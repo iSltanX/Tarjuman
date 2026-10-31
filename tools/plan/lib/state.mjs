@@ -368,7 +368,7 @@ function nextStep({ waves, wv, pv, gates, current }) {
       const w = wv[g.wave];
       return {
         tone: 'decision',
-        text: `نتيجة ${g.phase} «${g.outcomeLabel || 'غير مسجلة'}». اقرأ تقريرها وقرّر البوابة ${g.id}: افتح جلسة جديدة في النسخة الرئيسية (بلا worktree) بالنموذج ${w.coordinatorModel}، والصق ${w.command}، ثم أعطه قرارك.`,
+        text: `نتيجة ${g.phase} «${g.outcomeLabel || 'غير مسجلة'}». اقرأ تقريرها وقرّر البوابة ${g.id}: افتح جلسة جديدة في النسخة الرئيسية (بلا worktree) بالنموذج ${w.coordinatorModel}، والصق \`${w.command}\`، ثم أعطه قرارك.`,
         actions: [action('wave', w)],
       };
     }
@@ -379,11 +379,11 @@ function nextStep({ waves, wv, pv, gates, current }) {
   if (!current) return { tone: 'done', text: 'اكتملت الخطة: كل الموجات مغلقة ومتحققة.', actions: [] };
   const w = current;
   if (w.state === 'merging') {
-    return { tone: 'active', text: `الموجة ${w.id} قيد الدمج في فرع التكامل ${w.integration.branch}. أكمل جلسة المنسّق، أو افتح جلسة جديدة في النسخة الرئيسية والصق ${w.command} للاستئناف.`, actions: [action('wave', w)] };
+    return { tone: 'active', text: `الموجة ${w.id} قيد الدمج في فرع التكامل \`${w.integration.branch}\`. أكمل جلسة المنسّق، أو افتح جلسة جديدة في النسخة الرئيسية والصق \`${w.command}\` للاستئناف.`, actions: [action('wave', w)] };
   }
   if (w.state === 'blocked') {
     const notes = (w.record?.notes || []).slice(-1)[0];
-    return { tone: 'blocked', text: `بوابة ${w.id} متعطلة${notes ? `: ${notes}` : ''}. عالج سببها في جلسة المرحلة المذكورة، ثم استأنف المنسّق بـ${w.command}.`, actions: [action('wave', w)] };
+    return { tone: 'blocked', text: `بوابة ${w.id} متعطلة${notes ? `: ${notes}` : ''}. عالج سببها في جلسة المرحلة المذكورة، ثم استأنف المنسّق بـ\`${w.command}\`.`, actions: [action('wave', w)] };
   }
   if (w.state === 'waiting') return { tone: 'waiting', text: `الموجة ${w.id} لم تُفتح بعد. ${w.reasons.join(' ')}`, actions: [] };
 
@@ -391,7 +391,7 @@ function nextStep({ waves, wv, pv, gates, current }) {
   if (list.every((p) => p.state === 'ready')) {
     return {
       tone: 'merge',
-      text: `كل مراحل ${w.id} جاهزة للدمج. افتح جلسة جديدة في النسخة الرئيسية (بلا worktree) بالنموذج ${w.coordinatorModel}، والصق ${w.command}.`,
+      text: `كل مراحل ${w.id} جاهزة للدمج. افتح جلسة جديدة في النسخة الرئيسية (بلا worktree) بالنموذج ${w.coordinatorModel}، والصق \`${w.command}\`.`,
       actions: [action('wave', w)],
     };
   }
@@ -400,7 +400,7 @@ function nextStep({ waves, wv, pv, gates, current }) {
   const blocked = list.filter((p) => p.state === 'blocked');
   const ready = list.filter((p) => p.state === 'ready');
   const parts = [];
-  if (avail.length === 1) parts.push(`ابدأ ${avail[0].id} — ${avail[0].title}: افتح جلسة جديدة في Claude Code، واختر النموذج ${avail[0].model}، والصق ${avail[0].command}.`);
+  if (avail.length === 1) parts.push(`ابدأ ${avail[0].id} — ${avail[0].title}: افتح جلسة جديدة في Claude Code، واختر النموذج ${avail[0].model}، والصق \`${avail[0].command}\`.`);
   else if (avail.length > 1) parts.push(`ابدأ بالتوازي، كل مرحلة في جلسة مستقلة: ${avail.map((p) => `${p.id} (${p.model})`).join('، ')}.`);
   if (active.length) parts.push(`جارية: ${active.map((p) => `${p.id}${p.resume ? ` — ${p.resume}` : ''}`).join('؛ ')}.`);
   if (blocked.length) parts.push(`متعطلة: ${blocked.map((p) => `${p.id} — ${p.blocker || 'بلا سبب مسجّل'}`).join('؛ ')}.`);

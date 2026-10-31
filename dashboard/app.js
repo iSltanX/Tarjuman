@@ -14,8 +14,8 @@
     blocked: 'متعطلة', available: 'متاحة للبدء', waiting: 'مخططة',
   };
   var STATE_GROUP = {
-    verified: 'الدمج: في main بعد بوابة موجتها', integrating: 'الدمج: في فرع التكامل', ready: 'التسليم: بتقرير، لم تُدمج',
-    in_progress: 'العمل: في فرعها', blocked: 'العمل: بسبب مكتوب', available: 'الانتظار: يمكن بدؤها', waiting: 'الانتظار: لم يحن دورها',
+    verified: 'في main بعد البوابة', integrating: 'في فرع التكامل', ready: 'سُلّمت ولم تُدمج',
+    in_progress: 'في فرعها', blocked: 'بسبب مكتوب', available: 'يمكن بدؤها الآن', waiting: 'لم يحن دورها',
   };
   var WAVE_CLASS = { waiting: 'waiting', open: 'open', merging: 'merging', blocked: 'blocked', verified: 'verified' };
   var ICON = {
@@ -45,6 +45,12 @@
       .replace(/[ً-ٰٟـ]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
   }
   function trunc(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+  function countReq(n) {
+    if (n === 0) return 'لا متطلبات';
+    if (n === 1) return 'متطلب واحد';
+    if (n === 2) return 'متطلبان';
+    return n + (n <= 10 ? ' متطلبات' : ' متطلبًا');
+  }
   var fmtDate = new Intl.DateTimeFormat('ar-u-ca-gregory-nu-latn', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   var fmtClock = new Intl.DateTimeFormat('ar-u-ca-gregory-nu-latn', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   function when(ms) { try { return fmtDate.format(new Date(ms)); } catch (e) { return String(ms); } }
@@ -241,7 +247,7 @@
   }
 
   function renderGraph() {
-    var colW = 212, nodeW = 176, nodeH = 54, gapY = 14, top = 58, pad = 14;
+    var colW = 180, nodeW = 156, nodeH = 54, gapY = 14, top = 58, pad = 12;
     var W = S.waves.length * colW + pad * 2;
     var maxN = Math.max.apply(null, S.waves.map(function (w) { return w.phases.length; }));
     var inner = maxN * nodeH + (maxN - 1) * gapY;
@@ -255,14 +261,14 @@
       var y0 = top + (inner - hh) / 2;
       w.phases.forEach(function (id, j) { pos[id] = { x: cx - nodeW / 2, y: y0 + j * (nodeH + gapY), cx: cx }; });
     });
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" style="direction:rtl" role="img" aria-label="مخطط اعتماديات المراحل التسع في خمس موجات، من اليمين إلى اليسار">';
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="direction:rtl;max-width:' + W + 'px" role="img" aria-label="مخطط اعتماديات المراحل التسع في خمس موجات، من اليمين إلى اليسار">';
     s += '<defs><marker id="arr-met" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--verified)"/></marker>' +
       '<marker id="arr-pending" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--border-strong)"/></marker></defs>';
     S.waves.forEach(function (w, i) {
       var right = W - pad - i * colW;
       var cx = right - colW / 2;
       if (i > 0) s += '<line class="g-sep" x1="' + right + '" y1="8" x2="' + right + '" y2="' + (H - 6) + '"/>';
-      s += '<text class="g-col" x="' + cx + '" y="22" text-anchor="middle">' + esc(w.id) + ' — ' + esc(trunc(w.title, 20)) + '</text>';
+      s += '<text class="g-col" x="' + cx + '" y="22" text-anchor="middle">' + esc(w.id) + ' — ' + esc(trunc(w.title, 17)) + '</text>';
       s += '<text class="g-col g-col-state st-' + WAVE_CLASS[w.state] + '" x="' + cx + '" y="40" text-anchor="middle" style="fill:var(--c)">' + esc(w.label) + ' · ' + (w.parallel ? w.phases.length + ' بالتوازي' : 'منفردة') + '</text>';
     });
     S.phases.forEach(function (p) {
@@ -287,8 +293,8 @@
       if (!q) return;
       s += '<a class="g-node st-' + p.state + '" href="#phase-' + p.id + '" data-node="' + p.id + '" aria-label="' + esc(p.id + ' — ' + p.title + ': ' + p.label) + '">' +
         '<rect x="' + q.x + '" y="' + q.y + '" width="' + nodeW + '" height="' + nodeH + '" rx="11"/>' +
-        '<text x="' + q.cx + '" y="' + (q.y + 22) + '" text-anchor="middle"><tspan class="g-id">' + esc(p.id) + '</tspan><tspan class="g-title" dx="6">' + esc(p.label) + '</tspan></text>' +
-        '<text class="g-title" x="' + q.cx + '" y="' + (q.y + 41) + '" text-anchor="middle">' + esc(trunc(p.title, 24)) + '</text>' +
+        '<text x="' + q.cx + '" y="' + (q.y + 22) + '" text-anchor="middle"><tspan class="g-id">' + esc(p.id) + '</tspan><tspan class="g-title"> · ' + esc(p.label) + '</tspan></text>' +
+        '<text class="g-title" x="' + q.cx + '" y="' + (q.y + 41) + '" text-anchor="middle">' + esc(trunc(p.title, 21)) + '</text>' +
         '<title>' + esc(p.id + ' — ' + p.title + ' (' + p.label + ')') + '</title></a>';
     });
     s += '</svg>';
@@ -363,7 +369,7 @@
       ['الحالة', pill(p.state, p.label)],
       ['المصدر', esc(p.sourceLabel)],
       ['الفرع', p.branch ? '<code>' + esc(p.branch) + '</code>' : '<span class="muted">لم يُنشأ — المتوقع <code>' + esc(p.expectedBranch) + '</code></span>'],
-      ['مجلد العمل', p.worktree ? '<code>' + esc(p.worktree) + '</code>' + (p.dirty ? ' <span class="pill st-integrating">تغييرات غير ملتزمة</span>' : '') : '<span class="muted">' + esc(p.expectedWorktree) + '</span>'],
+      ['مجلد العمل', p.worktree ? '<code>' + esc(p.worktree) + '</code>' + (p.dirty ? ' <span class="pill st-integrating">تغييرات غير ملتزمة</span>' : '') : '<span class="muted">لم يُنشأ — المتوقع <code>' + esc(p.expectedWorktree) + '</code></span>'],
       ['آخر التزام', p.last ? '<code>' + esc(p.last.hash) + '</code> ' + esc(p.last.subject) : ''],
       ['متقدم على main', p.ahead != null && p.branch ? '<span class="num">' + p.ahead + '</span> التزام' : ''],
       ['آخر تحديث', esc(p.updated || '')],
@@ -522,7 +528,7 @@
     document.querySelectorAll('.g-node').forEach(function (n) { n.style.opacity = active && !match[n.dataset.node] ? '0.28' : ''; });
     document.querySelectorAll('[data-tile]').forEach(function (t) { t.setAttribute('aria-pressed', String(ui.states.has(t.dataset.tile))); });
     document.querySelectorAll('[data-fstate]').forEach(function (t) { t.setAttribute('aria-pressed', String(ui.states.has(t.dataset.fstate))); });
-    $('filter-note').textContent = active ? 'يُعرض ' + shown + ' من ' + total + ' مراحل · ' + rshown + ' متطلبًا' : '';
+    $('filter-note').textContent = active ? 'يُعرض ' + shown + ' من ' + total + ' مراحل · ' + countReq(rshown) : '';
   }
 
   function flash(el) {

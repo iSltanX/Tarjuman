@@ -224,6 +224,7 @@ a.chip:hover { border-color: var(--brand); color: var(--text); }
 .next__model { font-size: 0.8rem; color: var(--text-2); padding-inline: 4px; }
 
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; margin-top: 16px; }
+@media (min-width: 760px) { .tiles { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
 .tile { border: 1px solid var(--border); background: var(--sunken); border-radius: 12px; padding: 9px 12px; text-align: start; font: inherit; color: inherit; cursor: pointer; display: grid; gap: 1px; }
 .tile:hover { border-color: var(--c); }
 .tile[aria-pressed="true"] { border-color: var(--c); background: var(--cb); }
@@ -239,8 +240,7 @@ a.chip:hover { border-color: var(--brand); color: var(--text); }
 .waitlist ul { margin: 6px 0 0; padding-inline-start: 18px; font-size: 0.88rem; color: var(--text-2); }
 
 /* التصفية */
-.toolbar { position: sticky; top: 56px; z-index: 10; margin-top: 18px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
-@media (max-width: 759px) { .toolbar { position: static; } }
+.toolbar { margin-top: 18px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
 .search { flex: 1 1 240px; min-width: 200px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-strong); border-radius: 10px; padding: 0 10px; background: var(--sunken); }
 .search svg { width: 16px; height: 16px; color: var(--muted); flex: none; }
 .search input { flex: 1; border: 0; background: transparent; color: var(--text); font: inherit; min-height: 36px; outline: none; }
@@ -253,7 +253,7 @@ a.chip:hover { border-color: var(--brand); color: var(--text); }
 
 /* مخطط الاعتماديات */
 .graph { padding: 12px; overflow-x: auto; }
-.graph svg { display: block; margin-inline: auto; min-width: 960px; }
+.graph svg { display: block; margin-inline: auto; width: 100%; height: auto; min-width: 700px; }
 .g-col { font-family: var(--font); font-size: 12.5px; font-weight: 700; fill: var(--text-2); }
 .g-col-state { font-size: 11px; font-weight: 600; }
 .g-node rect { fill: var(--cb); stroke: var(--c); stroke-width: 1.5; }
