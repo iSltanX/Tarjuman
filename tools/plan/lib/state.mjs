@@ -218,7 +218,8 @@ export function deriveState(startDir, { mode = 'snapshot' } = {}) {
       const reportWritten = String(rec.md || '').includes(REPORT_MARK(id));
       let outOfScope = [];
       if (rec.branch && rec.source !== 'integration') {
-        const base = tagInfo(w).exists ? tagInfo(w).name : mainBranch;
+        // الفرق بثلاث نقاط من main يعزل عمل الفرع عن أي التزام دخل main بعد تفرّعه.
+        const base = mainBranch;
         const allowed = [...(ph.owns || []), ...(ph.fixScope || []), phaseDoc(plan, ph), evidenceOf(plan, ph) + '/**'];
         outOfScope = diffNames(root, `${base}...${rec.branch}`).filter((f) => !allowed.some((p) => matches(f, p)));
       }
@@ -358,39 +359,64 @@ export function deriveState(startDir, { mode = 'snapshot' } = {}) {
   return state;
 }
 
+// title وhint للعرض المختصر في اللوحة، وtext الوصف الكامل (يطبعه sync). ref مرحلة يُقرأ تقريرها إن لزم.
 function nextStep({ waves, wv, pv, gates, current }) {
   const action = (kind, item, primary = true) => ({
-    kind, id: item.id, label: kind === 'phase' ? `${item.commandLabel} ${item.id}` : `${item.commandLabel}`,
+    kind, id: item.id, title: item.title, label: kind === 'phase' ? `${item.commandLabel} ${item.id}` : `${item.commandLabel}`,
     command: item.command, model: kind === 'phase' ? item.model : item.coordinatorModel, primary,
   });
+  const COORD = 'افتح جلسة Claude Code جديدة في النسخة الرئيسية (بلا worktree)، واختر النموذج المقترح، والصق الأمر.';
   for (const g of Object.values(gates)) {
     if (g.state === 'awaiting') {
       const w = wv[g.wave];
       return {
         tone: 'decision',
+        title: `قرّر البوابة ${g.id}: نتيجة ${g.phase} «${g.outcomeLabel || 'غير مسجلة'}»`,
+        hint: `اقرأ تقرير ${g.phase} ثم ${COORD} وأعطِ المنسّق قرارك.`,
+        ref: g.phase,
         text: `نتيجة ${g.phase} «${g.outcomeLabel || 'غير مسجلة'}». اقرأ تقريرها وقرّر البوابة ${g.id}: افتح جلسة جديدة في النسخة الرئيسية (بلا worktree) بالنموذج ${w.coordinatorModel}، والصق \`${w.command}\`، ثم أعطه قرارك.`,
         actions: [action('wave', w)],
       };
     }
     if (g.state === 'closed') {
-      return { tone: 'blocked', text: `أُغلقت البوابة ${g.id} بقرارك: «${g.decision?.text || ''}». لا موجة تُفتح بعدها حتى تقرر غير ذلك.`, actions: [] };
+      return {
+        tone: 'blocked',
+        title: `البوابة ${g.id} مغلقة بقرارك`,
+        hint: `«${g.decision?.text || ''}». لا موجة تُفتح بعدها حتى تقرر غير ذلك.`,
+        text: `أُغلقت البوابة ${g.id} بقرارك: «${g.decision?.text || ''}». لا موجة تُفتح بعدها حتى تقرر غير ذلك.`,
+        actions: [],
+      };
     }
   }
-  if (!current) return { tone: 'done', text: 'اكتملت الخطة: كل الموجات مغلقة ومتحققة.', actions: [] };
+  if (!current) return { tone: 'done', title: 'اكتملت الخطة', hint: 'كل الموجات مغلقة ومتحققة.', text: 'اكتملت الخطة: كل الموجات مغلقة ومتحققة.', actions: [] };
   const w = current;
   if (w.state === 'merging') {
-    return { tone: 'active', text: `الموجة ${w.id} قيد الدمج في فرع التكامل \`${w.integration.branch}\`. أكمل جلسة المنسّق، أو افتح جلسة جديدة في النسخة الرئيسية والصق \`${w.command}\` للاستئناف.`, actions: [action('wave', w)] };
+    return {
+      tone: 'active',
+      title: `أكمل دمج ${w.id} — ${w.title}`,
+      hint: `الدمج جارٍ في فرع التكامل. أكمل جلسة المنسّق، أو ${COORD}`,
+      text: `الموجة ${w.id} قيد الدمج في فرع التكامل \`${w.integration.branch}\`. أكمل جلسة المنسّق، أو افتح جلسة جديدة في النسخة الرئيسية والصق \`${w.command}\` للاستئناف.`,
+      actions: [action('wave', w)],
+    };
   }
   if (w.state === 'blocked') {
     const notes = (w.record?.notes || []).slice(-1)[0];
-    return { tone: 'blocked', text: `بوابة ${w.id} متعطلة${notes ? `: ${notes}` : ''}. عالج سببها في جلسة المرحلة المذكورة، ثم استأنف المنسّق بـ\`${w.command}\`.`, actions: [action('wave', w)] };
+    return {
+      tone: 'blocked',
+      title: `بوابة ${w.id} متعطلة`,
+      hint: `${notes ? `${notes}. ` : ''}عالج السبب في جلسة المرحلة المذكورة، ثم استأنف المنسّق.`,
+      text: `بوابة ${w.id} متعطلة${notes ? `: ${notes}` : ''}. عالج سببها في جلسة المرحلة المذكورة، ثم استأنف المنسّق بـ\`${w.command}\`.`,
+      actions: [action('wave', w)],
+    };
   }
-  if (w.state === 'waiting') return { tone: 'waiting', text: `الموجة ${w.id} لم تُفتح بعد. ${w.reasons.join(' ')}`, actions: [] };
+  if (w.state === 'waiting') return { tone: 'waiting', title: `الموجة ${w.id} لم تُفتح بعد`, hint: w.reasons.join(' '), text: `الموجة ${w.id} لم تُفتح بعد. ${w.reasons.join(' ')}`, actions: [] };
 
   const list = w.phases.map((id) => pv[id]);
   if (list.every((p) => p.state === 'ready')) {
     return {
       tone: 'merge',
+      title: `ادمج الموجة ${w.id} — ${w.title}`,
+      hint: `كل مراحلها سُلّمت. ${COORD}`,
       text: `كل مراحل ${w.id} جاهزة للدمج. افتح جلسة جديدة في النسخة الرئيسية (بلا worktree) بالنموذج ${w.coordinatorModel}، والصق \`${w.command}\`.`,
       actions: [action('wave', w)],
     };
@@ -406,7 +432,25 @@ function nextStep({ waves, wv, pv, gates, current }) {
   if (blocked.length) parts.push(`متعطلة: ${blocked.map((p) => `${p.id} — ${p.blocker || 'بلا سبب مسجّل'}`).join('؛ ')}.`);
   if (ready.length) parts.push(`سُلّمت وتنتظر بقية الموجة: ${ready.map((p) => p.id).join('، ')}.`);
   const actions = [...avail.map((p) => action('phase', p)), ...blocked.map((p) => action('phase', p, false)), ...active.map((p) => action('phase', p, false))];
-  return { tone: blocked.length ? 'blocked' : avail.length ? 'start' : 'active', text: parts.join(' '), actions };
+  let title;
+  let hint;
+  if (avail.length === 1 && !active.length && !blocked.length) {
+    title = `ابدأ ${avail[0].id} — ${avail[0].title}`;
+    hint = 'افتح جلسة Claude Code جديدة في مجلد المشروع، واختر النموذج المقترح، والصق الأمر. الجلسة تطلب إذنك قبل أي اختبار حي.';
+  } else if (avail.length > 1) {
+    title = `ابدأ مراحل ${w.id} بالتوازي`;
+    hint = 'كل مرحلة في جلسة Claude Code مستقلة بنموذجها المقترح. ملفاتها لا تتقاطع.';
+  } else if (blocked.length) {
+    title = blocked.length === 1 ? `${blocked[0].id} متعطلة` : `مراحل متعطلة في ${w.id}`;
+    hint = `${blocked.map((p) => `${p.id}: ${p.blocker || 'بلا سبب مسجّل'}`).join('؛ ')}. عالج السبب ثم استأنف جلستها بالأمر.`;
+  } else if (active.length) {
+    title = active.length === 1 ? `${active[0].id} جارية — ${active[0].title}` : `مراحل جارية في ${w.id}`;
+    hint = active.length === 1 ? `نقطة الاستئناف: ${active[0].resume || '—'}` : 'كل مرحلة تعمل في جلستها؛ الأمر يستأنف أيًّا منها في جلسة جديدة إن انقطعت.';
+  } else {
+    title = `بانتظار بقية مراحل ${w.id}`;
+    hint = parts.join(' ');
+  }
+  return { tone: blocked.length ? 'blocked' : avail.length ? 'start' : 'active', title, hint, text: parts.join(' '), actions };
 }
 
 function staleGenerated(root, plan, reqs) {

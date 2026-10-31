@@ -60,6 +60,9 @@ const dedupe = (list) => {
 
 const normId = (s) => String(s || '').trim().toUpperCase();
 
+// العدّ بالعربية: ملف واحد، ملفان، 3–10 ملفات، 11 فأكثر ملفًا.
+const filesCount = (n) => (n === 1 ? 'ملف واحد' : n === 2 ? 'ملفين' : n >= 3 && n <= 10 ? `${n} ملفات` : `${n} ملفًا`);
+
 // ---------------------------------------------------------------- check
 
 function cmdCheck({ flags }) {
@@ -72,8 +75,8 @@ function cmdCheck({ flags }) {
     const ph = phaseById[normId(flags.phase)];
     if (!ph) die(`لا مرحلة بالمعرّف ${flags.phase}`);
     problems.push(...validatePhaseDoc(plan, ph, read(phaseDoc(plan, ph)), phaseDoc(plan, ph)));
-    const R = refs(ROOT);
-    const base = R.tags[baseTagOf(plan, ph.wave)] ? baseTagOf(plan, ph.wave) : plan.project.mainBranch;
+    // نقطة التفرّع عن main (ثلاث نقاط)، لا وسم الأساس: لا تُحسب على المرحلة التزامات دخلت main بعده.
+    const base = plan.project.mainBranch;
     const committed = diffNames(ROOT, `${base}...HEAD`);
     const pending = statusPorcelain(ROOT).split('\n').filter(Boolean).map((l) => l.slice(3).replace(/^"|"$/g, '').split(' -> ').pop());
     const files = [...new Set([...committed, ...pending])];
@@ -285,7 +288,7 @@ function cmdVerifyMerge({ pos }) {
     const branch = blk.ok ? blk.data.branch : null;
     let merge = blk.ok ? blk.data.mergeCommit : null;
     if (!merge) merge = git(ROOT, ['log', '--merges', '--format=%h', '-1', `--grep=دمج ${pid}`, 'HEAD'], { allowFail: true }) || null;
-    const files = branch && R.heads[branch] ? diffNames(ROOT, `${base}...${branch}`) : [];
+    const files = branch && R.heads[branch] ? diffNames(ROOT, `${plan.project.mainBranch}...${branch}`) : [];
     return { pid, branch, merge, files, known: !!(branch && R.heads[branch]) };
   });
   let errors = 0;
@@ -314,7 +317,7 @@ function cmdVerifyMerge({ pos }) {
       console.log(`✗ ${x.pid}: تغيير سقط في ${f} — لا يطابق رأس التكامل ولا يُنسب إلى دمج لاحق أو التزام مسجّل.`);
       errors++;
     }
-    console.log(`✓ ${x.pid}: ${same} من ${x.files.length} ملفًا مطابقة لرأس التكامل حرفيًا.`);
+    console.log(`✓ ${x.pid}: ${same} من ${filesCount(x.files.length)} مطابقة لرأس التكامل حرفيًا.`);
   });
   console.log(errors ? `النتيجة: ${errors} مشكلة — لا تتابع قبل حلها.` : 'النتيجة: لا تغيير سقط.');
   process.exit(errors ? 1 : 0);
