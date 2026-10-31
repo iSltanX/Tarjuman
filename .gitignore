@@ -1,0 +1,11 @@
+# مولّدات ومجلدات عمل محلية
+dashboard/data/
+.claude/worktrees/
+.claude/settings.local.json
+node_modules/
+dist/
+test-results/
+*.log
+.DS_Store
+# ملفات التعريف وبيانات الاختبار الحي لا تُحفظ في المستودع
+.tj-profiles/

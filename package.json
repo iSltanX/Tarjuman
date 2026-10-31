@@ -1,0 +1,16 @@
+{
+  "name": "tarjuman",
+  "private": true,
+  "version": "0.0.0",
+  "description": "ترجمان: إضافة Chrome وBrave تستخرج ترجمة يوتيوب الإنجليزية إلى SRT وتعرض الترجمة العربية فوق الفيديو. المعالجة والحفظ محليان.",
+  "type": "module",
+  "scripts": {
+    "plan:check": "node tools/plan/plan.mjs check",
+    "plan:sync": "node tools/plan/plan.mjs sync",
+    "plan:render": "node tools/plan/plan.mjs render",
+    "dashboard": "node tools/plan/plan.mjs serve"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
