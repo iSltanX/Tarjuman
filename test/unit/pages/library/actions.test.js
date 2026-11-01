@@ -200,3 +200,38 @@ test('حذف الكل يصلح السجل التالف أيضًا', async () => 
   await deleteVideoData({ store, videoId: ID, scope: 'all', now });
   assert.equal(await store.getVideo(ID), null);
 });
+
+test('رسالة الزمن السالب تقتطع قائمة المقاطع عند 8 مع «…»', async () => {
+  const cues = makeCues(12);
+  // أقصى إزاحة سالبة (−10 دقائق) تجعل كل المقاطع الاثني عشر سالبة.
+  const { store } = await seeded({ offset: -600000, cues });
+  await assert.rejects(
+    exportArabic({ store, videoId: ID, variant: 'current', askTiming: async () => 'shown', download: () => {} }),
+    (e) => e.code === 'MD_NEGATIVE_TIME' && e.message.includes('1، 2، 3، 4، 5، 6، 7، 8…') && !e.message.includes('9،'),
+  );
+});
+
+test('تصديران إنجليزيان متزامنان يخزّنان بصمة واحدة (الكشف داخل updateVideo على أحدث نسخة)', async () => {
+  const { store } = await seeded();
+  const before = (await store.getVideo(ID)).fingerprints.length;
+  const { download } = sink();
+  const [a, b] = await Promise.all([
+    exportEnglish({ store, videoId: ID, trackKey: 'en|manual', download, now }),
+    exportEnglish({ store, videoId: ID, trackKey: 'en|manual', download, now }),
+  ]);
+  assert.deepEqual([a.fingerprintSaved, b.fingerprintSaved].sort(), [false, true]);
+  assert.equal((await store.getVideo(ID)).fingerprints.length, before + 1);
+});
+
+test('إخفاق حفظ البصمة بعد التنزيل تنبيه (saveError) لا خطأ يُسقط التصدير', async () => {
+  const { store, area } = await seeded();
+  const { files, download } = sink();
+  area.failNext('set', new Error('boom'));
+  const r = await exportEnglish({ store, videoId: ID, trackKey: 'en|manual', download, now });
+  assert.equal(files.length, 1, 'الملف نزل');
+  assert.equal(r.fingerprintSaved, false);
+  assert.equal(r.saveError.code, 'ST_WRITE_FAILED');
+  assert.equal((await store.getVideo(ID)).fingerprints.length, 1, 'لم تُحفظ');
+  const again = await exportEnglish({ store, videoId: ID, trackKey: 'en|manual', download, now });
+  assert.equal(again.fingerprintSaved, true, 'إعادة التصدير تحفظها');
+});

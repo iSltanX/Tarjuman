@@ -1,4 +1,4 @@
-// رسالة عابرة أعلى الصفحة (figma-design-brief §١٢): ثلاث ثوانٍ، وعلى قارئ الشاشة عبر منطقة حيّة مستقلة. ثلاث نبرات
+// رسالة عابرة أعلى الصفحة (figma-design-brief §١٢): ثلاث ثوانٍ، وتُعلَن لقارئ الشاشة بمنطقة حيّة مستقلة (show يعلن نصها). ثلاث نبرات
 // بنص دائمًا (لا معنى باللون وحده). الرسائل نصوص جاهزة تأتي من رموز الأخطاء.
 import { el, icon } from '../../ui/components.js';
 
@@ -7,6 +7,7 @@ export const TOAST_MS = 3000;
 /**
  * @param {{ doc?: Document, setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void }} [env]
  * @returns {{ root: HTMLElement, live: HTMLElement, show: (text: string, tone?: 'success' | 'danger' | 'info') => void, announce: (text: string) => void }}
+ * show يعرض الرسالة ويعلنها؛ announce وحده للإعلان بلا رسالة مرئية (نجاح «نسخ» يتحول زره بدل رسالة).
  */
 export function createToaster({ doc = document, setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = (id) => clearTimeout(id) } = {}) {
   const stack = el('div', { className: 'lib-toasts', doc });
@@ -15,6 +16,7 @@ export function createToaster({ doc = document, setTimer = (fn, ms) => setTimeou
   const timers = new Map();
 
   function show(text, tone = 'success') {
+    announce(text);
     const node = el('div', {
       className: `lib-toast lib-toast--${tone}`,
       children: [icon(tone === 'danger' ? 'danger' : tone === 'info' ? 'info' : 'success', { doc }), el('span', { text, doc })],

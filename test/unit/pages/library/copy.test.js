@@ -78,7 +78,18 @@ test('النص لا يتسرب: لا إلى الحالة ولا إلى الإع�
   const text = log.written[0];
   const probe = 'ترجمة ملف ترجمة فيديو';
   assert.ok(text.includes(probe));
-  for (const sink of [log.states, log.announced, log.timers.map((t) => String(t.fn)), [copy.state()]]) {
+  for (const sink of [log.states, log.announced, log.timers.map((t) => t.ms), [copy.state()]]) {
     assert.equal(JSON.stringify(sink).includes(probe), false);
   }
+});
+
+test('ضغطتان متزامنتان: لا يبقى مؤقت قديم يعيد الزر عاديًا قبل ثانيتين من آخر نسخ', async () => {
+  const { copy, log } = harness();
+  await Promise.all([copy.copy(), copy.copy()]);
+  const live = log.timers.filter((t) => !t.cleared);
+  assert.equal(live.length, 1, 'مؤقت واحد حيّ');
+  assert.equal(log.timers.length, 2);
+  assert.equal(log.timers[0].cleared, true, 'مؤقت الأولى أُلغي عند نجاح الثانية');
+  live[0].fn();
+  assert.equal(copy.state(), 'idle');
 });

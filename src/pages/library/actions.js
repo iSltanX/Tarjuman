@@ -10,6 +10,10 @@ import { withArabicImport, withExport, withoutArabic } from '../../core/model/tr
 
 const iso = (now) => new Date(now()).toISOString();
 
+/** أول 8 أرقام ثم «…»: الإزاحة الكبيرة على ملف طويل تعطي مئات الأرقام لا تُقرأ في رسالة عابرة. */
+const LIST_LIMIT = 8;
+const listNumbers = (list) => (list.length > LIST_LIMIT ? `${list.slice(0, LIST_LIMIT).join('، ')}…` : list.join('، '));
+
 async function requireRecord(store, videoId) {
   const record = await store.getVideo(videoId);
   if (!record) throw new TjError('PG_VIDEO_GONE');
@@ -38,7 +42,7 @@ export async function exportArabic({ store, videoId, variant, askTiming, downloa
     choice = picked;
   }
   const timed = exportTiming(source, offset, choice);
-  if (!timed.ok) throw new TjError('MD_NEGATIVE_TIME', { params: { list: timed.negative.join('، ') } });
+  if (!timed.ok) throw new TjError('MD_NEGATIVE_TIME', { params: { list: listNumbers(timed.negative) } });
   const file = buildArabicExport({ videoId, cues: timed.cues, variant });
   download(file);
   return { name: file.name, timing: timed.timing, cueCount: timed.cues.length };
@@ -51,7 +55,7 @@ const sameFingerprint = (a, b) => a.trackKey === b.trackKey && a.mode === b.mode
  * إلا إن وُجدت بصمة مطابقة (المسار والوضع والنص والعدد) فلا تتراكم نسخ متطابقة حتى حد البصمات.
  * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string, trackKey: string,
  *   download: (file: { name: string, text: string }) => void, now: () => number }} o
- * @returns {Promise<{ name: string, cueCount: number, fingerprintSaved: boolean }>}
+ * @returns {Promise<{ name: string, cueCount: number, fingerprintSaved: boolean, saveError: unknown }>}
  */
 export async function exportEnglish({ store, videoId, trackKey, download, now }) {
   const record = await requireRecord(store, videoId);
@@ -63,13 +67,19 @@ export async function exportEnglish({ store, videoId, trackKey, download, now })
   });
   const [file] = built.files;
   download(file);
-  const known = record.fingerprints.some((f) => sameFingerprint(f, built.fingerprint));
-  if (known) return { name: file.name, cueCount: file.cueCount, fingerprintSaved: false };
-  await store.updateVideo(videoId, (rec) => {
-    if (!rec) return undefined;
-    return withExport(rec, { videoId, title: rec.title, durationMs: rec.durationMs, englishTrack: track, fingerprint: built.fingerprint }, iso(now));
-  });
-  return { name: file.name, cueCount: file.cueCount, fingerprintSaved: true };
+  // الكشف عن البصمة المعروفة داخل updateVideo على أحدث نسخة (لا قبله): تصديران متزامنان لا يخزّنان نسختين متطابقتين.
+  // الملف نزل بالفعل، فإخفاق حفظ البصمة تنبيه (saveError) لا خطأ يُسقط التصدير.
+  let saved = false;
+  try {
+    await store.updateVideo(videoId, (rec) => {
+      if (!rec || rec.fingerprints.some((f) => sameFingerprint(f, built.fingerprint))) return undefined;
+      saved = true;
+      return withExport(rec, { videoId, title: rec.title, durationMs: rec.durationMs, englishTrack: track, fingerprint: built.fingerprint }, iso(now));
+    });
+  } catch (saveError) {
+    return { name: file.name, cueCount: file.cueCount, fingerprintSaved: false, saveError };
+  }
+  return { name: file.name, cueCount: file.cueCount, fingerprintSaved: saved, saveError: null };
 }
 
 /**

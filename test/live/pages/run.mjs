@@ -28,6 +28,8 @@ class Done extends Error {}
 const DOWNLOADS = path.join(os.tmpdir(), `tj-p7-live-${browser}`);
 const PROFILE = `${browser}-p7`;
 const rel = (f) => path.relative(ROOT, f);
+/** يسقط محارف العزل الاتجاهي (FSI…PDI) من عنوان حوار قبل مطابقته. */
+const stripIsolates = (s) => String(s ?? '').replace(new RegExp('[\\u2066-\\u2069]', 'g'), '');
 
 const result = { browser: null, at: new Date().toISOString(), checks: [], screenshots: [], notes: [] };
 const check = (id, ok, detail = null) => {
@@ -267,7 +269,7 @@ try {
   await lib.send('Input.insertText', { text: 'محاضرة لا وجود لها' });
   await sleep(300);
   const none = await lib.eval(() => ({ title: document.querySelector('.tj-empty__title')?.textContent, clear: !!document.querySelector('.tj-empty button') }));
-  check('ac3-search-no-results', /^لا نتائج لـ«محاضرة لا وجود لها»$/.test(none.title) && none.clear, none);
+  check('ac3-search-no-results', /^لا نتائج لـ«محاضرة لا وجود لها»$/.test(stripIsolates(none.title)) && none.clear, { title: stripIsolates(none.title), clear: none.clear });
   await shoot(lib, 'library-search-no-results', { width: 1440 });
   await clickText(lib, '.tj-empty', 'مسح البحث');
   const sortedBefore = await lib.eval(() => document.querySelectorAll('li.lib-row').length);

@@ -148,7 +148,7 @@ test('البحث: يصفّي بالعنوان والمعرّف، ونتيجته 
   search.value = 'لا يوجد هذا';
   search.dispatchEvent({ type: 'input' });
   assert.equal(rows(m).length, 0);
-  assert.equal(textOf(m.root.querySelector('.tj-empty__title')), 'لا نتائج لـ«لا يوجد هذا»');
+  assert.equal(textOf(m.root.querySelector('.tj-empty__title')), `لا نتائج لـ«${iso('لا يوجد هذا')}»`);
   assertNoTemplate(m, 'بحث بلا نتائج');
   const live = m.root.querySelector('p.tj-sr-only[role="status"]');
   assert.equal(textOf(live), 'لا نتائج', 'إعلان لقارئ الشاشة بغياب النتائج');
@@ -520,4 +520,67 @@ test('تغيّر التخزين من سياق آخر يحدّث القائمة �
   await settle(10);
   assert.equal(rows(m).length, 2);
   m.lib.dispose();
+});
+
+test('بعد اختيار بند من القائمة يعود التركيز إلى زرها (فيعيده الحوار إليه عند إغلاقه)', async () => {
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
+  await m.lib.load();
+  const more = buttonNamed(m.root, 'المزيد: عنوان');
+  more.click();
+  assert.notEqual(m.doc.activeElement, more, 'التركيز على البند الأول');
+  menuItems(more)[0].click();
+  await settle();
+  assert.equal(m.doc.activeElement, more);
+});
+
+test('كل رسالة عابرة تُعلَن لقارئ الشاشة بنصها (نجاح التصدير والفشل)', async () => {
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
+  await m.lib.load();
+  const exportBtn = buttonNamed(m.root, 'تصدير SRT: عنوان');
+  exportBtn.click();
+  menuItems(exportBtn)[2].click();
+  await settle();
+  assert.equal(textOf(m.root.querySelector('.lib-toast--success')), 'بدأ تنزيل الملف.');
+  await m.clock.runAll();
+  assert.equal(textOf(m.lib.toaster.live), 'بدأ تنزيل الملف.');
+  m.lib.toaster.show('فشل ما', 'danger');
+  await m.clock.runAll();
+  assert.equal(textOf(m.lib.toaster.live), 'فشل ما');
+});
+
+test('إخفاق حفظ بصمة التصدير بعد نزول الملف يظهر تنبيهًا لا خطأً', async () => {
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
+  await m.lib.load();
+  const exportBtn = buttonNamed(m.root, 'تصدير SRT: عنوان');
+  exportBtn.click();
+  m.area.failNext('set', new Error('boom'));
+  menuItems(exportBtn)[2].click();
+  await settle();
+  assert.equal(m.calls.downloads.length, 1);
+  assert.equal(m.root.querySelector('.lib-toast--danger'), null);
+  assert.match(textOf(m.root.querySelector('.lib-toast--info')), /نُزّل الملف، لكن تعذّر حفظ بصمته/);
+});
+
+test('تغيّر الإعدادات من صفحة أخرى لا يعيد بناء القائمة (يحفظ التركيز وحالة «تم النسخ»)', async () => {
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
+  await m.lib.load();
+  const copyBtn = buttonNamed(m.root, 'نسخ تعليمات ترجمة: عنوان');
+  copyBtn.click();
+  await settle();
+  assert.equal(copyBtn.getAttribute('data-state'), 'success');
+  const pendingBefore = m.clock.pending().length;
+  await m.store.setSettings({ appearance: { scale: 120 } });
+  await m.area.flush();
+  assert.equal(m.clock.pending().length, pendingBefore, 'لا مؤقت إعادة قراءة جديد لتغيّر الإعدادات');
+  assert.equal(buttonNamed(m.root, 'نسخ تعليمات ترجمة: عنوان'), copyBtn, 'العنصر نفسه لم يُستبدل');
+  assert.equal(copyBtn.getAttribute('data-state'), 'success');
+});
+
+test('نص بحث المستخدم داخل عنوان «لا نتائج» معزول الاتجاه (what? لا تنقلب علامة الاستفهام)', async () => {
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
+  await m.lib.load();
+  const search = m.root.querySelector('input.lib-search__input');
+  search.value = 'what?';
+  search.dispatchEvent({ type: 'input' });
+  assert.equal(textOf(m.root.querySelector('.tj-empty__title')), `لا نتائج لـ«${iso('what?')}»`);
 });

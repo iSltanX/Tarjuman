@@ -366,3 +366,51 @@ test('خطوط الواجهة لا تتغير بتغيير خط الترجمة: 
   assert.equal(m.root.style.fontFamily ?? undefined, undefined);
   assert.equal(m.doc.body.style.fontFamily ?? undefined, undefined);
 });
+
+test('كل عنصر إدخال باسم وصول: منزلق الحجم بـaria-label، والحقول بـlabel، والـradio بـlabel ملفوف، والمجموعات بـlegend', async () => {
+  const m = await mount();
+  assert.equal(m.settings.slider.getAttribute('aria-label'), 'حجم خط الترجمة');
+  const labelFor = (id) => findAll(m.root, (e) => e.tagName === 'label' && e.getAttribute('for') === id).length;
+  const inputs = findAll(m.root, (e) => e.tagName === 'input');
+  assert.ok(inputs.length > 20);
+  for (const i of inputs) {
+    const type = i.getAttribute('type');
+    if (type === 'radio') {
+      let wrapped = false;
+      for (let n = i.parentNode; n; n = n.parentNode) if (n.tagName === 'label' && textOf(n)) wrapped = true;
+      assert.ok(wrapped, `radio ${i.getAttribute('value')} بلا label ملفوف`);
+    } else {
+      assert.ok(i.getAttribute('aria-label') || labelFor(i.id) > 0, `إدخال ${type} (${i.id}) بلا اسم وصول`);
+    }
+  }
+  const fieldsets = findAll(m.root, (e) => e.tagName === 'fieldset');
+  assert.equal(fieldsets.length, 6, 'وضع العرض، وخط الترجمة، والخلفية، والموضع، والخطوة، ووضع التصدير');
+  assert.ok(fieldsets.every((f) => textOf(f.querySelector('legend') ?? { textContent: '' })));
+});
+
+test('خطأ التحقق القديم يُمسح حين تُستبدل قيمة الحقل المعروضة بالمحفوظة', async () => {
+  const m = await mount();
+  const f = field(m, 'عتبة اقتراح التقسيم الاحتياطي');
+  type(f, '5');
+  await settle();
+  assert.equal(errorOf(f), 'عتبة التقسيم عدد صحيح من 50 إلى 2000.');
+  choose(radioByValue(m.root, 'long'));
+  await settle();
+  assert.equal(f.querySelector('input').value, '200');
+  assert.equal(errorOf(f), '');
+  assert.equal(f.querySelector('input').getAttribute('aria-invalid'), 'false');
+});
+
+test('فشل حفظ ما كُتب في حقل مركَّز يعيد الحقل إلى المحفوظ (لا تناقض بين المعروض والمخزَّن)', async () => {
+  const m = await mount();
+  const f = field(m, 'عتبة اقتراح التقسيم الاحتياطي');
+  const input = f.querySelector('input');
+  input.focus();
+  input.value = '300';
+  m.area.failNext('set', new Error('boom'));
+  input.dispatchEvent({ type: 'change' });
+  await settle();
+  assert.equal(input.value, '200', 'عاد إلى المحفوظ ولو كان مركَّزًا');
+  assert.equal((await m.store.getSettings()).export.splitThreshold, 200);
+  assert.ok(markText(m.root).includes(messageFor('PG_SAVE_FAILED')));
+});

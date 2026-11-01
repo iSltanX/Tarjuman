@@ -61,6 +61,8 @@ export function createSettings(env) {
     } catch (err) {
       mark.flash(messageFor('PG_SAVE_FAILED'), 'danger');
       settings = await store.getSettings().catch(() => settings);
+      syncAll(true);
+      return settings;
     }
     syncAll();
     return settings;
@@ -111,7 +113,7 @@ export function createSettings(env) {
   const scaleOut = el('output', { className: 'st-scale__value tj-mono', attrs: { for: scaleId }, doc });
   const slider = el('input', {
     className: 'st-scale__input',
-    attrs: { id: scaleId, type: 'range', min: String(SUBTITLE_SCALE.min), max: String(SUBTITLE_SCALE.max), step: String(SUBTITLE_SCALE.step), 'aria-valuetext': '100%' },
+    attrs: { id: scaleId, type: 'range', min: String(SUBTITLE_SCALE.min), max: String(SUBTITLE_SCALE.max), step: String(SUBTITLE_SCALE.step), 'aria-label': 'حجم خط الترجمة', 'aria-valuetext': '100%' },
     doc,
   });
   slider.value = String(settings.appearance.scale);
@@ -221,11 +223,11 @@ export function createSettings(env) {
   });
   const customHost = el('div', { className: 'st-custom', children: [stepField.root], doc });
   customHost.hidden = true;
-  sync.push(() => {
+  sync.push((force) => {
     const choice = stepChoice(settings.offsetStepMs);
     stepSeg.set(stepCustom ? 'custom' : choice);
     customHost.hidden = !(stepCustom || choice === 'custom');
-    stepField.set(stepText(settings.offsetStepMs));
+    stepField.set(stepText(settings.offsetStepMs), { force });
   });
   const timing = card('st-timing-title', 'التوقيت',
     row('خطوة أزرار ±', stepSeg.root, stepMark.root),
@@ -247,7 +249,7 @@ export function createSettings(env) {
     hint: `الافتراضي ${DEFAULT_SETTINGS.export.splitThreshold}. يُقترح التقسيم للملفات الأطول.`,
     commit: (n) => save({ export: { splitThreshold: n } }, splitMark),
   });
-  sync.push(() => splitField.set(String(settings.export.splitThreshold)));
+  sync.push((force) => splitField.set(String(settings.export.splitThreshold), { force }));
   const exporting = card('st-export-title', 'التصدير',
     row('الوضع الافتراضي', modeSeg.root, exportMark.root),
     el('div', { className: 'st-notes', children: [note(MODE_NOTES.normal), note(MODE_NOTES.long)], doc }),
@@ -260,14 +262,14 @@ export function createSettings(env) {
     hint: `الافتراضي ${DEFAULT_SETTINGS.thresholds.driftMs} ملي ثانية.`,
     commit: (n) => save({ thresholds: { driftMs: n } }, driftMark),
   });
-  sync.push(() => driftField.set(String(settings.thresholds.driftMs)));
+  sync.push((force) => driftField.set(String(settings.thresholds.driftMs), { force }));
   const compMark = marks();
   const compField = numberField({
     label: 'نسبة الاكتمال', unit: '%', value: completenessText(settings.thresholds.completeness), parse: parseCompleteness, mark: compMark.root, doc,
     hint: `الافتراضي ${completenessText(DEFAULT_SETTINGS.thresholds.completeness)}%.`,
     commit: (v) => save({ thresholds: { completeness: v } }, compMark),
   });
-  sync.push(() => compField.set(completenessText(settings.thresholds.completeness)));
+  sync.push((force) => compField.set(completenessText(settings.thresholds.completeness), { force }));
   const comparison = card('st-compare-title', 'المقارنة', el('div', { className: 'st-fields', children: [driftField.root, compField.root], doc }));
 
   // ---- التخزين ----
@@ -367,8 +369,9 @@ export function createSettings(env) {
     }
   }
 
-  function syncAll() {
-    for (const fn of sync) fn();
+  /** force: القيم المحفوظة تُفرض حتى على حقل مركَّز (بعد فشل حفظ). */
+  function syncAll(force = false) {
+    for (const fn of sync) fn(force);
   }
 
   root.append(

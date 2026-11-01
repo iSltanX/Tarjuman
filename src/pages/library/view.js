@@ -163,8 +163,9 @@ export function createLibrary(env) {
       const r = await exportArabic({ store, videoId: m.videoId, variant: option.action.variant, askTiming, download: env.download });
       if (r) done('PG_EXPORT_DONE');
     } else {
-      await exportEnglish({ store, videoId: m.videoId, trackKey: option.action.trackKey, download: env.download, now });
-      done('PG_EXPORT_DONE');
+      const r = await exportEnglish({ store, videoId: m.videoId, trackKey: option.action.trackKey, download: env.download, now });
+      if (r.saveError) toaster.show(messageFor('PG_FINGERPRINT_NOT_SAVED'), 'info');
+      else done('PG_EXPORT_DONE');
     }
   });
 
@@ -237,9 +238,10 @@ export function createLibrary(env) {
       // النص يُبنى عند الضغطة من السجل (العنوان) والمعرّف، ويُسلَّم إلى الحافظة ولا يُحفظ ولا يُعرض.
       buildText: () => instructions({ videoId: entry.videoId, title: entry.title }),
       write: (text) => env.clipboardWrite(text),
+      // النجاح يتحول به الزر ويُعلَن بعنوان الصف؛ الفشل رسالة عابرة تُعلَن بنفسها.
       announce: (code) => {
-        toaster.announce(code === 'PG_COPY_DONE' ? `${messageFor(code)} ‹${m.accessName}›` : messageFor(code));
-        if (code !== 'PG_COPY_DONE') toaster.show(messageFor(code), 'danger');
+        if (code === 'PG_COPY_DONE') toaster.announce(`${messageFor(code)} ‹${m.accessName}›`);
+        else toaster.show(messageFor(code), 'danger');
       },
       onState: (next) => {
         label.textContent = COPY_LABEL[next];
@@ -373,7 +375,7 @@ export function createLibrary(env) {
     const shown = visible();
     if (!shown.length) {
       const clear = actionButton(doc, { label: 'مسح البحث', variant: 'secondary', onClick: () => { search.value = ''; state.query = ''; render(); announceResults(); search.focus(); } });
-      listHost.append(emptyState({ title: `لا نتائج لـ«${clip(state.query.trim(), 60)}»`, text: 'جرّب جزءًا آخر من العنوان أو المعرّف.', action: clear, doc }));
+      listHost.append(emptyState({ title: `لا نتائج لـ«${isolate(clip(state.query.trim(), 60))}»`, text: 'جرّب جزءًا آخر من العنوان أو المعرّف.', action: clear, doc }));
       return;
     }
     const slice = shown.slice(0, state.limit);
@@ -400,7 +402,9 @@ export function createLibrary(env) {
     render();
   }
 
-  const unsubscribe = store.onChange(() => {
+  const unsubscribe = store.onChange((change) => {
+    // تغيّر الإعدادات من صفحة أخرى لا يمسّ القائمة: إعادة بنائها تهدم التركيز وحالة «تم النسخ» والقائمة المفتوحة.
+    if (!Object.keys(change.videos).length && !change.index && !change.cleared) return;
     if (reloadTimer !== null) clearTimer(reloadTimer);
     reloadTimer = setTimer(() => {
       reloadTimer = null;

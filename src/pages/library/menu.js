@@ -39,7 +39,8 @@ export function createMenu({ label, ariaLabel, icon: iconName, chevron = false, 
     });
     b.addEventListener('click', () => {
       if (it.disabledReason) return;
-      close();
+      // يعود التركيز إلى الزر قبل التنفيذ: الحوار الذي يفتحه البند يعيده إليه عند إغلاقه بدل أن يضيع في body.
+      close({ restoreFocus: true });
       it.onSelect();
     });
     return b;

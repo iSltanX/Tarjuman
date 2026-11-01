@@ -60,6 +60,8 @@ const INVISIBLE = new RegExp(
   + '\\u202A-\\u202E\\u2060-\\u206F\\u3164\\uFE00-\\uFE0F\\uFEFF\\uFFA0\\uFFF9-\\uFFFB]',
   'g',
 );
+// خارج المستوى الأساسي (علم u): محارف Tag (U+E0000–E007F) تحمل نصًا خفيًا لا يراه المستخدم، ومكمّل محددات التنويع، وتنسيق الموسيقى.
+const ASTRAL_INVISIBLE = new RegExp('[\\u{E0000}-\\u{E007F}\\u{E0100}-\\u{E01EF}\\u{1D173}-\\u{1D17A}]', 'gu');
 
 /**
  * العنوان بيانات لا تعليمات: سطر واحد بلا محارف خفية ولا تحكم ولا مسافات متتالية، وبحد النموذج. الغائب أو الفارغ
@@ -69,7 +71,7 @@ const INVISIBLE = new RegExp(
  */
 export function cleanTitle(title) {
   if (typeof title !== 'string') return TITLE_UNAVAILABLE;
-  const one = title.replace(LINE_BREAKS, ' ').replace(INVISIBLE, '').replace(/\s+/g, ' ').trim();
+  const one = title.replace(LINE_BREAKS, ' ').replace(INVISIBLE, '').replace(ASTRAL_INVISIBLE, '').replace(/\s+/g, ' ').trim();
   const clipped = one.length > LIMITS.maxTitleChars ? Array.from(one).slice(0, LIMITS.maxTitleChars).join('').trim() : one;
   return clipped || TITLE_UNAVAILABLE;
 }

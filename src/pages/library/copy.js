@@ -41,6 +41,8 @@ export function createCopyState({ buildText, write, announce, onState, setTimer 
         announce(toErrorInfo(err).code === 'TJ_BAD_VIDEO_ID' ? 'PG_COPY_BAD_ID' : 'PG_COPY_FAILED');
         return 'error';
       }
+      // ضغطة ثانية بدأت قبل انتهاء هذه قد تكون وضعت مؤقتها: يُلغى ليبقى «تم النسخ» ثانيتين من آخر نسخ.
+      cancelTimer();
       set('success');
       announce('PG_COPY_DONE');
       timer = setTimer(() => {

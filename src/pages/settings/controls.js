@@ -73,12 +73,13 @@ export function segmented({ legend, options, value, onChange, doc = document, cl
 /**
  * حقل رقمي بنص (لا type=number، فيقبل الأرقام الهندية) ووحدة بعده. يُتمّ عند `change` (إلغاء التركيز أو Enter):
  * `parse` يعيد { ok, value } أو { ok:false, code }؛ الخطأ يظهر تحت الحقل ولا يُستدعى `commit`. `set` لا يمسّ الحقل
- * وهو مركَّز (كي لا تُمحى كتابة المستخدم بتحديث من سياق آخر).
+ * وهو مركَّز (كي لا تُمحى كتابة المستخدم بتحديث من سياق آخر) إلا بـ`force` (بعد فشل حفظ ما كُتب فيه فيعود إلى المحفوظ)؛
+ * وحين يغيّر القيمة فعلًا يمسح خطأ التحقق القديم فلا يبقى بجانب قيمة صالحة.
  * @param {{
  *   label: string, hint?: string, unit?: string, value: string, parse: (text: string) => { ok: true, value: number } | { ok: false, code: string },
  *   commit: (value: number) => Promise<unknown> | unknown, mark?: HTMLElement | null, doc?: Document
  * }} o
- * @returns {{ root: HTMLElement, input: HTMLInputElement, set: (text: string) => void, setError: (code: string | null) => void }}
+ * @returns {{ root: HTMLElement, input: HTMLInputElement, set: (text: string, opts?: { force?: boolean }) => void, setError: (code: string | null) => void }}
  */
 export function numberField({ label, hint, unit, value, parse, commit, mark = null, doc = document }) {
   const id = uid('st-num');
@@ -115,8 +116,10 @@ export function numberField({ label, hint, unit, value, parse, commit, mark = nu
   });
   return {
     root, input, setError,
-    set(text) {
-      if (doc.activeElement !== input) input.value = text;
+    set(text, { force = false } = {}) {
+      if (doc.activeElement === input && !force) return;
+      if (input.value !== text) setError(null);
+      input.value = text;
     },
   };
 }

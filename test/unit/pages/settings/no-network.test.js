@@ -51,7 +51,10 @@ test('واجهات chrome في الصفحات قائمة مسماة: tabs.query 
   const allowed = new Set(['tabs.query', 'tabs.sendMessage', 'tabs.create', 'runtime.getURL', 'runtime.getManifest']);
   const used = new Set();
   for (const f of files.filter((x) => x.endsWith('.js'))) {
-    for (const m of strip(readFileSync(f, 'utf8')).matchAll(/\b(?:chrome|api)\.((?:tabs|runtime|storage|windows|scripting|downloads|cookies)\.\w+)/g)) used.add(m[1]);
+    const text = strip(readFileSync(f, 'utf8'));
+    // chrome.x.y وapi.x.y وglobalThis.chrome?.x.y، وكذلك المتغيرات المسماة باسم الواجهة (tabs.query بعد استخراج tabs).
+    for (const m of text.matchAll(/\b(?:chrome|api)\??\.((?:tabs|runtime|storage|windows|scripting|downloads|cookies|management|history|webRequest)\.\w+)/g)) used.add(m[1]);
+    for (const m of text.matchAll(/(?<![\w.])((?:tabs|runtime|windows|scripting|downloads|cookies|management|history)\.\w+)\(/g)) used.add(m[1]);
   }
   for (const u of used) assert.ok(allowed.has(u), `واجهة غير معتمدة: ${u}`);
   assert.ok(used.has('tabs.create'), 'فتح الصفحات والفيديو بتبويب جديد');

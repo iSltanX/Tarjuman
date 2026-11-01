@@ -63,18 +63,22 @@ startPage({
     }));
     const placeholder = skeleton();
     app.append(placeholder);
-    const reply = await queryVideoState();
-    placeholder.replaceWith(statusCard(describeStatus(reply)));
-    const gate = editorGate(reply);
     const notice = el('div', { attrs: { role: 'status' } });
+    // «المحفوظات» و«الإعدادات» لا تنتظران حالة الفيديو (قد تتأخر حتى مهلتها إن علق سكربت المحتوى)؛ و«المحرّر» معطّل بسببه
+    // حتى تصل.
+    const editorItem = (gate, desc = 'تحرير ترجمة هذا الفيديو') => menuItem({ iconName: 'editor', name: 'المحرّر', desc, disabledReason: gate.reason, onOpen: () => openPage('editor', { v: gate.videoId }) }, notice);
+    const editor = editorItem({ reason: 'جارٍ قراءة حالة الفيديو…' });
     app.append(el('nav', {
       className: 'tj-popup__menu',
       attrs: { 'aria-label': 'صفحات ترجمان' },
       children: [
-        menuItem({ iconName: 'editor', name: 'المحرّر', desc: 'تحرير ترجمة هذا الفيديو', disabledReason: gate.reason, onOpen: () => openPage('editor', { v: gate.videoId }) }, notice),
+        editor,
         menuItem({ iconName: 'library', name: 'المحفوظات', desc: 'كل الترجمات حسب الفيديو', onOpen: () => openPage('library') }, notice),
         menuItem({ iconName: 'settings', name: 'الإعدادات', desc: 'العرض والتوقيت والتصدير والتخزين', onOpen: () => openPage('settings') }, notice),
       ],
     }), notice);
+    const reply = await queryVideoState();
+    placeholder.replaceWith(statusCard(describeStatus(reply)));
+    editor.replaceWith(editorItem(editorGate(reply)));
   },
 });
