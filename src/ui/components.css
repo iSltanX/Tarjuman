@@ -1,0 +1,119 @@
+/* المكوّنات الأساسية (figma-design-brief.md §١٢ و§١٤.٢): الزر، والحقل، وحوار التأكيد، والتنبيه،
+   والحالة الفارغة، وشارة الحالة. كل حالة لها نص أو رمز لا لون وحده، وأقل هدف ضغط 40×40. */
+
+.tj-icon { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---- الزر ---- */
+.tj-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--tj-space-2);
+  min-height: 40px; padding: 0 14px; border-radius: var(--tj-radius-button);
+  border: 1px solid transparent; background: var(--tj-surface-2); color: var(--tj-text);
+  font: 700 14px/20px var(--tj-font-body); cursor: pointer; white-space: nowrap;
+  transition: background-color var(--tj-motion-menu) var(--tj-ease), border-color var(--tj-motion-menu) var(--tj-ease), opacity var(--tj-motion-menu);
+}
+.tj-btn--sm { min-height: 32px; padding: 0 10px; font-size: 13px; line-height: 18px; }
+.tj-btn--lg { min-height: 48px; padding: 0 18px; font-size: 16px; line-height: 24px; }
+.tj-btn--primary { background: var(--tj-brand); color: var(--tj-brand-ink); }
+.tj-btn--secondary { background: var(--tj-surface); border-color: var(--tj-border-strong); }
+.tj-btn--ghost { background: transparent; color: var(--tj-brand); }
+.tj-btn--danger { background: var(--tj-danger); color: var(--tj-danger-ink); }
+.tj-btn:hover:not(:disabled):not([aria-disabled="true"]) { filter: brightness(0.96); }
+.tj-btn--secondary:hover:not(:disabled):not([aria-disabled="true"]), .tj-btn--ghost:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-brand-soft); filter: none; }
+.tj-btn:active:not(:disabled):not([aria-disabled="true"]) { filter: brightness(0.9); }
+.tj-btn:disabled, .tj-btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+.tj-btn[aria-busy="true"] { cursor: progress; }
+.tj-btn[aria-busy="true"]::before {
+  content: ""; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid currentColor; border-inline-end-color: transparent; animation: tj-spin 0.8s linear infinite;
+}
+@keyframes tj-spin { to { transform: rotate(360deg); } }
+.tj-btn__reason { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
+
+/* ---- الحقل ---- */
+.tj-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tj-field__label { font: 700 14px/20px var(--tj-font-body); color: var(--tj-text); }
+.tj-field__input {
+  min-height: 40px; padding: 0 12px; width: 100%;
+  background: var(--tj-surface); color: var(--tj-text);
+  border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-field);
+  font: 400 16px/24px var(--tj-font-body);
+}
+.tj-field__input:hover:not(:disabled) { border-color: var(--tj-muted); }
+.tj-field__input:focus-visible { outline: 3px solid var(--tj-focus); outline-offset: 2px; border-color: var(--tj-focus); }
+.tj-field__input:disabled { opacity: 0.5; cursor: not-allowed; background: var(--tj-surface-2); }
+.tj-field__input--mono { font: 500 14px/20px var(--tj-font-mono); font-variant-numeric: tabular-nums; direction: ltr; text-align: left; }
+.tj-field__hint { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
+.tj-field__error { font: 400 13px/20px var(--tj-font-body); color: var(--tj-danger); }
+.tj-field--error .tj-field__input { border-color: var(--tj-danger); }
+
+/* ---- شارة الحالة ---- */
+.tj-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  font: 700 13px/18px var(--tj-font-body); background: var(--tj-surface-2); color: var(--tj-text-2); white-space: nowrap;
+}
+.tj-pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.tj-pill--info { background: var(--tj-info-bg); color: var(--tj-info); }
+.tj-pill--success { background: var(--tj-success-bg); color: var(--tj-success); }
+.tj-pill--warning { background: var(--tj-warning-bg); color: var(--tj-warning); }
+.tj-pill--danger { background: var(--tj-danger-bg); color: var(--tj-danger); }
+.tj-pill--edited { background: var(--tj-brand-soft); color: var(--tj-edited); }
+
+/* ---- التنبيه ---- */
+.tj-alert {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; width: 100%;
+  border-radius: var(--tj-radius-button); border: 1px solid transparent;
+  background: var(--tj-info-bg); color: var(--tj-text);
+}
+.tj-alert .tj-icon { margin-top: 4px; }
+.tj-alert__body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.tj-alert__title { font: 700 14px/24px var(--tj-font-body); }
+.tj-alert__text { font: 400 14px/24px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-alert__body > .tj-btn { align-self: flex-start; margin-top: 4px; }
+.tj-alert--info { background: var(--tj-info-bg); border-color: color-mix(in srgb, var(--tj-info) 25%, transparent); }
+.tj-alert--info .tj-icon { color: var(--tj-info); }
+.tj-alert--success { background: var(--tj-success-bg); border-color: color-mix(in srgb, var(--tj-success) 25%, transparent); }
+.tj-alert--success .tj-icon { color: var(--tj-success); }
+.tj-alert--warning { background: var(--tj-warning-bg); border-color: color-mix(in srgb, var(--tj-warning) 30%, transparent); }
+.tj-alert--warning .tj-icon { color: var(--tj-warning); }
+.tj-alert--danger { background: var(--tj-danger-bg); border-color: color-mix(in srgb, var(--tj-danger) 30%, transparent); }
+.tj-alert--danger .tj-icon { color: var(--tj-danger); }
+
+/* ---- الحالة الفارغة ---- */
+.tj-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; max-width: 420px; margin: var(--tj-space-7) auto; }
+.tj-empty__art { width: 96px; height: 72px; color: var(--tj-brand); }
+.tj-empty__title { font: 700 18px/28px var(--tj-font-head); }
+.tj-empty__text { font: 400 14px/24px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-empty__steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0; margin: 0; list-style: none; }
+.tj-empty__steps li { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); background: var(--tj-surface-2); padding: 4px 10px; border-radius: 999px; }
+
+/* ---- حوار التأكيد ---- */
+.tj-dialog {
+  width: min(420px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--tj-border);
+  border-radius: var(--tj-radius-card); background: var(--tj-surface); color: var(--tj-text); box-shadow: var(--tj-e2);
+}
+.tj-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+.tj-dialog[open] { animation: tj-pop var(--tj-motion-menu) var(--tj-ease); }
+@keyframes tj-pop { from { opacity: 0; transform: translateY(4px); } }
+.tj-dialog__form { display: flex; flex-direction: column; gap: 14px; margin: 0; }
+.tj-dialog__title { font: 700 18px/28px var(--tj-font-head); }
+.tj-dialog__body { font: 400 14px/24px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-dialog__footer { display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; }
+.tj-dialog--danger .tj-dialog__title { color: var(--tj-danger); }
+
+/* ---- بنود قائمة الأيقونة والصفحات ---- */
+.tj-mark {
+  width: 28px; height: 28px; border-radius: 8px; background: var(--tj-brand); color: var(--tj-brand-ink);
+  display: inline-grid; place-items: center; font: 700 17px/1 var(--tj-font-head); flex: none;
+}
+.tj-menuitem {
+  display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; width: 100%;
+  border: 0; border-radius: var(--tj-radius-button); background: transparent; text-align: start; cursor: pointer;
+}
+.tj-menuitem:hover:not([aria-disabled="true"]) { background: var(--tj-brand-soft); }
+.tj-menuitem[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+.tj-menuitem__text { display: flex; flex-direction: column; min-width: 0; }
+.tj-menuitem__name { font: 700 14px/20px var(--tj-font-body); }
+.tj-menuitem__desc { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
+
+.tj-skeleton { background: linear-gradient(90deg, var(--tj-surface-2), var(--tj-sunken), var(--tj-surface-2)); background-size: 200% 100%; animation: tj-shimmer 1.6s linear infinite; border-radius: 6px; min-height: 14px; }
+@keyframes tj-shimmer { to { background-position: -200% 0; } }

@@ -1,16 +1,20 @@
-// جسر MAIN → ISOLATED باتجاه واحد. يتحقق من المصدر والأصل ومن بنية الرسالة، ولا يرسل شيئًا إلى الصفحة.
-import { validateCaptureMessage } from '../extract/message.js';
+// جسر MAIN → ISOLATED باتجاه واحد (عقد messages §١). يقبل رسائل نافذة الصفحة نفسها وأصلها فقط، بالحقل
+// source='tarjuman'، ويمرّر البيانات كما هي إلى المستخرج الذي يتحقق من بنيتها (src/extract، P3). لا يرسل
+// شيئًا إلى الصفحة أبدًا، فلا أوامر من الصفحة إلى الإضافة.
+
+export const BRIDGE_SOURCE = 'tarjuman';
 
 /**
- * @param {(msg: import('../extract/message.js').CaptureMessage) => void} onCapture
+ * @param {(data: unknown) => void} onData بيانات غير موثوقة
  * @param {Window} [win]
  * @returns {() => void} إلغاء الاستماع
  */
-export function installBridge(onCapture, win = window) {
+export function installBridge(onData, win = window) {
   const handler = (event) => {
     if (event.source !== win || event.origin !== win.location.origin) return;
-    const msg = validateCaptureMessage(event.data);
-    if (msg) onCapture(msg);
+    const d = event.data;
+    if (!d || typeof d !== 'object' || d.source !== BRIDGE_SOURCE) return;
+    onData(d);
   };
   win.addEventListener('message', handler);
   return () => win.removeEventListener('message', handler);

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ترجمان — معرض المكوّنات</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="../base.css">
+  <link rel="stylesheet" href="../components.css">
+  <style>
+    .g-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+    .g-swatch { border: 1px solid var(--tj-border); border-radius: 10px; overflow: hidden; font: 500 12px/18px var(--tj-font-mono); }
+    .g-swatch span { display: block; height: 36px; }
+    .g-swatch code { display: block; padding: 4px 8px; direction: ltr; text-align: left; color: var(--tj-text-2); }
+    .g-section { display: flex; flex-direction: column; gap: 12px; }
+    .g-dialog { position: static; display: block; }
+  </style>
+</head>
+<body class="tj-page">
+  <main id="app"></main>
+  <script src="gallery.js"></script>
+</body>
+</html>
