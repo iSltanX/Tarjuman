@@ -12,6 +12,13 @@ body.ed-page { overflow: hidden; }
   display: grid; grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
 }
 .ed-app [hidden] { display: none !important; }
+/* كل جزء في صفّه صراحةً: إخفاء التنبيه أو الشريط السفلي لا يزيح القائمة إلى صف بارتفاع محتواها. */
+.ed-head { grid-row: 1; }
+.ed-toolbar { grid-row: 2; }
+.ed-offset { grid-row: 3; }
+.ed-banner { grid-row: 4; }
+.ed-body { grid-row: 5; }
+.ed-unsaved { grid-row: 6; }
 .ed-spacer { flex: 1; }
 .ed-group { display: inline-flex; align-items: center; gap: 6px; }
 .ed-skeleton { height: 64px; }

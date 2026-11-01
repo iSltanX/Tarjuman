@@ -751,7 +751,13 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
     refresh();
     const v = await openDialog({
       doc, size: 'md', title: 'تصدير الترجمة العربية (SRT)', content, focus: 'download',
-      actions: [{ label: 'تنزيل SRT', value: 'download', variant: 'primary', ref: (b) => { confirmBtn = b; } }, { label: 'إلغاء', value: 'cancel' }],
+      actions: [{
+        label: 'تنزيل SRT', value: 'download', variant: 'primary',
+        ref: (b) => {
+          confirmBtn = b;
+          setDisabled(b, plan.ok ? null : exportError(plan));
+        },
+      }, { label: 'إلغاء', value: 'cancel' }],
     });
     if (v !== 'download' || !plan?.ok) return;
     try {

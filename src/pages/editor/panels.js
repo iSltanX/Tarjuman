@@ -30,13 +30,14 @@ export function renderIssues(box, { doc, report, onJump }) {
     })),
     doc,
   });
-  box.replaceChildren(
+  // replaceChildren يكتب null نصًا، فتُسقط الأجزاء الغائبة قبله.
+  box.replaceChildren(...[
     el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: 'المشكلات', doc }), statusPill({ tone, text: report.list.length ? issuesSummary(report) : 'لا مشكلات ✓', doc })], doc }),
     report.errors ? el('p', { className: 'tj-caption', text: 'الأخطاء تمنع الحفظ والتصدير، ولا إصلاح تلقائي.', doc }) : null,
     report.exportBlockers.length ? el('p', { className: 'tj-caption', text: 'التداخل والمقطع بلا نص يمنعان التصدير وحده؛ الحفظ متاح.', doc }) : null,
     items.length ? list : null,
     items.length > MAX_ITEMS ? el('p', { className: 'tj-caption', text: `و${items.length - MAX_ITEMS} أخرى في القائمة.`, doc }) : null,
-  );
+  ].filter(Boolean));
 }
 
 /**
@@ -55,7 +56,7 @@ export function renderComparison(box, { doc, report, notes, readOnly, onRestore,
   const restore = reason
     ? el('p', { className: 'tj-caption', text: reason, doc })
     : button({ label: 'استعادة التوقيت الأصلي…', variant: 'secondary', size: 'sm', disabledReason: readOnly ? messageFor('ED_READ_ONLY') : null, onClick: onRestore, doc });
-  box.replaceChildren(
+  box.replaceChildren(...[
     el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: 'المقارنة', doc })], doc }),
     el('ul', { className: 'ed-cmp', children: lines, doc }),
     jumpable.length ? el('div', {
@@ -70,5 +71,5 @@ export function renderComparison(box, { doc, report, notes, readOnly, onRestore,
       children: [el('summary', { text: `ملاحظات الاستيراد (${notes.length})`, doc }), el('ul', { children: notes.map((t) => el('li', { className: 'tj-auto', text: t, doc })), doc })],
       doc,
     }) : null,
-  );
+  ].filter(Boolean));
 }
