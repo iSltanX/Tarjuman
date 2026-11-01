@@ -352,7 +352,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     else if (kind === 'badge') toggleMenu('timing', keyboard);
     else if (kind === 'upload') {
       if (controller.getState().arabic) toggleMenu('display', keyboard);
-      else pick('first');
+      else {
+        closeMenu(false);
+        pick('first');
+      }
     }
   }
 

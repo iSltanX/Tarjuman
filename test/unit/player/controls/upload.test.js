@@ -17,6 +17,11 @@ test('دون ترجمة: زر الرفع يفتح منتقي الملفات مب
   assert.equal(page.ui.menuOpen(), false);
   assert.equal(page.ui.fileInput().getAttribute('accept'), '.srt,application/x-subrip,text/plain');
   assert.equal(page.ui.fileInput().hasAttribute('multiple'), true);
+  click(page.ui.btn('download'));
+  assert.equal(page.ui.menuOpen(), true);
+  click(page.ui.btn('upload'));
+  assert.equal(page.ui.menuOpen(), false, 'فتح المنتقي يغلق القائمة المفتوحة');
+  assert.equal(opened, 2);
 });
 
 test('اختيار ملف: فحص ومقارنة بالبصمات المحفوظة والإعدادات، ثم التحميل وملخص المقارنة في قائمة العرض', async () => {

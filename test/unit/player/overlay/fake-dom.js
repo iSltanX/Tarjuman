@@ -148,6 +148,10 @@ export class FakeElement {
     return node;
   }
 
+  append(...nodes) {
+    for (const n of nodes) this.appendChild(n);
+  }
+
   insertBefore(node, ref) {
     if (!ref) return this.appendChild(node);
     if (node === ref) return node;
