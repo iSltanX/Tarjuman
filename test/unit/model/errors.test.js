@@ -28,14 +28,14 @@ test('كل رمز يبدأ ببادئة مجاله، ولا بادئة لمجا�
   assert.ok(seen.has('EX_WRONG_VIDEO') && seen.has('ST_CONFLICT') && seen.has('TJ_NOT_IMPLEMENTED'));
 });
 
-test('ملفات مجالات المراحل اللاحقة موجودة ببادئاتها وفارغة', () => {
+test('ملفات مجالات المراحل اللاحقة موجودة ببادئاتها ورسائلها مجمَّدة (تملؤها مرحلة المجال في ملفها)', () => {
   const byName = Object.fromEntries(DOMAINS.map((d) => [d.name, d]));
   assert.deepEqual(byName.import.PREFIXES, ['IM_', 'CMP_']);
   assert.deepEqual(byName.overlay.PREFIXES, ['PL_']);
   assert.deepEqual(byName.controls.PREFIXES, ['CT_']);
   assert.deepEqual(byName.pages.PREFIXES, ['PG_']);
   assert.deepEqual(byName.editor.PREFIXES, ['ED_']);
-  for (const n of ['import', 'overlay', 'controls', 'pages', 'editor']) assert.deepEqual(byName[n].MESSAGES, {});
+  for (const n of ['import', 'overlay', 'controls', 'pages', 'editor']) assert.ok(Object.isFrozen(byName[n].MESSAGES), n);
 });
 
 test('TjError: رسالة عربية بالقالب، وتفاصيل منقّاة ومقصورة', () => {
