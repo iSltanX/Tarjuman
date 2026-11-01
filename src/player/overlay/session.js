@@ -108,7 +108,7 @@ export function createOverlaySession({ controller, doc, win, player }) {
         fail('PL_RENDER_FAILED', err);
       }
     },
-    peek: () => view.peek(),
+    peek: (withBox) => view.peek(withBox),
     diagnostics: () => ({
       ...counts, lastCode, styleMode: view.styleMode, captionsHidden: hider.isOn(), hidden, engine: engine.stats(),
     }),

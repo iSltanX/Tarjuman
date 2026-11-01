@@ -18,7 +18,7 @@ const COALESCE_MS = 50;
 /**
  * @param {import('../../content/controller.js').Controller} controller
  * @param {{ doc?: Document, win?: Window }} [env]
- * @returns {MountHandle & { diagnostics: () => object, peek: () => object | null }}
+ * @returns {MountHandle & { diagnostics: () => object, peek: (withBox?: boolean) => object | null }}
  */
 export function mountOverlay(controller, env = {}) {
   const win = env.win ?? window;
@@ -123,6 +123,6 @@ export function mountOverlay(controller, env = {}) {
     }),
 
     /** للحزام الحي وحده: ما يظهر الآن. لا يدخل التشخيص. */
-    peek: () => (session ? session.peek() : null),
+    peek: (withBox) => (session ? session.peek(withBox) : null),
   };
 }

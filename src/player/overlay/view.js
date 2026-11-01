@@ -108,7 +108,7 @@ export function createOverlayView({ doc, win }) {
     isConnected: () => host.isConnected,
 
     /** للحزام الحي وحده: ما يظهر الآن (نصًا واتجاهًا). لا يدخل تقرير التشخيص أبدًا. */
-    peek() {
+    peek(withBox = true) {
       const empty = stage.hasAttribute('data-empty');
       // أثناء التلاشي تبقى العناصر دقائق قليلة في DOM وهي غير مرئية: الظاهر فعلًا لا يشملها.
       const rows = empty ? [] : [...stage.children].map((c) => ({ kind: c.className.includes('en') ? 'en' : 'ar', dir: c.getAttribute('dir'), text: c.textContent }));
@@ -118,7 +118,7 @@ export function createOverlayView({ doc, win }) {
       };
       return {
         lines: rows, hidden: host.hasAttribute('hidden'), empty, fading: empty && stage.children.length > 0, connected: host.isConnected,
-        host: box(host), stage: box(stage),
+        ...(withBox ? { host: box(host), stage: box(stage) } : {}),
       };
     },
 
