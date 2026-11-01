@@ -124,18 +124,171 @@
 ```json tj-status
 {
   "phase": "P7",
-  "status": "in_progress",
-  "updated": "2026-11-02T01:35:01+03:00",
+  "status": "ready",
+  "updated": "2026-11-02T02:09:14+03:00",
   "branch": "tj/P7-pages",
-  "resume": "الصفحات الثلاث وقالب التعليمات واختباراتها ملتزمة ومدفوعة (486 اختبارًا والفحص الكامل ناجحان). بقي الاختبار الحي على Brave (بانتظار موافقة سلطان) ثم الأدلة وتقرير التسليم.",
+  "resume": "جاهزة للدمج في W4",
   "blocker": null,
   "outcome": null,
-  "commit": null,
+  "commit": "e92b08b",
   "mergeCommit": null,
-  "checks": [],
-  "acceptance": {},
-  "evidence": [],
-  "sharedRequests": []
+  "checks": [
+    {
+      "cmd": "npm run check",
+      "result": "pass",
+      "at": "2026-11-02T02:08:31+03:00",
+      "note": "check-static ناجح (مع استثناء «حول» المسجّل)، وcheck-secrets على 90 ملفًا، و502/502 اختبارًا (منها اختبارات P7 في test/unit/pages وtest/unit/export بوحدات وبـDOM وهمي فوق تخزين محاكى)، والبناء"
+    },
+    {
+      "cmd": "run.mjs Brave 1.98.60 (Chromium 156.0.8078.48)",
+      "result": "pass",
+      "at": "2026-11-02T02:08:31+03:00",
+      "note": "47/47 بنافذة ظاهرة وملف اختبار منفصل: بيانات حقيقية، وضغطات Input، وحافظة النظام الفعلية، وإعادة تشغيل المتصفح، و0 طلبات خارجية من 8 صفحات، و0 أخطاء. سبقته تشغيلات كشفت عيوبًا أُصلحت (قفزة تخطيط، فراغات flex، عزل اتجاه العنوان، إعلان قديم، وعيوب حزام) — التفصيل في الأدلة"
+    },
+    {
+      "cmd": "مراجعة مستقلة (وكيل code-reviewer)",
+      "result": "pass",
+      "at": "2026-11-02T02:08:31+03:00",
+      "note": "لا حرج؛ 4 مهمة (محارف Tag الخفية في العنوان، واسم منزلق الحجم، وضياع التركيز بعد القائمة، وإعلان الرسائل العابرة) و6 ثانوية: عولجت كلها بإصلاح واختبار يحرسه، وأُعيد السيناريو الحي كاملًا بعدها"
+    },
+    {
+      "cmd": "plan:check --phase P7",
+      "result": "pass",
+      "at": "2026-11-02T02:08:31+03:00",
+      "note": "الملكية سليمة: ملف خارج الملكية واحد بطلب مسجّل ومطبَّق (check-static)"
+    }
+  ],
+  "acceptance": {
+    "P7-AC1": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/README.md",
+        "docs/evidence/P7/brave/live.json",
+        "docs/evidence/P7/brave/popup-with-subtitle-light.png",
+        "docs/evidence/P7/brave/popup-no-subtitle-light.png",
+        "docs/evidence/P7/brave/popup-not-video-light.png"
+      ],
+      "note": "الحالات الثلاث بفيديو حقيقي على يوتيوب والبنود الثلاثة تفتح صفحاتها"
+    },
+    "P7-AC2": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/README.md",
+        "docs/evidence/P7/brave/live.json",
+        "docs/evidence/P7/brave/library-full-1440-light.png",
+        "docs/evidence/P7/brave/library-export-menu.png"
+      ],
+      "note": "تجميع حسب الفيديو والبحث والترتيب والأوامر الستة بتأكيداتها على بيانات حقيقية"
+    },
+    "P7-AC3": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/brave/library-full-1440-dark.png",
+        "docs/evidence/P7/brave/library-empty-light.png",
+        "docs/evidence/P7/brave/library-search-no-results-light.png",
+        "docs/evidence/P7/brave/library-delete-dialog.png",
+        "docs/evidence/P7/brave/library-loading-light.png",
+        "docs/evidence/P7/brave/library-error-light.png",
+        "docs/evidence/P7/brave/library-narrow-480-light.png"
+      ],
+      "note": "الحالات بلقطات بالوضعين والعرض الضيق"
+    },
+    "P7-AC4": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/brave/live.json",
+        "docs/evidence/P7/brave/settings-1440-light.png",
+        "docs/evidence/P7/brave/settings-1440-dark.png",
+        "docs/evidence/P7/brave/settings-clear-dialog.png"
+      ],
+      "note": "كل خيار يُحفظ فورًا، والمسح بكلمة «امسح»، وتقرير التشخيص منقّى"
+    },
+    "P7-AC5": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/brave/live.json",
+        "test/unit/pages/settings/no-network.test.js"
+      ],
+      "note": "0 طلبات خارجية، وRTL، والمعرّفات LTR معزولة"
+    },
+    "P7-AC6": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/brave/live.json",
+        "test/unit/export/instructions.test.js"
+      ],
+      "note": "الحافظة الفعلية تطابق القالب حرفيًا (مصدره المواصفة) من صفّين لفيديوهين مختلفين ومن صف بلا عنوان"
+    },
+    "P7-AC7": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/brave/live.json",
+        "test/unit/pages/library/view.test.js",
+        "test/unit/pages/library/copy.test.js",
+        "docs/evidence/P7/brave/library-copy-error.png"
+      ],
+      "note": "لا نص ولا محرّر في أي حالة (نجاح وفشل)، والإعلان لقارئ الشاشة، والعنوان بيانات"
+    },
+    "P7-AC8": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/brave/live.json",
+        "docs/evidence/P7/brave/settings-font-saved.png",
+        "docs/evidence/P7/brave/settings-scale-160.png"
+      ],
+      "note": "الخطوط الأربعة والمنزلق بلوحة المفاتيح والمعاينة والاستعادة، والبقاء بعد إعادة تشغيل المتصفح"
+    },
+    "P7-AC9": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/brave/live.json"
+      ],
+      "note": "الخط المحسوب لعناصر الواجهة ثابت، ولا شبكة، ولا مفتاح إظهار التعليمات"
+    },
+    "P7-AC10": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P7/brave/live.json",
+        "docs/evidence/P7/brave/settings-about-open-light.png",
+        "docs/evidence/P7/brave/settings-about-open-dark.png"
+      ],
+      "note": "الرابطان _blank + noopener، وبشارة «خاص حاليًا»، ونسب الخطوط ورخصها المحلية"
+    }
+  },
+  "evidence": [
+    {
+      "label": "أدلة P7 (جدول القبول والبروتوكول وحدود الإثبات)",
+      "path": "docs/evidence/P7/README.md"
+    },
+    {
+      "label": "نتائج الاختبار الحي على Brave (47 فحصًا)",
+      "path": "docs/evidence/P7/brave/live.json"
+    },
+    {
+      "label": "لقطات الحالات بالوضعين والعرض الضيق",
+      "path": "docs/evidence/P7/brave"
+    }
+  ],
+  "sharedRequests": [
+    {
+      "file": "scripts/check-static.mjs",
+      "change": "السماح برابطي «حول» (https://bysltan.com والمستودع) حرفيًا في pages/settings/about.js وحده (ثابتان ABOUT_FILE وABOUT_LINKS ودالة URL_OK بمعامل ثانٍ)",
+      "why": "R42 يطلب رابطين خارجيين يُفتحان بضغط المستخدم في تبويب جديد؛ والفحص يمنع كل نطاق خارجي حرفي في src. الاستثناء بحرفية الرابطين وفي ملف واحد، ولا يمس قواعد الشبكة (لا fetch ولا قنوات). التزام مستقل 99b758e",
+      "applied": true
+    },
+    {
+      "file": "src/ui/components.js وcomponents.css",
+      "change": "رفع ما بُني داخل الصفحات إلى src/ui: أيقونات الصفحة (src/pages/library/icons.js) والقائمة المنسدلة (menu.js) والمقطّعة وحقل الرقم بوحدة وعلامة «حُفظ» (src/pages/settings/controls.js) والرسالة العابرة (toast.js) ومجموعة الخيارات (choice.js)",
+      "why": "لا مكوّن مشترك لها في src/ui؛ بُنيت داخل P7 وفق المخاطر المسجلة، ويستفيد منها المحرّر P8. لا يلزم لإغلاق P7",
+      "applied": false
+    },
+    {
+      "file": "docs/contracts/errors.md",
+      "change": "تحديث سطر errors.md من «فارغ» إلى رموز P7 (PG_: النسخ والمحفوظات والإعدادات)",
+      "why": "الملف ملك P2 مشترك؛ أُضيفت الرموز في src/core/errors/pages.js (ملك P7) ويُوءَم السطر عند الدمج",
+      "applied": false
+    }
+  ]
 }
 ```
 
@@ -144,7 +297,25 @@
 | التاريخ | ما أُنجز | الدليل |
 | --- | --- | --- |
 | 2026-10-31 | كُتبت المواصفة ضمن تأسيس الخطة. لم يُنفَّذ شيء. | — |
+| 2026-11-02 | قالب تعليمات الترجمة `instructions({ videoId, title, parts? })` من الملحق أ حرفيًا (العنوان بيانات، والرابط من المعرّف، والاستبدال بمرور واحد، وفقرة الأجزاء عند التقسيم)، و`buildExport` يمرّر عنوانه ومعرّفه فقط؛ وحُدّثت اختبارات P3 للتعليمات و`build-export`. | `test/unit/export/instructions.test.js` (يقرأ القالب من المواصفة نفسها ويطابقه) |
+| 2026-11-02 | نافذة الأيقونة: حالات البطاقة الأربع (ليست فيديو، وبلا ترجمة، وبترجمة، وجارٍ)، وشرط المحرّر بسببه، ومهلة الاستعلام؛ والبنود الثلاثة تُعرض فورًا. | `test/unit/pages/popup/status.test.js` |
+| 2026-11-02 | المحفوظات: قائمة مجمّعة حسب الفيديو بالبحث (تشكيل وحالة) والترتيب والسعة والعرض التدريجي؛ والأوامر: فتح الفيديو، وتعديل، واستبدال (قراءة ثم مقارنة ثم تأكيد بـ`expect`)، وتصدير SRT (عربي بتوقيت التصدير وإنجليزي «عادي» مع حفظ البصمة مرة واحدة)، وحذف بتأكيد يحدد ما يُحذف، و«نسخ» (النص يُبنى عند الضغطة ولا يُعرض ولا يُحفظ). الحالات: تحميل وفارغة وممتلئة وبحث فارغ وخطأ. | `test/unit/pages/library/` |
+| 2026-11-02 | الإعدادات و«حول»: العرض (وضع العرض، وخط الترجمة بأسماء بخطوطها، والمنزلق 70–160، والاستعادة، والخلفية، والموضع، ومعاينة حية)، والتوقيت، والتصدير، والمقارنة، والتخزين (والمسح بـ«امسح»)، والتشخيص المنقّى، و«حول» (الرابطان والنسب والرخص المحلية)؛ الحفظ فوري برسالة «حُفظ». | `test/unit/pages/settings/` |
+| 2026-11-02 | ملف مشترك: السماح برابطي «حول» في `scripts/check-static.mjs` لملف `about.js` وحده (التزام مستقل `99b758e`، مسجَّل ومطبَّق في `sharedRequests`). | `plan:check --phase P7` |
+| 2026-11-02 | الاختبار الحي على Brave (بموافقة سلطان): عدة تشغيلات كشفت وأُصلح: قفزة تخطيط لعلامة «حُفظ»، وفراغات flex في الإعدادات والعرض الضيق، وعزل اتجاه العنوان في عناوين الحوارات، وإعلان «لا نتائج» القديم، وعيوب في الحزام؛ والتشغيل المعتمد 47/47. | `docs/evidence/P7/` |
+| 2026-11-02 | مراجعة مستقلة (code-reviewer): لا حرج؛ 4 مهمة و6 ثانوية عولجت كلها بإصلاح واختبار، وأُعيد السيناريو الحي كاملًا (47/47). | `docs/evidence/P7/README.md` |
 
 ## تقرير التسليم
 
-> لم يُكتب بعد.
+### تقرير التسليم — P7
+
+- الفرع: `tj/P7-pages` · الأساس: `tj-W4/base` (d547eeb) · آخر التزام عمل: e92b08b
+- الفرق: 78 files changed, 5910 insertions(+), 178 deletions(-) (بقياس `git diff --stat tj-W4/base...HEAD`؛ ويشمل `docs/waves/W3.md` من التزام على `main` سبق فتح الفرع، وبدونه 77 ملفًا)
+- الملفات خارج الملكية: `scripts/check-static.mjs` وحده: السماح برابطي «حول» (`https://bysltan.com` والمستودع) حرفيًا في `pages/settings/about.js` وحده، بالتزام مستقل `99b758e` عنوانه «ملف مشترك: …»؛ مسجَّل في `sharedRequests` بـ`applied: true` ليراجعه المنسّق قبل الدمج. لا يمس قواعد الشبكة.
+- معايير القبول: AC1–AC10 كلها **ناجحة** (جدول بأدلة كل منها في [`docs/evidence/P7/README.md`](../evidence/P7/README.md))؛ الحي منها على Brave، والآلي بالوحدة وبـDOM وهمي، والبصري بلقطات بالوضعين والعرض الضيق.
+- الفحوص: `npm run check` ناجح (check-static، وcheck-secrets على 90 ملفًا، و502/502 اختبارًا، والبناء)؛ `plan:check --phase P7` سليم (تنبيه واحد: الملف المشترك المسجَّل).
+- الاختبار الحي: **Brave 1.98.60 (Chromium 156.0.8078.48)** بنافذة ظاهرة وملف اختبار منفصل، **47/47**: فيديو يوتيوب حقيقي لحالات النافذة، وبيانات محفوظة من مسارين حقيقيين (TED يدوي 427 مقطعًا، وتلقائي 1,056) بأربعة فيديوهات، والحافظة الفعلية بعد «نسخ» تطابق القالب حرفيًا من صفّين لفيديوهين ومن صف بلا عنوان، والتصدير والاستبدال (منتقي الملفات) والحذف، والمنزلق بلوحة المفاتيح، وبقاء تجوّل 160% بعد إعادة تشغيل المتصفح، و0 طلبات خارجية من 8 صفحات إضافة (68 طلبًا من الإضافة نفسها)، و0 أخطاء إضافة. **Chrome لم يُختبر حيًا** (المتصفحان معًا في P9).
+- النتيجة (لمرحلة بوابة): لا ينطبق.
+- انحرافات عن المواصفة: (1) تذكير تثبيت الأيقونة يظهر في الإعدادات ما دامت المحفوظات فارغة لا «مرة واحدة»، فعقد التخزين لا يسمح بمفتاح «أول تشغيل» ولا `localStorage`. (2) «دليل الاستخدام» قسم قابل للطي داخل «حول» لا رابط (لا صفحة جديدة دون تغيير البيان). (3) نافذة الأيقونة تعرض «المسار الإنجليزي: محفوظ ✓» إلى جانب «ملتقط ✓» و«غير ملتقط» (إن لم يُلتقط في الجلسة وكان محفوظًا). (4) معاينة الخط تستعمل ارتفاع مشغّل مرجعيًا 400px داخل صندوق 480×270 ليبقى النص مقروءًا. (5) «رفع ترجمة» بدل «استبدال» لفيديو بلا عربية. (6) بصمة تصدير الإنجليزية من المحفوظات لا تُكرَّر إن وُجدت مطابقة (المسار والوضع والنص والعدد).
+- خارج النطاق — مسجَّل لا منفَّذ: تطبيق الخط والحجم على الطبقة (P6)؛ المحرّر (P8)؛ رفع المكوّنات التي بُنيت داخل الصفحات (أيقونات وقائمة منسدلة ومقطّعة وحقل رقمي ورسالة عابرة) إلى `src/ui` (طلب مسجَّل `applied: false`)؛ وتحديث سطر `pages.js` في `docs/contracts/errors.md` (طلب مسجَّل).
+- ما يحتاجه المنسّق: مراجعة تعديل `scripts/check-static.mjs` (الالتزام `99b758e`) قبل الدمج؛ وتوءمة سطر `pages.js` في `errors.md`؛ وإن رغب في Chrome حيًا فمع P9. لا قرار مطلوب من سلطان. (حدود الإثبات الصريحة في `docs/evidence/P7/README.md`: تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا فلم يُختبر حيًا «ملتقط ✓»؛ والعربية المحفوظة عيّنة بأزمنة المسار الحقيقي؛ وفشل الحافظة وحالتا التحميل والخطأ بتعطيل مصطنع.)
