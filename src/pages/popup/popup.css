@@ -1,0 +1,7 @@
+/* نافذة الأيقونة: 320 عرضًا وارتفاع بحسب المحتوى حتى 480 (figma-design-brief.md §٨). */
+.tj-popup { width: 320px; min-height: 0; max-height: 480px; overflow-y: auto; }
+.tj-popup .tj-container { padding: var(--tj-space-3); gap: var(--tj-space-3); }
+.tj-popup__head { display: flex; align-items: center; gap: var(--tj-space-2); }
+.tj-popup__brand { font: 700 16px/24px var(--tj-font-head); }
+.tj-popup__status { display: flex; flex-direction: column; gap: 6px; padding: 14px; }
+.tj-popup__menu { display: flex; flex-direction: column; gap: 2px; }

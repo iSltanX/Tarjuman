@@ -1,0 +1,113 @@
+/* رموز تصميم صفحات ترجمان (figma-design-brief.md §٣). الوضع يتبع النظام، وdata-theme يفرضه.
+   الخطوط مثبّتة على الجهاز (لا طلب شبكة من صفحات الإضافة)، وبدائلها بحسب §٣.٣. */
+
+:root {
+  color-scheme: light dark;
+
+  --tj-bg: #F4F6F4;
+  --tj-surface: #FFFFFF;
+  --tj-surface-2: #EEF1EE;
+  --tj-sunken: #F8FAF8;
+  --tj-text: #16201C;
+  --tj-text-2: #3D4945;
+  --tj-muted: #64716C;
+  --tj-border: #DFE4E0;
+  --tj-border-strong: #C8D0CA;
+  --tj-brand: #0C6A6F;
+  --tj-brand-ink: #FFFFFF;
+  --tj-brand-soft: #E0F0EF;
+  --tj-focus: #2563EB;
+  --tj-success: #1C7A3D;
+  --tj-success-bg: #DFF2E5;
+  --tj-warning: #855600;
+  --tj-warning-bg: #FDF3DC;
+  --tj-danger: #B42318;
+  --tj-danger-bg: #FCE8E6;
+  --tj-info: #1D5DB3;
+  --tj-info-bg: #E3ECFA;
+  --tj-edited: #6342B6;
+
+  --tj-font-head: "Cairo", "Almarai", "SF Arabic", Tahoma, sans-serif;
+  --tj-font-body: "Almarai", "SF Arabic", "Noto Sans Arabic", Tahoma, sans-serif;
+  --tj-font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --tj-space-1: 4px;
+  --tj-space-2: 8px;
+  --tj-space-3: 12px;
+  --tj-space-4: 16px;
+  --tj-space-5: 20px;
+  --tj-space-6: 24px;
+  --tj-space-7: 32px;
+  --tj-space-8: 40px;
+
+  --tj-radius-field: 6px;
+  --tj-radius-button: 10px;
+  --tj-radius-card: 14px;
+  --tj-radius-card-lg: 20px;
+
+  --tj-e1: 0 1px 2px rgb(0 0 0 / 5%), 0 6px 18px rgb(0 0 0 / 5%);
+  --tj-e2: 0 20px 60px rgb(0 0 0 / 30%);
+
+  --tj-motion-menu: 140ms;
+  --tj-motion-toast: 180ms;
+  --tj-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --tj-bg: #0F1413;
+    --tj-surface: #161C1B;
+    --tj-surface-2: #1F2725;
+    --tj-sunken: #131918;
+    --tj-text: #E9EEEC;
+    --tj-text-2: #C2CBC8;
+    --tj-muted: #8F9B97;
+    --tj-border: #28312F;
+    --tj-border-strong: #37423F;
+    --tj-brand: #4EC9C4;
+    --tj-brand-ink: #062322;
+    --tj-brand-soft: #12302F;
+    --tj-focus: #8AB4FF;
+    --tj-success: #73D394;
+    --tj-success-bg: #15301F;
+    --tj-warning: #F0C46A;
+    --tj-warning-bg: #2F260F;
+    --tj-danger: #FF958C;
+    --tj-danger-bg: #3B1A17;
+    --tj-info: #8DB6F2;
+    --tj-info-bg: #172A43;
+    --tj-edited: #BBA7F3;
+    --tj-e1: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 18px rgb(0 0 0 / 25%);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --tj-bg: #0F1413;
+  --tj-surface: #161C1B;
+  --tj-surface-2: #1F2725;
+  --tj-sunken: #131918;
+  --tj-text: #E9EEEC;
+  --tj-text-2: #C2CBC8;
+  --tj-muted: #8F9B97;
+  --tj-border: #28312F;
+  --tj-border-strong: #37423F;
+  --tj-brand: #4EC9C4;
+  --tj-brand-ink: #062322;
+  --tj-brand-soft: #12302F;
+  --tj-focus: #8AB4FF;
+  --tj-success: #73D394;
+  --tj-success-bg: #15301F;
+  --tj-warning: #F0C46A;
+  --tj-warning-bg: #2F260F;
+  --tj-danger: #FF958C;
+  --tj-danger-bg: #3B1A17;
+  --tj-info: #8DB6F2;
+  --tj-info-bg: #172A43;
+  --tj-edited: #BBA7F3;
+  --tj-e1: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 18px rgb(0 0 0 / 25%);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
