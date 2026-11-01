@@ -64,8 +64,6 @@ export function watchPlayerState({ doc, win, player, onChange, pollMs = STATE_PO
 
   return {
     snapshot: () => last,
-    /** يعيد القراءة ويبلّغ إن تغيّر شيء. */
-    refresh: update,
     stop() {
       stopped = true;
       mutation?.disconnect();

@@ -27,6 +27,8 @@ export function createOverlaySession({ controller, doc, win, player }) {
   let destroyed = false;
   let hidden = null;
   let unreachableReported = false;
+  // ملء شاشة لا يستضيف أبناءً: المضيف خارج DOM عمدًا، فلا يُعدّ ذلك عطبًا يستدعي إعادة بناء الجلسة كل دورة.
+  let unreachableNow = false;
 
   const fail = (code, err) => {
     lastCode = code;
@@ -50,6 +52,7 @@ export function createOverlaySession({ controller, doc, win, player }) {
 
   function place() {
     const { parent, reason } = hostParent(doc, player);
+    unreachableNow = reason === 'unreachable';
     if (reason === 'unreachable') {
       if (!unreachableReported) {
         unreachableReported = true;
@@ -86,18 +89,45 @@ export function createOverlaySession({ controller, doc, win, player }) {
       engine.setSource({ ar: d.ar, en: d.en, offsetMs: d.offsetMs });
     } catch (err) {
       fail('PL_RENDER_FAILED', err);
+      // عند الإخفاق يُغلَق ولا يُفتَح (الإخفاء مقدَّم على العرض): لا ترجمة تبقى فوق إعلان أو فيديو آخر.
+      try {
+        hidden = true;
+        view.setHidden(true);
+        engine.setSource({ ar: null, en: null, offsetMs: 0 });
+      } catch {
+        // لا شيء بعد هذا: الإخفاق الأول سُجّل
+      }
     }
   }
 
-  const nav$ = watchNavigation({ win, onChange: refresh });
-  const pw = watchPlayerState({ doc, win, player, onChange: refresh });
-  const off = controller.subscribe(refresh);
-  refresh();
+  /** يوقف ما أُنشئ فقط: يُستدعى عند إخفاق البناء في منتصفه وعند التدمير. */
+  let nav$ = null;
+  let pw = null;
+  let off = null;
+  function teardown() {
+    off?.();
+    nav$?.stop();
+    pw?.stop();
+    engine.destroy();
+    hider.destroy();
+    view.destroy();
+  }
+
+  try {
+    nav$ = watchNavigation({ win, onChange: refresh });
+    pw = watchPlayerState({ doc, win, player, onChange: refresh });
+    off = controller.subscribe(refresh);
+    refresh();
+  } catch (err) {
+    destroyed = true;
+    teardown();
+    throw err;
+  }
 
   return {
     player,
     /** المشغّل والمضيف ما زالا في الصفحة (يوتيوب لم يعد رسمهما). */
-    healthy: () => !destroyed && player.isConnected && view.isConnected(),
+    healthy: () => !destroyed && player.isConnected && (view.isConnected() || unreachableNow),
     /** فحص خفيف دوري: إعادة المضيف إلى موضعه وربط عنصر فيديو جديد إن استُبدل. */
     check() {
       if (destroyed) return;
@@ -115,12 +145,7 @@ export function createOverlaySession({ controller, doc, win, player }) {
     destroy() {
       if (destroyed) return;
       destroyed = true;
-      off();
-      nav$.stop();
-      pw.stop();
-      engine.destroy();
-      hider.destroy();
-      view.destroy();
+      teardown();
     },
   };
 }

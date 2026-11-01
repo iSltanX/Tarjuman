@@ -76,8 +76,6 @@ export function createOverlayView({ doc, win }) {
       stage.removeAttribute('data-empty');
     },
 
-    clear,
-
     /** @param {boolean} hidden إخفاء تام (إعلان أو تنقّل): يمسح المحتوى أيضًا فلا يبقى شيء من السابق. */
     setHidden(hidden) {
       if (hidden) {

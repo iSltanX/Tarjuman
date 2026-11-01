@@ -112,7 +112,7 @@ export function createSyncEngine({ win, onFrame }) {
   return {
     /** يربط عنصر الفيديو (أو null). تبديله يعيد الربط ويحسب الجواب فورًا. */
     setVideo(next) {
-      if (next === video) return;
+      if (destroyed || next === video) return;
       stopLoop();
       unbind();
       video = next ?? null;
@@ -144,9 +144,6 @@ export function createSyncEngine({ win, onFrame }) {
       if (hasTracks() && playing()) startLoop();
       else stopLoop();
     },
-
-    /** إعادة حساب فورية دون تغيير المصدر. */
-    refresh: () => evaluate(true),
 
     stats: () => ({
       ...stats, running: !!rafId, tracks: SLOTS.filter((s) => tracks[s]).length,

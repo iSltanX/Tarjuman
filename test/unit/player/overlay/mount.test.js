@@ -169,3 +169,29 @@ test('يعمل مع المتحكم الحقيقي: الحالة تتبدل وا�
   assert.deepEqual(handle.peek().lines, [], 'تبديل الفيديو يمسح فورًا');
   handle.unmount();
 });
+
+test('ملء شاشة بعنصر لا يستضيف أبناءً: لا إعادة بناء للجلسة عند كل فحص دوري', () => {
+  const page = watchPage();
+  page.env.doc.fullscreenElement = page.video;
+  const handle = mountOverlay(page.controller, { doc: page.env.doc, win: page.env.win });
+  page.env.win.advance(HEALTH_MS * 6);
+  assert.equal(handle.state, 'mounted');
+  assert.equal(handle.diagnostics().attempts, 1);
+});
+
+test('إخفاق بناء الجلسة في منتصفه لا يترك مؤقتًا ولا مراقبًا ولا مستمعًا (مراجعة)', () => {
+  const page = watchPage();
+  page.controller.subscribe = () => {
+    throw new TypeError('boom');
+  };
+  const handle = mountOverlay(page.controller, { doc: page.env.doc, win: page.env.win });
+  page.env.win.advance(HEALTH_MS * 5);
+  assert.equal(handle.state, 'error');
+  assert.equal(handle.diagnostics().failures, MAX_FAILURES);
+  handle.unmount();
+  assert.equal(page.env.win.pendingTimers(), 0);
+  assert.equal(page.env.observers(), 0);
+  assert.equal(page.env.resizeObservers(), 0);
+  for (const t of ['yt-navigate-start', 'yt-navigate-finish', 'yt-page-data-updated', 'fullscreenchange']) assert.equal(page.env.doc.listenerCount(t), 0, t);
+  assert.equal(page.env.doc.adoptedStyleSheets.length, 0);
+});

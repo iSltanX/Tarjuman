@@ -224,8 +224,12 @@ test('عطل في العرض لا يصل إلى المتحكم ولا المشغ
   controller.getState = () => {
     throw new Error('boom');
   };
+  video.seekTo(1.5);
+  assert.equal(session.peek().lines.length, 1);
   assert.doesNotThrow(() => controller.set({ view: { displayOffsetMs: 0, displayMode: 'ar' } }));
   assert.equal(session.diagnostics().lastCode, 'PL_RENDER_FAILED');
+  // الإخفاق يُغلق ولا يُفتح: لا ترجمة تبقى ظاهرة (فوق إعلان أو فيديو آخر) بعد عطل في القرار.
+  assert.deepEqual([session.peek().hidden, session.peek().lines.length], [true, 0]);
   assert.ok(session.diagnostics().renderFailures >= 1);
   assert.doesNotThrow(() => video.seekTo(2));
 });
@@ -254,4 +258,16 @@ test('التدمير: يلغي الاشتراك ويزيل المضيف والو
   assert.equal(env.doc.listenerCount('fullscreenchange'), 0);
   assert.equal(video.listenerCount('seeked'), 0);
   void A;
+});
+
+test('ملء شاشة لا يستضيف أبناءً: الجلسة تبقى سليمة ولا تُعاد كل دورة (مراجعة: healthy)', () => {
+  const page = watchPage();
+  page.env.doc.fullscreenElement = page.video;
+  const session = createOverlaySession({ controller: page.controller, doc: page.env.doc, win: page.env.win, player: page.player });
+  assert.equal(session.diagnostics().lastCode, 'PL_FULLSCREEN_HOST');
+  assert.equal(session.healthy(), true, 'المضيف خارج DOM عمدًا لا عطبًا');
+  page.env.doc.fullscreenElement = null;
+  page.env.doc.dispatchEvent({ type: 'fullscreenchange' });
+  assert.equal(session.healthy(), true);
+  assert.ok(page.player.children.some((c) => c.id === 'tarjuman-overlay'), 'عاد المضيف بعد الخروج');
 });
