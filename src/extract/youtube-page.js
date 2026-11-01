@@ -55,6 +55,18 @@ export function mainVideoDurationMs(doc = document) {
 }
 
 /**
+ * نص ترجمة يوتيوب المعروض الآن في المشغّل الرئيسي وزمن الفيديو (قراءة فقط، للتحقق في الإثبات).
+ * @param {Document} doc
+ * @returns {{ text: string, timeSec: number | null, ad: boolean }}
+ */
+export function displayedCaption(doc = document) {
+  const segs = doc.querySelectorAll('#movie_player .ytp-caption-window-container .ytp-caption-segment');
+  const text = [...segs].map((s) => s.textContent).join(' ').replace(/\s+/g, ' ').trim();
+  const v = doc.querySelector('#movie_player video.html5-main-video');
+  return { text, timeSec: v && Number.isFinite(v.currentTime) ? Math.round(v.currentTime * 1000) / 1000 : null, ad: isAdShowing(doc) };
+}
+
+/**
  * بث جارٍ: شارة البث ظاهرة وغير معطلة. تقدير من DOM يُقاس حيًا.
  * @param {Document} doc
  */

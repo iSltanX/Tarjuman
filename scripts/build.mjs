@@ -8,11 +8,14 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'src');
-const OUT = path.join(ROOT, 'dist');
+// --out <مجلد> يبني في مجلد آخر (مثل نسخة الجلسة اليدوية خارج المستودع) دون مسّ dist/.
+const outArg = process.argv.indexOf('--out');
+const OUT = outArg > -1 ? path.resolve(process.argv[outArg + 1]) : path.join(ROOT, 'dist');
 
 const entries = {
   'main-world/capture': 'main-world/capture.js',
   'content/main': 'content/main.js',
+  'pages/poc/poc': 'pages/poc/poc.js',
 };
 
 await rm(OUT, { recursive: true, force: true });
@@ -28,5 +31,5 @@ await build({
   logLevel: 'warning',
 });
 await cp(path.join(SRC, 'manifest.json'), path.join(OUT, 'manifest.json'));
-await cp(path.join(SRC, 'pages/poc'), path.join(OUT, 'pages/poc'), { recursive: true });
+for (const f of ['index.html', 'poc.css']) await cp(path.join(SRC, 'pages/poc', f), path.join(OUT, 'pages/poc', f));
 console.log(`بُنيت الإضافة في ${path.relative(ROOT, OUT)}/`);

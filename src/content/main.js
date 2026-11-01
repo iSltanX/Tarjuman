@@ -3,13 +3,29 @@
 import { installBridge } from './bridge.js';
 import { createCaptureStore } from '../extract/capture-store.js';
 import { checkAcceptance, convertCapture } from '../extract/capture-adapter.js';
-import { watchCurrentVideo, mainVideoDurationMs, isLiveNow } from '../extract/youtube-page.js';
+import { watchCurrentVideo, mainVideoDurationMs, isLiveNow, displayedCaption } from '../extract/youtube-page.js';
 import { messageFor } from '../extract/codes.js';
+
+const MAX_LOG = 500;
+const SHOWN_PROBES_MS = [2500, 6000];
 
 const store = createCaptureStore();
 const durations = new Map();
-const tracker = watchCurrentVideo({ onChange: (id) => store.setCurrentVideo(id) });
+// سجل الجلسة للإثبات: معرّفات ورموز وأطوال فقط، ولا جسم ولا رابط. يُفقد بإغلاق التبويب.
+const sessionLog = [];
+function logEvent(e) {
+  sessionLog.push({ at: Date.now(), ...e });
+  if (sessionLog.length > MAX_LOG) sessionLog.shift();
+}
+
+const tracker = watchCurrentVideo({
+  onChange: (id, prev) => {
+    store.setCurrentVideo(id);
+    logEvent({ type: 'nav', from: prev, to: id });
+  },
+});
 store.setCurrentVideo(tracker.current());
+logEvent({ type: 'start', to: tracker.current() });
 
 function rememberDuration(videoId) {
   const d = mainVideoDurationMs();
@@ -17,15 +33,28 @@ function rememberDuration(videoId) {
   return videoId ? durations.get(videoId) ?? null : null;
 }
 
+/** بعد القبول: ما تعرضه يوتيوب على الشاشة في لحظتين، للمطابقة مع SRT لاحقًا. */
+function probeShown(videoId) {
+  for (const ms of SHOWN_PROBES_MS) {
+    setTimeout(() => {
+      if (tracker.current() !== videoId) return;
+      const s = displayedCaption();
+      logEvent({ type: 'shown', videoId, timeSec: s.timeSec, ad: s.ad, text: s.text.slice(0, 200) });
+    }, ms);
+  }
+}
+
 installBridge((msg) => {
   const current = tracker.current();
   store.setCurrentVideo(current);
   const decision = checkAcceptance(msg, { currentVideoId: current, isLive: isLiveNow() });
+  const base = {
+    videoId: msg.videoId, currentVideoId: current, lang: msg.lang, trackKind: msg.trackKind, hasTlang: msg.hasTlang,
+    format: msg.format, status: msg.status, bodyLength: msg.bodyLength, transport: msg.transport, hasPot: msg.hasPot,
+  };
   if (!decision.accepted) {
-    store.reject({
-      code: decision.code, detail: decision.detail, videoId: msg.videoId, lang: msg.lang, trackKind: msg.trackKind,
-      hasTlang: msg.hasTlang, format: msg.format, bodyLength: msg.bodyLength, status: msg.status, currentVideoId: current,
-    });
+    store.reject({ code: decision.code, detail: decision.detail, ...base });
+    logEvent({ type: 'reject', code: decision.code, ...base });
     return;
   }
   rememberDuration(current);
@@ -34,10 +63,12 @@ installBridge((msg) => {
     bodyLength: msg.bodyLength, body: msg.body, acceptedFor: current,
     meta: { hasPot: msg.hasPot, capsAsr: msg.capsAsr, kindParam: msg.kindParam },
   });
+  logEvent({ type: 'accept', ...base });
+  probeShown(current);
 });
 
 /**
- * لقطة الحالة لصفحة الفحص والحزام. الجسم الخام لا يُعاد إلا بطلب صريح من الحزام لحفظ العينات.
+ * لقطة الحالة لصفحة الفحص والحزام. الجسم الخام لا يُعاد إلا بطلب صريح (حفظ العينات).
  * @param {{ includeBody?: boolean }} [opts]
  */
 function snapshot({ includeBody = false } = {}) {
@@ -48,6 +79,7 @@ function snapshot({ includeBody = false } = {}) {
     currentVideoId: current,
     durationMs,
     navigations: store.navigations,
+    webdriver: navigator.webdriver === true,
     accepted: store.accepted().map((c) => {
       const conv = convertCapture(c, durationMs);
       return {
@@ -62,13 +94,14 @@ function snapshot({ includeBody = false } = {}) {
       };
     }),
     rejected: store.rejected().map((r) => ({ ...r, message: messageFor(r.code) })),
+    log: sessionLog.slice(),
   };
 }
 
 const extensionPrefix = chrome.runtime.getURL('');
 chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id || typeof sender.url !== 'string' || !sender.url.startsWith(extensionPrefix)) return;
-  if (req && req.type === 'tj:poc-snapshot') sendResponse(snapshot());
+  if (req && req.type === 'tj:poc-snapshot') sendResponse(snapshot({ includeBody: req.includeBody === true }));
 });
 
 // خطاف اختبار للحزام في العالم المعزول فقط (لا تراه الصفحة). يخص الإثبات ويُزال في P2.

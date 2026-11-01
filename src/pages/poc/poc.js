@@ -1,5 +1,6 @@
 // صفحة الفحص المؤقتة: تسأل سكربت المحتوى في كل تبويب يوتيوب عن لقطته وتعرضها، وتنزّل SRT عبر Blob
-// دون إذن downloads. البناء بـtextContent فقط.
+// دون إذن downloads، وتصدّر نتائج الإثبات ملفًا منقّى. البناء بـtextContent فقط.
+import { findSecrets } from '../../core/diagnostics/sanitize.js';
 
 const INVARIANT_NAMES = {
   words: 'تطابق الكلمات', noOverlap: 'لا تداخل', noEmpty: 'لا مقاطع فارغة',
@@ -34,12 +35,12 @@ function download(name, text) {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
-async function collect() {
+async function collect(includeBody = false) {
   const tabs = await chrome.tabs.query({});
   const out = [];
   for (const tab of tabs) {
     try {
-      const snap = await chrome.tabs.sendMessage(tab.id, { type: 'tj:poc-snapshot' });
+      const snap = await chrome.tabs.sendMessage(tab.id, { type: 'tj:poc-snapshot', includeBody });
       if (snap) out.push({ tabId: tab.id, active: tab.active, snap });
     } catch {
       // تبويب بلا سكربت ترجمان.
@@ -105,5 +106,35 @@ async function render() {
   }
 }
 
+/** يصدّر نتائج الإثبات (اللقطات وسجل الجلسة وSRT والعينات الخام) ملفًا واحدًا بعد التأكد من خلوه من الأسرار. */
+async function exportResults() {
+  const status = document.getElementById('export-status');
+  status.textContent = 'جارٍ التجهيز…';
+  const tabs = await collect(true);
+  const data = {
+    schema: 1,
+    exportedAt: new Date().toISOString(),
+    browser: {
+      isBrave: typeof navigator.brave !== 'undefined',
+      userAgent: navigator.userAgent,
+      brands: navigator.userAgentData ? navigator.userAgentData.brands.map((b) => `${b.brand} ${b.version}`) : null,
+      webdriverExtensionPage: navigator.webdriver === true,
+    },
+    tabs,
+  };
+  const text = `${JSON.stringify(data, null, 2)}\n`;
+  const leaks = findSecrets(text);
+  if (leaks.length) {
+    status.textContent = `أوقفنا التصدير: ${leaks.length} نمط حساس (${[...new Set(leaks.map((l) => l.type))].join('، ')}).`;
+    status.className = 'bad';
+    return;
+  }
+  const stamp = data.exportedAt.replace(/[:.]/g, '-').slice(0, 19);
+  download(`tarjuman-p1-${data.browser.isBrave ? 'brave' : 'chrome'}-${stamp}.json`, text);
+  status.textContent = `صُدّر ملف النتائج (${tabs.length} تبويب).`;
+  status.className = 'ok';
+}
+
 document.getElementById('refresh').addEventListener('click', render);
+document.getElementById('export').addEventListener('click', exportResults);
 render();
