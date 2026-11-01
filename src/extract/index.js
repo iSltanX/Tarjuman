@@ -39,8 +39,16 @@ export function createExtractor(env) {
   /** @type {Rejection | null} */
   let lastRejection = null;
   const listeners = new Set();
+  let listenerFailures = 0;
+  // كل مشترك على حدة: استثناء في أحدهم لا يخرج من معالج رسالة الجسر ولا يحرم غيره.
   const emit = () => {
-    for (const fn of listeners) fn();
+    for (const fn of [...listeners]) {
+      try {
+        fn();
+      } catch {
+        listenerFailures++;
+      }
+    }
   };
 
   function sync(current) {
@@ -139,6 +147,7 @@ export function createExtractor(env) {
       accepted: captures.accepted().length,
       rejected: captures.rejected().reduce((m, r) => ({ ...m, [r.code]: (m[r.code] ?? 0) + 1 }), {}),
       pending: pending.size,
+      listenerFailures,
     }),
   };
 }
