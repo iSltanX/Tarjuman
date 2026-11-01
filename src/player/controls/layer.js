@@ -222,11 +222,15 @@ export function createLayer({ doc, win, on }) {
         const r = e.getBoundingClientRect();
         return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width), height: Math.round(r.height) };
       };
+      const items = menu.hasAttribute('hidden') ? [] : [...menu.querySelectorAll('button, input')].map((e) => ({
+        fid: e.getAttribute('data-fid'), text: e.textContent, value: e.value ?? null, disabled: e.getAttribute('aria-disabled') === 'true', box: box(e),
+      }));
       return {
         bar: layer.getAttribute('data-bar'),
-        menu: menu.hasAttribute('hidden') ? null : { label: menu.getAttribute('aria-label'), text: menu.textContent, box: box(menu) },
+        menu: menu.hasAttribute('hidden') ? null : { label: menu.getAttribute('aria-label'), text: menu.textContent, box: box(menu), items },
         tip: tip.hasAttribute('hidden') ? null : tip.textContent,
-        toasts: [...toasts.children].map((t) => ({ tone: t.getAttribute('data-tone'), text: t.textContent })),
+        toasts: [...toasts.children].map((t) => ({ tone: t.getAttribute('data-tone'), text: t.textContent, box: box(t) })),
+        focusedFid: root.activeElement?.getAttribute?.('data-fid') ?? null,
       };
     },
 
