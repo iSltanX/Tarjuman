@@ -1,6 +1,6 @@
 {
   "browser": "Brave (Chrome/156.0.8078.48)",
-  "at": "2026-11-01T22:47:12.082Z",
+  "at": "2026-11-01T23:05:31.669Z",
   "headless": true,
   "video": "iG9CE55wbtY",
   "big": {
@@ -73,6 +73,13 @@
         "n": 1,
         "start": "00:00:27,103",
         "end": "00:00:29,678"
+      }
+    },
+    {
+      "id": "cmd-s-blocked-says-why",
+      "ok": true,
+      "detail": {
+        "toast": "لا تغييرات للحفظ."
       }
     },
     {
@@ -269,7 +276,7 @@
       "ok": true,
       "detail": {
         "status": "محفوظ ✓",
-        "rev": 21,
+        "rev": 28,
         "offset": 0,
         "versions": [
           "النسخة المعدّلة",
@@ -335,8 +342,8 @@
         "rowsInDom": 19,
         "sweep": {
           "steps": 80,
-          "maxFrameMs": 18,
-          "p95FrameMs": 18,
+          "maxFrameMs": 19,
+          "p95FrameMs": 17,
           "longFrames": 0,
           "rowsMax": 20,
           "emptyFrames": 0,
@@ -348,12 +355,12 @@
       "id": "large-file-smooth-editing",
       "ok": true,
       "detail": {
-        "openedMs": 136,
+        "openedMs": 80,
         "typed": true,
-        "typingMaxMs": 16,
+        "typingMaxMs": 32,
         "shiftAllMs": 32,
-        "undoAllMs": 24,
-        "p95FrameMs": 18
+        "undoAllMs": 32,
+        "p95FrameMs": 17
       }
     },
     {
@@ -370,24 +377,24 @@
     }
   ],
   "perf": {
-    "openedMs": 136,
+    "openedMs": 80,
     "sweep": {
       "steps": 80,
-      "maxFrameMs": 18,
-      "p95FrameMs": 18,
+      "maxFrameMs": 19,
+      "p95FrameMs": 17,
       "longFrames": 0,
       "rowsMax": 20,
       "emptyFrames": 0,
       "counter": "المقطع 2134 من 2140"
     },
     "typing": {
-      "count": 3,
-      "maxKey": 16,
+      "count": 15,
+      "maxKey": 32,
       "maxClick": 0,
       "over100": 0
     },
     "shiftAll": {
-      "count": 40,
+      "count": 45,
       "maxKey": 0,
       "maxClick": 32,
       "over100": 0
@@ -395,7 +402,7 @@
     "undoAll": {
       "count": 11,
       "maxKey": 0,
-      "maxClick": 24,
+      "maxClick": 32,
       "over100": 0
     },
     "rowsInDom": 19

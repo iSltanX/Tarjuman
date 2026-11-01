@@ -249,6 +249,12 @@ async function typeInto(sel, text, { enter = false, perChar = false } = {}) {
   await settle();
 }
 const row = (i, f) => `.ed-row[data-index="${i}"] [data-field="${f}"]`;
+/** ⌘S بتخطيط عربي: الحرف «س» والمفتاح الفعلي KeyS (modifiers 4 = Meta). */
+async function cmdS() {
+  await ed.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'س', code: 'KeyS', windowsVirtualKeyCode: 83, modifiers: 4 });
+  await ed.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'س', code: 'KeyS', windowsVirtualKeyCode: 83, modifiers: 4 });
+  await settle();
+}
 const downloads = new Map();
 b.conn.on('Browser.downloadWillBegin', (e) => downloads.set(e.guid, { name: e.suggestedFilename, state: 'started' }));
 b.conn.on('Browser.downloadProgress', (e) => { if (downloads.has(e.guid)) downloads.get(e.guid).state = e.state; });
@@ -313,6 +319,10 @@ try {
   const f0 = { start: await run(E.field, 0, 'start'), end: await run(E.field, 0, 'end') };
   check('rows-ordered-n-text-start-end', first.n === 1 && f0.start === formatTimecode(imp.cues[0].startMs) && f0.end === formatTimecode(imp.cues[0].endMs) && first.text === imp.cues[0].text,
     { n: first.n, ...f0 });
+  await clickOn(row(0, 'text'));
+  await cmdS();
+  s = await info();
+  check('cmd-s-blocked-says-why', s.toast === 'لا تغييرات للحفظ.' && !s.dirty, { toast: s.toast });
   await clickOn('label.ed-toggle');
   s = await info();
   check('english-reference-toggle', s.enHidden === true, { enHidden: s.enHidden });
@@ -463,7 +473,8 @@ try {
 
   // ===== AC3: الحفظ يُبقي الأصل، وينعكس في المشغّل المفتوح =====
   const expectText = (await run(E.cue, 2)).text;
-  await clickOn('.ed-head button', 'حفظ');
+  await clickOn(row(2, 'text'));
+  await cmdS();
   await sleep(800);
   s = await info();
   const stored = await iso(P.stored, VIDEO);
