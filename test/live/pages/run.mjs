@@ -22,6 +22,9 @@ const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k
 const browser = val('browser', 'brave');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
 const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P7'), browser);
+/** --only copy: يُعاد سيناريو «نسخ» وحده (الزرع والمحفوظات ثم النسخ والفشل) بعد إصلاح يخصه، لا السيناريو كله. */
+const ONLY = val('only');
+class Done extends Error {}
 const DOWNLOADS = path.join(os.tmpdir(), `tj-p7-live-${browser}`);
 const PROFILE = `${browser}-p7`;
 const rel = (f) => path.relative(ROOT, f);
@@ -152,7 +155,8 @@ async function waitFile(name, ms = 8000) {
   return null;
 }
 
-const STATE = (page, state) => page.waitFor((s) => document.querySelector('.lib-copy__button')?.getAttribute('data-state') === s, { args: [state], timeoutMs: 4000, intervalMs: 80 });
+/** ينتظر حالة زر «نسخ» المحدد (لا أول زر في الصفحة). */
+const STATE = (page, selector, state) => page.waitFor((sel, s) => document.querySelector(sel)?.getAttribute('data-state') === s, { args: [selector, state], timeoutMs: 4000, intervalMs: 80 });
 const seedStorage = (page) => page.eval((items) => chrome.storage.local.set(items), { args: [storageItems(seed.items)] });
 const settingsOf = (page) => page.eval(async () => (await chrome.storage.local.get('settings')).settings ?? null);
 
@@ -163,6 +167,8 @@ try {
   // ===== ١. نافذة الأيقونة (P7-AC1) =====
   const settings0 = await openExt('pages/settings/index.html');
   await settings0.waitFor(() => document.querySelector('.st-card'), { timeoutMs: 8000 });
+  if (ONLY) await seedStorage(settings0);
+  if (!ONLY) {
 
   const popupFg = await openExt('pages/popup/index.html');
   await popupFg.waitFor(() => document.querySelector('.tj-popup__menu'), { timeoutMs: 8000 });
@@ -221,6 +227,7 @@ try {
     await pp.close().catch(() => {});
   }
   check('ac1-popup-items-open-tabs', Object.values(opens).every(Boolean), opens);
+  }
 
   // ===== ٢. المحفوظات (P7-AC2/AC3/AC6/AC7) =====
   const lib = await openExt('pages/library/index.html');
@@ -277,38 +284,42 @@ try {
     if (shotName) await snap(lib, `${shotName}-hover`);
     writeClipboard('قيمة سابقة للتحقق');
     await lib.click(c.x, c.y);
-    const ok = await STATE(lib, 'success');
+    const ok = await STATE(lib, btn, 'success');
     if (shotName) await snap(lib, `${shotName}-success`);
     const label = await lib.eval((s) => document.querySelector(`${s}`).textContent.trim(), { args: [btn] });
     const clip = readClipboard();
     const expected = expectedInstructions(id, title);
     const scan = await scanNoTemplate(lib);
-    return { ok: !!ok, label, equal: clip === expected, len: clip.length, scan };
+    await sleep(250);
+    const liveAfter = await lib.eval(() => [...document.querySelectorAll('.lib > .tj-sr-only[role="status"]')].map((x) => x.textContent));
+    return { ok: !!ok, label, equal: clip === expected, len: clip.length, scan, liveAfter };
   };
   const c1 = await copyFlow(SEED_IDS.ted, seed.expectTitles[SEED_IDS.ted], 'library-copy');
   const c2 = await copyFlow(SEED_IDS.typo, seed.expectTitles[SEED_IDS.typo], null);
   const c3 = await copyFlow(SEED_IDS.untitled, null, null);
   check('ac6-clipboard-row-1', c1.ok && c1.equal && c1.label === 'تم النسخ', { equal: c1.equal, label: c1.label, chars: c1.len });
+  check('ac7-copy-announced-to-screen-reader-after-each-copy', [c1, c2, c3].every((c) => /^تم نسخ تعليمات الترجمة\. ‹.+›$/.test(c.liveAfter[1] ?? '') && c.liveAfter[0] === ''), [c1, c2, c3].map((c) => c.liveAfter));
   check('ac6-clipboard-row-2-different-video', c2.ok && c2.equal, { equal: c2.equal, chars: c2.len });
   check('ac6-clipboard-untitled-row-uses-unavailable', c3.ok && c3.equal, { equal: c3.equal });
   check('ac7-no-template-in-dom-after-copy', [c1, c2, c3].every((c) => c.scan.hits.length === 0 && c.scan.textareas === 0 && c.scan.textInputs === 0 && c.scan.editable === 0), c1.scan);
-  await lib.waitFor(() => document.querySelector('.lib-copy__button')?.getAttribute('data-state') === 'idle', { timeoutMs: 4000, intervalMs: 100 });
+  await lib.waitFor(() => [...document.querySelectorAll('.lib-copy__button')].every((x) => x.getAttribute('data-state') === 'idle'), { timeoutMs: 5000, intervalMs: 100 });
   const reverted = await lib.eval(() => [...document.querySelectorAll('.lib-copy__button')].map((x) => x.getAttribute('data-state')));
   check('ac7-copy-success-reverts-to-idle', reverted.every((s) => s === 'idle'), reverted);
   const aria = await lib.eval(() => ({ name: document.querySelector('.lib-copy__button').getAttribute('aria-label'), tip: document.querySelector('.lib-copy__tip').textContent, live: [...document.querySelectorAll('.lib > .tj-sr-only[role="status"]')].map((x) => x.textContent).join('|') }));
-  check('ac7-copy-accessibility', aria.name.startsWith('نسخ تعليمات ترجمة: Do schools kill creativity?') && aria.tip === 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.' && /تم نسخ تعليمات الترجمة\./.test(aria.live ?? ''), aria);
+  check('ac7-copy-accessibility', aria.name.startsWith('نسخ تعليمات ترجمة: Do schools kill creativity?') && aria.tip === 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.' && /تم نسخ تعليمات الترجمة\./.test(aria.live ?? '') && !/لا نتائج/.test(aria.live ?? ''), aria);
 
   // فشل الحافظة: «أعد المحاولة» ورسالة عابرة (برفض مصطنع للكتابة).
   await lib.eval(() => { Object.defineProperty(Clipboard.prototype, 'writeText', { configurable: true, value: () => Promise.reject(new DOMException('رفض اختباري', 'NotAllowedError')) }); });
   const failBtn = `${rowSel(1)} .lib-copy__button`;
   await clickSel(lib, failBtn);
-  const failed = await STATE(lib, 'error');
+  const failed = await STATE(lib, failBtn, 'error');
   const failInfo = await lib.eval(() => ({ label: document.querySelector('.lib-copy__button[data-state="error"]')?.textContent.trim(), toast: document.querySelector('.lib-toast--danger')?.textContent.trim() }));
   await snap(lib, 'library-copy-error');
   const failScan = await scanNoTemplate(lib);
   check('ac7-copy-failure-state', !!failed && failInfo.label === 'أعد المحاولة' && failInfo.toast === 'تعذّر النسخ إلى الحافظة. أعد المحاولة.' && failScan.hits.length === 0 && failScan.textareas === 0, { ...failInfo, hits: failScan.hits.length });
   await lib.reload();
   await lib.waitFor(() => document.querySelectorAll('li.lib-row').length === 4, { timeoutMs: 10000 });
+  if (ONLY === 'copy') throw new Done();
 
   // القائمة والتصدير: العربية بتوقيت التصدير (إزاحة +0.5 ← سؤال)، والإنجليزية المستخرجة.
   await clickText(lib, rowSel(1), 'تصدير SRT');
@@ -568,7 +579,7 @@ try {
   const all2 = errors.flatMap((e) => e.list);
   check('no-extension-errors', all2.length === 0, { count: all2.length, sample: all2.slice(0, 3) });
 } catch (err) {
-  check('run', false, { error: String(err.message).replace(/https?:\/\/\S+/g, '[رابط]') });
+  if (!(err instanceof Done)) check('run', false, { error: String(err.message).replace(/https?:\/\/\S+/g, '[رابط]') });
 } finally {
   try { writeClipboard(clipboardBefore); } catch { /* أفضل جهد */ }
   try { await b?.close(); } catch { /* مغلق */ }
@@ -581,8 +592,9 @@ try {
     console.error(`رُفضت كتابة الدليل: ${leaks.length} اكتشاف`);
     process.exitCode = 1;
   } else {
-    await writeFile(path.join(OUT, 'live.json'), text);
-    console.log(`${result.passed ? 'ناجح' : 'فيه إخفاق'} — ${rel(path.join(OUT, 'live.json'))}`);
+    const outName = ONLY ? `live-${ONLY}.json` : 'live.json';
+    await writeFile(path.join(OUT, outName), text);
+    console.log(`${result.passed ? 'ناجح' : 'فيه إخفاق'} — ${rel(path.join(OUT, outName))}`);
   }
   if (!result.passed) process.exitCode = 1;
 }

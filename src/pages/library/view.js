@@ -17,6 +17,10 @@ import { createToaster } from './toast.js';
 export const COPY_TIP = 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.';
 export const CAPTION = '«نسخ» ينسخ تعليمات الترجمة لترفقها مع ملف SRT الإنجليزي في أي تطبيق ذكاء اصطناعي.';
 const COPY_LABEL = Object.freeze({ idle: 'نسخ', success: 'تم النسخ', error: 'أعد المحاولة' });
+// عنوان الفيديو قد يكون إنجليزيًا داخل جملة عربية: يُعزل اتجاهًا (FSI…PDI) فلا تنقلب علامات الترقيم حوله في عناوين الحوارات.
+const FSI = String.fromCodePoint(0x2068);
+const PDI = String.fromCodePoint(0x2069);
+export const isolate = (s) => `${FSI}${s}${PDI}`;
 const clip = (s, max) => (Array.from(s).length > max ? `${Array.from(s).slice(0, max - 1).join('')}…` : s);
 let seq = 0;
 
@@ -109,12 +113,16 @@ export function createLibrary(env) {
   });
   const root = el('div', { className: 'lib', children: [header, el('p', { className: 'tj-caption lib-caption', text: CAPTION, doc }), capacityAlert, toolbar, resultsLive, listHost, toaster.root, toaster.live], doc });
 
+  /** يعلن عدد المطابقات لقارئ الشاشة، ويفرّغ الإعلان بمسح البحث فلا يبقى «لا نتائج» قديمًا. */
+  const announceResults = () => {
+    const n = visible().length;
+    resultsLive.textContent = state.query.trim() ? (n ? `${formatCount(n, COUNT_FORMS.video)} مطابق` : 'لا نتائج') : '';
+  };
   search.addEventListener('input', () => {
     state.query = search.value;
     state.limit = PAGE_SIZE;
     render();
-    const n = visible().length;
-    resultsLive.textContent = state.query.trim() ? (n ? `${formatCount(n, COUNT_FORMS.video)} مطابق` : 'لا نتائج') : '';
+    announceResults();
   });
   sort.addEventListener('change', () => {
     state.order = sort.value === 'title' ? 'title' : 'updated';
@@ -182,7 +190,7 @@ export function createLibrary(env) {
     });
     const had = Boolean(record.arabic);
     const ok = await confirm({
-      title: had ? `استبدال ترجمة "${clip(m.displayTitle, 80)}"؟` : `حفظ الترجمة العربية لـ"${clip(m.displayTitle, 80)}"؟`,
+      title: had ? `استبدال ترجمة "${isolate(clip(m.displayTitle, 80))}"؟` : `حفظ الترجمة العربية لـ"${isolate(clip(m.displayTitle, 80))}"؟`,
       confirmLabel: had ? 'استبدال' : 'حفظ', tone: had ? 'danger' : 'default', content, doc,
     });
     if (!ok) return;
@@ -197,7 +205,7 @@ export function createLibrary(env) {
       : [{ value: 'all', label: 'كل بيانات هذا الفيديو' }];
     const group = radioGroup({ legend: 'ما يُحذف', options, doc });
     const ok = await confirm({
-      title: `حذف ${hasArabic ? 'ترجمة' : 'بيانات'} "${clip(m.displayTitle, 80)}"؟`,
+      title: `حذف ${hasArabic ? 'ترجمة' : 'بيانات'} "${isolate(clip(m.displayTitle, 80))}"؟`,
       body: 'لا يمكن التراجع عن الحذف.', confirmLabel: 'حذف', tone: 'danger', content: group.root, doc,
     });
     if (!ok) return;
@@ -364,7 +372,7 @@ export function createLibrary(env) {
     }
     const shown = visible();
     if (!shown.length) {
-      const clear = actionButton(doc, { label: 'مسح البحث', variant: 'secondary', onClick: () => { search.value = ''; state.query = ''; render(); search.focus(); } });
+      const clear = actionButton(doc, { label: 'مسح البحث', variant: 'secondary', onClick: () => { search.value = ''; state.query = ''; render(); announceResults(); search.focus(); } });
       listHost.append(emptyState({ title: `لا نتائج لـ«${clip(state.query.trim(), 60)}»`, text: 'جرّب جزءًا آخر من العنوان أو المعرّف.', action: clear, doc }));
       return;
     }

@@ -12,6 +12,7 @@ import { NOW, makeCues, videoRecord } from '../../../helpers/fixtures.js';
 import { buttonNamed, findAll, newDocument, settle, textOf } from './fake-dom.js';
 
 const IDS = ['AAAAAAAAAAA', 'BBBBBBBBBBB', 'CCCCCCCCCCC'];
+const iso = (s) => `${String.fromCodePoint(0x2068)}${s}${String.fromCodePoint(0x2069)}`;
 const TEMPLATE_PROBES = ['ترجمة ملف ترجمة فيديو', 'أرفقتُ ملف ترجمة', 'بنية SRT: التزم بها', 'افهم قبل أن تترجم', '{{video_title}}', 'التسليم'];
 
 function timers() {
@@ -149,9 +150,12 @@ test('البحث: يصفّي بالعنوان والمعرّف، ونتيجته 
   assert.equal(rows(m).length, 0);
   assert.equal(textOf(m.root.querySelector('.tj-empty__title')), 'لا نتائج لـ«لا يوجد هذا»');
   assertNoTemplate(m, 'بحث بلا نتائج');
+  const live = m.root.querySelector('p.tj-sr-only[role="status"]');
+  assert.equal(textOf(live), 'لا نتائج', 'إعلان لقارئ الشاشة بغياب النتائج');
   buttonNamed(m.root, 'مسح البحث').click();
   assert.equal(search.value, '');
   assert.equal(rows(m).length, 3);
+  assert.equal(textOf(live), '', 'مسح البحث يفرّغ الإعلان القديم');
 });
 
 test('الترتيب بالعنوان، والعرض التدريجي (50 ثم المزيد)', async () => {
@@ -371,7 +375,7 @@ test('الحذف: حوار يسمّي الفيديو ويحدد ما يُحذف�
   menuItems(more)[0].click();
   await settle();
   const dialog = m.calls.confirms[0];
-  assert.equal(dialog.title, 'حذف ترجمة "عنوان"؟');
+  assert.equal(dialog.title, `حذف ترجمة "${iso('عنوان')}"؟`);
   assert.equal(dialog.body, 'لا يمكن التراجع عن الحذف.');
   assert.equal(dialog.confirmLabel, 'حذف');
   assert.equal(dialog.tone, 'danger');
@@ -399,7 +403,7 @@ test('الحذف: «كل بيانات هذا الفيديو» يزيل الصف�
   menuItems(moreB)[0].click();
   await settle();
   const only = m.calls.confirms[0];
-  assert.equal(only.title, 'حذف بيانات "ب"؟');
+  assert.equal(only.title, `حذف بيانات "${iso('ب')}"؟`);
   assert.equal(findAll(only.content, (e) => e.tagName === 'input').length, 1, 'خيار واحد: الكل');
   assert.equal(await m.store.getVideo(IDS[1]), null);
   assert.equal(rows(m).length, 1);
@@ -447,7 +451,7 @@ test('الاستبدال: الاختيار ثم حوار مقارنة بتصفي
   buttonNamed(m.root, 'استبدال الترجمة العربية: عنوان').click();
   await settle();
   const dialog = m.calls.confirms[0];
-  assert.equal(dialog.title, 'استبدال ترجمة "عنوان"؟');
+  assert.equal(dialog.title, `استبدال ترجمة "${iso('عنوان')}"؟`);
   assert.equal(dialog.confirmLabel, 'استبدال');
   assert.equal(dialog.tone, 'danger');
   const body = allText(dialog.content);

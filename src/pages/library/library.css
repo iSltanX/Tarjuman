@@ -72,7 +72,6 @@
   font: 400 13px/18px var(--tj-font-body); white-space: nowrap; box-shadow: var(--tj-e2); pointer-events: none;
   opacity: 0; visibility: hidden; transition: opacity var(--tj-motion-menu) var(--tj-ease);
 }
-[dir="rtl"] .lib-copy__tip, .lib-copy__tip { transform: translateX(50%); }
 .lib-copy:hover .lib-copy__tip, .lib-copy:focus-within .lib-copy__tip { opacity: 1; visibility: visible; }
 .lib-copy--success .lib-copy__tip, .lib-copy--error .lib-copy__tip { display: none; }
 .lib-copy--success .lib-copy__button { color: var(--tj-success); border-color: var(--tj-success); background: var(--tj-success-bg); }
@@ -104,5 +103,6 @@
 
 @media (max-width: 900px) {
   .lib-row { flex-direction: column; align-items: stretch; }
+  .lib-row__info { flex: 0 1 auto; }
   .lib-row__actions { justify-content: flex-start; }
 }

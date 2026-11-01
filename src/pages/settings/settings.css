@@ -61,7 +61,9 @@
 
 /* الحقول الرقمية بوحدتها. */
 .st-fields { display: flex; flex-wrap: wrap; gap: var(--tj-space-5); }
-.st-num { max-width: 320px; flex: 1 1 240px; }
+.st-num { max-width: 320px; width: 100%; }
+/* flex-basis في سياق الصف الملتف وحده: داخل بطاقة عمودية يصير ارتفاعًا ويترك فراغًا. */
+.st-fields > .st-num { flex: 1 1 240px; width: auto; }
 .st-num__head { display: flex; align-items: center; justify-content: space-between; gap: var(--tj-space-2); }
 .st-num__box { display: flex; align-items: center; gap: var(--tj-space-2); }
 .st-num__input { flex: 1; min-width: 0; }
