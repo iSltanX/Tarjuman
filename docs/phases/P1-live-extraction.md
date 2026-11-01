@@ -161,10 +161,10 @@
 ```json tj-status
 {
   "phase": "P1",
-  "status": "planned",
-  "updated": "2026-10-31",
-  "branch": null,
-  "resume": "لم تبدأ. ابدأ بالمهمة ١ بعد قراءة هذا الملف ودليل التشغيل.",
+  "status": "in_progress",
+  "updated": "2026-11-01T12:55:32+03:00",
+  "branch": "tj/P1-live-extraction",
+  "resume": "بدأت. المهمة ١: قراءة المواصفة والعقد وتقرير كلود، ثم رسالة الاختبار الحي.",
   "blocker": null,
   "outcome": null,
   "commit": null,
