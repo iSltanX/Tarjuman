@@ -161,10 +161,10 @@
 ```json tj-status
 {
   "phase": "P1",
-  "status": "integrating",
-  "updated": "2026-11-01T16:33:30+03:00",
+  "status": "verified",
+  "updated": "2026-11-01T16:35:41+03:00",
   "branch": "tj/P1-live-extraction",
-  "resume": "جاهزة للدمج في W1",
+  "resume": "مدمجة ومتحققة في W1",
   "blocker": null,
   "outcome": "success",
   "commit": "e31482f",
