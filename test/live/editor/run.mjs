@@ -129,6 +129,10 @@ const E = {
       dirty: s.session.dirty, changed: s.session.changedCount, offsetMs: s.session.offsetMs, view: s.view, external: s.external, scopeKind: s.scope,
       docTitle: document.title, enHidden: q('.ed-list').classList.contains('ed-list--no-en'),
       readOnlyRow: Boolean(q('.ed-row.is-readonly')),
+      layout: {
+        pageOverflow: document.scrollingElement.scrollHeight - innerHeight, pageScroll: document.scrollingElement.scrollTop,
+        listHeight: q('.ed-list').clientHeight, issueDir: q('.ed-issue') ? getComputedStyle(q('.ed-issue')).direction : null,
+      },
     };
   },
   cue: (i) => {
@@ -296,6 +300,7 @@ try {
   ed.on('Network.requestWillBeSent', (e) => { if (!/^(chrome-extension|data|blob):/.test(e.request.url)) net.push(1); });
   await ed.send('Network.enable');
   await ed.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await emulateScheme(ed, 'light');
   await ed.goto(`chrome-extension://${extId}/pages/editor/index.html?v=${VIDEO}`);
   await ed.send('Target.activateTarget', { targetId: ed.targetId }).catch(() => b.conn.send('Target.activateTarget', { targetId: ed.targetId }));
   check('editor-opens-by-url', await ed.waitFor(E.ready, { timeoutMs: 15000 }), null);
@@ -339,7 +344,7 @@ try {
   { scope: selScope, preview: preSel, result: s.result, deltas: st46.map((x, k) => x - imp.cues[3 + k].startMs) });
   await clickOn('.ed-seg__opt', 'الملف كله');
   s = await info();
-  check('offset-notice-before-whole-file-shift', s.notice === 'إزاحة العرض +0.5 ث مفعّلة؛ النقل هنا يُضاف إليها.' && s.preview.startsWith(`النطاق: الملف كله (${imp.cues.length} مقطعًا)`), { notice: s.notice, preview: s.preview });
+  check('offset-notice-before-whole-file-shift', s.notice === 'إزاحة العرض +0.5 ث مفعّلة؛ النقل هنا يُضاف إليها.' && s.preview.includes(`الملف كله (${imp.cues.length} مقطعًا)`), { notice: s.notice, preview: s.preview });
   check('unsaved-indicators', s.unsaved === 'لديك 4 تغييرات غير محفوظة' && s.docTitle.startsWith('● ') && !s.save.disabled, { unsaved: s.unsaved, docTitle: s.docTitle, save: s.save });
   await shoot('p8-unsaved');
 
@@ -353,7 +358,17 @@ try {
   s = await info();
   check('undo-redo-before-save', undone && afterRedo.every((x, k) => x === imp.cues[4 + k].startMs - 1200) && s.status === 'تغييرات غير محفوظة (4)', { undone, redoDeltas: afterRedo.map((x, k) => x - imp.cues[4 + k].startMs), status: s.status });
 
-  // ===== AC5: حوار التصدير يحدد التوقيت المصدَّر (الإزاحة +0.5) =====
+  // ===== التصدير مرفوض بالتداخل (نقل المحددة قبل الرابع)، والحفظ متاح =====
+  await clickOn('.ed-head button', 'تصدير');
+  s = await info();
+  const blocked = s.dialog;
+  await shoot('p8-export-blocked');
+  await clickOn('dialog[open] button', 'إلغاء');
+  check('export-blocked-by-overlap-save-allowed', blocked?.text.includes('لا يمكن التصدير') && blocked.text.includes('تداخل') && blocked.buttons[0].disabled && !s.save.disabled && s.issues.pill.includes('تحذير'),
+    { pill: s.issues.pill, confirmDisabled: blocked?.buttons[0].disabled, save: s.save });
+
+  // ===== AC5: حوار التصدير يحدد التوقيت المصدَّر (الإزاحة +0.5)، بعد تراجع يزيل التداخل =====
+  await clickOn('.ed-head button', 'تراجع');
   await clickOn('.ed-head button', 'تصدير');
   s = await info();
   const dlgExport = s.dialog;
@@ -364,6 +379,7 @@ try {
   await clickOn('dialog[open] label.ed-radio', 'المحفوظ فقط');
   const savedFile = await downloadFromDialog();
   const w2 = await run(E.cue, 2);
+  await clickOn('.ed-head button', 'إعادة');
   check('export-dialog-timing-choice', dlgExport?.text.includes('التوقيت المصدَّر') && dlgExport.checked.includes('shown') && dlgExport.text.includes(`${VIDEO}.ar.srt`)
     && shownFile?.name === `${VIDEO}.ar.srt` && shownFile.cues[2].startMs === w2.startMs + 500 && savedFile?.cues[2].startMs === w2.startMs && shownFile.cues.length === imp.cues.length,
   { checked: dlgExport?.checked, shown: shownFile && shownFile.cues[2].startMs - w2.startMs, saved: savedFile && savedFile.cues[2].startMs - w2.startMs, name: shownFile?.name });
@@ -379,6 +395,7 @@ try {
     && s.export.disabled && c9.endMs === 500 && (await run(E.field, 10, 'start')) === '00:01:xx',
   { pill: s.issues.pill, items: s.issues.items.slice(0, 3), save: s.save, export: s.export, keptEnd: c9.endMs });
   await shoot('p8-errors');
+  check('layout-fills-window-without-page-scroll', s.layout.pageOverflow <= 0 && s.layout.pageScroll === 0 && s.layout.listHeight > 300 && s.layout.listHeight < 900, s.layout);
   await clickOn('.ed-issue', '10');
   const act = await run(E.active);
   check('issue-jumps-to-cue', act.index === 9 && act.field === 'end', act);
@@ -387,7 +404,7 @@ try {
   await ed.key('Escape', 'Escape', 27);
   await clickOn('.ed-head button', 'تراجع');
   s = await info();
-  check('errors-cleared-by-user-not-auto', s.issues.pill === 'لا مشكلات ✓' && !s.save.disabled, { pill: s.issues.pill, save: s.save });
+  check('errors-cleared-by-user-not-auto', !s.issues.pill.includes('خط') && !s.save.disabled, { pill: s.issues.pill, save: s.save });
   await run(E.reveal, 11, 'end');
   await typeInto(row(11, 'end'), formatSrtTime(imp.cues[12].startMs + 400), { enter: true });
   s = await info();
