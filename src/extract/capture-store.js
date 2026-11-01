@@ -11,7 +11,8 @@ const MAX_REJECTED = 100;
  * }} AcceptedCapture
  */
 
-export function createCaptureStore() {
+/** @param {{ now?: () => number }} [opts] */
+export function createCaptureStore({ now = () => Date.now() } = {}) {
   let currentVideoId = null;
   let seq = 0;
   let navigations = 0;
@@ -34,13 +35,13 @@ export function createCaptureStore() {
     /** @param {Omit<AcceptedCapture, 'id' | 'at'>} capture */
     accept(capture) {
       if (capture.videoId !== currentVideoId) throw new Error('محاولة قبول التقاط لا يخص الفيديو الحالي');
-      const entry = { ...capture, id: ++seq, at: Date.now() };
+      const entry = { ...capture, id: ++seq, at: now() };
       accepted.set(`${capture.videoId}|${capture.lang}|${capture.trackKind}`, entry);
       return entry;
     },
     /** @param {{ code: string, detail: string, videoId: string | null, lang: string | null, trackKind: string, hasTlang: boolean, format: string, bodyLength: number, currentVideoId: string | null }} info */
     reject(info) {
-      rejected.push({ ...info, id: ++seq, at: Date.now() });
+      rejected.push({ ...info, id: ++seq, at: now() });
       if (rejected.length > MAX_REJECTED) rejected.shift();
     },
     accepted() {

@@ -27,9 +27,10 @@ export function checkAcceptance(msg, ctx) {
 }
 
 /**
- * @param {import('./message.js').CaptureMessage} msg مقبولة
+ * @param {{ body: string, trackKind: 'manual' | 'asr' }} capture التقاط مقبول
  * @param {number | null} durationMs
+ * @param {{ mode?: 'normal' | 'long', longOptions?: object }} [opts]
  */
-export function convertCapture(msg, durationMs) {
-  return convertTrack({ body: msg.body, trackKind: msg.trackKind, durationMs });
+export function convertCapture(capture, durationMs, { mode = 'normal', longOptions } = {}) {
+  return convertTrack({ body: capture.body, trackKind: capture.trackKind, durationMs, mode, longOptions });
 }
