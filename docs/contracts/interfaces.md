@@ -39,7 +39,10 @@ const controller = createController({ store, extractor, page: { title, durationM
 
 controller.getState()            // ControllerState مجمَّدة؛ لا تُعدَّل
 controller.subscribe(fn)         // fn(state) عند كل تغيّر؛ يعيد دالة إلغاء
+controller.diagnostics()         // أعداد ورموز: الكتابات الجارية، وإخفاقات المشتركين وآخرها، وتشخيص المستخرج
 ```
+
+كل مشترك يُبلَّغ على حدة: استثناء في مشترك (الطبقة مثلًا) لا يوقف المتحكم ولا يحرم غيره (الأدوات)، ويُعدّ في `diagnostics()`. وقد يصل أكثر من إشعار للتغيّر الواحد؛ والمشترك يقرأ الحالة الأخيرة ولا يفترض عددًا.
 
 **الحالة `ControllerState`:**
 
@@ -48,8 +51,8 @@ controller.subscribe(fn)         // fn(state) عند كل تغيّر؛ يعيد 
 | `videoId`، `title`، `durationMs` | الفيديو المعروض (من العنوان عبر `youtube-dom`). **المصدر الوحيد لمعرّف الفيديو الحالي.** | الكل |
 | `loading` | سجل الفيديو يُقرأ من التخزين. | P5، P6 |
 | `saved` | `VideoRecord` كما خُزّن أو `null`. | P6 |
-| `arabic` | `{ cues, edited, fileName, comparison }` أو `null`؛ `cues = current ?? original`. **المرجع ثابت** ما لم يتغير السجل. | P5، P6 |
-| `english` | للوضع المزدوج: `{ key, kind, lang, cues, source: "captured" \| "saved" }` أو `null`؛ الملتقط أولًا واليدوي قبل التلقائي. المرجع ثابت ما لم يتغير المسار. | P5 |
+| `arabic` | `{ cues, edited, fileName, comparison }` أو `null`؛ `cues = current ?? original`. **مرجع `cues` ثابت** ما لم يتغير مصدره (`importedAt` و`editedAt`)، ولو حُفظت الإزاحة أو الوضع. | P5، P6 |
+| `english` | للوضع المزدوج: `{ key, kind, lang, cues, source: "captured" \| "saved" }` أو `null`؛ الملتقط أولًا واليدوي قبل التلقائي. مرجع `cues` ثابت ما لم يتغير المسار (`key` و`capturedAt`). | P5 |
 | `captured` | `TrackInfo[]` مسارات هذه الجلسة للفيديو الحالي (§٢). | P6 |
 | `captureIssue` | آخر رفض يخص الفيديو الحالي `{ code, at }` (مثل `EX_NOT_ENGLISH`)؛ رفض فيديو آخر أو معاينة لا يظهر. | P6 |
 | `view` | `{ displayOffsetMs, displayMode }`. | P5، P6 |
@@ -62,7 +65,7 @@ controller.subscribe(fn)         // fn(state) عند كل تغيّر؛ يعيد 
 
 | الفعل | القاعدة | الأخطاء المرمية |
 | --- | --- | --- |
-| `nudgeOffset(1 \| -1)` | ± بخطوة الإعدادات (عقد التوقيت §٢). الحالة تتغير فورًا، والحفظ إن وُجد سجل. | `RangeError` لاتجاه آخر (متزامن) |
+| `nudgeOffset(1 \| -1)` | ± بخطوة الإعدادات (عقد التوقيت §٢). الحالة تتغير فورًا، والحفظ إن وُجد سجل. **أثناء `loading` لا أثر لأفعال العرض الأربعة** (الأدوات تعطّلها حتى يكتمل). | `RangeError` لاتجاه آخر (متزامن) |
 | `setOffset(ms)`، `resetOffset()` | الإدخال الدقيق وإعادة الضبط (شبكة 100ms، ±10 دقائق). | — |
 | `setDisplayMode("ar" \| "dual" \| "off")` | يُحفظ لكل فيديو. | `MD_INVALID` (متزامن) |
 | `loadArabic(input, { replace })` | `input = { fileName, cues, comparison, fingerprintId, notes }` من تدفق الاستيراد (§٦). يصفّر الإزاحة بإشعار، ويحفظ المسار الملتقط مرجعًا إن لم يكن محفوظًا. | `ST_ARABIC_EXISTS` دون `replace`، `MD_INVALID`، `ST_*` |
@@ -72,7 +75,7 @@ controller.subscribe(fn)         // fn(state) عند كل تغيّر؛ يعيد 
 | `dismissNotice()` | متزامن. | — |
 | `reload()` | يعيد قراءة سجل الفيديو الحالي. | — |
 
-`start(videoId)` و`setVideo(id)` و`handleStoreChange(change)` يستدعيها `main.js` وحده. تبديل الفيديو يمسح الحالة **فورًا** (فلا يظهر شيء من السابق) ثم يحمّل سجل الجديد؛ ونتيجة تحميل قديمة تُهمل.
+`start(videoId)` و`setVideo(id)` و`handleStoreChange(change)` يستدعيها `main.js` وحده. تبديل الفيديو يمسح الحالة **ومسارات المستخرج معًا قبل أي إشعار** (`setVideo` يستدعي `extractor.setVideo`)، فلا يظهر شيء من السابق، ثم يحمّل سجل الجديد؛ ونتيجة تحميل قديمة تُهمل، وكتابة تمت أثناء التحميل تُقرأ بعده. وإن تبدّل الفيديو أثناء تحميل الإعدادات في `start` فالأحدث يبقى.
 
 ## ٢. المستخرج — `src/extract/index.js` (P3)
 
@@ -94,6 +97,7 @@ ConvertResult = { ok, code, key, lang, kind, mode: "normal" | "long", cues: Cue[
 ```
 
 - `mode: "long"` يعيد الآن `TJ_NOT_IMPLEMENTED` حتى تنفّذه P3. الوضعان تحت الثوابت نفسها.
+- `setVideo` متكرر بأمان (المعرّف نفسه لا يفرّغ شيئًا)، والمتحكم يستدعيه قبل `main.js`. والمشتركون يُبلَّغون كلٌّ على حدة، وإخفاقاتهم تُعدّ في `diagnostics().listenerFailures`.
 - لا ترسل وحدة الاستخراج طلبًا ولا تخزّن شيئًا؛ الحفظ عبر `controller.recordExport`.
 - `src/extract/youtube-page.js` و`video-id.js` (من P1) حلّ محلهما `src/player/youtube-dom.js`، ولم يعد سكربت المحتوى يستوردهما؛ لـP3 أن تحذفهما وتقرأ من `youtube-dom` إن احتاجت.
 
@@ -117,7 +121,7 @@ MountHandle = { state: "stub" | "waiting" | "mounted" | "error", unmount(): void
 
 ## ٤. نقطة الدخول — `src/content/main.js` (مجمَّد)
 
-التركيب وحده، بهذا الترتيب: المستخرج ← الجسر (أولًا، فقد يصل الالتقاط مبكرًا) ← التخزين ← المتحكم ← مراقبة الفيديو (`controller.setVideo` ثم `extractor.setVideo`) ← `store.onChange` ← نقطتا التركيب ← رد نافذة الأيقونة ← `controller.start`. لا منطق منتج فيه.
+التركيب وحده، بهذا الترتيب: المستخرج ← الجسر (أولًا، فقد يصل الالتقاط مبكرًا) ← التخزين ← المتحكم ← مراقبة الفيديو (`controller.setVideo`، وهو يبدّل المستخرج معه؛ ثم `extractor.setVideo` تكرارًا آمنًا) ← `store.onChange` ← نقطتا التركيب ← رد نافذة الأيقونة ← `controller.start`. لا منطق منتج فيه.
 
 ## ٥. تدفق التصدير — `src/core/export/index.js` (P3)
 
@@ -198,6 +202,7 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 - `npm run build` → `dist/` (إنتاج، يفشل إن بقي خطاف التطوير)؛ و`npm run build:dev` يضيف في العالم المعزول `globalThis.__tarjuman = { controller, extractor, store, mounted }` ومعرض المكوّنات، و`version_name` ينتهي بـ`-dev`.
 - تقرير التشخيص: `createDiagnosticReport({ version, browser, sections })` في `src/core/diagnostics/report.js` يسقط المفاتيح النصية (`text` و`cues` و`body` و`srt` و`title`…) ثم ينقّي الباقي؛ كل مرحلة تضيف قسمها من أعداد ورموز.
 - الاختبار الحي عبر `test/live/harness/` (README هناك)، ودخان الإضافة `smoke.mjs`.
+- `scripts/run-tests.mjs` يفشل إن لم يجد اختبارًا، إلا بـ`--allow-empty` (لـ`test/integration` وحده حتى تكتبه W3)؛ و`check-static` حدّ أدنى سطري بعد نزع التعليقات، يمنع الأسماء الخطرة معرّفاتٍ وبالأقواس، لا محلل كامل.
 
 ## ١١. مراجعة العقد لكل مرحلة لاحقة
 
@@ -208,6 +213,6 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 | P5 | `player/overlay/**` (ومنه `index.js`)، و`sync`، و`watch`، و`errors/overlay.js` | المتحكم، و`lookupMs`، و`youtube-dom`، و`playerTokensCss`، و`test/helpers` (`fakeExtractor`) | لا |
 | P6 | `player/controls/**` (ومنه `index.js`)، و`errors/controls.js`، و`test/integration/player` | المتحكم وأفعاله، و`core/export` و`core/import`، و`youtube-dom`، و`src/ui/format.js`، و`playerTokensCss` | لا |
 | P7 | `pages/{popup,library,settings}`، و`errors/pages.js` | التخزين، والانتقالات، والرسائل، و`core/export` و`core/import`، و`src/ui`، والتشخيص | لا |
-| P8 | `pages/editor`، و`core/edit`، و`errors/editor.js` | التخزين (`expectRev`)، والتوقيت والانتقالات، و`core/compare` (الاستعادة)، و`core/export`، و`src/ui` | لا |
+| P8 | `pages/editor`، و`core/edit`، و`errors/editor.js` | التخزين (`expect`)، والتوقيت والانتقالات، و`core/compare` (الاستعادة)، و`core/export`، و`src/ui` | لا |
 
 ما قد يُطلب لاحقًا بمسار الاستثناء (لم يظهر حاجة إليه الآن): محدد يوتيوب جديد في `youtube-dom.js`، أو رفع مكوّن من صفحة إلى `src/ui`.

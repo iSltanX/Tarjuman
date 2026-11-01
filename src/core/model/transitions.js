@@ -25,6 +25,21 @@ function pruneFingerprints(list, keepId) {
   return out;
 }
 
+/**
+ * يضيف مسارًا إنجليزيًا أو يستبدل مسار مفتاحه. عند امتلاء الحد يُسقط أقدم مسار لا تشير إليه بصمة.
+ * @param {EnglishTrack[]} list @param {EnglishTrack} track @param {Fingerprint[]} fingerprints
+ */
+function putEnglish(list, track, fingerprints) {
+  const out = [...list.filter((x) => x.key !== track.key), { ...track, cues: cloneCues(track.cues) }];
+  const used = new Set(fingerprints.map((f) => f.trackKey));
+  while (out.length > LIMITS.maxEnglishTracks) {
+    const i = out.findIndex((x) => x.key !== track.key && !used.has(x.key));
+    if (i === -1) break;
+    out.splice(i, 1);
+  }
+  return out;
+}
+
 function base(record, { videoId, title, durationMs, displayMode }, now) {
   const r = record ? copy(record) : createVideoRecord({ videoId, title, durationMs, now, displayMode });
   if (r.videoId !== videoId) throw new TjError('MD_INVALID', { detail: 'سجل فيديو آخر' });
@@ -43,9 +58,8 @@ function base(record, { videoId, title, durationMs, displayMode }, now) {
  */
 export function withExport(record, input, now) {
   const r = base(record, input, now);
-  const t = input.englishTrack;
-  r.english = [...r.english.filter((x) => x.key !== t.key), { ...t, cues: cloneCues(t.cues) }];
   r.fingerprints = pruneFingerprints([...r.fingerprints.filter((f) => f.id !== input.fingerprint.id), copy(input.fingerprint)], r.arabic?.fingerprintId ?? null);
+  r.english = putEnglish(r.english, input.englishTrack, r.fingerprints);
   return r;
 }
 
@@ -66,8 +80,11 @@ export function withArabicImport(record, input, now, { replace = false } = {}) {
   if (record?.arabic && !replace) throw new TjError('ST_ARABIC_EXISTS');
   const fallbackMode = input.displayModeDefault ?? 'ar';
   const r = base(record, { ...input, displayMode: fallbackMode }, now);
+  // المسار الملتقط مرجع اختياري للمحرّر: يُضاف إن لم يكن محفوظًا وكان في الحد متسع.
   const t = input.englishTrack;
-  if (t && !r.english.some((x) => x.key === t.key)) r.english = [...r.english, { ...t, cues: cloneCues(t.cues) }];
+  if (t && !r.english.some((x) => x.key === t.key) && r.english.length < LIMITS.maxEnglishTracks) {
+    r.english = [...r.english, { ...t, cues: cloneCues(t.cues) }];
+  }
   const offsetWas = r.view.displayOffsetMs;
   r.arabic = {
     fileName: input.fileName, importedAt: now, original: cloneCues(input.cues), current: null, editedAt: null,

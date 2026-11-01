@@ -55,40 +55,82 @@ for (const p of PAGES) {
   for (const f of ['index.html', 'main.js']) if (!(await exists(path.join(SRC, 'pages', p, f)))) problems.push(`pages: ${p}/${f} مفقود`);
 }
 
-// ٢. أنماط ممنوعة في الشيفرة والصفحات والأنماط.
+// ٢. أنماط ممنوعة في الشيفرة والصفحات والأنماط. الأسماء الخطرة ممنوعة معرّفاتٍ أينما وردت (لا بعد نقطة
+// فقط)، والوصول إليها بالأقواس ممنوع كذلك. الفحص سطرًا بسطر بعد نزع التعليقات؛ هو حدّ أدنى لا محلل كامل.
 const RULES = [
-  { re: /\.innerHTML\b|\.outerHTML\b|insertAdjacentHTML|document\.write\b|createContextualFragment|\.srcdoc\b|parseFromString\([^)]*text\/html/, msg: 'إدراج HTML نصي ممنوع؛ textContent وDOM فقط' },
-  { re: /\beval\s*\(|new\s+Function\s*\(|set(?:Timeout|Interval)\s*\(\s*['"`]/, msg: 'تنفيذ نص كشيفرة ممنوع' },
-  { re: /\bimport\s*\(\s*['"`](?:https?:)?\/\/|importScripts\s*\(|<script[^>]*\bsrc\s*=\s*["'](?:https?:)?\/\//i, msg: 'شيفرة بعيدة ممنوعة' },
+  {
+    re: /\b(?:innerHTML|outerHTML|insertAdjacentHTML|setHTMLUnsafe|parseHTMLUnsafe|createContextualFragment|srcdoc)\b|\bdocument\s*\.\s*write(?:ln)?\b|parseFromString\([^)]*text\/html/,
+    msg: 'إدراج HTML نصي ممنوع؛ textContent وDOM فقط',
+  },
+  { re: /(?<![\w$.])eval\b|(?<![\w$])Function\s*\(|set(?:Timeout|Interval)\s*\(\s*['"`]/, msg: 'تنفيذ نص كشيفرة ممنوع' },
+  { re: /\bimport\s*\(\s*['"`](?:https?:)?\/\/|\bimportScripts\b|<script[^>]*\bsrc\s*=\s*["'](?:https?:)?\/\//i, msg: 'شيفرة بعيدة ممنوعة' },
   { re: /\bsetOption\s*\(|\bloadModule\s*\(/, msg: 'تفعيل المشغّل برمجيًا ممنوع دون قرار سلطان' },
   { re: /youtubei\/v1|innertube|get_transcript|get_panel/i, msg: 'طلبات InnerTube ممنوعة' },
-  { re: /navigator\.sendBeacon|new\s+WebSocket|new\s+EventSource|new\s+XMLHttpRequest\b/, msg: 'قنوات شبكة ممنوعة' },
+  { re: /\b(?:sendBeacon|WebSocket|EventSource|RTCPeerConnection|WebTransport)\b|\bnew\s+(?:Request|Image)\s*\(/, msg: 'قنوات شبكة ممنوعة' },
   {
-    re: /chrome\.(?:downloads|webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen|permissions\.request)\b|chrome\.tabs\.(?:executeScript|insertCSS)/,
+    re: /\bchrome\s*(?:\.|\[\s*['"`])\s*(?:downloads|webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen)\b|\bpermissions\s*\.\s*request\b|\btabs\s*\.\s*(?:executeScript|insertCSS)\b/,
     msg: 'واجهة تحتاج إذنًا غير معتمد',
   },
   { re: /\b(?:localStorage|sessionStorage|indexedDB)\b/, msg: 'التخزين عبر src/core/store وحده (لا localStorage ولا IndexedDB)' },
-  { re: /\bconsole\.(?:log|info|warn|error|debug|trace)\b/, msg: 'التسجيل في الكونسول ممنوع؛ الأخطاء برموز وتقرير التشخيص' },
+  { re: /\bconsole\b/, msg: 'التسجيل في الكونسول ممنوع؛ الأخطاء برموز وتقرير التشخيص' },
+  {
+    re: /\[\s*['"`](?:innerHTML|outerHTML|insertAdjacentHTML|setHTMLUnsafe|eval|fetch|sendBeacon|storage|write|writeln|XMLHttpRequest)['"`]\s*\]/,
+    msg: 'وصول بالأقواس إلى اسم ممنوع',
+  },
 ];
-// الطلب الوحيد المسموح: تمرير طلب الصفحة نفسه في غلاف fetch داخل capture.js.
-const NETWORK = /(?<!function\s+)\bfetch\s*\(|\.open\s*\(\s*['"](?:GET|POST)/;
-const PASSTHROUGH = new Set(['  const result = origFetch.apply(this, arguments); // الطلب الوحيد: طلب الصفحة نفسه.']);
-// الروابط الحرفية: عنوان المشاهدة على يوتيوب وحده (أمر «فتح الفيديو»)، ونطاق أسماء SVG ليس طلبًا.
-const URL_RE = /(?:https?:)?\/\/[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+[^\s'"`)]*/g;
+// الشبكة: fetch وXMLHttpRequest معرّفين ممنوعان، إلا أسطر غلافي الالتقاط في capture.js التي تمرّر طلب
+// الصفحة نفسه (مراجَعة حرفيًا). والسلسلة 'fetch' (اسم وسيلة النقل) ليست استدعاءً.
+const NETWORK = /(?<![\w$'"`])(?:fetch|XMLHttpRequest)(?![\w$'"`])|\.open\s*\(\s*['"`](?:get|post|put|patch|delete|head)['"`]/i;
+const PASSTHROUGH = new Set([
+  'const origFetch = window.fetch;',
+  'window.fetch = function fetch(input, init) {',
+  'const result = origFetch.apply(this, arguments); // الطلب الوحيد: طلب الصفحة نفسه.',
+  'const XHR = window.XMLHttpRequest.prototype;',
+]);
+const CAPTURE = path.join('main-world', 'capture.js');
+// الروابط الحرفية بأي مضيف (ومنه localhost): عنوان المشاهدة على يوتيوب وحده، ونطاق أسماء SVG ليس طلبًا.
+const URL_RE = /(?:https?:)?\/\/[A-Za-z0-9][A-Za-z0-9.-]*(?::\d+)?[^\s'"`)]*/g;
 const URL_OK = (u) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg';
-const COMMENT = /^\s*(?:\/\/|\*|\/\*)/;
+const STORAGE = /\bchrome\s*(?:\.|\[\s*['"`])\s*storage\b|\.\s*storage\s*\.\s*(?:local|sync|session|managed|onChanged)\b/;
+
+/** ينزع تعليقات الكتل (ولو امتدت أسطرًا أو سبقت شيفرة) وأسطر // كاملة؛ ويُبقي رقم السطر. */
+function codeLines(text) {
+  let inBlock = false;
+  return text.split('\n').map((raw) => {
+    let line = raw;
+    let out = '';
+    while (line.length) {
+      if (inBlock) {
+        const end = line.indexOf('*/');
+        if (end === -1) return out;
+        line = line.slice(end + 2);
+        inBlock = false;
+      } else {
+        const start = line.indexOf('/*');
+        if (start === -1) {
+          out += line;
+          break;
+        }
+        out += `${line.slice(0, start)} `;
+        line = line.slice(start + 2);
+        inBlock = true;
+      }
+    }
+    return /^\s*\/\//.test(out) ? '' : out;
+  });
+}
 
 for (const file of await walk(SRC)) {
   if (!/\.(?:m?js|html|css)$/.test(file)) continue;
   const rel = path.relative(SRC, file);
-  const lines = (await readFile(file, 'utf8')).split('\n');
-  lines.forEach((line, i) => {
-    if (COMMENT.test(line)) return;
+  const inStore = rel.startsWith(path.join('core', 'store') + path.sep);
+  codeLines(await readFile(file, 'utf8')).forEach((line, i) => {
+    if (!line.trim()) return;
     const at = `${rel}:${i + 1}`;
     for (const r of RULES) if (r.re.test(line)) problems.push(`${at}: ${r.msg}`);
-    if (NETWORK.test(line) && !PASSTHROUGH.has(line)) problems.push(`${at}: طلب شبكة من الإضافة`);
+    if (NETWORK.test(line) && !(rel === CAPTURE && PASSTHROUGH.has(line.trim()))) problems.push(`${at}: طلب شبكة من الإضافة`);
     for (const m of line.matchAll(URL_RE)) if (!URL_OK(m[0])) problems.push(`${at}: نطاق خارجي ${m[0].slice(0, 60)}`);
-    if (/chrome\.storage\b/.test(line) && !rel.startsWith(path.join('core', 'store') + path.sep)) problems.push(`${at}: chrome.storage خارج src/core/store`);
+    if (STORAGE.test(line) && !inStore) problems.push(`${at}: التخزين خارج src/core/store`);
   });
 }
 

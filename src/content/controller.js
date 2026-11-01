@@ -48,7 +48,6 @@ export function createController({ store, extractor = null, page = {}, now = () 
   let videoId = null;
   /** @type {VideoRecord | null} */
   let saved = null;
-  let knownRev = 0;
   let loading = false;
   /** @type {ViewState} */
   let view = { displayOffsetMs: 0, displayMode: settings.displayModeDefault };
@@ -58,22 +57,36 @@ export function createController({ store, extractor = null, page = {}, now = () 
   let version = 0;
   let loadSeq = 0;
   let pendingWrites = 0;
+  let writeEpoch = 0;
   let externalWhileWriting = false;
-  let englishCache = { id: null, cues: null };
+  let listenerFailures = 0;
+  let lastListenerError = null;
+  // مراجع المقاطع ثابتة ما لم يتغير مصدرها، وإن نُسخ السجل عند كل حفظ (الطبقة تبني فهرسها عليها).
+  const memo = new Map();
+  const stable = (slot, id, make) => {
+    const hit = memo.get(slot);
+    if (hit && hit.id === id) return hit.value;
+    const value = make();
+    memo.set(slot, { id, value });
+    return value;
+  };
   const listeners = new Set();
 
   const defaultView = () => ({ displayOffsetMs: 0, displayMode: settings.displayModeDefault });
+  /** نسخة السجل: المراجعة وتاريخ الحفظ معًا، فكاتبان بالمراجعة نفسها لا يلتبسان. */
+  const versionOf = (r) => (r ? `${r.rev}|${r.updatedAt}` : 'none');
 
   function pickEnglish() {
     const captured = extractor ? extractor.tracks().filter((t) => t.ok && t.cueCount > 0).sort(byKind) : [];
     if (captured.length) {
       const t = captured[0];
-      const id = `captured:${t.key}@${t.capturedAt}`;
-      if (englishCache.id !== id) englishCache = { id, cues: extractor.convert(t.key).cues };
-      return { key: t.key, kind: t.kind, lang: t.lang, cues: englishCache.cues, source: 'captured' };
+      const cues = stable('english', `${videoId}|captured:${t.key}@${t.capturedAt}`, () => extractor.convert(t.key).cues);
+      return { key: t.key, kind: t.kind, lang: t.lang, cues, source: 'captured' };
     }
     const s = saved ? saved.english.slice().sort(byKind)[0] : null;
-    return s ? { key: s.key, kind: s.kind, lang: s.lang, cues: s.cues, source: 'saved' } : null;
+    if (!s) return null;
+    const cues = stable('english', `${videoId}|saved:${s.key}@${s.capturedAt}`, () => s.cues);
+    return { key: s.key, kind: s.kind, lang: s.lang, cues, source: 'saved' };
   }
 
   /** @returns {ControllerState} */
@@ -87,7 +100,10 @@ export function createController({ store, extractor = null, page = {}, now = () 
       saved,
       captured: extractor ? extractor.tracks() : [],
       captureIssue: extractor ? extractor.lastRejection() : null,
-      arabic: a ? { cues: a.current ?? a.original, edited: a.current !== null, fileName: a.fileName, comparison: a.comparison } : null,
+      arabic: a ? {
+        cues: stable('arabic', `${videoId}|${a.importedAt}|${a.editedAt}`, () => a.current ?? a.original),
+        edited: a.current !== null, fileName: a.fileName, comparison: a.comparison,
+      } : null,
       english: videoId ? pickEnglish() : null,
       view: Object.freeze({ ...view }),
       settings,
@@ -98,10 +114,18 @@ export function createController({ store, extractor = null, page = {}, now = () 
   }
 
   let state = compute();
+  /** يبلّغ كل مشترك على حدة: استثناء في مشترك لا يوقف المتحكم ولا يحرم غيره. */
   function changed() {
     version++;
     state = compute();
-    for (const fn of [...listeners]) fn(state);
+    for (const fn of [...listeners]) {
+      try {
+        fn(state);
+      } catch (err) {
+        listenerFailures++;
+        lastListenerError = toErrorInfo(err);
+      }
+    }
   }
 
   function requireVideo() {
@@ -115,10 +139,8 @@ export function createController({ store, extractor = null, page = {}, now = () 
     pendingWrites++;
     try {
       const next = await store.updateVideo(id, fn);
-      if (id === videoId) {
-        saved = next;
-        knownRev = Math.max(knownRev, next?.rev ?? 0);
-      }
+      if (id === videoId) saved = next;
+      writeEpoch++;
       return { id, next };
     } finally {
       pendingWrites--;
@@ -129,16 +151,21 @@ export function createController({ store, extractor = null, page = {}, now = () 
     }
   }
 
-  async function reloadIfNewer() {
+  /** يعيد قراءة السجل ويطبّقه إن اختلفت نسخته عمّا في الحالة. */
+  async function reloadIfNewer({ force = false } = {}) {
     const id = videoId;
     if (!id) return;
     const seq = loadSeq;
     try {
       const rec = await store.getVideo(id);
       if (id !== videoId || seq !== loadSeq) return;
-      if (rec && rec.rev <= knownRev && saved) return;
+      // كتابة بدأت أثناء القراءة: تُطبَّق القراءة بعد انتهائها، فلا تطمس نقرة ± جارية.
+      if (pendingWrites) {
+        externalWhileWriting = true;
+        return;
+      }
+      if (!force && versionOf(rec) === versionOf(saved)) return;
       saved = rec;
-      knownRev = rec?.rev ?? 0;
       view = rec ? { ...rec.view } : defaultView();
       error = null;
     } catch (err) {
@@ -148,8 +175,12 @@ export function createController({ store, extractor = null, page = {}, now = () 
     changed();
   }
 
-  /** الإزاحة ووضع العرض: يتغيّران فورًا في الحالة، ويُحفظان في السجل إن وُجد؛ وبلا سجل يبقيان للجلسة. */
+  /**
+   * الإزاحة ووضع العرض: يتغيّران فورًا في الحالة، ويُحفظان في السجل إن وُجد؛ وبلا سجل يبقيان للجلسة.
+   * أثناء قراءة سجل الفيديو (loading) لا أثر لها: الأدوات تعطّلها حتى تكتمل.
+   */
   async function setView(patch) {
+    if (loading) return state;
     view = { ...view, ...patch };
     changed();
     if (!saved) return state;
@@ -181,20 +212,25 @@ export function createController({ store, extractor = null, page = {}, now = () 
       return () => listeners.delete(fn);
     },
 
-    /** تحميل الإعدادات ثم الفيديو الحالي. يُستدعى مرة من main.js. */
+    /**
+     * تحميل الإعدادات ثم الفيديو الحالي. يُستدعى مرة من main.js. إن تبدّل الفيديو أثناء تحميل الإعدادات
+     * (تنقل مبكر) فالتبديل الأحدث هو الصحيح، ولا يُعاد إلى المعرّف القديم.
+     */
     async start(initialVideoId) {
+      const seq0 = loadSeq;
       try {
         settings = await store.getSettings();
-        if (!saved) view = { ...view, displayMode: settings.displayModeDefault };
+        if (!saved && !loading) view = { ...view, displayMode: settings.displayModeDefault };
       } catch (err) {
         error = toErrorInfo(err);
       }
       changed();
-      await controller.setVideo(initialVideoId ?? null);
+      if (loadSeq === seq0) await controller.setVideo(initialVideoId ?? null);
     },
 
     /**
-     * تبديل الفيديو: تُمسح الحالة فورًا (فلا يظهر شيء من الفيديو السابق)، ثم يُحمَّل سجل الجديد وحده.
+     * تبديل الفيديو: تُمسح الحالة ومسارات المستخرج معًا قبل أي إشعار (فلا يظهر شيء من الفيديو السابق)،
+     * ثم يُحمَّل سجل الجديد وحده.
      * @param {string | null} id
      */
     async setVideo(id) {
@@ -203,19 +239,25 @@ export function createController({ store, extractor = null, page = {}, now = () 
       const seq = ++loadSeq;
       videoId = next;
       saved = null;
-      knownRev = 0;
       view = defaultView();
       notice = null;
       error = null;
-      englishCache = { id: null, cues: null };
+      memo.clear();
       loading = !!next;
+      extractor?.setVideo(next);
       changed();
       if (!next) return;
+      const epoch = writeEpoch;
       try {
         const rec = await store.getVideo(next);
         if (seq !== loadSeq) return;
+        // كتابة (استيراد أو تصدير) تمت أثناء القراءة: القراءة الآن أقدم منها، فيُقرأ الأحدث.
+        if (writeEpoch !== epoch) {
+          loading = false;
+          await reloadIfNewer({ force: true });
+          return;
+        }
         saved = rec;
-        knownRev = rec?.rev ?? 0;
         if (rec) view = { ...rec.view };
         if (rec?.arabic) notice = { code: 'ST_RESTORED', tone: 'info', at: now() };
       } catch (err) {
@@ -315,33 +357,37 @@ export function createController({ store, extractor = null, page = {}, now = () 
     },
 
     /** يعيد قراءة سجل الفيديو الحالي من التخزين. */
-    reload: () => {
-      knownRev = 0;
-      return reloadIfNewer();
-    },
+    reload: () => reloadIfNewer({ force: true }),
 
     /**
-     * تغيّرات التخزين من أي سياق (المحرّر، والمحفوظات، والإعدادات، وتبويب آخر). صدى كتابات هذا المتحكم يُتجاهل بـrev.
+     * تغيّرات التخزين من أي سياق (المحرّر، والمحفوظات، والإعدادات، وتبويب آخر). صدى كتابات هذا المتحكم
+     * يُعرف بنسخة السجل (المراجعة وتاريخ الحفظ)، والحدث الأقدم من الحالة يُهمل، وغيرهما يُعاد قراءته.
      * @param {import('../core/store/index.js').StoreChange} change
      */
     handleStoreChange(change) {
       if (change.settings) {
         settings = normalizeSettings(change.settings.newValue ?? DEFAULT_SETTINGS);
-        if (!saved && view.displayOffsetMs === 0) view = { ...view, displayMode: settings.displayModeDefault };
+        if (!saved && !loading && view.displayOffsetMs === 0) view = { ...view, displayMode: settings.displayModeDefault };
         changed();
       }
       if (!videoId) return;
       const mine = change.videos[videoId];
       if (!mine && !change.cleared) return;
-      const rev = mine?.newValue && Number.isInteger(mine.newValue.rev) ? mine.newValue.rev : null;
-      if (rev !== null && rev <= knownRev) return;
+      const nv = mine?.newValue ?? null;
+      if (nv && versionOf(nv) === versionOf(saved)) return;
+      if (nv && saved && Number.isInteger(nv.rev) && nv.rev < saved.rev) return;
       if (pendingWrites) {
         externalWhileWriting = true;
         return;
       }
-      if (rev === null) knownRev = 0;
       reloadIfNewer();
     },
+
+    /** للتشخيص: أعداد ورموز فقط. */
+    diagnostics: () => ({
+      videoId, loading, version, pendingWrites, listenerFailures, lastListenerError,
+      extractor: extractor ? extractor.diagnostics() : null,
+    }),
   };
 
   // التقاط أو رفض أو تنقل في المستخرج يغيّر الحالة.

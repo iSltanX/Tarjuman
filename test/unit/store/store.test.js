@@ -95,16 +95,54 @@ test('سجل غير صالح لا يُكتب (MD_INVALID)، ولا يتغير ا
   assert.deepEqual(area.dump(), before);
 });
 
-test('التعارض بين السياقات: expectRev يرفض إن تغيّر السجل منذ قُرئ', async () => {
+test('التعارض بين السياقات: expect يرفض إن تغيّر السجل منذ قُرئ', async () => {
   const area = createMemoryArea();
   const editor = createStore({ area, now: clock() });
   const player = createStore({ area, now: clock() });
   const rec = await editor.updateVideo('AAAAAAAAAAA', () => videoRecord());
   await player.updateVideo('AAAAAAAAAAA', (r) => withView(r, { displayOffsetMs: 1000 }, NOW));
-  await assert.rejects(editor.updateVideo('AAAAAAAAAAA', (r) => r, { expectRev: rec.rev }), code('ST_CONFLICT'));
-  await assert.rejects(editor.updateVideo('BBBBBBBBBBB', () => videoRecord({ videoId: 'BBBBBBBBBBB' }), { expectRev: 3 }), code('ST_CONFLICT'));
-  const ok = await editor.updateVideo('BBBBBBBBBBB', () => videoRecord({ videoId: 'BBBBBBBBBBB' }), { expectRev: 0 });
+  await assert.rejects(editor.updateVideo('AAAAAAAAAAA', (r) => r, { expect: rec }), code('ST_CONFLICT'));
+  await assert.rejects(editor.updateVideo('BBBBBBBBBBB', () => videoRecord({ videoId: 'BBBBBBBBBBB' }), { expect: rec }), code('ST_CONFLICT'));
+  const ok = await editor.updateVideo('BBBBBBBBBBB', () => videoRecord({ videoId: 'BBBBBBBBBBB' }), { expect: null });
   assert.equal(ok.rev, 1);
+});
+
+test('حذف ثم إنشاء بالمراجعة نفسها لا يخدع expect (ABA)', async () => {
+  const area = createMemoryArea();
+  const editor = createStore({ area, now: clock() });
+  const other = createStore({ area, now: clock(Date.parse(NOW) + 333) });
+  await editor.updateVideo('AAAAAAAAAAA', () => videoRecord());
+  const opened = await editor.updateVideo('AAAAAAAAAAA', (r) => withView(r, { displayOffsetMs: 100 }, NOW));
+  assert.equal(opened.rev, 2);
+  await other.deleteVideo('AAAAAAAAAAA');
+  await other.updateVideo('AAAAAAAAAAA', () => videoRecord());
+  const again = await other.updateVideo('AAAAAAAAAAA', (r) => withView(r, { displayOffsetMs: 900 }, NOW));
+  assert.equal(again.rev, 2, 'المراجعة نفسها لسجل مختلف');
+  await assert.rejects(editor.updateVideo('AAAAAAAAAAA', (r) => r, { expect: opened }), code('ST_CONFLICT'));
+});
+
+test('كتابة سياق آخر بين القراءة والكتابة: تُعاد fn على الأحدث بلا expect، وتُرفض معه', async () => {
+  const area = createMemoryArea();
+  const player = createStore({ area, now: clock() });
+  const editor = createStore({ area, now: clock() });
+  const base = await player.updateVideo('AAAAAAAAAAA', () => videoRecord());
+  let calls = 0;
+  const slow = player.updateVideo('AAAAAAAAAAA', async (r) => {
+    calls++;
+    if (calls === 1) await editor.updateVideo('AAAAAAAAAAA', (x) => withView(x, { displayMode: 'dual' }, NOW));
+    return withView(r, { displayOffsetMs: 500 }, NOW);
+  });
+  const done = await slow;
+  assert.equal(calls, 2, 'أُعيدت على الأحدث');
+  assert.deepEqual(done.view, { displayOffsetMs: 500, displayMode: 'dual' }, 'لم يضع تعديل أيٍّ منهما');
+  const conflicting = editor.updateVideo('AAAAAAAAAAA', async (r) => {
+    await player.updateVideo('AAAAAAAAAAA', (x) => withView(x, { displayOffsetMs: 700 }, NOW));
+    return withView(r, { displayMode: 'off' }, NOW);
+  }, { expect: done });
+  await assert.rejects(conflicting, code('ST_CONFLICT'));
+  const final = await player.getVideo('AAAAAAAAAAA');
+  assert.deepEqual(final.view, { displayOffsetMs: 700, displayMode: 'dual' });
+  assert.ok(final.rev > base.rev);
 });
 
 test('كتابات السياق الواحد متسلسلة: 20 تعديلًا متزامنًا لا يضيع منها شيء', async () => {
@@ -137,6 +175,10 @@ test('الفهرس: الأحدث أولًا، ويصلح نفسه (مُلخّص 
   assert.deepEqual(list.map((e) => e.videoId).sort(), ['AAAAAAAAAAA', 'BBBBBBBBBBB']);
   assert.ok(area.dump()['index:AAAAAAAAAAA']);
   assert.equal(area.dump()['index:CCCCCCCCCCC'], undefined);
+  area.rawSet('index:BBBBBBBBBBB', { schema: 1, videoId: 'BBBBBBBBBBB' });
+  list = await store.listIndex();
+  assert.deepEqual(list.map((e) => e.videoId).sort(), ['AAAAAAAAAAA', 'BBBBBBBBBBB'], 'مُلخّص غير صالح يُعاد بناؤه');
+  assert.equal(area.dump()['index:BBBBBBBBBBB'].rev, 1);
 });
 
 test('سجل تالف: ST_CORRUPT_RECORD عند قراءته، والفهرس يبقى يعمل', async () => {

@@ -10,13 +10,13 @@ import { NOW, fakeExtractor, fingerprint, englishTrack, makeCues, videoRecord } 
 
 const A = 'AAAAAAAAAAA';
 const B = 'BBBBBBBBBBB';
-const clock = () => {
-  let t = Date.parse(NOW);
+const clock = (start = Date.parse(NOW)) => {
+  let t = start;
   return () => (t += 1000);
 };
 
-async function setup({ records = [], settings, extractor = fakeExtractor(), storeWrap } = {}) {
-  const area = createMemoryArea();
+async function setup({ records = [], settings, extractor = fakeExtractor(), storeWrap, areaOpts } = {}) {
+  const area = createMemoryArea(areaOpts);
   const seed = createStore({ area, now: clock() });
   for (const r of records) await seed.updateVideo(r.videoId, () => r);
   if (settings) await seed.setSettings(settings);
@@ -25,7 +25,8 @@ async function setup({ records = [], settings, extractor = fakeExtractor(), stor
   if (storeWrap) store = storeWrap(store);
   const c = createController({ store, extractor, page: { title: () => 'عنوان من الصفحة', durationMs: () => 90000 }, now: clock() });
   store.onChange((ch) => c.handleStoreChange(ch));
-  const other = createStore({ area, now: clock() });
+  // سياق آخر (المحرّر أو تبويب آخر) بساعته؛ الساعات المتطابقة تصنع تواريخ متطابقة لا تحدث فعلًا.
+  const other = createStore({ area, now: clock(Date.parse(NOW) + 333) });
   return { area, store, other, c, extractor };
 }
 const settle = async (area) => {
@@ -224,6 +225,143 @@ test('المسار الإنجليزي للوضع المزدوج: الملتقط 
   assert.equal(c.getState().captured.length, 0);
   ex.reject('EX_NOT_ENGLISH');
   assert.equal(c.getState().captureIssue.code, 'EX_NOT_ENGLISH');
+});
+
+test('استثناء في مشترك لا يوقف المتحكم ولا يحرم المشتركين الآخرين', async () => {
+  const { c } = await setup({ records: [videoRecord()] });
+  const seen = [];
+  c.subscribe((s) => {
+    if (s.videoId) throw new Error('عطل في مشترك الطبقة');
+  });
+  c.subscribe((s) => seen.push(s.loading));
+  await c.start(A);
+  assert.equal(c.getState().loading, false, 'اكتمل التحميل');
+  assert.equal(c.getState().arabic.cues.length, 5);
+  assert.ok(seen.includes(false), 'المشترك السليم تلقى الحالة');
+  const d = c.diagnostics();
+  assert.ok(d.listenerFailures > 0);
+  assert.equal(d.lastListenerError.code, 'TJ_UNEXPECTED');
+});
+
+test('تبديل الفيديو: أول إشعار بعده بلا مسارات الفيديو السابق', async () => {
+  const ex = fakeExtractor({ tracks: [{ key: 'en|manual', kind: 'manual', cues: makeCues(4) }] });
+  const { c } = await setup({ extractor: ex });
+  await c.start(A);
+  assert.equal(c.getState().captured.length, 1);
+  const first = [];
+  const off = c.subscribe((s) => first.push({ videoId: s.videoId, captured: s.captured.length, english: s.english?.source ?? null }));
+  await c.setVideo(B);
+  off();
+  assert.deepEqual(first[0], { videoId: B, captured: 0, english: null });
+  assert.ok(first.every((x) => x.captured === 0 && x.english === null));
+});
+
+test('تنقل أثناء تحميل الإعدادات: الفيديو الأحدث يبقى ولا يعود المتحكم إلى القديم', async () => {
+  let release;
+  const gate = new Promise((r) => {
+    release = r;
+  });
+  const { c } = await setup({
+    records: [videoRecord(), videoRecord({ videoId: B, offset: 900 })],
+    storeWrap: (s) => ({ ...s, getSettings: () => gate.then(() => s.getSettings()) }),
+  });
+  const starting = c.start(A);
+  await c.setVideo(B);
+  release();
+  await starting;
+  assert.equal(c.getState().videoId, B);
+  assert.equal(c.getState().view.displayOffsetMs, 900);
+});
+
+test('± أثناء قراءة سجل الفيديو بلا أثر، ثم يعمل بعد اكتمالها', async () => {
+  let release;
+  const gate = new Promise((r) => {
+    release = r;
+  });
+  const { c, store } = await setup({
+    records: [videoRecord({ offset: 700 })],
+    storeWrap: (s) => ({ ...s, getVideo: (id) => gate.then(() => s.getVideo(id)) }),
+  });
+  const starting = c.start(A);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(c.getState().loading, true);
+  await c.nudgeOffset(1);
+  assert.equal(c.getState().view.displayOffsetMs, 0, 'لا أثر أثناء التحميل');
+  release();
+  await starting;
+  assert.equal(c.getState().view.displayOffsetMs, 700);
+  await c.nudgeOffset(1);
+  assert.equal((await store.getVideo(A)).view.displayOffsetMs, 1200);
+});
+
+test('مراجع المقاطع ثابتة عبر ± (العربي والإنجليزي المحفوظ)، وتتغير حين يتغير المصدر', async () => {
+  const { c, other, area } = await setup({ records: [videoRecord()] });
+  await c.start(A);
+  const a0 = c.getState().arabic.cues;
+  const e0 = c.getState().english.cues;
+  assert.equal(c.getState().english.source, 'saved');
+  await c.nudgeOffset(1);
+  await c.setDisplayMode('dual');
+  assert.equal(c.getState().arabic.cues, a0);
+  assert.equal(c.getState().english.cues, e0);
+  await other.updateVideo(A, (r) => withArabicEdit(r, { cues: makeCues(5, { startMs: 4000 }) }, NOW));
+  await settle(area);
+  assert.notEqual(c.getState().arabic.cues, a0);
+  assert.equal(c.getState().arabic.cues[0].startMs, 4000);
+});
+
+test('كاتبان بالمراجعة نفسها: حالة المشغّل تطابق المخزَّن في النهاية', async () => {
+  const { c, other, area, store } = await setup({ records: [videoRecord()] });
+  await c.start(A);
+  const editorSave = other.updateVideo(A, async (r) => {
+    await new Promise((res) => setTimeout(res, 20));
+    return withArabicEdit(r, { cues: makeCues(5, { startMs: 7000 }) }, NOW);
+  });
+  await c.nudgeOffset(1);
+  await editorSave;
+  await settle(area);
+  await new Promise((r) => setTimeout(r, 20));
+  await settle(area);
+  const stored = await store.getVideo(A);
+  const s = c.getState();
+  assert.equal(stored.arabic.current[0].startMs, 7000, 'حفظ المحرّر لم يضع');
+  assert.equal(stored.view.displayOffsetMs, 500, 'ولا نقرة المشغّل');
+  assert.equal(s.saved.rev, stored.rev);
+  assert.equal(s.arabic.edited, true);
+  assert.equal(s.view.displayOffsetMs, 500);
+});
+
+test('أحداث التخزين قبل انتهاء الكتابة (ترتيب غير مضمون في Chrome): لا تراجع ولا انفصال', async () => {
+  const { c, store, area } = await setup({ records: [videoRecord()], areaOpts: { eventsBeforeResolve: true } });
+  await c.start(A);
+  const seen = [];
+  c.subscribe((s) => seen.push(s.view.displayOffsetMs));
+  await Promise.all([c.nudgeOffset(1), c.nudgeOffset(1), c.nudgeOffset(1)]);
+  await settle(area);
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(c.getState().view.displayOffsetMs, 1500);
+  assert.equal((await store.getVideo(A)).view.displayOffsetMs, 1500);
+  for (let i = 1; i < seen.length; i++) assert.ok(seen[i] >= seen[i - 1], `تراجع: ${seen.join(',')}`);
+  assert.equal(c.getState().saved.rev, (await store.getVideo(A)).rev);
+});
+
+test('استيراد أثناء قراءة السجل: الحالة النهائية تحمل الاستيراد', async () => {
+  let release;
+  const gate = new Promise((r) => {
+    release = r;
+  });
+  let first = true;
+  const { c } = await setup({
+    records: [videoRecord({ arabic: false })],
+    storeWrap: (s) => ({ ...s, getVideo: (id) => (first ? (first = false, gate.then(() => s.getVideo(id))) : s.getVideo(id)) }),
+  });
+  const starting = c.start(A);
+  await new Promise((r) => setTimeout(r, 5));
+  const rec = await c.loadArabic({ fileName: 'x.srt', cues: makeCues(2) });
+  release();
+  await starting;
+  assert.equal(c.getState().saved.rev, rec.rev);
+  assert.equal(c.getState().arabic.cues.length, 2);
 });
 
 test('خطأ تخزين يظهر في الحالة برمز ورسالة، ولا يوقف المتحكم', async () => {

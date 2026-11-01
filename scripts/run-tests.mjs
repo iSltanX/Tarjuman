@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// يشغّل كل ملفات *.test.js تحت مجلد بـnode:test. مجلد بلا اختبارات بعد (مثل test/integration قبل W3)
-// يُبلَّغ عنه «لا اختبارات بعد» وينجح، فلا يُسجَّل غائبٌ ناجحًا ولا يُفشل الموجة.
-//   node scripts/run-tests.mjs test/unit [test/integration …]
+// يشغّل كل ملفات *.test.js تحت مجلد بـnode:test. غياب الاختبارات فشل، إلا بـ--allow-empty لمجلد لم تُكتب
+// اختباراته بعد (مثل test/integration قبل W3)، فيُبلَّغ «لا اختبارات بعد» وينجح.
+//   node scripts/run-tests.mjs test/unit
+//   node scripts/run-tests.mjs --allow-empty test/integration
 import { spawnSync } from 'node:child_process';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -25,9 +26,15 @@ async function walk(dir) {
   return out;
 }
 
-const dirs = process.argv.slice(2);
+const args = process.argv.slice(2);
+const allowEmpty = args.includes('--allow-empty');
+const dirs = args.filter((a) => a !== '--allow-empty');
 const files = (await Promise.all(dirs.map((d) => walk(path.resolve(ROOT, d))))).flat().sort();
 if (!files.length) {
+  if (!allowEmpty) {
+    console.error(`run-tests: لا ملفات اختبار في ${dirs.join('، ') || '(لا مجلد)'}`);
+    process.exit(1);
+  }
   console.log(`run-tests: لا اختبارات بعد في ${dirs.join('، ')}`);
   process.exit(0);
 }

@@ -142,6 +142,24 @@ test('البصمات: حد عشر، ولا تسقط البصمة التي تشي
   valid(rec);
 });
 
+test('حد المسارات الإنجليزية: التصدير يُسقط أقدم مسار لا تشير إليه بصمة، والمرجع لا يُضاف عند الامتلاء', () => {
+  let rec = videoRecord();
+  const langs = ['en-GB', 'en-US', 'en-AU', 'en-CA', 'en-IE', 'en-NZ', 'en-IN'];
+  rec = { ...rec, english: [...rec.english, ...langs.map((lang) => englishTrack({ lang }))] };
+  assert.equal(rec.english.length, 8);
+  valid(rec);
+  const t = englishTrack({ lang: 'en-ZA', kind: 'asr' });
+  const next = withExport(rec, { videoId: rec.videoId, englishTrack: t, fingerprint: fingerprint({ track: t, id: 'fp_limit000001' }) }, LATER);
+  valid(next);
+  assert.equal(next.english.length, 8);
+  assert.ok(next.english.some((x) => x.key === 'en|manual'), 'المسار المشار إليه بالبصمة باقٍ');
+  assert.ok(!next.english.some((x) => x.key === 'en-GB|manual'), 'أُسقط أقدم مسار غير مشار إليه');
+  const imp = withArabicImport(next, { videoId: rec.videoId, fileName: 'n.srt', cues: makeCues(2), englishTrack: englishTrack({ lang: 'en-SG' }) }, LATER, { replace: true });
+  valid(imp.record);
+  assert.equal(imp.record.english.length, 8);
+  assert.ok(!imp.record.english.some((x) => x.key === 'en-SG|manual'));
+});
+
 test('العرض والاستعادة والحذف لا تمس التوقيت المحفوظ', () => {
   const rec = videoRecord();
   const v = withView(rec, { displayOffsetMs: 700, displayMode: 'dual' }, LATER);

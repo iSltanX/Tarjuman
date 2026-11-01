@@ -116,8 +116,8 @@ VideoRecord = {
 
 | الدالة | متى | ما تفعله | ما لا تمسه |
 | --- | --- | --- | --- |
-| `withExport(rec, { videoId, title, durationMs, englishTrack, fingerprint })` | بعد تنزيل SRT إنجليزي | تحفظ المسار (أحدث التقاط لمفتاحه) وتضيف البصمة | العربية والإزاحة |
-| `withArabicImport(rec, { videoId, fileName, cues, comparison, fingerprintId, notes, englishTrack, displayModeDefault }, now, { replace })` | استيراد أو استبدال | الملف يصبح الأصل المستورد، و**الإزاحة صفر دائمًا**، و`off` يعود إلى الافتراضي. وجود ترجمة دون `replace` يرمي `ST_ARABIC_EXISTS`. تعيد `{ record, offsetWas, replaced }` | — |
+| `withExport(rec, { videoId, title, durationMs, englishTrack, fingerprint })` | بعد تنزيل SRT إنجليزي | تحفظ المسار (أحدث التقاط لمفتاحه) وتضيف البصمة؛ وعند امتلاء حد المسارات يُسقط أقدم مسار لا تشير إليه بصمة | العربية والإزاحة |
+| `withArabicImport(rec, { videoId, fileName, cues, comparison, fingerprintId, notes, englishTrack, displayModeDefault }, now, { replace })` | استيراد أو استبدال | الملف يصبح الأصل المستورد، و**الإزاحة صفر دائمًا**، و`off` يعود إلى الافتراضي، والمسار الملتقط يُضاف مرجعًا إن لم يكن محفوظًا وفي الحد متسع. وجود ترجمة دون `replace` يرمي `ST_ARABIC_EXISTS`. تعيد `{ record, offsetWas, replaced }` | — |
 | `withView(rec, { displayOffsetMs?, displayMode? })` | ± ووضع العرض | الإزاحة أو الوضع | أي توقيت محفوظ |
 | `withArabicEdit(rec, { cues, displayOffsetMs? })` | «حفظ» المحرّر | `current` = المقاطع، و`editedAt` الآن، والإزاحة إن مُرِّرت في الخطوة نفسها | `original` |
 | `withOriginalRestored(rec)` | «استعادة الأصل» | `current = null` | `original` |

@@ -1,6 +1,6 @@
 // وحدة التخزين (عقد docs/contracts/storage.md) فوق chrome.storage.local. سجل لكل فيديو ومُلخّصه في
 // مفتاح فهرس مستقل يُكتبان في عملية set واحدة، فلا يتسابق سياقان على مفتاح فهرس مشترك. الكتابة داخل
-// السياق الواحد متسلسلة، والتعارض بين السياقات يُكشف بـrev (expectRev).
+// السياق الواحد متسلسلة، والتعارض بين السياقات يُكشف بنسخة السجل (rev وupdatedAt) قبل الكتابة وبـexpect.
 import { TjError } from '../errors/index.js';
 import { assertValid } from '../model/validate.js';
 import { DEFAULT_SETTINGS, mergeSettings, normalizeSettings, validateSettings } from '../model/settings.js';
@@ -100,22 +100,39 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     return raw;
   }
 
-  async function syncIndex(keys) {
+  /** يقرأ المُلخّصات ويصلحها: المفقود أو غير الصالح لسجل صالح يُعاد بناؤه، واليتيم يُحذف. */
+  async function syncIndex() {
+    const keys = await listKeys();
     const ids = (kind) => new Set(keys.map(parseKey).filter((k) => k && k.kind === kind).map((k) => k.videoId));
     const videos = ids('video');
     const index = ids('index');
-    const missing = [...videos].filter((id) => !index.has(id));
     const orphan = [...index].filter((id) => !videos.has(id));
     if (orphan.length) await removeKeys(orphan.map(indexKey));
-    if (!missing.length) return;
-    const items = await read(missing.map(videoKey));
-    const repaired = {};
-    for (const id of missing) {
-      const rec = items[videoKey(id)];
-      if (validateVideoRecord(rec).ok) repaired[indexKey(id)] = summarizeVideo(rec);
+    const present = [...index].filter((id) => videos.has(id));
+    const items = present.length ? await read(present.map(indexKey)) : {};
+    const entries = new Map();
+    for (const id of present) {
+      const e = items[indexKey(id)];
+      if (validateIndexEntry(e).ok && e.videoId === id) entries.set(id, e);
     }
-    if (Object.keys(repaired).length) await write(repaired);
+    const missing = [...videos].filter((id) => !entries.has(id));
+    if (missing.length) {
+      const recs = await read(missing.map(videoKey));
+      const repaired = {};
+      for (const id of missing) {
+        const rec = recs[videoKey(id)];
+        if (!validateVideoRecord(rec).ok) continue;
+        const e = summarizeVideo(rec);
+        repaired[indexKey(id)] = e;
+        entries.set(id, e);
+      }
+      if (Object.keys(repaired).length) await write(repaired);
+    }
+    return [...entries.values()];
   }
+
+  /** نسخة السجل للمقارنة: المراجعة وتاريخ آخر حفظ معًا (فلا يخدع حذفٌ ثم إنشاءٌ بالمراجعة نفسها). */
+  const versionOf = (r) => (r ? `${r.rev}|${r.updatedAt}` : 'none');
 
   return {
     /** الترحيل مرة لكل سياق؛ كل دالة تنتظره ضمنًا. */
@@ -152,31 +169,41 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
 
     /**
      * قراءة ثم تعديل ثم كتابة للسجل ومُلخّصه معًا. fn تستلم نسخة (أو null) وتعيد سجلًا، أو null للحذف،
-     * أو undefined لعدم التغيير. rev يزيد واحدًا، وupdatedAt وcreatedAt يضبطهما التخزين.
+     * أو undefined لعدم التغيير؛ وقد تُستدعى أكثر من مرة فلتكن نقية. rev يزيد واحدًا، وupdatedAt وcreatedAt
+     * يضبطهما التخزين. قبل الكتابة مباشرة يُعاد فحص نسخة السجل: إن كتب سياق آخر بينهما أُعيدت fn على
+     * الأحدث (حتى ثلاث مرات)، أو رُفض بـST_CONFLICT إن مُرِّر expect.
      * @param {string} videoId
      * @param {(rec: VideoRecord | null) => VideoRecord | null | undefined | Promise<VideoRecord | null | undefined>} fn
-     * @param {{ expectRev?: number }} [opts] expectRev: يرفض بـST_CONFLICT إن تغيّر السجل منذ قُرئ (0 = غير موجود)
+     * @param {{ expect?: VideoRecord | null }} [opts] السجل الذي بُني عليه التعديل (null = غير موجود)؛
+     *   يرفض بـST_CONFLICT إن تغيّرت مراجعته أو تاريخ حفظه منذئذ
      * @returns {Promise<VideoRecord | null>}
      */
-    updateVideo(videoId, fn, { expectRev } = {}) {
+    updateVideo(videoId, fn, { expect } = {}) {
       checkId(videoId);
       return exclusive(async () => {
         await ready();
-        const cur = await readVideo(videoId);
-        if (expectRev !== undefined && (cur?.rev ?? 0) !== expectRev) {
-          throw new TjError('ST_CONFLICT', { detail: `المتوقع ${expectRev} والمخزَّن ${cur?.rev ?? 0}` });
+        for (let attempt = 1; ; attempt++) {
+          const cur = await readVideo(videoId);
+          if (expect !== undefined && versionOf(cur) !== versionOf(expect)) {
+            throw new TjError('ST_CONFLICT', { detail: `المتوقع ${versionOf(expect)} والمخزَّن ${versionOf(cur)}` });
+          }
+          const draft = await fn(cur ? structuredClone(cur) : null);
+          if (draft === undefined) return cur;
+          const { [videoKey(videoId)]: latest } = await read(videoKey(videoId));
+          if (versionOf(latest) !== versionOf(cur)) {
+            if (expect !== undefined || attempt >= 3) throw new TjError('ST_CONFLICT', { detail: `تغيّر أثناء التعديل: ${versionOf(cur)} ← ${versionOf(latest)}` });
+            continue;
+          }
+          if (draft === null) {
+            if (cur) await removeKeys([videoKey(videoId), indexKey(videoId)]);
+            return null;
+          }
+          const at = iso();
+          const next = { ...draft, videoId, rev: (cur?.rev ?? 0) + 1, createdAt: cur?.createdAt ?? at, updatedAt: at };
+          assertValid(validateVideoRecord(next), 'video');
+          await write({ [videoKey(videoId)]: next, [indexKey(videoId)]: summarizeVideo(next) });
+          return next;
         }
-        const draft = await fn(cur ? structuredClone(cur) : null);
-        if (draft === undefined) return cur;
-        if (draft === null) {
-          if (cur) await removeKeys([videoKey(videoId), indexKey(videoId)]);
-          return null;
-        }
-        const at = iso();
-        const next = { ...draft, videoId, rev: (cur?.rev ?? 0) + 1, createdAt: cur?.createdAt ?? at, updatedAt: at };
-        assertValid(validateVideoRecord(next), 'video');
-        await write({ [videoKey(videoId)]: next, [indexKey(videoId)]: summarizeVideo(next) });
-        return next;
       });
     },
 
@@ -190,18 +217,14 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     },
 
     /**
-     * فهرس المحفوظات الأحدث تعديلًا أولًا. يصلح نفسه: مُلخّص مفقود يُعاد بناؤه، ومُلخّص بلا سجل يُحذف.
+     * فهرس المحفوظات الأحدث تعديلًا أولًا. يصلح نفسه: مُلخّص مفقود أو غير صالح يُعاد بناؤه من سجله،
+     * ومُلخّص بلا سجل يُحذف. قراءة المفاتيح مرة واحدة.
      * @returns {Promise<IndexEntry[]>}
      */
     async listIndex() {
       await ready();
-      await exclusive(async () => syncIndex(await listKeys()));
-      const idx = (await listKeys()).filter((k) => parseKey(k)?.kind === 'index');
-      if (!idx.length) return [];
-      const items = await read(idx);
-      return Object.values(items)
-        .filter((e) => validateIndexEntry(e).ok)
-        .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
+      const entries = await exclusive(syncIndex);
+      return entries.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
     },
 
     /** @returns {Promise<import('./capacity.js').Capacity>} */

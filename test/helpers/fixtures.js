@@ -79,17 +79,21 @@ export function videoRecord({ videoId = VIDEO_ID, rev = 1, offset = 0, mode = 'a
 }
 
 /**
- * مستخرج وهمي بواجهة ExtractorAdapter (عقد interfaces §٢) لاختبار المتحكم والأدوات.
- * @param {{ tracks?: { key: string, kind: 'manual' | 'asr', lang?: string, cues: object[], ok?: boolean, code?: string | null }[] }} [o]
+ * مستخرج وهمي بواجهة ExtractorAdapter (عقد interfaces §٢) لاختبار المتحكم والأدوات. المسارات تخص
+ * videoId، وsetVideo يفرّغها عند تغيّر الفيديو وحده كما يفعل المستخرج الحقيقي.
+ * @param {{ videoId?: string | null, tracks?: { key: string, kind: 'manual' | 'asr', lang?: string, cues: object[], ok?: boolean, code?: string | null }[] }} [o]
  */
-export function fakeExtractor({ tracks = [] } = {}) {
+export function fakeExtractor({ videoId = VIDEO_ID, tracks = [] } = {}) {
+  let current = videoId;
   let list = tracks.map((t) => ({ lang: 'en', ok: true, code: null, ...t }));
   let rejection = null;
   const listeners = new Set();
   const emit = () => listeners.forEach((fn) => fn());
   return {
     handleMessage: () => ({ accepted: false, code: 'EX_NO_VIDEO' }),
-    setVideo() {
+    setVideo(id) {
+      if (id === current) return;
+      current = id;
       list = [];
       rejection = null;
       emit();

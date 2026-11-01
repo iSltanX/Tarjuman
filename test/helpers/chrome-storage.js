@@ -6,9 +6,10 @@ const clone = (v) => (v === undefined ? undefined : structuredClone(v));
 const sizeOf = (key, value) => key.length + JSON.stringify(value).length;
 
 /**
- * @param {{ quotaBytes?: number, unlimited?: boolean, initial?: Record<string, unknown> }} [opts]
+ * @param {{ quotaBytes?: number, unlimited?: boolean, initial?: Record<string, unknown>, eventsBeforeResolve?: boolean }} [opts]
+ *   eventsBeforeResolve: يصل onChanged قبل أن يُحلّ وعد الكتابة (ترتيب لا يضمنه Chrome في أي اتجاه)
  */
-export function createMemoryArea({ quotaBytes = 10485760, unlimited = false, initial = {} } = {}) {
+export function createMemoryArea({ quotaBytes = 10485760, unlimited = false, initial = {}, eventsBeforeResolve = false } = {}) {
   const data = new Map(Object.entries(structuredClone(initial)));
   const listeners = new Set();
   const failures = new Map();
@@ -23,13 +24,22 @@ export function createMemoryArea({ quotaBytes = 10485760, unlimited = false, ini
     }
   };
   const emit = (changes) => {
-    if (!Object.keys(changes).length) return;
-    pending.push(new Promise((resolve) => {
+    if (!Object.keys(changes).length) return Promise.resolve();
+    const deliver = () => {
+      for (const fn of listeners) fn(clone(changes), 'local');
+    };
+    if (eventsBeforeResolve) {
+      deliver();
+      return Promise.resolve();
+    }
+    const p = new Promise((resolve) => {
       setTimeout(() => {
-        for (const fn of listeners) fn(clone(changes), 'local');
+        deliver();
         resolve();
       }, 0);
-    }));
+    });
+    pending.push(p);
+    return p;
   };
   const keysOf = (keys) => (keys === null || keys === undefined ? [...data.keys()] : Array.isArray(keys) ? keys : [keys]);
 

@@ -14,6 +14,12 @@ const argv = process.argv.slice(2);
 const DEV = argv.includes('--dev');
 const outArg = argv.indexOf('--out');
 const OUT = outArg > -1 ? path.resolve(argv[outArg + 1]) : path.join(ROOT, 'dist');
+// المجلد يُمسح قبل البناء: لا يكون جذر المستودع ولا أبًا له ولا داخل src.
+const inside = (child, parent) => !path.relative(parent, child).startsWith('..') && !path.isAbsolute(path.relative(parent, child));
+if (inside(ROOT, OUT) || inside(OUT, SRC)) {
+  console.error(`build: مجلد الإخراج غير آمن للمسح: ${OUT}`);
+  process.exit(1);
+}
 
 const PAGES = ['popup', 'library', 'settings', 'editor'];
 
