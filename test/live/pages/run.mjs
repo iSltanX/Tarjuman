@@ -287,7 +287,13 @@ try {
     await sleep(500);
     if (shotName) await snap(lib, `${shotName}-hover`);
     writeClipboard('قيمة سابقة للتحقق');
-    await lib.click(c.x, c.y);
+    // الإحداثيات تُعاد قبل النقر مباشرة (بعد لقطة التلميح): التمرير أو التخطيط قد يتغيّر بينهما فتضيع النقرة.
+    const at = await lib.centerOf(btn);
+    const under = await lib.eval((x, y) => {
+      const e = document.elementFromPoint(x, y);
+      return { onCopyButton: !!e?.closest('.lib-copy__button'), scrollY: Math.round(scrollY), target: e ? `${e.tagName.toLowerCase()}.${String(e.className?.baseVal ?? e.className).slice(0, 40)}` : null };
+    }, { args: [at.x, at.y] });
+    await lib.click(at.x, at.y);
     const ok = await STATE(lib, btn, 'success');
     if (shotName) await snap(lib, `${shotName}-success`);
     const label = await lib.eval((s) => document.querySelector(`${s}`).textContent.trim(), { args: [btn] });
@@ -296,12 +302,12 @@ try {
     const scan = await scanNoTemplate(lib);
     await sleep(250);
     const liveAfter = await lib.eval(() => [...document.querySelectorAll('.lib > .tj-sr-only[role="status"]')].map((x) => x.textContent));
-    return { ok: !!ok, label, equal: clip === expected, len: clip.length, scan, liveAfter };
+    return { ok: !!ok, label, equal: clip === expected, len: clip.length, scan, liveAfter, under };
   };
   const c1 = await copyFlow(SEED_IDS.ted, seed.expectTitles[SEED_IDS.ted], 'library-copy');
   const c2 = await copyFlow(SEED_IDS.typo, seed.expectTitles[SEED_IDS.typo], null);
   const c3 = await copyFlow(SEED_IDS.untitled, null, null);
-  check('ac6-clipboard-row-1', c1.ok && c1.equal && c1.label === 'تم النسخ', { equal: c1.equal, label: c1.label, chars: c1.len });
+  check('ac6-clipboard-row-1', c1.ok && c1.equal && c1.label === 'تم النسخ', { equal: c1.equal, label: c1.label, chars: c1.len, under: c1.under });
   check('ac7-copy-announced-to-screen-reader-after-each-copy', [c1, c2, c3].every((c) => /^تم نسخ تعليمات الترجمة\. ‹.+›$/.test(c.liveAfter[1] ?? '') && c.liveAfter[0] === ''), [c1, c2, c3].map((c) => c.liveAfter));
   check('ac6-clipboard-row-2-different-video', c2.ok && c2.equal, { equal: c2.equal, chars: c2.len });
   check('ac6-clipboard-untitled-row-uses-unavailable', c3.ok && c3.equal, { equal: c3.equal });

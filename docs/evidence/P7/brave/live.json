@@ -1,0 +1,534 @@
+{
+  "browser": "Brave (Chrome/156.0.8078.48)",
+  "at": "2026-11-01T23:05:41.415Z",
+  "checks": [
+    {
+      "id": "ac1-popup-not-video",
+      "ok": true,
+      "detail": {
+        "status": "افتح فيديو على يوتيوب لتظهر حالته هنا.",
+        "items": [
+          {
+            "n": "المحرّر",
+            "off": true
+          },
+          {
+            "n": "المحفوظات",
+            "off": false
+          },
+          {
+            "n": "الإعدادات",
+            "off": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "ac1-watch-page-ready",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "ac1-popup-video-no-subtitle",
+      "ok": true,
+      "detail": {
+        "status": "Do schools kill creativity? | Sir Ken Robinson | TEDلا ترجمة عربية محفوظةالمسار الإنجليزي: غير ملتقط",
+        "pill": null,
+        "editorDisabled": true,
+        "editorDesc": "لا ترجمة لهذا الفيديو بعد"
+      }
+    },
+    {
+      "id": "ac1-popup-video-with-subtitle",
+      "ok": true,
+      "detail": {
+        "status": "Do schools kill creativity? | Sir Ken Robinson | TEDترجمة عربية · 427 مقطعًا · الإزاحة +0.5 ثمعدّلة",
+        "pill": "معدّلة",
+        "editorDisabled": false,
+        "editorDesc": "تحرير ترجمة هذا الفيديو"
+      }
+    },
+    {
+      "id": "ac1-popup-items-open-tabs",
+      "ok": true,
+      "detail": {
+        "المحرّر": true,
+        "المحفوظات": true,
+        "الإعدادات": true
+      }
+    },
+    {
+      "id": "ac2-library-grouped-by-video",
+      "ok": true,
+      "detail": [
+        [
+          "iG9CE55wbtY",
+          [
+            "EN يدوي",
+            "AR معدّلة"
+          ]
+        ],
+        [
+          "Y9rkKtK1b44",
+          [
+            "EN تلقائي"
+          ]
+        ],
+        [
+          "Zx81mN4qR7t",
+          [
+            "EN يدوي",
+            "AR الأصل",
+            "3 ناقصة"
+          ]
+        ],
+        [
+          "Lm2Nb6Vc8Xz",
+          [
+            "EN يدوي",
+            "AR الأصل"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "ac2-offset-and-relative-time",
+      "ok": true,
+      "detail": [
+        "رجة427 مقطعًانسخينسخ تعليمات الترجمة لترفقها مع ملف SRT.حذف…",
+        "جة1056 مقطعًانسخينسخ تعليمات الترجمة لترفقها مع ملف SRT.حذف…",
+        "خرجة40 مقطعًانسخينسخ تعليمات الترجمة لترفقها مع ملف SRT.حذف…",
+        "خرجة12 مقطعًانسخينسخ تعليمات الترجمة لترفقها مع ملف SRT.حذف…"
+      ]
+    },
+    {
+      "id": "ac5-mixed-direction",
+      "ok": true,
+      "detail": {
+        "idDir": [
+          "ltr"
+        ],
+        "titleBidi": [
+          "plaintext"
+        ]
+      }
+    },
+    {
+      "id": "ac5-rtl-arabic",
+      "ok": true,
+      "detail": {
+        "dir": "rtl",
+        "lang": "ar"
+      }
+    },
+    {
+      "id": "ac2-quota-text",
+      "ok": true,
+      "detail": {
+        "capText": "المستخدم 301 ك.ب"
+      }
+    },
+    {
+      "id": "ac2-search-by-title-and-id",
+      "ok": true,
+      "detail": {
+        "byTitle": 1,
+        "byId": 1
+      }
+    },
+    {
+      "id": "ac3-search-no-results",
+      "ok": true,
+      "detail": {
+        "title": "لا نتائج لـ«محاضرة لا وجود لها»",
+        "clear": true
+      }
+    },
+    {
+      "id": "ac2-sort-by-title",
+      "ok": true,
+      "detail": {
+        "first": "لماذا نترجم ",
+        "last": "بلا عنوان محفوظ"
+      }
+    },
+    {
+      "id": "ac6-clipboard-row-1",
+      "ok": true,
+      "detail": {
+        "equal": true,
+        "label": "تم النسخ",
+        "chars": 3425,
+        "under": {
+          "onCopyButton": true,
+          "scrollY": 0,
+          "target": "span."
+        }
+      }
+    },
+    {
+      "id": "ac7-copy-announced-to-screen-reader-after-each-copy",
+      "ok": true,
+      "detail": [
+        [
+          "",
+          "تم نسخ تعليمات الترجمة. ‹Do schools kill creativity? | Sir Ken Robinson | TED›"
+        ],
+        [
+          "",
+          "تم نسخ تعليمات الترجمة. ‹Typography for Long-form Reading — Part 2›"
+        ],
+        [
+          "",
+          "تم نسخ تعليمات الترجمة. ‹Lm2Nb6Vc8Xz›"
+        ]
+      ]
+    },
+    {
+      "id": "ac6-clipboard-row-2-different-video",
+      "ok": true,
+      "detail": {
+        "equal": true,
+        "chars": 3414
+      }
+    },
+    {
+      "id": "ac6-clipboard-untitled-row-uses-unavailable",
+      "ok": true,
+      "detail": {
+        "equal": true
+      }
+    },
+    {
+      "id": "ac7-no-template-in-dom-after-copy",
+      "ok": true,
+      "detail": {
+        "hits": [],
+        "textareas": 0,
+        "textInputs": 0,
+        "editable": 0
+      }
+    },
+    {
+      "id": "ac7-copy-success-reverts-to-idle",
+      "ok": true,
+      "detail": [
+        "idle",
+        "idle",
+        "idle",
+        "idle"
+      ]
+    },
+    {
+      "id": "ac7-copy-accessibility",
+      "ok": true,
+      "detail": {
+        "name": "نسخ تعليمات ترجمة: Do schools kill creativity? | Sir Ken Robinson | TED",
+        "tip": "ينسخ تعليمات الترجمة لترفقها مع ملف SRT.",
+        "live": "|تم نسخ تعليمات الترجمة. ‹Lm2Nb6Vc8Xz›"
+      }
+    },
+    {
+      "id": "ac7-copy-failure-state",
+      "ok": true,
+      "detail": {
+        "label": "أعد المحاولة",
+        "toast": "تعذّر النسخ إلى الحافظة. أعد المحاولة.",
+        "hits": 0
+      }
+    },
+    {
+      "id": "ac2-export-arabic-with-offset",
+      "ok": true,
+      "detail": {
+        "dialog": "توقيت الملف المصدَّر",
+        "cues": 427,
+        "shifted": 500
+      }
+    },
+    {
+      "id": "ac2-export-english-normal",
+      "ok": true,
+      "detail": {
+        "cues": 1056
+      }
+    },
+    {
+      "id": "ac2-open-video-and-edit",
+      "ok": true,
+      "detail": {
+        "video": true,
+        "editor": true
+      }
+    },
+    {
+      "id": "ac2-replace-with-compare-dialog",
+      "ok": true,
+      "detail": {
+        "title": "استبدال ترجمة \"⁨Do s",
+        "offset": 0,
+        "first": "ترجمة بديلة للمقطع 1"
+      }
+    },
+    {
+      "id": "ac2-delete-with-explicit-confirmation",
+      "ok": true,
+      "detail": {
+        "options": 2,
+        "arabicGone": true,
+        "englishKept": 1,
+        "rows": 3
+      }
+    },
+    {
+      "id": "ac3-loading-state",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "ac3-error-state",
+      "ok": true,
+      "detail": {
+        "diag": true
+      }
+    },
+    {
+      "id": "ac4-settings-sections",
+      "ok": true,
+      "detail": [
+        "العرض",
+        "التوقيت",
+        "التصدير",
+        "المقارنة",
+        "التخزين",
+        "التشخيص",
+        "حول"
+      ]
+    },
+    {
+      "id": "ac9-no-show-instructions-toggle",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "ac8-font-choice-saved-and-preview",
+      "ok": true,
+      "detail": {
+        "saved": "حُفظ",
+        "stored": "markazi",
+        "loadedFamilies": 6
+      }
+    },
+    {
+      "id": "ac9-ui-fonts-unchanged-by-subtitle-font",
+      "ok": true,
+      "detail": {
+        "before": 10,
+        "same": true
+      }
+    },
+    {
+      "id": "ac8-slider-keyboard",
+      "ok": true,
+      "detail": {
+        "start": 100,
+        "right": 95,
+        "left": 100,
+        "end": 160,
+        "home": 70,
+        "previewPx": [
+          "13px",
+          "29px"
+        ]
+      }
+    },
+    {
+      "id": "ac8-slider-saved",
+      "ok": true,
+      "detail": {
+        "scale": 160
+      }
+    },
+    {
+      "id": "ac8-reset-enabled-after-change",
+      "ok": true,
+      "detail": {
+        "disabled": "false"
+      }
+    },
+    {
+      "id": "ac8-reset-restores-defaults-and-disables",
+      "ok": true,
+      "detail": {
+        "s": {
+          "background": "soft",
+          "font": "almarai",
+          "position": "bottom",
+          "scale": 100
+        },
+        "disabled": "true",
+        "reason": "الخط والحجم افتراضيان بالفعل."
+      }
+    },
+    {
+      "id": "ac4-all-options-saved-instantly",
+      "ok": true,
+      "detail": {
+        "dual": "dual",
+        "step": 2000,
+        "split": 350,
+        "drift": 250,
+        "completeness": 0.9,
+        "stepErr": true
+      }
+    },
+    {
+      "id": "ac4-diagnostics-sanitized",
+      "ok": true,
+      "detail": {
+        "keys": [
+          "storage",
+          "library",
+          "settings"
+        ],
+        "videos": 3,
+        "leaks": 0
+      }
+    },
+    {
+      "id": "ac10-about-links-and-credits",
+      "ok": true,
+      "detail": {
+        "external": [
+          "bysltan.com",
+          "github.com"
+        ],
+        "licenses": 4
+      }
+    },
+    {
+      "id": "ac10-license-opens-local-in-new-tab",
+      "ok": true,
+      "detail": {
+        "opened": true
+      }
+    },
+    {
+      "id": "ac10-external-link-opens-new-tab-noopener",
+      "ok": true,
+      "detail": {
+        "opened": true,
+        "openerNull": true
+      }
+    },
+    {
+      "id": "ac5-ac9-no-network-from-extension-pages",
+      "ok": true,
+      "detail": {
+        "pages": 8,
+        "requests": 68,
+        "external": 0,
+        "hosts": []
+      }
+    },
+    {
+      "id": "ac8-extension-id-stable-across-restart",
+      "ok": true,
+      "detail": {
+        "same": true
+      }
+    },
+    {
+      "id": "ac8-font-and-scale-persist-after-browser-restart",
+      "ok": true,
+      "detail": {
+        "before": {
+          "background": "solid",
+          "font": "tajawal",
+          "position": "raised",
+          "scale": 160
+        },
+        "after": {
+          "background": "solid",
+          "font": "tajawal",
+          "position": "raised",
+          "scale": 160
+        },
+        "radio": "tajawal",
+        "slider": "160"
+      }
+    },
+    {
+      "id": "ac4-clear-all-requires-typed-word",
+      "ok": true,
+      "detail": {
+        "gate": [
+          "true",
+          "false"
+        ],
+        "before": 3,
+        "after": 0
+      }
+    },
+    {
+      "id": "ac3-empty-state",
+      "ok": true,
+      "detail": {
+        "title": "لا ترجمات محفوظة بعد",
+        "steps": [
+          "افتح فيديو",
+          "اضغط تحميل الترجمة",
+          "ارفع ملفك العربي"
+        ]
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": {
+        "count": 0,
+        "sample": []
+      }
+    }
+  ],
+  "screenshots": [
+    "docs/evidence/P7/brave/popup-not-video-light.png",
+    "docs/evidence/P7/brave/popup-not-video-dark.png",
+    "docs/evidence/P7/brave/popup-no-subtitle-light.png",
+    "docs/evidence/P7/brave/popup-no-subtitle-dark.png",
+    "docs/evidence/P7/brave/popup-with-subtitle-light.png",
+    "docs/evidence/P7/brave/popup-with-subtitle-dark.png",
+    "docs/evidence/P7/brave/library-full-1440-light.png",
+    "docs/evidence/P7/brave/library-full-1440-dark.png",
+    "docs/evidence/P7/brave/library-full-1024-light.png",
+    "docs/evidence/P7/brave/library-narrow-480-light.png",
+    "docs/evidence/P7/brave/library-search-no-results-light.png",
+    "docs/evidence/P7/brave/library-search-no-results-dark.png",
+    "docs/evidence/P7/brave/library-copy-hover.png",
+    "docs/evidence/P7/brave/library-copy-success.png",
+    "docs/evidence/P7/brave/library-copy-error.png",
+    "docs/evidence/P7/brave/library-export-menu.png",
+    "docs/evidence/P7/brave/library-export-timing-dialog.png",
+    "docs/evidence/P7/brave/library-replace-dialog.png",
+    "docs/evidence/P7/brave/library-delete-dialog.png",
+    "docs/evidence/P7/brave/library-loading-light.png",
+    "docs/evidence/P7/brave/library-error-light.png",
+    "docs/evidence/P7/brave/settings-1440-light.png",
+    "docs/evidence/P7/brave/settings-1440-dark.png",
+    "docs/evidence/P7/brave/settings-narrow-480-light.png",
+    "docs/evidence/P7/brave/settings-font-saved.png",
+    "docs/evidence/P7/brave/settings-scale-160.png",
+    "docs/evidence/P7/brave/settings-changed-1440-light.png",
+    "docs/evidence/P7/brave/settings-about-open-light.png",
+    "docs/evidence/P7/brave/settings-about-open-dark.png",
+    "docs/evidence/P7/brave/settings-clear-dialog.png",
+    "docs/evidence/P7/brave/library-empty-light.png",
+    "docs/evidence/P7/brave/library-empty-dark.png"
+  ],
+  "notes": [],
+  "extension": {
+    "version": "0.2.0",
+    "versionName": null
+  },
+  "passed": true
+}
