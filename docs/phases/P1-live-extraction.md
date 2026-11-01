@@ -162,16 +162,112 @@
 {
   "phase": "P1",
   "status": "in_progress",
-  "updated": "2026-11-01T13:26:23+03:00",
+  "updated": "2026-11-01T14:21:12+03:00",
   "branch": "tj/P1-live-extraction",
-  "resume": "الاختبار الحي جارٍ. اكتُشف: تحت CDP بالأنبوب navigator.webdriver=true ويوتيوب تعيد جسم timedtext فارغًا (200، 0B) في Brave وChrome، مع الإضافة ودونها، ولا تعرض الترجمة. مسار الالتقاط نفسه يعمل ويرفض بـEX_EMPTY_BODY. لا إخفاء لعلامة الأتمتة. التالي: أدلة غير معتمدة على الجسم عبر CDP، وقرار سلطان في جلسة غير مؤتمتة لإثبات AC1–AC4 وAC8.",
+  "resume": "Brave غير المؤتمت ثبت (AC1 وAC2 وAC4 وAC6 وAC7 وAC8). معلّق على سلطان: (١) تحميل الإضافة يدويًا مرة واحدة في ملف Chrome chrome-manual من مجلد extension-manual، ثم أشغّل: command node test/live/p1/hidden-run.mjs --browser chrome --profile chrome-manual --ext <extension-manual> --label chrome-matrix --warmup (AC3). (٢) 10 تنقلات داخلية بالنقر مع CC وتمرير فوق معاينات في نافذة Brave غير مؤتمتة ثم «تصدير النتائج»، ويُتحقق بـverify-export (AC5). ثم التقرير والنتيجة والتسليم.",
   "blocker": null,
   "outcome": null,
   "commit": null,
   "mergeCommit": null,
-  "checks": [],
-  "acceptance": {},
-  "evidence": [],
+  "checks": [
+    {
+      "cmd": "npm run check",
+      "result": "pass",
+      "at": "2026-11-01T14:21:12+03:00",
+      "note": "31 اختبارًا، وcheck:static وcheck:secrets ناجحان، والبناء"
+    }
+  ],
+  "acceptance": {
+    "P1-AC1": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P1/live-results.md",
+        "docs/evidence/P1/manual/brave-matrix-2026-11-01T10-47-42.json"
+      ],
+      "note": "Brave غير مؤتمت، Shields بإعداده الافتراضي: يدوي iG9CE55wbtY التُقط 59,007 محرفًا، v وlang=en ونوع manual مطابقة، والثوابت 6/6"
+    },
+    "P1-AC2": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P1/live-results.md",
+        "test/fixtures/json3/asr-nwc-Y9rkKtK1b44.json"
+      ],
+      "note": "Brave غير مؤتمت: Y9rkKtK1b44 بنوع asr (kind=asr)، 9,031 كلمة بلا فقد، ولا تداخل، والثوابت 6/6"
+    },
+    "P1-AC3": {
+      "result": "pending",
+      "evidence": [],
+      "note": "Chrome غير المؤتمت لم يُختبر: يحتاج تحميل الإضافة يدويًا مرة واحدة في ملف chrome-manual؛ أدلة Chrome المؤتمتة (رفض الإعلان والفارغ) لا تكفي"
+    },
+    "P1-AC4": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P1/live-results.md"
+      ],
+      "note": "Brave: يدوي 10/10 مواضع (21 لقطة exact ولقطة مفسَّرة)، تلقائي 10/10 contained؛ الاكتمال 96.8% و99.6%"
+    },
+    "P1-AC5": {
+      "result": "partial",
+      "evidence": [
+        "docs/evidence/P1/live-results.md",
+        "docs/evidence/P1/diag-notes.md"
+      ],
+      "note": "ثبت رفض الإعلان وترجمات فيديوهات أخرى والمعاينات، وصُحّح سباق التنقل؛ لم تُجرَ 10 تنقلات داخلية مع تمرير المعاينات في متصفح غير مؤتمت"
+    },
+    "P1-AC6": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P1/live-results.md",
+        "docs/evidence/P1/runs/brave-2026-11-01T10-26-13.json"
+      ],
+      "note": "0 طلب أصله الإضافة من 471 في سجل الشبكة، وcheck:secrets ناجح، ومخزن الإضافة فارغ"
+    },
+    "P1-AC7": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P1/live-results.md"
+      ],
+      "note": "بلا ترجمة: لا التقاط؛ tlang رُفض EX_TRANSLATED_TRACK؛ الفارغ صودف ورُفض EX_EMPTY_BODY؛ تنزيل SRT عبر Blob مطابق دون إذن downloads"
+    },
+    "P1-AC8": {
+      "result": "pass",
+      "evidence": [
+        "test/fixtures/json3/index.json"
+      ],
+      "note": "عينتان حقيقيتان منقّاتان (يدوي وتلقائي) واختبارات المحوّل والثوابت تنجح عليهما؛ لم يُصادف تكرار حرفي"
+    },
+    "P1-AC9": {
+      "result": "pending",
+      "evidence": [],
+      "note": "يُكتب عند التسليم بعد خطوات سلطان المعلّقة"
+    }
+  },
+  "evidence": [
+    {
+      "label": "نتائج P1 الحية",
+      "path": "docs/evidence/P1/live-results.md"
+    },
+    {
+      "label": "ملاحظات التشخيص (الجسم الفارغ وسباق التنقل)",
+      "path": "docs/evidence/P1/diag-notes.md"
+    },
+    {
+      "label": "أدلة الجلسات غير المؤتمتة",
+      "path": "docs/evidence/P1/manual/"
+    },
+    {
+      "label": "تشغيلات CDP المنقّاة",
+      "path": "docs/evidence/P1/runs/"
+    },
+    {
+      "label": "ملفات SRT الناتجة",
+      "path": "docs/evidence/P1/srt/"
+    },
+    {
+      "label": "عينات json3 الحقيقية",
+      "path": "test/fixtures/json3/"
+    }
+  ],
   "sharedRequests": []
 }
 ```
@@ -181,6 +277,12 @@
 | التاريخ | ما أُنجز | الدليل |
 | --- | --- | --- |
 | 2026-10-31 | كُتبت المواصفة ضمن تأسيس الخطة. لم يُنفَّذ شيء. | — |
+| 2026-11-01 | الإضافة الدنيا (MV3، `storage` فقط)، والتقاط MAIN، والجسر، والمحوّلان، والثوابت الستة، والكاتب والمحلّل الصارم، والمنقّي، وصفحة الفحص، والفحوص الآلية، وحزام CDP بلا اعتماديات. | `npm run check` |
+| 2026-11-01 | الاختبار الحي تحت CDP: يوتيوب أعادت جسم `timedtext` فارغًا لكل متصفح يعلن الأتمتة (`navigator.webdriver=true`)، في Brave وChrome، بالإضافة ودونها. لم تُخفَ العلامة. سُجّل السبب فرضية غير مثبتة. | [`diag-notes.md`](../evidence/P1/diag-notes.md) |
+| 2026-11-01 | بقرار سلطان: جلسة غير مؤتمتة بمتصفح عادي وروابط مشاهدة بمعاملات يوتيوب الموثّقة، وتصدير نتائج من الإضافة. Brave: التقاط يدوي وتلقائي وطويل، والثوابت 6/6، و10/10 مواضع لكل فيديو، ورفض `tlang` والعربي والفارغ وفيديو آخر، وتنزيل SRT عبر Blob. | [`live-results.md`](../evidence/P1/live-results.md) |
+| 2026-11-01 | ثبت سباق التنقل الداخلي (طلب ترجمة الفيديو الجديد يسبق تغيّر العنوان بنحو 300ms)، فأضيف انتظار 2000ms يعيد تقييم الالتقاط بكل القواعد. | [`diag-notes.md`](../evidence/P1/diag-notes.md) §٢ |
+| 2026-11-01 | بطلب سلطان ألا تظهر نوافذ أمامه: مشغّل خطة داخل صفحة الفحص يعمل في نافذة مخفية (`open -g -j`)، وأدلة CDP اللاحقة بوضع headless. عيّنتا json3 حقيقيتان في `test/fixtures/json3/`. | `test/live/p1/hidden-run.mjs` |
+| 2026-11-01 | معلّق على يد سلطان: تحميل الإضافة يدويًا مرة واحدة في ملف Chrome (`chrome-manual`)، و10 تنقلات داخلية مع تمرير المعاينات في متصفح غير مؤتمت. | [`live-results.md`](../evidence/P1/live-results.md) §هـ |
 
 ## تقرير التسليم
 

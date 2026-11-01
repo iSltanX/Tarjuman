@@ -67,7 +67,7 @@ quit();
 await sleep(3000);
 const planB64 = Buffer.from(JSON.stringify(plan)).toString('base64url');
 const runUrl = `chrome-extension://${unpackedIdOf(ext)}/pages/poc/index.html#run=${label}&plan=${planB64}`;
-const args = ['-g', '-j', '-na', APPS[browser], '--args', `--user-data-dir=${profileDir}`, '--no-first-run', '--no-default-browser-check', '--lang=en-US'];
+const args = ['-g', '-j', '-na', APPS[browser], '--args', `--user-data-dir=${profileDir}`, '--no-first-run', '--no-default-browser-check', '--lang=en-US', '--mute-audio'];
 if (browser === 'brave') args.push(`--load-extension=${ext}`);
 const started = Date.now();
 execFileSync('open', [...args, runUrl]);

@@ -35,6 +35,8 @@ export async function launch({ browser, extensionPath, flagLoad = false, profile
     '--accept-lang=en-US,en',
     '--window-size=1400,950',
     '--window-position=40,40',
+    // يكتم صوت نسخة الاختبار هذه وحدها طوال عمرها (مع التنقل وإعادة التحميل)، لا صوت الجهاز ولا متصفح المستخدم.
+    '--mute-audio',
   ];
   if (flagLoad && extensionPath) args.push(`--load-extension=${extensionPath}`);
   // بلا نافذة ولا تركيز (للتشخيص الذي لا يعتمد على محتوى الجسم). علامة الأتمتة تبقى ظاهرة كما هي.

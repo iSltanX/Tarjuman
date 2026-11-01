@@ -1,0 +1,38 @@
+{
+  "label": "brave-mute-check",
+  "exportedAt": "2026-11-01T11:20:44.412Z",
+  "browser": {
+    "isBrave": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "brands": [
+      "Not:A-Brand 8",
+      "Chromium 156",
+      "Brave 156"
+    ],
+    "webdriverExtensionPage": false
+  },
+  "storage": {
+    "local": [],
+    "session": []
+  },
+  "missing": [],
+  "secretsInExport": 0,
+  "tabs": [
+    {
+      "step": "nocap",
+      "currentVideoId": "aqz-KE-bpKQ",
+      "durationMs": null,
+      "navigations": 1,
+      "webdriverPage": false,
+      "accepted": [],
+      "rejected": [],
+      "log": [
+        {
+          "at": 1793532022362,
+          "type": "start",
+          "to": "aqz-KE-bpKQ"
+        }
+      ]
+    }
+  ]
+}

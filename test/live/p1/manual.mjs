@@ -28,7 +28,7 @@ export function unpackedId(dir) {
 }
 
 function openUrls(list) {
-  const args = ['-na', APPS[browser], '--args', `--user-data-dir=${profileDir}`, '--no-first-run', '--no-default-browser-check', '--lang=en-US'];
+  const args = ['-g', '-na', APPS[browser], '--args', `--user-data-dir=${profileDir}`, '--no-first-run', '--no-default-browser-check', '--lang=en-US', '--mute-audio'];
   if (ext) args.push(`--load-extension=${path.resolve(ext)}`);
   execFileSync('open', [...args, ...list]);
 }
