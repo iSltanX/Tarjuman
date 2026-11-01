@@ -108,10 +108,10 @@
 ```json tj-status
 {
   "phase": "P8",
-  "status": "planned",
-  "updated": "2026-10-31",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W4 بعد التحقق من W3.",
+  "status": "in_progress",
+  "updated": "2026-11-02T01:03:33+03:00",
+  "branch": "tj/P8-editor",
+  "resume": "بدأت المرحلة: قراءة العقود والمنطق النقي src/core/edit بالاختبارات أولًا.",
   "blocker": null,
   "outcome": null,
   "commit": null,
