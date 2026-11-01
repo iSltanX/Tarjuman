@@ -109,10 +109,10 @@
 ```json tj-status
 {
   "phase": "P4",
-  "status": "planned",
-  "updated": "2026-10-31",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W3 بعد التحقق من P2.",
+  "status": "in_progress",
+  "updated": "2026-11-01T18:27:28+03:00",
+  "branch": "tj/P4-import-compare",
+  "resume": "بدأت: قراءة العقود منجزة؛ التالي العينات والاختبارات ثم المحلّل المتسامح",
   "blocker": null,
   "outcome": null,
   "commit": null,
