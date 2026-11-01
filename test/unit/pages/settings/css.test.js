@@ -18,6 +18,12 @@ test('الإعدادات: .st-num بلا flex-basis (يصير ارتفاعًا �
   assert.match(rule(s, '.st-fields > .st-num'), /flex\s*:\s*1 1 240px/);
 });
 
+test('الإعدادات: علامة «حُفظ» لصف الخيار خارج التدفق فلا تدفع ما تحتها ولا تلتف', () => {
+  const s = css('settings/settings.css');
+  assert.match(rule(s, '.st-row'), /position:\s*relative/);
+  assert.match(rule(s, '.st-row .st-saved'), /position:\s*absolute/);
+});
+
 test('المحفوظات: عند تحوّل الصف إلى عمود يُلغى flex-basis للعمود المعلوماتي', () => {
   const l = css('library/library.css');
   assert.match(rule(l, '.lib-row__info'), /flex\s*:\s*1 1 320px/, 'في الصف الأفقي يتمدد عرضًا');

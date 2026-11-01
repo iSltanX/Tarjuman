@@ -167,6 +167,8 @@ try {
   // ===== ١. نافذة الأيقونة (P7-AC1) =====
   const settings0 = await openExt('pages/settings/index.html');
   await settings0.waitFor(() => document.querySelector('.st-card'), { timeoutMs: 8000 });
+  // يبدأ كل تشغيل من تخزين فارغ (ملف الاختبار يبقى بين التشغيلات)، فلا تلوّث بيانات تشغيل سابق حالات النافذة.
+  await settings0.eval(() => chrome.storage.local.clear());
   if (ONLY) await seedStorage(settings0);
   if (!ONLY) {
 

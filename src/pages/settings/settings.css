@@ -7,7 +7,7 @@
 .st-note { margin-top: calc(var(--tj-space-2) * -1); }
 .st-notes { display: flex; flex-direction: column; gap: var(--tj-space-1); }
 
-.st-row { display: flex; align-items: flex-start; gap: var(--tj-space-4); }
+.st-row { position: relative; display: flex; align-items: flex-start; gap: var(--tj-space-4); }
 .st-row__label { flex: 0 0 180px; min-height: 40px; display: flex; align-items: center; }
 .st-row__control { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: var(--tj-space-3); }
 .st-reset-row { display: flex; }
@@ -17,6 +17,8 @@
 .st-saved--success { color: var(--tj-success); }
 .st-saved--danger { color: var(--tj-danger); }
 .st-saved:empty { display: none; }
+/* علامة صف الخيار خارج التدفق في طرف الصف: ظهورها واختفاؤها لا يلتفّ ولا يدفع ما تحتها (قفزة تخطيط كشفتها اللقطات). */
+.st-row .st-saved { position: absolute; inset-inline-end: 0; inset-block-start: 0; }
 
 /* المقطّعة: radio حقيقي مخفي بصريًا، والمختار بصنف الجار. */
 .st-seg { display: inline-flex; border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-button); padding: 3px; margin: 0; min-width: 0; background: var(--tj-surface-2); gap: 2px; }
