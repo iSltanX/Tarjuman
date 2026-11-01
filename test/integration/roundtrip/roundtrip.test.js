@@ -212,11 +212,16 @@ function defineRoundtrip(label, exporter) {
   test(`${label}: جزء ناقص من التصدير المقسَّم ← تحذير فجوة ونقص بأرقامه`, { skip }, async () => {
     const exp = exporter(asr, { size: 200 });
     const parts = exp.files.map((f) => fileOf(modelTranslate(f.text), f.name.replace('.en.', '.ar.')));
+    // الجزء الثالث المحذوف من خطة أجزاء المصدّر نفسه: العقد يفرض الترقيم المستمر لا طولًا ثابتًا للجزء
+    // (مصدّر العقد 401..600، وتوزيع P3 المتوازن 353..528).
+    const gap = exp.fingerprint.parts[2];
+    const len = gap.to - gap.from + 1;
+    assert.ok(gap.from > 1 && len >= 1 && len <= 200, JSON.stringify(gap));
     const r = await doImport(parts.filter((_, i) => i !== 2), exp.fingerprint);
     assert.equal(r.ok, true);
-    assert.deepEqual(r.warnings.map((w) => [w.code, w.params.from, w.params.to]), [['IM_PARTS_GAP', 401, 600]]);
-    assert.deepEqual(r.comparison.missing, Array.from({ length: 200 }, (_, i) => 401 + i));
-    assert.deepEqual([r.comparison.countTarget, r.comparison.numbering, r.comparison.matched], [856, 'different', false]);
+    assert.deepEqual(r.warnings.map((w) => [w.code, w.params.from, w.params.to]), [['IM_PARTS_GAP', gap.from, gap.to]]);
+    assert.deepEqual(r.comparison.missing, Array.from({ length: len }, (_, i) => gap.from + i));
+    assert.deepEqual([r.comparison.countTarget, r.comparison.numbering, r.comparison.matched], [1056 - len, 'different', false]);
   });
 }
 
