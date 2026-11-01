@@ -1,0 +1,176 @@
+{
+  "label": "brave-asr-p4",
+  "exportedAt": "2026-11-01T10:55:02.949Z",
+  "browser": {
+    "isBrave": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "brands": [
+      "Not:A-Brand 8",
+      "Chromium 156",
+      "Brave 156"
+    ],
+    "webdriverExtensionPage": false
+  },
+  "secretsInExport": 0,
+  "tabs": [
+    {
+      "currentVideoId": "Y9rkKtK1b44",
+      "durationMs": 3000421,
+      "navigations": 1,
+      "webdriverPage": false,
+      "accepted": [
+        {
+          "videoId": "Y9rkKtK1b44",
+          "acceptedFor": "Y9rkKtK1b44",
+          "lang": "en",
+          "trackKind": "asr",
+          "format": "json3",
+          "transport": "xhr",
+          "bodyLength": 953282,
+          "bodySha256": "aa34a91cd5fa99e3",
+          "meta": {
+            "hasPot": true,
+            "capsAsr": true,
+            "kindParam": "asr"
+          },
+          "ok": true,
+          "code": null,
+          "invariants": [
+            {
+              "id": 1,
+              "key": "words",
+              "ok": true,
+              "detail": "9031 كلمة متطابقة"
+            },
+            {
+              "id": 2,
+              "key": "noOverlap",
+              "ok": true,
+              "detail": "لا تداخل"
+            },
+            {
+              "id": 3,
+              "key": "noEmpty",
+              "ok": true,
+              "detail": "لا مقاطع فارغة"
+            },
+            {
+              "id": 4,
+              "key": "monotonic",
+              "ok": true,
+              "detail": "متزايدة"
+            },
+            {
+              "id": 5,
+              "key": "bounds",
+              "ok": true,
+              "detail": "البداية ≥ 0 · النهاية ضمن المدة"
+            },
+            {
+              "id": 6,
+              "key": "reparse",
+              "ok": true,
+              "detail": "1056 مقطعًا"
+            }
+          ],
+          "warnings": [],
+          "report": {
+            "trackKind": "asr",
+            "stats": {
+              "totalEvents": 2532,
+              "textEvents": 1266,
+              "windowEvents": 1,
+              "newlineEvents": 1265,
+              "blankEvents": 0,
+              "appendEvents": 1265,
+              "missingDuration": 0,
+              "withOffsets": 1259,
+              "withAsrConf": 1265
+            },
+            "inferredKind": "asr",
+            "duplicatesRemoved": 0,
+            "eventsReordered": 0,
+            "converter": {
+              "words": 9031,
+              "clampedWordTimes": 0,
+              "options": {
+                "gapMs": 700,
+                "maxChars": 84,
+                "maxDurationMs": 6000,
+                "lineChars": 42,
+                "tailMs": 1500,
+                "minDurationMs": 300,
+                "rollingWords": 3
+              }
+            },
+            "lastEndMs": 2988140,
+            "firstStartMs": 7240,
+            "cueCount": 1056,
+            "sourceWords": 9031,
+            "completeness": 0.996
+          },
+          "nodeReconvertSame": true,
+          "nodeOk": true,
+          "shownChecks": [
+            {
+              "t": 1068579,
+              "verdict": "contained",
+              "match": true,
+              "displayed": "simple terms uh in football parant if you will vt8 and vt6",
+              "activeText": "if you will vt8 and vt6",
+              "timeSec": 1068.579
+            },
+            {
+              "t": 1072081,
+              "verdict": "contained",
+              "match": true,
+              "displayed": "you will vt8 and vt6 took 40 minutes off the clock which is almost",
+              "activeText": "which is almost precisely the amount of time that Admiral nagumo would have needed",
+              "timeSec": 1072.081
+            }
+          ],
+          "shownMatched": 2,
+          "srtFile": "docs/evidence/P1/srt/brave-asr-p4-Y9rkKtK1b44.asr.srt"
+        }
+      ],
+      "rejected": [],
+      "log": [
+        {
+          "at": 1793530479472,
+          "type": "start",
+          "to": "Y9rkKtK1b44"
+        },
+        {
+          "at": 1793530481270,
+          "type": "accept",
+          "videoId": "Y9rkKtK1b44",
+          "currentVideoId": "Y9rkKtK1b44",
+          "lang": "en",
+          "trackKind": "asr",
+          "hasTlang": false,
+          "format": "json3",
+          "status": 200,
+          "bodyLength": 953282,
+          "transport": "xhr",
+          "hasPot": true
+        },
+        {
+          "at": 1793530483776,
+          "type": "shown",
+          "videoId": "Y9rkKtK1b44",
+          "timeSec": 1068.579,
+          "ad": false,
+          "text": "simple terms uh in football parant if you will vt8 and vt6"
+        },
+        {
+          "at": 1793530487277,
+          "type": "shown",
+          "videoId": "Y9rkKtK1b44",
+          "timeSec": 1072.081,
+          "ad": false,
+          "text": "you will vt8 and vt6 took 40 minutes off the clock which is almost"
+        }
+      ]
+    }
+  ]
+}

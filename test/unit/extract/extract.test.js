@@ -5,6 +5,23 @@ import { validateCaptureMessage } from '../../../src/extract/message.js';
 import { checkAcceptance } from '../../../src/extract/capture-adapter.js';
 import { createCaptureStore } from '../../../src/extract/capture-store.js';
 import { videoIdFromLocation } from '../../../src/extract/video-id.js';
+import { createPendingBuffer } from '../../../src/extract/pending.js';
+
+test('pending: التقاط سبق تغيّر العنوان يُسحب لفيديوه خلال النافذة فقط', () => {
+  const p = createPendingBuffer({ windowMs: 2000 });
+  const m = (videoId) => ({ videoId, lang: 'en', trackKind: 'manual' });
+  p.add(m('AAAAAAAAAAA'), 1000);
+  p.add(m('BBBBBBBBBBB'), 1500);
+  p.add(m(null), 1500);
+  assert.equal(p.size, 2);
+  assert.deepEqual(p.take('CCCCCCCCCCC', 2000), []);
+  const hit = p.take('AAAAAAAAAAA', 2300);
+  assert.equal(hit.length, 1);
+  assert.equal(hit[0].ageMs, 1300);
+  assert.equal(p.take('AAAAAAAAAAA', 2300).length, 0, 'لا يُسحب مرتين');
+  assert.equal(p.take('BBBBBBBBBBB', 3600).length, 0, 'انتهت النافذة');
+  assert.equal(p.take(null, 3600).length, 0);
+});
 
 // رابط اصطناعي بقيم وهمية؛ لا يُحفظ أي رابط حقيقي في المستودع.
 const fake = (extra) => `https://www.youtube.com/api/timedtext?v=AAAAAAAAAAA&caps=asr&opi=1&xoaf=5&expire=1700000000&sparams=ip,expire&signature=FAKE&lang=en&fmt=json3&pot=FAKEPOTVALUEFAKEPOTVALUE${extra}`;

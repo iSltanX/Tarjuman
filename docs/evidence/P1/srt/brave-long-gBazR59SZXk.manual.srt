@@ -1,0 +1,8359 @@
+1
+00:00:01,569 --> 00:00:02,840
+» NEIL SMITH: Well, you're in for a treat today.
+
+2
+00:00:02,840 --> 00:00:07,259
+We're going to be talking
+with David Harvey on
+
+3
+00:00:07,259 --> 00:00:08,809
+the lectures that he's been giving
+
+4
+00:00:08,809 --> 00:00:11,300
+now for almost forty years, I think,
+
+5
+00:00:11,300 --> 00:00:13,919
+on Capital. My name is Neil Smith.
+
+6
+00:00:13,919 --> 00:00:19,019
+I teach in Anthropology and Geography at the
+City University of New York
+
+7
+00:00:19,019 --> 00:00:21,640
+and David has been a colleague of mine
+since he came here
+
+8
+00:00:21,640 --> 00:00:25,199
+but before that, a long time before that,
+more than thirty years
+
+9
+00:00:25,199 --> 00:00:30,009
+I was a student of David's at Johns
+Hopkins in Baltimore, and that's where
+
+10
+00:00:30,009 --> 00:00:33,180
+I first became
+
+11
+00:00:33,180 --> 00:00:37,580
+not aware of Capital as a book, but
+that's where I first read through it and
+
+12
+00:00:37,580 --> 00:00:41,620
+did so indeed with David.
+David what inspired you
+
+13
+00:00:41,620 --> 00:00:44,570
+to start to want to read Capital back,
+presumably, in the
+
+14
+00:00:44,570 --> 00:00:46,830
+very early 1970s?
+
+15
+00:00:46,830 --> 00:00:48,790
+» DAVID HARVEY: It was one of those
+
+16
+00:00:48,790 --> 00:00:50,480
+historical moments where
+
+17
+00:00:50,480 --> 00:00:53,360
+it seemed right to do it.
+
+18
+00:00:53,360 --> 00:00:56,320
+I arrived from England,
+
+19
+00:00:56,320 --> 00:00:59,770
+fresh off the boat in the summer of '69.
+
+20
+00:00:59,770 --> 00:01:01,670
+I arrived into the city, Baltimore where
+
+21
+00:01:01,670 --> 00:01:07,250
+in 1968 there had been a tremendous
+eruption of violence in the city in
+
+22
+00:01:07,250 --> 00:01:11,240
+the wake of the
+assassination of Martin Luther King,
+
+23
+00:01:11,240 --> 00:01:14,660
+the civil rights questions in the city were
+
+24
+00:01:14,660 --> 00:01:17,750
+blatant, the racism in the city was blatant,
+
+25
+00:01:17,750 --> 00:01:20,530
+the Vietnam War was on,
+
+26
+00:01:20,530 --> 00:01:21,970
+and all the war protests
+
+27
+00:01:21,970 --> 00:01:24,030
+were hotting up,
+
+28
+00:01:24,030 --> 00:01:27,620
+and it was a very, very confused time…
+
+29
+00:01:27,620 --> 00:01:29,560
+And I remember in,
+
+30
+00:01:29,560 --> 00:01:32,330
+I think, December of '69
+
+31
+00:01:32,330 --> 00:01:36,530
+Fred Hampton got assassinated in Chicago,
+
+32
+00:01:36,530 --> 00:01:37,920
+a Black Panther leader,
+
+33
+00:01:37,920 --> 00:01:39,489
+and shortly after that,
+
+34
+00:01:39,489 --> 00:01:41,700
+in May '70, there were
+
+35
+00:01:41,700 --> 00:01:44,740
+the killings at Kent State.
+
+36
+00:01:44,740 --> 00:01:48,020
+Huge student strike, millions of
+students all over the country
+
+37
+00:01:48,020 --> 00:01:52,100
+just went on strike. And then after that
+there were killings at Jackson State.
+
+38
+00:01:52,100 --> 00:01:57,970
+So this was this was a very, very,
+very upset time.
+
+39
+00:01:57,970 --> 00:01:59,009
+And I think,
+
+40
+00:01:59,009 --> 00:02:03,119
+for me, anyway, there was also a sense
+that we didn't quite know how to handle, or
+
+41
+00:02:03,119 --> 00:02:07,290
+how to explain this.
+
+42
+00:02:07,290 --> 00:02:11,800
+And I've been trained as a sort of social scientist,
+thinking about things, and I couldn't find a framework
+that would
+
+43
+00:02:11,800 --> 00:02:13,499
+really encompass all that was going on.
+
+44
+00:02:13,499 --> 00:02:17,539
+So I said to a few graduate students:
+'Hey why don't we just read Capital?
+
+45
+00:02:17,539 --> 00:02:18,770
+Since it's a book we haven't read,
+
+46
+00:02:18,770 --> 00:02:20,669
+maybe there's something in there
+
+47
+00:02:20,669 --> 00:02:21,980
+that would work.'
+
+48
+00:02:21,980 --> 00:02:25,829
+And so a few of us sat down and
+we ran a reading group on it.
+
+49
+00:02:25,829 --> 00:02:30,779
+And that's how it all began. And then
+having done it once and completely
+
+50
+00:02:30,779 --> 00:02:32,599
+misunderstood the book,
+
+51
+00:02:32,599 --> 00:02:35,059
+completely misunderstood it.
+Now I look back,
+
+52
+00:02:35,059 --> 00:02:38,499
+I'd be embarrassed to listen to what we
+were saying about this book in the first year.
+
+53
+00:02:38,499 --> 00:02:42,679
+You know, it was the blind leading the blind through
+this enormous text, you know.
+
+54
+00:02:42,679 --> 00:02:45,509
+And we didn't know what we were doing
+and then we thought: 'Well we've done it once,
+
+55
+00:02:45,509 --> 00:02:49,189
+we better do it again because we obviously
+haven't got this quite right.'
+
+56
+00:02:49,189 --> 00:02:51,799
+But one thing that I did learn
+at that point,
+
+57
+00:02:51,799 --> 00:02:56,359
+from that was: you only really begin to
+understand Capital when you get to the end.
+
+58
+00:02:56,359 --> 00:02:58,950
+It's very hard to start off with a…
+
+59
+00:02:58,950 --> 00:02:59,979
+» NEIL SMITH: Yeah.
+
+60
+00:02:59,979 --> 00:03:02,049
+» DAVID HARVEY: …sort of clear kind of understanding.
+
+61
+00:03:02,049 --> 00:03:04,449
+So the second year we decided
+to have another go at it,
+
+62
+00:03:04,449 --> 00:03:05,800
+and we had another go at it.
+
+63
+00:03:05,800 --> 00:03:08,009
+And I thought to myself: Well,
+
+64
+00:03:08,009 --> 00:03:10,700
+this is interesting, now, I began to see a
+framework emerging
+
+65
+00:03:10,700 --> 00:03:15,739
+that could help me explain what was going on.
+So I thought: Well, I should keep at it.
+
+66
+00:03:15,739 --> 00:03:18,010
+And there were people around,
+
+67
+00:03:18,010 --> 00:03:21,079
+like me, who kind of felt they needed
+a framework and so,
+
+68
+00:03:21,079 --> 00:03:22,829
+step by step
+
+69
+00:03:22,829 --> 00:03:26,049
+I started to say:
+well, I'll do this every year.
+
+70
+00:03:26,049 --> 00:03:29,609
+And of course one of the things that
+happens when you do that, is
+
+71
+00:03:29,609 --> 00:03:33,289
+that you suddenly find
+yourself called a Marxist.
+
+72
+00:03:33,289 --> 00:03:37,059
+I had no idea what a Marxist was,
+and I really didn't
+
+73
+00:03:37,059 --> 00:03:40,139
+care too much initially, but suddenly,
+just because you're reading the book
+
+74
+00:03:40,139 --> 00:03:42,289
+and taking it seriously,
+
+75
+00:03:42,289 --> 00:03:45,709
+and you want to know more about how to
+understand the world through these
+
+76
+00:03:45,709 --> 00:03:49,349
+lenses, you suddenly find yourself in this
+political corner. And after a bit you say:
+
+77
+00:03:49,349 --> 00:03:54,649
+I guess if that's who I am, then
+that's who I am, you know. So..
+
+78
+00:03:54,649 --> 00:03:56,979
+» NEIL SMITH: Well, I think it might be useful,
+since the
+
+79
+00:03:56,979 --> 00:03:59,859
+lectures are coming,
+
+80
+00:03:59,859 --> 00:04:02,680
+if you give us a bit of an overview,
+
+81
+00:04:02,680 --> 00:04:04,249
+a bit of a discussion
+
+82
+00:04:04,249 --> 00:04:11,290
+of what you think are the high points of
+the chapters in Volume 1 of Capital.
+
+83
+00:04:11,290 --> 00:04:15,229
+» DAVID HARVEY: One of the things that
+I think is really good to do,
+
+84
+00:04:15,229 --> 00:04:16,359
+and one of the reasons
+
+85
+00:04:16,359 --> 00:04:20,750
+I've got a great deal of pleasure out of
+teaching this course in this way,
+
+86
+00:04:20,750 --> 00:04:24,639
+is that many people have taken courses
+where they've done a little bit of Marx,
+
+87
+00:04:24,639 --> 00:04:28,870
+a little bit of Weber, Durkheim, this kind of stuff,
+they've read excerpts from Marx or something like that,
+
+88
+00:04:28,870 --> 00:04:31,620
+but they've never actually read it as a book,
+
+89
+00:04:31,620 --> 00:04:36,430
+and it's a fantastic literary construction.
+So, one of the things that I really want
+
+90
+00:04:36,430 --> 00:04:38,139
+to highlight is
+
+91
+00:04:38,139 --> 00:04:40,349
+what a good read it is!
+
+92
+00:04:40,349 --> 00:04:44,919
+Once you get past the difficulties of the
+language and grappling with all these kinds of
+
+93
+00:04:44,919 --> 00:04:50,120
+concepts and so on, it's a really, really
+dynamic piece, it flows very well.
+
+94
+00:04:50,120 --> 00:04:54,840
+And it flows from the beginning point
+which is just about a simple idea of a commodity.
+
+95
+00:04:54,840 --> 00:04:59,190
+You go into a supermarket, you find a commodity,
+you buy the commodity, you take it home, you eat it,
+
+96
+00:04:59,190 --> 00:05:03,629
+or wear it, or whatever, and,
+
+97
+00:05:03,629 --> 00:05:08,710
+and just beginning with that thing, which we
+all know about, it takes you step by step by step
+
+98
+00:05:08,710 --> 00:05:10,649
+right the way through,
+
+99
+00:05:10,649 --> 00:05:14,499
+unraveling how a capitalist economy works.
+
+100
+00:05:14,499 --> 00:05:20,509
+And then it builds around that sort of
+insights, stunning insights, as to why we have
+
+101
+00:05:20,509 --> 00:05:24,150
+unemployment, or why there is a struggle over
+
+102
+00:05:24,150 --> 00:05:26,290
+time, why is it that
+
+103
+00:05:26,290 --> 00:05:28,309
+capitalists are always trying to
+
+104
+00:05:28,309 --> 00:05:30,529
+snatch time away from you,
+
+105
+00:05:30,529 --> 00:05:33,270
+why do we live a life where our world
+
+106
+00:05:33,270 --> 00:05:35,050
+is kind of
+
+107
+00:05:35,050 --> 00:05:39,090
+orchestrated around a
+certain kind of concept of temporality,
+
+108
+00:05:39,090 --> 00:05:43,150
+and what the oppressions are
+which exist with all of that. So, I think it's
+
+109
+00:05:43,150 --> 00:05:46,979
+incredibly revelatory in what it does.
+
+110
+00:06:05,360 --> 00:06:09,099
+So, the aim of this course is to
+
+111
+00:06:09,099 --> 00:06:14,189
+get you to read this book,
+
+112
+00:06:14,189 --> 00:06:18,189
+and to do it as well as
+you can in Marx's own terms,
+
+113
+00:06:18,189 --> 00:06:20,869
+which may sound a bit ridiculous because,
+
+114
+00:06:20,869 --> 00:06:22,789
+since you haven't read the book,
+
+115
+00:06:22,789 --> 00:06:24,779
+you won't know exactly what his
+
+116
+00:06:24,779 --> 00:06:26,749
+terms are.
+
+117
+00:06:26,749 --> 00:06:31,630
+But one of his terms is that you read,
+
+118
+00:06:31,630 --> 00:06:35,479
+and therefore you'll get a lot
+more out of this class
+
+119
+00:06:35,479 --> 00:06:38,349
+if you read the assigned readings
+
+120
+00:06:38,349 --> 00:06:42,029
+before you come to class,
+than if you just come along and listen.
+
+121
+00:06:42,029 --> 00:06:46,080
+There's another reason
+for that, which is that
+
+122
+00:06:46,080 --> 00:06:49,729
+You have to struggle, always,
+
+123
+00:06:49,729 --> 00:06:52,990
+with understanding something.
+
+124
+00:06:52,990 --> 00:06:56,190
+And in struggling with it yourself
+
+125
+00:06:56,190 --> 00:06:58,379
+you can come to your own
+
+126
+00:06:58,379 --> 00:06:59,880
+understanding of what Marx stands for
+
+127
+00:06:59,880 --> 00:07:04,520
+and what it means to you. So it's an
+engagement between you and this book,
+
+128
+00:07:04,520 --> 00:07:06,969
+you and this text,
+
+129
+00:07:06,969 --> 00:07:07,860
+that I want
+
+130
+00:07:07,860 --> 00:07:11,699
+to encourage.
+
+131
+00:07:11,699 --> 00:07:13,749
+In doing that, however,
+
+132
+00:07:13,749 --> 00:07:18,099
+there is a complication
+which arises from the fact that
+
+133
+00:07:18,099 --> 00:07:22,659
+it's very hard to approach this without
+some preconceived ideas. Everybody has
+
+134
+00:07:22,659 --> 00:07:25,050
+heard of Karl Marx
+
+135
+00:07:25,050 --> 00:07:30,209
+and everybody knows the
+term Marxism and Marxist,
+
+136
+00:07:30,209 --> 00:07:33,379
+and there all kinds of connotations that go
+
+137
+00:07:33,379 --> 00:07:35,509
+with those words.
+
+138
+00:07:35,509 --> 00:07:41,370
+So, what I have to ask you at the
+beginning is to try to lay aside a lot of those
+
+139
+00:07:41,370 --> 00:07:43,689
+preconceptions, a lot of those
+
+140
+00:07:43,689 --> 00:07:47,289
+things you think you know about
+Marx and just try to read the text,
+
+141
+00:07:47,289 --> 00:07:52,179
+to find out what it really
+was he was trying to say.
+
+142
+00:07:52,179 --> 00:07:55,229
+And that, of course,
+
+143
+00:07:55,229 --> 00:07:59,270
+is not easy for a bunch
+of other reasons, which
+
+144
+00:07:59,270 --> 00:08:03,679
+I want to talk about by way of introduction.
+
+145
+00:08:03,679 --> 00:08:06,870
+One of the other preconceptions
+with which we tend to
+
+146
+00:08:06,870 --> 00:08:09,680
+approach a text of this kind is
+
+147
+00:08:09,680 --> 00:08:13,610
+out of our particular kind of
+intellectual history, and our own particular
+
+148
+00:08:13,610 --> 00:08:17,449
+intellectual formation,
+
+149
+00:08:17,449 --> 00:08:21,009
+and for people who are
+graduate students, for example,
+
+150
+00:08:21,009 --> 00:08:26,249
+this intellectual formation is very often
+governed by disciplinary apparatuses,
+
+151
+00:08:26,249 --> 00:08:27,530
+disciplinary considerations,
+
+152
+00:08:27,530 --> 00:08:30,169
+disciplinary concerns.
+
+153
+00:08:30,169 --> 00:08:32,580
+And so the tendency is
+
+154
+00:08:32,580 --> 00:08:37,050
+to sort of read it from
+your disciplinary standpoint.
+
+155
+00:08:37,050 --> 00:08:42,720
+Well, one of the great things about Marx is
+he would never have got tenure in any discipline,
+
+156
+00:08:42,720 --> 00:08:46,090
+and if you want to read him right, then
+you've got to forget about getting tenure
+
+157
+00:08:46,090 --> 00:08:48,130
+in your discipline;
+
+158
+00:08:48,130 --> 00:08:51,600
+not in the long run of course but at
+least for the purposes of this course.
+
+159
+00:08:51,600 --> 00:08:53,350
+You have to think about
+
+160
+00:08:53,350 --> 00:08:54,430
+what it is
+
+161
+00:08:54,430 --> 00:08:58,400
+that he is saying, independent of
+
+162
+00:08:58,400 --> 00:09:03,270
+the disciplinary apparatus with
+which you start to think about things.
+
+163
+00:09:03,270 --> 00:09:07,800
+Now, the other reason for saying that
+is actually this turns out to be an astonishingly rich
+
+164
+00:09:07,800 --> 00:09:10,660
+book in terms of its references.
+
+165
+00:09:10,660 --> 00:09:14,550
+References to Shakespeare,
+to the Greeks, to Balzac,
+
+166
+00:09:14,550 --> 00:09:17,740
+references to all of the the
+political economists, to philosophers,
+
+167
+00:09:17,740 --> 00:09:21,100
+to anthropologists and all
+the rest of it. In other words,
+
+168
+00:09:21,100 --> 00:09:22,920
+Marx draws upon
+
+169
+00:09:22,920 --> 00:09:25,950
+an immense array of sources,
+
+170
+00:09:25,950 --> 00:09:29,980
+and as he does so it might be really
+exciting for you to kind of figure out
+
+171
+00:09:29,980 --> 00:09:32,140
+what some of those sources are,
+
+172
+00:09:32,140 --> 00:09:36,700
+and actually some of them quite hard to track
+down, and I've been looking at this for a long time.
+
+173
+00:09:36,700 --> 00:09:41,250
+But it really is kind of
+very exciting when you start to see
+
+174
+00:09:41,250 --> 00:09:42,589
+some of the
+
+175
+00:09:42,589 --> 00:09:45,259
+connections. For instance, when I first
+started reading this, I had not read many
+
+176
+00:09:45,259 --> 00:09:48,850
+of Balzac's novels, then I'm reading
+Balzac's novels and I say to myself:
+
+177
+00:09:48,850 --> 00:09:51,690
+'Oh that's where Marx got it from!'
+
+178
+00:09:51,690 --> 00:09:55,550
+and then you kind of suddenly see all the
+ways in which he's drawing upon a whole
+
+179
+00:09:55,550 --> 00:09:57,400
+experiential world,
+
+180
+00:09:57,400 --> 00:10:00,570
+full of Goethe, full of
+Shakespeare, you know, all the rest of it.
+
+181
+00:10:00,570 --> 00:10:01,510
+So, it's a very
+
+182
+00:10:01,510 --> 00:10:04,710
+rich text in that kind of way,
+and you start to appreciate it,
+
+183
+00:10:04,710 --> 00:10:06,359
+I think, more
+
+184
+00:10:06,359 --> 00:10:08,860
+if you stop saying to yourself: 'Well,
+
+185
+00:10:08,860 --> 00:10:11,660
+who is he referring to in history?', or 'Which
+
+186
+00:10:11,660 --> 00:10:14,380
+economist is he talking about?' and so on.
+
+187
+00:10:14,380 --> 00:10:17,260
+And the other thing that will come
+across, if you read it that way, is you'll
+
+188
+00:10:17,260 --> 00:10:19,930
+actually find this a very interesting book.
+
+189
+00:10:19,930 --> 00:10:22,460
+It's a fascinating book,
+
+190
+00:10:22,460 --> 00:10:25,980
+and here of course we come across
+another set of preconceptions, because
+
+191
+00:10:25,980 --> 00:10:28,660
+many of you will already have encountered
+
+192
+00:10:28,660 --> 00:10:31,020
+some of Marx in your reading.
+
+193
+00:10:31,020 --> 00:10:34,620
+Maybe you read the Communist
+Manifesto in high school.
+
+194
+00:10:34,620 --> 00:10:37,710
+Maybe you went through one of those
+wonderful courses which is called
+
+195
+00:10:37,710 --> 00:10:40,880
+'Introduction to social theory',
+where you spent two weeks on Marx,
+
+196
+00:10:40,880 --> 00:10:46,460
+you know, two weeks on Weber, a few
+weeks on Durkheim and all the other kind of characters.
+
+197
+00:10:46,460 --> 00:10:48,910
+And maybe you read
+some excerpts from Capital.
+
+198
+00:10:48,910 --> 00:10:54,000
+But reading excerpts from Capital is
+entirely different from reading it as a book,
+
+199
+00:10:54,000 --> 00:10:58,269
+because you start to see these bits and
+pieces that are excerpts as, somehow or other,
+
+200
+00:10:58,269 --> 00:11:02,270
+playing into a much grander
+and broader narrative, and what I think
+
+201
+00:11:02,270 --> 00:11:05,430
+I'd like you to really try to
+get out of this, is some sense
+
+202
+00:11:05,430 --> 00:11:11,170
+of what that grander narrative is, and what that
+grander conception is, because that is, if you like,
+
+203
+00:11:11,170 --> 00:11:14,040
+how Marx, I think, would
+want to be read. He would hate it
+
+204
+00:11:14,040 --> 00:11:15,230
+if somebody said:
+
+205
+00:11:15,230 --> 00:11:19,000
+'Hey, you've got to excerpt this chapter',
+or 'You've got to do this chapter', and you can
+
+206
+00:11:19,000 --> 00:11:20,080
+understand Marx that way.
+
+207
+00:11:20,080 --> 00:11:23,680
+And he would certainly hate it if he knew he
+was being given three weeks in an introduction
+
+208
+00:11:23,680 --> 00:11:25,290
+to social theory class.
+
+209
+00:11:25,290 --> 00:11:27,440
+And I think you should hate that, too,
+
+210
+00:11:27,440 --> 00:11:30,280
+because you get a certain
+conception of Marx from that,
+
+211
+00:11:30,280 --> 00:11:32,070
+which is radically different
+
+212
+00:11:32,070 --> 00:11:35,290
+from the kind of
+conception you get from reading
+
+213
+00:11:35,290 --> 00:11:38,600
+a book like Marx's Capital.
+
+214
+00:11:38,600 --> 00:11:43,120
+Now the other thing that happens,
+of course, from the disciplinary standpoint
+
+215
+00:11:43,120 --> 00:11:49,320
+is that very often people
+start to re-orchestrate their understandings
+
+216
+00:11:49,320 --> 00:11:52,930
+around that disciplinary
+standpoint. That is, you say:
+
+217
+00:11:52,930 --> 00:11:56,380
+'Well, I'm not a good economist, I don't
+get the economics in here at all, so I'm not
+
+218
+00:11:56,380 --> 00:11:59,190
+going to be bothered to
+follow the economic argument,
+
+219
+00:11:59,190 --> 00:12:00,200
+I'm just going to follow
+
+220
+00:12:00,200 --> 00:12:01,819
+the philosophical argument'.
+
+221
+00:12:01,819 --> 00:12:02,819
+And actually,
+
+222
+00:12:02,819 --> 00:12:04,830
+it's very interesting reading
+
+223
+00:12:04,830 --> 00:12:07,460
+Marx in that perspective.
+
+224
+00:12:07,460 --> 00:12:11,290
+Now, I've taught this course
+now every year since 1971,
+
+225
+00:12:11,290 --> 00:12:12,780
+except one.
+
+226
+00:12:12,780 --> 00:12:17,240
+Some years I've taught it twice,
+some years I even taught it three times.
+
+227
+00:12:17,240 --> 00:12:20,880
+And in the early years I
+used to teach it to all kinds of
+
+228
+00:12:20,880 --> 00:12:22,310
+different groups.
+
+229
+00:12:22,310 --> 00:12:23,670
+One year it was
+
+230
+00:12:23,670 --> 00:12:27,430
+the whole philosophy department
+from what was called Morgan State
+
+231
+00:12:27,430 --> 00:12:29,949
+College at the time, Morgan
+State University. Another time
+
+232
+00:12:29,949 --> 00:12:33,690
+it was all of the graduate students in
+the English program at Johns Hopkins.
+
+233
+00:12:33,690 --> 00:12:34,579
+Another year
+
+234
+00:12:34,579 --> 00:12:38,960
+it was economists, and this kind of thing.
+And actually, what was fascinating to me was,
+
+235
+00:12:38,960 --> 00:12:43,170
+each time you read it with a different
+group, they saw different things in it.
+
+236
+00:12:43,170 --> 00:12:46,540
+And actually, I learned a great deal about
+the text from going through it with these
+
+237
+00:12:46,540 --> 00:12:49,670
+very different disciplinary groups.
+
+238
+00:12:49,670 --> 00:12:52,680
+Sometimes it drove me
+crazy, but I learned a great deal.
+
+239
+00:12:52,680 --> 00:12:55,100
+One year, for example,
+
+240
+00:12:55,100 --> 00:13:00,930
+I ran it with a group of people from
+the comparative literature program at Johns Hopkins,
+
+241
+00:13:00,930 --> 00:13:03,630
+about seven of them.
+
+242
+00:13:03,630 --> 00:13:07,290
+And we got onto chapter one,
+
+243
+00:13:07,290 --> 00:13:11,040
+and we spent the whole semester on chapter one.
+
+244
+00:13:11,040 --> 00:13:14,710
+It drove me nuts. I was saying: 'Look, we've got
+to get onto the working day', you know, and things like
+
+245
+00:13:14,710 --> 00:13:17,029
+that, very important issues
+of this kind, and they'd say:
+
+246
+00:13:17,029 --> 00:13:20,690
+'No, no, we've got to get this right, we've got
+to get this right', you know. 'What does he
+
+247
+00:13:20,690 --> 00:13:23,870
+actually mean by value? What is
+actually this money commodity? What
+
+248
+00:13:23,870 --> 00:13:26,070
+is fetish about? What is this really all about?'
+
+249
+00:13:26,070 --> 00:13:27,270
+And it turned out…
+
+250
+00:13:27,270 --> 00:13:30,830
+I said: 'Why are you doing all of this?'
+They said: 'Well, we're working very much in the
+
+251
+00:13:30,830 --> 00:13:33,679
+tradition of…' somebody I'd never
+heard of at the time, and thought
+
+252
+00:13:33,679 --> 00:13:37,430
+was obviously an idiot, because
+he was producing this kind of thing,
+
+253
+00:13:37,430 --> 00:13:39,980
+a man called Jacques Derrida,
+
+254
+00:13:39,980 --> 00:13:44,240
+who spent a lot of time at
+Hopkins during the late 1960s, early
+
+255
+00:13:44,240 --> 00:13:47,460
+1970s. And so actually
+
+256
+00:13:47,460 --> 00:13:50,890
+was very influential in the
+comparative literature program.
+
+257
+00:13:50,890 --> 00:13:53,100
+Now, one of the things I actually afterwards
+
+258
+00:13:53,100 --> 00:13:55,150
+thought about this was…
+
+259
+00:13:55,150 --> 00:14:00,080
+What they taught me was to pay
+very careful attention to Marx's language;
+
+260
+00:14:00,080 --> 00:14:05,040
+what he says, and how he says it, and what
+he means, and maybe what he's missing out,
+
+261
+00:14:05,040 --> 00:14:08,160
+and that is also terribly important.
+
+262
+00:14:08,160 --> 00:14:12,800
+And so, actually, I learned…
+and I'm very grateful to that group now,
+
+263
+00:14:12,800 --> 00:14:16,530
+apart from the fact that I no longer
+sound myself like an idiot for saying I don't…
+
+264
+00:14:16,530 --> 00:14:19,270
+I've never heard of Jacques Derrida, you know.
+
+265
+00:14:19,270 --> 00:14:23,380
+So it was just very influential
+
+266
+00:14:23,380 --> 00:14:28,170
+to have a group of that kind sort of take
+me through just chapter one
+
+267
+00:14:28,170 --> 00:14:30,100
+with a fine-toothed comb,
+
+268
+00:14:30,100 --> 00:14:33,360
+going through almost every word,
+every sentence, every connection with the
+
+269
+00:14:33,360 --> 00:14:34,910
+sentences, and so on.
+
+270
+00:14:34,910 --> 00:14:38,860
+Yes, indeed, I want to get you to the
+working day. Yes, indeed, I want to get
+
+271
+00:14:38,860 --> 00:14:41,629
+you through the volume, so we're
+not going to spend all of the time
+
+272
+00:14:41,629 --> 00:14:43,090
+on chapter one, but
+
+273
+00:14:43,090 --> 00:14:46,580
+this is the kind of thing that different
+disciplinary perspectives can open up.
+
+274
+00:14:46,580 --> 00:14:51,300
+Because Marx actually wrote this text
+
+275
+00:14:51,300 --> 00:14:55,890
+from those many different
+standpoints that I've indicated.
+
+276
+00:14:55,890 --> 00:14:56,610
+And I think that
+
+277
+00:14:56,610 --> 00:14:58,280
+we have to recognize
+
+278
+00:14:58,280 --> 00:15:03,330
+how those different standpoints
+intersect within the text.
+
+279
+00:15:03,330 --> 00:15:06,130
+There are in fact three major
+
+280
+00:15:06,130 --> 00:15:08,430
+areas of inspiration
+
+281
+00:15:08,430 --> 00:15:10,550
+for this work,
+
+282
+00:15:10,550 --> 00:15:13,790
+and they're all powered forward by
+
+283
+00:15:13,790 --> 00:15:18,940
+a deep commitment, in Marx's case, to
+
+284
+00:15:18,940 --> 00:15:22,540
+critical theory, to a critical analysis.
+
+285
+00:15:22,540 --> 00:15:27,890
+When he was relatively young he wrote a little
+piece to one of his sort of editorial colleagues
+
+286
+00:15:27,890 --> 00:15:30,070
+at a German journal.
+
+287
+00:15:30,070 --> 00:15:35,360
+The title of the piece is :
+'For a Ruthless Criticism of Everything Existing'.
+
+288
+00:15:35,360 --> 00:15:40,440
+A very modest piece, and I
+suggest that you actually go read it,
+
+289
+00:15:40,440 --> 00:15:42,780
+because it's fascinating.
+
+290
+00:15:42,780 --> 00:15:45,640
+What he does there is, he doesn't say
+
+291
+00:15:45,640 --> 00:15:46,680
+everybody
+
+292
+00:15:46,680 --> 00:15:50,800
+is stupid, I'm going to trash everybody,
+I'm going to criticize everybody out of
+
+293
+00:15:50,800 --> 00:15:51,790
+existence. No.
+
+294
+00:15:51,790 --> 00:15:53,760
+What he says is,
+
+295
+00:15:53,760 --> 00:15:57,050
+there are a lot of serious people
+who really thought about the world
+
+296
+00:15:57,050 --> 00:15:58,760
+very hard.
+
+297
+00:15:58,760 --> 00:16:04,830
+And they've seen certain things about
+the world, and what they have seen is our resource.
+
+298
+00:16:04,830 --> 00:16:09,540
+What the critical method does
+is to take what they have seen, and
+
+299
+00:16:09,540 --> 00:16:15,080
+to work on it and to transform
+it into something different.
+
+300
+00:16:15,080 --> 00:16:18,200
+And one of the things he later said,
+which I think captures his method
+
+301
+00:16:18,200 --> 00:16:19,750
+admirably, is:
+
+302
+00:16:19,750 --> 00:16:24,220
+he says the way in which you
+do that transformation is you take
+
+303
+00:16:24,220 --> 00:16:26,699
+radically different conceptual blocks
+
+304
+00:16:26,699 --> 00:16:32,370
+and you rub them together,
+and you make revolutionary fire.
+
+305
+00:16:32,370 --> 00:16:36,790
+And that is in effect what he's doing.
+He is taking very, very different traditions,
+
+306
+00:16:36,790 --> 00:16:38,340
+pushing them together,
+
+307
+00:16:38,340 --> 00:16:39,800
+rubbing them together,
+
+308
+00:16:39,800 --> 00:16:43,960
+and creating a completely
+new framework of knowledge.
+
+309
+00:16:43,960 --> 00:16:47,790
+And as he says in one of his introductory
+
+310
+00:16:49,670 --> 00:16:52,350
+prefaces, he says: if you're trying to
+create a new system of knowledge, then
+
+311
+00:16:52,350 --> 00:16:55,790
+you've got to reshape the whole conceptual apparatus.
+
+312
+00:16:55,790 --> 00:17:00,590
+You've got to reshape the whole method of inquiry.
+
+313
+00:17:00,590 --> 00:17:04,939
+Now, the three conceptual blocks
+that he rubs together in Capital
+
+314
+00:17:04,939 --> 00:17:07,110
+are really these:
+
+315
+00:17:07,110 --> 00:17:09,579
+First there is the conceptual block
+
+316
+00:17:09,579 --> 00:17:12,180
+of political economy.
+
+317
+00:17:12,180 --> 00:17:17,640
+Eighteenth century, early
+nineteenth century political economy.
+
+318
+00:17:17,640 --> 00:17:20,010
+This is mainly English.
+
+319
+00:17:20,010 --> 00:17:22,600
+Not solely English, but it's
+
+320
+00:17:22,600 --> 00:17:28,070
+from Locke and Hobbes and Hume to, of
+course, Adam Smith and Ricardo and Malthus.
+
+321
+00:17:28,070 --> 00:17:32,180
+And a host of other figures,
+like Steuart, and minor figures.
+
+322
+00:17:32,180 --> 00:17:35,880
+And he subjected all of these people
+
+323
+00:17:35,880 --> 00:17:39,730
+to a deep, deep criticism, in
+
+324
+00:17:39,730 --> 00:17:45,040
+three volumes called 'Theories of Surplus Value'.
+
+325
+00:17:45,040 --> 00:17:48,240
+He didn't have a photocopying machine
+and he didn't have the web and all those kinds
+
+326
+00:17:48,240 --> 00:17:51,240
+of things, so he
+laboriously copied out by hand
+
+327
+00:17:51,240 --> 00:17:52,980
+long passages from Adam Smith,
+
+328
+00:17:52,980 --> 00:17:54,770
+and then wrote a commentary on them.
+
+329
+00:17:54,770 --> 00:17:59,290
+Long passages from Steuart,
+
+330
+00:17:59,290 --> 00:18:03,390
+again, long sort of commentaries on them.
+
+331
+00:18:03,390 --> 00:18:07,990
+In fact what he was doing there
+was what we now call deconstruction.
+
+332
+00:18:07,990 --> 00:18:10,210
+And one of the things I learned
+
+333
+00:18:10,210 --> 00:18:12,950
+from going through 'Theories of Surplus Value' was
+
+334
+00:18:12,950 --> 00:18:16,170
+how to deconstruct arguments this way.
+
+335
+00:18:16,170 --> 00:18:18,340
+In effect, what he does is to say:
+
+336
+00:18:18,340 --> 00:18:19,979
+'Adam Smith makes this argument.
+
+337
+00:18:19,979 --> 00:18:22,770
+What is he missing out?
+
+338
+00:18:22,770 --> 00:18:25,030
+What is the absence? What is the missing
+
+339
+00:18:25,030 --> 00:18:26,400
+piece in this,
+
+340
+00:18:26,400 --> 00:18:28,299
+that really helps pin it all together,
+
+341
+00:18:28,299 --> 00:18:32,390
+and when we put it in there,
+transforms the argument?'
+
+342
+00:18:32,390 --> 00:18:34,470
+So political economy
+
+343
+00:18:34,470 --> 00:18:37,750
+is really quite strong
+
+344
+00:18:37,750 --> 00:18:38,540
+as one of the..
+
+345
+00:18:38,540 --> 00:18:42,760
+…one of the pieces in the story.
+
+346
+00:18:42,760 --> 00:18:46,429
+Now, I know political economy pretty well.
+I've read a lot of that stuff and I feel
+
+347
+00:18:46,429 --> 00:18:50,140
+fairly familiar with it. Maybe it's
+because I come out of the English
+
+348
+00:18:50,140 --> 00:18:53,260
+tradition and all the rest of it,
+that I feel fairly comfortable with it.
+
+349
+00:18:53,260 --> 00:18:56,080
+And so when we're going through,
+
+350
+00:18:56,080 --> 00:18:58,960
+I'll give you quite a bit of
+
+351
+00:18:58,960 --> 00:19:00,850
+the materials coming
+out of that, in terms of
+
+352
+00:19:00,850 --> 00:19:02,960
+where Marx is getting his inspiration from,
+
+353
+00:19:02,960 --> 00:19:05,240
+because he doesn't always cite it in Capital.
+
+354
+00:19:05,240 --> 00:19:06,789
+An idea comes up,
+
+355
+00:19:06,789 --> 00:19:08,830
+which is clearly taken from one place,
+
+356
+00:19:08,830 --> 00:19:10,400
+and is very significant,
+
+357
+00:19:10,400 --> 00:19:14,410
+but Marx doesn't always cite it.
+
+358
+00:19:14,410 --> 00:19:15,820
+There are, of course,
+
+359
+00:19:15,820 --> 00:19:21,420
+also some other theorists, even in
+the United States, but primarily French.
+
+360
+00:19:21,420 --> 00:19:25,230
+So there was a French tradition of
+political economy, too, rather different.
+
+361
+00:19:25,230 --> 00:19:29,370
+Marx makes reference to that, but that
+is one, if you like, one of the big areas
+
+362
+00:19:29,370 --> 00:19:32,920
+of his…of his discussion.
+
+363
+00:19:32,920 --> 00:19:36,460
+The second area
+
+364
+00:19:36,460 --> 00:19:39,770
+is German classical critical philosophy,
+
+365
+00:19:39,770 --> 00:19:41,870
+which stretches back to the Greeks.
+
+366
+00:19:41,870 --> 00:19:45,660
+Now, Marx wrote his dissertation
+
+367
+00:19:45,660 --> 00:19:50,040
+on Epicurus, so he was very, very
+familiar with Greek thought,
+
+368
+00:19:50,040 --> 00:19:52,750
+and of course the
+way in which Greek thought
+
+369
+00:19:52,750 --> 00:19:56,230
+came into the German
+philosophical critical tradition,
+
+370
+00:19:56,230 --> 00:20:01,340
+Spinoza, Leibniz, and of course Hegel,
+
+371
+00:20:01,340 --> 00:20:04,390
+and many others,
+
+372
+00:20:04,390 --> 00:20:08,470
+that kind of tradition
+is also extremely significant,
+
+373
+00:20:08,470 --> 00:20:13,390
+and so in many ways he's using
+the German critical philosophical tradition
+
+374
+00:20:13,390 --> 00:20:17,310
+in relationship to political
+economy. He's putting them together.
+
+375
+00:20:17,310 --> 00:20:19,200
+And he also drew heavily,
+
+376
+00:20:19,200 --> 00:20:21,980
+in lots of ways, upon Kant.
+
+377
+00:20:21,980 --> 00:20:23,760
+So that tradition
+
+378
+00:20:23,760 --> 00:20:27,660
+is also very significant. I'm not
+
+379
+00:20:27,660 --> 00:20:31,320
+very familiar with that tradition. I'm not
+deeply trained in that tradition, so those
+
+380
+00:20:31,320 --> 00:20:32,590
+of you who
+
+381
+00:20:32,590 --> 00:20:36,620
+have a deeper training in that tradition than I do,
+will probably spot things that I'm going to miss.
+
+382
+00:20:36,620 --> 00:20:38,970
+This is one of the things I learned when I
+
+383
+00:20:38,970 --> 00:20:41,900
+worked with a group of philosophers who were
+
+384
+00:20:41,900 --> 00:20:45,600
+steeped in Hegel, and all that
+kind of stuff, so I got a very Hegelian kind
+
+385
+00:20:45,600 --> 00:20:49,720
+of view, of how Marx is
+proceeding. I know some of it, but I'm not
+
+386
+00:20:49,720 --> 00:20:50,870
+so strong on it
+
+387
+00:20:50,870 --> 00:20:53,140
+as I would want to be.
+
+388
+00:20:53,140 --> 00:20:57,170
+And I have to say, early
+on I had some sympathy with the
+
+389
+00:20:57,170 --> 00:21:00,700
+British economist Joan Robinson when
+she said she really objected to the way in
+
+390
+00:21:00,700 --> 00:21:06,880
+which Hegel was putting his nose
+in between her and Ricardo in Marx's work.
+
+391
+00:21:06,880 --> 00:21:09,130
+I had sympathy with…
+
+392
+00:21:09,130 --> 00:21:11,870
+…with that, and so some of the…
+
+393
+00:21:11,870 --> 00:21:15,929
+…the problems I have with sort of
+becoming familiar with Hegel, I kind of have,
+
+394
+00:21:15,929 --> 00:21:19,340
+I have some sympathy with.
+
+395
+00:21:19,340 --> 00:21:23,760
+In fact, I jokingly say, and I probably shouldn't
+say it, and I'll upset all the Hegelians around,
+
+396
+00:21:23,760 --> 00:21:27,530
+actually, one of the best things
+about reading Hegel before you read Marx,
+
+397
+00:21:27,530 --> 00:21:32,730
+is it makes reading Marx pretty easy.
+
+398
+00:21:32,730 --> 00:21:37,270
+So get yourself a dose of Hegel before
+you do Marx and everything will be okay.
+
+399
+00:21:37,270 --> 00:21:38,990
+The third tradition
+
+400
+00:21:38,990 --> 00:21:41,750
+that he uses, and appeals to a lot,
+
+401
+00:21:41,750 --> 00:21:46,070
+is the utopian socialist tradition.
+
+402
+00:21:46,070 --> 00:21:48,570
+Now, this is primarily French,
+
+403
+00:21:48,570 --> 00:21:52,460
+although there's Robert Owen, and some of the
+British, and of course Thomas More, in the
+
+404
+00:21:52,460 --> 00:21:54,100
+British tradition,
+
+405
+00:21:54,100 --> 00:21:57,570
+who crops up every now
+and again in the text,
+
+406
+00:21:57,570 --> 00:21:59,900
+but the big socialist thinkers - there was
+
+407
+00:21:59,900 --> 00:22:10,180
+this tremendous burst of utopian
+thinking in the 1830s and 1840s in France.
+
+408
+00:22:10,180 --> 00:22:15,510
+People like Etienne Cabet, who created a
+group called the Icarians, who came here and settled
+
+409
+00:22:15,510 --> 00:22:19,050
+in the United States after 1848.
+
+410
+00:22:19,050 --> 00:22:25,490
+Proudhon. Saint-Simon. Fourier.
+
+411
+00:22:25,490 --> 00:22:28,810
+Marx was very, very familiar -
+he spent some time in Paris -
+
+412
+00:22:28,810 --> 00:22:30,169
+very familiar with their works,
+
+413
+00:22:30,169 --> 00:22:37,210
+and if you read the Communist Manifesto,
+you find that he's a bit frustrated with their works.
+
+414
+00:22:37,210 --> 00:22:40,780
+He doesn't like the way in which
+
+415
+00:22:40,780 --> 00:22:46,800
+the utopians are actually configuring some
+ideal society over there, without any idea
+
+416
+00:22:46,800 --> 00:22:51,080
+of how to get from here to there.
+
+417
+00:22:51,080 --> 00:22:54,810
+For Marx, what he wants
+to do is to try to convert
+
+418
+00:22:54,810 --> 00:22:58,270
+the socialist project
+from an utopian socialist project
+
+419
+00:22:58,270 --> 00:23:02,930
+into a scientific socialist project.
+
+420
+00:23:02,930 --> 00:23:06,220
+But in order to do that,
+he just can't take
+
+421
+00:23:06,220 --> 00:23:09,490
+English empiricism, English
+political economy, those kinds of things.
+
+422
+00:23:09,490 --> 00:23:14,760
+He has to recreate, reconfigure
+
+423
+00:23:14,760 --> 00:23:17,870
+what scientific method is all about.
+
+424
+00:23:17,870 --> 00:23:21,970
+And his scientific method is therefore
+
+425
+00:23:21,970 --> 00:23:25,780
+predicated very much on this
+
+426
+00:23:25,780 --> 00:23:29,490
+interrogation of, if you like,
+the mainly English
+
+427
+00:23:29,490 --> 00:23:32,190
+tradition of classical political economy,
+
+428
+00:23:32,190 --> 00:23:36,000
+with the mainly German
+tradition of critical philosophy,
+
+429
+00:23:36,000 --> 00:23:39,500
+with, if you like,
+the utopian impulse,
+
+430
+00:23:39,500 --> 00:23:42,559
+asking: what is communism?
+What is a socialist society?
+
+431
+00:23:42,559 --> 00:23:44,970
+How can we critique capitalism?
+
+432
+00:23:44,970 --> 00:23:49,660
+as, if you like, the third
+strain which is impelling him forward.
+
+433
+00:23:49,660 --> 00:23:52,710
+I'm pretty familiar with
+
+434
+00:23:52,710 --> 00:23:56,549
+the French socialist tradition,
+particularly of that period, of the utopian
+
+435
+00:23:56,549 --> 00:23:58,440
+tradition of that period,
+
+436
+00:23:58,440 --> 00:24:02,560
+and have even written about it so, so… You know,
+I've read a lot of those people, like Fourier,
+
+437
+00:24:02,560 --> 00:24:08,559
+Saint-Simon, and, and Proudhon,
+in particular, and I think, actually,
+
+438
+00:24:08,559 --> 00:24:14,280
+what happens is that Marx often draws
+from them more than he wants to acknowledge,
+
+439
+00:24:14,280 --> 00:24:18,940
+since he kind of wanted
+to distance himself
+
+440
+00:24:18,940 --> 00:24:22,030
+from that overt utopian tradition
+
+441
+00:24:22,030 --> 00:24:25,440
+that was there in the 1830s and
+1840s, in which he, in many
+
+442
+00:24:25,440 --> 00:24:31,330
+ways, saw as part of a chronic
+failure of the revolution of 1848 in Paris.
+
+443
+00:24:31,330 --> 00:24:35,330
+Since he wanted to distance himself
+from all of that, what he did was to say:
+
+444
+00:24:35,330 --> 00:24:39,820
+'Okay, I'm not going to acknowledge them very
+much at all', but in fact he makes a great
+
+445
+00:24:39,820 --> 00:24:44,049
+deal of use,
+particularly of Saint-Simon,
+
+446
+00:24:44,049 --> 00:24:50,390
+but also, by negation, Fourier.
+In fact, a lot of his ideas
+
+447
+00:24:50,390 --> 00:24:52,490
+are kind of the negative of Fourier.
+
+448
+00:24:52,490 --> 00:24:55,820
+So you can't really understand him
+without understanding who he's negating,
+
+449
+00:24:55,820 --> 00:24:57,850
+and he's negating Fourier, in the same way
+
+450
+00:24:57,850 --> 00:24:59,570
+that he negates
+
+451
+00:24:59,570 --> 00:25:03,470
+several of the political economists kind
+of outright, particularly Malthus, who
+
+452
+00:25:03,470 --> 00:25:05,220
+he had a particularly
+
+453
+00:25:05,220 --> 00:25:09,740
+hard time accepting.
+
+454
+00:25:09,740 --> 00:25:15,940
+So, those are, if you like, some of the main
+threads that come together in this book
+
+455
+00:25:15,940 --> 00:25:18,610
+I suggested however
+that we should be reading it
+
+456
+00:25:18,610 --> 00:25:23,550
+in Marx's own terms but that also poses
+
+457
+00:25:23,550 --> 00:25:28,220
+a whole set of difficulties and Marx
+himself was aware of this.
+
+458
+00:25:28,220 --> 00:25:31,510
+He interestingly commented
+
+459
+00:25:31,510 --> 00:25:33,850
+in one of his prefaces,
+
+460
+00:25:33,850 --> 00:25:41,900
+particularly the preface to the French edition,
+
+461
+00:25:41,900 --> 00:25:46,029
+when there was a suggestion that the
+French edition should be brought out
+
+462
+00:25:46,029 --> 00:25:51,140
+as a serial - you know the French
+like to publish things as feuilletons,
+
+463
+00:25:51,140 --> 00:25:55,170
+that's sort of - a paper comes out
+and it's the first two chapters…
+
+464
+00:25:55,170 --> 00:26:00,370
+and the next week…sort of a serialized kind of publication.
+
+465
+00:26:00,370 --> 00:26:04,220
+And what Marx writes (this is in 1872),
+
+466
+00:26:04,220 --> 00:26:08,270
+(He) says, "…I applaud your idea of publishing
+the translation of Capital as a serial…
+
+467
+00:26:08,270 --> 00:26:11,570
+…In this form the book will be more
+accessible to the working class…
+
+468
+00:26:11,570 --> 00:26:17,540
+…a consideration which to
+me outweighs everything else.
+
+469
+00:26:17,540 --> 00:26:20,460
+That is the good side of your suggestion.
+
+470
+00:26:20,460 --> 00:26:22,940
+But here is the reverse of the medal.
+
+471
+00:26:22,940 --> 00:26:26,120
+The method of analysis which I have employed…
+
+472
+00:26:26,120 --> 00:26:29,799
+…and which had not previously been
+applied to economic subjects…
+
+473
+00:26:29,799 --> 00:26:31,960
+makes the reading of the first chapters
+
+474
+00:26:31,960 --> 00:26:37,310
+rather arduous and it is
+to be feared that the French public…"
+
+475
+00:26:37,310 --> 00:26:38,770
+(and that will include you)
+
+476
+00:26:38,770 --> 00:26:42,690
+"…always impatient to come to a conclusion,
+eager to know the connection between
+
+477
+00:26:42,690 --> 00:26:44,110
+general principles
+
+478
+00:26:44,110 --> 00:26:47,040
+and the immediate questions
+that have aroused their passions
+
+479
+00:26:47,040 --> 00:26:51,870
+may be disheartened because they will
+be unable to move on at once.
+
+480
+00:26:51,870 --> 00:26:54,659
+That is a disadvantage I am
+powerless to overcome,
+
+481
+00:26:54,659 --> 00:26:57,840
+unless it be by forewarning and forearming
+
+482
+00:26:57,840 --> 00:27:00,850
+those readers who zealously seek the truth.
+
+483
+00:27:00,850 --> 00:27:04,490
+There is no royal road to science and only
+those who do not dread the fatiguing
+
+484
+00:27:04,490 --> 00:27:06,759
+climb of its steep paths
+
+485
+00:27:06,759 --> 00:27:08,150
+have a chance of gaining
+
+486
+00:27:08,150 --> 00:27:12,710
+its luminous summits."
+
+487
+00:27:12,710 --> 00:27:15,399
+So since you're all here zealously concerned
+
+488
+00:27:15,399 --> 00:27:17,830
+to pursue the truth,
+
+489
+00:27:17,830 --> 00:27:20,019
+I have to warn you, yeah, indeed
+
+490
+00:27:20,019 --> 00:27:25,870
+the reading of the first few chapters is
+particularly arduous. It's particularly difficult.
+
+491
+00:27:25,870 --> 00:27:28,740
+And there are a number of reasons for that.
+
+492
+00:27:28,740 --> 00:27:32,320
+One of the reasons is his method,
+which we'll talk about in a minute.
+
+493
+00:27:32,320 --> 00:27:35,640
+The other reason has to do
+
+494
+00:27:35,640 --> 00:27:40,010
+with the particular way in
+which he's setting up his project.
+
+495
+00:27:40,010 --> 00:27:42,700
+His project is to understand
+
+496
+00:27:42,700 --> 00:27:48,650
+how a capitalist mode of production works.
+
+497
+00:27:48,650 --> 00:27:55,159
+And he has in mind that this
+is going to be a huge, huge project.
+
+498
+00:27:55,159 --> 00:27:59,290
+In order to get that project underway,
+
+499
+00:27:59,290 --> 00:28:05,850
+he has to develop a conceptual
+apparatus which is going to help him understand
+
+500
+00:28:05,850 --> 00:28:11,860
+all the complexity that exists under capitalism.
+
+501
+00:28:11,860 --> 00:28:16,900
+And, again, in one of his introductions he talks about
+
+502
+00:28:16,900 --> 00:28:20,050
+how he's going to go about that.
+
+503
+00:28:20,050 --> 00:28:28,320
+He says: "The method of presentation",
+
+504
+00:28:28,320 --> 00:28:31,610
+and we're now dealing
+with the method of presentation,
+
+505
+00:28:31,610 --> 00:28:34,450
+this is in the post-face
+to the second edition,
+
+506
+00:28:34,450 --> 00:28:40,200
+"The method of presentation must
+differ in form from that of inquiry.
+
+507
+00:28:40,200 --> 00:28:43,230
+"The latter", that is,
+the process of inquiry,
+
+508
+00:28:43,230 --> 00:28:47,210
+"has to appropriate the material in
+detail to analyze these different forms of
+
+509
+00:28:47,210 --> 00:28:52,510
+development, and to track
+down their inner connection.
+
+510
+00:28:52,510 --> 00:28:57,580
+Only after this work has been done can
+the real movement be appropriately presented.
+
+511
+00:28:57,580 --> 00:28:59,950
+If this is done successfully,
+
+512
+00:28:59,950 --> 00:29:01,900
+if the life of the subject matter",
+
+513
+00:29:01,900 --> 00:29:04,380
+that is, the capitalist mode of production,
+
+514
+00:29:04,380 --> 00:29:08,090
+"is now reflected back in the
+ideas then it may appear as if we have
+
+515
+00:29:08,090 --> 00:29:13,910
+before us an a priori construction."
+
+516
+00:29:13,910 --> 00:29:15,809
+What Marx is talking about here
+
+517
+00:29:15,809 --> 00:29:21,120
+is his method of inquiry is
+different from his method of presentation.
+
+518
+00:29:21,120 --> 00:29:26,440
+His method of inquiry starts with
+everything that exists- everything that's going on.
+
+519
+00:29:26,440 --> 00:29:29,169
+You start with reality
+as you experience it,
+
+520
+00:29:29,169 --> 00:29:31,500
+as you see it, as you feel it.
+
+521
+00:29:31,500 --> 00:29:33,660
+You start with all of that.
+
+522
+00:29:33,660 --> 00:29:36,440
+You start with descriptions of the reality
+
+523
+00:29:36,440 --> 00:29:40,669
+by the political economists,
+by novelists, by everybody.
+
+524
+00:29:40,669 --> 00:29:42,919
+You start with all that material
+
+525
+00:29:42,919 --> 00:29:46,559
+and then you search in that material
+
+526
+00:29:46,559 --> 00:29:49,020
+for some simple concepts.
+
+527
+00:29:49,020 --> 00:29:51,380
+This is what he calls
+the 'method of descent.'
+
+528
+00:29:51,380 --> 00:29:53,040
+The method of descent from
+
+529
+00:29:53,040 --> 00:29:54,980
+the reality which you find,
+
+530
+00:29:54,980 --> 00:29:57,020
+going down, looking for
+
+531
+00:29:57,020 --> 00:30:00,440
+some foundational, fundamental concepts.
+
+532
+00:30:00,440 --> 00:30:06,060
+And once you've uncovered and
+discovered those fundamental concepts,
+
+533
+00:30:06,060 --> 00:30:09,970
+you then come back to the surface
+
+534
+00:30:09,970 --> 00:30:13,060
+and you look at what's going
+on around in the surface and you see
+
+535
+00:30:13,060 --> 00:30:16,980
+that behind the world of
+appearance that you started out with
+
+536
+00:30:16,980 --> 00:30:22,670
+there is another way to
+interpret what's going on.
+
+537
+00:30:22,670 --> 00:30:26,070
+In effect Marx is a
+pioneer in a method which if you,
+
+538
+00:30:26,070 --> 00:30:30,860
+you know, if you're familiar with
+psychoanalysis you would also, I think, understand.
+
+539
+00:30:30,860 --> 00:30:34,490
+That you start with surface behaviors
+and you look for some,
+
+540
+00:30:34,490 --> 00:30:37,380
+you look for conceptual
+apparatus like Freud did.
+
+541
+00:30:37,380 --> 00:30:40,710
+You come up with a conceptual apparatus
+and then it brings you back and you could
+
+542
+00:30:40,710 --> 00:30:46,210
+explain, 'Ah! That person is acting that
+way and it looks like this but in fact it's a
+
+543
+00:30:46,210 --> 00:30:48,100
+representation of that.'
+
+544
+00:30:48,100 --> 00:30:51,549
+Marx is doing the same sort of
+thing. In fact Marx is pioneering
+
+545
+00:30:51,549 --> 00:30:54,510
+this method in social science:
+
+546
+00:30:54,510 --> 00:30:58,120
+Start with the surface appearance;
+find the deep concepts.
+
+547
+00:30:58,120 --> 00:31:03,330
+In Capital he's going to start with
+the deep concepts. He's going to start
+
+548
+00:31:03,330 --> 00:31:07,950
+with the conclusions of his inquiries.
+
+549
+00:31:07,950 --> 00:31:11,580
+'What are my basic concepts?'
+
+550
+00:31:11,580 --> 00:31:14,480
+And he lays these basic concepts out,
+
+551
+00:31:14,480 --> 00:31:18,029
+very simply, very directly,
+
+552
+00:31:18,029 --> 00:31:21,860
+and indeed it looks like an a priori
+construction. When you first read it
+
+553
+00:31:21,860 --> 00:31:23,010
+you say,
+
+554
+00:31:23,010 --> 00:31:25,540
+'Where is all this stuff coming from?'
+
+555
+00:31:25,540 --> 00:31:29,720
+'Where'd he get it from?
+Why is he doing that?'
+
+556
+00:31:29,720 --> 00:31:35,880
+And half the time you have no idea what
+he's talking about with these concepts.
+
+557
+00:31:35,880 --> 00:31:37,780
+But then bit by bit,
+
+558
+00:31:37,780 --> 00:31:44,340
+as you move on, you start to see how these
+concepts are illuminating things going on around us.
+
+559
+00:31:44,340 --> 00:31:47,250
+So after a while you start to say, 'Ah!
+
+560
+00:31:47,250 --> 00:31:49,759
+'So that's what 'value theory' really means.'
+
+561
+00:31:49,759 --> 00:31:52,390
+'That's what the value argument is all about.'
+
+562
+00:31:52,390 --> 00:31:56,799
+'Ah! That is what this
+fetish is all really all about.'
+
+563
+00:31:56,799 --> 00:31:57,720
+'That is what these
+
+564
+00:31:57,720 --> 00:32:00,440
+concepts are doing for me.'
+
+565
+00:32:00,440 --> 00:32:04,110
+But in effect you only
+understand how these concepts work
+
+566
+00:32:04,110 --> 00:32:08,250
+by the time you get
+to the end of the book.
+
+567
+00:32:08,250 --> 00:32:10,460
+Now that's a very unfamiliar strategy.
+
+568
+00:32:10,460 --> 00:32:14,050
+I mean, we're familiar with strategies
+where people people hammer into you:
+
+569
+00:32:14,050 --> 00:32:17,600
+'Get the concept straight and then you go
+on to the next one.' It's like you build
+
+570
+00:32:17,600 --> 00:32:21,240
+brick by brick by brick by brick.
+
+571
+00:32:21,240 --> 00:32:23,250
+Marx is more like,
+
+572
+00:32:23,250 --> 00:32:26,540
+you know, dissecting an onion.
+I use this metaphor and it's an unfortunate one
+
+573
+00:32:26,540 --> 00:32:27,960
+because as somebody pointed out,
+
+574
+00:32:27,960 --> 00:32:31,530
+you know, when you dissect an
+onion it usually reduces you to tears.
+
+575
+00:32:31,530 --> 00:32:35,320
+But what he does in effect is
+to start from the outside of the onion,
+
+576
+00:32:35,320 --> 00:32:38,610
+go to the center of the onion, find
+out what makes the onion grow, and then
+
+577
+00:32:38,610 --> 00:32:41,210
+come back to the surface.
+
+578
+00:32:41,210 --> 00:32:45,020
+So you only understand, at
+the end of the day, what he's about,
+
+579
+00:32:45,020 --> 00:32:48,380
+when he comes back to the surface.
+
+580
+00:32:48,380 --> 00:32:52,310
+And his argument about what makes it
+grow… when you start from the
+
+581
+00:32:52,310 --> 00:32:54,880
+inner and you work outwards
+in these sort of layers…
+
+582
+00:32:54,880 --> 00:32:58,280
+and that's what you do.
+You perpetually enrich the concepts.
+
+583
+00:32:58,280 --> 00:32:59,910
+Something that seems like
+
+584
+00:32:59,910 --> 00:33:03,029
+a very stark and very abstract concept
+
+585
+00:33:03,029 --> 00:33:06,780
+gradually gets richer and
+richer and richer as you go on.
+
+586
+00:33:06,780 --> 00:33:08,890
+It's an expansion
+
+587
+00:33:08,890 --> 00:33:11,430
+of these concepts.
+
+588
+00:33:11,430 --> 00:33:15,290
+It's not a brick by brick approach at
+all, and most of us are not used to that, so
+
+589
+00:33:15,290 --> 00:33:19,520
+one of the things you've got to
+get used to is that this is what's going on.
+
+590
+00:33:19,520 --> 00:33:21,770
+What that means for you is
+
+591
+00:33:21,770 --> 00:33:25,540
+you've got to hang on like crazy
+for the first three chapters, at least,
+
+592
+00:33:25,540 --> 00:33:29,940
+because you probably won't really get the
+sense of what it's all about very well
+
+593
+00:33:29,940 --> 00:33:31,039
+until you get
+
+594
+00:33:31,039 --> 00:33:33,790
+further on down into the text,
+and then you start to see
+
+595
+00:33:33,790 --> 00:33:34,950
+how these concepts
+
+596
+00:33:34,950 --> 00:33:37,570
+are working, and how they… and then,
+
+597
+00:33:37,570 --> 00:33:39,129
+if you like, the proof of
+
+598
+00:33:39,129 --> 00:33:42,550
+the pudding is in the eating,
+that by the time you start to actually
+
+599
+00:33:42,550 --> 00:33:45,440
+derive some of the consequences
+
+600
+00:33:45,440 --> 00:33:49,150
+that Marx lays out then, of course,
+
+601
+00:33:49,150 --> 00:33:54,250
+you get somewhere.
+
+602
+00:33:54,250 --> 00:33:57,270
+Included in this is his
+choice of starting point.
+
+603
+00:33:57,270 --> 00:33:59,629
+As you will see, he starts
+from the standpoint…
+
+604
+00:33:59,629 --> 00:34:04,040
+from the concept of the commodity.
+
+605
+00:34:04,040 --> 00:34:07,680
+Now, this is a very
+strange starting point. I mean
+
+606
+00:34:07,680 --> 00:34:10,970
+most of you, when you think of Marx,
+will think of phrases like 'all history is the
+
+607
+00:34:10,970 --> 00:34:13,089
+history of class struggle'.
+
+608
+00:34:13,089 --> 00:34:17,499
+So you think: 'Well, Capital
+should start with class struggle'.
+
+609
+00:34:17,499 --> 00:34:21,789
+I don't know, it takes to about page 300
+before you get to any class struggle in Capital.
+
+610
+00:34:21,789 --> 00:34:24,589
+Very frustrating for those
+of you kind of really want to
+
+611
+00:34:24,589 --> 00:34:27,889
+get in there and think about the class struggle.
+
+612
+00:34:27,889 --> 00:34:30,789
+Why doesn't he start with money?
+
+613
+00:34:30,789 --> 00:34:33,349
+Actually, in his early
+preparatory investigations, he
+
+614
+00:34:33,349 --> 00:34:36,089
+wanted to start with money,
+
+615
+00:34:36,089 --> 00:34:40,809
+but then he found it was more
+and more impossible to start with money.
+
+616
+00:34:40,809 --> 00:34:44,269
+Why didn't he start with labour?
+
+617
+00:34:44,269 --> 00:34:47,739
+You know, he could have started in all
+kinds of different places, but he decides
+
+618
+00:34:47,739 --> 00:34:49,109
+to start with the commodity.
+
+619
+00:34:49,109 --> 00:34:54,359
+And if you go back and you read his preparatory
+writings, you see there was a long period,
+
+620
+00:34:54,359 --> 00:34:57,519
+about 20 or 30 years, where he
+was struggling with the question.
+
+621
+00:34:57,519 --> 00:34:58,859
+What's the best starting point
+
+622
+00:34:58,859 --> 00:35:00,479
+to really go after this?
+
+623
+00:35:00,479 --> 00:35:03,439
+What's at the centre of this
+onion, if you want to call it that,
+
+624
+00:35:03,439 --> 00:35:05,190
+when I analyze it,
+
+625
+00:35:05,190 --> 00:35:06,449
+it really allows me
+
+626
+00:35:06,449 --> 00:35:09,579
+to understand how the whole thing works?
+
+627
+00:35:09,579 --> 00:35:11,640
+And he decided to start with the commodity.
+
+628
+00:35:11,640 --> 00:35:13,859
+It's an arbitrary starting point.
+
+629
+00:35:13,859 --> 00:35:17,249
+You don't get its logic. He doesn't
+explain it. He doesn't even bother to
+
+630
+00:35:17,249 --> 00:35:19,779
+try and persuade you about it.
+He just says:
+
+631
+00:35:19,779 --> 00:35:23,639
+'This is where I start. This is how I
+start to think about it. These are the concepts
+
+632
+00:35:23,639 --> 00:35:27,249
+I'm going to use.'
+
+633
+00:35:27,249 --> 00:35:31,979
+Very cryptic kind of beginning to the whole
+thing. He doesn't attempt any kind of persuasion at all.
+
+634
+00:35:31,979 --> 00:35:35,619
+At that point you kind of say: 'Well, you know, if
+there's no justification for this, why don't I
+
+635
+00:35:35,619 --> 00:35:37,069
+lay the text aside?'
+
+636
+00:35:37,069 --> 00:35:39,420
+Then the thing starts to
+get a little complicated.
+
+637
+00:35:39,420 --> 00:35:44,209
+By the time you get to chapter three, which
+is where most people who read Capital stop reading it,
+
+638
+00:35:44,209 --> 00:35:46,230
+if they're trying to read it on their own,
+
+639
+00:35:46,230 --> 00:35:49,970
+by the time you get to chapter three,
+you kind of say: 'This is impossible. This is not
+
+640
+00:35:49,970 --> 00:35:50,909
+going anywhere.'
+
+641
+00:35:50,909 --> 00:35:55,239
+So it's really hard,
+for those kinds of reasons.
+
+642
+00:35:55,239 --> 00:36:00,309
+The other reason it's hard is because,
+
+643
+00:36:00,309 --> 00:36:04,179
+as I suggested, the
+conceptual apparatus is meant
+
+644
+00:36:04,179 --> 00:36:07,039
+not just to deal with Capital Volume 1.
+
+645
+00:36:07,039 --> 00:36:08,549
+It's meant to
+
+646
+00:36:08,549 --> 00:36:13,519
+take him all the way, in terms of all the
+other things he wanted to think about.
+
+647
+00:36:13,519 --> 00:36:18,009
+Now, you'll be distressed to know
+that there are three volumes of Capital.
+
+648
+00:36:18,009 --> 00:36:21,189
+So if you really want to
+understand the capitalist mode of production,
+
+649
+00:36:21,189 --> 00:36:24,109
+you have to read the three volumes of Capital.
+
+650
+00:36:24,109 --> 00:36:28,229
+Volume 1 is just one particular perspective on
+
+651
+00:36:28,229 --> 00:36:30,199
+the capitalist mode of production,
+
+652
+00:36:30,199 --> 00:36:36,019
+but even worse, the three volumes of Capital
+are only about an eighth of what he had in mind.
+
+653
+00:36:36,019 --> 00:36:39,849
+Here's what he wrote in
+a text called the Grundrisse,
+
+654
+00:36:39,849 --> 00:36:44,389
+which is a preparatory text, where
+he's setting out various designs for Capital.
+
+655
+00:36:44,389 --> 00:36:45,649
+He says: 'Okay,
+
+656
+00:36:45,649 --> 00:36:50,229
+what I'm going to do is to go through
+
+657
+00:36:50,229 --> 00:36:51,719
+the analysis as follows:
+
+658
+00:36:51,719 --> 00:36:55,999
+We're going to deal with: "1) The general
+abstract determinants which obtain more
+
+659
+00:36:55,999 --> 00:37:01,049
+or less in all forms of society.
+
+660
+00:37:01,049 --> 00:37:04,599
+2) The categories which make up the
+inner structure of bourgeois society,
+
+661
+00:37:04,599 --> 00:37:08,079
+and on which the fundamental
+classes rest: capital,
+
+662
+00:37:08,079 --> 00:37:12,899
+wage labour, landed property, their interrelation.
+
+663
+00:37:12,899 --> 00:37:14,669
+Town and Country.
+
+664
+00:37:14,669 --> 00:37:17,409
+The three great social classes;
+
+665
+00:37:17,409 --> 00:37:19,299
+exchange between them.
+
+666
+00:37:19,299 --> 00:37:20,519
+Circulation.
+
+667
+00:37:20,519 --> 00:37:22,599
+The credit system."
+
+668
+00:37:22,599 --> 00:37:24,489
+Good topic right now.
+
+669
+00:37:24,489 --> 00:37:27,759
+"Private.
+
+670
+00:37:27,759 --> 00:37:31,650
+3) Concentration of bourgeois society in
+the form of the state,
+
+671
+00:37:31,650 --> 00:37:34,249
+viewed in relation to itself.
+
+672
+00:37:34,249 --> 00:37:36,909
+The unproductive classes.
+
+673
+00:37:36,909 --> 00:37:38,160
+Taxes,
+
+674
+00:37:38,160 --> 00:37:39,499
+State debt.
+
+675
+00:37:39,499 --> 00:37:41,059
+Public credit.
+
+676
+00:37:41,059 --> 00:37:42,709
+The population.
+
+677
+00:37:42,709 --> 00:37:44,180
+The colonies.
+
+678
+00:37:44,180 --> 00:37:47,699
+Emigration.
+
+679
+00:37:47,699 --> 00:37:50,969
+4) The international relations of
+production,
+
+680
+00:37:50,969 --> 00:37:52,869
+international division of labour,
+
+681
+00:37:52,869 --> 00:37:54,589
+international exchange,
+
+682
+00:37:54,589 --> 00:37:56,039
+export and import,
+
+683
+00:37:56,039 --> 00:37:57,230
+rate of exchange,"
+
+684
+00:37:57,230 --> 00:38:01,359
+another good topic.
+
+685
+00:38:01,359 --> 00:38:02,209
+"Fifth," excellent topic,
+
+686
+00:38:02,209 --> 00:38:07,759
+"The world market and crises.'"
+
+687
+00:38:07,759 --> 00:38:08,440
+So this is, if you like,
+
+688
+00:38:08,440 --> 00:38:12,330
+the panorama he laid out in the
+Grundrisse of what it was he wanted to do.
+
+689
+00:38:12,330 --> 00:38:14,799
+This is what he had in mind,
+
+690
+00:38:14,799 --> 00:38:17,779
+that he was going to do,
+
+691
+00:38:17,779 --> 00:38:20,489
+when he wrote Capital.
+
+692
+00:38:20,489 --> 00:38:22,279
+He never finished it.
+
+693
+00:38:22,279 --> 00:38:24,259
+He never took up
+
+694
+00:38:24,259 --> 00:38:26,390
+most of those topics.
+
+695
+00:38:26,390 --> 00:38:27,940
+So what you have in Capital
+
+696
+00:38:27,940 --> 00:38:29,999
+is the beginning
+
+697
+00:38:29,999 --> 00:38:33,449
+of this massive kind of project,
+
+698
+00:38:33,449 --> 00:38:35,639
+a massive project which
+
+699
+00:38:35,639 --> 00:38:37,360
+he hinted at in lots
+
+700
+00:38:37,360 --> 00:38:41,950
+of places about, you know, how to
+understand the state, how to understand
+
+701
+00:38:41,950 --> 00:38:46,849
+civil society, how to understand
+emigration, how to understand
+
+702
+00:38:46,849 --> 00:38:52,759
+currency exchanges, and things like that.
+
+703
+00:38:52,759 --> 00:38:56,979
+So, here too, we have to understand both that
+
+704
+00:38:56,979 --> 00:39:00,109
+the conceptual apparatus
+
+705
+00:39:00,109 --> 00:39:02,119
+at the beginning, is…
+
+706
+00:39:02,119 --> 00:39:06,709
+he's really trying to design it in such
+a way that it bears the burden of all of that,
+
+707
+00:39:06,709 --> 00:39:08,890
+but in fact, what it then does,
+
+708
+00:39:08,890 --> 00:39:12,699
+is it provides the
+framework within which Volume 1
+
+709
+00:39:12,699 --> 00:39:14,020
+operates, and Volume 1
+
+710
+00:39:14,020 --> 00:39:17,569
+is just one single piece of this whole
+
+711
+00:39:17,569 --> 00:39:19,719
+puzzle that he's laid out.
+
+712
+00:39:19,719 --> 00:39:24,229
+Volume 1 is really essentially
+looking at the capitalist mode of production
+
+713
+00:39:24,229 --> 00:39:27,839
+from the standpoint of production,
+
+714
+00:39:27,839 --> 00:39:29,659
+not of the market,
+
+715
+00:39:29,659 --> 00:39:34,279
+not of global trade, but
+the standpoint of production.
+
+716
+00:39:34,279 --> 00:39:37,149
+So you're going to have to recognize
+that what you're going to get out of this
+
+717
+00:39:37,149 --> 00:39:41,190
+course is an analysis, by Marx,
+
+718
+00:39:41,190 --> 00:39:46,949
+of a capitalist mode of
+production from the perspective of production.
+
+719
+00:39:46,949 --> 00:39:50,459
+Volume 2 does the perspective of exchange.
+
+720
+00:39:50,459 --> 00:39:55,099
+Volume 3 does materials about crisis formation,
+
+721
+00:39:55,099 --> 00:39:59,959
+and also rules of distribution,
+
+722
+00:39:59,959 --> 00:40:02,829
+interest, rent, taxes,
+
+723
+00:40:02,829 --> 00:40:08,419
+those kinds of issues.
+
+724
+00:40:08,419 --> 00:40:10,929
+But then comes the method,
+
+725
+00:40:10,929 --> 00:40:12,839
+the other part of the method,
+
+726
+00:40:12,839 --> 00:40:18,259
+which is very important in terms of the
+method of presentation and the method of inquiry.
+
+727
+00:40:18,259 --> 00:40:23,809
+And that is Marx's use of dialectics.
+
+728
+00:40:23,809 --> 00:40:27,999
+What he says, again in his preface,
+
+729
+00:40:27,999 --> 00:40:32,190
+is that in dialectics we find
+
+730
+00:40:32,190 --> 00:40:34,999
+a completely different
+
+731
+00:40:34,999 --> 00:40:38,189
+concept of analysis.
+
+732
+00:40:38,189 --> 00:40:45,189
+You'll find hardly any causal language
+in Marx. Marx doesn't say, 'This causes that.'
+
+733
+00:40:45,219 --> 00:40:47,119
+He nearly always says that
+
+734
+00:40:47,119 --> 00:40:51,679
+'This is dialectically related to that.'
+
+735
+00:40:51,679 --> 00:40:55,119
+And a dialectical relation
+
+736
+00:40:55,119 --> 00:40:56,529
+is an inner relation,
+
+737
+00:40:56,529 --> 00:41:01,069
+not a causative external
+relation. It's an inner relation.
+
+738
+00:41:01,069 --> 00:41:05,259
+And he talks about this dialectical method
+
+739
+00:41:05,259 --> 00:41:09,509
+again in the postface
+to the second edition.
+
+740
+00:41:09,509 --> 00:41:11,619
+He says: 'Okay,
+
+741
+00:41:11,619 --> 00:41:21,209
+I took up some ideas from Hegel.
+
+742
+00:41:21,209 --> 00:41:24,900
+"But," he says, "my dialectical
+method is, in its foundations, not only
+
+743
+00:41:24,900 --> 00:41:29,479
+different from the Hegelian,
+but exactly opposite to it."
+
+744
+00:41:29,479 --> 00:41:31,029
+There are ways in which, I think,
+
+745
+00:41:31,029 --> 00:41:34,579
+we're going to find that's not exactly true.
+
+746
+00:41:34,579 --> 00:41:38,109
+That, in fact, Marx revolutionized
+
+747
+00:41:38,109 --> 00:41:42,269
+the dialectical method;
+he didn't simply invert it,
+
+748
+00:41:42,269 --> 00:41:45,189
+as is sometimes said.
+
+749
+00:41:45,189 --> 00:41:49,069
+He then goes on to say this: "I criticized
+the mystificatory side of the Hegelian
+
+750
+00:41:49,069 --> 00:41:53,160
+dialectic nearly thirty years ago."
+
+751
+00:41:53,160 --> 00:41:58,689
+What Marx is referring to here is
+
+752
+00:41:58,689 --> 00:42:01,719
+his tract called A Critique
+of Hegel's Philosophy of Law,
+
+753
+00:42:01,719 --> 00:42:05,159
+Critique of Hegel's Philosophy
+of Right, whichever the title is,
+
+754
+00:42:05,159 --> 00:42:06,989
+and I think that that critique
+
+755
+00:42:06,989 --> 00:42:09,999
+played a very foundational
+
+756
+00:42:09,999 --> 00:42:12,819
+moment in which Marx
+
+757
+00:42:12,819 --> 00:42:17,169
+defined his relationship to the Hegelian dialectic.
+
+758
+00:42:17,169 --> 00:42:19,959
+So he goes on talking about
+
+759
+00:42:19,959 --> 00:42:22,809
+this mystificatory aspect.
+
+760
+00:42:22,809 --> 00:42:27,739
+And the way in which this
+mystified form of the dialectic
+
+761
+00:42:27,739 --> 00:42:29,789
+as purveyed by Hegel,
+
+762
+00:42:29,789 --> 00:42:34,729
+became the fashion in Germany,
+
+763
+00:42:34,729 --> 00:42:39,759
+and why it was that he had to reform it
+
+764
+00:42:39,759 --> 00:42:43,619
+in such a way as so it could take account
+
+765
+00:42:43,619 --> 00:42:50,619
+of every historical developed
+form as being in a fluid state, in motion.
+
+766
+00:42:51,039 --> 00:42:53,779
+He had to re-figure it
+so that it could grasp
+
+767
+00:42:53,779 --> 00:42:59,910
+the transient aspects of
+a society as well.
+
+768
+00:42:59,910 --> 00:43:04,859
+And he then goes on to
+talk about this as being,
+
+769
+00:43:04,859 --> 00:43:09,099
+"This dialectical method does not
+let itself be impressed by anything, being
+
+770
+00:43:09,099 --> 00:43:14,749
+in it's very essence critical and revolutionary."
+
+771
+00:43:14,749 --> 00:43:18,999
+Now, what he's talking about here is,
+
+772
+00:43:18,999 --> 00:43:22,639
+he's going to use a
+version of dialectical method
+
+773
+00:43:22,639 --> 00:43:27,679
+to establish relations between
+
+774
+00:43:27,679 --> 00:43:29,979
+elements within his system.
+
+775
+00:43:29,979 --> 00:43:32,479
+but he is going to do it in such a way
+
+776
+00:43:32,479 --> 00:43:37,299
+as to capture fluidity and motion.
+
+777
+00:43:37,299 --> 00:43:41,959
+Marx above all is incredibly, incredibly
+
+778
+00:43:41,959 --> 00:43:44,419
+impressed with the fluidity
+
+779
+00:43:44,419 --> 00:43:48,739
+and the dynamics of capitalism.
+
+780
+00:43:48,739 --> 00:43:51,939
+Now this is very weird,
+because Marx is often
+
+781
+00:43:51,939 --> 00:43:53,959
+talked about as if he is a
+
+782
+00:43:53,959 --> 00:43:57,979
+static, structural analyst.
+
+783
+00:43:57,979 --> 00:44:03,309
+The weird thing is, when you read Capital,
+you realize he sees the motion.
+
+784
+00:44:03,309 --> 00:44:06,369
+He sees the movement all of the time.
+
+785
+00:44:06,369 --> 00:44:09,609
+He is constantly talking about
+
+786
+00:44:09,609 --> 00:44:14,939
+that movement and that
+movement is a dialectical movement.
+
+787
+00:44:14,939 --> 00:44:16,710
+So one of the ways in which
+
+788
+00:44:16,710 --> 00:44:22,729
+also you have to read Marx in Marx's
+own terms is to try to grapple with
+
+789
+00:44:22,729 --> 00:44:26,119
+what he means by dialectics.
+
+790
+00:44:26,119 --> 00:44:28,589
+Because the problem is he never wrote
+
+791
+00:44:28,589 --> 00:44:31,939
+a tract on dialectics.
+
+792
+00:44:31,939 --> 00:44:33,259
+He never said:
+
+793
+00:44:33,259 --> 00:44:35,499
+'Okay, this is my dialectical method'.
+
+794
+00:44:35,499 --> 00:44:36,630
+There are hints of it.
+
+795
+00:44:36,630 --> 00:44:38,800
+If you really want to
+understand his dialectical method,
+
+796
+00:44:38,800 --> 00:44:42,259
+you read Capital.
+
+797
+00:44:42,259 --> 00:44:45,739
+That's the best place to get it.
+
+798
+00:44:45,739 --> 00:44:49,469
+And when you've read
+Capital very carefully you will come out
+
+799
+00:44:49,469 --> 00:44:53,140
+with a sense of how dialectical method works.
+
+800
+00:44:53,140 --> 00:44:56,769
+But again, this is going
+to be a bit confusing because
+
+801
+00:44:56,769 --> 00:45:01,249
+you're probably not yet used
+to dialectical reasoning, and the curious thing about
+
+802
+00:45:01,249 --> 00:45:04,009
+academia is that the more
+well trained you are in a discipline,
+
+803
+00:45:04,009 --> 00:45:06,549
+probably less used you are
+
+804
+00:45:06,549 --> 00:45:08,280
+to dialectical method.
+
+805
+00:45:08,280 --> 00:45:10,329
+In fact young children are very dialectical.
+
+806
+00:45:10,329 --> 00:45:12,449
+They see everything in motion.
+
+807
+00:45:12,449 --> 00:45:15,709
+They see contradiction everywhere
+and they are quite contradictory about everything.
+
+808
+00:45:15,709 --> 00:45:18,609
+Every contradiction goes
+into everything else and
+
+809
+00:45:18,609 --> 00:45:19,649
+your kids say all kinds of
+
+810
+00:45:19,649 --> 00:45:22,469
+wondrous contradictory things to you.
+
+811
+00:45:22,469 --> 00:45:25,819
+And you kind of say 'Now you stop
+thinking about that. You have to think rationally'.
+
+812
+00:45:25,819 --> 00:45:28,619
+So, actually, we train people
+
+813
+00:45:28,619 --> 00:45:33,460
+out of being good
+dialecticians almost from day two.
+
+814
+00:45:33,460 --> 00:45:38,519
+But in fact dialectical method
+is intuitively very, very powerful.
+
+815
+00:45:38,519 --> 00:45:42,489
+And in a sense what
+Marx is doing is recovering
+
+816
+00:45:42,489 --> 00:45:48,069
+that incredibly intuitive
+dialectical method and putting it to work,
+
+817
+00:45:48,069 --> 00:45:51,400
+both in terms of an
+analytic schema, as we will see,
+
+818
+00:45:51,400 --> 00:45:53,900
+but also in terms of understanding
+
+819
+00:45:53,900 --> 00:45:56,440
+that everything is in process.
+
+820
+00:45:56,440 --> 00:45:58,759
+Everything is in motion.
+
+821
+00:45:58,759 --> 00:46:01,889
+Everything is defined in those terms.
+
+822
+00:46:01,889 --> 00:46:03,879
+He doesn't talk about labour.
+
+823
+00:46:03,879 --> 00:46:07,900
+He talks about the labour process.
+
+824
+00:46:07,900 --> 00:46:09,289
+Capital is not a thing;
+
+825
+00:46:09,289 --> 00:46:13,549
+it is a process; it is in motion.
+
+826
+00:46:13,549 --> 00:46:18,209
+Value does not exist unless it is in motion.
+
+827
+00:46:18,209 --> 00:46:22,589
+When things stop, value disappears,
+
+828
+00:46:22,589 --> 00:46:27,269
+and the whole system comes tumbling down.
+
+829
+00:46:27,269 --> 00:46:28,769
+And those of you who
+
+830
+00:46:28,769 --> 00:46:32,410
+remember very well what
+happened in the aftermath of 9/11.
+
+831
+00:46:32,410 --> 00:46:38,619
+Most things stopped. Motion stopped.
+
+832
+00:46:38,619 --> 00:46:41,869
+Planes stopped flying. You
+couldn't get through the bridges,
+
+833
+00:46:41,869 --> 00:46:43,770
+everything, and then in three days
+
+834
+00:46:43,770 --> 00:46:47,099
+suddenly everybody realized that
+capitalism would collapse
+
+835
+00:46:47,099 --> 00:46:50,420
+if things didn't get in motion again,
+so suddenly, you know, Giuliani
+
+836
+00:46:50,420 --> 00:46:51,099
+comes on and says:
+
+837
+00:46:51,099 --> 00:46:54,299
+'For god's sake, get out
+your credit cards and go shop.
+
+838
+00:46:54,299 --> 00:46:58,019
+Go back to Broadway. Go back
+and do this kind of stuff; go back.'
+
+839
+00:46:58,019 --> 00:47:01,599
+Bush even appeared on a TV
+ad for the airline industry, saying:
+
+840
+00:47:01,599 --> 00:47:04,509
+'Get back and start flying.
+
+841
+00:47:04,509 --> 00:47:07,719
+Get back in motion.' You know.
+
+842
+00:47:07,719 --> 00:47:12,919
+In other words, capitalism is, as
+Jack Kerouac would say, 'perpetually on the road.'
+
+843
+00:47:12,919 --> 00:47:17,069
+And if it's not always
+on the road, then it's nothing.
+
+844
+00:47:17,069 --> 00:47:21,650
+So Marx is incredibly
+appreciative of that. And it's very
+
+845
+00:47:21,650 --> 00:47:25,559
+strange to find him so
+often depicted as this static
+
+846
+00:47:25,559 --> 00:47:30,119
+figure who's got it all worked out.
+No, it's in motion and it's changing,
+
+847
+00:47:30,119 --> 00:47:33,929
+perpetually in motion.
+
+848
+00:47:33,929 --> 00:47:35,609
+So here, I think, too,
+
+849
+00:47:35,609 --> 00:47:39,699
+what Marx is trying to do
+is to find a conceptual apparatus
+
+850
+00:47:39,699 --> 00:47:44,640
+that would help you to understand that motion.
+
+851
+00:47:44,640 --> 00:47:47,329
+And so, some of his concepts
+
+852
+00:47:47,329 --> 00:47:49,539
+are formulated in such a way
+
+853
+00:47:49,539 --> 00:47:55,450
+that they're about relations;
+they're about transformative activity.
+
+854
+00:47:55,450 --> 00:48:00,459
+This is like this at this moment;
+and it's like that in the next moment.
+
+855
+00:48:00,459 --> 00:48:03,369
+And this can get quite confusing,
+
+856
+00:48:03,369 --> 00:48:06,599
+but what he's trying to do is to get
+behind the confusion, come up with a
+
+857
+00:48:06,599 --> 00:48:08,130
+conceptual apparatus,
+
+858
+00:48:08,130 --> 00:48:10,089
+a deep structure, if you like,
+
+859
+00:48:10,089 --> 00:48:12,180
+which is going to help you understand
+
+860
+00:48:12,180 --> 00:48:15,959
+all of that motion which
+is going on around us perpetually.
+
+861
+00:48:15,959 --> 00:48:20,029
+And, particularly, the way in which motion is
+
+862
+00:48:20,029 --> 00:48:27,029
+actually instantiated within a
+capitalist mode of production.
+
+863
+00:48:27,569 --> 00:48:29,579
+So, one of the ways
+in which I think you have to
+
+864
+00:48:29,579 --> 00:48:33,119
+try to understand Marx is by appreciating
+
+865
+00:48:33,119 --> 00:48:37,209
+his dialectical method.
+
+866
+00:48:37,209 --> 00:48:44,069
+Now there are a lot of people, including
+many Marxists, who really don't like his dialectics.
+
+867
+00:48:44,069 --> 00:48:45,430
+There is a whole sphere
+
+868
+00:48:45,430 --> 00:48:48,189
+called 'analytical Marxism,' for example,
+
+869
+00:48:48,189 --> 00:48:50,819
+which kind of says:
+'You know, all of that dialectics…'
+
+870
+00:48:50,819 --> 00:48:52,699
+They actually like to call themselves
+
+871
+00:48:52,699 --> 00:48:55,479
+'no bullshit Marxists,'
+
+872
+00:48:55,479 --> 00:49:02,599
+because they just basically say:
+'All that dialectics is just B.S.'
+
+873
+00:49:02,599 --> 00:49:04,030
+And then there are actually
+
+874
+00:49:04,030 --> 00:49:09,390
+other people who want to somehow or other
+take something that's very dialectical and turn it into
+
+875
+00:49:09,390 --> 00:49:12,809
+a causative structure.
+
+876
+00:49:12,809 --> 00:49:20,749
+And in fact there's a whole positivist version
+of what Marx says; that is, strip away the dialectics.
+
+877
+00:49:20,749 --> 00:49:23,959
+Now, this may be perfectly correct; I mean,
+I'm not making an argument, saying, you know,
+
+878
+00:49:23,959 --> 00:49:27,579
+the analytical Marxists are wrong.
+
+879
+00:49:27,579 --> 00:49:31,049
+I'm not going to make an argument,
+saying that people who turn it into
+
+880
+00:49:31,049 --> 00:49:34,109
+a positivist mathematical model are wrong.
+
+881
+00:49:34,109 --> 00:49:36,779
+Maybe they're right.
+
+882
+00:49:36,779 --> 00:49:41,029
+But what you have to do if you're
+going to understand Marx's text in Marx's terms:
+
+883
+00:49:41,029 --> 00:49:45,759
+you're going to have to
+grapple with the dialectic.
+
+884
+00:49:45,759 --> 00:49:49,139
+And it's fine afterwards
+if you want to say 'Marx is wrong
+
+885
+00:49:49,139 --> 00:49:52,239
+the dialectic is wrong, I don't like it,
+it doesn't work', this kind of thing.
+
+886
+00:49:52,239 --> 00:49:53,309
+That's fine.
+
+887
+00:49:53,309 --> 00:49:57,619
+But before you say that you've got to
+understand what it is and how it is working.
+
+888
+00:49:57,619 --> 00:50:01,410
+So part of what we want to do
+
+889
+00:50:01,410 --> 00:50:05,229
+is to spend some time
+
+890
+00:50:05,229 --> 00:50:08,659
+recognizing that dialectical aspect of Marx,
+
+891
+00:50:08,659 --> 00:50:14,269
+and seeing how it works.
+
+892
+00:50:14,269 --> 00:50:16,189
+Now there is one
+
+893
+00:50:16,189 --> 00:50:19,259
+final point before we get to the break.
+
+894
+00:50:19,259 --> 00:50:25,709
+I asked to try to read Marx in
+Marx's own terms but obviously I am your guide.
+
+895
+00:50:25,709 --> 00:50:27,259
+And so you going to read it
+
+896
+00:50:27,259 --> 00:50:32,119
+with my help and my terms
+are going to be very important.
+
+897
+00:50:32,119 --> 00:50:37,669
+So one of the things I want to
+say here is that of course my interest
+
+898
+00:50:37,669 --> 00:50:41,339
+in urbanisation, in uneven
+geographical development, imperialism
+
+899
+00:50:41,339 --> 00:50:44,059
+and all those kinds of things,
+
+900
+00:50:44,059 --> 00:50:48,549
+that my interests have actually
+
+901
+00:50:48,549 --> 00:50:53,529
+become very, very important in terms of
+
+902
+00:50:53,529 --> 00:50:55,659
+affecting the way in
+which I read this text.
+
+903
+00:50:55,659 --> 00:50:56,549
+In other words,
+
+904
+00:50:56,549 --> 00:51:01,529
+I've been through 30 odd years
+of dialogue between me and this text.
+
+905
+00:51:01,529 --> 00:51:04,949
+And one of the reasons
+I like to teach it every year is:
+
+906
+00:51:04,949 --> 00:51:09,309
+every year I ask to myself: 'How I'm
+going to read it differently this year?
+
+907
+00:51:09,309 --> 00:51:15,549
+What about will strike me
+that I didn't notice before?'
+
+908
+00:51:15,549 --> 00:51:19,439
+And new things strike me because
+new events crop up, that is history
+
+909
+00:51:19,439 --> 00:51:22,910
+and geography change.
+
+910
+00:51:22,910 --> 00:51:27,109
+And so, there are certain things which arise,
+and I can come back and I can look at Marx and say:
+
+911
+00:51:27,109 --> 00:51:30,400
+'Well, does he have anything to say about this?',
+and sometimes you find something really acute
+
+912
+00:51:30,400 --> 00:51:32,369
+which he has to say about it,
+
+913
+00:51:32,369 --> 00:51:35,239
+sometimes not at all.
+
+914
+00:51:35,239 --> 00:51:38,289
+So, I have been through a long dialogue
+
+915
+00:51:38,289 --> 00:51:41,849
+and I used this way of thinking
+
+916
+00:51:41,849 --> 00:51:47,949
+many of these conceptional
+apparatuses all of the time in the work I do.
+
+917
+00:51:47,949 --> 00:51:54,159
+And in the process, of course, I changed
+the way in which I understand the text.
+
+918
+00:51:54,159 --> 00:51:58,079
+I suspect that if you could
+get a recording of this class
+
+919
+00:51:58,079 --> 00:51:59,759
+from twenty five years ago,
+
+920
+00:51:59,759 --> 00:52:01,130
+you would find me saying
+
+921
+00:52:01,130 --> 00:52:05,379
+very different things
+from what I'm saying now.
+
+922
+00:52:05,379 --> 00:52:07,419
+For a variety of reasons both
+
+923
+00:52:07,419 --> 00:52:11,259
+the historical climate has changed,
+the intellectual climate has changed.
+
+924
+00:52:11,259 --> 00:52:15,109
+All sorts of issues have cropped
+up which didn't exist before. Therefore,
+
+925
+00:52:15,109 --> 00:52:17,289
+you read it in a different way.
+
+926
+00:52:17,289 --> 00:52:19,199
+Interesting point:
+
+927
+00:52:19,199 --> 00:52:23,649
+in one of the prefaces Marx talks
+about that process,
+
+928
+00:52:23,649 --> 00:52:25,890
+about how bourgeois theory
+
+929
+00:52:25,890 --> 00:52:29,559
+understood the world in a certain way
+and then history moved on to make that
+
+930
+00:52:29,559 --> 00:52:31,950
+theoretical formulation redundant,
+
+931
+00:52:31,950 --> 00:52:34,569
+and that therefore ideas had to change
+
+932
+00:52:34,569 --> 00:52:39,769
+as circumstances change.
+
+933
+00:52:39,769 --> 00:52:43,179
+Or ideas had to be reconfigured.
+
+934
+00:52:43,179 --> 00:52:44,690
+So you're going to get
+
+935
+00:52:44,690 --> 00:52:47,269
+some of my reading in it, too.
+
+936
+00:52:47,269 --> 00:52:49,370
+And there's no way you
+can avoid that, but
+
+937
+00:52:49,370 --> 00:52:50,849
+at the end of the day,
+
+938
+00:52:50,849 --> 00:52:54,669
+what I want you to do, is to come
+to your own reading of it,
+
+939
+00:52:54,669 --> 00:52:59,959
+that is, engage with the text in
+terms of your experience, both intellectual,
+
+940
+00:52:59,959 --> 00:53:03,189
+social, political,
+
+941
+00:53:03,189 --> 00:53:05,599
+and have a good time talking to the text,
+
+942
+00:53:05,599 --> 00:53:08,130
+and letting the text talk to you,
+
+943
+00:53:08,130 --> 00:53:11,340
+and appreciating the way
+in which Marx tries
+
+944
+00:53:11,340 --> 00:53:12,499
+to understand the world.
+
+945
+00:53:12,499 --> 00:53:17,020
+Because above all I think this text is a
+wonderful, wonderful exercise
+
+946
+00:53:17,020 --> 00:53:19,149
+in seeking to understand
+
+947
+00:53:19,149 --> 00:53:21,299
+what appears almost
+
+948
+00:53:21,299 --> 00:53:24,039
+impossible to understand.
+
+949
+00:53:24,039 --> 00:53:25,900
+So from this standpoint
+
+950
+00:53:25,900 --> 00:53:30,919
+you have to engage with the text.
+And okay I'm going to be in your way a little of the time,
+
+951
+00:53:30,919 --> 00:53:33,139
+but I hope not too much
+because at the end of the day
+
+952
+00:53:33,139 --> 00:53:37,869
+it is your business to really translate
+
+953
+00:53:37,869 --> 00:53:40,089
+what's going on in this text into
+
+954
+00:53:40,089 --> 00:53:42,299
+meaning in your own life.
+
+955
+00:53:42,299 --> 00:53:43,490
+That's what this book
+
+956
+00:53:43,490 --> 00:53:46,490
+is so great at. I think it will
+speak to you in some way. Probably not in the
+
+957
+00:53:46,490 --> 00:53:49,329
+same way to you as it does to me.
+
+958
+00:53:49,329 --> 00:53:52,219
+And that is perfectly valid
+
+959
+00:53:52,219 --> 00:53:54,420
+and perfectly reasonable.
+And I'd like therefore for you
+
+960
+00:53:54,420 --> 00:53:58,549
+to confront it in that kind of spirit.
+
+961
+00:53:58,549 --> 00:54:03,799
+Okay that's all I want to
+say by way of introduction.
+
+962
+00:54:03,799 --> 00:54:06,949
+What I thought would be very useful
+to do is just to read through this first
+
+963
+00:54:06,949 --> 00:54:10,579
+section with you and
+try to give you an idea
+
+964
+00:54:10,579 --> 00:54:17,809
+what I mean about method and all the rest of it.
+
+965
+00:54:17,809 --> 00:54:20,709
+Okay, he starts off simply saying:
+
+966
+00:54:20,709 --> 00:54:23,989
+"The wealth of societies in which
+the capitalist mode of production prevails
+
+967
+00:54:23,989 --> 00:54:27,299
+appears as an immense
+collection of commodities;
+
+968
+00:54:27,299 --> 00:54:28,739
+(…)individual commodity(…)"
+
+969
+00:54:28,739 --> 00:54:30,079
+(…)elementary form.
+
+970
+00:54:30,079 --> 00:54:31,699
+Our analysis therefore begins
+
+971
+00:54:31,699 --> 00:54:34,339
+with the commodity."
+
+972
+00:54:34,339 --> 00:54:36,099
+Okay, this is the a priori
+
+973
+00:54:36,099 --> 00:54:38,889
+beginning point which
+we've already mentioned.
+
+974
+00:54:38,889 --> 00:54:40,789
+But notice something
+
+975
+00:54:40,789 --> 00:54:43,889
+about the language: "appears".
+
+976
+00:54:43,889 --> 00:54:48,549
+Always watch out when
+Marx uses the word "appear".
+
+977
+00:54:48,549 --> 00:54:51,349
+"Appears" is not "is",
+
+978
+00:54:51,349 --> 00:54:53,889
+"appears" means that
+something else is going on,
+
+979
+00:54:53,889 --> 00:54:58,410
+and you better watch out and figure
+out what that "something else" is.
+
+980
+00:54:58,410 --> 00:55:02,899
+And notice also that
+
+981
+00:55:02,899 --> 00:55:05,259
+he is exclusively concerned with
+
+982
+00:55:05,259 --> 00:55:08,839
+the "capitalist mode of production".
+
+983
+00:55:08,839 --> 00:55:12,439
+He's not concerned with ancient
+modes of production or socialist
+
+984
+00:55:12,439 --> 00:55:14,339
+modes of production or
+
+985
+00:55:14,339 --> 00:55:18,559
+even hybrid modes of production.
+He's going to be concerned with
+
+986
+00:55:18,559 --> 00:55:20,329
+a capitalist mode of production
+
+987
+00:55:20,329 --> 00:55:23,589
+in a pretty pure form.
+
+988
+00:55:23,589 --> 00:55:26,670
+And I think that is a very important
+
+989
+00:55:26,670 --> 00:55:32,279
+thing to remember when
+we're reading through this text.
+
+990
+00:55:32,279 --> 00:55:34,519
+So this is a beginning point.
+
+991
+00:55:34,519 --> 00:55:36,579
+Now, when you think about it,
+
+992
+00:55:36,579 --> 00:55:44,579
+it's actually a very good beginning point.
+
+993
+00:55:44,709 --> 00:55:46,209
+Why? …How many of us
+
+994
+00:55:46,209 --> 00:55:53,059
+in this room have never had
+any experience of a commodity?
+
+995
+00:55:53,059 --> 00:55:56,949
+Everybody has experiences of commodities.
+
+996
+00:55:56,949 --> 00:55:59,509
+Did you see one today?
+
+997
+00:55:59,509 --> 00:56:01,579
+Did you see one yesterday?
+
+998
+00:56:01,579 --> 00:56:08,819
+Are you constantly shopping for them?
+Are you constantly wandering around looking at them?
+
+999
+00:56:08,819 --> 00:56:13,529
+The thing there is that
+of what he's done is to really choose
+
+1000
+00:56:13,529 --> 00:56:16,509
+a common denominator,
+
+1001
+00:56:16,509 --> 00:56:18,569
+something that is common to us all,
+
+1002
+00:56:18,569 --> 00:56:20,619
+something we know about.
+
+1003
+00:56:20,619 --> 00:56:24,219
+We go into the shop, we buy it
+
+1004
+00:56:24,219 --> 00:56:27,639
+and it's absolutely
+necessary for our existence.
+
+1005
+00:56:27,639 --> 00:56:31,239
+We can't live without consuming commodities.
+
+1006
+00:56:31,239 --> 00:56:35,169
+We have to buy
+commodities in order to live.
+
+1007
+00:56:35,169 --> 00:56:38,429
+It's a simple relation as that,
+so we start with that, and the other great
+
+1008
+00:56:38,429 --> 00:56:41,309
+thing about it is,
+
+1009
+00:56:41,309 --> 00:56:44,439
+and again I'll probably get
+some flack for saying this, is:
+
+1010
+00:56:44,439 --> 00:56:48,119
+it doesn't matter whether you're a man
+or a woman or a Japanese or an ethnic
+
+1011
+00:56:48,119 --> 00:56:51,689
+or a religious or
+whatever it is, in other words:
+
+1012
+00:56:51,689 --> 00:56:52,699
+this just very
+
+1013
+00:56:52,699 --> 00:56:57,619
+simple kind of economic
+transaction which you are looking at.
+
+1014
+00:56:57,619 --> 00:57:00,949
+And then he says: Well, what kind of
+economic transaction is it?
+
+1015
+00:57:00,949 --> 00:57:02,729
+Well, the commodity is
+
+1016
+00:57:02,729 --> 00:57:08,199
+something, he says,
+
+1017
+00:57:08,199 --> 00:57:11,849
+which meets a human want or need.
+
+1018
+00:57:11,849 --> 00:57:13,200
+and he says: I'm not
+
+1019
+00:57:13,200 --> 00:57:17,599
+interested… and this is the cryptic
+form of that … he says in the next paragraph…
+
+1020
+00:57:17,599 --> 00:57:20,119
+OK, something external to us
+
+1021
+00:57:20,119 --> 00:57:24,920
+which we then make ours in a way.
+
+1022
+00:57:24,920 --> 00:57:28,729
+And it "satisfies human needs of whatever
+kind. The nature of these needs whether
+
+1023
+00:57:28,729 --> 00:57:34,679
+they arise, for example from the
+stomach, or from the imagination, makes no difference."
+
+1024
+00:57:34,679 --> 00:57:38,159
+In other words: he is not really interested in
+psychologizing about it, he's laying it all aside.
+
+1025
+00:57:38,159 --> 00:57:42,439
+Saying: I'm not really interested
+
+1026
+00:57:42,439 --> 00:57:47,269
+in why people buy commodities.
+They can buy it because
+
+1027
+00:57:47,269 --> 00:57:50,429
+they want it, they need it, they desire it.
+
+1028
+00:57:50,429 --> 00:57:53,789
+I can buy it for fun or
+out of necessity or whatever. I'm not
+
+1029
+00:57:53,789 --> 00:57:56,900
+interested in talking about all of that.
+All I'm interested in is the very fact
+
+1030
+00:57:56,900 --> 00:58:01,599
+of simply somebody buying a commodity.
+
+1031
+00:58:01,599 --> 00:58:04,279
+And he then goes on and says: Well look at this.
+
+1032
+00:58:04,279 --> 00:58:09,159
+How many commodities are there in the world?
+
+1033
+00:58:09,159 --> 00:58:12,269
+Well, there are millions of them,
+all made up of different qualities,
+
+1034
+00:58:12,269 --> 00:58:16,739
+and we all kind of assess them in
+terms of different quantitative measures.
+
+1035
+00:58:16,739 --> 00:58:20,549
+And he again shunts this aside
+and says: "The discovery of these ways
+
+1036
+00:58:20,549 --> 00:58:27,199
+and hence of the manifold uses
+of things is the work of history.
+
+1037
+00:58:27,199 --> 00:58:30,689
+So also is the invention of socially
+recognized standards of measurement for the
+
+1038
+00:58:30,689 --> 00:58:33,639
+quantities of these useful objects.
+
+1039
+00:58:33,639 --> 00:58:36,749
+The diversity of the measures for commodities
+
+1040
+00:58:36,749 --> 00:58:43,239
+arises in part from the diverse nature of
+the objects to the measured, and in part from convention.
+
+1041
+00:58:43,239 --> 00:58:46,419
+The usefulness of a
+thing makes it a use-value."
+
+1042
+00:58:46,419 --> 00:58:51,549
+First big concept: use-value.
+
+1043
+00:58:51,549 --> 00:58:55,149
+It's useful to you. I'm not interested in
+discussing how it's useful to you. I'm not
+
+1044
+00:58:55,149 --> 00:58:59,249
+interested in discussing
+the history of use-values
+
+1045
+00:58:59,249 --> 00:59:02,669
+or anything of that kind, or the way in which they
+measure this kind of thing. All I'm interested in
+
+1046
+00:59:02,669 --> 00:59:04,429
+is the concept of use-value.
+
+1047
+00:59:04,429 --> 00:59:10,919
+Notice how he's abstracting very fast.
+
+1048
+00:59:10,919 --> 00:59:15,389
+And he talks in one of the prefaces about
+
+1049
+00:59:15,389 --> 00:59:19,469
+the problem for a social scientist, like himself,
+
+1050
+00:59:19,469 --> 00:59:24,789
+is that you can't go into a labouratory
+and isolate things and run experiments.
+
+1051
+00:59:24,789 --> 00:59:28,049
+So what you have to do
+in order to run an experiment
+
+1052
+00:59:28,049 --> 00:59:31,499
+is to use what he calls:
+'The power of abstraction.'
+
+1053
+00:59:31,499 --> 00:59:33,789
+And you see immediately:
+
+1054
+00:59:33,789 --> 00:59:36,789
+the commodity is central.
+
+1055
+00:59:36,789 --> 00:59:41,459
+I'm abstracting from human
+wants, needs and desires.
+
+1056
+00:59:41,459 --> 00:59:45,219
+I'm abstracting from any
+consideration of this specific
+
+1057
+00:59:45,219 --> 00:59:46,879
+properties of things.
+
+1058
+00:59:46,879 --> 00:59:48,949
+I'm just going to home in on the fact that
+
+1059
+00:59:48,949 --> 00:59:51,199
+in some sense this commodity
+
+1060
+00:59:51,199 --> 00:59:58,199
+has something called a use-value.
+
+1061
+00:59:59,180 --> 01:00:03,150
+And this then immediately leads him into,
+
+1062
+01:00:03,150 --> 01:00:05,279
+by the middle of
+
+1063
+01:00:05,279 --> 01:00:07,929
+page hundred and twenty-six,
+
+1064
+01:00:07,929 --> 01:00:11,620
+he says: "In the form of society
+to be considered here" - i.e.
+
+1065
+01:00:11,620 --> 01:00:15,669
+within a capitalist mode of production -
+
+1066
+01:00:15,669 --> 01:00:21,699
+"they are also the material
+bearers of exchange-value."
+
+1067
+01:00:21,699 --> 01:00:24,929
+Again… watch this word "bearers",
+
+1068
+01:00:24,929 --> 01:00:27,549
+a commodity is a bearer of something.
+
+1069
+01:00:27,549 --> 01:00:30,529
+It's not to say: it "is" something.
+
+1070
+01:00:30,529 --> 01:00:36,259
+It is a bearer of something
+
+1071
+01:00:36,259 --> 01:00:38,819
+which we have yet to define.
+
+1072
+01:00:38,819 --> 01:00:41,169
+And how do we think about it?
+
+1073
+01:00:41,169 --> 01:00:43,150
+Well, when we look at exchange
+
+1074
+01:00:43,150 --> 01:00:48,939
+processes, geographically, temporally,
+
+1075
+01:00:48,939 --> 01:00:52,679
+what we find is an enormous kind of
+
+1076
+01:00:52,679 --> 01:00:56,589
+process of exchange, of market exchange.
+
+1077
+01:00:56,589 --> 01:00:59,519
+We see different ratios occurring
+
+1078
+01:00:59,519 --> 01:01:03,489
+between shirts and shoes depending
+upon the time, depending upon the place.
+
+1079
+01:01:03,489 --> 01:01:10,529
+We see different quantitative
+relations between bushels of wheat and
+
+1080
+01:01:10,529 --> 01:01:14,079
+pairs of shoes and tons of
+steel and that kind of thing.
+
+1081
+01:01:14,079 --> 01:01:19,849
+So the first sight, what
+we see in the world of exchange
+
+1082
+01:01:19,849 --> 01:01:26,709
+is exchange-values which are
+incoherent, they're all over the place.
+
+1083
+01:01:26,709 --> 01:01:30,400
+As he says: "exchange-value
+
+1084
+01:01:30,400 --> 01:01:35,569
+appears to be something
+accidental and purely relative,
+
+1085
+01:01:35,569 --> 01:01:40,079
+and consequently an intrinsic
+value, i.e. an exchange-value that is
+
+1086
+01:01:40,079 --> 01:01:42,539
+inseparably connected with the commodity,
+
+1087
+01:01:42,539 --> 01:01:50,890
+inherent in it, seems to be a contradiction in terms."
+
+1088
+01:01:55,159 --> 01:01:56,689
+We noticed something
+
+1089
+01:01:56,689 --> 01:01:58,990
+about this world of exchange. That everything
+
+1090
+01:01:58,990 --> 01:02:04,869
+is in principle exchangeable
+with everything else.
+
+1091
+01:02:04,869 --> 01:02:11,089
+And what this immediately implies,
+as he says at page hundred and twenty-seven,
+
+1092
+01:02:11,089 --> 01:02:14,459
+is that you are always in a position
+having exchanged something for something else to
+
+1093
+01:02:14,459 --> 01:02:18,069
+then exchange what you've
+just got for something else.
+
+1094
+01:02:18,069 --> 01:02:19,209
+In other words: You can just
+
+1095
+01:02:19,209 --> 01:02:21,409
+keep on exchanging.
+
+1096
+01:02:21,409 --> 01:02:24,839
+So a thing can keep on moving.
+
+1097
+01:02:24,839 --> 01:02:29,279
+So it can be exchanged for all
+the other commodities at some point.
+
+1098
+01:02:29,279 --> 01:02:32,649
+And if that's the case, he then says
+
+1099
+01:02:32,649 --> 01:02:35,049
+on hundred and twenty-seven,
+
+1100
+01:02:35,049 --> 01:02:40,049
+"It follows from this that, firstly,
+the valid exchange-values of a particular commodity
+
+1101
+01:02:40,049 --> 01:02:43,630
+express something equal
+
+1102
+01:02:43,630 --> 01:02:47,669
+and secondly, exchange-value cannot
+be anything other than the mode of expression,
+
+1103
+01:02:47,669 --> 01:02:53,799
+the form of appearance of
+a content distinguishable from it."
+
+1104
+01:02:53,799 --> 01:02:56,349
+That is: if I have a commodity in my hand,
+
+1105
+01:02:56,349 --> 01:02:58,559
+I can't dissect it
+
+1106
+01:02:58,559 --> 01:03:03,469
+and find out that element
+inside of it that makes it exchangeable.
+
+1107
+01:03:03,469 --> 01:03:07,789
+It's something else.
+
+1108
+01:03:07,789 --> 01:03:11,059
+No. It is exchangeable for something else
+and I can't find out what makes it exchangeable
+
+1109
+01:03:11,059 --> 01:03:13,189
+just by looking at the commodity.
+
+1110
+01:03:13,189 --> 01:03:15,150
+I have to look at the commodity
+
+1111
+01:03:15,150 --> 01:03:21,099
+in motion. This is where
+we start to get in motion, in movement.
+
+1112
+01:03:21,099 --> 01:03:24,029
+I have to look at it.
+
+1113
+01:03:24,029 --> 01:03:24,859
+And as it moves,
+
+1114
+01:03:24,859 --> 01:03:27,909
+it is obviously expressing something
+
+1115
+01:03:27,909 --> 01:03:29,180
+about exchangeability,
+
+1116
+01:03:29,180 --> 01:03:33,139
+a commensurability in exchange.
+
+1117
+01:03:33,139 --> 01:03:36,479
+It means that all things
+are commensurable in exchange.
+
+1118
+01:03:36,479 --> 01:03:40,640
+Why are they commensurable?
+And what is that commensurability
+
+1119
+01:03:40,640 --> 01:03:42,459
+made up of?
+
+1120
+01:03:42,459 --> 01:03:44,669
+Where does it come from?
+
+1121
+01:03:44,669 --> 01:03:47,319
+How is it defined?
+
+1122
+01:03:47,319 --> 01:03:51,849
+And the commodity is the
+bearer of that something.
+
+1123
+01:03:51,849 --> 01:03:54,409
+But it is not inside of the commodity.
+
+1124
+01:03:54,409 --> 01:03:57,390
+It is borne by the commodity.
+
+1125
+01:03:57,390 --> 01:03:58,870
+It's a relation
+
+1126
+01:03:58,870 --> 01:04:00,379
+inside of the commodity,
+
+1127
+01:04:00,379 --> 01:04:03,399
+not a material thing.
+
+1128
+01:04:03,399 --> 01:04:06,569
+He then goes through corn and iron
+
+1129
+01:04:06,569 --> 01:04:11,919
+and gets into one of his geometrical examples,
+
+1130
+01:04:11,919 --> 01:04:14,360
+but says crucially right
+by the middle of the page:
+
+1131
+01:04:14,360 --> 01:04:18,769
+"Each of them, so far as it is exchange-value,
+
+1132
+01:04:18,769 --> 01:04:24,789
+must therefore be reducible to
+this third thing," whatever it is.
+
+1133
+01:04:24,789 --> 01:04:28,809
+And "this common element cannot
+be a geometrical, physical, chemical or other
+
+1134
+01:04:28,809 --> 01:04:33,569
+natural property of commodities,"
+he says further down the page.
+
+1135
+01:04:33,569 --> 01:04:36,869
+We're hitting something
+here that is rather significant.
+
+1136
+01:04:36,869 --> 01:04:38,410
+Marx is often
+
+1137
+01:04:38,410 --> 01:04:43,239
+depicted as some sort of grubby materialist.
+You know: Everything has to be material.
+
+1138
+01:04:43,239 --> 01:04:50,909
+But here what we're seeing immediately: he's not
+talking about the materiality of the thing at all.
+
+1139
+01:04:50,909 --> 01:04:54,289
+You can inspect the materiality of the
+commodity all you like, and you won't
+
+1140
+01:04:54,289 --> 01:04:55,729
+find out the secret of its
+
+1141
+01:04:55,729 --> 01:04:58,190
+commensurability and its exchangeability.
+
+1142
+01:04:58,190 --> 01:05:04,549
+You won't find it.
+
+1143
+01:05:04,549 --> 01:05:08,869
+And then he goes on to the
+next page, hundred twenty-eight, to say:
+
+1144
+01:05:08,869 --> 01:05:12,689
+"As use-values,
+
+1145
+01:05:12,689 --> 01:05:15,380
+commodities differ above all in quality,
+
+1146
+01:05:15,380 --> 01:05:19,130
+while as exchange-values they
+can only differ in quantity,"
+
+1147
+01:05:19,130 --> 01:05:22,779
+that is: how much of this
+exchanges for how much of that,
+
+1148
+01:05:22,779 --> 01:05:27,939
+"and therefore do not
+contain an atom of use-value."
+
+1149
+01:05:27,939 --> 01:05:33,709
+The commensurability that
+he's talking about is not constituted
+
+1150
+01:05:33,709 --> 01:05:39,189
+out of the utility of something.
+
+1151
+01:05:39,189 --> 01:05:42,999
+Then he goes on to say: "If then we
+disregard the use-value of commodities, only one
+
+1152
+01:05:42,999 --> 01:05:46,869
+property remains…" and here
+we're going to have another a priori leap.
+
+1153
+01:05:46,869 --> 01:05:48,379
+What's the property?
+
+1154
+01:05:48,379 --> 01:05:52,079
+They are all products of human labour.
+
+1155
+01:05:52,079 --> 01:05:55,919
+That is what they have in common
+
+1156
+01:05:55,919 --> 01:06:04,369
+and what exchange- and use-values
+are bearers of is that quality
+
+1157
+01:06:04,369 --> 01:06:09,229
+of being products of human labour.
+
+1158
+01:06:09,229 --> 01:06:11,599
+But, he then immediately goes on to say:
+
+1159
+01:06:11,599 --> 01:06:14,159
+What kind of labour is it?
+
+1160
+01:06:14,159 --> 01:06:16,899
+Well, it can't be
+
+1161
+01:06:16,899 --> 01:06:20,599
+based on the fact that
+if I'm lazy and I take,
+
+1162
+01:06:20,599 --> 01:06:25,239
+you know, fifteen days to make a shirt,
+then indeed, you should pay, you know, the equivalent…
+
+1163
+01:06:25,239 --> 01:06:27,789
+should be fifteen days of your labour,
+
+1164
+01:06:27,789 --> 01:06:32,079
+when I can go and find somebody who has made a
+shirt in three days, you know, I would exchange it
+
+1165
+01:06:32,079 --> 01:06:34,900
+with somebody for 3 days of labour.
+
+1166
+01:06:34,900 --> 01:06:37,339
+So he says on the bottom of that passage:
+
+1167
+01:06:37,339 --> 01:06:40,339
+"They can no longer be distinguished,
+
+1168
+01:06:40,339 --> 01:06:43,999
+but are all together
+reduced to the same kind of labour,
+
+1169
+01:06:43,999 --> 01:06:46,739
+human labour in the abstract."
+
+1170
+01:06:46,739 --> 01:06:50,559
+Well, this is moving very fast, very cryptic.
+
+1171
+01:06:50,559 --> 01:06:51,349
+Use-value,
+
+1172
+01:06:51,349 --> 01:06:52,659
+exchange-value,
+
+1173
+01:06:52,659 --> 01:06:54,889
+human labour in the abstract.
+
+1174
+01:06:54,889 --> 01:06:56,769
+And here it comes:
+
+1175
+01:06:56,769 --> 01:06:59,660
+"Let us now I look at the residue of the
+products of labour. There is nothing left
+
+1176
+01:06:59,660 --> 01:07:01,000
+of them in each case
+
+1177
+01:07:01,000 --> 01:07:03,999
+but the same phantom-like objectivity;"
+
+1178
+01:07:03,999 --> 01:07:06,609
+Marx loves all this stuff about phantoms and
+
+1179
+01:07:06,609 --> 01:07:10,009
+werewolves and all that kind of
+stuff. So you're gonna get a lot of that.
+
+1180
+01:07:10,009 --> 01:07:13,969
+He's a great admirer of Shelley and
+Frankenstein and all the rest of it,
+
+1181
+01:07:13,969 --> 01:07:16,779
+so you'll get a lot of
+that kind of language. It's great.
+
+1182
+01:07:16,779 --> 01:07:22,639
+"they are merely congealed
+quantities of homogeneous human labour,
+
+1183
+01:07:22,639 --> 01:07:26,459
+human labour-power expended without
+regard to the form of its expenditure.
+
+1184
+01:07:26,459 --> 01:07:29,989
+(…)As crystals of this
+social substance which is common to them all,
+
+1185
+01:07:29,989 --> 01:07:39,369
+they are values, commodity values."
+
+1186
+01:07:39,369 --> 01:07:45,420
+Okay, he's taken four pages to lay out
+
+1187
+01:07:45,420 --> 01:07:46,959
+three fundamental concepts.
+
+1188
+01:07:46,959 --> 01:07:53,619
+Use-value, exchange-value, value.
+
+1189
+01:07:53,619 --> 01:07:55,619
+Value is what is passed on
+
+1190
+01:07:55,619 --> 01:07:58,909
+in the process of commodity exchange.
+
+1191
+01:07:58,909 --> 01:08:05,629
+It's the hidden element in a commodity that makes
+
+1192
+01:08:05,629 --> 01:08:13,819
+all commodities in principle
+exchangeable with each other.
+
+1193
+01:08:13,819 --> 01:08:19,309
+So he then goes on to say:
+Well, having abstracted from use-value
+
+1194
+01:08:19,309 --> 01:08:22,999
+then we go back and
+look again at exchange-value.
+
+1195
+01:08:22,999 --> 01:08:26,929
+We then see exchange-value, as he says,
+on the bottom of page hundred and twenty-eight,
+
+1196
+01:08:26,929 --> 01:08:29,289
+"as the necessary mode of expression,
+
+1197
+01:08:29,289 --> 01:08:34,219
+or form of appearance, of value."
+
+1198
+01:08:34,219 --> 01:08:37,650
+Appearance, form of appearance; but
+this time you're looking at it the other way.
+
+1199
+01:08:37,650 --> 01:08:42,049
+That is there is something mysterious about
+the exchangeability of all of those commodities.
+
+1200
+01:08:42,049 --> 01:08:47,759
+There is something mysterious
+about the way in which
+
+1201
+01:08:47,759 --> 01:08:52,639
+all of those commodities could
+be commensurable with each other.
+
+1202
+01:08:52,639 --> 01:08:56,389
+And the mystery is that they're values,
+
+1203
+01:08:56,389 --> 01:08:58,560
+But values are represented now
+
+1204
+01:08:58,560 --> 01:09:01,330
+by exchange-value, so exchange-value,
+
+1205
+01:09:01,330 --> 01:09:03,069
+i.e. how much you are actually get for
+
+1206
+01:09:03,069 --> 01:09:04,549
+the product in the market,
+
+1207
+01:09:04,549 --> 01:09:06,250
+is a representation of value,
+
+1208
+01:09:06,250 --> 01:09:10,749
+is a representation of labour.
+
+1209
+01:09:10,749 --> 01:09:13,909
+Now, when you go to the supermarket,
+
+1210
+01:09:13,909 --> 01:09:17,859
+can you see the labour in the commodity?
+
+1211
+01:09:17,859 --> 01:09:21,719
+But it has an exchange-value, right?
+
+1212
+01:09:21,719 --> 01:09:22,859
+Again, Marx's point is:
+
+1213
+01:09:22,859 --> 01:09:26,969
+Yeah, they are products of
+labour but you can't see the labour,
+
+1214
+01:09:26,969 --> 01:09:29,499
+you can't see the labour on the commodity.
+
+1215
+01:09:29,499 --> 01:09:34,949
+But you get a sense of what it is
+because it is represented by its price.
+
+1216
+01:09:34,949 --> 01:09:36,659
+So that is, if you like,
+
+1217
+01:09:36,659 --> 01:09:42,269
+exchange-value is a
+representation of something else.
+
+1218
+01:09:42,269 --> 01:09:47,670
+Now again: to say something is a
+representation of something is not to say "is".
+
+1219
+01:09:47,670 --> 01:09:48,830
+Because, as anybody would
+
+1220
+01:09:48,830 --> 01:09:52,170
+quickly tell you, the difference
+between the representation and what
+
+1221
+01:09:52,170 --> 01:09:55,710
+actually something is, there can be quite a gap.
+And Marx is going to spend quite a bit of
+
+1222
+01:09:55,710 --> 01:09:59,400
+time talking about the nature of that gap between
+
+1223
+01:09:59,400 --> 01:10:06,400
+value and its representation.
+
+1224
+01:10:08,659 --> 01:10:12,329
+On hundred twenty-nine he says:
+
+1225
+01:10:12,329 --> 01:10:15,659
+"A use-value, or useful article,
+
+1226
+01:10:15,659 --> 01:10:19,959
+therefore, has value only because
+abstract human labour is objectified
+
+1227
+01:10:19,959 --> 01:10:26,959
+or materialized in it."
+
+1228
+01:10:26,959 --> 01:10:30,910
+Objectified - a very important kind of concept.
+
+1229
+01:10:30,910 --> 01:10:37,619
+A process, in fact a labour process,
+becomes objectified in a thing.
+
+1230
+01:10:37,619 --> 01:10:42,630
+This is an idea that's going to
+become very important in Marx.
+
+1231
+01:10:42,630 --> 01:10:44,659
+You have a thing
+
+1232
+01:10:44,659 --> 01:10:46,659
+and then there is a labour process.
+
+1233
+01:10:46,659 --> 01:10:48,360
+What's the relationship then
+
+1234
+01:10:48,360 --> 01:10:51,370
+between the process and the thing?
+This is going to come up
+
+1235
+01:10:51,370 --> 01:10:56,809
+again and again and again in the text.
+
+1236
+01:10:56,809 --> 01:10:59,250
+Processes and things,
+
+1237
+01:10:59,250 --> 01:11:05,409
+the thing is a representation of the process.
+
+1238
+01:11:05,409 --> 01:11:07,849
+You want a simple example of that?
+
+1239
+01:11:07,849 --> 01:11:10,369
+If I set an examination right now,
+
+1240
+01:11:10,369 --> 01:11:13,909
+I made you write out little
+paper about what these concepts mean.
+
+1241
+01:11:13,909 --> 01:11:15,169
+And then I graded you.
+
+1242
+01:11:15,169 --> 01:11:19,030
+I'll be grading you on the thing.
+
+1243
+01:11:19,030 --> 01:11:23,790
+What would it have to do with the
+process that's going on in here?
+
+1244
+01:11:23,790 --> 01:11:28,150
+I mean you might feel very, very outraged
+
+1245
+01:11:28,150 --> 01:11:33,849
+when I graded you C or D or F, or something
+like that, because you haven't quite got it yet.
+
+1246
+01:11:33,849 --> 01:11:37,149
+When in fact you're struggling in the process,
+
+1247
+01:11:37,149 --> 01:11:41,909
+the intellectual labour-process of trying
+to command on what the hell is going on in this text.
+
+1248
+01:11:41,909 --> 01:11:43,959
+It's a very important thing.
+
+1249
+01:11:43,959 --> 01:11:48,719
+But if I try to test it as a thing…and actually,
+
+1250
+01:11:48,719 --> 01:11:52,119
+education is full of this kind of problem.
+
+1251
+01:11:52,119 --> 01:11:54,249
+Education is about a process,
+
+1252
+01:11:54,249 --> 01:11:58,599
+it's about people learning things,
+it's about process, thinking, all this kind of stuff.
+
+1253
+01:11:58,599 --> 01:12:02,149
+And we are constantly testing how good
+people are in terms of that process by the
+
+1254
+01:12:02,149 --> 01:12:04,029
+things they make.
+
+1255
+01:12:04,029 --> 01:12:09,360
+Dissertations, essays, papers,
+
+1256
+01:12:09,360 --> 01:12:12,669
+multiple choice questions, all the rest of it.
+
+1257
+01:12:12,669 --> 01:12:16,320
+So what Marx is doing here
+is to say: Well, the representation,
+
+1258
+01:12:16,320 --> 01:12:18,469
+i.e. the exchange-value,
+
+1259
+01:12:18,469 --> 01:12:21,960
+is something which you can
+really see, but it is
+
+1260
+01:12:21,960 --> 01:12:25,419
+representing something which is value.
+
+1261
+01:12:25,419 --> 01:12:32,389
+And as we will see, value is always in motion.
+
+1262
+01:12:32,389 --> 01:12:37,900
+And that means that a
+process is objectified in a thing.
+
+1263
+01:12:37,900 --> 01:12:40,980
+A labour process, a potter making a pot
+
+1264
+01:12:40,980 --> 01:12:44,150
+is finally objectified in a thing. And
+it's the thing which is sold in the
+
+1265
+01:12:44,150 --> 01:12:47,000
+market, not the process.
+
+1266
+01:12:47,000 --> 01:12:51,119
+But the thing would not
+exist without the process.
+
+1267
+01:12:51,119 --> 01:12:54,479
+So the process has to be objectified.
+
+1268
+01:12:54,479 --> 01:12:58,059
+There are some people who would
+love to write a dissertation without ever
+
+1269
+01:12:58,059 --> 01:13:01,260
+actually producing the thing.
+
+1270
+01:13:01,260 --> 01:13:03,449
+You may come an say: Oh the process is great!
+
+1271
+01:13:03,449 --> 01:13:07,179
+…Ah, yeah okay, PhD immediately…
+
+1272
+01:13:07,179 --> 01:13:09,560
+…but of course, no, you've got to objectify it…
+
+1273
+01:13:09,560 --> 01:13:12,550
+And as everybody knows who's
+gone through this to some degree,
+
+1274
+01:13:12,550 --> 01:13:15,889
+you can have great ideas and think it is
+fantastic, and when you try to objectify it on paper
+
+1275
+01:13:15,889 --> 01:13:20,780
+you say:
+good god, what nonsense this is!
+
+1276
+01:13:20,780 --> 01:13:22,150
+And so, you've got to…
+
+1277
+01:13:22,150 --> 01:13:25,130
+so Marx is talking about that relationship.
+
+1278
+01:13:25,130 --> 01:13:26,159
+That's right in…
+
+1279
+01:13:26,159 --> 01:13:27,989
+that's implied in this, immediately in this
+
+1280
+01:13:27,989 --> 01:13:30,280
+notion of objectification.
+
+1281
+01:13:30,280 --> 01:13:34,699
+Human labour is objectified, materialized in
+
+1282
+01:13:34,699 --> 01:13:37,989
+this thing called a commodity.
+
+1283
+01:13:37,989 --> 01:13:41,849
+But then inside of that thing, the quantity
+
+1284
+01:13:41,849 --> 01:13:47,849
+is measured by the duration
+of the labour which is put into the thing. But…
+
+1285
+01:13:47,849 --> 01:13:51,969
+And that itself has measures, which he said…
+
+1286
+01:13:51,969 --> 01:13:57,219
+scale of hours, days etc.
+
+1287
+01:13:57,219 --> 01:13:59,199
+Again, there's a reference here,
+
+1288
+01:13:59,199 --> 01:14:02,349
+a coded reference,
+if you like, to the the way in which
+
+1289
+01:14:02,349 --> 01:14:07,830
+capitalist mode of production
+sets up a certain notion of temporality.
+
+1290
+01:14:07,830 --> 01:14:14,570
+Time, how does the capitalist mode
+of production structure time?
+
+1291
+01:14:14,570 --> 01:14:18,060
+And Marx is going to make an argument,
+saying: you've got to understand that
+
+1292
+01:14:18,060 --> 01:14:24,280
+a lot of it has to do with
+the fact that time is money.
+
+1293
+01:14:24,280 --> 01:14:27,420
+Time is connected to value in
+a certain kind of way, and therefore even our
+
+1294
+01:14:27,420 --> 01:14:30,710
+measures of time start to take on
+
+1295
+01:14:30,710 --> 01:14:33,950
+a certain kind of allure, simply
+
+1296
+01:14:33,950 --> 01:14:40,950
+because of the way in
+which it capitalist mode of production works.
+
+1297
+01:14:43,630 --> 01:14:50,089
+He then comes, down this paragraph, to say this:
+
+1298
+01:14:50,089 --> 01:14:56,039
+"I'm really looking at
+the total labour power of society
+
+1299
+01:14:56,039 --> 01:15:03,039
+which is manifested in
+the values of the world of commodities."
+
+1300
+01:15:03,729 --> 01:15:10,729
+Now, where does this society exist,
+and where does this world of commodities prevail?
+
+1301
+01:15:11,469 --> 01:15:12,850
+Here you're not looking at
+
+1302
+01:15:12,850 --> 01:15:19,519
+just one particular place, you're
+actually looking at a global situation.
+
+1303
+01:15:19,519 --> 01:15:22,429
+The world of commodities,
+
+1304
+01:15:22,429 --> 01:15:25,889
+where is the world
+of commodities right now?
+
+1305
+01:15:25,889 --> 01:15:29,690
+It's in China, it's in Mexico, it's in Japan,
+
+1306
+01:15:29,690 --> 01:15:32,190
+it's in Russia…
+
+1307
+01:15:32,190 --> 01:15:34,959
+It's a global thing.
+
+1308
+01:15:34,959 --> 01:15:36,780
+And he's looking at
+
+1309
+01:15:36,780 --> 01:15:39,429
+society, in a sense,
+
+1310
+01:15:39,429 --> 01:15:42,820
+the whole of the capitalist world.
+
+1311
+01:15:42,820 --> 01:15:47,679
+So he's looking at the notion of labour,
+
+1312
+01:15:47,679 --> 01:15:50,639
+and the measure of value,
+if you like, is going to be
+
+1313
+01:15:50,639 --> 01:15:56,110
+judged against that whole world,
+it's not the specific
+
+1314
+01:15:56,110 --> 01:16:02,580
+activity of a particular labour in a
+particular place and time, now it's a whole world.
+
+1315
+01:16:02,580 --> 01:16:05,979
+A global situation, even at this point,
+
+1316
+01:16:05,979 --> 01:16:08,499
+and actually, there's a brilliant
+
+1317
+01:16:08,499 --> 01:16:11,719
+sort of description of globalization, if
+you want to call it that, in the
+
+1318
+01:16:11,719 --> 01:16:13,869
+Communist Manifesto.
+
+1319
+01:16:13,869 --> 01:16:17,599
+Where Marx talks about the impulsions
+of the Bourgeoisie to create the world market
+
+1320
+01:16:17,599 --> 01:16:20,389
+and the consequence of making that,
+
+1321
+01:16:20,389 --> 01:16:24,589
+in which old industries get destroyed,
+new ones get created, there's tremendous
+
+1322
+01:16:24,589 --> 01:16:26,189
+kind of fluidity.
+
+1323
+01:16:26,189 --> 01:16:31,469
+Marx was writing this in a context
+where the world was opening very fast-
+
+1324
+01:16:31,469 --> 01:16:35,149
+through the steamship and
+the railways and all this kind of stuff
+
+1325
+01:16:35,149 --> 01:16:39,449
+to a global economy.
+
+1326
+01:16:39,449 --> 01:16:43,159
+And he understood very well the
+consequences of that, which meant that
+
+1327
+01:16:43,159 --> 01:16:46,059
+value was not something that was
+determined in our backyard, but was
+
+1328
+01:16:46,059 --> 01:16:52,039
+something which was determined
+in the world of commodities.
+
+1329
+01:16:52,039 --> 01:16:55,439
+And the result of that
+is that we end up as he says:
+
+1330
+01:16:55,439 --> 01:16:58,340
+"Each of these units,"
+
+1331
+01:16:58,340 --> 01:17:03,780
+that is of homogenous labour-power,
+
+1332
+01:17:03,780 --> 01:17:07,289
+"each of these units is the same as any
+other to the extent that it has the
+
+1333
+01:17:07,289 --> 01:17:09,390
+character of a socially average unit
+
+1334
+01:17:09,390 --> 01:17:13,109
+of labour-power and acts as such(…)"
+
+1335
+01:17:13,109 --> 01:17:16,600
+And here comes the crucial definition:
+
+1336
+01:17:16,600 --> 01:17:19,050
+"Socially necessary labour-time
+
+1337
+01:17:19,050 --> 01:17:22,690
+is the labour-time required to produce
+
+1338
+01:17:22,690 --> 01:17:27,209
+any use-value under the conditions
+of production normal for a given society and
+
+1339
+01:17:27,209 --> 01:17:32,569
+with the average degree of skill and
+intensity of labour prevalent in that society."
+
+1340
+01:17:32,569 --> 01:17:36,139
+This is his first cut definition of value.
+
+1341
+01:17:36,139 --> 01:17:43,139
+Value is socially necessary labour-time.
+
+1342
+01:17:44,270 --> 01:17:48,640
+One of the reasons, I think, Marx thought
+he could get away with this very cryptic presentation
+
+1343
+01:17:48,640 --> 01:17:52,249
+of use-value, exchange-value and value
+
+1344
+01:17:52,249 --> 01:17:55,889
+was because anybody who read Ricardo
+
+1345
+01:17:55,889 --> 01:18:00,409
+would say: 'Yeah, this is pure Ricardo.'
+
+1346
+01:18:00,409 --> 01:18:08,499
+And it is pure Ricardo, with however
+one exceptional insertion.
+
+1347
+01:18:08,499 --> 01:18:15,019
+Ricardo used the concept
+of labour-time as value.
+
+1348
+01:18:15,019 --> 01:18:21,840
+Marx uses the concept
+of socially necessary labour-time.
+
+1349
+01:18:21,840 --> 01:18:25,420
+And you should immediately
+ask yourself the question:
+
+1350
+01:18:25,420 --> 01:18:28,420
+What is 'socially necessary'?
+
+1351
+01:18:28,420 --> 01:18:31,699
+How is that established?
+
+1352
+01:18:31,699 --> 01:18:34,550
+He doesn't give any answer to it here.
+
+1353
+01:18:34,550 --> 01:18:38,429
+And you only begin to get the
+sense of the answer of that, when you are way on
+
+1354
+01:18:38,429 --> 01:18:40,969
+the way through Capital.
+
+1355
+01:18:40,969 --> 01:18:43,389
+In other words, what Marx has done
+
+1356
+01:18:43,389 --> 01:18:48,719
+here, is simply set up the
+Ricardian conceptual apparatus.
+
+1357
+01:18:48,719 --> 01:18:55,829
+Repeat it, and in a sense say:
+'Ricardo missed something out.'
+
+1358
+01:18:55,829 --> 01:19:03,039
+It is not adequate the call value labour-time.
+
+1359
+01:19:03,039 --> 01:19:05,360
+We have to insert that question mark:
+
+1360
+01:19:05,360 --> 01:19:07,759
+What is socially necessary labour-time?
+
+1361
+01:19:07,759 --> 01:19:11,699
+How is it determined? Who determines it?
+
+1362
+01:19:11,699 --> 01:19:14,579
+And that is the big issue.
+
+1363
+01:19:14,579 --> 01:19:19,210
+And I would submit it actually continues to
+be the big issue in global capitalism,
+
+1364
+01:19:19,210 --> 01:19:24,279
+who and how is value established?
+
+1365
+01:19:24,279 --> 01:19:27,729
+I mean we all like to think we have our
+own values and this kind of stuff, and everybody likes
+
+1366
+01:19:27,729 --> 01:19:31,519
+to go on talking about values.
+
+1367
+01:19:31,519 --> 01:19:35,659
+But Marx is kind of saying: 'Look,
+there is a value which is being determined
+
+1368
+01:19:35,659 --> 01:19:38,469
+by a process that we do not understand.'
+
+1369
+01:19:38,469 --> 01:19:41,090
+And it's not our choice,
+
+1370
+01:19:41,090 --> 01:19:44,689
+it's something that is happening to us.
+
+1371
+01:19:44,689 --> 01:19:46,210
+And how it is happening
+
+1372
+01:19:46,210 --> 01:19:49,499
+has to be unpacked. If you
+want to understand who you are,
+
+1373
+01:19:49,499 --> 01:19:52,739
+and where you stand in this maelstrom of
+
+1374
+01:19:52,739 --> 01:19:55,409
+churning values and everything.
+What you've got to do
+
+1375
+01:19:55,409 --> 01:19:58,270
+is to understand how value gets created,
+
+1376
+01:19:58,270 --> 01:20:02,360
+how it gets produced and with what consequences,
+
+1377
+01:20:02,360 --> 01:20:06,409
+socially, environmentally, all the rest of it.
+
+1378
+01:20:06,409 --> 01:20:07,539
+And if you think
+
+1379
+01:20:07,539 --> 01:20:10,780
+you can solve the environmental
+question of global warming and all that
+
+1380
+01:20:10,780 --> 01:20:13,440
+kind of stuff without actually confronting
+
+1381
+01:20:13,440 --> 01:20:16,760
+the whole kind of question of
+who determines the value structure
+
+1382
+01:20:16,760 --> 01:20:19,819
+and how is it determined by these processes,
+
+1383
+01:20:19,819 --> 01:20:22,980
+then you got to be kidding yourself.
+
+1384
+01:20:22,980 --> 01:20:24,790
+So what Marx in effect is saying:
+
+1385
+01:20:24,790 --> 01:20:28,699
+You got to understand
+what social necessity is.
+
+1386
+01:20:28,699 --> 01:20:30,550
+And we've got to spend a lot of time
+
+1387
+01:20:30,550 --> 01:20:35,079
+looking at what is socially necessary.
+
+1388
+01:20:35,079 --> 01:20:39,539
+He immediately points out however
+
+1389
+01:20:39,539 --> 01:20:42,489
+that value is not fixed.
+
+1390
+01:20:42,489 --> 01:20:46,280
+I've mentioned already, he's
+always on about the fluidity of things.
+
+1391
+01:20:46,280 --> 01:20:48,239
+He says:
+
+1392
+01:20:48,239 --> 01:20:53,989
+Of course value changes with productivity.
+
+1393
+01:20:53,989 --> 01:20:57,420
+"The introduction of
+power-looms into England, for example,
+
+1394
+01:20:57,420 --> 01:21:00,780
+probably reduced by one half the
+labour required to convert a given
+
+1395
+01:21:00,780 --> 01:21:04,489
+quantity of yarn into woven fabric.
+
+1396
+01:21:04,489 --> 01:21:07,979
+In order to do this, the
+English hand-loom weaver needed
+
+1397
+01:21:07,979 --> 01:21:10,760
+the the same amount of
+labour-time as before;
+
+1398
+01:21:10,760 --> 01:21:14,530
+but the product of his individual
+hour of labour now only represented
+
+1399
+01:21:14,530 --> 01:21:16,280
+half an hour of social labour,
+
+1400
+01:21:16,280 --> 01:21:17,660
+and consequently fell
+
+1401
+01:21:17,660 --> 01:21:22,109
+to one half of its former value."
+
+1402
+01:21:22,109 --> 01:21:27,690
+Okay, so value is in
+the first instance extremely
+
+1403
+01:21:27,690 --> 01:21:32,620
+sensitive to revolutions in technology,
+
+1404
+01:21:32,620 --> 01:21:34,489
+revolutions in productivity.
+
+1405
+01:21:34,489 --> 01:21:38,399
+And much of Capital is going to
+be taken up with the discussion
+
+1406
+01:21:38,399 --> 01:21:41,289
+of those revolutions in productivity,
+
+1407
+01:21:41,289 --> 01:21:47,519
+those revolutions in value-relations.
+
+1408
+01:21:47,519 --> 01:21:49,290
+This leads into the conclusion then,
+
+1409
+01:21:49,290 --> 01:21:51,520
+on the bottom of one twenty nine:
+
+1410
+01:21:51,520 --> 01:21:55,869
+"What exclusively determines the
+magnitude of the value of any article
+
+1411
+01:21:55,869 --> 01:21:59,279
+is therefore the amount
+of labour socially necessary,
+
+1412
+01:21:59,279 --> 01:22:03,179
+or the labour time
+socially necessary for its production."
+
+1413
+01:22:03,179 --> 01:22:06,479
+There's your definition.
+
+1414
+01:22:06,479 --> 01:22:12,169
+"The individual commodity counts
+here only as an average sample of its kind."
+
+1415
+01:22:12,169 --> 01:22:13,809
+Then he re-iterates.
+
+1416
+01:22:13,809 --> 01:22:17,149
+You often find Marx doing this, by the way.
+
+1417
+01:22:17,149 --> 01:22:19,249
+He repeats himself.
+
+1418
+01:22:19,249 --> 01:22:22,409
+He kind of…figures if you didn't get the
+
+1419
+01:22:22,409 --> 01:22:23,979
+hand-loom, the power-loom
+
+1420
+01:22:23,979 --> 01:22:27,260
+example, so he is going to
+
+1421
+01:22:27,260 --> 01:22:30,599
+hammer it home by pointing out
+
+1422
+01:22:30,599 --> 01:22:35,349
+that the value of the commodity does
+not remain constant, he says on hundred and thirty:
+
+1423
+01:22:35,349 --> 01:22:39,309
+"…if the labour-time required for its
+production also remained constant.
+
+1424
+01:22:39,309 --> 01:22:42,699
+But the latter changes with every variation
+in the productivity of labour." He then goes
+
+1425
+01:22:42,699 --> 01:22:46,480
+on to talk about this. But, notice:
+
+1426
+01:22:46,480 --> 01:22:51,530
+"This is determined by a
+wide range of circumstances;
+
+1427
+01:22:51,530 --> 01:22:57,560
+it is determined amongst other things by
+the workers average degree of skill,
+
+1428
+01:22:57,560 --> 01:23:01,859
+the level of development of
+science and its technological application,…"
+
+1429
+01:23:01,859 --> 01:23:09,989
+Marx is very hot on the significance of
+technology and science to capitalism.
+
+1430
+01:23:09,989 --> 01:23:13,249
+"…the social organization
+of the process of production,
+
+1431
+01:23:13,249 --> 01:23:16,829
+the extent and effectiveness of the means
+of production, and the conditions found in
+
+1432
+01:23:16,829 --> 01:23:23,539
+the natural environment."
+
+1433
+01:23:23,539 --> 01:23:30,320
+Vast array of elements
+which can impinge upon value.
+
+1434
+01:23:30,320 --> 01:23:35,139
+Transformations in the natural
+environment mean revolutions in value.
+
+1435
+01:23:35,139 --> 01:23:36,620
+Technology and science,
+
+1436
+01:23:36,620 --> 01:23:39,159
+social organization of production,
+
+1437
+01:23:39,159 --> 01:23:41,780
+technologies, all the rest of it…
+
+1438
+01:23:41,780 --> 01:23:43,829
+So, in fact, we've got
+
+1439
+01:23:43,829 --> 01:23:48,429
+value which is subject to a powerful
+array of forces, and he's not
+
+1440
+01:23:48,429 --> 01:23:52,119
+here attempting a definitive categorization
+of all of them, he just simply wants to
+
+1441
+01:23:52,119 --> 01:23:59,049
+alert us, that this thing we're
+calling value is not constant.
+
+1442
+01:23:59,049 --> 01:24:07,619
+It is subject to perpetual
+revolutionary transformations.
+
+1443
+01:24:08,600 --> 01:24:12,500
+But then a peculiar thing happens.
+
+1444
+01:24:12,500 --> 01:24:16,659
+Right in the last paragraph
+on hundred and thirty one
+
+1445
+01:24:16,659 --> 01:24:19,849
+he suddenly says:
+
+1446
+01:24:19,849 --> 01:24:22,610
+"A thing can be a
+use-value without being a value."
+
+1447
+01:24:22,610 --> 01:24:25,979
+Okay, we can all agree on that.
+
+1448
+01:24:25,979 --> 01:24:29,520
+We breathe air and so far we
+haven't managed to bottle it, although,
+
+1449
+01:24:29,520 --> 01:24:36,449
+we're beginning to, I guess, so…
+
+1450
+01:24:36,449 --> 01:24:42,219
+A thing can be useful and
+a product of human labour without being a commodity.
+
+1451
+01:24:42,219 --> 01:24:46,039
+I grow tomatoes in my
+backyard and I eat them…
+
+1452
+01:24:46,039 --> 01:24:48,749
+Lots of people, even within capitalism, actually
+
+1453
+01:24:48,749 --> 01:24:52,749
+produce a lot of things for themselves.
+
+1454
+01:24:52,749 --> 01:24:57,829
+With a little help
+from DIY and all the rest of it.
+
+1455
+01:24:57,829 --> 01:25:00,280
+"In order to produce the latter,"
+
+1456
+01:25:00,280 --> 01:25:02,619
+that is commodities,
+
+1457
+01:25:02,619 --> 01:25:03,809
+"he must not only produce use-values,
+
+1458
+01:25:03,809 --> 01:25:08,530
+but use-values for others."
+
+1459
+01:25:08,530 --> 01:25:13,050
+Furthermore, just not simply
+use-values for the lord, as a serf would do,
+
+1460
+01:25:13,050 --> 01:25:18,359
+but use-values which are going
+to go to others through the market.
+
+1461
+01:25:18,359 --> 01:25:20,460
+So it's use-values
+
+1462
+01:25:20,460 --> 01:25:27,460
+which you are producing,
+which are going to be sent to market.
+
+1463
+01:25:27,499 --> 01:25:32,960
+"Finally", he says, "nothing can
+be a value without being an object of utility.
+
+1464
+01:25:32,960 --> 01:25:36,400
+If the thing is useless, so is the labour
+contained in it; the labour does not count
+
+1465
+01:25:36,400 --> 01:25:42,679
+as labour, and therefore creates no value."
+
+1466
+01:25:42,679 --> 01:25:47,739
+Now he seems to dismiss
+and abstract from use-value earlier on.
+
+1467
+01:25:47,739 --> 01:25:48,980
+Saying: 'I'm not concerned
+
+1468
+01:25:48,980 --> 01:25:53,050
+with use-values, I'm not
+interested in them, etcetera.
+
+1469
+01:25:53,050 --> 01:25:56,079
+I abstract from them, I get to
+exchange-value, and that gets me to
+
+1470
+01:25:56,079 --> 01:25:59,329
+value. But now I've got
+value, but now I'm saying:
+
+1471
+01:25:59,329 --> 01:26:03,289
+it doesn't matter what kind of labour went
+into something, if somebody doesn't want it
+
+1472
+01:26:03,289 --> 01:26:08,090
+if it doesn't meet a human
+want, need or desire, then it ain't value.'
+
+1473
+01:26:08,090 --> 01:26:10,949
+So value is also dependent
+upon it being a use-value,
+
+1474
+01:26:10,949 --> 01:26:13,309
+for somebody, somewhere.
+
+1475
+01:26:13,309 --> 01:26:18,829
+You have to be able to sell it.
+So what he has done
+
+1476
+01:26:18,829 --> 01:26:25,829
+is to suddenly bring
+back use-value into the idea of value.
+
+1477
+01:26:27,590 --> 01:26:30,449
+Now, there's a very interesting
+
+1478
+01:26:30,449 --> 01:26:31,980
+kind of a structure that
+
+1479
+01:26:31,980 --> 01:26:34,530
+goes on here. Goes like this:
+
+1480
+01:26:34,530 --> 01:26:39,909
+And this is what I would like you to do: at
+the end of almost every section you read
+
+1481
+01:26:39,909 --> 01:26:45,019
+think about how the conceptional
+apparatus is constructed,
+
+1482
+01:26:45,019 --> 01:26:47,999
+and how it hangs together.
+
+1483
+01:26:47,999 --> 01:26:52,380
+What we've got here is
+something that goes like this:
+
+1484
+01:26:52,380 --> 01:27:00,679
+We've got the commodity.
+
+1485
+01:27:00,679 --> 01:27:01,960
+And we said, actually,
+
+1486
+01:27:01,960 --> 01:27:05,209
+the commodity has a dual character.
+
+1487
+01:27:05,209 --> 01:27:13,309
+It has a use-value.
+
+1488
+01:27:13,610 --> 01:27:20,610
+It also has an exchange-value.
+
+1489
+01:27:24,989 --> 01:27:27,879
+exchange-value is a
+representation of something.
+
+1490
+01:27:27,879 --> 01:27:30,519
+What is it a representation of?
+
+1491
+01:27:30,519 --> 01:27:36,739
+It's a representation of value.
+
+1492
+01:27:36,739 --> 01:27:41,619
+But value doesn't mean anything
+
+1493
+01:27:41,619 --> 01:27:47,239
+unless it connects back to use-value.
+
+1494
+01:27:47,239 --> 01:27:50,989
+What is value?
+
+1495
+01:27:50,989 --> 01:27:57,989
+Socially necessary labour-time.
+
+1496
+01:28:08,329 --> 01:28:16,820
+Now, if you own a house, are you more
+interested in its use-value or its exchange-value?
+
+1497
+01:28:16,820 --> 01:28:23,820
+Yeah, you're interested in both,
+you'd like to have your cake and eat it.
+
+1498
+01:28:27,469 --> 01:28:28,699
+Right?
+
+1499
+01:28:28,699 --> 01:28:34,999
+This is sort of opposition here. If you want
+to realize the exchange-value of something,
+
+1500
+01:28:34,999 --> 01:28:37,399
+you can't have the use-value of it.
+
+1501
+01:28:37,399 --> 01:28:40,820
+If you have the use-value of it then
+it's difficult to get the exchange-value, unless you do
+
+1502
+01:28:40,820 --> 01:28:43,529
+a reverse mortgage, or, you know,
+all those kinds of things that people did
+
+1503
+01:28:43,529 --> 01:28:47,939
+over the last few years.
+
+1504
+01:28:47,939 --> 01:28:50,830
+But notice the structure:
+
+1505
+01:28:50,830 --> 01:28:53,719
+Commodity, a singular concept
+
+1506
+01:28:53,719 --> 01:28:55,599
+which has two aspects.
+
+1507
+01:28:55,599 --> 01:28:57,750
+Now when you look at a commodity,
+
+1508
+01:28:57,750 --> 01:29:03,579
+can you actually divide it in half and say:
+that's the exchange-value and that's the use-value?
+
+1509
+01:29:03,579 --> 01:29:05,599
+No, there's a unity.
+
+1510
+01:29:05,599 --> 01:29:09,260
+But within that unity
+there is a dual aspect.
+
+1511
+01:29:09,260 --> 01:29:11,079
+And that dual aspect
+
+1512
+01:29:11,079 --> 01:29:15,999
+allows us to define something, called
+value, as socially necessary labour-time.
+
+1513
+01:29:15,999 --> 01:29:21,260
+Which is what the use-value of a
+commodity is a bearer of.
+
+1514
+01:29:21,260 --> 01:29:27,039
+That's what it is a bearer of.
+
+1515
+01:29:27,039 --> 01:29:31,059
+But, in order to be a value,
+it has to be useful.
+
+1516
+01:29:31,059 --> 01:29:33,160
+And of course, on this link
+
+1517
+01:29:33,160 --> 01:29:38,199
+we'll see all kinds of
+issues arising about supply and demand.
+
+1518
+01:29:38,199 --> 01:29:43,609
+If the supply is too great, the value will go
+down, if the supply is too little, the value will go up.
+
+1519
+01:29:43,609 --> 01:29:47,619
+So there is an element here of
+supply and demand involved.
+
+1520
+01:29:47,619 --> 01:29:51,320
+Marx is actually not
+terribly interested in that.
+
+1521
+01:29:51,320 --> 01:29:55,719
+As he will say at various points, as he goes on,
+
+1522
+01:29:55,719 --> 01:29:59,170
+what I'm interested in is, what happens when
+
+1523
+01:29:59,170 --> 01:30:04,599
+supply and demand are in equilibrium.
+
+1524
+01:30:04,599 --> 01:30:07,949
+When they are in equilibrium
+I have to have a different kind of analysis
+
+1525
+01:30:07,949 --> 01:30:10,290
+and the value of the commodities is fixed
+
+1526
+01:30:10,290 --> 01:30:13,869
+by this socially necessary
+labour-time, whatever that
+
+1527
+01:30:13,869 --> 01:30:20,610
+social necessity is. So what you've got here
+
+1528
+01:30:20,610 --> 01:30:23,939
+is something of this form,
+which then allows us to talk about
+
+1529
+01:30:23,939 --> 01:30:27,849
+the value of a commodity.
+
+1530
+01:30:27,849 --> 01:30:31,689
+We can talk about commodity values.
+
+1531
+01:30:31,689 --> 01:30:33,420
+We've got to the point where we understand:
+
+1532
+01:30:33,420 --> 01:30:36,420
+commodity values are constituted
+
+1533
+01:30:36,420 --> 01:30:41,159
+as socially necessary labour-time.
+
+1534
+01:30:41,159 --> 01:30:48,230
+Now this is partly, what I would suggest,
+
+1535
+01:30:48,230 --> 01:30:53,579
+is Marx's dialectical method working here.
+
+1536
+01:30:53,579 --> 01:30:59,539
+Would you say that exchange-values cause value?
+
+1537
+01:30:59,539 --> 01:31:01,520
+Would you say exchange-values
+
+1538
+01:31:01,520 --> 01:31:05,469
+cause use-value, or use-value
+is caused, or anything is caused by anything else?
+
+1539
+01:31:05,469 --> 01:31:09,530
+This is an analysis which is not causal.
+
+1540
+01:31:09,530 --> 01:31:15,679
+It's about relations, about dialectical relations.
+
+1541
+01:31:15,679 --> 01:31:21,119
+Can you talk about exchange-value
+without talking about use-value?
+
+1542
+01:31:21,119 --> 01:31:24,469
+No you can't.
+
+1543
+01:31:24,469 --> 01:31:29,050
+Can you talk about value without
+talking about use-value? No you can't.
+
+1544
+01:31:29,050 --> 01:31:32,550
+In other words, you can't talk about any
+one of these concepts without talking
+
+1545
+01:31:32,550 --> 01:31:35,820
+about all of the others.
+
+1546
+01:31:35,820 --> 01:31:39,690
+This is what I mean about, you know,
+beginning to sort of work through
+
+1547
+01:31:39,690 --> 01:31:43,119
+the conceptual apparatus of the onion.
+
+1548
+01:31:43,119 --> 01:31:51,489
+It's an organic, hanging together,
+a set of relations, between these concepts.
+
+1549
+01:31:51,489 --> 01:31:54,849
+But we've also seen, that we'll be
+
+1550
+01:31:54,849 --> 01:31:59,369
+going to be talking about motion, about movement,
+
+1551
+01:31:59,369 --> 01:32:02,639
+about the making of things, about labour processes,
+
+1552
+01:32:02,639 --> 01:32:08,009
+which become objectified in use-values,
+
+1553
+01:32:08,009 --> 01:32:13,269
+and which become represented by exchange-value.
+
+1554
+01:32:13,269 --> 01:32:17,179
+So we've got a very interesting
+
+1555
+01:32:17,179 --> 01:32:21,270
+kind of conceptual framework here,
+which is not about causality at all.
+
+1556
+01:32:21,270 --> 01:32:23,630
+It's about inner relations.
+
+1557
+01:32:23,630 --> 01:32:25,590
+And by understanding
+
+1558
+01:32:25,590 --> 01:32:30,119
+then we start to see also
+certain tensions I've already mentioned.
+
+1559
+01:32:30,119 --> 01:32:31,939
+That yes, it'd be very nice
+
+1560
+01:32:31,939 --> 01:32:36,699
+to have use-value and
+exchange-value at the same time.
+
+1561
+01:32:36,699 --> 01:32:40,159
+But a lot of time we
+are faced with a difficult choice.
+
+1562
+01:32:40,159 --> 01:32:43,380
+Do I have the use-value, or do I
+
+1563
+01:32:43,380 --> 01:32:45,380
+realize the exchange-value?
+
+1564
+01:32:45,380 --> 01:32:50,249
+Or do I give up the
+exchange-value and get the use-value?
+
+1565
+01:32:50,249 --> 01:32:54,609
+And those are the daily decisions we
+have to make when we go into the market, right?
+
+1566
+01:32:54,609 --> 01:32:55,629
+Do I give up
+
+1567
+01:32:55,629 --> 01:32:58,960
+the exchange-value…
+money for this or do I not..?
+
+1568
+01:32:58,960 --> 01:33:01,730
+Do I hang on to the money or what do I do?
+
+1569
+01:33:01,730 --> 01:33:08,239
+So Marx has set up something,
+that is explaining something, OK, already.
+
+1570
+01:33:08,239 --> 01:33:14,530
+And even as he explains however,
+he is not saying: this causes that.
+
+1571
+01:33:14,530 --> 01:33:17,250
+So it's not a causal analysis.
+
+1572
+01:33:17,250 --> 01:33:18,459
+This is where I'm beginning to…
+what I want you to start to think about,
+
+1573
+01:33:18,459 --> 01:33:24,039
+is a dialectical mode of argument.
+
+1574
+01:33:24,039 --> 01:33:26,980
+Which is already revealing something about
+
+1575
+01:33:26,980 --> 01:33:31,320
+the kinds of choices you
+make when you go into the supermarket.
+
+1576
+01:33:31,320 --> 01:33:34,429
+And the kinds of things
+you see in the supermarket.
+
+1577
+01:33:34,429 --> 01:33:37,639
+You're going to get a representation of
+human labour in the supermarket. You're not
+
+1578
+01:33:37,639 --> 01:33:41,119
+going to see the human labour.
+You're going to get a representation.
+
+1579
+01:33:41,119 --> 01:33:45,590
+You're gonna have to to deal with the
+representation as it is objectified,
+
+1580
+01:33:45,590 --> 01:33:47,990
+and as its value is represented,
+
+1581
+01:33:47,990 --> 01:33:52,260
+and then you have to make a
+decision about use- and exchange-value.
+
+1582
+01:33:52,260 --> 01:33:58,460
+So this is a way of situating
+what people do on a daily basis.
+
+1583
+01:33:58,460 --> 01:34:01,970
+And you can see that
+this apparatus, although Marx
+
+1584
+01:34:01,970 --> 01:34:05,679
+doesn't take it in the
+way that I'm taking it,
+
+1585
+01:34:05,679 --> 01:34:10,199
+but if you think about it you see
+immediately what this can help you understand.
+
+1586
+01:34:10,199 --> 01:34:14,219
+So you just don't learn it as a formal abstraction.
+
+1587
+01:34:14,219 --> 01:34:15,869
+You try to put sort of
+
+1588
+01:34:15,869 --> 01:34:19,809
+meat on the bones of this,
+by sort of thinking through.
+
+1589
+01:34:19,809 --> 01:34:23,260
+Well, what does that actually mean?
+
+1590
+01:34:23,260 --> 01:34:28,840
+How does that help me
+understand things that are going on around me?
+
+1591
+01:34:28,840 --> 01:34:33,929
+This is the kind of crucial sort of question
+
+1592
+01:34:33,929 --> 01:34:37,900
+which this form of analysis sets up.
+
+1593
+01:34:37,900 --> 01:34:40,110
+So my purpose reading through
+
+1594
+01:34:40,110 --> 01:34:43,939
+this first section is
+to give you some idea about,
+
+1595
+01:34:43,939 --> 01:34:47,540
+if you like, create a model of
+how you should try to read this.
+
+1596
+01:34:47,540 --> 01:34:49,470
+It won't always work for you. But
+
+1597
+01:34:49,470 --> 01:34:53,579
+what you should do at the end of every
+section is: draw back, say: all right,
+
+1598
+01:34:53,579 --> 01:34:57,039
+what kind of relationships
+was he talking about here?
+
+1599
+01:34:57,039 --> 01:34:59,400
+What do those relationships tell me
+
+1600
+01:34:59,400 --> 01:35:05,349
+both about all of this stuff,
+but also tell me about what's going on?
+
+1601
+01:35:05,349 --> 01:35:09,169
+In my daily life, in other people's daily life,
+what's going on in the market and all the
+
+1602
+01:35:09,169 --> 01:35:12,070
+rest of it? What does it tell me?
+
+1603
+01:35:12,070 --> 01:35:14,880
+Is it telling me anything?
+
+1604
+01:35:14,880 --> 01:35:18,300
+And initially it will be very
+hard to see what it might tell you, as you go on
+
+1605
+01:35:18,300 --> 01:35:21,499
+Marx will start to tell
+stories coming out of these relationships
+
+1606
+01:35:21,499 --> 01:35:23,999
+and he'll spin outwards from this
+
+1607
+01:35:23,999 --> 01:35:29,360
+into a far, far greater
+understanding of the dynamics of this.
+
+1608
+01:35:29,360 --> 01:35:34,119
+So this is the way in which he's working.
+
+1609
+01:35:34,119 --> 01:35:35,630
+And I think what
+
+1610
+01:35:35,630 --> 01:35:38,499
+I suggested to you is that
+
+1611
+01:35:38,499 --> 01:35:41,069
+you should go back over this section
+
+1612
+01:35:41,069 --> 01:35:46,070
+and look carefully at the way in which
+these concepts unfold and how they work
+
+1613
+01:35:46,070 --> 01:35:50,030
+in these sorts of terms.
+
+1614
+01:35:50,030 --> 01:35:52,550
+Now generally speaking,
+
+1615
+01:35:52,550 --> 01:35:55,969
+I've been talking all the time on this occasion,
+
+1616
+01:35:55,969 --> 01:35:58,839
+as an introductory thing.
+
+1617
+01:35:58,839 --> 01:36:02,359
+Rather necessary I
+found out of bitter experience.
+
+1618
+01:36:02,359 --> 01:36:03,260
+But I would like,
+
+1619
+01:36:03,260 --> 01:36:07,489
+actually, to try to get
+you to engage a little bit, so
+
+1620
+01:36:07,489 --> 01:36:09,790
+in the future,
+
+1621
+01:36:09,790 --> 01:36:13,460
+precisely because you've
+read the text very carefully in advance,
+
+1622
+01:36:13,460 --> 01:36:17,239
+you doubtless come with
+all kinds of questions in your mind.
+
+1623
+01:36:17,239 --> 01:36:18,300
+And so when
+
+1624
+01:36:18,300 --> 01:36:23,009
+I'm talking about something and you don't
+get it because it doesn't fit with what
+
+1625
+01:36:23,009 --> 01:36:26,619
+you got, then interrupt me, Ok.
+
+1626
+01:36:26,619 --> 01:36:36,169
+That's fine, but interrupt me about the text.
+
+1627
+01:36:36,169 --> 01:36:40,829
+As he says about this in his
+introduction to the French edition, you know,
+
+1628
+01:36:40,829 --> 01:36:45,729
+people very often want to talk politics
+
+1629
+01:36:45,729 --> 01:36:49,349
+in here, I love to talk politics.
+
+1630
+01:36:49,349 --> 01:36:52,959
+But sometimes if you talk
+all politics you forget the text,
+
+1631
+01:36:52,959 --> 01:36:56,280
+and actually the politics
+of this class is to get you to read the text
+
+1632
+01:36:56,280 --> 01:36:58,249
+and understand the text.
+
+1633
+01:36:58,249 --> 01:37:01,570
+If you want to discuss politics we go
+down to O'Reilly's bar on 35th street afterwards
+
+1634
+01:37:01,570 --> 01:37:04,119
+and discuss as much politics as you like,
+
+1635
+01:37:04,119 --> 01:37:06,709
+over several beers and that's
+
+1636
+01:37:06,709 --> 01:37:08,799
+part of the joy of this course.
+
+1637
+01:37:08,799 --> 01:37:12,819
+This is…,
+in here we wanna try to
+
+1638
+01:37:12,819 --> 01:37:14,520
+keep it with the text.
+
+1639
+01:37:14,520 --> 01:37:18,909
+But there are instances of the
+sort that I sort of indicated here where
+
+1640
+01:37:18,909 --> 01:37:23,110
+people might have a particular kind of
+experience which actually is illuminated
+
+1641
+01:37:23,110 --> 01:37:26,209
+by the framework of analysis.
+And that's extremely helpful.
+
+1642
+01:37:26,209 --> 01:37:29,449
+When people can kinda say:
+yeah, that reminds me off,
+
+1643
+01:37:29,449 --> 01:37:33,079
+you know, when I was working for
+AT&T this happened etc, you know, and
+
+1644
+01:37:33,079 --> 01:37:36,929
+this happened and this happened, and it is
+exactly what Marx is talking about. In other words:
+
+1645
+01:37:36,929 --> 01:37:39,670
+there are constant ways in which
+
+1646
+01:37:39,670 --> 01:37:43,520
+this refers to experience. I don't
+mind some of that, in fact, that's always
+
+1647
+01:37:43,520 --> 01:37:45,609
+very, very useful, but really,
+
+1648
+01:37:45,609 --> 01:37:47,769
+what we're trying to do
+is try to make sure we
+
+1649
+01:37:47,769 --> 01:37:51,400
+get through to the text, and we have also
+
+1650
+01:37:51,400 --> 01:37:54,890
+a little bit more fluidity, so that
+I'm not just preaching all the time
+
+1651
+01:37:54,890 --> 01:37:57,849
+and telling all the time, a
+little bit more fluidity so that you can get into
+
+1652
+01:37:57,849 --> 01:37:59,329
+discussing some things. Now,
+
+1653
+01:37:59,329 --> 01:38:02,909
+we have about ten minutes left
+so if anybody wants to raise some
+
+1654
+01:38:02,909 --> 01:38:08,150
+issues about what we've done?
+
+1655
+01:38:08,150 --> 01:38:12,909
+»STUDENT: I was just wondering, because I think that,
+in the philosophical tradition, when we speak of value,
+
+1656
+01:38:12,909 --> 01:38:15,689
+you usually have this conception
+of something that is absolute or that has
+
+1657
+01:38:15,689 --> 01:38:19,739
+an independent existence grounded in reality,
+
+1658
+01:38:19,739 --> 01:38:23,149
+and I'm wondering, whether
+we can understand Marx's
+
+1659
+01:38:23,149 --> 01:38:27,359
+definition of value as
+socially necessary labour-time,
+
+1660
+01:38:27,359 --> 01:38:31,960
+as itself, something that is socially
+conditioned, and is there any way
+
+1661
+01:38:31,960 --> 01:38:38,489
+that is totally outside,
+might there be a social configuration
+
+1662
+01:38:38,489 --> 01:38:46,280
+that we can imagine in which value is,
+
+1663
+01:38:46,280 --> 01:38:49,800
+actually itself its representation,
+
+1664
+01:38:49,800 --> 01:38:53,689
+when those two things are reconciled.
+
+1665
+01:38:53,689 --> 01:38:57,159
+Or is value always, inevitably kind of a chimera?
+
+1666
+01:38:57,159 --> 01:39:00,969
+»HARVEY: No, I think you gotta understand:
+
+1667
+01:39:00,969 --> 01:39:04,949
+Marx's concept of value is
+
+1668
+01:39:04,949 --> 01:39:11,619
+something which is internalized in the
+processes of a capitalist mode of production.
+
+1669
+01:39:11,619 --> 01:39:15,380
+And what he will say to you is: you may
+have alternative values, and that's fine.
+
+1670
+01:39:15,380 --> 01:39:19,759
+And you can dream about
+them and want them, this kind of stuff.
+
+1671
+01:39:19,759 --> 01:39:26,219
+But they don't mean very much,
+unless you can transform
+
+1672
+01:39:26,219 --> 01:39:30,760
+the real value system which is
+governing our daily lives which is this one.
+
+1673
+01:39:30,760 --> 01:39:34,760
+So Marx is not against, necessarily,
+thinking about alternative values. And in
+
+1674
+01:39:34,760 --> 01:39:37,610
+fact, I think, one of the big issues
+
+1675
+01:39:37,610 --> 01:39:43,380
+which we face right now, is
+precisely about what alternative values we
+
+1676
+01:39:43,380 --> 01:39:46,349
+would like to see
+
+1677
+01:39:46,349 --> 01:39:49,060
+operating in in the global marketplace.
+
+1678
+01:39:49,060 --> 01:39:52,709
+Values of fairness…
+
+1679
+01:39:52,709 --> 01:39:57,559
+and this is particularly coming up in
+the environmental issue, for example.
+
+1680
+01:39:57,559 --> 01:40:01,820
+People want to talk about
+environmental values which should be
+
+1681
+01:40:01,820 --> 01:40:04,680
+part in this. And the
+answer again, as I suggested, is:
+
+1682
+01:40:04,680 --> 01:40:06,949
+Marx would say: that's fine.
+
+1683
+01:40:06,949 --> 01:40:10,600
+Well, he might not say that's fine, he had a
+particular kind of aim of where he wants to go.
+
+1684
+01:40:10,600 --> 01:40:13,310
+But I think, theoretically he would say:
+
+1685
+01:40:13,310 --> 01:40:18,090
+that's fine. But in order to
+make your notion of value work
+
+1686
+01:40:18,090 --> 01:40:21,979
+you have to confront the one which is actually
+
+1687
+01:40:21,979 --> 01:40:23,820
+dominating us in terms of
+
+1688
+01:40:23,820 --> 01:40:27,159
+what's going on in the supermarket, how we're
+living our daily lives and all the rest of it.
+
+1689
+01:40:27,159 --> 01:40:29,840
+And we're talking about a value theory
+
+1690
+01:40:29,840 --> 01:40:32,059
+which is implicated inside of
+
+1691
+01:40:32,059 --> 01:40:34,340
+a capitalist mode of production.
+
+1692
+01:40:34,340 --> 01:40:40,260
+Now, there's been a
+categorical mistake in many instances,
+
+1693
+01:40:40,260 --> 01:40:43,979
+precisely because value is located
+in relationship to labour and labour processes,
+
+1694
+01:40:43,979 --> 01:40:49,589
+that there's been a lot of
+thinking in socialist societies of taking
+
+1695
+01:40:49,589 --> 01:40:54,229
+Marx's labour theory of value
+also almost as a normative device
+
+1696
+01:40:54,229 --> 01:40:56,439
+to think about how
+
+1697
+01:40:56,439 --> 01:40:57,499
+socialism should work.
+
+1698
+01:40:57,499 --> 01:41:00,150
+But this is not what
+Marx is saying, he's saying:
+
+1699
+01:41:00,150 --> 01:41:02,179
+value is inherent
+
+1700
+01:41:02,179 --> 01:41:03,949
+within a capitalist mode of production.
+
+1701
+01:41:03,949 --> 01:41:06,889
+And we have to come to terms
+
+1702
+01:41:06,889 --> 01:41:08,879
+with what that value is.
+
+1703
+01:41:08,879 --> 01:41:11,159
+Now, there are alternative value theories.
+
+1704
+01:41:11,159 --> 01:41:12,810
+And you know, you can
+
+1705
+01:41:12,810 --> 01:41:17,050
+philosophize about them, think
+about them and worry about them, socially,
+
+1706
+01:41:17,050 --> 01:41:18,939
+politically, all the rest of it…
+
+1707
+01:41:18,939 --> 01:41:22,499
+But his point is, as I suggested,
+
+1708
+01:41:22,499 --> 01:41:25,420
+you've always got to come
+back to confront this one,
+
+1709
+01:41:25,420 --> 01:41:28,570
+because this is very basic to how
+capitalist mode of production works.
+
+1710
+01:41:28,570 --> 01:41:29,119
+And if you wanna
+
+1711
+01:41:29,119 --> 01:41:31,969
+instantiate a different set of
+values, then you've gotta
+
+1712
+01:41:31,969 --> 01:41:35,300
+overthrow a capitalist mode of production.
+
+1713
+01:41:35,300 --> 01:41:38,280
+And that's his revolutionary intent.
+
+1714
+01:41:38,280 --> 01:41:43,530
+Sorry, there was a question here.
+
+1715
+01:41:43,530 --> 01:41:47,869
+»STUDENT: Yeah, I just was wondering if
+you could talk a little bit about how we should think
+
+1716
+01:41:47,869 --> 01:41:49,339
+about objectification. Because, I know, the
+preconceived notion I bring to it is
+
+1717
+01:41:49,339 --> 01:41:52,219
+much more static in terms of,
+
+1718
+01:41:52,219 --> 01:41:54,480
+as labour is objectified, it
+moves away from the labourer
+
+1719
+01:41:54,480 --> 01:41:57,030
+and there's this separation.
+
+1720
+01:41:57,030 --> 01:42:01,509
+How can I think about that in terms of,
+
+1721
+01:42:01,509 --> 01:42:04,409
+more process oriented?
+
+1722
+01:42:04,409 --> 01:42:08,270
+»HARVEY: Well, again…
+the thing is not…
+
+1723
+01:42:08,270 --> 01:42:11,159
+…is not…, for instance:
+
+1724
+01:42:11,159 --> 01:42:13,189
+Just to give you an example:
+
+1725
+01:42:14,639 --> 01:42:17,749
+Let's suppose that labour produces a house.
+
+1726
+01:42:17,749 --> 01:42:20,090
+Okay the labourers that
+produced the house move away from it,
+
+1727
+01:42:20,090 --> 01:42:23,510
+then maybe other labourers move in to it.
+
+1728
+01:42:23,510 --> 01:42:27,769
+And then there's the issue of: is that
+house then fixed forever in terms of
+
+1729
+01:42:27,769 --> 01:42:32,080
+its value? Well, given the way
+he set it up, the answer is no.
+
+1730
+01:42:32,080 --> 01:42:36,329
+Because let's suppose
+there are revolutions in technology
+
+1731
+01:42:36,329 --> 01:42:40,199
+which suddenly make housing
+production much easier.
+
+1732
+01:42:40,199 --> 01:42:44,480
+Then you can go away from, I don't know,
+shanty towns to sort of housing of a
+
+1733
+01:42:44,480 --> 01:42:47,300
+different kind, and therefore there's a dynamic
+
+1734
+01:42:47,300 --> 01:42:50,900
+involved in this, and therefore,
+
+1735
+01:42:50,900 --> 01:42:53,540
+you know, this gets back to the fact that
+
+1736
+01:42:53,540 --> 01:42:57,699
+something like a house has a use-value and
+the use-value remains a long time and you can still
+
+1737
+01:42:57,699 --> 01:43:00,889
+trade its exchange-value,
+so it has a residual exchange-value.
+
+1738
+01:43:00,889 --> 01:43:02,019
+So…,
+
+1739
+01:43:02,019 --> 01:43:03,930
+so again there's a dynamic here,
+
+1740
+01:43:03,930 --> 01:43:05,370
+so the thing
+
+1741
+01:43:05,370 --> 01:43:07,849
+and the qualities of things are not fixed.
+
+1742
+01:43:07,849 --> 01:43:10,550
+In fact, again, there's a lot of
+
+1743
+01:43:10,550 --> 01:43:14,989
+dynamism in this. But again Marx,
+by and large, is not going to be concerned about that
+
+1744
+01:43:14,989 --> 01:43:16,929
+in Capital. He's going to sort of say:
+
+1745
+01:43:16,929 --> 01:43:21,589
+OK, I'm gonna assume it's fixed for the moment.
+
+1746
+01:43:21,589 --> 01:43:24,000
+But nevertheless, what
+he's saying here is:
+
+1747
+01:43:24,000 --> 01:43:29,109
+watch out!, it's always in motion,
+it's never fixed, it's always changing, it's a dynamic
+
+1748
+01:43:29,109 --> 01:43:32,429
+concept, not a static one.
+And the objectification
+
+1749
+01:43:32,429 --> 01:43:37,189
+is there, but again, the meaning
+of the objectification itself changes over time
+
+1750
+01:43:37,189 --> 01:43:39,699
+and according to place. So you know
+
+1751
+01:43:39,699 --> 01:43:45,199
+there are all those elements within it.
+
+1752
+01:43:45,199 --> 01:43:46,779
+» STUDENT: This particular vision of the capitalist
+
+1753
+01:43:46,779 --> 01:43:50,590
+world that Marx deals with
+
+1754
+01:43:50,590 --> 01:43:52,469
+diverges, I mean obviously
+
+1755
+01:43:52,469 --> 01:43:53,679
+diverges with the modern day…
+
+1756
+01:43:53,679 --> 01:43:59,539
+Specifically with the way in which laws, and
+you know, create a proprietary… you know
+
+1757
+01:43:59,539 --> 01:44:01,769
+only certain companies
+can make one thing, and then,
+
+1758
+01:44:01,769 --> 01:44:06,690
+corporations sort of
+
+1759
+01:44:06,690 --> 01:44:07,700
+dominate the scene.
+
+1760
+01:44:07,700 --> 01:44:12,019
+It's not a free market- protectionist laws,
+
+1761
+01:44:12,019 --> 01:44:15,800
+…does that…
+
+1762
+01:44:15,800 --> 01:44:18,959
+affect the values being purely
+about the socially necessary labour-time.
+
+1763
+01:44:18,959 --> 01:44:21,800
+»HARVEY: Well that's one of the
+questions which you have to ask about. What is
+
+1764
+01:44:21,800 --> 01:44:23,989
+socially necessary labour-time?
+
+1765
+01:44:23,989 --> 01:44:25,800
+How is it determined?
+
+1766
+01:44:25,800 --> 01:44:30,120
+To what degree is there a monopoly
+power in the market which is determining it?
+
+1767
+01:44:30,120 --> 01:44:36,380
+To what degree is there imperialist
+politics which is determining it?
+
+1768
+01:44:36,380 --> 01:44:38,739
+To what degree is there
+
+1769
+01:44:38,739 --> 01:44:41,189
+colonial enslavement which is determining it?
+
+1770
+01:44:41,189 --> 01:44:42,130
+In other words:
+
+1771
+01:44:42,130 --> 01:44:43,869
+those are open questions.
+
+1772
+01:44:43,869 --> 01:44:47,479
+And Marx is very much open to
+
+1773
+01:44:47,479 --> 01:44:49,459
+discussing those sorts of questions
+
+1774
+01:44:49,459 --> 01:44:53,699
+in principle. But again, what
+we're going to look at is
+
+1775
+01:44:53,699 --> 01:44:57,359
+Marx's conception of a pure
+capitalist mode of production.
+
+1776
+01:44:57,359 --> 01:45:01,449
+Which in many ways, as we will see,
+is guided by the vision of classical
+
+1777
+01:45:01,449 --> 01:45:03,249
+political economy.
+
+1778
+01:45:03,249 --> 01:45:06,510
+In other words: classical political economy
+
+1779
+01:45:06,510 --> 01:45:09,969
+assumes there were going to be perfectly
+functioning markets and the state power
+
+1780
+01:45:09,969 --> 01:45:14,070
+is going to be out of the way,
+and there's gonna be no monopoly.
+
+1781
+01:45:14,070 --> 01:45:17,739
+So Marx tends to say:
+okay, let's assume that
+
+1782
+01:45:17,739 --> 01:45:21,469
+the classical political economists are
+correct and that's how the world is.
+
+1783
+01:45:21,469 --> 01:45:23,969
+We will see examples where
+
+1784
+01:45:23,969 --> 01:45:27,659
+that presumption gets him into difficulties.
+
+1785
+01:45:27,659 --> 01:45:29,699
+But actually, there's nothing
+
+1786
+01:45:29,699 --> 01:45:33,320
+in this conception that says you can't
+consider all those things, because,
+
+1787
+01:45:33,320 --> 01:45:36,099
+for me anyway, the category socially necessary
+
+1788
+01:45:36,099 --> 01:45:38,170
+is something which is perpetually open,
+
+1789
+01:45:38,170 --> 01:45:39,650
+is constantly changing.
+
+1790
+01:45:39,650 --> 01:45:41,659
+What is socially necessary now?
+
+1791
+01:45:41,659 --> 01:45:45,650
+as opposed to what was
+socially necessary in 1850.
+
+1792
+01:45:45,650 --> 01:45:50,099
+Very different. And so you know,
+
+1793
+01:45:50,099 --> 01:45:52,510
+I would want you to think about this as
+
+1794
+01:45:52,510 --> 01:45:55,580
+having a flexible reading in this,
+but realize that Marx is using it
+
+1795
+01:45:55,580 --> 01:45:59,219
+in a very specific way, in a very specific situation
+
+1796
+01:45:59,219 --> 01:46:03,340
+for very specific purposes.
+
+1797
+01:46:03,340 --> 01:46:06,739
+»STUDENT: Does socially necessary
+imply the amount of labour required
+
+1798
+01:46:06,739 --> 01:46:10,729
+for a labourer to reproduce him- or herself?
+
+1799
+01:46:10,729 --> 01:46:12,559
+»HARVEY: Socially necessary
+
+1800
+01:46:12,559 --> 01:46:15,849
+can include that kind of question.
+
+1801
+01:46:15,849 --> 01:46:19,290
+As many socialist feminists pointed out in the
+
+1802
+01:46:19,290 --> 01:46:22,690
+debates of the nineteen
+sixties/nineteen seventies,
+
+1803
+01:46:22,690 --> 01:46:26,489
+the whole question of socially necessary,
+
+1804
+01:46:26,489 --> 01:46:28,650
+has to take into account
+
+1805
+01:46:28,650 --> 01:46:31,860
+certain basic costs of reproduction
+that are born inside of the household
+
+1806
+01:46:31,860 --> 01:46:35,369
+and which may be
+disproportionately born by women.
+
+1807
+01:46:35,369 --> 01:46:38,429
+Even though, actually, if you look
+at the whole history of the industrial
+
+1808
+01:46:38,429 --> 01:46:40,480
+revolution, it was women's labour
+
+1809
+01:46:40,480 --> 01:46:44,070
+in the factories that was
+fundamental, as it is today. And most of
+
+1810
+01:46:44,070 --> 01:46:47,840
+the global proletariat right now is women.
+
+1811
+01:46:47,840 --> 01:46:51,190
+So the kind of social
+reproduction aspect of it, and how to
+
+1812
+01:46:51,190 --> 01:46:53,289
+integrate that into
+socially necessary, has been
+
+1813
+01:46:53,289 --> 01:46:58,230
+a contentious issue amongst Marxists.
+
+1814
+01:46:58,230 --> 01:47:01,690
+And what you have to
+remember by the way, is that Marx
+
+1815
+01:47:01,690 --> 01:47:07,969
+was a little skeptical of this
+term "Marxist". He once said: 'I am not a Marxist.'
+
+1816
+01:47:07,969 --> 01:47:11,489
+What he meant by that, was, there
+were a lot of things being said in his name, that were
+
+1817
+01:47:11,489 --> 01:47:13,639
+not exactly what he had to say.
+
+1818
+01:47:13,639 --> 01:47:18,309
+So again, that's one of the reasons
+why I want you to think about this in Marx's
+
+1819
+01:47:18,309 --> 01:47:21,940
+own terms. Because, you know,
+
+1820
+01:47:21,940 --> 01:47:24,139
+it's very, it's very important to realize
+
+1821
+01:47:24,139 --> 01:47:28,309
+how he expands this
+notion of social necessity,
+
+1822
+01:47:28,309 --> 01:47:29,679
+we will see.
+
+1823
+01:47:29,679 --> 01:47:32,889
+How you might want to expand it,
+is again something that is open
+
+1824
+01:47:32,889 --> 01:47:34,479
+to discussion and debate.
+
+1825
+01:47:34,479 --> 01:47:37,039
+How we should expand it,
+
+1826
+01:47:37,039 --> 01:47:41,719
+in terms of a socialist project, or
+socio-ecological project, or a social-
+
+1827
+01:47:41,719 --> 01:47:43,070
+feminist project, or whatever.
+
+1828
+01:47:43,070 --> 01:47:44,899
+How we should expand it,
+
+1829
+01:47:44,899 --> 01:47:47,730
+again, is something very much up to us.
+
+1830
+01:47:47,730 --> 01:47:51,609
+And I don't think Marx would want to be read
+
+1831
+01:47:51,609 --> 01:47:55,389
+as someone providing a
+gospel within which you
+
+1832
+01:47:55,389 --> 01:47:56,590
+can find yourself.
+
+1833
+01:47:56,590 --> 01:48:00,110
+It's not about confining mode of
+argument, it's a matter of
+
+1834
+01:48:00,110 --> 01:48:03,469
+liberating you to think about
+all kinds of possibilities,
+
+1835
+01:48:03,469 --> 01:48:05,369
+all kinds of alternatives,
+
+1836
+01:48:05,369 --> 01:48:08,780
+all kinds of ways to go.
+
+1837
+01:48:08,780 --> 01:48:09,929
+Just one more.
+
+1838
+01:48:09,929 --> 01:48:13,959
+»STUDENT: Could you just
+clarify very specifically
+
+1839
+01:48:13,959 --> 01:48:15,649
+the difference between
+use-value and exchange-value?
+
+1840
+01:48:15,649 --> 01:48:19,880
+»HARVEY: Use-value is a shirt or a shoe,
+
+1841
+01:48:19,880 --> 01:48:21,889
+whatever you use. The exchange-value is:
+
+1842
+01:48:21,889 --> 01:48:25,880
+shirts and shoes in the market,
+and about the prices on them,
+
+1843
+01:48:25,880 --> 01:48:30,099
+put very simply. And it's…
+
+1844
+01:48:30,099 --> 01:48:33,419
+I don't like to use the word price at this
+point, because we haven't talked very much about
+
+1845
+01:48:33,419 --> 01:48:35,969
+money. But when you get
+further down the line
+
+1846
+01:48:35,969 --> 01:48:40,610
+you see it's really about prices realized
+in the market, and exchange-value is the price
+
+1847
+01:48:40,610 --> 01:48:43,769
+of a commodity.
+
+1848
+01:48:43,769 --> 01:48:46,609
+Okay, we should leave it there.
+So thanks very much.
+
+1849
+01:48:46,609 --> 01:48:52,909
+We don't meet next week, right?,
+because…What is it?
+
+1850
+01:48:52,909 --> 01:48:55,679
+» STUDENT: Labour Day.
+» DAVID HARVEY: Oh, Labour Day, what a good idea.
+
+1851
+01:48:55,679 --> 01:48:57,739
+Next time I want you to read
+
+1852
+01:48:57,739 --> 01:49:03,840
+the rest of chapter one, and chapter two.
+
+1853
+01:49:03,840 --> 01:49:08,169
+So we will get to the end
+of chapter two. Chapter two is pretty short.
+
+1854
+01:49:08,169 --> 01:49:12,650
+The rest of this chapter is very
+curious for a variety of reasons. I mentioned
+
+1855
+01:49:12,650 --> 01:49:17,599
+Marx's literary style. His
+literary style changes from
+
+1856
+01:49:17,599 --> 01:49:23,369
+crisp analytic, like you've seen here,
+and that goes on for the next one,
+
+1857
+01:49:23,369 --> 01:49:27,419
+to what I can only call
+his kind of 'accountancy style',
+
+1858
+01:49:27,419 --> 01:49:29,869
+which is deadly boring.
+
+1859
+01:49:29,869 --> 01:49:31,629
+Where: 'this is worth two shillings
+
+1860
+01:49:31,629 --> 01:49:34,650
+and that's worth three shillings,
+
+1861
+01:49:34,650 --> 01:49:38,269
+and that's worth two and a half pence.
+And if we add this to that we will end up with…'
+
+1862
+01:49:38,269 --> 01:49:39,269
+Deadly boring.
+
+1863
+01:49:39,269 --> 01:49:42,980
+So the third section is rather long
+
+1864
+01:49:42,980 --> 01:49:46,550
+and rather boring of that style.
+
+1865
+01:49:46,550 --> 01:49:49,510
+And he could have done
+it much quicker in my view.
+
+1866
+01:49:49,510 --> 01:49:52,860
+But it has some very important
+insights in it. And so you're going to
+
+1867
+01:49:52,860 --> 01:49:53,810
+find yourself struggling.
+
+1868
+01:49:53,810 --> 01:49:57,070
+The last section of chapter one is the
+fetishism of commodities, where it's
+
+1869
+01:49:57,070 --> 01:50:00,300
+about werewolves and Robinson Crusoe,
+
+1870
+01:50:00,300 --> 01:50:04,489
+in an incredible kind of literary
+style. So you suddenly find in this chapter
+
+1871
+01:50:04,489 --> 01:50:08,159
+you're going to have a big
+sample of Marx's different writing styles.
+
+1872
+01:50:08,159 --> 01:50:09,479
+And they are all together.
+
+1873
+01:50:09,479 --> 01:50:13,699
+Now, if you wrote a PhD that way, people
+would say: For god's sakes!, smooth this out,
+
+1874
+01:50:13,699 --> 01:50:15,320
+you can't do that.
+
+1875
+01:50:15,320 --> 01:50:18,380
+Which style you're gonna write in?
+But he writes in different styles.
+
+1876
+01:50:18,380 --> 01:50:19,559
+And he enjoys it.
+
+1877
+01:50:19,559 --> 01:50:21,810
+And it's fun, actually, because you starts to say:
+
+1878
+01:50:21,810 --> 01:50:25,049
+How on earth does this relate to that?
+
+1879
+01:50:25,049 --> 01:50:28,939
+And what does this really mean?
+So anyway, chapter one is like that.
+
+1880
+01:50:28,939 --> 01:50:30,369
+Chapter two is relatively short,
+
+1881
+01:50:30,369 --> 01:50:33,389
+and again fairly analytic.
+
+1882
+01:50:33,389 --> 01:50:36,969
+Key concepts are laid out a bit like here. So
+it's a step further along the conceptional apparatus.
+
+1883
+01:50:36,969 --> 01:50:42,199
+Okay? So chapters one and two
+
+1884
+01:50:42,199 --> 01:50:45,859
+for next time.

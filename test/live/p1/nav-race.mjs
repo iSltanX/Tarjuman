@@ -11,7 +11,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const argv = process.argv.slice(2);
 const val = (k, d) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const video = val('video');
-const b = await launch({ browser: val('browser', 'brave') });
+const b = await launch({ browser: val('browser', 'brave'), headless: argv.includes('--headless') });
 try {
   const ext = await loadExtension(b.conn, path.join(ROOT, 'dist'));
   const page = await Page.open(b.conn);

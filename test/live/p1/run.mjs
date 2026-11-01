@@ -621,7 +621,7 @@ const ctx = {
 const steps = opts.steps ? String(opts.steps).split(',') : ALL_STEPS;
 const results = { browser, startedAt: new Date().toISOString(), account: opts.account || 'غير مسجَّل', ids: ctx.ids, steps: {}, errors: [] };
 
-const b = await launch({ browser, extensionPath: DIST, flagLoad: !!opts['flag-load'] });
+const b = await launch({ browser, extensionPath: DIST, flagLoad: !!opts['flag-load'], headless: !!opts.headless });
 ctx.conn = b.conn;
 results.version = { product: b.version.product, protocol: b.version.protocolVersion };
 log(`${browser}: ${b.version.product}`);

@@ -150,6 +150,70 @@ document.getElementById('refresh').addEventListener('click', render);
 document.getElementById('export').addEventListener('click', () => exportResults());
 render();
 
+// مشغّل الإثبات (P1 فقط، يُزال في P2): ‎#run=<اسم>&plan=<base64url>‎ خطة من روابط مشاهدة يوتيوب عادية بمعاملاتها
+// الموثّقة (t وcc_load_policy وcc_lang_pref). لكل خطوة: تبويب جديد ← انتظار ← لقطة ← إغلاق، ثم ملف نتائج واحد.
+// لا نقر ولا كتابة ولا سكربت داخل يوتيوب؛ فتح روابط فقط، كما يفتحها المستخدم.
+const RUN = /^#run=([A-Za-z0-9_-]{1,40})&plan=([A-Za-z0-9_-]+)$/.exec(location.hash);
+const PLAN_URL = /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}(?:&(?:t=\d{1,6}s|cc_load_policy=1|cc_lang_pref=[a-z]{2}))*$/;
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function askTab(tabId) {
+  try {
+    return await Promise.race([
+      chrome.tabs.sendMessage(tabId, { type: 'tj:poc-snapshot', includeBody: true }),
+      wait(5000).then(() => null),
+    ]);
+  } catch {
+    return null;
+  }
+}
+
+async function runPlan(label, plan) {
+  const status = document.getElementById('export-status');
+  const steps = [];
+  for (const [i, s] of plan.entries()) {
+    status.textContent = `الخطوة ${i + 1} من ${plan.length}: ${s.name}`;
+    if (!PLAN_URL.test(s.url)) {
+      steps.push({ step: s.name, error: 'رابط غير مسموح في الخطة' });
+      continue;
+    }
+    const tab = await chrome.tabs.create({ url: s.url, active: true });
+    await wait(s.waitMs);
+    let snap = null;
+    for (let k = 0; k < 3 && !snap; k++) {
+      snap = await askTab(tab.id);
+      if (!snap) await wait(2000);
+    }
+    steps.push({ tabId: tab.id, step: s.name, snap });
+    await chrome.tabs.remove(tab.id).catch(() => {});
+    await wait(1500);
+  }
+  const data = {
+    schema: 1, label, runner: true, exportedAt: new Date().toISOString(),
+    browser: {
+      isBrave: typeof navigator.brave !== 'undefined', userAgent: navigator.userAgent,
+      brands: navigator.userAgentData ? navigator.userAgentData.brands.map((b) => `${b.brand} ${b.version}`) : null,
+      webdriverExtensionPage: navigator.webdriver === true,
+    },
+    storage: { local: Object.keys(await chrome.storage.local.get(null)), session: Object.keys(await chrome.storage.session.get(null)) },
+    missing: steps.filter((s) => !s.snap).map((s) => ({ step: s.step, error: s.error || 'لا رد من التبويب' })),
+    tabs: steps.filter((s) => s.snap),
+  };
+  const text = `${JSON.stringify(data, null, 2)}\n`;
+  const leaks = findSecrets(text);
+  if (leaks.length) {
+    status.textContent = `أوقفنا التصدير: ${leaks.length} نمط حساس.`;
+    return;
+  }
+  download(`tarjuman-p1-${data.browser.isBrave ? 'brave' : 'chrome'}-${label}-${data.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`, text);
+  status.textContent = `انتهت الخطة (${steps.length} خطوة) وصُدّرت النتائج.`;
+}
+
+if (RUN) {
+  const plan = JSON.parse(atob(RUN[2].replace(/-/g, '+').replace(/_/g, '/')));
+  setTimeout(() => runPlan(RUN[1], plan), 1500);
+}
+
 // تصدير تلقائي للإثبات عند فتح الصفحة بالرابط ‎#export=<اسم>‎ (من سطر الأوامر في جلسة غير مؤتمتة)، ثم إغلاق
 // تبويبها. ومع ‎&srt‎ يُنزَّل SRT كل مسار مقبول عبر Blob، ومع ‎&close‎ تُغلق تبويبات يوتيوب التي أجابت.
 const auto = /^#export=([A-Za-z0-9_-]{1,40})((?:&(?:close|srt))*)$/.exec(location.hash);

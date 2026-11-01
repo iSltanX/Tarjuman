@@ -23,12 +23,12 @@ const raw = await readFile(file, 'utf8');
 const secrets = findSecrets(raw);
 const data = JSON.parse(raw);
 const out = {
-  label, exportedAt: data.exportedAt, browser: data.browser, secretsInExport: secrets.length, tabs: [],
+  label, exportedAt: data.exportedAt, browser: data.browser, storage: data.storage || null, missing: data.missing || [], secretsInExport: secrets.length, tabs: [],
 };
 
 for (const tab of data.tabs) {
   const s = tab.snap;
-  const t = { currentVideoId: s.currentVideoId, durationMs: s.durationMs, navigations: s.navigations, webdriverPage: s.webdriver, accepted: [], rejected: s.rejected.map((r) => ({ code: r.code, detail: r.detail, videoId: r.videoId, currentVideoId: r.currentVideoId, lang: r.lang, trackKind: r.trackKind, hasTlang: r.hasTlang, format: r.format, status: r.status, bodyLength: r.bodyLength })) };
+  const t = { step: tab.step || null, currentVideoId: s.currentVideoId, durationMs: s.durationMs, navigations: s.navigations, webdriverPage: s.webdriver, accepted: [], rejected: s.rejected.map((r) => ({ code: r.code, detail: r.detail, videoId: r.videoId, currentVideoId: r.currentVideoId, lang: r.lang, trackKind: r.trackKind, hasTlang: r.hasTlang, format: r.format, status: r.status, bodyLength: r.bodyLength })) };
   for (const a of s.accepted) {
     const node = convertTrack({ body: a.body || '', trackKind: a.trackKind, durationMs: s.durationMs });
     const cues = a.srt ? parseSrtStrict(a.srt) : [];

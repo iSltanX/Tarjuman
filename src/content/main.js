@@ -5,11 +5,13 @@ import { createCaptureStore } from '../extract/capture-store.js';
 import { checkAcceptance, convertCapture } from '../extract/capture-adapter.js';
 import { watchCurrentVideo, mainVideoDurationMs, isLiveNow, displayedCaption } from '../extract/youtube-page.js';
 import { messageFor } from '../extract/codes.js';
+import { createPendingBuffer } from '../extract/pending.js';
 
 const MAX_LOG = 500;
 const SHOWN_PROBES_MS = [2500, 6000];
 
 const store = createCaptureStore();
+const pending = createPendingBuffer();
 const durations = new Map();
 // سجل الجلسة للإثبات: معرّفات ورموز وأطوال فقط، ولا جسم ولا رابط. يُفقد بإغلاق التبويب.
 const sessionLog = [];
@@ -22,6 +24,8 @@ const tracker = watchCurrentVideo({
   onChange: (id, prev) => {
     store.setCurrentVideo(id);
     logEvent({ type: 'nav', from: prev, to: id });
+    // التقاط سبق تغيّر العنوان لهذا الفيديو بأقل من نافذة الانتظار: يُعاد تقييمه بكل القواعد.
+    for (const { msg, ageMs } of pending.take(id, Date.now())) handleCapture(msg, { pendingAgeMs: ageMs });
   },
 });
 store.setCurrentVideo(tracker.current());
@@ -44,17 +48,23 @@ function probeShown(videoId) {
   }
 }
 
-installBridge((msg) => {
+/**
+ * @param {import('../extract/message.js').CaptureMessage} msg
+ * @param {{ pendingAgeMs?: number }} [opts] من انتظار ما قبل التنقل
+ */
+function handleCapture(msg, { pendingAgeMs } = {}) {
   const current = tracker.current();
   store.setCurrentVideo(current);
   const decision = checkAcceptance(msg, { currentVideoId: current, isLive: isLiveNow() });
   const base = {
     videoId: msg.videoId, currentVideoId: current, lang: msg.lang, trackKind: msg.trackKind, hasTlang: msg.hasTlang,
     format: msg.format, status: msg.status, bodyLength: msg.bodyLength, transport: msg.transport, hasPot: msg.hasPot,
+    ...(pendingAgeMs !== undefined ? { pendingAgeMs } : {}),
   };
   if (!decision.accepted) {
     store.reject({ code: decision.code, detail: decision.detail, ...base });
     logEvent({ type: 'reject', code: decision.code, ...base });
+    if (decision.code === 'EX_WRONG_VIDEO' && pendingAgeMs === undefined) pending.add(msg, Date.now());
     return;
   }
   rememberDuration(current);
@@ -65,7 +75,9 @@ installBridge((msg) => {
   });
   logEvent({ type: 'accept', ...base });
   probeShown(current);
-});
+}
+
+installBridge((msg) => handleCapture(msg));
 
 /**
  * لقطة الحالة لصفحة الفحص والحزام. الجسم الخام لا يُعاد إلا بطلب صريح (حفظ العينات).
