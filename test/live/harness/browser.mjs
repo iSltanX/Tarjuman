@@ -21,9 +21,9 @@ export const human = (min = 600, max = 1400) => sleep(min + Math.random() * (max
 /**
  * @param {{ browser: 'brave' | 'chrome', extensionPath?: string, flagLoad?: boolean }} opts
  */
-export async function launch({ browser, extensionPath, flagLoad = false }) {
+export async function launch({ browser, extensionPath, flagLoad = false, profile = browser }) {
   const spec = BROWSERS[browser];
-  const profileDir = path.join(PROFILE_ROOT, browser);
+  const profileDir = path.join(PROFILE_ROOT, profile);
   await mkdir(profileDir, { recursive: true });
   const args = [
     `--user-data-dir=${profileDir}`,
@@ -83,12 +83,16 @@ export class Page {
     conn.on('Runtime.executionContextsCleared', () => this.contexts.clear(), sessionId);
   }
 
-  static async open(conn, url = 'about:blank') {
+  /**
+   * @param {{ runtime?: boolean }} [opts] runtime=false لا يفعّل مجال Runtime (تفعيله قابل للكشف من الصفحة)؛
+   *   التقييم في العالم الرئيسي يعمل دونه، أما سياقات العوالم المعزولة فتحتاجه.
+   */
+  static async open(conn, url = 'about:blank', { runtime = true } = {}) {
     const { targetId } = await conn.send('Target.createTarget', { url: 'about:blank' });
     const { sessionId } = await conn.send('Target.attachToTarget', { targetId, flatten: true });
     const page = new Page(conn, targetId, sessionId);
     await page.send('Page.enable');
-    await page.send('Runtime.enable');
+    if (runtime) await page.send('Runtime.enable');
     const { frameTree } = await page.send('Page.getFrameTree');
     page.mainFrameId = frameTree.frame.id;
     if (url !== 'about:blank') await page.goto(url);

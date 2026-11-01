@@ -12,7 +12,7 @@ import { launch, loadExtension, Page, sleep, human } from '../harness/browser.mj
 import { recordNetwork, sha256 } from '../harness/netlog.mjs';
 import {
   waitForPlayer, playerInfo, clickCC, ccPressed, ensureCC, seekAndRead, relatedIds, clickRelated,
-  currentUrlVideoId, dismissConsent, revealControls,
+  currentUrlVideoId, dismissConsent, revealControls, toggleCC, pressCaptionKey,
 } from '../harness/youtube.mjs';
 import { randomPositions, judgePosition } from './positions.mjs';
 import { parseSrtStrict } from '../../../src/core/srt/parser.js';
@@ -135,9 +135,7 @@ async function stepMeasure(ctx) {
     await sleep(4000);
     const afterOn = net.timedtext().length;
     // إيقاف ثم تشغيل: هل يُعاد الطلب أم يؤخذ من الذاكرة؟
-    await clickCC(page);
-    await sleep(2000);
-    await clickCC(page);
+    await toggleCC(page);
     await sleep(4000);
     const afterToggle = net.timedtext().length;
     const shot = await page.screenshot(path.join(EVIDENCE, `screenshots/${browser}-measure-${label}.png`));
@@ -282,7 +280,7 @@ async function stepSpecial(ctx) {
     await openWatch(page, ctx.ids.nocap);
     await waitAdEnd(page);
     const info = await playerInfo(page);
-    const clicked = info.ccButton?.visible ? await clickCC(page) : false;
+    const clicked = info.ccButton?.visible ? await ensureCC(page, true) : false;
     await sleep(4000);
     const snap = await snapshot(page, ctx.extId);
     out.noCaptions = { videoId: ctx.ids.nocap, tracks: info.tracks, ccButton: info.ccButton, clicked, timedtext: net.timedtext(), snapshot: summarizeSnapshot(snap) };
@@ -560,7 +558,7 @@ async function stepExperiments(ctx) {
     await openWatch(page, ctx.ids.asr);
     await waitAdEnd(page);
     if (await ccPressed(page)) {
-      await clickCC(page);
+      await pressCaptionKey(page);
       await sleep(1500);
       await page.reload();
       await waitForPlayer(page, ctx.ids.asr);
@@ -629,6 +627,7 @@ results.version = { product: b.version.product, protocol: b.version.protocolVers
 log(`${browser}: ${b.version.product}`);
 try {
   ctx.page = await Page.open(b.conn);
+  results.navigatorWebdriver = await ctx.page.eval(() => navigator.webdriver);
   if (opts.inspect) {
     await inspect(ctx, String(opts.inspect).split(','));
   } else if (opts.search) {

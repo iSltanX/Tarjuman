@@ -68,15 +68,33 @@ export async function clickCC(page) {
   return true;
 }
 
+/** اختصار يوتيوب للترجمة (c): فعل مستخدم حقيقي عبر لوحة المفاتيح، لا يعتمد على ظهور شريط التحكم. */
+export async function pressCaptionKey(page) {
+  await page.eval(() => {
+    if (document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) document.activeElement.blur();
+  });
+  await page.key('c', 'KeyC', 67);
+  await human(500, 900);
+}
+
 export async function ccPressed(page) {
   return page.eval(() => document.querySelector('#movie_player .ytp-subtitles-button')?.getAttribute('aria-pressed') === 'true');
 }
 
-/** يضمن تشغيل CC (ضغطة واحدة إن كانت مطفأة). */
+/** يضمن حالة CC بمفتاح c، ثم بالنقر إن لم يكفِ. */
 export async function ensureCC(page, on = true) {
   if ((await ccPressed(page)) === on) return 'already';
+  await pressCaptionKey(page);
+  if ((await ccPressed(page)) === on) return 'key';
   await clickCC(page);
   return (await ccPressed(page)) === on ? 'clicked' : 'failed';
+}
+
+/** إيقاف ثم تشغيل بالمفتاح. */
+export async function toggleCC(page) {
+  await pressCaptionKey(page);
+  await sleep(2000);
+  await pressCaptionKey(page);
 }
 
 export async function captionText(page) {
