@@ -1,0 +1,166 @@
+{
+  "label": "brave2-playlist",
+  "browser": {
+    "isBrave": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "brands": [
+      "Not:A-Brand 8",
+      "Chromium 156",
+      "Brave 156"
+    ],
+    "webdriverExtensionPage": false
+  },
+  "storage": {
+    "local": [],
+    "session": []
+  },
+  "missing": [],
+  "seed": 20261101,
+  "steps": [
+    {
+      "step": "warmup",
+      "videoId": "Q_h4IoPJXZw",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 3310,
+        "bodySha256": "36bf28a113b0d76f",
+        "invariants": 6,
+        "cues": 21,
+        "words": 208,
+        "duplicatesRemoved": 0,
+        "completeness": 0.906,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 0,
+            "verdict": "silence",
+            "match": true
+          },
+          {
+            "timeSec": 0,
+            "verdict": "silence",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "playlist",
+      "videoId": "dAaHHGHuy1c",
+      "webdriver": false,
+      "accepted": null,
+      "rejected": [
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 2175
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 2620
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 2281
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 0
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 2283
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 2283
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 3749
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 4328
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 3694
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 4717
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 2837
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": false,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 7829
+        },
+        {
+          "code": "EX_NOT_ENGLISH",
+          "sameVideo": true,
+          "lang": "ar",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 4870
+        }
+      ]
+    }
+  ]
+}
