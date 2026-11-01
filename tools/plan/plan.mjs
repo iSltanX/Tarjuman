@@ -8,6 +8,7 @@ import {
 } from './lib/util.mjs';
 import {
   toplevel, worktrees, currentBranch, isMainCheckout, statusPorcelain, refs, diffNames, blobId, logTouching, git, revCount,
+  mergeConflicts,
 } from './lib/git.mjs';
 import {
   fsReader, loadPlan, indexPlan, phaseDoc, waveDoc, baseTagOf, integrationOf, evidenceOf,
@@ -270,6 +271,37 @@ function cmdDiscover({ pos }) {
 
 // ---------------------------------------------------------------- verify-merge
 
+const CONFLICT = /تعارض|conflict/i;
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// يذكر النصُّ المسارَ كاملًا لا جزءًا من مسار أطول.
+const mentions = (text, f) => new RegExp(`(?<![\\w./-])${escRe(f)}(?![\\w/-]|\\.\\w)`).test(text);
+
+// حقائق التزام دمج المرحلة: أبواه، وملفات التعارض عند إعادة دمجهما، وأسطر رسالته من أول سطر يذكر التعارض.
+function mergeFacts(rev) {
+  const line = git(ROOT, ['rev-list', '--parents', '-n', '1', `${rev}^{commit}`], { allowFail: true });
+  const [sha, ours, theirs, ...more] = (line || '').split(' ');
+  if (!theirs || more.length) return null;
+  const msg = git(ROOT, ['log', '-1', '--format=%B', sha]).split('\n');
+  const from = msg.findIndex((l) => CONFLICT.test(l));
+  return { sha, short: sha.slice(0, 7), ours, theirs, conflicts: mergeConflicts(ROOT, ours, theirs), noted: from < 0 ? [] : msg.slice(from) };
+}
+
+// حلّ تعارض مسجّل داخل التزام الدمج نفسه، بشرطين معًا: آلي — إعادة دمج أبويه تُظهر في الملف تعارضًا فعليًا،
+// ونسخة الفرع هي التي دُمجت؛ ومسجّل — رسالة الدمج تذكره في سطر التعارض أو بعده، أو سطر في سجل الموجة يذكره
+// مع التزام الدمج. لا يكفي git diff-tree --cc: الحلّ المطابق لأحد الأبوين حرفيًا (W3) لا يظهر فيه.
+function conflictFix(m, x, f, waveLines) {
+  if (!m) return null;
+  const inLog = waveLines.some((l) => CONFLICT.test(l) && mentions(l, f) && (l.match(/\b[0-9a-f]{7,40}\b/g) || []).some((h) => m.sha.startsWith(h)));
+  const where = [m.noted.some((l) => mentions(l, f)) && 'رسالة الدمج', inLog && 'سجل الموجة'].filter(Boolean).join(' و');
+  const conflicted = !!m.conflicts?.includes(f);
+  if (!conflicted && !where) return null;
+  if (!m.conflicts) return { ok: false, why: 'تعذّر التحقق من التعارض بإعادة الدمج (git merge-tree --write-tree يحتاج Git 2.38 فأحدث)' };
+  if (!conflicted) return { ok: false, why: `مذكور حلًّا لتعارض في ${where}، لكن إعادة دمج ${m.short} لا تُظهر فيه تعارضًا` };
+  if (blobId(ROOT, m.theirs, f) !== blobId(ROOT, x.branch, f)) return { ok: false, why: `فرع المرحلة غيّره بعد دمجه في ${m.short}` };
+  if (!where) return { ok: false, why: `إعادة دمج ${m.short} تُظهر فيه تعارضًا، لكن حلّه غير مسجّل: اذكره في رسالة الدمج تحت سطر «تعارض في …»، أو بسطر «تعارض» في سجل الموجة يذكر ${m.short}` };
+  return { ok: true, why: `إعادة الدمج تُظهر فيه تعارضًا فعليًا، وحلّه مسجّل في ${where}` };
+}
+
 function cmdVerifyMerge({ pos }) {
   const id = normId(pos[0]);
   const read = fsReader(ROOT);
@@ -291,6 +323,9 @@ function cmdVerifyMerge({ pos }) {
     const files = branch && R.heads[branch] ? diffNames(ROOT, `${plan.project.mainBranch}...${branch}`) : [];
     return { pid, branch, merge, files, known: !!(branch && R.heads[branch]) };
   });
+  const waveLines = (read(waveDoc(plan, w)) || '').split('\n');
+  const facts = new Map();
+  const factsOf = (rev) => (facts.has(rev) ? facts.get(rev) : facts.set(rev, mergeFacts(rev)).get(rev));
   let errors = 0;
   info.forEach((x, i) => {
     if (!x.known) {
@@ -314,7 +349,12 @@ function cmdVerifyMerge({ pos }) {
         console.log(`• ${x.pid}: ${f} عُدّل بعد دمجها في ${after.map((c) => `${c.hash} «${c.subject}»`).join('، ')}.`);
         continue;
       }
-      console.log(`✗ ${x.pid}: تغيير سقط في ${f} — لا يطابق رأس التكامل ولا يُنسب إلى دمج لاحق أو التزام مسجّل.`);
+      const fix = x.merge ? conflictFix(factsOf(x.merge), x, f, waveLines) : null;
+      if (fix?.ok) {
+        console.log(`• ${x.pid}: ${f} حُلّ تعارضه في التزام دمجها ${factsOf(x.merge).short}: ${fix.why}.`);
+        continue;
+      }
+      console.log(`✗ ${x.pid}: تغيير سقط في ${f} — لا يطابق رأس التكامل ولا يُنسب إلى دمج لاحق أو التزام مسجّل أو حل تعارض مسجّل.${fix ? ` ${fix.why}.` : ''}`);
       errors++;
     }
     console.log(`✓ ${x.pid}: ${same} من ${filesCount(x.files.length)} مطابقة لرأس التكامل حرفيًا.`);

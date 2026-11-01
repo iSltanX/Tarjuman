@@ -121,6 +121,14 @@ export function blobId(cwd, ref, file) {
   return git(cwd, ['rev-parse', '-q', '--verify', `${ref}:${file}`], { allowFail: true });
 }
 
+// ملفات التعارض لو أُعيد دمج a وb الآن، دون فهرس ولا شجرة عاملة ولا مراجع (Git 2.38 فأحدث). يكتب كائنات
+// شجرة الناتج في المخزن غير مرجعية فتُكنس لاحقًا. null إن تعذّر الأمر.
+export function mergeConflicts(cwd, a, b) {
+  const r = run(cwd, ['merge-tree', '--write-tree', '--name-only', '--no-messages', '-z', a, b]);
+  if (r.error || (r.status !== 0 && r.status !== 1)) return null;
+  return r.stdout.split('\0').slice(1).filter(Boolean);
+}
+
 export function logTouching(cwd, range, file) {
   const out = git(cwd, ['log', '--format=%h%x1f%s', range, '--', file], { allowFail: true });
   return (out || '').split('\n').filter(Boolean).map((l) => {
