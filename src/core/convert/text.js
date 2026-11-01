@@ -57,3 +57,11 @@ export function wrapLines(text, lineChars) {
   if (line !== '') lines.push(line);
   return lines.join('\n');
 }
+
+const SENTENCE_END = /[.?!]["'”’)\]]*$/u;
+
+/**
+ * هل ينتهي النص بنهاية جملة (نقطة أو علامة استفهام أو تعجب، وربما بعدها إغلاق اقتباس أو قوس)؟
+ * @param {string} text
+ */
+export const endsSentence = (text) => SENTENCE_END.test(String(text).trimEnd());
