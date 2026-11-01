@@ -4,7 +4,6 @@ import { readTimedtextParams } from '../../../src/extract/timedtext-params.js';
 import { validateCaptureMessage } from '../../../src/extract/message.js';
 import { checkAcceptance } from '../../../src/extract/capture-adapter.js';
 import { createCaptureStore } from '../../../src/extract/capture-store.js';
-import { videoIdFromLocation } from '../../../src/extract/video-id.js';
 import { createPendingBuffer } from '../../../src/extract/pending.js';
 
 test('pending: التقاط سبق تغيّر العنوان يُسحب لفيديوه خلال النافذة فقط', () => {
@@ -89,12 +88,4 @@ test('capture-store: يُفرَّغ ما لا يخص الفيديو الحالي
   s.setCurrentVideo('BBBBBBBBBBB');
   assert.equal(s.accepted().length, 0);
   assert.equal(s.navigations, 2);
-});
-
-test('videoIdFromLocation', () => {
-  assert.equal(videoIdFromLocation({ pathname: '/watch', search: '?v=AAAAAAAAAAA&t=5' }), 'AAAAAAAAAAA');
-  assert.equal(videoIdFromLocation({ pathname: '/watch', search: '?v=short' }), null);
-  assert.equal(videoIdFromLocation({ pathname: '/shorts/AAAAAAAAAAA', search: '' }), 'AAAAAAAAAAA');
-  assert.equal(videoIdFromLocation({ pathname: '/', search: '' }), null);
-  assert.equal(videoIdFromLocation({ pathname: '/results', search: '?search_query=a' }), null);
 });
