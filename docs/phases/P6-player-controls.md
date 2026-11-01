@@ -123,18 +123,208 @@
 ```json tj-status
 {
   "phase": "P6",
-  "status": "planned",
-  "updated": "2026-10-31",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W4 بعد التحقق من W3.",
+  "status": "ready",
+  "updated": "2026-11-02T02:27:39+03:00",
+  "branch": "tj/P6-player-controls",
+  "resume": "جاهزة للدمج في W4",
   "blocker": null,
   "outcome": null,
-  "commit": null,
+  "commit": "11bbaec",
   "mergeCommit": null,
-  "checks": [],
-  "acceptance": {},
-  "evidence": [],
-  "sharedRequests": []
+  "checks": [
+    {
+      "cmd": "npm run check",
+      "result": "pass",
+      "at": "2026-11-02T02:26:29+03:00",
+      "note": "check-static ناجح، وcheck-secrets على 96 ملفًا، و465/465 اختبار وحدة (منها 70 للأدوات و73 للطبقة)، والبناء"
+    },
+    {
+      "cmd": "npm run test:integration",
+      "result": "pass",
+      "at": "2026-11-02T02:26:29+03:00",
+      "note": "18/18، منها 4 لتكامل المشغّل (test/integration/player) على المتحكم والتخزين وbuildExport وreadImport الحقيقية"
+    },
+    {
+      "cmd": "npm run plan:check",
+      "result": "pass",
+      "at": "2026-11-02T02:26:29+03:00",
+      "note": "سليمة بلا أخطاء؛ تنبيه الملفات خارج الملكية مغطى بأربعة طلبات في sharedRequests"
+    },
+    {
+      "cmd": "test/live/controls/run.mjs على Brave",
+      "result": "pass",
+      "at": "2026-11-02T02:26:29+03:00",
+      "note": "60/60 بعد 4 جولات كشفت خللين في المنتج أُصلحا بانحدار وعيوبًا في الحزام"
+    },
+    {
+      "cmd": "test/live/controls/run.mjs على Chrome",
+      "result": "pass",
+      "at": "2026-11-02T02:26:29+03:00",
+      "note": "60/60 من التشغيل الأول"
+    },
+    {
+      "cmd": "test/live/harness/smoke.mjs (بناء الإنتاج)",
+      "result": "pass",
+      "at": "2026-11-02T02:26:29+03:00",
+      "note": "15/15 في Brave وChrome؛ الأدوات والطبقة mounted"
+    }
+  ],
+  "acceptance": {
+    "P6-AC1": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/live.json",
+        "docs/evidence/P6/chrome/live.json",
+        "docs/evidence/P6/brave/narrow.json",
+        "docs/evidence/P6/chrome/narrow.json",
+        "test/unit/player/controls/mount.test.js"
+      ],
+      "note": "أول الأدوات اليمنى، وتختفي وتعود مع الشريط، وتُعاد بعد التنقل، والخمسة باقية حتى مشغّل 400px؛ وطيّ يوتيوب أدواته عند 520px وأقل منه هو لا منا"
+    },
+    "P6-AC2": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/live.json",
+        "docs/evidence/P6/chrome/live.json",
+        "docs/evidence/P6/brave/ac2-tooltip-plus.png"
+      ],
+      "note": "± بخطوة الإعداد، والشارة +0.5، والتلميحات بمعنى الإشارة، وزمن الفيديو ثابت"
+    },
+    "P6-AC3": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/live.json",
+        "docs/evidence/P6/chrome/live.json",
+        "docs/evidence/P6/brave/ac3-timing-menu.png",
+        "test/unit/player/controls/timing.test.js"
+      ],
+      "note": "إدخال دقيق وخطوة وإعادة ضبط؛ وأرقام ومسافة وأسهم وk وj وl وf وm وt في الحقل لم تصل إلى يوتيوب (والضابط خارجه وصل)"
+    },
+    "P6-AC4": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/live.json",
+        "docs/evidence/P6/chrome/live.json",
+        "docs/evidence/P6/brave/ac4-menu-captured.png",
+        "test/unit/player/controls/download.test.js"
+      ],
+      "note": "SRT العادي والأطول مطابقان بايتًا لـNode، والبصمة محفوظة، والمنسوخ بصمة buildExport().instructions ولا يُعرض؛ والالتقاط ممرَّر من جسم P1 الحقيقي"
+    },
+    "P6-AC5": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/live.json",
+        "docs/evidence/P6/chrome/live.json",
+        "docs/evidence/P6/brave/ac5-confirm-replace.png",
+        "test/unit/player/controls/upload.test.js"
+      ],
+      "note": "رفع وفحص ومقارنة «مطابق للأصل ✓»، والمزدوج، والاستبدال بتأكيد يذكر النقص وتصفير الإزاحة، والإلغاء لا يغيّر شيئًا"
+    },
+    "P6-AC6": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/live.json",
+        "docs/evidence/P6/chrome/live.json",
+        "test/integration/player/player.test.js"
+      ],
+      "note": "+1.0 والمزدوج بعد إعادة التحميل وبعد التنقل والعودة، ورسالة الاستعادة"
+    },
+    "P6-AC7": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/ac7-normal-shown.png",
+        "docs/evidence/P6/brave/ac7-normal-hidden.png",
+        "docs/evidence/P6/brave/ac7-theater.png",
+        "docs/evidence/P6/brave/ac7-fullscreen.png",
+        "docs/evidence/P6/brave/ac7-compact.png",
+        "docs/evidence/P6/chrome/ac7-normal-shown.png"
+      ],
+      "note": "الخمسة في الشريط وحده في الأوضاع الأربعة، ولا شيء من ترجمان حين يخفي يوتيوب شريطه"
+    },
+    "P6-AC8": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/ac7-normal-160.png",
+        "docs/evidence/P6/brave/ac7-compact-160.png",
+        "docs/evidence/P6/brave/ac7-fullscreen-160.png",
+        "docs/evidence/P6/chrome/ac7-theater-160.png",
+        "test/unit/player/overlay/fonts.test.js"
+      ],
+      "note": "مركزي 160% يلتف داخل 92% فوق الشريط في الأوضاع الأربعة، والتغيير يُطبَّق دون إعادة تركيب"
+    },
+    "P6-AC9": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/live.json",
+        "docs/evidence/P6/chrome/live.json",
+        "docs/evidence/P6/font-fetch-diag.json",
+        "docs/evidence/P6/brave/ac9-fallback-almarai.png",
+        "test/unit/player/overlay/fonts.test.js"
+      ],
+      "note": "من ملفات الإضافة بالعنوان المتغير، وصفر طلب خارجي، وخط تالف يرجع إلى المراعي برمز CT_FONT_FALLBACK دون رسالة"
+    },
+    "P6-AC10": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P6/brave/live.json",
+        "docs/evidence/P6/chrome/live.json",
+        "test/unit/player/controls/group.test.js"
+      ],
+      "note": "الخط وحجمه قبل ± وبعده متطابقان، وعنصر واحد لنا بخمسة أزرار"
+    }
+  },
+  "evidence": [
+    {
+      "label": "تقرير الأدلة",
+      "path": "docs/evidence/P6/README.md"
+    },
+    {
+      "label": "نتائج Brave",
+      "path": "docs/evidence/P6/brave/live.json"
+    },
+    {
+      "label": "نتائج Chrome",
+      "path": "docs/evidence/P6/chrome/live.json"
+    },
+    {
+      "label": "قياس المشغّل الضيق",
+      "path": "docs/evidence/P6/brave/narrow.json"
+    },
+    {
+      "label": "تشخيص قراءة الخط",
+      "path": "docs/evidence/P6/font-fetch-diag.json"
+    },
+    {
+      "label": "الدخان الحي",
+      "path": "docs/evidence/P6/smoke/brave.json"
+    }
+  ],
+  "sharedRequests": [
+    {
+      "file": "scripts/check-static.mjs",
+      "change": "سماح ضيق لسطر واحد حرفي في src/player/overlay/fonts.js وحده: const res = await fetch(runtime.getURL(path)); (خريطة PACKAGED_READS بجانب PASSTHROUGH، وأي fetch آخر في الملف أو السطر نفسه في ملف آخر يبقى مخالفة)",
+      "why": "العقد (interfaces §٣ و§٩) يطلب تحميل خطوط الترجمة عبر FontFace ببيانات الملف لا برابطه، وقراءة بيانات ملف من حزمة الإضافة (chrome-extension://، ليست شبكة) في سكربت المحتوى لا تتم إلا بـfetch، والفحص الثابت المجمَّد يمنع fetch كله خارج غلافي الالتقاط",
+      "applied": true
+    },
+    {
+      "file": "test/live/harness/smoke.mjs",
+      "change": "فحص mount-points-stub: حالة الأدوات تقبل waiting أو mounted بدل stub (سطر واحد وتعليقه)",
+      "why": "نقطة تركيب الأدوات لم تعد بديلًا بعد P6، فيفشل الدخان الحي الموروث؛ وسجل P5 نصّ على أن تحدّث P6 جزء الأدوات في W4",
+      "applied": true
+    },
+    {
+      "file": "test/live/harness/netlog.mjs",
+      "change": "طلب عنوانه chrome-extension:// (قراءة ملف من حزمة الإضافة نفسها) يُعدّ في packageReads وحده ولا يدخل total ولا extensionOnly",
+      "why": "العقد يحمّل خطوط الترجمة بقراءة ملفاتها من حزمة الإضافة (interfaces §٣)، فعدّها الدخان طلبَي شبكة من الإضافة وأسقط فحص no-extension-network-requests في بوابة الموجة؛ وهي ليست شبكة",
+      "applied": true
+    },
+    {
+      "file": "test/live/harness/smoke.mjs",
+      "change": "رسالة المتصفح «Unsafe attempt to load URL chrome-extension://…/ui/fonts/subtitle/*.woff2» تُعدّ في الملاحظات ولا تُحسب في no-extension-errors، وأي خطأ آخر يبقى؛ وpackageReads في تفصيل فحص الشبكة",
+      "why": "تظهر مع كل قراءة ناجحة لملف الخط بـuse_dynamic_url ودونه في المتصفحين (docs/evidence/P6/font-fetch-diag.json)، فهي من المتصفح لا خطأ من الإضافة، وكانت ستُسقط الدخان في بوابة الموجة",
+      "applied": true
+    }
+  ]
 }
 ```
 
@@ -143,7 +333,47 @@
 | التاريخ | ما أُنجز | الدليل |
 | --- | --- | --- |
 | 2026-10-31 | كُتبت المواصفة ضمن تأسيس الخطة. لم يُنفَّذ شيء. | — |
+| 2026-11-02 | بدء المرحلة في worktree `tj-P6` على `tj/P6-player-controls` فوق `tj-W4/base`. | `9bb5cf7` |
+| 2026-11-02 | طلب ملف مشترك مطبَّق: سطر `fetch` واحد حرفي لقراءة الخط من حزمة الإضافة في `check-static`، وحالة الأدوات في الدخان. | `832a0ca` |
+| 2026-11-02 | الطبقة: الحجم نسبة `appearance.scale`، وخط الترجمة عبر `FontFace` ببيانات ملفات الإضافة مرة لكل مستند، والبديل المراعي ثم خط النظام برمز؛ ورموز `CT_`. | `6835ef0`، `test/unit/player/overlay/fonts.test.js` |
+| 2026-11-02 | الأدوات: التركيب وإعادة الإدراج، والأزرار الخمسة بمقاساتها، والقوائم الأربع، والرسائل، وتدفقا التحميل والرفع؛ و58 اختبار وحدة؛ والـDOM الوهمي بالفقاعة والالتقاط والتركيز. | `3acfffe` |
+| 2026-11-02 | اختبار تكامل المشغّل على المتحكم والتخزين والتدفقات الحقيقية، وكشف خلل: قائمة مفتوحة تبقى عند فتح منتقي الرفع (أُصلح). | `4ee9d83` |
+| 2026-11-02 | مراجعة مستقلة بوكيل فرعي: 9 بنود؛ أُصلحت 8 بانحداراتها (منتقٍ بعد تبدّل الفيديو، والتحديث في المكان بـ`morph.js`، وعزل نقرة المنتقي، والتركيز، وإعادة محاولة الخط…)، والتاسع يُحسم حيًا. | `9ad3b80`، `review-fixes.test.js` |
+| 2026-11-02 | الاختبار الحي بموافقة سلطان: Brave (5 جولات) كشف خللين أُصلحا بانحدار — رسالة تغطي آخر بند في القائمة، وEsc يطبّق نصًا نصف مكتوب — ثم 60/60؛ وChrome 60/60. | `d9ddc97`، `b9d869f`، `docs/evidence/P6/` |
+| 2026-11-02 | تشخيصان حيان: رسالة المتصفح عند قراءة ملف الخط حميدة (بـ`use_dynamic_url` ودونه)، وطيّ أدوات يوتيوب في المشغّل الضيق منه لا منا. وطلبا ملف مشترك مطبّقان: `netlog` و`smoke` يميزان قراءة الحزمة؛ والدخان 15/15. | `cfb82d9`، `11bbaec` |
 
 ## تقرير التسليم
 
-> لم يُكتب بعد.
+### تقرير التسليم — P6
+
+- الفرع: `tj/P6-player-controls` · الأساس: `tj-W4/base` (`d547eeb`) · آخر التزام عمل: `11bbaec`
+- الفرق: `91 files changed, 8053 insertions(+), 85 deletions(-)` قبل الالتزام الأخير (39 ملفًا للكود والاختبارات والحزام وملف المرحلة، و52 للأدلة).
+- الملفات خارج الملكية (بطلبات مسجّلة مطبّقة في التزامات «ملف مشترك:» مستقلة، `applied: true`):
+  - `scripts/check-static.mjs`: سماح ضيق لسطر `fetch` واحد حرفي في `src/player/overlay/fonts.js` وحده (قراءة الخط من حزمة الإضافة لـ`FontFace` ببياناته كما يطلب العقد).
+  - `test/live/harness/smoke.mjs`: حالة الأدوات `waiting` أو `mounted`؛ ورسالة قراءة الخط المعروفة تُعدّ في الملاحظات لا الأخطاء.
+  - `test/live/harness/netlog.mjs`: طلب `chrome-extension://` (قراءة الحزمة) يُعدّ في `packageReads` لا الشبكة.
+- معايير القبول (كلها ناجحة، والتفصيل في `docs/evidence/P6/README.md`):
+  - P6-AC1 ناجح: الخمسة أول الأدوات اليمنى، تختفي مع الشريط (شفافيته 0) وتعود معه، وتُعاد بعد التنقل، وباقية حتى مشغّل 400px؛ وأزرار يوتيوب الظاهرة نفسها بنا ودوننا في كل عرض.
+  - P6-AC2 ناجح: ± بخطوة الإعداد، والشارة `+0.5`، والتلميحات بمعنى الإشارة، وزمن الفيديو ثابت.
+  - P6-AC3 ناجح: الإدخال الدقيق والخطوة وإعادة الضبط والشرح؛ وضغطات الأرقام والمسافة والأسهم وk وj وl وf وm وt في الحقل لا تصل إلى يوتيوب.
+  - P6-AC4 ناجح: SRT العادي والأطول مطابقان بايتًا، والبصمة محفوظة، والتعليمات المنسوخة هي `buildExport().instructions` ولا تُعرض.
+  - P6-AC5 ناجح: الرفع والمقارنة «مطابق للأصل ✓»، والمزدوج، والاستبدال بتأكيد يذكر النقص وتصفير الإزاحة.
+  - P6-AC6 ناجح: الإزاحة والوضع بعد إعادة التحميل والتنقل والعودة، ورسالة الاستعادة.
+  - P6-AC7 ناجح (بصري): لقطات العادي والمسرح وملء الشاشة والمضغوط، والشريط مخفيًا بلا شيء من ترجمان.
+  - P6-AC8 ناجح: مركزي 160% يلتف داخل 92% فوق الشريط في الأوضاع الأربعة، والتغيير دون إعادة تحميل.
+  - P6-AC9 ناجح: الخطوط من ملفات الإضافة بالعنوان المتغير، وصفر طلب خارجي، والخط التالف يرجع إلى المراعي برمز `CT_FONT_FALLBACK` دون رسالة.
+  - P6-AC10 ناجح: ± لا يغيّر الخط ولا الحجم، ولا عنصر جديد للخط أو الحجم في الشريط.
+- الفحوص: `npm run check` ناجح (check-static، وcheck-secrets على 96 ملفًا، و465/465 وحدة، والبناء) · `test/integration` 18/18 · `npm run plan:check` سليمة (تنبيه الملكية مغطى بالطلبات) · الدخان الحي 15/15 في المتصفحين.
+- الاختبار الحي: Brave 1.98.60 (Chromium 156.0.8078.48) **60/60**، وChrome 156.0.8078.74 **60/60**، بلا نافذة بملف اختبار جديد وحساب غير مسجَّل. السيناريوهات: الحقن واختفاء الشريط، والتحميل والنسخ والتقسيم، والرفع والمزدوج والاستبدال، و± وقائمة التوقيت والعزل، والحفظ بعد إعادة التحميل والتنقل، والأوضاع الأربعة عند 100% و160%، والمشغّل الضيق، وبديل الخط. والالتقاط ممرَّر من جسم P1 الحقيقي (الأتمتة تفرغه)، والحافظة مستبدلة في العالم المعزول.
+- النتيجة (لمرحلة بوابة): لا تنطبق.
+- انحرافات عن المواصفة:
+  - القوائم والتلميحات تتبع ظهور الشريط بالشفافية لا بالإزالة، فيبقى التركيز والكتابة في الحقل حين يُخفي يوتيوب شريطه.
+  - السطر الإنجليزي في الوضع المزدوج بالمراعي المضمّن لا بالخط المختار (كما في §٣.٣ من مواصفة التصميم).
+  - الرسائل العابرة تبقى ظاهرة والشريط مخفي (ليست أدوات)، وترتفع فوق القائمة المفتوحة.
+- خارج النطاق — مسجَّل لا منفَّذ:
+  - مربع «السماح بتنزيلات متعددة» للتقسيم الاحتياطي في نافذة ظاهرة: لـP9.
+  - كتابة حافظة الجهاز نفسها حيًا لم تُختبر حمايةً لحافظة سلطان (مسارها مختبر بالوحدة).
+- ما يحتاجه المنسّق:
+  - مراجعة الطلبات الأربعة في `sharedRequests` قبل الدمج.
+  - **تعارض متوقع في `scripts/check-static.mjs` مع P7:** P7 تضيف سماح رابطي «حول» (`ABOUT_FILE` و`URL_OK(u, rel)`) في الأسطر المجاورة لسماح P6 (`PACKAGED_READS` وشرط `NETWORK`). التغييران مستقلان ويُضمّان معًا.
+  - **قرار من سلطان (اختياري):** الكتابة في حقل الإزاحة والفيديو يعمل دون حركة فأرة تجعل يوتيوب يخفي شريطه بعد نحو 3 ثوانٍ فتختفي القائمة معه (التركيز والكتابة سليمان، وتعود بحركة الفأرة). المنفَّذ يتبع قاعدة §٦.٤ حرفيًا؛ والبديل إبقاء القائمة ظاهرة ما دام التركيز في حقلها.

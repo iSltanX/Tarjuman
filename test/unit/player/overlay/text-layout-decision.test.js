@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { hasArabic, lineDirection, splitLines } from '../../../../src/player/overlay/text.js';
-import { fontPx, layoutFor } from '../../../../src/player/overlay/layout.js';
+import { fontPx, layoutFor, scaleOf } from '../../../../src/player/overlay/layout.js';
 import { decide } from '../../../../src/player/overlay/decision.js';
 import { DEFAULT_SETTINGS } from '../../../../src/core/model/settings.js';
 import { makeCues } from '../../../helpers/fixtures.js';
@@ -29,34 +29,47 @@ test('تقسيم الأسطر: لا فراغات طرفية ولا أسطر فا
   assert.deepEqual(splitLines('<b>غامق</b>'), ['<b>غامق</b>'], 'النص خام، لا يُفسَّر');
 });
 
-test('حجم الخط نسبي لارتفاع المشغّل: 22 عند 480 و33 عند 720 و50 في ملء الشاشة 1080', () => {
-  assert.equal(fontPx(480, 'm'), 22);
-  assert.equal(fontPx(720, 'm'), 33);
-  assert.equal(fontPx(1080, 'm'), 50);
-  assert.deepEqual(['s', 'm', 'l', 'xl'].map((s) => fontPx(480, s)), [19, 22, 26, 32], 'مقاسات 85/100/120/145%');
-  assert.equal(fontPx(0, 'm'), 12, 'حد أدنى');
-  assert.equal(fontPx(NaN, 'xl'), 12);
+test('حجم الخط نسبي لارتفاع المشغّل: 22 عند 480 و33 عند 720 و50 في ملء الشاشة 1080 (عند 100%)', () => {
+  assert.equal(fontPx(480, 100), 22);
+  assert.equal(fontPx(720, 100), 33);
+  assert.equal(fontPx(1080, 100), 50);
+  assert.equal(fontPx(0, 100), 12, 'حد أدنى');
+  assert.equal(fontPx(NaN, 160), 12);
+  assert.equal(fontPx(480, undefined), 22, 'نسبة غائبة = 100%');
+});
+
+test('نسبة الحجم من الإعدادات (70% إلى 160%) فوق الحجم النسبي، والمقاسات القديمة بنسبها', () => {
+  assert.deepEqual([70, 85, 100, 120, 145, 160].map((p) => fontPx(480, p)), [15, 19, 22, 26, 32, 35]);
+  assert.equal(fontPx(1080, 160), 79, 'ملء شاشة 1080 عند 160%');
+  assert.equal(scaleOf({ scale: 160 }), 160);
+  assert.equal(scaleOf({ scale: 400 }), 160, 'مقصورة على الحد الأعلى');
+  assert.equal(scaleOf({ scale: 10 }), 70, 'وعلى الأدنى');
+  assert.deepEqual(['s', 'm', 'l', 'xl'].map((size) => scaleOf({ size })), [85, 100, 120, 145], 'القيم القديمة (قبل W4) بنسبها');
+  assert.equal(scaleOf({}), 100);
+  assert.equal(scaleOf(null), 100);
+  assert.equal(layoutFor({ appearance: { size: 'xl', position: 'bottom' }, playerHeight: 480, chromeLift: 0 }).fontPx, 32, 'مقاس قديم وصل كما هو');
+  assert.equal(layoutFor({ appearance: { ...DEFAULT_SETTINGS.appearance, scale: 160 }, playerHeight: 720, chromeLift: 0 }).fontPx, 53);
 });
 
 test('الموضع: أسفل 8% ومرتفع 20% وأعلى 8% من الأعلى', () => {
-  const ap = (position, size = 'm') => ({ size, position });
+  const ap = (position, scale = 100) => ({ scale, position });
   assert.deepEqual(layoutFor({ appearance: ap('bottom'), playerHeight: 400, chromeLift: 0 }), { fontPx: 18, anchor: 'bottom', offsetPx: 32 });
   assert.deepEqual(layoutFor({ appearance: ap('raised'), playerHeight: 400, chromeLift: 0 }), { fontPx: 18, anchor: 'bottom', offsetPx: 80 });
   assert.deepEqual(layoutFor({ appearance: ap('top'), playerHeight: 400, chromeLift: 0 }), { fontPx: 18, anchor: 'top', offsetPx: 32 });
 });
 
 test('ظهور شريط التحكم يرفع الطبقة السفلية فوقه بمسافة أمان، واختفاؤه ينزلها', () => {
-  const ap = { size: 'm', position: 'bottom' };
+  const ap = { scale: 100, position: 'bottom' };
   const shown = layoutFor({ appearance: ap, playerHeight: 360, chromeLift: 54 });
   const hidden = layoutFor({ appearance: ap, playerHeight: 360, chromeLift: 0 });
   assert.equal(shown.offsetPx, 62, '54 + 8');
   assert.equal(hidden.offsetPx, 29, '8% من 360');
   assert.ok(shown.offsetPx > hidden.offsetPx);
   // المرتفع أعلى أصلًا من الشريط فلا يتحرك إلا إن تجاوزه الشريط.
-  assert.equal(layoutFor({ appearance: { size: 'm', position: 'raised' }, playerHeight: 600, chromeLift: 54 }).offsetPx, 120);
-  assert.equal(layoutFor({ appearance: { size: 'm', position: 'raised' }, playerHeight: 200, chromeLift: 54 }).offsetPx, 62);
+  assert.equal(layoutFor({ appearance: { scale: 100, position: 'raised' }, playerHeight: 600, chromeLift: 54 }).offsetPx, 120);
+  assert.equal(layoutFor({ appearance: { scale: 100, position: 'raised' }, playerHeight: 200, chromeLift: 54 }).offsetPx, 62);
   // «أعلى» لا ترفعها شيء من الأسفل.
-  assert.equal(layoutFor({ appearance: { size: 'm', position: 'top' }, playerHeight: 360, chromeLift: 54 }).offsetPx, 29);
+  assert.equal(layoutFor({ appearance: { scale: 100, position: 'top' }, playerHeight: 360, chromeLift: 54 }).offsetPx, 29);
 });
 
 const AR = makeCues(3, { text: (i) => `سطر ${i}` });

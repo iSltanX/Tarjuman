@@ -91,6 +91,15 @@ export function createOverlayView({ doc, win }) {
       stage.setAttribute('data-bg', a.background);
     },
 
+    /**
+     * عائلة الخط بسلسلتها (المختار ثم المراعي المضمّن ثم خطوط النظام العربية)؛ تتغير دون إعادة بناء الأسطر.
+     * @param {{ ar: string, en: string }} f
+     */
+    setFont(f) {
+      if (host.style.getPropertyValue('--tj-sub-font') !== f.ar) host.style.setProperty('--tj-sub-font', f.ar);
+      if (host.style.getPropertyValue('--tj-sub-font-en') !== f.en) host.style.setProperty('--tj-sub-font-en', f.en);
+    },
+
     /** @param {{ fontPx: number, anchor: 'top' | 'bottom', offsetPx: number }} l */
     setLayout(l) {
       host.style.setProperty('--tj-fs', `${l.fontPx}px`);
@@ -110,13 +119,17 @@ export function createOverlayView({ doc, win }) {
       const empty = stage.hasAttribute('data-empty');
       // أثناء التلاشي تبقى العناصر دقائق قليلة في DOM وهي غير مرئية: الظاهر فعلًا لا يشملها.
       const rows = empty ? [] : [...stage.children].map((c) => ({ kind: c.className.includes('en') ? 'en' : 'ar', dir: c.getAttribute('dir'), text: c.textContent }));
+      // الخط المطبَّق فعلًا على أول سطر (للحزام الحي: عائلة الخط وحجمه وعرض كل سطر).
+      const first = stage.children[0];
+      const cs = first && win.getComputedStyle ? win.getComputedStyle(first) : null;
       const box = (e) => {
         const r = e.getBoundingClientRect();
         return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width), height: Math.round(r.height) };
       };
       return {
         lines: rows, hidden: host.hasAttribute('hidden'), empty, fading: empty && stage.children.length > 0, connected: host.isConnected,
-        ...(withBox ? { host: box(host), stage: box(stage) } : {}),
+        ...(withBox ? { host: box(host), stage: box(stage), lineBoxes: [...stage.children].map(box) } : {}),
+        font: cs ? { family: cs.fontFamily, size: cs.fontSize, weight: cs.fontWeight } : null,
       };
     },
 

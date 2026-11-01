@@ -1,0 +1,38 @@
+{
+  "note": "test/live/controls/font-fetch-diag.mjs بلا نافذة في ملف اختبار جديد على صفحة مشاهدة. المسبار getURL لمسار ليس من web_accessible_resources ('x') فيعيد المعرّف الثابت؛ وruntime.getURL لملف خط معلن يعيد العنوان المتغير (يظهر معرّفه المختصر في الرسالة). معرّفات الإضافة مقصوصة إلى 4 محارف.",
+  "runs": [
+    {
+      "browser": "Brave (Chrome/156.0.8078.48)",
+      "use_dynamic_url": true,
+      "fetchViaGetURL": { "ok": true, "bytes": 49308 },
+      "logOnFetchViaGetURL": "log.security: Unsafe attempt to load URL chrome-extension://839c…",
+      "fetchViaStaticId": { "err": "TypeError: Failed to fetch" },
+      "logOnStaticId": ["log.security: Unsafe attempt to load URL chrome-extension://hhcc…", "log.other: Denying load of chrome-extension://hhcc…", "log.network: Failed to load resource: net::ERR_FAILED"]
+    },
+    {
+      "browser": "Brave (Chrome/156.0.8078.48)",
+      "use_dynamic_url": false,
+      "fetchViaGetURL": { "ok": true, "bytes": 49308 },
+      "logOnFetchViaGetURL": "log.security: Unsafe attempt to load URL chrome-extension://moae…",
+      "fetchViaStaticId": { "ok": true, "status": 200 },
+      "logOnStaticId": ["log.security: Unsafe attempt to load URL chrome-extension://moae…"]
+    },
+    {
+      "browser": "Chrome (Chrome/156.0.8078.74)",
+      "use_dynamic_url": true,
+      "fetchViaGetURL": { "ok": true, "bytes": 49308 },
+      "logOnFetchViaGetURL": "log.security: Unsafe attempt to load URL chrome-extension://4df9…",
+      "fetchViaStaticId": { "err": "TypeError: Failed to fetch" },
+      "logOnStaticId": ["log.security: Unsafe attempt to load URL chrome-extension://nkgi…", "log.other: Denying load of chrome-extension://nkgi…", "log.network: Failed to load resource: net::ERR_FAILED"]
+    },
+    {
+      "browser": "Chrome (Chrome/156.0.8078.74)",
+      "use_dynamic_url": false,
+      "fetchViaGetURL": { "ok": true, "bytes": 49308 },
+      "logOnFetchViaGetURL": "log.security: Unsafe attempt to load URL chrome-extension://ohip…",
+      "fetchViaStaticId": { "ok": true, "status": 200 },
+      "logOnStaticId": ["log.security: Unsafe attempt to load URL chrome-extension://ohip…"]
+    }
+  ],
+  "conclusion": "القراءة تنجح بالعنوان الذي يعيده runtime.getURL في المتصفحين، والمعرّف الثابت يُرفض حين use_dynamic_url (كما يقصد البيان). رسالة «Unsafe attempt to load URL» تظهر مع كل قراءة ناجحة بـuse_dynamic_url ودونه، فهي من المتصفح عند قراءة سكربت المحتوى ملف إضافته، لا من الإعداد ولا من الإضافة؛ وتبقى في سجل المطوّر وحده بلا أثر على المستخدم."
+}

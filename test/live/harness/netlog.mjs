@@ -6,11 +6,16 @@ import { readTimedtextParams } from '../../../src/extract/timedtext-params.js';
 /** @param {import('./browser.mjs').Page} page */
 export function recordNetwork(page) {
   const timedtext = new Map(); // requestId → سجل
-  const stats = { total: 0, extensionFrames: 0, extensionOnly: 0, extensionOnlySamples: [], byType: {} };
+  const stats = { total: 0, extensionFrames: 0, extensionOnly: 0, extensionOnlySamples: [], packageReads: 0, byType: {} };
   const t0 = Date.now();
 
   const offs = [
     page.on('Network.requestWillBeSent', (p) => {
+      // قراءة ملف من حزمة الإضافة نفسها (خطوط الترجمة في P6) ليست شبكة: تُعدّ وحدها.
+      if (p.request.url.startsWith('chrome-extension://')) {
+        stats.packageReads++;
+        return;
+      }
       stats.total++;
       stats.byType[p.type || 'Other'] = (stats.byType[p.type || 'Other'] || 0) + 1;
       const frames = collectFrames(p.initiator);

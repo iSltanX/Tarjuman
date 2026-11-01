@@ -155,7 +155,7 @@ test('المظهر من الإعدادات: الحجم والخلفية والم
   const host = player.children.find((c) => c.id === 'tarjuman-overlay');
   const stage = host.shadowRoot.children.find((c) => c.className.includes('stage'));
   assert.equal(host.style.getPropertyValue('--tj-fs'), '17px', '4.6% من 360');
-  controller.set({ settings: { ...DEFAULT_SETTINGS, appearance: { size: 'xl', background: 'solid', position: 'top' } } });
+  controller.set({ settings: { ...DEFAULT_SETTINGS, appearance: { ...DEFAULT_SETTINGS.appearance, scale: 145, background: 'solid', position: 'top' } } });
   assert.equal(stage.getAttribute('data-bg'), 'solid');
   assert.equal(host.getAttribute('data-anchor'), 'top');
   assert.equal(host.style.getPropertyValue('--tj-fs'), '24px');
