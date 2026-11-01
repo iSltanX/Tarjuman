@@ -120,7 +120,8 @@ try {
   const s1 = await stateFromPopup(popup);
   const r1 = s1.reply;
   check('popup-video-state', r1?.watch === true && r1.videoId === VIDEO && r1.arabic === null, r1 && { via: s1.via, videoId: r1.videoId, loading: r1.loading, arabic: r1.arabic, view: r1.view });
-  check('mount-points-stub', r1?.mounted?.overlay === 'stub' && r1?.mounted?.controls === 'stub', r1?.mounted ?? null);
+  // الطبقة ركّبتها P5 (تنتظر المشغّل أو مركّبة)، وأدوات الشريط بديل حتى تركّبها P6.
+  check('mount-points-stub', ['waiting', 'mounted'].includes(r1?.mounted?.overlay) && r1?.mounted?.controls === 'stub', r1?.mounted ?? null);
   const items1 = await popup.eval(() => [...document.querySelectorAll('.tj-menuitem')].map((x) => ({ name: x.querySelector('.tj-menuitem__name')?.textContent, disabled: x.getAttribute('aria-disabled') === 'true' })));
   check('popup-items', items1.length === 3, items1);
   await shoot(popup, 'popup-no-arabic', { width: 320 });
