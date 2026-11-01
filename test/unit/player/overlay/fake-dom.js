@@ -1,6 +1,7 @@
-// DOM وهمي صغير بما تحتاجه الطبقة والمراقبة فقط (لا اعتماديات): عناصر بأبناء وسمات وأصناف وأنماط CSSOM،
-// وShadow DOM مع adoptedStyleSheets، ومحددات (معرّف وصنف ووسم وأحفاد)، ومراقبات MutationObserver
-// وResizeObserver تُنفَّذ فورًا، ومؤقتات يدوية. يكفي لاختبار منطق الطبقة؛ والمتصفح الفعلي في الاختبار الحي.
+// DOM وهمي صغير بما تحتاجه الطبقة والأدوات والمراقبة فقط (لا اعتماديات): عناصر بأبناء وسمات وأصناف وأنماط CSSOM،
+// وShadow DOM مع adoptedStyleSheets، ومحددات (معرّف وصنف ووسم وسمة وأحفاد وقوائم بفاصلة)، ومراقبات MutationObserver
+// وResizeObserver تُنفَّذ فورًا، ومؤقتات يدوية، والتركيز، وأحداث تعبر الجذور المظللة بمرحلتي الالتقاط والفقاعة
+// (bubbles: true فقط؛ وغيرها يصل إلى هدفه وحده كما كان). يكفي لاختبار المنطق؛ والمتصفح الفعلي في الاختبار الحي.
 
 let uid = 0;
 
@@ -33,15 +34,20 @@ class FakeStyle {
 }
 
 function parseSelector(sel) {
-  return sel.trim().split(/\s+/).map((part) => {
-    const m = /^([a-z][a-z0-9-]*)?(?:#([\w-]+))?((?:\.[\w-]+)*)$/i.exec(part);
+  return sel.trim().split(/\s+(?![^[]*\])/).map((part) => {
+    const m = /^([a-z][a-z0-9-]*)?(?:#([\w-]+))?((?:\.[\w-]+)*)((?:\[[\w-]+(?:="[^"]*")?\])*)$/i.exec(part);
     if (!m) throw new Error(`محدد غير مدعوم في الـDOM الوهمي: ${sel}`);
-    return { tag: m[1]?.toLowerCase() ?? null, id: m[2] ?? null, classes: m[3] ? m[3].split('.').filter(Boolean) : [] };
+    const attrs = [...(m[4] ?? '').matchAll(/\[([\w-]+)(?:="([^"]*)")?\]/g)].map((a) => ({ name: a[1], value: a[2] ?? null }));
+    return { tag: m[1]?.toLowerCase() ?? null, id: m[2] ?? null, classes: m[3] ? m[3].split('.').filter(Boolean) : [], attrs };
   });
 }
 
 const matchesCompound = (el, c) =>
-  (!c.tag || el.tagName === c.tag) && (!c.id || el.id === c.id) && c.classes.every((k) => el.classList.contains(k));
+  (!c.tag || el.tagName === c.tag) && (!c.id || el.id === c.id) && c.classes.every((k) => el.classList.contains(k))
+  && c.attrs.every((a) => el.hasAttribute?.(a.name) && (a.value === null || el.getAttribute(a.name) === a.value));
+
+/** الأب عبر حدود الظل: أب العقدة، أو مضيف الجذر المظلل. */
+const up = (n) => n.parentNode ?? n._host ?? null;
 
 export class FakeElement {
   constructor(tag, doc) {
@@ -98,6 +104,14 @@ export class FakeElement {
     this._text = String(v);
   }
 
+  get firstChild() {
+    return this.children[0] ?? null;
+  }
+
+  get firstElementChild() {
+    return this.children[0] ?? null;
+  }
+
   get isConnected() {
     let n = this;
     while (n) {
@@ -130,6 +144,18 @@ export class FakeElement {
     node.remove();
     node.parentNode = this;
     this.children.push(node);
+    this._childList();
+    return node;
+  }
+
+  insertBefore(node, ref) {
+    if (!ref) return this.appendChild(node);
+    if (node === ref) return node;
+    node.remove();
+    const i = this.children.indexOf(ref);
+    if (i < 0) throw new Error('المرجع ليس ابنًا');
+    node.parentNode = this;
+    this.children.splice(i, 0, node);
     this._childList();
     return node;
   }
@@ -189,6 +215,10 @@ export class FakeElement {
   }
 
   querySelectorAll(sel) {
+    if (sel.includes(',')) {
+      const all = new Set(sel.split(',').flatMap((one) => this.querySelectorAll(one)));
+      return [...this.descendants()].filter((el) => all.has(el));
+    }
     const parts = parseSelector(sel);
     const last = parts.at(-1);
     const out = [];
@@ -206,19 +236,51 @@ export class FakeElement {
     return out;
   }
 
-  addEventListener(type, fn) {
-    if (!this._listeners.has(type)) this._listeners.set(type, new Set());
-    this._listeners.get(type).add(fn);
+  addEventListener(type, fn, opts) {
+    addListener(this, type, fn, opts);
   }
 
-  removeEventListener(type, fn) {
-    this._listeners.get(type)?.delete(fn);
+  removeEventListener(type, fn, opts) {
+    removeListener(this, type, fn, opts);
   }
 
   dispatchEvent(ev) {
-    ev.target = this;
-    for (const fn of [...(this._listeners.get(ev.type) ?? [])]) fn(ev);
-    return true;
+    return dispatch(this, ev);
+  }
+
+  focus() {
+    this.ownerDocument?._focus(this);
+  }
+
+  blur() {
+    if (this.ownerDocument?._focused === this) this.ownerDocument._focus(null);
+  }
+
+  click() {
+    this.dispatchEvent({ type: 'click', bubbles: true, detail: 0 });
+  }
+
+  /** تحديد نص الحقل (للنسخ البديل) وموضع المؤشر: يُسجَّلان فقط. */
+  select() {
+    this.selected = true;
+  }
+
+  setSelectionRange(start, end) {
+    this.selectionStart = start;
+    this.selectionEnd = end;
+  }
+
+  /** العنصر المركّز داخل هذا الجذر المظلل (أو مضيف جذر متداخل فيه)، كما في ShadowRoot.activeElement. */
+  get activeElement() {
+    let n = this.ownerDocument?._focused ?? null;
+    while (n) {
+      let r = n;
+      while (r && !r._host) r = r.parentNode;
+      if (!r) return null;
+      if (r === this) return n;
+      n = r._host;
+    }
+    return null;
   }
 
   listenerCount(type) {
@@ -234,6 +296,51 @@ export class FakeElement {
   }
 }
 
+const capOf = (opts) => opts === true || !!opts?.capture;
+function addListener(node, type, fn, opts) {
+  if (!node._listeners.has(type)) node._listeners.set(type, new Set());
+  const list = node._listeners.get(type);
+  for (const l of list) if (l.fn === fn && l.capture === capOf(opts)) return;
+  list.add({ fn, capture: capOf(opts) });
+}
+function removeListener(node, type, fn, opts) {
+  const list = node._listeners.get(type);
+  if (!list) return;
+  for (const l of [...list]) if (l.fn === fn && l.capture === capOf(opts)) list.delete(l);
+}
+
+/**
+ * يرسل الحدث: الهدف وحده كما كان، أو (bubbles: true) مسار الالتقاط من المستند إلى الهدف ثم الفقاعة إلى المستند،
+ * عابرًا الجذور المظللة إلى مضيفيها. stopPropagation يوقف ما بعد العقدة الحالية، وcomposedPath يعيد المسار.
+ */
+function dispatch(target, ev) {
+  ev.target = target;
+  const path = [target];
+  if (ev.bubbles) {
+    for (let n = up(target); n; n = up(n)) path.push(n);
+    const doc = target.ownerDocument ?? target;
+    if (doc && path.at(-1) !== doc && doc._listeners) path.push(doc);
+  }
+  let stopped = false;
+  ev.composedPath = () => [...path];
+  ev.stopPropagation = () => (stopped = true);
+  ev.stopImmediatePropagation = () => (stopped = true);
+  ev.defaultPrevented = false;
+  ev.preventDefault = () => (ev.defaultPrevented = true);
+  const call = (node, phase) => {
+    for (const l of [...(node._listeners?.get(ev.type) ?? [])]) {
+      if (phase === 'capture' && !l.capture) continue;
+      if (phase === 'bubble' && l.capture) continue;
+      ev.currentTarget = node;
+      l.fn(ev);
+    }
+  };
+  for (let i = path.length - 1; i > 0 && !stopped; i--) call(path[i], 'capture');
+  if (!stopped) call(target, 'target');
+  for (let i = 1; i < path.length && !stopped; i++) call(path[i], 'bubble');
+  return !ev.defaultPrevented;
+}
+
 export function createFakeEnv({ href = 'https://www.youtube.com/watch?v=AAAAAAAAAAA' } = {}) {
   const url = new URL(href);
   const observers = new Set();
@@ -245,17 +352,40 @@ export function createFakeEnv({ href = 'https://www.youtube.com/watch?v=AAAAAAAA
     fullscreenElement: null,
     adoptedStyleSheets: [],
     _listeners: new Map(),
+    _focused: null,
     createElement: (tag) => new FakeElement(tag, doc),
+    createElementNS: (ns, tag) => {
+      const el = new FakeElement(tag, doc);
+      el.namespaceURI = ns;
+      return el;
+    },
     _notify(rec) {
       for (const o of [...observers]) o._deliver(rec);
     },
-    addEventListener(type, fn) {
-      if (!doc._listeners.has(type)) doc._listeners.set(type, new Set());
-      doc._listeners.get(type).add(fn);
+    _focus(el) {
+      const prev = doc._focused;
+      if (prev === el) return;
+      doc._focused = el;
+      prev?.dispatchEvent({ type: 'blur' });
+      el?.dispatchEvent({ type: 'focus' });
     },
-    removeEventListener: (type, fn) => doc._listeners.get(type)?.delete(fn),
+    /** العنصر المركّز كما يراه المستند: مضيف الظل الأعلى إن كان التركيز داخل جذر مظلل. */
+    get activeElement() {
+      let n = doc._focused;
+      if (!n || !n.isConnected) return doc.body;
+      let out = n;
+      for (let x = n; x; x = up(x)) if (x._host) out = x._host;
+      return out;
+    },
+    addEventListener(type, fn, opts) {
+      addListener(doc, type, fn, opts);
+    },
+    removeEventListener: (type, fn, opts) => removeListener(doc, type, fn, opts),
     dispatchEvent(ev) {
-      for (const fn of [...(doc._listeners.get(ev.type) ?? [])]) fn(ev);
+      ev.target = ev.target ?? doc;
+      ev.composedPath = ev.composedPath ?? (() => [doc]);
+      ev.stopPropagation = ev.stopPropagation ?? (() => {});
+      for (const l of [...(doc._listeners.get(ev.type) ?? [])]) l.fn(ev);
     },
     listenerCount: (type) => doc._listeners.get(type)?.size ?? 0,
     querySelector: (sel) => doc.documentElement.querySelector(sel),
@@ -320,14 +450,13 @@ export function createFakeEnv({ href = 'https://www.youtube.com/watch?v=AAAAAAAA
     MutationObserver: FakeMutationObserver,
     ResizeObserver: FakeResizeObserver,
     _listeners: new Map(),
-    addEventListener(type, fn) {
-      if (!win._listeners.has(type)) win._listeners.set(type, new Set());
-      win._listeners.get(type).add(fn);
+    addEventListener(type, fn, opts) {
+      addListener(win, type, fn, opts);
     },
-    removeEventListener: (type, fn) => win._listeners.get(type)?.delete(fn),
+    removeEventListener: (type, fn, opts) => removeListener(win, type, fn, opts),
     listenerCount: (type) => win._listeners.get(type)?.size ?? 0,
     fire(type, ev = { type }) {
-      for (const fn of [...(win._listeners.get(type) ?? [])]) fn(ev);
+      for (const l of [...(win._listeners.get(type) ?? [])]) l.fn(ev);
     },
     setTimeout(fn, ms) {
       const id = ++timerSeq;

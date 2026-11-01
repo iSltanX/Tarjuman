@@ -124,9 +124,9 @@
 {
   "phase": "P6",
   "status": "in_progress",
-  "updated": "2026-11-02T01:25:20+03:00",
+  "updated": "2026-11-02T01:33:21+03:00",
   "branch": "tj/P6-player-controls",
-  "resume": "بدأت المرحلة: قراءة المواصفة والمصمم ثم بناء src/player/controls",
+  "resume": "الأدوات الخمس والقوائم والتدفقان واختبارات وحدتها ملتزمة؛ التالي: اختبار تكامل المشغّل (test/integration/player) ثم البناء والاختبار الحي على Brave ثم Chrome",
   "blocker": null,
   "outcome": null,
   "commit": null,
