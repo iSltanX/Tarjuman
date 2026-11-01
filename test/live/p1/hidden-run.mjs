@@ -80,7 +80,7 @@ execFileSync('open', [...args, runUrl]);
 log(`أُطلق ${browser} مخفيًا بخطة من ${plan.length} خطوة`);
 
 const dl = path.join(os.homedir(), 'Downloads');
-const budget = plan.reduce((s, p) => s + p.waitMs + 6000, 0) + 60000;
+const budget = plan.reduce((s, p) => s + p.waitMs + 6000, 0) + 360000;
 let file = null;
 while (!file && Date.now() - started < budget) {
   await sleep(5000);
@@ -94,6 +94,11 @@ if (!file) {
   process.exit(1);
 }
 log(`النتائج: ${file}`);
+const head = JSON.parse(await readFile(file, 'utf8'));
+if (head.blocked) {
+  log(`أوقفت صفحة الإضافة التصدير: ${head.count} نمط (${head.types.join('، ')})`);
+  process.exit(1);
+}
 const vArgs = [path.join(HERE, 'verify-export.mjs'), file, '--label', label];
 if (val('fixtures')) vArgs.push('--fixtures', val('fixtures'));
 console.log(execFileSync(process.execPath, vArgs, { encoding: 'utf8' }).split('\n')[0]);

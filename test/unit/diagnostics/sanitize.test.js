@@ -42,3 +42,10 @@ test('sanitizeText يزيل الأسرار، وsanitizeDeep يسقط المفا�
   assert.deepEqual(findSecrets(JSON.stringify(d)), []);
   assert.equal(d.n, 3);
 });
+
+test('findSecrets: تجاهل الروابط في نص الترجمة دون تجاهل الرموز', () => {
+  const spoken = 'visit youtube.com/minutephysics for more';
+  assert.ok(findSecrets(spoken).length > 0);
+  assert.deepEqual(findSecrets(spoken, ['url']), []);
+  assert.ok(findSecrets(`${spoken} signature=${'B'.repeat(40)}`, ['url']).length > 0, 'التوقيع يُكشف دائمًا');
+});

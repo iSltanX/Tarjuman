@@ -18,12 +18,14 @@ const PATTERNS = [
 
 /**
  * @param {string} text
+ * @param {string[]} [ignoreTypes] أنواع تُتجاهل؛ مثل 'url' في نص ترجمة قد ينطق المتحدث فيه عنوانًا عامًا
  * @returns {{ type: string, index: number, length: number, sample: string }[]} المواضع مع عيّنة مقنّعة (أول 6 محارف فقط)
  */
-export function findSecrets(text) {
+export function findSecrets(text, ignoreTypes = []) {
   const found = [];
   const s = String(text);
   for (const { type, re } of PATTERNS) {
+    if (ignoreTypes.includes(type)) continue;
     re.lastIndex = 0;
     for (const m of s.matchAll(re)) {
       found.push({ type, index: m.index, length: m[0].length, sample: `${m[0].slice(0, 6)}…(${m[0].length})` });

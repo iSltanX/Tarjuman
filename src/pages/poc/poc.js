@@ -110,6 +110,24 @@ async function render() {
   }
 }
 
+const CONTENT_KEYS = new Set(['body', 'srt', 'text']);
+
+/**
+ * فحص الأسرار قبل التصدير: البيانات الوصفية بكل الأنماط، ونص الترجمة (الجسم وSRT والنص المعروض) بكل الأنماط
+ * عدا الروابط، لأن المتحدث قد ينطق عنوانًا عامًا في كلامه وليس ذلك سرًّا من أسرار الجلسة.
+ */
+function exportLeaks(data) {
+  const content = [];
+  const meta = JSON.stringify(data, (k, v) => {
+    if (CONTENT_KEYS.has(k) && typeof v === 'string') {
+      content.push(v);
+      return undefined;
+    }
+    return v;
+  });
+  return [...findSecrets(meta), ...findSecrets(content.join('\n'), ['url'])];
+}
+
 /** يصدّر نتائج الإثبات (اللقطات وسجل الجلسة وSRT والعينات الخام) ملفًا واحدًا بعد التأكد من خلوه من الأسرار. */
 async function exportResults(label = null) {
   const status = document.getElementById('export-status');
@@ -133,7 +151,7 @@ async function exportResults(label = null) {
     tabs,
   };
   const text = `${JSON.stringify(data, null, 2)}\n`;
-  const leaks = findSecrets(text);
+  const leaks = exportLeaks(data);
   if (leaks.length) {
     status.textContent = `أوقفنا التصدير: ${leaks.length} نمط حساس (${[...new Set(leaks.map((l) => l.type))].join('، ')}).`;
     status.className = 'bad';
@@ -199,13 +217,16 @@ async function runPlan(label, plan) {
     missing: steps.filter((s) => !s.snap).map((s) => ({ step: s.step, error: s.error || 'لا رد من التبويب' })),
     tabs: steps.filter((s) => s.snap),
   };
-  const text = `${JSON.stringify(data, null, 2)}\n`;
-  const leaks = findSecrets(text);
+  const leaks = exportLeaks(data);
+  const stamp = data.exportedAt.replace(/[:.]/g, '-').slice(0, 19);
+  const prefix = `tarjuman-p1-${data.browser.isBrave ? 'brave' : 'chrome'}-${label}`;
   if (leaks.length) {
+    // لا يُصدَّر شيء من البيانات؛ فقط أنواع الأنماط وعددها، ليُعرف سبب الإيقاف.
     status.textContent = `أوقفنا التصدير: ${leaks.length} نمط حساس.`;
+    download(`${prefix}-blocked-${stamp}.json`, `${JSON.stringify({ label, blocked: true, types: [...new Set(leaks.map((l) => l.type))], count: leaks.length })}\n`);
     return;
   }
-  download(`tarjuman-p1-${data.browser.isBrave ? 'brave' : 'chrome'}-${label}-${data.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`, text);
+  download(`${prefix}-${stamp}.json`, `${JSON.stringify(data, null, 2)}\n`);
   status.textContent = `انتهت الخطة (${steps.length} خطوة) وصُدّرت النتائج.`;
   await wait(3000);
   const self = await chrome.tabs.getCurrent();
