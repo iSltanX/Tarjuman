@@ -35,10 +35,11 @@ chrome.tabs.sendMessage(tabId, { type: "tj:get-video-state", v: 1 })   // videoS
 - النافذة تتحقق من الرد (`isVideoStateReply`) قبل عرضه. **لا رد** (رفض «Receiving end does not exist» أو تبويب ليس يوتيوب أو نسخة أقدم) يعني «افتح فيديو على يوتيوب» (`TJ_NOT_YOUTUBE`).
 - `chrome.tabs.query({ active: true, lastFocusedWindow: true })` و`chrome.tabs.sendMessage` و`chrome.tabs.create` لا تحتاج إذن `tabs`.
 - `mounted` حالة نقطتي التركيب للتشخيص والدخان الحي (عقد الواجهات §٣).
+- **ثبت حيًا في P2** في Brave وChrome: نافذة الأيقونة وجدت تبويب يوتيوب النشط وتلقت الرد بالمعرّف و`mounted: stub`.
 
 ## ٣. الصفحات ↔ المشغّل: التخزين وحده
 
-- لا رسائل مباشرة. الصفحة تكتب بالتخزين (عقد التخزين §٦)، والمتحكم في كل تبويب يوتيوب يسمع `store.onChange` فيعيد قراءة سجل فيديوه أو إعداداته (`controller.handleStoreChange`). الدخان الحي يتحقق منه (`storage-change-reaches-player`).
+- لا رسائل مباشرة. الصفحة تكتب بالتخزين (عقد التخزين §٦)، والمتحكم في كل تبويب يوتيوب يسمع `store.onChange` فيعيد قراءة سجل فيديوه أو إعداداته (`controller.handleStoreChange`). **ثبت حيًا في P2** (Brave وChrome): سجل كُتب من صفحة إضافة ظهر في رد المشغّل خلال ثانية (`storage-change-reaches-player`).
 - صدى كتابات المتحكم نفسه يُتجاهل بمقارنة `rev`؛ والكتابة الخارجية أثناء كتابته تؤجَّل حتى تنتهي ثم يقرأ الأحدث.
 
 ## ٤. الممنوعات
