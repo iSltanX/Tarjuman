@@ -115,9 +115,9 @@
 {
   "phase": "P3",
   "status": "in_progress",
-  "updated": "2026-11-01T18:35:25+03:00",
+  "updated": "2026-11-01T18:44:13+03:00",
   "branch": "tj/P3-export",
-  "resume": "المستخرج: الوضع الطويل واختيار المسار والتقييم بالمدة الحالية والتشخيص",
+  "resume": "الكود والاختبارات الآلية منجزة ومدفوعة (182 اختبارًا). بقي AC3 الحي: بانتظار موافقة سلطان على تشغيل docs/evidence/P3/live/download-check.mjs على Brave ثم Chrome، ثم الأدلة والتسليم",
   "blocker": null,
   "outcome": null,
   "commit": null,
