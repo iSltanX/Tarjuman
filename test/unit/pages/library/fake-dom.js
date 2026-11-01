@@ -35,7 +35,7 @@ export class FakeElement {
     this._attrs = new Map();
     this._classes = new Set();
     this._listeners = new Map();
-    this.style = {};
+    this.style = { setProperty(k, v) { this[k] = String(v); }, getPropertyValue(k) { return this[k] ?? ''; } };
     this.id = '';
     this.value = '';
     this.checked = false;

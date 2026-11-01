@@ -103,6 +103,12 @@ test('الصف: العنوان والمعرّف والشارات والإزاح�
   await m.lib.load();
   const row = rows(m)[0];
   assert.equal(textOf(row.querySelector('h2')), 'محاضرة');
+  // الاتجاه: العنوان يتبع أول حرف قوي فيه (عربي أو إنجليزي)، والمعرّف معزول LTR بخط أحادي.
+  assert.ok(row.querySelector('h2').classList.contains('tj-auto'));
+  const idEl = findAll(row, (e) => e.tagName === 'bdi')[0];
+  assert.equal(textOf(idEl), IDS[0]);
+  assert.equal(idEl.dir, 'ltr');
+  assert.ok(idEl.classList.contains('tj-ltr') && idEl.classList.contains('tj-mono'));
   assert.ok(textOf(row).includes(IDS[0]));
   const badges = findAll(row, (e) => e.classList.contains('tj-pill')).map(textOf);
   assert.deepEqual(badges, ['EN يدوي', 'AR الأصل']);
