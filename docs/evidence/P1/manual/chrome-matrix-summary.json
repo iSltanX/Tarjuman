@@ -1,0 +1,785 @@
+{
+  "label": "chrome-matrix",
+  "browser": {
+    "isBrave": false,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "brands": [
+      "Not:A-Brand 8",
+      "Chromium 156",
+      "Google Chrome 156"
+    ],
+    "webdriverExtensionPage": false
+  },
+  "storage": {
+    "local": [],
+    "session": []
+  },
+  "missing": [],
+  "seed": 20261101,
+  "steps": [
+    {
+      "step": "warmup",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 133,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 133,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "manual-p1",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 136.068,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 139.568,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "manual-p2",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 267.71,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 271.209,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "manual-p3",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 360.965,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 364.466,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "manual-p4",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 432.929,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 436.429,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "manual-p5",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 548.845,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 552.345,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "manual-p6",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": []
+      },
+      "rejected": [
+        {
+          "code": "EX_WRONG_VIDEO",
+          "sameVideo": false,
+          "lang": "en",
+          "trackKind": "asr",
+          "hasTlang": false,
+          "bodyLength": 0
+        },
+        {
+          "code": "EX_WRONG_VIDEO",
+          "sameVideo": false,
+          "lang": "en",
+          "trackKind": "asr",
+          "hasTlang": false,
+          "bodyLength": 40874
+        }
+      ]
+    },
+    {
+      "step": "manual-p7",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 793.91,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 797.409,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "manual-p8",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 924.98,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 928.487,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "manual-p9",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 968.838,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 972.338,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "manual-p10",
+      "videoId": "iG9CE55wbtY",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 59007,
+        "bodySha256": "bc5763e2478a3fbf",
+        "invariants": 6,
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "completeness": 0.968,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 1106.819,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 1110.318,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p1",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 174.172,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 177.672,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p2",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 562.976,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 566.476,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p3",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 748.96,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 752.466,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p4",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 1069.06,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 1072.559,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p5",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 1295.125,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 1298.625,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p6",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 1683.111,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 1686.612,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p7",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 1846.888,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 1850.388,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p8",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 2178.949,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 2182.448,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p9",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 2376.026,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 2379.524,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "asr-p10",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "asr",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 953282,
+        "bodySha256": "aa34a91cd5fa99e3",
+        "invariants": 6,
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "completeness": 0.996,
+        "inferredKind": "asr",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 2686,
+            "verdict": "contained",
+            "match": true
+          },
+          {
+            "timeSec": 2686,
+            "verdict": "contained",
+            "match": true
+          }
+        ]
+      },
+      "rejected": []
+    },
+    {
+      "step": "long",
+      "videoId": "gBazR59SZXk",
+      "webdriver": false,
+      "accepted": {
+        "lang": "en",
+        "trackKind": "manual",
+        "format": "json3",
+        "transport": "xhr",
+        "bodyLength": 273075,
+        "bodySha256": "79e58a0077776479",
+        "invariants": 6,
+        "cues": 1884,
+        "words": 16028,
+        "duplicatesRemoved": 0,
+        "completeness": 0.997,
+        "inferredKind": "manual",
+        "nodeReconvertSame": true,
+        "shown": [
+          {
+            "timeSec": 1800,
+            "verdict": "exact",
+            "match": true
+          },
+          {
+            "timeSec": 1800,
+            "verdict": "exact",
+            "match": true
+          }
+        ]
+      },
+      "rejected": [
+        {
+          "code": "EX_EMPTY_BODY",
+          "sameVideo": true,
+          "lang": "en",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "bodyLength": 0
+        }
+      ]
+    },
+    {
+      "step": "nocap",
+      "videoId": "aqz-KE-bpKQ",
+      "webdriver": false,
+      "accepted": null,
+      "rejected": []
+    },
+    {
+      "step": "tlang",
+      "videoId": "Y9rkKtK1b44",
+      "webdriver": false,
+      "accepted": null,
+      "rejected": [
+        {
+          "code": "EX_TRANSLATED_TRACK",
+          "sameVideo": true,
+          "lang": "en",
+          "trackKind": "asr",
+          "hasTlang": true,
+          "bodyLength": 361056
+        }
+      ]
+    }
+  ]
+}

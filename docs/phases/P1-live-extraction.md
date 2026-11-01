@@ -162,7 +162,7 @@
 {
   "phase": "P1",
   "status": "in_progress",
-  "updated": "2026-11-01T14:21:12+03:00",
+  "updated": "2026-11-01T15:05:17+03:00",
   "branch": "tj/P1-live-extraction",
   "resume": "Brave غير المؤتمت ثبت (AC1 وAC2 وAC4 وAC6 وAC7 وAC8). معلّق على سلطان: (١) تحميل الإضافة يدويًا مرة واحدة في ملف Chrome chrome-manual من مجلد extension-manual، ثم أشغّل: command node test/live/p1/hidden-run.mjs --browser chrome --profile chrome-manual --ext <extension-manual> --label chrome-matrix --warmup (AC3). (٢) 10 تنقلات داخلية بالنقر مع CC وتمرير فوق معاينات في نافذة Brave غير مؤتمتة ثم «تصدير النتائج»، ويُتحقق بـverify-export (AC5). ثم التقرير والنتيجة والتسليم.",
   "blocker": null,
@@ -195,9 +195,12 @@
       "note": "Brave غير مؤتمت: Y9rkKtK1b44 بنوع asr (kind=asr)، 9,031 كلمة بلا فقد، ولا تداخل، والثوابت 6/6"
     },
     "P1-AC3": {
-      "result": "pending",
-      "evidence": [],
-      "note": "Chrome غير المؤتمت لم يُختبر: يحتاج تحميل الإضافة يدويًا مرة واحدة في ملف chrome-manual؛ أدلة Chrome المؤتمتة (رفض الإعلان والفارغ) لا تكفي"
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P1/live-results.md",
+        "docs/evidence/P1/manual/chrome-matrix-summary.json"
+      ],
+      "note": "Chrome 156 غير مؤتمت: الفيديوهات الثلاثة بالنتيجة نفسها (بصمات الأجسام وملفات SRT متطابقة مع Brave)، الثوابت 6/6، والمواضع يدوي 18/18 exact وتلقائي 20/20، وtlang مرفوض، وإعلان مرفوض EX_WRONG_VIDEO"
     },
     "P1-AC4": {
       "result": "pass",
