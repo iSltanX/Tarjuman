@@ -47,6 +47,12 @@ for (const kind of ['manual', 'asr']) {
 }
 // --warmup: خطوة أولى تُهمل نتيجتها؛ أول صفحة مشاهدة في جلسة جديدة اختار فيها المشغّل العربية رغم cc_lang_pref=en.
 if (argv.includes('--warmup') && plan.length) plan.unshift({ ...plan[0], name: 'warmup' });
+// قائمة تشغيل من فيديوهات قصيرة: يوتيوب تنتقل بنفسها إلى التالي تنقلًا داخليًا (SPA) بلا نقر ولا أتمتة.
+// MinutePhysics «Quantum Mechanics»: أول 11 فيديو بين 1:04 و3:14 وكلها بمسار إنجليزي يدوي وتلقائي.
+if (only.includes('playlist')) {
+  plan.push({ name: 'warmup', url: watch('Q_h4IoPJXZw', 'cc_load_policy=1&cc_lang_pref=en'), waitMs: 15000 });
+  plan.push({ name: 'playlist', url: watch('Q_h4IoPJXZw', 'list=PL0E2ABD1D84697428&cc_load_policy=1&cc_lang_pref=en'), waitMs: Number(val('playlist-min', 19)) * 60000 });
+}
 if (only.includes('long')) plan.push({ name: 'long', url: watch(VIDEOS.long.id, 't=1800s&cc_load_policy=1&cc_lang_pref=en'), waitMs: WAIT_MS + 5000 });
 if (only.includes('nocap')) plan.push({ name: 'nocap', url: watch(VIDEOS.nocap.id, 'cc_load_policy=1&cc_lang_pref=en'), waitMs: 20000 });
 if (only.includes('tlang')) plan.push({ name: 'tlang', url: watch(VIDEOS.asr.id, 't=600s&cc_load_policy=1&cc_lang_pref=ar'), waitMs: WAIT_MS });

@@ -154,7 +154,7 @@ render();
 // الموثّقة (t وcc_load_policy وcc_lang_pref). لكل خطوة: تبويب جديد ← انتظار ← لقطة ← إغلاق، ثم ملف نتائج واحد.
 // لا نقر ولا كتابة ولا سكربت داخل يوتيوب؛ فتح روابط فقط، كما يفتحها المستخدم.
 const RUN = /^#run=([A-Za-z0-9_-]{1,40})&plan=([A-Za-z0-9_-]+)$/.exec(location.hash);
-const PLAN_URL = /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}(?:&(?:t=\d{1,6}s|cc_load_policy=1|cc_lang_pref=[a-z]{2}))*$/;
+const PLAN_URL = /^https:\/\/www\.youtube\.com\/watch\?v=[A-Za-z0-9_-]{11}(?:&(?:t=\d{1,6}s|cc_load_policy=1|cc_lang_pref=[a-z]{2}|list=[A-Za-z0-9_-]{10,64}))*$/;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function askTab(tabId) {
@@ -207,10 +207,15 @@ async function runPlan(label, plan) {
   }
   download(`tarjuman-p1-${data.browser.isBrave ? 'brave' : 'chrome'}-${label}-${data.exportedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`, text);
   status.textContent = `انتهت الخطة (${steps.length} خطوة) وصُدّرت النتائج.`;
+  await wait(3000);
+  const self = await chrome.tabs.getCurrent();
+  if (self) chrome.tabs.remove(self.id);
 }
 
 if (RUN) {
   const plan = JSON.parse(atob(RUN[2].replace(/-/g, '+').replace(/_/g, '/')));
+  // يُحذف رابط الخطة من سجل التبويب فورًا، فلا تُعاد الخطة إن استُعيدت الجلسة.
+  history.replaceState(null, '', location.pathname);
   setTimeout(() => runPlan(RUN[1], plan), 1500);
 }
 
@@ -219,6 +224,7 @@ if (RUN) {
 const auto = /^#export=([A-Za-z0-9_-]{1,40})((?:&(?:close|srt))*)$/.exec(location.hash);
 if (auto) {
   const flags = auto[2].split('&').filter(Boolean);
+  history.replaceState(null, '', location.pathname);
   setTimeout(async () => {
     const tabs = await exportResults(auto[1]);
     const answered = flags.includes('close') && tabs ? tabs.map((t) => t.tabId) : [];
