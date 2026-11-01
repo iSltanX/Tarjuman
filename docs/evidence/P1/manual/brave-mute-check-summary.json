@@ -1,0 +1,28 @@
+{
+  "label": "brave-mute-check",
+  "browser": {
+    "isBrave": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "brands": [
+      "Not:A-Brand 8",
+      "Chromium 156",
+      "Brave 156"
+    ],
+    "webdriverExtensionPage": false
+  },
+  "storage": {
+    "local": [],
+    "session": []
+  },
+  "missing": [],
+  "seed": 20261101,
+  "steps": [
+    {
+      "step": "nocap",
+      "videoId": "aqz-KE-bpKQ",
+      "webdriver": false,
+      "accepted": null,
+      "rejected": []
+    }
+  ]
+}

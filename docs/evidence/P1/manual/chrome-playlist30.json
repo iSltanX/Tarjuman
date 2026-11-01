@@ -1,0 +1,335 @@
+{
+  "label": "chrome-playlist30",
+  "exportedAt": "2026-11-01T13:09:09.105Z",
+  "browser": {
+    "isBrave": false,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "brands": [
+      "Not:A-Brand 8",
+      "Chromium 156",
+      "Google Chrome 156"
+    ],
+    "webdriverExtensionPage": false
+  },
+  "storage": {
+    "local": [],
+    "session": []
+  },
+  "missing": [],
+  "secretsInExport": 0,
+  "tabs": [
+    {
+      "step": "warmup",
+      "currentVideoId": "Q_h4IoPJXZw",
+      "durationMs": 66101,
+      "navigations": 1,
+      "webdriverPage": false,
+      "accepted": [
+        {
+          "videoId": "Q_h4IoPJXZw",
+          "acceptedFor": "Q_h4IoPJXZw",
+          "lang": "en",
+          "trackKind": "manual",
+          "format": "json3",
+          "transport": "xhr",
+          "bodyLength": 3310,
+          "bodySha256": "36bf28a113b0d76f",
+          "meta": {
+            "hasPot": true,
+            "capsAsr": true,
+            "kindParam": null
+          },
+          "ok": true,
+          "code": null,
+          "invariants": [
+            {
+              "id": 1,
+              "key": "words",
+              "ok": true,
+              "detail": "208 كلمة متطابقة"
+            },
+            {
+              "id": 2,
+              "key": "noOverlap",
+              "ok": true,
+              "detail": "لا تداخل"
+            },
+            {
+              "id": 3,
+              "key": "noEmpty",
+              "ok": true,
+              "detail": "لا مقاطع فارغة"
+            },
+            {
+              "id": 4,
+              "key": "monotonic",
+              "ok": true,
+              "detail": "متزايدة"
+            },
+            {
+              "id": 5,
+              "key": "bounds",
+              "ok": true,
+              "detail": "البداية ≥ 0 · النهاية ضمن المدة"
+            },
+            {
+              "id": 6,
+              "key": "reparse",
+              "ok": true,
+              "detail": "21 مقطعًا"
+            }
+          ],
+          "warnings": [],
+          "report": {
+            "trackKind": "manual",
+            "stats": {
+              "totalEvents": 21,
+              "textEvents": 21,
+              "windowEvents": 0,
+              "newlineEvents": 0,
+              "blankEvents": 0,
+              "appendEvents": 0,
+              "missingDuration": 0,
+              "withOffsets": 0,
+              "withAsrConf": 0
+            },
+            "inferredKind": "manual",
+            "duplicatesRemoved": 0,
+            "eventsReordered": 0,
+            "converter": {
+              "trimmed": 0,
+              "merged": 0,
+              "filledEnds": 0
+            },
+            "lastEndMs": 59890,
+            "firstStartMs": 139,
+            "cueCount": 21,
+            "sourceWords": 208,
+            "completeness": 0.906
+          },
+          "nodeReconvertSame": true,
+          "nodeOk": true,
+          "shownChecks": [
+            {
+              "t": 0,
+              "verdict": "silence",
+              "match": true,
+              "activeText": "",
+              "timeSec": 0
+            }
+          ],
+          "shownMatched": 1,
+          "srtFile": "docs/evidence/P1/srt/chrome-playlist30-Q_h4IoPJXZw.manual.srt"
+        }
+      ],
+      "rejected": [
+        {
+          "code": "EX_WRONG_VIDEO",
+          "detail": "v لا يطابق الفيديو المعروض",
+          "videoId": "OblS25oQS3c",
+          "currentVideoId": "Q_h4IoPJXZw",
+          "lang": "ar",
+          "trackKind": "asr",
+          "hasTlang": false,
+          "format": "json3",
+          "status": 200,
+          "bodyLength": 6192
+        }
+      ],
+      "log": [
+        {
+          "at": 1793536730169,
+          "type": "start",
+          "to": "Q_h4IoPJXZw"
+        },
+        {
+          "at": 1793536731641,
+          "type": "reject",
+          "code": "EX_WRONG_VIDEO",
+          "videoId": "OblS25oQS3c",
+          "currentVideoId": "Q_h4IoPJXZw",
+          "lang": "ar",
+          "trackKind": "asr",
+          "hasTlang": false,
+          "format": "json3",
+          "status": 200,
+          "bodyLength": 6192,
+          "transport": "xhr",
+          "hasPot": true
+        },
+        {
+          "at": 1793536741118,
+          "type": "accept",
+          "videoId": "Q_h4IoPJXZw",
+          "currentVideoId": "Q_h4IoPJXZw",
+          "lang": "en",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "format": "json3",
+          "status": 200,
+          "bodyLength": 3310,
+          "transport": "xhr",
+          "hasPot": true
+        },
+        {
+          "at": 1793536743627,
+          "type": "shown",
+          "videoId": "Q_h4IoPJXZw",
+          "timeSec": 0,
+          "ad": false,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "step": "playlist",
+      "currentVideoId": "Q_h4IoPJXZw",
+      "durationMs": 66101,
+      "navigations": 1,
+      "webdriverPage": false,
+      "accepted": [
+        {
+          "videoId": "Q_h4IoPJXZw",
+          "acceptedFor": "Q_h4IoPJXZw",
+          "lang": "en",
+          "trackKind": "manual",
+          "format": "json3",
+          "transport": "xhr",
+          "bodyLength": 3310,
+          "bodySha256": "36bf28a113b0d76f",
+          "meta": {
+            "hasPot": true,
+            "capsAsr": true,
+            "kindParam": null
+          },
+          "ok": true,
+          "code": null,
+          "invariants": [
+            {
+              "id": 1,
+              "key": "words",
+              "ok": true,
+              "detail": "208 كلمة متطابقة"
+            },
+            {
+              "id": 2,
+              "key": "noOverlap",
+              "ok": true,
+              "detail": "لا تداخل"
+            },
+            {
+              "id": 3,
+              "key": "noEmpty",
+              "ok": true,
+              "detail": "لا مقاطع فارغة"
+            },
+            {
+              "id": 4,
+              "key": "monotonic",
+              "ok": true,
+              "detail": "متزايدة"
+            },
+            {
+              "id": 5,
+              "key": "bounds",
+              "ok": true,
+              "detail": "البداية ≥ 0 · النهاية ضمن المدة"
+            },
+            {
+              "id": 6,
+              "key": "reparse",
+              "ok": true,
+              "detail": "21 مقطعًا"
+            }
+          ],
+          "warnings": [],
+          "report": {
+            "trackKind": "manual",
+            "stats": {
+              "totalEvents": 21,
+              "textEvents": 21,
+              "windowEvents": 0,
+              "newlineEvents": 0,
+              "blankEvents": 0,
+              "appendEvents": 0,
+              "missingDuration": 0,
+              "withOffsets": 0,
+              "withAsrConf": 0
+            },
+            "inferredKind": "manual",
+            "duplicatesRemoved": 0,
+            "eventsReordered": 0,
+            "converter": {
+              "trimmed": 0,
+              "merged": 0,
+              "filledEnds": 0
+            },
+            "lastEndMs": 59890,
+            "firstStartMs": 139,
+            "cueCount": 21,
+            "sourceWords": 208,
+            "completeness": 0.906
+          },
+          "nodeReconvertSame": true,
+          "nodeOk": true,
+          "shownChecks": [
+            {
+              "t": 0,
+              "verdict": "silence",
+              "match": true,
+              "activeText": "",
+              "timeSec": 0
+            },
+            {
+              "t": 0,
+              "verdict": "silence",
+              "match": true,
+              "activeText": "",
+              "timeSec": 0
+            }
+          ],
+          "shownMatched": 2,
+          "srtFile": "docs/evidence/P1/srt/chrome-playlist30-Q_h4IoPJXZw.manual.srt"
+        }
+      ],
+      "rejected": [],
+      "log": [
+        {
+          "at": 1793536747232,
+          "type": "start",
+          "to": "Q_h4IoPJXZw"
+        },
+        {
+          "at": 1793536765336,
+          "type": "accept",
+          "videoId": "Q_h4IoPJXZw",
+          "currentVideoId": "Q_h4IoPJXZw",
+          "lang": "en",
+          "trackKind": "manual",
+          "hasTlang": false,
+          "format": "json3",
+          "status": 200,
+          "bodyLength": 3310,
+          "transport": "xhr",
+          "hasPot": true
+        },
+        {
+          "at": 1793536767838,
+          "type": "shown",
+          "videoId": "Q_h4IoPJXZw",
+          "timeSec": 0,
+          "ad": false,
+          "text": ""
+        },
+        {
+          "at": 1793536771337,
+          "type": "shown",
+          "videoId": "Q_h4IoPJXZw",
+          "timeSec": 0,
+          "ad": false,
+          "text": ""
+        }
+      ]
+    }
+  ]
+}

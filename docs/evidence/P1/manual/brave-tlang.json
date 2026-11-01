@@ -1,0 +1,60 @@
+{
+  "label": "brave-tlang",
+  "exportedAt": "2026-11-01T10:59:51.537Z",
+  "browser": {
+    "isBrave": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "brands": [
+      "Not:A-Brand 8",
+      "Chromium 156",
+      "Brave 156"
+    ],
+    "webdriverExtensionPage": false
+  },
+  "secretsInExport": 0,
+  "tabs": [
+    {
+      "currentVideoId": "Y9rkKtK1b44",
+      "durationMs": 3000421,
+      "navigations": 1,
+      "webdriverPage": false,
+      "accepted": [],
+      "rejected": [
+        {
+          "code": "EX_TRANSLATED_TRACK",
+          "detail": "الطلب يحمل tlang",
+          "videoId": "Y9rkKtK1b44",
+          "currentVideoId": "Y9rkKtK1b44",
+          "lang": "en",
+          "trackKind": "asr",
+          "hasTlang": true,
+          "format": "json3",
+          "status": 200,
+          "bodyLength": 361279
+        }
+      ],
+      "log": [
+        {
+          "at": 1793530768085,
+          "type": "start",
+          "to": "Y9rkKtK1b44"
+        },
+        {
+          "at": 1793530770490,
+          "type": "reject",
+          "code": "EX_TRANSLATED_TRACK",
+          "videoId": "Y9rkKtK1b44",
+          "currentVideoId": "Y9rkKtK1b44",
+          "lang": "en",
+          "trackKind": "asr",
+          "hasTlang": true,
+          "format": "json3",
+          "status": 200,
+          "bodyLength": 361279,
+          "transport": "xhr",
+          "hasPot": true
+        }
+      ]
+    }
+  ]
+}

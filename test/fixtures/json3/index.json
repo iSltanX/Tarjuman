@@ -1,0 +1,49 @@
+{
+  "note": "عينات json3 حقيقية ملتقطة حيًا في P1 من استجابة مشغّل يوتيوب نفسه، بلا أي رابط أو رمز.",
+  "fixtures": [
+    {
+      "file": "manual-ted-iG9CE55wbtY.json",
+      "videoId": "iG9CE55wbtY",
+      "trackKind": "manual",
+      "lang": "en",
+      "browser": "brave",
+      "capturedAt": "2026-11-01",
+      "durationMs": 1203421,
+      "source": {
+        "title": "Do schools kill creativity? | Sir Ken Robinson | TED",
+        "channel": "TED",
+        "license": "CC BY-NC-ND 4.0 (سياسة محاضرات TED)"
+      },
+      "bodySha256": "bc5763e2478a3fbf",
+      "bodyChars": 59007,
+      "expected": {
+        "cues": 427,
+        "words": 3170,
+        "duplicatesRemoved": 0,
+        "textEvents": 427
+      }
+    },
+    {
+      "file": "asr-nwc-Y9rkKtK1b44.json",
+      "videoId": "Y9rkKtK1b44",
+      "trackKind": "asr",
+      "lang": "en",
+      "browser": "brave",
+      "capturedAt": "2026-11-01",
+      "durationMs": 3000000,
+      "source": {
+        "title": "Naval Heritage | Jonathan Parshall: The Untold Story of the Battle of Midway",
+        "channel": "U.S. Naval War College",
+        "license": "Creative Commons (مرشح يوتيوب CC BY)"
+      },
+      "bodySha256": "aa34a91cd5fa99e3",
+      "bodyChars": 953282,
+      "expected": {
+        "cues": 1056,
+        "words": 9031,
+        "duplicatesRemoved": 0,
+        "textEvents": 1266
+      }
+    }
+  ]
+}

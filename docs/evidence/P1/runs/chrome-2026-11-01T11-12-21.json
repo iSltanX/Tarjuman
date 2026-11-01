@@ -1,0 +1,2492 @@
+{
+  "browser": "chrome",
+  "startedAt": "2026-11-01T11:12:21.589Z",
+  "account": "غير مسجَّل",
+  "ids": {
+    "manual": "iG9CE55wbtY",
+    "asr": "Y9rkKtK1b44",
+    "nocap": "aqz-KE-bpKQ"
+  },
+  "steps": {
+    "measure": [
+      {
+        "label": "manual",
+        "videoId": "iG9CE55wbtY",
+        "info": {
+          "title": "Do schools kill creativity? | Sir Ken Robinson | TED",
+          "author": "TED",
+          "lengthSeconds": 1203,
+          "tracks": [
+            {
+              "lang": "af",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Afrikaans"
+            },
+            {
+              "lang": "sq",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Albanian"
+            },
+            {
+              "lang": "ar",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Arabic"
+            },
+            {
+              "lang": "hy",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Armenian"
+            },
+            {
+              "lang": "az",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Azerbaijani"
+            },
+            {
+              "lang": "bn",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Bangla"
+            },
+            {
+              "lang": "eu",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Basque"
+            },
+            {
+              "lang": "be",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Belarusian"
+            },
+            {
+              "lang": "bg",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Bulgarian"
+            },
+            {
+              "lang": "ca",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Catalan"
+            },
+            {
+              "lang": "ckb",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Central Kurdish"
+            },
+            {
+              "lang": "zh-CN",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Chinese (China)"
+            },
+            {
+              "lang": "zh-TW",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Chinese (Taiwan)"
+            },
+            {
+              "lang": "hr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Croatian"
+            },
+            {
+              "lang": "cs",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Czech"
+            },
+            {
+              "lang": "da",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Danish"
+            },
+            {
+              "lang": "nl",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Dutch"
+            },
+            {
+              "lang": "en",
+              "kind": "manual",
+              "translatable": true,
+              "name": "English"
+            },
+            {
+              "lang": "en",
+              "kind": "asr",
+              "translatable": true,
+              "name": "English (auto-generated)"
+            },
+            {
+              "lang": "eo",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Esperanto"
+            },
+            {
+              "lang": "et",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Estonian"
+            },
+            {
+              "lang": "fil",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Filipino"
+            },
+            {
+              "lang": "fi",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Finnish"
+            },
+            {
+              "lang": "fr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "French"
+            },
+            {
+              "lang": "fr-CA",
+              "kind": "manual",
+              "translatable": true,
+              "name": "French (Canada)"
+            },
+            {
+              "lang": "gl",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Galician"
+            },
+            {
+              "lang": "ka",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Georgian"
+            },
+            {
+              "lang": "de",
+              "kind": "manual",
+              "translatable": true,
+              "name": "German"
+            },
+            {
+              "lang": "el",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Greek"
+            },
+            {
+              "lang": "iw",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Hebrew"
+            },
+            {
+              "lang": "hu",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Hungarian"
+            },
+            {
+              "lang": "id",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Indonesian"
+            },
+            {
+              "lang": "inh",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Ingush"
+            },
+            {
+              "lang": "it",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Italian"
+            },
+            {
+              "lang": "ja",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Japanese"
+            },
+            {
+              "lang": "kn",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Kannada"
+            },
+            {
+              "lang": "ko",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Korean"
+            },
+            {
+              "lang": "ku",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Kurdish"
+            },
+            {
+              "lang": "lo",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Lao"
+            },
+            {
+              "lang": "lv",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Latvian"
+            },
+            {
+              "lang": "lt",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Lithuanian"
+            },
+            {
+              "lang": "mk",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Macedonian"
+            },
+            {
+              "lang": "mr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Marathi"
+            },
+            {
+              "lang": "mn",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Mongolian"
+            },
+            {
+              "lang": "mfe",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Morisyen"
+            },
+            {
+              "lang": "ne",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Nepali"
+            },
+            {
+              "lang": "no",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Norwegian"
+            },
+            {
+              "lang": "fa",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Persian"
+            },
+            {
+              "lang": "pl",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Polish"
+            },
+            {
+              "lang": "pt-BR",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Portuguese (Brazil)"
+            },
+            {
+              "lang": "pt-PT",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Portuguese (Portugal)"
+            },
+            {
+              "lang": "ro",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Romanian"
+            },
+            {
+              "lang": "ru",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Russian"
+            },
+            {
+              "lang": "sr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Serbian"
+            },
+            {
+              "lang": "si",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Sinhala"
+            },
+            {
+              "lang": "sk",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Slovak"
+            },
+            {
+              "lang": "sl",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Slovenian"
+            },
+            {
+              "lang": "es",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Spanish"
+            },
+            {
+              "lang": "sv",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Swedish"
+            },
+            {
+              "lang": "th",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Thai"
+            },
+            {
+              "lang": "tr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Turkish"
+            },
+            {
+              "lang": "uk",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Ukrainian"
+            },
+            {
+              "lang": "ur",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Urdu"
+            },
+            {
+              "lang": "uz",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Uzbek"
+            },
+            {
+              "lang": "vi",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Vietnamese"
+            }
+          ]
+        },
+        "ccWasOnBeforeClick": false,
+        "ensureCC": "key",
+        "requestsBeforeClick": 0,
+        "requestsAfterOn": 1,
+        "requestsAfterToggle": 2,
+        "toggleReRequested": true,
+        "timedtext": [
+          {
+            "t": 46522,
+            "method": "GET",
+            "videoId": "iG9CE55wbtY",
+            "lang": "en",
+            "trackKind": "manual",
+            "kindParam": null,
+            "capsAsr": true,
+            "hasTlang": false,
+            "format": "json3",
+            "hasPot": true,
+            "initiator": "script",
+            "viaExtensionWrapper": false,
+            "status": 200,
+            "fromCache": false,
+            "encodedBytes": 21,
+            "bodyBytes": 0,
+            "bodySha256": "e3b0c44298fc1c14",
+            "failed": null,
+            "mimeType": "text/html",
+            "bodyChars": 0
+          },
+          {
+            "t": 54019,
+            "method": "GET",
+            "videoId": "iG9CE55wbtY",
+            "lang": "en",
+            "trackKind": "manual",
+            "kindParam": null,
+            "capsAsr": true,
+            "hasTlang": false,
+            "format": "json3",
+            "hasPot": true,
+            "initiator": "script",
+            "viaExtensionWrapper": false,
+            "status": 200,
+            "fromCache": false,
+            "encodedBytes": 23,
+            "bodyBytes": 0,
+            "bodySha256": "e3b0c44298fc1c14",
+            "failed": null,
+            "mimeType": "text/html",
+            "bodyChars": 0
+          }
+        ],
+        "stats": {
+          "total": 158,
+          "extensionFrames": 0,
+          "extensionOnly": 0,
+          "extensionOnlySamples": [],
+          "byType": {
+            "Document": 4,
+            "Script": 26,
+            "Image": 39,
+            "Stylesheet": 8,
+            "Manifest": 1,
+            "Other": 15,
+            "Font": 2,
+            "Fetch": 30,
+            "XHR": 29,
+            "Media": 4
+          }
+        },
+        "screenshot": "docs/evidence/P1/screenshots/chrome-measure-manual.png"
+      },
+      {
+        "label": "asr",
+        "videoId": "Y9rkKtK1b44",
+        "info": {
+          "title": "Naval Heritage | Jonathan Parshall: The Untold Story of the Battle of Midway",
+          "author": "U.S. Naval War College",
+          "lengthSeconds": 3000,
+          "tracks": [
+            {
+              "lang": "en",
+              "kind": "asr",
+              "translatable": true,
+              "name": "English (auto-generated)"
+            }
+          ]
+        },
+        "ccWasOnBeforeClick": true,
+        "ensureCC": "already",
+        "requestsBeforeClick": 1,
+        "requestsAfterOn": 1,
+        "requestsAfterToggle": 2,
+        "toggleReRequested": true,
+        "timedtext": [
+          {
+            "t": 2303,
+            "method": "GET",
+            "videoId": "Y9rkKtK1b44",
+            "lang": "en",
+            "trackKind": "asr",
+            "kindParam": "asr",
+            "capsAsr": true,
+            "hasTlang": false,
+            "format": "json3",
+            "hasPot": true,
+            "initiator": "script",
+            "viaExtensionWrapper": false,
+            "status": 200,
+            "fromCache": false,
+            "encodedBytes": 23,
+            "bodyBytes": 0,
+            "bodySha256": "e3b0c44298fc1c14",
+            "failed": null,
+            "mimeType": "text/html",
+            "bodyChars": 0
+          },
+          {
+            "t": 12351,
+            "method": "GET",
+            "videoId": "Y9rkKtK1b44",
+            "lang": "en",
+            "trackKind": "asr",
+            "kindParam": "asr",
+            "capsAsr": true,
+            "hasTlang": false,
+            "format": "json3",
+            "hasPot": true,
+            "initiator": "script",
+            "viaExtensionWrapper": false,
+            "status": 200,
+            "fromCache": false,
+            "encodedBytes": 16,
+            "bodyBytes": 0,
+            "bodySha256": "e3b0c44298fc1c14",
+            "failed": null,
+            "mimeType": "text/html",
+            "bodyChars": 0
+          }
+        ],
+        "stats": {
+          "total": 104,
+          "extensionFrames": 0,
+          "extensionOnly": 0,
+          "extensionOnlySamples": [],
+          "byType": {
+            "Document": 1,
+            "Fetch": 17,
+            "XHR": 18,
+            "Script": 24,
+            "Stylesheet": 8,
+            "Image": 20,
+            "Manifest": 1,
+            "Font": 1,
+            "Other": 10,
+            "Media": 4
+          }
+        },
+        "screenshot": "docs/evidence/P1/screenshots/chrome-measure-asr.png"
+      }
+    ],
+    "load": {
+      "id": "lnbbcafibakjhacmngokdlgelpdlbamb",
+      "method": "Extensions.loadUnpacked"
+    },
+    "capture": [
+      {
+        "label": "manual",
+        "videoId": "iG9CE55wbtY",
+        "sawAd": false,
+        "ensureCC": "already",
+        "info": {
+          "title": "Do schools kill creativity? | Sir Ken Robinson | TED",
+          "author": "TED",
+          "lengthSeconds": 1203,
+          "duration": 1203.421,
+          "tracks": [
+            {
+              "lang": "af",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Afrikaans"
+            },
+            {
+              "lang": "sq",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Albanian"
+            },
+            {
+              "lang": "ar",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Arabic"
+            },
+            {
+              "lang": "hy",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Armenian"
+            },
+            {
+              "lang": "az",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Azerbaijani"
+            },
+            {
+              "lang": "bn",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Bangla"
+            },
+            {
+              "lang": "eu",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Basque"
+            },
+            {
+              "lang": "be",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Belarusian"
+            },
+            {
+              "lang": "bg",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Bulgarian"
+            },
+            {
+              "lang": "ca",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Catalan"
+            },
+            {
+              "lang": "ckb",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Central Kurdish"
+            },
+            {
+              "lang": "zh-CN",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Chinese (China)"
+            },
+            {
+              "lang": "zh-TW",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Chinese (Taiwan)"
+            },
+            {
+              "lang": "hr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Croatian"
+            },
+            {
+              "lang": "cs",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Czech"
+            },
+            {
+              "lang": "da",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Danish"
+            },
+            {
+              "lang": "nl",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Dutch"
+            },
+            {
+              "lang": "en",
+              "kind": "manual",
+              "translatable": true,
+              "name": "English"
+            },
+            {
+              "lang": "en",
+              "kind": "asr",
+              "translatable": true,
+              "name": "English (auto-generated)"
+            },
+            {
+              "lang": "eo",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Esperanto"
+            },
+            {
+              "lang": "et",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Estonian"
+            },
+            {
+              "lang": "fil",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Filipino"
+            },
+            {
+              "lang": "fi",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Finnish"
+            },
+            {
+              "lang": "fr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "French"
+            },
+            {
+              "lang": "fr-CA",
+              "kind": "manual",
+              "translatable": true,
+              "name": "French (Canada)"
+            },
+            {
+              "lang": "gl",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Galician"
+            },
+            {
+              "lang": "ka",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Georgian"
+            },
+            {
+              "lang": "de",
+              "kind": "manual",
+              "translatable": true,
+              "name": "German"
+            },
+            {
+              "lang": "el",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Greek"
+            },
+            {
+              "lang": "iw",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Hebrew"
+            },
+            {
+              "lang": "hu",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Hungarian"
+            },
+            {
+              "lang": "id",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Indonesian"
+            },
+            {
+              "lang": "inh",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Ingush"
+            },
+            {
+              "lang": "it",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Italian"
+            },
+            {
+              "lang": "ja",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Japanese"
+            },
+            {
+              "lang": "kn",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Kannada"
+            },
+            {
+              "lang": "ko",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Korean"
+            },
+            {
+              "lang": "ku",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Kurdish"
+            },
+            {
+              "lang": "lo",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Lao"
+            },
+            {
+              "lang": "lv",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Latvian"
+            },
+            {
+              "lang": "lt",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Lithuanian"
+            },
+            {
+              "lang": "mk",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Macedonian"
+            },
+            {
+              "lang": "mr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Marathi"
+            },
+            {
+              "lang": "mn",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Mongolian"
+            },
+            {
+              "lang": "mfe",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Morisyen"
+            },
+            {
+              "lang": "ne",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Nepali"
+            },
+            {
+              "lang": "no",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Norwegian"
+            },
+            {
+              "lang": "fa",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Persian"
+            },
+            {
+              "lang": "pl",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Polish"
+            },
+            {
+              "lang": "pt-BR",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Portuguese (Brazil)"
+            },
+            {
+              "lang": "pt-PT",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Portuguese (Portugal)"
+            },
+            {
+              "lang": "ro",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Romanian"
+            },
+            {
+              "lang": "ru",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Russian"
+            },
+            {
+              "lang": "sr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Serbian"
+            },
+            {
+              "lang": "si",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Sinhala"
+            },
+            {
+              "lang": "sk",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Slovak"
+            },
+            {
+              "lang": "sl",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Slovenian"
+            },
+            {
+              "lang": "es",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Spanish"
+            },
+            {
+              "lang": "sv",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Swedish"
+            },
+            {
+              "lang": "th",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Thai"
+            },
+            {
+              "lang": "tr",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Turkish"
+            },
+            {
+              "lang": "uk",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Ukrainian"
+            },
+            {
+              "lang": "ur",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Urdu"
+            },
+            {
+              "lang": "uz",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Uzbek"
+            },
+            {
+              "lang": "vi",
+              "kind": "manual",
+              "translatable": true,
+              "name": "Vietnamese"
+            }
+          ]
+        },
+        "timedtext": [
+          {
+            "t": 1770,
+            "method": "GET",
+            "videoId": "iG9CE55wbtY",
+            "lang": "en",
+            "trackKind": "manual",
+            "kindParam": null,
+            "capsAsr": true,
+            "hasTlang": false,
+            "format": "json3",
+            "hasPot": true,
+            "initiator": "script",
+            "viaExtensionWrapper": true,
+            "status": 200,
+            "fromCache": false,
+            "encodedBytes": 16,
+            "bodyBytes": 0,
+            "bodySha256": "e3b0c44298fc1c14",
+            "failed": null,
+            "mimeType": "text/html",
+            "bodyChars": 0
+          }
+        ],
+        "snapshot": {
+          "currentVideoId": "iG9CE55wbtY",
+          "durationMs": 1203421,
+          "navigations": 1,
+          "accepted": [],
+          "rejected": [
+            {
+              "code": "EX_EMPTY_BODY",
+              "detail": "طول الجسم 0",
+              "videoId": "iG9CE55wbtY",
+              "lang": "en",
+              "trackKind": "manual",
+              "hasTlang": false,
+              "format": "json3",
+              "bodyLength": 0,
+              "status": 200,
+              "currentVideoId": "iG9CE55wbtY"
+            }
+          ]
+        },
+        "extensionNetwork": null,
+        "screenshot": "docs/evidence/P1/screenshots/chrome-capture-manual.png"
+      },
+      {
+        "label": "asr",
+        "videoId": "Y9rkKtK1b44",
+        "sawAd": false,
+        "ensureCC": "already",
+        "info": {
+          "title": "Naval Heritage | Jonathan Parshall: The Untold Story of the Battle of Midway",
+          "author": "U.S. Naval War College",
+          "lengthSeconds": 3000,
+          "duration": 3000.421,
+          "tracks": [
+            {
+              "lang": "en",
+              "kind": "asr",
+              "translatable": true,
+              "name": "English (auto-generated)"
+            }
+          ]
+        },
+        "timedtext": [
+          {
+            "t": 1245,
+            "method": "GET",
+            "videoId": "Y9rkKtK1b44",
+            "lang": "en",
+            "trackKind": "asr",
+            "kindParam": "asr",
+            "capsAsr": true,
+            "hasTlang": false,
+            "format": "json3",
+            "hasPot": true,
+            "initiator": "script",
+            "viaExtensionWrapper": true,
+            "status": 200,
+            "fromCache": false,
+            "encodedBytes": 18,
+            "bodyBytes": 0,
+            "bodySha256": "e3b0c44298fc1c14",
+            "failed": null,
+            "mimeType": "text/html",
+            "bodyChars": 0
+          }
+        ],
+        "snapshot": {
+          "currentVideoId": "Y9rkKtK1b44",
+          "durationMs": 3000421,
+          "navigations": 1,
+          "accepted": [],
+          "rejected": [
+            {
+              "code": "EX_EMPTY_BODY",
+              "detail": "طول الجسم 0",
+              "videoId": "Y9rkKtK1b44",
+              "lang": "en",
+              "trackKind": "asr",
+              "hasTlang": false,
+              "format": "json3",
+              "bodyLength": 0,
+              "status": 200,
+              "currentVideoId": "Y9rkKtK1b44"
+            }
+          ]
+        },
+        "extensionNetwork": null,
+        "screenshot": "docs/evidence/P1/screenshots/chrome-capture-asr.png"
+      }
+    ],
+    "special": {
+      "noCaptions": {
+        "videoId": "aqz-KE-bpKQ",
+        "tracks": [],
+        "ccButton": {
+          "visible": false,
+          "pressed": "false"
+        },
+        "clicked": false,
+        "timedtext": [],
+        "snapshot": {
+          "currentVideoId": "aqz-KE-bpKQ",
+          "durationMs": 634601,
+          "navigations": 1,
+          "accepted": [],
+          "rejected": []
+        }
+      },
+      "tlang": {
+        "videoId": "iG9CE55wbtY",
+        "menu": "لا عنصر «Arabic»",
+        "restore": "ok",
+        "timedtext": [
+          {
+            "t": 1375,
+            "method": "GET",
+            "videoId": "iG9CE55wbtY",
+            "lang": "en",
+            "trackKind": "manual",
+            "kindParam": null,
+            "capsAsr": true,
+            "hasTlang": false,
+            "format": "json3",
+            "hasPot": true,
+            "initiator": "script",
+            "viaExtensionWrapper": true,
+            "status": 200,
+            "fromCache": false,
+            "encodedBytes": 23,
+            "bodyBytes": 0,
+            "bodySha256": "e3b0c44298fc1c14",
+            "failed": null,
+            "mimeType": "text/html",
+            "bodyChars": 0
+          }
+        ],
+        "snapshot": {
+          "currentVideoId": "iG9CE55wbtY",
+          "durationMs": 1203421,
+          "navigations": 1,
+          "accepted": [],
+          "rejected": [
+            {
+              "code": "EX_EMPTY_BODY",
+              "detail": "طول الجسم 0",
+              "videoId": "iG9CE55wbtY",
+              "lang": "en",
+              "trackKind": "manual",
+              "hasTlang": false,
+              "format": "json3",
+              "bodyLength": 0,
+              "status": 200,
+              "currentVideoId": "iG9CE55wbtY"
+            }
+          ]
+        }
+      }
+    },
+    "nav": {
+      "steps": [
+        {
+          "i": 1,
+          "from": "iG9CE55wbtY",
+          "to": "Mh3_wYHdeVs",
+          "clicked": false,
+          "arrived": false,
+          "urlId": "iG9CE55wbtY",
+          "sawAd": false,
+          "hasTracks": [
+            "af:manual",
+            "sq:manual",
+            "ar:manual",
+            "hy:manual",
+            "az:manual",
+            "bn:manual",
+            "eu:manual",
+            "be:manual",
+            "bg:manual",
+            "ca:manual",
+            "ckb:manual",
+            "zh-CN:manual",
+            "zh-TW:manual",
+            "hr:manual",
+            "cs:manual",
+            "da:manual",
+            "nl:manual",
+            "en:manual",
+            "en:asr",
+            "eo:manual",
+            "et:manual",
+            "fil:manual",
+            "fi:manual",
+            "fr:manual",
+            "fr-CA:manual",
+            "gl:manual",
+            "ka:manual",
+            "de:manual",
+            "el:manual",
+            "iw:manual",
+            "hu:manual",
+            "id:manual",
+            "inh:manual",
+            "it:manual",
+            "ja:manual",
+            "kn:manual",
+            "ko:manual",
+            "ku:manual",
+            "lo:manual",
+            "lv:manual",
+            "lt:manual",
+            "mk:manual",
+            "mr:manual",
+            "mn:manual",
+            "mfe:manual",
+            "ne:manual",
+            "no:manual",
+            "fa:manual",
+            "pl:manual",
+            "pt-BR:manual",
+            "pt-PT:manual",
+            "ro:manual",
+            "ru:manual",
+            "sr:manual",
+            "si:manual",
+            "sk:manual",
+            "sl:manual",
+            "es:manual",
+            "sv:manual",
+            "th:manual",
+            "tr:manual",
+            "uk:manual",
+            "ur:manual",
+            "uz:manual",
+            "vi:manual"
+          ],
+          "ccPressed": "true",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        },
+        {
+          "i": 2,
+          "from": "iG9CE55wbtY",
+          "to": "BUzMam2kH8g",
+          "clicked": true,
+          "arrived": true,
+          "urlId": "BUzMam2kH8g",
+          "sawAd": false,
+          "hasTracks": [],
+          "ccPressed": "false",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        },
+        {
+          "i": 3,
+          "from": "BUzMam2kH8g",
+          "to": "HJ-iljYCegI",
+          "clicked": true,
+          "arrived": true,
+          "urlId": "HJ-iljYCegI",
+          "sawAd": false,
+          "hasTracks": [
+            "ar:asr"
+          ],
+          "ccPressed": "false",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        },
+        {
+          "i": 4,
+          "from": "HJ-iljYCegI",
+          "to": "tsHYujfXasc",
+          "clicked": true,
+          "arrived": true,
+          "urlId": "tsHYujfXasc",
+          "sawAd": true,
+          "hasTracks": [
+            "ar:asr"
+          ],
+          "ccPressed": "true",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_WRONG_VIDEO",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        },
+        {
+          "i": 5,
+          "from": "tsHYujfXasc",
+          "to": "7UsSLSnliQo",
+          "clicked": true,
+          "arrived": true,
+          "urlId": "7UsSLSnliQo",
+          "sawAd": false,
+          "hasTracks": [
+            "ar:asr",
+            "en:asr"
+          ],
+          "ccPressed": "true",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_WRONG_VIDEO",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_EMPTY_BODY",
+            "EX_EMPTY_BODY"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        },
+        {
+          "i": 6,
+          "from": "7UsSLSnliQo",
+          "to": "1sFMrylREVY",
+          "clicked": true,
+          "arrived": true,
+          "urlId": "1sFMrylREVY",
+          "sawAd": false,
+          "hasTracks": [
+            "ar:asr"
+          ],
+          "ccPressed": "true",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_WRONG_VIDEO",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_EMPTY_BODY",
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        },
+        {
+          "i": 7,
+          "from": "1sFMrylREVY",
+          "to": "4iIEDhtNxWw",
+          "clicked": false,
+          "arrived": false,
+          "urlId": "1sFMrylREVY",
+          "sawAd": false,
+          "hasTracks": [
+            "ar:asr"
+          ],
+          "ccPressed": "true",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_WRONG_VIDEO",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_EMPTY_BODY",
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        },
+        {
+          "i": 8,
+          "from": "1sFMrylREVY",
+          "to": "7MGdv-RZkMA",
+          "clicked": true,
+          "arrived": true,
+          "urlId": "7MGdv-RZkMA",
+          "sawAd": false,
+          "hasTracks": [
+            "ar:asr"
+          ],
+          "ccPressed": "true",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_WRONG_VIDEO",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_EMPTY_BODY",
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        },
+        {
+          "i": 9,
+          "from": "7MGdv-RZkMA",
+          "to": "m4YUdhK-tvA",
+          "clicked": true,
+          "arrived": true,
+          "urlId": "m4YUdhK-tvA",
+          "sawAd": false,
+          "hasTracks": [
+            "ar:asr"
+          ],
+          "ccPressed": "true",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_WRONG_VIDEO",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_EMPTY_BODY",
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        },
+        {
+          "i": 10,
+          "from": "m4YUdhK-tvA",
+          "to": "o91DwZDP7zU",
+          "clicked": false,
+          "arrived": false,
+          "urlId": "m4YUdhK-tvA",
+          "sawAd": false,
+          "hasTracks": [
+            "ar:asr"
+          ],
+          "ccPressed": "true",
+          "accepted": [],
+          "rejectedSoFar": [
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_WRONG_VIDEO",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_EMPTY_BODY",
+            "EX_EMPTY_BODY",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH"
+          ],
+          "wrongAccepted": 0,
+          "spotCheck": null
+        }
+      ],
+      "wrongAcceptedTotal": 0,
+      "timedtext": [
+        {
+          "t": 1359,
+          "method": "GET",
+          "videoId": "iG9CE55wbtY",
+          "lang": "en",
+          "trackKind": "manual",
+          "kindParam": null,
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 24,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 37590,
+          "method": "GET",
+          "videoId": "HJ-iljYCegI",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": null,
+          "fromCache": false,
+          "encodedBytes": null,
+          "bodyBytes": null,
+          "bodySha256": null,
+          "failed": "net::ERR_ABORTED"
+        },
+        {
+          "t": 45297,
+          "method": "GET",
+          "videoId": "HJ-iljYCegI",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": null,
+          "fromCache": false,
+          "encodedBytes": null,
+          "bodyBytes": null,
+          "bodySha256": null,
+          "failed": "net::ERR_ABORTED"
+        },
+        {
+          "t": 45297,
+          "method": "GET",
+          "videoId": "tsHYujfXasc",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": null,
+          "fromCache": false,
+          "encodedBytes": null,
+          "bodyBytes": null,
+          "bodySha256": null,
+          "failed": "net::ERR_ABORTED"
+        },
+        {
+          "t": 45397,
+          "method": "GET",
+          "videoId": "tsHYujfXasc",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 24,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 54744,
+          "method": "GET",
+          "videoId": "7UsSLSnliQo",
+          "lang": "en",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 24,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 54903,
+          "method": "GET",
+          "videoId": "7UsSLSnliQo",
+          "lang": "en",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 24,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 63108,
+          "method": "GET",
+          "videoId": "1sFMrylREVY",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": null,
+          "fromCache": false,
+          "encodedBytes": null,
+          "bodyBytes": null,
+          "bodySha256": null,
+          "failed": "net::ERR_ABORTED"
+        },
+        {
+          "t": 63196,
+          "method": "GET",
+          "videoId": "1sFMrylREVY",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 24,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 93451,
+          "method": "GET",
+          "videoId": "7MGdv-RZkMA",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 24,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 93698,
+          "method": "GET",
+          "videoId": "7MGdv-RZkMA",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 24,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 101446,
+          "method": "GET",
+          "videoId": "m4YUdhK-tvA",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": null,
+          "fromCache": false,
+          "encodedBytes": null,
+          "bodyBytes": null,
+          "bodySha256": null,
+          "failed": "net::ERR_ABORTED"
+        },
+        {
+          "t": 101535,
+          "method": "GET",
+          "videoId": "m4YUdhK-tvA",
+          "lang": "ar",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 24,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        }
+      ],
+      "stats": {
+        "total": 408,
+        "extensionFrames": 192,
+        "extensionOnly": 0,
+        "extensionOnlySamples": [],
+        "byType": {
+          "Document": 2,
+          "Fetch": 109,
+          "XHR": 83,
+          "Script": 25,
+          "Stylesheet": 8,
+          "Image": 143,
+          "Font": 4,
+          "Manifest": 1,
+          "Other": 29,
+          "Media": 4
+        }
+      }
+    },
+    "hover": {
+      "search": [
+        {
+          "i": 0,
+          "id": "-moW9jvvMr4",
+          "preview": {
+            "present": true,
+            "playing": true,
+            "captions": false
+          }
+        },
+        {
+          "i": 1,
+          "id": "-moW9jvvMr4",
+          "preview": {
+            "present": true,
+            "playing": true,
+            "captions": false
+          }
+        },
+        {
+          "i": 2,
+          "id": "eVFzbxmKNUw",
+          "preview": {
+            "present": true,
+            "playing": true,
+            "captions": false
+          }
+        },
+        {
+          "i": 3,
+          "id": "eVFzbxmKNUw",
+          "preview": {
+            "present": true,
+            "playing": true,
+            "captions": false
+          }
+        },
+        {
+          "i": 4,
+          "id": "LNHBMFCzznE",
+          "preview": {
+            "present": true,
+            "playing": true,
+            "captions": false
+          }
+        },
+        {
+          "i": 5,
+          "id": "LNHBMFCzznE",
+          "preview": {
+            "present": true,
+            "playing": true,
+            "captions": false
+          }
+        }
+      ],
+      "searchSnapshot": {
+        "currentVideoId": null,
+        "durationMs": null,
+        "navigations": 0,
+        "accepted": [],
+        "rejected": [
+          {
+            "code": "EX_NO_VIDEO",
+            "detail": "لا فيديو في عنوان الصفحة",
+            "videoId": "lubbyFo9r8M",
+            "lang": "en",
+            "trackKind": "asr",
+            "hasTlang": false,
+            "format": "json3",
+            "bodyLength": 0,
+            "status": 200,
+            "currentVideoId": null
+          },
+          {
+            "code": "EX_NO_VIDEO",
+            "detail": "لا فيديو في عنوان الصفحة",
+            "videoId": "lubbyFo9r8M",
+            "lang": "en",
+            "trackKind": "asr",
+            "hasTlang": false,
+            "format": "json3",
+            "bodyLength": 0,
+            "status": 200,
+            "currentVideoId": null
+          },
+          {
+            "code": "EX_NO_VIDEO",
+            "detail": "لا فيديو في عنوان الصفحة",
+            "videoId": "-moW9jvvMr4",
+            "lang": "en",
+            "trackKind": "manual",
+            "hasTlang": false,
+            "format": "json3",
+            "bodyLength": 0,
+            "status": 200,
+            "currentVideoId": null
+          },
+          {
+            "code": "EX_NO_VIDEO",
+            "detail": "لا فيديو في عنوان الصفحة",
+            "videoId": "-moW9jvvMr4",
+            "lang": "en",
+            "trackKind": "manual",
+            "hasTlang": false,
+            "format": "json3",
+            "bodyLength": 0,
+            "status": 200,
+            "currentVideoId": null
+          },
+          {
+            "code": "EX_NO_VIDEO",
+            "detail": "لا فيديو في عنوان الصفحة",
+            "videoId": "eVFzbxmKNUw",
+            "lang": "en",
+            "trackKind": "manual",
+            "hasTlang": false,
+            "format": "json3",
+            "bodyLength": 0,
+            "status": 200,
+            "currentVideoId": null
+          },
+          {
+            "code": "EX_NO_VIDEO",
+            "detail": "لا فيديو في عنوان الصفحة",
+            "videoId": "eVFzbxmKNUw",
+            "lang": "en",
+            "trackKind": "manual",
+            "hasTlang": false,
+            "format": "json3",
+            "bodyLength": 0,
+            "status": 200,
+            "currentVideoId": null
+          },
+          {
+            "code": "EX_NO_VIDEO",
+            "detail": "لا فيديو في عنوان الصفحة",
+            "videoId": "LNHBMFCzznE",
+            "lang": "en",
+            "trackKind": "manual",
+            "hasTlang": false,
+            "format": "json3",
+            "bodyLength": 0,
+            "status": 200,
+            "currentVideoId": null
+          },
+          {
+            "code": "EX_NO_VIDEO",
+            "detail": "لا فيديو في عنوان الصفحة",
+            "videoId": "LNHBMFCzznE",
+            "lang": "en",
+            "trackKind": "manual",
+            "hasTlang": false,
+            "format": "json3",
+            "bodyLength": 0,
+            "status": 200,
+            "currentVideoId": null
+          }
+        ]
+      },
+      "watch": [
+        {
+          "i": 0,
+          "id": "iG9CE55wbtY",
+          "preview": {
+            "present": true,
+            "playing": false,
+            "captions": false
+          }
+        },
+        {
+          "i": 1,
+          "id": "iG9CE55wbtY",
+          "preview": {
+            "present": true,
+            "playing": false,
+            "captions": false
+          }
+        },
+        {
+          "i": 2,
+          "id": "iG9CE55wbtY",
+          "preview": {
+            "present": true,
+            "playing": false,
+            "captions": false
+          }
+        },
+        {
+          "i": 3,
+          "id": "iG9CE55wbtY",
+          "preview": {
+            "present": true,
+            "playing": false,
+            "captions": false
+          }
+        },
+        {
+          "i": 4,
+          "id": "iG9CE55wbtY",
+          "preview": {
+            "present": true,
+            "playing": false,
+            "captions": false
+          }
+        }
+      ],
+      "watchSnapshot": {
+        "currentVideoId": "iG9CE55wbtY",
+        "durationMs": 1203421,
+        "navigations": 1,
+        "accepted": [],
+        "rejected": [
+          {
+            "code": "EX_EMPTY_BODY",
+            "detail": "طول الجسم 0",
+            "videoId": "iG9CE55wbtY",
+            "lang": "en",
+            "trackKind": "manual",
+            "hasTlang": false,
+            "format": "json3",
+            "bodyLength": 0,
+            "status": 200,
+            "currentVideoId": "iG9CE55wbtY"
+          }
+        ]
+      },
+      "timedtext": [
+        {
+          "t": 1534,
+          "method": "GET",
+          "videoId": "lubbyFo9r8M",
+          "lang": "en",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 26,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 1985,
+          "method": "GET",
+          "videoId": "lubbyFo9r8M",
+          "lang": "en",
+          "trackKind": "asr",
+          "kindParam": "asr",
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 26,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 5660,
+          "method": "GET",
+          "videoId": "-moW9jvvMr4",
+          "lang": "en",
+          "trackKind": "manual",
+          "kindParam": null,
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 27,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 6025,
+          "method": "GET",
+          "videoId": "-moW9jvvMr4",
+          "lang": "en",
+          "trackKind": "manual",
+          "kindParam": null,
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 27,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 15981,
+          "method": "GET",
+          "videoId": "eVFzbxmKNUw",
+          "lang": "en",
+          "trackKind": "manual",
+          "kindParam": null,
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 27,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 16236,
+          "method": "GET",
+          "videoId": "eVFzbxmKNUw",
+          "lang": "en",
+          "trackKind": "manual",
+          "kindParam": null,
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 27,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 26888,
+          "method": "GET",
+          "videoId": "LNHBMFCzznE",
+          "lang": "en",
+          "trackKind": "manual",
+          "kindParam": null,
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 27,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 27114,
+          "method": "GET",
+          "videoId": "LNHBMFCzznE",
+          "lang": "en",
+          "trackKind": "manual",
+          "kindParam": null,
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 27,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        },
+        {
+          "t": 39008,
+          "method": "GET",
+          "videoId": "iG9CE55wbtY",
+          "lang": "en",
+          "trackKind": "manual",
+          "kindParam": null,
+          "capsAsr": true,
+          "hasTlang": false,
+          "format": "json3",
+          "hasPot": true,
+          "initiator": "script",
+          "viaExtensionWrapper": true,
+          "status": 200,
+          "fromCache": false,
+          "encodedBytes": 18,
+          "bodyBytes": 0,
+          "bodySha256": "e3b0c44298fc1c14",
+          "failed": null,
+          "mimeType": "text/html",
+          "bodyChars": 0
+        }
+      ],
+      "acceptedFromHover": 0
+    },
+    "ad": {
+      "tries": [
+        {
+          "videoId": "kJQP7kiw5Fk",
+          "adShown": false,
+          "duringAd": null,
+          "after": {
+            "currentVideoId": "kJQP7kiw5Fk",
+            "durationMs": 281521,
+            "navigations": 1,
+            "accepted": [],
+            "rejected": [
+              {
+                "code": "EX_EMPTY_BODY",
+                "detail": "الحالة 0",
+                "videoId": "kJQP7kiw5Fk",
+                "lang": "en-US",
+                "trackKind": "manual",
+                "hasTlang": false,
+                "format": "json3",
+                "bodyLength": 0,
+                "status": 0,
+                "currentVideoId": "kJQP7kiw5Fk"
+              },
+              {
+                "code": "EX_EMPTY_BODY",
+                "detail": "طول الجسم 0",
+                "videoId": "kJQP7kiw5Fk",
+                "lang": "en-US",
+                "trackKind": "manual",
+                "hasTlang": false,
+                "format": "json3",
+                "bodyLength": 0,
+                "status": 200,
+                "currentVideoId": "kJQP7kiw5Fk"
+              }
+            ]
+          },
+          "timedtext": [
+            {
+              "t": 1322,
+              "method": "GET",
+              "videoId": "kJQP7kiw5Fk",
+              "lang": "en-US",
+              "trackKind": "manual",
+              "kindParam": null,
+              "capsAsr": false,
+              "hasTlang": false,
+              "format": "json3",
+              "hasPot": true,
+              "initiator": "script",
+              "viaExtensionWrapper": true,
+              "status": null,
+              "fromCache": false,
+              "encodedBytes": null,
+              "bodyBytes": null,
+              "bodySha256": null,
+              "failed": "net::ERR_ABORTED"
+            },
+            {
+              "t": 1382,
+              "method": "GET",
+              "videoId": "kJQP7kiw5Fk",
+              "lang": "en-US",
+              "trackKind": "manual",
+              "kindParam": null,
+              "capsAsr": false,
+              "hasTlang": false,
+              "format": "json3",
+              "hasPot": true,
+              "initiator": "script",
+              "viaExtensionWrapper": true,
+              "status": 200,
+              "fromCache": false,
+              "encodedBytes": 19,
+              "bodyBytes": 0,
+              "bodySha256": "e3b0c44298fc1c14",
+              "failed": null,
+              "mimeType": "text/html",
+              "bodyChars": 0
+            }
+          ]
+        },
+        {
+          "videoId": "JGwWNGJdvx8",
+          "adShown": false,
+          "duringAd": null,
+          "after": {
+            "currentVideoId": "JGwWNGJdvx8",
+            "durationMs": 263241,
+            "navigations": 1,
+            "accepted": [],
+            "rejected": [
+              {
+                "code": "EX_EMPTY_BODY",
+                "detail": "طول الجسم 0",
+                "videoId": "JGwWNGJdvx8",
+                "lang": "en",
+                "trackKind": "manual",
+                "hasTlang": false,
+                "format": "json3",
+                "bodyLength": 0,
+                "status": 200,
+                "currentVideoId": "JGwWNGJdvx8"
+              },
+              {
+                "code": "EX_EMPTY_BODY",
+                "detail": "طول الجسم 0",
+                "videoId": "JGwWNGJdvx8",
+                "lang": "en",
+                "trackKind": "manual",
+                "hasTlang": false,
+                "format": "json3",
+                "bodyLength": 0,
+                "status": 200,
+                "currentVideoId": "JGwWNGJdvx8"
+              }
+            ]
+          },
+          "timedtext": [
+            {
+              "t": 1854,
+              "method": "GET",
+              "videoId": "JGwWNGJdvx8",
+              "lang": "en",
+              "trackKind": "manual",
+              "kindParam": null,
+              "capsAsr": true,
+              "hasTlang": false,
+              "format": "json3",
+              "hasPot": true,
+              "initiator": "script",
+              "viaExtensionWrapper": true,
+              "status": 200,
+              "fromCache": false,
+              "encodedBytes": 23,
+              "bodyBytes": 0,
+              "bodySha256": "e3b0c44298fc1c14",
+              "failed": null,
+              "mimeType": "text/html",
+              "bodyChars": 0
+            },
+            {
+              "t": 5312,
+              "method": "GET",
+              "videoId": "JGwWNGJdvx8",
+              "lang": "en",
+              "trackKind": "manual",
+              "kindParam": null,
+              "capsAsr": true,
+              "hasTlang": false,
+              "format": "json3",
+              "hasPot": true,
+              "initiator": "script",
+              "viaExtensionWrapper": true,
+              "status": 200,
+              "fromCache": false,
+              "encodedBytes": 24,
+              "bodyBytes": 0,
+              "bodySha256": "e3b0c44298fc1c14",
+              "failed": null,
+              "mimeType": "text/html",
+              "bodyChars": 0
+            }
+          ]
+        },
+        {
+          "videoId": "9bZkp7q19f0",
+          "adShown": true,
+          "duringAd": {
+            "currentVideoId": "9bZkp7q19f0",
+            "durationMs": null,
+            "navigations": 1,
+            "accepted": [],
+            "rejected": [
+              {
+                "code": "EX_WRONG_VIDEO",
+                "detail": "v لا يطابق الفيديو المعروض",
+                "videoId": "Tb_V746DQpA",
+                "lang": "en",
+                "trackKind": "asr",
+                "hasTlang": false,
+                "format": "json3",
+                "bodyLength": 0,
+                "status": 200,
+                "currentVideoId": "9bZkp7q19f0"
+              }
+            ]
+          },
+          "after": {
+            "currentVideoId": "9bZkp7q19f0",
+            "durationMs": 252241,
+            "navigations": 1,
+            "accepted": [],
+            "rejected": [
+              {
+                "code": "EX_WRONG_VIDEO",
+                "detail": "v لا يطابق الفيديو المعروض",
+                "videoId": "Tb_V746DQpA",
+                "lang": "en",
+                "trackKind": "asr",
+                "hasTlang": false,
+                "format": "json3",
+                "bodyLength": 0,
+                "status": 200,
+                "currentVideoId": "9bZkp7q19f0"
+              },
+              {
+                "code": "EX_NOT_ENGLISH",
+                "detail": "lang=ko",
+                "videoId": "9bZkp7q19f0",
+                "lang": "ko",
+                "trackKind": "asr",
+                "hasTlang": false,
+                "format": "json3",
+                "bodyLength": 0,
+                "status": 200,
+                "currentVideoId": "9bZkp7q19f0"
+              }
+            ]
+          },
+          "timedtext": [
+            {
+              "t": 1396,
+              "method": "GET",
+              "videoId": "Tb_V746DQpA",
+              "lang": "en",
+              "trackKind": "asr",
+              "kindParam": "asr",
+              "capsAsr": true,
+              "hasTlang": false,
+              "format": "json3",
+              "hasPot": true,
+              "initiator": "script",
+              "viaExtensionWrapper": true,
+              "status": 200,
+              "fromCache": false,
+              "encodedBytes": 24,
+              "bodyBytes": 0,
+              "bodySha256": "e3b0c44298fc1c14",
+              "failed": null,
+              "mimeType": "text/html",
+              "bodyChars": 0
+            },
+            {
+              "t": 54872,
+              "method": "GET",
+              "videoId": "9bZkp7q19f0",
+              "lang": "ko",
+              "trackKind": "asr",
+              "kindParam": "asr",
+              "capsAsr": true,
+              "hasTlang": false,
+              "format": "json3",
+              "hasPot": true,
+              "initiator": "script",
+              "viaExtensionWrapper": true,
+              "status": 200,
+              "fromCache": false,
+              "encodedBytes": 25,
+              "bodyBytes": 0,
+              "bodySha256": "e3b0c44298fc1c14",
+              "failed": null,
+              "mimeType": "text/html",
+              "bodyChars": 0
+            }
+          ]
+        }
+      ]
+    },
+    "storage": {
+      "localKeys": [],
+      "sessionKeys": [],
+      "bytes": 25,
+      "secrets": 0
+    }
+  },
+  "errors": [],
+  "version": {
+    "product": "Chrome/156.0.8078.74",
+    "protocol": "1.3"
+  },
+  "navigatorWebdriver": true,
+  "finishedAt": "2026-11-01T11:19:38.745Z"
+}

@@ -1,0 +1,272 @@
+{
+  "label": "brave-manual-nav",
+  "exportedAt": "2026-11-01T13:28:25.012Z",
+  "browser": {
+    "isBrave": true,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "brands": [
+      "Not:A-Brand 8",
+      "Chromium 156",
+      "Brave 156"
+    ],
+    "webdriverExtensionPage": false
+  },
+  "storage": {
+    "local": [],
+    "session": []
+  },
+  "secretsInExport": 0,
+  "tabs": [
+    {
+      "navigations": 12,
+      "visited": 13,
+      "acceptedTotal": 22,
+      "wrongAccepted": 0,
+      "pendingAccepted": 0,
+      "pendingReevaluated": 0,
+      "nonDisplayedRejected": [],
+      "perVideo": [
+        {
+          "videoId": "Q_h4IoPJXZw",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 3310,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [
+            "EX_NOT_ENGLISH",
+            "EX_NOT_ENGLISH"
+          ],
+          "shown": 2
+        },
+        {
+          "videoId": "_riIY-v2Ym8",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 2577,
+              "pendingAgeMs": null
+            },
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 2577,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 0
+        },
+        {
+          "videoId": "Hk3fgjHNQ2Q",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 12566,
+              "pendingAgeMs": null
+            },
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 12566,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [
+            "EX_EMPTY_BODY"
+          ],
+          "shown": 0
+        },
+        {
+          "videoId": "hTxWAQGgeQw",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 38448,
+              "pendingAgeMs": null
+            },
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 38448,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 4
+        },
+        {
+          "videoId": "1rLWVZVWfdY",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 12127,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [
+            "EX_EMPTY_BODY"
+          ],
+          "shown": 2
+        },
+        {
+          "videoId": "ajhFNcUTJI0",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 4735,
+              "pendingAgeMs": null
+            },
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 4735,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 3
+        },
+        {
+          "videoId": "s5S-hA9uKEM",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 3488,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 0
+        },
+        {
+          "videoId": "lR4tJr7sMPM",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 3702,
+              "pendingAgeMs": null
+            },
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 3702,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 4
+        },
+        {
+          "videoId": "GdTMuivYF30",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 4470,
+              "pendingAgeMs": null
+            },
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 4470,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 4
+        },
+        {
+          "videoId": "v6o2bUPdxV0",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 4070,
+              "pendingAgeMs": null
+            },
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 4070,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 4
+        },
+        {
+          "videoId": "gxJ4M7tyLRE",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 9011,
+              "pendingAgeMs": null
+            },
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 9011,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 4
+        },
+        {
+          "videoId": "nrTsvn9usVQ",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 5902,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 0
+        },
+        {
+          "videoId": "ASRpIym_jFM",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 8737,
+              "pendingAgeMs": null
+            },
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 8737,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 4
+        }
+      ],
+      "finalSnapshot": {
+        "currentVideoId": "ASRpIym_jFM",
+        "accepted": [
+          {
+            "videoId": "ASRpIym_jFM",
+            "ok": true,
+            "invariants": 6
+          }
+        ]
+      }
+    }
+  ]
+}

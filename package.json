@@ -5,12 +5,23 @@
   "description": "ترجمان: إضافة Chrome وBrave تستخرج ترجمة يوتيوب الإنجليزية إلى SRT وتعرض الترجمة العربية فوق الفيديو. المعالجة والحفظ محليان.",
   "type": "module",
   "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test \"test/unit/**/*.test.js\"",
+    "check:static": "node scripts/check-static.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:quick": "node scripts/check-static.mjs && node --test \"test/unit/**/*.test.js\"",
+    "check": "node scripts/check-static.mjs && node scripts/check-secrets.mjs && node --test \"test/unit/**/*.test.js\" && node scripts/build.mjs",
+    "check:wave": "npm run check && npm run plan:check",
+    "live:p1": "node test/live/p1/run.mjs",
     "plan:check": "node tools/plan/plan.mjs check",
     "plan:sync": "node tools/plan/plan.mjs sync",
     "plan:render": "node tools/plan/plan.mjs render",
     "dashboard": "node tools/plan/plan.mjs serve"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
   }
 }

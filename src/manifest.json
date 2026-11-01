@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "ترجمان — إثبات الاستخراج",
+  "version": "0.1.0",
+  "description": "إثبات P1: التقاط سلبي لترجمة يوتيوب الإنجليزية وتحويلها إلى SRT محليًا.",
+  "minimum_chrome_version": "111",
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "ترجمان — فحص الالتقاط",
+    "default_popup": "pages/poc/index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["main-world/capture.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    },
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content/main.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}

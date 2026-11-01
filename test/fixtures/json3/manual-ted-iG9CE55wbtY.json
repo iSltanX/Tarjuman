@@ -1,0 +1,2575 @@
+{
+  "wireMagic": "pb3",
+  "pens": [ {
+  
+  } ],
+  "wsWinStyles": [ {
+  
+  } ],
+  "wpWinPositions": [ {
+  
+  } ],
+  "events": [ {
+    "tStartMs": 27103,
+    "dDurationMs": 2575,
+    "segs": [ {
+      "utf8": "Good morning. How are you?"
+    } ]
+  }, {
+    "tStartMs": 29702,
+    "dDurationMs": 1403,
+    "segs": [ {
+      "utf8": "(Audience) Good."
+    } ]
+  }, {
+    "tStartMs": 31129,
+    "dDurationMs": 1668,
+    "segs": [ {
+      "utf8": "It's been great, hasn't it?"
+    } ]
+  }, {
+    "tStartMs": 33408,
+    "dDurationMs": 2321,
+    "segs": [ {
+      "utf8": "I've been blown away by the whole thing."
+    } ]
+  }, {
+    "tStartMs": 35753,
+    "dDurationMs": 1492,
+    "segs": [ {
+      "utf8": "In fact, I'm leaving."
+    } ]
+  }, {
+    "tStartMs": 37269,
+    "dDurationMs": 3906,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 43096,
+    "dDurationMs": 3567,
+    "segs": [ {
+      "utf8": "There have been three themes\nrunning through the conference,"
+    } ]
+  }, {
+    "tStartMs": 46687,
+    "dDurationMs": 2286,
+    "segs": [ {
+      "utf8": "which are relevant\nto what I want to talk about."
+    } ]
+  }, {
+    "tStartMs": 48997,
+    "dDurationMs": 4470,
+    "segs": [ {
+      "utf8": "One is the extraordinary\nevidence of human creativity"
+    } ]
+  }, {
+    "tStartMs": 53491,
+    "dDurationMs": 2413,
+    "segs": [ {
+      "utf8": "in all of the presentations that we've had"
+    } ]
+  }, {
+    "tStartMs": 55928,
+    "dDurationMs": 1952,
+    "segs": [ {
+      "utf8": "and in all of the people here;"
+    } ]
+  }, {
+    "tStartMs": 57904,
+    "dDurationMs": 2651,
+    "segs": [ {
+      "utf8": "just the variety of it\nand the range of it."
+    } ]
+  }, {
+    "tStartMs": 61158,
+    "dDurationMs": 2143,
+    "segs": [ {
+      "utf8": "The second is that it's put us in a place"
+    } ]
+  }, {
+    "tStartMs": 63325,
+    "dDurationMs": 2497,
+    "segs": [ {
+      "utf8": "where we have no idea\nwhat's going to happen"
+    } ]
+  }, {
+    "tStartMs": 65846,
+    "dDurationMs": 1391,
+    "segs": [ {
+      "utf8": "in terms of the future."
+    } ]
+  }, {
+    "tStartMs": 67261,
+    "dDurationMs": 2985,
+    "segs": [ {
+      "utf8": "No idea how this may play out."
+    } ]
+  }, {
+    "tStartMs": 70270,
+    "dDurationMs": 1622,
+    "segs": [ {
+      "utf8": "I have an interest in education."
+    } ]
+  }, {
+    "tStartMs": 71916,
+    "dDurationMs": 4412,
+    "segs": [ {
+      "utf8": "Actually, what I find is,\neverybody has an interest in education."
+    } ]
+  }, {
+    "tStartMs": 76352,
+    "dDurationMs": 1317,
+    "segs": [ {
+      "utf8": "Don't you?"
+    } ]
+  }, {
+    "tStartMs": 77693,
+    "dDurationMs": 1402,
+    "segs": [ {
+      "utf8": "I find this very interesting."
+    } ]
+  }, {
+    "tStartMs": 79119,
+    "dDurationMs": 3958,
+    "segs": [ {
+      "utf8": "If you're at a dinner party,\nand you say you work in education --"
+    } ]
+  }, {
+    "tStartMs": 83101,
+    "dDurationMs": 2745,
+    "segs": [ {
+      "utf8": "actually, you're not often\nat dinner parties, frankly."
+    } ]
+  }, {
+    "tStartMs": 85870,
+    "dDurationMs": 3796,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 89690,
+    "dDurationMs": 2428,
+    "segs": [ {
+      "utf8": "If you work in education,\nyou're not asked."
+    } ]
+  }, {
+    "tStartMs": 92142,
+    "dDurationMs": 3179,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 95345,
+    "dDurationMs": 3959,
+    "segs": [ {
+      "utf8": "And you're never asked back, curiously.\nThat's strange to me."
+    } ]
+  }, {
+    "tStartMs": 99328,
+    "dDurationMs": 2216,
+    "segs": [ {
+      "utf8": "But if you are, and you say to somebody,"
+    } ]
+  }, {
+    "tStartMs": 101568,
+    "dDurationMs": 1778,
+    "segs": [ {
+      "utf8": "you know, they say, \"What do you do?\""
+    } ]
+  }, {
+    "tStartMs": 103370,
+    "dDurationMs": 1688,
+    "segs": [ {
+      "utf8": "and you say you work in education,"
+    } ]
+  }, {
+    "tStartMs": 105082,
+    "dDurationMs": 2049,
+    "segs": [ {
+      "utf8": "you can see the blood run from their face."
+    } ]
+  }, {
+    "tStartMs": 107155,
+    "dDurationMs": 1685,
+    "segs": [ {
+      "utf8": "They're like, \"Oh my God. Why me?\""
+    } ]
+  }, {
+    "tStartMs": 108864,
+    "dDurationMs": 2276,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 111164,
+    "dDurationMs": 1524,
+    "segs": [ {
+      "utf8": "\"My one night out all week.\""
+    } ]
+  }, {
+    "tStartMs": 112712,
+    "dDurationMs": 2610,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 115346,
+    "dDurationMs": 3241,
+    "segs": [ {
+      "utf8": "But if you ask about their education,\nthey pin you to the wall,"
+    } ]
+  }, {
+    "tStartMs": 118611,
+    "dDurationMs": 3407,
+    "segs": [ {
+      "utf8": "because it's one of those things\nthat goes deep with people, am I right?"
+    } ]
+  }, {
+    "tStartMs": 122042,
+    "dDurationMs": 3493,
+    "segs": [ {
+      "utf8": "Like religion and money and other things."
+    } ]
+  }, {
+    "tStartMs": 125559,
+    "dDurationMs": 4442,
+    "segs": [ {
+      "utf8": "So I have a big interest in education,\nand I think we all do."
+    } ]
+  }, {
+    "tStartMs": 130025,
+    "dDurationMs": 1802,
+    "segs": [ {
+      "utf8": "We have a huge vested interest in it,"
+    } ]
+  }, {
+    "tStartMs": 131851,
+    "dDurationMs": 3320,
+    "segs": [ {
+      "utf8": "partly because it's education\nthat's meant to take us into this future"
+    } ]
+  }, {
+    "tStartMs": 135195,
+    "dDurationMs": 1654,
+    "segs": [ {
+      "utf8": "that we can't grasp."
+    } ]
+  }, {
+    "tStartMs": 136873,
+    "dDurationMs": 1166,
+    "segs": [ {
+      "utf8": "If you think of it,"
+    } ]
+  }, {
+    "tStartMs": 138063,
+    "dDurationMs": 6122,
+    "segs": [ {
+      "utf8": "children starting school this year\nwill be retiring in 2065."
+    } ]
+  }, {
+    "tStartMs": 145272,
+    "dDurationMs": 1571,
+    "segs": [ {
+      "utf8": "Nobody has a clue,"
+    } ]
+  }, {
+    "tStartMs": 146867,
+    "dDurationMs": 3559,
+    "segs": [ {
+      "utf8": "despite all the expertise that's been\non parade for the past four days,"
+    } ]
+  }, {
+    "tStartMs": 150450,
+    "dDurationMs": 2526,
+    "segs": [ {
+      "utf8": "what the world will look like\nin five years' time."
+    } ]
+  }, {
+    "tStartMs": 153000,
+    "dDurationMs": 2294,
+    "segs": [ {
+      "utf8": "And yet, we're meant\nto be educating them for it."
+    } ]
+  }, {
+    "tStartMs": 155318,
+    "dDurationMs": 2550,
+    "segs": [ {
+      "utf8": "So the unpredictability,\nI think, is extraordinary."
+    } ]
+  }, {
+    "tStartMs": 157892,
+    "dDurationMs": 3428,
+    "segs": [ {
+      "utf8": "And the third part of this\nis that we've all agreed, nonetheless,"
+    } ]
+  }, {
+    "tStartMs": 161344,
+    "dDurationMs": 5305,
+    "segs": [ {
+      "utf8": "on the really extraordinary\ncapacities that children have --"
+    } ]
+  }, {
+    "tStartMs": 166673,
+    "dDurationMs": 2335,
+    "segs": [ {
+      "utf8": "their capacities for innovation."
+    } ]
+  }, {
+    "tStartMs": 169032,
+    "dDurationMs": 2789,
+    "segs": [ {
+      "utf8": "I mean, Sirena last night\nwas a marvel, wasn't she?"
+    } ]
+  }, {
+    "tStartMs": 171845,
+    "dDurationMs": 1670,
+    "segs": [ {
+      "utf8": "Just seeing what she could do."
+    } ]
+  }, {
+    "tStartMs": 173539,
+    "dDurationMs": 5549,
+    "segs": [ {
+      "utf8": "And she's exceptional, but I think\nshe's not, so to speak,"
+    } ]
+  }, {
+    "tStartMs": 179112,
+    "dDurationMs": 2905,
+    "segs": [ {
+      "utf8": "exceptional in the whole of childhood."
+    } ]
+  }, {
+    "tStartMs": 182041,
+    "dDurationMs": 2831,
+    "segs": [ {
+      "utf8": "What you have there is a person\nof extraordinary dedication"
+    } ]
+  }, {
+    "tStartMs": 184896,
+    "dDurationMs": 1171,
+    "segs": [ {
+      "utf8": "who found a talent."
+    } ]
+  }, {
+    "tStartMs": 186091,
+    "dDurationMs": 2586,
+    "segs": [ {
+      "utf8": "And my contention is,\nall kids have tremendous talents,"
+    } ]
+  }, {
+    "tStartMs": 188701,
+    "dDurationMs": 2394,
+    "segs": [ {
+      "utf8": "and we squander them, pretty ruthlessly."
+    } ]
+  }, {
+    "tStartMs": 191119,
+    "dDurationMs": 1857,
+    "segs": [ {
+      "utf8": "So I want to talk about education,"
+    } ]
+  }, {
+    "tStartMs": 193000,
+    "dDurationMs": 1872,
+    "segs": [ {
+      "utf8": "and I want to talk about creativity."
+    } ]
+  }, {
+    "tStartMs": 194896,
+    "dDurationMs": 6096,
+    "segs": [ {
+      "utf8": "My contention is that creativity now\nis as important in education as literacy,"
+    } ]
+  }, {
+    "tStartMs": 201016,
+    "dDurationMs": 2787,
+    "segs": [ {
+      "utf8": "and we should treat it\nwith the same status."
+    } ]
+  }, {
+    "tStartMs": 203827,
+    "dDurationMs": 1112,
+    "segs": [ {
+      "utf8": "(Applause)"
+    } ]
+  }, {
+    "tStartMs": 204963,
+    "dDurationMs": 1189,
+    "segs": [ {
+      "utf8": "Thank you."
+    } ]
+  }, {
+    "tStartMs": 206176,
+    "dDurationMs": 4285,
+    "segs": [ {
+      "utf8": "(Applause)"
+    } ]
+  }, {
+    "tStartMs": 210485,
+    "dDurationMs": 2286,
+    "segs": [ {
+      "utf8": "That was it, by the way.\nThank you very much."
+    } ]
+  }, {
+    "tStartMs": 212795,
+    "dDurationMs": 2115,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 214934,
+    "dDurationMs": 1677,
+    "segs": [ {
+      "utf8": "So, 15 minutes left."
+    } ]
+  }, {
+    "tStartMs": 216635,
+    "dDurationMs": 3157,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 219816,
+    "dDurationMs": 1671,
+    "segs": [ {
+      "utf8": "\"Well, I was born ... \""
+    } ]
+  }, {
+    "tStartMs": 221511,
+    "dDurationMs": 3471,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 225006,
+    "dDurationMs": 2650,
+    "segs": [ {
+      "utf8": "I heard a great story recently --\nI love telling it --"
+    } ]
+  }, {
+    "tStartMs": 227680,
+    "dDurationMs": 2371,
+    "segs": [ {
+      "utf8": "of a little girl\nwho was in a drawing lesson."
+    } ]
+  }, {
+    "tStartMs": 230075,
+    "dDurationMs": 2175,
+    "segs": [ {
+      "utf8": "She was six, and she was\nat the back, drawing,"
+    } ]
+  }, {
+    "tStartMs": 232274,
+    "dDurationMs": 2760,
+    "segs": [ {
+      "utf8": "and the teacher said this girl\nhardly ever paid attention,"
+    } ]
+  }, {
+    "tStartMs": 235058,
+    "dDurationMs": 1786,
+    "segs": [ {
+      "utf8": "and in this drawing lesson, she did."
+    } ]
+  }, {
+    "tStartMs": 236868,
+    "dDurationMs": 1340,
+    "segs": [ {
+      "utf8": "The teacher was fascinated."
+    } ]
+  }, {
+    "tStartMs": 238232,
+    "dDurationMs": 2789,
+    "segs": [ {
+      "utf8": "She went over to her,\nand she said, \"What are you drawing?\""
+    } ]
+  }, {
+    "tStartMs": 241045,
+    "dDurationMs": 2491,
+    "segs": [ {
+      "utf8": "And the girl said,\n\"I'm drawing a picture of God.\""
+    } ]
+  }, {
+    "tStartMs": 244642,
+    "dDurationMs": 3318,
+    "segs": [ {
+      "utf8": "And the teacher said, \"But nobody\nknows what God looks like.\""
+    } ]
+  }, {
+    "tStartMs": 247984,
+    "dDurationMs": 2088,
+    "segs": [ {
+      "utf8": "And the girl said,\n\"They will in a minute.\""
+    } ]
+  }, {
+    "tStartMs": 250096,
+    "dDurationMs": 6782,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 261662,
+    "dDurationMs": 2727,
+    "segs": [ {
+      "utf8": "When my son was four in England --"
+    } ]
+  }, {
+    "tStartMs": 264413,
+    "dDurationMs": 2191,
+    "segs": [ {
+      "utf8": "actually, he was four\neverywhere, to be honest."
+    } ]
+  }, {
+    "tStartMs": 266628,
+    "dDurationMs": 1752,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 268404,
+    "dDurationMs": 3387,
+    "segs": [ {
+      "utf8": "If we're being strict about it,\nwherever he went, he was four that year."
+    } ]
+  }, {
+    "tStartMs": 271815,
+    "dDurationMs": 2638,
+    "segs": [ {
+      "utf8": "He was in the Nativity play.\nDo you remember the story?"
+    } ]
+  }, {
+    "tStartMs": 274477,
+    "dDurationMs": 1219,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 275720,
+    "dDurationMs": 1827,
+    "segs": [ {
+      "utf8": "No, it was big, it was a big story."
+    } ]
+  }, {
+    "tStartMs": 277571,
+    "dDurationMs": 2305,
+    "segs": [ {
+      "utf8": "Mel Gibson did the sequel,\nyou may have seen it."
+    } ]
+  }, {
+    "tStartMs": 279900,
+    "dDurationMs": 1261,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 281185,
+    "dDurationMs": 1561,
+    "segs": [ {
+      "utf8": "\"Nativity II.\""
+    } ]
+  }, {
+    "tStartMs": 282770,
+    "dDurationMs": 3884,
+    "segs": [ {
+      "utf8": "But James got the part of Joseph,\nwhich we were thrilled about."
+    } ]
+  }, {
+    "tStartMs": 286678,
+    "dDurationMs": 2906,
+    "segs": [ {
+      "utf8": "We considered this to be\none of the lead parts."
+    } ]
+  }, {
+    "tStartMs": 289608,
+    "dDurationMs": 2487,
+    "segs": [ {
+      "utf8": "We had the place crammed\nfull of agents in T-shirts:"
+    } ]
+  }, {
+    "tStartMs": 292119,
+    "dDurationMs": 1414,
+    "segs": [ {
+      "utf8": "\"James Robinson IS Joseph!\""
+    } ]
+  }, {
+    "tStartMs": 293557,
+    "dDurationMs": 1033,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 294614,
+    "dDurationMs": 3628,
+    "segs": [ {
+      "utf8": "He didn't have to speak, but you know\nthe bit where the three kings come in?"
+    } ]
+  }, {
+    "tStartMs": 298266,
+    "dDurationMs": 2685,
+    "segs": [ {
+      "utf8": "They come in bearing gifts,\ngold, frankincense and myrrh."
+    } ]
+  }, {
+    "tStartMs": 300975,
+    "dDurationMs": 1158,
+    "segs": [ {
+      "utf8": "This really happened."
+    } ]
+  }, {
+    "tStartMs": 302157,
+    "dDurationMs": 3116,
+    "segs": [ {
+      "utf8": "We were sitting there, and I think\nthey just went out of sequence,"
+    } ]
+  }, {
+    "tStartMs": 305297,
+    "dDurationMs": 2579,
+    "segs": [ {
+      "utf8": "because we talked to the little boy\nafterward and said,"
+    } ]
+  }, {
+    "tStartMs": 307900,
+    "dDurationMs": 2796,
+    "segs": [ {
+      "utf8": "\"You OK with that?\" They said,\n\"Yeah, why? Was that wrong?\""
+    } ]
+  }, {
+    "tStartMs": 310720,
+    "dDurationMs": 1156,
+    "segs": [ {
+      "utf8": "They just switched."
+    } ]
+  }, {
+    "tStartMs": 311900,
+    "dDurationMs": 3310,
+    "segs": [ {
+      "utf8": "The three boys came in, four-year-olds\nwith tea towels on their heads."
+    } ]
+  }, {
+    "tStartMs": 315234,
+    "dDurationMs": 3322,
+    "segs": [ {
+      "utf8": "They put these boxes down, and the first\nboy said, \"I bring you gold.\""
+    } ]
+  }, {
+    "tStartMs": 318580,
+    "dDurationMs": 2274,
+    "segs": [ {
+      "utf8": "And the second boy said,\n\"I bring you myrrh.\""
+    } ]
+  }, {
+    "tStartMs": 320878,
+    "dDurationMs": 2082,
+    "segs": [ {
+      "utf8": "And the third boy said, \"Frank sent this.\""
+    } ]
+  }, {
+    "tStartMs": 322984,
+    "dDurationMs": 5477,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 335711,
+    "dDurationMs": 3090,
+    "segs": [ {
+      "utf8": "What these things have in common\nis that kids will take a chance."
+    } ]
+  }, {
+    "tStartMs": 338825,
+    "dDurationMs": 3482,
+    "segs": [ {
+      "utf8": "If they don't know, they'll have a go."
+    } ]
+  }, {
+    "tStartMs": 342331,
+    "dDurationMs": 3029,
+    "segs": [ {
+      "utf8": "Am I right? They're not\nfrightened of being wrong."
+    } ]
+  }, {
+    "tStartMs": 345924,
+    "dDurationMs": 3507,
+    "segs": [ {
+      "utf8": "I don't mean to say that being wrong\nis the same thing as being creative."
+    } ]
+  }, {
+    "tStartMs": 349886,
+    "dDurationMs": 3090,
+    "segs": [ {
+      "utf8": "What we do know is,\nif you're not prepared to be wrong,"
+    } ]
+  }, {
+    "tStartMs": 353000,
+    "dDurationMs": 2367,
+    "segs": [ {
+      "utf8": "you'll never come up\nwith anything original --"
+    } ]
+  }, {
+    "tStartMs": 355391,
+    "dDurationMs": 2580,
+    "segs": [ {
+      "utf8": "if you're not prepared to be wrong."
+    } ]
+  }, {
+    "tStartMs": 357995,
+    "dDurationMs": 4443,
+    "segs": [ {
+      "utf8": "And by the time they get to be adults,\nmost kids have lost that capacity."
+    } ]
+  }, {
+    "tStartMs": 362462,
+    "dDurationMs": 2464,
+    "segs": [ {
+      "utf8": "They have become\nfrightened of being wrong."
+    } ]
+  }, {
+    "tStartMs": 364950,
+    "dDurationMs": 1690,
+    "segs": [ {
+      "utf8": "And we run our companies like this."
+    } ]
+  }, {
+    "tStartMs": 366664,
+    "dDurationMs": 1652,
+    "segs": [ {
+      "utf8": "We stigmatize mistakes."
+    } ]
+  }, {
+    "tStartMs": 368340,
+    "dDurationMs": 2302,
+    "segs": [ {
+      "utf8": "And we're now running\nnational education systems"
+    } ]
+  }, {
+    "tStartMs": 370666,
+    "dDurationMs": 2539,
+    "segs": [ {
+      "utf8": "where mistakes are the worst\nthing you can make."
+    } ]
+  }, {
+    "tStartMs": 373800,
+    "dDurationMs": 3108,
+    "segs": [ {
+      "utf8": "And the result is that\nwe are educating people"
+    } ]
+  }, {
+    "tStartMs": 376932,
+    "dDurationMs": 2342,
+    "segs": [ {
+      "utf8": "out of their creative capacities."
+    } ]
+  }, {
+    "tStartMs": 379298,
+    "dDurationMs": 4427,
+    "segs": [ {
+      "utf8": "Picasso once said this, he said\nthat all children are born artists."
+    } ]
+  }, {
+    "tStartMs": 383749,
+    "dDurationMs": 3222,
+    "segs": [ {
+      "utf8": "The problem is to remain\nan artist as we grow up."
+    } ]
+  }, {
+    "tStartMs": 386995,
+    "dDurationMs": 3232,
+    "segs": [ {
+      "utf8": "I believe this passionately,\nthat we don't grow into creativity,"
+    } ]
+  }, {
+    "tStartMs": 390251,
+    "dDurationMs": 1705,
+    "segs": [ {
+      "utf8": "we grow out of it."
+    } ]
+  }, {
+    "tStartMs": 391980,
+    "dDurationMs": 1883,
+    "segs": [ {
+      "utf8": "Or rather, we get educated out of it."
+    } ]
+  }, {
+    "tStartMs": 394607,
+    "dDurationMs": 1903,
+    "segs": [ {
+      "utf8": "So why is this?"
+    } ]
+  }, {
+    "tStartMs": 397124,
+    "dDurationMs": 2783,
+    "segs": [ {
+      "utf8": "I lived in Stratford-on-Avon\nuntil about five years ago."
+    } ]
+  }, {
+    "tStartMs": 399931,
+    "dDurationMs": 2253,
+    "segs": [ {
+      "utf8": "In fact, we moved from Stratford\nto Los Angeles."
+    } ]
+  }, {
+    "tStartMs": 402912,
+    "dDurationMs": 2624,
+    "segs": [ {
+      "utf8": "So you can imagine\nwhat a seamless transition this was."
+    } ]
+  }, {
+    "tStartMs": 405560,
+    "dDurationMs": 1416,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 407000,
+    "dDurationMs": 2376,
+    "segs": [ {
+      "utf8": "Actually, we lived in a place\ncalled Snitterfield,"
+    } ]
+  }, {
+    "tStartMs": 409400,
+    "dDurationMs": 1251,
+    "segs": [ {
+      "utf8": "just outside Stratford,"
+    } ]
+  }, {
+    "tStartMs": 410675,
+    "dDurationMs": 2635,
+    "segs": [ {
+      "utf8": "which is where\nShakespeare's father was born."
+    } ]
+  }, {
+    "tStartMs": 413334,
+    "dDurationMs": 2123,
+    "segs": [ {
+      "utf8": "Are you struck by a new thought? I was."
+    } ]
+  }, {
+    "tStartMs": 415481,
+    "dDurationMs": 2595,
+    "segs": [ {
+      "utf8": "You don't think of Shakespeare\nhaving a father, do you?"
+    } ]
+  }, {
+    "tStartMs": 418100,
+    "dDurationMs": 1373,
+    "segs": [ {
+      "utf8": "Do you?"
+    } ]
+  }, {
+    "tStartMs": 419497,
+    "dDurationMs": 2891,
+    "segs": [ {
+      "utf8": "Because you don't think\nof Shakespeare being a child, do you?"
+    } ]
+  }, {
+    "tStartMs": 422412,
+    "dDurationMs": 1264,
+    "segs": [ {
+      "utf8": "Shakespeare being seven?"
+    } ]
+  }, {
+    "tStartMs": 423700,
+    "dDurationMs": 1176,
+    "segs": [ {
+      "utf8": "I never thought of it."
+    } ]
+  }, {
+    "tStartMs": 424900,
+    "dDurationMs": 1692,
+    "segs": [ {
+      "utf8": "I mean, he was seven at some point."
+    } ]
+  }, {
+    "tStartMs": 426616,
+    "dDurationMs": 2266,
+    "segs": [ {
+      "utf8": "He was in somebody's\nEnglish class, wasn't he?"
+    } ]
+  }, {
+    "tStartMs": 428906,
+    "dDurationMs": 6787,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 435717,
+    "dDurationMs": 1329,
+    "segs": [ {
+      "utf8": "How annoying would that be?"
+    } ]
+  }, {
+    "tStartMs": 437070,
+    "dDurationMs": 3000,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 444939,
+    "dDurationMs": 1340,
+    "segs": [ {
+      "utf8": "\"Must try harder.\""
+    } ]
+  }, {
+    "tStartMs": 446303,
+    "dDurationMs": 3400,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 450559,
+    "dDurationMs": 2981,
+    "segs": [ {
+      "utf8": "Being sent to bed by his dad,\nto Shakespeare, \"Go to bed, now!\""
+    } ]
+  }, {
+    "tStartMs": 453564,
+    "dDurationMs": 1158,
+    "segs": [ {
+      "utf8": "To William Shakespeare."
+    } ]
+  }, {
+    "tStartMs": 454746,
+    "dDurationMs": 1271,
+    "segs": [ {
+      "utf8": "\"And put the pencil down!\""
+    } ]
+  }, {
+    "tStartMs": 456041,
+    "dDurationMs": 1075,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 457140,
+    "dDurationMs": 1477,
+    "segs": [ {
+      "utf8": "\"And stop speaking like that.\""
+    } ]
+  }, {
+    "tStartMs": 458641,
+    "dDurationMs": 3579,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 462244,
+    "dDurationMs": 1324,
+    "segs": [ {
+      "utf8": "\"It's confusing everybody.\""
+    } ]
+  }, {
+    "tStartMs": 463592,
+    "dDurationMs": 5270,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 468886,
+    "dDurationMs": 5186,
+    "segs": [ {
+      "utf8": "Anyway, we moved\nfrom Stratford to Los Angeles,"
+    } ]
+  }, {
+    "tStartMs": 474096,
+    "dDurationMs": 2476,
+    "segs": [ {
+      "utf8": "and I just want to say a word\nabout the transition."
+    } ]
+  }, {
+    "tStartMs": 476596,
+    "dDurationMs": 1802,
+    "segs": [ {
+      "utf8": "Actually, my son didn't want to come."
+    } ]
+  }, {
+    "tStartMs": 478422,
+    "dDurationMs": 2395,
+    "segs": [ {
+      "utf8": "I've got two kids;\nhe's 21 now, my daughter's 16."
+    } ]
+  }, {
+    "tStartMs": 480841,
+    "dDurationMs": 2203,
+    "segs": [ {
+      "utf8": "He didn't want to come to Los Angeles."
+    } ]
+  }, {
+    "tStartMs": 483068,
+    "dDurationMs": 3788,
+    "segs": [ {
+      "utf8": "He loved it, but he had\na girlfriend in England."
+    } ]
+  }, {
+    "tStartMs": 486880,
+    "dDurationMs": 2857,
+    "segs": [ {
+      "utf8": "This was the love of his life, Sarah."
+    } ]
+  }, {
+    "tStartMs": 489761,
+    "dDurationMs": 1375,
+    "segs": [ {
+      "utf8": "He'd known her for a month."
+    } ]
+  }, {
+    "tStartMs": 491160,
+    "dDurationMs": 1350,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 492534,
+    "dDurationMs": 3279,
+    "segs": [ {
+      "utf8": "Mind you, they'd had\ntheir fourth anniversary,"
+    } ]
+  }, {
+    "tStartMs": 495837,
+    "dDurationMs": 1936,
+    "segs": [ {
+      "utf8": "because it's a long time when you're 16."
+    } ]
+  }, {
+    "tStartMs": 497797,
+    "dDurationMs": 1641,
+    "segs": [ {
+      "utf8": "He was really upset on the plane."
+    } ]
+  }, {
+    "tStartMs": 499462,
+    "dDurationMs": 2407,
+    "segs": [ {
+      "utf8": "He said, \"I'll never find\nanother girl like Sarah.\""
+    } ]
+  }, {
+    "tStartMs": 501893,
+    "dDurationMs": 2314,
+    "segs": [ {
+      "utf8": "And we were rather pleased\nabout that, frankly --"
+    } ]
+  }, {
+    "tStartMs": 504231,
+    "dDurationMs": 4233,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 512434,
+    "dDurationMs": 2946,
+    "segs": [ {
+      "utf8": "because she was the main reason\nwe were leaving the country."
+    } ]
+  }, {
+    "tStartMs": 515404,
+    "dDurationMs": 3000,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 521141,
+    "dDurationMs": 2362,
+    "segs": [ {
+      "utf8": "But something strikes you\nwhen you move to America"
+    } ]
+  }, {
+    "tStartMs": 523527,
+    "dDurationMs": 1367,
+    "segs": [ {
+      "utf8": "and travel around the world:"
+    } ]
+  }, {
+    "tStartMs": 524918,
+    "dDurationMs": 3647,
+    "segs": [ {
+      "utf8": "every education system on earth\nhas the same hierarchy of subjects."
+    } ]
+  }, {
+    "tStartMs": 528589,
+    "dDurationMs": 1903,
+    "segs": [ {
+      "utf8": "Every one. Doesn't matter where you go."
+    } ]
+  }, {
+    "tStartMs": 530516,
+    "dDurationMs": 2270,
+    "segs": [ {
+      "utf8": "You'd think it would be\notherwise, but it isn't."
+    } ]
+  }, {
+    "tStartMs": 532810,
+    "dDurationMs": 2981,
+    "segs": [ {
+      "utf8": "At the top are mathematics and languages,\nthen the humanities."
+    } ]
+  }, {
+    "tStartMs": 535815,
+    "dDurationMs": 2291,
+    "segs": [ {
+      "utf8": "At the bottom are the arts.\nEverywhere on earth."
+    } ]
+  }, {
+    "tStartMs": 538130,
+    "dDurationMs": 4365,
+    "segs": [ {
+      "utf8": "And in pretty much every system, too,\nthere's a hierarchy within the arts."
+    } ]
+  }, {
+    "tStartMs": 542519,
+    "dDurationMs": 2857,
+    "segs": [ {
+      "utf8": "Art and music are normally given\na higher status in schools"
+    } ]
+  }, {
+    "tStartMs": 545400,
+    "dDurationMs": 1428,
+    "segs": [ {
+      "utf8": "than drama and dance."
+    } ]
+  }, {
+    "tStartMs": 546852,
+    "dDurationMs": 2107,
+    "segs": [ {
+      "utf8": "There isn't an education\nsystem on the planet"
+    } ]
+  }, {
+    "tStartMs": 548983,
+    "dDurationMs": 1919,
+    "segs": [ {
+      "utf8": "that teaches dance every day to children"
+    } ]
+  }, {
+    "tStartMs": 550926,
+    "dDurationMs": 1650,
+    "segs": [ {
+      "utf8": "the way we teach them mathematics."
+    } ]
+  }, {
+    "tStartMs": 552600,
+    "dDurationMs": 1158,
+    "segs": [ {
+      "utf8": "Why?"
+    } ]
+  }, {
+    "tStartMs": 553782,
+    "dDurationMs": 1167,
+    "segs": [ {
+      "utf8": "Why not?"
+    } ]
+  }, {
+    "tStartMs": 554973,
+    "dDurationMs": 1594,
+    "segs": [ {
+      "utf8": "I think this is rather important."
+    } ]
+  }, {
+    "tStartMs": 556591,
+    "dDurationMs": 2264,
+    "segs": [ {
+      "utf8": "I think math is very important,\nbut so is dance."
+    } ]
+  }, {
+    "tStartMs": 558879,
+    "dDurationMs": 2880,
+    "segs": [ {
+      "utf8": "Children dance all the time\nif they're allowed to, we all do."
+    } ]
+  }, {
+    "tStartMs": 561783,
+    "dDurationMs": 2450,
+    "segs": [ {
+      "utf8": "We all have bodies, don't we?\nDid I miss a meeting?"
+    } ]
+  }, {
+    "tStartMs": 564257,
+    "dDurationMs": 3364,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 567645,
+    "dDurationMs": 2321,
+    "segs": [ {
+      "utf8": "Truthfully, what happens is,\nas children grow up,"
+    } ]
+  }, {
+    "tStartMs": 569990,
+    "dDurationMs": 2714,
+    "segs": [ {
+      "utf8": "we start to educate them progressively\nfrom the waist up."
+    } ]
+  }, {
+    "tStartMs": 572728,
+    "dDurationMs": 1626,
+    "segs": [ {
+      "utf8": "And then we focus on their heads."
+    } ]
+  }, {
+    "tStartMs": 574378,
+    "dDurationMs": 1490,
+    "segs": [ {
+      "utf8": "And slightly to one side."
+    } ]
+  }, {
+    "tStartMs": 577044,
+    "dDurationMs": 2071,
+    "segs": [ {
+      "utf8": "If you were to visit education as an alien"
+    } ]
+  }, {
+    "tStartMs": 579139,
+    "dDurationMs": 2981,
+    "segs": [ {
+      "utf8": "and say \"What's it for, public education?\""
+    } ]
+  }, {
+    "tStartMs": 582144,
+    "dDurationMs": 2727,
+    "segs": [ {
+      "utf8": "I think you'd have to conclude,\nif you look at the output,"
+    } ]
+  }, {
+    "tStartMs": 584895,
+    "dDurationMs": 1357,
+    "segs": [ {
+      "utf8": "who really succeeds by this,"
+    } ]
+  }, {
+    "tStartMs": 586276,
+    "dDurationMs": 1700,
+    "segs": [ {
+      "utf8": "who does everything they should,"
+    } ]
+  }, {
+    "tStartMs": 588000,
+    "dDurationMs": 2731,
+    "segs": [ {
+      "utf8": "who gets all the brownie points,\nwho are the winners --"
+    } ]
+  }, {
+    "tStartMs": 590755,
+    "dDurationMs": 3238,
+    "segs": [ {
+      "utf8": "I think you'd have to conclude\nthe whole purpose of public education"
+    } ]
+  }, {
+    "tStartMs": 594017,
+    "dDurationMs": 1198,
+    "segs": [ {
+      "utf8": "throughout the world"
+    } ]
+  }, {
+    "tStartMs": 595239,
+    "dDurationMs": 1979,
+    "segs": [ {
+      "utf8": "is to produce university professors."
+    } ]
+  }, {
+    "tStartMs": 597718,
+    "dDurationMs": 1168,
+    "segs": [ {
+      "utf8": "Isn't it?"
+    } ]
+  }, {
+    "tStartMs": 598910,
+    "dDurationMs": 1984,
+    "segs": [ {
+      "utf8": "They're the people who come out the top."
+    } ]
+  }, {
+    "tStartMs": 600918,
+    "dDurationMs": 1819,
+    "segs": [ {
+      "utf8": "And I used to be one, so there."
+    } ]
+  }, {
+    "tStartMs": 602761,
+    "dDurationMs": 3697,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 606482,
+    "dDurationMs": 1600,
+    "segs": [ {
+      "utf8": "And I like university professors,"
+    } ]
+  }, {
+    "tStartMs": 608106,
+    "dDurationMs": 1915,
+    "segs": [ {
+      "utf8": "but, you know, we shouldn't hold them up"
+    } ]
+  }, {
+    "tStartMs": 610045,
+    "dDurationMs": 2931,
+    "segs": [ {
+      "utf8": "as the high-water mark\nof all human achievement."
+    } ]
+  }, {
+    "tStartMs": 613000,
+    "dDurationMs": 2113,
+    "segs": [ {
+      "utf8": "They're just a form of life."
+    } ]
+  }, {
+    "tStartMs": 615137,
+    "dDurationMs": 1423,
+    "segs": [ {
+      "utf8": "Another form of life."
+    } ]
+  }, {
+    "tStartMs": 616584,
+    "dDurationMs": 1397,
+    "segs": [ {
+      "utf8": "But they're rather curious."
+    } ]
+  }, {
+    "tStartMs": 618005,
+    "dDurationMs": 1964,
+    "segs": [ {
+      "utf8": "And I say this out of affection for them:"
+    } ]
+  }, {
+    "tStartMs": 619993,
+    "dDurationMs": 2075,
+    "segs": [ {
+      "utf8": "there's something curious\nabout professors."
+    } ]
+  }, {
+    "tStartMs": 622092,
+    "dDurationMs": 3746,
+    "segs": [ {
+      "utf8": "In my experience -- not all of them,\nbut typically -- they live in their heads."
+    } ]
+  }, {
+    "tStartMs": 625862,
+    "dDurationMs": 2143,
+    "segs": [ {
+      "utf8": "They live up there\nand slightly to one side."
+    } ]
+  }, {
+    "tStartMs": 628495,
+    "dDurationMs": 3436,
+    "segs": [ {
+      "utf8": "They're disembodied, you know,\nin a kind of literal way."
+    } ]
+  }, {
+    "tStartMs": 631955,
+    "dDurationMs": 3150,
+    "segs": [ {
+      "utf8": "They look upon their body as a form\nof transport for their heads."
+    } ]
+  }, {
+    "tStartMs": 635129,
+    "dDurationMs": 6047,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 641200,
+    "dDurationMs": 1377,
+    "segs": [ {
+      "utf8": "Don't they?"
+    } ]
+  }, {
+    "tStartMs": 642601,
+    "dDurationMs": 2145,
+    "segs": [ {
+      "utf8": "It's a way of getting\ntheir head to meetings."
+    } ]
+  }, {
+    "tStartMs": 644770,
+    "dDurationMs": 5228,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 650022,
+    "dDurationMs": 3922,
+    "segs": [ {
+      "utf8": "If you want real evidence\nof out-of-body experiences, by the way,"
+    } ]
+  }, {
+    "tStartMs": 653968,
+    "dDurationMs": 3475,
+    "segs": [ {
+      "utf8": "get yourself along to a residential\nconference of senior academics"
+    } ]
+  }, {
+    "tStartMs": 657467,
+    "dDurationMs": 2351,
+    "segs": [ {
+      "utf8": "and pop into the discotheque\non the final night."
+    } ]
+  }, {
+    "tStartMs": 659842,
+    "dDurationMs": 2612,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 662478,
+    "dDurationMs": 1356,
+    "segs": [ {
+      "utf8": "And there, you will see it."
+    } ]
+  }, {
+    "tStartMs": 663858,
+    "dDurationMs": 4493,
+    "segs": [ {
+      "utf8": "Grown men and women\nwrithing uncontrollably, off the beat."
+    } ]
+  }, {
+    "tStartMs": 668375,
+    "dDurationMs": 2492,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 670891,
+    "dDurationMs": 3325,
+    "segs": [ {
+      "utf8": "Waiting until it ends, so they can\ngo home and write a paper about it."
+    } ]
+  }, {
+    "tStartMs": 674240,
+    "dDurationMs": 1981,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 676245,
+    "dDurationMs": 3861,
+    "segs": [ {
+      "utf8": "Our education system is predicated\non the idea of academic ability."
+    } ]
+  }, {
+    "tStartMs": 680130,
+    "dDurationMs": 1171,
+    "segs": [ {
+      "utf8": "And there's a reason."
+    } ]
+  }, {
+    "tStartMs": 681325,
+    "dDurationMs": 3629,
+    "segs": [ {
+      "utf8": "Around the world, there were\nno public systems of education,"
+    } ]
+  }, {
+    "tStartMs": 684978,
+    "dDurationMs": 2107,
+    "segs": [ {
+      "utf8": "really, before the 19th century."
+    } ]
+  }, {
+    "tStartMs": 687109,
+    "dDurationMs": 3247,
+    "segs": [ {
+      "utf8": "They all came into being\nto meet the needs of industrialism."
+    } ]
+  }, {
+    "tStartMs": 690380,
+    "dDurationMs": 2052,
+    "segs": [ {
+      "utf8": "So the hierarchy is rooted on two ideas."
+    } ]
+  }, {
+    "tStartMs": 692456,
+    "dDurationMs": 4562,
+    "segs": [ {
+      "utf8": "Number one, that the most useful\nsubjects for work are at the top."
+    } ]
+  }, {
+    "tStartMs": 697042,
+    "dDurationMs": 3033,
+    "segs": [ {
+      "utf8": "So you were probably steered benignly away\nfrom things at school"
+    } ]
+  }, {
+    "tStartMs": 700099,
+    "dDurationMs": 1152,
+    "segs": [ {
+      "utf8": "when you were a kid,"
+    } ]
+  }, {
+    "tStartMs": 701275,
+    "dDurationMs": 1153,
+    "segs": [ {
+      "utf8": "things you liked,"
+    } ]
+  }, {
+    "tStartMs": 702452,
+    "dDurationMs": 2442,
+    "segs": [ {
+      "utf8": "on the grounds you would never\nget a job doing that."
+    } ]
+  }, {
+    "tStartMs": 704918,
+    "dDurationMs": 1151,
+    "segs": [ {
+      "utf8": "Is that right?"
+    } ]
+  }, {
+    "tStartMs": 706093,
+    "dDurationMs": 2412,
+    "segs": [ {
+      "utf8": "\"Don't do music, you're not\ngoing to be a musician;"
+    } ]
+  }, {
+    "tStartMs": 708529,
+    "dDurationMs": 1851,
+    "segs": [ {
+      "utf8": "don't do art, you won't be an artist.\""
+    } ]
+  }, {
+    "tStartMs": 710404,
+    "dDurationMs": 2746,
+    "segs": [ {
+      "utf8": "Benign advice -- now, profoundly mistaken."
+    } ]
+  }, {
+    "tStartMs": 713174,
+    "dDurationMs": 2145,
+    "segs": [ {
+      "utf8": "The whole world\nis engulfed in a revolution."
+    } ]
+  }, {
+    "tStartMs": 715343,
+    "dDurationMs": 2097,
+    "segs": [ {
+      "utf8": "And the second is academic ability,"
+    } ]
+  }, {
+    "tStartMs": 717464,
+    "dDurationMs": 2819,
+    "segs": [ {
+      "utf8": "which has really come to dominate\nour view of intelligence,"
+    } ]
+  }, {
+    "tStartMs": 720307,
+    "dDurationMs": 2739,
+    "segs": [ {
+      "utf8": "because the universities design\nthe system in their image."
+    } ]
+  }, {
+    "tStartMs": 723070,
+    "dDurationMs": 1151,
+    "segs": [ {
+      "utf8": "If you think of it,"
+    } ]
+  }, {
+    "tStartMs": 724245,
+    "dDurationMs": 3664,
+    "segs": [ {
+      "utf8": "the whole system of public education\naround the world is a protracted process"
+    } ]
+  }, {
+    "tStartMs": 727933,
+    "dDurationMs": 1151,
+    "segs": [ {
+      "utf8": "of university entrance."
+    } ]
+  }, {
+    "tStartMs": 729108,
+    "dDurationMs": 2293,
+    "segs": [ {
+      "utf8": "And the consequence is\nthat many highly talented,"
+    } ]
+  }, {
+    "tStartMs": 731425,
+    "dDurationMs": 2518,
+    "segs": [ {
+      "utf8": "brilliant, creative people\nthink they're not,"
+    } ]
+  }, {
+    "tStartMs": 733967,
+    "dDurationMs": 2133,
+    "segs": [ {
+      "utf8": "because the thing\nthey were good at at school"
+    } ]
+  }, {
+    "tStartMs": 736124,
+    "dDurationMs": 2302,
+    "segs": [ {
+      "utf8": "wasn't valued,\nor was actually stigmatized."
+    } ]
+  }, {
+    "tStartMs": 738450,
+    "dDurationMs": 2229,
+    "segs": [ {
+      "utf8": "And I think we can't afford\nto go on that way."
+    } ]
+  }, {
+    "tStartMs": 740703,
+    "dDurationMs": 2287,
+    "segs": [ {
+      "utf8": "In the next 30 years, according to UNESCO,"
+    } ]
+  }, {
+    "tStartMs": 743014,
+    "dDurationMs": 3406,
+    "segs": [ {
+      "utf8": "more people worldwide will be\ngraduating through education"
+    } ]
+  }, {
+    "tStartMs": 746444,
+    "dDurationMs": 2195,
+    "segs": [ {
+      "utf8": "than since the beginning of history."
+    } ]
+  }, {
+    "tStartMs": 748663,
+    "dDurationMs": 1157,
+    "segs": [ {
+      "utf8": "More people."
+    } ]
+  }, {
+    "tStartMs": 749844,
+    "dDurationMs": 2921,
+    "segs": [ {
+      "utf8": "And it's the combination\nof all the things we've talked about:"
+    } ]
+  }, {
+    "tStartMs": 752789,
+    "dDurationMs": 2393,
+    "segs": [ {
+      "utf8": "technology and its\ntransformational effect on work,"
+    } ]
+  }, {
+    "tStartMs": 755206,
+    "dDurationMs": 2478,
+    "segs": [ {
+      "utf8": "and demography and the huge\nexplosion in population."
+    } ]
+  }, {
+    "tStartMs": 757708,
+    "dDurationMs": 2437,
+    "segs": [ {
+      "utf8": "Suddenly, degrees aren't worth anything."
+    } ]
+  }, {
+    "tStartMs": 760169,
+    "dDurationMs": 1677,
+    "segs": [ {
+      "utf8": "Isn't that true?"
+    } ]
+  }, {
+    "tStartMs": 761870,
+    "dDurationMs": 2981,
+    "segs": [ {
+      "utf8": "When I was a student,\nif you had a degree, you had a job."
+    } ]
+  }, {
+    "tStartMs": 764875,
+    "dDurationMs": 2798,
+    "segs": [ {
+      "utf8": "If you didn't have a job,\nit's because you didn't want one."
+    } ]
+  }, {
+    "tStartMs": 767697,
+    "dDurationMs": 2334,
+    "segs": [ {
+      "utf8": "And I didn't want one, frankly."
+    } ]
+  }, {
+    "tStartMs": 770055,
+    "dDurationMs": 1591,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 771670,
+    "dDurationMs": 3805,
+    "segs": [ {
+      "utf8": "But now kids with degrees\nare often heading home"
+    } ]
+  }, {
+    "tStartMs": 775499,
+    "dDurationMs": 1794,
+    "segs": [ {
+      "utf8": "to carry on playing video games,"
+    } ]
+  }, {
+    "tStartMs": 777317,
+    "dDurationMs": 3048,
+    "segs": [ {
+      "utf8": "because you need an MA\nwhere the previous job required a BA,"
+    } ]
+  }, {
+    "tStartMs": 780389,
+    "dDurationMs": 1787,
+    "segs": [ {
+      "utf8": "and now you need a PhD for the other."
+    } ]
+  }, {
+    "tStartMs": 782200,
+    "dDurationMs": 1776,
+    "segs": [ {
+      "utf8": "It's a process of academic inflation."
+    } ]
+  }, {
+    "tStartMs": 784000,
+    "dDurationMs": 3756,
+    "segs": [ {
+      "utf8": "And it indicates the whole structure\nof education is shifting beneath our feet."
+    } ]
+  }, {
+    "tStartMs": 787780,
+    "dDurationMs": 2542,
+    "segs": [ {
+      "utf8": "We need to radically rethink\nour view of intelligence."
+    } ]
+  }, {
+    "tStartMs": 790346,
+    "dDurationMs": 1924,
+    "segs": [ {
+      "utf8": "We know three things about intelligence."
+    } ]
+  }, {
+    "tStartMs": 792294,
+    "dDurationMs": 1151,
+    "segs": [ {
+      "utf8": "One, it's diverse."
+    } ]
+  }, {
+    "tStartMs": 793469,
+    "dDurationMs": 2981,
+    "segs": [ {
+      "utf8": "We think about the world in all the ways\nthat we experience it."
+    } ]
+  }, {
+    "tStartMs": 796474,
+    "dDurationMs": 2977,
+    "segs": [ {
+      "utf8": "We think visually, we think in sound,\nwe think kinesthetically."
+    } ]
+  }, {
+    "tStartMs": 799475,
+    "dDurationMs": 2321,
+    "segs": [ {
+      "utf8": "We think in abstract terms,\nwe think in movement."
+    } ]
+  }, {
+    "tStartMs": 801820,
+    "dDurationMs": 1996,
+    "segs": [ {
+      "utf8": "Secondly, intelligence is dynamic."
+    } ]
+  }, {
+    "tStartMs": 804673,
+    "dDurationMs": 2303,
+    "segs": [ {
+      "utf8": "If you look at the interactions\nof a human brain,"
+    } ]
+  }, {
+    "tStartMs": 807000,
+    "dDurationMs": 3023,
+    "segs": [ {
+      "utf8": "as we heard yesterday\nfrom a number of presentations,"
+    } ]
+  }, {
+    "tStartMs": 810047,
+    "dDurationMs": 2158,
+    "segs": [ {
+      "utf8": "intelligence is wonderfully interactive."
+    } ]
+  }, {
+    "tStartMs": 812229,
+    "dDurationMs": 2238,
+    "segs": [ {
+      "utf8": "The brain isn't divided into compartments."
+    } ]
+  }, {
+    "tStartMs": 814872,
+    "dDurationMs": 1574,
+    "segs": [ {
+      "utf8": "In fact, creativity --"
+    } ]
+  }, {
+    "tStartMs": 816470,
+    "dDurationMs": 4020,
+    "segs": [ {
+      "utf8": "which I define as the process of having\noriginal ideas that have value --"
+    } ]
+  }, {
+    "tStartMs": 820514,
+    "dDurationMs": 1930,
+    "segs": [ {
+      "utf8": "more often than not comes about"
+    } ]
+  }, {
+    "tStartMs": 822468,
+    "dDurationMs": 3557,
+    "segs": [ {
+      "utf8": "through the interaction of different\ndisciplinary ways of seeing things."
+    } ]
+  }, {
+    "tStartMs": 827472,
+    "dDurationMs": 3631,
+    "segs": [ {
+      "utf8": "By the way, there's a shaft of nerves\nthat joins the two halves of the brain,"
+    } ]
+  }, {
+    "tStartMs": 831127,
+    "dDurationMs": 1298,
+    "segs": [ {
+      "utf8": "called the corpus callosum."
+    } ]
+  }, {
+    "tStartMs": 832449,
+    "dDurationMs": 1221,
+    "segs": [ {
+      "utf8": "It's thicker in women."
+    } ]
+  }, {
+    "tStartMs": 834471,
+    "dDurationMs": 1723,
+    "segs": [ {
+      "utf8": "Following off from Helen yesterday,"
+    } ]
+  }, {
+    "tStartMs": 836218,
+    "dDurationMs": 3011,
+    "segs": [ {
+      "utf8": "this is probably why women\nare better at multitasking."
+    } ]
+  }, {
+    "tStartMs": 839253,
+    "dDurationMs": 1825,
+    "segs": [ {
+      "utf8": "Because you are, aren't you?"
+    } ]
+  }, {
+    "tStartMs": 841102,
+    "dDurationMs": 3334,
+    "segs": [ {
+      "utf8": "There's a raft of research,\nbut I know it from my personal life."
+    } ]
+  }, {
+    "tStartMs": 844865,
+    "dDurationMs": 2935,
+    "segs": [ {
+      "utf8": "If my wife is cooking a meal\nat home, which is not often ..."
+    } ]
+  }, {
+    "tStartMs": 849224,
+    "dDurationMs": 1166,
+    "segs": [ {
+      "utf8": "thankfully."
+    } ]
+  }, {
+    "tStartMs": 850414,
+    "dDurationMs": 2690,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 853128,
+    "dDurationMs": 1452,
+    "segs": [ {
+      "utf8": "No, she's good at some things."
+    } ]
+  }, {
+    "tStartMs": 854604,
+    "dDurationMs": 2895,
+    "segs": [ {
+      "utf8": "But if she's cooking,\nshe's dealing with people on the phone,"
+    } ]
+  }, {
+    "tStartMs": 857523,
+    "dDurationMs": 2647,
+    "segs": [ {
+      "utf8": "she's talking to the kids,\nshe's painting the ceiling --"
+    } ]
+  }, {
+    "tStartMs": 860194,
+    "dDurationMs": 1015,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 861233,
+    "dDurationMs": 2025,
+    "segs": [ {
+      "utf8": "she's doing open-heart surgery over here."
+    } ]
+  }, {
+    "tStartMs": 863282,
+    "dDurationMs": 2998,
+    "segs": [ {
+      "utf8": "If I'm cooking, the door\nis shut, the kids are out,"
+    } ]
+  }, {
+    "tStartMs": 866304,
+    "dDurationMs": 1239,
+    "segs": [ {
+      "utf8": "the phone's on the hook,"
+    } ]
+  }, {
+    "tStartMs": 867567,
+    "dDurationMs": 1690,
+    "segs": [ {
+      "utf8": "if she comes in, I get annoyed."
+    } ]
+  }, {
+    "tStartMs": 869281,
+    "dDurationMs": 2790,
+    "segs": [ {
+      "utf8": "I say, \"Terry, please,\nI'm trying to fry an egg in here.\""
+    } ]
+  }, {
+    "tStartMs": 872095,
+    "dDurationMs": 6730,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 879254,
+    "dDurationMs": 1200,
+    "segs": [ {
+      "utf8": "\"Give me a break.\""
+    } ]
+  }, {
+    "tStartMs": 880478,
+    "dDurationMs": 1720,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 882222,
+    "dDurationMs": 2499,
+    "segs": [ {
+      "utf8": "Actually, do you know\nthat old philosophical thing,"
+    } ]
+  }, {
+    "tStartMs": 884745,
+    "dDurationMs": 3483,
+    "segs": [ {
+      "utf8": "\"If a tree falls in a forest,\nand nobody hears it, did it happen?\""
+    } ]
+  }, {
+    "tStartMs": 888252,
+    "dDurationMs": 1329,
+    "segs": [ {
+      "utf8": "Remember that old chestnut?"
+    } ]
+  }, {
+    "tStartMs": 889605,
+    "dDurationMs": 2910,
+    "segs": [ {
+      "utf8": "I saw a great T-shirt\nrecently, which said,"
+    } ]
+  }, {
+    "tStartMs": 892539,
+    "dDurationMs": 3437,
+    "segs": [ {
+      "utf8": "\"If a man speaks his mind in a forest,\nand no woman hears him,"
+    } ]
+  }, {
+    "tStartMs": 896000,
+    "dDurationMs": 1396,
+    "segs": [ {
+      "utf8": "is he still wrong?\""
+    } ]
+  }, {
+    "tStartMs": 897420,
+    "dDurationMs": 5606,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 905089,
+    "dDurationMs": 2039,
+    "segs": [ {
+      "utf8": "And the third thing about intelligence is,"
+    } ]
+  }, {
+    "tStartMs": 907152,
+    "dDurationMs": 1369,
+    "segs": [ {
+      "utf8": "it's distinct."
+    } ]
+  }, {
+    "tStartMs": 909114,
+    "dDurationMs": 2504,
+    "segs": [ {
+      "utf8": "I'm doing a new book at the moment\ncalled \"Epiphany,\""
+    } ]
+  }, {
+    "tStartMs": 911642,
+    "dDurationMs": 2441,
+    "segs": [ {
+      "utf8": "which is based on a series\nof interviews with people"
+    } ]
+  }, {
+    "tStartMs": 914107,
+    "dDurationMs": 1864,
+    "segs": [ {
+      "utf8": "about how they discovered their talent."
+    } ]
+  }, {
+    "tStartMs": 915995,
+    "dDurationMs": 2121,
+    "segs": [ {
+      "utf8": "I'm fascinated by\nhow people got to be there."
+    } ]
+  }, {
+    "tStartMs": 918140,
+    "dDurationMs": 3191,
+    "segs": [ {
+      "utf8": "It's really prompted by a conversation\nI had with a wonderful woman"
+    } ]
+  }, {
+    "tStartMs": 921355,
+    "dDurationMs": 2677,
+    "segs": [ {
+      "utf8": "who maybe most people\nhave never heard of, Gillian Lynne."
+    } ]
+  }, {
+    "tStartMs": 924056,
+    "dDurationMs": 1596,
+    "segs": [ {
+      "utf8": "Have you heard of her? Some have."
+    } ]
+  }, {
+    "tStartMs": 925676,
+    "dDurationMs": 2452,
+    "segs": [ {
+      "utf8": "She's a choreographer,\nand everybody knows her work."
+    } ]
+  }, {
+    "tStartMs": 928152,
+    "dDurationMs": 2016,
+    "segs": [ {
+      "utf8": "She did \"Cats\" and \"Phantom of the Opera.\""
+    } ]
+  }, {
+    "tStartMs": 930192,
+    "dDurationMs": 1151,
+    "segs": [ {
+      "utf8": "She's wonderful."
+    } ]
+  }, {
+    "tStartMs": 931367,
+    "dDurationMs": 2947,
+    "segs": [ {
+      "utf8": "I used to be on the board\nof The Royal Ballet, as you can see."
+    } ]
+  }, {
+    "tStartMs": 934338,
+    "dDurationMs": 1929,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 936291,
+    "dDurationMs": 3525,
+    "segs": [ {
+      "utf8": "Gillian and I had lunch one day.\nI said, \"How did you get to be a dancer?\""
+    } ]
+  }, {
+    "tStartMs": 939840,
+    "dDurationMs": 1151,
+    "segs": [ {
+      "utf8": "It was interesting."
+    } ]
+  }, {
+    "tStartMs": 941015,
+    "dDurationMs": 2247,
+    "segs": [ {
+      "utf8": "When she was at school,\nshe was really hopeless."
+    } ]
+  }, {
+    "tStartMs": 943286,
+    "dDurationMs": 2789,
+    "segs": [ {
+      "utf8": "And the school, in the '30s,\nwrote to her parents and said,"
+    } ]
+  }, {
+    "tStartMs": 946099,
+    "dDurationMs": 2035,
+    "segs": [ {
+      "utf8": "\"We think Gillian\nhas a learning disorder.\""
+    } ]
+  }, {
+    "tStartMs": 948158,
+    "dDurationMs": 2098,
+    "segs": [ {
+      "utf8": "She couldn't concentrate;\nshe was fidgeting."
+    } ]
+  }, {
+    "tStartMs": 950280,
+    "dDurationMs": 1877,
+    "segs": [ {
+      "utf8": "I think now they'd say she had ADHD."
+    } ]
+  }, {
+    "tStartMs": 952181,
+    "dDurationMs": 1299,
+    "segs": [ {
+      "utf8": "Wouldn't you?"
+    } ]
+  }, {
+    "tStartMs": 953504,
+    "dDurationMs": 4177,
+    "segs": [ {
+      "utf8": "But this was the 1930s, and ADHD\nhadn't been invented at this point."
+    } ]
+  }, {
+    "tStartMs": 957705,
+    "dDurationMs": 2040,
+    "segs": [ {
+      "utf8": "It wasn't an available condition."
+    } ]
+  }, {
+    "tStartMs": 959769,
+    "dDurationMs": 3215,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 963008,
+    "dDurationMs": 2042,
+    "segs": [ {
+      "utf8": "People weren't aware they could have that."
+    } ]
+  }, {
+    "tStartMs": 965074,
+    "dDurationMs": 2425,
+    "segs": [ {
+      "utf8": "(Laughter)"
+    } ]
+  }, {
+    "tStartMs": 967523,
+    "dDurationMs": 4176,
+    "segs": [ {
+      "utf8": "Anyway, she went to see this specialist."
+    } ]
+  }, {
+    "tStartMs": 971723,
+    "dDurationMs": 3707,
+    "segs": [ {
+      "utf8": "So, this oak-paneled room,\nand she was there with her mother,"
+    } ]
+  }, {
+    "tStartMs": 975454,
+    "dDurationMs": 2327,
+    "segs": [ {
+      "utf8": "and she was led and sat\non this chair at the end,"
+    } ]
+  }, {
+    "tStartMs": 977805,
+    "dDurationMs": 1945,
+    "segs": [ {
+      "utf8": "and she sat on her hands for 20 minutes,"
+    } ]
+  }, {
+    "tStartMs": 979774,
+    "dDurationMs": 1681,
+    "segs": [ {
+      "utf8": "while this man talked to her mother"
+    } ]
+  }, {
+    "tStartMs": 981479,
+    "dDurationMs": 2464,
+    "segs": [ {
+      "utf8": "about all the problems\nGillian was having at school,"
+    } ]
+  }, {
+    "tStartMs": 983967,
+    "dDurationMs": 3549,
+    "segs": [ {
+      "utf8": "because she was disturbing people,\nher homework was always late, and so on."
+    } ]
+  }, {
+    "tStartMs": 987540,
+    "dDurationMs": 1151,
+    "segs": [ {
+      "utf8": "Little kid of eight."
+    } ]
+  }, {
+    "tStartMs": 988715,
+    "dDurationMs": 2911,
+    "segs": [ {
+      "utf8": "In the end, the doctor went\nand sat next to Gillian and said,"
+    } ]
+  }, {
+    "tStartMs": 991650,
+    "dDurationMs": 2713,
+    "segs": [ {
+      "utf8": "\"I've listened to all these\nthings your mother's told me."
+    } ]
+  }, {
+    "tStartMs": 994387,
+    "dDurationMs": 1594,
+    "segs": [ {
+      "utf8": "I need to speak to her privately."
+    } ]
+  }, {
+    "tStartMs": 996005,
+    "dDurationMs": 2316,
+    "segs": [ {
+      "utf8": "Wait here. We'll be back.\nWe won't be very long,\""
+    } ]
+  }, {
+    "tStartMs": 998345,
+    "dDurationMs": 2650,
+    "segs": [ {
+      "utf8": "and they went and left her."
+    } ]
+  }, {
+    "tStartMs": 1001019,
+    "dDurationMs": 1640,
+    "segs": [ {
+      "utf8": "But as they went out of the room,"
+    } ]
+  }, {
+    "tStartMs": 1002683,
+    "dDurationMs": 2856,
+    "segs": [ {
+      "utf8": "he turned on the radio\nthat was sitting on his desk."
+    } ]
+  }, {
+    "tStartMs": 1005563,
+    "dDurationMs": 1638,
+    "segs": [ {
+      "utf8": "And when they got out of the room,"
+    } ]
+  }, {
+    "tStartMs": 1007225,
+    "dDurationMs": 2378,
+    "segs": [ {
+      "utf8": "he said to her mother,\n\"Just stand and watch her.\""
+    } ]
+  }, {
+    "tStartMs": 1009627,
+    "dDurationMs": 2512,
+    "segs": [ {
+      "utf8": "And the minute they left the room,"
+    } ]
+  }, {
+    "tStartMs": 1012163,
+    "dDurationMs": 2595,
+    "segs": [ {
+      "utf8": "she was on her feet, moving to the music."
+    } ]
+  }, {
+    "tStartMs": 1014782,
+    "dDurationMs": 3503,
+    "segs": [ {
+      "utf8": "And they watched for a few minutes,\nand he turned to her mother and said,"
+    } ]
+  }, {
+    "tStartMs": 1018309,
+    "dDurationMs": 1979,
+    "segs": [ {
+      "utf8": "\"Mrs. Lynne, Gillian isn't sick."
+    } ]
+  }, {
+    "tStartMs": 1020312,
+    "dDurationMs": 1664,
+    "segs": [ {
+      "utf8": "She's a dancer."
+    } ]
+  }, {
+    "tStartMs": 1023338,
+    "dDurationMs": 1386,
+    "segs": [ {
+      "utf8": "Take her to a dance school.\""
+    } ]
+  }, {
+    "tStartMs": 1024748,
+    "dDurationMs": 1228,
+    "segs": [ {
+      "utf8": "I said, \"What happened?\""
+    } ]
+  }, {
+    "tStartMs": 1026000,
+    "dDurationMs": 2976,
+    "segs": [ {
+      "utf8": "She said, \"She did. I can't tell you\nhow wonderful it was."
+    } ]
+  }, {
+    "tStartMs": 1029000,
+    "dDurationMs": 2829,
+    "segs": [ {
+      "utf8": "We walked in this room,\nand it was full of people like me --"
+    } ]
+  }, {
+    "tStartMs": 1031853,
+    "dDurationMs": 2222,
+    "segs": [ {
+      "utf8": "people who couldn't sit still,"
+    } ]
+  }, {
+    "tStartMs": 1034099,
+    "dDurationMs": 2907,
+    "segs": [ {
+      "utf8": "people who had to move to think.\""
+    } ]
+  }, {
+    "tStartMs": 1037030,
+    "dDurationMs": 1832,
+    "segs": [ {
+      "utf8": "Who had to move to think."
+    } ]
+  }, {
+    "tStartMs": 1038886,
+    "dDurationMs": 3610,
+    "segs": [ {
+      "utf8": "They did ballet, they did tap, jazz;\nthey did modern; they did contemporary."
+    } ]
+  }, {
+    "tStartMs": 1042520,
+    "dDurationMs": 2746,
+    "segs": [ {
+      "utf8": "She was eventually auditioned\nfor the Royal Ballet School."
+    } ]
+  }, {
+    "tStartMs": 1045290,
+    "dDurationMs": 3253,
+    "segs": [ {
+      "utf8": "She became a soloist; she had\na wonderful career at the Royal Ballet."
+    } ]
+  }, {
+    "tStartMs": 1048567,
+    "dDurationMs": 2555,
+    "segs": [ {
+      "utf8": "She eventually graduated\nfrom the Royal Ballet School,"
+    } ]
+  }, {
+    "tStartMs": 1051146,
+    "dDurationMs": 1928,
+    "segs": [ {
+      "utf8": "founded the Gillian Lynne Dance Company,"
+    } ]
+  }, {
+    "tStartMs": 1053098,
+    "dDurationMs": 1237,
+    "segs": [ {
+      "utf8": "met Andrew Lloyd Webber."
+    } ]
+  }, {
+    "tStartMs": 1054359,
+    "dDurationMs": 1296,
+    "segs": [ {
+      "utf8": "She's been responsible for"
+    } ]
+  }, {
+    "tStartMs": 1055679,
+    "dDurationMs": 3148,
+    "segs": [ {
+      "utf8": "some of the most successful\nmusical theater productions in history,"
+    } ]
+  }, {
+    "tStartMs": 1058851,
+    "dDurationMs": 1596,
+    "segs": [ {
+      "utf8": "she's given pleasure to millions,"
+    } ]
+  }, {
+    "tStartMs": 1060471,
+    "dDurationMs": 1407,
+    "segs": [ {
+      "utf8": "and she's a multimillionaire."
+    } ]
+  }, {
+    "tStartMs": 1061902,
+    "dDurationMs": 3710,
+    "segs": [ {
+      "utf8": "Somebody else might have put her\non medication and told her to calm down."
+    } ]
+  }, {
+    "tStartMs": 1065636,
+    "dDurationMs": 6782,
+    "segs": [ {
+      "utf8": "(Applause)"
+    } ]
+  }, {
+    "tStartMs": 1073603,
+    "dDurationMs": 1573,
+    "segs": [ {
+      "utf8": "What I think it comes to is this:"
+    } ]
+  }, {
+    "tStartMs": 1075200,
+    "dDurationMs": 1776,
+    "segs": [ {
+      "utf8": "Al Gore spoke the other night"
+    } ]
+  }, {
+    "tStartMs": 1077000,
+    "dDurationMs": 4519,
+    "segs": [ {
+      "utf8": "about ecology and the revolution\nthat was triggered by Rachel Carson."
+    } ]
+  }, {
+    "tStartMs": 1082257,
+    "dDurationMs": 2112,
+    "segs": [ {
+      "utf8": "I believe our only hope for the future"
+    } ]
+  }, {
+    "tStartMs": 1084393,
+    "dDurationMs": 3875,
+    "segs": [ {
+      "utf8": "is to adopt a new conception\nof human ecology,"
+    } ]
+  }, {
+    "tStartMs": 1088292,
+    "dDurationMs": 2527,
+    "segs": [ {
+      "utf8": "one in which we start\nto reconstitute our conception"
+    } ]
+  }, {
+    "tStartMs": 1090843,
+    "dDurationMs": 2261,
+    "segs": [ {
+      "utf8": "of the richness of human capacity."
+    } ]
+  }, {
+    "tStartMs": 1093128,
+    "dDurationMs": 3371,
+    "segs": [ {
+      "utf8": "Our education system has mined our minds"
+    } ]
+  }, {
+    "tStartMs": 1096523,
+    "dDurationMs": 3441,
+    "segs": [ {
+      "utf8": "in the way that we strip-mine the earth\nfor a particular commodity."
+    } ]
+  }, {
+    "tStartMs": 1100377,
+    "dDurationMs": 2422,
+    "segs": [ {
+      "utf8": "And for the future, it won't serve us."
+    } ]
+  }, {
+    "tStartMs": 1102823,
+    "dDurationMs": 2153,
+    "segs": [ {
+      "utf8": "We have to rethink\nthe fundamental principles"
+    } ]
+  }, {
+    "tStartMs": 1105000,
+    "dDurationMs": 2063,
+    "segs": [ {
+      "utf8": "on which we're educating our children."
+    } ]
+  }, {
+    "tStartMs": 1107087,
+    "dDurationMs": 2674,
+    "segs": [ {
+      "utf8": "There was a wonderful quote\nby Jonas Salk, who said,"
+    } ]
+  }, {
+    "tStartMs": 1109785,
+    "dDurationMs": 5097,
+    "segs": [ {
+      "utf8": "\"If all the insects\nwere to disappear from the Earth,"
+    } ]
+  }, {
+    "tStartMs": 1114906,
+    "dDurationMs": 2783,
+    "segs": [ {
+      "utf8": "within 50 years,\nall life on Earth would end."
+    } ]
+  }, {
+    "tStartMs": 1118770,
+    "dDurationMs": 3037,
+    "segs": [ {
+      "utf8": "If all human beings\ndisappeared from the Earth,"
+    } ]
+  }, {
+    "tStartMs": 1121831,
+    "dDurationMs": 2634,
+    "segs": [ {
+      "utf8": "within 50 years,\nall forms of life would flourish.\""
+    } ]
+  }, {
+    "tStartMs": 1125378,
+    "dDurationMs": 1285,
+    "segs": [ {
+      "utf8": "And he's right."
+    } ]
+  }, {
+    "tStartMs": 1127390,
+    "dDurationMs": 3731,
+    "segs": [ {
+      "utf8": "What TED celebrates is the gift\nof the human imagination."
+    } ]
+  }, {
+    "tStartMs": 1131533,
+    "dDurationMs": 4234,
+    "segs": [ {
+      "utf8": "We have to be careful now\nthat we use this gift wisely,"
+    } ]
+  }, {
+    "tStartMs": 1135791,
+    "dDurationMs": 3229,
+    "segs": [ {
+      "utf8": "and that we avert some of the scenarios\nthat we've talked about."
+    } ]
+  }, {
+    "tStartMs": 1139044,
+    "dDurationMs": 3755,
+    "segs": [ {
+      "utf8": "And the only way we'll do it\nis by seeing our creative capacities"
+    } ]
+  }, {
+    "tStartMs": 1142823,
+    "dDurationMs": 1787,
+    "segs": [ {
+      "utf8": "for the richness they are"
+    } ]
+  }, {
+    "tStartMs": 1144634,
+    "dDurationMs": 3182,
+    "segs": [ {
+      "utf8": "and seeing our children\nfor the hope that they are."
+    } ]
+  }, {
+    "tStartMs": 1147840,
+    "dDurationMs": 2398,
+    "segs": [ {
+      "utf8": "And our task is to educate\ntheir whole being,"
+    } ]
+  }, {
+    "tStartMs": 1150262,
+    "dDurationMs": 1413,
+    "segs": [ {
+      "utf8": "so they can face this future."
+    } ]
+  }, {
+    "tStartMs": 1151699,
+    "dDurationMs": 2505,
+    "segs": [ {
+      "utf8": "By the way -- we may not see this future,"
+    } ]
+  }, {
+    "tStartMs": 1154228,
+    "dDurationMs": 1563,
+    "segs": [ {
+      "utf8": "but they will."
+    } ]
+  }, {
+    "tStartMs": 1155815,
+    "dDurationMs": 2718,
+    "segs": [ {
+      "utf8": "And our job is to help them\nmake something of it."
+    } ]
+  }, {
+    "tStartMs": 1158557,
+    "dDurationMs": 1185,
+    "segs": [ {
+      "utf8": "Thank you very much."
+    } ]
+  }, {
+    "tStartMs": 1159766,
+    "dDurationMs": 5447,
+    "segs": [ {
+      "utf8": "(Applause)"
+    } ]
+  } ]
+}
