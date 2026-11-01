@@ -18,6 +18,7 @@ export function runbookParts(runbookMd) {
     phaseReport: pick(RUNBOOK_SECTIONS.phaseReport),
     waveReport: pick(RUNBOOK_SECTIONS.waveReport),
     live: pick(RUNBOOK_SECTIONS.live),
+    save: pick(RUNBOOK_SECTIONS.save),
   };
 }
 
@@ -86,13 +87,16 @@ export function phasePrompt({ plan, root, runbook, ph, wave, state, sectionsText
     'الدور — نفّذه خطوة خطوة:',
     sub(runbook.phaseRole, vars),
     '',
+    'الحفظ والدفع:',
+    sub(runbook.save, vars),
+    '',
     'الاختبارات الحية:',
     runbook.live,
     '',
     'صيغة تقرير التسليم:',
     sub(runbook.phaseReport, vars),
     '',
-    'لا تبدأ مرحلة أخرى، ولا تدمج، ولا تدفع. عند التسليم اطبع التقرير بالعربية وتوقّف.',
+    'لا تبدأ مرحلة أخرى، ولا تدمج، ولا تدفع غير فرع مرحلتك. عند التسليم ادفع الفرع، واطبع التقرير بالعربية مع نتيجة الدفع، وتوقّف.',
   ].join('\n');
 }
 
@@ -134,12 +138,15 @@ export function wavePrompt({ plan, root, runbook, wave, state, gate }) {
     'الدور — نفّذه خطوة خطوة:',
     sub(runbook.waveRole, vars),
     '',
+    'الحفظ والدفع:',
+    sub(runbook.save, vars),
+    '',
     'الاختبارات الحية (للدخان الحي):',
     runbook.live,
     '',
     'صيغة تقرير الموجة:',
     sub(runbook.waveReport, vars),
     '',
-    'لا تدفع ولا تنشر شيئًا. اطبع التقرير بالعربية وتوقّف.',
+    'لا تدفع main ولا وسمًا قبل نجاح البوابة، ولا تنشر شيئًا نشرًا عامًا. اطبع التقرير بالعربية مع نتيجة الدفع وتوقّف.',
   ].join('\n');
 }

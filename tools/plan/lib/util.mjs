@@ -58,6 +58,7 @@ export const RUNBOOK_SECTIONS = {
   phaseReport: 'تقرير التسليم',
   waveReport: 'تقرير الموجة',
   live: 'الاختبارات الحية وما يحتاجه سلطان',
+  save: 'الحفظ والدفع',
 };
 
 export function readText(file) {
