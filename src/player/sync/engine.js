@@ -30,7 +30,7 @@ export function createSyncEngine({ win, onFrame }) {
   const tracks = { ar: null, en: null };
   let rafId = 0;
   let destroyed = false;
-  const stats = { frames: 0, lookups: 0, emits: 0, loopStarts: 0 };
+  const stats = { frames: 0, lookups: 0, emits: 0, loopStarts: 0, evals: 0 };
   /** @type {Array<[string, () => void]>} */
   let bound = [];
 
@@ -39,6 +39,7 @@ export function createSyncEngine({ win, onFrame }) {
 
   /** @param {boolean} force يُبلَّغ حتى لو لم يتغير المقطع (بعد تغيير المصدر أو الإزاحة) */
   function evaluate(force) {
+    stats.evals++;
     if (destroyed) return;
     let changed = force;
     if (!video) {
@@ -147,7 +148,11 @@ export function createSyncEngine({ win, onFrame }) {
     /** إعادة حساب فورية دون تغيير المصدر. */
     refresh: () => evaluate(true),
 
-    stats: () => ({ ...stats, running: !!rafId, tracks: SLOTS.filter((s) => tracks[s]).length }),
+    stats: () => ({
+      ...stats, running: !!rafId, tracks: SLOTS.filter((s) => tracks[s]).length,
+      ar: tracks.ar ? { from: tracks.ar.from, to: tracks.ar.to, cue: tracks.ar.cue?.n ?? null, size: tracks.ar.index.size } : null,
+      video: video ? { connected: video.isConnected !== false, timeSec: Number.isFinite(video.currentTime) ? Math.round(video.currentTime * 100) / 100 : null } : null,
+    }),
 
     destroy() {
       destroyed = true;

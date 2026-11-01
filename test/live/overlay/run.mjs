@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BROWSERS, launch, loadExtension, sleep } from '../harness/browser.mjs';
 import { collectErrors, openTab } from '../harness/extension.mjs';
-import { clickRelated, dismissConsent, relatedIds, revealControls, waitForPlayer } from '../harness/youtube.mjs';
+import { clickRelated, currentUrlVideoId, dismissConsent, relatedIds, revealControls, waitForPlayer } from '../harness/youtube.mjs';
 import { SAMPLES } from '../../unit/player/overlay/samples.js';
 import { videoRecord } from '../../helpers/fixtures.js';
 
@@ -36,7 +36,15 @@ function cuesFor(durationSec, prefix, stepMs = 4000) {
   const count = Math.max(1, Math.floor((durationSec * 1000) / stepMs) - 1);
   return Array.from({ length: count }, (_, i) => ({ n: i + 1, startMs: i * stepMs + 500, endMs: i * stepMs + 3300, text: `${prefix} ${i + 1}: ${SAMPLES[i % SAMPLES.length].text}` }));
 }
-const recordFor = (videoId, cues, { offset = 0, mode = 'ar', durationSec } = {}) => ({ ...videoRecord({ videoId, cues, offset, mode }), title: 'P5 live', durationMs: Math.ceil(durationSec * 1000) + 5000 });
+// المتحكم يثبّت مرجع المقاطع بمفتاح (importedAt وeditedAt)، فكل بذر يحمل ختمًا فريدًا وإلا بقيت مقاطع السجل السابق.
+let seedSeq = 0;
+function recordFor(videoId, cues, { offset = 0, mode = 'ar', durationSec } = {}) {
+  const rec = { ...videoRecord({ videoId, cues, offset, mode }), title: 'P5 live', durationMs: Math.ceil(durationSec * 1000) + 5000 };
+  const stamp = new Date(Date.now() + seedSeq++).toISOString();
+  rec.arabic = { ...rec.arabic, importedAt: stamp };
+  rec.english = rec.english.map((t) => ({ ...t, capturedAt: stamp }));
+  return rec;
+}
 
 // ---- دوال تُنفَّذ داخل الصفحة (مستقلة بلا إغلاق خارجي) ----
 const P = {
@@ -132,7 +140,8 @@ const P = {
         resolve({ frames: s.length, p50: q(0.5), p95: q(0.95), p99: q(0.99), max: +s.at(-1).toFixed(2), over25: s.filter((x) => x > 25).length, over50: s.filter((x) => x > 50).length, longTasks });
       }
     };
-    Promise.resolve(v.play()).catch(() => {}).then(() => requestAnimationFrame(frame));
+    v.play().catch(() => {});
+    requestAnimationFrame(frame);
   }),
   /** يتتبع الطبقة والعنوان كل 25ms حول تنقّل: متى بدأ، ومتى تغير المعرّف، وما ظهر في كل لحظة. */
   trackNav: (ms) => new Promise((resolve) => {
@@ -180,7 +189,8 @@ const P = {
   },
 };
 
-const b = await launch({ browser, profile: `${browser}-p5`, headless: !argv.includes('--headed') });
+// ملف الاختبار يتدهور بكثرة التشغيل (يتوقف تشغيل الوسائط): ملف جديد لكل تشغيل بـ--profile.
+const b = await launch({ browser, profile: val('profile', `${browser}-p5`), headless: !argv.includes('--headed') });
 result.browser = `${BROWSERS[browser].name} (${b.version.product})`;
 console.log(`المتصفح: ${result.browser}`);
 let page;
@@ -192,12 +202,59 @@ const shoot = async (name) => {
   await page.screenshot(f);
   result.screenshots.push(path.relative(ROOT, f));
 };
+let realAds = 0;
+let adReturned = false;
+/**
+ * إعلان حقيقي على الصفحة (يظهر أحيانًا في أي متصفح، وقد يتكرر مرتين أو أكثر ومدة كل منها نحو دقيقة): تُقاس الطبقة أثناءه
+ * (يجب أن تكون مخفية فارغة)، ثم يُنتظر انتهاؤه (والتخطي بنقرة عادية متى ظهر الزر) وتُقاس عودتها.
+ * يعيد 'none' بلا إعلان، و'ended' إن انتهى، و'stuck' إن طال أكثر من المهلة (فتُعاد الصفحة بعدها).
+ */
+async function settleAds(label, { record = true } = {}) {
+  const isAd = () => page.eval(() => { const p = document.querySelector('#movie_player'); return !!p && (p.classList.contains('ad-showing') || p.classList.contains('ad-interrupting')); });
+  if (!(await isAd())) return 'none';
+  if (record) realAds++;
+  await sleep(900);
+  const during = await iso(P.peek);
+  const mainDuring = await page.eval(P.main);
+  if (record) check(`real-ad-hides-overlay (${label} #${realAds})`, 'P5-AC4', during.hidden === true && during.lines.length === 0, { classes: mainDuring.classes, hidden: during.hidden, lines: during.lines.length, videoDurationSec: mainDuring.duration && Math.round(mainDuring.duration) });
+  if (record) await shoot(`ad-real-${realAds}-during`);
+  const ended = await wait(() => {
+    const p = document.querySelector('#movie_player');
+    const skip = p?.querySelector('.ytp-skip-ad-button, .ytp-ad-skip-button-modern, .ytp-ad-skip-button');
+    if (skip && getComputedStyle(skip).display !== 'none') skip.click();
+    return p && !p.classList.contains('ad-showing') && !p.classList.contains('ad-interrupting');
+  }, { timeoutMs: 150000, intervalMs: 1000 });
+  if (!ended) {
+    result.notes.push(`إعلان حقيقي على ${label} طال أكثر من 150 ثانية (سلسلة إعلانات)؛ بقيت الطبقة مخفية طوال ذلك كما يُراد، وأُعيد فتح الصفحة لمتابعة السيناريوهات.`);
+    return 'stuck';
+  }
+  await sleep(1800);
+  const after = await iso(P.peek);
+  const m = await page.eval(P.main);
+  // لفيديو TED تُقارن الأسطر بما يجب أن يظهر عند الزمن الحالي؛ ولغيره يكفي ظهور الطبقة (لا حصر لمقاطعه هنا).
+  const expectNow = label === 'TED' && tedCues ? expectedAt(tedCues, m.currentTime ?? 0) : null;
+  const back = after.hidden === false && (!expectNow || JSON.stringify(after.lines.map((l) => l.text)) === JSON.stringify(expectNow));
+  if (record) check(`real-ad-overlay-returns (${label} #${realAds})`, 'P5-AC4', back, { hidden: after.hidden, timeAfter: m.currentTime, videoDurationSec: m.duration && Math.round(m.duration), classes: m.classes, shown: after.lines.length, expectedNow: expectNow ? expectNow.length : null });
+  if (record) adReturned = adReturned || back;
+  if (record) await shoot(`ad-real-${realAds}-after`);
+  if (record) result.notes.push(`إعلان حقيقي صودف على صفحة ${label}`);
+  return 'ended';
+}
+let tedCues = null;
+
 /** ينتقل إلى فيديو ويعيد تهيئة العالم المعزول. */
-async function openVideo(id, { seedCues, durationHint = 600 } = {}) {
-  await page.goto(`https://www.youtube.com/watch?v=${id}`);
+async function openVideoOnce(id, { seedCues, durationHint = 600, start = 0 } = {}) {
+  await page.goto(`https://www.youtube.com/watch?v=${id}${start ? `&t=${start}s` : ''}`);
   await dismissConsent(page).catch(() => false);
-  const ready = await waitForPlayer(page, id);
+  // الإقلاع التلقائي يختلف بين الجلسات: كتم الصوت ثم تشغيل مكتوم (مسموح) يضمن تحميل الوسائط، ثم إيقاف.
   await page.eval(() => document.querySelectorAll('video').forEach((v) => { v.muted = true; }));
+  let ready = await waitForPlayer(page, id, 12000);
+  if (!ready) {
+    await page.eval(() => { const v = document.querySelector('#movie_player video.html5-main-video'); if (v) { v.muted = true; v.play().catch(() => {}); } });
+    ready = await waitForPlayer(page, id, 25000);
+  }
+  const lengthSec = await page.eval(() => { try { return Number(document.querySelector('#movie_player').getPlayerResponse().videoDetails.lengthSeconds) || null; } catch { return null; } });
+  if (ready && lengthSec) ready = { ...ready, duration: lengthSec };
   if (await page.eval(() => /confirm you.re not a bot|unusual traffic/i.test(document.body?.innerText || ''))) throw new Error('BOT_CHALLENGE: توقف دون تحايل');
   await sleep(1500);
   isoId = page.isolatedContextId(extId);
@@ -205,10 +262,31 @@ async function openVideo(id, { seedCues, durationHint = 600 } = {}) {
   if (seedCues) await iso(P.seed, recordFor(id, seedCues, { durationSec: ready?.duration ?? durationHint }));
   return ready;
 }
+
+/** يفتح الفيديو ويتعامل مع الإعلان الحقيقي إن ظهر؛ وإن طالت سلسلة الإعلانات أُعيد فتح الصفحة (حتى 3 محاولات). */
+async function openVideo(id, opts = {}) {
+  let ready = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    ready = await openVideoOnce(id, opts);
+    const r = await settleAds(id === VIDEO ? 'TED' : id, { record: !!opts.seedCues });
+    if (r !== 'stuck') return ready;
+  }
+  return ready;
+}
+/** يقفز ويبقى متوقفًا (يوتيوب قد يستأنف التشغيل التلقائي بعد القفز، فيُعاد الإيقاف حتى يثبت). */
+// أزمنة القفز قريبة من المخزَّن مؤقتًا: القفز البعيد قد يُفرغ عنصر الفيديو (emptied) في جلسة الأتمتة فلا تصله أحداث seeking،
+// وهذا من يوتيوب لا من الطبقة. كلها داخل مقاطع (4 ثوانٍ لكل مقطع: بداية 0.5+4i ونهاية +2.8).
+const T_VIEW = 17.5; // المقطع 5 (16.5–19.3)
+const T_JUMP = 33.5; // المقطع 9 (32.5–35.3)
+const T_BACK = 14.0; // المقطع 4 (12.5–15.3)
 const seekTo = async (sec) => {
-  await page.eval((t) => { const v = document.querySelector('#movie_player video.html5-main-video'); v.pause(); v.currentTime = t; }, { args: [sec] });
-  await wait(() => { const v = document.querySelector('#movie_player video.html5-main-video'); return v && !v.seeking && v.readyState >= 2; }, { timeoutMs: 15000, intervalMs: 150 });
-  await sleep(350);
+  for (let i = 0; i < 4; i++) {
+    await page.eval((t) => { const v = document.querySelector('#movie_player video.html5-main-video'); v.pause(); v.currentTime = t; }, { args: [sec] });
+    await wait(() => { const v = document.querySelector('#movie_player video.html5-main-video'); return v && !v.seeking && v.readyState >= 2; }, { timeoutMs: 15000, intervalMs: 150 });
+    await sleep(450);
+    const st = await page.eval(() => { const v = document.querySelector('#movie_player video.html5-main-video'); return { paused: v.paused, t: v.currentTime }; });
+    if (st.paused && Math.abs(st.t - sec) < 0.05) return;
+  }
 };
 const expectedAt = (cues, sec, off = 0) => {
   const x = Math.round(sec * 1000) - off;
@@ -232,6 +310,7 @@ try {
   const ready = await openVideo(VIDEO);
   const dur = Math.floor(ready?.duration ?? 600);
   const cues = cuesFor(Math.min(dur, 1200), 'ع');
+  tedCues = cues;
   const seeded = await iso(P.seed, recordFor(VIDEO, cues, { durationSec: dur }));
   const st = await iso(P.state);
   check('overlay-mounted-and-record-loaded', 'تحضير', st.overlay === 'mounted' && seeded === cues.length && st.videoId === VIDEO, { ...st, seeded, durationSec: dur });
@@ -250,7 +329,8 @@ try {
     await iso(P.call, 'setDisplayMode', 'dual');
     await sleep(250);
     const m2 = await iso(P.peek);
-    check('dual-ar-over-en-single-layer', 'P5-AC1', m2.lines.map((l) => l.kind).join() === 'ar,en' && m2.lines.filter((l) => l.kind === 'en').every((l) => /^line \d+$/.test(l.text)), { lines: m2.lines.map((l) => [l.kind, l.dir]) });
+    const dbg = await iso(() => { const s = globalThis.__tarjuman.controller.getState(); return { mode: s.view.displayMode, english: !!s.english, enCount: s.english?.cues.length ?? 0, enSource: s.english?.source ?? null, t: document.querySelector('#movie_player video').currentTime }; });
+    check('dual-ar-over-en-single-layer', 'P5-AC1', m2.lines.map((l) => l.kind).join() === 'ar,en' && m2.lines.filter((l) => l.kind === 'en').every((l) => /^line \d+$/.test(l.text)), { lines: m2.lines.map((l) => [l.kind, l.dir]), hidden: m2.hidden, empty: m2.empty, dbg });
     await shoot('ac1-dual');
     await iso(P.call, 'setDisplayMode', 'off');
     await sleep(200);
@@ -259,58 +339,36 @@ try {
     await iso(P.call, 'setDisplayMode', 'ar');
   }
 
-  // ===== AC3: المزامنة =====
-  if (want('ac3')) {
-    for (const rate of [0.75, 1, 1.5, 2]) {
-      await seekTo(30);
-      const r = await iso(P.sample, 7000, cues, rate);
-      check(`sync-rate-${rate}x`, 'P5-AC3', r.bad === 0 || r.maxRun <= 1, { ...r });
-    }
-    await seekTo(60);
-    const before = (await page.eval(P.main)).currentTime;
-    const a = await shownText();
-    await iso(P.call, 'setOffset', 1000);
-    await sleep(250);
-    const b2 = await shownText();
-    const afterT = (await page.eval(P.main)).currentTime;
-    const expect = expectedAt(cues, before, 1000);
-    check('offset-changes-lookup-only', 'P5-AC3', before === afterT && JSON.stringify(b2) === JSON.stringify(expect), { currentTimeBefore: before, currentTimeAfter: afterT, wasShown: a.length, nowShown: b2.length });
-    await iso(P.call, 'setOffset', -1000);
-    await sleep(250);
-    check('offset-negative', 'P5-AC3', JSON.stringify(await shownText()) === JSON.stringify(expectedAt(cues, before, -1000)) && (await page.eval(P.main)).currentTime === before);
-    await iso(P.call, 'resetOffset');
-    await seekTo(100.2);
-    const jump = JSON.stringify(await shownText()) === JSON.stringify(expectedAt(cues, 100.2));
-    await seekTo(20.1);
-    const back = JSON.stringify(await shownText()) === JSON.stringify(expectedAt(cues, 20.1));
-    check('seek-forward-and-back', 'P5-AC3', jump && back, { jump, back });
-    const idle = await iso(P.diag);
-    check('loop-stops-when-paused', 'P5-AC3', idle.session.engine.running === false, { running: idle.session.engine.running });
-  }
-
   // ===== AC4 + AC6: العادي والمسرح وملء الشاشة، والنقرات والارتفاع فوق الشريط =====
   if (want('ac4')) {
-    await seekTo(10.5);
-    const expect = expectedAt(cues, 10.5);
+    await seekTo(T_VIEW);
+    const expect = expectedAt(cues, T_VIEW);
     const show = async (label) => {
-      await sleep(900);
+      await seekTo(T_VIEW); // تبديل العرض قد يستأنف التشغيل: يُعاد التثبيت عند المقطع المقصود قبل القياس
+      await sleep(600);
       const m = await page.eval(P.main);
       const p = await iso(P.peek);
       const inside = m.player && p.stage.top >= m.player.top - 2 && p.stage.bottom <= m.player.bottom + 2;
-      return { m, p, ok: JSON.stringify(p.lines.map((l) => l.text)) === JSON.stringify(expect) && !p.hidden && inside && p.host.w !== 0, label };
+      const dg = await iso(P.diag);
+      const stt = await iso(P.state);
+      return { m, p, ok: JSON.stringify(p.lines.map((l) => l.text)) === JSON.stringify(expect) && !p.hidden && inside && p.host.width !== 0, label, why: { paused: m.paused, t: m.currentTime, shown: p.lines.length, expected: expect.length, hidden: p.hidden, empty: p.empty, inside, hostW: p.host.width, view: stt.view, eng: dg.session.engine, last: dg.session.lastCode } };
     };
     const normal = await show('normal');
-    check('visible-normal', 'P5-AC4', normal.ok, { player: normal.m.player, stage: normal.p.stage });
+    check('visible-normal', 'P5-AC4', normal.ok, { why: normal.why });
     await shoot('ac4-normal');
     await page.key('t', 'KeyT', 84);
+    if (!(await wait(() => document.querySelector('ytd-watch-flexy')?.hasAttribute('theater'), { timeoutMs: 3000, intervalMs: 300 }))) {
+      const c = await page.centerOf('#movie_player .ytp-size-button', { scroll: false });
+      if (c) await page.click(c.x, c.y);
+    }
     const theater = await show('theater');
-    check('visible-theater', 'P5-AC4', theater.m.theater && theater.ok, { theater: theater.m.theater, player: theater.m.player });
+    check('visible-theater', 'P5-AC4', theater.m.theater && theater.ok, { theater: theater.m.theater, why: theater.why });
     await shoot('ac4-theater');
-    await page.key('t', 'KeyT', 84);
+    if (await page.eval(() => !!document.querySelector('ytd-watch-flexy')?.hasAttribute('theater'))) await page.key('t', 'KeyT', 84);
     await sleep(600);
     await page.key('f', 'KeyF', 70);
     const fs = await show('fullscreen');
-    check('visible-fullscreen', 'P5-AC4', (fs.m.fsId !== null || fs.m.classes.includes('ytp-fullscreen')) && fs.ok, { fullscreenElement: fs.m.fsId, hostParent: fs.m.hostParentId, classes: fs.m.classes, player: fs.m.player, diag: (await iso(P.diag)).session.lastCode });
+    check('visible-fullscreen', 'P5-AC4', (fs.m.fsId !== null || fs.m.classes.includes('ytp-fullscreen')) && fs.ok, { fullscreenElement: fs.m.fsId, hostParent: fs.m.hostParentId, classes: fs.m.classes, player: fs.m.player, why: fs.why, lastCode: (await iso(P.diag)).session.lastCode });
     await shoot('ac4-fullscreen');
     await page.key('f', 'KeyF', 70);
     await sleep(900);
@@ -319,7 +377,7 @@ try {
   }
 
   if (want('ac6')) {
-    await seekTo(10.5);
+    await seekTo(T_VIEW);
     await iso(P.call, 'setOffset', 0);
     const p = await iso(P.peek);
     const cx = Math.round((p.stage.left + p.stage.right) / 2);
@@ -359,36 +417,53 @@ try {
     await page.eval(() => { document.querySelector('#movie_player video.html5-main-video').pause(); });
   }
 
-  // ===== الإعلان (AC4): إعلان حقيقي إن صودف، وإلا محاكاة بفئة المشغّل مع التصريح بذلك =====
+  // ===== AC3: المزامنة (صفحة جديدة: المخزَّن مؤقتًا في بداية الفيديو، فلا قفز بعيد يُفرغ العنصر) =====
+  if (want('ac3')) {
+    await openVideo(VIDEO, { seedCues: cues });
+    for (const rate of [0.75, 1, 1.5, 2]) {
+      await seekTo(5);
+      const r = await iso(P.sample, 7000, cues, rate);
+      check(`sync-rate-${rate}x`, 'P5-AC3', r.bad === 0 || r.maxRun <= 1, r.bad === 0 || r.maxRun <= 1 ? { ...r } : { ...r, state: await iso(P.state), classes: (await page.eval(P.main)).classes, peek: await iso(P.peek) });
+    }
+    // الإزاحة +1.0: المقطع 6 (24.5–27.3) ظاهر عند 25.0، ومع +1.0 يصير وقت البحث 24.0 (فجوة): يتغير الظاهر وحده.
+    await seekTo(25.0);
+    const a = await shownText();
+    await iso(P.call, 'setOffset', 1000);
+    await sleep(250);
+    const b2 = await shownText();
+    const afterT = (await page.eval(P.main)).currentTime;
+    check('offset-plus-lookup-only', 'P5-AC3', a.length > 0 && JSON.stringify(b2) === JSON.stringify(expectedAt(cues, 25.0, 1000)) && JSON.stringify(a) !== JSON.stringify(b2) && afterT === 25.0, { wasShown: a.length, nowShown: b2.length, currentTimeBefore: 25.0, currentTimeAfter: afterT });
+    await iso(P.call, 'resetOffset');
+    // الإزاحة −1.0: عند 27.6 فجوة (27.3–28.5)، ومع −1.0 يصير وقت البحث 28.6 فيظهر المقطع 7 قبل موعده بثانية.
+    await seekTo(27.6);
+    const c0 = await shownText();
+    await iso(P.call, 'setOffset', -1000);
+    await sleep(250);
+    const c1 = await shownText();
+    const t2 = (await page.eval(P.main)).currentTime;
+    check('offset-minus-lookup-only', 'P5-AC3', c0.length === 0 && c1.length > 0 && JSON.stringify(c1) === JSON.stringify(expectedAt(cues, 27.6, -1000)) && t2 === 27.6, { before: c0.length, after: c1.length, currentTime: t2, state: await iso(P.state) });
+    await iso(P.call, 'resetOffset');
+    await seekTo(T_JUMP);
+    const jumpShown = await shownText();
+    const jump = jumpShown.length > 0 && JSON.stringify(jumpShown) === JSON.stringify(expectedAt(cues, T_JUMP));
+    await seekTo(T_BACK);
+    const backShown = await shownText();
+    const back = backShown.length > 0 && JSON.stringify(backShown) === JSON.stringify(expectedAt(cues, T_BACK));
+    check('seek-forward-and-back', 'P5-AC3', jump && back, { jump, back, readyState: await page.eval(() => document.querySelector('#movie_player video.html5-main-video').readyState) });
+    const idle = await iso(P.diag);
+    check('loop-stops-when-paused', 'P5-AC3', idle.session.engine.running === false, { running: idle.session.engine.running });
+  }
+
+  // ===== الإعلان (AC4): الإعلان الحقيقي يُقاس متى صودف (في أي سيناريو)، وإلا محاكاة بفئة المشغّل مع التصريح بذلك =====
   if (want('ad')) {
-    let real = null;
-    if (argv.includes('--ad')) {
+    if (!adReturned && argv.includes('--ad')) {
       for (const id of ['dQw4w9WgXcQ', '9bZkp7q19f0', 'kJQP7kiw5Fk', 'JGwWNGJdvx8']) {
         await openVideo(id, { seedCues: cuesFor(120, 'إ'), durationHint: 200 }).catch(() => null);
         const found = await wait(() => document.querySelector('#movie_player')?.classList.contains('ad-showing') || document.querySelector('#movie_player')?.classList.contains('ad-interrupting'), { timeoutMs: 14000, intervalMs: 400 });
-        if (found) { real = id; break; }
+        if (found && (await settleAds(id)) === 'ended' && adReturned) break;
       }
     }
-    if (real) {
-      await sleep(1200);
-      const during = await iso(P.peek);
-      const mainDuring = await page.eval(P.main);
-      check('real-ad-hides-overlay', 'P5-AC4', during.hidden === true && during.lines.length === 0, { classes: mainDuring.classes });
-      await shoot('ad-real-during');
-      // انتظار الانتهاء (وتخطٍّ بنقرة مستخدم عادية متى ظهر الزر).
-      const ended = await wait(() => {
-        const p = document.querySelector('#movie_player');
-        const skip = p?.querySelector('.ytp-skip-ad-button, .ytp-ad-skip-button-modern, .ytp-ad-skip-button');
-        if (skip && getComputedStyle(skip).display !== 'none') skip.click();
-        return p && !p.classList.contains('ad-showing') && !p.classList.contains('ad-interrupting');
-      }, { timeoutMs: 70000, intervalMs: 1000 });
-      await sleep(1500);
-      const after = await iso(P.peek);
-      const t = (await page.eval(P.main)).currentTime;
-      check('real-ad-overlay-returns', 'P5-AC4', !!ended && after.hidden === false, { ended: !!ended, hidden: after.hidden, timeAfter: t });
-      await shoot('ad-real-after');
-      result.notes.push(`إعلان حقيقي صودف على ${real}`);
-    } else {
+    if (!adReturned) {
       await openVideo(VIDEO, { seedCues: cues });
       await seekTo(10.5);
       await page.eval(() => document.querySelector('#movie_player').classList.add('ad-showing'));
@@ -398,47 +473,60 @@ try {
       await sleep(300);
       const after = await iso(P.peek);
       check('simulated-ad-class-hides-and-restores', 'P5-AC4', during.hidden && during.lines.length === 0 && !after.hidden && after.lines.length > 0, { simulated: true });
-      result.notes.push('لم يصادَف إعلان حقيقي؛ أُثبت الإخفاء بمحاكاة فئة ad-showing على المشغّل (غير كافٍ وحده لإثبات الإعلان الحقيقي).');
+      result.notes.push(realAds ? 'صودف إعلان حقيقي لكن عودة الطبقة بعده لم تُقَس (سلسلة طويلة)؛ أُثبتت العودة بمحاكاة فئة ad-showing.' : 'لم يصادَف إعلان حقيقي؛ أُثبت الإخفاء والعودة بمحاكاة فئة ad-showing على المشغّل (غير كافٍ وحده لإثبات الإعلان الحقيقي).');
     }
   }
 
   // ===== AC5: التنقل بين الفيديوهات =====
   if (want('ac5')) {
     await openVideo(VIDEO, { seedCues: cuesFor(Math.min(dur, 1200), 'ألف') });
-    const rel = await relatedIds(page);
-    const target = rel.find((id) => id !== VIDEO);
-    if (!target) check('navigation', 'P5-AC5', false, { reason: 'لا مقترحات' });
+    const rel = (await relatedIds(page)).filter((id) => id !== VIDEO).slice(0, 3);
+    if (!rel.length) check('navigation', 'P5-AC5', false, { reason: 'لا مقترحات' });
     else {
-      await iso(P.seed, recordFor(target, cuesFor(900, 'باء'), { durationSec: 905 }));
+      for (const id of rel) await iso(P.seed, recordFor(id, cuesFor(900, 'باء'), { durationSec: 905 }));
       await seekTo(10.5);
-      const startsWithA = (await shownText()).join(' ').startsWith('ألف');
-      const tracking = iso(P.trackNav, 7000);
+      const preShown = await shownText();
+      const startsWithA = preShown.join(' ').startsWith('ألف');
+      const tracking = iso(P.trackNav, 14000);
       await sleep(300);
-      await clickRelated(page, target);
+      let target = null;
+      for (const id of rel) {
+        await clickRelated(page, id);
+        await sleep(1800);
+        if ((await currentUrlVideoId(page)) !== id) {
+          result.notes.push('نقرة الفأرة على المقترح لم تنقل؛ استُعملت نقرة الرابط البرمجية (تنقّل SPA نفسه).');
+          await page.eval((x) => document.querySelector(`#secondary a[href^="/watch?v=${x}"]`)?.click(), { args: [id] });
+          await sleep(2200);
+        }
+        if ((await currentUrlVideoId(page)) === id) {
+          target = id;
+          break;
+        }
+      }
       const nav = await tracking;
-      const urlChangedAt = nav.rows.find((r) => r.url === target)?.at ?? null;
+      const urlChangedAt = target ? nav.rows.find((r) => r.url === target)?.at ?? null : null;
       const staleAfterStart = nav.rows.filter((r) => nav.startAt !== null && r.at >= nav.startAt + 60 && r.text.includes('ألف'));
       const staleAfterUrl = nav.rows.filter((r) => urlChangedAt !== null && r.at >= urlChangedAt && r.text.includes('ألف'));
-      check('overlay-cleared-immediately-on-navigation', 'P5-AC5', startsWithA && nav.startAt !== null && staleAfterStart.length === 0 && staleAfterUrl.length === 0, { startsWithA, navStartAtMs: nav.startAt, urlChangedAtMs: urlChangedAt, staleAfterStart: staleAfterStart.length, staleAfterUrl: staleAfterUrl.length });
+      check('overlay-cleared-immediately-on-navigation', 'P5-AC5', !!target && startsWithA && nav.startAt !== null && staleAfterStart.length === 0 && staleAfterUrl.length === 0, { target: !!target, startsWithA, preShown: preShown.length, navStartAtMs: nav.startAt, urlChangedAtMs: urlChangedAt, staleAfterStart: staleAfterStart.length, staleAfterUrl: staleAfterUrl.length });
       await sleep(1500);
       const s2 = await iso(P.state);
       await seekTo(8.6);
       const nowShown = await shownText();
-      check('new-video-loads-its-own-saved-translation', 'P5-AC5', s2.videoId === target && s2.arabic > 0 && nowShown.length > 0 && nowShown.every((t) => t.startsWith('باء')), { stateVideoIsTarget: s2.videoId === target, arabicCount: s2.arabic, shown: nowShown.length });
+      check('new-video-loads-its-own-saved-translation', 'P5-AC5', !!target && s2.videoId === target && s2.arabic > 0 && nowShown.length > 0 && nowShown.every((t) => t.startsWith('باء')), { stateVideoIsTarget: s2.videoId === target, arabicCount: s2.arabic, shown: nowShown.length });
       await shoot('ac5-after-navigation');
     }
   }
 
   // ===== AC7: الأداء على فيديو ساعتين فأكثر وملف 2400 مقطع =====
   if (want('ac7')) {
-    const r0 = await openVideo(PERF_VIDEO).catch((e) => ({ error: e.message }));
+    let r0 = null;
+    for (let i = 0; i < 3 && !r0?.duration; i++) r0 = await openVideo(PERF_VIDEO, { start: 3600 }).catch((e) => ({ error: e.message }));
     const durSec = r0?.duration ?? 0;
-    if (!durSec) check('perf-video-ready', 'P5-AC7', false, { error: r0?.error ?? 'لم يجهز' });
+    if (!durSec) check('perf-video-ready', 'P5-AC7', false, { error: r0?.error ?? 'لم يجهز', page: await page.eval(() => { const v = document.querySelector('#movie_player video.html5-main-video'); return { rs: v?.readyState, paused: v?.paused, cls: [...(document.querySelector('#movie_player')?.classList ?? [])].filter((c) => /ad-|mode/.test(c)) }; }).catch(() => null) });
     else {
       const big = cuesFor(durSec, 'ع', Math.max(2000, Math.floor((durSec * 1000) / 2400)));
       await iso(P.seed, recordFor(PERF_VIDEO, big, { durationSec: durSec }));
       check('perf-video-long-enough', 'P5-AC7', durSec >= 7200 && big.length >= 2000, { durationSec: Math.round(durSec), cues: big.length });
-      await seekTo(3600);
       await iso(P.call, 'setDisplayMode', 'off');
       await sleep(400);
       const base = await iso(P.frames, 10000, 1);
