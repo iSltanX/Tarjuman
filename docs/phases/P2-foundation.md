@@ -135,7 +135,7 @@
 {
   "phase": "P2",
   "status": "in_progress",
-  "updated": "2026-11-01T16:37:49+03:00",
+  "updated": "2026-11-01T16:51:11+03:00",
   "branch": "tj/P2-foundation",
   "resume": "بدأت: قراءة تقرير P1 والعقود الحالية، ثم كتابة العقود.",
   "blocker": null,
@@ -145,7 +145,14 @@
   "checks": [],
   "acceptance": {},
   "evidence": [],
-  "sharedRequests": []
+  "sharedRequests": [
+    {
+      "file": "src/extract/index.js",
+      "change": "إنشاء واجهة ExtractorAdapter الرقيقة (createExtractor) فوق وحدات P1 دون تعديل أي ملف منها",
+      "why": "src/content مجمَّد بعد P2 فيلزم أن يتصل بالاستخراج عبر واجهة واحدة تملكها P3؛ والبديل تجميد خمس وحدات من src/extract أمام P3",
+      "applied": true
+    }
+  ]
 }
 ```
 
