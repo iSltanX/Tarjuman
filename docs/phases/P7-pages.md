@@ -124,10 +124,10 @@
 ```json tj-status
 {
   "phase": "P7",
-  "status": "planned",
-  "updated": "2026-10-31",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W4 بعد التحقق من W3.",
+  "status": "in_progress",
+  "updated": "2026-11-02T01:03:17+03:00",
+  "branch": "tj/P7-pages",
+  "resume": "بدأت: قراءة العقود والتصميم ثم نافذة الأيقونة وقالب التعليمات.",
   "blocker": null,
   "outcome": null,
   "commit": null,
