@@ -40,7 +40,11 @@ async function collect(includeBody = false) {
   const out = [];
   for (const tab of tabs) {
     try {
-      const snap = await chrome.tabs.sendMessage(tab.id, { type: 'tj:poc-snapshot', includeBody });
+      // مهلة لكل تبويب: تبويب مستعاد لم يُحمَّل أو قيد التحميل لا يعلّق الصفحة كلها.
+      const snap = await Promise.race([
+        chrome.tabs.sendMessage(tab.id, { type: 'tj:poc-snapshot', includeBody }),
+        new Promise((resolve) => setTimeout(() => resolve(null), 3000)),
+      ]);
       if (snap) out.push({ tabId: tab.id, active: tab.active, snap });
     } catch {
       // تبويب بلا سكربت ترجمان.
@@ -107,18 +111,24 @@ async function render() {
 }
 
 /** يصدّر نتائج الإثبات (اللقطات وسجل الجلسة وSRT والعينات الخام) ملفًا واحدًا بعد التأكد من خلوه من الأسرار. */
-async function exportResults() {
+async function exportResults(label = null) {
   const status = document.getElementById('export-status');
   status.textContent = 'جارٍ التجهيز…';
   const tabs = await collect(true);
   const data = {
     schema: 1,
+    label,
     exportedAt: new Date().toISOString(),
     browser: {
       isBrave: typeof navigator.brave !== 'undefined',
       userAgent: navigator.userAgent,
       brands: navigator.userAgentData ? navigator.userAgentData.brands.map((b) => `${b.brand} ${b.version}`) : null,
       webdriverExtensionPage: navigator.webdriver === true,
+    },
+    // مخزن الإضافة: يُتوقع فارغًا في P1 (لا تخزين دائم ولا رموز).
+    storage: {
+      local: Object.keys(await chrome.storage.local.get(null)),
+      session: Object.keys(await chrome.storage.session.get(null)),
     },
     tabs,
   };
@@ -127,14 +137,36 @@ async function exportResults() {
   if (leaks.length) {
     status.textContent = `أوقفنا التصدير: ${leaks.length} نمط حساس (${[...new Set(leaks.map((l) => l.type))].join('، ')}).`;
     status.className = 'bad';
-    return;
+    return null;
   }
   const stamp = data.exportedAt.replace(/[:.]/g, '-').slice(0, 19);
-  download(`tarjuman-p1-${data.browser.isBrave ? 'brave' : 'chrome'}-${stamp}.json`, text);
+  download(`tarjuman-p1-${data.browser.isBrave ? 'brave' : 'chrome'}-${label ? `${label}-` : ''}${stamp}.json`, text);
   status.textContent = `صُدّر ملف النتائج (${tabs.length} تبويب).`;
   status.className = 'ok';
+  return tabs;
 }
 
 document.getElementById('refresh').addEventListener('click', render);
-document.getElementById('export').addEventListener('click', exportResults);
+document.getElementById('export').addEventListener('click', () => exportResults());
 render();
+
+// تصدير تلقائي للإثبات عند فتح الصفحة بالرابط ‎#export=<اسم>‎ (من سطر الأوامر في جلسة غير مؤتمتة)، ثم إغلاق
+// تبويبها. ومع ‎&srt‎ يُنزَّل SRT كل مسار مقبول عبر Blob، ومع ‎&close‎ تُغلق تبويبات يوتيوب التي أجابت.
+const auto = /^#export=([A-Za-z0-9_-]{1,40})((?:&(?:close|srt))*)$/.exec(location.hash);
+if (auto) {
+  const flags = auto[2].split('&').filter(Boolean);
+  setTimeout(async () => {
+    const tabs = await exportResults(auto[1]);
+    const answered = flags.includes('close') && tabs ? tabs.map((t) => t.tabId) : [];
+    if (flags.includes('srt') && tabs) {
+      for (const { snap } of tabs) {
+        for (const a of snap.accepted) if (a.ok) download(`${auto[1]}-${a.videoId}.${a.lang}.${a.trackKind}.srt`, a.srt);
+      }
+    }
+    setTimeout(async () => {
+      const tab = await chrome.tabs.getCurrent();
+      const ids = [...answered, ...(tab ? [tab.id] : [])];
+      if (ids.length) chrome.tabs.remove(ids);
+    }, 3000);
+  }, 1500);
+}
