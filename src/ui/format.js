@@ -25,22 +25,23 @@ export function formatTimecode(ms) {
 }
 
 /**
- * العدّ بالعربية: «مقطع واحد»، «مقطعان»، «3 مقاطع»، «11 مقطعًا».
+ * العدّ بالعربية: «مقطع واحد»، «مقطعان»، «3 مقاطع»، «11 مقطعًا»، «100 مقطع».
  * @param {number} n
- * @param {{ one: string, two: string, few: string, many: string }} forms مثل COUNT_FORMS.cue
+ * @param {{ one: string, two: string, few: string, many: string, single: string }} forms مثل COUNT_FORMS.cue
  */
 export function formatCount(n, forms) {
   if (n === 1) return forms.one;
   if (n === 2) return forms.two;
   const mod = n % 100;
   if (mod >= 3 && mod <= 10) return `${n} ${forms.few}`;
-  return `${n} ${forms.many}`;
+  if (mod >= 11) return `${n} ${forms.many}`;
+  return `${n} ${forms.single}`;
 }
 
 export const COUNT_FORMS = Object.freeze({
-  cue: Object.freeze({ one: 'مقطع واحد', two: 'مقطعان', few: 'مقاطع', many: 'مقطعًا' }),
-  video: Object.freeze({ one: 'فيديو واحد', two: 'فيديوهان', few: 'فيديوهات', many: 'فيديو' }),
-  change: Object.freeze({ one: 'تغيير واحد', two: 'تغييران', few: 'تغييرات', many: 'تغييرًا' }),
+  cue: Object.freeze({ one: 'مقطع واحد', two: 'مقطعان', few: 'مقاطع', many: 'مقطعًا', single: 'مقطع' }),
+  video: Object.freeze({ one: 'فيديو واحد', two: 'فيديوهان', few: 'فيديوهات', many: 'فيديو', single: 'فيديو' }),
+  change: Object.freeze({ one: 'تغيير واحد', two: 'تغييران', few: 'تغييرات', many: 'تغييرًا', single: 'تغيير' }),
 });
 
 /**
