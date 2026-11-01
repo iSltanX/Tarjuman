@@ -134,10 +134,10 @@
 ```json tj-status
 {
   "phase": "P2",
-  "status": "integrating",
-  "updated": "2026-11-01T17:56:09+03:00",
+  "status": "verified",
+  "updated": "2026-11-01T17:58:39+03:00",
   "branch": "tj/P2-foundation",
-  "resume": "جاهزة للدمج في W2",
+  "resume": "مدمجة ومتحققة في W2",
   "blocker": null,
   "outcome": null,
   "commit": "52f205c",
