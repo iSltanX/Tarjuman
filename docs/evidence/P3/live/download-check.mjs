@@ -167,7 +167,7 @@ try {
   const ready = await waitForPlayer(yt, WATCH_VIDEO);
   if (await yt.eval(() => /confirm you.re not a bot|unusual traffic/i.test(document.body?.innerText || ''))) throw new Error('BOT_CHALLENGE: توقف دون تحايل');
   check('watch-page', !!ready, ready ? { durationSec: Math.round(ready.duration) } : null);
-  result.watchPage = { origin: 'youtube.com/watch', playerReady: !!ready };
+  result.watchPage = { site: 'youtube', page: 'watch', playerReady: !!ready };
   await sleep(2500);
   const iso = yt.isolatedContextId(extId);
   check('isolated-world-ready', !!iso);
@@ -241,6 +241,11 @@ try {
   await mkdir(OUT, { recursive: true });
   if (leaks.length) {
     console.error(`رُفضت كتابة الدليل: ${leaks.length} اكتشاف`);
+    for (const l of leaks) {
+      // النوع والمفتاح وطول المطابقة فقط، لا القيمة
+      const key = text.slice(0, l.index).split('\n').at(-1).trim().match(/^"([^"]+)"/)?.[1] ?? '?';
+      console.error(`  - ${l.type} · المفتاح ${key} · الطول ${l.length}`);
+    }
     process.exitCode = 1;
   } else {
     await writeFile(path.join(OUT, 'download.json'), text);
