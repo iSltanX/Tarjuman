@@ -279,11 +279,21 @@ try {
   const errs = collectErrors(page, { extId, onlyExtension: true });
   const external = [];
   const extensionReads = [];
+  // طلب «من الإضافة وحدها» بقاعدة P1 (netlog): كل إطارات مكدّس المستدعي من الإضافة. غلاف الالتقاط (MAIN) يقع في مكدّس
+  // كل طلبات يوتيوب، فوجود إطار للإضافة وحده لا يجعل الطلب طلبها.
+  const framesOf = (init) => {
+    const out = [];
+    if (init?.url) out.push(init.url);
+    for (let st = init?.stack; st; st = st.parent) for (const f of st.callFrames ?? []) if (f.url) out.push(f.url);
+    return out;
+  };
   page.on('Network.requestWillBeSent', (e) => {
-    const frames = [e.initiator?.url, ...(e.initiator?.stack?.callFrames ?? []).map((f) => f.url)].filter(Boolean);
-    if (!frames.some((u) => u.startsWith(`chrome-extension://${extId}`))) return;
-    if (e.request.url.startsWith('chrome-extension://')) extensionReads.push(e.request.url.split('/').pop());
-    else if (!/^https:\/\/(www\.)?youtube\.com\//.test(e.request.url) && !/googlevideo\.com|ytimg\.com|ggpht\.com/.test(e.request.url)) external.push(new URL(e.request.url).host);
+    if (e.request.url.startsWith(`chrome-extension://`)) {
+      extensionReads.push(e.request.url.split('/').pop());
+      return;
+    }
+    const frames = framesOf(e.initiator);
+    if (frames.length && frames.every((u) => u.startsWith('chrome-extension://'))) external.push(new URL(e.request.url).host);
   });
   await page.send('Network.enable');
   await armChooser();
@@ -614,6 +624,22 @@ try {
     if ((await main(M.main)).fs) await main(() => document.exitFullscreen().then(() => true, () => false));
     await sleep(800);
   }
+  /** يوتيوب تحت الأتمتة قد يُفرغ الفيديو بعد قفزات بعيدة أو تغيير المقاس («Something went wrong»): صفحة جديدة عند
+   * زمن البدء (t=) ثم قفزة قصيرة إلى المقطع المقيس، فيظهر سطر حقيقي. */
+  async function freshShot() {
+    await page.goto(`https://www.youtube.com/watch?v=${VIDEO}&t=${Math.max(0, Math.floor(SHOT_AT) - 3)}s`);
+    await dismissConsent(page).catch(() => false);
+    await main(() => document.querySelectorAll('video').forEach((v) => { v.muted = true; }));
+    if (!(await waitForPlayer(page, VIDEO, 15000))) await main(M.play);
+    await waitForPlayer(page, VIDEO, 25000);
+    await sleep(1500);
+    isoId = page.isolatedContextId(extId);
+    await settleAds();
+    await main(M.pause);
+    await page.waitFor(() => !!document.querySelector('#tarjuman-controls'), { timeoutMs: 10000 });
+    await sleep(800);
+  }
+
   if (want('modes')) {
     const fam = (id) => subtitleFont(id).family;
     for (const scale of [100, 160]) {
@@ -621,6 +647,7 @@ try {
         await iso(I.setSettings, { appearance: { font: 'markazi', scale: 160 } });
         await sleep(1500);
       }
+      await freshShot();
       const suffix = scale === 160 ? '-160' : '';
       // عادي
       let r = await modeShots('normal');
@@ -657,7 +684,7 @@ try {
       if ((await main(M.main)).theater && fsBack) await page.click(fsBack.x, fsBack.y);
       await sleep(1200);
       // مشغّل ضيق: أصغر عرض نافذة يتسع فيه الشريط
-      const widths = scale === 100 ? [900, 760, 640, 600, 560, 520, 480, 440, 400] : [600];
+      const widths = scale === 100 ? [900, 760, 640, 600, 560, 520, 480, 440, 400] : [520];
       const narrow = [];
       for (const w of widths) {
         await page.send('Emulation.setDeviceMetricsOverride', { width: w, height: 800, deviceScaleFactor: 1, mobile: false });
@@ -669,10 +696,18 @@ try {
         const ytOutside = m.right.children.filter((c) => c.shown && c.box.width > 0 && (c.box.right > m.chrome.right + 1 || c.box.left < m.chrome.left - 1 || c.box.top >= m.chrome.bottom - 1)).map((c) => c.cls || c.id);
         const overlapLeft = m.leftRight ? pk.group.left < m.leftRight.right - 1 : null;
         narrow.push({ viewport: w, player: m.player.width, size: pk.size, five: Object.values(pk.buttons).every((x) => x.box.width > 0), outside: ytOutside, overlapLeft, overflow: pk.overflow, group: pk.group.width });
-        if (w === 600) {
+        if (w === 520) {
+          await freshShot();
+          await main(M.seek, SHOT_AT);
+          await sleep(700);
+          await revealControls(page);
+          await sleep(300);
           const ov = await iso(I.ov);
+          const m2 = await main(M.main);
+          const pk2 = await iso(I.peek);
           const maxLine = Math.max(0, ...(ov.lineBoxes ?? []).map((x) => x.width));
-          if (scale === 160) check('compact-160: wraps-within-92%-and-above-bar', 'P6-AC8', (ov.lineBoxes ?? []).length > 0 && maxLine <= m.player.width * 0.92 + 1 && ov.stage.bottom <= m.chrome.top + 1, { lines: (ov.lineBoxes ?? []).length, maxLine, player: m.player.width, lineHeights: (ov.lineBoxes ?? []).map((x) => x.height), font: ov.font });
+          if (scale === 160) check('compact-160: wraps-within-92%-and-above-bar', 'P6-AC8', (ov.lineBoxes ?? []).length > 0 && maxLine <= m2.player.width * 0.92 + 1 && ov.stage.bottom <= m2.chrome.top + 1, { lines: (ov.lineBoxes ?? []).length, maxLine, player: m2.player.width, lineHeights: (ov.lineBoxes ?? []).map((x) => x.height), font: ov.font });
+          check(`compact${scale === 160 ? '-160' : ''}: five-in-bar`, 'P6-AC7', pk2.size === 'compact' && Object.values(pk2.buttons).every((x) => x.box.width > 0 && x.box.top >= m2.chrome.top - 1 && x.box.bottom <= m2.chrome.bottom + 1), { size: pk2.size, player: m2.player.width });
           await shoot(`ac7-compact${suffix}`);
         }
       }
@@ -711,8 +746,14 @@ try {
   result.measures.diagnostics = { reinserts: d.session?.reinserts, renderFailures: d.session?.renderFailures, overflows: d.session?.overflows, lastCode: d.session?.lastCode };
   check('no-render-failures', 'P6-AC1', (d.session?.renderFailures ?? 0) === 0, result.measures.diagnostics);
   check('no-external-requests-from-extension', 'P6-AC9', external.length === 0, { external, fontReads: extensionReads.length });
-  result.errors = errs.list;
-  check('no-extension-errors', 'تحضير', errs.list.length === 0, errs.list.slice(0, 3));
+  // رسالة المتصفح عند قراءة سكربت المحتوى ملف خط من حزمة الإضافة (والقراءة ناجحة): تظهر بـuse_dynamic_url ودونه
+  // (test/live/controls/font-fetch-diag.mjs)، فتُعدّ وحدها ولا تُحسب خطأً من الإضافة.
+  const FONT_READ_LOG = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/subtitle\/[a-z0-9-]+-(?:400|700)\.woff2 /;
+  const known = errs.list.filter((x) => x.kind === 'log.security' && FONT_READ_LOG.test(x.text));
+  const real = errs.list.filter((x) => !known.includes(x));
+  result.errors = real;
+  result.measures.fontReadSecurityLogs = { count: known.length, fontReads: extensionReads.length };
+  check('no-extension-errors', 'تحضير', real.length === 0, real.slice(0, 3));
 } catch (err) {
   result.notes.push(`توقف: ${err.message}`);
   console.error(err);
