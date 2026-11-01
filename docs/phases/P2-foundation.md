@@ -134,14 +134,14 @@
 ```json tj-status
 {
   "phase": "P2",
-  "status": "ready",
-  "updated": "2026-11-01T17:47:48+03:00",
+  "status": "integrating",
+  "updated": "2026-11-01T17:56:09+03:00",
   "branch": "tj/P2-foundation",
   "resume": "جاهزة للدمج في W2",
   "blocker": null,
   "outcome": null,
   "commit": "52f205c",
-  "mergeCommit": null,
+  "mergeCommit": "61e5a88",
   "checks": [
     {
       "cmd": "npm run check",
