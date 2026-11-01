@@ -113,10 +113,10 @@
 ```json tj-status
 {
   "phase": "P5",
-  "status": "planned",
-  "updated": "2026-10-31",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W3 بعد التحقق من P2.",
+  "status": "in_progress",
+  "updated": "2026-11-01T18:26:52+03:00",
+  "branch": "tj/P5-overlay-sync",
+  "resume": "بدأت: قراءة العقود (التوقيت والمتحكم ونقطة التركيب) ثم المزامنة",
   "blocker": null,
   "outcome": null,
   "commit": null,
