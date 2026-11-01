@@ -590,7 +590,10 @@ async function inspect(ctx, ids) {
   for (const id of ids) {
     await openWatch(ctx.page, id);
     const i = await playerInfo(ctx.page);
-    out.push({ id, title: i.title, author: i.author, lengthSeconds: i.lengthSeconds, isLive: i.isLive, tracks: i.tracks });
+    out.push({
+      id, title: i.title, author: i.author, lengthSeconds: i.lengthSeconds, isLive: i.isLive,
+      trackCount: i.tracks.length, english: i.tracks.filter((t) => /^en/.test(t.lang)),
+    });
     console.log(JSON.stringify(out[out.length - 1]));
     await human(1500, 2500);
   }
