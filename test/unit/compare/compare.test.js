@@ -5,20 +5,13 @@ import assert from 'node:assert/strict';
 import { compare } from '../../../src/core/compare/index.js';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
 import { validateComparisonReport } from '../../../src/core/model/tracks.js';
-import { baseFingerprint, readSrtFixture } from '../../fixtures/srt/index.js';
+import { baseFingerprint, deepFreeze, readSrtFixture } from '../../fixtures/srt/index.js';
 import { makeCues } from '../../helpers/fixtures.js';
 
 const cuesOf = (name) => parseSrtLenient(readSrtFixture(name)).cues;
 const fp = baseFingerprint();
 const run = (name, opts) => compare(cuesOf(name), fp, opts);
 const valid = (report) => assert.deepEqual(validateComparisonReport(report), { ok: true }, JSON.stringify(report));
-const deepFreeze = (o) => {
-  if (o && typeof o === 'object' && !Object.isFrozen(o)) {
-    Object.freeze(o);
-    Object.values(o).forEach(deepFreeze);
-  }
-  return o;
-};
 
 test('مطابقة تامة: كل الحقول فارغة، والاستعادة متاحة، والتقرير يربط البصمة', () => {
   const r = run('clean.ar.srt');
@@ -163,4 +156,12 @@ test('ملف كبير: 50,000 مقطع في أقل من ثانيتين', () => {
   const r = compare(cues, big);
   assert.equal(r.matched, true);
   assert.ok(performance.now() - t0 < 2000, `${performance.now() - t0}ms`);
+});
+
+test('المقطع الفارغ بصريًا (محارف تنسيق ومسافات فقط) فارغ، والأرقام الهندية لا تُخفي مقطعًا إنجليزيًا', () => {
+  const texts = ['\u200B', '\u200F', '\u061C \u200E', ' ', 'Hello ١٢٣', 'Hello ۱۲۳ world', 'مرحبا ١٢٣', 'ISBN ١٢٣ مرحبا'];
+  const cues = texts.map((text, i) => ({ n: i + 1, startMs: i * 1000, endMs: i * 1000 + 500, text }));
+  const r = compare(cues, null);
+  assert.deepEqual(r.empty, [1, 2, 3, 4]);
+  assert.deepEqual(r.noArabic, [5, 6]);
 });

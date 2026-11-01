@@ -9,8 +9,11 @@ const EXCERPT_CHARS = 60;
 
 const INDIC_DIGITS = /[٠-٩۰-۹]/g;
 const HAS_INDIC = /[٠-٩۰-۹]/;
-const INVISIBLE_MARKS = /[‎‏‪-‮⁦-⁩﻿]/g;
-const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g;
+const INVISIBLE_MARKS = /[\u061C\u200B-\u200F\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/g;
+// تُزال من النص: C0/C1 ومحارف تجاوز الاتجاه والعزل. تبقى LRM وRLM وALM وZWNJ فهي مشروعة في العربية.
+const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
+// ما يشبه جزءًا من رأس مقطع عند أطراف الملف خطأ برقم السطر لا «شرح» يُحذف بصمت.
+const CUE_FRAGMENT_RE = /^\d+$|-->|\d:\d\d:\d\d/;
 
 const NUMBER_RE = /^\d+$/;
 const TIME_LIKE_RE = /^\d[^\s>]*\s*-->/;
@@ -40,7 +43,7 @@ const cleanLines = (text) => text.split('\n').map((l) => l.trim()).filter(Boolea
 export function parseSrtLenient(input) {
   if (typeof input !== 'string') throw new TypeError('المدخل ليس نصًا');
   const text = input.charCodeAt(0) === 0xfeff ? input.slice(1) : input;
-  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+  const lines = text.replace(/\r\n?|\u2028|\u2029/g, '\n').split('\n');
 
   // رأس المقطع: سطر رقم ثم سطر زمن. سطر يشبه الزمن وهو غير صالح أو بلا رقم قبله خطأ، لا نص يلتحق بما قبله.
   const heads = [];
@@ -60,15 +63,16 @@ export function parseSrtLenient(input) {
   let fence = false;
   const chatterBefore = [];
   const chatterAfter = [];
-  const sortOut = (slice, bucket) => {
-    for (const l of slice) {
+  const sortOut = (slice, bucket, from) => {
+    slice.forEach((l, i) => {
       const t = l.trim();
-      if (!t) continue;
+      if (!t) return;
       if (FENCE_RE.test(t)) fence = true;
+      else if (CUE_FRAGMENT_RE.test(headerForm(l))) throw new TjError('IM_STRAY_TEXT', { params: { line: from + i + 1 } });
       else bucket.push(t);
-    }
+    });
   };
-  sortOut(lines.slice(0, heads[0].num), chatterBefore);
+  sortOut(lines.slice(0, heads[0].num), chatterBefore, 0);
 
   const cues = [];
   let tagged = 0;
@@ -82,7 +86,7 @@ export function parseSrtLenient(input) {
     const stop = body.findIndex((l) => l.trim() === '' || (last && FENCE_RE.test(l.trim())));
     const textLines = stop === -1 ? body : body.slice(0, stop);
     const rest = stop === -1 ? [] : body.slice(stop);
-    if (last) sortOut(rest, chatterAfter);
+    if (last) sortOut(rest, chatterAfter, h.time + 1 + stop);
     else {
       const j = rest.findIndex((l) => l.trim() !== '');
       if (j !== -1) throw new TjError('IM_STRAY_TEXT', { params: { line: h.time + 1 + stop + j + 1 } });
@@ -103,7 +107,7 @@ export function parseSrtLenient(input) {
     if (t.length > LIMITS.maxTextChars) throw new TjError('IM_CUE_TOO_LONG', { params: { line: h.num + 1, max: LIMITS.maxTextChars } });
 
     const n = Number(headerForm(lines[h.num]));
-    if (n < 1 || n > MAX_CUE_NUMBER) throw new TjError('IM_BAD_NUMBER', { params: { line: h.num + 1 } });
+    if (n < 1 || n > MAX_CUE_NUMBER) throw new TjError('IM_BAD_NUMBER', { params: { line: h.num + 1, max: MAX_CUE_NUMBER } });
     const [, h1, m1, s1, f1, h2, m2, s2, f2] = h.m;
     const startMs = Number(h1) * 3600000 + Number(m1) * 60000 + Number(s1) * 1000 + Number(f1);
     const endMs = Number(h2) * 3600000 + Number(m2) * 60000 + Number(s2) * 1000 + Number(f2);

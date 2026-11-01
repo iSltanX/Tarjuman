@@ -10,7 +10,10 @@ export const DEFAULT_DRIFT_MS = 100;
 const MAX_DRIFT_MS = 60000;
 
 const HAS_LETTER = /\p{L}/u;
-const HAS_ARABIC = /\p{Script=Arabic}/u;
+// حرف عربي فعلي: الأرقام الهندية من الكتابة العربية لكنها ليست حروفًا، فلا تُخفي مقطعًا إنجليزيًا.
+const HAS_ARABIC_LETTER = /(?=\p{Script=Arabic})\p{L}/u;
+// مقطع فارغ بصريًا: مسافات أو محارف تنسيق غير مرئية (ZWSP وRLM…) فقط.
+const BLANK = /^[\s\p{Cf}]*$/u;
 const ascending = (a, b) => a - b;
 
 /**
@@ -32,10 +35,10 @@ export function compare(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS } = {}) 
 
   cues.forEach((cue, i) => {
     if (cue.n !== i + 1) sequential = false;
-    const text = cue.text.trim();
-    if (text === '') empty.add(cue.n);
+    const text = cue.text;
+    if (BLANK.test(text)) empty.add(cue.n);
     // المقطع الذي لا حروف فيه (♪ أو أرقام أو رموز) ليس ترجمة ناقصة؛ المقصود ما بقي بحروف غير عربية.
-    else if (HAS_LETTER.test(text) && !HAS_ARABIC.test(text)) noArabic.add(cue.n);
+    else if (HAS_LETTER.test(text) && !HAS_ARABIC_LETTER.test(text)) noArabic.add(cue.n);
     if (!source) return;
 
     const src = source.get(cue.n);

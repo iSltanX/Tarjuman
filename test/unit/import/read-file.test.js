@@ -17,13 +17,13 @@ const code = async (promise) => {
 
 test('نص UTF-8 يُقرأ كما هو، والـBOM يبقى للمحلّل ليتعامل معه', async () => {
   assert.equal(await readFileText(fileOf('1\nمرحبًا\n')), '1\nمرحبًا\n');
-  assert.equal(await readFileText(fileOf(new Uint8Array([0xef, 0xbb, 0xbf, 0x31]))), '﻿1');
+  assert.equal(await readFileText(fileOf(new Uint8Array([0xef, 0xbb, 0xbf, 0x31]))), '\uFEFF1');
   assert.equal(await readFileText(fileOf('')), '');
 });
 
 test('Windows-1256 وUTF-16 وبايتات UTF-8 غير صالحة: IM_NOT_UTF8 برسالة تقول ما يُفعل', async () => {
   const cp1256 = new Uint8Array([0xe3, 0xd1, 0xcd, 0xc8, 0xc7]);
-  const utf16le = Buffer.from('﻿1\n00:00:01,000 --> 00:00:02,000\nمرحبًا\n', 'utf16le');
+  const utf16le = Buffer.from('\uFEFF1\n00:00:01,000 --> 00:00:02,000\nمرحبًا\n', 'utf16le');
   const utf16be = Buffer.from(utf16le).swap16();
   for (const [label, bytes] of [['cp1256', cp1256], ['utf16le', utf16le], ['utf16be', utf16be], ['utf8 مقطوع', new Uint8Array([0xd9])], ['utf8 غير صالح', new Uint8Array([0xc3, 0x28])]]) {
     const e = await code(readFileText(fileOf(bytes)));

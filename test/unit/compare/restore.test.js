@@ -6,17 +6,10 @@ import { applyRestoreTiming, compare, previewRestoreTiming } from '../../../src/
 import { TjError } from '../../../src/core/errors/index.js';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
 import { validateCues } from '../../../src/core/model/cue.js';
-import { baseFingerprint, readSrtFixture } from '../../fixtures/srt/index.js';
+import { baseFingerprint, deepFreeze, readSrtFixture } from '../../fixtures/srt/index.js';
 
 const cuesOf = (name) => parseSrtLenient(readSrtFixture(name)).cues;
 const fp = baseFingerprint();
-const deepFreeze = (o) => {
-  if (o && typeof o === 'object' && !Object.isFrozen(o)) {
-    Object.freeze(o);
-    Object.values(o).forEach(deepFreeze);
-  }
-  return o;
-};
 const UNAVAILABLE = ['missing.ar.srt', 'dropped-renumbered.ar.srt', 'extra.ar.srt'];
 
 test('المعاينة عند التطابق: كل مقطع يختلف زمنه عن الأصل (ولو دون عتبة الانحراف)، بالقديم والجديد', () => {

@@ -13,7 +13,8 @@ export { MAX_FILES, MAX_FILE_BYTES, mergeParts, selectFingerprint };
 
 const DEFAULT_NAME = 'translation.ar.srt';
 const NAMES_NOTE_CHARS = 300;
-const NAME_CONTROLS = /[\u0000-\u001F\u007F-\u009F]/g;
+const NAME_CONTROLS = /[\u0000-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
+const HIGH_SURROGATE = /[\uD800-\uDBFF]/;
 const PART_MARK = /[._ -]?part[._ -]?\d+/i;
 
 /** @param {unknown} input File أو مصفوفة ملفات أو FileList */
@@ -23,9 +24,12 @@ function toList(input) {
   return [input];
 }
 
+/** قصّ إلى حد من وحدات UTF-16 دون شطر زوج بديل. */
+const clip = (s, max) => (s.length <= max ? s : s.slice(0, HIGH_SURROGATE.test(s[max - 1]) ? max - 1 : max));
+
 function displayName(file) {
   const raw = typeof file?.name === 'string' ? file.name : '';
-  return raw.replace(NAME_CONTROLS, '').slice(0, LIMITS.maxFileNameChars).trim() || DEFAULT_NAME;
+  return clip(raw.replace(NAME_CONTROLS, ''), LIMITS.maxFileNameChars).trim() || DEFAULT_NAME;
 }
 
 /** اسم الجزء الأول بحسب الأرقام بلا علامة «part N» إن بقي اسم صالح، وإلا كما هو. */
@@ -41,7 +45,7 @@ function threshold(settings) {
 
 /** حدّ النموذج 50 ملاحظة وكل ملاحظة ≤ 500 محرف؛ الفائض يُختصر بملاحظة تذكر عدده. */
 function capNotes(notes) {
-  const clipped = notes.map((n) => n.slice(0, LIMITS.maxNoteChars));
+  const clipped = notes.map((n) => clip(n, LIMITS.maxNoteChars));
   if (clipped.length <= LIMITS.maxNotes) return clipped;
   const kept = clipped.slice(0, LIMITS.maxNotes - 1);
   return [...kept, messageFor('IM_NOTE_MORE', { count: clipped.length - kept.length })];
@@ -67,12 +71,19 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings } = 
     const parts = [];
     const notes = [];
     const warnings = [];
+    let total = 0;
     for (const file of files) {
       current = displayName(file);
       const parsed = parseSrtLenient(await readFileText(file));
+      // الحد على المجموع أيضًا: كل ملف يجتاز حده وحده، والمدقق يرفض ما فوق 50,000 بعد الدمج.
+      total += parsed.cues.length;
+      if (total > LIMITS.maxCues) {
+        current = null;
+        throw new TjError('IM_TOO_MANY_CUES', { params: { max: LIMITS.maxCues } });
+      }
       parts.push({ name: current, cues: parsed.cues });
       for (const note of parsed.notes) notes.push(multi ? `«${current}»: ${note}` : note);
-      warnings.push(...parsed.warnings);
+      for (const w of parsed.warnings) warnings.push(multi ? { ...w, params: { ...w.params, file: current } } : w);
     }
     current = null;
 

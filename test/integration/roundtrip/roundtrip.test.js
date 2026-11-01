@@ -79,7 +79,7 @@ function modelTranslate(exported, { english = [], empty = [], tags = [], drift =
   let text = srtText(cues);
   if (fence) text = `${fence.before}\n\n\`\`\`srt\n${text}\`\`\`\n\n${fence.after}\n`;
   if (crlf) text = text.replace(/\n/g, '\r\n');
-  return bom ? `﻿${text}` : text;
+  return bom ? `\uFEFF${text}` : text;
 }
 
 const baseExpected = (fp, countTarget) => ({

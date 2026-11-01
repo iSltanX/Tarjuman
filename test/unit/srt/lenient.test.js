@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
 import { TjError, messageFor } from '../../../src/core/errors/index.js';
-import { validateCues } from '../../../src/core/model/cue.js';
+import { validateCue, validateCues } from '../../../src/core/model/cue.js';
 import { ENGLISH_LINES, readSrtFixture } from '../../fixtures/srt/index.js';
 
 const ARABIC = /[؀-ۿ]/;
@@ -98,6 +98,13 @@ test('سياج بلا شرح: ملاحظة السياج وحدها؛ وشرح ب
   assert.match(chatter.notes[0], /Sure! Here you go:/);
   assert.match(chatter.notes[1], /Let me know\./);
   assert.match(chatter.notes[1], /عددها 2/);
+});
+
+test('حد معروف: شرح لاصق بآخر مقطع دون سطر فارغ ولا سياج لا يُميَّز عن نصه فيبقى فيه', () => {
+  const r = parseSrtLenient(`${block(1, T1, 'سطر أخير')}Hope this helps!\n`);
+  assert.equal(r.cues[0].text, 'سطر أخير\nHope this helps!');
+  assert.deepEqual(r.notes, []);
+  assert.deepEqual(parseSrtLenient(`${block(1, T1, 'سطر أخير')}\nHope this helps!\n`).cues[0].text, 'سطر أخير', 'بسطر فارغ قبله يُزال');
 });
 
 test('مقتطف الشرح في الملاحظة قصير حتى لو كان السطر طويلًا', () => {
@@ -234,4 +241,47 @@ test('ملف كبير: 20,000 مقطع يُحلَّل في أقل من ثاني�
   const r = parseSrtLenient(big);
   assert.equal(r.cues.length, 20000);
   assert.ok(performance.now() - t0 < 2000, `${performance.now() - t0}ms`);
+});
+
+test('علامات غير مرئية (ALM وZWSP وZWNJ وZWJ وWJ وLRM وRLM) قبل رقم المقطع أو زمنه لا تُفسد الرأس', () => {
+  for (const mark of ['\u061C', '\u200B', '\u200C', '\u200D', '\u2060', '\u200E', '\u200F']) {
+    const r = parseSrtLenient(`${mark}1\n${mark}00:00:01,000 --> 00:00:03,000\nأ\n\n${mark}2\n${mark}00:00:04,000 --> 00:00:05,000\nب\n`);
+    assert.deepEqual(r.cues.map((c) => [c.n, c.text]), [[1, 'أ'], [2, 'ب']], `U+${mark.codePointAt(0).toString(16)}`);
+    assert.deepEqual([r.notes, r.warnings], [[], []]);
+  }
+});
+
+test('رأس مبتور أو مكسور عند أطراف الملف خطأ برقم السطر، لا «شرح» يُحذف بصمت (كما في وسطه)', () => {
+  const good = `${block(1, T1, 'أ')}\n${block(2, '00:00:04,000 --> 00:00:05,000', 'ب')}`;
+  const cut = fail(`${good}\n3\n00:00:06,000\n`);
+  assert.deepEqual([cut.code, cut.params.line], ['IM_STRAY_TEXT', 9], 'ناتج مبتور بعد رقم المقطع الأخير');
+  const noArrow = fail(`${block(1, '00:00:01,000 -> 00:00:03,000', 'أ')}\n${block(2, '00:00:04,000 --> 00:00:05,000', 'ب')}`);
+  assert.deepEqual([noArrow.code, noArrow.params.line], ['IM_STRAY_TEXT', 1], 'سهم مكسور في أول مقطع');
+  const tail = fail(`${good}\n00:00:09,000 --> 00:00:10,000\nمقطع بلا رقم\n`);
+  assert.equal(tail.code, 'IM_MISSING_NUMBER');
+  const timeInChatter = fail(`Duration 00:20:30 in total\n\n${good}`);
+  assert.deepEqual([timeInChatter.code, timeInChatter.params.line], ['IM_STRAY_TEXT', 1], 'سطر شرح يحوي زمنًا يُرفض بحذر');
+  assert.equal(parseSrtLenient(`Sure, here it is:\n\n${good}\nEnjoy!\n`).cues.length, 2, 'الشرح العادي يُزال');
+});
+
+test('محارف تجاوز الاتجاه والعزل تُزال من النص بملاحظة، وتبقى LRM وRLM وALM وZWNJ وZWJ', () => {
+  const r = parseSrtLenient(block(1, T1, 'a\u202Ebc\u202C \u2066x\u2069 \u200F\u061C\u200C\u200Dنص'));
+  assert.equal(r.cues[0].text, 'abc x \u200F\u061C\u200C\u200Dنص');
+  assert.deepEqual(r.notes, [messageFor('IM_NOTE_CONTROL', { count: 1 })]);
+  assert.match(r.notes[0], /تجاوز اتجاه/);
+});
+
+test('U+2028 وU+2029 فاصلا سطر كاللف', () => {
+  const r = parseSrtLenient(`1 ${T1} أ ب  ${block(2, '00:00:04,000 --> 00:00:05,000', 'ج')}`);
+  assert.deepEqual(r.cues.map((c) => c.text), ['أ\nب', 'ج']);
+});
+
+test('حد رقم المقطع في المحلّل يطابق مدقق النموذج (500,000)', () => {
+  const at = (n) => ({ n, startMs: 0, endMs: 1, text: 'x' });
+  assert.deepEqual(validateCue(at(500000)), { ok: true });
+  assert.equal(validateCue(at(500001)).ok, false);
+  assert.equal(parseSrtLenient(block(500000, T1, 'x')).cues[0].n, 500000);
+  const e = fail(block(500001, T1, 'x'));
+  assert.equal(e.code, 'IM_BAD_NUMBER');
+  assert.match(e.message, /500000/);
 });

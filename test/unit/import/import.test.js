@@ -7,21 +7,15 @@ import { previewRestoreTiming } from '../../../src/core/compare/index.js';
 import { messageFor } from '../../../src/core/errors/index.js';
 import { DEFAULT_SETTINGS } from '../../../src/core/model/settings.js';
 import { withArabicImport } from '../../../src/core/model/transitions.js';
+import { validateComparisonReport } from '../../../src/core/model/tracks.js';
 import { validateVideoRecord } from '../../../src/core/model/video.js';
-import { baseCues, baseFingerprint, fileOf, readSrtFixture } from '../../fixtures/srt/index.js';
+import { baseCues, baseFingerprint, deepFreeze, fileOf, readSrtFixture } from '../../fixtures/srt/index.js';
 import { NOW, VIDEO_ID, englishTrack, fingerprint, makeCues, videoRecord } from '../../helpers/fixtures.js';
 
 const ARABIC = /[؀-ۿ]/;
 const fp = baseFingerprint();
 const fixture = (name, fileName = name) => fileOf(readSrtFixture(name), fileName);
 const run = (input, opts = { fingerprints: [fp], settings: DEFAULT_SETTINGS }) => readImport(input, opts);
-const deepFreeze = (o) => {
-  if (o && typeof o === 'object' && !Object.isFrozen(o)) {
-    Object.freeze(o);
-    Object.values(o).forEach(deepFreeze);
-  }
-  return o;
-};
 const failed = async (input, opts) => {
   const r = await run(input, opts);
   assert.equal(r.ok, false, JSON.stringify(r).slice(0, 300));
@@ -244,4 +238,41 @@ test('ملف كبير: 20,000 مقطع عبر التدفق كله في أقل م
   assert.equal(r.ok, true);
   assert.equal(r.comparison.matched, true);
   assert.ok(performance.now() - t0 < 3000, `${performance.now() - t0}ms`);
+});
+
+test('مجموع مقاطع الأجزاء فوق 50,000 خطأ IM_TOO_MANY_CUES ولو اجتاز كل جزء حده، و50,000 تمامًا مقبول وتقريره صالح', async () => {
+  const blk = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => `${a + i}\n00:00:00,000 --> 00:00:01,000\nx\n`).join('\n');
+  const e = await failed([fileOf(blk(1, 50000), 'a.srt'), fileOf(blk(50001, 50010), 'b.srt')]);
+  assert.equal(e.code, 'IM_TOO_MANY_CUES');
+  assert.match(e.message, /50000/);
+  assert.doesNotMatch(e.message, /«/, 'خطأ المجموع لا يُنسب إلى ملف واحد');
+  const ok = await run([fileOf(blk(1, 25000), 'a.srt'), fileOf(blk(25001, 50000), 'b.srt')], { fingerprints: [], settings: DEFAULT_SETTINGS });
+  assert.equal(ok.ok, true);
+  assert.equal(ok.cues.length, 50000);
+  assert.deepEqual(validateComparisonReport(ok.comparison), { ok: true });
+});
+
+test('خطأ غير متوقع: TJ_UNEXPECTED برسالة عربية وتفاصيل منقّاة، ولا استثناء يتسرب', async () => {
+  const broken = { id: 'fp_broken00001', count: 8, createdAt: NOW, cues: null };
+  const r = await run(fixture('clean.ar.srt'), { fingerprints: [broken], settings: DEFAULT_SETTINGS });
+  assert.equal(r.ok, false);
+  assert.deepEqual(Object.keys(r.error).sort(), ['code', 'detail', 'message']);
+  assert.equal(r.error.code, 'TJ_UNEXPECTED');
+  assert.ok(ARABIC.test(r.error.message));
+  assert.equal(typeof r.error.detail, 'string');
+});
+
+test('تحذيرات الأجزاء تُنسب إلى ملفاتها (params.file) كما تُنسب ملاحظاتها', async () => {
+  const blocks = readSrtFixture('clean.ar.srt').split('\n\n');
+  const gappy = fileOf(`${[0, 1, 3].map((i) => blocks[i]).join('\n\n')}\n`, 'a.srt');
+  const r = await run([gappy, fixture('part2.ar.srt', 'b.srt')]);
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.warnings, [{ code: 'IM_NUMBERING_IRREGULAR', params: { prev: 2, n: 4, file: 'a.srt' } }]);
+  assert.deepEqual(r.comparison.missing, [3]);
+});
+
+test('اسم الملف: محارف تجاوز الاتجاه تُنزع، والقصّ لا يشطر زوجًا بديلًا', async () => {
+  assert.equal((await run(fixture('clean.ar.srt', '\u202Efdp.srt'))).fileName, 'fdp.srt');
+  const name = (await run(fixture('clean.ar.srt', `${'a'.repeat(254)}\u{1F600}.srt`))).fileName;
+  assert.equal(name, 'a'.repeat(254));
 });

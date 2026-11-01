@@ -29,5 +29,14 @@ export const baseTrack = () => englishTrack({ cues: baseCues() });
 /** @param {Parameters<typeof fingerprint>[0]} [over] */
 export const baseFingerprint = (over = {}) => fingerprint({ track: baseTrack(), ...over });
 
+/** تجميد عميق لإثبات أن المنطق لا يعدّل مدخلاته. */
+export function deepFreeze(o) {
+  if (o && typeof o === 'object' && !Object.isFrozen(o)) {
+    Object.freeze(o);
+    Object.values(o).forEach(deepFreeze);
+  }
+  return o;
+}
+
 /** كائن File من نص أو بايتات، كما يعطيه <input type="file">. */
 export const fileOf = (content, name = 'translation.ar.srt') => new File([content], name, { type: 'application/x-subrip' });
