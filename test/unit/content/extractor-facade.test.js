@@ -43,7 +43,7 @@ test('التقاط مقبول: مسار en|manual بعدد مقاطع P1، وا�
   assert.deepEqual(conv.cues, cues);
   conv.cues[0].text = 'عبث';
   assert.notEqual(x.convert('en|manual').cues[0].text, 'عبث', 'نسخة مستقلة');
-  assert.equal(x.convert('en|manual', { mode: 'long' }).code, 'TJ_NOT_IMPLEMENTED');
+  assert.equal(x.convert('en|manual', { mode: 'long' }).mode, 'long', 'سلوك الوضع الطويل في test/unit/extract (P3)');
   assert.equal(x.convert('en|asr').code, 'EX_NO_TRACK');
   assert.equal(JSON.stringify(x.diagnostics()).includes(body.slice(0, 40)), false, 'التشخيص بلا جسم');
 });

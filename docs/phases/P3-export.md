@@ -115,9 +115,9 @@
 {
   "phase": "P3",
   "status": "in_progress",
-  "updated": "2026-11-01T18:26:16+03:00",
+  "updated": "2026-11-01T18:35:25+03:00",
   "branch": "tj/P3-export",
-  "resume": "بدأت: قراءة تقرير P1 والعقود ثم تنفيذ ExtractorAdapter",
+  "resume": "المستخرج: الوضع الطويل واختيار المسار والتقييم بالمدة الحالية والتشخيص",
   "blocker": null,
   "outcome": null,
   "commit": null,
@@ -125,7 +125,14 @@
   "checks": [],
   "acceptance": {},
   "evidence": [],
-  "sharedRequests": []
+  "sharedRequests": [
+    {
+      "file": "test/unit/content/extractor-facade.test.js",
+      "change": "سطر واحد: تأكيد الوضع الطويل لم يعد TJ_NOT_IMPLEMENTED بل mode=long (السلوك الكامل مختبر في test/unit/extract)",
+      "why": "العقد (interfaces §٢) ينص أن الوضع الطويل يعيد TJ_NOT_IMPLEMENTED حتى تنفّذه P3، وتنفيذه مهمة P3؛ والاختبار ملك P2 ومجمَّد",
+      "applied": true
+    }
+  ]
 }
 ```
 
