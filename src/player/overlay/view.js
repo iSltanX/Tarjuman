@@ -109,8 +109,10 @@ export function createOverlayView({ doc, win }) {
 
     /** للحزام الحي وحده: ما يظهر الآن (نصًا واتجاهًا). لا يدخل تقرير التشخيص أبدًا. */
     peek() {
-      const rows = [...stage.children].map((c) => ({ kind: c.className.includes('en') ? 'en' : 'ar', dir: c.getAttribute('dir'), text: c.textContent }));
-      return { lines: rows, hidden: host.hasAttribute('hidden'), empty: stage.hasAttribute('data-empty'), connected: host.isConnected };
+      const empty = stage.hasAttribute('data-empty');
+      // أثناء التلاشي تبقى العناصر دقائق قليلة في DOM وهي غير مرئية: الظاهر فعلًا لا يشملها.
+      const rows = empty ? [] : [...stage.children].map((c) => ({ kind: c.className.includes('en') ? 'en' : 'ar', dir: c.getAttribute('dir'), text: c.textContent }));
+      return { lines: rows, hidden: host.hasAttribute('hidden'), empty, fading: empty && stage.children.length > 0, connected: host.isConnected };
     },
 
     destroy() {
