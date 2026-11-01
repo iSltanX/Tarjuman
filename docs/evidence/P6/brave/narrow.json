@@ -1,0 +1,192 @@
+{
+  "browser": "Brave (Chrome/156.0.8078.48)",
+  "at": "2026-11-01T23:14:24.595Z",
+  "extension": "Extensions.loadUnpacked",
+  "rows": [
+    {
+      "viewport": 1000,
+      "player": 632,
+      "withGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "withoutGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 900,
+      "player": 900,
+      "withGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "withoutGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 800,
+      "player": 800,
+      "withGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "withoutGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 720,
+      "player": 720,
+      "withGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "withoutGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 640,
+      "player": 640,
+      "withGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "withoutGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 600,
+      "player": 600,
+      "withGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "withoutGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 560,
+      "player": 560,
+      "withGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "withoutGroup": [
+        "ytp-autonav-toggle",
+        "ytp-subtitles-button",
+        "ytp-settings-button",
+        "ytp-size-button",
+        "ytp-fullscreen-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 520,
+      "player": 520,
+      "withGroup": [
+        "ytp-expand-right-bottom-section-button",
+        "ytp-settings-button"
+      ],
+      "withoutGroup": [
+        "ytp-expand-right-bottom-section-button",
+        "ytp-settings-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 480,
+      "player": 480,
+      "withGroup": [
+        "ytp-expand-right-bottom-section-button",
+        "ytp-settings-button"
+      ],
+      "withoutGroup": [
+        "ytp-expand-right-bottom-section-button",
+        "ytp-settings-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 440,
+      "player": 440,
+      "withGroup": [
+        "ytp-expand-right-bottom-section-button",
+        "ytp-settings-button"
+      ],
+      "withoutGroup": [
+        "ytp-expand-right-bottom-section-button",
+        "ytp-settings-button"
+      ],
+      "foldedBecauseOfGroup": []
+    },
+    {
+      "viewport": 400,
+      "player": 400,
+      "withGroup": [
+        "ytp-expand-right-bottom-section-button",
+        "ytp-settings-button"
+      ],
+      "withoutGroup": [
+        "ytp-expand-right-bottom-section-button",
+        "ytp-settings-button"
+      ],
+      "foldedBecauseOfGroup": []
+    }
+  ]
+}
