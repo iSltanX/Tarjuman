@@ -130,13 +130,17 @@ Settings = {
   schema: 1,
   offsetStepMs: 500,                       // 100..10000 من مضاعفات 100 (الخطوة 0.5 / 1 / مخصصة)
   displayModeDefault: "ar" | "dual",
-  appearance: { size: "s" | "m" | "l" | "xl", background: "none" | "soft" | "solid", position: "bottom" | "raised" | "top" },
-  export: { modeDefault: "normal" | "long", splitThreshold: 200, showInstructions: true },   // العتبة 50..2000
+  appearance: {
+    font: "almarai" | "noto-sans-arabic" | "tajawal" | "markazi",   // خط الترجمة فوق الفيديو وحدها
+    scale: 100,                                                     // 70..160 من مضاعفات 5، نسبة مئوية
+    background: "none" | "soft" | "solid", position: "bottom" | "raised" | "top"
+  },
+  export: { modeDefault: "normal" | "long", splitThreshold: 200 },   // العتبة 50..2000
   thresholds: { driftMs: 100, completeness: 0.85 }                                        // 10..5000 و0.5..1
 }
 ```
 
-الافتراضيات: الخطوة 500، والعربية وحدها، والمقاس `m`، والخلفية `soft`، والموضع `bottom`، والتصدير «عادي» (Q4)، والتقسيم عند 200، وإظهار التعليمات، والانحراف 100ms، والاكتمال 85% (Q6). **القراءة متسامحة** (`normalizeSettings`: كل حقل تالف يعود افتراضيه دون فقد البقية)، و**الكتابة صارمة** (`validateSettings`)، والتعديل الجزئي يُدمج حتى مستوى المجموعة (`mergeSettings`).
+الافتراضيات: الخطوة 500، والعربية وحدها، والخط `almarai` والحجم 100، والخلفية `soft`، والموضع `bottom`، والتصدير «عادي» (Q4)، والتقسيم عند 200، والانحراف 100ms، والاكتمال 85% (Q6). التعليمات لا تُعرض في الواجهة أبدًا، فلا إعداد لها (حُذف `export.showInstructions` في «تهيئة W4»). والحجم نسبة فوق الحجم النسبي لارتفاع المشغّل؛ والمقاسات القديمة قبل W4 (`appearance.size`) تحوّلها القراءة المتسامحة وحدها: `s` إلى 85، و`m` إلى 100، و`l` إلى 120، و`xl` إلى 145، والنسبة الصالحة تسبقها. الخطوط وملفاتها في `src/ui/subtitle-fonts.js` (عقد الواجهات §٩). **القراءة متسامحة** (`normalizeSettings`: كل حقل تالف يعود افتراضيه دون فقد البقية)، و**الكتابة صارمة** (`validateSettings`)، والتعديل الجزئي يُدمج حتى مستوى المجموعة (`mergeSettings`).
 
 ## ٩. مُلخّص الفهرس — `video.js`
 

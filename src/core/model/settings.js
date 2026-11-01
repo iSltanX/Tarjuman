@@ -5,15 +5,23 @@ import { OK, exactKeys, fail, firstFailure, isIntIn, isPlainObject } from './val
 
 export const SETTINGS_SCHEMA = 1;
 export const DISPLAY_MODE_DEFAULTS = Object.freeze(['ar', 'dual']);
-export const SUBTITLE_SIZES = Object.freeze(['s', 'm', 'l', 'xl']);
+/** خطوط الترجمة فوق الفيديو (بياناتها وملفاتها في src/ui/subtitle-fonts.js)؛ الأول هو الافتراضي. */
+export const SUBTITLE_FONTS = Object.freeze(['almarai', 'noto-sans-arabic', 'tajawal', 'markazi']);
+/** حجم الترجمة نسبة مئوية فوق الحجم النسبي لارتفاع المشغّل. */
+export const SUBTITLE_SCALE = Object.freeze({ min: 70, max: 160, step: 5, default: 100 });
+/** المقاسات القديمة (قبل W4) تُقرأ نسبًا: القراءة المتسامحة وحدها تحوّلها، ولا تُكتب أبدًا. */
+export const LEGACY_SUBTITLE_SIZES = Object.freeze({ s: 85, m: 100, l: 120, xl: 145 });
 export const SUBTITLE_BACKGROUNDS = Object.freeze(['none', 'soft', 'solid']);
 export const SUBTITLE_POSITIONS = Object.freeze(['bottom', 'raised', 'top']);
 
 /**
  * @typedef {{
  *   schema: 1, offsetStepMs: number, displayModeDefault: 'ar' | 'dual',
- *   appearance: { size: 's' | 'm' | 'l' | 'xl', background: 'none' | 'soft' | 'solid', position: 'bottom' | 'raised' | 'top' },
- *   export: { modeDefault: 'normal' | 'long', splitThreshold: number, showInstructions: boolean },
+ *   appearance: {
+ *     font: 'almarai' | 'noto-sans-arabic' | 'tajawal' | 'markazi', scale: number,
+ *     background: 'none' | 'soft' | 'solid', position: 'bottom' | 'raised' | 'top'
+ *   },
+ *   export: { modeDefault: 'normal' | 'long', splitThreshold: number },
  *   thresholds: { driftMs: number, completeness: number }
  * }} Settings
  */
@@ -23,24 +31,24 @@ export const DEFAULT_SETTINGS = Object.freeze({
   schema: SETTINGS_SCHEMA,
   offsetStepMs: DEFAULT_OFFSET_STEP_MS,
   displayModeDefault: 'ar',
-  appearance: Object.freeze({ size: 'm', background: 'soft', position: 'bottom' }),
-  export: Object.freeze({ modeDefault: 'normal', splitThreshold: 200, showInstructions: true }),
+  appearance: Object.freeze({ font: SUBTITLE_FONTS[0], scale: SUBTITLE_SCALE.default, background: 'soft', position: 'bottom' }),
+  export: Object.freeze({ modeDefault: 'normal', splitThreshold: 200 }),
   thresholds: Object.freeze({ driftMs: 100, completeness: 0.85 }),
 });
 
 const FIELDS = {
   offsetStepMs: (v) => isIntIn(v, OFFSET_GRID_MS, 10000) && v % OFFSET_GRID_MS === 0,
   displayModeDefault: (v) => DISPLAY_MODE_DEFAULTS.includes(v),
-  'appearance.size': (v) => SUBTITLE_SIZES.includes(v),
+  'appearance.font': (v) => SUBTITLE_FONTS.includes(v),
+  'appearance.scale': (v) => isIntIn(v, SUBTITLE_SCALE.min, SUBTITLE_SCALE.max) && v % SUBTITLE_SCALE.step === 0,
   'appearance.background': (v) => SUBTITLE_BACKGROUNDS.includes(v),
   'appearance.position': (v) => SUBTITLE_POSITIONS.includes(v),
   'export.modeDefault': (v) => v === 'normal' || v === 'long',
   'export.splitThreshold': (v) => isIntIn(v, 50, 2000),
-  'export.showInstructions': (v) => typeof v === 'boolean',
   'thresholds.driftMs': (v) => isIntIn(v, 10, 5000),
   'thresholds.completeness': (v) => typeof v === 'number' && v >= 0.5 && v <= 1,
 };
-const GROUPS = { appearance: ['size', 'background', 'position'], export: ['modeDefault', 'splitThreshold', 'showInstructions'], thresholds: ['driftMs', 'completeness'] };
+const GROUPS = { appearance: ['font', 'scale', 'background', 'position'], export: ['modeDefault', 'splitThreshold'], thresholds: ['driftMs', 'completeness'] };
 
 const get = (obj, path) => path.split('.').reduce((o, k) => (isPlainObject(o) ? o[k] : undefined), obj);
 
@@ -64,12 +72,16 @@ export function normalizeSettings(raw) {
     const v = get(raw, path);
     return FIELDS[path](v) ? v : get(DEFAULT_SETTINGS, path);
   };
+  // الحجم: النسبة إن صحّت، وإلا المقاس القديم بنسبته، وإلا الافتراضي.
+  const size = get(raw, 'appearance.size');
+  const legacy = typeof size === 'string' && Object.hasOwn(LEGACY_SUBTITLE_SIZES, size) ? LEGACY_SUBTITLE_SIZES[size] : undefined;
+  const scale = FIELDS['appearance.scale'](get(raw, 'appearance.scale')) || legacy === undefined ? pick('appearance.scale') : legacy;
   return {
     schema: SETTINGS_SCHEMA,
     offsetStepMs: pick('offsetStepMs'),
     displayModeDefault: pick('displayModeDefault'),
-    appearance: { size: pick('appearance.size'), background: pick('appearance.background'), position: pick('appearance.position') },
-    export: { modeDefault: pick('export.modeDefault'), splitThreshold: pick('export.splitThreshold'), showInstructions: pick('export.showInstructions') },
+    appearance: { font: pick('appearance.font'), scale, background: pick('appearance.background'), position: pick('appearance.position') },
+    export: { modeDefault: pick('export.modeDefault'), splitThreshold: pick('export.splitThreshold') },
     thresholds: { driftMs: pick('thresholds.driftMs'), completeness: pick('thresholds.completeness') },
   };
 }

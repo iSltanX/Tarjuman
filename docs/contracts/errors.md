@@ -26,9 +26,9 @@ messageFor(code, params) // القوالب {name} تُملأ؛ الرمز الم
 | الملف | المالك | البادئات | المحتوى الآن |
 | --- | --- | --- | --- |
 | `base.js` | P2 | `TJ_` عامة، `ST_` تخزين، `MD_` نموذج | `TJ_UNEXPECTED`، `TJ_NOT_IMPLEMENTED`، `TJ_NOT_YOUTUBE`، `TJ_NO_VIDEO`، `TJ_BAD_MESSAGE`، `TJ_BAD_VIDEO_ID`؛ `ST_READ_FAILED`، `ST_WRITE_FAILED`، `ST_QUOTA_EXCEEDED`، `ST_CAPACITY_WARNING`، `ST_LARGE_LIBRARY`، `ST_CORRUPT_RECORD`، `ST_CONFLICT`، `ST_ARABIC_EXISTS`، `ST_NO_RECORD`، `ST_SCHEMA_NEWER`، `ST_MIGRATION_FAILED`، وإشعارات `ST_RESTORED` و`ST_OFFSET_RESET` و`ST_SAVED`؛ `MD_INVALID`، `MD_NEGATIVE_TIME` |
-| `extract.js` | P3 | `EX_`، `KIND_` | رسائل P1 من `src/extract/codes.js` (`EX_WRONG_VIDEO`…`EX_LIVE`، و`KIND_MISMATCH`) و`EX_NO_TRACK`. لـP3 أن تنقل الرسائل إلى هذا الملف. |
-| `import.js` | P4 | `IM_` استيراد، `CMP_` مقارنة | فارغ |
-| `overlay.js` | P5 | `PL_` | فارغ |
+| `extract.js` | P3 | `EX_`، `KIND_` | مملوء في W3 (P3): رسائل الاستخراج (`EX_WRONG_VIDEO`…`EX_LIVE`، و`KIND_MISMATCH`، و`EX_NO_TRACK`) نُقلت من `src/extract/codes.js` المحذوف، ومعها رموز التحويل والتصدير (`EX_INVARIANT_FAILED`، و`EX_SPLIT_NOT_NEEDED`، و`EX_DOWNLOAD_FAILED`…). |
+| `import.js` | P4 | `IM_` استيراد، `CMP_` مقارنة | مملوء في W3 (P4): أخطاء القراءة والتحليل والأجزاء (`IM_NO_FILE`…`IM_PARTS_GAP`)، وملاحظات التنظيف (`IM_NOTE_…`)، و`CMP_RESTORE_UNAVAILABLE`. |
+| `overlay.js` | P5 | `PL_` | مملوء في W3 (P5): `PL_MOUNT_FAILED`، و`PL_RENDER_FAILED`، و`PL_FULLSCREEN_HOST`. |
 | `controls.js` | P6 | `CT_` | فارغ |
 | `pages.js` | P7 | `PG_` | فارغ |
 | `editor.js` | P8 | `ED_` | فارغ |

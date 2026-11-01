@@ -96,7 +96,7 @@ TrackInfo = { key: "en|manual", lang, kind, capturedAt: "ISO", ok, code, warning
 ConvertResult = { ok, code, key, lang, kind, mode: "normal" | "long", cues: Cue[], warnings: string[], report }
 ```
 
-- `mode: "long"` يعيد الآن `TJ_NOT_IMPLEMENTED` حتى تنفّذه P3. الوضعان تحت الثوابت نفسها.
+- `mode: "long"` («مقاطع أطول») نفّذته P3 في W3. الوضعان تحت الثوابت نفسها.
 - `setVideo` متكرر بأمان (المعرّف نفسه لا يفرّغ شيئًا)، والمتحكم يستدعيه قبل `main.js`. والمشتركون يُبلَّغون كلٌّ على حدة، وإخفاقاتهم تُعدّ في `diagnostics().listenerFailures`.
 - لا ترسل وحدة الاستخراج طلبًا ولا تخزّن شيئًا؛ الحفظ عبر `controller.recordExport`.
 - `src/extract/youtube-page.js` و`video-id.js` (من P1) حلّ محلهما `src/player/youtube-dom.js`، ولم يعد سكربت المحتوى يستوردهما؛ لـP3 أن تحذفهما وتقرأ من `youtube-dom` إن احتاجت.
@@ -115,7 +115,7 @@ MountHandle = { state: "stub" | "waiting" | "mounted" | "error", unmount(): void
 - `main.js` يستدعي كلًا منهما **مرة واحدة عند `document_start`** قبل وجود المشغّل؛ فالتنفيذ ينتظر `#movie_player` بنفسه (`MutationObserver`)، ويعيد التركيب عند إعادة رسم يوتيوب لعناصره، ويحدّث `state`.
 - `deps` للاختبار فقط: الأدوات تستورد تدفقي التصدير (§٥) والاستيراد (§٦) بنفسها، فلا يعرفهما `main.js`.
 - البديلان الحاليان لا يلمسان DOM ويعيدان `state: "stub"`، ويظهر ذلك في رد نافذة الأيقونة (`mounted`) والدخان الحي.
-- **الطبقة (P5):** حاوية Shadow DOM داخل `#movie_player`، و`textContent` فقط، والمظهر من `state.settings.appearance`، والإنجليزي للوضع المزدوج من `state.english`، والإعلان والشريط وملء الشاشة عبر `youtube-dom`، والبحث بـ`lookupMs` (عقد التوقيت). تغيّر `state.videoId` يمسح الطبقة فورًا. وإخفاء ترجمة يوتيوب الأصلية بنمط تحقنه الطبقة نفسها على `SELECTORS.captionWindow` ما دامت نشطة.
+- **الطبقة (P5، والخط والحجم P6):** حاوية Shadow DOM داخل `#movie_player`، و`textContent` فقط، والمظهر من `state.settings.appearance` بما فيه الخط (`font`) والحجم النسبي (`scale`، نسبة فوق الحجم النسبي لارتفاع المشغّل)، والخطوط من ملفات الإضافة (§٩) عبر `FontFace` ببياناتها لا برابطها، وعند التعذّر المراعي المضمّن ثم خط النظام العربي برمز في التشخيص، والإنجليزي للوضع المزدوج من `state.english`، والإعلان والشريط وملء الشاشة عبر `youtube-dom`، والبحث بـ`lookupMs` (عقد التوقيت). تغيّر `state.videoId` يمسح الطبقة فورًا. وإخفاء ترجمة يوتيوب الأصلية بنمط تحقنه الطبقة نفسها على `SELECTORS.captionWindow` ما دامت نشطة.
 - **الأدوات (P6):** مجموعة داخل بداية `getRightControls()`، والقوائم داخل `#movie_player`، وعزل الضغطات في الحقول، والرسائل من `messageFor(code)`، والخطوة بـ`controller.updateSettings({ offsetStepMs })`.
 - الرموز داخل المشغّل نصًا من `playerTokensCss()` (§٩)، فسكربت المحتوى لا يحمّل ملفات CSS من الإضافة.
 
@@ -132,7 +132,7 @@ buildExport({ videoId, title, track: { key, lang, kind, cues }, mode: "normal" |
   → { files: [{ name, text }], fingerprint: Fingerprint, instructions: string, warnings: string[] }   // يرمي TjError(EX_…)
 buildArabicExport({ videoId, cues, variant: "current" | "original" }) → { name, text }   // cues بعد exportTiming
 fileName({ videoId, lang: "en" | "ar", kind?, mode?, variant?, part? }) → string        // مثل VIDEOID.en.asr.normal.srt
-instructions({ count, mode }) → string                                                // نص تعليمات النموذج العربي
+instructions({ videoId, title, parts? }) → string                                     // تعليمات الترجمة: الملحق أ حرفيًا (P7)
 describeTrack(trackInfo) → string                                                      // «English – يدوي، 412 مقطعًا»
 download(file, { doc? })                                                               // Blob و<a download>، بلا إذن downloads
 ```
@@ -140,6 +140,7 @@ download(file, { doc? })                                                        
 - **في المشغّل (P6):** `controller.convertCaptured(key, { mode })` ← `buildExport` ← `download` لكل ملف ← `controller.recordExport({ trackKey: key, fingerprint })`.
 - **في الصفحات (P7، P8):** الإنجليزية من المسار المحفوظ بالوضع «عادي» وحده؛ والعربية بـ`exportTiming` (عقد التوقيت §٥) ثم `buildArabicExport`؛ وحفظ أي بصمة بـ`store.updateVideo` و`withExport`.
 - البصمة بحسب عقد البيانات §٤، وتُحفظ لكل تصدير.
+- **تعليمات الترجمة (من «تهيئة W4»، تنفّذها P7):** نص [الملحق أ في مواصفة المنتج](../product-spec.md#ملحق-أ-تعليمات-الترجمة-المعتمدة) حرفيًا بتعبئته (العنوان في سطر واحد بعد تجريد المحارف الخفية ومحارف التحكم، و«غير متوفر» إن غاب؛ والرابط من المعرّف بعد التحقق منه؛ واستبدال بمرور واحد)، وفقرة الأجزاء عند التقسيم الاحتياطي وحده (`parts`). `buildExport` يمرّر `videoId` و`title`. لا تُعرض داخل الإضافة؛ تنسخها قائمة التحميل (P6) وزر «نسخ» في المحفوظات (P7). وإلى أن تنفّذها P7 يبقى التوقيع القديم `instructions({ count, mode, parts })` في الشيفرة.
 
 ## ٦. تدفق الاستيراد والمقارنة — `src/core/import/index.js` و`src/core/compare/index.js` (P4)
 
@@ -193,9 +194,11 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 | `format.js` | `formatOffset` (`+0.5` `−1.0` `0.0`)، و`formatTimecode` (`HH:MM:SS,mmm`)، و`formatCount` بصيغ `COUNT_FORMS` («مقطع واحد»، «مقطعان»، «3 مقاطع»، «11 مقطعًا»)، و`formatBytes`. |
 | `player-tokens.js` | رموز `Player` (§٣.٢) و`playerTokensCss(selector)` لطبقة العرض والأدوات. |
 | `page.js` | `startPage({ title, render })` بحدّ أخطاء، و`openPage`، و`extensionVersion`. |
+| `subtitle-fonts.js` | بيانات خطوط الترجمة فوق الفيديو وحدها (من «تهيئة W4»): لكل خط معرّفه (`SUBTITLE_FONTS` في نموذج الإعدادات)، واسمه العربي واللاتيني، واسم عائلة فريد داخل الإضافة، وملفّا وزنيه 400 و700، وسلسلة البدائل (المراعي المضمّن ثم خطوط النظام العربية). بلا DOM. |
+| `fonts/subtitle/` | ملفات WOFF2 للخطوط الأربعة بوزنين مع رخصة OFL لكل عائلة، من مستودع Google Fonts الرسمي. تُعلن في `web_accessible_resources` لملفات `.woff2` وحدها على يوتيوب بـ`use_dynamic_url`، ولا تُحمَّل من الشبكة. |
 | `gallery/` | معرض المكوّنات بحالاتها، في بناء التطوير وحده. |
 
-الخطوط بالاسم مع بدائلها، مثبّتة على الجهاز؛ لا تُحمَّل من الشبكة. المكوّن الجديد يُبنى داخل صفحة مرحلته، ثم يُرفع إلى `src/ui` بطلب.
+خطوط الواجهة بالاسم مع بدائلها، مثبّتة على الجهاز؛ لا تُحمَّل من الشبكة. خطوط الترجمة وحدها مضمّنة في الإضافة (`fonts/subtitle/`) ولا تغيّر خطوط الواجهة. المكوّن الجديد يُبنى داخل صفحة مرحلته، ثم يُرفع إلى `src/ui` بطلب.
 
 ## ١٠. البناء والتشخيص والحزام
 
@@ -211,8 +214,8 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 | P3 | `src/extract/**` (ومنه `index.js`)، و`core/convert`، و`core/export`، و`errors/extract.js` | `core/model`، و`core/srt` (الكاتب والمحلّل الصارم)، و`core/diagnostics`، و`youtube-dom` | لا |
 | P4 | `core/srt`، و`core/import`، و`core/compare`، و`errors/import.js`، و`test/fixtures/srt`، و`test/integration/roundtrip` | `core/model` (البصمة والتقرير)، و`test/helpers` (`fingerprint()` بصمة العقد قبل دمج P3) | لا |
 | P5 | `player/overlay/**` (ومنه `index.js`)، و`sync`، و`watch`، و`errors/overlay.js` | المتحكم، و`lookupMs`، و`youtube-dom`، و`playerTokensCss`، و`test/helpers` (`fakeExtractor`) | لا |
-| P6 | `player/controls/**` (ومنه `index.js`)، و`errors/controls.js`، و`test/integration/player` | المتحكم وأفعاله، و`core/export` و`core/import`، و`youtube-dom`، و`src/ui/format.js`، و`playerTokensCss` | لا |
-| P7 | `pages/{popup,library,settings}`، و`errors/pages.js` | التخزين، والانتقالات، والرسائل، و`core/export` و`core/import`، و`src/ui`، والتشخيص | لا |
+| P6 | `player/controls/**` (ومنه `index.js`)، و`player/overlay/**` (الخط والحجم وحدهما)، و`errors/controls.js`، و`test/integration/player` | المتحكم وأفعاله، و`core/export` و`core/import`، و`youtube-dom`، و`src/ui/format.js`، و`playerTokensCss`، و`src/ui/subtitle-fonts.js` وملفات الخطوط | لا |
+| P7 | `pages/{popup,library,settings}`، و`core/export/instructions.js` و`core/export/index.js` (تعليمات الترجمة)، و`errors/pages.js` | التخزين، والانتقالات، والرسائل، و`core/export` و`core/import`، و`src/ui` ومنه `subtitle-fonts.js`، والتشخيص | لا |
 | P8 | `pages/editor`، و`core/edit`، و`errors/editor.js` | التخزين (`expect`)، والتوقيت والانتقالات، و`core/compare` (الاستعادة)، و`core/export`، و`src/ui` | لا |
 
 ما قد يُطلب لاحقًا بمسار الاستثناء (لم يظهر حاجة إليه الآن): محدد يوتيوب جديد في `youtube-dom.js`، أو رفع مكوّن من صفحة إلى `src/ui`.

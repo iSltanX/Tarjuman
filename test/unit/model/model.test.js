@@ -122,19 +122,41 @@ test('مُلخّص الفهرس من السجل صالح ويحمل ما تعر�
 
 test('الإعدادات: القراءة تعيد كل حقل تالف إلى افتراضيه، والكتابة صارمة', () => {
   assert.deepEqual(normalizeSettings(undefined), normalizeSettings(DEFAULT_SETTINGS));
-  const n = normalizeSettings({ offsetStepMs: 250, displayModeDefault: 'dual', appearance: { size: 'xxl', background: 'solid' }, junk: 1 });
+  const n = normalizeSettings({ offsetStepMs: 250, displayModeDefault: 'dual', appearance: { font: 'comic', scale: 103, background: 'solid' }, junk: 1 });
   assert.equal(n.offsetStepMs, 500, '250 ليست من مضاعفات 100');
   assert.equal(n.displayModeDefault, 'dual');
-  assert.deepEqual(n.appearance, { size: 'm', background: 'solid', position: 'bottom' });
+  assert.deepEqual(n.appearance, { font: 'almarai', scale: 100, background: 'solid', position: 'bottom' });
   okr(validateSettings(n));
-  const m = mergeSettings(n, { appearance: { size: 'xl' }, offsetStepMs: 1000 });
-  assert.deepEqual(m.appearance, { size: 'xl', background: 'solid', position: 'bottom' });
+  const m = mergeSettings(n, { appearance: { font: 'markazi', scale: 160 }, offsetStepMs: 1000 });
+  assert.deepEqual(m.appearance, { font: 'markazi', scale: 160, background: 'solid', position: 'bottom' });
   okr(validateSettings(m));
+  bad(validateSettings(mergeSettings(n, { appearance: { scale: 165 } })), 'appearance.scale');
+  bad(validateSettings(mergeSettings(n, { appearance: { scale: 72 } })), 'appearance.scale');
+  bad(validateSettings(mergeSettings(n, { appearance: { size: 'm' } })), 'appearance');
+  bad(validateSettings(mergeSettings(n, { export: { showInstructions: true } })), 'export');
   bad(validateSettings(mergeSettings(n, { offsetStepMs: 50 })), 'offsetStepMs');
   bad(validateSettings(mergeSettings(n, { thresholds: { completeness: 1.5 } })), 'completeness');
   bad(validateSettings({ ...n, extra: true }), 'extra');
   assert.equal(DEFAULT_SETTINGS.displayModeDefault, 'ar');
   assert.equal(DEFAULT_SETTINGS.offsetStepMs, 500);
+});
+
+test('الإعدادات: خط الترجمة وحجمها، والمقاسات القديمة تُقرأ نسبًا ولا تُكتب', () => {
+  assert.deepEqual(DEFAULT_SETTINGS.appearance, { font: 'almarai', scale: 100, background: 'soft', position: 'bottom' });
+  assert.equal('showInstructions' in DEFAULT_SETTINGS.export, false);
+  const old = (size, extra = {}) => normalizeSettings({ appearance: { size, background: 'none', ...extra }, export: { modeDefault: 'long', showInstructions: false } });
+  assert.deepEqual(['s', 'm', 'l', 'xl'].map((x) => old(x).appearance.scale), [85, 100, 120, 145]);
+  for (const x of ['xxl', 'constructor', '__proto__', 'toString', 2, null]) assert.equal(old(x).appearance.scale, 100, String(x));
+  assert.equal(old('xl', { scale: 70 }).appearance.scale, 70, 'النسبة الصالحة تسبق المقاس القديم');
+  assert.equal(old('xl', { scale: 71 }).appearance.scale, 145, 'نسبة تالفة ومقاس قديم: المقاس');
+  const n = old('l');
+  assert.deepEqual(n.appearance, { font: 'almarai', scale: 120, background: 'none', position: 'bottom' });
+  assert.deepEqual(n.export, { modeDefault: 'long', splitThreshold: 200 });
+  okr(validateSettings(n));
+  for (const font of ['almarai', 'noto-sans-arabic', 'tajawal', 'markazi']) okr(validateSettings(mergeSettings(n, { appearance: { font } })));
+  for (let scale = 70; scale <= 160; scale += 5) okr(validateSettings(mergeSettings(n, { appearance: { scale } })));
+  bad(validateSettings(mergeSettings(n, { appearance: { font: 'Almarai' } })), 'appearance.font');
+  bad(validateSettings(mergeSettings(n, { appearance: { scale: 100.5 } })), 'appearance.scale');
 });
 
 test('عناوين الصفحات وصفحة المشاهدة', () => {

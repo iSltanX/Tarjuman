@@ -29,15 +29,22 @@ test('أول تشغيل: meta بالإصدار 1، والإعدادات الاف
 
 test('الإعدادات: دمج جزئي حتى مستوى المجموعة، ورفض القيمة غير الصالحة دون كتابة', async () => {
   const { area, store } = make();
-  const s = await store.setSettings({ appearance: { size: 'l' }, offsetStepMs: 1000 });
-  assert.equal(s.appearance.size, 'l');
+  const s = await store.setSettings({ appearance: { scale: 120 }, offsetStepMs: 1000 });
+  assert.equal(s.appearance.scale, 120);
+  assert.equal(s.appearance.font, 'almarai');
   assert.equal(s.appearance.background, 'soft');
+  await assert.rejects(store.setSettings({ appearance: { size: 'l' } }), code('MD_INVALID'));
   await assert.rejects(store.setSettings({ offsetStepMs: 30 }), code('MD_INVALID'));
   assert.equal(area.dump().settings.offsetStepMs, 1000);
   area.rawSet('settings', { offsetStepMs: 'x', displayModeDefault: 'dual' });
   const n = await store.getSettings();
   assert.equal(n.offsetStepMs, 500);
   assert.equal(n.displayModeDefault, 'dual');
+  // إعدادات محفوظة قبل W4: المقاس القديم يُقرأ نسبة، وshowInstructions يسقط.
+  area.rawSet('settings', { schema: 1, appearance: { size: 'xl', background: 'solid', position: 'top' }, export: { modeDefault: 'long', splitThreshold: 300, showInstructions: false } });
+  const legacy = await store.getSettings();
+  assert.deepEqual(legacy.appearance, { font: 'almarai', scale: 145, background: 'solid', position: 'top' });
+  assert.deepEqual(legacy.export, { modeDefault: 'long', splitThreshold: 300 });
 });
 
 test('الحفظ والاسترجاع: المسار الإنجليزي والعربي الأصل والحالي والإزاحة والوضع والعنوان والتواريخ', async () => {

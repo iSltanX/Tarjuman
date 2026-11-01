@@ -25,7 +25,7 @@ async function walk(dir) {
 // ١. البيان: الأذونات المعتمدة فقط (عقد interfaces §٦)، ونقاط الدخول كلها مصرّح بها مسبقًا.
 const ALLOWED_PERMISSIONS = ['storage', 'unlimitedStorage'];
 const FORBIDDEN_KEYS = [
-  'host_permissions', 'optional_permissions', 'optional_host_permissions', 'background', 'web_accessible_resources',
+  'host_permissions', 'optional_permissions', 'optional_host_permissions', 'background',
   'externally_connectable', 'content_security_policy', 'sandbox', 'oauth2', 'key', 'chrome_url_overrides',
   'devtools_page', 'options_page', 'options_ui', 'commands', 'side_panel', 'declarative_net_request', 'update_url',
 ];
@@ -51,6 +51,23 @@ for (const c of cs) {
   for (const k of ['css', 'exclude_matches', 'include_globs', 'match_about_blank', 'match_origin_as_fallback']) if (k in c) problems.push(`manifest: ${k} غير مسموح في سكربت المحتوى`);
 }
 if (manifest.action?.default_popup !== 'pages/popup/index.html') problems.push('manifest: نافذة الأيقونة ليست pages/popup/index.html');
+// web_accessible_resources: خطوط الترجمة وحدها («تهيئة W4»): إدخال واحد لملفات .woff2 في ui/fonts/subtitle، ليوتيوب
+// وحده، بعنوان متغير (use_dynamic_url). ومجلد الخطوط لا يحوي غير WOFF2 ورخصها.
+const SUBTITLE_FONTS = path.join('ui', 'fonts', 'subtitle');
+if ('web_accessible_resources' in manifest) {
+  const war = manifest.web_accessible_resources;
+  const e = Array.isArray(war) && war.length === 1 ? war[0] : null;
+  if (!e || Object.keys(e).sort().join() !== 'matches,resources,use_dynamic_url' || JSON.stringify(e.resources) !== '["ui/fonts/subtitle/*.woff2"]'
+    || JSON.stringify(e.matches) !== YT || e.use_dynamic_url !== true) {
+    problems.push(`manifest: web_accessible_resources غير المعتمد ${JSON.stringify(war).slice(0, 160)}`);
+  }
+}
+if (await exists(path.join(SRC, SUBTITLE_FONTS))) {
+  for (const f of await walk(path.join(SRC, SUBTITLE_FONTS))) {
+    const rel = path.relative(path.join(SRC, SUBTITLE_FONTS), f);
+    if (!/^[a-z0-9-]+-(?:400|700)\.woff2$|^[a-z0-9-]+-OFL\.txt$/.test(rel)) problems.push(`${path.join(SUBTITLE_FONTS, rel)}: ملف غير متوقع في مجلد خطوط الترجمة`);
+  }
+}
 for (const p of PAGES) {
   for (const f of ['index.html', 'main.js']) if (!(await exists(path.join(SRC, 'pages', p, f)))) problems.push(`pages: ${p}/${f} مفقود`);
 }

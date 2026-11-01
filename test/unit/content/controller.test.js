@@ -197,10 +197,10 @@ test('حفظ المحرّر في سياق آخر ينعكس في المشغّل�
 test('تغيّر الإعدادات من صفحة الإعدادات يصل إلى المتحكم', async () => {
   const { c, other, area } = await setup();
   await c.start(A);
-  await other.setSettings({ offsetStepMs: 1000, appearance: { size: 'xl' } });
+  await other.setSettings({ offsetStepMs: 1000, appearance: { font: 'tajawal', scale: 145 } });
   await settle(area);
   assert.equal(c.getState().settings.offsetStepMs, 1000);
-  assert.equal(c.getState().settings.appearance.size, 'xl');
+  assert.deepEqual([c.getState().settings.appearance.font, c.getState().settings.appearance.scale], ['tajawal', 145]);
   await c.nudgeOffset(-1);
   assert.equal(c.getState().view.displayOffsetMs, -1000);
   const s = await c.updateSettings({ displayModeDefault: 'dual' });
