@@ -113,14 +113,14 @@
 ```json tj-status
 {
   "phase": "P5",
-  "status": "ready",
-  "updated": "2026-11-01T22:55:57+03:00",
+  "status": "integrating",
+  "updated": "2026-11-02T00:15:49+03:00",
   "branch": "tj/P5-overlay-sync",
   "resume": "جاهزة للدمج في W3",
   "blocker": null,
   "outcome": null,
   "commit": "b8b30dc",
-  "mergeCommit": null,
+  "mergeCommit": "69cea17",
   "checks": [
     {
       "cmd": "npm run check",

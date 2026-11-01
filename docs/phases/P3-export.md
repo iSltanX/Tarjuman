@@ -114,14 +114,14 @@
 ```json tj-status
 {
   "phase": "P3",
-  "status": "ready",
-  "updated": "2026-11-01T21:23:40+03:00",
+  "status": "integrating",
+  "updated": "2026-11-02T00:15:49+03:00",
   "branch": "tj/P3-export",
   "resume": "جاهزة للدمج في W3",
   "blocker": null,
   "outcome": null,
   "commit": "0f7014f",
-  "mergeCommit": null,
+  "mergeCommit": "e8b3ead",
   "checks": [
     {
       "cmd": "command npm run check",
