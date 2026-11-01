@@ -1,6 +1,6 @@
 {
   "browser": "Chrome 156.0.8078.74 (Chrome/156.0.8078.74)",
-  "at": "2026-11-01T14:29:01.787Z",
+  "at": "2026-11-01T14:46:58.406Z",
   "extension": {
     "version": "0.2.0",
     "versionName": null,
@@ -22,7 +22,7 @@
       "id": "watch-page",
       "ok": true,
       "detail": {
-        "durationSec": 75
+        "durationSec": 90
       }
     },
     {
@@ -148,7 +148,7 @@
       "id": "no-extension-network-requests",
       "ok": true,
       "detail": {
-        "total": 118,
+        "total": 105,
         "extensionOnly": 0
       }
     },

@@ -1,6 +1,6 @@
 {
   "browser": "Brave 156.1.98.60 (Chrome/156.0.8078.48)",
-  "at": "2026-11-01T14:28:30.723Z",
+  "at": "2026-11-01T14:46:36.744Z",
   "extension": {
     "version": "0.2.0",
     "versionName": null,
@@ -148,7 +148,7 @@
       "id": "no-extension-network-requests",
       "ok": true,
       "detail": {
-        "total": 85,
+        "total": 94,
         "extensionOnly": 0
       }
     },
