@@ -1,0 +1,223 @@
+{
+  "browser": "Brave (Chrome/156.0.8078.48)",
+  "at": "2026-11-01T23:44:00.477Z",
+  "headless": true,
+  "video": "iG9CE55wbtY",
+  "checks": [
+    {
+      "id": "load-unpacked",
+      "ok": true,
+      "detail": {
+        "method": "Extensions.loadUnpacked"
+      }
+    },
+    {
+      "id": "watch-page-tools-mounted",
+      "ok": true,
+      "detail": {
+        "mounted": {
+          "overlay": "mounted",
+          "controls": "mounted"
+        }
+      }
+    },
+    {
+      "id": "download-menu-shows-captured-track",
+      "ok": true,
+      "detail": {
+        "accepted": true,
+        "label": "تحميل الترجمة"
+      }
+    },
+    {
+      "id": "download-file-bytes-match-buildExport",
+      "ok": true,
+      "detail": {
+        "name": "iG9CE55wbtY.en.manual.normal.srt",
+        "bytes": 32411,
+        "expected": 32411,
+        "fingerprints": 1
+      }
+    },
+    {
+      "id": "copy-instructions-from-menu-is-appendix-a",
+      "ok": true,
+      "detail": {
+        "copied": {
+          "len": 3425,
+          "sha": "110220f811f0fb27"
+        },
+        "expected": {
+          "len": 3425,
+          "sha": "110220f811f0fb27"
+        },
+        "title": "محفوظ"
+      }
+    },
+    {
+      "id": "instructions-not-displayed-on-youtube",
+      "ok": true,
+      "detail": {
+        "toasts": [
+          "✓نُسخت تعليمات الترجمة."
+        ]
+      }
+    },
+    {
+      "id": "library-row-for-downloaded-video",
+      "ok": true,
+      "detail": {
+        "row": 1
+      }
+    },
+    {
+      "id": "copy-instructions-from-library-same-as-menu",
+      "ok": true,
+      "detail": {
+        "library": {
+          "len": 3425,
+          "sha": "110220f811f0fb27"
+        },
+        "menu": {
+          "len": 3425,
+          "sha": "110220f811f0fb27"
+        }
+      }
+    },
+    {
+      "id": "upload-loads-and-matches-fingerprint",
+      "ok": true,
+      "detail": {
+        "arabic": {
+          "n": 427,
+          "fileName": "iG9CE55wbtY.ar.srt",
+          "matched": true,
+          "edited": false
+        },
+        "menu": "الترجمة العربية"
+      }
+    },
+    {
+      "id": "watch-shows-file-cue-rtl",
+      "ok": true,
+      "detail": {
+        "t": 28.3905,
+        "lines": [
+          {
+            "kind": "ar",
+            "dir": "rtl",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "overlay-default-almarai-100",
+      "ok": true,
+      "detail": {
+        "appearance": {
+          "font": "almarai",
+          "scale": 100,
+          "background": "soft",
+          "position": "bottom"
+        },
+        "font": {
+          "family": "\"Tarjuman Subtitle Almarai\", \"SF Arabic\", \"Geeza Pro\", \"Noto Sans Arabic\", \"Segoe UI\", Tahoma, sans-serif",
+          "size": "33px",
+          "weight": "700"
+        },
+        "expectPx": 33
+      }
+    },
+    {
+      "id": "settings-font-and-scale-saved-from-ui",
+      "ok": true,
+      "detail": {
+        "app": {
+          "background": "soft",
+          "font": "markazi",
+          "position": "bottom",
+          "scale": 130
+        },
+        "out": "130%"
+      }
+    },
+    {
+      "id": "font-and-scale-reflected-on-player-without-reload",
+      "ok": true,
+      "detail": {
+        "font": {
+          "family": "\"Tarjuman Subtitle Markazi Text\", \"Tarjuman Subtitle Almarai\", \"SF Arabic\", \"Geeza Pro\", \"Noto Sans Arabic\", \"Segoe UI\", Tahoma, sans-serif",
+          "size": "43px",
+          "weight": "700"
+        },
+        "expectPx": 43,
+        "appearance": {
+          "font": "markazi",
+          "scale": 130,
+          "background": "soft",
+          "position": "bottom"
+        }
+      }
+    },
+    {
+      "id": "editor-opened-from-library",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "editor-edit-and-save",
+      "ok": true,
+      "detail": {
+        "before": true,
+        "dirty": "تغييرات غير محفوظة (1)",
+        "saved": true,
+        "current": true,
+        "originalKept": true
+      }
+    },
+    {
+      "id": "save-reflected-in-player-overlay",
+      "ok": true,
+      "detail": {
+        "inState": true,
+        "edited": true,
+        "shown": [
+          true
+        ],
+        "font": "\"Tarjuman Subtitle Markazi Text\""
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": {
+        "youtube": 0,
+        "pages": 0
+      }
+    },
+    {
+      "id": "no-network-from-extension",
+      "ok": true,
+      "detail": {
+        "external": 0
+      }
+    }
+  ],
+  "notes": [
+    "رسائل قراءة خطوط الترجمة من حزمة الإضافة (معروفة من P6، غير محسوبة أخطاءً): 4"
+  ],
+  "screenshots": [
+    "docs/evidence/W4/brave/w4-download-menu.png",
+    "docs/evidence/W4/brave/w4-library-copied.png",
+    "docs/evidence/W4/brave/w4-watch-almarai-100.png",
+    "docs/evidence/W4/brave/w4-settings-markazi-130.png",
+    "docs/evidence/W4/brave/w4-watch-markazi-130.png",
+    "docs/evidence/W4/brave/w4-editor-saved.png",
+    "docs/evidence/W4/brave/w4-player-after-save.png"
+  ],
+  "errors": {
+    "youtube": [],
+    "pages": []
+  }
+}

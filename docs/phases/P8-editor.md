@@ -108,8 +108,8 @@
 ```json tj-status
 {
   "phase": "P8",
-  "status": "integrating",
-  "updated": "2026-11-02T02:33:01+03:00",
+  "status": "verified",
+  "updated": "2026-11-02T02:46:04+03:00",
   "branch": "tj/P8-editor",
   "resume": "جاهزة للدمج في W4",
   "blocker": null,

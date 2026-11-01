@@ -123,8 +123,8 @@
 ```json tj-status
 {
   "phase": "P6",
-  "status": "integrating",
-  "updated": "2026-11-02T02:32:10+03:00",
+  "status": "verified",
+  "updated": "2026-11-02T02:46:04+03:00",
   "branch": "tj/P6-player-controls",
   "resume": "جاهزة للدمج في W4",
   "blocker": null,
