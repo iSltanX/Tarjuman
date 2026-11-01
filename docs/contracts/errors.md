@@ -29,9 +29,9 @@ messageFor(code, params) // القوالب {name} تُملأ؛ الرمز الم
 | `extract.js` | P3 | `EX_`، `KIND_` | مملوء في W3 (P3): رسائل الاستخراج (`EX_WRONG_VIDEO`…`EX_LIVE`، و`KIND_MISMATCH`، و`EX_NO_TRACK`) نُقلت من `src/extract/codes.js` المحذوف، ومعها رموز التحويل والتصدير (`EX_INVARIANT_FAILED`، و`EX_SPLIT_NOT_NEEDED`، و`EX_DOWNLOAD_FAILED`…). |
 | `import.js` | P4 | `IM_` استيراد، `CMP_` مقارنة | مملوء في W3 (P4): أخطاء القراءة والتحليل والأجزاء (`IM_NO_FILE`…`IM_PARTS_GAP`)، وملاحظات التنظيف (`IM_NOTE_…`)، و`CMP_RESTORE_UNAVAILABLE`. |
 | `overlay.js` | P5 | `PL_` | مملوء في W3 (P5): `PL_MOUNT_FAILED`، و`PL_RENDER_FAILED`، و`PL_FULLSCREEN_HOST`. |
-| `controls.js` | P6 | `CT_` | فارغ |
-| `pages.js` | P7 | `PG_` | فارغ |
-| `editor.js` | P8 | `ED_` | فارغ |
+| `controls.js` | P6 | `CT_` | مملوء في W4 (P6): التركيب والرسم (`CT_MOUNT_FAILED`، `CT_RENDER_FAILED`، `CT_BAR_OVERFLOW`)، والتحميل والنسخ (`CT_NOT_CAPTURED`…`CT_SPLIT_INVALID`)، والعرض والإزاحة (`CT_VIDEO_CHANGED`…`CT_STEP_INVALID`)، والخطوط (`CT_FONT_FALLBACK`، `CT_FONT_SYSTEM`). |
+| `pages.js` | P7 | `PG_` | مملوء في W4 (P7): النسخ (`PG_COPY_DONE`…`PG_ID_COPIED`)، والمحفوظات وأوامر الصف (`PG_LIST_FAILED`…`PG_OPEN_FAILED`)، والإعدادات والتخزين والتشخيص (`PG_SAVED`…`PG_DIAGNOSTICS_FAILED`). |
+| `editor.js` | P8 | `ED_` | مملوء في W4 (P8): أخطاء التوقيت والنص (`ED_END_BEFORE_START`…`ED_TEXT_INVALID`)، والتحذيرات (`ED_OVERLAP`…`ED_TEXT_BLANK_LINE`)، والإزاحة والتثبيت (`ED_SHIFT_NEGATIVE`…`ED_NO_OFFSET`)، والحفظ والتصدير وما حولهما (`ED_SAVE_HAS_ERRORS`…`ED_LEAVE_UNSAVED`). |
 
 كل مرحلة تضيف رموزها في ملفها وحده، ولا تعدّل `index.js` (مشترك). رسالة رمز من مجال آخر تُقرأ بـ`messageFor` ولا تُنسخ.
 
