@@ -108,14 +108,14 @@
 ```json tj-status
 {
   "phase": "P8",
-  "status": "ready",
-  "updated": "2026-11-02T02:07:43+03:00",
+  "status": "integrating",
+  "updated": "2026-11-02T02:33:01+03:00",
   "branch": "tj/P8-editor",
   "resume": "جاهزة للدمج في W4",
   "blocker": null,
   "outcome": null,
   "commit": "bb8e31e",
-  "mergeCommit": null,
+  "mergeCommit": "d277b98",
   "checks": [
     {
       "cmd": "npm run check",
