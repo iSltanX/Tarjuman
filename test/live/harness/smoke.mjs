@@ -5,10 +5,11 @@
 // لا يعتمد على جسم الترجمة، فيصح تحت الأتمتة. لا يكتب رابطًا ولا رمزًا في الأدلة.
 //   node test/live/harness/smoke.mjs --browser brave|chrome [--ext dist] [--gallery <بناء تطوير>]
 //        [--video iG9CE55wbtY] [--out docs/evidence/P2] [--headed]
+import { execFileSync } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launch, loadExtension, sleep } from './browser.mjs';
+import { BROWSERS, launch, loadExtension, sleep } from './browser.mjs';
 import { attach, collectErrors, emulateScheme, fullScreenshot, openTab, waitForTarget } from './extension.mjs';
 import { recordNetwork } from './netlog.mjs';
 import { dismissConsent, waitForPlayer } from './youtube.mjs';
@@ -53,7 +54,9 @@ const stateFromPopup = (page) => page.eval(async () => {
   return { via: 'none', reply: null };
 });
 
-async function openPopup(conn, extId, errors) {
+/** نافذة الأيقونة في تبويب خلفي بعد تنشيط تبويب يوتيوب، فيكون هو «التبويب النشط» كما في المنتج. */
+async function openPopup(conn, extId, errors, activeTargetId) {
+  if (activeTargetId) await conn.send('Target.activateTarget', { targetId: activeTargetId });
   const p = await openTab(conn, 'about:blank', { background: true });
   errors.push(collectErrors(p, { extId }));
   await p.goto(`chrome-extension://${extId}/pages/popup/index.html`);
@@ -62,6 +65,8 @@ async function openPopup(conn, extId, errors) {
 }
 
 async function shoot(page, name, { width } = {}) {
+  // التبويب الخلفي لا يُرسم، فيُنشَّط للقطة.
+  await page.conn.send('Target.activateTarget', { targetId: page.targetId });
   for (const scheme of ['light', 'dark']) {
     await emulateScheme(page, scheme);
     await sleep(150);
@@ -71,9 +76,19 @@ async function shoot(page, name, { width } = {}) {
   await emulateScheme(page, 'light');
 }
 
+/** إصدار التطبيق نفسه على macOS (Brave يعلن إصدار Chromium في CDP). */
+function appVersion(bin) {
+  try {
+    const plist = path.join(bin.slice(0, bin.indexOf('.app/') + 4), 'Contents/Info.plist');
+    return String(execFileSync('/usr/bin/defaults', ['read', plist, 'CFBundleShortVersionString'])).trim();
+  } catch {
+    return null;
+  }
+}
+
 const b = await launch({ browser, profile: `${browser}-p2`, headless: !argv.includes('--headed') });
-result.browser = b.version.product;
-console.log(`المتصفح: ${b.version.product} · الإضافة ${manifest.version_name ?? manifest.version} من ${rel(EXT) || EXT}`);
+result.browser = `${BROWSERS[browser].name} ${appVersion(BROWSERS[browser].bin) ?? '?'} (${b.version.product})`;
+console.log(`المتصفح: ${result.browser} · الإضافة ${manifest.version_name ?? manifest.version} من ${rel(EXT) || EXT}`);
 const pageErrors = [];
 try {
   const ext = await loadExtension(b.conn, EXT);
@@ -101,7 +116,7 @@ try {
   check('stubs-touch-no-youtube-dom', touched === 0, { elements: touched });
 
   // ٢. نافذة الأيقونة (تبويب خلفي فيبقى يوتيوب نشطًا): رد سكربت المحتوى ونقطتا التركيب.
-  const popup = await openPopup(b.conn, extId, pageErrors);
+  const popup = await openPopup(b.conn, extId, pageErrors, yt.targetId);
   const s1 = await stateFromPopup(popup);
   const r1 = s1.reply;
   check('popup-video-state', r1?.watch === true && r1.videoId === VIDEO && r1.arabic === null, r1 && { via: s1.via, videoId: r1.videoId, loading: r1.loading, arabic: r1.arabic, view: r1.view });
@@ -109,6 +124,7 @@ try {
   const items1 = await popup.eval(() => [...document.querySelectorAll('.tj-menuitem')].map((x) => ({ name: x.querySelector('.tj-menuitem__name')?.textContent, disabled: x.getAttribute('aria-disabled') === 'true' })));
   check('popup-items', items1.length === 3, items1);
   await shoot(popup, 'popup-no-arabic', { width: 320 });
+  await b.conn.send('Target.activateTarget', { targetId: yt.targetId });
 
   // ٣. كتابة سجل من صفحة إضافة تنعكس في المشغّل عبر أحداث التخزين (مسار المحرّر والمحفوظات).
   const rec = { ...videoRecord({ videoId: VIDEO, offset: 500 }), title: 'Smoke test record' };
@@ -127,7 +143,7 @@ try {
   };
   const names = { library: 'المحفوظات', settings: 'الإعدادات', editor: 'المحرّر' };
   for (const name of ['library', 'settings', 'editor']) {
-    const pop = await openPopup(b.conn, extId, pageErrors);
+    const pop = await openPopup(b.conn, extId, pageErrors, yt.targetId);
     if (name === 'editor') await shoot(pop, 'popup-with-arabic', { width: 320 });
     const clicked = await pop.eval((label) => {
       const item = [...document.querySelectorAll('.tj-menuitem')].find((x) => x.querySelector('.tj-menuitem__name')?.textContent === label);
@@ -189,13 +205,9 @@ try {
     const gErr = collectErrors(g, { extId: 'none' });
     await g.goto(pathToFileURL(path.join(GALLERY, 'ui/gallery/index.html')).href);
     await g.waitFor(() => document.querySelectorAll('.tj-card').length > 5, { timeoutMs: 8000 });
-    const fonts = await g.eval(async () => {
-      await document.fonts.ready;
-      return { cairo: document.fonts.check('700 16px Cairo'), almarai: document.fonts.check('400 16px Almarai'), plexMono: document.fonts.check('500 14px "IBM Plex Mono"') };
-    });
-    result.fonts = fonts;
+    await g.eval(() => document.fonts.ready.then(() => true));
     await shoot(g, 'ui-gallery', { width: 1200 });
-    check('ui-gallery', gErr.list.length === 0, { errors: gErr.list.length, fonts });
+    check('ui-gallery', gErr.list.length === 0, { errors: gErr.list.length });
     await g.close();
   }
 } catch (err) {

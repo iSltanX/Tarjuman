@@ -16,7 +16,7 @@
 .tj-btn--primary { background: var(--tj-brand); color: var(--tj-brand-ink); }
 .tj-btn--secondary { background: var(--tj-surface); border-color: var(--tj-border-strong); }
 .tj-btn--ghost { background: transparent; color: var(--tj-brand); }
-.tj-btn--danger { background: var(--tj-danger); color: #FFFFFF; }
+.tj-btn--danger { background: var(--tj-danger); color: var(--tj-danger-ink); }
 .tj-btn:hover:not(:disabled):not([aria-disabled="true"]) { filter: brightness(0.96); }
 .tj-btn--secondary:hover:not(:disabled):not([aria-disabled="true"]), .tj-btn--ghost:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-brand-soft); filter: none; }
 .tj-btn:active:not(:disabled):not([aria-disabled="true"]) { filter: brightness(0.9); }
@@ -68,6 +68,7 @@
 .tj-alert__body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .tj-alert__title { font: 700 14px/24px var(--tj-font-body); }
 .tj-alert__text { font: 400 14px/24px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-alert__body > .tj-btn { align-self: flex-start; margin-top: 4px; }
 .tj-alert--info { background: var(--tj-info-bg); border-color: color-mix(in srgb, var(--tj-info) 25%, transparent); }
 .tj-alert--info .tj-icon { color: var(--tj-info); }
 .tj-alert--success { background: var(--tj-success-bg); border-color: color-mix(in srgb, var(--tj-success) 25%, transparent); }

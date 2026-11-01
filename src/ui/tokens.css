@@ -23,6 +23,7 @@
   --tj-warning-bg: #FDF3DC;
   --tj-danger: #B42318;
   --tj-danger-bg: #FCE8E6;
+  --tj-danger-ink: #FFFFFF;
   --tj-info: #1D5DB3;
   --tj-info-bg: #E3ECFA;
   --tj-edited: #6342B6;
@@ -74,6 +75,7 @@
     --tj-warning-bg: #2F260F;
     --tj-danger: #FF958C;
     --tj-danger-bg: #3B1A17;
+    --tj-danger-ink: #2A0F0C;
     --tj-info: #8DB6F2;
     --tj-info-bg: #172A43;
     --tj-edited: #BBA7F3;
@@ -102,6 +104,7 @@
   --tj-warning-bg: #2F260F;
   --tj-danger: #FF958C;
   --tj-danger-bg: #3B1A17;
+  --tj-danger-ink: #2A0F0C;
   --tj-info: #8DB6F2;
   --tj-info-bg: #172A43;
   --tj-edited: #BBA7F3;

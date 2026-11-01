@@ -18,7 +18,8 @@ startPage({
     })));
     app.append(section('الخطوط',
       el('p', { className: 'tj-h1', text: 'المحفوظات — عنوان h1' }),
-      el('p', { className: 'tj-h4', text: 'محاضرة: Do schools kill creativity? — عنوان h4' }),
+      el('p', { className: 'tj-h4', children: ['عنوان فيديو إنجليزي معزول: ', ltr('Do schools kill creativity? | TED', { mono: false })] }),
+      el('p', { className: 'tj-h4 tj-auto', text: 'Do schools kill creativity? | TED' }),
       el('p', { className: 'tj-body', text: 'نص أساسي بخط المراعي، فيه كلمة API ورقم 412.' }),
       el('p', { className: 'tj-caption', children: ['التوقيت ', ltr(formatTimecode(724500)), ' والمعرّف ', ltr('dQw4w9WgXcQ'), ' والإزاحة ', ltr(formatOffset(500), { mono: false }), ' و', ltr(formatOffset(-1000), { mono: false })] }),
       el('p', { className: 'tj-body-sm', text: [1, 2, 3, 11, 100].map((n) => formatCount(n, COUNT_FORMS.cue)).join(' · ') }),

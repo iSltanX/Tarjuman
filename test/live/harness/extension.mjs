@@ -79,14 +79,24 @@ export function collectErrors(page, { extId, onlyExtension = false }) {
 /** @param {Page} page @param {'light' | 'dark'} scheme */
 export const emulateScheme = (page, scheme) => page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
 
-/** لقطة الصفحة كاملة (لا النافذة فقط). @param {Page} page @param {string} file */
+/**
+ * لقطة الصفحة كاملة بعرض محدد: نافذة العرض تُضبط على العرض ثم على طول المحتوى، وتُلتقط النافذة نفسها.
+ * (captureBeyondViewport يعيد التخطيط بعرض أكبر فتنزاح صفحات RTL خارج اللقطة.)
+ * @param {Page} page @param {string} file
+ */
 export async function fullScreenshot(page, file, { width = 1280 } = {}) {
-  const { cssContentSize } = await page.send('Page.getLayoutMetrics');
-  const height = Math.min(Math.ceil(cssContentSize.height), 6000);
-  const { data } = await page.send('Page.captureScreenshot', {
-    format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width: Math.min(width, Math.ceil(cssContentSize.width)), height, scale: 1 },
-  });
-  await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, Buffer.from(data, 'base64'));
+  const size = (height) => page.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+  await size(800);
+  await sleep(150);
+  try {
+    const content = await page.eval(() => Math.ceil(document.documentElement.scrollHeight));
+    await size(Math.min(Math.max(content, 200), 6000));
+    await sleep(150);
+    const { data } = await page.send('Page.captureScreenshot', { format: 'png' });
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, Buffer.from(data, 'base64'));
+  } finally {
+    await page.send('Emulation.clearDeviceMetricsOverride');
+  }
   return file;
 }
