@@ -124,7 +124,7 @@
 {
   "phase": "P6",
   "status": "in_progress",
-  "updated": "2026-11-02T01:03:00+03:00",
+  "updated": "2026-11-02T01:25:20+03:00",
   "branch": "tj/P6-player-controls",
   "resume": "بدأت المرحلة: قراءة المواصفة والمصمم ثم بناء src/player/controls",
   "blocker": null,
@@ -134,7 +134,20 @@
   "checks": [],
   "acceptance": {},
   "evidence": [],
-  "sharedRequests": []
+  "sharedRequests": [
+    {
+      "file": "scripts/check-static.mjs",
+      "change": "سماح ضيق لسطر واحد حرفي في src/player/overlay/fonts.js وحده: const res = await fetch(runtime.getURL(path)); (خريطة PACKAGED_READS بجانب PASSTHROUGH، وأي fetch آخر في الملف أو السطر نفسه في ملف آخر يبقى مخالفة)",
+      "why": "العقد (interfaces §٣ و§٩) يطلب تحميل خطوط الترجمة عبر FontFace ببيانات الملف لا برابطه، وقراءة بيانات ملف من حزمة الإضافة (chrome-extension://، ليست شبكة) في سكربت المحتوى لا تتم إلا بـfetch، والفحص الثابت المجمَّد يمنع fetch كله خارج غلافي الالتقاط",
+      "applied": true
+    },
+    {
+      "file": "test/live/harness/smoke.mjs",
+      "change": "فحص mount-points-stub: حالة الأدوات تقبل waiting أو mounted بدل stub (سطر واحد وتعليقه)",
+      "why": "نقطة تركيب الأدوات لم تعد بديلًا بعد P6، فيفشل الدخان الحي الموروث؛ وسجل P5 نصّ على أن تحدّث P6 جزء الأدوات في W4",
+      "applied": true
+    }
+  ]
 }
 ```
 

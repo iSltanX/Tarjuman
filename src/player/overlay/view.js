@@ -91,6 +91,15 @@ export function createOverlayView({ doc, win }) {
       stage.setAttribute('data-bg', a.background);
     },
 
+    /**
+     * عائلة الخط بسلسلتها (المختار ثم المراعي المضمّن ثم خطوط النظام العربية)؛ تتغير دون إعادة بناء الأسطر.
+     * @param {{ ar: string, en: string }} f
+     */
+    setFont(f) {
+      if (host.style.getPropertyValue('--tj-sub-font') !== f.ar) host.style.setProperty('--tj-sub-font', f.ar);
+      if (host.style.getPropertyValue('--tj-sub-font-en') !== f.en) host.style.setProperty('--tj-sub-font-en', f.en);
+    },
+
     /** @param {{ fontPx: number, anchor: 'top' | 'bottom', offsetPx: number }} l */
     setLayout(l) {
       host.style.setProperty('--tj-fs', `${l.fontPx}px`);

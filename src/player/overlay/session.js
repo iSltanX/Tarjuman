@@ -1,11 +1,14 @@
 // جلسة الطبقة على مشغّل بعينه (P5): تجمع المتحكم (الحالة) والمزامنة (المقطع الظاهر) والمراقبة (التنقل والإعلان
 // والشريط وملء الشاشة) والعرض (Shadow DOM) في حلقة قرار واحدة. تنتهي بتدمير المشغّل أو إعادة رسمه، وتعيد
 // نقطة التركيب إنشاءها. لا تكتب في المتحكم ولا في التخزين، ولا ترمي إليهما: الإخفاق رمز في التشخيص.
+// خط الترجمة وحجمها (P6): من المظهر في كل دورة، فتغييرهما في الإعدادات يظهر دون إعادة تحميل؛ والخط يُحمَّل عند أول
+// حاجة إليه (طبقة منخرطة) من محمّل المستند المشترك بين الجلسات.
 import { TjError } from '../../core/errors/index.js';
 import { createSyncEngine } from '../sync/engine.js';
 import { hostParent } from '../watch/fullscreen.js';
 import { watchNavigation } from '../watch/navigation.js';
 import { watchPlayerState } from '../watch/player-state.js';
+import { subtitleFontStack } from '../../ui/subtitle-fonts.js';
 import { getMainVideo } from '../youtube-dom.js';
 import { createCaptionHider } from './caption-hider.js';
 import { decide } from './decision.js';
@@ -19,9 +22,10 @@ const linesOf = (cue) => (cue ? splitLines(cue.text) : []);
  * @param {{
  *   controller: { getState: () => import('../../content/controller.js').ControllerState, subscribe: (fn: (s: any) => void) => () => void },
  *   doc: Document, win: Window, player: HTMLElement,
+ *   fonts?: { ensure: (id: string) => Promise<unknown> } | null,
  * }} deps
  */
-export function createOverlaySession({ controller, doc, win, player }) {
+export function createOverlaySession({ controller, doc, win, player, fonts = null }) {
   const counts = { renders: 0, renderFailures: 0, refreshes: 0, hostMoves: 0, fullscreenUnreachable: 0 };
   let lastCode = null;
   let destroyed = false;
@@ -29,6 +33,7 @@ export function createOverlaySession({ controller, doc, win, player }) {
   let unreachableReported = false;
   // ملء شاشة لا يستضيف أبناءً: المضيف خارج DOM عمدًا، فلا يُعدّ ذلك عطبًا يستدعي إعادة بناء الجلسة كل دورة.
   let unreachableNow = false;
+  let fontRequested = null;
 
   const fail = (code, err) => {
     lastCode = code;
@@ -81,6 +86,11 @@ export function createOverlaySession({ controller, doc, win, player }) {
       engine.setVideo(getMainVideo(doc));
       hider.set(d.hideNative);
       view.setAppearance({ background: d.appearance.background });
+      view.setFont({ ar: subtitleFontStack(d.appearance.font), en: subtitleFontStack('almarai') });
+      if (d.engaged && fonts && fontRequested !== d.appearance.font) {
+        fontRequested = d.appearance.font;
+        fonts.ensure(fontRequested);
+      }
       view.setLayout(layoutFor({ appearance: d.appearance, playerHeight: snap.height, chromeLift: snap.lift }));
       if (hidden !== !d.visible) {
         hidden = !d.visible;
@@ -140,7 +150,7 @@ export function createOverlaySession({ controller, doc, win, player }) {
     },
     peek: (withBox) => view.peek(withBox),
     diagnostics: () => ({
-      ...counts, lastCode, styleMode: view.styleMode, captionsHidden: hider.isOn(), hidden, engine: engine.stats(),
+      ...counts, lastCode, styleMode: view.styleMode, captionsHidden: hider.isOn(), hidden, engine: engine.stats(), fontRequested,
     }),
     destroy() {
       if (destroyed) return;

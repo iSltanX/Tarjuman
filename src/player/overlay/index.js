@@ -1,9 +1,10 @@
 // نقطة تركيب طبقة العرض (عقد interfaces §٣، تملكها P5). mountOverlay تُستدعى مرة عند document_start قبل وجود
 // المشغّل، فتنتظره بنفسها (MutationObserver على المستند ما دام غائبًا)، وتركّب جلسة عليه، وتعيد التركيب إن أعاد
 // يوتيوب رسم المشغّل أو أزال المضيف (فحص خفيف كل ثانية وعند أحداث يوتيوب). لا ترمي أبدًا: الإخفاق رمز في state
-// وفي diagnostics، ويبقى المشغّل والأدوات سليمين.
+// وفي diagnostics، ويبقى المشغّل والأدوات سليمين. محمّل خطوط الترجمة واحد للمستند (P6)، فلا تعيد الجلسات تحميلها.
 import { TjError } from '../../core/errors/index.js';
 import { EVENTS, getPlayer } from '../youtube-dom.js';
+import { createFontLoader } from './fonts.js';
 import { createOverlaySession } from './session.js';
 
 /**
@@ -17,12 +18,13 @@ const COALESCE_MS = 50;
 
 /**
  * @param {import('../../content/controller.js').Controller} controller
- * @param {{ doc?: Document, win?: Window }} [env]
+ * @param {{ doc?: Document, win?: Window, fonts?: ReturnType<typeof createFontLoader> | null }} [env] fonts للاختبار
  * @returns {MountHandle & { diagnostics: () => object, peek: (withBox?: boolean) => object | null }}
  */
 export function mountOverlay(controller, env = {}) {
   const win = env.win ?? window;
   const doc = env.doc ?? win.document;
+  const fonts = env.fonts !== undefined ? env.fonts : createFontLoader({ doc, win });
   /** @type {'stub' | 'waiting' | 'mounted' | 'error'} */
   let state = 'waiting';
   /** @type {ReturnType<typeof createOverlaySession> | null} */
@@ -70,7 +72,7 @@ export function mountOverlay(controller, env = {}) {
     if (failures >= MAX_FAILURES) return;
     attempts++;
     try {
-      session = createOverlaySession({ controller, doc, win, player });
+      session = createOverlaySession({ controller, doc, win, player, fonts });
       state = 'mounted';
       stopObserving();
     } catch (err) {
@@ -120,6 +122,7 @@ export function mountOverlay(controller, env = {}) {
     diagnostics: () => ({
       state, attempts, failures, lastCode: lastError?.code ?? null, lastDetail: lastError?.detail ?? null,
       session: session ? session.diagnostics() : null,
+      fonts: fonts ? fonts.diagnostics() : null,
     }),
 
     /** للحزام الحي وحده: ما يظهر الآن. لا يدخل التشخيص. */
