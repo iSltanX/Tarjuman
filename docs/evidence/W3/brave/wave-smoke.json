@@ -1,0 +1,168 @@
+{
+  "browser": "Brave (Chrome/156.0.8078.48)",
+  "at": "2026-11-01T21:24:04.051Z",
+  "headless": true,
+  "video": "iG9CE55wbtY",
+  "sample": {
+    "fixture": "manual-ted-iG9CE55wbtY.json",
+    "exportFile": "iG9CE55wbtY.en.manual.normal.srt",
+    "cues": 427,
+    "importFile": "iG9CE55wbtY.ar.srt",
+    "matched": true
+  },
+  "times": {
+    "back": 28.39,
+    "view": 31.96,
+    "jump": 44.88
+  },
+  "checks": [
+    {
+      "id": "sample-srt-exported-and-imported",
+      "ok": true,
+      "detail": {
+        "fixture": "manual-ted-iG9CE55wbtY.json",
+        "exportFile": "iG9CE55wbtY.en.manual.normal.srt",
+        "cues": 427,
+        "importFile": "iG9CE55wbtY.ar.srt",
+        "matched": true
+      }
+    },
+    {
+      "id": "measure-points",
+      "ok": true,
+      "detail": {
+        "singles": 11,
+        "back": 28.39,
+        "view": 31.96,
+        "jump": 44.88
+      }
+    },
+    {
+      "id": "load-unpacked",
+      "ok": true,
+      "detail": {
+        "method": "Extensions.loadUnpacked"
+      }
+    },
+    {
+      "id": "player-ready",
+      "ok": true,
+      "detail": {
+        "duration": 1203.421
+      }
+    },
+    {
+      "id": "srt-file-loaded-through-controller",
+      "ok": true,
+      "detail": {
+        "arabic": 427,
+        "fileName": "iG9CE55wbtY.ar.srt",
+        "fingerprintId": "fp_mvyc828jvb5w4t",
+        "matched": true,
+        "mode": "ar",
+        "overlay": "mounted",
+        "fingerprintIsExport": true
+      }
+    },
+    {
+      "id": "file-cue-shown-at-its-time",
+      "ok": true,
+      "detail": {
+        "t": 31.96,
+        "shown": 1,
+        "expected": 1,
+        "dirs": [
+          "rtl"
+        ]
+      }
+    },
+    {
+      "id": "seek-forward-and-back",
+      "ok": true,
+      "detail": {
+        "jumpTo": 44.88,
+        "jumpOk": true,
+        "backTo": 28.39,
+        "backOk": true
+      }
+    },
+    {
+      "id": "sync-while-playing-1x",
+      "ok": true,
+      "detail": {
+        "frames": 361,
+        "advancedSec": 5.97,
+        "bad": 0,
+        "maxRun": 0
+      }
+    },
+    {
+      "id": "visible-fullscreen",
+      "ok": true,
+      "detail": {
+        "fullscreenElement": "HTML",
+        "classes": [
+          "ytp-fullscreen"
+        ],
+        "player": {
+          "w": 800,
+          "h": 600,
+          "top": 0,
+          "bottom": 600
+        },
+        "inside": true,
+        "shown": 1
+      }
+    },
+    {
+      "id": "back-from-fullscreen",
+      "ok": true,
+      "detail": {
+        "fsId": null
+      }
+    },
+    {
+      "id": "navigation-clears-overlay",
+      "ok": true,
+      "detail": {
+        "target": true,
+        "preShown": 1,
+        "navStartAtMs": 2133,
+        "urlChangedAtMs": 2141,
+        "staleAfterStart": 0,
+        "staleAfterUrl": 0
+      }
+    },
+    {
+      "id": "new-video-without-stale-translation",
+      "ok": true,
+      "detail": {
+        "stateIsTarget": true,
+        "arabic": 0,
+        "shown": 0,
+        "overlay": "mounted"
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "no-network-from-extension",
+      "ok": true,
+      "detail": {
+        "requests": 0
+      }
+    }
+  ],
+  "notes": [
+    "نقرة الفأرة على المقترح لم تنقل؛ استُعملت نقرة الرابط البرمجية (تنقّل SPA نفسه)."
+  ],
+  "screenshots": [
+    "docs/evidence/W3/brave/w3-normal.png",
+    "docs/evidence/W3/brave/w3-fullscreen.png",
+    "docs/evidence/W3/brave/w3-after-navigation.png"
+  ],
+  "errors": []
+}
