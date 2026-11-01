@@ -1,0 +1,639 @@
+{
+  "browser": "Brave (Chrome/156.0.8078.48)",
+  "at": "2026-11-01T19:30:56.232Z",
+  "headless": true,
+  "video": "iG9CE55wbtY",
+  "checks": [
+    {
+      "id": "load-unpacked",
+      "ac": "تحضير",
+      "ok": true,
+      "detail": {
+        "method": "Extensions.loadUnpacked"
+      }
+    },
+    {
+      "id": "overlay-mounted-and-record-loaded",
+      "ac": "تحضير",
+      "ok": true,
+      "detail": {
+        "videoId": "iG9CE55wbtY",
+        "loading": false,
+        "arabic": 299,
+        "view": {
+          "displayMode": "ar",
+          "displayOffsetMs": 0
+        },
+        "overlay": "mounted",
+        "seeded": 299,
+        "durationSec": 1203
+      }
+    },
+    {
+      "id": "ar-only-in-movie-player",
+      "ac": "P5-AC1",
+      "ok": true,
+      "detail": {
+        "host": "movie_player",
+        "shown": 1,
+        "expected": 1
+      }
+    },
+    {
+      "id": "native-captions-hidden-while-active",
+      "ac": "P5-AC1",
+      "ok": true,
+      "detail": {
+        "display": "none",
+        "captionsHidden": true
+      }
+    },
+    {
+      "id": "dual-ar-over-en-single-layer",
+      "ac": "P5-AC1",
+      "ok": true,
+      "detail": {
+        "lines": [
+          [
+            "ar",
+            "rtl"
+          ],
+          [
+            "en",
+            "ltr"
+          ]
+        ],
+        "hidden": false,
+        "empty": false,
+        "dbg": {
+          "mode": "dual",
+          "english": true,
+          "enCount": 299,
+          "enSource": "saved",
+          "t": 10.5
+        }
+      }
+    },
+    {
+      "id": "off-restores-native-captions",
+      "ac": "P5-AC1",
+      "ok": true,
+      "detail": {
+        "captionsHidden": false
+      }
+    },
+    {
+      "id": "visible-normal",
+      "ac": "P5-AC4",
+      "ok": true,
+      "detail": {
+        "why": {
+          "paused": true,
+          "t": 17.5,
+          "shown": 1,
+          "expected": 1,
+          "hidden": false,
+          "empty": false,
+          "inside": true,
+          "hostW": 904,
+          "view": {
+            "displayMode": "ar",
+            "displayOffsetMs": 0
+          },
+          "eng": {
+            "frames": 2,
+            "lookups": 6,
+            "emits": 7,
+            "loopStarts": 1,
+            "evals": 30,
+            "running": false,
+            "tracks": 1,
+            "ar": {
+              "from": 16500,
+              "to": 19300,
+              "cue": 5,
+              "size": 299
+            },
+            "video": {
+              "connected": true,
+              "timeSec": 17.5
+            }
+          },
+          "last": null
+        }
+      }
+    },
+    {
+      "id": "visible-theater",
+      "ac": "P5-AC4",
+      "ok": true,
+      "detail": {
+        "theater": true,
+        "why": {
+          "paused": true,
+          "t": 17.5,
+          "shown": 1,
+          "expected": 1,
+          "hidden": false,
+          "empty": false,
+          "inside": true,
+          "hostW": 1400,
+          "view": {
+            "displayMode": "ar",
+            "displayOffsetMs": 0
+          },
+          "eng": {
+            "frames": 2,
+            "lookups": 6,
+            "emits": 7,
+            "loopStarts": 1,
+            "evals": 33,
+            "running": false,
+            "tracks": 1,
+            "ar": {
+              "from": 16500,
+              "to": 19300,
+              "cue": 5,
+              "size": 299
+            },
+            "video": {
+              "connected": true,
+              "timeSec": 17.5
+            }
+          },
+          "last": null
+        }
+      }
+    },
+    {
+      "id": "visible-fullscreen",
+      "ac": "P5-AC4",
+      "ok": true,
+      "detail": {
+        "fullscreenElement": "HTML",
+        "hostParent": "movie_player",
+        "classes": [
+          "paused-mode",
+          "ytp-fullscreen"
+        ],
+        "player": {
+          "w": 800,
+          "h": 600,
+          "top": 0,
+          "bottom": 600
+        },
+        "why": {
+          "paused": true,
+          "t": 17.5,
+          "shown": 1,
+          "expected": 1,
+          "hidden": false,
+          "empty": false,
+          "inside": true,
+          "hostW": 800,
+          "view": {
+            "displayMode": "ar",
+            "displayOffsetMs": 0
+          },
+          "eng": {
+            "frames": 2,
+            "lookups": 6,
+            "emits": 7,
+            "loopStarts": 1,
+            "evals": 36,
+            "running": false,
+            "tracks": 1,
+            "ar": {
+              "from": 16500,
+              "to": 19300,
+              "cue": 5,
+              "size": 299
+            },
+            "video": {
+              "connected": true,
+              "timeSec": 17.5
+            }
+          },
+          "last": null
+        },
+        "lastCode": null
+      }
+    },
+    {
+      "id": "back-from-fullscreen",
+      "ac": "P5-AC4",
+      "ok": true,
+      "detail": {
+        "hostParent": "movie_player",
+        "fsId": null
+      }
+    },
+    {
+      "id": "pointer-passes-through-overlay",
+      "ac": "P5-AC6",
+      "ok": true,
+      "detail": {
+        "under": "video.video-stream",
+        "hasHost": false
+      }
+    },
+    {
+      "id": "click-on-subtitle-reaches-video",
+      "ac": "P5-AC6",
+      "ok": true,
+      "detail": {
+        "pausedBefore": true,
+        "pausedAfter": false
+      }
+    },
+    {
+      "id": "youtube-controls-not-covered",
+      "ac": "P5-AC6",
+      "ok": true,
+      "detail": [
+        {
+          "s": ".ytp-play-button",
+          "found": true,
+          "hasHost": false
+        },
+        {
+          "s": ".ytp-subtitles-button",
+          "found": true,
+          "hasHost": false
+        },
+        {
+          "s": ".ytp-settings-button",
+          "found": true,
+          "hasHost": false
+        },
+        {
+          "s": ".ytp-fullscreen-button",
+          "found": true,
+          "hasHost": false
+        },
+        {
+          "s": ".ytp-progress-bar",
+          "found": true,
+          "hasHost": false
+        }
+      ]
+    },
+    {
+      "id": "raised-above-controls-when-shown",
+      "ac": "P5-AC6",
+      "ok": true,
+      "detail": {
+        "stageBottom": 679,
+        "chromeTop": 687
+      }
+    },
+    {
+      "id": "lowered-when-controls-hide",
+      "ac": "P5-AC6",
+      "ok": true,
+      "detail": {
+        "shownBottom": 679,
+        "hiddenBottom": 692
+      }
+    },
+    {
+      "id": "real-ad-hides-overlay (TED #1)",
+      "ac": "P5-AC4",
+      "ok": true,
+      "detail": {
+        "classes": [
+          "ad-showing",
+          "ad-interrupting",
+          "playing-mode",
+          "ytp-autohide"
+        ],
+        "hidden": true,
+        "lines": 0,
+        "videoDurationSec": 90
+      }
+    },
+    {
+      "id": "real-ad-overlay-returns (TED #1)",
+      "ac": "P5-AC4",
+      "ok": true,
+      "detail": {
+        "hidden": false,
+        "timeAfter": 1.997,
+        "videoDurationSec": 1203,
+        "classes": [
+          "playing-mode"
+        ],
+        "shown": 1,
+        "expectedNow": 1
+      }
+    },
+    {
+      "id": "sync-rate-0.75x",
+      "ac": "P5-AC3",
+      "ok": true,
+      "detail": {
+        "frames": 421,
+        "advancedSec": 5.2,
+        "bad": 0,
+        "lag1": 0,
+        "maxRun": 0,
+        "engine": {
+          "frames": 556,
+          "lookups": 5,
+          "emits": 6,
+          "loopStarts": 2,
+          "evals": 1000,
+          "running": true,
+          "tracks": 1,
+          "ar": {
+            "from": 8500,
+            "to": 11300,
+            "cue": 3,
+            "size": 299
+          },
+          "video": {
+            "connected": true,
+            "timeSec": 10.2
+          }
+        }
+      }
+    },
+    {
+      "id": "sync-rate-1x",
+      "ac": "P5-AC3",
+      "ok": true,
+      "detail": {
+        "frames": 421,
+        "advancedSec": 6.95,
+        "bad": 0,
+        "lag1": 0,
+        "maxRun": 0,
+        "engine": {
+          "frames": 978,
+          "lookups": 9,
+          "emits": 10,
+          "loopStarts": 3,
+          "evals": 1456,
+          "running": true,
+          "tracks": 1,
+          "ar": {
+            "from": 11300,
+            "to": 12500,
+            "cue": null,
+            "size": 299
+          },
+          "video": {
+            "connected": true,
+            "timeSec": 11.96
+          }
+        }
+      }
+    },
+    {
+      "id": "sync-rate-1.5x",
+      "ac": "P5-AC3",
+      "ok": true,
+      "detail": {
+        "frames": 421,
+        "advancedSec": 10.41,
+        "bad": 0,
+        "lag1": 0,
+        "maxRun": 0,
+        "engine": {
+          "frames": 1400,
+          "lookups": 15,
+          "emits": 16,
+          "loopStarts": 4,
+          "evals": 1912,
+          "running": true,
+          "tracks": 1,
+          "ar": {
+            "from": 15300,
+            "to": 16500,
+            "cue": null,
+            "size": 299
+          },
+          "video": {
+            "connected": true,
+            "timeSec": 15.42
+          }
+        }
+      }
+    },
+    {
+      "id": "sync-rate-2x",
+      "ac": "P5-AC3",
+      "ok": true,
+      "detail": {
+        "frames": 421,
+        "advancedSec": 13.89,
+        "bad": 0,
+        "lag1": 0,
+        "maxRun": 0,
+        "engine": {
+          "frames": 1822,
+          "lookups": 22,
+          "emits": 23,
+          "loopStarts": 5,
+          "evals": 2369,
+          "running": true,
+          "tracks": 1,
+          "ar": {
+            "from": 16500,
+            "to": 19300,
+            "cue": 5,
+            "size": 299
+          },
+          "video": {
+            "connected": true,
+            "timeSec": 18.92
+          }
+        }
+      }
+    },
+    {
+      "id": "offset-plus-lookup-only",
+      "ac": "P5-AC3",
+      "ok": true,
+      "detail": {
+        "wasShown": 1,
+        "nowShown": 0,
+        "currentTimeBefore": 25,
+        "currentTimeAfter": 25
+      }
+    },
+    {
+      "id": "offset-minus-lookup-only",
+      "ac": "P5-AC3",
+      "ok": true,
+      "detail": {
+        "before": 0,
+        "after": 1,
+        "currentTime": 27.6,
+        "state": {
+          "videoId": "iG9CE55wbtY",
+          "loading": false,
+          "arabic": 299,
+          "view": {
+            "displayMode": "ar",
+            "displayOffsetMs": -1000
+          },
+          "overlay": "mounted"
+        }
+      }
+    },
+    {
+      "id": "seek-forward-and-back",
+      "ac": "P5-AC3",
+      "ok": true,
+      "detail": {
+        "jump": true,
+        "back": true,
+        "readyState": 4
+      }
+    },
+    {
+      "id": "loop-stops-when-paused",
+      "ac": "P5-AC3",
+      "ok": true,
+      "detail": {
+        "running": false
+      }
+    },
+    {
+      "id": "overlay-cleared-immediately-on-navigation",
+      "ac": "P5-AC5",
+      "ok": true,
+      "detail": {
+        "target": true,
+        "startsWithA": true,
+        "preShown": 1,
+        "navStartAtMs": 2120,
+        "urlChangedAtMs": 2129,
+        "staleAfterStart": 0,
+        "staleAfterUrl": 0
+      }
+    },
+    {
+      "id": "new-video-loads-its-own-saved-translation",
+      "ac": "P5-AC5",
+      "ok": true,
+      "detail": {
+        "stateVideoIsTarget": true,
+        "arabicCount": 224,
+        "shown": 1
+      }
+    },
+    {
+      "id": "perf-video-long-enough",
+      "ac": "P5-AC7",
+      "ok": true,
+      "detail": {
+        "durationSec": 12683,
+        "cues": 2399
+      }
+    },
+    {
+      "id": "frame-time-with-overlay-vs-baseline",
+      "ac": "P5-AC7",
+      "ok": true,
+      "detail": {
+        "baseline": {
+          "frames": 600,
+          "p50": 16.7,
+          "p95": 17,
+          "p99": 17.5,
+          "max": 30.8,
+          "over25": 1,
+          "over50": 0,
+          "longTasks": 0
+        },
+        "overlay1x": {
+          "frames": 600,
+          "p50": 16.7,
+          "p95": 17.4,
+          "p99": 17.6,
+          "max": 27.5,
+          "over25": 1,
+          "over50": 0,
+          "longTasks": 0
+        },
+        "overlayDual2x": {
+          "frames": 600,
+          "p50": 16.7,
+          "p95": 17.5,
+          "p99": 17.7,
+          "max": 20.3,
+          "over25": 0,
+          "over50": 0,
+          "longTasks": 0
+        }
+      }
+    },
+    {
+      "id": "sync-on-big-file",
+      "ac": "P5-AC7",
+      "ok": true,
+      "detail": {
+        "frames": 481,
+        "advancedSec": 7.95,
+        "bad": 0,
+        "lag1": 0,
+        "maxRun": 0,
+        "engine": {
+          "frames": 1683,
+          "lookups": 27,
+          "emits": 20,
+          "loopStarts": 4,
+          "evals": 1860,
+          "running": true,
+          "tracks": 1,
+          "ar": {
+            "from": 3649260,
+            "to": 3651744,
+            "cue": null,
+            "size": 2399
+          },
+          "video": {
+            "connected": true,
+            "timeSec": 3650.49
+          }
+        },
+        "engineLookups": 24,
+        "engineFrames": 1202
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ac": "تحضير",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "no-network-from-extension",
+      "ac": "تحضير",
+      "ok": true,
+      "detail": {
+        "requests": 0
+      }
+    }
+  ],
+  "notes": [
+    "إعلان حقيقي صودف على صفحة TED",
+    "نقرة الفأرة على المقترح لم تنقل؛ استُعملت نقرة الرابط البرمجية (تنقّل SPA نفسه)."
+  ],
+  "screenshots": [
+    "docs/evidence/P5/brave/ac1-ar-only.png",
+    "docs/evidence/P5/brave/ac1-dual.png",
+    "docs/evidence/P5/brave/ac4-normal.png",
+    "docs/evidence/P5/brave/ac4-theater.png",
+    "docs/evidence/P5/brave/ac4-fullscreen.png",
+    "docs/evidence/P5/brave/ac6-controls-shown.png",
+    "docs/evidence/P5/brave/ac6-controls-hidden.png",
+    "docs/evidence/P5/brave/ad-real-1-during.png",
+    "docs/evidence/P5/brave/ad-real-1-after.png",
+    "docs/evidence/P5/brave/ac5-after-navigation.png",
+    "docs/evidence/P5/brave/ac7-long-video.png"
+  ],
+  "errors": []
+}
