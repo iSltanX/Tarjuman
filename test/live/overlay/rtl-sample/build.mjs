@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // يبني صفحة عيّنة RTL المحلية في مجلد خارج المستودع (افتراضيًا ~/Library/Application Support/Tarjuman-test/rtl-sample).
-//   node test/live/overlay/rtl-sample/build.mjs [--out <مجلد>]
+//   node test/live/overlay/rtl-sample/build.mjs [--page-out <مجلد>]
 import { build } from 'esbuild';
 import { mkdir, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -9,8 +9,8 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
-const outArg = argv.indexOf('--out');
-export const OUT = outArg > -1 ? path.resolve(argv[outArg + 1]) : path.join(os.homedir(), 'Library/Application Support/Tarjuman-test/rtl-sample');
+const outArg = argv.indexOf('--page-out');
+const OUT = outArg > -1 ? path.resolve(argv[outArg + 1]) : path.join(os.homedir(), 'Library/Application Support/Tarjuman-test/rtl-sample');
 
 await mkdir(OUT, { recursive: true });
 await build({ entryPoints: [path.join(HERE, 'entry.js')], outfile: path.join(OUT, 'rtl-sample.js'), bundle: true, format: 'iife', target: 'chrome111', charset: 'utf8', logLevel: 'warning' });
