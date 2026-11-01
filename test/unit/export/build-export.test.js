@@ -57,7 +57,8 @@ for (const [kind, p1File] of cases) {
       assert.equal(JSON.stringify(fp).includes(track.cues[3].text.split('\n')[0]), false, 'البصمة بلا نص');
       assert.match(fp.id, /^fp_[a-z0-9]{6,40}$/);
       assert.match(fp.textHash, /^fnv1a64:[0-9a-f]{16}$/);
-      assert.match(out.instructions, new RegExp(`${track.cues.length}`));
+      assert.ok(out.instructions.includes(`https://www.youtube.com/watch?v=${videoId}`), 'التعليمات تحمل رابط الفيديو من معرّفه');
+      assert.ok(out.instructions.includes('- العنوان: غير متوفر'), 'بلا عنوان في الطلب: غير متوفر');
     });
   }
 
@@ -129,10 +130,12 @@ test('تحذيرات التحويل تمر إلى الناتج بلا تكرار
   assert.deepEqual(out.warnings, ['EX_MAYBE_INCOMPLETE', 'EX_SPLIT_NOT_NEEDED']);
 });
 
-test('العنوان لا يدخل ملفًا ولا بصمة ولا تعليمات', () => {
+test('العنوان لا يدخل ملفًا ولا بصمة؛ يدخل نص التعليمات وحده بوصفه بيانات (R40)', () => {
   const { videoId, track } = captured('manual', 'normal');
   const out = buildExport({ videoId, title: 'عنوان سري جدًا', track, mode: 'normal', now: NOW });
-  assert.equal(JSON.stringify(out).includes('سري'), false);
+  assert.equal(JSON.stringify({ files: out.files, fingerprint: out.fingerprint, warnings: out.warnings }).includes('سري'), false);
+  assert.ok(out.instructions.includes('- العنوان: عنوان سري جدًا\n'));
+  assert.ok(out.instructions.includes(`- الرابط: https://www.youtube.com/watch?v=${videoId}\n`));
 });
 
 test('رموز الفشل: كل حالة برمز ثابت لا برسالة حرة', () => {

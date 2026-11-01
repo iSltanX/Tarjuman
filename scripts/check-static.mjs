@@ -110,7 +110,10 @@ const CAPTURE = path.join('main-world', 'capture.js');
 const PACKAGED_READS = new Map([[path.join('player', 'overlay', 'fonts.js'), new Set(['const res = await fetch(runtime.getURL(path));'])]]);
 // الروابط الحرفية بأي مضيف (ومنه localhost): عنوان المشاهدة على يوتيوب وحده، ونطاق أسماء SVG ليس طلبًا.
 const URL_RE = /(?:https?:)?\/\/[A-Za-z0-9][A-Za-z0-9.-]*(?::\d+)?[^\s'"`)]*/g;
-const URL_OK = (u) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg';
+// رابطا «حول» (R42) وحدهما، في ملفه وحده: روابط <a> تُفتح بضغط المستخدم في تبويب جديد، لا طلب شبكة من الإضافة.
+const ABOUT_FILE = path.join('pages', 'settings', 'about.js');
+const ABOUT_LINKS = new Set(['https://bysltan.com', 'https://github.com/iSltanX/Tarjuman']);
+const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u));
 const STORAGE = /\bchrome\s*(?:\.|\[\s*['"`])\s*storage\b|\.\s*storage\s*\.\s*(?:local|sync|session|managed|onChanged)\b/;
 
 /** ينزع تعليقات الكتل (ولو امتدت أسطرًا أو سبقت شيفرة) وأسطر // كاملة؛ ويُبقي رقم السطر. */
@@ -149,7 +152,7 @@ for (const file of await walk(SRC)) {
     const at = `${rel}:${i + 1}`;
     for (const r of RULES) if (r.re.test(line)) problems.push(`${at}: ${r.msg}`);
     if (NETWORK.test(line) && !(rel === CAPTURE && PASSTHROUGH.has(line.trim())) && !PACKAGED_READS.get(rel)?.has(line.trim())) problems.push(`${at}: طلب شبكة من الإضافة`);
-    for (const m of line.matchAll(URL_RE)) if (!URL_OK(m[0])) problems.push(`${at}: نطاق خارجي ${m[0].slice(0, 60)}`);
+    for (const m of line.matchAll(URL_RE)) if (!URL_OK(m[0], rel)) problems.push(`${at}: نطاق خارجي ${m[0].slice(0, 60)}`);
     if (STORAGE.test(line) && !inStore) problems.push(`${at}: التخزين خارج src/core/store`);
   });
 }

@@ -1,43 +1,42 @@
-// نافذة الأيقونة — بديل P2 المؤقت (تملكها P7): حالة الفيديو الحالي برسالة إلى سكربت المحتوى في التبويب
-// النشط، وثلاثة بنود تفتح صفحاتها في تبويب. الصياغة النهائية والحالات كاملة في P7.
-import { isVideoStateReply, videoStateRequest } from '../../core/model/messages.js';
+// نافذة الأيقونة (P7-AC1، figma-design-brief §٨): سطر حالة للفيديو الحالي برسالة إلى سكربت المحتوى في التبويب النشط،
+// وثلاثة بنود: المحرّر (للفيديو الحالي إن كانت له ترجمة، وإلا معطّل بسببه) والمحفوظات والإعدادات. كل بند يفتح صفحته في
+// تبويب جديد وتُغلق النافذة. لا طلبات شبكة، وكل نص عبر textContent.
 import { messageFor } from '../../core/errors/index.js';
-import { el, icon, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { alertBox, el, icon, statusPill } from '../../ui/components.js';
 import { openPage, startPage } from '../../ui/page.js';
+import { describeStatus, editorGate, queryVideoState } from './status.js';
 
-/** @returns {Promise<import('../../core/model/messages.js').VideoStateReply | null>} null: ليست صفحة يوتيوب */
-async function activeVideoState() {
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-    if (!tab || tab.id === undefined) return null;
-    const reply = await chrome.tabs.sendMessage(tab.id, videoStateRequest());
-    return isVideoStateReply(reply) ? reply : null;
-  } catch {
-    return null;
-  }
-}
+const skeleton = () => el('section', {
+  className: 'tj-card tj-popup__status',
+  attrs: { 'aria-busy': 'true', 'aria-label': 'جارٍ قراءة حالة الفيديو' },
+  children: [el('div', { className: 'tj-skeleton tj-popup__skel-title' }), el('div', { className: 'tj-skeleton tj-popup__skel-line' })],
+});
 
+/** @param {ReturnType<typeof describeStatus>} s */
 function statusCard(s) {
   const card = el('section', { className: 'tj-card tj-popup__status', attrs: { 'aria-live': 'polite' } });
-  if (!s || !s.watch) {
+  if (s.kind === 'not-video') {
     card.append(el('p', { className: 'tj-body-sm', text: messageFor('TJ_NOT_YOUTUBE') }));
     return card;
   }
-  card.append(el('h2', { className: 'tj-h4 tj-clamp-2 tj-auto', text: s.title ?? s.videoId }));
-  if (s.arabic) {
-    const parts = ['ترجمة عربية', formatCount(s.arabic.cueCount, COUNT_FORMS.cue), `الإزاحة ${formatOffset(s.view.displayOffsetMs)} ث`];
-    card.append(el('p', { className: 'tj-body-sm', text: parts.join(' · ') }));
-    if (s.arabic.edited) card.append(statusPill({ tone: 'edited', text: 'معدّلة' }));
+  card.append(el('h2', { className: 'tj-h4 tj-clamp-2 tj-auto', text: s.title }));
+  if (s.kind === 'loading') {
+    card.append(el('div', { className: 'tj-skeleton tj-popup__skel-line' }));
+  } else if (s.kind === 'has-subtitle') {
+    card.append(el('p', { className: 'tj-body-sm', text: s.line }));
+    if (s.edited) card.append(statusPill({ tone: 'edited', text: 'معدّلة' }));
   } else {
-    const captured = s.english.captured.some((t) => t.ok);
     card.append(el('p', { className: 'tj-body-sm', text: 'لا ترجمة عربية محفوظة' }));
-    card.append(el('p', { className: 'tj-caption', text: `المسار الإنجليزي: ${captured ? 'ملتقط ✓' : 'غير ملتقط'}` }));
+    card.append(el('p', { className: 'tj-caption', text: s.englishLine }));
   }
   return card;
 }
 
-function menuItem({ iconName, name, desc, disabledReason, onOpen }) {
+/**
+ * @param {{ iconName: Parameters<typeof icon>[0], name: string, desc: string, disabledReason?: string | null, onOpen: () => Promise<unknown> }} o
+ * @param {HTMLElement} notice حيّز رسالة الفشل
+ */
+function menuItem({ iconName, name, desc, disabledReason = null, onOpen }, notice) {
   const b = el('button', {
     className: 'tj-menuitem',
     attrs: { type: 'button', ...(disabledReason ? { 'aria-disabled': 'true', title: disabledReason } : {}) },
@@ -45,8 +44,12 @@ function menuItem({ iconName, name, desc, disabledReason, onOpen }) {
   });
   b.addEventListener('click', async () => {
     if (disabledReason) return;
-    await onOpen();
-    window.close();
+    try {
+      await onOpen();
+      window.close();
+    } catch {
+      notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
+    }
   });
   return b;
 }
@@ -58,19 +61,24 @@ startPage({
       className: 'tj-popup__head',
       children: [el('span', { className: 'tj-mark', text: 'ت', attrs: { 'aria-hidden': 'true' } }), el('span', { className: 'tj-popup__brand', text: 'ترجمان' }), el('span', { className: 'tj-caption', text: 'محلي بالكامل' })],
     }));
-    const placeholder = el('section', { className: 'tj-card tj-popup__status', children: [el('div', { className: 'tj-skeleton' }), el('div', { className: 'tj-skeleton' })] });
+    const placeholder = skeleton();
     app.append(placeholder);
-    const s = await activeVideoState();
-    placeholder.replaceWith(statusCard(s));
-    const editorReason = !s || !s.watch ? 'افتح فيديو على يوتيوب أولًا' : !s.arabic ? 'لا ترجمة لهذا الفيديو بعد' : null;
+    const notice = el('div', { attrs: { role: 'status' } });
+    // «المحفوظات» و«الإعدادات» لا تنتظران حالة الفيديو (قد تتأخر حتى مهلتها إن علق سكربت المحتوى)؛ و«المحرّر» معطّل بسببه
+    // حتى تصل.
+    const editorItem = (gate, desc = 'تحرير ترجمة هذا الفيديو') => menuItem({ iconName: 'editor', name: 'المحرّر', desc, disabledReason: gate.reason, onOpen: () => openPage('editor', { v: gate.videoId }) }, notice);
+    const editor = editorItem({ reason: 'جارٍ قراءة حالة الفيديو…' });
     app.append(el('nav', {
       className: 'tj-popup__menu',
       attrs: { 'aria-label': 'صفحات ترجمان' },
       children: [
-        menuItem({ iconName: 'editor', name: 'المحرّر', desc: 'تحرير ترجمة هذا الفيديو', disabledReason: editorReason, onOpen: () => openPage('editor', { v: s.videoId }) }),
-        menuItem({ iconName: 'library', name: 'المحفوظات', desc: 'كل الترجمات حسب الفيديو', onOpen: () => openPage('library') }),
-        menuItem({ iconName: 'settings', name: 'الإعدادات', desc: 'العرض والتوقيت والتصدير والتخزين', onOpen: () => openPage('settings') }),
+        editor,
+        menuItem({ iconName: 'library', name: 'المحفوظات', desc: 'كل الترجمات حسب الفيديو', onOpen: () => openPage('library') }, notice),
+        menuItem({ iconName: 'settings', name: 'الإعدادات', desc: 'العرض والتوقيت والتصدير والتخزين', onOpen: () => openPage('settings') }, notice),
       ],
-    }));
+    }), notice);
+    const reply = await queryVideoState();
+    placeholder.replaceWith(statusCard(describeStatus(reply)));
+    editor.replaceWith(editorItem(editorGate(reply)));
   },
 });

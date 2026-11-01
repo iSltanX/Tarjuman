@@ -1,0 +1,416 @@
+// واجهة الإعدادات بـDOM وهمي فوق تخزين حقيقي بمحاكاة (P7-AC4/AC8/AC9/AC10): كل خيار يُحفظ فورًا ويظهر «حُفظ»، والمعاينة
+// تتحدث فورًا، و«استعادة الخط والحجم» معطّلة عند الافتراضي، والتحقق من الحقول، والمسح بكتابة «امسح»، و«حول».
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { messageFor } from '../../../../src/core/errors/index.js';
+import { createStore } from '../../../../src/core/store/index.js';
+import { SUBTITLE_FONT_LIST } from '../../../../src/ui/subtitle-fonts.js';
+import { LINKS } from '../../../../src/pages/settings/about.js';
+import { createSettings, INSTALL_REMINDER, MODE_NOTES, PREVIEW_NOTE, SCALE_NOTE, SUBTITLE_NOTE } from '../../../../src/pages/settings/view.js';
+import { createMemoryArea } from '../../../helpers/chrome-storage.js';
+import { NOW, videoRecord } from '../../../helpers/fixtures.js';
+import { buttonNamed, findAll, newDocument, settle, textOf } from '../library/fake-dom.js';
+
+function timers() {
+  let n = 0;
+  const q = new Map();
+  return {
+    setTimer: (fn, ms) => { q.set(++n, { fn, ms }); return n; },
+    clearTimer: (id) => q.delete(id),
+    runAll() { const b = [...q.values()]; q.clear(); b.forEach((t) => t.fn()); },
+  };
+}
+
+async function mount({ initial, videos = 0, env = {} } = {}) {
+  let t = Date.parse(NOW);
+  const area = createMemoryArea({ unlimited: true });
+  const store = createStore({ area, now: () => (t += 1000) });
+  if (initial) await store.setSettings(initial);
+  for (let i = 0; i < videos; i++) await store.updateVideo(`V${String(i).padStart(10, '0')}`, () => videoRecord({ videoId: `V${String(i).padStart(10, '0')}` }));
+  await area.flush();
+  const doc = newDocument();
+  const clock = timers();
+  const calls = { clipboard: [], confirms: [] };
+  const answers = [];
+  const settings = createSettings({
+    store, doc, version: '0.2.0',
+    clipboardWrite: async (x) => { calls.clipboard.push(x); },
+    diagnosticsText: async () => '{"tarjuman":"0.2.0"}',
+    confirm: async (o) => { calls.confirms.push(o); const a = answers.shift(); if (typeof a === 'function') a(o); return a !== undefined && a !== false; },
+    setTimer: clock.setTimer, clearTimer: clock.clearTimer,
+    ...env,
+  });
+  doc.body.append(settings.root);
+  await settings.load();
+  return { settings, store, area, doc, clock, calls, answers, root: settings.root };
+}
+
+const section = (m, title) => findAll(m.root, (e) => e.tagName === 'section' && textOf(e.querySelector('h2') ?? { textContent: '' }) === title)[0];
+const radios = (root, name) => findAll(root, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio' && (name ? e.getAttribute('name') === name : true));
+const choose = (input) => { input.checked = true; input.dispatchEvent({ type: 'change' }); };
+const radioByValue = (root, value) => radios(root).find((r) => r.getAttribute('value') === value);
+const markText = (root) => findAll(root, (e) => e.classList.contains('st-saved')).map(textOf).filter(Boolean);
+const field = (m, label) => findAll(m.root, (e) => e.classList.contains('st-num') && textOf(e.querySelector('label')) === label)[0];
+const type = (f, text) => { const i = f.querySelector('input'); i.value = text; i.dispatchEvent({ type: 'change' }); };
+const errorOf = (f) => { const e = f.querySelector('.tj-field__error'); return e.hidden ? '' : textOf(e); };
+
+test('البنية: الرأس وسبعة أقسام بترتيبها، وكل خيار بتسمية', async () => {
+  const m = await mount();
+  assert.equal(textOf(m.root.querySelector('h1')), 'الإعدادات');
+  assert.deepEqual(findAll(m.root, (e) => e.tagName === 'h2').map(textOf), ['العرض', 'التوقيت', 'التصدير', 'المقارنة', 'التخزين', 'التشخيص', 'حول']);
+  assert.ok(textOf(m.root).includes('كل خيار يُحفظ فورًا على جهازك'));
+  assert.ok(textOf(m.root).includes(SUBTITLE_NOTE));
+  assert.ok(textOf(m.root).includes(SCALE_NOTE));
+  assert.ok(textOf(m.root).includes(PREVIEW_NOTE));
+  assert.ok(textOf(m.root).includes(MODE_NOTES.normal) && textOf(m.root).includes(MODE_NOTES.long));
+  assert.equal(findAll(m.root, (e) => e.tagName === 'textarea').length, 0);
+});
+
+test('القيم الأولية تعكس المحفوظ في كل عنصر', async () => {
+  const m = await mount({ initial: { displayModeDefault: 'dual', appearance: { font: 'tajawal', scale: 130, background: 'solid', position: 'top' }, offsetStepMs: 1500, export: { modeDefault: 'long', splitThreshold: 300 }, thresholds: { driftMs: 200, completeness: 0.9 } } });
+  assert.equal(radioByValue(m.root, 'dual').checked, true);
+  assert.equal(radios(m.root, 'st-font').find((r) => r.checked).getAttribute('value'), 'tajawal');
+  assert.equal(m.settings.slider.value, '130');
+  assert.equal(textOf(m.root.querySelector('output')), '130%');
+  assert.equal(radioByValue(m.root, 'solid').checked, true);
+  assert.equal(radioByValue(m.root, 'top').checked, true);
+  assert.equal(radioByValue(m.root, 'custom').checked, true);
+  assert.equal(field(m, 'الخطوة المخصصة').querySelector('input').value, '1.5');
+  assert.equal(radioByValue(m.root, 'long').checked, true);
+  assert.equal(field(m, 'عتبة اقتراح التقسيم الاحتياطي').querySelector('input').value, '300');
+  assert.equal(field(m, 'عتبة انحراف التوقيت').querySelector('input').value, '200');
+  assert.equal(field(m, 'نسبة الاكتمال').querySelector('input').value, '90');
+  assert.equal(m.settings.preview.stage.getAttribute('data-font'), 'tajawal');
+  assert.equal(m.settings.preview.stage.getAttribute('data-bg'), 'solid');
+});
+
+test('وضع العرض الافتراضي: يُحفظ فورًا وتظهر «حُفظ» ثم تختفي', async () => {
+  const m = await mount();
+  choose(radioByValue(m.root, 'dual'));
+  await settle();
+  assert.equal((await m.store.getSettings()).displayModeDefault, 'dual');
+  assert.deepEqual(markText(section(m, 'العرض')), ['حُفظ']);
+  m.clock.runAll();
+  assert.deepEqual(markText(section(m, 'العرض')), []);
+});
+
+test('خط الترجمة: أربعة خطوط كل اسم بخطه، والاختيار يُحفظ ويحدّث المعاينة، وبقية الإعدادات سليمة', async () => {
+  const m = await mount();
+  const names = findAll(m.root, (e) => e.classList.contains('st-font__name'));
+  assert.deepEqual(names.map(textOf), SUBTITLE_FONT_LIST.map((f) => f.nameAr));
+  names.forEach((n, i) => assert.ok(n.style.fontFamily.startsWith(`"${SUBTITLE_FONT_LIST[i].family}"`), `كل اسم بخطه: ${SUBTITLE_FONT_LIST[i].id}`));
+  assert.equal(radios(m.root, 'st-font').find((r) => r.checked).getAttribute('value'), 'almarai', 'المراعي افتراضيًا');
+  choose(radioByValue(m.root, 'markazi'));
+  await settle();
+  const saved = await m.store.getSettings();
+  assert.equal(saved.appearance.font, 'markazi');
+  assert.equal(saved.appearance.scale, 100);
+  assert.equal(saved.appearance.background, 'soft');
+  assert.match(m.settings.preview.stage.style.fontFamily, /^"Tarjuman Subtitle Markazi Text"/);
+  assert.equal(m.settings.preview.stage.getAttribute('data-font'), 'markazi');
+  assert.ok(markText(m.root).includes('حُفظ'));
+});
+
+test('منزلق الحجم: 70..160 بخطوة 5، يعرض قيمته، والمعاينة فورية والحفظ عند الإتمام بتقريب الشبكة', async () => {
+  const m = await mount();
+  const slider = m.settings.slider;
+  assert.deepEqual(['min', 'max', 'step', 'type'].map((a) => slider.getAttribute(a)), ['70', '160', '5', 'range']);
+  assert.equal(textOf(m.root.querySelector('output')), '100%');
+  const size = () => m.settings.preview.stage.style.fontSize;
+  const before = size();
+  slider.value = '160';
+  slider.dispatchEvent({ type: 'input' });
+  assert.equal(textOf(m.root.querySelector('output')), '160%');
+  assert.equal(slider.getAttribute('aria-valuetext'), '160%');
+  assert.notEqual(size(), before, 'المعاينة فورية قبل الحفظ');
+  assert.equal((await m.store.getSettings()).appearance.scale, 100, 'لا حفظ أثناء السحب');
+  slider.value = '103';
+  slider.dispatchEvent({ type: 'change' });
+  await settle();
+  assert.equal((await m.store.getSettings()).appearance.scale, 105);
+  assert.equal(slider.value, '105');
+  assert.equal(textOf(m.root.querySelector('output')), '105%');
+  assert.ok(markText(m.root).includes('حُفظ'));
+});
+
+test('«استعادة الخط والحجم الافتراضيين»: معطّلة بسببها عند الافتراضي، ومفعّلة بعد التغيير، وتستعيد المراعي و100%', async () => {
+  const m = await mount();
+  const reset = buttonNamed(m.root, 'استعادة الخط والحجم الافتراضيين');
+  assert.equal(reset.getAttribute('aria-disabled'), 'true');
+  assert.equal(reset.title, 'الخط والحجم افتراضيان بالفعل.');
+  reset.click();
+  await settle();
+  assert.equal(markText(m.root).length, 0, 'المعطّل لا يحفظ شيئًا');
+
+  choose(radioByValue(m.root, 'noto-sans-arabic'));
+  await settle();
+  assert.equal(reset.getAttribute('aria-disabled'), 'false');
+  m.settings.slider.value = '150';
+  m.settings.slider.dispatchEvent({ type: 'change' });
+  await settle();
+  reset.click();
+  await settle();
+  const s = await m.store.getSettings();
+  assert.deepEqual([s.appearance.font, s.appearance.scale], ['almarai', 100]);
+  assert.equal(reset.getAttribute('aria-disabled'), 'true');
+  assert.equal(radios(m.root, 'st-font').find((r) => r.checked).getAttribute('value'), 'almarai');
+  assert.equal(m.settings.slider.value, '100');
+});
+
+test('الخلفية والموضع: يُحفظان، والمعاينة تتبعهما', async () => {
+  const m = await mount();
+  const stage = m.settings.preview.stage;
+  choose(radioByValue(m.root, 'solid'));
+  choose(radioByValue(m.root, 'top'));
+  await settle();
+  const s = await m.store.getSettings();
+  assert.deepEqual([s.appearance.background, s.appearance.position], ['solid', 'top']);
+  assert.deepEqual([stage.getAttribute('data-bg'), stage.getAttribute('data-anchor'), stage.style.top, stage.style.bottom], ['solid', 'top', '8%', 'auto']);
+  choose(radioByValue(m.root, 'raised'));
+  await settle();
+  assert.deepEqual([stage.style.bottom, stage.style.top], ['20%', 'auto']);
+  choose(radioByValue(m.root, 'none'));
+  await settle();
+  assert.equal(stage.getAttribute('data-bg'), 'none');
+});
+
+test('المعاينة: سطران بالعربية معزولان اتجاهًا، وصندوق فيديو بنسبة 16:9', async () => {
+  const m = await mount();
+  const lines = findAll(m.settings.preview.root, (e) => e.classList.contains('st-preview__line'));
+  assert.deepEqual(lines.map(textOf), ['هذا هو السطر العربي المترجم.', 'والسطر الثاني بعده']);
+  assert.ok(lines.every((l) => l.getAttribute('dir') === 'rtl' && l.getAttribute('lang') === 'ar'));
+  assert.equal(m.settings.preview.root.getAttribute('role'), 'img');
+  assert.ok(m.settings.preview.root.getAttribute('aria-label'));
+});
+
+test('خطوة الأزرار: 0.5 و1 يُحفظان، و«مخصص» بحقل بتحقق: الخطأ لا يكتب، والصالح يكتب ويبقى «مخصص»', async () => {
+  const m = await mount();
+  const custom = m.root.querySelector('.st-custom');
+  assert.equal(custom.hidden, true);
+  choose(radioByValue(m.root, '1'));
+  await settle();
+  assert.equal((await m.store.getSettings()).offsetStepMs, 1000);
+  choose(radioByValue(m.root, '0.5'));
+  await settle();
+  assert.equal((await m.store.getSettings()).offsetStepMs, 500);
+
+  choose(radioByValue(m.root, 'custom'));
+  assert.equal(custom.hidden, false);
+  assert.equal((await m.store.getSettings()).offsetStepMs, 500, 'الاختيار وحده لا يكتب قبل قيمة صالحة');
+  const f = field(m, 'الخطوة المخصصة');
+  type(f, '0.05');
+  await settle();
+  assert.equal(errorOf(f), 'الخطوة من 0.1 إلى 10 ثوانٍ بمضاعفات 0.1.');
+  assert.equal(f.querySelector('input').getAttribute('aria-invalid'), 'true');
+  assert.equal((await m.store.getSettings()).offsetStepMs, 500);
+  type(f, '٢٫٥');
+  await settle();
+  assert.equal(errorOf(f), '');
+  assert.equal(f.querySelector('input').getAttribute('aria-invalid'), 'false');
+  assert.equal((await m.store.getSettings()).offsetStepMs, 2500);
+  assert.equal(radioByValue(m.root, 'custom').checked, true);
+  assert.equal(custom.hidden, false);
+});
+
+test('التصدير: الوضع الافتراضي وعتبة التقسيم بتحقق', async () => {
+  const m = await mount();
+  choose(radioByValue(m.root, 'long'));
+  await settle();
+  assert.equal((await m.store.getSettings()).export.modeDefault, 'long');
+  const f = field(m, 'عتبة اقتراح التقسيم الاحتياطي');
+  assert.equal(textOf(f.querySelector('.st-num__unit')), 'مقطع');
+  type(f, '49');
+  await settle();
+  assert.equal(errorOf(f), 'عتبة التقسيم عدد صحيح من 50 إلى 2000.');
+  assert.equal((await m.store.getSettings()).export.splitThreshold, 200);
+  type(f, '350');
+  await settle();
+  assert.equal(errorOf(f), '');
+  assert.equal((await m.store.getSettings()).export.splitThreshold, 350);
+  assert.equal((await m.store.getSettings()).export.modeDefault, 'long', 'دمج جزئي لا يمحو المجاور');
+});
+
+test('المقارنة: الانحراف بالملي ثانية والاكتمال بالمئة، بتحقق', async () => {
+  const m = await mount();
+  const drift = field(m, 'عتبة انحراف التوقيت');
+  const comp = field(m, 'نسبة الاكتمال');
+  assert.equal(textOf(drift.querySelector('.st-num__unit')), 'ملي ثانية');
+  assert.equal(textOf(comp.querySelector('.st-num__unit')), '%');
+  type(drift, '9');
+  type(comp, '101');
+  await settle();
+  assert.equal(errorOf(drift), 'عتبة الانحراف عدد صحيح من 10 إلى 5000 مللي ثانية.');
+  assert.equal(errorOf(comp), 'نسبة الاكتمال عدد صحيح من 50 إلى 100.');
+  type(drift, '250');
+  type(comp, '90');
+  await settle();
+  const s = await m.store.getSettings();
+  assert.deepEqual([s.thresholds.driftMs, s.thresholds.completeness], [250, 0.9]);
+});
+
+test('فشل الحفظ: رسالة خطأ بجانب الخيار، وتعود الواجهة إلى المحفوظ', async () => {
+  const m = await mount();
+  m.area.failNext('set', new Error('boom'));
+  choose(radioByValue(m.root, 'dual'));
+  await settle();
+  assert.deepEqual(markText(section(m, 'العرض')), [messageFor('PG_SAVE_FAILED')]);
+  assert.equal(radioByValue(m.root, 'ar').checked, true, 'عاد إلى العربية وحدها');
+  assert.equal(radioByValue(m.root, 'dual').checked, false);
+  assert.equal((await m.store.getSettings()).displayModeDefault, 'ar');
+});
+
+test('تغيّر الإعدادات من سياق آخر (المشغّل مثلًا) يحدّث الواجهة', async () => {
+  const m = await mount();
+  const other = createStore({ area: m.area, now: () => Date.parse(NOW) + 99000 });
+  await other.setSettings({ appearance: { font: 'tajawal', scale: 80 }, offsetStepMs: 1000 });
+  await m.area.flush();
+  await settle(10);
+  assert.equal(radios(m.root, 'st-font').find((r) => r.checked).getAttribute('value'), 'tajawal');
+  assert.equal(m.settings.slider.value, '80');
+  assert.equal(radioByValue(m.root, '1').checked, true);
+  m.settings.dispose();
+});
+
+test('التخزين: المستخدم بنص، والمسح بحوار يطلب «امسح» ولا يمسح دونها', async () => {
+  const m = await mount({ videos: 2, initial: { appearance: { font: 'tajawal' } } });
+  assert.match(textOf(section(m, 'التخزين')), /المستخدم \d+ ك\.ب \(بلا حد ثابت\)/);
+  const clear = buttonNamed(m.root, 'مسح كل البيانات');
+  assert.ok(clear.classList.contains('tj-btn--danger'));
+
+  m.answers.push(false);
+  clear.click();
+  await settle();
+  const dialog = m.calls.confirms[0];
+  assert.equal(dialog.tone, 'danger');
+  assert.equal(dialog.title, 'مسح كل البيانات؟');
+  assert.equal(dialog.confirmLabel, 'مسح كل البيانات');
+  assert.ok(textOf(dialog.content).includes('اكتب «امسح» للتأكيد'));
+  assert.equal((await m.store.listIndex()).length, 2, 'الإلغاء لا يمسح');
+
+  m.answers.push(true);
+  clear.click();
+  await settle();
+  assert.equal((await m.store.listIndex()).length, 2, 'التأكيد بلا كتابة الكلمة لا يمسح');
+
+  m.answers.push((o) => { o.content.querySelector('input').value = 'امسح'; });
+  clear.click();
+  await settle(10);
+  assert.deepEqual(await m.store.listIndex(), []);
+  assert.equal((await m.store.getSettings()).appearance.font, 'almarai', 'الإعدادات عادت افتراضية');
+  assert.equal(radios(m.root, 'st-font').find((r) => r.checked).getAttribute('value'), 'almarai');
+  assert.ok(markText(section(m, 'التخزين')).includes('مُسحت كل البيانات والإعدادات.'));
+  assert.ok(textOf(m.root).includes(INSTALL_REMINDER), 'فارغة بعد المسح: تذكير التثبيت');
+});
+
+test('التشخيص: زر النسخ ينسخ التقرير، وبيان ما يتضمنه وما لا يتضمنه، والفشل برسالة', async () => {
+  let fail = false;
+  const m = await mount({ env: { clipboardWrite: async (x) => { if (fail) throw new Error('رفض'); m.calls.clipboard.push(x); } } });
+  const diag = section(m, 'التشخيص');
+  assert.ok(textOf(diag).includes('الإصدار، والمتصفح، ونوع الخطأ، وأحجامًا وأعدادًا.'));
+  assert.deepEqual(findAll(diag, (e) => e.classList.contains('st-panel__title')).map(textOf), ['يتضمن', 'لا يتضمن أبدًا']);
+  assert.ok(textOf(diag).includes('روابط، أو رموز جلسة، أو ملفات ارتباط، أو نص الترجمة.'));
+  buttonNamed(diag, 'نسخ تقرير التشخيص').click();
+  await settle();
+  assert.deepEqual(m.calls.clipboard, ['{"tarjuman":"0.2.0"}']);
+  assert.deepEqual(markText(diag), ['نُسخ تقرير التشخيص.']);
+  fail = true;
+  buttonNamed(diag, 'نسخ تقرير التشخيص').click();
+  await settle();
+  assert.deepEqual(markText(diag), ['تعذّر نسخ تقرير التشخيص إلى الحافظة. أعد المحاولة.']);
+});
+
+test('تذكير التثبيت: يظهر ما دامت المحفوظات فارغة ويختفي بوجودها', async () => {
+  assert.ok(textOf((await mount()).root).includes(INSTALL_REMINDER));
+  assert.equal(textOf((await mount({ videos: 1 })).root).includes(INSTALL_REMINDER), false);
+});
+
+test('حول: الإصدار و«كل شيء محلي» والرابطان بتبويب جديد وnoopener، وبشارة «خاص حاليًا»، والخطوط ورخصها المحلية', async () => {
+  const m = await mount();
+  const about = section(m, 'حول');
+  assert.deepEqual(about.querySelector('.st-about__row').children.map(textOf), ['الإصدار', '0.2.0']);
+  assert.ok(textOf(about).includes('كل شيء محلي على جهازك'));
+  assert.ok(textOf(about).includes('ترجمان — تطوير سلطان'));
+  const links = findAll(about, (e) => e.tagName === 'a');
+  const byText = (t) => links.find((a) => textOf(a) === t);
+  const site = byText('bysltan.com');
+  const repo = byText('المستودع على GitHub');
+  assert.equal(site.getAttribute('href'), LINKS.site);
+  assert.equal(repo.getAttribute('href'), LINKS.repo);
+  for (const a of [site, repo]) {
+    assert.equal(a.getAttribute('target'), '_blank');
+    assert.match(a.getAttribute('rel'), /noopener/);
+  }
+  assert.ok(textOf(about).includes('خاص حاليًا'));
+  assert.ok(textOf(about).includes('خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: المراعي، ونوتو سانس العربي، وتجوّل، ومركزي.'));
+  assert.ok(buttonNamed(about, 'عرض التراخيص') === null, 'عرض التراخيص ملخّص details لا زر');
+  assert.ok(findAll(about, (e) => e.tagName === 'summary').map(textOf).includes('عرض التراخيص'));
+  assert.ok(findAll(about, (e) => e.tagName === 'summary').map(textOf).includes('دليل الاستخدام'));
+  const licenses = links.filter((a) => /OFL/.test(textOf(a)));
+  assert.equal(licenses.length, 4);
+  licenses.forEach((a, i) => {
+    assert.equal(a.getAttribute('href'), `../../${SUBTITLE_FONT_LIST[i].license}`, 'ملف رخصة محلي بمسار نسبي');
+    assert.match(a.getAttribute('rel'), /noopener/);
+  });
+  const external = links.filter((a) => /^https?:/.test(a.getAttribute('href'))).map((a) => a.getAttribute('href'));
+  assert.deepEqual(external.sort(), [LINKS.site, LINKS.repo].sort(), 'الرابطان الخارجيان الوحيدان');
+});
+
+test('خطوط الواجهة لا تتغير بتغيير خط الترجمة: الخط المضمّن على اسم كل خط وعلى المعاينة وحدهما', async () => {
+  const m = await mount();
+  const owners = () => findAll(m.root, (e) => Boolean(e.style.fontFamily)).map((e) => e.className).sort();
+  const before = owners();
+  assert.deepEqual(before, ['st-font__name', 'st-font__name', 'st-font__name', 'st-font__name', 'st-preview__stage']);
+  choose(radioByValue(m.root, 'markazi'));
+  await settle();
+  assert.deepEqual(owners(), before, 'الخط يغيّر المعاينة وحدها، لا عنصرًا آخر');
+  assert.equal(m.root.style.fontFamily ?? undefined, undefined);
+  assert.equal(m.doc.body.style.fontFamily ?? undefined, undefined);
+});
+
+test('كل عنصر إدخال باسم وصول: منزلق الحجم بـaria-label، والحقول بـlabel، والـradio بـlabel ملفوف، والمجموعات بـlegend', async () => {
+  const m = await mount();
+  assert.equal(m.settings.slider.getAttribute('aria-label'), 'حجم خط الترجمة');
+  const labelFor = (id) => findAll(m.root, (e) => e.tagName === 'label' && e.getAttribute('for') === id).length;
+  const inputs = findAll(m.root, (e) => e.tagName === 'input');
+  assert.ok(inputs.length > 20);
+  for (const i of inputs) {
+    const type = i.getAttribute('type');
+    if (type === 'radio') {
+      let wrapped = false;
+      for (let n = i.parentNode; n; n = n.parentNode) if (n.tagName === 'label' && textOf(n)) wrapped = true;
+      assert.ok(wrapped, `radio ${i.getAttribute('value')} بلا label ملفوف`);
+    } else {
+      assert.ok(i.getAttribute('aria-label') || labelFor(i.id) > 0, `إدخال ${type} (${i.id}) بلا اسم وصول`);
+    }
+  }
+  const fieldsets = findAll(m.root, (e) => e.tagName === 'fieldset');
+  assert.equal(fieldsets.length, 6, 'وضع العرض، وخط الترجمة، والخلفية، والموضع، والخطوة، ووضع التصدير');
+  assert.ok(fieldsets.every((f) => textOf(f.querySelector('legend') ?? { textContent: '' })));
+});
+
+test('خطأ التحقق القديم يُمسح حين تُستبدل قيمة الحقل المعروضة بالمحفوظة', async () => {
+  const m = await mount();
+  const f = field(m, 'عتبة اقتراح التقسيم الاحتياطي');
+  type(f, '5');
+  await settle();
+  assert.equal(errorOf(f), 'عتبة التقسيم عدد صحيح من 50 إلى 2000.');
+  choose(radioByValue(m.root, 'long'));
+  await settle();
+  assert.equal(f.querySelector('input').value, '200');
+  assert.equal(errorOf(f), '');
+  assert.equal(f.querySelector('input').getAttribute('aria-invalid'), 'false');
+});
+
+test('فشل حفظ ما كُتب في حقل مركَّز يعيد الحقل إلى المحفوظ (لا تناقض بين المعروض والمخزَّن)', async () => {
+  const m = await mount();
+  const f = field(m, 'عتبة اقتراح التقسيم الاحتياطي');
+  const input = f.querySelector('input');
+  input.focus();
+  input.value = '300';
+  m.area.failNext('set', new Error('boom'));
+  input.dispatchEvent({ type: 'change' });
+  await settle();
+  assert.equal(input.value, '200', 'عاد إلى المحفوظ ولو كان مركَّزًا');
+  assert.equal((await m.store.getSettings()).export.splitThreshold, 200);
+  assert.ok(markText(m.root).includes(messageFor('PG_SAVE_FAILED')));
+});

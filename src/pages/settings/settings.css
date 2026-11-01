@@ -1,0 +1,111 @@
+/* صفحة الإعدادات (figma-design-brief.md §١٠): عمود واحد بعرض أقصى 760، أقسام بطاقات، مقطّعات وحقول، ومعاينة حية.
+   كل لون من رموز src/ui/tokens.css بالوضعين. العرض الضيق: التسمية فوق عنصرها. */
+
+.st { display: flex; flex-direction: column; gap: var(--tj-space-4); }
+.st-header { display: flex; align-items: center; gap: var(--tj-space-3); }
+.st-card { display: flex; flex-direction: column; gap: var(--tj-space-4); padding: var(--tj-space-5); }
+.st-note { margin-top: calc(var(--tj-space-2) * -1); }
+.st-notes { display: flex; flex-direction: column; gap: var(--tj-space-1); }
+
+.st-row { position: relative; display: flex; align-items: flex-start; gap: var(--tj-space-4); }
+.st-row__label { flex: 0 0 180px; min-height: 40px; display: flex; align-items: center; }
+.st-row__control { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: var(--tj-space-3); }
+.st-reset-row { display: flex; }
+
+/* علامة «حُفظ» العابرة بجانب الخيار. */
+.st-saved { font: 700 13px/20px var(--tj-font-body); min-height: 20px; }
+.st-saved--success { color: var(--tj-success); }
+.st-saved--danger { color: var(--tj-danger); }
+.st-saved:empty { display: none; }
+/* علامة صف الخيار خارج التدفق في طرف الصف: ظهورها واختفاؤها لا يلتفّ ولا يدفع ما تحتها (قفزة تخطيط كشفتها اللقطات). */
+.st-row .st-saved { position: absolute; inset-inline-end: 0; inset-block-start: 0; }
+
+/* المقطّعة: radio حقيقي مخفي بصريًا، والمختار بصنف الجار. */
+.st-seg { display: inline-flex; border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-button); padding: 3px; margin: 0; min-width: 0; background: var(--tj-surface-2); gap: 2px; }
+.st-seg__option { position: relative; cursor: pointer; }
+.st-seg__option input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.st-seg__label { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; min-width: 64px; padding: 0 14px; border-radius: 8px; font: 700 14px/20px var(--tj-font-body); color: var(--tj-text-2); }
+.st-seg__option input:checked + .st-seg__label { background: var(--tj-surface); color: var(--tj-text); box-shadow: var(--tj-e1); }
+.st-seg__option input:focus-visible + .st-seg__label { outline: 3px solid var(--tj-focus); outline-offset: 2px; }
+.st-seg__option:hover input:not(:checked) + .st-seg__label { color: var(--tj-text); }
+
+/* خط الترجمة: كل اسم بخطه وبجانبه اسمه اللاتيني ووصفه. */
+.st-fonts { display: flex; flex-direction: column; gap: 2px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.st-font { display: flex; align-items: center; gap: var(--tj-space-3); min-height: 40px; padding: 0 var(--tj-space-2); border-radius: var(--tj-radius-button); cursor: pointer; }
+.st-font:hover { background: var(--tj-brand-soft); }
+.st-font:has(input:checked) { background: var(--tj-brand-soft); }
+.st-font input { accent-color: var(--tj-brand); margin: 0; width: 18px; height: 18px; }
+.st-font input:focus-visible { outline: 3px solid var(--tj-focus); outline-offset: 2px; }
+.st-font__name { font-size: 18px; line-height: 28px; font-weight: 700; min-width: 120px; }
+.st-font__meta { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
+
+/* المنزلق: القيمة ثم مسار بامتلاء من البداية، وعلامة للافتراضي 100%. */
+.st-scale__box { display: flex; align-items: center; gap: var(--tj-space-3); width: 100%; max-width: 380px; }
+.st-scale__track { position: relative; flex: 1; display: flex; align-items: center; }
+.st-scale__input { width: 100%; margin: 0; accent-color: var(--tj-brand); height: 24px; cursor: pointer; }
+.st-scale__input:focus-visible { outline: 3px solid var(--tj-focus); outline-offset: 4px; border-radius: 6px; }
+.st-scale__mark { position: absolute; inset-block-start: 100%; width: 2px; height: 6px; background: var(--tj-muted); border-radius: 1px; margin-inline-start: -1px; pointer-events: none; }
+.st-scale__value { min-width: 48px; text-align: end; direction: ltr; }
+.st-reset .tj-icon { width: 16px; height: 16px; }
+
+/* المعاينة الحية: فيديو داكن 480×270 بسطرين. */
+.st-preview { display: flex; }
+.st-preview__screen {
+  --st-sub-text: #fff; --st-sub-bg-soft: rgb(0 0 0 / 72%); --st-sub-bg-solid: rgb(0 0 0 / 92%);
+  position: relative; max-width: 100%; overflow: hidden; border-radius: var(--tj-radius-card);
+  background: radial-gradient(circle at 55% 40%, #4a463f 0%, #26231f 38%, #0d0d0d 100%); border: 1px solid var(--tj-border-strong);
+}
+.st-preview__stage { position: absolute; inset-inline: 4%; display: flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.5; font-weight: 400; }
+.st-preview__line { margin: 0; padding: 2px 8px; border-radius: 4px; color: var(--st-sub-text); text-align: center; unicode-bidi: isolate; width: fit-content; max-width: 100%; overflow-wrap: anywhere; font: inherit; }
+.st-preview__stage[data-bg="none"] .st-preview__line { background: none; text-shadow: 0 0 3px #000, 0 0 6px #000, 0 1px 3px #000, 0 2px 8px rgb(0 0 0 / 90%); }
+.st-preview__stage[data-bg="soft"] .st-preview__line { background: var(--st-sub-bg-soft); }
+.st-preview__stage[data-bg="solid"] .st-preview__line { background: var(--st-sub-bg-solid); }
+
+/* الحقول الرقمية بوحدتها. */
+.st-fields { display: flex; flex-wrap: wrap; gap: var(--tj-space-5); }
+.st-num { max-width: 320px; width: 100%; }
+/* flex-basis في سياق الصف الملتف وحده: داخل بطاقة عمودية يصير ارتفاعًا ويترك فراغًا. */
+.st-fields > .st-num { flex: 1 1 240px; width: auto; }
+.st-num__head { display: flex; align-items: center; justify-content: space-between; gap: var(--tj-space-2); }
+.st-num__box { display: flex; align-items: center; gap: var(--tj-space-2); }
+.st-num__input { flex: 1; min-width: 0; }
+.st-num__unit { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); white-space: nowrap; }
+.st-custom { padding-inline-start: 0; }
+.st-custom[hidden] { display: none; }
+.st-num__error[hidden], .tj-field__error[hidden] { display: none; }
+
+/* التخزين. */
+.st-quota { display: flex; flex-direction: column; gap: 6px; max-width: 360px; }
+.st-meter { display: block; height: 6px; border-radius: 999px; background: var(--tj-surface-2); overflow: hidden; }
+.st-meter[hidden] { display: none; }
+.st-meter__fill { display: block; height: 100%; background: var(--tj-brand); border-radius: 999px; }
+.st-meter--warning .st-meter__fill { background: var(--tj-warning); }
+.st-meter--full .st-meter__fill { background: var(--tj-danger); }
+.st-confirm { display: flex; flex-direction: column; gap: 6px; }
+
+/* التشخيص. */
+.st-diag__button { align-self: flex-start; }
+.st-panels { display: grid; grid-template-columns: 1fr 1fr; gap: var(--tj-space-3); }
+.st-panel { padding: var(--tj-space-3) var(--tj-space-4); border-radius: var(--tj-radius-button); background: var(--tj-sunken); display: flex; flex-direction: column; gap: 4px; }
+.st-panel__title { font: 700 14px/20px var(--tj-font-body); }
+.st-panel--ok .st-panel__title { color: var(--tj-success); }
+.st-panel--no .st-panel__title { color: var(--tj-danger); }
+
+/* حول. */
+.st-about__row { display: flex; align-items: center; gap: var(--tj-space-3); }
+.st-about__links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--tj-space-5); }
+.st-about__repo { display: inline-flex; align-items: center; gap: var(--tj-space-2); flex-wrap: wrap; }
+.st-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 700 14px/20px var(--tj-font-body); color: var(--tj-brand); text-decoration: none; }
+.st-link:hover { text-decoration: underline; }
+.st-link .tj-icon { width: 14px; height: 14px; }
+.st-rule { width: 100%; border: 0; border-top: 1px solid var(--tj-border); margin: 0; }
+.st-details__summary { cursor: pointer; font: 700 14px/20px var(--tj-font-body); color: var(--tj-brand); min-height: 32px; display: flex; align-items: center; }
+.st-guide, .st-licenses { margin: var(--tj-space-2) 0 0; padding-inline-start: var(--tj-space-6); display: flex; flex-direction: column; gap: var(--tj-space-2); font: 400 14px/24px var(--tj-font-body); color: var(--tj-text-2); }
+.st-licenses { list-style: none; padding-inline-start: 0; }
+
+@media (max-width: 640px) {
+  .st-row { flex-direction: column; gap: var(--tj-space-2); }
+  .st-row__label { flex: none; min-height: 0; }
+  .st-panels { grid-template-columns: 1fr; }
+  .st-seg__label { min-width: 52px; padding: 0 10px; }
+}

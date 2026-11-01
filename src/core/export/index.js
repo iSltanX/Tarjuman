@@ -40,10 +40,10 @@ function toMs(now) {
  *   videoId: string, title?: string | null,
  *   track: { key: string, lang: string, kind: 'manual' | 'asr', cues: import('../model/cue.js').Cue[], warnings?: string[] },
  *   mode: 'normal' | 'long', split?: { size: number } | null, now?: number | string | Date, rand?: () => number
- * }} spec title لا يُكتب في أي ملف ولا بصمة (خصوصية)
+ * }} spec title لا يُكتب في أي ملف ولا بصمة (خصوصية)، ويدخل نص التعليمات وحده بوصفه بيانات
  * @returns {{ files: ExportFile[], fingerprint: import('../model/tracks.js').Fingerprint, instructions: string, warnings: string[] }}
  */
-export function buildExport({ videoId, track, mode, split = null, now = Date.now(), rand }) {
+export function buildExport({ videoId, title = null, track, mode, split = null, now = Date.now(), rand }) {
   if (!isVideoId(videoId)) throw new TjError('TJ_BAD_VIDEO_ID');
   if (!EXPORT_MODES.includes(mode)) throw invalid('mode');
   const parsed = parseTrackKey(track?.key);
@@ -87,7 +87,7 @@ export function buildExport({ videoId, track, mode, split = null, now = Date.now
     parts: ranges ? ranges.map(({ index, from, to }) => ({ index, from, to })) : null,
   };
   assertValid(validateFingerprint(fingerprint), 'fingerprint');
-  return { files, fingerprint, instructions: instructions({ count: cues.length, mode, parts: ranges }), warnings };
+  return { files, fingerprint, instructions: instructions({ videoId, title, parts: ranges }), warnings };
 }
 
 /**

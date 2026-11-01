@@ -1,0 +1,12 @@
+/* خطوط الترجمة المضمّنة لمعاينة الإعدادات (R41): من ملفات الإضافة نفسها (src/ui/fonts/subtitle/)، فلا طلب شبكة ولا
+   خط يُحمَّل من الخارج. تُستعمل على اسم كل خط وعلى المعاينة وحدهما؛ خطوط واجهة الصفحة لا تتغير بتغيير خط الترجمة.
+   العائلات والأوزان مطابقة لـ src/ui/subtitle-fonts.js (اختبار يطابق الملفين). الخط لا يُنزَّل حتى يُستعمل. */
+
+@font-face { font-family: "Tarjuman Subtitle Almarai"; font-weight: 400; font-style: normal; font-display: swap; src: url("../../ui/fonts/subtitle/almarai-400.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman Subtitle Almarai"; font-weight: 700; font-style: normal; font-display: swap; src: url("../../ui/fonts/subtitle/almarai-700.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman Subtitle Noto Sans Arabic"; font-weight: 400; font-style: normal; font-display: swap; src: url("../../ui/fonts/subtitle/noto-sans-arabic-400.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman Subtitle Noto Sans Arabic"; font-weight: 700; font-style: normal; font-display: swap; src: url("../../ui/fonts/subtitle/noto-sans-arabic-700.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman Subtitle Tajawal"; font-weight: 400; font-style: normal; font-display: swap; src: url("../../ui/fonts/subtitle/tajawal-400.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman Subtitle Tajawal"; font-weight: 700; font-style: normal; font-display: swap; src: url("../../ui/fonts/subtitle/tajawal-700.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman Subtitle Markazi Text"; font-weight: 400; font-style: normal; font-display: swap; src: url("../../ui/fonts/subtitle/markazi-400.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman Subtitle Markazi Text"; font-weight: 700; font-style: normal; font-display: swap; src: url("../../ui/fonts/subtitle/markazi-700.woff2") format("woff2"); }
