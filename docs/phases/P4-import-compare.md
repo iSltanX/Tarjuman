@@ -110,9 +110,9 @@
 {
   "phase": "P4",
   "status": "in_progress",
-  "updated": "2026-11-01T18:40:03+03:00",
+  "updated": "2026-11-01T18:43:56+03:00",
   "branch": "tj/P4-import-compare",
-  "resume": "المحلّل والمقارن والاستعادة منجزة باختباراتها (154 اختبارًا في الفحص السريع)؛ التالي القراءة والدمج وreadImport ثم الذهاب والإياب",
+  "resume": "الاستيراد (قراءة ودمج وreadImport) منجز باختباراته (189 في الفحص السريع)؛ التالي اختبار الذهاب والإياب في test/integration/roundtrip ثم الفحوص والمراجعة المستقلة",
   "blocker": null,
   "outcome": null,
   "commit": null,
