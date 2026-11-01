@@ -147,6 +147,16 @@ export function createVirtualList({ doc, scroller, layout, create, update, onRan
     get range() {
       return range;
     },
+    get layout() {
+      return layout;
+    },
+    /** صفوف أخرى (إعادة فتح أو نسخة أخرى): يُزال المرسوم كله ويُرسم من التخطيط الجديد. @param {RowLayout} next */
+    reset(next) {
+      layout = next;
+      for (const el of shown.values()) el.remove();
+      shown.clear();
+      render();
+    },
     /** الصف إن كان مرسومًا. @param {number} row */
     elementOf: (row) => shown.get(row) ?? null,
     /** يحدّث صفوفًا مرسومة (أو كلها)، ويعيد التموضع إن تغيّر ارتفاع. @param {number[] | null} rows @param {boolean} [force] */

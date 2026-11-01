@@ -69,3 +69,12 @@ test('المقارنة: مطابق، وناقص بأرقامه، وانحراف�
   assert.equal(restoreUnavailable({ ...comparison(), numbering: 'different', restoreTimingAvailable: false }), 'الترقيم مختلف عن الأصل، فلا يمكن مطابقة التوقيت بأمان.');
   assert.equal(numberList([1, 2, 3, 4, 5, 6, 7, 8, 9]), '1، 2، 3، 4، 5، 6، 7، 8…');
 });
+
+test('اتجاه سطر الترجمة (§٤): RTL إن احتوى حرفًا عربيًا ولو بدأ بكلمة لاتينية، وLTR إن خلا منه', async () => {
+  const { textDir } = await import('../../../../src/pages/editor/rows.js');
+  assert.equal(textDir('API هو الواجهة.'), 'rtl');
+  assert.equal(textDir('مرحبًا'), 'rtl');
+  assert.equal(textDir('Hello there'), 'ltr');
+  assert.equal(textDir('♪ 123'), 'rtl', 'بلا حروف: اتجاه الصفحة');
+  assert.equal(textDir(''), 'rtl');
+});
