@@ -5,6 +5,7 @@
 import { checkAcceptance, convertCapture } from './capture-adapter.js';
 import { createCaptureStore } from './capture-store.js';
 import { createPendingBuffer } from './pending.js';
+import { validateCaptureMessage } from './message.js';
 
 /**
  * @typedef {{
@@ -49,7 +50,7 @@ export function createExtractor(env) {
   }
 
   /**
-   * @param {import('./message.js').CaptureMessage} msg مُتحقَّق منها في الجسر
+   * @param {import('./message.js').CaptureMessage} msg بعد validateCaptureMessage
    * @param {number} [pendingAgeMs]
    */
   function evaluate(msg, pendingAgeMs) {
@@ -95,8 +96,15 @@ export function createExtractor(env) {
   }
 
   return {
-    /** رسالة MAIN → ISOLATED بعد تحقق الجسر منها. */
-    handleMessage: (msg) => evaluate(msg),
+    /**
+     * بيانات MAIN → ISOLATED كما مرّرها الجسر (غير موثوقة): تُتحقق بنيتها هنا ثم تُقيَّم بقواعد القبول.
+     * @param {unknown} data
+     * @returns {{ accepted: boolean, code: string | null }}
+     */
+    handleMessage(data) {
+      const msg = validateCaptureMessage(data);
+      return msg ? evaluate(msg) : { accepted: false, code: null };
+    },
     /** يُستدعى عند تغيّر الفيديو المعروض: يفرّغ ما لا يخصه ويعيد تقييم ما انتظر له. */
     setVideo(videoId) {
       sync(videoId);
