@@ -1,0 +1,95 @@
+{
+  "label": "chrome-playlist30-nav",
+  "exportedAt": "2026-11-01T13:09:09.105Z",
+  "browser": {
+    "isBrave": false,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "brands": [
+      "Not:A-Brand 8",
+      "Chromium 156",
+      "Google Chrome 156"
+    ],
+    "webdriverExtensionPage": false
+  },
+  "storage": {
+    "local": [],
+    "session": []
+  },
+  "secretsInExport": 0,
+  "tabs": [
+    {
+      "navigations": 0,
+      "visited": 1,
+      "acceptedTotal": 1,
+      "wrongAccepted": 0,
+      "pendingAccepted": 0,
+      "pendingReevaluated": 0,
+      "nonDisplayedRejected": [
+        {
+          "code": "EX_WRONG_VIDEO",
+          "trackKind": "asr",
+          "bodyLength": 6192
+        }
+      ],
+      "perVideo": [
+        {
+          "videoId": "Q_h4IoPJXZw",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 3310,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 0
+        }
+      ],
+      "finalSnapshot": {
+        "currentVideoId": "Q_h4IoPJXZw",
+        "accepted": [
+          {
+            "videoId": "Q_h4IoPJXZw",
+            "ok": true,
+            "invariants": 6
+          }
+        ]
+      }
+    },
+    {
+      "navigations": 0,
+      "visited": 1,
+      "acceptedTotal": 1,
+      "wrongAccepted": 0,
+      "pendingAccepted": 0,
+      "pendingReevaluated": 0,
+      "nonDisplayedRejected": [],
+      "perVideo": [
+        {
+          "videoId": "Q_h4IoPJXZw",
+          "accepted": [
+            {
+              "lang": "en",
+              "trackKind": "manual",
+              "bodyLength": 3310,
+              "pendingAgeMs": null
+            }
+          ],
+          "rejectedWhileCurrent": [],
+          "shown": 0
+        }
+      ],
+      "finalSnapshot": {
+        "currentVideoId": "Q_h4IoPJXZw",
+        "accepted": [
+          {
+            "videoId": "Q_h4IoPJXZw",
+            "ok": true,
+            "invariants": 6
+          }
+        ]
+      }
+    }
+  ]
+}
