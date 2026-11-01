@@ -69,6 +69,8 @@ export function createLayer({ doc, win, on }) {
   let anchor = null;
   /** @type {Element | null} */
   let tipAnchor = null;
+  /** المسافة من أسفل المشغّل إلى أعلى القائمة المفتوحة. */
+  let menuTop = 0;
 
   const setVar = (el, k, v) => el.style.setProperty(k, v);
 
@@ -88,6 +90,14 @@ export function createLayer({ doc, win, on }) {
     setVar(menu, '--x', `${Math.round(x)}px`);
     setVar(menu, '--y', `${Math.round(y)}px`);
     setVar(menu, '--max-h', `${Math.max(120, Math.round(Math.min(bar.height * 0.7, bar.height - y - EDGE_PX)))}px`);
+    menuTop = y + (menu.getBoundingClientRect().height || 0);
+    placeToasts();
+  }
+
+  /** الرسائل فوق الشريط، وفوق القائمة المفتوحة إن وُجدت فلا تغطي بنودها (كشفه الاختبار الحي). */
+  function placeToasts() {
+    const y = menu.hasAttribute('hidden') ? bar.lift + GAP_PX : Math.max(bar.lift + GAP_PX, menuTop + GAP_PX);
+    setVar(toasts, '--y', `${Math.round(y)}px`);
   }
 
   function placeTip() {
@@ -110,7 +120,7 @@ export function createLayer({ doc, win, on }) {
       if (layer.getAttribute('data-size') !== b.size) layer.setAttribute('data-size', b.size);
       const state = b.hidden ? 'hidden' : 'shown';
       if (layer.getAttribute('data-bar') !== state) layer.setAttribute('data-bar', state);
-      setVar(toasts, '--y', `${Math.round(b.lift + GAP_PX)}px`);
+      placeToasts();
       placeMenu();
       placeTip();
     },
@@ -143,13 +153,16 @@ export function createLayer({ doc, win, on }) {
 
     /** يحدّث القائمة المفتوحة في مكانها (morph): العقد نفسها ما بقيت بنيتها. @param {Element[]} children */
     patchMenu(children) {
-      return morphChildren(menu, children);
+      const n = morphChildren(menu, children);
+      placeMenu();
+      return n;
     },
 
     closeMenu() {
       anchor = null;
       menu.setAttribute('hidden', '');
       menu.replaceChildren();
+      placeToasts();
     },
 
     menuOpen: () => !menu.hasAttribute('hidden'),

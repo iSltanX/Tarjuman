@@ -147,13 +147,25 @@ async function clickButton(kind) {
   await sleep(350);
 }
 async function clickItem(match) {
-  const p = await iso(I.peek);
-  const it = p.layer.menu?.items.find((x) => (typeof match === 'string' ? x.fid === match || x.text.includes(match) : match(x)));
-  if (!it) throw new Error(`لا بند: ${match}`);
-  const c = center(it.box);
-  await page.click(c.x, c.y);
-  await sleep(350);
-  return it;
+  for (let tries = 0; tries < 5; tries++) {
+    const p = await iso(I.peek);
+    const it = p.layer.menu?.items.find((x) => (typeof match === 'string' ? x.fid === match || x.text.includes(match) : match(x)));
+    if (!it) throw new Error(`لا بند: ${match}`);
+    const mb = p.layer.menu.box;
+    // بند خارج الجزء الظاهر من قائمة طويلة: تمرير بعجلة الفأرة كما يفعل المستخدم.
+    if (it.box.top < mb.top || it.box.bottom > mb.bottom) {
+      const c = center(mb);
+      await page.mouseMove(c.x, c.y);
+      await page.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: c.x, y: c.y, deltaX: 0, deltaY: it.box.bottom > mb.bottom ? it.box.bottom - mb.bottom + 24 : it.box.top - mb.top - 24 });
+      await sleep(350);
+      continue;
+    }
+    const c = center(it.box);
+    await page.click(c.x, c.y);
+    await sleep(350);
+    return it;
+  }
+  throw new Error(`بند لا يظهر: ${match}`);
 }
 const typeText = async (text) => {
   for (const ch of text) await page.key(ch, `Key${ch}`, ch.charCodeAt(0));

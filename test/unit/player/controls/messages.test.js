@@ -97,3 +97,19 @@ test('زمن مختصر للرسائل', () => {
   assert.equal(shortTime(3725000), '1:02:05');
   assert.equal(shortTime(5000), '0:05');
 });
+
+test('الرسائل فوق القائمة المفتوحة لا فوق بنودها (كشفه الاختبار الحي)، وتعود فوق الشريط بعد إغلاقها', async () => {
+  const { click, trackInfo, settle } = await import('./harness.js');
+  const page = mountPage({ state: makeState({ captured: [trackInfo()] }) });
+  const y = () => page.ui.layerHost().shadowRoot.querySelector('.toasts').style.getPropertyValue('--y');
+  assert.equal(y(), '60px', 'فوق الشريط (48 + 12)');
+  page.ui.menu().rect = { top: 0, left: 0, width: 300, height: 220, bottom: 220, right: 300 };
+  click(page.ui.btn('download'));
+  const menuY = parseInt(page.ui.menu().style.getPropertyValue('--y'), 10);
+  assert.equal(y(), `${menuY + 220 + 12}px`, 'فوق أعلى القائمة');
+  click(page.ui.item('نسخ تعليمات الترجمة'));
+  await settle();
+  assert.equal(page.ui.toasts().length, 1);
+  click(page.ui.btn('download'));
+  assert.equal(y(), '60px');
+});
