@@ -1,6 +1,6 @@
-// لوحة المشكلات (R28): تصف ولا تصلح. الأخطاء (نهاية قبل البداية، وزمن سالب، وصيغة غير صالحة، وما فوق الحد)
-// تمنع الحفظ والتصدير. والتحذيرات (تداخل، ومدة قصيرة جدًا، وفجوة كبيرة، ونص فارغ) لا تمنع الحفظ؛ لكن التداخل
-// والنص الفارغ يمنعان التصدير وحده لأن كاتب SRT يرفضهما (EX_TIMING_INVALID وEX_EMPTY_TEXT في P3).
+// لوحة المشكلات (R28): تصف ولا تصلح. الأخطاء (نهاية قبل البداية، وزمن سالب، وصيغة غير صالحة، وما فوق الحد،
+// ونص لا يقبله التخزين) تمنع الحفظ والتصدير. والتحذيرات (تداخل، ومدة قصيرة جدًا، وفجوة كبيرة، ونص فارغ) لا تمنع
+// الحفظ؛ لكن التداخل والنص الفارغ يمنعان التصدير وحده لأن كاتب SRT يرفضهما (EX_TIMING_INVALID وEX_EMPTY_TEXT في P3).
 import { LIMITS } from '../model/validate.js';
 
 /**
@@ -19,6 +19,7 @@ export const ISSUE_LIMITS = Object.freeze({ shortMs: 300, largeGapMs: 30000 });
  */
 
 const seconds = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
+const ERRORS = new Set(['ED_END_BEFORE_START', 'ED_NEGATIVE_TIME', 'ED_TIME_FORMAT', 'ED_TIME_RANGE', 'ED_TEXT_INVALID']);
 
 /**
  * @param {{ n: number, startMs: number, endMs: number, text: string }[]} cues
@@ -37,7 +38,7 @@ export function findIssues(cues, { drafts } = {}) {
     draftAt.get(index).push(field);
   }
   const add = (code, index, field = null, params = null) => {
-    const error = code === 'ED_END_BEFORE_START' || code === 'ED_NEGATIVE_TIME' || code === 'ED_TIME_FORMAT' || code === 'ED_TIME_RANGE';
+    const error = ERRORS.has(code);
     const exportOnly = code === 'ED_OVERLAP' || code === 'ED_TEXT_EMPTY' || code === 'ED_TEXT_BLANK_LINE';
     list.push({ code, tone: error ? 'error' : 'warning', index, n: cues[index].n, field, params, blocksSave: error, blocksExport: error || exportOnly });
   };
@@ -51,7 +52,9 @@ export function findIssues(cues, { drafts } = {}) {
     if (c.startMs > LIMITS.maxTimeMs || c.endMs > LIMITS.maxTimeMs) add('ED_TIME_RANGE', i, c.startMs > LIMITS.maxTimeMs ? 'start' : 'end');
     for (const field of draftAt.get(i) ?? []) add('ED_TIME_FORMAT', i, field === 'start' ? 'start' : 'end');
 
-    if (c.text === '') add('ED_TEXT_EMPTY', i, 'text');
+    // ما يرفضه مدقق المقطع (isText في النموذج) خطأ هنا، فلا يصل إلى التخزين ليفشل برسالة عامة.
+    if (c.text.length > LIMITS.maxTextChars || c.text.includes('\u0000')) add('ED_TEXT_INVALID', i, 'text', { max: LIMITS.maxTextChars });
+    else if (c.text === '') add('ED_TEXT_EMPTY', i, 'text');
     else if (c.text.split('\n').some((l) => l.trim() === '')) add('ED_TEXT_BLANK_LINE', i, 'text');
 
     const next = cues[i + 1];

@@ -77,3 +77,9 @@ test('الحفظ يُرفض بأخطاء التوقيت (حماية ثانية �
   assert.throws(() => editTransition(rec, { cues }, LATER), (e) => e instanceof TjError && e.code === 'ED_SAVE_HAS_ERRORS');
   assert.throws(() => editTransition(videoRecord({ arabic: false }), { cues }, LATER), (e) => e.code === 'ST_NO_RECORD');
 });
+
+test('المرجع مع نافذة طويلة تحتوي نوافذ بعدها: المنتصف يُنسب إلى أسبق نافذة تحويه (مراجعة)', () => {
+  const ar = [{ n: 1, startMs: 0, endMs: 100000 }, { n: 2, startMs: 10000, endMs: 20000 }, { n: 3, startMs: 30000, endMs: 40000 }];
+  const en = [{ n: 1, startMs: 49000, endMs: 51000, text: 'x' }, { n: 2, startMs: 14000, endMs: 16000, text: 'y' }];
+  assert.deepEqual(englishReference(ar, en, null), ['x', 'y', '']);
+});

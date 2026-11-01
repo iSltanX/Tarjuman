@@ -250,3 +250,50 @@ test('الأداء: نقل 50,000 مقطع والتراجع عنه، وتعدي�
   assert.ok(shiftMs < 1000, `النقل ${shiftMs.toFixed(0)}ms`);
   assert.ok(textMs < 100, `النص ${textMs.toFixed(0)}ms`);
 });
+
+test('التراجع عن نقل أصلح زمنًا سالبًا كتبه المستخدم يعيده كما كان، ولا يرمي ولا يُسقط خطوة (مراجعة)', () => {
+  const s = createEditSession({ cues: makeCues(3) });
+  s.setTime(0, 'start', -500);
+  assert.equal(s.issues().errors, 1);
+  assert.equal(s.shift({ kind: 'all' }, 1000).ok, true, 'النتيجة كلها غير سالبة');
+  assert.equal(s.issues().errors, 0);
+  assert.deepEqual(s.undo(), { ok: true, kind: 'shift' });
+  assert.equal(s.cueAt(0).startMs, -500, 'عاد الزمن الذي كتبه المستخدم بالضبط');
+  assert.equal(s.historySize, 1);
+  assert.deepEqual(s.redo(), { ok: true, kind: 'shift' });
+  assert.equal(s.cueAt(0).startMs, 500);
+  const c = createEditSession({ cues: makeCues(2), offsetMs: 2000 });
+  c.setTime(0, 'start', -1000);
+  assert.equal(c.commitOffset().ok, true);
+  c.undo();
+  assert.deepEqual([c.cueAt(0).startMs, c.offsetMs], [-1000, 2000]);
+});
+
+test('كتابة بعد سحب خطوة أعادت النص إلى ما قبلها خطوةٌ جديدة لا تنضم إلى خطوة أقدم مختومة (مراجعة)', () => {
+  const s = createEditSession({ cues: makeCues(1) });
+  s.setText(0, 'أ');
+  s.setText(0, 'أب');
+  s.seal();
+  s.setText(0, 'أبج');
+  s.setText(0, 'أب');
+  assert.equal(s.historySize, 1, 'الخطوة الفارغة سُحبت');
+  s.setText(0, 'أبد');
+  assert.equal(s.historySize, 2);
+  s.undo();
+  assert.equal(s.cueAt(0).text, 'أب');
+});
+
+test('حفظ انتهى والمستخدم عدّل أثناءه: المحفوظ أساس جديد، وما كُتب بعده يبقى غير محفوظ بتاريخه', () => {
+  const s = createEditSession({ cues: makeCues(3), offsetMs: 500 });
+  s.setText(0, 'محفوظ');
+  const saved = s.snapshot();
+  s.setText(1, 'كُتب أثناء الحفظ');
+  s.markSaved({ cues: saved, offsetMs: 500 });
+  assert.equal(s.isChanged(0), false);
+  assert.equal(s.isChanged(1), true);
+  assert.equal(s.changedCount, 1);
+  assert.equal(s.cueAt(1).text, 'كُتب أثناء الحفظ');
+  s.undo();
+  assert.equal(s.dirty, false, 'التراجع يعود إلى المحفوظ');
+  assert.throws(() => s.markSaved({ cues: saved.slice(1), offsetMs: 0 }), RangeError);
+});

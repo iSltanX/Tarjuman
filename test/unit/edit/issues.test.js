@@ -74,3 +74,11 @@ test('الأداء: 50,000 مقطع تُفحص بسرعة تكفي لكل تعد
   assert.equal(r.list.length, 0);
   assert.ok(ms < 200, `${ms.toFixed(1)}ms`);
 });
+
+test('نص لا يقبله التخزين (أطول من الحد أو فيه NUL) خطأ يمنع الحفظ قبل أن يفشل التخزين برسالة عامة (مراجعة)', () => {
+  const r = findIssues([cue(1, 0, 1000, 'أ'.repeat(5001)), cue(2, 2000, 3000, 'ب\u0000')]);
+  assert.deepEqual(codes(r), ['1:ED_TEXT_INVALID', '2:ED_TEXT_INVALID']);
+  assert.equal(r.errors, 2);
+  assert.ok(r.list.every((i) => i.blocksSave && i.field === 'text'));
+  assert.equal(findIssues([cue(1, 0, 1000, 'أ'.repeat(5000))]).errors, 0);
+});

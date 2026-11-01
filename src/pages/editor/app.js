@@ -9,6 +9,7 @@ import {
 } from '../../core/edit/index.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { download } from '../../core/export/index.js';
+import { arabicCues } from '../../core/model/video.js';
 import { alertBox, button, el, emptyState, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../../ui/format.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
@@ -267,7 +268,9 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   function onSessionChange(e) {
     if (S.view !== 'edit') return;
     const report = S.session.issues();
-    S.rows.forEach((r, k) => S.layout.setHeight(k, heightOf(r, S.session, report)));
+    // الكتابة في نص تغيّر ارتفاع صفها وحده (أسطره ومشكلات نصه)؛ وما عداها قد يمس مشكلات الجوار فيُعاد كله.
+    if (e.kind === 'text' && e.indices) for (const i of e.indices) S.layout.setHeight(S.rowOf[i], heightOf(S.rows[S.rowOf[i]], S.session, report));
+    else S.rows.forEach((r, k) => S.layout.setHeight(k, heightOf(r, S.session, report)));
     S.list.refresh(null, e.kind !== 'text' || Boolean(e.undo || e.redo) || e.indices === null);
     scheduleChrome();
     win.clearTimeout(S.compareTimer);
@@ -557,13 +560,26 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   }
 
   async function save() {
-    if (S.saving || saveBlockReason()) return;
+    if (S.saving) return;
+    const why = saveBlockReason();
+    if (why) {
+      // الزر المعطّل لا يصل إلى هنا؛ هذا ⌘S، فيُذكر السبب بدل صمت.
+      toast(why, 'info');
+      return;
+    }
     S.saving = true;
     renderHeader();
+    const session = S.session;
+    const at = session.version;
     try {
-      const rec = await saveEdits(store, videoId, S.opened, { cues: S.session.snapshot(), offsetChanged: S.session.offsetChanged, offsetMs: S.session.offsetMs }, { now });
+      const rec = await saveEdits(store, videoId, S.opened, { cues: session.snapshot(), offsetChanged: session.offsetChanged, offsetMs: session.offsetMs }, { now });
       S.result = null;
-      load(rec, { keepUi: true });
+      if (S.session === session && session.version !== at) {
+        // كتب المستخدم أثناء الحفظ: المحفوظ يصبح الأساس وما كُتب بعده يبقى غير محفوظ، فلا يُكتب فوق الحقل.
+        S.opened = rec;
+        S.edited = rec.arabic.current !== null;
+        session.markSaved({ cues: arabicCues(rec), offsetMs: rec.view.displayOffsetMs });
+      } else load(rec, { keepUi: true });
       toast('حُفظ ✓', 'success');
     } catch (err) {
       const info = toErrorInfo(err);
@@ -833,7 +849,8 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   // ---- لوحة المفاتيح والمغادرة والتخزين ----
   doc.addEventListener('keydown', (e) => {
     if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
-    const k = e.key.toLowerCase();
+    // المفتاح الفعلي لا الحرف: بتخطيط عربي يكون e.key «س» لا «s».
+    const k = { KeyS: 's', KeyZ: 'z', KeyY: 'y' }[e.code];
     if (k === 's') {
       e.preventDefault();
       save();

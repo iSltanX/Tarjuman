@@ -109,11 +109,23 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
     return r;
   };
 
-  /** يعكس خطوة أو يعيدها. */
+  /**
+   * يعكس خطوة أو يعيدها. النقل يُعاد بحساب خام لا بـshiftCues: الخطوة نفسها تحقّق منها الفعل الأصلي، والعكس دقيق
+   * لأن الأزمنة أعداد صحيحة؛ فنقلٌ أصلح زمنًا سالبًا كتبه المستخدم يُتراجع عنه إلى ذلك الزمن كما كان.
+   */
   const replay = (entry, forward) => {
     if (entry.patch) return applyPatch(entry.patch, forward);
-    const r = moveBy(entry.indices, forward ? entry.delta : -entry.delta);
-    if (!r.ok) throw new Error('تاريخ التحرير غير متسق');
+    const d = forward ? entry.delta : -entry.delta;
+    const move = (c) => Object.freeze({ n: c.n, startMs: c.startMs + d, endMs: c.endMs + d, text: c.text });
+    if (entry.indices === null) {
+      work = work.map(move);
+      markAll();
+    } else {
+      for (const i of entry.indices) {
+        work[i] = move(work[i]);
+        mark(i);
+      }
+    }
     if (entry.offset) offset = forward ? entry.offset[1] : entry.offset[0];
     return entry.indices;
   };
@@ -127,7 +139,10 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
     if (group && openGroup === group && top?.group === group && !redoStack.length) {
       top.patch[0][2] = after;
       // كتابة أعادت النص إلى ما كان قبل المجموعة: لا خطوة فارغة في التاريخ.
-      if (sameCue(top.patch[0][1], after)) undoStack.pop();
+      if (sameCue(top.patch[0][1], after)) {
+        undoStack.pop();
+        group = null;
+      }
     } else {
       push({ kind, patch: [[i, before, after]], group });
     }
@@ -308,6 +323,19 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
       base = Object.freeze(next.map(freezeCue));
       baseOffset = nextOffset;
       session.discard();
+    },
+
+    /**
+     * حفظٌ انتهى والمستخدم عدّل أثناء انتظاره: المحفوظ يصبح الأساس، ونسخة العمل والتاريخ والمسودات تبقى كما هي،
+     * فما كُتب بعد اللقطة يبقى «غير محفوظ» ولا يُكتب فوقه.
+     * @param {{ cues: Cue[], offsetMs: number }} o بالعدد نفسه
+     */
+    markSaved({ cues: saved, offsetMs: savedOffset }) {
+      if (saved.length !== work.length) throw new RangeError('المحفوظ بعدد مقاطع آخر');
+      base = Object.freeze(saved.map(freezeCue));
+      baseOffset = savedOffset;
+      markAll();
+      emit({ kind: 'text', indices: [], offset: true });
     },
   };
   return session;

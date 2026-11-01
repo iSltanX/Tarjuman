@@ -48,3 +48,9 @@ test('الثواني: الصيغ غير الصالحة وما يتجاوز ال�
     assert.equal(parseSeconds(bad).ok, false, String(bad));
   }
 });
+
+test('الفاصلة العربية «،» من لوحة المفاتيح العربية مقبولة في الزمن والثواني (مراجعة)', () => {
+  assert.deepEqual(parseTimecode('00:01:02،500'), { ok: true, ms: 62500 });
+  assert.deepEqual(parseSeconds('0،5'), { ok: true, ms: 500 });
+  assert.deepEqual(parseSeconds('−١،٢٥'), { ok: true, ms: -1250 });
+});

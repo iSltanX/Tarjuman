@@ -32,6 +32,9 @@ export function englishReference(arabic, english, fingerprint) {
     if (w && w.endMs > w.startMs) windows.push({ i, startMs: w.startMs, endMs: w.endMs });
   });
   windows.sort((a, b) => a.startMs - b.startMs || a.i - b.i);
+  // أكبر نهاية حتى كل نافذة: الرجوع عن آخر نافذة تبدأ قبل المنتصف يقف حين لا تبلغه أي نافذة أسبق.
+  const reach = [];
+  windows.forEach((w, k) => { reach[k] = Math.max(w.endMs, k ? reach[k - 1] : -Infinity); });
   const parts = new Map();
   for (const e of english) {
     const mid = (e.startMs + e.endMs) / 2;
@@ -45,10 +48,16 @@ export function englishReference(arabic, english, fingerprint) {
         lo = m + 1;
       } else hi = m - 1;
     }
-    // أول نافذة تحوي المنتصف عند تداخل النوافذ.
-    while (at > 0 && windows[at - 1].startMs <= mid && windows[at - 1].endMs >= mid) at--;
-    if (at < 0 || mid > windows[at].endMs) continue;
-    const i = windows[at].i;
+    // أقرب نافذة بدايةً تحوي المنتصف (الأدق عند تداخل النوافذ)، ولو كانت الحاوية نافذة طويلة تبدأ قبل غيرها.
+    let hit = -1;
+    for (let k = at; k >= 0 && reach[k] >= mid; k--) {
+      if (windows[k].endMs >= mid) {
+        hit = k;
+        break;
+      }
+    }
+    if (hit < 0) continue;
+    const i = windows[hit].i;
     if (!parts.has(i)) parts.set(i, []);
     parts.get(i).push(e.text.replace(/\s*\n\s*/g, ' '));
   }
