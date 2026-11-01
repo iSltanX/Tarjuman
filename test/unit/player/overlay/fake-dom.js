@@ -128,15 +128,23 @@ export class FakeElement {
   }
 
   getAttribute(k) {
+    if (k === 'class' && !this._attrs.has(k)) return this._classes.size ? this.className : null;
     return this._attrs.has(k) ? this._attrs.get(k) : null;
   }
 
   hasAttribute(k) {
-    return this._attrs.has(k);
+    return this._attrs.has(k) || (k === 'class' && this._classes.size > 0);
+  }
+
+  getAttributeNames() {
+    const names = [...this._attrs.keys()];
+    if (this._classes.size && !names.includes('class')) names.push('class');
+    return names;
   }
 
   removeAttribute(k) {
     this._attrs.delete(k);
+    if (k === 'class') this._classes = new Set();
     this._mutated(k);
   }
 

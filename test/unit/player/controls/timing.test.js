@@ -181,7 +181,7 @@ test('إعادة بناء القائمة لا تُضيع ما يُكتب: تغي
   type(input, '2.');
   page.controller.set({ settings: { ...DEFAULT_SETTINGS, offsetStepMs: 1000 } });
   const again = page.ui.field('offset');
-  assert.notEqual(again, input, 'أُعيد البناء');
+  assert.equal(again, input, 'الحقل نفسه حُدّث في مكانه');
   assert.equal(again.value, '2.');
   assert.equal(page.env.doc._focused, again);
 });

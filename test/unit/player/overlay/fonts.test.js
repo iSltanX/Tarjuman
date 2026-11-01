@@ -183,7 +183,7 @@ test('محمّل الخطوط واحد للمستند عبر إعادة تركي
   page.env.win.advance(1100);
   await flush();
   assert.equal(handle.diagnostics().attempts, 2);
-  // بلا chrome.runtime في الاختبار تتعذّر القراءة: الإخفاق مسجّل مرة واحدة رغم الجلسة الثانية (لا قراءة ثانية).
+  // بلا chrome.runtime في الاختبار تتعذّر القراءة: الجلسة الثانية تعيد المحاولة بالمحمّل نفسه، والإخفاق مسجّل مرة.
   assert.deepEqual(handle.diagnostics().fonts.failed, ['almarai']);
   assert.equal(handle.diagnostics().fonts.code, 'CT_FONT_SYSTEM');
 });

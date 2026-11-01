@@ -80,6 +80,7 @@ export async function copyText(text, { doc, win, root }) {
     // يسقط إلى البديل
   }
   let ta = null;
+  const prev = root.activeElement ?? null;
   try {
     ta = doc.createElement('textarea');
     ta.setAttribute('readonly', '');
@@ -97,6 +98,8 @@ export async function copyText(text, { doc, win, root }) {
     if (ta) {
       ta.value = '';
       ta.remove();
+      // التحديد نقل التركيز إلى الحقل المؤقت: يعود إلى حيث كان (بند القائمة) فلا يضيع موضع لوحة المفاتيح.
+      if (prev && prev.isConnected) prev.focus();
     }
   }
 }

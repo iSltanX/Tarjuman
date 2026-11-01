@@ -81,9 +81,12 @@ export function createGroup({ doc, win, on }) {
     }
     el.addEventListener('click', (ev) => {
       ev.stopPropagation();
-      // ضغطة لوحة المفاتيح تولّد click بلا مؤشر (detail = 0) — فيُنقل التركيز إلى القائمة.
-      on.action(kind, { keyboard: lastKey || ev.detail === 0 });
+      // ضغطة لوحة المفاتيح تولّد click بلا مؤشر (detail = 0) — فيُنقل التركيز إلى القائمة ويبقى على الزر.
+      const keyboard = lastKey || ev.detail === 0;
       lastKey = false;
+      // بعد نقرة الفأرة لا يبقى التركيز على الزر، فالمسافة بعدها توقف الفيديو كما في يوتيوب لا تكرر الضغطة.
+      if (!keyboard) el.blur();
+      on.action(kind, { keyboard });
     });
     el.addEventListener('keydown', (ev) => {
       if (!OWN_KEYS.has(ev.key)) return;

@@ -194,9 +194,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const spec = menuSpec(s);
     if (!spec) {
       if (ui.open) ui.open = null;
-      if (layer.menuOpen()) layer.closeMenu();
-      menuKey = null;
-      menuKind = null;
+      dropMenu();
       return;
     }
     if (spec.key === menuKey && spec.kind === menuKind && layer.menuOpen()) return;
@@ -207,11 +205,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (spec.kind !== menuKind || !layer.menuOpen()) {
       layer.openMenu(nodes, group.button(ANCHOR[spec.kind]), { label: TITLE[spec.kind], role: ROLE[spec.kind] });
     } else {
-      layer.replaceMenu(nodes);
+      layer.patchMenu(nodes);
     }
     menuKey = spec.key;
     menuKind = spec.kind;
-    if (fid) {
+    // العقدة المركّزة باقية في مكانها عادةً؛ وإن استُبدلت بنيتها فالتركيز يعود إلى نظيرتها بمعرّفها.
+    if (fid && !(focused?.isConnected && layer.focused() === focused)) {
       const el = layer.find(fid);
       if (el) {
         el.focus();
@@ -224,6 +223,19 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         }
       }
     }
+  }
+
+  /**
+   * إغلاق القائمة دون فعل من المستخدم (زالت الترجمة، أو تبدّل الفيديو): إن كان التركيز فيها عاد إلى زرها، فلا يسقط إلى
+   * الصفحة فتذهب الضغطات التالية إلى اختصارات يوتيوب.
+   */
+  function dropMenu() {
+    const hadFocus = !!layer.focused();
+    const anchor = menuKind ? ANCHOR[menuKind] : null;
+    if (layer.menuOpen()) layer.closeMenu();
+    menuKey = null;
+    menuKind = null;
+    if (hadFocus && anchor) group.focus(anchor);
   }
 
   function renderTip() {
@@ -269,11 +281,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   function syncVideo(s) {
     if (s.videoId === ui.videoId) return;
-    const hadMenu = !!ui.open;
     ui = freshUi(s.videoId);
-    menuKey = null;
-    menuKind = null;
-    if (hadMenu) layer.closeMenu();
+    dropMenu();
     for (const t of toasts) clearTimer(t.id);
     clearTimer('flash');
     clearTimer('done');
@@ -395,8 +404,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (returnFocus) group.focus(anchor);
   }
 
+  /** المنتقي يُفتح لفيديو بعينه: اختيار يصل بعد تبدّله لا يُحمَّل على الجديد. */
   function pick(purpose) {
-    ui.upload.pickFor = purpose;
+    ui.upload.pickFor = { purpose, videoId: ui.videoId };
     layer.pickFiles();
   }
 
@@ -591,9 +601,15 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   // ———— الرفع ————
 
   function onFiles(files) {
-    const purpose = ui.upload.pickFor;
+    const p = ui.upload.pickFor;
     ui.upload.pickFor = null;
-    startImport(files, purpose === 'replace');
+    // فُتح المنتقي لفيديو سابق (التنقل يصفّر الحالة) أو لم يُفتح منّا: لا يُقرأ الملف ولا يُحمَّل.
+    if (!p || p.videoId !== controller.getState().videoId) {
+      addToast('warning', messageFor('CT_VIDEO_CHANGED'));
+      render();
+      return;
+    }
+    startImport(files, p.purpose === 'replace');
   }
 
   async function startImport(files, replacing) {
@@ -604,8 +620,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     render();
     const read = await readFor({ controller, importFlow: flows.importFlow, files });
     if (destroyed || ui.upload !== u) return;
-    u.busy = false;
     if (!read.ok) {
+      u.busy = false;
       counts.flowFailures++;
       if (replacing && ui.open === 'display') u.error = read.error.message;
       else addToast('error', read.error.message);
@@ -613,6 +629,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       return;
     }
     if (controller.getState().arabic) {
+      u.busy = false;
       u.pending = read;
       ui.open = 'confirm';
       render();
@@ -621,6 +638,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     const r = await loadFor({ controller, read, replace: false });
     if (destroyed || ui.upload !== u) return;
+    u.busy = false;
     if (!r.ok) {
       if (r.error.code === 'ST_ARABIC_EXISTS') {
         u.pending = read;
@@ -650,16 +668,19 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (destroyed || ui.upload !== u) return;
     u.busy = false;
     u.pending = null;
-    ui.open = 'display';
+    // أغلق المستخدم التأكيد أثناء الحفظ (Esc أو النقر خارجه): تُطبَّق النتيجة دون إعادة فتح القائمة ولا نقل التركيز.
+    const stillOpen = ui.open === 'confirm';
     if (!r.ok) {
       counts.flowFailures++;
       u.error = r.error.message;
+      if (!stillOpen) addToast('error', r.error.message);
     } else {
       counts.imports++;
       u.warnings = read.warnings;
     }
+    if (stillOpen) ui.open = 'display';
     render();
-    layer.focusFirst();
+    if (stillOpen) layer.focusFirst();
   }
 
   // ———— خارج القوائم: النقر خارجها وEsc ————

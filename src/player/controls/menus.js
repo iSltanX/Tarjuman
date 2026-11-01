@@ -44,7 +44,8 @@ function button(h, cls, text, { act, name, value, disabled = false, reason = nul
       type: 'button', 'data-fid': fid, 'data-first': first ? '' : null,
       'aria-disabled': disabled ? 'true' : null, 'aria-description': disabled && reason ? reason : null, ...extra,
     },
-    on: { click: () => (disabled ? undefined : act(name, value)) },
+    // التعطيل يُقرأ من العقدة لحظة النقر: العقدة تبقى عبر التحديث في مكانها وقد يتغير تعطيلها.
+    on: { click: (ev) => (ev.currentTarget.getAttribute('aria-disabled') === 'true' ? undefined : act(name, value)) },
     children: [h('span', { className: 'stack', children: [h('span', { text }), disabled && reason ? h('span', { className: 'reason', text: reason }) : null] })],
   });
 }

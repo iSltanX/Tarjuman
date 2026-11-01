@@ -474,6 +474,25 @@ try {
     const m = await main(M.main);
     check('esc-closes-and-returns-focus', 'P6-AC3', !pk.layer.menu && m.active === 'tarjuman-controls', { menu: !!pk.layer.menu, active: m.active });
     // اختبار ضابط: الضغطة نفسها خارج الحقل تصل إلى يوتيوب (فالعزل أعلاه ذو معنى)
+    // معلومة: الكتابة في الحقل والفيديو يعمل دون تحريك الفأرة — هل يُخفي يوتيوب الشريط (فتختفي القائمة معه)، وهل يبقى
+    // التركيز في الحقل والضغطات معزولة؟ (بند من المراجعة المستقلة لا يُحسم إلا حيًا)
+    await clickButton('badge');
+    await clickItem('offset');
+    await main(M.play);
+    const tPlay = (await main(M.main)).video.t;
+    for (let i = 0; i < 8; i++) {
+      await pressKey('5', 'Digit5', 53);
+      await sleep(700);
+    }
+    const typed = await main(M.main);
+    const pkTyped = await iso(I.peek);
+    check('typing-while-playing (معلومة)', 'P6-AC3', pkTyped.layer.focusedFid === 'offset', {
+      autohide: typed.classes.includes('ytp-autohide'), layerBar: pkTyped.layer.bar, focusedFid: pkTyped.layer.focusedFid,
+      videoAdvanced: +(typed.video.t - tPlay).toFixed(2), value: pkTyped.layer.menu?.items.find((x) => x.fid === 'offset')?.value ?? null,
+    });
+    await main(M.pause);
+    await pressKey('Escape', 'Escape', 27);
+    await sleep(300);
     await main(() => document.activeElement?.blur());
     const t1 = (await main(M.main)).video.t;
     await pressKey('l', 'KeyL', 76);

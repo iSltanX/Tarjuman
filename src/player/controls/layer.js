@@ -2,6 +2,7 @@
 // القوائم ظاهرة في ملء الشاشة)، بـShadow DOM مغلق. القوائم والتلميحات تتبع ظهور الشريط (تختفي معه)، والرسائل العابرة
 // غير حاجبة فوق موضع الشريط. لا تلتقط الطبقة النقرات إلا على قائمة أو رسالة، ولا تصل منها ضغطة إلى اختصارات يوتيوب.
 import { createSheet } from '../overlay/sheet.js';
+import { morphChildren } from './morph.js';
 import { LAYER_ID, layerCss } from './styles.js';
 
 const GAP_PX = 12;
@@ -54,6 +55,8 @@ export function createLayer({ doc, win, on }) {
     });
     toasts.addEventListener(type, (ev) => ev.stopPropagation());
   }
+  // نقرة فتح المنتقي (input.click) تصعد عبر الجذر إلى المشغّل؛ لا تصل إليه فتوقف التشغيل أو تبدأه.
+  input.addEventListener('click', (ev) => ev.stopPropagation());
   input.addEventListener('change', () => {
     const files = Array.from(input.files ?? []);
     input.value = '';
@@ -138,9 +141,9 @@ export function createLayer({ doc, win, on }) {
       placeMenu();
     },
 
-    /** @param {Node[]} children */
-    replaceMenu(children) {
-      menu.replaceChildren(...children);
+    /** يحدّث القائمة المفتوحة في مكانها (morph): العقد نفسها ما بقيت بنيتها. @param {Element[]} children */
+    patchMenu(children) {
+      return morphChildren(menu, children);
     },
 
     closeMenu() {

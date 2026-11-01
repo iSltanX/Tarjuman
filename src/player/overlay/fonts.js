@@ -54,11 +54,14 @@ export function createFontLoader({ doc, win, read = readPackagedFont }) {
     })().then(
       () => {
         status.loaded.push(font.id);
+        status.failed = status.failed.filter((x) => x !== font.id);
         return true;
       },
       (err) => {
-        status.failed.push(font.id);
+        if (!status.failed.includes(font.id)) status.failed.push(font.id);
         status.lastDetail = (err instanceof Error ? `${err.name}: ${err.message}` : String(err)).slice(0, 200);
+        // إخفاق عابر لا يُحفظ: الطلب التالي للخط (تغيير الإعداد أو جلسة جديدة) يعيد المحاولة.
+        loads.delete(font.id);
         return false;
       },
     );
