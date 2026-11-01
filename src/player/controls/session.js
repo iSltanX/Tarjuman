@@ -436,10 +436,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         layer.focusFirst();
         return;
       case 'offsetText': t.offsetText = String(value); return;
-      case 'applyOffset': applyOffset(String(value)); return;
+      // change يصل عند فقد التركيز ولو بعد إغلاق القائمة (Esc أو النقر خارجها): الإغلاق إلغاء لما كُتب، لا تطبيق له.
+      case 'applyOffset': if (ui.open === 'timing') applyOffset(String(value)); return;
       case 'step': chooseStep(String(value)); return;
       case 'stepText': t.stepText = String(value); return;
-      case 'applyStep': applyStep(String(value)); return;
+      case 'applyStep': if (ui.open === 'timing') applyStep(String(value)); return;
       case 'reset':
         t.offsetText = null;
         t.offsetError = null;

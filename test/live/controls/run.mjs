@@ -49,6 +49,9 @@ function expectedExport(mode, split = null) {
 }
 const EXP_NORMAL = expectedExport('normal');
 const EXP_LONG = expectedExport('long');
+// زمن داخل مقطع ظاهر بعد الدقيقة الأولى (منتصف أول مقطع طوله 1.5 ث فأكثر): لقطات الخط والحجم تقيس سطرًا حقيقيًا.
+const SHOT_CUE = EXP_NORMAL.fingerprint.cues.find((c) => c.startMs >= 50000 && c.endMs - c.startMs >= 1500);
+const SHOT_AT = (SHOT_CUE.startMs + SHOT_CUE.endMs) / 2000;
 
 // ---- دوال تُنفَّذ في العالم المعزول للإضافة (بناء التطوير) ----
 const I = {
@@ -167,9 +170,20 @@ async function clickItem(match) {
   }
   throw new Error(`بند لا يظهر: ${match}`);
 }
+// رمز المفتاح الافتراضي لكل محرف (keyCode 46 هو Delete و45 Insert، فلا يصلحان للنقطة والشرطة).
+const KEYS = { '.': ['Period', 190], '-': ['Minus', 189], '+': ['Equal', 187], ' ': ['Space', 32] };
 const typeText = async (text) => {
-  for (const ch of text) await page.key(ch, `Key${ch}`, ch.charCodeAt(0));
+  for (const ch of text) {
+    const [code, kc] = KEYS[ch] ?? (/\d/.test(ch) ? [`Digit${ch}`, 48 + Number(ch)] : [`Key${ch.toUpperCase()}`, ch.toUpperCase().charCodeAt(0)]);
+    await page.key(ch, code, kc);
+  }
 };
+/** يفتح قائمة زر إن لم تكن مفتوحة (الضغط على زر قائمة مفتوحة يغلقها). */
+async function openMenuOf(kind, label) {
+  const p = await iso(I.peek);
+  if (p.layer.menu?.label === label) return;
+  await clickButton(kind);
+}
 const pressKey = (key, code, keyCode) => page.key(key, code, keyCode);
 async function clearField() {
   await pressKey('End', 'End', 35);
@@ -246,7 +260,7 @@ async function arabicFile(name, srt, { dropLast = false } = {}) {
   const blocks = srt.trim().split(/\n\n+/);
   const out = (dropLast ? blocks.slice(0, -1) : blocks).map((blk) => {
     const [n, time] = blk.split('\n');
-    return `${n}\n${time}\nهذه ترجمة المقطع ${n} إلى العربية.`;
+    return `${n}\n${time}\nهذه ترجمة المقطع ${n} إلى العربية، بجملة أطول قليلًا لاختبار التفاف السطر داخل عرض المشغّل دون أي قص.`;
   });
   const f = path.join(FILES, name);
   await writeFile(f, `${out.join('\n\n')}\n`);
@@ -473,7 +487,7 @@ try {
     await clickButton('plus');
     const st2 = await iso(I.state);
     check('step-choice-applies-to-buttons', 'P6-AC3', st.step === 1000 && st2.view.displayOffsetMs === -1300, { step: st.step, offset: st2.view.displayOffsetMs });
-    await clickButton('badge');
+    await openMenuOf('badge', 'توقيت الترجمة');
     await clickItem('step:500');
     await clickItem('reset');
     await sleep(300);
@@ -523,6 +537,16 @@ try {
     await clickButton('upload');
     await sleep(800);
     await page.reload();
+    // إشعار الاستعادة رسالة عابرة (3 ث): تُلتقط وهي ظاهرة.
+    let restoredToast = null;
+    for (let i = 0; i < 40 && !restoredToast; i++) {
+      isoId = page.isolatedContextId(extId);
+      if (isoId) {
+        const t = await iso(() => globalThis.__tarjuman?.mounted.controls.peek()?.layer.toasts ?? []).catch(() => []);
+        restoredToast = t.find((x) => /استُعيدت ترجمتك المحفوظة/.test(x.text)) ?? null;
+      }
+      if (!restoredToast) await sleep(200);
+    }
     await main(() => document.querySelectorAll('video').forEach((v) => { v.muted = true; }));
     await waitForPlayer(page, VIDEO, 25000);
     await sleep(1500);
@@ -534,7 +558,7 @@ try {
     let st = await iso(I.state);
     let pk = await iso(I.peek);
     check('restored-after-reload', 'P6-AC6', st.view.displayOffsetMs === 1000 && st.view.displayMode === 'dual' && pk.buttons.badge.text === '+1.0' && st.arabic?.n === 427, { view: st.view, badge: pk.buttons.badge.text });
-    check('restored-notice-shown', 'P6-AC6', pk.layer.toasts.some((t) => /استُعيدت ترجمتك المحفوظة/.test(t.text)), { toasts: pk.layer.toasts.map((t) => t.text) });
+    check('restored-notice-shown', 'P6-AC6', !!restoredToast, { toast: restoredToast?.text ?? null });
     const ids = (await relatedIds(page)).filter((x) => x !== VIDEO);
     if (ids[0]) {
       await main((id) => { const a = document.querySelector(`#secondary a[href^="/watch?v=${id}"]`); a?.click(); return !!a; }, ids[0]);
@@ -559,7 +583,7 @@ try {
     } else {
       result.notes.push('لا مقترحات في الصفحة: تخطي سيناريو التنقل.');
     }
-    await clickButton('badge');
+    await openMenuOf('badge', 'توقيت الترجمة');
     await clickItem('reset');
     await pressKey('Escape', 'Escape', 27);
     await clickButton('upload');
@@ -569,7 +593,7 @@ try {
 
   // ===== AC1 وAC7 وAC8: الأوضاع الأربعة، والخط والحجم عند 160% =====
   async function modeShots(tag) {
-    await main(M.seek, 52);
+    await main(M.seek, SHOT_AT);
     await sleep(700);
     await revealControls(page);
     await sleep(300);
@@ -578,7 +602,8 @@ try {
     const ov = await iso(I.ov);
     const inBar = Object.values(pk.buttons).every((x) => x.box.width > 0 && x.box.top >= m.chrome.top - 1 && x.box.bottom <= m.chrome.bottom + 1);
     const maxLine = Math.max(0, ...(ov.lineBoxes ?? []).map((x) => x.width));
-    return { m, pk, ov, inBar, maxLine, wrapOk: maxLine <= m.player.width * 0.92 + 1, aboveBar: ov.stage ? ov.stage.bottom <= m.chrome.top + 1 : null };
+    const lines = (ov.lineBoxes ?? []).length;
+    return { m, pk, ov, inBar, maxLine, lines, wrapOk: lines > 0 && maxLine <= m.player.width * 0.92 + 1, aboveBar: ov.stage ? ov.stage.bottom <= m.chrome.top + 1 : null };
   }
   async function exitFullscreen() {
     if (!(await main(M.main)).fs) return;
@@ -600,7 +625,7 @@ try {
       // عادي
       let r = await modeShots('normal');
       check(`normal${suffix}: five-in-bar`, 'P6-AC7', r.inBar && r.pk.size === 'normal', { size: r.pk.size, overflow: r.pk.overflow });
-      if (scale === 160) check('normal-160: wraps-within-92%-and-above-bar', 'P6-AC8', r.wrapOk && r.aboveBar, { maxLine: r.maxLine, player: r.m.player.width, stageBottom: r.ov.stage?.bottom, chromeTop: r.m.chrome.top, font: r.ov.font });
+      if (scale === 160) check('normal-160: wraps-within-92%-and-above-bar', 'P6-AC8', r.wrapOk && r.aboveBar, { lines: r.lines, maxLine: r.maxLine, player: r.m.player.width, stageBottom: r.ov.stage?.bottom, chromeTop: r.m.chrome.top, font: r.ov.font });
       await shoot(`ac7-normal${suffix}`);
       // مسرح
       const sizeBtn = await main(M.rectOf, '#movie_player .ytp-size-button');
@@ -647,7 +672,7 @@ try {
         if (w === 600) {
           const ov = await iso(I.ov);
           const maxLine = Math.max(0, ...(ov.lineBoxes ?? []).map((x) => x.width));
-          if (scale === 160) check('compact-160: wraps-within-92%-and-above-bar', 'P6-AC8', maxLine <= m.player.width * 0.92 + 1 && ov.stage.bottom <= m.chrome.top + 1, { maxLine, player: m.player.width, lines: ov.lines.length, font: ov.font });
+          if (scale === 160) check('compact-160: wraps-within-92%-and-above-bar', 'P6-AC8', (ov.lineBoxes ?? []).length > 0 && maxLine <= m.player.width * 0.92 + 1 && ov.stage.bottom <= m.chrome.top + 1, { lines: (ov.lineBoxes ?? []).length, maxLine, player: m.player.width, lineHeights: (ov.lineBoxes ?? []).map((x) => x.height), font: ov.font });
           await shoot(`ac7-compact${suffix}`);
         }
       }
@@ -666,7 +691,7 @@ try {
         const od = await iso(I.ovDiag);
         check('font-loaded-from-extension-files', 'P6-AC9', loaded.length === 2 && loaded.every((f) => f.status === 'loaded') && od.fonts.active === 'markazi', { faces: loaded, active: od.fonts.active, reads: extensionReads.slice(-6) });
         const ov = await iso(I.ov);
-        check('overlay-uses-font-and-160%', 'P6-AC8', /Tarjuman Subtitle Markazi Text/.test(ov.font?.family ?? '') && Math.abs(parseFloat(ov.font.size) - Math.round((await main(M.main)).player.height * 0.046 * 1.6)) <= 1, { font: ov.font });
+        check('overlay-uses-font-and-160%', 'P6-AC8', /Tarjuman Subtitle Markazi Text/.test(ov.font?.family ?? '') && Math.abs(parseFloat(ov.font?.size) - Math.round((await main(M.main)).player.height * 0.046 * 1.6)) <= 1, { font: ov.font });
       }
     }
     // التحديث دون إعادة تحميل، والبديل عند تعذّر الخط
@@ -676,7 +701,7 @@ try {
     const od = await iso(I.ovDiag);
     const ov = await iso(I.ov);
     const pk = await iso(I.peek);
-    check('settings-change-applies-without-reload', 'P6-AC8', od.attempts === attempts && Math.abs(parseFloat(ov.font.size) - Math.round((await main(M.main)).player.height * 0.046)) <= 1, { attempts: od.attempts, font: ov.font });
+    check('settings-change-applies-without-reload', 'P6-AC8', od.attempts === attempts && Math.abs(parseFloat(ov.font?.size) - Math.round((await main(M.main)).player.height * 0.046)) <= 1, { attempts: od.attempts, font: ov.font });
     if (BREAK === 'tajawal') check('broken-font-falls-back-to-embedded-almarai', 'P6-AC9', od.fonts.code === 'CT_FONT_FALLBACK' && od.fonts.active === 'almarai' && ov.lines.length > 0 && !pk.layer.toasts.length, { fonts: { code: od.fonts.code, active: od.fonts.active, failed: od.fonts.failed }, lines: ov.lines.length, toasts: pk.layer.toasts.length });
     await shoot('ac9-fallback-almarai');
     await iso(I.setSettings, { appearance: { font: 'almarai', scale: 100 } });

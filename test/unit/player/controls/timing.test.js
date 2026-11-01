@@ -196,3 +196,24 @@ test('اختفاء الترجمة العربية أو تبدّل الفيديو 
   page.controller.set({ videoId: 'BBBBBBBBBBB' });
   assert.equal(page.ui.menuOpen(), false);
 });
+
+test('Esc أثناء الكتابة يلغي ما كُتب ولا يطبّقه، ولو وصل change بعد الإغلاق (كشفه الاختبار الحي)', () => {
+  const page = page0();
+  openTiming(page);
+  const input = page.ui.field('offset');
+  input.focus();
+  type(input, '0.0555');
+  key(input, 'Escape');
+  assert.equal(page.ui.menuOpen(), false);
+  input.dispatchEvent({ type: 'change', target: input });
+  assert.equal(page.controller.calls.some((c) => c[0] === 'setOffset'), false);
+  assert.equal(page.controller.getState().view.displayOffsetMs, 0);
+  openTiming(page);
+  assert.equal(page.ui.field('offset').value, '0.0', 'يُفتح بالقيمة الحالية لا بما أُلغي');
+  // والنقر خارجها كذلك إلغاء
+  const input2 = page.ui.field('offset');
+  type(input2, '3');
+  pointerdown(page.video);
+  input2.dispatchEvent({ type: 'change', target: input2 });
+  assert.equal(page.controller.getState().view.displayOffsetMs, 0);
+});
