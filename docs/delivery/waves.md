@@ -15,7 +15,7 @@
 | W1 — إثبات الاستخراج الحي | P1 | منفردة | — | npm run plan:check · npm run check · تحسم G1 | منفردة: أكبر خطر في المشروع، وبوابة قرار. لا يُبنى شيء فوق استخراج لم يثبت، ولا يجاورها عمل يمسّ ملفات الأساس التي تنشئها. |
 | W2 — الأساس والعقود | P2 | منفردة | P1 | npm run plan:check · npm run check | منفردة: تثبّت العقود والهيكل ونقاط التركيب التي تبني عليها كل مراحل W3 وW4 بالتوازي. تمسّ manifest.json والبناء والمتحكم، فلا يجاورها أحد. |
 | W3 — المنطق الأساسي والعرض | P3 ← P4 ← P5 | 3 معًا | P2 | npm run plan:check · npm run check:wave | ثلاث مراحل مستقلة فوق عقود P2 بملكيات لا تتقاطع: التصدير (extract وconvert وexport)، والاستيراد والمقارنة (srt وimport وcompare)، والعرض والمزامنة (player/overlay وsync وwatch). لا ملف مشترك بينها. P3 أولًا لأن بصمتها يستعملها اختبار الذهاب والإياب في P4. |
-| W4 — واجهات الاستخدام | P6 ← P7 ← P8 | 3 معًا | P3 · P4 · P5 | npm run plan:check · npm run check:wave | ثلاث واجهات مستقلة تستهلك منطق W3 المدمج: شريط المشغّل (player/controls)، والأيقونة والمحفوظات والإعدادات (pages/popup وlibrary وsettings)، والمحرّر (pages/editor وcore/edit). العقود مجمّدة، وأساس الواجهة src/ui مشترك للقراءة فقط. |
+| W4 — واجهات الاستخدام | P6 ← P7 ← P8 | 3 معًا | P3 · P4 · P5 | npm run plan:check · npm run check:wave | ثلاث واجهات مستقلة تستهلك منطق W3 المدمج: شريط المشغّل مع تطبيق خط الترجمة وحجمها على الطبقة (player/controls وplayer/overlay)، والأيقونة والمحفوظات والإعدادات مع قالب تعليمات الترجمة (pages/popup وlibrary وsettings وcore/export/instructions)، والمحرّر (pages/editor وcore/edit). تسبقها «تهيئة W4» المسجّلة في docs/delivery/waves.md على main قبل وسمها، ثم العقود مجمّدة وأساس الواجهة src/ui مشترك للقراءة فقط. |
 | W5 — التكامل والجاهزية | P9 | منفردة | P6 · P7 · P8 | npm run plan:check · npm run check:wave | منفردة: الحكم التكاملي النهائي على المتصفحين. نجاح كل فرع منفردًا ليس نجاح التكامل. |
 <!-- tj:gen:waves-table:end -->
 
@@ -91,8 +91,8 @@ W1: P1 ──G1──▶ W2: P2 ──▶ W3: P3 ║ P4 ║ P5 ──▶ W4: P6 
 
 | المرحلة | تملك |
 | --- | --- |
-| P6 — أدوات شريط المشغّل | `src/player/controls/**`، `src/core/errors/controls.js`، `test/unit/player/controls/**`، `test/live/controls/**`، `test/integration/player/**` |
-| P7 — الأيقونة والمحفوظات والإعدادات | `src/pages/popup/**`، `src/pages/library/**`، `src/pages/settings/**`، `src/core/errors/pages.js`، `test/unit/pages/popup/**`، `test/unit/pages/library/**`، `test/unit/pages/settings/**`، `test/live/pages/**` |
+| P6 — أدوات شريط المشغّل | `src/player/controls/**`، `src/player/overlay/**`، `src/core/errors/controls.js`، `test/unit/player/controls/**`، `test/unit/player/overlay/**`، `test/live/controls/**`، `test/integration/player/**` |
+| P7 — الأيقونة والمحفوظات والإعدادات | `src/pages/popup/**`، `src/pages/library/**`، `src/pages/settings/**`، `src/core/errors/pages.js`، `src/core/export/instructions.js`، `src/core/export/index.js`، `test/unit/pages/popup/**`، `test/unit/pages/library/**`، `test/unit/pages/settings/**`، `test/unit/export/instructions.test.js`، `test/unit/export/build-export.test.js`، `test/live/pages/**` |
 | P8 — محرّر الترجمة | `src/pages/editor/**`، `src/core/edit/**`، `src/core/errors/editor.js`، `test/unit/edit/**`، `test/unit/pages/editor/**`، `test/live/editor/**` |
 
 **W5 — التكامل والجاهزية**
@@ -144,6 +144,28 @@ W1: P1 ──G1──▶ W2: P2 ──▶ W3: P3 ║ P4 ║ P5 ──▶ W4: P6 
 | W1 | سلوك الالتقاط الحي كما ثبت (`docs/contracts/extraction.md`) | P2 تثبّته فقط. |
 | W2 | كل `docs/contracts/` و`src/core/model/` و`src/manifest.json` و`src/content/` و`src/ui/` و`src/player/youtube-dom.js` و`package.json` و`scripts/` | على `main` بين الموجات، بطلب مسجّل يطبّقه المنسّق. لا تغيير عقد أثناء موجة متوازية. |
 | W3 | واجهات `export` و`import` و`compare` و`overlay` كما دُمجت | بطلب مسجّل، والمرحلة المحتاجة متعطلة حتى يُحسم. |
+
+## طلبات مسجّلة بين الموجات
+
+### تهيئة W4 — عقود المظهر وتعليمات الترجمة وخطوط الترجمة
+
+**الطلب:** اعتمده سلطان في 2026-11-01 مع إضافة «نسخ تعليمات الترجمة» وخط الترجمة وحجمها و«حول ترجمان» (R40 وR41 وR42). **ينفّذه منسّق W3** على `main` بعد تقديمه إلى `tj-int/W3` المتحقق، و**قبل** `git tag tj-W4/base` (الخطوة 9 من «دور: منسّق الموجة»)، فتبدأ فروع W4 منه. لا يُنفَّذ قبل ذلك: العقود لا تتغير أثناء موجة لم تُغلق.
+
+1. **نموذج الإعدادات:** `docs/contracts/data-model.md` §٨ و`src/core/model/settings.js` واختبارها في `test/unit/model/`:
+   - `appearance.font`: `"almarai" | "noto-sans-arabic" | "tajawal" | "markazi"`، والافتراضي `almarai`.
+   - `appearance.scale` بدل `appearance.size`: عدد صحيح من 70 إلى 160 من مضاعفات 5، والافتراضي 100. والقراءة المتسامحة تحوّل القيم القديمة: `s` إلى 85، و`m` إلى 100، و`l` إلى 120، و`xl` إلى 145.
+   - حذف `export.showInstructions`: التعليمات لا تُعرض في الواجهة أبدًا.
+2. **عقد الواجهات:** `docs/contracts/interfaces.md`:
+   - وحدة التصدير: `instructions({ videoId, title, parts? }) → string` بنص [الملحق أ في مواصفة المنتج](../product-spec.md#ملحق-أ-تعليمات-الترجمة-المعتمدة) حرفيًا، و`buildExport` يمرّر عنوانه ومعرّفه. تنفّذه P7.
+   - الطبقة: المظهر من `state.settings.appearance` بما فيه الخط والحجم النسبي، والخطوط من ملفات الإضافة. تنفّذه P6.
+3. **بيانات الخطوط:** `src/ui/subtitle-fonts.js` (بيانات فقط): لكل خط معرّفه، واسمه العربي، واسم عائلة فريد داخل الإضافة، وملفاه، وسلسلة البدائل (المراعي المضمّن، ثم خطوط النظام العربية).
+4. **ملفات الخطوط:** `src/ui/fonts/subtitle/`: WOFF2 للخطوط الأربعة بوزنين (700 و400) مع `OFL.txt` لكل عائلة، من مستودع Google Fonts الرسمي. **التنزيل بموافقة سلطان عند التنفيذ**، مع ذكر الملفات ومصدرها وحجمها.
+5. **البيان والبناء:**
+   - `src/manifest.json`: `web_accessible_resources` لملفات `ui/fonts/subtitle/*.woff2` وحدها، على `https://www.youtube.com/*`، مع `use_dynamic_url: true`. لا أذونات جديدة.
+   - `scripts/build.mjs`: نسخ `ui/fonts/**` إلى البناء.
+   - `scripts/check-static.mjs`: قبول هذا الإدخال وحده في البيان.
+6. **الوثائق:** إزالة هذا البند من «طلبات مسجّلة» أو وسمه «منفّذ» مع بصمة الالتزام، وتحديث `CLAUDE.md` إن لزم.
+7. **الفحص والالتزام:** `npm run check` و`npm run plan:check` خضراوان، ثم التزام `W4: تهيئة — عقود المظهر وتعليمات الترجمة وخطوط الترجمة`، ثم الوسم والدفع بقواعد «الحفظ والدفع».
 
 ## إن فشل الاستخراج عند G1
 
