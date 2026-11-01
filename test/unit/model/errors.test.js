@@ -35,7 +35,7 @@ test('ملفات مجالات المراحل اللاحقة موجودة ببا�
   assert.deepEqual(byName.controls.PREFIXES, ['CT_']);
   assert.deepEqual(byName.pages.PREFIXES, ['PG_']);
   assert.deepEqual(byName.editor.PREFIXES, ['ED_']);
-  for (const n of ['import', 'overlay', 'controls', 'pages', 'editor']) assert.deepEqual(byName[n].MESSAGES, {});
+  for (const n of ['import', 'controls', 'pages', 'editor']) assert.deepEqual(byName[n].MESSAGES, {});
 });
 
 test('TjError: رسالة عربية بالقالب، وتفاصيل منقّاة ومقصورة', () => {

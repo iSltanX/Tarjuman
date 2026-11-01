@@ -124,7 +124,14 @@
   "checks": [],
   "acceptance": {},
   "evidence": [],
-  "sharedRequests": []
+  "sharedRequests": [
+    {
+      "file": "test/unit/model/errors.test.js",
+      "change": "إخراج المجال overlay من قائمة المجالات التي يشترط الاختبار فراغ رسائلها (سطر واحد: for (const n of [...]))",
+      "why": "ملف الأخطاء src/core/errors/overlay.js ملك P5 ومطلوب في نطاقها، وإضافة رموز PL_ إليه تكسر شرط «فارغة» الموروث من تثبيت P2؛ ومجالا P4 وP6 وغيرهما سيحتاجان التعديل نفسه في سطرهما، فيضمّ المنسّق السطر بترتيب الدمج",
+      "applied": true
+    }
+  ]
 }
 ```
 
