@@ -9,6 +9,8 @@ export const COUNT = Object.freeze({
   error: Object.freeze({ one: 'خطأ واحد', two: 'خطآن', few: 'أخطاء', many: 'خطأً', single: 'خطأ' }),
   errorToFix: Object.freeze({ one: 'خطأ التوقيت', two: 'خطأي التوقيت', few: 'أخطاء توقيت', many: 'خطأ توقيت', single: 'خطأ توقيت' }),
   warning: Object.freeze({ one: 'تحذير واحد', two: 'تحذيران', few: 'تحذيرات', many: 'تحذيرًا', single: 'تحذير' }),
+  match: Object.freeze({ one: 'موضع واحد', two: 'موضعان', few: 'مواضع', many: 'موضعًا', single: 'موضع' }),
+  mark: Object.freeze({ one: 'علامة واحدة', two: 'علامتان', few: 'علامات', many: 'علامة', single: 'علامة' }),
 });
 
 /** صيغة العدد: one وtwo وfew وmany وsingle كما في formatCount. @param {number} n */

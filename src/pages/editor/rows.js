@@ -20,6 +20,7 @@ export const textDir = (text) => (HAS_ARABIC.test(text) || !HAS_LETTER.test(text
  *   session: ReturnType<typeof import('../../core/edit/index.js').createEditSession>,
  *   report: import('../../core/edit/issues.js').IssueReport,
  *   refs: string[], refDir: 'ltr' | 'rtl', showEnglish: boolean, readOnly: boolean,
+ *   match?: (index: number) => 'current' | 'match' | null, refRanges?: (index: number) => { start: number, end: number }[] | null,
  *   selection: Set<number>, activeIndex: number | null, stepMs: number
  * }} RowContext
  */
@@ -119,8 +120,23 @@ export function createRows(doc, ctx) {
     text.readOnly = c.readOnly;
     text.style.height = `${textLines(cue.text) * ROW.line + ROW.fieldChrome}px`;
 
-    en.textContent = c.refs[i] ?? '';
+    const ref = c.refs[i] ?? '';
+    const ranges = c.refRanges?.(i);
+    if (ranges?.length) {
+      // نتائج البحث في المرجع الإنجليزي مميزة فيه (للقراءة فقط).
+      const parts = [];
+      let at = 0;
+      for (const r of ranges) {
+        parts.push(ref.slice(at, r.start), el('mark', { text: ref.slice(r.start, r.end), doc }));
+        at = r.end;
+      }
+      parts.push(ref.slice(at));
+      en.replaceChildren(...parts);
+    } else if (en.childElementCount || en.textContent !== ref) en.textContent = ref;
     en.dir = c.refDir;
+    const match = c.match?.(i) ?? null;
+    node.classList.toggle('has-match', match === 'match');
+    node.classList.toggle('is-match-current', match === 'current');
     en.hidden = !c.showEnglish;
 
     nudges.hidden = c.readOnly;

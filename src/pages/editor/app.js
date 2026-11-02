@@ -19,6 +19,7 @@ import {
   classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged,
 } from './persist.js';
 import { createRows, textDir } from './rows.js';
+import { createSearch } from './search.js';
 import {
   activeSlotLine, editSlotLabel, errorsToFix, numberList, offsetLine, offsetNotice, refOptionLabel, saveStatus, scopeOption, scopeTarget,
   seconds, shiftSentence, slotFallback, unsavedSentence,
@@ -146,9 +147,27 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
   const previewEl = el('p', { className: 'ed-preview', doc });
   const noticeEl = el('p', { className: 'ed-notice', attrs: { role: 'alert' }, doc });
   const resultEl = el('p', { className: 'ed-result', attrs: { role: 'status', 'aria-live': 'polite' }, doc });
+  const search = createSearch({
+    doc,
+    cues: () => {
+      const s = act();
+      return Array.from({ length: s.count }, (_, i) => s.cueAt(i));
+    },
+    english: () => (S.view === 'original' ? S.refsOriginal : S.refs),
+    readOnly: () => (readOnly() ? messageFor('ED_READ_ONLY') : null),
+    onChange: () => S.list?.refresh(null),
+    reveal: (index, match, { focus, field }) => revealMatch(index, match, { focus, field }),
+    replace: (matches, replacement, only) => {
+      const r = S.session.replaceMatches(matches, replacement, { only });
+      S.result = { tone: r.count ? 'success' : 'info', text: r.count ? `استُبدل النص في ${formatCount(r.count, COUNT_FORMS.cue)}. التراجع يعيده خطوةً واحدة.` : 'لا تغيير.' };
+      renderToolbar();
+      return r;
+    },
+  });
   const toolbarEl = el('section', {
-    className: 'ed-toolbar', attrs: { 'aria-label': 'تعديل التوقيت' },
+    className: 'ed-toolbar', attrs: { 'aria-label': 'أدوات التحرير' },
     children: [
+      search.root,
       el('div', {
         className: 'ed-toolbar__row',
         children: [
@@ -211,6 +230,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
   const rowView = createRows(doc, () => ({
     rows: S.rows, session: act(), report: act().issues(), refs: S.colRefs, refDir: S.refCol === 'en' ? 'ltr' : 'rtl',
     showEnglish: S.showEnglish, readOnly: readOnly(), selection: S.selection, activeIndex: S.activeIndex, stepMs: S.stepMs,
+    match: (i) => search.rowState(i), refRanges: (i) => (S.refCol === 'en' ? search.englishRanges(i) : null),
   }));
 
   // ---- الفتح وإعادة الفتح ----
@@ -312,6 +332,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
       } else S.list.reset(S.layout);
     }
     listHead.classList.toggle('ed-list--no-en', !S.showEnglish);
+    search.refresh();
   }
 
   function compareNow(s) {
@@ -339,6 +360,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     if (e.kind === 'text' && e.indices) for (const i of e.indices) S.layout.setHeight(S.rowOf[i], heightOf(S.rows[S.rowOf[i]], S.session, report));
     else S.rows.forEach((r, k) => S.layout.setHeight(k, heightOf(r, S.session, report)));
     S.list.refresh(null, e.kind !== 'text' || Boolean(e.undo || e.redo) || e.indices === null);
+    search.refresh();
     scheduleChrome();
     win.clearTimeout(S.compareTimer);
     S.compareTimer = win.setTimeout(() => {
@@ -634,6 +656,19 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     const node = S.list.reveal(row);
     const sel = field === 'start' || field === 'end' ? `[data-field="${field}"]` : '[data-field="text"]';
     node?.querySelector(sel)?.focus({ preventScroll: true });
+  }
+
+  /** نتيجة بحث: الصف ظاهر ومميز، والمطابقة محددة في نصه حين يُطلب التركيز (أزرار ↑↓). */
+  function revealMatch(index, match, { focus, field }) {
+    if (index < 0 || index >= act().count) return;
+    setActive(index);
+    const node = S.list.reveal(S.rowOf[index]);
+    if (!focus || !node) return;
+    const text = node.querySelector('[data-field="text"]');
+    if (field === 'ar' && match && text) {
+      text.focus({ preventScroll: true });
+      text.setSelectionRange(match.start, match.end);
+    } else text?.focus({ preventScroll: true });
   }
 
   function jumpToN(n) {
@@ -1007,10 +1042,16 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
   doc.addEventListener('keydown', (e) => {
     if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
     // المفتاح الفعلي لا الحرف: بتخطيط عربي يكون e.key «س» لا «s».
-    const k = { KeyS: 's', KeyZ: 'z', KeyY: 'y' }[e.code];
+    const k = { KeyS: 's', KeyZ: 'z', KeyY: 'y', KeyF: 'f' }[e.code];
     if (k === 's') {
       e.preventDefault();
       save();
+      return;
+    }
+    if (k === 'f' && !doc.querySelector('dialog[open]')) {
+      // القائمة افتراضية فلا يرى بحث المتصفح صفوفها المخفية: ⌘F يركّز بحث المحرّر (R51).
+      e.preventDefault();
+      search.focus();
       return;
     }
     const t = e.target;
