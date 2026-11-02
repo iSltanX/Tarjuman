@@ -35,7 +35,7 @@ export const GLOSSARY = [
 ];
 
 /** مجلد node_modules الذي يحل منه المستودع esbuild (في worktree يُحل من النسخة الرئيسية). */
-const NODE_MODULES = (() => {
+export const NODE_MODULES = (() => {
   const f = fileURLToPath(import.meta.resolve('esbuild'));
   return f.slice(0, f.lastIndexOf(`${path.sep}node_modules${path.sep}`) + `${path.sep}node_modules`.length);
 })();

@@ -1,4 +1,4 @@
-// العيّنتان العربيتان الحقيقيتان (test/e2e/fixtures/، بإذن سلطان في P9): ترجمة نموذج خارجي لملفي SRT اللذين صدّرتهما
+// العيّنات العربية الحقيقية (test/e2e/fixtures/، بإذن سلطان في P9 ثم P15): ترجمة نموذج خارجي لملفي SRT اللذين صدّرتهما
 // الإضافة من عيّنتي P1 الحقيقيتين، باتباع الملحق أ. تمران في استيراد الإضافة ومقارِنها كما يرفعهما المستخدم، فتُقارنان
 // ببصمة التصدير نفسه «مطابق للأصل»؛ ولا رابط ولا رمز فيهما. أساس لاختبارات الإصدار الثاني.
 //   node scripts/run-tests.mjs test/e2e/static
@@ -15,6 +15,10 @@ const ROOT = new URL('../../../', import.meta.url);
 const CASES = [
   { id: 'iG9CE55wbtY', kind: 'manual', mode: 'normal', fixture: 'manual-ted-iG9CE55wbtY.json', durationMs: 1203421, cues: 427, ar: 'iG9CE55wbtY.en.manual.normal.ar.srt' },
   { id: 'Y9rkKtK1b44', kind: 'asr', mode: 'long', fixture: 'asr-nwc-Y9rkKtK1b44.json', durationMs: 3600000, cues: 729, ar: 'Y9rkKtK1b44.en.asr.long.ar.srt' },
+  // P15: ترجمة ثانية للمحاضرة نفسها من نموذج آخر (Haiku) لاختبار الخانات، وميدواي بالوضع العادي (Sonnet) للرحلة الطويلة.
+  { id: 'iG9CE55wbtY', kind: 'manual', mode: 'normal', fixture: 'manual-ted-iG9CE55wbtY.json', durationMs: 1203421, cues: 427, ar: 'iG9CE55wbtY.en.manual.normal.haiku.ar.srt' },
+  // وفيها ما يفعله نموذج حقيقي: أربعة مقاطع بلا حرف عربي («K» مرتين، و«VB-6»، و«1944»)، والمقارِن يرصد الثلاثة الأولى.
+  { id: 'Y9rkKtK1b44', kind: 'asr', mode: 'normal', fixture: 'asr-nwc-Y9rkKtK1b44.json', durationMs: 3600000, cues: 1056, ar: 'Y9rkKtK1b44.en.asr.normal.ar.srt', latin: [180, 244, 439, 593], noArabic: [180, 244, 439] },
 ];
 
 async function exported(c) {
@@ -32,7 +36,7 @@ for (const c of CASES) {
     const en = parseSrtStrict((await exported(c)).files[0].text);
     assert.equal(ar.length, c.cues);
     assert.deepEqual(ar.map((x) => [x.n, x.startMs, x.endMs]), en.map((x) => [x.n, x.startMs, x.endMs]));
-    assert.deepEqual(ar.filter((x) => !/\p{Script=Arabic}/u.test(x.text)).map((x) => x.n), []);
+    assert.deepEqual(ar.filter((x) => !/\p{Script=Arabic}/u.test(x.text)).map((x) => x.n), c.latin ?? []);
     assert.deepEqual(findSecrets(text), []);
     assert.equal(text.charCodeAt(0) === 0xfeff, false, 'بلا BOM');
   });
@@ -44,6 +48,6 @@ for (const c of CASES) {
     assert.equal(r.ok, true, r.error?.message);
     assert.equal(r.cues.length, c.cues);
     assert.equal(r.comparison.matched, true);
-    assert.deepEqual([r.comparison.missing, r.comparison.extra, r.comparison.drift, r.comparison.empty, r.comparison.noArabic], [[], [], [], [], []]);
+    assert.deepEqual([r.comparison.missing, r.comparison.extra, r.comparison.drift, r.comparison.empty, r.comparison.noArabic], [[], [], [], [], c.noArabic ?? []]);
   });
 }
