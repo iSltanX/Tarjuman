@@ -589,8 +589,10 @@ try {
     const s0 = await iso(I.state);
     await stableSeek((CUE.startMs + CUE.endMs) / 2000 + (s0.view.displayOffsetMs ?? 0) / 1000);
     await openMenuOf('upload', 'الترجمة العربية');
-    await clickItem('mark');
-    await sleep(800);
+    const tm = (await clickItem('mark', { wait: false })).at;
+    // زمن كتابة العلامة على حزمة بترجمتين من 2000 مقطع فأكثر (ملاحظة itemsFor: كل كتابة تعيد إرسال التوابع).
+    result.measures.longMarkWriteMs = await within(tm, async () => (await iso(I.bundle, LONG)).slots.some((x) => x?.marks.some((m) => m.n === CUE.n)), 5000);
+    await sleep(500);
     await closeMenus();
     const bd = await iso(I.bundle, LONG);
     const slot = bd.active - 1;
