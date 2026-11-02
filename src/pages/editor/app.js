@@ -6,8 +6,10 @@
 import { compare, previewRestoreTiming } from '../../core/compare/index.js';
 import { READING_DEFAULTS } from '../../core/edit/density.js';
 import {
-  buildRows, createEditSession, englishReference, parseSeconds, parseTimecode, pickEnglishTrack, planArabicExport,
+  buildRows, createEditSession, englishReference, parseSeconds, parseTimecode, pickEnglishTrack, planArabicExport, planMarkToggle,
+  resolveSlotMarks, reviewGroups,
 } from '../../core/edit/index.js';
+import { resolvePosition } from '../../core/model/marks.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { download } from '../../core/export/index.js';
 import { slotModels } from '../../core/model/bundle.js';
@@ -20,13 +22,14 @@ import { openDriftDialog } from './drift-dialog.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
 import { renderComparison, renderIssues } from './panels.js';
 import {
-  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged,
+  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged, writeMarks, writePosition,
 } from './persist.js';
+import { renderDensity, renderMarks, renderResume } from './review-panel.js';
 import { createRows, textDir } from './rows.js';
 import { createSearch } from './search.js';
 import {
-  activeSlotLine, editSlotLabel, errorsToFix, mergePreview, numberList, offsetLine, offsetNotice, refOptionLabel, saveStatus, scopeOption,
-  scopeTarget, seconds, seekResult, shiftSentence, slotFallback, splitPreview, unsavedSentence,
+  COUNT, MARK_LABEL, activeSlotLine, editSlotLabel, errorsToFix, mergePreview, nextMark, numberList, offsetLine, offsetNotice, refOptionLabel,
+  saveStatus, scopeOption, scopeTarget, seconds, seekResult, shiftSentence, slotFallback, splitPreview, unsavedSentence,
 } from './text.js';
 import { RowLayout, createVirtualList, rowHeight, textLines } from './virtual.js';
 
@@ -35,6 +38,8 @@ const KIND_LABEL = Object.freeze({
   replace: 'الاستبدال', merge: 'الدمج', split: 'الشطر', drift: 'تصحيح الانجراف', patch: 'ملف التصحيح', rescue: 'إعادة تطبيق تعديلاتي',
 });
 const STEPS = [100, 250, 500, 1000, 2000, 5000];
+/** سكون على مقطع قبل كتابة آخر موضع (نقطة طبيعية، لا مع كل تمرير). */
+const POSITION_DELAY_MS = 4000;
 const MAX_PREVIEW_ROWS = 200;
 const COMPARE_DELAY_MS = 250;
 
@@ -93,6 +98,8 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     result: /** @type {{ tone: string, text: string } | null} */ (null),
     external: /** @type {null | 'changed' | 'removed'} */ (null),
     saving: false, pending: null, leaving: false, externalChain: Promise.resolve(),
+    writing: 0, writeChain: Promise.resolve(), positionTimer: 0, resumeAfterSwitch: false,
+    markView: /** @type {ReturnType<typeof resolveSlotMarks> | null} */ (null),
     caret: /** @type {{ index: number, at: number, version: number } | null} */ (null),
     hoverAct: /** @type {{ kind: 'merge' | 'split', index: number } | null} */ (null),
     comparison: null, compareTimer: 0, frame: 0,
@@ -207,6 +214,27 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
   const bannerEl = el('div', { className: 'ed-banner', doc });
   const issuesEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المشكلات' }, doc });
   const compareEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المقارنة' }, doc });
+  const densityEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'الكثافة' }, doc });
+  const marksEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'العلامات' }, doc });
+  const resumeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'آخر موضع' }, doc });
+  const completeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'الاستكمال' }, doc });
+  // اللوحة الجانبية بتبويبين (§١٩.٩): «المراجعة» (الفحص الآلي ثم العلامات وآخر موضع) و«الاستكمال».
+  const sideTabs = [['review', 'المراجعة'], ['complete', 'الاستكمال']].map(([id, label]) => el('button', {
+    className: 'ed-tab', text: label, attrs: { type: 'button', role: 'tab', id: `ed-tab-${id}`, 'aria-controls': `ed-pane-${id}`, 'data-tab': id },
+    on: { click: () => setSideTab(id) },
+    doc,
+  }));
+  const reviewPane = el('div', {
+    className: 'ed-pane', attrs: { role: 'tabpanel', id: 'ed-pane-review', 'aria-labelledby': 'ed-tab-review' },
+    children: [
+      el('p', { className: 'ed-pane__title tj-label', text: 'الفحص الآلي', doc }), issuesEl, compareEl, densityEl,
+      el('p', { className: 'ed-pane__title tj-label', text: 'مراجعتك', doc }), marksEl, resumeEl,
+    ],
+    doc,
+  });
+  const completePane = el('div', { className: 'ed-pane', attrs: { role: 'tabpanel', id: 'ed-pane-complete', 'aria-labelledby': 'ed-tab-complete', hidden: '' }, children: [completeEl], doc });
+  const resumeChip = button({ label: '', size: 'sm', variant: 'secondary', className: 'ed-resume-chip', onClick: () => resumeHere(), doc });
+  resumeChip.hidden = true;
   const counterEl = el('span', { className: 'ed-counter tj-caption', attrs: { 'aria-live': 'off' }, doc });
   // العمود المرجعي (§١٩.٩): الإنجليزية أو ترجمة أخرى من خانات الفيديو، باختيار في رأس عموده.
   const refSel = el('select', { className: 'ed-select ed-ref-select', attrs: { 'aria-label': 'العمود المرجعي' }, on: { change: () => setRefCol(refSel.value) }, doc });
@@ -230,8 +258,12 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     el('div', {
       className: 'ed-body',
       children: [
-        el('aside', { className: 'ed-side', children: [issuesEl, compareEl], doc }),
-        el('section', { className: 'ed-main', attrs: { 'aria-label': 'قائمة المقاطع' }, children: [el('div', { className: 'ed-main__bar', children: [counterEl], doc }), listHead, scroller], doc }),
+        el('aside', {
+          className: 'ed-side',
+          children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': 'اللوحة الجانبية' }, children: sideTabs, doc }), reviewPane, completePane],
+          doc,
+        }),
+        el('section', { className: 'ed-main', attrs: { 'aria-label': 'قائمة المقاطع' }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc }),
       ],
       doc,
     }),
@@ -242,6 +274,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     rows: S.rows, session: act(), report: act().issues(), refs: S.colRefs, refDir: S.refCol === 'en' ? 'ltr' : 'rtl',
     showEnglish: S.showEnglish, readOnly: readOnly(), selection: S.selection, activeIndex: S.activeIndex, stepMs: S.stepMs,
     match: (i) => search.rowState(i), refRanges: (i) => (S.refCol === 'en' ? search.englishRanges(i) : null),
+    markOf: (i) => (S.view === 'edit' ? S.markView?.byIndex.get(i) ?? null : null),
   }));
 
   // ---- الفتح وإعادة الفتح ----
@@ -273,6 +306,8 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     titleEl.title = b.record.title ?? '';
     rebuildList();
     renderAll();
+    // «تابع من المقطع N» عند الفتح أو تبديل الخانة، لا بعد كل حفظ.
+    if (!keepUi) renderResumeChip();
   }
 
   /** نص المرجع لكل مقطع في النسخة المعروضة: الإنجليزية دائمًا (للبحث فيها قراءةً)، والعمود المرجعي بحسب الاختيار. */
@@ -317,6 +352,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     const cues = Array.from({ length: s.count }, (_, i) => s.cueAt(i));
     computeRefs(cues);
     S.comparison = compareNow(s);
+    computeMarks();
     const rows = buildRows(cues, S.comparison?.missing ?? []);
     const sameRows = Boolean(S.list) && rows.length === S.rows.length
       && rows.every((r, k) => r.type === S.rows[k].type && r.index === S.rows[k].index && r.n === S.rows[k].n);
@@ -376,6 +412,9 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     win.clearTimeout(S.compareTimer);
     S.compareTimer = win.setTimeout(() => {
       S.comparison = compareNow(act());
+      computeMarks();
+      S.list.refresh(null);
+      renderReview(act().issues());
       renderComparisonPanel();
     }, COMPARE_DELAY_MS);
   }
@@ -397,7 +436,9 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     renderOffset();
     renderUnsaved();
     renderBanner();
-    renderIssues(issuesEl, { doc, report: act().issues(), onJump: jumpTo });
+    const report = act().issues();
+    renderIssues(issuesEl, { doc, report: timingOnly(report), onJump: jumpTo });
+    renderReview(report);
   }
 
   function saveBlockReason() {
@@ -557,11 +598,170 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
   }
 
   let toastTimer = 0;
-  function toast(text, tone = 'success') {
-    toastEl.textContent = text;
-    toastEl.className = `ed-toast ed-toast--${tone} is-shown`;
+  /** رسالة عابرة تحت الرأس، و«تراجع» اختياري لما يمس شيئًا محفوظًا (§١٩.١) بمهلة أطول. */
+  function toast(text, tone = 'success', { action } = {}) {
+    const undo = action ? button({
+      label: action.label, size: 'sm', variant: 'ghost', className: 'ed-toast__action',
+      onClick: () => {
+        toastEl.classList.remove('is-shown');
+        action.onClick();
+      },
+      doc,
+    }) : null;
+    toastEl.replaceChildren(...[el('span', { text, doc }), undo].filter(Boolean));
+    toastEl.className = `ed-toast ed-toast--${tone}${undo ? ' ed-toast--action' : ''} is-shown`;
     win.clearTimeout(toastTimer);
-    toastTimer = win.setTimeout(() => toastEl.classList.remove('is-shown'), 3000);
+    toastTimer = win.setTimeout(() => toastEl.classList.remove('is-shown'), undo ? 7000 : 3000);
+  }
+
+  // ---- الاستكمال (R52): يُبنى في complete-panel.js ----
+  function renderComplete() {}
+
+  // ---- المراجعة والعلامات وآخر موضع (R53) ----
+  const shownCues = () => {
+    const s = act();
+    return Array.from({ length: s.count }, (_, i) => s.cueAt(i));
+  };
+
+  /** المشكلات بلا الكثافة (للوحة «المشكلات»؛ والكثافة مجموعتها). */
+  function timingOnly(report) {
+    const list = report.list.filter((x) => !x.density);
+    return { ...report, list, warnings: list.length - report.errors };
+  }
+
+  /** العلامات على المعروض: على المفتوح بالمواضع نفسها حين لم تتغير البنية، فيبقى المعدَّل غير المحفوظ مرتبطًا. */
+  function computeMarks() {
+    if (S.view !== 'edit' || !S.info) {
+      S.markView = resolveSlotMarks([], []);
+      return;
+    }
+    const s = S.session;
+    const opened = s.reshaped ? null : Array.from({ length: s.count }, (_, i) => s.baseAt(i));
+    S.markView = resolveSlotMarks(S.info.marks, shownCues(), { opened });
+  }
+
+  function renderReview(report) {
+    const groups = reviewGroups({ issues: report, comparison: S.comparison, marks: S.markView ?? resolveSlotMarks([], []) });
+    const limits = densityOf(S.prefs);
+    renderDensity(densityEl, { doc, items: groups.auto.density, maxCps: limits.maxCps, maxLineChars: READING_DEFAULTS.maxLineChars, onJump: (i) => jumpTo(i, 'text') });
+    renderMarks(marksEl, { doc, marks: groups.marks, readOnly: readOnly(), onJump: (i) => jumpTo(i, 'text'), onRemoveOrphans: () => removeOrphans() });
+    renderResume(resumeEl, { doc, items: resumeItems(), onResume: (n) => resumeSlot(n) });
+    for (const t of sideTabs) t.textContent = t.dataset.tab === 'review' ? `المراجعة${groups.counts.todo ? ` (${groups.counts.todo})` : ''}` : 'الاستكمال';
+  }
+
+  function setSideTab(id) {
+    for (const t of sideTabs) {
+      const on = t.dataset.tab === id;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+    }
+    reviewPane.hidden = id !== 'review';
+    completePane.hidden = id !== 'complete';
+    if (id === 'complete') renderComplete();
+  }
+
+  /** كتابات المحرّر واحدة بعد أخرى، كلٌّ على أحدث حزمة مفتوحة، فلا تُرفض كتابة لأن كتابة لنا سبقتها. */
+  function queue(fn) {
+    S.writing++;
+    const run = S.writeChain.then(() => fn(S.opened));
+    S.writeChain = run.catch(() => {}).finally(() => {
+      S.writing--;
+      if (!S.writing && !S.saving) flushPending();
+    });
+    return run;
+  }
+
+  /** بعد كتابة علامة أو موضع أو مرجع: الحزمة الناتجة هي المفتوحة، والجلسة كما هي. */
+  function afterCompanionWrite(b) {
+    S.opened = b;
+    S.info = openedSlot(b, S.slot);
+    computeMarks();
+    S.list.refresh(null);
+    renderAll();
+  }
+
+  async function writeMarkPlan(plan, message, { undoable = true } = {}) {
+    try {
+      const b = await queue((opened) => writeMarks(store, videoId, opened, S.slot, plan, { now }));
+      afterCompanionWrite(b);
+      toast(message, 'success', undoable ? { action: { label: 'تراجع', onClick: () => writeMarkPlan({ remove: plan.add, add: plan.remove }, 'أُعيدت العلامات كما كانت.', { undoable: false }) } } : {});
+    } catch (err) {
+      const info = toErrorInfo(err);
+      toast(info.code === 'ST_CONFLICT' ? 'تغيّرت الترجمة من مكان آخر؛ أعد المحاولة بعد تحديثها.' : `${messageFor('ED_MARK_FAILED')} (${info.code})`, 'danger');
+    }
+  }
+
+  /** تبديل علامة الصف: بلا ← «أعود إليه» ← «راجعته» ← بلا، كتابةً واحدة برسالة «تراجع». */
+  function toggleMark(i) {
+    if (readOnly() || S.external) return;
+    const cur = S.markView.byIndex.get(i) ?? null;
+    const kind = nextMark(cur?.kind ?? null);
+    let plan;
+    try {
+      plan = planMarkToggle(S.markView, shownCues(), i, kind, new Date(now()).toISOString());
+    } catch {
+      toast(messageFor('ED_MARK_FAILED'), 'danger');
+      return;
+    }
+    const n = act().cueAt(i).n;
+    writeMarkPlan(plan, kind ? `المقطع ${n}: «${MARK_LABEL[kind]}».` : `أُزيلت علامة المقطع ${n}.`);
+  }
+
+  function removeOrphans() {
+    if (readOnly() || !S.markView.orphans.length) return;
+    writeMarkPlan({ remove: S.markView.orphans, add: [] }, `أُزيلت ${formatCount(S.markView.orphans.length, COUNT.mark)} فقدت مقطعها.`);
+  }
+
+  /** مواضع الخانات الممتلئة: لكلٍّ رقم المقطع الأقرب إلى موضعها المحفوظ. */
+  function resumeItems() {
+    return S.opened.slots.filter((x) => x.track).map((x) => {
+      const cues = x.n === S.slot && S.view === 'edit' ? shownCues() : x.track.current ?? x.track.original;
+      const i = resolvePosition(x.position, cues);
+      return { slot: x.n, name: x.name, n: i === null ? null : cues[i].n, editing: x.n === S.slot };
+    });
+  }
+
+  function resumeSlot(n) {
+    if (n !== S.slot) {
+      S.resumeAfterSwitch = true;
+      switchSlot(n);
+      return;
+    }
+    resumeHere();
+  }
+
+  /** «تابع من المقطع 312»: القفز إلى آخر موضع للخانة. */
+  function resumeHere() {
+    resumeChip.hidden = true;
+    const i = resolvePosition(S.info.position, shownCues());
+    if (i !== null) jumpTo(i, 'text');
+  }
+
+  function renderResumeChip() {
+    const i = S.info.position ? resolvePosition(S.info.position, shownCues()) : null;
+    resumeChip.hidden = i === null;
+    if (i !== null) resumeChip.firstChild.textContent = `تابع من المقطع ${act().cueAt(i).n}`;
+  }
+
+  /** آخر موضع يُكتب عند نقاط طبيعية: بعد سكون على مقطع، وعند مغادرة الصفحة أو الخانة (لا مع كل تمرير). */
+  function schedulePosition() {
+    win.clearTimeout(S.positionTimer);
+    S.positionTimer = win.setTimeout(() => writePositionNow(), POSITION_DELAY_MS);
+  }
+
+  function writePositionNow() {
+    win.clearTimeout(S.positionTimer);
+    if (S.view !== 'edit' || S.activeIndex === null || S.external || !S.info) return null;
+    const cue = act().cueAt(S.activeIndex);
+    const stored = S.info.position;
+    if (stored && stored.n === cue.n && stored.startMs === cue.startMs) return null;
+    const saved = S.info.cues;
+    const index = resolvePosition({ n: cue.n, startMs: cue.startMs, at: '' }, saved);
+    if (index === null) return null;
+    const slot = S.slot;
+    return queue((opened) => writePosition(store, videoId, opened, slot, index, { now }))
+      .then((b) => { if (S.slot === slot) afterCompanionWrite(b); else S.opened = b; })
+      .catch(() => {});
   }
 
   // ---- الأفعال ----
@@ -595,6 +795,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     S.activeIndex = i;
     S.list.refresh([prev, i].filter((x) => x !== null).map((x) => S.rowOf[x]));
     renderToolbar();
+    if (i !== null) schedulePosition();
   }
 
   function toggleSelect(i, checked, range) {
@@ -787,7 +988,11 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     const at = session.version;
     try {
       const n = S.slot;
-      const saved = await saveSlot(store, videoId, S.opened, n, { cues: session.snapshot(), offsetChanged: session.offsetChanged, offsetMs: session.offsetMs }, { now });
+      const edit = {
+        cues: session.snapshot(), offsetChanged: session.offsetChanged, offsetMs: session.offsetMs,
+        reanchorFrom: session.reshaped ? null : session.baseSnapshot(),
+      };
+      const saved = await queue((opened) => saveSlot(store, videoId, opened, n, edit, { now }));
       S.result = null;
       if (S.session === session && session.version !== at) {
         // كتب المستخدم أثناء الحفظ: المحفوظ يصبح الأساس وما كُتب بعده يبقى غير محفوظ، فلا يُكتب فوق الحقل.
@@ -897,11 +1102,16 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
         return;
       }
     }
+    writePositionNow();
     S.view = 'edit';
     S.result = null;
     load(S.opened, n);
     rememberSlot(n);
     toast(`الترجمة ${n}`, 'info');
+    if (S.resumeAfterSwitch) {
+      S.resumeAfterSwitch = false;
+      resumeHere();
+    }
   }
 
   /** الخانة في العنوان، فيفتحها التحديث نفسها. */
@@ -938,7 +1148,8 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     S.saving = true;
     renderHeader();
     try {
-      const saved = await restoreSlotOriginal(store, videoId, S.opened, S.slot, { now });
+      const n = S.slot;
+      const saved = await queue((opened) => restoreSlotOriginal(store, videoId, opened, n, { now }));
       S.view = 'edit';
       S.result = null;
       load(saved, S.slot, { keepUi: true });
@@ -1147,6 +1358,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
       applyShift({ kind: 'cue', index: i }, Number(t.dataset.dir) * S.stepMs, scopeTarget('cue', { activeN: act().cueAt(i).n, total: act().count }));
     } else if (kind === 'merge') onMerge(i);
     else if (kind === 'split') onSplit(i);
+    else if (kind === 'mark') toggleMark(i);
   });
   // معاينة الدمج والشطر قبل التطبيق في سطر شريط الأدوات (كمعاينة ±).
   const hoverAct = (on) => (e) => {
@@ -1189,6 +1401,11 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
       doRedo();
     }
   });
+  // آخر موضع عند مغادرة الصفحة أو إخفاء التبويب (نقطة طبيعية).
+  win.addEventListener('pagehide', () => writePositionNow());
+  doc.addEventListener('visibilitychange', () => {
+    if (doc.visibilityState === 'hidden') writePositionNow();
+  });
   win.addEventListener('beforeunload', (e) => {
     if (S.leaving || !(S.session.dirty || S.session.hasDrafts)) return;
     e.preventDefault();
@@ -1205,12 +1422,13 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     }
     const c = change.cleared ? { oldValue: S.opened.record, newValue: null } : change.videos?.[videoId];
     if (!c) return;
-    if (S.saving) S.pending = c;
+    if (S.saving || S.writing) S.pending = c;
     else handleExternal(c);
   });
 
   load(bundle, picked.n);
   rememberSlot(picked.n);
+  setSideTab('review');
   if (picked.fallback) toast(slotFallback(requested, picked.n), 'info');
   const api = { get state() { return S; }, save, jumpTo, setView, switchSlot };
   if (typeof __TJ_DEV__ !== 'undefined' && __TJ_DEV__) globalThis.__tarjumanEditor = api;

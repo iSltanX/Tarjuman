@@ -115,6 +115,28 @@ body.ed-page { overflow: hidden; }
 .ed-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ed-chip { min-width: 40px; min-height: 32px; padding: 0 8px; border: 1px solid var(--tj-border-strong); border-radius: 999px; background: var(--tj-surface); color: var(--tj-text); cursor: pointer; }
 .ed-chip:hover { background: var(--tj-brand-soft); }
+/* ---- التبويبان: المراجعة والاستكمال ---- */
+.ed-side { gap: 12px; }
+.ed-tabs { display: flex; gap: 4px; padding: 3px; border-radius: var(--tj-radius-button); background: var(--tj-surface); border: 1px solid var(--tj-border); }
+.ed-tab {
+  flex: 1; min-height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--tj-text-2);
+  font: 700 13px/18px var(--tj-font-body); cursor: pointer;
+}
+.ed-tab[aria-selected="true"] { background: var(--tj-brand); color: var(--tj-brand-ink); }
+.ed-tab:focus-visible { outline: 3px solid var(--tj-focus); outline-offset: 1px; }
+.ed-pane { display: flex; flex-direction: column; gap: 18px; }
+.ed-pane__title { margin: 0 0 -10px; color: var(--tj-muted); text-transform: none; letter-spacing: 0; }
+.ed-markgroup { display: flex; flex-direction: column; gap: 6px; }
+.ed-markgroup h3 { margin: 0; }
+.ed-chip--todo { border-color: color-mix(in srgb, var(--tj-warning) 60%, transparent); color: var(--tj-warning); }
+.ed-chip--done { border-color: color-mix(in srgb, var(--tj-success) 60%, transparent); color: var(--tj-success); }
+.ed-chip--moved { border-style: dashed; }
+.ed-resume { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.ed-resume__item { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; }
+.ed-resume-chip { margin-inline-end: auto; }
+.ed-main__bar { align-items: center; gap: 8px; }
+.ed-toast--action { pointer-events: auto; display: flex; align-items: center; gap: 10px; }
+.ed-toast__action { color: inherit; }
 .ed-notes summary { cursor: pointer; font: 700 13px/20px var(--tj-font-body); }
 .ed-notes ul { margin: 6px 0 0; padding-inline-start: 18px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
 

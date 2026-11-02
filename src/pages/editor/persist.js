@@ -3,7 +3,7 @@
 // بعد فتحها. والنشطة لا تتغير من هنا أبدًا: الحفظ في الخانة نفسها. ما يصل من onChange بنسخة الحزمة المفتوحة نفسها صدى
 // كتابتنا فيُهمل؛ وتغيّرٌ لا يمس محتوى خانة التحرير (علامة من المشغّل، أو خانة أخرى) يُتبنّى دون تعارض.
 import { TjError } from '../../core/errors/index.js';
-import { slotEditTransition } from '../../core/edit/index.js';
+import { reanchorMarks, slotEditTransition } from '../../core/edit/index.js';
 import { withMarksReplaced, withPosition, withSlotOriginalRestored, withSlotReference } from '../../core/model/bundle.js';
 
 /** @typedef {import('../../core/model/slots.js').Bundle} Bundle */
@@ -63,15 +63,21 @@ function write(store, videoId, opened, fn) {
 }
 
 /**
- * «حفظ»: الخانة n بمقاطعها، والإزاحة إن ثُبّتت في الخطوة نفسها. النشطة لا تتغير.
+ * «حفظ»: الخانة n بمقاطعها، والإزاحة إن ثُبّتت في الخطوة نفسها. النشطة لا تتغير. وإن لم تتغير البنية (reanchorFrom:
+ * المقاطع كما فُتحت) تُربط علامات المقاطع المعدّلة بنسخها المحفوظة في الكتابة نفسها، فلا تصير «قد تكون انتقلت».
  * @param {Store} store @param {string} videoId @param {Bundle} opened @param {1 | 2 | 3} n
- * @param {{ cues: import('../../core/model/cue.js').Cue[], offsetChanged: boolean, offsetMs: number }} edit
+ * @param {{ cues: import('../../core/model/cue.js').Cue[], offsetChanged: boolean, offsetMs: number, reanchorFrom?: import('../../core/model/cue.js').Cue[] | null }} edit
  * @param {{ now?: () => number }} [env]
  * @returns {Promise<Bundle>}
  */
-export function saveSlot(store, videoId, opened, n, { cues, offsetChanged, offsetMs }, { now = Date.now } = {}) {
+export function saveSlot(store, videoId, opened, n, { cues, offsetChanged, offsetMs, reanchorFrom = null }, { now = Date.now } = {}) {
   const at = iso(now);
-  return write(store, videoId, opened, (b) => slotEditTransition(b, n, { cues, displayOffsetMs: offsetChanged ? offsetMs : undefined }, at));
+  return write(store, videoId, opened, (b) => {
+    const next = slotEditTransition(b, n, { cues, displayOffsetMs: offsetChanged ? offsetMs : undefined }, at);
+    if (!reanchorFrom) return next;
+    const plan = reanchorMarks(next.slots[n - 1].marks, reanchorFrom, cues);
+    return plan.remove.length ? withMarksReplaced(next, n, plan, at) : next;
+  });
 }
 
 /** «استعادة الأصل» لخانة بعد تأكيد المستخدم. @param {Store} store @param {string} videoId @param {Bundle} opened @param {1 | 2 | 3} n */

@@ -131,9 +131,14 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     const event = { ...e, version };
     for (const fn of listeners) fn(event);
   };
+  // خطوة بنية سقطت من حد التاريخ: المواضع لم تعد تقابل المفتوح وإن لم تبقَ في التاريخ.
+  let droppedStructural = false;
   const push = (entry) => {
     undoStack.push(entry);
-    if (undoStack.length > maxHistory) undoStack.splice(0, undoStack.length - maxHistory);
+    if (undoStack.length > maxHistory) {
+      const dropped = undoStack.splice(0, undoStack.length - maxHistory);
+      if (dropped.some((e) => STRUCTURAL_KINDS.includes(e.kind))) droppedStructural = true;
+    }
     redoStack = [];
   };
   const checkIndex = (i) => {
@@ -237,6 +242,8 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     get undoKind() { return undoStack[undoStack.length - 1]?.kind ?? null; },
     get redoKind() { return redoStack[redoStack.length - 1]?.kind ?? null; },
     get historySize() { return undoStack.length; },
+    /** تغيّرت البنية منذ الفتح (دمج أو شطر أو تصحيح أو إعادة تطبيق مطبَّقة)، فلا يقابل الموضعُ موضعَه في المفتوح. */
+    get reshaped() { return work.length !== base.length || droppedStructural || undoStack.some((e) => STRUCTURAL_KINDS.includes(e.kind)); },
     get version() { return version; },
     get hasDrafts() { return drafts.size > 0; },
     /** @param {number} i */
@@ -388,6 +395,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       work = base.slice();
       offset = baseOffset;
       recount();
+      droppedStructural = false;
       undoStack = [];
       redoStack = [];
       openGroup = null;
@@ -402,6 +410,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     rebase({ cues: next, offsetMs: nextOffset }) {
       base = Object.freeze(next.map(freezeCue));
       baseOffset = nextOffset;
+      droppedStructural = false;
       session.discard();
     },
 

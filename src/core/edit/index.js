@@ -6,5 +6,9 @@ export { STRUCTURAL_KINDS, createEditSession, resolveScope } from './session.js'
 export { planArabicExport } from './export.js';
 export { buildRows, englishReference, pickEnglishTrack } from './reference.js';
 export { editTransition, slotEditTransition } from './transition.js';
+export {
+  COMPLETION_DEFAULTS, REVIEW_CODES, completionGroups, completionNumbers, planMarkToggle, reanchorMarks, resolveSlotMarks, reviewGroups,
+  reviewItems,
+} from './review.js';
 // محرّكات P11 تُستورد من ملفاتها (عقد interfaces §١٦)؛ والبحث يُعاد تصديره هنا لراحة الصفحة وحدها.
 export { planReplace, searchCues } from './search.js';

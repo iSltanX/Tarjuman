@@ -130,6 +130,19 @@ test('علامة من المشغّل لا تمس محتوى خانة التحر�
   assert.equal(saved.slots[0].marks.length, 3, 'علامة المشغّل باقية');
 });
 
+test('الحفظ يعيد ربط علامات المقاطع المعدّلة في الكتابة نفسها (البنية كما هي)، ولا يمسها بعد دمج', async () => {
+  const { editor, opened } = await setup(withSlots());
+  const s = createEditSession({ cues: openedSlot(opened, 1).cues, offsetMs: 500 });
+  s.setText(0, 'صُحّح نص المقطع المعلَّم');
+  const saved = await saveSlot(editor, VIDEO_ID, opened, 1, {
+    cues: s.snapshot(), offsetChanged: false, offsetMs: 500, reanchorFrom: s.baseSnapshot(),
+  });
+  const [m] = saved.slots[0].marks.filter((x) => x.kind === 'todo');
+  assert.equal(m.textHash, markOn(saved.slots[0].track.current[0]).textHash, 'العلامة على النص المحفوظ');
+  assert.equal(m.at, opened.slots[0].marks[0].at, 'تاريخها كما هو');
+  assert.equal(saved.record.rev, opened.record.rev + 1, 'كتابة واحدة');
+});
+
 test('استعادة الأصل لخانة: تسقط النسخة المعدّلة المحفوظة، والنسخة القديمة تُرفض', async () => {
   const { editor, opened } = await setup(withSlots());
   const back = await restoreSlotOriginal(editor, VIDEO_ID, opened, 1);
