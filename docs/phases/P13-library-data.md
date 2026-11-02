@@ -139,10 +139,10 @@
 ```json tj-status
 {
   "phase": "P13",
-  "status": "planned",
-  "updated": "2026-11-02",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W7 بعد التحقق من W6.",
+  "status": "in_progress",
+  "updated": "2026-11-02T16:35:34+03:00",
+  "branch": "tj/P13-library-data",
+  "resume": "بدأت: قراءة العقود (backup والتوابع والاستعادة) ومواصفة التصميم §١٩، ثم src/core/backup باختبارات أولًا.",
   "blocker": null,
   "outcome": null,
   "commit": null,
