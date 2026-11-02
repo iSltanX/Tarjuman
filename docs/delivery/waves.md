@@ -132,7 +132,7 @@ W6: P10 ║ P11 ──▶ W7: P12 ║ P13 ║ P14 ──▶ W8: P15 ──tj-v2
 
 | المرحلة | تملك |
 | --- | --- |
-| P10 — أساس الإصدار الثاني: العقود والتخزين المتوافق | `docs/contracts/data-model.md`، `docs/contracts/storage.md`، `docs/contracts/timing.md`، `docs/contracts/messages.md`، `docs/contracts/interfaces.md`، `docs/contracts/errors.md`، `docs/contracts/README.md`، `docs/contracts/backup.md`، `src/core/model/**`، `src/core/store/**`، `src/content/**`، `src/player/youtube-dom.js`، `src/ui/**`، `src/core/errors/index.js`، `src/core/errors/base.js`، `src/core/errors/backup.js`، `scripts/check-static.mjs`، `scripts/build.mjs`، `test/helpers/**`، `test/live/harness/**`، `test/unit/model/**`، `test/unit/store/**`، `test/unit/content/**`، `test/unit/ui/**`، `test/integration/compat/**`، `test/fixtures/v1/**`، `test/live/compat/**` |
+| P10 — أساس الإصدار الثاني: العقود والتخزين المتوافق | `docs/contracts/data-model.md`، `docs/contracts/storage.md`، `docs/contracts/timing.md`، `docs/contracts/messages.md`، `docs/contracts/interfaces.md`، `docs/contracts/errors.md`، `docs/contracts/README.md`، `docs/contracts/backup.md`، `src/manifest.json`، `src/background/**`، `src/core/save/**`، `src/core/model/**`، `src/core/store/**`، `src/content/**`، `src/player/youtube-dom.js`، `src/ui/**`، `src/core/errors/index.js`، `src/core/errors/base.js`، `src/core/errors/backup.js`، `scripts/check-static.mjs`، `scripts/build.mjs`، `test/helpers/**`، `test/live/harness/**`، `test/unit/model/**`، `test/unit/store/**`، `test/unit/content/**`، `test/unit/ui/**`، `test/unit/save/**`، `test/unit/background/**`، `test/integration/compat/**`، `test/fixtures/v1/**`، `test/live/compat/**` |
 | P11 — محرّكات الإصدار الثاني: المحاذاة والاستيراد والتصدير والتحرير | `src/core/align/**`، `src/core/compare/**`، `src/core/import/**`، `src/core/srt/**`، `src/core/export/**`، `src/core/edit/search.js`، `src/core/edit/structure.js`، `src/core/edit/drift.js`، `src/core/edit/density.js`، `src/core/errors/import.js`، `src/core/errors/extract.js`، `src/core/errors/editor.js`، `test/unit/align/**`، `test/unit/compare/**`، `test/unit/import/**`، `test/unit/srt/**`، `test/unit/export/**`، `test/unit/edit/engines/**`، `test/fixtures/srt/**`، `test/fixtures/v2/**`، `test/integration/roundtrip/**` |
 
 **W7 — واجهات الإصدار الثاني**
@@ -175,7 +175,8 @@ W6: P10 ║ P11 ──▶ W7: P12 ║ P13 ║ P14 ──▶ W8: P15 ──tj-v2
 | `package-lock.json` | P1 · P2 | يتبع package.json. |
 | `scripts/**` | P1 · P2 · P10 | البناء والفحوص. تنشئها P1 وتثبّتها P2، وتعدّل P10 الفحص الثابت والبناء للإصدار الثاني، ثم بطلب. |
 | `scripts/release/**` | P1 · P2 · P9 · P15 | سكربتات حزمة التثبيت الشخصي. تنشئها P9 في W5، وتحدّثها P15 للإصدار الثاني في W8، ولا يمسّها غيرهما. |
-| `src/manifest.json` | P1 · P2 | تصرّح P2 بكل نقاط الدخول والأذونات مسبقًا، فلا تحتاج مراحل W3 وW4 لمسه. |
+| `src/manifest.json` | P1 · P2 · P10 | تصرّح P2 بكل نقاط الدخول والأذونات مسبقًا، فلا تحتاج مراحل W3 وW4 لمسه؛ وتضيف P10 إذن downloads والعامل الخلفي للحفظ وحدهما للإصدار الثاني، ثم يُجمَّد. |
+| `src/background/**` | P10 | العامل الخلفي للحفظ وحده (مكان حفظ الملفات). تنشئه P10 في W6، ثم يُجمَّد ولا يُضاف إليه إلا بطلب مسجّل. |
 | `src/content/**` | P1 · P2 · P10 | نقطة دخول سكربت المحتوى والمتحكم والجسر والرسائل. ثبّتتها P2، وتوسّعها P10 للإصدار الثاني (الترجمات الثلاث والعلامات والقفز وحالة الأدوات)، ثم تُجمَّد. |
 | `src/core/model/**` | P2 · P10 | نموذج البيانات المشترك. ثبّتته P2، وتضيف إليه P10 نماذج الإصدار الثاني دون تغيير أشكال الإصدار الأول، ثم يُجمَّد. |
 | `src/core/errors/index.js` | P2 · P10 | يجمع ملفات أخطاء المجالات؛ كل مرحلة تملك ملف مجالها فقط، وتسجّل P10 مجالات الإصدار الثاني. |
@@ -193,7 +194,7 @@ W6: P10 ║ P11 ──▶ W7: P12 ║ P13 ║ P14 ──▶ W8: P15 ──tj-v2
 | W2 | كل `docs/contracts/` و`src/core/model/` و`src/manifest.json` و`src/content/` و`src/ui/` و`src/player/youtube-dom.js` و`package.json` و`scripts/` | على `main` بين الموجات، بطلب مسجّل يطبّقه المنسّق. لا تغيير عقد أثناء موجة متوازية. |
 | W3 | واجهات `export` و`import` و`compare` و`overlay` كما دُمجت | بطلب مسجّل، والمرحلة المحتاجة متعطلة حتى يُحسم. |
 | قبل W6 | واجهات الربط للإصدار الثاني (أدناه) | تكتبها P10 في العقود كما هي، وتنفّذها P11 كما هي؛ والانحراف طلب مسجّل يحسمه المنسّق. |
-| W6 | عقود الإصدار الثاني كلها: التخزين المتوافق ومفاتيحه الجديدة، ونماذج الترجمات الثلاث والنسخة السابقة والعلامات والتفضيلات، والمتحكم والرسائل، وتوقيعات المحرّكات، وأساس الواجهة | على `main` بين الموجات بطلب مسجّل. لا تغيير عقد أثناء W7. |
+| W6 | عقود الإصدار الثاني كلها: التخزين المتوافق ومفاتيحه الجديدة، ونماذج الترجمات الثلاث والنسخة السابقة والعلامات والتفضيلات، والمتحكم والرسائل، وتوقيعات المحرّكات، وأساس الواجهة، ومكان الحفظ والعامل الخلفي | على `main` بين الموجات بطلب مسجّل. لا تغيير عقد أثناء W7. |
 
 ## واجهات الربط للإصدار الثاني (مثبتة قبل W6)
 
@@ -238,7 +239,7 @@ driftCorrect(cues, { a: { n, toMs }, b: { n, toMs } }) → { ok: true, cues } | 
 readingMetrics(cue) → { cps: number, longestLine: number }
 ```
 
-**ما تثبّته P10 داخل W6 وتستهلكه W7:** واجهة التخزين بالتوابع وواجهة الاستعادة، وأفعال المتحكم وحالته الجديدة، ورسالة القفز وأداة الصفحات، وحلّ ارتباط العلامات، وصيغة النسخة الاحتياطية. تُجمَّد كلها ببوابة W6 قبل أن تبدأ W7.
+**ما تثبّته P10 داخل W6 وتستهلكه W7:** واجهة التخزين بالتوابع وواجهة الاستعادة، وأفعال المتحكم وحالته الجديدة، ورسالة القفز وأداة الصفحات، وحلّ ارتباط العلامات، وصيغة النسخة الاحتياطية، ومكان الحفظ: `saveFile(file: { name, text, mime? }) → Promise<{ ok: true, mode, downloadId } | { ok: false, code }>` في `src/core/save` بتفضيل `saveLocation: { mode: 'downloads' | 'subfolder' | 'ask', folder: string }`. تُجمَّد كلها ببوابة W6 قبل أن تبدأ W7.
 
 ## اختبارات التكامل المشتركة
 
@@ -246,8 +247,8 @@ readingMetrics(cue) → { cps: number, longestLine: number }
 
 | الموجة | ما يُختبر مشتركًا |
 | --- | --- |
-| W6 | الرجوع إلى حزمة `tj-v1` حيًا (الأول ← الثاني ← الأول ← الثاني دون فقد) · القاموس من تفضيلات P10 عبر `instructions` في P11 · `reviewIncoming` على بصمات من واجهة التخزين، و`diffTranslations` على ترجمتين من خانتين · رسالة القفز تصل تبويبًا مفتوحًا. |
-| W7 | تفعيل الترجمة بين المحفوظات والمشغّل بالاتجاهين · الحفظ في خانة غير نشطة لا يغيّر المعروض · أعداد الاستبدال نفسها في المشغّل والمحفوظات · علامة المشغّل في المحرّر وفي الفرز · القاموس بالنص نفسه من الموضعين · ملف تصحيح من المحرّر يظهر في المشغّل · نسخة احتياطية تشمل ما أنشأته الأسطح الثلاثة وتُستعاد بافتراض التخطي · القفز من المحرّر إلى المشغّل. |
+| W6 | الرجوع إلى حزمة `tj-v1` حيًا (الأول ← الثاني ← الأول ← الثاني دون فقد) · القاموس من تفضيلات P10 عبر `instructions` في P11 · `reviewIncoming` على بصمات من واجهة التخزين، و`diffTranslations` على ترجمتين من خانتين · رسالة القفز تصل تبويبًا مفتوحًا · `saveFile` بالأوضاع الثلاثة من صفحة إضافة ومن المشغّل عبر العامل الخلفي. |
+| W7 | تفعيل الترجمة بين المحفوظات والمشغّل بالاتجاهين · الحفظ في خانة غير نشطة لا يغيّر المعروض · أعداد الاستبدال نفسها في المشغّل والمحفوظات · علامة المشغّل في المحرّر وفي الفرز · القاموس بالنص نفسه من الموضعين · ملف تصحيح من المحرّر يظهر في المشغّل · نسخة احتياطية تشمل ما أنشأته الأسطح الثلاثة وتُستعاد بافتراض التخطي · القفز من المحرّر إلى المشغّل · «مكان حفظ ملفات الترجمة» يسري على تنزيلات المشغّل وتصدير المحفوظات والمحرّر والنسخة الاحتياطية. |
 | W8 | الرحلة الكاملة على المتصفحين، والرجوع بالحزمة الحقيقية، ومسارات الإلغاء والتعارض ببصمة التخزين (P15). |
 
 ## طلبات مسجّلة بين الموجات
