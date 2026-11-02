@@ -110,14 +110,14 @@
 ```json tj-status
 {
   "phase": "P9",
-  "status": "ready",
-  "updated": "2026-11-02T05:42:50+03:00",
+  "status": "integrating",
+  "updated": "2026-11-02T06:57:02+03:00",
   "branch": "tj/P9-integration",
   "resume": "جاهزة للدمج في W5",
   "blocker": null,
   "outcome": null,
   "commit": "f970c9b",
-  "mergeCommit": null,
+  "mergeCommit": "6c13c58",
   "checks": [
     {
       "cmd": "npm run check:wave",
