@@ -41,7 +41,8 @@ export function createLayer({ doc, win, on }) {
   toasts.setAttribute('aria-live', 'polite');
   const input = doc.createElement('input');
   input.setAttribute('type', 'file');
-  input.setAttribute('accept', '.srt,application/x-subrip,text/plain');
+  // SRT، وTXT وMarkdown بمحتوى موقّت (R48): القارئ يزيل أغلفتها الواضحة بملاحظات.
+  input.setAttribute('accept', '.srt,.txt,.md,application/x-subrip,text/plain,text/markdown');
   input.setAttribute('multiple', '');
   input.setAttribute('hidden', '');
   input.setAttribute('tabindex', '-1');
@@ -164,8 +165,12 @@ export function createLayer({ doc, win, on }) {
       placeMenu();
     },
 
-    /** يحدّث القائمة المفتوحة في مكانها (morph): العقد نفسها ما بقيت بنيتها. @param {Element[]} children */
-    patchMenu(children) {
+    /**
+     * يحدّث القائمة المفتوحة في مكانها (morph): العقد نفسها ما بقيت بنيتها، واسمها إن تغيّر (تأكيد «رفع» صار «استبدال»).
+     * @param {Element[]} children @param {string} [label]
+     */
+    patchMenu(children, label) {
+      if (label && menu.getAttribute('aria-label') !== label) menu.setAttribute('aria-label', label);
       const n = morphChildren(menu, children);
       syncTyping(root.activeElement);
       placeMenu();
@@ -207,10 +212,12 @@ export function createLayer({ doc, win, on }) {
     },
 
     /**
-     * @param {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean }[]} list
+     * الرسالة بفعل («تراجع») تحمل زره بعد نصها؛ الضغط يُبلَّغ إلى الجلسة وحدها.
+     * @param {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action?: { label: string } | null }[]} list
      * @param {(id: string) => void} dismiss
+     * @param {(id: string) => void} [run] فعل الرسالة
      */
-    renderToasts(list, dismiss) {
+    renderToasts(list, dismiss, run = () => {}) {
       const key = list.map((t) => `${t.id}`).join('|');
       if (toasts.getAttribute('data-key') === key) return;
       toasts.setAttribute('data-key', key);
@@ -228,6 +235,14 @@ export function createLayer({ doc, win, on }) {
         tx.textContent = t.text;
         box.appendChild(g);
         box.appendChild(tx);
+        if (t.action) {
+          const a = doc.createElement('button');
+          a.setAttribute('type', 'button');
+          a.className = 'act';
+          a.textContent = t.action.label;
+          a.addEventListener('click', () => run(t.id));
+          box.appendChild(a);
+        }
         if (t.persist) {
           const x = doc.createElement('button');
           x.setAttribute('type', 'button');

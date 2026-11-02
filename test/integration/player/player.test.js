@@ -161,11 +161,13 @@ test('الاستبدال بتأكيد: الملخص الجديد وتنبيه ا
   await settle(area);
   assert.equal(record(area).view.displayOffsetMs, 500);
 
-  // النسخة الثانية ينقصها المقطع 6
+  // النسخة الثانية ينقصها المقطع 6، وتُحفظ فوق الخانة 1 (الافتراضي أول خانة فارغة، فتُختار 1 صراحة).
   const missing = ar.split('\n\n').slice(0, 5).join('\n\n');
-  click(page.ui.item('استبدال الملف…'));
+  click(page.ui.item('رفع ترجمة…'));
   chooseFiles(page.ui, [new File([missing], 'v2.ar.srt')]);
   await settle(area);
+  assert.equal(page.ui.menuLabel(), 'رفع ترجمة');
+  click(page.ui.menu().querySelector('[data-fid="target:1"]'));
   assert.equal(page.ui.menuLabel(), 'استبدال الترجمة؟');
   assert.match(page.ui.menuText(), /مقطع واحد ناقص: 6/);
   assert.match(page.ui.menuText(), /ستُصفَّر إزاحة العرض/);
@@ -177,6 +179,7 @@ test('الاستبدال بتأكيد: الملخص الجديد وتنبيه ا
   assert.equal(page.ui.btn('badge').textContent, '0.0');
   assert.match(page.ui.toasts().map((t) => t.text).join(), /صُفّرت إزاحة العرض لأن الملف الجديد يحمل توقيته\./);
   assert.equal(page.ui.btn('upload').querySelector('.dot').getAttribute('data-tone'), 'warning');
+  assert.equal((await page.store.getBundle(A)).previous.track.fileName, 'v1.ar.srt', 'النسخة السابقة حُفظت قبل الاستبدال');
 });
 
 test('الخطوة من قائمة الشارة تُحفظ في الإعدادات وتصل إلى ± وإلى صفحة أخرى مفتوحة', async () => {

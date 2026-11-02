@@ -108,13 +108,14 @@ test('إخفاق عابر في تحميل الخط لا يُحفظ: الطلب �
 test('إغلاق تأكيد الاستبدال أثناء الحفظ: تُطبَّق النتيجة دون إعادة فتح القائمة ولا نقل التركيز', async () => {
   const page = mountPage({ state: makeState({ arabic: arabic() }) });
   click(page.ui.btn('upload'));
-  click(page.ui.item('استبدال الملف…'));
+  click(page.ui.item('رفع ترجمة…'));
   chooseFiles(page.ui, [{ name: 'new.ar.srt' }]);
   await settle();
+  click(page.ui.menu().querySelector('[data-fid="target:1"]'));
   let release;
   const gate = new Promise((r) => (release = r));
-  const load = page.controller.loadArabic;
-  page.controller.loadArabic = async (...a) => {
+  const load = page.controller.loadArabicInto;
+  page.controller.loadArabicInto = async (...a) => {
     await gate;
     return load(...a);
   };

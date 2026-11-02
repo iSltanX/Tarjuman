@@ -27,8 +27,27 @@ export const LABELS = Object.freeze({
   modeAr: 'العربية وحدها',
   modeDual: 'العربية فوق الإنجليزية',
   modeOff: 'إخفاء الترجمة',
-  replace: 'استبدال الملف…',
+  replace: 'استبدال…',
+  uploadMore: 'رفع ترجمة…',
   replaceConfirm: 'استبدال',
+  save: 'حفظ',
+  uploadTitle: 'رفع ترجمة',
+  saveTo: 'حفظ في',
+  keepEdits: 'إبقاء تعديلاتي',
+  nameOther: 'الاسم يشير إلى فيديو آخر',
+  markReview: 'علّم للمراجعة',
+  undo: 'تراجع',
+  sync: 'مزامنة بجملة…',
+  syncTitle: 'مزامنة بجملة',
+  earlier: 'أبكر',
+  later: 'أحدث',
+  back: 'رجوع',
+  downloadCopy: 'تنزيل ونسخ التعليمات',
+  copyShort: 'نسخ التعليمات',
+  copied: '✓ نُسخت التعليمات',
+  copyFailed: 'تعذّر النسخ — أعد المحاولة',
+  englishSteps: 'CC ← ⚙ ← الترجمة ← English',
+  braveNote: 'Brave قد يختار العربية أولًا؛ اختر English مرة',
   cancel: 'إلغاء',
   offsetResetNote: 'ستُصفَّر إزاحة العرض لأن الملف الجديد يحمل توقيته.',
   slots: 'الترجمة النشطة',
@@ -42,6 +61,49 @@ export const LABELS = Object.freeze({
   signLegend: '+ تأخير: تظهر لاحقًا · − تقديم: تظهر أبكر · تُحفظ لهذا الفيديو',
   close: 'إغلاق',
 });
+
+/** «عند 12:34»: اللحظة المرجعية للمزامنة بالجملة. @param {string} t */
+export const syncAt = (t) => `عند ${t}`;
+/** الرسالة العابرة بعد تبديل الترجمة: «الترجمة 2». @param {number} n */
+export const slotToast = (n) => `الترجمة ${n}`;
+/** @param {number} n رقم المقطع */
+export const markToast = (n) => `عُلِّم المقطع ${n} للمراجعة`;
+/** @param {number} ms «الإزاحة −3.2 ث» */
+export const offsetToast = (ms) => `الإزاحة ${formatOffset(ms)} ث`;
+/** @param {string} name «✓ نُزّل VIDEOID.en.manual.normal.srt» أو «✓ نُزّل 3 أجزاء» */
+export const downloadedLine = (name) => `✓ نُزّل ${name}`;
+/** @param {number} n «+ القاموس (12)»: القاموس مرفق بالتعليمات المنسوخة */
+export const glossaryTag = (n) => `+ القاموس (${n})`;
+
+/** @param {number} n «سيُستبدل 12 تعديلًا يدويًا» (والمفرد والمثنى بصيغتيهما). */
+export function editsLine(n) {
+  const mod = n % 100;
+  const what = n === 1 ? 'تعديل يدوي واحد' : n === 2 ? 'تعديلان يدويان' : mod >= 3 && mod <= 10 ? `${n} تعديلات يدوية` : mod >= 11 ? `${n} تعديلًا يدويًا` : `${n} تعديل يدوي`;
+  return `سيُستبدل ${what}`;
+}
+
+/** @param {number} conflicts ما يأخذه الملف الجديد لتعارضه مع التعديلات */
+export const keptLine = (conflicts) => (conflicts ? `تُبقى تعديلاتك، ويأخذ الملف الجديد مواضع التعارض (${conflicts})` : 'تُبقى تعديلاتك اليدوية');
+
+/** «الاسم يشير إلى فيديو آخر · ‹العنوان مقصوصًا إلى 40 محرفًا›». @param {string | null} title */
+export function nameOtherLine(title) {
+  const t = String(title ?? '').replace(/\s+/g, ' ').trim();
+  if (!t) return LABELS.nameOther;
+  const chars = Array.from(t);
+  return `${LABELS.nameOther} · ${chars.length > 40 ? `${chars.slice(0, 39).join('').trimEnd()}…` : t}`;
+}
+
+/** عدد المحارف بأرقام مجمّعة: «18,400 محرف»، «12 محرفًا»، «5 محارف». @param {number} n */
+export function charsText(n) {
+  const mod = n % 100;
+  const g = n.toLocaleString('en-US');
+  if (n === 1) return 'محرف واحد';
+  if (n === 2) return 'محرفان';
+  return `${g} ${mod >= 3 && mod <= 10 ? 'محارف' : mod >= 11 ? 'محرفًا' : 'محرف'}`;
+}
+
+/** صف جزء في التقسيم الاحتياطي: «1 · 1–200 · 18,400 محرف». @param {{ index: number, from: number, to: number, chars: number }} p */
+export const partRow = (p) => `${p.index} · ${p.from}–${p.to} · ${charsText(p.chars)}`;
 
 /** اسم الوصول لخانة ترجمة: «الترجمة 2، نشطة» أو «الترجمة 3، فارغة». @param {{ n: number, active: boolean, filled: boolean }} s */
 export const slotLabel = (s) => `الترجمة ${s.n}${s.active ? '، نشطة' : s.filled ? '' : '، فارغة'}`;

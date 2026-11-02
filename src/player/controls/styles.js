@@ -64,8 +64,18 @@ export function layerCss() {
 button.slot { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; width: 26px; height: 24px; border-radius: 6px; border: 1px solid transparent; font: 700 12px/1 var(--tj-p-font-mono); color: rgb(255 255 255 / 85%); cursor: pointer; }
 button.slot[data-filled="true"] { border-color: rgb(255 255 255 / 35%); }
 button.slot[aria-checked="true"] { background: var(--tj-p-accent); border-color: var(--tj-p-accent); color: #062322; }
-button.slot[data-filled="false"] { color: rgb(255 255 255 / 40%); cursor: default; }
-button.slot:hover:not([aria-checked="true"]):not([data-filled="false"]) { background: var(--tj-p-menu-hover); }
+button.slot[data-filled="false"] { color: rgb(255 255 255 / 40%); }
+button.slot[data-filled="false"][aria-checked="true"] { color: #062322; }
+button.slot:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); }
+button.slot[aria-disabled="true"] { cursor: default; }
+.slots[aria-disabled="true"] button.slot { opacity: 0.6; }
+.row.target { justify-content: space-between; min-height: 36px; }
+.row.edits { min-height: 28px; font-size: 0.93em; }
+.row.edits[data-tone="warn"] { color: var(--tj-p-warn); }
+.row.edits[data-tone="ok"] { color: var(--tj-p-ok); }
+label.item[aria-disabled="true"] { color: rgb(255 255 255 / 45%); cursor: default; background: none; }
+.pair { display: flex; gap: 2px; }
+.pair > button.item { flex: 1 1 0; min-width: 0; width: auto; }
 .row { box-sizing: border-box; min-height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 12px; }
 .row.file { min-height: 32px; gap: 6px; }
 .dim { color: var(--tj-p-menu-text-2); white-space: nowrap; }
@@ -142,6 +152,8 @@ label.item:hover { background: var(--tj-p-menu-hover); }
 .toast .text { min-width: 0; }
 .toast button.x { all: unset; flex: none; cursor: pointer; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: rgb(255 255 255 / 80%); }
 .toast button.x:hover { background: var(--tj-p-menu-hover); color: #FFFFFF; }
+.toast button.act { all: unset; flex: none; cursor: pointer; padding: 2px 10px; margin-inline-start: 4px; border-radius: 6px; font-weight: 700; color: var(--tj-p-accent); }
+.toast button.act:hover { background: var(--tj-p-menu-hover); }
 
 .menu :focus-visible, .toast :focus-visible { ${FOCUS} }
 input.num:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--tj-p-accent); }

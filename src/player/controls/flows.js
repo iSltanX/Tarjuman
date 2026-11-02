@@ -1,6 +1,7 @@
 // تدفقا الشريط فوق وحدات W3 (عقد interfaces §٥ و§٦) دون منطق تصدير أو استيراد هنا:
 // التحميل: controller.convertCaptured ← buildExport ← download لكل ملف ← controller.recordExport (البصمة).
-// الرفع: readImport (فحص ومقارنة) ← controller.loadArabic (بتأكيد الاستبدال إن وُجدت ترجمة).
+// الرفع: readImport (فحص ومقارنة) ← reviewIncoming (قرينة الاسم) ← controller.loadArabicInto إلى الخانة المختارة (بتأكيد
+// مضغوط إن وُجدت ترجمة أو دل الاسم على فيديو آخر).
 // كل تدفق يثبّت معرّف الفيديو عند بدئه، فنتيجة تأخرت حتى تبدّل الفيديو لا تُطبَّق على الجديد أبدًا.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 
@@ -131,13 +132,39 @@ export async function readFor({ controller, importFlow, files }) {
 }
 
 /**
- * تحميل نتيجة القراءة في المتحكم للفيديو نفسه الذي قُرئت له وحده.
+ * قرينة اسم الملف (R48): يدل على فيديو آخر؟ ومعها عنوانه إن كان في المحفوظات. تنبيه لا رفض؛ وتعذّر قراءة المحفوظات
+ * يسقط العنوان وحده. قراءة فقط: لا كتابة في التخزين.
+ * @param {{ controller: object, importFlow: { reviewIncoming: Function, knownVideos?: () => Promise<{ videoId: string, title: string | null }[]> }, read: { videoId: string, input: { fileName: string, cues: object[] } } }} p
+ * @returns {Promise<{ videoId: string, title: string | null } | null>}
+ */
+export async function nameHintFor({ controller, importFlow, read }) {
+  let known = [];
+  try {
+    known = (await importFlow.knownVideos?.()) ?? [];
+  } catch {
+    known = [];
+  }
+  try {
+    const r = importFlow.reviewIncoming({
+      fileName: read.input.fileName, cues: read.input.cues, videoId: read.videoId,
+      fingerprints: controller.getState().saved?.fingerprints ?? [], knownVideoIds: known.map((e) => e.videoId),
+    });
+    if (!r.nameHint || !r.nameHint.differs) return null;
+    return { videoId: r.nameHint.videoId, title: known.find((e) => e.videoId === r.nameHint.videoId)?.title ?? null };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * تحميل نتيجة القراءة إلى خانة للفيديو نفسه الذي قُرئت له وحده. current مقاطع «إبقاء تعديلاتي» بعد الدمج إن اختيرت.
+ * @param {{ controller: object, read: { videoId: string, input: object }, n: 1 | 2 | 3, replace: boolean, current?: object[] | null }} p
  * @returns {Promise<{ ok: true } | { ok: false, error: { code: string, message: string } }>}
  */
-export async function loadFor({ controller, read, replace }) {
+export async function loadIntoFor({ controller, read, n, replace, current = null }) {
   if (controller.getState().videoId !== read.videoId) return { ok: false, error: infoOf('CT_VIDEO_CHANGED') };
   try {
-    await controller.loadArabic(read.input, { replace });
+    await controller.loadArabicInto(n, current ? { ...read.input, current } : read.input, { replace });
     return { ok: true };
   } catch (err) {
     return { ok: false, error: toErrorInfo(err) };
