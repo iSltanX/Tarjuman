@@ -46,8 +46,9 @@ export function layerCss() {
 :host { all: initial; position: absolute; inset: 0; display: block; z-index: ${LAYER_Z}; pointer-events: none; direction: ltr; }
 .layer { position: absolute; inset: 0; pointer-events: none; opacity: 1; transition: opacity ${BAR_FADE_MS}ms linear; font-family: var(--tj-p-font-body); color: var(--tj-p-menu-text); --menu-w: 300px; --fs: 14px; --title-fs: 15px; --tip-fs: 13px; --big-fs: 24px; }
 .layer[data-size="fullscreen"] { --menu-w: 340px; --fs: 16px; --title-fs: 17px; --tip-fs: 15px; --big-fs: 28px; }
-.layer[data-bar="hidden"] { opacity: 0; }
-.layer[data-bar="hidden"] * { pointer-events: none !important; }
+.layer[data-bar="hidden"]:not([data-typing]) { opacity: 0; }
+.layer[data-bar="hidden"]:not([data-typing]) * { pointer-events: none !important; }
+.layer[data-bar="hidden"][data-typing] .tip { display: none; }
 .menu, .toast, .tip { -webkit-font-smoothing: antialiased; }
 
 .tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); max-width: calc(100% - 16px); box-sizing: border-box; padding: 6px 9px; border-radius: 4px; background: var(--tj-p-tooltip-bg); color: #FFFFFF; font: 700 var(--tip-fs)/1.35 var(--tj-p-font-body); white-space: nowrap; direction: rtl; pointer-events: none; }
