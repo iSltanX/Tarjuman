@@ -1,0 +1,230 @@
+{
+  "browser": "Brave 156.1.98.63 (Chrome/156.0.8078.80)",
+  "at": "2026-11-02T19:31:30.415Z",
+  "extension": {
+    "version": "1.0.0",
+    "versionName": null,
+    "permissions": [
+      "storage",
+      "unlimitedStorage",
+      "downloads"
+    ]
+  },
+  "video": "iG9CE55wbtY",
+  "checks": [
+    {
+      "id": "load-unpacked",
+      "ok": true,
+      "detail": {
+        "method": "Extensions.loadUnpacked"
+      }
+    },
+    {
+      "id": "watch-page",
+      "ok": true,
+      "detail": {
+        "durationSec": 1203
+      }
+    },
+    {
+      "id": "content-script-isolated-world",
+      "ok": true,
+      "detail": {
+        "runtime": "string",
+        "devHook": "undefined"
+      }
+    },
+    {
+      "id": "no-dev-hook-in-production",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "stubs-touch-no-youtube-dom",
+      "ok": true,
+      "detail": {
+        "elements": 0
+      }
+    },
+    {
+      "id": "popup-video-state",
+      "ok": true,
+      "detail": {
+        "via": "active-tab",
+        "videoId": "iG9CE55wbtY",
+        "loading": false,
+        "arabic": null,
+        "view": {
+          "displayOffsetMs": 0,
+          "displayMode": "ar"
+        }
+      }
+    },
+    {
+      "id": "mount-points-stub",
+      "ok": true,
+      "detail": {
+        "overlay": "mounted",
+        "controls": "mounted"
+      }
+    },
+    {
+      "id": "popup-items",
+      "ok": true,
+      "detail": {
+        "menu": [
+          {
+            "name": "المحفوظات",
+            "disabled": false
+          },
+          {
+            "name": "الإعدادات",
+            "disabled": false
+          }
+        ],
+        "actions": [
+          "copy",
+          "find"
+        ]
+      }
+    },
+    {
+      "id": "storage-change-reaches-player",
+      "ok": true,
+      "detail": {
+        "arabic": {
+          "fileName": "iG9CE55wbtY.ar.srt",
+          "cueCount": 5,
+          "edited": false,
+          "matched": true
+        },
+        "view": {
+          "displayMode": "ar",
+          "displayOffsetMs": 500
+        }
+      }
+    },
+    {
+      "id": "page-library",
+      "ok": true,
+      "detail": {
+        "openedVia": "popup",
+        "rtl": true,
+        "externalRequests": 0
+      }
+    },
+    {
+      "id": "page-settings",
+      "ok": true,
+      "detail": {
+        "openedVia": "popup",
+        "rtl": true,
+        "externalRequests": 0
+      }
+    },
+    {
+      "id": "unlimitedStorage-adds-no-install-warning",
+      "ok": true,
+      "detail": {
+        "actual": [
+          "قراءة بياناتك وتغييرها في www.youtube.com",
+          "إدارة عمليات التنزيل"
+        ],
+        "storageOnly": [
+          "قراءة بياناتك وتغييرها في www.youtube.com"
+        ],
+        "withUnlimited": [
+          "قراءة بياناتك وتغييرها في www.youtube.com"
+        ],
+        "downloadsOnly": [
+          "قراءة بياناتك وتغييرها في www.youtube.com",
+          "إدارة عمليات التنزيل"
+        ],
+        "withTabsControl": [
+          "قراءة بياناتك وتغييرها في www.youtube.com",
+          "قراءة سجل التصفح التابع لك"
+        ]
+      }
+    },
+    {
+      "id": "install-warnings-approved-only",
+      "ok": true,
+      "detail": {
+        "actual": [
+          "قراءة بياناتك وتغييرها في www.youtube.com",
+          "إدارة عمليات التنزيل"
+        ],
+        "expected": [
+          "قراءة بياناتك وتغييرها في www.youtube.com",
+          "إدارة عمليات التنزيل"
+        ]
+      }
+    },
+    {
+      "id": "page-editor",
+      "ok": true,
+      "detail": {
+        "openedVia": "popup",
+        "rtl": true,
+        "externalRequests": 0
+      }
+    },
+    {
+      "id": "no-extension-network-requests",
+      "ok": true,
+      "detail": {
+        "total": 94,
+        "extensionOnly": 0,
+        "packageReads": 4
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": {
+        "youtube": 0,
+        "pages": 0
+      }
+    }
+  ],
+  "errors": {
+    "youtube": [],
+    "pages": []
+  },
+  "screenshots": [
+    "docs/evidence/W8/smoke/brave/popup-no-arabic-light.png",
+    "docs/evidence/W8/smoke/brave/popup-no-arabic-dark.png",
+    "docs/evidence/W8/smoke/brave/library-light.png",
+    "docs/evidence/W8/smoke/brave/library-dark.png",
+    "docs/evidence/W8/smoke/brave/settings-light.png",
+    "docs/evidence/W8/smoke/brave/settings-dark.png",
+    "docs/evidence/W8/smoke/brave/popup-with-arabic-light.png",
+    "docs/evidence/W8/smoke/brave/popup-with-arabic-dark.png",
+    "docs/evidence/W8/smoke/brave/editor-light.png",
+    "docs/evidence/W8/smoke/brave/editor-dark.png"
+  ],
+  "notes": [
+    "رسائل قراءة خطوط الترجمة من حزمة الإضافة (معروفة، غير محسوبة أخطاءً): 2"
+  ],
+  "installWarnings": {
+    "actual": [
+      "قراءة بياناتك وتغييرها في www.youtube.com",
+      "إدارة عمليات التنزيل"
+    ],
+    "storageOnly": [
+      "قراءة بياناتك وتغييرها في www.youtube.com"
+    ],
+    "withUnlimited": [
+      "قراءة بياناتك وتغييرها في www.youtube.com"
+    ],
+    "downloadsOnly": [
+      "قراءة بياناتك وتغييرها في www.youtube.com",
+      "إدارة عمليات التنزيل"
+    ],
+    "withTabsControl": [
+      "قراءة بياناتك وتغييرها في www.youtube.com",
+      "قراءة سجل التصفح التابع لك"
+    ]
+  },
+  "passed": true
+}
