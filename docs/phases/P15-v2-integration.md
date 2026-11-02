@@ -112,10 +112,10 @@
 ```json tj-status
 {
   "phase": "P15",
-  "status": "planned",
-  "updated": "2026-11-02",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W8 بعد التحقق من W7.",
+  "status": "in_progress",
+  "updated": "2026-11-02T19:17:33+03:00",
+  "branch": "tj/P15-v2-integration",
+  "resume": "بدأت: قراءة تقارير P10–P14 وسجلات W6 وW7، ثم رسالة الاختبار الحي.",
   "blocker": null,
   "outcome": null,
   "commit": null,
