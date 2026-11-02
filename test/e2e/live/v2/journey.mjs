@@ -395,7 +395,8 @@ try {
   const tedSonnet = await cuesOf(TED_SONNET);
   const tedHaiku = await cuesOf(TED_HAIKU);
   const midAr = await cuesOf(MID_AR);
-  const longAr = await cuesOf(LONG_AR);
+  // ترجمة الطويل خارج المستودع؛ غيابها يُسقط هذا الفحص وحده، فتُجرَّب بقية الخطوات بـ--only قبل وصولها.
+  const longAr = await cuesOf(LONG_AR).catch(() => []);
   check('real-long-translations-ready', 'تحضير', midAr.length >= 900 && longAr.length >= 2000 && tedHaiku.length === tedSonnet.length,
     { ted: [tedSonnet.length, tedHaiku.length], midway: midAr.length, long: longAr.length, englishLong: hand.videos.long.cues });
   // Markdown كما يعيده نموذج في محادثة: مقدمة، ثم الملف في سياج، ثم ملاحظة.
@@ -666,6 +667,74 @@ try {
     const at = Math.round((await main(M.time)) * 1000);
     const expect = target.startMs + (bd.slots[0].offset ?? 0);
     check('long-editor-jump-reaches-player-tab', '1', Math.abs(at - expect) < 400, { at, expect });
+  });
+
+  // ٧ب. مراجعة الواجهة بمبدأ «المشغّل للمشاهدة» (P15-AC5، §٦.٥) على بيانات حقيقية: الشريط وقوائمه بنصوصها المقيسة، وحوار
+  // الاستبدال من المشغّل (يُلغى بلا أثر، AC3)، ونافذة الأيقونة، والصفحات بالوضعين. اللقطات للمراجعة البشرية في الأدلة.
+  await step('ui-review', async () => {
+    await openVideo(LONG);
+    await front(yt);
+    await closeMenus();
+    const lines = (t) => clean(t).length;
+    const menus = {};
+    const grab = async (key) => {
+      const m = await menu();
+      menus[key] = { label: m?.label ?? null, items: m?.items.map((x) => x.fid) ?? [], chars: lines(m?.text), height: m?.box.height ?? null };
+      await shot(yt, `ui-${key}`);
+    };
+    await revealControls(yt);
+    const bar = await iso(I.peek);
+    result.measures.bar = { buttons: Object.keys(bar.buttons), group: bar.group, size: bar.size };
+    await shot(yt, 'ui-bar');
+    await openMenuOf('upload', 'الترجمة العربية');
+    await grab('menu-display');
+    const p0 = await iso(I.storagePrint);
+    nextUpload = [LONG_AR];
+    await clickItem('replace');
+    await sleep(2000);
+    await clickItem('target:2').catch(() => null);
+    await grab('menu-replace');
+    await clickItem('cancel');
+    await sleep(600);
+    await closeMenus();
+    const d = printDiff(p0, await iso(I.storagePrint));
+    check('player-replace-cancel-no-write', '3', menus['menu-replace'].label === 'استبدال الترجمة؟' && noDiff(d), { label: menus['menu-replace'].label, diff: noDiff(d) ? null : d });
+    await openMenuOf('badge', 'توقيت الترجمة');
+    await grab('menu-timing');
+    await clickItem('sync');
+    await grab('menu-sync');
+    await closeMenus();
+    await openMenuOf('download', 'تحميل الترجمة');
+    await grab('menu-download');
+    await closeMenus();
+    result.measures.menus = menus;
+    // الشريط بعناصره الخمسة وحدها (§٦.١)، والقوائم بلا شرح طويل: أطول نص قائمة كاملة بالمحارف للمراجعة.
+    check('ui-player-bar-five-elements-and-short-menus', 'مراجعة', result.measures.bar.buttons.length === 5 && Object.values(menus).every((m) => m.chars > 0 && m.chars < 600),
+      { buttons: result.measures.bar.buttons, chars: Object.fromEntries(Object.entries(menus).map(([k, m]) => [k, m.chars])) });
+    const pop = await extPage('pages/popup/index.html');
+    await front(yt);
+    await sleep(800);
+    await pop.reload();
+    await sleep(1200);
+    await shot(pop, 'ui-popup');
+    await pop.close();
+    const pages = [['library', 'pages/library/index.html'], ['settings-data', 'pages/settings/index.html#data'], ['settings-glossary', 'pages/settings/index.html#glossary'], ['settings-export', 'pages/settings/index.html#export'],
+      ['editor-review', `pages/editor/index.html?v=${LONG}&t=2`]];
+    for (const [name, url] of pages) {
+      const p = await extPage(url);
+      await front(p);
+      await sleep(1500);
+      if (name === 'editor-review') {
+        await p.waitFor(E.ready, { timeoutMs: 60000 });
+        await p.eval(E.hideEnglish);
+      }
+      for (const scheme of ['light', 'dark']) {
+        await p.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
+        await sleep(500);
+        await shot(p, `ui-${name}-${scheme}`);
+      }
+      await p.close();
+    }
   });
 
   // ٨. تعارض الحفظ بين تبويبين على الخانة نفسها: الثاني يُنبَّه ولا يكتب فوق الأول.

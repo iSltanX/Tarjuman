@@ -1,0 +1,53 @@
+{
+  "step": "ask",
+  "browser": "Brave 156.1.98.63",
+  "session": "نافذة أمامية مؤتمتة؛ «حفظ» في حوار النظام بيد سلطان",
+  "at": "2026-11-02T16:49:50.066Z",
+  "checks": [
+    {
+      "id": "settings-ask-every-time",
+      "ok": true,
+      "detail": {
+        "folder": "Tarjuman",
+        "mode": "ask"
+      }
+    },
+    {
+      "id": "ask-dialog-english-saved-by-hand",
+      "ok": true,
+      "detail": {
+        "file": "iG9CE55wbtY.en.manual.normal.srt",
+        "cues": 427,
+        "sha": "7770a795775890e6",
+        "sameAsHandDownload": true,
+        "waitedMs": 3550
+      }
+    },
+    {
+      "id": "ask-dialog-arabic-saved-by-hand",
+      "ok": true,
+      "detail": {
+        "file": "iG9CE55wbtY.ar.srt",
+        "cues": 427,
+        "sha": "e70250f9761597f9",
+        "sameAsHandDownload": null,
+        "waitedMs": 6548
+      }
+    },
+    {
+      "id": "settings-back-to-subfolder",
+      "ok": true,
+      "detail": {
+        "folder": "Tarjuman",
+        "mode": "subfolder"
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "notes": [],
+  "screenshots": []
+}
