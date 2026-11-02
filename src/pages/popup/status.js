@@ -1,6 +1,6 @@
 // منطق نافذة الأيقونة بلا DOM (P7-AC1، وإعادة التصميم، وP12-AC6): استعلام حالة الفيديو الحالي من سكربت المحتوى في
-// التبويب النشط، ووصف الحالة الأربع للبطاقة، وسطر حالة أدوات المشغّل والطبقة بسببه، وسطر رفض الالتقاط، والإجراءات
-// السريعة بحسب السياق، وشرط تفعيل «المحرّر»، وتقرير تشخيص الصفحة المنقّى (R64).
+// التبويب النشط، ووصف الحالة الأربع للبطاقة (ومؤشر «محفوظ»)، وسطر حالة أدوات المشغّل والطبقة بسببه، وسطر رفض الالتقاط،
+// والإجراءات السريعة بحسب السياق، ووجهة مدخل «المحفوظات» الواحد، وشرط تفعيل «المحرّر»، وتقرير تشخيص الصفحة المنقّى (R64).
 // الاستعلام يعيد null لكل ما ليس رد صفحة فيديو صالحًا («افتح فيديو على يوتيوب»): تبويب ليس يوتيوب، أو سكربت لم
 // يُحمَّل، أو نسخة أقدم، أو لا رد في المهلة.
 import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagnostics/report.js';
@@ -38,10 +38,11 @@ const MODE_TEXT = Object.freeze({ ar: 'العربية وحدها', dual: 'الع
 /**
  * وصف بطاقة الفيديو الحالي: حالة واحدة من أربع.
  * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
+ * saved: للفيديو سجل في المحفوظات (مؤشر حالة «محفوظ» في البطاقة، لا رابط).
  * @returns {{ kind: 'not-video' }
  *   | { kind: 'loading', title: string }
- *   | { kind: 'no-subtitle', title: string, englishLine: string, englishReady: boolean }
- *   | { kind: 'has-subtitle', title: string, line: string, edited: boolean, matched: boolean | null, mode: string, fileName: string }}
+ *   | { kind: 'no-subtitle', title: string, englishLine: string, englishReady: boolean, saved: boolean }
+ *   | { kind: 'has-subtitle', title: string, line: string, edited: boolean, matched: boolean | null, mode: string, fileName: string, saved: true }}
  */
 export function describeStatus(reply) {
   if (!reply || !reply.watch) return { kind: 'not-video' };
@@ -50,7 +51,7 @@ export function describeStatus(reply) {
   if (!reply.arabic) {
     const captured = reply.english.captured.some((t) => t.ok);
     const saved = reply.english.saved.length > 0;
-    return { kind: 'no-subtitle', title, englishLine: `المسار الإنجليزي: ${captured ? 'ملتقط ✓' : saved ? 'محفوظ ✓' : 'غير ملتقط'}`, englishReady: captured || saved };
+    return { kind: 'no-subtitle', title, englishLine: `المسار الإنجليزي: ${captured ? 'ملتقط ✓' : saved ? 'محفوظ ✓' : 'غير ملتقط'}`, englishReady: captured || saved, saved };
   }
   const a = reply.arabic;
   return {
@@ -61,7 +62,19 @@ export function describeStatus(reply) {
     matched: a.matched,
     mode: MODE_TEXT[reply.view.displayMode] ?? MODE_TEXT.ar,
     fileName: a.fileName,
+    saved: true,
   };
+}
+
+/**
+ * وجهة مدخل «المحفوظات» الواحد في النافذة (جولة الصقل): المحفوظات كلها، وعلى فيديو محفوظ تُفتح على صفه مُبرزًا (#v=) دون
+ * تصفية، فلا يحتاج زرًّا ثانيًا للوجهة نفسها.
+ * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
+ * @returns {string | undefined} جزء العنوان أو لا شيء
+ */
+export function libraryHash(reply) {
+  if (!reply?.watch || !reply.videoId || reply.loading) return undefined;
+  return reply.arabic || reply.english.saved.length > 0 ? `v=${reply.videoId}` : undefined;
 }
 
 /**
@@ -168,26 +181,22 @@ export function editorGate(reply) {
 }
 
 /**
- * الإجراءات السريعة للفيديو الحالي بترتيب أولويتها: الأول رئيسي. لا شيء لغير صفحة الفيديو (تُعرض آخر الترجمات بدلها).
+ * الإجراءات السريعة للفيديو الحالي بترتيب أولويتها: الأول رئيسي. لا شيء لغير صفحة الفيديو (تُعرض آخر الترجمات بدلها). لا
+ * تنقّل هنا: المحفوظات والإعدادات مدخلان في تذييل النافذة وحده.
  * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
- * @returns {{ id: 'editor' | 'copy' | 'find', label: string, primary: boolean, disabledReason: string | null }[]}
+ * @returns {{ id: 'editor' | 'copy', label: string, primary: boolean, disabledReason: string | null }[]}
  */
 export function quickActions(reply) {
   if (!reply || !reply.watch || !reply.videoId) return [];
   const gate = editorGate(reply);
-  const hasRecord = Boolean(reply.arabic) || reply.english.saved.length > 0;
   if (reply.loading) return [{ id: 'editor', label: 'تحرير الترجمة', primary: true, disabledReason: gate.reason }];
   if (reply.arabic) {
     return [
       { id: 'editor', label: 'تحرير الترجمة', primary: true, disabledReason: null },
-      { id: 'copy', label: 'نسخ تعليمات الترجمة', primary: false, disabledReason: null },
-      { id: 'find', label: 'في المحفوظات', primary: false, disabledReason: null },
+      { id: 'copy', label: 'نسخ التعليمات', primary: false, disabledReason: null },
     ];
   }
-  return [
-    { id: 'copy', label: 'نسخ تعليمات الترجمة', primary: true, disabledReason: null },
-    { id: 'find', label: 'في المحفوظات', primary: false, disabledReason: hasRecord ? null : 'لم يُحفظ شيء لهذا الفيديو بعد' },
-  ];
+  return [{ id: 'copy', label: 'نسخ تعليمات الترجمة', primary: true, disabledReason: null }];
 }
 
 /**

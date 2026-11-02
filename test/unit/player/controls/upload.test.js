@@ -1,6 +1,7 @@
 // الرفع والعرض (P6-AC5، وP12-AC2 الجزء الآلي): دون ترجمة يفتح منتقي الملفات مباشرة، والفحص والمقارنة فوق readImport
 // بالبصمات المحفوظة، ثم الحفظ في خانة (loadArabicInto) وملخص النتيجة؛ ومع ترجمة قائمة باسم الملف والملخص ووضع العرض،
-// والرفع بتأكيد مضغوط: «حفظ في» 1 2 3 (الافتراضي أول خانة فارغة)، وقرينة الاسم، وما يمسه الاستبدال و«إبقاء تعديلاتي».
+// والرفع بتأكيد مضغوط: «حفظ في» بالخانات المحفوظة و«جديدة» لأول فارغة (الافتراضي)، وقرينة الاسم، وما يمسه الاستبدال
+// و«إبقاء تعديلاتي».
 // لا كتابة قبل التأكيد، ولا تحميل لنتيجة قُرئت لفيديو سابق.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -45,13 +46,12 @@ test('اختيار ملف: فحص ومقارنة بالبصمات المحفوظ
   const text = page.ui.menuText();
   assert.match(text, /talk\.ar\.srt/);
   assert.match(text, /5 مقاطع/);
-  assert.match(text, /مطابق للأصل ✓/);
+  assert.match(text, /مطابق للأصل/);
+  assert.equal(text.includes('✓'), false, 'علامة المطابقة رمز SVG لا محرف');
+  assert.ok(page.ui.menu().querySelector('.summary svg.glyph'));
   assert.doesNotMatch(text, /التفاصيل الكاملة في المحرّر/, 'لا فقرة شرح في القائمة («المشغّل للمشاهدة»)');
-  // محدد الترجمات 1 2 3 أعلى القائمة: ترجمة واحدة في الخانة 1 نشطة، والخانتان 2 و3 فارغتان ومعطّلتان في الاختيار.
-  const slots = page.ui.menu().querySelectorAll('[role="radiogroup"] button.slot');
-  assert.deepEqual(slots.map((s) => [s.textContent, s.getAttribute('aria-checked'), s.getAttribute('data-filled'), s.getAttribute('aria-disabled')]), [['1', 'true', 'true', null], ['2', 'false', 'false', 'true'], ['3', 'false', 'false', 'true']]);
-  assert.equal(slots[0].getAttribute('aria-label'), 'الترجمة 1، نشطة');
-  assert.equal(slots[1].getAttribute('aria-label'), 'الترجمة 2، فارغة');
+  // ترجمة واحدة: لا محدد أصلًا (لا «1» وحده ولا خانات فارغة).
+  assert.equal(page.ui.menu().querySelectorAll('button.slot').length, 0);
   assert.equal(page.handle.diagnostics().session.imports, 1);
 });
 
@@ -84,11 +84,13 @@ test('مع ترجمة: قائمة العرض بالأوضاع الثلاثة، �
   const page = mountPage({ state: makeState({ arabic: arabic() }) });
   click(page.ui.btn('upload'));
   assert.equal(page.ui.menuOpen(), true);
-  const radios = page.ui.menu().querySelectorAll('[role="menuitemradio"]');
+  const group = page.ui.menu().querySelector('.seg[aria-label="وضع العرض"]');
+  const radios = group.querySelectorAll('[role="radio"]');
   assert.deepEqual(radios.map((r) => r.getAttribute('data-fid')), ['mode:ar', 'mode:dual', 'mode:off']);
   assert.equal(radios[0].getAttribute('aria-checked'), 'true');
   assert.equal(radios[1].getAttribute('aria-disabled'), 'true');
-  assert.match(radios[1].textContent, /استخرج الإنجليزية لهذا الفيديو أولًا/);
+  assert.match(radios[1].getAttribute('aria-description'), /استخرج الإنجليزية لهذا الفيديو أولًا/, 'السبب لقارئ الشاشة');
+  assert.match(radios[1].getAttribute('title'), /استخرج الإنجليزية لهذا الفيديو أولًا/, 'والسبب في التلميح');
   click(radios[1]);
   assert.equal(page.controller.calls.length, 0, 'المعطّل لا يُطبَّق');
   click(radios[2]);
@@ -139,7 +141,10 @@ test('رفع ثانٍ: تأكيد مضغوط بالملف وعدده وسطر ا
   assert.match(text, /4 مقاطع/);
   assert.match(text, /مقطع واحد ناقص: 5/);
   assert.match(text, /حفظ في/);
-  assert.deepEqual(targets(page), [['1', 'false', 'true', null], ['2', 'true', 'false', null], ['3', 'false', 'false', null]], 'الفارغة متاحة هدفًا');
+  assert.deepEqual(targets(page), [['1', 'false', null, null], ['جديدة', 'true', null, null]], 'المحفوظة استبدالًا، ثم «جديدة» لأول فارغة، ولا خانات فارغة أرقامًا');
+  assert.equal(page.ui.menu().querySelector('[data-fid="target:2"]').getAttribute('aria-label'), 'حفظ كترجمة جديدة');
+  assert.equal(page.ui.menu().querySelector('[data-fid="target:1"]').getAttribute('aria-label'), 'استبدال الترجمة 1، نشطة');
+  assert.equal(page.ui.menu().querySelector('[data-fid="target:3"]'), null);
   assert.equal(page.ui.menuText().includes('ستُصفَّر'), false, 'خانة فارغة: لا تصفير للمعروضة');
   assert.equal(page.ui.field('keep'), null, 'لا «إبقاء تعديلاتي» لخانة فارغة');
   assert.equal(loads(page).length, 0, 'لا شيء قبل التأكيد');
@@ -149,8 +154,8 @@ test('رفع ثانٍ: تأكيد مضغوط بالملف وعدده وسطر ا
   assert.deepEqual(loads(page)[0][3], { replace: false, activate: undefined }, 'التفعيل بافتراض المتحكم (الفارغة تصبح النشطة)');
   assert.equal(page.controller.getState().activeSlot, 2);
   assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
-  const slots = page.ui.menu().querySelectorAll('button.slot').filter((b) => b.getAttribute('data-fid').startsWith('slot:')).map((b) => b.getAttribute('aria-checked'));
-  assert.deepEqual(slots, ['false', 'true', 'false']);
+  const slots = page.ui.menu().querySelectorAll('button.slot').filter((b) => b.getAttribute('data-fid').startsWith('slot:')).map((b) => [b.textContent, b.getAttribute('aria-checked')]);
+  assert.deepEqual(slots, [['1', 'false'], ['2', 'true']], 'صار المحدد خيارين بعد الإضافة، والجديدة نشطة');
 });
 
 test('الاستبدال: اختيار خانة ممتلئة يجعل الزر «استبدال» بتنبيه تصفير الإزاحة للنشطة، والحفظ بالاستبدال', async () => {
@@ -229,10 +234,11 @@ test('قرينة الاسم: سطر «الاسم يشير إلى فيديو آخ
   assert.equal(loads(page).length, 0, 'لا حفظ قبل التأكيد');
   assert.equal(page.flows.reviews[0].knownVideoIds[0], 'BBBBBBBBBBB');
   const line = page.ui.menu().querySelectorAll('.alert').map((a) => a.textContent).find((t) => t.includes('الاسم يشير'));
-  assert.ok(line.startsWith('⚠الاسم يشير إلى فيديو آخر · محاضرة طويلة'));
+  assert.ok(line.startsWith('الاسم يشير إلى فيديو آخر · محاضرة طويلة'));
   assert.ok(line.endsWith('…'));
   assert.equal(Array.from(line.split(' · ')[1]).length, 40);
-  assert.deepEqual(targets(page).map((t) => t[1]), ['true', 'false', 'false']);
+  assert.deepEqual(targets(page), [], 'لا ترجمة محفوظة: لا محدد');
+  assert.match(page.ui.menu().querySelector('.row.target').textContent, /حفظ فيتُحفظ ترجمةً جديدة/);
   click(page.ui.item('إلغاء'));
   assert.equal(page.ui.menuOpen(), false, 'بلا ترجمة: الإلغاء يغلق');
   assert.equal(loads(page).length, 0);
@@ -246,7 +252,7 @@ test('قرينة لفيديو غير محفوظ، أو تعذّر قراءة ا�
   chooseFiles(page.ui, [file('CCCCCCCCCCC.en.asr.normal.ar.srt')]);
   await settle();
   const alerts = page.ui.menu().querySelectorAll('.alert').map((a) => a.textContent);
-  assert.ok(alerts.includes('⚠الاسم يشير إلى فيديو آخر'));
+  assert.ok(alerts.includes('الاسم يشير إلى فيديو آخر'));
 });
 
 test('إلغاء الرفع يعيد قائمة العرض ولا يحفظ شيئًا؛ وإعادة الضغط على الرفع تغلقها', async () => {
@@ -270,7 +276,7 @@ test('ترجمة أُضيفت من مكان آخر أثناء الفحص: يُط
   await settle();
   await settle();
   assert.equal(page.ui.menuLabel(), 'رفع ترجمة');
-  assert.deepEqual(targets(page).map((t) => t[1]), ['false', 'true', 'false']);
+  assert.deepEqual(targets(page).map((t) => [t[0], t[1]]), [['1', 'false'], ['جديدة', 'true']]);
   assert.equal(loads(page).length, 0);
 });
 

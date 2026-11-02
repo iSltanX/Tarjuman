@@ -55,23 +55,29 @@ for (const c of cs) {
   for (const k of ['css', 'exclude_matches', 'include_globs', 'match_about_blank', 'match_origin_as_fallback']) if (k in c) problems.push(`manifest: ${k} غير مسموح في سكربت المحتوى`);
 }
 if (manifest.action?.default_popup !== 'pages/popup/index.html') problems.push('manifest: نافذة الأيقونة ليست pages/popup/index.html');
-// web_accessible_resources: خطوط الترجمة وحدها («تهيئة W4»): إدخال واحد لملفات .woff2 في ui/fonts/subtitle، ليوتيوب
-// وحده، بعنوان متغير (use_dynamic_url). ومجلد الخطوط لا يحوي غير WOFF2 ورخصها.
+// web_accessible_resources: الخطوط وحدها («تهيئة W4»، وخطوط الواجهة في جولة الصقل): إدخال واحد لملفات .woff2 في
+// ui/fonts/subtitle (الترجمة) وui/fonts/ui (عناوين الواجهة)، ليوتيوب وحده، بعنوان متغير (use_dynamic_url). ومجلدا الخطوط لا
+// يحويان غير WOFF2 بأوزانها ورخصها. وأيقونات الإضافة PNG بأحجام البيان وحدها.
 const SUBTITLE_FONTS = path.join('ui', 'fonts', 'subtitle');
+const UI_FONTS = path.join('ui', 'fonts', 'ui');
 if ('web_accessible_resources' in manifest) {
   const war = manifest.web_accessible_resources;
   const e = Array.isArray(war) && war.length === 1 ? war[0] : null;
-  if (!e || Object.keys(e).sort().join() !== 'matches,resources,use_dynamic_url' || JSON.stringify(e.resources) !== '["ui/fonts/subtitle/*.woff2"]'
+  if (!e || Object.keys(e).sort().join() !== 'matches,resources,use_dynamic_url' || JSON.stringify(e.resources) !== '["ui/fonts/subtitle/*.woff2","ui/fonts/ui/*.woff2"]'
     || JSON.stringify(e.matches) !== YT || e.use_dynamic_url !== true) {
     problems.push(`manifest: web_accessible_resources غير المعتمد ${JSON.stringify(war).slice(0, 160)}`);
   }
 }
-if (await exists(path.join(SRC, SUBTITLE_FONTS))) {
-  for (const f of await walk(path.join(SRC, SUBTITLE_FONTS))) {
-    const rel = path.relative(path.join(SRC, SUBTITLE_FONTS), f);
-    if (!/^[a-z0-9-]+-(?:400|700)\.woff2$|^[a-z0-9-]+-OFL\.txt$/.test(rel)) problems.push(`${path.join(SUBTITLE_FONTS, rel)}: ملف غير متوقع في مجلد خطوط الترجمة`);
+for (const [dir, weights] of [[SUBTITLE_FONTS, '400|700'], [UI_FONTS, '600|700']]) {
+  if (!(await exists(path.join(SRC, dir)))) continue;
+  for (const f of await walk(path.join(SRC, dir))) {
+    const rel = path.relative(path.join(SRC, dir), f);
+    if (!new RegExp(`^[a-z0-9-]+-(?:${weights})\\.woff2$|^[a-z0-9-]+-OFL\\.txt$`).test(rel)) problems.push(`${path.join(dir, rel)}: ملف غير متوقع في مجلد الخطوط`);
   }
 }
+const ICON_SIZES = ['16', '32', '48', '128'];
+if (JSON.stringify(manifest.icons) !== JSON.stringify(Object.fromEntries(ICON_SIZES.map((n) => [n, `icons/tarjuman-icon-${n}.png`])))) problems.push('manifest: icons غير المعتمدة');
+for (const n of ICON_SIZES) if (!(await exists(path.join(SRC, 'icons', `tarjuman-icon-${n}.png`)))) problems.push(`icons: tarjuman-icon-${n}.png مفقودة`);
 for (const p of PAGES) {
   for (const f of ['index.html', 'main.js']) if (!(await exists(path.join(SRC, 'pages', p, f)))) problems.push(`pages: ${p}/${f} مفقود`);
 }

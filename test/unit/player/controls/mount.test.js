@@ -114,3 +114,30 @@ test('الحالة حية على المقبض نفسه، والتشخيص أعد
   assert.equal(page.handle.diagnostics().session.styleMode.group, 'adopted');
   void inspect;
 });
+
+test('خطوط الواجهة تُطلب عند أول تركيب ناجح مرة واحدة، ونتيجتها رموز في التشخيص؛ وإعادة التركيب لا تعيد الطلب بعد نجاحه', async () => {
+  const env = createFakeEnv();
+  const calls = [];
+  const uiFonts = async (e) => {
+    calls.push(e.doc === env.doc);
+    return { loaded: ['cairo', 'almarai'], failed: [] };
+  };
+  const handle = mountControls(fakeController(), { ...deps(env), uiFonts });
+  assert.equal(calls.length, 0, 'لا طلب قبل وجود المشغّل');
+  const parts = addPlayer(env);
+  addBar(env, parts);
+  env.win.advance(60);
+  assert.equal(handle.state, 'mounted');
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(calls, [true]);
+  assert.deepEqual(handle.diagnostics().uiFonts, { loaded: ['cairo', 'almarai'], failed: [] });
+  parts.player.remove();
+  env.win.advance(HEALTH_MS + 60);
+  const again = addPlayer(env);
+  addBar(env, again);
+  env.win.advance(HEALTH_MS + 60);
+  assert.equal(handle.state, 'mounted');
+  assert.equal(calls.length, 1, 'لا إعادة بعد النجاح');
+  const off = mountControls(fakeController(), { ...deps(createFakeEnv()), uiFonts: null });
+  assert.equal(off.diagnostics().uiFonts, null, 'بلا محمّل: لا شيء');
+});

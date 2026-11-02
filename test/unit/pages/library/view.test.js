@@ -227,10 +227,11 @@ test('فتح الفيديو يفتح عنوان المشاهدة وحده، وا
   assert.ok(buttonNamed(rowFor(m, IDS[1]), 'رفع ترجمة'), 'بلا عربية: «رفع ترجمة» الإجراء الرئيسي');
   assert.ok(buttonNamed(rowFor(m, IDS[0]), 'فتح الفيديو'), 'فتح الفيديو زر أيقوني باسم وصول');
   const slots = findAll(rowFor(m, IDS[0]), (e) => e.getAttribute('role') === 'radio' && e.classList.contains('tj-slots__slot'));
-  assert.deepEqual(slots.map((s) => [s.getAttribute('aria-checked'), s.getAttribute('data-filled')]), [['true', 'true'], ['false', 'false'], ['false', 'false']], 'ترجمة واحدة: الخانة 1 نشطة و2 و3 فارغتان');
-  assert.equal(slots[2].getAttribute('aria-label'), 'الترجمة 3، فارغة');
+  assert.deepEqual(slots.map((s) => [s.textContent, s.getAttribute('aria-checked')]), [['1', 'true']], 'ترجمة واحدة: لا خانات فارغة');
+  assert.equal(rowFor(m, IDS[0]).querySelector('.tj-slots').hidden, true, 'ترجمة واحدة: المحدد مخفي كله (لا «1» وحده)');
   const none = findAll(rowFor(m, IDS[1]), (e) => e.getAttribute('role') === 'radio' && e.classList.contains('tj-slots__slot'));
-  assert.ok(none.every((s) => s.getAttribute('data-filled') === 'false'), 'بلا عربية: الخانات الثلاث فارغة');
+  assert.equal(none.length, 0, 'بلا عربية: لا خانات');
+  assert.equal(rowFor(m, IDS[1]).querySelector('.tj-slots').hidden, true);
 });
 
 test('رقائق التصفية بأعدادها: مترجمة وبانتظار الترجمة ومعدّلة وتحذيرات، والقسم الفارغ يعرض «عرض الكل»', async () => {
@@ -523,7 +524,8 @@ test('الرفع: حوار الفحص الكامل — الافتراضي أول
   assert.equal(b.slots[0].offsetMs, 1000, 'إزاحة الأولى باقية');
   assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'حُفظت الترجمة في الخانة 2.');
   const picker = rows(m)[0].querySelector('.tj-slots');
-  assert.deepEqual(picker.querySelectorAll('button').map((x) => x.getAttribute('aria-checked')), ['false', 'true', 'false']);
+  assert.deepEqual(picker.querySelectorAll('button').map((x) => [x.textContent, x.getAttribute('aria-checked')]), [['1', 'false'], ['2', 'true']], 'صار خيارين بعد الإضافة، والجديدة نشطة');
+  assert.equal(picker.hidden, false);
 });
 
 test('الاستبدال: اختيار خانة ممتلئة يعرض أعداد الفروق وجدولها وتصفير الإزاحة، والتأكيد يستبدل ويحفظ السابقة', async () => {

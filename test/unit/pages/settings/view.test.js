@@ -418,7 +418,7 @@ test('تذكير التثبيت: يظهر ما دامت المحفوظات فا�
   assert.equal(textOf((await mount({ videos: 1 })).root).includes(INSTALL_REMINDER), false);
 });
 
-test('حول: الإصدار و«كل شيء محلي» والرابطان بتبويب جديد وnoopener، وبشارة «خاص حاليًا»، والخطوط ورخصها المحلية', async () => {
+test('حول: الإصدار و«كل شيء محلي» والرابطان بتبويب جديد وnoopener بلا عبارة «خاص حاليًا»، والخطوط ورخصها المحلية', async () => {
   const m = await mount();
   const about = section(m, 'حول');
   assert.deepEqual(about.querySelector('.st-about__row').children.map(textOf), ['الإصدار', '0.2.0']);
@@ -434,17 +434,19 @@ test('حول: الإصدار و«كل شيء محلي» والرابطان بت�
     assert.equal(a.getAttribute('target'), '_blank');
     assert.match(a.getAttribute('rel'), /noopener/);
   }
-  assert.ok(textOf(about).includes('خاص حاليًا'));
+  assert.equal(textOf(about).includes('خاص حاليًا'), false, 'النص المعروض بلا «خاص حاليًا» والرابط باقٍ');
   assert.ok(textOf(about).includes('خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: المراعي، ونوتو سانس العربي، وتجوّل، ومركزي.'));
   assert.ok(buttonNamed(about, 'عرض التراخيص') === null, 'عرض التراخيص ملخّص details لا زر');
   assert.ok(findAll(about, (e) => e.tagName === 'summary').map(textOf).includes('عرض التراخيص'));
   assert.ok(findAll(about, (e) => e.tagName === 'summary').map(textOf).includes('دليل الاستخدام'));
   const licenses = links.filter((a) => /OFL/.test(textOf(a)));
-  assert.equal(licenses.length, 4);
+  assert.equal(licenses.length, 5, 'خطوط الترجمة الأربعة وخط عناوين الواجهة');
+  const want = [...SUBTITLE_FONT_LIST.map((f) => f.license), 'ui/fonts/ui/cairo-OFL.txt'];
   licenses.forEach((a, i) => {
-    assert.equal(a.getAttribute('href'), `../../${SUBTITLE_FONT_LIST[i].license}`, 'ملف رخصة محلي بمسار نسبي');
+    assert.equal(a.getAttribute('href'), `../../${want[i]}`, 'ملف رخصة محلي بمسار نسبي');
     assert.match(a.getAttribute('rel'), /noopener/);
   });
+  assert.ok(textOf(about).includes('وعناوين الواجهة بخط القاهرة (Cairo) بالرخصة نفسها.'));
   const external = links.filter((a) => /^https?:/.test(a.getAttribute('href'))).map((a) => a.getAttribute('href'));
   assert.deepEqual(external.sort(), [LINKS.site, LINKS.repo].sort(), 'الرابطان الخارجيان الوحيدان');
 });

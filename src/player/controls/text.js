@@ -15,9 +15,9 @@ export const LABELS = Object.freeze({
   trackChoice: 'المسار',
   modeNormal: 'عادي',
   modeLong: 'مقاطع أطول',
-  modeNormalNote: 'مقاطع كما في يوتيوب، للتزامن الأدق.',
-  modeLongNote: 'جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما.',
-  checking: 'جارٍ التحقق من النص والتوقيت…',
+  modeNormalNote: 'مقاطع كما في يوتيوب، للتزامن الأدق',
+  modeLongNote: 'جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما',
+  checking: 'جارٍ التنزيل…',
   copyNeedsTrack: 'يتاح النسخ بعد التقاط المسار الإنجليزي.',
   fallback: 'خيارات احتياطية',
   split: 'تقسيم الملف إلى أجزاء (للملفات الطويلة جدًا)',
@@ -25,12 +25,20 @@ export const LABELS = Object.freeze({
   modeAr: 'العربية وحدها',
   modeDual: 'العربية فوق الإنجليزية',
   modeOff: 'إخفاء الترجمة',
+  segAr: 'العربية',
+  segDual: 'مع الإنجليزية',
+  segOff: 'إخفاء',
+  displayMode: 'وضع العرض',
+  exportMode: 'وضع التصدير',
   replace: 'استبدال…',
   uploadMore: 'رفع ترجمة…',
   replaceConfirm: 'استبدال',
   save: 'حفظ',
   uploadTitle: 'رفع ترجمة',
   saveTo: 'حفظ في',
+  saveNew: 'جديدة',
+  saveNewLabel: 'حفظ كترجمة جديدة',
+  savesAsNew: 'تُحفظ ترجمةً جديدة',
   keepEdits: 'إبقاء تعديلاتي',
   nameOther: 'الاسم يشير إلى فيديو آخر',
   markReview: 'علّم للمراجعة',
@@ -40,9 +48,11 @@ export const LABELS = Object.freeze({
   earlier: 'أبكر',
   later: 'أحدث',
   back: 'رجوع',
-  downloadCopy: 'تنزيل ونسخ التعليمات',
+  downloadFile: 'تنزيل الملف',
+  downloadFileLong: 'تنزيل ملف الترجمة الإنجليزية (SRT)',
   copyShort: 'نسخ التعليمات',
-  copied: '✓ نُسخت التعليمات',
+  copyLong: 'نسخ تعليمات الترجمة',
+  copied: 'نُسخت التعليمات',
   copyFailed: 'تعذّر النسخ — أعد المحاولة',
   englishSteps: 'CC ← ⚙ ← الترجمة ← English',
   braveNote: 'Brave قد يختار العربية أولًا؛ اختر English مرة',
@@ -56,8 +66,9 @@ export const LABELS = Object.freeze({
   stepField: 'خطوة الأزرار',
   stepCustom: 'مخصص',
   stepCustomField: 'الخطوة بالثواني',
-  reset: 'إعادة الضبط إلى 0',
-  signLegend: '+ تأخير: تظهر لاحقًا · − تقديم: تظهر أبكر · تُحفظ لهذا الفيديو',
+  reset: 'تصفير',
+  resetLong: 'إعادة الإزاحة إلى 0',
+  signLegend: '+ تأخير · − تقديم · تُحفظ لهذا الفيديو',
   close: 'إغلاق',
 });
 
@@ -69,8 +80,8 @@ export const slotToast = (n) => `الترجمة ${n}`;
 export const markToast = (n) => `عُلِّم المقطع ${n} للمراجعة`;
 /** @param {number} ms «الإزاحة −3.2 ث» */
 export const offsetToast = (ms) => `الإزاحة ${formatOffset(ms)} ث`;
-/** @param {string} name «✓ نُزّل VIDEOID.en.manual.normal.srt» أو «✓ نُزّل 3 أجزاء» */
-export const downloadedLine = (name) => `✓ نُزّل ${name}`;
+/** @param {string} name «نُزّل VIDEOID.en.manual.normal.srt» أو «نُزّل 3 أجزاء» (رمز النجاح SVG بجانبه في القائمة) */
+export const downloadedLine = (name) => `نُزّل ${name}`;
 /** @param {number} n «+ القاموس (12)»: القاموس مرفق بالتعليمات المنسوخة */
 export const glossaryTag = (n) => `+ القاموس (${n})`;
 

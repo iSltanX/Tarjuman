@@ -793,17 +793,16 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   }
 
   /**
-   * «تنزيل ونسخ التعليمات» (R61): فعل واحد بنتيجتين منفصلتين. النسخ أولًا: حوار «اسأل عن مكان الحفظ» يأخذ التركيز من
-   * الصفحة فيفشل النسخ بعده (R65). ثم الحفظ بمكان الإعدادات، ثم البصمة.
+   * «تنزيل الملف» (R61 بعد جولة الصقل): يحفظ ملف SRT وحده بمكان الإعدادات ثم البصمة، ولا ينسخ شيئًا؛ والنسخ زر مستقل
+   * (startCopy). لكلٍّ سطر نتيجته، فلا يمحو أحدهما نتيجة الآخر.
    */
   async function startDownload() {
     const d = ui.download;
-    if (d.busy || ui.copyBusy) return;
+    if (d.busy) return;
     const spec = exportSpec();
     if (!spec) return;
     d.busy = true;
     d.saveLine = null;
-    d.copyLine = null;
     d.result = [];
     render();
     const prep = prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
@@ -815,9 +814,6 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       render();
       return;
     }
-    await copyInto(d, prep.text);
-    if (destroyed || ui.download !== d) return;
-    render();
     const files = prep.built.files;
     const r = await saveFiles({ exportFlow: flows.exportFlow, files, doc });
     if (destroyed || ui.download !== d) return;
@@ -848,7 +844,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   /** «نسخ التعليمات» وحده: تعليمات المسار والوضع والتقسيم المختارة، بالقاموس إن أُرفق. لا ملف ولا بصمة. */
   async function startCopy() {
     const d = ui.download;
-    if (ui.copyBusy || d.busy) return;
+    if (ui.copyBusy) return;
     const spec = exportSpec();
     if (!spec) return;
     const prep = prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });

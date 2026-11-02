@@ -7,6 +7,7 @@ import { buildExport, instructions } from '../../core/export/index.js';
 import { readImport, reviewIncoming } from '../../core/import/index.js';
 import { saveFile } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
+import { loadUiFonts } from '../overlay/fonts.js';
 import { EVENTS, getPlayer, getRightControls } from '../youtube-dom.js';
 import { createControlsSession } from './session.js';
 
@@ -29,13 +30,17 @@ const DEFAULT_FLOWS = Object.freeze({
 
 /**
  * @param {import('../../content/controller.js').Controller} controller
- * @param {{ doc?: Document, win?: Window, exportFlow?: object, importFlow?: object, now?: () => number }} [deps]
+ * @param {{ doc?: Document, win?: Window, exportFlow?: object, importFlow?: object, now?: () => number, uiFonts?: typeof loadUiFonts | null }} [deps]
+ *   uiFonts للاختبار (null بلا خطوط)
  * @returns {import('../overlay/index.js').MountHandle & { diagnostics: () => object, peek: () => object | null }}
  */
 export function mountControls(controller, deps = {}) {
   const win = deps.win ?? window;
   const doc = deps.doc ?? win.document;
   const flows = { exportFlow: deps.exportFlow ?? DEFAULT_FLOWS.exportFlow, importFlow: deps.importFlow ?? DEFAULT_FLOWS.importFlow };
+  const uiFontsLoader = deps.uiFonts !== undefined ? deps.uiFonts : loadUiFonts;
+  /** خطوط الواجهة: تُطلب عند أول تركيب ناجح، ونتيجتها رموز في التشخيص. */
+  let uiFonts = /** @type {{ loaded: string[], failed: string[] } | 'pending' | null} */ (null);
   /** @type {'stub' | 'waiting' | 'mounted' | 'error'} */
   let state = 'waiting';
   /** @type {ReturnType<typeof createControlsSession> | null} */
@@ -103,6 +108,10 @@ export function mountControls(controller, deps = {}) {
       session = createControlsSession({ controller, doc, win, player, flows, now: deps.now });
       state = 'mounted';
       failures = 0;
+      if (uiFontsLoader && (uiFonts === null || (uiFonts !== 'pending' && !uiFonts.loaded.length))) {
+        uiFonts = 'pending';
+        uiFontsLoader({ doc, win }).then((r) => { uiFonts = r; }, () => { uiFonts = { loaded: [], failed: ['all'] }; });
+      }
       observePage(false);
       observeBar(right);
     } catch (err) {
@@ -152,6 +161,7 @@ export function mountControls(controller, deps = {}) {
     /** أعداد ورموز فقط: لا نص مقاطع ولا أسماء ملفات ولا روابط (R36). */
     diagnostics: () => ({
       state, attempts, failures, lastCode: lastError?.code ?? null, lastDetail: lastError?.detail ?? null,
+      uiFonts: uiFonts === 'pending' ? { pending: true } : uiFonts,
       session: session ? session.diagnostics() : null,
     }),
 

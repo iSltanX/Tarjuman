@@ -11,7 +11,7 @@ import { arabic, makeState, matched, mountPage } from './harness.js';
 
 test('إشعار الاستعادة رسالة معلومة عابرة (3 ث)، ثم يُصرف في المتحكم مرة واحدة', () => {
   const page = mountPage({ state: makeState({ arabic: arabic(), notice: { code: 'ST_RESTORED', tone: 'info', at: 7 } }) });
-  assert.deepEqual(page.ui.toasts(), [{ tone: 'info', text: 'ⓘاستُعيدت ترجمتك المحفوظة لهذا الفيديو.' }]);
+  assert.deepEqual(page.ui.toasts(), [{ tone: 'info', text: 'استُعيدت ترجمتك المحفوظة لهذا الفيديو.' }]);
   page.env.win.advance(1);
   assert.deepEqual(page.controller.calls, [['dismissNotice']]);
   assert.equal(page.controller.getState().notice, null);

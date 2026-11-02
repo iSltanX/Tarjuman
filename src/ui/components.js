@@ -1,6 +1,8 @@
 // بُناة DOM للمكوّنات المشتركة بين صفحات الإضافة. textContent وsetAttribute فقط، ولا HTML نصي أبدًا (فحص ثابت).
 // هنا: الأيقونات، والزر، والحقل، والشارة، والتنبيه، والحالة الفارغة، وحوار التأكيد، والشريط العلوي، ومجموعة الاختيار،
-// ورقائق التصفية، ومحدد الترجمات 1 2 3. القائمة المنسدلة في menu.js.
+// ورقائق التصفية، ومحدد الترجمات الموجودة. القائمة المنسدلة في menu.js، والشعار في logo.js.
+
+import { logo } from './logo.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -242,7 +244,7 @@ const NAV_PAGES = Object.freeze([
 ]);
 
 /**
- * الشريط العلوي المشترك: الشعار واسم المنتج، وروابط الصفحتين (الحالية بـaria-current)، و«محلي بالكامل».
+ * الشريط العلوي المشترك: الشعار المعتمد (التركيب الأفقي)، وروابط الصفحتين (الحالية بـaria-current)، و«محلي بالكامل».
  * @param {{ active: 'library' | 'settings' | 'editor' | null, doc?: Document }} o
  */
 export function topbar({ active, doc = document }) {
@@ -251,7 +253,7 @@ export function topbar({ active, doc = document }) {
     children: [el('div', {
       className: 'tj-topbar__inner',
       children: [
-        el('a', { className: 'tj-topbar__brand', attrs: { href: NAV_PAGES[0].href, 'aria-label': 'ترجمان — المحفوظات' }, children: [el('span', { className: 'tj-mark', text: 'ت', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'tj-topbar__name', text: 'ترجمان', doc })], doc }),
+        el('a', { className: 'tj-topbar__brand', attrs: { href: NAV_PAGES[0].href, 'aria-label': 'ترجمان — المحفوظات' }, children: [logo({ height: 24, label: null, doc })], doc }),
         el('nav', {
           className: 'tj-topbar__nav', attrs: { 'aria-label': 'صفحات ترجمان' },
           children: NAV_PAGES.map((p) => el('a', { className: 'tj-topbar__link', text: p.label, attrs: { href: p.href, ...(p.id === active ? { 'aria-current': 'page' } : {}) }, doc })),
@@ -364,58 +366,60 @@ export function chipGroup({ options, value, onChange, ariaLabel, doc = document 
 export const slotLabel = (s) => `الترجمة ${s.n}${s.active ? '، نشطة' : s.filled ? '' : '، فارغة'}`;
 
 /**
- * محدد الترجمات 1 2 3: النشطة بلون الإبراز، والمحفوظة بإطار، والفارغة باهتة ومعطّلة في الاختيار.
+ * محدد الترجمات الموجودة (جولة الصقل): زر لكل خانة محفوظة فقط، برقم خانتها (هويتها الثابتة في المشغّل والمحفوظات
+ * والمحرّر)، والنشطة بلون الإبراز؛ ويختفي كله حين لا تكون إلا ترجمة واحدة أو لا شيء. لا خانات فارغة معروضة. يُعاد بناؤه
+ * عند الإضافة والحذف والاستبدال بـupdate، ويبقى الربط برقم الخانة لا بموضع الزر.
  * @param {{ slots: SlotModel[], size?: 'sm' | 'md', ariaLabel?: string, onSelect?: (n: number) => void, doc?: Document }} o
- * @returns {{ root: HTMLElement, update: (slots: SlotModel[]) => void, buttons: HTMLButtonElement[] }}
+ * @returns {{ root: HTMLElement, update: (slots: SlotModel[]) => void, readonly buttons: HTMLButtonElement[], button: (n: number) => HTMLButtonElement | null }}
  */
 export function slotPicker({ slots, size = 'sm', ariaLabel = 'الترجمة النشطة', onSelect, doc = document }) {
-  const buttons = slots.map((s) => {
-    const b = el('button', { className: 'tj-slots__slot', text: String(s.n), attrs: { type: 'button', role: 'radio', 'data-slot': String(s.n) }, doc });
+  const root = el('div', { className: `tj-slots${size === 'md' ? ' tj-slots--md' : ''}`, attrs: { role: 'radiogroup', 'aria-label': ariaLabel }, doc });
+  /** @type {Map<number, HTMLButtonElement>} */
+  const byN = new Map();
+  const make = (n) => {
+    const b = el('button', { className: 'tj-slots__slot', text: String(n), attrs: { type: 'button', role: 'radio', 'data-slot': String(n), 'data-filled': 'true' }, doc });
     b.addEventListener('click', () => {
-      if (b.getAttribute('data-filled') === 'false' || b.getAttribute('aria-checked') === 'true') return;
-      onSelect?.(Number(b.getAttribute('data-slot')));
+      if (b.getAttribute('aria-checked') === 'true') return;
+      onSelect?.(n);
     });
     return b;
-  });
-  const root = el('div', { className: `tj-slots${size === 'md' ? ' tj-slots--md' : ''}`, attrs: { role: 'radiogroup', 'aria-label': ariaLabel }, children: buttons, doc });
+  };
   root.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    const usable = buttons.filter((b) => b.getAttribute('data-filled') === 'true');
-    const at = usable.indexOf(doc.activeElement);
-    if (at === -1 || usable.length < 2) return;
+    const list = [...root.children];
+    const at = list.indexOf(doc.activeElement);
+    if (at === -1 || list.length < 2) return;
     e.preventDefault();
-    // في RTL السهم الأيسر يتقدّم في الترتيب والأيمن يرجع.
-    const next = usable[((at + (e.key === 'ArrowLeft' ? 1 : -1)) % usable.length + usable.length) % usable.length];
-    next.focus();
+    // الأرقام تُقرأ من اليسار (LTR كخط الأعداد): السهم الأيمن إلى الرقم التالي.
+    list[((at + (e.key === 'ArrowRight' ? 1 : -1)) % list.length + list.length) % list.length].focus();
   });
   function update(list) {
-    list.forEach((s, i) => {
-      const b = buttons[i];
-      if (!b) return;
-      b.setAttribute('aria-checked', s.active ? 'true' : 'false');
-      b.setAttribute('data-filled', s.filled ? 'true' : 'false');
-      if (s.filled) b.removeAttribute('aria-disabled');
-      else b.setAttribute('aria-disabled', 'true');
-      b.setAttribute('aria-label', slotLabel(s));
-      b.title = s.name ? s.name : slotLabel(s);
-      b.tabIndex = s.active ? 0 : -1;
-    });
-    if (!list.some((s) => s.active)) {
-      const first = list.findIndex((s) => s.filled);
-      buttons.forEach((b, i) => { b.tabIndex = i === Math.max(0, first) ? 0 : -1; });
+    const shown = list.filter((s) => s.filled).sort((a, b) => a.n - b.n);
+    for (const [n, b] of byN) {
+      if (!shown.some((s) => s.n === n)) {
+        b.remove();
+        byN.delete(n);
+      }
     }
+    const focusN = (shown.find((s) => s.active) ?? shown[0])?.n ?? null;
+    for (const s of shown) {
+      let b = byN.get(s.n);
+      if (!b) {
+        b = make(s.n);
+        byN.set(s.n, b);
+      }
+      b.setAttribute('aria-checked', s.active ? 'true' : 'false');
+      b.setAttribute('aria-label', slotLabel(s));
+      b.title = s.name ? `${slotLabel(s)} — ${s.name}` : slotLabel(s);
+      b.tabIndex = s.n === focusN ? 0 : -1;
+      root.append(b);
+    }
+    root.hidden = shown.length < 2;
   }
   update(slots);
-  return { root, update, buttons };
+  return {
+    root, update,
+    get buttons() { return /** @type {HTMLButtonElement[]} */ ([...root.children]); },
+    button: (n) => byN.get(n) ?? null,
+  };
 }
-
-/**
- * الخانات الثلاث لفيديو في الإصدار الأول: ترجمة واحدة في الخانة 1 إن وُجدت، والباقي فارغ.
- * @param {{ hasArabic: boolean, name?: string | null }} o
- * @returns {SlotModel[]}
- */
-export const slotsForSingle = ({ hasArabic, name = null }) => [
-  { n: 1, filled: hasArabic, active: hasArabic, name: hasArabic ? name : null },
-  { n: 2, filled: false, active: false, name: null },
-  { n: 3, filled: false, active: false, name: null },
-];

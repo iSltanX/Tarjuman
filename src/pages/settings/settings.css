@@ -132,7 +132,7 @@
 .st-progress { display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 420px; }
 .st-progress[hidden] { display: none; }
 .st-progress__bar { width: 100%; height: 8px; accent-color: var(--tj-brand); }
-.st-restore { display: flex; flex-direction: column; gap: var(--tj-space-3); max-height: min(60vh, 560px); overflow-y: auto; padding-inline-end: 4px; }
+.st-restore { display: flex; flex-direction: column; gap: var(--tj-space-3); }
 .st-restore__counts { font-weight: 700; }
 .st-restore__group { display: flex; flex-direction: column; gap: var(--tj-space-2); border-top: 1px solid var(--tj-border); padding-top: var(--tj-space-3); }
 .st-restore__summary { cursor: pointer; min-height: 32px; line-height: 32px; display: list-item; list-style-position: inside; }
@@ -165,7 +165,6 @@
 .st-about { display: flex; flex-direction: column; gap: var(--tj-space-3); }
 .st-about__row { display: flex; align-items: center; gap: var(--tj-space-3); }
 .st-about__links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--tj-space-5); }
-.st-about__repo { display: inline-flex; align-items: center; gap: var(--tj-space-2); flex-wrap: wrap; }
 .st-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 700 14px/20px var(--tj-font-body); color: var(--tj-brand-text); text-decoration: none; }
 .st-link:hover { text-decoration: underline; }
 .st-link .tj-icon { width: 14px; height: 14px; }

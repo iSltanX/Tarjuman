@@ -93,21 +93,39 @@ test('الرسالة العابرة: نبرة بنص، وإعلان، وحد ث�
   assert.equal(textOf(toaster.live).length > 0, true, 'أُعلن');
 });
 
-test('اختيار الترجمة 1 2 3 من نماذج الحزمة: النشطة aria-checked، والفارغة معطّلة، وأسماء الوصول والاسم المختصر تلميحًا', () => {
+test('محدد الترجمات من نماذج الحزمة: المحفوظة وحدها بأرقامها، والنشطة aria-checked، وأسماء الوصول والاسم المختصر تلميحًا', () => {
   const doc = newDocument();
   const picked = [];
   const p = slotPicker({ slots: slotModels(sampleBundle()), onSelect: (n) => picked.push(n), doc });
-  const [b1, b2, b3] = p.buttons;
+  const [b1, b2] = p.buttons;
+  assert.equal(p.buttons.length, 2, 'لا زر للخانة الفارغة');
+  assert.equal(p.root.hidden, false);
   assert.equal(b1.getAttribute('aria-checked'), 'true');
   assert.equal(b1.getAttribute('aria-label'), 'الترجمة 1، نشطة');
-  assert.equal(b2.title, 'مراجعة');
-  assert.equal(b3.getAttribute('aria-disabled'), 'true');
-  assert.equal(b3.getAttribute('aria-label'), 'الترجمة 3، فارغة');
-  b3.click();
+  assert.equal(b2.title, 'الترجمة 2 — مراجعة');
+  assert.equal(p.button(3), null);
   b1.click();
   b2.click();
-  assert.deepEqual(picked, [2], 'الفارغة والنشطة لا تبلّغان');
+  assert.deepEqual(picked, [2], 'النشطة لا تبلّغ');
   assert.equal(slotLabel({ n: 2, filled: true, active: false }), 'الترجمة 2');
+});
+
+test('محدد الترجمات يُعاد بناؤه بالإضافة والحذف: ترجمة واحدة تخفيه، وثلاث تعرض الثلاث، والربط برقم الخانة لا بموضع الزر', () => {
+  const doc = newDocument();
+  const picked = [];
+  const s = (filled, active) => [1, 2, 3].map((n) => ({ n, filled: filled.includes(n), active: n === active, name: null }));
+  const p = slotPicker({ slots: s([1], 1), onSelect: (n) => picked.push(n), doc });
+  assert.equal(p.root.hidden, true, 'ترجمة واحدة: لا «1» وحده');
+  p.update(s([1, 2, 3], 3));
+  assert.equal(p.root.hidden, false);
+  assert.deepEqual(p.buttons.map((b) => [b.textContent, b.getAttribute('aria-checked')]), [['1', 'false'], ['2', 'false'], ['3', 'true']]);
+  p.update(s([2, 3], 2));
+  assert.deepEqual(p.buttons.map((b) => b.textContent), ['2', '3'], 'حُذفت الأولى');
+  p.buttons[1].click();
+  assert.deepEqual(picked, [3]);
+  p.update(s([], null));
+  assert.equal(p.buttons.length, 0);
+  assert.equal(p.root.hidden, true);
 });
 
 test('أصناف المكوّنات المرفوعة معرّفة في components.css بالوضعين (رموز tj- لا ألوان ثابتة)', async () => {

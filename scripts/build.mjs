@@ -58,10 +58,11 @@ await build({
   minifySyntax: true,
 });
 
-// HTML وCSS: الصفحات وأساس الواجهة، وملفات خطوط الترجمة ورخصها كما هي. معرض المكوّنات للتطوير وحده.
-for (const file of [...(await walk(path.join(SRC, 'pages'))), ...(await walk(path.join(SRC, 'ui')))]) {
+// HTML وCSS: الصفحات وأساس الواجهة، وملفات الخطوط (الترجمة والواجهة) ورخصها، وأيقونات الإضافة كما هي. معرض المكوّنات
+// للتطوير وحده.
+for (const file of [...(await walk(path.join(SRC, 'pages'))), ...(await walk(path.join(SRC, 'ui'))), ...(await walk(path.join(SRC, 'icons')))]) {
   const rel = path.relative(SRC, file);
-  if (!/\.(html|css)$/.test(rel) && !rel.startsWith(path.join('ui', 'fonts') + path.sep)) continue;
+  if (!/\.(html|css)$/.test(rel) && !rel.startsWith(path.join('ui', 'fonts') + path.sep) && !/^icons\/[a-z0-9-]+\.png$/.test(rel)) continue;
   if (!DEV && rel.startsWith(path.join('ui', 'gallery'))) continue;
   await mkdir(path.dirname(path.join(OUT, rel)), { recursive: true });
   await cp(file, path.join(OUT, rel));

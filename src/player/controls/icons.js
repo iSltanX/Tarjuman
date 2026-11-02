@@ -1,5 +1,6 @@
 // أيقونات الشريط (figma-design-brief §٥.٢): ممتلئة بيضاء على شبكة 24 مثل أيقونات يوتيوب، بلون currentColor
 // فتتبع حالات العادي والمرور والتعطيل. تُبنى بـcreateElementNS وtextContent وحدهما (لا HTML نصي).
+import { UI_FONT_BODY } from '../../ui/ui-fonts.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -19,7 +20,8 @@ function captionBox(doc, label, fontSize) {
     node(doc, 'rect', { x: 1.5, y: 5, width: 14, height: 11, rx: 2.2, fill: 'currentColor' }),
     node(doc, 'text', {
       x: 8.5, y: 13.4, 'text-anchor': 'middle', 'font-size': fontSize, 'font-weight': 700, fill: '#000', 'fill-opacity': 0.82,
-      'font-family': 'Arial, "SF Arabic", Tahoma, sans-serif',
+      // خط الواجهة المضمّن (ui-fonts.js) لا خط النظام: Brave يحجب غير الافتراضي منها عن صفحة يوتيوب.
+      'font-family': UI_FONT_BODY,
     }, label),
   ];
 }

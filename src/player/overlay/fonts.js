@@ -3,9 +3,51 @@
 // في صفحة يوتيوب ولا يُطلب نطاق خارجي. الخط يُحمَّل مرة لكل مستند عند أول حاجة إليه. وإن تعذّر المختار فالمراعي
 // المضمّن، ثم خط النظام العربي (سلسلة font-family نفسها تتكفل بالعرض)، برمز في التشخيص ودون رسالة فوق الفيديو.
 import { SUBTITLE_FONT_LIST, subtitleFont } from '../../ui/subtitle-fonts.js';
+import { UI_FONT_LIST } from '../../ui/ui-fonts.js';
 
 export const FONT_WEIGHTS = Object.freeze(['400', '700']);
 const BASE = SUBTITLE_FONT_LIST[0];
+
+/** تحميل خطوط الواجهة مرة لكل مستند، أيًّا كان من طلبها (الأدوات أو الطبقة). */
+const uiLoads = new WeakMap();
+
+/**
+ * خطوط واجهة الأدوات (ui-fonts.js) في document.fonts، فتصل إلى الجذور المغلقة كلها: @font-face داخل Shadow DOM لا يُعتدّ
+ * به، والخط المثبّت على الجهاز يحجبه Brave عن صفحة يوتيوب. مستقلة عن خط الترجمة المختار. لا ترمي أبدًا.
+ * @param {{ doc: Document, win: Window, read?: (path: string) => Promise<ArrayBuffer> }} env
+ * @returns {Promise<{ loaded: string[], failed: string[] }>}
+ */
+export function loadUiFonts({ doc, win, read = readPackagedFont }) {
+  if (uiLoads.has(doc)) return uiLoads.get(doc);
+  const run = async () => {
+    const out = { loaded: [], failed: [] };
+    const FF = win.FontFace ?? globalThis.FontFace;
+    const set = doc.fonts;
+    for (const font of UI_FONT_LIST) {
+      try {
+        if (typeof FF !== 'function' || !set || typeof set.add !== 'function') throw new Error('FontFace غير متاح');
+        const faces = await Promise.all(Object.entries(font.files).map(async ([weight, path]) => {
+          const face = new FF(font.family, await read(path), { weight, style: 'normal', display: 'swap' });
+          await face.load();
+          return face;
+        }));
+        for (const face of faces) set.add(face);
+        out.loaded.push(font.id);
+      } catch {
+        out.failed.push(font.id);
+      }
+    }
+    return out;
+  };
+  // إخفاق كامل عابر لا يُحفظ: التركيب التالي يعيد المحاولة. الحذف في then (بعد التخزين دائمًا)، فالدالة قد تنتهي متزامنة
+  // حين لا FontFace أصلًا.
+  const p = run().then((out) => {
+    if (!out.loaded.length) uiLoads.delete(doc);
+    return out;
+  });
+  uiLoads.set(doc, p);
+  return p;
+}
 
 /**
  * يقرأ ملف خط من حزمة الإضافة نفسها (chrome-extension://): ليس طلب شبكة، والمسار من subtitle-fonts وحده.

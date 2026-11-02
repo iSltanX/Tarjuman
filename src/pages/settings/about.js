@@ -1,17 +1,18 @@
-// قسم «حول» (R42، P7-AC10): الإصدار، و«كل شيء محلي»، ودليل الاستخدام، و«ترجمان — تطوير سلطان» مع رابطي bysltan.com
-// والمستودع (بشارة «خاص حاليًا» ما دام خاصًا)، ونسب خطوط الترجمة المضمّنة مع «عرض التراخيص» من ملفات الرخص المحلية.
-// الروابط تُفتح بالضغط وحده في تبويب جديد (noopener)؛ لا طلب شبكة قبل الضغط ولا بعده من الصفحة.
-import { el, icon, ltr, statusPill } from '../../ui/components.js';
+// قسم «حول» (R42، P7-AC10، وجولة الصقل): الإصدار، و«كل شيء محلي»، ودليل الاستخدام، و«ترجمان — تطوير سلطان» مع رابطي
+// bysltan.com والمستودع، ونسب الخطوط المضمّنة (الترجمة وعناوين الواجهة) مع «عرض التراخيص» من ملفات الرخص المحلية. الروابط
+// تُفتح بالضغط وحده في تبويب جديد (noopener)؛ لا طلب شبكة قبل الضغط ولا بعده من الصفحة.
+import { el, icon, ltr } from '../../ui/components.js';
 import { SUBTITLE_FONT_LIST } from '../../ui/subtitle-fonts.js';
+import { UI_FONT_LIST } from '../../ui/ui-fonts.js';
 
 /** الرابطان الخارجيان الوحيدان في الإضافة (يسمح بهما الفحص الثابت في هذا الملف وحده). */
 export const LINKS = Object.freeze({ site: 'https://bysltan.com', repo: 'https://github.com/iSltanX/Tarjuman' });
-/** «خاص حاليًا» ما دام المستودع خاصًا؛ أي تغيير قبل النشر بقرار سلطان. */
-export const REPO_IS_PRIVATE = true;
+/** خط عناوين الواجهة المضمّن (المراعي ملفه نفسه في خطوط الترجمة فلا يتكرر). */
+const UI_HEAD_FONT = Object.freeze({ nameAr: 'القاهرة', nameLatin: 'Cairo', license: UI_FONT_LIST[0].license });
 
 export const GUIDE_STEPS = Object.freeze([
   'افتح فيديو على يوتيوب وفعّل الترجمة (CC) واختر English.',
-  'من أزرار ترجمان في شريط تحكم المشغّل اختر «تحميل الترجمة الإنجليزية (SRT)»، ثم «نسخ تعليمات الترجمة».',
+  'من أزرار ترجمان في شريط تحكم المشغّل افتح «تحميل الترجمة الإنجليزية (SRT)»، ثم «تنزيل الملف» و«نسخ التعليمات» كلٌّ بزره.',
   'أرسل الملف مع التعليمات إلى أي نموذج ذكاء اصطناعي تختاره، واحفظ ناتجه ملف SRT.',
   'ارفعه بزر «رفع الترجمة العربية (SRT)» فتظهر الترجمة فوق الفيديو؛ وعدّل توقيتها بأزرار ± أو من المحرّر.',
   'تجد كل ما حفظته في «المحفوظات» من أيقونة الإضافة، وتصدّره أو تستبدله أو تحذفه من هناك.',
@@ -32,11 +33,11 @@ const arabicList = (names) => names.map((n, i) => (i ? `و${n}` : n)).join('، '
 
 /**
  * @param {{
- *   version: string, doc?: Document, fonts?: typeof SUBTITLE_FONT_LIST, repoPrivate?: boolean,
+ *   version: string, doc?: Document, fonts?: typeof SUBTITLE_FONT_LIST,
  *   section?: (...children: HTMLElement[]) => HTMLElement
  * }} o
  */
-export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LIST, repoPrivate = REPO_IS_PRIVATE, section }) {
+export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LIST, section }) {
   const guide = el('details', {
     className: 'st-details',
     children: [
@@ -52,7 +53,7 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
       el('ul', {
         className: 'st-licenses',
         attrs: { role: 'list' },
-        children: fonts.map((f) => el('li', {
+        children: [...fonts, UI_HEAD_FONT].map((f) => el('li', {
           // ملف الرخصة داخل الإضافة نفسها: رابط نسبي من pages/settings/ بلا شبكة.
           children: [el('a', { className: 'st-link', attrs: { href: `../../${f.license}`, target: '_blank', rel: 'noopener noreferrer' }, children: [el('span', { text: `${f.nameAr} · ${f.nameLatin} — SIL OFL 1.1`, doc }), icon('external', { doc })], doc })],
           doc,
@@ -72,11 +73,11 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
       className: 'st-about__links',
       children: [
         externalLink(doc, { href: LINKS.site, text: 'bysltan.com' }),
-        el('span', { className: 'st-about__repo', children: [externalLink(doc, { href: LINKS.repo, text: 'المستودع على GitHub' }), repoPrivate ? statusPill({ tone: 'neutral', text: 'خاص حاليًا', doc }) : null], doc }),
+        externalLink(doc, { href: LINKS.repo, text: 'المستودع على GitHub' }),
       ],
       doc,
     }),
-    el('p', { className: 'tj-caption', text: `خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: ${arabicList(fonts.map((f) => f.nameAr))}.`, doc }),
+    el('p', { className: 'tj-caption', text: `خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: ${arabicList(fonts.map((f) => f.nameAr))}. وعناوين الواجهة بخط ${UI_HEAD_FONT.nameAr} (${UI_HEAD_FONT.nameLatin}) بالرخصة نفسها.`, doc }),
     licenses,
   ];
   if (section) return section(el('div', { className: 'st-about', children: body, doc }));

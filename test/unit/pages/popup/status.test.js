@@ -1,8 +1,9 @@
-// نافذة الأيقونة (P7-AC1): الحالات الأربع للبطاقة، وشرط المحرّر ببيان سببه، واستعلام الحالة من التبويب النشط
-// (لا رد أو رد غير صالح أو مهلة = «افتح فيديو على يوتيوب»).
+// نافذة الأيقونة (P7-AC1، وجولة الصقل): الحالات الأربع للبطاقة ومؤشر «محفوظ»، والإجراءات السريعة بلا تنقّل مكرر، ووجهة
+// مدخل المحفوظات الواحد، وشرط المحرّر ببيان سببه، واستعلام الحالة من التبويب النشط (لا رد أو رد غير صالح أو مهلة = «افتح
+// فيديو على يوتيوب»).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describeStatus, editorGate, queryVideoState } from '../../../../src/pages/popup/status.js';
+import { describeStatus, editorGate, libraryHash, queryVideoState, quickActions } from '../../../../src/pages/popup/status.js';
 import { videoStateRequest } from '../../../../src/core/model/messages.js';
 
 const reply = (over = {}) => ({
@@ -22,13 +23,15 @@ test('جارٍ: الهيكل مع العنوان', () => {
 });
 
 test('فيديو بلا ترجمة محفوظة: ملتقط ✓ أو محفوظ ✓ أو غير ملتقط', () => {
-  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'المسار الإنجليزي: غير ملتقط', englishReady: false });
+  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'المسار الإنجليزي: غير ملتقط', englishReady: false, saved: false });
   const captured = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }], saved: [] } });
   assert.equal(describeStatus(captured).englishLine, 'المسار الإنجليزي: ملتقط ✓');
   const failed = reply({ english: { captured: [{ key: 'en|asr', kind: 'asr', cueCount: 0, ok: false }], saved: [] } });
   assert.equal(describeStatus(failed).englishLine, 'المسار الإنجليزي: غير ملتقط', 'مسار فاشل ليس ملتقطًا');
   const saved = reply({ english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 5 }] } });
   assert.equal(describeStatus(saved).englishLine, 'المسار الإنجليزي: محفوظ ✓');
+  assert.equal(describeStatus(saved).saved, true, 'مؤشر «محفوظ» لسجل بلا عربية');
+  assert.equal(describeStatus(captured).saved, false, 'الملتقط وحده ليس محفوظًا');
 });
 
 test('العنوان الغائب يعود إلى المعرّف', () => {
@@ -37,11 +40,29 @@ test('العنوان الغائب يعود إلى المعرّف', () => {
 
 test('فيديو بترجمة: «ترجمة عربية · 412 مقطعًا · الإزاحة +0.5 ث» وشارة معدّلة', () => {
   assert.deepEqual(describeStatus(withArabic()), {
-    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة عربية · 412 مقطعًا · الإزاحة +0.5 ث', edited: false, matched: true, mode: 'العربية وحدها', fileName: 'x.ar.srt',
+    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة عربية · 412 مقطعًا · الإزاحة +0.5 ث', edited: false, matched: true, mode: 'العربية وحدها', fileName: 'x.ar.srt', saved: true,
   });
   const edited = describeStatus(withArabic({ arabic: { fileName: 'x', cueCount: 1, edited: true, matched: null }, view: { displayOffsetMs: -1000, displayMode: 'dual' } }));
   assert.equal(edited.line, 'ترجمة عربية · مقطع واحد · الإزاحة −1.0 ث');
   assert.equal(edited.edited, true);
+});
+
+test('الإجراءات السريعة: تحرير ونسخ للفيديو بترجمة، ونسخ وحده بلا ترجمة، ولا وجهة تنقّل بينها (لا «في المحفوظات»)', () => {
+  assert.deepEqual(quickActions(withArabic()).map((a) => [a.id, a.label, a.primary]), [['editor', 'تحرير الترجمة', true], ['copy', 'نسخ التعليمات', false]]);
+  assert.deepEqual(quickActions(reply()).map((a) => [a.id, a.label, a.primary]), [['copy', 'نسخ تعليمات الترجمة', true]]);
+  const saved = reply({ english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 5 }] } });
+  assert.deepEqual(quickActions(saved).map((a) => a.id), ['copy']);
+  assert.deepEqual(quickActions(withArabic({ loading: true })).map((a) => [a.id, a.disabledReason]), [['editor', 'جارٍ قراءة ترجمة الفيديو…']]);
+  assert.deepEqual(quickActions(null), []);
+  for (const r of [withArabic(), reply(), saved]) assert.equal(quickActions(r).some((a) => a.id === 'find' || /المحفوظات/.test(a.label)), false);
+});
+
+test('مدخل المحفوظات الواحد: يفتح على صف الفيديو المحفوظ (#v=) دون تصفية، وإلا المحفوظات كلها', () => {
+  assert.equal(libraryHash(withArabic()), 'v=iG9CE55wbtY');
+  assert.equal(libraryHash(reply({ english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 5 }] } })), 'v=iG9CE55wbtY');
+  assert.equal(libraryHash(reply()), undefined, 'غير محفوظ: المحفوظات كلها');
+  assert.equal(libraryHash(null), undefined);
+  assert.equal(libraryHash(withArabic({ loading: true })), undefined);
 });
 
 test('المحرّر: مفعّل للفيديو الحالي بترجمة، وإلا معطّل بسبب ظاهر', () => {
