@@ -7,6 +7,7 @@ import { bundleFromBackup } from '../model/bundle.js';
 import { isVideoId } from '../model/ids.js';
 import { normalizePrefs, validatePrefs } from '../model/prefs.js';
 import { normalizeSettings, validateSettings } from '../model/settings.js';
+import { validateVideoRecord } from '../model/video.js';
 import { OK, exactKeys, fail, firstFailure, isIntIn, isIsoDate, isPlainObject } from '../model/validate.js';
 import { yieldToPage } from './create.js';
 import {
@@ -73,6 +74,22 @@ function readSection(raw, normalize, validate, groups, label) {
   return { patch, excluded };
 }
 
+/**
+ * مدخل فيديو: السجل بمدققه أولًا (فلا يصل إلى الفك سجل ناقص الشكل)، ثم bundleFromBackup. وأي رمي غير متوقع في الفك
+ * فشلٌ لهذا الفيديو وحده، لا للملف كله.
+ * @param {unknown} entry
+ */
+function checkEntry(entry) {
+  if (!isPlainObject(entry)) return fail('entry', 'ليس كائنًا');
+  const rec = validateVideoRecord(entry.record);
+  if (!rec.ok) return fail(`entry.record${rec.path.replace(/^video/, '')}`, rec.reason);
+  try {
+    return bundleFromBackup(entry);
+  } catch (err) {
+    return fail('entry', `تعذّر الفك (${err?.name ?? 'Error'})`);
+  }
+}
+
 const SETTINGS_GROUPS = ['offsetStepMs', 'displayModeDefault', 'appearance', 'export', 'thresholds'];
 const PREFS_GROUPS = ['glossary', 'review', 'saveLocation'];
 
@@ -125,7 +142,7 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   const total = data.videos.length;
   onProgress({ done: 0, total });
   for (const [index, entry] of data.videos.entries()) {
-    const r = bundleFromBackup(entry);
+    const r = checkEntry(entry);
     if (!r.ok) {
       const id = isPlainObject(entry) && isPlainObject(entry.record) && isVideoId(entry.record.videoId) ? entry.record.videoId : null;
       invalid.push({ index, videoId: id, code: 'BK_VIDEO_INVALID', detail: sanitizeText(`${r.path} — ${r.reason}`).slice(0, 300) });

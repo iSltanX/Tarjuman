@@ -193,6 +193,38 @@ test('فشل جزئي صادق: فيديو تالف أو مكرر يُستبعد
   assert.equal((await target.getPrefs()).glossary.terms.length, 3);
 });
 
+test('سجل ناقص الشكل في ملف مختوم (بلا view، أو fingerprints تالفة، أو arabic ليس كائنًا) يُستبعد وحده ولا يرمي', async () => {
+  const { store } = await sourceLibrary();
+  const { text } = await createBackup({ store, appVersion: '0.3.0', pause: noPause });
+  const mutations = [
+    (r) => { delete r.view; },
+    (r) => { r.view = null; },
+    (r) => { r.fingerprints = [null]; },
+    (r) => { r.fingerprints = 'x'; },
+    (r) => { r.arabic = 7; },
+    (r) => { r.english = [{}]; },
+  ];
+  for (const [i, mutate] of mutations.entries()) {
+    const sealed = await reseal(text, (f) => mutate(f.data.videos[0].record));
+    const r = await readBackup(sealed, { pause: noPause });
+    assert.equal(r.ok, true, `#${i}`);
+    assert.deepEqual(r.invalid.map((x) => [x.index, x.code]), [[0, 'BK_VIDEO_INVALID']], `#${i}`);
+    assert.match(r.invalid[0].detail, /^entry\.record/, `#${i}`);
+    assert.equal(r.videos.length, 2, `#${i}: الباقي يمضي`);
+  }
+  // عشوائي: حذف حقل أو إفساده في سجل واحد لا يرمي أبدًا.
+  const keys = ['view', 'fingerprints', 'arabic', 'english', 'title', 'rev', 'createdAt'];
+  for (let i = 0; i < 40; i++) {
+    const sealed = await reseal(text, (f) => {
+      const rec = f.data.videos[i % 3].record;
+      rec[keys[i % keys.length]] = [null, 'x', 0, [], {}][i % 5];
+    });
+    const r = await readBackup(sealed, { pause: noPause });
+    assert.equal(r.ok, true, `عشوائي #${i}`);
+    assert.equal(r.videos.length + r.invalid.length, 3);
+  }
+});
+
 test('الموجود يُتخطى افتراضيًا دون كتابة، ويُستبدل باختيار صريح لصف أو للكل؛ والجديد يُضاف', async () => {
   const src = await sourceLibrary();
   const read = await readBackup((await createBackup({ store: src.store, appVersion: '0.3.0', pause: noPause })).text, { pause: noPause });

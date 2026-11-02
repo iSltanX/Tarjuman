@@ -204,8 +204,8 @@ export async function changeReference({ store, videoId, n, fingerprintId, now })
     if (!s.track) throw new TjError('ST_SLOT_EMPTY');
     const fp = fingerprintId ? b.record.fingerprints.find((f) => f.id === fingerprintId) ?? null : null;
     if (fingerprintId && !fp) throw new TjError('MD_INVALID', { detail: 'fingerprintId' });
-    const cues = s.track.current ?? s.track.original;
-    return withSlotReference(b, n, { fingerprintId, comparison: fp ? compareWith(cues, fp, settings, s.track.notes) : null }, iso(now));
+    // التقرير وصف للملف المستورد كما في readImport وapplyUpload: الأصل لا النسخة المعدّلة، فلا يتغير بإعادة اختيار المرجع.
+    return withSlotReference(b, n, { fingerprintId, comparison: fp ? compareWith(s.track.original, fp, settings, s.track.notes) : null }, iso(now));
   });
 }
 

@@ -318,6 +318,65 @@ test('«البيانات» — فشل جزئي: التقرير يذكر ما ت�
   assert.ok(textOf(sec).includes(messageFor('BK_RESTORE_DONE')));
 });
 
+test('«نزّل نسخة من بياناتك الحالية أولًا» تكتمل قبل أي كتابة ولو أُكّدت الاستعادة أثناءها (لا تدخلها بيانات مستبدلة)', async () => {
+  const { built } = await sourceBackup();
+  const { area, store } = newStore();
+  for (const id of IDS) await store.updateVideo(id, () => ({ ...videoRecord({ videoId: id }), title: `محلي ${id}` }));
+  // إيقاف مصطنع في قراءة النسخة الاحترازية بعد فيديوها الأول: التأكيد يحدث وهي لم تقرأ الباقي بعد.
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  let armed = false;
+  let reads = 0;
+  const slow = Object.create(store);
+  slow.getBundle = async (id) => {
+    if (armed && ++reads === 2) await gate;
+    return store.getBundle(id);
+  };
+  const m = await mount({ store: slow, area });
+  m.pick(asFile(built.text));
+  m.answers.push(async (o) => {
+    const all = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('role') === 'switch')[0];
+    all.checked = true;
+    all.dispatchEvent({ type: 'change' });
+    armed = true;
+    buttonNamed(o.content, 'نزّل نسخة من بياناتك الحالية أولًا').click();
+    await settle(3);
+    setTimeout(release, 30);
+  });
+  await m.settings.data.restoreFromFile();
+  await settle(20);
+  assert.equal(m.calls.saves.length, 1);
+  const safety = JSON.parse(m.calls.saves[0].text);
+  assert.deepEqual(safety.data.videos.map((v) => v.record.title).sort(), IDS.map((id) => `محلي ${id}`).sort(), 'النسخة الاحترازية بالبيانات المحلية كلها');
+  assert.equal((await store.getVideo(IDS[1])).title, 'محاضرة عن النماذج', 'ثم استُبدل الكل');
+});
+
+test('«أعد المحاولة» معطّل أثناء التشغيل، والنقر المزدوج لا يشغّل تشغيلين', async () => {
+  const { built } = await sourceBackup();
+  const { area, store } = newStore();
+  let broken = true;
+  const calls = [];
+  const faulty = Object.create(store);
+  faulty.restoreVideo = (entry, opts) => {
+    calls.push(entry.record.videoId);
+    if (broken && entry.record.videoId === IDS[1]) return Promise.reject(new TjError('ST_WRITE_FAILED'));
+    return store.restoreVideo(entry, opts);
+  };
+  const m = await mount({ store: faulty, area });
+  m.pick(asFile(built.text));
+  m.answers.push(true);
+  await m.settings.data.restoreFromFile();
+  await settle(10);
+  broken = false;
+  calls.length = 0;
+  const again = buttonNamed(section(m, 'البيانات'), 'أعد المحاولة');
+  again.click();
+  again.click();
+  await settle(10);
+  assert.deepEqual(calls, [IDS[1]], 'تشغيل واحد');
+  assert.ok(textOf(section(m, 'البيانات')).includes('أضيف 3 · تُخطّي 0 · استُبدل 0 · تعذّر 0'));
+});
+
 test('«التخزين»: عدد الترجمات وأحجام الترجمات غير النشطة والنسخ السابقة', async () => {
   const { store } = await sourceBackup();
   const m = await mount({ store, area: createMemoryArea() });

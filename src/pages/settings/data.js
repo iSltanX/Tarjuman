@@ -73,7 +73,11 @@ export function dataControl(env) {
   const { doc, store, version, now } = env;
   const pause = env.pause ?? yieldToPage;
   const id = `st-data-${++seq}`;
-  let busy = false;
+  /** الأعمال الجارية عدّادًا (إنشاء أو فحص أو استعادة)، ومن ينتظر انتهاءها كلها، وأزرار تُعطَّل معها («أعد المحاولة»). */
+  let busy = 0;
+  let running = false;
+  const idleWaiters = [];
+  const extra = new Set();
 
   // ---- الإنشاء ----
   const includePrev = el('input', { attrs: { id: `${id}-prev`, type: 'checkbox' }, doc });
@@ -89,12 +93,16 @@ export function dataControl(env) {
   const restoreResult = el('div', { className: 'st-data__result', doc });
 
   const setBusy = (on) => {
-    busy = on;
-    for (const b of [createBtn, restoreBtn]) {
-      b.setAttribute('aria-disabled', on ? 'true' : 'false');
-      b.setAttribute('aria-busy', on ? 'true' : 'false');
+    busy = Math.max(0, busy + (on ? 1 : -1));
+    const off = busy > 0;
+    for (const b of [createBtn, restoreBtn, ...extra]) {
+      b.setAttribute('aria-disabled', off ? 'true' : 'false');
+      b.setAttribute('aria-busy', off ? 'true' : 'false');
     }
+    if (!off) idleWaiters.splice(0).forEach((resolve) => resolve());
   };
+  /** يُحل حين لا عمل جاريًا: الاستعادة تبدأ بعد اكتمال «نسخة من بياناتك الحالية» التي بدأت في المعاينة. */
+  const idle = () => (busy ? new Promise((resolve) => idleWaiters.push(resolve)) : Promise.resolve());
 
   /** نتيجة الحفظ سطرًا: النجاح باسم الملف وأعداده، والرجوع إلى التنزيل العادي، والإلغاء، والفشل. */
   function saveOutcome(host, saved, built) {
@@ -229,10 +237,20 @@ export function dataControl(env) {
     }));
     const firstResult = el('div', { className: 'st-data__result', attrs: { role: 'status', 'aria-live': 'polite' }, doc });
     const firstMeter = progressMeter(doc);
-    const first = button({ label: 'نزّل نسخة من بياناتك الحالية أولًا', icon: 'download', variant: 'ghost', size: 'sm', className: 'st-restore__first', doc, onClick: () => { makeBackup(firstResult, { includePrevious: true, meter: firstMeter }); } });
+    let confirmBtn = null;
+    // نسخة الحالي قبل الاستبدال: زر «استعادة» معطّل حتى تكتمل، والاستعادة نفسها تنتظرها (idle) فلا تسبق قراءتَها كتابةٌ.
+    const first = button({
+      label: 'نزّل نسخة من بياناتك الحالية أولًا', icon: 'download', variant: 'ghost', size: 'sm', className: 'st-restore__first', doc,
+      onClick: () => {
+        confirmBtn?.setAttribute('aria-disabled', 'true');
+        makeBackup(firstResult, { includePrevious: true, meter: firstMeter }).finally(() => confirmBtn?.setAttribute('aria-disabled', 'false'));
+      },
+    });
     kids.push(el('div', { className: 'st-restore__first-box', children: [first, firstMeter.root, firstResult], doc }));
+    const root = el('div', { className: 'st-restore', children: kids, doc });
     return {
-      root: el('div', { className: 'st-restore', children: kids, doc }),
+      root,
+      bindConfirm: () => { confirmBtn = root.closest?.('form')?.querySelector('button[value="confirm"]') ?? null; },
       choice: () => ({ replace: replaceAll ? 'all' : new Set(replace), settings: settingsBox.checked && plan.hasSettings }),
     };
   }
@@ -248,10 +266,15 @@ export function dataControl(env) {
     const again = report.failed.length || report.remaining.length || report.settings === 'failed'
       ? button({ label: 'أعد المحاولة', icon: 'restore', size: 'sm', variant: 'secondary', doc, onClick: () => { retry(); } })
       : null;
+    extra.clear();
+    if (again) extra.add(again);
     restoreResult.replaceChildren(alertBox({ tone, title: messageFor(code), text: lines.join('\n'), action: again ?? undefined, doc }));
   }
 
   async function run({ items, skipped, settings, prefs, titles, before }) {
+    // تشغيل واحد في كل وقت: النقر المزدوج على «أعد المحاولة» لا يشغّل تشغيلين من التقرير نفسه.
+    if (running) return null;
+    running = true;
     setBusy(true);
     try {
       const report = await runRestore({ store, items, skipped, settings, prefs, pause, onProgress: restoreMeter.show('جارٍ الاستعادة') });
@@ -269,6 +292,7 @@ export function dataControl(env) {
       restoreResult.replaceChildren(alertBox({ tone: 'danger', title: 'تعذّرت الاستعادة', text: toErrorInfo(err).message, doc }));
       return null;
     } finally {
+      running = false;
       setBusy(false);
     }
   }
@@ -301,8 +325,11 @@ export function dataControl(env) {
       return null;
     }
     const view = preview(read, plan, existingById);
-    const ok = await env.confirm({ title: 'استعادة من نسخة احتياطية', confirmLabel: 'استعادة', content: view.root, doc });
-    if (!ok) return null;
+    const pending = env.confirm({ title: 'استعادة من نسخة احتياطية', confirmLabel: 'استعادة', content: view.root, doc });
+    view.bindConfirm();
+    if (!(await pending)) return null;
+    // «نزّل نسخة من بياناتك الحالية أولًا» إن بدأت تكتمل قبل أي كتابة.
+    await idle();
     const choice = view.choice();
     const { items, skipped } = restoreItems(plan, choice.replace);
     const titles = new Map(read.videos.map((v) => [v.videoId, v.title ?? v.videoId]));
@@ -318,6 +345,6 @@ export function dataControl(env) {
     createRow: el('div', { className: 'st-data', children: [prevLabel, el('div', { className: 'st-actions', children: [createBtn], doc }), createMeter.root, createResult], doc }),
     restoreRow: el('div', { className: 'st-data', children: [el('div', { className: 'st-actions', children: [restoreBtn], doc }), restoreMeter.root, restoreResult], doc }),
     makeBackup, restoreFromFile,
-    get busy() { return busy; },
+    get busy() { return busy > 0; },
   };
 }
