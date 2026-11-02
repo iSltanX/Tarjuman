@@ -147,7 +147,8 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       cache.delete(videoId);
       return null;
     }
-    if (cur.changed) return exclusive(() => writeBundle(videoId, (b) => b));
+    // undefined: يُكتب ما غيّرته المصالحة إن بقي (قراءتان متزامنتان لا تكتبان مرتين).
+    if (cur.changed) return exclusive(() => writeBundle(videoId, () => undefined));
     return remember(cur.bundle);
   }
 

@@ -126,9 +126,9 @@ test('المصالحة تُكتب مرة: كتابة الإصدار الأول �
   const rec = area.dump()[`video:${A}`];
   area.rawSet(`video:${A}`, { ...withoutArabic(rec, NOW), rev: rec.rev + 1, updatedAt: '2026-11-03T00:00:00.000Z' });
   const n = sets.length;
-  const b = await store.getBundle(A);
+  const [b] = await Promise.all([store.getBundle(A), store.getVideo(A), store.getBundle(A)]);
   assert.equal(b.active, 2, 'حذف الأول للعربية فعّل الثانية');
-  assert.equal(sets.length, n + 1, 'كتابة واحدة');
+  assert.equal(sets.length, n + 1, 'كتابة واحدة ولو تزامنت القراءات');
   assert.equal(area.dump()[`bundle:${A}`].base.rev, b.record.rev);
   await store.getBundle(A);
   await store.getVideo(A);
