@@ -1,0 +1,7 @@
+/* خطوط واجهة صفحات الإضافة من ملفاتها نفسها (src/ui/ui-fonts.js): Cairo للعناوين وAlmarai للنص، بأسماء عائلات فريدة فلا
+   تعتمد على خط مثبّت على الجهاز ولا يمسها خط الترجمة المختار. لا طلب شبكة، والخط لا يُنزَّل حتى يُستعمل. */
+
+@font-face { font-family: "Tarjuman UI Cairo"; font-weight: 600; font-style: normal; font-display: swap; src: url("fonts/ui/cairo-600.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman UI Cairo"; font-weight: 700 800; font-style: normal; font-display: swap; src: url("fonts/ui/cairo-700.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman UI Almarai"; font-weight: 400; font-style: normal; font-display: swap; src: url("fonts/subtitle/almarai-400.woff2") format("woff2"); }
+@font-face { font-family: "Tarjuman UI Almarai"; font-weight: 500 800; font-style: normal; font-display: swap; src: url("fonts/subtitle/almarai-700.woff2") format("woff2"); }

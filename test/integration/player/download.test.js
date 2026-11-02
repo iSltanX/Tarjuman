@@ -1,6 +1,7 @@
 // تكامل قائمة التحميل (P12-AC4 وP12-AC8): المتحكم والتخزين الحقيقيان ووحدتا التصدير الحقيقيتان. القاموس من التفضيلات
 // المخزنة يُرفق بالتعليمات المنسوخة بالنص نفسه الذي تعطيه instructions لأي سطح آخر (المحفوظات ونافذة الأيقونة)؛ والتقسيم
-// الاحتياطي عند الجمل أو الصمت بأحجام أجزائه الفعلية قبل التنزيل، وضمّها يطابق الملف الكامل؛ والنسخ يسبق كل حفظ.
+// الاحتياطي عند الجمل أو الصمت بأحجام أجزائه الفعلية قبل التنزيل، وضمّها يطابق الملف الكامل؛ والنسخ والتنزيل فعلان مستقلان
+// بزرّين (جولة الصقل): النسخ لا يحفظ، والتنزيل لا ينسخ.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createController } from '../../../src/content/controller.js';
@@ -70,7 +71,7 @@ test('القاموس المرفق من التفضيلات المخزنة: الت
   assert.equal(page.ui.menu().querySelector('.tag'), null, 'إيقاف الإرفاق من الإعدادات يصل إلى المشغّل');
 });
 
-test('التقسيم عند الجمل أو الصمت: أحجام الأجزاء الفعلية قبل التنزيل، والنسخ قبل كل حفظ، وضمّ الأجزاء يطابق الكامل', async () => {
+test('التقسيم عند الجمل أو الصمت: أحجام الأجزاء الفعلية قبل التنزيل، والنسخ والتنزيل بزرّيهما، وضمّ الأجزاء يطابق الكامل', async () => {
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
@@ -84,9 +85,12 @@ test('التقسيم عند الجمل أو الصمت: أحجام الأجزا�
   assert.equal(ranges[0][0], 1);
   assert.equal(ranges.at(-1)[1], 420);
   for (const [, to] of ranges.slice(0, -1)) assert.equal(to % 5, 0, `الحد ${to} عند نهاية جملة وصمت`);
-  click(page.ui.item('تنزيل ونسخ التعليمات'));
+  click(page.ui.item('نسخ التعليمات'));
   await settle(area);
-  assert.deepEqual(page.events.map((e) => e[0]), ['copy', 'save', 'save', 'save'], 'النسخ أولًا ثم الأجزاء');
+  assert.deepEqual(page.events.map((e) => e[0]), ['copy'], 'النسخ وحده لا يحفظ');
+  click(page.ui.item('تنزيل الملف'));
+  await settle(area);
+  assert.deepEqual(page.events.map((e) => e[0]), ['copy', 'save', 'save', 'save'], 'التنزيل يحفظ الأجزاء ولا ينسخ ثانية');
   const saved = page.events.filter((e) => e[0] === 'save');
   rows.forEach((r, i) => assert.ok(r.endsWith(` · ${charsText(saved[i][2].length)}`), `حجم الجزء ${i + 1} هو حجم ملفه`));
   const full = buildExport({ videoId: A, track: { key: 'en|manual', lang: 'en', kind: 'manual', cues: EN }, mode: 'normal', now: Date.parse(NOW) }).files[0].text;

@@ -1,0 +1,629 @@
+{
+  "browser": "Brave (Chrome/156.0.8078.80)",
+  "at": "2026-11-02T18:50:27.936Z",
+  "headless": true,
+  "measureOnly": false,
+  "checks": [
+    {
+      "id": "logo-topbar-approved-shape-identity-color-both-schemes",
+      "ok": true,
+      "detail": {
+        "logoLight": {
+          "paths": 9,
+          "w": 109,
+          "h": 24,
+          "glyph": "rgb(67, 56, 202)",
+          "word": "rgb(23, 23, 28)",
+          "brand": "rgb(67, 56, 202)",
+          "ink": "rgb(23, 23, 28)",
+          "mark": false,
+          "textT": false
+        },
+        "logoDark": {
+          "paths": 9,
+          "w": 109,
+          "h": 24,
+          "glyph": "rgb(143, 150, 255)",
+          "word": "rgb(236, 236, 241)",
+          "brand": "rgb(143, 150, 255)",
+          "ink": "rgb(236, 236, 241)",
+          "mark": false,
+          "textT": false
+        }
+      }
+    },
+    {
+      "id": "pages-fonts-bundled-rendered",
+      "ok": true,
+      "detail": [
+        "«المحفوظات» \"Tarjuman UI Almarai\" → Almarai*",
+        "«الإعدادات» \"Tarjuman UI Almarai\" → Almarai*",
+        "«محلي بالكامل» \"Tarjuman UI Almarai\" → Almarai*",
+        "«60 فيديو» \"Tarjuman UI Almarai\" → Almarai*",
+        "«ترجماتك محفوظة هنا حسب الفيد» \"Tarjuman UI Almarai\" → Almarai*",
+        "«المستخدم 696 ك.ب» \"Tarjuman UI Almarai\" → Almarai*",
+        "«بحث بالعنوان أو المعرّف» \"Tarjuman UI Almarai\" → Almarai*",
+        "«ابحث بالعنوان أو المعرّف» \"Tarjuman UI Almarai\" → Almarai*"
+      ]
+    },
+    {
+      "id": "palette-new-indigo-neutral-both-schemes",
+      "ok": true,
+      "detail": {
+        "palLight": {
+          "brand": "#4338CA",
+          "bg": "rgb(245, 245, 247)",
+          "chip": "rgb(59, 50, 184)"
+        },
+        "palDark": {
+          "brand": "#8F96FF",
+          "bg": "rgb(17, 17, 21)",
+          "chip": "rgb(171, 177, 255)"
+        }
+      }
+    },
+    {
+      "id": "library-single-translation-no-picker",
+      "ok": true,
+      "detail": [
+        {
+          "hidden": true,
+          "n": 1
+        },
+        {
+          "hidden": true,
+          "n": 0
+        },
+        {
+          "hidden": true,
+          "n": 1
+        },
+        {
+          "hidden": true,
+          "n": 1
+        }
+      ]
+    },
+    {
+      "id": "library-layout-1440",
+      "ok": true,
+      "detail": {
+        "pageWidth": 1440,
+        "scrollWidth": 1440,
+        "overflow": [],
+        "clipped": 0,
+        "innerScrollers": []
+      }
+    },
+    {
+      "id": "library-layout-zoom125",
+      "ok": true,
+      "detail": {
+        "pageWidth": 1024,
+        "scrollWidth": 1024,
+        "overflow": [],
+        "clipped": 0,
+        "innerScrollers": []
+      }
+    },
+    {
+      "id": "library-layout-zoom150",
+      "ok": true,
+      "detail": {
+        "pageWidth": 853,
+        "scrollWidth": 853,
+        "overflow": [],
+        "clipped": 0,
+        "innerScrollers": []
+      }
+    },
+    {
+      "id": "library-layout-narrow",
+      "ok": true,
+      "detail": {
+        "pageWidth": 480,
+        "scrollWidth": 480,
+        "overflow": [],
+        "clipped": 0,
+        "innerScrollers": []
+      }
+    },
+    {
+      "id": "about-no-private-label-link-kept",
+      "ok": true,
+      "detail": {
+        "privateText": false,
+        "repoLink": true,
+        "target": "_blank"
+      }
+    },
+    {
+      "id": "settings-fonts-bundled-rendered",
+      "ok": true,
+      "detail": [
+        "«المحفوظات» \"Tarjuman UI Almarai\" → Almarai*",
+        "«الإعدادات» \"Tarjuman UI Almarai\" → Almarai*",
+        "«محلي بالكامل» \"Tarjuman UI Almarai\" → Almarai*",
+        "«العرض» \"Tarjuman UI Almarai\" → Almarai*",
+        "«التوقيت» \"Tarjuman UI Almarai\" → Almarai*",
+        "«التصدير» \"Tarjuman UI Almarai\" → Almarai*",
+        "«المقارنة والمراجعة» \"Tarjuman UI Almarai\" → Almarai*",
+        "«المصطلحات» \"Tarjuman UI Almarai\" → Almarai*"
+      ]
+    },
+    {
+      "id": "settings-layout-1440",
+      "ok": true,
+      "detail": {
+        "pageWidth": 1440,
+        "scrollWidth": 1440,
+        "overflow": [],
+        "clipped": 0,
+        "innerScrollers": []
+      }
+    },
+    {
+      "id": "settings-layout-zoom150",
+      "ok": true,
+      "detail": {
+        "pageWidth": 853,
+        "scrollWidth": 853,
+        "overflow": [],
+        "clipped": 0,
+        "innerScrollers": []
+      }
+    },
+    {
+      "id": "settings-layout-narrow",
+      "ok": true,
+      "detail": {
+        "pageWidth": 480,
+        "scrollWidth": 480,
+        "overflow": [],
+        "clipped": 0,
+        "innerScrollers": []
+      }
+    },
+    {
+      "id": "popup-not-video-one-entry-each",
+      "ok": true,
+      "detail": {
+        "nav": [
+          "library",
+          "settings"
+        ],
+        "all": [
+          "library",
+          "settings"
+        ],
+        "gear": false,
+        "logo": 9,
+        "h": 869,
+        "w": 1400,
+        "scroll": false
+      }
+    },
+    {
+      "id": "extension-icon-identity-color-transparent",
+      "ok": true,
+      "detail": {
+        "corner": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "tile": [
+          67,
+          56,
+          202,
+          255
+        ],
+        "size": [
+          128,
+          128
+        ]
+      }
+    },
+    {
+      "id": "youtube-player-ready",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "player-title-rendered-in-bundled-cairo",
+      "ok": true,
+      "detail": {
+        "text": "تحميل الترجمة",
+        "weight": "700",
+        "family": "\"Tarjuman UI Cairo\"",
+        "rendered": [
+          {
+            "name": "Cairo",
+            "custom": true,
+            "glyphs": 12
+          }
+        ]
+      }
+    },
+    {
+      "id": "player-all-text-bundled-fonts",
+      "ok": true,
+      "detail": [
+        "«تحميل الترجمة» \"Tarjuman UI Cairo\" → Cairo*",
+        "«English – يدوي، 427 مقطعًا» \"Tarjuman UI Almarai\" → Almarai*",
+        "«عادي» \"Tarjuman UI Almarai\" → Almarai*",
+        "«مقاطع أطول» \"Tarjuman UI Almarai\" → Almarai*",
+        "«تنزيل الملف» \"Tarjuman UI Almarai\" → Almarai*",
+        "«نسخ التعليمات» \"Tarjuman UI Almarai\" → Almarai*",
+        "«خيارات احتياطية» \"Tarjuman UI Almarai\" → Almarai*",
+        "«تحميل الترجمة الإنجليزية (SR» \"Tarjuman UI Almarai\" → "
+      ]
+    },
+    {
+      "id": "player-ui-fonts-loaded",
+      "ok": true,
+      "detail": {
+        "loaded": [
+          "cairo",
+          "almarai"
+        ],
+        "failed": []
+      }
+    },
+    {
+      "id": "download-menu-two-separate-buttons",
+      "ok": true,
+      "detail": [
+        "mode:normal:عادي",
+        "mode:long:مقاطع أطول",
+        "download:تنزيل الملف",
+        "copy:نسخ التعليمات",
+        "fallback:خيارات احتياطية"
+      ]
+    },
+    {
+      "id": "copy-copies-only",
+      "ok": true,
+      "detail": {
+        "afterCopy": {
+          "copies": 1,
+          "saves": []
+        },
+        "before": {
+          "copies": 0,
+          "saves": []
+        }
+      }
+    },
+    {
+      "id": "download-saves-only",
+      "ok": true,
+      "detail": {
+        "afterDl": {
+          "copies": 1,
+          "saves": [
+            "iG9CE55wbtY.en.manual.normal.srt"
+          ]
+        },
+        "line": "نُزّل iG9CE55wbtY.en.manual.normal.srtنُسخت"
+      }
+    },
+    {
+      "id": "both-result-lines-kept",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "slots-one-translation-hidden",
+      "ok": true,
+      "detail": {
+        "items": [
+          "mode:ar",
+          "mode:dual",
+          "mode:off",
+          "mark",
+          "replace"
+        ]
+      }
+    },
+    {
+      "id": "confirm-targets-filled-and-new",
+      "ok": true,
+      "detail": [
+        "target:1=1",
+        "target:2=جديدة"
+      ]
+    },
+    {
+      "id": "slots-two-translations-two-options",
+      "ok": true,
+      "detail": [
+        "1",
+        "2"
+      ]
+    },
+    {
+      "id": "confirm-targets-three",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "slots-three-translations-three-options",
+      "ok": true,
+      "detail": {
+        "slots": [
+          "1",
+          "2",
+          "3"
+        ],
+        "active": 3
+      }
+    },
+    {
+      "id": "switch-to-slot-2",
+      "ok": true,
+      "detail": {
+        "bd": {
+          "active": 2,
+          "filled": [
+            1,
+            2,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "id": "library-row-three-active-2",
+      "ok": true,
+      "detail": {
+        "hidden": false,
+        "slots": [
+          "1",
+          "2*",
+          "3"
+        ]
+      }
+    },
+    {
+      "id": "player-after-delete-3-two-options-active-2",
+      "ok": true,
+      "detail": [
+        "1",
+        "2"
+      ]
+    },
+    {
+      "id": "player-after-delete-1-picker-hidden",
+      "ok": true,
+      "detail": {
+        "slots": [],
+        "active": 2,
+        "file": "second.ar.srt"
+      }
+    },
+    {
+      "id": "library-row-after-deletes-hidden",
+      "ok": true,
+      "detail": {
+        "hidden": true,
+        "slots": [
+          "2*"
+        ]
+      }
+    },
+    {
+      "id": "popup-video-one-entry-per-destination",
+      "ok": true,
+      "detail": {
+        "actions": [
+          "editor",
+          "copy"
+        ],
+        "nav": [
+          "library",
+          "settings"
+        ],
+        "libEntries": 1,
+        "settingsEntries": 1,
+        "pills": [
+          "محفوظ",
+          "العربية وحدها"
+        ],
+        "savedIsLink": false,
+        "h": 869,
+        "inner": 869
+      }
+    },
+    {
+      "id": "popup-saved-indicator-not-link",
+      "ok": true,
+      "detail": [
+        "محفوظ",
+        "العربية وحدها"
+      ]
+    },
+    {
+      "id": "popup-fits-without-scroll-340",
+      "ok": true,
+      "detail": {
+        "pageWidth": 340,
+        "scrollWidth": 340,
+        "overflow": [],
+        "clipped": 0,
+        "innerScrollers": [],
+        "contentH": 340
+      }
+    },
+    {
+      "id": "popup-library-entry-opens-row",
+      "ok": true,
+      "detail": {
+        "opened": true,
+        "target": {
+          "row": "iG9CE55wbtY",
+          "rows": 50
+        }
+      }
+    },
+    {
+      "id": "editor-single-translation-no-picker",
+      "ok": true,
+      "detail": {
+        "picker": true,
+        "n": 1
+      }
+    },
+    {
+      "id": "editor-fonts-bundled-rendered",
+      "ok": true,
+      "detail": [
+        "«→ المحفوظات» \"Tarjuman UI Almarai\" → Arial+Almarai*",
+        "«النسخة الحالية (الأصل المستو» \"Tarjuman UI Almarai\" → ",
+        "«استعادة الأصل…» \"Tarjuman UI Almarai\" → Almarai*",
+        "«لا نسخة معدّلة محفوظة؛ المعر» \"Tarjuman UI Almarai\" → Almarai*",
+        "«تحرّر الترجمة 2، وهي النشطة » \"Tarjuman UI Almarai\" → Almarai*",
+        "«محفوظ» \"Tarjuman UI Almarai\" → Almarai*",
+        "«تراجع» \"Tarjuman UI Almarai\" → Almarai*",
+        "«لا شيء للتراجع» \"Tarjuman UI Almarai\" → Almarai*"
+      ]
+    },
+    {
+      "id": "player-menu-fits-narrow-player",
+      "ok": true,
+      "detail": {
+        "menu": {
+          "width": 264,
+          "height": 197,
+          "items": 5,
+          "minItemH": 28
+        },
+        "player": {
+          "w": 480,
+          "h": 360
+        },
+        "size": "compact"
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "no-network-from-extension-pages",
+      "ok": true,
+      "detail": {
+        "external": 0
+      }
+    }
+  ],
+  "measures": {
+    "download": {
+      "width": 280,
+      "height": 196,
+      "items": 5,
+      "minItemH": 28
+    },
+    "display-1": {
+      "width": 280,
+      "height": 172,
+      "items": 5,
+      "minItemH": 28
+    },
+    "timing": {
+      "width": 280,
+      "height": 231,
+      "items": 6,
+      "minItemH": 28
+    },
+    "display-2": {
+      "width": 280,
+      "height": 172,
+      "items": 7,
+      "minItemH": 24
+    },
+    "display-3": {
+      "width": 280,
+      "height": 172,
+      "items": 8,
+      "minItemH": 24
+    },
+    "download-narrow": {
+      "width": 264,
+      "height": 197,
+      "items": 5,
+      "minItemH": 28
+    }
+  },
+  "fonts": {
+    "library": [
+      "«المحفوظات» \"Tarjuman UI Almarai\" → Almarai*",
+      "«الإعدادات» \"Tarjuman UI Almarai\" → Almarai*",
+      "«محلي بالكامل» \"Tarjuman UI Almarai\" → Almarai*",
+      "«60 فيديو» \"Tarjuman UI Almarai\" → Almarai*",
+      "«ترجماتك محفوظة هنا حسب الفيد» \"Tarjuman UI Almarai\" → Almarai*",
+      "«المستخدم 696 ك.ب» \"Tarjuman UI Almarai\" → Almarai*",
+      "«بحث بالعنوان أو المعرّف» \"Tarjuman UI Almarai\" → Almarai*",
+      "«ابحث بالعنوان أو المعرّف» \"Tarjuman UI Almarai\" → Almarai*"
+    ],
+    "settings": [
+      "«المحفوظات» \"Tarjuman UI Almarai\" → Almarai*",
+      "«الإعدادات» \"Tarjuman UI Almarai\" → Almarai*",
+      "«محلي بالكامل» \"Tarjuman UI Almarai\" → Almarai*",
+      "«العرض» \"Tarjuman UI Almarai\" → Almarai*",
+      "«التوقيت» \"Tarjuman UI Almarai\" → Almarai*",
+      "«التصدير» \"Tarjuman UI Almarai\" → Almarai*",
+      "«المقارنة والمراجعة» \"Tarjuman UI Almarai\" → Almarai*",
+      "«المصطلحات» \"Tarjuman UI Almarai\" → Almarai*"
+    ],
+    "player": [
+      "«تحميل الترجمة» \"Tarjuman UI Cairo\" → Cairo*",
+      "«English – يدوي، 427 مقطعًا» \"Tarjuman UI Almarai\" → Almarai*",
+      "«عادي» \"Tarjuman UI Almarai\" → Almarai*",
+      "«مقاطع أطول» \"Tarjuman UI Almarai\" → Almarai*",
+      "«تنزيل الملف» \"Tarjuman UI Almarai\" → Almarai*",
+      "«نسخ التعليمات» \"Tarjuman UI Almarai\" → Almarai*",
+      "«خيارات احتياطية» \"Tarjuman UI Almarai\" → Almarai*",
+      "«تحميل الترجمة الإنجليزية (SR» \"Tarjuman UI Almarai\" → "
+    ]
+  },
+  "screenshots": [
+    "docs/evidence/UI-polish/brave/library-light.png",
+    "docs/evidence/UI-polish/brave/library-dark.png",
+    "docs/evidence/UI-polish/brave/library-narrow-light.png",
+    "docs/evidence/UI-polish/brave/settings-about-light.png",
+    "docs/evidence/UI-polish/brave/settings-about-dark.png",
+    "docs/evidence/UI-polish/brave/settings-display-light.png",
+    "docs/evidence/UI-polish/brave/settings-display-dark.png",
+    "docs/evidence/UI-polish/brave/settings-narrow-dark.png",
+    "docs/evidence/UI-polish/brave/popup-not-video-light.png",
+    "docs/evidence/UI-polish/brave/popup-not-video-dark.png",
+    "docs/evidence/UI-polish/brave/player-download.png",
+    "docs/evidence/UI-polish/brave/player-display-one.png",
+    "docs/evidence/UI-polish/brave/player-timing.png",
+    "docs/evidence/UI-polish/brave/player-download-results.png",
+    "docs/evidence/UI-polish/brave/player-confirm-second.png",
+    "docs/evidence/UI-polish/brave/player-display-two.png",
+    "docs/evidence/UI-polish/brave/player-display-three.png",
+    "docs/evidence/UI-polish/brave/library-three-slots-light.png",
+    "docs/evidence/UI-polish/brave/library-translations-panel-dark.png",
+    "docs/evidence/UI-polish/brave/player-display-after-delete.png",
+    "docs/evidence/UI-polish/brave/popup-video-light.png",
+    "docs/evidence/UI-polish/brave/popup-video-dark.png",
+    "docs/evidence/UI-polish/brave/editor-light.png",
+    "docs/evidence/UI-polish/brave/editor-dark.png",
+    "docs/evidence/UI-polish/brave/player-download-narrow.png"
+  ],
+  "notes": [],
+  "extension": {
+    "version": "0.2.0",
+    "versionName": "0.2.0-dev"
+  },
+  "summary": {
+    "total": 42,
+    "passed": 42,
+    "failed": []
+  }
+}

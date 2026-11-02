@@ -22,7 +22,7 @@ test('منتقٍ فُتح لفيديو ثم تبدّل الفيديو قبل ا�
 test('change عند فقد التركيز ثم النقر على «إعادة الضبط»: العقدة تحت المؤشر هي نفسها فيصل النقر', () => {
   const page = mountPage({ state: makeState({ arabic: arabic() }) });
   click(page.ui.btn('badge'));
-  const reset = page.ui.item('إعادة الضبط إلى 0');
+  const reset = page.ui.field('reset');
   const input = page.ui.field('offset');
   input.value = '5';
   input.dispatchEvent({ type: 'input', target: input, bubbles: true });
@@ -30,7 +30,7 @@ test('change عند فقد التركيز ثم النقر على «إعادة ا
   input.dispatchEvent({ type: 'change', target: input });
   assert.equal(page.controller.getState().view.displayOffsetMs, 5000);
   assert.equal(reset.isConnected, true, 'العقدة باقية بعد تغيّر الحالة');
-  assert.equal(page.ui.item('إعادة الضبط إلى 0'), reset);
+  assert.equal(page.ui.field('reset'), reset);
   click(reset);
   assert.equal(page.controller.getState().view.displayOffsetMs, 0);
 });

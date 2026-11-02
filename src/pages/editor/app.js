@@ -496,7 +496,9 @@ export async function mountEditor(app, {
     // المحدد هنا يحدد خانة التحرير لا النشطة (§١٩.٢): «المختارة» خانة التحرير، والنشطة تُذكر في الاسم والسطر.
     slotsEl.update(models.map((m) => ({ ...m, active: m.n === S.slot })));
     for (const m of models) {
-      const b = slotsEl.buttons[m.n - 1];
+      // المحدد يعرض الخانات المحفوظة وحدها (ويختفي مع ترجمة واحدة)، فالزر برقم خانته لا بموضعه.
+      const b = slotsEl.button(m.n);
+      if (!b) continue;
       const label = editSlotLabel(m, { editing: m.n === S.slot });
       b.setAttribute('aria-label', label);
       b.title = m.name ? `${label} — ${m.name}` : label;

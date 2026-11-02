@@ -1,21 +1,23 @@
-// نافذة الأيقونة (P7-AC1، وإعادة التصميم): نافذة استخدام سريعة لا مجرد روابط: بطاقة الفيديو الحالي (العنوان والحالة
-// وسطر الأدوات)، وإجراءات سريعة بحسب السياق (تحرير الترجمة، ونسخ تعليمات الترجمة من هنا مباشرة، والعثور عليه في
-// المحفوظات)، وعلى غير صفحة فيديو آخر الترجمات لفتحها أو تحريرها؛ ومدخلان خفيفان للمحفوظات والإعدادات. كل بند يفتح
-// صفحته في تبويب جديد وتُغلق النافذة. لا طلبات شبكة، وكل نص عبر textContent، ونص التعليمات يُنسخ ولا يُعرض.
+// نافذة الأيقونة (P7-AC1، وإعادة التصميم، وجولة الصقل): نافذة استخدام سريعة لا مجرد روابط: رأس بالشعار المعتمد، وبطاقة
+// الفيديو الحالي (العنوان والحالة ومؤشر «محفوظ» وسطر الأدوات)، وإجراءات سريعة بحسب السياق (تحرير الترجمة، ونسخ تعليمات
+// الترجمة من هنا مباشرة)، وعلى غير صفحة فيديو آخر الترجمات لفتحها أو تحريرها؛ ثم تذييل بمدخل واحد لكل وجهة: المحفوظات
+// (على صف الفيديو الحالي إن كان محفوظًا) والإعدادات. كل وجهة تفتح صفحتها في تبويب جديد وتُغلق النافذة. لا طلبات شبكة،
+// وكل نص عبر textContent، ونص التعليمات يُنسخ ولا يُعرض.
 import { messageFor } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { createStore } from '../../core/store/index.js';
 import { alertBox, button, el, icon, statusPill } from '../../ui/components.js';
+import { logo } from '../../ui/logo.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
 import {
-  attachedGlossary, browserLabel, captureLine, describeStatus, editorGate, pageReport, queryPageDiagnostics, quickActions, queryVideoState,
-  recentEntries, toolsStatus,
+  attachedGlossary, browserLabel, captureLine, describeStatus, editorGate, libraryHash, pageReport, queryPageDiagnostics, quickActions,
+  queryVideoState, recentEntries, toolsStatus,
 } from './status.js';
 
 /** زر النسخ: اسمه الكامل حين يكون رئيسيًا بعرض النافذة، ومختصرًا حين يجاور زرًا آخر. */
-const COPY_LABEL = Object.freeze({ idle: 'نسخ تعليمات الترجمة', idleShort: 'نسخ التعليمات', success: 'تم النسخ', error: 'أعد المحاولة' });
+const COPY_LABEL = Object.freeze({ idle: 'نسخ تعليمات الترجمة', idleShort: 'نسخ التعليمات', success: 'نُسخت التعليمات', error: 'أعد المحاولة' });
 
 const skeleton = () => el('section', {
   className: 'tj-popup__status',
@@ -59,13 +61,14 @@ function statusCard(s, tools, capture, reply) {
     card.append(el('div', { className: 'tj-skeleton tj-popup__skel-line' }));
   } else if (s.kind === 'has-subtitle') {
     card.append(el('p', { className: 'tj-body-sm', text: s.line }));
-    const pills = [statusPill({ tone: 'brand', text: s.mode, plain: true })];
+    const pills = [savedPill(), statusPill({ tone: 'neutral', text: s.mode, plain: true })];
     if (s.edited) pills.push(statusPill({ tone: 'edited', text: 'معدّلة' }));
     if (s.matched === false) pills.push(statusPill({ tone: 'warning', text: 'تختلف عن الأصل' }));
     card.append(el('div', { className: 'tj-popup__pills', children: pills }));
   } else {
     card.append(el('p', { className: 'tj-body-sm', text: 'لا ترجمة عربية محفوظة' }));
     card.append(el('p', { className: 'tj-caption', text: s.englishLine }));
+    if (s.saved) card.append(el('div', { className: 'tj-popup__pills', children: [savedPill()] }));
   }
   if (capture) card.append(el('p', { className: 'tj-caption tj-popup__capture', text: capture.text }));
   if (tools) {
@@ -76,12 +79,15 @@ function statusCard(s, tools, capture, reply) {
   return card;
 }
 
-/** عنصر تنقّل خفيف إلى صفحة (المحفوظات أو الإعدادات). */
+/** مؤشر حالة مختصر (لا رابط): للفيديو سجل في المحفوظات. والوصول إليه من مدخل «المحفوظات» في التذييل. */
+const savedPill = () => statusPill({ tone: 'success', text: 'محفوظ', title: 'هذا الفيديو في المحفوظات' });
+
+/** مدخل وجهة في تذييل النافذة (المحفوظات أو الإعدادات): واحد لكل وجهة. */
 function pageLink({ action, iconName, name, onOpen }, notice) {
   const b = el('button', {
-    className: 'tj-menuitem',
+    className: 'tj-popup__nav-item',
     attrs: { type: 'button', 'data-action': action },
-    children: [icon(iconName), el('span', { className: 'tj-menuitem__text', children: [el('span', { className: 'tj-menuitem__name', text: name })] }), el('span', { className: 'tj-menuitem__end', children: [icon('chevron', { className: 'tj-icon tj-icon--sm tj-popup__chev' })] })],
+    children: [icon(iconName), el('span', { text: name })],
   });
   b.addEventListener('click', async () => {
     try {
@@ -98,35 +104,28 @@ startPage({
   title: 'نافذة الأيقونة',
   async render(app) {
     const store = createStore();
-    const notice = el('div', { attrs: { role: 'status' } });
-    const settingsBtn = button({ label: 'الإعدادات', iconOnly: true, icon: 'settings', variant: 'ghost', size: 'sm', className: 'tj-popup__gear', onClick: async () => {
-      try {
-        await openPage('settings');
-        window.close();
-      } catch {
-        notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
-      }
-    } });
-    settingsBtn.setAttribute('data-action', 'settings');
+    const notice = el('div', { className: 'tj-popup__notice', attrs: { role: 'status' } });
     app.append(el('header', {
       className: 'tj-popup__head',
-      children: [el('span', { className: 'tj-mark', text: 'ت', attrs: { 'aria-hidden': 'true' } }), el('span', { className: 'tj-popup__brand', text: 'ترجمان' }), el('span', { className: 'tj-caption tj-popup__local', text: 'محلي بالكامل' }), settingsBtn],
+      children: [logo({ height: 22 }), el('span', { className: 'tj-caption tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: 'محلي بالكامل' })] })],
     }));
     const placeholder = skeleton();
     const actionsHost = el('div', { className: 'tj-popup__actions' });
     const recentHost = el('div', { className: 'tj-popup__recent' });
     app.append(placeholder, actionsHost, recentHost);
-    // «المحفوظات» و«الإعدادات» لا تنتظران حالة الفيديو (قد تتأخر حتى مهلتها إن علق سكربت المحتوى).
-    app.append(el('nav', {
-      className: 'tj-popup__menu',
+    // مدخل واحد لكل وجهة، ولا ينتظر حالة الفيديو (قد تتأخر حتى مهلتها إن علق سكربت المحتوى). المحفوظات تُفتح على صف الفيديو
+    // الحالي إن كان محفوظًا (تُعرف بعد الرد).
+    let reply = null;
+    app.append(notice, el('nav', {
+      className: 'tj-popup__nav',
       attrs: { 'aria-label': 'صفحات ترجمان' },
       children: [
-        pageLink({ action: 'library', iconName: 'library', name: 'المحفوظات', onOpen: () => openPage('library') }, notice),
+        pageLink({ action: 'library', iconName: 'library', name: 'المحفوظات', onOpen: () => openPage('library', undefined, { hash: libraryHash(reply) }) }, notice),
         pageLink({ action: 'settings', iconName: 'settings', name: 'الإعدادات', onOpen: () => openPage('settings') }, notice),
       ],
-    }), notice);
+    }));
 
-    const reply = await queryVideoState();
+    reply = await queryVideoState();
     const status = describeStatus(reply);
     placeholder.replaceWith(statusCard(status, toolsStatus(reply), captureLine(reply), reply));
     // القاموس المرفق في نسخ التعليمات من هنا كما في المشغّل والمحفوظات (النص نفسه من instructions).
@@ -150,11 +149,11 @@ startPage({
             notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
           }
         } });
-      } else if (a.id === 'copy') {
+      } else {
         const idle = a.primary ? COPY_LABEL.idle : COPY_LABEL.idleShort;
         const label = el('span', { text: idle });
         let glyph = icon('copy');
-        b = el('button', { className: `tj-btn tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', 'aria-label': COPY_LABEL.idle, title: 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
+        b = el('button', { className: `tj-btn tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', 'aria-label': COPY_LABEL.idle, title: 'ينسخ تعليمات الترجمة وحدها لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
         const copy = createCopyState({
           buildText: () => instructions({ videoId: reply.videoId, title: reply.title, glossary }),
           write: (text) => navigator.clipboard.writeText(text),
@@ -170,15 +169,6 @@ startPage({
           },
         });
         b.addEventListener('click', () => { copy.copy(); });
-      } else {
-        b = button({ label: a.label, icon: 'library', variant: 'secondary', disabledReason: a.disabledReason, onClick: async () => {
-          try {
-            await openPage('library', undefined, { hash: `q=${reply.videoId}` });
-            window.close();
-          } catch {
-            notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
-          }
-        } });
       }
       b.setAttribute('data-action', a.id);
       if (a.primary) b.classList.add('tj-popup__primary');

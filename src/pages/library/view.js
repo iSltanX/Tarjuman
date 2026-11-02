@@ -141,8 +141,8 @@ export function createLibrary(env) {
     className: 'lib-toolbar',
     children: [
       el('div', { className: 'lib-search', children: [el('label', { className: 'tj-sr-only', text: 'بحث بالعنوان أو المعرّف', attrs: { for: searchId }, doc }), icon('search', { doc, className: 'tj-icon lib-search__icon' }), search, clearSearch], doc }),
-      chips.root,
       el('div', { className: 'lib-sort', children: [el('label', { className: 'tj-caption', text: 'الترتيب', attrs: { for: sortId }, doc }), sort], doc }),
+      chips.root,
     ],
     doc,
   });

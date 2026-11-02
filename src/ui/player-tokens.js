@@ -1,26 +1,30 @@
-// رموز المشغّل (figma-design-brief.md §٣.٢ و§٣.٣) لطبقة العرض والأدوات داخل يوتيوب. سكربت المحتوى لا
-// يحمّل ملفات CSS من الإضافة، فتُعطى الرموز نصًا يُوضع في <style> داخل Shadow DOM أو عنصر الأدوات.
+// رموز المشغّل (figma-design-brief.md §٣.٢ و§٣.٣، وجولة الصقل) لطبقة العرض والأدوات داخل يوتيوب. سكربت المحتوى لا
+// يحمّل ملفات CSS من الإضافة، فتُعطى الرموز نصًا يُوضع في <style> داخل Shadow DOM أو عنصر الأدوات. القوائم داكنة محايدة
+// بلا صبغة فوق الفيديو، ولون الإبراز النيلي الفاتح نفسه في الصفحات (الوضع الداكن). الخطوط المضمّنة أولًا (ui-fonts.js).
+import { UI_FONT_BODY, UI_FONT_HEAD, UI_FONT_MONO } from './ui-fonts.js';
 
 export const PLAYER_TOKENS = Object.freeze({
   icon: 'rgb(255 255 255 / 90%)',
   iconHover: '#FFFFFF',
   iconDisabled: 'rgb(255 255 255 / 40%)',
-  menuBg: 'rgb(28 28 28 / 92%)',
+  menuBg: 'rgb(22 22 28 / 94%)',
   menuText: '#FFFFFF',
-  menuText2: 'rgb(255 255 255 / 70%)',
+  menuText2: 'rgb(255 255 255 / 72%)',
   menuHover: 'rgb(255 255 255 / 10%)',
-  accent: '#4EC9C4',
-  warn: '#F0C46A',
-  error: '#FF8A80',
-  ok: '#73D394',
-  tooltipBg: 'rgb(28 28 28 / 90%)',
+  menuLine: 'rgb(255 255 255 / 12%)',
+  accent: '#A5ACFF',
+  accentInk: '#14143A',
+  warn: '#EBC06A',
+  error: '#FF8F85',
+  ok: '#70D191',
+  tooltipBg: 'rgb(22 22 28 / 92%)',
   subText: '#FFFFFF',
   subBgSoft: 'rgb(0 0 0 / 72%)',
   subBgSolid: 'rgb(0 0 0 / 92%)',
   subEn: 'rgb(255 255 255 / 85%)',
-  fontHead: '"Cairo", "Almarai", "SF Arabic", Tahoma, sans-serif',
-  fontBody: '"Almarai", "SF Arabic", "Noto Sans Arabic", Tahoma, sans-serif',
-  fontMono: '"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace',
+  fontHead: UI_FONT_HEAD,
+  fontBody: UI_FONT_BODY,
+  fontMono: UI_FONT_MONO,
   menuRadius: '12px',
   motionMenu: '140ms',
   motionToast: '180ms',

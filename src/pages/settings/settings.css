@@ -2,12 +2,14 @@
    رفيع لا ببطاقات متداخلة: التسمية في العمود الأول وتحتها علامة «حُفظ» بمساحة محجوزة فلا تدفع شيئًا، والعنصر في
    الثاني. كل لون من رموز src/ui/tokens.css بالوضعين. العرض الضيق: التنقّل شريط أفقي فوق المحتوى والتسمية فوق عنصرها. */
 
-.st { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: var(--tj-space-7); align-items: start; }
-.st-head { display: flex; flex-direction: column; gap: 2px; }
+.st { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: var(--tj-space-7); align-items: start; --st-head-h: 58px; }
+/* ارتفاع الرأس ثابت بسلّم الطباعة (h1 36 + 2 + caption 20)، فيبدأ التنقّل الجانبي مع أول بطاقة تمامًا: هامشه ارتفاع الرأس وفجوة
+   المحتوى. والرأس لا يلتف في هذا العرض (العرض الضيق عمود واحد بلا هامش). */
+.st-head { display: flex; flex-direction: column; gap: 2px; min-height: var(--st-head-h); }
 .st-reminder:empty { display: none; }
 
 /* التنقّل الجانبي: لاصق تحت الشريط العلوي. */
-.st-nav { position: sticky; top: calc(var(--tj-topbar-h) + var(--tj-space-6)); display: flex; flex-direction: column; gap: 2px; margin-top: 48px; }
+.st-nav { position: sticky; top: calc(var(--tj-topbar-h) + var(--tj-space-6)); display: flex; flex-direction: column; gap: 2px; margin-top: calc(var(--st-head-h) + var(--tj-space-5)); }
 .st-nav__link {
   display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: var(--tj-radius-md);
   color: var(--tj-text-2); text-decoration: none; font: 700 14px/20px var(--tj-font-body);
@@ -19,6 +21,9 @@
 
 /* القسم. */
 .st-content { display: flex; flex-direction: column; gap: var(--tj-space-5); min-width: 0; }
+/* حاويتا التذكير والتنبيه فارغتين لا تأخذان فجوة فتزيحان القسم عن محاذاة التنقّل؛ وتبقيان في الشجرة (منطقة التنبيه حية
+   role=status فيعلن قارئ الشاشة ما يُكتب فيها). */
+.st-content > div:empty { position: absolute; }
 .st-section { background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); padding: var(--tj-space-5) var(--tj-space-6); display: flex; flex-direction: column; }
 .st-section__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--tj-space-4); padding-bottom: var(--tj-space-4); }
 .st-section__titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -132,7 +137,7 @@
 .st-progress { display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 420px; }
 .st-progress[hidden] { display: none; }
 .st-progress__bar { width: 100%; height: 8px; accent-color: var(--tj-brand); }
-.st-restore { display: flex; flex-direction: column; gap: var(--tj-space-3); max-height: min(60vh, 560px); overflow-y: auto; padding-inline-end: 4px; }
+.st-restore { display: flex; flex-direction: column; gap: var(--tj-space-3); }
 .st-restore__counts { font-weight: 700; }
 .st-restore__group { display: flex; flex-direction: column; gap: var(--tj-space-2); border-top: 1px solid var(--tj-border); padding-top: var(--tj-space-3); }
 .st-restore__summary { cursor: pointer; min-height: 32px; line-height: 32px; display: list-item; list-style-position: inside; }
@@ -165,7 +170,6 @@
 .st-about { display: flex; flex-direction: column; gap: var(--tj-space-3); }
 .st-about__row { display: flex; align-items: center; gap: var(--tj-space-3); }
 .st-about__links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--tj-space-5); }
-.st-about__repo { display: inline-flex; align-items: center; gap: var(--tj-space-2); flex-wrap: wrap; }
 .st-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 700 14px/20px var(--tj-font-body); color: var(--tj-brand-text); text-decoration: none; }
 .st-link:hover { text-decoration: underline; }
 .st-link .tj-icon { width: 14px; height: 14px; }
@@ -174,7 +178,7 @@
 .st-licenses { list-style: none; padding-inline-start: 0; }
 
 @media (max-width: 760px) {
-  .st { grid-template-columns: 1fr; gap: var(--tj-space-4); }
+  .st { grid-template-columns: minmax(0, 1fr); gap: var(--tj-space-4); }
   .st-nav { position: static; margin-top: 0; flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 4px; scrollbar-width: thin; order: 1; }
   .st-content { order: 2; }
   .st-nav__link { flex: none; min-height: 36px; padding: 0 12px; }

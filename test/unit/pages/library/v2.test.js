@@ -76,13 +76,13 @@ const openMore = (m, id, label) => {
 const panelOf = (m) => m.doc.body.querySelector('dialog.lib-panel');
 const cardOf = (panel, n) => panel.querySelector(`section[data-slot="${n}"]`);
 
-test('الصف: اختيار 1 2 3 يميّز النشطة، والضغط على غيرها يفعّلها برسالة «الترجمة 2» و«تراجع»، والفارغة لا تُفعَّل', async () => {
+test('الصف: محدد الترجمات الموجودة يميّز النشطة، والضغط على غيرها يفعّلها برسالة «الترجمة 2» و«تراجع»، وترجمة واحدة بلا محدد', async () => {
   const m = await mount();
   const picker = rowFor(m, IDS[0]).querySelector('.tj-slots');
   const slots = picker.querySelectorAll('button');
   assert.deepEqual(slots.map((b) => b.getAttribute('aria-checked')), ['true', 'false', 'false']);
   assert.deepEqual(slots.map((b) => b.getAttribute('aria-label')), ['الترجمة 1، نشطة', 'الترجمة 2', 'الترجمة 3']);
-  assert.equal(slots[1].title, 'مراجعة', 'التلميح الاسم المختصر');
+  assert.equal(slots[1].title, 'الترجمة 2 — مراجعة', 'التلميح بالاسم المختصر');
   slots[1].click();
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).active, 2);
@@ -92,11 +92,10 @@ test('الصف: اختيار 1 2 3 يميّز النشطة، والضغط على
   buttonNamed(toast, 'تراجع').click();
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).active, 1, 'التراجع يعيد النشطة السابقة');
-  // سجل الإصدار الأول: الخانة 1 نشطة والبقية فارغة معطّلة.
-  const old = rowFor(m, IDS[1]).querySelector('.tj-slots').querySelectorAll('button');
-  assert.deepEqual(old.map((b) => b.getAttribute('data-filled')), ['true', 'false', 'false']);
-  old[2].click();
-  await settle(5);
+  // سجل الإصدار الأول: ترجمة واحدة في الخانة 1، فالمحدد مخفي ولا خانات فارغة تُعرض.
+  const oldPicker = rowFor(m, IDS[1]).querySelector('.tj-slots');
+  assert.equal(oldPicker.hidden, true);
+  assert.deepEqual(oldPicker.querySelectorAll('button').map((b) => b.textContent), ['1']);
   assert.equal((await m.store.getBundle(IDS[1])).active, 1);
 });
 

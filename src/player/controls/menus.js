@@ -1,10 +1,12 @@
 // محتوى القوائم الصغيرة (مواصفة التصميم §٦ و§١٩): التحميل، والرفع والعرض، والتوقيت، وتأكيد الاستبدال. كل باني دالة
 // نقية من نموذج العرض إلى عقد DOM (textContent وsetAttribute فقط)، والأفعال تُبلَّغ إلى الجلسة. العنصر الذي يُستعاد
-// إليه التركيز بعد إعادة البناء يحمل data-fid، وأول عنصر للتركيز data-first. القوائم إجراءات سريعة بلا فقرات شرح
-// («المشغّل للمشاهدة»)؛ والتفاصيل في صفحات الإضافة. نص تعليمات الترجمة لا يمر من هنا أبدًا.
+// إليه التركيز بعد إعادة البناء يحمل data-fid، وأول عنصر للتركيز data-first. القوائم إجراءات سريعة مضغوطة بلا فقرات شرح
+// («المشغّل للمشاهدة»): الأدوات المرتبطة في صفوف (أوضاع العرض، والتنزيل والنسخ، والمزامنة والتصفير)، والشرح في التلميح،
+// والتفاصيل في صفحات الإضافة. نص تعليمات الترجمة لا يمر من هنا أبدًا.
 import { messageFor } from '../../core/errors/index.js';
 import { describeTrack } from '../../core/export/describe.js';
 import { formatOffset } from '../../ui/format.js';
+import { glyph } from './glyphs.js';
 import {
   LABELS, comparisonSummary, cueCount, editsLine, glossaryTag, keptLine, offsetMeaning, partRow, shortTime, slotLabel, stepSeconds, syncAt,
 } from './text.js';
@@ -15,9 +17,9 @@ import {
  * @typedef {{ n: number, filled: boolean, active: boolean, name: string | null }} SlotModel
  */
 
-/** @param {Document} doc @returns {H} */
+/** @param {Document} doc @returns {H & { glyph: (tone: string, className?: string) => SVGSVGElement }} */
 export function builder(doc) {
-  return (tag, { className, text, attrs, on, children } = {}) => {
+  const h = (tag, { className, text, attrs, on, children } = {}) => {
     const n = doc.createElement(tag);
     if (className) n.className = className;
     if (text !== undefined) n.textContent = text;
@@ -26,99 +28,154 @@ export function builder(doc) {
     for (const c of children ?? []) if (c) n.appendChild(c);
     return n;
   };
+  h.glyph = (tone, className) => glyph(doc, tone, className);
+  return h;
 }
 
 const sign = (ms) => (Math.round(ms / 100) === 0 ? 'zero' : ms > 0 ? 'positive' : 'negative');
 
 /** @param {H} h @param {'info' | 'warn' | 'error'} tone @param {string} text @param {Node[]} [extra] */
 function alert(h, tone, text, extra = []) {
-  const glyph = tone === 'info' ? 'ⓘ' : tone === 'warn' ? '⚠' : '✕';
   return h('div', {
     className: 'alert',
     attrs: { 'data-tone': tone, role: tone === 'info' ? 'note' : 'alert' },
-    children: [h('span', { className: 'glyph', text: glyph, attrs: { 'aria-hidden': 'true' } }), h('div', { className: 'stack', children: [h('span', { text }), ...extra] })],
+    children: [h.glyph?.(tone) ?? null, h('div', { className: 'stack', children: [h('span', { text }), ...extra] })],
   });
 }
 
-/** زر بنص؛ المعطّل يبقى قابلًا للتركيز ويقرأ سببه. */
-function button(h, cls, text, { act, name, value, disabled = false, reason = null, fid = null, first = false, extra = {} } = {}) {
+/** سطر ملخص المقارنة برمزه: «مطابق للأصل» بعلامة النجاح، والاختلاف بعلامة التحذير. */
+function summaryRow(h, summary) {
+  return h('div', {
+    className: 'row summary', attrs: { 'data-tone': summary.tone },
+    children: [summary.tone === 'info' ? null : h.glyph?.(summary.tone === 'ok' ? 'ok' : 'warn') ?? null, h('span', { text: summary.text.replace(/\s*✓$/, '') })],
+  });
+}
+
+/** زر بنص (وأيقونة اختيارية)؛ المعطّل يبقى قابلًا للتركيز ويقرأ سببه. */
+function button(h, cls, text, { act, name, value, disabled = false, reason = null, fid = null, first = false, icon = null, title = null, extra = {} } = {}) {
   return h('button', {
     className: cls,
     attrs: {
-      type: 'button', 'data-fid': fid, 'data-first': first ? '' : null,
+      type: 'button', 'data-fid': fid, 'data-first': first ? '' : null, title: title ?? (disabled && reason ? reason : null),
       'aria-disabled': disabled ? 'true' : null, 'aria-description': disabled && reason ? reason : null, ...extra,
     },
     // التعطيل يُقرأ من العقدة لحظة النقر: العقدة تبقى عبر التحديث في مكانها وقد يتغير تعطيلها.
     on: { click: (ev) => (ev.currentTarget.getAttribute('aria-disabled') === 'true' ? undefined : act(name, value)) },
-    children: [h('span', { className: 'stack', children: [h('span', { text }), disabled && reason ? h('span', { className: 'reason', text: reason }) : null] })],
+    children: [
+      icon ? h.glyph?.(icon, 'glyph glyph--btn') ?? null : null,
+      h('span', { className: 'stack', children: [h('span', { text }), disabled && reason && cls.includes('item') ? h('span', { className: 'reason', text: reason }) : null] }),
+    ],
   });
 }
 
-/** مجموعة اختيار واحد أفقية (عادي / مقاطع أطول، والخطوة). */
-function segmented(h, label, options, current, act, name, fid) {
+/**
+ * مجموعة اختيار واحد أفقية (عادي / مقاطع أطول، وأوضاع العرض، والخطوة). الخيار المعطّل يبقى قابلًا للتركيز ويذكر سببه في
+ * التلميح واسم الوصول؛ والشرح الطويل في التلميح لا في سطر تحت المجموعة.
+ * @param {{ value: string, label: string, title?: string, aria?: string, disabled?: boolean, reason?: string | null }[]} options
+ */
+function segmented(h, label, options, current, act, name, fid, { first = false, root = null } = {}) {
+  const focusV = (options.find((o) => o.value === current) ?? options[0])?.value;
   return h('div', {
     className: 'seg',
     attrs: { role: 'radiogroup', 'aria-label': label },
+    // نقطة Tab واحدة للمجموعة، والأسهم تنقل التركيز بين خياراتها (تُقرأ بترتيب الصفحة RTL: الأيسر إلى التالي).
+    on: {
+      keydown: (ev) => {
+        if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+        const list = [...ev.currentTarget.children];
+        const at = list.indexOf(root?.activeElement ?? null);
+        if (at === -1 || list.length < 2) return;
+        ev.preventDefault();
+        list[(at + (ev.key === 'ArrowLeft' ? 1 : -1) + list.length) % list.length].focus();
+      },
+    },
     children: options.map((o) => h('button', {
       text: o.label,
-      attrs: { type: 'button', role: 'radio', 'aria-checked': o.value === current ? 'true' : 'false', 'data-fid': `${fid}:${o.value}` },
-      on: { click: () => act(name, o.value) },
+      attrs: {
+        type: 'button', role: 'radio', 'aria-checked': o.value === current ? 'true' : 'false', 'data-fid': `${fid}:${o.value}`,
+        'data-first': first && o.value === current ? '' : null, tabindex: o.value === focusV ? '0' : '-1',
+        'aria-label': o.aria ?? null, title: o.disabled && o.reason ? o.reason : o.title ?? o.aria ?? null,
+        'aria-disabled': o.disabled ? 'true' : null, 'aria-description': o.disabled && o.reason ? o.reason : null,
+      },
+      on: { click: (ev) => (ev.currentTarget.getAttribute('aria-disabled') === 'true' ? undefined : act(name, o.value)) },
     })),
   });
 }
 
 /**
- * محدد الترجمات 1 2 3 (§١٩.٢) بمعنى `slotPicker` في src/ui وحالاته، داخل الجذر المغلق (فالتركيز من الجذر لا من المستند):
- * النشطة بلون الإبراز، والمحفوظة بإطار، والفارغة باهتة، بلا تسميات. «تفعيل» يختار النشطة والفارغة معطّلة فيه؛ و«هدف» في
- * تأكيد الرفع يختار الخانة الهدف والفارغة متاحة فيه. التركيز بالأسهم بين المتاحة، وEnter/Space تختار.
- * @param {H} h @param {Act} act @param {SlotModel[]} slots
- * @param {{ mode?: 'activate' | 'target', target?: number, disabled?: boolean, root?: ShadowRoot | null, label?: string }} [o]
+ * أزرار خانات ضمن مجموعة اختيار واحد داخل الجذر المغلق (فالتركيز من الجذر لا من المستند): التركيز بالأسهم بين المتاحة، وEnter
+ * وSpace تختار. الأرقام تُقرأ من اليسار كخط الأعداد.
+ * @param {H} h @param {{ n: number, text: string, label: string, title: string | null, checked: boolean, fid: string }[]} items
  */
-function slotPicker(h, act, slots, { mode = 'activate', target = 0, disabled = false, root = null, label = LABELS.slots } = {}) {
-  const checked = (s) => (mode === 'target' ? s.n === target : s.active);
-  const usable = (s) => !disabled && (mode === 'target' || s.filled);
-  const focusN = (slots.find((s) => checked(s) && usable(s)) ?? slots.find(usable))?.n ?? null;
-  const name = mode === 'target' ? 'target' : 'slot';
-  const buttons = slots.map((s) => h('button', {
-    className: 'slot', text: String(s.n),
-    attrs: {
-      type: 'button', role: 'radio', 'aria-checked': checked(s) ? 'true' : 'false', 'data-filled': s.filled ? 'true' : 'false',
-      'aria-disabled': usable(s) ? null : 'true', 'aria-label': slotLabel(s), title: s.name ?? null, 'data-fid': `${name}:${s.n}`,
-      tabindex: s.n === focusN ? '0' : '-1', 'data-first': mode === 'target' && checked(s) ? '' : null,
-    },
-    // الإتاحة والاختيار يُقرآن من العقدة لحظة النقر (تبقى في مكانها عبر التحديث).
-    on: { click: (ev) => (ev.currentTarget.getAttribute('aria-disabled') !== 'true' && ev.currentTarget.getAttribute('aria-checked') !== 'true' ? act(name, s.n) : undefined) },
-  }));
+function radioRow(h, act, name, items, { disabled = false, root = null, label, first = false } = {}) {
+  const focusN = (items.find((i) => i.checked) ?? items[0])?.n ?? null;
   return h('div', {
     className: 'slots',
     attrs: { role: 'radiogroup', 'aria-label': label, 'aria-disabled': disabled ? 'true' : null },
     on: {
       keydown: (ev) => {
         if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
-        const group = ev.currentTarget;
-        const list = [...group.children].filter((b) => b.getAttribute('aria-disabled') !== 'true');
+        const list = [...ev.currentTarget.children].filter((b) => b.getAttribute('aria-disabled') !== 'true');
         const at = list.indexOf(root?.activeElement ?? null);
         if (at === -1 || list.length < 2) return;
         ev.preventDefault();
-        // المحدد LTR كخط الأعداد: السهم الأيمن إلى الرقم التالي.
         list[(at + (ev.key === 'ArrowRight' ? 1 : -1) + list.length) % list.length].focus();
       },
     },
-    children: buttons,
+    children: items.map((it) => h('button', {
+      className: `slot${it.n === null ? ' slot--new' : ''}`, text: it.text,
+      attrs: {
+        type: 'button', role: 'radio', 'aria-checked': it.checked ? 'true' : 'false', 'aria-disabled': disabled ? 'true' : null,
+        'aria-label': it.label, title: it.title, 'data-fid': it.fid, tabindex: it.n === focusN ? '0' : '-1',
+        'data-first': first && it.checked ? '' : null,
+      },
+      // الإتاحة والاختيار يُقرآن من العقدة لحظة النقر (تبقى في مكانها عبر التحديث).
+      on: { click: (ev) => (ev.currentTarget.getAttribute('aria-disabled') !== 'true' && ev.currentTarget.getAttribute('aria-checked') !== 'true' ? act(name, it.value) : undefined) },
+    })),
   });
+}
+
+/**
+ * محدد الترجمات الموجودة (§١٩.٢، وجولة الصقل): زر لكل خانة محفوظة برقمها، والنشطة بلون الإبراز، ولا خانات فارغة؛ ولا شيء
+ * حين لا تكون إلا ترجمة واحدة (null). رقم الخانة هويتها الثابتة في المشغّل والمحفوظات والمحرّر، فيبقى الربط سليمًا بعد الحذف.
+ * @param {H} h @param {Act} act @param {SlotModel[]} slots
+ * @param {{ disabled?: boolean, root?: ShadowRoot | null }} [o]
+ */
+function slotPicker(h, act, slots, { disabled = false, root = null } = {}) {
+  const filled = slots.filter((s) => s.filled);
+  if (filled.length < 2) return null;
+  return radioRow(h, act, 'slot', filled.map((s) => ({
+    n: s.n, value: s.n, text: String(s.n), label: slotLabel(s), title: s.name ? `${slotLabel(s)} — ${s.name}` : slotLabel(s), checked: s.active, fid: `slot:${s.n}`,
+  })), { disabled, root, label: LABELS.slots });
+}
+
+/**
+ * «حفظ في» عند تأكيد الرفع: الخانات المحفوظة (الحفظ فيها استبدال) ثم «جديدة» لأول خانة فارغة إن وُجدت. لا تُعرض الخانات الفارغة
+ * أرقامًا. وحين لا خيار إلا «جديدة» سطر وصفي بلا محدد.
+ * @param {H} h @param {Act} act @param {SlotModel[]} slots @param {number} target
+ * @param {{ disabled?: boolean, root?: ShadowRoot | null }} [o]
+ */
+function targetPicker(h, act, slots, target, { disabled = false, root = null } = {}) {
+  const filled = slots.filter((s) => s.filled);
+  const free = slots.find((s) => !s.filled) ?? null;
+  if (!filled.length) return h('span', { className: 'dim', text: LABELS.savesAsNew });
+  const items = filled.map((s) => ({ n: s.n, value: s.n, text: String(s.n), label: `استبدال ${slotLabel(s)}`, title: s.name ? `استبدال ${slotLabel(s)} — ${s.name}` : `استبدال ${slotLabel(s)}`, checked: s.n === target, fid: `target:${s.n}` }));
+  if (free) items.push({ n: null, value: free.n, text: LABELS.saveNew, label: LABELS.saveNewLabel, title: LABELS.saveNewLabel, checked: free.n === target, fid: `target:${free.n}` });
+  return radioRow(h, act, 'target', items, { disabled, root, label: LABELS.saveTo, first: true });
 }
 
 /** سطر نتيجة مستقل (§١٩.٥): «✓ نُزّل …» أو «✓ نُسخت التعليمات»؛ وتعذّر النسخ زر يعيد المحاولة. */
 function resultLine(h, act, line, fid) {
+  const tone = line.tone === 'ok' ? 'ok' : line.tone === 'error' ? 'error' : 'info';
   if (line.tone === 'error' && fid === 'copyLine') {
-    return h('button', { className: 'line', text: line.text, attrs: { type: 'button', 'data-tone': 'error', 'data-fid': fid, 'aria-live': 'polite' }, on: { click: () => act('copy') } });
+    return h('button', { className: 'line', attrs: { type: 'button', 'data-tone': 'error', 'data-fid': fid, 'aria-live': 'polite' }, on: { click: () => act('copy') }, children: [h.glyph?.(tone) ?? null, h('span', { text: line.text })] });
   }
-  return h('div', { className: 'line', text: line.text, attrs: { 'data-tone': line.tone, 'data-fid': fid, role: line.tone === 'error' ? 'alert' : 'status' } });
+  return h('div', { className: 'line', attrs: { 'data-tone': line.tone, 'data-fid': fid, role: line.tone === 'error' ? 'alert' : 'status' }, children: [h.glyph?.(tone) ?? null, h('span', { className: 'line__text', text: line.text })] });
 }
 
 /**
- * قائمة التحميل (§٦.١ و§١٩.٥): «تنزيل ونسخ التعليمات» رئيسيًا و«نسخ التعليمات» ثانويًا بإشارة القاموس إن أُرفق، والنتيجتان
- * سطران مستقلان؛ وخطوات اختيار English بسطر عند التقاط مسار عربي أو مترجم آليًا (وملاحظة Brave)؛ وأحجام الأجزاء تحت
+ * قائمة التحميل (§٦.١ و§١٩.٥، وجولة الصقل): زرّان مستقلان في صف واحد، «تنزيل الملف» يحفظ ملف SRT وحده و«نسخ التعليمات» ينسخ
+ * التعليمات وحدها (بالقاموس إن أُرفق)، ولكلٍّ سطر نتيجته؛ وخطوات اختيار English بسطر عند التقاط مسار عربي أو مترجم آليًا (وملاحظة Brave)؛ وأحجام الأجزاء تحت
  * التقسيم الاحتياطي. لا عرض لنص التعليمات ولا لمكان الحفظ.
  * @param {H} h @param {Act} act
  * @param {{
@@ -130,7 +187,7 @@ function resultLine(h, act, line, fid) {
  *   parts: { index: number, from: number, to: number, chars: number }[] | null,
  * }} m
  */
-export function downloadMenu(h, act, m) {
+export function downloadMenu(h, act, m, root = null) {
   const out = [h('h2', { className: 'title', text: LABELS.downloadTitle })];
   if (m.live) {
     out.push(alert(h, 'info', messageFor('EX_LIVE')));
@@ -165,7 +222,7 @@ export function downloadMenu(h, act, m) {
       })),
     }));
   } else {
-    out.push(h('div', { className: 'row status', children: [h('span', { text: describeTrack(sel) }), h('span', { className: 'ok', text: '✓', attrs: { 'aria-hidden': 'true' } })] }));
+    out.push(h('div', { className: 'row status', children: [h('span', { text: describeTrack(sel) }), h.glyph?.('ok', 'glyph ok') ?? null] }));
   }
   for (const w of sel.warnings ?? []) {
     const text = w === 'EX_MAYBE_INCOMPLETE' && Number.isFinite(sel.lastEndMs) && Number.isFinite(m.durationMs)
@@ -174,22 +231,25 @@ export function downloadMenu(h, act, m) {
     out.push(alert(h, 'warn', text));
   }
 
-  out.push(segmented(h, 'وضع التصدير', [{ value: 'normal', label: LABELS.modeNormal }, { value: 'long', label: LABELS.modeLong }], m.mode, act, 'mode', 'mode'));
-  out.push(h('div', { className: 'note', text: m.mode === 'long' ? LABELS.modeLongNote : LABELS.modeNormalNote }));
+  out.push(segmented(h, LABELS.exportMode, [
+    { value: 'normal', label: LABELS.modeNormal, title: LABELS.modeNormalNote },
+    { value: 'long', label: LABELS.modeLong, title: LABELS.modeLongNote },
+  ], m.mode, act, 'mode', 'mode', { root }));
 
   out.push(h('div', {
-    className: 'actions',
+    className: 'actions inline',
     children: [
-      button(h, 'primary', m.busy ? LABELS.checking : LABELS.downloadCopy, { act, name: 'download', fid: 'download', first: m.tracks.length === 1, disabled: m.busy || m.copyBusy, extra: { 'aria-busy': m.busy ? 'true' : null } }),
-      h('div', {
-        className: 'copyrow',
-        children: [
-          button(h, 'secondary', LABELS.copyShort, { act, name: 'copy', fid: 'copy', disabled: m.copyBusy || m.busy }),
-          m.glossary ? h('span', { className: 'tag', text: glossaryTag(m.glossary), attrs: { 'data-fid': 'glossary' } }) : null,
-        ],
+      // اسم الوصول هو النص الظاهر نفسه (ومنه «جارٍ التنزيل…»)، والتفصيل وصف إضافي لا يحل محله.
+      button(h, 'primary', m.busy ? LABELS.checking : LABELS.downloadFile, {
+        act, name: 'download', fid: 'download', first: m.tracks.length === 1, disabled: m.busy, icon: 'download', title: LABELS.downloadFileHint,
+        extra: { 'aria-busy': m.busy ? 'true' : null, 'aria-description': LABELS.downloadFileHint },
+      }),
+      button(h, 'secondary', LABELS.copyShort, {
+        act, name: 'copy', fid: 'copy', disabled: m.copyBusy, icon: 'copy', title: LABELS.copyHint, extra: { 'aria-description': LABELS.copyHint },
       }),
     ],
   }));
+  if (m.glossary) out.push(h('div', { className: 'tag', text: glossaryTag(m.glossary), attrs: { 'data-fid': 'glossary' } }));
   if (m.saveLine) out.push(resultLine(h, act, m.saveLine, 'saveLine'));
   if (m.copyLine) out.push(resultLine(h, act, m.copyLine, 'copyLine'));
   for (const r of m.result) out.push(alert(h, r.tone, r.text));
@@ -230,8 +290,8 @@ export function downloadMenu(h, act, m) {
 }
 
 /**
- * قائمة الرفع والعرض (§٦.٢ و§١٩.٣) بترتيبها: محدد الترجمات أعلاها، ثم الملف وعدده، وسطر الملخص، وأوضاع العرض الثلاثة،
- * ثم «علّم للمراجعة» و«رفع ترجمة…» (أو «استبدال…») في صف واحد، فلا تزيد على سبعة صفوف ولا أسطر شرح.
+ * قائمة الرفع والعرض (§٦.٢ و§١٩.٣، وجولة الصقل) بترتيبها: العنوان ومحدد الترجمات الموجودة (حين تكون أكثر من واحدة)، ثم
+ * الملف وعدده، وسطر الملخص، وأوضاع العرض الثلاثة في صف واحد، ثم «علّم للمراجعة» و«رفع ترجمة…» (أو «استبدال…») في صف.
  * @param {H} h @param {Act} act
  * @param {{
  *   fileName: string, count: number, edited: boolean, comparison: object | null, notes: string[], slots: SlotModel[],
@@ -251,35 +311,22 @@ export function displayMenu(h, act, m, root = null) {
         h('span', { className: 'dim', text: `· ${cueCount(m.count)}${m.edited ? ' · معدّلة' : ''}` }),
       ],
     }),
-    h('div', { className: 'row summary', text: summary.text, attrs: { 'data-tone': summary.tone } }),
+    summaryRow(h, summary),
   ];
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
   const notes = m.notes.slice(0, 1);
   for (const n of notes) out.push(h('div', { className: 'note', text: n }));
   if (m.notes.length > notes.length) out.push(h('div', { className: 'note', text: `وملاحظات أخرى (${m.notes.length - notes.length}) في المحرّر.` }));
-  out.push(h('div', { className: 'sep' }));
-
-  const modes = [
-    { value: 'ar', label: LABELS.modeAr },
-    { value: 'dual', label: LABELS.modeDual, disabled: !m.dualAvailable, reason: messageFor('CT_DUAL_UNAVAILABLE') },
-    { value: 'off', label: LABELS.modeOff },
-  ];
+  out.push(segmented(h, LABELS.displayMode, [
+    { value: 'ar', label: LABELS.segAr, aria: LABELS.modeAr },
+    { value: 'dual', label: LABELS.segDual, aria: LABELS.modeDual, disabled: !m.dualAvailable, reason: messageFor('CT_DUAL_UNAVAILABLE') },
+    { value: 'off', label: LABELS.segOff, aria: LABELS.modeOff },
+  ], m.mode, act, 'displayMode', 'mode', { first: true, root }));
   out.push(h('div', {
-    attrs: { role: 'group', 'aria-label': 'وضع العرض' },
-    children: modes.map((o) => {
-      const b = button(h, 'item', o.label, {
-        act, name: 'displayMode', value: o.value, disabled: !!o.disabled, reason: o.reason ?? null, fid: `mode:${o.value}`, first: o.value === m.mode,
-        extra: { role: 'menuitemradio', 'aria-checked': o.value === m.mode ? 'true' : 'false' },
-      });
-      return b;
-    }),
-  }));
-  out.push(h('div', { className: 'sep' }));
-  out.push(h('div', {
-    className: 'pair',
+    className: 'actions inline',
     children: [
-      button(h, 'item', LABELS.markReview, { act, name: 'mark', fid: 'mark' }),
-      button(h, 'item', m.busy ? LABELS.importing : m.uploadLabel, { act, name: 'replace', fid: 'replace', disabled: m.busy, extra: { 'aria-busy': m.busy ? 'true' : null } }),
+      button(h, 'secondary', LABELS.markReview, { act, name: 'mark', fid: 'mark' }),
+      button(h, 'secondary', m.busy ? LABELS.importing : m.uploadLabel, { act, name: 'replace', fid: 'replace', disabled: m.busy, extra: { 'aria-busy': m.busy ? 'true' : null } }),
     ],
   }));
   if (m.error) out.push(alert(h, 'error', m.error));
@@ -303,13 +350,13 @@ export function confirmMenu(h, act, m, root = null) {
   const out = [
     h('h2', { className: 'title', text: m.filled ? LABELS.confirmTitle : LABELS.uploadTitle }),
     h('div', { className: 'row file', children: [h('span', { className: 'name', text: m.fileName, attrs: { dir: 'ltr', title: m.fileName } }), h('span', { className: 'dim', text: `· ${cueCount(m.count)}` })] }),
-    h('div', { className: 'row summary', text: summary.text, attrs: { 'data-tone': summary.tone } }),
+    summaryRow(h, summary),
   ];
   if (m.hint) out.push(alert(h, 'warn', m.hint));
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
   out.push(h('div', {
     className: 'row target',
-    children: [h('span', { text: LABELS.saveTo }), slotPicker(h, act, m.slots, { mode: 'target', target: m.target, disabled: m.busy, root, label: LABELS.saveTo })],
+    children: [h('span', { text: LABELS.saveTo }), targetPicker(h, act, m.slots, m.target, { disabled: m.busy, root })],
   }));
   if (m.filled && m.edits > 0) {
     out.push(h('div', { className: 'row edits', text: m.keep ? keptLine(m.conflicts) : editsLine(m.edits), attrs: { 'data-tone': m.keep ? 'ok' : 'warn', 'aria-live': 'polite' } }));
@@ -345,7 +392,7 @@ export function confirmMenu(h, act, m, root = null) {
  * @param {H} h @param {Act} act
  * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null }} m
  */
-export function timingMenu(h, act, m) {
+export function timingMenu(h, act, m, root = null) {
   if (m.sync) return syncView(h, act, m.sync);
   const value = formatOffset(m.offsetMs);
   const offset = h('input', {
@@ -371,11 +418,12 @@ export function timingMenu(h, act, m) {
       children: [h('bdi', { text: value, attrs: { dir: 'ltr' } }), h('span', { text: ` ${LABELS.seconds}` })],
     }),
     h('div', { className: 'meaning', text: offsetMeaning(m.offsetMs), attrs: { 'data-fid': 'meaning' } }),
-    h('div', { className: 'sep' }),
     h('div', { className: 'row field', children: [h('label', { text: LABELS.offsetField, attrs: { for: 'tj-offset' } }), offset, h('span', { className: 'unit', text: LABELS.seconds })] }),
     h('div', { className: 'field-error', text: m.offsetError ?? '', attrs: { id: 'tj-offset-error', 'aria-live': 'polite' } }),
-    h('div', { className: 'row', children: [h('span', { text: LABELS.stepField })] }),
-    segmented(h, LABELS.stepField, [{ value: '500', label: '0.5' }, { value: '1000', label: '1' }, { value: 'custom', label: LABELS.stepCustom }], preset, act, 'step', 'step'),
+    h('div', {
+      className: 'row field',
+      children: [h('span', { className: 'flabel', text: LABELS.stepField }), segmented(h, LABELS.stepField, [{ value: '500', label: '0.5' }, { value: '1000', label: '1' }, { value: 'custom', label: LABELS.stepCustom }], preset, act, 'step', 'step', { root })],
+    }),
   ];
   if (!m.custom && m.stepError) out.push(h('div', { className: 'field-error', text: m.stepError, attrs: { 'aria-live': 'polite' } }));
   if (m.custom) {
@@ -394,8 +442,13 @@ export function timingMenu(h, act, m) {
     out.push(h('div', { className: 'row field', children: [h('label', { text: LABELS.stepCustomField, attrs: { for: 'tj-step' } }), step, h('span', { className: 'unit', text: LABELS.seconds })] }));
     out.push(h('div', { className: 'field-error', text: m.stepError ?? '', attrs: { id: 'tj-step-error', 'aria-live': 'polite' } }));
   }
-  out.push(button(h, 'item', LABELS.sync, { act, name: 'sync', fid: 'sync' }));
-  out.push(h('div', { className: 'actions', children: [button(h, 'secondary', LABELS.reset, { act, name: 'reset', fid: 'reset' })] }));
+  out.push(h('div', {
+    className: 'actions inline',
+    children: [
+      button(h, 'secondary', LABELS.sync, { act, name: 'sync', fid: 'sync' }),
+      button(h, 'secondary', LABELS.reset, { act, name: 'reset', fid: 'reset', title: LABELS.resetHint, extra: { 'aria-description': LABELS.resetHint } }),
+    ],
+  }));
   out.push(h('div', { className: 'note', text: LABELS.signLegend }));
   return out;
 }

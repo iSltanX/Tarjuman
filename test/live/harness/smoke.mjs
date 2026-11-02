@@ -60,7 +60,7 @@ async function openPopup(conn, extId, errors, activeTargetId) {
   const p = await openTab(conn, 'about:blank', { background: true });
   errors.push(collectErrors(p, { extId }));
   await p.goto(`chrome-extension://${extId}/pages/popup/index.html`);
-  await p.waitFor(() => !!document.querySelector('.tj-popup__menu'), { timeoutMs: 8000 });
+  await p.waitFor(() => !!document.querySelector('.tj-popup__nav'), { timeoutMs: 8000 });
   return p;
 }
 
@@ -125,9 +125,9 @@ try {
   check('popup-video-state', r1?.watch === true && r1.videoId === VIDEO && r1.arabic === null, r1 && { via: s1.via, videoId: r1.videoId, loading: r1.loading, arabic: r1.arabic, view: r1.view });
   // الطبقة (P5) وأدوات الشريط (P6) ركّبتاهما مرحلتاهما: كل منهما تنتظر المشغّل أو مركّبة.
   check('mount-points-stub', ['waiting', 'mounted'].includes(r1?.mounted?.overlay) && ['waiting', 'mounted'].includes(r1?.mounted?.controls), r1?.mounted ?? null);
-  // بعد إعادة التصميم: مدخلا الصفحتين بنود، والمحرّر إجراء سريع [data-action="editor"] يظهر حين تكون للفيديو ترجمة.
+  // بعد جولة الصقل: مدخل واحد لكل صفحة في تذييل النافذة، والمحرّر إجراء سريع [data-action="editor"] حين تكون للفيديو ترجمة.
   const items1 = await popup.eval(() => ({
-    menu: [...document.querySelectorAll('.tj-menuitem')].map((x) => ({ name: x.querySelector('.tj-menuitem__name')?.textContent, disabled: x.getAttribute('aria-disabled') === 'true' })),
+    menu: [...document.querySelectorAll('.tj-popup__nav [data-action]')].map((x) => ({ name: x.textContent.trim(), disabled: x.getAttribute('aria-disabled') === 'true' })),
     actions: [...document.querySelectorAll('.tj-popup__actions [data-action]')].map((x) => x.getAttribute('data-action')),
   }));
   check('popup-items', items1.menu.length === 2 && items1.menu.map((i) => i.name).join('|') === 'المحفوظات|الإعدادات' && items1.actions.includes('copy'), items1);
@@ -155,7 +155,7 @@ try {
     if (name === 'editor') await shoot(pop, 'popup-with-arabic', { width: 320 });
     const clicked = await pop.eval((label, action) => {
       const item = document.querySelector(`.tj-popup__actions [data-action="${action}"]`)
-        ?? [...document.querySelectorAll('.tj-menuitem')].find((x) => x.querySelector('.tj-menuitem__name')?.textContent === label);
+        ?? [...document.querySelectorAll('.tj-popup__nav [data-action]')].find((x) => x.textContent.trim() === label);
       if (!item || item.getAttribute('aria-disabled') === 'true') return item ? 'disabled' : 'missing';
       item.click();
       return 'clicked';

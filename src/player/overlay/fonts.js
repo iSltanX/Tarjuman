@@ -3,9 +3,57 @@
 // في صفحة يوتيوب ولا يُطلب نطاق خارجي. الخط يُحمَّل مرة لكل مستند عند أول حاجة إليه. وإن تعذّر المختار فالمراعي
 // المضمّن، ثم خط النظام العربي (سلسلة font-family نفسها تتكفل بالعرض)، برمز في التشخيص ودون رسالة فوق الفيديو.
 import { SUBTITLE_FONT_LIST, subtitleFont } from '../../ui/subtitle-fonts.js';
+import { UI_FONT_LIST } from '../../ui/ui-fonts.js';
 
 export const FONT_WEIGHTS = Object.freeze(['400', '700']);
 const BASE = SUBTITLE_FONT_LIST[0];
+
+/** حالة خطوط الواجهة لكل مستند، أيًّا كان من طلبها (الأدوات أو الطبقة): ما حُمّل، والطلب الجاري أو الناجح كله. */
+const uiState = new WeakMap();
+
+/**
+ * خطوط واجهة الأدوات (ui-fonts.js) في document.fonts، فتصل إلى الجذور المغلقة كلها: @font-face داخل Shadow DOM لا يُعتدّ
+ * به، والخط المثبّت على الجهاز يحجبه Brave عن صفحة يوتيوب. مستقلة عن خط الترجمة المختار. لا ترمي أبدًا. ما تعذّر منها
+ * (كله أو بعضه) يُعاد وحده في الطلب التالي، وما حُمّل لا يُضاف ثانية.
+ * @param {{ doc: Document, win: Window, read?: (path: string) => Promise<ArrayBuffer> }} env
+ * @returns {Promise<{ loaded: string[], failed: string[] }>}
+ */
+export function loadUiFonts({ doc, win, read = readPackagedFont }) {
+  let st = uiState.get(doc);
+  if (!st) {
+    st = { loaded: new Set(), pending: null };
+    uiState.set(doc, st);
+  }
+  if (st.pending) return st.pending;
+  const run = async () => {
+    const failed = [];
+    const FF = win.FontFace ?? globalThis.FontFace;
+    const set = doc.fonts;
+    for (const font of UI_FONT_LIST) {
+      if (st.loaded.has(font.id)) continue;
+      try {
+        if (typeof FF !== 'function' || !set || typeof set.add !== 'function') throw new Error('FontFace غير متاح');
+        const faces = await Promise.all(Object.entries(font.files).map(async ([weight, path]) => {
+          const face = new FF(font.family, await read(path), { weight, style: 'normal', display: 'swap' });
+          await face.load();
+          return face;
+        }));
+        for (const face of faces) set.add(face);
+        st.loaded.add(font.id);
+      } catch {
+        failed.push(font.id);
+      }
+    }
+    return { loaded: UI_FONT_LIST.map((f) => f.id).filter((id) => st.loaded.has(id)), failed };
+  };
+  // الإخفاق العابر لا يُحفظ: الطلب التالي يعيد ما تعذّر. التصفير في then (بعد التخزين دائمًا)، فالدالة قد تنتهي متزامنة
+  // حين لا FontFace أصلًا.
+  st.pending = run().then((out) => {
+    if (out.failed.length) st.pending = null;
+    return out;
+  });
+  return st.pending;
+}
 
 /**
  * يقرأ ملف خط من حزمة الإضافة نفسها (chrome-extension://): ليس طلب شبكة، والمسار من subtitle-fonts وحده.

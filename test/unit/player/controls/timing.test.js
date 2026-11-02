@@ -24,7 +24,7 @@ test('القيمة الحالية بخط كبير ومعناها بالكلما�
   assert.equal(big().textContent, '+0.5 ث');
   assert.equal(big().getAttribute('data-sign'), 'positive');
   assert.match(page.ui.menuText(), /تظهر الترجمة لاحقًا بنصف ثانية/);
-  assert.match(page.ui.menuText(), /\+ تأخير: تظهر لاحقًا · − تقديم: تظهر أبكر · تُحفظ لهذا الفيديو/, 'سطر شرح واحد مختصر («المشغّل للمشاهدة»)');
+  assert.match(page.ui.menuText(), /\+ تأخير · − تقديم · تُحفظ لهذا الفيديو/, 'سطر شرح واحد مختصر («المشغّل للمشاهدة»)');
   assert.equal(page.ui.field('offset').value, '+0.5');
   click(page.ui.btn('minus'));
   click(page.ui.btn('minus'));
@@ -126,7 +126,12 @@ test('إخفاق حفظ الخطوة يظهر تحت الحقل', async () => {
 test('إعادة الضبط إلى 0 تعيد الشارة الباهتة', () => {
   const page = page0({ view: { displayOffsetMs: -1500, displayMode: 'ar' } });
   openTiming(page);
-  click(page.ui.item('إعادة الضبط إلى 0'));
+  const reset = page.ui.field('reset');
+  assert.equal(reset.textContent, 'تصفير');
+  assert.equal(reset.getAttribute('aria-label'), null, 'اسم الوصول هو النص الظاهر');
+  assert.equal(reset.getAttribute('aria-description'), 'إعادة الإزاحة إلى 0', 'والتفصيل وصف إضافي');
+  assert.equal(reset.parentNode, page.ui.field('sync').parentNode, 'المزامنة والتصفير في صف واحد');
+  click(reset);
   assert.deepEqual(page.controller.calls.at(-1), ['resetOffset']);
   assert.equal(page.ui.btn('badge').textContent, '0.0');
   assert.equal(page.ui.btn('badge').getAttribute('data-sign'), 'zero');

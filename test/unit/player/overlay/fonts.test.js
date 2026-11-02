@@ -1,12 +1,13 @@
 // خط الترجمة وحجمها على الطبقة (P6-AC8 وP6-AC9 الجزء الآلي): الخطوط من ملفات الإضافة عبر FontFace ببياناتها
 // (لا رابط ولا نطاق خارجي)، ومرة لكل مستند، والبديل المراعي ثم خط النظام برمز في التشخيص؛ والطبقة تطبّق العائلة
-// والحجم المحفوظين وتتحدث عند تغييرهما دون إعادة تركيب.
+// والحجم المحفوظين وتتحدث عند تغييرهما دون إعادة تركيب. وخطوط واجهة الأدوات (جولة الصقل) بالطريقة نفسها وبعائلاتها هي.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createFontLoader, readPackagedFont } from '../../../../src/player/overlay/fonts.js';
+import { createFontLoader, loadUiFonts, readPackagedFont } from '../../../../src/player/overlay/fonts.js';
 import { mountOverlay } from '../../../../src/player/overlay/index.js';
 import { DEFAULT_SETTINGS } from '../../../../src/core/model/settings.js';
 import { SUBTITLE_FONT_LIST, subtitleFontStack } from '../../../../src/ui/subtitle-fonts.js';
+import { UI_FONT_LIST } from '../../../../src/ui/ui-fonts.js';
 import { createFakeEnv } from './fake-dom.js';
 import { makeState, watchPage } from './harness.js';
 
@@ -186,4 +187,42 @@ test('محمّل الخطوط واحد للمستند عبر إعادة تركي
   // بلا chrome.runtime في الاختبار تتعذّر القراءة: الجلسة الثانية تعيد المحاولة بالمحمّل نفسه، والإخفاق مسجّل مرة.
   assert.deepEqual(handle.diagnostics().fonts.failed, ['almarai']);
   assert.equal(handle.diagnostics().fonts.code, 'CT_FONT_SYSTEM');
+});
+
+test('خطوط واجهة الأدوات: Cairo وAlmarai بعائلتيهما في document.fonts من ملفات الإضافة، مرة للمستند، مستقلة عن خط الترجمة', async () => {
+  const f = fontEnv();
+  const r = await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read });
+  assert.deepEqual(r, { loaded: ['cairo', 'almarai'], failed: [] });
+  assert.deepEqual(f.reads.sort(), ['ui/fonts/subtitle/almarai-400.woff2', 'ui/fonts/subtitle/almarai-700.woff2', 'ui/fonts/ui/cairo-600.woff2', 'ui/fonts/ui/cairo-700.woff2']);
+  assert.deepEqual(f.added.map((x) => `${x.family}/${x.weight}`).sort(), ['Tarjuman UI Almarai/400', 'Tarjuman UI Almarai/700', 'Tarjuman UI Cairo/600', 'Tarjuman UI Cairo/700']);
+  assert.ok(f.built.every((x) => x.source instanceof ArrayBuffer), 'بيانات الملف، لا url()');
+  assert.equal(f.added.some((x) => x.family.startsWith('Tarjuman Subtitle')), false, 'لا تمس عائلات الترجمة');
+  await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read });
+  assert.equal(f.reads.length, 4, 'مرة واحدة للمستند');
+  assert.deepEqual(UI_FONT_LIST.map((x) => x.family), ['Tarjuman UI Cairo', 'Tarjuman UI Almarai']);
+});
+
+test('خطوط الواجهة: تعذّر أحدهما لا يمنع الآخر ولا يرمي، وتعذّرهما معًا (لا FontFace) يعيد المحاولة في التركيب التالي', async () => {
+  const f = fontEnv({ failFamilies: ['Tarjuman UI Cairo'] });
+  assert.deepEqual(await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read }), { loaded: ['almarai'], failed: ['cairo'] });
+  const none = createFakeEnv();
+  const r1 = await loadUiFonts({ doc: none.doc, win: none.win, read: async () => new ArrayBuffer(8) });
+  assert.deepEqual(r1, { loaded: [], failed: ['cairo', 'almarai'] });
+  const g = fontEnv();
+  none.win.FontFace = g.env.win.FontFace;
+  none.doc.fonts = g.env.doc.fonts;
+  assert.deepEqual(await loadUiFonts({ doc: none.doc, win: none.win, read: g.read }), { loaded: ['cairo', 'almarai'], failed: [] }, 'إخفاق كامل عابر لا يُحفظ');
+});
+
+test('خطوط الواجهة: تعذّر بعضها يُعاد وحده في الطلب التالي، وما حُمّل لا يُقرأ ولا يُضاف ثانية', async () => {
+  const f = fontEnv({ failFamilies: ['Tarjuman UI Almarai'] });
+  assert.deepEqual(await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read }), { loaded: ['cairo'], failed: ['almarai'] });
+  const cairoReads = f.reads.filter((x) => x.includes('cairo')).length;
+  f.env.win.FontFace = fontEnv().env.win.FontFace;
+  const second = await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read });
+  assert.deepEqual(second, { loaded: ['cairo', 'almarai'], failed: [] });
+  assert.equal(f.reads.filter((x) => x.includes('cairo')).length, cairoReads, 'Cairo لا يُعاد');
+  assert.equal(f.added.filter((x) => x.family === 'Tarjuman UI Cairo').length, 2, 'وجها Cairo مرة واحدة');
+  const third = await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read });
+  assert.deepEqual(third, second, 'بعد النجاح كله: النتيجة المحفوظة');
 });

@@ -3,15 +3,15 @@
 // التركيز يكتب المستخدم في حقلها (product-spec §٦.٤، قرار سلطان في W4): تبقى ظاهرة حتى يغادر حقلها أو يغلقها. والرسائل
 // العابرة غير حاجبة فوق موضع الشريط. لا تلتقط الطبقة النقرات إلا على قائمة أو رسالة، ولا تصل منها ضغطة إلى اختصارات يوتيوب.
 import { createSheet } from '../overlay/sheet.js';
+import { glyph } from './glyphs.js';
 import { morphChildren } from './morph.js';
 import { LAYER_ID, layerCss } from './styles.js';
 
 const GAP_PX = 12;
 const EDGE_PX = 8;
-const MENU_W = { normal: 300, compact: 300, fullscreen: 340 };
+const MENU_W = { normal: 280, compact: 264, fullscreen: 320 };
 // ما يخص القائمة لا يصل إلى المشغّل: الضغطات (الأرقام والمسافة والأسهم اختصارات ليوتيوب) والنقر (تشغيل وإيقاف).
 const ISOLATE = ['keydown', 'keyup', 'keypress', 'click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'contextmenu', 'wheel'];
-const GLYPH = { success: '✓', info: 'ⓘ', warning: '⚠', error: '✕' };
 /** حقل يُكتب فيه (لا مربع اختيار ولا منتقي ملفات). @param {Element | null | undefined} el */
 const typable = (el) => String(el?.tagName).toLowerCase() === 'input' && !['checkbox', 'radio', 'file', 'button'].includes(el.getAttribute('type') ?? 'text');
 
@@ -96,9 +96,10 @@ export function createLayer({ doc, win, on }) {
   function placeMenu() {
     if (menu.hasAttribute('hidden') || !anchor) return;
     const { cx, above, playerW } = relative(anchor);
-    const w = Math.min(MENU_W[bar.size] ?? 300, Math.max(0, playerW - 2 * EDGE_PX));
+    const w = Math.min(MENU_W[bar.size] ?? MENU_W.normal, Math.max(0, playerW - 2 * EDGE_PX));
     const x = Math.max(EDGE_PX, Math.min(cx - w / 2, playerW - w - EDGE_PX));
     const y = Math.max(above, bar.lift) + GAP_PX;
+    setVar(menu, '--w', `${Math.round(w)}px`);
     setVar(menu, '--x', `${Math.round(x)}px`);
     setVar(menu, '--y', `${Math.round(y)}px`);
     setVar(menu, '--max-h', `${Math.max(120, Math.round(Math.min(bar.height * 0.7, bar.height - y - EDGE_PX)))}px`);
@@ -226,10 +227,7 @@ export function createLayer({ doc, win, on }) {
         box.className = 'toast';
         box.setAttribute('data-tone', t.tone);
         box.setAttribute('role', t.tone === 'error' || t.tone === 'warning' ? 'alert' : 'status');
-        const g = doc.createElement('span');
-        g.className = 'glyph';
-        g.setAttribute('aria-hidden', 'true');
-        g.textContent = GLYPH[t.tone] ?? GLYPH.info;
+        const g = glyph(doc, t.tone);
         const tx = doc.createElement('span');
         tx.className = 'text';
         tx.textContent = t.text;
@@ -248,7 +246,7 @@ export function createLayer({ doc, win, on }) {
           x.setAttribute('type', 'button');
           x.className = 'x';
           x.setAttribute('aria-label', 'إغلاق الرسالة');
-          x.textContent = '✕';
+          x.appendChild(glyph(doc, 'x', 'glyph glyph--x'));
           x.addEventListener('click', () => dismiss(t.id));
           box.appendChild(x);
         }

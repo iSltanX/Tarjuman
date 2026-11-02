@@ -1,5 +1,5 @@
 /* المكوّنات المشتركة لصفحات الإضافة: الزر، والحقل، والشارة، والتنبيه، والحالة الفارغة، والحوار، والقائمة المنسدلة،
-   والمقطّعة، ومجموعة الاختيار، ورقائق التصفية، ومحدد الترجمات 1 2 3، وبنود القوائم، والهيكل. كل حالة لها نص أو رمز
+   والمقطّعة، ومجموعة الاختيار، ورقائق التصفية، ومحدد الترجمات الموجودة، والشعار، وبنود القوائم، والهيكل. كل حالة لها نص أو رمز
    لا لون وحده، وأقل هدف ضغط 32×32 للأدوات الثانوية و40×40 لما عداها. كل الألوان من رموز tokens.css بالوضعين. */
 
 .tj-icon { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -24,12 +24,12 @@
 .tj-btn--icon { width: var(--tj-control-md); padding: 0; }
 .tj-btn--icon.tj-btn--sm { width: var(--tj-control-sm); }
 .tj-btn:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-hover); }
+.tj-btn:active:not(:disabled):not([aria-disabled="true"]):not(.tj-btn--primary):not(.tj-btn--danger) { background: var(--tj-pressed); }
 .tj-btn--primary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-brand-hover); }
-.tj-btn--secondary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-surface-2); border-color: var(--tj-muted); }
+.tj-btn--secondary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-sunken); border-color: var(--tj-border-input); }
 .tj-btn--ghost:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-hover); color: var(--tj-text); }
 .tj-btn--danger:hover:not(:disabled):not([aria-disabled="true"]) { background: color-mix(in srgb, var(--tj-danger) 88%, black); }
-.tj-btn:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(0.5px); }
-.tj-btn:disabled, .tj-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+.tj-btn:disabled, .tj-btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .tj-btn[aria-busy="true"] { cursor: progress; }
 .tj-btn[aria-busy="true"]::before {
   content: ""; width: 14px; height: 14px; border-radius: 50%;
@@ -44,12 +44,12 @@
 .tj-field__input {
   min-height: var(--tj-control-md); padding: 0 12px; width: 100%;
   background: var(--tj-surface); color: var(--tj-text);
-  border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-field);
-  font: 400 15px/22px var(--tj-font-body);
+  border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-field);
+  font: 400 14px/22px var(--tj-font-body);
 }
 .tj-field__input::placeholder { color: var(--tj-muted); }
-.tj-field__input:hover:not(:disabled) { border-color: var(--tj-muted); }
-.tj-field__input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 1px; border-color: var(--tj-focus); }
+.tj-field__input:hover:not(:disabled) { border-color: var(--tj-text-2); }
+.tj-field__input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 0; border-color: var(--tj-focus); }
 .tj-field__input:disabled { opacity: 0.55; cursor: not-allowed; background: var(--tj-surface-2); }
 .tj-field__input--mono { font: 500 14px/20px var(--tj-font-mono); font-variant-numeric: tabular-nums; direction: ltr; text-align: left; }
 .tj-field__hint { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
@@ -103,16 +103,22 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 
 /* ---- حوار التأكيد ---- */
 .tj-dialog {
-  width: min(440px, calc(100vw - 32px)); padding: 20px 22px; border: 1px solid var(--tj-border);
+  width: min(440px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain;
+  padding: 20px; border: 1px solid var(--tj-border);
   border-radius: var(--tj-radius-card); background: var(--tj-surface); color: var(--tj-text); box-shadow: var(--tj-e2);
 }
 .tj-dialog::backdrop { background: var(--tj-overlay); }
 .tj-dialog[open] { animation: tj-pop var(--tj-motion-menu) var(--tj-ease); }
 @keyframes tj-pop { from { opacity: 0; transform: translateY(4px); } }
 .tj-dialog__form { display: flex; flex-direction: column; gap: 14px; margin: 0; }
-.tj-dialog__title { font: 700 18px/28px var(--tj-font-head); overflow-wrap: anywhere; }
+.tj-dialog__title { font: 700 17px/27px var(--tj-font-head); overflow-wrap: anywhere; }
 .tj-dialog__body { font: 400 14px/23px var(--tj-font-body); color: var(--tj-text-2); }
-.tj-dialog__footer { display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; margin-top: 4px; }
+/* التذييل لاصق في أسفل الحوار حين يطول محتواه فيمرّر الحوار كله: الزران ظاهران دائمًا دون تمرير داخل تمرير. */
+.tj-dialog__footer {
+  display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap;
+  position: sticky; inset-block-end: -20px; z-index: 1; margin: 2px -20px -20px; padding: 12px 20px 20px;
+  background: var(--tj-surface); box-shadow: 0 -1px 0 var(--tj-border);
+}
 .tj-dialog--danger .tj-dialog__title { color: var(--tj-danger); }
 
 /* ---- مجموعة اختيار (radio) بخيارات ذات شرح ---- */
@@ -140,26 +146,25 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 /* ---- رقائق التصفية بأعدادها ---- */
 .tj-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .tj-chip {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: 999px;
-  border: 1px solid var(--tj-border-strong); background: var(--tj-surface); color: var(--tj-text-2);
+  display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--tj-border); background: var(--tj-surface); color: var(--tj-text-2);
   font: 700 13px/18px var(--tj-font-body); cursor: pointer; white-space: nowrap;
 }
 .tj-chip:hover { background: var(--tj-hover); color: var(--tj-text); }
-.tj-chip[aria-pressed="true"] { background: var(--tj-brand-soft); border-color: transparent; color: var(--tj-brand-text); }
+.tj-chip[aria-pressed="true"] { background: var(--tj-brand-soft); border-color: color-mix(in srgb, var(--tj-brand) 35%, transparent); color: var(--tj-brand-text); }
 .tj-chip__count { font: 500 12px/16px var(--tj-font-mono); color: var(--tj-muted); }
 .tj-chip[aria-pressed="true"] .tj-chip__count { color: inherit; opacity: 0.8; }
 
-/* ---- محدد الترجمات 1 2 3: النشطة بلون الإبراز، والمحفوظة بإطار، والفارغة باهتة. الأرقام تُقرأ 1 2 3 من اليسار كما في المشغّل ---- */
-.tj-slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--tj-surface-2); direction: ltr; }
+/* ---- محدد الترجمات الموجودة: زر لكل ترجمة محفوظة، والنشطة بلون الإبراز. الأرقام تُقرأ من اليسار كخط الأعداد ---- */
+.tj-slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); direction: ltr; flex: none; }
 .tj-slots__slot {
-  display: inline-grid; place-items: center; width: 26px; height: 24px; border-radius: 6px; border: 1px solid transparent;
-  background: transparent; color: var(--tj-text-2); font: 700 12px/1 var(--tj-font-mono); cursor: pointer; padding: 0;
+  display: inline-grid; place-items: center; min-width: 28px; height: 24px; padding: 0 6px; border-radius: 6px; border: 0;
+  background: transparent; color: var(--tj-text-2); font: 700 12px/1 var(--tj-font-body); font-variant-numeric: tabular-nums; cursor: pointer;
 }
-.tj-slots--md .tj-slots__slot { width: 30px; height: 28px; font-size: 13px; }
-.tj-slots__slot[data-filled="true"] { border-color: var(--tj-border-strong); background: var(--tj-surface); color: var(--tj-text); }
-.tj-slots__slot[aria-checked="true"] { background: var(--tj-brand); border-color: var(--tj-brand); color: var(--tj-brand-ink); }
-.tj-slots__slot[data-filled="false"] { color: var(--tj-muted); opacity: 0.6; cursor: not-allowed; }
-.tj-slots__slot:hover:not([aria-checked="true"]):not([data-filled="false"]) { background: var(--tj-hover); }
+.tj-slots--md .tj-slots__slot { min-width: 32px; height: 28px; font-size: 13px; }
+.tj-slots__slot:hover:not([aria-checked="true"]) { background: var(--tj-hover); color: var(--tj-text); }
+.tj-slots__slot[aria-checked="true"] { background: var(--tj-brand); color: var(--tj-brand-ink); cursor: default; }
+.tj-slots__slot:focus-visible { outline-offset: 1px; }
 
 /* ---- القائمة المنسدلة ---- */
 .tj-menu { position: relative; display: inline-flex; }
@@ -187,24 +192,10 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-menu__label { font: 400 14px/20px var(--tj-font-body); }
 .tj-menu__hint { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 
-/* ---- بنود القوائم في نافذة الأيقونة والصفحات ---- */
-.tj-mark {
-  width: 28px; height: 28px; border-radius: 8px; background: var(--tj-brand); color: var(--tj-brand-ink);
-  display: inline-grid; place-items: center; font: 700 17px/1 var(--tj-font-head); flex: none;
-}
-.tj-mark--lg { width: 36px; height: 36px; border-radius: 10px; font-size: 21px; }
-.tj-menuitem {
-  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; width: 100%;
-  border: 0; border-radius: var(--tj-radius-md); background: transparent; text-align: start; cursor: pointer; color: var(--tj-text);
-}
-.tj-menuitem .tj-icon { color: var(--tj-muted); width: 18px; height: 18px; }
-.tj-menuitem:hover:not([aria-disabled="true"]) { background: var(--tj-hover); }
-.tj-menuitem[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
-.tj-menuitem__text { display: flex; flex-direction: column; min-width: 0; }
-.tj-menuitem__name { font: 700 14px/20px var(--tj-font-body); }
-.tj-menuitem__desc { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
-.tj-menuitem__end { margin-inline-start: auto; color: var(--tj-muted); display: inline-flex; }
-
+/* ---- الشعار المعتمد (logo.js): لونا الشعار من رموزه لا من لون الإبراز ---- */
+.tj-logo { display: block; flex: none; }
+.tj-logo__glyph { fill: var(--tj-logo-glyph); }
+.tj-logo__word { fill: var(--tj-logo-word); }
 /* ---- التلميح (فوق زر، معكوس الألوان) ---- */
 .tj-tipwrap { position: relative; display: inline-flex; }
 .tj-tip {
@@ -215,8 +206,8 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 }
 .tj-tipwrap:hover .tj-tip, .tj-tipwrap:focus-within .tj-tip { opacity: 1; visibility: visible; }
 
-/* ---- الرسائل العابرة أعلى الصفحة ---- */
-.tj-toasts { position: fixed; inset-block-start: calc(var(--tj-topbar-h) + 10px); inset-inline: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+/* ---- الرسائل العابرة أسفل الصفحة: لا تغطي الشريط العلوي ولا عنوان الصفحة ولا أدواتها ---- */
+.tj-toasts { position: fixed; inset-block-end: 20px; inset-inline: 0; z-index: 100; display: flex; flex-direction: column-reverse; align-items: center; gap: 8px; pointer-events: none; padding: 0 16px; }
 .tj-toast {
   display: flex; align-items: center; gap: 10px; padding: 9px 14px; max-width: min(560px, calc(100vw - 32px));
   border-radius: var(--tj-radius-md); border: 1px solid transparent; box-shadow: var(--tj-e2);

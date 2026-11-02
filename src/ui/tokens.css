@@ -1,55 +1,61 @@
-/* رموز تصميم صفحات ترجمان. أسطح محايدة مريحة ولون إبراز واحد (بترولي) للإجراء الرئيسي والحالة النشطة والروابط
-   وحدها؛ والنجاح والتحذير والخطأ ألوان دلالية لا تُستعمل للزينة. الوضع يتبع النظام، وdata-theme يفرضه. الخطوط مثبّتة
-   على الجهاز (لا طلب شبكة من صفحات الإضافة). */
+/* رموز تصميم صفحات ترجمان (جولة الصقل، 2026-11-02): «حبر وورق». أسطح رمادية محايدة بلا صبغة، ونص بحبر داكن، ولون إبراز
+   واحد نيلي للإجراء الرئيسي والتحديد والروابط والتركيز وحدها؛ والنجاح والتحذير والخطأ والمعلومة والمعدّل ألوان دلالية
+   مستقلة لا تُستعمل للزينة. الشعار بشكله المعتمد ولون الهوية نفسه: الرمز بالإبراز والاسم بالحبر (--tj-logo-*). الوضع يتبع النظام، وdata-theme
+   يفرضه. النسب محسوبة: النص الثانوي ≥ 4.5:1 على كل سطح، وحد الحقل ≥ 3:1 على الصفحة والسطح. الخطوط مضمّنة (ui/fonts.css). */
 
 :root {
   color-scheme: light dark;
 
   /* الأسطح */
-  --tj-bg: #F5F6F5;
+  --tj-bg: #F5F5F7;
   --tj-surface: #FFFFFF;
-  --tj-surface-2: #EFF2F0;
-  --tj-sunken: #F9FAF9;
-  --tj-hover: rgb(22 32 28 / 6%);
-  --tj-pressed: rgb(22 32 28 / 11%);
-  --tj-overlay: rgb(10 14 13 / 45%);
+  --tj-surface-2: #EFEFF3;
+  --tj-sunken: #FAFAFB;
+  --tj-hover: rgb(23 23 40 / 5%);
+  --tj-pressed: rgb(23 23 40 / 10%);
+  --tj-overlay: rgb(12 12 20 / 45%);
 
   /* النص */
-  --tj-text: #16201C;
-  --tj-text-2: #46524E;
-  --tj-muted: #6B7975;
+  --tj-text: #17171C;
+  --tj-text-2: #46464F;
+  --tj-muted: #686873;
 
-  /* الحدود */
-  --tj-border: #E2E7E4;
-  --tj-border-strong: #C6CFCA;
+  /* الحدود: الفاصل، والحد البارز، وحد الحقل الذي يعرّف العنصر وحده (3:1) */
+  --tj-border: #E3E3E8;
+  --tj-border-strong: #C4C4CD;
+  --tj-border-input: #85858F;
 
   /* الإبراز */
-  --tj-brand: #0C6A6F;
-  --tj-brand-hover: #0A5C60;
+  --tj-brand: #4338CA;
+  --tj-brand-hover: #3730A3;
   --tj-brand-ink: #FFFFFF;
-  --tj-brand-soft: #E1F0EF;
-  --tj-brand-text: #0A5F63;
-  --tj-focus: #2563EB;
+  --tj-brand-soft: #EEEDFC;
+  --tj-brand-text: #3B32B8;
+  --tj-focus: #4F46E5;
+
+  /* الشعار: شكله المعتمد من Figma بلون الهوية (الرمز بالإبراز، والاسم بالحبر) */
+  --tj-logo-glyph: var(--tj-brand);
+  --tj-logo-word: var(--tj-text);
 
   /* الدلالات */
-  --tj-success: #1C7A3D;
-  --tj-success-bg: #E2F3E7;
-  --tj-warning: #8A5A00;
-  --tj-warning-bg: #FBF1D9;
+  --tj-success: #11703A;
+  --tj-success-bg: #E5F4EA;
+  --tj-warning: #8A5300;
+  --tj-warning-bg: #FCF1DC;
   --tj-danger: #B42318;
-  --tj-danger-bg: #FCE8E6;
+  --tj-danger-bg: #FDECEA;
   --tj-danger-ink: #FFFFFF;
-  --tj-info: #1D5DB3;
-  --tj-info-bg: #E5EDFA;
-  --tj-edited: #6342B6;
-  --tj-edited-bg: #EEE9FA;
+  --tj-info: #0B63A0;
+  --tj-info-bg: #E6F0F9;
+  --tj-edited: #93287F;
+  --tj-edited-bg: #F8EAF5;
 
-  /* الخطوط */
-  --tj-font-head: "Cairo", "Almarai", "SF Arabic", Tahoma, sans-serif;
-  --tj-font-body: "Almarai", "SF Arabic", "Noto Sans Arabic", Tahoma, sans-serif;
-  --tj-font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* الخطوط: المضمّنة أولًا (ui-fonts.js) */
+  --tj-font-head: "Tarjuman UI Cairo", "Tarjuman UI Almarai", "SF Arabic", Tahoma, sans-serif;
+  --tj-font-body: "Tarjuman UI Almarai", "SF Arabic", "Noto Sans Arabic", Tahoma, sans-serif;
+  --tj-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* المسافات */
+  /* المسافات: سلّم 4 */
   --tj-space-1: 4px;
   --tj-space-2: 8px;
   --tj-space-3: 12px;
@@ -61,21 +67,21 @@
 
   /* الزوايا والارتفاعات */
   --tj-radius-sm: 6px;
-  --tj-radius-md: 10px;
-  --tj-radius-lg: 14px;
-  --tj-radius-xl: 20px;
+  --tj-radius-md: 8px;
+  --tj-radius-lg: 12px;
+  --tj-radius-xl: 16px;
   --tj-radius-field: var(--tj-radius-sm);
   --tj-radius-button: var(--tj-radius-md);
   --tj-radius-card: var(--tj-radius-lg);
   --tj-radius-card-lg: var(--tj-radius-xl);
   --tj-control-sm: 32px;
-  --tj-control-md: 40px;
-  --tj-control-lg: 48px;
-  --tj-topbar-h: 56px;
+  --tj-control-md: 36px;
+  --tj-control-lg: 44px;
+  --tj-topbar-h: 52px;
 
   /* الظلال */
-  --tj-e1: 0 1px 2px rgb(0 0 0 / 4%), 0 4px 14px rgb(0 0 0 / 4%);
-  --tj-e2: 0 12px 40px rgb(0 0 0 / 18%), 0 2px 6px rgb(0 0 0 / 8%);
+  --tj-e1: 0 1px 2px rgb(16 16 28 / 5%), 0 2px 8px rgb(16 16 28 / 4%);
+  --tj-e2: 0 12px 32px rgb(16 16 28 / 16%), 0 2px 6px rgb(16 16 28 / 8%);
 
   /* الحركة */
   --tj-motion-menu: 140ms;
@@ -85,73 +91,75 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --tj-bg: #0F1413;
-    --tj-surface: #161C1B;
-    --tj-surface-2: #1F2725;
-    --tj-sunken: #131918;
-    --tj-hover: rgb(233 238 236 / 7%);
-    --tj-pressed: rgb(233 238 236 / 13%);
-    --tj-overlay: rgb(0 0 0 / 60%);
-    --tj-text: #E9EEEC;
-    --tj-text-2: #B9C3BF;
-    --tj-muted: #8C9894;
-    --tj-border: #28312F;
-    --tj-border-strong: #3A4542;
-    --tj-brand: #4EC9C4;
-    --tj-brand-hover: #62D3CE;
-    --tj-brand-ink: #062322;
-    --tj-brand-soft: #143331;
-    --tj-brand-text: #6AD3CE;
-    --tj-focus: #8AB4FF;
-    --tj-success: #73D394;
-    --tj-success-bg: #16301F;
-    --tj-warning: #F0C46A;
-    --tj-warning-bg: #2F260F;
-    --tj-danger: #FF958C;
-    --tj-danger-bg: #3B1A17;
+    --tj-bg: #111115;
+    --tj-surface: #18181D;
+    --tj-surface-2: #222229;
+    --tj-sunken: #141418;
+    --tj-hover: rgb(236 236 245 / 6%);
+    --tj-pressed: rgb(236 236 245 / 12%);
+    --tj-overlay: rgb(0 0 0 / 62%);
+    --tj-text: #ECECF1;
+    --tj-text-2: #B8B8C4;
+    --tj-muted: #8E8E9B;
+    --tj-border: #2A2A32;
+    --tj-border-strong: #40404A;
+    --tj-border-input: #6B6B77;
+    --tj-brand: #8F96FF;
+    --tj-brand-hover: #A3A9FF;
+    --tj-brand-ink: #14143A;
+    --tj-brand-soft: #262650;
+    --tj-brand-text: #ABB1FF;
+    --tj-focus: #ABB1FF;
+    --tj-success: #70D191;
+    --tj-success-bg: #15291D;
+    --tj-warning: #EBC06A;
+    --tj-warning-bg: #2C2410;
+    --tj-danger: #FF8F85;
+    --tj-danger-bg: #381A18;
     --tj-danger-ink: #2A0F0C;
-    --tj-info: #8DB6F2;
-    --tj-info-bg: #172A43;
-    --tj-edited: #BBA7F3;
-    --tj-edited-bg: #26203A;
-    --tj-e1: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 14px rgb(0 0 0 / 25%);
-    --tj-e2: 0 12px 40px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
+    --tj-info: #7EBDF0;
+    --tj-info-bg: #13283A;
+    --tj-edited: #E59BD7;
+    --tj-edited-bg: #33192F;
+    --tj-e1: 0 1px 2px rgb(0 0 0 / 30%), 0 2px 8px rgb(0 0 0 / 24%);
+    --tj-e2: 0 12px 32px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --tj-bg: #0F1413;
-  --tj-surface: #161C1B;
-  --tj-surface-2: #1F2725;
-  --tj-sunken: #131918;
-  --tj-hover: rgb(233 238 236 / 7%);
-  --tj-pressed: rgb(233 238 236 / 13%);
-  --tj-overlay: rgb(0 0 0 / 60%);
-  --tj-text: #E9EEEC;
-  --tj-text-2: #B9C3BF;
-  --tj-muted: #8C9894;
-  --tj-border: #28312F;
-  --tj-border-strong: #3A4542;
-  --tj-brand: #4EC9C4;
-  --tj-brand-hover: #62D3CE;
-  --tj-brand-ink: #062322;
-  --tj-brand-soft: #143331;
-  --tj-brand-text: #6AD3CE;
-  --tj-focus: #8AB4FF;
-  --tj-success: #73D394;
-  --tj-success-bg: #16301F;
-  --tj-warning: #F0C46A;
-  --tj-warning-bg: #2F260F;
-  --tj-danger: #FF958C;
-  --tj-danger-bg: #3B1A17;
+  --tj-bg: #111115;
+  --tj-surface: #18181D;
+  --tj-surface-2: #222229;
+  --tj-sunken: #141418;
+  --tj-hover: rgb(236 236 245 / 6%);
+  --tj-pressed: rgb(236 236 245 / 12%);
+  --tj-overlay: rgb(0 0 0 / 62%);
+  --tj-text: #ECECF1;
+  --tj-text-2: #B8B8C4;
+  --tj-muted: #8E8E9B;
+  --tj-border: #2A2A32;
+  --tj-border-strong: #40404A;
+  --tj-border-input: #6B6B77;
+  --tj-brand: #8F96FF;
+  --tj-brand-hover: #A3A9FF;
+  --tj-brand-ink: #14143A;
+  --tj-brand-soft: #262650;
+  --tj-brand-text: #ABB1FF;
+  --tj-focus: #ABB1FF;
+  --tj-success: #70D191;
+  --tj-success-bg: #15291D;
+  --tj-warning: #EBC06A;
+  --tj-warning-bg: #2C2410;
+  --tj-danger: #FF8F85;
+  --tj-danger-bg: #381A18;
   --tj-danger-ink: #2A0F0C;
-  --tj-info: #8DB6F2;
-  --tj-info-bg: #172A43;
-  --tj-edited: #BBA7F3;
-  --tj-edited-bg: #26203A;
-  --tj-e1: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 14px rgb(0 0 0 / 25%);
-  --tj-e2: 0 12px 40px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
+  --tj-info: #7EBDF0;
+  --tj-info-bg: #13283A;
+  --tj-edited: #E59BD7;
+  --tj-edited-bg: #33192F;
+  --tj-e1: 0 1px 2px rgb(0 0 0 / 30%), 0 2px 8px rgb(0 0 0 / 24%);
+  --tj-e2: 0 12px 32px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
 }
 
 :root[data-theme="light"] {
