@@ -87,6 +87,32 @@ export const offsetNotice = (offsetMs) => `إزاحة العرض ${formatOffset(
 /** سطر الإزاحة الثابت. @param {number} offsetMs */
 export const offsetLine = (offsetMs) => `إزاحة العرض أثناء المشاهدة: ${formatOffset(offsetMs)} ث — منفصلة عن التوقيت المحفوظ`;
 
+/**
+ * اسم الوصول لخانة في محدد خانة التحرير: «الترجمة 2، قيد التحرير، النشطة في المشغّل» أو «الترجمة 3، فارغة».
+ * @param {{ n: number, filled: boolean, active: boolean }} slot active هنا النشطة في المشغّل
+ * @param {{ editing: boolean }} o
+ */
+export function editSlotLabel(slot, { editing }) {
+  if (!slot.filled) return `الترجمة ${slot.n}، فارغة`;
+  return [`الترجمة ${slot.n}`, editing ? 'قيد التحرير' : null, slot.active ? 'النشطة في المشغّل' : null].filter(Boolean).join('، ');
+}
+
+/**
+ * سطر تحت الرأس يفرّق خانة التحرير عن النشطة (R43): الحفظ هنا لا يغيّر ما يُعرض في المشغّل.
+ * @param {number} editing @param {number | null} active @param {string | null} name
+ */
+export function activeSlotLine(editing, active, name) {
+  const who = name ? `تحرّر الترجمة ${editing} «${name}»` : `تحرّر الترجمة ${editing}`;
+  if (editing === active) return `${who}، وهي النشطة في المشغّل.`;
+  return `${who}. النشطة في المشغّل الترجمة ${active}، والحفظ هنا لا يغيّرها.`;
+}
+
+/** خيار العمود المرجعي: «الإنجليزية» أو «الترجمة 3 — مراجعة». @param {'en' | number} v @param {string | null} [name] */
+export const refOptionLabel = (v, name = null) => (v === 'en' ? 'الإنجليزية' : name ? `الترجمة ${v} — ${name}` : `الترجمة ${v}`);
+
+/** طُلبت خانة فارغة فعُرضت النشطة. @param {number | null} requested @param {number} opened */
+export const slotFallback = (requested, opened) => `الترجمة ${requested} فارغة، فعُرضت الترجمة ${opened}.`;
+
 /** مدة المقطع بالثواني بخانة عشرية: «2.7». @param {number} ms */
 export const durationText = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
 

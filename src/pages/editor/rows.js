@@ -19,7 +19,7 @@ export const textDir = (text) => (HAS_ARABIC.test(text) || !HAS_LETTER.test(text
  *   rows: ({ type: 'cue', index: number } | { type: 'missing', n: number })[],
  *   session: ReturnType<typeof import('../../core/edit/index.js').createEditSession>,
  *   report: import('../../core/edit/issues.js').IssueReport,
- *   refs: string[], showEnglish: boolean, readOnly: boolean,
+ *   refs: string[], refDir: 'ltr' | 'rtl', showEnglish: boolean, readOnly: boolean,
  *   selection: Set<number>, activeIndex: number | null, stepMs: number
  * }} RowContext
  */
@@ -120,6 +120,7 @@ export function createRows(doc, ctx) {
     text.style.height = `${textLines(cue.text) * ROW.line + ROW.fieldChrome}px`;
 
     en.textContent = c.refs[i] ?? '';
+    en.dir = c.refDir;
     en.hidden = !c.showEnglish;
 
     nudges.hidden = c.readOnly;

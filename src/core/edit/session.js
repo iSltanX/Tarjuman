@@ -368,7 +368,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       redoStack.push(entry);
       openGroup = null;
       clearDrafts(indices);
-      emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), undo: true });
+      emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), structural: STRUCTURAL_KINDS.includes(entry.kind), undo: true });
       return { ok: true, kind: entry.kind };
     },
 
@@ -379,7 +379,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       undoStack.push(entry);
       openGroup = null;
       clearDrafts(indices);
-      emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), redo: true });
+      emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), structural: STRUCTURAL_KINDS.includes(entry.kind), redo: true });
       return { ok: true, kind: entry.kind };
     },
 

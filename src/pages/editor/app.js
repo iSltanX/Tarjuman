@@ -1,36 +1,49 @@
-// صفحة المحرّر (P8، مواصفة التصميم §١١): الرأس والنسخة وحالة الحفظ، وشريط النطاق و±، وسطر إزاحة العرض المنفصل،
-// والقائمة الافتراضية، ولوحتا المشكلات والمقارنة، والحفظ والأصل والتصدير وحارس المغادرة. المنطق في src/core/edit
-// (الجلسة والمشكلات وما يُصدَّر)؛ هنا الحالة المعروضة والأحداث فقط. لا حفظ تلقائي أبدًا: «حفظ» وحده يكتب، بـexpect
-// السجل المفتوح، فإن تغيّر من المشغّل أو تبويب آخر رُفض ودُعي المستخدم إلى إعادة الفتح.
+// صفحة المحرّر (P8 ثم P14، مواصفة التصميم §١١ و§١٩.٩): الرأس والنسخة وخانة التحرير 1 2 3 وحالة الحفظ، وشريط النطاق
+// و±، وسطر إزاحة العرض المنفصل، والقائمة الافتراضية بعمودها المرجعي، واللوحة الجانبية، والحفظ والأصل والتصدير وحارس
+// المغادرة. المنطق في src/core/edit (الجلسة والمشكلات وما يُصدَّر)؛ هنا الحالة المعروضة والأحداث فقط. لا حفظ تلقائي
+// أبدًا: «حفظ» وحده يكتب في خانة التحرير، بـexpect الحزمة المفتوحة، فإن تغيّر محتوى الخانة من المشغّل أو تبويب آخر رُفض.
 /* global __TJ_DEV__ */
 import { compare, previewRestoreTiming } from '../../core/compare/index.js';
+import { READING_DEFAULTS } from '../../core/edit/density.js';
 import {
   buildRows, createEditSession, englishReference, parseSeconds, parseTimecode, pickEnglishTrack, planArabicExport,
 } from '../../core/edit/index.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { download } from '../../core/export/index.js';
-import { arabicCues } from '../../core/model/video.js';
-import { alertBox, button, el, emptyState, ltr, statusPill } from '../../ui/components.js';
+import { slotModels } from '../../core/model/bundle.js';
+import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../../ui/format.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
 import { renderComparison, renderIssues } from './panels.js';
-import { classifyChange, openedState, restoreOriginal, saveEdits } from './persist.js';
+import {
+  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged,
+} from './persist.js';
 import { createRows, textDir } from './rows.js';
 import {
-  errorsToFix, numberList, offsetLine, offsetNotice, saveStatus, scopeOption, scopeTarget, seconds, shiftSentence, unsavedSentence,
+  activeSlotLine, editSlotLabel, errorsToFix, numberList, offsetLine, offsetNotice, refOptionLabel, saveStatus, scopeOption, scopeTarget,
+  seconds, shiftSentence, slotFallback, unsavedSentence,
 } from './text.js';
 import { RowLayout, createVirtualList, rowHeight, textLines } from './virtual.js';
 
-const KIND_LABEL = Object.freeze({ text: 'تعديل النص', time: 'تعديل الزمن', shift: 'نقل التوقيت', commit: 'تثبيت الإزاحة', restore: 'استعادة التوقيت' });
+const KIND_LABEL = Object.freeze({
+  text: 'تعديل النص', time: 'تعديل الزمن', shift: 'نقل التوقيت', commit: 'تثبيت الإزاحة', restore: 'استعادة التوقيت',
+  replace: 'الاستبدال', merge: 'الدمج', split: 'الشطر', drift: 'تصحيح الانجراف', patch: 'ملف التصحيح', rescue: 'إعادة تطبيق تعديلاتي',
+});
 const STEPS = [100, 250, 500, 1000, 2000, 5000];
 const MAX_PREVIEW_ROWS = 200;
 const COMPARE_DELAY_MS = 250;
 
+/** عتبة الكثافة من التفضيلات (Q15): null = المعايرة. @param {import('../../core/model/prefs.js').Prefs} prefs */
+const densityOf = (prefs) => ({ maxCps: prefs?.review?.maxCps ?? READING_DEFAULTS.maxCps });
+
 /**
  * @param {HTMLElement} app
- * @param {{ videoId: string | null, store: ReturnType<typeof import('../../core/store/index.js').createStore>, doc?: Document, now?: () => number }} deps
+ * @param {{
+ *   videoId: string | null, slot?: 1 | 2 | 3 | null, store: ReturnType<typeof import('../../core/store/index.js').createStore>,
+ *   doc?: Document, now?: () => number
+ * }} deps slot خانة التحرير المطلوبة (t في العنوان)؛ وبدونها النشطة
  */
-export async function mountEditor(app, { videoId, store, doc = document, now = Date.now }) {
+export async function mountEditor(app, { videoId, slot: requested = null, store, doc = document, now = Date.now }) {
   const win = doc.defaultView;
   const title = (text) => el('h1', { className: 'tj-h1', text, doc });
 
@@ -40,16 +53,18 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   }
   const loading = el('div', { className: 'tj-stack', attrs: { 'aria-busy': 'true' }, children: Array.from({ length: 6 }, () => el('div', { className: 'tj-skeleton ed-skeleton', doc })), doc });
   app.append(title('المحرّر'), loading);
-  let record;
+  let bundle;
   let settings;
+  let prefs;
   try {
-    [record, settings] = await Promise.all([store.getVideo(videoId), store.getSettings()]);
+    [bundle, settings, prefs] = await Promise.all([store.getBundle(videoId), store.getSettings(), store.getPrefs()]);
   } catch (err) {
     const info = toErrorInfo(err);
     loading.replaceWith(alertBox({ tone: 'danger', title: 'تعذّر فتح المحرّر', text: `${info.message} (${info.code})`, doc }));
     return null;
   }
-  if (!record?.arabic) {
+  const picked = pickSlot(bundle, requested);
+  if (picked.n === null) {
     loading.replaceWith(emptyState({
       title: 'لا ترجمة محفوظة لهذا الفيديو', text: messageFor('ST_NO_RECORD'),
       steps: ['افتح الفيديو على يوتيوب', 'ارفع ملف الترجمة العربية من شريط المشغّل', 'ثم افتح المحرّر من أيقونة الإضافة'], doc,
@@ -59,11 +74,12 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
 
   // ---- الحالة ----
   const S = {
-    opened: record, fp: null, englishTrack: null, edited: false,
+    opened: bundle, slot: picked.n, info: null, prefs,
+    fp: null, englishTrack: null, edited: false,
     session: null, offSession: null, original: null,
     view: /** @type {'edit' | 'original'} */ ('edit'),
     rows: [], rowOf: new Int32Array(0), indexOfN: new Map(), missingRowOfN: new Map(),
-    refs: [], refsOriginal: [],
+    refs: [], refsOriginal: [], refCol: /** @type {'en' | 1 | 2 | 3} */ ('en'), colRefs: [],
     layout: null, list: null,
     selection: new Set(), lastChecked: null, activeIndex: null,
     scope: /** @type {'cue' | 'selection' | 'all'} */ ('all'),
@@ -71,7 +87,7 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
     showEnglish: true, hideEnglish: false, hoverDelta: 0,
     result: /** @type {{ tone: string, text: string } | null} */ (null),
     external: /** @type {null | 'changed' | 'removed'} */ (null),
-    saving: false, pending: null, leaving: false,
+    saving: false, pending: null, leaving: false, externalChain: Promise.resolve(),
     comparison: null, compareTimer: 0, frame: 0,
   };
   const act = () => (S.view === 'original' ? S.original : S.session);
@@ -83,6 +99,8 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   app.classList.add('ed-app');
   const backBtn = button({ label: '→ المحفوظات', variant: 'ghost', size: 'sm', onClick: () => goLibrary(), doc });
   const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate', dir: 'auto', doc });
+  const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'خانة التحرير', onSelect: (n) => switchSlot(n), doc });
+  const slotNote = el('span', { className: 'ed-slot-note tj-caption', doc });
   const versionSel = el('select', { className: 'ed-select', attrs: { 'aria-label': 'النسخة المعروضة' }, on: { change: () => setView(versionSel.value) }, doc });
   const restoreOrigBtn = button({ label: 'استعادة الأصل…', variant: 'ghost', size: 'sm', onClick: () => onRestoreOriginal(), doc });
   const statusBox = el('span', { className: 'ed-status', attrs: { role: 'status' }, doc });
@@ -93,7 +111,8 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   const headEl = el('header', {
     className: 'ed-head',
     children: [
-      el('div', { className: 'ed-head__row', children: [backBtn, titleEl, ltr(videoId, { doc }), versionSel, restoreOrigBtn], doc }),
+      el('div', { className: 'ed-head__row', children: [backBtn, titleEl, ltr(videoId, { doc }), slotsEl.root, versionSel, restoreOrigBtn], doc }),
+      el('div', { className: 'ed-head__row ed-head__slot', children: [slotNote], doc }),
       el('div', { className: 'ed-head__row', children: [statusBox, el('span', { className: 'ed-spacer', doc }), undoBtn, redoBtn, exportBtn, saveBtn], doc }),
     ],
     doc,
@@ -137,7 +156,7 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
           el('div', { className: 'ed-seg', attrs: { role: 'radiogroup', 'aria-label': 'النطاق' }, children: scopeBtns, doc }),
           el('span', { className: 'ed-group', children: [minusBtn, el('span', { className: 'tj-caption', text: 'خطوة', doc }), stepSel, plusBtn], doc }),
           el('span', { className: 'ed-group', children: [amountIn, applyBtn], doc }),
-          el('label', { className: 'ed-group ed-toggle', attrs: { for: 'ed-show-en' }, children: [enToggle, el('span', { text: 'إظهار الإنجليزي', doc })], doc }),
+          el('label', { className: 'ed-group ed-toggle', attrs: { for: 'ed-show-en' }, children: [enToggle, el('span', { text: 'إظهار المرجع', doc })], doc }),
         ],
         doc,
       }),
@@ -159,10 +178,13 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   const issuesEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المشكلات' }, doc });
   const compareEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المقارنة' }, doc });
   const counterEl = el('span', { className: 'ed-counter tj-caption', attrs: { 'aria-live': 'off' }, doc });
+  // العمود المرجعي (§١٩.٩): الإنجليزية أو ترجمة أخرى من خانات الفيديو، باختيار في رأس عموده.
+  const refSel = el('select', { className: 'ed-select ed-ref-select', attrs: { 'aria-label': 'العمود المرجعي' }, on: { change: () => setRefCol(refSel.value) }, doc });
   const listHead = el('div', {
     className: 'ed-list__head',
-    attrs: { 'aria-hidden': 'true' },
-    children: ['', '#', 'البداية', 'النهاية', 'المدة', 'النص العربي', 'الإنجليزي', ''].map((t, k) => el('span', { className: k === 6 ? 'ed-col-en' : '', text: t, doc })),
+    children: ['', '#', 'البداية', 'النهاية', 'المدة', 'النص العربي', null, ''].map((t, k) => (k === 6
+      ? el('span', { className: 'ed-col-en', children: [refSel], doc })
+      : el('span', { text: t, attrs: { 'aria-hidden': 'true' }, doc }))),
     doc,
   });
   const scroller = el('div', { className: 'ed-list', attrs: { role: 'list', 'aria-label': 'المقاطع' }, doc });
@@ -187,25 +209,25 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   );
 
   const rowView = createRows(doc, () => ({
-    rows: S.rows, session: act(), report: act().issues(), refs: S.view === 'original' ? S.refsOriginal : S.refs,
+    rows: S.rows, session: act(), report: act().issues(), refs: S.colRefs, refDir: S.refCol === 'en' ? 'ltr' : 'rtl',
     showEnglish: S.showEnglish, readOnly: readOnly(), selection: S.selection, activeIndex: S.activeIndex, stepMs: S.stepMs,
   }));
 
   // ---- الفتح وإعادة الفتح ----
-  function load(rec, { keepUi = false } = {}) {
-    const st = openedState(rec);
-    const sameCount = S.session && S.session.count === st.cues.length;
-    S.opened = rec;
+  /** @param {import('../../core/model/slots.js').Bundle} b @param {1 | 2 | 3} n */
+  function load(b, n, { keepUi = false } = {}) {
+    const st = openedSlot(b, n);
+    const sameCount = S.slot === n && S.session && S.session.count === st.cues.length;
+    S.opened = b;
+    S.slot = n;
+    S.info = st;
     S.fp = st.fingerprint;
     S.edited = st.edited;
-    S.englishTrack = pickEnglishTrack(rec.english, S.fp);
+    S.englishTrack = pickEnglishTrack(b.record.english, S.fp);
     S.offSession?.();
-    S.session = createEditSession({ cues: st.cues, offsetMs: st.offsetMs });
+    S.session = createEditSession({ cues: st.cues, offsetMs: st.offsetMs, density: densityOf(S.prefs) });
     S.offSession = S.session.onChange(onSessionChange);
-    S.original = createEditSession({ cues: st.original, offsetMs: st.offsetMs });
-    const en = S.englishTrack?.cues ?? [];
-    S.refs = englishReference(st.cues, en, S.fp);
-    S.refsOriginal = englishReference(st.original, en, S.fp);
+    S.original = createEditSession({ cues: st.original, offsetMs: st.offsetMs, density: densityOf(S.prefs) });
     if (!S.edited) S.view = 'edit';
     if (!(keepUi && sameCount)) {
       S.selection.clear();
@@ -213,12 +235,45 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
       S.lastChecked = null;
       S.scope = 'all';
     }
+    if (S.refCol !== 'en' && (S.refCol === n || !b.slots[S.refCol - 1].track)) S.refCol = 'en';
     S.external = null;
-    S.showEnglish = !S.hideEnglish && en.length > 0;
-    titleEl.textContent = rec.title ?? 'بلا عنوان محفوظ';
-    titleEl.title = rec.title ?? '';
+    S.showEnglish = !S.hideEnglish && ((S.englishTrack?.cues.length ?? 0) > 0 || S.refCol !== 'en');
+    titleEl.textContent = b.record.title ?? 'بلا عنوان محفوظ';
+    titleEl.title = b.record.title ?? '';
     rebuildList();
     renderAll();
+  }
+
+  /** نص المرجع لكل مقطع في النسخة المعروضة: الإنجليزية دائمًا (للبحث فيها قراءةً)، والعمود المرجعي بحسب الاختيار. */
+  function computeRefs(cues) {
+    const refs = englishReference(cues, S.englishTrack?.cues ?? [], S.fp);
+    if (S.view === 'original') S.refsOriginal = refs;
+    else S.refs = refs;
+    const other = S.refCol === 'en' ? null : S.opened.slots[S.refCol - 1].track;
+    S.colRefs = other ? englishReference(cues, other.current ?? other.original, S.fp) : refs;
+  }
+
+  /** قائمة العمود المرجعي: الإنجليزية (إن حُفظ مسار) والخانات الممتلئة الأخرى. */
+  function renderRefSelect() {
+    const options = [];
+    if (S.englishTrack?.cues.length) options.push(['en', refOptionLabel('en')]);
+    for (const slot of S.opened.slots) if (slot.track && slot.n !== S.slot) options.push([String(slot.n), refOptionLabel(slot.n, slot.name)]);
+    if (!options.length) options.push(['en', 'لا مرجع محفوظ']);
+    const sig = options.map((o) => o.join(':')).join('|');
+    if (refSel.dataset.sig !== sig) {
+      refSel.replaceChildren(...options.map(([v, t]) => el('option', { text: t, attrs: { value: v }, doc })));
+      refSel.dataset.sig = sig;
+    }
+    refSel.value = String(S.refCol);
+    refSel.disabled = options.length < 2;
+  }
+
+  function setRefCol(value) {
+    S.refCol = value === 'en' ? 'en' : /** @type {1 | 2 | 3} */ (Number(value));
+    computeRefs(act().snapshot());
+    renderRefSelect();
+    setShowEnglish(true);
+    renderToolbar();
   }
 
   function heightOf(r, s, report) {
@@ -229,6 +284,7 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   function rebuildList() {
     const s = act();
     const cues = Array.from({ length: s.count }, (_, i) => s.cueAt(i));
+    computeRefs(cues);
     S.comparison = compareNow(s);
     const rows = buildRows(cues, S.comparison?.missing ?? []);
     const sameRows = Boolean(S.list) && rows.length === S.rows.length
@@ -269,6 +325,15 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   // ---- أحداث الجلسة ----
   function onSessionChange(e) {
     if (S.view !== 'edit') return;
+    if (e.structural || S.session.count !== S.rowOf.length) {
+      // عدد المقاطع أو مواضعها تغيّرت (دمج، شطر، ملف تصحيح، إعادة تطبيق، أو تراجع عنها): الصفوف تُبنى من جديد.
+      if (S.activeIndex !== null && S.activeIndex >= S.session.count) S.activeIndex = null;
+      S.selection.clear();
+      S.lastChecked = null;
+      rebuildList();
+      scheduleChrome();
+      return;
+    }
     const report = S.session.issues();
     // الكتابة في نص تغيّر ارتفاع صفها وحده (أسطره ومشكلات نصه)؛ وما عداها قد يمس مشكلات الجوار فيُعاد كله.
     if (e.kind === 'text' && e.indices) for (const i of e.indices) S.layout.setHeight(S.rowOf[i], heightOf(S.rows[S.rowOf[i]], S.session, report));
@@ -289,6 +354,7 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   // ---- العرض ----
   function renderAll() {
     renderChrome();
+    renderRefSelect();
     renderComparisonPanel();
   }
 
@@ -311,9 +377,23 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
     return null;
   }
 
+  function renderSlots() {
+    const models = slotModels(S.opened);
+    // المحدد هنا يحدد خانة التحرير لا النشطة (§١٩.٢): «المختارة» خانة التحرير، والنشطة تُذكر في الاسم والسطر.
+    slotsEl.update(models.map((m) => ({ ...m, active: m.n === S.slot })));
+    for (const m of models) {
+      const b = slotsEl.buttons[m.n - 1];
+      const label = editSlotLabel(m, { editing: m.n === S.slot });
+      b.setAttribute('aria-label', label);
+      b.title = m.name ? `${label} — ${m.name}` : label;
+    }
+    slotNote.textContent = activeSlotLine(S.slot, S.opened.active, S.info.name);
+  }
+
   function renderHeader() {
     const s = S.session;
     const dirty = s.dirty;
+    renderSlots();
     doc.title = `${dirty ? '● ' : ''}ترجمان — المحرّر`;
     statusBox.replaceChildren(statusPill({ tone: dirty ? 'warning' : 'success', text: saveStatus(changes(), dirty), doc }));
     const options = [['edit', S.edited || dirty ? 'النسخة المعدّلة' : 'النسخة الحالية (الأصل المستورد)']];
@@ -384,8 +464,8 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
     resultEl.className = `ed-result${S.result ? ` ed-result--${S.result.tone}` : ''}`;
     resultEl.textContent = S.result?.text ?? '';
     enToggle.checked = S.showEnglish;
-    enToggle.disabled = !S.englishTrack?.cues.length;
-    enToggle.parentElement.title = enToggle.disabled ? 'لا مسار إنجليزي محفوظ لهذا الفيديو.' : '';
+    enToggle.disabled = !S.englishTrack?.cues.length && !S.opened.slots.some((x) => x.track && x.n !== S.slot);
+    enToggle.parentElement.title = enToggle.disabled ? 'لا مسار إنجليزي محفوظ ولا ترجمة أخرى لهذا الفيديو.' : '';
   }
 
   function renderOffset() {
@@ -425,7 +505,7 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
 
   function renderComparisonPanel() {
     renderComparison(compareEl, {
-      doc, report: S.comparison, notes: S.opened.arabic?.notes ?? [], readOnly: readOnly(),
+      doc, report: S.comparison, notes: S.info.track.notes ?? [], readOnly: readOnly(),
       onRestore: () => onRestoreTiming(), onJumpN: (n) => jumpToN(n),
     });
   }
@@ -469,6 +549,7 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   function setShowEnglish(on) {
     S.showEnglish = on;
     S.hideEnglish = !on;
+    enToggle.checked = on;
     scroller.classList.toggle('ed-list--no-en', !on);
     listHead.classList.toggle('ed-list--no-en', !on);
     S.list.refresh(null);
@@ -574,14 +655,16 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
     const session = S.session;
     const at = session.version;
     try {
-      const rec = await saveEdits(store, videoId, S.opened, { cues: session.snapshot(), offsetChanged: session.offsetChanged, offsetMs: session.offsetMs }, { now });
+      const n = S.slot;
+      const saved = await saveSlot(store, videoId, S.opened, n, { cues: session.snapshot(), offsetChanged: session.offsetChanged, offsetMs: session.offsetMs }, { now });
       S.result = null;
       if (S.session === session && session.version !== at) {
         // كتب المستخدم أثناء الحفظ: المحفوظ يصبح الأساس وما كُتب بعده يبقى غير محفوظ، فلا يُكتب فوق الحقل.
-        S.opened = rec;
-        S.edited = rec.arabic.current !== null;
-        session.markSaved({ cues: arabicCues(rec), offsetMs: rec.view.displayOffsetMs });
-      } else load(rec, { keepUi: true });
+        S.opened = saved;
+        S.info = openedSlot(saved, n);
+        S.edited = S.info.edited;
+        session.markSaved({ cues: S.info.cues, offsetMs: S.info.offsetMs });
+      } else load(saved, n, { keepUi: true });
       toast('حُفظ ✓', 'success');
     } catch (err) {
       const info = toErrorInfo(err);
@@ -603,13 +686,13 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   async function reopen() {
     if ((S.session.dirty || S.session.hasDrafts) && !(await confirmLeave(doc, `${unsavedSentence(changes())}. ستُفقد عند إعادة الفتح وتظهر آخر نسخة محفوظة.`))) return;
     try {
-      const rec = await store.getVideo(videoId);
-      if (!rec?.arabic) {
+      const b = await store.getBundle(videoId);
+      if (!b?.slots[S.slot - 1].track) {
         S.external = 'removed';
         renderAll();
         return;
       }
-      load(rec, { keepUi: true });
+      load(b, S.slot, { keepUi: true });
       toast(messageFor('ED_RELOADED'), 'info');
     } catch (err) {
       const info = toErrorInfo(err);
@@ -620,13 +703,85 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   function handleExternal(change) {
     const kind = classifyChange(S.opened, change);
     if (kind === 'none' || kind === 'echo') return;
-    if (kind === 'removed') S.external = 'removed';
-    else if (S.session.dirty || S.session.hasDrafts) S.external = 'changed';
-    else {
-      reopen();
+    if (kind === 'removed') {
+      S.external = 'removed';
+      renderAll();
       return;
     }
+    // تغيّرٌ لا يمس محتوى خانة التحرير (علامة من المشغّل، أو خانة أخرى، أو النشطة) يُتبنّى دون تعارض ولا إعادة بناء.
+    S.externalChain = S.externalChain.then(async () => {
+      let latest = null;
+      try {
+        latest = await store.getBundle(videoId);
+      } catch {
+        latest = null;
+      }
+      if (!latest?.slots[S.slot - 1].track) S.external = 'removed';
+      else if (!slotContentChanged(S.opened, latest, S.slot)) {
+        adopt(latest);
+        return;
+      } else if (S.session.dirty || S.session.hasDrafts) S.external = 'changed';
+      else {
+        load(latest, S.slot, { keepUi: true });
+        toast(messageFor('ED_RELOADED'), 'info');
+        return;
+      }
+      renderAll();
+    });
+  }
+
+  /** حزمة أحدث لم يتغير فيها محتوى خانة التحرير: تصبح المفتوحة (فيقبل الحفظ)، وتُحدَّث العلامات والمرجع والخانات. */
+  function adopt(latest) {
+    const prevFp = S.fp?.id ?? null;
+    S.opened = latest;
+    S.info = openedSlot(latest, S.slot);
+    if ((S.info.fingerprint?.id ?? null) !== prevFp) {
+      S.fp = S.info.fingerprint;
+      S.englishTrack = pickEnglishTrack(latest.record.english, S.fp);
+      rebuildList();
+    }
+    titleEl.textContent = latest.record.title ?? 'بلا عنوان محفوظ';
     renderAll();
+  }
+
+  /** تبديل خانة التحرير (§١٩.٩): بتغييرات غير محفوظة حوار تأكيد، ولا تتغير النشطة. */
+  async function switchSlot(n) {
+    if (n === S.slot || !S.opened.slots[n - 1]?.track) return;
+    if (S.session.dirty || S.session.hasDrafts) {
+      const canSave = !saveBlockReason();
+      const v = await openDialog({
+        doc, tone: 'danger', title: `التبديل إلى الترجمة ${n}؟`, focus: 'stay',
+        body: `${unsavedSentence(changes())} في الترجمة ${S.slot}. التبديل دون حفظ يُفقدها.`,
+        actions: [
+          { label: 'البقاء', value: 'stay', variant: 'primary' },
+          canSave ? { label: 'حفظ ثم التبديل', value: 'save', variant: 'secondary' } : null,
+          { label: 'التبديل دون حفظ', value: 'switch', variant: 'danger' },
+        ].filter(Boolean),
+      });
+      if (v === 'save') {
+        await save();
+        if (S.session.dirty) return;
+      } else if (v !== 'switch') {
+        renderSlots();
+        return;
+      }
+    }
+    S.view = 'edit';
+    S.result = null;
+    load(S.opened, n);
+    rememberSlot(n);
+    toast(`الترجمة ${n}`, 'info');
+  }
+
+  /** الخانة في العنوان، فيفتحها التحديث نفسها. */
+  function rememberSlot(n) {
+    try {
+      const url = new URL(win.location.href);
+      url.searchParams.set('t', String(n));
+      win.history.replaceState(win.history.state, '', url.href);
+    } catch {
+      // عنوان لا يُكتب (صفحة اختبار): لا أثر على التحرير.
+    }
   }
 
   async function onDiscard() {
@@ -652,10 +807,10 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
     S.saving = true;
     renderHeader();
     try {
-      const rec = await restoreOriginal(store, videoId, S.opened, { now });
+      const saved = await restoreSlotOriginal(store, videoId, S.opened, S.slot, { now });
       S.view = 'edit';
       S.result = null;
-      load(rec, { keepUi: true });
+      load(saved, S.slot, { keepUi: true });
       toast(messageFor('ED_ORIGINAL_RESTORED'), 'success');
     } catch (err) {
       const info = toErrorInfo(err);
@@ -876,14 +1031,24 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
     e.returnValue = '';
   });
   store.onChange((change) => {
-    const c = change.cleared ? { oldValue: S.opened, newValue: null } : change.videos?.[videoId];
+    if (change.prefs?.newValue) {
+      // حد سرعة القراءة من الإعدادات (R55) يسري فورًا؛ ولا يمس شيئًا محفوظًا.
+      S.prefs = change.prefs.newValue;
+      S.session.setDensity(densityOf(S.prefs));
+      S.original.setDensity(densityOf(S.prefs));
+      rebuildList();
+      scheduleChrome();
+    }
+    const c = change.cleared ? { oldValue: S.opened.record, newValue: null } : change.videos?.[videoId];
     if (!c) return;
     if (S.saving) S.pending = c;
     else handleExternal(c);
   });
 
-  load(record);
-  const api = { get state() { return S; }, save, jumpTo, setView };
+  load(bundle, picked.n);
+  rememberSlot(picked.n);
+  if (picked.fallback) toast(slotFallback(requested, picked.n), 'info');
+  const api = { get state() { return S; }, save, jumpTo, setView, switchSlot };
   if (typeof __TJ_DEV__ !== 'undefined' && __TJ_DEV__) globalThis.__tarjumanEditor = api;
   return api;
 }

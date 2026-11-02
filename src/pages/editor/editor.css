@@ -32,6 +32,8 @@ body.ed-page { overflow: hidden; }
 .ed-head { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
 .ed-head__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
 .ed-title { flex: 1 1 240px; min-width: 0; }
+.ed-head__slot { margin-top: -4px; }
+.ed-slot-note { color: var(--tj-text-2); }
 
 /* ---- شريط الأدوات والنطاق ---- */
 .ed-toolbar { display: flex; flex-direction: column; gap: 6px; padding: 10px 20px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
@@ -99,6 +101,9 @@ body.ed-page { overflow: hidden; }
   display: grid; grid-template-columns: var(--ed-cols); column-gap: 10px; padding: 6px 12px;
   border-bottom: 1px solid var(--tj-border); font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted);
 }
+.ed-list__head > span { display: flex; align-items: center; min-width: 0; }
+.ed-ref-select { min-height: 26px; max-width: 100%; padding: 0 6px; font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); }
+.ed-ref-select:disabled { opacity: 1; border-color: transparent; background: transparent; padding: 0; appearance: none; }
 .ed-list { overflow-y: auto; overflow-x: hidden; position: relative; }
 .ed-list__spacer { position: relative; width: 100%; }
 
@@ -129,7 +134,7 @@ body.ed-page { overflow: hidden; }
 }
 .ed-time:focus-visible, .ed-row__text:focus-visible { outline: 3px solid var(--tj-focus); outline-offset: 0; border-color: var(--tj-focus); }
 .ed-row__en {
-  margin: 0; padding-top: 8px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); text-align: left;
+  margin: 0; padding-top: 8px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); text-align: start;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
 }
 .ed-row__nudge { display: flex; gap: 4px; padding-top: 4px; opacity: 0; transition: opacity var(--tj-motion-menu) var(--tj-ease); }
