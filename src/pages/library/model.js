@@ -357,7 +357,8 @@ export function nameHintText(hint, titleOf = () => null) {
   if (!hint?.differs) return null;
   const t = titleOf(hint.videoId);
   const title = t ? (Array.from(t).length > 40 ? `${Array.from(t).slice(0, 39).join('')}…` : t) : null;
-  return title ? `الاسم يشير إلى فيديو آخر: ${title}` : `الاسم يشير إلى فيديو آخر (${hint.videoId}).`;
+  // العنوان معزول (FSI…PDI) فلا تنقلب علامات ترقيمه داخل الجملة العربية (تدقيق 5fedcb9، CL-002).
+  return title ? `الاسم يشير إلى فيديو آخر: ${String.fromCodePoint(0x2068)}${title}${String.fromCodePoint(0x2069)}` : `الاسم يشير إلى فيديو آخر (${hint.videoId}).`;
 }
 
 /**

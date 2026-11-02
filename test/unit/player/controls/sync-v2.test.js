@@ -158,3 +158,12 @@ test('تدقيق 5fedcb9 (GM-003): بعد نقرة فأرة في القائمة 
   assert.equal(p.ui.menuOpen(), true, 'باقية مفتوحة');
   assert.equal(shadow.querySelector('.layer').hasAttribute('data-keep'), true, 'وظاهرة (لا opacity 0)');
 });
+
+test('تدقيق 5fedcb9 (CL-002): جملة مزامنة عربية تبدأ بكلمة لاتينية اتجاهها RTL لا أول حرف قوي', () => {
+  const cues = makeCues(10, { text: (i) => (i === 5 ? 'API هو الواجهة! (الجزء 3)' : `جملة ${i}`) });
+  const p = page({ currentTime: 12, cues });
+  click(p.ui.item('مزامنة بجملة…'));
+  const api = sentences(p).find((b) => b.textContent.startsWith('API'));
+  assert.ok(api);
+  assert.equal(api.getAttribute('dir'), 'rtl');
+});

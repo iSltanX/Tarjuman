@@ -78,7 +78,7 @@ button.slot[aria-disabled="true"] { cursor: default; }
 .row.edits[data-tone="ok"] { color: var(--tj-p-ok); }
 label.item[aria-disabled="true"] { color: rgb(255 255 255 / 45%); cursor: default; background: none; }
 .sentences { display: flex; flex-direction: column; gap: 2px; }
-button.item.sentence { display: block; min-width: 0; line-height: var(--row); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; text-align: right; }
+button.item.sentence { display: block; min-width: 0; line-height: var(--row); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: isolate; text-align: right; }
 button.item.sentence[aria-current="true"] { box-shadow: inset -3px 0 0 var(--tj-p-accent); background: rgb(255 255 255 / 6%); }
 .tag { align-self: flex-start; padding: 1px 8px; margin: 0 6px; border-radius: 999px; background: rgb(255 255 255 / 10%); color: var(--tj-p-menu-text-2); font-size: 0.86em; white-space: nowrap; }
 

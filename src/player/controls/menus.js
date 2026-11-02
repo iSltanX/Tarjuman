@@ -5,7 +5,7 @@
 // والتفاصيل في صفحات الإضافة. نص تعليمات الترجمة لا يمر من هنا أبدًا.
 import { messageFor } from '../../core/errors/index.js';
 import { describeTrack } from '../../core/export/describe.js';
-import { formatOffset } from '../../ui/format.js';
+import { formatOffset, textDirection } from '../../ui/format.js';
 import { glyph } from './glyphs.js';
 import {
   LABELS, comparisonSummary, cueCount, editsLine, glossaryTag, keptLine, offsetMeaning, partRow, shortTime, slotLabel, stepSeconds, syncAt,
@@ -473,7 +473,7 @@ function syncView(h, act, v) {
       attrs: { role: 'group', 'aria-label': LABELS.syncTitle },
       children: v.items.map((it) => h('button', {
         className: 'item sentence', text: it.text,
-        attrs: { type: 'button', 'data-fid': `sentence:${it.index}`, title: it.text, 'aria-current': it.index === v.visible ? 'true' : null, dir: 'auto' },
+        attrs: { type: 'button', 'data-fid': `sentence:${it.index}`, title: it.text, 'aria-current': it.index === v.visible ? 'true' : null, dir: textDirection(it.text) },
         on: { click: () => act('sentence', it.index) },
       })),
     }),

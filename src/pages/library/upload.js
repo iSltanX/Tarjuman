@@ -4,7 +4,7 @@
 // تعديلاتي» بشرط المحاذاة (والسبب في التلميح واسم الوصول). لا كتابة هنا: الحوار يعيد الاختيار، والإلغاء لا يمس التخزين.
 import { messageFor } from '../../core/errors/index.js';
 import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { compareWith, uploadImpact } from './actions.js';
 import { absoluteTime, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, targetOptions } from './model.js';
 
@@ -26,8 +26,8 @@ function diffTable(doc, changes) {
       attrs: { 'data-kind': ch.kind },
       children: [
         el('td', { className: 'lib-diff__n', children: [ltr(cueNumber(ch), { doc })], doc }),
-        el('td', { className: 'lib-diff__before', text: cueText(ch.before), dir: 'auto', doc }),
-        el('td', { className: 'lib-diff__after', text: cueText(ch.after), dir: 'auto', doc }),
+        el('td', { className: 'lib-diff__before', text: cueText(ch.before), dir: textDirection(cueText(ch.before)), doc }),
+        el('td', { className: 'lib-diff__after', text: cueText(ch.after), dir: textDirection(cueText(ch.after)), doc }),
       ],
       doc,
     })));

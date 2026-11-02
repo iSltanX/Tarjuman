@@ -50,3 +50,16 @@ test('تدقيق 5fedcb9 (CL-001): الإزاحة الموقّعة داخل ال
   const e = { videoId: 'AAAAAAAAAAA', title: 't', updatedAt: '2026-11-01T10:00:00.000Z', rev: 1, english: [], arabic: null, fingerprints: 0, view: { displayOffsetMs: -1500, displayMode: 'ar' } };
   assert.ok(isolated(rowModel({ ...e, summary: { filled: 0, edited: 0, warned: 0, marks: { todo: 0, done: 0 } }, slots: [] }, Date.now()).offsetText, -1500));
 });
+
+test('تدقيق 5fedcb9 (CL-002): نص مقطع فيه حرف عربي RTL ولو بدأ بكلمة لاتينية، والخالي منه LTR؛ وجمل المزامنة بلا plaintext', async () => {
+  const { textDirection } = await import('../../../src/ui/format.js');
+  const { readFileSync } = await import('node:fs');
+  assert.equal(textDirection('API هو الواجهة! (الجزء 3)'), 'rtl');
+  assert.equal(textDirection('iPhone 17: مراجعة كاملة.'), 'rtl');
+  assert.equal(textDirection('Hello world.'), 'ltr');
+  assert.equal(textDirection(''), 'ltr');
+  const css = readFileSync(new URL('../../../src/player/controls/styles.js', import.meta.url), 'utf8');
+  assert.match(css, /button\.item\.sentence \{[^}]*unicode-bidi: isolate/);
+  const { nameHintText } = await import('../../../src/pages/library/model.js');
+  assert.ok(nameHintText({ videoId: 'BBBBBBBBBBB', differs: true }, () => 'Talk: part 2!').includes('⁨Talk: part 2!⁩'));
+});
