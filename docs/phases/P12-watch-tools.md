@@ -131,17 +131,150 @@
 ```json tj-status
 {
   "phase": "P12",
-  "status": "in_progress",
-  "updated": "2026-11-02T17:14:30+03:00",
+  "status": "ready",
+  "updated": "2026-11-02T17:45:25+03:00",
   "branch": "tj/P12-watch-tools",
-  "resume": "المهام 2–6 منفّذة ومدفوعة (قائمة العرض والرفع إلى خانة، والمزامنة بالجملة، وقائمة التحميل، ونافذة الأيقونة) واختباراتها الآلية ناجحة. التالي: الاختبار الحي test/live/controls/v2.mjs في Brave ثم Chrome بعد إذن سلطان، ثم التسليم.",
+  "resume": "جاهزة للدمج في W7",
   "blocker": null,
   "outcome": null,
-  "commit": null,
+  "commit": "649704d",
   "mergeCommit": null,
-  "checks": [],
-  "acceptance": {},
-  "evidence": [],
+  "checks": [
+    {
+      "cmd": "npm run check",
+      "result": "pass",
+      "at": "2026-11-02T17:45:22+03:00",
+      "note": "852 اختبار وحدة، والفحص الثابت والأسرار والبناء"
+    },
+    {
+      "cmd": "node scripts/run-tests.mjs test/integration",
+      "result": "pass",
+      "at": "2026-11-02T17:45:22+03:00",
+      "note": "37 اختبارًا، منها تكامل المشغّل والخانات والتحميل على التخزين الحقيقي (16)"
+    },
+    {
+      "cmd": "node scripts/run-tests.mjs test/e2e/static test/e2e/regression",
+      "result": "fail",
+      "at": "2026-11-02T17:45:22+03:00",
+      "note": "20 من 21: release.test.js (P9، والإصدار الثاني لـP15) يتوقع أذونات الإصدار الأول ويسقط بإذن downloads والعامل الخلفي من W6، كما سجّلت P10؛ لا علاقة لـP12"
+    },
+    {
+      "cmd": "node test/live/controls/v2.mjs --browser brave",
+      "result": "pass",
+      "at": "2026-11-02T17:45:22+03:00",
+      "note": "49/49 بلا نافذة، و8/8 لجولة المشغّل الضيق 480"
+    },
+    {
+      "cmd": "node test/live/controls/v2.mjs --browser chrome",
+      "result": "pass",
+      "at": "2026-11-02T17:45:22+03:00",
+      "note": "49/49 بلا نافذة، و8/8 لجولة المشغّل الضيق 480"
+    }
+  ],
+  "acceptance": {
+    "P12-AC1": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P12/brave/live.json",
+        "docs/evidence/P12/chrome/live.json",
+        "docs/evidence/P12/brave/ac1-switched.png",
+        "test/integration/player/slots.test.js",
+        "test/unit/player/controls/display-v2.test.js"
+      ],
+      "note": "التبديل ينعكس على الطبقة بإزاحة كل ترجمة دون إعادة تحميل، ورسالة بتراجع، والفارغة معطّلة"
+    },
+    "P12-AC2": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P12/brave/live.json",
+        "docs/evidence/P12/chrome/live.json",
+        "docs/evidence/P12/brave/ac2-confirm-name-hint.png",
+        "docs/evidence/P12/brave/ac2-replace-keep.png",
+        "test/integration/player/slots.test.js",
+        "test/unit/player/controls/upload.test.js"
+      ],
+      "note": "التأكيد المضغوط وقرينة الاسم وإبقاء التعديلات، وبصمة التخزين كما هي بعد الإلغاء والـEsc وإلغاء المنتقي"
+    },
+    "P12-AC3": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P12/brave/live.json",
+        "docs/evidence/P12/chrome/live.json",
+        "docs/evidence/P12/chrome/ac3-sync-view.png",
+        "test/unit/player/controls/sync-v2.test.js"
+      ],
+      "note": "ملف مؤخَّر 3 ث صار −3.0 باختيار جملة واحدة، بلا قفز ولا إيقاف ولا تغيير للملف"
+    },
+    "P12-AC4": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P12/brave/live.json",
+        "docs/evidence/P12/chrome/live.json",
+        "docs/evidence/P12/brave/ac4-parts.png",
+        "docs/evidence/P12/brave/ac4-english-guide.png",
+        "test/integration/player/download.test.js",
+        "test/unit/player/controls/download.test.js"
+      ],
+      "note": "سطران مستقلان، والقاموس بنص instructions نفسه، وأحجام الأجزاء الفعلية، وخطوات English وملاحظة Brave في Brave وحده"
+    },
+    "P12-AC5": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P12/brave/live.json",
+        "docs/evidence/P12/chrome/live.json",
+        "test/integration/player/slots.test.js"
+      ],
+      "note": "علامة todo للمقطع الظاهر في النشطة، والتراجع يمحوها"
+    },
+    "P12-AC6": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P12/brave/live.json",
+        "docs/evidence/P12/brave/page-diagnostics.json",
+        "docs/evidence/P12/brave/ac6-popup.png",
+        "test/unit/pages/popup/diagnostics.test.js"
+      ],
+      "note": "حالة الأدوات والطبقة والالتقاط بسببها، والتشخيص بلا معرّف ولا عنوان ولا نص ولا رابط (أُصلح تسرّب currentVideoId في الجولة الأولى)"
+    },
+    "P12-AC7": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P12/brave/ac7-normal.png",
+        "docs/evidence/P12/brave/ac7-theater.png",
+        "docs/evidence/P12/brave/ac7-fullscreen.png",
+        "docs/evidence/P12/narrow-480/chrome/ac7-narrow.png",
+        "docs/evidence/P12/README.md"
+      ],
+      "note": "الأوضاع الأربعة في المتصفحين، والمضغوط بعرض 480؛ في مشغّل بارتفاع 360 يحتاج آخر صف تمريرًا داخل القائمة"
+    },
+    "P12-AC8": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P12/brave/live.json",
+        "docs/evidence/P12/chrome/live.json",
+        "test/integration/player/download.test.js"
+      ],
+      "note": "النسخ قبل الحفظ مقيسًا، والافتراضي والمجلد الفرعي من المشغّل عبر العامل، و«اسأل» بلا نافذة يُلغى والنسخ قبله؛ الحوار الظاهر وحافظة الجهاز لم يُختبرا بنافذة"
+    }
+  },
+  "evidence": [
+    {
+      "label": "ملخص الأدلة",
+      "path": "docs/evidence/P12/README.md"
+    },
+    {
+      "label": "الاختبار الحي في Brave",
+      "path": "docs/evidence/P12/brave/live.json"
+    },
+    {
+      "label": "الاختبار الحي في Chrome",
+      "path": "docs/evidence/P12/chrome/live.json"
+    },
+    {
+      "label": "المشغّل الضيق 480",
+      "path": "docs/evidence/P12/narrow-480/"
+    }
+  ],
   "sharedRequests": []
 }
 ```
@@ -151,7 +284,46 @@
 | التاريخ | ما أُنجز | الدليل |
 | --- | --- | --- |
 | 2026-11-02 | كُتبت المواصفة ضمن خطة الإصدار الثاني بقرار سلطان. لم يُنفَّذ شيء. | — |
+| 2026-11-02 | بدء المرحلة في `.claude/worktrees/tj-P12` على `tj/P12-watch-tools` من `main` (`1c10261`) فوق `tj-W7/base` (`eaa1509`). | `ef1a7f9` |
+| 2026-11-02 | قائمة العرض: اختيار 1 2 3 (`activateSlot`) برسالة «الترجمة 2» وتراجع، و«علّم للمراجعة» للمقطع الظاهر (`markCue`) بتراجع، والرسائل العابرة بفعل؛ والرفع إلى خانة (`loadArabicInto`) بتأكيد مضغوط: سطر الملخص، و«حفظ في» 1 2 3 (أول فارغة)، وقرينة الاسم (`reviewIncoming`) بعنوان المحفوظ، وعند استبدال خانة معدّلة عدد ما سيُستبدل (`diffTranslations`) و«إبقاء تعديلاتي» (`mergeThreeWay`) بشرط المحاذاة؛ والمنتقي يقبل TXT وMarkdown. | `47e00ea` |
+| 2026-11-02 | «مزامنة بجملة…» في قائمة التوقيت: عرض فرعي عند لحظة الفتح الثابتة بسبع جمل و«أبكر» و«أحدث» و«رجوع»، والاختيار إزاحة فورية على الشبكة بتراجع، دون قفز ولا إيقاف ولا تغيير للملف. | `e1fe9b5` |
+| 2026-11-02 | قائمة التحميل: «تنزيل ونسخ التعليمات» بسطرين مستقلين، والنسخ قبل الحفظ، والحفظ بـ`saveFile` لكل ملف، وإشارة القاموس والتعليمات بالقاموس من `instructions`، والتقسيم الاحتياطي عند الجمل أو الصمت بأحجام أجزائه، وخطوات English وملاحظة Brave. | `4189e39` |
+| 2026-11-02 | نافذة الأيقونة: سطر الأدوات يميّز الأدوات من الطبقة بسببه، وسطر رفض الالتقاط، و«نسخ تشخيص الصفحة» منقّى، والقاموس في نسخ التعليمات. | `e8a8a7c` |
+| 2026-11-02 | سكربت الاختبار الحي `test/live/controls/v2.mjs`، ثم بإذن سلطان: Brave 45/49 في الجولة الأولى (تسرّب `currentVideoId` في التشخيص وثلاثة من الحزام)، فأُصلح الاستبعاد بمفتاح معرّف الفيديو وثُبّت الحزام، ثم Brave 49/49 وChrome 49/49، وجولة المشغّل الضيق 480 بـ8/8 في كلٍّ. | `a53a754` · `f23fbfa` · `649704d` |
 
 ## تقرير التسليم
 
-> لم يُكتب بعد.
+### تقرير التسليم — P12
+
+- الفرع: `tj/P12-watch-tools` · الأساس: `tj-W7/base` (`eaa1509`) · آخر التزام عمل: `649704d`
+- الفرق: `79 files changed, 5300 insertions(+), 335 deletions(-)` (منه `docs/waves/W6.md` من التزام `main` اللاحق للوسم `1c10261` الذي بدأ منه الفرع؛ وفرق P12 وحده منذ `1c10261`: `78 files changed, 5297 insertions(+), 333 deletions(-)`، منها 52 ملف أدلة).
+- الملفات خارج الملكية: لا شيء. كل ما تغيّر في `src/player/controls/**` و`src/pages/popup/**` و`src/core/errors/controls.js` و`test/unit/player/controls/**` و`test/unit/pages/popup/**` و`test/live/controls/**` و`test/integration/player/**` وملف المرحلة وأدلتها. القراءة من غيرها بتوقيعات العقد: المتحكم (§١٢)، و`saveFile` (§١٣)، و`instructions` بالقاموس، و`reviewIncoming` و`diffTranslations` و`mergeThreeWay` (§١٦)، وردّا الحالة والتشخيص (عقد الرسائل §٥–§٦)، و`createStore().listIndex()` قراءةً لقرينة الاسم.
+- معايير القبول:
+  - P12-AC1 ناجح: التبديل من 1 2 3 ينعكس على الطبقة بإزاحة كل ترجمة دون إعادة تحميل، برسالة وتراجع، والفارغة معطّلة بلا تسميات — `docs/evidence/P12/{brave,chrome}/live.json` ولقطات `ac1-*`، و`test/integration/player/slots.test.js`.
+  - P12-AC2 ناجح: الفحص وسطر الملخص و«حفظ في» (أول فارغة، والمضافة نشطة) وقرينة الاسم، و«سيُستبدل 3 تعديلات يدوية» مع «إبقاء تعديلاتي»، وبصمة `chrome.storage.local` كلها كما هي بعد «إلغاء» وEsc وإلغاء المنتقي، وTXT وMarkdown في المنتقي — الأدلة الحية ولقطتا `ac2-*` واختبارات الوحدة والتكامل.
+  - P12-AC3 ناجح: ملف مؤخَّر 3 ث صار −3.0 باختيار جملة واحدة، بتراجع، دون قفز أو إيقاف أو تغيير للملف — الأدلة الحية و`sync-v2.test.js`.
+  - P12-AC4 ناجح: سطران مستقلان، والقاموس «+ القاموس (2)» بنص `instructions` نفسه حرفيًا، وأحجام الأجزاء الثلاثة الفعلية وضمّها يطابق الكامل، وخطوات English وملاحظة Brave في Brave وحده — الأدلة الحية و`test/integration/player/download.test.js`.
+  - P12-AC5 ناجح: علامة `todo` للمقطع الظاهر في النشطة برسالة وتراجع يمحوها — الأدلة الحية و`slots.test.js`.
+  - P12-AC6 ناجح: حالة الأدوات والطبقة والالتقاط بسببها، و«نسخ تشخيص الصفحة» بلا معرّف ولا عنوان ولا نص ولا رابط — `brave/page-diagnostics.json` و`ac6-popup.png` و`diagnostics.test.js`.
+  - P12-AC7 ناجح: الأوضاع الأربعة في المتصفحين، والشريط بعناصره الخمسة، والقوائم بلا فقرات شرح؛ والمضغوط بعرض 480 — لقطات `ac7-*` و`narrow-480/`.
+  - P12-AC8 ناجح: النسخ قبل رسالة الحفظ مقيسًا، والتنزيل من المشغّل يتبع الافتراضي والمجلد الفرعي، ولا عنصر جديد في المشغّل، و«اسأل» بلا نافذة يُلغى والنسخ قبله — الأدلة الحية و`download.test.js`.
+- الفحوص:
+  - `npm run check`: ناجح — 852 اختبار وحدة، والفحص الثابت والأسرار والبناء.
+  - `node scripts/run-tests.mjs test/integration`: ناجح — 37/37.
+  - `node scripts/run-tests.mjs test/e2e/static test/e2e/regression`: 20/21 — `release.test.js` (من P9، وتحديثه للإصدار الثاني لـP15) يسقط بإذن `downloads` والعامل الخلفي من W6 كما سجّلت P10؛ لا علاقة لـP12.
+  - `command node tools/plan/plan.mjs check --phase P12`: ناجح (قبل الالتزام الأخير).
+- الاختبار الحي: بلا نافذة بملف تعريف جديد لكل جولة ومجلد تنزيلات داخله، على فيديو TED `iG9CE55wbtY` وحساب غير مسجَّل. Brave (Chromium 156.0.8078.80): 49/49، وChrome 156.0.8078.74: 49/49، وجولة المشغّل الضيق 480: 8/8 في كلٍّ. الجولة الأولى في Brave 45/49 كشفت تسرّب `currentVideoId` في تقرير التشخيص (أُصلح) وثلاثة إخفاقات من الحزام (وعد `play()`، والخروج من ملء الشاشة، وإعادة يوتيوب زمن الفيديو إلى 0 تحت الأتمتة).
+- النتيجة (لمرحلة بوابة): لا تنطبق.
+- انحرافات عن المواصفة:
+  - أول رفع لفيديو بلا ترجمة ولا قرينة اسم يُحفظ في الخانة 1 مباشرة دون التأكيد المضغوط (المسار المعتاد بلا خطوة زائدة)؛ والتأكيد يظهر متى وُجدت ترجمة أو دل الاسم على فيديو آخر.
+  - «علّم للمراجعة» و«رفع ترجمة…» (أو «استبدال…») في صف واحد، فتبقى قائمة العرض سبعة صفوف كما في §١٩.١.
+  - محدد 1 2 3 في المشغّل نسخة محلية بمعنى `slotPicker` في `src/ui` وحالاته ونصوص وصوله: الأصل لا يعمل داخل الجذر المغلق (التركيز من `document`) ولا يعرف وضع «الخانة الهدف»؛ فلا طلب ملف مشترك.
+  - «سيُستبدل N تعديلًا يدويًا»: N عدد التغييرات في المحاذاة بين أصل الخانة ونسختها الحالية (`diffTranslations(original, current).changes.length`، ونسخة لا تحاذي أصلها تُعدّ مقاطعها). على المحفوظات (P13) أن تعدّ بالطريقة نفسها ليتطابق العدد في بوابة W7.
+  - قرينة الاسم تقرأ فهرس المحفوظات بـ`createStore().listIndex()` من سكربت المحتوى عند الرفع وحده (قراءة؛ والإصلاح الذي قد يجريه `listIndex` لحالة غير متسقة من التخزين نفسه).
+- خارج النطاق — مسجَّل لا منفَّذ:
+  - في ملء الشاشة تغطي القائمة المفتوحة جزءًا من صف أزرار التفاعل الذي أضافه يوتيوب فوق شريطه ما دامت مفتوحة (موضع القوائم من P6).
+  - في مشغّل بارتفاع 360 تحتاج قائمة العرض تمريرًا لآخر صف (حد 70% من §٦)؛ قيد «بلا تمرير» للمشغّل العادي وقد تحقق.
+  - حوار «اسأل عن مكان الحفظ» الظاهر وحافظة الجهاز الفعلية لم يُختبرا بنافذة.
+  - «اختر الإنجليزية (English)» بدل «اختر English» (ملاحظة P9): رسائل `EX_` ملك مجال الاستخراج، فبقيت الصياغة كما في المواصفة §١٩.٥.
+  - تدقيق حزمة الإصدار (`scripts/release/audit.mjs` و`release.test.js`) لم يُحدَّث للإصدار الثاني (إذن التنزيلات والعامل الخلفي).
+- ما يحتاجه المنسّق: لا طلب ملف مشترك ولا تعديل عقد. للبوابة: مواءمة عدّ «التعديلات اليدوية» مع P13، وملاحظتا ملء الشاشة والمشغّل الضيق أعلاه.
