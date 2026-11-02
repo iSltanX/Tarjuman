@@ -1,0 +1,98 @@
+{
+  "step": "downgrade",
+  "browser": "Brave 156.1.98.63",
+  "profile": "brave-p9-live",
+  "headless": true,
+  "at": "2026-11-02T17:23:15.682Z",
+  "checks": [
+    {
+      "id": "profile-backed-up-before-downgrade",
+      "ok": true,
+      "detail": {
+        "backup": "p15-work/profile-backups/brave-p9-live-before-downgrade-2026-11-02T17-23-15-673Z"
+      }
+    },
+    {
+      "id": "v2-library-with-slots-previous-marks",
+      "ok": true,
+      "detail": {
+        "videos": 4,
+        "slots": {
+          "8-m7hqOqs9Y": "1100",
+          "Y9rkKtK1b44": "1110",
+          "gBazR59SZXk": "0000",
+          "iG9CE55wbtY": "1011"
+        },
+        "previous": 1,
+        "marks": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "v2-before-no-extension-errors",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "v1-library-lists-all",
+      "ok": true,
+      "detail": {
+        "rows": 4,
+        "expected": 4,
+        "failed": false
+      }
+    },
+    {
+      "id": "v1-no-extension-errors",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "v1-reads-active-and-writes-offset-and-setting",
+      "ok": true,
+      "detail": {
+        "file": "iG9CE55wbtY.en.manual.normal.ar.srt",
+        "valid": true,
+        "offset": 1500,
+        "step": 1000,
+        "index": 4
+      }
+    },
+    {
+      "id": "v2-reconciles-without-loss",
+      "ok": true,
+      "detail": {
+        "changed": [],
+        "tedOffset": 1500,
+        "reconciled": true,
+        "videos": 4
+      }
+    },
+    {
+      "id": "v2-prefs-kept-and-v1-setting-read",
+      "ok": true,
+      "detail": {
+        "glossary": 4,
+        "save": "subfolder",
+        "step": 1000
+      }
+    },
+    {
+      "id": "v2-after-no-extension-errors",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "notes": [
+    "v2-before: الإضافة 0.2.0-dev",
+    "حزمة tj-v1 من الالتزام 7e1cc33",
+    "v1: الإضافة 0.2.0",
+    "v2-after: الإضافة 0.2.0-dev",
+    "بصمة التخزين بعد العودة: 21 مفتاحًا"
+  ],
+  "screenshots": []
+}
