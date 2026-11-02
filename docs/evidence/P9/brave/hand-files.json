@@ -1,0 +1,83 @@
+{
+  "step": "hand-files",
+  "browser": "Brave",
+  "session": "ما نزّله سلطان في النافذة العادية بلا تحكم، كما هو",
+  "at": "2026-11-02T02:14:57.586Z",
+  "checks": [
+    {
+      "id": "hand-asr-long-split-parts-match-reference",
+      "ok": true,
+      "detail": {
+        "parts": 4,
+        "total": 4,
+        "cues": 729,
+        "continuous": true,
+        "ranges": [
+          "1–183",
+          "184–365",
+          "366–547",
+          "548–729"
+        ],
+        "expectedCues": 729
+      }
+    },
+    {
+      "id": "hand-long-long-split-parts-match-reference",
+      "ok": true,
+      "detail": {
+        "parts": 8,
+        "total": 8,
+        "cues": 1461,
+        "continuous": true,
+        "ranges": [
+          "1–183",
+          "184–366",
+          "367–549",
+          "550–732",
+          "733–915",
+          "916–1097",
+          "1098–1279",
+          "1280–1461"
+        ],
+        "expectedCues": 1461
+      }
+    },
+    {
+      "id": "hand-manual-long-split-parts-match-reference",
+      "ok": true,
+      "detail": {
+        "parts": 2,
+        "total": 2,
+        "cues": 305,
+        "continuous": true,
+        "ranges": [
+          "1–153",
+          "154–305"
+        ],
+        "expectedCues": 305
+      }
+    },
+    {
+      "id": "hand-manual-normal-full-matches-reference",
+      "ok": true,
+      "detail": {
+        "name": "iG9CE55wbtY.en.manual.normal.srt",
+        "bytes": 32411,
+        "sha": "7770a795775890e6",
+        "cues": 427,
+        "expected": {
+          "bytes": 32411,
+          "sha": "7770a795775890e6"
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Y9rkKtK1b44.en.asr.long.part01of04 (1).srt: تنزيل مكرر للجزء نفسه، مطابق للأول بايتًا.",
+    "Y9rkKtK1b44.en.asr.long.part02of04 (1).srt: تنزيل مكرر للجزء نفسه، مطابق للأول بايتًا.",
+    "Y9rkKtK1b44.en.asr.long.part03of04 (1).srt: تنزيل مكرر للجزء نفسه، مطابق للأول بايتًا.",
+    "Y9rkKtK1b44.en.asr.long.part04of04 (1).srt: تنزيل مكرر للجزء نفسه، مطابق للأول بايتًا.",
+    "لا نص تعليمات في الحافظة الآن (نُسخ غيره بعده)؛ يُعتمد ما رصده المراقب."
+  ],
+  "screenshots": []
+}

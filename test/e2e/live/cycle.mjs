@@ -120,13 +120,26 @@ async function clickButton(kind) {
   await yt.click(c.x, c.y);
   await sleep(450);
 }
+/** نقرة على الجزء الظاهر من البند؛ والقائمة الأطول من حدها تُمرَّر بعجلة الفأرة فوقها حتى يظهر (كما يفعل المستخدم). */
 async function clickItem(fid) {
-  const p = await iso(I.peek);
-  const it = p.layer.menu?.items.find((x) => x.fid === fid);
-  if (!it) throw new Error(`لا بند في القائمة: ${fid}`);
-  const c = center(it.box);
-  await yt.click(c.x, c.y);
-  await sleep(450);
+  for (let tries = 0; tries < 6; tries++) {
+    const p = await iso(I.peek);
+    const menu = p.layer.menu;
+    const it = menu?.items.find((x) => x.fid === fid);
+    if (!it) throw new Error(`لا بند في القائمة: ${fid}`);
+    const top = Math.max(it.box.top, menu.box.top);
+    const bottom = Math.min(it.box.bottom, menu.box.bottom);
+    if (bottom - top >= Math.min(24, it.box.height)) {
+      await yt.click(Math.round(it.box.left + it.box.width / 2), Math.round((top + bottom) / 2));
+      await sleep(450);
+      return;
+    }
+    const mc = center(menu.box);
+    await yt.mouseMove(mc.x, mc.y);
+    await yt.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: mc.x, y: mc.y, deltaX: 0, deltaY: it.box.top > menu.box.top ? 160 : -160 });
+    await sleep(300);
+  }
+  throw new Error(`البند لا يظهر في القائمة: ${fid}`);
 }
 async function seekTo(sec) {
   for (let i = 0; i < 4; i++) {
@@ -158,7 +171,8 @@ async function clickText(page, root, text) {
   await clickSel(page, '[data-p9-click]');
 }
 async function selectAllAndType(page, text) {
-  await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 4 });
+  // ⌘A عبر CDP على macOS لا ينفّذ «تحديد الكل» إلا بأمر التحرير صريحًا.
+  await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 4, commands: ['selectAll'] });
   await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'a', code: 'KeyA', windowsVirtualKeyCode: 65, modifiers: 4 });
   await sleep(120);
   await page.send('Input.insertText', { text });
@@ -248,7 +262,8 @@ async function library() {
     }, { args: [ids] });
     for (const r of recs) {
       const sv = state.videos[r.id];
-      const fp = r.fingerprints.find((f) => f.fileName === sv.srtName);
+      // التنزيل بالأجزاء يحفظ بصمته باسم آخر وبأجزائها: يكفي تطابق العدد حينئذ.
+      const fp = r.fingerprints.find((f) => f.fileName === sv.srtName) ?? (sv.fromParts ? r.fingerprints.find((f) => f.count === sv.cues) : null);
       ev.check(`saved-after-hand-download-${sv.slot}`, !!fp && fp.count === sv.cues && r.english.length >= 1 && r.title,
         { fingerprints: r.fingerprints.map((f) => ({ mode: f.mode, count: f.count })), english: r.english, title: r.title });
     }
@@ -318,8 +333,14 @@ async function finish() {
     const arPath = path.join(WORK, 'translations', arName);
     const arText = await readFile(arPath, 'utf8');
     const arCues = parseSrtStrict(arText);
-    ev.check('external-translation-matches-downloaded-file-and-copied-instructions', sha16(translatedFrom) === sv.srtSha && sha16(usedInstr) === sv.instructionsSha && arCues.length === sv.cues,
-      { english: sv.srtSha, translatedFrom: sha16(translatedFrom), instructions: sv.instructionsSha, usedInstructions: sha16(usedInstr), arabicCues: arCues.length, name: arName });
+    // التعليمات المستعملة في الترجمة تطابق المنسوخة من المحفوظات إلا سطر العنوان حين تعرض يوتيوب عنوانًا مترجمًا آليًا
+    // لواجهتها العربية (يُحفظ العنوان كما يظهر في الصفحة)؛ يُسجَّل ذلك صراحة.
+    const copiedInstr = await readFile(path.join(DIR, `${V.id}.instructions.txt`), 'utf8');
+    const noTitle = (t) => t.replace(/^- العنوان: .*$/m, '');
+    const sameInstr = sha16(usedInstr) === sv.instructionsSha;
+    ev.check('external-translation-matches-downloaded-file-and-copied-instructions',
+      sha16(translatedFrom) === sv.srtSha && sha16(copiedInstr) === sv.instructionsSha && noTitle(usedInstr) === noTitle(copiedInstr) && arCues.length === sv.cues,
+      { english: sv.srtSha, translatedFrom: sha16(translatedFrom), instructionsIdentical: sameInstr, onlyTitleLineDiffers: !sameInstr, arabicCues: arCues.length, name: arName });
 
     // صفحة المشاهدة في الجلسة المؤتمتة: لا يلزم جسم الترجمة بعد الآن (المسار الإنجليزي والبصمة محفوظان من التنزيل).
     yt = await openAttached(b.conn, 'about:blank');
@@ -331,10 +352,20 @@ async function finish() {
     await settleAds(ev);
     await main(M.pause);
 
-    // ===== ١. الرفع من الزر =====
+    // ===== ١. الرفع من الزر، أو الاستبدال بتأكيد إن كانت للفيديو ترجمة من جولة سابقة =====
     nextUpload = [arPath];
+    const had = (await iso(I.state)).arabic;
     await clickButton('upload');
-    const up = await yt.waitFor(() => globalThis.__tarjuman.controller.getState().arabic, { contextId: isoId, timeoutMs: 10000, intervalMs: 200 });
+    if (had) {
+      await clickItem('replace');
+      const asked = await yt.waitFor(() => globalThis.__tarjuman.mounted.controls.peek()?.layer.menu?.items.some((x) => x.fid === 'confirm'), { contextId: isoId, timeoutMs: 10000, intervalMs: 200 });
+      ev.check('replace-asks-confirmation', !!asked, null);
+      await clickItem('confirm');
+    }
+    const up = await yt.waitFor(() => {
+      const s = globalThis.__tarjuman.controller.getState();
+      return s.arabic && !s.arabic.edited && s.view.displayOffsetMs === 0 ? true : null;
+    }, { contextId: isoId, timeoutMs: 10000, intervalMs: 200 });
     await sleep(600);
     let s = await iso(I.state);
     let pk = await iso(I.peek);
@@ -359,23 +390,26 @@ async function finish() {
       { t: mid(VIEW), n: VIEW.n, lines: ov0.lines.map((l) => ({ kind: l.kind, dir: l.dir })) });
     await ev.shot(yt, `${which}-watch-ar`, { conn: b.conn });
 
-    // ===== ٣. المزامنة أثناء التشغيل =====
+    // ===== ٣. المزامنة أثناء التشغيل: الزمن والأسطر الظاهرة في قراءة واحدة داخل الصفحة (لا فاصل بينهما) =====
     await seekTo(Math.max(0, VIEW.startMs / 1000 - 1));
     await main(M.play);
     const samples = [];
-    for (let i = 0; i < 14; i++) {
-      await sleep(400);
-      const t = (await main(M.info)).t;
-      const o = await iso(I.ov);
-      const ms = t * 1000;
+    for (let i = 0; i < 20; i++) {
+      await sleep(350);
+      const o = await iso(() => {
+        const v = document.querySelector('#movie_player video.html5-main-video');
+        const p = globalThis.__tarjuman.mounted.overlay.peek(false);
+        return { t: v.currentTime, paused: v.paused, lines: p.lines.filter((l) => l.kind === 'ar').map((l) => l.text) };
+      });
+      const ms = o.t * 1000;
       const want = cuesAr.filter((c) => c.startMs <= ms && ms < c.endMs).flatMap((c) => splitLines(c.text));
-      const shownTxt = arLines(o).map((l) => l.text);
-      const near = cuesAr.some((c) => Math.abs(c.startMs - ms) < 250 || Math.abs(c.endMs - ms) < 250);
-      samples.push({ ok: near || JSON.stringify(want) === JSON.stringify(shownTxt), near });
+      const edge = Math.min(...cuesAr.map((c) => Math.min(Math.abs(c.startMs - ms), Math.abs(c.endMs - ms))));
+      const same = JSON.stringify(want) === JSON.stringify(o.lines);
+      samples.push({ ok: same || edge < 250, same, edgeMs: Math.round(edge), t: Math.round(ms), want: want.length, shown: o.lines.length, paused: o.paused });
     }
     await main(M.pause);
-    const okN = samples.filter((x) => x.ok).length;
-    ev.check('sync-while-playing', okN >= samples.length - 1, { samples: samples.length, matched: okN, nearBoundary: samples.filter((x) => x.near).length });
+    const misses = samples.filter((x) => !x.ok);
+    ev.check('sync-while-playing', misses.length === 0, { samples: samples.length, exact: samples.filter((x) => x.same).length, nearBoundary: samples.filter((x) => !x.same && x.ok).length, misses });
 
     // ===== ٤. العربية فوق الإنجليزية ثم العودة إلى العربية وحدها =====
     await seekTo(mid(VIEW));
@@ -424,22 +458,30 @@ async function finish() {
     await sleep(400);
     const pkL = await iso(I.peek);
     s = await iso(I.state);
-    ev.check('leaving-field-returns-menu-to-bar-rule', pkL.layer.typing === false && (pkL.layer.bar !== 'hidden' || pkL.layer.opacity === '0') && s.view.displayOffsetMs === 800,
-      { bar: pkL.layer.bar, typing: pkL.layer.typing, opacity: pkL.layer.opacity, offsetMs: s.view.displayOffsetMs });
+    ev.check('leaving-field-returns-menu-to-bar-rule', pkL.layer.typing === false && (pkL.layer.bar !== 'hidden' || pkL.layer.opacity === '0'),
+      { bar: pkL.layer.bar, typing: pkL.layer.typing, opacity: pkL.layer.opacity });
+    ev.check('typed-value-applied-on-leaving-field', s.view.displayOffsetMs === 800, { offsetMs: s.view.displayOffsetMs });
     await main(M.pause);
     await yt.key('Escape', 'Escape', 27);
     await sleep(300);
-    await clickButton('badge');
-    pk = await iso(I.peek);
-    const f2 = pk.layer.menu?.items.find((x) => x.fid === 'offset');
-    await yt.click(center(f2.box).x, center(f2.box).y);
-    await selectAllAndType(yt, '0.5');
-    await yt.key('Enter', 'Enter', 13);
-    await sleep(400);
-    s = await iso(I.state);
-    pk = await iso(I.peek);
-    ev.check('precise-input-sets-offset', s.view.displayOffsetMs === 500 && pk.buttons.badge.text.includes('+0.5'), { offsetMs: s.view.displayOffsetMs, badge: pk.buttons.badge.text });
-    if (pk.layer.menu) await yt.key('Escape', 'Escape', 27);
+    // الإدخال الدقيق بـEnter بقيمة مختلفة عن الحالية، ثم العودة إلى +0.5 لبقية الدورة.
+    const typeOffset = async (value) => {
+      await clickButton('badge');
+      const p = await iso(I.peek);
+      const f = p.layer.menu?.items.find((x) => x.fid === 'offset');
+      await yt.click(center(f.box).x, center(f.box).y);
+      await selectAllAndType(yt, value);
+      await yt.key('Enter', 'Enter', 13);
+      await sleep(400);
+      const st = await iso(I.state);
+      const pp = await iso(I.peek);
+      if (pp.layer.menu) await yt.key('Escape', 'Escape', 27);
+      return { offsetMs: st.view.displayOffsetMs, badge: pp.buttons.badge.text };
+    };
+    const p3 = await typeOffset('0.3');
+    ev.check('precise-input-sets-offset', p3.offsetMs === 300 && p3.badge.includes('+0.3'), p3);
+    const p5 = await typeOffset('0.5');
+    ev.check('precise-input-back-to-half-second', p5.offsetMs === 500 && p5.badge.includes('+0.5'), p5);
 
     // ===== ٧. المحرّر من المحفوظات: تعديل نص مقطع وحفظه =====
     const EDITED = `نص عدّله المحرّر في دورة P9 (${which})`;
