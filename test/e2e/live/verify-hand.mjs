@@ -41,10 +41,20 @@ function parsePart(text) {
   });
 }
 
-/** المقاطع المتوقعة ونص الملف الكامل لفيديو ووضع، أو null إن لم يكن له مرجع. */
-async function expected(id, mode) {
+/**
+ * المقاطع المتوقعة ونص الملف الكامل لفيديو ووضع، أو null إن لم يكن له مرجع. وفيديو بلا مرجع نُزّل ملفه العادي كاملًا
+ * في الجلسة نفسها: أجزاء «مقاطع أطول» تُقارن بالدمج الطويل لذلك الملف (اتساق الوضعين من الالتقاط نفسه).
+ */
+async function expected(id, mode, kind = 'manual') {
   const ref = REFS[id];
-  if (!ref) return null;
+  if (!ref) {
+    if (mode !== 'long') return null;
+    const normal = await readFile(path.join(DL, `${id}.en.${kind}.normal.srt`), 'utf8').catch(() => null);
+    if (!normal) return null;
+    const merged = mergeLong(parseSrtStrict(normal).map(({ startMs, endMs, text }) => ({ startMs, endMs, text }))).cues.map((c, i) => ({ n: i + 1, ...c }));
+    const text = writeSrt(merged);
+    return { text, cues: parseSrtStrict(text), fromSession: true };
+  }
   if (ref.fixture) {
     const body = await readFile(path.join(ROOT, 'test/fixtures/json3', ref.fixture), 'utf8');
     const ex = createExtractor({ currentVideoId: () => id, durationMs: () => ref.durationMs, isLive: () => false });
@@ -78,7 +88,7 @@ for (const n of (await readdir(DL)).filter((x) => !x.endsWith('.crdownload')).so
 
 const partsOf = {};
 for (const g of groups.values()) {
-  const exp = await expected(g.id, g.mode);
+  const exp = await expected(g.id, g.mode, g.kind);
   const slot = REFS[g.id]?.slot ?? 'live';
   const label = `${slot}-${g.mode}`;
   for (const d of g.dups) {
@@ -90,7 +100,7 @@ for (const g of groups.values()) {
     const text = await readFile(path.join(DL, g.full), 'utf8');
     const cues = parseSrtStrict(text);
     const detail = { name: g.full, bytes: Buffer.byteLength(text), sha: sha16(text), cues: cues.length };
-    if (exp) ev.check(`hand-${label}-full-matches-reference`, text === exp.text, { ...detail, expected: { bytes: Buffer.byteLength(exp.text), sha: sha16(exp.text) } });
+    if (exp && !exp.fromSession) ev.check(`hand-${label}-full-matches-reference`, text === exp.text, { ...detail, expected: { bytes: Buffer.byteLength(exp.text), sha: sha16(exp.text) } });
     else ev.check(`hand-${label}-full-valid-srt`, cues.length > 0 && findSecrets(text, ['url']).length === 0, detail);
     if (exp && text === exp.text && (g.id === 'iG9CE55wbtY' || g.id === 'Y9rkKtK1b44')) state.videos[g.id] = { ...(state.videos[g.id] ?? {}), slot, srtName: g.full, srtSha: sha16(text), cues: cues.length, fromParts: false };
   }
@@ -103,7 +113,7 @@ for (const g of groups.values()) {
     const ranges = parsed.map((p, i) => ({ index: i + 1, from: p[0]?.n, to: p.at(-1)?.n }));
     partsOf[`${g.id}|${g.mode}`] = ranges;
     const same = exp ? flat.length === exp.cues.length && flat.every((c, i) => key(c) === key(exp.cues[i])) : null;
-    const detail = { parts: g.parts.size, total: g.total, cues: flat.length, continuous, ranges: ranges.map((r) => `${r.from}–${r.to}`), expectedCues: exp?.cues.length ?? null };
+    const detail = { parts: g.parts.size, total: g.total, cues: flat.length, continuous, ranges: ranges.map((r) => `${r.from}–${r.to}`), expectedCues: exp?.cues.length ?? null, reference: exp ? (exp.fromSession ? 'الدمج الطويل للملف العادي من الجلسة نفسها' : 'المرجع الثابت') : null };
     ev.check(`hand-${label}-split-parts-${exp ? 'match-reference' : 'valid'}`, complete && continuous && (exp ? same : flat.length > 0), detail);
     if (complete && same && !g.full && (g.id === 'iG9CE55wbtY' || g.id === 'Y9rkKtK1b44') && !state.videos[g.id]?.srtName) {
       // الأجزاء بمقاطع الملف الكامل نفسها: الترجمة الخارجية للملف الكامل تخصها، والبصمة المحفوظة بأجزائها.
