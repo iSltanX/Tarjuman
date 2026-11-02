@@ -76,6 +76,9 @@ async function shoot(page, name, { width } = {}) {
   await emulateScheme(page, 'light');
 }
 
+/** التحذيرات المتوقعة للأذونات المعتمدة: تحذير سكربتي المحتوى، ومعه تحذير التنزيلات إن كان downloads في البيان. */
+const m2 = (w, perms) => (perms.includes('downloads') ? w.downloadsOnly : w.storageOnly);
+
 /** إصدار التطبيق نفسه على macOS (Brave يعلن إصدار Chromium في CDP). */
 function appVersion(bin) {
   try {
@@ -188,10 +191,16 @@ try {
       const warnings = await page.eval(async () => {
         const m = chrome.runtime.getManifest();
         const w = (perms) => chrome.management.getPermissionWarningsByManifest(JSON.stringify({ ...m, permissions: perms }));
-        return { actual: await w(m.permissions), storageOnly: await w(['storage']), withTabsControl: await w(['storage', 'tabs']) };
+        return {
+          actual: await w(m.permissions), storageOnly: await w(['storage']), withUnlimited: await w(['storage', 'unlimitedStorage']),
+          downloadsOnly: await w(['storage', 'downloads']), withTabsControl: await w(['storage', 'tabs']),
+        };
       });
       result.installWarnings = warnings;
-      check('unlimitedStorage-adds-no-install-warning', JSON.stringify(warnings.actual) === JSON.stringify(warnings.storageOnly) && warnings.withTabsControl.length > warnings.storageOnly.length, warnings);
+      check('unlimitedStorage-adds-no-install-warning', JSON.stringify(warnings.withUnlimited) === JSON.stringify(warnings.storageOnly) && warnings.withTabsControl.length > warnings.storageOnly.length, warnings);
+      // الإصدار الثاني: لا تحذير غير ما يضيفه downloads المعتمد لمكان الحفظ («إدارة التنزيلات»).
+      const expected = m2(warnings, manifest.permissions);
+      check('install-warnings-approved-only', JSON.stringify(warnings.actual) === JSON.stringify(expected), { actual: warnings.actual, expected });
     }
     await page.close();
   }

@@ -72,7 +72,7 @@ startPage({
       p.root.setAttribute('data-gallery', `slots-${size}`);
       return p.root;
     };
-    app.append(section('اختيار الترجمة 1 2 3',
+    app.append(section('اختيار الترجمة (SlotPicker)',
       el('div', { className: 'tj-row', children: [picker([[true, true], [true, false, 'مراجعة'], [false, false]], 'sm'), el('span', { className: 'tj-caption', text: 'النشطة · محفوظة · فارغة (المشغّل والمحفوظات)' })] }),
       el('div', { className: 'tj-row', children: [picker([[true, false], [true, true], [true, false]], 'md'), el('span', { className: 'tj-caption', text: 'رأس المحرّر (md)' })] }),
       el('div', { className: 'tj-row', children: [picker([[false, false], [false, false], [false, false]], 'sm'), el('span', { className: 'tj-caption', text: 'بلا ترجمة' })] }),

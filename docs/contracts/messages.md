@@ -102,4 +102,4 @@ chrome.runtime.sendMessage({ type: "tj:save-file", v: 1, file: { name: "iG9CE55w
 
 ### ما ثبت حيًا في P10
 
-يُكتب هنا بعد الإثبات الحي في Brave وChrome (أدلة [`docs/evidence/P10/`](../evidence/P10/)).
+في Brave وChrome (أدلة [`docs/evidence/P10/`](../evidence/P10/)): رسالة الحفظ من المشغّل وصلت العامل الخلفي فحفظ بالوضع المخزَّن (`downloads` و`subfolder` و`ask`)؛ و`tj:seek` من صفحة الإضافة غيّر زمن الفيديو المعروض وحده ورُفض لمعرّف آخر بـ`TJ_WRONG_VIDEO`؛ ورد الحالة الموسّع حمل الخانات والالتقاط وحالة الأدوات، ونافذة الإصدار الأول (حزمة `tj-v1`) قرأت رد مشغّلها كما اعتادت.
