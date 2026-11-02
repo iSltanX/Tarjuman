@@ -104,7 +104,9 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings } = 
 
     const fingerprint = selectFingerprint(fingerprints, cues.length);
     const finalNotes = capNotes(notes);
-    const comparison = { ...compare(cues, fingerprint, { driftMs: threshold(settings) }), notes: finalNotes.slice() };
+    const report = compare(cues, fingerprint, { driftMs: threshold(settings) });
+    // ملاحظات الاستيراد أولًا ثم ما يضيفه المقارن (سبب تعذّر الاستعادة الشاملة).
+    const comparison = { ...report, notes: capNotes([...notes, ...report.notes]) };
     return { ok: true, fileName, cues, comparison, fingerprintId: fingerprint ? fingerprint.id : null, notes: finalNotes, warnings };
   } catch (err) {
     const info = toErrorInfo(err);

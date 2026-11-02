@@ -1,6 +1,10 @@
 // المقارن (R13): يقارن الملف العربي بالبصمة ويصف الفروق فقط، فلا يعدّل شيئًا. المقارنة بالأرقام: النقص والزيادة والتوقيت
 // لكل رقم موجود في الجانبين. التوقيت المقارَن هو المحفوظ لا الظاهر (عقد التوقيت §٨). تقرير بصيغة عقد البيانات §٥.
-import { canRestore } from './restore.js';
+// الاستعادة الشاملة (R50) لا تصح إلا بمحاذاة متحققة؛ وإن طابق البناء ولم تتحقق المحاذاة فالسبب في notes دون حقل جديد.
+import { isIdentity } from '../align/index.js';
+import { messageFor } from '../errors/index.js';
+import { LIMITS } from '../model/validate.js';
+import { alignToFingerprint, sameStructure } from './restore.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 /** @typedef {import('../model/tracks.js').Fingerprint} Fingerprint */
@@ -15,6 +19,9 @@ const HAS_ARABIC_LETTER = /(?=\p{Script=Arabic})\p{L}/u;
 // مقطع فارغ بصريًا: مسافات أو محارف تنسيق غير مرئية (ZWSP وRLM…) فقط.
 const BLANK = /^[\s\p{Cf}]*$/u;
 const ascending = (a, b) => a - b;
+const HIGH_SURROGATE = /[\uD800-\uDBFF]/;
+/** ملاحظة في حد النموذج (500 محرف) دون شطر زوج بديل. */
+const clipNote = (s) => (s.length <= LIMITS.maxNoteChars ? s : `${s.slice(0, LIMITS.maxNoteChars - (HIGH_SURROGATE.test(s[LIMITS.maxNoteChars - 2]) ? 2 : 1))}…`);
 
 /**
  * @param {Cue[]} cues الملف العربي كما استُورد (الأرقام كما وردت)
@@ -58,6 +65,13 @@ export function compare(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS } = {}) 
   const countTarget = cues.length;
   const countSource = fingerprint ? fingerprint.count : null;
   const numbering = sequential ? 'same' : 'different';
+  const notes = [];
+  let restoreTimingAvailable = false;
+  if (sameStructure(cues, fingerprint)) {
+    const alignment = alignToFingerprint(cues, fingerprint);
+    restoreTimingAvailable = isIdentity(alignment, fingerprint.count, countTarget);
+    if (!restoreTimingAvailable) notes.push(clipNote(messageFor('CMP_RESTORE_UNVERIFIED', { reasons: alignment.reasons.join(' ') }).trim()));
+  }
 
   return {
     fingerprintId: fingerprint ? fingerprint.id : null,
@@ -70,8 +84,8 @@ export function compare(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS } = {}) 
     drift: drift.sort((a, b) => a.n - b.n),
     empty: [...empty].sort(ascending),
     noArabic: [...noArabic].sort(ascending),
-    restoreTimingAvailable: canRestore(cues, fingerprint),
+    restoreTimingAvailable,
     driftThresholdMs: driftMs,
-    notes: [],
+    notes,
   };
 }
