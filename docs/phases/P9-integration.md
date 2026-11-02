@@ -111,16 +111,129 @@
 {
   "phase": "P9",
   "status": "in_progress",
-  "updated": "2026-11-02T04:38:51+03:00",
+  "updated": "2026-11-02T05:41:52+03:00",
   "branch": "tj/P9-integration",
   "resume": "الإصلاحان والفحوص الآلية (الرسائل والتشخيص والحزمة) والأدلة الثلاثة ملتزمة. الاستخراج الحقيقي بيد سلطان (منفذ التصحيح يجعل webdriver=true): جلسة hand.mjs في Brave ثم Chrome، ثم cycle.mjs library/finish/restart وlist.mjs، ثم تقرير الأدلة والتسليم.",
   "blocker": null,
   "outcome": null,
   "commit": null,
   "mergeCommit": null,
-  "checks": [],
-  "acceptance": {},
-  "evidence": [],
+  "checks": [
+    {
+      "cmd": "npm run check:wave",
+      "result": "pass",
+      "at": "2026-11-02T05:41:39+03:00",
+      "note": "check:static، وcheck:secrets على 126 ملفًا، و652/652 وحدة، والبناء، و18/18 تكامل، وplan:check سليمة (تنبيه .gitignore المسجّل طلبًا)"
+    },
+    {
+      "cmd": "node scripts/run-tests.mjs test/e2e/static test/e2e/regression",
+      "result": "pass",
+      "at": "2026-11-02T05:41:39+03:00",
+      "note": "21/21: الرسائل والتشخيص 6، والحزمة 4، والعيّنتان العربيتان 4، وانحدار الإصلاحين 7"
+    },
+    {
+      "cmd": "node scripts/release/audit.mjs release/tarjuman-0.2.0",
+      "result": "pass",
+      "at": "2026-11-02T05:41:39+03:00",
+      "note": "10/10، والأرشيف 610,615 بايتًا مطابق للمجلد"
+    },
+    {
+      "cmd": "الدورة الحية Brave 1.98.63",
+      "result": "pass",
+      "at": "2026-11-02T05:41:39+03:00",
+      "note": "hand-files 4/4، وlibrary 6/6، وfinish-manual 23/23، وfinish-asr 22/22، وrestart 5/5، وlist-auto 1/1 (الإعلان لم يُصادف)"
+    },
+    {
+      "cmd": "الدورة الحية Chrome 156.0.8078.74",
+      "result": "pass",
+      "at": "2026-11-02T05:41:39+03:00",
+      "note": "hand-files 6/6، وlibrary 6/6، وfinish-manual 22/22، وfinish-asr 22/22، وrestart 5/5، وlist-auto 2/2"
+    },
+    {
+      "cmd": "smoke.mjs على حزمة الإصدار",
+      "result": "pass",
+      "at": "2026-11-02T05:41:39+03:00",
+      "note": "Brave 15/15 وChrome 15/15، وتحذير التثبيت الوحيد قراءة بيانات www.youtube.com"
+    }
+  ],
+  "acceptance": {
+    "P9-AC1": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P9/README.md",
+        "docs/evidence/P9/brave/finish-manual.json",
+        "docs/evidence/P9/brave/finish-asr.json",
+        "docs/evidence/P9/brave/restart.json",
+        "docs/evidence/P9/chrome/finish-manual.json",
+        "docs/evidence/P9/chrome/finish-asr.json",
+        "docs/evidence/P9/chrome/restart.json"
+      ],
+      "note": "الدورة كاملة في Brave ثم Chrome لـTED (يدوي) وميدواي (تلقائي): استخراج حقيقي بنقر سلطان مطابق للمراجع، ونسخ التعليمات من المحفوظات إلى حافظة الجهاز، وترجمة خارجية بالملحق أ، ورفع «مطابق للأصل»، ومشاهدة ومزامنة 20/20، وضبط، وتعديل وحفظ، وعودة، والخط والحجم باقيان بعد إعادة التشغيل"
+    },
+    "P9-AC2": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P9/README.md",
+        "docs/maintenance.md"
+      ],
+      "note": "القائمة الستة بنتائجها في المتصفحين، والإعلان لم يُصادف في Brave، وبث مسجّل بترجمة تلقائية فقط (s6MmNDkSkSM) رُفض في Chrome وسببه مسجّل مفتوحًا، والبديل nx7lhj25__c ناجح؛ ودليل الفحص الدوري"
+    },
+    "P9-AC3": {
+      "result": "pass",
+      "evidence": [
+        "docs/evidence/P9/messages-review.md",
+        "test/e2e/static/messages-diagnostics.test.js"
+      ],
+      "note": "137 رسالة مراجعة بلا إصلاح لازم، والفحص الآلي 6/6، وتقارير التشخيص بعد الدورات بلا رابط ولا رمز"
+    },
+    "P9-AC4": {
+      "result": "pass",
+      "evidence": [
+        "scripts/release/audit.mjs",
+        "docs/evidence/P9/README.md"
+      ],
+      "note": "تدقيق الحزمة 10/10، و0 طلبات من الإضافة في كل الجولات والدخان، وcheck:wave ناجح"
+    },
+    "P9-AC5": {
+      "result": "pass",
+      "evidence": [
+        "scripts/release/package.mjs",
+        "docs/user-guide.md",
+        "docs/known-limitations.md"
+      ],
+      "note": "الحزمة مجلدًا وأرشيفًا بالبصمات ورخص OFL للخطوط الأربعة، والدليلان، ورابط المستودع في «حول» عُرض على سلطان فقرر بقاءه"
+    }
+  },
+  "evidence": [
+    {
+      "label": "فهرس الأدلة",
+      "path": "docs/evidence/P9/README.md"
+    },
+    {
+      "label": "مراجعة الرسائل",
+      "path": "docs/evidence/P9/messages-review.md"
+    },
+    {
+      "label": "دورة Brave الحية",
+      "path": "docs/evidence/P9/brave/"
+    },
+    {
+      "label": "دورة Chrome الحية",
+      "path": "docs/evidence/P9/chrome/"
+    },
+    {
+      "label": "الدخان على حزمة الإصدار",
+      "path": "docs/evidence/P9/smoke-brave/brave/smoke.json"
+    },
+    {
+      "label": "الدخان على حزمة الإصدار في Chrome",
+      "path": "docs/evidence/P9/smoke-chrome/chrome/smoke.json"
+    },
+    {
+      "label": "العيّنتان العربيتان الحقيقيتان",
+      "path": "test/e2e/fixtures/"
+    }
+  ],
   "sharedRequests": [
     {
       "file": ".gitignore",
