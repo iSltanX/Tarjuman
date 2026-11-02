@@ -37,12 +37,13 @@ const validNumbers = (numbers, count) => Array.isArray(numbers) && numbers.lengt
 
 /**
  * @param {{
- *   videoId: string, title?: string | null, fingerprint: Fingerprint, englishTracks: EnglishTrack[], numbers: number[]
+ *   videoId: string, title?: string | null, fingerprint: Fingerprint, englishTracks: EnglishTrack[], numbers: number[],
+ *   glossary?: { source: string, target: string, note?: string | null }[] | null
  * }} spec numbers أرقام المقاطع في الملف الكامل (1..count)
  * @returns {{ ok: true, file: { name: string, text: string }, instructions: string, count: number } | { ok: false, code: string }}
- *   instructions بلا قاموس (التوقيع لا يحمله)؛ ونسخة القاموس من patchInstructions({ videoId, title, glossary }).
+ *   instructions بفقرة القاموس عند وجوده (إضافة W6 على العقد بطلب P11)، كـpatchInstructions({ videoId, title, glossary }).
  */
-export function buildPatchPackage({ videoId, title = null, fingerprint, englishTracks, numbers }) {
+export function buildPatchPackage({ videoId, title = null, fingerprint, englishTracks, numbers, glossary = null }) {
   if (!isVideoId(videoId)) return { ok: false, code: 'TJ_BAD_VIDEO_ID' };
   if (!fingerprint || !Array.isArray(fingerprint.cues)) return { ok: false, code: 'EX_PATCH_NO_SOURCE' };
   if (fingerprint.videoId !== videoId) return { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' };
@@ -65,7 +66,7 @@ export function buildPatchPackage({ videoId, title = null, fingerprint, englishT
   return {
     ok: true,
     file: { name: patchFileName({ videoId, lang: track.lang, kind: track.kind, mode: fingerprint.mode }), text },
-    instructions: patchInstructions({ videoId, title }),
+    instructions: patchInstructions({ videoId, title, glossary }),
     count: picked.length,
   };
 }
