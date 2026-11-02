@@ -6,12 +6,14 @@
 import { compare, previewRestoreTiming } from '../../core/compare/index.js';
 import { READING_DEFAULTS } from '../../core/edit/density.js';
 import {
-  buildRows, createEditSession, englishReference, parseSeconds, parseTimecode, pickEnglishTrack, planArabicExport, planMarkToggle,
-  resolveSlotMarks, reviewGroups,
+  COMPLETION_DEFAULTS, buildRows, completionGroups, completionNumbers, createEditSession, englishReference, parseSeconds, parseTimecode,
+  pickEnglishTrack, planArabicExport, planMarkToggle, resolveSlotMarks, reviewGroups,
 } from '../../core/edit/index.js';
 import { resolvePosition } from '../../core/model/marks.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
-import { download } from '../../core/export/index.js';
+import { buildPatchPackage, patchInstructions } from '../../core/export/index.js';
+import { partsStatus, readPatch } from '../../core/import/index.js';
+import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
 import { mergeCues, splitCue } from '../../core/edit/structure.js';
 import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
@@ -25,11 +27,12 @@ import {
   classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged, writeMarks, writePosition,
 } from './persist.js';
 import { renderDensity, renderMarks, renderResume } from './review-panel.js';
+import { previewPatch, renderCompletePanel } from './complete-panel.js';
 import { createRows, textDir } from './rows.js';
 import { createSearch } from './search.js';
 import {
   COUNT, MARK_LABEL, activeSlotLine, editSlotLabel, errorsToFix, mergePreview, nextMark, numberList, offsetLine, offsetNotice, refOptionLabel,
-  saveStatus, scopeOption, scopeTarget, seconds, seekResult, shiftSentence, slotFallback, splitPreview, unsavedSentence,
+  saveMessage, saveStatus, scopeOption, scopeTarget, seconds, seekResult, shiftSentence, slotFallback, splitPreview, unsavedSentence,
 } from './text.js';
 import { RowLayout, createVirtualList, rowHeight, textLines } from './virtual.js';
 
@@ -50,10 +53,12 @@ const densityOf = (prefs) => ({ maxCps: prefs?.review?.maxCps ?? READING_DEFAULT
  * @param {HTMLElement} app
  * @param {{
  *   videoId: string | null, slot?: 1 | 2 | 3 | null, store: ReturnType<typeof import('../../core/store/index.js').createStore>,
- *   doc?: Document, now?: () => number, seek?: typeof jumpToVideo
- * }} deps slot خانة التحرير المطلوبة (t في العنوان)؛ وبدونها النشطة. seek للاختبار وحده.
+ *   doc?: Document, now?: () => number, seek?: typeof jumpToVideo, saveFile?: typeof defaultSaveFile
+ * }} deps slot خانة التحرير المطلوبة (t في العنوان)؛ وبدونها النشطة. seek وsaveFile للاختبار وحده.
  */
-export async function mountEditor(app, { videoId, slot: requested = null, store, doc = document, now = Date.now, seek = jumpToVideo }) {
+export async function mountEditor(app, {
+  videoId, slot: requested = null, store, doc = document, now = Date.now, seek = jumpToVideo, saveFile = defaultSaveFile,
+}) {
   const win = doc.defaultView;
   const title = (text) => el('h1', { className: 'tj-h1', text, doc });
 
@@ -99,6 +104,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     external: /** @type {null | 'changed' | 'removed'} */ (null),
     saving: false, pending: null, leaving: false, externalChain: Promise.resolve(),
     writing: 0, writeChain: Promise.resolve(), positionTimer: 0, resumeAfterSwitch: false,
+    picks: { ...COMPLETION_DEFAULTS }, completeBusy: false, completeNumbers: /** @type {number[]} */ ([]), parts: null,
     markView: /** @type {ReturnType<typeof resolveSlotMarks> | null} */ (null),
     caret: /** @type {{ index: number, at: number, version: number } | null} */ (null),
     hoverAct: /** @type {{ kind: 'merge' | 'split', index: number } | null} */ (null),
@@ -353,6 +359,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     computeRefs(cues);
     S.comparison = compareNow(s);
     computeMarks();
+    computeParts();
     const rows = buildRows(cues, S.comparison?.missing ?? []);
     const sameRows = Boolean(S.list) && rows.length === S.rows.length
       && rows.every((r, k) => r.type === S.rows[k].type && r.index === S.rows[k].index && r.n === S.rows[k].n);
@@ -413,8 +420,10 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     S.compareTimer = win.setTimeout(() => {
       S.comparison = compareNow(act());
       computeMarks();
+      computeParts();
       S.list.refresh(null);
       renderReview(act().issues());
+      renderComplete();
       renderComparisonPanel();
     }, COMPARE_DELAY_MS);
   }
@@ -439,6 +448,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     const report = act().issues();
     renderIssues(issuesEl, { doc, report: timingOnly(report), onJump: jumpTo });
     renderReview(report);
+    renderComplete();
   }
 
   function saveBlockReason() {
@@ -614,8 +624,96 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     toastTimer = win.setTimeout(() => toastEl.classList.remove('is-shown'), undo ? 7000 : 3000);
   }
 
-  // ---- الاستكمال (R52): يُبنى في complete-panel.js ----
-  function renderComplete() {}
+  // ---- الاستكمال (R52) ----
+  const glossary = () => (S.prefs?.glossary?.attach && S.prefs.glossary.terms.length ? S.prefs.glossary.terms : null);
+
+  function completeReason() {
+    if (S.view !== 'edit') return messageFor('ED_READ_ONLY');
+    if (!S.fp) return messageFor('ED_NO_REFERENCE');
+    if (!S.opened.record.english.some((t) => t.key === S.fp.trackKey)) return messageFor('EX_PATCH_NO_SOURCE');
+    return null;
+  }
+
+  /** حالة الأجزاء المشتقة من الترجمة الحالية (بمحاذاة، فتُحسب بعد سكون لا مع كل حرف). */
+  function computeParts() {
+    S.parts = S.fp?.parts && S.view === 'edit' ? partsStatus(S.fp, S.session.snapshot()) : null;
+  }
+
+  function renderComplete() {
+    if (completePane.hidden || !S.markView) return;
+    const groups = completionGroups({ cues: shownCues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView, selection: S.selection });
+    S.completeNumbers = completionNumbers(groups, S.picks);
+    renderCompletePanel(completeEl, {
+      doc, reason: completeReason(), groups, picks: S.picks, numbers: S.completeNumbers, parts: S.parts,
+      glossaryCount: glossary()?.length ?? 0, readOnly: readOnly() ? messageFor('ED_READ_ONLY') : null, busy: S.completeBusy,
+      onPick: (key, on) => {
+        S.picks = { ...S.picks, [key]: on };
+        renderComplete();
+      },
+      onDownload: () => downloadPatch(),
+      onCopy: () => copyPatchInstructions(),
+      onImport: (files) => importPatch(files),
+    });
+  }
+
+  async function downloadPatch() {
+    if (completeReason() || S.completeBusy) return;
+    const pkg = buildPatchPackage({
+      videoId, title: S.opened.record.title, fingerprint: S.fp, englishTracks: S.opened.record.english, numbers: S.completeNumbers, glossary: glossary(),
+    });
+    if (!pkg.ok) {
+      toast(messageFor(pkg.code), 'danger');
+      return;
+    }
+    S.completeBusy = true;
+    renderComplete();
+    try {
+      await saveText(pkg.file);
+    } finally {
+      S.completeBusy = false;
+      renderComplete();
+    }
+  }
+
+  async function copyPatchInstructions() {
+    if (completeReason()) return;
+    try {
+      await win.navigator.clipboard.writeText(patchInstructions({ videoId, title: S.opened.record.title, glossary: glossary() }));
+      toast('نُسخت تعليمات الاستكمال. الصقها مع الملف في المحادثة.', 'success');
+    } catch {
+      toast('تعذّر النسخ. أعد المحاولة.', 'danger');
+    }
+  }
+
+  /** «استيراد ملف تصحيح…»: قراءة على الترجمة الحالية، ثم معاينة واختيار، ثم خطوة واحدة غير محفوظة. */
+  async function importPatch(files) {
+    if (completeReason() || readOnly()) return;
+    const before = S.session.version;
+    const read = await readPatch(files, { fingerprint: S.fp, cues: S.session.snapshot() });
+    if (!read.ok) {
+      await openDialog({
+        doc, tone: 'danger', title: 'تعذّر قراءة ملف التصحيح',
+        body: `${read.error.message}${read.error.line ? ` (السطر ${read.error.line})` : ''}`,
+        actions: [{ label: 'حسنًا', value: 'ok', variant: 'primary' }],
+      });
+      return;
+    }
+    if (S.session.version !== before) {
+      toast(messageFor('IM_PATCH_STALE'), 'danger');
+      return;
+    }
+    const only = await previewPatch({ doc, plan: read.plan });
+    if (!only) return;
+    const r = S.session.applyPatchPlan(read.plan, { only });
+    if (!r.ok) {
+      toast(messageFor(r.code), 'danger');
+      return;
+    }
+    S.result = { tone: 'success', text: `طُبّق ملف التصحيح على ${formatCount(only.length, COUNT_FORMS.cue)}${r.inserted ? ` (أُدرج ${r.inserted})` : ''}. احفظ لتثبيت ذلك، والتراجع يعيده خطوةً واحدة.` };
+    computeParts();
+    renderToolbar();
+    renderComplete();
+  }
 
   // ---- المراجعة والعلامات وآخر موضع (R53) ----
   const shownCues = () => {
@@ -1275,13 +1373,23 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
       }, { label: 'إلغاء', value: 'cancel' }],
     });
     if (v !== 'download' || !plan?.ok) return;
+    await saveText({ name: plan.name, text: plan.text });
+  }
+
+  /**
+   * كل ما يصدّره المحرّر عبر saveFile (R65): يتبع «مكان حفظ ملفات الترجمة»، والتعذّر يرجع إلى التنزيل المعتاد برسالته.
+   * @param {{ name: string, text: string }} file
+   */
+  async function saveText(file) {
+    let r;
     try {
-      download({ name: plan.name, text: plan.text }, { doc });
-      toast(`نُزّل ${plan.name}`, 'success');
-    } catch (err) {
-      const info = toErrorInfo(err);
-      toast(`${info.message} (${info.code})`, 'danger');
+      r = await saveFile(file, { store, doc });
+    } catch {
+      r = { ok: false, code: 'SV_FAILED' };
     }
+    const res = saveMessage(r, file.name, S.prefs?.saveLocation, messageFor);
+    toast(res.text, res.tone);
+    return r;
   }
 
   function exportError(plan) {

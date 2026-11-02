@@ -149,6 +149,19 @@ export function seekResult(r, at, message) {
     : { tone: 'success', text: `لا تبويب مفتوح لهذا الفيديو، فُتح في تبويب جديد عند ${at}.` };
 }
 
+/**
+ * نتيجة الحفظ عبر saveFile (R65) رسالةً عابرة: أين حُفظ الملف بحسب الوضع، أو الرجوع إلى التنزيل المعتاد، أو السبب.
+ * @param {{ ok: boolean, mode?: string, code?: string }} r @param {string} name
+ * @param {{ mode: string, folder: string } | undefined} location @param {(code: string) => string} message
+ */
+export function saveMessage(r, name, location, message) {
+  if (!r.ok) return { tone: r.code === 'SV_CANCELLED' ? 'info' : 'danger', text: `${name}: ${message(r.code)}` };
+  if (r.mode === 'blob') return { tone: 'info', text: `${name}: ${message('SV_FALLBACK_BLOB')}` };
+  if (r.mode === 'subfolder') return { tone: 'success', text: `حُفظ ${name} في التنزيلات/${location?.folder ?? 'Tarjuman'}.` };
+  if (r.mode === 'ask') return { tone: 'success', text: `حُفظ ${name} حيث اخترت.` };
+  return { tone: 'success', text: `حُفظ ${name} في مجلد التنزيلات.` };
+}
+
 /** طُلبت خانة فارغة فعُرضت النشطة. @param {number | null} requested @param {number} opened */
 export const slotFallback = (requested, opened) => `الترجمة ${requested} فارغة، فعُرضت الترجمة ${opened}.`;
 
