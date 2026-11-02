@@ -3,7 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compare } from '../../../src/core/compare/index.js';
-import { buildExport, buildPatchPackage } from '../../../src/core/export/index.js';
+import { buildExport, buildPatchPackage, planPartsByContent } from '../../../src/core/export/index.js';
+import { writeSrtFrom } from '../../../src/core/export/write.js';
 import { applyPatch, readImport, readPatch } from '../../../src/core/import/index.js';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
 import { realTrack } from '../../helpers/fixtures.js';
@@ -23,10 +24,12 @@ const translate = (srt) => `${srt.trimEnd().split('\n\n').map((block) => {
 }).join('\n\n')}\n`;
 
 test('تصدير مقسّم عند الجمل ← ترجمة كل جزء بترقيمه ← استيراد الأجزاء معًا: مطابقة تامة للبصمة والاستعادة متاحة', async () => {
-  const exp = buildExport({ videoId: VIDEO, track: TRACK, mode: 'normal', split: { size: 120, by: 'content' }, now: NOW });
-  assert.equal(exp.files.length, 4);
-  const files = exp.files.map((f) => fileOf(translate(f.text), f.name.replace('.en.', '.ar.')));
-  const r = await readImport(files, { fingerprints: [exp.fingerprint] });
+  const exp = buildExport({ videoId: VIDEO, track: TRACK, mode: 'normal', now: NOW });
+  const plan = planPartsByContent(EN, 120);
+  assert.equal(plan.length, 4);
+  const fingerprint = { ...exp.fingerprint, fileName: null, parts: plan };
+  const files = plan.map((p) => fileOf(translate(writeSrtFrom(EN.slice(p.from - 1, p.to), p.from)), `${VIDEO}.ar.part${p.index}.srt`));
+  const r = await readImport(files, { fingerprints: [fingerprint] });
   assert.equal(r.ok, true, JSON.stringify(r.error));
   assert.deepEqual(r.cues.map((c) => c.text), AR.map((c) => c.text));
   assert.deepEqual([r.comparison.matched, r.comparison.restoreTimingAvailable], [true, true]);

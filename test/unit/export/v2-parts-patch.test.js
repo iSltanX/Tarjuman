@@ -3,8 +3,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { convertTrack } from '../../../src/core/convert/index.js';
-import { CONTENT_SPLIT, buildExport, buildPatchPackage, patchInstructions, planParts, planPartsByContent } from '../../../src/core/export/index.js';
+import {
+  CONTENT_SPLIT, buildExport, buildPatchPackage, instructions, patchInstructions, planParts, planPartsByContent,
+} from '../../../src/core/export/index.js';
+import { writeSrtFrom } from '../../../src/core/export/write.js';
 import { endsSentence } from '../../../src/core/convert/text.js';
+import { validateFingerprint } from '../../../src/core/model/tracks.js';
 import { parseSrtStrict } from '../../../src/core/srt/parser.js';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
 import { realTrack } from '../../helpers/fixtures.js';
@@ -43,20 +47,17 @@ test('عيّنة P1 اليدوية الحقيقية (427): كل حد عند نه
   }
 });
 
-test('buildExport بالتقسيم بالمحتوى: ضمّ الأجزاء يطابق الملف الكامل، وأجزاء البصمة هي الخطة، والأسماء partNNofMM', () => {
-  const r = buildExport({ videoId: 'iG9CE55wbtY', track: trackOf(EN), mode: 'normal', split: { size: 500, by: 'content' }, now: NOW });
+test('الأجزاء بالمحتوى تُكتب بترقيم مستمر وضمّها يطابق الملف الكامل، وتجتاز مدقق أجزاء البصمة؛ والتقسيم القديم باقٍ', () => {
   const plan = planPartsByContent(EN, 500);
-  assert.deepEqual(r.fingerprint.parts, plan);
-  assert.equal(r.files.length, plan.length);
-  assert.equal(r.files[0].name, 'iG9CE55wbtY.en.manual.normal.part1of5.srt'.replace('part1of5', 'part01of05'));
-  const full = buildExport({ videoId: 'iG9CE55wbtY', track: trackOf(EN), mode: 'normal', now: NOW }).files[0].text;
-  assert.equal(r.files.map((f) => f.text).join('\n'), full);
-  assert.equal(parseSrtStrict(full).length, 2400);
-  r.files.forEach((f, i) => assert.equal(parseSrtLenient(f.text).cues[0].n, plan[i].from));
-  assert.ok(r.instructions.includes(`الجزء 2 (المقاطع ${plan[1].from}–${plan[1].to})`));
-  assert.throws(() => buildExport({ videoId: 'iG9CE55wbtY', track: trackOf(EN), mode: 'normal', split: { size: 500, by: 'words' }, now: NOW }), (e) => e.code === 'MD_INVALID');
+  const full = buildExport({ videoId: 'iG9CE55wbtY', track: trackOf(EN), mode: 'normal', now: NOW });
+  const texts = plan.map((p) => writeSrtFrom(EN.slice(p.from - 1, p.to), p.from));
+  assert.equal(texts.join('\n'), full.files[0].text);
+  assert.equal(parseSrtStrict(full.files[0].text).length, 2400);
+  texts.forEach((t, i) => assert.equal(parseSrtLenient(t).cues[0].n, plan[i].from));
+  assert.deepEqual(validateFingerprint({ ...full.fingerprint, fileName: null, parts: plan }), { ok: true });
+  assert.ok(instructions({ videoId: 'iG9CE55wbtY', title: null, parts: plan }).includes(`الجزء 2 (المقاطع ${plan[1].from}–${plan[1].to})`));
   const byCount = buildExport({ videoId: 'iG9CE55wbtY', track: trackOf(EN), mode: 'normal', split: { size: 500 }, now: NOW });
-  assert.deepEqual(byCount.fingerprint.parts, planParts(2400, 500), 'التقسيم القديم باقٍ افتراضيًا');
+  assert.deepEqual(byCount.fingerprint.parts, planParts(2400, 500), 'buildExport بتقسيمه القديم كما هو');
 });
 
 test('ملف الاستكمال (عادي، عيّنة P1): الأرقام المختارة بأزمنة البصمة ونص المسار، وتعليمات الملحق ب، واسم بعلامة en', () => {
