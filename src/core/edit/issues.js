@@ -1,7 +1,9 @@
 // لوحة المشكلات (R28): تصف ولا تصلح. الأخطاء (نهاية قبل البداية، وزمن سالب، وصيغة غير صالحة، وما فوق الحد،
 // ونص لا يقبله التخزين) تمنع الحفظ والتصدير. والتحذيرات (تداخل، ومدة قصيرة جدًا، وفجوة كبيرة، ونص فارغ) لا تمنع
 // الحفظ؛ لكن التداخل والنص الفارغ يمنعان التصدير وحده لأن كاتب SRT يرفضهما (EX_TIMING_INVALID وEX_EMPTY_TEXT في P3).
+// وتنبيهات الكثافة (R55: قراءة سريعة وسطر طويل) تحذيرات لا تمنع الحفظ ولا التصدير، بعتبة من التفضيلات أو المعايرة.
 import { LIMITS } from '../model/validate.js';
+import { READING_DEFAULTS, densityIssues, readingMetrics } from './density.js';
 
 /**
  * العتبات: لا تحذير في عيّنتي P1 الحقيقيتين (أقصر مقطع 719ms وأكبر فجوة 7.25ث)، فالتحذير يلفت إلى خطأ تحرير
@@ -13,20 +15,23 @@ export const ISSUE_LIMITS = Object.freeze({ shortMs: 300, largeGapMs: 30000 });
  * @typedef {'start' | 'end' | 'text'} IssueField
  * @typedef {{
  *   code: string, tone: 'error' | 'warning', index: number, n: number, field: IssueField | null,
- *   params: Record<string, string | number> | null, blocksSave: boolean, blocksExport: boolean
+ *   params: Record<string, string | number> | null, blocksSave: boolean, blocksExport: boolean, density: boolean
  * }} Issue
  * @typedef {{ list: Issue[], errors: number, warnings: number, exportBlockers: Issue[], byIndex: Map<number, Issue[]> }} IssueReport
  */
 
 const seconds = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
 const ERRORS = new Set(['ED_END_BEFORE_START', 'ED_NEGATIVE_TIME', 'ED_TIME_FORMAT', 'ED_TIME_RANGE', 'ED_TEXT_INVALID']);
+/** رموز الكثافة: مجموعة «الكثافة» في لوحة المراجعة، منفصلة عن التوقيت والنص. */
+export const DENSITY_CODES = Object.freeze(['ED_READING_FAST', 'ED_LINE_LONG']);
 
 /**
  * @param {{ n: number, startMs: number, endMs: number, text: string }[]} cues
- * @param {{ drafts?: Map<string, string> }} [opts] نص حقل زمن لم يُقرأ، بالمفتاح «الموضع:start|end»
+ * @param {{ drafts?: Map<string, string>, density?: Partial<typeof READING_DEFAULTS> | null }} [opts] drafts نص حقل زمن لم يُقرأ،
+ *   بالمفتاح «الموضع:start|end»؛ وdensity عتبة تنبيهات الكثافة (غيابها يطفئها، فلا يتغير ما يمنع الحفظ والتصدير)
  * @returns {IssueReport}
  */
-export function findIssues(cues, { drafts } = {}) {
+export function findIssues(cues, { drafts, density = null } = {}) {
   /** @type {Issue[]} */
   const list = [];
   const draftAt = new Map();
@@ -40,8 +45,12 @@ export function findIssues(cues, { drafts } = {}) {
   const add = (code, index, field = null, params = null) => {
     const error = ERRORS.has(code);
     const exportOnly = code === 'ED_OVERLAP' || code === 'ED_TEXT_EMPTY' || code === 'ED_TEXT_BLANK_LINE';
-    list.push({ code, tone: error ? 'error' : 'warning', index, n: cues[index].n, field, params, blocksSave: error, blocksExport: error || exportOnly });
+    list.push({
+      code, tone: error ? 'error' : 'warning', index, n: cues[index].n, field, params, blocksSave: error, blocksExport: error || exportOnly,
+      density: DENSITY_CODES.includes(code),
+    });
   };
+  const limits = density ? { ...READING_DEFAULTS, ...density } : null;
   /** خطأ توقيت في المقطع نفسه: لا تحذير تداخل أو فجوة بجواره، فهو ضجيج فوق الخطأ. */
   const broken = (c) => !(c.startMs >= 0 && c.endMs > c.startMs && c.endMs <= LIMITS.maxTimeMs);
 
@@ -64,6 +73,14 @@ export function findIssues(cues, { drafts } = {}) {
     if (nextOk && c.endMs > next.startMs) add('ED_OVERLAP', i, 'end', { next: next.n });
     if (duration < ISSUE_LIMITS.shortMs) add('ED_SHORT', i, 'end', { seconds: seconds(duration) });
     if (nextOk && next.startMs - c.endMs > ISSUE_LIMITS.largeGapMs) add('ED_GAP', i, 'end', { seconds: seconds(next.startMs - c.endMs) });
+    if (limits && c.text) {
+      const found = densityIssues(c, limits);
+      if (found.length) {
+        const m = readingMetrics(c);
+        if (found.includes('ED_READING_FAST')) add('ED_READING_FAST', i, 'text', { cps: m.cps, max: limits.maxCps });
+        if (found.includes('ED_LINE_LONG')) add('ED_LINE_LONG', i, 'text', { chars: m.longestLine, max: limits.maxLineChars });
+      }
+    }
   }
 
   const byIndex = new Map();

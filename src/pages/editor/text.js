@@ -9,6 +9,8 @@ export const COUNT = Object.freeze({
   error: Object.freeze({ one: 'خطأ واحد', two: 'خطآن', few: 'أخطاء', many: 'خطأً', single: 'خطأ' }),
   errorToFix: Object.freeze({ one: 'خطأ التوقيت', two: 'خطأي التوقيت', few: 'أخطاء توقيت', many: 'خطأ توقيت', single: 'خطأ توقيت' }),
   warning: Object.freeze({ one: 'تحذير واحد', two: 'تحذيران', few: 'تحذيرات', many: 'تحذيرًا', single: 'تحذير' }),
+  match: Object.freeze({ one: 'موضع واحد', two: 'موضعان', few: 'مواضع', many: 'موضعًا', single: 'موضع' }),
+  mark: Object.freeze({ one: 'علامة واحدة', two: 'علامتان', few: 'علامات', many: 'علامة', single: 'علامة' }),
 });
 
 /** صيغة العدد: one وtwo وfew وmany وsingle كما في formatCount. @param {number} n */
@@ -86,6 +88,95 @@ export const offsetNotice = (offsetMs) => `إزاحة العرض ${formatOffset(
 
 /** سطر الإزاحة الثابت. @param {number} offsetMs */
 export const offsetLine = (offsetMs) => `إزاحة العرض أثناء المشاهدة: ${formatOffset(offsetMs)} ث — منفصلة عن التوقيت المحفوظ`;
+
+/**
+ * اسم الوصول لخانة في محدد خانة التحرير: «الترجمة 2، قيد التحرير، النشطة في المشغّل» أو «الترجمة 3، فارغة».
+ * @param {{ n: number, filled: boolean, active: boolean }} slot active هنا النشطة في المشغّل
+ * @param {{ editing: boolean }} o
+ */
+export function editSlotLabel(slot, { editing }) {
+  if (!slot.filled) return `الترجمة ${slot.n}، فارغة`;
+  return [`الترجمة ${slot.n}`, editing ? 'قيد التحرير' : null, slot.active ? 'النشطة في المشغّل' : null].filter(Boolean).join('، ');
+}
+
+/**
+ * سطر تحت الرأس يفرّق خانة التحرير عن النشطة (R43): الحفظ هنا لا يغيّر ما يُعرض في المشغّل.
+ * @param {number} editing @param {number | null} active @param {string | null} name
+ */
+export function activeSlotLine(editing, active, name) {
+  const who = name ? `تحرّر الترجمة ${editing} «${name}»` : `تحرّر الترجمة ${editing}`;
+  if (editing === active) return `${who}، وهي النشطة في المشغّل.`;
+  return `${who}. النشطة في المشغّل الترجمة ${active}، والحفظ هنا لا يغيّرها.`;
+}
+
+/**
+ * اسم مرجع المقارنة في قائمته: نوع المسار ووضعه وأجزاؤه وتاريخ تصديره، قصيرًا بالعربية بدل اسم الملف الطويل.
+ * @param {{ trackKey: string, mode: string, parts: unknown[] | null, createdAt: string } | null} fp
+ */
+export function refLabel(fp) {
+  if (!fp) return 'مرجع غير محفوظ';
+  const kind = fp.trackKey.endsWith('|asr') ? 'تلقائي' : 'يدوي';
+  const mode = fp.mode === 'long' ? 'مقاطع أطول' : 'عادي';
+  const parts = fp.parts ? ` · ${fp.parts.length} أجزاء` : '';
+  return `${kind} · ${mode}${parts} · ${fp.createdAt.slice(0, 10)} ${fp.createdAt.slice(11, 16)}`;
+}
+
+/** خيار العمود المرجعي: «الإنجليزية» أو «الترجمة 3 — مراجعة». @param {'en' | number} v @param {string | null} [name] */
+export const refOptionLabel = (v, name = null) => (v === 'en' ? 'الإنجليزية' : name ? `الترجمة ${v} — ${name}` : `الترجمة ${v}`);
+
+// ---- العلامات (R53): «أعود إليه» و«راجعته»، والتبديل بينهما من زر الصف ----
+export const MARK_LABEL = Object.freeze({ todo: 'أعود إليه', done: 'راجعته' });
+/** ما بعد العلامة الحالية في التبديل: بلا ← أعود إليه ← راجعته ← بلا. @param {'todo' | 'done' | null} kind */
+export const nextMark = (kind) => (kind === null ? 'todo' : kind === 'todo' ? 'done' : null);
+
+/** اسم زر العلامة بما سيفعله. @param {number} n @param {{ kind: 'todo' | 'done' } | null} mark */
+export function markActionLabel(n, mark) {
+  const next = nextMark(mark?.kind ?? null);
+  return next ? `علّم المقطع ${n} «${MARK_LABEL[next]}»` : `أزل علامة المقطع ${n}`;
+}
+
+/** شارة الصف: ⚑ لـ«أعود إليه» و✓ لـ«راجعته»، و؟ لعلامة قد تكون انتقلت. @param {{ kind: 'todo' | 'done', state: string }} m */
+export const markBadge = (m) => `${m.kind === 'todo' ? '⚑' : '✓'}${m.state === 'moved' ? '؟' : ''}`;
+
+/** @param {{ kind: 'todo' | 'done', state: string }} m */
+export const markTitle = (m) => `${MARK_LABEL[m.kind]}${m.state === 'moved' ? ' — قد تكون انتقلت: تحقق أنها على المقطع الصحيح' : ''}`;
+
+// ---- البنية والقفز ----
+/** معاينة الدمج قبل التطبيق. @param {{ n: number }} a @param {{ n: number }} b @param {{ startMs: number, endMs: number, text: string }} merged @param {(ms: number) => string} tc */
+export const mergePreview = (a, b, merged, tc) => `سيُدمج المقطع ${a.n} مع ${b.n}: ${tc(merged.startMs)} ← ${tc(merged.endMs)}، والنصان سطرًا بعد سطر (${merged.text.split('\n').length} أسطر). التراجع يعيدهما.`;
+
+/** معاينة الشطر عند المؤشر. @param {number} n @param {string} head @param {string} tail */
+export const splitPreview = (n, head, tail) => `سيُشطر المقطع ${n} عند المؤشر: «${oneLine(head)}» | «${oneLine(tail)}»، والزمن بنسبة النص. التراجع يعيده.`;
+
+const oneLine = (s) => {
+  const flat = s.replace(/\s*\n\s*/g, ' ');
+  return flat.length > 28 ? `${flat.slice(0, 27)}…` : flat;
+};
+
+/** نتيجة القفز (R56). @param {{ ok: boolean, via?: 'open' | 'new', code?: string }} r @param {string} at @param {(code: string) => string} message */
+export function seekResult(r, at, message) {
+  if (!r.ok) return { tone: 'danger', text: `تعذّر الانتقال في الفيديو: ${message(r.code)}` };
+  return r.via === 'open'
+    ? { tone: 'success', text: `انتقل تبويب الفيديو المفتوح إلى ${at}.` }
+    : { tone: 'success', text: `لا تبويب مفتوح لهذا الفيديو، فُتح في تبويب جديد عند ${at}.` };
+}
+
+/**
+ * نتيجة الحفظ عبر saveFile (R65) رسالةً عابرة: أين حُفظ الملف بحسب الوضع، أو الرجوع إلى التنزيل المعتاد، أو السبب.
+ * @param {{ ok: boolean, mode?: string, code?: string }} r @param {string} name
+ * @param {{ mode: string, folder: string } | undefined} location @param {(code: string) => string} message
+ */
+export function saveMessage(r, name, location, message) {
+  if (!r.ok) return { tone: r.code === 'SV_CANCELLED' ? 'info' : 'danger', text: `${name}: ${message(r.code)}` };
+  if (r.mode === 'blob') return { tone: 'info', text: `${name}: ${message('SV_FALLBACK_BLOB')}` };
+  // «مجلد X داخل التنزيلات» لا «التنزيلات/X»: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص.
+  if (r.mode === 'subfolder') return { tone: 'success', text: `حُفظ ${name} في مجلد ${location?.folder ?? 'Tarjuman'} داخل التنزيلات.` };
+  if (r.mode === 'ask') return { tone: 'success', text: `حُفظ ${name} حيث اخترت.` };
+  return { tone: 'success', text: `حُفظ ${name} في مجلد التنزيلات.` };
+}
+
+/** طُلبت خانة فارغة فعُرضت النشطة. @param {number | null} requested @param {number} opened */
+export const slotFallback = (requested, opened) => `الترجمة ${requested} فارغة، فعُرضت الترجمة ${opened}.`;
 
 /** مدة المقطع بالثواني بخانة عشرية: «2.7». @param {number} ms */
 export const durationText = (ms) => (Math.round(ms / 100) / 10).toFixed(1);

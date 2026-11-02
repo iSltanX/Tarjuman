@@ -5,7 +5,8 @@
 import { messageFor } from '../../core/errors/index.js';
 import { el } from '../../ui/components.js';
 import { formatTimecode } from '../../ui/format.js';
-import { durationText, seconds } from './text.js';
+import { editorIcon } from './icons.js';
+import { durationText, markActionLabel, markBadge, markTitle, seconds } from './text.js';
 import { ROW, textLines } from './virtual.js';
 
 const HAS_ARABIC = /\p{Script=Arabic}/u;
@@ -19,7 +20,9 @@ export const textDir = (text) => (HAS_ARABIC.test(text) || !HAS_LETTER.test(text
  *   rows: ({ type: 'cue', index: number } | { type: 'missing', n: number })[],
  *   session: ReturnType<typeof import('../../core/edit/index.js').createEditSession>,
  *   report: import('../../core/edit/issues.js').IssueReport,
- *   refs: string[], showEnglish: boolean, readOnly: boolean,
+ *   refs: string[], refDir: 'ltr' | 'rtl', showEnglish: boolean, readOnly: boolean,
+ *   match?: (index: number) => 'current' | 'match' | null, refRanges?: (index: number) => { start: number, end: number }[] | null,
+ *   markOf?: (index: number) => { kind: 'todo' | 'done', state: 'linked' | 'moved' } | null,
  *   selection: Set<number>, activeIndex: number | null, stepMs: number
  * }} RowContext
  */
@@ -36,6 +39,13 @@ export function createRows(doc, ctx) {
     className: 'tj-btn tj-btn--ghost tj-btn--sm ed-row__nudge-btn',
     text: dir < 0 ? '−' : '+',
     attrs: { type: 'button', 'data-act': 'nudge', 'data-dir': String(dir) },
+    doc,
+  });
+  // إجراءات الصف عند المرور أو التركيز (§١٩.٩): أيقونات بتلميحاتها، والمعطّل يذكر سببه.
+  const action = (act, iconName) => el('button', {
+    className: 'tj-btn tj-btn--ghost tj-btn--sm tj-btn--icon ed-row__act',
+    attrs: { type: 'button', 'data-act': act },
+    children: [editorIcon(iconName, { doc })],
     doc,
   });
 
@@ -62,7 +72,10 @@ export function createRows(doc, ctx) {
         el('input', { className: 'ed-row__check', attrs: { type: 'checkbox', 'data-act': 'select', 'aria-label': `تحديد المقطع ${cue.n}` }, doc }),
         el('span', {
           className: 'ed-row__n tj-mono',
-          children: [el('span', { text: String(cue.n), doc }), el('span', { className: 'ed-row__dot', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'tj-sr-only ed-row__edited', doc })],
+          children: [
+            el('span', { text: String(cue.n), doc }), el('span', { className: 'ed-row__dot', attrs: { 'aria-hidden': 'true' }, doc }),
+            el('span', { className: 'tj-sr-only ed-row__edited', doc }), el('span', { className: 'ed-row__mark', doc }),
+          ],
           doc,
         }),
         timeInput('start', cue.n),
@@ -70,7 +83,7 @@ export function createRows(doc, ctx) {
         el('span', { className: 'ed-row__dur tj-mono-sm', doc }),
         el('textarea', { className: 'ed-row__text', attrs: { 'data-field': 'text', 'aria-label': `نص المقطع ${cue.n}` }, doc }),
         el('p', { className: 'ed-row__en', dir: 'ltr', doc }),
-        el('span', { className: 'ed-row__nudge', children: [nudge(-1), nudge(1)], doc }),
+        el('span', { className: 'ed-row__nudge', children: [nudge(-1), nudge(1), action('seek', 'play'), action('mark', 'flag'), action('merge', 'merge'), action('split', 'split')], doc }),
         el('p', { className: 'ed-row__msg', doc }),
       ],
       doc,
@@ -119,15 +132,52 @@ export function createRows(doc, ctx) {
     text.readOnly = c.readOnly;
     text.style.height = `${textLines(cue.text) * ROW.line + ROW.fieldChrome}px`;
 
-    en.textContent = c.refs[i] ?? '';
+    const ref = c.refs[i] ?? '';
+    const ranges = c.refRanges?.(i);
+    if (ranges?.length) {
+      // نتائج البحث في المرجع الإنجليزي مميزة فيه (للقراءة فقط).
+      const parts = [];
+      let at = 0;
+      for (const r of ranges) {
+        parts.push(ref.slice(at, r.start), el('mark', { text: ref.slice(r.start, r.end), doc }));
+        at = r.end;
+      }
+      parts.push(ref.slice(at));
+      en.replaceChildren(...parts);
+    } else if (en.childElementCount || en.textContent !== ref) en.textContent = ref;
+    en.dir = c.refDir;
+    const match = c.match?.(i) ?? null;
+    node.classList.toggle('has-match', match === 'match');
+    node.classList.toggle('is-match-current', match === 'current');
     en.hidden = !c.showEnglish;
 
-    nudges.hidden = c.readOnly;
     const step = seconds(c.stepMs);
-    nudges.children[0].setAttribute('aria-label', `تقديم المقطع ${cue.n} ${step} ث (يظهر أبكر)`);
-    nudges.children[0].title = `تقديم هذا المقطع ${step} ث (يظهر أبكر)`;
-    nudges.children[1].setAttribute('aria-label', `تأخير المقطع ${cue.n} ${step} ث (يظهر لاحقًا)`);
-    nudges.children[1].title = `تأخير هذا المقطع ${step} ث (يظهر لاحقًا)`;
+    const [minus, plus, seek, markBtn, mergeBtn, splitBtn] = nudges.children;
+    minus.hidden = c.readOnly;
+    plus.hidden = c.readOnly;
+    minus.setAttribute('aria-label', `تقديم المقطع ${cue.n} ${step} ث (يظهر أبكر)`);
+    minus.title = `تقديم هذا المقطع ${step} ث (يظهر أبكر)`;
+    plus.setAttribute('aria-label', `تأخير المقطع ${cue.n} ${step} ث (يظهر لاحقًا)`);
+    plus.title = `تأخير هذا المقطع ${step} ث (يظهر لاحقًا)`;
+    const label = (b, text, why = null) => {
+      b.setAttribute('aria-label', why ? `${text} — ${why}` : text);
+      b.title = why ? `${text}: ${why}` : text;
+      if (why) b.setAttribute('aria-disabled', 'true');
+      else b.removeAttribute('aria-disabled');
+    };
+    label(seek, `▶ في الفيديو: المقطع ${cue.n} عند ${formatTimecode(Math.max(0, cue.startMs + c.session.offsetMs))}`);
+    const mark = c.markOf?.(i) ?? null;
+    label(markBtn, markActionLabel(cue.n, mark), c.readOnly ? 'الأصل للعرض فقط' : null);
+    markBtn.setAttribute('aria-pressed', mark ? 'true' : 'false');
+    markBtn.dataset.kind = mark?.kind ?? '';
+    const isLast = i >= c.session.count - 1;
+    label(mergeBtn, `دمج المقطع ${cue.n} مع التالي`, c.readOnly ? 'الأصل للعرض فقط' : isLast ? 'لا مقطع بعده' : null);
+    label(splitBtn, `شطر المقطع ${cue.n} عند المؤشر`, c.readOnly ? 'الأصل للعرض فقط' : null);
+    const badge = num.querySelector('.ed-row__mark');
+    badge.dataset.kind = mark?.kind ?? '';
+    badge.dataset.state = mark?.state ?? '';
+    badge.textContent = mark ? markBadge(mark) : '';
+    badge.title = mark ? markTitle(mark) : '';
 
     msg.id = `ed-msg-${i}`;
     msg.hidden = !first;

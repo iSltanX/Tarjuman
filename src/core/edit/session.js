@@ -3,22 +3,44 @@
 // snapshot() بالانتقالات. عقد التوقيت: ± يغيّر المحفوظ لنطاق بـshiftCues، و«تثبيت الإزاحة» بـcommitOffset
 // يغيّر المقاطع والإزاحة معًا في خطوة واحدة، فلا تُطبَّق الإزاحة مرتين.
 //
-// الذاكرة على قدر التغيير لا الملف: النص والزمن والاستعادة تحفظ المقاطع المتغيرة وحدها، والنقل والتثبيت يحفظان
-// المقدار والنطاق (عكسهما نقل بالمقدار المعاكس، وهو دقيق لأن الأزمنة أعداد صحيحة).
+// الذاكرة على قدر التغيير لا الملف: النص والزمن والاستعادة والاستبدال تحفظ المقاطع المتغيرة وحدها، والنقل والتثبيت يحفظان
+// المقدار والنطاق (عكسهما نقل بالمقدار المعاكس، وهو دقيق لأن الأزمنة أعداد صحيحة). وما يغيّر البنية (الدمج والشطر والانجراف
+// وملف التصحيح وإعادة التطبيق بعد التعارض) يحفظ المصفوفتين قبله وبعده بمراجع مقاطعهما المجمّدة، لا نسخًا منها.
+//
+// «معدَّل» بالمحتوى لا بالموضع: المقطع معدَّل إن لم يوجد بمحتواه نفسه فيما فُتح، فلا يصير كل ما بعد دمج أو شطر معدَّلًا
+// لأن مواضعه انزاحت. وعدد التغييرات أكبر العددين: ما في العمل وليس في المفتوح، وما في المفتوح وليس في العمل.
 import { applyRestoreTiming, canRestore } from '../compare/index.js';
+import { isTjError } from '../errors/index.js';
+import { applyPatch as applyPatchPlan } from '../import/patch.js';
 import { commitOffset as commitOffsetCues, shiftCues } from '../model/timing.js';
+import { driftCorrect } from './drift.js';
 import { findIssues } from './issues.js';
+import { planReplace } from './search.js';
+import { mergeCues, splitCue } from './structure.js';
 
 /** @typedef {{ n: number, startMs: number, endMs: number, text: string }} Cue */
 /** @typedef {{ kind: 'cue', index: number } | { kind: 'selection', indices: number[] } | { kind: 'all' }} Scope */
 /**
- * @typedef {'text' | 'time' | 'shift' | 'commit' | 'restore'} EditKind
- * @typedef {{ kind: EditKind, patch?: [number, Cue, Cue][], indices?: number[] | null, delta?: number, offset?: [number, number], group?: string }} Entry
- * @typedef {{ kind: EditKind, indices: number[] | null, offset: boolean, version: number, undo?: boolean, redo?: boolean }} ChangeEvent
+ * @typedef {'text' | 'time' | 'shift' | 'commit' | 'restore' | 'replace' | 'merge' | 'split' | 'drift' | 'patch' | 'rescue'} EditKind
+ * @typedef {{
+ *   kind: EditKind, patch?: [number, Cue, Cue][], indices?: number[] | null, delta?: number, offset?: [number, number], group?: string,
+ *   swap?: [Cue[], Cue[]]
+ * }} Entry
+ * @typedef {{ kind: EditKind, indices: number[] | null, offset: boolean, version: number, structural?: boolean, undo?: boolean, redo?: boolean }} ChangeEvent
  */
+
+/** ما يغيّر عدد المقاطع أو مواضعها: الصفوف تُبنى من جديد بعده. */
+export const STRUCTURAL_KINDS = Object.freeze(['merge', 'split', 'patch', 'rescue']);
 
 const freezeCue = ({ n, startMs, endMs, text }) => Object.freeze({ n, startMs, endMs, text });
 const sameCue = (a, b) => a === b || (a.n === b.n && a.startMs === b.startMs && a.endMs === b.endMs && a.text === b.text);
+/** مفتاح المحتوى: ثلاثة أعداد صحيحة ثم النص، فلا لبس في الفاصل. */
+const keyOf = (c) => `${c.n}|${c.startMs}|${c.endMs}|${c.text}`;
+/** رفض محرّك برمزه (TjError) نتيجةً لا استثناء؛ وغيره خطأ برمجي يُرمى. */
+const refusal = (err) => {
+  if (!isTjError(err)) throw err;
+  return { ok: false, code: err.code };
+};
 
 /**
  * فهارس النطاق مرتبة بلا تكرار، أو null للملف كله.
@@ -42,13 +64,18 @@ export function resolveScope(scope, count) {
 /**
  * @param {{ cues: Cue[], offsetMs?: number, maxHistory?: number }} o
  */
-export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
+export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, density = null }) {
   let base = Object.freeze(cues.map(freezeCue));
   let baseOffset = offsetMs;
   /** @type {Cue[]} */
   let work = base.slice();
   let offset = offsetMs;
-  const changed = new Set();
+  /** @type {Map<string, number>} */
+  let baseCount = new Map();
+  /** @type {Map<string, number>} */
+  let workCount = new Map();
+  let added = 0;
+  let removed = 0;
   /** @type {Entry[]} */
   let undoStack = [];
   /** @type {Entry[]} */
@@ -59,14 +86,40 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
   let issuesCache = null;
   const listeners = new Set();
 
-  const mark = (i) => {
-    if (sameCue(work[i], base[i])) changed.delete(i);
-    else changed.add(i);
+  /** يحدّث عدّ مفتاح في العمل بمقدار، ومعه الفرقين عن المفتوح. */
+  const bump = (k, by) => {
+    const w = workCount.get(k) ?? 0;
+    const b = baseCount.get(k) ?? 0;
+    const next = w + by;
+    added += Math.max(0, next - b) - Math.max(0, w - b);
+    removed += Math.max(0, b - next) - Math.max(0, b - w);
+    if (next) workCount.set(k, next);
+    else workCount.delete(k);
   };
-  const markAll = () => {
-    changed.clear();
-    for (let i = 0; i < work.length; i++) if (!sameCue(work[i], base[i])) changed.add(i);
+  /** يضع مقطعًا في موضع ويحدّث العدّ. */
+  const put = (i, cue) => {
+    bump(keyOf(work[i]), -1);
+    work[i] = cue;
+    bump(keyOf(cue), 1);
   };
+  /** يعيد العدّ كله (بعد تغيير المصفوفة أو الأساس). */
+  const recount = () => {
+    baseCount = new Map();
+    for (const c of base) {
+      const k = keyOf(c);
+      baseCount.set(k, (baseCount.get(k) ?? 0) + 1);
+    }
+    workCount = new Map();
+    for (const c of work) {
+      const k = keyOf(c);
+      workCount.set(k, (workCount.get(k) ?? 0) + 1);
+    }
+    added = 0;
+    removed = 0;
+    for (const [k, w] of workCount) added += Math.max(0, w - (baseCount.get(k) ?? 0));
+    for (const [k, b] of baseCount) removed += Math.max(0, b - (workCount.get(k) ?? 0));
+  };
+  recount();
   const clearDrafts = (indices) => {
     if (indices === null) drafts.clear();
     else for (const i of indices) for (const f of ['start', 'end']) drafts.delete(`${i}:${f}`);
@@ -78,9 +131,17 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
     const event = { ...e, version };
     for (const fn of listeners) fn(event);
   };
+  // خطوة بنية سقطت من حد التاريخ: المواضع لم تعد تقابل المفتوح وإن لم تبقَ في التاريخ.
+  let droppedStructural = false;
+  // خطوات بنية دخلت في المحفوظ (markSaved): لا تجعل المواضع مختلفة عن الأساس ما دامت مطبَّقة.
+  let baked = new Set();
+  const structural = (e) => STRUCTURAL_KINDS.includes(e.kind);
   const push = (entry) => {
     undoStack.push(entry);
-    if (undoStack.length > maxHistory) undoStack.splice(0, undoStack.length - maxHistory);
+    if (undoStack.length > maxHistory) {
+      const dropped = undoStack.splice(0, undoStack.length - maxHistory);
+      if (dropped.some((e) => structural(e) && !baked.has(e))) droppedStructural = true;
+    }
     redoStack = [];
   };
   const checkIndex = (i) => {
@@ -89,10 +150,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
 
   /** يطبّق رقعة [موضع، قبل، بعد] في اتجاه. */
   const applyPatch = (patch, forward) => {
-    for (const [i, before, after] of patch) {
-      work[i] = forward ? after : before;
-      mark(i);
-    }
+    for (const [i, before, after] of patch) put(i, forward ? after : before);
     return patch.map(([i]) => i);
   };
 
@@ -102,10 +160,10 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
     const r = shiftCues(subset, delta);
     if (!r.ok) return r;
     // shiftCues يعيد نسخًا جديدة بالمفاتيح الأربعة نفسها، فتُجمَّد كما هي دون نسخة ثانية.
-    if (indices === null) work = r.cues.map(Object.freeze);
-    else indices.forEach((i, k) => { work[i] = Object.freeze(r.cues[k]); });
-    if (indices === null) markAll();
-    else indices.forEach(mark);
+    if (indices === null) {
+      work = r.cues.map(Object.freeze);
+      recount();
+    } else indices.forEach((i, k) => put(i, Object.freeze(r.cues[k])));
     return r;
   };
 
@@ -115,19 +173,42 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
    */
   const replay = (entry, forward) => {
     if (entry.patch) return applyPatch(entry.patch, forward);
+    if (entry.swap) {
+      work = (forward ? entry.swap[1] : entry.swap[0]).slice();
+      recount();
+      if (entry.offset) offset = forward ? entry.offset[1] : entry.offset[0];
+      return null;
+    }
     const d = forward ? entry.delta : -entry.delta;
     const move = (c) => Object.freeze({ n: c.n, startMs: c.startMs + d, endMs: c.endMs + d, text: c.text });
     if (entry.indices === null) {
       work = work.map(move);
-      markAll();
+      recount();
     } else {
-      for (const i of entry.indices) {
-        work[i] = move(work[i]);
-        mark(i);
-      }
+      for (const i of entry.indices) put(i, move(work[i]));
     }
     if (entry.offset) offset = forward ? entry.offset[1] : entry.offset[0];
     return entry.indices;
+  };
+
+  /**
+   * يستبدل المصفوفة كلها خطوةً واحدة (البنية والانجراف والتصحيح وإعادة التطبيق). المقاطع التي لم تتغير في موضعها تبقى
+   * بمراجعها. يعيد false إن لم يتغير شيء (فلا خطوة فارغة).
+   * @param {EditKind} kind @param {Cue[]} next @param {{ offsetMs?: number }} [o]
+   */
+  const swapAll = (kind, next, { offsetMs: nextOffset } = {}) => {
+    const before = work.slice();
+    const after = next.map((c, i) => (before[i] && sameCue(before[i], c) ? before[i] : freezeCue(c)));
+    const offsetPair = nextOffset !== undefined && nextOffset !== offset ? [offset, nextOffset] : undefined;
+    if (after.length === before.length && after.every((c, i) => c === before[i]) && !offsetPair) return false;
+    push({ kind, swap: [before, after], ...(offsetPair ? { offset: offsetPair } : {}) });
+    work = after.slice();
+    if (offsetPair) offset = offsetPair[1];
+    recount();
+    openGroup = null;
+    drafts.clear();
+    emit({ kind, indices: null, offset: Boolean(offsetPair), structural: STRUCTURAL_KINDS.includes(kind) });
+    return true;
   };
 
   /** تعديل مقطع واحد برقعة؛ والكتابة المتتابعة في المجموعة نفسها تُدمج في خطوة واحدة. */
@@ -147,8 +228,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
       push({ kind, patch: [[i, before, after]], group });
     }
     openGroup = group ?? null;
-    work[i] = after;
-    mark(i);
+    put(i, after);
     emit({ kind, indices: [i], offset: false });
     return { ok: true, changed: true };
   };
@@ -158,26 +238,41 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
     get offsetMs() { return offset; },
     get baseOffsetMs() { return baseOffset; },
     get offsetChanged() { return offset !== baseOffset; },
-    get changedCount() { return changed.size; },
-    get dirty() { return changed.size > 0 || offset !== baseOffset; },
+    get changedCount() { return Math.max(added, removed); },
+    get dirty() { return added > 0 || removed > 0 || offset !== baseOffset; },
     get canUndo() { return undoStack.length > 0; },
     get canRedo() { return redoStack.length > 0; },
     get undoKind() { return undoStack[undoStack.length - 1]?.kind ?? null; },
     get redoKind() { return redoStack[redoStack.length - 1]?.kind ?? null; },
     get historySize() { return undoStack.length; },
+    /** تغيّرت البنية منذ الفتح (دمج أو شطر أو تصحيح أو إعادة تطبيق مطبَّقة)، فلا يقابل الموضعُ موضعَه في المفتوح. */
+    get reshaped() {
+      return work.length !== base.length || droppedStructural
+        || undoStack.some((e) => structural(e) && !baked.has(e)) || redoStack.some((e) => baked.has(e));
+    },
+    /** لقطة البنية عند أخذ ما يُحفظ، تُمرَّر إلى markSaved فلا يُعدّ ما دخل المحفوظ تغييرًا في البنية. */
+    checkpoint: () => ({ entries: new Set(undoStack.filter(structural)), dropped: droppedStructural }),
     get version() { return version; },
     get hasDrafts() { return drafts.size > 0; },
     /** @param {number} i */
     cueAt: (i) => work[i],
     /** المقطع كما فُتح (للمقارنة بالمعدَّل). @param {number} i */
     baseAt: (i) => base[i],
-    /** @param {number} i */
-    isChanged: (i) => changed.has(i),
+    /** المقطع غير موجود بمحتواه فيما فُتح. @param {number} i */
+    isChanged: (i) => !baseCount.has(keyOf(work[i])),
+    /** المقاطع كما فُتحت (أساس الدمج الثلاثي عند التعارض). @returns {Cue[]} */
+    baseSnapshot: () => base.map(({ n, startMs, endMs, text }) => ({ n, startMs, endMs, text })),
     /** نص حقل زمن لم يُقرأ بعد. @param {number} i @param {'start' | 'end'} field */
     draftAt: (i, field) => drafts.get(`${i}:${field}`) ?? null,
     /** نسخة مستقلة للحفظ والتصدير. @returns {Cue[]} */
     snapshot: () => work.map(({ n, startMs, endMs, text }) => ({ n, startMs, endMs, text })),
-    issues: () => (issuesCache ??= findIssues(work, { drafts })),
+    issues: () => (issuesCache ??= findIssues(work, { drafts, density })),
+
+    /** عتبة تنبيهات الكثافة (أو null لإطفائها) بعد تغيّر التفضيلات. @param {{ maxCps?: number, maxLineChars?: number } | null} limits */
+    setDensity(limits) {
+      density = limits;
+      issuesCache = null;
+    },
 
     /** @param {(e: ChangeEvent) => void} fn */
     onChange(fn) {
@@ -253,7 +348,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
       if (!r.ok) return { ok: false, code: 'ED_COMMIT_NEGATIVE', negative: r.negative };
       push({ kind: 'commit', indices: null, delta: offset, offset: [offset, r.displayOffsetMs] });
       work = r.cues.map(Object.freeze);
-      markAll();
+      recount();
       offset = r.displayOffsetMs;
       openGroup = null;
       clearDrafts(null);
@@ -288,7 +383,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
       redoStack.push(entry);
       openGroup = null;
       clearDrafts(indices);
-      emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), undo: true });
+      emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), structural: STRUCTURAL_KINDS.includes(entry.kind), undo: true });
       return { ok: true, kind: entry.kind };
     },
 
@@ -299,7 +394,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
       undoStack.push(entry);
       openGroup = null;
       clearDrafts(indices);
-      emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), redo: true });
+      emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), structural: STRUCTURAL_KINDS.includes(entry.kind), redo: true });
       return { ok: true, kind: entry.kind };
     },
 
@@ -307,7 +402,9 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
     discard() {
       work = base.slice();
       offset = baseOffset;
-      changed.clear();
+      recount();
+      droppedStructural = false;
+      baked = new Set();
       undoStack = [];
       redoStack = [];
       openGroup = null;
@@ -322,20 +419,113 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200 }) {
     rebase({ cues: next, offsetMs: nextOffset }) {
       base = Object.freeze(next.map(freezeCue));
       baseOffset = nextOffset;
+      droppedStructural = false;
       session.discard();
     },
 
     /**
      * حفظٌ انتهى والمستخدم عدّل أثناء انتظاره: المحفوظ يصبح الأساس، ونسخة العمل والتاريخ والمسودات تبقى كما هي،
-     * فما كُتب بعد اللقطة يبقى «غير محفوظ» ولا يُكتب فوقه.
-     * @param {{ cues: Cue[], offsetMs: number }} o بالعدد نفسه
+     * فما كُتب بعد اللقطة يبقى «غير محفوظ» ولا يُكتب فوقه. ولا يُفترض العدد نفسه: دمج أو شطر أثناء الحفظ يبقى تغييرًا.
+     * @param {{ cues: Cue[], offsetMs: number }} o
+     * @param {ReturnType<typeof session.checkpoint>} [at] لقطة البنية عند أخذ المحفوظ (افتراضيها الآن)
      */
-    markSaved({ cues: saved, offsetMs: savedOffset }) {
-      if (saved.length !== work.length) throw new RangeError('المحفوظ بعدد مقاطع آخر');
+    markSaved({ cues: saved, offsetMs: savedOffset }, at = session.checkpoint()) {
       base = Object.freeze(saved.map(freezeCue));
       baseOffset = savedOffset;
-      markAll();
+      baked = at.entries;
+      if (at.dropped) droppedStructural = false;
+      recount();
       emit({ kind: 'text', indices: [], offset: true });
+    },
+
+    /**
+     * بعد التعارض (R57): الأحدث يصبح الأساس بلا تاريخ، ثم ناتج الدمج الثلاثي فوقه خطوةً واحدة «إعادة تطبيق تعديلاتي»؛
+     * فالتراجع يعيد الأحدث كما هو، ولا يُكتب شيء حتى «حفظ».
+     * @param {{ cues: Cue[], offsetMs: number }} latest @param {{ cues: Cue[], offsetMs: number }} merged
+     */
+    rebaseMerged(latest, merged) {
+      session.rebase(latest);
+      swapAll('rescue', merged.cues, { offsetMs: merged.offsetMs });
+    },
+
+    /**
+     * استبدال نصوص في مواضعها خطوةً واحدة (البحث والاستبدال، R51): لا يمس التوقيت ولا الأرقام.
+     * @param {{ index: number, after: string }[]} changes
+     */
+    replaceTexts(changes) {
+      const patch = [];
+      for (const { index, after } of changes) {
+        checkIndex(index);
+        if (typeof after !== 'string') throw new TypeError('النص ليس نصًا');
+        if (work[index].text !== after) patch.push([index, work[index], freezeCue({ ...work[index], text: after })]);
+      }
+      if (!patch.length) return { ok: true, count: 0, indices: [] };
+      push({ kind: 'replace', patch });
+      const indices = applyPatch(patch, true);
+      openGroup = null;
+      emit({ kind: 'replace', indices, offset: false });
+      return { ok: true, count: indices.length, indices };
+    },
+
+    /**
+     * خطة استبدال من نتائج البحث (planReplace في P11) ثم تطبيقها خطوةً واحدة.
+     * @param {{ index: number, start: number, end: number }[]} matches @param {string} replacement @param {{ only?: number[] }} [o]
+     */
+    replaceMatches(matches, replacement, { only } = {}) {
+      const { changes } = planReplace(work, matches, replacement, { only });
+      return session.replaceTexts(changes.map((c) => ({ index: c.index, after: c.after })));
+    },
+
+    /** دمج المقطع مع التالي (R54). @param {number} index */
+    merge(index) {
+      try {
+        swapAll('merge', mergeCues(work, index));
+        return { ok: true, index };
+      } catch (err) {
+        return refusal(err);
+      }
+    },
+
+    /** شطر المقطع عند موضع في نصه (R54). @param {number} index @param {number} at */
+    split(index, at) {
+      try {
+        swapAll('split', splitCue(work, index, at));
+        return { ok: true, index };
+      } catch (err) {
+        return refusal(err);
+      }
+    },
+
+    /**
+     * تصحيح الانجراف بنقطتين (R54): تحويل خطي للتوقيت كله خطوةً واحدة؛ الزمن السالب يرفضه كله بأرقامه.
+     * @param {{ a: { n: number, toMs: number }, b: { n: number, toMs: number } }} anchors
+     */
+    drift(anchors) {
+      let r;
+      try {
+        r = driftCorrect(work, anchors);
+      } catch (err) {
+        return refusal(err);
+      }
+      if (!r.ok) return { ok: false, code: 'ED_DRIFT_NEGATIVE', negative: r.negative };
+      const changedAny = swapAll('drift', r.cues);
+      return { ok: true, count: changedAny ? work.length : 0 };
+    },
+
+    /**
+     * ملف التصحيح بعد المعاينة (R52): الاستبدال والإدراج في المواضع المختارة، وما عداها كما هو، خطوةً واحدة.
+     * @param {import('../import/patch.js').PatchPlan} plan @param {{ only?: number[] }} [o] أرقام مختارة من الخطة
+     */
+    applyPatchPlan(plan, { only } = {}) {
+      let next;
+      try {
+        next = applyPatchPlan(work, plan, { only });
+      } catch (err) {
+        return refusal(err);
+      }
+      const before = work.length;
+      const changedAny = swapAll('patch', next);
+      return { ok: true, applied: changedAny, inserted: next.length - before };
     },
   };
   return session;

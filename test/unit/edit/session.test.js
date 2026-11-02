@@ -295,5 +295,9 @@ test('حفظ انتهى والمستخدم عدّل أثناءه: المحفوظ
   assert.equal(s.cueAt(1).text, 'كُتب أثناء الحفظ');
   s.undo();
   assert.equal(s.dirty, false, 'التراجع يعود إلى المحفوظ');
-  assert.throws(() => s.markSaved({ cues: saved.slice(1), offsetMs: 0 }), RangeError);
+  // الإصدار الثاني: «معدَّل» بالمحتوى، فالمحفوظ بعدد آخر (دمج أثناء الحفظ) أساس صالح بلا افتراض المواضع.
+  s.markSaved({ cues: saved.slice(1), offsetMs: 500 });
+  assert.equal(s.changedCount, 1, 'المقطع الأول ليس في المحفوظ');
+  assert.equal(s.isChanged(0), true);
+  assert.equal(s.isChanged(1), false);
 });
