@@ -309,7 +309,8 @@ export function createLibrary(env) {
     let glyph = icon('copy', { doc });
     const btn = el('button', {
       className: 'tj-btn tj-btn--secondary tj-btn--sm lib-copy__button',
-      attrs: { type: 'button', 'aria-label': `نسخ تعليمات ترجمة: ${m.accessName}`, 'aria-describedby': tipId, 'data-state': 'idle' },
+      // اسم الوصول يبدأ بالنص الظاهر في كل حالة (WCAG 2.5.3؛ تدقيق 5fedcb9، CL-007).
+      attrs: { type: 'button', 'aria-label': `${COPY_LABEL.idle}: ${m.accessName}`, 'aria-describedby': tipId, 'data-state': 'idle' },
       children: [glyph, label],
       doc,
     });
@@ -331,6 +332,7 @@ export function createLibrary(env) {
       },
       onState: (next) => {
         label.textContent = COPY_LABEL[next];
+        btn.setAttribute('aria-label', `${COPY_LABEL[next]}: ${m.accessName}`);
         const fresh = icon(next === 'success' ? 'check' : 'copy', { doc });
         glyph.replaceWith(fresh);
         glyph = fresh;
@@ -378,8 +380,8 @@ export function createLibrary(env) {
     });
     const primary = m.hasArabic
       ? button({ label: 'تعديل', icon: 'edit', variant: 'secondary', size: 'sm', title: name('تعديل'), doc, onClick: () => guarded(async () => { state.focusId = entry.videoId; remember(); await env.openPage('editor', { v: entry.videoId }); }) })
-      : button({ label: 'رفع ترجمة', icon: 'upload', variant: 'secondary', size: 'sm', title: name('رفع الترجمة العربية'), doc, onClick: () => upload(m) });
-    primary.setAttribute('aria-label', name(m.hasArabic ? 'تعديل' : 'رفع الترجمة العربية'));
+      : button({ label: 'رفع ترجمة', icon: 'upload', variant: 'secondary', size: 'sm', title: name('رفع ترجمة'), doc, onClick: () => upload(m) });
+    primary.setAttribute('aria-label', name(m.hasArabic ? 'تعديل' : 'رفع ترجمة'));
     const open = button({ label: name('فتح الفيديو'), iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: 'فتح الفيديو على يوتيوب', doc, onClick: () => guarded(async () => { await env.openTab(watchUrl(entry.videoId)); }) });
     const meta = [
       slots.root,

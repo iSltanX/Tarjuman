@@ -132,7 +132,7 @@ test('بلا عنوان محفوظ: النص الخافت واسم الوصول 
   const title = rows(m)[0].querySelector('h2');
   assert.equal(textOf(title), 'بلا عنوان محفوظ');
   assert.ok(title.classList.contains('lib-row__title--empty'));
-  assert.ok(buttonNamed(rows(m)[0], `نسخ تعليمات ترجمة: ${IDS[0]}`));
+  assert.ok(buttonNamed(rows(m)[0], `نسخ التعليمات: ${IDS[0]}`));
 
   const empty = await mount({ records: [] });
   await empty.lib.load();
@@ -275,8 +275,8 @@ test('حالة الصفحة في جزء العنوان: البحث والقسم 
 test('«نسخ»: يكتب تعليمات كل صف بعنوانه ورابطه حرفيًا، بلا عرض لنصها، و«تم النسخ» ثم يعود بعد ثانيتين', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: 'الأول — عنوان' }, { id: IDS[1], title: 'How Browsers Render Arabic Text' }] });
   await m.lib.load();
-  const first = buttonNamed(rowFor(m, IDS[0]), 'نسخ تعليمات ترجمة: الأول — عنوان');
-  const second = buttonNamed(rowFor(m, IDS[1]), 'نسخ تعليمات ترجمة: How Browsers Render Arabic Text');
+  const first = buttonNamed(rowFor(m, IDS[0]), 'نسخ التعليمات: الأول — عنوان');
+  const second = buttonNamed(rowFor(m, IDS[1]), 'نسخ التعليمات: How Browsers Render Arabic Text');
   assert.ok(first && second);
   assert.equal(textOf(first), 'نسخ التعليمات');
   assert.equal(first.getAttribute('data-state'), 'idle');
@@ -305,7 +305,7 @@ test('«نسخ»: يكتب تعليمات كل صف بعنوانه ورابطه 
 test('«نسخ»: التلميح بنصه المعتمد مرتبط بالزر (للمرور والتركيز)، وفيديو بلا عنوان يعمل بعنوان «غير متوفر»', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: null }] });
   await m.lib.load();
-  const button = buttonNamed(m.root, `نسخ تعليمات ترجمة: ${IDS[0]}`);
+  const button = buttonNamed(m.root, `نسخ التعليمات: ${IDS[0]}`);
   const tip = m.root.querySelector('.lib-copy__tip');
   assert.equal(textOf(tip), COPY_TIP);
   assert.equal(COPY_TIP, 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.');
@@ -324,7 +324,7 @@ test('«نسخ» عند رفض الحافظة: «أعد المحاولة» ور�
     env: { clipboardWrite: async (text) => { if (reject) throw new DOMException('Document is not focused.', 'NotAllowedError'); m.calls.clipboard.push(text); } },
   });
   await m.lib.load();
-  const button = buttonNamed(m.root, 'نسخ تعليمات ترجمة: عنوان');
+  const button = buttonNamed(m.root, 'نسخ التعليمات: عنوان');
   button.click();
   await settle();
   assert.equal(textOf(button), 'أعد المحاولة');
@@ -508,8 +508,11 @@ test('الرفع: حوار الفحص الكامل — الافتراضي أول
   assert.match(body, /جديد\.ar\.srt/);
   assert.match(body, /5 مقاطع/);
   assert.match(body, /الترجمة 1 — .*\(نشطة\)/);
-  assert.match(body, /الترجمة 2 — فارغة/);
+  // لا خانة فارغة بأرقامها (تدقيق 5fedcb9، CL-005): المحفوظة ثم «ترجمة جديدة» لأول فارغة.
+  assert.doesNotMatch(body, /فارغة/);
+  assert.match(body, /ترجمة جديدة/);
   const targets = findAll(dialog.content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio');
+  assert.deepEqual(targets.map((t) => t.getAttribute('value')), ['1', '2'], 'خياران: الأولى المحفوظة، والجديدة في 2');
   assert.deepEqual(targets.filter((t) => t.checked).map((t) => t.getAttribute('value')), ['2']);
   await m.area.flush();
   assert.equal(JSON.stringify(m.area.dump()), before, 'الإلغاء لا يغيّر بصمة التخزين');
@@ -744,7 +747,7 @@ test('إخفاق حفظ بصمة التصدير بعد نزول الملف يظ�
 test('تغيّر الإعدادات من صفحة أخرى لا يعيد بناء القائمة (يحفظ التركيز وحالة «تم النسخ»)', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
   await m.lib.load();
-  const copyBtn = buttonNamed(m.root, 'نسخ تعليمات ترجمة: عنوان');
+  const copyBtn = buttonNamed(m.root, 'نسخ التعليمات: عنوان');
   copyBtn.click();
   await settle();
   assert.equal(copyBtn.getAttribute('data-state'), 'success');
@@ -752,7 +755,7 @@ test('تغيّر الإعدادات من صفحة أخرى لا يعيد بنا�
   await m.store.setSettings({ appearance: { scale: 120 } });
   await m.area.flush();
   assert.equal(m.clock.pending().length, pendingBefore, 'لا مؤقت إعادة قراءة جديد لتغيّر الإعدادات');
-  assert.equal(buttonNamed(m.root, 'نسخ تعليمات ترجمة: عنوان'), copyBtn, 'العنصر نفسه لم يُستبدل');
+  assert.equal(buttonNamed(m.root, 'تم النسخ: عنوان'), copyBtn, 'العنصر نفسه لم يُستبدل (واسمه يبدأ بالظاهر)');
   assert.equal(copyBtn.getAttribute('data-state'), 'success');
 });
 
@@ -780,4 +783,42 @@ test('تدقيق 5fedcb9 (GM-016.3): الصف المقصود بعد الرجوع
   assert.ok(row, 'أُبرز حين ظهرت الصفحة');
   assert.equal(row.getAttribute('data-video'), target, 'ولو كان بعد أول 50');
   assert.equal(lib.state.focusId, null);
+});
+
+test('تدقيق 5fedcb9 (CL-007): اسم الوصول لأزرار الصف يبدأ بنصها الظاهر في كل حالة (WCAG 2.5.3)', async () => {
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }, { id: IDS[1], title: 'بلا عربية', arabic: false }] });
+  await m.lib.load();
+  const rowsHost = m.root.querySelectorAll('li[data-video]');
+  assert.equal(rowsHost.length, 2);
+  for (const b of rowsHost.flatMap((r) => findAll(r, (e) => e.tagName === 'button' && e.getAttribute('aria-label') && textOf(e)))) {
+    // يحوي الاسم النص الظاهر دائمًا، ويبدأ به لأفعال الصف (محدد الترجمات أرقامه «الترجمة 1» فيحوي الرقم).
+    assert.ok(b.getAttribute('aria-label').includes(textOf(b)), `${textOf(b)} ← ${b.getAttribute('aria-label')}`);
+    if (b.getAttribute('role') !== 'radio') assert.ok(b.getAttribute('aria-label').startsWith(textOf(b)), `${textOf(b)} ← ${b.getAttribute('aria-label')}`);
+  }
+  const copy = buttonNamed(m.root, 'نسخ التعليمات: عنوان');
+  copy.click();
+  await settle();
+  assert.equal(textOf(copy), 'تم النسخ');
+  assert.ok(copy.getAttribute('aria-label').startsWith('تم النسخ'));
+});
+
+test('تدقيق 5fedcb9 (CL-005): بلا ترجمة محفوظة سطر «تُحفظ ترجمةً جديدة» بلا محدد ولا «فارغة»؛ و«رفع إليها» يربط الجديدة بالخانة المطلوبة', async () => {
+  const { targetOptions } = await import('../../../../src/pages/library/model.js');
+  const { sampleBundle } = await import('../../../helpers/fixtures-v2.js');
+  const empty = { ...sampleBundle(), active: null, slots: [1, 2, 3].map((n) => ({ n, name: null, track: null, offsetMs: 0, marks: [], position: null })) };
+  assert.deepEqual(targetOptions(empty).map((o) => [o.n, o.label]), [[1, 'ترجمة جديدة']]);
+  const b = sampleBundle(); // 1 و2 ممتلئتان، 3 فارغة
+  assert.deepEqual(targetOptions(b).map((o) => [o.n, o.filled]), [[1, true], [2, true], [3, false]]);
+  assert.equal(targetOptions(b, 3).at(-1).n, 3);
+  const text = writeSrt(makeCues(5).map((c) => ({ ...c, text: `جديد ${c.n}` })));
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان', arabic: false }], env: { pickFiles: async () => [new File([text], 'جديد.ar.srt', { type: 'text/plain' })] } });
+  await m.lib.load();
+  m.answers.push(false);
+  const up = buttonNamed(rowFor(m, IDS[0]), 'رفع ترجمة');
+  up.click();
+  await settle();
+  const body = allText(m.calls.confirms[0].content);
+  assert.match(body, /تُحفظ ترجمةً جديدة/);
+  assert.doesNotMatch(body, /فارغة/);
+  assert.equal(findAll(m.calls.confirms[0].content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio').length, 0);
 });

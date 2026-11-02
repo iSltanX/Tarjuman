@@ -327,17 +327,22 @@ export function diffCountLines(d) {
 }
 
 /**
- * أهداف حوار الرفع: الخانات الثلاث بأسمائها وحالتها.
- * @param {import('../../core/model/slots.js').Bundle | null} b
+ * أهداف حوار الرفع كالمشغّل (ui-polish §٢، وproduct-spec «لا تُعرض خانة فارغة في أي محدد»): الترجمات المحفوظة بأرقامها
+ * (الحفظ فيها استبدال)، ثم خيار واحد «ترجمة جديدة» للخانة الفارغة المطلوبة أو أولاها؛ وبلا محفوظ هذا الخيار وحده (يعرضه
+ * الحوار سطرًا بلا محدد). لا «الترجمة 2 — فارغة» (تدقيق 5fedcb9، CL-005).
+ * @param {import('../../core/model/slots.js').Bundle | null} b @param {1 | 2 | 3 | null} [preferred]
  */
-export function targetOptions(b) {
-  return [1, 2, 3].map((n) => {
-    const s = b?.slots[n - 1];
-    const filled = Boolean(s?.track);
-    const active = b?.active === n;
-    const desc = !filled ? 'فارغة' : [s.name, s.track.fileName].filter(Boolean).join(' · ') + (active ? ' (نشطة)' : '');
-    return { n, filled, active, name: s?.name ?? null, label: `الترجمة ${n} — ${desc}` };
+export function targetOptions(b, preferred = null) {
+  const filledAt = (n) => Boolean(b?.slots[n - 1]?.track);
+  const out = [1, 2, 3].filter(filledAt).map((n) => {
+    const s = b.slots[n - 1];
+    const active = b.active === n;
+    const desc = [s.name, s.track.fileName].filter(Boolean).join(' · ') + (active ? ' (نشطة)' : '');
+    return { n, filled: true, active, name: s.name ?? null, label: `الترجمة ${n} — ${desc}` };
   });
+  const free = (preferred === 1 || preferred === 2 || preferred === 3) && !filledAt(preferred) ? preferred : [1, 2, 3].find((n) => !filledAt(n)) ?? null;
+  if (free) out.push({ n: free, filled: false, active: false, name: null, label: 'ترجمة جديدة' });
+  return out;
 }
 
 /** الهدف الافتراضي: المطلوب إن مُرِّر، وإلا أول خانة فارغة، وإلا النشطة (§١٩.٣). @param {object | null} b @param {number | null} [preferred] */

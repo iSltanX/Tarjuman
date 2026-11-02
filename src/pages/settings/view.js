@@ -459,6 +459,7 @@ export function createSettings(env) {
     doc, store, version, now, pause: env.pause, confirm,
     saveFile: env.saveFile ?? (async () => ({ ok: false, code: 'SV_FAILED' })),
     pickFile: env.pickFile ?? (async () => null),
+    onSaved: () => location.refreshLast(),
     onRestored: async () => {
       await Promise.all([
         store.getSettings().then((s) => { settings = s; }).catch(() => {}),
@@ -551,9 +552,19 @@ export function createSettings(env) {
   syncAll();
   select(active);
 
+  // المساحة والترجمات والتذكير تتبع المحفوظات حين تتغير من تبويب آخر (حفظ، أو رفع، أو حذف)، بعد سكون قصير لا مع كل كتابة
+  // (تدقيق 5fedcb9، GM-027.1).
+  let usageTimer = null;
+  const later = doc.defaultView?.setTimeout?.bind(doc.defaultView) ?? setTimeout;
   const unsubscribe = store.onChange((change) => {
     if (change.settings || change.cleared) store.getSettings().then((s) => { settings = s; syncAll(); }).catch(() => {});
     if (change.prefs || change.cleared) store.getPrefs().then((p) => { prefs = p; syncAll(); location.refreshLast(); }).catch(() => {});
+    if ((Object.keys(change.videos ?? {}).length || change.index || change.bundles?.length || change.cleared) && usageTimer === null) {
+      usageTimer = later(() => {
+        usageTimer = null;
+        Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage()]).catch(() => {});
+      }, 300);
+    }
   });
 
   return {

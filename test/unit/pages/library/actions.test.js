@@ -282,3 +282,12 @@ test('تدقيق 5fedcb9 (GM-015.2): تصدير الإنجليزية من الم
   assert.equal(after.slots[1].track.fingerprintId, 'fp_test000002', 'مرجع الخانة 2 باقٍ');
   assert.ok(after.record.fingerprints.some((f) => f.id === 'fp_test000002'));
 });
+
+test('تدقيق 5fedcb9 (GM-016.1): النص الدراسي من المحفوظات بروابط حيث يظهر المقطع (المحفوظ + إزاحة العرض) كالمحرّر', async () => {
+  const { exportStudy } = await import('../../../../src/pages/library/actions.js');
+  const { store } = await seeded({ offset: 2000 });
+  const files = [];
+  await exportStudy({ store, videoId: ID, format: 'md', bilingual: false, save: async (f) => { files.push(f); return { ok: true, mode: 'downloads', downloadId: 1 }; } });
+  const first = videoRecord({ videoId: ID }).arabic.original[0];
+  assert.match(files[0].text, new RegExp(`t=${Math.floor((first.startMs + 2000) / 1000)}s`), 'الرابط الأول بإزاحة العرض');
+});

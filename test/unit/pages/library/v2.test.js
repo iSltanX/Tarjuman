@@ -130,6 +130,7 @@ test('«الترجمات…»: بطاقة لكل خانة بتفاصيلها، �
   const one = cardOf(panel, 1);
   const two = cardOf(panel, 2);
   assert.ok(textOf(one).includes('نشطة'));
+  assert.ok(findAll(one, (e) => e.classList.contains('tj-pill--brand') && textOf(e) === 'نشطة').length === 1, 'النشطة بالإبراز كبقية الأسطح (CL-023)');
   assert.ok(textOf(one).includes(`${IDS[0]}.أولى.ar.srt`));
   assert.ok(textOf(one).includes('معدّلة'));
   assert.ok(textOf(one).includes('5 تعديلات يدوية'));
@@ -150,7 +151,8 @@ test('«الترجمات…»: بطاقة لكل خانة بتفاصيلها، �
   long.dispatchEvent({ type: 'change' });
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).slots[1].name, 'نسخة المراجع');
-  assert.ok(textOf(m.root.querySelector('.tj-toast--danger')).includes('24 محرفًا'));
+  // رسائل اللوحة داخل الحوار المشروط لا تحت خلفيته (CL-006).
+  assert.ok(textOf(panelOf(m).querySelector('.tj-toast--danger')).includes('24 محرفًا'));
 
   buttonNamed(cardOf(panelOf(m), 2), 'تفعيل').click();
   await settle(10);
@@ -184,7 +186,7 @@ test('«الترجمات…» — تغيير المرجع عند التعدد ي
   const s = (await m.store.getBundle(IDS[0])).slots[1];
   assert.equal(s.track.fingerprintId, 'fp_test000001');
   assert.equal(s.track.comparison.fingerprintId, 'fp_test000001');
-  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'تغيّر مرجع المقارنة للترجمة 2.');
+  assert.equal(textOf(panelOf(m).querySelector('.tj-toast--success')), 'تغيّر مرجع المقارنة للترجمة 2.');
 });
 
 test('«النسخة السابقة»: مصدرها وتاريخها وسعتها، والاستعادة تبديل قابل للعكس بتأكيد، والحذف بتأكيد', async () => {
@@ -265,7 +267,7 @@ test('«نسخ» يرفق القاموس بالنص نفسه الذي تبنيه
       await store.setPrefs(samplePrefs());
     },
   });
-  const copy = buttonNamed(rowFor(m, IDS[0]), 'نسخ تعليمات ترجمة');
+  const copy = buttonNamed(rowFor(m, IDS[0]), 'نسخ التعليمات');
   copy.click();
   await settle(5);
   const terms = samplePrefs().glossary.terms;
@@ -275,7 +277,7 @@ test('«نسخ» يرفق القاموس بالنص نفسه الذي تبنيه
   await m.area.flush();
   await settle(5);
   await m.clock.runAll();
-  buttonNamed(rowFor(m, IDS[0]), 'نسخ تعليمات ترجمة').click();
+  buttonNamed(rowFor(m, IDS[0]), 'نسخ التعليمات').click();
   await settle(5);
   assert.equal(m.calls.clipboard.at(-1), instructions({ videoId: IDS[0], title: 'عنوان' }));
 });
@@ -302,4 +304,22 @@ test('manualEdits: العدد نفسه في المحفوظات والمشغّل�
     assert.equal(manualEdits(track), expected, name);
     assert.equal(manualEdits(track), playerManualEdits(track), `${name}: المحفوظات والمشغّل`);
   }
+});
+
+test('تدقيق 5fedcb9 (CL-006، CL-015، GM-016.2): رسائل «الترجمات…» ومنطقتها الحية داخل الحوار وتعود بعده، واللوحة المفتوحة تتحدث بتغيّر من مكان آخر', async () => {
+  const { activateSlot } = await import('../../../../src/pages/library/actions.js');
+  const m = await mount();
+  openMore(m, IDS[0], 'الترجمات');
+  await settle(10);
+  const panel = panelOf(m);
+  assert.ok(panel.contains(m.lib.toaster.root) && panel.contains(m.lib.toaster.live), 'الحاويتان داخل الحوار');
+  // تغيّر من سياق آخر (المشغّل أو تبويب آخر): الخانة 2 نشطة.
+  await activateSlot({ store: m.store, videoId: IDS[0], n: 2, now: () => Date.parse(NOW) + 99999 });
+  await m.area.flush();
+  await new Promise((r) => setTimeout(r, 220));
+  await settle(10);
+  assert.ok(textOf(cardOf(panelOf(m), 2)).includes('نشطة'), 'اللوحة بالنسخة الأحدث');
+  panel.close('x');
+  await settle(5);
+  assert.ok(m.root.contains(m.lib.toaster.root) && m.root.contains(m.lib.toaster.live), 'عادتا إلى الصفحة');
 });

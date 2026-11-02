@@ -130,6 +130,8 @@ export function dataControl(env) {
       meter.hide();
       const saved = await env.saveFile({ name: built.name, text: built.text });
       saveOutcome(host, saved, built);
+      // «آخر ملف حُفظ» يتبع النسخة التي نزلت للتو (تدقيق 5fedcb9، GM-027.1).
+      if (saved.ok) await env.onSaved?.();
       return saved.ok;
     } catch (err) {
       meter.hide();

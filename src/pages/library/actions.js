@@ -112,8 +112,11 @@ export async function exportEnglish({ store, videoId, trackKey, save, now }) {
  */
 export async function exportStudy({ store, videoId, format, bilingual, save }) {
   const record = await requireRecord(store, videoId);
-  const cues = arabicCues(record);
-  if (!cues) throw new TjError('PG_STUDY_NO_ARABIC');
+  const stored = arabicCues(record);
+  if (!stored) throw new TjError('PG_STUDY_NO_ARABIC');
+  // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض) كالمحرّر، ومنه يُوزَّع الإنجليزي (تدقيق 5fedcb9، GM-016.1).
+  const timed = exportTiming(stored, record.view.displayOffsetMs, 'shown');
+  const cues = (timed.ok ? timed.cues : stored).map((c) => ({ ...c, startMs: Math.max(0, c.startMs), endMs: Math.max(0, c.endMs) }));
   const english = bilingual ? studyEnglish(record) : null;
   const file = buildStudyText({ videoId, title: record.title, cues, english, format, bilingual });
   return { name: file.name, saved: await save(file) };

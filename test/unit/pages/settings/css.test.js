@@ -41,3 +41,11 @@ test('المحفوظات: الصف شبكة (البيانات ثم الإجرا�
   const narrow = media(l, 'max-width: 760px');
   assert.match(narrow, /\.lib-row\s*\{[^}]*grid-template-columns:\s*1fr/);
 });
+
+test('تدقيق 5fedcb9 (CL-008، CL-009): القسم المفتوح بجزء العنوان لا يختبئ تحت الشريط اللاصق، وسطر «آخر الترجمات» يتسع للكسرات', () => {
+  const settings = css('settings/settings.css');
+  const all = [...settings.matchAll(/(?:^|\n)\.st-section\s*\{([^}]*)\}/g)].map((m) => m[1]).join(';');
+  assert.match(all, /scroll-margin-top:\s*calc\(var\(--tj-topbar-h/);
+  const popup = css('popup/popup.css');
+  assert.match(rule(popup, '.tj-popup__recent-title'), /14px\/22px/);
+});

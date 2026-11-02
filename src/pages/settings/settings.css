@@ -25,6 +25,8 @@
    role=status فيعلن قارئ الشاشة ما يُكتب فيها). */
 .st-content > div:empty { position: absolute; }
 .st-section { background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); padding: var(--tj-space-5) var(--tj-space-6); display: flex; flex-direction: column; }
+/* فتح الصفحة على قسم (#export) لا يخفي عنوانه تحت الشريط اللاصق (تدقيق 5fedcb9، CL-008). */
+.st-section { scroll-margin-top: calc(var(--tj-topbar-h, 56px) + var(--tj-space-4)); }
 .st-section__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--tj-space-4); padding-bottom: var(--tj-space-4); }
 .st-section__titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .st-section__titles h2:focus-visible { outline-offset: 4px; border-radius: 4px; }

@@ -64,8 +64,9 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   let reference = review.suggested ?? result.fingerprintId ?? null;
   let impact = uploadImpact(bundle, target, result.cues);
 
-  // الخانة الهدف بأسمائها.
-  const options = targetOptions(bundle);
+  // الخانة الهدف بأسمائها: المحفوظة ثم «ترجمة جديدة».
+  const options = targetOptions(bundle, preferred);
+  if (!options.some((o) => o.n === target)) target = options[0].n;
   const targetInputs = options.map((o) => {
     const input = el('input', { attrs: { type: 'radio', name: `${id}-target`, value: String(o.n) }, doc });
     input.checked = o.n === target;
@@ -80,7 +81,9 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   });
   // العنوان المرئي فقرة فوق المجموعة: legend يقع على حد fieldset فتُقص نقاط حروفه العليا («حفظ في»)؛ ويبقى اسم الوصول.
   const targetHead = el('p', { className: 'tj-label lib-up__head', text: 'حفظ في', attrs: { 'aria-hidden': 'true' }, doc });
-  const targetGroup = el('fieldset', {
+  // بلا ترجمة محفوظة: سطر «تُحفظ ترجمةً جديدة» بلا محدد، كتأكيد المشغّل.
+  const onlyNew = options.length === 1 && !options[0].filled;
+  const targetGroup = onlyNew ? el('p', { className: 'tj-body-sm lib-up__only-new', text: 'تُحفظ ترجمةً جديدة.', doc }) : el('fieldset', {
     className: 'tj-choice lib-up__targets',
     children: [
       el('legend', { className: 'tj-sr-only', text: 'حفظ في', doc }),
@@ -178,7 +181,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
       ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
       hint ? alertBox({ tone: 'warning', text: hint, doc }) : null,
-      targetHead,
+      onlyNew ? null : targetHead,
       targetGroup,
       referenceBlock,
       compareHost,
