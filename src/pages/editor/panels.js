@@ -41,6 +41,52 @@ export function renderIssues(box, { doc, report, onJump }) {
 }
 
 /**
+ * مرجع المقارنة (R50، P14): التصدير الإنجليزي المستعمل، واختيار غيره عند التعدد بترتيبه وسببه، وبيان غيابه أو ضعف الثقة به.
+ * الاختيار معاينةٌ تعيد المقارنة والعمود المرجعي، ولا يُحفظ إلا بـ«اعتماد هذا المرجع».
+ * @param {HTMLElement} box
+ * @param {{
+ *   doc: Document, options: { id: string, label: string, score: number, why: string }[], savedId: string | null,
+ *   shownId: string | null, preview: boolean, readOnly: string | null, busy: boolean,
+ *   onChoose: (id: string | null) => void, onCommit: () => void, onCancel: () => void
+ * }} o
+ */
+export function renderReference(box, { doc, options, savedId, shownId, preview, readOnly, busy, onChoose, onCommit, onCancel }) {
+  const head = el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: 'المرجع الإنجليزي', doc }), preview ? statusPill({ tone: 'warning', text: 'معاينة غير محفوظة', doc }) : el('span', { doc })], doc });
+  if (!options.length) {
+    box.replaceChildren(head, el('p', { className: 'tj-caption', text: 'لا تصدير إنجليزي محفوظ لهذا الفيديو، فلا مرجع للمقارنة. نزّل الترجمة الإنجليزية من المشغّل أولًا.', doc }));
+    return;
+  }
+  const sel = el('select', {
+    className: 'ed-select ed-ref-choice', attrs: { 'aria-label': 'مرجع المقارنة' },
+    on: { change: () => onChoose(sel.value || null) },
+    children: [
+      ...options.map((o, k) => el('option', { text: `${k === 0 ? '★ ' : ''}${o.label} — ${Math.round(o.score * 100)}%`, attrs: { value: o.id }, doc })),
+      el('option', { text: 'بلا مرجع', attrs: { value: '' }, doc }),
+    ],
+    doc,
+  });
+  sel.value = shownId ?? '';
+  sel.disabled = Boolean(readOnly) || busy;
+  const shown = options.find((o) => o.id === shownId) ?? null;
+  const weak = shown && shown.score < 0.5;
+  box.replaceChildren(...[
+    head,
+    sel,
+    shown ? el('p', { className: `tj-caption${weak ? ' ed-ref-weak' : ''}`, text: `${weak ? 'ثقة ضعيفة: ' : ''}${shown.why}`, doc }) : el('p', { className: 'tj-caption', text: 'بلا مرجع: يُعرض الملف كما هو، ولا ناقص ولا انحراف يُحسب.', doc }),
+    el('p', { className: 'tj-caption', text: 'المطابقة في العدد والتوقيت لا تعني صحة المعنى.', doc }),
+    preview ? el('div', {
+      className: 'ed-group ed-wrap',
+      children: [
+        button({ label: 'اعتماد هذا المرجع', variant: 'primary', size: 'sm', loading: busy, onClick: onCommit, doc }),
+        button({ label: 'رجوع إلى المحفوظ', size: 'sm', variant: 'ghost', onClick: onCancel, doc }),
+      ],
+      doc,
+    }) : null,
+    !preview && savedId === null && options.length ? el('p', { className: 'tj-caption', text: 'لا مرجع محفوظ لهذه الترجمة؛ اختر الأنسب من القائمة.', doc }) : null,
+  ].filter(Boolean));
+}
+
+/**
  * @param {HTMLElement} box
  * @param {{
  *   doc: Document, report: import('../../core/model/tracks.js').ComparisonReport | null, notes: string[],

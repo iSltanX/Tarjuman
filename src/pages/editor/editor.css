@@ -137,6 +137,11 @@ body.ed-page { overflow: hidden; }
 .ed-main__bar { align-items: center; gap: 8px; }
 .ed-toast--action { pointer-events: auto; display: flex; align-items: center; gap: 10px; }
 .ed-toast__action { color: inherit; }
+.ed-wrap { flex-wrap: wrap; }
+.ed-ref-choice { width: 100%; }
+.ed-ref-weak { color: var(--tj-warning); }
+.ed-rescue-list { display: flex; flex-direction: column; gap: 8px; padding: 8px; max-height: 46vh; }
+.ed-complete__group { min-height: 32px; }
 .ed-notes summary { cursor: pointer; font: 700 13px/20px var(--tj-font-body); }
 .ed-notes ul { margin: 6px 0 0; padding-inline-start: 18px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
 

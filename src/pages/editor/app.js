@@ -3,15 +3,17 @@
 // المغادرة. المنطق في src/core/edit (الجلسة والمشكلات وما يُصدَّر)؛ هنا الحالة المعروضة والأحداث فقط. لا حفظ تلقائي
 // أبدًا: «حفظ» وحده يكتب في خانة التحرير، بـexpect الحزمة المفتوحة، فإن تغيّر محتوى الخانة من المشغّل أو تبويب آخر رُفض.
 /* global __TJ_DEV__ */
-import { compare, previewRestoreTiming } from '../../core/compare/index.js';
+import { compare, previewRestoreTiming, rankReferences } from '../../core/compare/index.js';
+import { planRescue } from '../../core/edit/rescue.js';
+import { exportTiming } from '../../core/model/timing.js';
 import { READING_DEFAULTS } from '../../core/edit/density.js';
 import {
   COMPLETION_DEFAULTS, buildRows, completionGroups, completionNumbers, createEditSession, englishReference, parseSeconds, parseTimecode,
-  pickEnglishTrack, planArabicExport, planMarkToggle, resolveSlotMarks, reviewGroups,
+  pickEnglishTrack, planArabicExport, planMarkToggle, resolveSlotMarks, reviewGroups, reviewItems,
 } from '../../core/edit/index.js';
 import { resolvePosition } from '../../core/model/marks.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
-import { buildPatchPackage, patchInstructions } from '../../core/export/index.js';
+import { buildPatchPackage, buildReviewReport, buildStudyText, patchInstructions } from '../../core/export/index.js';
 import { partsStatus, readPatch } from '../../core/import/index.js';
 import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
@@ -22,9 +24,11 @@ import { createMenu } from '../../ui/menu.js';
 import { jumpToVideo } from '../../ui/seek.js';
 import { openDriftDialog } from './drift-dialog.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
-import { renderComparison, renderIssues } from './panels.js';
+import { openReportDialog, openStudyDialog } from './export-dialogs.js';
+import { renderComparison, renderIssues, renderReference } from './panels.js';
+import { openRescueDialog } from './rescue-dialog.js';
 import {
-  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged, writeMarks, writePosition,
+  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged, writeMarks, writePosition, writeReference,
 } from './persist.js';
 import { renderDensity, renderMarks, renderResume } from './review-panel.js';
 import { previewPatch, renderCompletePanel } from './complete-panel.js';
@@ -105,6 +109,7 @@ export async function mountEditor(app, {
     saving: false, pending: null, leaving: false, externalChain: Promise.resolve(),
     writing: 0, writeChain: Promise.resolve(), positionTimer: 0, resumeAfterSwitch: false,
     picks: { ...COMPLETION_DEFAULTS }, completeBusy: false, completeNumbers: /** @type {number[]} */ ([]), parts: null,
+    refPreview: /** @type {string | null | undefined} */ (undefined), refRank: [], refBusy: false,
     markView: /** @type {ReturnType<typeof resolveSlotMarks> | null} */ (null),
     caret: /** @type {{ index: number, at: number, version: number } | null} */ (null),
     hoverAct: /** @type {{ kind: 'merge' | 'split', index: number } | null} */ (null),
@@ -126,7 +131,16 @@ export async function mountEditor(app, {
   const statusBox = el('span', { className: 'ed-status', attrs: { role: 'status' }, doc });
   const undoBtn = button({ label: 'تراجع', size: 'sm', onClick: () => doUndo(), doc });
   const redoBtn = button({ label: 'إعادة', size: 'sm', onClick: () => doRedo(), doc });
-  const exportBtn = button({ label: 'تصدير…', size: 'sm', onClick: () => onExport(), doc });
+  // «تصدير ▾» (§١٩.٩): الترجمة SRT، وتقرير المراجعة، والنص الدراسي؛ وكلها عبر saveFile (R65).
+  const exportMenu = createMenu({
+    label: 'تصدير', chevron: true, doc,
+    items: [
+      { id: 'srt', label: 'الترجمة SRT…', hint: 'النسخة الحالية أو الأصل، بتوقيت المشاهدة أو المحفوظ', onSelect: () => onExport() },
+      { id: 'report', label: 'تقرير مراجعة…', hint: 'المقاطع ومشكلاتها وعلاماتك بأزمنتها', onSelect: () => onReport() },
+      { id: 'study', label: 'نص دراسي…', hint: 'فقرات للقراءة بروابط توقيت، عربي أو ثنائي اللغة', onSelect: () => onStudy() },
+    ],
+  });
+  const exportBtn = exportMenu.root;
   const saveBtn = button({ label: 'حفظ', variant: 'primary', size: 'sm', onClick: () => save(), doc });
   const headEl = el('header', {
     className: 'ed-head',
@@ -221,6 +235,7 @@ export async function mountEditor(app, {
   const issuesEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المشكلات' }, doc });
   const compareEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المقارنة' }, doc });
   const densityEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'الكثافة' }, doc });
+  const refEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المرجع الإنجليزي' }, doc });
   const marksEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'العلامات' }, doc });
   const resumeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'آخر موضع' }, doc });
   const completeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'الاستكمال' }, doc });
@@ -233,7 +248,7 @@ export async function mountEditor(app, {
   const reviewPane = el('div', {
     className: 'ed-pane', attrs: { role: 'tabpanel', id: 'ed-pane-review', 'aria-labelledby': 'ed-tab-review' },
     children: [
-      el('p', { className: 'ed-pane__title tj-label', text: 'الفحص الآلي', doc }), issuesEl, compareEl, densityEl,
+      el('p', { className: 'ed-pane__title tj-label', text: 'الفحص الآلي', doc }), issuesEl, refEl, compareEl, densityEl,
       el('p', { className: 'ed-pane__title tj-label', text: 'مراجعتك', doc }), marksEl, resumeEl,
     ],
     doc,
@@ -292,7 +307,9 @@ export async function mountEditor(app, {
     S.slot = n;
     S.info = st;
     S.fp = st.fingerprint;
+    S.refPreview = undefined;
     S.edited = st.edited;
+    rankRefs();
     S.englishTrack = pickEnglishTrack(b.record.english, S.fp);
     S.offSession?.();
     S.session = createEditSession({ cues: st.cues, offsetMs: st.offsetMs, density: densityOf(S.prefs) });
@@ -492,8 +509,7 @@ export async function mountEditor(app, {
     undoBtn.title = undoBtn.title || `تراجع عن: ${KIND_LABEL[s.undoKind]} (⌘Z)`;
     setDisabled(redoBtn, ro ?? (s.canRedo ? null : 'لا شيء للإعادة'));
     redoBtn.title = redoBtn.title || `إعادة: ${KIND_LABEL[s.redoKind]} (⇧⌘Z)`;
-    const errs = act().issues().errors;
-    setDisabled(exportBtn, errs ? messageFor('ED_EXPORT_HAS_ERRORS', { count: errorsToFix(errs) }) : null);
+    // «تصدير ▾» يبقى متاحًا: التقرير والنص الدراسي لا تمنعهما أخطاء التوقيت، وحوار SRT يذكر سبب منعه.
     const reason = saveBlockReason();
     for (const b of [saveBtn, unsavedSave]) {
       setDisabled(b, reason);
@@ -578,6 +594,7 @@ export async function mountEditor(app, {
     const actions = el('div', {
       className: 'ed-group',
       children: [
+        S.external === 'changed' && S.session.dirty ? button({ label: 'مقارنة وإعادة التطبيق…', variant: 'primary', size: 'sm', onClick: () => onRescue(), doc }) : null,
         S.external === 'changed' ? button({ label: 'إعادة الفتح', variant: 'secondary', size: 'sm', onClick: () => reopen(), doc }) : null,
         button({ label: 'تصدير نسختي…', variant: 'ghost', size: 'sm', onClick: () => onExport(), doc }),
       ],
@@ -589,10 +606,144 @@ export async function mountEditor(app, {
   }
 
   function renderComparisonPanel() {
+    renderReferencePanel();
     renderComparison(compareEl, {
       doc, report: S.comparison, notes: S.info.track.notes ?? [], readOnly: readOnly(),
       onRestore: () => onRestoreTiming(), onJumpN: (n) => jumpToN(n),
     });
+  }
+
+  // ---- مرجع المقارنة (R50): الاختيار معاينة تعيد المقارنة والعمود المرجعي، والحفظ صريح ----
+  const fpById = (id) => S.opened.record.fingerprints.find((f) => f.id === id) ?? null;
+
+  /** ترتيب المراجع للخانة (الأفضل أولًا) عند الفتح وتغيّر الحزمة، لا مع كل حرف. */
+  function rankRefs() {
+    const fps = S.opened.record.fingerprints;
+    let ranked = [];
+    try {
+      ranked = fps.length ? rankReferences(S.info.cues, fps) : [];
+    } catch {
+      ranked = fps.map((f) => ({ fingerprintId: f.id, score: 0, matched: false, why: '' }));
+    }
+    S.refRank = ranked.map((r) => {
+      const f = fpById(r.fingerprintId);
+      return { id: r.fingerprintId, score: r.score, why: r.why, label: f?.fileName ?? `${f?.trackKey ?? ''} · ${f?.mode === 'long' ? 'مقاطع أطول' : 'عادي'}${f?.parts ? ` · ${f.parts.length} أجزاء` : ''}` };
+    });
+  }
+
+  function renderReferencePanel() {
+    const savedId = S.info.fingerprint?.id ?? null;
+    renderReference(refEl, {
+      doc, options: S.refRank ?? [], savedId, shownId: S.fp?.id ?? null, preview: S.refPreview !== undefined, readOnly: readOnly() ? messageFor('ED_READ_ONLY') : null,
+      busy: S.refBusy, onChoose: (id) => previewRef(id), onCommit: () => commitRef(), onCancel: () => previewRef(undefined),
+    });
+  }
+
+  /** معاينة مرجع (أو undefined للرجوع إلى المحفوظ): المقارنة والعمود المرجعي والاستكمال بها. */
+  function previewRef(id) {
+    const savedId = S.info.fingerprint?.id ?? null;
+    S.refPreview = id === undefined || id === savedId ? undefined : id;
+    S.fp = S.refPreview === undefined ? S.info.fingerprint : fpById(S.refPreview);
+    S.englishTrack = pickEnglishTrack(S.opened.record.english, S.fp);
+    rebuildList();
+    renderAll();
+  }
+
+  /** «اعتماد هذا المرجع»: كتابة واحدة للخانة بمرجعها وتقرير المقارنة المحسوب على المحفوظ منها. */
+  async function commitRef() {
+    if (S.refPreview === undefined || S.refBusy) return;
+    const fp = S.fp;
+    S.refBusy = true;
+    renderReferencePanel();
+    try {
+      const comparison = fp ? compare(S.info.cues, fp, { driftMs: settings.thresholds.driftMs }) : null;
+      const n = S.slot;
+      const b = await queue((opened) => writeReference(store, videoId, opened, n, { fingerprintId: fp?.id ?? null, comparison }, { now }));
+      S.refPreview = undefined;
+      afterCompanionWrite(b);
+      toast(fp ? 'حُفظ المرجع لهذه الترجمة.' : 'حُفظت الترجمة بلا مرجع.', 'success');
+    } catch (err) {
+      const info = toErrorInfo(err);
+      toast(`تعذّر حفظ المرجع: ${info.message}`, 'danger');
+    } finally {
+      S.refBusy = false;
+      renderAll();
+    }
+  }
+
+  // ---- إنقاذ المسودة عند التعارض (R57) ----
+  async function onRescue() {
+    let latest = null;
+    try {
+      latest = await store.getBundle(videoId);
+    } catch {
+      latest = null;
+    }
+    if (!latest?.slots[S.slot - 1].track) {
+      S.external = 'removed';
+      renderAll();
+      return;
+    }
+    const theirs = openedSlot(latest, S.slot);
+    const input = {
+      base: S.session.baseSnapshot(), mine: S.session.snapshot(), theirs: theirs.cues,
+      offsets: { base: S.session.baseOffsetMs, mine: S.session.offsetMs, theirs: theirs.offsetMs },
+    };
+    const choice = await openRescueDialog({ doc, first: planRescue(input), offsets: input.offsets });
+    if (choice === 'export') {
+      onExport();
+      return;
+    }
+    if (!choice) return;
+    const plan = planRescue({ ...input, ...choice });
+    if (!plan.ok) return;
+    S.view = 'edit';
+    S.opened = latest;
+    S.info = theirs;
+    S.edited = theirs.edited;
+    S.refPreview = undefined;
+    S.fp = theirs.fingerprint;
+    S.englishTrack = pickEnglishTrack(latest.record.english, S.fp);
+    S.original = createEditSession({ cues: theirs.original, offsetMs: theirs.offsetMs, density: densityOf(S.prefs) });
+    S.external = null;
+    S.session.rebaseMerged({ cues: theirs.cues, offsetMs: theirs.offsetMs }, { cues: plan.cues, offsetMs: plan.offsetMs });
+    rankRefs();
+    rebuildList();
+    S.result = {
+      tone: 'success',
+      text: `أُعيد تطبيق ${formatCount(plan.kept.length, COUNT_FORMS.change)} من تعديلاتك فوق النسخة الأحدث، وبقي ما غيّره الأحدث. لم يُكتب شيء بعد: راجعها ثم احفظ.`,
+    };
+    renderAll();
+  }
+
+  // ---- تقرير المراجعة والنص الدراسي (R58) ----
+  async function onReport() {
+    const file = await openReportDialog({
+      doc,
+      build: ({ auto, marks, includeText, format }) => {
+        const items = reviewItems({
+          cues: shownCues(), issues: act().issues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView,
+          english: S.view === 'original' ? S.refsOriginal : S.refs, includeText, include: { auto, marks },
+        });
+        return { count: items.length, file: items.length ? buildReviewReport({ videoId, title: S.opened.record.title, items, includeText, format }) : null };
+      },
+    });
+    if (file) await saveText(file);
+  }
+
+  async function onStudy() {
+    const english = S.englishTrack?.cues ?? [];
+    const file = await openStudyDialog({
+      doc, hasEnglish: english.length > 0,
+      build: ({ bilingual, format }) => {
+        // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض)، ومنه يُوزَّع الإنجليزي بمنتصف زمنه.
+        const s = act();
+        const timed = exportTiming(s.snapshot(), S.view === 'original' ? 0 : S.session.offsetMs, 'shown');
+        const cues = timed.ok ? timed.cues : s.snapshot();
+        return buildStudyText({ videoId, title: S.opened.record.title, cues, english: bilingual ? english : null, format, bilingual });
+      },
+    });
+    if (file) await saveText(file);
   }
 
   function renderCounter() {
@@ -1169,7 +1320,8 @@ export async function mountEditor(app, {
     const prevFp = S.fp?.id ?? null;
     S.opened = latest;
     S.info = openedSlot(latest, S.slot);
-    if ((S.info.fingerprint?.id ?? null) !== prevFp) {
+    rankRefs();
+    if (S.refPreview === undefined && (S.info.fingerprint?.id ?? null) !== prevFp) {
       S.fp = S.info.fingerprint;
       S.englishTrack = pickEnglishTrack(latest.record.english, S.fp);
       rebuildList();
