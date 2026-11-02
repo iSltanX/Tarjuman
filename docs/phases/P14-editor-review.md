@@ -137,14 +137,14 @@
 ```json tj-status
 {
   "phase": "P14",
-  "status": "ready",
-  "updated": "2026-11-02T18:20:18+03:00",
+  "status": "integrating",
+  "updated": "2026-11-02T18:26:00+03:00",
   "branch": "tj/P14-editor-review",
   "resume": "جاهزة للدمج في W7",
   "blocker": null,
   "outcome": null,
   "commit": "63e4b70",
-  "mergeCommit": null,
+  "mergeCommit": "0b865e2",
   "checks": [
     {
       "cmd": "npm run check",

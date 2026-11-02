@@ -131,14 +131,14 @@
 ```json tj-status
 {
   "phase": "P12",
-  "status": "ready",
-  "updated": "2026-11-02T17:45:25+03:00",
+  "status": "integrating",
+  "updated": "2026-11-02T18:25:37+03:00",
   "branch": "tj/P12-watch-tools",
   "resume": "جاهزة للدمج في W7",
   "blocker": null,
   "outcome": null,
   "commit": "649704d",
-  "mergeCommit": null,
+  "mergeCommit": "6dfaa5f",
   "checks": [
     {
       "cmd": "npm run check",
