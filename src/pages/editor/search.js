@@ -151,13 +151,14 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
    * يعيد البحث بعد كتابة الاستعلام أو تغيّر خياراته (فتصير الحالية أقرب نتيجة من المقطع الحالي ويُمرَّر إليها)، أو بعد تغيّر
    * المقاطع (فتبقى الحالية قرب موضعها).
    */
-  function run() {
+  function run({ after = null } = {}) {
     win.clearTimeout(S.timer);
     const key = `${input.value}|${S.field}|${S.wholeWord}|${S.ignoreMarks}`;
     const fresh = key !== S.key;
     S.key = key;
     S.query = input.value;
-    const was = fresh ? null : S.matches[S.current];
+    // بعد «استبدال هنا» تكون الحالية أول نتيجة بعد النص المُدرَج، لا داخله (وإلا عشّش الاستبدال في نفسه).
+    const was = fresh ? null : after ?? S.matches[S.current];
     const list = cues();
     S.matches = S.query.trim() ? searchCues(list, S.query, { field: S.field, english: S.field === 'en' ? english() : null, wholeWord: S.wholeWord, ignoreMarks: S.ignoreMarks }) : [];
     S.byIndex = new Map();
@@ -204,7 +205,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     const m = S.matches[S.current];
     const r = replace(S.matches, replaceIn.value, [S.current]);
     if (!r.ok) return;
-    run();
+    run({ after: { index: m.index, start: m.start + replaceIn.value.length } });
     if (S.matches.length) reveal(S.matches[S.current].index, S.matches[S.current], { focus: false, field: 'ar' });
     else reveal(m.index, null, { focus: false, field: 'ar' });
   }
@@ -213,8 +214,10 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     if (replaceWhy()) return;
     const list = cues();
     const replacement = replaceIn.value;
-    const picked = new Set(S.matches.map((_, k) => k));
-    const rows = S.matches.slice(0, MAX_PREVIEW).map((m, k) => {
+    // ما عُرض هو ما يُطبَّق: المطابقات ملتقطة عند فتح الحوار، فلا يغيّرها إعادة بحث وهو مفتوح.
+    const matches = S.matches;
+    const picked = new Set(matches.map((_, k) => k));
+    const rows = matches.slice(0, MAX_PREVIEW).map((m, k) => {
       const c = list[m.index];
       const sn = snippet(c.text, m.start, m.end);
       const box = el('input', { attrs: { type: 'checkbox', checked: '', 'aria-label': `استبدال في المقطع ${c.n}` }, on: { change: () => { if (box.checked) picked.add(k); else picked.delete(k); sync(); } }, doc });
@@ -235,20 +238,20 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     let applyBtn = null;
     const total = el('p', { className: 'tj-caption', doc });
     const sync = () => {
-      const cuesTouched = new Set([...picked].map((k) => S.matches[k].index)).size;
+      const cuesTouched = new Set([...picked].map((k) => matches[k].index)).size;
       total.textContent = `المختار: ${formatCount(picked.size, COUNT.match)} في ${formatCount(cuesTouched, COUNT_FORMS.cue)}.`;
       if (applyBtn) {
         applyBtn.firstChild.textContent = `استبدال ${picked.size}`;
         setDisabled(applyBtn, picked.size ? null : 'اختر موضعًا واحدًا على الأقل.');
       }
     };
-    const plan = planReplace(list, S.matches, replacement);
+    const plan = planReplace(list, matches, replacement);
     const content = el('div', {
       className: 'tj-stack',
       children: [
         el('p', { className: 'tj-body-sm', text: `«${S.query}» ← «${replacement}». حرفيًا في المواضع المختارة وحدها؛ التوقيت والأرقام كما هي، وكل الاستبدال خطوة واحدة في التراجع.`, doc }),
         el('div', { className: 'ed-preview-table ed-replace-list', children: rows, doc }),
-        S.matches.length > MAX_PREVIEW ? el('p', { className: 'tj-caption', text: `تُعرض أول ${MAX_PREVIEW} موضع؛ والباقي (${S.matches.length - MAX_PREVIEW}) يُستبدل معها.`, doc }) : null,
+        matches.length > MAX_PREVIEW ? el('p', { className: 'tj-caption', text: `تُعرض أول ${MAX_PREVIEW} موضع؛ والباقي (${matches.length - MAX_PREVIEW}) يُستبدل معها.`, doc }) : null,
         el('p', { className: 'tj-caption', text: `يتغير نص ${formatCount(plan.changes.length, COUNT_FORMS.cue)}.`, doc }),
         total,
       ],
@@ -263,7 +266,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
       ],
     });
     if (v !== 'apply' || !picked.size) return;
-    replace(S.matches, replacement, [...picked].sort((a, b) => a - b));
+    replace(matches, replacement, [...picked].sort((a, b) => a - b));
     run();
   }
 

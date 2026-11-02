@@ -143,6 +143,24 @@ test('إعادة التطبيق بعد التعارض: الأحدث أساس، �
   assert.deepEqual(s.baseSnapshot(), latest.cues);
 });
 
+test('بعد حفظٍ كُتب أثناءه: الدمج الذي دخل المحفوظ لا يعدّ تغييرًا في البنية، وما بعده يُعدّ (مراجعة)', () => {
+  const s = createEditSession({ cues: makeCues(6) });
+  s.merge(1);
+  const saved = s.snapshot();
+  const at = s.checkpoint();
+  s.setText(0, 'كُتب أثناء الحفظ');
+  s.markSaved({ cues: saved, offsetMs: 0 }, at);
+  assert.equal(s.reshaped, false, 'المواضع تقابل المحفوظ');
+  assert.equal(s.changedCount, 1);
+  s.split(2, 'سطر'.length);
+  assert.equal(s.reshaped, true, 'شطر بعد الحفظ');
+  s.undo();
+  assert.equal(s.reshaped, false);
+  s.undo();
+  s.undo();
+  assert.equal(s.reshaped, true, 'التراجع عن دمج محفوظ يغيّر المواضع عن المحفوظ');
+});
+
 test('الكثافة: قراءة سريعة وسطر طويل تحذيران لا يمنعان الحفظ ولا التصدير، وبعتبة قابلة للضبط (P14-AC3، R55)', () => {
   const fast = { n: 1, startMs: 0, endMs: 1000, text: 'هذا سطر عربي طويل جدًا يُقرأ في ثانية واحدة' };
   const long = { n: 2, startMs: 2000, endMs: 9000, text: 'سطر واحد طويل جدًا يتجاوز اثنين وأربعين محرفًا بكثير هنا' };

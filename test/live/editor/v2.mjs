@@ -487,6 +487,32 @@ try {
     await settle(400);
   });
 
+  // «استبدال هنا» ببديل يحوي ما يُبحث عنه يتقدم إلى التالية ولا يعشّش في النص المُدرَج (مراجعة مستقلة).
+  await step('ac2-replace-here-advances', async () => {
+    await clickOn(rowSel(2, 'text'));
+    await cmd('KeyF', 'ب', 70);
+    await ed.eval(() => { const i = document.querySelector('.ed-search__input'); i.value = ''; });
+    await typeText('للمقطع 2');
+    await settle(400);
+    await ed.eval(() => { const i = document.querySelector('.ed-search__replace input'); i.value = ''; });
+    await clickOn('.ed-search__replace input');
+    await typeText('للمقطع 2 مكرر');
+    await clickOn('.ed-search__replace button', 'استبدال هنا');
+    await clickOn('.ed-search__replace button', 'استبدال هنا');
+    const texts = await ed.eval(() => {
+      const s = globalThis.__tarjumanEditor.state.session;
+      return Array.from({ length: s.count }, (_, i) => s.cueAt(i).text).filter((t) => t.includes('مكرر'));
+    });
+    const s = await info();
+    check('ac2-replace-here-advances', texts.length === 2 && texts.every((t) => !t.includes('مكرر مكرر')) && s.history === 2, { texts, history: s.history });
+    await clickOn('.ed-head button', 'تراجع');
+    await clickOn('.ed-head button', 'تراجع');
+    await ed.eval(() => {
+      const i = document.querySelector('.ed-search__input'); i.value = ''; i.dispatchEvent(new Event('input'));
+    });
+    await settle(400);
+  });
+
   // ===== AC3: الدمج والشطر والانجراف بمعاينة وتراجع، والكثافة غير مانعة =====
   await step('ac3-structure', async () => {
     let s = await info();

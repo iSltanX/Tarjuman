@@ -133,11 +133,14 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
   };
   // خطوة بنية سقطت من حد التاريخ: المواضع لم تعد تقابل المفتوح وإن لم تبقَ في التاريخ.
   let droppedStructural = false;
+  // خطوات بنية دخلت في المحفوظ (markSaved): لا تجعل المواضع مختلفة عن الأساس ما دامت مطبَّقة.
+  let baked = new Set();
+  const structural = (e) => STRUCTURAL_KINDS.includes(e.kind);
   const push = (entry) => {
     undoStack.push(entry);
     if (undoStack.length > maxHistory) {
       const dropped = undoStack.splice(0, undoStack.length - maxHistory);
-      if (dropped.some((e) => STRUCTURAL_KINDS.includes(e.kind))) droppedStructural = true;
+      if (dropped.some((e) => structural(e) && !baked.has(e))) droppedStructural = true;
     }
     redoStack = [];
   };
@@ -243,7 +246,12 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     get redoKind() { return redoStack[redoStack.length - 1]?.kind ?? null; },
     get historySize() { return undoStack.length; },
     /** تغيّرت البنية منذ الفتح (دمج أو شطر أو تصحيح أو إعادة تطبيق مطبَّقة)، فلا يقابل الموضعُ موضعَه في المفتوح. */
-    get reshaped() { return work.length !== base.length || droppedStructural || undoStack.some((e) => STRUCTURAL_KINDS.includes(e.kind)); },
+    get reshaped() {
+      return work.length !== base.length || droppedStructural
+        || undoStack.some((e) => structural(e) && !baked.has(e)) || redoStack.some((e) => baked.has(e));
+    },
+    /** لقطة البنية عند أخذ ما يُحفظ، تُمرَّر إلى markSaved فلا يُعدّ ما دخل المحفوظ تغييرًا في البنية. */
+    checkpoint: () => ({ entries: new Set(undoStack.filter(structural)), dropped: droppedStructural }),
     get version() { return version; },
     get hasDrafts() { return drafts.size > 0; },
     /** @param {number} i */
@@ -396,6 +404,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       offset = baseOffset;
       recount();
       droppedStructural = false;
+      baked = new Set();
       undoStack = [];
       redoStack = [];
       openGroup = null;
@@ -418,10 +427,13 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
      * حفظٌ انتهى والمستخدم عدّل أثناء انتظاره: المحفوظ يصبح الأساس، ونسخة العمل والتاريخ والمسودات تبقى كما هي،
      * فما كُتب بعد اللقطة يبقى «غير محفوظ» ولا يُكتب فوقه. ولا يُفترض العدد نفسه: دمج أو شطر أثناء الحفظ يبقى تغييرًا.
      * @param {{ cues: Cue[], offsetMs: number }} o
+     * @param {ReturnType<typeof session.checkpoint>} [at] لقطة البنية عند أخذ المحفوظ (افتراضيها الآن)
      */
-    markSaved({ cues: saved, offsetMs: savedOffset }) {
+    markSaved({ cues: saved, offsetMs: savedOffset }, at = session.checkpoint()) {
       base = Object.freeze(saved.map(freezeCue));
       baseOffset = savedOffset;
+      baked = at.entries;
+      if (at.dropped) droppedStructural = false;
       recount();
       emit({ kind: 'text', indices: [], offset: true });
     },

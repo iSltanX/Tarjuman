@@ -1,6 +1,6 @@
 {
   "browser": "Brave (Chrome/156.0.8078.80)",
-  "at": "2026-11-02T14:49:18.841Z",
+  "at": "2026-11-02T15:17:40.581Z",
   "headless": true,
   "videos": {
     "ted": "iG9CE55wbtY",
@@ -224,6 +224,17 @@
       }
     },
     {
+      "id": "ac2-replace-here-advances",
+      "ok": true,
+      "detail": {
+        "texts": [
+          "ترجمة للمقطع 2 مكرر0",
+          "ترجمة للمقطع 2 مكرر1"
+        ],
+        "history": 2
+      }
+    },
+    {
       "id": "ac3-merge",
       "ok": true,
       "detail": {
@@ -253,7 +264,7 @@
         "comparison": {
           "missing": 1,
           "restore": false,
-          "fp": "fp_mvzdk9a1yvm7b4"
+          "fp": "fp_mvzekqclh4zj6l"
         }
       }
     },
@@ -265,7 +276,7 @@
         "comparison": {
           "missing": 0,
           "restore": true,
-          "fp": "fp_mvzdk9a1yvm7b4"
+          "fp": "fp_mvzekqclh4zj6l"
         }
       }
     },
@@ -421,11 +432,11 @@
       "id": "ac8-reference-preview",
       "ok": true,
       "detail": {
-        "fp": "fp_mvzdka1tqig1uy",
+        "fp": "fp_mvzekr4drci3gy",
         "cmp": {
           "missing": 0,
           "restore": true,
-          "fp": "fp_mvzdka1tqig1uy"
+          "fp": "fp_mvzekr4drci3gy"
         }
       }
     },
@@ -433,7 +444,7 @@
       "id": "ac8-reference-saved-explicitly",
       "ok": true,
       "detail": {
-        "stored": "fp_mvzdka1tqig1uy"
+        "stored": "fp_mvzekr4drci3gy"
       }
     },
     {
@@ -554,12 +565,13 @@
         "pages": [
           "about:blank",
           "about:blank",
+          "about:blank",
+          "about:blank",
           "/watch?v=iG9CE55wbtY&t=278s",
           "about:blank",
           "about:blank",
-          "about:blank",
-          "about:blank",
           "chrome-extension://ppeeglbgljikjaeplnfgkjnjajcbiiie/pages/ed",
+          "about:blank",
           "about:blank",
           "about:blank"
         ]
@@ -569,7 +581,7 @@
       "id": "perf-2400-search-and-edit-smooth",
       "ok": true,
       "detail": {
-        "openedMs": 355,
+        "openedMs": 352,
         "typing": {
           "count": 0,
           "maxKey": 0,
@@ -578,20 +590,20 @@
         },
         "results": "1 من 329",
         "replaceEv": {
-          "count": 56,
+          "count": 49,
           "maxKey": 0,
-          "maxClick": 40,
+          "maxClick": 48,
           "over100": 0
         },
         "mergeEv": {
-          "count": 84,
+          "count": 88,
           "maxKey": 0,
-          "maxClick": 40,
+          "maxClick": 48,
           "over100": 0
         },
         "sweep": {
           "steps": 60,
-          "maxFrameMs": 25,
+          "maxFrameMs": 19,
           "p95FrameMs": 18,
           "rowsMax": 19
         }
@@ -618,7 +630,7 @@
     }
   ],
   "perf": {
-    "openedMs": 355,
+    "openedMs": 352,
     "typing": {
       "count": 0,
       "maxKey": 0,
@@ -627,20 +639,20 @@
     },
     "results": "1 من 329",
     "replaceEv": {
-      "count": 56,
+      "count": 49,
       "maxKey": 0,
-      "maxClick": 40,
+      "maxClick": 48,
       "over100": 0
     },
     "mergeEv": {
-      "count": 84,
+      "count": 88,
       "maxKey": 0,
-      "maxClick": 40,
+      "maxClick": 48,
       "over100": 0
     },
     "sweep": {
       "steps": 60,
-      "maxFrameMs": 25,
+      "maxFrameMs": 19,
       "p95FrameMs": 18,
       "rowsMax": 19
     }
@@ -663,14 +675,14 @@
     "player": [
       {
         "kind": "log.security",
-        "text": "Unsafe attempt to load URL chrome-extension://6e287831-d4dd-4574-9f30-b32fddebcfd5/ui/fonts/subtitle/almarai-400.woff2 from frame with URL [رابط] Domains, protocols and ports must match.\n"
+        "text": "Unsafe attempt to load URL chrome-extension://6e6c2115-63e1-4495-ab5b-cb77ecde640b/ui/fonts/subtitle/almarai-400.woff2 from frame with URL [رابط] Domains, protocols and ports must match.\n"
       },
       {
         "kind": "log.security",
-        "text": "Unsafe attempt to load URL chrome-extension://6e287831-d4dd-4574-9f30-b32fddebcfd5/ui/fonts/subtitle/almarai-700.woff2 from frame with URL [رابط] Domains, protocols and ports must match.\n"
+        "text": "Unsafe attempt to load URL chrome-extension://6e6c2115-63e1-4495-ab5b-cb77ecde640b/ui/fonts/subtitle/almarai-700.woff2 from frame with URL [رابط] Domains, protocols and ports must match.\n"
       }
     ],
     "editor": []
   },
-  "summary": "62/62"
+  "summary": "63/63"
 }

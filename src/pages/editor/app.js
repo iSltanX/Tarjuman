@@ -107,7 +107,8 @@ export async function mountEditor(app, {
     result: /** @type {{ tone: string, text: string } | null} */ (null),
     external: /** @type {null | 'changed' | 'removed'} */ (null),
     saving: false, pending: null, leaving: false, externalChain: Promise.resolve(),
-    writing: 0, writeChain: Promise.resolve(), positionTimer: 0, resumeAfterSwitch: false,
+    writing: 0, writeChain: Promise.resolve(), positionTimer: 0,
+    resumeFrom: /** @type {import('../../core/model/marks.js').Position | null} */ (null),
     picks: { ...COMPLETION_DEFAULTS }, completeBusy: false, completeNumbers: /** @type {number[]} */ ([]), parts: null,
     refPreview: /** @type {string | null | undefined} */ (undefined), refRank: [], refBusy: false,
     markView: /** @type {ReturnType<typeof resolveSlotMarks> | null} */ (null),
@@ -193,7 +194,15 @@ export async function mountEditor(app, {
     onChange: () => S.list?.refresh(null),
     reveal: (index, match, { focus, field }) => revealMatch(index, match, { focus, field }),
     replace: (matches, replacement, only) => {
-      const r = S.session.replaceMatches(matches, replacement, { only });
+      let r;
+      try {
+        r = S.session.replaceMatches(matches, replacement, { only });
+      } catch {
+        // تغيّرت المقاطع بعد البحث فلم تعد المواضع صالحة: لا استبدال، والبحث يُعاد.
+        S.result = { tone: 'danger', text: 'تغيّرت المقاطع بعد البحث؛ أعد المعاينة.' };
+        renderToolbar();
+        return { ok: false, count: 0 };
+      }
       S.result = { tone: r.count ? 'success' : 'info', text: r.count ? `استُبدل النص في ${formatCount(r.count, COUNT_FORMS.cue)}. التراجع يعيده خطوةً واحدة.` : 'لا تغيير.' };
       renderToolbar();
       return r;
@@ -674,11 +683,12 @@ export async function mountEditor(app, {
 
   // ---- إنقاذ المسودة عند التعارض (R57) ----
   async function onRescue() {
-    let latest = null;
+    let latest;
     try {
       latest = await store.getBundle(videoId);
-    } catch {
-      latest = null;
+    } catch (err) {
+      toast(`تعذّرت قراءة آخر نسخة: ${toErrorInfo(err).message}`, 'danger');
+      return;
     }
     if (!latest?.slots[S.slot - 1].track) {
       S.external = 'removed';
@@ -972,23 +982,23 @@ export async function mountEditor(app, {
   }
 
   function resumeSlot(n) {
-    if (n !== S.slot) {
-      S.resumeAfterSwitch = true;
-      switchSlot(n);
-      return;
-    }
-    resumeHere();
+    if (n !== S.slot) switchSlot(n, { resume: true });
+    else resumeHere();
   }
 
-  /** «تابع من المقطع 312»: القفز إلى آخر موضع للخانة. */
+  /**
+   * «تابع من المقطع 312»: القفز إلى الموضع الذي وُجد عند فتح الخانة (S.resumeFrom)، لا إلى ما كُتب بعده في الجلسة نفسها
+   * (تنقّل البحث مثلًا)، فلا تضيع نقطة المتابعة الحقيقية.
+   */
   function resumeHere() {
     resumeChip.hidden = true;
-    const i = resolvePosition(S.info.position, shownCues());
+    const i = resolvePosition(S.resumeFrom, shownCues());
     if (i !== null) jumpTo(i, 'text');
   }
 
   function renderResumeChip() {
-    const i = S.info.position ? resolvePosition(S.info.position, shownCues()) : null;
+    S.resumeFrom = S.info.position;
+    const i = S.resumeFrom ? resolvePosition(S.resumeFrom, shownCues()) : null;
     resumeChip.hidden = i === null;
     if (i !== null) resumeChip.firstChild.textContent = `تابع من المقطع ${act().cueAt(i).n}`;
   }
@@ -1039,13 +1049,14 @@ export async function mountEditor(app, {
     S.list.refresh(null);
   }
 
-  function setActive(i) {
+  /** @param {number | null} i @param {{ track?: boolean }} [o] track=false لتنقّل برمجي (نتائج البحث) لا يُكتب موضعًا */
+  function setActive(i, { track = true } = {}) {
     if (S.activeIndex === i) return;
     const prev = S.activeIndex;
     S.activeIndex = i;
     S.list.refresh([prev, i].filter((x) => x !== null).map((x) => S.rowOf[x]));
     renderToolbar();
-    if (i !== null) schedulePosition();
+    if (i !== null && track) schedulePosition();
   }
 
   function toggleSelect(i, checked, range) {
@@ -1209,7 +1220,8 @@ export async function mountEditor(app, {
   /** نتيجة بحث: الصف ظاهر ومميز، والمطابقة محددة في نصه حين يُطلب التركيز (أزرار ↑↓). */
   function revealMatch(index, match, { focus, field }) {
     if (index < 0 || index >= act().count) return;
-    setActive(index);
+    // عرض نتيجة لا يُعدّ موضع عمل؛ والتركيز في نصها (↑↓) يكتبه عبر focusin كأي تركيز من المستخدم.
+    setActive(index, { track: false });
     const node = S.list.reveal(S.rowOf[index]);
     if (!focus || !node) return;
     const text = node.querySelector('[data-field="text"]');
@@ -1237,6 +1249,7 @@ export async function mountEditor(app, {
     renderHeader();
     const session = S.session;
     const at = session.version;
+    const shape = session.checkpoint();
     try {
       const n = S.slot;
       const edit = {
@@ -1250,13 +1263,16 @@ export async function mountEditor(app, {
         S.opened = saved;
         S.info = openedSlot(saved, n);
         S.edited = S.info.edited;
-        session.markSaved({ cues: S.info.cues, offsetMs: S.info.offsetMs });
+        session.markSaved({ cues: S.info.cues, offsetMs: S.info.offsetMs }, shape);
       } else load(saved, n, { keepUi: true });
       toast('حُفظ ✓', 'success');
     } catch (err) {
       const info = toErrorInfo(err);
-      if (info.code === 'ST_CONFLICT') S.external = 'changed';
-      toast(`تعذّر الحفظ: ${info.message}`, 'danger');
+      if (info.code === 'ST_CONFLICT') {
+        // الرفض قد يكون من تغيّر لا يمس محتوى الخانة (حدث لم يُعالَج بعد): يُعاد الفحص فيُتبنّى الأحدث أو تظهر اللافتة.
+        await recheck();
+        toast(S.external ? `تعذّر الحفظ: ${info.message}` : 'تغيّرت الحزمة من مكان آخر دون أن يمس ذلك هذه الترجمة؛ اضغط «حفظ» مرة أخرى.', S.external ? 'danger' : 'info');
+      } else toast(`تعذّر الحفظ: ${info.message}`, 'danger');
     } finally {
       S.saving = false;
       flushPending();
@@ -1295,13 +1311,22 @@ export async function mountEditor(app, {
       renderAll();
       return;
     }
-    // تغيّرٌ لا يمس محتوى خانة التحرير (علامة من المشغّل، أو خانة أخرى، أو النشطة) يُتبنّى دون تعارض ولا إعادة بناء.
+    recheck();
+  }
+
+  /**
+   * يقرأ أحدث حزمة ويقرّر: تغيّرٌ لا يمس محتوى خانة التحرير (علامة من المشغّل، أو خانة أخرى، أو النشطة) يُتبنّى دون تعارض،
+   * وتغيّر محتواها لافتة إن كانت تعديلات وإلا إعادة فتح، وغيابها «حُذفت». وتعذّر القراءة لا يُحسب حذفًا: تبقى الحالة.
+   * @returns {Promise<void>}
+   */
+  function recheck() {
     S.externalChain = S.externalChain.then(async () => {
-      let latest = null;
+      let latest;
       try {
         latest = await store.getBundle(videoId);
-      } catch {
-        latest = null;
+      } catch (err) {
+        toast(`تعذّرت قراءة آخر نسخة: ${toErrorInfo(err).message}`, 'danger');
+        return;
       }
       if (!latest?.slots[S.slot - 1].track) S.external = 'removed';
       else if (!slotContentChanged(S.opened, latest, S.slot)) {
@@ -1315,6 +1340,7 @@ export async function mountEditor(app, {
       }
       renderAll();
     });
+    return S.externalChain;
   }
 
   /** حزمة أحدث لم يتغير فيها محتوى خانة التحرير: تصبح المفتوحة (فيقبل الحفظ)، وتُحدَّث العلامات والمرجع والخانات. */
@@ -1322,21 +1348,24 @@ export async function mountEditor(app, {
     const prevFp = S.fp?.id ?? null;
     S.opened = latest;
     S.info = openedSlot(latest, S.slot);
+    // المحتوى المفتوح صار مطابقًا للأحدث: لا تعارض قائمًا (ولو ظهرت لافتة قبله).
+    S.external = null;
     rankRefs();
+    if (S.refCol !== 'en' && !latest.slots[S.refCol - 1].track) S.refCol = 'en';
     if (S.refPreview === undefined && (S.info.fingerprint?.id ?? null) !== prevFp) {
       S.fp = S.info.fingerprint;
       S.englishTrack = pickEnglishTrack(latest.record.english, S.fp);
       rebuildList();
-    }
+    } else computeRefs(shownCues());
     titleEl.textContent = latest.record.title ?? 'بلا عنوان محفوظ';
     // العلامات والموضع من الحزمة الأحدث (علامة من المشغّل مثلًا) على الصفوف المعروضة.
     computeMarks();
-    S.list.refresh(null);
+    S.list.refresh(null, true);
     renderAll();
   }
 
-  /** تبديل خانة التحرير (§١٩.٩): بتغييرات غير محفوظة حوار تأكيد، ولا تتغير النشطة. */
-  async function switchSlot(n) {
+  /** تبديل خانة التحرير (§١٩.٩): بتغييرات غير محفوظة حوار تأكيد، ولا تتغير النشطة. resume يقفز إلى آخر موضعها بعد التبديل. */
+  async function switchSlot(n, { resume = false } = {}) {
     if (n === S.slot || !S.opened.slots[n - 1]?.track) return;
     if (S.session.dirty || S.session.hasDrafts) {
       const canSave = !saveBlockReason();
@@ -1357,16 +1386,26 @@ export async function mountEditor(app, {
         return;
       }
     }
-    writePositionNow();
+    // بعد لافتة تغيّر (أو حذف) لا تُحمَّل الخانة الأخرى من الحزمة القديمة: تُقرأ الأحدث أولًا.
+    let target = S.opened;
+    if (S.external) {
+      try {
+        target = await store.getBundle(videoId);
+      } catch (err) {
+        toast(`تعذّرت قراءة آخر نسخة: ${toErrorInfo(err).message}`, 'danger');
+        return;
+      }
+      if (!target?.slots[n - 1]?.track) {
+        toast(`الترجمة ${n} لم تعد موجودة.`, 'danger');
+        return;
+      }
+    } else writePositionNow();
     S.view = 'edit';
     S.result = null;
-    load(S.opened, n);
+    load(target, n);
     rememberSlot(n);
     toast(`الترجمة ${n}`, 'info');
-    if (S.resumeAfterSwitch) {
-      S.resumeAfterSwitch = false;
-      resumeHere();
-    }
+    if (resume) resumeHere();
   }
 
   /** الخانة في العنوان، فيفتحها التحديث نفسها. */
