@@ -4,16 +4,19 @@
 import { TjError } from '../errors/index.js';
 import { assertValid } from '../model/validate.js';
 import { DEFAULT_SETTINGS, mergeSettings, normalizeSettings, validateSettings } from '../model/settings.js';
+import { DEFAULT_PREFS, mergePrefs, normalizePrefs, validatePrefs } from '../model/prefs.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { isVideoId } from '../model/ids.js';
 import { chromeLocalArea } from './area.js';
 import { computeCapacity } from './capacity.js';
-import { KEY_META, KEY_SETTINGS, indexKey, parseKey, videoKey } from './keys.js';
+import { COMPANION_KINDS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, indexKey, parseKey, videoKey } from './keys.js';
 import { MIGRATIONS, STORAGE_SCHEMA, migrate } from './migrate.js';
 
 export { STORAGE_SCHEMA, MIGRATIONS } from './migrate.js';
 export { computeCapacity, WARN_RATIO, FULL_RATIO, ADVISORY_BYTES } from './capacity.js';
-export { videoKey, indexKey, parseKey, KEY_META, KEY_SETTINGS } from './keys.js';
+export {
+  videoKey, indexKey, bundleKey, altsKey, prevKey, marksKey, companionKeys, parseKey, KEY_META, KEY_SETTINGS, KEY_PREFS, KEY_SAVES,
+} from './keys.js';
 
 /**
  * @typedef {import('../model/video.js').VideoRecord} VideoRecord
@@ -22,7 +25,9 @@ export { videoKey, indexKey, parseKey, KEY_META, KEY_SETTINGS } from './keys.js'
  * @typedef {{
  *   videos: Record<string, { oldValue: VideoRecord | null, newValue: VideoRecord | null }>,
  *   settings: { oldValue: unknown, newValue: unknown } | null,
- *   index: boolean, cleared: boolean
+ *   index: boolean, cleared: boolean,
+ *   prefs: { oldValue: unknown, newValue: unknown } | null,
+ *   bundles: string[]
  * }} StoreChange
  */
 
@@ -160,6 +165,45 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       });
     },
 
+    /** @returns {Promise<import('../model/prefs.js').Prefs>} تفضيلات الإصدار الثاني كاملة دائمًا (عقد storage §١٠) */
+    async getPrefs() {
+      await ready();
+      const { [KEY_PREFS]: raw } = await read(KEY_PREFS);
+      return normalizePrefs(raw ?? DEFAULT_PREFS);
+    },
+
+    /**
+     * @param {Record<string, unknown>} patch تعديل جزئي حتى مستوى المجموعة
+     * @returns {Promise<import('../model/prefs.js').Prefs>}
+     */
+    setPrefs(patch) {
+      return exclusive(async () => {
+        await ready();
+        const { [KEY_PREFS]: raw } = await read(KEY_PREFS);
+        const next = mergePrefs(normalizePrefs(raw ?? DEFAULT_PREFS), patch);
+        assertValid(validatePrefs(next), 'prefs');
+        await write({ [KEY_PREFS]: next });
+        return next;
+      });
+    },
+
+    /** @returns {Promise<{ downloadId: number, at: string } | null>} معرّف آخر ملف نزّله ترجمان (لا مسار) */
+    async getLastSave() {
+      await ready();
+      const { [KEY_SAVES]: raw } = await read(KEY_SAVES);
+      const last = raw && typeof raw === 'object' ? raw.last : null;
+      return last && Number.isInteger(last.downloadId) && last.downloadId >= 0 && typeof last.at === 'string' ? { downloadId: last.downloadId, at: last.at } : null;
+    },
+
+    /** @param {number} downloadId معرّف من نتيجة downloads.download نفسها */
+    setLastSave(downloadId) {
+      if (!Number.isInteger(downloadId) || downloadId < 0) return Promise.reject(new TjError('MD_INVALID', { detail: 'downloadId' }));
+      return exclusive(async () => {
+        await ready();
+        await write({ [KEY_SAVES]: { schema: 1, last: { downloadId, at: iso() } } });
+      });
+    },
+
     /** @param {string} videoId @returns {Promise<VideoRecord | null>} */
     async getVideo(videoId) {
       checkId(videoId);
@@ -259,7 +303,7 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     onChange(fn) {
       return area.onChanged((changes) => {
         /** @type {StoreChange} */
-        const out = { videos: {}, settings: null, index: false, cleared: false };
+        const out = { videos: {}, settings: null, index: false, cleared: false, prefs: null, bundles: [] };
         for (const [key, ch] of Object.entries(changes)) {
           const k = parseKey(key);
           if (!k) continue;
@@ -267,8 +311,10 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
           else if (k.kind === 'settings') out.settings = { oldValue: ch.oldValue, newValue: ch.newValue };
           else if (k.kind === 'index') out.index = true;
           else if (k.kind === 'meta' && ch.newValue === undefined) out.cleared = true;
+          else if (k.kind === 'prefs') out.prefs = { oldValue: ch.oldValue, newValue: ch.newValue };
+          else if (COMPANION_KINDS.includes(k.kind) && !out.bundles.includes(k.videoId)) out.bundles.push(k.videoId);
         }
-        if (Object.keys(out.videos).length || out.settings || out.index || out.cleared) fn(out);
+        if (Object.keys(out.videos).length || out.settings || out.index || out.cleared || out.prefs || out.bundles.length) fn(out);
       });
     },
   };

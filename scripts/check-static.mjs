@@ -22,10 +22,12 @@ async function walk(dir) {
   return out;
 }
 
-// ١. البيان: الأذونات المعتمدة فقط (عقد interfaces §٦)، ونقاط الدخول كلها مصرّح بها مسبقًا.
-const ALLOWED_PERMISSIONS = ['storage', 'unlimitedStorage'];
+// ١. البيان: الأذونات المعتمدة فقط (عقد interfaces §٦ و§١٣)، ونقاط الدخول كلها مصرّح بها مسبقًا. downloads معتمد
+// لمكان الحفظ وحده (الإصدار الثاني)، والعامل الخلفي للحفظ وحده بمدخل واحد.
+const ALLOWED_PERMISSIONS = ['storage', 'unlimitedStorage', 'downloads'];
+const BACKGROUND = '{"service_worker":"background/worker.js"}';
 const FORBIDDEN_KEYS = [
-  'host_permissions', 'optional_permissions', 'optional_host_permissions', 'background',
+  'host_permissions', 'optional_permissions', 'optional_host_permissions',
   'externally_connectable', 'content_security_policy', 'sandbox', 'oauth2', 'key', 'chrome_url_overrides',
   'devtools_page', 'options_page', 'options_ui', 'commands', 'side_panel', 'declarative_net_request', 'update_url',
 ];
@@ -39,6 +41,8 @@ if (perms.length !== new Set(perms).size || perms.some((p) => !ALLOWED_PERMISSIO
   problems.push(`manifest: الأذونات ${JSON.stringify(perms)} والمعتمد ${JSON.stringify(ALLOWED_PERMISSIONS)}`);
 }
 for (const k of FORBIDDEN_KEYS) if (k in manifest) problems.push(`manifest: المفتاح ${k} غير مسموح`);
+if ('background' in manifest && JSON.stringify(manifest.background) !== BACKGROUND) problems.push(`manifest: background غير المعتمد ${JSON.stringify(manifest.background)} (المعتمد ${BACKGROUND})`);
+if ('background' in manifest && !(await exists(path.join(SRC, 'background', 'worker.js')))) problems.push('manifest: background/worker.js مفقود');
 const cs = manifest.content_scripts ?? [];
 const mainWorld = cs.filter((c) => c.world === 'MAIN');
 const isolated = cs.filter((c) => c.world !== 'MAIN');
@@ -85,7 +89,7 @@ const RULES = [
   { re: /youtubei\/v1|innertube|get_transcript|get_panel/i, msg: 'طلبات InnerTube ممنوعة' },
   { re: /\b(?:sendBeacon|WebSocket|EventSource|RTCPeerConnection|WebTransport)\b|\bnew\s+(?:Request|Image)\s*\(/, msg: 'قنوات شبكة ممنوعة' },
   {
-    re: /\bchrome\s*(?:\.|\[\s*['"`])\s*(?:downloads|webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen)\b|\bpermissions\s*\.\s*request\b|\btabs\s*\.\s*(?:executeScript|insertCSS)\b/,
+    re: /\bchrome\s*(?:\.|\[\s*['"`])\s*(?:webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen)\b|\bchrome\s*\[\s*['"`]downloads|\bpermissions\s*\.\s*request\b|\btabs\s*\.\s*(?:executeScript|insertCSS)\b/,
     msg: 'واجهة تحتاج إذنًا غير معتمد',
   },
   { re: /\b(?:localStorage|sessionStorage|indexedDB)\b/, msg: 'التخزين عبر src/core/store وحده (لا localStorage ولا IndexedDB)' },
@@ -115,6 +119,19 @@ const ABOUT_FILE = path.join('pages', 'settings', 'about.js');
 const ABOUT_LINKS = new Set(['https://bysltan.com', 'https://github.com/iSltanX/Tarjuman']);
 const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u));
 const STORAGE = /\bchrome\s*(?:\.|\[\s*['"`])\s*storage\b|\.\s*storage\s*\.\s*(?:local|sync|session|managed|onChanged)\b/;
+// واجهة التنزيلات محصورة في ملفات ترجمان (اعتماد سلطان 2026-11-02، عقد interfaces §١٣): في src/core/save وsrc/background
+// وحدهما؛ والوصول إلى كائنها (.downloads) في أسطر مراجَعة حرفيًا تسلّمه إلى متغير اسمه downloads لا غير؛ ولا يُستدعى منه
+// إلا download وsearch، وsearch بالمعرّف وحده. فلا بحث في تنزيلات المستخدم، ولا فتح ولا حذف، ولا مستمعات تمس كل التنزيلات.
+const DL_DIRS = [path.join('core', 'save') + path.sep, 'background' + path.sep];
+const DL_OBJECT = /\b(?:chrome|api)\s*\??\.\s*downloads\b/;
+const DL_SOURCES = new Set([
+  'const downloads = api?.downloads;',
+  'export async function savedPath(downloadId, { downloads = globalThis.chrome?.downloads } = {}) {',
+  'createSaveService({ runtime: chrome.runtime, downloads: chrome.downloads, store: createStore() }).install();',
+]);
+const DL_MEMBER = /\bdownloads\s*\??\.\s*([A-Za-z_$][\w$]*)/g;
+const DL_SEARCH_BY_ID = /\bdownloads\s*\.\s*search\s*\(\s*\{\s*id(?:\s*:\s*[A-Za-z_$][\w$]*)?\s*\}\s*\)/;
+const DL_LISTENERS = /\bon(?:DeterminingFilename|Erased)\b/;
 
 /** ينزع تعليقات الكتل (ولو امتدت أسطرًا أو سبقت شيفرة) وأسطر // كاملة؛ ويُبقي رقم السطر. */
 function codeLines(text) {
@@ -154,6 +171,15 @@ for (const file of await walk(SRC)) {
     if (NETWORK.test(line) && !(rel === CAPTURE && PASSTHROUGH.has(line.trim())) && !PACKAGED_READS.get(rel)?.has(line.trim())) problems.push(`${at}: طلب شبكة من الإضافة`);
     for (const m of line.matchAll(URL_RE)) if (!URL_OK(m[0], rel)) problems.push(`${at}: نطاق خارجي ${m[0].slice(0, 60)}`);
     if (STORAGE.test(line) && !inStore) problems.push(`${at}: التخزين خارج src/core/store`);
+    const inDl = DL_DIRS.some((d) => rel.startsWith(d));
+    const members = [...line.matchAll(DL_MEMBER)].map((m) => m[1]);
+    if (!inDl && (DL_OBJECT.test(line) || members.length)) problems.push(`${at}: واجهة التنزيلات خارج src/core/save وsrc/background`);
+    if (inDl && DL_OBJECT.test(line) && !DL_SOURCES.has(line.trim())) problems.push(`${at}: وصول غير مراجَع إلى كائن التنزيلات`);
+    if (inDl) {
+      for (const m of members) if (m !== 'download' && m !== 'search') problems.push(`${at}: downloads.${m} غير مسموح (download وsearch بالمعرّف وحدهما)`);
+      if (members.includes('search') && !DL_SEARCH_BY_ID.test(line)) problems.push(`${at}: downloads.search بالمعرّف وحده ({ id })`);
+    }
+    if (DL_LISTENERS.test(line)) problems.push(`${at}: مستمع يمس كل تنزيلات المتصفح`);
   });
 }
 

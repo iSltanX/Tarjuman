@@ -90,6 +90,21 @@ export function mainVideoDurationMs(doc = document) {
 }
 
 /**
+ * القفز إلى زمن في الفيديو الرئيسي (رسالة tj:seek، عقد messages §٧): currentTime وحده، دون تشغيل ولا إيقاف. لا قفز أثناء
+ * الإعلان ولا قبل وجود الفيديو؛ والزمن بعد النهاية يُقصر عليها.
+ * @param {number} ms @param {Document} [doc]
+ * @returns {boolean} هل تغيّر الزمن
+ */
+export function seekMainVideo(ms, doc = document) {
+  if (!Number.isInteger(ms) || ms < 0 || isAdShowing(doc)) return false;
+  const v = getMainVideo(doc);
+  if (!v) return false;
+  const sec = ms / 1000;
+  v.currentTime = Number.isFinite(v.duration) && v.duration > 0 ? Math.min(sec, v.duration) : sec;
+  return true;
+}
+
+/**
  * بث جارٍ: شارة البث ظاهرة وغير معطلة. تقدير من DOM لم يثبت حيًا بعد (عقد الاستخراج).
  * @param {Document} [doc]
  */

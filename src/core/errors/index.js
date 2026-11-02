@@ -8,6 +8,7 @@ import * as overlay from './overlay.js';
 import * as controls from './controls.js';
 import * as pages from './pages.js';
 import * as editor from './editor.js';
+import * as backup from './backup.js';
 
 export const DOMAINS = Object.freeze([
   { name: 'base', owner: 'P2', ...base },
@@ -17,6 +18,7 @@ export const DOMAINS = Object.freeze([
   { name: 'controls', owner: 'P6', ...controls },
   { name: 'pages', owner: 'P7', ...pages },
   { name: 'editor', owner: 'P8', ...editor },
+  { name: 'backup', owner: 'P13', ...backup },
 ]);
 
 const ALL = Object.freeze(Object.assign({}, ...DOMAINS.map((d) => d.MESSAGES)));

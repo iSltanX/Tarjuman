@@ -6,6 +6,7 @@ import { createController } from './controller.js';
 import { installMessageHandler } from './messages.js';
 import { createExtractor } from '../extract/index.js';
 import { createStore } from '../core/store/index.js';
+import { saveFile } from '../core/save/index.js';
 import { mountOverlay } from '../player/overlay/index.js';
 import { mountControls } from '../player/controls/index.js';
 import { isLiveNow, mainVideoDurationMs, videoTitle, watchCurrentVideo } from '../player/youtube-dom.js';
@@ -42,5 +43,5 @@ controller.start(tracker.current());
 
 // بناء التطوير وحده (npm run build:dev): خطاف للحزام الحي في العالم المعزول، لا تراه الصفحة.
 if (typeof __TJ_DEV__ !== 'undefined' && __TJ_DEV__) {
-  globalThis.__tarjuman = { controller, extractor, store, mounted };
+  globalThis.__tarjuman = { controller, extractor, store, mounted, saveFile };
 }

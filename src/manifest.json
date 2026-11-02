@@ -4,7 +4,10 @@
   "version": "0.2.0",
   "description": "يستخرج ترجمة يوتيوب الإنجليزية إلى SRT، ويعرض ترجمتك العربية فوق الفيديو بضبط التوقيت والتحرير. كل المعالجة والحفظ محليان.",
   "minimum_chrome_version": "111",
-  "permissions": ["storage", "unlimitedStorage"],
+  "permissions": ["storage", "unlimitedStorage", "downloads"],
+  "background": {
+    "service_worker": "background/worker.js"
+  },
   "action": {
     "default_title": "ترجمان",
     "default_popup": "pages/popup/index.html"

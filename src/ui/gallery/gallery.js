@@ -1,7 +1,13 @@
-// معرض مكوّنات src/ui في حالاتها (بناء التطوير وحده): مرجع بصري للمراحل اللاحقة ولقطات P2-AC6.
+// معرض مكوّنات src/ui في حالاتها (بناء التطوير وحده): مرجع بصري للمراحل اللاحقة ولقطات P2-AC6. وهو صفحة إضافة،
+// فيكشف للحزام الحي (P10) saveFile والتخزين وأداة القفز في صفحة إضافة حقيقية؛ بناء الإنتاج لا يحويه.
 import { alertBox, button, el, emptyState, field, ltr, statusPill } from '../components.js';
 import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../format.js';
 import { startPage } from '../page.js';
+import { saveFile, savedPath } from '../../core/save/index.js';
+import { createStore } from '../../core/store/index.js';
+import { jumpToVideo } from '../seek.js';
+
+globalThis.__tarjumanPage = { saveFile, savedPath, store: createStore(), jumpToVideo };
 
 const TOKENS = ['bg', 'surface', 'surface-2', 'sunken', 'text', 'text-2', 'muted', 'border', 'border-strong', 'brand', 'brand-soft', 'focus', 'success', 'warning', 'danger', 'info', 'edited'];
 
