@@ -70,7 +70,8 @@ export async function auditPackage(dir) {
   check('content-scripts-youtube-only', matches.length > 0 && matches.every((m) => m === YOUTUBE_MATCH)
     && (manifest.content_scripts ?? []).every((c) => c.all_frames === false), { matches: [...new Set(matches)] });
   const war = manifest.web_accessible_resources ?? [];
-  check('web-accessible-fonts-only', war.every((w) => w.resources.every((r) => r === 'ui/fonts/subtitle/*.woff2') && w.matches.every((m) => m === YOUTUBE_MATCH) && w.use_dynamic_url === true),
+  // خطوط الترجمة، وخطا الواجهة المضمّنان لأدوات المشغّل (جولة الصقل §١)؛ لا غيرهما.
+  check('web-accessible-fonts-only', war.every((w) => w.resources.every((r) => r === 'ui/fonts/subtitle/*.woff2' || r === 'ui/fonts/ui/*.woff2') && w.matches.every((m) => m === YOUTUBE_MATCH) && w.use_dynamic_url === true),
     { resources: war.flatMap((w) => w.resources) });
   const bg = manifest.background ?? null;
   check('save-worker-only-and-no-externally-connectable', JSON.stringify(bg) === JSON.stringify({ service_worker: WORKER })
@@ -79,7 +80,7 @@ export async function auditPackage(dir) {
   check('manifest-v3-and-no-dev-version-name', manifest.manifest_version === 3 && !manifest.version_name, { version: manifest.version, versionName: manifest.version_name ?? null });
 
   // ---- الملفات: لا خرائط مصدر ولا معرض مكوّنات ولا ملفات غير متوقعة ----
-  const unexpected = files.filter((f) => !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt))$/.test(f));
+  const unexpected = files.filter((f) => !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt)|ui\/fonts\/ui\/[a-z-]+-(?:600\.woff2|700\.woff2|OFL\.txt)|icons\/tarjuman-icon-(?:16|32|48|128)\.png)$/.test(f));
   check('only-expected-files', unexpected.length === 0, { unexpected, files: files.length });
   check('no-source-maps-or-gallery', !files.some((f) => f.endsWith('.map') || f.startsWith('ui/gallery/')), null);
 

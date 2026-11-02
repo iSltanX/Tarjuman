@@ -3,7 +3,7 @@
 // ويعمل في Brave وChrome.
 // دخان بوابة W7 (سكربت المنسّق): الأسطح الثلاثة معًا على رأس التكامل، بنقرات وكتابة حقيقية عبر CDP كما في سكربتات المراحل
 // (test/live/controls/v2.mjs لـP12، وtest/live/pages/p13.mjs لـP13، وtest/live/editor/v2.mjs لـP14):
-//   الإعدادات (P13): القاموس ومكان الحفظ «مجلد فرعي» ← المشغّل (P12): «تنزيل ونسخ التعليمات» ثم رفع الترجمة 1 ← المحفوظات (P13):
+//   الإعدادات (P13): القاموس ومكان الحفظ «مجلد فرعي» ← المشغّل (P12): «تنزيل الملف» و«نسخ التعليمات» ثم رفع الترجمة 1 ← المحفوظات (P13):
 //   رفع إلى خانة فارغة ← التفعيل بالاتجاهين خلال ثانية ← المحرّر (P14): تعديل الخانة 1 ← استبدال الخانة المعدّلة من المشغّل ومن
 //   المحفوظات بالأعداد نفسها مع «إبقاء تعديلاتي» ← علامة من المشغّل في المحرّر وفي فرز المحفوظات ← المزامنة بالجملة ← المحرّر
 //   على خانة غير نشطة (بحث واستبدال ودمج وشطر) لا يغيّر المعروض ← القفز إلى التبويب ← دورة استكمال قصيرة تظهر في المشغّل ←
@@ -346,7 +346,9 @@ async function navHash(page, id) {
 }
 const chipLabels = (page) => page.eval(() => [...document.querySelectorAll('.tj-chip')].map((c) => c.getAttribute('aria-label')));
 const row = `document.querySelector('li.lib-row[data-video="${VIDEO}"]')`;
-const rowSlots = (page) => page.eval((id) => [...(document.querySelector(`li.lib-row[data-video="${id}"] .tj-slots`)?.querySelectorAll('button') ?? [])].map((x) => x.getAttribute('aria-checked')), { args: [VIDEO] });
+// المحدد يعرض الترجمات الموجودة وحدها بأرقام خاناتها (جولة الصقل §٢)، فالقراءة برقم الخانة لا بالموضع: [1..3] ← aria-checked أو null.
+const rowSlots = (page) => page.eval((id) => [1, 2, 3].map((n) => document.querySelector(`li.lib-row[data-video="${id}"] .tj-slots button[data-slot="${n}"]`)?.getAttribute('aria-checked') ?? null), { args: [VIDEO] });
+const rowSlot = (n) => `${row}?.querySelector('.tj-slots button[data-slot="${n}"]')`;
 async function rowMenu(page, item) {
   await clickOn(page, `${row}?.querySelector('button.lib-more')`, 'المزيد');
   return byText('.tj-menu__list:not([hidden]) [role=menuitem]', item);
@@ -418,7 +420,8 @@ const waitLine = (timeoutMs = 15000) => yt.waitFor(() => {
   const m = globalThis.__tarjuman.mounted.controls.peek()?.layer.menu;
   const t = m?.text ?? '';
   const busy = m?.items.some((x) => x.fid === 'download' && x.text.includes('جارٍ'));
-  return !busy && /✓ نُزّل|أُلغي الحفظ|تعذّر حفظ|اسم الملف أو نوعه/.test(t) && /✓ نُسخت التعليمات|تعذّر النسخ/.test(t) ? t : null;
+  // رمز النجاح SVG بجانب السطر منذ جولة الصقل، فلا «✓» في النص.
+  return !busy && /نُزّل|أُلغي الحفظ|تعذّر حفظ|اسم الملف أو نوعه/.test(t) && /نُسخت التعليمات|تعذّر النسخ/.test(t) ? t : null;
 }, { contextId: isoId, timeoutMs });
 async function stableSeek(t) {
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -583,7 +586,7 @@ try {
       { attach: prefs?.glossary.attach, terms: prefs?.glossary.terms.length, saveLocation: prefs?.saveLocation });
   });
 
-  // ٢. المشغّل (P12): «تنزيل ونسخ التعليمات» يتبع المجلد الفرعي، والنص المنسوخ يرفق القاموس.
+  // ٢. المشغّل (P12): «تنزيل الملف» يتبع المجلد الفرعي، و«نسخ التعليمات» (زر مستقل منذ جولة الصقل §٣) يرفق القاموس.
   let title = null;
   await step('player-download', async () => {
     await openVideo();
@@ -593,10 +596,11 @@ try {
     await openMenuOf('download', 'تحميل الترجمة');
     const m = await menu();
     await clickItem('download');
+    await clickItem('copy');
     const line = await waitLine();
     const file = await waitFile(SUB, (n) => n === `${VIDEO}.en.manual.normal.srt`);
     const text = file ? await readFile(file.path, 'utf8') : null;
-    check('player-download-follows-subfolder', '8', !!file && text === EXP.files[0].text && (line ?? '').includes('✓ نُزّل'), { file: file ? `${SUB}/${file.name}` : null, line: clean(line).slice(0, 160) });
+    check('player-download-follows-subfolder', '8', !!file && text === EXP.files[0].text && (line ?? '').includes('نُزّل'), { file: file ? `${SUB}/${file.name}` : null, line: clean(line).slice(0, 160) });
     const copies = await iso(I.copies);
     playerCopy = copies.at(-1) ?? null;
     const expected = instructions({ videoId: VIDEO, title, glossary: GLOSSARY });
@@ -641,7 +645,7 @@ try {
     await front(lib);
     await lib.waitFor((id) => document.querySelector(`li.lib-row[data-video="${id}"] .tj-slots button`), { args: [VIDEO], timeoutMs: 8000 });
     // الزمن من لحظة إرسال النقرة (لا من انتظار السكربت بعدها) حتى يُقرأ التغيير في الطرف الآخر.
-    let t0 = await clickOn(lib, `${row}?.querySelectorAll('.tj-slots button')[${other - 1}]`, `الخانة ${other} في الصف`, { wait: false });
+    let t0 = await clickOn(lib, rowSlot(other), `الخانة ${other} في الصف`, { wait: false });
     const toPlayer = await within(t0, async () => (await iso(I.state)).activeSlot === other);
     await sleep(500);
     const lines = await iso(I.ov);
@@ -877,7 +881,7 @@ try {
   // ١٢. دورة استكمال قصيرة على الخانة 2 بعد تفعيلها من المحفوظات: الملف في المجلد الفرعي، والرد يُطبَّق ويُحفظ، ويظهر في المشغّل.
   await step('editor-complete-cycle', async () => {
     await front(lib);
-    const t0 = await clickOn(lib, `${row}?.querySelectorAll('.tj-slots button')[1]`, 'الخانة 2 في الصف', { wait: false });
+    const t0 = await clickOn(lib, rowSlot(2), 'الخانة 2 في الصف', { wait: false });
     const ms = await within(t0, async () => (await iso(I.state)).activeSlot === 2);
     check('library-activates-slot-2', '1', ms !== null && ms <= 1000, { ms });
     await openEditor(`v=${VIDEO}&t=2`);
@@ -983,8 +987,8 @@ try {
     await lib.waitFor((id) => !!document.querySelector(`li.lib-row[data-video="${id}"]`), { args: [VIDEO], timeoutMs: 10000 });
     await front(lib);
     const chips = await chipLabels(lib);
-    check('restored-library-row-and-filter', '6', (await rowSlots(lib)).length === 3 && chips.includes('تحتاج مراجعة (1)'), { chips, slots: await rowSlots(lib) });
-    await clickOn(lib, `${row}?.querySelectorAll('.tj-slots button')[0]`, 'الخانة 1 في الصف');
+    check('restored-library-row-and-filter', '6', (await rowSlots(lib)).every((x) => x !== null) && chips.includes('تحتاج مراجعة (1)'), { chips, slots: await rowSlots(lib) });
+    await clickOn(lib, rowSlot(1), 'الخانة 1 في الصف');
     await sleep(800);
     const activeNow = await lib.eval(S.active, { args: [VIDEO] });
     await front(st);

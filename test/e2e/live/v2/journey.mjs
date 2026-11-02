@@ -311,7 +311,8 @@ async function showCueSure(id, n) {
 // ---- المحفوظات ----
 let lib = null;
 const rowOf = (id) => `document.querySelector('li.lib-row[data-video="${id}"]')`;
-const rowSlots = (page, id) => page.eval((v) => [...(document.querySelector(`li.lib-row[data-video="${v}"] .tj-slots`)?.querySelectorAll('button') ?? [])].map((x) => x.getAttribute('aria-checked')), { args: [id] });
+// المحدد يعرض الترجمات الموجودة وحدها بأرقام خاناتها (جولة الصقل §٢): [1..3] ← aria-checked أو null.
+const rowSlots = (page, id) => page.eval((v) => [1, 2, 3].map((n) => document.querySelector(`li.lib-row[data-video="${v}"] .tj-slots button[data-slot="${n}"]`)?.getAttribute('aria-checked') ?? null), { args: [id] });
 async function rowMenu(id, item) {
   await clickOn(lib, `${rowOf(id)}?.querySelector('button.lib-more')`, 'المزيد');
   return byText('.tj-menu__list:not([hidden]) [role=menuitem]', item);
