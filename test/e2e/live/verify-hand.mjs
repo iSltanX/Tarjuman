@@ -11,10 +11,9 @@ import { buildExport } from '../../../src/core/export/index.js';
 import { instructions } from '../../../src/core/export/instructions.js';
 import { mergeLong } from '../../../src/core/convert/long.js';
 import { parseSrtStrict } from '../../../src/core/srt/parser.js';
-import { parseSrtTime } from '../../../src/core/srt/time.js';
 import { writeSrt } from '../../../src/core/srt/writer.js';
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
-import { BROWSERS, Evidence, ROOT, WORK, loadState, readClipboard, saveState, sha16 } from './lib.mjs';
+import { BROWSERS, Evidence, ROOT, WORK, loadState, parsePart, readClipboard, saveState, sha16 } from './lib.mjs';
 
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
@@ -27,19 +26,6 @@ const REFS = {
   gBazR59SZXk: { slot: 'long', srt: 'docs/evidence/P1/srt/gBazR59SZXk.en.manual.srt', kind: 'manual' },
 };
 const key = (c) => `${c.n}|${c.startMs}|${c.endMs}|${c.text}`;
-
-/** جزء احتياطي بالصرامة نفسها، والترقيم مستمر من رقم أول مقطع فيه (لا من 1). */
-function parsePart(text) {
-  if (text.charCodeAt(0) === 0xfeff || !text.endsWith('\n')) throw new Error('جزء بلا نهاية سطر أو ببداية BOM');
-  const blocks = text.slice(0, -1).split('\n\n');
-  const first = Number(blocks[0].split('\n')[0]);
-  return blocks.map((block, i) => {
-    const lines = block.split('\n');
-    const [a, b] = lines[1].split(' --> ');
-    if (lines[0] !== String(first + i) || parseSrtTime(a) === null || parseSrtTime(b) === null) throw new Error(`كتلة غير صالحة عند ${first + i}`);
-    return { n: first + i, startMs: parseSrtTime(a), endMs: parseSrtTime(b), text: lines.slice(2).join('\n') };
-  });
-}
 
 /**
  * المقاطع المتوقعة ونص الملف الكامل لفيديو ووضع، أو null إن لم يكن له مرجع. وفيديو بلا مرجع نُزّل ملفه العادي كاملًا

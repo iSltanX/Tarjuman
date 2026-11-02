@@ -1,0 +1,57 @@
+{
+  "step": "restart",
+  "at": "2026-11-02T02:36:54.466Z",
+  "checks": [
+    {
+      "id": "browser-closed",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "font-and-scale-persist-after-browser-restart",
+      "ok": true,
+      "detail": {
+        "app": {
+          "background": "soft",
+          "font": "tajawal",
+          "position": "bottom",
+          "scale": 130
+        },
+        "out": "130%",
+        "checked": "تجوّلTajawal · أضيق، فيقلّ الالتفاف"
+      }
+    },
+    {
+      "id": "player-after-restart-uses-saved-font-scale-translation-offset",
+      "ok": true,
+      "detail": {
+        "font": "34px",
+        "expectPx": 34,
+        "edited": true,
+        "offsetMs": 500,
+        "shownEdited": true
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": {
+        "count": 0
+      }
+    },
+    {
+      "id": "no-network-from-extension",
+      "ok": true,
+      "detail": {
+        "external": 0
+      }
+    }
+  ],
+  "notes": [],
+  "screenshots": [
+    "docs/evidence/P9/chrome/restart-settings.png",
+    "docs/evidence/P9/chrome/restart-watch.png"
+  ],
+  "browser": "Chrome (Chrome/156.0.8078.74)",
+  "errors": []
+}

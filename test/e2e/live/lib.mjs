@@ -15,6 +15,7 @@ import { PROFILE_ROOT, sleep } from '../../live/harness/browser.mjs';
 import { attach } from '../../live/harness/extension.mjs';
 import { unpackedIdOf } from '../../live/p1/ext-id.mjs';
 import { findSecrets, sanitizeDeep } from '../../../src/core/diagnostics/sanitize.js';
+import { parseSrtTime } from '../../../src/core/srt/time.js';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 /** مجلد العمل خارج المستودع: التنزيلات، والتعليمات المنسوخة، والترجمات، وحالة الخطوات. */
@@ -264,3 +265,16 @@ export async function saveState(browser, state) {
 }
 
 export const clip = (s, n = 200) => String(s ?? '').replace(/https?:\/\/\S+/g, '[رابط]').slice(0, n);
+
+/** جزء احتياطي بصرامة المحلّل الصارم، والترقيم مستمر من رقم أول مقطع فيه (لا من 1). */
+export function parsePart(text) {
+  if (text.charCodeAt(0) === 0xfeff || !text.endsWith('\n')) throw new Error('جزء بلا نهاية سطر أو ببداية BOM');
+  const blocks = text.slice(0, -1).split('\n\n');
+  const first = Number(blocks[0].split('\n')[0]);
+  return blocks.map((block, i) => {
+    const lines = block.split('\n');
+    const [a, b] = lines[1].split(' --> ');
+    if (lines[0] !== String(first + i) || parseSrtTime(a) === null || parseSrtTime(b) === null) throw new Error(`كتلة غير صالحة عند ${first + i}`);
+    return { n: first + i, startMs: parseSrtTime(a), endMs: parseSrtTime(b), text: lines.slice(2).join('\n') };
+  });
+}

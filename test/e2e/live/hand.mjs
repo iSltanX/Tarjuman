@@ -131,14 +131,9 @@ if (WANT_COPY) {
   const sameButTitle = copied && copied.replace(/^- العنوان: .*$/m, '') === expInstr.replace(/^- العنوان: .*$/m, '');
   ev.check('hand-copy-from-player-bar-to-device-clipboard', copied === expInstr, { len: copied?.length ?? null, sha: copied && sha16(copied), expected: { len: expInstr.length, sha: sha16(expInstr) }, sameExceptTitle: sameButTitle });
 }
-if (splitParts.length) {
-  const parts = await Promise.all(splitParts.sort().map(async (n) => parseSrtStrict(await readFile(path.join(DL, n), 'utf8'))));
-  const flat = parts.flat();
-  const continuous = flat.every((c, i) => c.n === i + 1);
-  ev.check('hand-split-parts-downloaded-with-continuous-numbering', continuous && flat.length > 0, { parts: parts.length, cues: flat.length, continuous });
-} else if (browser === 'chrome') {
-  ev.note('التقسيم الاحتياطي في نافذة ظاهرة لم يُجرَّب (اختياري).');
-}
+// الأجزاء الاحتياطية تُتحقق لكل فيديو ووضع بمراجعها في verify-hand.mjs.
+if (splitParts.length) ev.note(`أجزاء احتياطية في مجلد التنزيل: ${splitParts.length} (تُتحقق بـverify-hand.mjs).`);
+else if (browser === 'chrome') ev.note('التقسيم الاحتياطي في نافذة ظاهرة لم يُجرَّب (اختياري).');
 await saveState(browser, state);
 await ev.write();
 process.exit(ev.failed.length ? 1 : 0);
