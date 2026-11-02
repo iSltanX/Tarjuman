@@ -11,8 +11,10 @@ import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
 import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
-import { visibleCueIndex } from './sentence.js';
-import { LABELS, badgeTip, comparisonSummary, markToast, minusTip, nameOtherLine, nudgeFlash, parseSeconds, plusTip, slotToast } from './text.js';
+import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
+import {
+  LABELS, badgeTip, comparisonSummary, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime, slotToast,
+} from './text.js';
 
 export const TOAST_MS = 3000;
 export const FLASH_MS = 1000;
@@ -24,6 +26,7 @@ const MAX_OFFSET_S = 600;
 const SPLIT = Object.freeze({ min: 50, max: 2000 });
 const STEP = Object.freeze({ min: 100, max: 10000 });
 const PRESET_STEPS = [500, 1000];
+const SENTENCE_STEP = 7;
 const KIND_ORDER = { manual: 0, asr: 1 };
 /** زر كل قائمة: موضعها فوقه، وإليه يعود التركيز عند إغلاقها. */
 const ANCHOR = { download: 'download', display: 'upload', confirm: 'upload', timing: 'badge' };
@@ -49,7 +52,7 @@ function freshUi(videoId) {
     switching: false,
     download: { key: null, mode: null, why: false, fallback: false, split: false, splitSize: null, splitError: null, busy: false, done: null, result: [] },
     upload: { busy: false, error: null, warnings: [], pending: null, pickFor: null, plans: new Map() },
-    timing: { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null },
+    timing: { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null, sync: null },
   };
 }
 
@@ -198,9 +201,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const t = ui.timing;
     const step = s.settings.offsetStepMs;
     const off = s.view.displayOffsetMs;
+    const sync = t.sync ? { at: shortTime(t.sync.atMs), visible: t.sync.visible, ...sentenceWindow(s.arabic.cues, t.sync.start) } : null;
     return {
       offsetMs: off, offsetText: t.offsetText ?? formatOffset(off), offsetError: t.offsetError,
-      stepMs: step, custom: t.custom || !PRESET_STEPS.includes(step), stepText: t.stepText ?? stepText(step), stepError: t.stepError,
+      stepMs: step, custom: t.custom || !PRESET_STEPS.includes(step), stepText: t.stepText ?? stepText(step), stepError: t.stepError, sync,
     };
   }
 
@@ -310,9 +314,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       syncVideo(s);
       handleNotices(s);
       const bar = bar$.snapshot();
-      // اختفى شريط يوتيوب والقائمة مفتوحة بلا تركيز فيها (لا كتابة ولا لوحة مفاتيح) ولا عمل جارٍ ولا تأكيد ينتظر: تُغلق
-      // بدل أن تعود فجأة مع الشريط عند أول حركة للمؤشر.
-      if (bar.hidden && ui.open && ui.open !== 'confirm' && !ui.download.busy && !ui.upload.busy && !layer.isTyping() && !layer.focused()) ui.open = null;
+      // اختفى شريط يوتيوب والقائمة مفتوحة بلا تركيز فيها (لا كتابة ولا لوحة مفاتيح) ولا عمل جارٍ ولا قرار ينتظر (تأكيد، أو
+      // اختيار جملة للمزامنة): تُغلق بدل أن تعود فجأة مع الشريط عند أول حركة للمؤشر.
+      const pending = ui.open === 'confirm' || (ui.open === 'timing' && !!ui.timing.sync);
+      if (bar.hidden && ui.open && !pending && !ui.download.busy && !ui.upload.busy && !layer.isTyping() && !layer.focused()) ui.open = null;
       lastModel = groupModel(s, bar);
       group.update(lastModel);
       layer.setBar(bar);
@@ -471,7 +476,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     if (ui.open === 'confirm') ui.upload.pending = null;
     ui.open = kind;
-    if (kind === 'timing') ui.timing = { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null };
+    if (kind === 'timing') ui.timing = { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null, sync: null };
     if (kind === 'display') ui.upload.error = null;
     render();
     if (keyboard) layer.focusFirst();
@@ -535,6 +540,19 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       case 'step': chooseStep(String(value)); return;
       case 'stepText': t.stepText = String(value); return;
       case 'applyStep': if (ui.open === 'timing') applyStep(String(value)); return;
+      case 'sync': openSync(); return;
+      case 'syncEarlier': if (t.sync) t.sync = { ...t.sync, start: Math.max(0, t.sync.start - SENTENCE_STEP) }; break;
+      case 'syncLater': {
+        const count = controller.getState().arabic?.cues.length ?? 0;
+        if (t.sync) t.sync = { ...t.sync, start: Math.max(0, Math.min(t.sync.start + SENTENCE_STEP, count - SENTENCE_STEP)) };
+        break;
+      }
+      case 'syncBack':
+        t.sync = null;
+        render();
+        layer.find('sync')?.focus();
+        return;
+      case 'sentence': applySentence(Number(value)); return;
       case 'reset':
         t.offsetText = null;
         t.offsetError = null;
@@ -608,6 +626,45 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       ui.upload.error = toErrorInfo(err).message;
       render();
     }
+  }
+
+  /**
+   * «مزامنة بجملة…»: العرض الفرعي عند لحظة الفتح (ثابتة)، وجمل النشطة حولها؛ والتركيز داخله فلا يضيع موضع لوحة المفاتيح.
+   * لا يُمس الفيديو: لا إيقاف ولا قفز.
+   */
+  function openSync() {
+    const s = controller.getState();
+    const cues = s.arabic?.cues;
+    const video = getMainVideo(doc);
+    if (!cues?.length || !video || !Number.isFinite(video.currentTime)) return;
+    const atMs = Math.round(video.currentTime * 1000);
+    const at = lookupMs(video.currentTime, s.view.displayOffsetMs);
+    const visible = visibleCueIndex(cues, at);
+    const center = visible ?? nearestCueIndex(cues, at);
+    ui.timing.sync = { atMs, start: windowAround(cues.length, center), visible };
+    ui.timing.offsetText = null;
+    ui.timing.offsetError = null;
+    render();
+    (layer.find(`sentence:${center}`) ?? layer.find('syncBack'))?.focus();
+  }
+
+  /** الجملة المختارة تظهر بدايتها عند لحظة الفتح: إزاحة فورية، ورسالة «الإزاحة −3.2 ث» بتراجع. لا يتغير الملف. */
+  function applySentence(index) {
+    const s = controller.getState();
+    const t = ui.timing;
+    const cue = s.arabic?.cues[index];
+    if (!t.sync || !cue || s.loading) return;
+    const prev = s.view.displayOffsetMs;
+    const next = syncOffset(t.sync.atMs, cue);
+    t.sync = null;
+    t.offsetText = null;
+    t.offsetError = null;
+    controller.setOffset(next)?.catch?.(() => {});
+    if (next !== prev) group.pulse();
+    counts.syncs++;
+    addToast('success', offsetToast(next), { action: { label: LABELS.undo, run: () => controller.setOffset(prev) } });
+    render();
+    layer.find('sync')?.focus();
   }
 
   function applyOffset(text) {

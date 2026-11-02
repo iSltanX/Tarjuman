@@ -5,7 +5,7 @@
 import { messageFor } from '../../core/errors/index.js';
 import { describeTrack } from '../../core/export/describe.js';
 import { formatOffset } from '../../ui/format.js';
-import { LABELS, comparisonSummary, cueCount, editsLine, keptLine, offsetMeaning, shortTime, slotLabel, stepSeconds } from './text.js';
+import { LABELS, comparisonSummary, cueCount, editsLine, keptLine, offsetMeaning, shortTime, slotLabel, stepSeconds, syncAt } from './text.js';
 
 /**
  * @typedef {(name: string, value?: unknown) => void} Act
@@ -314,6 +314,7 @@ export function confirmMenu(h, act, m, root = null) {
  * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null }} m
  */
 export function timingMenu(h, act, m) {
+  if (m.sync) return syncView(h, act, m.sync);
   const value = formatOffset(m.offsetMs);
   const offset = h('input', {
     className: 'num',
@@ -361,9 +362,44 @@ export function timingMenu(h, act, m) {
     out.push(h('div', { className: 'row field', children: [h('label', { text: LABELS.stepCustomField, attrs: { for: 'tj-step' } }), step, h('span', { className: 'unit', text: LABELS.seconds })] }));
     out.push(h('div', { className: 'field-error', text: m.stepError ?? '', attrs: { id: 'tj-step-error', 'aria-live': 'polite' } }));
   }
+  out.push(button(h, 'item', LABELS.sync, { act, name: 'sync', fid: 'sync' }));
   out.push(h('div', { className: 'actions', children: [button(h, 'secondary', LABELS.reset, { act, name: 'reset', fid: 'reset' })] }));
   out.push(h('div', { className: 'note', text: LABELS.signLegend }));
   return out;
+}
+
+/**
+ * العرض الفرعي «مزامنة بجملة» (§١٩.٤): رأسه «عند 12:34» (لحظة الفتح الثابتة) و«رجوع»، ثم حتى سبع جمل من النشطة، كلٌّ سطر
+ * واحد مقصوص (الظاهرة الآن مميّزة)، ثم «أبكر» و«أحدث». لا شرح.
+ * @param {H} h @param {Act} act
+ * @param {{ at: string, visible: number | null, items: { index: number, n: number, text: string }[], earlier: boolean, later: boolean }} v
+ */
+function syncView(h, act, v) {
+  return [
+    h('div', {
+      className: 'head',
+      children: [
+        h('h2', { className: 'title', text: syncAt(v.at) }),
+        button(h, 'link', LABELS.back, { act, name: 'syncBack', fid: 'syncBack' }),
+      ],
+    }),
+    h('div', {
+      className: 'sentences',
+      attrs: { role: 'group', 'aria-label': LABELS.syncTitle },
+      children: v.items.map((it) => h('button', {
+        className: 'item sentence', text: it.text,
+        attrs: { type: 'button', 'data-fid': `sentence:${it.index}`, title: it.text, 'aria-current': it.index === v.visible ? 'true' : null, dir: 'auto' },
+        on: { click: () => act('sentence', it.index) },
+      })),
+    }),
+    h('div', {
+      className: 'pair',
+      children: [
+        button(h, 'item', LABELS.earlier, { act, name: 'syncEarlier', fid: 'syncEarlier', disabled: !v.earlier }),
+        button(h, 'item', LABELS.later, { act, name: 'syncLater', fid: 'syncLater', disabled: !v.later }),
+      ],
+    }),
+  ];
 }
 
 /** نص الخطوة في حقلها المخصص: «0.3». @param {number} ms */
