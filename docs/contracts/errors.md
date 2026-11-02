@@ -1,6 +1,6 @@
 # عقد الأخطاء والرسائل والتشخيص
 
-> **مثبّت في P2 (2026-11-01) ومجمَّد.** الشيفرة `src/core/errors/` و`src/core/diagnostics/`، واختباراتها `test/unit/model/errors.test.js`.
+> **مثبّت في P2 (2026-11-01)، ووسّعته P10 للإصدار الثاني (2026-11-02) ثم جُمِّد.** الشيفرة `src/core/errors/` و`src/core/diagnostics/`، واختباراتها `test/unit/model/errors.test.js`.
 
 ## ١. البنية
 
@@ -25,13 +25,14 @@ messageFor(code, params) // القوالب {name} تُملأ؛ الرمز الم
 
 | الملف | المالك | البادئات | المحتوى الآن |
 | --- | --- | --- | --- |
-| `base.js` | P2 | `TJ_` عامة، `ST_` تخزين، `MD_` نموذج | `TJ_UNEXPECTED`، `TJ_NOT_IMPLEMENTED`، `TJ_NOT_YOUTUBE`، `TJ_NO_VIDEO`، `TJ_BAD_MESSAGE`، `TJ_BAD_VIDEO_ID`؛ `ST_READ_FAILED`، `ST_WRITE_FAILED`، `ST_QUOTA_EXCEEDED`، `ST_CAPACITY_WARNING`، `ST_LARGE_LIBRARY`، `ST_CORRUPT_RECORD`، `ST_CONFLICT`، `ST_ARABIC_EXISTS`، `ST_NO_RECORD`، `ST_SCHEMA_NEWER`، `ST_MIGRATION_FAILED`، وإشعارات `ST_RESTORED` و`ST_OFFSET_RESET` و`ST_SAVED`؛ `MD_INVALID`، `MD_NEGATIVE_TIME` |
+| `base.js` | P2 ثم P10 | `TJ_` عامة، `ST_` تخزين، `MD_` نموذج، `SV_` الحفظ (P10) | `TJ_UNEXPECTED`، `TJ_NOT_IMPLEMENTED`، `TJ_NOT_YOUTUBE`، `TJ_NO_VIDEO`، `TJ_BAD_MESSAGE`، `TJ_BAD_VIDEO_ID`؛ `ST_READ_FAILED`، `ST_WRITE_FAILED`، `ST_QUOTA_EXCEEDED`، `ST_CAPACITY_WARNING`، `ST_LARGE_LIBRARY`، `ST_CORRUPT_RECORD`، `ST_CONFLICT`، `ST_ARABIC_EXISTS`، `ST_NO_RECORD`، `ST_SCHEMA_NEWER`، `ST_MIGRATION_FAILED`، وإشعارات `ST_RESTORED` و`ST_OFFSET_RESET` و`ST_SAVED`؛ `MD_INVALID`، `MD_NEGATIVE_TIME` |
 | `extract.js` | P3 | `EX_`، `KIND_` | مملوء في W3 (P3): رسائل الاستخراج (`EX_WRONG_VIDEO`…`EX_LIVE`، و`KIND_MISMATCH`، و`EX_NO_TRACK`) نُقلت من `src/extract/codes.js` المحذوف، ومعها رموز التحويل والتصدير (`EX_INVARIANT_FAILED`، و`EX_SPLIT_NOT_NEEDED`، و`EX_DOWNLOAD_FAILED`…). |
 | `import.js` | P4 | `IM_` استيراد، `CMP_` مقارنة | مملوء في W3 (P4): أخطاء القراءة والتحليل والأجزاء (`IM_NO_FILE`…`IM_PARTS_GAP`)، وملاحظات التنظيف (`IM_NOTE_…`)، و`CMP_RESTORE_UNAVAILABLE`. |
 | `overlay.js` | P5 | `PL_` | مملوء في W3 (P5): `PL_MOUNT_FAILED`، و`PL_RENDER_FAILED`، و`PL_FULLSCREEN_HOST`. |
 | `controls.js` | P6 | `CT_` | مملوء في W4 (P6): التركيب والرسم (`CT_MOUNT_FAILED`، `CT_RENDER_FAILED`، `CT_BAR_OVERFLOW`)، والتحميل والنسخ (`CT_NOT_CAPTURED`…`CT_SPLIT_INVALID`)، والعرض والإزاحة (`CT_VIDEO_CHANGED`…`CT_STEP_INVALID`)، والخطوط (`CT_FONT_FALLBACK`، `CT_FONT_SYSTEM`). |
 | `pages.js` | P7 | `PG_` | مملوء في W4 (P7): النسخ (`PG_COPY_DONE`…`PG_ID_COPIED`)، والمحفوظات وأوامر الصف (`PG_LIST_FAILED`…`PG_OPEN_FAILED`)، والإعدادات والتخزين والتشخيص (`PG_SAVED`…`PG_DIAGNOSTICS_FAILED`). |
 | `editor.js` | P8 | `ED_` | مملوء في W4 (P8): أخطاء التوقيت والنص (`ED_END_BEFORE_START`…`ED_TEXT_INVALID`)، والتحذيرات (`ED_OVERLAP`…`ED_TEXT_BLANK_LINE`)، والإزاحة والتثبيت (`ED_SHIFT_NEGATIVE`…`ED_NO_OFFSET`)، والحفظ والتصدير وما حولهما (`ED_SAVE_HAS_ERRORS`…`ED_LEAVE_UNSAVED`). |
+| `backup.js` | P10 (التسجيل) ثم P13 | `BK_` | مسجّل في الفهرس **بلا رسائل** في W6 (P10)؛ تملؤه P13 في W7 بأخطاء النسخة الاحتياطية والاستعادة (عقد [`backup.md`](backup.md) §٥). |
 
 كل مرحلة تضيف رموزها في ملفها وحده، ولا تعدّل `index.js` (مشترك). رسالة رمز من مجال آخر تُقرأ بـ`messageFor` ولا تُنسخ.
 
@@ -53,3 +54,11 @@ createDiagnosticReport({ version: '0.2.0', browser: 'Brave 1.98', sections: { st
 - **لا يتضمن أبدًا:** روابط، أو رموز جلسة، أو ملفات ارتباط، أو نص ترجمة أو عنوان فيديو: المفاتيح `text` و`texts` و`cues` و`body` و`srt` و`original` و`current` و`title` و`fileName` و`lines` و`words` تُستبدل بـ«[مستبعد]»، ثم يمر الباقي بـ`sanitizeDeep` (اختبار).
 - `src/core/diagnostics/sanitize.js` (من P1) هو المنقّي الوحيد، ويستعمله الفحص الآلي `check:secrets` على العينات والأدلة.
 - لا `console.*` في `src` (فحص ثابت): الأخطاء رموز في الحالة وتقرير التشخيص.
+
+## ٥. الإصدار الثاني (P10)
+
+- **الحفظ** (`SV_`، عقد الواجهات §١٣): `SV_SAVED` نجاح، و`SV_FALLBACK_BLOB` إشعار حين تعذّرت واجهة التنزيلات فنُزّل الملف بالطريقة الحالية (مجلد التنزيلات وإعداد المتصفح)، و`SV_BAD_FILE` اسم أو امتداد غير مقبول، و`SV_TOO_LARGE` فوق حد القناة، و`SV_BAD_FOLDER` اسم مجلد فرعي غير صالح، و`SV_CANCELLED` ألغى المستخدم حوار الحفظ، و`SV_FAILED` غير ذلك.
+- **الخانات والسابقة** (`ST_`): `ST_SLOT_EMPTY` تفعيل خانة فارغة أو تعديلها، و`ST_NO_PREVIOUS` استعادة بلا سابقة، و`ST_PREVIOUS_SAVED` إشعار «حُفظت النسخة السابقة». والاستبدال بلا تأكيد يبقى `ST_ARABIC_EXISTS`.
+- **القفز** (`TJ_`): `TJ_WRONG_VIDEO` التبويب يعرض فيديو غير المطلوب، و`TJ_SEEK_FAILED` تعذّر تغيير الزمن (لا مشغّل بعد).
+- **النسخة الاحتياطية** (`BK_`): المجال مسجّل ببادئته وبلا رسائل حتى P13. محتوى النسخة لا يدخل التشخيص أبدًا: الأعداد والرموز وحدها.
+- **تشخيص الصفحة** (عقد الرسائل §٦) يضيف قسم `page` من أعداد المتحكم والمستخرج وحالة التركيب ورموزها.

@@ -1,6 +1,6 @@
 # عقد الواجهات وحدود الوحدات
 
-> **مثبّت في P2 (2026-11-01) ومجمَّد.** يحدد أين يعيش كل شيء ومن يملكه وما يستدعيه، فتعمل W3 (P3 وP4 وP5) ثم W4 (P6 وP7 وP8) بالتوازي **دون لمس أي ملف مشترك**. التوقيعات هنا مطابقة للشيفرة؛ وأي حاجة إلى تغييرها تغيير عقد (المرحلة متعطلة حتى يحسمه المنسّق على `main`).
+> **مثبّت في P2 (2026-11-01)، ووسّعته P10 للإصدار الثاني (2026-11-02) ثم جُمِّد.** يحدد أين يعيش كل شيء ومن يملكه وما يستدعيه، فتعمل W3 (P3 وP4 وP5) ثم W4 (P6 وP7 وP8)، ثم W7 (P12 وP13 وP14)، بالتوازي **دون لمس أي ملف مشترك**. §٠–§١١ للإصدار الأول وتبقى صحيحة، و§١٢–§١٨ إضافات الثاني. التوقيعات هنا مطابقة للشيفرة؛ وأي حاجة إلى تغييرها تغيير عقد (المرحلة متعطلة حتى يحسمه المنسّق على `main`).
 
 ## ٠. بنية الشيفرة والملكية بعد P2
 
@@ -41,6 +41,8 @@ controller.getState()            // ControllerState مجمَّدة؛ لا تُع
 controller.subscribe(fn)         // fn(state) عند كل تغيّر؛ يعيد دالة إلغاء
 controller.diagnostics()         // أعداد ورموز: الكتابات الجارية، وإخفاقات المشتركين وآخرها، وتشخيص المستخرج
 ```
+
+حالة الإصدار الثاني وأفعاله في §١٢؛ وكل ما هنا باقٍ بمعناه وتوقيعه.
 
 كل مشترك يُبلَّغ على حدة: استثناء في مشترك (الطبقة مثلًا) لا يوقف المتحكم ولا يحرم غيره (الأدوات)، ويُعدّ في `diagnostics()`. وقد يصل أكثر من إشعار للتغيّر الواحد؛ والمشترك يقرأ الحالة الأخيرة ولا يفترض عددًا.
 
@@ -137,6 +139,8 @@ describeTrack(trackInfo) → string                                             
 download(file, { doc? })                                                               // Blob و<a download>، بلا إذن downloads
 ```
 
+وفي الإصدار الثاني يحل `saveFile` (§١٣) محل `download` في كل تنزيل حين تلمس مراحل W7 موضعه، و`download` باقٍ احتياطه.
+
 - **في المشغّل (P6):** `controller.convertCaptured(key, { mode })` ← `buildExport` ← `download` لكل ملف ← `controller.recordExport({ trackKey: key, fingerprint })`.
 - **في الصفحات (P7، P8):** الإنجليزية من المسار المحفوظ بالوضع «عادي» وحده؛ والعربية بـ`exportTiming` (عقد التوقيت §٥) ثم `buildArabicExport`؛ وحفظ أي بصمة بـ`store.updateVideo` و`withExport`.
 - البصمة بحسب عقد البيانات §٤، وتُحفظ لكل تصدير.
@@ -219,3 +223,171 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 | P8 | `pages/editor`، و`core/edit`، و`errors/editor.js` | التخزين (`expect`)، والتوقيت والانتقالات، و`core/compare` (الاستعادة)، و`core/export`، و`src/ui` | لا |
 
 ما قد يُطلب لاحقًا بمسار الاستثناء (لم يظهر حاجة إليه الآن): محدد يوتيوب جديد في `youtube-dom.js`، أو رفع مكوّن من صفحة إلى `src/ui`.
+
+---
+
+## ١٢. المتحكم في الإصدار الثاني — `src/content/controller.js`
+
+يقرأ السجل بـ`store.getVideo` كما كان ثم حزمته بـ`store.bundleOf(record)` (عقد التخزين §١٠)، فتبقى اختبارات السباق والقراءة على حالها؛ ويكتب عبر `updateVideo` لأفعال الإصدار الأول و`updateBundle` للجديدة.
+
+**حقول جديدة في `ControllerState`** (كل حقول §١ باقية بمعناها، و`arabic` و`view` للنشطة):
+
+| الحقل | المعنى | يستعمله |
+| --- | --- | --- |
+| `bundle` | الحزمة (عقد البيانات §١٠) أو `null`؛ لا تُعدَّل. | P12 |
+| `activeSlot` | `1 \| 2 \| 3 \| null`. | P12 |
+| `slots` | `SlotModel[]` بثلاثة عناصر `{ n, filled, active, name, edited, cueCount }` لاختيار 1 2 3 وحوار الرفع. | P12 |
+| `marks` | علامات النشطة `{ slot, items: Mark[] }` أو `null`؛ حلّها بـ`resolveMark` (عقد البيانات §١٢). | P12 |
+| `previous` | `{ from, savedAt } \| null` بلا نص. | P12 |
+| `prefs` | `Prefs` كاملة (القاموس لإشارة «+ القاموس (12)»). | P12 |
+
+**أفعال جديدة:**
+
+| الفعل | القاعدة | الأخطاء |
+| --- | --- | --- |
+| `activateSlot(n)` | تبديل النشطة كتابةً واحدة (`withActiveSlot`)؛ الطبقة تعرض الجديدة بإزاحتها بعد الحفظ. لا أثر أثناء `loading`. | `ST_SLOT_EMPTY`، `MD_INVALID`، `ST_*` |
+| `loadArabicInto(n, input, { replace, activate })` | الرفع إلى خانة (`withSlotUpload`) بمدخل `loadArabic` ومعه `current?`. الممتلئة تحتاج `replace` وتحفظ السابقة. إشعار `ST_OFFSET_RESET` إن صُفّرت إزاحة النشطة، وإلا `ST_PREVIOUS_SAVED` عند الاستبدال. تعيد `{ record, replaced, activated }`. | `ST_ARABIC_EXISTS`، `MD_INVALID`، `ST_*` |
+| `markCue({ index }, kind = "todo")` | يعلّم مقطع النشطة برقمه في `state.arabic.cues` (`withMark`)، و`null` يزيل علامته. تعيد `{ mark, undo }`، و`undo()` يعيد العلامات كما كانت بكتابة واحدة. | `ST_NO_RECORD`، `RangeError`، `ST_*` |
+| `updatePrefs(patch)` | `store.setPrefs`. | `MD_INVALID`، `ST_*` |
+
+`loadArabic` (الإصدار الأول) يبقى: يكتب في النشطة، واستبدالها يحفظ السابقة تلقائيًا عبر `updateVideo`. و`handleStoreChange` يحدّث `prefs` من `change.prefs`. والقفز إلى زمن ليس فعلًا في المتحكم: يتحقق منه معالج الرسائل (§١٤).
+
+## ١٣. مكان حفظ الملفات — `src/core/save/` و`src/background/` (R65)
+
+```js
+// src/core/save/index.js
+saveFile(file: { name, text, mime? }, deps?) → Promise<{ ok: true, mode: 'downloads' | 'subfolder' | 'ask' | 'blob', downloadId: number | null } | { ok: false, code }>
+validateSaveFile(file, { maxChars }) → { ok: true } | { ok: false, code: 'SV_BAD_FILE' | 'SV_TOO_LARGE' }
+downloadTarget(saveLocation, name) → { filename, saveAs? }
+savedPath(downloadId, { downloads }) → Promise<string | null>     // المكان الفعلي لملف نزّله ترجمان
+SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 16777216 }
+```
+
+- **ثلاثة مسارات بالدالة نفسها:** الصفحات (فيها `chrome.downloads`) تحفظ مباشرة: `Blob` ورابطه ثم `downloads.download`. وسكربت المحتوى (لا يصل إلى `chrome.downloads`) يرسل `tj:save-file` إلى العامل (عقد الرسائل §٧). وعند تعذّر الواجهة أو القناة يرجع إلى `download` القديم (Blob و`<a download>`) و`mode: 'blob'`، ويعرض المستدعي `SV_FALLBACK_BLOB`.
+- **الأوضاع** من `prefs.saveLocation` وحدها، يقرؤها `saveFile` في الصفحة أو العامل من التخزين، لا من المستدعي:
+
+| الوضع | `downloads.download` | السلوك |
+| --- | --- | --- |
+| `downloads` (الافتراضي) | `{ filename: name }` بلا `saveAs` | مجلد التنزيلات، **ويتبع إعداد المتصفح في السؤال** كالتنزيل الحالي. |
+| `subfolder` | `{ filename: "‹folder›/‹name›", saveAs: false }` | مجلد فرعي داخل التنزيلات يُنشأ عند الحاجة، ويُحفظ فيه تلقائيًا. |
+| `ask` | `{ filename: name, saveAs: true }` | حوار الحفظ من النظام عند كل تنزيل؛ والإلغاء `SV_CANCELLED`. |
+
+  ودائمًا `conflictAction: 'uniquify'`: **لا كتابة فوق ملف قائم**. وسلوك كل وضع في كل متصفح كما ثبت حيًا في «ما ثبت حيًا» أدناه.
+- **التحقق قبل التنزيل:** الاسم 1..150 محرفًا من الحروف (ومنها العربية) والأرقام و`. _ -` والمسافة، بلا فواصل مسار ولا `..` ولا محارف تحكم، ولا يبدأ بنقطة؛ وامتداده `.srt` أو `.txt` أو `.md` أو `.json`؛ والنوع من الامتداد لا من المستدعي؛ والحجم حتى `maxMessageChars` عبر العامل و`maxPageChars` من الصفحات. وإلا `SV_BAD_FILE` أو `SV_TOO_LARGE` بلا تنزيل.
+- **العامل الخلفي** `src/background/worker.js` (`background.service_worker` في البيان) **للحفظ وحده**: `createSaveService({ runtime, downloads, store })` في `save-service.js` يستمع لـ`tj:save-file`، ويقبلها من سكربت الإضافة وحده (`sender.id` ثم سكربت محتوى على يوتيوب أو صفحة إضافة)، ويقرأ الوضع من التفضيلات، ويتحقق من الملف، ويحفظ النص في رابط `data:` (لا `URL.createObjectURL` في العامل)، ويسجّل المعرّف بـ`store.setLastSave`. لا منطق آخر فيه.
+- **الإذن محصور في ملفات ترجمان** (اعتماد سلطان 2026-11-02)، ويفرضه `check-static`:
+  - `chrome.downloads` في `src/core/save/**` و`src/background/**` وحدهما.
+  - لا يُستدعى منه إلا `download` و`search`، و`search` بالمعرّف وحده `search({ id })` لمعرّف نزّلته الإضافة نفسها (من نتيجة `download` أو `getLastSave`).
+  - لا `open` ولا `show` ولا `showDefaultFolder` ولا `erase` ولا `removeFile` ولا `cancel` ولا `pause` ولا `resume` ولا `acceptDanger` ولا `getFileIcon` ولا `setUiOptions` ولا `setShelfEnabled` ولا `drag`، ولا مستمع `onCreated` أو `onChanged` أو `onErased` أو `onDeterminingFilename` (تمس كل تنزيلات المتصفح).
+- **المكان الفعلي** `savedPath(id)`: من `downloads.search({ id })` لذلك الملف وحده، إن كانت حالته `complete` و`exists`؛ وإلا `null` فلا يُعرض مسار. **لا يُخزَّن مسار**، ولا يدخل التشخيص.
+- **البيان:** `permissions` = `storage` و`unlimitedStorage` و`downloads` وحدها (تحذير التثبيت الجديد الوحيد «إدارة التنزيلات»)، و`background: { service_worker: "background/worker.js" }`. لا `tabs` ولا `host_permissions`.
+
+### ما ثبت حيًا في P10
+
+يُكتب هنا بعد الإثبات الحي في Brave وChrome (أدلة [`docs/evidence/P10/`](../evidence/P10/)).
+
+## ١٤. القفز إلى زمن الفيديو — `src/ui/seek.js` و`src/content/messages.js` (R56، Q14)
+
+```js
+// صفحات الإضافة (المحرّر في P14)
+jumpToVideo({ videoId, ms }, { tabs, windows }) → Promise<{ ok: true, via: 'open' | 'new', tabId } | { ok: false, code }>
+// youtube-dom
+seekMainVideo(ms, { doc }) → boolean          // video.currentTime = ms / 1000 وحده
+```
+
+- **بلا إذن `tabs` ولا `host_permissions`:** `tabs.query({})` ثم طلب حالة الفيديو (`tj:get-video-state`) من كل تبويب؛ وحده تبويب يوتيوب فيه سكربت ترجمان يرد بمعرّفه، فيُعرف تبويب الفيديو المفتوح دون قراءة عنوانه. عند التعدد: الأحدث استعمالًا (`lastAccessed`)، ثم النشط.
+- **التبويب المفتوح:** `tabs.update(id, { active: true })` و`windows.update(windowId, { focused: true })` ثم `tj:seek`؛ ورفضه يعيد رمزه.
+- **لا تبويب:** `tabs.create({ url: watchUrl(videoId, { atMs: ms }) })` (`&t=<ثوانٍ>s`)، و`via: 'new'`.
+- معالج الرسائل في سكربت المحتوى يقبل `tj:seek` بشروط عقد الرسائل §٧، ويغيّر الزمن بـ`seekMainVideo` وحدها.
+
+## ١٥. أساس الواجهة في الإصدار الثاني — `src/ui/`
+
+مكوّنات بنتها P7 وP8 داخل صفحاتهما رُفعت إلى `src/ui` بمعرضها وحالاتها، بالوضعين وRTL. **الصفحات الحالية لم تتغير** (تبقى نسخها المحلية، أو ملفاتها المحيلة إلى `src/ui`)، وصفحات W7 تعتمد المرفوعة حين تلمس موضعها.
+
+| الملف | المكوّن | من |
+| --- | --- | --- |
+| `menu.js` | `createMenu` — القائمة المنسدلة | المحفوظات (رُفع مع إعادة التصميم) |
+| `forms.js` | `segmented` — المقطّعة · `numberField` — حقل الرقم بوحدة · `savedMark` — علامة «حُفظ» | الإعدادات (P7) |
+| `toast.js` | `createToaster` — الرسالة العابرة | المحفوظات (P7) |
+| `components.js` | `choiceGroup` — مجموعة الخيارات · `chipGroup` — رقائق الفرز · `slotPicker` — اختيار الترجمة 1 2 3 (`TJ/SlotPicker`، مواصفة التصميم §١٩.٢) | إعادة التصميم |
+| `seek.js` | `jumpToVideo` (§١٤) | P10 |
+
+- أصناف CSS بالبادئة `tj-` في `components.css`. والتوقيعات كما في الشيفرة، ومعرضها `src/ui/gallery/` (بناء التطوير).
+- `slotPicker` يأخذ `SlotModel[]` من `slotModels(bundle)` أو `state.slots`، والفارغة معطّلة في الاختيار وتصلح هدفًا في حوار الرفع وحده.
+
+## ١٦. واجهات الربط للإصدار الثاني (مثبتة قبل W6)
+
+> منقولة كما ثُبّتت في [الموجات](../delivery/waves.md) («واجهات الربط للإصدار الثاني»). تنفّذ P11 توقيعاتها كما هي، وأي حاجة إلى تغييرها طلب مسجّل، والمرحلة متعطلة حتى يحسمه المنسّق. الأنواع غير المذكورة (المقطع، والبصمة، والمسار الإنجليزي، وتقرير المقارنة) كما في عقد البيانات.
+
+**أشكال يتبادلها الطرفان:**
+
+- **مصطلح القاموس:** `{ source: string (1..80), target: string (1..80), note: string | null (≤120) }`، والقاموس حتى 100 مصطلح. تحفظه P10 في تفضيلات الإصدار الثاني (`prefs.glossary.terms`، عقد البيانات §١٤)، وتستهلكه `instructions` في P11.
+- **بند تقرير المراجعة:** `{ n, startMs, endMs, problems: string[] (رموز), mark: 'todo' | 'done' | null, text: string | null, english: string | null }`. يبنيه المحرّر (P14) من لوحة المراجعة، ويكتبه `buildReviewReport` في P11. و`mark` من علامة المقطع (عقد البيانات §١٢).
+
+**محرّكات P11 (منطق نقي، لا DOM ولا تخزين):**
+
+```js
+// src/core/align
+alignCues(a: Cue[], b: Cue[], opts?) → { pairs: { a: number | null, b: number | null }[], confidence: 'high' | 'low', reasons: string[] }
+diffTranslations(current: Cue[], incoming: Cue[], opts?) → { aligned: boolean, confidence, counts: { textChanged, timingChanged, added, removed, unchanged }, changes: { n, kind, before, after }[] }
+mergeThreeWay({ base, mine, theirs }: { base: Cue[], mine: Cue[], theirs: Cue[] }, opts?)
+  → { ok: true, cues: Cue[], kept: number[], taken: number[], conflicts: { n, mine, theirs }[] } | { ok: false, reason: string }
+
+// src/core/compare
+rankReferences(cues: Cue[], fingerprints: Fingerprint[]) → { fingerprintId, score, matched, why }[]   // الأفضل أولًا
+compare(...)   // التوقيع نفسه؛ restoreTimingAvailable لا يصح إلا بمحاذاة متحققة، والسبب في notes
+
+// src/core/import (وsrc/core/srt بالتوقيع نفسه، مع Markdown)
+reviewIncoming({ fileName, cues, videoId, fingerprints, knownVideoIds? })
+  → { references: ReturnType<rankReferences>, suggested: string | null, certain: boolean, nameHint: null | { videoId: string, differs: boolean } }
+readPatch(fileOrFiles, { fingerprint, cues }) → Promise<{ ok: true, plan } | { ok: false, error: { code, message, line? } }>
+applyPatch(cues: Cue[], plan, { only?: number[] }) → Cue[]
+
+// src/core/export
+instructions({ videoId, title, parts?, glossary? }) → string            // glossary: مصطلحات القاموس أعلاه
+planPartsByContent(cues: Cue[], size: number) → { index, from, to }[] | null   // planParts القديم باقٍ
+buildPatchPackage({ videoId, title, fingerprint, englishTracks, numbers }) → { ok: true, file: { name, text }, instructions: string, count } | { ok: false, code }
+buildStudyText({ videoId, title, cues, english?, format: 'txt' | 'md', bilingual: boolean }) → { name, text }
+buildReviewReport({ videoId, title, items, includeText: boolean, format: 'txt' | 'md' }) → { name, text }   // items: بنود التقرير أعلاه
+
+// src/core/edit (ملفات المحرّكات الجديدة فقط)
+searchCues(cues, query, { field: 'ar' | 'en', english?, wholeWord, ignoreMarks }) → { index, start, end }[]
+planReplace(cues, matches, replacement, { only?: number[] }) → { changes: { index, n, before, after }[] }
+mergeCues(cues, index) → Cue[] · splitCue(cues, index, at) → Cue[]
+driftCorrect(cues, { a: { n, toMs }, b: { n, toMs } }) → { ok: true, cues } | { ok: false, negative: number[] }
+readingMetrics(cue) → { cps: number, longestLine: number }
+```
+
+**ما تثبّته P10 داخل W6 وتستهلكه W7:** واجهة التخزين بالتوابع وواجهة الاستعادة (عقد التخزين §١٠)، وأفعال المتحكم وحالته الجديدة (§١٢)، ورسالة القفز وأداة الصفحات (§١٤، وعقد الرسائل §٧)، وحلّ ارتباط العلامات (عقد البيانات §١٢)، وصيغة النسخة الاحتياطية ([`backup.md`](backup.md))، ومكان الحفظ: `saveFile(file: { name, text, mime? }) → Promise<{ ok: true, mode, downloadId } | { ok: false, code }>` في `src/core/save` بتفضيل `saveLocation: { mode: 'downloads' | 'subfolder' | 'ask', folder: string }` (§١٣). تُجمَّد كلها ببوابة W6 قبل أن تبدأ W7.
+
+**نقاط ربط تُختبر في بوابة W6:** القاموس من التفضيلات المخزنة عبر `instructions` (P11)، و`reviewIncoming` على بصمات تقرؤها واجهة التخزين (`bundle.record.fingerprints`)، و`diffTranslations` على ترجمتين من خانتين (`bundle.slots[i].track`).
+
+## ١٧. بنية الشيفرة والملكية بعد P10
+
+```text
+src/
+  manifest.json                     مجمَّد بعد W6: الأذونات storage وunlimitedStorage وdownloads، والعامل الخلفي
+  background/worker.js، save-service.js   مجمَّد بعد W6: العامل الخلفي للحفظ وحده
+  content/{main,bridge,controller,messages}.js   مجمَّد بعد W6 (§١٢، وعقد الرسائل §٥–§٧)
+  core/
+    model/                          مجمَّد بعد W6: + slots.js وmarks.js وbundle.js وprefs.js
+    store/                          مجمَّد بعد W6: + bundles.js (الحزمة والمصالحة والاستعادة)
+    save/                           مجمَّد بعد W6: saveFile (§١٣)
+    errors/backup.js                تسجّله P10، وتملؤه P13
+    align/ (P11)   backup/ (P13)
+  player/youtube-dom.js             + seekMainVideo
+  ui/                               + forms.js وtoast.js وseek.js (§١٥)
+test/
+  helpers/                          + fixtures-v2.js (ثلاث ترجمات وسابقة وعلامات وتفضيلات) ومحاكاة التخزين بالتوابع
+  fixtures/v1/                      لقطة مجمّدة من نموذج tj-v1 وتخزينه وأخطائه (لا تُعدَّل)
+  integration/compat/               التوافق بالاتجاهين
+  live/compat/                      الإثبات الحي للتوافق والرجوع والقفز ومكان الحفظ
+```
+
+## ١٨. مراجعة العقد لمراحل W7
+
+| المرحلة | تكتب في | تستهلك (قراءة) | تحتاج ملفًا مشتركًا؟ |
+| --- | --- | --- | --- |
+| P12 | `player/controls/**`، و`pages/popup/**` | المتحكم (§١٢)، و`saveFile` (§١٣)، و`instructions` بالقاموس، ومحرّكات P11، وردّا الحالة والتشخيص (عقد الرسائل §٥–§٦)، و`slotPicker` و`createToaster` | لا |
+| P13 | `pages/library/**`، و`pages/settings/**`، و`core/backup/**`، و`errors/backup.js` | `getBundle` و`updateBundle` وانتقالات الحزمة و`listLibrary` و`restoreVideo` و`bundleBytes` و`getPrefs`/`setPrefs` و`getLastSave` و`savedPath` و`saveFile`، وصيغة `backup.md`، ومحرّكات P11، و`src/ui` | لا |
+| P14 | `pages/editor/**`، و`core/edit/**` (عدا محرّكات P11) | `updateBundle` بـ`expect` وانتقالات الخانة والعلامات والموضع، و`resolveMark`، و`jumpToVideo`، و`saveFile`، ومحرّكات P11، و`src/ui` | لا |
