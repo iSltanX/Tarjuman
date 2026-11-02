@@ -61,7 +61,7 @@ test('تشخيص الصفحة: طلبه إلى التبويب النشط، وا�
 
 test('التقرير منقّى: رموز وأعداد، بلا عنوان ولا اسم ملف ولا اسم ترجمة ولا رابط ولا معرّف فيديو', () => {
   const sections = {
-    controller: { videoId: 'iG9CE55wbtY', loading: false, version: 12, extractor: { lastVideoId: 'iG9CE55wbtY', accepted: 2, rejected: { EX_NOT_ENGLISH: 1 } } },
+    controller: { videoId: 'iG9CE55wbtY', loading: false, version: 12, extractor: { lastVideoId: 'iG9CE55wbtY', currentVideoId: 'iG9CE55wbtY', pending: [{ video_id: 'iG9CE55wbtY' }], accepted: 2, rejected: { EX_NOT_ENGLISH: 1 } } },
     mounted: {
       overlay: { state: 'mounted', lastCode: 'PL_FONT_FALLBACK', note: 'https://www.youtube.com/watch?v=iG9CE55wbtY' },
       controls: { state: 'mounted', session: { renders: 40, lastCode: 'CT_COPY_FAILED' } },

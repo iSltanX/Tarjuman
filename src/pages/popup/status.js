@@ -123,8 +123,11 @@ export function browserLabel(nav = globalThis.navigator) {
   return m ? `${m[1]} ${m[2]}` : 'غير معروف';
 }
 
-/** المعرّفات خارج التقرير: ما شوهد لا يدخل التشخيص (والمنقّي يسقط النصوص والعناوين والروابط بعدها). */
-const ID_KEYS = /^(?:videoId|videoIds|lastVideoId)$/;
+/**
+ * المعرّفات خارج التقرير: ما شوهد لا يدخل التشخيص (والمنقّي يسقط النصوص والعناوين والروابط بعدها). كل مفتاح ينتهي باسم
+ * معرّف الفيديو (videoId وcurrentVideoId وlastVideoId…)، فلا يتسرب من قسم يضيفه مستخرج أو متحكم لاحقًا.
+ */
+const ID_KEYS = /video_?ids?$/i;
 function withoutIds(value) {
   if (Array.isArray(value)) return value.map(withoutIds);
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, ID_KEYS.test(k) ? '[مستبعد]' : withoutIds(v)]));

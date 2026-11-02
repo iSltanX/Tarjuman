@@ -131,7 +131,8 @@ const M = {
     };
   },
   pause: () => { const v = document.querySelector('#movie_player video.html5-main-video'); v.muted = true; v.pause(); return v.paused; },
-  play: () => { const v = document.querySelector('#movie_player video.html5-main-video'); v.muted = true; return v.play().then(() => true, () => false); },
+  // لا يُنتظر وعد play: قد لا يُحسم بلا نافذة (والمشغّل قد يعرض «Something went wrong» تحت الأتمتة).
+  play: () => { const v = document.querySelector('#movie_player video.html5-main-video'); v.muted = true; v.play().catch(() => {}); return true; },
   seek: (t) => { const v = document.querySelector('#movie_player video.html5-main-video'); v.pause(); v.currentTime = t; return true; },
   rectOf: (sel) => { const e = document.querySelector(sel); if (!e) return null; const b = e.getBoundingClientRect(); return { x: Math.round(b.left + b.width / 2), y: Math.round(b.top + b.height / 2) }; },
 };
@@ -275,6 +276,27 @@ async function openVideo(id, { inject = 'en' } = {}) {
   await iso(I.stub);
   if (inject) await iso(I.inject, capture(id, inject));
   await sleep(500);
+}
+
+/**
+ * قفز ينتظر استقرار الزمن: تحت الأتمتة قد يعرض مشغّل يوتيوب «Something went wrong» فيعيد زمن الفيديو إلى 0 بعد القفز بلحظات
+ * (لا علاقة لترجمان به: الإضافة لا تكتب الزمن أبدًا). يُعاد القفز حتى يثبت الزمن ثانيتين، أو يُسجَّل أنه لم يثبت.
+ */
+async function stableSeek(t) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await main(M.seek, t);
+    let ok = true;
+    for (let i = 0; i < 5; i++) {
+      await sleep(400);
+      if (Math.abs((await main(M.main)).video.t - t) > 0.05) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) return attempt + 1;
+  }
+  result.notes.push(`زمن الفيديو لم يثبت بعد القفز إلى ${t} ث (مشغّل يوتيوب تحت الأتمتة).`);
+  return 0;
 }
 
 async function step(name, fn) {
@@ -433,7 +455,7 @@ try {
 
   // ===== AC1: التبديل من 1 2 3 ينعكس على الطبقة بلا إعادة تحميل =====
   await step('switch-slots', async () => {
-    await main(M.seek, CUE_AT);
+    await stableSeek(CUE_AT);
     await sleep(800);
     const lines2 = await iso(I.ov);
     await openMenuOf('upload', 'الترجمة العربية');
@@ -479,17 +501,19 @@ try {
 
   // ===== AC5: «علّم للمراجعة» =====
   await step('mark', async () => {
-    await main(M.seek, CUE_AT);
-    await sleep(800);
+    const stable = await stableSeek(CUE_AT);
     await openMenuOf('upload', 'الترجمة العربية');
+    const tBefore = (await main(M.main)).video.t;
+    result.measures.markSeek = { stable, tBefore, ytError: await main(() => !!document.querySelector('#movie_player .ytp-error')) };
     await clickItem('mark');
+    const tAfter = (await main(M.main)).video.t;
     await sleep(800);
     let bd = await iso(I.bundle, VIDEO);
     const p = await iso(I.peek);
     check('mark-visible-cue', 'P12-AC5', bd.slots[1].marks.some((x) => x.n === CUE.n && x.kind === 'todo'), { marks: bd.slots[1].marks, cue: CUE.n });
     check('mark-toast-undo', 'P12-AC5', p.layer.toasts.some((t) => t.text.includes(`عُلِّم المقطع ${CUE.n} للمراجعة`) && t.text.includes('تراجع')), { toasts: p.layer.toasts.map((t) => t.text) });
-    const t0 = (await main(M.main)).video.t;
-    check('mark-no-seek', 'P12-AC5', Math.abs(t0 - CUE_AT) < 0.05, { t0 });
+    const tLater = (await main(M.main)).video.t;
+    check('mark-no-seek', 'P12-AC5', Math.abs(tAfter - tBefore) < 0.05, { seekTo: CUE_AT, tBefore, tAfter, tLater });
     await clickUndo();
     bd = await iso(I.bundle, VIDEO);
     check('mark-undo', 'P12-AC5', bd.slots[1].marks.length === 0, { marks: bd.slots[1].marks });
@@ -506,7 +530,7 @@ try {
     const s = await iso(I.state);
     check('late-file-in-slot-3', 'P12-AC3', s.activeSlot === 3 && s.view.displayOffsetMs === 0, { active: s.activeSlot });
     // الجملة تُسمع عند بدايتها الحقيقية؛ والفيديو موقوف للقياس الدقيق (والتشغيل في الفحص التالي).
-    await main(M.seek, CUE.startMs / 1000);
+    await stableSeek(CUE.startMs / 1000);
     await sleep(800);
     await closeMenus();
     await openMenuOf('badge', 'توقيت الترجمة');
@@ -554,7 +578,8 @@ try {
       const pk = await iso(I.peek);
       const mm = await main(M.main);
       const inBar = Object.values(pk.buttons).every((x) => x.box.top >= mm.chrome.top - 1 && x.box.bottom <= mm.chrome.bottom + 1 && x.box.width > 0);
-      check(`${name}: five-in-bar-menu-no-paragraphs`, 'P12-AC7', Object.keys(pk.buttons).length === 5 && inBar && m && !/التفاصيل|اضغط|يمكنك/.test(m.text), { size: pk.size, menuH: m?.box.height });
+      const inMode = { normal: !mm.theater && !mm.fs, theater: mm.theater && !mm.fs, fullscreen: mm.fs, narrow: !mm.fs && mm.player.width < 600 }[name];
+      check(`${name}: five-in-bar-menu-no-paragraphs`, 'P12-AC7', inMode && Object.keys(pk.buttons).length === 5 && inBar && m && !/التفاصيل|اضغط|يمكنك/.test(m.text), { size: pk.size, theater: mm.theater, fs: mm.fs, player: mm.player.width, menuH: m?.box.height });
       result.measures[name] = { player: mm.player, menu: m?.box, size: pk.size };
       await shoot(`ac7-${name}`);
       await closeMenus();
@@ -569,14 +594,19 @@ try {
     if (fs) await page.click(fs.x, fs.y);
     await sleep(1800);
     await modeShot('fullscreen');
-    await page.key('Escape', 'Escape', 27);
-    await sleep(1200);
+    // الخروج كما يفعل المستخدم: زر ملء الشاشة نفسه (Esc عبر CDP لا يصل إلى واجهة المتصفح).
+    await revealControls(page);
+    const fsOut = await main(M.rectOf, '#movie_player .ytp-fullscreen-button');
+    if (fsOut) await page.click(fsOut.x, fsOut.y);
+    await sleep(1500);
+    if ((await main(M.main)).fs) await main(() => document.exitFullscreen().then(() => true, () => false));
+    await sleep(800);
     if ((await main(M.main)).theater) {
       const back = await main(M.rectOf, '#movie_player .ytp-size-button');
       if (back) await page.click(back.x, back.y);
       await sleep(1200);
     }
-    await page.send('Emulation.setDeviceMetricsOverride', { width: 760, height: 800, deviceScaleFactor: 1, mobile: false });
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 560, height: 800, deviceScaleFactor: 1, mobile: false });
     await sleep(1500);
     await modeShot('narrow');
     await page.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 950, deviceScaleFactor: 1, mobile: false });
