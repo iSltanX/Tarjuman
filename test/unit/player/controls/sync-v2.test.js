@@ -115,3 +115,46 @@ test('العرض الفرعي لا يُغلق مع اختفاء الشريط (ق
   p.env.doc.body.dispatchEvent({ type: 'pointerdown', bubbles: true });
   assert.equal(p.ui.menuOpen(), false);
 });
+
+test('تدقيق 5fedcb9 (CX-004): «تراجع» المزامنة بعد تبديل الترجمة النشطة لا يكتب إزاحة الأولى في الثانية', async () => {
+  const p = mountPage({ state: makeState({ ...withSlots([slotTrack({ cues: LATE }), slotTrack({ cues: HEARD })], { offsets: [1000, 7000, 0] }), view: { displayOffsetMs: 1000, displayMode: 'ar' } }) });
+  prepareVideo(p.video, { currentTime: 26.0, paused: false });
+  click(p.ui.btn('badge'));
+  click(p.ui.item('مزامنة بجملة…'));
+  click(sentences(p).find((b) => b.textContent === 'الجملة رقم 11'));
+  assert.equal(p.controller.getState().view.displayOffsetMs, -3000);
+  await p.controller.activateSlot(2);
+  await settle();
+  assert.equal(p.controller.getState().view.displayOffsetMs, 7000, 'الثانية بإزاحتها');
+  click(p.ui.layerHost().shadowRoot.querySelector('.toasts button.act'));
+  await settle();
+  assert.equal(p.controller.getState().view.displayOffsetMs, 7000, 'لا تُكتب إزاحة الأولى في الثانية');
+  assert.deepEqual(p.controller.calls.filter((c) => c[0] === 'setOffset').map((c) => c[1]), [-3000]);
+  assert.ok(p.ui.toasts().some((t) => t.text.includes('تغيّرت الترجمة النشطة')), 'يُقال لماذا');
+});
+
+test('تدقيق 5fedcb9 (GM-003): بعد نقرة فأرة في القائمة لا يبقى التركيز فيها، فتُغلق مع اختفاء الشريط ولا تلتقط الضغطات خفية؛ وبلوحة المفاتيح تبقى ظاهرة', async () => {
+  const p = page();
+  const shadow = p.ui.layerHost().shadowRoot;
+  // نقرة فأرة على بند يبقي القائمة مفتوحة (خطوة الأزرار)؛ المتصفح يركّز الزر عند الضغط قبل النقر.
+  const mouse = (el) => { el.focus(); click(el); };
+  mouse(p.ui.field('step:1000'));
+  await settle();
+  assert.equal(shadow.activeElement ?? null, null, 'لا تركيز باقٍ بعد نقرة الفأرة');
+  p.player.classList.add('ytp-autohide');
+  p.env.win.advance(1100);
+  assert.equal(p.ui.menuOpen(), false, 'أُغلقت مع الشريط');
+  // بلوحة المفاتيح (detail = 0) يبقى التركيز، فتبقى القائمة مفتوحة وظاهرة.
+  p.player.classList.remove('ytp-autohide');
+  p.env.win.advance(1100);
+  click(p.ui.btn('badge'), 0);
+  const step = p.ui.field('step:500');
+  step.focus();
+  click(step, 0);
+  await settle();
+  assert.ok(shadow.activeElement, 'التركيز باقٍ للوحة المفاتيح');
+  p.player.classList.add('ytp-autohide');
+  p.env.win.advance(1100);
+  assert.equal(p.ui.menuOpen(), true, 'باقية مفتوحة');
+  assert.equal(shadow.querySelector('.layer').hasAttribute('data-keep'), true, 'وظاهرة (لا opacity 0)');
+});

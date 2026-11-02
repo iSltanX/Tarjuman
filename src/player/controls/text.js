@@ -226,3 +226,6 @@ export function parseSeconds(raw) {
   const v = Number(s);
   return Number.isFinite(v) ? v : null;
 }
+
+/** «تراجع» مزامنة بجملة بعد تبدّل الترجمة النشطة أو استبدالها: لا يُكتب في غيرها (CX-004). */
+export const syncUndoStale = 'تغيّرت الترجمة النشطة، فلم يُتراجع عن مزامنة سابقتها.';

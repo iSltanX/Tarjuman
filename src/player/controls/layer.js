@@ -67,6 +67,16 @@ export function createLayer({ doc, win, on }) {
   };
   menu.addEventListener('focusin', (ev) => syncTyping(ev.target));
   menu.addEventListener('focusout', () => syncTyping(null));
+  // بعد نقرة الفأرة على بند لا يبقى التركيز فيه (كأزرار الشريط، group.js): وإلا بقيت القائمة «مركّزة» فلا تُغلق مع اختفاء
+  // الشريط، وتلتقط المسافة وEnter وهي خفية فتنفّذ بندًا لا يُرى (تدقيق 5fedcb9، GM-003). ولوحة المفاتيح (detail = 0) تبقي
+  // التركيز، والحقول تبقيه للكتابة.
+  menu.addEventListener('click', (ev) => {
+    if (!(ev.detail > 0)) return;
+    queueMicrotask(() => {
+      const f = root.activeElement;
+      if (f && menu.contains(f) && !typable(f)) f.blur();
+    });
+  });
   // نقرة فتح المنتقي (input.click) تصعد عبر الجذر إلى المشغّل؛ لا تصل إليه فتوقف التشغيل أو تبدأه.
   input.addEventListener('click', (ev) => ev.stopPropagation());
   input.addEventListener('change', () => {
@@ -193,6 +203,11 @@ export function createLayer({ doc, win, on }) {
 
     /** العنصر المركّز داخل الطبقة (الجذر مغلق فلا يراه document.activeElement). */
     focused: () => root.activeElement ?? null,
+    /** القائمة باقية مفتوحة بقرار (تركيز لوحة المفاتيح، أو تأكيد ينتظر، أو عمل جارٍ): تبقى ظاهرة والشريط مخفي، فلا تُترك خفية تعمل. */
+    setKeep(on) {
+      if (on) layer.setAttribute('data-keep', '');
+      else layer.removeAttribute('data-keep');
+    },
 
     /** @param {string} fid */
     find: (fid) => menu.querySelector(`[data-fid="${fid}"]`),

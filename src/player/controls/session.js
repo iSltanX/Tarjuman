@@ -13,7 +13,7 @@ import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu }
 import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
 import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
 import {
-  LABELS, badgeTip, comparisonSummary, downloadedLine, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime,
+  LABELS, badgeTip, comparisonSummary, downloadedLine, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime, syncUndoStale,
   slotToast,
 } from './text.js';
 
@@ -347,6 +347,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       // اختيار جملة للمزامنة): تُغلق بدل أن تعود فجأة مع الشريط عند أول حركة للمؤشر.
       const pending = ui.open === 'confirm' || (ui.open === 'timing' && !!ui.timing.sync);
       if (bar.hidden && ui.open && !pending && !ui.download.busy && !ui.upload.busy && !layer.isTyping() && !layer.focused()) ui.open = null;
+      // وما بقي مفتوحًا بقرار يبقى ظاهرًا: لا قائمة خفية تتلقى الضغطات، ولا تختفي أمام مستخدم لوحة المفاتيح (GM-003).
+      layer.setKeep?.(!!ui.open && (pending || ui.download.busy || ui.upload.busy || !!layer.focused()));
       lastModel = groupModel(s, bar);
       group.update(lastModel);
       layer.setBar(bar);
@@ -694,7 +696,20 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     controller.setOffset(next)?.catch?.(() => {});
     if (next !== prev) group.pulse();
     counts.syncs++;
-    addToast('success', offsetToast(next), { action: { label: LABELS.undo, run: () => controller.setOffset(prev) } });
+    // التراجع لإزاحة الترجمة التي زامنها المستخدم وحدها: إن تبدّلت النشطة أو استُبدلت (مقاطع أخرى) لا يُطبَّق على غيرها
+    // (تدقيق 5fedcb9، CX-004: كان يكتب إزاحة الأولى في الثانية).
+    const target = { videoId: s.videoId, cues: s.arabic.cues };
+    addToast('success', offsetToast(next), {
+      action: {
+        label: LABELS.undo,
+        run: () => {
+          const now = controller.getState();
+          if (now.videoId === target.videoId && now.arabic?.cues === target.cues) return controller.setOffset(prev);
+          addToast('info', syncUndoStale);
+          return null;
+        },
+      },
+    });
     render();
     layer.find('sync')?.focus();
   }

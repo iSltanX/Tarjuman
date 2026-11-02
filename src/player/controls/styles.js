@@ -46,8 +46,9 @@ export function layerCss() {
 :host { all: initial; position: absolute; inset: 0; display: block; z-index: ${LAYER_Z}; pointer-events: none; direction: ltr; }
 .layer { position: absolute; inset: 0; pointer-events: none; opacity: 1; transition: opacity ${BAR_FADE_MS}ms linear; font-family: var(--tj-p-font-body); color: var(--tj-p-menu-text); --fs: 13px; --title-fs: 14px; --tip-fs: 12px; --big-fs: 22px; --row: 32px; }
 .layer[data-size="fullscreen"] { --fs: 15px; --title-fs: 16px; --tip-fs: 14px; --big-fs: 26px; --row: 38px; }
-.layer[data-bar="hidden"]:not([data-typing]) { opacity: 0; }
-.layer[data-bar="hidden"]:not([data-typing]) * { pointer-events: none !important; }
+.layer[data-bar="hidden"]:not([data-typing]):not([data-keep]) { opacity: 0; }
+.layer[data-bar="hidden"]:not([data-typing]):not([data-keep]) * { pointer-events: none !important; }
+.layer[data-bar="hidden"][data-keep] .tip { display: none; }
 .layer[data-bar="hidden"][data-typing] .tip { display: none; }
 .menu, .toast, .tip { -webkit-font-smoothing: antialiased; }
 
