@@ -249,6 +249,11 @@ async function typeInto(sel, text, { enter = false, perChar = false } = {}) {
   await settle();
 }
 const row = (i, f) => `.ed-row[data-index="${i}"] [data-field="${f}"]`;
+/** حوار تصدير SRT: في الإصدار الثاني من قائمة «تصدير ▾» (P14). */
+async function openSrtExport() {
+  await clickOn('.ed-head .tj-menu__button', 'تصدير');
+  await clickOn('.tj-menu__item', 'الترجمة SRT');
+}
 /** ⌘S بتخطيط عربي: الحرف «س» والمفتاح الفعلي KeyS (modifiers 4 = Meta). */
 async function cmdS() {
   await ed.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'س', code: 'KeyS', windowsVirtualKeyCode: 83, modifiers: 4 });
@@ -369,7 +374,7 @@ try {
   check('undo-redo-before-save', undone && afterRedo.every((x, k) => x === imp.cues[4 + k].startMs - 1200) && s.status === 'تغييرات غير محفوظة (4)', { undone, redoDeltas: afterRedo.map((x, k) => x - imp.cues[4 + k].startMs), status: s.status });
 
   // ===== التصدير مرفوض بالتداخل (نقل المحددة قبل الرابع)، والحفظ متاح =====
-  await clickOn('.ed-head button', 'تصدير');
+  await openSrtExport();
   s = await info();
   const blocked = s.dialog;
   await shoot('p8-export-blocked');
@@ -379,13 +384,13 @@ try {
 
   // ===== AC5: حوار التصدير يحدد التوقيت المصدَّر (الإزاحة +0.5)، بعد تراجع يزيل التداخل =====
   await clickOn('.ed-head button', 'تراجع');
-  await clickOn('.ed-head button', 'تصدير');
+  await openSrtExport();
   s = await info();
   const dlgExport = s.dialog;
   await shoot('p8-export');
   const shownFile = await downloadFromDialog();
   await settle(500);
-  await clickOn('.ed-head button', 'تصدير');
+  await openSrtExport();
   await clickOn('dialog[open] label.ed-radio', 'المحفوظ فقط');
   const savedFile = await downloadFromDialog();
   const w2 = await run(E.cue, 2);
@@ -494,7 +499,7 @@ try {
   const orig2 = await run(E.cue, 2);
   check('original-view-read-only', s.view === 'original' && s.readOnlyRow && orig2.text === imp.cues[2].text && s.preview === 'الأصل المستورد للعرض والتصدير فقط. اختر «النسخة المعدّلة» للتعديل.',
     { view: s.view, readOnly: s.readOnlyRow });
-  await clickOn('.ed-head button', 'تصدير');
+  await openSrtExport();
   const origFile = await downloadFromDialog();
   check('export-original', origFile?.name === `${VIDEO}.ar.original.srt` && origFile.cues[0].startMs === imp.cues[0].startMs && origFile.cues[2].text === imp.cues[2].text, { name: origFile?.name });
   await ed.eval(() => { const sel = document.querySelector('.ed-head select'); sel.value = 'edit'; sel.dispatchEvent(new Event('change')); });
