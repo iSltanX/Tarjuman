@@ -70,7 +70,7 @@
 /* حوار الرفع والاستبدال الكامل: الهدف والمرجع والمقارنة وما سيتغير، بتمرير داخلي إن طال. */
 .lib-up { display: flex; flex-direction: column; gap: 12px; max-height: min(62vh, 620px); overflow-y: auto; padding-inline-end: 4px; }
 .lib-up__targets { margin: 0; }
-.lib-up__targets > legend { margin-bottom: 6px; }
+.lib-up__head { margin: 0 0 -6px; }
 .lib-up__label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .lib-up__ref { width: 100%; min-height: var(--tj-control-sm); font-size: 14px; }
 .lib-up__impact { display: flex; flex-direction: column; gap: 8px; }
@@ -80,7 +80,7 @@
 
 /* جدول الفروق القابل للطي، بدفعات من 200. */
 .lib-diff__box { border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); padding: 6px 10px; }
-.lib-diff__summary { cursor: pointer; font: 700 14px/24px var(--tj-font-body); color: var(--tj-brand-text); min-height: 32px; display: flex; align-items: center; }
+.lib-diff__summary { cursor: pointer; font: 700 14px/32px var(--tj-font-body); color: var(--tj-brand-text); min-height: 32px; display: list-item; list-style-position: inside; }
 .lib-diff__wrap { max-height: 280px; overflow: auto; margin-top: 6px; }
 .lib-diff { width: 100%; border-collapse: collapse; font: 400 13px/20px var(--tj-font-body); }
 .lib-diff th { position: sticky; top: 0; background: var(--tj-surface-2); text-align: start; padding: 6px 8px; font-weight: 700; color: var(--tj-muted); }

@@ -159,21 +159,31 @@ export function dataControl(env) {
     const titleOf = (v) => v.title ?? v.videoId;
     if (plan.fresh.length) {
       const shown = plan.fresh.slice(0, PREVIEW_FRESH_MAX);
-      kids.push(el('section', {
-        className: 'st-restore__group',
+      // قائمة الجديدة قابلة للطي، مفتوحة إن قصرت: في مكتبة كبيرة لا تدفن مجموعة «موجودة» (موضع القرار) تحت مئة صف.
+      const fresh = el('details', {
+        className: 'st-restore__group st-restore__fresh',
         children: [
-          el('h3', { className: 'tj-h4', text: `جديدة — ستُضاف (${plan.fresh.length})`, doc }),
+          el('summary', { className: 'tj-h4 st-restore__summary', text: `جديدة — ستُضاف (${plan.fresh.length})`, doc }),
           el('ul', {
             className: 'st-restore__list', attrs: { role: 'list' },
             children: [
-              ...shown.map((v) => el('li', { className: 'st-restore__item', children: [el('span', { className: 'st-restore__title', text: titleOf(v), dir: 'auto', doc }), el('span', { className: 'tj-caption', text: formatCount(v.counts.translations, FORMS.translation), doc })], doc })),
+              ...shown.map((v) => el('li', {
+                className: 'st-restore__item',
+                children: [
+                  el('span', { className: 'st-restore__title', text: titleOf(v), dir: 'auto', doc }),
+                  el('span', { className: 'tj-caption', text: v.counts.translations ? formatCount(v.counts.translations, FORMS.translation) : 'بلا ترجمة', doc }),
+                ],
+                doc,
+              })),
               plan.fresh.length > shown.length ? el('li', { className: 'tj-caption', text: `و${formatCount(plan.fresh.length - shown.length, COUNT_FORMS.video)} غيرها`, doc }) : null,
             ],
             doc,
           }),
         ],
         doc,
-      }));
+      });
+      fresh.open = plan.fresh.length <= 10;
+      kids.push(fresh);
     }
     const replaceNote = el('p', { className: 'tj-caption st-restore__danger', text: 'الاستبدال يكتب فوق الفيديو كاملًا ولا يحفظ له نسخة سابقة.', doc });
     replaceNote.hidden = true;

@@ -85,8 +85,9 @@ export async function buildP13Seed({ large: count = LARGE_COUNT } = {}) {
   const store = createStore({ area });
   await store.setSettings({ offsetStepMs: 1000, appearance: { scale: 120 } });
   await store.setPrefs(samplePrefs({ mode: 'downloads' }));
-  const ids = await realistic(store);
+  // المكتبة الكبيرة أولًا، ثم الواقعية: التخزين يضبط تاريخ التعديل عند الكتابة، فتظهر الواقعية في أعلى القائمة.
   for (let i = 0; i < count; i++) await large(store, i);
+  const ids = await realistic(store);
   await area.flush();
   return { items: area.dump(), store, area, ids };
 }

@@ -78,10 +78,12 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
     });
     return input;
   });
+  // العنوان المرئي فقرة فوق المجموعة: legend يقع على حد fieldset فتُقص نقاط حروفه العليا («حفظ في»)؛ ويبقى اسم الوصول.
+  const targetHead = el('p', { className: 'tj-label lib-up__head', text: 'حفظ في', attrs: { 'aria-hidden': 'true' }, doc });
   const targetGroup = el('fieldset', {
     className: 'tj-choice lib-up__targets',
     children: [
-      el('legend', { className: 'tj-label', text: 'حفظ في', doc }),
+      el('legend', { className: 'tj-sr-only', text: 'حفظ في', doc }),
       ...options.map((o, i) => el('label', {
         className: 'tj-choice__option',
         children: [targetInputs[i], el('span', { className: 'tj-choice__text', children: [el('span', { className: 'tj-choice__label', text: o.label, dir: 'auto', doc }), o.filled ? el('span', { className: 'tj-choice__hint', text: 'ممتلئة: الحفظ فيها استبدال', doc }) : null], doc })],
@@ -176,6 +178,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
       ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
       hint ? alertBox({ tone: 'warning', text: hint, doc }) : null,
+      targetHead,
       targetGroup,
       referenceBlock,
       compareHost,

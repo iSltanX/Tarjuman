@@ -258,7 +258,9 @@ async function createPhase() {
   await clickOn(lib, confirmBtn, 'تأكيد الاستعادة الثانية');
   await sleep(900);
   const back = await getKeys(lib, [`alts:${TED}`, `prev:${TED}`]);
-  check('ac3-restore-reversible', JSON.stringify(back) === JSON.stringify(before));
+  // المحتوى يعود كما كان؛ وتاريخ حفظ السابقة (savedAt) يتجدد بكل تبديل.
+  const content = (x) => JSON.stringify({ alts: x[`alts:${TED}`].slots, prev: { ...x[`prev:${TED}`].previous, savedAt: null } });
+  check('ac3-restore-reversible', content(back) === content(before), { savedAtRenewed: back[`prev:${TED}`].previous.savedAt !== before[`prev:${TED}`].previous.savedAt });
   await typeInto(lib, `document.querySelector('dialog.lib-panel section[data-slot="3"] input')`, 'حرفية', 'اسم الخانة 3');
   await sleep(500);
   check('ac1-slot-rename', (await getKeys(lib, [`bundle:${TED}`]))[`bundle:${TED}`]?.names?.[2] === 'حرفية');
@@ -286,6 +288,8 @@ async function createPhase() {
   });
   check('ac2-dialog-parts', /حفظ في/.test(upText) && /المرجع/.test(upText) && /سيُستبدل/.test(upText) && /جدول الفروق/.test(upText) && keep !== null, { keep, lost: /سيُستبدل [^.]+\./.exec(upText)?.[0] ?? null });
   await clickOn(lib, `${topDialog}?.querySelector('.lib-diff__summary')`, 'جدول الفروق');
+  // فتح الجدول يمرّر محتوى الحوار؛ اللقطة من أعلاه (اسم الملف والهدف والمرجع والأعداد).
+  await lib.eval(() => { const u = document.querySelector('dialog.tj-dialog[open] .lib-up'); if (u) u.scrollTop = 0; });
   await shot(lib, 'upload-dialog');
   await clickOn(lib, cancelBtn, 'إلغاء الرفع');
   await sleep(600);
@@ -345,13 +349,19 @@ async function createPhase() {
   await sleep(500);
   const status = await textOf(st, `document.querySelector('.st-status')`);
   check('ac8-subfolder-mode', (await getKeys(st, ['prefs'])).prefs.saveLocation.mode === 'subfolder' && status === 'المكان المختار: مجلد التنزيلات/Tarjuman', { status });
+  // المسار الفعلي من سجل المتصفح يحمل مسار الجهاز: يُموَّه في اللقطة وحدها (والنص النسبي في JSON).
+  await st.eval(() => { const p = document.querySelector('.st-last-save__path'); if (p) p.style.filter = 'blur(5px)'; });
   await shot(st, 'settings-save-location');
-  await lib.eval(() => location.reload());
+  await st.eval(() => { const p = document.querySelector('.st-last-save__path'); if (p) p.style.filter = ''; });
+  await lib.reload();
   await lib.waitFor(() => document.querySelectorAll('li.lib-row').length >= 50, { timeoutMs: 30000 });
+  const lastBefore = (await getKeys(lib, ['saves'])).saves?.last?.downloadId ?? null;
   await clickOn(lib, `document.querySelector('li.lib-row[data-video="${SEED_IDS.asr}"] button.lib-more')`, 'المزيد (asr)');
   await clickOn(lib, byText('.tj-menu__list:not([hidden]) [role=menuitem]', 'الإنجليزية'), 'تصدير الإنجليزية');
   const subFile = await waitFile('Tarjuman', (n) => n.startsWith(SEED_IDS.asr) && n.endsWith('.srt'));
   check('ac8-export-follows-subfolder', Boolean(subFile), { file: inDl(subFile) });
+  // معرّف آخر تنزيل يُسجَّل بعد اكتمال التنزيل في المتصفح (لا عند ظهور الملف)، ثم يُقرأ مكانه من سجل المتصفح.
+  await lib.waitFor((was) => new Promise((r) => chrome.storage.local.get('saves').then((x) => r((x.saves?.last?.downloadId ?? null) !== was))), { args: [lastBefore], timeoutMs: 15000 });
   await st.reload();
   const lastShown = await st.waitFor(() => { const e = document.querySelector('.st-last-save'); return e && !e.hidden ? e.textContent : null; }, { timeoutMs: 8000 });
   check('ac8-last-save-from-browser', Boolean(lastShown) && lastShown.includes('Tarjuman') && lastShown.includes(SEED_IDS.asr), { shown: lastShown ? inDl(lastShown.replace('آخر ملف حُفظ: ', '').trim()) : null });
@@ -361,9 +371,11 @@ async function createPhase() {
   await clickOn(lib, byText('.tj-menu__list:not([hidden]) [role=menuitem]', 'الإنجليزية'), 'تصدير الإنجليزية (اسأل)');
   const askToast = await lib.waitFor(() => [...document.querySelectorAll('.tj-toast')].map((t) => t.textContent).join('|') || null, { timeoutMs: 20000, intervalMs: 300 });
   observe('ac8-ask-headless', { toast: askToast, note: 'بلا نافذة لا يُظهر المتصفح حوار «اسأل» (W6)، فالنتيجة دليل أن التصدير طلب الحوار؛ والحوار نفسه أُثبت بنافذة في P10.' });
+  const beforeReset = (await getKeys(st, ['prefs'])).prefs.saveLocation;
+  const resetState = await st.eval(() => { const r = document.querySelector('.st-location__reset'); return r ? { disabled: r.getAttribute('aria-disabled'), status: document.querySelector('.st-status')?.textContent } : null; });
   await clickOn(st, `document.querySelector('.st-location__reset')`, 'استعادة الافتراضي');
-  await sleep(500);
-  check('ac8-reset-default', JSON.stringify((await getKeys(st, ['prefs'])).prefs.saveLocation) === JSON.stringify({ mode: 'downloads', folder: 'Tarjuman' }));
+  const resetDone = await st.waitFor(() => new Promise((r) => chrome.storage.local.get('prefs').then((x) => r(x.prefs?.saveLocation?.mode === 'downloads' ? x.prefs.saveLocation : null))), { timeoutMs: 5000 });
+  check('ac8-reset-default', resetDone?.mode === 'downloads' && resetDone?.folder === 'Tarjuman', { beforeReset, resetState, after: resetDone ?? (await getKeys(st, ['prefs'])).prefs.saveLocation });
 
   // AC4: إنشاء النسخة الاحتياطية بتقدم ظاهر، وتسليمها إلى مرحلة الاستعادة.
   await navHash(st, 'data');
@@ -474,7 +486,8 @@ async function restorePhase() {
       marks: restored[`marks:${id}`]?.slots ?? [0, 1, 2].map(() => ({ marks: [], position: null })),
     };
     const want = { ...e, record: { ...e.record, rev: 0 } };
-    if (JSON.stringify(got) === JSON.stringify(want)) same++;
+    // chrome.storage يعيد مفاتيح الكائنات مرتبة أبجديًا، فالمقارنة بصيغة قانونية مرتبة المفاتيح في كل مستوى.
+    if (canonical(got) === canonical(want)) same++;
     else diffs.push(id);
   }
   check('ac4-brave-to-chrome-identical', same === 302, { same, diffs: diffs.slice(0, 5) });
@@ -521,6 +534,9 @@ async function restorePhase() {
   await lib.waitFor(() => document.querySelectorAll('dialog.lib-panel[open] section.lib-slot').length === 4, { timeoutMs: 8000 });
   await shot(lib, 'translations-panel-restored');
 }
+
+/** JSON بمفاتيح مرتبة في كل مستوى. */
+const canonical = (v) => JSON.stringify(v, (_k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, x[k]])) : x));
 
 /** فيديوهات محلية في Chrome بالمعرّفات نفسها وعمل أحدث. */
 async function buildLocal(ids) {
