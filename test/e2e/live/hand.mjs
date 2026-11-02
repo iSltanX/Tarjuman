@@ -6,8 +6,9 @@
 // مجلد التنزيل والحافظة فقط، ثم يغلق المتصفح ويقارن الملفات بايتًا بالمراجع. منفذ التصحيح يجعل webdriver=true فيعيد
 // يوتيوب الجسم فارغًا (قيس في P9)، فلا بديل عن اليد هنا.
 // والحافظة: لا يُلتفت إلا إلى نص تعليمات الترجمة (بسطره الأول)؛ ما ينسخه سلطان في عمله لا يُحفظ ولا يُقارن.
-//   node test/e2e/live/hand.mjs --browser brave --live s6MmNDkSkSM [--minutes 25] [--monitor]
+//   node test/e2e/live/hand.mjs --browser brave --live s6MmNDkSkSM [--minutes 25] [--monitor] [--only asr,long]
 //   --monitor  يراقب جلسة يدوية مفتوحة بالفعل (لا بناء ولا تشغيل)، ويغلقها في النهاية.
+//   --only     بنود بعينها لإكمال جلسة سابقة: لا يُمسح ما نُزّل قبلها، والأدلة في hand-<البنود>.json.
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -30,12 +31,15 @@ const profileDir = path.join(PROFILE_ROOT, spec.profile);
 const DL = path.join(WORK, browser, 'hand-downloads');
 const TED_TITLE = 'Do schools kill creativity? | Sir Ken Robinson | TED';
 
+const ONLY = val('only') ? val('only').split(',') : null;
 const ITEMS = [
   { slot: 'manual', id: 'iG9CE55wbtY', kind: 'manual', mode: 'normal', ref: { fixture: 'manual-ted-iG9CE55wbtY.json', durationMs: 1203421 } },
   { slot: 'asr', id: 'Y9rkKtK1b44', kind: 'asr', mode: 'long', ref: { fixture: 'asr-nwc-Y9rkKtK1b44.json', durationMs: 3600000 } },
   { slot: 'long', id: 'gBazR59SZXk', kind: 'manual', mode: 'normal', ref: { srt: 'docs/evidence/P1/srt/gBazR59SZXk.en.manual.srt' } },
   ...(LIVE ? [{ slot: 'live', id: LIVE, kind: null, mode: 'normal', ref: null }] : []),
-];
+].filter((it) => !ONLY || ONLY.includes(it.slot));
+/** نسخ التعليمات من الشريط مطلوب في جلسة فيها فيديو TED وحدها. */
+const WANT_COPY = ITEMS.some((it) => it.slot === 'manual');
 const fileRe = (it) => new RegExp(`^${it.id.replace(/-/g, '\\-')}\\.en\\.(manual|asr)\\.${it.mode}\\.srt$`);
 
 async function expected(it) {
@@ -48,7 +52,7 @@ async function expected(it) {
 }
 
 const version = execFileSync('plutil', ['-extract', 'CFBundleShortVersionString', 'raw', path.join(spec.app, 'Contents/Info.plist')], { encoding: 'utf8' }).trim();
-const ev = new Evidence(path.join(ROOT, 'docs/evidence/P9', browser), 'hand', { step: 'hand', browser: `${spec.name} ${version}`, session: 'نافذة عادية بلا أي علم تحكم ولا اتصال؛ النقرات بيد سلطان' });
+const ev = new Evidence(path.join(ROOT, 'docs/evidence/P9', browser), ONLY ? `hand-${ONLY.join('-')}` : 'hand', { step: 'hand', browser: `${spec.name} ${version}`, session: 'نافذة عادية بلا أي علم تحكم ولا اتصال؛ النقرات بيد سلطان' });
 const state = await loadState(browser);
 
 const MONITOR = argv.includes('--monitor');
@@ -60,8 +64,9 @@ if (MONITOR) {
 } else {
   if (pidsOf(profileDir).length) throw new Error(`${spec.name} يعمل بملف ${spec.profile}؛ أغلقه أولًا`);
   execFileSync(process.execPath, [path.join(ROOT, 'scripts/build.mjs'), '--out', spec.ext], { cwd: ROOT, stdio: 'ignore' });
-  await rm(DL, { recursive: true, force: true });
+  if (!ONLY) await rm(DL, { recursive: true, force: true });
   await mkdir(DL, { recursive: true });
+  for (const n of await readdir(DL)) if (ITEMS.some((it) => fileRe(it).test(n))) await rm(path.join(DL, n));
   await setDownloadDir(profileDir, DL);
   sentinel();
   const urls = ITEMS.map((it) => `https://www.youtube.com/watch?v=${it.id}&cc_load_policy=1&cc_lang_pref=en`);
@@ -99,7 +104,7 @@ while (Date.now() < end) {
   const files = ITEMS.every((it) => seen.has(it.slot));
   if (files && !filesAt) filesAt = Date.now();
   // النسخ ينتظر ثلاث دقائق بعد اكتمال الملفات، ثم يُسجَّل غيابه ولا يُعلَّق الاختبار.
-  const ready = files && (copied || Date.now() - filesAt > 180000);
+  const ready = files && (!WANT_COPY || copied || Date.now() - filesAt > 180000);
   if (ready && !doneAt) doneAt = Date.now();
   // مهلة بعد اكتمال المطلوب لما هو اختياري (تقسيم Chrome الاحتياطي).
   if (doneAt && Date.now() - doneAt > (browser === 'chrome' ? 150000 : 8000)) break;
@@ -121,9 +126,11 @@ for (const it of ITEMS) {
   }
   state.videos[it.id] = { ...(state.videos[it.id] ?? {}), slot: it.slot, srtName: name ?? null, srtSha: got ? sha16(got) : null, cues };
 }
-const expInstr = specInstructions('iG9CE55wbtY', TED_TITLE);
-const sameButTitle = copied && copied.replace(/^- العنوان: .*$/m, '') === expInstr.replace(/^- العنوان: .*$/m, '');
-ev.check('hand-copy-from-player-bar-to-device-clipboard', copied === expInstr, { len: copied?.length ?? null, sha: copied && sha16(copied), expected: { len: expInstr.length, sha: sha16(expInstr) }, sameExceptTitle: sameButTitle });
+if (WANT_COPY) {
+  const expInstr = specInstructions('iG9CE55wbtY', TED_TITLE);
+  const sameButTitle = copied && copied.replace(/^- العنوان: .*$/m, '') === expInstr.replace(/^- العنوان: .*$/m, '');
+  ev.check('hand-copy-from-player-bar-to-device-clipboard', copied === expInstr, { len: copied?.length ?? null, sha: copied && sha16(copied), expected: { len: expInstr.length, sha: sha16(expInstr) }, sameExceptTitle: sameButTitle });
+}
 if (splitParts.length) {
   const parts = await Promise.all(splitParts.sort().map(async (n) => parseSrtStrict(await readFile(path.join(DL, n), 'utf8'))));
   const flat = parts.flat();

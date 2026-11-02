@@ -1,0 +1,76 @@
+{
+  "step": "hand",
+  "browser": "Brave 156.1.98.63",
+  "session": "نافذة عادية بلا أي علم تحكم ولا اتصال؛ النقرات بيد سلطان",
+  "at": "2026-11-02T01:31:10.941Z",
+  "checks": [
+    {
+      "id": "hand-manual-real-extraction-matches-reference",
+      "ok": true,
+      "detail": {
+        "name": "iG9CE55wbtY.en.manual.normal.srt",
+        "bytes": 32411,
+        "sha": "7770a795775890e6",
+        "cues": 427,
+        "expected": {
+          "bytes": 32411,
+          "sha": "7770a795775890e6"
+        }
+      }
+    },
+    {
+      "id": "hand-asr-real-extraction-matches-reference",
+      "ok": false,
+      "detail": {
+        "name": null,
+        "bytes": null,
+        "sha": null,
+        "cues": null,
+        "expected": {
+          "bytes": 72917,
+          "sha": "e953aa0077979d9a"
+        }
+      }
+    },
+    {
+      "id": "hand-long-real-extraction-matches-reference",
+      "ok": false,
+      "detail": {
+        "name": null,
+        "bytes": null,
+        "sha": null,
+        "cues": null,
+        "expected": {
+          "bytes": 156507,
+          "sha": "bb1ed83c3cf3d281"
+        }
+      }
+    },
+    {
+      "id": "hand-live-real-extraction-valid-srt",
+      "ok": false,
+      "detail": {
+        "name": null,
+        "bytes": null,
+        "sha": null,
+        "cues": null,
+        "kind": null
+      }
+    },
+    {
+      "id": "hand-copy-from-player-bar-to-device-clipboard",
+      "ok": true,
+      "detail": {
+        "len": 3425,
+        "sha": "110220f811f0fb27",
+        "expected": {
+          "len": 3425,
+          "sha": "110220f811f0fb27"
+        },
+        "sameExceptTitle": true
+      }
+    }
+  ],
+  "notes": [],
+  "screenshots": []
+}
