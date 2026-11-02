@@ -4,7 +4,7 @@
 // بإحداثيات الأزرار والبنود. تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُمرَّر جسم P1 الحقيقي الملتقط للفيديو نفسه
 // إلى المستخرج عبر خطاف التطوير. الحافظة تُستبدل في العالمين (المشغّل ونافذة الأيقونة) فلا تُمسّ حافظة الجهاز.
 //   npm run build:dev -- --out <مجلد خارج المستودع>
-//   node test/live/controls/v2.mjs --browser brave|chrome --ext <مجلد> [--headed] [--out docs/evidence/P12]
+//   node test/live/controls/v2.mjs --browser brave|chrome --ext <مجلد> [--headed] [--out docs/evidence/P12] [--only upload-first,modes] [--narrow 480]
 import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -27,6 +27,8 @@ const VIDEO = 'iG9CE55wbtY';
 const OTHER = 'Y9rkKtK1b44';
 const FIXTURE = path.join(ROOT, 'test/fixtures/json3/manual-ted-iG9CE55wbtY.json');
 const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P12'), browser);
+const ONLY = val('only') ? new Set(val('only').split(',')) : null;
+const NARROW = Number(val('narrow', 560));
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const PROFILE = `${browser}-p12-${RUN}`;
 const DL = path.join(PROFILE_ROOT, `downloads-${browser}-p12`, RUN);
@@ -300,6 +302,7 @@ async function stableSeek(t) {
 }
 
 async function step(name, fn) {
+  if (ONLY && !ONLY.has(name)) return;
   try {
     await fn();
   } catch (err) {
@@ -606,7 +609,7 @@ try {
       if (back) await page.click(back.x, back.y);
       await sleep(1200);
     }
-    await page.send('Emulation.setDeviceMetricsOverride', { width: 560, height: 800, deviceScaleFactor: 1, mobile: false });
+    await page.send('Emulation.setDeviceMetricsOverride', { width: NARROW, height: 800, deviceScaleFactor: 1, mobile: false });
     await sleep(1500);
     await modeShot('narrow');
     await page.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 950, deviceScaleFactor: 1, mobile: false });

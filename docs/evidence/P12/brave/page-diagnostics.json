@@ -1,0 +1,216 @@
+{
+  "tarjuman": "0.2.0",
+  "browser": "Brave 156",
+  "at": "2026-11-02T14:37:55.458Z",
+  "sections": {
+    "popup": {
+      "watch": true,
+      "loading": false,
+      "tools": {
+        "overlay": "mounted",
+        "controls": "mounted",
+        "code": null
+      },
+      "capture": {
+        "state": "captured",
+        "count": 1,
+        "code": null
+      },
+      "slots": [
+        {
+          "n": 1,
+          "filled": true,
+          "active": false
+        },
+        {
+          "n": 2,
+          "filled": true,
+          "active": false
+        },
+        {
+          "n": 3,
+          "filled": true,
+          "active": true
+        }
+      ],
+      "arabic": {
+        "cueCount": 427,
+        "edited": false,
+        "matched": false
+      },
+      "english": {
+        "captured": [
+          {
+            "kind": "manual",
+            "ok": true,
+            "cueCount": 427
+          }
+        ],
+        "saved": 1
+      },
+      "view": {
+        "displayMode": "ar",
+        "displayOffsetMs": 0
+      }
+    },
+    "page": {
+      "controller": {
+        "videoId": "[مستبعد]",
+        "loading": false,
+        "version": 32,
+        "pendingWrites": 0,
+        "listenerFailures": 0,
+        "lastListenerError": null,
+        "extractor": {
+          "currentVideoId": "[مستبعد]",
+          "navigations": 1,
+          "accepted": 1,
+          "rejected": {
+            "EX_EMPTY_BODY": 1
+          },
+          "pending": 0,
+          "listenerFailures": 0,
+          "tracks": [
+            {
+              "key": "en|manual",
+              "lang": "en",
+              "kind": "manual",
+              "ok": true,
+              "code": null,
+              "warnings": [],
+              "cueCount": 427,
+              "bodyLength": 59007,
+              "format": "json3",
+              "transport": "xhr",
+              "completeness": null,
+              "inferredKind": "manual",
+              "invariants": [
+                {
+                  "id": 1,
+                  "key": "words",
+                  "ok": true
+                },
+                {
+                  "id": 2,
+                  "key": "noOverlap",
+                  "ok": true
+                },
+                {
+                  "id": 3,
+                  "key": "noEmpty",
+                  "ok": true
+                },
+                {
+                  "id": 4,
+                  "key": "monotonic",
+                  "ok": true
+                },
+                {
+                  "id": 5,
+                  "key": "bounds",
+                  "ok": true
+                },
+                {
+                  "id": 6,
+                  "key": "reparse",
+                  "ok": true
+                }
+              ]
+            }
+          ],
+          "recentRejections": [
+            {
+              "code": "EX_EMPTY_BODY",
+              "lang": "en",
+              "trackKind": "manual",
+              "format": "json3",
+              "bodyLength": 0,
+              "hasTlang": false
+            }
+          ]
+        }
+      },
+      "mounted": {
+        "overlay": {
+          "state": "mounted",
+          "attempts": 1,
+          "failures": 0,
+          "lastCode": null,
+          "lastDetail": null,
+          "session": {
+            "renders": 14,
+            "renderFailures": 0,
+            "refreshes": 55,
+            "hostMoves": 0,
+            "fullscreenUnreachable": 0,
+            "lastCode": null,
+            "styleMode": "adopted",
+            "captionsHidden": true,
+            "hidden": false,
+            "engine": {
+              "frames": 140,
+              "lookups": 13,
+              "emits": 14,
+              "loopStarts": 1,
+              "evals": 171,
+              "running": false,
+              "tracks": 1,
+              "ar": {
+                "from": 60904,
+                "to": 63555,
+                "cue": 12,
+                "size": 427
+              },
+              "video": {
+                "connected": true,
+                "timeSec": 62.23
+              }
+            },
+            "fontRequested": "almarai"
+          },
+          "fonts": {
+            "requested": "almarai",
+            "active": "almarai",
+            "code": null,
+            "loaded": [
+              "almarai"
+            ],
+            "failed": [],
+            "lastDetail": null
+          }
+        },
+        "controls": {
+          "state": "mounted",
+          "attempts": 1,
+          "failures": 0,
+          "lastCode": null,
+          "lastDetail": null,
+          "session": {
+            "renders": 136,
+            "renderFailures": 0,
+            "reinserts": 1,
+            "downloads": 3,
+            "copies": 5,
+            "imports": 4,
+            "flowFailures": 0,
+            "overflows": 0,
+            "switches": 1,
+            "marks": 1,
+            "syncs": 2,
+            "undos": 4,
+            "lastCode": null,
+            "lastDetail": null,
+            "open": null,
+            "size": "normal",
+            "overflow": null,
+            "styleMode": {
+              "group": "adopted",
+              "layer": "adopted"
+            },
+            "toasts": 0
+          }
+        }
+      }
+    }
+  }
+}
