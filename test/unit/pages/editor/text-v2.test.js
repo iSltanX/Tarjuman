@@ -2,7 +2,7 @@
 // الحفظ تتبع «مكان حفظ ملفات الترجمة».
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { activeSlotLine, editSlotLabel, refOptionLabel, saveMessage, slotFallback } from '../../../../src/pages/editor/text.js';
+import { activeSlotLine, editSlotLabel, refLabel, refOptionLabel, saveMessage, slotFallback } from '../../../../src/pages/editor/text.js';
 import { messageFor } from '../../../../src/core/errors/index.js';
 
 test('خانة التحرير والنشطة: الاسم والسطر يفرّقان بينهما، والحفظ هنا لا يغيّر النشطة', () => {
@@ -19,7 +19,9 @@ test('خانة التحرير والنشطة: الاسم والسطر يفرّق
 test('رسالة الحفظ تتبع «مكان حفظ ملفات الترجمة»: التنزيلات، والمجلد الفرعي، والسؤال، والرجوع إلى المعتاد، والإلغاء', () => {
   const loc = { mode: 'subfolder', folder: 'ترجمات' };
   assert.equal(saveMessage({ ok: true, mode: 'downloads' }, 'a.srt', loc, messageFor).text, 'حُفظ a.srt في مجلد التنزيلات.');
-  assert.equal(saveMessage({ ok: true, mode: 'subfolder' }, 'a.srt', loc, messageFor).text, 'حُفظ a.srt في التنزيلات/ترجمات.');
+  assert.equal(saveMessage({ ok: true, mode: 'subfolder' }, 'a.srt', loc, messageFor).text, 'حُفظ a.srt في مجلد ترجمات داخل التنزيلات.');
+  assert.equal(refLabel({ trackKey: 'en|manual', mode: 'normal', parts: [{}, {}, {}], createdAt: '2026-11-02T10:05:00.000Z' }), 'يدوي · عادي · 3 أجزاء · 2026-11-02 10:05');
+  assert.equal(refLabel({ trackKey: 'en|asr', mode: 'long', parts: null, createdAt: '2026-11-02T10:05:00.000Z' }), 'تلقائي · مقاطع أطول · 2026-11-02 10:05');
   assert.equal(saveMessage({ ok: true, mode: 'ask' }, 'a.srt', loc, messageFor).text, 'حُفظ a.srt حيث اخترت.');
   const blob = saveMessage({ ok: true, mode: 'blob' }, 'a.srt', loc, messageFor);
   assert.equal(blob.tone, 'info');

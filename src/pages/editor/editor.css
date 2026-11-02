@@ -135,7 +135,9 @@ body.ed-page { overflow: hidden; }
 .ed-resume__item { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; }
 .ed-resume-chip { margin-inline-end: auto; }
 .ed-main__bar { align-items: center; gap: 8px; }
-.ed-toast--action { pointer-events: auto; display: flex; align-items: center; gap: 10px; }
+/* أعلى تحديدًا من .ed-toast (pointer-events: none) الذي يأتي بعدها في الملف، فيُنقر «تراجع» ما دامت ظاهرة وحدها. */
+.ed-toast.ed-toast--action { display: flex; align-items: center; gap: 10px; }
+.ed-toast.ed-toast--action.is-shown { pointer-events: auto; }
 .ed-toast__action { color: inherit; }
 .ed-wrap { flex-wrap: wrap; }
 .ed-ref-choice { width: 100%; }

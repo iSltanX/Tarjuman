@@ -82,7 +82,7 @@ export function renderCompletePanel(box, o) {
     el('p', { className: 'tj-caption', text: 'ملف صغير بالمقاطع المختارة من الأصل الإنجليزي نفسه، تترجمه بتعليماته، ثم تستورد ما يعيده فيوضع كل مقطع في موضعه.', doc }),
     o.reason ? alertBox({ tone: 'info', title: 'لا يُبنى ملف الاستكمال الآن', text: o.reason, doc }) : null,
     el('fieldset', { className: 'ed-fieldset', children: [el('legend', { className: 'tj-label', text: 'المقاطع', doc }), ...checks], doc }),
-    o.numbers.length ? el('p', { className: 'tj-caption', children: ['الأرقام: ', ltr(numberList(o.numbers), { doc })], doc }) : null,
+    o.numbers.length ? el('p', { className: 'tj-caption', text: `الأرقام: ${numberList(o.numbers)}`, doc }) : null,
     el('div', { className: 'ed-group ed-wrap', children: [download, copy], doc }),
     o.glossaryCount ? el('p', { className: 'tj-caption', text: `+ القاموس (${o.glossaryCount}) في التعليمات.`, doc }) : null,
     el('div', { className: 'ed-group', children: [importBtn, file], doc }),

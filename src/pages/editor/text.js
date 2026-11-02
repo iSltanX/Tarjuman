@@ -109,6 +109,18 @@ export function activeSlotLine(editing, active, name) {
   return `${who}. النشطة في المشغّل الترجمة ${active}، والحفظ هنا لا يغيّرها.`;
 }
 
+/**
+ * اسم مرجع المقارنة في قائمته: نوع المسار ووضعه وأجزاؤه وتاريخ تصديره، قصيرًا بالعربية بدل اسم الملف الطويل.
+ * @param {{ trackKey: string, mode: string, parts: unknown[] | null, createdAt: string } | null} fp
+ */
+export function refLabel(fp) {
+  if (!fp) return 'مرجع غير محفوظ';
+  const kind = fp.trackKey.endsWith('|asr') ? 'تلقائي' : 'يدوي';
+  const mode = fp.mode === 'long' ? 'مقاطع أطول' : 'عادي';
+  const parts = fp.parts ? ` · ${fp.parts.length} أجزاء` : '';
+  return `${kind} · ${mode}${parts} · ${fp.createdAt.slice(0, 10)} ${fp.createdAt.slice(11, 16)}`;
+}
+
 /** خيار العمود المرجعي: «الإنجليزية» أو «الترجمة 3 — مراجعة». @param {'en' | number} v @param {string | null} [name] */
 export const refOptionLabel = (v, name = null) => (v === 'en' ? 'الإنجليزية' : name ? `الترجمة ${v} — ${name}` : `الترجمة ${v}`);
 
@@ -157,7 +169,8 @@ export function seekResult(r, at, message) {
 export function saveMessage(r, name, location, message) {
   if (!r.ok) return { tone: r.code === 'SV_CANCELLED' ? 'info' : 'danger', text: `${name}: ${message(r.code)}` };
   if (r.mode === 'blob') return { tone: 'info', text: `${name}: ${message('SV_FALLBACK_BLOB')}` };
-  if (r.mode === 'subfolder') return { tone: 'success', text: `حُفظ ${name} في التنزيلات/${location?.folder ?? 'Tarjuman'}.` };
+  // «مجلد X داخل التنزيلات» لا «التنزيلات/X»: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص.
+  if (r.mode === 'subfolder') return { tone: 'success', text: `حُفظ ${name} في مجلد ${location?.folder ?? 'Tarjuman'} داخل التنزيلات.` };
   if (r.mode === 'ask') return { tone: 'success', text: `حُفظ ${name} حيث اخترت.` };
   return { tone: 'success', text: `حُفظ ${name} في مجلد التنزيلات.` };
 }

@@ -30,15 +30,16 @@ export function snippet(text, start, end, around = CONTEXT) {
  *   cues: () => { n: number, startMs: number, endMs: number, text: string }[],
  *   english: () => string[],
  *   readOnly: () => string | null,
+ *   active: () => number | null,
  *   onChange: () => void,
  *   reveal: (index: number, match: { start: number, end: number } | null, opts: { focus: boolean, field: 'ar' | 'en' }) => void,
  *   replace: (matches: { index: number, start: number, end: number }[], replacement: string, only: number[]) => { ok: boolean, count: number },
  * }} o
  */
-export function createSearch({ doc, cues, english, readOnly, onChange, reveal, replace }) {
+export function createSearch({ doc, cues, english, readOnly, active, onChange, reveal, replace }) {
   const win = doc.defaultView;
   const S = {
-    query: '', field: /** @type {'ar' | 'en'} */ ('ar'), wholeWord: false, ignoreMarks: false,
+    query: '', key: '', field: /** @type {'ar' | 'en'} */ ('ar'), wholeWord: false, ignoreMarks: false,
     matches: /** @type {{ index: number, start: number, end: number }[]} */ ([]), current: -1,
     byIndex: /** @type {Map<number, number[]>} */ (new Map()), replaceOpen: false, timer: 0,
   };
@@ -146,11 +147,17 @@ export function createSearch({ doc, cues, english, readOnly, onChange, reveal, r
     S.timer = win.setTimeout(run, DELAY_MS);
   }
 
-  /** يعيد البحث (بعد كتابة الاستعلام أو تغيّر المقاطع) ويبقي النتيجة الحالية قرب موضعها. */
+  /**
+   * يعيد البحث بعد كتابة الاستعلام أو تغيّر خياراته (فتصير الحالية أقرب نتيجة من المقطع الحالي ويُمرَّر إليها)، أو بعد تغيّر
+   * المقاطع (فتبقى الحالية قرب موضعها).
+   */
   function run() {
     win.clearTimeout(S.timer);
+    const key = `${input.value}|${S.field}|${S.wholeWord}|${S.ignoreMarks}`;
+    const fresh = key !== S.key;
+    S.key = key;
     S.query = input.value;
-    const was = S.matches[S.current];
+    const was = fresh ? null : S.matches[S.current];
     const list = cues();
     S.matches = S.query.trim() ? searchCues(list, S.query, { field: S.field, english: S.field === 'en' ? english() : null, wholeWord: S.wholeWord, ignoreMarks: S.ignoreMarks }) : [];
     S.byIndex = new Map();
@@ -159,13 +166,19 @@ export function createSearch({ doc, cues, english, readOnly, onChange, reveal, r
       S.byIndex.get(m.index).push(k);
     });
     if (!S.matches.length) S.current = -1;
-    else if (!was) S.current = Math.min(S.current, S.matches.length - 1);
+    else if (fresh) {
+      const from = active() ?? 0;
+      const k = S.matches.findIndex((m) => m.index >= from);
+      S.current = k < 0 ? 0 : k;
+    } else if (!was) S.current = Math.min(Math.max(S.current, 0), S.matches.length - 1);
     else {
       const k = S.matches.findIndex((m) => m.index > was.index || (m.index === was.index && m.start >= was.start));
       S.current = k < 0 ? S.matches.length - 1 : k;
     }
     render();
     onChange();
+    const m = S.matches[S.current];
+    if (fresh && m) reveal(m.index, m, { focus: false, field: S.field });
   }
 
   function step(dir, { focus }) {

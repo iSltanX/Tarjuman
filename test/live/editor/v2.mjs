@@ -172,7 +172,7 @@ const E = {
       resume: [...document.querySelectorAll('.ed-resume__item')].map((r) => r.textContent),
       comparison: s.comparison ? { missing: s.comparison.missing.length, restore: s.comparison.restoreTimingAvailable, fp: s.comparison.fingerprintId } : null,
       parts: s.parts ? s.parts.map((p) => `${p.index}:${p.received}/${p.total}`) : null,
-      fp: s.fp?.id ?? null, url: location.search,
+      fp: s.fp?.id ?? null, url: location.search, lastSeek: s.lastSeek,
       dialog: dlg ? {
         title: dlg.querySelector('.tj-dialog__title')?.textContent ?? null, text: dlg.textContent.slice(0, 600),
         buttons: [...dlg.querySelectorAll('.tj-dialog__footer button')].map((b) => ({ value: b.value, label: b.textContent.trim(), disabled: b.getAttribute('aria-disabled') === 'true' })),
@@ -280,6 +280,9 @@ const shoot = async (name) => {
   result.screenshots.push(path.relative(ROOT, f));
 };
 async function clickOn(sel, label = null) {
+  // صف خارج المدى المرسوم (القائمة افتراضية): يُمرَّر إليه أولًا.
+  const rowIndex = /^\.ed-row\[data-index="(\d+)"\]/.exec(sel)?.[1];
+  if (rowIndex !== undefined) await run(E.reveal, Number(rowIndex));
   if (!(await run(E.probe, sel, label))) throw new Error(`لا عنصر: ${sel} ${label ?? ''}`);
   const c = await ed.centerOf('[data-probe="1"]');
   if (!c) throw new Error(`عنصر غير ظاهر: ${sel} ${label ?? ''}`);
@@ -350,7 +353,9 @@ async function setFiles(selector, files) {
   await ed.send('DOM.setFileInputFiles', { nodeId, files });
   await settle(800);
 }
+const ONLY = val('only')?.split(',') ?? null;
 async function step(id, fn) {
+  if (ONLY && !ONLY.some((p) => id.startsWith(p))) return;
   try {
     await fn();
   } catch (err) {
@@ -360,6 +365,10 @@ async function step(id, fn) {
 }
 
 try {
+  // تبويبات يستعيدها المتصفح من جولة سابقة في ملف الاختبار (محرّر أو فيديو) تُغلق، فلا تُحسب «مفتوحة» في القفز.
+  for (const x of (await b.conn.send('Target.getTargets')).targetInfos) {
+    if (x.type === 'page' && x.url !== 'about:blank') await b.conn.send('Target.closeTarget', { targetId: x.targetId }).catch(() => {});
+  }
   const ext = await loadExtension(b.conn, EXT);
   check('load-unpacked', !ext.error, ext.error ? { error: ext.error } : { method: ext.method });
   if (ext.error) throw new Error('تعذّر تحميل الإضافة');
@@ -402,6 +411,8 @@ try {
     check('ac1-reference-options', s.refOptions.includes('الإنجليزية') && s.refOptions.includes('الترجمة 1'), { options: s.refOptions });
     await ed.eval(() => { const sel = document.querySelector('.ed-ref-select'); sel.value = '1'; sel.dispatchEvent(new Event('change')); });
     await settle();
+    await run(E.reveal, 0);
+    await settle();
     const refText = await ed.eval(() => document.querySelector('.ed-row[data-index="0"] .ed-row__en')?.textContent ?? '');
     const refDir = await ed.eval(() => document.querySelector('.ed-row[data-index="0"] .ed-row__en')?.dir ?? '');
     check('ac1-reference-other-translation', refText.startsWith('ترجمة للمقطع') && refDir === 'rtl', { refText: refText.slice(0, 40), refDir });
@@ -435,12 +446,12 @@ try {
     await typeText('للمقطع 1');
     await settle(400);
     s = await info();
-    const total = Number((s.search.count ?? '').split(' من ')[1]);
-    check('ac2-results-counter', /^1 من \d+$/.test(s.search.count) && total > 10 && s.matchRows > 0, { count: s.search.count, rows: s.matchRows });
+    const [k0, total] = (s.search.count ?? '').split(' من ').map(Number);
+    check('ac2-results-counter', k0 >= 1 && total > 10 && s.matchRows > 0 && (s.search.where ?? '').startsWith('المقطع'), { count: s.search.count, rows: s.matchRows, where: s.search.where });
     await ed.key('Enter', 'Enter', 13);
     await settle();
     s = await info();
-    check('ac2-next-result', s.search.count === `2 من ${total}` && (s.search.where ?? '').startsWith('المقطع'), { count: s.search.count, where: s.search.where });
+    check('ac2-next-result', s.search.count === `${k0 + 1} من ${total}` && (s.search.where ?? '').startsWith('المقطع'), { count: s.search.count, where: s.search.where });
     await clickOn('.ed-search button', 'استبدال');
     await clickOn('.ed-search__replace input');
     await typeText('للبند 1');
@@ -662,6 +673,8 @@ try {
     await settle(1200);
     const at = await yt.eval(P.time);
     const expect = target.startMs + 500;
+    await b.conn.send('Target.activateTarget', { targetId: ed.targetId });
+    await settle(400);
     check('ac4-seek-open-tab', Math.abs(at - expect) < 400, { at, expect, toast: (await info()).toast });
     const yt2 = await openTab(b.conn, `https://www.youtube.com/watch?v=${VIDEO}`);
     await waitForPlayer(yt2, VIDEO, 30000);
@@ -675,19 +688,32 @@ try {
     check('ac4-seek-most-recent-of-many', Math.abs(a2 - (c2.startMs + 500)) < 400 && Math.abs(a1 - (c2.startMs + 500)) > 400, { first: a1, second: a2, expect: c2.startMs + 500 });
     await yt2.close();
     await yt.close();
+    // «غائب» حقًا: كل تبويب للفيديو يُغلق (ومنها ما استعاده المتصفح)، ولا يُنقر حتى يغيب من القائمة.
+    for (let k = 0; k < 40; k++) {
+      const { targetInfos } = await b.conn.send('Target.getTargets');
+      const left = targetInfos.filter((x) => x.type === 'page' && x.url.includes(`youtube.com/watch?v=${VIDEO}`));
+      if (!left.length) break;
+      for (const x of left) await b.conn.send('Target.closeTarget', { targetId: x.targetId }).catch(() => {});
+      await sleep(250);
+    }
     await sleep(800);
     await b.conn.send('Target.activateTarget', { targetId: ed.targetId });
     const known = new Set((await b.conn.send('Target.getTargets')).targetInfos.map((x) => x.targetId));
     const c3 = await run(E.cue, 90);
     await rowAction(90, 'seek');
-    const fresh = await waitForTarget(b.conn, (u) => u.includes(`v=${VIDEO}`), { timeoutMs: 8000, exclude: known });
+    const fresh = await waitForTarget(b.conn, (u) => u.includes(`youtube.com/watch?v=${VIDEO}`), { timeoutMs: 8000, exclude: known });
     const t = Math.floor((c3.startMs + 500) / 1000);
-    check('ac4-seek-new-tab-when-absent', !!fresh && fresh.url.includes(`&t=${t}s`), { url: fresh ? fresh.url.replace(/^https?:\/\/[^/]+/, '') : null });
+    const after = await info();
+    const pages = (await b.conn.send('Target.getTargets')).targetInfos.filter((x) => x.type === 'page').map((x) => x.url.replace(/^https?:\/\/[^/?]+/, '').slice(0, 60));
+    check('ac4-seek-new-tab-when-absent', !!fresh && fresh.url.includes(`&t=${t}s`), { url: fresh ? fresh.url.replace(/^https?:\/\/[^/]+/, '') : null, lastSeek: after.lastSeek, pages });
     if (fresh) {
       yt = await attach(b.conn, fresh.targetId);
       await sleep(3000);
       isoId = yt.isolatedContextId(extId);
     }
+    // القفز يجلب تبويب الفيديو إلى الأمام؛ والمحرّر في الخلفية لا يرسم إطارات (requestAnimationFrame).
+    await b.conn.send('Target.activateTarget', { targetId: ed.targetId });
+    await settle(600);
   });
 
   // ===== الأداء على 2400 مقطع: البحث والاستبدال والدمج والتمرير =====

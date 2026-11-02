@@ -35,7 +35,7 @@ import { previewPatch, renderCompletePanel } from './complete-panel.js';
 import { createRows, textDir } from './rows.js';
 import { createSearch } from './search.js';
 import {
-  COUNT, MARK_LABEL, activeSlotLine, editSlotLabel, errorsToFix, mergePreview, nextMark, numberList, offsetLine, offsetNotice, refOptionLabel,
+  COUNT, MARK_LABEL, activeSlotLine, editSlotLabel, errorsToFix, mergePreview, nextMark, numberList, offsetLine, offsetNotice, refLabel, refOptionLabel,
   saveMessage, saveStatus, scopeOption, scopeTarget, seconds, seekResult, shiftSentence, slotFallback, splitPreview, unsavedSentence,
 } from './text.js';
 import { RowLayout, createVirtualList, rowHeight, textLines } from './virtual.js';
@@ -112,6 +112,7 @@ export async function mountEditor(app, {
     refPreview: /** @type {string | null | undefined} */ (undefined), refRank: [], refBusy: false,
     markView: /** @type {ReturnType<typeof resolveSlotMarks> | null} */ (null),
     caret: /** @type {{ index: number, at: number, version: number } | null} */ (null),
+    lastSeek: /** @type {{ ok: boolean, via: string | null, code: string | null, ms: number } | null} */ (null),
     hoverAct: /** @type {{ kind: 'merge' | 'split', index: number } | null} */ (null),
     comparison: null, compareTimer: 0, frame: 0,
   };
@@ -188,6 +189,7 @@ export async function mountEditor(app, {
     },
     english: () => (S.view === 'original' ? S.refsOriginal : S.refs),
     readOnly: () => (readOnly() ? messageFor('ED_READ_ONLY') : null),
+    active: () => S.activeIndex,
     onChange: () => S.list?.refresh(null),
     reveal: (index, match, { focus, field }) => revealMatch(index, match, { focus, field }),
     replace: (matches, replacement, only) => {
@@ -423,6 +425,8 @@ export async function mountEditor(app, {
       S.selection.clear();
       S.lastChecked = null;
       rebuildList();
+      // المقارنة أُعيدت في rebuildList (العدد والترقيم تغيّرا)، فتُرسم لوحتها الآن لا بعد المؤقّت.
+      renderComparisonPanel();
       scheduleChrome();
       return;
     }
@@ -625,10 +629,7 @@ export async function mountEditor(app, {
     } catch {
       ranked = fps.map((f) => ({ fingerprintId: f.id, score: 0, matched: false, why: '' }));
     }
-    S.refRank = ranked.map((r) => {
-      const f = fpById(r.fingerprintId);
-      return { id: r.fingerprintId, score: r.score, why: r.why, label: f?.fileName ?? `${f?.trackKey ?? ''} · ${f?.mode === 'long' ? 'مقاطع أطول' : 'عادي'}${f?.parts ? ` · ${f.parts.length} أجزاء` : ''}` };
-    });
+    S.refRank = ranked.map((r) => ({ id: r.fingerprintId, score: r.score, why: r.why, label: refLabel(fpById(r.fingerprintId)) }));
   }
 
   function renderReferencePanel() {
@@ -1185,6 +1186,7 @@ export async function mountEditor(app, {
     const ms = Math.max(0, cue.startMs + S.session.offsetMs);
     setActive(i);
     const r = await seek({ videoId, ms });
+    S.lastSeek = { ok: r.ok, via: r.via ?? null, code: r.code ?? null, ms };
     const res = seekResult(r, formatTimecode(ms), (code) => messageFor(code));
     toast(res.text, res.tone);
   }
@@ -1327,6 +1329,9 @@ export async function mountEditor(app, {
       rebuildList();
     }
     titleEl.textContent = latest.record.title ?? 'بلا عنوان محفوظ';
+    // العلامات والموضع من الحزمة الأحدث (علامة من المشغّل مثلًا) على الصفوف المعروضة.
+    computeMarks();
+    S.list.refresh(null);
     renderAll();
   }
 
