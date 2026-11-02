@@ -143,8 +143,8 @@
 ```json tj-status
 {
   "phase": "P11",
-  "status": "integrating",
-  "updated": "2026-11-02T16:17:59+03:00",
+  "status": "verified",
+  "updated": "2026-11-02T16:30:54+03:00",
   "branch": "tj/P11-v2-engines",
   "resume": "جاهزة للدمج في W6",
   "blocker": null,
