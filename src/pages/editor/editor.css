@@ -255,3 +255,20 @@ body.ed-page { overflow: hidden; }
 @media (max-width: 1180px) {
   .ed-body { grid-template-columns: 260px minmax(0, 1fr); }
 }
+/* النوافذ الأضيق (نصف شاشة حاسوب): عمود العربية لا يضيق عن 240 والإنجليزي عن 160، وما لا يتسع يُمرَّر أفقيًا مع رأسه
+   بدل قصّ صامت يُخفي أزرار الصف؛ وتحت 900 تصعد اللوحة الجانبية فوق القائمة (تدقيق 5fedcb9، CL-004). ارتفاع الصف من
+   أسطر النص (virtual.js) لا من العرض، فلا يتغير ROW. */
+@media (max-width: 1100px) {
+  .tj-container.ed-app {
+    --ed-cols: 24px 44px 112px 112px 36px minmax(240px, 1.5fr) minmax(160px, 1fr) 104px;
+    --ed-cols-no-en: 24px 44px 112px 112px 36px minmax(240px, 1fr) 104px;
+  }
+  .ed-body { grid-template-columns: 240px minmax(0, 1fr); }
+  .ed-main { overflow-x: auto; }
+  .ed-list__head, .ed-list { min-width: 940px; }
+  .ed-list__head.ed-list--no-en, .ed-list.ed-list--no-en { min-width: 780px; }
+}
+@media (max-width: 900px) {
+  .ed-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 30vh) minmax(0, 1fr); }
+  .ed-side { border-inline-end: 0; border-bottom: 1px solid var(--tj-border); }
+}

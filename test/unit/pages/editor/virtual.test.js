@@ -44,3 +44,15 @@ test('الأداء: 50,000 صف تخطيطًا وبحثًا دون مسح خطي
   assert.ok(e - s < 40, `المرسوم ${e - s} صفًا فقط`);
   assert.ok(buildMs < 50 && rangeMs < 200, `البناء ${buildMs.toFixed(1)}ms والمدى ${rangeMs.toFixed(1)}ms`);
 });
+
+test('تدقيق 5fedcb9 (CL-004): المحرّر تحت 1100 بعمود عربية لا يضيق عن 240 وتمرير أفقي مع الرأس، وتحت 900 اللوحة فوق القائمة', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const css = await readFile(new URL('../../../../src/pages/editor/editor.css', import.meta.url), 'utf8');
+  const block = (q) => { const i = css.indexOf(`@media (max-width: ${q}px)`); return i < 0 ? '' : css.slice(i, css.indexOf('\n}', i)); };
+  assert.match(block(1100), /--ed-cols: [^;]*minmax\(240px, 1\.5fr\)/);
+  assert.match(block(1100), /\.ed-main \{ overflow-x: auto; \}/);
+  assert.match(block(1100), /\.ed-list__head, \.ed-list \{ min-width: 940px; \}/);
+  assert.match(block(900), /\.ed-body \{ grid-template-columns: minmax\(0, 1fr\);/);
+  // الأعمدة الثابتة والدنيا تتسع في 940: 432 ثابتة + 240 + 160 + سبع فجوات 10 + حشو 24.
+  assert.ok(432 + 240 + 160 + 70 + 24 <= 940);
+});
