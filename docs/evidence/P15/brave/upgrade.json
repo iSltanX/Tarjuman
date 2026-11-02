@@ -1,0 +1,96 @@
+{
+  "step": "upgrade",
+  "browser": "Brave 156.1.98.63",
+  "profile": "brave-p9-live",
+  "headless": true,
+  "at": "2026-11-02T16:32:54.980Z",
+  "checks": [
+    {
+      "id": "profile-backed-up-before-upgrade",
+      "ok": true,
+      "detail": {
+        "backup": "p15-work/profile-backups/brave-p9-live-2026-11-02T16-32-54-972Z"
+      }
+    },
+    {
+      "id": "v1-library-shows-real-data",
+      "ok": true,
+      "detail": {
+        "version": "0.2.0",
+        "rows": 3,
+        "videos": [
+          {
+            "id": "Y9rkKtK1b44",
+            "arabic": 729,
+            "fingerprints": 2
+          },
+          {
+            "id": "gBazR59SZXk",
+            "arabic": 0,
+            "fingerprints": 1
+          },
+          {
+            "id": "iG9CE55wbtY",
+            "arabic": 427,
+            "fingerprints": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "v1-no-extension-errors",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "v2-reads-same-library",
+      "ok": true,
+      "detail": {
+        "version": "0.2.0-dev",
+        "rows": 3,
+        "same": true
+      }
+    },
+    {
+      "id": "v2-read-writes-nothing",
+      "ok": true,
+      "detail": {
+        "keys": 8
+      }
+    },
+    {
+      "id": "v2-settings-glossary-and-subfolder",
+      "ok": true,
+      "detail": {
+        "attach": true,
+        "terms": 4,
+        "saveLocation": {
+          "folder": "Tarjuman",
+          "mode": "subfolder"
+        }
+      }
+    },
+    {
+      "id": "v2-settings-write-prefs-only",
+      "ok": true,
+      "detail": {
+        "changed": [],
+        "added": [
+          "prefs"
+        ],
+        "removed": []
+      }
+    },
+    {
+      "id": "v2-no-extension-errors",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "notes": [
+    "حزمة tj-v1 من الالتزام 7e1cc33",
+    "v1: الإضافة 0.2.0 (Chrome/156.0.8078.80)",
+    "v2: الإضافة 0.2.0-dev (Chrome/156.0.8078.80)"
+  ],
+  "screenshots": []
+}

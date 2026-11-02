@@ -1,0 +1,168 @@
+{
+  "step": "hand",
+  "browser": "Chrome 156.0.8078.74",
+  "session": "نافذة عادية بلا أي علم تحكم ولا اتصال؛ النقرات بيد سلطان",
+  "long": "8-m7hqOqs9Y",
+  "at": "2026-11-02T16:50:13.368Z",
+  "checks": [
+    {
+      "id": "hand-manual-real-extraction-matches-reference",
+      "ok": true,
+      "detail": {
+        "name": "iG9CE55wbtY.en.manual.normal.srt",
+        "bytes": 32411,
+        "sha": "7770a795775890e6",
+        "cues": 427,
+        "kind": "manual",
+        "expected": {
+          "bytes": 32411,
+          "sha": "7770a795775890e6"
+        }
+      }
+    },
+    {
+      "id": "hand-asr-real-extraction-matches-reference",
+      "ok": true,
+      "detail": {
+        "name": "Y9rkKtK1b44.en.asr.normal.srt",
+        "bytes": 84419,
+        "sha": "ab84d676495d8389",
+        "cues": 1056,
+        "kind": "asr",
+        "expected": {
+          "bytes": 84419,
+          "sha": "ab84d676495d8389"
+        }
+      }
+    },
+    {
+      "id": "hand-long-real-extraction-2000-plus",
+      "ok": true,
+      "detail": {
+        "name": "8-m7hqOqs9Y.en.asr.normal.srt",
+        "bytes": 172549,
+        "sha": "c56a104703ff21b8",
+        "cues": 2266,
+        "kind": "asr"
+      }
+    },
+    {
+      "id": "hand-long-split-parts-equal-full-file",
+      "ok": true,
+      "detail": {
+        "parts": 12,
+        "plan": [
+          {
+            "index": 1,
+            "from": 1,
+            "to": 189
+          },
+          {
+            "index": 2,
+            "from": 190,
+            "to": 390
+          },
+          {
+            "index": 3,
+            "from": 391,
+            "to": 561
+          },
+          {
+            "index": 4,
+            "from": 562,
+            "to": 756
+          },
+          {
+            "index": 5,
+            "from": 757,
+            "to": 958
+          },
+          {
+            "index": 6,
+            "from": 959,
+            "to": 1132
+          },
+          {
+            "index": 7,
+            "from": 1133,
+            "to": 1323
+          },
+          {
+            "index": 8,
+            "from": 1324,
+            "to": 1514
+          },
+          {
+            "index": 9,
+            "from": 1515,
+            "to": 1703
+          },
+          {
+            "index": 10,
+            "from": 1704,
+            "to": 1891
+          },
+          {
+            "index": 11,
+            "from": 1892,
+            "to": 2077
+          },
+          {
+            "index": 12,
+            "from": 2078,
+            "to": 2266
+          }
+        ]
+      }
+    },
+    {
+      "id": "hand-manual-copy-to-device-clipboard-with-glossary",
+      "ok": true,
+      "detail": {
+        "len": 3935,
+        "sha": "d6cd0540f261bf44",
+        "expected": {
+          "len": 3935,
+          "sha": "d6cd0540f261bf44"
+        },
+        "titleMatches": true
+      }
+    },
+    {
+      "id": "hand-asr-copy-to-device-clipboard-with-glossary",
+      "ok": true,
+      "detail": {
+        "len": 3959,
+        "sha": "765a9a1b1746f600",
+        "expected": {
+          "len": 3959,
+          "sha": "765a9a1b1746f600"
+        },
+        "titleMatches": true
+      }
+    },
+    {
+      "id": "hand-long-copy-to-device-clipboard-with-glossary",
+      "ok": true,
+      "detail": {
+        "len": 3927,
+        "sha": "b29699cff4bf6d5d",
+        "expected": {
+          "len": 3927,
+          "sha": "b29699cff4bf6d5d"
+        },
+        "titleMatches": null
+      }
+    },
+    {
+      "id": "hand-long-split-copy-has-parts-paragraph",
+      "ok": true,
+      "detail": {
+        "len": 4505,
+        "expected": 4505
+      }
+    }
+  ],
+  "notes": [],
+  "screenshots": []
+}
