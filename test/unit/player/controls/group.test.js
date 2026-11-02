@@ -33,7 +33,7 @@ test('التلميحات بالخطوة الحالية ومعنى الإشارة
   const { ui } = page;
   assert.equal(ui.btn('minus').getAttribute('aria-label'), 'تقديم الترجمة 0.5 ث (تظهر أبكر)');
   assert.equal(ui.btn('plus').getAttribute('aria-label'), 'تأخير الترجمة 0.5 ث (تظهر لاحقًا)');
-  assert.equal(ui.btn('badge').getAttribute('aria-label'), 'الإزاحة: +0.5 ث (تظهر الترجمة لاحقًا). اضغط للخيارات');
+  assert.equal(ui.btn('badge').getAttribute('aria-label'), 'الإزاحة: \u2066+0.5\u2069 ث (تظهر الترجمة لاحقًا). اضغط للخيارات');
   assert.equal(ui.btn('badge').textContent, '+0.5');
   assert.equal(ui.btn('badge').getAttribute('data-sign'), 'positive');
   page.controller.set({ settings: { ...DEFAULT_SETTINGS, offsetStepMs: 1000 }, view: { displayOffsetMs: -1500, displayMode: 'ar' } });
@@ -65,7 +65,7 @@ test('− و+ يغيّران الإزاحة وحدها بخطوة الإعداد
   assert.equal(after.view.displayOffsetMs, 500);
   assert.equal(ui.btn('badge').textContent, '+0.5');
   assert.equal(ui.btn('badge').hasAttribute('data-pulse'), true);
-  assert.equal(ui.tip(), '+0.5 ث · تظهر لاحقًا');
+  assert.equal(ui.tip(), '\u2066+0.5\u2069 ث · تظهر لاحقًا');
   assert.strictEqual(after.settings, before.settings, 'الإعدادات (ومنها الخط والحجم) كما هي');
   assert.strictEqual(after.arabic, before.arabic, 'المقاطع المحفوظة كما هي');
   page.env.win.advance(FLASH_MS + 10);
@@ -73,7 +73,7 @@ test('− و+ يغيّران الإزاحة وحدها بخطوة الإعداد
   assert.equal(ui.btn('badge').hasAttribute('data-pulse'), false);
   click(ui.btn('minus'));
   click(ui.btn('minus'));
-  assert.equal(ui.tip(), '−0.5 ث · تظهر أبكر');
+  assert.equal(ui.tip(), '\u2066−0.5\u2069 ث · تظهر أبكر');
 });
 
 test('Enter والمسافة على أزرار الشريط لا تصل إلى اختصارات يوتيوب، وغيرها يمر', () => {

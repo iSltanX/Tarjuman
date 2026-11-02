@@ -4,7 +4,7 @@
 // تعديلاتي» بشرط المحاذاة (والسبب في التلميح واسم الوصول). لا كتابة هنا: الحوار يعيد الاختيار، والإلغاء لا يمس التخزين.
 import { messageFor } from '../../core/errors/index.js';
 import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 import { compareWith, uploadImpact } from './actions.js';
 import { absoluteTime, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, targetOptions } from './model.js';
 
@@ -169,7 +169,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       }
       kids.push(el('p', { className: 'tj-caption', text: 'تُحفظ الترجمة المستبدلة نسخةً سابقة يمكن استعادتها.', doc }));
     }
-    if (bundle.active === target && slot.offsetMs !== 0) kids.push(el('p', { className: 'tj-caption', text: `ستُصفَّر إزاحة العرض (${formatOffset(slot.offsetMs)} ث) لأن الملف الجديد يحمل توقيته.`, doc }));
+    if (bundle.active === target && slot.offsetMs !== 0) kids.push(el('p', { className: 'tj-caption', text: `ستُصفَّر إزاحة العرض (${offsetInline(slot.offsetMs)} ث) لأن الملف الجديد يحمل توقيته.`, doc }));
     impactHost.replaceChildren(...kids);
   }
 

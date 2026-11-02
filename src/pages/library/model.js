@@ -5,7 +5,7 @@
 import { diffTranslations } from '../../core/align/index.js';
 import { messageFor } from '../../core/errors/index.js';
 import { isVideoId } from '../../core/model/ids.js';
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 
 /** حجم الدفعة المعروضة: عرض تدريجي لمحفوظات كثيرة. */
 export const PAGE_SIZE = 50;
@@ -199,7 +199,7 @@ export function rowModel(e, nowMs) {
     /** اسم الوصول للأوامر: العنوان إن وُجد وإلا المعرّف. */
     accessName: e.title ?? e.videoId,
     badges,
-    offsetText: e.view.displayOffsetMs !== 0 ? `الإزاحة ${formatOffset(e.view.displayOffsetMs)} ث` : null,
+    offsetText: e.view.displayOffsetMs !== 0 ? `الإزاحة ${offsetInline(e.view.displayOffsetMs)} ث` : null,
     relative: relativeTime(e.updatedAt, nowMs),
     absolute: absoluteTime(e.updatedAt),
     hasArabic: Boolean(e.arabic),

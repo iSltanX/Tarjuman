@@ -46,7 +46,7 @@ test('ملف مؤخَّر 3 ثوانٍ يُضبط باختيار جملة واح
   assert.equal(sentences(p).length, 0, 'عاد إلى قائمة التوقيت');
   assert.equal(p.env.doc._focused, p.ui.item('مزامنة بجملة…'));
   const [toast] = p.ui.toasts();
-  assert.equal(toast.text, 'الإزاحة −3.0 ثتراجع');
+  assert.equal(toast.text, 'الإزاحة \u2066−3.0\u2069 ثتراجع');
   click(p.ui.layerHost().shadowRoot.querySelector('.toasts button.act'));
   await settle();
   assert.deepEqual(p.controller.calls.filter((c) => c[0] === 'setOffset').map((c) => c[1]), [-3000, 0]);

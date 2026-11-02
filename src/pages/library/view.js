@@ -9,7 +9,7 @@ import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, slotPicker, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatBytes, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatBytes, formatCount, offsetInline } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
 import { createToaster } from '../../ui/toast.js';
 import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportStudy, prepareUpload, studyName } from './actions.js';
@@ -186,12 +186,12 @@ export function createLibrary(env) {
     const group = radioGroup({
       legend: 'توقيت الملف المصدَّر',
       options: [
-        { value: 'shown', label: `كما يظهر الآن (المحفوظ + الإزاحة ${formatOffset(offsetMs)} ث)`, hint: 'الاختيار المناسب لما تشاهده فوق الفيديو.' },
+        { value: 'shown', label: `كما يظهر الآن (المحفوظ + الإزاحة ${offsetInline(offsetMs)} ث)`, hint: 'الاختيار المناسب لما تشاهده فوق الفيديو.' },
         { value: 'saved', label: 'المحفوظ كما هو (دون الإزاحة)', hint: 'التوقيت المخزَّن في ترجمتك بلا تعديل.' },
       ],
       doc,
     });
-    return confirm({ title: 'توقيت الملف المصدَّر', body: `لهذه الترجمة إزاحة عرض ${formatOffset(offsetMs)} ث. اختر التوقيت الذي يُكتب في الملف.`, confirmLabel: 'تصدير', content: group.root, doc })
+    return confirm({ title: 'توقيت الملف المصدَّر', body: `لهذه الترجمة إزاحة عرض ${offsetInline(offsetMs)} ث. اختر التوقيت الذي يُكتب في الملف.`, confirmLabel: 'تصدير', content: group.root, doc })
       .then((ok) => (ok ? group.value() : null));
   }
 

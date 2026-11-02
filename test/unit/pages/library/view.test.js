@@ -120,7 +120,7 @@ test('الصف: العنوان والمعرّف والشارات والإزاح�
   assert.ok(textOf(row).includes(IDS[0]));
   const badges = findAll(row, (e) => e.classList.contains('tj-pill')).map(textOf);
   assert.deepEqual(badges, ['EN يدوي', 'AR الأصل']);
-  assert.ok(textOf(row).includes('الإزاحة +0.5 ث'));
+  assert.ok(textOf(row).includes('الإزاحة \u2066+0.5\u2069 ث'));
   const when = findAll(row, (e) => e.classList.contains('tj-caption') && e.title)[0];
   assert.equal(textOf(when), 'قبل 3 ساعات');
   assert.match(when.title, /2026/);
@@ -386,7 +386,7 @@ test('تصدير العربية بإزاحة يسأل عن التوقيت بقي
   await settle();
   assert.equal(m.calls.confirms.length, 1);
   assert.equal(m.calls.confirms[0].title, 'توقيت الملف المصدَّر');
-  assert.match(m.calls.confirms[0].body, /\+0\.5 ث/);
+  assert.match(m.calls.confirms[0].body, /\u2066\+0\.5\u2069 ث/);
   assert.equal(m.calls.downloads.length, 0);
 
   exportBtn.click();
@@ -545,7 +545,7 @@ test('الاستبدال: اختيار خانة ممتلئة يعرض أعداد
         const body = allText(o.content);
         assert.match(body, /يتغير النص في 1 · التوقيت في 0 · يُضاف 0 · يُحذف 0 · بلا تغيير 4/);
         assert.match(body, /جدول الفروق \(1\)/);
-        assert.match(body, /ستُصفَّر إزاحة العرض \(\+1\.0 ث\)/);
+        assert.match(body, /ستُصفَّر إزاحة العرض \(\u2066\+1\.0\u2069 ث\)/);
         assert.match(body, /تُحفظ الترجمة المستبدلة نسخةً سابقة/);
         const cells = findAll(o.content, (e) => e.tagName === 'td').map(textOf);
         assert.deepEqual(cells, ['2', 'سطر 2', 'جديد 2']);

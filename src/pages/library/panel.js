@@ -5,7 +5,7 @@
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { SLOT_NAME_MAX } from '../../core/model/slots.js';
 import { alertBox, button, el, ltr, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatBytes, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatBytes, formatCount, offsetInline } from '../../ui/format.js';
 import { activateSlot, changeReference, deletePrevious, deleteSlot, renameSlot, restorePrevious } from './actions.js';
 import { absoluteTime, comparisonSummary, fingerprintLabel, manualEdits, previousCard, relativeTime } from './model.js';
 
@@ -141,7 +141,7 @@ export function openTranslations(env) {
         edits ? el('p', { className: 'lib-slot__edited', children: [statusPill({ tone: 'edited', text: 'معدّلة', doc }), el('span', { className: 'tj-caption', text: ` ${formatCount(edits, EDIT_FORMS)}`, doc })], doc }) : null,
         alertBox({ tone: summary.tone, text: summary.lines.join('\n'), doc }),
         ...referenceRow(b, s),
-        el('p', { className: 'tj-caption lib-slot__offset', text: `الإزاحة ${formatOffset(s.offsetMs)} ث`, doc }),
+        el('p', { className: 'tj-caption lib-slot__offset', text: `الإزاحة ${offsetInline(s.offsetMs)} ث`, doc }),
         s.marks.length ? el('p', { className: 'tj-caption lib-slot__marks', text: `العلامات: ${todo} أعود إليه · ${done} راجعته`, doc }) : null,
         el('div', { className: 'lib-slot__actions', children: actions, doc }),
       ],

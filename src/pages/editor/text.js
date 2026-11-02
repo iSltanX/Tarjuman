@@ -1,6 +1,6 @@
 // نصوص المحرّر العربية (figma-design-brief.md §١١ و§١٦): النطاق قبل الفعل وبعده، والعدّ بالعربية بمطابقة
 // الصفة للمعدود، والإزاحة بعلامتها، وتقرير المقارنة سطورًا. دوال نقية بلا DOM.
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 
 const MAX_LIST = 8;
 
@@ -84,10 +84,10 @@ export function shiftSentence(target, deltaMs, when) {
 }
 
 /** التنبيه قبل نقل الملف كله والإزاحة مفعّلة (عقد التوقيت §٣). @param {number} offsetMs */
-export const offsetNotice = (offsetMs) => `إزاحة العرض ${formatOffset(offsetMs)} ث مفعّلة؛ النقل هنا يُضاف إليها.`;
+export const offsetNotice = (offsetMs) => `إزاحة العرض ${offsetInline(offsetMs)} ث مفعّلة؛ النقل هنا يُضاف إليها.`;
 
 /** سطر الإزاحة الثابت. @param {number} offsetMs */
-export const offsetLine = (offsetMs) => `إزاحة العرض أثناء المشاهدة: ${formatOffset(offsetMs)} ث — منفصلة عن التوقيت المحفوظ`;
+export const offsetLine = (offsetMs) => `إزاحة العرض أثناء المشاهدة: ${offsetInline(offsetMs)} ث — منفصلة عن التوقيت المحفوظ`;
 
 /**
  * اسم الوصول لخانة في محدد خانة التحرير: «الترجمة 2، قيد التحرير، النشطة في المشغّل» أو «الترجمة 3، فارغة».

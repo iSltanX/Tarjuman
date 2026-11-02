@@ -134,9 +134,9 @@ test('«الترجمات…»: بطاقة لكل خانة بتفاصيلها، �
   assert.ok(textOf(one).includes(`${IDS[0]}.أولى.ar.srt`));
   assert.ok(textOf(one).includes('معدّلة'));
   assert.ok(textOf(one).includes('5 تعديلات يدوية'));
-  assert.ok(textOf(one).includes('الإزاحة +0.5 ث'));
+  assert.ok(textOf(one).includes('الإزاحة \u2066+0.5\u2069 ث'));
   assert.ok(textOf(one).includes('العلامات: 1 أعود إليه · 1 راجعته'));
-  assert.ok(textOf(two).includes('الإزاحة −1.2 ث'));
+  assert.ok(textOf(two).includes('الإزاحة \u2066−1.2\u2069 ث'));
   assert.ok(textOf(one).includes('المرجع:'));
   assert.equal(panel.querySelectorAll('section.lib-slot').length, 4, 'ثلاث خانات وبطاقة السابقة، لا خانة رابعة');
 

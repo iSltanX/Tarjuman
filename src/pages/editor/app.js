@@ -21,7 +21,7 @@ import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
 import { mergeCues, splitCue } from '../../core/edit/structure.js';
 import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatTimecode, offsetInline } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
 import { jumpToVideo } from '../../ui/seek.js';
 import { openDriftDialog } from './drift-dialog.js';
@@ -598,7 +598,7 @@ export async function mountEditor(app, {
     const s = S.session;
     offsetText.textContent = offsetLine(s.offsetMs);
     offsetSub.textContent = s.offsetChanged
-      ? `ثُبّتت الإزاحة ${formatOffset(s.baseOffsetMs)} ث في التوقيت ولم يُحفظ ذلك بعد. التراجع يعيدهما معًا.`
+      ? `ثُبّتت الإزاحة ${offsetInline(s.baseOffsetMs)} ث في التوقيت ولم يُحفظ ذلك بعد. التراجع يعيدهما معًا.`
       : '+ تأخير: تظهر الترجمة لاحقًا · − تقديم: تظهر أبكر. تغيّرها أزرار ± في شريط المشغّل.';
     setDisabled(commitBtn, readOnly() ? messageFor('ED_READ_ONLY') : s.offsetMs === 0 ? messageFor('ED_NO_OFFSET') : null);
   }
@@ -1153,7 +1153,7 @@ export async function mountEditor(app, {
     const was = S.session.offsetMs;
     const r = S.session.commitOffset();
     S.result = r.ok
-      ? { tone: 'success', text: `ثُبّتت إزاحة العرض ${formatOffset(was)} ث في توقيت الملف كله (${formatCount(r.count, COUNT_FORMS.cue)})، وصارت الإزاحة 0.0. احفظ لتثبيت ذلك.` }
+      ? { tone: 'success', text: `ثُبّتت إزاحة العرض ${offsetInline(was)} ث في توقيت الملف كله (${formatCount(r.count, COUNT_FORMS.cue)})، وصارت الإزاحة 0.0. احفظ لتثبيت ذلك.` }
       : { tone: 'danger', text: messageFor(r.code, r.negative ? { list: numberList(r.negative) } : undefined) };
     renderAll();
   }
@@ -1628,7 +1628,7 @@ export async function mountEditor(app, {
       timingBox.replaceChildren(variant === 'current' && offset !== 0
         ? radios('ed-timing', {
           legend: 'التوقيت المصدَّر',
-          options: [['shown', `الظاهر أثناء المشاهدة (المحفوظ + الإزاحة ${formatOffset(offset)} ث)`], ['saved', 'المحفوظ فقط']],
+          options: [['shown', `الظاهر أثناء المشاهدة (المحفوظ + الإزاحة ${offsetInline(offset)} ث)`], ['saved', 'المحفوظ فقط']],
         }, choice, (v) => { choice = v; refresh(); })
         : el('span', { doc }));
       const name = plan.ok ? plan.name : `${videoId}.ar${variant === 'original' ? '.original' : ''}.srt`;

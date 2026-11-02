@@ -40,10 +40,10 @@ test('العنوان الغائب يعود إلى المعرّف', () => {
 
 test('فيديو بترجمة: «ترجمة عربية · 412 مقطعًا · الإزاحة +0.5 ث» وشارة معدّلة', () => {
   assert.deepEqual(describeStatus(withArabic()), {
-    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة عربية · 412 مقطعًا · الإزاحة +0.5 ث', edited: false, matched: true, mode: 'العربية وحدها', fileName: 'x.ar.srt', saved: true,
+    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة عربية · 412 مقطعًا · الإزاحة \u2066+0.5\u2069 ث', edited: false, matched: true, mode: 'العربية وحدها', fileName: 'x.ar.srt', saved: true,
   });
   const edited = describeStatus(withArabic({ arabic: { fileName: 'x', cueCount: 1, edited: true, matched: null }, view: { displayOffsetMs: -1000, displayMode: 'dual' } }));
-  assert.equal(edited.line, 'ترجمة عربية · مقطع واحد · الإزاحة −1.0 ث');
+  assert.equal(edited.line, 'ترجمة عربية · مقطع واحد · الإزاحة \u2066−1.0\u2069 ث');
   assert.equal(edited.edited, true);
 });
 

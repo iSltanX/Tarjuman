@@ -35,3 +35,18 @@ test('الأحجام ورموز المشغّل', () => {
   assert.ok(css.includes('--tj-p-sub-bg-soft: rgb(0 0 0 / 72%);'));
   assert.equal(Object.keys(PLAYER_TOKENS).length, (css.match(/--tj-p-/g) || []).length);
 });
+
+test('تدقيق 5fedcb9 (CL-001): الإزاحة الموقّعة داخل الجمل العربية معزولة LTR في كل سطح، والقيمة نفسها كالشارة', async () => {
+  const { offsetInline, formatOffset } = await import('../../../src/ui/format.js');
+  const { offsetToast, badgeTip, nudgeFlash } = await import('../../../src/player/controls/text.js');
+  const { offsetLine, offsetNotice } = await import('../../../src/pages/editor/text.js');
+  const { rowModel } = await import('../../../src/pages/library/model.js');
+  const isolated = (s, ms) => s.includes(`⁦${formatOffset(ms)}⁩`);
+  assert.equal(offsetInline(500), '⁦+0.5⁩');
+  assert.equal(offsetInline(-1000), '⁦−1.0⁩');
+  for (const ms of [500, -1000]) {
+    for (const s of [offsetToast(ms), badgeTip(ms), nudgeFlash(ms), offsetLine(ms), offsetNotice(ms)]) assert.ok(isolated(s, ms), s);
+  }
+  const e = { videoId: 'AAAAAAAAAAA', title: 't', updatedAt: '2026-11-01T10:00:00.000Z', rev: 1, english: [], arabic: null, fingerprints: 0, view: { displayOffsetMs: -1500, displayMode: 'ar' } };
+  assert.ok(isolated(rowModel({ ...e, summary: { filled: 0, edited: 0, warned: 0, marks: { todo: 0, done: 0 } }, slots: [] }, Date.now()).offsetText, -1500));
+});

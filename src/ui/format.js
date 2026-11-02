@@ -13,6 +13,20 @@ export function formatOffset(ms) {
   return `${v > 0 ? '+' : MINUS}${Math.abs(v).toFixed(1)}`;
 }
 
+const LRI = String.fromCodePoint(0x2066);
+const PDI = String.fromCodePoint(0x2069);
+
+/**
+ * الإزاحة الموقّعة داخل جملة عربية: معزولة LTR (LRI…PDI) فتبقى علامتها يسار أرقامها كما في الشارة، لا «0.5+» ولا «1.0−»
+ * (قواعد UBA: العلامة بعد حرف عربي تأخذ اتجاه السياق؛ تدقيق 5fedcb9، CL-001). نص لا عنصر، فيصلح للتلميح واسم الوصول والخيارات.
+ * والحقول والشارة تبقى بـformatOffset (اتجاهها LTR من نفسها).
+ * @param {number} ms
+ */
+export const offsetInline = (ms) => `${LRI}${formatOffset(ms)}${PDI}`;
+
+/** نص LTR معزول داخل جملة عربية (فرق موقّع، أو مثال «+1.2»). @param {string} s */
+export const ltrInline = (s) => `${LRI}${s}${PDI}`;
+
 /**
  * زمن بصيغة HH:MM:SS,mmm (للعرض؛ الكاتب في src/core/srt يكتب الصيغة نفسها في الملف).
  * @param {number} ms

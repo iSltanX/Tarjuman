@@ -5,7 +5,7 @@
 // يُحمَّل، أو نسخة أقدم، أو لا رد في المهلة.
 import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagnostics/report.js';
 import { messageFor } from '../../core/errors/index.js';
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 import { MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest } from '../../core/model/messages.js';
 
 /** مهلة الرد: سكربت لا يردّ لا يترك النافذة هيكلًا إلى الأبد. */
@@ -57,7 +57,7 @@ export function describeStatus(reply) {
   return {
     kind: 'has-subtitle',
     title,
-    line: ['ترجمة عربية', formatCount(a.cueCount, COUNT_FORMS.cue), `الإزاحة ${formatOffset(reply.view.displayOffsetMs)} ث`].join(' · '),
+    line: ['ترجمة عربية', formatCount(a.cueCount, COUNT_FORMS.cue), `الإزاحة ${offsetInline(reply.view.displayOffsetMs)} ث`].join(' · '),
     edited: a.edited,
     matched: a.matched,
     mode: MODE_TEXT[reply.view.displayMode] ?? MODE_TEXT.ar,

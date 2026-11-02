@@ -82,12 +82,12 @@ test('الزمن النسبي بالعربية: الآن، ودقائق، وسا
 test('rowModel: شارات الملفات والتحذير والإزاحة والتاريخ', () => {
   const m = rowModel(entry({ english: [{ key: 'en|asr', kind: 'asr', cueCount: 9 }, { key: 'en|manual', kind: 'manual', cueCount: 5 }], view: { displayOffsetMs: 500, displayMode: 'ar' } }), NOW);
   assert.deepEqual(m.badges.map((b) => b.text), ['EN يدوي', 'EN تلقائي', 'AR الأصل']);
-  assert.equal(m.offsetText, 'الإزاحة +0.5 ث');
+  assert.equal(m.offsetText, 'الإزاحة \u2066+0.5\u2069 ث', 'معزولة LTR (CL-001)');
   assert.equal(m.relative, 'قبل ساعتين');
   assert.match(m.absolute, /2026/);
   assert.equal(m.displayTitle, 'محاضرة عن الخطوط');
   assert.equal(rowModel(entry({ view: { displayOffsetMs: 0, displayMode: 'ar' } }), NOW).offsetText, null);
-  assert.equal(rowModel(entry({ view: { displayOffsetMs: -1000, displayMode: 'ar' } }), NOW).offsetText, 'الإزاحة −1.0 ث');
+  assert.equal(rowModel(entry({ view: { displayOffsetMs: -1000, displayMode: 'ar' } }), NOW).offsetText, 'الإزاحة \u2066−1.0\u2069 ث');
 
   const edited = rowModel(entry({ arabic: { fileName: 'x', cueCount: 3, edited: true, matched: false, missing: 3, extra: 0, drift: 0 } }), NOW);
   assert.deepEqual(edited.badges.map((b) => [b.text, b.tone]), [['EN يدوي', 'neutral'], ['AR معدّلة', 'edited'], ['3 ناقصة', 'warning']]);

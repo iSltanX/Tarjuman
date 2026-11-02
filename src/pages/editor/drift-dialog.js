@@ -5,7 +5,7 @@ import { driftCorrect } from '../../core/edit/drift.js';
 import { parseSeconds, parseTimecode } from '../../core/edit/index.js';
 import { isTjError, messageFor } from '../../core/errors/index.js';
 import { alertBox, el, ltr } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, formatTimecode } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatTimecode, ltrInline } from '../../ui/format.js';
 import { openDialog, setDisabled } from './dialogs.js';
 import { numberList, seconds } from './text.js';
 
@@ -93,10 +93,10 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
     }
     const t = parseAnchorTime(x.tIn.value, cues[i].startMs);
     if (!t.ok) {
-      x.note.textContent = 'اكتب زمنًا مثل 00:12:01,300، أو فرقًا بالثواني مثل +1.2 أو −0.8.';
+      x.note.textContent = `اكتب زمنًا مثل 00:12:01,300، أو فرقًا بالثواني مثل ${ltrInline('+1.2')} أو ${ltrInline('−0.8')}.`;
       return null;
     }
-    x.note.textContent = `الآن ${formatTimecode(cues[i].startMs)}، ويصبح ${formatTimecode(t.toMs)} (${t.delta >= 0 ? '+' : '−'}${seconds(t.delta)} ث).`;
+    x.note.textContent = `الآن ${formatTimecode(cues[i].startMs)}، ويصبح ${formatTimecode(t.toMs)} (${ltrInline(`${t.delta >= 0 ? '+' : '−'}${seconds(t.delta)}`)} ث).`;
     return { n, toMs: t.toMs, index: i };
   };
 
@@ -133,7 +133,7 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
       summary ? el('p', {
         className: 'tj-body-sm',
         text: summary.changed
-          ? `يتغير توقيت ${formatCount(summary.changed, COUNT_FORMS.cue)} من ${cues.length}، وأكبر تغيير ${summary.max >= 0 ? '+' : '−'}${seconds(summary.max)} ث (المقطع ${summary.maxN}). النص والأرقام كما هي.`
+          ? `يتغير توقيت ${formatCount(summary.changed, COUNT_FORMS.cue)} من ${cues.length}، وأكبر تغيير ${ltrInline(`${summary.max >= 0 ? '+' : '−'}${seconds(summary.max)}`)} ث (المقطع ${summary.maxN}). النص والأرقام كما هي.`
           : 'التوقيت مطابق للنقطتين؛ لا شيء يتغير.',
         doc,
       }) : null,
