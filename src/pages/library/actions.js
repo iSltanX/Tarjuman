@@ -9,7 +9,8 @@ import { TjError, messageFor } from '../../core/errors/index.js';
 import { buildArabicExport, buildExport, buildStudyText } from '../../core/export/index.js';
 import { readImport, reviewIncoming } from '../../core/import/index.js';
 import {
-  withActiveSlot, withPreviousRestored, withSlotName, withSlotReference, withSlotUpload, withoutPrevious, withoutSlot,
+  applyRecordChange, referencedFingerprints, withActiveSlot, withPreviousRestored, withSlotName, withSlotReference, withSlotUpload, withoutPrevious,
+  withoutSlot,
 } from '../../core/model/bundle.js';
 import { LIMITS } from '../../core/model/validate.js';
 import { arabicCues } from '../../core/model/video.js';
@@ -87,10 +88,15 @@ export async function exportEnglish({ store, videoId, trackKey, save, now }) {
   // الملف نزل بالفعل، فإخفاق حفظ البصمة تنبيه (saveError) لا خطأ يُسقط التصدير.
   let stored = false;
   try {
-    await store.updateVideo(videoId, (rec) => {
+    // على الحزمة لا السجل وحده: بصمات الخانات غير النشطة والسابقة لا يسقطها حد البصمات، كما في المشغّل
+    // (referencedFingerprints؛ تدقيق 5fedcb9، GM-015.2: كانت تسقط فيُقرأ مرجع تلك الخانة null بصمت).
+    await store.updateBundle(videoId, (b) => {
+      const rec = b?.record;
       if (!rec || rec.fingerprints.some((f) => sameFingerprint(f, built.fingerprint))) return undefined;
       stored = true;
-      return withExport(rec, { videoId, title: rec.title, durationMs: rec.durationMs, englishTrack: track, fingerprint: built.fingerprint }, iso(now));
+      const at = iso(now);
+      const next = withExport(rec, { videoId, title: rec.title, durationMs: rec.durationMs, englishTrack: track, fingerprint: built.fingerprint }, at, { keep: referencedFingerprints(b) });
+      return applyRecordChange(b, next, at);
     });
   } catch (saveError) {
     return { name: file.name, cueCount: file.cueCount, fingerprintSaved: false, saveError, saved: result };

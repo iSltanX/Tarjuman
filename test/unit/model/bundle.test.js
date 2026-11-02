@@ -271,3 +271,15 @@ test('النسخة الاحتياطية: الحزمة إلى مدخل ومنه �
   const t = arabicTrack({ label: 'x' });
   assert.equal(bundleFromBackup({ ...entry, previous: { from: 4, savedAt: NOW, track: t, offsetMs: 0 } }).ok, false);
 });
+
+test('تدقيق 5fedcb9 (GM-015.3، منفي): الرفع إلى خانة فارغة يفعّلها بإزاحة صفر ولا يصفّر إزاحة السابقة، فلا إشعار «صُفّرت»', () => {
+  const b = sampleBundle();
+  b.slots[1] = { ...b.slots[1], track: null, name: null, marks: [], position: null, offsetMs: 0 };
+  const before = b.slots[0].offsetMs;
+  assert.notEqual(before, 0);
+  const out = withSlotUpload(b, 2, { videoId: b.videoId, fileName: 'x.ar.srt', cues: b.slots[0].track.original, comparison: null, fingerprintId: null, notes: [] }, LATER);
+  assert.equal(out.bundle.active, 2, 'الفارغة تُفعَّل (Q16)');
+  assert.equal(out.bundle.slots[1].offsetMs, 0, 'الجديدة بإزاحة صفر (العقد)');
+  assert.equal(out.bundle.slots[0].offsetMs, before, 'إزاحة الأولى محفوظة في خانتها، لم تُصفَّر');
+  assert.equal(out.offsetWas, 0);
+});

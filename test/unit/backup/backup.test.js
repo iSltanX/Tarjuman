@@ -389,3 +389,36 @@ test('سجل تالف في المكتبة لا يوقف الإنشاء ويُب�
   assert.equal(built.counts.videos, 2);
   assert.equal((await readBackup(built.text, { pause: noPause })).ok, true);
 });
+
+test('تدقيق 5fedcb9 (GM-015.5): مجموعة صالحة بترتيب مفاتيح آخر تُقبل، ومصطلح مكرر واحد يسقط وحده لا القاموس كله', async () => {
+  const { store } = await sourceLibrary();
+  const { text } = await createBackup({ store, appVersion: '0.3.0', pause: noPause });
+  const sealed = await reseal(text, (f) => {
+    const loc = f.data.prefs.saveLocation;
+    f.data.prefs.saveLocation = { folder: loc.folder, mode: loc.mode }; // ترتيب آخر لمفاتيح صالحة
+    f.data.prefs.glossary.terms.push({ ...f.data.prefs.glossary.terms[0], target: 'نسخة مكررة' });
+  });
+  const r = await readBackup(sealed, { pause: noPause });
+  assert.equal(r.ok, true);
+  const original = JSON.parse(text).data.prefs;
+  assert.deepEqual(r.prefs.patch.saveLocation, { folder: original.saveLocation.folder, mode: original.saveLocation.mode }, 'لا يُستبعد لترتيب مفاتيحه');
+  assert.deepEqual(r.prefs.patch.glossary.terms, original.glossary.terms, 'يبقى القاموس بلا المكرر');
+  assert.deepEqual(r.warnings, [{ code: 'BK_SETTINGS_INVALID', params: { groups: 'prefs.glossary (جزئيًا)' } }]);
+});
+
+test('تدقيق 5fedcb9 (GM-015.4): مدخل لا يطابق ثوابت الحزمة (اسم لخانة فارغة، أو مرجع بصمة غائبة) «تعذّر» بسببه لا يُطبَّع بصمت', async () => {
+  const { store } = await sourceLibrary();
+  const { text } = await createBackup({ store, appVersion: '0.3.0', pause: noPause });
+  const empty = (f) => f.data.videos.findIndex((v) => v.alts.some((x, i) => x === null && v.active !== i + 1));
+  const sealed = await reseal(text, (f) => {
+    const v = f.data.videos[empty(f)];
+    const slot = v.alts.findIndex((x, i) => x === null && v.active !== i + 1);
+    v.names[slot] = 'اسم لخانة فارغة';
+  });
+  const r = await readBackup(sealed, { pause: noPause });
+  assert.equal(r.ok, true);
+  assert.ok(r.invalid.some((x) => x.code === 'BK_VIDEO_INVALID' && /entry\.names/.test(x.detail ?? '')), JSON.stringify(r.invalid));
+  // ونسخة سليمة تمر كما هي (ذهاب وإياب).
+  const fine = await readBackup(text, { pause: noPause });
+  assert.deepEqual(fine.invalid, []);
+});

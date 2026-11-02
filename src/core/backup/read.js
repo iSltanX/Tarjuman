@@ -5,8 +5,8 @@
 import { sanitizeText } from '../diagnostics/sanitize.js';
 import { bundleFromBackup } from '../model/bundle.js';
 import { isVideoId } from '../model/ids.js';
-import { normalizePrefs, validatePrefs } from '../model/prefs.js';
-import { normalizeSettings, validateSettings } from '../model/settings.js';
+import { DEFAULT_PREFS, normalizePrefs, validatePrefs } from '../model/prefs.js';
+import { DEFAULT_SETTINGS, normalizeSettings, validateSettings } from '../model/settings.js';
 import { validateVideoRecord } from '../model/video.js';
 import { OK, exactKeys, fail, firstFailure, isIntIn, isIsoDate, isPlainObject } from '../model/validate.js';
 import { yieldToPage } from './create.js';
@@ -54,22 +54,29 @@ function checkShape(file) {
 }
 
 /**
- * قسم الإعدادات أو التفضيلات: قراءة متسامحة ثم تحقق صارم. المجموعة الصالحة كما هي تدخل التعديل، والتالفة تُستبعد وحدها
- * (فتبقى قيمتها الحالية عند الاستعادة)، والقسم الذي ليس كائنًا يُستبعد كله.
+ * قسم الإعدادات أو التفضيلات: قراءة متسامحة ثم تحقق صارم، لكل مجموعة وحدها. الصالحة كما هي تدخل التعديل (بأي ترتيب
+ * لمفاتيحها)؛ والمجموعة القائمة (القاموس: partial) يدخل منها ما أبقته القراءة المتسامحة (مصطلح مكرر أو تالف يسقط وحده) ويُذكر في
+ * التحذير؛ وغيرها التالف يُستبعد وحده (فتبقى قيمته الحالية عند الاستعادة، لا افتراضي يحل محلها)؛ والقسم الذي ليس كائنًا يُستبعد
+ * كله (تدقيق 5fedcb9، GM-015.5: كان ترتيب المفاتيح أو مصطلح واحد يُسقط المجموعة كلها).
  * @param {unknown} raw @param {(x: unknown) => object} normalize @param {(x: unknown) => { ok: boolean }} validate
- * @param {string[]} groups @param {string} label
+ * @param {string[]} groups @param {string} label @param {object} defaults @param {string[]} [partial]
  * @returns {SectionRead}
  */
-function readSection(raw, normalize, validate, groups, label) {
+function readSection(raw, normalize, validate, groups, label, defaults, partial = []) {
   if (raw === null) return null;
   if (!isPlainObject(raw)) return { patch: {}, excluded: [label] };
   if (validate(raw).ok) return { patch: Object.fromEntries(groups.map((g) => [g, raw[g]])), excluded: [] };
   const fixed = normalize(raw);
+  const same = (x, y) => JSON.stringify(x) === JSON.stringify(y);
   const patch = {};
   const excluded = [];
   for (const g of groups) {
-    if (g in raw && JSON.stringify(fixed[g]) === JSON.stringify(raw[g])) patch[g] = raw[g];
-    else excluded.push(`${label}.${g}`);
+    if (!(g in raw)) excluded.push(`${label}.${g}`);
+    else if (validate({ ...fixed, [g]: raw[g] }).ok) patch[g] = raw[g];
+    else if (partial.includes(g) && !same(fixed[g], defaults[g])) {
+      patch[g] = fixed[g];
+      excluded.push(`${label}.${g} (جزئيًا)`);
+    } else excluded.push(`${label}.${g}`);
   }
   return { patch, excluded };
 }
@@ -129,8 +136,8 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   if (!file.options.previous && data.videos.some((v) => isPlainObject(v) && v.previous !== null)) return reject('BK_INTEGRITY', 'options.previous');
 
   const warnings = [];
-  const settings = readSection(data.settings, normalizeSettings, validateSettings, SETTINGS_GROUPS, 'settings');
-  const prefs = readSection(data.prefs, normalizePrefs, validatePrefs, PREFS_GROUPS, 'prefs');
+  const settings = readSection(data.settings, normalizeSettings, validateSettings, SETTINGS_GROUPS, 'settings', normalizeSettings(DEFAULT_SETTINGS));
+  const prefs = readSection(data.prefs, normalizePrefs, validatePrefs, PREFS_GROUPS, 'prefs', normalizePrefs(DEFAULT_PREFS), ['glossary']);
   const excluded = [...(settings?.excluded ?? []), ...(prefs?.excluded ?? [])];
   if (excluded.length) warnings.push({ code: 'BK_SETTINGS_INVALID', params: { groups: excluded.join('، ') } });
 

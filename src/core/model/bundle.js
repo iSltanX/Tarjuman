@@ -512,5 +512,15 @@ export function bundleFromBackup(entry) {
   if (entry.active !== null && entry.alts[entry.active - 1] !== null) return fail('entry.alts', 'خانة النشطة في السجل وحده');
   const { bundle } = unpackBundle({ record: entry.record, head, alts, prev, marks });
   const r = validateBundle(bundle);
-  return r.ok ? { ok: true, bundle } : r;
+  if (!r.ok) return r;
+  // ثوابت الحزمة بلا تطبيع صامت: ما لا يعود مدخلًا مطابقًا (اسم أو علامات لخانة فارغة، أو مرجع بصمة غائبة، أو نشطة بلا
+  // ترجمة) تالفٌ يُعرض «تعذّر» بسببه، لا يُصلَح بإسقاط بعضه (backup.md §٥؛ تدقيق 5fedcb9، GM-015.4).
+  const back = bundleToBackup(bundle, { includePrevious: entry.previous !== null });
+  for (const k of ['record', 'active', 'names', 'alts', 'previous', 'marks']) {
+    if (canonical(back[k]) !== canonical(entry[k])) return fail(`entry.${k}`, 'لا يطابق ثوابت الحزمة');
+  }
+  return { ok: true, bundle };
 }
+
+/** JSON بمفاتيح مرتبة: مقارنة بنيوية لا تتأثر بترتيب المفاتيح. */
+const canonical = (v) => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, x[k]])) : x));

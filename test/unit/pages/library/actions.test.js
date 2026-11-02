@@ -261,3 +261,24 @@ test('تدقيق 5fedcb9 (GM-015.1): «إبقاء تعديلاتي» في الم
   const same = uploadImpact({ slots: [{ track: { original, current: undone } }, { track: null }, { track: null }] }, 1, undone).keep;
   assert.deepEqual([same.ok, same.cues], [true, null]);
 });
+
+test('تدقيق 5fedcb9 (GM-015.2): تصدير الإنجليزية من المحفوظات عند حد البصمات لا يسقط بصمة خانة غير نشطة (كالمشغّل)', async () => {
+  const { sampleBundle, seedBundle } = await import('../../../helpers/fixtures-v2.js');
+  const { fingerprint } = await import('../../../helpers/fixtures.js');
+  const area = createMemoryArea({ unlimited: true });
+  const store = createStore({ area, now });
+  const b = sampleBundle(); // الخانة 2 مرجعها fp_test000002، والنشطة fp_test000001
+  // ثماني بصمات أقدم تملأ الحد (10) مع بصمتي العيّنة.
+  const old = Array.from({ length: 8 }, (_, i) => fingerprint({ track: b.record.english[0], id: `fp_old${String(i).padStart(7, '0')}`, createdAt: '2026-10-01T00:00:00.000Z' }));
+  // البصمة المرجعية للخانة 2 أول القائمة (الأقدم إضافةً)، فيسقطها الحد أولًا لو لم تُحفظ.
+  const [fp1, fp2] = b.record.fingerprints;
+  b.record.fingerprints = [fp2, ...old, fp1];
+  await seedBundle(store, b);
+  const saveFile = async (f) => ({ ok: true, mode: 'downloads', downloadId: 1, name: f.name });
+  const r = await exportEnglish({ store, videoId: b.videoId, trackKey: b.record.english[0].key, now, save: saveFile });
+  assert.equal(r.fingerprintSaved, true);
+  const after = await store.getBundle(b.videoId);
+  assert.equal(after.record.fingerprints.length, 10, 'الحد محترم');
+  assert.equal(after.slots[1].track.fingerprintId, 'fp_test000002', 'مرجع الخانة 2 باقٍ');
+  assert.ok(after.record.fingerprints.some((f) => f.id === 'fp_test000002'));
+});
