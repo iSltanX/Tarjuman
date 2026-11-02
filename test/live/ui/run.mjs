@@ -5,6 +5,7 @@
 // المنسدلة، وإغلاق قائمة المشغّل مع الشريط)، وخلو الصفحات من الأخطاء والشبكة. لا رابط ولا رمز في الأدلة.
 //   command npm run build:dev -- --out <مجلد خارج المستودع>
 //   command node test/live/ui/run.mjs --browser brave|chrome --ext <مجلد> [--out docs/evidence/UI] [--headed] [--skip-youtube]
+import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +24,9 @@ const OUT = path.resolve(ROOT, val('out', 'docs/evidence/UI'), browser);
 const HEADED = argv.includes('--headed');
 const SKIP_YT = argv.includes('--skip-youtube');
 const PROFILE = val('profile', `${browser}-ui-${Date.now()}`);
+/** --only settings,library,popup,player: أقسام بعينها بعد إصلاح يخصها (popup وplayer يحتاجان يوتيوب). */
+const ONLY = val('only') ? new Set(val('only').split(',')) : null;
+const want = (id) => !ONLY || ONLY.has(id);
 const rel = (f) => path.relative(ROOT, f);
 
 const result = { browser: null, at: new Date().toISOString(), headless: !HEADED, checks: [], screenshots: [], notes: [] };
@@ -31,6 +35,12 @@ const check = (id, ok, detail = null) => {
   console.log(`${ok ? '✓' : '✗'} ${id}${detail ? ` — ${JSON.stringify(detail).slice(0, 300)}` : ''}`);
 };
 const note = (t) => { result.notes.push(t); console.log(`· ${t}`); };
+
+// الحافظة الحقيقية (macOS): تُقرأ بعد «نسخ التعليمات» وتُعاد كما كانت في النهاية.
+const clipEnv = { ...process.env, LANG: 'en_US.UTF-8', LC_ALL: 'en_US.UTF-8' };
+const readClipboard = () => execFileSync('/usr/bin/pbpaste', { env: clipEnv, encoding: 'utf8' });
+const writeClipboard = (text) => execFileSync('/usr/bin/pbcopy', { env: clipEnv, input: text });
+const clipboardBefore = readClipboard();
 
 const manifest = JSON.parse(await readFile(path.join(EXT, 'manifest.json'), 'utf8'));
 result.extension = { version: manifest.version, versionName: manifest.version_name ?? null };
@@ -131,6 +141,7 @@ try {
   await st.waitFor(() => document.querySelector('.st-nav') && document.querySelectorAll('.st-section').length >= 7, { timeoutMs: 10000 });
   await clearStorage(st);
   await st.eval(() => document.fonts.ready.then(() => true));
+  if (want('settings')) {
   const stInfo = await st.eval(() => ({
     nav: [...document.querySelectorAll('.st-nav__link')].map((a) => ({ t: a.textContent.trim(), cur: a.getAttribute('aria-current') })),
     visible: [...document.querySelectorAll('.st-section')].filter((s) => !s.hidden).map((s) => s.id),
@@ -177,9 +188,11 @@ try {
   const narrowInfo = await st.eval(() => ({ navRow: getComputedStyle(document.querySelector('.st-nav')).flexDirection, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   check('settings-layout-no-overflow', stNarrow.overflow.length === 0 && stNarrow.clipped === 0, stNarrow);
   note(`الإعدادات في 480: التنقّل ${narrowInfo.navRow} · عرض التمرير ${narrowInfo.sw} من ${narrowInfo.cw}`);
+  }
   await st.close();
 
   // ===== ٢. المحفوظات: فارغة، ثم قليلة (الصف والمحدد والإجراءات والقائمة)، ثم كثيرة (الرقائق والبحث والمزيد) =====
+  if (want('library')) {
   const lib = await openExt('pages/library/index.html');
   await lib.waitFor(() => document.querySelector('.lib') && !document.querySelector('.lib-skeleton'), { timeoutMs: 10000 });
   const empty = await lib.eval(() => ({ title: document.querySelector('.tj-empty__title')?.textContent, steps: document.querySelectorAll('.tj-empty__steps li').length, toolbarHidden: document.querySelector('.lib-toolbar')?.hidden }));
@@ -191,13 +204,15 @@ try {
   const rows = await lib.eval(() => [...document.querySelectorAll('li.lib-row')].map((r) => ({
     title: r.querySelector('h2').textContent.slice(0, 40), id: r.querySelector('bdi')?.textContent,
     idDir: getComputedStyle(r.querySelector('bdi')).direction, titleBidi: getComputedStyle(r.querySelector('h2')).unicodeBidi,
+    // العنوان الإنجليزي يبقى في موضع العناوين العربية: حافة نصه اليمنى عند حافة عمود البيانات اليمنى.
+    titleGap: (() => { const h = r.querySelector('h2'); const rg = document.createRange(); rg.selectNodeContents(h); return Math.round(r.querySelector('.lib-row__main').getBoundingClientRect().right - rg.getBoundingClientRect().right); })(),
     slots: [...r.querySelectorAll('.tj-slots__slot')].map((s) => `${s.textContent}:${s.getAttribute('aria-checked') === 'true' ? 'on' : s.getAttribute('data-filled') === 'true' ? 'filled' : 'empty'}`).join(' '),
     badges: [...r.querySelectorAll('.tj-pill')].map((p) => p.textContent),
     actions: [...r.querySelectorAll('.lib-row__actions button')].map((x) => x.getAttribute('aria-label') ?? x.textContent.trim()),
     height: Math.round(r.getBoundingClientRect().height),
   })));
   const counts = await lib.eval(() => [...document.querySelectorAll('.tj-chip')].map((c) => c.getAttribute('aria-label')));
-  const okRows = rows.every((r) => r.idDir === 'ltr' && r.titleBidi === 'plaintext');
+  const okRows = rows.every((r) => r.idDir === 'ltr' && r.titleBidi === 'plaintext' && Math.abs(r.titleGap) <= 2);
   const awaiting = rows.find((r) => r.id === 'Y9rkKtK1b44');
   const translated = rows.find((r) => r.id === 'iG9CE55wbtY');
   check('library-rows-slots-and-actions', okRows && translated.slots === '1:on 2:empty 3:empty' && awaiting.slots === '1:empty 2:empty 3:empty' && translated.actions[0].startsWith('تعديل') && awaiting.actions[0].startsWith('رفع') && translated.badges.includes('AR معدّلة'), { rows, counts });
@@ -217,6 +232,20 @@ try {
   await lib.key('Escape', 'Escape', 27);
   await sleep(200);
   check('library-more-menu-escape-closes', !(await lib.eval(() => !!document.querySelector('.tj-menu__list:not([hidden])'))));
+  // قائمة الصف الأخير تمتد تحت القائمة ولا تُقص: آخر بند فيها هو ما يراه المؤشر في موضعه.
+  await clickText(lib, 'ul.lib-list > li:last-child', 'المزيد');
+  const lastMenu = await lib.eval(() => {
+    const list = document.querySelector('.tj-menu__list:not([hidden])');
+    const last = list?.querySelector('[role="menuitem"]:last-child');
+    if (!last) return { open: false };
+    const r = last.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return { open: true, visible: !!hit && last.contains(hit), belowList: r.bottom > document.querySelector('ul.lib-list').getBoundingClientRect().bottom };
+  });
+  check('library-last-row-menu-not-clipped', lastMenu.open && lastMenu.visible && lastMenu.belowList, lastMenu);
+  await snap(lib, 'library-more-menu-last-row');
+  await lib.key('Escape', 'Escape', 27);
+  await sleep(200);
 
   // «نسخ التعليمات»: الحالة تتحول ولا يظهر نص التعليمات.
   await clickSel(lib, 'ul.lib-list > li:nth-child(1) .lib-copy__button');
@@ -265,20 +294,28 @@ try {
   check('library-layout-no-overflow', libAudit.overflow.length === 0 && libAudit.clipped === 0, libAudit);
   await shoot(lib, 'library-narrow-480', { width: 480, schemes: ['light'] });
   await lib.close();
+  } else {
+    const seeder = await openExt('pages/settings/index.html', { background: true });
+    await seedStorage(seeder, many);
+    await seeder.close();
+  }
 
   // ===== ٣. نافذة الأيقونة: ليست صفحة فيديو (آخر الترجمات)، ثم على فيديو بلا ترجمة ثم بترجمة =====
+  if (want('popup')) {
   const popupFg = await openExt('pages/popup/index.html');
-  await popupFg.waitFor(() => document.querySelector('.tj-popup__menu') && !document.querySelector('[aria-busy="true"]'), { timeoutMs: 8000 });
+  await popupFg.waitFor(() => !!document.querySelector('#app[data-ready]'), { timeoutMs: 8000 });
+  // النافذة الحقيقية تأخذ ارتفاع محتواها؛ في التبويب يُقاس المحتوى (#app) لا نافذة التبويب.
   const notVideo = await popupFg.eval(() => ({
     status: document.querySelector('.tj-popup__status')?.textContent.trim(), recent: document.querySelectorAll('.tj-popup__recent-row').length,
     menu: [...document.querySelectorAll('.tj-menuitem .tj-menuitem__name')].map((x) => x.textContent), actions: document.querySelectorAll('.tj-popup__actions [data-action]').length,
-    h: Math.round(document.documentElement.scrollHeight), w: Math.round(document.documentElement.clientWidth),
+    h: Math.round(document.getElementById('app').scrollHeight), w: Math.round(document.body.getBoundingClientRect().width),
   }));
-  check('popup-not-video-recent', notVideo.status === 'افتح فيديو على يوتيوب لتظهر حالته هنا.' && notVideo.recent === 3 && notVideo.menu.join('|') === 'المحفوظات|الإعدادات' && notVideo.actions === 0 && notVideo.h <= 520, notVideo);
+  check('popup-not-video-recent', notVideo.status === 'افتح فيديو على يوتيوب لتظهر حالته هنا.' && notVideo.recent === 3 && notVideo.menu.join('|') === 'المحفوظات|الإعدادات' && notVideo.actions === 0 && notVideo.h <= 520 && notVideo.w === 340, notVideo);
   await shoot(popupFg, 'popup-not-video', { width: 340 });
   await popupFg.close();
+  }
 
-  if (!SKIP_YT) {
+  if (!SKIP_YT && (want('popup') || want('player'))) {
     const yt = await openTab(b.conn, 'about:blank');
     errors.push(collectErrors(yt, { extId, onlyExtension: true }));
     await yt.goto(`https://www.youtube.com/watch?v=${SEED_IDS.ted}`);
@@ -291,7 +328,7 @@ try {
     const openPopupBg = async () => {
       await b.conn.send('Target.activateTarget', { targetId: yt.targetId });
       const p = await openExt('pages/popup/index.html', { background: true });
-      await p.waitFor(() => document.querySelector('.tj-popup__menu') && !document.querySelector('[aria-busy="true"]'), { timeoutMs: 8000 });
+      await p.waitFor(() => !!document.querySelector('#app[data-ready]'), { timeoutMs: 8000 });
       return p;
     };
     const popupInfo = (p) => p.eval(() => ({
@@ -299,19 +336,31 @@ try {
       tools: document.querySelector('.tj-popup__tools')?.textContent.trim(),
       actions: [...document.querySelectorAll('.tj-popup__actions [data-action]')].map((x) => ({ a: x.getAttribute('data-action'), primary: x.classList.contains('tj-popup__primary'), off: x.getAttribute('aria-disabled') === 'true' })),
       pills: [...document.querySelectorAll('.tj-popup__pills .tj-pill')].map((x) => x.textContent),
-      h: Math.round(document.documentElement.scrollHeight),
+      h: Math.round(document.getElementById('app').scrollHeight),
+      // لا زر يُقصّ نصه: عرض محتوى كل زر لا يتجاوز عرضه الظاهر.
+      clipped: [...document.querySelectorAll('.tj-popup__actions .tj-btn')].filter((b) => b.scrollWidth > b.clientWidth + 1).length,
     }));
+    if (want('popup')) {
     // الفيديو المبذور له ترجمة معدّلة بإزاحة +0.5.
     const withSub = await openPopupBg();
     const ws = await popupInfo(withSub);
-    check('popup-with-subtitle-actions', /ترجمة عربية · \d+ مقطعًا · الإزاحة \+0\.5 ث/.test(ws.status) && ws.actions.map((a) => a.a).join() === 'editor,copy,find' && ws.actions[0].primary && ws.pills.includes('معدّلة') && /أدوات المشغّل/.test(ws.tools ?? '') && ws.h <= 520, ws);
+    check('popup-with-subtitle-actions', /ترجمة عربية · \d+ مقطعًا · الإزاحة \+0\.5 ث/.test(ws.status) && ws.actions.map((a) => a.a).join() === 'editor,copy,find' && ws.actions[0].primary && ws.pills.includes('معدّلة') && /أدوات المشغّل/.test(ws.tools ?? '') && ws.h <= 520 && ws.clipped === 0, ws);
     await shoot(withSub, 'popup-with-subtitle', { width: 340 });
-    // «نسخ تعليمات الترجمة» من النافذة: تتحول الحالة ولا نص للتعليمات في الصفحة.
-    await withSub.eval(() => Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async (t) => { globalThis.__tjLen = t.length; } }));
+    // «نسخ تعليمات الترجمة» من النافذة: التعليمات بعنوان الفيديو ورابطه تصل إلى الحافظة، ولا نص لها في الصفحة. بنافذة
+    // ظاهرة تُقرأ حافظة الجهاز نفسها؛ وبلا نافذة لا تصل كتابة الصفحة إلى حافظة الجهاز، فتُلتقط من الصفحة (Clipboard.prototype).
+    writeClipboard('tj-ui-live-marker');
+    await withSub.eval(() => {
+      Clipboard.prototype.writeText = async function writeText(t) { globalThis.__tjCopied = String(t); };
+      return true;
+    });
+    await b.conn.send('Target.activateTarget', { targetId: withSub.targetId });
     await clickSel(withSub, '[data-action="copy"]');
     await withSub.waitFor(() => document.querySelector('[data-action="copy"]')?.getAttribute('data-state') === 'success', { timeoutMs: 4000, intervalMs: 80 });
-    const copied = await withSub.eval(() => ({ len: globalThis.__tjLen ?? 0, leaked: document.body.textContent.includes('أرفقتُ ملف ترجمة') }));
-    check('popup-copy-instructions', copied.len > 500 && !copied.leaked, copied);
+    await sleep(300);
+    const fromPage = await withSub.eval(() => globalThis.__tjCopied ?? '');
+    const clip = HEADED && !fromPage ? readClipboard() : fromPage;
+    const copied = { via: fromPage ? 'page' : 'clipboard', len: clip.length, hasHeader: clip.startsWith('ترجمة ملف ترجمة فيديو'), hasTitle: clip.includes('- العنوان: Do schools kill creativity?'), hasUrl: clip.includes(`watch?v=${SEED_IDS.ted}`), leaked: await withSub.eval(() => document.body.textContent.includes('أرفقتُ ملف ترجمة')) };
+    check('popup-copy-instructions', copied.len > 500 && copied.hasHeader && copied.hasTitle && copied.hasUrl && !copied.leaked, copied);
     await snap(withSub, 'popup-copy-success');
     await withSub.close();
     // بلا ترجمة: حذف السجل ثم النافذة.
@@ -324,8 +373,10 @@ try {
     check('popup-no-subtitle-actions', /لا ترجمة عربية محفوظة/.test(ns.status) && ns.actions[0]?.a === 'copy' && ns.actions[0].primary && ns.actions.find((a) => a.a === 'find')?.off === true, ns);
     await shoot(noSub, 'popup-no-subtitle', { width: 340 });
     await noSub.close();
+    }
 
     // ===== ٤. قوائم المشغّل: العرض بمحدد 1 2 3، والتوقيت بسطر واحد، والإغلاق مع اختفاء الشريط =====
+    if (want('player')) {
     const seeder = await openExt('pages/settings/index.html', { background: true });
     await seedStorage(seeder, few);
     await seeder.close();
@@ -367,6 +418,7 @@ try {
     check('player-timing-menu-one-note', tm.layer.menu?.label === 'توقيت الترجمة' && tm.layer.menu.text.includes('تُحفظ لهذا الفيديو') && !tm.layer.menu.text.includes('الإزاحة لهذا الفيديو فقط'), { label: tm.layer.menu?.label });
     await snap(yt, 'player-timing-menu');
     await yt.key('Escape', 'Escape', 27);
+    }
     await yt.close();
   } else {
     note('تخطّي يوتيوب (--skip-youtube): لم تُلتقط نافذة الأيقونة على فيديو ولا قوائم المشغّل.');
@@ -382,6 +434,7 @@ try {
   console.error(`✗ توقف: ${err?.message ?? err}`);
 } finally {
   await b?.close().catch(() => {});
+  try { writeClipboard(clipboardBefore); } catch { /* الحافظة غير متاحة */ }
 }
 
 const json = JSON.stringify(result, null, 2);

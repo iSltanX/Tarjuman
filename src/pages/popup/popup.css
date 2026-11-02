@@ -22,8 +22,9 @@
 /* الإجراءات السريعة: الرئيسي بعرض النافذة، والثانوية في صف. */
 .tj-popup__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .tj-popup__actions:empty { display: none; }
-.tj-popup__actions > .tj-btn { flex: 1 1 auto; min-height: 42px; }
-.tj-popup__actions > .tj-popup__primary { flex-basis: 100%; }
+.tj-popup__actions > .tj-btn { flex: 1 1 calc(50% - 4px); min-width: 0; min-height: 42px; padding-inline: 10px; white-space: normal; line-height: 18px; font-size: 13px; }
+.tj-popup__actions > .tj-btn .tj-icon { flex: none; }
+.tj-popup__actions > .tj-popup__primary { flex-basis: 100%; font-size: 14px; line-height: 20px; }
 .tj-popup__hint { flex-basis: 100%; }
 .tj-popup__copy--success { background: var(--tj-success-bg) !important; color: var(--tj-success) !important; border-color: var(--tj-success) !important; }
 .tj-popup__copy--error { background: var(--tj-danger-bg) !important; color: var(--tj-danger) !important; border-color: var(--tj-danger) !important; }

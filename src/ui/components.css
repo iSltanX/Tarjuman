@@ -55,8 +55,7 @@
 .tj-field__hint { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
 .tj-field__error { font: 400 13px/20px var(--tj-font-body); color: var(--tj-danger); }
 .tj-field--error .tj-field__input { border-color: var(--tj-danger); }
-select.tj-field__input { padding-inline-end: 32px; appearance: none; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%); background-position: calc(100% - 100% + 18px) 50%, calc(100% - 100% + 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; cursor: pointer; }
-html[dir="rtl"] select.tj-field__input { background-position: 18px 50%, 13px 50%; }
+select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 
 /* ---- شارة الحالة: نقطة ونص ---- */
 .tj-pill {
@@ -122,12 +121,12 @@ html[dir="rtl"] select.tj-field__input { background-position: 18px 50%, 13px 50%
 .tj-choice__option:hover { background: var(--tj-hover); }
 .tj-choice__option:has(input:checked) { border-color: var(--tj-brand); background: var(--tj-brand-soft); }
 .tj-choice__option:has(input:disabled) { cursor: not-allowed; color: var(--tj-muted); background: var(--tj-sunken); }
-.tj-choice__option input { margin: 5px 0 0; accent-color: var(--tj-brand); flex: none; width: 16px; height: 16px; }
-.tj-choice__option input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
+.tj-choice__option > input[type="radio"] { margin: 5px 0 0; accent-color: var(--tj-brand); flex: none; width: 16px; height: 16px; }
+.tj-choice__option > input[type="radio"]:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .tj-choice__text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
 .tj-choice__label { font: 700 14px/22px var(--tj-font-body); }
 .tj-choice__hint { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
-.tj-choice__extra { margin-top: 6px; }
+.tj-choice__extra { display: block; margin-top: 8px; }
 
 /* ---- المقطّعة: خيار واحد من قليل (radio حقيقي مخفي بصريًا) ---- */
 .tj-seg { display: inline-flex; border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-md); padding: 3px; margin: 0; min-width: 0; background: var(--tj-surface-2); gap: 2px; max-width: 100%; }
@@ -150,8 +149,8 @@ html[dir="rtl"] select.tj-field__input { background-position: 18px 50%, 13px 50%
 .tj-chip__count { font: 500 12px/16px var(--tj-font-mono); color: var(--tj-muted); }
 .tj-chip[aria-pressed="true"] .tj-chip__count { color: inherit; opacity: 0.8; }
 
-/* ---- محدد الترجمات 1 2 3: النشطة بلون الإبراز، والمحفوظة بإطار، والفارغة باهتة ---- */
-.tj-slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--tj-surface-2); }
+/* ---- محدد الترجمات 1 2 3: النشطة بلون الإبراز، والمحفوظة بإطار، والفارغة باهتة. الأرقام تُقرأ 1 2 3 من اليسار كما في المشغّل ---- */
+.tj-slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--tj-surface-2); direction: ltr; }
 .tj-slots__slot {
   display: inline-grid; place-items: center; width: 26px; height: 24px; border-radius: 6px; border: 1px solid transparent;
   background: transparent; color: var(--tj-text-2); font: 700 12px/1 var(--tj-font-mono); cursor: pointer; padding: 0;

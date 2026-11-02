@@ -11,7 +11,8 @@ import { openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
 import { describeStatus, editorGate, quickActions, queryVideoState, recentEntries, toolsStatus } from './status.js';
 
-const COPY_LABEL = Object.freeze({ idle: 'نسخ تعليمات الترجمة', success: 'تم النسخ', error: 'أعد المحاولة' });
+/** زر النسخ: اسمه الكامل حين يكون رئيسيًا بعرض النافذة، ومختصرًا حين يجاور زرًا آخر. */
+const COPY_LABEL = Object.freeze({ idle: 'نسخ تعليمات الترجمة', idleShort: 'نسخ التعليمات', success: 'تم النسخ', error: 'أعد المحاولة' });
 
 const skeleton = () => el('section', {
   className: 'tj-popup__status',
@@ -111,15 +112,16 @@ startPage({
           }
         } });
       } else if (a.id === 'copy') {
-        const label = el('span', { text: COPY_LABEL.idle });
+        const idle = a.primary ? COPY_LABEL.idle : COPY_LABEL.idleShort;
+        const label = el('span', { text: idle });
         let glyph = icon('copy');
-        b = el('button', { className: `tj-btn tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', title: 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
+        b = el('button', { className: `tj-btn tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', 'aria-label': COPY_LABEL.idle, title: 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
         const copy = createCopyState({
           buildText: () => instructions({ videoId: reply.videoId, title: reply.title }),
           write: (text) => navigator.clipboard.writeText(text),
           announce: (code) => notice.replaceChildren(code === 'PG_COPY_DONE' ? el('span', { className: 'tj-sr-only', text: messageFor(code) }) : alertBox({ tone: 'danger', text: messageFor(code) })),
           onState: (next) => {
-            label.textContent = COPY_LABEL[next];
+            label.textContent = next === 'idle' ? idle : COPY_LABEL[next];
             const fresh = icon(next === 'success' ? 'check' : 'copy');
             glyph.replaceWith(fresh);
             glyph = fresh;
@@ -168,5 +170,7 @@ startPage({
         // المحفوظات غير متاحة الآن: تبقى النافذة بمدخليها.
       }
     }
+    // اكتمل العرض (للحزام الحي: لا يقرأ النافذة قبل آخر الترجمات).
+    app.setAttribute('data-ready', '1');
   },
 });
