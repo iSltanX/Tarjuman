@@ -235,6 +235,9 @@ export function createController({ store, extractor = null, page = {}, now = () 
       error = null;
     } catch (err) {
       error = toErrorInfo(err);
+      // لم تُحفظ: يعود العرض إلى المحفوظ (ما لم تبقَ كتابة أخرى جارية تحسمه)، فلا تُعرض إزاحة تزول عند إعادة الفتح
+      // (تدقيق 5fedcb9، GM-027.4).
+      if (saved && !pendingWrites) view = { ...saved.view };
     }
     changed();
     return state;

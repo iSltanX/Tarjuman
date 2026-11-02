@@ -145,3 +145,15 @@ test('تسجيل التصدير عند امتلاء حد البصمات لا ي�
   assert.equal(b.slots[1].track.fingerprintId, 'fp_test000002');
   assert.equal(englishTrack().key, track.key);
 });
+
+test('تدقيق 5fedcb9 (GM-027.4): ± لم يُحفظ (فشل الكتابة) لا يبقى ظاهرًا؛ يعود العرض إلى المحفوظ مع الخطأ', async () => {
+  const { area, c } = await setup();
+  const before = c.getState().view.displayOffsetMs;
+  area.failNext('set', new Error('Resource::kQuotaBytes quota exceeded'));
+  await c.nudgeOffset(1);
+  const s = c.getState();
+  assert.equal(s.view.displayOffsetMs, before, 'لا إزاحة لم تُحفظ');
+  assert.equal(s.error?.code, 'ST_QUOTA_EXCEEDED');
+  await c.nudgeOffset(1);
+  assert.notEqual(c.getState().view.displayOffsetMs, before, 'التالية تُحفظ وتظهر');
+});

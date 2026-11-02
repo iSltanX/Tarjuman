@@ -204,3 +204,19 @@ test('مخفي الترجمة يسقط إلى <style> في head إن لم تتو
   hider.set(false);
   assert.equal(env.doc.head.children.length, 0);
 });
+
+test('تدقيق 5fedcb9 (CL-003): الطبقة تنشر أعلى سطرها الظاهر عن أسفل المشغّل لرسائل الأدوات، وتزيله فارغة أو في الأعلى', async () => {
+  const { createOverlayView } = await import('../../../../src/player/overlay/view.js');
+  const { createFakeEnv } = await import('./fake-dom.js');
+  const env = createFakeEnv({ href: 'https://www.youtube.com/watch?v=AAAAAAAAAAA' });
+  const v = createOverlayView({ doc: env.doc, win: env.win });
+  v.setLayout({ fontPx: 22, anchor: 'bottom', offsetPx: 60 });
+  assert.equal(v.host.getAttribute('data-stage-top'), null, 'لا سطر');
+  v.render({ ar: ['سطر'], en: [] });
+  assert.ok(Number(v.host.getAttribute('data-stage-top')) >= 60);
+  v.render({ ar: [], en: [] });
+  assert.equal(v.host.getAttribute('data-stage-top'), null);
+  v.setLayout({ fontPx: 22, anchor: 'top', offsetPx: 30 });
+  v.render({ ar: ['سطر'], en: [] });
+  assert.equal(v.host.getAttribute('data-stage-top'), null, 'الأعلى لا يزاحم رسائل الأسفل');
+});

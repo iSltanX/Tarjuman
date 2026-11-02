@@ -117,9 +117,18 @@ export function createLayer({ doc, win, on }) {
     placeToasts();
   }
 
-  /** الرسائل فوق الشريط، وفوق القائمة المفتوحة إن وُجدت فلا تغطي بنودها (كشفه الاختبار الحي). */
+  /**
+   * الرسائل فوق الشريط، وفوق القائمة المفتوحة إن وُجدت فلا تغطي بنودها (كشفه الاختبار الحي)، وفوق سطر الترجمة الظاهر فلا
+   * تحجبه (طبقة الترجمة تنشر أعلاه data-stage-top؛ تدقيق 5fedcb9، CL-003)؛ ولا تتجاوز حافة المشغّل العليا في مشغّل قصير
+   * (CL-016): إن لم يتسع فوقها مكان نزلت إلى أعلى ما يتسع.
+   */
   function placeToasts() {
-    const y = menu.hasAttribute('hidden') ? bar.lift + GAP_PX : Math.max(bar.lift + GAP_PX, menuTop + GAP_PX);
+    let y = menu.hasAttribute('hidden') ? bar.lift + GAP_PX : Math.max(bar.lift + GAP_PX, menuTop + GAP_PX);
+    const overlay = host.parentNode?.querySelector?.('#tarjuman-overlay');
+    const stageTop = overlay && !overlay.hasAttribute('hidden') ? Number(overlay.getAttribute('data-stage-top')) : NaN;
+    if (Number.isFinite(stageTop) && stageTop > 0) y = Math.max(y, stageTop + GAP_PX);
+    const h = toasts.getBoundingClientRect?.()?.height ?? 0;
+    if (bar.height > 0 && h > 0 && y + h > bar.height - EDGE_PX) y = Math.max(EDGE_PX, bar.height - h - EDGE_PX);
     setVar(toasts, '--y', `${Math.round(y)}px`);
   }
 
@@ -267,6 +276,8 @@ export function createLayer({ doc, win, on }) {
         }
         return box;
       }));
+      // ارتفاع الرسائل الجديد يحدد ما يتسع فوقها (CL-016).
+      placeToasts();
     },
 
     /** @param {Element} player يضع الطبقة آخر أبناء المشغّل إن لم تكن فيه. */

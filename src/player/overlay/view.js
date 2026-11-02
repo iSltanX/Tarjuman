@@ -26,6 +26,20 @@ export function createOverlayView({ doc, win }) {
   /** @type {{ ar: string[], en: string[] }} */
   let shown = { ar: [], en: [] };
   let fadeTimer = 0;
+  let layout = { anchor: 'bottom', offsetPx: 0 };
+
+  /**
+   * أعلى السطر الظاهر عن أسفل المشغّل (موضعه المقصود لا أثناء انتقاله) سمةً على المضيف، فتضع أدوات المشغّل رسائلها فوقه
+   * لا عليه (§٦.٥ «المشغّل للمشاهدة»؛ تدقيق 5fedcb9، CL-003). والجذر مغلق فلا يُقرأ من خارجه غيرها.
+   */
+  function publishStage() {
+    if (stage.hasAttribute('data-empty') || layout.anchor !== 'bottom') {
+      host.removeAttribute('data-stage-top');
+      return;
+    }
+    const h = stage.getBoundingClientRect?.()?.height ?? 0;
+    host.setAttribute('data-stage-top', String(Math.round(layout.offsetPx + h)));
+  }
 
   function line(text, kind) {
     const el = doc.createElement('div');
@@ -47,6 +61,7 @@ export function createOverlayView({ doc, win }) {
     shown = { ar: [], en: [] };
     stage.setAttribute('data-empty', '');
     stage.replaceChildren();
+    publishStage();
   }
 
   return {
@@ -63,6 +78,7 @@ export function createOverlayView({ doc, win }) {
       if (!ar.length && !en.length) {
         shown = { ar: [], en: [] };
         stage.setAttribute('data-empty', '');
+        publishStage();
         cancelFade();
         fadeTimer = win.setTimeout(() => {
           fadeTimer = 0;
@@ -74,6 +90,7 @@ export function createOverlayView({ doc, win }) {
       shown = { ar: [...ar], en: [...en] };
       stage.replaceChildren(...ar.map((t) => line(t, 'ar')), ...en.map((t) => line(t, 'en')));
       stage.removeAttribute('data-empty');
+      publishStage();
     },
 
     /** @param {boolean} hidden إخفاء تام (إعلان أو تنقّل): يمسح المحتوى أيضًا فلا يبقى شيء من السابق. */
@@ -105,6 +122,8 @@ export function createOverlayView({ doc, win }) {
       host.style.setProperty('--tj-fs', `${l.fontPx}px`);
       host.style.setProperty('--tj-offset', `${l.offsetPx}px`);
       host.setAttribute('data-anchor', l.anchor);
+      layout = { anchor: l.anchor, offsetPx: l.offsetPx };
+      publishStage();
     },
 
     /** @param {Element} parent يضع المضيف آخر أبناء الأب إن لم يكن فيه. */

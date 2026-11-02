@@ -113,3 +113,30 @@ test('الرسائل فوق القائمة المفتوحة لا فوق بنود
   click(page.ui.btn('download'));
   assert.equal(y(), '60px');
 });
+
+test('تدقيق 5fedcb9 (CL-003، CL-016): الرسائل فوق سطر الترجمة الظاهر لا عليه، ولا تتجاوز حافة المشغّل العليا', async () => {
+  const { settle } = await import('./harness.js');
+  const page = mountPage({ state: makeState({}), height: 360 });
+  const layer = page.ui.layerHost().shadowRoot;
+  const y = () => parseInt(layer.querySelector('.toasts').style.getPropertyValue('--y'), 10);
+  // طبقة الترجمة (مضيفها في المشغّل) تنشر أعلى سطرها: 140 فوق أسفل المشغّل.
+  const overlay = page.env.doc.createElement('div');
+  overlay.id = 'tarjuman-overlay';
+  overlay.setAttribute('data-stage-top', '140');
+  page.player.appendChild(overlay);
+  page.controller.set({ notice: { code: 'ST_RESTORED', tone: 'info', at: 1 } });
+  await settle();
+  assert.equal(page.ui.toasts().length, 1);
+  assert.ok(y() >= 140 + 12, `فوق السطر: ${y()}`);
+  // مشغّل قصير والرسالة لا تتسع فوق السطر: تنزل إلى أعلى ما يتسع داخل المشغّل.
+  overlay.setAttribute('data-stage-top', '330');
+  layer.querySelector('.toasts').rect = { top: 0, left: 0, width: 300, height: 40, bottom: 40, right: 300 };
+  page.controller.set({ notice: { code: 'ST_OFFSET_RESET', tone: 'info', at: 2 } });
+  await settle();
+  assert.ok(y() + 40 <= 360 - 8, `داخل المشغّل: ${y()}`);
+  // بلا سطر ظاهر: فوق الشريط كما كانت.
+  overlay.removeAttribute('data-stage-top');
+  page.controller.set({ notice: { code: 'ST_RESTORED', tone: 'info', at: 3 } });
+  await settle();
+  assert.equal(y(), 60);
+});
