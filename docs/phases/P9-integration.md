@@ -124,8 +124,8 @@
   "sharedRequests": [
     {
       "file": ".gitignore",
-      "change": "سطر واحد: release/ مع dist/",
-      "why": "مجلد ناتج scripts/release/package.mjs (الحزمة والأرشيف) مولّد محلي لا يُحفظ في Git، كما dist/",
+      "change": "سطر واحد: /release/ (مثبّت بالجذر) مع dist/",
+      "why": "مجلد ناتج scripts/release/package.mjs (الحزمة والأرشيف) مولّد محلي لا يُحفظ في Git، كما dist/. التثبيت بالجذر كي لا يطابق مجلد المصدر scripts/release/ (مراجعة جلسة التخطيط): release/x يُتجاهل وscripts/release/x.mjs لا يُتجاهل.",
       "applied": true
     }
   ]
