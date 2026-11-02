@@ -22,6 +22,7 @@ function pickFiles(doc = document) {
 startPage({
   title: 'المحفوظات',
   wide: true,
+  nav: 'library',
   async render(app) {
     const store = createStore();
     const lib = createLibrary({

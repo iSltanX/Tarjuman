@@ -22,7 +22,7 @@ test('جارٍ: الهيكل مع العنوان', () => {
 });
 
 test('فيديو بلا ترجمة محفوظة: ملتقط ✓ أو محفوظ ✓ أو غير ملتقط', () => {
-  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'المسار الإنجليزي: غير ملتقط' });
+  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'المسار الإنجليزي: غير ملتقط', englishReady: false });
   const captured = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }], saved: [] } });
   assert.equal(describeStatus(captured).englishLine, 'المسار الإنجليزي: ملتقط ✓');
   const failed = reply({ english: { captured: [{ key: 'en|asr', kind: 'asr', cueCount: 0, ok: false }], saved: [] } });
@@ -37,7 +37,7 @@ test('العنوان الغائب يعود إلى المعرّف', () => {
 
 test('فيديو بترجمة: «ترجمة عربية · 412 مقطعًا · الإزاحة +0.5 ث» وشارة معدّلة', () => {
   assert.deepEqual(describeStatus(withArabic()), {
-    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة عربية · 412 مقطعًا · الإزاحة +0.5 ث', edited: false,
+    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة عربية · 412 مقطعًا · الإزاحة +0.5 ث', edited: false, matched: true, mode: 'العربية وحدها', fileName: 'x.ar.srt',
   });
   const edited = describeStatus(withArabic({ arabic: { fileName: 'x', cueCount: 1, edited: true, matched: null }, view: { displayOffsetMs: -1000, displayMode: 'dual' } }));
   assert.equal(edited.line, 'ترجمة عربية · مقطع واحد · الإزاحة −1.0 ث');

@@ -1,6 +1,5 @@
-// عناصر نماذج الإعدادات (figma-design-brief §١٤.٢): مقطّعة (Segmented) بأزرار radio حقيقية، وحقل رقمي بوحدة وتحقق عند
-// الإتمام، وعلامة «حُفظ» العابرة بجانب كل خيار. كلها DOM وtextContent فقط، وتُبنى داخل الصفحة وتُطلب ترقيتها إلى
-// src/ui بمسار الاستثناء (sharedRequests).
+// عناصر نماذج الإعدادات: مقطّعة (Segmented) بأزرار radio حقيقية بأنماط src/ui المشتركة، وحقل رقمي بوحدة وتحقق عند
+// الإتمام، وعلامة «حُفظ» العابرة تحت تسمية الخيار. كلها DOM وtextContent فقط.
 import { messageFor } from '../../core/errors/index.js';
 import { el } from '../../ui/components.js';
 
@@ -10,7 +9,7 @@ const uid = (p) => `${p}-${++seq}`;
 export const SAVED_MS = 2000;
 
 /**
- * علامة نتيجة الحفظ بجانب الخيار: «حُفظ» أو خطأ، وتختفي بعد ثانيتين. منطقة حيّة فيعلنها قارئ الشاشة.
+ * علامة نتيجة الحفظ تحت تسمية الخيار: «حُفظ» أو خطأ، وتختفي بعد ثانيتين. منطقة حيّة فيعلنها قارئ الشاشة.
  * @param {{ doc?: Document, setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void }} [env]
  * @returns {{ root: HTMLElement, flash: (text: string, tone?: 'success' | 'danger') => void }}
  */
@@ -54,10 +53,10 @@ export function segmented({ legend, options, value, onChange, doc = document, cl
     return input;
   });
   const root = el('fieldset', {
-    className: `st-seg ${className}`.trim(),
+    className: `tj-seg ${className}`.trim(),
     children: [
       el('legend', { className: 'tj-sr-only', text: legend, doc }),
-      ...options.map((o, i) => el('label', { className: 'st-seg__option', children: [inputs[i], el('span', { className: 'st-seg__label', text: o.label, doc })], doc })),
+      ...options.map((o, i) => el('label', { className: 'tj-seg__option', children: [inputs[i], el('span', { className: 'tj-seg__label', text: o.label, doc })], doc })),
     ],
     doc,
   });

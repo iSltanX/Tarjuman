@@ -182,6 +182,9 @@ export function createLayer({ doc, win, on }) {
 
     menuOpen: () => !menu.hasAttribute('hidden'),
 
+    /** المستخدم يكتب في حقل القائمة الآن (فتبقى ظاهرة مع اختفاء الشريط، ولا تُغلق تلقائيًا). */
+    isTyping: () => layer.hasAttribute('data-typing'),
+
     /** العنصر المركّز داخل الطبقة (الجذر مغلق فلا يراه document.activeElement). */
     focused: () => root.activeElement ?? null,
 

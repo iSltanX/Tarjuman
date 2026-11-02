@@ -7,6 +7,8 @@ import { createSettings } from './view.js';
 
 startPage({
   title: 'الإعدادات',
+  nav: 'settings',
+  wide: true,
   async render(app) {
     const store = createStore();
     const version = extensionVersion();

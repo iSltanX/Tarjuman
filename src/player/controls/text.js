@@ -31,7 +31,7 @@ export const LABELS = Object.freeze({
   replaceConfirm: 'استبدال',
   cancel: 'إلغاء',
   offsetResetNote: 'ستُصفَّر إزاحة العرض لأن الملف الجديد يحمل توقيته.',
-  editorHint: 'التفاصيل الكاملة في المحرّر: افتحه من أيقونة ترجمان أعلى المتصفح.',
+  slots: 'الترجمة النشطة',
   importing: 'جارٍ فحص الملف ومقارنته…',
   offsetField: 'الإزاحة بالثواني',
   seconds: 'ث',
@@ -39,10 +39,12 @@ export const LABELS = Object.freeze({
   stepCustom: 'مخصص',
   stepCustomField: 'الخطوة بالثواني',
   reset: 'إعادة الضبط إلى 0',
-  signLegend: '+ تأخير: تظهر لاحقًا · − تقديم: تظهر أبكر',
-  perVideo: 'الإزاحة لهذا الفيديو فقط وتُحفظ.',
+  signLegend: '+ تأخير: تظهر لاحقًا · − تقديم: تظهر أبكر · تُحفظ لهذا الفيديو',
   close: 'إغلاق',
 });
+
+/** اسم الوصول لخانة ترجمة: «الترجمة 2، نشطة» أو «الترجمة 3، فارغة». @param {{ n: number, active: boolean, filled: boolean }} s */
+export const slotLabel = (s) => `الترجمة ${s.n}${s.active ? '، نشطة' : s.filled ? '' : '، فارغة'}`;
 
 /**
  * الخطوة بالثواني بلا أصفار زائدة: 500 ← «0.5»، و1000 ← «1»، و1500 ← «1.5».

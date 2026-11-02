@@ -1,6 +1,6 @@
-// نموذج المحفوظات بلا DOM (P7-AC2/AC3): البحث بالعنوان والمعرّف، والترتيب، وتجميع بيانات الصف (شارات الملفات
-// والإزاحة والتاريخ)، وخيارات التصدير بأسباب التعطيل، وملخص المقارنة لحوار الاستبدال. كل ما هنا دوال نقية على
-// IndexEntry (عقد data-model §٩) فتُختبر بلا متصفح.
+// نموذج المحفوظات بلا DOM (P7-AC2/AC3): البحث بالعنوان والمعرّف، والتصفية بالأقسام بأعدادها، والترتيب، وتجميع بيانات
+// الصف (شارات الملفات والإزاحة والتاريخ)، وخيارات التصدير بأسباب التعطيل، وملخص المقارنة لحوار الاستبدال، وحالة
+// الصفحة في جزء العنوان. كل ما هنا دوال نقية على IndexEntry (عقد data-model §٩) فتُختبر بلا متصفح.
 import { messageFor } from '../../core/errors/index.js';
 import { isVideoId } from '../../core/model/ids.js';
 import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
@@ -8,6 +8,66 @@ import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
 /** حجم الدفعة المعروضة: عرض تدريجي لمحفوظات كثيرة. */
 export const PAGE_SIZE = 50;
 export const NO_TITLE_TEXT = 'بلا عنوان محفوظ';
+
+/** أقسام التصفية: من حالة الترجمة في المُلخّص وحده. «تحتاج مراجعة» (العلامات) تُضاف في الإصدار الثاني. */
+export const FILTERS = Object.freeze([
+  Object.freeze({ value: 'all', label: 'الكل' }),
+  Object.freeze({ value: 'translated', label: 'مترجمة' }),
+  Object.freeze({ value: 'awaiting', label: 'بانتظار الترجمة' }),
+  Object.freeze({ value: 'edited', label: 'معدّلة' }),
+  Object.freeze({ value: 'warnings', label: 'تحذيرات المقارنة' }),
+]);
+export const FILTER_VALUES = Object.freeze(FILTERS.map((f) => f.value));
+export const SORTS = Object.freeze([Object.freeze({ value: 'updated', label: 'آخر تعديل' }), Object.freeze({ value: 'title', label: 'العنوان' })]);
+
+const MATCH = {
+  all: () => true,
+  translated: (e) => e.arabic !== null,
+  awaiting: (e) => e.arabic === null,
+  edited: (e) => Boolean(e.arabic?.edited),
+  warnings: (e) => e.arabic !== null && e.arabic.matched === false,
+};
+
+/**
+ * @template {{ arabic: null | { edited: boolean, matched: boolean | null } }} E
+ * @param {E[]} entries @param {string} filter
+ * @returns {E[]}
+ */
+export const filterEntries = (entries, filter) => entries.filter(MATCH[filter] ?? MATCH.all);
+
+/** أعداد كل قسم على كل المحفوظات (لا على نتيجة البحث)، فيعرف المستخدم ما عنده بنظرة. */
+export const filterCounts = (entries) => Object.fromEntries(FILTER_VALUES.map((f) => [f, entries.filter(MATCH[f]).length]));
+
+/** @param {unknown} v */
+export const isFilter = (v) => FILTER_VALUES.includes(v);
+
+/**
+ * حالة الصفحة من جزء العنوان (#q=…&f=…&s=…&v=…) وإليه: البحث والقسم والترتيب والصف المقصود بعد الرجوع من المحرّر.
+ * @param {string} hash
+ */
+export function parsePageState(hash) {
+  const p = new URLSearchParams(String(hash ?? '').replace(/^#/, ''));
+  const f = p.get('f');
+  const s = p.get('s');
+  const v = p.get('v');
+  return {
+    query: p.get('q') ?? '',
+    filter: isFilter(f) ? f : 'all',
+    order: s === 'title' ? 'title' : 'updated',
+    focusId: isVideoId(v) ? v : null,
+  };
+}
+
+/** @param {{ query: string, filter: string, order: string, focusId?: string | null }} s */
+export function serializePageState({ query, filter, order, focusId = null }) {
+  const p = new URLSearchParams();
+  if (query.trim()) p.set('q', query.trim());
+  if (filter !== 'all') p.set('f', filter);
+  if (order !== 'updated') p.set('s', order);
+  if (focusId) p.set('v', focusId);
+  const s = p.toString();
+  return s ? `#${s}` : '';
+}
 
 // يسقط التشكيل والتطويل ويوحّد الألف والياء والهاء المربوطة ليجد البحث «محاضرة» في «مُحاضَرة».
 const MARKS = new RegExp('[\\u064B-\\u065F\\u0670\\u0640]', 'g');
@@ -66,7 +126,7 @@ function ago(n, forms) {
 }
 
 /**
- * التاريخ نسبيًا بالعربية (§٩ «قبل ساعتين»). الزمن المستقبلي (ساعة جهاز متقدمة) أو غير الصالح «الآن».
+ * التاريخ نسبيًا بالعربية («قبل ساعتين»). الزمن المستقبلي (ساعة جهاز متقدمة) أو غير الصالح «الآن».
  * @param {string} iso @param {number} nowMs
  */
 export function relativeTime(iso, nowMs) {
@@ -103,14 +163,14 @@ const EN_KIND = Object.freeze({ manual: 'يدوي', asr: 'تلقائي' });
  * @param {import('../../core/model/video.js').IndexEntry} e @param {number} nowMs
  */
 export function rowModel(e, nowMs) {
-  /** @type {{ tone: 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'edited', text: string, id: string }[]} */
+  /** @type {{ tone: 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'edited', text: string, id: string, title?: string }[]} */
   const badges = [];
   for (const kind of ['manual', 'asr']) {
-    if (e.english.some((t) => t.kind === kind)) badges.push({ tone: 'neutral', text: `EN ${EN_KIND[kind]}`, id: `en-${kind}` });
+    if (e.english.some((t) => t.kind === kind)) badges.push({ tone: 'neutral', text: `EN ${EN_KIND[kind]}`, id: `en-${kind}`, title: `المسار الإنجليزي ${EN_KIND[kind]} محفوظ` });
   }
-  if (e.arabic) badges.push(e.arabic.edited ? { tone: 'edited', text: 'AR معدّلة', id: 'ar-edited' } : { tone: 'info', text: 'AR الأصل', id: 'ar-original' });
+  if (e.arabic) badges.push(e.arabic.edited ? { tone: 'edited', text: 'AR معدّلة', id: 'ar-edited', title: 'عُدّلت في المحرّر بعد الرفع' } : { tone: 'info', text: 'AR الأصل', id: 'ar-original', title: 'الترجمة العربية كما رُفعت' });
   const warning = e.arabic ? warningText(e.arabic) : null;
-  if (warning) badges.push({ tone: 'warning', text: warning, id: 'warning' });
+  if (warning) badges.push({ tone: 'warning', text: warning, id: 'warning', title: 'المقارنة بالأصل الإنجليزي' });
   return {
     videoId: e.videoId,
     title: e.title,
@@ -124,6 +184,8 @@ export function rowModel(e, nowMs) {
     absolute: absoluteTime(e.updatedAt),
     hasArabic: Boolean(e.arabic),
     edited: Boolean(e.arabic?.edited),
+    fileName: e.arabic?.fileName ?? null,
+    cueText: e.arabic ? formatCount(e.arabic.cueCount, COUNT_FORMS.cue) : null,
   };
 }
 
@@ -181,7 +243,7 @@ const LIST_LIMIT = 8;
 const numbers = (list) => (list.length > LIST_LIMIT ? `${list.slice(0, LIST_LIMIT).join('، ')}…` : list.join('، '));
 
 /**
- * ملخص المقارنة لحوار الاستبدال (§١٦.٣): نبرة وأسطر قصيرة.
+ * ملخص المقارنة لحوار الاستبدال: نبرة وأسطر قصيرة.
  * @param {import('../../core/model/tracks.js').ComparisonReport | null} r
  * @returns {{ tone: 'info' | 'success' | 'warning', lines: string[] }}
  */

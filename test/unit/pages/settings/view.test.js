@@ -133,11 +133,12 @@ test('منزلق الحجم: 70..160 بخطوة 5، يعرض قيمته، وال
   assert.ok(markText(m.root).includes('حُفظ'));
 });
 
-test('«استعادة الخط والحجم الافتراضيين»: معطّلة بسببها عند الافتراضي، ومفعّلة بعد التغيير، وتستعيد المراعي و100%', async () => {
+test('«استعادة الافتراضي» لقسم العرض: معطّلة بسببها عند الافتراضي، ومفعّلة بعد التغيير، وتستعيد المراعي و100% ووضع العرض', async () => {
   const m = await mount();
-  const reset = buttonNamed(m.root, 'استعادة الخط والحجم الافتراضيين');
+  const reset = buttonNamed(section(m, 'العرض'), 'استعادة الافتراضي');
+  assert.ok(reset, 'زر الاستعادة في رأس القسم');
   assert.equal(reset.getAttribute('aria-disabled'), 'true');
-  assert.equal(reset.title, 'الخط والحجم افتراضيان بالفعل.');
+  assert.equal(reset.title, 'إعدادات هذا القسم افتراضية بالفعل.');
   reset.click();
   await settle();
   assert.equal(markText(m.root).length, 0, 'المعطّل لا يحفظ شيئًا');
@@ -147,14 +148,55 @@ test('«استعادة الخط والحجم الافتراضيين»: معطّ�
   assert.equal(reset.getAttribute('aria-disabled'), 'false');
   m.settings.slider.value = '150';
   m.settings.slider.dispatchEvent({ type: 'change' });
+  choose(radioByValue(m.root, 'dual'));
   await settle();
   reset.click();
   await settle();
   const s = await m.store.getSettings();
-  assert.deepEqual([s.appearance.font, s.appearance.scale], ['almarai', 100]);
+  assert.deepEqual([s.appearance.font, s.appearance.scale, s.displayModeDefault], ['almarai', 100, 'ar']);
   assert.equal(reset.getAttribute('aria-disabled'), 'true');
   assert.equal(radios(m.root, 'st-font').find((r) => r.checked).getAttribute('value'), 'almarai');
   assert.equal(m.settings.slider.value, '100');
+  // الأقسام الأخرى لها استعادتها، وما لا افتراضيات له (التخزين والتشخيص وحول) بلا زر.
+  assert.ok(buttonNamed(section(m, 'التوقيت'), 'استعادة الافتراضي'));
+  assert.ok(buttonNamed(section(m, 'التصدير'), 'استعادة الافتراضي'));
+  assert.equal(buttonNamed(section(m, 'التخزين'), 'استعادة الافتراضي'), null);
+  assert.equal(buttonNamed(section(m, 'حول'), 'استعادة الافتراضي'), null);
+});
+
+test('التنقّل الجانبي: سبعة أقسام، المختار بـaria-current وقسمه وحده ظاهر، والاختيار يُحفظ في جزء العنوان ويُقرأ منه', async () => {
+  let hash = 'export';
+  const nav = { get: () => hash, set: (id) => { hash = id; }, onChange: () => () => {} };
+  const m = await mount({ env: { nav } });
+  const links = findAll(m.root, (e) => e.classList.contains('st-nav__link'));
+  assert.deepEqual(links.map(textOf), ['العرض', 'التوقيت', 'التصدير', 'المقارنة', 'التخزين', 'التشخيص', 'حول']);
+  assert.equal(m.settings.active, 'export', 'فُتحت على القسم المذكور في العنوان');
+  assert.equal(section(m, 'التصدير').hidden, false);
+  assert.equal(section(m, 'العرض').hidden, true);
+  assert.equal(links[2].getAttribute('aria-current'), 'page');
+  links[4].click();
+  assert.equal(m.settings.active, 'storage');
+  assert.equal(hash, 'storage', 'حُفظ في جزء العنوان');
+  assert.equal(section(m, 'التخزين').hidden, false);
+  assert.equal(section(m, 'التصدير').hidden, true);
+  assert.equal(links[2].getAttribute('aria-current'), null);
+  assert.equal(links[4].getAttribute('aria-current'), 'page');
+});
+
+test('مكان حفظ الملفات (R65) في التصدير: الأوضاع الثلاثة والافتراضي مجلد التنزيلات، وغير المتاح معطّل بسببه، وحالة مفهومة بلا مسار', async () => {
+  const m = await mount();
+  const exp = section(m, 'التصدير');
+  const inputs = radios(exp).filter((r) => ['downloads', 'subfolder', 'ask'].includes(r.getAttribute('value')));
+  assert.equal(inputs.length, 3);
+  assert.equal(inputs[0].checked, true, 'الافتراضي مجلد التنزيلات');
+  assert.equal(inputs[1].disabled, true);
+  assert.equal(inputs[2].disabled, true);
+  assert.ok(textOf(exp).includes('يُفعَّل في الإصدار الثاني مع إذن التنزيلات'));
+  assert.ok(textOf(exp).includes('المكان الآن: مجلد التنزيلات'));
+  const folder = findAll(exp, (e) => e.classList.contains('st-subfolder'))[0];
+  assert.equal(folder.value, 'Tarjuman');
+  assert.equal(folder.disabled, true);
+  assert.ok(!/\/Users|C:\\|~\//.test(textOf(exp)), 'لا مسار فعلي يُدّعى');
 });
 
 test('الخلفية والموضع: يُحفظان، والمعاينة تتبعهما', async () => {
@@ -384,7 +426,7 @@ test('كل عنصر إدخال باسم وصول: منزلق الحجم بـaria
     }
   }
   const fieldsets = findAll(m.root, (e) => e.tagName === 'fieldset');
-  assert.equal(fieldsets.length, 6, 'وضع العرض، وخط الترجمة، والخلفية، والموضع، والخطوة، ووضع التصدير');
+  assert.equal(fieldsets.length, 7, 'وضع العرض، وخط الترجمة، والخلفية، والموضع، والخطوة، ومكان الحفظ، ووضع التصدير');
   assert.ok(fieldsets.every((f) => textOf(f.querySelector('legend') ?? { textContent: '' })));
 });
 

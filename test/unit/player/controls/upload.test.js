@@ -42,7 +42,12 @@ test('اختيار ملف: فحص ومقارنة بالبصمات المحفوظ
   assert.match(text, /talk\.ar\.srt/);
   assert.match(text, /5 مقاطع/);
   assert.match(text, /مطابق للأصل ✓/);
-  assert.match(text, /التفاصيل الكاملة في المحرّر: افتحه من أيقونة ترجمان أعلى المتصفح\./);
+  assert.doesNotMatch(text, /التفاصيل الكاملة في المحرّر/, 'لا فقرة شرح في القائمة («المشغّل للمشاهدة»)');
+  // محدد الترجمات 1 2 3 أعلى القائمة: ترجمة واحدة في الخانة 1 نشطة، والخانتان 2 و3 فارغتان ومعطّلتان في الاختيار.
+  const slots = page.ui.menu().querySelectorAll('[role="radiogroup"] button.slot');
+  assert.deepEqual(slots.map((s) => [s.textContent, s.getAttribute('aria-checked'), s.getAttribute('data-filled'), s.getAttribute('aria-disabled')]), [['1', 'true', 'true', null], ['2', 'false', 'false', 'true'], ['3', 'false', 'false', 'true']]);
+  assert.equal(slots[0].getAttribute('aria-label'), 'الترجمة 1، نشطة');
+  assert.equal(slots[1].getAttribute('aria-label'), 'الترجمة 2، فارغة');
   assert.equal(page.handle.diagnostics().session.imports, 1);
 });
 
