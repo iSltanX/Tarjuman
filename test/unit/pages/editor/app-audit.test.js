@@ -221,3 +221,39 @@ test('GM-026.4: خطأ توقيت (زمن سالب) لا يمنع «نص درا�
   assert.equal(saved.length, 1, 'صُدِّر');
   assert.match(saved[0].text, /t=0s/);
 });
+
+test('CX-H7: تبديل الخانة أثناء قراءة ملف التصحيح لا يطبّقه على الخانة الأخرى ولو تطابقت مقاطعها ونسختها', async () => {
+  const { formatSrtTime } = await import('../../../../src/core/srt/time.js');
+  const area = createMemoryArea({ unlimited: true });
+  let at = Date.parse(NOW);
+  const now = () => (at += 1000);
+  const store = createStore({ area, now });
+  const initial = sampleBundle();
+  // الخانة 2 بمقاطع الأولى نفسها (رُفع الملف نفسه مرتين) وبمرجع آخر.
+  initial.slots[1].track = { ...initial.slots[1].track, original: structuredClone(initial.slots[0].track.current), current: null, editedAt: null };
+  await seedBundle(store, initial);
+  const env = editorDocument({ videoId: initial.videoId });
+  const editor = await mountEditor(env.root, { videoId: initial.videoId, store, doc: env.doc, now });
+  await env.flush();
+  const tab = env.root.querySelectorAll('[role="tab"]')[1];
+  tab.click();
+  await env.flush();
+  const fp = initial.record.fingerprints[0];
+  const c = fp.cues[1];
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  const text = `${c.n}\n${formatSrtTime(c.startMs)} --> ${formatSrtTime(c.endMs)}\nاستكمال\n`;
+  const slow = { name: `${initial.videoId}.en.manual.normal.patch.srt`, size: text.length, arrayBuffer: async () => { await gate; return new TextEncoder().encode(text).buffer; } };
+  const input = env.root.querySelector('section[aria-label="الاستكمال"] input[type="file"]') ?? env.root.querySelector('input[type="file"]');
+  assert.ok(input, 'منتقي ملف التصحيح');
+  input.files = [slow];
+  input.dispatchEvent({ type: 'change' });
+  await settle();
+  await editor.switchSlot(2);
+  assert.equal(editor.state.slot, 2);
+  assert.equal(editor.state.session.version, 0);
+  release();
+  await env.flush(5);
+  assert.equal(env.doc.querySelector('dialog[open]'), null, 'لا معاينة تصحيح على الخانة الأخرى');
+  assert.equal(editor.state.session.dirty, false, 'لم يُطبَّق شيء على الثانية');
+});

@@ -870,8 +870,12 @@ export async function mountEditor(app, {
   /** «استيراد ملف تصحيح…»: قراءة على الترجمة الحالية، ثم معاينة واختيار، ثم خطوة واحدة غير محفوظة. */
   async function importPatch(files) {
     if (completeReason() || readOnly()) return;
-    const before = S.session.version;
-    const read = await readPatch(files, { fingerprint: S.fp, cues: S.session.snapshot() });
+    // الجلسة نفسها بنسختها: تبديل الخانة أثناء قراءة الملف يفتح جلسة جديدة قد تبدأ بالنسخة نفسها (CX-H7).
+    const session = S.session;
+    const fp = S.fp;
+    const before = session.version;
+    const stale = () => S.session !== session || S.fp !== fp || session.version !== before;
+    const read = await readPatch(files, { fingerprint: fp, cues: session.snapshot() });
     if (!read.ok) {
       await openDialog({
         doc, tone: 'danger', title: 'تعذّر قراءة ملف التصحيح',
@@ -880,13 +884,17 @@ export async function mountEditor(app, {
       });
       return;
     }
-    if (S.session.version !== before) {
+    if (stale()) {
       toast(messageFor('IM_PATCH_STALE'), 'danger');
       return;
     }
     const only = await previewPatch({ doc, plan: read.plan });
     if (!only) return;
-    const r = S.session.applyPatchPlan(read.plan, { only });
+    if (stale()) {
+      toast(messageFor('IM_PATCH_STALE'), 'danger');
+      return;
+    }
+    const r = session.applyPatchPlan(read.plan, { only });
     if (!r.ok) {
       toast(messageFor(r.code), 'danger');
       return;
