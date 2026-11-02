@@ -1,50 +1,13 @@
 // بُناة DOM للمكوّنات المشتركة بين صفحات الإضافة. textContent وsetAttribute فقط، ولا HTML نصي أبدًا (فحص ثابت).
 // هنا: الأيقونات، والزر، والحقل، والشارة، والتنبيه، والحالة الفارغة، وحوار التأكيد، والشريط العلوي، ومجموعة الاختيار،
-// ورقائق التصفية، ومحدد الترجمات الموجودة. القائمة المنسدلة في menu.js، والشعار في logo.js.
+// ورقائق التصفية، ومحدد الترجمات الموجودة. الأيقونات في icons.js، والقائمة المنسدلة في menu.js، والشعار في logo.js.
 
+import { ICONS } from './icons.js';
 import { logo } from './logo.js';
 
-const SVG = 'http://www.w3.org/2000/svg';
+export { ICONS };
 
-/** أيقونات بخط 2px على شبكة 24 بنمط Lucide. الاتجاهية منها (external, chevron) تُقلب بالـCSS عند الحاجة لا هنا. */
-export const ICONS = Object.freeze({
-  info: [['circle', { cx: 12, cy: 12, r: 10 }], ['path', { d: 'M12 16v-4' }], ['path', { d: 'M12 8h.01' }]],
-  warning: [['path', { d: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' }], ['path', { d: 'M12 9v4' }], ['path', { d: 'M12 17h.01' }]],
-  success: [['path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }], ['path', { d: 'm9 11 3 3L22 4' }]],
-  danger: [['circle', { cx: 12, cy: 12, r: 10 }], ['path', { d: 'm15 9-6 6' }], ['path', { d: 'm9 9 6 6' }]],
-  editor: [['path', { d: 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z' }], ['path', { d: 'M14 2v4a2 2 0 0 0 2 2h4' }], ['path', { d: 'M16 13H8' }], ['path', { d: 'M16 17H8' }]],
-  library: [['path', { d: 'm16 6 4 14' }], ['path', { d: 'M12 6v14' }], ['path', { d: 'M8 8v12' }], ['path', { d: 'M4 4v16' }]],
-  settings: [['path', { d: 'M20 7h-9' }], ['path', { d: 'M14 17H5' }], ['circle', { cx: 17, cy: 17, r: 3 }], ['circle', { cx: 7, cy: 7, r: 3 }]],
-  screen: [['rect', { x: 3, y: 4, width: 18, height: 13, rx: 2 }], ['path', { d: 'M7 13h10' }], ['path', { d: 'M9 10h6' }], ['path', { d: 'M8 21h8' }]],
-  external: [['path', { d: 'M15 3h6v6' }], ['path', { d: 'M10 14 21 3' }], ['path', { d: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6' }]],
-  edit: [['path', { d: 'M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z' }], ['path', { d: 'm15 5 4 4' }]],
-  replace: [['path', { d: 'M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' }], ['path', { d: 'M21 3v5h-5' }], ['path', { d: 'M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' }], ['path', { d: 'M8 16H3v5' }]],
-  download: [['path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }], ['path', { d: 'm7 10 5 5 5-5' }], ['path', { d: 'M12 15V3' }]],
-  upload: [['path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }], ['path', { d: 'm17 8-5-5-5 5' }], ['path', { d: 'M12 3v12' }]],
-  chevron: [['path', { d: 'm6 9 6 6 6-6' }]],
-  copy: [['rect', { x: 8, y: 8, width: 14, height: 14, rx: 2 }], ['path', { d: 'M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2' }]],
-  check: [['path', { d: 'M20 6 9 17l-5-5' }]],
-  more: [['circle', { cx: 12, cy: 12, r: 1 }], ['circle', { cx: 19, cy: 12, r: 1 }], ['circle', { cx: 5, cy: 12, r: 1 }]],
-  trash: [['path', { d: 'M3 6h18' }], ['path', { d: 'M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6' }], ['path', { d: 'M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2' }], ['path', { d: 'M10 11v6' }], ['path', { d: 'M14 11v6' }]],
-  search: [['circle', { cx: 11, cy: 11, r: 8 }], ['path', { d: 'm21 21-4.3-4.3' }]],
-  restore: [['path', { d: 'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8' }], ['path', { d: 'M3 3v5h5' }]],
-  clipboard: [['rect', { x: 8, y: 2, width: 8, height: 4, rx: 1 }], ['path', { d: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' }]],
-  alert: [['circle', { cx: 12, cy: 12, r: 10 }], ['path', { d: 'M12 8v4' }], ['path', { d: 'M12 16h.01' }]],
-  x: [['path', { d: 'M18 6 6 18' }], ['path', { d: 'm6 6 12 12' }]],
-  play: [['path', { d: 'm6 3 14 9-14 9V3z' }]],
-  video: [['path', { d: 'm22 8-6 4 6 4V8Z' }], ['rect', { x: 2, y: 6, width: 14, height: 12, rx: 2 }]],
-  folder: [['path', { d: 'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z' }]],
-  clock: [['circle', { cx: 12, cy: 12, r: 10 }], ['path', { d: 'M12 6v6l4 2' }]],
-  type: [['path', { d: 'M4 7V4h16v3' }], ['path', { d: 'M9 20h6' }], ['path', { d: 'M12 4v16' }]],
-  shield: [['path', { d: 'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z' }]],
-  sliders: [['path', { d: 'M4 21v-7' }], ['path', { d: 'M4 10V3' }], ['path', { d: 'M12 21v-9' }], ['path', { d: 'M12 8V3' }], ['path', { d: 'M20 21v-5' }], ['path', { d: 'M20 12V3' }], ['path', { d: 'M1 14h6' }], ['path', { d: 'M9 8h6' }], ['path', { d: 'M17 16h6' }]],
-  captions: [['rect', { x: 2, y: 5, width: 20, height: 14, rx: 2 }], ['path', { d: 'M7 13h4' }], ['path', { d: 'M15 13h2' }], ['path', { d: 'M7 17h2' }], ['path', { d: 'M13 17h4' }]],
-  'hard-drive': [['path', { d: 'M22 12H2' }], ['path', { d: 'M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z' }], ['path', { d: 'M6 16h.01' }], ['path', { d: 'M10 16h.01' }]],
-  activity: [['path', { d: 'M22 12h-4l-3 9L9 3l-3 9H2' }]],
-  list: [['path', { d: 'M8 6h13' }], ['path', { d: 'M8 12h13' }], ['path', { d: 'M8 18h13' }], ['path', { d: 'M3 6h.01' }], ['path', { d: 'M3 12h.01' }], ['path', { d: 'M3 18h.01' }]],
-  layers: [['path', { d: 'm12 2 9 4.5-9 4.5-9-4.5L12 2Z' }], ['path', { d: 'm3 11.5 9 4.5 9-4.5' }], ['path', { d: 'm3 16.5 9 4.5 9-4.5' }]],
-  plus: [['path', { d: 'M5 12h14' }], ['path', { d: 'M12 5v14' }]],
-});
+const SVG = 'http://www.w3.org/2000/svg';
 
 export const ICON_NAMES = Object.freeze(Object.keys(ICONS));
 
@@ -197,7 +160,7 @@ export function emptyState({ title, text, steps, action, icon: iconName = 'capti
  */
 export function statusPill({ tone = 'neutral', text, plain = false, title, doc = document }) {
   // الشارة بنقطة مؤشرها الوحيد: علامة «✓» في آخر النص تكرر النقطة («• محفوظ ✓»)، فتُسقط هنا ويبقى النص كما هو في مصدره.
-  const shown = plain ? text : String(text).replace(/\s*✓$/, '');
+  const shown = plain || typeof text !== 'string' ? text : text.replace(/\s*✓$/, '');
   const p = el('span', { className: `tj-pill${tone === 'neutral' ? '' : ` tj-pill--${tone}`}${plain ? ' tj-pill--plain' : ''}`, text: shown, doc });
   if (title) p.title = title;
   return p;
@@ -404,7 +367,7 @@ export function slotPicker({ slots, size = 'sm', ariaLabel = 'الترجمة ا�
       }
     }
     const focusN = (shown.find((s) => s.active) ?? shown[0])?.n ?? null;
-    for (const s of shown) {
+    shown.forEach((s, i) => {
       let b = byN.get(s.n);
       if (!b) {
         b = make(s.n);
@@ -414,8 +377,9 @@ export function slotPicker({ slots, size = 'sm', ariaLabel = 'الترجمة ا�
       b.setAttribute('aria-label', slotLabel(s));
       b.title = s.name ? `${slotLabel(s)} — ${s.name}` : slotLabel(s);
       b.tabIndex = s.n === focusN ? 0 : -1;
-      root.append(b);
-    }
+      // لا يُنقل زر في مكانه: نقل العقدة المركّزة يُسقط التركيز إلى body (لوحة المفاتيح بعد اختيار خانة).
+      if (root.children[i] !== b) root.insertBefore(b, root.children[i] ?? null);
+    });
     root.hidden = shown.length < 2;
   }
   update(slots);

@@ -21,8 +21,9 @@
 
 /* القسم. */
 .st-content { display: flex; flex-direction: column; gap: var(--tj-space-5); min-width: 0; }
-/* حاويتا التذكير والتنبيه فارغتين لا تأخذان فجوة فتزيحان القسم عن محاذاة التنقّل. */
-.st-content > div:empty { display: none; }
+/* حاويتا التذكير والتنبيه فارغتين لا تأخذان فجوة فتزيحان القسم عن محاذاة التنقّل؛ وتبقيان في الشجرة (منطقة التنبيه حية
+   role=status فيعلن قارئ الشاشة ما يُكتب فيها). */
+.st-content > div:empty { position: absolute; }
 .st-section { background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); padding: var(--tj-space-5) var(--tj-space-6); display: flex; flex-direction: column; }
 .st-section__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--tj-space-4); padding-bottom: var(--tj-space-4); }
 .st-section__titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }

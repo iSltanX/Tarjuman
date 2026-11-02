@@ -1,7 +1,7 @@
 // رموز الحالة الصغيرة في قوائم المشغّل ورسائله (جولة الصقل): SVG من مجموعة أيقونات الواجهة نفسها بدل محارف ⓘ ⚠ ✕ ✓ التي
 // كان المتصفح يرسمها بخطوط النظام المتفرقة (Hiragino وPingFang). اللون currentColor من نغمة السطر، ولا معنى باللون وحده:
 // كل رمز بجانب نص يقول المعنى. تُبنى بـcreateElementNS وsetAttribute وحدهما.
-import { ICONS } from '../../ui/components.js';
+import { ICONS } from '../../ui/icons.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const NAME = Object.freeze({ info: 'info', warn: 'warning', warning: 'warning', error: 'danger', danger: 'danger', ok: 'check', success: 'check', x: 'x', copy: 'copy', download: 'download' });

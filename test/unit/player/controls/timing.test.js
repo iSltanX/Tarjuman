@@ -128,7 +128,8 @@ test('إعادة الضبط إلى 0 تعيد الشارة الباهتة', () =
   openTiming(page);
   const reset = page.ui.field('reset');
   assert.equal(reset.textContent, 'تصفير');
-  assert.equal(reset.getAttribute('aria-label'), 'إعادة الإزاحة إلى 0', 'اسم الوصول كامل');
+  assert.equal(reset.getAttribute('aria-label'), null, 'اسم الوصول هو النص الظاهر');
+  assert.equal(reset.getAttribute('aria-description'), 'إعادة الإزاحة إلى 0', 'والتفصيل وصف إضافي');
   assert.equal(reset.parentNode, page.ui.field('sync').parentNode, 'المزامنة والتصفير في صف واحد');
   click(reset);
   assert.deepEqual(page.controller.calls.at(-1), ['resetOffset']);

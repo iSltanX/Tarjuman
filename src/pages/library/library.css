@@ -10,18 +10,19 @@
 /* مقياس السعة في نهاية الرأس: نص وشريط رفيع، يصير تحذيرًا عند 80% وامتلاءً عند 98%. */
 .lib-quota { display: flex; flex-direction: column; gap: 5px; width: 220px; max-width: 100%; }
 
-/* شريط الأدوات في صفين متوازنين: البحث في البداية والترتيب في النهاية، ثم الرقائق بعرض الصفحة تحتهما. */
+/* شريط الأدوات في صفين متوازنين: البحث في البداية والترتيب في النهاية، ثم الرقائق بعرض الصفحة تحتهما. ترتيب DOM هو
+   الترتيب البصري نفسه، فيتبعه التنقّل بـTab. */
 .lib-toolbar { display: flex; align-items: center; gap: var(--tj-space-3) var(--tj-space-4); flex-wrap: wrap; }
-.lib-toolbar > .tj-chips { order: 3; flex-basis: 100%; }
+.lib-toolbar > .tj-chips { flex-basis: 100%; }
 .lib-toolbar[hidden] { display: none; }
-.lib-search { order: 1; position: relative; flex: 1 1 260px; min-width: 220px; max-width: 420px; display: flex; align-items: center; }
+.lib-search { position: relative; flex: 1 1 260px; min-width: 220px; max-width: 420px; display: flex; align-items: center; }
 .lib-search__input { padding-inline-start: 38px; padding-inline-end: 36px; }
 .lib-search__input::-webkit-search-cancel-button { display: none; }
 .lib-search__icon { position: absolute; inset-inline-start: 12px; color: var(--tj-muted); pointer-events: none; width: 18px; height: 18px; }
 .lib-search__clear { position: absolute; inset-inline-end: 4px; }
 .lib-search:not(:focus-within) .lib-search__clear:not(:focus-visible) { opacity: 0; pointer-events: none; }
 .lib-search:has(.lib-search__input:placeholder-shown) .lib-search__clear { opacity: 0; pointer-events: none; }
-.lib-sort { order: 2; display: flex; align-items: center; gap: var(--tj-space-2); margin-inline-start: auto; }
+.lib-sort { display: flex; align-items: center; gap: var(--tj-space-2); margin-inline-start: auto; }
 .lib-sort__select { width: 150px; min-height: var(--tj-control-sm); font-size: 14px; }
 
 /* القائمة. */

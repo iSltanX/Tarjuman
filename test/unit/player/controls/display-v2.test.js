@@ -179,11 +179,27 @@ test('قائمة العرض مضغوطة بترتيب §١٩.٣: الرأس با
   const menu = page.ui.menu();
   const rows = menu.children.filter((c) => !c.classList.contains('sep'));
   assert.deepEqual(rows.map((r) => r.className || r.tagName), ['head', 'row file', 'row summary', 'seg', 'actions inline']);
-  assert.deepEqual(rows[3].children.map((b) => [b.textContent, b.getAttribute('aria-label')]), [['العربية', 'العربية وحدها'], ['مع الإنجليزية', 'العربية فوق الإنجليزية'], ['إخفاء', 'إخفاء الترجمة']], 'الأوضاع الثلاثة بتسمية قصيرة واسم وصول كامل');
+  const modes = rows[3].children.map((b) => [b.textContent, b.getAttribute('aria-label')]);
+  assert.deepEqual(modes, [['العربية', 'العربية وحدها'], ['فوق الإنجليزية', 'العربية فوق الإنجليزية'], ['إخفاء', 'إخفاء الترجمة']], 'الأوضاع الثلاثة بتسمية قصيرة واسم وصول كامل');
+  for (const [shown, name] of modes) assert.ok(name.includes(shown), `اسم الوصول يحوي النص الظاهر: ${shown}`);
   assert.equal(rows[3].getAttribute('role'), 'radiogroup');
+  assert.deepEqual(rows[3].children.map((b) => b.getAttribute('tabindex')), ['0', '-1', '-1'], 'نقطة Tab واحدة للمجموعة (المختار)');
   assert.deepEqual(rows[4].children.map((b) => b.textContent), ['علّم للمراجعة', 'رفع ترجمة…']);
   assert.equal(menu.querySelectorAll('.sep').length, 0, 'بلا فواصل زائدة');
   const full = mountPage({ state: makeState(withSlots([slotTrack(), slotTrack(), slotTrack()])) });
   openDisplay(full);
   assert.ok(full.ui.item('استبدال…'), 'لا خانة فارغة: «استبدال…»');
+});
+
+test('الأوضاع الثلاثة: الأسهم تنقل التركيز بين خياراتها داخل الجذر (الأيسر إلى التالي في RTL) دون تطبيق، وEnter يطبّق', () => {
+  const page = mountPage({ state: makeState(three()) });
+  openDisplay(page);
+  const root = page.ui.layerHost().shadowRoot;
+  const [ar, dual] = page.ui.menu().querySelector('.seg').children;
+  ar.focus();
+  key(ar, 'ArrowLeft');
+  assert.equal(root.activeElement, dual, 'انتقل التركيز إلى الخيار التالي');
+  assert.equal(page.controller.calls.some((c) => c[0] === 'setDisplayMode'), false, 'الأسهم لا تطبّق');
+  key(dual, 'ArrowRight');
+  assert.equal(root.activeElement, ar);
 });

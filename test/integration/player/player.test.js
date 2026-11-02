@@ -77,7 +77,7 @@ test('الدورة كاملة: تحميل بالبصمة ثم رفع الترج�
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('تنزيل ونسخ التعليمات'));
+  click(page.ui.item('تنزيل الملف'));
   await settle(area);
   assert.equal(page.files.length, 1);
   assert.equal(page.files[0].name, `${A}.en.manual.normal.srt`);
@@ -96,7 +96,7 @@ test('الدورة كاملة: تحميل بالبصمة ثم رفع الترج�
   assert.equal(s.arabic.comparison.matched, true);
   assert.equal(record(area).arabic.fileName, 'talk.ar.srt');
   assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
-  assert.match(page.ui.menuText(), /مطابق للأصل ✓/);
+  assert.match(page.ui.menuText(), /مطابق للأصل/);
   assert.equal(page.ui.btn('upload').querySelector('.dot').getAttribute('data-tone'), 'loaded');
 
   page.video.seekTo(1.5);
@@ -107,7 +107,7 @@ test('± ووضع العرض يُحفظان لكل فيديو ويُستعادا
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('تنزيل ونسخ التعليمات'));
+  click(page.ui.item('تنزيل الملف'));
   await settle(area);
   click(page.ui.btn('upload'));
   chooseFiles(page.ui, [new File([translate(page.files[0].text)], 'talk.ar.srt')]);
@@ -154,7 +154,7 @@ test('الاستبدال بتأكيد: الملخص الجديد وتنبيه ا
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('تنزيل ونسخ التعليمات'));
+  click(page.ui.item('تنزيل الملف'));
   await settle(area);
   const ar = translate(page.files[0].text);
   click(page.ui.btn('upload'));
@@ -190,7 +190,7 @@ test('الخطوة من قائمة الشارة تُحفظ في الإعدادا
   const page = await openPage(area);
   const other = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('تنزيل ونسخ التعليمات'));
+  click(page.ui.item('تنزيل الملف'));
   await settle(area);
   click(page.ui.btn('upload'));
   chooseFiles(page.ui, [new File([translate(page.files[0].text)], 'a.srt')]);

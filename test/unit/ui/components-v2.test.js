@@ -136,3 +136,20 @@ test('أصناف المكوّنات المرفوعة معرّفة في component
   const added = css.slice(css.indexOf('.tj-toast--action'), css.indexOf('/* ---- مقياس السعة'));
   assert.doesNotMatch(added, /#[0-9a-f]{3,8}\b|rgb\(/i, 'الألوان من الرموز وحدها');
 });
+
+test('محدد الترجمات: التحديث بالقائمة نفسها لا ينقل الأزرار (نقل الزر المركّز يُسقط التركيز)، وينقل ما تغيّر موضعه وحده', () => {
+  const doc = newDocument();
+  const s = (filled, active) => [1, 2, 3].map((n) => ({ n, filled: filled.includes(n), active: n === active, name: null }));
+  const p = slotPicker({ slots: s([1, 2, 3], 1), doc });
+  const before = [...p.buttons];
+  let moves = 0;
+  const ins = p.root.insertBefore.bind(p.root);
+  p.root.insertBefore = (n, r) => { moves++; return ins(n, r); };
+  p.update(s([1, 2, 3], 2));
+  assert.equal(moves, 0, 'لا نقل بلا تغيير موضع');
+  assert.deepEqual(p.buttons, before, 'الأزرار نفسها بترتيبها');
+  assert.equal(p.button(2).getAttribute('aria-checked'), 'true');
+  p.update(s([1, 3], 3));
+  assert.deepEqual(p.buttons.map((b) => b.textContent), ['1', '3']);
+  assert.strictEqual(p.button(3), before[2], 'زر الخانة 3 هو نفسه بعد حذف الثانية');
+});

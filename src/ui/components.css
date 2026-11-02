@@ -192,23 +192,10 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-menu__label { font: 400 14px/20px var(--tj-font-body); }
 .tj-menu__hint { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 
-/* ---- بنود القوائم في نافذة الأيقونة والصفحات ---- */
 /* ---- الشعار المعتمد (logo.js): لونا الشعار من رموزه لا من لون الإبراز ---- */
 .tj-logo { display: block; flex: none; }
 .tj-logo__glyph { fill: var(--tj-logo-glyph); }
 .tj-logo__word { fill: var(--tj-logo-word); }
-.tj-menuitem {
-  display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; width: 100%;
-  border: 0; border-radius: var(--tj-radius-md); background: transparent; text-align: start; cursor: pointer; color: var(--tj-text);
-}
-.tj-menuitem .tj-icon { color: var(--tj-muted); width: 18px; height: 18px; }
-.tj-menuitem:hover:not([aria-disabled="true"]) { background: var(--tj-hover); }
-.tj-menuitem[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
-.tj-menuitem__text { display: flex; flex-direction: column; min-width: 0; }
-.tj-menuitem__name { font: 700 14px/20px var(--tj-font-body); }
-.tj-menuitem__desc { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
-.tj-menuitem__end { margin-inline-start: auto; color: var(--tj-muted); display: inline-flex; }
-
 /* ---- التلميح (فوق زر، معكوس الألوان) ---- */
 .tj-tipwrap { position: relative; display: inline-flex; }
 .tj-tip {

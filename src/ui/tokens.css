@@ -1,7 +1,7 @@
 /* رموز تصميم صفحات ترجمان (جولة الصقل، 2026-11-02): «حبر وورق». أسطح رمادية محايدة بلا صبغة، ونص بحبر داكن، ولون إبراز
    واحد نيلي للإجراء الرئيسي والتحديد والروابط والتركيز وحدها؛ والنجاح والتحذير والخطأ والمعلومة والمعدّل ألوان دلالية
-   مستقلة لا تُستعمل للزينة. الشعار يبقى بلونه المعتمد (--tj-logo-*) ولا يتبع لون الإبراز. الوضع يتبع النظام، وdata-theme
-   يفرضه. النسب محسوبة: النص الثانوي ≥ 4.5:1 على كل سطح، وحد الحقل ≥ 3:1. الخطوط مضمّنة (ui/fonts.css). */
+   مستقلة لا تُستعمل للزينة. الشعار بشكله المعتمد ولون الهوية نفسه: الرمز بالإبراز والاسم بالحبر (--tj-logo-*). الوضع يتبع النظام، وdata-theme
+   يفرضه. النسب محسوبة: النص الثانوي ≥ 4.5:1 على كل سطح، وحد الحقل ≥ 3:1 على الصفحة والسطح. الخطوط مضمّنة (ui/fonts.css). */
 
 :root {
   color-scheme: light dark;
@@ -23,7 +23,7 @@
   /* الحدود: الفاصل، والحد البارز، وحد الحقل الذي يعرّف العنصر وحده (3:1) */
   --tj-border: #E3E3E8;
   --tj-border-strong: #C4C4CD;
-  --tj-border-input: #8E8E99;
+  --tj-border-input: #85858F;
 
   /* الإبراز */
   --tj-brand: #4338CA;
@@ -33,9 +33,9 @@
   --tj-brand-text: #3B32B8;
   --tj-focus: #4F46E5;
 
-  /* الشعار المعتمد (Figma: tarjuman-lockup-horizontal-light) */
-  --tj-logo-glyph: #0C6A6F;
-  --tj-logo-word: #0B2A2C;
+  /* الشعار: شكله المعتمد من Figma بلون الهوية (الرمز بالإبراز، والاسم بالحبر) */
+  --tj-logo-glyph: var(--tj-brand);
+  --tj-logo-word: var(--tj-text);
 
   /* الدلالات */
   --tj-success: #11703A;
@@ -110,8 +110,6 @@
     --tj-brand-soft: #262650;
     --tj-brand-text: #ABB1FF;
     --tj-focus: #ABB1FF;
-    --tj-logo-glyph: #4EC9C4;
-    --tj-logo-word: #F5F1E8;
     --tj-success: #70D191;
     --tj-success-bg: #15291D;
     --tj-warning: #EBC06A;
@@ -149,8 +147,6 @@
   --tj-brand-soft: #262650;
   --tj-brand-text: #ABB1FF;
   --tj-focus: #ABB1FF;
-  --tj-logo-glyph: #4EC9C4;
-  --tj-logo-word: #F5F1E8;
   --tj-success: #70D191;
   --tj-success-bg: #15291D;
   --tj-warning: #EBC06A;

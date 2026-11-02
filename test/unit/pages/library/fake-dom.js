@@ -112,6 +112,17 @@ export class FakeElement {
     return n;
   }
 
+  /** كما في DOM: ينقل العقدة قبل المرجع (أو إلى الآخر بلا مرجع)، ولا يفعل شيئًا إن كانت هي المرجع. */
+  insertBefore(node, ref) {
+    if (!ref) return this.appendChild(node);
+    if (node === ref) return node;
+    const n = this._adopt(node);
+    const i = this.childNodes.indexOf(ref);
+    if (i < 0) throw new Error('المرجع ليس ابنًا');
+    this.childNodes.splice(i, 0, n);
+    return n;
+  }
+
   removeChild(n) {
     const i = this.childNodes.indexOf(n);
     if (i > -1) {

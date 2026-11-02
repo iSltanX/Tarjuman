@@ -39,7 +39,8 @@
 .tj-popup__hint { flex-basis: 100%; }
 .tj-popup__copy--success { background: var(--tj-success-bg) !important; color: var(--tj-success) !important; border-color: color-mix(in srgb, var(--tj-success) 40%, transparent) !important; }
 .tj-popup__copy--error { background: var(--tj-danger-bg) !important; color: var(--tj-danger) !important; border-color: color-mix(in srgb, var(--tj-danger) 40%, transparent) !important; }
-.tj-popup__notice:empty { display: none; }
+/* منطقة حية (role=status): تبقى في الشجرة فارغةً ليعلن قارئ الشاشة ما يُكتب فيها، وتخرج من التدفق فلا تأخذ فجوة. */
+.tj-popup__notice:empty { position: absolute; }
 
 /* آخر الترجمات على غير صفحة فيديو. */
 .tj-popup__recent:empty { display: none; }

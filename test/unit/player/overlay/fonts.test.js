@@ -213,3 +213,16 @@ test('خطوط الواجهة: تعذّر أحدهما لا يمنع الآخر 
   none.doc.fonts = g.env.doc.fonts;
   assert.deepEqual(await loadUiFonts({ doc: none.doc, win: none.win, read: g.read }), { loaded: ['cairo', 'almarai'], failed: [] }, 'إخفاق كامل عابر لا يُحفظ');
 });
+
+test('خطوط الواجهة: تعذّر بعضها يُعاد وحده في الطلب التالي، وما حُمّل لا يُقرأ ولا يُضاف ثانية', async () => {
+  const f = fontEnv({ failFamilies: ['Tarjuman UI Almarai'] });
+  assert.deepEqual(await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read }), { loaded: ['cairo'], failed: ['almarai'] });
+  const cairoReads = f.reads.filter((x) => x.includes('cairo')).length;
+  f.env.win.FontFace = fontEnv().env.win.FontFace;
+  const second = await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read });
+  assert.deepEqual(second, { loaded: ['cairo', 'almarai'], failed: [] });
+  assert.equal(f.reads.filter((x) => x.includes('cairo')).length, cairoReads, 'Cairo لا يُعاد');
+  assert.equal(f.added.filter((x) => x.family === 'Tarjuman UI Cairo').length, 2, 'وجها Cairo مرة واحدة');
+  const third = await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read });
+  assert.deepEqual(third, second, 'بعد النجاح كله: النتيجة المحفوظة');
+});

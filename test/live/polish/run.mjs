@@ -14,7 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BROWSERS, PROFILE_ROOT, launch, loadExtension, human, sleep } from '../harness/browser.mjs';
-import { collectErrors, emulateScheme, fullScreenshot, openTab, waitForTarget } from '../harness/extension.mjs';
+import { attach, collectErrors, emulateScheme, fullScreenshot, openTab, waitForTarget } from '../harness/extension.mjs';
 import { dismissConsent, revealControls, waitForPlayer } from '../harness/youtube.mjs';
 import { createExtractor } from '../../../src/extract/index.js';
 import { buildExport } from '../../../src/core/export/index.js';
@@ -310,7 +310,14 @@ try {
     await lib.waitFor(() => document.querySelectorAll('li.lib-row').length > 3, { timeoutMs: 10000 });
     const logoOf = () => lib.eval(() => {
       const svg = document.querySelector('.tj-topbar__brand svg.tj-logo');
-      return svg ? { paths: svg.querySelectorAll('path').length, w: Math.round(svg.getBoundingClientRect().width), h: Math.round(svg.getBoundingClientRect().height), glyph: getComputedStyle(svg.querySelector('.tj-logo__glyph path')).fill, word: getComputedStyle(svg.querySelector('.tj-logo__word path')).fill, mark: !!document.querySelector('.tj-mark'), textT: [...document.querySelectorAll('.tj-topbar__brand *')].some((e) => e.childNodes.length === 1 && e.textContent === 'ت') } : null;
+      // لون الهوية كما يحسبه المتصفح: لون زر رئيسي ولون النص، يُقارن بهما لونا الرمز والاسم.
+      const probe = document.createElement('span');
+      probe.style.color = 'var(--tj-brand)';
+      document.body.append(probe);
+      const brand = getComputedStyle(probe).color;
+      probe.remove();
+      const ink = getComputedStyle(document.body).color;
+      return svg ? { paths: svg.querySelectorAll('path').length, w: Math.round(svg.getBoundingClientRect().width), h: Math.round(svg.getBoundingClientRect().height), glyph: getComputedStyle(svg.querySelector('.tj-logo__glyph path')).fill, word: getComputedStyle(svg.querySelector('.tj-logo__word path')).fill, brand, ink, mark: !!document.querySelector('.tj-mark'), textT: [...document.querySelectorAll('.tj-topbar__brand *')].some((e) => e.childNodes.length === 1 && e.textContent === 'ت') } : null;
     });
     const paletteOf = () => lib.eval(() => {
       const cs = getComputedStyle(document.documentElement);
@@ -325,7 +332,9 @@ try {
     const logoDark = await logoOf();
     const palDark = await paletteOf();
     await emulateScheme(lib, 'light');
-    check('logo-topbar-approved-svg-both-schemes', logoLight && logoLight.paths === 9 && !logoLight.mark && !logoLight.textT && logoLight.h === 24 && logoLight.glyph === 'rgb(12, 106, 111)' && logoLight.word === 'rgb(11, 42, 44)' && logoDark.glyph === 'rgb(78, 201, 196)' && logoDark.word === 'rgb(245, 241, 232)', { logoLight, logoDark });
+    check('logo-topbar-approved-shape-identity-color-both-schemes', logoLight && logoLight.paths === 9 && !logoLight.mark && !logoLight.textT && logoLight.h === 24
+      && logoLight.glyph === logoLight.brand && logoLight.word === logoLight.ink && logoLight.glyph === 'rgb(67, 56, 202)'
+      && logoDark.glyph === logoDark.brand && logoDark.word === logoDark.ink && logoDark.glyph === 'rgb(143, 150, 255)', { logoLight, logoDark });
     const libFonts = await renderedFonts(lib, { limit: 14 });
     result.fonts.library = brief(libFonts);
     check('pages-fonts-bundled-rendered', allBundled(libFonts), brief(libFonts));
@@ -351,9 +360,10 @@ try {
       const sec = [...document.querySelectorAll('.st-section')].find((s) => !s.hidden && s.offsetParent);
       const t = sec?.textContent ?? '';
       const repo = [...(sec?.querySelectorAll('a') ?? [])].find((a) => a.textContent.includes('المستودع'));
-      return { privateText: t.includes('خاص حاليًا'), repo: repo?.getAttribute('href') ?? null, target: repo?.getAttribute('target') ?? null };
+      // الرابط يُقارن داخل الصفحة ولا يُكتب في الأدلة (لا روابط فيها).
+      return { privateText: t.includes('خاص حاليًا'), repoLink: repo?.getAttribute('href') === 'https://github.com/iSltanX/Tarjuman', target: repo?.getAttribute('target') ?? null };
     });
-    check('about-no-private-label-link-kept', !about.privateText && about.repo === 'https://github.com/iSltanX/Tarjuman' && about.target === '_blank', about);
+    check('about-no-private-label-link-kept', !about.privateText && about.repoLink && about.target === '_blank', about);
     await shoot(st, 'settings-about', { width: 1280 });
     await st.eval(() => { location.hash = 'display'; });
     await sleep(500);
@@ -382,6 +392,18 @@ try {
       h: document.documentElement.scrollHeight, w: document.documentElement.clientWidth, scroll: document.documentElement.scrollHeight > window.innerHeight,
     }));
     check('popup-not-video-one-entry-each', nv.nav.join() === 'library,settings' && nv.all.join() === 'library,settings' && !nv.gear && nv.logo === 9, nv);
+    const icon = await pop.eval(async () => {
+      const im = new Image();
+      im.src = chrome.runtime.getURL('icons/tarjuman-icon-128.png');
+      await im.decode();
+      const c = document.createElement('canvas');
+      c.width = 128; c.height = 128;
+      const x = c.getContext('2d');
+      x.drawImage(im, 0, 0);
+      const px = (a, b) => [...x.getImageData(a, b, 1, 1).data];
+      return { corner: px(2, 2), tile: px(64, 24), size: [im.naturalWidth, im.naturalHeight] };
+    });
+    check('extension-icon-identity-color-transparent', icon.corner[3] === 0 && icon.tile.slice(0, 3).join() === '67,56,202' && icon.size.join() === '128,128', icon);
     await shoot(pop, 'popup-not-video', { width: 340 });
     await pop.close();
   });
@@ -570,8 +592,16 @@ try {
       await front(p);
       await clickSel(p, '.tj-popup__nav [data-action="library"]');
       const opened = await waitForTarget(b.conn, (u) => u.includes('/pages/library/index.html'), { timeoutMs: 6000, exclude: seen }).catch(() => null);
-      const extPages = (await b.conn.send('Target.getTargets')).targetInfos.filter((t) => t.url.startsWith('chrome-extension://')).map((t) => `${t.type}:${t.url.split('/').slice(3).join('/')}`);
-      check('popup-library-entry-opens-row', !!opened && opened.url.endsWith(`#v=${VIDEO}`), { hash: opened?.url.split('#')[1] ?? null, extPages });
+      // المحفوظات تُبرز الصف المقصود مرة ثم تمسح #v= من العنوان، فالدليل الصف المُبرَز في التبويب الجديد لا العنوان.
+      let target = null;
+      if (opened) {
+        const nl = await attach(b.conn, opened.targetId);
+        target = await nl.waitFor(() => document.querySelector('li.lib-row--target')?.getAttribute('data-video') ?? null, { timeoutMs: 6000 }).catch(() => null);
+        const filtered = await nl.eval(() => document.querySelectorAll('li.lib-row').length);
+        target = { row: target, rows: filtered };
+        await nl.close();
+      }
+      check('popup-library-entry-opens-row', !!opened && target?.row === VIDEO && target.rows > 1, { opened: !!opened, target });
       await p.close().catch(() => {});
     });
 
@@ -588,21 +618,30 @@ try {
       await ed.close();
     });
 
-    await step('player-narrow-and-fullscreen-sizes', async () => {
-      await yt.send('Emulation.setDeviceMetricsOverride', { width: 760, height: 700, deviceScaleFactor: 1, mobile: false });
-      await sleep(1500);
-      await openMenu('download', 'تحميل الترجمة');
-      if (!(await menu())) {
-        await sleep(800);
-        await clickBar('download');
-      }
+    await step('player-narrow', async () => {
+      // تبويب جديد بعرض 480 من البداية (المشغّل المضغوط)، فلا يعتمد على إعادة تخطيط يوتيوب بعد تغيير الحجم.
+      await closeMenus();
+      const wide = yt;
+      yt = await openTab(b.conn, 'about:blank');
+      await yt.send('Emulation.setDeviceMetricsOverride', { width: 480, height: 760, deviceScaleFactor: 1, mobile: false });
+      await yt.goto(`https://www.youtube.com/watch?v=${VIDEO}`);
+      await waitForPlayer(yt, VIDEO, 30000);
+      await yt.waitFor(() => !!document.querySelector('#tarjuman-controls'), { timeoutMs: 15000 });
+      await sleep(2000);
+      await main(() => { const v = document.querySelector('#movie_player video'); v.muted = true; v.pause(); return true; });
+      isoId = yt.isolatedContextId(extId);
+      await iso(I.inject, capture);
+      await sleep(600);
+      await clickBar('download');
       const mm = await measureMenu('download-narrow');
       const pr = await main(() => { const r = document.querySelector('#movie_player').getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; });
-      check('player-menu-fits-narrow-player', mm && mm.width <= pr.w - 16 && mm.height <= pr.h, { menu: mm, player: pr });
+      const size = (await iso(I.peek)).size ?? null;
+      check('player-menu-fits-narrow-player', mm && mm.width <= pr.w - 16 && mm.height <= pr.h, { menu: mm, player: pr, size });
       await snapPlayer('player-download-narrow');
       await closeMenus();
-      await yt.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 950, deviceScaleFactor: 1, mobile: false });
-      await sleep(800);
+      await yt.close();
+      yt = wide;
+      isoId = yt.isolatedContextId(extId);
     });
   }
 

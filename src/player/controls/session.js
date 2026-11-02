@@ -243,7 +243,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (!kind || !s.videoId) return null;
     if (kind === 'download') {
       const m = downloadModel(s);
-      return { kind, key: JSON.stringify({ ...m, splitSize: null }), build: () => downloadMenu(h, act, m) };
+      return { kind, key: JSON.stringify({ ...m, splitSize: null }), build: () => downloadMenu(h, act, m, layer.root) };
     }
     if (kind === 'display') {
       if (!s.arabic) return null;
@@ -261,7 +261,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (kind === 'timing') {
       if (!s.arabic || s.loading) return null;
       const m = timingModel(s);
-      return { kind, key: JSON.stringify({ ...m, offsetText: null, stepText: null }), build: () => timingMenu(h, act, m) };
+      return { kind, key: JSON.stringify({ ...m, offsetText: null, stepText: null }), build: () => timingMenu(h, act, m, layer.root) };
     }
     return null;
   }
@@ -850,7 +850,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const prep = prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
     if (!prep.ok) {
       counts.flowFailures++;
-      d.result = [{ tone: 'error', text: prep.error.message }];
+      // في سطر النسخ وحده (يعيد المحاولة)، فلا يمحو تحذيرات التنزيل في d.result.
+      d.copyLine = { tone: 'error', text: prep.error.message };
       render();
       return;
     }

@@ -67,7 +67,9 @@ test('مسار واحد: سطر الحالة بوصفه، ووضع التصدي�
   assert.match(text, /آخر ترجمة عند 12:40 والفيديو 18:05؛ قد يكون النص ناقصًا\./);
   const dl = page.ui.item(DL);
   assert.equal(dl.className, 'primary');
-  assert.equal(dl.getAttribute('aria-label'), 'تنزيل ملف الترجمة الإنجليزية (SRT)');
+  assert.equal(dl.getAttribute('aria-label'), null, 'اسم الوصول هو النص الظاهر (ومنه «جارٍ التنزيل…»)');
+  assert.equal(dl.getAttribute('aria-description'), 'ملف الترجمة الإنجليزية (SRT) وحده');
+  assert.equal(page.ui.field('copy').getAttribute('aria-description'), 'تعليمات الترجمة وحدها، لترفقها مع الملف');
   assert.equal(page.ui.field('copy').className, 'secondary');
   assert.equal(page.ui.field('copy').textContent, 'نسخ التعليمات');
   assert.equal(dl.parentNode, page.ui.field('copy').parentNode, 'الزران في صف واحد');

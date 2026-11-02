@@ -73,15 +73,27 @@ function button(h, cls, text, { act, name, value, disabled = false, reason = nul
  * التلميح واسم الوصول؛ والشرح الطويل في التلميح لا في سطر تحت المجموعة.
  * @param {{ value: string, label: string, title?: string, aria?: string, disabled?: boolean, reason?: string | null }[]} options
  */
-function segmented(h, label, options, current, act, name, fid, { first = false } = {}) {
+function segmented(h, label, options, current, act, name, fid, { first = false, root = null } = {}) {
+  const focusV = (options.find((o) => o.value === current) ?? options[0])?.value;
   return h('div', {
     className: 'seg',
     attrs: { role: 'radiogroup', 'aria-label': label },
+    // نقطة Tab واحدة للمجموعة، والأسهم تنقل التركيز بين خياراتها (تُقرأ بترتيب الصفحة RTL: الأيسر إلى التالي).
+    on: {
+      keydown: (ev) => {
+        if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+        const list = [...ev.currentTarget.children];
+        const at = list.indexOf(root?.activeElement ?? null);
+        if (at === -1 || list.length < 2) return;
+        ev.preventDefault();
+        list[(at + (ev.key === 'ArrowLeft' ? 1 : -1) + list.length) % list.length].focus();
+      },
+    },
     children: options.map((o) => h('button', {
       text: o.label,
       attrs: {
         type: 'button', role: 'radio', 'aria-checked': o.value === current ? 'true' : 'false', 'data-fid': `${fid}:${o.value}`,
-        'data-first': first && o.value === current ? '' : null,
+        'data-first': first && o.value === current ? '' : null, tabindex: o.value === focusV ? '0' : '-1',
         'aria-label': o.aria ?? null, title: o.disabled && o.reason ? o.reason : o.title ?? o.aria ?? null,
         'aria-disabled': o.disabled ? 'true' : null, 'aria-description': o.disabled && o.reason ? o.reason : null,
       },
@@ -175,7 +187,7 @@ function resultLine(h, act, line, fid) {
  *   parts: { index: number, from: number, to: number, chars: number }[] | null,
  * }} m
  */
-export function downloadMenu(h, act, m) {
+export function downloadMenu(h, act, m, root = null) {
   const out = [h('h2', { className: 'title', text: LABELS.downloadTitle })];
   if (m.live) {
     out.push(alert(h, 'info', messageFor('EX_LIVE')));
@@ -222,17 +234,18 @@ export function downloadMenu(h, act, m) {
   out.push(segmented(h, LABELS.exportMode, [
     { value: 'normal', label: LABELS.modeNormal, title: LABELS.modeNormalNote },
     { value: 'long', label: LABELS.modeLong, title: LABELS.modeLongNote },
-  ], m.mode, act, 'mode', 'mode'));
+  ], m.mode, act, 'mode', 'mode', { root }));
 
   out.push(h('div', {
     className: 'actions inline',
     children: [
+      // اسم الوصول هو النص الظاهر نفسه (ومنه «جارٍ التنزيل…»)، والتفصيل وصف إضافي لا يحل محله.
       button(h, 'primary', m.busy ? LABELS.checking : LABELS.downloadFile, {
-        act, name: 'download', fid: 'download', first: m.tracks.length === 1, disabled: m.busy, icon: 'download', title: LABELS.downloadFileLong,
-        extra: { 'aria-busy': m.busy ? 'true' : null, 'aria-label': LABELS.downloadFileLong },
+        act, name: 'download', fid: 'download', first: m.tracks.length === 1, disabled: m.busy, icon: 'download', title: LABELS.downloadFileHint,
+        extra: { 'aria-busy': m.busy ? 'true' : null, 'aria-description': LABELS.downloadFileHint },
       }),
       button(h, 'secondary', LABELS.copyShort, {
-        act, name: 'copy', fid: 'copy', disabled: m.copyBusy, icon: 'copy', title: LABELS.copyLong, extra: { 'aria-label': LABELS.copyLong },
+        act, name: 'copy', fid: 'copy', disabled: m.copyBusy, icon: 'copy', title: LABELS.copyHint, extra: { 'aria-description': LABELS.copyHint },
       }),
     ],
   }));
@@ -308,7 +321,7 @@ export function displayMenu(h, act, m, root = null) {
     { value: 'ar', label: LABELS.segAr, aria: LABELS.modeAr },
     { value: 'dual', label: LABELS.segDual, aria: LABELS.modeDual, disabled: !m.dualAvailable, reason: messageFor('CT_DUAL_UNAVAILABLE') },
     { value: 'off', label: LABELS.segOff, aria: LABELS.modeOff },
-  ], m.mode, act, 'displayMode', 'mode', { first: true }));
+  ], m.mode, act, 'displayMode', 'mode', { first: true, root }));
   out.push(h('div', {
     className: 'actions inline',
     children: [
@@ -379,7 +392,7 @@ export function confirmMenu(h, act, m, root = null) {
  * @param {H} h @param {Act} act
  * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null }} m
  */
-export function timingMenu(h, act, m) {
+export function timingMenu(h, act, m, root = null) {
   if (m.sync) return syncView(h, act, m.sync);
   const value = formatOffset(m.offsetMs);
   const offset = h('input', {
@@ -409,7 +422,7 @@ export function timingMenu(h, act, m) {
     h('div', { className: 'field-error', text: m.offsetError ?? '', attrs: { id: 'tj-offset-error', 'aria-live': 'polite' } }),
     h('div', {
       className: 'row field',
-      children: [h('span', { className: 'flabel', text: LABELS.stepField }), segmented(h, LABELS.stepField, [{ value: '500', label: '0.5' }, { value: '1000', label: '1' }, { value: 'custom', label: LABELS.stepCustom }], preset, act, 'step', 'step')],
+      children: [h('span', { className: 'flabel', text: LABELS.stepField }), segmented(h, LABELS.stepField, [{ value: '500', label: '0.5' }, { value: '1000', label: '1' }, { value: 'custom', label: LABELS.stepCustom }], preset, act, 'step', 'step', { root })],
     }),
   ];
   if (!m.custom && m.stepError) out.push(h('div', { className: 'field-error', text: m.stepError, attrs: { 'aria-live': 'polite' } }));
@@ -433,7 +446,7 @@ export function timingMenu(h, act, m) {
     className: 'actions inline',
     children: [
       button(h, 'secondary', LABELS.sync, { act, name: 'sync', fid: 'sync' }),
-      button(h, 'secondary', LABELS.reset, { act, name: 'reset', fid: 'reset', title: LABELS.resetLong, extra: { 'aria-label': LABELS.resetLong } }),
+      button(h, 'secondary', LABELS.reset, { act, name: 'reset', fid: 'reset', title: LABELS.resetHint, extra: { 'aria-description': LABELS.resetHint } }),
     ],
   }));
   out.push(h('div', { className: 'note', text: LABELS.signLegend }));

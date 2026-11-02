@@ -39,7 +39,7 @@ export function mountControls(controller, deps = {}) {
   const doc = deps.doc ?? win.document;
   const flows = { exportFlow: deps.exportFlow ?? DEFAULT_FLOWS.exportFlow, importFlow: deps.importFlow ?? DEFAULT_FLOWS.importFlow };
   const uiFontsLoader = deps.uiFonts !== undefined ? deps.uiFonts : loadUiFonts;
-  /** خطوط الواجهة: تُطلب عند أول تركيب ناجح، ونتيجتها رموز في التشخيص. */
+  /** خطوط الواجهة: تُطلب عند أول تركيب ناجح (ويُعاد ما تعذّر منها عند التركيب التالي)، ونتيجتها رموز في التشخيص. */
   let uiFonts = /** @type {{ loaded: string[], failed: string[] } | 'pending' | null} */ (null);
   /** @type {'stub' | 'waiting' | 'mounted' | 'error'} */
   let state = 'waiting';
@@ -108,7 +108,7 @@ export function mountControls(controller, deps = {}) {
       session = createControlsSession({ controller, doc, win, player, flows, now: deps.now });
       state = 'mounted';
       failures = 0;
-      if (uiFontsLoader && (uiFonts === null || (uiFonts !== 'pending' && !uiFonts.loaded.length))) {
+      if (uiFontsLoader && (uiFonts === null || (uiFonts !== 'pending' && uiFonts.failed.length))) {
         uiFonts = 'pending';
         uiFontsLoader({ doc, win }).then((r) => { uiFonts = r; }, () => { uiFonts = { loaded: [], failed: ['all'] }; });
       }

@@ -8,22 +8,29 @@ import { UI_FONT_LIST } from '../../ui/ui-fonts.js';
 export const FONT_WEIGHTS = Object.freeze(['400', '700']);
 const BASE = SUBTITLE_FONT_LIST[0];
 
-/** تحميل خطوط الواجهة مرة لكل مستند، أيًّا كان من طلبها (الأدوات أو الطبقة). */
-const uiLoads = new WeakMap();
+/** حالة خطوط الواجهة لكل مستند، أيًّا كان من طلبها (الأدوات أو الطبقة): ما حُمّل، والطلب الجاري أو الناجح كله. */
+const uiState = new WeakMap();
 
 /**
  * خطوط واجهة الأدوات (ui-fonts.js) في document.fonts، فتصل إلى الجذور المغلقة كلها: @font-face داخل Shadow DOM لا يُعتدّ
- * به، والخط المثبّت على الجهاز يحجبه Brave عن صفحة يوتيوب. مستقلة عن خط الترجمة المختار. لا ترمي أبدًا.
+ * به، والخط المثبّت على الجهاز يحجبه Brave عن صفحة يوتيوب. مستقلة عن خط الترجمة المختار. لا ترمي أبدًا. ما تعذّر منها
+ * (كله أو بعضه) يُعاد وحده في الطلب التالي، وما حُمّل لا يُضاف ثانية.
  * @param {{ doc: Document, win: Window, read?: (path: string) => Promise<ArrayBuffer> }} env
  * @returns {Promise<{ loaded: string[], failed: string[] }>}
  */
 export function loadUiFonts({ doc, win, read = readPackagedFont }) {
-  if (uiLoads.has(doc)) return uiLoads.get(doc);
+  let st = uiState.get(doc);
+  if (!st) {
+    st = { loaded: new Set(), pending: null };
+    uiState.set(doc, st);
+  }
+  if (st.pending) return st.pending;
   const run = async () => {
-    const out = { loaded: [], failed: [] };
+    const failed = [];
     const FF = win.FontFace ?? globalThis.FontFace;
     const set = doc.fonts;
     for (const font of UI_FONT_LIST) {
+      if (st.loaded.has(font.id)) continue;
       try {
         if (typeof FF !== 'function' || !set || typeof set.add !== 'function') throw new Error('FontFace غير متاح');
         const faces = await Promise.all(Object.entries(font.files).map(async ([weight, path]) => {
@@ -32,21 +39,20 @@ export function loadUiFonts({ doc, win, read = readPackagedFont }) {
           return face;
         }));
         for (const face of faces) set.add(face);
-        out.loaded.push(font.id);
+        st.loaded.add(font.id);
       } catch {
-        out.failed.push(font.id);
+        failed.push(font.id);
       }
     }
-    return out;
+    return { loaded: UI_FONT_LIST.map((f) => f.id).filter((id) => st.loaded.has(id)), failed };
   };
-  // إخفاق كامل عابر لا يُحفظ: التركيب التالي يعيد المحاولة. الحذف في then (بعد التخزين دائمًا)، فالدالة قد تنتهي متزامنة
+  // الإخفاق العابر لا يُحفظ: الطلب التالي يعيد ما تعذّر. التصفير في then (بعد التخزين دائمًا)، فالدالة قد تنتهي متزامنة
   // حين لا FontFace أصلًا.
-  const p = run().then((out) => {
-    if (!out.loaded.length) uiLoads.delete(doc);
+  st.pending = run().then((out) => {
+    if (out.failed.length) st.pending = null;
     return out;
   });
-  uiLoads.set(doc, p);
-  return p;
+  return st.pending;
 }
 
 /**
