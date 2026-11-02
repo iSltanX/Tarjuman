@@ -1,6 +1,7 @@
-// نموذج المحفوظات بلا DOM (P7-AC2/AC3): البحث بالعنوان والمعرّف، والتصفية بالأقسام بأعدادها، والترتيب، وتجميع بيانات
-// الصف (شارات الملفات والإزاحة والتاريخ)، وخيارات التصدير بأسباب التعطيل، وملخص المقارنة لحوار الاستبدال، وحالة
-// الصفحة في جزء العنوان. كل ما هنا دوال نقية على IndexEntry (عقد data-model §٩) فتُختبر بلا متصفح.
+// نموذج المحفوظات بلا DOM (P7-AC2/AC3، وP13-AC1/AC3/AC6): البحث بالعنوان والمعرّف، والفرز بالحالات الخمس بأعدادها من ملخص
+// الفرز، والترتيب، وتجميع بيانات الصف (شارات الملفات والإزاحة والتاريخ ونماذج 1 2 3)، وخيارات التصدير بأسباب التعطيل،
+// وملخص المقارنة، وبطاقات «الترجمات…» والنسخة السابقة، وأهداف حوار الرفع وأعداد فروقه، وحالة الصفحة في جزء العنوان. كل ما
+// هنا دوال نقية على مدخل المحفوظات (IndexEntry ومعه summary وslots، عقد data-model §٩ و§١٥) فتُختبر بلا متصفح.
 import { messageFor } from '../../core/errors/index.js';
 import { isVideoId } from '../../core/model/ids.js';
 import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
@@ -9,24 +10,40 @@ import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
 export const PAGE_SIZE = 50;
 export const NO_TITLE_TEXT = 'بلا عنوان محفوظ';
 
-/** أقسام التصفية: من حالة الترجمة في المُلخّص وحده. «تحتاج مراجعة» (العلامات) تُضاف في الإصدار الثاني. */
+/**
+ * أقسام الفرز (R46، مواصفة التصميم §١٩.٧): «الكل» والحالات الخمس، من مُلخّص الفهرس (بانتظار الترجمة ومترجمة) وملخص الفرز
+ * (معدّلة، و«تحذيرات آلية» من الفحص الآلي للمقارنة، و«تحتاج مراجعة» من علامات المراجعة البشرية؛ منفصلتان).
+ */
 export const FILTERS = Object.freeze([
   Object.freeze({ value: 'all', label: 'الكل' }),
-  Object.freeze({ value: 'translated', label: 'مترجمة' }),
   Object.freeze({ value: 'awaiting', label: 'بانتظار الترجمة' }),
+  Object.freeze({ value: 'translated', label: 'مترجمة' }),
   Object.freeze({ value: 'edited', label: 'معدّلة' }),
-  Object.freeze({ value: 'warnings', label: 'تحذيرات المقارنة' }),
+  Object.freeze({ value: 'warnings', label: 'تحذيرات آلية' }),
+  Object.freeze({ value: 'review', label: 'تحتاج مراجعة' }),
 ]);
 export const FILTER_VALUES = Object.freeze(FILTERS.map((f) => f.value));
 export const SORTS = Object.freeze([Object.freeze({ value: 'updated', label: 'آخر تعديل' }), Object.freeze({ value: 'title', label: 'العنوان' })]);
 
+/** ملخص الفرز لمدخل بلا رأس حزمة (سجل الإصدار الأول): من مُلخّص الفهرس وحده (عقد data-model §١٥). */
+const summaryOf = (e) => e.summary ?? {
+  filled: e.arabic ? 1 : 0, edited: e.arabic?.edited ? 1 : 0, warned: e.arabic && e.arabic.matched === false ? 1 : 0, marks: { todo: 0, done: 0 },
+};
+
 const MATCH = {
   all: () => true,
-  translated: (e) => e.arabic !== null,
   awaiting: (e) => e.arabic === null,
-  edited: (e) => Boolean(e.arabic?.edited),
-  warnings: (e) => e.arabic !== null && e.arabic.matched === false,
+  translated: (e) => e.arabic !== null,
+  edited: (e) => summaryOf(e).edited > 0,
+  warnings: (e) => summaryOf(e).warned > 0,
+  review: (e) => summaryOf(e).marks.todo > 0,
 };
+
+/**
+ * مدخل المحفوظات للعرض: مُلخّص الفهرس ومعه ملخص الفرز ونماذج 1 2 3 من listLibrary.
+ * @param {{ entry: import('../../core/model/video.js').IndexEntry, summary: object, slots: object[] }[]} items
+ */
+export const libraryEntries = (items) => items.map((x) => ({ ...x.entry, summary: x.summary, slots: x.slots }));
 
 /**
  * @template {{ arabic: null | { edited: boolean, matched: boolean | null } }} E
@@ -170,7 +187,9 @@ export function rowModel(e, nowMs) {
   }
   if (e.arabic) badges.push(e.arabic.edited ? { tone: 'edited', text: 'AR معدّلة', id: 'ar-edited', title: 'عُدّلت في المحرّر بعد الرفع' } : { tone: 'info', text: 'AR الأصل', id: 'ar-original', title: 'الترجمة العربية كما رُفعت' });
   const warning = e.arabic ? warningText(e.arabic) : null;
-  if (warning) badges.push({ tone: 'warning', text: warning, id: 'warning', title: 'المقارنة بالأصل الإنجليزي' });
+  if (warning) badges.push({ tone: 'warning', text: warning, id: 'warning', title: 'الفحص الآلي: المقارنة بالأصل الإنجليزي' });
+  const todo = summaryOf(e).marks.todo;
+  if (todo > 0) badges.push({ tone: 'brand', text: `تحتاج مراجعة ${todo}`, id: 'review', title: 'مقاطع علّمتها «أعود إليه»' });
   return {
     videoId: e.videoId,
     title: e.title,
@@ -186,6 +205,8 @@ export function rowModel(e, nowMs) {
     edited: Boolean(e.arabic?.edited),
     fileName: e.arabic?.fileName ?? null,
     cueText: e.arabic ? formatCount(e.arabic.cueCount, COUNT_FORMS.cue) : null,
+    /** نماذج 1 2 3 (من الحزمة، أو من الفهرس لسجل الإصدار الأول: النشطة في 1). */
+    slots: e.slots ?? [1, 2, 3].map((n) => ({ n, filled: n === 1 && Boolean(e.arabic), active: n === 1 && Boolean(e.arabic), name: null, edited: n === 1 && Boolean(e.arabic?.edited), cueCount: n === 1 ? e.arabic?.cueCount ?? 0 : 0 })),
   };
 }
 
@@ -258,4 +279,94 @@ export function comparisonSummary(r) {
   if (r.drift.length) lines.push(r.drift.length === 1 ? 'توقيت مختلف في مقطع واحد' : r.drift.length === 2 ? 'توقيت مختلف في مقطعين' : `توقيت مختلف في ${formatCount(r.drift.length, COUNT_FORMS.cue)}`);
   if (r.empty.length) lines.push(`${formatCount(r.empty.length, NOUN.empty)} (لم يترجمها النموذج): ${numbers(r.empty)}`);
   return { tone: 'warning', lines: lines.length ? lines : ['الملف لا يطابق الملف المصدَّر.'] };
+}
+
+// ---- الإصدار الثاني: الترجمات الثلاث والنسخة السابقة والرفع (P13) ----
+
+/** «النص الدراسي» يحتاج ترجمة نشطة. @param {{ arabic: unknown }} e */
+export const studyGate = (e) => (e.arabic ? null : messageFor('PG_STUDY_NO_ARABIC'));
+
+const MODE_LABEL = Object.freeze({ normal: 'عادي', long: 'مقاطع أطول' });
+
+/**
+ * وصف بصمة مرجع المقارنة: نوع المسار والوضع والعدد وتاريخ التصدير (والتقسيم إن وُجد).
+ * @param {import('../../core/model/tracks.js').Fingerprint} fp @param {string} [date] التاريخ منسقًا
+ */
+export function fingerprintLabel(fp, date = '') {
+  const kind = EN_KIND[String(fp.trackKey).split('|')[1]] ?? '';
+  const parts = [`الإنجليزية ${kind}`.trim(), MODE_LABEL[fp.mode] ?? fp.mode, formatCount(fp.count, COUNT_FORMS.cue)];
+  if (fp.parts) parts.push(`${fp.parts.length} أجزاء`);
+  if (date) parts.push(date);
+  return parts.join(' · ');
+}
+
+/**
+ * عدد التعديلات اليدوية في ترجمة: المقاطع التي تختلف فيها النسخة الحالية عن الأصل المستورد بالرقم نفسه (نصًا أو توقيتًا)،
+ * وما زاد أو نقص منها. صفر إن لم تُعدَّل.
+ * @param {{ original: import('../../core/model/cue.js').Cue[], current: import('../../core/model/cue.js').Cue[] | null } | null} track
+ */
+export function manualEdits(track) {
+  if (!track?.current) return 0;
+  const byN = new Map(track.original.map((c) => [c.n, c]));
+  let n = 0;
+  for (const c of track.current) {
+    const o = byN.get(c.n);
+    if (!o || o.text !== c.text || o.startMs !== c.startMs || o.endMs !== c.endMs) n += 1;
+    byN.delete(c.n);
+  }
+  return n + byN.size;
+}
+
+/**
+ * أعداد ما سيتغير لو حلّ الملف الوارد محل الخانة (diffTranslations): أسطر قصيرة.
+ * @param {ReturnType<typeof import('../../core/align/index.js').diffTranslations>} d
+ */
+export function diffCountLines(d) {
+  const c = d.counts;
+  if (!d.aligned) return [`لا يتحاذى الملفان بالتوقيت: سيُستبدل كل شيء (${c.removed} حالية ← ${c.added} جديدة).`];
+  return [
+    `يتغير النص في ${c.textChanged} · التوقيت في ${c.timingChanged} · يُضاف ${c.added} · يُحذف ${c.removed} · بلا تغيير ${c.unchanged}`,
+    ...(d.confidence === 'low' ? ['المحاذاة غير مؤكدة: الأعداد تقريبية.'] : []),
+  ];
+}
+
+/**
+ * أهداف حوار الرفع: الخانات الثلاث بأسمائها وحالتها.
+ * @param {import('../../core/model/slots.js').Bundle | null} b
+ */
+export function targetOptions(b) {
+  return [1, 2, 3].map((n) => {
+    const s = b?.slots[n - 1];
+    const filled = Boolean(s?.track);
+    const active = b?.active === n;
+    const desc = !filled ? 'فارغة' : [s.name, s.track.fileName].filter(Boolean).join(' · ') + (active ? ' (نشطة)' : '');
+    return { n, filled, active, name: s?.name ?? null, label: `الترجمة ${n} — ${desc}` };
+  });
+}
+
+/** الهدف الافتراضي: المطلوب إن مُرِّر، وإلا أول خانة فارغة، وإلا النشطة (§١٩.٣). @param {object | null} b @param {number | null} [preferred] */
+export function defaultTarget(b, preferred = null) {
+  if (preferred === 1 || preferred === 2 || preferred === 3) return preferred;
+  const opts = targetOptions(b);
+  return (opts.find((o) => !o.filled) ?? opts.find((o) => o.active) ?? opts[0]).n;
+}
+
+/** سطر تنبيه الاسم: «الاسم يشير إلى فيديو آخر» وعنوانه مقصوصًا إلى 40 محرفًا إن كان محفوظًا. */
+export function nameHintText(hint, titleOf = () => null) {
+  if (!hint?.differs) return null;
+  const t = titleOf(hint.videoId);
+  const title = t ? (Array.from(t).length > 40 ? `${Array.from(t).slice(0, 39).join('')}…` : t) : null;
+  return title ? `الاسم يشير إلى فيديو آخر: ${title}` : `الاسم يشير إلى فيديو آخر (${hint.videoId}).`;
+}
+
+/**
+ * بطاقة النسخة السابقة: «من الترجمة 2 · قبل ساعة · 0.6 م.ب».
+ * @param {{ from: number, savedAt: string, track: { fileName: string, original: unknown[] } } | null} p
+ * @param {number | null} bytes @param {number} nowMs @param {(n: number) => string} formatSize
+ */
+export function previousCard(p, bytes, nowMs, formatSize) {
+  if (!p) return null;
+  const parts = [`من الترجمة ${p.from}`, relativeTime(p.savedAt, nowMs)];
+  if (Number.isFinite(bytes) && bytes > 0) parts.push(formatSize(bytes));
+  return { from: p.from, line: parts.join(' · '), fileName: p.track.fileName, absolute: absoluteTime(p.savedAt), cueText: formatCount(p.track.original.length, COUNT_FORMS.cue) };
 }

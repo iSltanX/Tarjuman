@@ -150,6 +150,20 @@ export class FakeElement {
     this.ownerDocument.activeElement = this;
   }
 
+  /** <dialog> (P13): الفتح يضع open، والإغلاق يزيله ويطلق close بالقيمة المعادة. */
+  showModal() {
+    this.open = true;
+    this.setAttribute('open', '');
+  }
+
+  close(value) {
+    if (!this.open) return;
+    this.open = false;
+    this.removeAttribute('open');
+    if (value !== undefined) this.returnValue = value;
+    this.dispatchEvent({ type: 'close' });
+  }
+
   *descendants() {
     for (const c of this.children) {
       yield c;
