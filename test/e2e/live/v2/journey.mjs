@@ -18,6 +18,7 @@ import path from 'node:path';
 import { human, sleep } from '../../../live/harness/browser.mjs';
 import { collectErrors, openTab } from '../../../live/harness/extension.mjs';
 import { dismissConsent, revealControls, waitForPlayer } from '../../../live/harness/youtube.mjs';
+import { diffTranslations } from '../../../../src/core/align/index.js';
 import { findSecrets } from '../../../../src/core/diagnostics/sanitize.js';
 import { parseSrtLenient } from '../../../../src/core/srt/lenient.js';
 import { parseSrtStrict } from '../../../../src/core/srt/parser.js';
@@ -711,13 +712,29 @@ try {
     // الشريط بعناصره الخمسة وحدها (§٦.١)، والقوائم بلا شرح طويل: أطول نص قائمة كاملة بالمحارف للمراجعة.
     check('ui-player-bar-five-elements-and-short-menus', 'مراجعة', result.measures.bar.buttons.length === 5 && Object.values(menus).every((m) => m.chars > 0 && m.chars < 600),
       { buttons: result.measures.bar.buttons, chars: Object.fromEntries(Object.entries(menus).map(([k, m]) => [k, m.chars])) });
-    const pop = await extPage('pages/popup/index.html');
+    // نافذة الأيقونة في تبويب خلفي فيبقى تبويب الفيديو النشط، ثم «نسخ تشخيص الصفحة» بحافظة بديلة في الصفحة (P15-AC4).
     await front(yt);
-    await sleep(800);
-    await pop.reload();
+    const pop = await openTab(b.conn, `chrome-extension://${b.extId}/pages/popup/index.html`, { background: true });
+    tracked.push({ where: 'pages/popup/index.html', errs: collectErrors(pop, { extId: b.extId }) });
+    await sleep(1500);
+    const stub = () => { window.__copied = []; Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async (t) => { window.__copied.push(t); } }); return true; };
+    await pop.eval(stub);
+    await pop.eval(() => document.querySelector('[data-action="diagnostics"]')?.click());
     await sleep(1200);
+    const pageDiag = (await pop.eval(() => window.__copied ?? []))[0] ?? '';
     await shot(pop, 'ui-popup');
     await pop.close();
+    const st = await extPage('pages/settings/index.html#diagnostics');
+    await st.eval(stub);
+    await clickOn(st, byText('button', 'نسخ تقرير التشخيص'), 'نسخ تقرير التشخيص');
+    await sleep(1200);
+    const settingsDiag = (await st.eval(() => window.__copied ?? []))[0] ?? '';
+    await st.close();
+    const titles = hand.videos ? Object.values(hand.videos).map((v) => v.title).filter(Boolean) : [];
+    const leaks = (t) => ({ url: /https?:\/\//.test(t), secrets: findSecrets(t).length, title: titles.some((x) => t.includes(x)), cue: !!CUE && t.includes(CUE.text), file: /\.srt|\.md/.test(t) });
+    const clean2 = (t) => Object.values(leaks(t)).every((x) => !x);
+    check('diagnostics-page-and-settings-no-text-no-url', '4', pageDiag.length > 50 && settingsDiag.length > 50 && clean2(pageDiag) && clean2(settingsDiag),
+      { page: { chars: pageDiag.length, ...leaks(pageDiag) }, settings: { chars: settingsDiag.length, ...leaks(settingsDiag) } });
     const pages = [['library', 'pages/library/index.html'], ['settings-data', 'pages/settings/index.html#data'], ['settings-glossary', 'pages/settings/index.html#glossary'], ['settings-export', 'pages/settings/index.html#export'],
       ['editor-review', `pages/editor/index.html?v=${LONG}&t=2`]];
     for (const [name, url] of pages) {
@@ -770,12 +787,16 @@ try {
     await edSave();
     await front(lib);
     await sleep(800);
+    // العدد المتوقع بمحرّك P11 نفسه على الخانة كما خُزّنت (ترجمة P9 فيها تعديل سابق من الإصدار الأول).
+    const e0 = await lib.eval(S.entry, { args: [TED] });
+    const t0 = e0.active === 1 ? e0.record.arabic : e0.alts[0]?.track;
+    const expectEdits = diffTranslations(t0.original, t0.current ?? t0.original).changes.length;
     let p0 = await lib.eval(storagePrint);
     let up = await libraryUploadAsk(TED, TED_HAIKU, 1);
     await clickOn(lib, cancelBtn, 'إلغاء');
     await sleep(600);
     let d = printDiff(p0, await lib.eval(storagePrint));
-    check('library-replace-cancel-no-write', '3', editsIn(up.lost) === 3 && noDiff(d), { edits: editsIn(up.lost), diff: noDiff(d) ? null : d });
+    check('library-replace-cancel-no-write', '3', editsIn(up.lost) === expectEdits && expectEdits >= 3 && noDiff(d), { edits: editsIn(up.lost), expected: expectEdits, diff: noDiff(d) ? null : d });
     up = await libraryUploadAsk(TED, TED_HAIKU, 1);
     await clickOn(lib, `${topDialog}?.querySelector('.lib-up input[type="checkbox"]')`, 'إبقاء تعديلاتي');
     await clickOn(lib, confirmBtn, 'تأكيد الاستبدال');
