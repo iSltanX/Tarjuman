@@ -13,11 +13,14 @@ import { planParts } from './parts.js';
 import { assertWritable, verifyRoundTrip, writeSrtFrom } from './write.js';
 
 export { fileName } from './names.js';
-export { instructions } from './instructions.js';
+export { GLOSSARY_LIMITS, glossaryParagraph, instructions, patchInstructions } from './instructions.js';
 export { describeTrack, languageLabel, trackLabel } from './describe.js';
 export { download, SRT_MIME } from './download.js';
-export { planParts } from './parts.js';
+export { CONTENT_SPLIT, planParts, planPartsByContent } from './parts.js';
 export { fnv1a64, textHash } from './hash.js';
+export { buildPatchPackage, patchFileName } from './patch.js';
+export { buildStudyText } from './study.js';
+export { buildReviewReport } from './report.js';
 
 const invalid = (what) => new TjError('MD_INVALID', { detail: `تصدير: ${what}` });
 

@@ -1,21 +1,40 @@
-// الاستعادة اليدوية للتوقيت (R14). لا تُتاح إلا عند تطابق العدد والترقيم مع البصمة تمامًا. المعاينة لا تغيّر شيئًا،
-// والتطبيق دالة منفصلة تُستدعى بعد تأكيد المستخدم وحده؛ ولا يستدعيها المقارن ولا الاستيراد أبدًا. تغيّر التوقيت
+// الاستعادة اليدوية للتوقيت (R14 وR50). لا تُتاح إلا عند تطابق العدد والترقيم مع البصمة تمامًا **ومحاذاة متحققة**: كل
+// مقطع يقابل نظيره بتوقيته واحدًا بواحد (src/core/align)، فلا يكفي أن يعيد دمجٌ وشطرٌ العدد إلى أصله. المعاينة لا تغيّر
+// شيئًا، والتطبيق دالة منفصلة تُستدعى بعد تأكيد المستخدم وحده؛ ولا يستدعيها المقارن ولا الاستيراد أبدًا. تغيّر التوقيت
 // المحفوظ فقط، ولا تمسّ النص ولا الأرقام ولا إزاحة العرض.
+import { alignCues, isIdentity } from '../align/index.js';
 import { TjError } from '../errors/index.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 /** @typedef {import('../model/tracks.js').Fingerprint} Fingerprint */
 
 /**
- * الاستعادة تتاح حين يطابق عدد المقاطع عدد البصمة ويكون ترقيم الملف 1..العدد بالترتيب (فيتقابل المقطع والمقطع).
+ * التطابق البنيوي وحده: عدد المقاطع يساوي عدد البصمة وترقيم الملف 1..العدد بالترتيب.
  * @param {Cue[]} cues
  * @param {Fingerprint | null} fingerprint
  */
-export function canRestore(cues, fingerprint) {
+export function sameStructure(cues, fingerprint) {
   if (!fingerprint || !Array.isArray(fingerprint.cues) || !Array.isArray(cues)) return false;
   const count = cues.length;
   if (count === 0 || count !== fingerprint.count || count !== fingerprint.cues.length) return false;
   return cues.every((c, i) => c.n === i + 1 && fingerprint.cues[i].n === i + 1);
+}
+
+/**
+ * محاذاة الملف بالبصمة (البصمة بلا نص، فالتوقيت والترقيم وحدهما).
+ * @param {Cue[]} cues
+ * @param {Fingerprint} fingerprint
+ */
+export const alignToFingerprint = (cues, fingerprint) => alignCues(fingerprint.cues.map((c) => ({ ...c, text: '' })), cues);
+
+/**
+ * الاستعادة تتاح حين يتطابق البناء وتتحقق المحاذاة هوية (ثقة عالية، وكل مقطع بنظيره في موضعه).
+ * @param {Cue[]} cues
+ * @param {Fingerprint | null} fingerprint
+ */
+export function canRestore(cues, fingerprint) {
+  if (!sameStructure(cues, fingerprint)) return false;
+  return isIdentity(alignToFingerprint(cues, fingerprint), fingerprint.count, cues.length);
 }
 
 /**
