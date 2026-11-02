@@ -35,6 +35,11 @@ const MIN_COVERAGE = 0.5;
 const WEAK_RATE = 0.02;
 const NUMBER_ONLY_RATE = 0.05;
 const RATE_FLOOR = 2;
+// الزوج الضعيف الذي يجمعه بمقابله رقمه يُقبل انجرافًا إن وافق فرقه وسيط فروق جيرانه بفارق ≤ 300ms أو ربع مدته، وأغلب
+// الأزواج متطابقة زمنيًا.
+const TREND_SPAN = 5;
+const TREND_TOLERANCE_MS = 300;
+const TREND_TOLERANCE_RATE = 0.25;
 
 const OP_MATCH = 1;
 const OP_SKIP_A = 2;
@@ -148,10 +153,14 @@ export function alignCues(a, b, opts = {}) {
     R[i] = Math.max(R[i], R[i - 1]);
     L[i] = Math.min(L[i], R[i - 1]);
   }
+  // العدّ بعدد عادي والتوقف فور تجاوز السقف، قبل أي حجز (مجموع العروض قد يفيض عن 32 بتًا في ملف متكدس).
+  let cells = 0;
+  for (let i = 0; i <= n; i++) {
+    cells += R[i] - L[i] + 1;
+    if (cells > MAX_CELLS) return { pairs: lone(), confidence: 'low', reasons: [messageFor('CMP_ALIGN_TOO_DENSE')] };
+  }
   const rowStart = new Int32Array(n + 2);
   for (let i = 0; i <= n; i++) rowStart[i + 1] = rowStart[i] + (R[i] - L[i] + 1);
-  const cells = rowStart[n + 1];
-  if (cells > MAX_CELLS) return { pairs: lone(), confidence: 'low', reasons: [messageFor('CMP_ALIGN_TOO_DENSE')] };
 
   const cost = new Float64Array(cells).fill(Infinity);
   const op = new Uint8Array(cells);
@@ -265,14 +274,33 @@ export function alignCues(a, b, opts = {}) {
   const pairs = rev.reverse();
   groups.reverse();
 
-  // الجودة والأسباب.
+  // الجودة والأسباب. فرق البداية لكل زوج 1:1 (بعد الإزاحة العامة)، ليُعرف أيوافق الزوج الضعيف اتجاه جيرانه.
+  const matchAt = new Map();
+  const deltas = [];
+  groups.forEach((g, k) => {
+    if (g.kind !== 'match') return;
+    matchAt.set(k, deltas.length);
+    deltas.push(bs[g.j0] - a[g.i0].startMs);
+  });
+  /** انجراف تدريجي: فرق الزوج قريب من وسيط فروق الأزواج المجاورة (خمسة من كل جهة). */
+  const followsTrend = (k, g) => {
+    const p = matchAt.get(k);
+    const near = deltas.slice(Math.max(0, p - TREND_SPAN), p + TREND_SPAN + 1).sort((x, y) => x - y);
+    const median = near[near.length >> 1];
+    const tolerance = Math.max(TREND_TOLERANCE_MS, (a[g.i0].endMs - a[g.i0].startMs) * TREND_TOLERANCE_RATE);
+    return Math.abs(deltas[p] - median) <= tolerance;
+  };
+  // الانجراف يبدأ من توقيت سليم: لا يُقبل إلا وأغلب الأزواج 1:1 متطابقة زمنيًا (فملف مزاح كله أو صغير مزاح ليس انجرافًا).
+  const strongMatches = groups.filter((g) => g.kind === 'match' && iou(a[g.i0].startMs, a[g.i0].endMs, bs[g.j0], be[g.j0]) >= o.weakIou).length;
+  const trendAllowed = strongMatches * 2 >= deltas.length;
   const weak = [];
   const numberOnly = [];
+  const drifting = [];
   const merges = [];
   const splits = [];
   const shiftedRuns = [];
   let run = null;
-  for (const g of groups) {
+  groups.forEach((g, k) => {
     const x = iou(a[g.i0].startMs, a[g.i1].endMs, bs[g.j0], be[g.j1]);
     if (g.kind === 'merge') merges.push(a[g.i0].n);
     if (g.kind === 'split') splits.push(a[g.i0].n);
@@ -281,7 +309,7 @@ export function alignCues(a, b, opts = {}) {
         ? textA[g.i0] && textA[g.i0] === textB[g.j0]
         : flat(textA.slice(g.i0, g.i1 + 1).join(' ')) === flat(textB.slice(g.j0, g.j1 + 1).join(' ')));
       if (!byText) {
-        if (g.kind === 'match' && useNumbers && a[g.i0].n === b[g.j0].n) numberOnly.push(b[g.j0].n);
+        if (g.kind === 'match' && useNumbers && a[g.i0].n === b[g.j0].n) (trendAllowed && followsTrend(k, g) ? drifting : numberOnly).push(b[g.j0].n);
         else weak.push(b[g.j0].n);
       }
     }
@@ -293,13 +321,15 @@ export function alignCues(a, b, opts = {}) {
         shiftedRuns.push(run);
       }
     } else run = null;
-  }
+  });
   const onlyA = pairs.filter((p) => p.b === null).map((p) => a[p.a].n);
   const onlyB = pairs.filter((p) => p.a === null).map((p) => b[p.b].n);
   const matchedA = n - onlyA.length;
   const matchedB = m - onlyB.length;
   const coverage = Math.max(matchedA / n, matchedB / m);
   const units = groups.length;
+  // الحد المسموح من الأزواج الضعيفة: نسبة من الوحدات، ولا يقل عن اثنين إلا في ملف صغير (فلا يبلغ نصف وحداته).
+  const allowed = (rate) => Math.max(Math.min(RATE_FLOOR, Math.floor(units / 2)), Math.ceil(units * rate));
 
   let low = false;
   if (coverage < MIN_COVERAGE) {
@@ -307,12 +337,16 @@ export function alignCues(a, b, opts = {}) {
     reasons.push(messageFor('CMP_ALIGN_COVERAGE', { percent: Math.round(coverage * 100) }));
   }
   if (weak.length) {
-    if (weak.length > Math.max(RATE_FLOOR, Math.ceil(units * WEAK_RATE))) low = true;
+    if (weak.length > allowed(WEAK_RATE)) low = true;
     reasons.push(messageFor('CMP_ALIGN_WEAK', { count: weak.length, list: shortList(weak) }));
   }
   if (numberOnly.length) {
-    if (numberOnly.length > Math.max(RATE_FLOOR, Math.ceil(units * NUMBER_ONLY_RATE))) low = true;
+    if (numberOnly.length > allowed(NUMBER_ONLY_RATE)) low = true;
     reasons.push(messageFor('CMP_ALIGN_NUMBER_ONLY', { count: numberOnly.length, list: shortList(numberOnly) }));
+  }
+  if (drifting.length) {
+    const most = deltas.reduce((m, d) => Math.max(m, Math.abs(d)), 0);
+    reasons.push(messageFor('CMP_ALIGN_DRIFTING', { count: drifting.length, seconds: (most / 1000).toFixed(1) }));
   }
   if (offset) reasons.push(messageFor('CMP_ALIGN_OFFSET', { seconds: (offset / 1000).toFixed(1) }));
   if (merges.length) reasons.push(messageFor('CMP_ALIGN_MERGED', { count: merges.length, list: shortList(merges) }));

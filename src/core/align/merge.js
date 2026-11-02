@@ -43,8 +43,8 @@ function placed(pairs, side, n) {
  *   align خيارات المحاذاة (useText مفعّل افتراضيًا: النص غير المعدّل مرساة). resolve اختيار المستخدم لكل تعارض برقمه n.
  * @returns {{ ok: true, cues: Cue[], kept: number[], taken: number[], conflicts: Conflict[] } | { ok: false, reason: string }}
  *   kept وtaken مواضع (من 0) في cues لما أُبقي من تعديل المستخدم ولما أُخذ من تغيير الجديد (والحذف المُبقى لا موضع له).
- *   conflicts ما لم يُحسم: n رقم أول مقطع في المنطقة من الأصل القديم (أو من الجديد لإضافتين متداخلتين)، وmine وtheirs
- *   مقاطع الطرفين فيها (مصفوفة فارغة = حُذف). أرقام الناتج من مصدر كل مقطع كما هي.
+ *   conflicts ما لم يُحسم: n رقم أول مقطع في المنطقة من الأصل القديم (ومفتاحه في resolve)، وmine وtheirs مقاطع الطرفين
+ *   فيها (مصفوفة فارغة = حُذف). أرقام الناتج من مصدر كل مقطع كما هي.
  */
 export function mergeThreeWay({ base, mine, theirs }, opts = {}) {
   const alignOpts = { useText: true, ...opts.align };
@@ -52,30 +52,58 @@ export function mergeThreeWay({ base, mine, theirs }, opts = {}) {
   if (am.confidence === 'low') return { ok: false, reason: messageFor('CMP_MERGE_LOW_MINE', { reasons: am.reasons.join(' ') }) };
   const at = alignCues(base, theirs, alignOpts);
   if (at.confidence === 'low') return { ok: false, reason: messageFor('CMP_MERGE_LOW_THEIRS', { reasons: at.reasons.join(' ') }) };
-  const choice = (n) => (opts.resolve instanceof Map ? opts.resolve.get(n) : opts.resolve?.[n]);
+  // اختيار غير صالح (غير mine وtheirs) لا يحسم شيئًا: يبقى التعارض مسرودًا.
+  const choice = (n) => {
+    const v = opts.resolve instanceof Map ? opts.resolve.get(n) : opts.resolve?.[n];
+    return v === 'mine' || v === 'theirs' ? v : undefined;
+  };
 
   const n = base.length;
   const M = placed(am.pairs, mine, n);
   const T = placed(at.pairs, theirs, n);
-  // المناطق: حد بين الأصل g−1 وg مسموح حين يقطع عنده الطرفان معًا.
+  // إضافات كل فجوة من الطرفين. إضافتان متداخلتان مختلفتان عند فجوة واحدة تُضمّان إلى منطقة الأصل المجاورة، فيبقى مفتاح كل
+  // تعارض رقمًا من الأصل القديم (لا يختلط بترقيم الجديد).
+  const gapCues = (P) => {
+    const map = new Map();
+    for (const b of P.blocks) {
+      if (b.gap === null) continue;
+      if (!map.has(b.gap)) map.set(b.gap, []);
+      map.get(b.gap).push(...b.cues);
+    }
+    return map;
+  };
+  const gm = gapCues(M);
+  const gt = gapCues(T);
+  const clash = (g) => {
+    const mi = gm.get(g) ?? [];
+    const ti = gt.get(g) ?? [];
+    return !sameList(mi, ti) && mi.some((x) => ti.some((y) => overlaps(x, y)));
+  };
+  // المناطق: حد بين الأصل g−1 وg مسموح حين يقطع عنده الطرفان معًا ولا تتصادم عنده إضافتاهما.
+  const cut = (g) => M.cutAt[g] && T.cutAt[g] && !clash(g);
   const regionOf = new Int32Array(n);
   const regions = [];
   for (let i = 0; i < n; i++) {
-    if (i === 0 || (M.cutAt[i] && T.cutAt[i])) regions.push({ from: i, to: i, mine: [], theirs: [] });
+    if (i === 0 || cut(i)) regions.push({ from: i, to: i, mine: [], theirs: [] });
     regions[regions.length - 1].to = i;
     regionOf[i] = regions.length - 1;
   }
-  // الإضافة عند فجوة داخل منطقة جزء منها؛ وعند حد مسموح إضافة مستقلة بين منطقتين.
-  const gaps = new Map();
-  const gapAt = (g) => {
-    if (!gaps.has(g)) gaps.set(g, { mine: [], theirs: [] });
-    return gaps.get(g);
+  // موضع الإضافة: المنطقة التي تقع الفجوة داخلها أو تُضم إليها، أو -1 لإضافة مستقلة بين منطقتين.
+  const home = (g) => {
+    if (!regions.length) return -1;
+    if (g > 0 && g < n && !cut(g)) return regionOf[g];
+    if (clash(g)) return g === 0 ? 0 : regions.length - 1;
+    return -1;
   };
+  const gaps = new Map();
   const assign = (P, key) => {
     for (const b of P.blocks) {
-      if (b.gap === null) regions[regionOf[b.from]][key].push(...b.cues);
-      else if (b.gap > 0 && b.gap < n && !(M.cutAt[b.gap] && T.cutAt[b.gap])) regions[regionOf[b.gap]][key].push(...b.cues);
-      else gapAt(b.gap)[key].push(...b.cues);
+      const at = b.gap === null ? regionOf[b.from] : home(b.gap);
+      if (at >= 0) regions[at][key].push(...b.cues);
+      else {
+        if (!gaps.has(b.gap)) gaps.set(b.gap, { mine: [], theirs: [] });
+        gaps.get(b.gap)[key].push(...b.cues);
+      }
     }
   };
   assign(M, 'mine');
@@ -96,12 +124,7 @@ export function mergeThreeWay({ base, mine, theirs }, opts = {}) {
     if (!gap) return;
     const { mine: mi, theirs: ti } = gap;
     if (sameList(mi, ti)) return emit(ti, ti.length ? taken : null);
-    if (mi.some((x) => ti.some((y) => overlaps(x, y)))) {
-      const pick = choice(ti[0].n);
-      if (!pick) conflicts.push({ n: ti[0].n, mine: mi.map(one), theirs: ti.map(one) });
-      return pick === 'mine' ? emit(mi, kept) : emit(ti, taken);
-    }
-    // إضافتان لا تتداخلان: تبقيان كلتاهما بترتيب الزمن.
+    // إضافتان لا تتداخلان (المتداخلتان ضُمّتا إلى منطقة): تبقيان كلتاهما بترتيب الزمن.
     const all = [...mi.map((c) => ({ c, mine: true })), ...ti.map((c) => ({ c, mine: false }))].sort((x, y) => x.c.startMs - y.c.startMs);
     for (const { c, mine: own } of all) emit([c], own ? kept : taken);
   };

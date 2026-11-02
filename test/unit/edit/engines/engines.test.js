@@ -42,6 +42,16 @@ test('البحث بالتطبيع للمطابقة وحدها: التشكيل و
   assert.deepEqual(searchCues(CUES, '').length + searchCues(CUES, '   ').length, 0);
 });
 
+test('البحث الدقيق لا يطابق الحرف الأساسي داخل حرف مركّب (و في ؤ، وا في أ، وe في é)؛ ومع ignoreMarks يطابق', () => {
+  const cues = [{ n: 1, startMs: 0, endMs: 1000, text: 'مؤمن وأحمد في café' }];
+  assert.deepEqual(searchCues(cues, 'و').map((m) => m.start), [5], 'واو العطف وحدها');
+  assert.deepEqual(searchCues(cues, 'ا'), []);
+  assert.deepEqual(searchCues(cues, 'e'), []);
+  assert.deepEqual(planReplace(cues, searchCues(cues, 'و'), 'X').changes[0].after, 'مؤمن Xأحمد في café');
+  assert.deepEqual(searchCues(cues, 'و', { ignoreMarks: true }).map((m) => m.start), [1, 5]);
+  assert.deepEqual(searchCues(cues, 'cafe', { ignoreMarks: true }).map((m) => [m.start, m.end]), [[14, 18]]);
+});
+
 test('الكلمة كاملة: لا تطابق داخل كلمة، والتشكيل جزء من الكلمة', () => {
   assert.deepEqual(searchCues(CUES, 'كتب', { wholeWord: true, ignoreMarks: true }).map((m) => m.index), [0]);
   assert.deepEqual(searchCues(CUES, 'الطالب', { wholeWord: true }).map((m) => m.index), [0]);
@@ -89,6 +99,11 @@ test('الشطر: عند المؤشر بنسبة المحارف، والقطعت
   assert.equal(out[1].endMs, 3500 + Math.round(1500 * (12 / 21)));
   for (const bad of [0, CUES[1].text.length, 2.5]) assert.throws(() => splitCue(CUES, 1, bad), (e) => e.code === 'ED_SPLIT_INVALID');
   assert.throws(() => splitCue([{ n: 1, startMs: 10, endMs: 11, text: 'أ ب' }], 0, 1), (e) => e.code === 'ED_SPLIT_INVALID');
+  // لا داخل زوج بديل ولا بين الحرف وتشكيله.
+  const emoji = [{ n: 1, startMs: 0, endMs: 4000, text: `${fromCodes(0x1f600)} مرحبًا بكم` }];
+  assert.throws(() => splitCue(emoji, 0, 1), (e) => e.code === 'ED_SPLIT_INVALID');
+  assert.throws(() => splitCue(CUES, 0, 1), (e) => e.code === 'ED_SPLIT_INVALID', 'بين الكاف وفتحتها');
+  assert.equal(splitCue(emoji, 0, 2)[1].text, 'مرحبًا بكم');
 });
 
 test('سياسة الترقيم تمنع الاستعادة الشاملة: دمج ثم شطر يعيدان العدد ولا يعيدان الترقيم المتسلسل', () => {
@@ -120,6 +135,9 @@ test('تصحيح الانجراف: تحويل خطي يضع المرساتين �
     { a: { n: 1, toMs: 0 }, b: { n: 1, toMs: 5 } }, { a: { n: 9, toMs: 0 }, b: { n: 1, toMs: 5 } },
     { a: { n: 1, toMs: 20_000 }, b: { n: 3, toMs: 10_000 } }, { a: { n: 1, toMs: -5 }, b: { n: 3, toMs: 10_000 } },
   ]) assert.throws(() => driftCorrect(cues, anchors), (e) => e.code === 'ED_DRIFT_ANCHORS');
+  // تمدد يتجاوز حد النموذج (100 ساعة) يُرفض برمز، لا مخرج غير صالح.
+  const close = [{ n: 1, startMs: 1000, endMs: 2000, text: 'أ' }, { n: 2, startMs: 1001, endMs: 3000, text: 'ب' }];
+  assert.throws(() => driftCorrect(close, { a: { n: 1, toMs: 1000 }, b: { n: 2, toMs: 300_000_000 } }), (e) => e.code === 'ED_DRIFT_RANGE' && hasCode(e.code));
 });
 
 test('مقاييس الكثافة: المحارف المرئية ومسافاتها دون التشكيل وفواصل الأسطر، وأطول سطر، والمدة غير الموجبة', () => {

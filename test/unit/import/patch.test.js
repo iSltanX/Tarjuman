@@ -55,6 +55,24 @@ test('المواضع بالمحاذاة لا بالرقم: ترجمة أُعيد
   assert.deepEqual(m.plan.warnings.map((w) => w.code), ['IM_PATCH_SKIPPED_STRUCTURE']);
 });
 
+test('مراجعة: مقطع أضافه المستخدم فوق موضع ساقط (تقابل زمني ضعيف) لا يُستبدل، بل يُتخطى بتحذير؛ والإزاحة العامة لا تُسقط الاستبدال', async () => {
+  const f = EN[4];
+  const note = { n: 5, startMs: f.startMs + 500, endMs: f.startMs + Math.max(600, Math.round((f.endMs - f.startMs) * 0.35)), text: 'ملاحظتي' };
+  const current = AR.map((c, i) => (i === 4 ? note : c));
+  const r = await read(patchFor([5, 9]), current);
+  assert.equal(r.ok, true, JSON.stringify(r.error));
+  assert.deepEqual(r.plan.items.map((x) => [x.n, x.action]), [[9, 'replace']]);
+  assert.deepEqual(r.plan.skipped, [{ n: 5, reason: 'weak' }]);
+  assert.deepEqual(r.plan.warnings.map((w) => w.code), ['IM_PATCH_SKIPPED_WEAK']);
+  assert.deepEqual(applyPatch(current, r.plan)[4], note);
+  const alone = await read(patchFor([5]), current);
+  assert.deepEqual([alone.ok, alone.plan.items, alone.plan.warnings.map((w) => w.code)], [true, [], ['IM_PATCH_SKIPPED_WEAK']], 'خطة بلا بنود يشرحها التحذير');
+
+  const shifted = AR.map((c) => ({ ...c, startMs: c.startMs + 1500, endMs: c.endMs + 1500 }));
+  const s = await read(patchFor([9]), shifted);
+  assert.deepEqual(s.plan.items.map((x) => [x.n, x.action, x.index]), [[9, 'replace', 8]]);
+});
+
 test('ليس لهذا المرجع: زمن لا يطابق، وترقيم أُعيد من 1، ورقم خارج الملف، ومكرر، وبلا بصمة', async () => {
   const wrongTime = patchFor([57]).map((c) => ({ ...c, startMs: c.startMs + 40 }));
   assert.equal((await read(wrongTime, AR)).error.code, 'IM_PATCH_TIME_MISMATCH');

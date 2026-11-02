@@ -22,13 +22,23 @@ export function clock(ms) {
 }
 
 const MD_SPECIAL = /[\\`*_[\]<>|~&#]/g;
-/** نص حرفي في Markdown. */
-export const mdEscape = (text) => String(text).replace(MD_SPECIAL, (ch) => `\\${ch}`);
-/** عكس mdEscape (للاختبار وللمقارنة بالنص الأصلي). */
-export const mdUnescape = (text) => String(text).replace(/\\([\\`*_[\]<>|~&#])/g, '$1');
+/**
+ * نص حرفي في Markdown: علامات التنسيق والوسوم والكيانات، والنقطتان بعد المخطط (http:) والنقطة بعد www فلا يصير النص رابطًا
+ * تلقائيًا في عارض GFM.
+ */
+export const mdEscape = (text) => String(text)
+  .replace(MD_SPECIAL, (ch) => `\\${ch}`)
+  .replace(/\b(https?|ftp|mailto)(?=:)/gi, '$1\\')
+  .replace(/\bwww(?=\.)/gi, 'www\\');
+/** نص يبدأ به سطر (كالاقتباس): ومعه علامة القائمة أو الترقيم في أوله. */
+export const mdEscapeLine = (text) => mdEscape(text).replace(/^([-+])(?=\s|$)/, '\\$1').replace(/^(\d+)([.)])(?=\s|$)/, '$1\\$2');
+/** عكس mdEscape وmdEscapeLine (للاختبار وللمقارنة بالنص الأصلي): كل شرطة مائلة في الأصل مهرّبة، فلا لبس. */
+export const mdUnescape = (text) => String(text).replace(/\\([\\`*_[\]<>|~&#:.+\-)])/g, '$1');
 
+// فواصل الأسطر كلها (CRLF وCR وNEL وفاصلا السطر والفقرة)، لا \n وحده.
+const LINE_SPLIT = new RegExp('\\r\\n|[\\r\\n\\u0085\\u2028\\u2029]');
 /** نص المقطع في سطر واحد: فواصل الأسطر داخله مسافة، ولا يتغير غيرها. */
-export const oneLine = (text) => String(text).split('\n').map((l) => l.trim()).filter(Boolean).join(' ');
+export const oneLine = (text) => String(text).split(LINE_SPLIT).map((l) => l.trim()).filter(Boolean).join(' ');
 
 /** عنوان الوثيقة: عنوان الفيديو سطرًا واحدًا بعد التجريد (كالتعليمات)، و«غير متوفر» إن غاب. */
 export const docTitle = (title) => cleanTitle(title);

@@ -45,6 +45,14 @@ test('مقطع واحد بسطر توقيت خاطئ (ساعة زائدة) تُ�
   assert.equal(applyRestoreTiming(cues, FP)[700].startMs, EN[700].startMs);
 });
 
+test('انجراف تدريجي (4ms لكل مقطع حتى 0.8 ث في آخر 200 مقطع) تُتاح استعادته وسبب الانجراف ظاهر في المحاذاة', () => {
+  const en = Array.from({ length: 200 }, (_, i) => ({ n: i + 1, startMs: i * 3000, endMs: i * 3000 + 2000, text: 'x' }));
+  const fp = fingerprint({ track: englishTrack({ cues: en }) });
+  const drifted = en.map((c, i) => ({ ...c, startMs: c.startMs + 4 * i, endMs: c.endMs + 4 * i, text: 'س' }));
+  assert.equal(canRestore(drifted, fp), true);
+  assert.deepEqual(applyRestoreTiming(drifted, fp).map((c) => c.startMs), en.map((c) => c.startMs));
+});
+
 test('عيّنة P1 اليدوية ومقابلها العربي الحقيقي: مطابقة تامة، والاستعادة متاحة', () => {
   const { cues: english } = realTrack('manual');
   const fp = fingerprint({ videoId: 'iG9CE55wbtY', track: englishTrack({ cues: english }) });

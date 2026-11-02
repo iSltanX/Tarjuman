@@ -57,6 +57,22 @@ test('نص مُعادٍ في الترجمة: يبقى حرفيًا في Markdown
   assert.equal(mdUnescape(line), `${cues[0].text} ${cues[1].text}`);
 });
 
+test('مراجعة: الروابط التلقائية وعلامة القائمة في أول سطر الاقتباس وفواصل الأسطر غير \\n لا تُفسَّر، والنص يعود كما هو بفك التهريب', () => {
+  const cr = String.fromCharCode(13);
+  const cues = [{ n: 1, startMs: 1000, endMs: 2000, text: `زوروا www.evil.example وhttp://e.example${cr}- عنصر` }];
+  const english = [{ n: 1, startMs: 1000, endMs: 2000, text: '- Hello' }, { n: 2, startMs: 1500, endMs: 1900, text: '1. world' }];
+  const { text } = buildStudyText({ videoId: VIDEO, title: 'Talk www.x.example', cues, english, format: 'md', bilingual: true });
+  const lines = text.split('\n');
+  assert.equal(lines[0], '# Talk www\\.x.example');
+  const ar = lines.find((l) => LINK_MD.test(l)).replace(LINK_MD, '');
+  assert.equal(ar, 'زوروا www\\.evil.example وhttp\\://e.example \\- عنصر'.replace(' \\- ', ' - '));
+  assert.equal(/www\.|https?:/.test(ar), false, 'لا رابط تلقائي');
+  assert.equal(mdUnescape(ar), `زوروا www.evil.example وhttp://e.example - عنصر`);
+  const quote = lines.find((l) => l.startsWith('> '));
+  assert.equal(quote, '> \\- Hello 1. world');
+  assert.equal(mdUnescape(quote.slice(2)), '- Hello 1. world');
+});
+
 test('تقرير المراجعة: البنود بترتيبها وروابطها وأسماء مشكلاتها وعلاماتها، والمقتطفات باختيار المستخدم حرفيًا', () => {
   const items = [
     { n: 12, startMs: 83_400, endMs: 85_000, problems: ['ED_OVERLAP', 'ED_READING_FAST'], mark: 'todo', text: 'سطر أول\nسطر *ثانٍ*', english: 'first line' },

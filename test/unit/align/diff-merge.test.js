@@ -125,9 +125,27 @@ test('مقطع أضفته في صمت يبقى؛ وإضافتان متداخلت
   assert.equal(r.cues[1000].text, 'أضفته');
   assert.deepEqual(r.kept, [1000]);
 
+  // إضافتان متداخلتان مختلفتان تُضمّان إلى منطقة الأصل المجاورة: تعارض واحد مفتاحه رقم من الأصل القديم (999 و1000 → 1000).
   const addTheirs = [...BASE.slice(0, 1000), { n: 1001, startMs: t + 1, endMs: t + 3, text: 'الجديد' }, ...BASE.slice(1000)];
   const both = mergeThreeWay({ base: BASE, mine: addMine, theirs: addTheirs });
-  assert.deepEqual(both.conflicts.map((c) => c.n), [1001]);
+  assert.deepEqual(both.conflicts.map((c) => c.n), [BASE[999].n]);
+  assert.deepEqual(both.conflicts[0].mine.map((c) => c.text), [BASE[999].text, 'أضفته', BASE[1000].text]);
+  assert.deepEqual(both.conflicts[0].theirs.map((c) => c.text), [BASE[999].text, 'الجديد', BASE[1000].text]);
+});
+
+test('مراجعة: تعارض إضافة وتعارض تعديل متجاوران لا يتصادم مفتاحاهما مع ترقيم الجديد؛ والاختيار غير الصالح لا يحسم شيئًا', () => {
+  const small = BASE.slice(0, 20);
+  const t = small[9].endMs;
+  const mine = [...small.slice(0, 10), { n: 900, startMs: t + 1, endMs: t + 3, text: 'إضافتي' }, ...small.slice(10)]
+    .map((c) => (c.n === 11 ? { ...c, text: 'تعديلي 11' } : c));
+  const theirs = renumber([...small.slice(0, 10), { n: 0, startMs: t + 1, endMs: t + 3, text: 'إضافة الجديد' }, ...small.slice(10)]
+    .map((c) => (c.n === 11 ? { ...c, text: 'جديد 11' } : c)));
+  const r = mergeThreeWay({ base: small, mine, theirs });
+  assert.equal(new Set(r.conflicts.map((c) => c.n)).size, r.conflicts.length, 'مفاتيح التعارض فريدة');
+  assert.ok(r.conflicts.every((c) => small.some((b) => b.n === c.n)), 'كل مفتاح رقم من الأصل القديم');
+
+  const one = mergeThreeWay({ base: BASE, mine: edit(BASE, { 7: { text: 'تعديلي' } }), theirs: edit(BASE, { 7: { text: 'جديد' } }) }, { resolve: { 8: 'ours' } });
+  assert.deepEqual(one.conflicts.map((c) => c.n), [8], 'قيمة غير mine وtheirs تُبقي التعارض مسرودًا');
 });
 
 test('ثقة منخفضة ترفض بسبب مكتوب ولا تُرجع دمجًا', () => {

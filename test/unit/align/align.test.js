@@ -106,11 +106,34 @@ test('ثقة منخفضة عند الشك: ملف فيديو آخر، وقائم
   assert.equal(alignCues(EN, scrambled).confidence, 'low');
 });
 
-test('مقاطع متكدسة في لحظة واحدة لا تستنزف الذاكرة: ثقة منخفضة بسبب ظاهر', () => {
-  const piled = Array.from({ length: 4000 }, (_, i) => ({ n: i + 1, startMs: 1000, endMs: 2000, text: 'x' }));
-  const r = alignCues(piled, piled);
+test('مقاطع متكدسة في لحظة واحدة لا تستنزف الذاكرة ولا تنهار حتى 50,000: ثقة منخفضة بسبب ظاهر', () => {
+  for (const count of [4000, 50000]) {
+    const piled = Array.from({ length: count }, (_, i) => ({ n: i + 1, startMs: 1000, endMs: 2000, text: 'x' }));
+    const r = alignCues(piled, piled);
+    assert.equal(r.confidence, 'low');
+    assert.ok(has(r, 'متكدسة'));
+  }
+});
+
+test('ملف صغير كل أزواجه لا يجمعها إلا الرقم ليس محاذاة متحققة؛ ومقطع شاذ واحد في ملف من ثمانية مقبول', () => {
+  const a = [{ n: 1, startMs: 1000, endMs: 3000, text: '' }, { n: 2, startMs: 4000, endMs: 6000, text: '' }];
+  const far = a.map((c) => ({ ...c, startMs: c.startMs + 14000, endMs: c.endMs + 14000 }));
+  const r = alignCues(a, far, { offset: 0 });
   assert.equal(r.confidence, 'low');
-  assert.ok(has(r, 'متكدسة'));
+  assert.equal(isIdentity(r, 2, 2), false);
+  const eight = longTrack(8, { seed: 3 });
+  const oneOff = eight.map((c, i) => (i === 4 ? { ...c, startMs: c.startMs + 600_000, endMs: c.endMs + 600_000 } : c));
+  assert.ok(isIdentity(alignCues(eight, oneOff), 8, 8));
+});
+
+test('انجراف تدريجي (4ms لكل مقطع حتى 0.8 ث) هوية بثقة عالية؛ ونصف المقاطع مبعثرة بالرقم وحده منخفضة', () => {
+  const a = Array.from({ length: 200 }, (_, i) => ({ n: i + 1, startMs: i * 3000, endMs: i * 3000 + 2000, text: '' }));
+  const drift = a.map((c, i) => ({ ...c, startMs: c.startMs + 4 * i, endMs: c.endMs + 4 * i }));
+  const r = alignCues(a, drift);
+  assert.ok(isIdentity(r, 200, 200), r.reasons.join(' | '));
+  assert.ok(has(r, 'انجراف تدريجي'));
+  const scattered = a.map((c, i) => (i % 2 ? { ...c, startMs: c.startMs + 90_000, endMs: c.endMs + 90_000 } : c));
+  assert.equal(alignCues(a, scattered).confidence, 'low');
 });
 
 /**

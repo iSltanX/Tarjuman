@@ -31,6 +31,9 @@ export function mergeCues(cues, index) {
 export function splitCue(cues, index, at) {
   const c = cues[index];
   if (!c || !Number.isInteger(at) || at <= 0 || at >= c.text.length || c.endMs - c.startMs < 2) throw new TjError('ED_SPLIT_INVALID');
+  // لا يُشطر داخل زوج بديل (نصف محرف) ولا بين الحرف وعلامة تشكيله.
+  const unit = c.text.charCodeAt(at);
+  if ((unit >= 0xdc00 && unit <= 0xdfff) || /\p{M}/u.test(c.text[at])) throw new TjError('ED_SPLIT_INVALID');
   const head = lines(c.text.slice(0, at)).join('\n');
   const tail = lines(c.text.slice(at)).join('\n');
   if (!head || !tail) throw new TjError('ED_SPLIT_INVALID');

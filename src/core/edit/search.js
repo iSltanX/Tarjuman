@@ -55,6 +55,12 @@ export function searchCues(cues, query, { field = 'ar', english = null, wholeWor
       const k = norm.indexOf(q, from);
       if (k < 0) break;
       const last = k + q.length - 1;
+      // حدّا المطابقة على حدود محارف المصدر: لا تبدأ ولا تنتهي داخل محرف مركّب فُكّك (ا داخل أ، وe داخل é).
+      const splitsChar = (k > 0 && starts[k] === starts[k - 1]) || (last + 1 < norm.length && starts[last + 1] === starts[last]);
+      if (splitsChar) {
+        from = k + 1;
+        continue;
+      }
       if (wholeWord && ((k > 0 && WORD.test(norm[k - 1])) || (last + 1 < norm.length && WORD.test(norm[last + 1])))) {
         from = k + 1;
         continue;

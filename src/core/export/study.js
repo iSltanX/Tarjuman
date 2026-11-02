@@ -4,7 +4,7 @@
 import { TjError } from '../errors/index.js';
 import { validateCues } from '../model/cue.js';
 import { assertValid } from '../model/validate.js';
-import { checkFormat, clock, docTitle, mdEscape, oneLine, timeUrl, videoUrl } from './doc.js';
+import { checkFormat, clock, docTitle, mdEscape, mdEscapeLine, oneLine, timeUrl, videoUrl } from './doc.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 
@@ -77,7 +77,7 @@ export function buildStudyText({ videoId, title = null, cues, english = null, fo
     const enLine = enText && enText[k].length ? enText[k].join(' ') : null;
     if (md) {
       lines.push(`[${clock(p.startMs)}](${link}) ${mdEscape(ar)}`);
-      if (enLine) lines.push('', `> ${mdEscape(enLine)}`);
+      if (enLine) lines.push('', `> ${mdEscapeLine(enLine)}`);
     } else {
       lines.push(`[${clock(p.startMs)}] ${link}`, ar);
       if (enLine) lines.push(enLine);
