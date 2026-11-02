@@ -191,7 +191,7 @@ SlotView = {
 - `active === null` ⇔ `record.arabic === null` ⇔ الخانات الثلاث فارغة. فإن وُجدت ترجمة فواحدة نشطة دائمًا.
 - للنشطة: `slots[active-1].track` و`offsetMs` نسخة من `record.arabic` و`record.view.displayOffsetMs`. **السجل هو المرجع**: الانتقالات تغيّره، و`syncActive` يعيد ملء الخانة منه.
 - الخانة الفارغة: `name = null` و`offsetMs = 0` و`marks = []` و`position = null`.
-- `fingerprintId` الخانة غير النشطة أو النسخة السابقة يشير إلى بصمة في `record.fingerprints` أو يُقرأ `null` (البصمة التي أسقطها حد البصمات تفقد مرجعيتها، فتُعرض «بلا مرجع» حتى يُختار غيرها). و`comparison` يبقى كما حُفظ وصفًا.
+- `fingerprintId` الخانة غير النشطة أو النسخة السابقة يشير إلى بصمة في `record.fingerprints` أو يُقرأ `null` (البصمة التي أسقطها حد البصمات تفقد مرجعيتها، فتُعرض «بلا مرجع» حتى يُختار غيرها). و`comparison` يبقى كما حُفظ وصفًا للملف كما رُفع. والتحذيرات الحاضرة (مُلخّص الفهرس، و`warned` في ملخص الفرز، وحالة المتحكم ورد الحالة، ولوحتا المحرّر) تُشتق ولا تُخزَّن: `trackComparison(track, fingerprints)` في `src/core/compare/current.js` للنسخة المعروضة بمحاذاتها الزمنية بالبصمة (وبثقة منخفضة حكم الرقم)، فلا حالة تتقادم بعد الاستكمال أو التحرير (R46؛ تدقيق 5fedcb9).
 - الحد: 5,000 علامة لكل خانة (`LIMITS.maxMarks`).
 
 **نموذج الخانة للواجهة** (`slotModels(bundle)`، يطابق `SlotModel` في `src/ui/components.js`): `{ n, filled, active, name }` لكل خانة، ومعها `edited` و`cueCount` للعرض.

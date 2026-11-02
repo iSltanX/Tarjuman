@@ -10,14 +10,16 @@ const isTime = (x) => Number.isInteger(x) && x >= 0;
 
 /**
  * @param {Cue[]} cues
- * @param {{ a: { n: number, toMs: number }, b: { n: number, toMs: number } }} anchors المقطع برقمه (أول ظهور له) وزمن بدايته الصحيح
+ * @param {{ a: { n: number, toMs: number, index?: number }, b: { n: number, toMs: number, index?: number } }} anchors المقطع برقمه
+ *   (أول ظهور له) وزمن بدايته الصحيح؛ وindex موضعه حين يحمل رقمه مقطعان (قطعتا شطر: تدقيق 5fedcb9، GM-005)، ويُقبل إن كان رقمه n
  * @returns {{ ok: true, cues: Cue[] } | { ok: false, negative: number[] }}
  * @throws {TjError} ED_DRIFT_ANCHORS لمرساتين غير صالحتين (مقطع غير موجود، أو المقطع نفسه، أو ترتيب ينقلب)، وED_DRIFT_RANGE
  *   لزمن يتجاوز حد النموذج (100 ساعة)
  */
 export function driftCorrect(cues, { a, b } = {}) {
-  const ia = cues.findIndex((c) => c.n === a?.n);
-  const ib = cues.findIndex((c) => c.n === b?.n);
+  const at = (x) => (Number.isInteger(x?.index) && cues[x.index]?.n === x.n ? x.index : cues.findIndex((c) => c.n === x?.n));
+  const ia = at(a);
+  const ib = at(b);
   if (ia < 0 || ib < 0 || ia === ib || !isTime(a.toMs) || !isTime(b.toMs)) throw new TjError('ED_DRIFT_ANCHORS');
   const fromA = cues[ia].startMs;
   const fromB = cues[ib].startMs;

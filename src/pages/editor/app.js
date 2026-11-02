@@ -3,9 +3,10 @@
 // المغادرة. المنطق في src/core/edit (الجلسة والمشكلات وما يُصدَّر)؛ هنا الحالة المعروضة والأحداث فقط. لا حفظ تلقائي
 // أبدًا: «حفظ» وحده يكتب في خانة التحرير، بـexpect الحزمة المفتوحة، فإن تغيّر محتوى الخانة من المشغّل أو تبويب آخر رُفض.
 /* global __TJ_DEV__ */
-import { compare, previewRestoreTiming, rankReferences } from '../../core/compare/index.js';
+import { compare, currentComparison, fingerprintCoverage, previewRestoreTiming, rankReferences } from '../../core/compare/index.js';
 import { planRescue } from '../../core/edit/rescue.js';
 import { exportTiming } from '../../core/model/timing.js';
+import { LIMITS } from '../../core/model/validate.js';
 import { READING_DEFAULTS } from '../../core/edit/density.js';
 import {
   COMPLETION_DEFAULTS, buildRows, completionGroups, completionNumbers, createEditSession, englishReference, parseSeconds, parseTimecode,
@@ -106,6 +107,7 @@ export async function mountEditor(app, {
     showEnglish: true, hideEnglish: false, hoverDelta: 0,
     result: /** @type {{ tone: string, text: string } | null} */ (null),
     external: /** @type {null | 'changed' | 'removed'} */ (null),
+    coverage: /** @type {ReturnType<typeof fingerprintCoverage>} */ ({ ok: false }),
     saving: false, saveDone: Promise.resolve(), pending: null, leaving: false, externalChain: Promise.resolve(),
     writing: 0, writeChain: Promise.resolve(), positionTimer: 0,
     resumeFrom: /** @type {import('../../core/model/marks.js').Position | null} */ (null),
@@ -346,11 +348,14 @@ export async function mountEditor(app, {
 
   /** نص المرجع لكل مقطع في النسخة المعروضة: الإنجليزية دائمًا (للبحث فيها قراءةً)، والعمود المرجعي بحسب الاختيار. */
   function computeRefs(cues) {
-    const refs = englishReference(cues, S.englishTrack?.cues ?? [], S.fp);
+    // تغطية البصمة بالمحاذاة مرة لكل بناء: نوافذ المرجع، وأرقام الاستكمال، ومواضع صفوف الناقص (GM-002، GM-005).
+    const coverage = fingerprintCoverage(S.fp, cues);
+    if (S.view !== 'original') S.coverage = coverage;
+    const refs = englishReference(cues, S.englishTrack?.cues ?? [], S.fp, { coverage });
     if (S.view === 'original') S.refsOriginal = refs;
     else S.refs = refs;
     const other = S.refCol === 'en' ? null : S.opened.slots[S.refCol - 1].track;
-    S.colRefs = other ? englishReference(cues, other.current ?? other.original, S.fp) : refs;
+    S.colRefs = other ? englishReference(cues, other.current ?? other.original, S.fp, { coverage }) : refs;
   }
 
   /** قائمة العمود المرجعي: الإنجليزية (إن حُفظ مسار) والخانات الممتلئة الأخرى. */
@@ -385,10 +390,10 @@ export async function mountEditor(app, {
     const s = act();
     const cues = Array.from({ length: s.count }, (_, i) => s.cueAt(i));
     computeRefs(cues);
-    S.comparison = compareNow(s);
+    S.comparison = compareNow(s, S.view === 'original' ? undefined : S.coverage);
     computeMarks();
     computeParts();
-    const rows = buildRows(cues, S.comparison?.missing ?? []);
+    const rows = buildRows(cues, S.comparison?.missing ?? [], { numbersOf: S.coverage?.ok ? S.coverage.numbersOf : null });
     const sameRows = Boolean(S.list) && rows.length === S.rows.length
       && rows.every((r, k) => r.type === S.rows[k].type && r.index === S.rows[k].index && r.n === S.rows[k].n);
     S.rows = rows;
@@ -417,9 +422,13 @@ export async function mountEditor(app, {
     search.refresh();
   }
 
-  function compareNow(s) {
+  /** تقرير النسخة المعروضة بالمحاذاة (current.js): لا نقص زائف بعد إعادة ترقيم أو دمج أو شطر. */
+  function compareNow(s, coverage) {
     try {
-      return compare(s.snapshot(), S.fp, { driftMs: settings.thresholds.driftMs });
+      const cues = s.snapshot();
+      const cov = coverage ?? fingerprintCoverage(S.fp, cues);
+      if (s === S.session) S.coverage = cov;
+      return currentComparison(cues, S.fp, { driftMs: settings.thresholds.driftMs, coverage: cov });
     } catch {
       return null;
     }
@@ -661,14 +670,18 @@ export async function mountEditor(app, {
     renderAll();
   }
 
-  /** «اعتماد هذا المرجع»: كتابة واحدة للخانة بمرجعها وتقرير المقارنة المحسوب على المحفوظ منها. */
+  /**
+   * «اعتماد هذا المرجع»: كتابة واحدة للخانة بمرجعها وتقريره. التقرير وصف للملف كما رُفع (الأصل لا النسخة المعدّلة، عقد
+   * data-model §١٠) كما في المحفوظات (changeReference)، والحاضر يُشتق من النسخة الحالية (GM-013).
+   */
   async function commitRef() {
     if (S.refPreview === undefined || S.refBusy) return;
     const fp = S.fp;
     S.refBusy = true;
     renderReferencePanel();
     try {
-      const comparison = fp ? compare(S.info.cues, fp, { driftMs: settings.thresholds.driftMs }) : null;
+      const report = fp ? compare(S.info.original, fp, { driftMs: settings.thresholds.driftMs }) : null;
+      const comparison = report ? { ...report, notes: [...(S.info.track.notes ?? []), ...report.notes].slice(0, LIMITS.maxNotes) } : null;
       const n = S.slot;
       const b = await queue((opened) => writeReference(store, videoId, opened, n, { fingerprintId: fp?.id ?? null, comparison }, { now }));
       S.refPreview = undefined;
@@ -805,7 +818,10 @@ export async function mountEditor(app, {
 
   function renderComplete() {
     if (completePane.hidden || !S.markView) return;
-    const groups = completionGroups({ cues: shownCues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView, selection: S.selection });
+    const groups = completionGroups({
+      cues: shownCues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView, selection: S.selection,
+      numbersOf: S.view === 'edit' && S.coverage?.ok ? S.coverage.numbersOf : null,
+    });
     S.completeNumbers = completionNumbers(groups, S.picks);
     renderCompletePanel(completeEl, {
       doc, reason: completeReason(), groups, picks: S.picks, numbers: S.completeNumbers, parts: S.parts,

@@ -16,19 +16,22 @@ export function pickEnglishTrack(tracks, fingerprint) {
 
 /**
  * نص إنجليزي لكل مقطع عربي: المقاطع الإنجليزية (بوضعها «عادي» كما حُفظت) التي يقع منتصفها في نافذة المقطع.
- * النافذة من البصمة برقم المقطع (فلا يتغير المرجع بتعديل توقيت العربي، ويصح لوضع «مقاطع أطول» الذي جمع
- * عدة مقاطع عادية في مقطع واحد)، وبلا بصمة من توقيت العربي كما فُتح.
+ * النافذة من البصمة (فلا يتغير المرجع بتعديل توقيت العربي، ويصح لوضع «مقاطع أطول» الذي جمع عدة مقاطع عادية في مقطع واحد):
+ * بتغطية المحاذاة الزمنية إن وثقت (المدموج يأخذ اتحاد نوافذه، وقطعة الشطر زمنها، والملف المعاد ترقيمه نافذته الصحيحة لا نافذة
+ * رقمه؛ تدقيق 5fedcb9، GM-002 وGM-005)، وإلا برقم المقطع؛ وبلا بصمة من توقيت العربي كما فُتح.
  * @param {TimedCue[]} arabic @param {TimedCue[]} english
  * @param {{ cues: { n: number, startMs: number, endMs: number }[] } | null} fingerprint
+ * @param {{ coverage?: { ok: boolean, windowOf?: { startMs: number, endMs: number }[] } }} [opts] تغطية fingerprintCoverage لهذه المقاطع
  * @returns {string[]} بطول المقاطع العربية، و'' لما لا مرجع له
  */
-export function englishReference(arabic, english, fingerprint) {
+export function englishReference(arabic, english, fingerprint, { coverage } = {}) {
   const out = arabic.map(() => '');
   if (!english.length) return out;
   const byN = fingerprint ? new Map(fingerprint.cues.map((c) => [c.n, c])) : null;
+  const covered = fingerprint && coverage?.ok && coverage.windowOf.length === arabic.length ? coverage.windowOf : null;
   const windows = [];
   arabic.forEach((c, i) => {
-    const w = byN ? byN.get(c.n) : c;
+    const w = covered ? covered[i] : byN ? byN.get(c.n) : c;
     if (w && w.endMs > w.startMs) windows.push({ i, startMs: w.startMs, endMs: w.endMs });
   });
   windows.sort((a, b) => a.startMs - b.startMs || a.i - b.i);
@@ -68,14 +71,16 @@ export function englishReference(arabic, english, fingerprint) {
 /**
  * صفوف القائمة: كل مقطع بموضعه، وكل رقم ناقص من الأصل («ناقص في الترجمة») قبل أول مقطع رقمه أكبر منه.
  * @param {{ n: number }[]} cues @param {number[]} missing أرقام مرتبة من تقرير المقارنة
+ * @param {{ numbersOf?: number[][] }} [opts] أرقام البصمة لكل مقطع من التغطية (ملف أُعيد ترقيمه)، وإلا رقمه
  * @returns {({ type: 'cue', index: number } | { type: 'missing', n: number })[]}
  */
-export function buildRows(cues, missing) {
+export function buildRows(cues, missing, { numbersOf } = {}) {
   const rows = [];
   const gaps = [...missing].sort((a, b) => a - b);
   let k = 0;
+  const orderOf = (c, index) => numbersOf?.[index]?.[0] ?? c.n;
   cues.forEach((c, index) => {
-    while (k < gaps.length && gaps[k] < c.n) rows.push({ type: 'missing', n: gaps[k++] });
+    while (k < gaps.length && gaps[k] < orderOf(c, index)) rows.push({ type: 'missing', n: gaps[k++] });
     rows.push({ type: 'cue', index });
   });
   while (k < gaps.length) rows.push({ type: 'missing', n: gaps[k++] });

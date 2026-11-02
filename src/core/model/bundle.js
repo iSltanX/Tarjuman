@@ -1,6 +1,7 @@
 // انتقالات الحزمة النقية (عقد data-model §١٣): الترجمات الثلاث والنسخة السابقة والعلامات وآخر موضع، وجسر انتقالات
 // الإصدار الأول، والتعبئة إلى مفاتيح التخزين والفك منها مع مصالحة ما يكتبه الأول (عقد storage §٧–§٩)، والتحويل إلى مدخل
 // النسخة الاحتياطية ومنه (backup.md §٣). كل دالة تعيد حزمة جديدة ولا تغيّر مدخلها؛ والسجل هو المرجع لخانة النشطة.
+import { trackComparison } from '../compare/current.js';
 import { TjError } from '../errors/index.js';
 import { cloneCues } from './cue.js';
 import { markAnchor, markCounts, prepareCues, resolveMark, sameAnchor, validateMarks } from './marks.js';
@@ -377,7 +378,11 @@ export function referencedFingerprints(b) {
   return [...new Set(ids)];
 }
 
-const warnedTrack = (t) => !!t.comparison && (t.comparison.missing.length > 0 || t.comparison.extra.length > 0 || t.comparison.drift.length > 0);
+// التحذير للنسخة المعروضة الآن (trackComparison)، لا لتقرير الاستيراد وحده (R46: لا حالة تتقادم؛ تدقيق 5fedcb9، GM-013).
+const warnedTrack = (t, fingerprints) => {
+  const c = trackComparison(t, fingerprints);
+  return !!c && (c.missing.length > 0 || c.extra.length > 0 || c.drift.length > 0);
+};
 
 /** ملخص الفرز (عقد data-model §١٥). @param {Bundle} b @returns {SortSummary} */
 export function summarizeBundle(b) {
@@ -386,7 +391,7 @@ export function summarizeBundle(b) {
   return {
     filled: filled.length,
     edited: filled.filter((s) => s.track.current !== null).length,
-    warned: filled.filter((s) => warnedTrack(s.track)).length,
+    warned: filled.filter((s) => warnedTrack(s.track, b.record.fingerprints)).length,
     marks: { todo: marks.reduce((a, m) => a + m.todo, 0), done: marks.reduce((a, m) => a + m.done, 0) },
   };
 }

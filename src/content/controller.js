@@ -3,6 +3,7 @@
 // التوقيت المحفوظ، والاستيراد يصفّرها بإشعار، والتصدير الإنجليزي لا يتأثر بها. الطبقة والأدوات تقرآن
 // الحالة وتشتركان في تغيّرها، ولا تكتبان في التخزين إلا عبر أفعاله. وفي الإصدار الثاني (عقد interfaces §١٢) يعرف حزمة
 // الفيديو (الترجمات الثلاث والسابقة والعلامات) والتفضيلات، ويبدّل النشطة ويرفع إلى خانة ويعلّم المقطع بتراجع.
+import { trackComparison } from '../core/compare/index.js';
 import { TjError, toErrorInfo } from '../core/errors/index.js';
 import {
   bundleFromRecord, referencedFingerprints, slotModels, withActiveSlot, withMark, withMarksReplaced, withSlotUpload,
@@ -121,7 +122,9 @@ export function createController({ store, extractor = null, page = {}, now = () 
       arabic: a ? {
         // الخانة والملف في المفتاح: ترجمتان بتاريخ استيراد واحد لا تلتبسان بعد التبديل.
         cues: stable('arabic', `${videoId}|${activeSlot}|${a.fileName}|${a.importedAt}|${a.editedAt}`, () => a.current ?? a.original),
-        edited: a.current !== null, fileName: a.fileName, comparison: a.comparison,
+        edited: a.current !== null, fileName: a.fileName,
+        // تقرير النسخة المعروضة (شارة المشغّل وقائمته) لا تقرير الاستيراد وحده (GM-013).
+        comparison: stable('comparison', `${videoId}|${activeSlot}|${a.fileName}|${a.importedAt}|${a.editedAt}|${a.fingerprintId}|${saved.rev}`, () => trackComparison(a, saved.fingerprints)),
       } : null,
       english: videoId ? pickEnglish() : null,
       view: Object.freeze({ ...view }),

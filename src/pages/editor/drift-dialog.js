@@ -61,6 +61,8 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
   const byN = new Map();
   cues.forEach((c, i) => { if (!byN.has(c.n)) byN.set(c.n, i); });
 
+  // المرساة بموضعها: قطعتا شطر تحملان رقمًا واحدًا، فالرقم المكتوب كما اقتُرح يبقى على المقطع المقترح نفسه، وغيره أول ظهوره
+  // (تدقيق 5fedcb9، GM-005: كانت النقطة الثانية على القطعة الثانية تُقرأ الأولى فيرفض الحوار أو يحسب انحرافًا زائفًا).
   const anchor = (label, i) => {
     const nIn = el('input', { className: 'ed-amount', dir: 'ltr', attrs: { type: 'text', inputmode: 'numeric', value: String(cues[i].n), 'aria-label': `${label}: رقم المقطع` }, doc });
     const tIn = el('input', { className: 'ed-time', dir: 'ltr', attrs: { type: 'text', value: formatTimecode(cues[i].startMs), 'aria-label': `${label}: الزمن الصحيح أو الفرق`, spellcheck: 'false', autocomplete: 'off' }, doc });
@@ -74,7 +76,7 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
       ],
       doc,
     });
-    return { box, nIn, tIn, note };
+    return { box, nIn, tIn, note, start: i };
   };
   const A = anchor('النقطة الأولى', first);
   const B = anchor('النقطة الثانية', last);
@@ -84,7 +86,7 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
 
   const readAnchor = (x) => {
     const n = Number(x.nIn.value.trim());
-    const i = Number.isInteger(n) ? byN.get(n) : undefined;
+    const i = Number.isInteger(n) ? (cues[x.start]?.n === n ? x.start : byN.get(n)) : undefined;
     if (i === undefined) {
       x.note.textContent = 'لا مقطع بهذا الرقم.';
       return null;
@@ -107,11 +109,11 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
     if (!a || !b) why = 'أكمل النقطتين أولًا.';
     else {
       try {
-        const r = driftCorrect(cues, { a: { n: a.n, toMs: a.toMs }, b: { n: b.n, toMs: b.toMs } });
+        const r = driftCorrect(cues, { a: { n: a.n, toMs: a.toMs, index: a.index }, b: { n: b.n, toMs: b.toMs, index: b.index } });
         if (!r.ok) why = messageFor('ED_DRIFT_NEGATIVE', { list: numberList(r.negative) });
         else {
           summary = driftSummary(cues, r.cues, [0, a.index, b.index, cues.length - 1]);
-          result = { a: { n: a.n, toMs: a.toMs }, b: { n: b.n, toMs: b.toMs } };
+          result = { a: { n: a.n, toMs: a.toMs, index: a.index }, b: { n: b.n, toMs: b.toMs, index: b.index } };
         }
       } catch (err) {
         if (!isTjError(err)) throw err;

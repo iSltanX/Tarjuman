@@ -188,9 +188,15 @@ test('العلامة: تعليم مقطع ثم التراجع بدقة، وإع�
 test('ملخص الفرز من البيانات نفسها، والحزمة البسيطة لا تحتاج مفاتيح جديدة', () => {
   assert.deepEqual(summarizeBundle(sampleBundle({ third: true })), { filled: 3, edited: 1, warned: 0, marks: { todo: 2, done: 1 } });
   const rec = videoRecord();
-  rec.arabic.comparison = { ...rec.arabic.comparison, matched: false, missing: [3], restoreTimingAvailable: false };
+  // نقص فعلي في المقاطع يطابقه التقرير المحفوظ.
+  rec.arabic.original = rec.arabic.original.filter((c) => c.n !== 3);
+  rec.arabic.comparison = { ...rec.arabic.comparison, matched: false, missing: [3], countTarget: 4, restoreTimingAvailable: false };
   const plain = ok(bundleFromRecord(rec));
   assert.deepEqual(summarizeBundle(plain), { filled: 1, edited: 0, warned: 1, marks: { todo: 0, done: 0 } });
+  // تدقيق 5fedcb9 (GM-013): بعد استكمال الناقص وحفظه لا يبقى تحذير التقرير المحفوظ (وصف الملف كما رُفع).
+  const completed = structuredClone(plain);
+  completed.slots[0].track.current = videoRecord().arabic.original;
+  assert.equal(summarizeBundle(completed).warned, 0);
   assert.equal(isTrivialBundle(plain), true);
   assert.equal(isTrivialBundle(sampleBundle()), false);
   assert.equal(isTrivialBundle(withSlotName(plain, 1, 'اسم')), false);

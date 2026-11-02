@@ -1,4 +1,5 @@
 // سجل الفيديو ومُلخّصه في الفهرس (عقد data-model §٦ وstorage §٢). السجل وحدة الحفظ لكل فيديو.
+import { trackComparison } from '../compare/current.js';
 import { isValidOffset } from './timing.js';
 import { isVideoId } from './ids.js';
 import { validateArabicTrack, validateEnglishTrack, validateFingerprint } from './tracks.js';
@@ -91,7 +92,8 @@ export const arabicCues = (record) => (record?.arabic ? record.arabic.current ??
  */
 export function summarizeVideo(r) {
   const a = r.arabic;
-  const cmp = a?.comparison ?? null;
+  // التحذيرات للنسخة المعروضة الآن لا لتقرير الاستيراد وحده، فلا تبقى «3 ناقصة» بعد الاستكمال والحفظ (R46؛ GM-013).
+  const cmp = a ? trackComparison(a, r.fingerprints) : null;
   return {
     schema: RECORD_SCHEMA, videoId: r.videoId, title: r.title, updatedAt: r.updatedAt, rev: r.rev,
     english: r.english.map((t) => ({ key: t.key, kind: t.kind, cueCount: t.cues.length })),
