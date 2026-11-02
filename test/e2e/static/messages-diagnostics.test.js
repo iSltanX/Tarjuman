@@ -21,14 +21,9 @@ const POT = `pot=${'Mk'.repeat(40)}`;
 const HOSTILE = `https://www.youtube.com/api/timedtext?v=iG9CE55wbtY&${POT}&signature=${'A1b2'.repeat(10)} SAPISID=abcdefghijkl`;
 const clean = (text) => findSecrets(text).length === 0 && !/https?:\/\//.test(text) && !/timedtext/.test(text);
 
-/** كل الرموز من ملفات المجالات نفسها (لا من قائمة يدوية). */
+/** كل الرموز من مجالات السجل نفسه (لا من قائمة يدوية)، ومنها مجالات الإصدار الثاني كالنسخ الاحتياطي (P15). */
 async function catalog() {
-  const out = [];
-  for (const name of ['base', 'extract', 'import', 'overlay', 'controls', 'pages', 'editor']) {
-    const m = await import(`../../../src/core/errors/${name}.js`);
-    for (const [code, text] of Object.entries(m.MESSAGES)) out.push({ domain: name, code, text });
-  }
-  return out;
+  return DOMAINS.flatMap((d) => Object.entries(d.MESSAGES).map(([code, text]) => ({ domain: d.name, code, text })));
 }
 
 // كلمات لاتينية مقصودة في الرسائل: أسماء يراها المستخدم كما هي في يوتيوب والملفات والترميز.

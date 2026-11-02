@@ -1,5 +1,6 @@
-// P9-AC4 وAC5 (آلي): حزمة التثبيت الشخصي تُبنى من الإنتاج وتجتاز تدقيق الملفات المشحونة (الأذونات المعتمدة وحدها، ولا
-// اتصال خارجي، وخطوط الترجمة برخصها)، والأرشيف يطابق المجلد بايتًا ويتكرر بايتًا لمحتوى واحد، والتدقيق يكشف المخالفة.
+// P9-AC4 وAC5، وP15-AC4 وAC6 للإصدار الثاني (آلي): حزمة التثبيت الشخصي تُبنى من الإنتاج وتجتاز تدقيق الملفات المشحونة
+// (الأذونات المعتمدة وحدها ومنها downloads، والعامل الخلفي للحفظ وحده، ولا اتصال خارجي، وخطوط الترجمة برخصها)، والأرشيف
+// يطابق المجلد بايتًا ويتكرر بايتًا لمحتوى واحد، والتدقيق يكشف المخالفة.
 //   node scripts/run-tests.mjs test/e2e/static
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,8 +24,11 @@ test('الحزمة: بناء الإنتاج باسم الإصدار، والتد
   assert.equal(entries.length, pkg.meta.files.length);
   assert.ok(entries.every((e) => e.name.startsWith(`${pkg.name}/`)), 'مجلد واحد باسم الإصدار داخل الأرشيف');
   const manifest = JSON.parse(entries.find((e) => e.name === `${pkg.name}/manifest.json`).data.toString('utf8'));
-  assert.deepEqual(manifest.permissions, ['storage', 'unlimitedStorage']);
+  assert.deepEqual(manifest.permissions, ['storage', 'unlimitedStorage', 'downloads']);
+  assert.deepEqual(manifest.background, { service_worker: 'background/worker.js' });
+  assert.equal(manifest.version, '0.2.0', 'الإصدار الثاني');
   assert.equal(manifest.version_name, undefined, 'لا اسم إصدار تطوير');
+  assert.ok(pkg.meta.files.some((f) => f.path === 'background/worker.js'), 'العامل الخلفي في الحزمة');
 });
 
 test('الحزمة تضم ملف رخصة OFL لكل خط ترجمة مضمّن، ولا خطاف تطوير فيها', async () => {
@@ -62,6 +66,29 @@ test('التدقيق يكشف المخالفات: إذن زائد، وطلب ش�
     }
     const net = r.checks.find((c) => c.id === 'no-external-connection-or-forbidden-code').detail.problems.map((p) => p.why);
     assert.ok(net.includes('طلب شبكة') && net.includes('رابط خارجي غير مسموح'));
+  } finally {
+    await rm(bad, { recursive: true, force: true });
+  }
+});
+
+test('التدقيق يحصر العامل الخلفي في الحفظ: التنزيلات خارج العامل، وفتح تنزيل أو حذفه، وعامل آخر، كلها مخالفات', async () => {
+  const bad = await mkdtemp(path.join(os.tmpdir(), 'tj-p15-bad-'));
+  try {
+    await cp(pkg.dir, bad, { recursive: true });
+    const lib = path.join(bad, 'pages/library/main.js');
+    await writeFile(lib, `${await readFile(lib, 'utf8')}\nchrome.downloads.download({ url: "data:," });\n`);
+    const worker = path.join(bad, 'background/worker.js');
+    await writeFile(worker, `${await readFile(worker, 'utf8')}\nchrome.downloads.open(1); chrome.downloads.removeFile(1);\n`);
+    let r = await auditPackage(bad);
+    const why = r.checks.find((c) => c.id === 'no-external-connection-or-forbidden-code').detail.problems;
+    assert.ok(why.some((p) => p.file === 'pages/library/main.js' && p.why === 'واجهة التنزيلات خارج العامل'));
+    assert.ok(why.some((p) => p.file === 'background/worker.js' && p.why === 'استعمال للتنزيلات خارج الحفظ'));
+    assert.ok(!why.some((p) => p.file === 'background/worker.js' && p.why === 'واجهة التنزيلات خارج العامل'), 'العامل وحده يستعمل التنزيلات');
+
+    const mf = JSON.parse(await readFile(path.join(bad, 'manifest.json'), 'utf8'));
+    await writeFile(path.join(bad, 'manifest.json'), JSON.stringify({ ...mf, background: { service_worker: 'background/other.js', type: 'module' } }));
+    r = await auditPackage(bad);
+    assert.equal(r.checks.find((c) => c.id === 'save-worker-only-and-no-externally-connectable').ok, false);
   } finally {
     await rm(bad, { recursive: true, force: true });
   }

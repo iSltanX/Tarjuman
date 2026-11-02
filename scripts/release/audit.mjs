@@ -1,21 +1,29 @@
 #!/usr/bin/env node
-// تدقيق حزمة الإضافة المبنية قبل تسليمها للتثبيت الشخصي (P9-AC4 وAC5): يقرأ الملفات المشحونة نفسها لا المصدر.
-// الأذونات ضمن المعتمد وحده، ولا اتصال خارجي (لا طلب شبكة إلا قراءة خط من الحزمة، ولا رابط إلا المسموح)، ولا
-// شيفرة بعيدة ولا تقييم نصي ولا HTML نصي، ولا خطاف تطوير ولا معرض مكوّنات، وكل خط ترجمة مضمّن بملفيه ورخصته.
+// تدقيق حزمة الإضافة المبنية قبل تسليمها للتثبيت الشخصي (P9-AC4 وAC5، وللإصدار الثاني P15-AC4 وAC6): يقرأ الملفات
+// المشحونة نفسها لا المصدر. الأذونات ضمن المعتمد وحده، ولا اتصال خارجي (لا طلب شبكة إلا قراءة خط من الحزمة، ولا رابط إلا
+// المسموح)، ولا شيفرة بعيدة ولا تقييم نصي ولا HTML نصي، ولا خطاف تطوير ولا معرض مكوّنات، وكل خط ترجمة مضمّن بملفيه ورخصته.
+// والإصدار الثاني (product-spec §١٠ «الأذونات والعامل الخلفي»): إذن downloads وحده وعامل خلفي للحفظ فقط، وواجهة التنزيلات
+// في العامل وحده ومحصورة في download وsearch بمعرّف ما نزّلته الإضافة.
 //   node scripts/release/audit.mjs <مجلد الإضافة المبنية>
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SUBTITLE_FONT_LIST } from '../../src/ui/subtitle-fonts.js';
 
-/** الأذونات المعتمدة (product-spec §١٠، والتحقق في P2): لا غيرها ولا host_permissions ولا أذونات اختيارية. */
-export const APPROVED_PERMISSIONS = ['storage', 'unlimitedStorage'];
+/** الأذونات المعتمدة (product-spec §١٠، والتحقق في P2، وdownloads للإصدار الثاني): لا غيرها ولا host_permissions ولا اختيارية. */
+export const APPROVED_PERMISSIONS = ['storage', 'unlimitedStorage', 'downloads'];
+/** العامل الخلفي الوحيد: خدمة الحفظ (P10). */
+export const WORKER = 'background/worker.js';
 const YOUTUBE_MATCH = 'https://www.youtube.com/*';
-/** الروابط المسموحة في شيفرة الحزمة: نطاق SVG، ورابط الفيديو في تعليمات الترجمة، ورابطا «حول» في صفحة الإعدادات وحدها. */
+/**
+ * الروابط المسموحة في شيفرة الحزمة: نطاق SVG، ورابط الفيديو في تعليمات الترجمة، ورابطا «حول» في صفحة الإعدادات وحدها،
+ * وأصل يوتيوب في العامل للتحقق من مرسل الرسالة (لا طلب إليه).
+ */
 const URL_OK = (u, rel) => u === 'http://www.w3.org/2000/svg'
   || u === YOUTUBE_MATCH
   || u.startsWith('https://www.youtube.com/watch?v=')
-  || (rel === 'pages/settings/main.js' && (u === 'https://bysltan.com' || u === 'https://github.com/iSltanX/Tarjuman'));
+  || (rel === 'pages/settings/main.js' && (u === 'https://bysltan.com' || u === 'https://github.com/iSltanX/Tarjuman'))
+  || (rel === WORKER && u === 'https://www.youtube.com/');
 /** طلب الشبكة الوحيد في الحزمة: قراءة خط الترجمة من ملفاتها (P6، chrome-extension://). */
 const FETCH_OK = new Map([['content/main.js', [/\bfetch\(runtime\.getURL\(/]]]);
 const FORBIDDEN = [
@@ -23,7 +31,10 @@ const FORBIDDEN = [
   { re: /\bsendBeacon\s*\(|\bimportScripts\s*\(/, why: 'إرسال أو تحميل شيفرة' },
   { re: /\beval\s*\(|\bnew\s+Function\s*\(/, why: 'تقييم نص شيفرةً' },
   { re: /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML\s*\(|document\.write\s*\(/, why: 'HTML نصي' },
-  { re: /\bchrome\.(?:debugger|scripting|tabs\.executeScript|webRequest|cookies|downloads)\b/, why: 'واجهة متصفح غير معتمدة' },
+  { re: /\bchrome\.(?:debugger|scripting|tabs\.executeScript|webRequest|cookies)\b/, why: 'واجهة متصفح غير معتمدة' },
+  { re: /\bchrome\.downloads\b/, why: 'واجهة التنزيلات خارج العامل', except: [WORKER] },
+  // ما نزّلته الإضافة وحده: لا فتح ولا حذف ولا مسح ولا إظهار ولا اعتراض أسماء ولا متابعة تنزيلات المستخدم.
+  { re: /\bdownloads\.(?:open|show|showDefaultFolder|removeFile|erase|acceptDanger|pause|resume|cancel|setShelfEnabled|setUiOptions|getFileIcon|onDeterminingFilename|onCreated|onErased)\b/, why: 'استعمال للتنزيلات خارج الحفظ' },
   { re: /<script[^>]+src=["']https?:/i, why: 'شيفرة بعيدة' },
   { re: /__tarjuman\b|__TJ_DEV__/, why: 'خطاف تطوير' },
   { re: /\bconsole\.(?:log|info|warn|error|debug)\s*\(/, why: 'تسجيل في الكونسول' },
@@ -61,12 +72,14 @@ export async function auditPackage(dir) {
   const war = manifest.web_accessible_resources ?? [];
   check('web-accessible-fonts-only', war.every((w) => w.resources.every((r) => r === 'ui/fonts/subtitle/*.woff2') && w.matches.every((m) => m === YOUTUBE_MATCH) && w.use_dynamic_url === true),
     { resources: war.flatMap((w) => w.resources) });
-  check('no-background-or-externally-connectable', !manifest.background && !manifest.externally_connectable && !manifest.content_security_policy,
-    { background: !!manifest.background, externallyConnectable: !!manifest.externally_connectable, csp: !!manifest.content_security_policy });
+  const bg = manifest.background ?? null;
+  check('save-worker-only-and-no-externally-connectable', JSON.stringify(bg) === JSON.stringify({ service_worker: WORKER })
+    && !manifest.externally_connectable && !manifest.content_security_policy,
+    { background: bg, externallyConnectable: !!manifest.externally_connectable, csp: !!manifest.content_security_policy });
   check('manifest-v3-and-no-dev-version-name', manifest.manifest_version === 3 && !manifest.version_name, { version: manifest.version, versionName: manifest.version_name ?? null });
 
   // ---- الملفات: لا خرائط مصدر ولا معرض مكوّنات ولا ملفات غير متوقعة ----
-  const unexpected = files.filter((f) => !/^(?:manifest\.json|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt))$/.test(f));
+  const unexpected = files.filter((f) => !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt))$/.test(f));
   check('only-expected-files', unexpected.length === 0, { unexpected, files: files.length });
   check('no-source-maps-or-gallery', !files.some((f) => f.endsWith('.map') || f.startsWith('ui/gallery/')), null);
 
@@ -74,7 +87,7 @@ export async function auditPackage(dir) {
   const problems = [];
   for (const rel of files.filter((f) => /\.(?:js|html|css|json)$/.test(f))) {
     const text = await readFile(path.join(dir, rel), 'utf8');
-    for (const { re, why } of FORBIDDEN) if (re.test(text)) problems.push({ file: rel, why });
+    for (const { re, why, except = [] } of FORBIDDEN) if (!except.includes(rel) && re.test(text)) problems.push({ file: rel, why });
     const calls = [...text.matchAll(/\bfetch\s*\(/g)].map((m) => text.slice(m.index, m.index + 40));
     const allowed = FETCH_OK.get(rel) ?? [];
     for (const c of calls) if (!allowed.some((re) => re.test(c))) problems.push({ file: rel, why: 'طلب شبكة', sample: c.slice(0, 30) });
