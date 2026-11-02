@@ -143,10 +143,10 @@
 ```json tj-status
 {
   "phase": "P11",
-  "status": "planned",
-  "updated": "2026-11-02",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W6 بعد التحقق من W5 ووسم tj-v1؛ ونصا الملحقين أ وب معتمدان منذ 2026-11-02.",
+  "status": "in_progress",
+  "updated": "2026-11-02T08:23:57+03:00",
+  "branch": "tj/P11-v2-engines",
+  "resume": "بدأت: قراءة واجهات الربط والملحقين والعقد، ثم العيّنات والمحاذاة.",
   "blocker": null,
   "outcome": null,
   "commit": null,
