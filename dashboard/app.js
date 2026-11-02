@@ -224,7 +224,7 @@
 
   function renderProgress() {
     var c = S.counts;
-    var parts = ['<span><b>' + c.verified + '</b> من ' + S.total + ' مراحل مدمجة ومتحققة</span>'];
+    var parts = ['<span><b>' + c.verified + '</b> من ' + S.total + (S.total > 10 ? ' مرحلة' : ' مراحل') + ' مدمجة ومتحققة</span>'];
     if (c.ready) parts.push('<span><b>' + c.ready + '</b> جاهزة للدمج</span>');
     if (c.integrating) parts.push('<span><b>' + c.integrating + '</b> قيد الدمج</span>');
     if (c.in_progress) parts.push('<span><b>' + c.in_progress + '</b> جارية</span>');
