@@ -78,6 +78,12 @@ const I = {
     };
   },
   cueText: (n) => globalThis.__tarjuman.controller.getState().arabic?.cues.find((c) => c.n === n)?.text ?? null,
+  /** زمن المقطع n في الترجمة النشطة كما خُزّنت (والنسخة المؤخَّرة غير الأصل)، وإزاحتها. */
+  cueAt: (n) => {
+    const s = globalThis.__tarjuman.controller.getState();
+    const c = s.arabic?.cues.find((x) => x.n === n);
+    return c ? { startMs: c.startMs, endMs: c.endMs, offsetMs: s.view?.displayOffsetMs ?? 0 } : null;
+  },
   bundle: async (id) => {
     const b = await globalThis.__tarjuman.store.getBundle(id);
     if (!b) return null;
@@ -271,12 +277,26 @@ async function within(t0, fn, timeoutMs = 3000) {
   }
   return null;
 }
-/** الخانة النشطة في المشغّل، ثم مقطع n ظاهر في الطبقة (القفز إلى منتصفه مع إزاحة الخانة). */
-async function showCue(n, cues) {
-  const c = cues.find((x) => x.n === n);
-  const s = await iso(I.state);
-  await stableSeek((c.startMs + c.endMs) / 2000 + (s.view?.displayOffsetMs ?? 0) / 1000);
+/** مقطع n من الترجمة النشطة ظاهر في الطبقة: القفز إلى منتصفه بزمنه المخزّن في الخانة النشطة وإزاحتها. */
+async function showCue(n) {
+  const c = await iso(I.cueAt, n);
+  await stableSeek((c.startMs + c.endMs) / 2000 + c.offsetMs / 1000);
   await sleep(700);
+  return iso(I.ov);
+}
+/**
+ * مثل showCue، وإن لم يظهر نص المقطع (مشغّل يوتيوب تعطّل تحت الأتمتة فعاد زمنه إلى 0، كما سجّلت P12) يُعاد تحميل الصفحة
+ * مرتين على الأكثر، ويُسجَّل ذلك ملاحظةً لا فحصًا.
+ */
+async function showCueSure(id, n) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const want = (await iso(I.cueText, n))?.split('\n')[0];
+    const lines = await showCue(n);
+    if (want && lines.some((l) => l.includes(want))) return lines;
+    result.notes.push(`المقطع ${n} لم يظهر (زمن الفيديو ${Math.round(await main(M.time))} ث)؛ أُعيد تحميل صفحة الفيديو.`);
+    ytVideo = null;
+    await openVideo(id);
+  }
   return iso(I.ov);
 }
 
@@ -433,14 +453,14 @@ try {
     check('ted-two-models-two-slots', '1', !!target2 && bd.slots[0]?.count === 427 && bd.slots[1]?.count === 427 && bd.slots[1].file === path.basename(TED_HAIKU) && bd.slots[0].file === firstFile
       && bd.slots[0].texts.join('\n') !== bd.slots[1].texts.join('\n'), { files: bd.slots.map((x) => x?.file ?? null), active: bd.active, missing: bd.slots.map((x) => x?.missing ?? null) });
     const n = tedHaiku.find((c) => c.startMs >= 120000 && c.endMs - c.startMs >= 1800 && !c.text.includes('\n')).n;
-    const ov2 = await showCue(n, tedHaiku);
+    const ov2 = await showCue(n);
     const txt2 = await iso(I.cueText, n);
     await closeMenus();
     await openMenuOf('upload', 'الترجمة العربية');
     const t1 = (await clickItem('slot:1', { wait: false })).at;
     const ms = await within(t1, async () => (await iso(I.state)).activeSlot === 1);
     await closeMenus();
-    const ov1 = await showCue(n, tedSonnet);
+    const ov1 = await showCue(n);
     const txt1 = await iso(I.cueText, n);
     const s1 = bd.slots[0].texts[n - 1];
     const s2 = bd.slots[1].texts[n - 1];
@@ -506,7 +526,7 @@ try {
     check('editor-complete-finds-missing', '1', (s.complete ?? '').includes(`الناقص (${DROP.length})`), { complete: clean(s.complete).slice(0, 160) });
     const before = new Set(await listDl(SUB));
     await edClick('[aria-label="الاستكمال"] button', 'تنزيل ملف الاستكمال');
-    const patch = await waitFile(SUB, (n) => n.endsWith('.patch.srt'), { except: before, timeoutMs: 20000 });
+    const patch = await waitFile(SUB, (n) => /\.patch( \(\d+\))?\.srt$/.test(n), { except: before, timeoutMs: 20000 });
     const patchCues = patch ? parseSrtLenient(await readFile(patch.path, 'utf8')).cues : [];
     check('editor-patch-file-in-subfolder', '1', !!patch && patchCues.map((c) => c.n).join(',') === DROP.join(','), { file: patch ? `${SUBDIR}/${patch.name}` : null, cues: patchCues.map((c) => c.n) });
     const reply = path.join(FILES, `${MID}.patch.reply.srt`);
@@ -555,7 +575,7 @@ try {
     check('long-first-upload-2000-plus-slot-1', '1', s.activeSlot === 1 && s.arabic?.count === longAr.length && longAr.length >= 2000 && bd.slots[0]?.missing === 0,
       { count: s.arabic?.count, missing: bd.slots[0]?.missing, ms: result.measures.longFirstUploadMs });
     CUE = longAr.find((c) => c.startMs >= 600000 && c.endMs - c.startMs >= 1500 && !c.text.includes('\n'));
-    const lines = await showCue(CUE.n, longAr);
+    const lines = await showCue(CUE.n);
     check('long-overlay-shows-cue', '1', lines.some((l) => l.includes(CUE.text)), { cue: CUE.n, lines });
     await shot(yt, 'long-player');
     await playerUpload(LONG_LATE);
@@ -581,36 +601,37 @@ try {
       { offset: s.view.displayOffsetMs, want: wantMs, stored: bd.slots[1]?.offset });
   });
 
-  // ٦. علامة من المشغّل على الطويل: في لوحة مراجعة المحرّر، وفي فرز المحفوظات.
-  await step('long-mark', async () => {
-    await openVideo(LONG);
+  // ٦. علامة من المشغّل: تظهر في لوحة مراجعة المحرّر وفي فرز المحفوظات. على TED لا على الطويل: مشغّل يوتيوب لفيديو AWS
+  // يتعطل تحت الأتمتة بلا نافذة («حدث خطأ») فيعيد زمنه إلى 0 لحظة فتح القائمة، فلا مقطع ظاهر يُعلَّم (يُسجَّل ملاحظةً).
+  await step('mark-across', async () => {
+    await openVideo(TED);
     await front(yt);
-    CUE ??= longAr.find((c) => c.startMs >= 600000 && c.endMs - c.startMs >= 1500 && !c.text.includes('\n'));
-    const s0 = await iso(I.state);
-    await stableSeek((CUE.startMs + CUE.endMs) / 2000 + (s0.view.displayOffsetMs ?? 0) / 1000);
+    const active = (await iso(I.state)).activeSlot;
+    const n = (await iso(() => globalThis.__tarjuman.controller.getState().arabic.cues.find((c) => c.startMs >= 240000 && c.endMs - c.startMs >= 1800 && !c.text.includes('\n'))?.n));
+    await showCueSure(TED, n);
     await openMenuOf('upload', 'الترجمة العربية');
     const tm = (await clickItem('mark', { wait: false })).at;
-    // زمن كتابة العلامة على حزمة بترجمتين من 2000 مقطع فأكثر (ملاحظة itemsFor: كل كتابة تعيد إرسال التوابع).
-    result.measures.longMarkWriteMs = await within(tm, async () => (await iso(I.bundle, LONG)).slots.some((x) => x?.marks.some((m) => m.n === CUE.n)), 5000);
+    result.measures.markWriteMs = await within(tm, async () => (await iso(I.bundle, TED)).slots[active - 1]?.marks.some((m) => m.n === n), 5000);
     await sleep(500);
     await closeMenus();
-    const bd = await iso(I.bundle, LONG);
-    const slot = bd.active - 1;
-    check('long-player-mark-stored', '1', bd.slots[slot].marks.some((x) => x.n === CUE.n && x.kind === 'todo'), { marks: bd.slots[slot].marks, cue: CUE.n, slot: bd.active });
-    const ms = await openEditor(`v=${LONG}&t=${bd.active}`);
+    const bd = await iso(I.bundle, TED);
+    const pk = await iso(I.peek);
+    check('player-mark-stored', '1', bd.slots[active - 1].marks.some((x) => x.n === n && x.kind === 'todo'),
+      { marks: bd.slots.map((x) => x?.marks ?? null), cue: n, slot: active, ms: result.measures.markWriteMs, toasts: pk.layer.toasts.map((t) => t.text) });
+    const ms = await openEditor(`v=${TED}&t=${active}`);
     if (await run(E.probe, '.ed-tab', 'المراجعة')) await edClick('.ed-tab', 'المراجعة');
     const s = await info();
-    check('long-mark-in-editor-review', '1', s.marks.some((m) => m.startsWith('أعود إليه (1)')), { marks: s.marks, readyMs: ms });
+    check('mark-in-editor-review', '1', s.marks.some((m) => m.startsWith('أعود إليه (1)')), { marks: s.marks, readyMs: ms });
     await front(lib);
     await lib.reload();
     const chips = await lib.waitFor(() => {
       const l = [...document.querySelectorAll('.tj-chip')].map((c) => c.getAttribute('aria-label'));
-      return l.some((x) => /^تحتاج مراجعة \(\d+\)$/.test(x)) ? l : null;
+      return l.some((x) => /^تحتاج مراجعة \([1-9]\d*\)$/.test(x)) ? l : null;
     }, { timeoutMs: 8000 });
     await clickOn(lib, byText('.tj-chip', 'تحتاج مراجعة'), 'فرز «تحتاج مراجعة»');
     await sleep(500);
     const rows = await lib.eval(() => [...document.querySelectorAll('li.lib-row')].map((r) => r.dataset.video));
-    check('long-mark-counted-in-library-filter', '1', !!chips && rows.includes(LONG), { chips, rows });
+    check('mark-counted-in-library-filter', '1', !!chips && rows.includes(TED), { chips, rows });
     await clickOn(lib, byText('.tj-chip', 'الكل'), 'فرز «الكل»');
   });
 
@@ -619,9 +640,7 @@ try {
   await step('long-editor', async () => {
     await openVideo(LONG);
     await front(yt);
-    const st0 = await iso(I.state);
-    await stableSeek((CUE.startMs + CUE.endMs) / 2000 + (st0.view.displayOffsetMs ?? 0) / 1000);
-    await sleep(600);
+    await showCueSure(LONG, CUE.n);
     const before = { state: await iso(I.state), lines: await iso(I.ov) };
     const readyMs = await openEditor(`v=${LONG}&t=1`);
     let s = await info();
@@ -756,27 +775,38 @@ try {
     }
   });
 
-  // ٨. تعارض الحفظ بين تبويبين على الخانة نفسها: الثاني يُنبَّه ولا يكتب فوق الأول.
+  // ٨. تعارض الحفظ بين تبويبين على الخانة نفسها: كلاهما عدّل قبل أن يحفظ أحدهما؛ الأول يحفظ، والثاني يُنبَّه ولا يكتب فوقه.
   await step('save-conflict-two-tabs', async () => {
     await openEditor(`v=${LONG}&t=1`);
     const ed2 = await extPage(`pages/editor/index.html?v=${LONG}&t=1`);
     await ed2.waitFor(E.ready, { timeoutMs: 60000 });
     await front(ed);
     await editAppend(ed, [10], ' — من التبويب الأول');
-    await edSave(ed);
-    const p1 = await ed.eval(storagePrint);
+    // التعديل يُسجَّل في الجلسة بعد الكتابة بقليل؛ ينتظر السكربت تسجيله في التبويبين قبل الحفظ (وإلا لا تعارض أصلًا).
+    const dirtyA = await ed.waitFor(() => globalThis.__tarjumanEditor.state.session.dirty, { timeoutMs: 5000 });
     await front(ed2);
     await editAppend(ed2, [11], ' — من التبويب الثاني');
+    const dirtyB = await ed2.waitFor(() => globalThis.__tarjumanEditor.state.session.dirty, { timeoutMs: 5000 });
+    await front(ed);
+    await edSave(ed);
+    const savedA = await info();
+    const content = (p) => Object.fromEntries(Object.entries(p).filter(([k]) => /^(video|alts|bundle|prev):/.test(k)));
+    const p1 = content(await ed.eval(storagePrint));
+    await front(ed2);
+    await sleep(800);
+    const bannerBefore = await ed2.eval(() => { const x = document.querySelector('.ed-banner'); return x && !x.hidden ? x.textContent.trim() : null; });
     await edSave(ed2);
     await sleep(800);
     const banner = await ed2.eval(() => { const x = document.querySelector('.ed-banner'); return x && !x.hidden ? x.textContent.trim() : null; });
-    const p2 = await ed2.eval(storagePrint);
+    const p2 = content(await ed2.eval(storagePrint));
     const entry = await ed2.eval(S.entry, { args: [LONG] });
     const slot1 = entry.active === 1 ? entry.record.arabic : entry.alts[0]?.track;
     const texts = (slot1?.current ?? slot1?.original ?? []).map((c) => c.text);
     const d = printDiff(p1, p2);
-    check('save-conflict-second-tab-warned-no-overwrite', '3', !!banner && texts.some((t) => t.endsWith('من التبويب الأول')) && !texts.some((t) => t.endsWith('من التبويب الثاني'))
-      && d.changed.every((k) => !k.startsWith(`video:${LONG}`) && !k.startsWith(`alts:${LONG}`)), { banner: clean(banner).slice(0, 160), diff: d });
+    check('save-conflict-second-tab-warned-no-overwrite', '3', !!(banner || bannerBefore) && texts.some((t) => t.endsWith('من التبويب الأول')) && !texts.some((t) => t.endsWith('من التبويب الثاني')) && noDiff(d),
+      { bannerOnExternalChange: clean(bannerBefore).slice(0, 160), bannerOnSave: clean(banner).slice(0, 160), diff: noDiff(d) ? null : d,
+        dirty: { a: dirtyA, b: dirtyB }, savedA: { dirty: savedA.dirty, toast: savedA.toast, banner: savedA.banner }, texts: { c11: texts[10]?.slice(-24), c12: texts[11]?.slice(-24) } });
+    await shot(ed2, 'conflict-banner');
     await ed2.close();
   });
 
@@ -842,7 +872,7 @@ try {
     let before = new Set(await listDl(SUB));
     await edMenu('تصدير', 'الترجمة SRT');
     await edClick('dialog[open] button', 'تنزيل SRT');
-    const srt = await waitFile(SUB, (n) => n.startsWith(LONG) && n.endsWith('.ar.srt'), { except: before, timeoutMs: 30000 });
+    const srt = await waitFile(SUB, (n) => n.startsWith(LONG) && /\.ar( \(\d+\))?\.srt$/.test(n), { except: before, timeoutMs: 30000 });
     check('editor-export-2000-plus-in-subfolder', '1', !!srt && parseSrtLenient(await readFile(srt.path, 'utf8')).cues.length === longAr.length, { file: srt ? `${SUBDIR}/${srt.name}` : null });
     await libReady(MID);
     before = new Set(await listDl(SUB));
