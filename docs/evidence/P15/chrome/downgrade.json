@@ -1,0 +1,100 @@
+{
+  "step": "downgrade",
+  "browser": "Chrome 156.0.8078.74",
+  "profile": "chrome-manual",
+  "headless": true,
+  "at": "2026-11-02T17:37:06.568Z",
+  "checks": [
+    {
+      "id": "profile-backed-up-before-downgrade",
+      "ok": true,
+      "detail": {
+        "backup": "p15-work/profile-backups/chrome-manual-before-downgrade-2026-11-02T17-37-06-551Z"
+      }
+    },
+    {
+      "id": "v2-library-with-slots-previous-marks",
+      "ok": true,
+      "detail": {
+        "videos": 5,
+        "slots": {
+          "8-m7hqOqs9Y": "1100",
+          "Y9rkKtK1b44": "1110",
+          "gBazR59SZXk": "0000",
+          "iG9CE55wbtY": "1011",
+          "nx7lhj25__c": "0000"
+        },
+        "previous": 1,
+        "marks": [
+          0,
+          0,
+          0,
+          1,
+          0
+        ]
+      }
+    },
+    {
+      "id": "v2-before-no-extension-errors",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "v1-library-lists-all",
+      "ok": true,
+      "detail": {
+        "rows": 5,
+        "expected": 5,
+        "failed": false
+      }
+    },
+    {
+      "id": "v1-no-extension-errors",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "v1-reads-active-and-writes-offset-and-setting",
+      "ok": true,
+      "detail": {
+        "file": "iG9CE55wbtY.en.manual.normal.ar.srt",
+        "valid": true,
+        "offset": 1500,
+        "step": 1000,
+        "index": 5
+      }
+    },
+    {
+      "id": "v2-reconciles-without-loss",
+      "ok": true,
+      "detail": {
+        "changed": [],
+        "tedOffset": 1500,
+        "reconciled": true,
+        "videos": 5
+      }
+    },
+    {
+      "id": "v2-prefs-kept-and-v1-setting-read",
+      "ok": true,
+      "detail": {
+        "glossary": 4,
+        "save": "subfolder",
+        "step": 1000
+      }
+    },
+    {
+      "id": "v2-after-no-extension-errors",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "notes": [
+    "v2-before: الإضافة 0.2.0-dev",
+    "حزمة tj-v1 من الالتزام 7e1cc33",
+    "v1: الإضافة 0.2.0",
+    "v2-after: الإضافة 0.2.0-dev",
+    "بصمة التخزين بعد العودة: 23 مفتاحًا"
+  ],
+  "screenshots": []
+}

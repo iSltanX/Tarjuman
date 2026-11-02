@@ -23,7 +23,7 @@ import { findSecrets } from '../../../../src/core/diagnostics/sanitize.js';
 import { parseSrtLenient } from '../../../../src/core/srt/lenient.js';
 import { parseSrtStrict } from '../../../../src/core/srt/parser.js';
 import { formatSrtTime } from '../../../../src/core/srt/time.js';
-import { BROWSERS, PROFILE_ROOT, ROOT, V2, VIDEOS, WORK, launchBrowser, pidsOf } from './lib.mjs';
+import { BROWSERS, PROFILE_ROOT, ROOT, V2, VIDEOS, WORK, launchBrowser, pidsOf, quitProfile } from './lib.mjs';
 import {
   FONT_READ_LOG, appVersion, byText, canonical, chooseFile, clean, clickOn, confirmBtn, cancelBtn, extPage as openExtPage, listDl, navHash,
   noDiff, printDiff, storagePrint, textOf, topDialog, waitFile,
@@ -225,7 +225,15 @@ async function stableSeek(t) {
   result.notes.push(`زمن الفيديو لم يثبت بعد القفز إلى ${t} ث (مشغّل يوتيوب تحت الأتمتة).`);
   return 0;
 }
+/** هل ما زال التبويب حيًا؟ Chrome قد يُسقط التبويبات الخلفية لتوفير الذاكرة فتنقطع جلستها (ثبت في P15). */
+const alive = (page) => page.eval('1').then(() => true, () => false);
+const dropped = (what) => result.notes.push(`أسقط المتصفح تبويب ${what} في الخلفية فأُعيد فتحه.`);
 async function openVideo(id) {
+  if (yt && !(await alive(yt))) {
+    dropped('الفيديو');
+    yt = null;
+    ytVideo = null;
+  }
   if (yt && ytVideo === id) return;
   if (!yt) {
     yt = await openTab(b.conn, 'about:blank');
@@ -308,8 +316,16 @@ async function rowMenu(id, item) {
   await clickOn(lib, `${rowOf(id)}?.querySelector('button.lib-more')`, 'المزيد');
   return byText('.tj-menu__list:not([hidden]) [role=menuitem]', item);
 }
-async function libReady(id) {
+async function focusLib() {
+  if (!lib || !(await alive(lib))) {
+    if (lib) dropped('المحفوظات');
+    lib = await extPage('pages/library/index.html');
+    await lib.waitFor(() => document.querySelectorAll('li.lib-row').length > 0, { timeoutMs: 15000 });
+  }
   await front(lib);
+}
+async function libReady(id) {
+  await focusLib();
   await lib.waitFor((v) => !!document.querySelector(`li.lib-row[data-video="${v}"]`), { args: [id], timeoutMs: 15000 });
 }
 /** حوار رفع المحفوظات حتى ما قبل التأكيد: الخانة الهدف، ونص التعديلات المهددة. */
@@ -361,7 +377,11 @@ async function rowAction(i, a) {
   await edClick(actSel(i, a));
 }
 async function openEditor(query) {
-  if (!ed) ed = await extPage('about:blank'.replace('about:blank', 'pages/editor/index.html?' + query));
+  if (ed && !(await alive(ed))) {
+    dropped('المحرّر');
+    ed = null;
+  }
+  if (!ed) ed = await extPage(`pages/editor/index.html?${query}`);
   else {
     await front(ed);
     await ed.goto(`chrome-extension://${b.extId}/pages/editor/index.html?${query}`);
@@ -622,7 +642,7 @@ try {
     if (await run(E.probe, '.ed-tab', 'المراجعة')) await edClick('.ed-tab', 'المراجعة');
     const s = await info();
     check('mark-in-editor-review', '1', s.marks.some((m) => m.startsWith('أعود إليه (1)')), { marks: s.marks, readyMs: ms });
-    await front(lib);
+    await focusLib();
     await lib.reload();
     const chips = await lib.waitFor(() => {
       const l = [...document.querySelectorAll('.tj-chip')].map((c) => c.getAttribute('aria-label'));
@@ -817,7 +837,7 @@ try {
     await openEditor(`v=${TED}&t=1`);
     await editAppend(ed, [5, 6, 7], EDITED);
     await edSave();
-    await front(lib);
+    await focusLib();
     await sleep(800);
     // العدد المتوقع بمحرّك P11 نفسه على الخانة كما خُزّنت (ترجمة P9 فيها تعديل سابق من الإصدار الأول).
     const e0 = await lib.eval(S.entry, { args: [TED] });
@@ -948,6 +968,8 @@ try {
   check('run', 'تشغيل', false, { error: String(err.message ?? err).replace(/https?:\/\/\S+/g, '[رابط]').slice(0, 300) });
 } finally {
   if (b) await b.close().catch(() => {});
+  // جولة متعثرة قد تترك المتصفح يعمل بملف الاختبار؛ يُغلق فلا تتعطل الجولة التالية.
+  if (pidsOf(profileDir).length) await quitProfile(profileDir);
 }
 
 const json = JSON.stringify(result, null, 2).split(DL).join('‹تنزيلات الاختبار›').split(PROFILE_ROOT).join('‹ملفات الاختبار›');
