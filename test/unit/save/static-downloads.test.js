@@ -67,3 +67,22 @@ test('البيان: إذن غير معتمد، وعامل خلفي بمدخل آ
   const host = await mutateManifest((m) => { m.host_permissions = ['<all_urls>']; });
   assert.match(host.stderr, /manifest: المفتاح host_permissions غير مسموح/);
 });
+
+test('تدقيق 5fedcb9 (GM-017.2): «/*» داخل سلسلة أو تعبير نمطي لا يفتح تعليقًا يُعمي الفحص عن بقية الملف، والتعليقات الحقيقية تُنزع', async () => {
+  const r = await withTree(async (dir) => {
+    await writeFile(path.join(dir, 'pages', 'library', 'blind.js'), [
+      "export const match = ['https://www.youtube.com/*'];",
+      'export const glob = /^a\\/*b$/;',
+      'export const x = () => eval("1");',
+      '/* تعليق حقيقي: eval( لا يُحسب */ export const y = 1;',
+      'export const css = `a { color: red; } /* ملاحظة */`;',
+      "export const z = () => fetch('https://collector.example/x');",
+      '',
+    ].join('\n'));
+  });
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /blind\.js:3: تنفيذ نص كشيفرة ممنوع/, 'السطر بعد السلسلة مفحوص');
+  assert.doesNotMatch(r.stderr, /blind\.js:4: تنفيذ نص/, 'ما في التعليق لا يُحسب');
+  assert.match(r.stderr, /blind\.js:6: طلب شبكة من الإضافة/);
+  assert.match(r.stderr, /blind\.js:6: نطاق خارجي https:\/\/collector\.example/);
+});

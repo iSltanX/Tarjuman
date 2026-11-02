@@ -120,3 +120,57 @@ test('انتظار التنزيل: من «جارٍ» إلى الاكتمال أ�
   assert.equal(await settleDownload(fakeDownloads({ states: ['interrupted'] }), 1, fast), 'failed');
   assert.equal(await settleDownload(fakeDownloads({ states: ['in_progress'] }), 1, { pollMs: 10, timeoutMs: 20, wait: async () => {} }), 'pending');
 });
+
+test('تدقيق 5fedcb9 (CX-005، GM-001): أسماء ترجمان لمعرّف يبدأ بـ_ أو - تُحفظ من الصفحة والعامل، والمسارات الخبيثة مرفوضة كما كانت', async () => {
+  const { fileName } = await import('../../../src/core/export/names.js');
+  const { patchFileName } = await import('../../../src/core/export/patch.js');
+  const { buildArabicExport } = await import('../../../src/core/export/index.js');
+  const { buildStudyText } = await import('../../../src/core/export/study.js');
+  const { buildReviewReport } = await import('../../../src/core/export/report.js');
+  const { createSaveService } = await import('../../../src/background/save-service.js');
+  const cues = [{ n: 1, startMs: 1000, endMs: 2000, text: 'مرحبا' }];
+  for (const videoId of ['_AAAAAAAAAA', '-AAAAAAAAAA', '-_-_-_-_-_-']) {
+    const names = [
+      fileName({ videoId, lang: 'en', kind: 'manual', mode: 'normal' }),
+      fileName({ videoId, lang: 'en', kind: 'asr', mode: 'long', part: { index: 2, total: 5 } }),
+      fileName({ videoId, lang: 'ar' }),
+      fileName({ videoId, lang: 'ar', variant: 'original' }),
+      patchFileName({ videoId, lang: 'en', kind: 'manual', mode: 'normal' }),
+      buildArabicExport({ videoId, cues }).name,
+      buildStudyText({ videoId, cues, format: 'txt' }).name,
+      buildStudyText({ videoId, cues, format: 'md' }).name,
+      buildReviewReport({ videoId, items: [], format: 'txt' }).name,
+    ];
+    for (const name of names) assert.equal(validateSaveFile({ name, text: 'x' }).ok, true, name);
+    // من الصفحة: يصل التنزيل فعلًا.
+    const downloads = fakeDownloads();
+    assert.deepEqual(await saveFile({ name: names[0], text: 'x' }, { api: { downloads }, store: store(), settle: fast }), { ok: true, mode: 'downloads', downloadId: 40 });
+    assert.equal(downloads.calls.download.length, 1);
+    // من سكربت المحتوى عبر العامل: يقبله العامل كذلك.
+    const runtime = { id: 'tj', getURL: (p) => `chrome-extension://tj/${p}`, onMessage: { addListener() {} } };
+    const svc = createSaveService({ runtime, downloads: fakeDownloads(), store: store(), settle: fast });
+    const reply = await svc.handle({ type: 'tj:save-file', v: 1, file: { name: names[2], text: 'x' } }, { id: 'tj', url: 'chrome-extension://tj/pages/library/index.html', origin: 'chrome-extension://tj' });
+    assert.equal(reply?.ok, true, `العامل: ${names[2]}`);
+  }
+  for (const name of ['-/x.srt', '_\\x.srt', '-..srt', ' x.srt', '.x.srt', '_x .srt', `-${String.fromCharCode(0)}.srt`]) {
+    assert.deepEqual(validateSaveFile({ name, text: 'x' }), { ok: false, code: 'SV_BAD_FILE' }, JSON.stringify(name));
+  }
+});
+
+test('تدقيق 5fedcb9 (CX-H6، GM-017.4): مهلة رد العامل لا تنزّل بديل Blob، والتنزيل الباقي «جاريًا» بعد مهلة الانتظار pending لا «حُفظ»', async () => {
+  let fellBack = 0;
+  const fallback = () => { fellBack++; };
+  const never = { sendMessage: () => new Promise(() => {}) };
+  assert.deepEqual(await saveFile(file, { api: { runtime: never }, fallback, replyTimeoutMs: 5 }), { ok: false, code: 'SV_NO_REPLY' });
+  assert.equal(fellBack, 0, 'لا ملف ثانٍ');
+  // صفحة: الحالة تبقى in_progress حتى المهلة.
+  const s = store();
+  const revokes = [];
+  const doc = { defaultView: { URL, Blob, setTimeout: (fn, ms) => { revokes.push(ms); return 0; } } };
+  const pending = await saveFile(file, { api: { downloads: fakeDownloads({ states: ['in_progress'] }) }, store: s, settle: fast, doc });
+  assert.equal(revokes.length, 1, 'الرابط يبقى ما دام الحوار مفتوحًا ثم يُلغى بمؤقت');
+  assert.deepEqual(pending, { ok: true, mode: 'downloads', downloadId: 40, pending: true });
+  // العامل يمرر pending في رده، والمحتوى يعيده.
+  const viaWorker = await saveFile(file, { api: { runtime: { sendMessage: async () => ({ v: 1, ok: true, mode: 'ask', downloadId: 9, pending: true }) } }, fallback });
+  assert.deepEqual(viaWorker, { ok: true, mode: 'ask', downloadId: 9, pending: true });
+});

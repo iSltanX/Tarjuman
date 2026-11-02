@@ -199,6 +199,7 @@ export function createLibrary(env) {
   function savedToast(saved, successCode = 'PG_EXPORT_DONE') {
     if (saved.ok) {
       if (saved.mode === 'blob') toaster.show(messageFor('SV_FALLBACK_BLOB'), 'info');
+      else if (saved.pending) toaster.show(messageFor('SV_PENDING'), 'info');
       else done(successCode);
       return true;
     }

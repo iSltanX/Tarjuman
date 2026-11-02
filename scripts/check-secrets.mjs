@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // فحص آلي لخلو العينات والأدلة والسجلات من pot والتواقيع والروابط وملفات الارتباط والرموز.
-// يمرّ على test/fixtures/ وأدلة كل المراحل في docs/evidence/. الوثائق السردية (.md) قد تذكر روابط مراجع
+// يمرّ على test/fixtures/ وعينات test/e2e/fixtures/ (ترجمات حقيقية؛ تدقيق 5fedcb9، GM-028) وأدلة كل المراحل في
+// docs/evidence/. الوثائق السردية (.md) قد تذكر روابط مراجع
 // عامة، أما روابط يوتيوب وجوجل والأسرار فممنوعة فيها أيضًا. يخرج برمز 1 عند أي اكتشاف.
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -8,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { findSecrets } from '../src/core/diagnostics/sanitize.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SCOPES = ['test/fixtures', 'docs/evidence'];
+const SCOPES = ['test/fixtures', 'test/e2e/fixtures', 'docs/evidence'];
 const TEXT = /\.(json|srt|txt|log|md|csv|ndjson)$/i;
 const SENSITIVE_HOST = /(?:youtu\.?be|youtube|google|googlevideo|ytimg|ggpht)/i;
 

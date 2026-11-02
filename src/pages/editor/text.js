@@ -169,6 +169,7 @@ export function seekResult(r, at, message) {
 export function saveMessage(r, name, location, message) {
   if (!r.ok) return { tone: r.code === 'SV_CANCELLED' ? 'info' : 'danger', text: `${name}: ${message(r.code)}` };
   if (r.mode === 'blob') return { tone: 'info', text: `${name}: ${message('SV_FALLBACK_BLOB')}` };
+  if (r.pending) return { tone: 'info', text: `${name}: ${message('SV_PENDING')}` };
   // «مجلد X داخل التنزيلات» لا «التنزيلات/X»: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص.
   if (r.mode === 'subfolder') return { tone: 'success', text: `حُفظ ${name} في مجلد ${location?.folder ?? 'Tarjuman'} داخل التنزيلات.` };
   if (r.mode === 'ask') return { tone: 'success', text: `حُفظ ${name} حيث اخترت.` };

@@ -259,14 +259,14 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 
 ```js
 // src/core/save/index.js
-saveFile(file: { name, text, mime? }, deps?) → Promise<{ ok: true, mode: 'downloads' | 'subfolder' | 'ask' | 'blob', downloadId: number | null } | { ok: false, code }>
+saveFile(file: { name, text, mime? }, deps?) → Promise<{ ok: true, mode: 'downloads' | 'subfolder' | 'ask' | 'blob', downloadId: number | null, pending?: true } | { ok: false, code }>
 validateSaveFile(file, { maxChars }) → { ok: true } | { ok: false, code: 'SV_BAD_FILE' | 'SV_TOO_LARGE' }
 downloadTarget(saveLocation, name) → { filename, saveAs? }
 savedPath(downloadId, { downloads }) → Promise<string | null>     // المكان الفعلي لملف نزّله ترجمان
 SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 16777216 }
 ```
 
-- **ثلاثة مسارات بالدالة نفسها:** الصفحات (فيها `chrome.downloads`) تحفظ مباشرة: `Blob` ورابطه ثم `downloads.download`. وسكربت المحتوى (لا يصل إلى `chrome.downloads`) يرسل `tj:save-file` إلى العامل (عقد الرسائل §٧). وعند تعذّر الواجهة أو القناة يرجع إلى `download` القديم (Blob و`<a download>`) و`mode: 'blob'`، ويعرض المستدعي `SV_FALLBACK_BLOB`.
+- **ثلاثة مسارات بالدالة نفسها:** الصفحات (فيها `chrome.downloads`) تحفظ مباشرة: `Blob` ورابطه ثم `downloads.download`. وسكربت المحتوى (لا يصل إلى `chrome.downloads`) يرسل `tj:save-file` إلى العامل (عقد الرسائل §٧). وعند تعذّر الواجهة أو القناة يرجع إلى `download` القديم (Blob و`<a download>`) و`mode: 'blob'`، ويعرض المستدعي `SV_FALLBACK_BLOB`. وانقضاء مهلة رد العامل لا يرجع إلى Blob (`SV_NO_REPLY`)، والتنزيل الباقي «جاريًا» بعد مهلة الانتظار `pending: true` فيعرض المستدعي `SV_PENDING`.
 - **الأوضاع** من `prefs.saveLocation` وحدها، يقرؤها `saveFile` في الصفحة أو العامل من التخزين، لا من المستدعي:
 
 | الوضع | `downloads.download` | السلوك |
@@ -276,7 +276,7 @@ SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 167
 | `ask` | `{ filename: name, saveAs: true }` | حوار الحفظ من النظام عند كل تنزيل؛ والإلغاء `SV_CANCELLED`. |
 
   ودائمًا `conflictAction: 'uniquify'`: **لا كتابة فوق ملف قائم**. وسلوك كل وضع في كل متصفح كما ثبت حيًا في «ما ثبت حيًا» أدناه.
-- **التحقق قبل التنزيل:** الاسم 1..150 محرفًا من الحروف (ومنها العربية) والأرقام و`. _ -` والمسافة، بلا فواصل مسار ولا `..` ولا محارف تحكم، ولا يبدأ بنقطة؛ وامتداده `.srt` أو `.txt` أو `.md` أو `.json`؛ والنوع من الامتداد لا من المستدعي؛ والحجم حتى `maxMessageChars` عبر العامل و`maxPageChars` من الصفحات. وإلا `SV_BAD_FILE` أو `SV_TOO_LARGE` بلا تنزيل.
+- **التحقق قبل التنزيل:** الاسم 1..150 محرفًا من الحروف (ومنها العربية) والأرقام و`. _ -` والمسافة، بلا فواصل مسار ولا `..` ولا محارف تحكم، ولا يبدأ بنقطة ولا مسافة (ويبدأ بـ`_` أو `-` كما يبدأ معرّف يوتيوب؛ تدقيق 5fedcb9)؛ وامتداده `.srt` أو `.txt` أو `.md` أو `.json`؛ والنوع من الامتداد لا من المستدعي؛ والحجم حتى `maxMessageChars` عبر العامل و`maxPageChars` من الصفحات. وإلا `SV_BAD_FILE` أو `SV_TOO_LARGE` بلا تنزيل.
 - **العامل الخلفي** `src/background/worker.js` (`background.service_worker` في البيان) **للحفظ وحده**: `createSaveService({ runtime, downloads, store })` في `save-service.js` يستمع لـ`tj:save-file`، ويقبلها من سكربت الإضافة وحده (`sender.id` ثم سكربت محتوى على يوتيوب أو صفحة إضافة)، ويقرأ الوضع من التفضيلات، ويتحقق من الملف، ويحفظ النص في رابط `data:` (لا `URL.createObjectURL` في العامل)، ويسجّل المعرّف بـ`store.setLastSave`. لا منطق آخر فيه.
 - **الإذن محصور في ملفات ترجمان** (اعتماد سلطان 2026-11-02)، ويفرضه `check-static`:
   - `chrome.downloads` في `src/core/save/**` و`src/background/**` وحدهما.

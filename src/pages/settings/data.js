@@ -110,6 +110,7 @@ export function dataControl(env) {
     if (saved.ok) {
       kids.push(alertBox({ tone: 'success', text: `${messageFor('BK_CREATED', { videos: formatCount(built.counts.videos, COUNT_FORMS.video) })} ${built.name}`, doc }));
       if (saved.mode === 'blob') kids.push(alertBox({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB'), doc }));
+      if (saved.pending) kids.push(alertBox({ tone: 'info', text: messageFor('SV_PENDING'), doc }));
     } else {
       kids.push(alertBox({ tone: saved.code === 'SV_CANCELLED' ? 'info' : 'danger', text: messageFor(saved.code), doc }));
     }

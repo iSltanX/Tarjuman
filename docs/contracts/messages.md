@@ -93,12 +93,12 @@ chrome.tabs.sendMessage(tabId, { type: "tj:seek", v: 1, videoId: "iG9CE55wbtY", 
 
 ```js
 chrome.runtime.sendMessage({ type: "tj:save-file", v: 1, file: { name: "iG9CE55wbtY.en.manual.normal.srt", text: "…" } })   // saveRequest(file)
-// الرد: { v: 1, ok: true, mode: "downloads" | "subfolder" | "ask", downloadId } | { v: 1, ok: false, code: "SV_…" }
+// الرد: { v: 1, ok: true, mode: "downloads" | "subfolder" | "ask", downloadId, pending?: true } | { v: 1, ok: false, code: "SV_…" }
 ```
 
 - العامل يقبلها من **سكربت الإضافة وحده**: `sender.id === chrome.runtime.id`، والمرسِل سكربت محتوى على `https://www.youtube.com/` أو صفحة من الإضافة؛ وما عدا ذلك يُتجاهل بلا رد.
 - **العامل يقرأ مكان الحفظ من التفضيلات** (`store.getPrefs().saveLocation`) **لا من الرسالة**، ولا تحمل الرسالة نوع MIME ولا مسارًا. ويتحقق من الاسم والامتداد والحجم (`validateSaveFile`، عقد الواجهات §١٣) قبل أي تنزيل.
-- **لا رد** (عامل غير متاح أو خطأ قناة) يجعل المرسِل يرجع إلى التنزيل الحالي عبر Blob برسالة `SV_FALLBACK_BLOB` (عقد الواجهات §١٣).
+- **لا رد** (عامل غير متاح أو خطأ قناة) يجعل المرسِل يرجع إلى التنزيل الحالي عبر Blob برسالة `SV_FALLBACK_BLOB` (عقد الواجهات §١٣). أما **ردٌّ لم يصل في مهلته** والرسالة قد وصلت فلا يرجع إلى Blob (قد يكون العامل بدأ التنزيل فيتكرر الملف): `SV_NO_REPLY`. و`pending: true` حين يبقى التنزيل «جاريًا» بعد مهلة الانتظار (حوار الحفظ مفتوح)، فيعرض المستدعي `SV_PENDING` لا «حُفظ» (تدقيق 5fedcb9).
 
 ### ما ثبت حيًا في P10
 

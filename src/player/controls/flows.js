@@ -50,18 +50,20 @@ export function prepareExport({ controller, exportFlow, key, mode, split, now })
 export async function saveFiles({ exportFlow, files, doc }) {
   const saved = [];
   let blob = false;
+  let pending = false;
   for (const file of files) {
     let r;
     try {
       r = await exportFlow.saveFile({ name: file.name, text: file.text }, { doc });
     } catch (err) {
-      return { saved, blob, stopped: toErrorInfo(err) };
+      return { saved, blob, pending, stopped: toErrorInfo(err) };
     }
-    if (!r?.ok) return { saved, blob, stopped: infoOf(r?.code ?? 'SV_FAILED') };
+    if (!r?.ok) return { saved, blob, pending, stopped: infoOf(r?.code ?? 'SV_FAILED') };
     saved.push(file.name);
     if (r.mode === 'blob') blob = true;
+    if (r.pending) pending = true;
   }
-  return { saved, blob, stopped: null };
+  return { saved, blob, pending, stopped: null };
 }
 
 /**

@@ -832,6 +832,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       else d.saveLine = line;
     }
     if (r.blob) d.result.push({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB') });
+    if (r.pending) d.result.push({ tone: 'info', text: messageFor('SV_PENDING') });
     d.result.push(...prep.built.warnings.map((code) => ({ tone: code === 'EX_SPLIT_NOT_NEEDED' ? 'info' : 'warn', text: messageFor(code) })));
     if (r.saved.length) {
       const rec = await recordFor({ controller, key: spec.key, built: prep.built, videoId: prep.videoId });
