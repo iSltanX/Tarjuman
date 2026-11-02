@@ -10,7 +10,7 @@ import { isVideoId } from '../model/ids.js';
 import {
   applyRecordChange, bundleFromBackup, bundleFromRecord, slotModels, summarizeBundle, syncActive, unpackBundle,
 } from '../model/bundle.js';
-import { validateBundle } from '../model/slots.js';
+import { validateAltsValue, validateBundle, validateHead, validateMarksValue } from '../model/slots.js';
 import { chromeLocalArea } from './area.js';
 import { bundleReadKeys, checkRaw, hasCompanions, itemsFor, rawBundle } from './bundles.js';
 import { computeCapacity } from './capacity.js';
@@ -201,6 +201,25 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     }
   }
 
+  /**
+   * تعديل جزئي لمفتاح عام (الإعدادات أو التفضيلات) كما في writeBundle: قراءة ثم دمج ثم إعادة قراءة قبل الكتابة مباشرة؛ إن
+   * كتب سياق آخر بينهما يُعاد الدمج على الأحدث (حتى ثلاث مرات ثم ST_CONFLICT)، فلا يمحو تغيير مجموعةٍ تغييرَ أخرى في سياق
+   * آخر (تدقيق 5fedcb9، CX-H3: مصطلح أضيف وتغيير مكان الحفظ معًا كانا يُسقطان المصطلح).
+   */
+  async function mergeWrite(key, merge) {
+    for (let attempt = 1; ; attempt++) {
+      const { [key]: raw } = await read(key);
+      const next = merge(raw);
+      const { [key]: latest } = await read(key);
+      if (JSON.stringify(latest ?? null) !== JSON.stringify(raw ?? null)) {
+        if (attempt >= 3) throw new TjError('ST_CONFLICT', { detail: key });
+        continue;
+      }
+      await write({ [key]: next });
+      return next;
+    }
+  }
+
   const trivialSummary = (entry) => ({
     filled: entry.arabic ? 1 : 0, edited: entry.arabic?.edited ? 1 : 0,
     warned: entry.arabic && (entry.arabic.missing || entry.arabic.extra || entry.arabic.drift) ? 1 : 0, marks: { todo: 0, done: 0 },
@@ -266,11 +285,11 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     setSettings(patch) {
       return exclusive(async () => {
         await ready();
-        const { [KEY_SETTINGS]: raw } = await read(KEY_SETTINGS);
-        const next = mergeSettings(normalizeSettings(raw ?? DEFAULT_SETTINGS), patch);
-        assertValid(validateSettings(next), 'settings');
-        await write({ [KEY_SETTINGS]: next });
-        return next;
+        return mergeWrite(KEY_SETTINGS, (raw) => {
+          const next = mergeSettings(normalizeSettings(raw ?? DEFAULT_SETTINGS), patch);
+          assertValid(validateSettings(next), 'settings');
+          return next;
+        });
       });
     },
 
@@ -288,11 +307,11 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     setPrefs(patch) {
       return exclusive(async () => {
         await ready();
-        const { [KEY_PREFS]: raw } = await read(KEY_PREFS);
-        const next = mergePrefs(normalizePrefs(raw ?? DEFAULT_PREFS), patch);
-        assertValid(validatePrefs(next), 'prefs');
-        await write({ [KEY_PREFS]: next });
-        return next;
+        return mergeWrite(KEY_PREFS, (raw) => {
+          const next = mergePrefs(normalizePrefs(raw ?? DEFAULT_PREFS), patch);
+          assertValid(validatePrefs(next), 'prefs');
+          return next;
+        });
       });
     },
 
@@ -459,11 +478,40 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       const entries = (await exclusive(syncIndex)).sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
       const ids = entries.map((e) => e.videoId);
       const heads = ids.length ? await read(ids.map(bundleKey)) : {};
+      // الرأس المطابق لمُلخّصه (كتبهما الإصدار الثاني معًا) يكفي للفرز: ملخصه والأسماء والنشطة، ومعه الخانات غير النشطة
+      // والعلامات في قراءة واحدة للكل، بلا السجلات ولا السوابق (عقد data-model §١٥ وR46: «دون قراءة الترجمات»؛ تدقيق 5fedcb9،
+      // GM-009: كانت كل حزمة تُقرأ كاملة واحدة بعد أخرى). وما لا يطابق أو لا يصح يمر بالقراءة الكاملة والمصالحة كما كان.
+      const matching = (entry) => {
+        const h = heads[bundleKey(entry.videoId)];
+        return h !== undefined && validateHead(h).ok && h.videoId === entry.videoId && h.base.rev === entry.rev && h.base.updatedAt === entry.updatedAt;
+      };
+      const quick = entries.filter(matching).map((e) => e.videoId);
+      const light = quick.length ? await read(quick.flatMap((id) => [altsKey(id), marksKey(id)])) : {};
+      const fromHead = (entry, head) => {
+        const alts = light[altsKey(entry.videoId)] ?? null;
+        const marks = light[marksKey(entry.videoId)] ?? null;
+        if ((alts !== null && (!validateAltsValue(alts).ok || alts.videoId !== entry.videoId)) || (marks !== null && (!validateMarksValue(marks).ok || marks.videoId !== entry.videoId))) return null;
+        const slots = [1, 2, 3].map((n) => {
+          const active = head.active === n;
+          const t = active ? null : alts?.slots[n - 1]?.track ?? null;
+          return {
+            n, filled: active ? !!entry.arabic : !!t, active, name: head.names[n - 1],
+            edited: active ? !!entry.arabic?.edited : !!t && t.current !== null,
+            cueCount: active ? entry.arabic?.cueCount ?? 0 : t ? (t.current ?? t.original).length : 0,
+          };
+        });
+        return { entry, summary: head.summary, slots };
+      };
       const out = [];
       for (const entry of entries) {
         const head = heads[bundleKey(entry.videoId)];
         if (head === undefined) {
           out.push({ entry, summary: trivialSummary(entry), slots: slotModelsFromIndex(entry) });
+          continue;
+        }
+        const row = quick.includes(entry.videoId) ? fromHead(entry, head) : null;
+        if (row) {
+          out.push(row);
           continue;
         }
         // للرأس: الحزمة نفسها (تصالح إن لزم)؛ والتالف يُعرض بمُلخّص سجله ولا يوقف القائمة.

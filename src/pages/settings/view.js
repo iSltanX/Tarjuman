@@ -439,13 +439,10 @@ export function createSettings(env) {
       if (mine !== usageSeq) return;
       libraryText.textContent = translations ? `الترجمات المحفوظة: ${translations} · الفيديوهات المترجمة: ${videos}` : 'لا ترجمات محفوظة بعد.';
       libraryBytes.textContent = '';
-      let alts = 0;
-      let previous = 0;
-      for (const x of list) {
-        const b = await store.bundleBytes(x.entry.videoId);
-        alts += b.alts;
-        previous += b.previous;
-      }
+      // الأحجام معًا لا واحدًا بعد آخر (GM-009): رحلة لكل فيديو بالتوازي بدل أربع متتالية.
+      const sizes = await Promise.all(list.map((x) => store.bundleBytes(x.entry.videoId)));
+      const alts = sizes.reduce((s, b) => s + b.alts, 0);
+      const previous = sizes.reduce((s, b) => s + b.previous, 0);
       if (mine !== usageSeq) return;
       libraryBytes.textContent = list.length ? `الترجمات غير النشطة ${formatBytes(alts)} · النسخ السابقة ${formatBytes(previous)}` : '';
     } catch (err) {

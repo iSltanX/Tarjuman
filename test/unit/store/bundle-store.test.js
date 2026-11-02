@@ -199,3 +199,14 @@ test('الأحداث: تغيّر التوابع يُعلن بمعرّفاتها 
   assert.ok(events.every((e) => !e.bundles.length || e.videos[A]), 'كل تغيّر للتوابع يصحبه السجل');
   assert.ok(events.some((e) => e.bundles.includes(A)));
 });
+
+test('تدقيق 5fedcb9 (GM-010): بترتيب مفاتيح Chromium، ± وآخر موضع لا يعيدان كتابة الترجمات الأخرى والسابقة والعلامات', async () => {
+  const { store, sets } = make({ chromiumKeyOrder: true });
+  await seedBundle(store, sampleBundle({ third: true }));
+  await store.updateVideo(A, (r) => withView(r, { displayOffsetMs: 900 }, NOW));
+  assert.deepEqual(sets.at(-1), [`bundle:${A}`, `index:${A}`, `video:${A}`], '±: السجل والفهرس والرأس وحدها');
+  await store.updateBundle(A, (b) => withActiveSlot(b, 2, NOW));
+  assert.ok(sets.at(-1).includes(`alts:${A}`), 'التبديل يغيّر التوابع فعلًا فتُكتب');
+  await store.updateVideo(A, (r) => withView(r, { displayOffsetMs: 300 }, NOW));
+  assert.deepEqual(sets.at(-1), [`bundle:${A}`, `index:${A}`, `video:${A}`]);
+});

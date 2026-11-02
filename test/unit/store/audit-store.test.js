@@ -135,3 +135,36 @@ test('CX-H4: سجل تالف بلا مُلخّص لا يظهر في المحفو
   assert.deepEqual([report.replaced, report.failed], [[A], []]);
   assert.equal((await store.getBundle(A)).slots[1].name, 'مراجعة', 'أُصلح من النسخة');
 });
+
+test('CX-H3: إضافة مصطلح وتغيير مكان الحفظ من سياقين معًا لا يُسقط أحدهما الآخر', async () => {
+  const { gate, a, b } = shared();
+  await a.setPrefs({ glossary: { attach: true, terms: [{ source: 'one', target: 'واحد', note: null }] } });
+  // بعد قراءة السياق الأول للتفضيلات يغيّر الآخر مكان الحفظ.
+  gate.armed = { match: (keys) => keys === 'prefs', run: () => b.setPrefs({ saveLocation: { mode: 'subfolder', folder: 'ترجماتي' } }) };
+  await a.setPrefs({ glossary: { attach: true, terms: [{ source: 'one', target: 'واحد', note: null }, { source: 'two', target: 'اثنان', note: null }] } });
+  const p = await b.getPrefs();
+  assert.equal(p.glossary.terms.length, 2, 'المصطلح باقٍ');
+  assert.deepEqual(p.saveLocation, { mode: 'subfolder', folder: 'ترجماتي' }, 'ومكان الحفظ باقٍ');
+});
+
+test('GM-009: المحفوظات من الرأس المطابق والتوابع الخفيفة بقراءات ثابتة العدد، بلا السجلات ولا السوابق، وبالنتيجة نفسها', async () => {
+  const { summarizeBundle, slotModels } = await import('../../../src/core/model/bundle.js');
+  const area = createMemoryArea({ unlimited: true, chromiumKeyOrder: true });
+  const store = createStore({ area, now });
+  const ids = Array.from({ length: 50 }, (_, i) => `vid${String(i).padStart(8, '0')}`);
+  for (const [i, id] of ids.entries()) await seedBundle(store, sampleBundle({ videoId: id, third: i % 3 === 0 }));
+  const reads = [];
+  const get = area.get;
+  area.get = async (keys) => { reads.push(keys); return get(keys); };
+  const list = await store.listLibrary();
+  const keys = reads.flatMap((k) => (Array.isArray(k) ? k : [k]));
+  assert.equal(list.length, 50);
+  assert.ok(reads.length <= 4, `قراءات: ${reads.length}`);
+  assert.equal(keys.filter((k) => /^(?:video|prev):/.test(k)).length, 0, 'لا سجل ولا سابقة');
+  area.get = get;
+  for (const row of list) {
+    const b = await store.getBundle(row.entry.videoId);
+    assert.deepEqual(row.summary, summarizeBundle(b), row.entry.videoId);
+    assert.deepEqual(row.slots, slotModels(b), row.entry.videoId);
+  }
+});
