@@ -19,6 +19,11 @@ const HAS_ARABIC_LETTER = /(?=\p{Script=Arabic})\p{L}/u;
 // مقطع فارغ بصريًا: مسافات أو محارف تنسيق غير مرئية (ZWSP وRLM…) فقط.
 const BLANK = /^[\s\p{Cf}]*$/u;
 const ascending = (a, b) => a - b;
+
+/** مقطع فارغ بصريًا. */
+export const isBlankText = (text) => BLANK.test(text);
+/** مقطع بحروف غير عربية فقط (الرموز والأرقام وحدها ليست ترجمة ناقصة). */
+export const lacksArabic = (text) => !BLANK.test(text) && HAS_LETTER.test(text) && !HAS_ARABIC_LETTER.test(text);
 const HIGH_SURROGATE = /[\uD800-\uDBFF]/;
 /** ملاحظة في حد النموذج (500 محرف) دون شطر زوج بديل. */
 const clipNote = (s) => (s.length <= LIMITS.maxNoteChars ? s : `${s.slice(0, LIMITS.maxNoteChars - (HIGH_SURROGATE.test(s[LIMITS.maxNoteChars - 2]) ? 2 : 1))}…`);

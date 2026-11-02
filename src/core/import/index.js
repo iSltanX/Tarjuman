@@ -8,29 +8,14 @@ import { parseSrtLenient } from '../srt/lenient.js';
 import { selectFingerprint } from './fingerprint.js';
 import { mergeParts } from './merge.js';
 import { MAX_FILES, MAX_FILE_BYTES, readFileText } from './read-file.js';
+import { clip, displayName, toList } from './files.js';
 
 export { MAX_FILES, MAX_FILE_BYTES, mergeParts, selectFingerprint };
+export { applyPatch, cuesKey, partsStatus, readPatch } from './patch.js';
+export { REVIEW_THRESHOLDS, classTransitions, reviewIncoming, videoIdFromName } from './review.js';
 
-const DEFAULT_NAME = 'translation.ar.srt';
 const NAMES_NOTE_CHARS = 300;
-const NAME_CONTROLS = /[\u0000-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
-const HIGH_SURROGATE = /[\uD800-\uDBFF]/;
 const PART_MARK = /[._ -]?part[._ -]?\d+/i;
-
-/** @param {unknown} input File أو مصفوفة ملفات أو FileList */
-function toList(input) {
-  if (input === null || input === undefined) return [];
-  if (typeof input === 'object' && typeof input.arrayBuffer !== 'function') return Array.from(input);
-  return [input];
-}
-
-/** قصّ إلى حد من وحدات UTF-16 دون شطر زوج بديل. */
-const clip = (s, max) => (s.length <= max ? s : s.slice(0, HIGH_SURROGATE.test(s[max - 1]) ? max - 1 : max));
-
-function displayName(file) {
-  const raw = typeof file?.name === 'string' ? file.name : '';
-  return clip(raw.replace(NAME_CONTROLS, ''), LIMITS.maxFileNameChars).trim() || DEFAULT_NAME;
-}
 
 /** اسم الجزء الأول بحسب الأرقام بلا علامة «part N» إن بقي اسم صالح، وإلا كما هو. */
 function mergedFileName(order) {

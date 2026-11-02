@@ -1,6 +1,8 @@
 // محلّل SRT متسامح للملفات المستوردة، وهي نص غير موثوق من نموذج أو أداة خارجية. يقبل BOM وCRLF والفاصلة والنقطة
 // في الأزمنة والأسطر الزائدة والترقيم غير المتسلسل، ويجرّد وسوم التنسيق نصيًا ولا يفسّر أي HTML. كل تحويل للنص يعود
 // في notes، وما لا يُحلَّل يرمي TjError برقم السطر. لا يعدّل التوقيت ولا الترقيم أبدًا. (الصارم لمخرجات ترجمان: parser.js)
+// ملفات TXT وMarkdown (R48) بالمحلّل نفسه: تُزال أغلفة محددة واضحة فقط بملاحظة — أسوار ``` و~~~، والتأكيد حول سطر
+// الرقم أو الزمن كله (**12** و`00:00:01,000 --> …`)، والعناوين والفقرات قبل الملف وبعده. وما داخل نص المقطع يبقى حرفيًا.
 import { TjError, messageFor } from '../errors/index.js';
 import { LIMITS } from '../model/validate.js';
 
@@ -18,7 +20,9 @@ const CUE_FRAGMENT_RE = /^\d+$|-->|\d:\d\d:\d\d/;
 const NUMBER_RE = /^\d+$/;
 const TIME_LIKE_RE = /^\d[^\s>]*\s*-->/;
 const TIME_RE = /^(\d+):([0-5]\d):([0-5]\d)[,.](\d{3})\s*-->\s*(\d+):([0-5]\d):([0-5]\d)[,.](\d{3})$/;
-const FENCE_RE = /^`{3,}[\w+-]*$/;
+const FENCE_RE = /^(?:`{3,}|~{3,})[\w+-]*$/;
+// غلاف تأكيد واحد يحيط بسطر الرأس كله: ** أو __ أو * أو _ أو `.
+const EMPHASIS_RE = /^(\*\*|__|\*|_|`)(\S(?:.*\S)?)\1$/;
 
 // وسوم التنسيق التي تُجرَّد وحدها، وأوامر التموضع من نمط ASS مثل {\an8}. كل وسم HTML آخر يبقى نصًا حرفيًا.
 const FORMAT_TAG_RE = /<\/?(?:i|b|u|s|em|strong|font)(?:\s[^<>]*)?>/gi;
@@ -30,6 +34,14 @@ const latinDigits = (s) => s.replace(INDIC_DIGITS, (d) => String(d.charCodeAt(0)
 
 /** صورة السطر لمطابقة الرأس: بلا علامات اتجاه، وأرقام لاتينية، وبلا مسافات أطراف. */
 const headerForm = (line) => latinDigits(line.replace(INVISIBLE_MARKS, '')).trim();
+
+/** صورة الرأس بعد نزع غلاف التأكيد إن أحاط بالسطر كله. */
+const bare = (line) => {
+  const form = headerForm(line);
+  const m = EMPHASIS_RE.exec(form);
+  return m ? m[2].trim() : form;
+};
+const wrapped = (line) => EMPHASIS_RE.test(headerForm(line));
 
 const excerpt = (s) => (s.length > EXCERPT_CHARS ? `${s.slice(0, EXCERPT_CHARS - 1)}…` : s);
 const cleanLines = (text) => text.split('\n').map((l) => l.trim()).filter(Boolean).join('\n');
@@ -48,16 +60,22 @@ export function parseSrtLenient(input) {
   // رأس المقطع: سطر رقم ثم سطر زمن. سطر يشبه الزمن وهو غير صالح أو بلا رقم قبله خطأ، لا نص يلتحق بما قبله.
   const heads = [];
   let indicDigits = false;
+  let emphasized = 0;
   for (let i = 0; i < lines.length; i++) {
-    const form = headerForm(lines[i]);
+    const form = bare(lines[i]);
     if (!TIME_LIKE_RE.test(form)) continue;
     const m = TIME_RE.exec(form);
     if (!m) throw new TjError('IM_BAD_TIME', { params: { line: i + 1 } });
-    if (i === 0 || !NUMBER_RE.test(headerForm(lines[i - 1]))) throw new TjError('IM_MISSING_NUMBER', { params: { line: i + 1 } });
+    if (i === 0 || !NUMBER_RE.test(bare(lines[i - 1]))) throw new TjError('IM_MISSING_NUMBER', { params: { line: i + 1 } });
     if (HAS_INDIC.test(lines[i]) || HAS_INDIC.test(lines[i - 1])) indicDigits = true;
+    emphasized += Number(wrapped(lines[i])) + Number(wrapped(lines[i - 1]));
     heads.push({ num: i - 1, time: i, m });
   }
-  if (!heads.length) throw new TjError(lines.every((l) => l.trim() === '') ? 'IM_EMPTY_FILE' : 'IM_NO_CUES');
+  if (!heads.length) {
+    if (lines.every((l) => l.trim() === '')) throw new TjError('IM_EMPTY_FILE');
+    // أرقام مقاطع ونصوص بلا سطر زمن واحد: الناقص سطور التوقيت تحديدًا، ولا تُخترع أزمنة.
+    throw new TjError(lines.filter((l) => NUMBER_RE.test(bare(l))).length >= 2 ? 'IM_NO_TIMING' : 'IM_NO_CUES');
+  }
   if (heads.length > LIMITS.maxCues) throw new TjError('IM_TOO_MANY_CUES', { params: { max: LIMITS.maxCues } });
 
   let fence = false;
@@ -68,7 +86,7 @@ export function parseSrtLenient(input) {
       const t = l.trim();
       if (!t) return;
       if (FENCE_RE.test(t)) fence = true;
-      else if (CUE_FRAGMENT_RE.test(headerForm(l))) throw new TjError('IM_STRAY_TEXT', { params: { line: from + i + 1 } });
+      else if (CUE_FRAGMENT_RE.test(bare(l))) throw new TjError('IM_STRAY_TEXT', { params: { line: from + i + 1 } });
       else bucket.push(t);
     });
   };
@@ -106,7 +124,7 @@ export function parseSrtLenient(input) {
     if (LITERAL_TAG_RE.test(t)) literalHtml++;
     if (t.length > LIMITS.maxTextChars) throw new TjError('IM_CUE_TOO_LONG', { params: { line: h.num + 1, max: LIMITS.maxTextChars } });
 
-    const n = Number(headerForm(lines[h.num]));
+    const n = Number(bare(lines[h.num]));
     if (n < 1 || n > MAX_CUE_NUMBER) throw new TjError('IM_BAD_NUMBER', { params: { line: h.num + 1, max: MAX_CUE_NUMBER } });
     const [, h1, m1, s1, f1, h2, m2, s2, f2] = h.m;
     const startMs = Number(h1) * 3600000 + Number(m1) * 60000 + Number(s1) * 1000 + Number(f1);
@@ -121,6 +139,7 @@ export function parseSrtLenient(input) {
   if (fence) notes.push(messageFor('IM_NOTE_FENCE'));
   if (chatterBefore.length) notes.push(messageFor('IM_NOTE_CHATTER_BEFORE', { count: chatterBefore.length, first: excerpt(chatterBefore[0]) }));
   if (chatterAfter.length) notes.push(messageFor('IM_NOTE_CHATTER_AFTER', { count: chatterAfter.length, first: excerpt(chatterAfter[0]) }));
+  if (emphasized) notes.push(messageFor('IM_NOTE_MD_EMPHASIS', { count: emphasized }));
   if (indicDigits) notes.push(messageFor('IM_NOTE_DIGITS'));
   if (tagged) notes.push(messageFor('IM_NOTE_TAGS', { count: tagged }));
   if (controlled) notes.push(messageFor('IM_NOTE_CONTROL', { count: controlled }));
