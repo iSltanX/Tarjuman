@@ -104,7 +104,7 @@ test('المقاسات: عادي، ومضغوط تحت 560px، وملء الشا
   assert.equal(page.ui.size(), 'fullscreen', 'الوضع الكبير مقاس ملء الشاشة');
 });
 
-test('القوائم والتلميحات تتبع الشريط: تختفي حين يُخفي يوتيوب أدواته وتعود معه دون فقد حالتها', () => {
+test('القوائم تتبع الشريط: قائمة فُتحت بالفأرة تُغلق حين يُخفي يوتيوب أدواته فلا تعود فجأة معه، وبالتركيز فيها تبقى', () => {
   const page = mountPage({ state: withArabic() });
   const { ui } = page;
   click(ui.btn('badge'));
@@ -112,9 +112,19 @@ test('القوائم والتلميحات تتبع الشريط: تختفي حي
   assert.equal(ui.barState(), 'shown');
   page.player.classList.add('ytp-autohide');
   assert.equal(ui.barState(), 'hidden');
-  assert.equal(ui.menuOpen(), true, 'القائمة باقية منطقيًا (التركيز والكتابة لا يضيعان)');
+  assert.equal(ui.menuOpen(), false, 'لا تركيز فيها: تُغلق مع الشريط');
   page.player.classList.remove('ytp-autohide');
   assert.equal(ui.barState(), 'shown');
+  assert.equal(ui.menuOpen(), false, 'ولا تعود مع الشريط');
+  // بلوحة المفاتيح: التركيز داخل القائمة يبقيها منطقيًا (التركيز والكتابة لا يضيعان) وتتبع الشريط بالشفافية.
+  click(ui.btn('badge'), 0);
+  assert.equal(ui.menuOpen(), true);
+  page.player.classList.add('ytp-autohide');
+  assert.equal(ui.barState(), 'hidden');
+  assert.equal(ui.menuOpen(), true, 'التركيز فيها: باقية');
+  page.player.classList.remove('ytp-autohide');
+  assert.equal(ui.barState(), 'shown');
+  assert.equal(ui.menuOpen(), true);
 });
 
 test('نقطة الجاهزية على زر التحميل حين يُلتقط مسار، ونقطة الحالة على الرفع بحسب المقارنة', () => {

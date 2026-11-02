@@ -1,24 +1,26 @@
-// واجهة الإعدادات (P7-AC4/AC8/AC9/AC10، figma-design-brief §١٠): عمود واحد بأقسام بطاقات، والحفظ فوري لكل خيار برسالة
-// «حُفظ» بجانبه. العرض (الوضع الافتراضي، وخط الترجمة، وحجمها بمنزلق، والخلفية، والموضع، ومعاينة حية)، والتوقيت،
-// والتصدير، والمقارنة، والتخزين (والمسح بكتابة «امسح»)، والتشخيص، و«حول». خط الترجمة وحجمها يخصان المعاينة وما
-// يُعرض فوق الفيديو وحدهما، وخطوط الصفحة نفسها لا تتغير. لا طلبات شبكة، وكل نص عبر textContent.
+// واجهة الإعدادات (P7-AC4/AC8/AC9/AC10، وإعادة التصميم): تنقّل جانبي في البداية (اليمين) بأقسام قصيرة، ومحتوى القسم
+// المختار بجواره، والحفظ فوري لكل خيار بعلامة «حُفظ» تحت تسميته، و«استعادة الافتراضي» لكل قسم له افتراضيات. القسم
+// المختار في جزء العنوان (#export) فيبقى عند التحديث وتُفتح الصفحة عليه من رابط. خط الترجمة وحجمها يخصان المعاينة
+// وما يُعرض فوق الفيديو وحدهما، وخطوط الصفحة نفسها لا تتغير. لا طلبات شبكة، وكل نص عبر textContent.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { DEFAULT_SETTINGS, SUBTITLE_BACKGROUNDS, SUBTITLE_POSITIONS, SUBTITLE_SCALE } from '../../core/model/settings.js';
-import { alertBox, confirmDialog, el, ltr } from '../../ui/components.js';
+import { alertBox, button, choiceGroup, confirmDialog, el, icon, ltr } from '../../ui/components.js';
 import { formatBytes } from '../../ui/format.js';
 import { SUBTITLE_FONT_LIST, subtitleFontStack } from '../../ui/subtitle-fonts.js';
-import { pageIcon } from '../library/icons.js';
 import { aboutSection } from './about.js';
 import { numberField, savedMark, segmented } from './controls.js';
 import {
-  CONFIRM_WORD, DEFAULT_SCALE_MARK_PCT, PREVIEW_BOX, PREVIEW_LINES, completenessText, confirmWordOk, parseCompleteness, parseDrift, parseSplit,
-  parseStep, previewStyle, resetState, snapScale, stepChoice, stepText,
+  CONFIRM_WORD, DEFAULT_SCALE_MARK_PCT, DEFAULT_SECTION, DEFAULT_SUBFOLDER, PREVIEW_BOX, PREVIEW_LINES, SAVE_LOCATIONS, SAVE_LOCATION_NOTE,
+  SAVE_LOCATION_PENDING, SECTIONS, completenessText, confirmWordOk, isSectionId, parseCompleteness, parseDrift, parseSplit, parseStep,
+  previewStyle, saveLocationStatus, sectionReset, snapScale, stepChoice, stepText,
 } from './model.js';
 
 export const SUBTITLE_NOTE = 'يخص الترجمة فوق الفيديو وحدها، والخطوط مضمّنة في الإضافة.';
 export const SCALE_NOTE = 'من 70% إلى 160% بخطوة 5% · الافتراضي 100%';
-export const PREVIEW_NOTE = 'المعاينة تتحدث فور تغيير الخط أو الحجم. الحجم نسبة من ارتفاع المشغّل، فيكبر النص في ملء الشاشة.';
+export const PREVIEW_NOTE = 'الحجم نسبة من ارتفاع المشغّل، فيكبر النص في ملء الشاشة.';
 export const INSTALL_REMINDER = 'ثبّت أيقونة ترجمان في شريط المتصفح من قائمة الإضافات.';
+export const SAVE_HINT = 'كل خيار يُحفظ فورًا على جهازك.';
+export const RESET_LABEL = 'استعادة الافتراضي';
 export const MODE_NOTES = Object.freeze({
   normal: 'عادي: مقاطع كما في يوتيوب، للتزامن الأدق.',
   long: 'مقاطع أطول: جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما.',
@@ -33,9 +35,29 @@ const POSITION_LABELS = Object.freeze({ bottom: 'أسفل', raised: 'مرتفع'
  *   clipboardWrite: (text: string) => Promise<void>,
  *   diagnosticsText: () => Promise<string>,
  *   confirm?: typeof confirmDialog,
+ *   nav?: { get: () => string | null, set: (id: string) => void, onChange: (fn: () => void) => () => void },
  *   setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void,
  * }} SettingsEnv
  */
+
+/** التنقّل عبر جزء العنوان إن وُجدت نافذة، وإلا ذاكرة فقط (الاختبارات). */
+function hashNav(doc) {
+  const win = doc.defaultView ?? null;
+  if (!win?.location || !win.history?.replaceState) {
+    let memo = null;
+    return { get: () => memo, set: (id) => { memo = id; }, onChange: () => () => {} };
+  }
+  return {
+    get: () => String(win.location.hash ?? '').replace(/^#/, '') || null,
+    set: (id) => {
+      if (win.location.hash !== `#${id}`) win.history.replaceState(null, '', `#${id}`);
+    },
+    onChange: (fn) => {
+      win.addEventListener('hashchange', fn);
+      return () => win.removeEventListener('hashchange', fn);
+    },
+  };
+}
 
 /** @param {SettingsEnv} env */
 export function createSettings(env) {
@@ -43,6 +65,7 @@ export function createSettings(env) {
   const setTimer = env.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
   const clearTimer = env.clearTimer ?? ((id) => clearTimeout(id));
   const confirm = env.confirm ?? confirmDialog;
+  const nav = env.nav ?? hashNav(doc);
   const marks = () => savedMark({ doc, setTimer, clearTimer });
   let settings = DEFAULT_SETTINGS;
   let stepCustom = false;
@@ -50,7 +73,7 @@ export function createSettings(env) {
   const sync = [];
 
   const root = el('div', { className: 'st', doc });
-  const reminderHost = el('div', { doc });
+  const reminderHost = el('div', { className: 'st-reminder', doc });
   const alertHost = el('div', { attrs: { role: 'status' }, doc });
 
   /** يحفظ تعديلًا جزئيًا ويبلّغ العلامة بالنتيجة؛ الفشل يُبقي القيمة السابقة في الواجهة. */
@@ -68,12 +91,47 @@ export function createSettings(env) {
     return settings;
   }
 
-  const card = (id, title, ...children) => el('section', {
-    className: 'tj-card st-card', attrs: { 'aria-labelledby': id },
-    children: [el('h2', { className: 'tj-h3', text: title, attrs: { id }, doc }), ...children], doc,
-  });
-  const row = (label, control, ...extra) => el('div', { className: 'st-row', children: [el('div', { className: 'st-row__label', children: [typeof label === 'string' ? el('span', { className: 'tj-label', text: label, doc }) : label], doc }), el('div', { className: 'st-row__control', children: [control, ...extra], doc })], doc });
+  // ---- البُنى المشتركة ----
   const note = (text) => el('p', { className: 'tj-caption st-note', text, doc });
+  /** صف: التسمية في البداية وتحتها علامة الحفظ، والعنصر بعدها. */
+  const row = (label, mark, control, ...extra) => el('div', {
+    className: 'st-row',
+    children: [
+      el('div', { className: 'st-row__label', children: [el('span', { className: 'tj-label', text: label, doc }), mark?.root ?? null], doc }),
+      el('div', { className: 'st-row__control', children: [control, ...extra], doc }),
+    ],
+    doc,
+  });
+
+  /** قسم بعنوان ووصف و«استعادة الافتراضي» إن كان له افتراضيات. */
+  function section(def, ...children) {
+    const reset = sectionReset(settings, def.id);
+    let resetBtn = null;
+    let resetMark = null;
+    if (reset) {
+      resetMark = marks();
+      resetBtn = button({ label: RESET_LABEL, variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: () => {
+        const r = sectionReset(settings, def.id);
+        if (!r || r.isDefault) return;
+        save(r.patch, resetMark);
+      } });
+      sync.push(() => {
+        const r = sectionReset(settings, def.id);
+        resetBtn.setAttribute('aria-disabled', r.isDefault ? 'true' : 'false');
+        resetBtn.title = r.disabledReason ?? '';
+      });
+    }
+    const head = el('div', {
+      className: 'st-section__head',
+      children: [
+        el('div', { className: 'st-section__titles', children: [el('h2', { className: 'tj-h2', text: def.title, attrs: { id: `st-${def.id}-title` }, doc }), el('p', { className: 'tj-caption', text: def.desc, doc })], doc }),
+        resetBtn ? el('div', { className: 'st-section__actions', children: [resetBtn, resetMark.root], doc }) : null,
+      ],
+      doc,
+    });
+    return el('section', { className: 'st-section', attrs: { id: def.id, 'aria-labelledby': `st-${def.id}-title`, 'data-section': def.id }, children: [head, ...children], doc });
+  }
+  const byId = Object.fromEntries(SECTIONS.map((s) => [s.id, s]));
 
   // ---- العرض ----
   const displayMark = marks();
@@ -130,25 +188,6 @@ export function createSettings(env) {
   const sliderBox = el('div', { className: 'st-scale__box', children: [el('div', { className: 'st-scale__track', children: [slider, defaultMark], doc }), scaleOut], doc });
   sync.push(() => { slider.value = String(settings.appearance.scale); showScale(settings.appearance.scale); });
 
-  const resetBtn = el('button', {
-    className: 'tj-btn tj-btn--ghost tj-btn--sm st-reset', attrs: { type: 'button' },
-    children: [pageIcon('restore', { doc }), el('span', { text: 'استعادة الخط والحجم الافتراضيين', doc })], doc,
-  });
-  // السبب خارج الزر فلا يدخل اسمه؛ يرتبط به وصفًا (aria-describedby) وبـtitle.
-  const resetReason = el('span', { className: 'tj-sr-only', attrs: { id: 'st-reset-reason' }, doc });
-  resetBtn.addEventListener('click', (e) => {
-    if (resetBtn.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
-    save({ appearance: { font: DEFAULT_SETTINGS.appearance.font, scale: DEFAULT_SETTINGS.appearance.scale } }, scaleMark);
-  });
-  sync.push(() => {
-    const r = resetState(settings.appearance);
-    resetBtn.setAttribute('aria-disabled', r.isDefault ? 'true' : 'false');
-    resetBtn.title = r.disabledReason ?? '';
-    resetReason.textContent = r.disabledReason ?? '';
-    if (r.isDefault) resetBtn.setAttribute('aria-describedby', 'st-reset-reason');
-    else resetBtn.removeAttribute('aria-describedby');
-  });
-
   const bgMark = marks();
   const bgSeg = segmented({
     legend: 'الخلفية', value: settings.appearance.background, doc,
@@ -191,24 +230,20 @@ export function createSettings(env) {
   })();
   sync.push(() => preview.update(settings.appearance));
 
-  const display = card('st-display-title', 'العرض',
-    row('وضع العرض الافتراضي', displaySeg.root, displayMark.root),
-    row(el('span', { className: 'tj-label', text: 'خط الترجمة', doc }), fontList, fontMark.root),
-    note(SUBTITLE_NOTE),
-    row('حجم الخط', sliderBox, scaleMark.root),
-    note(SCALE_NOTE),
-    el('div', { className: 'st-reset-row', children: [resetBtn, resetReason], doc }),
-    row('الخلفية', bgSeg.root, bgMark.root),
-    row('الموضع', posSeg.root, posMark.root),
-    preview.root,
-    note(PREVIEW_NOTE));
+  const display = section(byId.display,
+    row('وضع العرض الافتراضي', displayMark, displaySeg.root),
+    row('خط الترجمة', fontMark, fontList, note(SUBTITLE_NOTE)),
+    row('حجم الخط', scaleMark, sliderBox, note(SCALE_NOTE)),
+    row('الخلفية', bgMark, bgSeg.root),
+    row('الموضع', posMark, posSeg.root),
+    el('div', { className: 'st-preview-block', children: [el('span', { className: 'tj-label', text: 'معاينة حية', doc }), preview.root, note(PREVIEW_NOTE)], doc }));
 
   // ---- التوقيت ----
   const stepMark = marks();
   let stepField;
   const stepSeg = segmented({
     legend: 'خطوة أزرار ±', value: stepChoice(settings.offsetStepMs), doc,
-    options: [{ value: '0.5', label: '0.5' }, { value: '1', label: '1' }, { value: 'custom', label: 'مخصص' }],
+    options: [{ value: '0.5', label: '0.5 ث' }, { value: '1', label: '1 ث' }, { value: 'custom', label: 'مخصص' }],
     onChange: (v) => {
       stepCustom = v === 'custom';
       customHost.hidden = !stepCustom;
@@ -229,13 +264,23 @@ export function createSettings(env) {
     customHost.hidden = !(stepCustom || choice === 'custom');
     stepField.set(stepText(settings.offsetStepMs), { force });
   });
-  const timing = card('st-timing-title', 'التوقيت',
-    row('خطوة أزرار ±', stepSeg.root, stepMark.root),
-    customHost,
-    el('p', { className: 'tj-body-sm', text: '+ تأخير: تظهر لاحقًا · − تقديم: تظهر أبكر', doc }),
-    note('الإزاحة تُحفظ لكل فيديو، ولا تغيّر ملفك.'));
+  const timing = section(byId.timing,
+    row('خطوة أزرار ±', stepMark, stepSeg.root, customHost, note('+ تأخير: تظهر الترجمة لاحقًا · − تقديم: تظهر أبكر. الإزاحة تُحفظ لكل فيديو ولا تغيّر ملفك.')));
 
   // ---- التصدير ----
+  // مكان حفظ ملفات الترجمة (R65): الواجهة كاملة بأوضاعها الثلاثة؛ غير الافتراضيين ينتظران إذن التنزيلات (الإصدار الثاني).
+  const subfolderId = 'st-subfolder';
+  const subfolder = el('input', { className: 'tj-field__input tj-field__input--mono st-subfolder', attrs: { id: subfolderId, type: 'text', 'aria-label': 'اسم المجلد الفرعي', autocomplete: 'off', spellcheck: 'false', placeholder: DEFAULT_SUBFOLDER }, dir: 'ltr', doc });
+  subfolder.value = DEFAULT_SUBFOLDER;
+  subfolder.disabled = true;
+  const locationGroup = choiceGroup({
+    legend: 'مكان حفظ ملفات الترجمة', value: 'downloads', doc,
+    options: SAVE_LOCATIONS.map((o) => ({ value: o.value, label: o.label, hint: o.hint, disabledReason: o.available ? null : SAVE_LOCATION_PENDING, extra: o.value === 'subfolder' ? subfolder : null })),
+  });
+  const locationStatus = el('p', { className: 'st-status', children: [icon('folder', { doc }), el('span', { text: saveLocationStatus('downloads'), doc })], doc });
+  const exporting = section(byId.export,
+    row('مكان حفظ الملفات', null, locationGroup.root, locationStatus, note(SAVE_LOCATION_NOTE)));
+
   const exportMark = marks();
   const modeSeg = segmented({
     legend: 'الوضع الافتراضي للتصدير', value: settings.export.modeDefault, doc,
@@ -250,10 +295,10 @@ export function createSettings(env) {
     commit: (n) => save({ export: { splitThreshold: n } }, splitMark),
   });
   sync.push((force) => splitField.set(String(settings.export.splitThreshold), { force }));
-  const exporting = card('st-export-title', 'التصدير',
-    row('الوضع الافتراضي', modeSeg.root, exportMark.root),
-    el('div', { className: 'st-notes', children: [note(MODE_NOTES.normal), note(MODE_NOTES.long)], doc }),
-    splitField.root);
+  exporting.append(
+    row('وضع التصدير الافتراضي', exportMark, modeSeg.root, el('div', { className: 'st-notes', children: [note(MODE_NOTES.normal), note(MODE_NOTES.long)], doc })),
+    row('التقسيم الاحتياطي', null, splitField.root),
+  );
 
   // ---- المقارنة ----
   const driftMark = marks();
@@ -270,12 +315,12 @@ export function createSettings(env) {
     commit: (v) => save({ thresholds: { completeness: v } }, compMark),
   });
   sync.push((force) => compField.set(completenessText(settings.thresholds.completeness), { force }));
-  const comparison = card('st-compare-title', 'المقارنة', el('div', { className: 'st-fields', children: [driftField.root, compField.root], doc }));
+  const comparison = section(byId.compare, el('div', { className: 'st-fields', children: [driftField.root, compField.root], doc }));
 
   // ---- التخزين ----
-  const usageText = el('span', { className: 'tj-caption', doc });
-  const meterFill = el('span', { className: 'st-meter__fill', doc });
-  const meter = el('span', { className: 'st-meter', attrs: { role: 'meter', 'aria-label': 'المساحة المستخدمة', 'aria-valuemin': '0', 'aria-valuemax': '100' }, children: [meterFill], doc });
+  const usageText = el('span', { className: 'tj-body-sm st-quota__text', doc });
+  const meterFill = el('span', { className: 'tj-meter__fill', doc });
+  const meter = el('span', { className: 'tj-meter', attrs: { role: 'meter', 'aria-label': 'المساحة المستخدمة', 'aria-valuemin': '0', 'aria-valuemax': '100' }, children: [meterFill], doc });
   const storageMark = marks();
   const capacityAlert = el('div', { doc });
   async function refreshCapacity() {
@@ -287,15 +332,14 @@ export function createSettings(env) {
         const pct = Math.min(100, Math.round((cap.bytesInUse / cap.quotaBytes) * 100));
         meterFill.style.width = `${pct}%`;
         meter.setAttribute('aria-valuenow', String(pct));
-        meter.className = `st-meter st-meter--${cap.level}`;
+        meter.className = `tj-meter tj-meter--${cap.level}`;
       }
       capacityAlert.replaceChildren(...(cap.code ? [alertBox({ tone: cap.level === 'full' ? 'danger' : 'warning', text: messageFor(cap.code), doc })] : []));
     } catch (err) {
       usageText.textContent = toErrorInfo(err).message;
     }
   }
-  const clearBtn = el('button', { className: 'tj-btn tj-btn--danger', attrs: { type: 'button' }, children: [pageIcon('trash', { doc }), el('span', { text: 'مسح كل البيانات', doc })], doc });
-  clearBtn.addEventListener('click', () => { clearAll(); });
+  const clearBtn = button({ label: 'مسح كل البيانات', variant: 'danger', icon: 'trash', doc, onClick: () => { clearAll(); } });
   async function clearAll() {
     const typed = el('input', { className: 'tj-field__input', attrs: { id: 'st-confirm-word', type: 'text', autocomplete: 'off', placeholder: CONFIRM_WORD }, doc });
     const content = el('div', {
@@ -331,33 +375,34 @@ export function createSettings(env) {
       storageMark.flash(toErrorInfo(err).message, 'danger');
     }
   }
-  const storage = card('st-storage-title', 'التخزين',
-    el('div', { className: 'st-quota', children: [usageText, meter], doc }),
-    capacityAlert,
-    el('div', { className: 'st-row__control', children: [clearBtn, storageMark.root], doc }));
+  const storage = section(byId.storage,
+    row('المساحة المستخدمة', null, el('div', { className: 'st-quota', children: [usageText, meter], doc }), capacityAlert),
+    row('مسح البيانات', storageMark, el('div', { className: 'st-actions', children: [clearBtn], doc }), note('يحذف كل الترجمات المحفوظة والإعدادات من هذا المتصفح. الملفات التي نزّلتها على جهازك لا تتأثر.')));
 
   // ---- التشخيص ----
   const diagMark = marks();
-  const diagBtn = el('button', { className: 'tj-btn tj-btn--secondary st-diag__button', attrs: { type: 'button' }, children: [pageIcon('clipboard', { doc }), el('span', { text: 'نسخ تقرير التشخيص', doc })], doc });
-  diagBtn.addEventListener('click', async () => {
+  const diagBtn = button({ label: 'نسخ تقرير التشخيص', variant: 'secondary', icon: 'clipboard', doc, onClick: async () => {
     try {
       await env.clipboardWrite(await env.diagnosticsText());
       diagMark.flash(messageFor('PG_DIAGNOSTICS_DONE'), 'success');
     } catch {
       diagMark.flash(messageFor('PG_DIAGNOSTICS_FAILED'), 'danger');
     }
-  });
+  } });
   const panel = (tone, title, text) => el('div', { className: `st-panel st-panel--${tone}`, children: [el('strong', { className: 'st-panel__title', text: title, doc }), el('p', { className: 'tj-body-sm', text, doc })], doc });
-  const diagnostics = card('st-diag-title', 'التشخيص',
-    el('div', { className: 'st-row__control', children: [diagBtn, diagMark.root], doc }),
-    el('div', {
-      className: 'st-panels',
-      children: [
-        panel('ok', 'يتضمن', 'الإصدار، والمتصفح، ونوع الخطأ، وأحجامًا وأعدادًا.'),
-        panel('no', 'لا يتضمن أبدًا', 'روابط، أو رموز جلسة، أو ملفات ارتباط، أو نص الترجمة.'),
-      ],
-      doc,
-    }));
+  const diagnostics = section(byId.diagnostics,
+    row('تقرير التشخيص', diagMark, el('div', { className: 'st-actions', children: [diagBtn], doc }),
+      el('div', {
+        className: 'st-panels',
+        children: [
+          panel('ok', 'يتضمن', 'الإصدار، والمتصفح، ونوع الخطأ، وأحجامًا وأعدادًا.'),
+          panel('no', 'لا يتضمن أبدًا', 'روابط، أو رموز جلسة، أو ملفات ارتباط، أو نص الترجمة.'),
+        ],
+        doc,
+      })));
+
+  // ---- حول ----
+  const about = aboutSection({ version, doc, section: (...kids) => section(byId.about, ...kids) });
 
   async function refreshReminder() {
     // لا مفتاح «أول تشغيل» في التخزين (عقد المفاتيح)؛ فالتذكير يظهر ما دامت المحفوظات فارغة.
@@ -374,12 +419,44 @@ export function createSettings(env) {
     for (const fn of sync) fn(force);
   }
 
+  // ---- التنقّل بين الأقسام ----
+  const sections = { display, timing, export: exporting, compare: comparison, storage, diagnostics, about };
+  let active = isSectionId(nav.get()) ? nav.get() : DEFAULT_SECTION;
+  const navLinks = SECTIONS.map((s) => el('a', {
+    className: 'st-nav__link', attrs: { href: `#${s.id}`, 'data-section': s.id },
+    children: [icon(s.icon, { doc }), el('span', { className: 'st-nav__name', text: s.title, doc })],
+    on: { click: (e) => { e.preventDefault?.(); select(s.id, { focus: true }); } },
+    doc,
+  }));
+  const sideNav = el('nav', { className: 'st-nav', attrs: { 'aria-label': 'أقسام الإعدادات' }, children: navLinks, doc });
+
+  function select(id, { focus = false } = {}) {
+    if (!isSectionId(id)) id = DEFAULT_SECTION;
+    active = id;
+    for (const [key, sec] of Object.entries(sections)) sec.hidden = key !== id;
+    for (const link of navLinks) {
+      if (link.getAttribute('data-section') === id) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    }
+    nav.set(id);
+    if (focus) sections[id].querySelector('h2')?.focus?.();
+  }
+  const offNav = nav.onChange(() => { if (isSectionId(nav.get()) && nav.get() !== active) select(nav.get()); });
+
   root.append(
-    el('header', { className: 'st-header', children: [el('span', { className: 'tj-mark', text: 'ت', attrs: { 'aria-hidden': 'true' }, doc }), el('h1', { className: 'tj-h1', text: 'الإعدادات', doc })], doc }),
-    el('p', { className: 'tj-caption', text: 'كل خيار يُحفظ فورًا على جهازك، وتظهر «حُفظ» بجانبه.', doc }),
-    reminderHost, alertHost, display, timing, exporting, comparison, storage, diagnostics, aboutSection({ version, doc }),
+    sideNav,
+    el('div', {
+      className: 'st-content',
+      children: [
+        el('header', { className: 'st-head', children: [el('h1', { className: 'tj-h1', text: 'الإعدادات', doc }), el('p', { className: 'tj-caption', text: SAVE_HINT, doc })], doc }),
+        reminderHost, alertHost, display, timing, exporting, comparison, storage, diagnostics, about,
+      ],
+      doc,
+    }),
   );
+  for (const sec of Object.values(sections)) sec.querySelector('h2').tabIndex = -1;
   syncAll();
+  select(active);
 
   const unsubscribe = store.onChange((change) => {
     if (!change.settings && !change.cleared) return;
@@ -387,7 +464,8 @@ export function createSettings(env) {
   });
 
   return {
-    root, preview, slider,
+    root, preview, slider, select,
+    get active() { return active; },
     get settings() { return settings; },
     async load() {
       try {
@@ -399,6 +477,9 @@ export function createSettings(env) {
       }
       await Promise.all([refreshCapacity(), refreshReminder()]);
     },
-    dispose: unsubscribe,
+    dispose() {
+      unsubscribe();
+      offNav();
+    },
   };
 }

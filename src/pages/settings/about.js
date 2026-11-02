@@ -1,9 +1,8 @@
-// قسم «حول» (R42، P7-AC10، figma-design-brief §١٠): الإصدار، و«كل شيء محلي»، ودليل الاستخدام، و«ترجمان — تطوير سلطان»
-// مع رابطي bysltan.com والمستودع (بشارة «خاص حاليًا» ما دام خاصًا)، ونسب خطوط الترجمة المضمّنة مع «عرض التراخيص»
-// من ملفات الرخص المحلية. الروابط تُفتح بالضغط وحده في تبويب جديد (noopener)؛ لا طلب شبكة قبل الضغط ولا بعده من الصفحة.
-import { el, ltr, statusPill } from '../../ui/components.js';
+// قسم «حول» (R42، P7-AC10): الإصدار، و«كل شيء محلي»، ودليل الاستخدام، و«ترجمان — تطوير سلطان» مع رابطي bysltan.com
+// والمستودع (بشارة «خاص حاليًا» ما دام خاصًا)، ونسب خطوط الترجمة المضمّنة مع «عرض التراخيص» من ملفات الرخص المحلية.
+// الروابط تُفتح بالضغط وحده في تبويب جديد (noopener)؛ لا طلب شبكة قبل الضغط ولا بعده من الصفحة.
+import { el, icon, ltr, statusPill } from '../../ui/components.js';
 import { SUBTITLE_FONT_LIST } from '../../ui/subtitle-fonts.js';
-import { pageIcon } from '../library/icons.js';
 
 /** الرابطان الخارجيان الوحيدان في الإضافة (يسمح بهما الفحص الثابت في هذا الملف وحده). */
 export const LINKS = Object.freeze({ site: 'https://bysltan.com', repo: 'https://github.com/iSltanX/Tarjuman' });
@@ -23,7 +22,7 @@ function externalLink(doc, { href, text }) {
   return el('a', {
     className: 'st-link',
     attrs: { href, target: '_blank', rel: 'noopener noreferrer' },
-    children: [el('span', { text, doc }), pageIcon('external', { doc })],
+    children: [el('span', { text, doc }), icon('external', { doc })],
     doc,
   });
 }
@@ -32,9 +31,12 @@ function externalLink(doc, { href, text }) {
 const arabicList = (names) => names.map((n, i) => (i ? `و${n}` : n)).join('، ');
 
 /**
- * @param {{ version: string, doc?: Document, fonts?: typeof SUBTITLE_FONT_LIST, repoPrivate?: boolean }} o
+ * @param {{
+ *   version: string, doc?: Document, fonts?: typeof SUBTITLE_FONT_LIST, repoPrivate?: boolean,
+ *   section?: (...children: HTMLElement[]) => HTMLElement
+ * }} o
  */
-export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LIST, repoPrivate = REPO_IS_PRIVATE }) {
+export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LIST, repoPrivate = REPO_IS_PRIVATE, section }) {
   const guide = el('details', {
     className: 'st-details',
     children: [
@@ -52,7 +54,7 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
         attrs: { role: 'list' },
         children: fonts.map((f) => el('li', {
           // ملف الرخصة داخل الإضافة نفسها: رابط نسبي من pages/settings/ بلا شبكة.
-          children: [el('a', { className: 'st-link', attrs: { href: `../../${f.license}`, target: '_blank', rel: 'noopener noreferrer' }, children: [el('span', { text: `${f.nameAr} · ${f.nameLatin} — SIL OFL 1.1`, doc }), pageIcon('external', { doc })], doc })],
+          children: [el('a', { className: 'st-link', attrs: { href: `../../${f.license}`, target: '_blank', rel: 'noopener noreferrer' }, children: [el('span', { text: `${f.nameAr} · ${f.nameLatin} — SIL OFL 1.1`, doc }), icon('external', { doc })], doc })],
           doc,
         })),
         doc,
@@ -60,27 +62,28 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
     ],
     doc,
   });
+  const body = [
+    el('div', { className: 'st-about__row', children: [el('span', { className: 'tj-label', text: 'الإصدار', doc }), ltr(version, { doc })], doc }),
+    el('p', { className: 'tj-body-sm', text: 'كل شيء محلي على جهازك، لا حسابات ولا خادم ولا مفتاح API.', doc }),
+    guide,
+    el('hr', { className: 'tj-rule', doc }),
+    el('p', { className: 'tj-label', text: 'ترجمان — تطوير سلطان', doc }),
+    el('div', {
+      className: 'st-about__links',
+      children: [
+        externalLink(doc, { href: LINKS.site, text: 'bysltan.com' }),
+        el('span', { className: 'st-about__repo', children: [externalLink(doc, { href: LINKS.repo, text: 'المستودع على GitHub' }), repoPrivate ? statusPill({ tone: 'neutral', text: 'خاص حاليًا', doc }) : null], doc }),
+      ],
+      doc,
+    }),
+    el('p', { className: 'tj-caption', text: `خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: ${arabicList(fonts.map((f) => f.nameAr))}.`, doc }),
+    licenses,
+  ];
+  if (section) return section(el('div', { className: 'st-about', children: body, doc }));
   return el('section', {
-    className: 'tj-card st-card st-about',
+    className: 'st-section st-about',
     attrs: { 'aria-labelledby': 'st-about-title' },
-    children: [
-      el('h2', { className: 'tj-h3', text: 'حول', attrs: { id: 'st-about-title' }, doc }),
-      el('div', { className: 'st-about__row', children: [el('span', { className: 'tj-label', text: 'الإصدار', doc }), ltr(version, { doc })], doc }),
-      el('p', { className: 'tj-body-sm', text: 'كل شيء محلي على جهازك، لا حسابات ولا خادم ولا مفتاح API.', doc }),
-      guide,
-      el('hr', { className: 'st-rule', doc }),
-      el('p', { className: 'tj-label', text: 'ترجمان — تطوير سلطان', doc }),
-      el('div', {
-        className: 'st-about__links',
-        children: [
-          externalLink(doc, { href: LINKS.site, text: 'bysltan.com' }),
-          el('span', { className: 'st-about__repo', children: [externalLink(doc, { href: LINKS.repo, text: 'المستودع على GitHub' }), repoPrivate ? statusPill({ tone: 'neutral', text: 'خاص حاليًا', doc }) : null], doc }),
-        ],
-        doc,
-      }),
-      el('p', { className: 'tj-caption', text: `خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: ${arabicList(fonts.map((f) => f.nameAr))}.`, doc }),
-      licenses,
-    ],
+    children: [el('h2', { className: 'tj-h2', text: 'حول', attrs: { id: 'st-about-title' }, doc }), ...body],
     doc,
   });
 }

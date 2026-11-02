@@ -122,8 +122,12 @@ try {
   check('popup-video-state', r1?.watch === true && r1.videoId === VIDEO && r1.arabic === null, r1 && { via: s1.via, videoId: r1.videoId, loading: r1.loading, arabic: r1.arabic, view: r1.view });
   // الطبقة (P5) وأدوات الشريط (P6) ركّبتاهما مرحلتاهما: كل منهما تنتظر المشغّل أو مركّبة.
   check('mount-points-stub', ['waiting', 'mounted'].includes(r1?.mounted?.overlay) && ['waiting', 'mounted'].includes(r1?.mounted?.controls), r1?.mounted ?? null);
-  const items1 = await popup.eval(() => [...document.querySelectorAll('.tj-menuitem')].map((x) => ({ name: x.querySelector('.tj-menuitem__name')?.textContent, disabled: x.getAttribute('aria-disabled') === 'true' })));
-  check('popup-items', items1.length === 3, items1);
+  // بعد إعادة التصميم: مدخلا الصفحتين بنود، والمحرّر إجراء سريع [data-action="editor"] يظهر حين تكون للفيديو ترجمة.
+  const items1 = await popup.eval(() => ({
+    menu: [...document.querySelectorAll('.tj-menuitem')].map((x) => ({ name: x.querySelector('.tj-menuitem__name')?.textContent, disabled: x.getAttribute('aria-disabled') === 'true' })),
+    actions: [...document.querySelectorAll('.tj-popup__actions [data-action]')].map((x) => x.getAttribute('data-action')),
+  }));
+  check('popup-items', items1.menu.length === 2 && items1.menu.map((i) => i.name).join('|') === 'المحفوظات|الإعدادات' && items1.actions.includes('copy'), items1);
   await shoot(popup, 'popup-no-arabic', { width: 320 });
   await b.conn.send('Target.activateTarget', { targetId: yt.targetId });
 
@@ -146,12 +150,13 @@ try {
   for (const name of ['library', 'settings', 'editor']) {
     const pop = await openPopup(b.conn, extId, pageErrors, yt.targetId);
     if (name === 'editor') await shoot(pop, 'popup-with-arabic', { width: 320 });
-    const clicked = await pop.eval((label) => {
-      const item = [...document.querySelectorAll('.tj-menuitem')].find((x) => x.querySelector('.tj-menuitem__name')?.textContent === label);
+    const clicked = await pop.eval((label, action) => {
+      const item = document.querySelector(`.tj-popup__actions [data-action="${action}"]`)
+        ?? [...document.querySelectorAll('.tj-menuitem')].find((x) => x.querySelector('.tj-menuitem__name')?.textContent === label);
       if (!item || item.getAttribute('aria-disabled') === 'true') return item ? 'disabled' : 'missing';
       item.click();
       return 'clicked';
-    }, { args: [names[name]] });
+    }, { args: [names[name], name] });
     const prefix = `chrome-extension://${extId}/pages/${name}/index.html`;
     const target = clicked === 'clicked' ? await waitForTarget(b.conn, (u) => u.startsWith(prefix), { exclude: seen }) : null;
     const via = target ? 'popup' : `direct (${clicked})`;

@@ -58,7 +58,17 @@ export function layerCss() {
 .menu[hidden] { display: none; }
 @keyframes tj-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .title { margin: 0; padding: 6px 12px 6px; font: 700 var(--title-fs)/1.4 var(--tj-p-font-head); }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 8px 2px 12px; }
+.head .title { padding: 4px 0; }
+.slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgb(255 255 255 / 8%); direction: ltr; flex: none; }
+button.slot { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; width: 26px; height: 24px; border-radius: 6px; border: 1px solid transparent; font: 700 12px/1 var(--tj-p-font-mono); color: rgb(255 255 255 / 85%); cursor: pointer; }
+button.slot[data-filled="true"] { border-color: rgb(255 255 255 / 35%); }
+button.slot[aria-checked="true"] { background: var(--tj-p-accent); border-color: var(--tj-p-accent); color: #062322; }
+button.slot[data-filled="false"] { color: rgb(255 255 255 / 40%); cursor: default; }
+button.slot:hover:not([aria-checked="true"]):not([data-filled="false"]) { background: var(--tj-p-menu-hover); }
 .row { box-sizing: border-box; min-height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 12px; }
+.row.file { min-height: 32px; gap: 6px; }
+.dim { color: var(--tj-p-menu-text-2); white-space: nowrap; }
 .status { font-weight: 700; }
 .status .ok { color: var(--tj-p-ok); }
 .note { padding: 0 12px 4px; font-size: 0.93em; color: var(--tj-p-menu-text-2); }

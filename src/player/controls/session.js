@@ -143,6 +143,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const a = s.arabic;
     return {
       fileName: a.fileName, count: a.cues.length, edited: a.edited, comparison: a.comparison, notes: a.comparison?.notes ?? [],
+      // الإصدار الأول: ترجمة واحدة في الخانة 1 نشطة، والخانتان 2 و3 فارغتان حتى تُضاف الخانات (P10/P12).
+      slots: [{ n: 1, filled: true, active: true, name: a.fileName }, { n: 2, filled: false, active: false, name: null }, { n: 3, filled: false, active: false, name: null }],
       warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, busy: ui.upload.busy, error: ui.upload.error,
     };
   }
@@ -264,6 +266,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       syncVideo(s);
       handleNotices(s);
       const bar = bar$.snapshot();
+      // اختفى شريط يوتيوب والقائمة مفتوحة بلا تركيز فيها (لا كتابة ولا لوحة مفاتيح) ولا عمل جارٍ ولا تأكيد ينتظر: تُغلق
+      // بدل أن تعود فجأة مع الشريط عند أول حركة للمؤشر.
+      if (bar.hidden && ui.open && ui.open !== 'confirm' && !ui.download.busy && !ui.upload.busy && !layer.isTyping() && !layer.focused()) ui.open = null;
       lastModel = groupModel(s, bar);
       group.update(lastModel);
       layer.setBar(bar);
@@ -427,6 +432,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       case 'download': startDownload(); return;
       case 'copy': startCopy(); return;
       case 'displayMode': setMode(value); return;
+      // تبديل الخانة النشطة: لا خانات غير الأولى في الإصدار الأول، فلا فعل حتى تُضاف (P10/P12).
+      case 'slot': return;
       case 'replace': pick('replace'); return;
       case 'confirmReplace': confirmReplace(); return;
       case 'cancelReplace':

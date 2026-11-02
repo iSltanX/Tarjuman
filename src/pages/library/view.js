@@ -1,22 +1,26 @@
-// واجهة المحفوظات (P7-AC2/AC3/AC6/AC7، figma-design-brief §٩): قائمة مجمّعة حسب الفيديو بالبحث والترتيب والسعة،
-// وأوامر كل صف: فتح الفيديو وتعديل واستبدال وتصدير SRT ونسخ (تعليمات الترجمة) وحذف. الحالات: تحميل وفارغة وممتلئة
-// ونتيجة بحث فارغة وخطأ. كل نص عبر textContent، ولا طلبات شبكة، ونص تعليمات الترجمة لا يدخل DOM في أي حال.
+// واجهة المحفوظات (P7-AC2/AC3/AC6/AC7، وإعادة التصميم): سجل واحد لكل فيديو في قائمة مدمجة: العنوان، ومحدد الترجمات
+// 1 2 3، والمعرّف، والشارات، والتاريخ؛ والإجراءات المتكررة ظاهرة (تعديل أو رفع ترجمة، ونسخ تعليمات الترجمة، وفتح
+// الفيديو) والثانوية في «المزيد» (تصدير SRT، والاستبدال، والحذف). بحث وأقسام تصفية بأعدادها وترتيب، وحالتها في جزء
+// العنوان فتبقى عند الرجوع من المحرّر. الحالات: تحميل وفارغة وممتلئة ونتيجة بحث فارغة وقسم فارغ وخطأ. كل نص عبر
+// textContent، ولا طلبات شبكة، ونص تعليمات الترجمة لا يدخل DOM في أي حال.
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
-import { alertBox, confirmDialog, el, emptyState, ltr, statusPill } from '../../ui/components.js';
+import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, slotPicker, slotsForSingle, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatBytes, formatCount, formatOffset } from '../../ui/format.js';
+import { createMenu } from '../../ui/menu.js';
 import { applyReplacement, deleteVideoData, exportArabic, exportEnglish, readReplacement } from './actions.js';
 import { radioGroup } from './choice.js';
 import { createCopyState } from './copy.js';
-import { pageIcon } from './icons.js';
-import { createMenu } from './menu.js';
-import { PAGE_SIZE, comparisonSummary, copyGate, exportOptions, rowModel, searchEntries, sortEntries } from './model.js';
+import {
+  FILTERS, PAGE_SIZE, SORTS, comparisonSummary, copyGate, exportOptions, filterCounts, filterEntries, parsePageState, rowModel, searchEntries,
+  serializePageState, sortEntries,
+} from './model.js';
 import { createToaster } from './toast.js';
 
 export const COPY_TIP = 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.';
-export const CAPTION = '«نسخ» ينسخ تعليمات الترجمة لترفقها مع ملف SRT الإنجليزي في أي تطبيق ذكاء اصطناعي.';
-const COPY_LABEL = Object.freeze({ idle: 'نسخ', success: 'تم النسخ', error: 'أعد المحاولة' });
+export const CAPTION = 'ترجماتك محفوظة هنا حسب الفيديو، والأصل المستورد محفوظ دائمًا.';
+const COPY_LABEL = Object.freeze({ idle: 'نسخ التعليمات', success: 'تم النسخ', error: 'أعد المحاولة' });
 // عنوان الفيديو قد يكون إنجليزيًا داخل جملة عربية: يُعزل اتجاهًا (FSI…PDI) فلا تنقلب علامات الترقيم حوله في عناوين الحوارات.
 const FSI = String.fromCodePoint(0x2068);
 const PDI = String.fromCodePoint(0x2069);
@@ -34,33 +38,24 @@ let seq = 0;
  *   pickFiles: () => Promise<File[] | null>,
  *   diagnosticsText: () => Promise<string>,
  *   confirm?: typeof confirmDialog,
+ *   nav?: { get: () => string, set: (hash: string) => void },
  *   setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void,
  * }} LibraryEnv
  */
 
-/** زر بحجم صغير بأيقونة من أيقونات الصفحة، ومعطّل بسبب ظاهر حين يلزم. */
-function actionButton(doc, { label, icon, variant = 'secondary', ariaLabel, disabledReason = null, onClick, className = '' }) {
-  const b = el('button', {
-    className: `tj-btn tj-btn--${variant} tj-btn--sm ${className}`.trim(),
-    attrs: { type: 'button', ...(ariaLabel ? { 'aria-label': ariaLabel } : {}) },
-    children: [icon ? pageIcon(icon, { doc }) : null, el('span', { text: label, doc })],
-    doc,
-  });
-  if (disabledReason) {
-    const id = `lib-reason-${++seq}`;
-    b.setAttribute('aria-disabled', 'true');
-    b.setAttribute('aria-describedby', id);
-    b.title = disabledReason;
-    b.append(el('span', { className: 'tj-sr-only', text: disabledReason, attrs: { id }, doc }));
+/** حالة الصفحة في جزء العنوان إن وُجدت نافذة، وإلا ذاكرة فقط (الاختبارات). */
+function hashNav(doc) {
+  const win = doc.defaultView ?? null;
+  if (!win?.location || !win.history?.replaceState) {
+    let memo = '';
+    return { get: () => memo, set: (h) => { memo = h; } };
   }
-  b.addEventListener('click', (e) => {
-    if (b.getAttribute('aria-disabled') === 'true') {
-      e.preventDefault();
-      return;
-    }
-    onClick?.(e);
-  });
-  return b;
+  return {
+    get: () => String(win.location.hash ?? ''),
+    set: (h) => {
+      if (String(win.location.hash ?? '') !== h) win.history.replaceState(null, '', `${win.location.pathname}${win.location.search}${h}`);
+    },
+  };
 }
 
 /** @param {LibraryEnv} env */
@@ -69,36 +64,67 @@ export function createLibrary(env) {
   const setTimer = env.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
   const clearTimer = env.clearTimer ?? ((id) => clearTimeout(id));
   const confirm = env.confirm ?? confirmDialog;
+  const nav = env.nav ?? hashNav(doc);
   const toaster = createToaster({ doc, setTimer, clearTimer });
+  const initial = parsePageState(nav.get());
   const state = {
     status: /** @type {'loading' | 'ready' | 'error'} */ ('loading'),
     entries: /** @type {import('../../core/model/video.js').IndexEntry[]} */ ([]),
     capacity: /** @type {import('../../core/store/capacity.js').Capacity | null} */ (null),
-    query: '', order: /** @type {'updated' | 'title'} */ ('updated'), limit: PAGE_SIZE,
+    query: initial.query, filter: initial.filter, order: /** @type {'updated' | 'title'} */ (initial.order), limit: PAGE_SIZE,
+    /** الصف المقصود بعد الرجوع من المحرّر (#v=…): يُبرَز مرة ثم يُنسى. */
+    focusId: initial.focusId,
     error: /** @type {{ code: string, message: string } | null} */ (null),
   };
   const copyStates = new Set();
   let loadSeq = 0;
   let reloadTimer = null;
 
+  const remember = () => nav.set(serializePageState(state));
+
   // ---- الرأس والأدوات ----
-  const countPill = el('span', { className: 'lib-count', doc });
+  const countPill = el('span', { className: 'tj-pill tj-pill--plain lib-count', doc });
   const quotaHost = el('div', { className: 'lib-quota-host', doc });
   const capacityAlert = el('div', { className: 'lib-capacity-alert', doc });
   const searchId = `lib-search-${++seq}`;
   const search = el('input', { className: 'tj-field__input lib-search__input', attrs: { id: searchId, type: 'search', placeholder: 'ابحث بالعنوان أو المعرّف', autocomplete: 'off', spellcheck: 'false' }, doc });
+  search.value = state.query;
+  const clearSearch = button({ label: 'مسح البحث', iconOnly: true, icon: 'x', variant: 'ghost', size: 'sm', className: 'lib-search__clear', doc, onClick: () => {
+    search.value = '';
+    state.query = '';
+    state.limit = PAGE_SIZE;
+    render();
+    announceResults();
+    remember();
+    search.focus();
+  } });
   const sortId = `lib-sort-${++seq}`;
   const sort = el('select', {
-    className: 'tj-field__input lib-sort__select', attrs: { id: sortId },
-    children: [el('option', { text: 'آخر تعديل', attrs: { value: 'updated' }, doc }), el('option', { text: 'العنوان', attrs: { value: 'title' }, doc })],
+    className: 'tj-field__input lib-sort__select', attrs: { id: sortId, 'aria-label': 'الترتيب' },
+    children: SORTS.map((s) => el('option', { text: s.label, attrs: { value: s.value }, doc })),
     doc,
+  });
+  sort.value = state.order;
+  const chips = chipGroup({
+    options: FILTERS.map((f) => ({ value: f.value, label: f.label, count: null })), value: state.filter, ariaLabel: 'تصفية المحفوظات', doc,
+    onChange: (v) => {
+      state.filter = v;
+      state.limit = PAGE_SIZE;
+      render();
+      announceResults();
+      remember();
+    },
   });
   const resultsLive = el('p', { className: 'tj-sr-only', attrs: { role: 'status', 'aria-live': 'polite' }, doc });
   const listHost = el('div', { className: 'lib-list-host', doc });
   const header = el('header', {
-    className: 'lib-header',
+    className: 'tj-page-head lib-header',
     children: [
-      el('div', { className: 'lib-titlebar', children: [el('span', { className: 'tj-mark', text: 'ت', attrs: { 'aria-hidden': 'true' }, doc }), el('h1', { className: 'tj-h1', text: 'المحفوظات', doc }), countPill], doc }),
+      el('div', {
+        className: 'tj-page-head__titles',
+        children: [el('div', { className: 'tj-page-head__title', children: [el('h1', { className: 'tj-h1', text: 'المحفوظات', doc }), countPill], doc }), el('p', { className: 'tj-caption lib-caption', text: CAPTION, doc })],
+        doc,
+      }),
       quotaHost,
     ],
     doc,
@@ -106,30 +132,33 @@ export function createLibrary(env) {
   const toolbar = el('div', {
     className: 'lib-toolbar',
     children: [
-      el('div', { className: 'lib-search', children: [el('label', { className: 'tj-sr-only', text: 'بحث بالعنوان أو المعرّف', attrs: { for: searchId }, doc }), pageIcon('search', { doc, className: 'tj-icon lib-search__icon' }), search], doc }),
-      el('div', { className: 'lib-sort', children: [el('label', { className: 'tj-label', text: 'الترتيب', attrs: { for: sortId }, doc }), sort], doc }),
+      el('div', { className: 'lib-search', children: [el('label', { className: 'tj-sr-only', text: 'بحث بالعنوان أو المعرّف', attrs: { for: searchId }, doc }), icon('search', { doc, className: 'tj-icon lib-search__icon' }), search, clearSearch], doc }),
+      chips.root,
+      el('div', { className: 'lib-sort', children: [el('label', { className: 'tj-caption', text: 'الترتيب', attrs: { for: sortId }, doc }), sort], doc }),
     ],
     doc,
   });
-  const root = el('div', { className: 'lib', children: [header, el('p', { className: 'tj-caption lib-caption', text: CAPTION, doc }), capacityAlert, toolbar, resultsLive, listHost, toaster.root, toaster.live], doc });
+  const root = el('div', { className: 'lib', children: [header, capacityAlert, toolbar, resultsLive, listHost, toaster.root, toaster.live], doc });
 
   /** يعلن عدد المطابقات لقارئ الشاشة، ويفرّغ الإعلان بمسح البحث فلا يبقى «لا نتائج» قديمًا. */
   const announceResults = () => {
     const n = visible().length;
-    resultsLive.textContent = state.query.trim() ? (n ? `${formatCount(n, COUNT_FORMS.video)} مطابق` : 'لا نتائج') : '';
+    resultsLive.textContent = state.query.trim() || state.filter !== 'all' ? (n ? `${formatCount(n, COUNT_FORMS.video)} مطابق` : 'لا نتائج') : '';
   };
   search.addEventListener('input', () => {
     state.query = search.value;
     state.limit = PAGE_SIZE;
     render();
     announceResults();
+    remember();
   });
   sort.addEventListener('change', () => {
     state.order = sort.value === 'title' ? 'title' : 'updated';
     render();
+    remember();
   });
 
-  const visible = () => sortEntries(searchEntries(state.entries, state.query), state.order);
+  const visible = () => sortEntries(filterEntries(searchEntries(state.entries, state.query), state.filter), state.order);
 
   /** أخطاء الأوامر رسائل عابرة بنص عربي من رمزها. */
   const fail = (err) => toaster.show(toErrorInfo(err).message, 'danger');
@@ -221,17 +250,17 @@ export function createLibrary(env) {
     const gate = copyGate(entry);
     const tipId = `lib-tip-${++seq}`;
     const label = el('span', { text: COPY_LABEL.idle, doc });
-    let glyph = pageIcon('copy', { doc });
-    const button = el('button', {
+    let glyph = icon('copy', { doc });
+    const btn = el('button', {
       className: 'tj-btn tj-btn--secondary tj-btn--sm lib-copy__button',
       attrs: { type: 'button', 'aria-label': `نسخ تعليمات ترجمة: ${m.accessName}`, 'aria-describedby': tipId, 'data-state': 'idle' },
       children: [glyph, label],
       doc,
     });
-    const tip = el('span', { className: 'lib-copy__tip', text: gate.enabled ? COPY_TIP : gate.reason, attrs: { id: tipId, role: 'tooltip' }, doc });
-    const wrap = el('span', { className: 'lib-copy', children: [button, tip], doc });
+    const tip = el('span', { className: 'tj-tip lib-copy__tip', text: gate.enabled ? COPY_TIP : gate.reason, attrs: { id: tipId, role: 'tooltip' }, doc });
+    const wrap = el('span', { className: 'tj-tipwrap lib-copy', children: [btn, tip], doc });
     if (!gate.enabled) {
-      button.setAttribute('aria-disabled', 'true');
+      btn.setAttribute('aria-disabled', 'true');
       return wrap;
     }
     const copy = createCopyState({
@@ -245,89 +274,86 @@ export function createLibrary(env) {
       },
       onState: (next) => {
         label.textContent = COPY_LABEL[next];
-        const fresh = pageIcon(next === 'success' ? 'check' : 'copy', { doc });
+        const fresh = icon(next === 'success' ? 'check' : 'copy', { doc });
         glyph.replaceWith(fresh);
         glyph = fresh;
-        button.setAttribute('data-state', next);
+        btn.setAttribute('data-state', next);
         wrap.classList.toggle('lib-copy--success', next === 'success');
         wrap.classList.toggle('lib-copy--error', next === 'error');
       },
       setTimer, clearTimer,
     });
     copyStates.add(copy);
-    button.addEventListener('click', () => { copy.copy(); });
+    btn.addEventListener('click', () => { copy.copy(); });
     return wrap;
   }
 
   function buildRow(entry) {
     const m = rowModel(entry, now());
     const titleId = `lib-title-${++seq}`;
-    const idCopy = el('button', {
-      className: 'lib-idcopy', attrs: { type: 'button', 'aria-label': `نسخ معرّف الفيديو ${entry.videoId}` },
-      children: [pageIcon('copy', { doc })], doc,
-    });
-    idCopy.addEventListener('click', async () => {
-      try {
-        await env.clipboardWrite(entry.videoId);
-        toaster.show(messageFor('PG_ID_COPIED'), 'success');
-      } catch {
-        toaster.show(messageFor('PG_COPY_FAILED'), 'danger');
-      }
-    });
     const name = (verb) => `${verb}: ${m.accessName}`;
-    const exportMenu = createMenu({
-      label: 'تصدير SRT', ariaLabel: name('تصدير SRT'), icon: 'download', chevron: true, doc,
-      items: exportOptions(entry).map((o) => ({ id: o.id, label: o.label, hint: o.hint, disabledReason: o.disabledReason, onSelect: () => exportFile(m, o) })),
+    const idCopy = button({
+      label: `نسخ معرّف الفيديو ${entry.videoId}`, iconOnly: true, icon: 'copy', variant: 'ghost', size: 'sm', className: 'lib-idcopy', title: 'نسخ المعرّف', doc,
+      onClick: async () => {
+        try {
+          await env.clipboardWrite(entry.videoId);
+          toaster.show(messageFor('PG_ID_COPIED'), 'success');
+        } catch {
+          toaster.show(messageFor('PG_COPY_FAILED'), 'danger');
+        }
+      },
     });
+    const slots = slotPicker({ slots: slotsForSingle({ hasArabic: m.hasArabic, name: m.fileName }), ariaLabel: name('الترجمة النشطة'), doc });
+    const exportItems = exportOptions(entry).map((o) => ({ id: o.id, label: o.label, hint: o.hint, disabledReason: o.disabledReason, icon: 'download', onSelect: () => exportFile(m, o) }));
     const moreMenu = createMenu({
-      label: 'المزيد', ariaLabel: name('المزيد'), icon: 'more', iconOnly: true, className: 'lib-more', doc,
-      items: [{ id: 'delete', label: 'حذف…', tone: 'danger', icon: 'trash', onSelect: () => remove(m, entry.arabic !== null) }],
+      label: 'المزيد', ariaLabel: name('المزيد'), icon: 'more', iconOnly: true, variant: 'ghost', className: 'lib-more', doc,
+      items: [
+        { kind: 'group', label: 'تصدير SRT' },
+        ...exportItems,
+        { kind: 'separator' },
+        ...(m.hasArabic ? [{ id: 'replace', label: 'استبدال الترجمة العربية…', icon: 'replace', onSelect: () => replace(m) }] : []),
+        { id: 'delete', label: m.hasArabic ? 'حذف الترجمة…' : 'حذف بيانات الفيديو…', tone: 'danger', icon: 'trash', onSelect: () => remove(m, entry.arabic !== null) },
+      ],
     });
-    return el('li', {
-      className: 'tj-card lib-row', attrs: { 'aria-labelledby': titleId },
+    const primary = m.hasArabic
+      ? button({ label: 'تعديل', icon: 'edit', variant: 'secondary', size: 'sm', title: name('تعديل'), doc, onClick: () => guarded(async () => { state.focusId = entry.videoId; remember(); await env.openPage('editor', { v: entry.videoId }); }) })
+      : button({ label: 'رفع ترجمة', icon: 'upload', variant: 'secondary', size: 'sm', title: name('رفع الترجمة العربية'), doc, onClick: () => replace(m) });
+    primary.setAttribute('aria-label', name(m.hasArabic ? 'تعديل' : 'رفع الترجمة العربية'));
+    const open = button({ label: name('فتح الفيديو'), iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: 'فتح الفيديو على يوتيوب', doc, onClick: () => guarded(async () => { await env.openTab(watchUrl(entry.videoId)); }) });
+    const meta = [
+      slots.root,
+      el('span', { className: 'lib-row__id', children: [ltr(entry.videoId, { doc }), idCopy], doc }),
+      ...m.badges.map((b) => statusPill({ tone: b.tone, text: b.text, plain: b.tone === 'neutral', title: b.title, doc })),
+      m.offsetText ? el('span', { className: 'tj-caption lib-row__offset', text: m.offsetText, doc }) : null,
+      el('span', { className: 'tj-caption lib-row__when', text: m.relative, attrs: { title: m.absolute }, doc }),
+    ];
+    const li = el('li', {
+      className: 'lib-row', attrs: { 'aria-labelledby': titleId, 'data-video': entry.videoId, tabindex: '-1' },
       children: [
         el('div', {
-          className: 'lib-row__info',
+          className: 'lib-row__main',
           children: [
-            el('h2', { className: `tj-h4 tj-auto lib-row__title${m.hasTitle ? '' : ' lib-row__title--empty'}`, text: m.displayTitle, attrs: { id: titleId }, doc }),
-            el('div', { className: 'lib-row__id', children: [ltr(entry.videoId, { doc }), idCopy], doc }),
-            el('div', {
-              className: 'lib-row__meta',
-              children: [
-                ...m.badges.map((b) => statusPill({ tone: b.tone, text: b.text, doc })),
-                m.offsetText ? el('span', { className: 'tj-caption', text: m.offsetText, doc }) : null,
-                el('span', { className: 'tj-caption', text: m.relative, attrs: { title: m.absolute }, doc }),
-              ],
-              doc,
-            }),
+            el('h2', { className: `tj-h4 tj-auto lib-row__title${m.hasTitle ? '' : ' lib-row__title--empty'}`, text: m.displayTitle, attrs: { id: titleId, ...(m.hasTitle ? { title: m.displayTitle } : {}) }, doc }),
+            el('div', { className: 'lib-row__meta', children: meta, doc }),
           ],
           doc,
         }),
-        el('div', {
-          className: 'lib-row__actions',
-          children: [
-            actionButton(doc, { label: 'فتح الفيديو', icon: 'external', variant: 'ghost', ariaLabel: name('فتح الفيديو'), onClick: () => guarded(async () => { await env.openTab(watchUrl(entry.videoId)); }) }),
-            actionButton(doc, { label: 'تعديل', icon: 'edit', ariaLabel: name('تعديل'), disabledReason: m.hasArabic ? null : messageFor('PG_NO_ARABIC'), onClick: () => guarded(async () => { await env.openPage('editor', { v: entry.videoId }); }) }),
-            actionButton(doc, { label: m.hasArabic ? 'استبدال' : 'رفع ترجمة', icon: 'replace', ariaLabel: name(m.hasArabic ? 'استبدال الترجمة العربية' : 'رفع الترجمة العربية'), onClick: () => replace(m) }),
-            exportMenu.root,
-            copyButton(m, entry),
-            moreMenu.root,
-          ],
-          doc,
-        }),
+        el('div', { className: 'lib-row__actions', children: [primary, copyButton(m, entry), open, moreMenu.root], doc }),
       ],
       doc,
     });
+    return li;
   }
 
   // ---- الحالات ----
   function skeletonRows() {
-    return el('div', { className: 'lib-skeleton', attrs: { 'aria-busy': 'true', 'aria-label': 'جارٍ قراءة المحفوظات' }, children: [1, 2, 3].map(() => el('div', { className: 'tj-card lib-row lib-row--skeleton', children: [el('div', { className: 'tj-skeleton lib-skel-a', doc }), el('div', { className: 'tj-skeleton lib-skel-b', doc })], doc })), doc });
+    return el('div', { className: 'lib-skeleton', attrs: { 'aria-busy': 'true', 'aria-label': 'جارٍ قراءة المحفوظات' }, children: [1, 2, 3].map(() => el('div', { className: 'lib-row lib-row--skeleton', children: [el('div', { className: 'tj-skeleton lib-skel-a', doc }), el('div', { className: 'tj-skeleton lib-skel-b', doc })], doc })), doc });
   }
 
   function renderMeta() {
     countPill.textContent = state.status === 'ready' ? formatCount(state.entries.length, COUNT_FORMS.video) : '';
     countPill.hidden = state.status !== 'ready';
+    chips.setCounts(state.status === 'ready' ? filterCounts(state.entries) : {});
     quotaHost.replaceChildren();
     capacityAlert.replaceChildren();
     const cap = state.capacity;
@@ -336,9 +362,9 @@ export function createLibrary(env) {
     const children = [el('span', { className: 'tj-caption lib-quota__text', text, doc })];
     if (cap.quotaBytes) {
       const pct = Math.min(100, Math.round((cap.bytesInUse / cap.quotaBytes) * 100));
-      const fill = el('span', { className: 'lib-meter__fill', doc });
+      const fill = el('span', { className: 'tj-meter__fill', doc });
       fill.style.width = `${pct}%`;
-      children.push(el('span', { className: `lib-meter lib-meter--${cap.level}`, attrs: { role: 'meter', 'aria-label': 'المساحة المستخدمة', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(pct) }, children: [fill], doc }));
+      children.push(el('span', { className: `tj-meter tj-meter--${cap.level}`, attrs: { role: 'meter', 'aria-label': 'المساحة المستخدمة', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(pct) }, children: [fill], doc }));
     }
     quotaHost.append(el('div', { className: 'lib-quota', children, doc }));
     if (cap.code) capacityAlert.append(alertBox({ tone: cap.level === 'full' ? 'danger' : 'warning', text: messageFor(cap.code), doc }));
@@ -349,13 +375,14 @@ export function createLibrary(env) {
     listHost.replaceChildren();
     for (const c of copyStates) c.dispose();
     copyStates.clear();
+    toolbar.hidden = state.status === 'ready' && !state.entries.length;
     if (state.status === 'loading') {
       listHost.append(skeletonRows());
       return;
     }
     if (state.status === 'error') {
-      const copyDiag = actionButton(doc, {
-        label: 'نسخ تقرير التشخيص', icon: 'clipboard',
+      const copyDiag = button({
+        label: 'نسخ تقرير التشخيص', icon: 'clipboard', size: 'sm', doc,
         onClick: async () => {
           try {
             await env.clipboardWrite(await env.diagnosticsText());
@@ -369,22 +396,38 @@ export function createLibrary(env) {
       return;
     }
     if (!state.entries.length) {
-      listHost.append(emptyState({ title: 'لا ترجمات محفوظة بعد', steps: ['افتح فيديو', 'اضغط تحميل الترجمة', 'ارفع ملفك العربي'], doc }));
+      listHost.append(emptyState({ title: 'لا ترجمات محفوظة بعد', text: 'كل فيديو تحمّل ترجمته أو ترفع ملفه العربي يظهر هنا.', steps: ['افتح فيديو', 'اضغط تحميل الترجمة', 'ارفع ملفك العربي'], doc }));
       return;
     }
     const shown = visible();
     if (!shown.length) {
-      const clear = actionButton(doc, { label: 'مسح البحث', variant: 'secondary', onClick: () => { search.value = ''; state.query = ''; render(); announceResults(); search.focus(); } });
-      listHost.append(emptyState({ title: `لا نتائج لـ«${isolate(clip(state.query.trim(), 60))}»`, text: 'جرّب جزءًا آخر من العنوان أو المعرّف.', action: clear, doc }));
+      if (state.query.trim()) {
+        const clear = button({ label: 'مسح البحث', variant: 'secondary', size: 'sm', doc, onClick: () => { search.value = ''; state.query = ''; render(); announceResults(); remember(); search.focus(); } });
+        listHost.append(emptyState({ icon: 'search', title: `لا نتائج لـ«${isolate(clip(state.query.trim(), 60))}»`, text: 'جرّب جزءًا آخر من العنوان أو المعرّف.', action: clear, doc }));
+      } else {
+        const all = button({ label: 'عرض الكل', variant: 'secondary', size: 'sm', doc, onClick: () => { state.filter = 'all'; chips.set('all'); render(); announceResults(); remember(); } });
+        listHost.append(emptyState({ icon: 'list', title: 'لا فيديوهات في هذا القسم', text: 'اختر قسمًا آخر أو اعرض الكل.', action: all, doc }));
+      }
       return;
     }
     const slice = shown.slice(0, state.limit);
     listHost.append(el('ul', { className: 'lib-list', attrs: { role: 'list' }, children: slice.map(buildRow), doc }));
     if (shown.length > slice.length) {
-      listHost.append(actionButton(doc, {
-        label: `عرض المزيد (${formatCount(shown.length - slice.length, COUNT_FORMS.video)})`, variant: 'secondary', className: 'lib-more-rows',
+      listHost.append(button({
+        label: `عرض المزيد (${formatCount(shown.length - slice.length, COUNT_FORMS.video)})`, variant: 'secondary', className: 'lib-more-rows', doc,
         onClick: () => { state.limit += PAGE_SIZE; render(); },
       }));
+    }
+    // الرجوع من المحرّر: الصف المقصود يُبرَز ويُمرَّر إليه مرة واحدة.
+    if (state.focusId) {
+      const row = listHost.querySelector(`li[data-video="${state.focusId}"]`);
+      state.focusId = null;
+      remember();
+      if (row) {
+        row.classList.add('lib-row--target');
+        row.scrollIntoView?.({ block: 'center' });
+        row.focus?.({ preventScroll: true });
+      }
     }
   }
 

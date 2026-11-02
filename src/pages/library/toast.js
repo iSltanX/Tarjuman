@@ -1,5 +1,5 @@
-// رسالة عابرة أعلى الصفحة (figma-design-brief §١٢): ثلاث ثوانٍ، وتُعلَن لقارئ الشاشة بمنطقة حيّة مستقلة (show يعلن نصها). ثلاث نبرات
-// بنص دائمًا (لا معنى باللون وحده). الرسائل نصوص جاهزة تأتي من رموز الأخطاء.
+// رسالة عابرة أعلى الصفحة: ثلاث ثوانٍ، وتُعلَن لقارئ الشاشة بمنطقة حيّة مستقلة (show يعلن نصها). ثلاث نبرات بنص
+// دائمًا (لا معنى باللون وحده). الرسائل نصوص جاهزة تأتي من رموز الأخطاء. الأنماط من src/ui المشتركة.
 import { el, icon } from '../../ui/components.js';
 
 export const TOAST_MS = 3000;
@@ -10,7 +10,7 @@ export const TOAST_MS = 3000;
  * show يعرض الرسالة ويعلنها؛ announce وحده للإعلان بلا رسالة مرئية (نجاح «نسخ» يتحول زره بدل رسالة).
  */
 export function createToaster({ doc = document, setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = (id) => clearTimeout(id) } = {}) {
-  const stack = el('div', { className: 'lib-toasts', doc });
+  const stack = el('div', { className: 'tj-toasts lib-toasts', doc });
   // منطقة حيّة مخفية للإعلان؛ تبقى في الصفحة طوال عمرها فيلتقط قارئ الشاشة تغيّر نصها.
   const live = el('div', { className: 'tj-sr-only', attrs: { role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' }, doc });
   const timers = new Map();
@@ -18,7 +18,7 @@ export function createToaster({ doc = document, setTimer = (fn, ms) => setTimeou
   function show(text, tone = 'success') {
     announce(text);
     const node = el('div', {
-      className: `lib-toast lib-toast--${tone}`,
+      className: `tj-toast tj-toast--${tone} lib-toast lib-toast--${tone}`,
       children: [icon(tone === 'danger' ? 'danger' : tone === 'info' ? 'info' : 'success', { doc }), el('span', { text, doc })],
       doc,
     });

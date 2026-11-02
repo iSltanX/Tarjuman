@@ -24,8 +24,7 @@ test('القيمة الحالية بخط كبير ومعناها بالكلما�
   assert.equal(big().textContent, '+0.5 ث');
   assert.equal(big().getAttribute('data-sign'), 'positive');
   assert.match(page.ui.menuText(), /تظهر الترجمة لاحقًا بنصف ثانية/);
-  assert.match(page.ui.menuText(), /\+ تأخير: تظهر لاحقًا · − تقديم: تظهر أبكر/);
-  assert.match(page.ui.menuText(), /الإزاحة لهذا الفيديو فقط وتُحفظ\./);
+  assert.match(page.ui.menuText(), /\+ تأخير: تظهر لاحقًا · − تقديم: تظهر أبكر · تُحفظ لهذا الفيديو/, 'سطر شرح واحد مختصر («المشغّل للمشاهدة»)');
   assert.equal(page.ui.field('offset').value, '+0.5');
   click(page.ui.btn('minus'));
   click(page.ui.btn('minus'));

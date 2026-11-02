@@ -62,8 +62,15 @@ async function mount({ records = IDS.map((id, i) => ({ id, title: `عنوان ${
   return { lib, store, area, doc, clock, calls, answers, root: lib.root };
 }
 
-/** بنود القائمة المنسدلة المرتبطة بزرها (في الصف أكثر من قائمة). */
+/** بنود القائمة المنسدلة المرتبطة بزرها. */
 const menuItems = (button) => button.parentNode.querySelectorAll('[role=menuitem]');
+/** «استبدال الترجمة العربية…» من قائمة «المزيد» للصف المسمّى. */
+const clickReplace = (m, name = 'عنوان') => {
+  const more = buttonNamed(m.root, `المزيد: ${name}`);
+  more.click();
+  menuItems(more).find((i) => textOf(i).startsWith('استبدال')).click();
+};
+const deleteItem = (more) => menuItems(more).at(-1);
 const rows = (m) => m.root.querySelectorAll('li.lib-row');
 const rowTitles = (m) => rows(m).map((r) => textOf(r.querySelector('h2')));
 const rowFor = (m, id) => rows(m).find((r) => textOf(r).includes(id));
@@ -94,7 +101,7 @@ test('التحميل: هيكل ثم قائمة بالعدد والسطر الت�
   assert.equal(textOf(m.root.querySelector('.lib-count')), '3 فيديوهات');
   assert.equal(textOf(m.root.querySelector('.lib-caption')), CAPTION);
   assert.match(textOf(m.root.querySelector('.lib-quota__text')), /^المستخدم \d+ ك\.ب$/);
-  assert.equal(m.root.querySelectorAll('.lib-meter').length, 0, 'بلا حد ثابت لا شريط');
+  assert.equal(m.root.querySelectorAll('.tj-meter').length, 0, 'بلا حد ثابت لا شريط');
   assert.deepEqual(rowTitles(m).sort(), ['عنوان 1', 'عنوان 2', 'عنوان 3']);
   assertNoTemplate(m, 'ممتلئة');
 });
@@ -199,11 +206,11 @@ test('السعة: شريط رفيع بقيمته، وتحذير عند 80% ين�
   const area = { areaOpts: { quotaBytes: Math.ceil(bytes / 0.85), initial: seed.area.dump() } };
   const m = await mount({ records: [], ...area });
   await m.lib.load();
-  const meter = m.root.querySelector('.lib-meter');
+  const meter = m.root.querySelector('.tj-meter');
   assert.ok(meter);
   assert.equal(meter.getAttribute('role'), 'meter');
   assert.ok(Number(meter.getAttribute('aria-valuenow')) >= 80);
-  assert.ok(meter.classList.contains('lib-meter--warning'));
+  assert.ok(meter.classList.contains('tj-meter--warning'));
   assert.match(textOf(m.root.querySelector('.lib-quota__text')), /^المستخدم .* من .*$/);
   assert.match(textOf(m.root.querySelector('.lib-capacity-alert')), /اقتربت مساحة الحفظ من حدها \(80%\)/);
 });
@@ -216,13 +223,52 @@ test('فتح الفيديو يفتح عنوان المشاهدة وحده، وا
   await settle();
   assert.deepEqual(m.calls.tabs, [`https://www.youtube.com/watch?v=${IDS[0]}`]);
   assert.deepEqual(m.calls.pages, [['editor', { v: IDS[0] }]]);
-  const disabled = buttonNamed(rowFor(m, IDS[1]), 'تعديل');
-  assert.equal(disabled.getAttribute('aria-disabled'), 'true');
-  assert.equal(disabled.title, 'لا ترجمة عربية محفوظة لهذا الفيديو.');
-  disabled.click();
-  await settle();
-  assert.equal(m.calls.pages.length, 1, 'المعطّل لا يفتح شيئًا');
-  assert.ok(buttonNamed(rowFor(m, IDS[1]), 'رفع'), 'بلا عربية: رفع بدل استبدال');
+  assert.equal(buttonNamed(rowFor(m, IDS[1]), 'تعديل'), null, 'بلا عربية: لا زر تعديل معطّل، بل «رفع ترجمة» مكانه');
+  assert.ok(buttonNamed(rowFor(m, IDS[1]), 'رفع ترجمة'), 'بلا عربية: «رفع ترجمة» الإجراء الرئيسي');
+  assert.ok(buttonNamed(rowFor(m, IDS[0]), 'فتح الفيديو'), 'فتح الفيديو زر أيقوني باسم وصول');
+  const slots = findAll(rowFor(m, IDS[0]), (e) => e.getAttribute('role') === 'radio' && e.classList.contains('tj-slots__slot'));
+  assert.deepEqual(slots.map((s) => [s.getAttribute('aria-checked'), s.getAttribute('data-filled')]), [['true', 'true'], ['false', 'false'], ['false', 'false']], 'ترجمة واحدة: الخانة 1 نشطة و2 و3 فارغتان');
+  assert.equal(slots[2].getAttribute('aria-label'), 'الترجمة 3، فارغة');
+  const none = findAll(rowFor(m, IDS[1]), (e) => e.getAttribute('role') === 'radio' && e.classList.contains('tj-slots__slot'));
+  assert.ok(none.every((s) => s.getAttribute('data-filled') === 'false'), 'بلا عربية: الخانات الثلاث فارغة');
+});
+
+test('رقائق التصفية بأعدادها: مترجمة وبانتظار الترجمة ومعدّلة وتحذيرات، والقسم الفارغ يعرض «عرض الكل»', async () => {
+  const m = await mount({ records: [{ id: IDS[0], title: 'أ' }, { id: IDS[1], title: 'ب', arabic: false }, { id: IDS[2], title: 'ج' }] });
+  await m.lib.load();
+  const chip = (f) => findAll(m.root, (e) => e.classList.contains('tj-chip') && e.getAttribute('data-filter') === f)[0];
+  const count = (f) => textOf(chip(f).querySelector('.tj-chip__count'));
+  assert.deepEqual(['all', 'translated', 'awaiting', 'edited', 'warnings'].map(count), ['3', '2', '1', '0', '0']);
+  assert.equal(chip('all').getAttribute('aria-label'), 'الكل (3)');
+  assert.equal(chip('awaiting').getAttribute('aria-label'), 'بانتظار الترجمة (1)');
+  assert.equal(chip('all').getAttribute('aria-pressed'), 'true');
+  chip('awaiting').click();
+  assert.equal(chip('awaiting').getAttribute('aria-pressed'), 'true');
+  assert.equal(chip('all').getAttribute('aria-pressed'), 'false');
+  assert.deepEqual(rowTitles(m), ['ب']);
+  chip('edited').click();
+  assert.equal(rows(m).length, 0);
+  assert.equal(textOf(m.root.querySelector('.tj-empty__title')), 'لا فيديوهات في هذا القسم');
+  buttonNamed(m.root, 'عرض الكل').click();
+  assert.equal(rows(m).length, 3);
+  assert.equal(chip('all').getAttribute('aria-pressed'), 'true');
+});
+
+test('حالة الصفحة في جزء العنوان: البحث والقسم والترتيب تُقرأ منه وتُكتب إليه، والصف المقصود (v) يُبرَز بعد الرجوع', async () => {
+  let hash = '#f=awaiting&s=title&v=BBBBBBBBBBB';
+  const nav = { get: () => hash, set: (h) => { hash = h; } };
+  const m = await mount({ records: [{ id: IDS[0], title: 'أ' }, { id: IDS[1], title: 'ب', arabic: false }], env: { nav } });
+  await m.lib.load();
+  assert.equal(m.lib.state.filter, 'awaiting');
+  assert.equal(m.lib.state.order, 'title');
+  assert.equal(m.root.querySelector('select.lib-sort__select').value, 'title');
+  assert.deepEqual(rowTitles(m), ['ب']);
+  assert.ok(rowFor(m, IDS[1]).classList.contains('lib-row--target'), 'الصف المقصود مُبرَز');
+  assert.equal(hash, '#f=awaiting&s=title', 'بعد الإبراز يُحذف v من العنوان ويبقى البحث والقسم والترتيب');
+  const search = m.root.querySelector('input.lib-search__input');
+  search.value = 'ب';
+  search.dispatchEvent({ type: 'input' });
+  assert.equal(hash, '#q=%D8%A8&f=awaiting&s=title');
 });
 
 test('«نسخ»: يكتب تعليمات كل صف بعنوانه ورابطه حرفيًا، بلا عرض لنصها، و«تم النسخ» ثم يعود بعد ثانيتين', async () => {
@@ -231,7 +277,7 @@ test('«نسخ»: يكتب تعليمات كل صف بعنوانه ورابطه 
   const first = buttonNamed(rowFor(m, IDS[0]), 'نسخ تعليمات ترجمة: الأول — عنوان');
   const second = buttonNamed(rowFor(m, IDS[1]), 'نسخ تعليمات ترجمة: How Browsers Render Arabic Text');
   assert.ok(first && second);
-  assert.equal(textOf(first), 'نسخ');
+  assert.equal(textOf(first), 'نسخ التعليمات');
   assert.equal(first.getAttribute('data-state'), 'idle');
 
   first.click();
@@ -249,7 +295,7 @@ test('«نسخ»: يكتب تعليمات كل صف بعنوانه ورابطه 
   assertNoTemplate(m, 'تم النسخ');
 
   await m.clock.runAll();
-  assert.equal(textOf(first), 'نسخ');
+  assert.equal(textOf(first), 'نسخ التعليمات');
   assert.equal(first.getAttribute('data-state'), 'idle');
   assert.equal(m.lib.toaster.live.textContent, 'تم نسخ تعليمات الترجمة. ‹How Browsers Render Arabic Text›', 'إعلان لقارئ الشاشة بعنوان الصف');
   assertNoTemplate(m, 'عادي بعد النسخ');
@@ -302,17 +348,18 @@ test('نسخ المعرّف: يكتب المعرّف وحده', async () => {
   assert.deepEqual(m.calls.clipboard, [IDS[0]]);
 });
 
-test('تصدير SRT: قائمة بأسباب التعطيل، والعربية الحالية تنزل باسمها دون سؤال عند إزاحة صفر', async () => {
+test('تصدير SRT من «المزيد»: قائمة بأسباب التعطيل، والعربية الحالية تنزل باسمها دون سؤال عند إزاحة صفر', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
   await m.lib.load();
-  const menuButton = buttonNamed(m.root, 'تصدير SRT: عنوان');
+  const menuButton = buttonNamed(m.root, 'المزيد: عنوان');
   assert.equal(menuButton.getAttribute('aria-expanded'), 'false');
   menuButton.click();
   assert.equal(menuButton.getAttribute('aria-expanded'), 'true');
   const items = menuItems(menuButton);
-  assert.deepEqual(items.map((i) => textOf(i.querySelector('.lib-menu__label'))), ['العربية — النسخة الحالية', 'العربية — الأصل المستورد', 'الإنجليزية — المستخرجة']);
+  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['العربية — النسخة الحالية', 'العربية — الأصل المستورد', 'الإنجليزية — المستخرجة', 'استبدال الترجمة العربية…', 'حذف الترجمة…']);
   assert.equal(items[1].getAttribute('aria-disabled'), 'true');
-  assert.equal(textOf(items[1].querySelector('.lib-menu__hint')), 'لم تُعدَّل الترجمة، فالأصل المستورد هو النسخة الحالية.');
+  assert.equal(textOf(items[1].querySelector('.tj-menu__hint')), 'لم تُعدَّل الترجمة، فالأصل المستورد هو النسخة الحالية.');
+  assert.ok(items.at(-1).classList.contains('tj-menu__item--danger'), 'الحذف بلون الخطر');
   items[1].click();
   await settle();
   assert.equal(m.calls.downloads.length, 0, 'المعطّل لا ينزّل');
@@ -331,7 +378,7 @@ test('تصدير SRT: قائمة بأسباب التعطيل، والعربية 
 test('تصدير العربية بإزاحة يسأل عن التوقيت بقيمتها، والإلغاء لا ينزّل', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: 'عنوان', offset: 500 }] });
   await m.lib.load();
-  const exportBtn = buttonNamed(m.root, 'تصدير SRT: عنوان');
+  const exportBtn = buttonNamed(m.root, 'المزيد: عنوان');
   exportBtn.click();
   m.answers.push(false);
   menuItems(exportBtn)[0].click();
@@ -351,8 +398,8 @@ test('تصدير العربية بإزاحة يسأل عن التوقيت بقي
 test('القائمة المنسدلة: Esc يغلق ويعيد التركيز، والنقر خارجها يغلق، وقائمة واحدة مفتوحة', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: 'أ' }, { id: IDS[1], title: 'ب' }] });
   await m.lib.load();
-  const a = buttonNamed(rowFor(m, IDS[0]), 'تصدير SRT');
-  const b = buttonNamed(rowFor(m, IDS[1]), 'تصدير SRT');
+  const a = buttonNamed(rowFor(m, IDS[0]), 'المزيد');
+  const b = buttonNamed(rowFor(m, IDS[1]), 'المزيد');
   a.click();
   assert.equal(a.getAttribute('aria-expanded'), 'true');
   b.click();
@@ -372,19 +419,19 @@ test('الحذف: حوار يسمّي الفيديو ويحدد ما يُحذف�
   const more = buttonNamed(m.root, 'المزيد: عنوان');
   more.click();
   m.answers.push(false);
-  menuItems(more)[0].click();
+  deleteItem(more).click();
   await settle();
   const dialog = m.calls.confirms[0];
   assert.equal(dialog.title, `حذف ترجمة "${iso('عنوان')}"؟`);
   assert.equal(dialog.body, 'لا يمكن التراجع عن الحذف.');
   assert.equal(dialog.confirmLabel, 'حذف');
   assert.equal(dialog.tone, 'danger');
-  assert.deepEqual(findAll(dialog.content, (e) => e.classList.contains('lib-choice__label')).map(textOf), ['العربية فقط (يبقى المسار الإنجليزي والبصمة)', 'كل بيانات هذا الفيديو']);
+  assert.deepEqual(findAll(dialog.content, (e) => e.classList.contains('tj-choice__label')).map(textOf), ['العربية فقط (يبقى المسار الإنجليزي والبصمة)', 'كل بيانات هذا الفيديو']);
   assert.equal((await m.store.getVideo(IDS[0])).arabic !== null, true, 'الإلغاء لم يحذف');
 
   more.click();
   m.answers.push(true);
-  menuItems(more)[0].click();
+  deleteItem(more).click();
   await settle();
   const after = await m.store.getVideo(IDS[0]);
   assert.equal(after.arabic, null);
@@ -400,7 +447,7 @@ test('الحذف: «كل بيانات هذا الفيديو» يزيل الصف�
   const moreB = buttonNamed(rowFor(m, IDS[1]), 'المزيد');
   moreB.click();
   m.answers.push(true);
-  menuItems(moreB)[0].click();
+  deleteItem(moreB).click();
   await settle();
   const only = m.calls.confirms[0];
   assert.equal(only.title, `حذف بيانات "${iso('ب')}"؟`);
@@ -412,7 +459,7 @@ test('الحذف: «كل بيانات هذا الفيديو» يزيل الصف�
   const moreA = buttonNamed(rowFor(m, IDS[0]), 'المزيد');
   moreA.click();
   m.answers.push(true);
-  menuItems(moreA)[0].click();
+  deleteItem(moreA).click();
   await settle();
   const dialog = m.calls.confirms[1];
   const inputs = findAll(dialog.content, (e) => e.tagName === 'input');
@@ -435,7 +482,7 @@ test('الحذف: اختيار الخيار الثاني يمرَّر إلى ا�
   await m.lib.load();
   const moreC = buttonNamed(m.root, 'المزيد');
   moreC.click();
-  menuItems(moreC)[0].click();
+  deleteItem(moreC).click();
   await settle();
   assert.equal(await m.store.getVideo(IDS[0]), null);
   assert.equal(rows(m).length, 0);
@@ -448,7 +495,7 @@ test('الاستبدال: الاختيار ثم حوار مقارنة بتصفي
   const m = await mount({ records: [{ id: IDS[0], title: 'عنوان', offset: 1000 }], env: { pickFiles: async () => picked } });
   await m.lib.load();
   m.answers.push(false);
-  buttonNamed(m.root, 'استبدال الترجمة العربية: عنوان').click();
+  clickReplace(m);
   await settle();
   const dialog = m.calls.confirms[0];
   assert.equal(dialog.title, `استبدال ترجمة "${iso('عنوان')}"؟`);
@@ -462,7 +509,7 @@ test('الاستبدال: الاختيار ثم حوار مقارنة بتصفي
   assert.equal((await m.store.getVideo(IDS[0])).arabic.original[0].text, 'سطر 1', 'الإلغاء لم يكتب');
 
   m.answers.push(true);
-  buttonNamed(m.root, 'استبدال الترجمة العربية: عنوان').click();
+  clickReplace(m);
   await settle();
   const after = await m.store.getVideo(IDS[0]);
   assert.equal(after.arabic.original[0].text, 'جديد 1');
@@ -475,11 +522,11 @@ test('الاستبدال: إلغاء المنتقي لا يفعل شيئًا، �
   let picked = null;
   const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }], env: { pickFiles: async () => picked } });
   await m.lib.load();
-  buttonNamed(m.root, 'استبدال الترجمة العربية: عنوان').click();
+  clickReplace(m);
   await settle();
   assert.equal(m.calls.confirms.length, 0);
   picked = [new File(['ليس SRT'], 'x.srt', { type: 'text/plain' })];
-  buttonNamed(m.root, 'استبدال الترجمة العربية: عنوان').click();
+  clickReplace(m);
   await settle();
   assert.equal(m.calls.confirms.length, 0, 'لا حوار لملف تالف');
   assert.match(textOf(m.root.querySelector('.lib-toast--danger')), /SRT|مقطع/);
@@ -501,7 +548,7 @@ test('الاستبدال: تغيّر السجل قبل التأكيد يظهر S
     },
   });
   await m.lib.load();
-  buttonNamed(m.root, 'استبدال الترجمة العربية: عنوان').click();
+  clickReplace(m);
   await settle(10);
   assert.match(textOf(m.root.querySelector('.lib-toast--danger')), /تغيّر هذا السجل من مكان آخر/);
   const after = await m.store.getVideo(IDS[0]);
@@ -536,7 +583,7 @@ test('بعد اختيار بند من القائمة يعود التركيز إ�
 test('كل رسالة عابرة تُعلَن لقارئ الشاشة بنصها (نجاح التصدير والفشل)', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
   await m.lib.load();
-  const exportBtn = buttonNamed(m.root, 'تصدير SRT: عنوان');
+  const exportBtn = buttonNamed(m.root, 'المزيد: عنوان');
   exportBtn.click();
   menuItems(exportBtn)[2].click();
   await settle();
@@ -551,7 +598,7 @@ test('كل رسالة عابرة تُعلَن لقارئ الشاشة بنصها
 test('إخفاق حفظ بصمة التصدير بعد نزول الملف يظهر تنبيهًا لا خطأً', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
   await m.lib.load();
-  const exportBtn = buttonNamed(m.root, 'تصدير SRT: عنوان');
+  const exportBtn = buttonNamed(m.root, 'المزيد: عنوان');
   exportBtn.click();
   m.area.failNext('set', new Error('boom'));
   menuItems(exportBtn)[2].click();

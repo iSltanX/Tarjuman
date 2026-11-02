@@ -1,9 +1,44 @@
-/* نافذة الأيقونة: 320 عرضًا وارتفاع بحسب المحتوى حتى 480 (figma-design-brief.md §٨). */
-.tj-popup { width: 320px; min-height: 0; max-height: 480px; overflow-y: auto; }
-.tj-popup .tj-container { padding: var(--tj-space-3); gap: var(--tj-space-3); }
-.tj-popup__head { display: flex; align-items: center; gap: var(--tj-space-2); }
+/* نافذة الأيقونة: 340 عرضًا وارتفاع بحسب المحتوى حتى 520. رأس خفيف بزر الإعدادات، وبطاقة الفيديو الحالي بلا إطار
+   مضاعف، وإجراءات سريعة قليلة بأهداف نقر مريحة، ومدخلان للصفحتين. */
+.tj-popup { width: 340px; min-height: 0; max-height: 520px; overflow-y: auto; background: var(--tj-surface); }
+.tj-popup .tj-container { padding: 10px 12px 12px; gap: 10px; }
+.tj-popup__head { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .tj-popup__brand { font: 700 16px/24px var(--tj-font-head); }
-.tj-popup__status { display: flex; flex-direction: column; gap: 6px; padding: 14px; align-items: flex-start; }
-.tj-popup__skel-title { width: 80%; height: 20px; }
+.tj-popup__local { margin-inline-end: auto; }
+.tj-popup__gear { color: var(--tj-muted); }
+
+/* بطاقة الفيديو الحالي. */
+.tj-popup__status { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-sunken); border: 1px solid var(--tj-border); align-items: flex-start; }
+.tj-popup__title { font: 600 14px/22px var(--tj-font-head); }
+.tj-popup__pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.tj-popup__tools { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; }
+.tj-popup__tools::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.tj-popup__tools--success { color: var(--tj-success); }
+.tj-popup__tools--info { color: var(--tj-info); }
+.tj-popup__tools--danger { color: var(--tj-danger); }
+.tj-popup__skel-title { width: 80%; height: 18px; }
 .tj-popup__skel-line { width: 55%; height: 14px; }
-.tj-popup__menu { display: flex; flex-direction: column; gap: 2px; }
+
+/* الإجراءات السريعة: الرئيسي بعرض النافذة، والثانوية في صف. */
+.tj-popup__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tj-popup__actions:empty { display: none; }
+.tj-popup__actions > .tj-btn { flex: 1 1 calc(50% - 4px); min-width: 0; min-height: 42px; padding-inline: 10px; white-space: normal; line-height: 18px; font-size: 13px; }
+.tj-popup__actions > .tj-btn .tj-icon { flex: none; }
+.tj-popup__actions > .tj-popup__primary { flex-basis: 100%; font-size: 14px; line-height: 20px; }
+.tj-popup__hint { flex-basis: 100%; }
+.tj-popup__copy--success { background: var(--tj-success-bg) !important; color: var(--tj-success) !important; border-color: var(--tj-success) !important; }
+.tj-popup__copy--error { background: var(--tj-danger-bg) !important; color: var(--tj-danger) !important; border-color: var(--tj-danger) !important; }
+
+/* آخر الترجمات على غير صفحة فيديو. */
+.tj-popup__recent:empty { display: none; }
+.tj-popup__recent { display: flex; flex-direction: column; gap: 2px; }
+.tj-popup__section { font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); padding: 4px 4px 2px; }
+.tj-popup__recent-row { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 4px 0 8px; border-radius: var(--tj-radius-md); }
+.tj-popup__recent-row:hover { background: var(--tj-hover); }
+.tj-popup__recent-title { flex: 1; min-width: 0; font: 400 14px/20px var(--tj-font-body); }
+.tj-popup__recent-actions { display: inline-flex; gap: 2px; flex: none; }
+
+/* مدخلا الصفحتين. */
+.tj-popup__menu { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--tj-border); padding-top: 6px; }
+.tj-popup__menu .tj-menuitem { min-height: 40px; }
+.tj-popup__chev { transform: rotate(90deg); }

@@ -41,7 +41,8 @@ test('الكتابة في حقل الإدخال الدقيق تبقي قائمة
   assert.equal(ui.menuOpen(), true);
   leave(field);
   assert.equal(typing(ui), false, 'مغادرة الحقل تعيد القائمة إلى قاعدة الشريط');
-  assert.equal(ui.menuOpen(), true, 'القائمة لا تُغلق؛ تتبع الشريط بالشفافية كما في P6');
+  page.controller.set({});
+  assert.equal(ui.menuOpen(), false, 'غادر الحقل والشريط مخفي: تُغلق القائمة عند التحديث التالي فلا تعود فجأة مع الشريط');
   page.player.classList.remove('ytp-autohide');
   assert.equal(ui.barState(), 'shown');
 });

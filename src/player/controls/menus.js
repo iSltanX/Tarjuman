@@ -1,14 +1,16 @@
-// محتوى القوائم الصغيرة (figma-design-brief §٦): التحميل، والرفع والعرض، والتوقيت، وتأكيد الاستبدال. كل باني دالة
+// محتوى القوائم الصغيرة (مواصفة التصميم §٦ و§١٩): التحميل، والرفع والعرض، والتوقيت، وتأكيد الاستبدال. كل باني دالة
 // نقية من نموذج العرض إلى عقد DOM (textContent وsetAttribute فقط)، والأفعال تُبلَّغ إلى الجلسة. العنصر الذي يُستعاد
-// إليه التركيز بعد إعادة البناء يحمل data-fid، وأول عنصر للتركيز data-first. نص تعليمات الترجمة لا يمر من هنا أبدًا.
+// إليه التركيز بعد إعادة البناء يحمل data-fid، وأول عنصر للتركيز data-first. القوائم إجراءات سريعة بلا فقرات شرح
+// («المشغّل للمشاهدة»)؛ والتفاصيل في صفحات الإضافة. نص تعليمات الترجمة لا يمر من هنا أبدًا.
 import { messageFor } from '../../core/errors/index.js';
 import { describeTrack } from '../../core/export/describe.js';
 import { formatOffset } from '../../ui/format.js';
-import { LABELS, comparisonSummary, cueCount, offsetMeaning, shortTime, stepSeconds } from './text.js';
+import { LABELS, comparisonSummary, cueCount, offsetMeaning, shortTime, slotLabel, stepSeconds } from './text.js';
 
 /**
  * @typedef {(name: string, value?: unknown) => void} Act
  * @typedef {(tag: string, o?: { className?: string, text?: string, attrs?: Record<string, string>, on?: Record<string, (ev: any) => void>, children?: (Node | null | false | undefined)[] }) => HTMLElement} H
+ * @typedef {{ n: number, filled: boolean, active: boolean, name: string | null }} SlotModel
  */
 
 /** @param {Document} doc @returns {H} */
@@ -59,6 +61,25 @@ function segmented(h, label, options, current, act, name, fid) {
       text: o.label,
       attrs: { type: 'button', role: 'radio', 'aria-checked': o.value === current ? 'true' : 'false', 'data-fid': `${fid}:${o.value}` },
       on: { click: () => act(name, o.value) },
+    })),
+  });
+}
+
+/**
+ * محدد الترجمات 1 2 3 (§١٩.٢): النشطة بلون الإبراز، والمحفوظة بإطار، والفارغة باهتة ومعطّلة في الاختيار، بلا تسميات.
+ * @param {H} h @param {Act} act @param {SlotModel[]} slots
+ */
+function slotPicker(h, act, slots) {
+  return h('div', {
+    className: 'slots',
+    attrs: { role: 'radiogroup', 'aria-label': LABELS.slots },
+    children: slots.map((s) => h('button', {
+      className: 'slot', text: String(s.n),
+      attrs: {
+        type: 'button', role: 'radio', 'aria-checked': s.active ? 'true' : 'false', 'data-filled': s.filled ? 'true' : 'false',
+        'aria-disabled': s.filled ? null : 'true', 'aria-label': slotLabel(s), title: s.name ?? null, 'data-fid': `slot:${s.n}`,
+      },
+      on: { click: (ev) => (ev.currentTarget.getAttribute('data-filled') === 'true' && ev.currentTarget.getAttribute('aria-checked') !== 'true' ? act('slot', s.n) : undefined) },
     })),
   });
 }
@@ -155,32 +176,30 @@ export function downloadMenu(h, act, m) {
 }
 
 /**
- * قائمة الرفع والعرض (§٦.٢).
+ * قائمة الرفع والعرض (§٦.٢ و§١٩.٣): محدد الترجمات أعلاها، ثم الملف وعدده وسطر الملخص، وأوضاع العرض، والاستبدال.
  * @param {H} h @param {Act} act
  * @param {{
- *   fileName: string, count: number, edited: boolean, comparison: object | null, notes: string[],
+ *   fileName: string, count: number, edited: boolean, comparison: object | null, notes: string[], slots: SlotModel[],
  *   warnings: string[], mode: 'ar' | 'dual' | 'off', dualAvailable: boolean, busy: boolean, error: string | null,
  * }} m
  */
 export function displayMenu(h, act, m) {
   const summary = comparisonSummary(m.comparison);
   const out = [
-    h('h2', { className: 'title', text: LABELS.displayTitle }),
+    h('div', { className: 'head', children: [h('h2', { className: 'title', text: LABELS.displayTitle }), slotPicker(h, act, m.slots)] }),
     h('div', {
-      className: 'row',
+      className: 'row file',
       children: [
         h('span', { className: 'name', text: m.fileName, attrs: { dir: 'ltr', title: m.fileName } }),
-        h('span', { text: `· ${cueCount(m.count)}` }),
+        h('span', { className: 'dim', text: `· ${cueCount(m.count)}${m.edited ? ' · معدّلة' : ''}` }),
       ],
     }),
     h('div', { className: 'row summary', text: summary.text, attrs: { 'data-tone': summary.tone } }),
   ];
-  if (m.edited) out.push(h('div', { className: 'note', text: 'عُدّلت في المحرّر بعد الرفع.' }));
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
-  const notes = m.notes.slice(0, 2);
+  const notes = m.notes.slice(0, 1);
   for (const n of notes) out.push(h('div', { className: 'note', text: n }));
-  if (m.notes.length > notes.length) out.push(h('div', { className: 'note', text: `وملاحظات أخرى (${m.notes.length - notes.length}).` }));
-  out.push(h('div', { className: 'note', text: LABELS.editorHint }));
+  if (m.notes.length > notes.length) out.push(h('div', { className: 'note', text: `وملاحظات أخرى (${m.notes.length - notes.length}) في المحرّر.` }));
   out.push(h('div', { className: 'sep' }));
 
   const modes = [
@@ -213,7 +232,7 @@ export function confirmMenu(h, act, m) {
   const summary = comparisonSummary(m.comparison);
   const out = [
     h('h2', { className: 'title', text: LABELS.confirmTitle }),
-    h('div', { className: 'row', children: [h('span', { className: 'name', text: m.fileName, attrs: { dir: 'ltr' } }), h('span', { text: `· ${cueCount(m.count)}` })] }),
+    h('div', { className: 'row file', children: [h('span', { className: 'name', text: m.fileName, attrs: { dir: 'ltr' } }), h('span', { className: 'dim', text: `· ${cueCount(m.count)}` })] }),
     h('div', { className: 'row summary', text: summary.text, attrs: { 'data-tone': summary.tone } }),
   ];
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
@@ -283,7 +302,6 @@ export function timingMenu(h, act, m) {
   }
   out.push(h('div', { className: 'actions', children: [button(h, 'secondary', LABELS.reset, { act, name: 'reset', fid: 'reset' })] }));
   out.push(h('div', { className: 'note', text: LABELS.signLegend }));
-  out.push(h('div', { className: 'note', text: LABELS.perVideo }));
   return out;
 }
 
