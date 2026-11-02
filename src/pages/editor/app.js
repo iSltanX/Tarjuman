@@ -11,8 +11,12 @@ import {
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { download } from '../../core/export/index.js';
 import { slotModels } from '../../core/model/bundle.js';
+import { mergeCues, splitCue } from '../../core/edit/structure.js';
 import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../../ui/format.js';
+import { createMenu } from '../../ui/menu.js';
+import { jumpToVideo } from '../../ui/seek.js';
+import { openDriftDialog } from './drift-dialog.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
 import { renderComparison, renderIssues } from './panels.js';
 import {
@@ -21,8 +25,8 @@ import {
 import { createRows, textDir } from './rows.js';
 import { createSearch } from './search.js';
 import {
-  activeSlotLine, editSlotLabel, errorsToFix, numberList, offsetLine, offsetNotice, refOptionLabel, saveStatus, scopeOption, scopeTarget,
-  seconds, shiftSentence, slotFallback, unsavedSentence,
+  activeSlotLine, editSlotLabel, errorsToFix, mergePreview, numberList, offsetLine, offsetNotice, refOptionLabel, saveStatus, scopeOption,
+  scopeTarget, seconds, seekResult, shiftSentence, slotFallback, splitPreview, unsavedSentence,
 } from './text.js';
 import { RowLayout, createVirtualList, rowHeight, textLines } from './virtual.js';
 
@@ -41,10 +45,10 @@ const densityOf = (prefs) => ({ maxCps: prefs?.review?.maxCps ?? READING_DEFAULT
  * @param {HTMLElement} app
  * @param {{
  *   videoId: string | null, slot?: 1 | 2 | 3 | null, store: ReturnType<typeof import('../../core/store/index.js').createStore>,
- *   doc?: Document, now?: () => number
- * }} deps slot خانة التحرير المطلوبة (t في العنوان)؛ وبدونها النشطة
+ *   doc?: Document, now?: () => number, seek?: typeof jumpToVideo
+ * }} deps slot خانة التحرير المطلوبة (t في العنوان)؛ وبدونها النشطة. seek للاختبار وحده.
  */
-export async function mountEditor(app, { videoId, slot: requested = null, store, doc = document, now = Date.now }) {
+export async function mountEditor(app, { videoId, slot: requested = null, store, doc = document, now = Date.now, seek = jumpToVideo }) {
   const win = doc.defaultView;
   const title = (text) => el('h1', { className: 'tj-h1', text, doc });
 
@@ -89,6 +93,8 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     result: /** @type {{ tone: string, text: string } | null} */ (null),
     external: /** @type {null | 'changed' | 'removed'} */ (null),
     saving: false, pending: null, leaving: false, externalChain: Promise.resolve(),
+    caret: /** @type {{ index: number, at: number, version: number } | null} */ (null),
+    hoverAct: /** @type {{ kind: 'merge' | 'split', index: number } | null} */ (null),
     comparison: null, compareTimer: 0, frame: 0,
   };
   const act = () => (S.view === 'original' ? S.original : S.session);
@@ -164,6 +170,10 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
       return r;
     },
   });
+  const timingMenu = createMenu({
+    label: 'أدوات التوقيت', chevron: true, align: 'start', doc,
+    items: [{ id: 'drift', label: 'تصحيح الانجراف…', hint: 'تحويل خطي للتوقيت كله بنقطتين صحيحتين', onSelect: () => onDrift() }],
+  });
   const toolbarEl = el('section', {
     className: 'ed-toolbar', attrs: { 'aria-label': 'أدوات التحرير' },
     children: [
@@ -175,6 +185,7 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
           el('div', { className: 'ed-seg', attrs: { role: 'radiogroup', 'aria-label': 'النطاق' }, children: scopeBtns, doc }),
           el('span', { className: 'ed-group', children: [minusBtn, el('span', { className: 'tj-caption', text: 'خطوة', doc }), stepSel, plusBtn], doc }),
           el('span', { className: 'ed-group', children: [amountIn, applyBtn], doc }),
+          timingMenu.root,
           el('label', { className: 'ed-group ed-toggle', attrs: { for: 'ed-show-en' }, children: [enToggle, el('span', { text: 'إظهار المرجع', doc })], doc }),
         ],
         doc,
@@ -478,7 +489,8 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     amountIn.readOnly = Boolean(ro);
     stepSel.disabled = Boolean(ro);
     const delta = S.hoverDelta || amountDelta();
-    previewEl.textContent = ro ? messageFor('ED_READ_ONLY') : delta ? shiftSentence(target, delta, 'before') : `النطاق: ${target} · الخطوة ${step} ث`;
+    const structure = !ro && S.hoverAct ? structurePreview(S.hoverAct.kind, S.hoverAct.index) : null;
+    previewEl.textContent = ro ? messageFor('ED_READ_ONLY') : structure ?? (delta ? shiftSentence(target, delta, 'before') : `النطاق: ${target} · الخطوة ${step} ث`);
     const notice = ro ? 0 : S.session.shiftNotice(scopeObj());
     noticeEl.hidden = !notice;
     noticeEl.textContent = notice ? offsetNotice(notice) : '';
@@ -656,6 +668,90 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     const node = S.list.reveal(row);
     const sel = field === 'start' || field === 'end' ? `[data-field="${field}"]` : '[data-field="text"]';
     node?.querySelector(sel)?.focus({ preventScroll: true });
+  }
+
+  // ---- إجراءات الصف: الدمج والشطر والقفز (R54، R56) ----
+  const caretOf = (i) => (S.caret && S.caret.index === i && S.caret.version === S.session.version ? S.caret.at : null);
+
+  /** سطر المعاينة قبل الدمج أو الشطر، من المحرّكين نفسيهما على المقطع وحده. */
+  function structurePreview(kind, i) {
+    const s = S.session;
+    if (i >= s.count) return null;
+    try {
+      if (kind === 'merge') {
+        if (i >= s.count - 1) return messageFor('ED_MERGE_INVALID');
+        const [merged] = mergeCues([s.cueAt(i), s.cueAt(i + 1)], 0);
+        return mergePreview(s.cueAt(i), s.cueAt(i + 1), merged, formatTimecode);
+      }
+      const at = caretOf(i);
+      if (at === null) return `ضع المؤشر في نص المقطع ${s.cueAt(i).n} حيث تريد الشطر، ثم اضغط «شطر».`;
+      const [head, tail] = splitCue([s.cueAt(i)], 0, at);
+      return splitPreview(s.cueAt(i).n, head.text, tail.text);
+    } catch (err) {
+      return toErrorInfo(err).message;
+    }
+  }
+
+  function afterStructure(i, text) {
+    S.caret = null;
+    S.hoverAct = null;
+    S.result = { tone: 'success', text };
+    jumpTo(Math.min(i, act().count - 1), 'text');
+    renderToolbar();
+  }
+
+  function onMerge(i) {
+    if (readOnly()) return;
+    const [a, b] = [S.session.cueAt(i), S.session.cueAt(i + 1)];
+    const r = S.session.merge(i);
+    if (r.ok) afterStructure(i, `دُمج المقطع ${a.n} مع ${b.n}. احفظ لتثبيت ذلك، والتراجع يعيدهما.`);
+    else {
+      S.result = { tone: 'danger', text: messageFor(r.code) };
+      renderToolbar();
+    }
+  }
+
+  function onSplit(i) {
+    if (readOnly()) return;
+    const at = caretOf(i);
+    const n = S.session.cueAt(i).n;
+    if (at === null) {
+      S.result = { tone: 'info', text: `ضع المؤشر في نص المقطع ${n} حيث تريد الشطر، ثم اضغط «شطر» مرة أخرى.` };
+      jumpTo(i, 'text');
+      renderToolbar();
+      return;
+    }
+    const r = S.session.split(i, at);
+    if (r.ok) afterStructure(i, `شُطر المقطع ${n} إلى قطعتين برقمه نفسه. احفظ لتثبيت ذلك، والتراجع يعيده.`);
+    else {
+      S.result = { tone: 'danger', text: messageFor(r.code) };
+      renderToolbar();
+    }
+  }
+
+  /** «▶ في الفيديو»: زمن المقطع كما يظهر (المحفوظ + إزاحة العرض) في تبويب الفيديو المفتوح أو تبويب جديد. */
+  async function onSeek(i) {
+    const cue = act().cueAt(i);
+    const ms = Math.max(0, cue.startMs + S.session.offsetMs);
+    setActive(i);
+    const r = await seek({ videoId, ms });
+    const res = seekResult(r, formatTimecode(ms), (code) => messageFor(code));
+    toast(res.text, res.tone);
+  }
+
+  /** «تصحيح الانجراف…» من «أدوات التوقيت»: حوار بمرساتين ومعاينة، ثم خطوة واحدة في الجلسة. */
+  async function onDrift() {
+    if (readOnly()) {
+      toast(messageFor('ED_READ_ONLY'), 'info');
+      return;
+    }
+    const anchors = await openDriftDialog({ doc, cues: S.session.snapshot(), activeIndex: S.activeIndex });
+    if (!anchors) return;
+    const r = S.session.drift(anchors);
+    S.result = r.ok
+      ? { tone: r.count ? 'success' : 'info', text: r.count ? `صُحّح انجراف التوقيت في الملف كله (${formatCount(r.count, COUNT_FORMS.cue)}). احفظ لتثبيت ذلك، والتراجع يعيده.` : 'التوقيت مطابق للنقطتين؛ لا شيء تغيّر.' }
+      : { tone: 'danger', text: messageFor(r.code, r.negative ? { list: numberList(r.negative) } : undefined) };
+    renderToolbar();
   }
 
   /** نتيجة بحث: الصف ظاهر ومميز، والمطابقة محددة في نصه حين يُطلب التركيز (أزرار ↑↓). */
@@ -1023,20 +1119,47 @@ export async function mountEditor(app, { videoId, slot: requested = null, store,
     const node = rowOfNode(e.target);
     if (node) setActive(Number(node.dataset.index));
   });
+  // موضع المؤشر في نص المقطع (للشطر عنده): يُحفظ عند كل حركة وعند مغادرة الحقل، فيبقى بعد نقل التركيز إلى زر الشطر.
+  const trackCaret = (e) => {
+    const t = e.target;
+    const node = rowOfNode(t);
+    if (!node || t.dataset?.field !== 'text') return;
+    S.caret = { index: Number(node.dataset.index), at: t.selectionStart, version: S.session.version };
+  };
+  for (const type of ['keyup', 'mouseup', 'input', 'select']) scroller.addEventListener(type, trackCaret);
   scroller.addEventListener('focusout', (e) => {
-    if (e.target.dataset?.field === 'text') S.session.seal();
+    if (e.target.dataset?.field === 'text') {
+      trackCaret(e);
+      S.session.seal();
+    }
   });
   scroller.addEventListener('click', (e) => {
     const t = e.target.closest?.('[data-act]');
     const node = t && rowOfNode(t);
     if (!node) return;
     const i = Number(node.dataset.index);
-    if (t.dataset.act === 'select') toggleSelect(i, t.checked, e.shiftKey);
-    else if (t.dataset.act === 'nudge' && !readOnly()) {
+    const kind = t.dataset.act;
+    if (kind === 'select') toggleSelect(i, t.checked, e.shiftKey);
+    else if (kind === 'seek') onSeek(i);
+    else if (t.getAttribute('aria-disabled') === 'true') return;
+    else if (kind === 'nudge' && !readOnly()) {
       setActive(i);
       applyShift({ kind: 'cue', index: i }, Number(t.dataset.dir) * S.stepMs, scopeTarget('cue', { activeN: act().cueAt(i).n, total: act().count }));
-    }
+    } else if (kind === 'merge') onMerge(i);
+    else if (kind === 'split') onSplit(i);
   });
+  // معاينة الدمج والشطر قبل التطبيق في سطر شريط الأدوات (كمعاينة ±).
+  const hoverAct = (on) => (e) => {
+    const t = e.target.closest?.('[data-act="merge"], [data-act="split"]');
+    const node = t && rowOfNode(t);
+    if (!node) return;
+    S.hoverAct = on ? { kind: t.dataset.act, index: Number(node.dataset.index) } : null;
+    renderToolbar();
+  };
+  scroller.addEventListener('mouseover', hoverAct(true));
+  scroller.addEventListener('mouseout', hoverAct(false));
+  scroller.addEventListener('focusin', hoverAct(true));
+  scroller.addEventListener('focusout', hoverAct(false));
 
   // ---- لوحة المفاتيح والمغادرة والتخزين ----
   doc.addEventListener('keydown', (e) => {

@@ -6,8 +6,8 @@ html, body.ed-page { height: 100%; }
 body.ed-page { overflow: hidden; }
 
 .tj-container.ed-app {
-  --ed-cols: 28px 52px 128px 128px 40px minmax(0, 1.5fr) minmax(0, 1fr) 72px;
-  --ed-cols-no-en: 28px 52px 128px 128px 40px minmax(0, 1fr) 72px;
+  --ed-cols: 28px 52px 128px 128px 40px minmax(0, 1.5fr) minmax(0, 1fr) 108px;
+  --ed-cols-no-en: 28px 52px 128px 128px 40px minmax(0, 1fr) 108px;
   max-width: none; margin: 0; padding: 0; gap: 0; height: 100vh;
   display: grid; grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
 }
@@ -160,9 +160,21 @@ body.ed-page { overflow: hidden; }
   margin: 0; padding-top: 8px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); text-align: start;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
 }
-.ed-row__nudge { display: flex; gap: 4px; padding-top: 4px; opacity: 0; transition: opacity var(--tj-motion-menu) var(--tj-ease); }
+/* إجراءات الصف: صفّان من ثلاثة (± و▶، ثم العلامة والدمج والشطر) داخل ارتفاع الصف الأدنى (82). */
+.ed-row__nudge {
+  display: grid; grid-template-columns: repeat(3, 32px); grid-auto-rows: 28px; gap: 4px; padding-top: 4px;
+  opacity: 0; transition: opacity var(--tj-motion-menu) var(--tj-ease);
+}
 .ed-row:hover .ed-row__nudge, .ed-row:focus-within .ed-row__nudge, .ed-row.is-active .ed-row__nudge { opacity: 1; }
-.ed-row__nudge-btn { min-width: 32px; padding: 0; font-size: 16px; }
+.ed-row__nudge-btn, .ed-row__act { min-width: 32px; min-height: 28px; height: 28px; padding: 0; font-size: 16px; }
+.ed-row__nudge-btn[hidden] { display: block !important; visibility: hidden; }
+.ed-row__act .tj-icon { width: 16px; height: 16px; }
+.ed-row__act[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
+.ed-row__act[data-act="mark"][data-kind="todo"] { color: var(--tj-warning); }
+.ed-row__act[data-act="mark"][data-kind="done"] { color: var(--tj-success); }
+.ed-row__mark { font: 700 13px/1 var(--tj-font-body); }
+.ed-row__mark[data-kind="todo"] { color: var(--tj-warning); }
+.ed-row__mark[data-kind="done"] { color: var(--tj-success); }
 .ed-row__msg {
   grid-column: 3 / -1; grid-row: 2; margin: 2px 0 0; height: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   font: 400 13px/20px var(--tj-font-body); color: var(--tj-warning);
