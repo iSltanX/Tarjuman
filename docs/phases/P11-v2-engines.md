@@ -143,14 +143,14 @@
 ```json tj-status
 {
   "phase": "P11",
-  "status": "ready",
-  "updated": "2026-11-02T09:43:39+03:00",
+  "status": "integrating",
+  "updated": "2026-11-02T16:17:59+03:00",
   "branch": "tj/P11-v2-engines",
   "resume": "جاهزة للدمج في W6",
   "blocker": null,
   "outcome": null,
   "commit": "4f94106",
-  "mergeCommit": null,
+  "mergeCommit": "abfe4cb",
   "checks": [
     {
       "cmd": "npm run check",
