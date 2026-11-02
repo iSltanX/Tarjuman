@@ -7,9 +7,12 @@ import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { createStore } from '../../core/store/index.js';
 import { alertBox, button, el, icon, statusPill } from '../../ui/components.js';
-import { openPage, startPage } from '../../ui/page.js';
+import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
-import { describeStatus, editorGate, quickActions, queryVideoState, recentEntries, toolsStatus } from './status.js';
+import {
+  attachedGlossary, browserLabel, captureLine, describeStatus, editorGate, pageReport, queryPageDiagnostics, quickActions, queryVideoState,
+  recentEntries, toolsStatus,
+} from './status.js';
 
 /** زر النسخ: اسمه الكامل حين يكون رئيسيًا بعرض النافذة، ومختصرًا حين يجاور زرًا آخر. */
 const COPY_LABEL = Object.freeze({ idle: 'نسخ تعليمات الترجمة', idleShort: 'نسخ التعليمات', success: 'تم النسخ', error: 'أعد المحاولة' });
@@ -20,8 +23,32 @@ const skeleton = () => el('section', {
   children: [el('div', { className: 'tj-skeleton tj-popup__skel-title' }), el('div', { className: 'tj-skeleton tj-popup__skel-line' })],
 });
 
-/** @param {ReturnType<typeof describeStatus>} s @param {ReturnType<typeof toolsStatus>} tools */
-function statusCard(s, tools) {
+/** «نسخ تشخيص الصفحة» (§١٩.٦): رابط صغير ونتيجته بسطر. التقرير رموز وأعداد منقّاة، ولا يُعرض. */
+function diagnosticsLink(reply) {
+  const result = el('span', { className: 'tj-caption tj-popup__diag-result', attrs: { role: 'status', 'aria-live': 'polite' } });
+  const link = el('button', { className: 'tj-popup__diag', text: 'نسخ تشخيص الصفحة', attrs: { type: 'button', 'data-action': 'diagnostics' } });
+  link.addEventListener('click', async () => {
+    link.setAttribute('aria-busy', 'true');
+    let ok = false;
+    try {
+      const sections = await queryPageDiagnostics();
+      await navigator.clipboard.writeText(pageReport({ reply, sections, version: extensionVersion(), browser: browserLabel() }));
+      ok = true;
+    } catch {
+      ok = false;
+    }
+    link.removeAttribute('aria-busy');
+    result.textContent = ok ? '✓ نُسخ التشخيص' : 'تعذّر النسخ — أعد المحاولة';
+    result.setAttribute('data-tone', ok ? 'success' : 'danger');
+  });
+  return el('p', { className: 'tj-popup__diag-row', children: [link, result] });
+}
+
+/**
+ * @param {ReturnType<typeof describeStatus>} s @param {ReturnType<typeof toolsStatus>} tools
+ * @param {ReturnType<typeof captureLine>} capture @param {object | null} reply
+ */
+function statusCard(s, tools, capture, reply) {
   const card = el('section', { className: 'tj-popup__status', attrs: { 'aria-live': 'polite' } });
   if (s.kind === 'not-video') {
     card.append(el('p', { className: 'tj-body-sm', text: messageFor('TJ_NOT_YOUTUBE') }));
@@ -40,7 +67,12 @@ function statusCard(s, tools) {
     card.append(el('p', { className: 'tj-body-sm', text: 'لا ترجمة عربية محفوظة' }));
     card.append(el('p', { className: 'tj-caption', text: s.englishLine }));
   }
-  if (tools) card.append(el('p', { className: `tj-caption tj-popup__tools tj-popup__tools--${tools.tone}`, text: tools.text }));
+  if (capture) card.append(el('p', { className: 'tj-caption tj-popup__capture', text: capture.text }));
+  if (tools) {
+    card.append(el('p', { className: `tj-caption tj-popup__tools tj-popup__tools--${tools.tone}`, text: tools.text }));
+    if (tools.reason && tools.reason !== tools.text) card.append(el('p', { className: 'tj-caption tj-popup__reason', text: tools.reason }));
+    card.append(diagnosticsLink(reply));
+  }
   return card;
 }
 
@@ -96,7 +128,14 @@ startPage({
 
     const reply = await queryVideoState();
     const status = describeStatus(reply);
-    placeholder.replaceWith(statusCard(status, toolsStatus(reply)));
+    placeholder.replaceWith(statusCard(status, toolsStatus(reply), captureLine(reply), reply));
+    // القاموس المرفق في نسخ التعليمات من هنا كما في المشغّل والمحفوظات (النص نفسه من instructions).
+    let glossary = null;
+    try {
+      glossary = attachedGlossary(await store.getPrefs());
+    } catch {
+      glossary = null;
+    }
 
     // الإجراءات السريعة للفيديو الحالي.
     const gate = editorGate(reply);
@@ -117,7 +156,7 @@ startPage({
         let glyph = icon('copy');
         b = el('button', { className: `tj-btn tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', 'aria-label': COPY_LABEL.idle, title: 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
         const copy = createCopyState({
-          buildText: () => instructions({ videoId: reply.videoId, title: reply.title }),
+          buildText: () => instructions({ videoId: reply.videoId, title: reply.title, glossary }),
           write: (text) => navigator.clipboard.writeText(text),
           announce: (code) => notice.replaceChildren(code === 'PG_COPY_DONE' ? el('span', { className: 'tj-sr-only', text: messageFor(code) }) : alertBox({ tone: 'danger', text: messageFor(code) })),
           onState: (next) => {

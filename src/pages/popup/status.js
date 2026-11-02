@@ -1,9 +1,12 @@
-// منطق نافذة الأيقونة بلا DOM (P7-AC1، وإعادة التصميم): استعلام حالة الفيديو الحالي من سكربت المحتوى في التبويب
-// النشط، ووصف الحالة الأربع للبطاقة، وسطر حالة الأدوات، والإجراءات السريعة بحسب السياق، وشرط تفعيل «المحرّر».
+// منطق نافذة الأيقونة بلا DOM (P7-AC1، وإعادة التصميم، وP12-AC6): استعلام حالة الفيديو الحالي من سكربت المحتوى في
+// التبويب النشط، ووصف الحالة الأربع للبطاقة، وسطر حالة أدوات المشغّل والطبقة بسببه، وسطر رفض الالتقاط، والإجراءات
+// السريعة بحسب السياق، وشرط تفعيل «المحرّر»، وتقرير تشخيص الصفحة المنقّى (R64).
 // الاستعلام يعيد null لكل ما ليس رد صفحة فيديو صالحًا («افتح فيديو على يوتيوب»): تبويب ليس يوتيوب، أو سكربت لم
 // يُحمَّل، أو نسخة أقدم، أو لا رد في المهلة.
+import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagnostics/report.js';
+import { messageFor } from '../../core/errors/index.js';
 import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
-import { isVideoStateReply, videoStateRequest } from '../../core/model/messages.js';
+import { MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest } from '../../core/model/messages.js';
 
 /** مهلة الرد: سكربت لا يردّ لا يترك النافذة هيكلًا إلى الأبد. */
 export const REPLY_TIMEOUT_MS = 1500;
@@ -62,16 +65,91 @@ export function describeStatus(reply) {
 }
 
 /**
- * سطر حالة أدوات المشغّل في بطاقة الفيديو (مواصفة التصميم §١٩.٦): تعمل، أو بانتظار المشغّل، أو تعذّر الربط.
+ * سطر حالة أدوات المشغّل وطبقة الترجمة في بطاقة الفيديو (مواصفة التصميم §١٩.٦): تعمل، أو بانتظار المشغّل، أو تعذّر الربط؛
+ * وعند التعطل سببه المفهوم من آخر رمز (عقد messages §٥).
  * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
- * @returns {{ tone: 'success' | 'info' | 'danger', text: string } | null}
+ * @returns {{ tone: 'success' | 'info' | 'danger', text: string, reason: string | null } | null}
  */
 export function toolsStatus(reply) {
   if (!reply || !reply.watch) return null;
   const { controls, overlay } = reply.mounted;
-  if (controls === 'mounted' && overlay === 'mounted') return { tone: 'success', text: 'أدوات المشغّل تعمل' };
-  if (controls === 'error' || overlay === 'error') return { tone: 'danger', text: 'تعذّر ربط الأدوات بالمشغّل — أعد تحميل الصفحة' };
-  return { tone: 'info', text: 'بانتظار المشغّل' };
+  const code = typeof reply.tools?.code === 'string' ? reply.tools.code : null;
+  const reason = code ? messageFor(code) : null;
+  if (controls === 'mounted' && overlay === 'mounted') return { tone: 'success', text: 'أدوات المشغّل تعمل', reason: null };
+  if (controls === 'error') return { tone: 'danger', text: 'تعذّر ربط الأدوات بالمشغّل — أعد تحميل الصفحة', reason };
+  if (overlay === 'error') return { tone: 'danger', text: 'تعذّر ربط طبقة الترجمة بالمشغّل — أعد تحميل الصفحة', reason };
+  return { tone: 'info', text: 'بانتظار المشغّل', reason: null };
+}
+
+/**
+ * سطر رفض الالتقاط لهذه الجلسة (مثل مسار عربي أو مترجم آليًا)، أو null. ما يُلتقط صالحًا لا يُذكر هنا.
+ * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
+ * @returns {{ tone: 'warning', text: string } | null}
+ */
+export function captureLine(reply) {
+  const c = reply?.watch ? reply.capture : null;
+  if (!c || c.state !== 'rejected' || typeof c.code !== 'string') return null;
+  return { tone: 'warning', text: messageFor(c.code) };
+}
+
+/**
+ * القاموس المرفق بتعليمات الترجمة، أو null (التفضيلات: «أرفق القاموس» مفعّل وفيه مصطلح).
+ * @param {import('../../core/model/prefs.js').Prefs | null | undefined} prefs
+ */
+export const attachedGlossary = (prefs) => (prefs?.glossary?.attach && prefs.glossary.terms?.length ? prefs.glossary.terms : null);
+
+/**
+ * تشخيص الصفحة من سكربت المحتوى في التبويب النشط (عقد messages §٦): أقسامه أو null.
+ * @param {{ tabs?: typeof chrome.tabs, timeoutMs?: number }} [env]
+ * @returns {Promise<Record<string, unknown> | null>}
+ */
+export async function queryPageDiagnostics({ tabs = globalThis.chrome?.tabs, timeoutMs = REPLY_TIMEOUT_MS } = {}) {
+  try {
+    const [tab] = await withTimeout(tabs.query({ active: true, lastFocusedWindow: true }), timeoutMs);
+    if (!tab || tab.id === undefined) return null;
+    const r = await withTimeout(tabs.sendMessage(tab.id, pageDiagnosticsRequest()), timeoutMs);
+    return r && typeof r === 'object' && r.v === MESSAGE_VERSION && r.ok === true && r.sections && typeof r.sections === 'object' ? r.sections : null;
+  } catch {
+    return null;
+  }
+}
+
+/** «Brave 156» أو «Chrome 156»: الاسم والرقم الرئيسي وحدهما، لا سلسلة وكيل المستخدم. @param {Navigator | undefined} nav */
+export function browserLabel(nav = globalThis.navigator) {
+  const brands = Array.isArray(nav?.userAgentData?.brands) ? nav.userAgentData.brands.filter((b) => b && typeof b.brand === 'string' && !/not.?a.?brand/i.test(b.brand)) : [];
+  const pick = brands.find((b) => /brave/i.test(b.brand)) ?? brands.find((b) => /chrome$/i.test(b.brand)) ?? brands.find((b) => /chromium/i.test(b.brand)) ?? brands[0];
+  if (pick) return `${pick.brand.replace(/^Google /, '')} ${String(pick.version).split('.')[0]}`.slice(0, 40);
+  const m = /(Chrome|Chromium)\/(\d+)/.exec(String(nav?.userAgent ?? ''));
+  return m ? `${m[1]} ${m[2]}` : 'غير معروف';
+}
+
+/** المعرّفات خارج التقرير: ما شوهد لا يدخل التشخيص (والمنقّي يسقط النصوص والعناوين والروابط بعدها). */
+const ID_KEYS = /^(?:videoId|videoIds|lastVideoId)$/;
+function withoutIds(value) {
+  if (Array.isArray(value)) return value.map(withoutIds);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, ID_KEYS.test(k) ? '[مستبعد]' : withoutIds(v)]));
+  return value;
+}
+
+/**
+ * تقرير «نسخ تشخيص الصفحة» (R64، P12-AC6): رموز وأعداد من رد الحالة ومن سكربت المحتوى (المتحكم والمستخرج ونقطتا التركيب
+ * برموز PL_ وCT_)، بلا نص ولا عنوان ولا رابط ولا معرّف فيديو، عبر createDiagnosticReport الذي ينقّيه.
+ * @param {{ reply: import('../../core/model/messages.js').VideoStateReply | null, sections: Record<string, unknown> | null, version: string, browser: string, at?: string }} p
+ */
+export function pageReport({ reply, sections, version, browser, at }) {
+  const popup = reply ? {
+    watch: reply.watch, loading: reply.loading,
+    tools: reply.tools ?? { overlay: reply.mounted.overlay, controls: reply.mounted.controls, code: null },
+    capture: reply.capture ?? null,
+    slots: Array.isArray(reply.slots) ? reply.slots.map((x) => ({ n: x.n, filled: x.filled, active: x.active })) : null,
+    arabic: reply.arabic ? { cueCount: reply.arabic.cueCount, edited: reply.arabic.edited, matched: reply.arabic.matched } : null,
+    english: { captured: reply.english.captured.map((t) => ({ kind: t.kind, ok: t.ok, cueCount: t.cueCount })), saved: reply.english.saved.length },
+    view: reply.view,
+  } : null;
+  return formatDiagnosticReport(createDiagnosticReport({
+    version, browser, ...(at ? { at } : {}),
+    sections: withoutIds({ popup, page: sections ?? { unavailable: true } }),
+  }));
 }
 
 /**
