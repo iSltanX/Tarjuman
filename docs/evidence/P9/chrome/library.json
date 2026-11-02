@@ -1,0 +1,97 @@
+{
+  "step": "library",
+  "at": "2026-11-02T02:33:44.961Z",
+  "checks": [
+    {
+      "id": "saved-after-hand-download-asr",
+      "ok": true,
+      "detail": {
+        "fingerprints": [
+          {
+            "mode": "long",
+            "count": 729
+          },
+          {
+            "mode": "long",
+            "count": 729
+          }
+        ],
+        "english": [
+          {
+            "kind": "asr",
+            "cues": 1056
+          }
+        ],
+        "title": true
+      }
+    },
+    {
+      "id": "saved-after-hand-download-manual",
+      "ok": true,
+      "detail": {
+        "fingerprints": [
+          {
+            "mode": "normal",
+            "count": 427
+          }
+        ],
+        "english": [
+          {
+            "kind": "manual",
+            "cues": 427
+          }
+        ],
+        "title": true
+      }
+    },
+    {
+      "id": "copy-from-library-to-device-clipboard-manual",
+      "ok": true,
+      "detail": {
+        "row": 4,
+        "state": "success",
+        "len": 3425,
+        "sha": "110220f811f0fb27",
+        "expected": {
+          "len": 3425,
+          "sha": "110220f811f0fb27"
+        }
+      }
+    },
+    {
+      "id": "copy-from-library-to-device-clipboard-asr",
+      "ok": true,
+      "detail": {
+        "row": 3,
+        "state": "success",
+        "len": 3449,
+        "sha": "8da8cb3d6b85c99f",
+        "expected": {
+          "len": 3449,
+          "sha": "8da8cb3d6b85c99f"
+        }
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": {
+        "count": 0
+      }
+    },
+    {
+      "id": "no-network-from-extension",
+      "ok": true,
+      "detail": {
+        "external": 0
+      }
+    }
+  ],
+  "notes": [],
+  "screenshots": [
+    "docs/evidence/P9/chrome/library-after-hand-downloads.png",
+    "docs/evidence/P9/chrome/library-copied.png"
+  ],
+  "browser": "Chrome (Chrome/156.0.8078.74)",
+  "errors": []
+}

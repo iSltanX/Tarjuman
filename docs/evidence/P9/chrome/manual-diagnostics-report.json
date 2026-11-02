@@ -1,0 +1,34 @@
+{
+  "tarjuman": "0.2.0",
+  "browser": "Chrome 156",
+  "at": "2026-11-02T02:35:34.137Z",
+  "sections": {
+    "storage": {
+      "bytesInUse": 862656,
+      "quotaBytes": null,
+      "unlimited": true,
+      "level": "normal",
+      "code": null
+    },
+    "library": {
+      "videos": 4,
+      "withArabic": 1,
+      "edited": 1,
+      "mismatched": 0,
+      "withEnglish": 4,
+      "fingerprints": 6
+    },
+    "settings": {
+      "offsetStepMs": 500,
+      "displayModeDefault": "ar",
+      "font": "tajawal",
+      "scale": 130,
+      "background": "soft",
+      "position": "bottom",
+      "exportMode": "normal",
+      "splitThreshold": 200,
+      "driftMs": 100,
+      "completeness": 0.85
+    }
+  }
+}

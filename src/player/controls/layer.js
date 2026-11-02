@@ -1,6 +1,7 @@
 // طبقة القوائم والتلميحات والرسائل (figma-design-brief §٥.٢ و§٦ و§٧.٢): عنصر واحد داخل #movie_player نفسه (فتبقى
-// القوائم ظاهرة في ملء الشاشة)، بـShadow DOM مغلق. القوائم والتلميحات تتبع ظهور الشريط (تختفي معه)، والرسائل العابرة
-// غير حاجبة فوق موضع الشريط. لا تلتقط الطبقة النقرات إلا على قائمة أو رسالة، ولا تصل منها ضغطة إلى اختصارات يوتيوب.
+// القوائم ظاهرة في ملء الشاشة)، بـShadow DOM مغلق. القوائم والتلميحات تتبع ظهور الشريط (تختفي معه)، إلا قائمة فيها
+// التركيز يكتب المستخدم في حقلها (product-spec §٦.٤، قرار سلطان في W4): تبقى ظاهرة حتى يغادر حقلها أو يغلقها. والرسائل
+// العابرة غير حاجبة فوق موضع الشريط. لا تلتقط الطبقة النقرات إلا على قائمة أو رسالة، ولا تصل منها ضغطة إلى اختصارات يوتيوب.
 import { createSheet } from '../overlay/sheet.js';
 import { morphChildren } from './morph.js';
 import { LAYER_ID, layerCss } from './styles.js';
@@ -11,6 +12,8 @@ const MENU_W = { normal: 300, compact: 300, fullscreen: 340 };
 // ما يخص القائمة لا يصل إلى المشغّل: الضغطات (الأرقام والمسافة والأسهم اختصارات ليوتيوب) والنقر (تشغيل وإيقاف).
 const ISOLATE = ['keydown', 'keyup', 'keypress', 'click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'contextmenu', 'wheel'];
 const GLYPH = { success: '✓', info: 'ⓘ', warning: '⚠', error: '✕' };
+/** حقل يُكتب فيه (لا مربع اختيار ولا منتقي ملفات). @param {Element | null | undefined} el */
+const typable = (el) => String(el?.tagName).toLowerCase() === 'input' && !['checkbox', 'radio', 'file', 'button'].includes(el.getAttribute('type') ?? 'text');
 
 /**
  * @param {{ doc: Document, win: Window, on: { escape: () => void, files: (files: File[]) => void } }} deps
@@ -55,6 +58,14 @@ export function createLayer({ doc, win, on }) {
     });
     toasts.addEventListener(type, (ev) => ev.stopPropagation());
   }
+  // الكتابة في حقل القائمة تبقيها ظاهرة والشريط مخفي (data-typing)؛ ومغادرة الحقل تعيدها إلى قاعدة الشريط. التركيز
+  // المنتقل بين حقلين يمر بـfocusout ثم focusin في المهمة نفسها، فلا ترمش القائمة.
+  const syncTyping = (el) => {
+    if (typable(el)) layer.setAttribute('data-typing', '');
+    else layer.removeAttribute('data-typing');
+  };
+  menu.addEventListener('focusin', (ev) => syncTyping(ev.target));
+  menu.addEventListener('focusout', () => syncTyping(null));
   // نقرة فتح المنتقي (input.click) تصعد عبر الجذر إلى المشغّل؛ لا تصل إليه فتوقف التشغيل أو تبدأه.
   input.addEventListener('click', (ev) => ev.stopPropagation());
   input.addEventListener('change', () => {
@@ -148,12 +159,15 @@ export function createLayer({ doc, win, on }) {
       menu.setAttribute('role', a11y.role ?? 'menu');
       menu.setAttribute('aria-label', a11y.label);
       menu.removeAttribute('hidden');
+      // استبدال المحتوى قد يزيل الحقل المركّز دون focusout.
+      syncTyping(root.activeElement);
       placeMenu();
     },
 
     /** يحدّث القائمة المفتوحة في مكانها (morph): العقد نفسها ما بقيت بنيتها. @param {Element[]} children */
     patchMenu(children) {
       const n = morphChildren(menu, children);
+      syncTyping(root.activeElement);
       placeMenu();
       return n;
     },
@@ -162,6 +176,7 @@ export function createLayer({ doc, win, on }) {
       anchor = null;
       menu.setAttribute('hidden', '');
       menu.replaceChildren();
+      syncTyping(null);
       placeToasts();
     },
 
@@ -243,6 +258,8 @@ export function createLayer({ doc, win, on }) {
       }));
       return {
         bar: layer.getAttribute('data-bar'),
+        typing: layer.hasAttribute('data-typing'),
+        opacity: win.getComputedStyle ? win.getComputedStyle(layer).opacity : null,
         menu: menu.hasAttribute('hidden') ? null : { label: menu.getAttribute('aria-label'), text: menu.textContent, box: box(menu), items },
         tip: tip.hasAttribute('hidden') ? null : tip.textContent,
         toasts: [...toasts.children].map((t) => ({ tone: t.getAttribute('data-tone'), text: t.textContent, box: box(t) })),

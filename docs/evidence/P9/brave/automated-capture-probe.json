@@ -1,0 +1,47 @@
+{
+  "step": "extract",
+  "video": "iG9CE55wbtY",
+  "kind": "manual",
+  "mode": "normal",
+  "at": "2026-11-02T01:07:14.482Z",
+  "checks": [
+    {
+      "id": "real-capture-without-automation-flag",
+      "ok": false,
+      "detail": {
+        "webdriver": true,
+        "capturedBeforeAttach": null
+      }
+    },
+    {
+      "id": "run-aborted",
+      "ok": false,
+      "detail": {
+        "error": "لم يُلتقط مسار en|manual"
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": {
+        "count": 0
+      }
+    },
+    {
+      "id": "no-network-from-extension",
+      "ok": true,
+      "detail": {
+        "external": 0
+      }
+    }
+  ],
+  "notes": [
+    "تخزين الإضافة فارغ في بداية دورة هذا المتصفح (ملف الاختبار يبقى بين التشغيلات).",
+    "المحاولة 1: لا مسار en|manual مقبول (آخر رفض: —)، فيُعاد فتح الصفحة كما في P1.",
+    "المحاولة 2: لا مسار en|manual مقبول (آخر رفض: EX_NOT_ENGLISH)، فيُعاد فتح الصفحة كما في P1.",
+    "المحاولة 3: لا مسار en|manual مقبول (آخر رفض: EX_NOT_ENGLISH)، فيُعاد فتح الصفحة كما في P1."
+  ],
+  "screenshots": [],
+  "browser": "Brave (Chrome/156.0.8078.48)",
+  "errors": []
+}

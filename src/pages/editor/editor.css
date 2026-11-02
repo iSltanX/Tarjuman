@@ -29,7 +29,7 @@ body.ed-page { overflow: hidden; }
 }
 
 /* ---- الرأس ---- */
-.ed-head { display: flex; flex-direction: column; gap: 8px; padding: 12px 20px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
+.ed-head { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
 .ed-head__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
 .ed-title { flex: 1 1 240px; min-width: 0; }
 
@@ -159,13 +159,14 @@ body.ed-page { overflow: hidden; }
 }
 .ed-unsaved .tj-label { color: var(--tj-warning); }
 .ed-counter { white-space: nowrap; }
+/* تحت الرأس عند طرفه (تحت «حفظ» في RTL): أعلى الصفحة دون أن تغطي العنوان أو أزرار الرأس. */
 .ed-toast {
-  position: fixed; top: 16px; left: 50%; z-index: 10; transform: translate(-50%, -8px); opacity: 0; pointer-events: none;
+  position: absolute; top: calc(100% + 8px); inset-inline-end: 20px; z-index: 10; transform: translateY(-8px); opacity: 0; pointer-events: none;
   padding: 10px 14px; border-radius: var(--tj-radius-button); box-shadow: var(--tj-e2); font: 700 14px/20px var(--tj-font-body);
   background: var(--tj-success-bg); color: var(--tj-success);
   transition: opacity var(--tj-motion-toast) var(--tj-ease), transform var(--tj-motion-toast) var(--tj-ease);
 }
-.ed-toast.is-shown { opacity: 1; transform: translate(-50%, 0); }
+.ed-toast.is-shown { opacity: 1; transform: none; }
 .ed-toast--danger { background: var(--tj-danger-bg); color: var(--tj-danger); }
 .ed-toast--info { background: var(--tj-info-bg); color: var(--tj-info); }
 
