@@ -90,3 +90,11 @@ test('بلا إنذار خاطئ على قائمة أسماء مخصصة', () =>
   assert.equal(classTransitions('TEDtalk2006'), 2);
   assert.ok(classTransitions('iG9CE55wbtY') >= 6);
 });
+
+test('تدقيق 5fedcb9 (GM-026.1): المعرّف وسط اسم أطول بين شرطتين مرشح كطرفيه، والرقم المقطوع ليس معرّفًا', async () => {
+  const { videoIdFromName } = await import('../../../src/core/import/review.js');
+  assert.deepEqual(videoIdFromName('ar_iG9CE55wbtY_final.srt', { videoId: 'AAAAAAAAAAA' }), { videoId: 'iG9CE55wbtY', differs: true });
+  assert.deepEqual(videoIdFromName('ar_iG9CE55wbtY_final.srt', { videoId: 'iG9CE55wbtY' }), { videoId: 'iG9CE55wbtY', differs: false });
+  assert.equal(videoIdFromName('ar_123456789_v1.srt', { videoId: 'AAAAAAAAAAA' }), null);
+  assert.equal(videoIdFromName('translation_v2_final_2026.srt', { videoId: 'AAAAAAAAAAA' }), null);
+});

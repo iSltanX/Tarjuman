@@ -192,3 +192,32 @@ test('GM-027.3: عتبة الانحراف من الإعدادات تسري عل�
   assert.notEqual(before, 750);
   assert.equal(editor.state.comparison?.driftThresholdMs, 750);
 });
+
+test('GM-026.4: خطأ توقيت (زمن سالب) لا يمنع «نص دراسي» كما يقول «تصدير ▾»؛ الرابط من بداية الفيديو', async () => {
+  const saved = [];
+  const area = createMemoryArea({ unlimited: true });
+  let at = Date.parse(NOW);
+  const now = () => (at += 1000);
+  const store = createStore({ area, now });
+  const initial = sampleBundle();
+  await seedBundle(store, initial);
+  const env = editorDocument({ videoId: initial.videoId });
+  const editor = await mountEditor(env.root, { videoId: initial.videoId, store, doc: env.doc, now, saveFile: async (f) => { saved.push(f); return { ok: true, mode: 'downloads', downloadId: 1 }; } });
+  await env.flush();
+  editor.state.session.setTime(0, 'start', -1500); // سالب حتى بعد إزاحة العرض (+0.5)
+  assert.ok(editor.state.session.issues().errors > 0, 'خطأ توقيت قائم');
+  const btn = env.root.querySelectorAll('button').find((b) => b.textContent.includes('تصدير'));
+  btn.click();
+  await env.flush();
+  const study = env.doc.querySelectorAll('[role="menuitem"], button').find((b) => b.textContent.includes('نص دراسي'));
+  assert.ok(study, 'بند «نص دراسي…»');
+  study.click();
+  await env.flush();
+  const dialog = env.doc.querySelector('dialog[open]');
+  assert.ok(dialog);
+  assert.doesNotMatch(dialog.textContent, /لا يُصدَّر الآن/, 'لا منع بخطأ التوقيت');
+  dialog.close('save');
+  await env.flush();
+  assert.equal(saved.length, 1, 'صُدِّر');
+  assert.match(saved[0].text, /t=0s/);
+});

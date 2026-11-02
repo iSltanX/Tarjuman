@@ -76,7 +76,11 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings } = 
     let fileName = parts[0].name;
     if (multi) {
       const merged = mergeParts(parts);
-      if (merged.overlaps.length) throw new TjError('IM_PARTS_OVERLAP', { params: merged.overlaps[0] });
+      if (merged.overlaps.length) {
+        const o = merged.overlaps[0];
+        if (o.stray) throw new TjError('IM_PARTS_STRAY_NUMBER', { params: { a: o.a, b: o.b, list: o.stray.join('، ') } });
+        throw new TjError('IM_PARTS_OVERLAP', { params: o });
+      }
       for (const gap of merged.gaps) warnings.push({ code: 'IM_PARTS_GAP', params: gap });
       cues = merged.cues;
       fileName = mergedFileName(merged.order);

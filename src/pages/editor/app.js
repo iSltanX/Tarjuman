@@ -766,7 +766,8 @@ export async function mountEditor(app, {
         // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض)، ومنه يُوزَّع الإنجليزي بمنتصف زمنه.
         const s = act();
         const timed = exportTiming(s.snapshot(), S.view === 'original' ? 0 : S.session.offsetMs, 'shown');
-        const cues = timed.ok ? timed.cues : s.snapshot();
+        // أخطاء التوقيت لا تمنع النص الدراسي (كما يقول «تصدير ▾»): الزمن السالب رابطه من بداية الفيديو (GM-026.4).
+        const cues = (timed.ok ? timed.cues : s.snapshot()).map((c) => ({ ...c, startMs: Math.max(0, c.startMs), endMs: Math.max(0, c.endMs) }));
         return buildStudyText({ videoId, title: S.opened.record.title, cues, english: bilingual ? english : null, format, bilingual });
       },
     });

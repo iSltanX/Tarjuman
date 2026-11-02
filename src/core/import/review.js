@@ -22,18 +22,23 @@ export function classTransitions(token) {
   return t;
 }
 
-/** الرموز المرشحة في الاسم مع ما يليها: أحد عشر محرفًا محاطة بغير محارف المعرّف، وطرفا سلسلة أطول بعد شرطة أو قبلها. */
+/**
+ * الرموز المرشحة في الاسم مع ما يليها: أحد عشر محرفًا محاطة بغير محارف المعرّف، وفي سلسلة أطول كل نافذة بطوله يحيط بها من
+ * جهتيها طرف السلسلة أو شرطة (فالمعرّف وسط «ar_iG9CE55wbtY_final» مرشح كطرفيها؛ تدقيق 5fedcb9، GM-026.1).
+ */
 function candidates(name) {
   const out = [];
   const re = /[A-Za-z0-9_-]+/g;
   let m;
   while ((m = re.exec(name))) {
     const run = m[0];
-    const end = m.index + run.length;
-    if (run.length === ID_LEN) out.push({ token: run, after: name.slice(end) });
+    if (run.length === ID_LEN) out.push({ token: run, after: name.slice(m.index + run.length) });
     else if (run.length > ID_LEN) {
-      if (/[-_]/.test(run[run.length - ID_LEN - 1])) out.push({ token: run.slice(-ID_LEN), after: name.slice(end) });
-      if (/[-_]/.test(run[ID_LEN])) out.push({ token: run.slice(0, ID_LEN), after: name.slice(m.index + ID_LEN) });
+      for (let i = 0; i + ID_LEN <= run.length; i++) {
+        const opens = i === 0 || /[-_]/.test(run[i - 1]);
+        const closes = i + ID_LEN === run.length || /[-_]/.test(run[i + ID_LEN]);
+        if (opens && closes) out.push({ token: run.slice(i, i + ID_LEN), after: name.slice(m.index + i + ID_LEN) });
+      }
     }
   }
   return out;
