@@ -164,10 +164,10 @@
 ```json tj-status
 {
   "phase": "P10",
-  "status": "planned",
-  "updated": "2026-11-02",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W6 بعد التحقق من W5 ووسم tj-v1.",
+  "status": "in_progress",
+  "updated": "2026-11-02T08:23:43+03:00",
+  "branch": "tj/P10-v2-foundation",
+  "resume": "بدأت: قراءة العقود والمواصفة وواجهات الربط، ثم كتابة العقود أولًا.",
   "blocker": null,
   "outcome": null,
   "commit": null,
