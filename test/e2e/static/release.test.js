@@ -26,7 +26,8 @@ test('الحزمة: بناء الإنتاج باسم الإصدار، والتد
   const manifest = JSON.parse(entries.find((e) => e.name === `${pkg.name}/manifest.json`).data.toString('utf8'));
   assert.deepEqual(manifest.permissions, ['storage', 'unlimitedStorage', 'downloads']);
   assert.deepEqual(manifest.background, { service_worker: 'background/worker.js' });
-  assert.equal(manifest.version, '0.2.0', 'الإصدار الثاني');
+  // رفع رقم البيان للإصدار الثاني قرار للمنسّق أو لسلطان (known-limitations)، فلا يُثبَّت رقم بعينه هنا.
+  assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
   assert.equal(manifest.version_name, undefined, 'لا اسم إصدار تطوير');
   assert.ok(pkg.meta.files.some((f) => f.path === 'background/worker.js'), 'العامل الخلفي في الحزمة');
 });

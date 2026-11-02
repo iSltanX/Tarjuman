@@ -101,21 +101,24 @@ export async function quitProfile(profileDir) {
  * يشغّل المتصفح بملف الاختبار. المؤتمتة (debug=true): في الخلفية دون أن تأخذ التركيز (open -g -n) بمنفذ تصحيح محلي،
  * وأعلام منع الإبطاء للنافذة المغطاة كي يستمر العرض والتشغيل خلف نوافذ سلطان. اليدوية (debug=false): نافذة أمامية بلا
  * أي علم تحكم، ولا اتصال بها. تُغلق أولًا أي نسخة باقية من الملف نفسه.
+ * والمؤتمتة بلا نافذة (headless) لا تظهر فوق نوافذ سلطان أصلًا (P15)، والمؤتمتة الأمامية (front) نافذة يُنتظر فيها سلطان
+ * (حوار «اسأل عن مكان الحفظ»). ext يغيّر مسار الإضافة (ملفات P15).
  * @param {'brave' | 'chrome'} browser
- * @param {{ profile?: string, loadExt?: boolean, debug?: boolean, urls?: string[] }} [o]
+ * @param {{ profile?: string, ext?: string, loadExt?: boolean, debug?: boolean, headless?: boolean, front?: boolean, urls?: string[] }} [o]
  */
-export async function launchBrowser(browser, { profile, loadExt, debug = true, urls = ['about:blank'] } = {}) {
-  const spec = { ...BROWSERS[browser], ...(profile ? { profile } : {}) };
+export async function launchBrowser(browser, { profile, ext, loadExt, debug = true, headless = false, front = false, urls = ['about:blank'] } = {}) {
+  const spec = { ...BROWSERS[browser], ...(profile ? { profile } : {}), ...(ext ? { ext } : {}) };
   const profileDir = path.join(PROFILE_ROOT, spec.profile);
   await mkdir(profileDir, { recursive: true });
   if (pidsOf(profileDir).length) await quitProfile(profileDir);
   await rm(path.join(profileDir, 'DevToolsActivePort'), { force: true });
   const args = [
-    ...(debug ? ['-g'] : []), '-n', '-a', spec.app, '--args',
+    ...(debug && !front ? ['-g'] : []), '-n', '-a', spec.app, '--args',
     `--user-data-dir=${profileDir}`, ...(debug ? ['--remote-debugging-port=0'] : []),
     '--no-first-run', '--no-default-browser-check', '--lang=en-US', '--mute-audio',
     '--window-size=1400,950', '--window-position=40,40',
     ...(debug ? ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling'] : []),
+    ...(debug && headless ? ['--headless=new'] : []),
   ];
   if (loadExt ?? spec.flagLoad) args.push(`--load-extension=${spec.ext}`);
   args.push(...urls);
