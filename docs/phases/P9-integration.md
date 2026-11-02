@@ -111,7 +111,7 @@
 {
   "phase": "P9",
   "status": "in_progress",
-  "updated": "2026-11-02T03:54:38+03:00",
+  "updated": "2026-11-02T04:34:48+03:00",
   "branch": "tj/P9-integration",
   "resume": "أُصلحت ملاحظتا W4 (قائمة التوقيت مع التركيز، ورسالة «حُفظ ✓» في المحرّر) باختبارات في test/e2e/regression. بانتظار موافقة سلطان على رسالة الاختبار الحي وقراراته (الترجمة، والحافظة، والعيّنات، ورابط «حول»).",
   "blocker": null,
@@ -121,7 +121,14 @@
   "checks": [],
   "acceptance": {},
   "evidence": [],
-  "sharedRequests": []
+  "sharedRequests": [
+    {
+      "file": ".gitignore",
+      "change": "سطر واحد: release/ مع dist/",
+      "why": "مجلد ناتج scripts/release/package.mjs (الحزمة والأرشيف) مولّد محلي لا يُحفظ في Git، كما dist/",
+      "applied": true
+    }
+  ]
 }
 ```
 
