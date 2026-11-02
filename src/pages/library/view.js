@@ -1,22 +1,27 @@
-// واجهة المحفوظات (P7-AC2/AC3/AC6/AC7، وإعادة التصميم): سجل واحد لكل فيديو في قائمة مدمجة: العنوان، ومحدد الترجمات
-// 1 2 3، والمعرّف، والشارات، والتاريخ؛ والإجراءات المتكررة ظاهرة (تعديل أو رفع ترجمة، ونسخ تعليمات الترجمة، وفتح
-// الفيديو) والثانوية في «المزيد» (تصدير SRT، والاستبدال، والحذف). بحث وأقسام تصفية بأعدادها وترتيب، وحالتها في جزء
-// العنوان فتبقى عند الرجوع من المحرّر. الحالات: تحميل وفارغة وممتلئة ونتيجة بحث فارغة وقسم فارغ وخطأ. كل نص عبر
-// textContent، ولا طلبات شبكة، ونص تعليمات الترجمة لا يدخل DOM في أي حال.
+// واجهة المحفوظات (P7-AC2/AC3/AC6/AC7، وإعادة التصميم، وP13-AC1/AC2/AC3/AC6/AC7): سجل واحد لكل فيديو في قائمة مدمجة:
+// العنوان، واختيار الترجمة 1 2 3 (يفعّل غير النشطة)، والمعرّف، والشارات، والتاريخ؛ والإجراءات المتكررة ظاهرة (تعديل أو رفع
+// ترجمة، ونسخ تعليمات الترجمة بالقاموس، وفتح الفيديو) والثانوية في «المزيد» («الترجمات…» بلوحتها، وتصدير SRT و«نص
+// دراسي…» عبر saveFile، و«رفع ترجمة…» بحوار الفحص الكامل، والحذف). بحث ورقائق الفرز بالحالات الخمس بأعدادها وترتيب،
+// وحالتها في جزء العنوان فتبقى عند الرجوع من المحرّر. الحالات: تحميل وفارغة وممتلئة ونتيجة بحث فارغة وقسم فارغ وخطأ. كل
+// نص عبر textContent، ولا طلبات شبكة، ونص تعليمات الترجمة لا يدخل DOM في أي حال.
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
-import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, slotPicker, slotsForSingle, statusPill } from '../../ui/components.js';
+import { DEFAULT_PREFS } from '../../core/model/prefs.js';
+import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, slotPicker, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatBytes, formatCount, formatOffset } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
-import { applyReplacement, deleteVideoData, exportArabic, exportEnglish, readReplacement } from './actions.js';
+import { createToaster } from '../../ui/toast.js';
+import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportStudy, prepareUpload, studyName } from './actions.js';
 import { radioGroup } from './choice.js';
 import { createCopyState } from './copy.js';
 import {
-  FILTERS, PAGE_SIZE, SORTS, comparisonSummary, copyGate, exportOptions, filterCounts, filterEntries, parsePageState, rowModel, searchEntries,
-  serializePageState, sortEntries,
+  FILTERS, PAGE_SIZE, SORTS, copyGate, exportOptions, filterCounts, filterEntries, libraryEntries, parsePageState, rowModel, searchEntries,
+  serializePageState, sortEntries, studyGate,
 } from './model.js';
-import { createToaster } from './toast.js';
+import { openTranslations } from './panel.js';
+import { studyContent } from './study.js';
+import { uploadContent } from './upload.js';
 
 export const COPY_TIP = 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.';
 export const CAPTION = 'ترجماتك محفوظة هنا حسب الفيديو، والأصل المستورد محفوظ دائمًا.';
@@ -33,7 +38,7 @@ let seq = 0;
  *   store: ReturnType<typeof import('../../core/store/index.js').createStore>,
  *   doc?: Document, now?: () => number,
  *   openTab: (url: string) => Promise<unknown>, openPage: (name: 'editor', params: { v: string }) => Promise<unknown>,
- *   download: (file: { name: string, text: string }) => void,
+ *   saveFile: import('./actions.js').SaveFn,
  *   clipboardWrite: (text: string) => Promise<void>,
  *   pickFiles: () => Promise<File[] | null>,
  *   diagnosticsText: () => Promise<string>,
@@ -69,8 +74,11 @@ export function createLibrary(env) {
   const initial = parsePageState(nav.get());
   const state = {
     status: /** @type {'loading' | 'ready' | 'error'} */ ('loading'),
-    entries: /** @type {import('../../core/model/video.js').IndexEntry[]} */ ([]),
+    /** مُلخّص الفهرس لكل فيديو ومعه ملخص الفرز ونماذج 1 2 3 (listLibrary). */
+    entries: /** @type {ReturnType<typeof libraryEntries>} */ ([]),
     capacity: /** @type {import('../../core/store/capacity.js').Capacity | null} */ (null),
+    /** التفضيلات: القاموس يُرفق بالتعليمات المنسوخة. */
+    prefs: /** @type {import('../../core/model/prefs.js').Prefs} */ (DEFAULT_PREFS),
     query: initial.query, filter: initial.filter, order: /** @type {'updated' | 'title'} */ (initial.order), limit: PAGE_SIZE,
     /** الصف المقصود بعد الرجوع من المحرّر (#v=…): يُبرَز مرة ثم يُنسى. */
     focusId: initial.focusId,
@@ -187,51 +195,98 @@ export function createLibrary(env) {
       .then((ok) => (ok ? group.value() : null));
   }
 
+  /** نتيجة الحفظ (saveFile) رسالةً عابرة: النجاح، والرجوع إلى التنزيل العادي، والإلغاء، والفشل برمزه. يعيد هل حُفظ. */
+  function savedToast(saved, successCode = 'PG_EXPORT_DONE') {
+    if (saved.ok) {
+      if (saved.mode === 'blob') toaster.show(messageFor('SV_FALLBACK_BLOB'), 'info');
+      else done(successCode);
+      return true;
+    }
+    toaster.show(messageFor(saved.code), saved.code === 'SV_CANCELLED' ? 'info' : 'danger');
+    return false;
+  }
+
   const exportFile = (m, option) => guarded(async () => {
     if (option.action.type === 'ar') {
-      const r = await exportArabic({ store, videoId: m.videoId, variant: option.action.variant, askTiming, download: env.download });
-      if (r) done('PG_EXPORT_DONE');
+      const r = await exportArabic({ store, videoId: m.videoId, variant: option.action.variant, askTiming, save: env.saveFile });
+      if (r) savedToast(r.saved);
     } else {
-      const r = await exportEnglish({ store, videoId: m.videoId, trackKey: option.action.trackKey, download: env.download, now });
+      const r = await exportEnglish({ store, videoId: m.videoId, trackKey: option.action.trackKey, save: env.saveFile, now });
       if (r.saveError) toaster.show(messageFor('PG_FINGERPRINT_NOT_SAVED'), 'info');
-      else done('PG_EXPORT_DONE');
+      else savedToast(r.saved);
     }
   });
 
-  const replace = (m) => guarded(async () => {
-    const files = await env.pickFiles();
-    if (!files || !files.length) return;
-    const { record, settings, result } = await readReplacement({ store, videoId: m.videoId, files });
-    if (!result.ok) {
-      toaster.show(result.error.message, 'danger');
-      return;
-    }
-    const summary = comparisonSummary(result.comparison);
-    const content = el('div', {
-      className: 'lib-compare',
-      children: [
-        el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
-        alertBox({ tone: summary.tone, text: summary.lines.join('\n'), doc }),
-        ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
-        el('p', { className: 'tj-caption', text: 'ستُصفَّر إزاحة العرض لأن الملف الجديد يحمل توقيته.', doc }),
-        record.arabic ? el('p', { className: 'tj-caption', text: 'الأصل القديم لا يُحذف إلا بتأكيدك.', doc }) : null,
-      ],
-      doc,
-    });
-    const had = Boolean(record.arabic);
-    const ok = await confirm({
-      title: had ? `استبدال ترجمة "${isolate(clip(m.displayTitle, 80))}"؟` : `حفظ الترجمة العربية لـ"${isolate(clip(m.displayTitle, 80))}"؟`,
-      confirmLabel: had ? 'استبدال' : 'حفظ', tone: had ? 'danger' : 'default', content, doc,
-    });
+  /** «نص دراسي…»: الصيغة واللغة ومعاينة الاسم، ثم الحفظ عبر saveFile. */
+  const study = (m, entry) => guarded(async () => {
+    const content = studyContent({ doc, hasEnglish: entry.english.length > 0, name: (o) => studyName({ store, videoId: m.videoId, ...o }) });
+    await content.ready;
+    const ok = await confirm({ title: `نص دراسي لـ"${isolate(clip(m.displayTitle, 80))}"`, body: 'الترجمة النشطة فقرات بأوقاتها، لقراءتها أو مراجعتها خارج الفيديو.', confirmLabel: 'تنزيل', content: content.root, doc });
     if (!ok) return;
-    await applyReplacement({ store, record, settings, result, now });
-    done(had ? 'PG_REPLACE_DONE' : 'PG_IMPORT_DONE');
+    const r = await exportStudy({ store, videoId: m.videoId, ...content.value(), save: env.saveFile });
+    savedToast(r.saved);
+  });
+
+  /**
+   * الرفع إلى خانة (حوار الفحص الكامل): المنتقي، ثم القراءة والفحص، ثم الحوار، ثم الكتابة بالحزمة التي بُني عليها. يعيد هل كُتب.
+   * @param {{ videoId: string, displayTitle: string }} m @param {1 | 2 | 3 | null} [preferred]
+   */
+  async function upload(m, preferred = null) {
+    let wrote = false;
+    await guarded(async () => {
+      const files = await env.pickFiles();
+      if (!files || !files.length) return;
+      const prep = await prepareUpload({ store, videoId: m.videoId, files, knownVideoIds: state.entries.map((e) => e.videoId) });
+      if (!prep.result.ok) {
+        toaster.show(prep.result.error.message, 'danger');
+        return;
+      }
+      const titleOf = (id) => state.entries.find((e) => e.videoId === id)?.title ?? null;
+      let confirmBtn = null;
+      const labelFor = (replace) => (replace ? 'استبدال' : 'حفظ');
+      const view = uploadContent({
+        doc, prep, preferred, titleOf,
+        onTarget: (replace) => {
+          if (!confirmBtn) return;
+          const label = confirmBtn.querySelector('span') ?? confirmBtn;
+          label.textContent = labelFor(replace);
+        },
+      });
+      const pending = confirm({ title: `رفع ترجمة لـ"${isolate(clip(m.displayTitle, 80))}"`, confirmLabel: labelFor(view.replace()), content: view.root, doc });
+      confirmBtn = view.root.closest?.('form')?.querySelector('button[value="confirm"]') ?? null;
+      if (!(await pending)) return;
+      const choice = view.choice();
+      const info = await applyUpload({ store, bundle: prep.bundle, settings: prep.settings, result: prep.result, ...choice, now });
+      toaster.show(messageFor(info.replaced ? 'PG_UPLOAD_REPLACED' : 'PG_UPLOAD_SAVED', { n: choice.n }), 'success');
+      if (info.offsetWas !== 0) toaster.show(messageFor('ST_OFFSET_RESET'), 'info');
+      wrote = true;
+      await load();
+    });
+    return wrote;
+  }
+
+  /** «الترجمات…»: اللوحة الجانبية. */
+  const translations = (m) => guarded(async () => {
+    const panel = openTranslations({
+      doc, store, videoId: m.videoId, title: clip(m.displayTitle, 60), now, confirm, toaster,
+      onChanged: () => load(),
+      upload: (n) => upload(m, n),
+    });
+    await panel.closed;
+  });
+
+  /** اختيار 1 2 3 في الصف: يفعّل الخانة برسالة عابرة فيها «تراجع». */
+  const activate = (m, n) => guarded(async () => {
+    const { before } = await activateSlot({ store, videoId: m.videoId, n, now });
     await load();
+    toaster.show(messageFor('PG_SLOT_ACTIVATED', { n }), 'success', before && before !== n ? {
+      action: { label: 'تراجع', onClick: () => guarded(async () => { await activateSlot({ store, videoId: m.videoId, n: before, now }); await load(); }) },
+    } : undefined);
   });
 
   const remove = (m, hasArabic) => guarded(async () => {
     const options = hasArabic
-      ? [{ value: 'arabic', label: 'العربية فقط (يبقى المسار الإنجليزي والبصمة)' }, { value: 'all', label: 'كل بيانات هذا الفيديو' }]
+      ? [{ value: 'arabic', label: 'الترجمة النشطة وحدها (تبقى الأخرى والمسار الإنجليزي والبصمة)' }, { value: 'all', label: 'كل بيانات هذا الفيديو' }]
       : [{ value: 'all', label: 'كل بيانات هذا الفيديو' }];
     const group = radioGroup({ legend: 'ما يُحذف', options, doc });
     const ok = await confirm({
@@ -264,8 +319,9 @@ export function createLibrary(env) {
       return wrap;
     }
     const copy = createCopyState({
-      // النص يُبنى عند الضغطة من السجل (العنوان) والمعرّف، ويُسلَّم إلى الحافظة ولا يُحفظ ولا يُعرض.
-      buildText: () => instructions({ videoId: entry.videoId, title: entry.title }),
+      // النص يُبنى عند الضغطة من السجل (العنوان) والمعرّف والقاموس المحفوظ إن كان مرفقًا (النص نفسه في قائمة التحميل)،
+      // ويُسلَّم إلى الحافظة ولا يُحفظ ولا يُعرض.
+      buildText: () => instructions({ videoId: entry.videoId, title: entry.title, glossary: state.prefs.glossary.attach ? state.prefs.glossary.terms : null }),
       write: (text) => env.clipboardWrite(text),
       // النجاح يتحول به الزر ويُعلَن بعنوان الصف؛ الفشل رسالة عابرة تُعلَن بنفسها.
       announce: (code) => {
@@ -303,21 +359,25 @@ export function createLibrary(env) {
         }
       },
     });
-    const slots = slotPicker({ slots: slotsForSingle({ hasArabic: m.hasArabic, name: m.fileName }), ariaLabel: name('الترجمة النشطة'), doc });
+    // 1 2 3 بجانب الشارات: النشطة مميزة، والضغط على غيرها يفعّلها؛ والتلميح الاسم المختصر إن وُجد.
+    const slots = slotPicker({ slots: m.slots, ariaLabel: name('الترجمة النشطة'), onSelect: (n) => activate(m, n), doc });
     const exportItems = exportOptions(entry).map((o) => ({ id: o.id, label: o.label, hint: o.hint, disabledReason: o.disabledReason, icon: 'download', onSelect: () => exportFile(m, o) }));
     const moreMenu = createMenu({
       label: 'المزيد', ariaLabel: name('المزيد'), icon: 'more', iconOnly: true, variant: 'ghost', className: 'lib-more', doc,
       items: [
-        { kind: 'group', label: 'تصدير SRT' },
-        ...exportItems,
+        { id: 'translations', label: 'الترجمات…', icon: 'layers', onSelect: () => translations(m) },
         { kind: 'separator' },
-        ...(m.hasArabic ? [{ id: 'replace', label: 'استبدال الترجمة العربية…', icon: 'replace', onSelect: () => replace(m) }] : []),
+        { kind: 'group', label: 'تصدير' },
+        ...exportItems,
+        { id: 'study', label: 'نص دراسي…', icon: 'download', disabledReason: studyGate(entry), onSelect: () => study(m, entry) },
+        { kind: 'separator' },
+        { id: 'upload', label: 'رفع ترجمة…', icon: 'upload', onSelect: () => upload(m) },
         { id: 'delete', label: m.hasArabic ? 'حذف الترجمة…' : 'حذف بيانات الفيديو…', tone: 'danger', icon: 'trash', onSelect: () => remove(m, entry.arabic !== null) },
       ],
     });
     const primary = m.hasArabic
       ? button({ label: 'تعديل', icon: 'edit', variant: 'secondary', size: 'sm', title: name('تعديل'), doc, onClick: () => guarded(async () => { state.focusId = entry.videoId; remember(); await env.openPage('editor', { v: entry.videoId }); }) })
-      : button({ label: 'رفع ترجمة', icon: 'upload', variant: 'secondary', size: 'sm', title: name('رفع الترجمة العربية'), doc, onClick: () => replace(m) });
+      : button({ label: 'رفع ترجمة', icon: 'upload', variant: 'secondary', size: 'sm', title: name('رفع الترجمة العربية'), doc, onClick: () => upload(m) });
     primary.setAttribute('aria-label', name(m.hasArabic ? 'تعديل' : 'رفع الترجمة العربية'));
     const open = button({ label: name('فتح الفيديو'), iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: 'فتح الفيديو على يوتيوب', doc, onClick: () => guarded(async () => { await env.openTab(watchUrl(entry.videoId)); }) });
     const meta = [
@@ -434,9 +494,9 @@ export function createLibrary(env) {
   async function load() {
     const mine = ++loadSeq;
     try {
-      const [entries, capacity] = await Promise.all([store.listIndex(), store.capacity()]);
+      const [items, capacity, prefs] = await Promise.all([store.listLibrary(), store.capacity(), store.getPrefs().catch(() => DEFAULT_PREFS)]);
       if (mine !== loadSeq) return;
-      Object.assign(state, { entries, capacity, status: 'ready', error: null });
+      Object.assign(state, { entries: libraryEntries(items), capacity, prefs, status: 'ready', error: null });
     } catch (err) {
       if (mine !== loadSeq) return;
       const info = toErrorInfo(err);
@@ -446,8 +506,10 @@ export function createLibrary(env) {
   }
 
   const unsubscribe = store.onChange((change) => {
+    // التفضيلات (القاموس) تُقرأ عند ضغطة النسخ، فتُحدَّث بلا إعادة بناء.
+    if (change.prefs) store.getPrefs().then((p) => { state.prefs = p; }).catch(() => {});
     // تغيّر الإعدادات من صفحة أخرى لا يمسّ القائمة: إعادة بنائها تهدم التركيز وحالة «تم النسخ» والقائمة المفتوحة.
-    if (!Object.keys(change.videos).length && !change.index && !change.cleared) return;
+    if (!Object.keys(change.videos).length && !change.index && !change.cleared && !change.bundles.length) return;
     if (reloadTimer !== null) clearTimer(reloadTimer);
     reloadTimer = setTimer(() => {
       reloadTimer = null;

@@ -1,6 +1,8 @@
-// نموذج الإعدادات بلا DOM (P7-AC4/AC8): قراءة حقول الإدخال بتحقق صارم يطابق نموذج الإعدادات (برموز PG_)، وحالة
-// «افتراضي» لكل قسم وتعديل استعادته، وأقسام الصفحة، ومكان حفظ الملفات (R65)، وهندسة المعاينة الحية. لا كتابة هنا:
-// الكتابة في view.js عبر store.setSettings.
+// نموذج الإعدادات بلا DOM (P7-AC4/AC8، وP13-AC7/AC8): قراءة حقول الإدخال بتحقق صارم يطابق نموذج الإعدادات والتفضيلات
+// (برموز PG_)، وحالة «افتراضي» لكل قسم وتعديل استعادته، وأقسام الصفحة، ومكان حفظ الملفات (R65)، وحد سرعة القراءة،
+// ومصطلحات القاموس، وهندسة المعاينة الحية. لا كتابة هنا: الكتابة في view.js عبر setSettings وsetPrefs.
+import { READING_DEFAULTS } from '../../core/edit/density.js';
+import { DEFAULT_FOLDER, DEFAULT_PREFS, GLOSSARY_LIMITS, READING_SPEED, isValidFolderName, validateTerm } from '../../core/model/prefs.js';
 import { DEFAULT_SETTINGS, SUBTITLE_SCALE } from '../../core/model/settings.js';
 import { PLAYER_TOKENS } from '../../ui/player-tokens.js';
 import { subtitleFontStack } from '../../ui/subtitle-fonts.js';
@@ -19,8 +21,10 @@ export const SECTIONS = Object.freeze([
   Object.freeze({ id: 'display', title: 'العرض', icon: 'type', desc: 'وضع العرض الافتراضي، وخط الترجمة وحجمها وخلفيتها وموضعها فوق الفيديو.' }),
   Object.freeze({ id: 'timing', title: 'التوقيت', icon: 'clock', desc: 'خطوة زرّي − و+ في شريط المشغّل.' }),
   Object.freeze({ id: 'export', title: 'التصدير', icon: 'download', desc: 'مكان حفظ الملفات، ووضع التصدير الافتراضي، وعتبة التقسيم الاحتياطي.' }),
-  Object.freeze({ id: 'compare', title: 'المقارنة', icon: 'sliders', desc: 'عتبات مقارنة الملف العربي بالأصل الإنجليزي عند الرفع.' }),
-  Object.freeze({ id: 'storage', title: 'التخزين', icon: 'hard-drive', desc: 'المساحة المستخدمة على هذا المتصفح، ومسح كل البيانات.' }),
+  Object.freeze({ id: 'compare', title: 'المقارنة والمراجعة', icon: 'sliders', desc: 'عتبات مقارنة الملف العربي بالأصل الإنجليزي عند الرفع، وحد سرعة القراءة في المراجعة.' }),
+  Object.freeze({ id: 'glossary', title: 'المصطلحات', icon: 'list', desc: 'مقابلاتك المفضّلة للمصطلحات، تُرفق بتعليمات الترجمة حين تنسخها.' }),
+  Object.freeze({ id: 'storage', title: 'التخزين', icon: 'hard-drive', desc: 'المساحة المستخدمة على هذا المتصفح، وسعة الترجمات والنسخ السابقة، ومسح كل البيانات.' }),
+  Object.freeze({ id: 'data', title: 'البيانات', icon: 'layers', desc: 'نسخة احتياطية من مكتبتك في ملف على جهازك، تستعيدها هنا أو في متصفح آخر.' }),
   Object.freeze({ id: 'diagnostics', title: 'التشخيص', icon: 'activity', desc: 'تقرير منقّى بلا روابط ولا نصوص، لطلب المساعدة.' }),
   Object.freeze({ id: 'about', title: 'حول', icon: 'info', desc: 'الإصدار، ودليل الاستخدام، والمطوّر، وتراخيص الخطوط.' }),
 ]);
@@ -29,47 +33,60 @@ export const DEFAULT_SECTION = SECTIONS[0].id;
 /** @param {unknown} id */
 export const isSectionId = (id) => SECTIONS.some((s) => s.id === id);
 
-/** الأقسام التي تملك «استعادة الافتراضي» ومفاتيح الإعدادات التي تعيدها. */
+/** الأقسام التي تملك «استعادة الافتراضي»: مفاتيح الإعدادات ومجموعات التفضيلات التي تعيدها. */
 const RESETTABLE = Object.freeze({
-  display: Object.freeze(['displayModeDefault', 'appearance']),
-  timing: Object.freeze(['offsetStepMs']),
-  export: Object.freeze(['export']),
-  compare: Object.freeze(['thresholds']),
+  display: Object.freeze({ settings: Object.freeze(['displayModeDefault', 'appearance']), prefs: Object.freeze([]) }),
+  timing: Object.freeze({ settings: Object.freeze(['offsetStepMs']), prefs: Object.freeze([]) }),
+  export: Object.freeze({ settings: Object.freeze(['export']), prefs: Object.freeze(['saveLocation']) }),
+  compare: Object.freeze({ settings: Object.freeze(['thresholds']), prefs: Object.freeze(['review']) }),
 });
 
 const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
- * هل قيم القسم افتراضية؟ وما التعديل الذي يعيدها؟ القسم بلا استعادة يعيد null.
+ * هل قيم القسم افتراضية؟ وما التعديلان (للإعدادات وللتفضيلات) اللذان يعيدانها؟ القسم بلا استعادة يعيد null.
  * @param {import('../../core/model/settings.js').Settings} settings @param {string} sectionId
- * @returns {{ isDefault: boolean, patch: Record<string, unknown>, disabledReason: string | null } | null}
+ * @param {import('../../core/model/prefs.js').Prefs} [prefs]
+ * @returns {{ isDefault: boolean, patch: Record<string, unknown>, prefsPatch: Record<string, unknown>, disabledReason: string | null } | null}
  */
-export function sectionReset(settings, sectionId) {
+export function sectionReset(settings, sectionId, prefs = DEFAULT_PREFS) {
   const keys = RESETTABLE[sectionId];
   if (!keys) return null;
-  const patch = Object.fromEntries(keys.map((k) => [k, structuredClone(DEFAULT_SETTINGS[k])]));
-  const isDefault = keys.every((k) => sameJson(settings[k], DEFAULT_SETTINGS[k]));
-  return { isDefault, patch, disabledReason: isDefault ? 'إعدادات هذا القسم افتراضية بالفعل.' : null };
+  const patch = Object.fromEntries(keys.settings.map((k) => [k, structuredClone(DEFAULT_SETTINGS[k])]));
+  const prefsPatch = Object.fromEntries(keys.prefs.map((k) => [k, structuredClone(DEFAULT_PREFS[k])]));
+  const isDefault = keys.settings.every((k) => sameJson(settings[k], DEFAULT_SETTINGS[k])) && keys.prefs.every((k) => sameJson(prefs[k], DEFAULT_PREFS[k]));
+  return { isDefault, patch, prefsPatch, disabledReason: isDefault ? 'إعدادات هذا القسم افتراضية بالفعل.' : null };
 }
 
-/** مكان حفظ ملفات الترجمة (R65): الأوضاع الثلاثة. الوضعان غير الافتراضيين ينتظران إذن التنزيلات في الإصدار الثاني. */
-export const SAVE_LOCATION_PENDING = 'يُفعَّل في الإصدار الثاني مع إذن التنزيلات؛ الآن تُحفظ الملفات في مجلد التنزيلات.';
-export const DEFAULT_SUBFOLDER = 'Tarjuman';
+/** مكان حفظ ملفات الترجمة (R65، مواصفة التصميم §١٩.٨): الأوضاع الثلاثة، والافتراضي كالسلوك الحالي. */
+export const DEFAULT_SUBFOLDER = DEFAULT_FOLDER;
 export const SAVE_LOCATIONS = Object.freeze([
-  Object.freeze({ value: 'downloads', label: 'مجلد التنزيلات', hint: 'الافتراضي · حيث يحفظ المتصفح تنزيلاته.', available: true }),
-  Object.freeze({ value: 'subfolder', label: 'مجلد فرعي داخل التنزيلات', hint: 'باسم تختاره، يُحفظ فيه كل ما ينزّله ترجمان تلقائيًا.', available: false }),
-  Object.freeze({ value: 'ask', label: 'اسأل عن مكان الحفظ عند كل تنزيل', hint: 'يفتح حوار الحفظ في كل مرة.', available: false }),
+  Object.freeze({ value: 'downloads', label: 'مجلد التنزيلات (الافتراضي)', hint: 'حيث يحفظ المتصفح تنزيلاته، وبإعداده في السؤال عن مكان الحفظ.' }),
+  Object.freeze({ value: 'subfolder', label: 'مجلد فرعي داخل التنزيلات', hint: 'يُنشأ عند الحاجة، ويُحفظ فيه تلقائيًا ما دام المتصفح لا يسأل عن مكان كل تنزيل.' }),
+  Object.freeze({ value: 'ask', label: 'اسأل عن مكان الحفظ عند كل تنزيل', hint: 'يفتح حوار الحفظ من النظام في كل مرة.' }),
 ]);
-export const SAVE_LOCATION_NOTE = 'لا تسمح المتصفحات للإضافات بالحفظ التلقائي خارج مجلد التنزيلات. الملفات المنزّلة مستقلة عن المحفوظات داخل الإضافة.';
+export const SAVE_LOCATION_NOTE = 'لا تسمح المتصفحات للإضافات بالحفظ التلقائي خارج مجلد التنزيلات؛ لاختيار مجلد آخر اختر «اسأل عن مكان الحفظ عند كل تنزيل».';
 
 /**
- * سطر الحالة المفهومة لمكان الحفظ: وصف للإعداد لا مسار فعلي (المسار لا يُعرض إلا بعد تأكيد المتصفح حفظ ملف).
+ * سطر المكان المختار: وصف للإعداد لا مسار فعلي (المسار لا يُعرض إلا من سجل المتصفح لملف نزّله ترجمان واكتمل ووُجد).
  * @param {'downloads' | 'subfolder' | 'ask'} mode @param {string} [subfolder]
  */
 export function saveLocationStatus(mode, subfolder = DEFAULT_SUBFOLDER) {
-  if (mode === 'subfolder') return `المكان المختار: مجلد التنزيلات / ${subfolder}`;
+  if (mode === 'subfolder') return `المكان المختار: مجلد التنزيلات/${subfolder}`;
   if (mode === 'ask') return 'المكان المختار: يُسأل عند كل تنزيل';
-  return 'المكان الآن: مجلد التنزيلات';
+  return 'المكان المختار: مجلد التنزيلات';
+}
+
+/** @param {{ mode: string, folder: string }} loc */
+export const isDefaultLocation = (loc) => loc.mode === DEFAULT_PREFS.saveLocation.mode && loc.folder === DEFAULT_PREFS.saveLocation.folder;
+
+/**
+ * اسم المجلد الفرعي من الحقل: يُشذّب ثم يُتحقق منه بقاعدة النموذج نفسها.
+ * @param {string} text @returns {{ ok: true, value: string } | { ok: false, code: 'SV_BAD_FOLDER' }}
+ */
+export function parseFolder(text) {
+  const v = String(text ?? '').trim();
+  return isValidFolderName(v) ? { ok: true, value: v } : { ok: false, code: 'SV_BAD_FOLDER' };
 }
 
 const ARABIC_INDIC = new RegExp('[\\u0660-\\u0669\\u06F0-\\u06F9]', 'g');
@@ -107,6 +124,49 @@ export const parseDrift = (text) => integerIn(text, DRIFT_RANGE_MS, 'PG_DRIFT_IN
 export function parseCompleteness(text) {
   const r = integerIn(text, COMPLETENESS_RANGE_PCT, 'PG_COMPLETENESS_INVALID');
   return r.ok ? { ok: true, value: r.value / 100 } : r;
+}
+
+/** حد سرعة القراءة: الافتراضي المعايَر (P11) حين يكون null في التفضيلات. */
+export const READING_DEFAULT_CPS = READING_DEFAULTS.maxCps;
+
+/**
+ * حد سرعة القراءة (حرف/ث): الحقل الفارغ يعيد الافتراضي (null)، وإلا عدد صحيح 5..40.
+ * @param {string} text @returns {{ ok: true, value: number | null } | { ok: false, code: 'PG_READING_INVALID' }}
+ */
+export function parseReadingSpeed(text) {
+  const s = normalizeNumber(text);
+  if (!s) return { ok: true, value: null };
+  if (!/^\d{1,3}$/.test(s)) return { ok: false, code: 'PG_READING_INVALID' };
+  const n = Number(s);
+  return n >= READING_SPEED.min && n <= READING_SPEED.max ? { ok: true, value: n } : { ok: false, code: 'PG_READING_INVALID' };
+}
+
+/** نص الحقل: فارغ للافتراضي. @param {number | null} maxCps */
+export const readingText = (maxCps) => (maxCps === null ? '' : String(maxCps));
+
+/** عدّاد القاموس «12 من 100». @param {number} n */
+export const glossaryCounter = (n) => `${n} من ${GLOSSARY_LIMITS.maxTerms}`;
+
+const oneLine = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
+
+/**
+ * مصطلح جديد من حقول الإضافة: يُشذّب ويُطوى، ثم يُتحقق منه بمدقق النموذج، وبالتفرد دون اعتبار لحالة الأحرف، وبالحد.
+ * @param {{ source: string, target: string, note: string }} input
+ * @param {import('../../core/model/prefs.js').GlossaryTerm[]} terms القائمة الحالية
+ * @returns {{ ok: true, term: import('../../core/model/prefs.js').GlossaryTerm } | { ok: false, code: string, field: 'source' | 'target' | 'note' | null }}
+ */
+export function termDraft(input, terms) {
+  if (terms.length >= GLOSSARY_LIMITS.maxTerms) return { ok: false, code: 'PG_TERM_LIMIT', field: null };
+  const note = oneLine(input.note);
+  const term = { source: oneLine(input.source), target: oneLine(input.target), note: note || null };
+  const r = validateTerm(term);
+  if (!r.ok) {
+    const field = /source$/.test(r.path) ? 'source' : /target$/.test(r.path) ? 'target' : 'note';
+    return { ok: false, code: { source: 'PG_TERM_SOURCE_INVALID', target: 'PG_TERM_TARGET_INVALID', note: 'PG_TERM_NOTE_INVALID' }[field], field };
+  }
+  const key = term.source.toLocaleLowerCase('en');
+  if (terms.some((t) => t.source.toLocaleLowerCase('en') === key)) return { ok: false, code: 'PG_TERM_DUPLICATE', field: 'source' };
+  return { ok: true, term };
 }
 
 /** نص الخطوة بالثواني للحقل: 0.5 و1 و2.5. @param {number} ms */

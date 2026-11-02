@@ -13,18 +13,22 @@ const css = (f) => readFileSync(path.join(ROOT, 'src/pages', f), 'utf8').replace
 const rule = (text, selector) => new RegExp(`(?:^|\\n)${selector.replace(/[.>]/g, '\\$&')}\\s*\\{([^}]*)\\}`).exec(text)?.[1] ?? null;
 const media = (text, query) => new RegExp(`@media \\(${query}\\) \\{([\\s\\S]*?)\\n\\}`).exec(text)?.[1] ?? '';
 
-test('الإعدادات: .st-num بلا flex-basis (يصير ارتفاعًا داخل بطاقة عمودية)، والتمدد داخل .st-fields وحده', () => {
+const ui = readFileSync(path.join(ROOT, 'src/ui/components.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+test('الإعدادات: الحقل الرقمي (.tj-num من src/ui) بلا flex-basis (يصير ارتفاعًا داخل بطاقة عمودية)، والتمدد داخل .st-fields وحده', () => {
   const s = css('settings/settings.css');
-  assert.ok(rule(s, '.st-num'), 'قاعدة .st-num موجودة');
-  assert.equal(/flex\s*:/.test(rule(s, '.st-num')), false);
-  assert.match(rule(s, '.st-fields > .st-num'), /flex\s*:\s*1 1 240px/);
+  assert.ok(rule(ui, '.tj-num'), 'قاعدة .tj-num موجودة');
+  assert.equal(/flex\s*:/.test(rule(ui, '.tj-num')), false);
+  assert.equal(rule(s, '.tj-num'), null, 'لا تُعاد تعريف القاعدة المشتركة في الصفحة');
+  assert.match(rule(s, '.st-fields > .tj-num'), /flex\s*:\s*1 1 240px/);
 });
 
 test('الإعدادات: الصف شبكة من عمودين (التسمية ثم العنصر) تصير عمودًا واحدًا في العرض الضيق، وعلامة «حُفظ» بمساحة محجوزة', () => {
   const s = css('settings/settings.css');
   assert.match(rule(s, '.st-row'), /display:\s*grid/);
   assert.match(rule(s, '.st-row'), /grid-template-columns:\s*\d+px minmax\(0, 1fr\)/);
-  assert.match(rule(s, '.st-saved'), /min-height:\s*18px/, 'العلامة تحجز سطرها فلا يقفز التخطيط عند ظهورها');
+  assert.match(rule(ui, '.tj-saved'), /min-height:\s*18px/, 'العلامة تحجز سطرها فلا يقفز التخطيط عند ظهورها');
+  assert.match(rule(s, '.st-row__label .tj-saved'), /min-height:\s*18px/);
   const narrow = media(s, 'max-width: 760px');
   assert.match(narrow, /\.st-row\s*\{[^}]*grid-template-columns:\s*1fr/);
   assert.match(narrow, /\.st-nav\s*\{[^}]*flex-direction:\s*row/, 'التنقّل الجانبي يصير شريطًا أفقيًا');
