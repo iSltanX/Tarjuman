@@ -137,10 +137,10 @@
 ```json tj-status
 {
   "phase": "P14",
-  "status": "planned",
-  "updated": "2026-11-02",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W7 بعد التحقق من W6.",
+  "status": "in_progress",
+  "updated": "2026-11-02T16:36:00+03:00",
+  "branch": "tj/P14-editor-review",
+  "resume": "بدأت: قراءة عقود P10 ومحرّكات P11 والمحرّر القائم وتخطيط المهام.",
   "blocker": null,
   "outcome": null,
   "commit": null,
