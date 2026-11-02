@@ -204,9 +204,37 @@ export function validateWaveDoc(plan, w, md, where) {
   return out;
 }
 
+/**
+ * أدلة كتلة الحالة: كل دليل كائن { label, path }، ومساره موجود (تحذير)؛ والأنماط والمجلدات لا تُفحص (تدقيق 5fedcb9، GM-020:
+ * كانت أدلة P4 مفقودة بتجاهل *.log وأدلة P5 نصوصًا بلا مسار دون أن يكشفها الفحص).
+ */
+export function validateEvidence(ph, block, read, where) {
+  const out = [];
+  const list = Array.isArray(block?.data?.evidence) ? block.data.evidence : [];
+  for (const e of list) {
+    if (!e || typeof e !== 'object' || typeof e.path !== 'string') {
+      out.push({ level: 'warn', text: `${ph.id}: دليل بلا مسار (يجب { label, path }): ${String(typeof e === 'string' ? e : JSON.stringify(e)).slice(0, 80)}`, where });
+      continue;
+    }
+    if (/[*{]/.test(e.path) || e.path.endsWith('/') || !/\.[A-Za-z0-9]+$/.test(e.path)) continue; // نمط أو مجلد
+    let text = null;
+    try {
+      text = read(e.path);
+    } catch {
+      text = null;
+    }
+    if (text == null) out.push({ level: 'warn', text: `${ph.id}: الدليل غير موجود: ${e.path}`, where });
+  }
+  return out;
+}
+
 export function validateDocs(plan, read) {
   const out = [];
-  for (const ph of plan.phases) out.push(...validatePhaseDoc(plan, ph, read(phaseDoc(plan, ph)), phaseDoc(plan, ph)));
+  for (const ph of plan.phases) {
+    const md = read(phaseDoc(plan, ph));
+    out.push(...validatePhaseDoc(plan, ph, md, phaseDoc(plan, ph)));
+    if (md != null) out.push(...validateEvidence(ph, readBlock(md, 'tj-status'), read, phaseDoc(plan, ph)));
+  }
   for (const w of plan.waves) out.push(...validateWaveDoc(plan, w, read(waveDoc(plan, w)), waveDoc(plan, w)));
   const rb = read(RUNBOOK);
   if (rb == null) out.push({ level: 'error', text: 'دليل التشغيل غير موجود', where: RUNBOOK });

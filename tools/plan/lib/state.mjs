@@ -313,7 +313,8 @@ export function deriveState(startDir, { mode = 'snapshot' } = {}) {
     for (const p of phases) for (const a of p.acceptance) if (a.req.includes(r.id)) links.push({ phase: p.id, ac: a.id, result: a.result, verified: p.state === 'verified' });
     let st = 'planned';
     if (links.length && links.every((l) => l.verified && l.result === 'pass')) st = 'verified';
-    else if (links.some((l) => l.verified && l.result === 'pass')) st = 'partial';
+    // معيار «جزئي» في مرحلة متحققة إثبات جزئي لا «لم يُثبت» (تدقيق 5fedcb9، GM-020: كان R28 يُعرض «لم يُثبت» ومرحلته متحققة).
+    else if (links.some((l) => l.verified && (l.result === 'pass' || l.result === 'partial'))) st = 'partial';
     else if (links.some((l) => l.result === 'pass')) st = 'delivered';
     const labels = { verified: 'متحقق', partial: 'متحقق جزئيًا', delivered: 'مُثبت في فرع غير مدمج', planned: 'لم يُثبت' };
     return { ...r, groupTitle: reqs.groups.find((g) => g.id === r.group)?.title || r.group, phases: [...new Set(links.map((l) => l.phase))], acceptance: links, state: st, label: labels[st] };
