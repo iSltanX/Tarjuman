@@ -2,6 +2,7 @@
 // الفرز، والترتيب، وتجميع بيانات الصف (شارات الملفات والإزاحة والتاريخ ونماذج 1 2 3)، وخيارات التصدير بأسباب التعطيل،
 // وملخص المقارنة، وبطاقات «الترجمات…» والنسخة السابقة، وأهداف حوار الرفع وأعداد فروقه، وحالة الصفحة في جزء العنوان. كل ما
 // هنا دوال نقية على مدخل المحفوظات (IndexEntry ومعه summary وslots، عقد data-model §٩ و§١٥) فتُختبر بلا متصفح.
+import { diffTranslations } from '../../core/align/index.js';
 import { messageFor } from '../../core/errors/index.js';
 import { isVideoId } from '../../core/model/ids.js';
 import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
@@ -301,20 +302,15 @@ export function fingerprintLabel(fp, date = '') {
 }
 
 /**
- * عدد التعديلات اليدوية في ترجمة: المقاطع التي تختلف فيها النسخة الحالية عن الأصل المستورد بالرقم نفسه (نصًا أو توقيتًا)،
- * وما زاد أو نقص منها. صفر إن لم تُعدَّل.
+ * عدد التعديلات اليدوية في ترجمة: كل تغيير في المحاذاة بين الأصل المستورد والنسخة الحالية (نص أو توقيت أو دمج أو شطر أو
+ * إضافة أو حذف) تعديل واحد، ونسخة لا تحاذي أصلها تُعدّ مقاطعها كلها. صفر إن لم تُعدَّل. التعريف نفسه في المشغّل
+ * (src/player/controls/replace.js) فيتطابق العدد في السطحين، ولا مقارنة بالرقم وحده (R49، وإصلاح تكامل W7).
  * @param {{ original: import('../../core/model/cue.js').Cue[], current: import('../../core/model/cue.js').Cue[] | null } | null} track
  */
 export function manualEdits(track) {
   if (!track?.current) return 0;
-  const byN = new Map(track.original.map((c) => [c.n, c]));
-  let n = 0;
-  for (const c of track.current) {
-    const o = byN.get(c.n);
-    if (!o || o.text !== c.text || o.startMs !== c.startMs || o.endMs !== c.endMs) n += 1;
-    byN.delete(c.n);
-  }
-  return n + byN.size;
+  const d = diffTranslations(track.original, track.current);
+  return d.aligned ? d.changes.length : track.current.length;
 }
 
 /**

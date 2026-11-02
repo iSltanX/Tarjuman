@@ -8,8 +8,10 @@ import { instructions } from '../../../../src/core/export/instructions.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { createLibrary } from '../../../../src/pages/library/view.js';
 import { FILTERS, filterCounts, filterEntries, libraryEntries, manualEdits } from '../../../../src/pages/library/model.js';
+import { manualEdits as playerManualEdits } from '../../../../src/player/controls/replace.js';
+import { mergeCues, splitCue } from '../../../../src/core/edit/structure.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
-import { NOW, videoRecord } from '../../../helpers/fixtures.js';
+import { NOW, makeCues, videoRecord } from '../../../helpers/fixtures.js';
 import { samplePrefs, sampleBundle, seedBundle } from '../../../helpers/fixtures-v2.js';
 import { buttonNamed, findAll, newDocument, settle, textOf } from './fake-dom.js';
 
@@ -284,4 +286,21 @@ test('manualEdits: يعدّ المقاطع المختلفة عن الأصل وم
   assert.equal(manualEdits({ original, current: null }), 0);
   assert.equal(manualEdits({ original, current: [original[0], { ...original[1], text: 'ب معدّل' }] }), 2, 'نص مقطع ومقطع محذوف');
   assert.equal(manualEdits({ original, current: [...original, { n: 4, startMs: 3000, endMs: 4000, text: 'د' }] }), 1);
+});
+
+test('manualEdits: العدد نفسه في المحفوظات والمشغّل، والدمج والشطر وإعادة الترقيم تعديل واحد لا مقارنة بالرقم (بوابة W7)', () => {
+  const original = makeCues(40);
+  const renumber = (cues) => cues.map((c, i) => ({ ...c, n: i + 1 }));
+  const cases = {
+    text: [original.map((c) => (c.n % 10 === 3 ? { ...c, text: `${c.text} معدّل` } : c)), 4],
+    merge: [mergeCues(original, 4), 1],
+    split: [splitCue(original, 4, 2), 1],
+    mergeRenumbered: [renumber(mergeCues(original, 4)), 1],
+    splitRenumbered: [renumber(splitCue(original, 4, 2)), 1],
+  };
+  for (const [name, [current, expected]] of Object.entries(cases)) {
+    const track = { original, current };
+    assert.equal(manualEdits(track), expected, name);
+    assert.equal(manualEdits(track), playerManualEdits(track), `${name}: المحفوظات والمشغّل`);
+  }
 });
