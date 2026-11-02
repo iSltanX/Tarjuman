@@ -196,7 +196,9 @@ export function emptyState({ title, text, steps, action, icon: iconName = 'capti
  * @param {{ tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'edited' | 'brand', text: string, plain?: boolean, title?: string, doc?: Document }} o
  */
 export function statusPill({ tone = 'neutral', text, plain = false, title, doc = document }) {
-  const p = el('span', { className: `tj-pill${tone === 'neutral' ? '' : ` tj-pill--${tone}`}${plain ? ' tj-pill--plain' : ''}`, text, doc });
+  // الشارة بنقطة مؤشرها الوحيد: علامة «✓» في آخر النص تكرر النقطة («• محفوظ ✓»)، فتُسقط هنا ويبقى النص كما هو في مصدره.
+  const shown = plain ? text : String(text).replace(/\s*✓$/, '');
+  const p = el('span', { className: `tj-pill${tone === 'neutral' ? '' : ` tj-pill--${tone}`}${plain ? ' tj-pill--plain' : ''}`, text: shown, doc });
   if (title) p.title = title;
   return p;
 }

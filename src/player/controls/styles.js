@@ -152,7 +152,9 @@ button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decor
 .seg button:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); color: #FFFFFF; }
 .seg button[aria-checked="true"] { background: rgb(255 255 255 / 20%); color: #FFFFFF; font-weight: 700; }
 .seg button[aria-disabled="true"] { color: rgb(255 255 255 / 38%); cursor: default; }
-.row.field > .seg { flex: 1; }
+/* المقطّعة بجوار تسميتها في صف (خطوة الأزرار): بعرض محتواها فلا يُقص «مخصص»، والتسمية تأخذ الباقي. */
+.row.field > .seg { flex: none; }
+.row.field > .seg button { flex: none; min-width: 34px; padding: 0 9px; }
 
 .big { padding: 2px 6px 0; text-align: center; font: 700 var(--big-fs)/1.3 var(--tj-p-font-head); }
 .big[data-sign="positive"], .big[data-sign="negative"] { color: var(--tj-p-accent); }

@@ -13,7 +13,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BROWSERS, launch, loadExtension, human, sleep } from '../harness/browser.mjs';
+import { BROWSERS, PROFILE_ROOT, launch, loadExtension, human, sleep } from '../harness/browser.mjs';
 import { collectErrors, emulateScheme, fullScreenshot, openTab, waitForTarget } from '../harness/extension.mjs';
 import { dismissConsent, revealControls, waitForPlayer } from '../harness/youtube.mjs';
 import { createExtractor } from '../../../src/extract/index.js';
@@ -32,6 +32,7 @@ const MEASURE_ONLY = argv.includes('--measure-only');
 const VIDEO = SEED_IDS.ted;
 const FIXTURE = path.join(ROOT, 'test/fixtures/json3/manual-ted-iG9CE55wbtY.json');
 const PROFILE = `${browser}-polish-${Date.now()}`;
+const DL = path.join(PROFILE_ROOT, PROFILE, 'downloads');
 const rel = (f) => path.relative(ROOT, f);
 
 const result = { browser: null, at: new Date().toISOString(), headless: !HEADED, measureOnly: MEASURE_ONLY, checks: [], measures: {}, fonts: {}, screenshots: [], notes: [] };
@@ -168,8 +169,12 @@ async function renderedFonts(page, { hostIds = null, selectorText = null, limit 
   }
   return out;
 }
-/** كل نص عربي رُسم كله بخط مضمّن (Cairo أو Almarai)، لا بخط النظام. */
-const allBundled = (list) => list.length > 0 && list.every((n) => n.rendered.length > 0 && n.rendered.every((f) => f.custom && /Cairo|Almarai/i.test(f.name)));
+/**
+ * كل نص عربي مرسوم رسمه خط مضمّن (Cairo أو Almarai)، لا خط النظام. النص غير المرسوم (قارئ الشاشة، وبنود القائمة المنسدلة
+ * الأصلية) خارج الفحص؛ ورمز مفرد ليس في الخط (→ ✓) يُرسم بخط النظام مقبول ما دام النص نفسه بالمضمّن.
+ */
+const painted = (list) => list.filter((n) => n.rendered.length > 0);
+const allBundled = (list) => painted(list).length > 0 && painted(list).every((n) => n.rendered.some((f) => f.custom && /Cairo|Almarai/i.test(f.name)) && n.rendered.every((f) => (f.custom && /Cairo|Almarai/i.test(f.name)) || f.glyphs <= 2));
 const brief = (list) => list.slice(0, 8).map((n) => `«${n.text}» ${n.family} → ${n.rendered.map((f) => `${f.name}${f.custom ? '*' : ''}`).join('+')}`);
 
 // ---- مساعدات المشغّل ----
@@ -281,6 +286,10 @@ async function step(name, fn) {
 
 try {
   await mkdir(OUT, { recursive: true });
+  // مجلد التنزيل داخل ملف الاختبار وبلا «اسأل»، فيُحفظ ملف المشغّل فعلًا (لا حوار حفظ بلا نافذة).
+  await mkdir(path.join(PROFILE_ROOT, PROFILE, 'Default'), { recursive: true });
+  await mkdir(DL, { recursive: true });
+  await writeFile(path.join(PROFILE_ROOT, PROFILE, 'Default', 'Preferences'), JSON.stringify({ download: { default_directory: DL, prompt_for_download: false, directory_upgrade: true }, savefile: { default_directory: DL } }));
   b = await launch({ browser, profile: PROFILE, headless: !HEADED });
   result.browser = `${BROWSERS[browser].name} (${b.version.product})`;
   const ext = await loadExtension(b.conn, EXT);
@@ -299,19 +308,28 @@ try {
   if (!MEASURE_ONLY) await step('pages', async () => {
     await lib.reload();
     await lib.waitFor(() => document.querySelectorAll('li.lib-row').length > 3, { timeoutMs: 10000 });
-    const logoInfo = await lib.eval(() => {
+    const logoOf = () => lib.eval(() => {
       const svg = document.querySelector('.tj-topbar__brand svg.tj-logo');
-      return svg ? { paths: svg.querySelectorAll('path').length, w: Math.round(svg.getBoundingClientRect().width), h: Math.round(svg.getBoundingClientRect().height), glyph: getComputedStyle(svg.querySelector('.tj-logo__glyph path')).fill, mark: !!document.querySelector('.tj-mark'), textT: [...document.querySelectorAll('.tj-topbar__brand *')].some((e) => e.childNodes.length === 1 && e.textContent === 'ت') } : null;
+      return svg ? { paths: svg.querySelectorAll('path').length, w: Math.round(svg.getBoundingClientRect().width), h: Math.round(svg.getBoundingClientRect().height), glyph: getComputedStyle(svg.querySelector('.tj-logo__glyph path')).fill, word: getComputedStyle(svg.querySelector('.tj-logo__word path')).fill, mark: !!document.querySelector('.tj-mark'), textT: [...document.querySelectorAll('.tj-topbar__brand *')].some((e) => e.childNodes.length === 1 && e.textContent === 'ت') } : null;
     });
-    check('logo-topbar-approved-svg', logoInfo && logoInfo.paths === 9 && !logoInfo.mark && !logoInfo.textT && logoInfo.h === 24 && logoInfo.glyph === 'rgb(12, 106, 111)', logoInfo);
-    const libFonts = await renderedFonts(lib, { limit: 14 });
-    result.fonts.library = brief(libFonts);
-    check('pages-fonts-bundled-rendered', allBundled(libFonts), brief(libFonts));
-    const palette = await lib.eval(() => {
+    const paletteOf = () => lib.eval(() => {
       const cs = getComputedStyle(document.documentElement);
       return { brand: cs.getPropertyValue('--tj-brand').trim(), bg: getComputedStyle(document.body).backgroundColor, chip: getComputedStyle(document.querySelector('.tj-chip[aria-pressed="true"]')).color };
     });
-    check('palette-new-indigo-neutral', palette.brand === '#4338CA' && palette.bg === 'rgb(245, 245, 247)', palette);
+    await emulateScheme(lib, 'light');
+    await sleep(200);
+    const logoLight = await logoOf();
+    const palLight = await paletteOf();
+    await emulateScheme(lib, 'dark');
+    await sleep(200);
+    const logoDark = await logoOf();
+    const palDark = await paletteOf();
+    await emulateScheme(lib, 'light');
+    check('logo-topbar-approved-svg-both-schemes', logoLight && logoLight.paths === 9 && !logoLight.mark && !logoLight.textT && logoLight.h === 24 && logoLight.glyph === 'rgb(12, 106, 111)' && logoLight.word === 'rgb(11, 42, 44)' && logoDark.glyph === 'rgb(78, 201, 196)' && logoDark.word === 'rgb(245, 241, 232)', { logoLight, logoDark });
+    const libFonts = await renderedFonts(lib, { limit: 14 });
+    result.fonts.library = brief(libFonts);
+    check('pages-fonts-bundled-rendered', allBundled(libFonts), brief(libFonts));
+    check('palette-new-indigo-neutral-both-schemes', palLight.brand === '#4338CA' && palLight.bg === 'rgb(245, 245, 247)' && palDark.brand === '#8F96FF' && palDark.bg === 'rgb(17, 17, 21)', { palLight, palDark });
     // بنود الصفوف: ترجمة واحدة تخفي المحدد.
     const rowPickers = await lib.eval(() => [...document.querySelectorAll('li.lib-row')].slice(0, 12).map((r) => ({ hidden: r.querySelector('.tj-slots')?.hidden ?? null, n: r.querySelectorAll('.tj-slots__slot').length })));
     check('library-single-translation-no-picker', rowPickers.every((p) => p.hidden === true && p.n <= 1), rowPickers.slice(0, 4));
@@ -541,12 +559,19 @@ try {
       }));
       check('popup-video-one-entry-per-destination', info.actions.join() === 'editor,copy' && info.nav.join() === 'library,settings' && info.libEntries === 1 && info.settingsEntries === 1, info);
       check('popup-saved-indicator-not-link', info.pills.includes('محفوظ') && !info.savedIsLink, info.pills);
+      await p.send('Emulation.setDeviceMetricsOverride', { width: 340, height: 600, deviceScaleFactor: 1, mobile: false });
+      await sleep(250);
+      const pa = await layoutAudit(p);
+      const contentH = await p.eval(() => Math.round(document.querySelector('.tj-container').getBoundingClientRect().height));
+      check('popup-fits-without-scroll-340', pa.scrollWidth <= 340 && !pa.overflow.length && !pa.clipped && contentH <= 600, { ...pa, contentH });
+      await p.send('Emulation.clearDeviceMetricsOverride');
       await shoot(p, 'popup-video', { width: 340 });
       const seen = new Set((await b.conn.send('Target.getTargets')).targetInfos.map((t) => t.targetId));
       await front(p);
       await clickSel(p, '.tj-popup__nav [data-action="library"]');
       const opened = await waitForTarget(b.conn, (u) => u.includes('/pages/library/index.html'), { timeoutMs: 6000, exclude: seen }).catch(() => null);
-      check('popup-library-entry-opens-row', !!opened && opened.url.endsWith(`#v=${VIDEO}`), { hash: opened?.url.split('#')[1] ?? null });
+      const extPages = (await b.conn.send('Target.getTargets')).targetInfos.filter((t) => t.url.startsWith('chrome-extension://')).map((t) => `${t.type}:${t.url.split('/').slice(3).join('/')}`);
+      check('popup-library-entry-opens-row', !!opened && opened.url.endsWith(`#v=${VIDEO}`), { hash: opened?.url.split('#')[1] ?? null, extPages });
       await p.close().catch(() => {});
     });
 
@@ -567,6 +592,10 @@ try {
       await yt.send('Emulation.setDeviceMetricsOverride', { width: 760, height: 700, deviceScaleFactor: 1, mobile: false });
       await sleep(1500);
       await openMenu('download', 'تحميل الترجمة');
+      if (!(await menu())) {
+        await sleep(800);
+        await clickBar('download');
+      }
       const mm = await measureMenu('download-narrow');
       const pr = await main(() => { const r = document.querySelector('#movie_player').getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; });
       check('player-menu-fits-narrow-player', mm && mm.width <= pr.w - 16 && mm.height <= pr.h, { menu: mm, player: pr });

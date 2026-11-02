@@ -14,12 +14,15 @@ function node(doc, tag, attrs, text) {
 
 const STROKE = { fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
 
-/** مستطيل الترجمة الممتلئ (كأيقونة CC) بحرفين داكنين داخله. */
-function captionBox(doc, label, fontSize) {
+/**
+ * مستطيل الترجمة الممتلئ (كأيقونة CC) بحرفين داكنين داخله. خط السطر محسوب لحدود الحرف في المراعي العريض (المضمّن) فيتوسط
+ * الإطار (مركزه 10.5): «EN» ارتفاع الحرف الكبير 0.716em، و«ع» من −0.378em إلى 0.472em حول خط السطر.
+ */
+function captionBox(doc, label, fontSize, baseline) {
   return [
     node(doc, 'rect', { x: 1.5, y: 5, width: 14, height: 11, rx: 2.2, fill: 'currentColor' }),
     node(doc, 'text', {
-      x: 8.5, y: 13.4, 'text-anchor': 'middle', 'font-size': fontSize, 'font-weight': 700, fill: '#000', 'fill-opacity': 0.82,
+      x: 8.5, y: baseline, 'text-anchor': 'middle', 'font-size': fontSize, 'font-weight': 700, fill: '#000', 'fill-opacity': 0.82,
       // خط الواجهة المضمّن (ui-fonts.js) لا خط النظام: Brave يحجب غير الافتراضي منها عن صفحة يوتيوب.
       'font-family': UI_FONT_BODY,
     }, label),
@@ -28,13 +31,13 @@ function captionBox(doc, label, fontSize) {
 
 const SHAPES = {
   download: (doc) => [
-    ...captionBox(doc, 'EN', 6.4),
+    ...captionBox(doc, 'EN', 6.4, 12.8),
     node(doc, 'path', { d: 'M19.5 5.5v9', ...STROKE }),
     node(doc, 'path', { d: 'M16.6 11.8l2.9 2.9 2.9-2.9', ...STROKE }),
     node(doc, 'path', { d: 'M16.2 19.2h6.6', ...STROKE }),
   ],
   upload: (doc) => [
-    ...captionBox(doc, 'ع', 8.4),
+    ...captionBox(doc, 'ع', 8.6, 10.9),
     node(doc, 'path', { d: 'M19.5 15.5v-9', ...STROKE }),
     node(doc, 'path', { d: 'M16.6 9.2l2.9-2.9 2.9 2.9', ...STROKE }),
     node(doc, 'path', { d: 'M16.2 19.2h6.6', ...STROKE }),
