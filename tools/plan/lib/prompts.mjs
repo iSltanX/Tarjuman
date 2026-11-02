@@ -55,7 +55,7 @@ export function phasePrompt({ plan, root, runbook, ph, wave, state, sectionsText
     '',
     `المهمة: ${ph.id} — ${ph.title}`,
     `الموجة: ${wave.id} — ${wave.title} · وسم الأساس: ${baseTagOf(plan, wave.id)} · الفرع: ${branchOf(plan, ph)} · مجلد العمل: ${worktreeOf(plan, ph)}`,
-    `النموذج المقترح: ${ph.model} (${ph.whyModel}) · الجهد: ${ph.effort} · الحجم: ${ph.size} · التقدير: ${ph.estimate}`,
+    `النموذج المقترح: ${ph.model} (${ph.whyModel}) · الجهد: ${ph.effort} · الحجم: ${ph.size}`,
     `تعتمد على: ${or((ph.dependsOn || []).join('، '))} · بالتوازي مع: ${or(parallelOf(plan, ph).join('، '))} · البوابات المطلوبة: ${or((ph.requiresGates || []).join('، '))}`,
     `الحالة الآن: ${state.label} (${state.sourceLabel}) · نقطة الاستئناف: ${or(state.resume)}`,
     `الأمر المكافئ: ${phaseCommand(plan, ph)}`,

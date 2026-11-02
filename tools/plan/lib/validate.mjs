@@ -22,7 +22,9 @@ export function validatePlan(plan, reqs) {
     if (seen.has(ph.id)) err(`معرّف مرحلة مكرر: ${ph.id}`);
     seen.add(ph.id);
     if (!/^[a-z0-9-]+$/.test(ph.slug || '')) err(`اسم مختصر غير صالح للمرحلة ${ph.id}: ${ph.slug}`);
-    for (const k of ['title', 'wave', 'model', 'whyModel', 'estimate', 'size']) if (!ph[k]) err(`المرحلة ${ph.id} بلا حقل ${k}`);
+    for (const k of ['title', 'wave', 'model', 'whyModel', 'size']) if (!ph[k]) err(`المرحلة ${ph.id} بلا حقل ${k}`);
+    // estimate باقٍ بقيمة «بلا تقدير زمني» لأن نسخ الأدوات القديمة في worktrees قائمة تشترطه حين تفحص main؛ ولا يُعرض.
+    if (/يوم|أيام|أسبوع|أسابيع|ساعة|ساعات|شهر|أشهر/.test(ph.estimate || '')) err(`المرحلة ${ph.id} فيها تقدير زمني؛ الخطة بلا تقديرات بالأيام أو الأسابيع`);
   }
   const wseen = new Set();
   for (const w of plan.waves) {

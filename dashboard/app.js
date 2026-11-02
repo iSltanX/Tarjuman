@@ -317,7 +317,7 @@
       ['تعتمد على', p.dependsOn.length ? p.dependsOn.map(depChip).join(' ') : '—'],
       ['بالتوازي مع', esc(p.parallelWith.join('، ') || '—')],
       ['البوابات', esc(p.requiresGates.join('، ') || '—')],
-      ['الحجم', esc(p.size + ' · ' + p.estimate)],
+      ['الحجم', esc(p.size)],
       ['النموذج', esc(p.model + ' · الجهد ' + p.effort + ' — ' + p.whyModel)],
       ['اختبار حي', p.live ? 'نعم' : 'لا'],
     ]) + '</div>';

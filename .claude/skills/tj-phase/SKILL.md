@@ -1,7 +1,7 @@
 ---
 name: tj-phase
 description: يبدأ مرحلة من خطة ترجمان أو يستأنفها في worktree وفرع خاصين بها، وينفّذ نطاقها وحده ويفحصه ويسلّمه ويتوقف دون الانتقال إلى غيرها. يُستدعى يدويًا فقط بـ`/tj-phase P3`.
-argument-hint: <P1…P9>
+argument-hint: <P1…P15>
 disable-model-invocation: true
 allowed-tools: Bash(pwd) Bash(git rev-parse *) Bash(git worktree list*) Bash(git status *) Bash(git tag -l *) Bash(git branch --list *) Bash(git log *) Bash(git rev-list *) Bash(git merge-base *) Bash(command node tools/plan/plan.mjs brief *) Bash(command node tools/plan/plan.mjs check *)
 ---

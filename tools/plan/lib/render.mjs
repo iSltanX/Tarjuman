@@ -24,7 +24,7 @@ export function renderPhaseMeta(plan, ph) {
     ['البوابات المطلوبة', dash(gates)],
     ['تعمل بالتوازي مع', dash(parallelOf(plan, ph))],
     ['النموذج المقترح', `${ph.model} · الجهد ${ph.effort} — ${ph.whyModel}`],
-    ['الحجم والتقدير', `${ph.size} · ${ph.estimate}`],
+    ['الحجم', ph.size],
     ['الفرع ومجلد العمل', `${code(branchOf(plan, ph))} · ${code(worktreeOf(plan, ph))}`],
     ['الأمر', `${code(phaseCommand(plan, ph))} في جلسة جديدة`],
     ['اختبار حي', ph.live ? 'نعم — يتبع «الاختبارات الحية» في دليل التشغيل' : 'لا'],
@@ -60,7 +60,8 @@ export function renderWaveBlock(plan, w) {
     return [String(i + 1), `${ph.id} — ${ph.title}`, dash(ph.dependsOn), ph.model, code(phaseCommand(plan, ph))];
   });
   let out = table(['الترتيب', 'المرحلة', 'تعتمد على', 'النموذج المقترح', 'الأمر'], rows);
-  out += `\n\n- **التوازي:** ${w.phases.length > 1 ? `${w.phases.length} مراحل معًا، كلٌّ في worktree وفرع مستقلين` : 'منفردة'}`;
+  const together = w.phases.length === 2 ? 'مرحلتان معًا' : `${w.phases.length} مراحل معًا`;
+  out += `\n\n- **التوازي:** ${w.phases.length > 1 ? `${together}، كلٌّ في worktree وفرع مستقلين` : 'منفردة'}`;
   out += `\n- **أوامر البوابة:** ${w.gate.commands.map(code).join(' ثم ')}`;
   if (w.gate.live) out += `\n- **الدخان الحي:** ${w.gate.live}`;
   if (w.gate.decision) out += `\n- **تحسم البوابة:** ${w.gate.decision} — ${gateById[w.gate.decision]?.title || ''}`;
@@ -118,7 +119,7 @@ export function renderRequirementsMap(plan, reqs) {
     '',
     '> **مولّد** من [`plan/plan.json`](../plan/plan.json) و[`plan/requirements.json`](../plan/requirements.json) بالأمر `npm run plan:render`. لا تعدّله بيدك. النتيجة الحية لكل معيار (لم يُثبت، ناجح، مدمج ومتحقق) في [اللوحة](../dashboard/index.html) وكتل `tj-status`، لا هنا. قرارات النطاق في [مواصفة المنتج](product-spec.md).',
     '',
-    `**الخلاصة:** ${reqs.requirements.length} متطلبًا · ${acCount} معيار قبول · ${plan.phases.length} مراحل في ${plan.waves.length} موجات. كل متطلب مرتبط بمعيار قبول واحد على الأقل، ويفرض ذلك \`npm run plan:check\`.`,
+    `**الخلاصة:** ${reqs.requirements.length} متطلبًا · ${acCount} معيار قبول · ${plan.phases.length} ${plan.phases.length > 10 ? 'مرحلة' : 'مراحل'} في ${plan.waves.length} موجات. كل متطلب مرتبط بمعيار قبول واحد على الأقل، ويفرض ذلك \`npm run plan:check\`.`,
     '',
     '## المتطلبات حسب المجموعة',
   ];

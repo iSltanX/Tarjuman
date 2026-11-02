@@ -1,7 +1,7 @@
 ---
 name: tj-merge
 description: منسّق موجة في خطة ترجمان — يكتشف فروع مراحلها وتقاريرها بنفسه، ويدمجها بالترتيب في فرع تكامل، ويفحص «لا تغيير سقط» وبوابة الموجة، ويحدّث الحالة، ويحسم البوابة بقرار سلطان عند الحاجة، ثم يفتح الموجة التالية. الحكم محلي، ولا يدفع `main` ووسم الموجة التالية إلى GitHub إلا بعد نجاح البوابة. يُستدعى يدويًا فقط بـ`/tj-merge W3` في النسخة الرئيسية.
-argument-hint: <W1…W5> [قرار البوابة إن طُلب]
+argument-hint: <W1…W8> [قرار البوابة إن طُلب]
 disable-model-invocation: true
 allowed-tools: Bash(pwd) Bash(git rev-parse *) Bash(git worktree list*) Bash(git status *) Bash(git tag -l *) Bash(git branch --list *) Bash(git log *) Bash(git rev-list *) Bash(git merge-base *) Bash(command node tools/plan/plan.mjs brief *) Bash(command node tools/plan/plan.mjs discover *) Bash(command node tools/plan/plan.mjs check*)
 ---

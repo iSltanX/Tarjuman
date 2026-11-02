@@ -237,7 +237,7 @@ export function deriveState(startDir, { mode = 'snapshot' } = {}) {
 
       const view = {
         id, title: ph.title, slug: ph.slug, wave: w.id, waveTitle: w.title, order: w.phases.indexOf(id) + 1,
-        size: ph.size, effort: ph.effort, estimate: ph.estimate, model: ph.model, whyModel: ph.whyModel,
+        size: ph.size, effort: ph.effort, model: ph.model, whyModel: ph.whyModel,
         live: !!ph.live, isGate: !!ph.outcome, needsUser: ph.needsUser || [], owns: ph.owns || [], fixScope: ph.fixScope || [],
         doc: phaseDoc(plan, ph), evidenceDir: evidenceOf(plan, ph), expectedBranch: branchOf(plan, ph), expectedWorktree: worktreeOf(plan, ph),
         requirements: ph.requirements || [], dependsOn: ph.dependsOn || [], parallelWith: parallelOf(plan, ph), requiresGates: ph.requiresGates || [],
