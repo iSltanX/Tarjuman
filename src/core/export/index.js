@@ -9,15 +9,18 @@ import { assertValid } from '../model/validate.js';
 import { textHash } from './hash.js';
 import { instructions } from './instructions.js';
 import { fileName } from './names.js';
-import { planParts } from './parts.js';
+import { planParts, planPartsByContent } from './parts.js';
 import { assertWritable, verifyRoundTrip, writeSrtFrom } from './write.js';
 
 export { fileName } from './names.js';
-export { instructions } from './instructions.js';
+export { GLOSSARY_LIMITS, glossaryParagraph, instructions, patchInstructions } from './instructions.js';
 export { describeTrack, languageLabel, trackLabel } from './describe.js';
 export { download, SRT_MIME } from './download.js';
-export { planParts } from './parts.js';
+export { CONTENT_SPLIT, planParts, planPartsByContent } from './parts.js';
 export { fnv1a64, textHash } from './hash.js';
+export { buildPatchPackage, patchFileName } from './patch.js';
+export { buildStudyText } from './study.js';
+export { buildReviewReport } from './report.js';
 
 const invalid = (what) => new TjError('MD_INVALID', { detail: `تصدير: ${what}` });
 
@@ -39,8 +42,9 @@ function toMs(now) {
  * @param {{
  *   videoId: string, title?: string | null,
  *   track: { key: string, lang: string, kind: 'manual' | 'asr', cues: import('../model/cue.js').Cue[], warnings?: string[] },
- *   mode: 'normal' | 'long', split?: { size: number } | null, now?: number | string | Date, rand?: () => number
- * }} spec title لا يُكتب في أي ملف ولا بصمة (خصوصية)، ويدخل نص التعليمات وحده بوصفه بيانات
+ *   mode: 'normal' | 'long', split?: { size: number, by?: 'count' | 'content' } | null, now?: number | string | Date, rand?: () => number
+ * }} spec title لا يُكتب في أي ملف ولا بصمة (خصوصية)، ويدخل نص التعليمات وحده بوصفه بيانات. split.by (إضافة P11 على العقد):
+ *   'count' التوزيع المتوازن القديم (الافتراضي)، و'content' عند حدود الجمل أو الصمت (planPartsByContent).
  * @returns {{ files: ExportFile[], fingerprint: import('../model/tracks.js').Fingerprint, instructions: string, warnings: string[] }}
  */
 export function buildExport({ videoId, title = null, track, mode, split = null, now = Date.now(), rand }) {
@@ -53,12 +57,13 @@ export function buildExport({ videoId, title = null, track, mode, split = null, 
   assertValid(validateCues(cues, 'track.cues'), 'track.cues');
   assertWritable(cues);
   if (split !== null && (typeof split !== 'object' || !Number.isInteger(split.size) || split.size < 1)) throw invalid('split.size');
+  if (split !== null && split.by !== undefined && split.by !== 'count' && split.by !== 'content') throw invalid('split.by');
   const ms = toMs(now);
   const warnings = [...new Set([...(Array.isArray(track.warnings) ? track.warnings : [])])];
 
   const full = writeSrtFrom(cues);
   verifyRoundTrip(full, cues);
-  const ranges = split ? planParts(cues.length, split.size) : null;
+  const ranges = split ? (split.by === 'content' ? planPartsByContent(cues, split.size) : planParts(cues.length, split.size)) : null;
   if (split && !ranges) warnings.push('EX_SPLIT_NOT_NEEDED');
   const name = (part) => fileName({ videoId, lang: track.lang, kind: track.kind, mode, part });
   /** @type {ExportFile[]} */
