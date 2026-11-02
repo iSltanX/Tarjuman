@@ -4,7 +4,7 @@ dashboard/data/
 .claude/settings.local.json
 node_modules/
 dist/
-release/
+/release/
 test-results/
 *.log
 .DS_Store
