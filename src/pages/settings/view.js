@@ -1,18 +1,24 @@
-// واجهة الإعدادات (P7-AC4/AC8/AC9/AC10، وإعادة التصميم): تنقّل جانبي في البداية (اليمين) بأقسام قصيرة، ومحتوى القسم
-// المختار بجواره، والحفظ فوري لكل خيار بعلامة «حُفظ» تحت تسميته، و«استعادة الافتراضي» لكل قسم له افتراضيات. القسم
-// المختار في جزء العنوان (#export) فيبقى عند التحديث وتُفتح الصفحة عليه من رابط. خط الترجمة وحجمها يخصان المعاينة
-// وما يُعرض فوق الفيديو وحدهما، وخطوط الصفحة نفسها لا تتغير. لا طلبات شبكة، وكل نص عبر textContent.
+// واجهة الإعدادات (P7-AC4/AC8/AC9/AC10، وإعادة التصميم، وP13-AC4/AC7/AC8): تنقّل جانبي في البداية (اليمين) بأقسام قصيرة،
+// ومحتوى القسم المختار بجواره، والحفظ فوري لكل خيار بعلامة «حُفظ» تحت تسميته، و«استعادة الافتراضي» لكل قسم له افتراضيات.
+// القسم المختار في جزء العنوان (#export) فيبقى عند التحديث وتُفتح الصفحة عليه من رابط. خط الترجمة وحجمها يخصان المعاينة
+// وما يُعرض فوق الفيديو وحدهما، وخطوط الصفحة نفسها لا تتغير. والإصدار الثاني: مكان الحفظ أول «التصدير»، وحد سرعة القراءة
+// في «المقارنة والمراجعة»، وبطاقتا «المصطلحات» و«البيانات»، وسعة الترجمات والسوابق في «التخزين»؛ وتفضيلاته في prefs.
+// لا طلبات شبكة، وكل نص عبر textContent.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
+import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { DEFAULT_SETTINGS, SUBTITLE_BACKGROUNDS, SUBTITLE_POSITIONS, SUBTITLE_SCALE } from '../../core/model/settings.js';
-import { alertBox, button, choiceGroup, confirmDialog, el, icon, ltr } from '../../ui/components.js';
+import { alertBox, button, confirmDialog, el, icon, ltr, statusPill } from '../../ui/components.js';
 import { formatBytes } from '../../ui/format.js';
+import { numberField, savedMark, segmented } from '../../ui/forms.js';
 import { SUBTITLE_FONT_LIST, subtitleFontStack } from '../../ui/subtitle-fonts.js';
 import { aboutSection } from './about.js';
-import { numberField, savedMark, segmented } from './controls.js';
+import { dataControl } from './data.js';
+import { glossaryControl } from './glossary.js';
+import { saveLocationControl } from './location.js';
 import {
-  CONFIRM_WORD, DEFAULT_SCALE_MARK_PCT, DEFAULT_SECTION, DEFAULT_SUBFOLDER, PREVIEW_BOX, PREVIEW_LINES, SAVE_LOCATIONS, SAVE_LOCATION_NOTE,
-  SAVE_LOCATION_PENDING, SECTIONS, completenessText, confirmWordOk, isSectionId, parseCompleteness, parseDrift, parseSplit, parseStep,
-  previewStyle, saveLocationStatus, sectionReset, snapScale, stepChoice, stepText,
+  CONFIRM_WORD, DEFAULT_SCALE_MARK_PCT, DEFAULT_SECTION, PREVIEW_BOX, PREVIEW_LINES, READING_DEFAULT_CPS, SECTIONS, completenessText,
+  confirmWordOk, isSectionId, parseCompleteness, parseDrift, parseReadingSpeed, parseSplit, parseStep, previewStyle, readingText,
+  sectionReset, snapScale, stepChoice, stepText,
 } from './model.js';
 
 export const SUBTITLE_NOTE = 'يخص الترجمة فوق الفيديو وحدها، والخطوط مضمّنة في الإضافة.';
@@ -31,9 +37,13 @@ const POSITION_LABELS = Object.freeze({ bottom: 'أسفل', raised: 'مرتفع'
 /**
  * @typedef {{
  *   store: ReturnType<typeof import('../../core/store/index.js').createStore>,
- *   version: string, doc?: Document,
+ *   version: string, doc?: Document, now?: () => number,
  *   clipboardWrite: (text: string) => Promise<void>,
  *   diagnosticsText: () => Promise<string>,
+ *   saveFile?: (file: { name: string, text: string }) => Promise<{ ok: true, mode: string, downloadId: number | null } | { ok: false, code: string }>,
+ *   savedPath?: (downloadId: number) => Promise<string | null>,
+ *   pickFile?: () => Promise<File | null>,
+ *   pause?: () => Promise<void>,
  *   confirm?: typeof confirmDialog,
  *   nav?: { get: () => string | null, set: (id: string) => void, onChange: (fn: () => void) => () => void },
  *   setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void,
@@ -67,7 +77,9 @@ export function createSettings(env) {
   const confirm = env.confirm ?? confirmDialog;
   const nav = env.nav ?? hashNav(doc);
   const marks = () => savedMark({ doc, setTimer, clearTimer });
+  const now = env.now ?? Date.now;
   let settings = DEFAULT_SETTINGS;
+  let prefs = DEFAULT_PREFS;
   let stepCustom = false;
   /** مؤشر إلى ما يحدّث الواجهة من الإعدادات (يُملأ أدناه). */
   const sync = [];
@@ -91,6 +103,21 @@ export function createSettings(env) {
     return settings;
   }
 
+  /** مثل save للتفضيلات (القاموس وحد القراءة ومكان الحفظ). يعيد التفضيلات الجديدة، أو null عند الفشل. */
+  async function savePrefs(patch, mark) {
+    try {
+      prefs = await store.setPrefs(patch);
+      mark.flash(messageFor('PG_SAVED'), 'success');
+    } catch {
+      mark.flash(messageFor('PG_SAVE_FAILED'), 'danger');
+      prefs = await store.getPrefs().catch(() => prefs);
+      syncAll(true);
+      return null;
+    }
+    syncAll();
+    return prefs;
+  }
+
   // ---- البُنى المشتركة ----
   const note = (text) => el('p', { className: 'tj-caption st-note', text, doc });
   /** صف: التسمية في البداية وتحتها علامة الحفظ، والعنصر بعدها. */
@@ -105,18 +132,19 @@ export function createSettings(env) {
 
   /** قسم بعنوان ووصف و«استعادة الافتراضي» إن كان له افتراضيات. */
   function section(def, ...children) {
-    const reset = sectionReset(settings, def.id);
+    const reset = sectionReset(settings, def.id, prefs);
     let resetBtn = null;
     let resetMark = null;
     if (reset) {
       resetMark = marks();
-      resetBtn = button({ label: RESET_LABEL, variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: () => {
-        const r = sectionReset(settings, def.id);
+      resetBtn = button({ label: RESET_LABEL, variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: async () => {
+        const r = sectionReset(settings, def.id, prefs);
         if (!r || r.isDefault) return;
-        save(r.patch, resetMark);
+        if (Object.keys(r.patch).length) await save(r.patch, resetMark);
+        if (Object.keys(r.prefsPatch).length) await savePrefs(r.prefsPatch, resetMark);
       } });
       sync.push(() => {
-        const r = sectionReset(settings, def.id);
+        const r = sectionReset(settings, def.id, prefs);
         resetBtn.setAttribute('aria-disabled', r.isDefault ? 'true' : 'false');
         resetBtn.title = r.disabledReason ?? '';
       });
@@ -268,18 +296,18 @@ export function createSettings(env) {
     row('خطوة أزرار ±', stepMark, stepSeg.root, customHost, note('+ تأخير: تظهر الترجمة لاحقًا · − تقديم: تظهر أبكر. الإزاحة تُحفظ لكل فيديو ولا تغيّر ملفك.')));
 
   // ---- التصدير ----
-  // مكان حفظ ملفات الترجمة (R65): الواجهة كاملة بأوضاعها الثلاثة؛ غير الافتراضيين ينتظران إذن التنزيلات (الإصدار الثاني).
-  const subfolderId = 'st-subfolder';
-  const subfolder = el('input', { className: 'tj-field__input tj-field__input--mono st-subfolder', attrs: { id: subfolderId, type: 'text', 'aria-label': 'اسم المجلد الفرعي', autocomplete: 'off', spellcheck: 'false', placeholder: DEFAULT_SUBFOLDER }, dir: 'ltr', doc });
-  subfolder.value = DEFAULT_SUBFOLDER;
-  subfolder.disabled = true;
-  const locationGroup = choiceGroup({
-    legend: 'مكان حفظ ملفات الترجمة', value: 'downloads', doc,
-    options: SAVE_LOCATIONS.map((o) => ({ value: o.value, label: o.label, hint: o.hint, disabledReason: o.available ? null : SAVE_LOCATION_PENDING, extra: o.value === 'subfolder' ? subfolder : null })),
+  // مكان حفظ ملفات الترجمة (R65) أول بند: يتبعه كل تصدير من المحفوظات والنسخة الاحتياطية.
+  const locationMark = marks();
+  const location = saveLocationControl({
+    doc, mark: locationMark, getPrefs: () => prefs, savePrefs,
+    lastSavePath: async () => {
+      const last = await store.getLastSave();
+      return last && env.savedPath ? env.savedPath(last.downloadId) : null;
+    },
   });
-  const locationStatus = el('p', { className: 'st-status', children: [icon('folder', { doc }), el('span', { text: saveLocationStatus('downloads'), doc })], doc });
+  sync.push((force) => location.sync(force));
   const exporting = section(byId.export,
-    row('مكان حفظ الملفات', null, locationGroup.root, locationStatus, note(SAVE_LOCATION_NOTE)));
+    row('مكان حفظ ملفات الترجمة', locationMark, location.root));
 
   const exportMark = marks();
   const modeSeg = segmented({
@@ -315,7 +343,31 @@ export function createSettings(env) {
     commit: (v) => save({ thresholds: { completeness: v } }, compMark),
   });
   sync.push((force) => compField.set(completenessText(settings.thresholds.completeness), { force }));
-  const comparison = section(byId.compare, el('div', { className: 'st-fields', children: [driftField.root, compField.root], doc }));
+  // حد سرعة القراءة (R55): فارغ = الافتراضي المعايَر، بعلامة «الافتراضي» ظاهرة.
+  const readingMark = marks();
+  const readingField = numberField({
+    label: 'حد سرعة القراءة (حرف/ث)', unit: 'حرف/ث', value: readingText(prefs.review.maxCps), parse: parseReadingSpeed, mark: readingMark.root, doc,
+    hint: `من 5 إلى 40. اتركه فارغًا للافتراضي ${READING_DEFAULT_CPS}. ينبّه المحرّر إلى المقاطع الأسرع منه ولا يمنع الحفظ.`,
+    commit: (v) => savePrefs({ review: { maxCps: v } }, readingMark),
+  });
+  readingField.input.setAttribute('placeholder', String(READING_DEFAULT_CPS));
+  const readingDefault = statusPill({ tone: 'neutral', plain: true, text: `الافتراضي ${READING_DEFAULT_CPS}`, doc });
+  sync.push((force) => {
+    readingField.set(readingText(prefs.review.maxCps), { force });
+    readingDefault.hidden = prefs.review.maxCps !== null;
+  });
+  const comparison = section(byId.compare,
+    el('div', { className: 'st-fields', children: [driftField.root, compField.root], doc }),
+    el('div', { className: 'st-fields st-fields--review', children: [readingField.root, readingDefault], doc }));
+
+  // ---- المصطلحات ----
+  const glossaryAttachMark = marks();
+  const glossaryListMark = marks();
+  const glossary = glossaryControl({ doc, getPrefs: () => prefs, savePrefs, attachMark: glossaryAttachMark, listMark: glossaryListMark });
+  sync.push(() => glossary.sync());
+  const glossarySection = section(byId.glossary,
+    row('الإرفاق', glossaryAttachMark, glossary.attachRow, note('حين يكون في القاموس مصطلحات، تُرفق بتعليمات الترجمة التي تنسخها من المشغّل أو المحفوظات.')),
+    row('القاموس', glossaryListMark, el('div', { className: 'st-gl__head', children: [glossary.counter], doc }), glossary.list));
 
   // ---- التخزين ----
   const usageText = el('span', { className: 'tj-body-sm st-quota__text', doc });
@@ -366,18 +418,62 @@ export function createSettings(env) {
     if (!(await pending) || !confirmWordOk(typed.value)) return;
     try {
       await store.clearAll();
-      settings = await store.getSettings();
+      [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs()]);
       storageMark.flash(messageFor('PG_CLEAR_DONE'), 'success');
       syncAll();
-      await refreshCapacity();
-      await refreshReminder();
+      await Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage(), location.refreshLast()]);
     } catch (err) {
       storageMark.flash(toErrorInfo(err).message, 'danger');
     }
   }
+  // سعة الترجمات والسوابق: الأعداد من المحفوظات، والأحجام بالبايت لكل فيديو (bundleBytes)، بعد عرض الصفحة.
+  const libraryText = el('span', { className: 'tj-body-sm st-library-usage', doc });
+  const libraryBytes = el('span', { className: 'tj-caption st-library-bytes', doc });
+  let usageSeq = 0;
+  async function refreshLibraryUsage() {
+    const mine = ++usageSeq;
+    try {
+      const list = await store.listLibrary();
+      const translations = list.reduce((s, x) => s + x.summary.filled, 0);
+      const videos = list.filter((x) => x.summary.filled > 0).length;
+      if (mine !== usageSeq) return;
+      libraryText.textContent = translations ? `الترجمات المحفوظة: ${translations} · الفيديوهات المترجمة: ${videos}` : 'لا ترجمات محفوظة بعد.';
+      libraryBytes.textContent = '';
+      let alts = 0;
+      let previous = 0;
+      for (const x of list) {
+        const b = await store.bundleBytes(x.entry.videoId);
+        alts += b.alts;
+        previous += b.previous;
+      }
+      if (mine !== usageSeq) return;
+      libraryBytes.textContent = list.length ? `الترجمات غير النشطة ${formatBytes(alts)} · النسخ السابقة ${formatBytes(previous)}` : '';
+    } catch (err) {
+      if (mine === usageSeq) libraryText.textContent = toErrorInfo(err).message;
+    }
+  }
   const storage = section(byId.storage,
     row('المساحة المستخدمة', null, el('div', { className: 'st-quota', children: [usageText, meter], doc }), capacityAlert),
+    row('الترجمات والنسخ السابقة', null, el('div', { className: 'st-library', children: [libraryText, libraryBytes], doc })),
     row('مسح البيانات', storageMark, el('div', { className: 'st-actions', children: [clearBtn], doc }), note('يحذف كل الترجمات المحفوظة والإعدادات من هذا المتصفح. الملفات التي نزّلتها على جهازك لا تتأثر.')));
+
+  // ---- البيانات ----
+  const data = dataControl({
+    doc, store, version, now, pause: env.pause, confirm,
+    saveFile: env.saveFile ?? (async () => ({ ok: false, code: 'SV_FAILED' })),
+    pickFile: env.pickFile ?? (async () => null),
+    onRestored: async () => {
+      await Promise.all([
+        store.getSettings().then((s) => { settings = s; }).catch(() => {}),
+        store.getPrefs().then((p) => { prefs = p; }).catch(() => {}),
+      ]);
+      syncAll();
+      await Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage()]);
+    },
+  });
+  const dataSection = section(byId.data,
+    row('نسخة احتياطية', null, data.createRow, note('ملف JSON واحد فيه ترجماتك وعلاماتك وإعداداتك وقاموسك، يُحفظ في مكان حفظ الملفات المختار. لا يُرسل إلى أي مكان.')),
+    row('الاستعادة', null, data.restoreRow, note('تُفحص النسخة كلها قبل أي كتابة. الموجود يُتخطى ما لم تختر استبداله.')));
 
   // ---- التشخيص ----
   const diagMark = marks();
@@ -420,7 +516,7 @@ export function createSettings(env) {
   }
 
   // ---- التنقّل بين الأقسام ----
-  const sections = { display, timing, export: exporting, compare: comparison, storage, diagnostics, about };
+  const sections = { display, timing, export: exporting, compare: comparison, glossary: glossarySection, storage, data: dataSection, diagnostics, about };
   let active = isSectionId(nav.get()) ? nav.get() : DEFAULT_SECTION;
   const navLinks = SECTIONS.map((s) => el('a', {
     className: 'st-nav__link', attrs: { href: `#${s.id}`, 'data-section': s.id },
@@ -449,7 +545,7 @@ export function createSettings(env) {
       className: 'st-content',
       children: [
         el('header', { className: 'st-head', children: [el('h1', { className: 'tj-h1', text: 'الإعدادات', doc }), el('p', { className: 'tj-caption', text: SAVE_HINT, doc })], doc }),
-        reminderHost, alertHost, display, timing, exporting, comparison, storage, diagnostics, about,
+        reminderHost, alertHost, display, timing, exporting, comparison, glossarySection, storage, dataSection, diagnostics, about,
       ],
       doc,
     }),
@@ -459,23 +555,24 @@ export function createSettings(env) {
   select(active);
 
   const unsubscribe = store.onChange((change) => {
-    if (!change.settings && !change.cleared) return;
-    store.getSettings().then((s) => { settings = s; syncAll(); }).catch(() => {});
+    if (change.settings || change.cleared) store.getSettings().then((s) => { settings = s; syncAll(); }).catch(() => {});
+    if (change.prefs || change.cleared) store.getPrefs().then((p) => { prefs = p; syncAll(); location.refreshLast(); }).catch(() => {});
   });
 
   return {
-    root, preview, slider, select,
+    root, preview, slider, select, data, location, glossary,
     get active() { return active; },
     get settings() { return settings; },
+    get prefs() { return prefs; },
     async load() {
       try {
-        settings = await store.getSettings();
+        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs()]);
         syncAll();
       } catch (err) {
         const info = toErrorInfo(err);
         alertHost.replaceChildren(alertBox({ tone: 'danger', title: 'تعذّرت قراءة الإعدادات', text: `${info.message} (${info.code})`, doc }));
       }
-      await Promise.all([refreshCapacity(), refreshReminder()]);
+      await Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage(), location.refreshLast()]);
     },
     dispose() {
       unsubscribe();

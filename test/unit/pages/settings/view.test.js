@@ -49,15 +49,17 @@ const section = (m, title) => findAll(m.root, (e) => e.tagName === 'section' && 
 const radios = (root, name) => findAll(root, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio' && (name ? e.getAttribute('name') === name : true));
 const choose = (input) => { input.checked = true; input.dispatchEvent({ type: 'change' }); };
 const radioByValue = (root, value) => radios(root).find((r) => r.getAttribute('value') === value);
-const markText = (root) => findAll(root, (e) => e.classList.contains('st-saved')).map(textOf).filter(Boolean);
-const field = (m, label) => findAll(m.root, (e) => e.classList.contains('st-num') && textOf(e.querySelector('label')) === label)[0];
+const markText = (root) => findAll(root, (e) => e.classList.contains('tj-saved')).map(textOf).filter(Boolean);
+const field = (m, label) => findAll(m.root, (e) => e.classList.contains('tj-num') && textOf(e.querySelector('label')) === label)[0];
 const type = (f, text) => { const i = f.querySelector('input'); i.value = text; i.dispatchEvent({ type: 'change' }); };
 const errorOf = (f) => { const e = f.querySelector('.tj-field__error'); return e.hidden ? '' : textOf(e); };
 
-test('البنية: الرأس وسبعة أقسام بترتيبها، وكل خيار بتسمية', async () => {
+const SECTION_TITLES = ['العرض', 'التوقيت', 'التصدير', 'المقارنة والمراجعة', 'المصطلحات', 'التخزين', 'البيانات', 'التشخيص', 'حول'];
+
+test('البنية: الرأس وتسعة أقسام بترتيبها («البيانات» بعد «التخزين»)، وكل خيار بتسمية', async () => {
   const m = await mount();
   assert.equal(textOf(m.root.querySelector('h1')), 'الإعدادات');
-  assert.deepEqual(findAll(m.root, (e) => e.tagName === 'h2').map(textOf), ['العرض', 'التوقيت', 'التصدير', 'المقارنة', 'التخزين', 'التشخيص', 'حول']);
+  assert.deepEqual(findAll(m.root, (e) => e.tagName === 'h2').map(textOf), SECTION_TITLES);
   assert.ok(textOf(m.root).includes('كل خيار يُحفظ فورًا على جهازك'));
   assert.ok(textOf(m.root).includes(SUBTITLE_NOTE));
   assert.ok(textOf(m.root).includes(SCALE_NOTE));
@@ -164,39 +166,89 @@ test('«استعادة الافتراضي» لقسم العرض: معطّلة ب
   assert.equal(buttonNamed(section(m, 'حول'), 'استعادة الافتراضي'), null);
 });
 
-test('التنقّل الجانبي: سبعة أقسام، المختار بـaria-current وقسمه وحده ظاهر، والاختيار يُحفظ في جزء العنوان ويُقرأ منه', async () => {
+test('التنقّل الجانبي: تسعة أقسام، المختار بـaria-current وقسمه وحده ظاهر، والاختيار يُحفظ في جزء العنوان ويُقرأ منه', async () => {
   let hash = 'export';
   const nav = { get: () => hash, set: (id) => { hash = id; }, onChange: () => () => {} };
   const m = await mount({ env: { nav } });
   const links = findAll(m.root, (e) => e.classList.contains('st-nav__link'));
-  assert.deepEqual(links.map(textOf), ['العرض', 'التوقيت', 'التصدير', 'المقارنة', 'التخزين', 'التشخيص', 'حول']);
+  assert.deepEqual(links.map(textOf), SECTION_TITLES);
   assert.equal(m.settings.active, 'export', 'فُتحت على القسم المذكور في العنوان');
   assert.equal(section(m, 'التصدير').hidden, false);
   assert.equal(section(m, 'العرض').hidden, true);
   assert.equal(links[2].getAttribute('aria-current'), 'page');
-  links[4].click();
+  links[5].click();
   assert.equal(m.settings.active, 'storage');
   assert.equal(hash, 'storage', 'حُفظ في جزء العنوان');
   assert.equal(section(m, 'التخزين').hidden, false);
   assert.equal(section(m, 'التصدير').hidden, true);
   assert.equal(links[2].getAttribute('aria-current'), null);
-  assert.equal(links[4].getAttribute('aria-current'), 'page');
+  assert.equal(links[5].getAttribute('aria-current'), 'page');
 });
 
-test('مكان حفظ الملفات (R65) في التصدير: الأوضاع الثلاثة والافتراضي مجلد التنزيلات، وغير المتاح معطّل بسببه، وحالة مفهومة بلا مسار', async () => {
+test('مكان حفظ ملفات الترجمة (R65، P13-AC8) أول بند في التصدير: الأوضاع الثلاثة، والمجلد الفرعي بتحقق، و«استعادة الافتراضي»، وسطر المكان المختار وصفًا', async () => {
   const m = await mount();
   const exp = section(m, 'التصدير');
+  const firstRowLabel = textOf(exp.querySelector('.st-row .tj-label'));
+  assert.equal(firstRowLabel, 'مكان حفظ ملفات الترجمة', 'أول بند في البطاقة');
   const inputs = radios(exp).filter((r) => ['downloads', 'subfolder', 'ask'].includes(r.getAttribute('value')));
   assert.equal(inputs.length, 3);
   assert.equal(inputs[0].checked, true, 'الافتراضي مجلد التنزيلات');
-  assert.equal(inputs[1].disabled, true);
-  assert.equal(inputs[2].disabled, true);
-  assert.ok(textOf(exp).includes('يُفعَّل في الإصدار الثاني مع إذن التنزيلات'));
-  assert.ok(textOf(exp).includes('المكان الآن: مجلد التنزيلات'));
+  assert.ok(inputs.every((i) => !i.disabled), 'الأوضاع الثلاثة متاحة');
+  assert.ok(textOf(exp).includes('مجلد التنزيلات (الافتراضي)'));
+  assert.ok(textOf(exp).includes('المكان المختار: مجلد التنزيلات'));
+  assert.ok(textOf(exp).includes('لا تسمح المتصفحات للإضافات بالحفظ التلقائي خارج مجلد التنزيلات؛ لاختيار مجلد آخر اختر «اسأل عن مكان الحفظ عند كل تنزيل».'));
   const folder = findAll(exp, (e) => e.classList.contains('st-subfolder'))[0];
   assert.equal(folder.value, 'Tarjuman');
-  assert.equal(folder.disabled, true);
+  assert.equal(folder.disabled, true, 'معطّل إلا في وضع المجلد الفرعي');
+  const reset = findAll(exp, (e) => e.tagName === 'button' && e.classList.contains('st-location__reset'))[0];
+  assert.equal(reset.getAttribute('aria-disabled'), 'true', 'معطّل حين يكون الافتراضي');
+  const last = findAll(exp, (e) => e.classList.contains('st-last-save'))[0];
+  assert.equal(last.hidden, true, 'لا مسار بلا ملف نزّله ترجمان');
   assert.ok(!/\/Users|C:\\|~\//.test(textOf(exp)), 'لا مسار فعلي يُدّعى');
+
+  // المجلد الفرعي: يُفعَّل الحقل، والاسم غير الصالح يُرفض بلا حفظ، والصالح يُحفظ ويظهر في سطر المكان.
+  choose(inputs[1]);
+  await settle();
+  assert.equal((await m.store.getPrefs()).saveLocation.mode, 'subfolder');
+  assert.equal(folder.disabled, false);
+  assert.ok(textOf(exp).includes('المكان المختار: مجلد التنزيلات/Tarjuman'));
+  folder.value = 'a/b';
+  folder.dispatchEvent({ type: 'change' });
+  await settle();
+  assert.equal((await m.store.getPrefs()).saveLocation.folder, 'Tarjuman');
+  assert.ok(textOf(exp).includes(messageFor('SV_BAD_FOLDER')));
+  assert.equal(folder.getAttribute('aria-invalid'), 'true');
+  folder.value = '  ترجماتي  ';
+  folder.dispatchEvent({ type: 'change' });
+  await settle();
+  assert.equal((await m.store.getPrefs()).saveLocation.folder, 'ترجماتي');
+  assert.ok(textOf(exp).includes('المكان المختار: مجلد التنزيلات/ترجماتي'));
+  assert.equal(reset.getAttribute('aria-disabled'), 'false');
+  reset.click();
+  await settle();
+  assert.deepEqual((await m.store.getPrefs()).saveLocation, { mode: 'downloads', folder: 'Tarjuman' });
+  assert.equal(folder.disabled, true);
+  choose(inputs[2]);
+  await settle();
+  assert.ok(textOf(exp).includes('المكان المختار: يُسأل عند كل تنزيل'));
+});
+
+test('«آخر ملف حُفظ» من سجل المتصفح وحده: يظهر المسار لملف نزّله ترجمان واكتمل ووُجد، وإلا لا يُعرض مسار', async () => {
+  const asked = [];
+  let answer = '/Users/test/Downloads/Tarjuman/AAAAAAAAAAA.ar.srt';
+  const m = await mount({ env: { savedPath: async (id) => { asked.push(id); return answer; } } });
+  const exp = section(m, 'التصدير');
+  const last = findAll(exp, (e) => e.classList.contains('st-last-save'))[0];
+  assert.equal(last.hidden, true, 'لا معرّف تنزيل محفوظ: لا سؤال ولا مسار');
+  assert.deepEqual(asked, []);
+  await m.store.setLastSave(42);
+  await m.settings.location.refreshLast();
+  assert.deepEqual(asked, [42]);
+  assert.equal(last.hidden, false);
+  assert.ok(textOf(last).includes('آخر ملف حُفظ: /Users/test/Downloads/Tarjuman/AAAAAAAAAAA.ar.srt'));
+  answer = null; // حُذف الملف أو لم يكتمل
+  await m.settings.location.refreshLast();
+  assert.equal(last.hidden, true);
 });
 
 test('الخلفية والموضع: يُحفظان، والمعاينة تتبعهما', async () => {
@@ -260,7 +312,7 @@ test('التصدير: الوضع الافتراضي وعتبة التقسيم ب
   await settle();
   assert.equal((await m.store.getSettings()).export.modeDefault, 'long');
   const f = field(m, 'عتبة اقتراح التقسيم الاحتياطي');
-  assert.equal(textOf(f.querySelector('.st-num__unit')), 'مقطع');
+  assert.equal(textOf(f.querySelector('.tj-num__unit')), 'مقطع');
   type(f, '49');
   await settle();
   assert.equal(errorOf(f), 'عتبة التقسيم عدد صحيح من 50 إلى 2000.');
@@ -276,8 +328,8 @@ test('المقارنة: الانحراف بالملي ثانية والاكتم�
   const m = await mount();
   const drift = field(m, 'عتبة انحراف التوقيت');
   const comp = field(m, 'نسبة الاكتمال');
-  assert.equal(textOf(drift.querySelector('.st-num__unit')), 'ملي ثانية');
-  assert.equal(textOf(comp.querySelector('.st-num__unit')), '%');
+  assert.equal(textOf(drift.querySelector('.tj-num__unit')), 'ملي ثانية');
+  assert.equal(textOf(comp.querySelector('.tj-num__unit')), '%');
   type(drift, '9');
   type(comp, '101');
   await settle();
