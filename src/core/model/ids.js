@@ -65,10 +65,14 @@ export function videoParam(search) {
 }
 
 /**
- * عنوان صفحة المشاهدة الوحيد الذي تفتحه الإضافة (أمر «فتح الفيديو»).
+ * عنوان صفحة المشاهدة الوحيد الذي تفتحه الإضافة (أمر «فتح الفيديو»)، وعند زمن بالثواني الصحيحة للقفز (الإصدار الثاني).
  * @param {string} videoId
+ * @param {{ atMs?: number }} [opts]
  */
-export function watchUrl(videoId) {
+export function watchUrl(videoId, { atMs } = {}) {
   if (!isVideoId(videoId)) throw new RangeError('معرّف فيديو غير صالح');
-  return `https://www.youtube.com/watch?v=${videoId}`;
+  const base = `https://www.youtube.com/watch?v=${videoId}`;
+  if (atMs === undefined) return base;
+  if (!Number.isInteger(atMs) || atMs < 0) throw new RangeError('زمن غير صالح');
+  return `${base}&t=${Math.floor(atMs / 1000)}s`;
 }

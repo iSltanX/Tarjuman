@@ -15,11 +15,16 @@ import { createVideoRecord } from './video.js';
 
 const copy = (r) => structuredClone(r);
 
-/** يبقي آخر LIMITS.maxFingerprints بصمة، ولا يسقط البصمة التي تشير إليها الترجمة العربية. */
-function pruneFingerprints(list, keepId) {
+/**
+ * يبقي آخر LIMITS.maxFingerprints بصمة، ولا يسقط البصمة التي تشير إليها الترجمة العربية، ولا ما في keep (مراجع
+ * الترجمات غير النشطة والسابقة في الإصدار الثاني).
+ */
+function pruneFingerprints(list, keepId, keep = []) {
+  const kept = new Set([keepId, ...keep].filter(Boolean));
   const out = list.slice();
   while (out.length > LIMITS.maxFingerprints) {
-    const i = out.findIndex((f) => f.id !== keepId);
+    const i = out.findIndex((f) => !kept.has(f.id));
+    if (i === -1) break;
     out.splice(i, 1);
   }
   return out;
@@ -54,11 +59,12 @@ function base(record, { videoId, title, durationMs, displayMode }, now) {
  * @param {VideoRecord | null} record
  * @param {{ videoId: string, title?: string | null, durationMs?: number | null, englishTrack: EnglishTrack, fingerprint: Fingerprint, displayMode?: 'ar' | 'dual' }} input
  * @param {string} now ISO
+ * @param {{ keep?: string[] }} [opts] بصمات لا تسقط عند امتلاء الحد (مراجع الإصدار الثاني)
  * @returns {VideoRecord}
  */
-export function withExport(record, input, now) {
+export function withExport(record, input, now, { keep = [] } = {}) {
   const r = base(record, input, now);
-  r.fingerprints = pruneFingerprints([...r.fingerprints.filter((f) => f.id !== input.fingerprint.id), copy(input.fingerprint)], r.arabic?.fingerprintId ?? null);
+  r.fingerprints = pruneFingerprints([...r.fingerprints.filter((f) => f.id !== input.fingerprint.id), copy(input.fingerprint)], r.arabic?.fingerprintId ?? null, keep);
   r.english = putEnglish(r.english, input.englishTrack, r.fingerprints);
   return r;
 }

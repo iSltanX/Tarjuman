@@ -1,6 +1,6 @@
 # عقد الرسائل
 
-> **مثبّت في P2 (2026-11-01) ومجمَّد.** المسارات ثلاثة فقط، وكلها بيانات لا أوامر. الشيفرة: `src/content/bridge.js` و`src/content/messages.js` و`src/core/model/messages.js`، واختباراتها `test/unit/content/page-boundary.test.js`.
+> **مثبّت في P2 (2026-11-01)، ووسّعته P10 للإصدار الثاني (2026-11-02) ثم جُمِّد.** المسارات ثلاثة في الإصدار الأول (§١–§٣)، ويضيف الثاني ثلاث رسائل محددة (§٥–§٧)؛ وكلها بيانات أو طلبات مقيّدة، لا أوامر عامة. الشيفرة: `src/content/bridge.js` و`src/content/messages.js` و`src/core/model/messages.js`، واختباراتها `test/unit/content/page-boundary.test.js`.
 
 ## ١. MAIN → ISOLATED (الالتقاط)
 
@@ -45,5 +45,61 @@ chrome.tabs.sendMessage(tabId, { type: "tj:get-video-state", v: 1 })   // videoS
 ## ٤. الممنوعات
 
 - MAIN ← الإضافة: لا أوامر. الإضافة → MAIN: لا رسائل.
-- لا `chrome.runtime.sendMessage` من سكربت المحتوى إلى الصفحات، ولا `externally_connectable`، ولا `runtime.connect`، ولا عامل خلفي.
+- لا `chrome.runtime.sendMessage` من سكربت المحتوى إلا رسالة الحفظ إلى العامل الخلفي (§٧)، ولا `externally_connectable`، ولا `runtime.connect`. والعامل الخلفي للحفظ وحده.
 - لا رسالة جديدة دون تغيير هذا العقد على `main`.
+
+---
+
+## ٥. الإصدار الثاني: رد حالة الفيديو الموسّع (R64)
+
+الطلب نفسه `{ type: "tj:get-video-state", v: 1 }` والرد بالإصدار نفسه `v: 1` وحقوله كلها كما في §٢، **ومعها** حقول جديدة تتجاهلها نافذة الإصدار الأول (`isVideoStateReply` لم يتغير):
+
+```js
+{
+  …§٢,
+  slots: [{ n: 1, filled: true, active: true, name: "ترجمتي" | null }, { n: 2, … }, { n: 3, … }],   // 1 2 3 بلا نص
+  capture: { state: "captured" | "rejected" | "none", count: 1, code: "EX_NOT_ENGLISH" | null },   // الالتقاط لهذه الجلسة
+  tools: { overlay: "mounted", controls: "mounted", code: "CT_MOUNT_FAILED" | null }               // = mounted مع آخر رمز تعطل
+}
+```
+
+- `capture.state`: `captured` عند مسار ملتقط صالح، و`rejected` عند آخر رفض يخص الفيديو (`code` رمزه، مثل `EX_NOT_ENGLISH` لمسار عربي أو مترجم آليًا)، وإلا `none`.
+- `tools.code` آخر رمز تعطل من نقطتي التركيب إن وُجد (`state: "error"`)؛ والسبب المفهوم من `messageFor(code)`.
+- `isVideoStateReplyV2(reply)` يتحقق من الحقول الجديدة؛ والنافذة الجديدة تعرض الرد القديم (بلا هذه الحقول) كما يعرضه الأول.
+
+## ٦. الإصدار الثاني: تشخيص الصفحة (R64)
+
+```js
+chrome.tabs.sendMessage(tabId, { type: "tj:get-page-diagnostics", v: 1 })    // pageDiagnosticsRequest()
+// الرد: { v: 1, ok: true, sections: { controller, extractor, mounted } } — أعداد ورموز فقط
+```
+
+يُقبل من صفحات الإضافة وحدها (`isExtensionPage`) كطلب الحالة. الأقسام بلا نص ولا عنوان ولا رابط، والنافذة تبني منها `createDiagnosticReport` (عقد الأخطاء §٤) الذي ينقّيها مرة أخرى.
+
+## ٧. الإصدار الثاني: رسالتا القفز والحفظ
+
+### القفز إلى زمن الفيديو (R56، Q14) — الصفحات → سكربت المحتوى
+
+```js
+chrome.tabs.sendMessage(tabId, { type: "tj:seek", v: 1, videoId: "iG9CE55wbtY", ms: 754200 })   // seekRequest(videoId, ms)
+// الرد: { v: 1, ok: true, ms } | { v: 1, ok: false, code: "TJ_WRONG_VIDEO" | "TJ_NO_VIDEO" | "TJ_BAD_MESSAGE" }
+```
+
+- يُقبل من **صفحات الإضافة وحدها** (`isExtensionPage`)، و`videoId` **يساوي الفيديو المعروض** في المتحكم (`state.videoId`)، و`ms` عدد صحيح من 0 إلى `LIMITS.maxTimeMs` (`isSeekRequest`). وإلا يُرفض برمز ولا يتغير شيء.
+- **لا يتغير إلا الزمن:** `video.currentTime = ms / 1000` عبر `seekMainVideo` في `youtube-dom`، دون تشغيل ولا إيقاف ولا تغيير إعداد. لا يُقبل أي أمر آخر من الصفحات.
+- أداة الصفحات `jumpToVideo` (عقد الواجهات §١٤) تجد التبويب أو تفتحه.
+
+### الحفظ عبر العامل الخلفي (R65) — سكربت المحتوى → العامل
+
+```js
+chrome.runtime.sendMessage({ type: "tj:save-file", v: 1, file: { name: "iG9CE55wbtY.en.manual.normal.srt", text: "…" } })   // saveRequest(file)
+// الرد: { v: 1, ok: true, mode: "downloads" | "subfolder" | "ask", downloadId } | { v: 1, ok: false, code: "SV_…" }
+```
+
+- العامل يقبلها من **سكربت الإضافة وحده**: `sender.id === chrome.runtime.id`، والمرسِل سكربت محتوى على `https://www.youtube.com/` أو صفحة من الإضافة؛ وما عدا ذلك يُتجاهل بلا رد.
+- **العامل يقرأ مكان الحفظ من التفضيلات** (`store.getPrefs().saveLocation`) **لا من الرسالة**، ولا تحمل الرسالة نوع MIME ولا مسارًا. ويتحقق من الاسم والامتداد والحجم (`validateSaveFile`، عقد الواجهات §١٣) قبل أي تنزيل.
+- **لا رد** (عامل غير متاح أو خطأ قناة) يجعل المرسِل يرجع إلى التنزيل الحالي عبر Blob برسالة `SV_FALLBACK_BLOB` (عقد الواجهات §١٣).
+
+### ما ثبت حيًا في P10
+
+في Brave وChrome (أدلة [`docs/evidence/P10/`](../evidence/P10/)): رسالة الحفظ من المشغّل وصلت العامل الخلفي فحفظ بالوضع المخزَّن (`downloads` و`subfolder` و`ask`)؛ و`tj:seek` من صفحة الإضافة غيّر زمن الفيديو المعروض وحده ورُفض لمعرّف آخر بـ`TJ_WRONG_VIDEO`؛ ورد الحالة الموسّع حمل الخانات والالتقاط وحالة الأدوات، ونافذة الإصدار الأول (حزمة `tj-v1`) قرأت رد مشغّلها كما اعتادت.

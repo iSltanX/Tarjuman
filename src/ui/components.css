@@ -227,6 +227,28 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-toast--success { background: var(--tj-success-bg); color: var(--tj-success); border-color: color-mix(in srgb, var(--tj-success) 25%, transparent); }
 .tj-toast--danger { background: var(--tj-danger-bg); color: var(--tj-danger); border-color: color-mix(in srgb, var(--tj-danger) 25%, transparent); }
 .tj-toast--info { background: var(--tj-info-bg); color: var(--tj-info); border-color: color-mix(in srgb, var(--tj-info) 25%, transparent); }
+/* رسالة بزر «تراجع» (الإصدار الثاني): الزر قابل للضغط والرسالة تبقى ضعف المدة. */
+.tj-toast--action { pointer-events: auto; }
+.tj-toast__action {
+  margin-inline-start: 6px; padding: 2px 10px; border-radius: 6px; border: 1px solid currentColor; background: transparent;
+  color: inherit; font: 700 12px/18px var(--tj-font-body); cursor: pointer;
+}
+.tj-toast__action:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.tj-toast__action:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
+
+/* ---- علامة «حُفظ» وحقل الرقم بوحدة (رُفعا من الإعدادات في الإصدار الثاني) ---- */
+.tj-saved { display: block; font: 700 12px/18px var(--tj-font-body); min-height: 18px; color: var(--tj-muted); }
+.tj-saved--success { color: var(--tj-success); }
+.tj-saved--success::before { content: "✓ "; }
+.tj-saved--danger { color: var(--tj-danger); }
+.tj-num { max-width: 320px; width: 100%; }
+.tj-num__head { display: flex; align-items: center; justify-content: space-between; gap: var(--tj-space-2); }
+.tj-num__head .tj-saved { min-height: 0; }
+.tj-num__box { display: flex; align-items: center; gap: var(--tj-space-2); }
+.tj-num__input { flex: 1; min-width: 0; }
+.tj-num__unit { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); white-space: nowrap; }
+.tj-num .tj-field__error[hidden] { display: none; }
+.tj-seg__option:has(input:disabled) { cursor: not-allowed; opacity: 0.55; }
 
 /* ---- مقياس السعة ---- */
 .tj-meter { display: block; height: 5px; border-radius: 999px; background: var(--tj-border); overflow: hidden; }

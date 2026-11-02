@@ -26,6 +26,8 @@ const PAGES = ['popup', 'library', 'settings', 'editor'];
 const entries = {
   'main-world/capture': 'main-world/capture.js',
   'content/main': 'content/main.js',
+  // العامل الخلفي للحفظ وحده (الإصدار الثاني): سكربت كلاسيكي مجمّع، فلا "type": "module" في البيان.
+  'background/worker': 'background/worker.js',
   ...Object.fromEntries(PAGES.map((p) => [`pages/${p}/main`, `pages/${p}/main.js`])),
   ...(DEV ? { 'ui/gallery/gallery': 'ui/gallery/gallery.js' } : {}),
 };
@@ -69,12 +71,14 @@ const manifest = JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf
 if (DEV) manifest.version_name = `${manifest.version}-dev`;
 await writeFile(path.join(OUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
-// حزمة الإنتاج بلا خطاف تطوير: يفشل البناء إن بقي.
+// حزمة الإنتاج بلا خطاف تطوير (سكربت المحتوى وصفحات الإضافة): يفشل البناء إن بقي.
 if (!DEV) {
-  const content = await readFile(path.join(OUT, 'content/main.js'), 'utf8');
-  if (content.includes('__tarjuman') || content.includes('__TJ_DEV__')) {
-    console.error('build: خطاف التطوير باقٍ في حزمة الإنتاج');
-    process.exit(1);
+  for (const out of Object.keys(entries)) {
+    const content = await readFile(path.join(OUT, `${out}.js`), 'utf8');
+    if (content.includes('__tarjuman') || content.includes('__TJ_DEV__')) {
+      console.error(`build: خطاف التطوير باقٍ في حزمة الإنتاج (${out}.js)`);
+      process.exit(1);
+    }
   }
 }
 const shown = path.relative(ROOT, OUT);

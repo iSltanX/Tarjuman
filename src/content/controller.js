@@ -1,9 +1,14 @@
 // المتحكم (عقد interfaces §١): مصدر الحالة الوحيد في صفحة يوتيوب. يعرف الفيديو الحالي وسجله المحفوظ
 // والمسارات الملتقطة والإزاحة ووضع العرض والإعدادات، ويطبّق عقد التوقيت: الإزاحة تُحفظ لكل فيديو ولا تمس
 // التوقيت المحفوظ، والاستيراد يصفّرها بإشعار، والتصدير الإنجليزي لا يتأثر بها. الطبقة والأدوات تقرآن
-// الحالة وتشتركان في تغيّرها، ولا تكتبان في التخزين إلا عبر أفعاله.
+// الحالة وتشتركان في تغيّرها، ولا تكتبان في التخزين إلا عبر أفعاله. وفي الإصدار الثاني (عقد interfaces §١٢) يعرف حزمة
+// الفيديو (الترجمات الثلاث والسابقة والعلامات) والتفضيلات، ويبدّل النشطة ويرفع إلى خانة ويعلّم المقطع بتراجع.
 import { TjError, toErrorInfo } from '../core/errors/index.js';
+import {
+  bundleFromRecord, referencedFingerprints, slotModels, withActiveSlot, withMark, withMarksReplaced, withSlotUpload,
+} from '../core/model/bundle.js';
 import { isVideoId } from '../core/model/ids.js';
+import { DEFAULT_PREFS, normalizePrefs } from '../core/model/prefs.js';
 import { DEFAULT_SETTINGS, normalizeSettings } from '../core/model/settings.js';
 import { normalizeOffset } from '../core/model/timing.js';
 import { withArabicImport, withExport, withView } from '../core/model/transitions.js';
@@ -24,7 +29,10 @@ import { DISPLAY_MODES } from '../core/model/video.js';
  *   arabic: null | { cues: Cue[], edited: boolean, fileName: string, comparison: VideoRecord['arabic']['comparison'] },
  *   english: null | { key: string, kind: 'manual' | 'asr', lang: string, cues: Cue[], source: 'captured' | 'saved' },
  *   view: ViewState, settings: Settings, notice: Notice | null,
- *   error: { code: string, message: string, detail: string | null } | null, version: number
+ *   error: { code: string, message: string, detail: string | null } | null, version: number,
+ *   bundle: import('../core/model/slots.js').Bundle | null, activeSlot: 1 | 2 | 3 | null,
+ *   slots: ReturnType<typeof slotModels>, marks: null | { slot: 1 | 2 | 3, items: import('../core/model/marks.js').Mark[] },
+ *   previous: null | { from: 1 | 2 | 3, savedAt: string }, prefs: import('../core/model/prefs.js').Prefs
  * }} ControllerState
  * @typedef {ReturnType<typeof createController>} Controller
  */
@@ -44,10 +52,18 @@ export function createController({ store, extractor = null, page = {}, now = () 
   const iso = () => new Date(now()).toISOString();
   /** @type {Settings} */
   let settings = normalizeSettings(DEFAULT_SETTINGS);
+  let prefs = normalizePrefs(DEFAULT_PREFS);
   /** @type {string | null} */
   let videoId = null;
   /** @type {VideoRecord | null} */
   let saved = null;
+  /** حزمة السجل المحفوظ نفسه (store.bundleOf)، أو حزمته وحده من مخزن لا يعرف الحزم؛ مرة لكل سجل. */
+  let bundleMemo = { rec: null, bundle: null };
+  const bundleFor = (rec) => {
+    if (!rec) return null;
+    if (bundleMemo.rec !== rec) bundleMemo = { rec, bundle: typeof store.bundleOf === 'function' ? store.bundleOf(rec) : bundleFromRecord(rec) };
+    return bundleMemo.bundle;
+  };
   let loading = false;
   /** @type {ViewState} */
   let view = { displayOffsetMs: 0, displayMode: settings.displayModeDefault };
@@ -92,6 +108,8 @@ export function createController({ store, extractor = null, page = {}, now = () 
   /** @returns {ControllerState} */
   function compute() {
     const a = saved?.arabic ?? null;
+    const bundle = bundleFor(saved);
+    const activeSlot = bundle?.active ?? null;
     return Object.freeze({
       videoId,
       title: saved?.title ?? (videoId ? page.title?.() ?? null : null),
@@ -101,7 +119,8 @@ export function createController({ store, extractor = null, page = {}, now = () 
       captured: extractor ? extractor.tracks() : [],
       captureIssue: extractor ? extractor.lastRejection() : null,
       arabic: a ? {
-        cues: stable('arabic', `${videoId}|${a.importedAt}|${a.editedAt}`, () => a.current ?? a.original),
+        // الخانة والملف في المفتاح: ترجمتان بتاريخ استيراد واحد لا تلتبسان بعد التبديل.
+        cues: stable('arabic', `${videoId}|${activeSlot}|${a.fileName}|${a.importedAt}|${a.editedAt}`, () => a.current ?? a.original),
         edited: a.current !== null, fileName: a.fileName, comparison: a.comparison,
       } : null,
       english: videoId ? pickEnglish() : null,
@@ -110,6 +129,12 @@ export function createController({ store, extractor = null, page = {}, now = () 
       notice,
       error,
       version,
+      bundle,
+      activeSlot,
+      slots: slotModels(bundle),
+      marks: bundle && activeSlot ? { slot: activeSlot, items: bundle.slots[activeSlot - 1].marks } : null,
+      previous: bundle?.previous ? { from: bundle.previous.from, savedAt: bundle.previous.savedAt } : null,
+      prefs,
     });
   }
 
@@ -140,6 +165,24 @@ export function createController({ store, extractor = null, page = {}, now = () 
     try {
       const next = await store.updateVideo(id, fn);
       if (id === videoId) saved = next;
+      writeEpoch++;
+      return { id, next };
+    } finally {
+      pendingWrites--;
+      if (!pendingWrites && externalWhileWriting) {
+        externalWhileWriting = false;
+        reloadIfNewer();
+      }
+    }
+  }
+
+  /** كتابة واحدة في حزمة الفيديو الحالي (الإصدار الثاني)، بقواعد writeRecord نفسها. */
+  async function writeBundle(fn) {
+    const id = requireVideo();
+    pendingWrites++;
+    try {
+      const next = await store.updateBundle(id, fn);
+      if (id === videoId) saved = next ? next.record : null;
       writeEpoch++;
       return { id, next };
     } finally {
@@ -221,6 +264,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       try {
         settings = await store.getSettings();
         if (!saved && !loading) view = { ...view, displayMode: settings.displayModeDefault };
+        if (typeof store.getPrefs === 'function') prefs = await store.getPrefs();
       } catch (err) {
         error = toErrorInfo(err);
       }
@@ -326,10 +370,12 @@ export function createController({ store, extractor = null, page = {}, now = () 
       const conv = extractor.convert(trackKey, { mode: 'normal' });
       if (!info || !conv.ok) throw new TjError(conv.code ?? 'EX_NO_TRACK');
       const englishTrack = { key: conv.key, lang: conv.lang, kind: conv.kind, capturedAt: info.capturedAt, source: 'capture', cues: conv.cues };
+      // بصمات الترجمات غير النشطة والسابقة لا يسقطها حد البصمات (الإصدار الثاني).
+      const keep = referencedFingerprints(bundleFor(saved));
       const { id, next } = await writeRecord((rec) => withExport(rec, {
         videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, englishTrack, fingerprint,
         displayMode: view.displayMode === 'off' ? settings.displayModeDefault : view.displayMode,
-      }, iso()));
+      }, iso(), { keep }));
       if (id === videoId) changed();
       return next;
     },
@@ -350,6 +396,89 @@ export function createController({ store, extractor = null, page = {}, now = () 
       return settings;
     },
 
+    /**
+     * تبديل الترجمة النشطة (الإصدار الثاني): كتابة واحدة تحفظ لكل ترجمة نصها وتعديلاتها وإزاحتها. لا أثر أثناء loading.
+     * @param {1 | 2 | 3} n
+     */
+    async activateSlot(n) {
+      if (loading) return state;
+      requireVideo();
+      if (!bundleFor(saved)?.slots[n - 1]?.track) throw new TjError(n === 1 || n === 2 || n === 3 ? 'ST_SLOT_EMPTY' : 'MD_INVALID', { detail: `slot=${n}` });
+      const { id, next } = await writeBundle((b) => (b ? withActiveSlot(b, n, iso()) : undefined));
+      if (id === videoId && next) {
+        view = { ...next.record.view };
+        error = null;
+        changed();
+      }
+      return state;
+    },
+
+    /**
+     * الرفع إلى خانة (الإصدار الثاني) بمدخل loadArabic ومعه current اختياري («إبقاء تعديلاتي»). الممتلئة تحتاج replace
+     * وتحفظ السابقة؛ والفارغة تصبح النشطة افتراضيًا (Q16).
+     * @param {1 | 2 | 3} n
+     * @param {{ fileName: string, cues: Cue[], current?: Cue[] | null, comparison?: object | null, fingerprintId?: string | null, notes?: string[] }} input
+     * @param {{ replace?: boolean, activate?: boolean }} [opts]
+     * @returns {Promise<{ record: VideoRecord, replaced: boolean, activated: boolean }>}
+     */
+    async loadArabicInto(n, input, { replace = false, activate } = {}) {
+      const vid = requireVideo();
+      const englishTrack = preferredCapturedTrack();
+      const activeBefore = bundleFor(saved)?.active ?? null;
+      let result = { replaced: false, offsetWas: 0 };
+      const { id, next } = await writeBundle((b) => {
+        result = withSlotUpload(b, n, {
+          videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, ...input,
+          englishTrack, displayModeDefault: settings.displayModeDefault,
+        }, iso(), { replace, activate });
+        return result.bundle;
+      });
+      const activated = next.active === n && activeBefore !== n;
+      if (id === videoId) {
+        view = { ...next.record.view };
+        notice = result.offsetWas !== 0 ? { code: 'ST_OFFSET_RESET', tone: 'info', at: now() }
+          : result.replaced ? { code: 'ST_PREVIOUS_SAVED', tone: 'info', at: now() } : null;
+        error = null;
+        changed();
+      }
+      return { record: next.record, replaced: result.replaced, activated };
+    },
+
+    /**
+     * يعلّم مقطع النشطة (برقمه في state.arabic.cues) أو يزيل علامته (kind = null)، مع تراجع بكتابة واحدة.
+     * @param {{ index: number }} target @param {'todo' | 'done' | null} [kind]
+     * @returns {Promise<{ mark: import('../core/model/marks.js').Mark | null, undo: () => Promise<void> }>}
+     */
+    async markCue({ index }, kind = 'todo') {
+      requireVideo();
+      const slot = bundleFor(saved)?.active ?? null;
+      if (!slot) throw new TjError('ST_NO_RECORD');
+      let before = [];
+      let mark = null;
+      const { id, next } = await writeBundle((b) => {
+        if (!b || b.active !== slot) throw new TjError('ST_NO_RECORD');
+        const r = withMark(b, slot, { index, kind }, iso());
+        before = r.before;
+        mark = r.mark;
+        return r.bundle;
+      });
+      if (id === videoId && next) changed();
+      return {
+        mark,
+        undo: async () => {
+          const { id: uid, next: back } = await writeBundle((b) => (b && b.slots[slot - 1].track ? withMarksReplaced(b, slot, { remove: mark ? [mark] : [], add: before }, iso()) : undefined));
+          if (uid === videoId && back) changed();
+        },
+      };
+    },
+
+    /** تفضيلات الإصدار الثاني. @param {Record<string, unknown>} patch */
+    async updatePrefs(patch) {
+      prefs = await store.setPrefs(patch);
+      changed();
+      return prefs;
+    },
+
     dismissNotice() {
       if (!notice) return;
       notice = null;
@@ -368,6 +497,10 @@ export function createController({ store, extractor = null, page = {}, now = () 
       if (change.settings) {
         settings = normalizeSettings(change.settings.newValue ?? DEFAULT_SETTINGS);
         if (!saved && !loading && view.displayOffsetMs === 0) view = { ...view, displayMode: settings.displayModeDefault };
+        changed();
+      }
+      if (change.prefs) {
+        prefs = normalizePrefs(change.prefs.newValue ?? DEFAULT_PREFS);
         changed();
       }
       if (!videoId) return;

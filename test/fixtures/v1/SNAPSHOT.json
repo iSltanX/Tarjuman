@@ -1,0 +1,31 @@
+{
+  "note": "لقطة مجمّدة من نموذج tj-v1 وتخزينه وأخطائه ومنقّيه (P10). لا تُعدَّل أبدًا: test/integration/compat/snapshot.test.js يتحقق أن كل ملف يطابق بصمته في الوسم.",
+  "tag": "tj-v1",
+  "commit": "7e1cc339f2ac06dd27922f895787498e7fb0c8af",
+  "blobs": {
+    "src/core/diagnostics/sanitize.js": "676e6f526664e9017f9f4702e03583864a05cd33",
+    "src/core/errors/base.js": "ff120cf2734b8575f9d8cee06d39c2a95b5aea3e",
+    "src/core/errors/controls.js": "e1101a24cc449b415006f12a9dbb71150ca4cd95",
+    "src/core/errors/editor.js": "c2cd36480944ed0cb9feb14ec4e30497248b074d",
+    "src/core/errors/extract.js": "76b3a49a142c4deae71732a1b2b400775f04e514",
+    "src/core/errors/import.js": "a70bb8ca5a2f4789aed0cab8912b3b4701a0f7d3",
+    "src/core/errors/index.js": "9d745ab1939342e0ed452ea3222608d53530bff6",
+    "src/core/errors/overlay.js": "6ba374316ad7b4566ffdc7a0094c7a6b9cc3d210",
+    "src/core/errors/pages.js": "1b7629f4bc80f6dccc6ae5cc2aa30581d47e3399",
+    "src/core/model/cue.js": "63eebb4fd0e99fc4dd3c3d9f39f47bfcabed742c",
+    "src/core/model/ids.js": "95da5e5d4034d22ab56cd8eb608f2a5e06e0aac3",
+    "src/core/model/index.js": "ada7cb98946745fecf84e893ebc8f07054b135a8",
+    "src/core/model/messages.js": "3ba01409843b149a1fde37e3048d30c4b8f805a5",
+    "src/core/model/settings.js": "c3b5210fa28bad982d3978da7323b061f79d0702",
+    "src/core/model/timing.js": "2aee4a87ddd98d349cb89da3aed1fba201192b22",
+    "src/core/model/tracks.js": "75f4cae00d6bec9169e95e7c76a3d43da3498f0d",
+    "src/core/model/transitions.js": "e6a3d9b77bbf91e16f70b4e632a871eb71d475e7",
+    "src/core/model/validate.js": "864326d51e91f00c37b887702ebb1b0af7b7630b",
+    "src/core/model/video.js": "a4bd84247c58212b20efcc91dd9fa8cbb9d7d8e3",
+    "src/core/store/area.js": "a3cd9cffbb58f2a5bc7b51c9ef35c822cb27bd32",
+    "src/core/store/capacity.js": "0f9e882f8f80bc10e0ef02254744bee8deb0e67c",
+    "src/core/store/index.js": "732f0019d08a4eee12f821a15c7f22a8f3ca5d01",
+    "src/core/store/keys.js": "7071bb021ddaa4c4b2104d5721a00e2f6f88d168",
+    "src/core/store/migrate.js": "1a3cae5a2ef233a8fab25370c496d51260a2506c"
+  }
+}

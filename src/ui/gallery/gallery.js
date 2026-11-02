@@ -1,7 +1,18 @@
-// معرض مكوّنات src/ui في حالاتها (بناء التطوير وحده): مرجع بصري للمراحل اللاحقة ولقطات P2-AC6.
-import { alertBox, button, el, emptyState, field, ltr, statusPill } from '../components.js';
+// معرض مكوّنات src/ui في حالاتها (بناء التطوير وحده): مرجع بصري للمراحل اللاحقة ولقطات P2-AC6. وهو صفحة إضافة،
+// فيكشف للحزام الحي (P10) saveFile والتخزين وأداة القفز في صفحة إضافة حقيقية؛ بناء الإنتاج لا يحويه.
+import { alertBox, button, chipGroup, choiceGroup, el, emptyState, field, ltr, slotPicker, statusPill } from '../components.js';
 import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../format.js';
+import { numberField, savedMark, segmented } from '../forms.js';
+import { createMenu } from '../menu.js';
 import { startPage } from '../page.js';
+import { createToaster } from '../toast.js';
+import { download as blobDownload } from '../../core/export/download.js';
+import { saveFile, savedPath } from '../../core/save/index.js';
+import { createStore } from '../../core/store/index.js';
+import { jumpToVideo } from '../seek.js';
+
+// blobDownload: التنزيل الحالي (الإصدار الأول) للمقارنة بالوضع الافتراضي.
+globalThis.__tarjumanPage = { saveFile, savedPath, blobDownload, store: createStore(), jumpToVideo };
 
 const TOKENS = ['bg', 'surface', 'surface-2', 'sunken', 'text', 'text-2', 'muted', 'border', 'border-strong', 'brand', 'brand-soft', 'focus', 'success', 'warning', 'danger', 'info', 'edited'];
 
@@ -53,5 +64,51 @@ startPage({
       el('div', { className: 'tj-dialog__footer', children: [button({ label: 'حذف', variant: 'danger' }), button({ label: 'إلغاء' })] }),
     ] }));
     app.append(section('حوار التأكيد', dlg));
+
+    // ---- مكوّنات الإصدار الثاني المرفوعة إلى src/ui (P10-AC7، عقد interfaces §١٥) ----
+    const slots = (list) => list.map(([filled, active, name = null], i) => ({ n: i + 1, filled, active, name }));
+    const picker = (list, size) => {
+      const p = slotPicker({ slots: slots(list), size, onSelect: () => {} });
+      p.root.setAttribute('data-gallery', `slots-${size}`);
+      return p.root;
+    };
+    app.append(section('اختيار الترجمة (SlotPicker)',
+      el('div', { className: 'tj-row', children: [picker([[true, true], [true, false, 'مراجعة'], [false, false]], 'sm'), el('span', { className: 'tj-caption', text: 'النشطة · محفوظة · فارغة (المشغّل والمحفوظات)' })] }),
+      el('div', { className: 'tj-row', children: [picker([[true, false], [true, true], [true, false]], 'md'), el('span', { className: 'tj-caption', text: 'رأس المحرّر (md)' })] }),
+      el('div', { className: 'tj-row', children: [picker([[false, false], [false, false], [false, false]], 'sm'), el('span', { className: 'tj-caption', text: 'بلا ترجمة' })] }),
+    ));
+    const menu = createMenu({ label: 'المزيد', chevron: true, items: [
+      { kind: 'group', label: 'الترجمات' },
+      { id: 'tracks', label: 'الترجمات…', icon: 'captions', onSelect: () => {} },
+      { id: 'restore', label: 'استعادة النسخة السابقة', disabledReason: 'لا نسخة سابقة', onSelect: () => {} },
+      { kind: 'separator' },
+      { id: 'delete', label: 'حذف', tone: 'danger', onSelect: () => {} },
+    ] });
+    app.append(section('القائمة المنسدلة', el('div', { className: 'tj-row', children: [menu.root] })));
+    const seg = segmented({ legend: 'خطوة الإزاحة', value: '500', onChange: () => {}, options: [{ value: '500', label: '0.5 ث' }, { value: '1000', label: '1 ث' }, { value: 'x', label: 'مخصّصة' }, { value: 'off', label: 'معطّلة', disabledReason: 'مثال تعطيل' }] });
+    const mark = savedMark({ setTimer: () => 0, clearTimer: () => {} });
+    mark.flash('حُفظ', 'success');
+    const markErr = savedMark({ setTimer: () => 0, clearTimer: () => {} });
+    markErr.flash('تعذّر الحفظ', 'danger');
+    const num = numberField({ label: 'حد سرعة القراءة', unit: 'حرف/ث', hint: 'الافتراضي 17', value: '17', parse: (t) => ({ ok: true, value: Number(t) }), commit: () => {}, mark: mark.root });
+    const numErr = numberField({ label: 'عتبة الانحراف', unit: 'ms', value: '5', parse: () => ({ ok: false, code: 'MD_INVALID' }), commit: () => {} });
+    numErr.setError('MD_INVALID');
+    app.append(section('المقطّعة وحقل الرقم بوحدة وعلامة «حُفظ»',
+      el('div', { className: 'tj-row', children: [seg.root] }),
+      el('div', { className: 'tj-row', children: [num.root, numErr.root, el('div', { children: [markErr.root] })] }),
+    ));
+    const choice = choiceGroup({ legend: 'مكان حفظ ملفات الترجمة', value: 'downloads', options: [
+      { value: 'downloads', label: 'مجلد التنزيلات (الافتراضي)' },
+      { value: 'subfolder', label: 'مجلد فرعي داخل التنزيلات', extra: field({ label: 'اسم المجلد', value: 'Tarjuman', disabled: true }).root },
+      { value: 'ask', label: 'اسأل عن مكان الحفظ عند كل تنزيل', hint: 'حوار الحفظ من النظام' },
+    ] });
+    const chips = chipGroup({ ariaLabel: 'فرز المحفوظات', value: 'all', onChange: () => {}, options: [{ value: 'all', label: 'الكل', count: 12 }, { value: 'waiting', label: 'بانتظار الترجمة', count: 3 }, { value: 'review', label: 'تحتاج مراجعة', count: 2 }] });
+    app.append(section('مجموعة الخيارات ورقائق الفرز', choice.root, chips.root));
+    const toaster = createToaster({ setTimer: () => 0, clearTimer: () => {} });
+    toaster.root.classList.add('g-toasts');
+    toaster.show('حُفظ.', 'success');
+    toaster.show('الترجمة 2', 'info', { action: { label: 'تراجع', onClick: () => {} } });
+    toaster.show('تعذّر الحفظ. أعد المحاولة.', 'danger');
+    app.append(section('الرسالة العابرة', toaster.root, toaster.live));
   },
 });

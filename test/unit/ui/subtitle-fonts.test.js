@@ -39,7 +39,8 @@ test('البيان يكشف ملفات WOFF2 للخطوط وحدها، ليوت�
   assert.deepEqual(manifest.web_accessible_resources, [
     { resources: [`${SUBTITLE_FONT_DIR}/*.woff2`], matches: ['https://www.youtube.com/*'], use_dynamic_url: true },
   ]);
-  assert.deepEqual(manifest.permissions, ['storage', 'unlimitedStorage'], 'لا أذونات جديدة');
+  // الإصدار الثاني (P10-AC8): downloads معتمد لمكان الحفظ وحده بقرار سلطان 2026-11-02؛ ولا إذن غيره.
+  assert.deepEqual(manifest.permissions, ['storage', 'unlimitedStorage', 'downloads'], 'الأذونات المعتمدة وحدها');
 });
 
 test('سلسلة الخط: المختار، ثم المراعي المضمّن، ثم خطوط النظام العربية؛ والمعرّف المجهول يعود إلى المراعي', () => {

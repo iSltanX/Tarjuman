@@ -12,6 +12,8 @@ export const LIMITS = Object.freeze({
   maxFingerprints: 10,
   maxNotes: 50,
   maxNoteChars: 500,
+  // الإصدار الثاني (عقد data-model §١٦)
+  maxMarks: 5000,
 });
 
 /** @typedef {{ ok: true } | { ok: false, path: string, reason: string }} Result */
@@ -35,6 +37,11 @@ export const isIntIn = (x, min, max) => Number.isInteger(x) && x >= min && x <= 
 
 /** @param {unknown} s @param {number} max */
 export const isText = (s, max) => typeof s === 'string' && s.length <= max && !s.includes('\u0000');
+
+// سطر واحد مشذّب بلا محارف تحكم ولا تنسيق ولا فواصل أسطر (الأسماء المختصرة والمصطلحات).
+const LINE_BAD_RE = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
+/** @param {unknown} s @param {number} max @param {number} [min] */
+export const isLine = (s, max, min = 1) => typeof s === 'string' && s === s.trim() && s.length >= min && s.length <= max && !LINE_BAD_RE.test(s);
 
 /**
  * يتحقق أن الكائن بمفاتيح معروفة فقط وكلها موجودة.
