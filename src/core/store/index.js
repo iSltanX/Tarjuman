@@ -116,6 +116,10 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
   // آخر حزمة قُرئت أو كُتبت لكل فيديو في هذا السياق (لـbundleOf)، بحد صغير.
   const cache = new Map();
   const CACHE_MAX = 8;
+  // عدد كتابات هذا السياق لكل فيديو: قراءة بدأت قبل كتابة وانتهت بعدها لقطةٌ أقدم، فلا تحل في الذاكرة محل الأحدث
+  // (تدقيق 5fedcb9، GM-004: كانت تُسقط الخانات الأخرى والعلامات من bundleOf في المشغّل).
+  const writes = new Map();
+  const wrote = (id) => writes.set(id, (writes.get(id) ?? 0) + 1);
   function remember(b) {
     if (!b) return b;
     cache.delete(b.videoId);
@@ -141,6 +145,7 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
    * @returns {Promise<Bundle | null>}
    */
   async function readBundle(videoId) {
+    const gen = writes.get(videoId) ?? 0;
     const cur = await loadBundle(videoId);
     if (cur.orphan) {
       await exclusive(() => removeOrphan(videoId));
@@ -149,7 +154,7 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     }
     // undefined: يُكتب ما غيّرته المصالحة إن بقي (قراءتان متزامنتان لا تكتبان مرتين).
     if (cur.changed) return exclusive(() => writeBundle(videoId, () => undefined));
-    return remember(cur.bundle);
+    return (writes.get(videoId) ?? 0) === gen ? remember(cur.bundle) : cur.bundle;
   }
 
   /**
@@ -177,6 +182,7 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
         continue;
       }
       if (draft === null) {
+        wrote(videoId);
         cache.delete(videoId);
         if (cur.raw.record || hasCompanions(cur.raw)) await removeKeys([videoKey(videoId), indexKey(videoId), ...companionKeys(videoId)]);
         return null;
@@ -190,6 +196,7 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       assertValid(validateBundle(next), 'video');
       // سجل جديد لمعرّف بقيت له توابع يتيمة (حذفه الأول): رأس جديد، والتوابع القديمة تُطمس بقيمها الجديدة.
       await write(itemsFor(next, cur.raw, { forceHead: !prior && hasCompanions(cur.raw) }));
+      wrote(videoId);
       return remember(next);
     }
   }
@@ -205,6 +212,11 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
 
   /** يقرأ المُلخّصات ويصلحها: المفقود أو غير الصالح لسجل صالح يُعاد بناؤه، واليتيم يُحذف (ومعه توابع الإصدار الثاني). */
   async function syncIndex() {
+    return (await scanIndex()).entries;
+  }
+
+  /** syncIndex ومعه سجلات بمفتاح لا تُقرأ ولا مُلخّص صالح لها (فلا تظهر في المحفوظات). */
+  async function scanIndex() {
     const keys = await listKeys();
     const ids = (kind) => new Set(keys.map(parseKey).filter((k) => k && k.kind === kind).map((k) => k.videoId));
     const videos = ids('video');
@@ -233,7 +245,7 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       }
       if (Object.keys(repaired).length) await write(repaired);
     }
-    return [...entries.values()];
+    return { entries: [...entries.values()], unreadable: [...videos].filter((id) => !entries.has(id)).sort() };
   }
 
   return {
@@ -378,6 +390,7 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       checkId(videoId);
       return exclusive(async () => {
         await ready();
+        wrote(videoId);
         cache.delete(videoId);
         await removeKeys([videoKey(videoId), indexKey(videoId), ...companionKeys(videoId)]);
       });
@@ -396,15 +409,28 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       checkId(videoId);
       return exclusive(async () => {
         await ready();
-        const raw = checkRaw(rawBundle(await read(bundleReadKeys(videoId)), videoId), videoId);
-        if (raw.record && !replace) return { status: 'skipped' };
-        const next = structuredClone(parsed.bundle);
-        next.record.rev = (raw.record?.rev ?? 0) + 1;
-        syncActive(next);
-        assertValid(validateBundle(next), 'bundle');
-        await write(itemsFor(next, raw));
-        remember(next);
-        return { status: raw.record ? 'replaced' : 'added' };
+        for (let attempt = 1; ; attempt++) {
+          // بلا checkRaw: الموجود (ولو تالفًا) يُتخطى افتراضيًا فلا يُكتب فوقه دون اختيار، والاستبدال الصريح يطمسه كله بما
+          // في النسخة فيصلحه (تدقيق 5fedcb9، GM-006؛ كان التالف يرفض في الحالتين).
+          const raw = rawBundle(await read(bundleReadKeys(videoId)), videoId);
+          if (raw.record !== null && !replace) return { status: 'skipped' };
+          const prior = raw.record !== null && Number.isInteger(raw.record.rev) && raw.record.rev > 0 ? raw.record.rev : 0;
+          const next = structuredClone(parsed.bundle);
+          next.record.rev = prior + 1;
+          syncActive(next);
+          assertValid(validateBundle(next), 'bundle');
+          // كما في writeBundle: إعادة فحص السجل قبل الكتابة مباشرة، فسجلٌ أنشأه سياق آخر بين القراءة والكتابة يُعاد تقييم
+          // تخطيه بدل الكتابة فوقه بتقرير «أضيف» (CX-003). والتوابع اليتيمة لسجل غائب تُطمس برأس جديد.
+          const { [videoKey(videoId)]: latest } = await read(videoKey(videoId));
+          if (versionOf(latest) !== versionOf(raw.record)) {
+            if (attempt >= 3) throw new TjError('ST_CONFLICT', { detail: `تغيّر أثناء الاستعادة: ${versionOf(raw.record)} ← ${versionOf(latest)}` });
+            continue;
+          }
+          await write(itemsFor(next, raw, { forceHead: raw.record === null && hasCompanions(raw) }));
+          wrote(videoId);
+          remember(next);
+          return { status: raw.record ? 'replaced' : 'added' };
+        }
       });
     },
 
@@ -462,6 +488,16 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       await ready();
       const entries = await exclusive(syncIndex);
       return entries.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
+    },
+
+    /**
+     * معرّفات فيديوهات لها سجل في التخزين لا يُقرأ ولا مُلخّص صالح له، فلا تظهر في المحفوظات (تلف خارجي). تُذكر في تقرير
+     * النسخة الاحتياطية «تعذّر»، وتُعدّ «موجودة» في معاينة الاستعادة فيُختار استبدالها (تدقيق 5fedcb9، CX-H4).
+     * @returns {Promise<string[]>}
+     */
+    async unreadableVideos() {
+      await ready();
+      return (await exclusive(scanIndex)).unreadable;
     },
 
     /** @returns {Promise<import('./capacity.js').Capacity>} */

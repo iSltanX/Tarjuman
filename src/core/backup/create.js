@@ -26,7 +26,10 @@ export async function createBackup({ store, appVersion, includePrevious = true, 
   const [settings, prefs, library] = await Promise.all([store.getSettings(), store.getPrefs(), store.listLibrary()]);
   const ids = library.map((item) => item.entry.videoId);
   const videos = [];
-  const skipped = [];
+  // سجل بمفتاح لا يُقرأ ولا مُلخّص له لا يظهر في المحفوظات، فيُذكر «تعذّر» بدل أن يغيب عن التقرير (تدقيق 5fedcb9، CX-H4).
+  const listed = new Set(ids);
+  const unreadable = typeof store.unreadableVideos === 'function' ? await store.unreadableVideos() : [];
+  const skipped = unreadable.filter((id) => !listed.has(id)).map((videoId) => ({ videoId, code: 'ST_CORRUPT_RECORD' }));
   onProgress({ done: 0, total: ids.length });
   for (const [i, id] of ids.entries()) {
     try {

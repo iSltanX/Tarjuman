@@ -315,9 +315,12 @@ export function dataControl(env) {
     setBusy(true);
     let read;
     let library;
+    let unreadable = [];
     try {
       read = await readBackup(file, { pause, onProgress: restoreMeter.show('جارٍ فحص النسخة') });
       library = read.ok ? await store.listLibrary() : [];
+      // سجل محلي تالف لا يظهر في المحفوظات «موجود» أيضًا: يُتخطى افتراضيًا، ويُختار استبداله لإصلاحه (CX-H4، GM-006).
+      unreadable = read.ok && typeof store.unreadableVideos === 'function' ? await store.unreadableVideos() : [];
     } catch (err) {
       read = { ok: false, code: toErrorInfo(err).code, message: toErrorInfo(err).message };
     } finally {
@@ -329,7 +332,7 @@ export function dataControl(env) {
       return null;
     }
     const existingById = new Map(library.map((x) => [x.entry.videoId, x.entry]));
-    const plan = planRestore(read, existingById.keys());
+    const plan = planRestore(read, [...existingById.keys(), ...unreadable]);
     if (!plan.counts.videos && !plan.hasSettings) {
       restoreResult.replaceChildren(alertBox({ tone: 'warning', text: messageFor('BK_NOTHING'), doc }));
       return null;
