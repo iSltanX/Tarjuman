@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
   GLOSSARY_LIMITS, GLOSSARY_TEMPLATE, PATCH_INSTRUCTIONS_TEMPLATE, glossaryParagraph, instructions, patchInstructions,
 } from '../../../src/core/export/instructions.js';
+import { GLOSSARY_LIMITS as PREFS_GLOSSARY_LIMITS } from '../../../src/core/model/prefs.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const SPEC = readFileSync(path.join(ROOT, 'docs/product-spec.md'), 'utf8');
@@ -77,7 +78,8 @@ test('المصطلحات بيانات: لا يُوسَّع متغير داخله
 test('حدود القاموس: أول 100 مصطلح وحدها، والحقول مقصوصة إلى 80 و80 و120 محرفًا', () => {
   const many = Array.from({ length: 130 }, (_, i) => ({ source: `term${i}`, target: `مقابل${i}`, note: null }));
   const lines = glossaryParagraph(many).split('\n').filter((l) => /^- term\d+ = /.test(l));
-  assert.equal(lines.length, GLOSSARY_LIMITS.terms);
+  assert.equal(GLOSSARY_LIMITS, PREFS_GLOSSARY_LIMITS, 'حدود واحدة يحفظ بها نموذج التفضيلات وتقرأ بها التعليمات');
+  assert.equal(lines.length, GLOSSARY_LIMITS.maxTerms);
   const long = glossaryParagraph([{ source: 'س'.repeat(200), target: 'ص'.repeat(200), note: 'ن'.repeat(300) }]);
   const last = long.split('\n').at(-1);
   assert.equal(last, `- ${'س'.repeat(80)} = ${'ص'.repeat(80)} (${'ن'.repeat(120)})`);

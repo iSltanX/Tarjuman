@@ -4,6 +4,7 @@
 // المقارن في الاستيراد (P4) هو الحكم.
 import { TjError } from '../errors/index.js';
 import { isVideoId } from '../model/ids.js';
+import { GLOSSARY_LIMITS } from '../model/prefs.js';
 import { LIMITS } from '../model/validate.js';
 import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 
@@ -61,8 +62,8 @@ export const GLOSSARY_TEMPLATE = `مصطلحات مفضّلة
 المقابلات (الإنجليزي = العربي المفضّل):
 - {{source}} = {{target}} ({{note}})`;
 
-/** حدود القاموس (واجهات الربط): 100 مصطلح، والمصطلح ومقابله 1..80 محرفًا، والملاحظة حتى 120. */
-export const GLOSSARY_LIMITS = Object.freeze({ terms: 100, source: 80, target: 80, note: 120 });
+/** حدود القاموس (واجهات الربط): 100 مصطلح، والمصطلح ومقابله 1..80 محرفًا، والملاحظة حتى 120. مصدرها نموذج التفضيلات. */
+export { GLOSSARY_LIMITS };
 
 // قسم «بنية SRT» يبدأ بعد الفقرة: القاموس يُدرج قبله (بعد «الأسلوب»).
 const SRT_SECTION = '\n\nبنية SRT: التزم بها حرفيًا';
@@ -109,11 +110,11 @@ export function glossaryParagraph(glossary) {
   if (!Array.isArray(glossary)) return null;
   const lines = [];
   for (const term of glossary) {
-    if (lines.length >= GLOSSARY_LIMITS.terms) break;
-    const source = cleanLine(term?.source, GLOSSARY_LIMITS.source);
-    const target = cleanLine(term?.target, GLOSSARY_LIMITS.target);
+    if (lines.length >= GLOSSARY_LIMITS.maxTerms) break;
+    const source = cleanLine(term?.source, GLOSSARY_LIMITS.maxSource);
+    const target = cleanLine(term?.target, GLOSSARY_LIMITS.maxTarget);
     if (!source || !target) continue;
-    const note = cleanLine(term?.note, GLOSSARY_LIMITS.note);
+    const note = cleanLine(term?.note, GLOSSARY_LIMITS.maxNote);
     lines.push(`- ${source} = ${target}${note ? ` (${note})` : ''}`);
   }
   if (!lines.length) return null;
