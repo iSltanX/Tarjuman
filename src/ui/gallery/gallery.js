@@ -3,11 +3,13 @@
 import { alertBox, button, el, emptyState, field, ltr, statusPill } from '../components.js';
 import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../format.js';
 import { startPage } from '../page.js';
+import { download as blobDownload } from '../../core/export/download.js';
 import { saveFile, savedPath } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { jumpToVideo } from '../seek.js';
 
-globalThis.__tarjumanPage = { saveFile, savedPath, store: createStore(), jumpToVideo };
+// blobDownload: التنزيل الحالي (الإصدار الأول) للمقارنة بالوضع الافتراضي.
+globalThis.__tarjumanPage = { saveFile, savedPath, blobDownload, store: createStore(), jumpToVideo };
 
 const TOKENS = ['bg', 'surface', 'surface-2', 'sunken', 'text', 'text-2', 'muted', 'border', 'border-strong', 'brand', 'brand-soft', 'focus', 'success', 'warning', 'danger', 'info', 'edited'];
 
