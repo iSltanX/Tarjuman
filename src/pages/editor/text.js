@@ -50,8 +50,8 @@ export function unsavedSentence(n) {
   return `لديك ${formatCount(n, COUNT_FORMS.change)} ${adj}`;
 }
 
-/** مؤشر الرأس: «● تغييرات غير محفوظة (12)» أو «محفوظ ✓». @param {number} n @param {boolean} dirty */
-export const saveStatus = (n, dirty) => (dirty ? `تغييرات غير محفوظة (${n})` : 'محفوظ ✓');
+/** مؤشر الرأس: «تغييرات غير محفوظة (12)» أو «محفوظ» (الرمز من الشارة لا من نص بخط آخر). @param {number} n @param {boolean} dirty */
+export const saveStatus = (n, dirty) => (dirty ? `تغييرات غير محفوظة (${n})` : 'محفوظ');
 
 /**
  * تسمية خيار النطاق: «المقطع 57» و«المحددة (3)» و«الملف كله».
@@ -135,8 +135,12 @@ export function markActionLabel(n, mark) {
   return next ? `علّم المقطع ${n} «${MARK_LABEL[next]}»` : `أزل علامة المقطع ${n}`;
 }
 
-/** شارة الصف: ⚑ لـ«أعود إليه» و✓ لـ«راجعته»، و؟ لعلامة قد تكون انتقلت. @param {{ kind: 'todo' | 'done', state: string }} m */
-export const markBadge = (m) => `${m.kind === 'todo' ? '⚑' : '✓'}${m.state === 'moved' ? '؟' : ''}`;
+/**
+ * شارة الصف: أيقونة flag لـ«أعود إليه» وcheck لـ«راجعته» (SVG لا رمز نصي يسقط إلى خط نظام؛ تدقيق 5fedcb9، CL-010)، و«؟» لعلامة
+ * قد تكون انتقلت.
+ * @param {{ kind: 'todo' | 'done', state: string }} m @returns {{ icon: 'flag' | 'check', suffix: string }}
+ */
+export const markBadge = (m) => ({ icon: m.kind === 'todo' ? 'flag' : 'check', suffix: m.state === 'moved' ? '؟' : '' });
 
 /** @param {{ kind: 'todo' | 'done', state: string }} m */
 export const markTitle = (m) => `${MARK_LABEL[m.kind]}${m.state === 'moved' ? ' — قد تكون انتقلت: تحقق أنها على المقطع الصحيح' : ''}`;
@@ -190,7 +194,7 @@ export const durationText = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
 export function comparisonLines(r) {
   if (!r || r.fingerprintId === null) return [{ tone: 'info', text: 'لا بصمة للمقارنة؛ عُرض الملف كما هو.' }];
   const lines = [];
-  if (r.matched) lines.push({ tone: 'success', text: 'مطابق للأصل ✓' });
+  if (r.matched) lines.push({ tone: 'success', text: 'مطابق للأصل' });
   lines.push({ tone: r.countSource === r.countTarget ? 'info' : 'warning', text: `العدد: ${r.countTarget} من ${r.countSource}` });
   if (r.numbering === 'different') lines.push({ tone: 'warning', text: 'الترقيم غير متسلسل أو مختلف عن الأصل.' });
   if (r.missing.length) {

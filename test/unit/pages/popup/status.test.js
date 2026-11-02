@@ -25,11 +25,11 @@ test('جارٍ: الهيكل مع العنوان', () => {
 test('فيديو بلا ترجمة محفوظة: ملتقط ✓ أو محفوظ ✓ أو غير ملتقط', () => {
   assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'المسار الإنجليزي: غير ملتقط', englishReady: false, saved: false });
   const captured = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }], saved: [] } });
-  assert.equal(describeStatus(captured).englishLine, 'المسار الإنجليزي: ملتقط ✓');
+  assert.equal(describeStatus(captured).englishLine, 'المسار الإنجليزي: ملتقط');
   const failed = reply({ english: { captured: [{ key: 'en|asr', kind: 'asr', cueCount: 0, ok: false }], saved: [] } });
   assert.equal(describeStatus(failed).englishLine, 'المسار الإنجليزي: غير ملتقط', 'مسار فاشل ليس ملتقطًا');
   const saved = reply({ english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 5 }] } });
-  assert.equal(describeStatus(saved).englishLine, 'المسار الإنجليزي: محفوظ ✓');
+  assert.equal(describeStatus(saved).englishLine, 'المسار الإنجليزي: محفوظ');
   assert.equal(describeStatus(saved).saved, true, 'مؤشر «محفوظ» لسجل بلا عربية');
   assert.equal(describeStatus(captured).saved, false, 'الملتقط وحده ليس محفوظًا');
 });

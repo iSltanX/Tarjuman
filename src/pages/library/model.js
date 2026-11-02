@@ -271,7 +271,7 @@ const numbers = (list) => (list.length > LIST_LIMIT ? `${list.slice(0, LIST_LIMI
  */
 export function comparisonSummary(r) {
   if (!r || r.fingerprintId === null) return { tone: 'info', lines: ['لا بصمة للمقارنة؛ عُرض الملف كما هو.'] };
-  if (r.matched) return { tone: 'success', lines: ['مطابق للأصل ✓'] };
+  if (r.matched) return { tone: 'success', lines: ['مطابق للأصل'] };
   const lines = [];
   if (r.countSource !== null && r.countSource !== r.countTarget) lines.push(`عدد المقاطع: ${r.countTarget} من ${r.countSource}`);
   if (r.missing.length) lines.push(`${formatCount(r.missing.length, NOUN.missing)}: ${numbers(r.missing)}`);

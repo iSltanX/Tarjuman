@@ -51,7 +51,7 @@ export function describeStatus(reply) {
   if (!reply.arabic) {
     const captured = reply.english.captured.some((t) => t.ok);
     const saved = reply.english.saved.length > 0;
-    return { kind: 'no-subtitle', title, englishLine: `المسار الإنجليزي: ${captured ? 'ملتقط ✓' : saved ? 'محفوظ ✓' : 'غير ملتقط'}`, englishReady: captured || saved, saved };
+    return { kind: 'no-subtitle', title, englishLine: `المسار الإنجليزي: ${captured ? 'ملتقط' : saved ? 'محفوظ' : 'غير ملتقط'}`, englishReady: captured || saved, saved };
   }
   const a = reply.arabic;
   return {

@@ -504,7 +504,8 @@ test('الرفع: حوار الفحص الكامل — الافتراضي أول
   assert.equal(dialog.title, `رفع ترجمة لـ"${iso('عنوان')}"`);
   assert.equal(dialog.confirmLabel, 'حفظ', 'الهدف الافتراضي فارغ: حفظ لا استبدال');
   const body = allText(dialog.content);
-  assert.match(body, /مطابق للأصل ✓/);
+  assert.match(body, /مطابق للأصل/);
+  assert.doesNotMatch(body, /✓/, 'لا «✓» نصية بجوار أيقونة النجاح (CL-010)');
   assert.match(body, /جديد\.ar\.srt/);
   assert.match(body, /5 مقاطع/);
   assert.match(body, /الترجمة 1 — .*\(نشطة\)/);

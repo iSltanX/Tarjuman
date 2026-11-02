@@ -40,7 +40,7 @@ function diagnosticsLink(reply) {
       ok = false;
     }
     link.removeAttribute('aria-busy');
-    result.textContent = ok ? '✓ نُسخ التشخيص' : 'تعذّر النسخ — أعد المحاولة';
+    result.textContent = ok ? 'نُسخ التشخيص' : 'تعذّر النسخ — أعد المحاولة';
     result.setAttribute('data-tone', ok ? 'success' : 'danger');
   });
   return el('p', { className: 'tj-popup__diag-row', children: [link, result] });

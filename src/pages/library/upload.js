@@ -12,7 +12,7 @@ export const DIFF_BATCH = 200;
 let seq = 0;
 const EDIT_FORMS = Object.freeze({ one: 'تعديل يدوي واحد', two: 'تعديلان يدويان', few: 'تعديلات يدوية', many: 'تعديلًا يدويًا', single: 'تعديل يدوي' });
 
-const cueText = (c) => (Array.isArray(c) ? c.map((x) => x.text).join(' ⏎ ') : c ? c.text : '—');
+const cueText = (c) => (Array.isArray(c) ? c.map((x) => x.text).join(' · ') : c ? c.text : '—');
 const cueNumber = (ch) => String(ch.n);
 
 /** جدول الفروق بدفعات: # · الحالي · الجديد. @param {Document} doc @param {{ n: number, before: unknown, after: unknown }[]} changes */

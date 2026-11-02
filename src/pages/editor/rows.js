@@ -176,7 +176,10 @@ export function createRows(doc, ctx) {
     const badge = num.querySelector('.ed-row__mark');
     badge.dataset.kind = mark?.kind ?? '';
     badge.dataset.state = mark?.state ?? '';
-    badge.textContent = mark ? markBadge(mark) : '';
+    if (mark) {
+      const b = markBadge(mark);
+      badge.replaceChildren(editorIcon(b.icon, { doc, className: 'tj-icon ed-row__mark-icon' }), b.suffix);
+    } else badge.replaceChildren();
     badge.title = mark ? markTitle(mark) : '';
 
     msg.id = `ed-msg-${i}`;

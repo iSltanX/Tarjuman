@@ -81,8 +81,10 @@ test('إغلاق القائمة يُسقط حالة الكتابة، وفتح ق
 
 test('الأنماط: الشريط المخفي يُخفي الطبقة إلا في حالة الكتابة، والتلميح لا يظهر والشريط مخفي', () => {
   const css = layerCss();
-  assert.match(css, /\.layer\[data-bar="hidden"\]:not\(\[data-typing\]\) \{ opacity: 0; \}/);
-  assert.match(css, /\.layer\[data-bar="hidden"\]:not\(\[data-typing\]\) \* \{ pointer-events: none !important; \}/);
+  // وما يبقى مفتوحًا بقرار (data-keep: تركيز لوحة المفاتيح أو تأكيد أو عمل جارٍ) يبقى ظاهرًا كذلك (تدقيق 5fedcb9، GM-003).
+  assert.match(css, /\.layer\[data-bar="hidden"\]:not\(\[data-typing\]\):not\(\[data-keep\]\) \{ opacity: 0; \}/);
+  assert.match(css, /\.layer\[data-bar="hidden"\]:not\(\[data-typing\]\):not\(\[data-keep\]\) \* \{ pointer-events: none !important; \}/);
+  assert.match(css, /\.layer\[data-bar="hidden"\]\[data-keep\] \.tip \{ display: none; \}/);
   assert.match(css, /\.layer\[data-bar="hidden"\]\[data-typing\] \.tip \{ display: none; \}/);
   assert.doesNotMatch(css, /\.layer\[data-bar="hidden"\] \{ opacity: 0; \}/, 'لا قاعدة إخفاء مطلقة تتجاوز حالة الكتابة');
 });

@@ -60,7 +60,7 @@ export function renderReference(box, { doc, options, savedId, shownId, preview, 
     className: 'ed-select ed-ref-choice', attrs: { 'aria-label': 'مرجع المقارنة' },
     on: { change: () => onChoose(sel.value || null) },
     children: [
-      ...options.map((o, k) => el('option', { text: `${k === 0 ? '★ ' : ''}${o.label} — ${Math.round(o.score * 100)}%`, attrs: { value: o.id }, doc })),
+      ...options.map((o, k) => el('option', { text: `${o.label} — ${Math.round(o.score * 100)}%${k === 0 ? ' — الأقرب' : ''}`, attrs: { value: o.id }, doc })),
       el('option', { text: 'بلا مرجع', attrs: { value: '' }, doc }),
     ],
     doc,

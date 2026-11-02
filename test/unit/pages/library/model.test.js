@@ -146,7 +146,7 @@ const report = (over = {}) => ({
 test('ملخص المقارنة: لا بصمة، ومطابق، وناقص، وزائد، وتوقيت مختلف، وفارغ', () => {
   assert.deepEqual(comparisonSummary(null), { tone: 'info', lines: ['لا بصمة للمقارنة؛ عُرض الملف كما هو.'] });
   assert.equal(comparisonSummary(report({ fingerprintId: null, countSource: null })).tone, 'info');
-  assert.deepEqual(comparisonSummary(report({ matched: true, countTarget: 427 })), { tone: 'success', lines: ['مطابق للأصل ✓'] });
+  assert.deepEqual(comparisonSummary(report({ matched: true, countTarget: 427 })), { tone: 'success', lines: ['مطابق للأصل'] });
   const missing = comparisonSummary(report({ missing: [57, 58, 201] }));
   assert.equal(missing.tone, 'warning');
   assert.deepEqual(missing.lines, ['عدد المقاطع: 425 من 427', '3 مقاطع ناقصة: 57، 58، 201']);

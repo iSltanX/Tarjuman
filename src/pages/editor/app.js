@@ -127,7 +127,7 @@ export async function mountEditor(app, {
   // ---- الهيكل ----
   app.replaceChildren();
   app.classList.add('ed-app');
-  const backBtn = button({ label: '→ المحفوظات', variant: 'ghost', size: 'sm', onClick: () => goLibrary(), doc });
+  const backBtn = button({ label: 'المحفوظات', icon: 'library', variant: 'ghost', size: 'sm', onClick: () => goLibrary(), doc });
   const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate', dir: 'auto', doc });
   const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'خانة التحرير', onSelect: (n) => switchSlot(n), doc });
   const slotNote = el('span', { className: 'ed-slot-note tj-caption', doc });
@@ -1329,7 +1329,7 @@ export async function mountEditor(app, {
         S.edited = S.info.edited;
         session.markSaved({ cues: S.info.cues, offsetMs: S.info.offsetMs }, shape);
       } else load(saved, n, { keepUi: true });
-      toast('حُفظ ✓', 'success');
+      toast('حُفظ.', 'success');
     } catch (err) {
       const info = toErrorInfo(err);
       if (info.code === 'ST_CONFLICT') {

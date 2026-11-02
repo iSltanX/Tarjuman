@@ -26,7 +26,7 @@ test('لم يُلتقط مسار: إرشاد لتفعيل CC واختيار Engl
   click(page.ui.item('لماذا؟'));
   assert.match(page.ui.menuText(), /ترجمان يقرأ الترجمة التي يجلبها المشغّل لك، ولا يرسل أي طلب من عنده\./);
   assert.equal(page.ui.item('لماذا؟').getAttribute('aria-expanded'), 'true');
-  assert.equal(page.ui.menuText().includes('CC ← ⚙'), false, 'الخطوات لرفض المسار وحده');
+  assert.equal(page.ui.menuText().includes('CC ثم الإعدادات'), false, 'الخطوات لرفض المسار وحده');
 });
 
 test('مسار عربي أو مترجم آليًا: رسالته وخطوات اختيار English بسطر، وملاحظة Brave في Brave وحده', () => {
@@ -35,7 +35,7 @@ test('مسار عربي أو مترجم آليًا: رسالته وخطوات ا
     open(chrome);
     const alert = chrome.ui.menu().querySelector('.alert');
     assert.ok(alert.textContent.includes(messageFor(code)));
-    assert.equal(alert.querySelector('.steps').textContent, 'CC ← ⚙ ← الترجمة ← English');
+    assert.equal(alert.querySelector('.steps').textContent, 'CC ثم الإعدادات ثم «الترجمة» ثم English');
     assert.equal(alert.querySelector('.note-in'), null, 'لا ملاحظة Brave في Chrome');
   }
   const brave = mountPage({ state: makeState({ captureIssue: { code: 'EX_NOT_ENGLISH', at: 1 } }), brave: true });

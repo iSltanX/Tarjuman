@@ -230,7 +230,7 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 /* ---- علامة «حُفظ» وحقل الرقم بوحدة (رُفعا من الإعدادات في الإصدار الثاني) ---- */
 .tj-saved { display: block; font: 700 12px/18px var(--tj-font-body); min-height: 18px; color: var(--tj-muted); }
 .tj-saved--success { color: var(--tj-success); }
-.tj-saved--success::before { content: "✓ "; }
+.tj-saved--success::before { content: ""; display: inline-block; inline-size: 0.32em; block-size: 0.64em; margin-inline-end: 0.45em; border: solid currentColor; border-width: 0 2px 2px 0; transform: translateY(-0.12em) rotate(45deg); } /* علامة مرسومة لا «✓» بخط آخر (CL-010) */
 .tj-saved--danger { color: var(--tj-danger); }
 .tj-num { max-width: 320px; width: 100%; }
 .tj-num__head { display: flex; align-items: center; justify-content: space-between; gap: var(--tj-space-2); }

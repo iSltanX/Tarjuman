@@ -54,7 +54,8 @@ export const LABELS = Object.freeze({
   copyHint: 'تعليمات الترجمة وحدها، لترفقها مع الملف',
   copied: 'نُسخت التعليمات',
   copyFailed: 'تعذّر النسخ — أعد المحاولة',
-  englishSteps: 'CC ← ⚙ ← الترجمة ← English',
+  // كلمات لا رموز (← و⚙ خارج الخطين المضمّنين، فيرسمها Brave بخطوط نظام متفرقة؛ تدقيق 5fedcb9، CL-017).
+  englishSteps: 'CC ثم الإعدادات ثم «الترجمة» ثم English',
   braveNote: 'Brave قد يختار العربية أولًا؛ اختر English مرة',
   partsLabel: 'أحجام الأجزاء',
   cancel: 'إلغاء',
@@ -196,7 +197,7 @@ export function comparisonSummary(cmp) {
   const untranslated = [...new Set([...cmp.empty, ...cmp.noArabic])].length;
   if (untranslated) parts.push(`${formatCount(untranslated, COUNT_FORMS.cue)} بلا ترجمة عربية`);
   if (!parts.length && cmp.numbering === 'different') parts.push('ترقيم المقاطع مختلف عن الأصل');
-  if (!parts.length) return { tone: cmp.matched ? 'ok' : 'warn', text: cmp.matched ? 'مطابق للأصل ✓' : 'يختلف عن الأصل' };
+  if (!parts.length) return { tone: cmp.matched ? 'ok' : 'warn', text: cmp.matched ? 'مطابق للأصل' : 'يختلف عن الأصل' };
   return { tone: 'warn', text: parts.join(' · ') };
 }
 
