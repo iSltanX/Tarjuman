@@ -242,3 +242,22 @@ test('إخفاق حفظ البصمة بعد التنزيل تنبيه (saveError
   const again = await exportEnglish({ store, videoId: ID, trackKey: 'en|manual', save, now });
   assert.equal(again.fingerprintSaved, true, 'إعادة التصدير تحفظها');
 });
+
+test('تدقيق 5fedcb9 (GM-015.1): «إبقاء تعديلاتي» في المحفوظات بمحرك المشغّل نفسه (R49): التعارض للملف الجديد، والمطابق للجديد غير معدّل', async () => {
+  const { uploadImpact } = await import('../../../../src/pages/library/actions.js');
+  const { keepEditsPlan } = await import('../../../../src/player/controls/replace.js');
+  const original = makeCues(8);
+  const mine = original.map((c, i) => (i === 1 ? { ...c, text: 'تعديلي' } : i === 5 ? { ...c, text: 'تعديلي الآخر' } : c));
+  const theirs = original.map((c, i) => (i === 5 ? { ...c, text: 'من الملف' } : i === 7 ? { ...c, text: 'جديد' } : c));
+  const bundle = { slots: [{ track: { original, current: mine } }, { track: null }, { track: null }] };
+  const lib = uploadImpact(bundle, 1, theirs).keep;
+  const player = keepEditsPlan({ original, current: mine }, theirs);
+  assert.equal(lib.ok, true);
+  assert.equal(lib.cues[5].text, 'من الملف', 'موضع التعارض يأخذه الملف الجديد كالمشغّل');
+  assert.deepEqual(lib.cues, player.current, 'النتيجة نفسها في السطحين');
+  assert.equal(lib.conflicts, player.conflicts);
+  // تعديلات يبطلها الجديد كلها: لا نسخة معدّلة تُكتب (كانت المحفوظات تسمها «معدّلة» رغم مطابقتها الجديد).
+  const undone = original.map((c, i) => (i === 5 ? { ...c, text: 'من الملف' } : c));
+  const same = uploadImpact({ slots: [{ track: { original, current: undone } }, { track: null }, { track: null }] }, 1, undone).keep;
+  assert.deepEqual([same.ok, same.cues], [true, null]);
+});

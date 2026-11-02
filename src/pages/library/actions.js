@@ -3,7 +3,7 @@
 // وحدها أو كل بيانات الفيديو)؛ وفي الإصدار الثاني: تبديل النشطة، والاسم المختصر، والمرجع، وحذف خانة، والنسخة السابقة
 // (استعادة بتبديل قابل للعكس وحذف)، والرفع إلى خانة بفحص كامل. لا واجهة هنا: كل شيء بتبعيات تُحقن، فتُختبر بمحاكاة
 // التخزين. الكتابة عبر انتقالات النموذج وupdateVideo وupdateBundle وحدها، كل تغيير كتابة ذرية واحدة.
-import { diffTranslations, mergeThreeWay } from '../../core/align/index.js';
+import { diffTranslations, keepEditsMerge } from '../../core/align/index.js';
 import { compare } from '../../core/compare/index.js';
 import { TjError, messageFor } from '../../core/errors/index.js';
 import { buildArabicExport, buildExport, buildStudyText } from '../../core/export/index.js';
@@ -227,7 +227,7 @@ export async function prepareUpload({ store, videoId, files, knownVideoIds = [] 
 
 /**
  * ما يعرضه حوار الرفع لخانة هدف: هل هو استبدال، وأعداد الفروق مع الحالي (diffTranslations على المعروض في الخانة)، وعدد
- * التعديلات اليدوية التي ستُفقد، وهل يمكن «إبقاء تعديلاتي» (mergeThreeWay بثقة) وسببه إن لم يمكن. وصف فقط.
+ * التعديلات اليدوية التي ستُفقد، وهل يمكن «إبقاء تعديلاتي» (keepEditsMerge بثقة) وسببه إن لم يمكن. وصف فقط.
  * @param {import('../../core/model/slots.js').Bundle} bundle @param {1 | 2 | 3} n @param {import('../../core/model/cue.js').Cue[]} incoming
  */
 export function uploadImpact(bundle, n, incoming) {
@@ -236,15 +236,11 @@ export function uploadImpact(bundle, n, incoming) {
   const diff = diffTranslations(track.current ?? track.original, incoming);
   const edits = manualEdits(track);
   if (!edits) return { replace: true, diff, edits, keep: { ok: false, reason: messageFor('PG_KEEP_EDITS_NONE'), cues: null } };
-  const merged = mergeThreeWay({ base: track.original, mine: track.current, theirs: incoming });
-  if (!merged.ok) return { replace: true, diff, edits, keep: { ok: false, reason: `${messageFor('PG_KEEP_EDITS_UNALIGNED')} ${merged.reason}`, cues: null } };
-  // التعارض يُحسم لصالح تعديلات المستخدم: هذا معنى «إبقاء تعديلاتي».
-  const resolved = merged.conflicts.length
-    ? mergeThreeWay({ base: track.original, mine: track.current, theirs: incoming }, { resolve: Object.fromEntries(merged.conflicts.map((c) => [c.n, 'mine'])) })
-    : merged;
-  return resolved.ok
-    ? { replace: true, diff, edits, keep: { ok: true, reason: null, cues: resolved.cues, conflicts: merged.conflicts.length } }
-    : { replace: true, diff, edits, keep: { ok: false, reason: `${messageFor('PG_KEEP_EDITS_UNALIGNED')} ${resolved.reason}`, cues: null } };
+  // المحرك نفسه في المشغّل (R49): تبقى التعديلات حيث لم يغيّر الملف الجديد موضعها، وما تعارض يأخذه الجديد.
+  const merged = keepEditsMerge(track, incoming);
+  return merged.ok
+    ? { replace: true, diff, edits, keep: { ok: true, reason: null, cues: merged.current, conflicts: merged.conflicts } }
+    : { replace: true, diff, edits, keep: { ok: false, reason: `${messageFor('PG_KEEP_EDITS_UNALIGNED')} ${merged.reason}`, cues: null } };
 }
 
 /**

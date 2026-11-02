@@ -40,8 +40,8 @@ export async function openRescueDialog({ doc, first, offsets }) {
       className: 'ed-fieldset',
       children: [
         el('legend', { className: 'tj-label', text: `المقطع ${c.n}`, doc }),
-        radio(name, 'theirs', `الأحدث: ${flat(c.theirs)}`, true, () => { resolve[c.n] = 'theirs'; }),
-        radio(name, 'mine', `تعديلي: ${flat(c.mine)}`, false, () => { resolve[c.n] = 'mine'; }),
+        radio(name, 'theirs', `الأحدث: ${flat(c.theirs)}`, true, () => { resolve[c.key] = 'theirs'; }),
+        radio(name, 'mine', `تعديلي: ${flat(c.mine)}`, false, () => { resolve[c.key] = 'mine'; }),
       ],
       doc,
     });

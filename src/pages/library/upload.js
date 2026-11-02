@@ -158,7 +158,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
         keepBox.checked = false;
         keepBox.disabled = !impact.keep.ok;
         keepBox.setAttribute('aria-disabled', impact.keep.ok ? 'false' : 'true');
-        keepLabel.title = impact.keep.ok ? 'تُطبَّق تعديلاتك على الملف الجديد، وما تعارض منها تبقى فيه نسختك.' : impact.keep.reason ?? '';
+        keepLabel.title = impact.keep.ok ? 'تُطبَّق تعديلاتك على الملف الجديد حيث لم يغيّر موضعها، وما تعارض منها يأخذه الملف الجديد.' : impact.keep.reason ?? '';
         keepWhy.textContent = impact.keep.ok ? '' : ` (${impact.keep.reason ?? ''})`;
         if (impact.keep.ok) keepBox.removeAttribute('aria-describedby');
         else keepBox.setAttribute('aria-describedby', keepWhy.getAttribute('id'));

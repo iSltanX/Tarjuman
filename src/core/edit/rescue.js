@@ -10,10 +10,10 @@ import { diffTranslations, mergeThreeWay } from '../align/index.js';
  * @param {{
  *   base: Cue[], mine: Cue[], theirs: Cue[],
  *   offsets: { base: number, mine: number, theirs: number },
- *   resolve?: Record<number, 'mine' | 'theirs'>, offsetChoice?: 'mine' | 'theirs'
+ *   resolve?: Record<number | string, 'mine' | 'theirs'>, offsetChoice?: 'mine' | 'theirs'
  * }} o
  * @returns {{ ok: false, reason: string }
- *   | { ok: true, cues: Cue[], kept: number[], taken: number[], conflicts: { n: number, mine: Cue[], theirs: Cue[] }[],
+ *   | { ok: true, cues: Cue[], kept: number[], taken: number[], conflicts: { n: number, key: number | string, mine: Cue[], theirs: Cue[] }[],
  *       offsetMs: number, offsetConflict: boolean, counts: { mine: number, theirs: number } }}
  *   counts: ما غيّره كل طرف عن المفتوح (للعرض)؛ وconflicts ما بقي بلا اختيار.
  */

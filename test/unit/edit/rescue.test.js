@@ -78,3 +78,26 @@ test('التعارض في التخزين: الحفظ يُرفض، والإنقا
   assert.equal(cur[0].text, 'تعديلي في المحرّر');
   assert.equal(cur[3].text, 'من التبويب الآخر', 'تغيير الأحدث لم يُكتب فوقه');
 });
+
+test('تدقيق 5fedcb9 (CX-001): قطعتا شطر محفوظ برقم واحد لكلٍّ تعارضها واختيارها، فاختيار الأولى لا يحسم الثانية', async () => {
+  const { splitCue } = await import('../../../src/core/edit/structure.js');
+  const { validateCues } = await import('../../../src/core/model/cue.js');
+  const base = splitCue([{ n: 1, startMs: 1000, endMs: 5000, text: 'الأول الثاني' }], 0, 5);
+  assert.equal(validateCues(base).ok, true, 'القطعتان صالحتان برقم واحد');
+  const mine = base.map((c, i) => ({ ...c, text: `تعديلي ${i + 1}` }));
+  const theirs = base.map((c, i) => ({ ...c, text: `الأحدث ${i + 1}` }));
+  const ctx = { base, mine, theirs, offsets: { base: 0, mine: 0, theirs: 0 } };
+  const first = rescueConflicts(ctx);
+  assert.deepEqual(first.map((c) => c.n), [1, 1], 'الرقم للعرض كما هو');
+  assert.equal(new Set(first.map((c) => c.key)).size, 2, 'مفتاحان مختلفان');
+  // «تعديلي» للأولى، والثانية على «الأحدث» الافتراضي (كما يبني حوار الإنقاذ resolve بمفتاح كل صف).
+  const chosen = planRescue({ ...ctx, resolve: { [first[0].key]: 'mine' } });
+  assert.deepEqual(texts(chosen.cues), ['تعديلي 1', 'الأحدث 2']);
+  assert.deepEqual(chosen.conflicts.map((c) => c.key), [first[1].key], 'الثانية ما زالت تنتظر اختيارها');
+  const both = planRescue({ ...ctx, resolve: { [first[0].key]: 'theirs', [first[1].key]: 'mine' } });
+  assert.deepEqual([texts(both.cues), both.conflicts.length], [['الأحدث 1', 'تعديلي 2'], 0]);
+  // ملف مستورد بأرقام مكررة (لا شطر): المفتاح يميّز الظهورين كذلك، والرقم الفريد يبقى مفتاحه نفسه.
+  const dup = [{ n: 1, startMs: 0, endMs: 900, text: 'أ' }, { n: 2, startMs: 1000, endMs: 1900, text: 'ب' }, { n: 2, startMs: 2000, endMs: 2900, text: 'ج' }];
+  const r = rescueConflicts({ base: dup, mine: dup.map((c) => ({ ...c, text: `${c.text} م` })), theirs: dup.map((c) => ({ ...c, text: `${c.text} ث` })), offsets: ctx.offsets });
+  assert.deepEqual(r.map((c) => c.key), [1, '2.1', '2.2']);
+});

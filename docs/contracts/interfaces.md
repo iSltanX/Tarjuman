@@ -379,7 +379,7 @@ readingMetrics(cue) → { cps: number, longestLine: number }
 
 **ما أضافه التنفيذ (P11) دون تغيير توقيع، موثّقًا عند دمج W6:**
 
-- `mergeThreeWay(sides, { align?, resolve? })`: `align` خيارات المحاذاة (و`useText` مفعّل فيه افتراضيًا: النص غير المعدّل مرساة)، و`resolve` اختيار المستخدم لكل تعارض برقمه `n` (`{ [n]: 'mine' | 'theirs' }` أو `Map`)، ولا يُحسم تعارض إلا بقيمة صالحة فيه. وضعف الثقة `{ ok: false, reason }` بنص `CMP_MERGE_LOW_MINE` أو `CMP_MERGE_LOW_THEIRS`.
+- `mergeThreeWay(sides, { align?, resolve? })`: `align` خيارات المحاذاة (و`useText` مفعّل فيه افتراضيًا: النص غير المعدّل مرساة)، و`resolve` اختيار المستخدم لكل تعارض بمفتاحه `key` (`{ [key]: 'mine' | 'theirs' }` أو `Map`)، ولا يُحسم تعارض إلا بقيمة صالحة فيه. و`key` رقم أول مقطع في المنطقة من الأصل `n` ما لم يتكرر هذا الرقم في الأصل، وإلا `"n.k"` لظهوره k (قطعتا شطر محفوظ تحملان رقمًا واحدًا، فلكل منطقة اختيارها؛ تصحيح بعد تدقيق 5fedcb9). وضعف الثقة `{ ok: false, reason }` بنص `CMP_MERGE_LOW_MINE` أو `CMP_MERGE_LOW_THEIRS`.
 - `src/core/align`: `ALIGN_DEFAULTS` (`windowMs` 15000، و`maxGroup` 3، و`weakIou` 0.5، و`useText` false، و`offset` `'auto'`)، والمساعدات `iou` و`isIdentity` و`toBlocks`. أسباب المحاذاة رسائل `CMP_ALIGN_…` منسّقة تُعرض كما هي.
 - `src/core/compare`: `rankReferences` يكتب `why` برسالة `CMP_REF_MATCHED` أو `CMP_REF_SUMMARY`.
 - `src/core/import`: `partsStatus(fingerprint, cues) → { index, from, to, total, received, complete }[] | null` حالة استلام الأجزاء المشتقة (R52)، وهي `plan.parts` في ناتج `readPatch`، و`videoIdFromName(fileName, { videoId?, knownVideoIds? }) → null | { videoId, differs }` قرينة الاسم، و`REVIEW_THRESHOLDS` (`suggest` 0.5، و`certain` 0.8، و`gap` 0.1)، و`classTransitions` و`cuesKey`.
