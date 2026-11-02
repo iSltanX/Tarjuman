@@ -285,3 +285,17 @@ test('حد رقم المقطع في المحلّل يطابق مدقق النم�
   assert.equal(e.code, 'IM_BAD_NUMBER');
   assert.match(e.message, /500000/);
 });
+
+test('تدقيق 5fedcb9 (GM-012): بعد الملف، المواضع الغامضة كما تطلبها التعليمات شرحٌ لا خطأ، والمقطع المقطوع بعد الأخير ما زال خطأً', () => {
+  const file = `${block(1, T1, 'أ')}\n${block(2, '00:00:04,000 --> 00:00:05,000', 'ب')}\n`;
+  for (const tail of ['2', '**2**', 'المقطع 2 عند 0:00:04 غامض', 'مواضع غامضة: 1، 2 (00:00:04,000)']) {
+    const r = parseSrtLenient(`${file}\n${tail}\n`);
+    assert.equal(r.cues.length, 2, tail);
+    assert.ok(r.notes.length >= 1, `${tail}: الذيل في الملاحظات`);
+  }
+  // رقم بعد آخر مقطع (3): رأس مقطع مقطوع، لا إشارة.
+  const cut = fail(`${file}\n3\n`);
+  assert.deepEqual([cut.code, cut.params.line], ['IM_STRAY_TEXT', 10]);
+  // سطر زمن مقطوع بعد الملف ما زال خطأ زمن.
+  assert.equal(fail(`${file}\n3\n00:00:06,000 --> \n`).code, 'IM_BAD_TIME');
+});

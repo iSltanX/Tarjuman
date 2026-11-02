@@ -328,8 +328,9 @@ export function alignCues(a, b, opts = {}) {
   const matchedB = m - onlyB.length;
   const coverage = Math.max(matchedA / n, matchedB / m);
   const units = groups.length;
-  // الحد المسموح من الأزواج الضعيفة: نسبة من الوحدات، ولا يقل عن اثنين إلا في ملف صغير (فلا يبلغ نصف وحداته).
-  const allowed = (rate) => Math.max(Math.min(RATE_FLOOR, Math.floor(units / 2)), Math.ceil(units * rate));
+  // الحد المسموح من الأزواج الضعيفة: نسبة من الوحدات، ولا يقل عن اثنين إلا في ملف صغير (فلا يبلغ نصف وحداته)، ولا يبلغ
+  // الوحدات كلها أبدًا: ملف من مقطع واحد لا يجمعه بالمرجع إلا رقمه ليس محاذاة متحققة (تدقيق 5fedcb9، CX-006).
+  const allowed = (rate) => Math.min(units - 1, Math.max(Math.min(RATE_FLOOR, Math.floor(units / 2)), Math.ceil(units * rate)));
 
   let low = false;
   if (coverage < MIN_COVERAGE) {

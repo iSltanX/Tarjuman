@@ -102,3 +102,19 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings } = 
     return { ok: false, error };
   }
 }
+
+/**
+ * نتيجة readImport بالمرجع الأقرب (R50): ما يقترحه فحص الملف الوارد (reviewIncoming.suggested، بالمحاذاة والأرقام) إن اختلف
+ * عن اختيار readImport بالعدد أو الأحدث، فتُعاد المقارنة به. يستعمله المشغّل كما تفعل المحفوظات، فيحفظ السطحان المرجع
+ * والتقرير نفسيهما للملف نفسه (P13-AC2؛ تدقيق 5fedcb9، GM-011).
+ * @param {Extract<Awaited<ReturnType<typeof readImport>>, { ok: true }>} result
+ * @param {string | null | undefined} suggested @param {import('../model/tracks.js').Fingerprint[]} fingerprints
+ * @param {{ thresholds?: { driftMs?: number } } | undefined} settings
+ */
+export function withSuggestedReference(result, suggested, fingerprints, settings) {
+  if (!result?.ok || !suggested || suggested === result.fingerprintId) return result;
+  const fp = (fingerprints ?? []).find((f) => f.id === suggested);
+  if (!fp) return result;
+  const report = compare(result.cues, fp, { driftMs: threshold(settings) });
+  return { ...result, fingerprintId: fp.id, comparison: { ...report, notes: capNotes([...result.notes, ...report.notes]) } };
+}

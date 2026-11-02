@@ -5,6 +5,7 @@
 // مضغوط إن وُجدت ترجمة أو دل الاسم على فيديو آخر).
 // كل تدفق يثبّت معرّف الفيديو عند بدئه، فنتيجة تأخرت حتى تبدّل الفيديو لا تُطبَّق على الجديد أبدًا.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
+import { withSuggestedReference } from '../../core/import/index.js';
 
 const infoOf = (code, params) => ({ code, message: messageFor(code, params) });
 
@@ -149,6 +150,16 @@ export async function readFor({ controller, importFlow, files }) {
   }
   if (controller.getState().videoId !== videoId) return { ok: false, error: infoOf('CT_VIDEO_CHANGED') };
   if (!res.ok) return { ok: false, error: { code: res.error.code, message: res.error.message } };
+  // المرجع الأقرب كما في المحفوظات (R50): لا البصمة الأحدث أو المطابقة عددًا وحدها حين تعددت التصديرات (GM-011).
+  const fingerprints = s.saved?.fingerprints ?? [];
+  if (fingerprints.length > 1 && typeof importFlow.reviewIncoming === 'function') {
+    try {
+      const review = importFlow.reviewIncoming({ fileName: res.fileName, cues: res.cues, videoId, fingerprints, knownVideoIds: [] });
+      res = withSuggestedReference(res, review?.suggested, fingerprints, s.settings);
+    } catch {
+      // فحص المرجع تحسين: تعذّره يُبقي اختيار readImport.
+    }
+  }
   const { fileName, cues, comparison, fingerprintId, notes } = res;
   return {
     ok: true,
