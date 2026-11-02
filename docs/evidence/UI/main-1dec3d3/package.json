@@ -1,0 +1,216 @@
+{
+  "name": "tarjuman-0.2.0",
+  "version": "0.2.0",
+  "minimumChromeVersion": "111",
+  "commit": "1dec3d313bf2",
+  "dirty": false,
+  "builtAt": "2026-11-02T05:00:59.616Z",
+  "zip": {
+    "file": "tarjuman-0.2.0.zip",
+    "bytes": 638538,
+    "sha256": "29791154a943db44d727b4d1ceed801cc63a58a984ff45b69996b048e0cdfac1",
+    "verified": true
+  },
+  "audit": {
+    "ok": true,
+    "checks": [
+      {
+        "id": "permissions-approved-only",
+        "ok": true
+      },
+      {
+        "id": "no-host-or-optional-permissions",
+        "ok": true
+      },
+      {
+        "id": "content-scripts-youtube-only",
+        "ok": true
+      },
+      {
+        "id": "web-accessible-fonts-only",
+        "ok": true
+      },
+      {
+        "id": "no-background-or-externally-connectable",
+        "ok": true
+      },
+      {
+        "id": "manifest-v3-and-no-dev-version-name",
+        "ok": true
+      },
+      {
+        "id": "only-expected-files",
+        "ok": true
+      },
+      {
+        "id": "no-source-maps-or-gallery",
+        "ok": true
+      },
+      {
+        "id": "no-external-connection-or-forbidden-code",
+        "ok": true
+      },
+      {
+        "id": "subtitle-fonts-with-ofl-licenses",
+        "ok": true
+      }
+    ]
+  },
+  "files": [
+    {
+      "path": "content/main.js",
+      "bytes": 261180,
+      "sha256": "28831f097d9d8f4497e6c293aeaf44f583bed2c6b7703836a6cd07985dae4225"
+    },
+    {
+      "path": "main-world/capture.js",
+      "bytes": 3456,
+      "sha256": "c7e3b46a6a28ad52c5ff0dbb809f0c03f6473fbfc426580ea6363ee133ff5196"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 1155,
+      "sha256": "df85ca8b0e923c73978390651171f0203ae4317330cc7e75583a06024d84eef2"
+    },
+    {
+      "path": "pages/editor/editor.css",
+      "bytes": 12524,
+      "sha256": "d8e2ff2cde9e215b2aa7ae415ee073117f7d011cb2d2a7d5d78157a0303d3896"
+    },
+    {
+      "path": "pages/editor/index.html",
+      "bytes": 514,
+      "sha256": "230a7a3ccb874f677a227df27db21a692e5bfbe700ee3a33363ce0ce76d35d4a"
+    },
+    {
+      "path": "pages/editor/main.js",
+      "bytes": 163292,
+      "sha256": "a340d1ede91f998bbc0663deb86e99ef29c2bd7282a475a72c0ba1f37d629baa"
+    },
+    {
+      "path": "pages/library/index.html",
+      "bytes": 511,
+      "sha256": "7cf4dac854121bc38b5100f2767082c68007e297eca96a72c21fd342a57dfbd4"
+    },
+    {
+      "path": "pages/library/library.css",
+      "bytes": 5505,
+      "sha256": "7a03f316edbf89c3974c96c3ec3920eb1832700920d5b07d652e41438d70193e"
+    },
+    {
+      "path": "pages/library/main.js",
+      "bytes": 160332,
+      "sha256": "0b599cd14dfb490112e125f2a2ebd52d570595918de9ec0e96110f2fa69507f8"
+    },
+    {
+      "path": "pages/popup/index.html",
+      "bytes": 487,
+      "sha256": "4b0246a2a2906652c7c3fb7456b0b7ba47a64b2c2d56619938c4d5fcfaf367bd"
+    },
+    {
+      "path": "pages/popup/main.js",
+      "bytes": 91613,
+      "sha256": "54c4389d4242b493fb236994c433af83b116165e59572e033322b68aa58ab4a5"
+    },
+    {
+      "path": "pages/popup/popup.css",
+      "bytes": 3421,
+      "sha256": "2d877b97e2cba4071ca59e01ccd335e2b9e70d4a45e1ad24959867c33b553048"
+    },
+    {
+      "path": "pages/settings/fonts.css",
+      "bytes": 2101,
+      "sha256": "c01558882229bf678eab620c4fd76feddef46e5add1ad31d613d1d500dc3a52d"
+    },
+    {
+      "path": "pages/settings/index.html",
+      "bytes": 555,
+      "sha256": "1dff0bde3db1a365ac666395ae73d913e0c525d743e7255a69ad7c84ccdf9503"
+    },
+    {
+      "path": "pages/settings/main.js",
+      "bytes": 115175,
+      "sha256": "fe5383ddf5f4c0c2daee1d7842df68be57f72314faa14ded1751703b9bdb9adf"
+    },
+    {
+      "path": "pages/settings/settings.css",
+      "bytes": 10397,
+      "sha256": "507e24cc30e57508b615662b2828a807c223b53cb9773da9a84ee5d3e598d805"
+    },
+    {
+      "path": "ui/base.css",
+      "bytes": 6103,
+      "sha256": "32b28af0b3aa3ba123f0351ca83469c1b57961bd6668c59789599ff9d84a134f"
+    },
+    {
+      "path": "ui/components.css",
+      "bytes": 18955,
+      "sha256": "3e16f81f8878cb7c4416414e69e3dc44cf1aaa56ab6aae6276856640040e6406"
+    },
+    {
+      "path": "ui/fonts/subtitle/almarai-400.woff2",
+      "bytes": 49308,
+      "sha256": "8c2ffd300aef0d3a4384feb813409370d07107688d3a1b5903673e682a13b7e5"
+    },
+    {
+      "path": "ui/fonts/subtitle/almarai-700.woff2",
+      "bytes": 50604,
+      "sha256": "c0305c235bbb21fca0cffbbeff37a70083adff73e2cdc0c60898d8e854d90735"
+    },
+    {
+      "path": "ui/fonts/subtitle/almarai-OFL.txt",
+      "bytes": 4391,
+      "sha256": "142e053c374dd465a92bd7378116b517e344dbc662361308130fc2566db30c2a"
+    },
+    {
+      "path": "ui/fonts/subtitle/markazi-400.woff2",
+      "bytes": 52020,
+      "sha256": "610d2fdfb3e7e36e8900f8d4335b1089dec56b11a4c238343912c7a8fb9cfb2b"
+    },
+    {
+      "path": "ui/fonts/subtitle/markazi-700.woff2",
+      "bytes": 52548,
+      "sha256": "f1d58a03d8f74aaf61884a9e965dfb5ba77861a191289d813d6a2a4ae4b1d5e1"
+    },
+    {
+      "path": "ui/fonts/subtitle/markazi-OFL.txt",
+      "bytes": 4485,
+      "sha256": "6e7f259edf178c70b2ee36acfcc934b76d1cd56bb58d2c8f2ab8b5dded8bd430"
+    },
+    {
+      "path": "ui/fonts/subtitle/noto-sans-arabic-400.woff2",
+      "bytes": 66416,
+      "sha256": "d1a1f8f032a49e52c4afdebe1d8f53945470aaa884f3e7146457099966556b2d"
+    },
+    {
+      "path": "ui/fonts/subtitle/noto-sans-arabic-700.woff2",
+      "bytes": 67484,
+      "sha256": "79e6cec4d8901899dcc7e17e7c7a985d0a209a50ee72444c4f47c80fb16696e0"
+    },
+    {
+      "path": "ui/fonts/subtitle/noto-sans-arabic-OFL.txt",
+      "bytes": 4382,
+      "sha256": "07fc70bfeb985cc1a87a8587d0a0c80bab11c86c9dc3fd95b6f0cb332f983e96"
+    },
+    {
+      "path": "ui/fonts/subtitle/tajawal-400.woff2",
+      "bytes": 20776,
+      "sha256": "c97f7c2486afb4856ebe5f88dd55a6318b805d3223af8959fbcd8c278a41ac86"
+    },
+    {
+      "path": "ui/fonts/subtitle/tajawal-700.woff2",
+      "bytes": 20988,
+      "sha256": "e112b82cedd60bc41efe8f4e124d90fd55fde6a6d6b94d9de063dae139688f0e"
+    },
+    {
+      "path": "ui/fonts/subtitle/tajawal-OFL.txt",
+      "bytes": 4464,
+      "sha256": "9b584984f9db0ee30347391a76eff9c0a6b03dc450c3c6afe3757a2cb3a4db87"
+    },
+    {
+      "path": "ui/tokens.css",
+      "bytes": 4610,
+      "sha256": "0e380e360a11c6e26baba27b91b655f35fdd2a6e0fbfa4504d7cd0f22ef6c125"
+    }
+  ]
+}

@@ -175,6 +175,11 @@ try {
     else await page.goto(`${prefix}${name === 'editor' ? `?v=${VIDEO}` : ''}`);
     await page.waitFor(() => document.querySelector('#app')?.children.length > 0, { timeoutMs: 8000 });
     await sleep(400);
+    // بعد إعادة التصميم تُظهر الإعدادات قسمًا واحدًا: السعة («بلا حد ثابت») في «التخزين»، ويُفتح بجزء العنوان.
+    if (name === 'settings') {
+      await page.eval(() => { location.hash = '#storage'; });
+      await sleep(300);
+    }
     const text = await page.eval(() => document.body.innerText);
     const dir = await page.eval(() => getComputedStyle(document.documentElement).direction);
     check(`page-${name}`, expect[name](text) && dir === 'rtl' && pnet.other === 0, { openedVia: via, rtl: dir === 'rtl', externalRequests: pnet.other });
