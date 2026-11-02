@@ -28,7 +28,7 @@ import { openReportDialog, openStudyDialog } from './export-dialogs.js';
 import { renderComparison, renderIssues, renderReference } from './panels.js';
 import { openRescueDialog } from './rescue-dialog.js';
 import {
-  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged, writeMarks, writePosition, writeReference,
+  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotChange, slotContentChanged, writeMarks, writePosition, writeReference,
 } from './persist.js';
 import { renderDensity, renderMarks, renderResume } from './review-panel.js';
 import { previewPatch, renderCompletePanel } from './complete-panel.js';
@@ -106,7 +106,7 @@ export async function mountEditor(app, {
     showEnglish: true, hideEnglish: false, hoverDelta: 0,
     result: /** @type {{ tone: string, text: string } | null} */ (null),
     external: /** @type {null | 'changed' | 'removed'} */ (null),
-    saving: false, pending: null, leaving: false, externalChain: Promise.resolve(),
+    saving: false, saveDone: Promise.resolve(), pending: null, leaving: false, externalChain: Promise.resolve(),
     writing: 0, writeChain: Promise.resolve(), positionTimer: 0,
     resumeFrom: /** @type {import('../../core/model/marks.js').Position | null} */ (null),
     picks: { ...COMPLETION_DEFAULTS }, completeBusy: false, completeNumbers: /** @type {number[]} */ ([]), parts: null,
@@ -942,6 +942,17 @@ export async function mountEditor(app, {
     renderAll();
   }
 
+  /**
+   * بعد كتابة آخر موضع (مؤقّت السكون أو المغادرة): الحزمة الناتجة هي المفتوحة، ولا يُعاد إلا قسم «آخر موضع». فلا تُهدم اللوحة
+   * الجانبية ولا يسقط تركيز أو قائمة مفتوحة فيها كل بضع ثوانٍ (تدقيق 5fedcb9، GM-014.3).
+   */
+  function afterPositionWrite(b, slot) {
+    S.opened = b;
+    if (S.slot !== slot) return;
+    S.info = openedSlot(b, S.slot);
+    renderResume(resumeEl, { doc, items: resumeItems(), onResume: (n) => resumeSlot(n) });
+  }
+
   async function writeMarkPlan(plan, message, { undoable = true } = {}) {
     try {
       const b = await queue((opened) => writeMarks(store, videoId, opened, S.slot, plan, { now }));
@@ -1022,7 +1033,7 @@ export async function mountEditor(app, {
     if (index === null) return null;
     const slot = S.slot;
     return queue((opened) => writePosition(store, videoId, opened, slot, index, { now }))
-      .then((b) => { if (S.slot === slot) afterCompanionWrite(b); else S.opened = b; })
+      .then((b) => afterPositionWrite(b, slot))
       .catch(() => {});
   }
 
@@ -1241,6 +1252,7 @@ export async function mountEditor(app, {
 
   async function save() {
     if (S.saving) return;
+    commitFocusedTime();
     const why = saveBlockReason();
     if (why) {
       // الزر المعطّل لا يصل إلى هنا؛ هذا ⌘S، فيُذكر السبب بدل صمت.
@@ -1248,6 +1260,8 @@ export async function mountEditor(app, {
       return;
     }
     S.saving = true;
+    let done;
+    S.saveDone = new Promise((r) => { done = r; });
     renderHeader();
     const session = S.session;
     const at = session.version;
@@ -1260,7 +1274,12 @@ export async function mountEditor(app, {
       };
       const saved = await queue((opened) => saveSlot(store, videoId, opened, n, edit, { now }));
       S.result = null;
-      if (S.session === session && session.version !== at) {
+      if (S.session !== session) {
+        // فُتحت جلسة أخرى أثناء الانتظار (تبديل خانة مثلًا): المحفوظ للخانة القديمة، فلا يُفتح فوق الجلسة الجديدة ومسودتها؛
+        // يصبح الأحدث أساسها إن لم يمس محتواها، وإلا قرّر الفحص (تدقيق 5fedcb9، CX-002).
+        if (!slotContentChanged(S.opened, saved, S.slot)) adopt(saved);
+        else recheck();
+      } else if (session.version !== at) {
         // كتب المستخدم أثناء الحفظ: المحفوظ يصبح الأساس وما كُتب بعده يبقى غير محفوظ، فلا يُكتب فوق الحقل.
         S.opened = saved;
         S.info = openedSlot(saved, n);
@@ -1277,9 +1296,26 @@ export async function mountEditor(app, {
       } else toast(`تعذّر الحفظ: ${info.message}`, 'danger');
     } finally {
       S.saving = false;
+      done();
       flushPending();
       renderAll();
     }
+  }
+
+  /**
+   * زمن مكتوب في حقل لم يُغادَر بعد (change لا يُطلق إلا بالمغادرة أو Enter): يُعتمد قبل الحفظ والمغادرة والتبديل والتغيّر
+   * الخارجي، فلا يضيع بـ⌘S ولا يطمسه تحديث الصفوف (تدقيق 5fedcb9، GM-007).
+   */
+  function commitFocusedTime() {
+    const t = doc.activeElement;
+    const field = t?.dataset?.field;
+    if ((field !== 'start' && field !== 'end') || readOnly() || !S.session) return;
+    const node = rowOfNode(t);
+    if (!node) return;
+    const i = Number(node.dataset.index);
+    const cue = S.session.cueAt(i);
+    const shown = S.session.draftAt(i, field) ?? formatTimecode(field === 'start' ? cue.startMs : cue.endMs);
+    if (t.value !== shown) commitTime(i, field, t.value);
   }
 
   function flushPending() {
@@ -1323,6 +1359,7 @@ export async function mountEditor(app, {
    */
   function recheck() {
     S.externalChain = S.externalChain.then(async () => {
+      commitFocusedTime();
       let latest;
       try {
         latest = await store.getBundle(videoId);
@@ -1330,8 +1367,10 @@ export async function mountEditor(app, {
         toast(`تعذّرت قراءة آخر نسخة: ${toErrorInfo(err).message}`, 'danger');
         return;
       }
-      if (!latest?.slots[S.slot - 1].track) S.external = 'removed';
-      else if (!slotContentChanged(S.opened, latest, S.slot)) {
+      const kind = latest?.slots[S.slot - 1].track ? slotChange(S.opened, latest, S.slot) : 'removed';
+      if (kind === 'removed') S.external = 'removed';
+      else if (kind === 'none' || (kind === 'offset' && S.session.adoptOffset(latest.slots[S.slot - 1].offsetMs))) {
+        // إزاحة غيّرها المشغّل والمحرّر لم يغيّرها: تُتبنّى دون تعارض، فيبقى الحفظ والتراجع (GM-014.2).
         adopt(latest);
         return;
       } else if (S.session.dirty || S.session.hasDrafts) S.external = 'changed';
@@ -1360,15 +1399,19 @@ export async function mountEditor(app, {
       rebuildList();
     } else computeRefs(shownCues());
     titleEl.textContent = latest.record.title ?? 'بلا عنوان محفوظ';
-    // العلامات والموضع من الحزمة الأحدث (علامة من المشغّل مثلًا) على الصفوف المعروضة.
+    // العلامات والموضع من الحزمة الأحدث (علامة من المشغّل مثلًا) على الصفوف المعروضة. بلا فرض: المحتوى لم يتغير، فلا يُطمس
+    // ما يُكتب في الحقل المركّز.
     computeMarks();
-    S.list.refresh(null, true);
+    S.list.refresh(null);
     renderAll();
   }
 
   /** تبديل خانة التحرير (§١٩.٩): بتغييرات غير محفوظة حوار تأكيد، ولا تتغير النشطة. resume يقفز إلى آخر موضعها بعد التبديل. */
   async function switchSlot(n, { resume = false } = {}) {
+    // حفظٌ جارٍ يُنتظر أولًا: لا يُسأل المستخدم عن تغييرات يجري حفظها، ولا يصل رده بعد فتح خانة أخرى (CX-002).
+    if (S.saving) await S.saveDone;
     if (n === S.slot || !S.opened.slots[n - 1]?.track) return;
+    commitFocusedTime();
     if (S.session.dirty || S.session.hasDrafts) {
       const canSave = !saveBlockReason();
       const v = await openDialog({
@@ -1442,6 +1485,8 @@ export async function mountEditor(app, {
     });
     if (v !== 'restore') return;
     S.saving = true;
+    let done;
+    S.saveDone = new Promise((r) => { done = r; });
     renderHeader();
     try {
       const n = S.slot;
@@ -1456,6 +1501,7 @@ export async function mountEditor(app, {
       toast(`تعذّرت الاستعادة: ${info.message}`, 'danger');
     } finally {
       S.saving = false;
+      done();
       flushPending();
       renderAll();
     }
@@ -1598,6 +1644,7 @@ export async function mountEditor(app, {
   }
 
   async function goLibrary() {
+    commitFocusedTime();
     if ((S.session.dirty || S.session.hasDrafts) && !(await confirmLeave(doc, messageFor('ED_LEAVE_UNSAVED')))) return;
     S.leaving = true;
     win.location.assign(new URL('../library/index.html', win.location.href).href);
@@ -1721,6 +1768,7 @@ export async function mountEditor(app, {
     if (change.prefs?.newValue) {
       // حد سرعة القراءة من الإعدادات (R55) يسري فورًا؛ ولا يمس شيئًا محفوظًا.
       S.prefs = change.prefs.newValue;
+      commitFocusedTime();
       S.session.setDensity(densityOf(S.prefs));
       S.original.setDensity(densityOf(S.prefs));
       rebuildList();

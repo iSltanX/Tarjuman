@@ -443,6 +443,20 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
      * فالتراجع يعيد الأحدث كما هو، ولا يُكتب شيء حتى «حفظ».
      * @param {{ cues: Cue[], offsetMs: number }} latest @param {{ cues: Cue[], offsetMs: number }} merged
      */
+    /**
+     * إزاحة جديدة من مكان آخر (± في المشغّل) والجلسة لم تغيّر إزاحتها ولا في تاريخها خطوة إزاحة: تصبح الإزاحة وأساسها،
+     * وتبقى التعديلات والتاريخ (تدقيق 5fedcb9، GM-014.2). وإلا false فيبقى القرار للتعارض.
+     * @param {number} offsetMs
+     */
+    adoptOffset(offsetMs) {
+      if (offset !== baseOffset || undoStack.some((e) => e.offset) || redoStack.some((e) => e.offset)) return false;
+      if (offsetMs === offset) return true;
+      baseOffset = offsetMs;
+      offset = offsetMs;
+      emit({ kind: 'text', indices: [], offset: true });
+      return true;
+    },
+
     rebaseMerged(latest, merged) {
       session.rebase(latest);
       swapAll('rescue', merged.cues, { offsetMs: merged.offsetMs });
