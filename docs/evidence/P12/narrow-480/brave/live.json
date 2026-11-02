@@ -1,0 +1,257 @@
+{
+  "browser": "Brave (Chrome/156.0.8078.80)",
+  "at": "2026-11-02T14:42:38.732Z",
+  "headless": true,
+  "video": "iG9CE55wbtY",
+  "checks": [
+    {
+      "id": "load-unpacked",
+      "ac": "تحضير",
+      "ok": true,
+      "detail": {
+        "method": "Extensions.loadUnpacked"
+      }
+    },
+    {
+      "id": "captured-and-mounted",
+      "ac": "تحضير",
+      "ok": true,
+      "detail": {
+        "videoId": "iG9CE55wbtY",
+        "title": "Do schools kill creativity? | Sir Ken Robinson | TED",
+        "loading": false,
+        "captured": [
+          {
+            "key": "en|manual",
+            "ok": true
+          }
+        ],
+        "captureIssue": null,
+        "arabic": null,
+        "activeSlot": null,
+        "slots": [
+          {
+            "n": 1,
+            "filled": false,
+            "active": false,
+            "name": null,
+            "edited": false,
+            "cueCount": 0
+          },
+          {
+            "n": 2,
+            "filled": false,
+            "active": false,
+            "name": null,
+            "edited": false,
+            "cueCount": 0
+          },
+          {
+            "n": 3,
+            "filled": false,
+            "active": false,
+            "name": null,
+            "edited": false,
+            "cueCount": 0
+          }
+        ],
+        "view": {
+          "displayOffsetMs": 0,
+          "displayMode": "ar"
+        },
+        "marks": 0,
+        "mounted": {
+          "overlay": "mounted",
+          "controls": "mounted"
+        }
+      }
+    },
+    {
+      "id": "first-upload-direct-to-slot-1",
+      "ac": "P12-AC2",
+      "ok": true,
+      "detail": {
+        "active": 1,
+        "arabic": {
+          "n": 427,
+          "fileName": "ted.ar.srt",
+          "edited": false
+        }
+      }
+    },
+    {
+      "id": "normal: five-in-bar-menu-no-paragraphs",
+      "ac": "P12-AC7",
+      "ok": true,
+      "detail": {
+        "size": "normal",
+        "theater": false,
+        "fs": false,
+        "player": 967,
+        "menuH": 311
+      }
+    },
+    {
+      "id": "theater: five-in-bar-menu-no-paragraphs",
+      "ac": "P12-AC7",
+      "ok": true,
+      "detail": {
+        "size": "normal",
+        "theater": true,
+        "fs": false,
+        "player": 1400,
+        "menuH": 311
+      }
+    },
+    {
+      "id": "fullscreen: five-in-bar-menu-no-paragraphs",
+      "ac": "P12-AC7",
+      "ok": true,
+      "detail": {
+        "size": "fullscreen",
+        "theater": false,
+        "fs": true,
+        "player": 1400,
+        "menuH": 314
+      }
+    },
+    {
+      "id": "narrow: five-in-bar-menu-no-paragraphs",
+      "ac": "P12-AC7",
+      "ok": true,
+      "detail": {
+        "size": "compact",
+        "theater": false,
+        "fs": false,
+        "player": 480,
+        "menuH": 252
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ac": "عام",
+      "ok": true,
+      "detail": {
+        "errors": []
+      }
+    }
+  ],
+  "notes": [],
+  "screenshots": [
+    "docs/evidence/P12/narrow-480/brave/ac1-display-one.png",
+    "docs/evidence/P12/narrow-480/brave/ac7-normal.png",
+    "docs/evidence/P12/narrow-480/brave/ac7-theater.png",
+    "docs/evidence/P12/narrow-480/brave/ac7-fullscreen.png",
+    "docs/evidence/P12/narrow-480/brave/ac7-narrow.png"
+  ],
+  "measures": {
+    "normal": {
+      "player": {
+        "left": 16,
+        "right": 983,
+        "top": 68,
+        "bottom": 793,
+        "width": 967,
+        "height": 725
+      },
+      "menu": {
+        "top": 411,
+        "bottom": 722,
+        "left": 413,
+        "right": 713,
+        "width": 300,
+        "height": 311
+      },
+      "size": "normal"
+    },
+    "theater": {
+      "player": {
+        "left": 0,
+        "right": 1400,
+        "top": 56,
+        "bottom": 837,
+        "width": 1400,
+        "height": 781
+      },
+      "menu": {
+        "top": 455,
+        "bottom": 766,
+        "left": 830,
+        "right": 1130,
+        "width": 300,
+        "height": 311
+      },
+      "size": "normal"
+    },
+    "fullscreen": {
+      "player": {
+        "left": 0,
+        "right": 1400,
+        "top": 0,
+        "bottom": 950,
+        "width": 1400,
+        "height": 950
+      },
+      "menu": {
+        "top": 565,
+        "bottom": 879,
+        "left": 837,
+        "right": 1177,
+        "width": 340,
+        "height": 314
+      },
+      "size": "fullscreen"
+    },
+    "narrow": {
+      "player": {
+        "left": 0,
+        "right": 480,
+        "top": 56,
+        "bottom": 416,
+        "width": 480,
+        "height": 360
+      },
+      "menu": {
+        "top": 93,
+        "bottom": 345,
+        "left": 104,
+        "right": 404,
+        "width": 300,
+        "height": 252
+      },
+      "size": "compact"
+    }
+  },
+  "errors": [],
+  "diag": {
+    "state": "mounted",
+    "attempts": 1,
+    "failures": 0,
+    "lastCode": null,
+    "lastDetail": null,
+    "session": {
+      "renders": 28,
+      "renderFailures": 0,
+      "reinserts": 1,
+      "downloads": 0,
+      "copies": 0,
+      "imports": 1,
+      "flowFailures": 0,
+      "overflows": 0,
+      "switches": 0,
+      "marks": 0,
+      "syncs": 0,
+      "undos": 0,
+      "lastCode": null,
+      "lastDetail": null,
+      "open": null,
+      "size": "normal",
+      "overflow": null,
+      "styleMode": {
+        "group": "adopted",
+        "layer": "adopted"
+      },
+      "toasts": 0
+    }
+  }
+}

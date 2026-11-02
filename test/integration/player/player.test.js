@@ -4,7 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createController } from '../../../src/content/controller.js';
-import { buildExport, download } from '../../../src/core/export/index.js';
+import { buildExport, instructions } from '../../../src/core/export/index.js';
+import { saveFile } from '../../../src/core/save/index.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { mountControls } from '../../../src/player/controls/index.js';
 import { mountOverlay } from '../../../src/player/overlay/index.js';
@@ -42,11 +43,13 @@ async function openPage(area, { videoId = A } = {}) {
   const controller = createController({ store, extractor, page: { title: () => 'محاضرة تجريبية', durationMs: () => 30000 }, now: clock() });
   store.onChange((ch) => controller.handleStoreChange(ch));
   const files = [];
+  // saveFile الحقيقي: بلا واجهة تنزيلات ولا عامل هنا فيرجع إلى Blob (مسار الاحتياط نفسه في المتصفح).
   const exportFlow = {
     buildExport,
-    download(file, e) {
+    instructions,
+    saveFile(file, e) {
       files.push(file);
-      download(file, e);
+      return saveFile(file, e);
     },
   };
   const controls = mountControls(controller, { doc: env.doc, win: env.win, exportFlow, now: () => Date.parse(NOW) });
@@ -74,7 +77,7 @@ test('الدورة كاملة: تحميل بالبصمة ثم رفع الترج�
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('تنزيل SRT'));
+  click(page.ui.item('تنزيل ونسخ التعليمات'));
   await settle(area);
   assert.equal(page.files.length, 1);
   assert.equal(page.files[0].name, `${A}.en.manual.normal.srt`);
@@ -104,7 +107,7 @@ test('± ووضع العرض يُحفظان لكل فيديو ويُستعادا
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('تنزيل SRT'));
+  click(page.ui.item('تنزيل ونسخ التعليمات'));
   await settle(area);
   click(page.ui.btn('upload'));
   chooseFiles(page.ui, [new File([translate(page.files[0].text)], 'talk.ar.srt')]);
@@ -151,7 +154,7 @@ test('الاستبدال بتأكيد: الملخص الجديد وتنبيه ا
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('تنزيل SRT'));
+  click(page.ui.item('تنزيل ونسخ التعليمات'));
   await settle(area);
   const ar = translate(page.files[0].text);
   click(page.ui.btn('upload'));
@@ -161,11 +164,13 @@ test('الاستبدال بتأكيد: الملخص الجديد وتنبيه ا
   await settle(area);
   assert.equal(record(area).view.displayOffsetMs, 500);
 
-  // النسخة الثانية ينقصها المقطع 6
+  // النسخة الثانية ينقصها المقطع 6، وتُحفظ فوق الخانة 1 (الافتراضي أول خانة فارغة، فتُختار 1 صراحة).
   const missing = ar.split('\n\n').slice(0, 5).join('\n\n');
-  click(page.ui.item('استبدال الملف…'));
+  click(page.ui.item('رفع ترجمة…'));
   chooseFiles(page.ui, [new File([missing], 'v2.ar.srt')]);
   await settle(area);
+  assert.equal(page.ui.menuLabel(), 'رفع ترجمة');
+  click(page.ui.menu().querySelector('[data-fid="target:1"]'));
   assert.equal(page.ui.menuLabel(), 'استبدال الترجمة؟');
   assert.match(page.ui.menuText(), /مقطع واحد ناقص: 6/);
   assert.match(page.ui.menuText(), /ستُصفَّر إزاحة العرض/);
@@ -177,6 +182,7 @@ test('الاستبدال بتأكيد: الملخص الجديد وتنبيه ا
   assert.equal(page.ui.btn('badge').textContent, '0.0');
   assert.match(page.ui.toasts().map((t) => t.text).join(), /صُفّرت إزاحة العرض لأن الملف الجديد يحمل توقيته\./);
   assert.equal(page.ui.btn('upload').querySelector('.dot').getAttribute('data-tone'), 'warning');
+  assert.equal((await page.store.getBundle(A)).previous.track.fileName, 'v1.ar.srt', 'النسخة السابقة حُفظت قبل الاستبدال');
 });
 
 test('الخطوة من قائمة الشارة تُحفظ في الإعدادات وتصل إلى ± وإلى صفحة أخرى مفتوحة', async () => {
@@ -184,7 +190,7 @@ test('الخطوة من قائمة الشارة تُحفظ في الإعدادا
   const page = await openPage(area);
   const other = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('تنزيل SRT'));
+  click(page.ui.item('تنزيل ونسخ التعليمات'));
   await settle(area);
   click(page.ui.btn('upload'));
   chooseFiles(page.ui, [new File([translate(page.files[0].text)], 'a.srt')]);

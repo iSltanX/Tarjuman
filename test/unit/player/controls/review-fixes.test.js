@@ -108,13 +108,14 @@ test('إخفاق عابر في تحميل الخط لا يُحفظ: الطلب �
 test('إغلاق تأكيد الاستبدال أثناء الحفظ: تُطبَّق النتيجة دون إعادة فتح القائمة ولا نقل التركيز', async () => {
   const page = mountPage({ state: makeState({ arabic: arabic() }) });
   click(page.ui.btn('upload'));
-  click(page.ui.item('استبدال الملف…'));
+  click(page.ui.item('رفع ترجمة…'));
   chooseFiles(page.ui, [{ name: 'new.ar.srt' }]);
   await settle();
+  click(page.ui.menu().querySelector('[data-fid="target:1"]'));
   let release;
   const gate = new Promise((r) => (release = r));
-  const load = page.controller.loadArabic;
-  page.controller.loadArabic = async (...a) => {
+  const load = page.controller.loadArabicInto;
+  page.controller.loadArabicInto = async (...a) => {
     await gate;
     return load(...a);
   };
@@ -149,7 +150,7 @@ test('بديل النسخ يعيد التركيز إلى بند القائمة �
   const page = mountPage({ state: makeState({ captured: [trackInfo()] }), clipboard: 'none' });
   page.env.doc.execCommand = () => true;
   click(page.ui.btn('download'), 0);
-  const copy = page.ui.item('نسخ تعليمات الترجمة');
+  const copy = page.ui.field('copy');
   copy.focus();
   click(copy, 0);
   await settle();

@@ -2,24 +2,43 @@
 // يكتبه المستخدم، وما يجري) في عرض واحد: المجموعة في الشريط، والقوائم والتلميحات والرسائل في الطبقة. لا تكتب في
 // التخزين إلا عبر أفعال المتحكم، ولا ترمي إليه: الإخفاق رمز في التشخيص، أو رسالة مفهومة للمستخدم إن خصّ فعله.
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
+import { lookupMs } from '../../core/model/timing.js';
 import { formatOffset } from '../../ui/format.js';
-import { SELECTORS, getChromeBottom, getRightControls, isLiveNow } from '../youtube-dom.js';
+import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isLiveNow } from '../youtube-dom.js';
 import { watchBar } from './bar.js';
-import { copyText, instructionsFor, loadFor, readFor, runDownload } from './flows.js';
+import { attachedGlossary, copyText, loadIntoFor, nameHintFor, partSizes, prepareExport, readFor, recordFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
-import { LABELS, badgeTip, comparisonSummary, minusTip, nudgeFlash, parseSeconds, plusTip } from './text.js';
+import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
+import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
+import {
+  LABELS, badgeTip, comparisonSummary, downloadedLine, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime,
+  slotToast,
+} from './text.js';
 
 export const TOAST_MS = 3000;
 export const FLASH_MS = 1000;
-export const DONE_MS = 2000;
+/** إعادة حساب أحجام الأجزاء بعد توقف الكتابة في حقل الحجم. */
+export const PREVIEW_MS = 250;
+/** رسالة فيها «تراجع» تبقى أطول قليلًا من العابرة: وقت كافٍ للقرار دون أن تبقى فوق الفيديو. */
+export const UNDO_MS = 6000;
 const MAX_TOASTS = 3;
 const MAX_OFFSET_S = 600;
 const SPLIT = Object.freeze({ min: 50, max: 2000 });
 const STEP = Object.freeze({ min: 100, max: 10000 });
 const PRESET_STEPS = [500, 1000];
+const SENTENCE_STEP = 7;
 const KIND_ORDER = { manual: 0, asr: 1 };
+/** رفض يعني أن المشغّل يعرض مسارًا غير الإنجليزية الأصلية: يُرشد إلى اختيار English بخطوات (R64). */
+const NOT_ENGLISH = new Set(['EX_NOT_ENGLISH', 'EX_TRANSLATED_TRACK']);
+/** Brave قد يختار العربية أولًا؛ يُعرف من علامته في المتصفح نفسه. @param {Navigator | undefined} nav */
+const isBrave = (nav) => !!nav && (typeof nav.brave === 'object' || (Array.isArray(nav.userAgentData?.brands) && nav.userAgentData.brands.some((b) => /brave/i.test(String(b?.brand)))));
+/** حجم الجزء من نصه، أو null خارج الحدود. @param {unknown} raw */
+const splitSizeOf = (raw) => {
+  const n = Number(String(raw ?? '').trim());
+  return Number.isInteger(n) && n >= SPLIT.min && n <= SPLIT.max ? n : null;
+};
 /** زر كل قائمة: موضعها فوقه، وإليه يعود التركيز عند إغلاقها. */
 const ANCHOR = { download: 'download', display: 'upload', confirm: 'upload', timing: 'badge' };
 const ROLE = { download: 'menu', display: 'menu', confirm: 'dialog', timing: 'dialog' };
@@ -29,6 +48,9 @@ const TITLE = { download: LABELS.downloadTitle, display: LABELS.displayTitle, co
 const partsLabel = (n) => (n === 2 ? 'جزآن' : n % 100 >= 3 && n % 100 <= 10 ? `${n} أجزاء` : `${n} جزءًا`);
 const signOf = (ms) => (Math.round(ms / 100) === 0 ? 'zero' : ms > 0 ? 'positive' : 'negative');
 const okTracks = (s) => s.captured.filter((t) => t.ok && t.cueCount > 0).sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
+/** نماذج 1 2 3 من المتحكم؛ وحالة بلا خانات (متحكم الإصدار الأول) ترجمة واحدة في الخانة 1 نشطة. */
+const slotsOf = (s) => (Array.isArray(s.slots) && s.slots.length === 3 ? s.slots.map(({ n, filled, active, name }) => ({ n, filled, active, name }))
+  : [{ n: 1, filled: !!s.arabic, active: !!s.arabic, name: null }, { n: 2, filled: false, active: false, name: null }, { n: 3, filled: false, active: false, name: null }]);
 
 /** حالة الواجهة المحلية لفيديو واحد؛ تُستبدل كلها عند تبدّل الفيديو فلا يبقى شيء من السابق. */
 function freshUi(videoId) {
@@ -38,9 +60,13 @@ function freshUi(videoId) {
     hint: /** @type {string | null} */ (null),
     flash: /** @type {string | null} */ (null),
     copyBusy: false,
-    download: { key: null, mode: null, why: false, fallback: false, split: false, splitSize: null, splitError: null, busy: false, done: null, result: [] },
-    upload: { busy: false, error: null, warnings: [], pending: null, pickFor: null },
-    timing: { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null },
+    switching: false,
+    download: {
+      key: null, mode: null, why: false, fallback: false, split: false, splitSize: null, splitError: null, busy: false,
+      saveLine: null, copyLine: null, result: [], preview: null,
+    },
+    upload: { busy: false, error: null, warnings: [], pending: null, pickFor: null, plans: new Map() },
+    timing: { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null, sync: null },
   };
 }
 
@@ -53,7 +79,10 @@ function freshUi(videoId) {
  * }} deps
  */
 export function createControlsSession({ controller, doc, win, player, flows, now = () => Date.now() }) {
-  const counts = { renders: 0, renderFailures: 0, reinserts: 0, downloads: 0, copies: 0, imports: 0, flowFailures: 0, overflows: 0 };
+  const counts = {
+    renders: 0, renderFailures: 0, reinserts: 0, downloads: 0, copies: 0, imports: 0, flowFailures: 0, overflows: 0,
+    switches: 0, marks: 0, syncs: 0, undos: 0,
+  };
   let lastCode = null;
   let lastDetail = null;
   let destroyed = false;
@@ -62,9 +91,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let menuKind = null;
   let lastModel = null;
   let overflow = null;
-  let flags = { live: false, unavailable: false };
-  /** @type {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean }[]} */
+  let flags = { live: false, unavailable: false, brave: false };
+  /** @type {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action: { label: string } | null }[]} */
   let toasts = [];
+  /** فعل كل رسالة بفعل («تراجع») بمعرّفها؛ لا يدخل العرض. */
+  const toastActions = new Map();
   let toastSeq = 0;
   const timers = new Map();
   let seenNotice = null;
@@ -94,7 +125,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const b = doc.querySelector(SELECTORS.subtitlesButton);
     return !!b && (b.getAttribute('aria-disabled') === 'true' || b.hasAttribute('disabled'));
   }
-  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable() });
+  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator) });
 
   // ———— نماذج العرض ————
 
@@ -135,32 +166,74 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       selectedKey: tracks.some((t) => t.key === d.key) ? d.key : tracks[0]?.key ?? null,
       mode: d.mode ?? s.settings.export.modeDefault, durationMs: s.durationMs,
       why: d.why, fallbackOpen: d.fallback, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
-      busy: d.busy, copyBusy: ui.copyBusy, done: d.done, result: d.result,
+      busy: d.busy, copyBusy: ui.copyBusy, saveLine: d.saveLine, copyLine: d.copyLine, result: d.result,
+      glossary: attachedGlossary(s.prefs)?.length ?? 0,
+      englishGuide: !tracks.length && NOT_ENGLISH.has(s.captureIssue?.code ?? '') ? { brave: flags.brave } : null,
+      parts: previewParts(s, tracks),
     };
+  }
+
+  /** أحجام الأجزاء للمسار والوضع والحجم الحاليين، تُحسب مرة لكل تغيّر فيها (والكتابة في الحقل مؤجلة قليلًا). */
+  function previewParts(s, tracks) {
+    const d = ui.download;
+    const t = tracks.find((x) => x.key === d.key) ?? tracks[0];
+    const size = d.split ? splitSizeOf(d.splitSize ?? s.settings.export.splitThreshold) : null;
+    if (!t || !size) return null;
+    const mode = d.mode ?? s.settings.export.modeDefault;
+    const key = `${t.key}|${t.capturedAt}|${mode}|${size}`;
+    if (d.preview?.key !== key) d.preview = { key, rows: partSizes({ controller, exportFlow: flows.exportFlow, key: t.key, mode, split: { size, by: 'content' }, now: now() }) };
+    return d.preview.rows;
   }
 
   function displayModel(s) {
     const a = s.arabic;
+    const slots = slotsOf(s);
     return {
       fileName: a.fileName, count: a.cues.length, edited: a.edited, comparison: a.comparison, notes: a.comparison?.notes ?? [],
-      // الإصدار الأول: ترجمة واحدة في الخانة 1 نشطة، والخانتان 2 و3 فارغتان حتى تُضاف الخانات (P10/P12).
-      slots: [{ n: 1, filled: true, active: true, name: a.fileName }, { n: 2, filled: false, active: false, name: null }, { n: 3, filled: false, active: false, name: null }],
+      slots, switching: s.loading || ui.switching, uploadLabel: slots.some((x) => !x.filled) ? LABELS.uploadMore : LABELS.replace,
       warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, busy: ui.upload.busy, error: ui.upload.error,
     };
   }
 
+  /**
+   * ما يمسه الحفظ في الخانة n: عدد تعديلاتها اليدوية، و«إبقاء تعديلاتي» إن أتاحته المحاذاة. يُحسب مرة لكل ترجمة خانة
+   * (يُعاد إن تغيّرت الخانة من سياق آخر والتأكيد مفتوح).
+   */
+  function planFor(s, p, n) {
+    const track = s.bundle?.slots?.[n - 1]?.track ?? null;
+    const hit = ui.upload.plans.get(n);
+    if (hit && hit.track === track && hit.input === p.input) return hit.plan;
+    const edits = manualEdits(track);
+    const plan = { edits, keep: edits ? keepEditsPlan(track, p.input.cues) : null };
+    ui.upload.plans.set(n, { track, input: p.input, plan });
+    return plan;
+  }
+
+  /** التأكيد المضغوط بعد فحص الملف (§١٩.٣): الملف والملخص، وقرينة الاسم، و«حفظ في» 1 2 3، وما يمسه الاستبدال. */
   function confirmModel(s) {
     const p = ui.upload.pending;
-    return { fileName: p.input.fileName, count: p.input.cues.length, comparison: p.input.comparison, warnings: p.warnings, offsetMs: s.view.displayOffsetMs };
+    const slots = slotsOf(s);
+    const target = slots.find((x) => x.n === p.target) ?? slots[0];
+    const filled = target.filled;
+    const plan = filled ? planFor(s, p, target.n) : { edits: 0, keep: null };
+    const keepOk = !!plan.keep?.ok;
+    return {
+      fileName: p.input.fileName, count: p.input.cues.length, comparison: p.input.comparison, warnings: p.warnings,
+      hint: p.hint ? nameOtherLine(p.hint.title) : null, slots, target: target.n, filled, edits: plan.edits,
+      keepAvailable: keepOk, keep: keepOk && p.keep, conflicts: keepOk ? plan.keep.conflicts : 0,
+      offsetNote: filled && target.active && Math.round(s.view.displayOffsetMs / 100) !== 0,
+      busy: ui.upload.busy, error: ui.upload.error,
+    };
   }
 
   function timingModel(s) {
     const t = ui.timing;
     const step = s.settings.offsetStepMs;
     const off = s.view.displayOffsetMs;
+    const sync = t.sync ? { at: shortTime(t.sync.atMs), visible: t.sync.visible, ...sentenceWindow(s.arabic.cues, t.sync.start) } : null;
     return {
       offsetMs: off, offsetText: t.offsetText ?? formatOffset(off), offsetError: t.offsetError,
-      stepMs: step, custom: t.custom || !PRESET_STEPS.includes(step), stepText: t.stepText ?? stepText(step), stepError: t.stepError,
+      stepMs: step, custom: t.custom || !PRESET_STEPS.includes(step), stepText: t.stepText ?? stepText(step), stepError: t.stepError, sync,
     };
   }
 
@@ -175,12 +248,15 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (kind === 'display') {
       if (!s.arabic) return null;
       const m = displayModel(s);
-      return { kind, key: JSON.stringify({ ...m, comparison: m.comparison?.fingerprintId ?? null, c: s.arabic.cues.length, v: s.version }), build: () => displayMenu(h, act, m) };
+      return { kind, key: JSON.stringify({ ...m, comparison: m.comparison?.fingerprintId ?? null, c: s.arabic.cues.length, v: s.version }), build: () => displayMenu(h, act, m, layer.root) };
     }
     if (kind === 'confirm') {
       if (!ui.upload.pending) return null;
       const m = confirmModel(s);
-      return { kind, key: JSON.stringify({ f: m.fileName, n: m.count, w: m.warnings, o: m.offsetMs }), build: () => confirmMenu(h, act, m) };
+      return {
+        kind, label: m.filled ? LABELS.confirmTitle : LABELS.uploadTitle,
+        key: JSON.stringify({ ...m, comparison: m.comparison?.fingerprintId ?? null }), build: () => confirmMenu(h, act, m, layer.root),
+      };
     }
     if (kind === 'timing') {
       if (!s.arabic || s.loading) return null;
@@ -204,10 +280,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const fid = focused?.getAttribute?.('data-fid') ?? null;
     const caret = fid && typeof focused.selectionStart === 'number' ? focused.selectionStart : null;
     const nodes = spec.build();
+    const label = spec.label ?? TITLE[spec.kind];
     if (spec.kind !== menuKind || !layer.menuOpen()) {
-      layer.openMenu(nodes, group.button(ANCHOR[spec.kind]), { label: TITLE[spec.kind], role: ROLE[spec.kind] });
+      layer.openMenu(nodes, group.button(ANCHOR[spec.kind]), { label, role: ROLE[spec.kind] });
     } else {
-      layer.patchMenu(nodes);
+      layer.patchMenu(nodes, label);
     }
     menuKey = spec.key;
     menuKind = spec.kind;
@@ -255,7 +332,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   }
 
   function renderToasts() {
-    layer.renderToasts(toasts, dismissToast);
+    layer.renderToasts(toasts, dismissToast, runToast);
   }
 
   /** الحلقة الوحيدة: كل مدخل (حالة المتحكم، الشريط، فعل المستخدم) يمر هنا. */
@@ -266,9 +343,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       syncVideo(s);
       handleNotices(s);
       const bar = bar$.snapshot();
-      // اختفى شريط يوتيوب والقائمة مفتوحة بلا تركيز فيها (لا كتابة ولا لوحة مفاتيح) ولا عمل جارٍ ولا تأكيد ينتظر: تُغلق
-      // بدل أن تعود فجأة مع الشريط عند أول حركة للمؤشر.
-      if (bar.hidden && ui.open && ui.open !== 'confirm' && !ui.download.busy && !ui.upload.busy && !layer.isTyping() && !layer.focused()) ui.open = null;
+      // اختفى شريط يوتيوب والقائمة مفتوحة بلا تركيز فيها (لا كتابة ولا لوحة مفاتيح) ولا عمل جارٍ ولا قرار ينتظر (تأكيد، أو
+      // اختيار جملة للمزامنة): تُغلق بدل أن تعود فجأة مع الشريط عند أول حركة للمؤشر.
+      const pending = ui.open === 'confirm' || (ui.open === 'timing' && !!ui.timing.sync);
+      if (bar.hidden && ui.open && !pending && !ui.download.busy && !ui.upload.busy && !layer.isTyping() && !layer.focused()) ui.open = null;
       lastModel = groupModel(s, bar);
       group.update(lastModel);
       layer.setBar(bar);
@@ -290,8 +368,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     dropMenu();
     for (const t of toasts) clearTimer(t.id);
     clearTimer('flash');
-    clearTimer('done');
+    clearTimer('preview');
     toasts = [];
+    toastActions.clear();
   }
 
   function handleNotices(s) {
@@ -326,22 +405,54 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     timers.delete(key);
   }
 
-  /** رسالة عابرة: النجاح والمعلومة تختفيان بعد 3 ثوانٍ، والتحذير والخطأ يبقيان حتى الإغلاق. */
-  function addToast(tone, text) {
+  /**
+   * رسالة عابرة: النجاح والمعلومة تختفيان بعد 3 ثوانٍ، والتحذير والخطأ يبقيان حتى الإغلاق. ومعها فعل اختياري («تراجع»)
+   * يُنفَّذ مرة ثم تختفي، وتبقى الرسالة بفعلها 6 ثوانٍ.
+   * @param {'success' | 'info' | 'warning' | 'error'} tone @param {string} text
+   * @param {{ action?: { label: string, run: () => unknown } | null }} [o]
+   */
+  function addToast(tone, text, { action = null } = {}) {
     const id = `t${++toastSeq}`;
     const persist = tone === 'warning' || tone === 'error';
     const dropped = toasts.filter((t) => t.text === text);
-    for (const t of dropped) clearTimer(t.id);
-    toasts = [...toasts.filter((t) => t.text !== text), { id, tone, text, persist }];
-    while (toasts.length > MAX_TOASTS) clearTimer(toasts.shift().id);
-    if (!persist) later(id, TOAST_MS, () => dismissToast(id));
+    for (const t of dropped) {
+      clearTimer(t.id);
+      toastActions.delete(t.id);
+    }
+    toasts = [...toasts.filter((t) => t.text !== text), { id, tone, text, persist, action: action ? { label: action.label } : null }];
+    if (action) toastActions.set(id, action.run);
+    while (toasts.length > MAX_TOASTS) {
+      const old = toasts.shift();
+      clearTimer(old.id);
+      toastActions.delete(old.id);
+    }
+    if (!persist) later(id, action ? UNDO_MS : TOAST_MS, () => dismissToast(id));
     renderToasts();
   }
 
   function dismissToast(id) {
     clearTimer(id);
+    toastActions.delete(id);
     toasts = toasts.filter((t) => t.id !== id);
     renderToasts();
+  }
+
+  /** فعل الرسالة (التراجع): مرة واحدة، والإخفاق رسالة مفهومة. */
+  async function runToast(id) {
+    const run = toastActions.get(id);
+    dismissToast(id);
+    if (!run) return;
+    const vid = ui.videoId;
+    try {
+      await run();
+      counts.undos++;
+    } catch (err) {
+      if (destroyed || ui.videoId !== vid) return;
+      counts.flowFailures++;
+      fail('CT_UNDO_FAILED', err);
+      addToast('error', messageFor('CT_UNDO_FAILED'));
+    }
+    render();
   }
 
   // ———— الأفعال من الشريط ————
@@ -394,7 +505,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     if (ui.open === 'confirm') ui.upload.pending = null;
     ui.open = kind;
-    if (kind === 'timing') ui.timing = { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null };
+    if (kind === 'timing') ui.timing = { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null, sync: null };
     if (kind === 'display') ui.upload.error = null;
     render();
     if (keyboard) layer.focusFirst();
@@ -424,23 +535,36 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const t = ui.timing;
     switch (name) {
       case 'why': d.why = !d.why; break;
-      case 'track': d.key = value; d.done = null; d.result = []; break;
-      case 'mode': d.mode = value; d.done = null; break;
+      case 'track': d.key = value; d.saveLine = null; d.copyLine = null; d.result = []; break;
+      case 'mode': d.mode = value; d.saveLine = null; d.copyLine = null; break;
       case 'fallback': d.fallback = !d.fallback; break;
       case 'split': d.split = !!value; d.splitError = null; break;
-      case 'splitSize': d.splitSize = String(value); return;
+      case 'splitSize':
+        d.splitSize = String(value);
+        later('preview', PREVIEW_MS, render);
+        return;
       case 'download': startDownload(); return;
       case 'copy': startCopy(); return;
       case 'displayMode': setMode(value); return;
-      // تبديل الخانة النشطة: لا خانات غير الأولى في الإصدار الأول، فلا فعل حتى تُضاف (P10/P12).
-      case 'slot': return;
+      case 'slot': activate(Number(value)); return;
+      case 'mark': markVisible(); return;
       case 'replace': pick('replace'); return;
-      case 'confirmReplace': confirmReplace(); return;
+      case 'target':
+        if (ui.upload.pending && !ui.upload.busy) {
+          ui.upload.pending.target = Number(value);
+          ui.upload.pending.keep = false;
+          ui.upload.error = null;
+        }
+        break;
+      case 'keep': if (ui.upload.pending) ui.upload.pending.keep = !!value; break;
+      case 'confirmReplace': confirmUpload(); return;
       case 'cancelReplace':
         ui.upload.pending = null;
-        ui.open = 'display';
+        ui.upload.error = null;
+        ui.open = controller.getState().arabic ? 'display' : null;
         render();
-        layer.focusFirst();
+        if (ui.open) layer.focusFirst();
+        else group.focus('upload');
         return;
       case 'offsetText': t.offsetText = String(value); return;
       // change يصل عند فقد التركيز ولو بعد إغلاق القائمة (Esc أو النقر خارجها): الإغلاق إلغاء لما كُتب، لا تطبيق له.
@@ -448,6 +572,19 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       case 'step': chooseStep(String(value)); return;
       case 'stepText': t.stepText = String(value); return;
       case 'applyStep': if (ui.open === 'timing') applyStep(String(value)); return;
+      case 'sync': openSync(); return;
+      case 'syncEarlier': if (t.sync) t.sync = { ...t.sync, start: Math.max(0, t.sync.start - SENTENCE_STEP) }; break;
+      case 'syncLater': {
+        const count = controller.getState().arabic?.cues.length ?? 0;
+        if (t.sync) t.sync = { ...t.sync, start: Math.max(0, Math.min(t.sync.start + SENTENCE_STEP, count - SENTENCE_STEP)) };
+        break;
+      }
+      case 'syncBack':
+        t.sync = null;
+        render();
+        layer.find('sync')?.focus();
+        return;
+      case 'sentence': applySentence(Number(value)); return;
       case 'reset':
         t.offsetText = null;
         t.offsetError = null;
@@ -459,6 +596,61 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     render();
   }
 
+  /** تبديل الترجمة النشطة من 1 2 3، ورسالة «الترجمة 2» بتراجع إلى السابقة. لا أثر أثناء القراءة أو تبديل جارٍ. */
+  async function activate(n) {
+    const s = controller.getState();
+    const prev = s.activeSlot;
+    if (s.loading || ui.switching || !prev || prev === n || typeof controller.activateSlot !== 'function') return;
+    const mine = ui;
+    mine.switching = true;
+    render();
+    try {
+      await controller.activateSlot(n);
+    } catch (err) {
+      if (destroyed || ui !== mine) return;
+      mine.switching = false;
+      counts.flowFailures++;
+      addToast('error', toErrorInfo(err).message);
+      render();
+      return;
+    }
+    if (destroyed || ui !== mine) return;
+    mine.switching = false;
+    counts.switches++;
+    addToast('success', slotToast(n), { action: { label: LABELS.undo, run: () => controller.activateSlot(prev) } });
+    render();
+  }
+
+  /** «علّم للمراجعة»: المقطع الظاهر الآن في الترجمة النشطة (بزمن الفيديو والإزاحة)، ورسالة بتراجع. */
+  async function markVisible() {
+    const s = controller.getState();
+    const cues = s.arabic?.cues;
+    if (!cues || typeof controller.markCue !== 'function') return;
+    const video = getMainVideo(doc);
+    const at = video && Number.isFinite(video.currentTime) ? lookupMs(video.currentTime, s.view.displayOffsetMs) : NaN;
+    const index = visibleCueIndex(cues, at);
+    if (index === null) {
+      addToast('info', messageFor('CT_NO_VISIBLE_CUE'));
+      return;
+    }
+    const n = cues[index].n;
+    const mine = ui;
+    let r;
+    try {
+      r = await controller.markCue({ index }, 'todo');
+    } catch (err) {
+      if (destroyed || ui !== mine) return;
+      counts.flowFailures++;
+      addToast('error', toErrorInfo(err).message);
+      render();
+      return;
+    }
+    if (destroyed || ui !== mine) return;
+    counts.marks++;
+    addToast('success', markToast(n), { action: { label: LABELS.undo, run: () => r.undo() } });
+    render();
+  }
+
   function setMode(mode) {
     try {
       controller.setDisplayMode(mode)?.catch?.(() => {});
@@ -466,6 +658,45 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       ui.upload.error = toErrorInfo(err).message;
       render();
     }
+  }
+
+  /**
+   * «مزامنة بجملة…»: العرض الفرعي عند لحظة الفتح (ثابتة)، وجمل النشطة حولها؛ والتركيز داخله فلا يضيع موضع لوحة المفاتيح.
+   * لا يُمس الفيديو: لا إيقاف ولا قفز.
+   */
+  function openSync() {
+    const s = controller.getState();
+    const cues = s.arabic?.cues;
+    const video = getMainVideo(doc);
+    if (!cues?.length || !video || !Number.isFinite(video.currentTime)) return;
+    const atMs = Math.round(video.currentTime * 1000);
+    const at = lookupMs(video.currentTime, s.view.displayOffsetMs);
+    const visible = visibleCueIndex(cues, at);
+    const center = visible ?? nearestCueIndex(cues, at);
+    ui.timing.sync = { atMs, start: windowAround(cues.length, center), visible };
+    ui.timing.offsetText = null;
+    ui.timing.offsetError = null;
+    render();
+    (layer.find(`sentence:${center}`) ?? layer.find('syncBack'))?.focus();
+  }
+
+  /** الجملة المختارة تظهر بدايتها عند لحظة الفتح: إزاحة فورية، ورسالة «الإزاحة −3.2 ث» بتراجع. لا يتغير الملف. */
+  function applySentence(index) {
+    const s = controller.getState();
+    const t = ui.timing;
+    const cue = s.arabic?.cues[index];
+    if (!t.sync || !cue || s.loading) return;
+    const prev = s.view.displayOffsetMs;
+    const next = syncOffset(t.sync.atMs, cue);
+    t.sync = null;
+    t.offsetText = null;
+    t.offsetError = null;
+    controller.setOffset(next)?.catch?.(() => {});
+    if (next !== prev) group.pulse();
+    counts.syncs++;
+    addToast('success', offsetToast(next), { action: { label: LABELS.undo, run: () => controller.setOffset(prev) } });
+    render();
+    layer.find('sync')?.focus();
   }
 
   function applyOffset(text) {
@@ -526,83 +757,114 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     render();
   }
 
-  /** حجم الجزء من حقله إن طُلب التقسيم؛ القيمة غير الصالحة توقف الفعل بخطأ تحت الحقل. */
+  /** حجم الجزء من حقله إن طُلب التقسيم (عند الجمل أو الصمت، R60)؛ القيمة غير الصالحة توقف الفعل بخطأ تحت الحقل. */
   function splitSpec() {
     const d = ui.download;
     if (!d.split) return { ok: true, split: null };
-    const raw = d.splitSize ?? String(controller.getState().settings.export.splitThreshold);
-    const n = Number(String(raw).trim());
-    if (!Number.isInteger(n) || n < SPLIT.min || n > SPLIT.max) {
+    const n = splitSizeOf(d.splitSize ?? controller.getState().settings.export.splitThreshold);
+    if (n === null) {
       d.splitError = messageFor('CT_SPLIT_INVALID');
       return { ok: false };
     }
     d.splitError = null;
-    return { ok: true, split: { size: n } };
+    return { ok: true, split: { size: n, by: 'content' } };
   }
 
-  async function startDownload() {
-    const d = ui.download;
-    if (d.busy) return;
-    const s = controller.getState();
-    const m = downloadModel(s);
-    if (!m.selectedKey) return;
+  /** ما يُصدَّر الآن: المسار المختار بوضعه وتقسيمه، أو null مع خطأ الحقل. */
+  function exportSpec() {
+    const m = downloadModel(controller.getState());
+    if (!m.selectedKey) return null;
     const sp = splitSpec();
     if (!sp.ok) {
       render();
       layer.find('splitSize')?.focus();
-      return;
+      return null;
     }
+    return { key: m.selectedKey, mode: m.mode, split: sp.split };
+  }
+
+  /** النسخ ونتيجته في سطرها؛ النص لا يُعرض أبدًا. */
+  async function copyInto(d, text) {
+    const ok = await copyText(text, { doc, win, root: layer.root });
+    if (ok) counts.copies++;
+    else counts.flowFailures++;
+    d.copyLine = ok ? { tone: 'ok', text: LABELS.copied } : { tone: 'error', text: LABELS.copyFailed };
+    return ok;
+  }
+
+  /**
+   * «تنزيل ونسخ التعليمات» (R61): فعل واحد بنتيجتين منفصلتين. النسخ أولًا: حوار «اسأل عن مكان الحفظ» يأخذ التركيز من
+   * الصفحة فيفشل النسخ بعده (R65). ثم الحفظ بمكان الإعدادات، ثم البصمة.
+   */
+  async function startDownload() {
+    const d = ui.download;
+    if (d.busy || ui.copyBusy) return;
+    const spec = exportSpec();
+    if (!spec) return;
     d.busy = true;
-    d.done = null;
+    d.saveLine = null;
+    d.copyLine = null;
     d.result = [];
     render();
-    const r = await runDownload({ controller, exportFlow: flows.exportFlow, doc, key: m.selectedKey, mode: m.mode, split: sp.split, now: now() });
+    const prep = prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
+    if (!prep.ok) {
+      d.busy = false;
+      counts.flowFailures++;
+      fail(prep.error.code, prep.error.message);
+      d.result = [{ tone: 'error', text: prep.error.message }];
+      render();
+      return;
+    }
+    await copyInto(d, prep.text);
+    if (destroyed || ui.download !== d) return;
+    render();
+    const files = prep.built.files;
+    const r = await saveFiles({ exportFlow: flows.exportFlow, files, doc });
     if (destroyed || ui.download !== d) return;
     d.busy = false;
-    if (!r.ok) {
-      counts.flowFailures++;
-      fail(r.error.code, r.error.message);
-      d.result = [{ tone: 'error', text: r.error.message }];
-    } else {
+    if (r.saved.length) {
       counts.downloads++;
-      d.done = r.names.length > 1 ? partsLabel(r.names.length) : r.names[0];
-      d.result = r.warnings.map((code) => ({ tone: code === 'EX_SPLIT_NOT_NEEDED' ? 'info' : 'warn', text: messageFor(code) }));
-      if (!r.saved) d.result.push({ tone: 'warn', text: r.saveError?.code === 'CT_VIDEO_CHANGED' ? r.saveError.message : messageFor('CT_FINGERPRINT_NOT_SAVED') });
-      later('done', DONE_MS, () => {
-        if (ui.download !== d) return;
-        d.done = null;
-        render();
-      });
+      d.saveLine = { tone: 'ok', text: downloadedLine(r.saved.length > 1 ? partsLabel(r.saved.length) : r.saved[0]) };
+    }
+    if (r.stopped) {
+      if (r.stopped.code !== 'SV_CANCELLED') {
+        counts.flowFailures++;
+        fail(r.stopped.code, r.stopped.message);
+      }
+      const line = { tone: r.stopped.code === 'SV_CANCELLED' ? 'info' : 'error', text: r.stopped.message };
+      if (r.saved.length) d.result.push(line);
+      else d.saveLine = line;
+    }
+    if (r.blob) d.result.push({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB') });
+    d.result.push(...prep.built.warnings.map((code) => ({ tone: code === 'EX_SPLIT_NOT_NEEDED' ? 'info' : 'warn', text: messageFor(code) })));
+    if (r.saved.length) {
+      const rec = await recordFor({ controller, key: spec.key, built: prep.built, videoId: prep.videoId });
+      if (destroyed || ui.download !== d) return;
+      if (!rec.saved) d.result.push({ tone: 'warn', text: rec.error.code === 'CT_VIDEO_CHANGED' ? rec.error.message : messageFor('CT_FINGERPRINT_NOT_SAVED') });
     }
     render();
   }
 
+  /** «نسخ التعليمات» وحده: تعليمات المسار والوضع والتقسيم المختارة، بالقاموس إن أُرفق. لا ملف ولا بصمة. */
   async function startCopy() {
-    if (ui.copyBusy) return;
-    const s = controller.getState();
-    const m = downloadModel(s);
-    if (!m.selectedKey) return;
-    const sp = splitSpec();
-    if (!sp.ok) {
-      render();
-      return;
-    }
-    const r = instructionsFor({ controller, exportFlow: flows.exportFlow, key: m.selectedKey, mode: m.mode, split: sp.split, now: now() });
-    if (!r.ok) {
+    const d = ui.download;
+    if (ui.copyBusy || d.busy) return;
+    const spec = exportSpec();
+    if (!spec) return;
+    const prep = prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
+    if (!prep.ok) {
       counts.flowFailures++;
-      ui.download.result = [{ tone: 'error', text: r.error.message }];
+      d.result = [{ tone: 'error', text: prep.error.message }];
       render();
       return;
     }
     const mine = ui;
     mine.copyBusy = true;
+    d.copyLine = null;
     render();
-    const ok = await copyText(r.text, { doc, win, root: layer.root });
+    await copyInto(d, prep.text);
     if (destroyed || ui !== mine) return;
     mine.copyBusy = false;
-    if (ok) counts.copies++;
-    else counts.flowFailures++;
-    addToast(ok ? 'success' : 'error', messageFor(ok ? 'CT_COPIED' : 'CT_COPY_FAILED'));
     render();
   }
 
@@ -620,6 +882,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     startImport(files, p.purpose === 'replace');
   }
 
+  /**
+   * فحص الملف ثم حفظه في خانة. لفيديو بلا ترجمة ولا قرينة على فيديو آخر يُحفظ في الخانة 1 مباشرة (المسار المعتاد)؛ وإلا
+   * تأكيد مضغوط داخل المشغّل يختار الخانة. لا كتابة في التخزين قبل «حفظ» أو «استبدال»، فالإلغاء لا يغيّر شيئًا.
+   */
   async function startImport(files, replacing) {
     const u = ui.upload;
     if (u.busy) return;
@@ -636,59 +902,70 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       render();
       return;
     }
-    if (controller.getState().arabic) {
-      u.busy = false;
-      u.pending = read;
-      ui.open = 'confirm';
-      render();
-      layer.focusFirst();
-      return;
-    }
-    const r = await loadFor({ controller, read, replace: false });
+    const hint = await nameHintFor({ controller, importFlow: flows.importFlow, read });
     if (destroyed || ui.upload !== u) return;
-    u.busy = false;
-    if (!r.ok) {
-      if (r.error.code === 'ST_ARABIC_EXISTS') {
-        u.pending = read;
-        ui.open = 'confirm';
+    const slots = slotsOf(controller.getState());
+    if (!hint && !slots.some((x) => x.filled)) {
+      const r = await loadIntoFor({ controller, read, n: 1, replace: false });
+      if (destroyed || ui.upload !== u) return;
+      u.busy = false;
+      if (r.ok) {
+        counts.imports++;
+        u.warnings = read.warnings;
+        ui.open = 'display';
         render();
-        layer.focusFirst();
         return;
       }
-      counts.flowFailures++;
-      addToast('error', r.error.message);
-      render();
-      return;
+      if (r.error.code !== 'ST_ARABIC_EXISTS') {
+        counts.flowFailures++;
+        addToast('error', r.error.message);
+        render();
+        return;
+      }
     }
-    counts.imports++;
-    u.warnings = read.warnings;
-    ui.open = 'display';
+    u.busy = false;
+    u.plans.clear();
+    u.pending = { ...read, hint, target: defaultTarget(slotsOf(controller.getState())), keep: false };
+    ui.open = 'confirm';
     render();
+    layer.focusFirst();
   }
 
-  async function confirmReplace() {
+  async function confirmUpload() {
     const u = ui.upload;
-    const read = u.pending;
-    if (!read || u.busy) return;
+    const p = u.pending;
+    if (!p || u.busy) return;
+    const s = controller.getState();
+    const m = confirmModel(s);
+    const plan = m.filled ? planFor(s, p, m.target) : null;
+    const current = m.keep && plan?.keep?.ok ? plan.keep.current : null;
     u.busy = true;
+    u.error = null;
     render();
-    const r = await loadFor({ controller, read, replace: true });
+    const r = await loadIntoFor({ controller, read: p, n: m.target, replace: m.filled, current });
     if (destroyed || ui.upload !== u) return;
     u.busy = false;
-    u.pending = null;
     // أغلق المستخدم التأكيد أثناء الحفظ (Esc أو النقر خارجه): تُطبَّق النتيجة دون إعادة فتح القائمة ولا نقل التركيز.
     const stillOpen = ui.open === 'confirm';
     if (!r.ok) {
       counts.flowFailures++;
+      // امتلأت الخانة من سياق آخر قبل الحفظ: يبقى التأكيد مفتوحًا بحالتها الجديدة (فيصير «استبدال») مع سببه.
+      if (r.error.code === 'ST_ARABIC_EXISTS' && stillOpen) {
+        u.error = r.error.message;
+        render();
+        return;
+      }
+      u.pending = null;
       u.error = r.error.message;
       if (!stillOpen) addToast('error', r.error.message);
     } else {
       counts.imports++;
-      u.warnings = read.warnings;
+      u.pending = null;
+      u.warnings = p.warnings;
     }
-    if (stillOpen) ui.open = 'display';
+    if (stillOpen) ui.open = controller.getState().arabic ? 'display' : null;
     render();
-    if (stillOpen) layer.focusFirst();
+    if (stillOpen && ui.open) layer.focusFirst();
   }
 
   // ———— خارج القوائم: النقر خارجها وEsc ————

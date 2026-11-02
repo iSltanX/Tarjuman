@@ -5,7 +5,9 @@
 import { messageFor } from '../../core/errors/index.js';
 import { describeTrack } from '../../core/export/describe.js';
 import { formatOffset } from '../../ui/format.js';
-import { LABELS, comparisonSummary, cueCount, offsetMeaning, shortTime, slotLabel, stepSeconds } from './text.js';
+import {
+  LABELS, comparisonSummary, cueCount, editsLine, glossaryTag, keptLine, offsetMeaning, partRow, shortTime, slotLabel, stepSeconds, syncAt,
+} from './text.js';
 
 /**
  * @typedef {(name: string, value?: unknown) => void} Act
@@ -66,32 +68,66 @@ function segmented(h, label, options, current, act, name, fid) {
 }
 
 /**
- * محدد الترجمات 1 2 3 (§١٩.٢): النشطة بلون الإبراز، والمحفوظة بإطار، والفارغة باهتة ومعطّلة في الاختيار، بلا تسميات.
+ * محدد الترجمات 1 2 3 (§١٩.٢) بمعنى `slotPicker` في src/ui وحالاته، داخل الجذر المغلق (فالتركيز من الجذر لا من المستند):
+ * النشطة بلون الإبراز، والمحفوظة بإطار، والفارغة باهتة، بلا تسميات. «تفعيل» يختار النشطة والفارغة معطّلة فيه؛ و«هدف» في
+ * تأكيد الرفع يختار الخانة الهدف والفارغة متاحة فيه. التركيز بالأسهم بين المتاحة، وEnter/Space تختار.
  * @param {H} h @param {Act} act @param {SlotModel[]} slots
+ * @param {{ mode?: 'activate' | 'target', target?: number, disabled?: boolean, root?: ShadowRoot | null, label?: string }} [o]
  */
-function slotPicker(h, act, slots) {
+function slotPicker(h, act, slots, { mode = 'activate', target = 0, disabled = false, root = null, label = LABELS.slots } = {}) {
+  const checked = (s) => (mode === 'target' ? s.n === target : s.active);
+  const usable = (s) => !disabled && (mode === 'target' || s.filled);
+  const focusN = (slots.find((s) => checked(s) && usable(s)) ?? slots.find(usable))?.n ?? null;
+  const name = mode === 'target' ? 'target' : 'slot';
+  const buttons = slots.map((s) => h('button', {
+    className: 'slot', text: String(s.n),
+    attrs: {
+      type: 'button', role: 'radio', 'aria-checked': checked(s) ? 'true' : 'false', 'data-filled': s.filled ? 'true' : 'false',
+      'aria-disabled': usable(s) ? null : 'true', 'aria-label': slotLabel(s), title: s.name ?? null, 'data-fid': `${name}:${s.n}`,
+      tabindex: s.n === focusN ? '0' : '-1', 'data-first': mode === 'target' && checked(s) ? '' : null,
+    },
+    // الإتاحة والاختيار يُقرآن من العقدة لحظة النقر (تبقى في مكانها عبر التحديث).
+    on: { click: (ev) => (ev.currentTarget.getAttribute('aria-disabled') !== 'true' && ev.currentTarget.getAttribute('aria-checked') !== 'true' ? act(name, s.n) : undefined) },
+  }));
   return h('div', {
     className: 'slots',
-    attrs: { role: 'radiogroup', 'aria-label': LABELS.slots },
-    children: slots.map((s) => h('button', {
-      className: 'slot', text: String(s.n),
-      attrs: {
-        type: 'button', role: 'radio', 'aria-checked': s.active ? 'true' : 'false', 'data-filled': s.filled ? 'true' : 'false',
-        'aria-disabled': s.filled ? null : 'true', 'aria-label': slotLabel(s), title: s.name ?? null, 'data-fid': `slot:${s.n}`,
+    attrs: { role: 'radiogroup', 'aria-label': label, 'aria-disabled': disabled ? 'true' : null },
+    on: {
+      keydown: (ev) => {
+        if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+        const group = ev.currentTarget;
+        const list = [...group.children].filter((b) => b.getAttribute('aria-disabled') !== 'true');
+        const at = list.indexOf(root?.activeElement ?? null);
+        if (at === -1 || list.length < 2) return;
+        ev.preventDefault();
+        // المحدد LTR كخط الأعداد: السهم الأيمن إلى الرقم التالي.
+        list[(at + (ev.key === 'ArrowRight' ? 1 : -1) + list.length) % list.length].focus();
       },
-      on: { click: (ev) => (ev.currentTarget.getAttribute('data-filled') === 'true' && ev.currentTarget.getAttribute('aria-checked') !== 'true' ? act('slot', s.n) : undefined) },
-    })),
+    },
+    children: buttons,
   });
 }
 
+/** سطر نتيجة مستقل (§١٩.٥): «✓ نُزّل …» أو «✓ نُسخت التعليمات»؛ وتعذّر النسخ زر يعيد المحاولة. */
+function resultLine(h, act, line, fid) {
+  if (line.tone === 'error' && fid === 'copyLine') {
+    return h('button', { className: 'line', text: line.text, attrs: { type: 'button', 'data-tone': 'error', 'data-fid': fid, 'aria-live': 'polite' }, on: { click: () => act('copy') } });
+  }
+  return h('div', { className: 'line', text: line.text, attrs: { 'data-tone': line.tone, 'data-fid': fid, role: line.tone === 'error' ? 'alert' : 'status' } });
+}
+
 /**
- * قائمة التحميل (§٦.١).
+ * قائمة التحميل (§٦.١ و§١٩.٥): «تنزيل ونسخ التعليمات» رئيسيًا و«نسخ التعليمات» ثانويًا بإشارة القاموس إن أُرفق، والنتيجتان
+ * سطران مستقلان؛ وخطوات اختيار English بسطر عند التقاط مسار عربي أو مترجم آليًا (وملاحظة Brave)؛ وأحجام الأجزاء تحت
+ * التقسيم الاحتياطي. لا عرض لنص التعليمات ولا لمكان الحفظ.
  * @param {H} h @param {Act} act
  * @param {{
  *   live: boolean, unavailable: boolean, captureIssue: string | null, invalid: { code: string | null }[],
  *   tracks: import('../../extract/index.js').TrackInfo[], selectedKey: string | null, mode: 'normal' | 'long', durationMs: number | null,
  *   why: boolean, fallbackOpen: boolean, split: boolean, splitSize: string, splitError: string | null,
- *   busy: boolean, copyBusy: boolean, done: string | null, result: { tone: 'info' | 'warn' | 'error', text: string }[],
+ *   busy: boolean, copyBusy: boolean, saveLine: { tone: string, text: string } | null, copyLine: { tone: string, text: string } | null,
+ *   result: { tone: 'info' | 'warn' | 'error', text: string }[], glossary: number, englishGuide: { brave: boolean } | null,
+ *   parts: { index: number, from: number, to: number, chars: number }[] | null,
  * }} m
  */
 export function downloadMenu(h, act, m) {
@@ -101,7 +137,12 @@ export function downloadMenu(h, act, m) {
     return out;
   }
   if (!m.tracks.length) {
-    if (m.captureIssue) out.push(alert(h, 'warn', messageFor(m.captureIssue)));
+    if (m.captureIssue) {
+      const guide = m.englishGuide
+        ? [h('span', { className: 'steps', text: LABELS.englishSteps }), m.englishGuide.brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null]
+        : [];
+      out.push(alert(h, 'warn', messageFor(m.captureIssue), guide.filter(Boolean)));
+    }
     for (const t of m.invalid) out.push(alert(h, 'error', messageFor(t.code ?? 'EX_NO_TRACK')));
     if (m.unavailable && !m.captureIssue) {
       out.push(alert(h, 'info', messageFor('CT_NO_CAPTIONS')));
@@ -136,14 +177,21 @@ export function downloadMenu(h, act, m) {
   out.push(segmented(h, 'وضع التصدير', [{ value: 'normal', label: LABELS.modeNormal }, { value: 'long', label: LABELS.modeLong }], m.mode, act, 'mode', 'mode'));
   out.push(h('div', { className: 'note', text: m.mode === 'long' ? LABELS.modeLongNote : LABELS.modeNormalNote }));
 
-  const dl = m.busy ? LABELS.checking : m.done ? `✓ نُزّل ${m.done}` : LABELS.downloadSrt;
   out.push(h('div', {
     className: 'actions',
     children: [
-      button(h, 'primary', dl, { act, name: 'download', fid: 'download', first: m.tracks.length === 1, disabled: m.busy, extra: { 'data-done': m.done && !m.busy ? '' : null, 'aria-busy': m.busy ? 'true' : null } }),
-      button(h, 'secondary', LABELS.copyInstructions, { act, name: 'copy', fid: 'copy', disabled: m.copyBusy }),
+      button(h, 'primary', m.busy ? LABELS.checking : LABELS.downloadCopy, { act, name: 'download', fid: 'download', first: m.tracks.length === 1, disabled: m.busy || m.copyBusy, extra: { 'aria-busy': m.busy ? 'true' : null } }),
+      h('div', {
+        className: 'copyrow',
+        children: [
+          button(h, 'secondary', LABELS.copyShort, { act, name: 'copy', fid: 'copy', disabled: m.copyBusy || m.busy }),
+          m.glossary ? h('span', { className: 'tag', text: glossaryTag(m.glossary), attrs: { 'data-fid': 'glossary' } }) : null,
+        ],
+      }),
     ],
   }));
+  if (m.saveLine) out.push(resultLine(h, act, m.saveLine, 'saveLine'));
+  if (m.copyLine) out.push(resultLine(h, act, m.copyLine, 'copyLine'));
   for (const r of m.result) out.push(alert(h, r.tone, r.text));
 
   out.push(h('div', { className: 'sep' }));
@@ -170,23 +218,32 @@ export function downloadMenu(h, act, m) {
       size.value = m.splitSize;
       out.push(h('div', { className: 'row field', children: [h('label', { text: LABELS.splitSize }), size] }));
       out.push(h('div', { className: 'field-error', text: m.splitError ?? '', attrs: { 'aria-live': 'polite' } }));
+      if (m.parts) {
+        out.push(h('div', {
+          className: 'parts', attrs: { role: 'list', 'aria-label': LABELS.partsLabel },
+          children: m.parts.map((p) => h('div', { className: 'row part', attrs: { role: 'listitem' }, children: [h('bdi', { text: partRow(p), attrs: { dir: 'ltr' } })] })),
+        }));
+      }
     }
   }
   return out;
 }
 
 /**
- * قائمة الرفع والعرض (§٦.٢ و§١٩.٣): محدد الترجمات أعلاها، ثم الملف وعدده وسطر الملخص، وأوضاع العرض، والاستبدال.
+ * قائمة الرفع والعرض (§٦.٢ و§١٩.٣) بترتيبها: محدد الترجمات أعلاها، ثم الملف وعدده، وسطر الملخص، وأوضاع العرض الثلاثة،
+ * ثم «علّم للمراجعة» و«رفع ترجمة…» (أو «استبدال…») في صف واحد، فلا تزيد على سبعة صفوف ولا أسطر شرح.
  * @param {H} h @param {Act} act
  * @param {{
  *   fileName: string, count: number, edited: boolean, comparison: object | null, notes: string[], slots: SlotModel[],
+ *   switching: boolean, uploadLabel: string,
  *   warnings: string[], mode: 'ar' | 'dual' | 'off', dualAvailable: boolean, busy: boolean, error: string | null,
  * }} m
+ * @param {ShadowRoot | null} [root] جذر القائمة (للتركيز بالأسهم في المحدد)
  */
-export function displayMenu(h, act, m) {
+export function displayMenu(h, act, m, root = null) {
   const summary = comparisonSummary(m.comparison);
   const out = [
-    h('div', { className: 'head', children: [h('h2', { className: 'title', text: LABELS.displayTitle }), slotPicker(h, act, m.slots)] }),
+    h('div', { className: 'head', children: [h('h2', { className: 'title', text: LABELS.displayTitle }), slotPicker(h, act, m.slots, { disabled: m.switching, root })] }),
     h('div', {
       className: 'row file',
       children: [
@@ -218,32 +275,68 @@ export function displayMenu(h, act, m) {
     }),
   }));
   out.push(h('div', { className: 'sep' }));
-  out.push(button(h, 'item', m.busy ? LABELS.importing : LABELS.replace, { act, name: 'replace', fid: 'replace', disabled: m.busy, extra: { 'aria-busy': m.busy ? 'true' : null } }));
+  out.push(h('div', {
+    className: 'pair',
+    children: [
+      button(h, 'item', LABELS.markReview, { act, name: 'mark', fid: 'mark' }),
+      button(h, 'item', m.busy ? LABELS.importing : m.uploadLabel, { act, name: 'replace', fid: 'replace', disabled: m.busy, extra: { 'aria-busy': m.busy ? 'true' : null } }),
+    ],
+  }));
   if (m.error) out.push(alert(h, 'error', m.error));
   return out;
 }
 
 /**
- * تأكيد الاستبدال داخل المشغّل (§٦.٢): ملخص المقارنة الجديد وتنبيه تصفير الإزاحة.
+ * التأكيد المضغوط بعد فحص الملف (§١٩.٣): الملف وعدده، وسطر الملخص، وسطر قرينة الاسم، و«حفظ في» 1 2 3 (الممتلئة تعني
+ * الاستبدال)، وعند استبدال خانة معدّلة سطر ما سيُستبدل ومربع «إبقاء تعديلاتي» (معطّل بسببه في التلميح واسم الوصول حين
+ * لا تسمح المحاذاة)، وتنبيه تصفير الإزاحة للنشطة. لا جدول فروق هنا.
  * @param {H} h @param {Act} act
- * @param {{ fileName: string, count: number, comparison: object | null, warnings: string[], offsetMs: number }} m
+ * @param {{
+ *   fileName: string, count: number, comparison: object | null, warnings: string[], hint: string | null,
+ *   slots: SlotModel[], target: number, filled: boolean, edits: number, keepAvailable: boolean, keep: boolean, conflicts: number,
+ *   offsetNote: boolean, busy: boolean, error: string | null,
+ * }} m
+ * @param {ShadowRoot | null} [root]
  */
-export function confirmMenu(h, act, m) {
+export function confirmMenu(h, act, m, root = null) {
   const summary = comparisonSummary(m.comparison);
   const out = [
-    h('h2', { className: 'title', text: LABELS.confirmTitle }),
-    h('div', { className: 'row file', children: [h('span', { className: 'name', text: m.fileName, attrs: { dir: 'ltr' } }), h('span', { className: 'dim', text: `· ${cueCount(m.count)}` })] }),
+    h('h2', { className: 'title', text: m.filled ? LABELS.confirmTitle : LABELS.uploadTitle }),
+    h('div', { className: 'row file', children: [h('span', { className: 'name', text: m.fileName, attrs: { dir: 'ltr', title: m.fileName } }), h('span', { className: 'dim', text: `· ${cueCount(m.count)}` })] }),
     h('div', { className: 'row summary', text: summary.text, attrs: { 'data-tone': summary.tone } }),
   ];
+  if (m.hint) out.push(alert(h, 'warn', m.hint));
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
-  if (Math.round(m.offsetMs / 100) !== 0) out.push(alert(h, 'info', LABELS.offsetResetNote));
+  out.push(h('div', {
+    className: 'row target',
+    children: [h('span', { text: LABELS.saveTo }), slotPicker(h, act, m.slots, { mode: 'target', target: m.target, disabled: m.busy, root, label: LABELS.saveTo })],
+  }));
+  if (m.filled && m.edits > 0) {
+    out.push(h('div', { className: 'row edits', text: m.keep ? keptLine(m.conflicts) : editsLine(m.edits), attrs: { 'data-tone': m.keep ? 'ok' : 'warn', 'aria-live': 'polite' } }));
+    const reason = m.keepAvailable ? null : messageFor('CT_KEEP_UNAVAILABLE');
+    const check = h('input', {
+      className: 'check',
+      attrs: {
+        type: 'checkbox', 'data-fid': 'keep', disabled: m.keepAvailable && !m.busy ? null : '',
+        'aria-label': reason ? `${LABELS.keepEdits} — ${reason}` : LABELS.keepEdits,
+      },
+      on: { change: (ev) => act('keep', !!ev.target.checked) },
+    });
+    check.checked = m.keep;
+    out.push(h('label', {
+      className: 'item', attrs: { title: reason, 'aria-disabled': reason ? 'true' : null },
+      children: [check, h('span', { text: LABELS.keepEdits })],
+    }));
+  }
+  if (m.offsetNote) out.push(alert(h, 'info', LABELS.offsetResetNote));
   out.push(h('div', {
     className: 'actions inline',
     children: [
-      button(h, 'primary', LABELS.replaceConfirm, { act, name: 'confirmReplace', fid: 'confirm' }),
-      button(h, 'secondary', LABELS.cancel, { act, name: 'cancelReplace', fid: 'cancel', first: true }),
+      button(h, 'primary', m.busy ? LABELS.importing : m.filled ? LABELS.replaceConfirm : LABELS.save, { act, name: 'confirmReplace', fid: 'confirm', disabled: m.busy, extra: { 'aria-busy': m.busy ? 'true' : null } }),
+      button(h, 'secondary', LABELS.cancel, { act, name: 'cancelReplace', fid: 'cancel' }),
     ],
   }));
+  if (m.error) out.push(alert(h, 'error', m.error));
   return out;
 }
 
@@ -253,6 +346,7 @@ export function confirmMenu(h, act, m) {
  * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null }} m
  */
 export function timingMenu(h, act, m) {
+  if (m.sync) return syncView(h, act, m.sync);
   const value = formatOffset(m.offsetMs);
   const offset = h('input', {
     className: 'num',
@@ -300,9 +394,44 @@ export function timingMenu(h, act, m) {
     out.push(h('div', { className: 'row field', children: [h('label', { text: LABELS.stepCustomField, attrs: { for: 'tj-step' } }), step, h('span', { className: 'unit', text: LABELS.seconds })] }));
     out.push(h('div', { className: 'field-error', text: m.stepError ?? '', attrs: { id: 'tj-step-error', 'aria-live': 'polite' } }));
   }
+  out.push(button(h, 'item', LABELS.sync, { act, name: 'sync', fid: 'sync' }));
   out.push(h('div', { className: 'actions', children: [button(h, 'secondary', LABELS.reset, { act, name: 'reset', fid: 'reset' })] }));
   out.push(h('div', { className: 'note', text: LABELS.signLegend }));
   return out;
+}
+
+/**
+ * العرض الفرعي «مزامنة بجملة» (§١٩.٤): رأسه «عند 12:34» (لحظة الفتح الثابتة) و«رجوع»، ثم حتى سبع جمل من النشطة، كلٌّ سطر
+ * واحد مقصوص (الظاهرة الآن مميّزة)، ثم «أبكر» و«أحدث». لا شرح.
+ * @param {H} h @param {Act} act
+ * @param {{ at: string, visible: number | null, items: { index: number, n: number, text: string }[], earlier: boolean, later: boolean }} v
+ */
+function syncView(h, act, v) {
+  return [
+    h('div', {
+      className: 'head',
+      children: [
+        h('h2', { className: 'title', text: syncAt(v.at) }),
+        button(h, 'link', LABELS.back, { act, name: 'syncBack', fid: 'syncBack' }),
+      ],
+    }),
+    h('div', {
+      className: 'sentences',
+      attrs: { role: 'group', 'aria-label': LABELS.syncTitle },
+      children: v.items.map((it) => h('button', {
+        className: 'item sentence', text: it.text,
+        attrs: { type: 'button', 'data-fid': `sentence:${it.index}`, title: it.text, 'aria-current': it.index === v.visible ? 'true' : null, dir: 'auto' },
+        on: { click: () => act('sentence', it.index) },
+      })),
+    }),
+    h('div', {
+      className: 'pair',
+      children: [
+        button(h, 'item', LABELS.earlier, { act, name: 'syncEarlier', fid: 'syncEarlier', disabled: !v.earlier }),
+        button(h, 'item', LABELS.later, { act, name: 'syncLater', fid: 'syncLater', disabled: !v.later }),
+      ],
+    }),
+  ];
 }
 
 /** نص الخطوة في حقلها المخصص: «0.3». @param {number} ms */

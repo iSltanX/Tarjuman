@@ -3,8 +3,10 @@
 // جلسة عليهما، وتعيد المجموعة إلى بداية الشريط إن أعاد يوتيوب رسمه (مراقب على الشريط وفحص خفيف كل ثانية وعند أحداث
 // يوتيوب). لا ترمي أبدًا: الإخفاق رمز في state وفي diagnostics، ويبقى المشغّل سليمًا. deps للاختبار وحده.
 import { TjError } from '../../core/errors/index.js';
-import { buildExport, download } from '../../core/export/index.js';
-import { readImport } from '../../core/import/index.js';
+import { buildExport, instructions } from '../../core/export/index.js';
+import { readImport, reviewIncoming } from '../../core/import/index.js';
+import { saveFile } from '../../core/save/index.js';
+import { createStore } from '../../core/store/index.js';
 import { EVENTS, getPlayer, getRightControls } from '../youtube-dom.js';
 import { createControlsSession } from './session.js';
 
@@ -13,9 +15,16 @@ export const HEALTH_MS = 1000;
 export const MAX_FAILURES = 3;
 const COALESCE_MS = 50;
 
+/** فيديوهات المحفوظات بعناوينها لقرينة اسم الملف (قراءة الفهرس وحده، عند الرفع فقط). */
+let libraryStore = null;
+async function knownVideos() {
+  libraryStore ??= createStore();
+  return (await libraryStore.listIndex()).map((e) => ({ videoId: e.videoId, title: e.title ?? null }));
+}
+
 const DEFAULT_FLOWS = Object.freeze({
-  exportFlow: Object.freeze({ buildExport, download }),
-  importFlow: Object.freeze({ readImport }),
+  exportFlow: Object.freeze({ buildExport, instructions, saveFile }),
+  importFlow: Object.freeze({ readImport, reviewIncoming, knownVideos }),
 });
 
 /**

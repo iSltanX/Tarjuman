@@ -64,8 +64,33 @@ export function layerCss() {
 button.slot { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; width: 26px; height: 24px; border-radius: 6px; border: 1px solid transparent; font: 700 12px/1 var(--tj-p-font-mono); color: rgb(255 255 255 / 85%); cursor: pointer; }
 button.slot[data-filled="true"] { border-color: rgb(255 255 255 / 35%); }
 button.slot[aria-checked="true"] { background: var(--tj-p-accent); border-color: var(--tj-p-accent); color: #062322; }
-button.slot[data-filled="false"] { color: rgb(255 255 255 / 40%); cursor: default; }
-button.slot:hover:not([aria-checked="true"]):not([data-filled="false"]) { background: var(--tj-p-menu-hover); }
+button.slot[data-filled="false"] { color: rgb(255 255 255 / 40%); }
+button.slot[data-filled="false"][aria-checked="true"] { color: #062322; }
+button.slot:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); }
+button.slot[aria-disabled="true"] { cursor: default; }
+.slots[aria-disabled="true"] button.slot { opacity: 0.6; }
+.row.target { justify-content: space-between; min-height: 36px; }
+.row.edits { min-height: 28px; font-size: 0.93em; }
+.row.edits[data-tone="warn"] { color: var(--tj-p-warn); }
+.row.edits[data-tone="ok"] { color: var(--tj-p-ok); }
+label.item[aria-disabled="true"] { color: rgb(255 255 255 / 45%); cursor: default; background: none; }
+.sentences { display: flex; flex-direction: column; gap: 2px; }
+button.item.sentence { display: block; min-width: 0; line-height: 40px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; text-align: right; }
+button.item.sentence[aria-current="true"] { box-shadow: inset -3px 0 0 var(--tj-p-accent); background: rgb(255 255 255 / 6%); }
+.copyrow { display: flex; align-items: center; gap: 8px; }
+.copyrow > button.secondary { flex: 1; }
+.tag { flex: none; padding: 2px 8px; border-radius: 999px; background: rgb(255 255 255 / 10%); color: var(--tj-p-menu-text-2); font-size: 0.86em; white-space: nowrap; }
+.line { all: unset; box-sizing: border-box; display: block; padding: 2px 12px; font-size: 0.93em; }
+.line[data-tone="ok"] { color: var(--tj-p-ok); }
+.line[data-tone="info"] { color: var(--tj-p-menu-text-2); }
+.line[data-tone="error"] { color: var(--tj-p-error); }
+button.line { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.steps { direction: rtl; font-weight: 700; }
+.note-in { font-size: 0.93em; color: var(--tj-p-menu-text-2); }
+.parts { display: flex; flex-direction: column; padding: 0 0 4px; }
+.row.part { min-height: 26px; font: 500 0.93em/1.4 var(--tj-p-font-mono); color: var(--tj-p-menu-text-2); }
+.pair { display: flex; gap: 2px; }
+.pair > button.item { flex: 1 1 0; min-width: 0; width: auto; }
 .row { box-sizing: border-box; min-height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 12px; }
 .row.file { min-height: 32px; gap: 6px; }
 .dim { color: var(--tj-p-menu-text-2); white-space: nowrap; }
@@ -109,7 +134,6 @@ button.secondary { background: rgb(255 255 255 / 12%); color: #FFFFFF; }
 button.secondary:hover { background: rgb(255 255 255 / 18%); }
 button.danger { background: var(--tj-p-error); color: #2B0D0A; }
 button.primary[aria-disabled="true"], button.secondary[aria-disabled="true"] { opacity: 0.45; cursor: default; filter: none; }
-button.primary[data-done] { background: var(--tj-p-ok); }
 button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; font-size: 0.93em; }
 
 .seg { display: flex; gap: 2px; padding: 2px; margin: 0 8px; border-radius: 10px; background: rgb(255 255 255 / 8%); }
@@ -142,6 +166,8 @@ label.item:hover { background: var(--tj-p-menu-hover); }
 .toast .text { min-width: 0; }
 .toast button.x { all: unset; flex: none; cursor: pointer; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: rgb(255 255 255 / 80%); }
 .toast button.x:hover { background: var(--tj-p-menu-hover); color: #FFFFFF; }
+.toast button.act { all: unset; flex: none; cursor: pointer; padding: 2px 10px; margin-inline-start: 4px; border-radius: 6px; font-weight: 700; color: var(--tj-p-accent); }
+.toast button.act:hover { background: var(--tj-p-menu-hover); }
 
 .menu :focus-visible, .toast :focus-visible { ${FOCUS} }
 input.num:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--tj-p-accent); }

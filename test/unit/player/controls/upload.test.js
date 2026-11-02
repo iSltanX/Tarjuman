@@ -1,21 +1,22 @@
-// الرفع والعرض (P6-AC5 الجزء الآلي): دون ترجمة يفتح منتقي الملفات مباشرة، والفحص والمقارنة فوق readImport بالبصمات
-// المحفوظة، ثم loadArabic وملخص النتيجة؛ ومع ترجمة قائمة باسم الملف والملخص ووضع العرض والاستبدال بتأكيد يذكر تصفير
-// الإزاحة. لا تحميل لنتيجة قُرئت لفيديو سابق.
+// الرفع والعرض (P6-AC5، وP12-AC2 الجزء الآلي): دون ترجمة يفتح منتقي الملفات مباشرة، والفحص والمقارنة فوق readImport
+// بالبصمات المحفوظة، ثم الحفظ في خانة (loadArabicInto) وملخص النتيجة؛ ومع ترجمة قائمة باسم الملف والملخص ووضع العرض،
+// والرفع بتأكيد مضغوط: «حفظ في» 1 2 3 (الافتراضي أول خانة فارغة)، وقرينة الاسم، وما يمسه الاستبدال و«إبقاء تعديلاتي».
+// لا كتابة قبل التأكيد، ولا تحميل لنتيجة قُرئت لفيديو سابق.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { messageFor } from '../../../../src/core/errors/index.js';
-import { AR_CUES, arabic, chooseFiles, click, makeState, matched, mountPage, settle } from './harness.js';
+import { TjError, messageFor } from '../../../../src/core/errors/index.js';
+import { AR_CUES, arabic, chooseFiles, click, makeState, matched, mountPage, settle, slotTrack, withSlots } from './harness.js';
 
 const file = (name) => ({ name });
 
-test('دون ترجمة: زر الرفع يفتح منتقي الملفات مباشرة (لا قائمة)، ويقبل SRT وأجزاءه', () => {
+test('دون ترجمة: زر الرفع يفتح منتقي الملفات مباشرة (لا قائمة)، ويقبل SRT وأجزاءه وTXT وMarkdown', () => {
   const page = mountPage();
   let opened = 0;
   page.ui.fileInput().addEventListener('click', () => opened++);
   click(page.ui.btn('upload'));
   assert.equal(opened, 1);
   assert.equal(page.ui.menuOpen(), false);
-  assert.equal(page.ui.fileInput().getAttribute('accept'), '.srt,application/x-subrip,text/plain');
+  assert.equal(page.ui.fileInput().getAttribute('accept'), '.srt,.txt,.md,application/x-subrip,text/plain,text/markdown');
   assert.equal(page.ui.fileInput().hasAttribute('multiple'), true);
   click(page.ui.btn('download'));
   assert.equal(page.ui.menuOpen(), true);
@@ -34,9 +35,12 @@ test('اختيار ملف: فحص ومقارنة بالبصمات المحفوظ
   assert.deepEqual(page.flows.reads[0].names, ['talk.ar.srt']);
   assert.strictEqual(page.flows.reads[0].opts.fingerprints, fps);
   assert.strictEqual(page.flows.reads[0].opts.settings, page.controller.getState().settings);
-  const load = page.controller.calls.find((c) => c[0] === 'loadArabic');
-  assert.deepEqual(Object.keys(load[1]).sort(), ['comparison', 'cues', 'fileName', 'fingerprintId', 'notes'], 'مدخل loadArabic بعقده');
-  assert.deepEqual(load[2], { replace: false });
+  const load = page.controller.calls.find((c) => c[0] === 'loadArabicInto');
+  assert.equal(load[1], 1, 'فيديو بلا ترجمة ولا قرينة: الخانة 1 مباشرة');
+  assert.deepEqual(Object.keys(load[2]).sort(), ['comparison', 'cues', 'fileName', 'fingerprintId', 'notes'], 'مدخل loadArabic بعقده');
+  assert.deepEqual(load[3], { replace: false, activate: undefined });
+  assert.equal(page.flows.reviews[0].fileName, 'talk.ar.srt', 'فُحص الاسم قبل الحفظ');
+  assert.strictEqual(page.flows.reviews[0].fingerprints, fps);
   assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
   const text = page.ui.menuText();
   assert.match(text, /talk\.ar\.srt/);
@@ -57,7 +61,7 @@ test('ملف تالف أو بترميز آخر: رسالة القراءة كما
   click(page.ui.btn('upload'));
   chooseFiles(page.ui, [file('bad.srt')]);
   await settle();
-  assert.equal(page.controller.calls.some((c) => c[0] === 'loadArabic'), false);
+  assert.equal(page.controller.calls.some((c) => c[0] === 'loadArabicInto'), false);
   assert.deepEqual(page.ui.toasts().map((t) => t.tone), ['error']);
   assert.match(page.ui.toasts()[0].text, /السطر 214/);
 });
@@ -109,59 +113,180 @@ test('ملخص المقارنة بلونه: نقص بأرقامه، وتوقيت
   assert.equal(p3.ui.menu().querySelector('.summary').textContent, 'لا بصمة للمقارنة؛ عُرض الملف كما هو.');
 });
 
-test('استبدال الملف: منتقٍ، ثم فحص، ثم تأكيد داخل المشغّل بالملخص الجديد وتنبيه تصفير الإزاحة، ثم التحميل بالاستبدال', async () => {
-  const page = mountPage({ state: makeState({ arabic: arabic(), view: { displayOffsetMs: 1500, displayMode: 'ar' } }) });
+/** صفحة بترجمة في الخانة 1 (نشطة) وما يُعطى من غيرها، ثم الرفع من قائمة العرض حتى التأكيد المضغوط. */
+async function uploadAgain({ tracks = [slotTrack()], offset = 0, name = 'new.ar.srt', read = null, hint = null, known = [] } = {}) {
+  const page = mountPage({ state: makeState({ ...withSlots(tracks), view: { displayOffsetMs: offset, displayMode: 'ar' } }) });
+  if (read) page.flows.readResult = read;
+  page.flows.nameHint = hint;
+  page.flows.known = known;
   click(page.ui.btn('upload'));
   let opened = 0;
   page.ui.fileInput().addEventListener('click', () => opened++);
-  click(page.ui.item('استبدال الملف…'));
+  click(page.ui.item(tracks.filter(Boolean).length < 3 ? 'رفع ترجمة…' : 'استبدال…'));
   assert.equal(opened, 1);
-  page.flows.readResult = (files) => ({ ok: true, fileName: files[0].name, cues: AR_CUES.slice(0, 4), comparison: matched({ matched: false, missing: [5], countTarget: 4 }), fingerprintId: 'fp_test000001', notes: [], warnings: [] });
-  chooseFiles(page.ui, [file('new.ar.srt')]);
+  chooseFiles(page.ui, [file(name)]);
   await settle();
-  assert.equal(page.ui.menuLabel(), 'استبدال الترجمة؟');
+  return page;
+}
+const targets = (page) => page.ui.menu().querySelectorAll('button.slot').filter((b) => b.getAttribute('data-fid').startsWith('target:')).map((b) => [b.textContent, b.getAttribute('aria-checked'), b.getAttribute('data-filled'), b.getAttribute('aria-disabled')]);
+const loads = (page) => page.controller.calls.filter((c) => c[0] === 'loadArabicInto');
+
+test('رفع ثانٍ: تأكيد مضغوط بالملف وعدده وسطر الملخص، و«حفظ في» الافتراضي أول خانة فارغة، والحفظ يجعلها النشطة', async () => {
+  const page = await uploadAgain({ read: (files) => ({ ok: true, fileName: files[0].name, cues: AR_CUES.slice(0, 4), comparison: matched({ matched: false, missing: [5], countTarget: 4 }), fingerprintId: 'fp_test000001', notes: [], warnings: [] }) });
+  assert.equal(page.ui.menuLabel(), 'رفع ترجمة');
   const text = page.ui.menuText();
   assert.match(text, /new\.ar\.srt/);
   assert.match(text, /4 مقاطع/);
   assert.match(text, /مقطع واحد ناقص: 5/);
-  assert.match(text, /ستُصفَّر إزاحة العرض لأن الملف الجديد يحمل توقيته\./);
-  assert.equal(page.controller.calls.some((c) => c[0] === 'loadArabic'), false, 'لا شيء قبل التأكيد');
+  assert.match(text, /حفظ في/);
+  assert.deepEqual(targets(page), [['1', 'false', 'true', null], ['2', 'true', 'false', null], ['3', 'false', 'false', null]], 'الفارغة متاحة هدفًا');
+  assert.equal(page.ui.menuText().includes('ستُصفَّر'), false, 'خانة فارغة: لا تصفير للمعروضة');
+  assert.equal(page.ui.field('keep'), null, 'لا «إبقاء تعديلاتي» لخانة فارغة');
+  assert.equal(loads(page).length, 0, 'لا شيء قبل التأكيد');
+  click(page.ui.item('حفظ'));
+  await settle();
+  assert.deepEqual(loads(page)[0].slice(0, 2), ['loadArabicInto', 2]);
+  assert.deepEqual(loads(page)[0][3], { replace: false, activate: undefined }, 'التفعيل بافتراض المتحكم (الفارغة تصبح النشطة)');
+  assert.equal(page.controller.getState().activeSlot, 2);
+  assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
+  const slots = page.ui.menu().querySelectorAll('button.slot').filter((b) => b.getAttribute('data-fid').startsWith('slot:')).map((b) => b.getAttribute('aria-checked'));
+  assert.deepEqual(slots, ['false', 'true', 'false']);
+});
+
+test('الاستبدال: اختيار خانة ممتلئة يجعل الزر «استبدال» بتنبيه تصفير الإزاحة للنشطة، والحفظ بالاستبدال', async () => {
+  const page = await uploadAgain({ tracks: [slotTrack(), slotTrack({ fileName: 'b.srt' })], offset: 1500 });
+  assert.deepEqual(targets(page).map((t) => t[1]), ['false', 'false', 'true']);
+  click(page.ui.menu().querySelector('[data-fid="target:1"]'));
+  assert.equal(page.ui.menuLabel(), 'استبدال الترجمة؟');
+  assert.match(page.ui.menuText(), /ستُصفَّر إزاحة العرض لأن الملف الجديد يحمل توقيته\./);
+  click(page.ui.menu().querySelector('[data-fid="target:2"]'));
+  assert.equal(page.ui.menuText().includes('ستُصفَّر'), false, 'خانة غير نشطة: المعروض لا يتغير');
+  click(page.ui.menu().querySelector('[data-fid="target:1"]'));
   click(page.ui.item('استبدال'));
   await settle();
-  const load = page.controller.calls.find((c) => c[0] === 'loadArabic');
-  assert.deepEqual(load[2], { replace: true });
+  assert.deepEqual(loads(page)[0][3], { replace: true, activate: undefined });
   assert.equal(page.controller.getState().view.displayOffsetMs, 0);
-  assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
   assert.match(page.ui.toasts().map((t) => t.text).join(), /صُفّرت إزاحة العرض لأن الملف الجديد يحمل توقيته\./, 'إشعار المتحكم رسالة عابرة');
 });
 
-test('إلغاء الاستبدال يعيد قائمة العرض ولا يحمّل شيئًا؛ وإعادة الضغط على الرفع تغلقها', async () => {
-  const page = mountPage({ state: makeState({ arabic: arabic() }) });
-  click(page.ui.btn('upload'));
-  click(page.ui.item('استبدال الملف…'));
-  chooseFiles(page.ui, [file('new.ar.srt')]);
+test('الحفظ في خانة ممتلئة غير نشطة لا يغيّر المعروض، وإشعار حفظ السابقة', async () => {
+  const page = await uploadAgain({ tracks: [slotTrack(), slotTrack({ fileName: 'b.srt' }), slotTrack({ fileName: 'c.srt' })] });
+  assert.deepEqual(targets(page).map((t) => t[1]), ['true', 'false', 'false'], 'لا فارغة: الافتراضي النشطة');
+  click(page.ui.menu().querySelector('[data-fid="target:3"]'));
+  click(page.ui.item('استبدال'));
   await settle();
-  assert.equal(page.ui.menuLabel(), 'استبدال الترجمة؟');
-  assert.equal(page.ui.menuText().includes('ستُصفَّر'), false, 'الإزاحة صفر فلا تنبيه');
+  assert.equal(page.controller.getState().activeSlot, 1);
+  assert.equal(page.controller.getState().arabic.fileName, 'talk.ar.srt');
+  assert.ok(page.ui.toasts().some((t) => t.text.includes(messageFor('ST_PREVIOUS_SAVED'))));
+});
+
+const EDITED = AR_CUES.map((c, i) => (i < 2 ? { ...c, text: `${c.text} — معدّل` } : c));
+const THEIRS = AR_CUES.map((c, i) => (i === 4 ? { ...c, text: 'سطر جديد من الملف' } : c));
+const THREE = () => [slotTrack({ current: EDITED }), slotTrack({ fileName: 'b.srt' }), slotTrack({ fileName: 'c.srt' })];
+const readAs = (cues, comparison = matched()) => (files) => ({ ok: true, fileName: files[0].name, cues, comparison, fingerprintId: comparison?.fingerprintId ?? null, notes: [], warnings: [] });
+
+test('استبدال خانة معدّلة: «سيُستبدل تعديلان يدويان»، و«إبقاء تعديلاتي» يدمج فوق الجديد', async () => {
+  const page = await uploadAgain({ tracks: THREE(), read: readAs(THEIRS) });
+  assert.match(page.ui.menuText(), /سيُستبدل تعديلان يدويان/);
+  const keep = page.ui.field('keep');
+  assert.equal(keep.hasAttribute('disabled'), false, 'المحاذاة تسمح');
+  assert.equal(keep.getAttribute('aria-label'), 'إبقاء تعديلاتي');
+  keep.checked = true;
+  keep.dispatchEvent({ type: 'change', target: keep });
+  assert.match(page.ui.menuText(), /تُبقى تعديلاتك اليدوية/);
+  click(page.ui.item('استبدال'));
+  await settle();
+  const [, n, input, opts] = loads(page)[0];
+  assert.equal(n, 1);
+  assert.deepEqual(opts, { replace: true, activate: undefined });
+  assert.strictEqual(input.cues, THEIRS, 'الأصل الجديد هو الملف');
+  assert.deepEqual(input.current.map((c) => c.text), [EDITED[0].text, EDITED[1].text, AR_CUES[2].text, AR_CUES[3].text, 'سطر جديد من الملف'], 'التعديلات فوق الجديد');
+});
+
+test('دون «إبقاء تعديلاتي» يُستبدل الأصل والتعديلات معًا؛ والمحاذاة الضعيفة تعطّله بسببه في اسم الوصول', async () => {
+  const plain = await uploadAgain({ tracks: THREE(), read: readAs(THEIRS) });
+  click(plain.ui.item('استبدال'));
+  await settle();
+  assert.equal('current' in loads(plain)[0][2], false, 'بلا نسخة حالية');
+
+  const far = AR_CUES.map((c, i) => ({ ...c, startMs: 500000 + i * 9000, endMs: 503000 + i * 9000, text: `آخر ${i}` }));
+  const weak = await uploadAgain({ tracks: THREE(), read: readAs(far, null) });
+  const keep = weak.ui.field('keep');
+  assert.equal(keep.hasAttribute('disabled'), true);
+  assert.equal(keep.getAttribute('aria-label'), `إبقاء تعديلاتي — ${messageFor('CT_KEEP_UNAVAILABLE')}`);
+  assert.equal(keep.parentNode.getAttribute('title'), messageFor('CT_KEEP_UNAVAILABLE'), 'السبب في التلميح لا في سطر');
+  assert.equal(weak.ui.menuText().includes(messageFor('CT_KEEP_UNAVAILABLE')), false);
+});
+
+test('قرينة الاسم: سطر «الاسم يشير إلى فيديو آخر» بعنوانه المحفوظ مقصوصًا، ولو كان أول رفع (فلا حفظ مباشر)', async () => {
+  const long = 'محاضرة طويلة جدًا عن موضوع آخر تمامًا وعنوانها يتجاوز أربعين محرفًا';
+  const page = mountPage();
+  page.flows.nameHint = { videoId: 'BBBBBBBBBBB', differs: true };
+  page.flows.known = [{ videoId: 'BBBBBBBBBBB', title: long }];
+  click(page.ui.btn('upload'));
+  chooseFiles(page.ui, [file('BBBBBBBBBBB.en.manual.normal.ar.srt')]);
+  await settle();
+  assert.equal(loads(page).length, 0, 'لا حفظ قبل التأكيد');
+  assert.equal(page.flows.reviews[0].knownVideoIds[0], 'BBBBBBBBBBB');
+  const line = page.ui.menu().querySelectorAll('.alert').map((a) => a.textContent).find((t) => t.includes('الاسم يشير'));
+  assert.ok(line.startsWith('⚠الاسم يشير إلى فيديو آخر · محاضرة طويلة'));
+  assert.ok(line.endsWith('…'));
+  assert.equal(Array.from(line.split(' · ')[1]).length, 40);
+  assert.deepEqual(targets(page).map((t) => t[1]), ['true', 'false', 'false']);
+  click(page.ui.item('إلغاء'));
+  assert.equal(page.ui.menuOpen(), false, 'بلا ترجمة: الإلغاء يغلق');
+  assert.equal(loads(page).length, 0);
+});
+
+test('قرينة لفيديو غير محفوظ، أو تعذّر قراءة المحفوظات: السطر وحده بلا عنوان', async () => {
+  const page = mountPage();
+  page.flows.nameHint = { videoId: 'CCCCCCCCCCC', differs: true };
+  page.flows.knownFails = true;
+  click(page.ui.btn('upload'));
+  chooseFiles(page.ui, [file('CCCCCCCCCCC.en.asr.normal.ar.srt')]);
+  await settle();
+  const alerts = page.ui.menu().querySelectorAll('.alert').map((a) => a.textContent);
+  assert.ok(alerts.includes('⚠الاسم يشير إلى فيديو آخر'));
+});
+
+test('إلغاء الرفع يعيد قائمة العرض ولا يحفظ شيئًا؛ وإعادة الضغط على الرفع تغلقها', async () => {
+  const page = await uploadAgain();
+  assert.equal(page.ui.menuLabel(), 'رفع ترجمة');
   click(page.ui.item('إلغاء'));
   assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
-  assert.equal(page.controller.calls.some((c) => c[0] === 'loadArabic'), false);
+  assert.equal(loads(page).length, 0);
   click(page.ui.btn('upload'));
   assert.equal(page.ui.menuOpen(), false);
 });
 
-test('ترجمة أُضيفت من مكان آخر أثناء الفحص (ST_ARABIC_EXISTS): يُطلب التأكيد بدل الاستبدال الصامت', async () => {
+test('ترجمة أُضيفت من مكان آخر أثناء الفحص: يُطلب التأكيد بدل الحفظ الصامت في الخانة 1', async () => {
   const page = mountPage();
   let release;
   page.flows.readGate = new Promise((r) => (release = r));
   click(page.ui.btn('upload'));
   chooseFiles(page.ui, [file('a.srt')]);
-  page.controller.set({ arabic: arabic({ fileName: 'other.srt' }) });
+  page.controller.set({ ...withSlots([slotTrack({ fileName: 'other.srt' })]) });
   release();
   await settle();
   await settle();
+  assert.equal(page.ui.menuLabel(), 'رفع ترجمة');
+  assert.deepEqual(targets(page).map((t) => t[1]), ['false', 'true', 'false']);
+  assert.equal(loads(page).length, 0);
+});
+
+test('امتلأت الخانة الهدف من سياق آخر قبل الحفظ: يبقى التأكيد مفتوحًا بسببه، ويصير «استبدال»', async () => {
+  const page = await uploadAgain();
+  const save = page.ui.item('حفظ');
+  page.controller.loadArabicInto = async (n, input, opts) => {
+    page.controller.calls.push(['loadArabicInto', n, input, opts]);
+    page.controller.set({ ...withSlots([slotTrack(), slotTrack({ fileName: 'x.srt' })]) });
+    throw new TjError('ST_ARABIC_EXISTS');
+  };
+  click(save);
+  await settle();
+  assert.equal(page.ui.menuOpen(), true);
   assert.equal(page.ui.menuLabel(), 'استبدال الترجمة؟');
-  assert.equal(page.controller.calls.filter((c) => c[0] === 'loadArabic').length, 0);
+  assert.ok(page.ui.menuText().includes(messageFor('ST_ARABIC_EXISTS')));
 });
 
 test('تبدّل الفيديو أثناء الفحص: لا تحميل لنتيجة الفيديو السابق على الجديد', async () => {
@@ -174,7 +299,7 @@ test('تبدّل الفيديو أثناء الفحص: لا تحميل لنتي�
   release();
   await settle();
   await settle();
-  assert.equal(page.controller.calls.some((c) => c[0] === 'loadArabic'), false);
+  assert.equal(loads(page).length, 0);
   assert.equal(page.ui.menuOpen(), false);
   assert.equal(page.ui.btn('upload').querySelector('.spin').hasAttribute('hidden'), true, 'لا دوّار عالق على الفيديو الجديد');
 });

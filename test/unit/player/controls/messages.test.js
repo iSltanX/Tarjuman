@@ -107,7 +107,7 @@ test('الرسائل فوق القائمة المفتوحة لا فوق بنود
   click(page.ui.btn('download'));
   const menuY = parseInt(page.ui.menu().style.getPropertyValue('--y'), 10);
   assert.equal(y(), `${menuY + 220 + 12}px`, 'فوق أعلى القائمة');
-  click(page.ui.item('نسخ تعليمات الترجمة'));
+  page.controller.set({ notice: { code: 'ST_RESTORED', tone: 'info', at: 1 } });
   await settle();
   assert.equal(page.ui.toasts().length, 1);
   click(page.ui.btn('download'));
