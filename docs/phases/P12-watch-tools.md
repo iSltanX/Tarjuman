@@ -131,10 +131,10 @@
 ```json tj-status
 {
   "phase": "P12",
-  "status": "planned",
-  "updated": "2026-11-02",
-  "branch": null,
-  "resume": "لم تبدأ. تُتاح عند فتح W7 بعد التحقق من W6.",
+  "status": "in_progress",
+  "updated": "2026-11-02T16:35:32+03:00",
+  "branch": "tj/P12-watch-tools",
+  "resume": "بدأت: قراءة المواصفة §٦.٥ وتصميم §١٩ وعقود P10 ومحرّكات P11، ثم المهمة 2 (اختيار الترجمة وعلّم للمراجعة).",
   "blocker": null,
   "outcome": null,
   "commit": null,
