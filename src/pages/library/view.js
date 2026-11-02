@@ -471,6 +471,11 @@ export function createLibrary(env) {
       }
       return;
     }
+    // الصف المقصود بعد الرجوع خارج الصفحات المعروضة: تُوسَّع حتى تشمله (تدقيق 5fedcb9، GM-016.3).
+    if (state.focusId) {
+      const at = shown.findIndex((x) => x.videoId === state.focusId);
+      if (at >= state.limit) state.limit = Math.ceil((at + 1) / PAGE_SIZE) * PAGE_SIZE;
+    }
     const slice = shown.slice(0, state.limit);
     listHost.append(el('ul', { className: 'lib-list', attrs: { role: 'list' }, children: slice.map(buildRow), doc }));
     if (shown.length > slice.length) {
@@ -479,8 +484,9 @@ export function createLibrary(env) {
         onClick: () => { state.limit += PAGE_SIZE; render(); },
       }));
     }
-    // الرجوع من المحرّر: الصف المقصود يُبرَز ويُمرَّر إليه مرة واحدة.
-    if (state.focusId) {
+    // الرجوع من المحرّر: الصف المقصود يُبرَز ويُمرَّر إليه مرة واحدة، حين تظهر الصفحة للمستخدم؛ فلا يستهلكه تحديث في الخلفية
+    // (حفظ المحرّر في تبويب آخر) قبل أن يعود (GM-016.3).
+    if (state.focusId && doc.visibilityState !== 'hidden') {
       const row = listHost.querySelector(`li[data-video="${state.focusId}"]`);
       state.focusId = null;
       remember();
@@ -518,12 +524,16 @@ export function createLibrary(env) {
     }, 200);
   });
 
+  const onVisible = () => { if (doc.visibilityState === 'visible' && state.focusId && state.status === 'ready') render(); };
+  doc.addEventListener?.('visibilitychange', onVisible);
+
   render();
 
   return {
     root, state, toaster, load,
     dispose() {
       unsubscribe();
+      doc.removeEventListener?.('visibilitychange', onVisible);
       if (reloadTimer !== null) clearTimer(reloadTimer);
       for (const c of copyStates) c.dispose();
     },

@@ -6,6 +6,7 @@
 import { compare, currentComparison, fingerprintCoverage, previewRestoreTiming, rankReferences } from '../../core/compare/index.js';
 import { planRescue } from '../../core/edit/rescue.js';
 import { exportTiming } from '../../core/model/timing.js';
+import { normalizeSettings } from '../../core/model/settings.js';
 import { LIMITS } from '../../core/model/validate.js';
 import { READING_DEFAULTS } from '../../core/edit/density.js';
 import {
@@ -294,7 +295,7 @@ export async function mountEditor(app, {
       children: [
         el('aside', {
           className: 'ed-side',
-          children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': 'اللوحة الجانبية' }, children: sideTabs, doc }), reviewPane, completePane],
+          children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': 'اللوحة الجانبية' }, children: sideTabs, on: { keydown: onTabsKey }, doc }), reviewPane, completePane],
           doc,
         }),
         el('section', { className: 'ed-main', attrs: { 'aria-label': 'قائمة المقاطع' }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc }),
@@ -713,7 +714,7 @@ export async function mountEditor(app, {
     const theirs = openedSlot(latest, S.slot);
     const input = {
       base: S.session.baseSnapshot(), mine: S.session.snapshot(), theirs: theirs.cues,
-      offsets: { base: S.session.baseOffsetMs, mine: S.session.offsetMs, theirs: theirs.offsetMs },
+      offsets: { base: S.session.baseOffsetMs, mine: S.session.offsetMs, theirs: theirs.offsetMs, committed: S.session.committedMs },
     };
     const choice = await openRescueDialog({ doc, first: planRescue(input), offsets: input.offsets });
     if (choice === 'export') {
@@ -925,6 +926,22 @@ export async function mountEditor(app, {
     renderMarks(marksEl, { doc, marks: groups.marks, readOnly: readOnly(), onJump: (i) => jumpTo(i, 'text'), onRemoveOrphans: () => removeOrphans() });
     renderResume(resumeEl, { doc, items: resumeItems(), onResume: (n) => resumeSlot(n) });
     for (const t of sideTabs) t.textContent = t.dataset.tab === 'review' ? `المراجعة${groups.counts.todo ? ` (${groups.counts.todo})` : ''}` : 'الاستكمال';
+  }
+
+  /**
+   * التبويبات بلوحة المفاتيح (نمط WAI-ARIA Tabs): التبويب المختار وحده في ترتيب Tab، والأسهم بين التبويبات (الصفحة RTL: الأيسر
+   * إلى التالي)، وHome وEnd إلى الطرفين؛ والتنقل يختار التبويب ويركّزه. كان «الاستكمال» بـtabIndex=-1 بلا أسهم فلا يُبلَغ
+   * بلوحة المفاتيح (تدقيق 5fedcb9، GM-008).
+   */
+  function onTabsKey(e) {
+    const at = sideTabs.indexOf(doc.activeElement);
+    if (at === -1) return;
+    const last = sideTabs.length - 1;
+    const to = { ArrowLeft: at === last ? 0 : at + 1, ArrowRight: at === 0 ? last : at - 1, Home: 0, End: last }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    setSideTab(sideTabs[to].dataset.tab);
+    sideTabs[to].focus();
   }
 
   function setSideTab(id) {
@@ -1223,7 +1240,8 @@ export async function mountEditor(app, {
   /** «▶ في الفيديو»: زمن المقطع كما يظهر (المحفوظ + إزاحة العرض) في تبويب الفيديو المفتوح أو تبويب جديد. */
   async function onSeek(i) {
     const cue = act().cueAt(i);
-    const ms = Math.max(0, cue.startMs + S.session.offsetMs);
+    // إزاحة النسخة المعروضة نفسها التي يذكرها تلميح «▶ في الفيديو» (GM-027.3).
+    const ms = Math.max(0, cue.startMs + act().offsetMs);
     setActive(i);
     const r = await seek({ videoId, ms });
     S.lastSeek = { ok: r.ok, via: r.via ?? null, code: r.code ?? null, ms };
@@ -1663,7 +1681,9 @@ export async function mountEditor(app, {
     commitFocusedTime();
     if ((S.session.dirty || S.session.hasDrafts) && !(await confirmLeave(doc, messageFor('ED_LEAVE_UNSAVED')))) return;
     S.leaving = true;
-    win.location.assign(new URL('../library/index.html', win.location.href).href);
+    // آخر موضع قبل المغادرة (لا يكتمل غالبًا في pagehide)، والصف المقصود في المحفوظات (#v=…؛ تدقيق 5fedcb9، GM-016.3).
+    await writePositionNow();
+    win.location.assign(new URL(`../library/index.html#v=${videoId}`, win.location.href).href);
   }
 
   // ---- أحداث القائمة (تفويض من الحاوية) ----
@@ -1781,6 +1801,14 @@ export async function mountEditor(app, {
     e.returnValue = '';
   });
   store.onChange((change) => {
+    if (change.settings?.newValue) {
+      // عتبة الانحراف من الإعدادات تسري فورًا على المقارنة الحاضرة (GM-027.3)؛ وخطوة الأزرار اختيار المستخدم هنا فلا تُطمس.
+      settings = normalizeSettings(change.settings.newValue);
+      S.comparison = compareNow(act());
+      computeParts();
+      scheduleChrome();
+      renderComparisonPanel();
+    }
     if (change.prefs?.newValue) {
       // حد سرعة القراءة من الإعدادات (R55) يسري فورًا؛ ولا يمس شيئًا محفوظًا.
       S.prefs = change.prefs.newValue;

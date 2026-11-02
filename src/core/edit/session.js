@@ -238,6 +238,8 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     get offsetMs() { return offset; },
     get baseOffsetMs() { return baseOffset; },
     get offsetChanged() { return offset !== baseOffset; },
+    /** ما ثُبّت من الإزاحة في التوقيت منذ الفتح («تثبيت الإزاحة» المطبَّق): يغيّر الإزاحة ولا يغيّر الظاهر (GM-014.1). */
+    get committedMs() { return undoStack.filter((e) => e.kind === 'commit').reduce((sum, e) => sum + e.offset[0] - e.offset[1], 0); },
     get changedCount() { return Math.max(added, removed); },
     get dirty() { return added > 0 || removed > 0 || offset !== baseOffset; },
     get canUndo() { return undoStack.length > 0; },

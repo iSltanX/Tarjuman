@@ -152,3 +152,43 @@ test('GM-014.3: كتابة «آخر موضع» بعد سكون لا تهدم ا�
   assert.equal(env.root.contains(target), true, 'العنصر نفسه ما زال في الصفحة');
   assert.equal(editor.state.info.position?.n, editor.state.session.cueAt(4).n, 'الموضع كُتب');
 });
+
+test('GM-008: تبويبا «المراجعة» و«الاستكمال» بلوحة المفاتيح: الأسهم وHome وEnd تختار وتركّز، والمختار وحده في ترتيب Tab', async () => {
+  const { env } = await mounted();
+  const tabs = env.root.querySelectorAll('[role="tab"]');
+  assert.equal(tabs.length, 2);
+  const [review, complete] = tabs;
+  assert.deepEqual([review.tabIndex, complete.tabIndex], [0, -1]);
+  review.focus();
+  review.dispatchEvent({ type: 'keydown', key: 'ArrowLeft' });
+  assert.equal(env.doc.activeElement, complete, 'الأيسر إلى التالي في RTL');
+  assert.deepEqual([complete.getAttribute('aria-selected'), complete.tabIndex, review.tabIndex], ['true', 0, -1]);
+  assert.equal(env.root.querySelector('#ed-pane-complete')?.hidden ?? false, false);
+  complete.dispatchEvent({ type: 'keydown', key: 'Home' });
+  assert.equal(env.doc.activeElement, review);
+  review.dispatchEvent({ type: 'keydown', key: 'End' });
+  assert.equal(env.doc.activeElement, complete);
+  complete.dispatchEvent({ type: 'keydown', key: 'ArrowRight' });
+  assert.equal(env.doc.activeElement, review);
+});
+
+test('GM-016.3: «→ المحفوظات» يكتب آخر موضع ثم يعود بالصف المقصود (#v=…)', async () => {
+  const { editor, env, store, videoId } = await mounted();
+  editor.jumpTo(4, null);
+  const back = env.root.querySelectorAll('button').find((b) => b.textContent.includes('المحفوظات'));
+  assert.ok(back, 'زر الرجوع');
+  back.click();
+  await settle();
+  await env.flush();
+  assert.match(env.doc.defaultView.location.assigned, /library\/index\.html#v=AAAAAAAAAAA$/);
+  assert.equal((await store.getBundle(videoId)).slots[0].position?.n, editor.state.session.cueAt(4).n, 'كُتب الموضع قبل المغادرة');
+});
+
+test('GM-027.3: عتبة الانحراف من الإعدادات تسري على المقارنة الحاضرة دون إعادة فتح', async () => {
+  const { editor, env, store } = await mounted();
+  const before = editor.state.comparison?.driftThresholdMs;
+  await store.setSettings({ thresholds: { driftMs: 750 } });
+  await env.flush(5);
+  assert.notEqual(before, 750);
+  assert.equal(editor.state.comparison?.driftThresholdMs, 750);
+});

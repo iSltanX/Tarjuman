@@ -101,3 +101,24 @@ test('تدقيق 5fedcb9 (CX-001): قطعتا شطر محفوظ برقم واح�
   const r = rescueConflicts({ base: dup, mine: dup.map((c) => ({ ...c, text: `${c.text} م` })), theirs: dup.map((c) => ({ ...c, text: `${c.text} ث` })), offsets: ctx.offsets });
   assert.deepEqual(r.map((c) => c.key), [1, '2.1', '2.2']);
 });
+
+test('تدقيق 5fedcb9 (GM-014.1): «تثبيت الإزاحة» ثم ± من المشغّل: الإنقاذ يطبّق إزاحة الأحدث فوق التوقيت المثبّت مرة واحدة', () => {
+  const base = makeCues(3);
+  const session = createEditSession({ cues: base, offsetMs: 1000 });
+  assert.equal(session.commitOffset().ok, true);
+  assert.deepEqual([session.offsetMs, session.committedMs], [0, 1000]);
+  const mine = session.snapshot();
+  assert.equal(mine[0].startMs, base[0].startMs + 1000, 'التوقيت يحمل الإزاحة');
+  const shown = (r) => r.cues[0].startMs + r.offsetMs;
+  // المشغّل غيّر الإزاحة من +1.0 إلى +1.5 (لا توقيتًا): الظاهر المقصود +1.5، لا +2.5.
+  const offsets = { base: 1000, mine: session.offsetMs, theirs: 1500, committed: session.committedMs };
+  const r = planRescue({ base, mine, theirs: base, offsets });
+  assert.equal(r.ok, true);
+  assert.equal(r.offsetConflict, false, 'التثبيت لا يحرّك الظاهر فلا تعارض');
+  assert.equal(shown(r), base[0].startMs + 1500);
+  // الأحدث لم يحرّك الإزاحة: يبقى ظاهر التثبيت (+1.0).
+  assert.equal(shown(planRescue({ base, mine, theirs: base, offsets: { ...offsets, theirs: 1000 } })), base[0].startMs + 1000);
+  // وبعد التراجع عن التثبيت لا شيء مثبّت.
+  session.undo();
+  assert.equal(session.committedMs, 0);
+});

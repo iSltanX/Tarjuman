@@ -764,3 +764,20 @@ test('نص بحث المستخدم داخل عنوان «لا نتائج» مع�
   search.dispatchEvent({ type: 'input' });
   assert.equal(textOf(m.root.querySelector('.tj-empty__title')), `لا نتائج لـ«${iso('what?')}»`);
 });
+
+test('تدقيق 5fedcb9 (GM-016.3): الصف المقصود بعد الرجوع (#v=…) يُبرَز حين تظهر الصفحة لا في الخلفية، ولو كان بعد أول 50', async () => {
+  const ids = Array.from({ length: 60 }, (_, i) => `vid${String(i).padStart(8, '0')}`);
+  const target = ids[0]; // الأقدم تعديلًا: آخر القائمة بعد الخمسين الأولى
+  const nav = { get: () => `#v=${target}`, set() {} };
+  const { lib, doc, root } = await mount({ records: ids.map((id, i) => ({ id, title: `فيديو ${i}` })), env: { nav } });
+  doc.visibilityState = 'hidden';
+  await lib.load();
+  assert.equal(root.querySelector('.lib-row--target'), null, 'لا إبراز والصفحة مخفية');
+  assert.equal(lib.state.focusId, target, 'لا يُستهلك في الخلفية');
+  doc.visibilityState = 'visible';
+  for (const fn of doc._listeners.get('visibilitychange') ?? []) fn({ type: 'visibilitychange' });
+  const row = root.querySelector('.lib-row--target');
+  assert.ok(row, 'أُبرز حين ظهرت الصفحة');
+  assert.equal(row.getAttribute('data-video'), target, 'ولو كان بعد أول 50');
+  assert.equal(lib.state.focusId, null);
+});
