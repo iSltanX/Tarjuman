@@ -6,19 +6,21 @@ import { lookupMs } from '../../core/model/timing.js';
 import { formatOffset } from '../../ui/format.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isLiveNow } from '../youtube-dom.js';
 import { watchBar } from './bar.js';
-import { copyText, instructionsFor, loadIntoFor, nameHintFor, readFor, runDownload } from './flows.js';
+import { attachedGlossary, copyText, loadIntoFor, nameHintFor, partSizes, prepareExport, readFor, recordFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
 import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
 import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
 import {
-  LABELS, badgeTip, comparisonSummary, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime, slotToast,
+  LABELS, badgeTip, comparisonSummary, downloadedLine, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime,
+  slotToast,
 } from './text.js';
 
 export const TOAST_MS = 3000;
 export const FLASH_MS = 1000;
-export const DONE_MS = 2000;
+/** إعادة حساب أحجام الأجزاء بعد توقف الكتابة في حقل الحجم. */
+export const PREVIEW_MS = 250;
 /** رسالة فيها «تراجع» تبقى أطول قليلًا من العابرة: وقت كافٍ للقرار دون أن تبقى فوق الفيديو. */
 export const UNDO_MS = 6000;
 const MAX_TOASTS = 3;
@@ -28,6 +30,15 @@ const STEP = Object.freeze({ min: 100, max: 10000 });
 const PRESET_STEPS = [500, 1000];
 const SENTENCE_STEP = 7;
 const KIND_ORDER = { manual: 0, asr: 1 };
+/** رفض يعني أن المشغّل يعرض مسارًا غير الإنجليزية الأصلية: يُرشد إلى اختيار English بخطوات (R64). */
+const NOT_ENGLISH = new Set(['EX_NOT_ENGLISH', 'EX_TRANSLATED_TRACK']);
+/** Brave قد يختار العربية أولًا؛ يُعرف من علامته في المتصفح نفسه. @param {Navigator | undefined} nav */
+const isBrave = (nav) => !!nav && (typeof nav.brave === 'object' || (Array.isArray(nav.userAgentData?.brands) && nav.userAgentData.brands.some((b) => /brave/i.test(String(b?.brand)))));
+/** حجم الجزء من نصه، أو null خارج الحدود. @param {unknown} raw */
+const splitSizeOf = (raw) => {
+  const n = Number(String(raw ?? '').trim());
+  return Number.isInteger(n) && n >= SPLIT.min && n <= SPLIT.max ? n : null;
+};
 /** زر كل قائمة: موضعها فوقه، وإليه يعود التركيز عند إغلاقها. */
 const ANCHOR = { download: 'download', display: 'upload', confirm: 'upload', timing: 'badge' };
 const ROLE = { download: 'menu', display: 'menu', confirm: 'dialog', timing: 'dialog' };
@@ -50,7 +61,10 @@ function freshUi(videoId) {
     flash: /** @type {string | null} */ (null),
     copyBusy: false,
     switching: false,
-    download: { key: null, mode: null, why: false, fallback: false, split: false, splitSize: null, splitError: null, busy: false, done: null, result: [] },
+    download: {
+      key: null, mode: null, why: false, fallback: false, split: false, splitSize: null, splitError: null, busy: false,
+      saveLine: null, copyLine: null, result: [], preview: null,
+    },
     upload: { busy: false, error: null, warnings: [], pending: null, pickFor: null, plans: new Map() },
     timing: { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null, sync: null },
   };
@@ -77,7 +91,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let menuKind = null;
   let lastModel = null;
   let overflow = null;
-  let flags = { live: false, unavailable: false };
+  let flags = { live: false, unavailable: false, brave: false };
   /** @type {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action: { label: string } | null }[]} */
   let toasts = [];
   /** فعل كل رسالة بفعل («تراجع») بمعرّفها؛ لا يدخل العرض. */
@@ -111,7 +125,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const b = doc.querySelector(SELECTORS.subtitlesButton);
     return !!b && (b.getAttribute('aria-disabled') === 'true' || b.hasAttribute('disabled'));
   }
-  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable() });
+  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator) });
 
   // ———— نماذج العرض ————
 
@@ -152,8 +166,23 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       selectedKey: tracks.some((t) => t.key === d.key) ? d.key : tracks[0]?.key ?? null,
       mode: d.mode ?? s.settings.export.modeDefault, durationMs: s.durationMs,
       why: d.why, fallbackOpen: d.fallback, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
-      busy: d.busy, copyBusy: ui.copyBusy, done: d.done, result: d.result,
+      busy: d.busy, copyBusy: ui.copyBusy, saveLine: d.saveLine, copyLine: d.copyLine, result: d.result,
+      glossary: attachedGlossary(s.prefs)?.length ?? 0,
+      englishGuide: !tracks.length && NOT_ENGLISH.has(s.captureIssue?.code ?? '') ? { brave: flags.brave } : null,
+      parts: previewParts(s, tracks),
     };
+  }
+
+  /** أحجام الأجزاء للمسار والوضع والحجم الحاليين، تُحسب مرة لكل تغيّر فيها (والكتابة في الحقل مؤجلة قليلًا). */
+  function previewParts(s, tracks) {
+    const d = ui.download;
+    const t = tracks.find((x) => x.key === d.key) ?? tracks[0];
+    const size = d.split ? splitSizeOf(d.splitSize ?? s.settings.export.splitThreshold) : null;
+    if (!t || !size) return null;
+    const mode = d.mode ?? s.settings.export.modeDefault;
+    const key = `${t.key}|${t.capturedAt}|${mode}|${size}`;
+    if (d.preview?.key !== key) d.preview = { key, rows: partSizes({ controller, exportFlow: flows.exportFlow, key: t.key, mode, split: { size, by: 'content' }, now: now() }) };
+    return d.preview.rows;
   }
 
   function displayModel(s) {
@@ -339,7 +368,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     dropMenu();
     for (const t of toasts) clearTimer(t.id);
     clearTimer('flash');
-    clearTimer('done');
+    clearTimer('preview');
     toasts = [];
     toastActions.clear();
   }
@@ -506,11 +535,14 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const t = ui.timing;
     switch (name) {
       case 'why': d.why = !d.why; break;
-      case 'track': d.key = value; d.done = null; d.result = []; break;
-      case 'mode': d.mode = value; d.done = null; break;
+      case 'track': d.key = value; d.saveLine = null; d.copyLine = null; d.result = []; break;
+      case 'mode': d.mode = value; d.saveLine = null; d.copyLine = null; break;
       case 'fallback': d.fallback = !d.fallback; break;
       case 'split': d.split = !!value; d.splitError = null; break;
-      case 'splitSize': d.splitSize = String(value); return;
+      case 'splitSize':
+        d.splitSize = String(value);
+        later('preview', PREVIEW_MS, render);
+        return;
       case 'download': startDownload(); return;
       case 'copy': startCopy(); return;
       case 'displayMode': setMode(value); return;
@@ -725,83 +757,114 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     render();
   }
 
-  /** حجم الجزء من حقله إن طُلب التقسيم؛ القيمة غير الصالحة توقف الفعل بخطأ تحت الحقل. */
+  /** حجم الجزء من حقله إن طُلب التقسيم (عند الجمل أو الصمت، R60)؛ القيمة غير الصالحة توقف الفعل بخطأ تحت الحقل. */
   function splitSpec() {
     const d = ui.download;
     if (!d.split) return { ok: true, split: null };
-    const raw = d.splitSize ?? String(controller.getState().settings.export.splitThreshold);
-    const n = Number(String(raw).trim());
-    if (!Number.isInteger(n) || n < SPLIT.min || n > SPLIT.max) {
+    const n = splitSizeOf(d.splitSize ?? controller.getState().settings.export.splitThreshold);
+    if (n === null) {
       d.splitError = messageFor('CT_SPLIT_INVALID');
       return { ok: false };
     }
     d.splitError = null;
-    return { ok: true, split: { size: n } };
+    return { ok: true, split: { size: n, by: 'content' } };
   }
 
-  async function startDownload() {
-    const d = ui.download;
-    if (d.busy) return;
-    const s = controller.getState();
-    const m = downloadModel(s);
-    if (!m.selectedKey) return;
+  /** ما يُصدَّر الآن: المسار المختار بوضعه وتقسيمه، أو null مع خطأ الحقل. */
+  function exportSpec() {
+    const m = downloadModel(controller.getState());
+    if (!m.selectedKey) return null;
     const sp = splitSpec();
     if (!sp.ok) {
       render();
       layer.find('splitSize')?.focus();
-      return;
+      return null;
     }
+    return { key: m.selectedKey, mode: m.mode, split: sp.split };
+  }
+
+  /** النسخ ونتيجته في سطرها؛ النص لا يُعرض أبدًا. */
+  async function copyInto(d, text) {
+    const ok = await copyText(text, { doc, win, root: layer.root });
+    if (ok) counts.copies++;
+    else counts.flowFailures++;
+    d.copyLine = ok ? { tone: 'ok', text: LABELS.copied } : { tone: 'error', text: LABELS.copyFailed };
+    return ok;
+  }
+
+  /**
+   * «تنزيل ونسخ التعليمات» (R61): فعل واحد بنتيجتين منفصلتين. النسخ أولًا: حوار «اسأل عن مكان الحفظ» يأخذ التركيز من
+   * الصفحة فيفشل النسخ بعده (R65). ثم الحفظ بمكان الإعدادات، ثم البصمة.
+   */
+  async function startDownload() {
+    const d = ui.download;
+    if (d.busy || ui.copyBusy) return;
+    const spec = exportSpec();
+    if (!spec) return;
     d.busy = true;
-    d.done = null;
+    d.saveLine = null;
+    d.copyLine = null;
     d.result = [];
     render();
-    const r = await runDownload({ controller, exportFlow: flows.exportFlow, doc, key: m.selectedKey, mode: m.mode, split: sp.split, now: now() });
+    const prep = prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
+    if (!prep.ok) {
+      d.busy = false;
+      counts.flowFailures++;
+      fail(prep.error.code, prep.error.message);
+      d.result = [{ tone: 'error', text: prep.error.message }];
+      render();
+      return;
+    }
+    await copyInto(d, prep.text);
+    if (destroyed || ui.download !== d) return;
+    render();
+    const files = prep.built.files;
+    const r = await saveFiles({ exportFlow: flows.exportFlow, files, doc });
     if (destroyed || ui.download !== d) return;
     d.busy = false;
-    if (!r.ok) {
-      counts.flowFailures++;
-      fail(r.error.code, r.error.message);
-      d.result = [{ tone: 'error', text: r.error.message }];
-    } else {
+    if (r.saved.length) {
       counts.downloads++;
-      d.done = r.names.length > 1 ? partsLabel(r.names.length) : r.names[0];
-      d.result = r.warnings.map((code) => ({ tone: code === 'EX_SPLIT_NOT_NEEDED' ? 'info' : 'warn', text: messageFor(code) }));
-      if (!r.saved) d.result.push({ tone: 'warn', text: r.saveError?.code === 'CT_VIDEO_CHANGED' ? r.saveError.message : messageFor('CT_FINGERPRINT_NOT_SAVED') });
-      later('done', DONE_MS, () => {
-        if (ui.download !== d) return;
-        d.done = null;
-        render();
-      });
+      d.saveLine = { tone: 'ok', text: downloadedLine(r.saved.length > 1 ? partsLabel(r.saved.length) : r.saved[0]) };
+    }
+    if (r.stopped) {
+      if (r.stopped.code !== 'SV_CANCELLED') {
+        counts.flowFailures++;
+        fail(r.stopped.code, r.stopped.message);
+      }
+      const line = { tone: r.stopped.code === 'SV_CANCELLED' ? 'info' : 'error', text: r.stopped.message };
+      if (r.saved.length) d.result.push(line);
+      else d.saveLine = line;
+    }
+    if (r.blob) d.result.push({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB') });
+    d.result.push(...prep.built.warnings.map((code) => ({ tone: code === 'EX_SPLIT_NOT_NEEDED' ? 'info' : 'warn', text: messageFor(code) })));
+    if (r.saved.length) {
+      const rec = await recordFor({ controller, key: spec.key, built: prep.built, videoId: prep.videoId });
+      if (destroyed || ui.download !== d) return;
+      if (!rec.saved) d.result.push({ tone: 'warn', text: rec.error.code === 'CT_VIDEO_CHANGED' ? rec.error.message : messageFor('CT_FINGERPRINT_NOT_SAVED') });
     }
     render();
   }
 
+  /** «نسخ التعليمات» وحده: تعليمات المسار والوضع والتقسيم المختارة، بالقاموس إن أُرفق. لا ملف ولا بصمة. */
   async function startCopy() {
-    if (ui.copyBusy) return;
-    const s = controller.getState();
-    const m = downloadModel(s);
-    if (!m.selectedKey) return;
-    const sp = splitSpec();
-    if (!sp.ok) {
-      render();
-      return;
-    }
-    const r = instructionsFor({ controller, exportFlow: flows.exportFlow, key: m.selectedKey, mode: m.mode, split: sp.split, now: now() });
-    if (!r.ok) {
+    const d = ui.download;
+    if (ui.copyBusy || d.busy) return;
+    const spec = exportSpec();
+    if (!spec) return;
+    const prep = prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
+    if (!prep.ok) {
       counts.flowFailures++;
-      ui.download.result = [{ tone: 'error', text: r.error.message }];
+      d.result = [{ tone: 'error', text: prep.error.message }];
       render();
       return;
     }
     const mine = ui;
     mine.copyBusy = true;
+    d.copyLine = null;
     render();
-    const ok = await copyText(r.text, { doc, win, root: layer.root });
+    await copyInto(d, prep.text);
     if (destroyed || ui !== mine) return;
     mine.copyBusy = false;
-    if (ok) counts.copies++;
-    else counts.flowFailures++;
-    addToast(ok ? 'success' : 'error', messageFor(ok ? 'CT_COPIED' : 'CT_COPY_FAILED'));
     render();
   }
 

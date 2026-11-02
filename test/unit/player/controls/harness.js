@@ -199,13 +199,17 @@ export function fakeFlows() {
   const downloads = [];
   const reads = [];
   const reviews = [];
+  const instructionCalls = [];
   const flows = {
-    built, downloads, reads, reviews,
+    built, downloads, reads, reviews, instructionCalls,
+    saveResults: [],
+    saveGate: null,
+    saveError: null,
+    onSave: null,
     nameHint: null,
     known: [],
     knownFails: false,
     buildError: null,
-    downloadError: null,
     parts: 1,
     warnings: [],
     readResult: (files) => ({
@@ -218,16 +222,25 @@ export function fakeFlows() {
         if (flows.buildError) throw new TjError(flows.buildError);
         const n = flows.parts;
         const name = (i) => `${spec.videoId}.en.${spec.track.kind}.${spec.mode}${n > 1 ? `.part${i}of${n}` : ''}.srt`;
+        const parts = n > 1 ? Array.from({ length: n }, (_, i) => ({ index: i + 1, from: i * 2 + 1, to: i * 2 + 2 })) : null;
         return {
-          files: Array.from({ length: n }, (_, i) => ({ name: name(i + 1), text: 'srt', part: null, cueCount: 5 })),
-          fingerprint: { id: 'fp_new0000001', mode: spec.mode },
+          files: Array.from({ length: n }, (_, i) => ({ name: name(i + 1), text: 'srt'.repeat(i + 1), part: parts ? { ...parts[i], total: n } : null, cueCount: 5 })),
+          fingerprint: { id: 'fp_new0000001', mode: spec.mode, parts },
           instructions: INSTRUCTIONS,
           warnings: [...flows.warnings],
         };
       },
-      download(file, env) {
-        if (flows.downloadError) throw new TjError(flows.downloadError);
-        downloads.push({ name: file.name, hasDoc: !!env?.doc });
+      instructions(spec) {
+        instructionCalls.push(spec);
+        return `${INSTRUCTIONS}+قاموس(${spec.glossary.length})`;
+      },
+      async saveFile(file, env) {
+        if (flows.saveGate) await flows.saveGate;
+        flows.onSave?.(file);
+        if (flows.saveError) throw new TjError(flows.saveError);
+        const r = flows.saveResults.length ? flows.saveResults.shift() : { ok: true, mode: 'downloads', downloadId: downloads.length + 1 };
+        if (r.ok) downloads.push({ name: file.name, hasDoc: !!env?.doc });
+        return r;
       },
     },
     importFlow: {
@@ -275,7 +288,7 @@ export function addBar(env, parts, { width = 640 } = {}) {
  * صفحة مشاهدة بمشغّل وشريط وأدوات مركّبة.
  * @param {{ state?: object, controllerOpts?: object, width?: number, height?: number, withBar?: boolean, clipboard?: 'ok' | 'fail' | 'none' }} [o]
  */
-export function mountPage({ state = makeState(), controllerOpts = {}, width = 640, height = 360, withBar = true, clipboard = 'ok' } = {}) {
+export function mountPage({ state = makeState(), controllerOpts = {}, width = 640, height = 360, withBar = true, clipboard = 'ok', brave = false } = {}) {
   const env = createFakeEnv({ href: `https://www.youtube.com/watch?v=${A}` });
   const parts = addPlayer(env, { width, height });
   const bar = withBar ? addBar(env, parts, { width }) : {};
@@ -288,6 +301,7 @@ export function mountPage({ state = makeState(), controllerOpts = {}, width = 64
       },
     },
   };
+  if (brave) env.win.navigator.brave = { isBrave: async () => true };
   const controller = fakeController(state, controllerOpts);
   const flows = fakeFlows();
   const handle = mountControls(controller, { doc: env.doc, win: env.win, exportFlow: flows.exportFlow, importFlow: flows.importFlow, now: () => Date.parse(NOW) });

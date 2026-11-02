@@ -5,7 +5,9 @@
 import { messageFor } from '../../core/errors/index.js';
 import { describeTrack } from '../../core/export/describe.js';
 import { formatOffset } from '../../ui/format.js';
-import { LABELS, comparisonSummary, cueCount, editsLine, keptLine, offsetMeaning, shortTime, slotLabel, stepSeconds, syncAt } from './text.js';
+import {
+  LABELS, comparisonSummary, cueCount, editsLine, glossaryTag, keptLine, offsetMeaning, partRow, shortTime, slotLabel, stepSeconds, syncAt,
+} from './text.js';
 
 /**
  * @typedef {(name: string, value?: unknown) => void} Act
@@ -106,14 +108,26 @@ function slotPicker(h, act, slots, { mode = 'activate', target = 0, disabled = f
   });
 }
 
+/** سطر نتيجة مستقل (§١٩.٥): «✓ نُزّل …» أو «✓ نُسخت التعليمات»؛ وتعذّر النسخ زر يعيد المحاولة. */
+function resultLine(h, act, line, fid) {
+  if (line.tone === 'error' && fid === 'copyLine') {
+    return h('button', { className: 'line', text: line.text, attrs: { type: 'button', 'data-tone': 'error', 'data-fid': fid, 'aria-live': 'polite' }, on: { click: () => act('copy') } });
+  }
+  return h('div', { className: 'line', text: line.text, attrs: { 'data-tone': line.tone, 'data-fid': fid, role: line.tone === 'error' ? 'alert' : 'status' } });
+}
+
 /**
- * قائمة التحميل (§٦.١).
+ * قائمة التحميل (§٦.١ و§١٩.٥): «تنزيل ونسخ التعليمات» رئيسيًا و«نسخ التعليمات» ثانويًا بإشارة القاموس إن أُرفق، والنتيجتان
+ * سطران مستقلان؛ وخطوات اختيار English بسطر عند التقاط مسار عربي أو مترجم آليًا (وملاحظة Brave)؛ وأحجام الأجزاء تحت
+ * التقسيم الاحتياطي. لا عرض لنص التعليمات ولا لمكان الحفظ.
  * @param {H} h @param {Act} act
  * @param {{
  *   live: boolean, unavailable: boolean, captureIssue: string | null, invalid: { code: string | null }[],
  *   tracks: import('../../extract/index.js').TrackInfo[], selectedKey: string | null, mode: 'normal' | 'long', durationMs: number | null,
  *   why: boolean, fallbackOpen: boolean, split: boolean, splitSize: string, splitError: string | null,
- *   busy: boolean, copyBusy: boolean, done: string | null, result: { tone: 'info' | 'warn' | 'error', text: string }[],
+ *   busy: boolean, copyBusy: boolean, saveLine: { tone: string, text: string } | null, copyLine: { tone: string, text: string } | null,
+ *   result: { tone: 'info' | 'warn' | 'error', text: string }[], glossary: number, englishGuide: { brave: boolean } | null,
+ *   parts: { index: number, from: number, to: number, chars: number }[] | null,
  * }} m
  */
 export function downloadMenu(h, act, m) {
@@ -123,7 +137,12 @@ export function downloadMenu(h, act, m) {
     return out;
   }
   if (!m.tracks.length) {
-    if (m.captureIssue) out.push(alert(h, 'warn', messageFor(m.captureIssue)));
+    if (m.captureIssue) {
+      const guide = m.englishGuide
+        ? [h('span', { className: 'steps', text: LABELS.englishSteps }), m.englishGuide.brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null]
+        : [];
+      out.push(alert(h, 'warn', messageFor(m.captureIssue), guide.filter(Boolean)));
+    }
     for (const t of m.invalid) out.push(alert(h, 'error', messageFor(t.code ?? 'EX_NO_TRACK')));
     if (m.unavailable && !m.captureIssue) {
       out.push(alert(h, 'info', messageFor('CT_NO_CAPTIONS')));
@@ -158,14 +177,21 @@ export function downloadMenu(h, act, m) {
   out.push(segmented(h, 'وضع التصدير', [{ value: 'normal', label: LABELS.modeNormal }, { value: 'long', label: LABELS.modeLong }], m.mode, act, 'mode', 'mode'));
   out.push(h('div', { className: 'note', text: m.mode === 'long' ? LABELS.modeLongNote : LABELS.modeNormalNote }));
 
-  const dl = m.busy ? LABELS.checking : m.done ? `✓ نُزّل ${m.done}` : LABELS.downloadSrt;
   out.push(h('div', {
     className: 'actions',
     children: [
-      button(h, 'primary', dl, { act, name: 'download', fid: 'download', first: m.tracks.length === 1, disabled: m.busy, extra: { 'data-done': m.done && !m.busy ? '' : null, 'aria-busy': m.busy ? 'true' : null } }),
-      button(h, 'secondary', LABELS.copyInstructions, { act, name: 'copy', fid: 'copy', disabled: m.copyBusy }),
+      button(h, 'primary', m.busy ? LABELS.checking : LABELS.downloadCopy, { act, name: 'download', fid: 'download', first: m.tracks.length === 1, disabled: m.busy || m.copyBusy, extra: { 'aria-busy': m.busy ? 'true' : null } }),
+      h('div', {
+        className: 'copyrow',
+        children: [
+          button(h, 'secondary', LABELS.copyShort, { act, name: 'copy', fid: 'copy', disabled: m.copyBusy || m.busy }),
+          m.glossary ? h('span', { className: 'tag', text: glossaryTag(m.glossary), attrs: { 'data-fid': 'glossary' } }) : null,
+        ],
+      }),
     ],
   }));
+  if (m.saveLine) out.push(resultLine(h, act, m.saveLine, 'saveLine'));
+  if (m.copyLine) out.push(resultLine(h, act, m.copyLine, 'copyLine'));
   for (const r of m.result) out.push(alert(h, r.tone, r.text));
 
   out.push(h('div', { className: 'sep' }));
@@ -192,6 +218,12 @@ export function downloadMenu(h, act, m) {
       size.value = m.splitSize;
       out.push(h('div', { className: 'row field', children: [h('label', { text: LABELS.splitSize }), size] }));
       out.push(h('div', { className: 'field-error', text: m.splitError ?? '', attrs: { 'aria-live': 'polite' } }));
+      if (m.parts) {
+        out.push(h('div', {
+          className: 'parts', attrs: { role: 'list', 'aria-label': LABELS.partsLabel },
+          children: m.parts.map((p) => h('div', { className: 'row part', attrs: { role: 'listitem' }, children: [h('bdi', { text: partRow(p), attrs: { dir: 'ltr' } })] })),
+        }));
+      }
     }
   }
   return out;

@@ -3,8 +3,9 @@
 // جلسة عليهما، وتعيد المجموعة إلى بداية الشريط إن أعاد يوتيوب رسمه (مراقب على الشريط وفحص خفيف كل ثانية وعند أحداث
 // يوتيوب). لا ترمي أبدًا: الإخفاق رمز في state وفي diagnostics، ويبقى المشغّل سليمًا. deps للاختبار وحده.
 import { TjError } from '../../core/errors/index.js';
-import { buildExport, download } from '../../core/export/index.js';
+import { buildExport, instructions } from '../../core/export/index.js';
 import { readImport, reviewIncoming } from '../../core/import/index.js';
+import { saveFile } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { EVENTS, getPlayer, getRightControls } from '../youtube-dom.js';
 import { createControlsSession } from './session.js';
@@ -22,7 +23,7 @@ async function knownVideos() {
 }
 
 const DEFAULT_FLOWS = Object.freeze({
-  exportFlow: Object.freeze({ buildExport, download }),
+  exportFlow: Object.freeze({ buildExport, instructions, saveFile }),
   importFlow: Object.freeze({ readImport, reviewIncoming, knownVideos }),
 });
 

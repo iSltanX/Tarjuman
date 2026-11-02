@@ -77,6 +77,18 @@ label.item[aria-disabled="true"] { color: rgb(255 255 255 / 45%); cursor: defaul
 .sentences { display: flex; flex-direction: column; gap: 2px; }
 button.item.sentence { display: block; min-width: 0; line-height: 40px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; text-align: right; }
 button.item.sentence[aria-current="true"] { box-shadow: inset -3px 0 0 var(--tj-p-accent); background: rgb(255 255 255 / 6%); }
+.copyrow { display: flex; align-items: center; gap: 8px; }
+.copyrow > button.secondary { flex: 1; }
+.tag { flex: none; padding: 2px 8px; border-radius: 999px; background: rgb(255 255 255 / 10%); color: var(--tj-p-menu-text-2); font-size: 0.86em; white-space: nowrap; }
+.line { all: unset; box-sizing: border-box; display: block; padding: 2px 12px; font-size: 0.93em; }
+.line[data-tone="ok"] { color: var(--tj-p-ok); }
+.line[data-tone="info"] { color: var(--tj-p-menu-text-2); }
+.line[data-tone="error"] { color: var(--tj-p-error); }
+button.line { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.steps { direction: rtl; font-weight: 700; }
+.note-in { font-size: 0.93em; color: var(--tj-p-menu-text-2); }
+.parts { display: flex; flex-direction: column; padding: 0 0 4px; }
+.row.part { min-height: 26px; font: 500 0.93em/1.4 var(--tj-p-font-mono); color: var(--tj-p-menu-text-2); }
 .pair { display: flex; gap: 2px; }
 .pair > button.item { flex: 1 1 0; min-width: 0; width: auto; }
 .row { box-sizing: border-box; min-height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 12px; }
@@ -122,7 +134,6 @@ button.secondary { background: rgb(255 255 255 / 12%); color: #FFFFFF; }
 button.secondary:hover { background: rgb(255 255 255 / 18%); }
 button.danger { background: var(--tj-p-error); color: #2B0D0A; }
 button.primary[aria-disabled="true"], button.secondary[aria-disabled="true"] { opacity: 0.45; cursor: default; filter: none; }
-button.primary[data-done] { background: var(--tj-p-ok); }
 button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; font-size: 0.93em; }
 
 .seg { display: flex; gap: 2px; padding: 2px; margin: 0 8px; border-radius: 10px; background: rgb(255 255 255 / 8%); }

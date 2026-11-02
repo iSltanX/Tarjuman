@@ -150,7 +150,7 @@ test('بديل النسخ يعيد التركيز إلى بند القائمة �
   const page = mountPage({ state: makeState({ captured: [trackInfo()] }), clipboard: 'none' });
   page.env.doc.execCommand = () => true;
   click(page.ui.btn('download'), 0);
-  const copy = page.ui.item('نسخ تعليمات الترجمة');
+  const copy = page.ui.field('copy');
   copy.focus();
   click(copy, 0);
   await settle();
