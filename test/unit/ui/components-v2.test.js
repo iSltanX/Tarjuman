@@ -153,3 +153,26 @@ test('محدد الترجمات: التحديث بالقائمة نفسها لا
   assert.deepEqual(p.buttons.map((b) => b.textContent), ['1', '3']);
   assert.strictEqual(p.button(3), before[2], 'زر الخانة 3 هو نفسه بعد حذف الثانية');
 });
+
+test('تدقيق 5fedcb9 (CL-011، CL-018): مؤشر الاختيار في المقطّعة ≥ 3:1 بالوضعين، ونصه ≥ 4.5:1؛ وأهداف الضغط الصغيرة مكبّرة', async () => {
+  const tokens = await readFile(path.join(ROOT, 'src/ui/tokens.css'), 'utf8');
+  const dark = tokens.slice(tokens.indexOf('@media (prefers-color-scheme: dark)'));
+  const light = tokens.slice(0, tokens.indexOf('@media (prefers-color-scheme: dark)'));
+  const hex = (block, name) => new RegExp(`--${name}:\\s*(#[0-9A-Fa-f]{6})`).exec(block)?.[1];
+  const lum = (h) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  for (const [name, block] of [['فاتح', light], ['داكن', dark]]) {
+    assert.ok(ratio(hex(block, 'tj-brand'), hex(block, 'tj-surface-2')) >= 3, `${name}: الحد على المسار`);
+    assert.ok(ratio(hex(block, 'tj-brand-text'), hex(block, 'tj-brand-soft')) >= 4.5, `${name}: النص على الخلفية`);
+  }
+  const ui = await readFile(path.join(ROOT, 'src/ui/components.css'), 'utf8');
+  assert.match(ui, /\.tj-seg__option input:checked \+ \.tj-seg__label \{[^}]*box-shadow: inset 0 0 0 1\.5px var\(--tj-brand\)/);
+  assert.match(ui, /\.tj-chip \{[^}]*min-height: 32px/);
+  assert.match(ui, /\.tj-slots__slot::after \{ content: ""; position: absolute; inset: -4px 0; \}/);
+  const editor = await readFile(path.join(ROOT, 'src/pages/editor/editor.css'), 'utf8');
+  assert.match(editor, /\.ed-row__check \{ width: 24px; height: 24px;/);
+  assert.match(editor, /\.ed-seg__opt\[aria-checked="true"\] \{ background: var\(--tj-brand-soft\)/);
+});

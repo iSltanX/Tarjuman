@@ -44,7 +44,7 @@ body.ed-page { overflow: hidden; }
   font: 700 13px/18px var(--tj-font-body); cursor: pointer; white-space: nowrap;
 }
 .ed-seg__opt + .ed-seg__opt { border-inline-start: 1px solid var(--tj-border-strong); }
-.ed-seg__opt[aria-checked="true"] { background: var(--tj-brand); color: var(--tj-brand-ink); }
+.ed-seg__opt[aria-checked="true"] { background: var(--tj-brand-soft); color: var(--tj-brand-text); box-shadow: inset 0 0 0 1.5px var(--tj-brand); } /* نمط المقطّعة نفسه في الصفحات (CL-011) */
 .ed-seg__opt[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .ed-seg__opt:focus-visible { outline-offset: -3px; }
 .ed-amount {
@@ -167,7 +167,7 @@ body.ed-page { overflow: hidden; }
 }
 .ed-list--no-en .ed-row, .ed-list__head.ed-list--no-en { grid-template-columns: var(--ed-cols-no-en); }
 .ed-list__head.ed-list--no-en .ed-col-en { display: none; }
-.ed-row__check { width: 20px; height: 20px; margin: 10px 0 0; accent-color: var(--tj-brand); }
+.ed-row__check { width: 24px; height: 24px; margin: 8px 0 0; accent-color: var(--tj-brand); } /* 24 حدّ WCAG 2.5.8 في صف كثيف (CL-018) */
 .ed-row__n { display: flex; align-items: center; gap: 4px; min-height: 40px; color: var(--tj-text-2); }
 .ed-row__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tj-edited); visibility: hidden; flex: none; }
 .ed-row.is-edited .ed-row__dot { visibility: visible; }

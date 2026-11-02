@@ -20,7 +20,7 @@
 .tj-popup__reason { color: var(--tj-muted); }
 /* «نسخ تشخيص الصفحة»: رابط نصي صغير ونتيجته بسطر بجانبه. */
 .tj-popup__diag-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
-.tj-popup__diag { all: unset; cursor: pointer; font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); text-decoration: underline; text-underline-offset: 3px; }
+.tj-popup__diag { all: unset; display: inline-block; padding: 7px 0; cursor: pointer; font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); text-decoration: underline; text-underline-offset: 3px; } /* هدف 32 ارتفاعًا (CL-018) */
 .tj-popup__diag:hover { color: var(--tj-text); }
 .tj-popup__diag:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; border-radius: 4px; }
 .tj-popup__diag[aria-busy="true"] { opacity: 0.6; cursor: progress; }
