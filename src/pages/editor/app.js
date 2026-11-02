@@ -171,6 +171,8 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
   const unsavedDiscard = button({ label: 'تجاهل التغييرات', variant: 'ghost', size: 'sm', onClick: () => onDiscard(), doc });
   const unsavedEl = el('div', { className: 'ed-unsaved', attrs: { role: 'region', 'aria-label': 'تغييرات غير محفوظة' }, children: [unsavedText, el('span', { className: 'ed-spacer', doc }), unsavedSave, unsavedDiscard], doc });
   const toastEl = el('div', { className: 'ed-toast', attrs: { role: 'status', 'aria-live': 'polite' }, doc });
+  // الرسالة العابرة تحت الرأس عند طرفه (تحت «حفظ»)، لا فوق العنوان (ملاحظة W4 من لقطة w4-editor-saved).
+  headEl.appendChild(toastEl);
   app.append(
     headEl, toolbarEl, offsetEl, bannerEl,
     el('div', {
@@ -181,7 +183,7 @@ export async function mountEditor(app, { videoId, store, doc = document, now = D
       ],
       doc,
     }),
-    unsavedEl, toastEl,
+    unsavedEl,
   );
 
   const rowView = createRows(doc, () => ({
