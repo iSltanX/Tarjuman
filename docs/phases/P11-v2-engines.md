@@ -279,19 +279,19 @@
       "file": "docs/contracts/interfaces.md",
       "change": "buildExport يقبل split.by (count افتراضيًا، أو content فيستعمل planPartsByContent) دون تغيير غيره",
       "why": "R60 يحتاج ملفات مقسّمة بالمحتوى عبر buildExport (التحقق من الضمّ وأجزاء البصمة والأسماء)، وواجهة التصدير مجمّدة منذ W3 وواجهات الربط لم تذكر الطريق؛ جُرّب التغيير ثم أُعيد في 724ac62، وتطبيقه سطران في src/core/export/index.js بعد الحسم، وإلا تكتب P12 الأجزاء بنفسها",
-      "applied": false
+      "applied": true
     },
     {
       "file": "docs/contracts/interfaces.md",
       "change": "buildPatchPackage يقبل glossary فتُدرج فقرة القاموس في تعليماته قبل البند الأخير، أو تعتمد P14 الدالة المصدَّرة patchInstructions({ videoId, title, glossary })",
       "why": "الملحق ب يشترط القاموس عند وجوده وتوقيع buildPatchPackage في واجهات الربط بلا glossary؛ لم يُغيَّر التوقيع، والنص بالقاموس متاح من patchInstructions",
-      "applied": false
+      "applied": true
     },
     {
       "file": "docs/contracts/interfaces.md وdocs/contracts/errors.md",
       "change": "توثيق ما أضافته P11 دون تغيير توقيع: الاستعادة الشاملة تشترط محاذاة هوية وسببها في notes، وreadImport يضم ملاحظات المقارن، وmergeThreeWay يقبل opts.resolve وopts.align، والتصديرات المساعدة (partsStatus وvideoIdFromName وpatchInstructions وglossaryParagraph وdensityIssues وREADING_DEFAULTS وALIGN_DEFAULTS)، ورموز IM_ وCMP_ وEX_ وED_ الجديدة",
       "why": "العقود تكتبها P10 والمنسّق في W6، ويلزم أن تطابق ما دُمج",
-      "applied": false
+      "applied": true
     }
   ]
 }

@@ -130,7 +130,7 @@ MountHandle = { state: "stub" | "waiting" | "mounted" | "error", unmount(): void
 وحدة نقية تستهلكها الأدوات (P6) والمحفوظات (P7) والمحرّر (P8). تكتب الملفات عبر `src/core/srt` (قراءة).
 
 ```js
-buildExport({ videoId, title, track: { key, lang, kind, cues }, mode: "normal" | "long", split: null | { size } , now })
+buildExport({ videoId, title, track: { key, lang, kind, cues }, mode: "normal" | "long", split: null | { size, by?: "count" | "content" } , now })
   → { files: [{ name, text }], fingerprint: Fingerprint, instructions: string, warnings: string[] }   // يرمي TjError(EX_…)
 buildArabicExport({ videoId, cues, variant: "current" | "original" }) → { name, text }   // cues بعد exportTiming
 fileName({ videoId, lang: "en" | "ar", kind?, mode?, variant?, part? }) → string        // مثل VIDEOID.en.asr.normal.srt
@@ -140,6 +140,8 @@ download(file, { doc? })                                                        
 ```
 
 وفي الإصدار الثاني يحل `saveFile` (§١٣) محل `download` في كل تنزيل حين تلمس مراحل W7 موضعه، و`download` باقٍ احتياطه.
+
+- **التقسيم بالمحتوى (إضافة W6 بطلب P11، R60):** `split.by` اختياري؛ `"count"` (الافتراضي) التوزيع المتوازن القديم `planParts`، و`"content"` عند حدود الجمل أو الصمت `planPartsByContent` (§١٦). الأسماء وأجزاء البصمة والضمّ المطابق للملف الكامل كما في التقسيم القديم، وقيمة غيرهما `MD_INVALID`.
 
 - **في المشغّل (P6):** `controller.convertCaptured(key, { mode })` ← `buildExport` ← `download` لكل ملف ← `controller.recordExport({ trackKey: key, fingerprint })`.
 - **في الصفحات (P7، P8):** الإنجليزية من المسار المحفوظ بالوضع «عادي» وحده؛ والعربية بـ`exportTiming` (عقد التوقيت §٥) ثم `buildArabicExport`؛ وحفظ أي بصمة بـ`store.updateVideo` و`withExport`.
@@ -161,6 +163,7 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 - **اختيار البصمة:** الأحدث بين المطابقة عددًا، وإلا الأحدث؛ ويُسجَّل في `fingerprintId` وفي `comparison.fingerprintId`.
 - الناتج الناجح هو مدخل `controller.loadArabic(result, { replace })` في المشغّل، أو `withArabicImport` في المحفوظات. لا كتابة في التخزين داخل وحدة الاستيراد.
 - كل تحويل للنص يُذكر في `notes`، ولا تعديل للتوقيت إلا بالاستعادة المؤكدة.
+- **في الإصدار الثاني (P11):** `compare` يتيح `restoreTimingAvailable` بمحاذاة هوية متحققة وحدها (§١٦)، وإن طابق العدد والترقيم ولم تتحقق المحاذاة فالسبب `CMP_RESTORE_UNVERIFIED` في `comparison.notes` دون حقل جديد؛ و`readImport` يضم في `comparison.notes` ملاحظات القراءة ثم ملاحظات المقارن. والقارئ يقبل أغلفة Markdown المحددة (السياج ``` أو ~~~، وعلامات التأكيد حول أسطر الأرقام والتوقيت، وأسطر الشرح والعناوين حول الملف) بملاحظة لكلٍّ، ويرفض النص بلا توقيت بـ`IM_NO_TIMING`.
 
 ## ٧. محددات يوتيوب — `src/player/youtube-dom.js` (مشترك)
 
@@ -330,7 +333,7 @@ seekMainVideo(ms, { doc }) → boolean          // video.currentTime = ms / 1000
 
 ## ١٦. واجهات الربط للإصدار الثاني (مثبتة قبل W6)
 
-> منقولة كما ثُبّتت في [الموجات](../delivery/waves.md) («واجهات الربط للإصدار الثاني»). تنفّذ P11 توقيعاتها كما هي، وأي حاجة إلى تغييرها طلب مسجّل، والمرحلة متعطلة حتى يحسمه المنسّق. الأنواع غير المذكورة (المقطع، والبصمة، والمسار الإنجليزي، وتقرير المقارنة) كما في عقد البيانات.
+> منقولة كما ثُبّتت في [الموجات](../delivery/waves.md) («واجهات الربط للإصدار الثاني»). تنفّذ P11 توقيعاتها كما هي، وأي حاجة إلى تغييرها طلب مسجّل، والمرحلة متعطلة حتى يحسمه المنسّق. **وعند دمج W6** حسم المنسّق طلبي P11 بإضافتين اختياريتين (`glossary` في `buildPatchPackage` أدناه، و`split.by` في `buildExport` §٥)، ووثّق ما أضافه التنفيذ دون تغيير توقيع في «ما أضافه التنفيذ» آخر هذا القسم؛ ثم جُمِّد كله ببوابة W6. الأنواع غير المذكورة (المقطع، والبصمة، والمسار الإنجليزي، وتقرير المقارنة) كما في عقد البيانات.
 
 **أشكال يتبادلها الطرفان:**
 
@@ -359,7 +362,7 @@ applyPatch(cues: Cue[], plan, { only?: number[] }) → Cue[]
 // src/core/export
 instructions({ videoId, title, parts?, glossary? }) → string            // glossary: مصطلحات القاموس أعلاه
 planPartsByContent(cues: Cue[], size: number) → { index, from, to }[] | null   // planParts القديم باقٍ
-buildPatchPackage({ videoId, title, fingerprint, englishTracks, numbers }) → { ok: true, file: { name, text }, instructions: string, count } | { ok: false, code }
+buildPatchPackage({ videoId, title, fingerprint, englishTracks, numbers, glossary? }) → { ok: true, file: { name, text }, instructions: string, count } | { ok: false, code }   // glossary (W6): فقرة القاموس في instructions وحدها
 buildStudyText({ videoId, title, cues, english?, format: 'txt' | 'md', bilingual: boolean }) → { name, text }
 buildReviewReport({ videoId, title, items, includeText: boolean, format: 'txt' | 'md' }) → { name, text }   // items: بنود التقرير أعلاه
 
@@ -372,6 +375,17 @@ readingMetrics(cue) → { cps: number, longestLine: number }
 ```
 
 **ما تثبّته P10 داخل W6 وتستهلكه W7:** واجهة التخزين بالتوابع وواجهة الاستعادة (عقد التخزين §١٠)، وأفعال المتحكم وحالته الجديدة (§١٢)، ورسالة القفز وأداة الصفحات (§١٤، وعقد الرسائل §٧)، وحلّ ارتباط العلامات (عقد البيانات §١٢)، وصيغة النسخة الاحتياطية ([`backup.md`](backup.md))، ومكان الحفظ: `saveFile(file: { name, text, mime? }) → Promise<{ ok: true, mode, downloadId } | { ok: false, code }>` في `src/core/save` بتفضيل `saveLocation: { mode: 'downloads' | 'subfolder' | 'ask', folder: string }` (§١٣). تُجمَّد كلها ببوابة W6 قبل أن تبدأ W7.
+
+**ما أضافه التنفيذ (P11) دون تغيير توقيع، موثّقًا عند دمج W6:**
+
+- `mergeThreeWay(sides, { align?, resolve? })`: `align` خيارات المحاذاة (و`useText` مفعّل فيه افتراضيًا: النص غير المعدّل مرساة)، و`resolve` اختيار المستخدم لكل تعارض برقمه `n` (`{ [n]: 'mine' | 'theirs' }` أو `Map`)، ولا يُحسم تعارض إلا بقيمة صالحة فيه. وضعف الثقة `{ ok: false, reason }` بنص `CMP_MERGE_LOW_MINE` أو `CMP_MERGE_LOW_THEIRS`.
+- `src/core/align`: `ALIGN_DEFAULTS` (`windowMs` 15000، و`maxGroup` 3، و`weakIou` 0.5، و`useText` false، و`offset` `'auto'`)، والمساعدات `iou` و`isIdentity` و`toBlocks`. أسباب المحاذاة رسائل `CMP_ALIGN_…` منسّقة تُعرض كما هي.
+- `src/core/compare`: `rankReferences` يكتب `why` برسالة `CMP_REF_MATCHED` أو `CMP_REF_SUMMARY`.
+- `src/core/import`: `partsStatus(fingerprint, cues) → { index, from, to, total, received, complete }[] | null` حالة استلام الأجزاء المشتقة (R52)، وهي `plan.parts` في ناتج `readPatch`، و`videoIdFromName(fileName, { videoId?, knownVideoIds? }) → null | { videoId, differs }` قرينة الاسم، و`REVIEW_THRESHOLDS` (`suggest` 0.5، و`certain` 0.8، و`gap` 0.1)، و`classTransitions` و`cuesKey`.
+- `src/core/export`: `patchInstructions({ videoId, title, glossary? }) → string` نص الملحق ب، و`glossaryParagraph(terms) → string | null` فقرة القاموس وحدها، و`GLOSSARY_TEMPLATE` و`PATCH_INSTRUCTIONS_TEMPLATE`، و`CONTENT_SPLIT` (`tolerance` 0.15، و`silenceMs` 1500). و`GLOSSARY_LIMITS` هو ثابت نموذج التفضيلات نفسه (`maxTerms` 100، و`maxSource` و`maxTarget` 80، و`maxNote` 120)، يعيد التصدير تصديره ولا يعرّف غيره.
+- `src/core/edit/density.js`: `READING_DEFAULTS` (`maxCps` 20، و`maxLineChars` 42) معايرة على مقاطع عربية حقيقية، وهي ما يعنيه `prefs.review.maxCps: null`؛ و`densityIssues(cue, limits?) → ('ED_READING_FAST' | 'ED_LINE_LONG')[]` للوحة المشكلات (P14).
+- `src/core/edit`: محرّكات P11 في ملفاتها (`search.js` و`structure.js` و`drift.js` و`density.js`) تُستورد منها مباشرة، و`index.js` القديم لم يُمس.
+- الرموز الجديدة في [عقد الأخطاء](errors.md) §٦.
 
 **نقاط ربط تُختبر في بوابة W6:** القاموس من التفضيلات المخزنة عبر `instructions` (P11)، و`reviewIncoming` على بصمات تقرؤها واجهة التخزين (`bundle.record.fingerprints`)، و`diffTranslations` على ترجمتين من خانتين (`bundle.slots[i].track`).
 

@@ -241,6 +241,8 @@ readingMetrics(cue) → { cps: number, longestLine: number }
 
 **ما تثبّته P10 داخل W6 وتستهلكه W7:** واجهة التخزين بالتوابع وواجهة الاستعادة، وأفعال المتحكم وحالته الجديدة، ورسالة القفز وأداة الصفحات، وحلّ ارتباط العلامات، وصيغة النسخة الاحتياطية، ومكان الحفظ: `saveFile(file: { name, text, mime? }) → Promise<{ ok: true, mode, downloadId } | { ok: false, code }>` في `src/core/save` بتفضيل `saveLocation: { mode: 'downloads' | 'subfolder' | 'ask', folder: string }`. تُجمَّد كلها ببوابة W6 قبل أن تبدأ W7.
 
+**عند دمج W6:** حسم المنسّق طلبي P11 بإضافتين اختياريتين لا تغيّران الافتراضي (`split.by` في `buildExport`، و`glossary` في `buildPatchPackage`)، ووحّد `GLOSSARY_LIMITS` على نموذج التفضيلات، ووثّق ما أضافه التنفيذ. النص المجمّد من الآن في [`interfaces.md`](../contracts/interfaces.md) §٥ و§٦ و§١٦ و[`errors.md`](../contracts/errors.md) §٦، وما أعلاه سجل ما ثُبّت قبل الموجة.
+
 ## اختبارات التكامل المشتركة
 
 نجاح اختبارات كل مرحلة وحدها لا يكفي. ما يربط مرحلتين أو أكثر يُختبر بعد دمجهما في بوابة الموجة: يكتبه المنسّق سكربت دخان في `docs/evidence/<WAVE>/` (كما في W4)، وتحوّله P15 إلى اختبارات دائمة في `test/e2e/`. ولكل مرحلة محاكيات العقد في `test/helpers` (من P10) لتختبر جانبها قبل الدمج.
