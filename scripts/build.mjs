@@ -57,6 +57,9 @@ await mkdir(OUT, { recursive: true });
 await build({
   entryPoints: Object.fromEntries(Object.entries(entries).map(([out, src]) => [out, path.join(SRC, src)])),
   outdir: OUT,
+  // esbuild يكتب مسار كل ملف مصدر في تعليق داخل الحزمة نسبةً إلى مجلد العمل، فالبناء من مجلد آخر كان يكتب مسار الجهاز.
+  // المجلد مثبّت على جذر المستودع، فتتطابق الحزمة بايتًا أينما شُغّل البناء (جولة النشر T4، إعادة البناء من حزمة المصدر).
+  absWorkingDir: ROOT,
   bundle: true,
   format: 'iife',
   target: 'chrome111',
