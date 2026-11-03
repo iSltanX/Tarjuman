@@ -756,7 +756,8 @@ test('تغيّر الإعدادات من صفحة أخرى لا يعيد بنا�
   await m.store.setSettings({ appearance: { scale: 120 } });
   await m.area.flush();
   assert.equal(m.clock.pending().length, pendingBefore, 'لا مؤقت إعادة قراءة جديد لتغيّر الإعدادات');
-  assert.equal(buttonNamed(m.root, 'تم النسخ: عنوان'), copyBtn, 'العنصر نفسه لم يُستبدل (واسمه يبدأ بالظاهر)');
+  // العقدة لا تُمرَّر إلى assert.equal: فشله يبني فرقًا للـDOM الوهمي المترابط كله بذاكرة تربيعية خارج كومة V8.
+  assert.ok(buttonNamed(m.root, 'تم النسخ: عنوان') === copyBtn, 'العنصر نفسه لم يُستبدل (واسمه يبدأ بالظاهر)');
   assert.equal(copyBtn.getAttribute('data-state'), 'success');
 });
 
@@ -776,7 +777,7 @@ test('تدقيق 5fedcb9 (GM-016.3): الصف المقصود بعد الرجوع
   const { lib, doc, root } = await mount({ records: ids.map((id, i) => ({ id, title: `فيديو ${i}` })), env: { nav } });
   doc.visibilityState = 'hidden';
   await lib.load();
-  assert.equal(root.querySelector('.lib-row--target'), null, 'لا إبراز والصفحة مخفية');
+  assert.ok(root.querySelector('.lib-row--target') === null, 'لا إبراز والصفحة مخفية');
   assert.equal(lib.state.focusId, target, 'لا يُستهلك في الخلفية');
   doc.visibilityState = 'visible';
   for (const fn of doc._listeners.get('visibilitychange') ?? []) fn({ type: 'visibilitychange' });

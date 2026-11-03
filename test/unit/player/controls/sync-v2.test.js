@@ -140,7 +140,8 @@ test('تدقيق 5fedcb9 (GM-003): بعد نقرة فأرة في القائمة 
   const mouse = (el) => { el.focus(); click(el); };
   mouse(p.ui.field('step:1000'));
   await settle();
-  assert.equal(shadow.activeElement ?? null, null, 'لا تركيز باقٍ بعد نقرة الفأرة');
+  // العقدة لا تُمرَّر إلى assert.equal: فشله يبني فرقًا للـDOM الوهمي المترابط كله بذاكرة تربيعية خارج كومة V8.
+  assert.ok(!shadow.activeElement, 'لا تركيز باقٍ بعد نقرة الفأرة');
   p.player.classList.add('ytp-autohide');
   p.env.win.advance(1100);
   assert.equal(p.ui.menuOpen(), false, 'أُغلقت مع الشريط');

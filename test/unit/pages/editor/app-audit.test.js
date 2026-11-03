@@ -1,5 +1,7 @@
 // انحدارات المحرّر مركّبًا كاملًا فوق التخزين الحقيقي بمحاكاة chrome.storage (تدقيق 5fedcb9): تسلسلات الحفظ والتبديل
 // والتغيّر الخارجي التي تفقد عملًا غير محفوظ. الـDOM وهمي (test/helpers/editor-dom.js)، والمؤقتات لا تمضي إلا بـflush.
+// العقد تُقارن بـassert.ok(a === b) لا بـassert.equal: فشل equal على عقدة يفحص الـDOM الوهمي المترابط كله (نحو مليوني سطر)
+// ويبني الفرق بذاكرة تربيعية خارج كومة V8، فيستنزف ذاكرة الجهاز بدل أن يفشل الاختبار.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore } from '../../../../src/core/store/index.js';
@@ -74,7 +76,7 @@ test('CX-002: التبديل أثناء حفظ جارٍ ينتظره: لا حو�
   await settle();
   const switching = editor.switchSlot(2);
   await settle();
-  assert.equal(env.doc.querySelector('dialog[open]'), null, 'لا حوار «التبديل دون حفظ» والحفظ جارٍ');
+  assert.ok(env.doc.querySelector('dialog[open]') === null, 'لا حوار «التبديل دون حفظ» والحفظ جارٍ');
   assert.equal(editor.state.slot, 1, 'لم يُبدَّل قبل الرد');
   gate.paused = false;
   gate.release?.();
@@ -148,7 +150,7 @@ test('GM-014.3: كتابة «آخر موضع» بعد سكون لا تهدم ا�
   assert.ok(target, 'زر في قسم العلامات');
   target.focus();
   await env.flush(5);
-  assert.equal(env.doc.activeElement, target, 'التركيز باقٍ');
+  assert.ok(env.doc.activeElement === target, 'التركيز باقٍ');
   assert.equal(env.root.contains(target), true, 'العنصر نفسه ما زال في الصفحة');
   assert.equal(editor.state.info.position?.n, editor.state.session.cueAt(4).n, 'الموضع كُتب');
 });
@@ -161,15 +163,15 @@ test('GM-008: تبويبا «المراجعة» و«الاستكمال» بلو�
   assert.deepEqual([review.tabIndex, complete.tabIndex], [0, -1]);
   review.focus();
   review.dispatchEvent({ type: 'keydown', key: 'ArrowLeft' });
-  assert.equal(env.doc.activeElement, complete, 'الأيسر إلى التالي في RTL');
+  assert.ok(env.doc.activeElement === complete, 'الأيسر إلى التالي في RTL');
   assert.deepEqual([complete.getAttribute('aria-selected'), complete.tabIndex, review.tabIndex], ['true', 0, -1]);
   assert.equal(env.root.querySelector('#ed-pane-complete')?.hidden ?? false, false);
   complete.dispatchEvent({ type: 'keydown', key: 'Home' });
-  assert.equal(env.doc.activeElement, review);
+  assert.ok(env.doc.activeElement === review);
   review.dispatchEvent({ type: 'keydown', key: 'End' });
-  assert.equal(env.doc.activeElement, complete);
+  assert.ok(env.doc.activeElement === complete);
   complete.dispatchEvent({ type: 'keydown', key: 'ArrowRight' });
-  assert.equal(env.doc.activeElement, review);
+  assert.ok(env.doc.activeElement === review);
 });
 
 test('GM-016.3: «→ المحفوظات» يكتب آخر موضع ثم يعود بالصف المقصود (#v=…)', async () => {
@@ -254,6 +256,6 @@ test('CX-H7: تبديل الخانة أثناء قراءة ملف التصحيح
   assert.equal(editor.state.session.version, 0);
   release();
   await env.flush(5);
-  assert.equal(env.doc.querySelector('dialog[open]'), null, 'لا معاينة تصحيح على الخانة الأخرى');
+  assert.ok(env.doc.querySelector('dialog[open]') === null, 'لا معاينة تصحيح على الخانة الأخرى');
   assert.equal(editor.state.session.dirty, false, 'لم يُطبَّق شيء على الثانية');
 });
