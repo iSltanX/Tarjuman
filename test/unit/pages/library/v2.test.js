@@ -170,7 +170,7 @@ test('«الترجمات…»: بطاقة لكل خانة بتفاصيلها، �
   assert.equal((await m.store.getBundle(IDS[0])).slots[2].track, null);
   assert.ok(textOf(cardOf(panelOf(m), 3)).includes('فارغة'));
   panelOf(m).close();
-  assert.equal(panelOf(m), null, 'الإغلاق يزيل اللوحة');
+  assert.ok(panelOf(m) === null, 'الإغلاق يزيل اللوحة');
 });
 
 test('«الترجمات…» — تغيير المرجع عند التعدد يعيد المقارنة ويحفظ المرجع', async () => {

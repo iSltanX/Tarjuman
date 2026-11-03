@@ -24,7 +24,7 @@ test('محدد الترجمات: ترجمتان تعرضان خيارين فقط
   assert.deepEqual(b.map((x) => x.getAttribute('aria-label')), ['الترجمة 1، نشطة', 'الترجمة 2']);
   assert.equal(b[1].getAttribute('title'), 'الترجمة 2 — نسخة ب', 'الاسم المختصر في التلميح وحده');
   assert.equal(page.ui.menuText().includes('نسخة ب'), false, 'بلا تسميات');
-  assert.equal(page.ui.menu().querySelector('[data-fid="slot:3"]'), null, 'الخانة الفارغة غير معروضة');
+  assert.ok(page.ui.menu().querySelector('[data-fid="slot:3"]') === null, 'الخانة الفارغة غير معروضة');
   click(b[0]);
   assert.equal(page.controller.calls.some((c) => c[0] === 'activateSlot'), false, 'النشطة لا تُعاد');
 });
@@ -33,7 +33,7 @@ test('محدد الترجمات: ترجمة واحدة تخفيه كله (لا �
   const one = mountPage({ state: makeState(withSlots([slotTrack(), null, null])) });
   openDisplay(one);
   assert.equal(slotButtons(one).length, 0);
-  assert.equal(one.ui.menu().querySelector('.slots'), null, 'لا محدد مع ترجمة واحدة');
+  assert.ok(one.ui.menu().querySelector('.slots') === null, 'لا محدد مع ترجمة واحدة');
   assert.equal(one.ui.menu().children[0].className, 'head', 'العنوان وحده في الرأس');
   const all = mountPage({ state: makeState(withSlots([slotTrack(), slotTrack({ fileName: 'b.srt' }), slotTrack({ fileName: 'c.srt' })], { active: 3 })) });
   openDisplay(all);
@@ -117,10 +117,10 @@ test('المحدد بلوحة المفاتيح: التركيز على النشط
   assert.deepEqual(b.map((x) => x.getAttribute('tabindex')), ['0', '-1', '-1']);
   b[0].focus();
   key(b[0], 'ArrowRight');
-  assert.equal(page.env.doc._focused, b[1]);
+  assert.ok(page.env.doc._focused === b[1]);
   key(b[1], 'ArrowLeft');
   key(b[0], 'ArrowLeft');
-  assert.equal(page.env.doc._focused, b[2], 'يدور');
+  assert.ok(page.env.doc._focused === b[2], 'يدور');
   click(b[2]);
   await settle();
   assert.equal(page.controller.getState().activeSlot, 3);
@@ -198,8 +198,8 @@ test('الأوضاع الثلاثة: الأسهم تنقل التركيز بين
   const [ar, dual] = page.ui.menu().querySelector('.seg').children;
   ar.focus();
   key(ar, 'ArrowLeft');
-  assert.equal(root.activeElement, dual, 'انتقل التركيز إلى الخيار التالي');
+  assert.ok(root.activeElement === dual, 'انتقل التركيز إلى الخيار التالي');
   assert.equal(page.controller.calls.some((c) => c[0] === 'setDisplayMode'), false, 'الأسهم لا تطبّق');
   key(dual, 'ArrowRight');
-  assert.equal(root.activeElement, ar);
+  assert.ok(root.activeElement === ar);
 });

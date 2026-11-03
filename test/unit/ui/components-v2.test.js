@@ -103,7 +103,7 @@ test('محدد الترجمات من نماذج الحزمة: المحفوظة �
   assert.equal(b1.getAttribute('aria-checked'), 'true');
   assert.equal(b1.getAttribute('aria-label'), 'الترجمة 1، نشطة');
   assert.equal(b2.title, 'الترجمة 2 — مراجعة');
-  assert.equal(p.button(3), null);
+  assert.ok(p.button(3) === null);
   b1.click();
   b2.click();
   assert.deepEqual(picked, [2], 'النشطة لا تبلّغ');
@@ -147,11 +147,12 @@ test('محدد الترجمات: التحديث بالقائمة نفسها لا
   p.root.insertBefore = (n, r) => { moves++; return ins(n, r); };
   p.update(s([1, 2, 3], 2));
   assert.equal(moves, 0, 'لا نقل بلا تغيير موضع');
-  assert.deepEqual(p.buttons, before, 'الأزرار نفسها بترتيبها');
+  // مواضع الأزرار في before لا الأزرار نفسها: فشل deepEqual على عقدة يفحص الـDOM الوهمي كله (library/fake-dom.js).
+  assert.deepEqual(p.buttons.map((b) => before.indexOf(b)), [0, 1, 2], 'الأزرار نفسها بترتيبها');
   assert.equal(p.button(2).getAttribute('aria-checked'), 'true');
   p.update(s([1, 3], 3));
   assert.deepEqual(p.buttons.map((b) => b.textContent), ['1', '3']);
-  assert.strictEqual(p.button(3), before[2], 'زر الخانة 3 هو نفسه بعد حذف الثانية');
+  assert.ok(p.button(3) === before[2], 'زر الخانة 3 هو نفسه بعد حذف الثانية');
 });
 
 test('تدقيق 5fedcb9 (CL-011، CL-018): مؤشر الاختيار في المقطّعة ≥ 3:1 بالوضعين، ونصه ≥ 4.5:1؛ وأهداف الضغط الصغيرة مكبّرة', async () => {

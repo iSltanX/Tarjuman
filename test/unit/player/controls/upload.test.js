@@ -144,9 +144,9 @@ test('رفع ثانٍ: تأكيد مضغوط بالملف وعدده وسطر ا
   assert.deepEqual(targets(page), [['1', 'false', null, null], ['جديدة', 'true', null, null]], 'المحفوظة استبدالًا، ثم «جديدة» لأول فارغة، ولا خانات فارغة أرقامًا');
   assert.equal(page.ui.menu().querySelector('[data-fid="target:2"]').getAttribute('aria-label'), 'حفظ كترجمة جديدة');
   assert.equal(page.ui.menu().querySelector('[data-fid="target:1"]').getAttribute('aria-label'), 'استبدال الترجمة 1، نشطة');
-  assert.equal(page.ui.menu().querySelector('[data-fid="target:3"]'), null);
+  assert.ok(page.ui.menu().querySelector('[data-fid="target:3"]') === null);
   assert.equal(page.ui.menuText().includes('ستُصفَّر'), false, 'خانة فارغة: لا تصفير للمعروضة');
-  assert.equal(page.ui.field('keep'), null, 'لا «إبقاء تعديلاتي» لخانة فارغة');
+  assert.ok(page.ui.field('keep') === null, 'لا «إبقاء تعديلاتي» لخانة فارغة');
   assert.equal(loads(page).length, 0, 'لا شيء قبل التأكيد');
   click(page.ui.item('حفظ'));
   await settle();

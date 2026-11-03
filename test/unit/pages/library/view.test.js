@@ -174,7 +174,7 @@ test('الترتيب بالعنوان، والعرض التدريجي (50 ثم �
   assert.ok(more, 'زر عرض المزيد');
   more.click();
   assert.equal(rows(m).length, 60);
-  assert.equal(buttonNamed(m.root, 'عرض المزيد'), null);
+  assert.ok(buttonNamed(m.root, 'عرض المزيد') === null);
   const sort = m.root.querySelector('select.lib-sort__select');
   sort.value = 'title';
   sort.dispatchEvent({ type: 'change' });
@@ -223,7 +223,7 @@ test('فتح الفيديو يفتح عنوان المشاهدة وحده، وا
   await settle();
   assert.deepEqual(m.calls.tabs, [`https://www.youtube.com/watch?v=${IDS[0]}`]);
   assert.deepEqual(m.calls.pages, [['editor', { v: IDS[0] }]]);
-  assert.equal(buttonNamed(rowFor(m, IDS[1]), 'تعديل'), null, 'بلا عربية: لا زر تعديل معطّل، بل «رفع ترجمة» مكانه');
+  assert.ok(buttonNamed(rowFor(m, IDS[1]), 'تعديل') === null, 'بلا عربية: لا زر تعديل معطّل، بل «رفع ترجمة» مكانه');
   assert.ok(buttonNamed(rowFor(m, IDS[1]), 'رفع ترجمة'), 'بلا عربية: «رفع ترجمة» الإجراء الرئيسي');
   assert.ok(buttonNamed(rowFor(m, IDS[0]), 'فتح الفيديو'), 'فتح الفيديو زر أيقوني باسم وصول');
   const slots = findAll(rowFor(m, IDS[0]), (e) => e.getAttribute('role') === 'radio' && e.classList.contains('tj-slots__slot'));
@@ -408,7 +408,7 @@ test('القائمة المنسدلة: Esc يغلق ويعيد التركيز، 
   assert.equal(b.getAttribute('aria-expanded'), 'true');
   m.doc.activeElement.dispatchEvent({ type: 'keydown', key: 'Escape' });
   assert.equal(b.getAttribute('aria-expanded'), 'false');
-  assert.equal(m.doc.activeElement, b);
+  assert.ok(m.doc.activeElement === b);
   a.click();
   m.doc.body.dispatchEvent({ type: 'pointerdown' });
   assert.equal(a.getAttribute('aria-expanded'), 'false');
@@ -711,10 +711,10 @@ test('بعد اختيار بند من القائمة يعود التركيز إ�
   await m.lib.load();
   const more = buttonNamed(m.root, 'المزيد: عنوان');
   more.click();
-  assert.notEqual(m.doc.activeElement, more, 'التركيز على البند الأول');
+  assert.ok(m.doc.activeElement !== more, 'التركيز على البند الأول');
   menuItems(more)[1].click();
   await settle();
-  assert.equal(m.doc.activeElement, more);
+  assert.ok(m.doc.activeElement === more);
 });
 
 test('كل رسالة عابرة تُعلَن لقارئ الشاشة بنصها (نجاح التصدير والفشل)', async () => {
@@ -741,7 +741,7 @@ test('إخفاق حفظ بصمة التصدير بعد نزول الملف يظ�
   menuItems(exportBtn)[3].click();
   await settle();
   assert.equal(m.calls.downloads.length, 1);
-  assert.equal(m.root.querySelector('.tj-toast--danger'), null);
+  assert.ok(m.root.querySelector('.tj-toast--danger') === null);
   assert.match(textOf(m.root.querySelector('.tj-toast--info')), /نُزّل الملف، لكن تعذّر حفظ بصمته/);
 });
 

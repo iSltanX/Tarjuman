@@ -68,7 +68,7 @@ test('القاموس المرفق من التفضيلات المخزنة: الت
 
   await page.store.setPrefs({ glossary: { attach: false, terms: TERMS } });
   await settle(area);
-  assert.equal(page.ui.menu().querySelector('.tag'), null, 'إيقاف الإرفاق من الإعدادات يصل إلى المشغّل');
+  assert.ok(page.ui.menu().querySelector('.tag') === null, 'إيقاف الإرفاق من الإعدادات يصل إلى المشغّل');
 });
 
 test('التقسيم عند الجمل أو الصمت: أحجام الأجزاء الفعلية قبل التنزيل، والنسخ والتنزيل بزرّيهما، وضمّ الأجزاء يطابق الكامل', async () => {

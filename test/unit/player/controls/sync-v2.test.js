@@ -29,7 +29,7 @@ test('العرض الفرعي: «عند 12:34» من لحظة الفتح، وس�
   // عند 26.2 ث وبلا إزاحة: الجملة 9 (في الملف 24.0–26.0) انتهت للتو فهي الظاهرة، والنافذة حولها.
   assert.deepEqual(sentences(p).map((b) => b.textContent), [6, 7, 8, 9, 10, 11, 12].map((i) => `الجملة رقم ${i}`));
   assert.equal(sentences(p).find((b) => b.getAttribute('aria-current') === 'true').textContent, 'الجملة رقم 9');
-  assert.equal(p.env.doc._focused, sentences(p)[3], 'التركيز داخل العرض على المعروضة');
+  assert.ok(p.env.doc._focused === sentences(p)[3], 'التركيز داخل العرض على المعروضة');
   assert.equal(p.ui.menuLabel(), 'توقيت الترجمة');
   assert.equal(p.video.writes, 0);
   assert.equal(p.video.pauses, 0);
@@ -44,7 +44,7 @@ test('ملف مؤخَّر 3 ثوانٍ يُضبط باختيار جملة واح
   assert.equal(p.controller.getState().view.displayOffsetMs, -3000);
   assert.equal(p.ui.btn('badge').textContent, '−3.0');
   assert.equal(sentences(p).length, 0, 'عاد إلى قائمة التوقيت');
-  assert.equal(p.env.doc._focused, p.ui.item('مزامنة بجملة…'));
+  assert.ok(p.env.doc._focused === p.ui.item('مزامنة بجملة…'));
   const [toast] = p.ui.toasts();
   assert.equal(toast.text, 'الإزاحة \u2066−3.0\u2069 ثتراجع');
   click(p.ui.layerHost().shadowRoot.querySelector('.toasts button.act'));

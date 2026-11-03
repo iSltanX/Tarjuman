@@ -10,17 +10,20 @@ function setup() {
   return { env, ...addPlayer(env) };
 }
 
+/** النتيجة باسم الأب لا بالعقدة نفسها: فشل deepEqual على عقدة يفحص الـDOM الوهمي كله (overlay/fake-dom.js). */
+const placed = (r, names) => ({ ...r, parent: Object.keys(names).find((k) => names[k] === r.parent) ?? '?' });
+
 test('بلا ملء شاشة: داخل المشغّل', () => {
   const { env, player } = setup();
-  assert.deepEqual(hostParent(env.doc, player), { parent: player, reason: 'normal' });
+  assert.deepEqual(placed(hostParent(env.doc, player), { player }), { parent: 'player', reason: 'normal' });
 });
 
 test('عنصر ملء الشاشة هو المشغّل أو أحد آبائه: الطبقة داخله أصلًا', () => {
   const { env, player } = setup();
   env.doc.fullscreenElement = player;
-  assert.deepEqual(hostParent(env.doc, player), { parent: player, reason: 'ancestor' });
+  assert.deepEqual(placed(hostParent(env.doc, player), { player }), { parent: 'player', reason: 'ancestor' });
   env.doc.fullscreenElement = env.doc.body;
-  assert.deepEqual(hostParent(env.doc, player), { parent: player, reason: 'ancestor' });
+  assert.deepEqual(placed(hostParent(env.doc, player), { player }), { parent: 'player', reason: 'ancestor' });
 });
 
 test('عنصر ملء الشاشة غريب عن المشغّل: ينتقل المضيف إليه (البديل)', () => {
@@ -28,7 +31,7 @@ test('عنصر ملء الشاشة غريب عن المشغّل: ينتقل ال
   const other = env.doc.createElement('div');
   env.doc.body.appendChild(other);
   env.doc.fullscreenElement = other;
-  assert.deepEqual(hostParent(env.doc, player), { parent: other, reason: 'moved' });
+  assert.deepEqual(placed(hostParent(env.doc, player), { player, other }), { parent: 'other', reason: 'moved' });
 });
 
 test('عنصر ملء الشاشة هو الفيديو داخل المشغّل أو عنصر لا يرسم أبناءه: لا مكان', () => {

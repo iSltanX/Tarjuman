@@ -24,7 +24,7 @@ const texts = (stage) => stage.children.map((c) => c.textContent);
 test('الهيكل: مضيف بمعرّف ترجمان داخل #movie_player وظل فيه ورقة أنماط وطبقة عرض فارغة', () => {
   const { view, player, stage } = setup();
   assert.equal(view.host.id, HOST_ID);
-  assert.equal(view.host.parentNode, player);
+  assert.ok(view.host.parentNode === player);
   assert.equal(view.styleMode, 'adopted', 'لا عنصر <style> ولا سمة style');
   assert.equal(view.host.shadowRoot.adoptedStyleSheets.length, 1);
   assert.ok(stage.hasAttribute('data-empty'));
@@ -130,7 +130,7 @@ test('إعادة رسم الأسطر نفسها لا تغيّر العناصر',
   view.render({ ar: ['أ', 'ب'], en: [] });
   const first = [...stage.children];
   view.render({ ar: ['أ', 'ب'], en: [] });
-  assert.deepEqual(stage.children, first);
+  assert.equal(stage.children.length, first.length);
   assert.ok(stage.children.every((c, i) => c === first[i]));
 });
 

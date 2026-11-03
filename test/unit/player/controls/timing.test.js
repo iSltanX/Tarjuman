@@ -130,7 +130,7 @@ test('إعادة الضبط إلى 0 تعيد الشارة الباهتة', () =
   assert.equal(reset.textContent, 'تصفير');
   assert.equal(reset.getAttribute('aria-label'), null, 'اسم الوصول هو النص الظاهر');
   assert.equal(reset.getAttribute('aria-description'), 'إعادة الإزاحة إلى 0', 'والتفصيل وصف إضافي');
-  assert.equal(reset.parentNode, page.ui.field('sync').parentNode, 'المزامنة والتصفير في صف واحد');
+  assert.ok(reset.parentNode === page.ui.field('sync').parentNode, 'المزامنة والتصفير في صف واحد');
   click(reset);
   assert.deepEqual(page.controller.calls.at(-1), ['resetOffset']);
   assert.equal(page.ui.btn('badge').textContent, '0.0');
@@ -152,17 +152,17 @@ test('الإغلاق: إعادة الضغط، والنقر خارجها، وEsc 
   page.ui.field('offset').focus();
   key(page.ui.field('offset'), 'Escape');
   assert.equal(page.ui.menuOpen(), false, 'Esc');
-  assert.equal(page.env.doc._focused, page.ui.btn('badge'), 'التركيز عاد إلى الشارة');
+  assert.ok(page.env.doc._focused === page.ui.btn('badge'), 'التركيز عاد إلى الشارة');
   assert.equal(page.ui.btn('badge').getAttribute('aria-expanded'), 'false');
 });
 
 test('بلوحة المفاتيح: الفتح ينقل التركيز إلى أول عنصر (حقل الإزاحة)، وبالفأرة يبقى على الزر', () => {
   const page = page0();
   click(page.ui.btn('badge'), 0);
-  assert.equal(page.env.doc._focused, page.ui.field('offset'));
+  assert.ok(page.env.doc._focused === page.ui.field('offset'));
   click(page.ui.btn('badge'), 0);
   click(page.ui.btn('badge'), 1);
-  assert.notEqual(page.env.doc._focused, page.ui.field('offset'));
+  assert.ok(page.env.doc._focused !== page.ui.field('offset'));
 });
 
 test('قائمة واحدة في كل مرة: فتح التوقيت يغلق التحميل، وتلميح الزر لا يظهر وقائمته مفتوحة', () => {
@@ -185,9 +185,9 @@ test('إعادة بناء القائمة لا تُضيع ما يُكتب: تغي
   type(input, '2.');
   page.controller.set({ settings: { ...DEFAULT_SETTINGS, offsetStepMs: 1000 } });
   const again = page.ui.field('offset');
-  assert.equal(again, input, 'الحقل نفسه حُدّث في مكانه');
+  assert.ok(again === input, 'الحقل نفسه حُدّث في مكانه');
   assert.equal(again.value, '2.');
-  assert.equal(page.env.doc._focused, again);
+  assert.ok(page.env.doc._focused === again);
 });
 
 test('اختفاء الترجمة العربية أو تبدّل الفيديو يغلق القائمة', () => {

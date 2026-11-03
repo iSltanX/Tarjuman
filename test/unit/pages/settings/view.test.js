@@ -162,8 +162,8 @@ test('«استعادة الافتراضي» لقسم العرض: معطّلة ب
   // الأقسام الأخرى لها استعادتها، وما لا افتراضيات له (التخزين والتشخيص وحول) بلا زر.
   assert.ok(buttonNamed(section(m, 'التوقيت'), 'استعادة الافتراضي'));
   assert.ok(buttonNamed(section(m, 'التصدير'), 'استعادة الافتراضي'));
-  assert.equal(buttonNamed(section(m, 'التخزين'), 'استعادة الافتراضي'), null);
-  assert.equal(buttonNamed(section(m, 'حول'), 'استعادة الافتراضي'), null);
+  assert.ok(buttonNamed(section(m, 'التخزين'), 'استعادة الافتراضي') === null);
+  assert.ok(buttonNamed(section(m, 'حول'), 'استعادة الافتراضي') === null);
 });
 
 test('التنقّل الجانبي: تسعة أقسام، المختار بـaria-current وقسمه وحده ظاهر، والاختيار يُحفظ في جزء العنوان ويُقرأ منه', async () => {

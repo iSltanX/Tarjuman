@@ -30,7 +30,7 @@ test('change عند فقد التركيز ثم النقر على «إعادة ا
   input.dispatchEvent({ type: 'change', target: input });
   assert.equal(page.controller.getState().view.displayOffsetMs, 5000);
   assert.equal(reset.isConnected, true, 'العقدة باقية بعد تغيّر الحالة');
-  assert.equal(page.ui.field('reset'), reset);
+  assert.ok(page.ui.field('reset') === reset);
   click(reset);
   assert.equal(page.controller.getState().view.displayOffsetMs, 0);
 });
@@ -41,11 +41,11 @@ test('قائمة العرض لا تُعاد بناؤها تحت المؤشر م�
   const off = page.ui.menu().querySelector('[data-fid="mode:off"]');
   page.controller.set({ notice: null });
   page.controller.set({ error: null });
-  assert.equal(page.ui.menu().querySelector('[data-fid="mode:off"]'), off);
+  assert.ok(page.ui.menu().querySelector('[data-fid="mode:off"]') === off);
   // وتعطيل يتغير على العقدة نفسها يُحترم لحظة النقر
   const dual = page.ui.menu().querySelector('[data-fid="mode:dual"]');
   page.controller.set({ english: { key: 'en|manual', kind: 'manual', lang: 'en', cues: [], source: 'saved' } });
-  assert.equal(page.ui.menu().querySelector('[data-fid="mode:dual"]'), dual, 'العقدة نفسها');
+  assert.ok(page.ui.menu().querySelector('[data-fid="mode:dual"]') === dual, 'العقدة نفسها');
   assert.equal(dual.getAttribute('aria-disabled'), null);
   click(dual);
   assert.deepEqual(page.controller.calls.at(-1), ['setDisplayMode', 'dual']);
@@ -66,7 +66,7 @@ test('بعد نقرة الفأرة على − أو + لا يبقى التركي�
   const page = mountPage({ state: makeState({ arabic: arabic() }) });
   page.ui.btn('plus').focus();
   click(page.ui.btn('plus'), 1);
-  assert.notEqual(page.env.doc._focused, page.ui.btn('plus'));
+  assert.ok(page.env.doc._focused !== page.ui.btn('plus'));
   const seen = [];
   page.env.doc.addEventListener('keydown', (ev) => seen.push(ev.key));
   key(page.env.doc.body, ' ');
@@ -74,7 +74,7 @@ test('بعد نقرة الفأرة على − أو + لا يبقى التركي�
   page.ui.btn('minus').focus();
   key(page.ui.btn('minus'), 'Enter');
   click(page.ui.btn('minus'), 0);
-  assert.equal(page.env.doc._focused, page.ui.btn('minus'));
+  assert.ok(page.env.doc._focused === page.ui.btn('minus'));
 });
 
 test('إخفاق عابر في تحميل الخط لا يُحفظ: الطلب التالي يعيد المحاولة وينجح', async () => {
@@ -130,20 +130,20 @@ test('إغلاق تأكيد الاستبدال أثناء الحفظ: تُطبَ
   await settle();
   assert.equal(page.controller.getState().arabic.fileName, 'new.ar.srt', 'النتيجة طُبّقت');
   assert.equal(page.ui.menuOpen(), false, 'لم تُعد القائمة');
-  assert.equal(page.env.doc._focused, outside, 'التركيز لم يُسرق');
+  assert.ok(page.env.doc._focused === outside, 'التركيز لم يُسرق');
 });
 
 test('إغلاق القائمة تلقائيًا والتركيز فيها (زالت الترجمة أو تبدّل الفيديو): يعود التركيز إلى زرها', () => {
   const page = mountPage({ state: makeState({ arabic: arabic() }) });
   click(page.ui.btn('badge'), 0);
-  assert.equal(page.env.doc._focused, page.ui.field('offset'));
+  assert.ok(page.env.doc._focused === page.ui.field('offset'));
   page.controller.set({ arabic: null });
   assert.equal(page.ui.menuOpen(), false);
-  assert.equal(page.env.doc._focused, page.ui.btn('badge'));
+  assert.ok(page.env.doc._focused === page.ui.btn('badge'));
   page.controller.set({ arabic: arabic(), captured: [trackInfo()] });
   click(page.ui.btn('download'), 0);
   page.controller.set({ videoId: 'BBBBBBBBBBB' });
-  assert.equal(page.env.doc._focused, page.ui.btn('download'));
+  assert.ok(page.env.doc._focused === page.ui.btn('download'));
 });
 
 test('بديل النسخ يعيد التركيز إلى بند القائمة بعد الحقل المؤقت', async () => {
@@ -154,7 +154,7 @@ test('بديل النسخ يعيد التركيز إلى بند القائمة �
   copy.focus();
   click(copy, 0);
   await settle();
-  assert.equal(page.env.doc._focused, copy);
+  assert.ok(page.env.doc._focused === copy);
 });
 
 test('المحدّث في المكان: يحفظ العقد المطابقة، ويدرج الجديد ويزيل الزائد، وينقل السمات والنص والقيمة', () => {
@@ -178,11 +178,12 @@ test('المحدّث في المكان: يحفظ العقد المطابقة، �
   n4.value = 'y';
   const inserted = morphChildren(parent, [n1, n2, n3, n4]);
   assert.equal(inserted, 1, 'الخطأ وحده جديد');
-  assert.deepEqual(parent.children, [a, n2, b, c]);
+  // مواضع العقد في القائمة المتوقعة لا العقد نفسها: فشل deepEqual على عقدة يفحص الـDOM الوهمي كله (overlay/fake-dom.js).
+  assert.deepEqual(parent.children.map((n) => [a, n2, b, c].indexOf(n)), [0, 1, 2, 3]);
   assert.equal(a.getAttribute('aria-checked'), 'true');
   assert.equal(b.textContent, 'جديد');
   assert.equal(c.value, 'y');
   morphChildren(parent, [el('button', { 'data-fid': 'a' }, 'أ')]);
-  assert.deepEqual(parent.children, [a], 'الزائد أُزيل');
+  assert.deepEqual(parent.children.map((n) => [a].indexOf(n)), [0], 'الزائد أُزيل');
   assert.equal(a.hasAttribute('aria-checked'), false, 'السمة الغائبة أُزيلت');
 });
