@@ -9,6 +9,7 @@ import { createStore } from '../core/store/index.js';
 import { saveFile } from '../core/save/index.js';
 import { mountOverlay } from '../player/overlay/index.js';
 import { mountControls } from '../player/controls/index.js';
+import { mountPanel } from '../player/panel/index.js';
 import { isLiveNow, mainVideoDurationMs, videoTitle, watchCurrentVideo } from '../player/youtube-dom.js';
 
 /* global __TJ_DEV__ */
@@ -37,7 +38,7 @@ tracker = watchCurrentVideo({
 });
 store.onChange((change) => controller.handleStoreChange(change));
 
-const mounted = { overlay: mountOverlay(controller), controls: mountControls(controller) };
+const mounted = { overlay: mountOverlay(controller), controls: mountControls(controller), panel: mountPanel(controller) };
 installMessageHandler({ controller, mounted });
 controller.start(tracker.current());
 

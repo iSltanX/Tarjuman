@@ -125,6 +125,8 @@ MountHandle = { state: "stub" | "waiting" | "mounted" | "error", unmount(): void
 
 التركيب وحده، بهذا الترتيب: المستخرج ← الجسر (أولًا، فقد يصل الالتقاط مبكرًا) ← التخزين ← المتحكم ← مراقبة الفيديو (`controller.setVideo`، وهو يبدّل المستخرج معه؛ ثم `extractor.setVideo` تكرارًا آمنًا) ← `store.onChange` ← نقطتا التركيب ← رد نافذة الأيقونة ← `controller.start`. لا منطق منتج فيه.
 
+**نقطة التركيب الثالثة (الهوية «بُنّ على ورق»، قرار سلطان 2026-11-03، [identity-redesign.md §٤](../identity-redesign.md)):** `mounted.panel = mountPanel(controller, env = { doc, win })` من `src/player/panel/index.js`، بمقبض مثل الأخريين: `{ state: "stub" | "waiting" | "mounted" | "error", unmount(), diagnostics(), peek() }`، وتُستدعى مرة عند `document_start` وتنتظر العمود بنفسها. المضيف **أول ابن** في عمود يوتيوب الثانوي (`ytd-watch-flexy #secondary-inner`، وبديله `#secondary`) في صفحات الفيديو وحدها، بـShadow DOM مغلق و`textContent` فقط؛ فيكون يمين الفيديو في التخطيط العريض وتحته في الضيق ووضع المسرح، ولا يغطي الفيديو ولا أدواته. يعاد إلى موضعه إن أعاد يوتيوب رسم العمود، ويُخفى في ملء الشاشة ويُزال بمغادرة صفحة الفيديو. تقرأ حالة المتحكم وتكتب بأفعاله وحدها: `updatePrefs({ ui })` للفتح والإغلاق وإخفاء الزر ونص اللوحة، و`nudgeOffset` و`resetOffset` للإزاحة المشتركة، و`updateSettings({ offsetStepMs })` للخطوة بمسار قائمة التوقيت نفسه، و`reload` لإعادة المحاولة. والمقطع الحالي بـ`indexFor(...).find` و`lookupMs` كالطبقة. ولا يظهر `mounted.panel` في رد نافذة الأيقونة (`messages.js` مجمَّد) بل في `__tarjuman.mounted.panel.diagnostics()` ببناء التطوير.
+
 ## ٥. تدفق التصدير — `src/core/export/index.js` (P3)
 
 وحدة نقية تستهلكها الأدوات (P6) والمحفوظات (P7) والمحرّر (P8). تكتب الملفات عبر `src/core/srt` (قراءة).
