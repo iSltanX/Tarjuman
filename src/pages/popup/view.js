@@ -1,6 +1,6 @@
 // بُناة DOM لنافذة الأيقونة بلا اتصال بالتخزين ولا بالتبويبات (الهوية «بُنّ على ورق»، لوحة Popup): هيكل القراءة، وبطاقة الفيديو
 // الحالي بحالاتها، وخطوات «بلا ترجمة عربية»، وملاحظة «ليست صفحة فيديو». textContent وsetAttribute فقط. المنطق والبيانات
-// في status.js، والتركيب في main.js.
+// في status.js، والتركيب في main.js. الصنف التاريخي tj-popup__status باقٍ على البطاقة والهيكل والملاحظة: يقرؤه الحزام الحي.
 import { el, statusPill } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
 import { popupIcon } from './icons.js';
@@ -11,7 +11,7 @@ export const NOT_VIDEO_TEXT = 'افتح فيديو على يوتيوب لتبد�
 /** هيكل بارتفاع البطاقة: لا تقفز النافذة حين يصل الرد. @param {Document} [doc] */
 export function skeletonCard(doc = document) {
   return el('section', {
-    className: 'tj-popup__card',
+    className: 'tj-popup__card tj-popup__status',
     attrs: { 'aria-busy': 'true', 'aria-label': 'جارٍ قراءة حالة الفيديو' },
     children: [
       el('div', { className: 'tj-skeleton tj-popup__skel-title', doc }),
@@ -65,7 +65,7 @@ function toolsRow(tools, doc) {
  * @param {Document} [doc]
  */
 export function statusCard(s, tools, capture, doc = document) {
-  const card = el('section', { className: 'tj-popup__card', attrs: { 'aria-live': 'polite' }, doc });
+  const card = el('section', { className: 'tj-popup__card tj-popup__status', attrs: { 'aria-live': 'polite' }, doc });
   card.append(el('h2', { className: 'tj-popup__title tj-clamp-2 tj-auto', text: s.title, dir: textDirection(s.title), attrs: { title: s.title }, doc }));
   if (s.kind === 'loading') {
     card.append(el('div', { className: 'tj-skeleton tj-popup__skel-line', doc }));
@@ -113,7 +113,7 @@ export function guideList(steps, doc = document) {
 /** ملاحظة «ليست صفحة فيديو»: أيقونة الفيديو والنص. @param {Document} [doc] */
 export function notVideoNote(doc = document) {
   return el('div', {
-    className: 'tj-popup__note', attrs: { role: 'status' },
+    className: 'tj-popup__note tj-popup__status', attrs: { role: 'status' },
     children: [popupIcon('video', { doc }), el('span', { text: NOT_VIDEO_TEXT, doc })],
     doc,
   });
