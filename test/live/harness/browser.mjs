@@ -10,6 +10,8 @@ import { CdpConnection, pipeTransport } from './cdp.mjs';
 export const BROWSERS = {
   brave: { name: 'Brave', bin: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser' },
   chrome: { name: 'Chrome', bin: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' },
+  // Edge (جولة النشر T3): بناء Chromium نفسه، وCDP بالأنبوب نفسه.
+  edge: { name: 'Edge', bin: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge' },
 };
 
 export const PROFILE_ROOT = path.join(os.homedir(), 'Library/Application Support/Tarjuman-test');

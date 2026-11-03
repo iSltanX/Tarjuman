@@ -38,7 +38,8 @@ const entries = {
   // العامل الخلفي للحفظ وحده (الإصدار الثاني): سكربت كلاسيكي مجمّع، فلا "type": "module" في البيان.
   'background/worker': 'background/worker.js',
   ...Object.fromEntries(PAGES.map((p) => [`pages/${p}/main`, `pages/${p}/main.js`])),
-  ...(DEV ? { 'ui/gallery/gallery': 'ui/gallery/gallery.js' } : {}),
+  ...(DEV ? { 'ui/gallery/gallery': 'ui/gallery/gallery.js', 'dev/harness-bridge': 'dev/harness-bridge.js' } : {}),
+  ...(DEV && TARGET === 'firefox' ? { 'dev/harness-background': 'dev/harness-background.js' } : {}),
 };
 
 async function walk(dir) {
@@ -78,7 +79,13 @@ for (const file of [...(await walk(path.join(SRC, 'pages'))), ...(await walk(pat
 }
 
 const manifest = targetManifest(JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8')), TARGET);
-if (DEV) manifest.version_name = `${manifest.version}-dev`;
+if (DEV) {
+  manifest.version_name = `${manifest.version}-dev`;
+  // جسر الحزام الحي (جولة النشر T3) بعد سكربت المحتوى في عالمه المعزول نفسه: بناء التطوير وحده.
+  manifest.content_scripts.find((c) => c.js.includes('content/main.js')).js.push('dev/harness-bridge.js');
+  // وفي Firefox سكربت خلفية يفتح صفحات الإضافة لجسر الحزام (عامل Chromium ملف واحد، وCDP ينتقل إليها بنفسه).
+  if (TARGET === 'firefox') manifest.background.scripts.push('dev/harness-background.js');
+}
 await writeFile(path.join(OUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
 // حزمة الإنتاج بلا خطاف تطوير (سكربت المحتوى وصفحات الإضافة): يفشل البناء إن بقي.
