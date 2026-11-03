@@ -240,7 +240,7 @@ test('الوضع المزدوج: «فوق ‹اسم لغة الأصل›» با�
     assert.equal(dualButton(page).textContent, `فوق ${arName(lang)}`, lang);
     assert.equal(dualButton(page).getAttribute('aria-label'), `العربية فوق ${arName(lang)}`);
     assert.equal(dualButton(page).getAttribute('aria-disabled'), null);
-    assert.equal(page.ui.menu().querySelector('[data-fid="dualReason"]'), null, 'لا سبب تعطيل مع أصل');
+    assert.ok(page.ui.menu().querySelector('[data-fid="dualReason"]') === null, 'لا سبب تعطيل مع أصل');
     assert.equal(page.ui.menuText().includes('الإنجليزية'), lang === 'en', 'لا «الإنجليزية» لأصل بلغة أخرى');
   }
 });
