@@ -33,9 +33,9 @@ test('سطر ما قبل التطبيق وما بعده (§١١.٢): «سيُؤ�
 });
 
 test('الإزاحة: سطر ثابت منفصل، وتنبيه قبل نقل الملف كله', () => {
-  assert.equal(offsetLine(500), 'إزاحة العرض أثناء المشاهدة: +0.5 ث — منفصلة عن التوقيت المحفوظ');
-  assert.equal(offsetNotice(500), 'إزاحة العرض +0.5 ث مفعّلة؛ النقل هنا يُضاف إليها.');
-  assert.equal(offsetNotice(-1000), 'إزاحة العرض −1.0 ث مفعّلة؛ النقل هنا يُضاف إليها.');
+  assert.equal(offsetLine(500), 'إزاحة العرض أثناء المشاهدة: \u2066+0.5\u2069 ث — منفصلة عن التوقيت المحفوظ');
+  assert.equal(offsetNotice(500), 'إزاحة العرض \u2066+0.5\u2069 ث مفعّلة؛ النقل هنا يُضاف إليها.');
+  assert.equal(offsetNotice(-1000), 'إزاحة العرض \u2066−1.0\u2069 ث مفعّلة؛ النقل هنا يُضاف إليها.');
 });
 
 test('العدّ: الأخطاء والتحذيرات والتغييرات بمطابقة الصفة', () => {
@@ -53,11 +53,11 @@ test('العدّ: الأخطاء والتحذيرات والتغييرات بم�
   assert.equal(unsavedSentence(3), 'لديك 3 تغييرات غير محفوظة');
   assert.equal(unsavedSentence(100), 'لديك 100 تغيير غير محفوظ');
   assert.equal(saveStatus(12, true), 'تغييرات غير محفوظة (12)');
-  assert.equal(saveStatus(0, false), 'محفوظ ✓');
+  assert.equal(saveStatus(0, false), 'محفوظ');
 });
 
 test('المقارنة: مطابق، وناقص بأرقامه، وانحراف، وبلا بصمة؛ وسبب منع الاستعادة', () => {
-  assert.deepEqual(comparisonLines(comparison()).map((l) => l.text), ['مطابق للأصل ✓', 'العدد: 5 من 5']);
+  assert.deepEqual(comparisonLines(comparison()).map((l) => l.text), ['مطابق للأصل', 'العدد: 5 من 5']);
   assert.deepEqual(comparisonLines(null), [{ tone: 'info', text: 'لا بصمة للمقارنة؛ عُرض الملف كما هو.' }]);
   const r = { ...comparison(), matched: false, countTarget: 3, missing: [57, 58, 201], drift: Array.from({ length: 12 }, (_, i) => ({ n: i + 1, startDeltaMs: 300, endDeltaMs: 0 })), restoreTimingAvailable: false };
   const texts = comparisonLines(r).map((l) => l.text);

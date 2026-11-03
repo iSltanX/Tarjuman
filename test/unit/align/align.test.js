@@ -225,3 +225,18 @@ test('الأداء: محاذاة 20,000 مقطع بدمج وشطر في أقل �
   assert.equal(r.confidence, 'high');
   assert.ok(ms < 2000, `${Math.round(ms)}ms`);
 });
+
+test('تدقيق 5fedcb9 (CX-006): مقطع واحد لا يجمعه بالمرجع إلا رقمه ليس محاذاة متحققة، والمطابق زمنيًا هوية، والمقطع الشاذ بين جيران موثوقين مقبول', async () => {
+  const { compare } = await import('../../../src/core/compare/compare.js');
+  const one = [{ n: 1, startMs: 1000, endMs: 2000, text: '' }];
+  const far = [{ n: 1, startMs: 12000, endMs: 13000, text: 'بعيد' }];
+  const r = alignCues(one, far, { offset: 0 });
+  assert.equal(r.confidence, 'low', r.reasons.join(' | '));
+  assert.equal(isIdentity(r, 1, 1), false);
+  const fp = { id: 'fp_test000001', count: 1, cues: one };
+  assert.equal(compare(far, fp).restoreTimingAvailable, false, 'لا استعادة توقيت متحققة الهوية بالرقم وحده');
+  assert.ok(isIdentity(alignCues(one, [{ n: 1, startMs: 1050, endMs: 2050, text: 'قريب' }]), 1, 1), 'المتطابق زمنيًا هوية');
+  const eight = longTrack(8, { seed: 3 });
+  const oneOff = eight.map((c, i) => (i === 4 ? { ...c, startMs: c.startMs + 600_000, endMs: c.endMs + 600_000 } : c));
+  assert.ok(isIdentity(alignCues(eight, oneOff), 8, 8), 'تسامح المقطع الشاذ باقٍ');
+});

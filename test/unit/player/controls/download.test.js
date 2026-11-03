@@ -21,12 +21,12 @@ test('لم يُلتقط مسار: إرشاد لتفعيل CC واختيار Engl
   const page = mountPage();
   open(page);
   assert.match(page.ui.menuText(), /فعّل الترجمة \(CC\) واختر English، ثم افتح هذه القائمة\./);
-  assert.equal(page.ui.item(DL), null);
+  assert.ok(page.ui.item(DL) === null);
   assert.equal(page.ui.menuText().includes('لا يرسل أي طلب'), false);
   click(page.ui.item('لماذا؟'));
   assert.match(page.ui.menuText(), /ترجمان يقرأ الترجمة التي يجلبها المشغّل لك، ولا يرسل أي طلب من عنده\./);
   assert.equal(page.ui.item('لماذا؟').getAttribute('aria-expanded'), 'true');
-  assert.equal(page.ui.menuText().includes('CC ← ⚙'), false, 'الخطوات لرفض المسار وحده');
+  assert.equal(page.ui.menuText().includes('CC ثم الإعدادات'), false, 'الخطوات لرفض المسار وحده');
 });
 
 test('مسار عربي أو مترجم آليًا: رسالته وخطوات اختيار English بسطر، وملاحظة Brave في Brave وحده', () => {
@@ -35,8 +35,8 @@ test('مسار عربي أو مترجم آليًا: رسالته وخطوات ا
     open(chrome);
     const alert = chrome.ui.menu().querySelector('.alert');
     assert.ok(alert.textContent.includes(messageFor(code)));
-    assert.equal(alert.querySelector('.steps').textContent, 'CC ← ⚙ ← الترجمة ← English');
-    assert.equal(alert.querySelector('.note-in'), null, 'لا ملاحظة Brave في Chrome');
+    assert.equal(alert.querySelector('.steps').textContent, 'CC ثم الإعدادات ثم «الترجمة» ثم English');
+    assert.ok(alert.querySelector('.note-in') === null, 'لا ملاحظة Brave في Chrome');
   }
   const brave = mountPage({ state: makeState({ captureIssue: { code: 'EX_NOT_ENGLISH', at: 1 } }), brave: true });
   open(brave);
@@ -47,7 +47,7 @@ test('رفض آخر أو مسار تالف أو بث جارٍ: رسالة الم
   const p2 = mountPage({ state: makeState({ captured: [trackInfo({ ok: false, code: 'EX_EMPTY_BODY', cueCount: 0 })] }) });
   open(p2);
   assert.ok(p2.ui.menuText().includes(messageFor('EX_EMPTY_BODY')));
-  assert.equal(p2.ui.item(DL), null);
+  assert.ok(p2.ui.item(DL) === null);
   const p3 = mountPage();
   p3.env.doc.querySelector('#movie_player').appendChild(Object.assign(p3.env.doc.createElement('div'), { className: 'ytp-live-badge' }));
   p3.env.doc.defaultView.getComputedStyle = () => ({ display: 'inline-block' });
@@ -72,10 +72,10 @@ test('مسار واحد: سطر الحالة بوصفه، ووضع التصدي�
   assert.equal(page.ui.field('copy').getAttribute('aria-description'), 'تعليمات الترجمة وحدها، لترفقها مع الملف');
   assert.equal(page.ui.field('copy').className, 'secondary');
   assert.equal(page.ui.field('copy').textContent, 'نسخ التعليمات');
-  assert.equal(dl.parentNode, page.ui.field('copy').parentNode, 'الزران في صف واحد');
+  assert.ok(dl.parentNode === page.ui.field('copy').parentNode, 'الزران في صف واحد');
   assert.equal(dl.parentNode.className, 'actions inline');
   assert.equal(page.ui.menu().querySelectorAll('button').filter((b) => /تنزيل ونسخ/.test(b.textContent)).length, 0, 'لا إجراء مركّب');
-  assert.equal(page.ui.menu().querySelector('.tag'), null, 'لا قاموس: لا إشارة');
+  assert.ok(page.ui.menu().querySelector('.tag') === null, 'لا قاموس: لا إشارة');
   click(page.ui.item('مقاطع أطول'));
   assert.equal(page.ui.field('mode:long').getAttribute('title'), 'جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما');
   assert.equal(page.ui.item('مقاطع أطول').getAttribute('aria-checked'), 'true');
@@ -279,7 +279,7 @@ test('القاموس المرفق: إشارة «+ القاموس (2)» تحت ا
 
   const off = withTrack({ prefs: { schema: 1, glossary: { attach: false, terms }, review: { maxCps: null }, saveLocation: { mode: 'downloads', folder: 'Tarjuman' } } });
   open(off);
-  assert.equal(off.ui.menu().querySelector('.tag'), null);
+  assert.ok(off.ui.menu().querySelector('.tag') === null);
   click(off.ui.field('copy'));
   await settle();
   assert.deepEqual(off.copied, [INSTRUCTIONS]);

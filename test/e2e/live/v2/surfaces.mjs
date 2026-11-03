@@ -17,7 +17,7 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BROWSERS, PROFILE_ROOT, human, launch, loadExtension, sleep } from '../../../live/harness/browser.mjs';
-import { attach, collectErrors, openTab } from '../../../live/harness/extension.mjs';
+import { FONT_READ_LOG, attach, collectErrors, openTab } from '../../../live/harness/extension.mjs';
 import { dismissConsent, revealControls, waitForPlayer } from '../../../live/harness/youtube.mjs';
 import { alignCues, diffTranslations } from '../../../../src/core/align/index.js';
 import { compare } from '../../../../src/core/compare/index.js';
@@ -48,7 +48,6 @@ const SUB = 'Tarjuman';
 const sha = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
 const ISOLATES = new RegExp(`[${String.fromCharCode(0x2066)}-${String.fromCharCode(0x2069)}]`, 'g');
 const clean = (s) => String(s ?? '').replace(ISOLATES, '').replace(/\s+/g, ' ').trim();
-const FONT_READ_LOG = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/subtitle\/[a-z0-9-]+-(?:400|700)\.woff2 /;
 
 const result = { browser: null, at: new Date().toISOString(), headless: HEADLESS, video: VIDEO, head: null, extension: null, checks: [], measures: {}, notes: [], screenshots: [], errors: {} };
 const check = (id, test, ok, detail = null) => {

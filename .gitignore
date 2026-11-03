@@ -7,6 +7,8 @@ dist/
 /release/
 test-results/
 *.log
+# سجلات الأدلة تُحفظ (تدقيق 5fedcb9، GM-020: ضاعت سجلات P4 بتجاهل *.log)
+!docs/evidence/**/*.log
 .DS_Store
 # ملفات التعريف وبيانات الاختبار الحي لا تُحفظ في المستودع
 .tj-profiles/

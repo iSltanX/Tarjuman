@@ -159,22 +159,26 @@ export function reviewItems({ cues, issues, comparison, fingerprint, marks, engl
 
 /**
  * مجموعات الاستكمال (R52) بأرقام الملف الكامل (1..عدد البصمة): الناقص والفارغ تلقائيًا، و«بلا حروف عربية» اختياري،
- * والمعلّمة «أعود إليه» والمحددة. الرقم من رقم المقطع (المدموج يحمل رقم أوله، والقطعتان رقم المقطع).
+ * والمعلّمة «أعود إليه» والمحددة. الرقم رقم البصمة الذي يغطيه المقطع بالمحاذاة (numbersOf من fingerprintCoverage: المدموج
+ * أرقامه كلها، والقطعة رقم أصلها، وفي ملف أُعيد ترقيمه رقم موضعه لا رقمه المكتوب؛ تدقيق 5fedcb9، GM-002)، وإلا رقم المقطع.
  * @param {{
  *   cues: Cue[], comparison: import('../model/tracks.js').ComparisonReport | null, fingerprint: import('../model/tracks.js').Fingerprint | null,
- *   marks: ReturnType<typeof resolveSlotMarks>, selection: Iterable<number>
+ *   marks: ReturnType<typeof resolveSlotMarks>, selection: Iterable<number>, numbersOf?: number[][] | null
  * }} o
  */
-export function completionGroups({ cues, comparison, fingerprint, marks, selection }) {
+export function completionGroups({ cues, comparison, fingerprint, marks, selection, numbersOf = null }) {
   const count = fingerprint?.count ?? 0;
   const inRange = (n) => Number.isInteger(n) && n >= 1 && n <= count;
   const uniq = (ns) => [...new Set(ns.filter(inRange))].sort((a, b) => a - b);
+  const mapped = numbersOf && numbersOf.length === cues.length ? numbersOf : null;
+  const numbers = (i) => (mapped ? mapped[i] : cues[i] ? [cues[i].n] : []);
+  const indices = (pred) => cues.flatMap((c, i) => (pred(c) ? numbers(i) : []));
   return {
     missing: uniq(comparison && comparison.fingerprintId === fingerprint?.id ? comparison.missing : []),
-    empty: uniq(cues.filter((c) => isBlankText(c.text)).map((c) => c.n)),
-    noArabic: uniq(cues.filter((c) => lacksArabic(c.text)).map((c) => c.n)),
-    marked: uniq(marks.entries.filter((e) => e.kind === 'todo').map((e) => cues[e.index]?.n)),
-    selected: uniq([...selection].map((i) => cues[i]?.n)),
+    empty: uniq(indices((c) => isBlankText(c.text))),
+    noArabic: uniq(indices((c) => lacksArabic(c.text))),
+    marked: uniq(marks.entries.filter((e) => e.kind === 'todo').flatMap((e) => numbers(e.index))),
+    selected: uniq([...selection].flatMap((i) => numbers(i))),
   };
 }
 

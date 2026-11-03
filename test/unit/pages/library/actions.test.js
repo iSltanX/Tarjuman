@@ -242,3 +242,52 @@ test('إخفاق حفظ البصمة بعد التنزيل تنبيه (saveError
   const again = await exportEnglish({ store, videoId: ID, trackKey: 'en|manual', save, now });
   assert.equal(again.fingerprintSaved, true, 'إعادة التصدير تحفظها');
 });
+
+test('تدقيق 5fedcb9 (GM-015.1): «إبقاء تعديلاتي» في المحفوظات بمحرك المشغّل نفسه (R49): التعارض للملف الجديد، والمطابق للجديد غير معدّل', async () => {
+  const { uploadImpact } = await import('../../../../src/pages/library/actions.js');
+  const { keepEditsPlan } = await import('../../../../src/player/controls/replace.js');
+  const original = makeCues(8);
+  const mine = original.map((c, i) => (i === 1 ? { ...c, text: 'تعديلي' } : i === 5 ? { ...c, text: 'تعديلي الآخر' } : c));
+  const theirs = original.map((c, i) => (i === 5 ? { ...c, text: 'من الملف' } : i === 7 ? { ...c, text: 'جديد' } : c));
+  const bundle = { slots: [{ track: { original, current: mine } }, { track: null }, { track: null }] };
+  const lib = uploadImpact(bundle, 1, theirs).keep;
+  const player = keepEditsPlan({ original, current: mine }, theirs);
+  assert.equal(lib.ok, true);
+  assert.equal(lib.cues[5].text, 'من الملف', 'موضع التعارض يأخذه الملف الجديد كالمشغّل');
+  assert.deepEqual(lib.cues, player.current, 'النتيجة نفسها في السطحين');
+  assert.equal(lib.conflicts, player.conflicts);
+  // تعديلات يبطلها الجديد كلها: لا نسخة معدّلة تُكتب (كانت المحفوظات تسمها «معدّلة» رغم مطابقتها الجديد).
+  const undone = original.map((c, i) => (i === 5 ? { ...c, text: 'من الملف' } : c));
+  const same = uploadImpact({ slots: [{ track: { original, current: undone } }, { track: null }, { track: null }] }, 1, undone).keep;
+  assert.deepEqual([same.ok, same.cues], [true, null]);
+});
+
+test('تدقيق 5fedcb9 (GM-015.2): تصدير الإنجليزية من المحفوظات عند حد البصمات لا يسقط بصمة خانة غير نشطة (كالمشغّل)', async () => {
+  const { sampleBundle, seedBundle } = await import('../../../helpers/fixtures-v2.js');
+  const { fingerprint } = await import('../../../helpers/fixtures.js');
+  const area = createMemoryArea({ unlimited: true });
+  const store = createStore({ area, now });
+  const b = sampleBundle(); // الخانة 2 مرجعها fp_test000002، والنشطة fp_test000001
+  // ثماني بصمات أقدم تملأ الحد (10) مع بصمتي العيّنة.
+  const old = Array.from({ length: 8 }, (_, i) => fingerprint({ track: b.record.english[0], id: `fp_old${String(i).padStart(7, '0')}`, createdAt: '2026-10-01T00:00:00.000Z' }));
+  // البصمة المرجعية للخانة 2 أول القائمة (الأقدم إضافةً)، فيسقطها الحد أولًا لو لم تُحفظ.
+  const [fp1, fp2] = b.record.fingerprints;
+  b.record.fingerprints = [fp2, ...old, fp1];
+  await seedBundle(store, b);
+  const saveFile = async (f) => ({ ok: true, mode: 'downloads', downloadId: 1, name: f.name });
+  const r = await exportEnglish({ store, videoId: b.videoId, trackKey: b.record.english[0].key, now, save: saveFile });
+  assert.equal(r.fingerprintSaved, true);
+  const after = await store.getBundle(b.videoId);
+  assert.equal(after.record.fingerprints.length, 10, 'الحد محترم');
+  assert.equal(after.slots[1].track.fingerprintId, 'fp_test000002', 'مرجع الخانة 2 باقٍ');
+  assert.ok(after.record.fingerprints.some((f) => f.id === 'fp_test000002'));
+});
+
+test('تدقيق 5fedcb9 (GM-016.1): النص الدراسي من المحفوظات بروابط حيث يظهر المقطع (المحفوظ + إزاحة العرض) كالمحرّر', async () => {
+  const { exportStudy } = await import('../../../../src/pages/library/actions.js');
+  const { store } = await seeded({ offset: 2000 });
+  const files = [];
+  await exportStudy({ store, videoId: ID, format: 'md', bilingual: false, save: async (f) => { files.push(f); return { ok: true, mode: 'downloads', downloadId: 1 }; } });
+  const first = videoRecord({ videoId: ID }).arabic.original[0];
+  assert.match(files[0].text, new RegExp(`t=${Math.floor((first.startMs + 2000) / 1000)}s`), 'الرابط الأول بإزاحة العرض');
+});

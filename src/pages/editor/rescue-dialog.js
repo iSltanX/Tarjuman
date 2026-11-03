@@ -2,7 +2,7 @@
 // تعارض (والأحدث افتراضيًا فلا يُكتب فوقه بصمت)، و«تطبيق غير المتعارض (N)». يعيد الاختيارات أو 'export' أو null؛ والتطبيق
 // في الجلسة (app.js) لا يكتب شيئًا حتى «حفظ».
 import { alertBox, el } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 import { openDialog } from './dialogs.js';
 
 let seq = 0;
@@ -40,8 +40,8 @@ export async function openRescueDialog({ doc, first, offsets }) {
       className: 'ed-fieldset',
       children: [
         el('legend', { className: 'tj-label', text: `المقطع ${c.n}`, doc }),
-        radio(name, 'theirs', `الأحدث: ${flat(c.theirs)}`, true, () => { resolve[c.n] = 'theirs'; }),
-        radio(name, 'mine', `تعديلي: ${flat(c.mine)}`, false, () => { resolve[c.n] = 'mine'; }),
+        radio(name, 'theirs', `الأحدث: ${flat(c.theirs)}`, true, () => { resolve[c.key] = 'theirs'; }),
+        radio(name, 'mine', `تعديلي: ${flat(c.mine)}`, false, () => { resolve[c.key] = 'mine'; }),
       ],
       doc,
     });
@@ -50,8 +50,8 @@ export async function openRescueDialog({ doc, first, offsets }) {
     className: 'ed-fieldset',
     children: [
       el('legend', { className: 'tj-label', text: 'إزاحة العرض', doc }),
-      radio('ed-rescue-offset', 'theirs', `الأحدث: ${formatOffset(offsets.theirs)} ث`, true, () => { offsetChoice = 'theirs'; }),
-      radio('ed-rescue-offset', 'mine', `إزاحتي: ${formatOffset(offsets.mine)} ث`, false, () => { offsetChoice = 'mine'; }),
+      radio('ed-rescue-offset', 'theirs', `الأحدث: ${offsetInline(offsets.theirs)} ث`, true, () => { offsetChoice = 'theirs'; }),
+      radio('ed-rescue-offset', 'mine', `إزاحتي: ${offsetInline(offsets.mine)} ث`, false, () => { offsetChoice = 'mine'; }),
     ],
     doc,
   }) : null;

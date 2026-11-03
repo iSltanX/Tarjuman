@@ -2,4 +2,4 @@
 // الاستبدال وإبقاء التعديلات (P12 وP13) والاستكمال وإنقاذ المسودة (P14)، والمقارن في src/core/compare.
 export { ALIGN_DEFAULTS, alignCues, iou, isIdentity, toBlocks } from './align.js';
 export { diffTranslations } from './diff.js';
-export { mergeThreeWay } from './merge.js';
+export { keepEditsMerge, mergeThreeWay } from './merge.js';

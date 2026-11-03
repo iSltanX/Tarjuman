@@ -9,7 +9,7 @@ import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, slotPicker, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatBytes, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
 import { createToaster } from '../../ui/toast.js';
 import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportStudy, prepareUpload, studyName } from './actions.js';
@@ -186,12 +186,12 @@ export function createLibrary(env) {
     const group = radioGroup({
       legend: 'توقيت الملف المصدَّر',
       options: [
-        { value: 'shown', label: `كما يظهر الآن (المحفوظ + الإزاحة ${formatOffset(offsetMs)} ث)`, hint: 'الاختيار المناسب لما تشاهده فوق الفيديو.' },
+        { value: 'shown', label: `كما يظهر الآن (المحفوظ + الإزاحة ${offsetInline(offsetMs)} ث)`, hint: 'الاختيار المناسب لما تشاهده فوق الفيديو.' },
         { value: 'saved', label: 'المحفوظ كما هو (دون الإزاحة)', hint: 'التوقيت المخزَّن في ترجمتك بلا تعديل.' },
       ],
       doc,
     });
-    return confirm({ title: 'توقيت الملف المصدَّر', body: `لهذه الترجمة إزاحة عرض ${formatOffset(offsetMs)} ث. اختر التوقيت الذي يُكتب في الملف.`, confirmLabel: 'تصدير', content: group.root, doc })
+    return confirm({ title: 'توقيت الملف المصدَّر', body: `لهذه الترجمة إزاحة عرض ${offsetInline(offsetMs)} ث. اختر التوقيت الذي يُكتب في الملف.`, confirmLabel: 'تصدير', content: group.root, doc })
       .then((ok) => (ok ? group.value() : null));
   }
 
@@ -199,6 +199,7 @@ export function createLibrary(env) {
   function savedToast(saved, successCode = 'PG_EXPORT_DONE') {
     if (saved.ok) {
       if (saved.mode === 'blob') toaster.show(messageFor('SV_FALLBACK_BLOB'), 'info');
+      else if (saved.pending) toaster.show(messageFor('SV_PENDING'), 'info');
       else done(successCode);
       return true;
     }
@@ -308,7 +309,8 @@ export function createLibrary(env) {
     let glyph = icon('copy', { doc });
     const btn = el('button', {
       className: 'tj-btn tj-btn--secondary tj-btn--sm lib-copy__button',
-      attrs: { type: 'button', 'aria-label': `نسخ تعليمات ترجمة: ${m.accessName}`, 'aria-describedby': tipId, 'data-state': 'idle' },
+      // اسم الوصول يبدأ بالنص الظاهر في كل حالة (WCAG 2.5.3؛ تدقيق 5fedcb9، CL-007).
+      attrs: { type: 'button', 'aria-label': `${COPY_LABEL.idle}: ${m.accessName}`, 'aria-describedby': tipId, 'data-state': 'idle' },
       children: [glyph, label],
       doc,
     });
@@ -330,6 +332,7 @@ export function createLibrary(env) {
       },
       onState: (next) => {
         label.textContent = COPY_LABEL[next];
+        btn.setAttribute('aria-label', `${COPY_LABEL[next]}: ${m.accessName}`);
         const fresh = icon(next === 'success' ? 'check' : 'copy', { doc });
         glyph.replaceWith(fresh);
         glyph = fresh;
@@ -377,8 +380,8 @@ export function createLibrary(env) {
     });
     const primary = m.hasArabic
       ? button({ label: 'تعديل', icon: 'edit', variant: 'secondary', size: 'sm', title: name('تعديل'), doc, onClick: () => guarded(async () => { state.focusId = entry.videoId; remember(); await env.openPage('editor', { v: entry.videoId }); }) })
-      : button({ label: 'رفع ترجمة', icon: 'upload', variant: 'secondary', size: 'sm', title: name('رفع الترجمة العربية'), doc, onClick: () => upload(m) });
-    primary.setAttribute('aria-label', name(m.hasArabic ? 'تعديل' : 'رفع الترجمة العربية'));
+      : button({ label: 'رفع ترجمة', icon: 'upload', variant: 'secondary', size: 'sm', title: name('رفع ترجمة'), doc, onClick: () => upload(m) });
+    primary.setAttribute('aria-label', name(m.hasArabic ? 'تعديل' : 'رفع ترجمة'));
     const open = button({ label: name('فتح الفيديو'), iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: 'فتح الفيديو على يوتيوب', doc, onClick: () => guarded(async () => { await env.openTab(watchUrl(entry.videoId)); }) });
     const meta = [
       slots.root,
@@ -393,7 +396,7 @@ export function createLibrary(env) {
         el('div', {
           className: 'lib-row__main',
           children: [
-            el('h2', { className: `tj-h4 tj-auto lib-row__title${m.hasTitle ? '' : ' lib-row__title--empty'}`, text: m.displayTitle, attrs: { id: titleId, ...(m.hasTitle ? { title: m.displayTitle } : {}) }, doc }),
+            el('h2', { className: `tj-h4 tj-auto lib-row__title${m.hasTitle ? '' : ' lib-row__title--empty'}`, text: m.displayTitle, dir: textDirection(m.displayTitle), attrs: { id: titleId, ...(m.hasTitle ? { title: m.displayTitle } : {}) }, doc }),
             el('div', { className: 'lib-row__meta', children: meta, doc }),
           ],
           doc,
@@ -470,6 +473,11 @@ export function createLibrary(env) {
       }
       return;
     }
+    // الصف المقصود بعد الرجوع خارج الصفحات المعروضة: تُوسَّع حتى تشمله (تدقيق 5fedcb9، GM-016.3).
+    if (state.focusId) {
+      const at = shown.findIndex((x) => x.videoId === state.focusId);
+      if (at >= state.limit) state.limit = Math.ceil((at + 1) / PAGE_SIZE) * PAGE_SIZE;
+    }
     const slice = shown.slice(0, state.limit);
     listHost.append(el('ul', { className: 'lib-list', attrs: { role: 'list' }, children: slice.map(buildRow), doc }));
     if (shown.length > slice.length) {
@@ -478,8 +486,9 @@ export function createLibrary(env) {
         onClick: () => { state.limit += PAGE_SIZE; render(); },
       }));
     }
-    // الرجوع من المحرّر: الصف المقصود يُبرَز ويُمرَّر إليه مرة واحدة.
-    if (state.focusId) {
+    // الرجوع من المحرّر: الصف المقصود يُبرَز ويُمرَّر إليه مرة واحدة، حين تظهر الصفحة للمستخدم؛ فلا يستهلكه تحديث في الخلفية
+    // (حفظ المحرّر في تبويب آخر) قبل أن يعود (GM-016.3).
+    if (state.focusId && doc.visibilityState !== 'hidden') {
       const row = listHost.querySelector(`li[data-video="${state.focusId}"]`);
       state.focusId = null;
       remember();
@@ -517,12 +526,16 @@ export function createLibrary(env) {
     }, 200);
   });
 
+  const onVisible = () => { if (doc.visibilityState === 'visible' && state.focusId && state.status === 'ready') render(); };
+  doc.addEventListener?.('visibilitychange', onVisible);
+
   render();
 
   return {
     root, state, toaster, load,
     dispose() {
       unsubscribe();
+      doc.removeEventListener?.('visibilitychange', onVisible);
       if (reloadTimer !== null) clearTimer(reloadTimer);
       for (const c of copyStates) c.dispose();
     },

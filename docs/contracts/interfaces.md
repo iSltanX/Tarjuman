@@ -259,14 +259,14 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 
 ```js
 // src/core/save/index.js
-saveFile(file: { name, text, mime? }, deps?) → Promise<{ ok: true, mode: 'downloads' | 'subfolder' | 'ask' | 'blob', downloadId: number | null } | { ok: false, code }>
+saveFile(file: { name, text, mime? }, deps?) → Promise<{ ok: true, mode: 'downloads' | 'subfolder' | 'ask' | 'blob', downloadId: number | null, pending?: true } | { ok: false, code }>
 validateSaveFile(file, { maxChars }) → { ok: true } | { ok: false, code: 'SV_BAD_FILE' | 'SV_TOO_LARGE' }
 downloadTarget(saveLocation, name) → { filename, saveAs? }
 savedPath(downloadId, { downloads }) → Promise<string | null>     // المكان الفعلي لملف نزّله ترجمان
 SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 16777216 }
 ```
 
-- **ثلاثة مسارات بالدالة نفسها:** الصفحات (فيها `chrome.downloads`) تحفظ مباشرة: `Blob` ورابطه ثم `downloads.download`. وسكربت المحتوى (لا يصل إلى `chrome.downloads`) يرسل `tj:save-file` إلى العامل (عقد الرسائل §٧). وعند تعذّر الواجهة أو القناة يرجع إلى `download` القديم (Blob و`<a download>`) و`mode: 'blob'`، ويعرض المستدعي `SV_FALLBACK_BLOB`.
+- **ثلاثة مسارات بالدالة نفسها:** الصفحات (فيها `chrome.downloads`) تحفظ مباشرة: `Blob` ورابطه ثم `downloads.download`. وسكربت المحتوى (لا يصل إلى `chrome.downloads`) يرسل `tj:save-file` إلى العامل (عقد الرسائل §٧). وعند تعذّر الواجهة أو القناة يرجع إلى `download` القديم (Blob و`<a download>`) و`mode: 'blob'`، ويعرض المستدعي `SV_FALLBACK_BLOB`. وانقضاء مهلة رد العامل لا يرجع إلى Blob (`SV_NO_REPLY`)، والتنزيل الباقي «جاريًا» بعد مهلة الانتظار `pending: true` فيعرض المستدعي `SV_PENDING`.
 - **الأوضاع** من `prefs.saveLocation` وحدها، يقرؤها `saveFile` في الصفحة أو العامل من التخزين، لا من المستدعي:
 
 | الوضع | `downloads.download` | السلوك |
@@ -276,7 +276,7 @@ SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 167
 | `ask` | `{ filename: name, saveAs: true }` | حوار الحفظ من النظام عند كل تنزيل؛ والإلغاء `SV_CANCELLED`. |
 
   ودائمًا `conflictAction: 'uniquify'`: **لا كتابة فوق ملف قائم**. وسلوك كل وضع في كل متصفح كما ثبت حيًا في «ما ثبت حيًا» أدناه.
-- **التحقق قبل التنزيل:** الاسم 1..150 محرفًا من الحروف (ومنها العربية) والأرقام و`. _ -` والمسافة، بلا فواصل مسار ولا `..` ولا محارف تحكم، ولا يبدأ بنقطة؛ وامتداده `.srt` أو `.txt` أو `.md` أو `.json`؛ والنوع من الامتداد لا من المستدعي؛ والحجم حتى `maxMessageChars` عبر العامل و`maxPageChars` من الصفحات. وإلا `SV_BAD_FILE` أو `SV_TOO_LARGE` بلا تنزيل.
+- **التحقق قبل التنزيل:** الاسم 1..150 محرفًا من الحروف (ومنها العربية) والأرقام و`. _ -` والمسافة، بلا فواصل مسار ولا `..` ولا محارف تحكم، ولا يبدأ بنقطة ولا مسافة (ويبدأ بـ`_` أو `-` كما يبدأ معرّف يوتيوب؛ تدقيق 5fedcb9)؛ وامتداده `.srt` أو `.txt` أو `.md` أو `.json`؛ والنوع من الامتداد لا من المستدعي؛ والحجم حتى `maxMessageChars` عبر العامل و`maxPageChars` من الصفحات. وإلا `SV_BAD_FILE` أو `SV_TOO_LARGE` بلا تنزيل.
 - **العامل الخلفي** `src/background/worker.js` (`background.service_worker` في البيان) **للحفظ وحده**: `createSaveService({ runtime, downloads, store })` في `save-service.js` يستمع لـ`tj:save-file`، ويقبلها من سكربت الإضافة وحده (`sender.id` ثم سكربت محتوى على يوتيوب أو صفحة إضافة)، ويقرأ الوضع من التفضيلات، ويتحقق من الملف، ويحفظ النص في رابط `data:` (لا `URL.createObjectURL` في العامل)، ويسجّل المعرّف بـ`store.setLastSave`. لا منطق آخر فيه.
 - **الإذن محصور في ملفات ترجمان** (اعتماد سلطان 2026-11-02)، ويفرضه `check-static`:
   - `chrome.downloads` في `src/core/save/**` و`src/background/**` وحدهما.
@@ -352,6 +352,9 @@ mergeThreeWay({ base, mine, theirs }: { base: Cue[], mine: Cue[], theirs: Cue[] 
 
 // src/core/compare
 rankReferences(cues: Cue[], fingerprints: Fingerprint[]) → { fingerprintId, score, matched, why }[]   // الأفضل أولًا
+fingerprintCoverage(fingerprint, cues) → { ok: true, numbersOf, windowOf, pairs, missing, extra, structural } | { ok: false }   // تدقيق 5fedcb9
+currentComparison(cues, fingerprint, { driftMs?, coverage? }) → ComparisonReport   // النقص والزيادة والانحراف بالمحاذاة، والباقي من compare
+trackComparison(track, fingerprints) → ComparisonReport | null                     // الحاضر لترجمة محفوظة، والمحفوظ بلا مرجع
 compare(...)   // التوقيع نفسه؛ restoreTimingAvailable لا يصح إلا بمحاذاة متحققة، والسبب في notes
 
 // src/core/import (وsrc/core/srt بالتوقيع نفسه، مع Markdown)
@@ -379,7 +382,7 @@ readingMetrics(cue) → { cps: number, longestLine: number }
 
 **ما أضافه التنفيذ (P11) دون تغيير توقيع، موثّقًا عند دمج W6:**
 
-- `mergeThreeWay(sides, { align?, resolve? })`: `align` خيارات المحاذاة (و`useText` مفعّل فيه افتراضيًا: النص غير المعدّل مرساة)، و`resolve` اختيار المستخدم لكل تعارض برقمه `n` (`{ [n]: 'mine' | 'theirs' }` أو `Map`)، ولا يُحسم تعارض إلا بقيمة صالحة فيه. وضعف الثقة `{ ok: false, reason }` بنص `CMP_MERGE_LOW_MINE` أو `CMP_MERGE_LOW_THEIRS`.
+- `mergeThreeWay(sides, { align?, resolve? })`: `align` خيارات المحاذاة (و`useText` مفعّل فيه افتراضيًا: النص غير المعدّل مرساة)، و`resolve` اختيار المستخدم لكل تعارض بمفتاحه `key` (`{ [key]: 'mine' | 'theirs' }` أو `Map`)، ولا يُحسم تعارض إلا بقيمة صالحة فيه. و`key` رقم أول مقطع في المنطقة من الأصل `n` ما لم يتكرر هذا الرقم في الأصل، وإلا `"n.k"` لظهوره k (قطعتا شطر محفوظ تحملان رقمًا واحدًا، فلكل منطقة اختيارها؛ تصحيح بعد تدقيق 5fedcb9). وضعف الثقة `{ ok: false, reason }` بنص `CMP_MERGE_LOW_MINE` أو `CMP_MERGE_LOW_THEIRS`.
 - `src/core/align`: `ALIGN_DEFAULTS` (`windowMs` 15000، و`maxGroup` 3، و`weakIou` 0.5، و`useText` false، و`offset` `'auto'`)، والمساعدات `iou` و`isIdentity` و`toBlocks`. أسباب المحاذاة رسائل `CMP_ALIGN_…` منسّقة تُعرض كما هي.
 - `src/core/compare`: `rankReferences` يكتب `why` برسالة `CMP_REF_MATCHED` أو `CMP_REF_SUMMARY`.
 - `src/core/import`: `partsStatus(fingerprint, cues) → { index, from, to, total, received, complete }[] | null` حالة استلام الأجزاء المشتقة (R52)، وهي `plan.parts` في ناتج `readPatch`، و`videoIdFromName(fileName, { videoId?, knownVideoIds? }) → null | { videoId, differs }` قرينة الاسم، و`REVIEW_THRESHOLDS` (`suggest` 0.5، و`certain` 0.8، و`gap` 0.1)، و`classTransitions` و`cuesKey`.

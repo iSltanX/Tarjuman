@@ -4,7 +4,7 @@
 // الحرفي في planReplace (P11)، وتطبيقه خطوة واحدة في الجلسة. هنا الحالة والعناصر فقط؛ لا يمس التوقيت ولا المرجع.
 import { planReplace, searchCues } from '../../core/edit/index.js';
 import { button, el } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, textDirection } from '../../ui/format.js';
 import { openDialog, setDisabled } from './dialogs.js';
 import { COUNT } from './text.js';
 
@@ -227,7 +227,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
           box,
           el('span', { className: 'ed-replace-item__n tj-mono-sm', text: String(c.n), doc }),
           el('span', {
-            className: 'ed-replace-item__text', dir: 'auto',
+            className: 'ed-replace-item__text', dir: textDirection(`${sn.before}${sn.hit}${sn.after}`),
             children: [sn.before, el('del', { text: sn.hit, doc }), el('ins', { text: replacement || '∅', doc }), sn.after],
             doc,
           }),
@@ -282,7 +282,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
       const list = cues();
       const text = S.field === 'en' ? english()[m.index] ?? '' : list[m.index].text;
       const sn = snippet(text, m.start, m.end);
-      where.replaceChildren(`المقطع ${list[m.index].n}: `, el('span', { dir: S.field === 'en' ? 'ltr' : 'auto', children: [sn.before, el('mark', { text: sn.hit, doc }), sn.after], doc }));
+      where.replaceChildren(`المقطع ${list[m.index].n}: `, el('span', { dir: S.field === 'en' ? 'ltr' : textDirection(`${sn.before}${sn.hit}${sn.after}`), children: [sn.before, el('mark', { text: sn.hit, doc }), sn.after], doc }));
       where.hidden = false;
     } else {
       where.replaceChildren();

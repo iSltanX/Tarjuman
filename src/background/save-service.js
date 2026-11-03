@@ -40,7 +40,7 @@ export function createSaveService({ runtime, downloads, store, settle }) {
       const r = await startDownload(downloads, { url: dataUrl(req.file.text, v.mime), ...downloadTarget(prefs.saveLocation, req.file.name) }, settle);
       if (!r.ok) return { v: MESSAGE_VERSION, ok: false, code: r.code };
       await store.setLastSave(r.downloadId).catch(() => {});
-      return { v: MESSAGE_VERSION, ok: true, mode: prefs.saveLocation.mode, downloadId: r.downloadId };
+      return { v: MESSAGE_VERSION, ok: true, mode: prefs.saveLocation.mode, downloadId: r.downloadId, ...(r.state === 'pending' ? { pending: true } : {}) };
     })().catch(() => ({ v: MESSAGE_VERSION, ok: false, code: 'SV_FAILED' }));
   }
 

@@ -19,6 +19,20 @@ import { runbookParts, phaseSections, phasePrompt, wavePrompt } from './prompts.
 
 const REPORT_MARK = (id) => `### تقرير التسليم — ${id}`;
 
+const REQ_LABEL = { verified: 'متحقق', partial: 'متحقق جزئيًا', delivered: 'مُثبت في فرع غير مدمج', planned: 'لم يُثبت' };
+
+/**
+ * حالة المتطلب من روابط معاييره ({ result, verified }). معيار «جزئي» في مرحلة متحققة إثبات جزئي لا «لم يُثبت»
+ * (تدقيق 5fedcb9، GM-020: كان R28 يُعرض «لم يُثبت» ومرحلته متحققة).
+ * @param {{ result: string, verified: boolean }[]} links
+ */
+export function requirementState(links) {
+  if (links.length && links.every((l) => l.verified && l.result === 'pass')) return 'verified';
+  if (links.some((l) => l.verified && (l.result === 'pass' || l.result === 'partial'))) return 'partial';
+  if (links.some((l) => l.result === 'pass')) return 'delivered';
+  return 'planned';
+}
+
 export function deriveState(startDir, { mode = 'snapshot' } = {}) {
   const problems = [];
   const problem = (level, text, where = '') => problems.push({ level, text, where });
@@ -311,12 +325,8 @@ export function deriveState(startDir, { mode = 'snapshot' } = {}) {
   const requirements = reqs.requirements.map((r) => {
     const links = [];
     for (const p of phases) for (const a of p.acceptance) if (a.req.includes(r.id)) links.push({ phase: p.id, ac: a.id, result: a.result, verified: p.state === 'verified' });
-    let st = 'planned';
-    if (links.length && links.every((l) => l.verified && l.result === 'pass')) st = 'verified';
-    else if (links.some((l) => l.verified && l.result === 'pass')) st = 'partial';
-    else if (links.some((l) => l.result === 'pass')) st = 'delivered';
-    const labels = { verified: 'متحقق', partial: 'متحقق جزئيًا', delivered: 'مُثبت في فرع غير مدمج', planned: 'لم يُثبت' };
-    return { ...r, groupTitle: reqs.groups.find((g) => g.id === r.group)?.title || r.group, phases: [...new Set(links.map((l) => l.phase))], acceptance: links, state: st, label: labels[st] };
+    const st = requirementState(links);
+    return { ...r, groupTitle: reqs.groups.find((g) => g.id === r.group)?.title || r.group, phases: [...new Set(links.map((l) => l.phase))], acceptance: links, state: st, label: REQ_LABEL[st] };
   });
 
   // تنبيهات git إضافية

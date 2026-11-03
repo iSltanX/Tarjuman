@@ -81,12 +81,17 @@ export function parseSrtLenient(input) {
   let fence = false;
   const chatterBefore = [];
   const chatterAfter = [];
-  const sortOut = (slice, bucket, from) => {
+  // بعد الملف: التعليمات تطلب «أرقام المواضع الغامضة في سطر واحد بعد الملف»، فسطر نثري (فيه حروف ولا يبدأ برأس زمن) شرح ولو
+  // ذكر زمنًا، ورقم وحيد لا يتجاوز آخر مقطع إشارة إلى مقطع لا رأس مقطع جديد؛ أما الرقم بعده فمقطع مقطوع يبقى خطأً برقم سطره
+  // (تدقيق 5fedcb9، GM-012).
+  const lastN = Number(bare(lines[heads[heads.length - 1].num]));
+  const proseAfter = (form) => (/\p{L}/u.test(form) && !TIME_LIKE_RE.test(form)) || (NUMBER_RE.test(form) && Number(form) <= lastN);
+  const sortOut = (slice, bucket, from, after = false) => {
     slice.forEach((l, i) => {
       const t = l.trim();
       if (!t) return;
       if (FENCE_RE.test(t)) fence = true;
-      else if (CUE_FRAGMENT_RE.test(bare(l))) throw new TjError('IM_STRAY_TEXT', { params: { line: from + i + 1 } });
+      else if (CUE_FRAGMENT_RE.test(bare(l)) && !(after && proseAfter(bare(l)))) throw new TjError('IM_STRAY_TEXT', { params: { line: from + i + 1 } });
       else bucket.push(t);
     });
   };
@@ -104,7 +109,7 @@ export function parseSrtLenient(input) {
     const stop = body.findIndex((l) => l.trim() === '' || (last && FENCE_RE.test(l.trim())));
     const textLines = stop === -1 ? body : body.slice(0, stop);
     const rest = stop === -1 ? [] : body.slice(stop);
-    if (last) sortOut(rest, chatterAfter, h.time + 1 + stop);
+    if (last) sortOut(rest, chatterAfter, h.time + 1 + stop, true);
     else {
       const j = rest.findIndex((l) => l.trim() !== '');
       if (j !== -1) throw new TjError('IM_STRAY_TEXT', { params: { line: h.time + 1 + stop + j + 1 } });

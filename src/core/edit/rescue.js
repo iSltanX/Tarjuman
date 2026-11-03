@@ -9,11 +9,11 @@ import { diffTranslations, mergeThreeWay } from '../align/index.js';
 /**
  * @param {{
  *   base: Cue[], mine: Cue[], theirs: Cue[],
- *   offsets: { base: number, mine: number, theirs: number },
- *   resolve?: Record<number, 'mine' | 'theirs'>, offsetChoice?: 'mine' | 'theirs'
+ *   offsets: { base: number, mine: number, theirs: number, committed?: number },
+ *   resolve?: Record<number | string, 'mine' | 'theirs'>, offsetChoice?: 'mine' | 'theirs'
  * }} o
  * @returns {{ ok: false, reason: string }
- *   | { ok: true, cues: Cue[], kept: number[], taken: number[], conflicts: { n: number, mine: Cue[], theirs: Cue[] }[],
+ *   | { ok: true, cues: Cue[], kept: number[], taken: number[], conflicts: { n: number, key: number | string, mine: Cue[], theirs: Cue[] }[],
  *       offsetMs: number, offsetConflict: boolean, counts: { mine: number, theirs: number } }}
  *   counts: ما غيّره كل طرف عن المفتوح (للعرض)؛ وconflicts ما بقي بلا اختيار.
  */
@@ -24,10 +24,14 @@ export function planRescue({ base, mine, theirs, offsets, resolve = {}, offsetCh
     const d = diffTranslations(base, side);
     return d.counts.textChanged + d.counts.timingChanged + d.counts.added + d.counts.removed;
   };
-  const mineMoved = offsets.mine !== offsets.base;
+  // ما ثبّتُّه من الإزاحة في توقيت المقاطع (committed) نقلٌ لا يغيّر الظاهر: لا يُعدّ تحريكًا للإزاحة، وإزاحة الأحدث تُطبَّق فوق
+  // توقيتي بعد طرحه، فلا تُجمع مرتين (كانت +1.0 مثبّتة و+1.5 من المشغّل تصير +2.5؛ تدقيق 5fedcb9، GM-014.1).
+  const committed = offsets.committed ?? 0;
+  const theirsOnMine = offsets.theirs - committed;
+  const mineMoved = offsets.mine + committed !== offsets.base;
   const theirsMoved = offsets.theirs !== offsets.base;
-  const offsetConflict = mineMoved && theirsMoved && offsets.mine !== offsets.theirs;
-  const offsetMs = offsetConflict ? (offsetChoice === 'mine' ? offsets.mine : offsets.theirs) : mineMoved ? offsets.mine : offsets.theirs;
+  const offsetConflict = mineMoved && theirsMoved && offsets.mine + committed !== offsets.theirs;
+  const offsetMs = offsetConflict ? (offsetChoice === 'mine' ? offsets.mine : theirsOnMine) : mineMoved ? offsets.mine : theirsOnMine;
   return { ...merged, offsetMs, offsetConflict, counts: { mine: changed(mine), theirs: changed(theirs) } };
 }
 

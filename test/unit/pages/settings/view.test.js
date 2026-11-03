@@ -162,8 +162,8 @@ test('«استعادة الافتراضي» لقسم العرض: معطّلة ب
   // الأقسام الأخرى لها استعادتها، وما لا افتراضيات له (التخزين والتشخيص وحول) بلا زر.
   assert.ok(buttonNamed(section(m, 'التوقيت'), 'استعادة الافتراضي'));
   assert.ok(buttonNamed(section(m, 'التصدير'), 'استعادة الافتراضي'));
-  assert.equal(buttonNamed(section(m, 'التخزين'), 'استعادة الافتراضي'), null);
-  assert.equal(buttonNamed(section(m, 'حول'), 'استعادة الافتراضي'), null);
+  assert.ok(buttonNamed(section(m, 'التخزين'), 'استعادة الافتراضي') === null);
+  assert.ok(buttonNamed(section(m, 'حول'), 'استعادة الافتراضي') === null);
 });
 
 test('التنقّل الجانبي: تسعة أقسام، المختار بـaria-current وقسمه وحده ظاهر، والاختيار يُحفظ في جزء العنوان ويُقرأ منه', async () => {
@@ -509,4 +509,25 @@ test('فشل حفظ ما كُتب في حقل مركَّز يعيد الحقل �
   assert.equal(input.value, '200', 'عاد إلى المحفوظ ولو كان مركَّزًا');
   assert.equal((await m.store.getSettings()).export.splitThreshold, 200);
   assert.ok(markText(m.root).includes(messageFor('PG_SAVE_FAILED')));
+});
+
+test('تدقيق 5fedcb9 (GM-027.1): إحصاءات «الترجمات والنسخ السابقة» تتبع تغيّر المحفوظات من تبويب آخر، و«آخر ملف حُفظ» يتبع النسخة الاحتياطية', async () => {
+  let answer = '/Users/test/Downloads/Tarjuman/tarjuman-backup.json';
+  const m = await mount({ videos: 1, env: { savedPath: async () => answer, saveFile: async () => { await m.store.setLastSave(7); return { ok: true, mode: 'downloads', downloadId: 7 }; } } });
+  const usage = () => textOf(findAll(m.root, (e) => e.classList.contains('st-library-usage'))[0]);
+  assert.match(usage(), /الفيديوهات المترجمة: 1/);
+  const other = createStore({ area: m.area, now: () => Date.parse(NOW) + 5e6 });
+  await other.updateVideo('V0000000009', () => videoRecord({ videoId: 'V0000000009' }));
+  await m.area.flush();
+  await new Promise((r) => setTimeout(r, 350));
+  await settle(10);
+  assert.match(usage(), /الفيديوهات المترجمة: 2/, 'دون إعادة فتح الصفحة');
+  const last = findAll(section(m, 'التصدير'), (e) => e.classList.contains('st-last-save'))[0];
+  assert.equal(last.hidden, true);
+  const createBtn = buttonNamed(m.root, 'إنشاء نسخة احتياطية');
+  createBtn.click();
+  await new Promise((r) => setTimeout(r, 50));
+  await settle(20);
+  assert.equal(last.hidden, false, 'السطر ظهر بعد الحفظ');
+  assert.ok(textOf(last).includes(answer));
 });

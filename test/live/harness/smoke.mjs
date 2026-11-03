@@ -10,7 +10,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { BROWSERS, launch, loadExtension, sleep } from './browser.mjs';
-import { attach, collectErrors, emulateScheme, fullScreenshot, openTab, waitForTarget } from './extension.mjs';
+import { FONT_READ_LOG, attach, collectErrors, emulateScheme, fullScreenshot, openTab, waitForTarget } from './extension.mjs';
 import { recordNetwork } from './netlog.mjs';
 import { dismissConsent, waitForPlayer } from './youtube.mjs';
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
@@ -212,7 +212,6 @@ try {
 
   // ٦. أخطاء الإضافة في يوتيوب والصفحات كلها. رسالة المتصفح عند قراءة سكربت المحتوى ملف خط من حزمة الإضافة (والقراءة
   // ناجحة؛ docs/evidence/P6/font-fetch-diag.json) تُعدّ وحدها ولا تُحسب خطأً.
-  const FONT_READ_LOG = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/subtitle\/[a-z0-9-]+-(?:400|700)\.woff2 /;
   const fontReadLogs = ytErrors.list.filter((x) => x.kind === 'log.security' && FONT_READ_LOG.test(x.text));
   if (fontReadLogs.length) result.notes.push(`رسائل قراءة خطوط الترجمة من حزمة الإضافة (معروفة، غير محسوبة أخطاءً): ${fontReadLogs.length}`);
   result.errors = { youtube: ytErrors.list.filter((x) => !fontReadLogs.includes(x)), pages: pageErrors.flatMap((e) => e.list) };

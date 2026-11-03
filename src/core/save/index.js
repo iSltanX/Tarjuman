@@ -19,12 +19,14 @@ export const SAVE_TYPES = Object.freeze({
 export const SETTLE = Object.freeze({ pollMs: 400, timeoutMs: 120000 });
 const PENDING_REVOKE_MS = 10 * 60 * 1000;
 
-// حروف (ومنها العربية) وأرقام وعلامات التشكيل و. _ - ( ) والمسافة؛ يبدأ بحرف أو رقم، ولا فواصل مسار ولا محارف تحكم.
-const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{M}\p{N} ._()-]*$/u;
+// حروف (ومنها العربية) وأرقام وعلامات التشكيل و. _ - ( ) والمسافة؛ يبدأ بحرف أو رقم أو _ أو - (معرّف يوتيوب قد يبدأ
+// بهما، وأسماء ترجمان تبدأ به: تدقيق 5fedcb9، CX-005)، ولا يبدأ بنقطة ولا مسافة، ولا فواصل مسار ولا محارف تحكم.
+const NAME_RE = /^[\p{L}\p{N}_-][\p{L}\p{M}\p{N} ._()-]*$/u;
 
 /**
  * @typedef {{ name: string, text: string, mime?: string }} SaveFile
- * @typedef {{ ok: true, mode: 'downloads' | 'subfolder' | 'ask' | 'blob', downloadId: number | null } | { ok: false, code: string }} SaveResult
+ * @typedef {{ ok: true, mode: 'downloads' | 'subfolder' | 'ask' | 'blob', downloadId: number | null, pending?: true } | { ok: false, code: string }} SaveResult
+ *   pending: بدأ التنزيل وما زال بعد مهلة الانتظار «جارٍ» (حوار الحفظ مفتوح غالبًا)، فلا يُقال «حُفظ» بعد.
  */
 
 /**
@@ -159,7 +161,7 @@ export async function saveFile(file, { api = globalThis.chrome, store = null, do
     }
     if (r.ok) {
       await s.setLastSave(r.downloadId).catch(() => {});
-      return { ok: true, mode: prefs.saveLocation.mode, downloadId: r.downloadId };
+      return { ok: true, mode: prefs.saveLocation.mode, downloadId: r.downloadId, ...(r.state === 'pending' ? { pending: true } : {}) };
     }
     if (r.code === 'SV_CANCELLED') return { ok: false, code: 'SV_CANCELLED' };
     return blobFallback(file, { fallback, doc });
@@ -172,11 +174,14 @@ export async function saveFile(file, { api = globalThis.chrome, store = null, do
     let reply;
     try {
       reply = await withTimeout(Promise.resolve(api.runtime.sendMessage(saveRequest(file))), replyTimeoutMs);
-    } catch {
+    } catch (err) {
+      // وصلت الرسالة ولم يصل ردها في المهلة: قد يكون العامل بدأ التنزيل (أو حوار الحفظ مفتوح)، فلا يُنزَّل بديل Blob يكرر
+      // الملف (تدقيق 5fedcb9، CX-H6). وتعذّر القناة نفسها (لا مستمع) يرجع إلى Blob كما كان.
+      if (err?.message === 'timeout') return { ok: false, code: 'SV_NO_REPLY' };
       reply = null;
     }
     if (isSaveReply(reply)) {
-      if (reply.ok) return { ok: true, mode: reply.mode, downloadId: reply.downloadId };
+      if (reply.ok) return { ok: true, mode: reply.mode, downloadId: reply.downloadId, ...(reply.pending === true ? { pending: true } : {}) };
       if (reply.code !== 'SV_FAILED') return { ok: false, code: reply.code };
     }
     return blobFallback(file, { fallback, doc });

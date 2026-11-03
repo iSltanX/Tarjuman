@@ -133,9 +133,19 @@ export function classifyChange(opened, change) {
  * @param {Bundle} a @param {Bundle | null} b @param {1 | 2 | 3} n
  */
 export function slotContentChanged(a, b, n) {
+  return slotChange(a, b, n) !== 'none';
+}
+
+/**
+ * ما تغيّر في الخانة n بين حزمتين: لا شيء، أو إزاحتها وحدها (± من المشغّل)، أو محتواها.
+ * @param {Bundle} a @param {Bundle | null} b @param {1 | 2 | 3} n
+ * @returns {'none' | 'offset' | 'content'}
+ */
+export function slotChange(a, b, n) {
   const x = a?.slots?.[n - 1];
   const y = b?.slots?.[n - 1];
-  if (!x?.track || !y?.track) return Boolean(x?.track) !== Boolean(y?.track);
-  const content = (s) => JSON.stringify([s.offsetMs, s.track.fileName, s.track.importedAt, s.track.editedAt, s.track.original, s.track.current]);
-  return content(x) !== content(y);
+  if (!x?.track || !y?.track) return Boolean(x?.track) !== Boolean(y?.track) ? 'content' : 'none';
+  const content = (s) => JSON.stringify([s.track.fileName, s.track.importedAt, s.track.editedAt, s.track.original, s.track.current]);
+  if (content(x) !== content(y)) return 'content';
+  return x.offsetMs !== y.offsetMs ? 'offset' : 'none';
 }

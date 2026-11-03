@@ -1,6 +1,6 @@
 // نصوص أدوات الشريط (figma-design-brief §٥.٢ و§٦ و§١٦.١) ودوالها النقية: التلميحات بالخطوة الحالية، ومعنى
 // الإزاحة بالكلمات، وملخص المقارنة في سطر، وقراءة الثواني من حقل. أرقام لاتينية، والإزاحة بعلامتها (formatOffset).
-import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatTimecode, offsetInline } from '../../ui/format.js';
 
 export const LABELS = Object.freeze({
   group: 'أدوات ترجمان',
@@ -54,7 +54,8 @@ export const LABELS = Object.freeze({
   copyHint: 'تعليمات الترجمة وحدها، لترفقها مع الملف',
   copied: 'نُسخت التعليمات',
   copyFailed: 'تعذّر النسخ — أعد المحاولة',
-  englishSteps: 'CC ← ⚙ ← الترجمة ← English',
+  // كلمات لا رموز (← و⚙ خارج الخطين المضمّنين، فيرسمها Brave بخطوط نظام متفرقة؛ تدقيق 5fedcb9، CL-017).
+  englishSteps: 'CC ثم الإعدادات ثم «الترجمة» ثم English',
   braveNote: 'Brave قد يختار العربية أولًا؛ اختر English مرة',
   partsLabel: 'أحجام الأجزاء',
   cancel: 'إلغاء',
@@ -79,7 +80,7 @@ export const slotToast = (n) => `الترجمة ${n}`;
 /** @param {number} n رقم المقطع */
 export const markToast = (n) => `عُلِّم المقطع ${n} للمراجعة`;
 /** @param {number} ms «الإزاحة −3.2 ث» */
-export const offsetToast = (ms) => `الإزاحة ${formatOffset(ms)} ث`;
+export const offsetToast = (ms) => `الإزاحة ${offsetInline(ms)} ث`;
 /** @param {string} name «نُزّل VIDEOID.en.manual.normal.srt» أو «نُزّل 3 أجزاء» (رمز النجاح SVG بجانبه في القائمة) */
 export const downloadedLine = (name) => `نُزّل ${name}`;
 /** @param {number} n «+ القاموس (12)»: القاموس مرفق بالتعليمات المنسوخة */
@@ -136,13 +137,13 @@ const sign = (ms) => (Math.round(ms / 100) === 0 ? 0 : Math.sign(ms));
 export function badgeTip(ms) {
   const s = sign(ms);
   const meaning = s > 0 ? ' (تظهر الترجمة لاحقًا)' : s < 0 ? ' (تظهر الترجمة أبكر)' : '';
-  return `الإزاحة: ${formatOffset(ms)} ث${meaning}. اضغط للخيارات`;
+  return `الإزاحة: ${offsetInline(ms)} ث${meaning}. اضغط للخيارات`;
 }
 
 /** @param {number} ms التلميح العابر بعد ± لثانية: «+1.0 ث · تظهر لاحقًا» */
 export function nudgeFlash(ms) {
   const s = sign(ms);
-  return `${formatOffset(ms)} ث · ${s > 0 ? 'تظهر لاحقًا' : s < 0 ? 'تظهر أبكر' : 'في توقيتها المحفوظ'}`;
+  return `${offsetInline(ms)} ث · ${s > 0 ? 'تظهر لاحقًا' : s < 0 ? 'تظهر أبكر' : 'في توقيتها المحفوظ'}`;
 }
 
 /** @param {number} absMs مقدار موجب: «بنصف ثانية»، «بثانية واحدة»، «بثانيتين»، وإلا «بـ1.5 ث». */
@@ -196,7 +197,7 @@ export function comparisonSummary(cmp) {
   const untranslated = [...new Set([...cmp.empty, ...cmp.noArabic])].length;
   if (untranslated) parts.push(`${formatCount(untranslated, COUNT_FORMS.cue)} بلا ترجمة عربية`);
   if (!parts.length && cmp.numbering === 'different') parts.push('ترقيم المقاطع مختلف عن الأصل');
-  if (!parts.length) return { tone: cmp.matched ? 'ok' : 'warn', text: cmp.matched ? 'مطابق للأصل ✓' : 'يختلف عن الأصل' };
+  if (!parts.length) return { tone: cmp.matched ? 'ok' : 'warn', text: cmp.matched ? 'مطابق للأصل' : 'يختلف عن الأصل' };
   return { tone: 'warn', text: parts.join(' · ') };
 }
 
@@ -226,3 +227,6 @@ export function parseSeconds(raw) {
   const v = Number(s);
   return Number.isFinite(v) ? v : null;
 }
+
+/** «تراجع» مزامنة بجملة بعد تبدّل الترجمة النشطة أو استبدالها: لا يُكتب في غيرها (CX-004). */
+export const syncUndoStale = 'تغيّرت الترجمة النشطة، فلم يُتراجع عن مزامنة سابقتها.';

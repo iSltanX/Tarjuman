@@ -76,7 +76,11 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings } = 
     let fileName = parts[0].name;
     if (multi) {
       const merged = mergeParts(parts);
-      if (merged.overlaps.length) throw new TjError('IM_PARTS_OVERLAP', { params: merged.overlaps[0] });
+      if (merged.overlaps.length) {
+        const o = merged.overlaps[0];
+        if (o.stray) throw new TjError('IM_PARTS_STRAY_NUMBER', { params: { a: o.a, b: o.b, list: o.stray.join('، ') } });
+        throw new TjError('IM_PARTS_OVERLAP', { params: o });
+      }
       for (const gap of merged.gaps) warnings.push({ code: 'IM_PARTS_GAP', params: gap });
       cues = merged.cues;
       fileName = mergedFileName(merged.order);
@@ -101,4 +105,20 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings } = 
     if (info.code === 'TJ_UNEXPECTED') error.detail = info.detail;
     return { ok: false, error };
   }
+}
+
+/**
+ * نتيجة readImport بالمرجع الأقرب (R50): ما يقترحه فحص الملف الوارد (reviewIncoming.suggested، بالمحاذاة والأرقام) إن اختلف
+ * عن اختيار readImport بالعدد أو الأحدث، فتُعاد المقارنة به. يستعمله المشغّل كما تفعل المحفوظات، فيحفظ السطحان المرجع
+ * والتقرير نفسيهما للملف نفسه (P13-AC2؛ تدقيق 5fedcb9، GM-011).
+ * @param {Extract<Awaited<ReturnType<typeof readImport>>, { ok: true }>} result
+ * @param {string | null | undefined} suggested @param {import('../model/tracks.js').Fingerprint[]} fingerprints
+ * @param {{ thresholds?: { driftMs?: number } } | undefined} settings
+ */
+export function withSuggestedReference(result, suggested, fingerprints, settings) {
+  if (!result?.ok || !suggested || suggested === result.fingerprintId) return result;
+  const fp = (fingerprints ?? []).find((f) => f.id === suggested);
+  if (!fp) return result;
+  const report = compare(result.cues, fp, { driftMs: threshold(settings) });
+  return { ...result, fingerprintId: fp.id, comparison: { ...report, notes: capNotes([...result.notes, ...report.notes]) } };
 }

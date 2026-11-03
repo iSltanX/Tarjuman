@@ -6,10 +6,15 @@
 
 | المجموعة | الأمر | الناجح | الفاشل | السجل |
 | --- | --- | --- | --- | --- |
-| srt (المحلّل المتسامح + اختبارات P1 الأربعة) | `run-tests test/unit/srt` | 30 | 0 | [`unit-srt.log`](unit-srt.log) |
-| compare (المقارن والاستعادة) | `run-tests test/unit/compare` | 23 | 0 | [`unit-compare.log`](unit-compare.log) |
-| import (القراءة والدمج والتدفق) | `run-tests test/unit/import` | 39 | 0 | [`unit-import.log`](unit-import.log) |
-| الذهاب والإياب | `run-tests test/integration` | 7 | 0 (و7 مُتخطاة: سيناريوهات تصدير P3 الحقيقي) | [`integration-roundtrip.log`](integration-roundtrip.log) |
+| srt (المحلّل المتسامح + اختبارات P1 الأربعة) | `run-tests test/unit/srt` | 30 | 0 | `unit-srt.log` (لم يُحفظ) |
+| compare (المقارن والاستعادة) | `run-tests test/unit/compare` | 23 | 0 | `unit-compare.log` (لم يُحفظ) |
+| import (القراءة والدمج والتدفق) | `run-tests test/unit/import` | 39 | 0 | `unit-import.log` (لم يُحفظ) |
+| الذهاب والإياب | `run-tests test/integration` | 7 | 0 (و7 مُتخطاة: سيناريوهات تصدير P3 الحقيقي) | `integration-roundtrip.log` (لم يُحفظ) |
+
+> **السجلات الأربعة لم تُحفظ في Git** (تدقيق 5fedcb9، GM-020): كتبتها المرحلة هنا، لكن `.gitignore` يتجاهل `*.log` فلم تدخل
+> التزام التسليم، ولم يكشف `plan:check` غيابها. الأرقام أعلاه هي ما سجّلته المرحلة وقتها، ولا سجل يثبتها الآن. والاختبارات
+> نفسها ما زالت في `test/unit/{srt,compare,import}` و`test/integration/roundtrip` وتمر في كل `check:wave`. صار
+> `!docs/evidence/**/*.log` استثناءً في `.gitignore`، و`plan:check` ينبّه إلى كل دليل غير موجود.
 
 كل `npm run check:wave`: ناجح (200 اختبار وحدة، والتكامل، `check-static` و`check-secrets` والبناء و`plan:check`).
 

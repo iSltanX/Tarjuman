@@ -3,9 +3,11 @@
 // المغادرة. المنطق في src/core/edit (الجلسة والمشكلات وما يُصدَّر)؛ هنا الحالة المعروضة والأحداث فقط. لا حفظ تلقائي
 // أبدًا: «حفظ» وحده يكتب في خانة التحرير، بـexpect الحزمة المفتوحة، فإن تغيّر محتوى الخانة من المشغّل أو تبويب آخر رُفض.
 /* global __TJ_DEV__ */
-import { compare, previewRestoreTiming, rankReferences } from '../../core/compare/index.js';
+import { compare, currentComparison, fingerprintCoverage, previewRestoreTiming, rankReferences } from '../../core/compare/index.js';
 import { planRescue } from '../../core/edit/rescue.js';
 import { exportTiming } from '../../core/model/timing.js';
+import { normalizeSettings } from '../../core/model/settings.js';
+import { LIMITS } from '../../core/model/validate.js';
 import { READING_DEFAULTS } from '../../core/edit/density.js';
 import {
   COMPLETION_DEFAULTS, buildRows, completionGroups, completionNumbers, createEditSession, englishReference, parseSeconds, parseTimecode,
@@ -19,7 +21,7 @@ import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
 import { mergeCues, splitCue } from '../../core/edit/structure.js';
 import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatTimecode, offsetInline, textDirection } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
 import { jumpToVideo } from '../../ui/seek.js';
 import { openDriftDialog } from './drift-dialog.js';
@@ -28,7 +30,7 @@ import { openReportDialog, openStudyDialog } from './export-dialogs.js';
 import { renderComparison, renderIssues, renderReference } from './panels.js';
 import { openRescueDialog } from './rescue-dialog.js';
 import {
-  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged, writeMarks, writePosition, writeReference,
+  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotChange, slotContentChanged, writeMarks, writePosition, writeReference,
 } from './persist.js';
 import { renderDensity, renderMarks, renderResume } from './review-panel.js';
 import { previewPatch, renderCompletePanel } from './complete-panel.js';
@@ -106,7 +108,8 @@ export async function mountEditor(app, {
     showEnglish: true, hideEnglish: false, hoverDelta: 0,
     result: /** @type {{ tone: string, text: string } | null} */ (null),
     external: /** @type {null | 'changed' | 'removed'} */ (null),
-    saving: false, pending: null, leaving: false, externalChain: Promise.resolve(),
+    coverage: /** @type {ReturnType<typeof fingerprintCoverage>} */ ({ ok: false }),
+    saving: false, saveDone: Promise.resolve(), pending: null, leaving: false, externalChain: Promise.resolve(),
     writing: 0, writeChain: Promise.resolve(), positionTimer: 0,
     resumeFrom: /** @type {import('../../core/model/marks.js').Position | null} */ (null),
     picks: { ...COMPLETION_DEFAULTS }, completeBusy: false, completeNumbers: /** @type {number[]} */ ([]), parts: null,
@@ -124,8 +127,9 @@ export async function mountEditor(app, {
   // ---- الهيكل ----
   app.replaceChildren();
   app.classList.add('ed-app');
-  const backBtn = button({ label: '→ المحفوظات', variant: 'ghost', size: 'sm', onClick: () => goLibrary(), doc });
-  const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate', dir: 'auto', doc });
+  const backBtn = button({ label: 'المحفوظات', icon: 'library', variant: 'ghost', size: 'sm', onClick: () => goLibrary(), doc });
+  // العنوان بقاعدة «حرف عربي ⇒ RTL» لا أول حرف قوي (قرار سلطان، CL-002)، بمحاذاة يمين حتى الإنجليزي الخالص.
+  const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate tj-auto', doc });
   const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'خانة التحرير', onSelect: (n) => switchSlot(n), doc });
   const slotNote = el('span', { className: 'ed-slot-note tj-caption', doc });
   const versionSel = el('select', { className: 'ed-select', attrs: { 'aria-label': 'النسخة المعروضة' }, on: { change: () => setView(versionSel.value) }, doc });
@@ -292,7 +296,7 @@ export async function mountEditor(app, {
       children: [
         el('aside', {
           className: 'ed-side',
-          children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': 'اللوحة الجانبية' }, children: sideTabs, doc }), reviewPane, completePane],
+          children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': 'اللوحة الجانبية' }, children: sideTabs, on: { keydown: onTabsKey }, doc }), reviewPane, completePane],
           doc,
         }),
         el('section', { className: 'ed-main', attrs: { 'aria-label': 'قائمة المقاطع' }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc }),
@@ -337,6 +341,7 @@ export async function mountEditor(app, {
     S.external = null;
     S.showEnglish = !S.hideEnglish && ((S.englishTrack?.cues.length ?? 0) > 0 || S.refCol !== 'en');
     titleEl.textContent = b.record.title ?? 'بلا عنوان محفوظ';
+    titleEl.dir = textDirection(titleEl.textContent);
     titleEl.title = b.record.title ?? '';
     rebuildList();
     renderAll();
@@ -346,11 +351,14 @@ export async function mountEditor(app, {
 
   /** نص المرجع لكل مقطع في النسخة المعروضة: الإنجليزية دائمًا (للبحث فيها قراءةً)، والعمود المرجعي بحسب الاختيار. */
   function computeRefs(cues) {
-    const refs = englishReference(cues, S.englishTrack?.cues ?? [], S.fp);
+    // تغطية البصمة بالمحاذاة مرة لكل بناء: نوافذ المرجع، وأرقام الاستكمال، ومواضع صفوف الناقص (GM-002، GM-005).
+    const coverage = fingerprintCoverage(S.fp, cues);
+    if (S.view !== 'original') S.coverage = coverage;
+    const refs = englishReference(cues, S.englishTrack?.cues ?? [], S.fp, { coverage });
     if (S.view === 'original') S.refsOriginal = refs;
     else S.refs = refs;
     const other = S.refCol === 'en' ? null : S.opened.slots[S.refCol - 1].track;
-    S.colRefs = other ? englishReference(cues, other.current ?? other.original, S.fp) : refs;
+    S.colRefs = other ? englishReference(cues, other.current ?? other.original, S.fp, { coverage }) : refs;
   }
 
   /** قائمة العمود المرجعي: الإنجليزية (إن حُفظ مسار) والخانات الممتلئة الأخرى. */
@@ -385,10 +393,10 @@ export async function mountEditor(app, {
     const s = act();
     const cues = Array.from({ length: s.count }, (_, i) => s.cueAt(i));
     computeRefs(cues);
-    S.comparison = compareNow(s);
+    S.comparison = compareNow(s, S.view === 'original' ? undefined : S.coverage);
     computeMarks();
     computeParts();
-    const rows = buildRows(cues, S.comparison?.missing ?? []);
+    const rows = buildRows(cues, S.comparison?.missing ?? [], { numbersOf: S.coverage?.ok ? S.coverage.numbersOf : null });
     const sameRows = Boolean(S.list) && rows.length === S.rows.length
       && rows.every((r, k) => r.type === S.rows[k].type && r.index === S.rows[k].index && r.n === S.rows[k].n);
     S.rows = rows;
@@ -417,9 +425,13 @@ export async function mountEditor(app, {
     search.refresh();
   }
 
-  function compareNow(s) {
+  /** تقرير النسخة المعروضة بالمحاذاة (current.js): لا نقص زائف بعد إعادة ترقيم أو دمج أو شطر. */
+  function compareNow(s, coverage) {
     try {
-      return compare(s.snapshot(), S.fp, { driftMs: settings.thresholds.driftMs });
+      const cues = s.snapshot();
+      const cov = coverage ?? fingerprintCoverage(S.fp, cues);
+      if (s === S.session) S.coverage = cov;
+      return currentComparison(cues, S.fp, { driftMs: settings.thresholds.driftMs, coverage: cov });
     } catch {
       return null;
     }
@@ -588,7 +600,7 @@ export async function mountEditor(app, {
     const s = S.session;
     offsetText.textContent = offsetLine(s.offsetMs);
     offsetSub.textContent = s.offsetChanged
-      ? `ثُبّتت الإزاحة ${formatOffset(s.baseOffsetMs)} ث في التوقيت ولم يُحفظ ذلك بعد. التراجع يعيدهما معًا.`
+      ? `ثُبّتت الإزاحة ${offsetInline(s.baseOffsetMs)} ث في التوقيت ولم يُحفظ ذلك بعد. التراجع يعيدهما معًا.`
       : '+ تأخير: تظهر الترجمة لاحقًا · − تقديم: تظهر أبكر. تغيّرها أزرار ± في شريط المشغّل.';
     setDisabled(commitBtn, readOnly() ? messageFor('ED_READ_ONLY') : s.offsetMs === 0 ? messageFor('ED_NO_OFFSET') : null);
   }
@@ -661,14 +673,18 @@ export async function mountEditor(app, {
     renderAll();
   }
 
-  /** «اعتماد هذا المرجع»: كتابة واحدة للخانة بمرجعها وتقرير المقارنة المحسوب على المحفوظ منها. */
+  /**
+   * «اعتماد هذا المرجع»: كتابة واحدة للخانة بمرجعها وتقريره. التقرير وصف للملف كما رُفع (الأصل لا النسخة المعدّلة، عقد
+   * data-model §١٠) كما في المحفوظات (changeReference)، والحاضر يُشتق من النسخة الحالية (GM-013).
+   */
   async function commitRef() {
     if (S.refPreview === undefined || S.refBusy) return;
     const fp = S.fp;
     S.refBusy = true;
     renderReferencePanel();
     try {
-      const comparison = fp ? compare(S.info.cues, fp, { driftMs: settings.thresholds.driftMs }) : null;
+      const report = fp ? compare(S.info.original, fp, { driftMs: settings.thresholds.driftMs }) : null;
+      const comparison = report ? { ...report, notes: [...(S.info.track.notes ?? []), ...report.notes].slice(0, LIMITS.maxNotes) } : null;
       const n = S.slot;
       const b = await queue((opened) => writeReference(store, videoId, opened, n, { fingerprintId: fp?.id ?? null, comparison }, { now }));
       S.refPreview = undefined;
@@ -700,7 +716,7 @@ export async function mountEditor(app, {
     const theirs = openedSlot(latest, S.slot);
     const input = {
       base: S.session.baseSnapshot(), mine: S.session.snapshot(), theirs: theirs.cues,
-      offsets: { base: S.session.baseOffsetMs, mine: S.session.offsetMs, theirs: theirs.offsetMs },
+      offsets: { base: S.session.baseOffsetMs, mine: S.session.offsetMs, theirs: theirs.offsetMs, committed: S.session.committedMs },
     };
     const choice = await openRescueDialog({ doc, first: planRescue(input), offsets: input.offsets });
     if (choice === 'export') {
@@ -752,7 +768,8 @@ export async function mountEditor(app, {
         // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض)، ومنه يُوزَّع الإنجليزي بمنتصف زمنه.
         const s = act();
         const timed = exportTiming(s.snapshot(), S.view === 'original' ? 0 : S.session.offsetMs, 'shown');
-        const cues = timed.ok ? timed.cues : s.snapshot();
+        // أخطاء التوقيت لا تمنع النص الدراسي (كما يقول «تصدير ▾»): الزمن السالب رابطه من بداية الفيديو (GM-026.4).
+        const cues = (timed.ok ? timed.cues : s.snapshot()).map((c) => ({ ...c, startMs: Math.max(0, c.startMs), endMs: Math.max(0, c.endMs) }));
         return buildStudyText({ videoId, title: S.opened.record.title, cues, english: bilingual ? english : null, format, bilingual });
       },
     });
@@ -805,7 +822,10 @@ export async function mountEditor(app, {
 
   function renderComplete() {
     if (completePane.hidden || !S.markView) return;
-    const groups = completionGroups({ cues: shownCues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView, selection: S.selection });
+    const groups = completionGroups({
+      cues: shownCues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView, selection: S.selection,
+      numbersOf: S.view === 'edit' && S.coverage?.ok ? S.coverage.numbersOf : null,
+    });
     S.completeNumbers = completionNumbers(groups, S.picks);
     renderCompletePanel(completeEl, {
       doc, reason: completeReason(), groups, picks: S.picks, numbers: S.completeNumbers, parts: S.parts,
@@ -852,8 +872,12 @@ export async function mountEditor(app, {
   /** «استيراد ملف تصحيح…»: قراءة على الترجمة الحالية، ثم معاينة واختيار، ثم خطوة واحدة غير محفوظة. */
   async function importPatch(files) {
     if (completeReason() || readOnly()) return;
-    const before = S.session.version;
-    const read = await readPatch(files, { fingerprint: S.fp, cues: S.session.snapshot() });
+    // الجلسة نفسها بنسختها: تبديل الخانة أثناء قراءة الملف يفتح جلسة جديدة قد تبدأ بالنسخة نفسها (CX-H7).
+    const session = S.session;
+    const fp = S.fp;
+    const before = session.version;
+    const stale = () => S.session !== session || S.fp !== fp || session.version !== before;
+    const read = await readPatch(files, { fingerprint: fp, cues: session.snapshot() });
     if (!read.ok) {
       await openDialog({
         doc, tone: 'danger', title: 'تعذّر قراءة ملف التصحيح',
@@ -862,13 +886,17 @@ export async function mountEditor(app, {
       });
       return;
     }
-    if (S.session.version !== before) {
+    if (stale()) {
       toast(messageFor('IM_PATCH_STALE'), 'danger');
       return;
     }
     const only = await previewPatch({ doc, plan: read.plan });
     if (!only) return;
-    const r = S.session.applyPatchPlan(read.plan, { only });
+    if (stale()) {
+      toast(messageFor('IM_PATCH_STALE'), 'danger');
+      return;
+    }
+    const r = session.applyPatchPlan(read.plan, { only });
     if (!r.ok) {
       toast(messageFor(r.code), 'danger');
       return;
@@ -911,6 +939,22 @@ export async function mountEditor(app, {
     for (const t of sideTabs) t.textContent = t.dataset.tab === 'review' ? `المراجعة${groups.counts.todo ? ` (${groups.counts.todo})` : ''}` : 'الاستكمال';
   }
 
+  /**
+   * التبويبات بلوحة المفاتيح (نمط WAI-ARIA Tabs): التبويب المختار وحده في ترتيب Tab، والأسهم بين التبويبات (الصفحة RTL: الأيسر
+   * إلى التالي)، وHome وEnd إلى الطرفين؛ والتنقل يختار التبويب ويركّزه. كان «الاستكمال» بـtabIndex=-1 بلا أسهم فلا يُبلَغ
+   * بلوحة المفاتيح (تدقيق 5fedcb9، GM-008).
+   */
+  function onTabsKey(e) {
+    const at = sideTabs.indexOf(doc.activeElement);
+    if (at === -1) return;
+    const last = sideTabs.length - 1;
+    const to = { ArrowLeft: at === last ? 0 : at + 1, ArrowRight: at === 0 ? last : at - 1, Home: 0, End: last }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    setSideTab(sideTabs[to].dataset.tab);
+    sideTabs[to].focus();
+  }
+
   function setSideTab(id) {
     for (const t of sideTabs) {
       const on = t.dataset.tab === id;
@@ -940,6 +984,17 @@ export async function mountEditor(app, {
     computeMarks();
     S.list.refresh(null);
     renderAll();
+  }
+
+  /**
+   * بعد كتابة آخر موضع (مؤقّت السكون أو المغادرة): الحزمة الناتجة هي المفتوحة، ولا يُعاد إلا قسم «آخر موضع». فلا تُهدم اللوحة
+   * الجانبية ولا يسقط تركيز أو قائمة مفتوحة فيها كل بضع ثوانٍ (تدقيق 5fedcb9، GM-014.3).
+   */
+  function afterPositionWrite(b, slot) {
+    S.opened = b;
+    if (S.slot !== slot) return;
+    S.info = openedSlot(b, S.slot);
+    renderResume(resumeEl, { doc, items: resumeItems(), onResume: (n) => resumeSlot(n) });
   }
 
   async function writeMarkPlan(plan, message, { undoable = true } = {}) {
@@ -1022,7 +1077,7 @@ export async function mountEditor(app, {
     if (index === null) return null;
     const slot = S.slot;
     return queue((opened) => writePosition(store, videoId, opened, slot, index, { now }))
-      .then((b) => { if (S.slot === slot) afterCompanionWrite(b); else S.opened = b; })
+      .then((b) => afterPositionWrite(b, slot))
       .catch(() => {});
   }
 
@@ -1100,7 +1155,7 @@ export async function mountEditor(app, {
     const was = S.session.offsetMs;
     const r = S.session.commitOffset();
     S.result = r.ok
-      ? { tone: 'success', text: `ثُبّتت إزاحة العرض ${formatOffset(was)} ث في توقيت الملف كله (${formatCount(r.count, COUNT_FORMS.cue)})، وصارت الإزاحة 0.0. احفظ لتثبيت ذلك.` }
+      ? { tone: 'success', text: `ثُبّتت إزاحة العرض ${offsetInline(was)} ث في توقيت الملف كله (${formatCount(r.count, COUNT_FORMS.cue)})، وصارت الإزاحة 0.0. احفظ لتثبيت ذلك.` }
       : { tone: 'danger', text: messageFor(r.code, r.negative ? { list: numberList(r.negative) } : undefined) };
     renderAll();
   }
@@ -1196,7 +1251,8 @@ export async function mountEditor(app, {
   /** «▶ في الفيديو»: زمن المقطع كما يظهر (المحفوظ + إزاحة العرض) في تبويب الفيديو المفتوح أو تبويب جديد. */
   async function onSeek(i) {
     const cue = act().cueAt(i);
-    const ms = Math.max(0, cue.startMs + S.session.offsetMs);
+    // إزاحة النسخة المعروضة نفسها التي يذكرها تلميح «▶ في الفيديو» (GM-027.3).
+    const ms = Math.max(0, cue.startMs + act().offsetMs);
     setActive(i);
     const r = await seek({ videoId, ms });
     S.lastSeek = { ok: r.ok, via: r.via ?? null, code: r.code ?? null, ms };
@@ -1241,6 +1297,7 @@ export async function mountEditor(app, {
 
   async function save() {
     if (S.saving) return;
+    commitFocusedTime();
     const why = saveBlockReason();
     if (why) {
       // الزر المعطّل لا يصل إلى هنا؛ هذا ⌘S، فيُذكر السبب بدل صمت.
@@ -1248,6 +1305,8 @@ export async function mountEditor(app, {
       return;
     }
     S.saving = true;
+    let done;
+    S.saveDone = new Promise((r) => { done = r; });
     renderHeader();
     const session = S.session;
     const at = session.version;
@@ -1260,14 +1319,19 @@ export async function mountEditor(app, {
       };
       const saved = await queue((opened) => saveSlot(store, videoId, opened, n, edit, { now }));
       S.result = null;
-      if (S.session === session && session.version !== at) {
+      if (S.session !== session) {
+        // فُتحت جلسة أخرى أثناء الانتظار (تبديل خانة مثلًا): المحفوظ للخانة القديمة، فلا يُفتح فوق الجلسة الجديدة ومسودتها؛
+        // يصبح الأحدث أساسها إن لم يمس محتواها، وإلا قرّر الفحص (تدقيق 5fedcb9، CX-002).
+        if (!slotContentChanged(S.opened, saved, S.slot)) adopt(saved);
+        else recheck();
+      } else if (session.version !== at) {
         // كتب المستخدم أثناء الحفظ: المحفوظ يصبح الأساس وما كُتب بعده يبقى غير محفوظ، فلا يُكتب فوق الحقل.
         S.opened = saved;
         S.info = openedSlot(saved, n);
         S.edited = S.info.edited;
         session.markSaved({ cues: S.info.cues, offsetMs: S.info.offsetMs }, shape);
       } else load(saved, n, { keepUi: true });
-      toast('حُفظ ✓', 'success');
+      toast('حُفظ.', 'success');
     } catch (err) {
       const info = toErrorInfo(err);
       if (info.code === 'ST_CONFLICT') {
@@ -1277,9 +1341,26 @@ export async function mountEditor(app, {
       } else toast(`تعذّر الحفظ: ${info.message}`, 'danger');
     } finally {
       S.saving = false;
+      done();
       flushPending();
       renderAll();
     }
+  }
+
+  /**
+   * زمن مكتوب في حقل لم يُغادَر بعد (change لا يُطلق إلا بالمغادرة أو Enter): يُعتمد قبل الحفظ والمغادرة والتبديل والتغيّر
+   * الخارجي، فلا يضيع بـ⌘S ولا يطمسه تحديث الصفوف (تدقيق 5fedcb9، GM-007).
+   */
+  function commitFocusedTime() {
+    const t = doc.activeElement;
+    const field = t?.dataset?.field;
+    if ((field !== 'start' && field !== 'end') || readOnly() || !S.session) return;
+    const node = rowOfNode(t);
+    if (!node) return;
+    const i = Number(node.dataset.index);
+    const cue = S.session.cueAt(i);
+    const shown = S.session.draftAt(i, field) ?? formatTimecode(field === 'start' ? cue.startMs : cue.endMs);
+    if (t.value !== shown) commitTime(i, field, t.value);
   }
 
   function flushPending() {
@@ -1323,6 +1404,7 @@ export async function mountEditor(app, {
    */
   function recheck() {
     S.externalChain = S.externalChain.then(async () => {
+      commitFocusedTime();
       let latest;
       try {
         latest = await store.getBundle(videoId);
@@ -1330,8 +1412,10 @@ export async function mountEditor(app, {
         toast(`تعذّرت قراءة آخر نسخة: ${toErrorInfo(err).message}`, 'danger');
         return;
       }
-      if (!latest?.slots[S.slot - 1].track) S.external = 'removed';
-      else if (!slotContentChanged(S.opened, latest, S.slot)) {
+      const kind = latest?.slots[S.slot - 1].track ? slotChange(S.opened, latest, S.slot) : 'removed';
+      if (kind === 'removed') S.external = 'removed';
+      else if (kind === 'none' || (kind === 'offset' && S.session.adoptOffset(latest.slots[S.slot - 1].offsetMs))) {
+        // إزاحة غيّرها المشغّل والمحرّر لم يغيّرها: تُتبنّى دون تعارض، فيبقى الحفظ والتراجع (GM-014.2).
         adopt(latest);
         return;
       } else if (S.session.dirty || S.session.hasDrafts) S.external = 'changed';
@@ -1360,15 +1444,20 @@ export async function mountEditor(app, {
       rebuildList();
     } else computeRefs(shownCues());
     titleEl.textContent = latest.record.title ?? 'بلا عنوان محفوظ';
-    // العلامات والموضع من الحزمة الأحدث (علامة من المشغّل مثلًا) على الصفوف المعروضة.
+    titleEl.dir = textDirection(titleEl.textContent);
+    // العلامات والموضع من الحزمة الأحدث (علامة من المشغّل مثلًا) على الصفوف المعروضة. بلا فرض: المحتوى لم يتغير، فلا يُطمس
+    // ما يُكتب في الحقل المركّز.
     computeMarks();
-    S.list.refresh(null, true);
+    S.list.refresh(null);
     renderAll();
   }
 
   /** تبديل خانة التحرير (§١٩.٩): بتغييرات غير محفوظة حوار تأكيد، ولا تتغير النشطة. resume يقفز إلى آخر موضعها بعد التبديل. */
   async function switchSlot(n, { resume = false } = {}) {
+    // حفظٌ جارٍ يُنتظر أولًا: لا يُسأل المستخدم عن تغييرات يجري حفظها، ولا يصل رده بعد فتح خانة أخرى (CX-002).
+    if (S.saving) await S.saveDone;
     if (n === S.slot || !S.opened.slots[n - 1]?.track) return;
+    commitFocusedTime();
     if (S.session.dirty || S.session.hasDrafts) {
       const canSave = !saveBlockReason();
       const v = await openDialog({
@@ -1442,6 +1531,8 @@ export async function mountEditor(app, {
     });
     if (v !== 'restore') return;
     S.saving = true;
+    let done;
+    S.saveDone = new Promise((r) => { done = r; });
     renderHeader();
     try {
       const n = S.slot;
@@ -1456,6 +1547,7 @@ export async function mountEditor(app, {
       toast(`تعذّرت الاستعادة: ${info.message}`, 'danger');
     } finally {
       S.saving = false;
+      done();
       flushPending();
       renderAll();
     }
@@ -1539,7 +1631,7 @@ export async function mountEditor(app, {
       timingBox.replaceChildren(variant === 'current' && offset !== 0
         ? radios('ed-timing', {
           legend: 'التوقيت المصدَّر',
-          options: [['shown', `الظاهر أثناء المشاهدة (المحفوظ + الإزاحة ${formatOffset(offset)} ث)`], ['saved', 'المحفوظ فقط']],
+          options: [['shown', `الظاهر أثناء المشاهدة (المحفوظ + الإزاحة ${offsetInline(offset)} ث)`], ['saved', 'المحفوظ فقط']],
         }, choice, (v) => { choice = v; refresh(); })
         : el('span', { doc }));
       const name = plan.ok ? plan.name : `${videoId}.ar${variant === 'original' ? '.original' : ''}.srt`;
@@ -1598,9 +1690,12 @@ export async function mountEditor(app, {
   }
 
   async function goLibrary() {
+    commitFocusedTime();
     if ((S.session.dirty || S.session.hasDrafts) && !(await confirmLeave(doc, messageFor('ED_LEAVE_UNSAVED')))) return;
     S.leaving = true;
-    win.location.assign(new URL('../library/index.html', win.location.href).href);
+    // آخر موضع قبل المغادرة (لا يكتمل غالبًا في pagehide)، والصف المقصود في المحفوظات (#v=…؛ تدقيق 5fedcb9، GM-016.3).
+    await writePositionNow();
+    win.location.assign(new URL(`../library/index.html#v=${videoId}`, win.location.href).href);
   }
 
   // ---- أحداث القائمة (تفويض من الحاوية) ----
@@ -1718,9 +1813,18 @@ export async function mountEditor(app, {
     e.returnValue = '';
   });
   store.onChange((change) => {
+    if (change.settings?.newValue) {
+      // عتبة الانحراف من الإعدادات تسري فورًا على المقارنة الحاضرة (GM-027.3)؛ وخطوة الأزرار اختيار المستخدم هنا فلا تُطمس.
+      settings = normalizeSettings(change.settings.newValue);
+      S.comparison = compareNow(act());
+      computeParts();
+      scheduleChrome();
+      renderComparisonPanel();
+    }
     if (change.prefs?.newValue) {
       // حد سرعة القراءة من الإعدادات (R55) يسري فورًا؛ ولا يمس شيئًا محفوظًا.
       S.prefs = change.prefs.newValue;
+      commitFocusedTime();
       S.session.setDensity(densityOf(S.prefs));
       S.original.setDensity(densityOf(S.prefs));
       rebuildList();

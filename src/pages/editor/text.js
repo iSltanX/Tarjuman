@@ -1,6 +1,6 @@
 // نصوص المحرّر العربية (figma-design-brief.md §١١ و§١٦): النطاق قبل الفعل وبعده، والعدّ بالعربية بمطابقة
 // الصفة للمعدود، والإزاحة بعلامتها، وتقرير المقارنة سطورًا. دوال نقية بلا DOM.
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 
 const MAX_LIST = 8;
 
@@ -50,8 +50,8 @@ export function unsavedSentence(n) {
   return `لديك ${formatCount(n, COUNT_FORMS.change)} ${adj}`;
 }
 
-/** مؤشر الرأس: «● تغييرات غير محفوظة (12)» أو «محفوظ ✓». @param {number} n @param {boolean} dirty */
-export const saveStatus = (n, dirty) => (dirty ? `تغييرات غير محفوظة (${n})` : 'محفوظ ✓');
+/** مؤشر الرأس: «تغييرات غير محفوظة (12)» أو «محفوظ» (الرمز من الشارة لا من نص بخط آخر). @param {number} n @param {boolean} dirty */
+export const saveStatus = (n, dirty) => (dirty ? `تغييرات غير محفوظة (${n})` : 'محفوظ');
 
 /**
  * تسمية خيار النطاق: «المقطع 57» و«المحددة (3)» و«الملف كله».
@@ -84,10 +84,10 @@ export function shiftSentence(target, deltaMs, when) {
 }
 
 /** التنبيه قبل نقل الملف كله والإزاحة مفعّلة (عقد التوقيت §٣). @param {number} offsetMs */
-export const offsetNotice = (offsetMs) => `إزاحة العرض ${formatOffset(offsetMs)} ث مفعّلة؛ النقل هنا يُضاف إليها.`;
+export const offsetNotice = (offsetMs) => `إزاحة العرض ${offsetInline(offsetMs)} ث مفعّلة؛ النقل هنا يُضاف إليها.`;
 
 /** سطر الإزاحة الثابت. @param {number} offsetMs */
-export const offsetLine = (offsetMs) => `إزاحة العرض أثناء المشاهدة: ${formatOffset(offsetMs)} ث — منفصلة عن التوقيت المحفوظ`;
+export const offsetLine = (offsetMs) => `إزاحة العرض أثناء المشاهدة: ${offsetInline(offsetMs)} ث — منفصلة عن التوقيت المحفوظ`;
 
 /**
  * اسم الوصول لخانة في محدد خانة التحرير: «الترجمة 2، قيد التحرير، النشطة في المشغّل» أو «الترجمة 3، فارغة».
@@ -135,8 +135,12 @@ export function markActionLabel(n, mark) {
   return next ? `علّم المقطع ${n} «${MARK_LABEL[next]}»` : `أزل علامة المقطع ${n}`;
 }
 
-/** شارة الصف: ⚑ لـ«أعود إليه» و✓ لـ«راجعته»، و؟ لعلامة قد تكون انتقلت. @param {{ kind: 'todo' | 'done', state: string }} m */
-export const markBadge = (m) => `${m.kind === 'todo' ? '⚑' : '✓'}${m.state === 'moved' ? '؟' : ''}`;
+/**
+ * شارة الصف: أيقونة flag لـ«أعود إليه» وcheck لـ«راجعته» (SVG لا رمز نصي يسقط إلى خط نظام؛ تدقيق 5fedcb9، CL-010)، و«؟» لعلامة
+ * قد تكون انتقلت.
+ * @param {{ kind: 'todo' | 'done', state: string }} m @returns {{ icon: 'flag' | 'check', suffix: string }}
+ */
+export const markBadge = (m) => ({ icon: m.kind === 'todo' ? 'flag' : 'check', suffix: m.state === 'moved' ? '؟' : '' });
 
 /** @param {{ kind: 'todo' | 'done', state: string }} m */
 export const markTitle = (m) => `${MARK_LABEL[m.kind]}${m.state === 'moved' ? ' — قد تكون انتقلت: تحقق أنها على المقطع الصحيح' : ''}`;
@@ -169,6 +173,7 @@ export function seekResult(r, at, message) {
 export function saveMessage(r, name, location, message) {
   if (!r.ok) return { tone: r.code === 'SV_CANCELLED' ? 'info' : 'danger', text: `${name}: ${message(r.code)}` };
   if (r.mode === 'blob') return { tone: 'info', text: `${name}: ${message('SV_FALLBACK_BLOB')}` };
+  if (r.pending) return { tone: 'info', text: `${name}: ${message('SV_PENDING')}` };
   // «مجلد X داخل التنزيلات» لا «التنزيلات/X»: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص.
   if (r.mode === 'subfolder') return { tone: 'success', text: `حُفظ ${name} في مجلد ${location?.folder ?? 'Tarjuman'} داخل التنزيلات.` };
   if (r.mode === 'ask') return { tone: 'success', text: `حُفظ ${name} حيث اخترت.` };
@@ -189,7 +194,7 @@ export const durationText = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
 export function comparisonLines(r) {
   if (!r || r.fingerprintId === null) return [{ tone: 'info', text: 'لا بصمة للمقارنة؛ عُرض الملف كما هو.' }];
   const lines = [];
-  if (r.matched) lines.push({ tone: 'success', text: 'مطابق للأصل ✓' });
+  if (r.matched) lines.push({ tone: 'success', text: 'مطابق للأصل' });
   lines.push({ tone: r.countSource === r.countTarget ? 'info' : 'warning', text: `العدد: ${r.countTarget} من ${r.countSource}` });
   if (r.numbering === 'different') lines.push({ tone: 'warning', text: 'الترقيم غير متسلسل أو مختلف عن الأصل.' });
   if (r.missing.length) {

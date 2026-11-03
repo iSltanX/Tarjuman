@@ -2,6 +2,7 @@
 // «استعادة التوقيت الأصلي…» حين يتطابق العدد والترقيم وحده، وملاحظات الاستيراد. وصف فقط: لا إصلاح تلقائي.
 import { messageFor } from '../../core/errors/index.js';
 import { button, el, statusPill } from '../../ui/components.js';
+import { textDirection } from '../../ui/format.js';
 import { comparisonLines, issuesSummary, restoreUnavailable } from './text.js';
 
 const MAX_ITEMS = 200;
@@ -60,7 +61,7 @@ export function renderReference(box, { doc, options, savedId, shownId, preview, 
     className: 'ed-select ed-ref-choice', attrs: { 'aria-label': 'مرجع المقارنة' },
     on: { change: () => onChoose(sel.value || null) },
     children: [
-      ...options.map((o, k) => el('option', { text: `${k === 0 ? '★ ' : ''}${o.label} — ${Math.round(o.score * 100)}%`, attrs: { value: o.id }, doc })),
+      ...options.map((o, k) => el('option', { text: `${o.label} — ${Math.round(o.score * 100)}%${k === 0 ? ' — الأقرب' : ''}`, attrs: { value: o.id }, doc })),
       el('option', { text: 'بلا مرجع', attrs: { value: '' }, doc }),
     ],
     doc,
@@ -114,7 +115,7 @@ export function renderComparison(box, { doc, report, notes, readOnly, onRestore,
     restore,
     notes.length ? el('details', {
       className: 'ed-notes',
-      children: [el('summary', { text: `ملاحظات الاستيراد (${notes.length})`, doc }), el('ul', { children: notes.map((t) => el('li', { className: 'tj-auto', text: t, doc })), doc })],
+      children: [el('summary', { text: `ملاحظات الاستيراد (${notes.length})`, doc }), el('ul', { children: notes.map((t) => el('li', { className: 'tj-auto', text: t, dir: textDirection(t), doc })), doc })],
       doc,
     }) : null,
   ].filter(Boolean));

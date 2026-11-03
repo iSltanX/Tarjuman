@@ -7,7 +7,7 @@ import { messageFor } from '../errors/index.js';
 import { alignCues, toBlocks } from './align.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
-/** @typedef {{ n: number, mine: Cue[], theirs: Cue[] }} Conflict */
+/** @typedef {{ n: number, key: number | string, mine: Cue[], theirs: Cue[] }} Conflict */
 
 const one = ({ n, startMs, endMs, text }) => ({ n, startMs, endMs, text });
 const sameCue = (x, y) => x.startMs === y.startMs && x.endMs === y.endMs && x.text === y.text;
@@ -40,11 +40,12 @@ function placed(pairs, side, n) {
 /**
  * @param {{ base: Cue[], mine: Cue[], theirs: Cue[] }} sides
  * @param {{ align?: Partial<import('./align.js').ALIGN_DEFAULTS>, resolve?: Record<number, 'mine' | 'theirs'> | Map<number, 'mine' | 'theirs'> }} [opts]
- *   align خيارات المحاذاة (useText مفعّل افتراضيًا: النص غير المعدّل مرساة). resolve اختيار المستخدم لكل تعارض برقمه n.
+ *   align خيارات المحاذاة (useText مفعّل افتراضيًا: النص غير المعدّل مرساة). resolve اختيار المستخدم لكل تعارض بمفتاحه key.
  * @returns {{ ok: true, cues: Cue[], kept: number[], taken: number[], conflicts: Conflict[] } | { ok: false, reason: string }}
  *   kept وtaken مواضع (من 0) في cues لما أُبقي من تعديل المستخدم ولما أُخذ من تغيير الجديد (والحذف المُبقى لا موضع له).
- *   conflicts ما لم يُحسم: n رقم أول مقطع في المنطقة من الأصل القديم (ومفتاحه في resolve)، وmine وtheirs مقاطع الطرفين
- *   فيها (مصفوفة فارغة = حُذف). أرقام الناتج من مصدر كل مقطع كما هي.
+ *   conflicts ما لم يُحسم: n رقم أول مقطع في المنطقة من الأصل القديم (للعرض)، وkey مفتاحه في resolve: الرقم نفسه ما لم
+ *   يتكرر في الأصل، وإلا «n.k» للظهور k منه (قطعتا شطر تحملان رقمًا واحدًا، فلكل منطقة اختيارها)؛ وmine وtheirs مقاطع
+ *   الطرفين فيها (مصفوفة فارغة = حُذف). أرقام الناتج من مصدر كل مقطع كما هي.
  */
 export function mergeThreeWay({ base, mine, theirs }, opts = {}) {
   const alignOpts = { useText: true, ...opts.align };
@@ -59,6 +60,15 @@ export function mergeThreeWay({ base, mine, theirs }, opts = {}) {
   };
 
   const n = base.length;
+  // مفتاح كل مقطع من الأصل: رقمه، وللمكرر منه (قطعتا شطر محفوظ) رقمه وترتيب ظهوره، فلا يحسم اختيارُ منطقةٍ غيرَها.
+  const total = new Map();
+  for (const c of base) total.set(c.n, (total.get(c.n) ?? 0) + 1);
+  const seenN = new Map();
+  const keyAt = base.map((c) => {
+    const k = (seenN.get(c.n) ?? 0) + 1;
+    seenN.set(c.n, k);
+    return total.get(c.n) === 1 ? c.n : `${c.n}.${k}`;
+  });
   const M = placed(am.pairs, mine, n);
   const T = placed(at.pairs, theirs, n);
   // إضافات كل فجوة من الطرفين. إضافتان متداخلتان مختلفتان عند فجوة واحدة تُضمّان إلى منطقة الأصل المجاورة، فيبقى مفتاح كل
@@ -134,7 +144,7 @@ export function mergeThreeWay({ base, mine, theirs }, opts = {}) {
     const B = base.slice(r.from, r.to + 1);
     const mineChanged = !sameList(B, r.mine);
     const theirsChanged = !sameList(B, r.theirs);
-    const key = B[0].n;
+    const key = keyAt[r.from];
     if (B.length === 1 && r.mine.length === 1 && r.theirs.length === 1) {
       // حقلًا حقلًا: لكل من النص والتوقيت قيمة الأصل والطرفين.
       const [b] = B;
@@ -151,7 +161,7 @@ export function mergeThreeWay({ base, mine, theirs }, opts = {}) {
       const text = field((c) => c.text, (p, q) => p === q);
       const time = field((c) => [c.startMs, c.endMs], (p, q) => p[0] === q[0] && p[1] === q[1]);
       const pick = text.conflict || time.conflict ? choice(key) : null;
-      if ((text.conflict || time.conflict) && !pick) conflicts.push({ n: key, mine: [one(x)], theirs: [one(y)] });
+      if ((text.conflict || time.conflict) && !pick) conflicts.push({ n: b.n, key, mine: [one(x)], theirs: [one(y)] });
       const resolve = (f) => (f.conflict ? { v: pick === 'mine' ? f.xv : f.yv, from: pick === 'mine' ? 'mine' : 'theirs' } : f);
       const t = resolve(text);
       const s = resolve(time);
@@ -166,11 +176,25 @@ export function mergeThreeWay({ base, mine, theirs }, opts = {}) {
     else if (sameList(r.mine, r.theirs)) emit(r.theirs, taken);
     else {
       const pick = choice(key);
-      if (!pick) conflicts.push({ n: key, mine: r.mine.map(one), theirs: r.theirs.map(one) });
+      if (!pick) conflicts.push({ n: B[0].n, key, mine: r.mine.map(one), theirs: r.theirs.map(one) });
       if (pick === 'mine') emit(r.mine, kept);
       else emit(r.theirs, taken);
     }
   }
   insertions(n);
   return { ok: true, cues, kept, taken, conflicts };
+}
+
+/**
+ * «إبقاء تعديلاتي» فوق ملف جديد (R49): الدمج الثلاثي بين أصل الخانة وتعديلاتها والملف الجديد؛ تبقى التعديلات حيث لم يغيّر
+ * الجديد موضعها، وما تعارض يأخذه الجديد، ولا يُستعمل إلا بثقة المحاذاة. واحد للمشغّل والمحفوظات فتتطابق نتيجة الملف نفسه في
+ * السطحين (P13-AC2؛ كانت المحفوظات تحسم التعارض لنسخة المستخدم خلاف R49 والمشغّل، تدقيق 5fedcb9).
+ * @param {{ original: Cue[], current: Cue[] | null }} track @param {Cue[]} incoming
+ * @returns {{ ok: true, current: Cue[] | null, conflicts: number } | { ok: false, reason: string }}
+ *   current النسخة الحالية فوق الأصل الجديد، أو null إن لم يبقَ من التعديلات شيء (فلا تُعدّ الخانة معدّلة).
+ */
+export function keepEditsMerge(track, incoming) {
+  const r = mergeThreeWay({ base: track.original, mine: track.current ?? track.original, theirs: incoming });
+  if (!r.ok) return { ok: false, reason: r.reason };
+  return { ok: true, current: sameList(r.cues, incoming) ? null : r.cues, conflicts: r.conflicts.length };
 }

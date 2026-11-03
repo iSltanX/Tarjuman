@@ -5,7 +5,7 @@
 import { diffTranslations } from '../../core/align/index.js';
 import { messageFor } from '../../core/errors/index.js';
 import { isVideoId } from '../../core/model/ids.js';
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 
 /** حجم الدفعة المعروضة: عرض تدريجي لمحفوظات كثيرة. */
 export const PAGE_SIZE = 50;
@@ -199,7 +199,7 @@ export function rowModel(e, nowMs) {
     /** اسم الوصول للأوامر: العنوان إن وُجد وإلا المعرّف. */
     accessName: e.title ?? e.videoId,
     badges,
-    offsetText: e.view.displayOffsetMs !== 0 ? `الإزاحة ${formatOffset(e.view.displayOffsetMs)} ث` : null,
+    offsetText: e.view.displayOffsetMs !== 0 ? `الإزاحة ${offsetInline(e.view.displayOffsetMs)} ث` : null,
     relative: relativeTime(e.updatedAt, nowMs),
     absolute: absoluteTime(e.updatedAt),
     hasArabic: Boolean(e.arabic),
@@ -271,7 +271,7 @@ const numbers = (list) => (list.length > LIST_LIMIT ? `${list.slice(0, LIST_LIMI
  */
 export function comparisonSummary(r) {
   if (!r || r.fingerprintId === null) return { tone: 'info', lines: ['لا بصمة للمقارنة؛ عُرض الملف كما هو.'] };
-  if (r.matched) return { tone: 'success', lines: ['مطابق للأصل ✓'] };
+  if (r.matched) return { tone: 'success', lines: ['مطابق للأصل'] };
   const lines = [];
   if (r.countSource !== null && r.countSource !== r.countTarget) lines.push(`عدد المقاطع: ${r.countTarget} من ${r.countSource}`);
   if (r.missing.length) lines.push(`${formatCount(r.missing.length, NOUN.missing)}: ${numbers(r.missing)}`);
@@ -327,17 +327,22 @@ export function diffCountLines(d) {
 }
 
 /**
- * أهداف حوار الرفع: الخانات الثلاث بأسمائها وحالتها.
- * @param {import('../../core/model/slots.js').Bundle | null} b
+ * أهداف حوار الرفع كالمشغّل (ui-polish §٢، وproduct-spec «لا تُعرض خانة فارغة في أي محدد»): الترجمات المحفوظة بأرقامها
+ * (الحفظ فيها استبدال)، ثم خيار واحد «ترجمة جديدة» للخانة الفارغة المطلوبة أو أولاها؛ وبلا محفوظ هذا الخيار وحده (يعرضه
+ * الحوار سطرًا بلا محدد). لا «الترجمة 2 — فارغة» (تدقيق 5fedcb9، CL-005).
+ * @param {import('../../core/model/slots.js').Bundle | null} b @param {1 | 2 | 3 | null} [preferred]
  */
-export function targetOptions(b) {
-  return [1, 2, 3].map((n) => {
-    const s = b?.slots[n - 1];
-    const filled = Boolean(s?.track);
-    const active = b?.active === n;
-    const desc = !filled ? 'فارغة' : [s.name, s.track.fileName].filter(Boolean).join(' · ') + (active ? ' (نشطة)' : '');
-    return { n, filled, active, name: s?.name ?? null, label: `الترجمة ${n} — ${desc}` };
+export function targetOptions(b, preferred = null) {
+  const filledAt = (n) => Boolean(b?.slots[n - 1]?.track);
+  const out = [1, 2, 3].filter(filledAt).map((n) => {
+    const s = b.slots[n - 1];
+    const active = b.active === n;
+    const desc = [s.name, s.track.fileName].filter(Boolean).join(' · ') + (active ? ' (نشطة)' : '');
+    return { n, filled: true, active, name: s.name ?? null, label: `الترجمة ${n} — ${desc}` };
   });
+  const free = (preferred === 1 || preferred === 2 || preferred === 3) && !filledAt(preferred) ? preferred : [1, 2, 3].find((n) => !filledAt(n)) ?? null;
+  if (free) out.push({ n: free, filled: false, active: false, name: null, label: 'ترجمة جديدة' });
+  return out;
 }
 
 /** الهدف الافتراضي: المطلوب إن مُرِّر، وإلا أول خانة فارغة، وإلا النشطة (§١٩.٣). @param {object | null} b @param {number | null} [preferred] */
@@ -352,7 +357,8 @@ export function nameHintText(hint, titleOf = () => null) {
   if (!hint?.differs) return null;
   const t = titleOf(hint.videoId);
   const title = t ? (Array.from(t).length > 40 ? `${Array.from(t).slice(0, 39).join('')}…` : t) : null;
-  return title ? `الاسم يشير إلى فيديو آخر: ${title}` : `الاسم يشير إلى فيديو آخر (${hint.videoId}).`;
+  // العنوان معزول (FSI…PDI) فلا تنقلب علامات ترقيمه داخل الجملة العربية (تدقيق 5fedcb9، CL-002).
+  return title ? `الاسم يشير إلى فيديو آخر: ${String.fromCodePoint(0x2068)}${title}${String.fromCodePoint(0x2069)}` : `الاسم يشير إلى فيديو آخر (${hint.videoId}).`;
 }
 
 /**

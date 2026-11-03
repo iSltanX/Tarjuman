@@ -276,3 +276,20 @@ test('اسم الملف: محارف تجاوز الاتجاه تُنزع، وا�
   const name = (await run(fixture('clean.ar.srt', `${'a'.repeat(254)}\u{1F600}.srt`))).fileName;
   assert.equal(name, 'a'.repeat(254));
 });
+
+test('تدقيق 5fedcb9 (GM-026.2): رقم شاذ واحد في جزء (2500 بدل 15) يُسمّى هو لا تداخل الجزأين كله', async () => {
+  const { formatSrtTime } = await import('../../../src/core/srt/time.js');
+  const { makeCues } = await import('../../helpers/fixtures.js');
+  const all = makeCues(40, { text: (i) => `ترجمة ${i}` });
+  // بأرقامها كما هي (writeSrt يرقّم تسلسليًا).
+  const srt = (cues) => cues.map((c) => `${c.n}\n${formatSrtTime(c.startMs)} --> ${formatSrtTime(c.endMs)}\n${c.text}\n`).join('\n');
+  const first = all.slice(0, 20).map((c) => (c.n === 15 ? { ...c, n: 2500 } : c));
+  const second = all.slice(20);
+  const e = await failed([new File([srt(first)], 'part1.ar.srt'), new File([srt(second)], 'part2.ar.srt')]);
+  assert.equal(e.code, 'IM_PARTS_STRAY_NUMBER');
+  assert.match(e.message, /2500/);
+  assert.match(e.message, /«part1\.ar\.srt»/);
+  // تداخل حقيقي بين جزأين يبقى IM_PARTS_OVERLAP.
+  const both = await failed([new File([srt(all.slice(0, 25))], 'a.srt'), new File([srt(all.slice(20))], 'b.srt')]);
+  assert.equal(both.code, 'IM_PARTS_OVERLAP');
+});

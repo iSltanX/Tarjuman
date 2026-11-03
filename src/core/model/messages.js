@@ -1,6 +1,7 @@
 // رسائل الإضافة الداخلية (عقد docs/contracts/messages.md). الصفحات لا تراسل المشغّل إلا بطلبات محددة (الحالة،
 // والتشخيص، والقفز إلى زمن)، وتُعرف بمصدرها لا بمحتواها: لا يُقبل طلب إلا من صفحة في الإضافة نفسها. وسكربت المحتوى
 // لا يراسل إلا العامل الخلفي برسالة الحفظ (§٧). كلها بالإصدار v: 1، ورد الحالة موسّع بحقول تتجاهلها النافذة القديمة.
+import { trackComparison } from '../compare/current.js';
 import { DISPLAY_MODES } from './video.js';
 import { isVideoId } from './ids.js';
 import { LIMITS, isPlainObject } from './validate.js';
@@ -81,7 +82,11 @@ export function buildVideoStateReply(s, mounted) {
     },
     arabic: a ? {
       fileName: a.fileName, cueCount: (a.current ?? a.original).length, edited: a.current !== null,
-      matched: a.comparison && a.comparison.fingerprintId ? a.comparison.matched : null,
+      matched: (() => {
+        // للنسخة المعروضة الآن (GM-013): لا «تختلف عن الأصل» بعد استكمالها.
+        const c = trackComparison(a, s.saved.fingerprints);
+        return c && c.fingerprintId ? c.matched : null;
+      })(),
     } : null,
     view: { ...s.view },
     mounted: { overlay: String(mounted.overlay), controls: String(mounted.controls) },

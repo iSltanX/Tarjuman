@@ -144,9 +144,9 @@ test('رفع ثانٍ: تأكيد مضغوط بالملف وعدده وسطر ا
   assert.deepEqual(targets(page), [['1', 'false', null, null], ['جديدة', 'true', null, null]], 'المحفوظة استبدالًا، ثم «جديدة» لأول فارغة، ولا خانات فارغة أرقامًا');
   assert.equal(page.ui.menu().querySelector('[data-fid="target:2"]').getAttribute('aria-label'), 'حفظ كترجمة جديدة');
   assert.equal(page.ui.menu().querySelector('[data-fid="target:1"]').getAttribute('aria-label'), 'استبدال الترجمة 1، نشطة');
-  assert.equal(page.ui.menu().querySelector('[data-fid="target:3"]'), null);
+  assert.ok(page.ui.menu().querySelector('[data-fid="target:3"]') === null);
   assert.equal(page.ui.menuText().includes('ستُصفَّر'), false, 'خانة فارغة: لا تصفير للمعروضة');
-  assert.equal(page.ui.field('keep'), null, 'لا «إبقاء تعديلاتي» لخانة فارغة');
+  assert.ok(page.ui.field('keep') === null, 'لا «إبقاء تعديلاتي» لخانة فارغة');
   assert.equal(loads(page).length, 0, 'لا شيء قبل التأكيد');
   click(page.ui.item('حفظ'));
   await settle();
@@ -317,4 +317,30 @@ test('إخفاق الحفظ عند التحميل: رسالة المتحكم ك�
   await settle();
   await settle();
   assert.ok(page.ui.toasts().some((t) => t.tone === 'error' && t.text.includes(messageFor('ST_QUOTA_EXCEEDED'))));
+});
+
+test('تدقيق 5fedcb9 (GM-011): الرفع من المشغّل يعتمد المرجع الأقرب كالمحفوظات، لا الأحدث، حين تعددت التصديرات', async () => {
+  const { readFor } = await import('../../../../src/player/controls/flows.js');
+  const { readImport, reviewIncoming } = await import('../../../../src/core/import/index.js');
+  const { writeSrt } = await import('../../../../src/core/srt/writer.js');
+  const { DEFAULT_SETTINGS, normalizeSettings } = await import('../../../../src/core/model/settings.js');
+  const { englishTrack, fingerprint, makeCues } = await import('../../../helpers/fixtures.js');
+  const normal = englishTrack({ cues: makeCues(300, { text: (i) => `line ${i}` }) });
+  const longCues = [];
+  for (let i = 0; i < 300; i += 3) longCues.push({ n: longCues.length + 1, startMs: normal.cues[i].startMs, endMs: normal.cues[Math.min(i + 2, 299)].endMs, text: 'x' });
+  const fpNormal = fingerprint({ track: normal, id: 'fp_normal00001', createdAt: '2026-11-01T10:00:00.000Z' });
+  const fpLong = { ...fingerprint({ track: englishTrack({ cues: longCues }), id: 'fp_long0000001', mode: 'long', createdAt: '2026-11-01T11:00:00.000Z' }) };
+  // ترجمة الوضع العادي ينقصها مقطع واحد (299): لا تطابق عدد أي بصمة، فكان readImport يختار الأحدث (الطويل).
+  const ar = normal.cues.filter((_, i) => i !== 150).map((c) => ({ ...c, text: `ترجمة ${c.n}` }));
+  const file = new File([writeSrt(ar)], 'AAAAAAAAAAA.ar.srt');
+  const settings = normalizeSettings(DEFAULT_SETTINGS);
+  const state = { videoId: 'AAAAAAAAAAA', saved: { fingerprints: [fpNormal, fpLong] }, settings };
+  const controller = { getState: () => state };
+  const r = await readFor({ controller, importFlow: { readImport, reviewIncoming }, files: [file] });
+  assert.equal(r.ok, true);
+  assert.equal(r.input.fingerprintId, fpNormal.id, 'المرجع الأقرب');
+  assert.deepEqual([r.input.comparison.fingerprintId, r.input.comparison.countSource, r.input.comparison.extra.length], [fpNormal.id, 300, 0], 'التقرير بالمرجع الأقرب: لا 199 زائدًا على بصمة المئة');
+  // والمحفوظات تختار المرجع نفسه للملف نفسه.
+  const review = reviewIncoming({ fileName: file.name, cues: (await readImport([file], { fingerprints: [fpNormal, fpLong], settings })).cues, videoId: 'AAAAAAAAAAA', fingerprints: [fpNormal, fpLong] });
+  assert.equal(review.suggested, fpNormal.id);
 });

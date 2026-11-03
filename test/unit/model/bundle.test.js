@@ -188,9 +188,15 @@ test('العلامة: تعليم مقطع ثم التراجع بدقة، وإع�
 test('ملخص الفرز من البيانات نفسها، والحزمة البسيطة لا تحتاج مفاتيح جديدة', () => {
   assert.deepEqual(summarizeBundle(sampleBundle({ third: true })), { filled: 3, edited: 1, warned: 0, marks: { todo: 2, done: 1 } });
   const rec = videoRecord();
-  rec.arabic.comparison = { ...rec.arabic.comparison, matched: false, missing: [3], restoreTimingAvailable: false };
+  // نقص فعلي في المقاطع يطابقه التقرير المحفوظ.
+  rec.arabic.original = rec.arabic.original.filter((c) => c.n !== 3);
+  rec.arabic.comparison = { ...rec.arabic.comparison, matched: false, missing: [3], countTarget: 4, restoreTimingAvailable: false };
   const plain = ok(bundleFromRecord(rec));
   assert.deepEqual(summarizeBundle(plain), { filled: 1, edited: 0, warned: 1, marks: { todo: 0, done: 0 } });
+  // تدقيق 5fedcb9 (GM-013): بعد استكمال الناقص وحفظه لا يبقى تحذير التقرير المحفوظ (وصف الملف كما رُفع).
+  const completed = structuredClone(plain);
+  completed.slots[0].track.current = videoRecord().arabic.original;
+  assert.equal(summarizeBundle(completed).warned, 0);
   assert.equal(isTrivialBundle(plain), true);
   assert.equal(isTrivialBundle(sampleBundle()), false);
   assert.equal(isTrivialBundle(withSlotName(plain, 1, 'اسم')), false);
@@ -264,4 +270,16 @@ test('النسخة الاحتياطية: الحزمة إلى مدخل ومنه �
   assert.equal(bundleFromBackup({ ...entry, record: { ...entry.record, injected: 1 } }).ok, false);
   const t = arabicTrack({ label: 'x' });
   assert.equal(bundleFromBackup({ ...entry, previous: { from: 4, savedAt: NOW, track: t, offsetMs: 0 } }).ok, false);
+});
+
+test('تدقيق 5fedcb9 (GM-015.3، منفي): الرفع إلى خانة فارغة يفعّلها بإزاحة صفر ولا يصفّر إزاحة السابقة، فلا إشعار «صُفّرت»', () => {
+  const b = sampleBundle();
+  b.slots[1] = { ...b.slots[1], track: null, name: null, marks: [], position: null, offsetMs: 0 };
+  const before = b.slots[0].offsetMs;
+  assert.notEqual(before, 0);
+  const out = withSlotUpload(b, 2, { videoId: b.videoId, fileName: 'x.ar.srt', cues: b.slots[0].track.original, comparison: null, fingerprintId: null, notes: [] }, LATER);
+  assert.equal(out.bundle.active, 2, 'الفارغة تُفعَّل (Q16)');
+  assert.equal(out.bundle.slots[1].offsetMs, 0, 'الجديدة بإزاحة صفر (العقد)');
+  assert.equal(out.bundle.slots[0].offsetMs, before, 'إزاحة الأولى محفوظة في خانتها، لم تُصفَّر');
+  assert.equal(out.offsetWas, 0);
 });

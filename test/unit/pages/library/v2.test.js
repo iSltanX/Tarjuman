@@ -130,12 +130,13 @@ test('«الترجمات…»: بطاقة لكل خانة بتفاصيلها، �
   const one = cardOf(panel, 1);
   const two = cardOf(panel, 2);
   assert.ok(textOf(one).includes('نشطة'));
+  assert.ok(findAll(one, (e) => e.classList.contains('tj-pill--brand') && textOf(e) === 'نشطة').length === 1, 'النشطة بالإبراز كبقية الأسطح (CL-023)');
   assert.ok(textOf(one).includes(`${IDS[0]}.أولى.ar.srt`));
   assert.ok(textOf(one).includes('معدّلة'));
   assert.ok(textOf(one).includes('5 تعديلات يدوية'));
-  assert.ok(textOf(one).includes('الإزاحة +0.5 ث'));
+  assert.ok(textOf(one).includes('الإزاحة \u2066+0.5\u2069 ث'));
   assert.ok(textOf(one).includes('العلامات: 1 أعود إليه · 1 راجعته'));
-  assert.ok(textOf(two).includes('الإزاحة −1.2 ث'));
+  assert.ok(textOf(two).includes('الإزاحة \u2066−1.2\u2069 ث'));
   assert.ok(textOf(one).includes('المرجع:'));
   assert.equal(panel.querySelectorAll('section.lib-slot').length, 4, 'ثلاث خانات وبطاقة السابقة، لا خانة رابعة');
 
@@ -150,7 +151,8 @@ test('«الترجمات…»: بطاقة لكل خانة بتفاصيلها، �
   long.dispatchEvent({ type: 'change' });
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).slots[1].name, 'نسخة المراجع');
-  assert.ok(textOf(m.root.querySelector('.tj-toast--danger')).includes('24 محرفًا'));
+  // رسائل اللوحة داخل الحوار المشروط لا تحت خلفيته (CL-006).
+  assert.ok(textOf(panelOf(m).querySelector('.tj-toast--danger')).includes('24 محرفًا'));
 
   buttonNamed(cardOf(panelOf(m), 2), 'تفعيل').click();
   await settle(10);
@@ -168,7 +170,7 @@ test('«الترجمات…»: بطاقة لكل خانة بتفاصيلها، �
   assert.equal((await m.store.getBundle(IDS[0])).slots[2].track, null);
   assert.ok(textOf(cardOf(panelOf(m), 3)).includes('فارغة'));
   panelOf(m).close();
-  assert.equal(panelOf(m), null, 'الإغلاق يزيل اللوحة');
+  assert.ok(panelOf(m) === null, 'الإغلاق يزيل اللوحة');
 });
 
 test('«الترجمات…» — تغيير المرجع عند التعدد يعيد المقارنة ويحفظ المرجع', async () => {
@@ -184,7 +186,7 @@ test('«الترجمات…» — تغيير المرجع عند التعدد ي
   const s = (await m.store.getBundle(IDS[0])).slots[1];
   assert.equal(s.track.fingerprintId, 'fp_test000001');
   assert.equal(s.track.comparison.fingerprintId, 'fp_test000001');
-  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'تغيّر مرجع المقارنة للترجمة 2.');
+  assert.equal(textOf(panelOf(m).querySelector('.tj-toast--success')), 'تغيّر مرجع المقارنة للترجمة 2.');
 });
 
 test('«النسخة السابقة»: مصدرها وتاريخها وسعتها، والاستعادة تبديل قابل للعكس بتأكيد، والحذف بتأكيد', async () => {
@@ -265,7 +267,7 @@ test('«نسخ» يرفق القاموس بالنص نفسه الذي تبنيه
       await store.setPrefs(samplePrefs());
     },
   });
-  const copy = buttonNamed(rowFor(m, IDS[0]), 'نسخ تعليمات ترجمة');
+  const copy = buttonNamed(rowFor(m, IDS[0]), 'نسخ التعليمات');
   copy.click();
   await settle(5);
   const terms = samplePrefs().glossary.terms;
@@ -275,7 +277,7 @@ test('«نسخ» يرفق القاموس بالنص نفسه الذي تبنيه
   await m.area.flush();
   await settle(5);
   await m.clock.runAll();
-  buttonNamed(rowFor(m, IDS[0]), 'نسخ تعليمات ترجمة').click();
+  buttonNamed(rowFor(m, IDS[0]), 'نسخ التعليمات').click();
   await settle(5);
   assert.equal(m.calls.clipboard.at(-1), instructions({ videoId: IDS[0], title: 'عنوان' }));
 });
@@ -302,4 +304,47 @@ test('manualEdits: العدد نفسه في المحفوظات والمشغّل�
     assert.equal(manualEdits(track), expected, name);
     assert.equal(manualEdits(track), playerManualEdits(track), `${name}: المحفوظات والمشغّل`);
   }
+});
+
+test('تدقيق 5fedcb9 (CL-006، CL-015، GM-016.2): رسائل «الترجمات…» ومنطقتها الحية داخل الحوار وتعود بعده، واللوحة المفتوحة تتحدث بتغيّر من مكان آخر', async () => {
+  const { activateSlot } = await import('../../../../src/pages/library/actions.js');
+  const m = await mount();
+  openMore(m, IDS[0], 'الترجمات');
+  await settle(10);
+  const panel = panelOf(m);
+  assert.ok(panel.contains(m.lib.toaster.root) && panel.contains(m.lib.toaster.live), 'الحاويتان داخل الحوار');
+  // تغيّر من سياق آخر (المشغّل أو تبويب آخر): الخانة 2 نشطة.
+  await activateSlot({ store: m.store, videoId: IDS[0], n: 2, now: () => Date.parse(NOW) + 99999 });
+  await m.area.flush();
+  await new Promise((r) => setTimeout(r, 220));
+  await settle(10);
+  assert.ok(textOf(cardOf(panelOf(m), 2)).includes('نشطة'), 'اللوحة بالنسخة الأحدث');
+  panel.close('x');
+  await settle(5);
+  assert.ok(m.root.contains(m.lib.toaster.root) && m.root.contains(m.lib.toaster.live), 'عادتا إلى الصفحة');
+});
+
+test('تدقيق 5fedcb9 (CL-002، قرار سلطان): عنوان فيه حرف عربي RTL ولو بدأ بكلمة لاتينية، والإنجليزي الخالص LTR، في الصف ولوحة «الترجمات…»', async () => {
+  const MIXED = 'API هو الواجهة! (الجزء 3)';
+  const EN = 'Do schools kill creativity? | TED';
+  const m = await mount({
+    seed: async (store) => {
+      await seedBundle(store, sampleBundle({ videoId: IDS[0] }));
+      await store.updateVideo(IDS[0], (r) => ({ ...r, title: MIXED }));
+      await store.updateVideo(IDS[1], () => ({ ...videoRecord({ videoId: IDS[1] }), title: EN }));
+    },
+  });
+  const titleOf = (id) => rowFor(m, id).querySelector('.lib-row__title');
+  assert.equal(titleOf(IDS[0]).textContent, MIXED);
+  assert.equal(titleOf(IDS[0]).dir, 'rtl', 'يبدأ بـAPI وفيه حرف عربي');
+  assert.equal(titleOf(IDS[1]).dir, 'ltr', 'إنجليزي خالص، بمحاذاة يمين من .tj-auto');
+  openMore(m, IDS[0], 'الترجمات');
+  await settle(10);
+  const head = panelOf(m).querySelector('.lib-panel__title');
+  assert.equal(head.dir, 'rtl');
+  assert.equal(head.textContent, `الترجمات — ${String.fromCodePoint(0x2068)}${MIXED}${String.fromCodePoint(0x2069)}`, 'العنوان معزول داخل الجملة');
+  // .tj-auto لا يأخذ أول حرف قوي (plaintext يتجاهل dir)، بل يعزل ويحاذي يمينًا.
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../../../../src/ui/base.css', import.meta.url), 'utf8');
+  assert.match(css, /\.tj-auto \{ unicode-bidi: isolate; text-align: right; \}/);
 });

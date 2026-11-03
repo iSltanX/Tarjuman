@@ -1,7 +1,7 @@
 // معرض مكوّنات src/ui في حالاتها (بناء التطوير وحده): مرجع بصري للمراحل اللاحقة ولقطات P2-AC6. وهو صفحة إضافة،
 // فيكشف للحزام الحي (P10) saveFile والتخزين وأداة القفز في صفحة إضافة حقيقية؛ بناء الإنتاج لا يحويه.
 import { alertBox, button, chipGroup, choiceGroup, el, emptyState, field, ltr, slotPicker, statusPill } from '../components.js';
-import { COUNT_FORMS, formatCount, formatOffset, formatTimecode } from '../format.js';
+import { COUNT_FORMS, formatCount, formatOffset, formatTimecode, textDirection } from '../format.js';
 import { numberField, savedMark, segmented } from '../forms.js';
 import { createMenu } from '../menu.js';
 import { startPage } from '../page.js';
@@ -11,8 +11,10 @@ import { saveFile, savedPath } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { jumpToVideo } from '../seek.js';
 
-// blobDownload: التنزيل الحالي (الإصدار الأول) للمقارنة بالوضع الافتراضي.
-globalThis.__tarjumanPage = { saveFile, savedPath, blobDownload, store: createStore(), jumpToVideo };
+// blobDownload: التنزيل الحالي (الإصدار الأول) للمقارنة بالوضع الافتراضي. والتخزين في صفحة الإضافة وحدها: لقطات المعرض في
+// smoke.mjs تفتحه من file:// بلا chrome.storage، فكان createStore() يرمي قبل الرسم فتخرج صفحة فارغة (تدقيق 5fedcb9).
+const store = globalThis.chrome?.storage?.local ? createStore() : null;
+globalThis.__tarjumanPage = { saveFile, savedPath, blobDownload, store, jumpToVideo };
 
 const TOKENS = ['bg', 'surface', 'surface-2', 'sunken', 'text', 'text-2', 'muted', 'border', 'border-strong', 'brand', 'brand-soft', 'focus', 'success', 'warning', 'danger', 'info', 'edited'];
 
@@ -30,7 +32,8 @@ startPage({
     app.append(section('الخطوط',
       el('p', { className: 'tj-h1', text: 'المحفوظات — عنوان h1' }),
       el('p', { className: 'tj-h4', children: ['عنوان فيديو إنجليزي معزول: ', ltr('Do schools kill creativity? | TED', { mono: false })] }),
-      el('p', { className: 'tj-h4 tj-auto', text: 'Do schools kill creativity? | TED' }),
+      el('p', { className: 'tj-h4 tj-auto', text: 'Do schools kill creativity? | TED', dir: textDirection('Do schools kill creativity? | TED') }),
+      el('p', { className: 'tj-h4 tj-auto', text: 'API هو الواجهة! (الجزء 3)', dir: textDirection('API هو الواجهة! (الجزء 3)') }),
       el('p', { className: 'tj-body', text: 'نص أساسي بخط المراعي، فيه كلمة API ورقم 412.' }),
       el('p', { className: 'tj-caption', children: ['التوقيت ', ltr(formatTimecode(724500)), ' والمعرّف ', ltr('dQw4w9WgXcQ'), ' والإزاحة ', ltr(formatOffset(500), { mono: false }), ' و', ltr(formatOffset(-1000), { mono: false })] }),
       el('p', { className: 'tj-body-sm', text: [1, 2, 3, 11, 100].map((n) => formatCount(n, COUNT_FORMS.cue)).join(' · ') }),

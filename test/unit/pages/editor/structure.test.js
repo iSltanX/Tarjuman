@@ -54,6 +54,6 @@ test('العلامة: التبديل بلا ← أعود إليه ← راجعت
   assert.equal(markActionLabel(12, null), 'علّم المقطع 12 «أعود إليه»');
   assert.equal(markActionLabel(12, { kind: 'todo' }), 'علّم المقطع 12 «راجعته»');
   assert.equal(markActionLabel(12, { kind: 'done' }), 'أزل علامة المقطع 12');
-  assert.equal(markBadge({ kind: 'todo', state: 'linked' }), '⚑');
-  assert.equal(markBadge({ kind: 'done', state: 'moved' }), '✓؟');
+  assert.deepEqual(markBadge({ kind: 'todo', state: 'linked' }), { icon: 'flag', suffix: '' }, 'أيقونة لا رمز نصي (CL-010)');
+  assert.deepEqual(markBadge({ kind: 'done', state: 'moved' }), { icon: 'check', suffix: '؟' });
 });

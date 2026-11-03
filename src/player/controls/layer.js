@@ -67,6 +67,16 @@ export function createLayer({ doc, win, on }) {
   };
   menu.addEventListener('focusin', (ev) => syncTyping(ev.target));
   menu.addEventListener('focusout', () => syncTyping(null));
+  // بعد نقرة الفأرة على بند لا يبقى التركيز فيه (كأزرار الشريط، group.js): وإلا بقيت القائمة «مركّزة» فلا تُغلق مع اختفاء
+  // الشريط، وتلتقط المسافة وEnter وهي خفية فتنفّذ بندًا لا يُرى (تدقيق 5fedcb9، GM-003). ولوحة المفاتيح (detail = 0) تبقي
+  // التركيز، والحقول تبقيه للكتابة.
+  menu.addEventListener('click', (ev) => {
+    if (!(ev.detail > 0)) return;
+    queueMicrotask(() => {
+      const f = root.activeElement;
+      if (f && menu.contains(f) && !typable(f)) f.blur();
+    });
+  });
   // نقرة فتح المنتقي (input.click) تصعد عبر الجذر إلى المشغّل؛ لا تصل إليه فتوقف التشغيل أو تبدأه.
   input.addEventListener('click', (ev) => ev.stopPropagation());
   input.addEventListener('change', () => {
@@ -107,9 +117,18 @@ export function createLayer({ doc, win, on }) {
     placeToasts();
   }
 
-  /** الرسائل فوق الشريط، وفوق القائمة المفتوحة إن وُجدت فلا تغطي بنودها (كشفه الاختبار الحي). */
+  /**
+   * الرسائل فوق الشريط، وفوق القائمة المفتوحة إن وُجدت فلا تغطي بنودها (كشفه الاختبار الحي)، وفوق سطر الترجمة الظاهر فلا
+   * تحجبه (طبقة الترجمة تنشر أعلاه data-stage-top؛ تدقيق 5fedcb9، CL-003)؛ ولا تتجاوز حافة المشغّل العليا في مشغّل قصير
+   * (CL-016): إن لم يتسع فوقها مكان نزلت إلى أعلى ما يتسع.
+   */
   function placeToasts() {
-    const y = menu.hasAttribute('hidden') ? bar.lift + GAP_PX : Math.max(bar.lift + GAP_PX, menuTop + GAP_PX);
+    let y = menu.hasAttribute('hidden') ? bar.lift + GAP_PX : Math.max(bar.lift + GAP_PX, menuTop + GAP_PX);
+    const overlay = host.parentNode?.querySelector?.('#tarjuman-overlay');
+    const stageTop = overlay && !overlay.hasAttribute('hidden') ? Number(overlay.getAttribute('data-stage-top')) : NaN;
+    if (Number.isFinite(stageTop) && stageTop > 0) y = Math.max(y, stageTop + GAP_PX);
+    const h = toasts.getBoundingClientRect?.()?.height ?? 0;
+    if (bar.height > 0 && h > 0 && y + h > bar.height - EDGE_PX) y = Math.max(EDGE_PX, bar.height - h - EDGE_PX);
     setVar(toasts, '--y', `${Math.round(y)}px`);
   }
 
@@ -193,6 +212,11 @@ export function createLayer({ doc, win, on }) {
 
     /** العنصر المركّز داخل الطبقة (الجذر مغلق فلا يراه document.activeElement). */
     focused: () => root.activeElement ?? null,
+    /** القائمة باقية مفتوحة بقرار (تركيز لوحة المفاتيح، أو تأكيد ينتظر، أو عمل جارٍ): تبقى ظاهرة والشريط مخفي، فلا تُترك خفية تعمل. */
+    setKeep(on) {
+      if (on) layer.setAttribute('data-keep', '');
+      else layer.removeAttribute('data-keep');
+    },
 
     /** @param {string} fid */
     find: (fid) => menu.querySelector(`[data-fid="${fid}"]`),
@@ -252,6 +276,8 @@ export function createLayer({ doc, win, on }) {
         }
         return box;
       }));
+      // ارتفاع الرسائل الجديد يحدد ما يتسع فوقها (CL-016).
+      placeToasts();
     },
 
     /** @param {Element} player يضع الطبقة آخر أبناء المشغّل إن لم تكن فيه. */

@@ -8,7 +8,7 @@ import {
 } from '../../core/backup/index.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { alertBox, button, el, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, textDirection } from '../../ui/format.js';
 
 let seq = 0;
 const PREVIEW_FRESH_MAX = 100;
@@ -110,6 +110,7 @@ export function dataControl(env) {
     if (saved.ok) {
       kids.push(alertBox({ tone: 'success', text: `${messageFor('BK_CREATED', { videos: formatCount(built.counts.videos, COUNT_FORMS.video) })} ${built.name}`, doc }));
       if (saved.mode === 'blob') kids.push(alertBox({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB'), doc }));
+      if (saved.pending) kids.push(alertBox({ tone: 'info', text: messageFor('SV_PENDING'), doc }));
     } else {
       kids.push(alertBox({ tone: saved.code === 'SV_CANCELLED' ? 'info' : 'danger', text: messageFor(saved.code), doc }));
     }
@@ -129,6 +130,8 @@ export function dataControl(env) {
       meter.hide();
       const saved = await env.saveFile({ name: built.name, text: built.text });
       saveOutcome(host, saved, built);
+      // «آخر ملف حُفظ» يتبع النسخة التي نزلت للتو (تدقيق 5fedcb9، GM-027.1).
+      if (saved.ok) await env.onSaved?.();
       return saved.ok;
     } catch (err) {
       meter.hide();
@@ -170,7 +173,7 @@ export function dataControl(env) {
               ...shown.map((v) => el('li', {
                 className: 'st-restore__item',
                 children: [
-                  el('span', { className: 'st-restore__title', text: titleOf(v), dir: 'auto', doc }),
+                  el('span', { className: 'st-restore__title', text: titleOf(v), dir: textDirection(titleOf(v)), doc }),
                   el('span', { className: 'tj-caption', text: v.counts.translations ? formatCount(v.counts.translations, FORMS.translation) : 'بلا ترجمة', doc }),
                 ],
                 doc,
@@ -212,7 +215,7 @@ export function dataControl(env) {
         return el('li', {
           className: 'st-restore__item st-restore__item--existing',
           children: [
-            el('span', { className: 'st-restore__title', text: titleOf(v), dir: 'auto', doc }),
+            el('span', { className: 'st-restore__title', text: titleOf(v), dir: textDirection(titleOf(v)), doc }),
             newer ? statusPill({ tone: 'warning', text: 'الحالية أحدث', title: `الحالية: ${backupDate(local.updatedAt)} · في النسخة: ${backupDate(v.updatedAt)}`, doc }) : null,
             el('label', { className: 'st-check st-restore__replace', attrs: { for: box.getAttribute('id') }, children: [box, el('span', { text: 'استبدال', doc })], doc }),
           ],
@@ -315,9 +318,12 @@ export function dataControl(env) {
     setBusy(true);
     let read;
     let library;
+    let unreadable = [];
     try {
       read = await readBackup(file, { pause, onProgress: restoreMeter.show('جارٍ فحص النسخة') });
       library = read.ok ? await store.listLibrary() : [];
+      // سجل محلي تالف لا يظهر في المحفوظات «موجود» أيضًا: يُتخطى افتراضيًا، ويُختار استبداله لإصلاحه (CX-H4، GM-006).
+      unreadable = read.ok && typeof store.unreadableVideos === 'function' ? await store.unreadableVideos() : [];
     } catch (err) {
       read = { ok: false, code: toErrorInfo(err).code, message: toErrorInfo(err).message };
     } finally {
@@ -329,7 +335,7 @@ export function dataControl(env) {
       return null;
     }
     const existingById = new Map(library.map((x) => [x.entry.videoId, x.entry]));
-    const plan = planRestore(read, existingById.keys());
+    const plan = planRestore(read, [...existingById.keys(), ...unreadable]);
     if (!plan.counts.videos && !plan.hasSettings) {
       restoreResult.replaceChildren(alertBox({ tone: 'warning', text: messageFor('BK_NOTHING'), doc }));
       return null;

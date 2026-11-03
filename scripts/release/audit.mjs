@@ -3,17 +3,21 @@
 // المشحونة نفسها لا المصدر. الأذونات ضمن المعتمد وحده، ولا اتصال خارجي (لا طلب شبكة إلا قراءة خط من الحزمة، ولا رابط إلا
 // المسموح)، ولا شيفرة بعيدة ولا تقييم نصي ولا HTML نصي، ولا خطاف تطوير ولا معرض مكوّنات، وكل خط ترجمة مضمّن بملفيه ورخصته.
 // والإصدار الثاني (product-spec §١٠ «الأذونات والعامل الخلفي»): إذن downloads وحده وعامل خلفي للحفظ فقط، وواجهة التنزيلات
-// في العامل وحده ومحصورة في download وsearch بمعرّف ما نزّلته الإضافة.
+// محصورة في download وsearch (عقد interfaces §١٣: صفحات الإضافة مباشرة عبر core/save، والعامل لسكربت المحتوى)، ولا تصل
+// إليها شيفرة عالم الصفحة. وكل ملف يشير إليه البيان أو صفحة أو نمط موجود غير فارغ، وخطوط الواجهة كخطوط الترجمة برخصها.
 //   node scripts/release/audit.mjs <مجلد الإضافة المبنية>
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SUBTITLE_FONT_LIST } from '../../src/ui/subtitle-fonts.js';
+import { UI_FONT_LIST } from '../../src/ui/ui-fonts.js';
 
 /** الأذونات المعتمدة (product-spec §١٠، والتحقق في P2، وdownloads للإصدار الثاني): لا غيرها ولا host_permissions ولا اختيارية. */
 export const APPROVED_PERMISSIONS = ['storage', 'unlimitedStorage', 'downloads'];
 /** العامل الخلفي الوحيد: خدمة الحفظ (P10). */
 export const WORKER = 'background/worker.js';
+/** شيفرة عالم الصفحة (MAIN): لا واجهات إضافة فيها. */
+const MAIN_WORLD = 'main-world/capture.js';
 const YOUTUBE_MATCH = 'https://www.youtube.com/*';
 /**
  * الروابط المسموحة في شيفرة الحزمة: نطاق SVG، ورابط الفيديو في تعليمات الترجمة، ورابطا «حول» في صفحة الإعدادات وحدها،
@@ -32,9 +36,11 @@ const FORBIDDEN = [
   { re: /\beval\s*\(|\bnew\s+Function\s*\(/, why: 'تقييم نص شيفرةً' },
   { re: /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML\s*\(|document\.write\s*\(/, why: 'HTML نصي' },
   { re: /\bchrome\.(?:debugger|scripting|tabs\.executeScript|webRequest|cookies)\b/, why: 'واجهة متصفح غير معتمدة' },
-  { re: /\bchrome\.downloads\b/, why: 'واجهة التنزيلات خارج العامل', except: [WORKER] },
-  // ما نزّلته الإضافة وحده: لا فتح ولا حذف ولا مسح ولا إظهار ولا اعتراض أسماء ولا متابعة تنزيلات المستخدم.
-  { re: /\bdownloads\.(?:open|show|showDefaultFolder|removeFile|erase|acceptDanger|pause|resume|cancel|setShelfEnabled|setUiOptions|getFileIcon|onDeterminingFilename|onCreated|onErased)\b/, why: 'استعمال للتنزيلات خارج الحفظ' },
+  { re: /\bchrome\s*\??\.\s*downloads\b/, why: 'واجهة التنزيلات في عالم الصفحة', only: [MAIN_WORLD] },
+  // ما نزّلته الإضافة وحده: لا فتح ولا حذف ولا مسح ولا إظهار ولا اعتراض أسماء ولا متابعة تنزيلات المستخدم، ولا استدعاء غير
+  // download وsearch (بالنقطة أو ?. ؛ كان النمط القديم لا يطابق chrome?.downloads، تدقيق 5fedcb9).
+  { re: /\bdownloads\s*\??\.\s*(?:open|show|showDefaultFolder|removeFile|erase|acceptDanger|pause|resume|cancel|setShelfEnabled|setUiOptions|getFileIcon|onDeterminingFilename|onCreated|onChanged|onErased)\b/, why: 'استعمال للتنزيلات خارج الحفظ' },
+  { re: /\bdownloads\s*\??\.\s*(?!(?:download|search)\b)[A-Za-z_$][\w$]*\s*\(/, why: 'استعمال للتنزيلات خارج الحفظ' },
   { re: /<script[^>]+src=["']https?:/i, why: 'شيفرة بعيدة' },
   { re: /__tarjuman\b|__TJ_DEV__/, why: 'خطاف تطوير' },
   { re: /\bconsole\.(?:log|info|warn|error|debug)\s*\(/, why: 'تسجيل في الكونسول' },
@@ -88,7 +94,7 @@ export async function auditPackage(dir) {
   const problems = [];
   for (const rel of files.filter((f) => /\.(?:js|html|css|json)$/.test(f))) {
     const text = await readFile(path.join(dir, rel), 'utf8');
-    for (const { re, why, except = [] } of FORBIDDEN) if (!except.includes(rel) && re.test(text)) problems.push({ file: rel, why });
+    for (const { re, why, except = [], only = null } of FORBIDDEN) if (!except.includes(rel) && (!only || only.includes(rel)) && re.test(text)) problems.push({ file: rel, why });
     const calls = [...text.matchAll(/\bfetch\s*\(/g)].map((m) => text.slice(m.index, m.index + 40));
     const allowed = FETCH_OK.get(rel) ?? [];
     for (const c of calls) if (!allowed.some((re) => re.test(c))) problems.push({ file: rel, why: 'طلب شبكة', sample: c.slice(0, 30) });
@@ -110,6 +116,42 @@ export async function auditPackage(dir) {
     fonts.push({ id: f.id, files: present.length, ofl, nonEmpty: sizes.every((s) => s > 0) });
   }
   check('subtitle-fonts-with-ofl-licenses', fonts.every((f) => f.files === 3 && f.ofl && f.nonEmpty), { fonts });
+
+  // ---- خطوط الواجهة المضمّنة ورخصها (جولة الصقل §١؛ تدقيق 5fedcb9، GM-028) ----
+  const uiFonts = [];
+  for (const f of UI_FONT_LIST) {
+    const want = [...Object.values(f.files), f.license];
+    const present = want.filter((p) => files.includes(p));
+    const ofl = files.includes(f.license) && /SIL OPEN FONT LICENSE/i.test(await readFile(path.join(dir, f.license), 'utf8'));
+    const sizes = await Promise.all(present.map(async (p) => (await stat(path.join(dir, p))).size));
+    uiFonts.push({ id: f.id, files: present.length, want: want.length, ofl, nonEmpty: sizes.every((s) => s > 0) });
+  }
+  check('ui-fonts-with-ofl-licenses', uiFonts.every((f) => f.files === f.want && f.ofl && f.nonEmpty), { fonts: uiFonts });
+
+  // ---- كل ما يُشار إليه موجود غير فارغ: البيان، ومراجع الصفحات (src وhref)، وروابط الأنماط (url)، وملفات الخطوط ----
+  // only-expected-files يمنع الزائد وحده؛ فحزمة ينقصها سكربت معلن كانت تنجح (تدقيق 5fedcb9، CX-007).
+  const required = new Set();
+  const add = (p) => { if (typeof p === 'string' && p) required.add(path.posix.normalize(p.replace(/^\//, ''))); };
+  add(manifest.background?.service_worker);
+  for (const c of manifest.content_scripts ?? []) for (const js of c.js ?? []) add(js);
+  add(manifest.action?.default_popup);
+  for (const v of Object.values(manifest.icons ?? {})) add(v);
+  for (const v of Object.values(manifest.action?.default_icon ?? {})) add(v);
+  for (const f of [...SUBTITLE_FONT_LIST, ...UI_FONT_LIST]) for (const p of [...Object.values(f.files), f.license]) add(p);
+  const local = (ref) => !/^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i.test(ref);
+  for (const rel of files.filter((f) => /\.(?:html|css)$/.test(f))) {
+    const text = await readFile(path.join(dir, rel), 'utf8');
+    const refs = rel.endsWith('.html')
+      ? [...text.matchAll(/\b(?:src|href)\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1])
+      : [...text.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/gi)].map((m) => m[1]);
+    for (const ref of refs.filter(local)) add(path.posix.join(path.posix.dirname(rel), ref.split(/[?#]/)[0]));
+  }
+  const missing = [];
+  for (const p of [...required].sort()) {
+    if (!files.includes(p)) missing.push(p);
+    else if ((await stat(path.join(dir, p))).size === 0) missing.push(`${p} (فارغ)`);
+  }
+  check('required-assets-present', missing.length === 0, { missing, required: required.size });
 
   return { ok: checks.every((c) => c.ok), checks, files };
 }

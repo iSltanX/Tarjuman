@@ -78,7 +78,7 @@ export function renderMarks(box, { doc, marks, readOnly, onJump, onRemoveOrphans
   }) : null;
   box.replaceChildren(...[
     head(doc, 'العلامات', statusPill({ tone: marks.todo.length ? 'warning' : total ? 'success' : 'neutral', text: total ? formatCount(total, COUNT.mark) : 'لا علامات', doc })),
-    el('p', { className: 'tj-caption', text: 'مراجعتك أنت، منفصلة عن الفحص الآلي. بدّل علامة المقطع من زر ⚑ في صفه، أو من المشغّل («علّم للمراجعة»).', doc }),
+    el('p', { className: 'tj-caption', text: 'مراجعتك أنت، منفصلة عن الفحص الآلي. بدّل علامة المقطع من زر العلامة في صفه، أو من المشغّل («علّم للمراجعة»).', doc }),
     group(MARK_LABEL.todo, marks.todo),
     group(MARK_LABEL.done, marks.done),
     group('تحتاج تحقق', marks.check, marks.check.length ? 'تغيّر نص مقطعها أو زمنه منذ وُضعت: تأكد أنها على المقطع الصحيح ثم بدّلها.' : null),

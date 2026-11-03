@@ -3,13 +3,17 @@
 // لاحقة كما في المتصفح؛ flush() ينتظره.
 
 const clone = (v) => (v === undefined ? undefined : structuredClone(v));
+/** نسخة بمفاتيح الكائنات مرتبة أبجديًا كما يعيدها chrome.storage في Chromium (base::Value::Dict). */
+const sorted = (v) => (Array.isArray(v) ? v.map(sorted) : v && typeof v === 'object'
+  ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sorted(v[k])])) : v);
 const sizeOf = (key, value) => key.length + JSON.stringify(value).length;
 
 /**
- * @param {{ quotaBytes?: number, unlimited?: boolean, initial?: Record<string, unknown>, eventsBeforeResolve?: boolean }} [opts]
+ * @param {{ quotaBytes?: number, unlimited?: boolean, initial?: Record<string, unknown>, eventsBeforeResolve?: boolean, chromiumKeyOrder?: boolean }} [opts]
  *   eventsBeforeResolve: يصل onChanged قبل أن يُحلّ وعد الكتابة (ترتيب لا يضمنه Chrome في أي اتجاه)
+ *   chromiumKeyOrder: get يعيد مفاتيح الكائنات مرتبة كما في المتصفح الحقيقي (تدقيق 5fedcb9، GM-010)
  */
-export function createMemoryArea({ quotaBytes = 10485760, unlimited = false, initial = {}, eventsBeforeResolve = false } = {}) {
+export function createMemoryArea({ quotaBytes = 10485760, unlimited = false, initial = {}, eventsBeforeResolve = false, chromiumKeyOrder = false } = {}) {
   const data = new Map(Object.entries(structuredClone(initial)));
   const listeners = new Set();
   const failures = new Map();
@@ -47,7 +51,7 @@ export function createMemoryArea({ quotaBytes = 10485760, unlimited = false, ini
     async get(keys) {
       maybeFail('get');
       const out = {};
-      for (const k of keysOf(keys)) if (data.has(k)) out[k] = clone(data.get(k));
+      for (const k of keysOf(keys)) if (data.has(k)) out[k] = chromiumKeyOrder ? sorted(data.get(k)) : clone(data.get(k));
       return out;
     },
     async set(items) {

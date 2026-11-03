@@ -111,11 +111,17 @@ test('سجل الفيديو: صارم في المفاتيح والإزاحة و�
 
 test('مُلخّص الفهرس من السجل صالح ويحمل ما تعرضه المحفوظات', () => {
   const r = videoRecord({ offset: 500 });
+  // نقص فعلي (المقطعان 2 و3) يطابقه التقرير المحفوظ.
+  r.arabic.original = r.arabic.original.filter((c) => c.n !== 2 && c.n !== 3);
   r.arabic.comparison = { ...r.arabic.comparison, matched: false, restoreTimingAvailable: false, missing: [2, 3], countTarget: 3 };
   const e = summarizeVideo(r);
   okr(validateIndexEntry(e));
   assert.deepEqual(e.english, [{ key: 'en|manual', kind: 'manual', cueCount: 5 }]);
-  assert.deepEqual(e.arabic, { fileName: 'AAAAAAAAAAA.ar.srt', cueCount: 5, edited: false, matched: false, missing: 2, extra: 0, drift: 0 });
+  assert.deepEqual(e.arabic, { fileName: 'AAAAAAAAAAA.ar.srt', cueCount: 3, edited: false, matched: false, missing: 2, extra: 0, drift: 0 });
+  // تدقيق 5fedcb9 (GM-013): الاستكمال المحفوظ يزيل التحذير من المُلخّص، والتقرير المحفوظ يبقى وصفًا للملف كما رُفع.
+  const done = summarizeVideo({ ...r, arabic: { ...r.arabic, current: videoRecord().arabic.original, editedAt: NOW } });
+  assert.deepEqual([done.arabic.cueCount, done.arabic.edited, done.arabic.matched, done.arabic.missing], [5, true, true, 0]);
+  assert.deepEqual(r.arabic.comparison.missing, [2, 3]);
   assert.equal(e.view.displayOffsetMs, 500);
   assert.equal(summarizeVideo(videoRecord({ arabic: false })).arabic, null);
 });

@@ -45,12 +45,12 @@ test('الخطوة والتلميحات: «0.5» و«1» و«1.5»، والإش�
   assert.deepEqual([100, 300, 500, 1000, 1500, 10000].map(stepSeconds), ['0.1', '0.3', '0.5', '1', '1.5', '10']);
   assert.equal(minusTip(500), 'تقديم الترجمة 0.5 ث (تظهر أبكر)');
   assert.equal(plusTip(1000), 'تأخير الترجمة 1 ث (تظهر لاحقًا)');
-  assert.equal(badgeTip(0), 'الإزاحة: 0.0 ث. اضغط للخيارات');
-  assert.equal(badgeTip(500), 'الإزاحة: +0.5 ث (تظهر الترجمة لاحقًا). اضغط للخيارات');
-  assert.equal(badgeTip(-1500), 'الإزاحة: −1.5 ث (تظهر الترجمة أبكر). اضغط للخيارات');
-  assert.equal(nudgeFlash(1000), '+1.0 ث · تظهر لاحقًا');
-  assert.equal(nudgeFlash(-500), '−0.5 ث · تظهر أبكر');
-  assert.equal(nudgeFlash(0), '0.0 ث · في توقيتها المحفوظ');
+  assert.equal(badgeTip(0), 'الإزاحة: \u20660.0\u2069 ث. اضغط للخيارات');
+  assert.equal(badgeTip(500), 'الإزاحة: \u2066+0.5\u2069 ث (تظهر الترجمة لاحقًا). اضغط للخيارات');
+  assert.equal(badgeTip(-1500), 'الإزاحة: \u2066−1.5\u2069 ث (تظهر الترجمة أبكر). اضغط للخيارات');
+  assert.equal(nudgeFlash(1000), '\u2066+1.0\u2069 ث · تظهر لاحقًا');
+  assert.equal(nudgeFlash(-500), '\u2066−0.5\u2069 ث · تظهر أبكر');
+  assert.equal(nudgeFlash(0), '\u20660.0\u2069 ث · في توقيتها المحفوظ');
 });
 
 test('معنى الإزاحة بالكلمات', () => {
@@ -63,7 +63,7 @@ test('معنى الإزاحة بالكلمات', () => {
 
 test('ملخص المقارنة بالمطابقة العددية للصفة، وقائمة الأرقام المختصرة', () => {
   const s = (o) => comparisonSummary(matched({ matched: false, ...o })).text;
-  assert.deepEqual(comparisonSummary(matched()), { tone: 'ok', text: 'مطابق للأصل ✓' });
+  assert.deepEqual(comparisonSummary(matched()), { tone: 'ok', text: 'مطابق للأصل' });
   assert.deepEqual(comparisonSummary(null), { tone: 'info', text: 'لا بصمة للمقارنة؛ عُرض الملف كما هو.' });
   assert.equal(comparisonSummary(matched({ fingerprintId: null, matched: false })).tone, 'info');
   assert.equal(s({ missing: [5] }), 'مقطع واحد ناقص: 5');
@@ -112,4 +112,31 @@ test('الرسائل فوق القائمة المفتوحة لا فوق بنود
   assert.equal(page.ui.toasts().length, 1);
   click(page.ui.btn('download'));
   assert.equal(y(), '60px');
+});
+
+test('تدقيق 5fedcb9 (CL-003، CL-016): الرسائل فوق سطر الترجمة الظاهر لا عليه، ولا تتجاوز حافة المشغّل العليا', async () => {
+  const { settle } = await import('./harness.js');
+  const page = mountPage({ state: makeState({}), height: 360 });
+  const layer = page.ui.layerHost().shadowRoot;
+  const y = () => parseInt(layer.querySelector('.toasts').style.getPropertyValue('--y'), 10);
+  // طبقة الترجمة (مضيفها في المشغّل) تنشر أعلى سطرها: 140 فوق أسفل المشغّل.
+  const overlay = page.env.doc.createElement('div');
+  overlay.id = 'tarjuman-overlay';
+  overlay.setAttribute('data-stage-top', '140');
+  page.player.appendChild(overlay);
+  page.controller.set({ notice: { code: 'ST_RESTORED', tone: 'info', at: 1 } });
+  await settle();
+  assert.equal(page.ui.toasts().length, 1);
+  assert.ok(y() >= 140 + 12, `فوق السطر: ${y()}`);
+  // مشغّل قصير والرسالة لا تتسع فوق السطر: تنزل إلى أعلى ما يتسع داخل المشغّل.
+  overlay.setAttribute('data-stage-top', '330');
+  layer.querySelector('.toasts').rect = { top: 0, left: 0, width: 300, height: 40, bottom: 40, right: 300 };
+  page.controller.set({ notice: { code: 'ST_OFFSET_RESET', tone: 'info', at: 2 } });
+  await settle();
+  assert.ok(y() + 40 <= 360 - 8, `داخل المشغّل: ${y()}`);
+  // بلا سطر ظاهر: فوق الشريط كما كانت.
+  overlay.removeAttribute('data-stage-top');
+  page.controller.set({ notice: { code: 'ST_RESTORED', tone: 'info', at: 3 } });
+  await settle();
+  assert.equal(y(), 60);
 });

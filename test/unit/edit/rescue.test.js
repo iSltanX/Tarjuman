@@ -78,3 +78,47 @@ test('التعارض في التخزين: الحفظ يُرفض، والإنقا
   assert.equal(cur[0].text, 'تعديلي في المحرّر');
   assert.equal(cur[3].text, 'من التبويب الآخر', 'تغيير الأحدث لم يُكتب فوقه');
 });
+
+test('تدقيق 5fedcb9 (CX-001): قطعتا شطر محفوظ برقم واحد لكلٍّ تعارضها واختيارها، فاختيار الأولى لا يحسم الثانية', async () => {
+  const { splitCue } = await import('../../../src/core/edit/structure.js');
+  const { validateCues } = await import('../../../src/core/model/cue.js');
+  const base = splitCue([{ n: 1, startMs: 1000, endMs: 5000, text: 'الأول الثاني' }], 0, 5);
+  assert.equal(validateCues(base).ok, true, 'القطعتان صالحتان برقم واحد');
+  const mine = base.map((c, i) => ({ ...c, text: `تعديلي ${i + 1}` }));
+  const theirs = base.map((c, i) => ({ ...c, text: `الأحدث ${i + 1}` }));
+  const ctx = { base, mine, theirs, offsets: { base: 0, mine: 0, theirs: 0 } };
+  const first = rescueConflicts(ctx);
+  assert.deepEqual(first.map((c) => c.n), [1, 1], 'الرقم للعرض كما هو');
+  assert.equal(new Set(first.map((c) => c.key)).size, 2, 'مفتاحان مختلفان');
+  // «تعديلي» للأولى، والثانية على «الأحدث» الافتراضي (كما يبني حوار الإنقاذ resolve بمفتاح كل صف).
+  const chosen = planRescue({ ...ctx, resolve: { [first[0].key]: 'mine' } });
+  assert.deepEqual(texts(chosen.cues), ['تعديلي 1', 'الأحدث 2']);
+  assert.deepEqual(chosen.conflicts.map((c) => c.key), [first[1].key], 'الثانية ما زالت تنتظر اختيارها');
+  const both = planRescue({ ...ctx, resolve: { [first[0].key]: 'theirs', [first[1].key]: 'mine' } });
+  assert.deepEqual([texts(both.cues), both.conflicts.length], [['الأحدث 1', 'تعديلي 2'], 0]);
+  // ملف مستورد بأرقام مكررة (لا شطر): المفتاح يميّز الظهورين كذلك، والرقم الفريد يبقى مفتاحه نفسه.
+  const dup = [{ n: 1, startMs: 0, endMs: 900, text: 'أ' }, { n: 2, startMs: 1000, endMs: 1900, text: 'ب' }, { n: 2, startMs: 2000, endMs: 2900, text: 'ج' }];
+  const r = rescueConflicts({ base: dup, mine: dup.map((c) => ({ ...c, text: `${c.text} م` })), theirs: dup.map((c) => ({ ...c, text: `${c.text} ث` })), offsets: ctx.offsets });
+  assert.deepEqual(r.map((c) => c.key), [1, '2.1', '2.2']);
+});
+
+test('تدقيق 5fedcb9 (GM-014.1): «تثبيت الإزاحة» ثم ± من المشغّل: الإنقاذ يطبّق إزاحة الأحدث فوق التوقيت المثبّت مرة واحدة', () => {
+  const base = makeCues(3);
+  const session = createEditSession({ cues: base, offsetMs: 1000 });
+  assert.equal(session.commitOffset().ok, true);
+  assert.deepEqual([session.offsetMs, session.committedMs], [0, 1000]);
+  const mine = session.snapshot();
+  assert.equal(mine[0].startMs, base[0].startMs + 1000, 'التوقيت يحمل الإزاحة');
+  const shown = (r) => r.cues[0].startMs + r.offsetMs;
+  // المشغّل غيّر الإزاحة من +1.0 إلى +1.5 (لا توقيتًا): الظاهر المقصود +1.5، لا +2.5.
+  const offsets = { base: 1000, mine: session.offsetMs, theirs: 1500, committed: session.committedMs };
+  const r = planRescue({ base, mine, theirs: base, offsets });
+  assert.equal(r.ok, true);
+  assert.equal(r.offsetConflict, false, 'التثبيت لا يحرّك الظاهر فلا تعارض');
+  assert.equal(shown(r), base[0].startMs + 1500);
+  // الأحدث لم يحرّك الإزاحة: يبقى ظاهر التثبيت (+1.0).
+  assert.equal(shown(planRescue({ base, mine, theirs: base, offsets: { ...offsets, theirs: 1000 } })), base[0].startMs + 1000);
+  // وبعد التراجع عن التثبيت لا شيء مثبّت.
+  session.undo();
+  assert.equal(session.committedMs, 0);
+});

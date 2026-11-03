@@ -5,7 +5,7 @@
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { SLOT_NAME_MAX } from '../../core/model/slots.js';
 import { alertBox, button, el, ltr, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatBytes, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatBytes, formatCount, offsetInline } from '../../ui/format.js';
 import { activateSlot, changeReference, deletePrevious, deleteSlot, renameSlot, restorePrevious } from './actions.js';
 import { absoluteTime, comparisonSummary, fingerprintLabel, manualEdits, previousCard, relativeTime } from './model.js';
 
@@ -29,7 +29,7 @@ export function openTranslations(env) {
   const dialog = el('dialog', {
     className: 'tj-dialog lib-panel', attrs: { 'aria-labelledby': `${id}-title` },
     children: [
-      el('div', { className: 'lib-panel__head', children: [el('h2', { className: 'tj-h3 lib-panel__title', text: `الترجمات — ${env.title}`, dir: 'auto', attrs: { id: `${id}-title` }, doc }), close], doc }),
+      el('div', { className: 'lib-panel__head', children: [el('h2', { className: 'tj-h3 lib-panel__title', text: `الترجمات — ${String.fromCodePoint(0x2068)}${env.title}${String.fromCodePoint(0x2069)}`, dir: 'rtl', attrs: { id: `${id}-title` }, doc }), close], doc }),
       body,
     ],
     doc,
@@ -38,18 +38,21 @@ export function openTranslations(env) {
   const fail = (err) => env.toaster.show(toErrorInfo(err).message, 'danger');
   /** فعل كتابة: ينفّذ ثم يعيد الرسم ويبلّغ القائمة؛ الفيديو المحذوف يغلق اللوحة. */
   async function act(fn, done) {
+    busy++;
     try {
       await fn();
       if (done) env.toaster.show(done, 'success');
     } catch (err) {
       fail(err);
       if (err instanceof TjError && err.code === 'PG_VIDEO_GONE') {
+        busy--;
         dialog.close();
         await env.onChanged();
         return;
       }
     }
     await render();
+    busy--;
     await env.onChanged();
   }
 
@@ -103,7 +106,7 @@ export function openTranslations(env) {
       className: 'lib-slot__head',
       children: [
         el('h3', { className: 'tj-h4', text: `الترجمة ${s.n}`, doc }),
-        !s.track ? statusPill({ tone: 'neutral', plain: true, text: 'فارغة', doc }) : b.active === s.n ? statusPill({ tone: 'success', text: 'نشطة', doc }) : null,
+        !s.track ? statusPill({ tone: 'neutral', plain: true, text: 'فارغة', doc }) : b.active === s.n ? statusPill({ tone: 'brand', text: 'نشطة', doc }) : null,
       ],
       doc,
     });
@@ -138,7 +141,7 @@ export function openTranslations(env) {
         edits ? el('p', { className: 'lib-slot__edited', children: [statusPill({ tone: 'edited', text: 'معدّلة', doc }), el('span', { className: 'tj-caption', text: ` ${formatCount(edits, EDIT_FORMS)}`, doc })], doc }) : null,
         alertBox({ tone: summary.tone, text: summary.lines.join('\n'), doc }),
         ...referenceRow(b, s),
-        el('p', { className: 'tj-caption lib-slot__offset', text: `الإزاحة ${formatOffset(s.offsetMs)} ث`, doc }),
+        el('p', { className: 'tj-caption lib-slot__offset', text: `الإزاحة ${offsetInline(s.offsetMs)} ث`, doc }),
         s.marks.length ? el('p', { className: 'tj-caption lib-slot__marks', text: `العلامات: ${todo} أعود إليه · ${done} راجعته`, doc }) : null,
         el('div', { className: 'lib-slot__actions', children: actions, doc }),
       ],
@@ -214,17 +217,47 @@ export function openTranslations(env) {
       body.replaceChildren(alertBox({ tone: 'info', text: messageFor('PG_VIDEO_GONE'), doc }));
       return;
     }
+    shown = `${b.record.rev}|${b.record.updatedAt}`;
     body.replaceChildren(...b.slots.map((s) => slotCard(b, s)), previousSection(b, bytes));
   }
 
+  // تغيّر الحزمة من مكان آخر (تبويب آخر أو المشغّل) واللوحة مفتوحة: يُعاد رسمها بنسختها الأحدث، فلا تبني تأكيداتها على لقطة
+  // قديمة؛ إلا والمستخدم يكتب اسمًا أو فعلٌ جارٍ (يرسمها بنفسه بعده). صدى كتابات اللوحة نفسها لا يعيد الرسم (تدقيق 5fedcb9،
+  // GM-016.2).
+  let shown = null;
+  let busy = 0;
+  const later = doc.defaultView?.setTimeout?.bind(doc.defaultView) ?? setTimeout;
+  let pending = null;
+  const refreshIfChanged = async () => {
+    pending = null;
+    if (busy || (doc.activeElement && body.contains(doc.activeElement) && doc.activeElement.tagName === 'input')) return;
+    let latest;
+    try {
+      latest = await store.getBundle(videoId);
+    } catch {
+      return;
+    }
+    if (!latest || `${latest.record.rev}|${latest.record.updatedAt}` !== shown) await render();
+  };
+  const unsubscribe = typeof store.onChange === 'function' ? store.onChange((ch) => {
+    if (!(ch.cleared || ch.videos?.[videoId] || ch.bundles?.includes(videoId)) || pending) return;
+    pending = later(refreshIfChanged, 150);
+  }) : () => {};
+
+  // رسائل نتائج الأفعال داخل الحوار المشروط لا تحت خلفيته: ما خارجه خامل بصريًا ولقارئ الشاشة (تدقيق 5fedcb9، CL-006
+  // وCL-015). تُنقل حاويتا الممرر إليه مدة فتحه وتعودان مكانهما.
+  const moved = [env.toaster.root, env.toaster.live].filter((n) => n && n.parentNode).map((n) => ({ n, parent: n.parentNode, next: n.nextSibling }));
   const closed = new Promise((resolve) => {
     dialog.addEventListener('close', () => {
+      unsubscribe();
+      for (const { n, parent, next } of moved) parent.insertBefore(n, next && next.parentNode === parent ? next : null);
       dialog.remove();
       resolve();
     }, { once: true });
   });
   doc.body.append(dialog);
   dialog.showModal();
+  for (const { n } of moved) dialog.append(n);
   const ready = render().then(() => close.focus?.());
   return { dialog, closed, ready, render };
 }

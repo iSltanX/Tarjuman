@@ -72,19 +72,23 @@ test('التدقيق يكشف المخالفات: إذن زائد، وطلب ش�
   }
 });
 
-test('التدقيق يحصر العامل الخلفي في الحفظ: التنزيلات خارج العامل، وفتح تنزيل أو حذفه، وعامل آخر، كلها مخالفات', async () => {
+test('التدقيق يحصر التنزيلات في الحفظ (عقد interfaces §١٣): download وsearch من الصفحات والعامل مسموحان، وغيرهما بالنقطة أو ?. مخالفة، ولا تنزيلات في عالم الصفحة، ولا عامل آخر', async () => {
   const bad = await mkdtemp(path.join(os.tmpdir(), 'tj-p15-bad-'));
   try {
     await cp(pkg.dir, bad, { recursive: true });
     const lib = path.join(bad, 'pages/library/main.js');
-    await writeFile(lib, `${await readFile(lib, 'utf8')}\nchrome.downloads.download({ url: "data:," });\n`);
+    // صفحة الإضافة تحفظ مباشرة (core/save): ليس مخالفة. والفتح والحذف بأي صيغة مخالفة (كان ?. يفلت قبل تدقيق 5fedcb9).
+    await writeFile(lib, `${await readFile(lib, 'utf8')}\nchrome.downloads.download({ url: "blob:x" });\nglobalThis.chrome?.downloads?.show(1);\n`);
     const worker = path.join(bad, 'background/worker.js');
     await writeFile(worker, `${await readFile(worker, 'utf8')}\nchrome.downloads.open(1); chrome.downloads.removeFile(1);\n`);
+    const capture = path.join(bad, 'main-world/capture.js');
+    await writeFile(capture, `${await readFile(capture, 'utf8')}\nwindow.chrome?.downloads;\n`);
     let r = await auditPackage(bad);
     const why = r.checks.find((c) => c.id === 'no-external-connection-or-forbidden-code').detail.problems;
-    assert.ok(why.some((p) => p.file === 'pages/library/main.js' && p.why === 'واجهة التنزيلات خارج العامل'));
+    assert.ok(why.some((p) => p.file === 'pages/library/main.js' && p.why === 'استعمال للتنزيلات خارج الحفظ'), 'show بـ?. مكشوف');
     assert.ok(why.some((p) => p.file === 'background/worker.js' && p.why === 'استعمال للتنزيلات خارج الحفظ'));
-    assert.ok(!why.some((p) => p.file === 'background/worker.js' && p.why === 'واجهة التنزيلات خارج العامل'), 'العامل وحده يستعمل التنزيلات');
+    assert.ok(why.some((p) => p.file === 'main-world/capture.js' && p.why === 'واجهة التنزيلات في عالم الصفحة'));
+    assert.ok(!why.some((p) => p.why === 'واجهة التنزيلات خارج العامل'), 'لا قاعدة «العامل وحده» تخالف العقد');
 
     const mf = JSON.parse(await readFile(path.join(bad, 'manifest.json'), 'utf8'));
     await writeFile(path.join(bad, 'manifest.json'), JSON.stringify({ ...mf, background: { service_worker: 'background/other.js', type: 'module' } }));
@@ -92,5 +96,40 @@ test('التدقيق يحصر العامل الخلفي في الحفظ: الت�
     assert.equal(r.checks.find((c) => c.id === 'save-worker-only-and-no-externally-connectable').ok, false);
   } finally {
     await rm(bad, { recursive: true, force: true });
+  }
+});
+
+test('تدقيق 5fedcb9 (CX-007، GM-028): حزمة ينقصها ملف يشير إليه البيان أو صفحة أو نمط، أو خط واجهة أو رخصته، تفشل', async () => {
+  const cases = [
+    ['content/main.js', 'required-assets-present'],
+    ['background/worker.js', 'required-assets-present'],
+    ['pages/editor/editor.css', 'required-assets-present'],
+    ['pages/popup/index.html', 'required-assets-present'],
+    ['icons/tarjuman-icon-48.png', 'required-assets-present'],
+    ['ui/tokens.css', 'required-assets-present'],
+    ['ui/fonts/ui/cairo-600.woff2', 'ui-fonts-with-ofl-licenses'],
+    ['ui/fonts/ui/cairo-OFL.txt', 'ui-fonts-with-ofl-licenses'],
+  ];
+  for (const [file, id] of cases) {
+    const bad = await mkdtemp(path.join(os.tmpdir(), 'tj-audit-missing-'));
+    try {
+      await cp(pkg.dir, bad, { recursive: true });
+      await rm(path.join(bad, file));
+      const r = await auditPackage(bad);
+      assert.equal(r.ok, false, `${file}: التدقيق لا ينجح`);
+      assert.equal(r.checks.find((c) => c.id === id).ok, false, `${file}: ${id}`);
+    } finally {
+      await rm(bad, { recursive: true, force: true });
+    }
+  }
+  // ملف موجود فارغ كذلك.
+  const empty = await mkdtemp(path.join(os.tmpdir(), 'tj-audit-empty-'));
+  try {
+    await cp(pkg.dir, empty, { recursive: true });
+    await writeFile(path.join(empty, 'content/main.js'), '');
+    const r = await auditPackage(empty);
+    assert.deepEqual(r.checks.find((c) => c.id === 'required-assets-present').detail.missing, ['content/main.js (فارغ)']);
+  } finally {
+    await rm(empty, { recursive: true, force: true });
   }
 });

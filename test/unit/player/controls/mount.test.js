@@ -44,7 +44,7 @@ test('يوتيوب يعيد رسم الشريط الأيمن بعنصر جديد
   page.right.remove();
   page.controls.appendChild(fresh);
   page.env.win.advance(HEALTH_MS + 10);
-  assert.equal(fresh.firstChild, host, 'المجموعة نفسها نُقلت');
+  assert.ok(fresh.firstChild === host, 'المجموعة نفسها نُقلت');
   assert.equal(page.handle.diagnostics().attempts, 1, 'الجلسة نفسها');
   assert.ok(page.handle.diagnostics().session.reinserts >= 1);
 });
@@ -56,7 +56,7 @@ test('زر أُدرج قبل المجموعة: تعود أول الشريط خل
   page.right.insertBefore(intruder, page.right.firstChild);
   page.env.win.advance(60);
   assert.equal(page.right.firstChild.id, 'tarjuman-controls');
-  assert.equal(page.right.children[1], intruder, 'ترتيب أدوات يوتيوب كما هو');
+  assert.ok(page.right.children[1] === intruder, 'ترتيب أدوات يوتيوب كما هو');
 });
 
 test('يوتيوب يعيد رسم المشغّل كله: جلسة جديدة عليه، ولا يبقى شيء على القديم', () => {
@@ -69,7 +69,7 @@ test('يوتيوب يعيد رسم المشغّل كله: جلسة جديدة ع
   page.env.win.advance(HEALTH_MS + 10);
   assert.equal(page.handle.state, 'mounted');
   assert.equal(bar.right.firstChild.id, 'tarjuman-controls');
-  assert.notEqual(bar.right.firstChild, oldGroup);
+  assert.ok(bar.right.firstChild !== oldGroup);
   assert.equal(oldLayer.isConnected, false);
   assert.equal(page.handle.diagnostics().attempts, 2);
   assert.equal(page.controller.subscribers(), 1, 'اشتراك واحد');
@@ -81,8 +81,8 @@ test('إلغاء التركيب: يزيل المجموعة والطبقة وال
   assert.ok(docListeners.every((n) => n >= 1), JSON.stringify(docListeners));
   page.handle.unmount();
   assert.equal(page.handle.state, 'stub');
-  assert.equal(page.ui.groupHost(), null);
-  assert.equal(page.ui.layerHost(), null);
+  assert.ok(page.ui.groupHost() === null);
+  assert.ok(page.ui.layerHost() === null);
   assert.deepEqual(['pointerdown', 'keydown', 'yt-navigate-finish', 'yt-page-data-updated'].map((t) => page.env.doc.listenerCount(t)), [0, 0, 0, 0]);
   assert.equal(page.controller.subscribers(), 0);
   assert.equal(page.env.observers(), 0);

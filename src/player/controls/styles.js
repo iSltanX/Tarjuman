@@ -46,8 +46,9 @@ export function layerCss() {
 :host { all: initial; position: absolute; inset: 0; display: block; z-index: ${LAYER_Z}; pointer-events: none; direction: ltr; }
 .layer { position: absolute; inset: 0; pointer-events: none; opacity: 1; transition: opacity ${BAR_FADE_MS}ms linear; font-family: var(--tj-p-font-body); color: var(--tj-p-menu-text); --fs: 13px; --title-fs: 14px; --tip-fs: 12px; --big-fs: 22px; --row: 32px; }
 .layer[data-size="fullscreen"] { --fs: 15px; --title-fs: 16px; --tip-fs: 14px; --big-fs: 26px; --row: 38px; }
-.layer[data-bar="hidden"]:not([data-typing]) { opacity: 0; }
-.layer[data-bar="hidden"]:not([data-typing]) * { pointer-events: none !important; }
+.layer[data-bar="hidden"]:not([data-typing]):not([data-keep]) { opacity: 0; }
+.layer[data-bar="hidden"]:not([data-typing]):not([data-keep]) * { pointer-events: none !important; }
+.layer[data-bar="hidden"][data-keep] .tip { display: none; }
 .layer[data-bar="hidden"][data-typing] .tip { display: none; }
 .menu, .toast, .tip { -webkit-font-smoothing: antialiased; }
 
@@ -65,8 +66,9 @@ export function layerCss() {
 
 /* مجموعة أزرار الخانات (الترجمات الموجودة، و«حفظ في»). */
 .slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgb(255 255 255 / 8%); direction: ltr; flex: none; }
-button.slot { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; min-width: 28px; height: 24px; padding: 0 7px; border-radius: 6px; font: 700 12px/1 var(--tj-p-font-body); font-variant-numeric: tabular-nums; color: rgb(255 255 255 / 85%); cursor: pointer; }
+button.slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 7px; border-radius: 6px; font: 700 12px/1 var(--tj-p-font-body); font-variant-numeric: tabular-nums; color: rgb(255 255 255 / 85%); cursor: pointer; }
 button.slot.slot--new { direction: rtl; padding: 0 9px; }
+button.slot::after { content: ""; position: absolute; inset: -4px 0; } /* هدف 32 ارتفاعًا (CL-018) */
 button.slot[aria-checked="true"] { background: var(--tj-p-accent); color: var(--tj-p-accent-ink); cursor: default; }
 button.slot:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); color: #FFFFFF; }
 button.slot[aria-disabled="true"] { cursor: default; }
@@ -77,7 +79,7 @@ button.slot[aria-disabled="true"] { cursor: default; }
 .row.edits[data-tone="ok"] { color: var(--tj-p-ok); }
 label.item[aria-disabled="true"] { color: rgb(255 255 255 / 45%); cursor: default; background: none; }
 .sentences { display: flex; flex-direction: column; gap: 2px; }
-button.item.sentence { display: block; min-width: 0; line-height: var(--row); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; text-align: right; }
+button.item.sentence { display: block; min-width: 0; line-height: var(--row); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: isolate; text-align: right; }
 button.item.sentence[aria-current="true"] { box-shadow: inset -3px 0 0 var(--tj-p-accent); background: rgb(255 255 255 / 6%); }
 .tag { align-self: flex-start; padding: 1px 8px; margin: 0 6px; border-radius: 999px; background: rgb(255 255 255 / 10%); color: var(--tj-p-menu-text-2); font-size: 0.86em; white-space: nowrap; }
 
@@ -144,13 +146,13 @@ button.secondary:hover { background: rgb(255 255 255 / 17%); }
 button.danger { background: var(--tj-p-error); color: #2B0D0A; }
 button.primary[aria-disabled="true"], button.secondary[aria-disabled="true"] { opacity: 0.45; cursor: default; filter: none; }
 button.primary[aria-busy="true"] { cursor: progress; }
-button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; font-size: 0.93em; }
+button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; font-size: 0.93em; padding: 7px 4px; margin: -7px -4px; } /* «لماذا؟» بهدف 32 دون تغيير السطر (CL-018) */
 
 /* المقطّعة: خيار واحد من قليل في صف (وضع التصدير، وأوضاع العرض، والخطوة). */
 .seg { display: flex; gap: 2px; padding: 2px; border-radius: 9px; background: rgb(255 255 255 / 8%); }
 .seg button { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; min-height: calc(var(--row) - 4px); display: flex; align-items: center; justify-content: center; padding: 0 6px; border-radius: 7px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgb(255 255 255 / 82%); }
 .seg button:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); color: #FFFFFF; }
-.seg button[aria-checked="true"] { background: rgb(255 255 255 / 20%); color: #FFFFFF; font-weight: 700; }
+.seg button[aria-checked="true"] { background: rgb(255 255 255 / 20%); color: #FFFFFF; font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--tj-p-accent); } /* مؤشر ≥ 3:1 (CL-011) */
 .seg button[aria-disabled="true"] { color: rgb(255 255 255 / 38%); cursor: default; }
 /* المقطّعة بجوار تسميتها في صف (خطوة الأزرار): بعرض محتواها فلا يُقص «مخصص»، والتسمية تأخذ الباقي. */
 .row.field > .seg { flex: none; }

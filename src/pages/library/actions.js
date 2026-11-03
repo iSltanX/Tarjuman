@@ -3,13 +3,14 @@
 // وحدها أو كل بيانات الفيديو)؛ وفي الإصدار الثاني: تبديل النشطة، والاسم المختصر، والمرجع، وحذف خانة، والنسخة السابقة
 // (استعادة بتبديل قابل للعكس وحذف)، والرفع إلى خانة بفحص كامل. لا واجهة هنا: كل شيء بتبعيات تُحقن، فتُختبر بمحاكاة
 // التخزين. الكتابة عبر انتقالات النموذج وupdateVideo وupdateBundle وحدها، كل تغيير كتابة ذرية واحدة.
-import { diffTranslations, mergeThreeWay } from '../../core/align/index.js';
+import { diffTranslations, keepEditsMerge } from '../../core/align/index.js';
 import { compare } from '../../core/compare/index.js';
 import { TjError, messageFor } from '../../core/errors/index.js';
 import { buildArabicExport, buildExport, buildStudyText } from '../../core/export/index.js';
 import { readImport, reviewIncoming } from '../../core/import/index.js';
 import {
-  withActiveSlot, withPreviousRestored, withSlotName, withSlotReference, withSlotUpload, withoutPrevious, withoutSlot,
+  applyRecordChange, referencedFingerprints, withActiveSlot, withPreviousRestored, withSlotName, withSlotReference, withSlotUpload, withoutPrevious,
+  withoutSlot,
 } from '../../core/model/bundle.js';
 import { LIMITS } from '../../core/model/validate.js';
 import { arabicCues } from '../../core/model/video.js';
@@ -87,10 +88,15 @@ export async function exportEnglish({ store, videoId, trackKey, save, now }) {
   // الملف نزل بالفعل، فإخفاق حفظ البصمة تنبيه (saveError) لا خطأ يُسقط التصدير.
   let stored = false;
   try {
-    await store.updateVideo(videoId, (rec) => {
+    // على الحزمة لا السجل وحده: بصمات الخانات غير النشطة والسابقة لا يسقطها حد البصمات، كما في المشغّل
+    // (referencedFingerprints؛ تدقيق 5fedcb9، GM-015.2: كانت تسقط فيُقرأ مرجع تلك الخانة null بصمت).
+    await store.updateBundle(videoId, (b) => {
+      const rec = b?.record;
       if (!rec || rec.fingerprints.some((f) => sameFingerprint(f, built.fingerprint))) return undefined;
       stored = true;
-      return withExport(rec, { videoId, title: rec.title, durationMs: rec.durationMs, englishTrack: track, fingerprint: built.fingerprint }, iso(now));
+      const at = iso(now);
+      const next = withExport(rec, { videoId, title: rec.title, durationMs: rec.durationMs, englishTrack: track, fingerprint: built.fingerprint }, at, { keep: referencedFingerprints(b) });
+      return applyRecordChange(b, next, at);
     });
   } catch (saveError) {
     return { name: file.name, cueCount: file.cueCount, fingerprintSaved: false, saveError, saved: result };
@@ -106,8 +112,11 @@ export async function exportEnglish({ store, videoId, trackKey, save, now }) {
  */
 export async function exportStudy({ store, videoId, format, bilingual, save }) {
   const record = await requireRecord(store, videoId);
-  const cues = arabicCues(record);
-  if (!cues) throw new TjError('PG_STUDY_NO_ARABIC');
+  const stored = arabicCues(record);
+  if (!stored) throw new TjError('PG_STUDY_NO_ARABIC');
+  // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض) كالمحرّر، ومنه يُوزَّع الإنجليزي (تدقيق 5fedcb9، GM-016.1).
+  const timed = exportTiming(stored, record.view.displayOffsetMs, 'shown');
+  const cues = (timed.ok ? timed.cues : stored).map((c) => ({ ...c, startMs: Math.max(0, c.startMs), endMs: Math.max(0, c.endMs) }));
   const english = bilingual ? studyEnglish(record) : null;
   const file = buildStudyText({ videoId, title: record.title, cues, english, format, bilingual });
   return { name: file.name, saved: await save(file) };
@@ -227,7 +236,7 @@ export async function prepareUpload({ store, videoId, files, knownVideoIds = [] 
 
 /**
  * ما يعرضه حوار الرفع لخانة هدف: هل هو استبدال، وأعداد الفروق مع الحالي (diffTranslations على المعروض في الخانة)، وعدد
- * التعديلات اليدوية التي ستُفقد، وهل يمكن «إبقاء تعديلاتي» (mergeThreeWay بثقة) وسببه إن لم يمكن. وصف فقط.
+ * التعديلات اليدوية التي ستُفقد، وهل يمكن «إبقاء تعديلاتي» (keepEditsMerge بثقة) وسببه إن لم يمكن. وصف فقط.
  * @param {import('../../core/model/slots.js').Bundle} bundle @param {1 | 2 | 3} n @param {import('../../core/model/cue.js').Cue[]} incoming
  */
 export function uploadImpact(bundle, n, incoming) {
@@ -236,15 +245,11 @@ export function uploadImpact(bundle, n, incoming) {
   const diff = diffTranslations(track.current ?? track.original, incoming);
   const edits = manualEdits(track);
   if (!edits) return { replace: true, diff, edits, keep: { ok: false, reason: messageFor('PG_KEEP_EDITS_NONE'), cues: null } };
-  const merged = mergeThreeWay({ base: track.original, mine: track.current, theirs: incoming });
-  if (!merged.ok) return { replace: true, diff, edits, keep: { ok: false, reason: `${messageFor('PG_KEEP_EDITS_UNALIGNED')} ${merged.reason}`, cues: null } };
-  // التعارض يُحسم لصالح تعديلات المستخدم: هذا معنى «إبقاء تعديلاتي».
-  const resolved = merged.conflicts.length
-    ? mergeThreeWay({ base: track.original, mine: track.current, theirs: incoming }, { resolve: Object.fromEntries(merged.conflicts.map((c) => [c.n, 'mine'])) })
-    : merged;
-  return resolved.ok
-    ? { replace: true, diff, edits, keep: { ok: true, reason: null, cues: resolved.cues, conflicts: merged.conflicts.length } }
-    : { replace: true, diff, edits, keep: { ok: false, reason: `${messageFor('PG_KEEP_EDITS_UNALIGNED')} ${resolved.reason}`, cues: null } };
+  // المحرك نفسه في المشغّل (R49): تبقى التعديلات حيث لم يغيّر الملف الجديد موضعها، وما تعارض يأخذه الجديد.
+  const merged = keepEditsMerge(track, incoming);
+  return merged.ok
+    ? { replace: true, diff, edits, keep: { ok: true, reason: null, cues: merged.current, conflicts: merged.conflicts } }
+    : { replace: true, diff, edits, keep: { ok: false, reason: `${messageFor('PG_KEEP_EDITS_UNALIGNED')} ${merged.reason}`, cues: null } };
 }
 
 /**

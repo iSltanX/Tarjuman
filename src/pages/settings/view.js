@@ -439,13 +439,10 @@ export function createSettings(env) {
       if (mine !== usageSeq) return;
       libraryText.textContent = translations ? `الترجمات المحفوظة: ${translations} · الفيديوهات المترجمة: ${videos}` : 'لا ترجمات محفوظة بعد.';
       libraryBytes.textContent = '';
-      let alts = 0;
-      let previous = 0;
-      for (const x of list) {
-        const b = await store.bundleBytes(x.entry.videoId);
-        alts += b.alts;
-        previous += b.previous;
-      }
+      // الأحجام معًا لا واحدًا بعد آخر (GM-009): رحلة لكل فيديو بالتوازي بدل أربع متتالية.
+      const sizes = await Promise.all(list.map((x) => store.bundleBytes(x.entry.videoId)));
+      const alts = sizes.reduce((s, b) => s + b.alts, 0);
+      const previous = sizes.reduce((s, b) => s + b.previous, 0);
       if (mine !== usageSeq) return;
       libraryBytes.textContent = list.length ? `الترجمات غير النشطة ${formatBytes(alts)} · النسخ السابقة ${formatBytes(previous)}` : '';
     } catch (err) {
@@ -462,6 +459,7 @@ export function createSettings(env) {
     doc, store, version, now, pause: env.pause, confirm,
     saveFile: env.saveFile ?? (async () => ({ ok: false, code: 'SV_FAILED' })),
     pickFile: env.pickFile ?? (async () => null),
+    onSaved: () => location.refreshLast(),
     onRestored: async () => {
       await Promise.all([
         store.getSettings().then((s) => { settings = s; }).catch(() => {}),
@@ -554,9 +552,19 @@ export function createSettings(env) {
   syncAll();
   select(active);
 
+  // المساحة والترجمات والتذكير تتبع المحفوظات حين تتغير من تبويب آخر (حفظ، أو رفع، أو حذف)، بعد سكون قصير لا مع كل كتابة
+  // (تدقيق 5fedcb9، GM-027.1).
+  let usageTimer = null;
+  const later = doc.defaultView?.setTimeout?.bind(doc.defaultView) ?? setTimeout;
   const unsubscribe = store.onChange((change) => {
     if (change.settings || change.cleared) store.getSettings().then((s) => { settings = s; syncAll(); }).catch(() => {});
     if (change.prefs || change.cleared) store.getPrefs().then((p) => { prefs = p; syncAll(); location.refreshLast(); }).catch(() => {});
+    if ((Object.keys(change.videos ?? {}).length || change.index || change.bundles?.length || change.cleared) && usageTimer === null) {
+      usageTimer = later(() => {
+        usageTimer = null;
+        Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage()]).catch(() => {});
+      }, 300);
+    }
   });
 
   return {

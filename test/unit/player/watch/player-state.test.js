@@ -89,7 +89,7 @@ test('المراقبة على class المشغّل وحده لا على شجرت
   };
   watchPlayerState({ doc: env.doc, win: env.win, player, onChange() {} });
   assert.equal(seen.length, 1);
-  assert.equal(seen[0].target, player);
+  assert.ok(seen[0].target === player);
   assert.deepEqual(seen[0].opts, { attributes: true, attributeFilter: ['class'] }, 'لا subtree ولا childList ولا characterData');
   assert.equal(env.resizeObservers(), 1);
 });

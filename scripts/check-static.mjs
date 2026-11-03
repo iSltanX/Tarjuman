@@ -139,29 +139,65 @@ const DL_MEMBER = /\bdownloads\s*\??\.\s*([A-Za-z_$][\w$]*)/g;
 const DL_SEARCH_BY_ID = /\bdownloads\s*\.\s*search\s*\(\s*\{\s*id(?:\s*:\s*[A-Za-z_$][\w$]*)?\s*\}\s*\)/;
 const DL_LISTENERS = /\bon(?:DeterminingFilename|Erased)\b/;
 
-/** ينزع تعليقات الكتل (ولو امتدت أسطرًا أو سبقت شيفرة) وأسطر // كاملة؛ ويُبقي رقم السطر. */
+/**
+ * ينزع تعليقات الكتل (ولو امتدت أسطرًا أو سبقت شيفرة) وأسطر // كاملة؛ ويُبقي رقم السطر ونصوص السلاسل كما هي (فالروابط والأسماء
+ * داخلها تُفحص). يتتبع السلاسل ('…' و"…" وقوالب `…` ولو امتدت أسطرًا) والتعابير النمطية، فـ'/*' داخل سلسلة مثل
+ * 'https://www.youtube.com/*' لا يفتح تعليقًا يُعمي الفحص عن بقية الملف (تدقيق 5fedcb9، GM-017.2). هو حدّ أدنى لا محلل كامل.
+ */
 function codeLines(text) {
-  let inBlock = false;
+  let mode = 'code'; // code | block | ' | " | ` | regex
+  let regexClass = false;
   return text.split('\n').map((raw) => {
-    let line = raw;
     let out = '';
-    while (line.length) {
-      if (inBlock) {
-        const end = line.indexOf('*/');
-        if (end === -1) return out;
-        line = line.slice(end + 2);
-        inBlock = false;
-      } else {
-        const start = line.indexOf('/*');
-        if (start === -1) {
-          out += line;
-          break;
+    let prev = ''; // آخر محرف غير فراغ في الشيفرة (لتمييز / القسمة من بداية تعبير نمطي)
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      const next = raw[i + 1];
+      if (mode === 'block') {
+        if (ch === '*' && next === '/') {
+          mode = 'code';
+          i++;
+          out += ' ';
         }
-        out += `${line.slice(0, start)} `;
-        line = line.slice(start + 2);
-        inBlock = true;
+        continue;
       }
+      if (mode === "'" || mode === '"' || mode === '`') {
+        out += ch;
+        if (ch === '\\') {
+          out += next ?? '';
+          i++;
+        } else if (ch === mode) mode = 'code';
+        continue;
+      }
+      if (mode === 'regex') {
+        out += ch;
+        if (ch === '\\') {
+          out += next ?? '';
+          i++;
+        } else if (ch === '[') regexClass = true;
+        else if (ch === ']') regexClass = false;
+        else if (ch === '/' && !regexClass) mode = 'code';
+        continue;
+      }
+      if (ch === '/' && next === '*') {
+        mode = 'block';
+        i++;
+        continue;
+      }
+      if (ch === '/' && next === '/') {
+        out += raw.slice(i);
+        break;
+      }
+      if (ch === "'" || ch === '"' || ch === '`') mode = ch;
+      else if (ch === '/' && (prev === '' || /[(,=:[!&|?{};+\-*%<>~^]/.test(prev) || /\b(?:return|typeof|case|in|of)$/.test(out.trimEnd()))) {
+        mode = 'regex';
+        regexClass = false;
+      }
+      out += ch;
+      if (!/\s/.test(ch)) prev = ch;
     }
+    // سلسلة عادية أو تعبير نمطي لا يمتدان إلى السطر التالي.
+    if (mode === "'" || mode === '"' || mode === 'regex') mode = 'code';
     return /^\s*\/\//.test(out) ? '' : out;
   });
 }

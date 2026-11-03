@@ -238,6 +238,8 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     get offsetMs() { return offset; },
     get baseOffsetMs() { return baseOffset; },
     get offsetChanged() { return offset !== baseOffset; },
+    /** ما ثُبّت من الإزاحة في التوقيت منذ الفتح («تثبيت الإزاحة» المطبَّق): يغيّر الإزاحة ولا يغيّر الظاهر (GM-014.1). */
+    get committedMs() { return undoStack.filter((e) => e.kind === 'commit').reduce((sum, e) => sum + e.offset[0] - e.offset[1], 0); },
     get changedCount() { return Math.max(added, removed); },
     get dirty() { return added > 0 || removed > 0 || offset !== baseOffset; },
     get canUndo() { return undoStack.length > 0; },
@@ -443,6 +445,20 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
      * فالتراجع يعيد الأحدث كما هو، ولا يُكتب شيء حتى «حفظ».
      * @param {{ cues: Cue[], offsetMs: number }} latest @param {{ cues: Cue[], offsetMs: number }} merged
      */
+    /**
+     * إزاحة جديدة من مكان آخر (± في المشغّل) والجلسة لم تغيّر إزاحتها ولا في تاريخها خطوة إزاحة: تصبح الإزاحة وأساسها،
+     * وتبقى التعديلات والتاريخ (تدقيق 5fedcb9، GM-014.2). وإلا false فيبقى القرار للتعارض.
+     * @param {number} offsetMs
+     */
+    adoptOffset(offsetMs) {
+      if (offset !== baseOffset || undoStack.some((e) => e.offset) || redoStack.some((e) => e.offset)) return false;
+      if (offsetMs === offset) return true;
+      baseOffset = offsetMs;
+      offset = offsetMs;
+      emit({ kind: 'text', indices: [], offset: true });
+      return true;
+    },
+
     rebaseMerged(latest, merged) {
       session.rebase(latest);
       swapAll('rescue', merged.cues, { offsetMs: merged.offsetMs });

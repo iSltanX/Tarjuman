@@ -10,7 +10,7 @@ import { cloneCues } from '../model/cue.js';
  * @returns {{
  *   cues: Cue[], order: string[],
  *   gaps: { a: string, b: string, from: number, to: number }[],
- *   overlaps: { a: string, b: string, from: number, to: number }[],
+ *   overlaps: { a: string, b: string, from: number, to: number, stray?: number[] }[],
  *   duplicates: number[]
  * }}
  */
@@ -34,7 +34,13 @@ export function mergeParts(parts) {
   let reachName = null;
   for (const cur of info) {
     if (reachName !== null) {
-      if (cur.min <= reach) overlaps.push({ a: reachName, b: cur.part.name, from: cur.min, to: Math.min(reach, cur.max) });
+      if (cur.min <= reach) {
+        // تداخل سببه أرقام قليلة شاذة في الجزء السابق (2500 بدل 150): تُسمّى هي لا نطاق الجزأين (تدقيق 5fedcb9، GM-026.2).
+        const prior = info.find((p) => p.part.name === reachName);
+        const stray = prior ? [...new Set(prior.part.cues.map((c) => c.n).filter((n) => n >= cur.min))].sort((x, y) => x - y) : [];
+        const rest = prior ? prior.part.cues.filter((c) => c.n < cur.min).length : 0;
+        overlaps.push({ a: reachName, b: cur.part.name, from: cur.min, to: Math.min(reach, cur.max), ...(stray.length && stray.length <= 3 && rest >= stray.length * 10 ? { stray } : {}) });
+      }
       else if (cur.min > reach + 1) gaps.push({ a: reachName, b: cur.part.name, from: reach + 1, to: cur.min - 1 });
     }
     if (cur.max > reach) {

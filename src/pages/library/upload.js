@@ -4,7 +4,7 @@
 // تعديلاتي» بشرط المحاذاة (والسبب في التلميح واسم الوصول). لا كتابة هنا: الحوار يعيد الاختيار، والإلغاء لا يمس التخزين.
 import { messageFor } from '../../core/errors/index.js';
 import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { compareWith, uploadImpact } from './actions.js';
 import { absoluteTime, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, targetOptions } from './model.js';
 
@@ -12,7 +12,7 @@ export const DIFF_BATCH = 200;
 let seq = 0;
 const EDIT_FORMS = Object.freeze({ one: 'تعديل يدوي واحد', two: 'تعديلان يدويان', few: 'تعديلات يدوية', many: 'تعديلًا يدويًا', single: 'تعديل يدوي' });
 
-const cueText = (c) => (Array.isArray(c) ? c.map((x) => x.text).join(' ⏎ ') : c ? c.text : '—');
+const cueText = (c) => (Array.isArray(c) ? c.map((x) => x.text).join(' · ') : c ? c.text : '—');
 const cueNumber = (ch) => String(ch.n);
 
 /** جدول الفروق بدفعات: # · الحالي · الجديد. @param {Document} doc @param {{ n: number, before: unknown, after: unknown }[]} changes */
@@ -26,8 +26,8 @@ function diffTable(doc, changes) {
       attrs: { 'data-kind': ch.kind },
       children: [
         el('td', { className: 'lib-diff__n', children: [ltr(cueNumber(ch), { doc })], doc }),
-        el('td', { className: 'lib-diff__before', text: cueText(ch.before), dir: 'auto', doc }),
-        el('td', { className: 'lib-diff__after', text: cueText(ch.after), dir: 'auto', doc }),
+        el('td', { className: 'lib-diff__before', text: cueText(ch.before), dir: textDirection(cueText(ch.before)), doc }),
+        el('td', { className: 'lib-diff__after', text: cueText(ch.after), dir: textDirection(cueText(ch.after)), doc }),
       ],
       doc,
     })));
@@ -64,8 +64,9 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   let reference = review.suggested ?? result.fingerprintId ?? null;
   let impact = uploadImpact(bundle, target, result.cues);
 
-  // الخانة الهدف بأسمائها.
-  const options = targetOptions(bundle);
+  // الخانة الهدف بأسمائها: المحفوظة ثم «ترجمة جديدة».
+  const options = targetOptions(bundle, preferred);
+  if (!options.some((o) => o.n === target)) target = options[0].n;
   const targetInputs = options.map((o) => {
     const input = el('input', { attrs: { type: 'radio', name: `${id}-target`, value: String(o.n) }, doc });
     input.checked = o.n === target;
@@ -80,7 +81,9 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   });
   // العنوان المرئي فقرة فوق المجموعة: legend يقع على حد fieldset فتُقص نقاط حروفه العليا («حفظ في»)؛ ويبقى اسم الوصول.
   const targetHead = el('p', { className: 'tj-label lib-up__head', text: 'حفظ في', attrs: { 'aria-hidden': 'true' }, doc });
-  const targetGroup = el('fieldset', {
+  // بلا ترجمة محفوظة: سطر «تُحفظ ترجمةً جديدة» بلا محدد، كتأكيد المشغّل.
+  const onlyNew = options.length === 1 && !options[0].filled;
+  const targetGroup = onlyNew ? el('p', { className: 'tj-body-sm lib-up__only-new', text: 'تُحفظ ترجمةً جديدة.', doc }) : el('fieldset', {
     className: 'tj-choice lib-up__targets',
     children: [
       el('legend', { className: 'tj-sr-only', text: 'حفظ في', doc }),
@@ -158,7 +161,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
         keepBox.checked = false;
         keepBox.disabled = !impact.keep.ok;
         keepBox.setAttribute('aria-disabled', impact.keep.ok ? 'false' : 'true');
-        keepLabel.title = impact.keep.ok ? 'تُطبَّق تعديلاتك على الملف الجديد، وما تعارض منها تبقى فيه نسختك.' : impact.keep.reason ?? '';
+        keepLabel.title = impact.keep.ok ? 'تُطبَّق تعديلاتك على الملف الجديد حيث لم يغيّر موضعها، وما تعارض منها يأخذه الملف الجديد.' : impact.keep.reason ?? '';
         keepWhy.textContent = impact.keep.ok ? '' : ` (${impact.keep.reason ?? ''})`;
         if (impact.keep.ok) keepBox.removeAttribute('aria-describedby');
         else keepBox.setAttribute('aria-describedby', keepWhy.getAttribute('id'));
@@ -166,7 +169,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       }
       kids.push(el('p', { className: 'tj-caption', text: 'تُحفظ الترجمة المستبدلة نسخةً سابقة يمكن استعادتها.', doc }));
     }
-    if (bundle.active === target && slot.offsetMs !== 0) kids.push(el('p', { className: 'tj-caption', text: `ستُصفَّر إزاحة العرض (${formatOffset(slot.offsetMs)} ث) لأن الملف الجديد يحمل توقيته.`, doc }));
+    if (bundle.active === target && slot.offsetMs !== 0) kids.push(el('p', { className: 'tj-caption', text: `ستُصفَّر إزاحة العرض (${offsetInline(slot.offsetMs)} ث) لأن الملف الجديد يحمل توقيته.`, doc }));
     impactHost.replaceChildren(...kids);
   }
 
@@ -178,7 +181,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
       ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
       hint ? alertBox({ tone: 'warning', text: hint, doc }) : null,
-      targetHead,
+      onlyNew ? null : targetHead,
       targetGroup,
       referenceBlock,
       compareHost,

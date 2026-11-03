@@ -19,7 +19,7 @@ import { parseSrtStrict } from '../../../src/core/srt/parser.js';
 import { subtitleFont } from '../../../src/ui/subtitle-fonts.js';
 import { splitLines } from '../../../src/player/overlay/text.js';
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
-import { collectErrors } from '../../live/harness/extension.mjs';
+import { FONT_READ_LOG, collectErrors } from '../../live/harness/extension.mjs';
 import { dismissConsent, revealControls, waitForPlayer } from '../../live/harness/youtube.mjs';
 import {
   BROWSERS, Evidence, ROOT, WORK, attachTab, clip, clipboardAfter, connectBrowser, launchBrowser, loadState,
@@ -304,7 +304,6 @@ async function library() {
 async function finishErrors(ev) {
   if (!errorLists.length && !yt) return;
   await sleep(300);
-  const FONT_READ_LOG = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/subtitle\/[a-z0-9-]+-(?:400|700)\.woff2 /;
   const lists = errorLists.map((e) => ({ where: e.where, list: e.errs.list }));
   if (ytErrs) lists.push({ where: 'youtube', list: ytErrs.list });
   const all = lists.flatMap((l) => l.list.map((x) => ({ where: l.where, ...x })));

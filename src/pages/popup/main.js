@@ -8,6 +8,7 @@ import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { createStore } from '../../core/store/index.js';
 import { alertBox, button, el, icon, statusPill } from '../../ui/components.js';
+import { textDirection } from '../../ui/format.js';
 import { logo } from '../../ui/logo.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
@@ -40,7 +41,7 @@ function diagnosticsLink(reply) {
       ok = false;
     }
     link.removeAttribute('aria-busy');
-    result.textContent = ok ? '✓ نُسخ التشخيص' : 'تعذّر النسخ — أعد المحاولة';
+    result.textContent = ok ? 'نُسخ التشخيص' : 'تعذّر النسخ — أعد المحاولة';
     result.setAttribute('data-tone', ok ? 'success' : 'danger');
   });
   return el('p', { className: 'tj-popup__diag-row', children: [link, result] });
@@ -56,7 +57,7 @@ function statusCard(s, tools, capture, reply) {
     card.append(el('p', { className: 'tj-body-sm', text: messageFor('TJ_NOT_YOUTUBE') }));
     return card;
   }
-  card.append(el('h2', { className: 'tj-popup__title tj-clamp-2 tj-auto', text: s.title, attrs: { title: s.title } }));
+  card.append(el('h2', { className: 'tj-popup__title tj-clamp-2 tj-auto', text: s.title, dir: textDirection(s.title), attrs: { title: s.title } }));
   if (s.kind === 'loading') {
     card.append(el('div', { className: 'tj-skeleton tj-popup__skel-line' }));
   } else if (s.kind === 'has-subtitle') {
@@ -153,7 +154,8 @@ startPage({
         const idle = a.primary ? COPY_LABEL.idle : COPY_LABEL.idleShort;
         const label = el('span', { text: idle });
         let glyph = icon('copy');
-        b = el('button', { className: `tj-btn tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', 'aria-label': COPY_LABEL.idle, title: 'ينسخ تعليمات الترجمة وحدها لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
+        // الاسم هو النص الظاهر نفسه في كل حالة (WCAG 2.5.3؛ تدقيق 5fedcb9، CL-007 وGM-027.2)، والشرح في التلميح.
+        b = el('button', { className: `tj-btn tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', title: 'ينسخ تعليمات الترجمة وحدها لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
         const copy = createCopyState({
           buildText: () => instructions({ videoId: reply.videoId, title: reply.title, glossary }),
           write: (text) => navigator.clipboard.writeText(text),
@@ -183,15 +185,18 @@ startPage({
         if (recent.length) {
           recentHost.append(el('h3', { className: 'tj-popup__section', text: 'آخر الترجمات' }));
           for (const e of recent) {
-            const title = el('span', { className: 'tj-popup__recent-title tj-truncate tj-auto', text: e.title ?? e.videoId, attrs: { title: e.title ?? e.videoId } });
-            const openBtn = button({ label: `فتح الفيديو: ${e.title ?? e.videoId}`, iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: 'فتح الفيديو', onClick: async () => {
-              await chrome.tabs.create({ url: watchUrl(e.videoId) });
-              window.close();
-            } });
-            const editBtn = button({ label: `تحرير: ${e.title ?? e.videoId}`, iconOnly: true, icon: 'edit', variant: 'ghost', size: 'sm', title: 'تحرير الترجمة', disabledReason: e.arabic ? null : messageFor('PG_NO_ARABIC'), onClick: async () => {
-              await openPage('editor', { v: e.videoId });
-              window.close();
-            } });
+            const title = el('span', { className: 'tj-popup__recent-title tj-truncate tj-auto', text: e.title ?? e.videoId, dir: textDirection(e.title ?? e.videoId), attrs: { title: e.title ?? e.videoId } });
+            // تعذّر فتح التبويب أو الصفحة يُقال كما في أزرار الحالة، لا رفضٌ صامت (تدقيق 5fedcb9، GM-027.2).
+            const go = (fn) => async () => {
+              try {
+                await fn();
+                window.close();
+              } catch {
+                notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
+              }
+            };
+            const openBtn = button({ label: `فتح الفيديو: ${e.title ?? e.videoId}`, iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: 'فتح الفيديو', onClick: go(() => chrome.tabs.create({ url: watchUrl(e.videoId) })) });
+            const editBtn = button({ label: `تحرير: ${e.title ?? e.videoId}`, iconOnly: true, icon: 'edit', variant: 'ghost', size: 'sm', title: 'تحرير الترجمة', disabledReason: e.arabic ? null : messageFor('PG_NO_ARABIC'), onClick: go(() => openPage('editor', { v: e.videoId })) });
             recentHost.append(el('div', { className: 'tj-popup__recent-row', children: [title, el('span', { className: 'tj-popup__recent-actions', children: [editBtn, openBtn] })] }));
           }
         }

@@ -5,7 +5,7 @@ import { driftCorrect } from '../../core/edit/drift.js';
 import { parseSeconds, parseTimecode } from '../../core/edit/index.js';
 import { isTjError, messageFor } from '../../core/errors/index.js';
 import { alertBox, el, ltr } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, formatTimecode } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatTimecode, ltrInline } from '../../ui/format.js';
 import { openDialog, setDisabled } from './dialogs.js';
 import { numberList, seconds } from './text.js';
 
@@ -61,6 +61,8 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
   const byN = new Map();
   cues.forEach((c, i) => { if (!byN.has(c.n)) byN.set(c.n, i); });
 
+  // المرساة بموضعها: قطعتا شطر تحملان رقمًا واحدًا، فالرقم المكتوب كما اقتُرح يبقى على المقطع المقترح نفسه، وغيره أول ظهوره
+  // (تدقيق 5fedcb9، GM-005: كانت النقطة الثانية على القطعة الثانية تُقرأ الأولى فيرفض الحوار أو يحسب انحرافًا زائفًا).
   const anchor = (label, i) => {
     const nIn = el('input', { className: 'ed-amount', dir: 'ltr', attrs: { type: 'text', inputmode: 'numeric', value: String(cues[i].n), 'aria-label': `${label}: رقم المقطع` }, doc });
     const tIn = el('input', { className: 'ed-time', dir: 'ltr', attrs: { type: 'text', value: formatTimecode(cues[i].startMs), 'aria-label': `${label}: الزمن الصحيح أو الفرق`, spellcheck: 'false', autocomplete: 'off' }, doc });
@@ -74,7 +76,7 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
       ],
       doc,
     });
-    return { box, nIn, tIn, note };
+    return { box, nIn, tIn, note, start: i };
   };
   const A = anchor('النقطة الأولى', first);
   const B = anchor('النقطة الثانية', last);
@@ -84,17 +86,17 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
 
   const readAnchor = (x) => {
     const n = Number(x.nIn.value.trim());
-    const i = Number.isInteger(n) ? byN.get(n) : undefined;
+    const i = Number.isInteger(n) ? (cues[x.start]?.n === n ? x.start : byN.get(n)) : undefined;
     if (i === undefined) {
       x.note.textContent = 'لا مقطع بهذا الرقم.';
       return null;
     }
     const t = parseAnchorTime(x.tIn.value, cues[i].startMs);
     if (!t.ok) {
-      x.note.textContent = 'اكتب زمنًا مثل 00:12:01,300، أو فرقًا بالثواني مثل +1.2 أو −0.8.';
+      x.note.textContent = `اكتب زمنًا مثل 00:12:01,300، أو فرقًا بالثواني مثل ${ltrInline('+1.2')} أو ${ltrInline('−0.8')}.`;
       return null;
     }
-    x.note.textContent = `الآن ${formatTimecode(cues[i].startMs)}، ويصبح ${formatTimecode(t.toMs)} (${t.delta >= 0 ? '+' : '−'}${seconds(t.delta)} ث).`;
+    x.note.textContent = `الآن ${formatTimecode(cues[i].startMs)}، ويصبح ${formatTimecode(t.toMs)} (${ltrInline(`${t.delta >= 0 ? '+' : '−'}${seconds(t.delta)}`)} ث).`;
     return { n, toMs: t.toMs, index: i };
   };
 
@@ -107,11 +109,11 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
     if (!a || !b) why = 'أكمل النقطتين أولًا.';
     else {
       try {
-        const r = driftCorrect(cues, { a: { n: a.n, toMs: a.toMs }, b: { n: b.n, toMs: b.toMs } });
+        const r = driftCorrect(cues, { a: { n: a.n, toMs: a.toMs, index: a.index }, b: { n: b.n, toMs: b.toMs, index: b.index } });
         if (!r.ok) why = messageFor('ED_DRIFT_NEGATIVE', { list: numberList(r.negative) });
         else {
           summary = driftSummary(cues, r.cues, [0, a.index, b.index, cues.length - 1]);
-          result = { a: { n: a.n, toMs: a.toMs }, b: { n: b.n, toMs: b.toMs } };
+          result = { a: { n: a.n, toMs: a.toMs, index: a.index }, b: { n: b.n, toMs: b.toMs, index: b.index } };
         }
       } catch (err) {
         if (!isTjError(err)) throw err;
@@ -131,7 +133,7 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
       summary ? el('p', {
         className: 'tj-body-sm',
         text: summary.changed
-          ? `يتغير توقيت ${formatCount(summary.changed, COUNT_FORMS.cue)} من ${cues.length}، وأكبر تغيير ${summary.max >= 0 ? '+' : '−'}${seconds(summary.max)} ث (المقطع ${summary.maxN}). النص والأرقام كما هي.`
+          ? `يتغير توقيت ${formatCount(summary.changed, COUNT_FORMS.cue)} من ${cues.length}، وأكبر تغيير ${ltrInline(`${summary.max >= 0 ? '+' : '−'}${seconds(summary.max)}`)} ث (المقطع ${summary.maxN}). النص والأرقام كما هي.`
           : 'التوقيت مطابق للنقطتين؛ لا شيء يتغير.',
         doc,
       }) : null,

@@ -61,11 +61,16 @@ export function itemsFor(next, raw, { forceHead = false } = {}) {
   for (const kind of COMPANIONS) {
     const value = p[kind];
     const stored = raw[kind];
-    const changed = stored === null ? !isEmptyCompanion(kind, value) : JSON.stringify(stored) !== JSON.stringify(value);
+    // مقارنة بنيوية لا نصية: chrome.storage يعيد مفاتيح الكائنات مرتبة، فكانت كل كتابة تعيد إرسال الترجمات الأخرى والسابقة
+    // والعلامات (تدقيق 5fedcb9، GM-010؛ كان قيدًا معروفًا في known-limitations §٤).
+    const changed = stored === null ? !isEmptyCompanion(kind, value) : canonical(stored) !== canonical(value);
     if (changed) items[KEY_OF[kind](id)] = value;
   }
   return items;
 }
+
+/** JSON بمفاتيح مرتبة في كل مستوى (ترتيب المصفوفات كما هو). */
+const canonical = (v) => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, x[k]])) : x));
 
 /** هل في القراءة توابع (لسجل محذوف = يتيمة). @param {RawBundle} raw */
 export const hasCompanions = (raw) => raw.head !== null || raw.alts !== null || raw.prev !== null || raw.marks !== null;
