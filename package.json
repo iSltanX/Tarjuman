@@ -1,14 +1,20 @@
 {
   "name": "tarjuman",
   "private": true,
-  "version": "0.0.0",
-  "description": "ترجمان: إضافة Chrome وBrave تستخرج ترجمة يوتيوب الإنجليزية إلى SRT وتعرض الترجمة العربية فوق الفيديو. المعالجة والحفظ محليان.",
+  "version": "1.0.0",
+  "description": "ترجمان: إضافة لمتصفحات Chrome وEdge وBrave وFirefox على الحاسوب تستخرج ترجمة يوتيوب الإنجليزية إلى SRT وتعرض الترجمة العربية فوق الفيديو. المعالجة والحفظ محليان.",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": {
+    "name": "Sultan (BySultan)",
+    "url": "https://bysltan.com"
+  },
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:dev": "node scripts/build.mjs --dev",
     "build:firefox": "node scripts/build.mjs --target firefox",
     "lint:firefox": "node scripts/build.mjs --target firefox && web-ext lint --source-dir dist-firefox",
+    "package": "node scripts/release/package.mjs && node scripts/release/store.mjs",
     "test": "node scripts/run-tests.mjs test/unit",
     "test:integration": "node scripts/run-tests.mjs --allow-empty test/integration",
     "check:static": "node scripts/check-static.mjs",
