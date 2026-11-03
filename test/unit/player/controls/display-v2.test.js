@@ -83,6 +83,20 @@ test('تبديل الترجمة: فوري بإزاحتها، ورسالة «ال
   assert.equal(page.handle.diagnostics().session.undos, 1);
 });
 
+test('«الترجمة 2» لا تُعلن إلا إن صارت النشطة فعلًا: وعد عاد دون تبديل لا رسالة نجاح له', async () => {
+  const page = mountPage({ state: makeState(three()) });
+  openDisplay(page);
+  page.controller.activateSlot = async (n) => {
+    page.controller.calls.push(['activateSlot', n]);
+    return page.controller.getState();
+  };
+  click(slotButtons(page)[1]);
+  await settle();
+  assert.equal(page.controller.getState().activeSlot, 1);
+  assert.deepEqual(page.ui.toasts(), [], 'لا «الترجمة 2» ولا تراجع');
+  assert.equal(page.handle.diagnostics().session.switches, 0);
+});
+
 test('رسالة التراجع تختفي وحدها بعد مهلتها دون فعل', async () => {
   const page = mountPage({ state: makeState(three()) });
   openDisplay(page);

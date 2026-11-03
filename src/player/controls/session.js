@@ -92,7 +92,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let lastModel = null;
   let overflow = null;
   let flags = { live: false, unavailable: false, brave: false };
-  /** @type {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action: { label: string } | null }[]} */
+  /** @type {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action: { label: string } | null, icon: 'clock' | null }[]} */
   let toasts = [];
   /** فعل كل رسالة بفعل («تراجع») بمعرّفها؛ لا يدخل العرض. */
   const toastActions = new Map();
@@ -420,9 +420,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
    * رسالة عابرة: النجاح والمعلومة تختفيان بعد 3 ثوانٍ، والتحذير والخطأ يبقيان حتى الإغلاق. ومعها فعل اختياري («تراجع»)
    * يُنفَّذ مرة ثم تختفي، وتبقى الرسالة بفعلها 6 ثوانٍ.
    * @param {'success' | 'info' | 'warning' | 'error'} tone @param {string} text
-   * @param {{ action?: { label: string, run: () => unknown } | null }} [o]
+   * @param {{ action?: { label: string, run: () => unknown } | null, icon?: 'clock' | null }} [o] icon رمز غير رمز النغمة (الساعة لرسالة الإزاحة)
    */
-  function addToast(tone, text, { action = null } = {}) {
+  function addToast(tone, text, { action = null, icon = null } = {}) {
     const id = `t${++toastSeq}`;
     const persist = tone === 'warning' || tone === 'error';
     const dropped = toasts.filter((t) => t.text === text);
@@ -430,7 +430,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       clearTimer(t.id);
       toastActions.delete(t.id);
     }
-    toasts = [...toasts.filter((t) => t.text !== text), { id, tone, text, persist, action: action ? { label: action.label } : null }];
+    toasts = [...toasts.filter((t) => t.text !== text), { id, tone, text, persist, action: action ? { label: action.label } : null, icon }];
     if (action) toastActions.set(id, action.run);
     while (toasts.length > MAX_TOASTS) {
       const old = toasts.shift();
@@ -627,6 +627,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     if (destroyed || ui !== mine) return;
     mine.switching = false;
+    // لا «الترجمة 2» إلا إن صارت هي النشطة فعلًا في الحالة (لا مجرد عودة الوعد).
+    if (controller.getState().activeSlot !== n) {
+      render();
+      return;
+    }
     counts.switches++;
     addToast('success', slotToast(n), { action: { label: LABELS.undo, run: () => controller.activateSlot(prev) } });
     render();
@@ -691,36 +696,55 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     (layer.find(`sentence:${center}`) ?? layer.find('syncBack'))?.focus();
   }
 
-  /** الجملة المختارة تظهر بدايتها عند لحظة الفتح: إزاحة فورية، ورسالة «الإزاحة −3.2 ث» بتراجع. لا يتغير الملف. */
-  function applySentence(index) {
+  /**
+   * الجملة المختارة تظهر بدايتها عند لحظة الفتح: إزاحة فورية، ثم رسالة «الإزاحة −3.2 ث» بتراجع. لا يتغير الملف. والرسالة بعد
+   * ثبوت الإزاحة لا قبله: إن لم تُحفظ (يعيد المتحكم العرض إلى المحفوظ ويرفع خطأه) فلا رسالة نجاح، ويصل الخطأ من حالة المتحكم.
+   */
+  async function applySentence(index) {
     const s = controller.getState();
     const t = ui.timing;
     const cue = s.arabic?.cues[index];
     if (!t.sync || !cue || s.loading) return;
     const prev = s.view.displayOffsetMs;
     const next = syncOffset(t.sync.atMs, cue);
+    const mine = ui;
     t.sync = null;
     t.offsetText = null;
     t.offsetError = null;
-    controller.setOffset(next)?.catch?.(() => {});
+    const done = controller.setOffset(next);
     if (next !== prev) group.pulse();
-    counts.syncs++;
+    render();
+    layer.find('sync')?.focus();
+    try {
+      await done;
+    } catch (err) {
+      if (destroyed || ui !== mine) return;
+      counts.flowFailures++;
+      addToast('error', toErrorInfo(err).message);
+      render();
+      return;
+    }
+    if (destroyed || ui !== mine) return;
+    const now = controller.getState();
     // التراجع لإزاحة الترجمة التي زامنها المستخدم وحدها: إن تبدّلت النشطة أو استُبدلت (مقاطع أخرى) لا يُطبَّق على غيرها
     // (تدقيق 5fedcb9، CX-004: كان يكتب إزاحة الأولى في الثانية).
     const target = { videoId: s.videoId, cues: s.arabic.cues };
-    addToast('success', offsetToast(next), {
+    if (now.videoId !== target.videoId || now.arabic?.cues !== target.cues) return;
+    if (now.view.displayOffsetMs !== next || (now.error && now.error !== s.error)) return;
+    counts.syncs++;
+    addToast('info', offsetToast(next), {
+      icon: 'clock',
       action: {
         label: LABELS.undo,
         run: () => {
-          const now = controller.getState();
-          if (now.videoId === target.videoId && now.arabic?.cues === target.cues) return controller.setOffset(prev);
+          const cur = controller.getState();
+          if (cur.videoId === target.videoId && cur.arabic?.cues === target.cues) return controller.setOffset(prev);
           addToast('info', syncUndoStale);
           return null;
         },
       },
     });
     render();
-    layer.find('sync')?.focus();
   }
 
   function applyOffset(text) {
@@ -844,7 +868,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     d.busy = false;
     if (r.saved.length) {
       counts.downloads++;
-      d.saveLine = { tone: 'ok', text: downloadedLine(r.saved.length > 1 ? partsLabel(r.saved.length) : r.saved[0]) };
+      // بدأ التنزيل وما زال حوار الحفظ مفتوحًا (pending): لا يُقال «نُزّل» قبل أن يكتمل، بل ما ينتظره المستخدم.
+      d.saveLine = r.pending
+        ? { tone: 'info', text: messageFor('SV_PENDING') }
+        : { tone: 'ok', text: downloadedLine(r.saved.length > 1 ? partsLabel(r.saved.length) : r.saved[0]) };
     }
     if (r.stopped) {
       if (r.stopped.code !== 'SV_CANCELLED') {
@@ -856,7 +883,6 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       else d.saveLine = line;
     }
     if (r.blob) d.result.push({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB') });
-    if (r.pending) d.result.push({ tone: 'info', text: messageFor('SV_PENDING') });
     d.result.push(...prep.built.warnings.map((code) => ({ tone: code === 'EX_SPLIT_NOT_NEEDED' ? 'info' : 'warn', text: messageFor(code) })));
     if (r.saved.length) {
       const rec = await recordFor({ controller, key: spec.key, built: prep.built, videoId: prep.videoId });

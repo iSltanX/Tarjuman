@@ -357,3 +357,37 @@ test('عنوان القائمة «تحميل الأصل»، واسم الوصو�
   assert.equal(page.ui.menuText().includes('تحميل الترجمة'), false);
   assert.equal(page.ui.btn('download').getAttribute('aria-label').includes('الترجمة الإنجليزية'), false);
 });
+
+test('تنزيل بدأ وحوار الحفظ ما زال مفتوحًا (pending): لا «نُزّل» بل ما ينتظره المستخدم، بلا علامة نجاح', async () => {
+  const page = withTrack();
+  page.flows.saveResults = [{ ok: true, mode: 'ask', downloadId: 1, pending: true }];
+  open(page);
+  click(page.ui.item(DL));
+  await settle();
+  assert.deepEqual(lines(page), [['saveLine', 'info', messageFor('SV_PENDING')]]);
+  assert.equal(page.ui.menuText().includes('نُزّل'), false, 'لا ادعاء بتمام الحفظ');
+  assert.equal(page.ui.menu().querySelectorAll('.line').filter((l) => l.getAttribute('data-tone') === 'ok').length, 0);
+  assert.equal(page.ui.menu().querySelectorAll('.alert').filter((a) => a.textContent.includes(messageFor('SV_PENDING'))).length, 0, 'لا تكرار للرسالة');
+});
+
+test('النجاح الكامل وحده يقول «نُزّل»: حفظ تام بنغمة النجاح، وإلغاء أو إخفاق بنغمتهما', async () => {
+  const done = withTrack();
+  open(done);
+  click(done.ui.item(DL));
+  await settle();
+  assert.deepEqual(lines(done)[0].slice(0, 2), ['saveLine', 'ok']);
+  const cancelled = withTrack();
+  cancelled.flows.saveResults = [{ ok: false, code: 'SV_CANCELLED' }];
+  open(cancelled);
+  click(cancelled.ui.item(DL));
+  await settle();
+  assert.deepEqual(lines(cancelled)[0].slice(0, 2), ['saveLine', 'info']);
+  assert.equal(cancelled.ui.menuText().includes('نُزّل'), false);
+  const failed = withTrack();
+  failed.flows.saveResults = [{ ok: false, code: 'SV_BAD_FILE' }];
+  open(failed);
+  click(failed.ui.item(DL));
+  await settle();
+  assert.deepEqual(lines(failed)[0].slice(0, 2), ['saveLine', 'error']);
+  assert.equal(failed.ui.menuText().includes('نُزّل'), false);
+});

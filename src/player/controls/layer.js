@@ -238,7 +238,7 @@ export function createLayer({ doc, win, on }) {
 
     /**
      * الرسالة بفعل («تراجع») تحمل زره بعد نصها؛ الضغط يُبلَّغ إلى الجلسة وحدها.
-     * @param {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action?: { label: string } | null }[]} list
+     * @param {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action?: { label: string } | null, icon?: 'clock' | null }[]} list
      * @param {(id: string) => void} dismiss
      * @param {(id: string) => void} [run] فعل الرسالة
      */
@@ -251,7 +251,7 @@ export function createLayer({ doc, win, on }) {
         box.className = 'toast';
         box.setAttribute('data-tone', t.tone);
         box.setAttribute('role', t.tone === 'error' || t.tone === 'warning' ? 'alert' : 'status');
-        const g = glyph(doc, t.tone);
+        const g = glyph(doc, t.icon ?? t.tone);
         const tx = doc.createElement('span');
         tx.className = 'text';
         tx.textContent = t.text;
