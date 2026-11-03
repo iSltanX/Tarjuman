@@ -169,5 +169,7 @@ export function panelCss() {
 /* عريض (≥ ${WIDE_MIN}px، اللوحة تحت الفيديو): القائمة وعمود التوقيت جنبًا إلى جنب */
 .root[data-wide][data-kind="ready"] .panel { display: grid; grid-template-columns: minmax(0, 1fr) 248px; grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "head head" "bar side" "body side"; }
 .root[data-wide][data-kind="ready"] .foot { border-top: 0; border-inline-start: 1px solid var(--tj-border); justify-content: center; }
-.root[data-wide][data-kind="ready"] .foot__hint { display: none; }`;
+.root[data-wide][data-kind="ready"] .foot__hint { display: none; }
+.root[data-wide][data-kind="ready"] .off .lbl, .root[data-wide][data-kind="ready"] .off__val .mean { display: none; }
+.root[data-wide][data-kind="ready"] .off .b { width: var(--tj-control-lg); padding: 0; }`;
 }

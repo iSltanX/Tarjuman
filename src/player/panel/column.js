@@ -1,6 +1,6 @@
 // عمود يوتيوب الثانوي (docs/identity-redesign.md §٤): مضيف اللوحة أول أبنائه، فيضعه يوتيوب يمين الفيديو في التخطيط العريض
 // وتحته في وضع المسرح، ولا يغطي الفيديو ولا أدواته. وفي تخطيط العمود الواحد (عرض ضيق، `is-single-column`) يُخفي يوتيوب
-// العمود الثانوي كله وينقل مقترحاته إلى #below، فتنتقل اللوحة إلى #below بعد بيانات الفيديو (العنوان والقناة) كما في لوحة
+// العمود الثانوي كله وينقل مقترحاته إلى #below، فتنتقل اللوحة إلى #below بعد صندوق بيانات الفيديو (العنوان والقناة) كما في لوحة
 // WatchNarrow، وتعود إلى العمود بعودة العمودين. هنا وحدها محددات هذه المواضع (مثل محددات youtube-dom.js: غير رسمية،
 // فالحاجة إلى تغييرها في ملف واحد)، وقراءة هندسة المشغّل والعمود.
 
@@ -34,13 +34,23 @@ export function findColumn(doc) {
 }
 
 /**
- * يضع المضيف أول ابن في العمود، وفي #below بعد بيانات الفيديو إن وُجدت (أو يتركه إن كان كذلك). يوتيوب قد يعيد رسم العمود أو
+ * ابن #below الذي يحمل بيانات الفيديو (يوتيوب يضع ytd-watch-metadata داخل صندوق في #below لا ابنًا مباشرًا)، أو null.
+ * @param {HTMLElement} column
+ */
+function belowAnchor(column) {
+  let n = column.querySelector?.(BELOW_ANCHOR_TAG) ?? null;
+  while (n && n.parentNode !== column) n = n.parentNode;
+  return n ?? null;
+}
+
+/**
+ * يضع المضيف أول ابن في العمود، وفي #below بعد صندوق بيانات الفيديو إن وُجد (أو يتركه إن كان كذلك). يوتيوب قد يعيد رسم العمود أو
  * يدرج قبل المضيف عنصرًا، فيُستدعى عند كل فحص دوري.
  * @param {HTMLElement} host @param {HTMLElement} column
  * @returns {boolean} هل نُقل أو أُدرج
  */
 export function placeHost(host, column) {
-  const anchor = column.id === 'below' ? Array.from(column.children ?? []).find((c) => c.tagName?.toLowerCase() === BELOW_ANCHOR_TAG) ?? null : null;
+  const anchor = column.id === 'below' ? belowAnchor(column) : null;
   const before = anchor ? anchor.nextSibling : column.firstChild;
   const placed = host.parentNode === column && (anchor ? anchor.nextSibling === host : (column.firstElementChild ?? column.firstChild) === host);
   if (placed) return false;

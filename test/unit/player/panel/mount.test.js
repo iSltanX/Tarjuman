@@ -300,7 +300,10 @@ test('تخطيط العمود الواحد (عرض ضيق): يوتيوب يخف�
   const page = watchPage();
   const below = page.doc.createElement('div');
   below.id = 'below';
-  const meta = page.doc.createElement('ytd-watch-metadata');
+  // كما في يوتيوب: البيانات داخل صندوق في #below لا ابنًا مباشرًا.
+  const meta = page.doc.createElement('div');
+  meta.className = 'box';
+  meta.appendChild(page.doc.createElement('ytd-watch-metadata'));
   const comments = page.doc.createElement('ytd-comments');
   below.append(meta, comments);
   page.primary.appendChild(below);
