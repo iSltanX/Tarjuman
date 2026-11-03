@@ -8,7 +8,8 @@ const NAME = Object.freeze({
   info: 'info', warn: 'warning', warning: 'warning', error: 'danger', danger: 'danger', ok: 'check', success: 'check', x: 'x', copy: 'copy',
   download: 'download', upload: 'upload', restore: 'restore', clock: 'clock', flag: 'flag',
 });
-// رمز العلَم لـ«علّم للمراجعة»: غير موجود في مجموعة الواجهة، ويُرسم بالسُمك والنهايات نفسها.
+// رمز العلَم لـ«علّم للمراجعة»: غير موجود في مجموعة الواجهة، ويُرسم بالسُمك والنهايات نفسها. معدّل من flag في Lucide (ISC)،
+// ونسبته في THIRD_PARTY_NOTICES.txt (scripts/release/notices.mjs).
 const EXTRA = Object.freeze({
   flag: [['path', { d: 'M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z' }], ['path', { d: 'M4 22v-7' }]],
 });

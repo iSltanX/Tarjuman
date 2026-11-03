@@ -6,13 +6,18 @@
 // محصورة في download وsearch (عقد interfaces §١٣: صفحات الإضافة مباشرة عبر core/save، والعامل لسكربت المحتوى)، ولا تصل
 // إليها شيفرة عالم الصفحة. وكل ملف يشير إليه البيان أو صفحة أو نمط موجود غير فارغ، وخطوط الواجهة كخطوط الترجمة برخصها.
 // والهدفان (جولة النشر T2، scripts/targets.mjs) بالفحوص نفسها: chromium (Chrome وBrave وEdge) بعامل خدمة وبلا إعدادات Gecko،
-// وfirefox بسكربت خلفية وإعدادات Gecko المعتمدة حرفيًا وبلا gecko_android.
+// وfirefox بسكربت خلفية وإعدادات Gecko المعتمدة حرفيًا وبلا gecko_android. وإشعارات الأطراف الثالثة (T4) في جذر الحزمة تنسب
+// كل خط مشحون وأيقونات Lucide ودوال esbuild بنصوص تراخيصها.
 //   node scripts/release/audit.mjs <مجلد الإضافة المبنية> [--target chromium|firefox]
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SUBTITLE_FONT_LIST } from '../../src/ui/subtitle-fonts.js';
 import { UI_FONT_LIST } from '../../src/ui/ui-fonts.js';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+/** إشعارات الأطراف الثالثة في جذر الحزمة (scripts/release/notices.mjs). */
+const NOTICES_FILE = 'THIRD_PARTY_NOTICES.txt';
 
 /** الأذونات المعتمدة (product-spec §١٠، والتحقق في P2، وdownloads للإصدار الثاني): لا غيرها ولا host_permissions ولا اختيارية. */
 export const APPROVED_PERMISSIONS = ['storage', 'unlimitedStorage', 'downloads'];
@@ -113,7 +118,7 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   check('target-browser-settings', target === 'chromium' ? bss === null : JSON.stringify(bss) === JSON.stringify(GECKO_SETTINGS), { target, browserSpecificSettings: bss });
 
   // ---- الملفات: لا خرائط مصدر ولا معرض مكوّنات ولا ملفات غير متوقعة ----
-  const unexpected = files.filter((f) => !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt)|ui\/fonts\/ui\/[a-z-]+-(?:600\.woff2|700\.woff2|OFL\.txt)|icons\/tarjuman-icon-(?:16|32|48|128)\.png)$/.test(f));
+  const unexpected = files.filter((f) => !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt)|ui\/fonts\/ui\/[a-z-]+-(?:600\.woff2|700\.woff2|OFL\.txt)|icons\/tarjuman-icon-(?:16|32|48|128)\.png|THIRD_PARTY_NOTICES\.txt)$/.test(f));
   check('only-expected-files', unexpected.length === 0, { unexpected, files: files.length });
   check('no-source-maps-or-gallery', !files.some((f) => f.endsWith('.map') || f.startsWith('ui/gallery/')), null);
 
@@ -166,6 +171,21 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
     uiFonts.push({ id: f.id, files: present.length, want: want.length, ofl, nonEmpty: sizes.every((s) => s > 0) });
   }
   check('ui-fonts-with-ofl-licenses', uiFonts.every((f) => f.files === f.want && f.ofl && f.nonEmpty), { fonts: uiFonts });
+
+  // ---- إشعارات الأطراف الثالثة (جولة النشر T4) في جذر الحزمة: سطر حقوق كل خط مشحون كما في رخصته، ونص ترخيص Lucide حرفيًا
+  // (ومعه قسم Feather)، وترخيص esbuild لدوالّه المساعدة. فحزمة بخط أو أيقونات بلا نسبة لا تمر ----
+  let notices = '';
+  if (files.includes(NOTICES_FILE)) notices = (await readFile(path.join(dir, NOTICES_FILE), 'utf8')).replace(/\r\n/g, '\n');
+  const missingNotices = [];
+  for (const f of [...SUBTITLE_FONT_LIST, ...UI_FONT_LIST]) {
+    if (!files.includes(f.license)) continue; // غياب الرخصة نفسها يكشفه فحصا الخطوط.
+    const head = (await readFile(path.join(dir, f.license), 'utf8')).replace(/\r\n/g, '\n').split('\n').find((l) => /\S/.test(l)).trim();
+    if (!notices.includes(head)) missingNotices.push(f.license);
+  }
+  const lucide = (await readFile(path.join(ROOT, 'src/ui/lucide-LICENSE.txt'), 'utf8')).replace(/\r\n/g, '\n').trimEnd();
+  if (!notices.includes(lucide)) missingNotices.push('Lucide (ISC) وFeather (MIT)');
+  if (!/esbuild[\s\S]*MIT License[\s\S]*Evan Wallace/.test(notices)) missingNotices.push('esbuild (MIT)');
+  check('third-party-notices', notices.length > 0 && missingNotices.length === 0, { present: notices.length > 0, missing: missingNotices });
 
   // ---- كل ما يُشار إليه موجود غير فارغ: البيان، ومراجع الصفحات (src وhref)، وروابط الأنماط (url)، وملفات الخطوط ----
   // only-expected-files يمنع الزائد وحده؛ فحزمة ينقصها سكربت معلن كانت تنجح (تدقيق 5fedcb9، CX-007).

@@ -1,5 +1,6 @@
 // أيقونة نافذة الأيقونة التي لا مقابل لها في src/ui/icons.js: «العين المشطوبة» لصف «زر النص المتزامن مخفي». بالشكل نفسه
-// (خطوط 24×24 بلون النص) وبـcreateElementNS وحده؛ وما يوجد في src/ui يُستعمل من هناك (كالمحرّر: editor/icons.js).
+// (خطوط 24×24 بلون النص) وبـcreateElementNS وحده؛ وما يوجد في src/ui يُستعمل من هناك (كالمحرّر: editor/icons.js). والعين
+// المشطوبة معدّلة من eye-off في Lucide (ISC)، ونسبتها في THIRD_PARTY_NOTICES.txt (scripts/release/notices.mjs).
 import { ICONS, icon } from '../../ui/components.js';
 
 const SVG = 'http://www.w3.org/2000/svg';

@@ -1,6 +1,6 @@
 // قسم «حول» (R42، P7-AC10، وجولة الصقل): الإصدار، و«كل شيء محلي»، ودليل الاستخدام، و«الإبلاغ عن مشكلة» (جولة النشر T2.1،
-// report.js)، و«ترجمان — تطوير سلطان» مع رابطي bysltan.com والمستودع، ونسب الخطوط المضمّنة (الترجمة وعناوين الواجهة) مع
-// «عرض التراخيص» من ملفات الرخص المحلية. الروابط تُفتح بالضغط وحده في تبويب جديد (noopener)؛ ولا طلب شبكة من هذا الملف.
+// report.js)، و«ترجمان — تطوير سلطان» مع رابطي bysltan.com والمستودع، ونسب الخطوط المضمّنة (الترجمة وعناوين الواجهة) وأيقونات
+// Lucide مع «عرض التراخيص» من ملفات الرخص المحلية وملف إشعارات الأطراف الثالثة (جولة النشر T4). الروابط تُفتح بالضغط وحده في تبويب جديد (noopener)؛ ولا طلب شبكة من هذا الملف.
 import { el, icon, ltr } from '../../ui/components.js';
 import { SUBTITLE_FONT_LIST } from '../../ui/subtitle-fonts.js';
 import { UI_FONT_LIST } from '../../ui/ui-fonts.js';
@@ -9,6 +9,11 @@ import { UI_FONT_LIST } from '../../ui/ui-fonts.js';
 export const LINKS = Object.freeze({ site: 'https://bysltan.com', repo: 'https://github.com/iSltanX/Tarjuman' });
 /** خط عناوين الواجهة المضمّن (المراعي ملفه نفسه في خطوط الترجمة فلا يتكرر). */
 const UI_HEAD_FONT = Object.freeze({ nameAr: 'القاهرة', nameLatin: 'Cairo', license: UI_FONT_LIST[0].license });
+/**
+ * أيقونات الواجهة من Lucide (ISC، وبعضها مشتق من Feather، MIT): ترخيصاهما يشترطان بقاء الإشعار مع كل نسخة، فنصّاهما في
+ * THIRD_PARTY_NOTICES.txt بجذر الحزمة (جولة النشر T4، scripts/release/notices.mjs)، ويفتحه «عرض التراخيص» بلا شبكة.
+ */
+export const NOTICES_FILE = 'THIRD_PARTY_NOTICES.txt';
 
 /**
  * سطر الخصوصية كما هو صحيح: المعالجة والحفظ على الجهاز، ولا يخرج منه شيء إلا صور الفيديو في المحفوظات (i.ytimg.com بمعرّف
@@ -61,9 +66,12 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
       el('ul', {
         className: 'st-licenses',
         attrs: { role: 'list' },
-        children: [...fonts, UI_HEAD_FONT].map((f) => el('li', {
+        children: [
+          ...[...fonts, UI_HEAD_FONT].map((f) => ({ href: f.license, text: `${f.nameAr} · ${f.nameLatin} — SIL OFL 1.1` })),
+          { href: NOTICES_FILE, text: 'أيقونات الواجهة · Lucide — ISC، ومنها Feather — MIT' },
+        ].map(({ href, text }) => el('li', {
           // ملف الرخصة داخل الإضافة نفسها: رابط نسبي من pages/settings/ بلا شبكة.
-          children: [el('a', { className: 'st-link', attrs: { href: `../../${f.license}`, target: '_blank', rel: 'noopener noreferrer' }, children: [el('span', { text: `${f.nameAr} · ${f.nameLatin} — SIL OFL 1.1`, doc }), icon('external', { doc })], doc })],
+          children: [el('a', { className: 'st-link', attrs: { href: `../../${href}`, target: '_blank', rel: 'noopener noreferrer' }, children: [el('span', { text, doc }), icon('external', { doc })], doc })],
           doc,
         })),
         doc,
@@ -86,7 +94,7 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
       ],
       doc,
     }),
-    el('p', { className: 'tj-caption', text: `خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: ${arabicList(fonts.map((f) => f.nameAr))}. وعناوين الواجهة بخط ${UI_HEAD_FONT.nameAr} (${UI_HEAD_FONT.nameLatin}) بالرخصة نفسها.`, doc }),
+    el('p', { className: 'tj-caption', text: `خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: ${arabicList(fonts.map((f) => f.nameAr))}. وعناوين الواجهة بخط ${UI_HEAD_FONT.nameAr} (${UI_HEAD_FONT.nameLatin}) بالرخصة نفسها. وأغلب أيقونات الواجهة من Lucide برخصة ISC، وبعضها مشتق من Feather برخصة MIT.`, doc }),
     licenses,
   ];
   if (section) return section(el('div', { className: 'st-about', children: body, doc }));

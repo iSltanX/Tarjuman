@@ -81,6 +81,16 @@ for (const file of [...(await walk(path.join(SRC, 'pages'))), ...(await walk(pat
   await cp(file, path.join(OUT, rel));
 }
 
+// إشعارات الأطراف الثالثة (جولة النشر T4) في جذر الحزمة: الخطوط وأيقونات Lucide ودوال esbuild المساعدة، وتراخيصها تشترط بقاء
+// الإشعار مع كل نسخة. يولّدها scripts/release/notices.mjs، ويفتحها «عرض التراخيص» في «حول». وبلا الملف لا تُبنى حزمة.
+const NOTICES = 'THIRD_PARTY_NOTICES.txt';
+try {
+  await cp(path.join(ROOT, NOTICES), path.join(OUT, NOTICES));
+} catch {
+  console.error(`build: ${NOTICES} غائب عن جذر المستودع؛ شغّل node scripts/release/notices.mjs`);
+  process.exit(1);
+}
+
 const manifest = targetManifest(JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8')), TARGET);
 if (DEV) {
   manifest.version_name = `${manifest.version}-dev`;

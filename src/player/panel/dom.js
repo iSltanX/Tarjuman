@@ -5,7 +5,10 @@ import { logo } from '../../ui/logo.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
-/** أيقونات اللوحة التي ليست في مجموعة الواجهة المشتركة (src/ui/icons.js)، بالنمط نفسه (شبكة 24، خط 2). */
+/**
+ * أيقونات اللوحة التي ليست في مجموعة الواجهة المشتركة (src/ui/icons.js)، بالنمط نفسه (شبكة 24، خط 2). الأربع من Lucide كما هي
+ * (ISC، ومنها ما يشتق من Feather، MIT)، ونسبتها في THIRD_PARTY_NOTICES.txt (scripts/release/notices.mjs).
+ */
 const LOCAL_ICONS = Object.freeze({
   minus: [['path', { d: 'M5 12h14' }]],
   'eye-off': [
