@@ -1,7 +1,7 @@
 {
   "name": "tarjuman",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "ترجمان: إضافة لمتصفحات Chrome وEdge وBrave وFirefox على الحاسوب تستخرج ترجمة يوتيوب الإنجليزية إلى SRT وتعرض الترجمة العربية فوق الفيديو. المعالجة والحفظ محليان.",
   "license": "SEE LICENSE IN LICENSE",
   "author": {
