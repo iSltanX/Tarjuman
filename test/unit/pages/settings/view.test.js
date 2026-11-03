@@ -421,7 +421,7 @@ test('تذكير التثبيت: يظهر ما دامت المحفوظات فا�
 test('حول: الإصدار وسطر الخصوصية الصادق (محلي إلا صور الفيديو) والرابطان بتبويب جديد وnoopener بلا عبارة «خاص حاليًا»، والخطوط ورخصها المحلية', async () => {
   const m = await mount();
   const about = section(m, 'حول');
-  assert.deepEqual(about.querySelector('.st-about__row').children.map(textOf), ['الإصدار', '0.2.0']);
+  assert.deepEqual([...about.querySelector('.st-about__row').children].map(textOf), ['الإصدار', '0.2.0']);
   assert.ok(textOf(about).includes(PRIVACY_LINE));
   assert.equal(textOf(about).includes('كل شيء محلي على جهازك'), false, 'لا ادّعاء مطلق بأن كل شيء محلي: الصور من يوتيوب');
   assert.ok(textOf(about).includes('ترجمان — تطوير سلطان'));

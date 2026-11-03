@@ -203,9 +203,20 @@ export function createPanelSession({ controller, doc, win }) {
       });
     },
     undo() {
-      const restore = toast?.restore ?? false;
-      clearToast();
-      setPrefs({ ui: { panelEntry: true, panelOpen: restore } });
+      // الرسالة تبقى حتى يُحفظ الإظهار (صدى التخزين أو نهاية الحفظ)، فلا تختفي اللوحة لحظةً بينهما (مراجعة الهوية L3).
+      if (!toast || toast.undoing) return;
+      const restore = toast.restore;
+      if (toastTimer) win.clearTimeout(toastTimer);
+      toastTimer = 0;
+      toast.undoing = true;
+      act(async () => {
+        try {
+          await controller.updatePrefs({ ui: { panelEntry: true, panelOpen: restore } });
+        } finally {
+          clearToast();
+          render();
+        }
+      });
       render();
     },
     setFollow(v) {
@@ -282,6 +293,8 @@ export function createPanelSession({ controller, doc, win }) {
         loc = null;
         snapNext = false;
         resumeState = { visible: false, label: '' };
+        // الإخفاء المؤقت بصفوف جاهزة (ملء الشاشة) يُبقي حالة التتبّع؛ وما عداه (إغلاق، تحميل، فيديو آخر) يعيده مفعّلًا.
+        if (!(out.mode === 'none' && out.kind === 'ready')) follow.reset();
       }
       if (out.rebuilt) counts.rebuilds++;
       if (ready) {
@@ -427,7 +440,7 @@ export function createPanelSession({ controller, doc, win }) {
       return column;
     },
     host: view.host,
-    peek: () => ({ ...view.peek(), anchor, follow: follow.on, ready }),
+    peek: (o) => ({ ...view.peek(o), anchor, follow: follow.on, ready }),
     diagnostics() {
       const p = view.peek();
       return {

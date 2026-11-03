@@ -23,7 +23,7 @@ import { mergeCues, splitCue } from '../../core/edit/structure.js';
 import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatTimecode, offsetInline, textDirection } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
-import { jumpToVideo } from '../../ui/seek.js';
+import { jumpToVideo, openVideo as defaultOpenVideo } from '../../ui/seek.js';
 import { openDriftDialog } from './drift-dialog.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
 import { openReportDialog, openStudyDialog } from './export-dialogs.js';
@@ -60,11 +60,11 @@ const densityOf = (prefs) => ({ maxCps: prefs?.review?.maxCps ?? READING_DEFAULT
  * @param {HTMLElement} app
  * @param {{
  *   videoId: string | null, slot?: 1 | 2 | 3 | null, store: ReturnType<typeof import('../../core/store/index.js').createStore>,
- *   doc?: Document, now?: () => number, seek?: typeof jumpToVideo, saveFile?: typeof defaultSaveFile
- * }} deps slot خانة التحرير المطلوبة (t في العنوان)؛ وبدونها النشطة. seek وsaveFile للاختبار وحده.
+ *   doc?: Document, now?: () => number, seek?: typeof jumpToVideo, openVideo?: typeof defaultOpenVideo, saveFile?: typeof defaultSaveFile
+ * }} deps slot خانة التحرير المطلوبة (t في العنوان)؛ وبدونها النشطة. seek وopenVideo وsaveFile للاختبار وحده.
  */
 export async function mountEditor(app, {
-  videoId, slot: requested = null, store, doc = document, now = Date.now, seek = jumpToVideo, saveFile = defaultSaveFile,
+  videoId, slot: requested = null, store, doc = document, now = Date.now, seek = jumpToVideo, openVideo = defaultOpenVideo, saveFile = defaultSaveFile,
 }) {
   const win = doc.defaultView;
   const title = (text) => el('h1', { className: 'tj-h1', text, doc });
@@ -87,7 +87,7 @@ export async function mountEditor(app, {
   }
   const picked = pickSlot(bundle, requested);
   if (picked.n === null) {
-    // مخرجان من الحالة الفارغة (لوحة EditorStates): «فتح الفيديو» بما تفعله المحفوظات (تبويبه المفتوح أو تبويب جديد)، و«المحفوظات».
+    // مخرجان من الحالة الفارغة (لوحة EditorStates): «فتح الفيديو» (تبويبه المفتوح كما هو بلا قفز زمني، أو تبويب جديد)، و«المحفوظات».
     const emptyNote = el('div', { attrs: { role: 'status' }, doc });
     const actions = el('div', {
       className: 'ed-empty__actions',
@@ -95,8 +95,8 @@ export async function mountEditor(app, {
         button({
           label: 'فتح الفيديو', icon: 'external', size: 'sm', doc,
           onClick: async () => {
-            const r = await seek({ videoId, ms: 0 });
-            emptyNote.replaceChildren(...(r?.ok ? [] : [alertBox({ tone: 'danger', text: messageFor(r?.code ?? 'TJ_SEEK_FAILED'), doc })]));
+            const r = await openVideo(videoId);
+            emptyNote.replaceChildren(...(r?.ok ? [] : [alertBox({ tone: 'danger', text: messageFor(r?.code ?? 'PG_OPEN_FAILED'), doc })]));
           },
         }),
         button({ label: 'المحفوظات', variant: 'ghost', size: 'sm', onClick: () => { win?.location.assign(new URL(`../library/index.html#v=${videoId}`, win.location.href).href); }, doc }),

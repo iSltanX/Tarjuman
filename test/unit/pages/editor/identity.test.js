@@ -11,14 +11,14 @@ import { NOW } from '../../../helpers/fixtures.js';
 import { sampleBundle, seedBundle } from '../../../helpers/fixtures-v2.js';
 import { editorDocument, settle } from '../../../helpers/editor-dom.js';
 
-async function mounted({ seed = true, seek } = {}) {
+async function mounted({ seed = true, seek, openVideo } = {}) {
   const area = createMemoryArea({ unlimited: true });
   let at = Date.parse(NOW);
   const store = createStore({ area, now: () => (at += 1000) });
   const initial = sampleBundle();
   if (seed) await seedBundle(store, initial);
   const env = editorDocument({ videoId: initial.videoId });
-  const editor = await mountEditor(env.root, { videoId: initial.videoId, store, doc: env.doc, now: () => (at += 1000), ...(seek ? { seek } : {}) });
+  const editor = await mountEditor(env.root, { videoId: initial.videoId, store, doc: env.doc, now: () => (at += 1000), ...(seek ? { seek } : {}), ...(openVideo ? { openVideo } : {}) });
   await env.flush();
   return { area, store, editor, env, videoId: initial.videoId };
 }
@@ -30,9 +30,9 @@ test('الرأس صفّان: الوجهة والعنوان والمعرّف ثم
   const { editor, env, videoId } = await mounted();
   assert.ok(editor);
   const head = env.root.querySelector('header.ed-head');
-  const rows = head.children.filter((c) => c.classList.contains('ed-head__row'));
+  const rows = [...head.children].filter((c) => c.classList.contains('ed-head__row'));
   assert.equal(rows.length, 2, 'صفّان (والرسالة العابرة خارجهما)');
-  const first = rows[0].children;
+  const first = [...rows[0].children];
   assert.ok(first[0].classList.contains('ed-back'), 'الأول: الرجوع إلى المحفوظات');
   assert.ok(text(first[0]).includes('المحفوظات'));
   assert.equal(first[0].querySelectorAll('svg').length, 1, 'سهم الرجوع');
@@ -67,8 +67,8 @@ test('تسمية «خانة التحرير» تختفي مع المحدد حين
   const env = editorDocument({ videoId: one.videoId });
   await mountEditor(env.root, { videoId: one.videoId, store, doc: env.doc, now: () => (at += 1000) });
   await env.flush();
-  const row = env.root.querySelector('header.ed-head').children.filter((c) => c.classList.contains('ed-head__row'))[1];
-  const label = row.children.find((c) => text(c) === 'خانة التحرير');
+  const row = [...env.root.querySelector('header.ed-head').children].filter((c) => c.classList.contains('ed-head__row'))[1];
+  const label = [...row.children].find((c) => text(c) === 'خانة التحرير');
   assert.ok(label.hidden === true, 'بلا محدد لا تسمية له');
   assert.ok(row.querySelector('.tj-slots').hidden === true);
 });
@@ -131,24 +131,26 @@ test('لافتة التغيّر الخارجي لا تُستبدل بملاحظ�
   assert.ok(banner.getAttribute('data-kind') !== 'readonly' || text(banner).length > 0);
 });
 
-test('الحالة الفارغة: «فتح الفيديو» بقفز المحفوظات نفسه (الزمن 0)، و«المحفوظات» يعود إلى صفها', async () => {
+test('الحالة الفارغة: «فتح الفيديو» يفتحه بلا قفز زمني (لا tj:seek)، و«المحفوظات» يعود إلى صفها', async () => {
   const calls = [];
-  const { env, videoId } = await mounted({ seed: false, seek: async (target) => { calls.push(target); return { ok: true, via: 'new', tabId: 1 }; } });
+  const seeks = [];
+  const { env, videoId } = await mounted({ seed: false, seek: async (t) => { seeks.push(t); return { ok: true }; }, openVideo: async (id) => { calls.push(id); return { ok: true, via: 'open', tabId: 1 }; } });
   const empty = env.root.querySelector('.tj-empty');
   assert.ok(empty, 'حالة فارغة');
   assert.ok(text(empty).includes('لا ترجمة محفوظة لهذا الفيديو'));
   named(empty, 'فتح الفيديو').click();
   await settle();
-  assert.deepEqual(calls, [{ videoId, ms: 0 }]);
+  assert.deepEqual(calls, [videoId]);
+  assert.equal(seeks.length, 0, 'لا يعيد الفيديو المفتوح إلى أوله');
   named(empty, 'المحفوظات').click();
   assert.match(env.doc.defaultView.location.assigned, /pages\/library\/index\.html#v=/);
 });
 
 test('الحالة الفارغة: فشل فتح الفيديو يُقال برسالته', async () => {
-  const { env } = await mounted({ seed: false, seek: async () => ({ ok: false, code: 'TJ_SEEK_FAILED' }) });
+  const { env } = await mounted({ seed: false, openVideo: async () => ({ ok: false, code: 'PG_OPEN_FAILED' }) });
   named(env.root.querySelector('.tj-empty'), 'فتح الفيديو').click();
   await settle();
-  assert.ok(text(env.root).includes('تعذّر الانتقال إلى هذا الزمن'));
+  assert.ok(text(env.root).includes('تعذّر فتح التبويب'));
 });
 
 test('حوار تبديل الخانة بتغييرات غير محفوظة: «حفظ ثم التبديل» الأساسي ثم «البقاء» (عليه التركيز) ثم «التبديل دون حفظ» هادئ الخطر في النهاية، والعنوان بلون النص', async () => {

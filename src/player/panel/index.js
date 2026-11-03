@@ -71,7 +71,17 @@ export function mountPanel(controller, env = {}) {
       });
   }
 
-  function tryMount() {
+  /** الفحص الدوري ومستمعا التنقل لا يرمون أبدًا: أي إخفاق غير متوقع رمز في التشخيص ويُعاد في الفحص التالي. */
+  function safeMount() {
+    try {
+      mountOnce();
+    } catch (err) {
+      failures++;
+      lastError = new TjError('PL_MOUNT_FAILED', { cause: err, detail: err instanceof Error ? `${err.name}: ${err.message}` : undefined });
+    }
+  }
+
+  function mountOnce() {
     if (stopped) return;
     // خارج صفحة الفيديو لا لوحة: تُدمَّر الجلسة (وتخرج من DOM) وتعود الحالة إلى الانتظار.
     if (videoIdFromLocation(win.location) === null) {
@@ -111,7 +121,7 @@ export function mountPanel(controller, env = {}) {
     if (coalesce || stopped) return;
     coalesce = win.setTimeout(() => {
       coalesce = 0;
-      tryMount();
+      safeMount();
     }, COALESCE_MS);
   }
 
@@ -121,8 +131,8 @@ export function mountPanel(controller, env = {}) {
   };
   doc.addEventListener(EVENTS.navigateFinish, onPage);
   doc.addEventListener(EVENTS.pageDataUpdated, onPage);
-  const health = win.setInterval(tryMount, HEALTH_MS);
-  tryMount();
+  const health = win.setInterval(safeMount, HEALTH_MS);
+  safeMount();
 
   return {
     get state() {
@@ -149,6 +159,6 @@ export function mountPanel(controller, env = {}) {
     }),
 
     /** للحزام الحي وحده: ما يظهر الآن. لا يدخل التشخيص. */
-    peek: () => (session ? session.peek() : null),
+    peek: (o) => (session ? session.peek(o) : null),
   };
 }

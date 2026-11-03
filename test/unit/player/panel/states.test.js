@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_PREFS, mergePrefs } from '../../../../src/core/model/prefs.js';
 import { UNDO_MS } from '../../../../src/player/panel/session.js';
-import { A, B, arCues, click, english, enCues, hidden, key, makeState, ui, watchPage } from './harness.js';
+import { A, B, arCues, click, english, enCues, flush, hidden, key, makeState, ui, watchPage } from './harness.js';
 
 const prefsWith = (ui) => mergePrefs(DEFAULT_PREFS, { ui });
 const ago = (p, n) => p.controller.calls.filter((c) => c[0] === n);
@@ -443,3 +443,28 @@ test('الفيديو الآخر في الحالة (تنقّل لم يلحقه ا
   assert.equal(handle.peek().kind, 'ready');
   assert.equal(handle.peek().rows, 3);
 });
+
+test('مراجعة الهوية L3 وL10: الرسالة تبقى حتى يُحفظ الإظهار (لا تختفي اللوحة لحظة)، والتركيز إلى «تراجع» ثم إلى اللوحة', async () => {
+  let release = null;
+  let gated = false;
+  const page = watchPage({ controllerOpts: { prefsGate: () => (gated ? new Promise((r) => { release = r; }) : null) } });
+  page.mount();
+  const v = ui(page);
+  click(v.qa('.head .b')[0]);
+  v.q('.menu [role="menuitem"]').focus();
+  click(v.q('.menu [role="menuitem"]'));
+  await flush();
+  assert.equal(page.handle.peek().mode, 'toast');
+  assert.ok(v.root.activeElement === v.q('.act'), 'التركيز إلى «تراجع» لا إلى body');
+  gated = true;
+  click(v.q('.act'));
+  await flush();
+  assert.equal(page.handle.peek().mode, 'toast', 'الرسالة باقية حتى يُحفظ الإظهار');
+  click(v.q('.act'));
+  assert.equal(page.controller.calls.filter(([n]) => n === 'updatePrefs').length, 2, 'ضغطة ثانية أثناء الحفظ لا تكرر');
+  release();
+  await flush();
+  assert.equal(page.handle.peek().mode, 'open');
+  assert.ok(v.root.activeElement === v.qa('.head .b')[1], 'التركيز إلى زر إغلاق اللوحة بعد التراجع');
+});
+

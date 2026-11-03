@@ -1,6 +1,7 @@
 // نصوص لوحة النص المتزامن ودوالها النقية (docs/identity-redesign.md §٤، ولوحات التصميم WatchPanel وPanelStates وWatchNarrow).
 // أرقام لاتينية، والإزاحة بعلامتها (formatOffset)، والعدّ بالعربية (formatCount). لا شيء هنا يعرف DOM.
 import { COUNT_FORMS, formatCount, formatOffset, offsetInline } from '../../ui/format.js';
+import { languageName as sharedLanguageName } from '../../ui/lang.js';
 
 export const LABELS = Object.freeze({
   title: 'النص المتزامن',
@@ -42,34 +43,19 @@ export const LABELS = Object.freeze({
   stepCapture: 'شغّل ترجمة يوتيوب (CC) ليلتقط ترجمان الأصل',
   emptyNote: 'يظهر النص هنا متزامنًا فور الرفع.',
   errorTitle: 'تعذّرت قراءة الترجمة المحفوظة',
-  inlineErrorTitle: 'لم يُحفظ آخر تغيير',
+  // خطأ المتحكم أيًّا كان (حفظ أو قراءة أو تعارض): عنوان محايد، ورسالته تقول ما حدث.
+  inlineErrorTitle: 'تعذّرت العملية الأخيرة',
   retry: 'إعادة المحاولة',
 });
 
 /**
- * اسم اللغة بالعربية من رمز المسار الأصلي الفعلي (لا اسم مكتوب بالشيفرة): اللغة الأساسية من الرمز (en-GB ← en) بأسماء
- * Intl.DisplayNames، ثم الرمز كاملًا، ثم الرمز نفسه إن لم يعرفه المتصفح. لا يرمي أبدًا.
+ * اسم لغة الأصل للوحة: اللغة الأساسية وحدها (en-GB ← الإنجليزية) من الدالة المشتركة (src/ui/lang.js)؛ وبلا اسم معروف الرمز
+ * نفسه، وبلا رمز أو برمز غير محدد نص فارغ (فيُكتب «الأصل»). لا يرمي أبدًا.
  * @param {string | null | undefined} code
- * @param {typeof Intl.DisplayNames} [DisplayNames] للاختبار
+ * @param {typeof Intl.DisplayNames | null} [DisplayNames] للاختبار
  */
 export function languageName(code, DisplayNames = globalThis.Intl?.DisplayNames) {
-  const raw = String(code ?? '').trim();
-  if (!raw || typeof DisplayNames !== 'function') return raw;
-  let names;
-  try {
-    names = new DisplayNames(['ar'], { type: 'language' });
-  } catch {
-    return raw;
-  }
-  for (const c of [raw.split(/[-_]/)[0], raw]) {
-    try {
-      const n = names.of(c);
-      if (n && n.toLowerCase() !== c.toLowerCase()) return n;
-    } catch {
-      // رمز غير صالح عند هذا المتصفح: التالي
-    }
-  }
-  return raw;
+  return sharedLanguageName(code, { region: false, DisplayNames }) ?? '';
 }
 
 /**

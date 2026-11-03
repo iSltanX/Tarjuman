@@ -65,6 +65,18 @@ test('الصورة: img واحد لكل صف بعنوانها من معرّفه 
   assert.ok(grid.children[0].classList.contains('lib-thumb') && grid.children[1].classList.contains('lib-row__main'), 'الصورة أولًا (يمين الصف في RTL) ثم العنوان');
 });
 
+test('مراجعة الهوية L9: تعذّر قراءة التفضيلات لا يطلب صورًا (البلاطة وحدها)، والقائمة تعمل', async () => {
+  const m = await mount({
+    records: [{ id: ID(1) }],
+    seed: async (store) => { store.getPrefs = async () => { throw new Error('prefs unreadable'); }; },
+  });
+  assert.equal(m.lib.state.prefs.ui.thumbnails, false);
+  const row = rowFor(m, ID(1));
+  assert.ok(row, 'الصف معروض');
+  assert.equal(findAll(row, (e) => e.tagName === 'img').length, 0, 'لا طلب خارجي ما لم يُعرف التفضيل');
+  assert.equal(row.querySelector('.lib-thumb').getAttribute('data-state'), 'fallback');
+});
+
 test('الصورة: لا طلب ولا img حين يُطفأ «صور الفيديو»؛ بلاطة بأيقونة الفيديو، والمدة باقية', async () => {
   const m = await mount({ records: [{ id: ID(1), durationMs: 125000 }], prefs: { ui: { thumbnails: false } } });
   assert.equal(m.lib.state.prefs.ui.thumbnails, false);
@@ -251,7 +263,7 @@ test('الصف: الشارة الوحيدة والترجمات (شرائح لل�
   const row = rowFor(m, ID(1));
   assert.equal(row.querySelectorAll('.tj-pill').length, 1, 'شارة حالة واحدة');
   assert.equal(textOf(row.querySelector('.tj-pill')), 'تحتاج مراجعة 2');
-  assert.deepEqual(row.querySelector('.lib-row__actions').children.map((c) => c.getAttribute('data-fk') ?? c.querySelector('button').getAttribute('data-fk')), [`${ID(1)}:edit`, `${ID(1)}:open`, `${ID(1)}:toggle`, `${ID(1)}:more`]);
+  assert.deepEqual([...row.querySelector('.lib-row__actions').children].map((c) => c.getAttribute('data-fk') ?? c.querySelector('button').getAttribute('data-fk')), [`${ID(1)}:edit`, `${ID(1)}:open`, `${ID(1)}:toggle`, `${ID(1)}:more`]);
   assert.equal(textOf(row.querySelector('.lib-trs__label')), 'الترجمات');
   const toggle = buttonNamed(row, 'إظهار الترجمات');
   toggle.click();
@@ -324,5 +336,5 @@ test('حفظ التركيز: بعد التفعيل من شريحة يعود ال
   await settle(15);
   assert.equal((await m.store.getBundle(ID(1))).active, 2);
   assert.equal(m.doc.activeElement.getAttribute('data-fk'), `${ID(1)}:chip-2`, 'الشريحة المعاد بناؤها');
-  assert.equal(chip(2).getAttribute('aria-checked'), 'true');
+  assert.equal(chip(2).getAttribute('aria-pressed'), 'true');
 });

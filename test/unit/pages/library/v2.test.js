@@ -94,7 +94,7 @@ const txt = (e) => e.textContent;
 test('الصف: شريحة لكل ترجمة موجودة تميّز النشطة، والضغط على غيرها يفعّلها برسالة «الترجمة 2» و«تراجع»، ولا شريحة لفارغ سوى شريحة الرفع', async () => {
   const m = await mount();
   let chips = chipsOf(m, IDS[0]);
-  assert.deepEqual(chips.map((b) => [textOf(b), b.getAttribute('aria-checked')]), [['الترجمة 1', 'true'], ['2 · مراجعة', 'false'], ['الترجمة 3', 'false']], 'الاسم المختصر إن وُجد');
+  assert.deepEqual(chips.map((b) => [textOf(b), b.getAttribute('aria-pressed')]), [['الترجمة 1', 'true'], ['2 · مراجعة', 'false'], ['الترجمة 3', 'false']], 'الاسم المختصر إن وُجد');
   assert.equal(rowFor(m, IDS[0]).querySelectorAll('.lib-chip--add').length, 0, 'ثلاث ترجمات: لا شريحة رفع');
   assert.equal(chips[1].title, 'الترجمة 2 — مراجعة — اضغط لتفعيلها');
   assert.equal(chips[0].title, `الترجمة 1 (النشطة) — الإزاحة ${LRI}+0.5${PDI} ث`, 'إزاحة النشطة في تلميح شريحتها');
@@ -104,12 +104,12 @@ test('الصف: شريحة لكل ترجمة موجودة تميّز النشط�
   assert.equal((await m.store.getBundle(IDS[0])).active, 2);
   const toast = m.root.querySelector('.tj-toast--success');
   assert.ok(textOf(toast).startsWith('الترجمة 2'));
-  assert.deepEqual(chipsOf(m, IDS[0]).map((b) => b.getAttribute('aria-checked')), ['false', 'true', 'false']);
+  assert.deepEqual(chipsOf(m, IDS[0]).map((b) => b.getAttribute('aria-pressed')), ['false', 'true', 'false']);
   buttonNamed(toast, 'تراجع').click();
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).active, 1, 'التراجع يعيد النشطة السابقة');
   // سجل الإصدار الأول: ترجمة واحدة في الخانة 1 تُعرض شريحتها، والخانة 2 شريحة الرفع المتقطّعة (لا نسخة فارغة).
-  assert.deepEqual(chipsOf(m, IDS[1]).map((b) => [textOf(b), b.getAttribute('aria-checked')]), [['الترجمة 1', 'true']]);
+  assert.deepEqual(chipsOf(m, IDS[1]).map((b) => [textOf(b), b.getAttribute('aria-pressed')]), [['الترجمة 1', 'true']]);
   assert.equal(textOf(rowFor(m, IDS[1]).querySelector('.lib-chip--add')), '2 · فارغة');
   assert.equal((await m.store.getBundle(IDS[1])).active, 1);
   // لوحة المفاتيح: الأسهم تنقل التركيز بين الشرائح بترتيب العرض (اليسار هو التالي)، لا تفعّل.
@@ -117,6 +117,7 @@ test('الصف: شريحة لكل ترجمة موجودة تميّز النشط�
   a.focus();
   a.dispatchEvent({ type: 'keydown', key: 'ArrowLeft' });
   assert.ok(m.doc.activeElement === b2);
+  assert.deepEqual(chipsOf(m, IDS[0]).map((x) => x.getAttribute('tabindex')), ['-1', '0', '-1'], 'نقطة Tab تتبع التركيز');
   b2.dispatchEvent({ type: 'keydown', key: 'ArrowRight' });
   assert.ok(m.doc.activeElement === a);
   assert.equal((await m.store.getBundle(IDS[0])).active, 1, 'الأسهم لا تغيّر النشطة');
@@ -135,8 +136,8 @@ test('شريحة الرفع المتقطّعة: الخانة الفارغة ال
   assert.equal(add.length, 1, 'شريحة متقطّعة واحدة');
   assert.equal(textOf(add[0]), '3 · فارغة');
   assert.equal(add[0].getAttribute('aria-description'), 'رفع ترجمة إلى الخانة 3');
-  assert.ok(add[0].getAttribute('aria-checked') === null && add[0].getAttribute('role') === null, 'إجراء لا خيار في مجموعة الخيارات');
-  assert.equal(add[0].parentNode.querySelector('.lib-chips').querySelectorAll('.lib-chip--add').length, 0, 'خارج مجموعة radio');
+  assert.ok(add[0].getAttribute('aria-pressed') === null && add[0].getAttribute('role') === null, 'إجراء لا زر تبديل في شريط الترجمات');
+  assert.equal(add[0].parentNode.querySelector('.lib-chips').querySelectorAll('.lib-chip--add').length, 0, 'خارج شريط الترجمات');
   const before = JSON.stringify(m.area.dump());
   m.answers.push(false);
   add[0].click();

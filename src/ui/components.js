@@ -209,7 +209,7 @@ const NAV_PAGES = Object.freeze([
 ]);
 
 /**
- * الشريط العلوي المشترك: الشعار المعتمد (التركيب الأفقي)، وروابط الصفحتين (الحالية بـaria-current)، و«محلي بالكامل».
+ * الشريط العلوي المشترك: الشعار المعتمد (التركيب الأفقي)، وروابط الصفحتين (الحالية بـaria-current)، و«بياناتك على جهازك».
  * @param {{ active: 'library' | 'settings' | 'editor' | null, doc?: Document }} o
  */
 export function topbar({ active, doc = document }) {
@@ -224,7 +224,7 @@ export function topbar({ active, doc = document }) {
           children: NAV_PAGES.map((p) => el('a', { className: 'tj-topbar__link', text: p.label, attrs: { href: p.href, ...(p.id === active ? { 'aria-current': 'page' } : {}) }, doc })),
           doc,
         }),
-        el('span', { className: 'tj-topbar__end', children: [icon('shield', { doc }), el('span', { text: 'محلي بالكامل', doc })], doc }),
+        el('span', { className: 'tj-topbar__end', children: [icon('shield', { doc }), el('span', { text: 'بياناتك على جهازك', doc })], doc }),
       ],
       doc,
     })],

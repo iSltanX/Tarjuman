@@ -67,17 +67,17 @@ test('القيم الأولية من prefs.ui: مفعّلان افتراضيًا
   assert.equal(sw(off, 'ui.thumbnails').checked, false);
 });
 
-test('«زر النص المتزامن»: الإطفاء يكتب prefs.ui.panelEntry=false فورًا بعلامة «حُفظ» ولا يمسّ بقية ui ولا غيرها', async () => {
+test('«زر النص المتزامن»: الإطفاء يكتب panelEntry=false ويغلق اللوحة معه (كإخفائه من قائمتها) بعلامة «حُفظ»، ولا يمسّ غيرهما', async () => {
   const m = await mount({ prefs: { ui: { panelOpen: true, panelDual: false }, glossary: { attach: false } } });
   toggle(sw(m, 'ui.panelEntry'), false);
   await settle();
   const p = await m.store.getPrefs();
-  assert.deepEqual(p.ui, { thumbnails: true, panelEntry: false, panelOpen: true, panelDual: false });
+  assert.deepEqual(p.ui, { thumbnails: true, panelEntry: false, panelOpen: false, panelDual: false }, 'لا تُفتح اللوحة وحدها حين يعود الزر');
   assert.equal(p.glossary.attach, false);
   assert.deepEqual(marks(rowOf(m, 'زر النص المتزامن')), ['حُفظ']);
   toggle(sw(m, 'ui.panelEntry'), true);
   await settle();
-  assert.equal((await m.store.getPrefs()).ui.panelEntry, true, 'التشغيل يعيده');
+  assert.deepEqual((await m.store.getPrefs()).ui, { thumbnails: true, panelEntry: true, panelOpen: false, panelDual: false }, 'التشغيل يعيد الزر وحده واللوحة مغلقة');
 });
 
 test('«صور الفيديو في المحفوظات»: يكتب prefs.ui.thumbnails ويبقى panelEntry على حاله', async () => {

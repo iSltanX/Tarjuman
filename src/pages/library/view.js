@@ -10,6 +10,9 @@ import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
+
+/** تعذّرت قراءة التفضيلات: الافتراضي، لكن بلا صور (لا طلب خارجي ما لم يُعرف أن المستخدم يريده؛ مراجعة الهوية L9). */
+const PREFS_UNREADABLE = Object.freeze({ ...DEFAULT_PREFS, ui: Object.freeze({ ...DEFAULT_PREFS.ui, thumbnails: false }) });
 import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
@@ -366,14 +369,17 @@ export function createLibrary(env) {
   }
 
   // ---- الصف ----
-  /** شريحة خانة موجودة: الرقم والاسم المختصر، والنشطة بالإبراز ومعيّن؛ والضغط على غير النشطة يفعّلها. */
+  /**
+   * شريحة خانة موجودة: الرقم والاسم المختصر، والنشطة بالإبراز ومعيّن وaria-pressed؛ والضغط على غير النشطة يفعّلها. زر تبديل في
+   * شريط أدوات لا خيار في مجموعة خيارات: الأسهم تنقل التركيز ولا تفعّل (التفعيل يغيّر المحفوظ وله رسالة تراجع).
+   */
   function slotChip(m, s, focusable) {
     const label = chipLabel(s);
     const base = s.name ? `الترجمة ${s.n} — ${s.name}` : `الترجمة ${s.n}`;
     const b = el('button', {
       className: `lib-chip${s.active ? ' lib-chip--active' : ''}`,
       attrs: {
-        type: 'button', role: 'radio', 'aria-checked': s.active ? 'true' : 'false', 'data-slot': String(s.n), 'data-fk': `${m.videoId}:chip-${s.n}`,
+        type: 'button', 'aria-pressed': s.active ? 'true' : 'false', 'data-slot': String(s.n), 'data-fk': `${m.videoId}:chip-${s.n}`,
         tabindex: focusable ? '0' : '-1', title: s.active ? `${base} (النشطة)${m.offsetText ? ` — ${m.offsetText}` : ''}` : `${base} — اضغط لتفعيلها`,
       },
       children: [el('i', { className: 'lib-chip__mark', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'lib-chip__text', text: label, doc })],
@@ -405,16 +411,19 @@ export function createLibrary(env) {
       return el('div', { className: 'lib-trs lib-trs--none', children: [label, el('span', { className: 'lib-trs__none', text: `لا ترجمة عربية بعد · ${m.sourceText}`, doc })], doc });
     }
     const focusAt = m.filled.find((s) => s.active) ?? m.filled[0];
-    const group = el('div', { className: 'lib-chips', attrs: { role: 'radiogroup', 'aria-labelledby': labelId }, children: m.filled.map((s) => slotChip(m, s, s.n === focusAt.n)), doc });
-    // الأسهم تنقل التركيز بين الشرائح (بترتيب العرض: اليسار هو التالي في RTL)، والتنشيط بـEnter أو المسافة.
+    const group = el('div', { className: 'lib-chips', attrs: { role: 'toolbar', 'aria-labelledby': labelId }, children: m.filled.map((s) => slotChip(m, s, s.n === focusAt.n)), doc });
+    // الأسهم تنقل التركيز بين الشرائح (بترتيب العرض: اليسار هو التالي في RTL) ونقطة Tab معه، والتنشيط بـEnter أو المسافة.
+    // children مجموعة HTMLCollection لا مصفوفة: تُنسخ قبل indexOf.
     group.addEventListener('keydown', (e) => {
       const forward = e.key === 'ArrowLeft' || e.key === 'ArrowDown';
       if (!forward && e.key !== 'ArrowRight' && e.key !== 'ArrowUp') return;
-      const list = group.children;
+      const list = [...group.children];
       const at = list.indexOf(doc.activeElement);
       if (at === -1 || list.length < 2) return;
       e.preventDefault();
-      list[(at + (forward ? 1 : -1) + list.length) % list.length].focus();
+      const next = list[(at + (forward ? 1 : -1) + list.length) % list.length];
+      for (const c of list) c.setAttribute('tabindex', c === next ? '0' : '-1');
+      next.focus();
     });
     return el('div', { className: 'lib-trs', children: [label, el('div', { className: 'lib-trs__chips', children: [group, m.nextEmpty ? addChip(m, m.nextEmpty) : null], doc })], doc });
   }
@@ -703,7 +712,7 @@ export function createLibrary(env) {
   async function load() {
     const mine = ++loadSeq;
     try {
-      const [items, capacity, prefs] = await Promise.all([store.listLibrary(), store.capacity(), store.getPrefs().catch(() => DEFAULT_PREFS)]);
+      const [items, capacity, prefs] = await Promise.all([store.listLibrary(), store.capacity(), store.getPrefs().catch(() => PREFS_UNREADABLE)]);
       if (mine !== loadSeq) return;
       Object.assign(state, { entries: libraryEntries(items), capacity, prefs, status: 'ready', error: null });
     } catch (err) {

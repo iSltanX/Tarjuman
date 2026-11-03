@@ -295,3 +295,38 @@ test('التشخيص: أعداد ورموز فقط، بلا نص مقاطع ول
   assert.ok(!json.includes('youtube.com'));
   assert.equal(handle.diagnostics().session.rows, 1);
 });
+
+test('تخطيط العمود الواحد (عرض ضيق): يوتيوب يخفي العمود فينتقل المضيف إلى #below بعد بيانات الفيديو، ويعود بعودة العمودين', () => {
+  const page = watchPage();
+  const below = page.doc.createElement('div');
+  below.id = 'below';
+  const meta = page.doc.createElement('ytd-watch-metadata');
+  const comments = page.doc.createElement('ytd-comments');
+  below.append(meta, comments);
+  page.primary.appendChild(below);
+  page.mount();
+  const host = page.hostEl();
+  assert.ok(host, 'في العمود أولًا');
+  // يوتيوب يتحول إلى عمود واحد: يخفي #secondary وينقل المقترحات تحت الفيديو.
+  page.flexy.setAttribute('is-single-column', '');
+  page.inner.rect = { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 };
+  below.rect = { left: 0, top: 380, width: 640, height: 900, right: 640, bottom: 1280 };
+  page.env.win.advance(HEALTH_MS + 10);
+  assert.ok(host.parentNode === below, 'انتقل إلى #below');
+  assert.ok(below.children[0] === meta && below.children[1] === host && below.children[2] === comments, 'بعد بيانات الفيديو وقبل التعليقات');
+  assert.equal(page.handle.peek().place, 'below');
+  assert.equal(page.hostEl(), null, 'لم يبقَ في العمود المخفي');
+  // يوتيوب يدرج عنصرًا بين البيانات والمضيف: يعود بعدها مباشرة عند الفحص.
+  const chips = page.doc.createElement('ytd-chips');
+  below.insertBefore(chips, host);
+  page.env.win.advance(HEALTH_MS + 10);
+  assert.ok(below.children[1] === host, 'يعود بعد البيانات مباشرة');
+  // عودة العمودين: إلى أول العمود الثانوي، بالجلسة نفسها.
+  page.flexy.removeAttribute('is-single-column');
+  page.setGeometry(true);
+  page.env.win.advance(HEALTH_MS + 10);
+  assert.ok(page.hostEl() === host && page.inner.children[0] === host, 'عاد أول العمود');
+  assert.equal(page.handle.peek().place, 'beside');
+  page.handle.unmount();
+});
+

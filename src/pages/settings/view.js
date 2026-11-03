@@ -150,7 +150,11 @@ export function createSettings(env) {
    */
   function uiSwitch(key, text, mark) {
     const input = el('input', { className: 'st-switch__input', attrs: { id: `st-ui-${key}`, type: 'checkbox', role: 'switch', 'data-pref': `ui.${key}` }, doc });
-    input.addEventListener('change', () => { savePrefs({ ui: { [key]: input.checked } }, mark); });
+    // إطفاء «زر النص المتزامن» كإخفائه من قائمة اللوحة: يُغلق اللوحة معه، فلا تُفتح وحدها حين يعود الزر (مراجعة الهوية L4).
+    input.addEventListener('change', () => {
+      const patch = key === 'panelEntry' && !input.checked ? { panelEntry: false, panelOpen: false } : { [key]: input.checked };
+      savePrefs({ ui: patch }, mark);
+    });
     sync.push(() => { input.checked = prefs.ui[key]; });
     input.checked = prefs.ui[key];
     return el('label', {

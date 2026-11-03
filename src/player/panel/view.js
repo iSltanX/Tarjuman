@@ -214,10 +214,11 @@ export function createPanelView({ doc, win, on }) {
   const panel = el(doc, 'section', { className: 'panel', attrs: { 'aria-label': LABELS.panel } }, [head, menu, bar, body, foot]);
 
   // ———— رسالة التراجع ————
+  const undoBtn = el(doc, 'button', { className: 'act', attrs: { type: 'button' }, text: LABELS.undo, on: { click: () => on.undo() } });
   const toast = el(doc, 'div', { className: 'toast', attrs: { role: 'status', hidden: '' } }, [
     icon(doc, 'eye-off', { size: 'sm' }),
     el(doc, 'span', { text: LABELS.toastHidden }),
-    el(doc, 'button', { className: 'act', attrs: { type: 'button' }, text: LABELS.undo, on: { click: () => on.undo() } }),
+    undoBtn,
   ]);
 
   shell.append(entry, panel, toast);
@@ -422,6 +423,10 @@ export function createPanelView({ doc, win, on }) {
     // التركيز لا يضيع بتبديل الشكل: من الزر إلى اللوحة (زر الإغلاق)، ومن اللوحة إلى الزر.
     if (prevActive === entry && m.mode === 'open') closeBtn.focus();
     else if (prevActive && m.mode === 'entry' && (panel.contains(prevActive))) entry.focus();
+    // إخفاء الزر من قائمة اللوحة: التركيز إلى «تراجع» لا إلى body (مراجعة الهوية L10)؛ والتراجع يعيده إلى الزر أو اللوحة.
+    else if (prevActive && m.mode === 'toast' && panel.contains(prevActive)) undoBtn.focus();
+    else if (prevActive === undoBtn && m.mode === 'entry') entry.focus();
+    else if (prevActive === undoBtn && m.mode === 'open') closeBtn.focus();
 
     const becameReady = readyOpen && !wasReady;
     shown = { mode: m.mode, kind: m.kind };
@@ -440,8 +445,17 @@ export function createPanelView({ doc, win, on }) {
     host.remove();
   }
 
-  /** لقطة نصية لما يُرى (للحزام الحي والاختبارات): عدّادات ونصوص الواجهة، لا نصوص المقاطع. */
-  function peek() {
+  /**
+   * لقطة نصية لما يُرى (للحزام الحي والاختبارات): عدّادات ونصوص الواجهة، لا نصوص المقاطع.
+   * @param {{ boxes?: boolean, rows?: number[] }} [o] boxes: مواضع الأزرار وصفوف rows (للحزام الحي يضغطها بنقرة حقيقية داخل الجذر المغلق)
+   */
+  function peek(o = {}) {
+    const box = (e) => {
+      for (let n = e; n && n !== shell; n = n.parentNode) if (n.hasAttribute?.('hidden')) return null;
+      if (!e) return null;
+      const r = e.getBoundingClientRect();
+      return r.width && r.height ? { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width), height: Math.round(r.height) } : null;
+    };
     const segsOf = (g) => Array.from(g.el.children).map((b) => ({
       value: b.getAttribute('data-v'), text: b.textContent, checked: b.getAttribute('aria-checked') === 'true',
       disabled: b.getAttribute('aria-disabled') === 'true', title: b.getAttribute('title'), aria: b.getAttribute('aria-label'),
@@ -467,6 +481,14 @@ export function createPanelView({ doc, win, on }) {
       inlineError: inlineError.hasAttribute('hidden') ? null : inlineText.textContent,
       toast: toast.hasAttribute('hidden') ? null : toast.textContent,
       menu: menuOpen,
+      boxes: !o.boxes ? undefined : {
+        host: box(host), entry: box(entry), panel: box(panel), opts: box(optsBtn), close: box(closeBtn), hide: box(hideItem), follow: box(followSwitch),
+        resume: box(resume), reset: box(resetBtn), earlier: box(earlierBtn), later: box(laterBtn), undo: box(undoBtn), list: box(transcript.list),
+        dual: Array.from(segs.el.children).map(box),
+        rows: (o.rows ?? []).map((i) => ({ i, label: transcript.labelOf(i), box: box(transcript.rowEl(i)), time: box(transcript.rowEl(i)?.firstElementChild ?? null) })),
+      },
+      scrollTop: o.boxes ? Math.round(transcript.list.scrollTop) : undefined,
+      originals: o.boxes ? transcript.list.querySelectorAll('.en').length : undefined,
     };
   }
 

@@ -251,4 +251,8 @@ test('deleteSummary: بنود لما يوجد فعلًا وحده، لكل تر�
   solo.slots[1] = { n: 2, name: null, track: null, offsetMs: 0, marks: [], position: null };
   assert.deepEqual(deleteSummary(solo, { scope: 'slot', n: 1 }).keeps, ['المسار الإنجليزي والبصمات تبقى']);
   assert.ok(!deleteSummary(solo, { scope: 'all' }).items.some((t) => t.includes('السابقة')), 'لا سابقة: لا بند لها');
+  // مراجعة الهوية L5: لا ترجمة ممتلئة وبقيت نسخة سابقة: تُذكر لأنها تُحذف مع الفيديو.
+  const onlyPrev = sampleBundle({ videoId: 'AAAAAAAAAAA' });
+  onlyPrev.slots = onlyPrev.slots.map((x) => ({ ...x, track: null, marks: [], offsetMs: 0, position: null }));
+  assert.ok(deleteSummary(onlyPrev, { scope: 'all' }).items.includes(`النسخة السابقة (من الترجمة ${onlyPrev.previous.from})`));
 });

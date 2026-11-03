@@ -117,6 +117,12 @@ export class FakeElement {
     return this.children[0] ?? null;
   }
 
+  get nextSibling() {
+    const sibs = this.parentNode?.children;
+    if (!sibs) return null;
+    return sibs[sibs.indexOf(this) + 1] ?? null;
+  }
+
   get isConnected() {
     let n = this;
     while (n) {

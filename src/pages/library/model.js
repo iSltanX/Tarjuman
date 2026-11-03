@@ -434,18 +434,6 @@ export function nameHintText(hint, titleOf = () => null) {
   return title ? `الاسم يشير إلى فيديو آخر: ${String.fromCodePoint(0x2068)}${title}${String.fromCodePoint(0x2069)}` : `الاسم يشير إلى فيديو آخر (${hint.videoId}).`;
 }
 
-/**
- * بطاقة النسخة السابقة: «من الترجمة 2 · قبل ساعة · 0.6 م.ب».
- * @param {{ from: number, savedAt: string, track: { fileName: string, original: unknown[] } } | null} p
- * @param {number | null} bytes @param {number} nowMs @param {(n: number) => string} formatSize
- */
-export function previousCard(p, bytes, nowMs, formatSize) {
-  if (!p) return null;
-  const parts = [`من الترجمة ${p.from}`, relativeTime(p.savedAt, nowMs)];
-  if (Number.isFinite(bytes) && bytes > 0) parts.push(formatSize(bytes));
-  return { from: p.from, line: parts.join(' · '), fileName: p.track.fileName, absolute: absoluteTime(p.savedAt), cueText: formatCount(p.track.original.length, COUNT_FORMS.cue) };
-}
-
 /** «الترجمة 2» و«الترجمتان 1 و3» و«الترجمات 1 و2 و3». @param {number[]} nums */
 export function slotsPhrase(nums) {
   const list = nums.map(String);
@@ -470,8 +458,9 @@ export function deleteSummary(b, what) {
     items.push(`الترجمة ${named(s)} — ملف ${ltrInline(s.track.fileName)}`);
   } else if (slots.length) {
     items.push(slots.length === 1 ? `الترجمة ${named(slots[0])}` : `${slots.length === 2 ? 'الترجمتان' : 'الترجمات'} ${slots.map(named).join(' و')}`);
-    if (b.previous) items.push(`النسخة السابقة (من الترجمة ${b.previous.from})`);
   }
+  // النسخة السابقة تُحذف مع الفيديو كله ولو لم تبقَ ترجمة ممتلئة (مراجعة الهوية L5).
+  if (what.scope === 'all' && b.previous) items.push(`النسخة السابقة (من الترجمة ${b.previous.from})`);
   const edits = slots.reduce((n, s) => n + manualEdits(s.track), 0);
   if (edits) items.push(formatCount(edits, EDIT_FORMS));
   const marks = slots.reduce((n, s) => n + s.marks.length, 0);

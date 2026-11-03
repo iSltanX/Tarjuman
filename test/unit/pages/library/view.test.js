@@ -234,8 +234,8 @@ test('فتح الفيديو يفتح عنوان المشاهدة وحده، و«
   const up = buttonNamed(rowFor(m, IDS[1]), 'رفع ترجمة');
   assert.ok(up && up.classList.contains('tj-btn--primary'), 'بلا عربية: «رفع ترجمة» الإجراء الرئيسي');
   assert.ok(buttonNamed(rowFor(m, IDS[0]), 'فتح الفيديو'), 'فتح الفيديو زر أيقوني باسم وصول');
-  const chips = findAll(rowFor(m, IDS[0]), (e) => e.classList.contains('lib-chip') && e.getAttribute('role') === 'radio');
-  assert.deepEqual(chips.map((s) => [textOf(s), s.getAttribute('aria-checked')]), [['الترجمة 1', 'true']], 'شريحة لكل ترجمة موجودة وحدها');
+  const chips = findAll(rowFor(m, IDS[0]), (e) => e.classList.contains('lib-chip') && e.getAttribute('aria-pressed') !== null);
+  assert.deepEqual(chips.map((s) => [textOf(s), s.getAttribute('aria-pressed')]), [['الترجمة 1', 'true']], 'شريحة لكل ترجمة موجودة وحدها');
   const none = rowFor(m, IDS[1]);
   assert.equal(findAll(none, (e) => e.classList.contains('lib-chip')).length, 0, 'بلا عربية: لا شرائح ولا خانة فارغة');
   assert.equal(textOf(none.querySelector('.lib-trs__none')), 'لا ترجمة عربية بعد · الأصل جاهز', 'الأصل الإنجليزي محفوظ فعلًا');
@@ -532,7 +532,7 @@ test('الرفع: حوار الفحص الكامل — الافتراضي أول
   assert.equal(b.slots[0].offsetMs, 1000, 'إزاحة الأولى باقية');
   assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'حُفظت الترجمة في الخانة 2.');
   const chips = rows(m)[0].querySelector('.lib-chips');
-  assert.deepEqual(chips.querySelectorAll('button').map((x) => [textOf(x), x.getAttribute('aria-checked')]), [['الترجمة 1', 'false'], ['الترجمة 2', 'true']], 'صارت ترجمتين بعد الإضافة، والجديدة نشطة');
+  assert.deepEqual(chips.querySelectorAll('button').map((x) => [textOf(x), x.getAttribute('aria-pressed')]), [['الترجمة 1', 'false'], ['الترجمة 2', 'true']], 'صارت ترجمتين بعد الإضافة، والجديدة نشطة');
   assert.equal(rows(m)[0].querySelectorAll('.lib-chip--add').map(textOf)[0], '3 · فارغة', 'والشريحة المتقطّعة للخانة التالية');
 });
 
@@ -797,9 +797,9 @@ test('تدقيق 5fedcb9 (CL-007): اسم الوصول لأزرار الصف ي�
   for (const b of rowsHost.flatMap((r) => findAll(r, (e) => e.tagName === 'button' && e.getAttribute('aria-label') && textOf(e)))) {
     // يحوي الاسم النص الظاهر دائمًا، ويبدأ به لأفعال الصف (محدد الترجمات أرقامه «الترجمة 1» فيحوي الرقم).
     assert.ok(b.getAttribute('aria-label').includes(textOf(b)), `${textOf(b)} ← ${b.getAttribute('aria-label')}`);
-    if (b.getAttribute('role') !== 'radio') assert.ok(b.getAttribute('aria-label').startsWith(textOf(b)), `${textOf(b)} ← ${b.getAttribute('aria-label')}`);
+    if (b.getAttribute('aria-pressed') === null) assert.ok(b.getAttribute('aria-label').startsWith(textOf(b)), `${textOf(b)} ← ${b.getAttribute('aria-label')}`);
   }
-  // الشرائح: radio بنصها الظاهر اسمًا (بلا aria-label يخالفه)، والشريحة المتقطّعة اسمها نصها ووصفها فعل الرفع.
+  // الشرائح: أزرار تبديل بنصها الظاهر اسمًا (بلا aria-label يخالفه)، والشريحة المتقطّعة اسمها نصها ووصفها فعل الرفع.
   const chips = findAll(rowFor(m, IDS[0]), (e) => e.classList.contains('lib-chip'));
   assert.ok(chips.length >= 1);
   for (const c of chips) assert.ok(c.getAttribute('aria-label') === null, `${textOf(c)}: الاسم من النص الظاهر`);

@@ -452,3 +452,25 @@ test('آلاف المقاطع: تغيّر الإزاحة لا يعيد البن�
   assert.equal(handle.diagnostics().session.rebuilds, 1);
   assert.equal(ui(page).rows()[2499].children[0].textContent, '41:44');
 });
+
+test('مراجعة الهوية L2: الإغلاق ثم الفتح، أو تحميل ترجمة أخرى، يعيدان التتبّع من الحالي (لا «العودة إلى» قديمة)', () => {
+  const { page, list } = open({ cues: many(100), t: 50.5 });
+  list.dispatchEvent({ type: 'wheel', bubbles: true });
+  assert.equal(page.handle.peek().follow, false);
+  const ui0 = page.controller.getState().prefs.ui;
+  page.controller.set({ prefs: { ui: { ...ui0, panelOpen: false } } });
+  assert.equal(page.handle.peek().mode, 'entry');
+  page.controller.set({ prefs: { ui: { ...ui0, panelOpen: true } } });
+  const p = page.handle.peek();
+  assert.equal(p.mode, 'open');
+  assert.equal(p.follow, true, 'التتبّع مفعّل بعد الفتح');
+  assert.equal(p.resume, null, 'لا «العودة إلى» من الجلسة السابقة');
+  assert.equal(ui(page).switchEl.getAttribute('aria-checked'), 'true');
+  // ترجمة أخرى تُحمَّل (حالة تحميل ثم صفوف): من الحالي أيضًا.
+  list.dispatchEvent({ type: 'wheel', bubbles: true });
+  assert.equal(page.handle.peek().follow, false);
+  page.controller.set({ loading: true, arabic: null });
+  page.controller.set({ loading: false, arabic: { cues: many(80) } });
+  assert.equal(page.handle.peek().follow, true);
+});
+

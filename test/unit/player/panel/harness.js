@@ -73,6 +73,8 @@ export function fakeController(initial = makeState(), opts = {}) {
     async updatePrefs(patch) {
       calls.push(['updatePrefs', patch]);
       if (opts.prefsFail) throw new Error('prefs write failed');
+      // حفظ بطيء (صدى التخزين يتأخر): يُطبَّق حين يُستدعى release.
+      if (opts.prefsGate) await opts.prefsGate();
       set({ prefs: mergePrefs(state.prefs, patch) });
       return state.prefs;
     },

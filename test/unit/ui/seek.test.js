@@ -2,7 +2,7 @@
 // عناوينها (بلا إذن tabs)، وتختار الأحدث استعمالًا عند التعدد، وتفتح تبويبًا جديدًا عند الزمن إن لم تجده.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { findVideoTabs, jumpToVideo } from '../../../src/ui/seek.js';
+import { findVideoTabs, jumpToVideo, openVideo } from '../../../src/ui/seek.js';
 
 const A = 'AAAAAAAAAAA';
 const reply = (videoId) => ({ v: 1, ok: true, watch: true, videoId, title: null, loading: false, english: { captured: [], saved: [] }, arabic: null, view: { displayOffsetMs: 0, displayMode: 'ar' }, mounted: { overlay: 'mounted', controls: 'mounted' } });
@@ -56,3 +56,19 @@ test('رفض القفز يعيد رمزه، وغياب الرد TJ_SEEK_FAILED',
   const silent = fakeTabs([{ id: 2, windowId: 1, answer: reply(A) }], { seekReply: () => undefined });
   assert.deepEqual(await jumpToVideo({ videoId: A, ms: 0 }, silent), { ok: false, code: 'TJ_SEEK_FAILED' });
 });
+
+test('openVideo: تبويب الفيديو المفتوح يُجلب كما هو بلا tj:seek (لا يعود إلى أوله)، وإلا تبويب جديد بلا زمن', async () => {
+  const f = fakeTabs([{ id: 2, windowId: 7, active: false, lastAccessed: 300, answer: reply(A) }]);
+  assert.deepEqual(await openVideo(A, f), { ok: true, via: 'open', tabId: 2 });
+  assert.deepEqual(f.calls.update.at(-1), [2, { active: true }]);
+  assert.deepEqual(f.calls.focus.at(-1), [7, { focused: true }]);
+  assert.equal(f.calls.sent.filter(([, type]) => type === 'tj:seek').length, 0, 'لا قفز زمني');
+  const g = fakeTabs([{ id: 1, windowId: 1, active: true, lastAccessed: 100 }]);
+  assert.deepEqual(await openVideo(A, g), { ok: true, via: 'new', tabId: 99 });
+  assert.deepEqual(g.calls.create, [{ url: `https://www.youtube.com/watch?v=${A}` }]);
+  assert.deepEqual(await openVideo('bad', g), { ok: false, code: 'TJ_BAD_VIDEO_ID' });
+  const broken = fakeTabs([]);
+  broken.tabs.query = async () => { throw new Error('x'); };
+  assert.deepEqual(await openVideo(A, broken), { ok: false, code: 'PG_OPEN_FAILED' });
+});
+

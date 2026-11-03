@@ -1,5 +1,5 @@
 // نافذة الأيقونة (P7-AC1، وإعادة التصميم، وجولة الصقل، والهوية «بُنّ على ورق»): نافذة استخدام سريعة لا مجرد روابط: رأس
-// بالشعار المعتمد و«محلي بالكامل»، وبطاقة الفيديو الحالي (العنوان والحالة ومؤشر «محفوظ» وسطر الأدوات)، وصف «زر النص
+// بالشعار المعتمد و«بياناتك على جهازك»، وبطاقة الفيديو الحالي (العنوان والحالة ومؤشر «محفوظ» وسطر الأدوات)، وصف «زر النص
 // المتزامن مخفي» بزر إظهاره حين أخفاه المستخدم، وإجراءات سريعة بحسب السياق (تحرير الترجمة، ونسخ تعليمات الترجمة من هنا
 // مباشرة)، وثلاث خطوات تُرشد فيديو بلا ترجمة عربية من حالة الأصل الفعلية، وعلى غير صفحة فيديو آخر الترجمات لفتحها أو
 // تحريرها؛ ثم تذييل بمدخل واحد لكل وجهة: المحفوظات (على صف الفيديو الحالي إن كان محفوظًا) والإعدادات. كل وجهة تفتح صفحتها
@@ -70,7 +70,7 @@ startPage({
     const notice = el('div', { className: 'tj-popup__notice', attrs: { role: 'status' } });
     app.append(el('header', {
       className: 'tj-popup__head',
-      children: [logo({ height: 22 }), el('span', { className: 'tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: 'محلي بالكامل' })] })],
+      children: [logo({ height: 22 }), el('span', { className: 'tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: 'بياناتك على جهازك' })] })],
     }));
     const main = el('div', { className: 'tj-popup__main' });
     const eyebrow = el('span', { className: 'tj-popup__eyebrow', text: 'الفيديو الحالي' });

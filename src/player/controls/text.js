@@ -1,6 +1,7 @@
 // نصوص أدوات الشريط (figma-design-brief §٥.٢ و§٦ و§١٦.١) ودوالها النقية: التلميحات بالخطوة الحالية، ومعنى
 // الإزاحة بالكلمات، وملخص المقارنة في سطر، وقراءة الثواني من حقل. أرقام لاتينية، والإزاحة بعلامتها (formatOffset).
 import { COUNT_FORMS, formatCount, formatTimecode, offsetInline } from '../../ui/format.js';
+import { languageName as sharedLanguageName } from '../../ui/lang.js';
 
 export const LABELS = Object.freeze({
   group: 'أدوات ترجمان',
@@ -89,24 +90,13 @@ export const LABELS = Object.freeze({
 });
 
 /** @type {Intl.DisplayNames | null} */
-let languageNames = null;
 /**
- * اسم اللغة بالعربية من رمز المسار الفعلي (en ← الإنجليزية، fr ← الفرنسية، en-GB ← الإنجليزية (المملكة المتحدة))؛ وما لا يعرفه
- * المتصفح أو رمز غير صالح يبقى الرمز نفسه، وبلا رمز null. لا اسم لغة مكتوب هنا: الأصل ما التقطه المشغّل لا ما نفترضه.
+ * اسم اللغة بالعربية من رمز المسار الفعلي بلهجته إن عُرفت (en ← الإنجليزية، en-GB ← الإنجليزية (المملكة المتحدة))، من الدالة
+ * المشتركة (src/ui/lang.js)؛ وما لا يعرفه المتصفح يبقى رمزه، وبلا رمز أو برمز غير محدد null.
  * @param {string | null | undefined} lang
  * @returns {string | null}
  */
-export function languageName(lang) {
-  const code = String(lang ?? '').trim();
-  if (!code) return null;
-  try {
-    languageNames ??= new Intl.DisplayNames(['ar'], { type: 'language' });
-    const name = languageNames.of(code);
-    return name && name !== 'root' ? name : code;
-  } catch {
-    return code;
-  }
-}
+export const languageName = (lang) => sharedLanguageName(lang);
 
 /**
  * تسمية وضع «العربية فوق الأصل» باسم لغة الأصل الفعلية: الظاهرة بلغتها الأساسية («فوق الإنجليزية»)، واسم الوصول

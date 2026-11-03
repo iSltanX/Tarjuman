@@ -56,7 +56,7 @@ test('مُطفأة (prefs.ui.thumbnails = false): بلاطة بأيقونة ال
   const svg = tile.children[0];
   assert.equal(svg.tagName, 'svg');
   assert.equal(svg.getAttribute('aria-hidden'), 'true', 'الأيقونة زخرفية');
-  assert.deepEqual(svg.children.map((c) => c.tagName), ['path', 'rect'], 'أيقونة الفيديو (كاميرا) لا لقطة');
+  assert.deepEqual([...svg.children].map((c) => c.tagName), ['path', 'rect'], 'أيقونة الفيديو (كاميرا) لا لقطة');
   const everything = findAll(t.root, () => true).flatMap((e) => [...e._attrs.values(), e.textContent]).join('|');
   assert.equal(/ytimg|\.jpg|https?:/.test(everything), false, 'لا طلب ولا عنوان حين تُطفأ');
 });
