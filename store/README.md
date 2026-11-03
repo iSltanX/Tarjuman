@@ -91,9 +91,9 @@
 | الحقل | مطلوب؟ | الحد أو المقاس | ترجمان | المصدر |
 | --- | --- | --- | --- | --- |
 | حساب المطوّر | مطلوب | رسوم تسجيل لمرة واحدة. مبلغها 5 دولارات في تدوينة Chromium (2020-03-12)، والصفحة الحالية لا تذكره. والتحقق بخطوتين إلزامي، وبريد التواصل موثّق، واسم الناشر مطلوب | سلطان بيده عند النشر | [register](https://developer.chrome.com/docs/webstore/register)، [policies](https://developer.chrome.com/docs/webstore/program-policies/policies) |
-| إعلان تاجر أو غير تاجر (DSA) | مطلوب من كل المطوّرين | التاجر يُنشر اسمه القانوني وهاتفه وعنوانه أسفل الإدراج | **[قرار]** | [trader-disclosure](https://developer.chrome.com/docs/webstore/program-policies/trader-disclosure) |
+| إعلان تاجر أو غير تاجر (DSA) | مطلوب من كل المطوّرين | التاجر يُنشر اسمه القانوني وهاتفه وعنوانه أسفل الإدراج | «غير تاجر» بانتظار تأكيد سلطان (§٥) | [trader-disclosure](https://developer.chrome.com/docs/webstore/program-policies/trader-disclosure) |
 | الحزمة | مطلوبة | ZIP حتى 2GB، والبيان في جذرها، ورقم الإصدار يزيد مع كل رفع، وللناشر الجديد إضافتان منشورتان | T4 | [publish](https://developer.chrome.com/docs/webstore/publish)، [prepare](https://developer.chrome.com/docs/webstore/prepare) |
-| الاسم | من `name` في البيان | حتى 75 محرفًا | «ترجمان». **[قرار]** صيغة العنوان | [prepare](https://developer.chrome.com/docs/webstore/prepare) |
+| الاسم | من `name` في البيان | حتى 75 محرفًا، و`short_name` حتى 12 | «ترجمان - ترجمتك العربية فوق الفيديو» (35)، و`short_name` «ترجمان». T2 | [prepare](https://developer.chrome.com/docs/webstore/prepare) |
 | الملخص | من `description` في البيان | حتى 132 محرفًا، نص عادي | الحالي 122 محرفًا، ويُراجع بعد T2.1 | [best-listing](https://developer.chrome.com/docs/webstore/best-listing) |
 | الوصف التفصيلي | مطلوب، والفارغ يُرفض | بلا حد منشور. ممنوع حشو الكلمات (Yellow Argon): لا قوائم مواقع أو علامات، ولا تكرار الكلمة أكثر من 5 مرات | T6 | [listing-requirements](https://developer.chrome.com/docs/webstore/program-policies/listing-requirements) |
 | الفئة واللغة | في Product details | الإلزام وقائمة الفئات لم يُتحقق منهما | T6 | [cws-dashboard-listing](https://developer.chrome.com/docs/webstore/cws-dashboard-listing) |
@@ -109,7 +109,7 @@
 | Data usage وتصديقات Limited Use | مطلوب للنشر والتحديث | خانات لأنواع البيانات، وقائمتها الكاملة لم يُتحقق منها | T5 وT6 | [user-data-faq](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq) |
 | رابط سياسة الخصوصية | مطلوب، فالإضافة تتعامل مع بيانات المستخدم | غيابه أو تعطّل رابطه سبب رفض (Purple Lithium) | T5 وT7 | [troubleshooting](https://developer.chrome.com/docs/webstore/troubleshooting) |
 | إقرار Limited Use في الموقع | مطلوب لمن يتعامل مع البيانات | في الصفحة الرئيسية للموقع أو على بُعد نقرة منها | T7 | [limited-use](https://developer.chrome.com/docs/webstore/program-policies/limited-use) |
-| الظهور والمناطق | — | Public أو Unlisted أو Private، وكل المناطق أو بعضها | **[قرار]** | [cws-dashboard-distribution](https://developer.chrome.com/docs/webstore/cws-dashboard-distribution) |
+| الظهور والمناطق | — | Public أو Unlisted أو Private، وكل المناطق أو بعضها | Public وكل المناطق | [cws-dashboard-distribution](https://developer.chrome.com/docs/webstore/cws-dashboard-distribution) |
 | Test instructions | اختياري | ليس شرطًا للنشر، ونوصي به | T6 | [cws-dashboard-test-instructions](https://developer.chrome.com/docs/webstore/cws-dashboard-test-instructions) |
 | الإشارة إلى يوتيوب | — | لا علامة Google اسمًا ولا شعارًا. يجوز «for» أو «compatible with» مع ™، وجملة إسناد في الوصف | T6 | [branding](https://developer.chrome.com/docs/webstore/branding) |
 
@@ -117,13 +117,13 @@
 
 | الحقل | مطلوب؟ | الحد أو المقاس | ترجمان | المصدر |
 | --- | --- | --- | --- | --- |
-| حساب Partner Center | مطلوب | مجاني بحساب Microsoft. النوع Individual أو Company، ولا يتغير هو ولا الدولة بعد التسجيل. واسم الناشر حتى 50 محرفًا ويظهر علنًا | **[قرار]**، وسلطان بيده | [create-dev-account](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/create-dev-account) |
-| صفة التاجر | — | نوع الحساب هو الإعلان: التوزيع المرتبط بعمل تجاري يقتضي حساب Company (اتفاقية المطوّر §2) | **[قرار]** | Microsoft Store App Developer Agreement 8.11 |
+| حساب Partner Center | مطلوب | مجاني بحساب Microsoft. النوع Individual أو Company، ولا يتغير هو ولا الدولة بعد التسجيل. واسم الناشر حتى 50 محرفًا ويظهر علنًا | الحساب الحالي: Individual باسم BySultan | [create-dev-account](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/create-dev-account) |
+| صفة التاجر | — | نوع الحساب هو الإعلان: التوزيع المرتبط بعمل تجاري يقتضي حساب Company (اتفاقية المطوّر §2) | Individual، فليس تاجرًا | Microsoft Store App Developer Agreement 8.11 |
 | الحزمة | مطلوبة | zip والبيان في جذرها، وبلا `update_url`. حد الحجم لم يُتحقق منه | لا `update_url` اليوم. T4 | [port-chrome-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/developer-guide/port-chrome-extension) |
 | الاسم والوصف القصير | من البيان | لا ذكر لمتصفح آخر (1.1.2). والحد الأقصى للطول لم يُتحقق منه | البيان لا يذكر متصفحًا اليوم | [developer-policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) |
 | Category | مطلوب | — | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
 | Privacy policy URL | مطلوب متى جُمعت معلومات شخصية | سياسة تخص Edge أساسًا (1.5.2) | T5 وT7 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
-| Website وSupport contact | اختياريان | يظهران للمستخدمين، وقد يُعرض بريد الدعم علنًا | **[قرار]** البريد. T7 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Website وSupport contact | اختياريان | يظهران للمستخدمين، وقد يُعرض بريد الدعم علنًا | `bysltan.com` و`iSultanBy@gmail.com`. T7 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
 | Mature content | خانة | — | T6 | [developer-policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) |
 | Single purpose، وتبرير الأذونات، والشيفرة البعيدة، وData usage | صفحة Privacy | الإفصاح الناقص أو غير الدقيق سبب رفض | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
 | Description | مطلوب لكل لغة | من 250 إلى 10,000 محرف | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
@@ -134,7 +134,7 @@
 | YouTube video | اختياري | تُوقف الإعلانات فيه (2.13) | — | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
 | Search terms | اختيارية | حتى 7 مصطلحات، و30 محرفًا لكل منها، و21 كلمة إجمالًا | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
 | Notes for certification | اختيارية، والبند 1.3 يوجب خطوات الاختبار | الوصول إلى الميزات وبيانات التجربة | T6 | [developer-policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) |
-| Visibility وMarkets | — | Public أو Hidden، وكل الأسواق أو بعضها | **[قرار]** | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Visibility وMarkets | — | Public أو Hidden، وكل الأسواق أو بعضها | Public وكل الأسواق | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
 | المراجعة | — | حتى 7 أيام عمل، وللتحديث المدة نفسها | — | [update-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/update/update-extension) |
 
 ### Firefox Add-ons (AMO)
@@ -143,16 +143,16 @@
 | --- | --- | --- | --- | --- |
 | حساب Mozilla واتفاقية التوزيع | مطلوبان | الاتفاقية المحدّثة تُقبل عند الطلب ابتداءً من 2026-12-01 | سلطان بيده | [distribution agreement](https://extensionworkshop.com/documentation/publish/firefox-add-on-distribution-agreement/) |
 | ملف الإضافة | مطلوب | zip أو xpi حتى 200MB. وبلا `gecko_android` يُتاح لسطح المكتب وحده | T2 وT4 | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
-| `browser_specific_settings.gecko.id` | لازم للتوقيع في MV3 | نص شبيه بالبريد حتى 80 محرفًا، أو GUID. و`tarjuman@bysltan.com` يطابق الصيغة | **[قرار]** تأكيده قبل أول رفع. T2 | [MDN browser_specific_settings](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings) |
+| `browser_specific_settings.gecko.id` | لازم للتوقيع في MV3 | نص شبيه بالبريد حتى 80 محرفًا، أو GUID. و`tarjuman@bysltan.com` يطابق الصيغة | معتمد، ويربط الإدراج وتحديثاته. T2 | [MDN browser_specific_settings](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings) |
 | `data_collection_permissions` | إلزامي لكل إضافة جديدة منذ 2025-11-03 | `required: ["none"]` إن لم يُجمع شيء دون موافقة، و`technicalAndInteraction` لا يكون إلا اختياريًا | T2 وT2.1، ويحكم T5 في الصور | [firefox-builtin-data-consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) |
 | شيفرة المصدر | إلزامية لكل إصدار | README فيه نظام التشغيل والأدوات وإصداراتها وكل أوامر البناء، وملف القفل، وأدوات مفتوحة المصدر. والمطابقة تامة | T4 | [source-code-submission](https://extensionworkshop.com/documentation/publish/source-code-submission/) |
-| Name | مطلوب | حتى 50 محرفًا | «ترجمان» | addons-server (`max_length=50`) |
+| Name | مطلوب | حتى 50 محرفًا | «ترجمان - ترجمتك العربية فوق الفيديو» (35). T2 | addons-server (`max_length=50`) |
 | Add-on URL (slug) | يُولَّد ويُعدَّل | فريد، حتى 30 محرفًا | T6 | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
 | Summary | مطلوب | حتى 250 محرفًا، بلا روابط | T6 | [create-an-appealing-listing](https://extensionworkshop.com/documentation/develop/create-an-appealing-listing/) |
 | Description | اختياري | حتى 15,000، وMarkdown محدود. ويذكر ما تنقله الإضافة («No Surprises») | T6 | [add-on-policies](https://extensionworkshop.com/documentation/publish/add-on-policies/) |
 | Categories | مطلوبة للإدراج | حتى 2 في الوثيقة، و3 في الشيفرة. ومنها Language Support وPhotos, Music & Videos | T6 | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
 | Tags | اختيارية | حتى 10 من قائمة ثابتة، فيها `youtube` و`translate` | T6 | AMO API `/api/v5/addons/tags/` |
-| Support email وwebsite وHomepage | اختيارية | 100 و255 و255 محرفًا | **[قرار]** البريد. T7 | addons-server |
+| Support email وwebsite وHomepage | اختيارية | 100 و255 و255 محرفًا | `iSultanBy@gmail.com` و`bysltan.com`. T7 | addons-server |
 | License | مطلوبة للمدرج | منها `all-rights-reserved` | **[قرار]** في T4 | [addons-server licenses](https://mozilla.github.io/addons-server/topics/api/licenses.html) |
 | Privacy policy | مطلوبة متى نُقلت بيانات من الجهاز | لم تعد تُستضاف في AMO، ويُستحسن رابطها في الإدراج | T5 وT7 | [add-on-policies-faq](https://extensionworkshop.com/documentation/publish/add-on-policies-faq/) |
 | Notes for Reviewers | اختيارية | حتى 3,000، ولا يراها إلا Mozilla | T6 | addons-server |
@@ -177,29 +177,30 @@
 - **Chrome: التصغير والتعمية.** التصغير مسموح والتعمية ممنوعة (Red Titanium، ومن أمثلتها تهريب المحارف بـ`\u`). و`charset: 'utf8'` في `scripts/build.mjs` يمنع هذا التهريب.
 - **Edge: الحزمة.** يُحذف `update_url` إن وُجد، وهو غير موجود اليوم.
 
-## ٥. القرارات التي تلزمك قبل T2
+## ٥. القرارات
 
-١. **[قرار] Chrome Web Store مع خطر Blue Zinc:**
+حسمها سلطان في 2026-11-03، بعد عرض التوصيات عليه.
 
-   - أ. الإرسال إلى المتاجر الثلاثة بإدراج شفاف (§١)، وطعن واحد إن رُفض، ولا إعادة إرسال متكررة. **توصيتي.**
-   - ب. Edge وFirefox الآن، وChrome بعد قبولهما.
-   - ج. لا Chrome أصلًا. وحينها يبقى Brave، الذي يثبّت من متجر Chrome، على التثبيت الشخصي.
+| القرار | المعتمد | أثره |
+| --- | --- | --- |
+| Chrome Web Store مع خطر Blue Zinc | الإرسال إلى المتاجر الثلاثة بإدراج شفاف (§١)، وطعن واحد إن رُفض، ولا إعادة إرسال متكررة | T6 وT8 |
+| اسم الناشر | **BySultan** في المتاجر الثلاثة | T6 |
+| حساب Edge | حساب Partner Center الحالي من نوع **Individual**، دون حساب جديد ولا تغيير في نوعه. والنوع الفردي إعلان بأن التوزيع ليس عملًا تجاريًا (اتفاقية المطوّر §2) | — |
+| حساب Google للنشر | حساب باسم الناشر BySultan، لا الحساب الشخصي | — |
+| الاسم | `name`: **«ترجمان - ترجمتك العربية فوق الفيديو»** (35 محرفًا) على نمط مِجهَر («مِجهَر - مساعدك على GitHub»). و`short_name` و`default_title`: «ترجمان». وتبقى علامة يوتيوب خارج العنوان. ومتجرا Chrome وEdge يأخذان العنوان من البيان، فيظهر الاسم الكامل في صفحة الإضافات بالمتصفح أيضًا | T2 يعدّله في البيان للهدفين |
+| لغة الإدراج | العربية وحدها بلا `_locales`، وملاحظات المراجعين بالإنجليزية | T6 |
+| الظهور | عام (Public) في المتاجر الثلاثة، وكل المناطق | T6 وT8 |
+| Firefox | `tarjuman@bysltan.com` (على نمط `mijhar@bysltan.com`)، لسطح المكتب وحده بلا `gecko_android` | T2 |
+| الموقع | `bysltan.com`، وصفحات ترجمان فيه من T7 | T7 |
+| بريد الدعم | `iSultanBy@gmail.com`، ويظهر علنًا في صفحات المتاجر وصفحة الدعم | T5 وT6 وT7 |
 
-٢. **[قرار] هوية الناشر:**
+**تأكيدات لم تصل بعد:** لا تمنع T2، وتلزم قبل الإرسال في T8.
 
-   - اسم الناشر الظاهر في المتاجر الثلاثة، وهو في Edge حتى 50 محرفًا.
-   - نوع حساب Edge: Individual أو Company. لا يتغير بعد التسجيل، وهو إعلان صفة التاجر.
-   - صفة التاجر في Chrome: التاجر يُنشر اسمه القانوني وهاتفه وعنوانه.
-   - بريد الدعم الذي يظهر علنًا.
-   - حساب Google للنشر: الحساب الشخصي أم حساب مخصص. السياسة تجيز في الحالات القصوى تعليق خدمات Google المرتبطة بالحساب، فأوصي بحساب مخصص.
+١. صفة «غير تاجر» في Chrome، وهي المتسقة مع حساب Edge الفردي. والتاجر يُنشر اسمه القانوني وهاتفه وعنوانه.
 
-٣. **[قرار] الاسم في المتاجر:** «ترجمان» وحده كما في البيان اليوم (**توصيتي**: لا تغيير في الهوية، والملخص يشرح)، أو اسم بوصف مثل «ترجمان: ترجمتك العربية على YouTube™». والاسم يُقرأ من البيان، فتغييره يغيّر اسم الإضافة في المتصفح أيضًا، ولا يذكر متصفحًا ولا يوهم بانتماء إلى يوتيوب أو Google.
+٢. بريد حساب Google المخصص، وهو بريد التواصل الظاهر في صفحة الإضافة على متجر Chrome: هل هو `iSultanBy@gmail.com` نفسه؟
 
-٤. **[قرار] لغة الإدراج:** العربية وحدها بلا `_locales`، فلا يتغير البيان (**توصيتي**)، وملاحظات المراجعين بالإنجليزية في الحالتين. أو العربية والإنجليزية، وتتطلب `_locales` و`default_locale` في T2، ووصفًا وشعارًا لكل لغة في Edge.
-
-٥. **[قرار] الظهور:** عام في المتاجر الثلاثة (**توصيتي**)، أو غير مدرج أو مخفي أولًا. والمناطق كلها افتراضيًا.
-
-٦. **[قرار] معرّف Firefox:** تأكيد `tarjuman@bysltan.com` نهائيًا قبل أول رفع، فهو يربط الإدراج وتحديثاته. والاكتفاء بسطح المكتب.
+٣. أن «BySultan» في Edge هو Publisher display name الظاهر للعموم، لا معرّف الناشر التقني.
 
 **قرارات تنتظر مرحلتها:** الترخيص، ورابط المستودع في «حول»، ورقم الإصدار الأول في المتاجر (`package.json` على `0.0.0` والبيان على `1.0.0`) في T4. ونص الإدراج وفيديو اللقطات في T6. وروابط الموقع والدعم في T7.
 
