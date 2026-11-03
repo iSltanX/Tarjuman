@@ -269,13 +269,15 @@ Prefs = {
     terms: [{ source: "prompt", target: "موجِّه", note: null }]   // حتى 100 مصطلح
   },
   review: { maxCps: null },               // حد سرعة القراءة (حرف/ث) 5..40، وnull = الافتراضي المعايَر في P11 (Q15)
-  saveLocation: { mode: "downloads" | "subfolder" | "ask", folder: "Tarjuman" }   // R65، Q17
+  saveLocation: { mode: "downloads" | "subfolder" | "ask", folder: "Tarjuman" },  // R65، Q17
+  ui: { thumbnails: true, panelEntry: true, panelOpen: false, panelDual: true }   // الهوية «بُنّ على ورق» (2026-11-03)
 }
 ```
 
 - **مصطلح القاموس** (واجهة ربط مثبتة في [الموجات](../delivery/waves.md)): `{ source: string (1..80), target: string (1..80), note: string | null (≤120) }` بعد التشذيب، سطر واحد بلا محارف تحكم؛ و`source` فريد دون اعتبار لحالة الأحرف. تستهلكه `instructions({ …, glossary })` في P11. القراءة المتسامحة تُسقط المصطلح التالف وحده.
 - **مكان الحفظ** (عقد الواجهات §١٣): `folder` اسم مجلد واحد داخل التنزيلات، 1..60 محرفًا، بلا `/ \ : * ? " < > |` ولا محارف تحكم، ولا يبدأ أو ينتهي بنقطة أو مسافة، وليس اسمًا محجوزًا في Windows (`CON` و`NUL` و`COM1`…). الافتراضي «مجلد التنزيلات» يطابق السلوك الحالي.
-- الافتراضيات `DEFAULT_PREFS`: قاموس فارغ مرفق، و`maxCps: null`، و`downloads` و`Tarjuman`.
+- **تفضيلات الواجهة `ui`** (قرار سلطان 2026-11-03، [identity-redesign.md](../identity-redesign.md)): `thumbnails` صور الفيديو في المحفوظات من خوادم يوتيوب، و`panelEntry` زر لوحة النص المتزامن في صفحات الفيديو، و`panelOpen` اللوحة مفتوحة، و`panelDual` الأصل تحت العربية في اللوحة. كلها منطقية. تفضيلات الجهاز: النسخة الاحتياطية تحملها ولا تستعيدها (`PREFS_GROUPS`)، فتبقى قيم الجهاز المستعيد. والتفضيلات المحفوظة بلا `ui` تُقرأ بافتراضيها.
+- الافتراضيات `DEFAULT_PREFS`: قاموس فارغ مرفق، و`maxCps: null`، و`downloads` و`Tarjuman`، و`ui` بصور الفيديو وزر اللوحة مفعّلين واللوحة مغلقة ومع الأصل.
 
 ## ١٥. ملخص الفرز — `bundle.js`
 
