@@ -3,17 +3,26 @@
 // المحتوى لا تقبل وحدات ES)، والبيان وملفات HTML وCSS منسوخة كما هي. لا شيفرة بعيدة ولا خطوط من الشبكة.
 //   --dev       بناء التطوير: خطاف الحزام الحي في العالم المعزول ومعرض المكوّنات، وversion_name ينتهي بـ-dev
 //   --out <dir> مجلد آخر (مثل نسخة جلسة يدوية خارج المستودع) دون مسّ dist/
+//   --target <chromium|firefox>  الهدف (scripts/targets.mjs): chromium افتراضيًا في dist/، وfirefox في dist-firefox/. الشيفرة
+//               واحدة، ويختلف البيان وحده بطبقة Firefox.
 import { build } from 'esbuild';
 import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_OUT, TARGETS, targetManifest } from './targets.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'src');
 const argv = process.argv.slice(2);
 const DEV = argv.includes('--dev');
+const targetArg = argv.indexOf('--target');
+const TARGET = targetArg > -1 ? argv[targetArg + 1] : 'chromium';
+if (!TARGETS.includes(TARGET)) {
+  console.error(`build: هدف غير معروف ${TARGET} (المعتمد: ${TARGETS.join('، ')})`);
+  process.exit(1);
+}
 const outArg = argv.indexOf('--out');
-const OUT = outArg > -1 ? path.resolve(argv[outArg + 1]) : path.join(ROOT, 'dist');
+const OUT = outArg > -1 ? path.resolve(argv[outArg + 1]) : path.join(ROOT, DEFAULT_OUT[TARGET]);
 // المجلد يُمسح قبل البناء: لا يكون جذر المستودع ولا أبًا له ولا داخل src.
 const inside = (child, parent) => !path.relative(parent, child).startsWith('..') && !path.isAbsolute(path.relative(parent, child));
 if (inside(ROOT, OUT) || inside(OUT, SRC)) {
@@ -68,7 +77,7 @@ for (const file of [...(await walk(path.join(SRC, 'pages'))), ...(await walk(pat
   await cp(file, path.join(OUT, rel));
 }
 
-const manifest = JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8'));
+const manifest = targetManifest(JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8')), TARGET);
 if (DEV) manifest.version_name = `${manifest.version}-dev`;
 await writeFile(path.join(OUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
@@ -83,4 +92,4 @@ if (!DEV) {
   }
 }
 const shown = path.relative(ROOT, OUT);
-console.log(`بُنيت الإضافة${DEV ? ' (تطوير)' : ''} في ${shown.startsWith('..') ? OUT : shown}/`);
+console.log(`بُنيت الإضافة${DEV ? ' (تطوير)' : ''}${TARGET === 'chromium' ? '' : ` لـ${TARGET}`} في ${shown.startsWith('..') ? OUT : shown}/`);

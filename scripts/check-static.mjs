@@ -5,6 +5,7 @@
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { targetManifest } from './targets.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const srcArg = process.argv.indexOf('--src');
@@ -23,9 +24,16 @@ async function walk(dir) {
 }
 
 // ١. البيان: الأذونات المعتمدة فقط (عقد interfaces §٦ و§١٣)، ونقاط الدخول كلها مصرّح بها مسبقًا. downloads معتمد
-// لمكان الحفظ وحده (الإصدار الثاني)، والعامل الخلفي للحفظ وحده بمدخل واحد.
+// لمكان الحفظ وحده (الإصدار الثاني)، والعامل الخلفي للحفظ وحده بمدخل واحد. يُفحص بيانا الهدفين (جولة النشر T2) بالقواعد
+// نفسها: src/manifest.json لعائلة Chromium، وما تولّده منه طبقة Firefox في scripts/targets.mjs؛ والطبقة لا تغيّر غير
+// الخلفية وbrowser_specific_settings، وقيمتاهما هنا حرفيتان لا مأخوذتان من الطبقة.
 const ALLOWED_PERMISSIONS = ['storage', 'unlimitedStorage', 'downloads'];
-const BACKGROUND = '{"service_worker":"background/worker.js"}';
+const BACKGROUND = {
+  chromium: '{"service_worker":"background/worker.js"}',
+  firefox: '{"scripts":["background/worker.js"]}',
+};
+// Gecko المعتمد (store/README.md §٥): المعرّف، وأدنى إصدار 140، ولا جمع بيانات، ولا gecko_android (سطح المكتب وحده).
+const GECKO_SETTINGS = '{"gecko":{"id":"tarjuman@bysltan.com","strict_min_version":"140.0","data_collection_permissions":{"required":["none"]}}}';
 const FORBIDDEN_KEYS = [
   'host_permissions', 'optional_permissions', 'optional_host_permissions',
   'externally_connectable', 'content_security_policy', 'sandbox', 'oauth2', 'key', 'chrome_url_overrides',
@@ -33,41 +41,74 @@ const FORBIDDEN_KEYS = [
 ];
 const PAGES = ['popup', 'library', 'settings', 'editor'];
 const YT = '["https://www.youtube.com/*"]';
+// الاسم والملخص في المتاجر (store/README.md §٣): الاسم حتى 50 (AMO)، والمختصر حتى 12، والملخص حتى 132 (Chrome)؛ ولا ذكر
+// لمتصفح أو لشركة متصفح (Edge 1.1.2، وعلامات Google وMozilla).
+const NAME_MAX = 50;
+const SHORT_NAME_MAX = 12;
+const DESCRIPTION_MAX = 132;
+const BROWSER_NAMES = /chrom(?:e|ium)|brave|edge|firefox|mozilla|google|microsoft|كروم|بريف|إيدج|ايدج|فايرفوكس|فيرفوكس|جوجل|غوغل|مايكروسوفت/i;
 
-const manifest = JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8'));
-const perms = manifest.permissions ?? [];
-if (manifest.manifest_version !== 3) problems.push('manifest: ليس MV3');
-if (perms.length !== new Set(perms).size || perms.some((p) => !ALLOWED_PERMISSIONS.includes(p)) || !perms.includes('storage')) {
-  problems.push(`manifest: الأذونات ${JSON.stringify(perms)} والمعتمد ${JSON.stringify(ALLOWED_PERMISSIONS)}`);
-}
-for (const k of FORBIDDEN_KEYS) if (k in manifest) problems.push(`manifest: المفتاح ${k} غير مسموح`);
-if ('background' in manifest && JSON.stringify(manifest.background) !== BACKGROUND) problems.push(`manifest: background غير المعتمد ${JSON.stringify(manifest.background)} (المعتمد ${BACKGROUND})`);
-if ('background' in manifest && !(await exists(path.join(SRC, 'background', 'worker.js')))) problems.push('manifest: background/worker.js مفقود');
-const cs = manifest.content_scripts ?? [];
-const mainWorld = cs.filter((c) => c.world === 'MAIN');
-const isolated = cs.filter((c) => c.world !== 'MAIN');
-if (cs.length !== 2 || mainWorld.length !== 1 || isolated.length !== 1) problems.push('manifest: المتوقع سكربتا محتوى فقط (MAIN وISOLATED)');
-if (JSON.stringify(mainWorld[0]?.js) !== '["main-world/capture.js"]' || mainWorld[0]?.run_at !== 'document_start') problems.push('manifest: سكربت MAIN عند document_start مفقود أو مختلف');
-if (JSON.stringify(isolated[0]?.js) !== '["content/main.js"]' || isolated[0]?.run_at !== 'document_start') problems.push('manifest: سكربت ISOLATED (content/main.js) عند document_start مفقود أو مختلف');
-for (const c of cs) {
-  if (JSON.stringify(c.matches) !== YT) problems.push(`manifest: مطابقة غير متوقعة ${JSON.stringify(c.matches)}`);
-  if (c.all_frames) problems.push('manifest: all_frames غير مسموح');
-  for (const k of ['css', 'exclude_matches', 'include_globs', 'match_about_blank', 'match_origin_as_fallback']) if (k in c) problems.push(`manifest: ${k} غير مسموح في سكربت المحتوى`);
-}
-if (manifest.action?.default_popup !== 'pages/popup/index.html') problems.push('manifest: نافذة الأيقونة ليست pages/popup/index.html');
-// web_accessible_resources: الخطوط وحدها («تهيئة W4»، وخطوط الواجهة في جولة الصقل): إدخال واحد لملفات .woff2 في
-// ui/fonts/subtitle (الترجمة) وui/fonts/ui (عناوين الواجهة)، ليوتيوب وحده، بعنوان متغير (use_dynamic_url). ومجلدا الخطوط لا
-// يحويان غير WOFF2 بأوزانها ورخصها. وأيقونات الإضافة PNG بأحجام البيان وحدها.
+const base = JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8'));
+if ('browser_specific_settings' in base) problems.push('manifest: browser_specific_settings لطبقة Firefox وحدها، لا في البيان الأساسي');
 const SUBTITLE_FONTS = path.join('ui', 'fonts', 'subtitle');
 const UI_FONTS = path.join('ui', 'fonts', 'ui');
-if ('web_accessible_resources' in manifest) {
-  const war = manifest.web_accessible_resources;
-  const e = Array.isArray(war) && war.length === 1 ? war[0] : null;
-  if (!e || Object.keys(e).sort().join() !== 'matches,resources,use_dynamic_url' || JSON.stringify(e.resources) !== '["ui/fonts/subtitle/*.woff2","ui/fonts/ui/*.woff2"]'
-    || JSON.stringify(e.matches) !== YT || e.use_dynamic_url !== true) {
-    problems.push(`manifest: web_accessible_resources غير المعتمد ${JSON.stringify(war).slice(0, 160)}`);
+
+for (const target of ['chromium', 'firefox']) {
+  let manifest;
+  try {
+    manifest = targetManifest(base, target);
+  } catch (e) {
+    problems.push(`manifest (${target}): تعذّر توليده (${e.message})`);
+    continue;
+  }
+  const at = target === 'chromium' ? 'manifest' : `manifest (${target})`;
+  const perms = manifest.permissions ?? [];
+  if (manifest.manifest_version !== 3) problems.push(`${at}: ليس MV3`);
+  if (perms.length !== new Set(perms).size || perms.some((p) => !ALLOWED_PERMISSIONS.includes(p)) || !perms.includes('storage')) {
+    problems.push(`${at}: الأذونات ${JSON.stringify(perms)} والمعتمد ${JSON.stringify(ALLOWED_PERMISSIONS)}`);
+  }
+  for (const k of FORBIDDEN_KEYS) if (k in manifest) problems.push(`${at}: المفتاح ${k} غير مسموح`);
+  if ('background' in manifest && JSON.stringify(manifest.background) !== BACKGROUND[target]) problems.push(`${at}: background غير المعتمد ${JSON.stringify(manifest.background)} (المعتمد ${BACKGROUND[target]})`);
+  if (target === 'firefox' && JSON.stringify(manifest.browser_specific_settings) !== GECKO_SETTINGS) {
+    problems.push(`${at}: browser_specific_settings غير المعتمد ${JSON.stringify(manifest.browser_specific_settings ?? null).slice(0, 200)}`);
+  }
+  // الطبقة لا تمس غير مفتاحيها: ما عداهما في بيان Firefox مطابق للبيان الأساسي.
+  if (target === 'firefox') {
+    for (const k of new Set([...Object.keys(base), ...Object.keys(manifest)])) {
+      if (k !== 'background' && k !== 'browser_specific_settings' && JSON.stringify(base[k]) !== JSON.stringify(manifest[k])) problems.push(`${at}: الطبقة غيّرت ${k}`);
+    }
+  }
+  if (typeof manifest.name !== 'string' || ![...manifest.name].length || [...manifest.name].length > NAME_MAX) problems.push(`${at}: name فارغ أو أطول من ${NAME_MAX}`);
+  if (typeof manifest.short_name !== 'string' || ![...manifest.short_name].length || [...manifest.short_name].length > SHORT_NAME_MAX) problems.push(`${at}: short_name فارغ أو أطول من ${SHORT_NAME_MAX}`);
+  if (typeof manifest.description !== 'string' || [...manifest.description].length > DESCRIPTION_MAX) problems.push(`${at}: description مفقود أو أطول من ${DESCRIPTION_MAX}`);
+  for (const k of ['name', 'short_name', 'description']) if (BROWSER_NAMES.test(manifest[k] ?? '')) problems.push(`${at}: ${k} يذكر متصفحًا أو شركة متصفح`);
+  const cs = manifest.content_scripts ?? [];
+  const mainWorld = cs.filter((c) => c.world === 'MAIN');
+  const isolated = cs.filter((c) => c.world !== 'MAIN');
+  if (cs.length !== 2 || mainWorld.length !== 1 || isolated.length !== 1) problems.push(`${at}: المتوقع سكربتا محتوى فقط (MAIN وISOLATED)`);
+  if (JSON.stringify(mainWorld[0]?.js) !== '["main-world/capture.js"]' || mainWorld[0]?.run_at !== 'document_start') problems.push(`${at}: سكربت MAIN عند document_start مفقود أو مختلف`);
+  if (JSON.stringify(isolated[0]?.js) !== '["content/main.js"]' || isolated[0]?.run_at !== 'document_start') problems.push(`${at}: سكربت ISOLATED (content/main.js) عند document_start مفقود أو مختلف`);
+  for (const c of cs) {
+    if (JSON.stringify(c.matches) !== YT) problems.push(`${at}: مطابقة غير متوقعة ${JSON.stringify(c.matches)}`);
+    if (c.all_frames) problems.push(`${at}: all_frames غير مسموح`);
+    for (const k of ['css', 'exclude_matches', 'include_globs', 'match_about_blank', 'match_origin_as_fallback']) if (k in c) problems.push(`${at}: ${k} غير مسموح في سكربت المحتوى`);
+  }
+  if (manifest.action?.default_popup !== 'pages/popup/index.html') problems.push(`${at}: نافذة الأيقونة ليست pages/popup/index.html`);
+  // web_accessible_resources: الخطوط وحدها («تهيئة W4»، وخطوط الواجهة في جولة الصقل): إدخال واحد لملفات .woff2 في
+  // ui/fonts/subtitle (الترجمة) وui/fonts/ui (عناوين الواجهة)، ليوتيوب وحده، بعنوان متغير (use_dynamic_url؛ وFirefox يتجاهله،
+  // فعنوان moz-extension عشوائي لكل نسخة متصفح أصلًا). ومجلدا الخطوط لا يحويان غير WOFF2 بأوزانها ورخصها.
+  if ('web_accessible_resources' in manifest) {
+    const war = manifest.web_accessible_resources;
+    const e = Array.isArray(war) && war.length === 1 ? war[0] : null;
+    if (!e || Object.keys(e).sort().join() !== 'matches,resources,use_dynamic_url' || JSON.stringify(e.resources) !== '["ui/fonts/subtitle/*.woff2","ui/fonts/ui/*.woff2"]'
+      || JSON.stringify(e.matches) !== YT || e.use_dynamic_url !== true) {
+      problems.push(`${at}: web_accessible_resources غير المعتمد ${JSON.stringify(war).slice(0, 160)}`);
+    }
   }
 }
+// الملفات التي يشير إليها البيان: واحدة في الهدفين. وأيقونات الإضافة PNG بأحجام البيان وحدها.
+const manifest = base;
+if ('background' in manifest && !(await exists(path.join(SRC, 'background', 'worker.js')))) problems.push('manifest: background/worker.js مفقود');
 for (const [dir, weights] of [[SUBTITLE_FONTS, '400|700'], [UI_FONTS, '600|700']]) {
   if (!(await exists(path.join(SRC, dir)))) continue;
   for (const f of await walk(path.join(SRC, dir))) {
@@ -234,4 +275,4 @@ if (problems.length) {
   console.error(`check-static: ${problems.length} مخالفة\n- ${problems.join('\n- ')}`);
   process.exit(1);
 }
-console.log('check-static: ناجح (البيان والأذونات المعتمدة، ولا HTML نصي ولا eval ولا شيفرة بعيدة ولا نطاقات خارجية ولا طلبات ولا تسجيل)');
+console.log('check-static: ناجح (بيانا Chromium وFirefox والأذونات المعتمدة، ولا HTML نصي ولا eval ولا شيفرة بعيدة ولا نطاقات خارجية ولا طلبات ولا تسجيل)');

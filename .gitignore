@@ -4,6 +4,7 @@ dashboard/data/
 .claude/settings.local.json
 node_modules/
 dist/
+dist-firefox/
 /release/
 test-results/
 *.log
