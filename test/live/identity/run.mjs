@@ -430,7 +430,8 @@ try {
     check('settings-thumbnails-back-on', (await prefsIn(st))?.thumbnails === true);
     await st.goto(`chrome-extension://${extId}/pages/settings/index.html#about`);
     await st.waitFor(() => document.body.innerText.includes('خوادم يوتيوب'), { timeoutMs: 8000 });
-    const about = await st.eval(() => ({ privacy: [...document.querySelectorAll('p')].some((p) => /بياناتك كلها على جهازك/.test(p.textContent) && /صور الفيديو في المحفوظات تُطلب من خوادم يوتيوب/.test(p.textContent)) }));
+    // سطر الخصوصية بعد قناة البلاغات (جولة النشر T2.1): الصور ما دام مفتاحها مفعّلًا، والبلاغ يرسله المستخدم بنفسه.
+    const about = await st.eval(() => ({ privacy: [...document.querySelectorAll('p')].some((p) => /بياناتك كلها على جهازك/.test(p.textContent) && /صور الفيديو في المحفوظات من خوادم يوتيوب/.test(p.textContent) && /وبلاغ ترسله أنت بنفسك/.test(p.textContent)) }));
     check('settings-privacy-line-matches-behavior', about.privacy, about);
     result.measures.permissions = { permissions: result.extension.permissions, hostPermissions: result.extension.hostPermissions };
     await st.close();
