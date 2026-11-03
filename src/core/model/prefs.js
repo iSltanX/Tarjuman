@@ -15,7 +15,8 @@ export const DEFAULT_FOLDER = 'Tarjuman';
  *   schema: 1,
  *   glossary: { attach: boolean, terms: GlossaryTerm[] },
  *   review: { maxCps: number | null },
- *   saveLocation: { mode: 'downloads' | 'subfolder' | 'ask', folder: string }
+ *   saveLocation: { mode: 'downloads' | 'subfolder' | 'ask', folder: string },
+ *   ui: { thumbnails: boolean, panelEntry: boolean, panelOpen: boolean, panelDual: boolean }
  * }} Prefs
  */
 
@@ -25,6 +26,10 @@ export const DEFAULT_PREFS = Object.freeze({
   glossary: Object.freeze({ attach: true, terms: Object.freeze([]) }),
   review: Object.freeze({ maxCps: null }),
   saveLocation: Object.freeze({ mode: 'downloads', folder: DEFAULT_FOLDER }),
+  // تفضيلات الواجهة على هذا الجهاز (الهوية «بُنّ على ورق»، docs/identity-redesign.md): صور الفيديو في المحفوظات من
+  // خوادم يوتيوب (مفعّلة افتراضيًا بقرار سلطان)، وزر لوحة النص المتزامن في صفحة الفيديو، وحالة اللوحة (مفتوحة؟ ومع
+  // الأصل؟). لا تُستعاد من النسخة الاحتياطية (backup/read.js: PREFS_GROUPS)، فهي للجهاز لا للبيانات.
+  ui: Object.freeze({ thumbnails: true, panelEntry: true, panelOpen: false, panelDual: true }),
 });
 
 // سطر واحد بلا محارف تحكم (ومنها فواصل الأسطر)، ومشذّب.
@@ -69,15 +74,19 @@ const FIELDS = {
   'review.maxCps': (v) => v === null || isIntIn(v, READING_SPEED.min, READING_SPEED.max),
   'saveLocation.mode': (v) => SAVE_MODES.includes(v),
   'saveLocation.folder': (v) => isValidFolderName(v),
+  'ui.thumbnails': (v) => typeof v === 'boolean',
+  'ui.panelEntry': (v) => typeof v === 'boolean',
+  'ui.panelOpen': (v) => typeof v === 'boolean',
+  'ui.panelDual': (v) => typeof v === 'boolean',
 };
-const GROUPS = { glossary: ['attach', 'terms'], review: ['maxCps'], saveLocation: ['mode', 'folder'] };
+const GROUPS = { glossary: ['attach', 'terms'], review: ['maxCps'], saveLocation: ['mode', 'folder'], ui: ['thumbnails', 'panelEntry', 'panelOpen', 'panelDual'] };
 
 const get = (obj, path) => path.split('.').reduce((o, k) => (isPlainObject(o) ? o[k] : undefined), obj);
 
 /** @param {unknown} p */
 export function validatePrefs(p) {
   return firstFailure([
-    () => exactKeys(p, ['schema', 'glossary', 'review', 'saveLocation'], 'prefs'),
+    () => exactKeys(p, ['schema', 'glossary', 'review', 'saveLocation', 'ui'], 'prefs'),
     () => (p.schema === PREFS_SCHEMA ? OK : fail('prefs.schema', 'إصدار غير معروف')),
     ...Object.entries(GROUPS).map(([g, keys]) => () => exactKeys(p[g], keys, `prefs.${g}`)),
     ...Object.entries(FIELDS).map(([path, ok]) => () => (ok(get(p, path)) ? OK : fail(`prefs.${path}`, 'قيمة غير صالحة'))),
@@ -109,6 +118,7 @@ export function normalizePrefs(raw) {
     glossary: { attach: pick('glossary.attach'), terms },
     review: { maxCps: pick('review.maxCps') },
     saveLocation: { mode: pick('saveLocation.mode'), folder: pick('saveLocation.folder') },
+    ui: { thumbnails: pick('ui.thumbnails'), panelEntry: pick('ui.panelEntry'), panelOpen: pick('ui.panelOpen'), panelDual: pick('ui.panelDual') },
   };
 }
 

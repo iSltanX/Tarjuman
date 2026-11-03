@@ -98,6 +98,7 @@ function checkEntry(entry) {
 }
 
 const SETTINGS_GROUPS = ['offsetStepMs', 'displayModeDefault', 'appearance', 'export', 'thresholds'];
+// ui (تفضيلات الواجهة على الجهاز) لا تُستعاد عمدًا: تبقى قيم هذا الجهاز (docs/identity-redesign.md).
 const PREFS_GROUPS = ['glossary', 'review', 'saveLocation'];
 
 /**
