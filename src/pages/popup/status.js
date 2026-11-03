@@ -7,6 +7,7 @@ import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagn
 import { messageFor } from '../../core/errors/index.js';
 import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 import { MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest } from '../../core/model/messages.js';
+import { relativeTime } from '../library/model.js';
 
 /** مهلة الرد: سكربت لا يردّ لا يترك النافذة هيكلًا إلى الأبد. */
 export const REPLY_TIMEOUT_MS = 1500;
@@ -34,6 +35,8 @@ export async function queryVideoState({ tabs = globalThis.chrome?.tabs, timeoutM
 }
 
 const MODE_TEXT = Object.freeze({ ar: 'العربية وحدها', dual: 'العربية فوق الإنجليزية', off: 'الترجمة مخفية' });
+/** نوع مسار الأصل كما يُعرض بجانب حالته: «ملتقط · يدوي». */
+const KIND_TEXT = Object.freeze({ manual: 'يدوي', asr: 'تلقائي' });
 
 /**
  * وصف بطاقة الفيديو الحالي: حالة واحدة من أربع.
@@ -41,7 +44,7 @@ const MODE_TEXT = Object.freeze({ ar: 'العربية وحدها', dual: 'الع
  * saved: للفيديو سجل في المحفوظات (مؤشر حالة «محفوظ» في البطاقة، لا رابط).
  * @returns {{ kind: 'not-video' }
  *   | { kind: 'loading', title: string }
- *   | { kind: 'no-subtitle', title: string, englishLine: string, englishReady: boolean, saved: boolean }
+ *   | { kind: 'no-subtitle', title: string, englishLine: string, englishKind: string | null, englishReady: boolean, saved: boolean }
  *   | { kind: 'has-subtitle', title: string, line: string, edited: boolean, matched: boolean | null, mode: string, fileName: string, saved: true }}
  */
 export function describeStatus(reply) {
@@ -49,9 +52,12 @@ export function describeStatus(reply) {
   const title = reply.title ?? reply.videoId ?? '';
   if (reply.loading) return { kind: 'loading', title };
   if (!reply.arabic) {
-    const captured = reply.english.captured.some((t) => t.ok);
+    const capturedTrack = reply.english.captured.find((t) => t.ok);
+    const captured = Boolean(capturedTrack);
     const saved = reply.english.saved.length > 0;
-    return { kind: 'no-subtitle', title, englishLine: `المسار الإنجليزي: ${captured ? 'ملتقط' : saved ? 'محفوظ' : 'غير ملتقط'}`, englishReady: captured || saved, saved };
+    // نوع المسار (يدوي أو تلقائي) من المسار الذي تُبنى عليه الحالة: الملتقط أولًا ثم المحفوظ، وإلا لا شيء.
+    const englishKind = KIND_TEXT[(capturedTrack ?? reply.english.saved[0])?.kind] ?? null;
+    return { kind: 'no-subtitle', title, englishLine: `المسار الإنجليزي: ${captured ? 'ملتقط' : saved ? 'محفوظ' : 'غير ملتقط'}`, englishKind, englishReady: captured || saved, saved };
   }
   const a = reply.arabic;
   return {
@@ -64,6 +70,40 @@ export function describeStatus(reply) {
     fileName: a.fileName,
     saved: true,
   };
+}
+
+/** خطوات الإرشاد لفيديو بلا ترجمة عربية، بنصوصها كما في اللوحة المعتمدة. */
+export const GUIDE_TEXT = Object.freeze([
+  'نزّل الأصل من زر التنزيل وانسخ التعليمات',
+  'ترجمها بنموذجك المفضّل',
+  'ارفع العربية من زر الترجمة في الشريط',
+]);
+
+/**
+ * خطوات «بلا ترجمة عربية» من الحالة الفعلية لا من نية: ما دام الأصل الإنجليزي غير ملتقط ولا محفوظ فالخطوة الأولى هي الحالية
+ * والباقيتان منتظرتان؛ وإن التُقط أو حُفظ فالأولى منجزة والثانية هي الحالية والثالثة منتظرة. لا خطوات لغير هذه الحالة.
+ * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
+ * @returns {{ n: 1 | 2 | 3, text: string, state: 'done' | 'now' | 'pending' }[] | null}
+ */
+export function guideSteps(reply) {
+  const s = describeStatus(reply);
+  if (s.kind !== 'no-subtitle') return null;
+  const now = s.englishReady ? 1 : 0;
+  return GUIDE_TEXT.map((text, i) => ({ n: /** @type {1 | 2 | 3} */ (i + 1), text, state: i < now ? 'done' : i === now ? 'now' : 'pending' }));
+}
+
+/**
+ * زر لوحة النص المتزامن مخفي بقرار المستخدم (prefs.ui.panelEntry=false)؟ القيمة الغائبة أو غير المعروفة ليست «مخفيًا».
+ * @param {import('../../core/model/prefs.js').Prefs | null | undefined} prefs
+ */
+export const entryHidden = (prefs) => prefs?.ui?.panelEntry === false;
+
+/**
+ * سطر آخر ترجمة: «قبل ساعتين · 412 مقطعًا»، أو «… · بانتظار الترجمة» لفيديو بلا عربية.
+ * @param {{ updatedAt: string, arabic: { cueCount: number } | null }} entry @param {number} nowMs
+ */
+export function recentLine(entry, nowMs) {
+  return [relativeTime(entry.updatedAt, nowMs), entry.arabic ? formatCount(entry.arabic.cueCount, COUNT_FORMS.cue) : 'بانتظار الترجمة'].filter(Boolean).join(' · ');
 }
 
 /**

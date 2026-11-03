@@ -1,34 +1,32 @@
-// نافذة الأيقونة (P7-AC1، وإعادة التصميم، وجولة الصقل): نافذة استخدام سريعة لا مجرد روابط: رأس بالشعار المعتمد، وبطاقة
-// الفيديو الحالي (العنوان والحالة ومؤشر «محفوظ» وسطر الأدوات)، وإجراءات سريعة بحسب السياق (تحرير الترجمة، ونسخ تعليمات
-// الترجمة من هنا مباشرة)، وعلى غير صفحة فيديو آخر الترجمات لفتحها أو تحريرها؛ ثم تذييل بمدخل واحد لكل وجهة: المحفوظات
-// (على صف الفيديو الحالي إن كان محفوظًا) والإعدادات. كل وجهة تفتح صفحتها في تبويب جديد وتُغلق النافذة. لا طلبات شبكة،
-// وكل نص عبر textContent، ونص التعليمات يُنسخ ولا يُعرض.
+// نافذة الأيقونة (P7-AC1، وإعادة التصميم، وجولة الصقل، والهوية «بُنّ على ورق»): نافذة استخدام سريعة لا مجرد روابط: رأس
+// بالشعار المعتمد و«محلي بالكامل»، وبطاقة الفيديو الحالي (العنوان والحالة ومؤشر «محفوظ» وسطر الأدوات)، وصف «زر النص
+// المتزامن مخفي» بزر إظهاره حين أخفاه المستخدم، وإجراءات سريعة بحسب السياق (تحرير الترجمة، ونسخ تعليمات الترجمة من هنا
+// مباشرة)، وثلاث خطوات تُرشد فيديو بلا ترجمة عربية من حالة الأصل الفعلية، وعلى غير صفحة فيديو آخر الترجمات لفتحها أو
+// تحريرها؛ ثم تذييل بمدخل واحد لكل وجهة: المحفوظات (على صف الفيديو الحالي إن كان محفوظًا) والإعدادات. كل وجهة تفتح صفحتها
+// في تبويب جديد وتُغلق النافذة. لا طلبات شبكة، وكل نص عبر textContent، ونص التعليمات يُنسخ ولا يُعرض. البناة في view.js
+// والمنطق في status.js وصف الإظهار في entry.js.
 import { messageFor } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { createStore } from '../../core/store/index.js';
-import { alertBox, button, el, icon, statusPill } from '../../ui/components.js';
+import { alertBox, button, el, icon } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
 import { logo } from '../../ui/logo.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
+import { bindEntryRow } from './entry.js';
 import {
-  attachedGlossary, browserLabel, captureLine, describeStatus, editorGate, libraryHash, pageReport, queryPageDiagnostics, quickActions,
-  queryVideoState, recentEntries, toolsStatus,
+  attachedGlossary, browserLabel, captureLine, describeStatus, editorGate, guideSteps, libraryHash, pageReport, queryPageDiagnostics, quickActions,
+  queryVideoState, recentEntries, recentLine, toolsStatus,
 } from './status.js';
+import { guideList, notVideoNote, skeletonCard, statusCard } from './view.js';
 
 /** زر النسخ: اسمه الكامل حين يكون رئيسيًا بعرض النافذة، ومختصرًا حين يجاور زرًا آخر. */
 const COPY_LABEL = Object.freeze({ idle: 'نسخ تعليمات الترجمة', idleShort: 'نسخ التعليمات', success: 'نُسخت التعليمات', error: 'أعد المحاولة' });
 
-const skeleton = () => el('section', {
-  className: 'tj-popup__status',
-  attrs: { 'aria-busy': 'true', 'aria-label': 'جارٍ قراءة حالة الفيديو' },
-  children: [el('div', { className: 'tj-skeleton tj-popup__skel-title' }), el('div', { className: 'tj-skeleton tj-popup__skel-line' })],
-});
-
 /** «نسخ تشخيص الصفحة» (§١٩.٦): رابط صغير ونتيجته بسطر. التقرير رموز وأعداد منقّاة، ولا يُعرض. */
 function diagnosticsLink(reply) {
-  const result = el('span', { className: 'tj-caption tj-popup__diag-result', attrs: { role: 'status', 'aria-live': 'polite' } });
+  const result = el('span', { className: 'tj-popup__diag-result', attrs: { role: 'status', 'aria-live': 'polite' } });
   const link = el('button', { className: 'tj-popup__diag', text: 'نسخ تشخيص الصفحة', attrs: { type: 'button', 'data-action': 'diagnostics' } });
   link.addEventListener('click', async () => {
     link.setAttribute('aria-busy', 'true');
@@ -46,42 +44,6 @@ function diagnosticsLink(reply) {
   });
   return el('p', { className: 'tj-popup__diag-row', children: [link, result] });
 }
-
-/**
- * @param {ReturnType<typeof describeStatus>} s @param {ReturnType<typeof toolsStatus>} tools
- * @param {ReturnType<typeof captureLine>} capture @param {object | null} reply
- */
-function statusCard(s, tools, capture, reply) {
-  const card = el('section', { className: 'tj-popup__status', attrs: { 'aria-live': 'polite' } });
-  if (s.kind === 'not-video') {
-    card.append(el('p', { className: 'tj-body-sm', text: messageFor('TJ_NOT_YOUTUBE') }));
-    return card;
-  }
-  card.append(el('h2', { className: 'tj-popup__title tj-clamp-2 tj-auto', text: s.title, dir: textDirection(s.title), attrs: { title: s.title } }));
-  if (s.kind === 'loading') {
-    card.append(el('div', { className: 'tj-skeleton tj-popup__skel-line' }));
-  } else if (s.kind === 'has-subtitle') {
-    card.append(el('p', { className: 'tj-body-sm', text: s.line }));
-    const pills = [savedPill(), statusPill({ tone: 'neutral', text: s.mode, plain: true })];
-    if (s.edited) pills.push(statusPill({ tone: 'edited', text: 'معدّلة' }));
-    if (s.matched === false) pills.push(statusPill({ tone: 'warning', text: 'تختلف عن الأصل' }));
-    card.append(el('div', { className: 'tj-popup__pills', children: pills }));
-  } else {
-    card.append(el('p', { className: 'tj-body-sm', text: 'لا ترجمة عربية محفوظة' }));
-    card.append(el('p', { className: 'tj-caption', text: s.englishLine }));
-    if (s.saved) card.append(el('div', { className: 'tj-popup__pills', children: [savedPill()] }));
-  }
-  if (capture) card.append(el('p', { className: 'tj-caption tj-popup__capture', text: capture.text }));
-  if (tools) {
-    card.append(el('p', { className: `tj-caption tj-popup__tools tj-popup__tools--${tools.tone}`, text: tools.text }));
-    if (tools.reason && tools.reason !== tools.text) card.append(el('p', { className: 'tj-caption tj-popup__reason', text: tools.reason }));
-    card.append(diagnosticsLink(reply));
-  }
-  return card;
-}
-
-/** مؤشر حالة مختصر (لا رابط): للفيديو سجل في المحفوظات. والوصول إليه من مدخل «المحفوظات» في التذييل. */
-const savedPill = () => statusPill({ tone: 'success', text: 'محفوظ', title: 'هذا الفيديو في المحفوظات' });
 
 /** مدخل وجهة في تذييل النافذة (المحفوظات أو الإعدادات): واحد لكل وجهة. */
 function pageLink({ action, iconName, name, onOpen }, notice) {
@@ -108,16 +70,22 @@ startPage({
     const notice = el('div', { className: 'tj-popup__notice', attrs: { role: 'status' } });
     app.append(el('header', {
       className: 'tj-popup__head',
-      children: [logo({ height: 22 }), el('span', { className: 'tj-caption tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: 'محلي بالكامل' })] })],
+      children: [logo({ height: 22 }), el('span', { className: 'tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: 'محلي بالكامل' })] })],
     }));
-    const placeholder = skeleton();
+    const main = el('div', { className: 'tj-popup__main' });
+    const eyebrow = el('span', { className: 'tj-popup__eyebrow', text: 'الفيديو الحالي' });
+    const placeholder = skeletonCard();
+    const entryHost = el('div', { className: 'tj-popup__entry-host' });
     const actionsHost = el('div', { className: 'tj-popup__actions' });
+    const stepsHost = el('div', { className: 'tj-popup__guide' });
+    const diagHost = el('div', { className: 'tj-popup__diag-host' });
     const recentHost = el('div', { className: 'tj-popup__recent' });
-    app.append(placeholder, actionsHost, recentHost);
+    main.append(eyebrow, placeholder, entryHost, actionsHost, stepsHost, diagHost, recentHost, notice);
+    app.append(main);
     // مدخل واحد لكل وجهة، ولا ينتظر حالة الفيديو (قد تتأخر حتى مهلتها إن علق سكربت المحتوى). المحفوظات تُفتح على صف الفيديو
     // الحالي إن كان محفوظًا (تُعرف بعد الرد).
     let reply = null;
-    app.append(notice, el('nav', {
+    app.append(el('nav', {
       className: 'tj-popup__nav',
       attrs: { 'aria-label': 'صفحات ترجمان' },
       children: [
@@ -125,10 +93,11 @@ startPage({
         pageLink({ action: 'settings', iconName: 'settings', name: 'الإعدادات', onOpen: () => openPage('settings') }, notice),
       ],
     }));
+    // «زر النص المتزامن مخفي» لا ينتظر رد الصفحة هو الآخر: التفضيلات من التخزين مباشرة.
+    const entry = bindEntryRow({ store, host: entryHost });
 
     reply = await queryVideoState();
     const status = describeStatus(reply);
-    placeholder.replaceWith(statusCard(status, toolsStatus(reply), captureLine(reply), reply));
     // القاموس المرفق في نسخ التعليمات من هنا كما في المشغّل والمحفوظات (النص نفسه من instructions).
     let glossary = null;
     try {
@@ -137,12 +106,20 @@ startPage({
       glossary = null;
     }
 
+    if (status.kind === 'not-video') {
+      eyebrow.textContent = 'آخر الترجمات';
+      placeholder.replaceWith(notVideoNote());
+      main.insertBefore(eyebrow, recentHost);
+    } else {
+      placeholder.replaceWith(statusCard(status, toolsStatus(reply), captureLine(reply)));
+    }
+
     // الإجراءات السريعة للفيديو الحالي.
     const gate = editorGate(reply);
     for (const a of quickActions(reply)) {
       let b;
       if (a.id === 'editor') {
-        b = button({ label: a.label, icon: 'edit', variant: a.primary ? 'primary' : 'secondary', disabledReason: a.disabledReason, onClick: async () => {
+        b = button({ label: a.label, icon: 'edit', size: 'lg', variant: a.primary ? 'primary' : 'secondary', disabledReason: a.disabledReason, onClick: async () => {
           try {
             await openPage('editor', { v: gate.videoId });
             window.close();
@@ -155,7 +132,7 @@ startPage({
         const label = el('span', { text: idle });
         let glyph = icon('copy');
         // الاسم هو النص الظاهر نفسه في كل حالة (WCAG 2.5.3؛ تدقيق 5fedcb9، CL-007 وGM-027.2)، والشرح في التلميح.
-        b = el('button', { className: `tj-btn tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', title: 'ينسخ تعليمات الترجمة وحدها لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
+        b = el('button', { className: `tj-btn tj-btn--lg tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', title: 'ينسخ تعليمات الترجمة وحدها لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
         const copy = createCopyState({
           buildText: () => instructions({ videoId: reply.videoId, title: reply.title, glossary }),
           write: (text) => navigator.clipboard.writeText(text),
@@ -176,16 +153,23 @@ startPage({
       if (a.primary) b.classList.add('tj-popup__primary');
       actionsHost.append(b);
     }
-    if (status.kind === 'no-subtitle') actionsHost.append(el('p', { className: 'tj-caption tj-popup__hint', text: 'ارفع الملف العربي من زر الرفع في شريط المشغّل.' }));
+    // فيديو بلا ترجمة عربية: ثلاث خطوات من حالة الأصل الفعلية (ملتقط أو محفوظ أو لا).
+    const steps = guideSteps(reply);
+    if (steps) stepsHost.append(guideList(steps));
+    // تشخيص الصفحة حيث تُعرض حالة أدوات المشغّل.
+    if (toolsStatus(reply)) diagHost.append(diagnosticsLink(reply));
 
     // ليست صفحة فيديو: آخر الترجمات من المحفوظات.
     if (status.kind === 'not-video') {
       try {
         const recent = recentEntries(await store.listIndex());
         if (recent.length) {
-          recentHost.append(el('h3', { className: 'tj-popup__section', text: 'آخر الترجمات' }));
+          const list = el('div', { className: 'tj-popup__recent-list' });
+          const nowMs = Date.now();
           for (const e of recent) {
-            const title = el('span', { className: 'tj-popup__recent-title tj-truncate tj-auto', text: e.title ?? e.videoId, dir: textDirection(e.title ?? e.videoId), attrs: { title: e.title ?? e.videoId } });
+            const name = e.title ?? e.videoId;
+            const title = el('span', { className: 'tj-popup__recent-title tj-truncate tj-auto', text: name, dir: textDirection(name), attrs: { title: name } });
+            const meta = el('span', { className: 'tj-popup__recent-meta', text: recentLine(e, nowMs) });
             // تعذّر فتح التبويب أو الصفحة يُقال كما في أزرار الحالة، لا رفضٌ صامت (تدقيق 5fedcb9، GM-027.2).
             const go = (fn) => async () => {
               try {
@@ -195,15 +179,20 @@ startPage({
                 notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
               }
             };
-            const openBtn = button({ label: `فتح الفيديو: ${e.title ?? e.videoId}`, iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: 'فتح الفيديو', onClick: go(() => chrome.tabs.create({ url: watchUrl(e.videoId) })) });
-            const editBtn = button({ label: `تحرير: ${e.title ?? e.videoId}`, iconOnly: true, icon: 'edit', variant: 'ghost', size: 'sm', title: 'تحرير الترجمة', disabledReason: e.arabic ? null : messageFor('PG_NO_ARABIC'), onClick: go(() => openPage('editor', { v: e.videoId })) });
-            recentHost.append(el('div', { className: 'tj-popup__recent-row', children: [title, el('span', { className: 'tj-popup__recent-actions', children: [editBtn, openBtn] })] }));
+            const openBtn = button({ label: `فتح الفيديو: ${name}`, iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: 'فتح الفيديو', onClick: go(() => chrome.tabs.create({ url: watchUrl(e.videoId) })) });
+            const editBtn = button({ label: `تحرير: ${name}`, iconOnly: true, icon: 'edit', variant: 'ghost', size: 'sm', title: 'تحرير الترجمة', disabledReason: e.arabic ? null : messageFor('PG_NO_ARABIC'), onClick: go(() => openPage('editor', { v: e.videoId })) });
+            list.append(el('div', { className: 'tj-popup__recent-row', children: [el('span', { className: 'tj-popup__recent-text', children: [title, meta] }), el('span', { className: 'tj-popup__recent-actions', children: [editBtn, openBtn] })] }));
           }
+          recentHost.append(el('div', { className: 'tj-popup__card tj-popup__card--list', children: [list] }));
+        } else {
+          eyebrow.remove();
         }
       } catch {
         // المحفوظات غير متاحة الآن: تبقى النافذة بمدخليها.
+        eyebrow.remove();
       }
     }
+    await entry.ready;
     // اكتمل العرض (للحزام الحي: لا يقرأ النافذة قبل آخر الترجمات).
     app.setAttribute('data-ready', '1');
   },
