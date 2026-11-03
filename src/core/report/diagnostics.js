@@ -7,7 +7,8 @@
 const OS = Object.freeze({ mac: 'macos', win: 'windows', linux: 'linux', cros: 'chromeos', android: 'android', openbsd: 'openbsd', fuchsia: 'fuchsia' });
 /** runtime.PlatformArch ← قيم العقد (Firefox يسمّي ARM64 aarch64). */
 const ARCH = Object.freeze({ arm: 'arm', arm64: 'arm64', aarch64: 'arm64', 'x86-32': 'x86', 'x86-64': 'x86_64', mips: 'mips', mips64: 'mips64' });
-const PREFERRED = ['Microsoft Edge', 'Google Chrome', 'Brave', 'Opera', 'Vivaldi', 'Chromium'];
+// Brave ليس هنا: علامته في userAgentData تحمل إصدار Chromium لا إصداره هو (انظر browserOf).
+const PREFERRED = ['Microsoft Edge', 'Google Chrome', 'Opera', 'Vivaldi', 'Chromium'];
 
 /**
  * مصادر التشخيص الحية؛ والاختبارات تمرّر مصادر بديلة.
@@ -37,9 +38,11 @@ async function browserOf(s) {
   const high = await Promise.resolve().then(() => ua?.getHighEntropyValues?.(['platformVersion', 'fullVersionList']) ?? NONE).catch(() => NONE);
   const brands = high?.fullVersionList ?? ua?.brands ?? [];
   const osVersion = high?.platformVersion ?? 'unknown';
-  if (await Promise.resolve().then(s.isBrave).catch(() => false)) {
-    return { browser: 'Brave', version: brands.find((b) => b.brand === 'Chromium')?.version ?? 'unknown', osVersion };
-  }
+  // Brave لا يكشف إصداره هو (1.x) لصفحات الإضافة: علامتا «Brave» و«Chromium» عنده بإصدار Chromium، مخفّضًا غالبًا إلى
+  // ‎156.0.0.0. فلا يُعرض إصدار Chromium على أنه إصدار Brave (المراجعة المستقلة 2026-11-04؛ أدلة T3: «Brave 156.0.0.0» والمتصفح
+  // 1.98.63): الإصدار unknown صريحة، وإصدار Chromium في حقله المسمّى chromiumVersion.
+  const brave = await Promise.resolve().then(s.isBrave).catch(() => false) || brands.some((b) => b.brand === 'Brave');
+  if (brave) return { browser: 'Brave', version: 'unknown', chromiumVersion: brands.find((b) => b.brand === 'Chromium')?.version ?? 'unknown', osVersion };
   const known = PREFERRED.map((name) => brands.find((b) => b.brand === name)).find(Boolean);
   if (known) return { browser: known.brand, version: known.version, osVersion };
   const m = /Firefox\/([\d.]+)/.exec(s.userAgent());
@@ -63,6 +66,7 @@ export async function collectDiagnostics(s = liveSources()) {
     arch: ARCH[platform?.arch] ?? 'unknown',
     browser: b.browser,
     browserVersion: b.version,
+    ...(b.chromiumVersion === undefined ? {} : { chromiumVersion: b.chromiumVersion }),
     buildTarget: s.target(),
     test: s.development(),
   };

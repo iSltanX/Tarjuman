@@ -75,3 +75,16 @@ test('«انسخ البلاغ»: الجسم نفسه JSON منسَّقًا يع�
   assert.ok(text.includes('\n  "product": "tarjuman"'));
   assert.deepEqual(JSON.parse(text), p);
 });
+
+test('Brave (المراجعة المستقلة 2026-11-04): إصداره unknown وإصدار Chromium في chromium_version بشكله الضيق، والمعاينة تسمّي كلًّا باسمه', () => {
+  const brave = { ...DIAG, browser: 'Brave', browserVersion: 'unknown', chromiumVersion: '156.0.0.0' };
+  const p = buildPayload({ kind: 'bug', description: 'x' }, brave);
+  assert.deepEqual(p.diagnostics, { browser: 'Brave', browser_version: 'unknown', chromium_version: '156.0.0.0', build_target: 'chromium' });
+  const rows = reviewRows(p);
+  const row = rows.find((r) => r.label === 'المتصفح');
+  assert.equal(row.value, 'Brave unknown · Chromium 156.0.0.0', 'لا «Brave 156.0.0.0»');
+  const covered = rows.flatMap((r) => r.field.split(' · ').map((f) => f.replace(/^diagnostics\./, '')));
+  for (const f of Object.keys(p.diagnostics)) assert.ok(covered.includes(f), `الحقل ${f} غير معروض`);
+  assert.equal(diagnosticsOf({ ...brave, chromiumVersion: '156; DROP' }).chromium_version, 'unknown');
+  assert.equal('chromium_version' in diagnosticsOf(DIAG), false, 'لا حقل زائد لمتصفح يكشف إصداره');
+});

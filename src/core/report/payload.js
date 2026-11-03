@@ -15,8 +15,8 @@ export const KIND_LABELS = Object.freeze({ bug: 'خلل', suggestion: 'اقتر�
 /**
  * @typedef {{
  *   appVersion: string, os: string, osVersion: string, arch: string,
- *   browser: string, browserVersion: string, buildTarget: string, test: boolean,
- * }} Diagnostics
+ *   browser: string, browserVersion: string, chromiumVersion?: string, buildTarget: string, test: boolean,
+ * }} Diagnostics browserVersion إصدار المتصفح المسمّى نفسه أو unknown، وchromiumVersion إصدار محرّكه حيث لا يكشف المتصفح إصداره (Brave)
  * @typedef {{ kind: string, description: string }} ReportForm
  */
 
@@ -34,6 +34,7 @@ export function diagnosticsOf(d) {
   return {
     browser: narrow(d.browser, 32, NAME),
     browser_version: narrow(d.browserVersion, 32, VERSION),
+    ...(d.chromiumVersion === undefined ? {} : { chromium_version: narrow(d.chromiumVersion, 32, VERSION) }),
     build_target: d.buildTarget === 'firefox' ? 'firefox' : 'chromium',
   };
 }
@@ -74,7 +75,12 @@ export function reviewRows(p) {
     { label: 'المنتج', value: p.product, field: 'product' },
     { label: 'النوع', value: `${KIND_LABELS[p.kind]} (${p.kind})`, field: 'kind' },
     { label: 'إصدار ترجمان', value: p.app_version, field: 'app_version' },
-    { label: 'المتصفح', value: `${p.diagnostics.browser} ${p.diagnostics.browser_version}`, field: 'diagnostics.browser · browser_version' },
+    p.diagnostics.chromium_version === undefined
+      ? { label: 'المتصفح', value: `${p.diagnostics.browser} ${p.diagnostics.browser_version}`, field: 'diagnostics.browser · browser_version' }
+      : {
+        label: 'المتصفح', value: `${p.diagnostics.browser} ${p.diagnostics.browser_version} · Chromium ${p.diagnostics.chromium_version}`,
+        field: 'diagnostics.browser · browser_version · chromium_version',
+      },
     { label: 'حزمة البناء', value: p.diagnostics.build_target, field: 'diagnostics.build_target' },
     { label: 'النظام', value: `${p.os} ${p.os_version} · ${p.arch}`, field: 'os · os_version · arch' },
     { label: 'لغة الواجهة', value: p.locale, field: 'locale' },

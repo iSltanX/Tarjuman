@@ -27,12 +27,18 @@ test('Chrome وEdge من علامات userAgentData بإصدار النظام ا
   assert.deepEqual([edge.browser, edge.browserVersion, edge.os, edge.arch], ['Microsoft Edge', '156.0.4314.58', 'windows', 'x86_64']);
 });
 
-test('Brave يُعرف بـnavigator.brave وإصداره من Chromium', async () => {
-  const d = await collectDiagnostics(sources({
-    isBrave: async () => true,
-    uaData: () => ({ brands: [{ brand: 'Chromium', version: '156' }, { brand: 'Brave', version: '156' }], getHighEntropyValues: async () => ({ fullVersionList: [{ brand: 'Chromium', version: '156.0.7650.10' }] }) }),
-  }));
-  assert.deepEqual([d.browser, d.browserVersion, d.osVersion], ['Brave', '156.0.7650.10', 'unknown']);
+test('Brave يُعرف بـnavigator.brave، ولا يُعرض إصدار Chromium على أنه إصداره: الإصدار unknown وChromium في حقله', async () => {
+  // كما في Brave 1.98.63 الحقيقي (أدلة T3): العلامتان بإصدار Chromium مخفّضًا، ولا أثر لـ1.98.63 في أي مصدر للصفحة.
+  const brands = [{ brand: 'Chromium', version: '156' }, { brand: 'Brave', version: '156' }];
+  const ua = { brands, getHighEntropyValues: async () => ({ fullVersionList: [{ brand: 'Chromium', version: '156.0.0.0' }, { brand: 'Brave', version: '156.0.0.0' }] }) };
+  const d = await collectDiagnostics(sources({ isBrave: async () => true, uaData: () => ua }));
+  assert.deepEqual([d.browser, d.browserVersion, d.chromiumVersion, d.osVersion], ['Brave', 'unknown', '156.0.0.0', 'unknown']);
+  // علامة Brave وحدها (بلا navigator.brave) لا تعيد الخلط نفسه من قائمة المتصفحات المعروفة.
+  const byBrand = await collectDiagnostics(sources({ uaData: () => ua }));
+  assert.deepEqual([byBrand.browser, byBrand.browserVersion, byBrand.chromiumVersion], ['Brave', 'unknown', '156.0.0.0']);
+  // ولا حقل chromiumVersion لمتصفح يكشف إصداره.
+  const chrome = await collectDiagnostics(sources({ uaData: () => ({ brands: [{ brand: 'Google Chrome', version: '156' }], getHighEntropyValues: async () => ({ fullVersionList: [{ brand: 'Google Chrome', version: '156.0.8078.80' }] }) }) }));
+  assert.equal('chromiumVersion' in chrome, false);
 });
 
 test('Firefox: الاسم والإصدار من getBrowserInfo، وARM64 باسمه aarch64، وهدف البناء firefox', async () => {
