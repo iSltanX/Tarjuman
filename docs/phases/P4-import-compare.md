@@ -147,67 +147,50 @@
     "P4-AC1": {
       "result": "pass",
       "evidence": [
-        "docs/evidence/P4/unit-srt.log"
+        "docs/evidence/P4/README.md"
       ],
       "note": "المحلّل المتسامح: 26 اختبارًا (BOM وCRLF والفاصلة والنقطة والأسطر الزائدة والأرقام الهندية، وتجريد الوسوم، وأخطاء برقم السطر بالعربية)"
     },
     "P4-AC2": {
       "result": "pass",
       "evidence": [
-        "docs/evidence/P4/unit-srt.log",
-        "docs/evidence/P4/unit-import.log"
+        "docs/evidence/P4/README.md"
       ],
       "note": "اختبار الحقن: script وimg وjavascript والكيانات تبقى نصًا حرفيًا لا يُفسَّر؛ ويجرَّد التنسيق وحده بملاحظة"
     },
     "P4-AC3": {
       "result": "pass",
       "evidence": [
-        "docs/evidence/P4/unit-compare.log"
+        "docs/evidence/P4/README.md"
       ],
       "note": "النقص والزيادة والانحراف بعتبة قابلة للضبط والفراغ وبلا حرف عربي، لكل حالة اختبار، والتقرير يجتاز مدقق العقد"
     },
     "P4-AC4": {
       "result": "pass",
       "evidence": [
-        "docs/evidence/P4/unit-compare.log"
+        "docs/evidence/P4/README.md"
       ],
       "note": "لا تُتاح إلا عند تطابق العدد والترقيم (ثماني حالات منع)، والمعاينة لا تطبق شيئًا، والتطبيق منفصل"
     },
     "P4-AC5": {
       "result": "pass",
       "evidence": [
-        "docs/evidence/P4/unit-import.log"
+        "docs/evidence/P4/README.md"
       ],
       "note": "الدمج بالأرقام مع الفجوات (تحذير) والتداخل والتكرار (خطأ) ومجموع الأجزاء"
     },
     "P4-AC6": {
       "result": "pass",
       "evidence": [
-        "docs/evidence/P4/integration-roundtrip.log"
+        "docs/evidence/P4/README.md"
       ],
       "note": "ذهاب وإياب على العينتين الحقيقيتين بسبعة سيناريوهات، والمتوقع من الأخطاء المزروعة؛ وسيناريوهات P3 الحقيقية تعمل تلقائيًا بعد دمجها"
     }
   },
   "evidence": [
     {
-      "label": "أدلة P4 وجدول المعايير والمراجعة المستقلة",
+      "label": "أدلة P4 وجدول المعايير والمراجعة المستقلة (أرقام السجلات الأربعة فيه؛ السجلات نفسها لم تُحفظ في Git، تجاهلها *.log)",
       "path": "docs/evidence/P4/README.md"
-    },
-    {
-      "label": "سجل اختبارات srt",
-      "path": "docs/evidence/P4/unit-srt.log"
-    },
-    {
-      "label": "سجل اختبارات compare",
-      "path": "docs/evidence/P4/unit-compare.log"
-    },
-    {
-      "label": "سجل اختبارات import",
-      "path": "docs/evidence/P4/unit-import.log"
-    },
-    {
-      "label": "سجل اختبار الذهاب والإياب",
-      "path": "docs/evidence/P4/integration-roundtrip.log"
     }
   ],
   "sharedRequests": [

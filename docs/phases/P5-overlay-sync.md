@@ -240,11 +240,26 @@
     }
   },
   "evidence": [
-    "docs/evidence/P5/README.md",
-    "docs/evidence/P5/brave/live.json",
-    "docs/evidence/P5/chrome/live.json",
-    "docs/evidence/P5/rtl-sample/brave-rtl-sample.json",
-    "docs/evidence/P5/rtl-sample/chrome-rtl-sample.json"
+    {
+      "label": "أدلة P5 وجدول المعايير",
+      "path": "docs/evidence/P5/README.md"
+    },
+    {
+      "label": "القياس الحي في Brave",
+      "path": "docs/evidence/P5/brave/live.json"
+    },
+    {
+      "label": "القياس الحي في Chrome",
+      "path": "docs/evidence/P5/chrome/live.json"
+    },
+    {
+      "label": "ملف SRT العيّنة فوق فيديو حقيقي في Brave",
+      "path": "docs/evidence/P5/rtl-sample/brave-rtl-sample.json"
+    },
+    {
+      "label": "ملف SRT العيّنة فوق فيديو حقيقي في Chrome",
+      "path": "docs/evidence/P5/rtl-sample/chrome-rtl-sample.json"
+    }
   ],
   "sharedRequests": [
     {
