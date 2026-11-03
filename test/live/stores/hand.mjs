@@ -7,8 +7,11 @@
 // ← «أرسل البلاغ» ← قبول الإذن. السكربت يراقب مجلدات التنزيل وحافظة الجهاز والبلاغات الجديدة في app-reports وحدها، ثم يغلق
 // المتصفحات ويقارن، ويتحقق من كل بلاغ برقمه ووسومه (product:tarjuman وkind:* وtest) ثم يغلقه.
 //   command node test/live/stores/hand.mjs [--minutes 30] [--out docs/evidence/T3/manual]
+//   command node test/live/stores/hand.mjs --finalize <مجلد hand-…> --log <سجل الجلسة> [--out …]
+//     إغلاق جلسة انتهت يدها ولم ينتهِ سكربتها: يُتحقق من الملفات (ومنها المجلد الفرعي لمكان الحفظ المختار) ومن أحداث الحافظة في
+//     سجل الجلسة ومن البلاغات، وتُغلق البلاغات المتحقق منها.
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PROFILE_ROOT, sleep } from '../harness/browser.mjs';
@@ -24,18 +27,21 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const MINUTES = Number(val('minutes', 30));
 const OUT = path.resolve(ROOT, val('out', 'docs/evidence/T3/manual'));
+const FINALIZE = val('finalize');
+const SESSION_LOG = val('log');
 const VIDEO = 'iG9CE55wbtY';
 const TITLE = 'Do schools kill creativity? | Sir Ken Robinson | TED';
 const WATCH = `https://www.youtube.com/watch?v=${VIDEO}`;
-const RUN = new Date().toISOString().replace(/[:.]/g, '-');
-const WORK = path.join(PROFILE_ROOT, 't3-work', `hand-${RUN}`);
+const RUN = FINALIZE ? path.basename(FINALIZE).replace(/^hand-/, '') : new Date().toISOString().replace(/[:.]/g, '-');
+const WORK = FINALIZE ? path.resolve(FINALIZE) : path.join(PROFILE_ROOT, 't3-work', `hand-${RUN}`);
 const EXT_C = path.join(WORK, 'ext-chromium');
 const EXT_F = path.join(WORK, 'ext-firefox');
 const CHROME_EXT = path.join(PROFILE_ROOT, 'extension-manual');
 const REPO = 'iSltanX/app-reports';
 const BROWSERS = ['brave', 'chrome', 'edge', 'firefox'];
 const dl = (b) => path.join(WORK, b, 'downloads');
-const started = new Date();
+// بداية الجلسة من اسم مجلدها في الإغلاق (2026-11-03T21-23-34-287Z ← ISO).
+const started = FINALIZE ? new Date(RUN.replace(/T(\d\d)-(\d\d)-(\d\d)-(\d+)Z$/, 'T$1:$2:$3.$4Z')) : new Date();
 
 // ---- المتوقع من عيّنة P1 نفسها (الجسم الحقيقي للفيديو، ملتقطًا في P1) ----
 const body = await readFile(path.join(ROOT, 'test/fixtures/json3/manual-ted-iG9CE55wbtY.json'), 'utf8');
@@ -49,8 +55,10 @@ const log = (s) => console.log(`${new Date().toISOString().slice(11, 19)} ${s}`)
 
 // ---- البناء والملفات ----
 await mkdir(WORK, { recursive: true });
-execFileSync(process.execPath, [path.join(ROOT, 'scripts/build.mjs'), '--dev', '--out', EXT_C], { stdio: 'ignore' });
-execFileSync(process.execPath, [path.join(ROOT, 'scripts/build.mjs'), '--dev', '--target', 'firefox', '--out', EXT_F], { stdio: 'ignore' });
+if (!FINALIZE) {
+  execFileSync(process.execPath, [path.join(ROOT, 'scripts/build.mjs'), '--dev', '--out', EXT_C], { stdio: 'ignore' });
+  execFileSync(process.execPath, [path.join(ROOT, 'scripts/build.mjs'), '--dev', '--target', 'firefox', '--out', EXT_F], { stdio: 'ignore' });
+}
 for (const b of BROWSERS) await mkdir(dl(b), { recursive: true });
 
 const appVersion = (app) => {
@@ -100,33 +108,34 @@ async function openFirefox() {
   return () => tail;
 }
 
-// Chrome: البناء في مجلد الإضافة المحمّلة يدويًا (يقرؤه Chrome عند التشغيل).
-if (pidsOf(profiles.chrome).length) await quitProfile(profiles.chrome);
-await rm(CHROME_EXT, { recursive: true, force: true });
-await cp(EXT_C, CHROME_EXT, { recursive: true });
-const chromeId = unpackedIdOf(CHROME_EXT);
+let ffTail = () => '';
+if (!FINALIZE) {
+  // Chrome: البناء في مجلد الإضافة المحمّلة يدويًا (يقرؤه Chrome عند التشغيل).
+  if (pidsOf(profiles.chrome).length) await quitProfile(profiles.chrome);
+  await rm(CHROME_EXT, { recursive: true, force: true });
+  await cp(EXT_C, CHROME_EXT, { recursive: true });
+  const chromeId = unpackedIdOf(CHROME_EXT);
 
-await openChromium('brave', { ext: EXT_C, loadFlag: true, urls: [WATCH] });
-await sleep(1500);
-await openChromium('edge', { ext: EXT_C, loadFlag: true, urls: [WATCH] });
-await sleep(1500);
-await openChromium('chrome', { ext: CHROME_EXT, loadFlag: false, urls: [WATCH, `chrome-extension://${chromeId}/pages/settings/index.html#about`] });
-await sleep(1500);
-const ffTail = await openFirefox();
+  await openChromium('brave', { ext: EXT_C, loadFlag: true, urls: [WATCH] });
+  await sleep(1500);
+  await openChromium('edge', { ext: EXT_C, loadFlag: true, urls: [WATCH] });
+  await sleep(1500);
+  await openChromium('chrome', { ext: CHROME_EXT, loadFlag: false, urls: [WATCH, `chrome-extension://${chromeId}/pages/settings/index.html#about`] });
+  await sleep(1500);
+  ffTail = await openFirefox();
+  log('النوافذ الأربع مفتوحة: الجلسة اليدوية تبدأ.');
+}
 for (const b of BROWSERS) result.browsers[b] = { browser: `${APPS[b].name} ${appVersion(appOf(b)) ?? '?'}`, profile: path.basename(profiles[b]) };
-log('النوافذ الأربع مفتوحة: الجلسة اليدوية تبدأ.');
 
 // ---- المراقبة ----
-const guard = sentinel();
 const seenFiles = new Map();
 let lastDownloadBrowser = null;
-let lastClip = guard;
 const reportsSeen = new Map();
-const end = Date.now() + MINUTES * 60000;
 let lastGh = 0;
+// بحث في المجلد وما تحته: Chrome يحفظ في مجلد فرعي (Tarjuman/) إن اختاره سلطان مكانًا للحفظ.
 const listSrt = async (b) => {
   try {
-    return (await readdir(dl(b))).filter((n) => n.endsWith('.srt'));
+    return (await readdir(dl(b), { recursive: true })).filter((n) => n.endsWith('.srt'));
   } catch {
     return [];
   }
@@ -136,6 +145,32 @@ function ghReports() {
   if (r.status !== 0) return null;
   return JSON.parse(r.stdout).filter((i) => Date.parse(i.createdAt) >= started.getTime() - 60000);
 }
+if (FINALIZE) {
+  // الملفات بأوقات تعديلها، والحافظة من سطور سجل الجلسة، وكل نسخ يُنسب إلى آخر تنزيل قبله.
+  for (const b of BROWSERS) {
+    for (const f of await listSrt(b)) {
+      const full = path.join(dl(b), f);
+      seenFiles.set(`${b}/${f}`, { browser: b, file: f, text: await readFile(full, 'utf8'), at: (await stat(full)).mtimeMs });
+    }
+  }
+  const day = started.toISOString().slice(0, 10);
+  const lines = SESSION_LOG ? (await readFile(SESSION_LOG, 'utf8')).split('\n') : [];
+  for (const line of lines) {
+    const m = /^(\d\d:\d\d:\d\d) نسخ إلى الحافظة بعد تنزيل \S+ \((\d+) محرفًا\)/.exec(line);
+    if (!m) continue;
+    const at = Date.parse(`${day}T${m[1]}Z`);
+    const before = [...seenFiles.values()].filter((x) => x.at <= at + 999).sort((x, y) => y.at - x.at)[0];
+    result.clipboard.push({ after: before?.browser ?? null, afterFile: before?.file ?? null, length: Number(m[2]), sha: null, at: new Date(at).toISOString() });
+  }
+  // آخر نسخ ما زال في الحافظة: بصمته تُقارن بالمتوقع أدناه.
+  const clip = readClipboard();
+  const last = result.clipboard.at(-1);
+  if (last && clip.length === last.length) last.sha = sha16(clip);
+  for (const i of ghReports() ?? []) reportsSeen.set(i.number, i);
+}
+const guard = FINALIZE ? null : sentinel();
+let lastClip = guard;
+const end = FINALIZE ? 0 : Date.now() + MINUTES * 60000;
 while (Date.now() < end) {
   for (const b of BROWSERS) {
     for (const f of await listSrt(b)) {
@@ -176,16 +211,71 @@ if (webExt) {
   await sleep(3000);
   if (webExt.exitCode === null) webExt.kill('SIGTERM');
 }
-result.notes.push(`web-ext: ${ffTail().replace(/\s+/g, ' ').slice(-300)}`);
-const expectedInstr = [instructions({ videoId: VIDEO, title: TITLE }), instructions({ videoId: VIDEO, title: TITLE, glossary: [] })].map(sha16);
+if (FINALIZE) {
+  // Firefox الذي شغّله web-ext بقي بعد إيقاف السكربت: يُغلق بمسار ملفه.
+  const r = spawnSync('pgrep', ['-f', '--', profiles.firefox]);
+  for (const pid of String(r.stdout).split('\n').filter(Boolean).map(Number)) {
+    try {
+      process.kill(pid, 'SIGTERM');
+    } catch {
+      // انتهى.
+    }
+  }
+} else {
+  result.notes.push(`web-ext: ${ffTail().replace(/\s+/g, ' ').slice(-300)}`);
+}
+// parseSrtStrict يرمي عند أي خلل ويشترط الترقيم من 1؛ وجزء التقسيم ترقيمه مستمر من أول مقاطعه (first)، فيُعاد ترقيمه من 1
+// بعد التحقق من تتابعه ثم يُحلَّل بالصرامة نفسها.
+const strictCues = (text, first = 1) => {
+  try {
+    const blocks = (text.charCodeAt(0) === 0xfeff ? text.slice(1) : text).trim().split(/\r?\n\r?\n/);
+    if (!blocks.every((blk, i) => blk.split(/\r?\n/)[0] === String(first + i))) return null;
+    const renumbered = first === 1 ? text : blocks.map((blk, i) => blk.replace(/^[^\r\n]*/, String(i + 1))).join('\n\n') + '\n';
+    return parseSrtStrict(renumbered);
+  } catch {
+    return null;
+  }
+};
+const expectedCues = strictCues(EXPECTED_SRT);
+const plain = instructions({ videoId: VIDEO, title: TITLE });
+const expectedInstr = { [sha16(plain)]: 'بلا قاموس', [sha16(instructions({ videoId: VIDEO, title: TITLE, glossary: [] }))]: 'بلا قاموس' };
+result.expected = { srtChars: EXPECTED_SRT.length, cues: expectedCues?.length ?? null, instructionsChars: plain.length };
 for (const b of BROWSERS) {
   const files = [...seenFiles.values()].filter((x) => x.browser === b);
-  const f = files[0];
-  const strict = f ? parseSrtStrict(f.text) : null;
+  const f = files.find((x) => /\.normal\.srt$/.test(x.file)) ?? files[0];
+  const cues = f ? strictCues(f.text) : null;
+  // ملفات التقسيم (إن نُزّلت): كل جزء SRT صارم، ومجموع مقاطعها بالترتيب = مقاطع الملف الكامل نصًا وتوقيتًا.
+  const parts = files.filter((x) => /\.part\d+of\d+\.srt$/.test(x.file)).sort((x, y) => x.file.localeCompare(y.file));
+  let split = null;
+  if (parts.length) {
+    let next = 1;
+    const each = parts.map((p) => {
+      const c = strictCues(p.text, next);
+      next += c?.length ?? 0;
+      return { file: p.file, chars: p.text.length, cues: c };
+    });
+    const joined = each.flatMap((p) => p.cues ?? []);
+    const same = !!expectedCues && joined.length === expectedCues.length
+      && joined.every((c, i) => c.text === expectedCues[i].text && c.startMs === expectedCues[i].startMs && c.endMs === expectedCues[i].endMs);
+    const ranges = [];
+    let from = 1;
+    each.forEach((p, i) => {
+      const n = p.cues?.length ?? 0;
+      ranges.push({ index: i + 1, from, to: from + n - 1 });
+      from += n;
+    });
+    const partsInstr = instructions({ videoId: VIDEO, title: TITLE, parts: ranges });
+    expectedInstr[sha16(partsInstr)] = 'تعليمات التقسيم';
+    split = { files: each.map((p) => ({ file: p.file, chars: p.chars, cues: p.cues?.length ?? null, strict: !!p.cues })), joinedEqualsWhole: same, instructionsChars: partsInstr.length };
+  }
   result.browsers[b] = {
     ...result.browsers[b],
-    srt: f ? { file: f.file, chars: f.text.length, sha: sha16(f.text), cues: strict?.ok ? strict.cues.length : null, strict: !!strict?.ok, sameAsP1: f.text === EXPECTED_SRT } : null,
-    clipboard: result.clipboard.filter((c) => c.after === b).map((c) => ({ length: c.length, instructions: expectedInstr.includes(c.sha) })),
+    files: files.map((x) => x.file),
+    srt: f ? { file: f.file, chars: f.text.length, sha: sha16(f.text), cues: cues?.length ?? null, strict: !!cues, sameAsP1: f.text === EXPECTED_SRT } : null,
+    split,
+    clipboard: result.clipboard.filter((c) => c.after === b).map((c) => ({
+      at: c.at, afterFile: c.afterFile ?? null, length: c.length, sha: c.sha, matches: c.sha ? (expectedInstr[c.sha] ?? 'لا يطابق') : null,
+    })),
   };
 }
 for (const i of reportsSeen.values()) {
