@@ -21,7 +21,7 @@ import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
 import { mergeCues, splitCue } from '../../core/edit/structure.js';
 import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, formatTimecode, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatTimecode, offsetInline, textDirection } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
 import { jumpToVideo } from '../../ui/seek.js';
 import { openDriftDialog } from './drift-dialog.js';
@@ -128,7 +128,8 @@ export async function mountEditor(app, {
   app.replaceChildren();
   app.classList.add('ed-app');
   const backBtn = button({ label: 'المحفوظات', icon: 'library', variant: 'ghost', size: 'sm', onClick: () => goLibrary(), doc });
-  const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate', dir: 'auto', doc });
+  // العنوان بقاعدة «حرف عربي ⇒ RTL» لا أول حرف قوي (قرار سلطان، CL-002)، بمحاذاة يمين حتى الإنجليزي الخالص.
+  const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate tj-auto', doc });
   const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'خانة التحرير', onSelect: (n) => switchSlot(n), doc });
   const slotNote = el('span', { className: 'ed-slot-note tj-caption', doc });
   const versionSel = el('select', { className: 'ed-select', attrs: { 'aria-label': 'النسخة المعروضة' }, on: { change: () => setView(versionSel.value) }, doc });
@@ -340,6 +341,7 @@ export async function mountEditor(app, {
     S.external = null;
     S.showEnglish = !S.hideEnglish && ((S.englishTrack?.cues.length ?? 0) > 0 || S.refCol !== 'en');
     titleEl.textContent = b.record.title ?? 'بلا عنوان محفوظ';
+    titleEl.dir = textDirection(titleEl.textContent);
     titleEl.title = b.record.title ?? '';
     rebuildList();
     renderAll();
@@ -1442,6 +1444,7 @@ export async function mountEditor(app, {
       rebuildList();
     } else computeRefs(shownCues());
     titleEl.textContent = latest.record.title ?? 'بلا عنوان محفوظ';
+    titleEl.dir = textDirection(titleEl.textContent);
     // العلامات والموضع من الحزمة الأحدث (علامة من المشغّل مثلًا) على الصفوف المعروضة. بلا فرض: المحتوى لم يتغير، فلا يُطمس
     // ما يُكتب في الحقل المركّز.
     computeMarks();

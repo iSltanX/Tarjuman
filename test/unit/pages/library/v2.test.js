@@ -323,3 +323,28 @@ test('تدقيق 5fedcb9 (CL-006، CL-015، GM-016.2): رسائل «الترجم
   await settle(5);
   assert.ok(m.root.contains(m.lib.toaster.root) && m.root.contains(m.lib.toaster.live), 'عادتا إلى الصفحة');
 });
+
+test('تدقيق 5fedcb9 (CL-002، قرار سلطان): عنوان فيه حرف عربي RTL ولو بدأ بكلمة لاتينية، والإنجليزي الخالص LTR، في الصف ولوحة «الترجمات…»', async () => {
+  const MIXED = 'API هو الواجهة! (الجزء 3)';
+  const EN = 'Do schools kill creativity? | TED';
+  const m = await mount({
+    seed: async (store) => {
+      await seedBundle(store, sampleBundle({ videoId: IDS[0] }));
+      await store.updateVideo(IDS[0], (r) => ({ ...r, title: MIXED }));
+      await store.updateVideo(IDS[1], () => ({ ...videoRecord({ videoId: IDS[1] }), title: EN }));
+    },
+  });
+  const titleOf = (id) => rowFor(m, id).querySelector('.lib-row__title');
+  assert.equal(titleOf(IDS[0]).textContent, MIXED);
+  assert.equal(titleOf(IDS[0]).dir, 'rtl', 'يبدأ بـAPI وفيه حرف عربي');
+  assert.equal(titleOf(IDS[1]).dir, 'ltr', 'إنجليزي خالص، بمحاذاة يمين من .tj-auto');
+  openMore(m, IDS[0], 'الترجمات');
+  await settle(10);
+  const head = panelOf(m).querySelector('.lib-panel__title');
+  assert.equal(head.dir, 'rtl');
+  assert.equal(head.textContent, `الترجمات — ${String.fromCodePoint(0x2068)}${MIXED}${String.fromCodePoint(0x2069)}`, 'العنوان معزول داخل الجملة');
+  // .tj-auto لا يأخذ أول حرف قوي (plaintext يتجاهل dir)، بل يعزل ويحاذي يمينًا.
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../../../../src/ui/base.css', import.meta.url), 'utf8');
+  assert.match(css, /\.tj-auto \{ unicode-bidi: isolate; text-align: right; \}/);
+});

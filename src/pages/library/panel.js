@@ -29,7 +29,7 @@ export function openTranslations(env) {
   const dialog = el('dialog', {
     className: 'tj-dialog lib-panel', attrs: { 'aria-labelledby': `${id}-title` },
     children: [
-      el('div', { className: 'lib-panel__head', children: [el('h2', { className: 'tj-h3 lib-panel__title', text: `الترجمات — ${env.title}`, dir: 'auto', attrs: { id: `${id}-title` }, doc }), close], doc }),
+      el('div', { className: 'lib-panel__head', children: [el('h2', { className: 'tj-h3 lib-panel__title', text: `الترجمات — ${String.fromCodePoint(0x2068)}${env.title}${String.fromCodePoint(0x2069)}`, dir: 'rtl', attrs: { id: `${id}-title` }, doc }), close], doc }),
       body,
     ],
     doc,

@@ -8,6 +8,7 @@ import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { createStore } from '../../core/store/index.js';
 import { alertBox, button, el, icon, statusPill } from '../../ui/components.js';
+import { textDirection } from '../../ui/format.js';
 import { logo } from '../../ui/logo.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
@@ -56,7 +57,7 @@ function statusCard(s, tools, capture, reply) {
     card.append(el('p', { className: 'tj-body-sm', text: messageFor('TJ_NOT_YOUTUBE') }));
     return card;
   }
-  card.append(el('h2', { className: 'tj-popup__title tj-clamp-2 tj-auto', text: s.title, attrs: { title: s.title } }));
+  card.append(el('h2', { className: 'tj-popup__title tj-clamp-2 tj-auto', text: s.title, dir: textDirection(s.title), attrs: { title: s.title } }));
   if (s.kind === 'loading') {
     card.append(el('div', { className: 'tj-skeleton tj-popup__skel-line' }));
   } else if (s.kind === 'has-subtitle') {
@@ -184,7 +185,7 @@ startPage({
         if (recent.length) {
           recentHost.append(el('h3', { className: 'tj-popup__section', text: 'آخر الترجمات' }));
           for (const e of recent) {
-            const title = el('span', { className: 'tj-popup__recent-title tj-truncate tj-auto', text: e.title ?? e.videoId, attrs: { title: e.title ?? e.videoId } });
+            const title = el('span', { className: 'tj-popup__recent-title tj-truncate tj-auto', text: e.title ?? e.videoId, dir: textDirection(e.title ?? e.videoId), attrs: { title: e.title ?? e.videoId } });
             // تعذّر فتح التبويب أو الصفحة يُقال كما في أزرار الحالة، لا رفضٌ صامت (تدقيق 5fedcb9، GM-027.2).
             const go = (fn) => async () => {
               try {

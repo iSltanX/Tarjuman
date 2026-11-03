@@ -37,11 +37,12 @@ a { color: var(--tj-brand-text); }
 .tj-mono-sm { font: 500 12px/18px var(--tj-font-mono); font-variant-numeric: tabular-nums; }
 .tj-num { font-variant-numeric: tabular-nums; }
 
-/* الأزمنة والمعرّفات والأسماء الإنجليزية: LTR معزولة داخل الجمل العربية. العنوان المختلط يتبع أول حرف قوي فيه في
-   ترتيب حروفه وعلاماته (plaintext)، لكنه يبقى في موضع العناوين العربية نفسه: محاذاة يمين فعلية لأن plaintext تجعل
-   start/end تتبع اتجاه النص لا اتجاه الصفحة. القيمة الفعلية الوحيدة هنا، والصفحات كلها RTL. */
+/* الأزمنة والمعرّفات والأسماء الإنجليزية: LTR معزولة داخل الجمل العربية. والعنوان المختلط اتجاهه صريح في dir من
+   textDirection (src/ui/format.js): RTL إن احتوى حرفًا عربيًا ولو بدأ بكلمة لاتينية («API هو الواجهة»)، وإلا LTR؛ لا أول
+   حرف قوي (قرار سلطان 2026-11-03، تدقيق 5fedcb9، CL-002). ويبقى في موضع العناوين العربية نفسه بمحاذاة يمين فعلية.
+   القيمة الفعلية الوحيدة هنا، والصفحات كلها RTL. */
 .tj-ltr { direction: ltr; unicode-bidi: isolate; display: inline-block; max-width: 100%; }
-.tj-auto { unicode-bidi: plaintext; text-align: right; }
+.tj-auto { unicode-bidi: isolate; text-align: right; }
 .tj-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tj-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 

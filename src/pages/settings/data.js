@@ -8,7 +8,7 @@ import {
 } from '../../core/backup/index.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { alertBox, button, el, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, textDirection } from '../../ui/format.js';
 
 let seq = 0;
 const PREVIEW_FRESH_MAX = 100;
@@ -173,7 +173,7 @@ export function dataControl(env) {
               ...shown.map((v) => el('li', {
                 className: 'st-restore__item',
                 children: [
-                  el('span', { className: 'st-restore__title', text: titleOf(v), dir: 'auto', doc }),
+                  el('span', { className: 'st-restore__title', text: titleOf(v), dir: textDirection(titleOf(v)), doc }),
                   el('span', { className: 'tj-caption', text: v.counts.translations ? formatCount(v.counts.translations, FORMS.translation) : 'بلا ترجمة', doc }),
                 ],
                 doc,
@@ -215,7 +215,7 @@ export function dataControl(env) {
         return el('li', {
           className: 'st-restore__item st-restore__item--existing',
           children: [
-            el('span', { className: 'st-restore__title', text: titleOf(v), dir: 'auto', doc }),
+            el('span', { className: 'st-restore__title', text: titleOf(v), dir: textDirection(titleOf(v)), doc }),
             newer ? statusPill({ tone: 'warning', text: 'الحالية أحدث', title: `الحالية: ${backupDate(local.updatedAt)} · في النسخة: ${backupDate(v.updatedAt)}`, doc }) : null,
             el('label', { className: 'st-check st-restore__replace', attrs: { for: box.getAttribute('id') }, children: [box, el('span', { text: 'استبدال', doc })], doc }),
           ],

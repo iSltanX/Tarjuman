@@ -9,7 +9,7 @@ import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, slotPicker, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatBytes, formatCount, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
 import { createToaster } from '../../ui/toast.js';
 import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportStudy, prepareUpload, studyName } from './actions.js';
@@ -396,7 +396,7 @@ export function createLibrary(env) {
         el('div', {
           className: 'lib-row__main',
           children: [
-            el('h2', { className: `tj-h4 tj-auto lib-row__title${m.hasTitle ? '' : ' lib-row__title--empty'}`, text: m.displayTitle, attrs: { id: titleId, ...(m.hasTitle ? { title: m.displayTitle } : {}) }, doc }),
+            el('h2', { className: `tj-h4 tj-auto lib-row__title${m.hasTitle ? '' : ' lib-row__title--empty'}`, text: m.displayTitle, dir: textDirection(m.displayTitle), attrs: { id: titleId, ...(m.hasTitle ? { title: m.displayTitle } : {}) }, doc }),
             el('div', { className: 'lib-row__meta', children: meta, doc }),
           ],
           doc,

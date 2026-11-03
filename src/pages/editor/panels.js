@@ -2,6 +2,7 @@
 // «استعادة التوقيت الأصلي…» حين يتطابق العدد والترقيم وحده، وملاحظات الاستيراد. وصف فقط: لا إصلاح تلقائي.
 import { messageFor } from '../../core/errors/index.js';
 import { button, el, statusPill } from '../../ui/components.js';
+import { textDirection } from '../../ui/format.js';
 import { comparisonLines, issuesSummary, restoreUnavailable } from './text.js';
 
 const MAX_ITEMS = 200;
@@ -114,7 +115,7 @@ export function renderComparison(box, { doc, report, notes, readOnly, onRestore,
     restore,
     notes.length ? el('details', {
       className: 'ed-notes',
-      children: [el('summary', { text: `ملاحظات الاستيراد (${notes.length})`, doc }), el('ul', { children: notes.map((t) => el('li', { className: 'tj-auto', text: t, doc })), doc })],
+      children: [el('summary', { text: `ملاحظات الاستيراد (${notes.length})`, doc }), el('ul', { children: notes.map((t) => el('li', { className: 'tj-auto', text: t, dir: textDirection(t), doc })), doc })],
       doc,
     }) : null,
   ].filter(Boolean));

@@ -259,3 +259,21 @@ test('CX-H7: تبديل الخانة أثناء قراءة ملف التصحيح
   assert.ok(env.doc.querySelector('dialog[open]') === null, 'لا معاينة تصحيح على الخانة الأخرى');
   assert.equal(editor.state.session.dirty, false, 'لم يُطبَّق شيء على الثانية');
 });
+
+test('CL-002 (قرار سلطان): عنوان المحرّر RTL إن احتوى حرفًا عربيًا ولو بدأ بكلمة لاتينية، والإنجليزي الخالص LTR', async () => {
+  for (const [title, dir] of [['API هو الواجهة! (الجزء 3)', 'rtl'], ['Do schools kill creativity? | TED', 'ltr']]) {
+    const area = createMemoryArea({ unlimited: true });
+    let at = Date.parse(NOW);
+    const now = () => (at += 1000);
+    const store = createStore({ area, now });
+    const initial = sampleBundle();
+    initial.record.title = title;
+    await seedBundle(store, initial);
+    const env = editorDocument({ videoId: initial.videoId });
+    await mountEditor(env.root, { videoId: initial.videoId, store, doc: env.doc, now });
+    await env.flush();
+    const h1 = env.root.querySelector('h1');
+    assert.equal(h1.textContent, title);
+    assert.equal(h1.dir, dir, title);
+  }
+});
