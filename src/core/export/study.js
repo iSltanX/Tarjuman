@@ -1,7 +1,7 @@
 // النص الدراسي (R58): الترجمة العربية (أو العربية فوق الإنجليزية) فقرات للقراءة، لكل فقرة رابط إلى زمنها في الفيديو. لا تلخيص
 // ولا تغيير: نص كل مقطع كما هو، وفواصل الأسطر داخله مسافة. الفقرة تنقطع عند صمت طويل، أو بعد ستة مقاطع عند نهاية جملة، أو
 // عند اثني عشر مقطعًا. الإنجليزي (للثنائي) يُوزَّع على الفقرات بمنتصف زمنه، فيصح مع أي وضع تصدير.
-import { TjError } from '../errors/index.js';
+import { TjError, messageFor } from '../errors/index.js';
 import { validateCues } from '../model/cue.js';
 import { assertValid } from '../model/validate.js';
 import { checkFormat, clock, docTitle, mdEscape, mdEscapeLine, oneLine, timeUrl, videoUrl } from './doc.js';
@@ -9,6 +9,34 @@ import { checkFormat, clock, docTitle, mdEscape, mdEscapeLine, oneLine, timeUrl,
 /** @typedef {import('../model/cue.js').Cue} Cue */
 
 export const STUDY_PARAGRAPH = Object.freeze({ gapMs: 2000, sentenceCues: 6, maxCues: 12 });
+
+/**
+ * توقيت روابط النص الدراسي في المحفوظات والمحرّر معًا: حيث يظهر كل مقطع في الفيديو (المحفوظ + إزاحة العرض). وما تجعله الإزاحة
+ * (أو خطأ توقيت في المحرّر) قبل بداية الفيديو يبدأ رابطه من 0:00 وحده، وأرقامه في `clamped` ليعلنها السطح؛ ولا تسقط الإزاحة
+ * عن بقية المقاطع (تدقيق مستقل 2026-11-04: كان مقطع سالب واحد يعيد كل المقاطع إلى المحفوظ بلا إزاحة وبلا تنبيه).
+ * @param {Cue[]} cues @param {number} displayOffsetMs
+ * @returns {{ cues: Cue[], clamped: number[] }}
+ */
+export function studyTiming(cues, displayOffsetMs) {
+  const shift = Number.isInteger(displayOffsetMs) ? displayOffsetMs : 0;
+  const clamped = [];
+  const out = cues.map((c) => {
+    const startMs = c.startMs + shift;
+    const endMs = c.endMs + shift;
+    if (startMs >= 0 && endMs >= 0) return { ...c, startMs, endMs };
+    clamped.push(c.n);
+    return { ...c, startMs: Math.max(0, startMs), endMs: Math.max(0, endMs) };
+  });
+  return { cues: out, clamped };
+}
+
+const NOTE_LIST = 8;
+/** نص الإشعار لما قُصّ إلى بداية الفيديو، أو '' إن لم يُقص شيء. أول ثمانية أرقام ثم «…». @param {number[]} clamped */
+export function studyTimingNote(clamped) {
+  if (!clamped.length) return '';
+  const list = clamped.length > NOTE_LIST ? `${clamped.slice(0, NOTE_LIST).join('، ')}…` : clamped.join('، ');
+  return messageFor('EX_STUDY_CLAMPED', { list });
+}
 const SENTENCE_END = /[.!?؟…]["'”’»)\]]*$/u;
 
 /** @param {Cue[]} cues */

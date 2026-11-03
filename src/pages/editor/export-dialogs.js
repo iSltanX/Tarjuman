@@ -83,8 +83,8 @@ export function openReportDialog({ doc, build }) {
 }
 
 /**
- * «نص دراسي…»: الترجمة فقرات للقراءة بروابط توقيت، عربيًا أو ثنائي اللغة.
- * @param {{ doc: Document, hasEnglish: boolean, build: (o: { bilingual: boolean, format: 'txt' | 'md' }) => { name: string, text: string } }} o
+ * «نص دراسي…»: الترجمة فقرات للقراءة بروابط توقيت، عربيًا أو ثنائي اللغة. `note` إشعار ما تبدأ روابطه من 0:00 (studyTimingNote).
+ * @param {{ doc: Document, hasEnglish: boolean, build: (o: { bilingual: boolean, format: 'txt' | 'md' }) => { file: { name: string, text: string }, note?: string } }} o
  */
 export function openStudyDialog({ doc, hasEnglish, build }) {
   const o = { bilingual: false, format: /** @type {'txt' | 'md'} */ ('md') };
@@ -96,6 +96,9 @@ export function openStudyDialog({ doc, hasEnglish, build }) {
       }),
       formats(doc, 'ed-study-format', o.format, (v) => { o.format = v; }),
     ],
-    build: () => ({ file: build(o), why: null }),
+    build: () => {
+      const r = build(o);
+      return { file: r.file, why: null, note: r.note ?? '' };
+    },
   });
 }

@@ -72,10 +72,15 @@ export function videoIdFromName(fileName, { videoId = null, knownVideoIds = [] }
   return best ? { videoId: best, differs: best !== videoId } : null;
 }
 
-/** بصمتان لتصدير واحد بعينه (المسار والوضع والعدد والنص والأزمنة نفسها): الترجيح بينهما لا يغيّر شيئًا. */
-function equivalent(x, y) {
+/**
+ * بصمتان لتصدير واحد بعينه (المسار والوضع والعدد والنص والأزمنة نفسها): الترجيح بينهما لا يغيّر شيئًا، وحفظ الثانية تكرار.
+ * التعريف الوحيد لـ«التصدير نفسه» (الفحص هنا، وكشف التكرار في تصدير المحفوظات): الأزمنة جزء منه، فنص مطابق بتوقيت مختلف ملف
+ * آخر تُحفظ بصمته، وإلا قورن ما يعود به المستخدم ببصمة أقدم فظهر انحراف غير حقيقي (تدقيق مستقل 2026-11-04).
+ * @param {Fingerprint | null | undefined} x @param {Fingerprint | null | undefined} y
+ */
+export function sameExport(x, y) {
   return !!x && !!y && x.trackKey === y.trackKey && x.mode === y.mode && x.count === y.count && x.textHash === y.textHash
-    && x.cues.every((c, i) => c.startMs === y.cues[i].startMs && c.endMs === y.cues[i].endMs);
+    && x.cues.length === y.cues.length && x.cues.every((c, i) => c.startMs === y.cues[i].startMs && c.endMs === y.cues[i].endMs);
 }
 
 /**
@@ -95,6 +100,6 @@ export function reviewIncoming({ fileName, cues, videoId, fingerprints, knownVid
   // المطابقة التامة (العدد والترقيم والتوقيت) تحسم وحدها إن لم يطابق التالي مثلها.
   const certain = !!suggested && top.score >= REVIEW_THRESHOLDS.certain
     && (!second || top.score - second.score >= REVIEW_THRESHOLDS.gap || (top.matched && !second.matched)
-      || equivalent(byId(top.fingerprintId), byId(second.fingerprintId)));
+      || sameExport(byId(top.fingerprintId), byId(second.fingerprintId)));
   return { references, suggested, certain, nameHint: videoIdFromName(fileName, { videoId, knownVideoIds }) };
 }

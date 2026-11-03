@@ -5,7 +5,6 @@
 /* global __TJ_DEV__ */
 import { compare, currentComparison, fingerprintCoverage, previewRestoreTiming, rankReferences } from '../../core/compare/index.js';
 import { planRescue } from '../../core/edit/rescue.js';
-import { exportTiming } from '../../core/model/timing.js';
 import { normalizeSettings } from '../../core/model/settings.js';
 import { LIMITS } from '../../core/model/validate.js';
 import { READING_DEFAULTS } from '../../core/edit/density.js';
@@ -15,7 +14,7 @@ import {
 } from '../../core/edit/index.js';
 import { resolvePosition } from '../../core/model/marks.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
-import { buildPatchPackage, buildReviewReport, buildStudyText, patchInstructions } from '../../core/export/index.js';
+import { buildPatchPackage, buildReviewReport, buildStudyText, patchInstructions, studyTiming, studyTimingNote } from '../../core/export/index.js';
 import { partsStatus, readPatch } from '../../core/import/index.js';
 import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
@@ -814,12 +813,10 @@ export async function mountEditor(app, {
     const file = await openStudyDialog({
       doc, hasEnglish: english.length > 0,
       build: ({ bilingual, format }) => {
-        // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض)، ومنه يُوزَّع الإنجليزي بمنتصف زمنه.
-        const s = act();
-        const timed = exportTiming(s.snapshot(), S.view === 'original' ? 0 : S.session.offsetMs, 'shown');
-        // أخطاء التوقيت لا تمنع النص الدراسي (كما يقول «تصدير ▾»): الزمن السالب رابطه من بداية الفيديو (GM-026.4).
-        const cues = (timed.ok ? timed.cues : s.snapshot()).map((c) => ({ ...c, startMs: Math.max(0, c.startMs), endMs: Math.max(0, c.endMs) }));
-        return buildStudyText({ videoId, title: S.opened.record.title, cues, english: bilingual ? english : null, format, bilingual });
+        // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض)، ومنه يُوزَّع الإنجليزي بمنتصف زمنه. أخطاء التوقيت لا
+        // تمنع النص الدراسي (GM-026.4): ما وقع قبل الصفر وحده رابطه من بداية الفيديو ويُذكر في الحوار، وبقية المقاطع بإزاحتها.
+        const { cues, clamped } = studyTiming(act().snapshot(), S.view === 'original' ? 0 : S.session.offsetMs);
+        return { file: buildStudyText({ videoId, title: S.opened.record.title, cues, english: bilingual ? english : null, format, bilingual }), note: studyTimingNote(clamped) };
       },
     });
     if (file) await saveText(file);
