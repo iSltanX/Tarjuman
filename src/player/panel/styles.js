@@ -8,12 +8,14 @@ export const HOST_ID = 'tarjuman-panel';
 export const NARROW_MAX = 320;
 /** عرض العمود (px) من هذا الحد «عريض» (اللوحة تحت الفيديو): القائمة بجانب عمود التوقيت. */
 export const WIDE_MIN = 560;
+/** أدنى ارتفاع للوحة المفتوحة بجانب الفيديو: مشغّل قصير (نافذة ضيقة) لا يترك للقائمة بضعة أسطر. */
+export const MIN_HEIGHT = 400;
 
 export function panelCss() {
   return `${panelTokensCss('.root')}
-:host { all: initial; display: block; box-sizing: border-box; width: 100%; margin: 0 0 12px; direction: rtl; }
+:host { all: initial; display: block; flex: none; box-sizing: border-box; width: 100%; min-width: 0; margin: 0 0 12px; direction: rtl; }
 :host([hidden]) { display: none !important; }
-:host([data-mode="open"]) { height: var(--tj-panel-h, 480px); }
+:host([data-mode="open"]) { height: max(var(--tj-panel-h, 480px), ${MIN_HEIGHT}px); }
 :host([data-mode="open"][data-place="below"]) { height: clamp(300px, 46vh, 420px); }
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }

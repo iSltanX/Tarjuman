@@ -26,8 +26,8 @@ export function createFollow({ win, list, rowEl, onChange }) {
 
   // مدخلات المستخدم وحدها توقف التتبّع.
   const stop = () => set(false);
-  list.addEventListener('wheel', stop);
-  list.addEventListener('touchmove', stop);
+  list.addEventListener('wheel', stop, { passive: true });
+  list.addEventListener('touchmove', stop, { passive: true });
   list.addEventListener('keydown', (ev) => {
     if (SCROLL_KEYS.has(ev.key)) stop();
   });

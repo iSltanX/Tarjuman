@@ -117,7 +117,7 @@ export function originalLookup(enCues) {
 
 /**
  * نموذج العرض من حالة المتحكم وحالة الصفحة والواجهة المحلية. الأولوية: لوحة مخفية خارج صفحة الفيديو وفي ملء الشاشة؛ وزر مخفي
- * (رسالة التراجع وحدها إن كانت)؛ ثم مفتوحة أو زر. والمفتوحة: جارٍ التحميل (فيديو الصفحة غير فيديو الحالة، أو تنقّل، أو
+ * (رسالة التراجع وحدها إن كانت)؛ ثم مفتوحة أو زر. والمفتوحة (وكذا المخفية بملء الشاشة وهي مفتوحة): جارٍ التحميل (فيديو الصفحة غير فيديو الحالة، أو تنقّل، أو
  * قراءة السجل)، فخطأ لا ترجمة معه، فلا ترجمة عربية، وإلا جاهزة.
  * @param {import('../../content/controller.js').ControllerState} state
  * @param {{ videoId: string | null, navigating: boolean, visible: boolean }} page
@@ -133,8 +133,9 @@ export function derive(state, page, ui) {
   else if (!entry) mode = ui.toast ? 'toast' : 'none';
   else mode = prefs.panelOpen === true ? 'open' : 'entry';
 
+  // ملء الشاشة يخفي المضيف ولا يمسح الصفوف: تبقى (kind غير فارغ مع mode='none') فلا يضيع موضع التمرير ولا يُعاد البناء عند الخروج.
   let kind = null;
-  if (mode === 'open') {
+  if (mode === 'open' || (mode === 'none' && !page.visible && entry && prefs.panelOpen === true)) {
     if (!sameVideo || page.navigating || state.loading) kind = 'loading';
     else if (state.error && !state.arabic) kind = 'error';
     else if (!state.arabic) kind = 'empty';
@@ -143,7 +144,7 @@ export function derive(state, page, ui) {
 
   const arabic = sameVideo && !page.navigating ? state.arabic : null;
   const en = sameVideo && state.english?.cues?.length ? state.english : null;
-  const original = en ? { lang: en.lang, name: languageName(en.lang) || en.lang, cues: en.cues } : null;
+  const original = en ? { lang: en.lang, name: languageName(en.lang) || 'الأصل', cues: en.cues } : null;
   const dualPref = prefs.panelDual !== false;
   const slot = state.activeSlot ?? null;
   const slotName = slot ? state.slots?.find((s) => s.n === slot)?.name ?? null : null;

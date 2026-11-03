@@ -241,6 +241,11 @@ export function createPanelView({ doc, win, on }) {
       ev.stopPropagation();
     });
   }
+  // خروج التركيز من القائمة (Tab) يغلقها؛ والانتقال داخلها أو إلى زرها لا.
+  menu.addEventListener('focusout', (ev) => {
+    const to = ev.relatedTarget;
+    if (menuOpen && !(to && (menu.contains(to) || optsBtn.contains(to)))) setMenu(false);
+  });
   shell.addEventListener('pointerdown', (ev) => {
     if (menuOpen && !menu.contains(ev.target) && !optsBtn.contains(ev.target)) setMenu(false);
   });
@@ -409,7 +414,8 @@ export function createPanelView({ doc, win, on }) {
         if (m.kind === 'empty') renderSteps(m);
         if (m.kind === 'error') setText(errText, m.error?.message ?? '');
       }
-    } else {
+    } else if (!(m.mode === 'none' && m.kind === 'ready')) {
+      // مخفية بملء الشاشة وهي جاهزة: تبقى الصفوف بأعيانها (لا بناء عند الخروج)؛ وغير ذلك يُمسح.
       transcript.clear();
     }
 

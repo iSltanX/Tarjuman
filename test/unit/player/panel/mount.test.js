@@ -261,6 +261,7 @@ test('unmount: يزيل المضيف والاشتراك والمراقبين و�
   assert.equal(hosts(page).length, 0);
   assert.equal(page.controller.subscribers(), 0);
   assert.equal(page.env.observers(), 0);
+  assert.equal(page.env.resizeObservers(), 0);
   assert.equal(page.env.win.pendingTimers(), 0);
   assert.equal(page.doc.listenerCount('yt-navigate-finish'), 0);
   assert.equal(page.doc.listenerCount('fullscreenchange'), 0);

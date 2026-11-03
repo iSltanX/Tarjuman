@@ -46,8 +46,6 @@ export function createPanelSession({ controller, doc, win }) {
   let checkTimer = 0;
   /** @type {any} */
   let video = null;
-  /** @type {any} */
-  let player = null;
 
   const fail = (code, err) => {
     lastCode = code;
@@ -295,6 +293,7 @@ export function createPanelSession({ controller, doc, win }) {
           syncPlayback();
           updateResume();
         }
+        startLoop();
       }
     } catch (err) {
       fail('PL_RENDER_FAILED', err);
