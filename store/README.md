@@ -1,0 +1,249 @@
+# مواد المتاجر — المتطلبات وخطر الرفض
+
+> **المرحلة:** T1 من [جولة النشر](../docs/store-release.md). قُرئت المصادر الرسمية في **2026-11-03** مباشرة، ما لم يُذكر غير ذلك. ولم تُعدَّل الشيفرة.
+> **الرموز:** **[قرار]** يلزمه قرار سلطان. و«لم يُتحقق» ما لم يوجد في مصدر رسمي. و«استئناس» سابقة لا سياسة، فوجود إضافة في متجر لا يضمن قبول غيرها.
+> **هذا المجلد** للمواد المتتبَّعة (T6). أما الحزم فتُبنى في `release/`، وهو متجاهَل في Git.
+
+## ١. الخلاصة: خطر الرفض لكل متجر
+
+الخطر الحاسم واحد في المتاجر الثلاثة: أن يُعدّ تصدير ترجمة يوتيوب إلى SRT تنزيلًا غير مصرّح به لمحتوى محمي. والتصدير وظيفة ترجمان الأساسية، فإن عُدّ مخالفة لم يبقَ ما يُزال ثم يُعاد الإرسال دونه.
+
+| المتجر | احتمال الرفض بسبب التصدير | أثره إن وقع | أسباب رفض أخرى يمكن تفاديها |
+| --- | --- | --- | --- |
+| Chrome Web Store (ومنه Brave) | **متوسط** | **حاسم**: علاج السياسة سحب الإضافة، وطعن واحد فقط | سياسة الخصوصية، والإفصاح، وتبرير `downloads` |
+| Microsoft Edge Add-ons | **منخفض** | حاسم أيضًا، فالبند نفسه | ذكر متصفح آخر، وسياسة خصوصية لا تخص Edge، ونقص خطوات الاختبار |
+| Firefox Add-ons (AMO) | **منخفض** | حاسم أيضًا، لكن لا سابقة رفض | شيفرة المصدر وإعادة البناء، ودقة `data_collection_permissions` |
+
+### Chrome Web Store: احتمال متوسط وأثر حاسم
+
+**النص.** تنهى السياسة عن تشجيع الوصول أو التنزيل أو البث غير المصرّح به لمحتوى أو وسائط محمية، أو تسهيله أو تمكينه («Malicious and Prohibited Products»). وصفحة استكشاف المخالفات تجمع لهذا القسم المعرّفات Blue Zinc وBlue Copper وBlue Lithium وBlue Magnesium، دون تخصيص كل معرّف بسبب. ومن الأسباب الشائعة التي تعدّدها: تسهيل تنزيل فيديوهات يوتيوب، وتسهيل تنزيل محتوى يخالف حقوق مالكه. وعلاجها: إن كانت هذه وظيفة الإضافة الأساسية فالموصى به سحبها.
+
+**لماذا قد يُعامل ترجمان معاملتها:**
+- شروط يوتيوب (المؤرخة في 15 ديسمبر 2023) تمنع تنزيل أي جزء من «المحتوى» إلا بما تسمح به الخدمة صراحة أو بإذن كتابي.
+- وتعريف المحتوى فيها يشمل النصوص، وإن لم يذكر الترجمات المصاحبة بالاسم. والترجمة اليدوية ملك صاحب القناة في الغالب.
+- بلاغ في مجموعة مطوري Chromium بتاريخ 2026-03-12: رُفضت إضافة تحت Blue Zinc بعبارة «specifically, YouTube». وكان من ميزاتها نسخ نص الترجمة وتنزيل الصور المصغّرة، ولم يُعرف أي ميزة سببت الرفض، ولم يُجب فريق Chrome عن ذلك.
+- ناشر جديد، وإضافة جديدة، وإذن `downloads` الذي تعدّه صفحة المراجعة حساسًا: كلها إشارات تُخضع الإضافة لتدقيق أطول.
+- الالتقاط يغلّف `fetch` و`XMLHttpRequest` في عالم الصفحة. هذا مشروع ومعلن، لكنه مما يلفت المراجع.
+
+**لماذا لا يُعدّ الاحتمال مرتفعًا:**
+- نص السياسة لا يذكر الترجمات ولا النصوص المكتوبة. ويوتيوب لا يرد فيه إلا مع «videos».
+- السياسة تستثني «video downloaders» من الإبراز في المتجر، ومع ذلك أُبرزت إضافتان لتصدير ترجمات يوتيوب (استئناس):
+
+| الإضافة | المستخدمون | Featured | آخر تحديث | ملاحظة |
+| --- | --- | --- | --- | --- |
+| Transcript for YouTube™ | 40,000 | نعم | 2026-10-27 | تصدّر TXT وSRT وVTT، وفي وصفها إسناد العلامة إلى Google ونفي الارتباط. تحققت منها |
+| Download Youtube Subtitles | 30,000 | نعم | 2024-03-07 | تصدّر srt وvtt وtxt |
+| Download YouTube Transcript | 7,000 | — | 2026-04-26 | تصدّر SRT وVTT وTXT |
+
+**العاقبة.** يُسمح بالطعن في قرار المخالفة مرة واحدة. و«التعدي المتكرر على حقوق الملكية الفكرية» ينهي حساب المطوّر بنص السياسة، وفي الحالات القصوى قد تُعلَّق خدمات Google المرتبطة بالحساب. فإن رُفضت الإضافة تحت Blue Zinc: طعن واحد مدروس، ولا إعادة إرسال متكررة.
+
+**ما يخفّف الخطر دون إخفاء الوظيفة** (تنفيذه في T6):
+1. يصف الإدراج ما يحدث: تصدير الترجمة الإنجليزية لترجمتها بنفسك، ثم عرض ترجمتك العربية فوق الفيديو. ولا تظهر كلمة «downloader» في العنوان.
+2. ينصّ الإدراج على أن الإضافة لا تنزّل فيديو ولا صوتًا، ولا تطلب ملفات الترجمة من يوتيوب بنفسها، وإنما تقرأ نسخة من الترجمة التي طلبها مشغّل يوتيوب نفسه.
+3. حقل Test instructions بالإنجليزية يشرح المسار للمراجع خطوة خطوة.
+4. يُشار إلى يوتيوب بصيغة «for YouTube™» مع جملة إسناد العلامة إلى Google LLC، كما تطلب إرشادات علامة المتجر.
+5. سياسة الخصوصية منشورة ورابطها يعمل قبل الإرسال.
+
+### Microsoft Edge Add-ons: احتمال منخفض
+
+- **البند 2.8** يمنع تقديم الوصول أو التنزيل أو البث غير المصرّح به لمحتوى أو وسائط محمية، أو تشجيعه أو تمكينه. صيغته عامة، بلا مثال عن يوتيوب، ولا ذكر للترجمات في السياسة كلها.
+- **سوابق (استئناس):**
+  - إضافات منشورة لتنزيل ترجمات يوتيوب، منها YouTube Caption ونحو 1,500 مستخدم (SRT وVTT)، وSubtitle Downloader: Netflix, YouTube & More (تحديث 2026-10-23).
+  - بل أدوات تنزيل فيديو يوتيوب نفسها، منها Video DownloadHelper بنحو 1.5 مليون مستخدم.
+  - ولم يُعثر على بلاغ رفض في Edge بسبب تنزيل من يوتيوب.
+- **أسباب رفض يمكن تفاديها:**
+  - البند 1.1.2: لا ذكر لمتصفح آخر في الاسم أو الوصف. ودليل النقل يجعل حذف ذكر Chrome شرطًا لاجتياز الاعتماد.
+  - البند 1.5.2: سياسة الخصوصية تخص Edge أساسًا.
+  - البند 1.3: خطوات الاختبار كاملة عند الإرسال، ومعها ملف SRT عربي للتجربة.
+  - البند 1.3.2: الخادم يعمل، وهذا يخص نقطة البلاغات بعد T2.1.
+  - البند 1.6: لا أذونات «للمستقبل»، فإذن البلاغ الاختياري لا يُشحن إلا والميزة كاملة.
+  - البند 1.1.7: الشيفرة المعمّاة ممنوعة، وقد يطلب المراجع شيفرة مقروءة.
+
+### Firefox Add-ons (AMO): احتمال منخفض، والخطر إجرائي
+
+- **السياسات** لا تذكر يوتيوب ولا تنزيل الفيديو ولا الترجمات. وما ينطبق علينا ثلاثة: سياسة الاستخدام المقبول (حقوق الملكية الفكرية)، وقانون الولايات المتحدة، ومبدأ «No Surprises» (أن يذكر الإدراج ما ترسله الإضافة).
+- **سوابق (استئناس):**
+  - Video DownloadHelper مدرجة ومُوصى بها (`recommended`)، ووصفها يتضمن «Download Youtube videos». تحققت منها: 1,835,582 مستخدمًا يوميًا، والإصدار 10.6.7.2 بتاريخ 2026-10-21.
+  - إضافات تنزيل ترجمات يوتيوب مدرجة، منها Youtube Subtitle Downloader وYouTube Transcript Copy.
+  - ما وُجد من حظر كان لأسباب أخرى: جمع بيانات بلا إفصاح، ومحتوى احتيالي.
+- **الخطر الفعلي إجرائي:**
+  - شيفرة المصدر إلزامية لأن البناء يجمّع بـesbuild، ويجب أن يطابق بناء المراجع حزمتنا تمامًا.
+  - `data_collection_permissions` إلزامي لكل إضافة جديدة، ويجب أن يصف ما يحدث بدقة.
+  - سياسة الخصوصية لازمة متى خرجت بيانات من الجهاز.
+
+## ٢. ما يحدث للبيانات، وما يقتضيه في كل متجر
+
+الخلاصة: **سياسة الخصوصية لازمة في المتاجر الثلاثة**، فيُنشر الموقع (T7) قبل أي إرسال.
+
+| ما يحدث | Chrome | Edge | Firefox |
+| --- | --- | --- | --- |
+| قراءة نسخة استجابة الترجمة ومعالجتها على الجهاز | «تعامل مع بيانات المستخدم»، فاستخراج محتوى الصفحة ومحتوى طلبات HTTP واستجاباتها منه، والإفصاح لازم وإن بقيت البيانات على الجهاز (user-data-faq، س2 وس3) | لا نقل، فلا يقتضي إفصاحًا خاصًا | النقل عند Mozilla ما خرج من الإضافة أو المتصفح، فلا نقل هنا |
+| حفظ ملف SRT على القرص بأمر المستخدم | داخل الوظيفة المعلنة | داخل الوظيفة المعلنة | الأسئلة الشائعة تجيز النسخ الاحتياطي المحلي الذي يطلقه المستخدم بلا موافقة صريحة |
+| صور المحفوظات من `i.ytimg.com` بمعرّف الفيديو (مفتاح مفعّل افتراضيًا) | لا نص يخصه (لم يُتحقق) | لا نص يخصه (لم يُتحقق) | غير محسوم: قد يُعدّ `browsingActivity` أو `websiteContent`. ويحكم فيه T5 |
+| البلاغ (T2.1): وصف يكتبه المستخدم واسم المتصفح وإصداره إلى خادم المطوّر | سياسة خصوصية وإفصاح في لوحة المتجر، وإفصاح بارز وموافقة **داخل واجهة الإضافة**، وHTTPS بلا بيانات في الرابط أو الترويسات (Purple Copper)، وأضيق إذن ولو كان اختياريًا | سياسة خصوصية (اتفاقية المطوّر §4(h)، والبند 1.5.1) | `optional: ["technicalAndInteraction"]`، وهو مفعّل افتراضيًا ويُطفأ عند التثبيت. فإن أُطفئ لا يُرسل البلاغ، أو يُطلب الإذن بـ`permissions.request`. والنص الحر قد يُعدّ بيانات شخصية بتقدير المراجع |
+
+## ٣. جدول المتطلبات
+
+العمود «ترجمان» يذكر حاله اليوم والمرحلة التي تسد الناقص. وكل حقل مطلوب هنا يقابله في T6 مادة جاهزة.
+
+### Chrome Web Store
+
+| الحقل | مطلوب؟ | الحد أو المقاس | ترجمان | المصدر |
+| --- | --- | --- | --- | --- |
+| حساب المطوّر | مطلوب | رسوم تسجيل لمرة واحدة. مبلغها 5 دولارات في تدوينة Chromium (2020-03-12)، والصفحة الحالية لا تذكره. والتحقق بخطوتين إلزامي، وبريد التواصل موثّق، واسم الناشر مطلوب | سلطان بيده عند النشر | [register](https://developer.chrome.com/docs/webstore/register)، [policies](https://developer.chrome.com/docs/webstore/program-policies/policies) |
+| إعلان تاجر أو غير تاجر (DSA) | مطلوب من كل المطوّرين | التاجر يُنشر اسمه القانوني وهاتفه وعنوانه أسفل الإدراج | **[قرار]** | [trader-disclosure](https://developer.chrome.com/docs/webstore/program-policies/trader-disclosure) |
+| الحزمة | مطلوبة | ZIP حتى 2GB، والبيان في جذرها، ورقم الإصدار يزيد مع كل رفع، وللناشر الجديد إضافتان منشورتان | T4 | [publish](https://developer.chrome.com/docs/webstore/publish)، [prepare](https://developer.chrome.com/docs/webstore/prepare) |
+| الاسم | من `name` في البيان | حتى 75 محرفًا | «ترجمان». **[قرار]** صيغة العنوان | [prepare](https://developer.chrome.com/docs/webstore/prepare) |
+| الملخص | من `description` في البيان | حتى 132 محرفًا، نص عادي | الحالي 122 محرفًا، ويُراجع بعد T2.1 | [best-listing](https://developer.chrome.com/docs/webstore/best-listing) |
+| الوصف التفصيلي | مطلوب، والفارغ يُرفض | بلا حد منشور. ممنوع حشو الكلمات (Yellow Argon): لا قوائم مواقع أو علامات، ولا تكرار الكلمة أكثر من 5 مرات | T6 | [listing-requirements](https://developer.chrome.com/docs/webstore/program-policies/listing-requirements) |
+| الفئة واللغة | في Product details | الإلزام وقائمة الفئات لم يُتحقق منهما | T6 | [cws-dashboard-listing](https://developer.chrome.com/docs/webstore/cws-dashboard-listing) |
+| أيقونة المتجر | مطلوبة | 128×128 PNG، والرسم 96×96 بحشو شفاف 16px | توجد أيقونة 128، ويُتحقق من الحشو في T6 | [images](https://developer.chrome.com/docs/webstore/images) |
+| لقطات الشاشة | مطلوبة: من 1 إلى 5 | 1280×800 أو 640×400، بزوايا مربعة وبلا حشو | T6 | [images](https://developer.chrome.com/docs/webstore/images) |
+| Small promo tile | اختياري | 440×280 PNG أو JPEG. والإضافات التي لا تملكه تُعرض بعد التي تملكه | T6 | [images](https://developer.chrome.com/docs/webstore/images) |
+| Marquee | اختياري | 1400×560، وهو شرط الظهور في الشريط الدوّار | T6 | [images](https://developer.chrome.com/docs/webstore/images) |
+| فيديو | اختياري | رابط يوتيوب | — | [cws-dashboard-listing](https://developer.chrome.com/docs/webstore/cws-dashboard-listing) |
+| Homepage وSupport URL | اختياريان | Official URL يتطلب موقعًا موثّقًا في Search Console | T7 | [cws-dashboard-listing](https://developer.chrome.com/docs/webstore/cws-dashboard-listing) |
+| Single purpose | مطلوب | وصف مفصّل للغرض الواحد | T6 | [cws-dashboard-privacy](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) |
+| تبرير الأذونات | مطلوب لكل إذن | `storage` و`unlimitedStorage` و`downloads`، وإذن البلاغ الاختياري بعد T2.1 | T6 | [cws-dashboard-privacy](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) |
+| إعلان الشيفرة البعيدة | مطلوب | «No, I am not using remote code» | T6 | [cws-dashboard-privacy](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) |
+| Data usage وتصديقات Limited Use | مطلوب للنشر والتحديث | خانات لأنواع البيانات، وقائمتها الكاملة لم يُتحقق منها | T5 وT6 | [user-data-faq](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq) |
+| رابط سياسة الخصوصية | مطلوب، فالإضافة تتعامل مع بيانات المستخدم | غيابه أو تعطّل رابطه سبب رفض (Purple Lithium) | T5 وT7 | [troubleshooting](https://developer.chrome.com/docs/webstore/troubleshooting) |
+| إقرار Limited Use في الموقع | مطلوب لمن يتعامل مع البيانات | في الصفحة الرئيسية للموقع أو على بُعد نقرة منها | T7 | [limited-use](https://developer.chrome.com/docs/webstore/program-policies/limited-use) |
+| الظهور والمناطق | — | Public أو Unlisted أو Private، وكل المناطق أو بعضها | **[قرار]** | [cws-dashboard-distribution](https://developer.chrome.com/docs/webstore/cws-dashboard-distribution) |
+| Test instructions | اختياري | ليس شرطًا للنشر، ونوصي به | T6 | [cws-dashboard-test-instructions](https://developer.chrome.com/docs/webstore/cws-dashboard-test-instructions) |
+| الإشارة إلى يوتيوب | — | لا علامة Google اسمًا ولا شعارًا. يجوز «for» أو «compatible with» مع ™، وجملة إسناد في الوصف | T6 | [branding](https://developer.chrome.com/docs/webstore/branding) |
+
+### Microsoft Edge Add-ons
+
+| الحقل | مطلوب؟ | الحد أو المقاس | ترجمان | المصدر |
+| --- | --- | --- | --- | --- |
+| حساب Partner Center | مطلوب | مجاني بحساب Microsoft. النوع Individual أو Company، ولا يتغير هو ولا الدولة بعد التسجيل. واسم الناشر حتى 50 محرفًا ويظهر علنًا | **[قرار]**، وسلطان بيده | [create-dev-account](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/create-dev-account) |
+| صفة التاجر | — | نوع الحساب هو الإعلان: التوزيع المرتبط بعمل تجاري يقتضي حساب Company (اتفاقية المطوّر §2) | **[قرار]** | Microsoft Store App Developer Agreement 8.11 |
+| الحزمة | مطلوبة | zip والبيان في جذرها، وبلا `update_url`. حد الحجم لم يُتحقق منه | لا `update_url` اليوم. T4 | [port-chrome-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/developer-guide/port-chrome-extension) |
+| الاسم والوصف القصير | من البيان | لا ذكر لمتصفح آخر (1.1.2). والحد الأقصى للطول لم يُتحقق منه | البيان لا يذكر متصفحًا اليوم | [developer-policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) |
+| Category | مطلوب | — | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Privacy policy URL | مطلوب متى جُمعت معلومات شخصية | سياسة تخص Edge أساسًا (1.5.2) | T5 وT7 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Website وSupport contact | اختياريان | يظهران للمستخدمين، وقد يُعرض بريد الدعم علنًا | **[قرار]** البريد. T7 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Mature content | خانة | — | T6 | [developer-policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) |
+| Single purpose، وتبرير الأذونات، والشيفرة البعيدة، وData usage | صفحة Privacy | الإفصاح الناقص أو غير الدقيق سبب رفض | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Description | مطلوب لكل لغة | من 250 إلى 10,000 محرف | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Extension logo | مطلوب لكل لغة | 1:1، والموصى به 300×300، والأدنى 128×128 | لا أيقونة أكبر من 128. T4 وT6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Small promotional tile | اختياري في صفحة النشر، و«مطلوب» في صفحة النظرة العامة | 440×280، ونقدّمه احتياطًا | T6 | [extensions overview](https://learn.microsoft.com/en-us/microsoft-edge/extensions/) |
+| Large promotional tile | اختياري | 1400×560 PNG | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Screenshots | اختيارية | حتى 6، بمقاس 640×480 أو 1280×800 | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| YouTube video | اختياري | تُوقف الإعلانات فيه (2.13) | — | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Search terms | اختيارية | حتى 7 مصطلحات، و30 محرفًا لكل منها، و21 كلمة إجمالًا | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Notes for certification | اختيارية، والبند 1.3 يوجب خطوات الاختبار | الوصول إلى الميزات وبيانات التجربة | T6 | [developer-policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) |
+| Visibility وMarkets | — | Public أو Hidden، وكل الأسواق أو بعضها | **[قرار]** | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| المراجعة | — | حتى 7 أيام عمل، وللتحديث المدة نفسها | — | [update-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/update/update-extension) |
+
+### Firefox Add-ons (AMO)
+
+| الحقل | مطلوب؟ | الحد أو المقاس | ترجمان | المصدر |
+| --- | --- | --- | --- | --- |
+| حساب Mozilla واتفاقية التوزيع | مطلوبان | الاتفاقية المحدّثة تُقبل عند الطلب ابتداءً من 2026-12-01 | سلطان بيده | [distribution agreement](https://extensionworkshop.com/documentation/publish/firefox-add-on-distribution-agreement/) |
+| ملف الإضافة | مطلوب | zip أو xpi حتى 200MB. وبلا `gecko_android` يُتاح لسطح المكتب وحده | T2 وT4 | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
+| `browser_specific_settings.gecko.id` | لازم للتوقيع في MV3 | نص شبيه بالبريد حتى 80 محرفًا، أو GUID. و`tarjuman@bysltan.com` يطابق الصيغة | **[قرار]** تأكيده قبل أول رفع. T2 | [MDN browser_specific_settings](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings) |
+| `data_collection_permissions` | إلزامي لكل إضافة جديدة منذ 2025-11-03 | `required: ["none"]` إن لم يُجمع شيء دون موافقة، و`technicalAndInteraction` لا يكون إلا اختياريًا | T2 وT2.1، ويحكم T5 في الصور | [firefox-builtin-data-consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) |
+| شيفرة المصدر | إلزامية لكل إصدار | README فيه نظام التشغيل والأدوات وإصداراتها وكل أوامر البناء، وملف القفل، وأدوات مفتوحة المصدر. والمطابقة تامة | T4 | [source-code-submission](https://extensionworkshop.com/documentation/publish/source-code-submission/) |
+| Name | مطلوب | حتى 50 محرفًا | «ترجمان» | addons-server (`max_length=50`) |
+| Add-on URL (slug) | يُولَّد ويُعدَّل | فريد، حتى 30 محرفًا | T6 | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
+| Summary | مطلوب | حتى 250 محرفًا، بلا روابط | T6 | [create-an-appealing-listing](https://extensionworkshop.com/documentation/develop/create-an-appealing-listing/) |
+| Description | اختياري | حتى 15,000، وMarkdown محدود. ويذكر ما تنقله الإضافة («No Surprises») | T6 | [add-on-policies](https://extensionworkshop.com/documentation/publish/add-on-policies/) |
+| Categories | مطلوبة للإدراج | حتى 2 في الوثيقة، و3 في الشيفرة. ومنها Language Support وPhotos, Music & Videos | T6 | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
+| Tags | اختيارية | حتى 10 من قائمة ثابتة، فيها `youtube` و`translate` | T6 | AMO API `/api/v5/addons/tags/` |
+| Support email وwebsite وHomepage | اختيارية | 100 و255 و255 محرفًا | **[قرار]** البريد. T7 | addons-server |
+| License | مطلوبة للمدرج | منها `all-rights-reserved` | **[قرار]** في T4 | [addons-server licenses](https://mozilla.github.io/addons-server/topics/api/licenses.html) |
+| Privacy policy | مطلوبة متى نُقلت بيانات من الجهاز | لم تعد تُستضاف في AMO، ويُستحسن رابطها في الإدراج | T5 وT7 | [add-on-policies-faq](https://extensionworkshop.com/documentation/publish/add-on-policies-faq/) |
+| Notes for Reviewers | اختيارية | حتى 3,000، ولا يراها إلا Mozilla | T6 | addons-server |
+| Release notes | اختيارية | حتى 3,000 | T6 | addons-server |
+| Icon | من البيان | مربعة، وتُخزَّن بمقاسات 32 و64 و128 | 128 موجودة | [create-an-appealing-listing](https://extensionworkshop.com/documentation/develop/create-an-appealing-listing/) |
+| Screenshots | اختيارية | الموصى به 1280×800 (1.6:1). وإن كان المفتاح `content-optimization` مفعّلًا في الإنتاج، وهذا لم يُتحقق منه، فالشرط 1000×750 فأكثر بنسبة 4:3. ومقاس 1280×960 يجتاز الحالتين | T6 | [create-an-appealing-listing](https://extensionworkshop.com/documentation/develop/create-an-appealing-listing/) |
+| المراجعة | — | تحقق آلي قبل التوقيع حتى 24 ساعة، وأطول إن اختيرت للمراجعة اليدوية. ومراجعة الشيفرة يدويًا ممكنة في أي وقت بعد النشر | — | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
+
+## ٤. وقائع تقنية للمراحل التالية
+
+قرأتها في T1 ولم تُختبر بعد. يثبتها T2 وT3 بالبناء والاختبار.
+
+- **Firefox: الخلفية.** `background.service_worker` غير مدعوم، فتحل محله `background.scripts`. وإن وُجد `service_worker` وحده فخطأ `BACKGROUND_SERVICE_WORKER_NOFALLBACK`.
+- **Firefox: الخطوط.** `use_dynamic_url` غير مدعوم، ورابط `moz-extension://` عشوائي لكل نسخة متصفح أصلًا. وأثر المفتاح في `web-ext lint` لم يُختبر.
+- **Firefox: إصدارات المفاتيح.** `world: "MAIN"` مدعوم منذ 128، و`optional_host_permissions` منذ 128 أيضًا، فالحد الأدنى 140 يغطيهما ويتسق مع `data_collection_permissions`.
+- **Firefox: إذن يوتيوب.** أذونات المضيف المشتقة من `content_scripts.matches` تُمنح عند التثبيت منذ 127، ويستطيع المستخدم سحبها. يختبرها T3.
+- **Firefox: التنزيل.** `downloads.download` بعنوان `data:` لا يذكره MDN، وهو يوثّق طريق `blob`. يختبره T3.
+- **Firefox: بيئة المراجع.** الافتراضية Ubuntu 24.04.4 على ARM64، وNode 24.14.0، وnpm 11.9.0. وعندنا Node 24.18.1 وnpm 11.16.0، وملف القفل يحوي `@esbuild/linux-arm64`.
+- **Firefox: التصغير.** صفحة شيفرة المصدر لا توصي بالتصغير وإن أجازته، والبناء يستعمل `minifySyntax`. ينظر فيه T4 ولا يغيّره T1.
+- **البناء: هدف esbuild.** `target: 'chrome111'`، فيُراجع لهدف Firefox في T2.
+- **البناء: التراخيص.** `legalComments: 'none'` يحذف تعليقات التراخيص، فتلزم إشعارات الأطراف الثالثة في T4.
+- **Chrome: التصغير والتعمية.** التصغير مسموح والتعمية ممنوعة (Red Titanium، ومن أمثلتها تهريب المحارف بـ`\u`). و`charset: 'utf8'` في `scripts/build.mjs` يمنع هذا التهريب.
+- **Edge: الحزمة.** يُحذف `update_url` إن وُجد، وهو غير موجود اليوم.
+
+## ٥. القرارات التي تلزمك قبل T2
+
+١. **[قرار] Chrome Web Store مع خطر Blue Zinc:**
+
+   - أ. الإرسال إلى المتاجر الثلاثة بإدراج شفاف (§١)، وطعن واحد إن رُفض، ولا إعادة إرسال متكررة. **توصيتي.**
+   - ب. Edge وFirefox الآن، وChrome بعد قبولهما.
+   - ج. لا Chrome أصلًا. وحينها يبقى Brave، الذي يثبّت من متجر Chrome، على التثبيت الشخصي.
+
+٢. **[قرار] هوية الناشر:**
+
+   - اسم الناشر الظاهر في المتاجر الثلاثة، وهو في Edge حتى 50 محرفًا.
+   - نوع حساب Edge: Individual أو Company. لا يتغير بعد التسجيل، وهو إعلان صفة التاجر.
+   - صفة التاجر في Chrome: التاجر يُنشر اسمه القانوني وهاتفه وعنوانه.
+   - بريد الدعم الذي يظهر علنًا.
+   - حساب Google للنشر: الحساب الشخصي أم حساب مخصص. السياسة تجيز في الحالات القصوى تعليق خدمات Google المرتبطة بالحساب، فأوصي بحساب مخصص.
+
+٣. **[قرار] الاسم في المتاجر:** «ترجمان» وحده كما في البيان اليوم (**توصيتي**: لا تغيير في الهوية، والملخص يشرح)، أو اسم بوصف مثل «ترجمان: ترجمتك العربية على YouTube™». والاسم يُقرأ من البيان، فتغييره يغيّر اسم الإضافة في المتصفح أيضًا، ولا يذكر متصفحًا ولا يوهم بانتماء إلى يوتيوب أو Google.
+
+٤. **[قرار] لغة الإدراج:** العربية وحدها بلا `_locales`، فلا يتغير البيان (**توصيتي**)، وملاحظات المراجعين بالإنجليزية في الحالتين. أو العربية والإنجليزية، وتتطلب `_locales` و`default_locale` في T2، ووصفًا وشعارًا لكل لغة في Edge.
+
+٥. **[قرار] الظهور:** عام في المتاجر الثلاثة (**توصيتي**)، أو غير مدرج أو مخفي أولًا. والمناطق كلها افتراضيًا.
+
+٦. **[قرار] معرّف Firefox:** تأكيد `tarjuman@bysltan.com` نهائيًا قبل أول رفع، فهو يربط الإدراج وتحديثاته. والاكتفاء بسطح المكتب.
+
+**قرارات تنتظر مرحلتها:** الترخيص، ورابط المستودع في «حول»، ورقم الإصدار الأول في المتاجر (`package.json` على `0.0.0` والبيان على `1.0.0`) في T4. ونص الإدراج وفيديو اللقطات في T6. وروابط الموقع والدعم في T7.
+
+**بيدك عند النشر، لا في هذه الجولة:** إنشاء الحسابات الثلاثة، ودفع رسوم Chrome، والتحقق بخطوتين، وإعلان صفة التاجر، والرفع.
+
+## ٦. المصادر
+
+قُرئت كلها في 2026-11-03. والتاريخ بين القوسين «آخر تحديث» كما تعرضه الصفحة، وبعضه أقدم من محتواها.
+
+- **Chrome Web Store:**
+  - [Program Policies](https://developer.chrome.com/docs/webstore/program-policies/policies) (2025-05-22)
+  - [Malicious and Prohibited Products](https://developer.chrome.com/docs/webstore/program-policies/malicious-and-prohibited) (2022-11-01)
+  - [Impersonation and IP](https://developer.chrome.com/docs/webstore/program-policies/impersonation-and-intellectual-property) (2022-11-01)
+  - [Troubleshooting violations](https://developer.chrome.com/docs/webstore/troubleshooting)
+  - [Review process](https://developer.chrome.com/docs/webstore/review-process)
+  - [User data FAQ](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq)
+  - [Limited Use](https://developer.chrome.com/docs/webstore/program-policies/limited-use) (2022-11-01)
+  - [Listing requirements](https://developer.chrome.com/docs/webstore/program-policies/listing-requirements) (2024-07-10)
+  - [Images](https://developer.chrome.com/docs/webstore/images)
+  - [Listing tab](https://developer.chrome.com/docs/webstore/cws-dashboard-listing)
+  - [Privacy tab](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)
+  - [Distribution](https://developer.chrome.com/docs/webstore/cws-dashboard-distribution)
+  - [Test instructions](https://developer.chrome.com/docs/webstore/cws-dashboard-test-instructions) (2025-05-16)
+  - [Register](https://developer.chrome.com/docs/webstore/register) (2024-02-13)
+  - [Trader disclosure](https://developer.chrome.com/docs/webstore/program-policies/trader-disclosure) (2024-02-09)
+  - [Branding](https://developer.chrome.com/docs/webstore/branding)
+  - [بلاغ الرفض](https://groups.google.com/a/chromium.org/g/chromium-extensions/c/K17UE-7Bjgs) (2026-03-12)
+  - [Transcript for YouTube™](https://chromewebstore.google.com/detail/mjmghnkcbdmdbkolinkcbapglcinoahd)
+- **Microsoft Edge Add-ons:**
+  - [Developer policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (ms.date 2026-07-24)
+  - [Publish an extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) (2026-05-05)
+  - [Create a developer account](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/create-dev-account) (2025-12-12)
+  - [Port a Chrome extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/developer-guide/port-chrome-extension) (2021-02-17)
+  - [Update an extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/update/update-extension) (2022-11-04)
+  - Microsoft Store App Developer Agreement، الإصدار 8.11 (يسري من 2026-04-17)
+- **Firefox Add-ons:**
+  - [Add-on Policies](https://extensionworkshop.com/documentation/publish/add-on-policies/) (2026-10-20)، وتعديل يسري في 2026-12-01 لا يمس الإرسال ولا المراجعة
+  - [Policies FAQ](https://extensionworkshop.com/documentation/publish/add-on-policies-faq/) (2025-08-04)
+  - [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) (2026-10-18)
+  - [Source code submission](https://extensionworkshop.com/documentation/publish/source-code-submission/)
+  - [Submitting an add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) (2026-05-10)
+  - [Signing and distribution](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/) (2024-08-21)
+  - [MV3 migration guide](https://extensionworkshop.com/documentation/develop/manifest-v3-migration-guide/)
+  - [Mozilla Acceptable Use Policy](https://www.mozilla.org/en-US/about/legal/acceptable-use/)
+  - [Video DownloadHelper](https://addons.mozilla.org/en-US/firefox/addon/video-downloadhelper/)
+- **يوتيوب:**
+  - [شروط الخدمة](https://www.youtube.com/static?template=terms&hl=en&gl=US): النسخة الأمريكية مؤرخة في 2023-12-15، والعربية سارية منذ 2022-01-05 وفيها استثناء ثالث «ما يسمح به القانون الساري»
