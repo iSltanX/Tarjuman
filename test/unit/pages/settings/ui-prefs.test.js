@@ -12,7 +12,7 @@ import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW } from '../../../helpers/fixtures.js';
 import { buttonNamed, findAll, newDocument, settle, textOf } from '../library/fake-dom.js';
 
-async function mount({ prefs } = {}) {
+async function mount({ prefs, env = {} } = {}) {
   let t = Date.parse(NOW);
   const area = createMemoryArea({ unlimited: true });
   const store = createStore({ area, now: () => (t += 1000) });
@@ -24,6 +24,7 @@ async function mount({ prefs } = {}) {
     store, doc, version: '0.2.0',
     clipboardWrite: async () => {}, diagnosticsText: async () => '{}',
     setTimer: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimer: () => {},
+    ...env,
   });
   doc.body.append(settings.root);
   await settings.load();
@@ -112,6 +113,62 @@ test('«صور الفيديو في المحفوظات»: يكتب prefs.ui.thumb
   assert.equal(p.ui.panelEntry, true);
   assert.deepEqual(marks(rowOf(m, 'صور الفيديو في المحفوظات')), ['حُفظ']);
   assert.equal(m.settings.prefs.ui.thumbnails, false, 'حالة الصفحة تتبع المحفوظ');
+});
+
+/** موافقة Firefox بمحاكاة: answer ما يردّه طلب الموافقة، وcalls ترتيب الاستدعاءات. */
+function firefoxConsent({ granted = false, answer = true } = {}) {
+  const state = { granted, calls: [] };
+  return {
+    state,
+    thumbsConsent: {
+      needed: true,
+      check: async () => { state.calls.push('check'); return state.granted; },
+      request: () => { state.calls.push('request'); if (answer) state.granted = true; return Promise.resolve(answer); },
+    },
+  };
+}
+
+test('Firefox (قرار سلطان 2026-11-04): بلا موافقة يبدو المفتاح مطفأً وإن كان التفضيل مفعّلًا، وشرحه يذكر موافقة «نشاط التصفح»', async () => {
+  const c = firefoxConsent();
+  const m = await mount({ env: { thumbsConsent: c.thumbsConsent } });
+  assert.equal(m.settings.prefs.ui.thumbnails, true, 'التفضيل الافتراضي لم يُمسّ');
+  assert.equal(sw(m, 'ui.thumbnails').checked, false, 'المعروض = المفتاح والموافقة معًا');
+  const row = rowOf(m, 'صور الفيديو في المحفوظات');
+  assert.ok(textOf(row).includes('وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح»'));
+  assert.equal(textOf(row).includes('أطفئها ليبقى كل شيء على جهازك'), false);
+  assert.deepEqual(c.state.calls, ['check'], 'قراءة بلا طلب عند الفتح');
+});
+
+test('Firefox: تفعيل المفتاح يطلب الموافقة في الضغطة نفسها، فإن مُنحت حُفظ وظهر مفعّلًا', async () => {
+  const c = firefoxConsent({ answer: true });
+  const m = await mount({ env: { thumbsConsent: c.thumbsConsent }, prefs: { ui: { thumbnails: false } } });
+  const input = sw(m, 'ui.thumbnails');
+  toggle(input, true);
+  assert.deepEqual(c.state.calls, ['check', 'request'], 'الطلب متزامن داخل الضغطة قبل أي انتظار');
+  await settle();
+  assert.equal((await m.store.getPrefs()).ui.thumbnails, true);
+  assert.equal(input.checked, true);
+  assert.deepEqual(marks(rowOf(m, 'صور الفيديو في المحفوظات')), ['حُفظ']);
+});
+
+test('Firefox: رفض الموافقة يبقي المفتاح مطفأً برسالة، ولا يكتب شيئًا؛ والإطفاء يكتب بلا طلب', async () => {
+  const c = firefoxConsent({ answer: false });
+  const m = await mount({ env: { thumbsConsent: c.thumbsConsent }, prefs: { ui: { thumbnails: false } } });
+  const input = sw(m, 'ui.thumbnails');
+  const before = await m.store.getPrefs();
+  toggle(input, true);
+  await settle();
+  assert.equal(input.checked, false);
+  assert.deepEqual(marks(rowOf(m, 'صور الفيديو في المحفوظات')), [THUMBNAILS_SWITCH.refused]);
+  assert.deepEqual(await m.store.getPrefs(), before, 'لا كتابة');
+
+  const on = firefoxConsent({ granted: true });
+  const m2 = await mount({ env: { thumbsConsent: on.thumbsConsent } });
+  assert.equal(sw(m2, 'ui.thumbnails').checked, true, 'الموافقة الممنوحة والمفتاح المفعّل: مفعّل');
+  toggle(sw(m2, 'ui.thumbnails'), false);
+  await settle();
+  assert.equal((await m2.store.getPrefs()).ui.thumbnails, false);
+  assert.deepEqual(on.state.calls, ['check'], 'الإطفاء لا يطلب شيئًا');
 });
 
 test('فشل الكتابة: رسالة الخطأ بجانب المفتاح ويعود إلى المحفوظ فلا يناقض التخزين', async () => {

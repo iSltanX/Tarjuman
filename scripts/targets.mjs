@@ -10,13 +10,14 @@ export const DEFAULT_OUT = Object.freeze({ chromium: 'dist', firefox: 'dist-fire
 /**
  * إعدادات Gecko المعتمدة (قرار سلطان، store/README.md §٥). لا يُجمع شيء دون موافقة، فالمطلوب none؛ وقناة البلاغات (T2.1)
  * فئتها الاختيارية technicalAndInteraction (اسم المتصفح وإصداره والنظام في البلاغ)، تُطلب مع إذن مضيفها عند أول إرسال.
- * وحكم T5 بتعريفات Mozilla (docs/site/README.md): none لا يطابق ما دامت صور المحفوظات مفعّلة افتراضيًا، فهي تنقل معرّفات
- * المحفوظات إلى i.ytimg.com دون موافقة (أقرب الفئات browsingActivity). والخيار معلّق بقرار سلطان؛ ولا تغيير هنا قبله.
+ * وصور المحفوظات تنقل معرّفات المحفوظات إلى i.ytimg.com (حكم T5 بتعريفات Mozilla، docs/site/README.md)، فتُعلن
+ * browsingActivity اختيارية، ويطلبها مفتاح الصور عند تفعيله، والصور مطفأة حتى الموافقة (قرار سلطان 2026-11-04،
+ * src/core/consent/thumbnails.js). فيبقى none صادقًا: لا يُجمع شيء دون موافقة.
  */
 export const GECKO = Object.freeze({
   id: 'tarjuman@bysltan.com',
   strict_min_version: '140.0',
-  data_collection_permissions: Object.freeze({ required: Object.freeze(['none']), optional: Object.freeze(['technicalAndInteraction']) }),
+  data_collection_permissions: Object.freeze({ required: Object.freeze(['none']), optional: Object.freeze(['technicalAndInteraction', 'browsingActivity']) }),
 });
 
 /**

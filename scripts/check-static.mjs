@@ -32,9 +32,9 @@ const BACKGROUND = {
   chromium: '{"service_worker":"background/worker.js"}',
   firefox: '{"scripts":["background/worker.js"]}',
 };
-// Gecko المعتمد (store/README.md §٥): المعرّف، وأدنى إصدار 140، ولا جمع بيانات دون موافقة، وفئة البلاغ الاختيارية وحدها
-// (T2.1)، ولا gecko_android (سطح المكتب وحده).
-const GECKO_SETTINGS = '{"gecko":{"id":"tarjuman@bysltan.com","strict_min_version":"140.0","data_collection_permissions":{"required":["none"],"optional":["technicalAndInteraction"]}}}';
+// Gecko المعتمد (store/README.md §٥): المعرّف، وأدنى إصدار 140، ولا جمع بيانات دون موافقة، والفئتان الاختياريتان وحدهما:
+// البلاغ (T2.1) وصور المحفوظات (قرار سلطان 2026-11-04)، ولا gecko_android (سطح المكتب وحده).
+const GECKO_SETTINGS = '{"gecko":{"id":"tarjuman@bysltan.com","strict_min_version":"140.0","data_collection_permissions":{"required":["none"],"optional":["technicalAndInteraction","browsingActivity"]}}}';
 // قناة البلاغات (جولة النشر T2.1): إذن مضيف اختياري لخادمها وحده، يُطلب عند أول إرسال؛ والإلزامية كما هي.
 const OPTIONAL_HOSTS = '["https://app-reports.isultantf.workers.dev/*"]';
 const FORBIDDEN_KEYS = [
@@ -142,8 +142,9 @@ const RULES = [
   {
     re: /\bchrome\s*(?:\.|\[\s*['"`])\s*(?:webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen)\b|\bchrome\s*\[\s*['"`]downloads|\bpermissions\s*\.\s*request\b|\btabs\s*\.\s*(?:executeScript|insertCSS)\b/,
     msg: 'واجهة تحتاج إذنًا غير معتمد',
-    // طلب إذن مضيف البلاغات وحده، بسطره المراجَع في ملف القناة (جولة النشر T2.1).
-    allow: (rel, line) => rel === REPORT_FILE && REPORT_LINES.has(line.trim()),
+    // طلب إذن مضيف البلاغات وحده، بسطره المراجَع في ملف القناة (جولة النشر T2.1)؛ وطلب موافقة صور المحفوظات في Firefox بسطره
+    // المراجَع في ملف الموافقة (قرار سلطان 2026-11-04، core/consent/thumbnails.js).
+    allow: (rel, line) => (rel === REPORT_FILE && REPORT_LINES.has(line.trim())) || (rel === CONSENT_FILE && CONSENT_LINES.has(line.trim())),
   },
   { re: /\b(?:localStorage|sessionStorage|indexedDB)\b/, msg: 'التخزين عبر src/core/store وحده (لا localStorage ولا IndexedDB)' },
   { re: /\bconsole\b/, msg: 'التسجيل في الكونسول ممنوع؛ الأخطاء برموز وتقرير التشخيص' },
@@ -169,6 +170,12 @@ const REPORTS_ORIGIN = 'https://app-reports.isultantf.workers.dev';
 const REPORT_LINES = new Set([
   'const pageFetch = (url, init) => globalThis.fetch(url, init);',
   'return Promise.resolve(api.permissions.request(reportPermissions(target))).then((granted) => granted === true, () => false);',
+]);
+// موافقة صور المحفوظات في Firefox (قرار سلطان 2026-11-04، docs/site/README.md): طلب واحد لفئة browsingActivity وحدها، بسطره
+// المراجَع حرفيًا في ملفه وحده؛ بلا مضيف ولا إذن آخر.
+const CONSENT_FILE = path.join('core', 'consent', 'thumbnails.js');
+const CONSENT_LINES = new Set([
+  'return Promise.resolve(api.permissions.request({ data_collection: [THUMBS_DATA] })).then((granted) => granted === true, () => false);',
 ]);
 // قراءة ملف خط الترجمة من حزمة الإضافة نفسها (chrome-extension://، ليست شبكة) لـFontFace ببياناته (عقد interfaces §٣):
 // في محمّل خطوط الطبقة وحده، والسطر مراجَع حرفيًا كأسطر غلافي الالتقاط (طلب ملف مشترك من P6).

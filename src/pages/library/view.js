@@ -4,7 +4,7 @@
 // والأفعال: تحرير (أو رفع ترجمة)، وفتح الفيديو، وتوسيع الصف (بطاقات الترجمات في الصف نفسه)، و«المزيد» (تصدير SRT والنص
 // الدراسي، ورفع ترجمة، ونسخ تعليمات الترجمة بالقاموس، والحذف بتأكيد يسرد ما يُحذف). التجميع بالتاريخ (اليوم وهذا الأسبوع
 // وأقدم) مع ترتيب «آخر تعديل»، بحث ورقائق الفرز بالحالات الخمس بأعدادها وترتيب، وحالتها في جزء العنوان فتبقى عند الرجوع من
-// المحرّر. الصورة بتفضيل prefs.ui.thumbnails وحده (thumb.js)، والمدة من سجل الفيديو كسولًا. الحالات: تحميل وفارغة وممتلئة
+// المحرّر. الصورة بتفضيل prefs.ui.thumbnails، ومعه في Firefox موافقة «نشاط التصفح» (core/consent/thumbnails.js)، والمدة من سجل الفيديو كسولًا. الحالات: تحميل وفارغة وممتلئة
 // ونتيجة بحث فارغة وقسم فارغ وخطأ. كل نص عبر textContent، ونص تعليمات الترجمة لا يدخل DOM في أي حال.
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
@@ -30,6 +30,7 @@ import {
 import { studyContent } from './study.js';
 import { clip, isolate } from './text.js';
 import { thumbnail } from './thumb.js';
+import { thumbnailsShown } from '../../core/consent/thumbnails.js';
 import { uploadContent } from './upload.js';
 
 export { isolate };
@@ -72,6 +73,8 @@ export function createLibrary(env) {
   const { store, doc = document, now = Date.now } = env;
   const setTimer = env.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
   const clearTimer = env.clearTimer ?? ((id) => clearTimeout(id));
+  // موافقة صور المحفوظات (Firefox وحده، core/consent/thumbnails.js): تُقرأ عند التحميل ومع كل تغيّر للتفضيلات، وفي Chromium «نعم».
+  const thumbsCheck = () => Promise.resolve().then(() => (env.thumbsConsent ? env.thumbsConsent() : true)).then((g) => g === true, () => false);
   const confirm = env.confirm ?? confirmDialog;
   const nav = env.nav ?? hashNav(doc);
   const toaster = createToaster({ doc, setTimer, clearTimer });
@@ -83,6 +86,7 @@ export function createLibrary(env) {
     capacity: /** @type {import('../../core/store/capacity.js').Capacity | null} */ (null),
     /** التفضيلات: القاموس يُرفق بالتعليمات المنسوخة، و«صور الفيديو» تحكم الصورة في الصف. */
     prefs: /** @type {import('../../core/model/prefs.js').Prefs} */ (DEFAULT_PREFS),
+    thumbsGranted: false,
     query: initial.query, filter: initial.filter, order: /** @type {'updated' | 'title'} */ (initial.order), limit: PAGE_SIZE,
     /** الصف المقصود بعد الرجوع من المحرّر (#v=…): يُبرَز مرة ثم يُنسى. */
     focusId: initial.focusId,
@@ -452,7 +456,7 @@ export function createLibrary(env) {
 
     // الصورة والمدة.
     const cached = durations.get(`${entry.videoId}|${entry.rev}`);
-    const thumb = thumbnail({ doc, videoId: entry.videoId, enabled: state.prefs.ui.thumbnails, durationMs: cached ?? null });
+    const thumb = thumbnail({ doc, videoId: entry.videoId, enabled: thumbnailsShown(state.prefs.ui.thumbnails, state.thumbsGranted), durationMs: cached ?? null });
     thumbs.add(thumb);
     whenVisible(thumb.root, () => wantDuration(entry, thumb));
 
@@ -712,9 +716,9 @@ export function createLibrary(env) {
   async function load() {
     const mine = ++loadSeq;
     try {
-      const [items, capacity, prefs] = await Promise.all([store.listLibrary(), store.capacity(), store.getPrefs().catch(() => PREFS_UNREADABLE)]);
+      const [items, capacity, prefs, thumbsGranted] = await Promise.all([store.listLibrary(), store.capacity(), store.getPrefs().catch(() => PREFS_UNREADABLE), thumbsCheck()]);
       if (mine !== loadSeq) return;
-      Object.assign(state, { entries: libraryEntries(items), capacity, prefs, status: 'ready', error: null });
+      Object.assign(state, { entries: libraryEntries(items), capacity, prefs, thumbsGranted, status: 'ready', error: null });
     } catch (err) {
       if (mine !== loadSeq) return;
       const info = toErrorInfo(err);
@@ -726,9 +730,11 @@ export function createLibrary(env) {
   const unsubscribe = store.onChange((change) => {
     // التفضيلات: القاموس يُقرأ عند ضغطة النسخ، و«صور الفيديو» تُطبَّق على الصور الحالية دون إعادة بناء القائمة.
     if (change.prefs) {
-      store.getPrefs().then((p) => {
+      // والموافقة تُقرأ معها (Firefox): تفعيل المفتاح من الإعدادات يمنحها ثم يكتب التفضيل.
+      Promise.all([store.getPrefs(), thumbsCheck()]).then(([p, granted]) => {
         state.prefs = p;
-        for (const t of thumbs) t.setEnabled(p.ui.thumbnails);
+        state.thumbsGranted = granted;
+        for (const t of thumbs) t.setEnabled(thumbnailsShown(p.ui.thumbnails, granted));
       }).catch(() => {});
     }
     // تغيّر الإعدادات من صفحة أخرى لا يمسّ القائمة: إعادة بنائها تهدم التركيز والقائمة المفتوحة.

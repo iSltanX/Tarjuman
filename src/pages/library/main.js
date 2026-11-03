@@ -1,6 +1,7 @@
 // المحفوظات (P7 ثم P13): تركيب الصفحة في المتصفح وحده: التخزين الحقيقي، وفتح التبويبات بـchrome.tabs.create (لا يحتاج
 // إذن tabs)، والحفظ عبر saveFile (يتبع مكان الحفظ المختار)، والحافظة بضغطة المستخدم، ومنتقي الملفات. المنطق كله في
 // view.js وexpand.js وthumb.js وupload.js وstudy.js وdelete.js وactions.js وmodel.js.
+import { buildTarget, thumbnailsConsent } from '../../core/consent/thumbnails.js';
 import { saveFile } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
@@ -34,6 +35,8 @@ startPage({
       clipboardWrite: (text) => navigator.clipboard.writeText(text),
       pickFiles: () => pickFiles(),
       diagnosticsText: () => collectDiagnostics({ store, version: extensionVersion() }),
+      // صور المحفوظات في Firefox بموافقة «نشاط التصفح» (core/consent/thumbnails.js)؛ وفي Chromium «نعم» دائمًا.
+      thumbsConsent: () => thumbnailsConsent(chrome, buildTarget()),
     });
     app.append(lib.root);
     await lib.load();

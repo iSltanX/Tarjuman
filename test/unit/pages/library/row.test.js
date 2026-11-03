@@ -109,6 +109,36 @@ test('تبديل «صور الفيديو» من صفحة أخرى يُطبَّق
   assert.ok(rowFor(m, ID(2)));
 });
 
+test('Firefox (قرار سلطان 2026-11-04): بلا موافقة «نشاط التصفح» لا img ولو كان المفتاح مفعّلًا، ومنحها مع تغيّر التفضيلات يعيد الصور في مكانها', async () => {
+  let granted = false;
+  const m = await mount({ records: [{ id: ID(1) }, { id: ID(2) }], env: { thumbsConsent: async () => granted } });
+  assert.equal(m.lib.state.prefs.ui.thumbnails, true, 'المفتاح مفعّل افتراضيًا');
+  assert.equal(m.lib.state.thumbsGranted, false);
+  assert.equal(findAll(m.root, (e) => e.tagName === 'img').length, 0, 'لا طلب صورة بلا موافقة');
+  assert.equal(m.root.querySelectorAll('.lib-thumb__fallback').length, 2);
+  // مفتاح الإعدادات يمنح الموافقة ثم يكتب التفضيل.
+  granted = true;
+  await m.store.setPrefs({ ui: { thumbnails: true, panelDual: false } });
+  await m.area.flush();
+  await settle(10);
+  assert.equal(m.lib.state.thumbsGranted, true);
+  assert.equal(findAll(m.root, (e) => e.tagName === 'img').length, 2, 'الصور بعد الموافقة');
+  // سحب الموافقة من صفحة إضافات Firefox يظهر مع أول تغيّر للتفضيلات.
+  granted = false;
+  await m.store.setPrefs({ ui: { panelDual: true } });
+  await m.area.flush();
+  await settle(10);
+  assert.equal(findAll(m.root, (e) => e.tagName === 'img').length, 0);
+});
+
+test('قراءة الموافقة إن فشلت تُعدّ «لا»، وبلا مدخل الموافقة (Chromium) تبقى الصور بالمفتاح وحده', async () => {
+  const failing = await mount({ records: [{ id: ID(1) }], env: { thumbsConsent: async () => { throw new Error('x'); } } });
+  assert.equal(findAll(failing.root, (e) => e.tagName === 'img').length, 0);
+  const chromium = await mount({ records: [{ id: ID(1) }] });
+  assert.equal(chromium.lib.state.thumbsGranted, true);
+  assert.equal(findAll(chromium.root, (e) => e.tagName === 'img').length, 1);
+});
+
 test('تغيّر تفضيل آخر (القاموس) لا يمسّ الصور ولا القائمة', async () => {
   const m = await mount({ records: [{ id: ID(1) }] });
   const img = imgOf(rowFor(m, ID(1)));

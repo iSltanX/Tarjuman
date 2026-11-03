@@ -4,6 +4,7 @@
 // وما يُعرض فوق الفيديو وحدهما، وخطوط الصفحة نفسها لا تتغير. والإصدار الثاني: مكان الحفظ أول «التصدير»، وحد سرعة القراءة
 // في «المقارنة والمراجعة»، وبطاقتا «المصطلحات» و«البيانات»، وسعة الترجمات والسوابق في «التخزين»؛ وتفضيلاته في prefs.
 // لا طلبات شبكة، وكل نص عبر textContent.
+import { thumbnailsShown } from '../../core/consent/thumbnails.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { DEFAULT_SETTINGS, SUBTITLE_BACKGROUNDS, SUBTITLE_POSITIONS, SUBTITLE_SCALE } from '../../core/model/settings.js';
@@ -40,6 +41,9 @@ export const PANEL_OPEN_SWITCH = Object.freeze({
 export const THUMBNAILS_SWITCH = Object.freeze({
   label: 'صور الفيديو في المحفوظات', text: 'تُعرض صورة كل فيديو',
   note: `تُطلب من خوادم يوتيوب (${ltrInline('i.ytimg.com')}) بمعرّف الفيديو؛ أطفئها ليبقى كل شيء على جهازك.`,
+  // Firefox (قرار سلطان 2026-11-04، core/consent/thumbnails.js): التفعيل يطلب موافقة «نشاط التصفح»، والصور مطفأة حتى يوافق.
+  noteFirefox: `تُطلب من خوادم يوتيوب (${ltrInline('i.ytimg.com')}) بمعرّف الفيديو. وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح»، وتسحبها من صفحة إضافات المتصفح.`,
+  refused: 'لم تُمنح الموافقة، فلا تُعرض الصور.',
 });
 export const MODE_NOTES = Object.freeze({
   normal: 'عادي: مقاطع كما في يوتيوب، للتزامن الأدق.',
@@ -95,6 +99,9 @@ export function createSettings(env) {
   const now = env.now ?? Date.now;
   let settings = DEFAULT_SETTINGS;
   let prefs = DEFAULT_PREFS;
+  // موافقة صور المحفوظات (Firefox وحده؛ core/consent/thumbnails.js): الصور تظهر بالمفتاح والموافقة معًا، وفي Chromium بالمفتاح.
+  const thumbsConsent = env.thumbsConsent ?? { needed: false, check: () => Promise.resolve(true), request: () => Promise.resolve(true) };
+  let thumbsGranted = !thumbsConsent.needed;
   let stepCustom = false;
   /** مؤشر إلى ما يحدّث الواجهة من الإعدادات (يُملأ أدناه). */
   const sync = [];
@@ -158,14 +165,28 @@ export function createSettings(env) {
     const input = el('input', { className: 'st-switch__input', attrs: { id: `st-ui-${key}`, type: 'checkbox', role: 'switch', 'data-pref': `ui.${key}` }, doc });
     // إطفاء «زر النص المتزامن» كإخفائه من قائمة اللوحة: يُغلق اللوحة معه، فلا تُفتح وحدها حين يعود الزر (مراجعة الهوية L4)؛ وفتح
     // اللوحة يعيد زرها، فلا تُفتح لوحة لا زر يغلقها من الشريط.
+    const shown = () => (key === 'thumbnails' ? thumbnailsShown(prefs.ui.thumbnails, thumbsGranted) : prefs.ui[key]);
     input.addEventListener('change', () => {
+      // تفعيل الصور في Firefox: طلب الموافقة أول ما في الضغطة (قبل أي انتظار)، والممنوحة تعود بلا سؤال؛ والرفض يبقيها مطفأة.
+      if (key === 'thumbnails' && thumbsConsent.needed && input.checked) {
+        thumbsConsent.request().then((granted) => {
+          thumbsGranted = granted === true;
+          if (!thumbsGranted) {
+            input.checked = false;
+            mark.flash(THUMBNAILS_SWITCH.refused, 'info');
+            return;
+          }
+          savePrefs({ ui: { thumbnails: true } }, mark);
+        });
+        return;
+      }
       let patch = { [key]: input.checked };
       if (key === 'panelEntry' && !input.checked) patch = { panelEntry: false, panelOpen: false };
       if (key === 'panelOpen' && input.checked) patch = { panelOpen: true, panelEntry: true };
       savePrefs({ ui: patch }, mark);
     });
-    sync.push(() => { input.checked = prefs.ui[key]; });
-    input.checked = prefs.ui[key];
+    sync.push(() => { input.checked = shown(); });
+    input.checked = shown();
     return el('label', {
       className: 'st-switch', attrs: { for: `st-ui-${key}` },
       children: [input, el('span', { className: 'st-switch__track', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'st-switch__label', text, doc })],
@@ -333,7 +354,7 @@ export function createSettings(env) {
     row('الموضع', posMark, posSeg.root),
     rowWithHint(PANEL_OPEN_SWITCH.label, PANEL_OPEN_SWITCH.hint, openMark, openSwitch, note(PANEL_OPEN_SWITCH.note)),
     rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)),
-    row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(THUMBNAILS_SWITCH.note)),
+    row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsConsent.needed ? THUMBNAILS_SWITCH.noteFirefox : THUMBNAILS_SWITCH.note)),
     row('معاينة حية', null, preview.root, note(PREVIEW_NOTE)));
 
   // ---- التوقيت ----
@@ -647,7 +668,7 @@ export function createSettings(env) {
     get prefs() { return prefs; },
     async load() {
       try {
-        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs()]);
+        [settings, prefs, thumbsGranted] = await Promise.all([store.getSettings(), store.getPrefs(), thumbsConsent.check().then((g) => g === true, () => false)]);
         syncAll();
       } catch (err) {
         const info = toErrorInfo(err);
