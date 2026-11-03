@@ -14,6 +14,7 @@
 | أيقونات الشريط | السلسلة «ب»: سهم على سطر لتحميل الأصل، وفقاعتا حديث للترجمة، و− و+ والقيمة؛ بلا كلمات ولا صناديق، والاسم عند التحويم والتركيز | 2026-11-03 |
 | لوحة النص المتزامن | في الوضع العادي بلا مفتاح؛ **يمين الفيديو** في عمود يوتيوب الثانوي، وزر فتحها يمينًا؛ لا تغطي الفيديو ولا أدواته؛ إزاحة واحدة مشتركة مع المشغّل | 2026-11-03 |
 | إغلاق اللوحة وإخفاء زرها | فعلان منفصلان؛ الإخفاء يعود من نافذة الأيقونة أو الإعدادات | 2026-11-03 |
+| اللوحة في واجهة يوتيوب العربية (RTL) | يمين الفيديو أيضًا: يعكس ترجمان تخطيط عمودَي يوتيوب كالمرآة ما دامت اللوحة ظاهرة في العمود الثانوي (الفيديو يسارًا بعرضه نفسه، والعمود يمينه، بهامشَي الحافة والفاصل كما في تخطيط يوتيوب)، ويعود تخطيط يوتيوب كما كان حين يُخفى الزر أو في العمود الواحد أو بمغادرة الصفحة | 2026-11-03 |
 | صور الفيديو في المحفوظات | تحميل مباشر من `i.ytimg.com` بمعرّف الفيديو الحقيقي، بمفتاح «صور الفيديو» مفعّل افتراضيًا، ونص الخصوصية يقول ذلك | 2026-11-03 |
 | الأساس | فوق إصلاحات التدقيق | 2026-11-03 |
 
@@ -47,6 +48,7 @@
 | WatchPanel | الأصل مع الترجمة باسم لغته، ومعطّل بسببه بلا أصل | `panel/model.js` و`view.js` | `panel/states`، `panel/model` | `panel-dual-names-real-original-language`، `panel-dual-shows-original-lines-and-hides-them`، `panel-dual-choice-saved` |
 | PanelStates | الإغلاق يُبقي الزر؛ والإخفاء فعل منفصل بتراجع؛ والعودة من النافذة أو الإعدادات | `panel/session.js`، `popup/entry.js`، `settings/view.js` | `panel/states` (ومنها L3/L10)، `popup/view`، `settings/ui-prefs` | `panel-close-keeps-entry`، `panel-hide-shows-undo-message`، `panel-undo-restores-entry-and-open-panel`، `panel-hidden-entry-gone-after-message`، `popup-shows-hidden-entry-row`، `popup-show-entry-saves-and-reports-real-result`، `youtube-entry-returns-after-popup` |
 | PanelStates | الحالات: تحميل، ولا ترجمة (خطوات)، وخطأ بعنوان محايد، وعمود ضيق | `panel/view.js` و`text.js` | `panel/states` | `panel-follows-new-video-without-stale-rows` (حالة «لا ترجمة» حيًا) |
+| WatchPanel | اللوحة يمين الفيديو في واجهة يوتيوب العربية أيضًا (تبديل العمودين ما دامت ظاهرة، والفيديو بعرضه) | `panel/column.js` (`createColumnMirror`) و`session.js` | `panel/mount` (المرآة بقيم يوتيوب، والاستعادة عند الإخفاء وLTR والعمود الواحد والإزالة، وإعادة القراءة بتغيّر التخطيط) | `panel-right-of-video-in-arabic-youtube`، `arabic-youtube-mirror-keeps-player-width-margins-and-gap`، `arabic-youtube-restored-when-entry-hidden` |
 | WatchNarrow | العرض الضيق تحت الفيديو، ووضع المسرح، وملء الشاشة، والتنقل | `panel/column.js` (العمود الواحد ← `#below`)، `panel/index.js` | `panel/mount`، `panel/behavior` | `panel-narrow-goes-below-video-no-overlap`، `panel-theater-mode-below-video`، `panel-back-beside-video-after-resize-and-theater`، `panel-hidden-in-fullscreen`، `panel-restored-after-fullscreen-without-loss`، `panel-back-restores-saved-translation` |
 | Library | صورة الفيديو بمعرّفه الحقيقي، والبديلة للغائب، والمدة الحقيقية، والطلب الوحيد بلا مُحيل | `pages/library/thumb.js` و`view.js` | `library/thumb`، `library/thumb-static`، `library/row` (ومنها L9)، `settings/no-network` | `library-thumbnail-real-video-id`، `library-thumbnail-fallback-for-missing-video`، `library-duration-is-real`، `library-only-external-request-is-ytimg-thumbnail` |
 | Library · Settings | مفتاح «صور الفيديو» يوقف الطلبات فورًا | `settings/view.js`، `library/view.js` | `settings/ui-prefs`، `library/row` | `settings-thumbnails-off-saved`، `library-thumbnails-off-no-requests-fallback-only`، `settings-thumbnails-back-on` |
@@ -57,7 +59,7 @@
 
 ## ٤. لوحة النص المتزامن (الوضع العادي)
 
-**المكان:** أول عنصر في عمود يوتيوب الثانوي (`#secondary-inner` أو `#secondary` في `ytd-watch-flexy`)، فتكون يمين الفيديو في التخطيط العريض، وتحته في وضع المسرح كما يضع يوتيوب عموده. وفي **تخطيط العمود الواحد** (العرض الضيق، `ytd-watch-flexy[is-single-column]`، أضيق من 1000 تقريبًا) يُخفي يوتيوب العمود الثانوي كله وينقل مقترحاته تحت الفيديو، فتنتقل اللوحة إلى `#below` بعد صندوق بيانات الفيديو (الصندوق الذي فيه `ytd-watch-metadata`: العنوان والقناة والوصف) وقبل المقترحات، كما في لوحة WatchNarrow، وتعود إلى العمود بعودة العمودين بالجلسة نفسها. لا تغطي الفيديو ولا أدواته. ارتفاعها بارتفاع المشغّل في العريض، وحدّ أقصى تحته. تُخفى في ملء الشاشة، وخارج صفحات `/watch`.
+**المكان:** أول عنصر في عمود يوتيوب الثانوي (`#secondary-inner` أو `#secondary` في `ytd-watch-flexy`)، فتكون يمين الفيديو في التخطيط العريض، وتحته في وضع المسرح كما يضع يوتيوب عموده. وفي **تخطيط العمود الواحد** (العرض الضيق، `ytd-watch-flexy[is-single-column]`، أضيق من 1000 تقريبًا) يُخفي يوتيوب العمود الثانوي كله وينقل مقترحاته تحت الفيديو، فتنتقل اللوحة إلى `#below` بعد صندوق بيانات الفيديو (الصندوق الذي فيه `ytd-watch-metadata`: العنوان والقناة والوصف) وقبل المقترحات، كما في لوحة WatchNarrow، وتعود إلى العمود بعودة العمودين بالجلسة نفسها. وفي **واجهة يوتيوب العربية** (اتجاه `#columns` المحسوب RTL) يضع يوتيوب عموده يسار الفيديو، فيعكس ترجمان تخطيط العمودين كالمرآة ما دامت اللوحة ظاهرة فيه: `flex-direction: row-reverse` على `#columns`، ويتبادل `#primary` و`#secondary` حشوَيهما وهامشَيهما الأيمن والأيسر كما حسبها يوتيوب، فيكون التخطيط صورة الأصل المعكوسة بالمقاسات نفسها (الفيديو بعرضه، وهامش الحافة، والفاصل). أنماط سطرية على العناصر الثلاثة وحدها تُستعاد قيمها السابقة كما كانت حين لا حاجة، وتُعاد قراءتها إن غيّر يوتيوب تخطيطه (`column.js` `createColumnMirror`). لا تغطي الفيديو ولا أدواته. ارتفاعها بارتفاع المشغّل في العريض، وحدّ أقصى تحته. تُخفى في ملء الشاشة، وخارج صفحات `/watch`.
 
 **الزر:** شريط في رأس العمود حين تكون مغلقة: الرمز، و«النص المتزامن»، وقيمة الإزاحة إن خالفت الصفر. `aria-expanded`.
 
@@ -88,7 +90,6 @@
 
 | البند | الحال الآن | ما يلزم |
 | --- | --- | --- |
-| **موضع اللوحة في واجهة يوتيوب العربية (RTL)** | اللوحة تتبع عمود يوتيوب الثانوي؛ ويوتيوب بالعربية يضع العمود **يسار** الفيديو، فتظهر اللوحة يساره بلا تداخل (ثبت حيًا بـ`hl=ar`). يمين الفيديو محقق في الواجهة الإنجليزية (LTR). | قرار: تبقى في عمود يوتيوب أينما وضعه، أم تُنقل يمين الفيديو في RTL (لا مكان لها هناك دون تغطية أو دفع المشغّل). |
 | «تصدير الحالية أولًا» و«تصدير الكل أولًا» في حواري الاستبدال والحذف | في لوحة LibraryDialogs موسومة «غير منفّذ (قرار معلّق)»؛ المنتج يصدّر من «المزيد» وبطاقة كل ترجمة. | قرار: يُضافان إلى الحوارين أم يُحذفان من التصميم. |
 | اسم ملف تصدير ترجمة غير نشطة | كل الخانات تُصدَّر باسم `VIDEOID.ar.srt` المتفق عليه، فيلتبس تصدير خانتين. | قرار تسمية (مثل `VIDEOID.ar.2.srt`) يمس عقد الاستيراد بالاسم. |
 | المدة في `IndexEntry` | المدة تُقرأ من سجل الفيديو كسولًا لكل صف ظاهر (`store.getVideo`). | قرار عقدي: إضافة `durationMs` إلى الملخّص فتُقرأ دون السجل. |

@@ -8,7 +8,7 @@ import { lookupMs } from '../../core/model/timing.js';
 import { parseSeconds } from '../controls/text.js';
 import { watchNavigation } from '../watch/navigation.js';
 import { getMainVideo, getPlayer, isAdShowing, isPlayerFullscreen, seekMainVideo } from '../youtube-dom.js';
-import { FALLBACK_HEIGHT, isBeside, placeHost } from './column.js';
+import { FALLBACK_HEIGHT, createColumnMirror, isBeside, placeHost } from './column.js';
 import { createFollow } from './follow.js';
 import { derive } from './model.js';
 import { createPanelView } from './view.js';
@@ -263,6 +263,7 @@ export function createPanelSession({ controller, doc, win }) {
   };
 
   view = createPanelView({ doc, win, on });
+  const mirror = createColumnMirror({ doc, win });
   follow = createFollow({ win, list: view.transcript.list, rowEl: (i) => view.transcript.rowEl(i), onChange: () => render() });
 
   // ———— الحلقة الوحيدة ————
@@ -280,6 +281,9 @@ export function createPanelSession({ controller, doc, win }) {
         if (prefsUi?.panelEntry === false) toast.seen = true;
         else if (toast.seen) clearToast();
       }
+      // الواجهة العربية: اللوحة يمين الفيديو بتبديل العمودين ما دامت ظاهرة في العمود الثانوي (وتبقى كذلك خلف ملء الشاشة).
+      const inSecondary = !!column && column.id !== 'below';
+      mirror.update(inSecondary && (model.mode !== 'none' || (fullscreen && mirror.active)));
       measure();
       const out = view.render(model, {
         follow: follow.on,
@@ -341,6 +345,7 @@ export function createPanelSession({ controller, doc, win }) {
     for (const t of VIDEO_EVENTS) video?.removeEventListener(t, onVideoEvent);
     video = null;
     clearToast();
+    mirror?.restore();
     view?.destroy();
   }
 
@@ -432,6 +437,7 @@ export function createPanelSession({ controller, doc, win }) {
       columnObserver?.disconnect();
       columnObserver = null;
       column = null;
+      mirror.restore();
       view.host.remove();
     },
     check,
@@ -440,12 +446,12 @@ export function createPanelSession({ controller, doc, win }) {
       return column;
     },
     host: view.host,
-    peek: (o) => ({ ...view.peek(o), anchor, follow: follow.on, ready }),
+    peek: (o) => ({ ...view.peek(o), anchor, follow: follow.on, ready, mirrored: mirror.active }),
     diagnostics() {
       const p = view.peek();
       return {
         ...counts, lastCode, mode: p.mode, kind: p.kind, rows: p.rows, follow: follow.on, place: p.place, narrow: p.narrow, wide: p.wide,
-        theme: p.theme, styleMode: view.styleMode, anchor, toast: !!toast, video: !!video,
+        theme: p.theme, styleMode: view.styleMode, anchor, toast: !!toast, video: !!video, mirrored: mirror.active,
       };
     },
     destroy() {

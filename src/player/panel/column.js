@@ -68,3 +68,86 @@ export function isBeside(player, column) {
   const apart = column.left >= player.right - 4 || column.right <= player.left + 4;
   return apart && column.top < player.bottom - 4;
 }
+
+/** عمودا صفحة المشاهدة: الحاوية ذات flex، والعمود الأول (المشغّل) والثانوي. */
+export const COLUMNS_SELECTOR = 'ytd-watch-flexy #columns';
+export const PRIMARY_SELECTOR = 'ytd-watch-flexy #primary';
+export const SECONDARY_SELECTOR = 'ytd-watch-flexy #secondary';
+/** الخصائص الأفقية التي تتبادل جهتيها في المرآة. */
+const SIDES = Object.freeze([['padding-left', 'paddingRight'], ['padding-right', 'paddingLeft'], ['margin-left', 'marginRight'], ['margin-right', 'marginLeft']]);
+
+/**
+ * واجهة يوتيوب RTL (العربية): يضع يوتيوب عموده الثانوي يسار الفيديو. ما دامت اللوحة ظاهرة فيه يُعكس تخطيط العمودين كالمرآة
+ * (قرار سلطان 2026-11-03: اللوحة يمين الفيديو في الواجهتين): `row-reverse` على الحاوية، ويتبادل كلٌّ من العمودين حشوَيه
+ * وهامشَيه الأيمن والأيسر كما حسبها يوتيوب، فيكون التخطيط صورة التخطيط الأصلي المعكوسة بالمقاسات نفسها: الفيديو بعرضه،
+ * والهامش الخارجي عند حافة الصفحة، والفاصل بينهما كما هو. أنماط سطرية على العناصر الثلاثة وحدها (لا CSS عام ولا تغطية)،
+ * تُستعاد قيمها السابقة كما كانت حين لا حاجة: إخفاء الزر، أو العمود الواحد، أو الواجهة LTR، أو مغادرة صفحة الفيديو، أو إعادة
+ * يوتيوب رسم العمودين. وإن غيّر يوتيوب تخطيطه (عرض النافذة أو سمات ytd-watch-flexy) تُستعاد ثم تُعاد بقيمه الجديدة.
+ * @param {{ doc: Document, win: Window }} deps
+ */
+export function createColumnMirror({ doc, win }) {
+  /** @type {null | { columns: HTMLElement, primary: HTMLElement, secondary: HTMLElement, key: string, prev: Array<[HTMLElement, string, string]> }} */
+  let applied = null;
+  const styleOf = (el) => {
+    try {
+      return win.getComputedStyle?.(el) ?? null;
+    } catch {
+      return null;
+    }
+  };
+  const layoutKey = () => {
+    const flexy = doc.querySelector('ytd-watch-flexy');
+    const attrs = flexy?.getAttributeNames?.() ?? [];
+    return `${win.innerWidth ?? 0}|${attrs.filter((n) => /column|window|theater|full/.test(n)).sort().join(',')}`;
+  };
+
+  function restore() {
+    if (!applied) return false;
+    for (const [el, prop, value] of applied.prev) {
+      if (value) el.style.setProperty(prop, value);
+      else el.style.removeProperty(prop);
+    }
+    applied = null;
+    return true;
+  }
+
+  /**
+   * @param {boolean} want اللوحة ظاهرة في العمود الثانوي (لا في #below)
+   * @returns {boolean} هل العمودان معكوسان الآن
+   */
+  function update(want) {
+    const columns = doc.querySelector(COLUMNS_SELECTOR);
+    const primary = doc.querySelector(PRIMARY_SELECTOR);
+    const secondary = doc.querySelector(SECONDARY_SELECTOR);
+    const key = layoutKey();
+    if (applied && (applied.columns !== columns || applied.primary !== primary || applied.secondary !== secondary || applied.key !== key)) restore();
+    const rtl = !!columns && !!primary && !!secondary && styleOf(columns)?.direction === 'rtl';
+    if (!want || !rtl) {
+      restore();
+      return false;
+    }
+    if (applied) return true;
+    // القيم المحسوبة تُنسخ كلها والتخطيط أصلي قبل أي كتابة: getComputedStyle حيّ، فقراءة جانب بعد كتابة الآخر تعيد المكتوب.
+    const native = [primary, secondary].map((el) => {
+      const cs = styleOf(el);
+      return [el, cs ? Object.fromEntries(SIDES.map(([, from]) => [from, cs[from]])) : null];
+    });
+    const prev = [[columns, 'flex-direction', columns.style.getPropertyValue('flex-direction')]];
+    for (const [el] of native) for (const [prop] of SIDES) prev.push([el, prop, el.style.getPropertyValue(prop)]);
+    columns.style.setProperty('flex-direction', 'row-reverse');
+    for (const [el, cs] of native) {
+      if (!cs) continue;
+      for (const [prop, from] of SIDES) el.style.setProperty(prop, cs[from]);
+    }
+    applied = { columns, primary, secondary, key, prev };
+    return true;
+  }
+
+  return {
+    update,
+    restore,
+    get active() {
+      return !!applied;
+    },
+  };
+}

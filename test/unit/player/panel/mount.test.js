@@ -333,3 +333,91 @@ test('تخطيط العمود الواحد (عرض ضيق): يوتيوب يخف�
   page.handle.unmount();
 });
 
+/** صفحة بـ#columns (كيوتيوب) ونمط محسوب: اتجاه الحاوية وحشو العمودين وهوامشهما كما في واجهته العربية (الفيديو يمينًا). */
+function rtlPage({ dir = 'rtl' } = {}) {
+  const page = watchPage();
+  const cols = page.doc.createElement('div');
+  cols.id = 'columns';
+  page.flexy.appendChild(cols);
+  page.primary.remove();
+  page.secondary.remove();
+  cols.append(page.primary, page.secondary);
+  page.cols = cols;
+  page.dir = dir;
+  page.native = {
+    primary: { paddingLeft: '16px', paddingRight: '0px', marginLeft: '0px', marginRight: '16px' },
+    secondary: { paddingLeft: '16px', paddingRight: '0px', marginLeft: '0px', marginRight: '0px' },
+  };
+  page.win.innerWidth = 1400;
+  // حيّ كما في المتصفح: النمط السطري يغلب القيمة الأصلية فور كتابته (فقراءة جانب بعد كتابة الآخر تعيد المكتوب).
+  const live = (el, key) => {
+    const out = {};
+    for (const [css, js] of [['padding-left', 'paddingLeft'], ['padding-right', 'paddingRight'], ['margin-left', 'marginLeft'], ['margin-right', 'marginRight']]) {
+      Object.defineProperty(out, js, { enumerable: true, get: () => el.style.getPropertyValue(css) || page.native[key][js] });
+    }
+    return out;
+  };
+  page.win.getComputedStyle = (el) => (el === cols ? { direction: page.dir } : el === page.primary ? live(el, 'primary') : el === page.secondary ? live(el, 'secondary') : {});
+  return page;
+}
+const SIDE_PROPS = ['padding-left', 'padding-right', 'margin-left', 'margin-right'];
+const sides = (el) => SIDE_PROPS.map((k) => el.style.getPropertyValue(k));
+const mirrored = (page) => ({ flex: page.cols.style.getPropertyValue('flex-direction'), primary: sides(page.primary), secondary: sides(page.secondary) });
+const NONE = { flex: '', primary: ['', '', '', ''], secondary: ['', '', '', ''] };
+const prefsUi = (page, over) => page.controller.set({ prefs: { ...page.controller.getState().prefs, ui: { ...page.controller.getState().prefs.ui, ...over } } });
+
+test('الواجهة العربية (قرار سلطان): تخطيط العمودين معكوس كالمرآة فاللوحة يمين الفيديو بالمقاسات نفسها؛ والإخفاء يعيد يوتيوب كما كان', () => {
+  const page = rtlPage();
+  page.cols.style.setProperty('flex-direction', 'row');
+  page.mount();
+  // المشغّل: حشوه الأيسر (الفاصل) يصير أيمن وهامشه الأيمن (حافة الصفحة) يصير أيسر؛ والعمود: حشوه الأيسر (حافة الصفحة) يصير أيمن.
+  assert.deepEqual(mirrored(page), { flex: 'row-reverse', primary: ['0px', '16px', '16px', '0px'], secondary: ['0px', '16px', '0px', '0px'] });
+  assert.equal(page.handle.peek().mirrored, true);
+  assert.equal(page.handle.diagnostics().session.mirrored, true);
+  // إخفاء الزر: لا لوحة، فيعود تخطيط يوتيوب وقيمته السطرية السابقة كما كانت.
+  prefsUi(page, { panelEntry: false, panelOpen: false });
+  assert.equal(page.handle.peek().mode, 'none');
+  assert.deepEqual(mirrored(page), { ...NONE, flex: 'row' });
+  assert.equal(page.handle.peek().mirrored, false);
+  prefsUi(page, { panelEntry: true });
+  assert.equal(mirrored(page).flex, 'row-reverse', 'يعود العكس بعودة الزر');
+  // يوتيوب يغيّر تخطيطه (عرض النافذة): تُستعاد قيمه ثم تُقرأ الجديدة وتُعكس.
+  page.native.primary = { paddingLeft: '24px', paddingRight: '0px', marginLeft: '0px', marginRight: '24px' };
+  page.win.innerWidth = 1280;
+  page.env.win.advance(HEALTH_MS + 10);
+  assert.deepEqual(mirrored(page).primary, ['0px', '24px', '24px', '0px'], 'بقيم يوتيوب الجديدة');
+  // الإزالة تستعيد كل شيء.
+  page.handle.unmount();
+  assert.deepEqual(mirrored(page), { ...NONE, flex: 'row' });
+});
+
+test('الواجهة LTR لا تُمس، والتحوّل إليها يستعيد؛ والعمود الواحد (#below) يستعيد؛ والإزالة تستعيد', () => {
+  const ltr = rtlPage({ dir: 'ltr' });
+  ltr.mount();
+  assert.deepEqual(mirrored(ltr), NONE, 'الإنجليزية: العمود يمين الفيديو أصلًا');
+  assert.equal(ltr.handle.peek().mirrored, false);
+  ltr.handle.unmount();
+
+  const page = rtlPage();
+  page.mount();
+  assert.equal(mirrored(page).flex, 'row-reverse');
+  page.dir = 'ltr';
+  page.env.win.advance(HEALTH_MS + 10);
+  assert.deepEqual(mirrored(page), NONE, 'تحوّل يوتيوب إلى LTR');
+  page.dir = 'rtl';
+  page.env.win.advance(HEALTH_MS + 10);
+  assert.equal(mirrored(page).flex, 'row-reverse');
+  // العمود الواحد: اللوحة تحت الفيديو في #below، فلا عكس.
+  const below = page.doc.createElement('div');
+  below.id = 'below';
+  page.primary.appendChild(below);
+  page.flexy.setAttribute('is-single-column', '');
+  page.env.win.advance(HEALTH_MS + 10);
+  assert.ok(page.hostEl() === null && below.children.some((c) => c.id === 'tarjuman-panel'));
+  assert.deepEqual(mirrored(page), NONE, 'العمود الواحد يستعيد');
+  page.flexy.removeAttribute('is-single-column');
+  page.env.win.advance(HEALTH_MS + 10);
+  assert.equal(mirrored(page).flex, 'row-reverse', 'وعودة العمودين تعيده');
+  page.handle.unmount();
+  assert.deepEqual(mirrored(page), NONE, 'الإزالة تستعيد');
+});

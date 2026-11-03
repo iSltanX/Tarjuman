@@ -661,8 +661,20 @@ try {
     await front(yt);
     const p = await waitPeek((x) => x.mode === 'entry', 6000);
     check('youtube-entry-returns-after-popup', p.mode === 'entry' && !p.entry.hidden, { mode: p.mode });
+    // فتح اللوحة من الزر العائد: يُتحقق منه، وإن لم يُفتح يُسجَّل ما تحت نقطة الضغط ويُعاد مرة.
+    const hitAt = (box) => main((x, y) => { const e = document.elementFromPoint(x, y); return e ? `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}` : null; }, center(box).x, center(box).y);
+    const hit = await hitAt(p.boxes.entry);
     await clickBox(p.boxes.entry, 'زر اللوحة');
-    await waitPeek((x) => x.mode === 'open' && x.kind === 'ready');
+    let o = await waitPeek((x) => x.mode === 'open' && x.kind === 'ready', 5000);
+    let tries = 1;
+    if (o.mode !== 'open') {
+      note(`الضغطة الأولى على زر اللوحة بعد النافذة لم تفتحها (تحت النقطة: ${hit}، والوضع ${o.mode}); أُعيدت.`);
+      const again = await peek();
+      await clickBox(again.boxes.entry, 'زر اللوحة');
+      o = await waitPeek((x) => x.mode === 'open' && x.kind === 'ready', 5000);
+      tries = 2;
+    }
+    check('panel-reopens-from-returned-entry', o.mode === 'open' && o.kind === 'ready', { mode: o.mode, kind: o.kind, tries, hit });
   });
 
   await step('panel-site-navigation', async () => {
@@ -782,7 +794,8 @@ try {
     await sleep(800);
   });
 
-  // واجهة يوتيوب العربية (RTL): يضع يوتيوب عموده الثانوي يسار الفيديو. يُقاس الموضع ويُسجَّل قرارًا معلّقًا (لا نجاح ولا سقوط).
+  // واجهة يوتيوب العربية (RTL): يضع يوتيوب عموده الثانوي يسار الفيديو، وقرار سلطان (2026-11-03) أن تبقى اللوحة يمينه، فيُبدَّل
+  // العمودان ما دامت ظاهرة: الفيديو يسارًا بعرضه في الواجهة الإنجليزية، والهامش الخارجي عند حافة الصفحة، وإخفاء الزر يعيد يوتيوب.
   await step('panel-arabic-youtube-interface', async () => {
     // لغة الواجهة: رأس اللغة وتفضيل يوتيوب hl في ملف الاختبار وحده (لا حساب).
     await yt.send('Network.enable');
@@ -794,17 +807,49 @@ try {
     await sleep(2500);
     isoId = yt.isolatedContextId(extId);
     await yt.waitFor(() => globalThis.__tarjuman?.mounted.panel.peek()?.ready, { contextId: isoId, timeoutMs: 15000 });
+    await sleep(800);
+    const sideOf = (g) => (g.host && g.player ? (g.host.left >= g.player.right - 4 ? 'right' : g.host.right <= g.player.left + 4 ? 'left' : 'below-or-overlap') : null);
+    // صفّا العمودين: المشغّل ومحتوى العمود الثانوي (#secondary-inner موجود في الحالين، لا مضيف اللوحة).
+    const rowOf = () => main(() => {
+      const r = (e) => { const x = e.getBoundingClientRect(); return { left: Math.round(x.left), right: Math.round(x.right), width: Math.round(x.width) }; };
+      return { player: r(document.querySelector('#movie_player')), inner: r(document.querySelector('ytd-watch-flexy #secondary-inner')), vw: innerWidth };
+    });
     const g = await main(M.geo);
     const p = await peek();
-    const side = g.host && g.player ? (g.host.left >= g.player.right - 4 ? 'right' : g.host.right <= g.player.left + 4 ? 'left' : 'below-or-overlap') : null;
-    result.measures.arabicInterface = { dir: g.dir, lang: g.lang, side, host: g.host, player: g.player, mode: p?.mode, rows: p?.rows };
+    const side = sideOf(g);
+    const mirroredRow = await rowOf();
+    result.measures.arabicInterface = { dir: g.dir, lang: g.lang, side, host: g.host, player: g.player, mode: p?.mode, rows: p?.rows, mirrored: p?.mirrored, mirroredRow };
     if (g.dir !== 'rtl') {
-      skip('panel-side-in-arabic-youtube', `لم تتحول واجهة يوتيوب إلى RTL (lang=${g.lang})`);
+      skip('panel-right-of-video-in-arabic-youtube', `لم تتحول واجهة يوتيوب إلى RTL (lang=${g.lang})`);
       return;
     }
-    note(`واجهة يوتيوب العربية: اللوحة ${side === 'left' ? 'يسار' : side === 'right' ? 'يمين' : 'تحت'} الفيديو، في عمود يوتيوب الثانوي، بلا تداخل: ${!overlaps(g.host, g.player)}.`);
-    check('panel-arabic-youtube-no-overlap-and-rows', !overlaps(g.host, g.player) && p.rows === s0.arabic, { side, rows: p.rows });
+    check('panel-right-of-video-in-arabic-youtube', side === 'right' && p.mirrored === true && p.mode === 'open' && !overlaps(g.host, g.player) && p.rows === s0.arabic && g.docWidth <= g.viewport.w, { side, mirrored: p.mirrored, mode: p.mode, rows: p.rows, host: g.host, player: g.player });
     await snap(yt, 'watch-panel-arabic-interface');
+    // إخفاء الزر من قائمة اللوحة: بعد الرسالة لا لوحة، فيعود تخطيط يوتيوب العربي كما كان (العمود يسار الفيديو).
+    let q = await peek();
+    await clickBox(q.boxes.opts, 'خيارات اللوحة');
+    q = await waitPeek((x) => x.menu === true);
+    await clickBox(q.boxes.hide, 'إخفاء زر اللوحة');
+    q = await waitPeek((x) => x.mode === 'none', 9000);
+    await sleep(800);
+    const nativeRow = await rowOf();
+    const inline = await main(() => ['#columns', '#primary', '#secondary'].map((sel) => document.querySelector(`ytd-watch-flexy ${sel}`).getAttribute('style') ?? ''));
+    result.measures.arabicInterface.nativeRow = nativeRow;
+    check('arabic-youtube-restored-when-entry-hidden', q.mode === 'none' && q.mirrored === false && nativeRow.inner.right <= nativeRow.player.left + 4 && inline.every((x) => !/flex-direction|padding|margin/.test(x)), { mode: q.mode, mirrored: q.mirrored, inline });
+    // المعكوس صورة الأصل: المشغّل بعرضه، وهامش حافة كلٍّ منهما، والفاصل بينهما كما في تخطيط يوتيوب نفسه.
+    const m = mirroredRow;
+    const n = nativeRow;
+    const same = (a, b2) => Math.abs(a - b2) <= 2;
+    const geom = {
+      playerWidth: [m.player.width, n.player.width],
+      videoEdge: [m.player.left, n.vw - n.player.right],
+      columnEdge: [m.vw - m.inner.right, n.inner.left],
+      gap: [m.inner.left - m.player.right, n.player.left - n.inner.right],
+    };
+    check('arabic-youtube-mirror-keeps-player-width-margins-and-gap', Object.values(geom).every(([a, b2]) => same(a, b2)), geom);
+    // إعادة الزر (للتنظيف) بفعل المتحكم نفسه الذي تكتبه نافذة الأيقونة.
+    await iso(() => globalThis.__tarjuman.controller.updatePrefs({ ui: { panelEntry: true, panelOpen: true } }).then(() => true));
+    await waitPeek((x) => x.mode === 'open' && x.mirrored === true, 6000);
   });
 
   await step('panel-diagnostics-clean', async () => {
