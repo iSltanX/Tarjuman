@@ -28,6 +28,7 @@ import { openDriftDialog } from './drift-dialog.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
 import { openReportDialog, openStudyDialog } from './export-dialogs.js';
 import { renderComparison, renderIssues, renderReference } from './panels.js';
+import { editorIcon } from './icons.js';
 import { openRescueDialog } from './rescue-dialog.js';
 import {
   classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotChange, slotContentChanged, writeMarks, writePosition, writeReference,
@@ -86,10 +87,27 @@ export async function mountEditor(app, {
   }
   const picked = pickSlot(bundle, requested);
   if (picked.n === null) {
+    // مخرجان من الحالة الفارغة (لوحة EditorStates): «فتح الفيديو» بما تفعله المحفوظات (تبويبه المفتوح أو تبويب جديد)، و«المحفوظات».
+    const emptyNote = el('div', { attrs: { role: 'status' }, doc });
+    const actions = el('div', {
+      className: 'ed-empty__actions',
+      children: [
+        button({
+          label: 'فتح الفيديو', icon: 'external', size: 'sm', doc,
+          onClick: async () => {
+            const r = await seek({ videoId, ms: 0 });
+            emptyNote.replaceChildren(...(r?.ok ? [] : [alertBox({ tone: 'danger', text: messageFor(r?.code ?? 'TJ_SEEK_FAILED'), doc })]));
+          },
+        }),
+        button({ label: 'المحفوظات', variant: 'ghost', size: 'sm', onClick: () => { win?.location.assign(new URL(`../library/index.html#v=${videoId}`, win.location.href).href); }, doc }),
+      ],
+      doc,
+    });
     loading.replaceWith(emptyState({
       title: 'لا ترجمة محفوظة لهذا الفيديو', text: messageFor('ST_NO_RECORD'),
-      steps: ['افتح الفيديو على يوتيوب', 'ارفع ملف الترجمة العربية من شريط المشغّل', 'ثم افتح المحرّر من أيقونة الإضافة'], doc,
+      steps: ['افتح الفيديو على يوتيوب', 'ارفع ملف الترجمة العربية من شريط المشغّل', 'ثم افتح المحرّر من أيقونة الإضافة'], action: actions, doc,
     }));
+    app.append(emptyNote);
     return null;
   }
 
@@ -127,7 +145,8 @@ export async function mountEditor(app, {
   // ---- الهيكل ----
   app.replaceChildren();
   app.classList.add('ed-app');
-  const backBtn = button({ label: 'المحفوظات', icon: 'library', variant: 'ghost', size: 'sm', onClick: () => goLibrary(), doc });
+  const backBtn = button({ label: 'المحفوظات', variant: 'ghost', size: 'sm', className: 'ed-back', onClick: () => goLibrary(), doc });
+  backBtn.replaceChildren(editorIcon('arrow', { doc }), el('span', { text: 'المحفوظات', doc })); // سهم الرجوع (يمينًا في RTL) ثم الاسم
   // العنوان بقاعدة «حرف عربي ⇒ RTL» لا أول حرف قوي (قرار سلطان، CL-002)، بمحاذاة يمين حتى الإنجليزي الخالص.
   const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate tj-auto', doc });
   const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'خانة التحرير', onSelect: (n) => switchSlot(n), doc });
@@ -135,8 +154,9 @@ export async function mountEditor(app, {
   const versionSel = el('select', { className: 'ed-select', attrs: { 'aria-label': 'النسخة المعروضة' }, on: { change: () => setView(versionSel.value) }, doc });
   const restoreOrigBtn = button({ label: 'استعادة الأصل…', variant: 'ghost', size: 'sm', onClick: () => onRestoreOriginal(), doc });
   const statusBox = el('span', { className: 'ed-status', attrs: { role: 'status' }, doc });
-  const undoBtn = button({ label: 'تراجع', size: 'sm', onClick: () => doUndo(), doc });
-  const redoBtn = button({ label: 'إعادة', size: 'sm', onClick: () => doRedo(), doc });
+  // أيقونتان بلا نص (اسمهما في aria-label، وما سيتراجع عنه أو يعاد في التلميح): الإعادة هي أيقونة التراجع معكوسة بـCSS.
+  const undoBtn = button({ label: 'تراجع', icon: 'restore', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-undo', onClick: () => doUndo(), doc });
+  const redoBtn = button({ label: 'إعادة', icon: 'restore', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-redo', onClick: () => doRedo(), doc });
   // «تصدير ▾» (§١٩.٩): الترجمة SRT، وتقرير المراجعة، والنص الدراسي؛ وكلها عبر saveFile (R65).
   const exportMenu = createMenu({
     label: 'تصدير', chevron: true, doc,
@@ -148,12 +168,15 @@ export async function mountEditor(app, {
   });
   const exportBtn = exportMenu.root;
   const saveBtn = button({ label: 'حفظ', variant: 'primary', size: 'sm', onClick: () => save(), doc });
+  // الرأس صفّان (لوحة Editor): الأول للوجهة والعنوان ثم الحالة والتراجع والتصدير والحفظ، والثاني لخانة التحرير والنسخة المعروضة
+  // وسطر الخانة النشطة. تسمية «خانة التحرير» تختفي مع المحدد (ترجمة واحدة لا محدد).
+  const slotLabel = el('span', { className: 'ed-head__label', text: 'خانة التحرير', attrs: { 'aria-hidden': 'true' }, doc });
+  const slotSep = el('span', { className: 'ed-head__sep', attrs: { 'aria-hidden': 'true' }, doc });
   const headEl = el('header', {
     className: 'ed-head',
     children: [
-      el('div', { className: 'ed-head__row', children: [backBtn, titleEl, ltr(videoId, { doc }), slotsEl.root, versionSel, restoreOrigBtn], doc }),
-      el('div', { className: 'ed-head__row ed-head__slot', children: [slotNote], doc }),
-      el('div', { className: 'ed-head__row', children: [statusBox, el('span', { className: 'ed-spacer', doc }), undoBtn, redoBtn, exportBtn, saveBtn], doc }),
+      el('div', { className: 'ed-head__row', children: [backBtn, titleEl, ltr(videoId, { doc }), el('span', { className: 'ed-spacer', doc }), statusBox, undoBtn, redoBtn, exportBtn, saveBtn], doc }),
+      el('div', { className: 'ed-head__row ed-head__slot', children: [slotLabel, slotsEl.root, slotSep, el('span', { className: 'ed-head__label', text: 'النسخة المعروضة', attrs: { 'aria-hidden': 'true' }, doc }), versionSel, restoreOrigBtn, el('span', { className: 'ed-spacer', doc }), slotNote], doc }),
     ],
     doc,
   });
@@ -242,7 +265,7 @@ export async function mountEditor(app, {
   const commitBtn = button({ label: 'تثبيت الإزاحة في التوقيت', size: 'sm', onClick: () => onCommit(), doc });
   const offsetEl = el('section', {
     className: 'ed-offset', attrs: { 'aria-label': 'إزاحة العرض' },
-    children: [el('div', { className: 'ed-offset__body', children: [offsetText, offsetSub], doc }), commitBtn],
+    children: [editorIcon('info', { doc }), el('div', { className: 'ed-offset__body', children: [offsetText, offsetSub], doc }), commitBtn],
     doc,
   });
 
@@ -285,7 +308,8 @@ export async function mountEditor(app, {
   const unsavedText = el('p', { className: 'tj-label', doc });
   const unsavedSave = button({ label: 'حفظ', variant: 'primary', size: 'sm', onClick: () => save(), doc });
   const unsavedDiscard = button({ label: 'تجاهل التغييرات', variant: 'ghost', size: 'sm', onClick: () => onDiscard(), doc });
-  const unsavedEl = el('div', { className: 'ed-unsaved', attrs: { role: 'region', 'aria-label': 'تغييرات غير محفوظة' }, children: [unsavedText, el('span', { className: 'ed-spacer', doc }), unsavedSave, unsavedDiscard], doc });
+  // الشريط السفلي معكوس الألوان (لوحة Editor): معيّن ثم الجملة، وفي النهاية «تجاهل» ثم «حفظ» (الحفظ أقصى النهاية).
+  const unsavedEl = el('div', { className: 'ed-unsaved', attrs: { role: 'region', 'aria-label': 'تغييرات غير محفوظة' }, children: [el('span', { className: 'ed-unsaved__dot', attrs: { 'aria-hidden': 'true' }, doc }), unsavedText, el('span', { className: 'ed-spacer', doc }), unsavedDiscard, unsavedSave], doc });
   const toastEl = el('div', { className: 'ed-toast', attrs: { role: 'status', 'aria-live': 'polite' }, doc });
   // الرسالة العابرة تحت الرأس عند طرفه (تحت «حفظ»)، لا فوق العنوان (ملاحظة W4 من لقطة w4-editor-saved).
   headEl.appendChild(toastEl);
@@ -293,13 +317,14 @@ export async function mountEditor(app, {
     headEl, toolbarEl, offsetEl, bannerEl,
     el('div', {
       className: 'ed-body',
+      // القائمة أولًا ثم اللوحة الجانبية: في RTL القائمة يمينًا واللوحة يسارًا (لوحة Editor)، فيطابق ترتيب التركيز الترتيب البصري.
       children: [
+        el('section', { className: 'ed-main', attrs: { 'aria-label': 'قائمة المقاطع' }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc }),
         el('aside', {
           className: 'ed-side',
           children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': 'اللوحة الجانبية' }, children: sideTabs, on: { keydown: onTabsKey }, doc }), reviewPane, completePane],
           doc,
         }),
-        el('section', { className: 'ed-main', attrs: { 'aria-label': 'قائمة المقاطع' }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc }),
       ],
       doc,
     }),
@@ -516,6 +541,8 @@ export async function mountEditor(app, {
       b.title = m.name ? `${label} — ${m.name}` : label;
     }
     slotNote.textContent = activeSlotLine(S.slot, S.opened.active, S.info.name);
+    slotLabel.hidden = slotsEl.root.hidden;
+    slotSep.hidden = slotsEl.root.hidden;
   }
 
   function renderHeader() {
@@ -613,10 +640,32 @@ export async function mountEditor(app, {
 
   function renderBanner() {
     if (!S.external) {
+      // الأصل المستورد للقراءة فقط (لوحة EditorStates): ملاحظة بمخرجين موجودين أصلًا، الانتقال إلى «النسخة المعدّلة» وتصدير الأصل.
+      // تُبنى مرة لهذه الحالة، فلا يُسقط إعادة الرسم تركيزًا على أحد زرّيها.
+      if (readOnly()) {
+        if (bannerEl.getAttribute('data-kind') === 'readonly') return;
+        bannerEl.setAttribute('data-kind', 'readonly');
+        bannerEl.hidden = false;
+        bannerEl.replaceChildren(alertBox({
+          tone: 'info', title: 'تعرض الأصل المستورد — قراءة فقط', text: 'التعديل في «النسخة المعدّلة».',
+          action: el('div', {
+            className: 'ed-group',
+            children: [
+              button({ label: 'الانتقال إليها', variant: 'ghost', size: 'sm', onClick: () => setView('edit'), doc }),
+              button({ label: 'تصدير الأصل', variant: 'ghost', size: 'sm', onClick: () => onExport(), doc }),
+            ],
+            doc,
+          }),
+          doc,
+        }));
+        return;
+      }
+      bannerEl.removeAttribute('data-kind');
       bannerEl.replaceChildren();
       bannerEl.hidden = true;
       return;
     }
+    bannerEl.removeAttribute('data-kind');
     bannerEl.hidden = false;
     const actions = el('div', {
       className: 'ed-group',
@@ -1460,13 +1509,15 @@ export async function mountEditor(app, {
     commitFocusedTime();
     if (S.session.dirty || S.session.hasDrafts) {
       const canSave = !saveBlockReason();
+      // الترتيب كما في لوحة EditorStates: «حفظ ثم التبديل» الأساسي (إن أمكن الحفظ)، ثم «البقاء» (وعليه التركيز الأول)، و«التبديل دون
+      // حفظ» الصريح في آخر الصف بنبرة خطر هادئة. العنوان بلون النص: الخطر في الزر لا في السؤال.
       const v = await openDialog({
-        doc, tone: 'danger', title: `التبديل إلى الترجمة ${n}؟`, focus: 'stay',
+        doc, title: `التبديل إلى الترجمة ${n}؟`, focus: 'stay',
         body: `${unsavedSentence(changes())} في الترجمة ${S.slot}. التبديل دون حفظ يُفقدها.`,
         actions: [
-          { label: 'البقاء', value: 'stay', variant: 'primary' },
-          canSave ? { label: 'حفظ ثم التبديل', value: 'save', variant: 'secondary' } : null,
-          { label: 'التبديل دون حفظ', value: 'switch', variant: 'danger' },
+          canSave ? { label: 'حفظ ثم التبديل', value: 'save', variant: 'primary' } : null,
+          { label: 'البقاء', value: 'stay', variant: canSave ? 'secondary' : 'primary' },
+          { label: 'التبديل دون حفظ', value: 'switch', variant: 'ghost', className: 'ed-btn--danger-quiet' },
         ].filter(Boolean),
       });
       if (v === 'save') {

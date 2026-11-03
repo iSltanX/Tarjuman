@@ -30,7 +30,7 @@ export function setDisabled(b, reason) {
  * @param {{
  *   doc: Document, title: string, body?: string, content?: HTMLElement | null, size?: 'sm' | 'md' | 'lg',
  *   tone?: 'default' | 'danger',
- *   actions: { label: string, value: string, variant?: 'primary' | 'secondary' | 'danger' | 'ghost', ref?: (b: HTMLButtonElement) => void }[],
+ *   actions: { label: string, value: string, variant?: 'primary' | 'secondary' | 'danger' | 'ghost', className?: string, ref?: (b: HTMLButtonElement) => void }[],
  *   focus?: string
  * }} o أول زر يحمل القيمة focus يأخذ التركيز (الافتراضي آخر زر، وهو الإلغاء عادةً)
  * @returns {Promise<string | null>} قيمة الزر، أو null عند Esc
@@ -39,7 +39,7 @@ export function openDialog({ doc, title, body, content = null, size = 'sm', tone
   return new Promise((resolve) => {
     const dialog = el('dialog', { className: `tj-dialog ed-dialog ed-dialog--${size}${tone === 'danger' ? ' tj-dialog--danger' : ''}`, attrs: { 'aria-labelledby': 'ed-dialog-title' }, doc });
     const buttons = actions.map((a) => {
-      const b = button({ label: a.label, variant: a.variant ?? 'secondary', type: 'submit', value: a.value, doc });
+      const b = button({ label: a.label, variant: a.variant ?? 'secondary', className: a.className ?? '', type: 'submit', value: a.value, doc });
       a.ref?.(b);
       return b;
     });
