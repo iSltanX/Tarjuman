@@ -49,7 +49,28 @@ export async function exportArabic({ store, videoId, variant, askTiming, save })
   const record = await requireRecord(store, videoId);
   if (!record.arabic) throw new TjError('PG_NO_ARABIC');
   const source = variant === 'original' ? record.arabic.original : arabicCues(record);
-  const offset = record.view.displayOffsetMs;
+  return exportCues({ videoId, source, offset: record.view.displayOffsetMs, variant, askTiming, save });
+}
+
+/**
+ * «تصدير SRT» في بطاقة ترجمة: النسخة الحالية للخانة n (نشطة أو لا) بإزاحتها هي، وبسؤال التوقيت نفسه إن لم تكن صفرًا. اسم
+ * الملف المتفق عليه VIDEOID.ar.srt كتصدير «المزيد». لا يغيّر شيئًا مخزَّنًا.
+ * @param {{
+ *   store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string, n: 1 | 2 | 3,
+ *   askTiming: (offsetMs: number) => Promise<'shown' | 'saved' | null>, save: SaveFn
+ * }} o
+ */
+export async function exportSlot({ store, videoId, n, askTiming, save }) {
+  const b = await store.getBundle(videoId);
+  if (!b) throw new TjError('PG_VIDEO_GONE');
+  const s = b.slots[n - 1];
+  if (!s?.track) throw new TjError('PG_NO_ARABIC');
+  const offset = b.active === n ? b.record.view.displayOffsetMs : s.offsetMs;
+  return exportCues({ videoId, source: s.track.current ?? s.track.original, offset, variant: 'current', askTiming, save });
+}
+
+/** الجزء المشترك: توقيت التصدير (سؤال عند إزاحة غير صفر، والإلغاء null، والزمن السالب يرفض) ثم بناء الملف وحفظه. */
+async function exportCues({ videoId, source, offset, variant, askTiming, save }) {
   let choice = 'shown';
   if (offset !== 0) {
     const picked = await askTiming(offset);

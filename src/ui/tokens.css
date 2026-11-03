@@ -1,54 +1,60 @@
-/* رموز تصميم صفحات ترجمان (جولة الصقل، 2026-11-02): «حبر وورق». أسطح رمادية محايدة بلا صبغة، ونص بحبر داكن، ولون إبراز
-   واحد نيلي للإجراء الرئيسي والتحديد والروابط والتركيز وحدها؛ والنجاح والتحذير والخطأ والمعلومة والمعدّل ألوان دلالية
-   مستقلة لا تُستعمل للزينة. الشعار بشكله المعتمد ولون الهوية نفسه: الرمز بالإبراز والاسم بالحبر (--tj-logo-*). الوضع يتبع النظام، وdata-theme
-   يفرضه. النسب محسوبة: النص الثانوي ≥ 4.5:1 على كل سطح، وحد الحقل ≥ 3:1 على الصفحة والسطح. الخطوط مضمّنة (ui/fonts.css). */
+/* رموز تصميم صفحات ترجمان — الهوية «بُنّ على ورق» (قرار سلطان 2026-11-03، docs/identity-redesign.md). ورقٌ دافئ بثلاث
+   طبقات (الصفحة، والغائر، والبطاقة البيضاء) تفصلها النغمة وخطٌّ شعري لا ظل؛ وإبراز واحد بُنّيّ للإجراء الرئيسي والتحديد
+   والمقطع الحالي والروابط والتركيز وحدها؛ والقرمزي للخطر بعيدًا عن الإبراز؛ والمعلومة بصبغة الإبراز لا بأزرق. الشعار
+   بشكله المعتمد: جسد التاء بالبُنّ، والنقطتان بالذهب، والاسم بالمداد (--tj-logo-*). الوضع يتبع النظام، وdata-theme يفرضه.
+   النسب محسوبة بالوضعين: النص الأساسي ≥ 12:1، والثانوي ≥ 7:1، والخافت ≥ 4.5:1 على كل سطح، وحد الحقل ≥ 3:1. */
 
 :root {
   color-scheme: light dark;
 
-  /* الأسطح */
-  --tj-bg: #F5F5F7;
+  /* الأسطح: الصفحة، والبطاقة، والغائر (مسار المقطّعة والرقائق)، والمنطقة الغائرة داخل سطح */
+  --tj-bg: #FAF8F4;
   --tj-surface: #FFFFFF;
-  --tj-surface-2: #EFEFF3;
-  --tj-sunken: #FAFAFB;
-  --tj-hover: rgb(23 23 40 / 5%);
-  --tj-pressed: rgb(23 23 40 / 10%);
-  --tj-overlay: rgb(12 12 20 / 45%);
+  --tj-surface-2: #F1EDE6;
+  --tj-sunken: #F6F3EE;
+  --tj-hover: rgb(31 26 22 / 4.5%);
+  --tj-pressed: rgb(31 26 22 / 8%);
+  --tj-overlay: rgb(20 16 12 / 32%);
 
-  /* النص */
-  --tj-text: #17171C;
-  --tj-text-2: #46464F;
-  --tj-muted: #686873;
+  /* النص: المداد، والثانوي، والخافت */
+  --tj-text: #1F1A16;
+  --tj-text-2: #4B423B;
+  --tj-muted: #6B5F57;
 
-  /* الحدود: الفاصل، والحد البارز، وحد الحقل الذي يعرّف العنصر وحده (3:1) */
-  --tj-border: #E3E3E8;
-  --tj-border-strong: #C4C4CD;
-  --tj-border-input: #85858F;
+  /* الحدود: الفاصل الشعري، والبارز، وحد الحقل الذي يعرّف العنصر وحده (≥ 3:1) */
+  --tj-border: #E8E3DB;
+  --tj-border-strong: #DAD3C8;
+  --tj-border-input: #867B70;
 
-  /* الإبراز */
-  --tj-brand: #4338CA;
-  --tj-brand-hover: #3730A3;
+  /* الإبراز: بُنّ */
+  --tj-brand: #5C4434;
+  --tj-brand-hover: #47342A;
   --tj-brand-ink: #FFFFFF;
-  --tj-brand-soft: #EEEDFC;
-  --tj-brand-text: #3B32B8;
-  --tj-focus: #4F46E5;
+  --tj-brand-soft: #F0E7DD;
+  --tj-brand-text: #4E3A2C;
+  --tj-brand-track: rgb(92 68 52 / 18%);
+  --tj-focus: #5C4434;
 
-  /* الشعار: شكله المعتمد من Figma بلون الهوية (الرمز بالإبراز، والاسم بالحبر) */
+  /* الشعار: الجسد بالإبراز، والنقطتان بالذهب، والاسم بالمداد. والنقطتان لا تظهران في الواجهة إلا في الشعار. */
   --tj-logo-glyph: var(--tj-brand);
+  --tj-logo-dots: #C9A24D;
   --tj-logo-word: var(--tj-text);
+  /* مؤشر اللحظة الحالية (المعيّن بجانب زمن المقطع الحالي) */
+  --tj-mark: var(--tj-brand);
 
-  /* الدلالات */
-  --tj-success: #11703A;
-  --tj-success-bg: #E5F4EA;
-  --tj-warning: #8A5300;
-  --tj-warning-bg: #FCF1DC;
-  --tj-danger: #B42318;
-  --tj-danger-bg: #FDECEA;
+  /* الدلالات: مستقلة عن الإبراز، ومع كلٍّ منها كلمة أو أيقونة */
+  --tj-success: #2A7A47;
+  --tj-success-bg: #EAF5EE;
+  --tj-warning: #8A6314;
+  --tj-warning-bg: #FBF2DE;
+  --tj-danger: #B0273F;
+  --tj-danger-bg: #FCEAEE;
   --tj-danger-ink: #FFFFFF;
-  --tj-info: #0B63A0;
-  --tj-info-bg: #E6F0F9;
-  --tj-edited: #93287F;
-  --tj-edited-bg: #F8EAF5;
+  --tj-info: var(--tj-brand-text);
+  /* المعلومة صامتة: سطح غائر محايد وأيقونتها بالإبراز، لا شريط بُنّي ثقيل (ملاحظة سلطان 2026-11-03). */
+  --tj-info-bg: var(--tj-sunken);
+  --tj-edited: #4B423B;
+  --tj-edited-bg: #F1EDE6;
 
   /* الخطوط: المضمّنة أولًا (ui-fonts.js) */
   --tj-font-head: "Tarjuman UI Cairo", "Tarjuman UI Almarai", "SF Arabic", Tahoma, sans-serif;
@@ -65,23 +71,26 @@
   --tj-space-7: 32px;
   --tj-space-8: 40px;
 
-  /* الزوايا والارتفاعات */
-  --tj-radius-sm: 6px;
-  --tj-radius-md: 8px;
-  --tj-radius-lg: 12px;
-  --tj-radius-xl: 16px;
-  --tj-radius-field: var(--tj-radius-sm);
+  /* الزوايا: 4 للشارات المربعة، و6 للأزرار والحقول، و10 للبطاقات والقوائم والصفوف، و14 للحوار واللوحة */
+  --tj-radius-sm: 4px;
+  --tj-radius-md: 6px;
+  --tj-radius-lg: 10px;
+  --tj-radius-xl: 14px;
+  --tj-radius-field: var(--tj-radius-md);
   --tj-radius-button: var(--tj-radius-md);
   --tj-radius-card: var(--tj-radius-lg);
   --tj-radius-card-lg: var(--tj-radius-xl);
+
+  /* الارتفاعات: 32 أصغر هدف ضغط، و36 للصفحات، و40 للنافذة وأدوات التوقيت؛ والشريط العلوي 56 */
   --tj-control-sm: 32px;
   --tj-control-md: 36px;
-  --tj-control-lg: 44px;
-  --tj-topbar-h: 52px;
+  --tj-control-lg: 40px;
+  --tj-topbar-h: 56px;
 
-  /* الظلال */
-  --tj-e1: 0 1px 2px rgb(16 16 28 / 5%), 0 2px 8px rgb(16 16 28 / 4%);
-  --tj-e2: 0 12px 32px rgb(16 16 28 / 16%), 0 2px 6px rgb(16 16 28 / 8%);
+  /* الطبقات مسطّحة: لا ظل للبطاقة، وخط حافة للقوائم والتلميحات والرسائل، وظل واحد للحوار فوق الستارة */
+  --tj-e1: none;
+  --tj-e2: 0 0 0 1px rgb(31 26 22 / 10%), 0 8px 24px rgb(31 26 22 / 8%);
+  --tj-e3: 0 0 0 1px rgb(31 26 22 / 10%), 0 16px 40px rgb(31 26 22 / 12%);
 
   /* الحركة */
   --tj-motion-menu: 140ms;
@@ -91,75 +100,77 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --tj-bg: #111115;
-    --tj-surface: #18181D;
-    --tj-surface-2: #222229;
-    --tj-sunken: #141418;
-    --tj-hover: rgb(236 236 245 / 6%);
-    --tj-pressed: rgb(236 236 245 / 12%);
-    --tj-overlay: rgb(0 0 0 / 62%);
-    --tj-text: #ECECF1;
-    --tj-text-2: #B8B8C4;
-    --tj-muted: #8E8E9B;
-    --tj-border: #2A2A32;
-    --tj-border-strong: #40404A;
-    --tj-border-input: #6B6B77;
-    --tj-brand: #8F96FF;
-    --tj-brand-hover: #A3A9FF;
-    --tj-brand-ink: #14143A;
-    --tj-brand-soft: #262650;
-    --tj-brand-text: #ABB1FF;
-    --tj-focus: #ABB1FF;
-    --tj-success: #70D191;
-    --tj-success-bg: #15291D;
-    --tj-warning: #EBC06A;
-    --tj-warning-bg: #2C2410;
-    --tj-danger: #FF8F85;
-    --tj-danger-bg: #381A18;
-    --tj-danger-ink: #2A0F0C;
-    --tj-info: #7EBDF0;
-    --tj-info-bg: #13283A;
-    --tj-edited: #E59BD7;
-    --tj-edited-bg: #33192F;
-    --tj-e1: 0 1px 2px rgb(0 0 0 / 30%), 0 2px 8px rgb(0 0 0 / 24%);
-    --tj-e2: 0 12px 32px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
+    --tj-bg: #1F1C1A;
+    --tj-surface: #292522;
+    --tj-surface-2: #332E2A;
+    --tj-sunken: #1A1816;
+    --tj-hover: rgb(245 240 230 / 6%);
+    --tj-pressed: rgb(245 240 230 / 10%);
+    --tj-overlay: rgb(0 0 0 / 50%);
+    --tj-text: #F5F0E6;
+    --tj-text-2: #D6CDC1;
+    --tj-muted: #ACA297;
+    --tj-border: #352F2A;
+    --tj-border-strong: #3F3832;
+    --tj-border-input: #8A7F74;
+    --tj-brand: #D6B38F;
+    --tj-brand-hover: #E4CBB0;
+    --tj-brand-ink: #2B1B10;
+    --tj-brand-soft: #3A2E25;
+    --tj-brand-text: #E4CBB0;
+    --tj-brand-track: rgb(214 179 143 / 22%);
+    --tj-focus: #E4CBB0;
+    --tj-logo-dots: #E2C27A;
+    --tj-success: #86CF9D;
+    --tj-success-bg: #1B3225;
+    --tj-warning: #E5C170;
+    --tj-warning-bg: #342A14;
+    --tj-danger: #EC8094;
+    --tj-danger-bg: #3E1620;
+    --tj-danger-ink: #120F0D;
+    --tj-edited: #D6CDC1;
+    --tj-edited-bg: #332E2A;
+    --tj-info-bg: #2D2825;
+    --tj-e2: 0 0 0 1px rgb(255 255 255 / 14%), 0 8px 24px rgb(0 0 0 / 40%);
+    --tj-e3: 0 0 0 1px rgb(255 255 255 / 14%), 0 16px 40px rgb(0 0 0 / 50%);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --tj-bg: #111115;
-  --tj-surface: #18181D;
-  --tj-surface-2: #222229;
-  --tj-sunken: #141418;
-  --tj-hover: rgb(236 236 245 / 6%);
-  --tj-pressed: rgb(236 236 245 / 12%);
-  --tj-overlay: rgb(0 0 0 / 62%);
-  --tj-text: #ECECF1;
-  --tj-text-2: #B8B8C4;
-  --tj-muted: #8E8E9B;
-  --tj-border: #2A2A32;
-  --tj-border-strong: #40404A;
-  --tj-border-input: #6B6B77;
-  --tj-brand: #8F96FF;
-  --tj-brand-hover: #A3A9FF;
-  --tj-brand-ink: #14143A;
-  --tj-brand-soft: #262650;
-  --tj-brand-text: #ABB1FF;
-  --tj-focus: #ABB1FF;
-  --tj-success: #70D191;
-  --tj-success-bg: #15291D;
-  --tj-warning: #EBC06A;
-  --tj-warning-bg: #2C2410;
-  --tj-danger: #FF8F85;
-  --tj-danger-bg: #381A18;
-  --tj-danger-ink: #2A0F0C;
-  --tj-info: #7EBDF0;
-  --tj-info-bg: #13283A;
-  --tj-edited: #E59BD7;
-  --tj-edited-bg: #33192F;
-  --tj-e1: 0 1px 2px rgb(0 0 0 / 30%), 0 2px 8px rgb(0 0 0 / 24%);
-  --tj-e2: 0 12px 32px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
+  --tj-bg: #1F1C1A;
+  --tj-surface: #292522;
+  --tj-surface-2: #332E2A;
+  --tj-sunken: #1A1816;
+  --tj-hover: rgb(245 240 230 / 6%);
+  --tj-pressed: rgb(245 240 230 / 10%);
+  --tj-overlay: rgb(0 0 0 / 50%);
+  --tj-text: #F5F0E6;
+  --tj-text-2: #D6CDC1;
+  --tj-muted: #ACA297;
+  --tj-border: #352F2A;
+  --tj-border-strong: #3F3832;
+  --tj-border-input: #8A7F74;
+  --tj-brand: #D6B38F;
+  --tj-brand-hover: #E4CBB0;
+  --tj-brand-ink: #2B1B10;
+  --tj-brand-soft: #3A2E25;
+  --tj-brand-text: #E4CBB0;
+  --tj-brand-track: rgb(214 179 143 / 22%);
+  --tj-focus: #E4CBB0;
+  --tj-logo-dots: #E2C27A;
+  --tj-success: #86CF9D;
+  --tj-success-bg: #1B3225;
+  --tj-warning: #E5C170;
+  --tj-warning-bg: #342A14;
+  --tj-danger: #EC8094;
+  --tj-danger-bg: #3E1620;
+  --tj-danger-ink: #120F0D;
+  --tj-edited: #D6CDC1;
+  --tj-edited-bg: #332E2A;
+  --tj-info-bg: #2D2825;
+  --tj-e2: 0 0 0 1px rgb(255 255 255 / 14%), 0 8px 24px rgb(0 0 0 / 40%);
+  --tj-e3: 0 0 0 1px rgb(255 255 255 / 14%), 0 16px 40px rgb(0 0 0 / 50%);
 }
 
 :root[data-theme="light"] {

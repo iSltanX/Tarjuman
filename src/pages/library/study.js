@@ -1,24 +1,29 @@
-// حوار «نص دراسي…» (R58، P13-AC7، مواصفة التصميم §١٩.٧) في قائمة التصدير: الصيغة (TXT أو Markdown)، واللغة (العربية أو
-// ثنائي اللغة، والثنائي معطّل بسببه إن لم يُحفظ مسار إنجليزي)، ومعاينة اسم الملف. النص يبنيه buildStudyText (P11) ويُحفظ
-// عبر saveFile عند التأكيد؛ لا يُعرض شيء من نصه هنا.
-import { choiceGroup, el, ltr } from '../../ui/components.js';
+// حوار «نص دراسي…» (R58، P13-AC7، مواصفة التصميم §١٩.٧، وتصميم LibraryDialogs) في قائمة التصدير: الصيغة (TXT أو Markdown)،
+// واللغة (العربية أو ثنائي اللغة، والثنائي معطّل بسببه إن لم يُحفظ مسار إنجليزي)، ومعاينة اسم الملف. النص يبنيه
+// buildStudyText (P11) ويُحفظ عبر saveFile عند التأكيد؛ لا يُعرض شيء من نصه هنا.
+import { el, ltr } from '../../ui/components.js';
+import { segGroup } from './seg.js';
+
+export const MD_HINT = 'بروابط الأوقات إلى الفيديو.';
 
 /**
  * @param {{ doc: Document, hasEnglish: boolean, name: (o: { format: 'txt' | 'md', bilingual: boolean }) => Promise<string> }} o
  * @returns {{ root: HTMLElement, value: () => { format: 'txt' | 'md', bilingual: boolean }, ready: Promise<void> }}
  */
 export function studyContent({ doc, hasEnglish, name }) {
-  const preview = el('span', { doc });
-  const format = choiceGroup({
+  const preview = el('span', { className: 'lib-study__file', doc });
+  const mdHint = el('p', { className: 'tj-field__hint', text: MD_HINT, doc });
+  mdHint.hidden = true;
+  const format = segGroup({
     legend: 'الصيغة', value: 'txt', doc,
-    options: [{ value: 'txt', label: 'نص عادي (TXT)' }, { value: 'md', label: 'Markdown', hint: 'بروابط الأوقات إلى الفيديو.' }],
-    onChange: () => { refresh(); },
+    options: [{ value: 'txt', label: 'TXT', ariaLabel: 'TXT — نص عادي' }, { value: 'md', label: 'Markdown' }],
+    onChange: (v) => { mdHint.hidden = v !== 'md'; refresh(); },
   });
-  const language = choiceGroup({
+  const language = segGroup({
     legend: 'اللغة', value: 'ar', doc,
     options: [
       { value: 'ar', label: 'العربية وحدها' },
-      { value: 'bi', label: 'ثنائي: العربية والإنجليزية', disabledReason: hasEnglish ? null : 'لا مسار إنجليزي محفوظ لهذا الفيديو.' },
+      { value: 'bi', label: 'ثنائي · العربية والإنجليزية', disabledReason: hasEnglish ? null : 'لا مسار إنجليزي محفوظ لهذا الفيديو.' },
     ],
     onChange: () => { refresh(); },
   });
@@ -34,12 +39,13 @@ export function studyContent({ doc, hasEnglish, name }) {
     }
     if (mine === seq) preview.replaceChildren(...(text ? [ltr(text, { mono: true, doc })] : []));
   }
+  const field = (label, ...kids) => el('div', { className: 'tj-field', children: [el('span', { className: 'tj-field__label', text: label, doc }), ...kids], doc });
   const root = el('div', {
     className: 'lib-study',
     children: [
-      el('span', { className: 'tj-label', text: 'الصيغة', doc }), format.root,
-      el('span', { className: 'tj-label', text: 'اللغة', doc }), language.root,
-      el('p', { className: 'tj-caption lib-study__name', children: ['اسم الملف: ', preview], doc }),
+      field('الصيغة', format.root, mdHint),
+      field('اللغة', language.root),
+      el('div', { className: 'tj-field lib-study__name', children: [el('span', { className: 'tj-field__label', text: 'اسم الملف', doc }), preview], doc }),
     ],
     doc,
   });

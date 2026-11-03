@@ -3,6 +3,7 @@
 // للملف؛ وملف مؤخَّر نحو 3 ثوانٍ يُضبط باختيار جملة واحدة.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { TjError, messageFor } from '../../../../src/core/errors/index.js';
 import { prepareVideo } from '../overlay/harness.js';
 import { makeCues } from '../../../helpers/fixtures.js';
 import { click, makeState, mountPage, settle, slotTrack, withSlots } from './harness.js';
@@ -45,7 +46,12 @@ test('ملف مؤخَّر 3 ثوانٍ يُضبط باختيار جملة واح
   assert.equal(p.ui.btn('badge').textContent, '−3.0');
   assert.equal(sentences(p).length, 0, 'عاد إلى قائمة التوقيت');
   assert.ok(p.env.doc._focused === p.ui.item('مزامنة بجملة…'));
+  assert.deepEqual(p.ui.toasts(), [], 'لا رسالة قبل ثبوت الإزاحة');
+  await settle();
   const [toast] = p.ui.toasts();
+  assert.equal(toast.tone, 'info', 'الإزاحة معلومة بتراجع لا «نجاح»');
+  const glyphEl = p.ui.layerHost().shadowRoot.querySelector('.toasts .toast svg.glyph');
+  assert.ok(glyphEl.children.map((n) => n.getAttribute('d')).includes('M12 6v6l4 2'), 'بساعة لا بعلامة نجاح');
   assert.equal(toast.text, 'الإزاحة \u2066−3.0\u2069 ثتراجع');
   click(p.ui.layerHost().shadowRoot.querySelector('.toasts button.act'));
   await settle();
@@ -123,6 +129,7 @@ test('تدقيق 5fedcb9 (CX-004): «تراجع» المزامنة بعد تبد
   click(p.ui.item('مزامنة بجملة…'));
   click(sentences(p).find((b) => b.textContent === 'الجملة رقم 11'));
   assert.equal(p.controller.getState().view.displayOffsetMs, -3000);
+  await settle();
   await p.controller.activateSlot(2);
   await settle();
   assert.equal(p.controller.getState().view.displayOffsetMs, 7000, 'الثانية بإزاحتها');
@@ -167,4 +174,36 @@ test('تدقيق 5fedcb9 (CL-002): جملة مزامنة عربية تبدأ ب�
   const api = sentences(p).find((b) => b.textContent.startsWith('API'));
   assert.ok(api);
   assert.equal(api.getAttribute('dir'), 'rtl');
+});
+
+test('لا رسالة نجاح لإزاحة لم تثبت: كتابة فشلت (عاد العرض إلى المحفوظ وارتفع الخطأ) فالخطأ وحده يُعرض', async () => {
+  const p = page({ currentTime: 26.0 });
+  const before = p.controller.getState().view;
+  p.controller.setOffset = async (ms) => {
+    p.controller.calls.push(['setOffset', ms]);
+    p.controller.set({ view: { ...before, displayOffsetMs: ms } });
+    await settle();
+    p.controller.set({ view: before, error: { code: 'ST_WRITE_FAILED', message: messageFor('ST_WRITE_FAILED'), detail: null } });
+  };
+  click(p.ui.item('مزامنة بجملة…'));
+  click(sentences(p).find((b) => b.textContent === 'الجملة رقم 11'));
+  await settle();
+  await settle();
+  assert.equal(p.controller.getState().view.displayOffsetMs, 0, 'عاد إلى المحفوظ');
+  assert.deepEqual(p.ui.toasts().map((t) => t.tone), ['error'], 'خطأ الكتابة وحده، لا «الإزاحة −3.0 ث»');
+  assert.equal(p.ui.toasts().some((t) => t.text.includes('الإزاحة')), false);
+  assert.equal(p.handle.diagnostics().session.syncs, 0);
+});
+
+test('رفض الوعد نفسه: رسالة الخطأ لا رسالة النجاح', async () => {
+  const p = page({ currentTime: 26.0 });
+  p.controller.setOffset = (ms) => {
+    p.controller.calls.push(['setOffset', ms]);
+    return Promise.reject(new TjError('ST_WRITE_FAILED'));
+  };
+  click(p.ui.item('مزامنة بجملة…'));
+  click(sentences(p).find((b) => b.textContent === 'الجملة رقم 11'));
+  await settle();
+  assert.deepEqual(p.ui.toasts().map((t) => t.tone), ['error']);
+  assert.ok(p.ui.toasts()[0].text.includes(messageFor('ST_WRITE_FAILED')));
 });

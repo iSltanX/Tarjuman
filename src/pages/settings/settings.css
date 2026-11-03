@@ -1,75 +1,89 @@
-/* صفحة الإعدادات: تنقّل جانبي في البداية (اليمين في RTL) ومحتوى القسم المختار بجواره. الصفوف داخل القسم مفصولة بخط
-   رفيع لا ببطاقات متداخلة: التسمية في العمود الأول وتحتها علامة «حُفظ» بمساحة محجوزة فلا تدفع شيئًا، والعنصر في
-   الثاني. كل لون من رموز src/ui/tokens.css بالوضعين. العرض الضيق: التنقّل شريط أفقي فوق المحتوى والتسمية فوق عنصرها. */
+/* صفحة الإعدادات (الهوية «بُنّ على ورق»، لوحتا Settings وSettingsData): تنقّل جانبي في البداية (اليمين في RTL) ومحتوى القسم
+   المختار بجواره. القسم بطاقة على الورق: رأسها عنوان ووصف قصير و«استعادة الافتراضي» في النهاية، وصفوفها 184 | 1fr بخط شعري
+   كامل العرض بين الصف والصف. التسمية في العمود الأول وتحتها علامة «حُفظ» بمساحة محجوزة فلا تدفع شيئًا، والعنصر في الثاني.
+   كل لون من رموز src/ui/tokens.css بالوضعين. العرض الضيق: التنقّل شريط أفقي فوق المحتوى والتسمية فوق عنصرها. */
 
-.st { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: var(--tj-space-7); align-items: start; --st-head-h: 58px; }
-/* ارتفاع الرأس ثابت بسلّم الطباعة (h1 36 + 2 + caption 20)، فيبدأ التنقّل الجانبي مع أول بطاقة تمامًا: هامشه ارتفاع الرأس وفجوة
-   المحتوى. والرأس لا يلتف في هذا العرض (العرض الضيق عمود واحد بلا هامش). */
+.st { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: var(--tj-space-7); align-items: start; --st-head-h: 62px; }
+/* ارتفاع الرأس ثابت بسلّم الطباعة (display 40 + 2 + caption 20)، فيبدأ التنقّل الجانبي مع أول بطاقة تمامًا: هامشه ارتفاع الرأس
+   وفجوة المحتوى. والرأس لا يلتف في هذا العرض (العرض الضيق عمود واحد بلا هامش). */
 .st-head { display: flex; flex-direction: column; gap: 2px; min-height: var(--st-head-h); }
 .st-reminder:empty { display: none; }
 
-/* التنقّل الجانبي: لاصق تحت الشريط العلوي. */
-.st-nav { position: sticky; top: calc(var(--tj-topbar-h) + var(--tj-space-6)); display: flex; flex-direction: column; gap: 2px; margin-top: calc(var(--st-head-h) + var(--tj-space-5)); }
+/* التنقّل الجانبي: لاصق تحت الشريط العلوي. الحالي على سطح البطاقة بإطار شعري وأيقونته بالإبراز (والمعنى بالوزن واللون لا باللون وحده). */
+.st-nav { position: sticky; top: calc(var(--tj-topbar-h) + var(--tj-space-6)); display: flex; flex-direction: column; gap: 2px; margin-top: calc(var(--st-head-h) + var(--tj-space-4)); }
 .st-nav__link {
   display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: var(--tj-radius-md);
   color: var(--tj-text-2); text-decoration: none; font: 700 14px/20px var(--tj-font-body);
 }
 .st-nav__link .tj-icon { width: 18px; height: 18px; color: var(--tj-muted); }
 .st-nav__link:hover { background: var(--tj-hover); color: var(--tj-text); }
-.st-nav__link[aria-current="page"] { background: var(--tj-brand-soft); color: var(--tj-brand-text); }
-.st-nav__link[aria-current="page"] .tj-icon { color: inherit; }
+.st-nav__link[aria-current="page"] { background: var(--tj-surface); color: var(--tj-text); box-shadow: inset 0 0 0 1px var(--tj-border); }
+.st-nav__link[aria-current="page"] .tj-icon { color: var(--tj-brand); }
 
 /* القسم. */
-.st-content { display: flex; flex-direction: column; gap: var(--tj-space-5); min-width: 0; }
+.st-content { display: flex; flex-direction: column; gap: var(--tj-space-4); min-width: 0; }
 /* حاويتا التذكير والتنبيه فارغتين لا تأخذان فجوة فتزيحان القسم عن محاذاة التنقّل؛ وتبقيان في الشجرة (منطقة التنبيه حية
    role=status فيعلن قارئ الشاشة ما يُكتب فيها). */
 .st-content > div:empty { position: absolute; }
-.st-section { background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); padding: var(--tj-space-5) var(--tj-space-6); display: flex; flex-direction: column; }
+.st-section { background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); padding: 0; display: flex; flex-direction: column; }
 /* فتح الصفحة على قسم (#export) لا يخفي عنوانه تحت الشريط اللاصق (تدقيق 5fedcb9، CL-008). */
 .st-section { scroll-margin-top: calc(var(--tj-topbar-h, 56px) + var(--tj-space-4)); }
-.st-section__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--tj-space-4); padding-bottom: var(--tj-space-4); }
-.st-section__titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.st-section__head { display: flex; align-items: center; gap: var(--tj-space-3); padding: 14px 20px; border-bottom: 1px solid var(--tj-border); }
+.st-section__titles { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px var(--tj-space-3); min-width: 0; flex: 1; }
+.st-section__titles h2 { font: 700 17px/27px var(--tj-font-head); }
 .st-section__titles h2:focus-visible { outline-offset: 4px; border-radius: 4px; }
-.st-section__actions { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; }
-.st-section__actions .tj-saved { text-align: end; }
+.st-section__titles .tj-caption { font-size: 12px; line-height: 18px; }
+.st-section__actions { display: flex; align-items: center; gap: var(--tj-space-2); flex: none; }
+.st-section__actions .tj-saved { text-align: end; min-height: 0; }
+/* ما بعد الرأس: صفوف وكتل بخط شعري كامل العرض بينها، وآخرها بلا خط. */
+.st-section > :not(.st-section__head) { border-bottom: 1px solid var(--tj-border); }
+.st-section > :last-child { border-bottom: 0; }
 
 /* الصف: التسمية والعلامة في البداية، والعنصر بعدها. */
-.st-row { display: grid; grid-template-columns: 184px minmax(0, 1fr); gap: 6px var(--tj-space-6); align-items: start; padding: var(--tj-space-4) 0; border-top: 1px solid var(--tj-border); }
-.st-row__label { display: flex; flex-direction: column; gap: 2px; padding-top: 9px; min-width: 0; }
+.st-row { display: grid; grid-template-columns: 184px minmax(0, 1fr); gap: 6px var(--tj-space-5); align-items: start; padding: 14px 20px; }
+.st-row__label { display: flex; flex-direction: column; gap: 2px; padding-top: 8px; min-width: 0; }
+.st-row__hint { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 .st-row__control { display: flex; flex-direction: column; align-items: flex-start; gap: var(--tj-space-2); min-width: 0; }
 .st-row__control > * { max-width: 100%; }
-.st-note { max-width: 560px; }
+.st-note { max-width: 560px; font-size: 12px; line-height: 18px; }
 .st-notes { display: flex; flex-direction: column; gap: 2px; }
 .st-actions { display: flex; flex-wrap: wrap; gap: var(--tj-space-2); }
+.st-danger { color: var(--tj-danger); }
 
 /* علامة «حُفظ» (tj-saved من src/ui) تحت التسمية بمساحة محجوزة (لا تدفع ما تحتها). */
 .st-row__label .tj-saved { min-height: 18px; }
 
-/* خط الترجمة: كل اسم بخطه وبجانبه اسمه اللاتيني ووصفه. */
-.st-fonts { display: flex; flex-direction: column; gap: 2px; border: 0; padding: 0; margin: 0; min-width: 0; width: 100%; max-width: 520px; }
-.st-font { display: flex; align-items: center; gap: var(--tj-space-3); min-height: 40px; padding: 0 var(--tj-space-2); border-radius: var(--tj-radius-md); cursor: pointer; }
-.st-font:hover { background: var(--tj-hover); }
-.st-font:has(input:checked) { background: var(--tj-brand-soft); }
-.st-font input { accent-color: var(--tj-brand); margin: 0; width: 16px; height: 16px; flex: none; }
-.st-font input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
-.st-font__name { font-size: 18px; line-height: 28px; font-weight: 700; min-width: 120px; }
-.st-font__meta { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
+/* خط الترجمة (لوحة الإعدادات المعتمدة): شرائح مدمجة في سطر، اسم كل خط بخطه نفسه و«الافتراضي» وسمٌ صغير؛ والمختار بحدّ الإبراز
+   وصبغته الخفيفة (الحد ≥ 3:1 على البطاقة بالوضعين) بلا إطار مزدوج، والزر الدائري مخفي بصريًا وبقي للوحة المفاتيح وقارئ الشاشة.
+   ووصف المختار سطرٌ واحد تحتها. */
+.st-fonts { display: flex; flex-wrap: wrap; gap: var(--tj-space-2); border: 0; padding: 0; margin: 0; min-width: 0; width: 100%; }
+.st-font {
+  position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: var(--tj-control-lg); padding: 0 14px;
+  border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-md); background: var(--tj-surface); color: var(--tj-text); cursor: pointer;
+}
+.st-font:hover { border-color: var(--tj-border-input); }
+.st-font:has(input:checked) { background: var(--tj-brand-soft); border-color: var(--tj-brand); color: var(--tj-brand-text); }
+.st-font input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.st-font:has(input:focus-visible) { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
+.st-font__name { font-size: 16px; line-height: 24px; font-weight: 700; }
+.st-font__tag { font: 400 11px/16px var(--tj-font-body); color: var(--tj-muted); }
+.st-font:has(input:checked) .st-font__tag { color: inherit; opacity: 0.8; }
+.st-font-meta { margin: 0; font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
 
 /* المنزلق: القيمة ثم مسار بامتلاء من البداية، وعلامة للافتراضي 100%. */
-.st-scale__box { display: flex; align-items: center; gap: var(--tj-space-3); width: 100%; max-width: 380px; }
+.st-scale__box { display: flex; align-items: center; gap: var(--tj-space-3); width: 100%; max-width: 420px; }
 .st-scale__track { position: relative; flex: 1; display: flex; align-items: center; }
 .st-scale__input { width: 100%; margin: 0; accent-color: var(--tj-brand); height: 24px; cursor: pointer; }
 .st-scale__input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 4px; border-radius: 6px; }
 .st-scale__mark { position: absolute; inset-block-start: 100%; width: 2px; height: 6px; background: var(--tj-muted); border-radius: 1px; margin-inline-start: -1px; pointer-events: none; }
 .st-scale__value { min-width: 48px; text-align: end; direction: ltr; }
 
-/* المعاينة الحية: فيديو داكن 480×270 بسطرين. */
-.st-preview-block { display: flex; flex-direction: column; gap: var(--tj-space-2); padding-top: var(--tj-space-4); border-top: 1px solid var(--tj-border); }
+/* المعاينة الحية: فيديو داكن بسطرين (داكن بالوضعين: هو الفيديو لا الواجهة). */
 .st-preview { display: flex; }
 .st-preview__screen {
   --st-sub-text: #fff; --st-sub-bg-soft: rgb(0 0 0 / 72%); --st-sub-bg-solid: rgb(0 0 0 / 92%);
-  position: relative; max-width: 100%; overflow: hidden; border-radius: var(--tj-radius-md);
-  background: radial-gradient(circle at 55% 40%, #4a463f 0%, #26231f 38%, #0d0d0d 100%); border: 1px solid var(--tj-border-strong);
+  position: relative; max-width: 100%; overflow: hidden; border-radius: var(--tj-radius-lg);
+  background: radial-gradient(circle at 55% 40%, #4a463f 0%, #26231f 38%, #0e0e10 100%); border: 1px solid var(--tj-border-strong);
 }
 .st-preview__stage { position: absolute; inset-inline: 4%; display: flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.5; font-weight: 400; }
 .st-preview__line { margin: 0; padding: 2px 8px; border-radius: 4px; color: var(--st-sub-text); text-align: center; unicode-bidi: isolate; width: fit-content; max-width: 100%; overflow-wrap: anywhere; font: inherit; }
@@ -78,10 +92,10 @@
 .st-preview__stage[data-bg="solid"] .st-preview__line { background: var(--st-sub-bg-solid); }
 
 /* الحقول الرقمية بوحدتها (tj-num من src/ui). */
-.st-fields { display: flex; flex-wrap: wrap; gap: var(--tj-space-5); padding-top: var(--tj-space-2); }
+.st-fields { display: flex; flex-wrap: wrap; gap: var(--tj-space-5); padding: 14px 20px; }
 /* flex-basis في سياق الصف الملتف وحده: داخل عمود يصير ارتفاعًا ويترك فراغًا. */
 .st-fields > .tj-num { flex: 1 1 240px; width: auto; }
-.st-fields--review { align-items: flex-end; border-top: 1px solid var(--tj-border); margin-top: var(--tj-space-4); padding-top: var(--tj-space-4); }
+.st-fields--review { align-items: flex-end; }
 .st-fields--review > .tj-pill { margin-bottom: 30px; }
 .tj-num__unit { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); white-space: nowrap; }
 .st-custom { padding-inline-start: 0; width: 100%; max-width: 320px; }
@@ -100,28 +114,29 @@
 .st-last-save__path bdi { display: block; direction: ltr; unicode-bidi: plaintext; text-align: right; }
 .st-last-save[hidden] { display: none; }
 
-/* مربع الاختيار والمفتاح. */
+/* مربع الاختيار والمفتاح. المفتاح: النص في البداية ومساره في النهاية، المطفأ بحد الحقل (≥ 3:1) والمشغّل بالإبراز، والإبهام من سطح البطاقة. */
 .st-check { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; font: 400 14px/22px var(--tj-font-body); cursor: pointer; }
 .st-check input { accent-color: var(--tj-brand); width: 16px; height: 16px; margin: 0; flex: none; }
 .st-check input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .st-check:has(input:disabled) { color: var(--tj-muted); cursor: not-allowed; }
-.st-switch { position: relative; display: inline-flex; align-items: center; gap: 10px; min-height: 32px; cursor: pointer; font: 700 14px/22px var(--tj-font-body); }
-.st-switch__input { position: absolute; opacity: 0; width: 36px; height: 20px; margin: 0; inset-inline-start: 0; cursor: pointer; }
-.st-switch__track { position: relative; width: 36px; height: 20px; border-radius: 999px; background: var(--tj-border-strong); flex: none; transition: background var(--tj-motion-menu); }
+.st-switch { position: relative; display: inline-flex; flex-direction: row-reverse; align-items: center; gap: 10px; min-height: 32px; cursor: pointer; font: 700 14px/22px var(--tj-font-body); }
+.st-switch__input { position: absolute; opacity: 0; width: 36px; height: 20px; margin: 0; inset-inline-start: auto; inset-inline-end: 0; cursor: pointer; }
+.st-switch__track { position: relative; width: 36px; height: 20px; border-radius: 999px; background: var(--tj-border-input); flex: none; transition: background var(--tj-motion-menu); }
 .st-switch__track::after { content: ""; position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--tj-surface); box-shadow: var(--tj-e1); transition: inset-inline-start var(--tj-motion-menu); }
 .st-switch__input:checked + .st-switch__track { background: var(--tj-brand); }
-.st-switch__input:checked + .st-switch__track::after { inset-inline-start: 18px; }
+.st-switch__input:checked + .st-switch__track::after { inset-inline-start: 18px; background: var(--tj-brand-ink); }
 .st-switch__input:focus-visible + .st-switch__track { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .st-switch--danger .st-switch__input:checked + .st-switch__track { background: var(--tj-danger); }
+.st-switch--danger .st-switch__input:checked + .st-switch__track::after { background: var(--tj-danger-ink); }
 .st-switch--danger .st-switch__label { color: var(--tj-danger); }
 
-/* المصطلحات. */
+/* المصطلحات: جدول بخط شعري ورأس على الغائر. */
 .st-gl { display: flex; flex-direction: column; gap: var(--tj-space-3); width: 100%; max-width: 680px; }
 .st-gl__head { display: flex; align-items: center; gap: var(--tj-space-2); }
 .st-gl__wrap { width: 100%; overflow-x: auto; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); }
 .st-gl__wrap[hidden], .st-gl__empty[hidden] { display: none; }
 .st-gl__table { width: 100%; border-collapse: collapse; font: 400 14px/22px var(--tj-font-body); }
-.st-gl__table th { text-align: start; font: 700 13px/20px var(--tj-font-body); color: var(--tj-muted); padding: 8px 12px; background: var(--tj-surface-2); border-bottom: 1px solid var(--tj-border); }
+.st-gl__table th { text-align: start; font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); padding: 7px 12px; background: var(--tj-sunken); border-bottom: 1px solid var(--tj-border); }
 .st-gl__table td { padding: 6px 12px; border-top: 1px solid var(--tj-border); vertical-align: middle; overflow-wrap: anywhere; }
 .st-gl__table tr:first-child td { border-top: 0; }
 .st-gl__source { font-family: var(--tj-font-mono); unicode-bidi: plaintext; text-align: right; }
@@ -136,12 +151,19 @@
 .st-data__result { display: flex; flex-direction: column; gap: var(--tj-space-2); width: 100%; }
 .st-data__result:empty { display: none; }
 .st-data .tj-alert__text, .st-restore .tj-alert__text { white-space: pre-line; overflow-wrap: anywhere; }
-.st-progress { display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 420px; }
+.st-progress { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 420px; }
 .st-progress[hidden] { display: none; }
-.st-progress__bar { width: 100%; height: 8px; accent-color: var(--tj-brand); }
+.st-progress__text { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
+/* شريط التقدم برسمنا لا بالأصلي: مسار الغائر وامتلاء الإبراز بزاوية البطاقة. */
+.st-progress__bar { appearance: none; -webkit-appearance: none; width: 100%; height: 6px; border: 0; border-radius: 3px; overflow: hidden; background: var(--tj-surface-2); accent-color: var(--tj-brand); }
+.st-progress__bar::-webkit-progress-bar { background: var(--tj-surface-2); }
+.st-progress__bar::-webkit-progress-value { background: var(--tj-brand); border-radius: 3px; }
+.st-progress__bar::-moz-progress-bar { background: var(--tj-brand); border-radius: 3px; }
+/* حوار الاستعادة: الفئتان (الجديدة والموجودة) بطاقتان بخط شعري، والعدّ الكلي عنوان الحوار الثانوي. */
 .st-restore { display: flex; flex-direction: column; gap: var(--tj-space-3); }
-.st-restore__counts { font-weight: 700; }
-.st-restore__group { display: flex; flex-direction: column; gap: var(--tj-space-2); border-top: 1px solid var(--tj-border); padding-top: var(--tj-space-3); }
+.st-restore__meta { color: var(--tj-muted); font-size: 13px; line-height: 20px; }
+.st-restore__counts { font-weight: 700; color: var(--tj-text); }
+.st-restore__group { display: flex; flex-direction: column; gap: var(--tj-space-2); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); background: var(--tj-surface); padding: 12px 14px; }
 .st-restore__summary { cursor: pointer; min-height: 32px; line-height: 32px; display: list-item; list-style-position: inside; }
 .st-restore__summary:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; border-radius: 4px; }
 .st-restore__fresh[open] > .st-restore__summary { margin-bottom: var(--tj-space-2); }
@@ -158,18 +180,18 @@
 .st-library { display: flex; flex-direction: column; gap: 2px; }
 
 /* التخزين. */
-.st-quota { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 360px; }
+.st-quota { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 420px; }
 .st-confirm { display: flex; flex-direction: column; gap: 6px; }
 
 /* التشخيص. */
 .st-panels { display: grid; grid-template-columns: 1fr 1fr; gap: var(--tj-space-3); width: 100%; max-width: 640px; }
-.st-panel { padding: var(--tj-space-3) var(--tj-space-4); border-radius: var(--tj-radius-md); background: var(--tj-sunken); border: 1px solid var(--tj-border); display: flex; flex-direction: column; gap: 2px; }
+.st-panel { padding: var(--tj-space-3) var(--tj-space-4); border-radius: var(--tj-radius-lg); background: var(--tj-sunken); border: 1px solid var(--tj-border); display: flex; flex-direction: column; gap: 2px; }
 .st-panel__title { font: 700 13px/20px var(--tj-font-body); }
 .st-panel--ok .st-panel__title { color: var(--tj-success); }
 .st-panel--no .st-panel__title { color: var(--tj-danger); }
 
 /* حول. */
-.st-about { display: flex; flex-direction: column; gap: var(--tj-space-3); }
+.st-about { display: flex; flex-direction: column; gap: var(--tj-space-3); padding: 16px 20px; }
 .st-about__row { display: flex; align-items: center; gap: var(--tj-space-3); }
 .st-about__links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--tj-space-5); }
 .st-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 700 14px/20px var(--tj-font-body); color: var(--tj-brand-text); text-decoration: none; }
@@ -184,9 +206,10 @@
   .st-nav { position: static; margin-top: 0; flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 4px; scrollbar-width: thin; order: 1; }
   .st-content { order: 2; }
   .st-nav__link { flex: none; min-height: 36px; padding: 0 12px; }
-  .st-section { padding: var(--tj-space-4); }
-  .st-row { grid-template-columns: 1fr; gap: var(--tj-space-2); }
-  .st-row__label { padding-top: 0; flex-direction: row; align-items: baseline; gap: var(--tj-space-3); }
+  .st-row { grid-template-columns: 1fr; gap: var(--tj-space-2); padding: 14px 16px; }
+  .st-row__label { padding-top: 0; flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 2px var(--tj-space-3); }
+  .st-section__head { padding: 12px 16px; flex-wrap: wrap; }
+  .st-fields, .st-about { padding: 14px 16px; }
   .tj-saved { min-height: 0; }
   .st-panels { grid-template-columns: 1fr; }
   .st-gl__add { grid-template-columns: 1fr; }

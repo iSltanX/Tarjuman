@@ -30,8 +30,8 @@ test('الأحجام ورموز المشغّل', () => {
   assert.equal(formatBytes(820 * 1024), '820 ك.ب');
   const css = playerTokensCss();
   assert.match(css, /^:host \{ /);
-  assert.ok(css.includes('--tj-p-accent: #A5ACFF;'));
-  assert.ok(css.includes('--tj-p-accent-ink: #14143A;'));
+  assert.ok(css.includes('--tj-p-accent: #D6B38F;'));
+  assert.ok(css.includes('--tj-p-accent-ink: #2B1B10;'));
   assert.ok(css.includes('--tj-p-sub-bg-soft: rgb(0 0 0 / 72%);'));
   assert.equal(Object.keys(PLAYER_TOKENS).length, (css.match(/--tj-p-/g) || []).length);
 });

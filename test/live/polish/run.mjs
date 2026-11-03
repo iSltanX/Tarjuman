@@ -7,6 +7,9 @@
 // تكبير متصفح فعلي) مع تدقيق التجاوز الأفقي والتمرير. كل فعل على
 // الأدوات نقرة مستخدم حقيقية (Input). تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُمرَّر جسم P1 الحقيقي الملتقط
 // للفيديو نفسه إلى المستخرج عبر خطاف التطوير. الحافظة تُستبدل في العالم المعزول فلا تُمس حافظة الجهاز. لا رابط ولا رمز في الأدلة.
+// مواءمة الهوية «بُنّ على ورق» (2026-11-03، docs/identity-redesign.md): الشعار واللوحة وأيقونة الإضافة بقيمها الجديدة، وعنوانا
+// قائمتي الشريط «تحميل الأصل» و«الترجمة»، وشرائح المحفوظات والحذف من التوسيع في الصف بدل لوحة «الترجمات…»، والشبكة من صفحات
+// الإضافة صور i.ytimg.com وحدها بلا مُحيل (و404 صور المعرّفات الوهمية في البذرة متوقعة وتُعدّ وحدها).
 //   command npm run build:dev -- --out <مجلد خارج المستودع>
 //   command node test/live/polish/run.mjs --browser brave|chrome --ext <مجلد> [--out docs/evidence/UI-polish] [--headed]
 //   [--measure-only]  قياس قوائم المشغّل ولقطاتها وحدها (للمقارنة مع بناء سابق)
@@ -60,6 +63,9 @@ const srtFile = async (name, text) => {
 
 const errors = [];
 const nets = [];
+/** صورة الفيديو المصغّرة بمعرّفه (الاستثناء المسمّى الوحيد للشبكة في صفحات الإضافة)، و404 لمعرّف غير موجود متوقعة. */
+const THUMB_RE = /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/mqdefault\.jpg$/;
+const thumb404 = { n: 0 };
 let b = null;
 let extId = null;
 
@@ -67,14 +73,22 @@ let extId = null;
 async function openExt(restPath, { background = false } = {}) {
   const page = await openTab(b.conn, 'about:blank', { background });
   errors.push(collectErrors(page, { extId }));
-  const net = { external: 0, hosts: new Set() };
+  // صور الفيديو في المحفوظات (قرار سلطان، docs/identity-redesign.md §٥) الطلب الخارجي الوحيد المسموح: تُعدّ وحدها، وبلا مُحيل.
+  const net = { external: 0, thumbs: 0, referers: 0, hosts: new Set() };
   nets.push(net);
   page.on('Network.requestWillBeSent', (p) => {
     const u = p.request.url;
-    if (!/^(chrome-extension|data|blob|about):/.test(u)) {
-      net.external++;
-      try { net.hosts.add(new URL(u).host); } catch { net.hosts.add('?'); }
+    if (/^(chrome-extension|data|blob|about):/.test(u)) return;
+    if (THUMB_RE.test(u.split('?')[0])) {
+      net.thumbs++;
+      if (p.request.headers?.Referer || p.request.headers?.referer) net.referers++;
+      return;
     }
+    net.external++;
+    try { net.hosts.add(new URL(u).host); } catch { net.hosts.add('?'); }
+  });
+  page.on('Log.entryAdded', ({ entry }) => {
+    if (entry.level === 'error' && entry.source === 'network' && THUMB_RE.test(String(entry.url ?? '').split('?')[0]) && /404/.test(entry.text)) thumb404.n++;
   });
   await page.send('Network.enable');
   await page.send('Emulation.setFocusEmulationEnabled', { enabled: true });
@@ -256,7 +270,7 @@ async function upload(file) {
   nextUpload = [file];
   const s = await iso(I.state);
   if (s.arabic) {
-    await openMenu('upload', 'الترجمة العربية');
+    await openMenu('upload', 'الترجمة');
     await clickItem('replace');
   } else {
     await clickBar('upload');
@@ -334,15 +348,16 @@ try {
     const palDark = await paletteOf();
     await emulateScheme(lib, 'light');
     check('logo-topbar-approved-shape-identity-color-both-schemes', logoLight && logoLight.paths === 9 && !logoLight.mark && !logoLight.textT && logoLight.h === 24
-      && logoLight.glyph === logoLight.brand && logoLight.word === logoLight.ink && logoLight.glyph === 'rgb(67, 56, 202)'
-      && logoDark.glyph === logoDark.brand && logoDark.word === logoDark.ink && logoDark.glyph === 'rgb(143, 150, 255)', { logoLight, logoDark });
+      && logoLight.glyph === logoLight.brand && logoLight.word === logoLight.ink && logoLight.glyph === 'rgb(92, 68, 52)'
+      && logoDark.glyph === logoDark.brand && logoDark.word === logoDark.ink && logoDark.glyph === 'rgb(214, 179, 143)', { logoLight, logoDark });
     const libFonts = await renderedFonts(lib, { limit: 14 });
     result.fonts.library = brief(libFonts);
     check('pages-fonts-bundled-rendered', allBundled(libFonts), brief(libFonts));
-    check('palette-new-indigo-neutral-both-schemes', palLight.brand === '#4338CA' && palLight.bg === 'rgb(245, 245, 247)' && palDark.brand === '#8F96FF' && palDark.bg === 'rgb(17, 17, 21)', { palLight, palDark });
-    // بنود الصفوف: ترجمة واحدة تخفي المحدد.
-    const rowPickers = await lib.eval(() => [...document.querySelectorAll('li.lib-row')].slice(0, 12).map((r) => ({ hidden: r.querySelector('.tj-slots')?.hidden ?? null, n: r.querySelectorAll('.tj-slots__slot').length })));
-    check('library-single-translation-no-picker', rowPickers.every((p) => p.hidden === true && p.n <= 1), rowPickers.slice(0, 4));
+    // الهوية «بُنّ على ورق» (docs/identity-redesign.md): الإبراز البُنّي على الورق الدافئ، والكراميل على الداكن.
+    check('palette-coffee-on-paper-both-schemes', palLight.brand === '#5C4434' && palLight.bg === 'rgb(250, 248, 244)' && palDark.brand === '#D6B38F' && palDark.bg === 'rgb(31, 28, 26)', { palLight, palDark });
+    // شرائح الصفوف (الهوية §٥): شريحة لكل ترجمة موجودة وحدها، والخانة الفارغة التالية إجراء رفع لا نسخة.
+    const rowChips = await lib.eval(() => [...document.querySelectorAll('li.lib-row')].slice(0, 12).map((r) => ({ chips: r.querySelectorAll('.lib-chips button').length, add: r.querySelectorAll('.lib-chip--add').length, none: !!r.querySelector('.lib-trs--none') })));
+    check('library-chips-existing-translations-only', rowChips.every((p) => (p.none ? p.chips === 0 && p.add === 0 : p.chips === 1 && p.add === 1)), rowChips.slice(0, 4));
     for (const [w, label] of [[1440, '1440'], [1024, 'zoom125'], [853, 'zoom150'], [480, 'narrow']]) {
       await lib.send('Emulation.setDeviceMetricsOverride', { width: w, height: 900, deviceScaleFactor: 1, mobile: false });
       await sleep(250);
@@ -404,7 +419,7 @@ try {
       const px = (a, b) => [...x.getImageData(a, b, 1, 1).data];
       return { corner: px(2, 2), tile: px(64, 24), size: [im.naturalWidth, im.naturalHeight] };
     });
-    check('extension-icon-identity-color-transparent', icon.corner[3] === 0 && icon.tile.slice(0, 3).join() === '67,56,202' && icon.size.join() === '128,128', icon);
+    check('extension-icon-identity-color-transparent', icon.corner[3] === 0 && icon.tile.slice(0, 3).join() === '92,68,52' && icon.size.join() === '128,128', icon);
     await shoot(pop, 'popup-not-video', { width: 340 });
     await pop.close();
   });
@@ -430,13 +445,13 @@ try {
   await sleep(800);
 
   await step('player-fonts-and-sizes', async () => {
-    const dm = await openMenu('download', 'تحميل الترجمة');
+    const dm = await openMenu('download', 'تحميل الأصل');
     await measureMenu('download');
     await snapPlayer('player-download');
     const dl = await renderedFonts(yt, { hostIds: ['tarjuman-controls-layer', 'tarjuman-controls'] });
     result.fonts.player = brief(dl);
     if (!MEASURE_ONLY) {
-      const title = dl.find((n) => n.text.startsWith('تحميل الترجمة'));
+      const title = dl.find((n) => n.text.startsWith('تحميل الأصل'));
       check('player-title-rendered-in-bundled-cairo', title && title.rendered.every((f) => f.custom && /Cairo/i.test(f.name)), title);
       check('player-all-text-bundled-fonts', allBundled(dl), brief(dl));
       const diag = await iso(I.diag);
@@ -444,7 +459,7 @@ try {
     }
     void dm;
     await closeMenus();
-    await openMenu('upload', 'الترجمة العربية');
+    await openMenu('upload', 'الترجمة');
     await measureMenu('display-1');
     await snapPlayer('player-display-one');
     await closeMenus();
@@ -456,7 +471,7 @@ try {
 
   if (!MEASURE_ONLY) {
     await step('download-and-copy-separate', async () => {
-      const m = await openMenu('download', 'تحميل الترجمة');
+      const m = await openMenu('download', 'تحميل الأصل');
       const fids = m.items.map((x) => x.fid);
       check('download-menu-two-separate-buttons', fids.includes('download') && fids.includes('copy') && !m.items.some((x) => /تنزيل ونسخ/.test(x.text)), m.items.map((x) => `${x.fid}:${x.text}`).slice(0, 8));
       const before = await iso(I.counts);
@@ -476,7 +491,7 @@ try {
     });
 
     await step('slots-one-two-three', async () => {
-      let m = await openMenu('upload', 'الترجمة العربية');
+      let m = await openMenu('upload', 'الترجمة');
       check('slots-one-translation-hidden', slotsIn(m).length === 0 && !m.items.some((x) => x.fid?.startsWith('slot:')), { items: m.items.map((x) => x.fid).slice(0, 6) });
       await closeMenus();
       // الثانية: تأكيد «حفظ في» بالمحفوظة و«جديدة»، ثم خياران.
@@ -517,25 +532,27 @@ try {
     await step('library-sync-and-delete', async () => {
       await lib.goto(`chrome-extension://${extId}/pages/library/index.html#v=${VIDEO}`);
       await front(lib);
-      await lib.waitFor((id) => !!document.querySelector(`li.lib-row[data-video="${id}"] .tj-slots`), { args: [VIDEO], timeoutMs: 10000 });
+      await lib.waitFor((id) => !!document.querySelector(`li.lib-row[data-video="${id}"] .lib-chips`), { args: [VIDEO], timeoutMs: 10000 });
+      // شرائح الصف (الهوية §٥): رقم كل ترجمة موجودة، والنشطة بـaria-pressed؛ والخانة الفارغة التالية شريحة رفع منفصلة.
       const row = () => lib.eval((id) => {
-        const p = document.querySelector(`li.lib-row[data-video="${id}"] .tj-slots`);
-        return { hidden: p.hidden, slots: [...p.querySelectorAll('.tj-slots__slot')].map((x) => `${x.textContent}${x.getAttribute('aria-checked') === 'true' ? '*' : ''}`) };
+        const r = document.querySelector(`li.lib-row[data-video="${id}"]`);
+        return {
+          slots: [...r.querySelectorAll('.lib-chips button')].map((x) => `${x.getAttribute('data-slot')}${x.getAttribute('aria-pressed') === 'true' ? '*' : ''}`),
+          add: r.querySelector('.lib-chip--add')?.getAttribute('data-slot') ?? null,
+        };
       }, { args: [VIDEO] });
       const r1 = await row();
-      check('library-row-three-active-2', !r1.hidden && r1.slots.join() === '1,2*,3', r1);
+      check('library-row-three-active-2', r1.slots.join() === '1,2*,3' && r1.add === null, r1);
       await shoot(lib, 'library-three-slots', { width: 1280, schemes: ['light'] });
-      // حذف الخانة 3 من لوحة «الترجمات…» كما يفعل المستخدم.
-      await lib.eval((id) => document.querySelector(`li.lib-row[data-video="${id}"] button.lib-more`)?.setAttribute('data-live-more', '1'), { args: [VIDEO] });
-      await clickSel(lib, '[data-live-more]');
-      await clickText(lib, '.tj-menu__list:not([hidden])', 'الترجمات');
-      await lib.waitFor(() => !!document.querySelector('dialog.lib-panel[open] .lib-slot'), { timeoutMs: 6000 });
-      await shoot(lib, 'library-translations-panel', { width: 1280, schemes: ['dark'] });
+      // حذف الخانة 3 من التوسيع في الصف (بدل لوحة «الترجمات…») كما يفعل المستخدم.
+      await clickSel(lib, `li.lib-row[data-video="${VIDEO}"] .lib-toggle`);
+      await lib.waitFor(() => document.querySelectorAll('.lib-card[data-slot]').length >= 3, { timeoutMs: 6000 });
+      await shoot(lib, 'library-translations-expanded', { width: 1280, schemes: ['dark'] });
       const deleteSlot = async (n) => {
         const ok = await lib.eval((k) => {
-          const card = [...document.querySelectorAll('dialog.lib-panel[open] .lib-slot')].find((c) => c.textContent.includes(`الترجمة ${k}`));
-          const btn = card?.querySelector('.lib-slot__delete');
+          const btn = document.querySelector(`.lib-card[data-slot="${k}"] .lib-card__delete`);
           if (!btn) return false;
+          document.querySelectorAll('[data-live-del]').forEach((e) => e.removeAttribute('data-live-del'));
           btn.setAttribute('data-live-del', '1');
           return true;
         }, { args: [n] });
@@ -548,23 +565,23 @@ try {
       await deleteSlot(3);
       await front(yt);
       await sleep(800);
-      let m = await openMenu('upload', 'الترجمة العربية');
+      let m = await openMenu('upload', 'الترجمة');
       check('player-after-delete-3-two-options-active-2', slotsIn(m).join() === '1,2' && (await iso(I.state)).activeSlot === 2, slotsIn(m));
       await closeMenus();
       await front(lib);
       await deleteSlot(1);
       await front(yt);
       await sleep(800);
-      m = await openMenu('upload', 'الترجمة العربية');
+      m = await openMenu('upload', 'الترجمة');
       const st = await iso(I.state);
       check('player-after-delete-1-picker-hidden', slotsIn(m).length === 0 && st.activeSlot === 2 && st.arabic === 'second.ar.srt', { slots: slotsIn(m), active: st.activeSlot, file: st.arabic });
       await snapPlayer('player-display-after-delete');
       await closeMenus();
       await front(lib);
-      await lib.eval(() => document.querySelector('dialog.lib-panel[open]')?.close());
       await sleep(600);
+      // ترجمة واحدة باقية (2) نشطة، والخانة الفارغة التالية (1) شريحة رفع.
       const r2 = await row();
-      check('library-row-after-deletes-hidden', r2.hidden && r2.slots.join() === '2*', r2);
+      check('library-row-after-deletes-one-chip', r2.slots.join() === '2*' && r2.add === '1', r2);
     });
 
     await step('popup-on-video', async () => {
@@ -646,10 +663,18 @@ try {
     });
   }
 
-  const extErrors = errors.flatMap((e) => e.list).filter((x) => !/favicon|ERR_BLOCKED_BY_CLIENT/i.test(x.text));
+  // 404 صورة المعرّف غير الموجود (معرّفات البذرة الوهمية) متوقعة وتُعدّ وحدها؛ وأي خطأ آخر يبقى خطأ.
+  let skipped404 = 0;
+  const extErrors = errors.flatMap((e) => e.list).filter((x) => !/favicon|ERR_BLOCKED_BY_CLIENT/i.test(x.text)).filter((x) => {
+    if (x.kind === 'log.network' && /404/.test(x.text) && skipped404 < thumb404.n) { skipped404++; return false; }
+    return true;
+  });
+  result.measures.expectedThumb404 = thumb404.n;
   check('no-extension-errors', extErrors.length === 0, extErrors.slice(0, 5).map((x) => `${x.kind}: ${x.text.slice(0, 120)}`));
   const ext2 = nets.reduce((n, x) => n + x.external, 0);
-  check('no-network-from-extension-pages', ext2 === 0, { external: ext2 });
+  const thumbs = nets.reduce((n, x) => n + x.thumbs, 0);
+  const refs = nets.reduce((n, x) => n + x.referers, 0);
+  check('no-network-from-extension-pages-except-thumbnails', ext2 === 0 && refs === 0, { external: ext2, thumbnails: thumbs, referers: refs });
 } catch (err) {
   check('run: اكتمل', false, { error: err.message.slice(0, 300) });
 } finally {

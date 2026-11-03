@@ -95,9 +95,11 @@ test('الدورة كاملة: تحميل بالبصمة ثم رفع الترج�
   assert.equal(s.arabic.cues.length, 6);
   assert.equal(s.arabic.comparison.matched, true);
   assert.equal(record(area).arabic.fileName, 'talk.ar.srt');
-  assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
+  assert.equal(page.ui.menuLabel(), 'الترجمة');
   assert.match(page.ui.menuText(), /مطابق للأصل/);
-  assert.equal(page.ui.btn('upload').querySelector('.dot').getAttribute('data-tone'), 'loaded');
+  // الهوية «بُنّ على ورق»: لا نقطة حالة على الزر؛ الحالة في الوصف والتلميح.
+  assert.equal(page.ui.btn('upload').querySelector('.dot'), null);
+  assert.match(page.ui.btn('upload').getAttribute('aria-description') ?? '', /مطابق للأصل/);
 
   page.video.seekTo(1.5);
   assert.deepEqual(page.shown(), ['سطر 1']);
@@ -181,7 +183,8 @@ test('الاستبدال بتأكيد: الملخص الجديد وتنبيه ا
   assert.equal(record(area).view.displayOffsetMs, 0);
   assert.equal(page.ui.btn('badge').textContent, '0.0');
   assert.match(page.ui.toasts().map((t) => t.text).join(), /صُفّرت إزاحة العرض لأن الملف الجديد يحمل توقيته\./);
-  assert.equal(page.ui.btn('upload').querySelector('.dot').getAttribute('data-tone'), 'warning');
+  assert.equal(page.ui.btn('upload').querySelector('.dot'), null);
+  assert.doesNotMatch(page.ui.btn('upload').getAttribute('aria-description') ?? '', /مطابق للأصل/);
   assert.equal((await page.store.getBundle(A)).previous.track.fileName, 'v1.ar.srt', 'النسخة السابقة حُفظت قبل الاستبدال');
 });
 

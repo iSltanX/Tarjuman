@@ -17,6 +17,7 @@ export function samplePrefs({ mode = 'subfolder', folder = 'Tarjuman' } = {}) {
     },
     review: { maxCps: 17 },
     saveLocation: { mode, folder },
+    ui: { thumbnails: true, panelEntry: true, panelOpen: false, panelDual: true },
   };
 }
 

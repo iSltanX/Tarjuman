@@ -34,12 +34,12 @@ test('الإعدادات: الصف شبكة من عمودين (التسمية ث
   assert.match(narrow, /\.st-nav\s*\{[^}]*flex-direction:\s*row/, 'التنقّل الجانبي يصير شريطًا أفقيًا');
 });
 
-test('المحفوظات: الصف شبكة (البيانات ثم الإجراءات) تصير عمودًا واحدًا في العرض الضيق', () => {
+test('المحفوظات: شبكة الصف (الصورة، والبيانات، والترجمات، والإجراءات) تُعاد ترتيبًا في العرض الضيق فتنزل الإجراءات صفًّا وحدها', () => {
   const l = css('library/library.css');
-  assert.match(rule(l, '.lib-row'), /display:\s*grid/);
-  assert.match(rule(l, '.lib-row'), /grid-template-columns:\s*minmax\(0, 1fr\) auto/);
+  assert.match(rule(l, '.lib-row__grid'), /display:\s*grid/);
+  assert.match(rule(l, '.lib-row__grid'), /grid-template-areas:\s*"thumb main trs acts"/);
   const narrow = media(l, 'max-width: 760px');
-  assert.match(narrow, /\.lib-row\s*\{[^}]*grid-template-columns:\s*1fr/);
+  assert.match(narrow, /\.lib-row__grid\s*\{[^}]*grid-template-areas:\s*"thumb main" "thumb trs" "acts acts"/, 'الإجراءات في صف مستقل تحت البيانات');
 });
 
 test('تدقيق 5fedcb9 (CL-008، CL-009): القسم المفتوح بجزء العنوان لا يختبئ تحت الشريط اللاصق، وسطر «آخر الترجمات» يتسع للكسرات', () => {

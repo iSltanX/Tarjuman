@@ -5,7 +5,7 @@
 // والكثافة، والقفز إلى الفيديو (تبويب مفتوح، وغائب، وأكثر من تبويب)، ولوحة المراجعة والعلامات وآخر موضع، والاستكمال على
 // 900 مقطع ينقصها 12 بجزأين، وإنقاذ المسودة عند التعارض، واختيار المرجع، والتقرير والنص الدراسي، ومكان الحفظ؛ ثم الأداء
 // على 2400 مقطع. النص العربي اصطناعي، والإنجليزي الحقيقي يُخفى من اللقطات.
-//   node test/live/editor/v2.mjs [--browser brave] [--headed] [--out docs/evidence/P14] [--dry]
+//   node test/live/editor/v2.mjs [--browser brave] [--headed] [--out docs/evidence/P14] [--dry] [--profile <اسم>] [--ext-out <مجلد>]
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -29,10 +29,11 @@ const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k
 const browser = val('browser', 'brave');
 const HEADED = argv.includes('--headed');
 const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P14'));
-const PROFILE = `${browser}-p14`;
+// --profile و--ext-out لملف تعريف ومجلد بناء خاصين بجولة (لا يُعاد استعمال بيئة اختبار جلسة أخرى).
+const PROFILE = val('profile', `${browser}-p14`);
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
-const DL = path.join(PROFILE_ROOT, `downloads-${browser}-p14`, RUN);
-const EXT = path.join(PROFILE_ROOT, 'ext-p14-dev');
+const DL = path.join(PROFILE_ROOT, `downloads-${PROFILE}`, RUN);
+const EXT = path.resolve(val('ext-out', path.join(PROFILE_ROOT, 'ext-p14-dev')));
 const VIDEO = 'iG9CE55wbtY';
 const GAP = 'TJp14gap001';
 const BIG = 'TJp14big001';
@@ -422,7 +423,8 @@ try {
     await typeText(' — عُدّل في الخانة 2');
     await clickOn('.ed-head .tj-slots__slot', '1');
     s = await info();
-    check('ac1-switch-guard', s.dialog?.title === 'التبديل إلى الترجمة 1؟' && s.dialog.buttons.map((x) => x.value).join(',') === 'stay,save,switch', s.dialog);
+    // الترتيب بالهوية «بُنّ على ورق» (لوحة EditorStates): «حفظ ثم التبديل» الأساسي، ثم «البقاء»، ثم «التبديل دون حفظ» هادئ الخطر.
+    check('ac1-switch-guard', s.dialog?.title === 'التبديل إلى الترجمة 1؟' && s.dialog.buttons.map((x) => x.value).join(',') === 'save,stay,switch', s.dialog);
     await shoot('ac1-switch-guard');
     await clickOn('dialog[open] button', 'البقاء');
     await cmd('KeyS', 'س', 83);
@@ -691,6 +693,30 @@ try {
     await iso(P.prefs, { saveLocation: { mode: 'downloads', folder: 'Tarjuman' } });
   });
 
+  /**
+   * إعلان يوتيوب في تبويب (Chrome لا يحجبه): يُترك يعمل مكتومًا حتى ينتهي ويُضغط «تخطٍّ» إن ظهر، ثم يُوقف الفيديو؛ فالقفز
+   * يُرفض أثناء الإعلان عمدًا (isAdShowing). يعيد هل انتُظر إعلان.
+   */
+  async function waitNoAd(page, limitMs = 150000) {
+    const isAd = () => page.eval(() => { const p = document.querySelector('#movie_player'); return !!p && (p.classList.contains('ad-showing') || p.classList.contains('ad-interrupting')); });
+    if (!(await isAd())) return false;
+    await page.eval(() => { const v = document.querySelector('#movie_player video'); if (v) { v.muted = true; v.play().catch(() => {}); } return true; });
+    const end = Date.now() + limitMs;
+    while (Date.now() < end && (await isAd())) {
+      const skip = await page.eval(() => {
+        const s2 = document.querySelector('.ytp-skip-ad-button, .ytp-ad-skip-button-modern, .ytp-ad-skip-button');
+        if (!s2 || !s2.offsetParent) return null;
+        const r = s2.getBoundingClientRect();
+        return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+      });
+      if (skip) await page.click(skip.x, skip.y);
+      await sleep(1500);
+    }
+    await sleep(1000);
+    await page.eval(P.pause).catch(() => {});
+    return true;
+  }
+
   // ===== AC4: القفز إلى زمن المقطع: تبويب مفتوح، وأكثر من تبويب، وغائب =====
   await step('ac4-seek', async () => {
     await openEditor(`v=${VIDEO}&t=1`);
@@ -705,6 +731,7 @@ try {
     const yt2 = await openTab(b.conn, `https://www.youtube.com/watch?v=${VIDEO}`);
     await waitForPlayer(yt2, VIDEO, 30000);
     await yt2.eval(P.pause).catch(() => {});
+    if (await waitNoAd(yt2)) result.adsWaited = (result.adsWaited ?? 0) + 1;
     await sleep(1500);
     await b.conn.send('Target.activateTarget', { targetId: ed.targetId });
     const c2 = await run(E.cue, 60);

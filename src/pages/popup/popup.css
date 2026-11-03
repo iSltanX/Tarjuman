@@ -1,64 +1,113 @@
-/* نافذة الأيقونة: 340 عرضًا وارتفاع بحسب المحتوى (الحالات المعتادة بلا تمرير؛ والمتصفح يحدّها بـ600). رأس بالشعار المعتمد
-   و«محلي بالكامل»، وبطاقة الفيديو الحالي بلا إطار مضاعف، وإجراءات سريعة قليلة بأهداف ضغط مريحة، ثم تذييل بمدخل واحد لكل
-   وجهة (المحفوظات والإعدادات) في صف واحد. */
-.tj-popup { width: 340px; min-height: 0; background: var(--tj-surface); }
-.tj-popup .tj-container { padding: 12px; gap: 10px; }
-.tj-popup__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; padding: 0 2px; }
-.tj-popup__local { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+/* نافذة الأيقونة (الهوية «بُنّ على ورق»، لوحة Popup): 340 عرضًا وارتفاع بحسب المحتوى (الحالات المعتادة بلا تمرير؛ والمتصفح
+   يحدّها بـ600). رأس 52 بالشعار المعتمد و«بياناتك على جهازك» على سطح البطاقة، وبطاقة الفيديو الحالي على الورق بخط شعري لا ظل،
+   وإجراءات 40 بعرضين متساويين، ثم تذييل 48 بمدخل واحد لكل وجهة (المحفوظات والإعدادات). كل لون من رموز src/ui/tokens.css
+   بالوضعين، والمعيّن (نقطة التاء) نقطة الحالة وحدها. */
+.tj-popup { width: 340px; min-height: 0; background: var(--tj-bg); }
+.tj-popup .tj-container { max-width: none; margin: 0; padding: 0; gap: 0; }
+.tj-popup__head { height: 52px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 16px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
+.tj-popup__local { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 .tj-popup__local .tj-icon { width: 14px; height: 14px; }
+.tj-popup__main { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 16px; }
+.tj-popup__eyebrow { font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 
 /* بطاقة الفيديو الحالي. */
-.tj-popup__status { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-sunken); border: 1px solid var(--tj-border); align-items: stretch; }
-.tj-popup__title { font: 600 14px/22px var(--tj-font-head); }
-.tj-popup__pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
-.tj-popup__tools { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; }
-.tj-popup__tools::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
-.tj-popup__tools--success { color: var(--tj-success); }
-.tj-popup__tools--info { color: var(--tj-info); }
+.tj-popup__card { display: flex; flex-direction: column; gap: 10px; align-items: stretch; padding: 14px; border-radius: var(--tj-radius-card); background: var(--tj-surface); border: 1px solid var(--tj-border); }
+.tj-popup__card .tj-rule { margin: 0; }
+.tj-popup__title { font: 600 15px/23px var(--tj-font-head); }
+.tj-popup__line { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-popup__pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.tj-popup__pills .tj-pill .tj-icon { width: 14px; height: 14px; }
+.tj-popup .tj-pill--outline { background: transparent; box-shadow: inset 0 0 0 1px var(--tj-border-strong); }
+.tj-popup .tj-pill--warning .tj-icon { color: inherit; }
+/* سطر نتيجة بأيقونة (✓ ملتقط، وتحذير الالتقاط): النص مع الأيقونة لا باللون وحده. */
+.tj-popup__result { display: flex; align-items: center; gap: 6px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-popup__result .tj-icon { flex: none; }
+.tj-popup__result--ok .tj-icon { color: var(--tj-success); }
+.tj-popup__result--warn { color: var(--tj-warning); }
+.tj-popup__result--warn .tj-icon { color: inherit; }
+.tj-popup__capture { font-size: 12px; line-height: 18px; }
+/* حالة أدوات المشغّل: معيّن بلون الحالة ونصها، وتحته سبب التعطل. بانتظار المشغّل معيّن ينبض (الانشغال). */
+.tj-popup__tools { display: flex; align-items: flex-start; gap: 8px; font: 400 12px/18px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-popup__dot { flex: none; width: 5px; height: 5px; margin-top: 6.5px; border-radius: 1px; transform: rotate(45deg); background: currentColor; }
+.tj-popup__tools-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tj-popup__tools--success .tj-popup__dot { color: var(--tj-success); }
+.tj-popup__tools--info .tj-popup__dot { color: var(--tj-mark); animation: tj-pulse 0.9s var(--tj-ease) infinite; }
 .tj-popup__tools--danger { color: var(--tj-danger); }
-.tj-popup__capture { color: var(--tj-warning); }
 .tj-popup__reason { color: var(--tj-muted); }
-/* «نسخ تشخيص الصفحة»: رابط نصي صغير ونتيجته بسطر بجانبه. */
-.tj-popup__diag-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
-.tj-popup__diag { all: unset; display: inline-block; padding: 7px 0; cursor: pointer; font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); text-decoration: underline; text-underline-offset: 3px; } /* هدف 32 ارتفاعًا (CL-018) */
-.tj-popup__diag:hover { color: var(--tj-text); }
-.tj-popup__diag:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; border-radius: 4px; }
-.tj-popup__diag[aria-busy="true"] { opacity: 0.6; cursor: progress; }
-.tj-popup__diag-result:empty { display: none; }
-.tj-popup__diag-result[data-tone="success"] { color: var(--tj-success); }
-.tj-popup__diag-result[data-tone="danger"] { color: var(--tj-danger); }
 .tj-popup__skel-title { width: 80%; height: 18px; }
 .tj-popup__skel-line { width: 55%; height: 14px; }
+.tj-popup__skel-pill { width: 64px; height: 22px; border-radius: 999px; }
+.tj-popup__skel-pill--wide { width: 110px; }
+.tj-popup__skel-tools { width: 40%; height: 14px; }
+
+/* «زر النص المتزامن مخفي · إظهاره»: صف على الغائر بأيقونة العين المشطوبة وزر ثانوي. */
+.tj-popup__entry-host { display: contents; } /* الحاوية بلا صندوق: الصف ونتيجته عنصران في عمود النافذة، والفارغ منهما بلا فجوة */
+.tj-popup__entry-slot:empty { display: none; }
+.tj-popup__entry { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); color: var(--tj-text); }
+.tj-popup__entry > .tj-icon { color: var(--tj-text-2); }
+.tj-popup__entry-text { flex: 1; min-width: 0; font: 400 13px/20px var(--tj-font-body); }
+.tj-popup__entry-result:empty { position: absolute; }
+.tj-popup__entry-result { display: flex; flex-direction: column; gap: 6px; }
 
 /* الإجراءات السريعة: الرئيسي وحده بعرض النافذة، أو الرئيسي والثانوي في صف بعرضين متساويين. */
-.tj-popup__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tj-popup__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .tj-popup__actions:empty { display: none; }
-.tj-popup__actions > .tj-btn { flex: 1 1 0; min-width: 0; padding-inline: 10px; }
-.tj-popup__actions > .tj-btn .tj-icon { flex: none; }
+.tj-popup__actions > .tj-btn { min-width: 0; padding-inline: 12px; font-size: 14px; line-height: 20px; }
+.tj-popup__actions > .tj-btn:only-child { grid-column: 1 / -1; }
+.tj-popup__actions > .tj-btn .tj-icon { flex: none; width: 16px; height: 16px; }
 .tj-popup__actions > .tj-btn > span { overflow: hidden; text-overflow: ellipsis; }
-.tj-popup__hint { flex-basis: 100%; }
-.tj-popup__copy--success { background: var(--tj-success-bg) !important; color: var(--tj-success) !important; border-color: color-mix(in srgb, var(--tj-success) 40%, transparent) !important; }
-.tj-popup__copy--error { background: var(--tj-danger-bg) !important; color: var(--tj-danger) !important; border-color: color-mix(in srgb, var(--tj-danger) 40%, transparent) !important; }
+.tj-popup__copy--success { background: var(--tj-success-bg) !important; color: var(--tj-success) !important; border-color: var(--tj-success) !important; }
+.tj-popup__copy--error { background: var(--tj-danger-bg) !important; color: var(--tj-danger) !important; border-color: var(--tj-danger) !important; }
 /* منطقة حية (role=status): تبقى في الشجرة فارغةً ليعلن قارئ الشاشة ما يُكتب فيها، وتخرج من التدفق فلا تأخذ فجوة. */
 .tj-popup__notice:empty { position: absolute; }
 
-/* آخر الترجمات على غير صفحة فيديو. */
+/* الخطوات الثلاث لفيديو بلا ترجمة عربية: منجزة بعلامة ✓، والحالية برقمها ممتلئًا بالإبراز، والمنتظرة برقمها محاطًا. */
+.tj-popup__guide:empty { display: none; }
+.tj-popup__steps { display: flex; flex-direction: column; gap: 9px; margin: 0; padding: 12px; list-style: none; border-radius: var(--tj-radius-card); background: var(--tj-surface-2); }
+.tj-popup__step { display: flex; align-items: center; gap: 10px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
+.tj-popup__step-n {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--tj-border-input); font: 700 12px/1 var(--tj-font-body); color: var(--tj-muted);
+}
+.tj-popup__step-n .tj-icon { width: 14px; height: 14px; stroke-width: 2.25; }
+.tj-popup__step--done { color: var(--tj-text-2); }
+.tj-popup__step--done .tj-popup__step-n { border-color: var(--tj-success); background: var(--tj-success-bg); color: var(--tj-success); }
+.tj-popup__step--now { color: var(--tj-text); }
+.tj-popup__step--now .tj-popup__step-n { border-color: var(--tj-brand); background: var(--tj-brand); color: var(--tj-brand-ink); }
+
+/* «نسخ تشخيص الصفحة»: رابط نصي صغير تحت الإجراءات ونتيجته بسطر بجانبه. */
+.tj-popup__diag-host:empty { display: none; }
+.tj-popup__diag-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.tj-popup__diag { all: unset; display: inline-flex; align-items: center; min-height: 32px; padding: 0 4px; cursor: pointer; font: 400 12px/18px var(--tj-font-body); color: var(--tj-text-2); text-decoration: underline; text-underline-offset: 3px; } /* هدف 32 ارتفاعًا (CL-018) */
+.tj-popup__diag:hover { color: var(--tj-text); }
+.tj-popup__diag:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; border-radius: 4px; }
+.tj-popup__diag[aria-busy="true"] { opacity: 0.6; cursor: progress; }
+.tj-popup__diag-result { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
+.tj-popup__diag-result:empty { display: none; }
+.tj-popup__diag-result[data-tone="success"] { color: var(--tj-success); }
+.tj-popup__diag-result[data-tone="danger"] { color: var(--tj-danger); }
+
+/* ليست صفحة فيديو: ملاحظة معلومة ثم آخر الترجمات في بطاقة، لكل ترجمة سطر عنوانها وسطر عمرها وعدد مقاطعها. */
+.tj-popup__note { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-info-bg); color: var(--tj-text); font: 400 13px/20px var(--tj-font-body); }
+.tj-popup__note .tj-icon { color: var(--tj-info); }
 .tj-popup__recent:empty { display: none; }
-.tj-popup__recent { display: flex; flex-direction: column; gap: 2px; }
-.tj-popup__section { font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); padding: 2px 4px; }
-.tj-popup__recent-row { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 4px 0 8px; border-radius: var(--tj-radius-md); }
-.tj-popup__recent-row:hover { background: var(--tj-hover); }
-.tj-popup__recent-title { flex: 1; min-width: 0; font: 400 14px/22px var(--tj-font-body); } /* 22 تتسع لكسرات المراعي في السطر المقتطع (CL-009) */
+.tj-popup__card--list { padding: 4px 12px; gap: 0; }
+.tj-popup__recent-list { display: flex; flex-direction: column; }
+.tj-popup__recent-row { display: flex; align-items: center; gap: 6px; padding: 8px 0; border-top: 1px solid var(--tj-border); }
+.tj-popup__recent-row:first-child { border-top: 0; }
+.tj-popup__recent-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tj-popup__recent-title { font: 600 14px/22px var(--tj-font-head); } /* 22 تتسع لكسرات المراعي والنقاط في السطر المقتطع (CL-009) */
+.tj-popup__recent-meta { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 .tj-popup__recent-actions { display: inline-flex; gap: 2px; flex: none; }
 
-/* التذييل: مدخل واحد لكل وجهة في صف. */
-.tj-popup__nav { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border-top: 1px solid var(--tj-border); padding-top: 10px; }
+/* التذييل: مدخل واحد لكل وجهة، بارتفاع 48، يفصل بينهما خط. */
+.tj-popup__nav { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--tj-border); background: var(--tj-surface); }
 .tj-popup__nav-item {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tj-control-md); padding: 0 10px;
-  border: 0; border-radius: var(--tj-radius-md); background: transparent; color: var(--tj-text-2); cursor: pointer;
-  font: 700 13px/18px var(--tj-font-body);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 10px;
+  border: 0; border-radius: 0; background: transparent; color: var(--tj-text); cursor: pointer; font: 700 14px/20px var(--tj-font-body);
 }
-.tj-popup__nav-item .tj-icon { width: 18px; height: 18px; color: var(--tj-muted); }
-.tj-popup__nav-item:hover { background: var(--tj-hover); color: var(--tj-text); }
+.tj-popup__nav-item + .tj-popup__nav-item { border-inline-start: 1px solid var(--tj-border); }
+.tj-popup__nav-item .tj-icon { width: 18px; height: 18px; color: var(--tj-text-2); }
+.tj-popup__nav-item:hover { background: var(--tj-hover); }
 .tj-popup__nav-item:active { background: var(--tj-pressed); }
-.tj-popup__nav-item:hover .tj-icon { color: var(--tj-text-2); }
+.tj-popup__nav-item:focus-visible { outline-offset: -3px; }

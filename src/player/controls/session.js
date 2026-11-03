@@ -5,7 +5,7 @@ import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
 import { formatOffset } from '../../ui/format.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isLiveNow } from '../youtube-dom.js';
-import { watchBar } from './bar.js';
+import { fitSize, watchBar } from './bar.js';
 import { attachedGlossary, copyText, loadIntoFor, nameHintFor, partSizes, prepareExport, readFor, recordFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
@@ -14,7 +14,7 @@ import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
 import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
 import {
   LABELS, badgeTip, comparisonSummary, downloadedLine, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime, syncUndoStale,
-  slotToast,
+  slotToast, withState,
 } from './text.js';
 
 export const TOAST_MS = 3000;
@@ -78,7 +78,7 @@ function freshUi(videoId) {
  *   now?: () => number,
  * }} deps
  */
-export function createControlsSession({ controller, doc, win, player, flows, now = () => Date.now() }) {
+export function createControlsSession({ controller, doc, win, player, flows, now = () => Date.now(), link = null }) {
   const counts = {
     renders: 0, renderFailures: 0, reinserts: 0, downloads: 0, copies: 0, imports: 0, flowFailures: 0, overflows: 0,
     switches: 0, marks: 0, syncs: 0, undos: 0,
@@ -92,7 +92,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let lastModel = null;
   let overflow = null;
   let flags = { live: false, unavailable: false, brave: false };
-  /** @type {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action: { label: string } | null }[]} */
+  /** @type {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action: { label: string } | null, icon: 'clock' | null }[]} */
   let toasts = [];
   /** فعل كل رسالة بفعل («تراجع») بمعرّفها؛ لا يدخل العرض. */
   const toastActions = new Map();
@@ -116,6 +116,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   };
 
   const group = createGroup({ doc, win, on: { action, hint, escape: () => closeMenu(true) } });
+  // زر اللوحة يستقبل التركيز حين تُغلق اللوحة وفيها التركيز (src/player/link.js).
+  const unlink = link?.register(() => group.focus('panel')) ?? null;
   const layer = createLayer({ doc, win, on: { escape: () => closeMenu(true), files: onFiles } });
 
   // ———— قراءات من الصفحة (كل اسم يوتيوب من youtube-dom) ————
@@ -129,6 +131,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   // ———— نماذج العرض ————
 
+  /**
+   * نموذج الأزرار الخمسة. بلا نقاط حالة على الأزرار: اسم الوظيفة هو اسم الوصول، وهو التلميح عند المرور والتركيز، ومعنى الحالة
+   * (جاهز، مسار ناقص، ترجمة فيها فروق، جارٍ العمل) يلحق التلميح ويُوصف به الزر؛ والسبب يصحب المعطّل والمقيَّد في اسمه وتلميحه.
+   */
   function groupModel(s, bar) {
     const tracks = okTracks(s);
     const noVideo = !s.videoId;
@@ -137,22 +143,32 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const withReason = (label) => (reason ? `${label} — ${reason}` : label);
     const step = s.settings.offsetStepMs;
     const off = s.view.displayOffsetMs;
-    const tone = s.arabic ? comparisonSummary(s.arabic.comparison).tone : null;
+    const summary = s.arabic ? comparisonSummary(s.arabic.comparison) : null;
     const unavailable = flags.live || (!tracks.length && flags.unavailable);
     const dlReason = flags.live ? messageFor('EX_LIVE') : unavailable ? messageFor('CT_NO_CAPTIONS') : null;
+    const dlName = dlReason ? `${LABELS.download} — ${dlReason}` : LABELS.download;
+    const dlState = dlReason ? null : ui.download.busy ? LABELS.stateDownloading : tracks.length ? (tracks.some((t) => t.warnings?.length) ? LABELS.stateIncomplete : LABELS.stateReady) : null;
+    const upState = ui.upload.busy ? LABELS.importing : s.arabic && summary.tone === 'warn' ? LABELS.stateDiffers : null;
+    const upLabel = s.arabic ? `${LABELS.translation}: ${s.arabic.fileName}` : LABELS.upload;
+    const badge = badgeTip(off);
+    const ui$ = s.prefs?.ui;
+    const panelShown = ui$?.panelEntry !== false;
+    const panelOpen = panelShown && ui$?.panelOpen === true;
+    const panelTip = panelOpen ? LABELS.panelClose : LABELS.panelOpen;
     return {
-      size: bar.size,
+      size: fitSize(bar, panelShown ? 5 : 4),
       download: {
-        label: dlReason ? `${LABELS.download} — ${dlReason}` : LABELS.download, disabled: noVideo, unavailable,
-        loading: ui.download.busy, dot: tracks.length ? 'ready' : null, expanded: ui.open === 'download',
+        label: dlName, tip: withState(dlName, dlState), description: dlState, disabled: noVideo, unavailable,
+        loading: ui.download.busy, expanded: ui.open === 'download',
       },
       upload: {
-        label: s.arabic ? `الترجمة العربية: ${s.arabic.fileName}` : LABELS.upload, disabled: noVideo || s.loading,
-        loading: ui.upload.busy, dot: s.arabic ? (tone === 'warn' ? 'warning' : 'loaded') : null, expanded: ui.open === 'display' || ui.open === 'confirm',
+        label: upLabel, tip: withState(s.arabic ? LABELS.translation : LABELS.upload, upState), description: s.arabic ? summary.text : upState,
+        disabled: noVideo || s.loading, loading: ui.upload.busy, expanded: ui.open === 'display' || ui.open === 'confirm',
       },
-      minus: { label: withReason(minusTip(step)), disabled: viewOff },
-      badge: { label: withReason(badgeTip(off)), disabled: viewOff, text: formatOffset(off), sign: signOf(off), expanded: ui.open === 'timing' },
-      plus: { label: withReason(plusTip(step)), disabled: viewOff },
+      panel: { label: LABELS.panel, tip: panelTip, description: null, disabled: noVideo, hidden: !panelShown, pressed: panelOpen },
+      minus: { label: withReason(minusTip(step)), tip: withReason(minusTip(step)), description: null, disabled: viewOff },
+      badge: { label: withReason(badge), tip: withReason(badge), description: null, disabled: viewOff, text: formatOffset(off), sign: signOf(off), expanded: ui.open === 'timing' },
+      plus: { label: withReason(plusTip(step)), tip: withReason(plusTip(step)), description: null, disabled: viewOff },
     };
   }
 
@@ -191,7 +207,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       fileName: a.fileName, count: a.cues.length, edited: a.edited, comparison: a.comparison, notes: a.comparison?.notes ?? [],
       slots, switching: s.loading || ui.switching, uploadLabel: slots.some((x) => !x.filled) ? LABELS.uploadMore : LABELS.replace,
-      warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, busy: ui.upload.busy, error: ui.upload.error,
+      warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, originalLang: s.english?.lang ?? null, busy: ui.upload.busy, error: ui.upload.error,
     };
   }
 
@@ -325,7 +341,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     const kind = ui.hint;
     if (kind && !(ui.open && ANCHOR[ui.open] === kind)) {
-      layer.showTip(lastModel[kind].label, group.button(kind));
+      layer.showTip(lastModel[kind].tip, group.button(kind));
       return;
     }
     layer.showTip(null, null);
@@ -411,9 +427,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
    * رسالة عابرة: النجاح والمعلومة تختفيان بعد 3 ثوانٍ، والتحذير والخطأ يبقيان حتى الإغلاق. ومعها فعل اختياري («تراجع»)
    * يُنفَّذ مرة ثم تختفي، وتبقى الرسالة بفعلها 6 ثوانٍ.
    * @param {'success' | 'info' | 'warning' | 'error'} tone @param {string} text
-   * @param {{ action?: { label: string, run: () => unknown } | null }} [o]
+   * @param {{ action?: { label: string, run: () => unknown } | null, icon?: 'clock' | null }} [o] icon رمز غير رمز النغمة (الساعة لرسالة الإزاحة)
    */
-  function addToast(tone, text, { action = null } = {}) {
+  function addToast(tone, text, { action = null, icon = null } = {}) {
     const id = `t${++toastSeq}`;
     const persist = tone === 'warning' || tone === 'error';
     const dropped = toasts.filter((t) => t.text === text);
@@ -421,7 +437,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       clearTimer(t.id);
       toastActions.delete(t.id);
     }
-    toasts = [...toasts.filter((t) => t.text !== text), { id, tone, text, persist, action: action ? { label: action.label } : null }];
+    toasts = [...toasts.filter((t) => t.text !== text), { id, tone, text, persist, action: action ? { label: action.label } : null, icon }];
     if (action) toastActions.set(id, action.run);
     while (toasts.length > MAX_TOASTS) {
       const old = toasts.shift();
@@ -475,6 +491,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     if (kind === 'minus') nudge(-1);
     else if (kind === 'plus') nudge(1);
+    else if (kind === 'panel') togglePanel(keyboard);
     else if (kind === 'download') toggleMenu('download', keyboard);
     else if (kind === 'badge') toggleMenu('timing', keyboard);
     else if (kind === 'upload') {
@@ -484,6 +501,17 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         pick('first');
       }
     }
+  }
+
+  /** زر اللوحة: يفتحها ويغلقها بالتفضيل المحفوظ نفسه الذي يكتبه زر الإغلاق فيها ومفتاح الإعدادات (يبقى آخر اختيار). */
+  function togglePanel(keyboard) {
+    closeMenu(false);
+    const open = controller.getState().prefs?.ui?.panelOpen === true;
+    if (!open && keyboard) link?.requestPanelFocus();
+    controller.updatePrefs({ ui: { panelOpen: !open } })?.catch?.((err) => {
+      fail('CT_PANEL_TOGGLE_FAILED', err);
+      addToast('error', messageFor('CT_PANEL_TOGGLE_FAILED'));
+    });
   }
 
   function nudge(dir) {
@@ -618,6 +646,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     if (destroyed || ui !== mine) return;
     mine.switching = false;
+    // لا «الترجمة 2» إلا إن صارت هي النشطة فعلًا في الحالة (لا مجرد عودة الوعد).
+    if (controller.getState().activeSlot !== n) {
+      render();
+      return;
+    }
     counts.switches++;
     addToast('success', slotToast(n), { action: { label: LABELS.undo, run: () => controller.activateSlot(prev) } });
     render();
@@ -682,36 +715,55 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     (layer.find(`sentence:${center}`) ?? layer.find('syncBack'))?.focus();
   }
 
-  /** الجملة المختارة تظهر بدايتها عند لحظة الفتح: إزاحة فورية، ورسالة «الإزاحة −3.2 ث» بتراجع. لا يتغير الملف. */
-  function applySentence(index) {
+  /**
+   * الجملة المختارة تظهر بدايتها عند لحظة الفتح: إزاحة فورية، ثم رسالة «الإزاحة −3.2 ث» بتراجع. لا يتغير الملف. والرسالة بعد
+   * ثبوت الإزاحة لا قبله: إن لم تُحفظ (يعيد المتحكم العرض إلى المحفوظ ويرفع خطأه) فلا رسالة نجاح، ويصل الخطأ من حالة المتحكم.
+   */
+  async function applySentence(index) {
     const s = controller.getState();
     const t = ui.timing;
     const cue = s.arabic?.cues[index];
     if (!t.sync || !cue || s.loading) return;
     const prev = s.view.displayOffsetMs;
     const next = syncOffset(t.sync.atMs, cue);
+    const mine = ui;
     t.sync = null;
     t.offsetText = null;
     t.offsetError = null;
-    controller.setOffset(next)?.catch?.(() => {});
+    const done = controller.setOffset(next);
     if (next !== prev) group.pulse();
-    counts.syncs++;
+    render();
+    layer.find('sync')?.focus();
+    try {
+      await done;
+    } catch (err) {
+      if (destroyed || ui !== mine) return;
+      counts.flowFailures++;
+      addToast('error', toErrorInfo(err).message);
+      render();
+      return;
+    }
+    if (destroyed || ui !== mine) return;
+    const now = controller.getState();
     // التراجع لإزاحة الترجمة التي زامنها المستخدم وحدها: إن تبدّلت النشطة أو استُبدلت (مقاطع أخرى) لا يُطبَّق على غيرها
     // (تدقيق 5fedcb9، CX-004: كان يكتب إزاحة الأولى في الثانية).
     const target = { videoId: s.videoId, cues: s.arabic.cues };
-    addToast('success', offsetToast(next), {
+    if (now.videoId !== target.videoId || now.arabic?.cues !== target.cues) return;
+    if (now.view.displayOffsetMs !== next || (now.error && now.error !== s.error)) return;
+    counts.syncs++;
+    addToast('info', offsetToast(next), {
+      icon: 'clock',
       action: {
         label: LABELS.undo,
         run: () => {
-          const now = controller.getState();
-          if (now.videoId === target.videoId && now.arabic?.cues === target.cues) return controller.setOffset(prev);
+          const cur = controller.getState();
+          if (cur.videoId === target.videoId && cur.arabic?.cues === target.cues) return controller.setOffset(prev);
           addToast('info', syncUndoStale);
           return null;
         },
       },
     });
     render();
-    layer.find('sync')?.focus();
   }
 
   function applyOffset(text) {
@@ -835,7 +887,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     d.busy = false;
     if (r.saved.length) {
       counts.downloads++;
-      d.saveLine = { tone: 'ok', text: downloadedLine(r.saved.length > 1 ? partsLabel(r.saved.length) : r.saved[0]) };
+      // بدأ التنزيل وما زال حوار الحفظ مفتوحًا (pending): لا يُقال «نُزّل» قبل أن يكتمل، بل ما ينتظره المستخدم.
+      d.saveLine = r.pending
+        ? { tone: 'info', text: messageFor('SV_PENDING') }
+        : { tone: 'ok', text: downloadedLine(r.saved.length > 1 ? partsLabel(r.saved.length) : r.saved[0]) };
     }
     if (r.stopped) {
       if (r.stopped.code !== 'SV_CANCELLED') {
@@ -847,7 +902,6 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       else d.saveLine = line;
     }
     if (r.blob) d.result.push({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB') });
-    if (r.pending) d.result.push({ tone: 'info', text: messageFor('SV_PENDING') });
     d.result.push(...prep.built.warnings.map((code) => ({ tone: code === 'EX_SPLIT_NOT_NEEDED' ? 'info' : 'warn', text: messageFor(code) })));
     if (r.saved.length) {
       const rec = await recordFor({ controller, key: spec.key, built: prep.built, videoId: prep.videoId });
@@ -1031,6 +1085,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let off = null;
   function teardown() {
     off?.();
+    unlink?.();
     bar$?.stop();
     doc.removeEventListener('pointerdown', onDocPointer, true);
     doc.removeEventListener('keydown', onDocKey, true);
@@ -1044,7 +1099,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     place();
     flags = readFlags();
     bar$ = watchBar({
-      doc, win, player,
+      doc, win, player, own: () => group.host,
       onChange: (bar) => {
         render();
         measureOverflow(bar);
@@ -1098,9 +1153,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         inRightControls: !!right && right === getRightControls(doc),
         size: bar$.snapshot().size,
         group: box(group.host),
-        buttons: Object.fromEntries(['download', 'upload', 'minus', 'badge', 'plus'].map((k) => {
+        fit: lastModel?.size ?? null,
+        room: bar$.snapshot().room,
+        buttons: Object.fromEntries(['download', 'upload', 'panel', 'minus', 'badge', 'plus'].map((k) => {
           const el = group.button(k);
-          return [k, { box: box(el), label: el.getAttribute('aria-label'), disabled: el.getAttribute('aria-disabled') === 'true', text: k === 'badge' ? el.textContent : null }];
+          const shown = !!el.getClientRects?.().length;
+          return [k, { box: shown ? box(el) : null, label: el.getAttribute('aria-label'), tip: lastModel?.[k]?.tip ?? null, description: el.getAttribute('aria-description'), busy: el.getAttribute('aria-busy') === 'true', disabled: el.getAttribute('aria-disabled') === 'true', pressed: el.getAttribute('aria-pressed'), text: k === 'badge' ? el.textContent : null }];
         })),
         layer: layer.peek(),
         overflow,

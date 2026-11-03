@@ -3,8 +3,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  comparisonSummary, copyGate, exportOptions, normalizeQuery, relativeTime, rowModel, searchEntries, sortEntries,
+  chipLabel, comparisonSummary, copyGate, dateGroupOf, deleteSummary, exportOptions, groupEntries, normalizeQuery, relativeTime,
+  rowModel, rowStatus, searchEntries, slotsPhrase, sortEntries, translationTotal,
 } from '../../../../src/pages/library/model.js';
+import { sampleBundle } from '../../../helpers/fixtures-v2.js';
 
 const NOW = Date.parse('2026-11-02T12:00:00.000Z');
 const ago = (ms) => new Date(NOW - ms).toISOString();
@@ -79,25 +81,83 @@ test('الزمن النسبي بالعربية: الآن، ودقائق، وسا
   assert.equal(relativeTime('ليس تاريخًا', NOW), '');
 });
 
-test('rowModel: شارات الملفات والتحذير والإزاحة والتاريخ', () => {
-  const m = rowModel(entry({ english: [{ key: 'en|asr', kind: 'asr', cueCount: 9 }, { key: 'en|manual', kind: 'manual', cueCount: 5 }], view: { displayOffsetMs: 500, displayMode: 'ar' } }), NOW);
-  assert.deepEqual(m.badges.map((b) => b.text), ['EN يدوي', 'EN تلقائي', 'AR الأصل']);
-  assert.equal(m.offsetText, 'الإزاحة \u2066+0.5\u2069 ث', 'معزولة LTR (CL-001)');
+test('rowModel: سطر «عُدّل منذ · N مقطعًا» والتاريخ المطلق، وعدد مقاطع الترجمة النشطة', () => {
+  const m = rowModel(entry(), NOW);
+  assert.equal(m.whenText, 'عُدّل قبل ساعتين');
   assert.equal(m.relative, 'قبل ساعتين');
   assert.match(m.absolute, /2026/);
-  assert.equal(m.displayTitle, 'محاضرة عن الخطوط');
-  assert.equal(rowModel(entry({ view: { displayOffsetMs: 0, displayMode: 'ar' } }), NOW).offsetText, null);
+  assert.equal(m.countText, '425 مقطعًا');
+  assert.equal(m.offsetText, null, 'إزاحة صفر: لا نص');
+  assert.equal(rowModel(entry({ view: { displayOffsetMs: 500, displayMode: 'ar' } }), NOW).offsetText, 'الإزاحة \u2066+0.5\u2069 ث', 'معزولة LTR (CL-001)');
   assert.equal(rowModel(entry({ view: { displayOffsetMs: -1000, displayMode: 'ar' } }), NOW).offsetText, 'الإزاحة \u2066−1.0\u2069 ث');
+  assert.equal(m.displayTitle, 'محاضرة عن الخطوط');
+  assert.equal(rowModel(entry({ updatedAt: ago(5 * 1000) }), NOW).whenText, 'عُدّل الآن');
+  assert.equal(rowModel(entry({ updatedAt: 'ليس تاريخًا' }), NOW).whenText, null, 'لا تاريخ مخمّن');
+  // بلا ترجمة: مقاطع المسار الإنجليزي (اليدوي أولًا) بوصفها إنجليزية، وإلا لا شيء.
+  const en = [{ key: 'en|asr', kind: 'asr', cueCount: 9 }, { key: 'en|manual', kind: 'manual', cueCount: 286 }];
+  assert.equal(rowModel(entry({ arabic: null, english: en }), NOW).countText, '286 مقطعًا إنجليزيًا');
+  assert.equal(rowModel(entry({ arabic: null, english: [] }), NOW).countText, null);
+});
 
-  const edited = rowModel(entry({ arabic: { fileName: 'x', cueCount: 3, edited: true, matched: false, missing: 3, extra: 0, drift: 0 } }), NOW);
-  assert.deepEqual(edited.badges.map((b) => [b.text, b.tone]), [['EN يدوي', 'neutral'], ['AR معدّلة', 'edited'], ['3 ناقصة', 'warning']]);
-  const both = rowModel(entry({ arabic: { fileName: 'x', cueCount: 3, edited: false, matched: false, missing: 2, extra: 1, drift: 12 } }), NOW);
-  assert.equal(both.badges.at(-1).text, '2 ناقصة · 1 زائدة · توقيت مختلف في 12');
-  const noFp = rowModel(entry({ arabic: { fileName: 'x', cueCount: 3, edited: false, matched: null, missing: 0, extra: 0, drift: 0 } }), NOW);
-  assert.equal(noFp.badges.some((b) => b.tone === 'warning'), false, 'لا بصمة: لا شارة تحذير');
+test('rowModel: الشرائح للترجمات الموجودة وحدها، وأول خانة فارغة للرفع، وحالة الأصل لسطر «لا ترجمة»', () => {
+  const slot = (n, filled, extra = {}) => ({ n, filled, active: false, name: null, edited: false, cueCount: filled ? 5 : 0, ...extra });
+  const m = rowModel(entry({ slots: [slot(1, false), slot(2, true, { active: true, name: 'Claude' }), slot(3, true)] }), NOW);
+  assert.deepEqual(m.filled.map((s) => s.n), [2, 3], 'الفارغة لا تُعدّ نسخةً');
+  assert.equal(m.nextEmpty, 1, 'أول خانة فارغة ولو سبقت الممتلئة');
+  assert.deepEqual(m.filled.map(chipLabel), ['2 · Claude', 'الترجمة 3'], 'الاسم المختصر إن وُجد وإلا «الترجمة N»');
+  assert.equal(rowModel(entry({ slots: [slot(1, true, { active: true }), slot(2, true), slot(3, true)] }), NOW).nextEmpty, null, 'ثلاث ترجمات: لا شريحة رفع');
+  // سجل الإصدار الأول بلا slots: النشطة في 1، والتالية 2.
+  const old = rowModel(entry(), NOW);
+  assert.deepEqual(old.filled.map((s) => s.n), [1]);
+  assert.equal(old.nextEmpty, 2);
   const none = rowModel(entry({ arabic: null, english: [] }), NOW);
-  assert.deepEqual(none.badges, []);
+  assert.deepEqual(none.filled, []);
+  assert.equal(none.nextEmpty, 1);
+  assert.equal(none.sourceText, 'الأصل غير ملتقط');
+  assert.equal(rowModel(entry({ arabic: null }), NOW).sourceText, 'الأصل جاهز');
   assert.equal(none.hasArabic, false);
+});
+
+test('rowStatus: شارة واحدة بأولوية «تحتاج مراجعة» ثم التحذير الآلي ثم «معدّلة» ثم «مترجمة»، وبلا ترجمة «بانتظار الترجمة»', () => {
+  const ar = (over = {}) => ({ fileName: 'x', cueCount: 3, edited: false, matched: true, missing: 0, extra: 0, drift: 0, ...over });
+  const summary = (over = {}) => ({ filled: 1, edited: 0, warned: 0, marks: { todo: 0, done: 0 }, ...over });
+  assert.deepEqual(rowStatus(entry({ arabic: null })).text, 'بانتظار الترجمة');
+  assert.equal(rowStatus(entry({ arabic: null })).tone, 'neutral');
+  assert.deepEqual([rowStatus(entry({ arabic: ar() })).text, rowStatus(entry({ arabic: ar() })).tone], ['مترجمة', 'success']);
+  assert.deepEqual([rowStatus(entry({ arabic: ar({ edited: true }) })).text, rowStatus(entry({ arabic: ar({ edited: true }) })).tone], ['معدّلة', 'edited']);
+  assert.equal(rowStatus(entry({ arabic: ar(), summary: summary({ edited: 1 }) })).text, 'معدّلة', 'معدّلة في خانة غير نشطة');
+  const warned = rowStatus(entry({ arabic: ar({ edited: true, matched: false, missing: 3 }) }));
+  assert.deepEqual([warned.text, warned.tone, warned.title], ['3 ناقصة', 'warning', '3 ناقصة · معدّلة'], 'التحذير قبل «معدّلة» وتلميحه يسرد الحالات المنطبقة');
+  assert.equal(rowStatus(entry({ arabic: ar({ matched: false, missing: 2, extra: 1, drift: 12 }) })).text, '2 ناقصة · 1 زائدة · توقيت مختلف في 12');
+  assert.equal(rowStatus(entry({ arabic: ar({ matched: null }) })).tone, 'success', 'لا بصمة: لا تحذير');
+  const review = rowStatus(entry({ arabic: ar({ edited: true, matched: false, missing: 1 }), summary: summary({ marks: { todo: 2, done: 0 } }) }));
+  assert.deepEqual([review.text, review.tone], ['تحتاج مراجعة 2', 'info']);
+});
+
+test('التجميع بالتاريخ: اليوم من منتصف ليل الجهاز، وهذا الأسبوع الأيام الستة قبله، وأقدم؛ والمستقبلي اليوم وغير الصالح أقدم', () => {
+  const now = new Date(2026, 10, 3, 15, 30).getTime(); // محلي: 3 نوفمبر 15:30
+  const at = (daysAgo, h = 12) => new Date(2026, 10, 3 - daysAgo, h, 0).toISOString();
+  assert.equal(dateGroupOf(at(0, 0), now), 'today', 'منتصف الليل نفسه');
+  assert.equal(dateGroupOf(at(0, 9), now), 'today');
+  assert.equal(dateGroupOf(at(1, 23), now), 'week', 'أمس مساءً');
+  assert.equal(dateGroupOf(at(6, 0), now), 'week', 'قبل ست أيام من منتصف الليل');
+  assert.equal(dateGroupOf(at(7, 12), now), 'older');
+  assert.equal(dateGroupOf(new Date(now + 5 * HOUR).toISOString(), now), 'today', 'ساعة جهاز متقدمة');
+  assert.equal(dateGroupOf('ليس تاريخًا', now), 'older');
+
+  const list = [entry({ videoId: 'AAAAAAAAAAA', updatedAt: at(0) }), entry({ videoId: 'BBBBBBBBBBB', updatedAt: at(0, 8) }), entry({ videoId: 'CCCCCCCCCCC', updatedAt: at(3) }), entry({ videoId: 'DDDDDDDDDDD', updatedAt: at(30) })];
+  const groups = groupEntries(list, now);
+  assert.deepEqual(groups.map((g) => [g.key, g.label, g.entries.map((e) => e.videoId)]), [
+    ['today', 'اليوم', ['AAAAAAAAAAA', 'BBBBBBBBBBB']], ['week', 'هذا الأسبوع', ['CCCCCCCCCCC']], ['older', 'أقدم', ['DDDDDDDDDDD']],
+  ], 'ترتيب الأقسام وترتيب الصفوف داخلها كما وردت');
+  assert.deepEqual(groupEntries([list[3]], now).map((g) => g.key), ['older'], 'الأقسام الفارغة لا تُعاد');
+  assert.deepEqual(groupEntries([], now), []);
+});
+
+test('translationTotal: مجموع الخانات الممتلئة (ولسجل الإصدار الأول ترجمة واحدة)', () => {
+  const slots = (...f) => f.map((filled, i) => ({ n: i + 1, filled }));
+  assert.equal(translationTotal([entry({ slots: slots(true, true, false) }), entry({ slots: slots(true, false, false) }), entry({ arabic: null, slots: slots(false, false, false) })]), 3);
+  assert.equal(translationTotal([entry(), entry({ arabic: null })]), 1, 'بلا slots: النشطة وحدها');
 });
 
 test('rowModel: بلا عنوان محفوظ يظهر بنصه واسم الوصول يعود إلى المعرّف', () => {
@@ -157,4 +217,42 @@ test('ملخص المقارنة: لا بصمة، ومطابق، وناقص، و�
   const many = comparisonSummary(report({ countTarget: 427, missing: Array.from({ length: 20 }, (_, i) => i + 1) })).lines.at(-1);
   assert.match(many, /^20 مقطعًا ناقصًا: 1، 2، 3، 4، 5، 6، 7، 8…$/);
   assert.equal(comparisonSummary(report({ countTarget: 427, numbering: 'different' })).lines[0], 'ترقيم المقاطع يختلف عن الملف المصدَّر.');
+});
+
+test('slotsPhrase: «الترجمة 2» و«الترجمتان 1 و3» و«الترجمات 1 و2 و3»', () => {
+  assert.equal(slotsPhrase([2]), 'الترجمة 2');
+  assert.equal(slotsPhrase([1, 3]), 'الترجمتان 1 و3');
+  assert.equal(slotsPhrase([1, 2, 3]), 'الترجمات 1، 2 و3');
+});
+
+test('deleteSummary: بنود لما يوجد فعلًا وحده، لكل ترجمة وللكل، وما يبقى', () => {
+  const LRI = String.fromCodePoint(0x2066);
+  const PDI = String.fromCodePoint(0x2069);
+  const b = sampleBundle({ videoId: 'AAAAAAAAAAA', third: true });
+  // الكل: ثلاث ترجمات بأسماء، والسابقة، وتعديلات الأولى (5)، وعلامات الأولى والثانية (3)، وإزاحاتها، وموضع الأولى، والإنجليزي والبصمات.
+  assert.deepEqual(deleteSummary(b, { scope: 'all' }), {
+    items: [
+      'الترجمات 1 و2 «مراجعة» و3', 'النسخة السابقة (من الترجمة 2)', '5 تعديلات يدوية', '3 علامات مراجعة', 'الإزاحات المحفوظة', 'آخر موضع محفوظ في المحرّر',
+      'المسار الإنجليزي الملتقط', 'بصمات التصدير (2)', 'سجل الفيديو: العنوان والمدة وإعدادات العرض',
+    ],
+    keeps: [],
+  });
+  // ترجمة نشطة واحدة: الأولى بتعديلاتها وعلاماتها (2) وإزاحتها وموضعها؛ ويبقى غيرها والسابقة والإنجليزي، وتصبح الثانية النشطة.
+  const one = deleteSummary(b, { scope: 'slot', n: 1 });
+  assert.deepEqual(one.items, [`الترجمة 1 — ملف ${LRI}${b.slots[0].track.fileName}${PDI}`, '5 تعديلات يدوية', 'علامتا مراجعة', `الإزاحة المحفوظة (${LRI}+0.5${PDI} ث)`, 'آخر موضع محفوظ في المحرّر']);
+  assert.deepEqual(one.keeps, ['الترجمتان 2 و3 تبقى، وتصبح الترجمة 2 النشطة', 'النسخة السابقة تبقى', 'المسار الإنجليزي والبصمات تبقى']);
+  // غير نشطة بلا شيء: الثانية بعلامة واحدة وإزاحة؛ لا «تصبح النشطة» لأن النشطة غيرها.
+  const two = deleteSummary(b, { scope: 'slot', n: 2 });
+  assert.deepEqual(two.items.slice(1), ['علامة مراجعة واحدة', `الإزاحة المحفوظة (${LRI}−1.2${PDI} ث)`]);
+  assert.ok(two.items[0].startsWith('الترجمة 2 «مراجعة» — ملف'));
+  assert.deepEqual(two.keeps, ['الترجمتان 1 و3 تبقى', 'النسخة السابقة تبقى', 'المسار الإنجليزي والبصمات تبقى']);
+  // بلا سابقة ولا ترجمة أخرى: لا بنود «تبقى» لها.
+  const solo = sampleBundle({ videoId: 'AAAAAAAAAAA', previous: false });
+  solo.slots[1] = { n: 2, name: null, track: null, offsetMs: 0, marks: [], position: null };
+  assert.deepEqual(deleteSummary(solo, { scope: 'slot', n: 1 }).keeps, ['المسار الإنجليزي والبصمات تبقى']);
+  assert.ok(!deleteSummary(solo, { scope: 'all' }).items.some((t) => t.includes('السابقة')), 'لا سابقة: لا بند لها');
+  // مراجعة الهوية L5: لا ترجمة ممتلئة وبقيت نسخة سابقة: تُذكر لأنها تُحذف مع الفيديو.
+  const onlyPrev = sampleBundle({ videoId: 'AAAAAAAAAAA' });
+  onlyPrev.slots = onlyPrev.slots.map((x) => ({ ...x, track: null, marks: [], offsetMs: 0, position: null }));
+  assert.ok(deleteSummary(onlyPrev, { scope: 'all' }).items.includes(`النسخة السابقة (من الترجمة ${onlyPrev.previous.from})`));
 });

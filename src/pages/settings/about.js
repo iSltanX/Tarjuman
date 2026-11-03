@@ -10,9 +10,15 @@ export const LINKS = Object.freeze({ site: 'https://bysltan.com', repo: 'https:/
 /** خط عناوين الواجهة المضمّن (المراعي ملفه نفسه في خطوط الترجمة فلا يتكرر). */
 const UI_HEAD_FONT = Object.freeze({ nameAr: 'القاهرة', nameLatin: 'Cairo', license: UI_FONT_LIST[0].license });
 
+/**
+ * سطر الخصوصية كما هو صحيح: البيانات كلها على الجهاز، والاستثناء الوحيد صور الفيديو في المحفوظات (i.ytimg.com بمعرّف الفيديو)
+ * ما دام مفتاحها «صور الفيديو في المحفوظات» مفعّلًا (prefs.ui.thumbnails، افتراضيًا مفعّل بقرار سلطان). لا يُقال «كل شيء محلي» مطلقًا.
+ */
+export const PRIVACY_LINE = 'بياناتك كلها على جهازك؛ لا حسابات ولا خادم ولا مفتاح API. وصور الفيديو في المحفوظات تُطلب من خوادم يوتيوب ما دام مفتاحها مفعّلًا.';
+
 export const GUIDE_STEPS = Object.freeze([
   'افتح فيديو على يوتيوب وفعّل الترجمة (CC) واختر English.',
-  'من أزرار ترجمان في شريط تحكم المشغّل افتح «تحميل الترجمة الإنجليزية (SRT)»، ثم «تنزيل الملف» و«نسخ التعليمات» كلٌّ بزره.',
+  'من أزرار ترجمان في شريط تحكم المشغّل افتح «تحميل الأصل (SRT)»، ثم «تنزيل الملف» و«نسخ التعليمات» كلٌّ بزره.',
   'أرسل الملف مع التعليمات إلى أي نموذج ذكاء اصطناعي تختاره، واحفظ ناتجه ملف SRT.',
   'ارفعه بزر «رفع الترجمة العربية (SRT)» فتظهر الترجمة فوق الفيديو؛ وعدّل توقيتها بأزرار ± أو من المحرّر.',
   'تجد كل ما حفظته في «المحفوظات» من أيقونة الإضافة، وتصدّره أو تستبدله أو تحذفه من هناك.',
@@ -65,7 +71,7 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
   });
   const body = [
     el('div', { className: 'st-about__row', children: [el('span', { className: 'tj-label', text: 'الإصدار', doc }), ltr(version, { doc })], doc }),
-    el('p', { className: 'tj-body-sm', text: 'كل شيء محلي على جهازك، لا حسابات ولا خادم ولا مفتاح API.', doc }),
+    el('p', { className: 'tj-body-sm', text: PRIVACY_LINE, doc }),
     guide,
     el('hr', { className: 'tj-rule', doc }),
     el('p', { className: 'tj-label', text: 'ترجمان — تطوير سلطان', doc }),

@@ -6,6 +6,9 @@ export const SELECTORS = Object.freeze({
   player: '#movie_player',
   video: '#movie_player video.html5-main-video',
   rightControls: '#movie_player .ytp-right-controls',
+  leftControls: '#movie_player .ytp-left-controls',
+  // منزلق الصوت: يتسع حين يمر المؤشر على زر الصوت ويعود صفرًا بعده.
+  volumePanel: '#movie_player .ytp-left-controls .ytp-volume-panel',
   chromeBottom: '#movie_player .ytp-chrome-bottom',
   progressBar: '#movie_player .ytp-progress-bar-container',
   captionWindow: '#movie_player .ytp-caption-window-container',
@@ -22,6 +25,8 @@ export const CLASSES = Object.freeze({
   fullscreen: 'ytp-fullscreen',
   bigMode: 'ytp-big-mode',
   smallMode: 'ytp-small-mode',
+  // عنوان الفصل في الأدوات اليسرى: يتمدد ويُقتطع، فلا يُحسب من المساحة اللازمة لها.
+  chapter: 'ytp-chapter-container',
 });
 
 export const EVENTS = Object.freeze({
@@ -56,6 +61,9 @@ export const getMainVideo = (doc = document) => doc.querySelector(SELECTORS.vide
 
 /** @param {Document} [doc] @returns {HTMLElement | null} موضع إدراج أدوات ترجمان (بدايته) */
 export const getRightControls = (doc = document) => doc.querySelector(SELECTORS.rightControls);
+
+/** @param {Document} [doc] @returns {HTMLElement | null} أدوات الشريط اليسرى (التشغيل والصوت والوقت وعنوان الفصل) */
+export const getLeftControls = (doc = document) => doc.querySelector(SELECTORS.leftControls);
 
 /** @param {Document} [doc] @returns {HTMLElement | null} شريط التحكم السفلي كله */
 export const getChromeBottom = (doc = document) => doc.querySelector(SELECTORS.chromeBottom);

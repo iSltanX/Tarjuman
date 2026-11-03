@@ -1,15 +1,20 @@
-// إضافات الإصدار الثاني في المحفوظات (P13-AC1/AC3/AC6/AC7) بـDOM وهمي فوق تخزين حقيقي بمحاكاة: اختيار 1 2 3 في الصف
-// يفعّل غير النشطة بتراجع، والفرز بالحالات الخمس بأعدادها («تحذيرات آلية» منفصلة عن «تحتاج مراجعة»)، ولوحة «الترجمات…»
-// (الاسم والمرجع والتفعيل والحذف بتأكيد، والنسخة السابقة بسعتها واستعادتها بتبديل قابل للعكس وحذفها، ولا خانة رابعة)،
-// و«نص دراسي…» عبر saveFile، والنسخ يرفق القاموس بالنص نفسه.
+// إضافات الإصدار الثاني في المحفوظات (P13-AC1/AC3/AC6/AC7، والهوية) بـDOM وهمي فوق تخزين حقيقي بمحاكاة: شرائح الخانات
+// الموجودة في الصف (الضغط على غير النشطة يفعّلها بتراجع) وشريحة الرفع المتقطّعة، والفرز بالحالات الخمس بأعدادها («تحذيرات
+// آلية» منفصلة عن «تحتاج مراجعة»)، والتوسيع في الصف ببطاقات الترجمات (الاسم والمرجع والتفعيل والتصدير والملف البديل والحذف
+// بتأكيد يسرد ما يُحذف، والنسخة السابقة بسعتها واستعادتها بتبديل قابل للعكس وحذفها، ولا خانة رابعة)، و«نص دراسي…» عبر
+// saveFile، والنسخ من «المزيد» يرفق القاموس بالنص نفسه.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { instructions } from '../../../../src/core/export/instructions.js';
 import { createStore } from '../../../../src/core/store/index.js';
+import { formatTimecode } from '../../../../src/ui/format.js';
 import { createLibrary } from '../../../../src/pages/library/view.js';
 import { FILTERS, filterCounts, filterEntries, libraryEntries, manualEdits } from '../../../../src/pages/library/model.js';
+import { MD_HINT } from '../../../../src/pages/library/study.js';
 import { manualEdits as playerManualEdits } from '../../../../src/player/controls/replace.js';
 import { mergeCues, splitCue } from '../../../../src/core/edit/structure.js';
+import { withoutSlot } from '../../../../src/core/model/bundle.js';
+import { writeSrt } from '../../../../src/core/srt/writer.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, makeCues, videoRecord } from '../../../helpers/fixtures.js';
 import { samplePrefs, sampleBundle, seedBundle } from '../../../helpers/fixtures-v2.js';
@@ -73,30 +78,102 @@ const openMore = (m, id, label) => {
   more.click();
   menuItems(more).find((i) => textOf(i).startsWith(label)).click();
 };
-const panelOf = (m) => m.doc.body.querySelector('dialog.lib-panel');
-const cardOf = (panel, n) => panel.querySelector(`section[data-slot="${n}"]`);
+/** التوسيع في الصف: يضغط زر «إظهار الترجمات» ويعيد جذره. */
+const expand = async (m, id) => {
+  buttonNamed(rowFor(m, id), 'إظهار الترجمات').click();
+  await settle(10);
+  return expOf(m, id);
+};
+const expOf = (m, id) => rowFor(m, id).querySelector('.lib-exp');
+const cardOf = (exp, n) => exp.querySelector(`section[data-slot="${n}"]`);
+const chipsOf = (m, id) => rowFor(m, id).querySelectorAll('.lib-chips button');
+const LRI = String.fromCodePoint(0x2066);
+const PDI = String.fromCodePoint(0x2069);
+const txt = (e) => e.textContent;
 
-test('الصف: محدد الترجمات الموجودة يميّز النشطة، والضغط على غيرها يفعّلها برسالة «الترجمة 2» و«تراجع»، وترجمة واحدة بلا محدد', async () => {
+test('الصف: شريحة لكل ترجمة موجودة تميّز النشطة، والضغط على غيرها يفعّلها برسالة «الترجمة 2» و«تراجع»، ولا شريحة لفارغ سوى شريحة الرفع', async () => {
   const m = await mount();
-  const picker = rowFor(m, IDS[0]).querySelector('.tj-slots');
-  const slots = picker.querySelectorAll('button');
-  assert.deepEqual(slots.map((b) => b.getAttribute('aria-checked')), ['true', 'false', 'false']);
-  assert.deepEqual(slots.map((b) => b.getAttribute('aria-label')), ['الترجمة 1، نشطة', 'الترجمة 2', 'الترجمة 3']);
-  assert.equal(slots[1].title, 'الترجمة 2 — مراجعة', 'التلميح بالاسم المختصر');
-  slots[1].click();
+  let chips = chipsOf(m, IDS[0]);
+  assert.deepEqual(chips.map((b) => [textOf(b), b.getAttribute('aria-pressed')]), [['الترجمة 1', 'true'], ['2 · مراجعة', 'false'], ['الترجمة 3', 'false']], 'الاسم المختصر إن وُجد');
+  assert.equal(rowFor(m, IDS[0]).querySelectorAll('.lib-chip--add').length, 0, 'ثلاث ترجمات: لا شريحة رفع');
+  assert.equal(chips[1].title, 'الترجمة 2 — مراجعة — اضغط لتفعيلها');
+  assert.equal(chips[0].title, `الترجمة 1 (النشطة) — الإزاحة ${LRI}+0.5${PDI} ث`, 'إزاحة النشطة في تلميح شريحتها');
+  assert.deepEqual(chips.map((b) => b.getAttribute('tabindex')), ['0', '-1', '-1'], 'نقطة Tab واحدة');
+  chips[1].click();
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).active, 2);
   const toast = m.root.querySelector('.tj-toast--success');
   assert.ok(textOf(toast).startsWith('الترجمة 2'));
-  assert.deepEqual(rowFor(m, IDS[0]).querySelector('.tj-slots').querySelectorAll('button').map((b) => b.getAttribute('aria-checked')), ['false', 'true', 'false']);
+  assert.deepEqual(chipsOf(m, IDS[0]).map((b) => b.getAttribute('aria-pressed')), ['false', 'true', 'false']);
   buttonNamed(toast, 'تراجع').click();
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).active, 1, 'التراجع يعيد النشطة السابقة');
-  // سجل الإصدار الأول: ترجمة واحدة في الخانة 1، فالمحدد مخفي ولا خانات فارغة تُعرض.
-  const oldPicker = rowFor(m, IDS[1]).querySelector('.tj-slots');
-  assert.equal(oldPicker.hidden, true);
-  assert.deepEqual(oldPicker.querySelectorAll('button').map((b) => b.textContent), ['1']);
+  // سجل الإصدار الأول: ترجمة واحدة في الخانة 1 تُعرض شريحتها، والخانة 2 شريحة الرفع المتقطّعة (لا نسخة فارغة).
+  assert.deepEqual(chipsOf(m, IDS[1]).map((b) => [textOf(b), b.getAttribute('aria-pressed')]), [['الترجمة 1', 'true']]);
+  assert.equal(textOf(rowFor(m, IDS[1]).querySelector('.lib-chip--add')), '2 · فارغة');
   assert.equal((await m.store.getBundle(IDS[1])).active, 1);
+  // لوحة المفاتيح: الأسهم تنقل التركيز بين الشرائح بترتيب العرض (اليسار هو التالي)، لا تفعّل.
+  const [a, b2] = chipsOf(m, IDS[0]);
+  a.focus();
+  a.dispatchEvent({ type: 'keydown', key: 'ArrowLeft' });
+  assert.ok(m.doc.activeElement === b2);
+  assert.deepEqual(chipsOf(m, IDS[0]).map((x) => x.getAttribute('tabindex')), ['-1', '0', '-1'], 'نقطة Tab تتبع التركيز');
+  b2.dispatchEvent({ type: 'keydown', key: 'ArrowRight' });
+  assert.ok(m.doc.activeElement === a);
+  assert.equal((await m.store.getBundle(IDS[0])).active, 1, 'الأسهم لا تغيّر النشطة');
+});
+
+test('شريحة الرفع المتقطّعة: الخانة الفارغة التالية وحدها، وتفتح الرفع إليها هي (ولو سبقت الممتلئة)', async () => {
+  const text = writeSrt(makeCues(5).map((c) => ({ ...c, text: `جديد ${c.n}` })));
+  const m = await mount({
+    seed: async (store) => {
+      await seedBundle(store, sampleBundle({ videoId: IDS[0] })); // 1 و2 ممتلئتان، 3 فارغة
+    },
+    env: { pickFiles: async () => [new File([text], 'جديد.ar.srt')] },
+  });
+  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', '2 · مراجعة'], 'الشرائح للموجودة وحدها');
+  const add = rowFor(m, IDS[0]).querySelectorAll('.lib-chip--add');
+  assert.equal(add.length, 1, 'شريحة متقطّعة واحدة');
+  assert.equal(textOf(add[0]), '3 · فارغة');
+  assert.equal(add[0].getAttribute('aria-description'), 'رفع ترجمة إلى الخانة 3');
+  assert.ok(add[0].getAttribute('aria-pressed') === null && add[0].getAttribute('role') === null, 'إجراء لا زر تبديل في شريط الترجمات');
+  assert.equal(add[0].parentNode.querySelector('.lib-chips').querySelectorAll('.lib-chip--add').length, 0, 'خارج شريط الترجمات');
+  const before = JSON.stringify(m.area.dump());
+  m.answers.push(false);
+  add[0].click();
+  await settle(10);
+  const dialog = m.calls.confirms.at(-1);
+  const radios = findAll(dialog.content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio');
+  assert.deepEqual(radios.map((r) => [r.getAttribute('value'), r.checked]), [['1', false], ['2', false], ['3', true]], 'الهدف الافتراضي الخانة المطلوبة');
+  assert.equal(dialog.confirmLabel, 'حفظ', 'حفظ لا استبدال');
+  assert.equal(JSON.stringify(m.area.dump()), before, 'الإلغاء لا يمسّ التخزين');
+  // ثم التأكيد يكتب في الخانة 3 وتختفي شريحة الرفع (لا خانة أخرى فارغة).
+  m.answers.push(true);
+  rowFor(m, IDS[0]).querySelector('.lib-chip--add').click();
+  await settle(15);
+  const b = await m.store.getBundle(IDS[0]);
+  assert.equal(b.slots[2].track.original[0].text, 'جديد 1');
+  assert.equal(rowFor(m, IDS[0]).querySelectorAll('.lib-chip--add').length, 0);
+  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', '2 · مراجعة', 'الترجمة 3']);
+});
+
+test('شريحة الرفع المتقطّعة: إن حُذفت الأولى فالفارغة التالية هي 1 وإليها يذهب الرفع', async () => {
+  const text = writeSrt(makeCues(5));
+  const m = await mount({
+    seed: async (store) => {
+      await seedBundle(store, sampleBundle({ videoId: IDS[0], third: true }));
+      await store.updateBundle(IDS[0], (b) => withoutSlot(b, 1, NOW));
+    },
+    env: { pickFiles: async () => [new File([text], 'x.ar.srt')] },
+  });
+  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['2 · مراجعة', 'الترجمة 3'], 'الرقم هوية الخانة: لا إعادة ترقيم');
+  const add = rowFor(m, IDS[0]).querySelector('.lib-chip--add');
+  assert.equal(textOf(add), '1 · فارغة');
+  m.answers.push(false);
+  add.click();
+  await settle(10);
+  const radios = findAll(m.calls.confirms.at(-1).content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio');
+  assert.deepEqual(radios.filter((r) => r.checked).map((r) => r.getAttribute('value')), ['1']);
 });
 
 test('الفرز بالحالات الخمس بأعدادها، و«تحذيرات آلية» منفصلة عن «تحتاج مراجعة» البشرية', async () => {
@@ -121,63 +198,203 @@ test('الفرز بالحالات الخمس بأعدادها، و«تحذيرا
   assert.equal(libraryEntries([{ entry: { videoId: 'x' }, summary: { filled: 0 }, slots: [] }])[0].summary.filled, 0);
 });
 
-test('«الترجمات…»: بطاقة لكل خانة بتفاصيلها، والاسم المختصر يُحفظ، والتفعيل، وحذف ترجمة بتأكيد', async () => {
+test('التوسيع في الصف: بطاقة لكل ترجمة بتفاصيلها (الملف والتاريخ والتعديلات والإزاحة والنتيجة والمرجع والعلامات)، ويُطوى فتعود الحال', async () => {
   const m = await mount();
-  openMore(m, IDS[0], 'الترجمات');
-  await settle(10);
-  const panel = panelOf(m);
-  assert.ok(panel?.open, 'اللوحة مفتوحة');
-  const one = cardOf(panel, 1);
-  const two = cardOf(panel, 2);
-  assert.ok(textOf(one).includes('نشطة'));
+  const toggle = () => buttonNamed(rowFor(m, IDS[0]), 'إظهار الترجمات');
+  assert.equal(toggle().getAttribute('aria-expanded'), 'false');
+  assert.ok(expOf(m, IDS[0]) === null, 'مطوي: لا بطاقات ولا قراءة للحزمة');
+  const exp = await expand(m, IDS[0]);
+  assert.ok(exp, 'التوسيع في الصف نفسه لا حوار جانبي');
+  assert.equal(m.doc.body.querySelectorAll('dialog').length, 0);
+  const open = buttonNamed(rowFor(m, IDS[0]), 'إخفاء الترجمات');
+  assert.equal(open.getAttribute('aria-expanded'), 'true');
+  assert.equal(open.getAttribute('aria-controls'), exp.id, 'الزر يتحكم بمنطقة التوسيع');
+  assert.equal(exp.getAttribute('role'), 'region');
+  assert.equal(exp.getAttribute('aria-busy'), 'false');
+  assert.ok(rowFor(m, IDS[0]).classList.contains('lib-row--open'));
+  assert.equal(textOf(exp.querySelector('.lib-exp__title')), 'ترجمات هذا الفيديو');
+  const one = cardOf(exp, 1);
+  const two = cardOf(exp, 2);
+  assert.equal(exp.querySelectorAll('section.lib-card').length, 3, 'ثلاث ترجمات بلا خانة رابعة ولا فارغة (ممتلئة كلها)');
+  assert.ok(one.classList.contains('lib-card--active'));
   assert.ok(findAll(one, (e) => e.classList.contains('tj-pill--brand') && textOf(e) === 'نشطة').length === 1, 'النشطة بالإبراز كبقية الأسطح (CL-023)');
-  assert.ok(textOf(one).includes(`${IDS[0]}.أولى.ar.srt`));
-  assert.ok(textOf(one).includes('معدّلة'));
-  assert.ok(textOf(one).includes('5 تعديلات يدوية'));
-  assert.ok(textOf(one).includes('الإزاحة \u2066+0.5\u2069 ث'));
+  assert.equal(findAll(two, (e) => textOf(e) === 'نشطة').length, 0);
+  assert.ok(textOf(one).includes(m_fileName(1)));
+  assert.ok(textOf(one).includes('5 مقاطع'));
+  assert.ok(textOf(one).includes('5 تعديلات يدوية'), 'عدد التعديلات اليدوية');
+  assert.ok(textOf(two).includes('بلا تعديل'));
+  assert.ok(textOf(one).includes(`الإزاحة ${LRI}+0.5${PDI} ث`));
+  assert.ok(textOf(two).includes(`الإزاحة ${LRI}−1.2${PDI} ث`));
+  assert.match(textOf(one.querySelector('.lib-card__meta')), /^رُفعت قبل ساعة · 5 تعديلات يدوية · الإزاحة/, 'تاريخ الرفع والتعديلات والإزاحة');
+  assert.match(one.querySelector('.lib-card__meta').querySelector('span').title, /2026/, 'والتاريخ المطلق في التلميح');
   assert.ok(textOf(one).includes('العلامات: 1 أعود إليه · 1 راجعته'));
-  assert.ok(textOf(two).includes('الإزاحة \u2066−1.2\u2069 ث'));
   assert.ok(textOf(one).includes('المرجع:'));
-  assert.equal(panel.querySelectorAll('section.lib-slot').length, 4, 'ثلاث خانات وبطاقة السابقة، لا خانة رابعة');
+  assert.ok(textOf(one.querySelector('.lib-result')).length > 0, 'نتيجة المقارنة');
+  assert.ok(findAll(two, (e) => e.classList.contains('lib-prevl')).length === 1, 'النسخة السابقة في بطاقة خانتها (2)');
+  assert.ok(findAll(one, (e) => e.classList.contains('lib-prevl')).length === 0);
+  const actions = (card) => card.querySelector('.lib-card__actions').querySelectorAll('button').map(textOf);
+  assert.deepEqual(actions(one), ['تصدير SRT', 'ملف بديل…', 'حذف…'], 'النشطة بلا «تفعيل»');
+  assert.deepEqual(actions(two), ['تفعيل', 'تصدير SRT', 'ملف بديل…', 'حذف…']);
+  assert.equal(textOf(two.querySelector('.lib-card__actions .tj-btn--primary')), 'تفعيل', 'الإجراء الرئيسي في غير النشطة');
+  // يُطوى: تزول البطاقات والحالة تعود.
+  open.click();
+  assert.ok(expOf(m, IDS[0]) === null);
+  assert.equal(buttonNamed(rowFor(m, IDS[0]), 'إظهار الترجمات').getAttribute('aria-expanded'), 'false');
+  assert.ok(!rowFor(m, IDS[0]).classList.contains('lib-row--open'));
+});
 
-  const name = two.querySelector('input');
+/** اسم ملف ترجمة الخانة في عيّنة الإصدار الثاني (بالثلاث). */
+function m_fileName(n) {
+  return sampleBundle({ third: true }).slots[n - 1].track.fileName;
+}
+
+test('التوسيع: الخانة الفارغة بطاقة متقطّعة واحدة بزر «رفع ترجمة…» يرفع إليها، ولا بطاقة لخانة ثالثة فارغة', async () => {
+  const text = writeSrt(makeCues(5).map((c) => ({ ...c, text: `جديد ${c.n}` })));
+  const m = await mount({
+    seed: async (store) => { await seedBundle(store, sampleBundle({ videoId: IDS[0] })); },
+    env: { pickFiles: async () => [new File([text], 'جديد.ar.srt')] },
+  });
+  const exp = await expand(m, IDS[0]);
+  assert.equal(exp.querySelectorAll('section.lib-card').length, 3, 'ترجمتان وبطاقة فارغة واحدة');
+  const empty = exp.querySelector('.lib-card--empty');
+  assert.equal(textOf(empty.querySelector('h4')), 'الترجمة 3 · خانة فارغة');
+  assert.equal(empty.getAttribute('data-slot'), '3');
+  m.answers.push(false);
+  buttonNamed(empty, 'رفع ترجمة…').click();
+  await settle(10);
+  const radios = findAll(m.calls.confirms.at(-1).content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio');
+  assert.deepEqual(radios.filter((r) => r.checked).map((r) => r.getAttribute('value')), ['3'], 'الرفع إلى الخانة الفارغة المعروضة');
+  m.answers.push(true);
+  buttonNamed(expOf(m, IDS[0]).querySelector('.lib-card--empty'), 'رفع ترجمة…').click();
+  await settle(20);
+  assert.equal((await m.store.getBundle(IDS[0])).slots[2].track.original[0].text, 'جديد 1');
+  assert.equal(expOf(m, IDS[0]).querySelectorAll('.lib-card--empty').length, 0, 'امتلأت: لا بطاقة فارغة');
+  assert.equal(expOf(m, IDS[0]).querySelectorAll('section.lib-card').length, 3);
+});
+
+test('التوسيع: الاسم المختصر يُحفظ (Enter أو change) ويُلغى بـEsc، والتفعيل، وحذف ترجمة بتأكيد يسرد ما يُحذف', async () => {
+  const m = await mount();
+  let exp = await expand(m, IDS[0]);
+  buttonNamed(cardOf(exp, 2), 'إعادة تسمية الترجمة 2').click();
+  const name = cardOf(exp, 2).querySelector('input');
   assert.equal(name.value, 'مراجعة');
+  assert.equal(name.getAttribute('maxlength'), '24');
+  assert.ok(m.doc.activeElement === name, 'التحرير يبدأ بالتركيز على الحقل');
   name.value = '  نسخة   المراجع ';
   name.dispatchEvent({ type: 'change' });
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).slots[1].name, 'نسخة المراجع');
-  const long = cardOf(panelOf(m), 2).querySelector('input');
+  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', '2 · نسخة المراجع', 'الترجمة 3'], 'الشريحة تحدّثت');
+  assert.equal(textOf(cardOf(expOf(m, IDS[0]), 2).querySelector('h4')), 'الترجمة 2 · نسخة المراجع');
+  // اسم أطول من الحد: رسالة خطأ ولا يُحفظ.
+  exp = expOf(m, IDS[0]);
+  buttonNamed(cardOf(exp, 2), 'إعادة تسمية الترجمة 2').click();
+  const long = cardOf(exp, 2).querySelector('input');
   long.value = 'اسم طويل جدًا يتجاوز الحد المسموح';
   long.dispatchEvent({ type: 'change' });
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).slots[1].name, 'نسخة المراجع');
-  // رسائل اللوحة داخل الحوار المشروط لا تحت خلفيته (CL-006).
-  assert.ok(textOf(panelOf(m).querySelector('.tj-toast--danger')).includes('24 محرفًا'));
+  assert.ok(textOf(m.root.querySelector('.tj-toast--danger')).includes('24 محرفًا'), 'الرسالة في الصفحة نفسها لا في حوار');
+  // Esc يلغي دون كتابة، وEnter بقيمة غير متغيرة يخرج دون كتابة.
+  const rev = (await m.store.getBundle(IDS[0])).record.rev;
+  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'تسمية الترجمة 3').click();
+  const third = cardOf(expOf(m, IDS[0]), 3).querySelector('input');
+  third.value = 'مسودة';
+  third.dispatchEvent({ type: 'keydown', key: 'Escape' });
+  assert.ok(cardOf(expOf(m, IDS[0]), 3).querySelector('input') === null, 'عاد العنوان');
+  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'تسمية الترجمة 3').click();
+  cardOf(expOf(m, IDS[0]), 3).querySelector('input').dispatchEvent({ type: 'keydown', key: 'Enter' });
+  await settle(5);
+  assert.equal((await m.store.getBundle(IDS[0])).slots[2].name, null);
+  assert.equal((await m.store.getBundle(IDS[0])).record.rev, rev, 'لا كتابة');
 
-  buttonNamed(cardOf(panelOf(m), 2), 'تفعيل').click();
+  buttonNamed(cardOf(expOf(m, IDS[0]), 2), 'تفعيل').click();
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).active, 2);
-  assert.ok(textOf(cardOf(panelOf(m), 2)).includes('نشطة'));
+  assert.ok(textOf(cardOf(expOf(m, IDS[0]), 2)).includes('نشطة'));
+  assert.ok(findAll(cardOf(expOf(m, IDS[0]), 1), (e) => textOf(e) === 'نشطة').length === 0);
 
   m.answers.push(false);
-  buttonNamed(cardOf(panelOf(m), 3), 'حذف هذه الترجمة…').click();
+  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'حذف…').click();
   await settle(10);
-  assert.equal(m.calls.confirms.at(-1).tone, 'danger');
+  const del = m.calls.confirms.at(-1);
+  assert.equal(del.tone, 'danger');
+  assert.equal(del.title, 'حذف الترجمة 3؟');
+  assert.deepEqual(del.content.querySelectorAll('ul.lib-del__list')[0].querySelectorAll('li').map(textOf).slice(0, 1), [`الترجمة 3 — ملف ${LRI}${m_fileName(3)}${PDI}`]);
+  assert.ok(findAll(del.content, (e) => e.classList.contains('lib-del__list'))[1], 'وما يبقى');
   assert.ok((await m.store.getBundle(IDS[0])).slots[2].track, 'الإلغاء لا يحذف');
   m.answers.push(true);
-  buttonNamed(cardOf(panelOf(m), 3), 'حذف هذه الترجمة…').click();
+  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'حذف…').click();
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).slots[2].track, null);
-  assert.ok(textOf(cardOf(panelOf(m), 3)).includes('فارغة'));
-  panelOf(m).close();
-  assert.ok(panelOf(m) === null, 'الإغلاق يزيل اللوحة');
+  assert.ok(textOf(expOf(m, IDS[0]).querySelector('.lib-card--empty')).includes('الترجمة 3 · خانة فارغة'), 'صارت البطاقة المتقطّعة');
+  assert.equal(textOf(m.root.querySelectorAll('.tj-toast--success').at(-1)), 'حُذفت الترجمة 3.');
+  assert.deepEqual(chipsOf(m, IDS[0]).map((b) => b.getAttribute('data-slot')), ['1', '2'], 'والشريحة زالت');
 });
 
-test('«الترجمات…» — تغيير المرجع عند التعدد يعيد المقارنة ويحفظ المرجع', async () => {
+test('التوسيع: «تصدير SRT» لأي ترجمة (ولو غير نشطة) بإزاحتها هي وبسؤال التوقيت، والإلغاء لا ينزّل', async () => {
   const m = await mount();
-  openMore(m, IDS[0], 'الترجمات');
+  let exp = await expand(m, IDS[0]);
+  // الخانة 3 غير نشطة بإزاحة +0.3: يسأل عن التوقيت؛ الإلغاء لا ينزّل.
+  m.answers.push(false);
+  buttonNamed(cardOf(exp, 3), 'تصدير SRT').click();
   await settle(10);
-  const select = cardOf(panelOf(m), 2).querySelector('select');
+  assert.equal(m.calls.confirms.at(-1).title, 'توقيت الملف المصدَّر');
+  assert.match(m.calls.confirms.at(-1).body, /\u2066\+0\.3\u2069 ث/);
+  assert.equal(m.calls.saves.length, 0);
+  // «كما يظهر الآن»: التوقيت المحفوظ + الإزاحة.
+  m.answers.push(true);
+  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'تصدير SRT').click();
+  await settle(10);
+  assert.equal(m.calls.saves.length, 1);
+  assert.equal(m.calls.saves[0].name, `${IDS[0]}.ar.srt`);
+  assert.ok(m.calls.saves[0].text.includes('ثالثة 1') && !m.calls.saves[0].text.includes('أولى 1'), 'نص الخانة 3 لا النشطة');
+  const stored = (await m.store.getBundle(IDS[0])).slots[2].track.original[0];
+  const shown = /(\d\d:\d\d:\d\d,\d{3}) --> /.exec(m.calls.saves[0].text)[1];
+  assert.notEqual(shown, formatTimecode(stored.startMs), 'بالإزاحة');
+  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'بدأ تنزيل الملف.');
+  // «المحفوظ كما هو»: بلا إزاحة.
+  m.answers.push((o) => {
+    const saved = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('value') === 'saved')[0];
+    saved.checked = true;
+    saved.dispatchEvent({ type: 'change' });
+    return true;
+  });
+  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'تصدير SRT').click();
+  await settle(10);
+  assert.ok(m.calls.saves[1].text.includes(`${formatTimecode(stored.startMs)} --> `));
+  // نتيجة saveFile الفاشلة رسالة بنص رمزها.
+  exp = expOf(m, IDS[0]);
+});
+
+test('التوسيع: «ملف بديل…» يرفع إلى الخانة نفسها استبدالًا (الهدف الافتراضي رقمها)، والإلغاء لا يمسّ التخزين', async () => {
+  const text = writeSrt(makeCues(5).map((c) => ({ ...c, text: `بديل ${c.n}` })));
+  const m = await mount({ env: { pickFiles: async () => [new File([text], 'بديل.ar.srt')] } });
+  const exp = await expand(m, IDS[0]);
+  const before = JSON.stringify(m.area.dump());
+  m.answers.push(false);
+  buttonNamed(cardOf(exp, 2), 'ملف بديل…').click();
+  await settle(10);
+  const dialog = m.calls.confirms.at(-1);
+  const radios = findAll(dialog.content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio');
+  assert.deepEqual(radios.filter((r) => r.checked).map((r) => r.getAttribute('value')), ['2'], 'الهدف الافتراضي الخانة نفسها');
+  assert.equal(dialog.confirmLabel, 'استبدال');
+  assert.equal(JSON.stringify(m.area.dump()), before);
+  m.answers.push(true);
+  buttonNamed(cardOf(expOf(m, IDS[0]), 2), 'ملف بديل…').click();
+  await settle(20);
+  const b = await m.store.getBundle(IDS[0]);
+  assert.equal(b.slots[1].track.original[0].text, 'بديل 1');
+  assert.equal(b.previous.from, 2, 'المستبدَلة نسخة سابقة');
+  assert.equal(b.slots[0].track.original[0].text, 'أولى 1', 'الأخرى باقية');
+  assert.ok(expOf(m, IDS[0]), 'التوسيع باقٍ بعد التحديث');
+  assert.ok(textOf(cardOf(expOf(m, IDS[0]), 2)).includes('بديل.ar.srt'), 'البطاقة بالملف الجديد');
+});
+
+test('التوسيع — تغيير المرجع عند التعدد يعيد المقارنة ويحفظ المرجع', async () => {
+  const m = await mount();
+  const exp = await expand(m, IDS[0]);
+  const select = cardOf(exp, 2).querySelector('select');
   assert.equal(select.childNodes.length, 3, 'البصمتان و«بلا مرجع»');
   assert.equal(select.value, 'fp_test000002');
   select.value = 'fp_test000001';
@@ -186,15 +403,32 @@ test('«الترجمات…» — تغيير المرجع عند التعدد ي
   const s = (await m.store.getBundle(IDS[0])).slots[1];
   assert.equal(s.track.fingerprintId, 'fp_test000001');
   assert.equal(s.track.comparison.fingerprintId, 'fp_test000001');
-  assert.equal(textOf(panelOf(m).querySelector('.tj-toast--success')), 'تغيّر مرجع المقارنة للترجمة 2.');
+  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'تغيّر مرجع المقارنة للترجمة 2.');
 });
 
-test('«النسخة السابقة»: مصدرها وتاريخها وسعتها، والاستعادة تبديل قابل للعكس بتأكيد، والحذف بتأكيد', async () => {
+test('التوسيع — نتيجة المقارنة: مطابقة بعدّها، والمقاطع الناقصة بأرقامها، وبلا بصمة سطر معلومة', async () => {
+  const b = sampleBundle({ videoId: IDS[0], third: true });
+  b.slots[0].track.comparison = { ...b.slots[0].track.comparison, matched: true, countSource: 5, countTarget: 5 };
+  b.slots[1].track.comparison = { ...b.slots[1].track.comparison, matched: false, missing: [57, 58, 203], countSource: 8, countTarget: 5, restoreTimingAvailable: false };
+  b.slots[2].track.fingerprintId = null;
+  b.slots[2].track.comparison = null;
+  b.record.arabic = structuredClone(b.slots[0].track);
+  const m = await mount({ seed: async (store) => { await seedBundle(store, b); } });
+  const exp = await expand(m, IDS[0]);
+  assert.equal(textOf(cardOf(exp, 1).querySelector('.lib-result')), 'مطابق للأصل · 5 من 5');
+  assert.ok(cardOf(exp, 1).querySelector('.lib-result').classList.contains('lib-result--success'));
+  assert.match(textOf(cardOf(exp, 2).querySelector('.lib-result')), /3 مقاطع ناقصة: 57، 58، 203/);
+  assert.ok(cardOf(exp, 2).querySelector('.lib-result').classList.contains('lib-result--warning'));
+  assert.match(textOf(cardOf(exp, 3).querySelector('.lib-result')), /لا بصمة للمقارنة/);
+});
+
+test('التوسيع — «النسخة السابقة» في بطاقة خانتها: تاريخها وسعتها، والاستعادة تبديل قابل للعكس بتأكيد، والحذف بتأكيد', async () => {
   const m = await mount();
-  openMore(m, IDS[0], 'الترجمات');
-  await settle(10);
-  const prev = () => panelOf(m).querySelector('section.lib-prev');
-  assert.match(textOf(prev()), /من الترجمة 2 · قبل ساعة · \d+ ك\.ب/);
+  await expand(m, IDS[0]);
+  const prev = () => expOf(m, IDS[0]).querySelector('.lib-prevl');
+  assert.match(textOf(prev()), /^نسخة سابقة محفوظة · قبل ساعة · \d+ ك\.ب/);
+  assert.ok(prev().parentNode.getAttribute('data-slot') === '2', 'في بطاقة الترجمة 2 (مصدرها)');
+  assert.ok(prev().querySelector('.lib-prevl__text').title.includes('.ar.srt'), 'ملفها وتاريخها في التلميح');
   const before = await m.store.getBundle(IDS[0]);
   m.answers.push(true);
   buttonNamed(prev(), 'استعادة').click();
@@ -210,26 +444,87 @@ test('«النسخة السابقة»: مصدرها وتاريخها وسعته�
   assert.deepEqual(again.slots[1].track.original, before.slots[1].track.original, 'استعادة ثانية تعكس الأولى');
   assert.deepEqual(again.slots.map((s) => s.n), [1, 2, 3], 'لا خانة رابعة');
 
+  m.answers.push(false);
+  buttonNamed(prev(), 'حذف').click();
+  await settle(10);
+  assert.ok((await m.store.getBundle(IDS[0])).previous, 'الإلغاء لا يحذف');
   m.answers.push(true);
   buttonNamed(prev(), 'حذف').click();
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).previous, null);
-  assert.ok(textOf(prev()).includes('لا نسخة سابقة'));
+  assert.ok(prev() === null, 'زال السطر');
+});
+
+test('التوسيع — نسخة سابقة لخانة لا بطاقة لها (فارغة غير التالية) سطر قائم بذاته فلا تضيع الاستعادة', async () => {
+  const b = sampleBundle({ videoId: IDS[0], third: true });
+  b.previous = { ...b.previous, from: 3 };
+  const m = await mount({
+    seed: async (store) => {
+      await seedBundle(store, b);
+      await store.updateBundle(IDS[0], (cur) => ({ ...withoutSlot(cur, 3, NOW), previous: cur.previous }));
+      await store.updateBundle(IDS[0], (cur) => ({ ...withoutSlot(cur, 2, NOW), previous: cur.previous }));
+    },
+  });
+  const exp = await expand(m, IDS[0]);
+  // الفارغتان 2 و3: بطاقة متقطّعة لأولاهما (2)، والسابقة من 3 سطر مستقل تحت البطاقات.
+  assert.equal(exp.querySelector('.lib-card--empty').getAttribute('data-slot'), '2');
+  const own = exp.querySelector('.lib-exp__extra .lib-prevl');
+  assert.ok(own, 'سطر مستقل');
+  assert.match(textOf(own), /^نسخة سابقة محفوظة · من الترجمة 3 · /);
+  assert.ok(buttonNamed(own, 'استعادة'));
+});
+
+test('التوسيع: يبقى مفتوحًا عبر إعادة بناء القائمة ويتحدّث بتغيّر من مكان آخر (المشغّل أو تبويب آخر)، والتركيز يعود إلى الزر نفسه', async () => {
+  const { activateSlot } = await import('../../../../src/pages/library/actions.js');
+  const m = await mount();
+  const exp = await expand(m, IDS[0]);
+  const btn = buttonNamed(cardOf(exp, 3), 'تصدير SRT');
+  btn.focus();
+  // تغيّر من سياق آخر: الخانة 2 نشطة.
+  await activateSlot({ store: m.store, videoId: IDS[0], n: 2, now: () => Date.parse(NOW) + 99999 });
+  await m.area.flush();
+  await m.clock.runAll();
+  await settle(10);
+  assert.ok(expOf(m, IDS[0]), 'ما زال مفتوحًا');
+  assert.ok(textOf(cardOf(expOf(m, IDS[0]), 2)).includes('نشطة'), 'بالنسخة الأحدث');
+  assert.ok(textOf(cardOf(expOf(m, IDS[0]), 1)).includes('نشطة') === false);
+  assert.equal(m.doc.activeElement.getAttribute('data-fk'), `${IDS[0]}:card-3:export`, 'التركيز عاد إلى الزر نفسه بعد إعادة الرسم');
+  // رسائل التوسيع في الصفحة نفسها: الحاويتان في جذر المحفوظات دائمًا.
+  assert.ok(m.root.contains(m.lib.toaster.root) && m.root.contains(m.lib.toaster.live));
+});
+
+test('التوسيع: عنوان الفيديو معزول في اسم منطقته، وفيديو حُذف من مكان آخر يزيل صفه ولا يرمي', async () => {
+  const m = await mount();
+  const exp = await expand(m, IDS[0]);
+  assert.equal(exp.getAttribute('aria-label'), `ترجمات ${String.fromCodePoint(0x2068)}${(await m.store.getVideo(IDS[0])).title}${String.fromCodePoint(0x2069)}`);
+  await m.store.deleteVideo(IDS[0]);
+  await m.area.flush();
+  await m.clock.runAll();
+  await settle(10);
+  assert.ok(rowFor(m, IDS[0]) === undefined, 'زال الصف');
+  assert.ok(!m.doc.body.querySelector('.lib-exp'));
 });
 
 test('«نص دراسي…»: الصيغة واللغة ومعاينة الاسم، ثم الحفظ عبر saveFile؛ والثنائي معطّل بلا مسار إنجليزي', async () => {
   const m = await mount();
   m.answers.push(async (o) => {
-    assert.ok(textOf(o.content).includes(`اسم الملف: ${IDS[0]}.ar.study.txt`));
+    const fileName = () => textOf(o.content.querySelector('.lib-study__file'));
+    assert.equal(fileName(), `${IDS[0]}.ar.study.txt`);
+    // مقطّعتان (الصيغة واللغة) بخيارات radio حقيقية، والمعاينة تحت «اسم الملف».
+    assert.equal(o.content.querySelectorAll('fieldset.tj-seg').length, 2);
+    assert.deepEqual(findAll(o.content, (e) => e.classList.contains('tj-seg__label')).map(textOf), ['TXT', 'Markdown', 'العربية وحدها', 'ثنائي · العربية والإنجليزية']);
+    const hint = findAll(o.content, (e) => e.classList.contains('tj-field__hint') && textOf(e) === MD_HINT)[0];
+    assert.equal(hint.hidden, true, 'تلميح روابط الأوقات لـMarkdown وحده');
     const md = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('value') === 'md')[0];
     md.checked = true;
     md.dispatchEvent({ type: 'change' });
+    assert.equal(hint.hidden, false);
     const bi = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('value') === 'bi')[0];
     assert.equal(bi.disabled, false);
     bi.checked = true;
     bi.dispatchEvent({ type: 'change' });
     await settle(5);
-    assert.ok(textOf(o.content).includes(`اسم الملف: ${IDS[0]}.ar-en.study.md`));
+    assert.equal(fileName(), `${IDS[0]}.ar-en.study.md`);
     return true;
   });
   openMore(m, IDS[0], 'نص دراسي');
@@ -245,6 +540,22 @@ test('«نص دراسي…»: الصيغة واللغة ومعاينة الاس�
   more.click();
   const item = menuItems(more).find((i) => textOf(i).startsWith('نص دراسي'));
   assert.equal(item.getAttribute('aria-disabled'), 'true');
+});
+
+test('«نص دراسي…» بلا مسار إنجليزي: الثنائي معطّل بسببه في السطر وفي التلميح ولا يُختار', async () => {
+  const m = await mount({
+    seed: async (store) => { await store.updateVideo(IDS[0], () => ({ ...videoRecord({ videoId: IDS[0] }), english: [], fingerprints: [], arabic: { ...videoRecord({ videoId: IDS[0] }).arabic, fingerprintId: null, comparison: null }, title: 'عربي وحده' })); },
+  });
+  let seen = null;
+  m.answers.push((o) => {
+    const bi = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('value') === 'bi')[0];
+    seen = { disabled: bi.disabled, why: findAll(o.content, (e) => e.classList.contains('tj-field__hint') && e.id === bi.getAttribute('aria-describedby')).map(textOf)[0], described: bi.getAttribute('aria-describedby') };
+    return false;
+  });
+  openMore(m, IDS[0], 'نص دراسي');
+  await settle(10);
+  assert.deepEqual(seen && { disabled: seen.disabled, why: seen.why }, { disabled: true, why: 'لا مسار إنجليزي محفوظ لهذا الفيديو.' });
+  assert.ok(seen.described, 'السبب مرتبط بالخيار');
 });
 
 test('التصدير يتبع saveFile: الإلغاء رسالة معلومة، والرجوع إلى التنزيل العادي SV_FALLBACK_BLOB، ولا بصمة لتصدير لم يحدث', async () => {
@@ -267,8 +578,7 @@ test('«نسخ» يرفق القاموس بالنص نفسه الذي تبنيه
       await store.setPrefs(samplePrefs());
     },
   });
-  const copy = buttonNamed(rowFor(m, IDS[0]), 'نسخ التعليمات');
-  copy.click();
+  openMore(m, IDS[0], 'نسخ التعليمات');
   await settle(5);
   const terms = samplePrefs().glossary.terms;
   assert.equal(m.calls.clipboard[0], instructions({ videoId: IDS[0], title: 'عنوان', glossary: terms }));
@@ -277,7 +587,7 @@ test('«نسخ» يرفق القاموس بالنص نفسه الذي تبنيه
   await m.area.flush();
   await settle(5);
   await m.clock.runAll();
-  buttonNamed(rowFor(m, IDS[0]), 'نسخ التعليمات').click();
+  openMore(m, IDS[0], 'نسخ التعليمات');
   await settle(5);
   assert.equal(m.calls.clipboard.at(-1), instructions({ videoId: IDS[0], title: 'عنوان' }));
 });
@@ -306,25 +616,7 @@ test('manualEdits: العدد نفسه في المحفوظات والمشغّل�
   }
 });
 
-test('تدقيق 5fedcb9 (CL-006، CL-015، GM-016.2): رسائل «الترجمات…» ومنطقتها الحية داخل الحوار وتعود بعده، واللوحة المفتوحة تتحدث بتغيّر من مكان آخر', async () => {
-  const { activateSlot } = await import('../../../../src/pages/library/actions.js');
-  const m = await mount();
-  openMore(m, IDS[0], 'الترجمات');
-  await settle(10);
-  const panel = panelOf(m);
-  assert.ok(panel.contains(m.lib.toaster.root) && panel.contains(m.lib.toaster.live), 'الحاويتان داخل الحوار');
-  // تغيّر من سياق آخر (المشغّل أو تبويب آخر): الخانة 2 نشطة.
-  await activateSlot({ store: m.store, videoId: IDS[0], n: 2, now: () => Date.parse(NOW) + 99999 });
-  await m.area.flush();
-  await new Promise((r) => setTimeout(r, 220));
-  await settle(10);
-  assert.ok(textOf(cardOf(panelOf(m), 2)).includes('نشطة'), 'اللوحة بالنسخة الأحدث');
-  panel.close('x');
-  await settle(5);
-  assert.ok(m.root.contains(m.lib.toaster.root) && m.root.contains(m.lib.toaster.live), 'عادتا إلى الصفحة');
-});
-
-test('تدقيق 5fedcb9 (CL-002، قرار سلطان): عنوان فيه حرف عربي RTL ولو بدأ بكلمة لاتينية، والإنجليزي الخالص LTR، في الصف ولوحة «الترجمات…»', async () => {
+test('تدقيق 5fedcb9 (CL-002، قرار سلطان): عنوان فيه حرف عربي RTL ولو بدأ بكلمة لاتينية، والإنجليزي الخالص LTR، في الصف ومنطقة التوسيع', async () => {
   const MIXED = 'API هو الواجهة! (الجزء 3)';
   const EN = 'Do schools kill creativity? | TED';
   const m = await mount({
@@ -336,13 +628,11 @@ test('تدقيق 5fedcb9 (CL-002، قرار سلطان): عنوان فيه حر�
   });
   const titleOf = (id) => rowFor(m, id).querySelector('.lib-row__title');
   assert.equal(titleOf(IDS[0]).textContent, MIXED);
+  assert.equal(titleOf(IDS[0]).tagName, 'h3');
   assert.equal(titleOf(IDS[0]).dir, 'rtl', 'يبدأ بـAPI وفيه حرف عربي');
   assert.equal(titleOf(IDS[1]).dir, 'ltr', 'إنجليزي خالص، بمحاذاة يمين من .tj-auto');
-  openMore(m, IDS[0], 'الترجمات');
-  await settle(10);
-  const head = panelOf(m).querySelector('.lib-panel__title');
-  assert.equal(head.dir, 'rtl');
-  assert.equal(head.textContent, `الترجمات — ${String.fromCodePoint(0x2068)}${MIXED}${String.fromCodePoint(0x2069)}`, 'العنوان معزول داخل الجملة');
+  const exp = await expand(m, IDS[0]);
+  assert.equal(exp.getAttribute('aria-label'), `ترجمات ${String.fromCodePoint(0x2068)}${MIXED}${String.fromCodePoint(0x2069)}`, 'العنوان معزول داخل الجملة');
   // .tj-auto لا يأخذ أول حرف قوي (plaintext يتجاهل dir)، بل يعزل ويحاذي يمينًا.
   const { readFileSync } = await import('node:fs');
   const css = readFileSync(new URL('../../../../src/ui/base.css', import.meta.url), 'utf8');

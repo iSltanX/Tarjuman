@@ -1,13 +1,24 @@
 // نصوص أدوات الشريط (figma-design-brief §٥.٢ و§٦ و§١٦.١) ودوالها النقية: التلميحات بالخطوة الحالية، ومعنى
 // الإزاحة بالكلمات، وملخص المقارنة في سطر، وقراءة الثواني من حقل. أرقام لاتينية، والإزاحة بعلامتها (formatOffset).
 import { COUNT_FORMS, formatCount, formatTimecode, offsetInline } from '../../ui/format.js';
+import { languageName as sharedLanguageName } from '../../ui/lang.js';
 
 export const LABELS = Object.freeze({
   group: 'أدوات ترجمان',
-  download: 'تحميل الترجمة الإنجليزية (SRT)',
+  download: 'تحميل الأصل (SRT)',
   upload: 'رفع الترجمة العربية (SRT)',
-  downloadTitle: 'تحميل الترجمة',
-  displayTitle: 'الترجمة العربية',
+  translation: 'الترجمة',
+  panel: 'النص المتزامن',
+  panelOpen: 'فتح النص المتزامن',
+  panelClose: 'إغلاق النص المتزامن',
+  downloadTitle: 'تحميل الأصل',
+  displayTitle: 'الترجمة',
+  languageTitle: 'اللغة',
+  originalFallback: 'الأصل',
+  kindManual: 'يدوية',
+  kindAsr: 'تلقائية',
+  arabicName: 'العربية',
+  edited: 'معدّلة',
   timingTitle: 'توقيت الترجمة',
   confirmTitle: 'استبدال الترجمة؟',
   whyLink: 'لماذا؟',
@@ -18,15 +29,16 @@ export const LABELS = Object.freeze({
   modeNormalNote: 'مقاطع كما في يوتيوب، للتزامن الأدق',
   modeLongNote: 'جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما',
   checking: 'جارٍ التنزيل…',
-  copyNeedsTrack: 'يتاح النسخ بعد التقاط المسار الإنجليزي.',
+  copyNeedsTrack: 'يتاح النسخ بعد التقاط مسار الأصل.',
   fallback: 'خيارات احتياطية',
   split: 'تقسيم الملف إلى أجزاء (للملفات الطويلة جدًا)',
   splitSize: 'مقاطع لكل جزء',
   modeAr: 'العربية وحدها',
-  modeDual: 'العربية فوق الإنجليزية',
+  // بلا مسار أصلي لا لغة تُسمّى: «فوق الأصل». ومعه يُسمّى باسم لغته (dualLabels).
+  modeDual: 'العربية فوق الأصل',
   modeOff: 'إخفاء الترجمة',
   segAr: 'العربية',
-  segDual: 'فوق الإنجليزية',
+  segDual: 'فوق الأصل',
   segOff: 'إخفاء',
   displayMode: 'وضع العرض',
   exportMode: 'وضع التصدير',
@@ -49,7 +61,7 @@ export const LABELS = Object.freeze({
   later: 'أحدث',
   back: 'رجوع',
   downloadFile: 'تنزيل الملف',
-  downloadFileHint: 'ملف الترجمة الإنجليزية (SRT) وحده',
+  downloadFileHint: 'ملف الأصل (SRT) وحده',
   copyShort: 'نسخ التعليمات',
   copyHint: 'تعليمات الترجمة وحدها، لترفقها مع الملف',
   copied: 'نُسخت التعليمات',
@@ -71,7 +83,51 @@ export const LABELS = Object.freeze({
   resetHint: 'إعادة الإزاحة إلى 0',
   signLegend: '+ تأخير · − تقديم · تُحفظ لهذا الفيديو',
   close: 'إغلاق',
+  // حالة زرّي الشريط في تلميحهما ووصفهما (لا نقطة ملوّنة على الزر).
+  stateReady: 'المسار جاهز',
+  stateIncomplete: 'قد يكون المسار ناقصًا',
+  stateDownloading: 'جارٍ التنزيل…',
+  stateDiffers: 'فيها فروق عن الأصل',
+  slotsFull: 'الخانات الثلاث ممتلئة؛ الرفع استبدال.',
+  sentenceNow: 'أي جملة تُقال الآن؟',
 });
+
+/** @type {Intl.DisplayNames | null} */
+/**
+ * اسم اللغة بالعربية من رمز المسار الفعلي بلهجته إن عُرفت (en ← الإنجليزية، en-GB ← الإنجليزية (المملكة المتحدة))، من الدالة
+ * المشتركة (src/ui/lang.js)؛ وما لا يعرفه المتصفح يبقى رمزه، وبلا رمز أو برمز غير محدد null.
+ * @param {string | null | undefined} lang
+ * @returns {string | null}
+ */
+export const languageName = (lang) => sharedLanguageName(lang);
+
+/**
+ * تسمية وضع «العربية فوق الأصل» باسم لغة الأصل الفعلية: الظاهرة بلغتها الأساسية («فوق الإنجليزية»)، واسم الوصول
+ * الكامل بلهجتها («العربية فوق الإنجليزية (المملكة المتحدة)»)؛ وبلا أصل «فوق الأصل».
+ * @param {string | null | undefined} lang
+ * @returns {{ short: string, aria: string }}
+ */
+export function dualLabels(lang) {
+  const full = languageName(lang);
+  if (!full) return { short: LABELS.segDual, aria: LABELS.modeDual };
+  const base = languageName(String(lang).trim().split(/[-_]/)[0]) ?? full;
+  return { short: `فوق ${base}`, aria: `العربية فوق ${full}` };
+}
+
+/**
+ * سطر المسار الملتقط في قائمة التحميل: «الإنجليزية · يدوية · 412 مقطعًا» (اسم لغته الفعلي، ونوعه، وعدد مقاطعه).
+ * @param {{ lang: string, kind: 'manual' | 'asr', cueCount: number }} t
+ */
+export function trackLine(t) {
+  const kind = t.kind === 'asr' ? LABELS.kindAsr : LABELS.kindManual;
+  return `${languageName(t.lang) ?? LABELS.originalFallback} · ${kind} · ${formatCount(t.cueCount, COUNT_FORMS.cue)}`;
+}
+
+/** سطر الترجمة في قائمتها: «العربية · 412 مقطعًا» (و«· معدّلة» حين عُدّلت). @param {number} count @param {boolean} edited */
+export const translationLine = (count, edited) => `${LABELS.arabicName} · ${formatCount(count, COUNT_FORMS.cue)}${edited ? ` · ${LABELS.edited}` : ''}`;
+
+/** تلميح الزر مع حالته: «تحميل الأصل (SRT) · المسار جاهز»؛ وبلا حالة الاسم وحده. @param {string} name @param {string | null} state */
+export const withState = (name, state) => (state ? `${name} · ${state}` : name);
 
 /** «عند 12:34»: اللحظة المرجعية للمزامنة بالجملة. @param {string} t */
 export const syncAt = (t) => `عند ${t}`;

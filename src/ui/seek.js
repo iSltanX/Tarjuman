@@ -52,3 +52,32 @@ export async function jumpToVideo({ videoId, ms }, { tabs = globalThis.chrome?.t
     return { ok: false, code: 'TJ_SEEK_FAILED' };
   }
 }
+
+/**
+ * فتح الفيديو بلا قفز زمني (حالة المحرّر الفارغة): تبويبه المفتوح يُجلب إلى الأمام كما هو دون أن يُمسّ موضع تشغيله، وإلا فُتح
+ * تبويب جديد في أوله. لا رسالة tj:seek.
+ * @param {string} videoId
+ * @param {{ tabs?: typeof chrome.tabs, windows?: typeof chrome.windows, timeoutMs?: number }} [deps]
+ * @returns {Promise<{ ok: true, via: 'open' | 'new', tabId: number } | { ok: false, code: string }>}
+ */
+export async function openVideo(videoId, { tabs = globalThis.chrome?.tabs, windows = globalThis.chrome?.windows, timeoutMs = ASK_TIMEOUT_MS } = {}) {
+  let url;
+  try {
+    url = watchUrl(videoId);
+  } catch {
+    return { ok: false, code: 'TJ_BAD_VIDEO_ID' };
+  }
+  try {
+    const [tab] = await findVideoTabs(videoId, { tabs, timeoutMs });
+    if (tab) {
+      await tabs.update(tab.id, { active: true });
+      if (windows && Number.isInteger(tab.windowId)) await windows.update(tab.windowId, { focused: true }).catch(() => {});
+      return { ok: true, via: 'open', tabId: tab.id };
+    }
+    const created = await tabs.create({ url });
+    return { ok: true, via: 'new', tabId: created?.id ?? -1 };
+  } catch {
+    return { ok: false, code: 'PG_OPEN_FAILED' };
+  }
+}
+

@@ -112,7 +112,11 @@ test('التفعيل من المحفوظات ينعكس في المشغّل ال
   doc.body.append(lib.root);
   await lib.load();
   const row = lib.root.querySelector(`li[data-video="${A}"]`);
-  row.querySelector('.tj-slots').querySelectorAll('button')[1].click();
+  // الهوية «بُنّ على ورق»: التفعيل من بطاقة الترجمة في الصف الموسّع (بدل محدد الخانات في الصف).
+  row.querySelector('.lib-toggle').click();
+  await settle(10);
+  const card = row.querySelector('.lib-card[data-slot="2"]');
+  [...card.querySelectorAll('button')].find((b) => b.textContent.trim() === 'تفعيل').click();
   await settle(10);
   await area.flush();
   await settle(10);

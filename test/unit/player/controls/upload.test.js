@@ -31,7 +31,7 @@ test('اختيار ملف: فحص ومقارنة بالبصمات المحفوظ
   const page = mountPage({ state: makeState({ saved: { fingerprints: fps } }) });
   click(page.ui.btn('upload'));
   chooseFiles(page.ui, [file('talk.ar.srt')]);
-  assert.equal(page.ui.btn('upload').querySelector('.spin').hasAttribute('hidden'), false, 'فحص جارٍ');
+  assert.equal(page.ui.btn('upload').querySelector('.load').hasAttribute('hidden'), false, 'فحص جارٍ');
   await settle();
   assert.deepEqual(page.flows.reads[0].names, ['talk.ar.srt']);
   assert.strictEqual(page.flows.reads[0].opts.fingerprints, fps);
@@ -42,7 +42,7 @@ test('اختيار ملف: فحص ومقارنة بالبصمات المحفوظ
   assert.deepEqual(load[3], { replace: false, activate: undefined });
   assert.equal(page.flows.reviews[0].fileName, 'talk.ar.srt', 'فُحص الاسم قبل الحفظ');
   assert.strictEqual(page.flows.reviews[0].fingerprints, fps);
-  assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
+  assert.equal(page.ui.menuLabel(), 'الترجمة');
   const text = page.ui.menuText();
   assert.match(text, /talk\.ar\.srt/);
   assert.match(text, /5 مقاطع/);
@@ -89,8 +89,8 @@ test('مع ترجمة: قائمة العرض بالأوضاع الثلاثة، �
   assert.deepEqual(radios.map((r) => r.getAttribute('data-fid')), ['mode:ar', 'mode:dual', 'mode:off']);
   assert.equal(radios[0].getAttribute('aria-checked'), 'true');
   assert.equal(radios[1].getAttribute('aria-disabled'), 'true');
-  assert.match(radios[1].getAttribute('aria-description'), /استخرج الإنجليزية لهذا الفيديو أولًا/, 'السبب لقارئ الشاشة');
-  assert.match(radios[1].getAttribute('title'), /استخرج الإنجليزية لهذا الفيديو أولًا/, 'والسبب في التلميح');
+  assert.match(radios[1].getAttribute('aria-description'), /الأصل غير ملتقط لهذا الفيديو/, 'السبب لقارئ الشاشة');
+  assert.match(radios[1].getAttribute('title'), /الأصل غير ملتقط لهذا الفيديو/, 'والسبب في التلميح');
   click(radios[1]);
   assert.equal(page.controller.calls.length, 0, 'المعطّل لا يُطبَّق');
   click(radios[2]);
@@ -153,7 +153,7 @@ test('رفع ثانٍ: تأكيد مضغوط بالملف وعدده وسطر ا
   assert.deepEqual(loads(page)[0].slice(0, 2), ['loadArabicInto', 2]);
   assert.deepEqual(loads(page)[0][3], { replace: false, activate: undefined }, 'التفعيل بافتراض المتحكم (الفارغة تصبح النشطة)');
   assert.equal(page.controller.getState().activeSlot, 2);
-  assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
+  assert.equal(page.ui.menuLabel(), 'الترجمة');
   const slots = page.ui.menu().querySelectorAll('button.slot').filter((b) => b.getAttribute('data-fid').startsWith('slot:')).map((b) => [b.textContent, b.getAttribute('aria-checked')]);
   assert.deepEqual(slots, [['1', 'false'], ['2', 'true']], 'صار المحدد خيارين بعد الإضافة، والجديدة نشطة');
 });
@@ -259,7 +259,7 @@ test('إلغاء الرفع يعيد قائمة العرض ولا يحفظ شي�
   const page = await uploadAgain();
   assert.equal(page.ui.menuLabel(), 'رفع ترجمة');
   click(page.ui.item('إلغاء'));
-  assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
+  assert.equal(page.ui.menuLabel(), 'الترجمة');
   assert.equal(loads(page).length, 0);
   click(page.ui.btn('upload'));
   assert.equal(page.ui.menuOpen(), false);
@@ -307,7 +307,7 @@ test('تبدّل الفيديو أثناء الفحص: لا تحميل لنتي�
   await settle();
   assert.equal(loads(page).length, 0);
   assert.equal(page.ui.menuOpen(), false);
-  assert.equal(page.ui.btn('upload').querySelector('.spin').hasAttribute('hidden'), true, 'لا دوّار عالق على الفيديو الجديد');
+  assert.equal(page.ui.btn('upload').querySelector('.load').hasAttribute('hidden'), true, 'لا دوّار عالق على الفيديو الجديد');
 });
 
 test('إخفاق الحفظ عند التحميل: رسالة المتحكم كما هي', async () => {

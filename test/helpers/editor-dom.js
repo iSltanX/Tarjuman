@@ -24,7 +24,7 @@ function patchElements() {
         });
       },
     },
-    options: { get() { return this.children.filter((c) => c.tagName === 'option'); } },
+    options: { get() { return [...this.children].filter((c) => c.tagName === 'option'); } },
     parentElement: { get() { return this.parentNode; } },
     firstChild: { get() { return this.childNodes[0] ?? null; } },
     scrollTop: { writable: true, value: 0 },

@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 // الاختبار الحي لـP13 على الإضافة المبنية (dist) في ملف اختبار منفصل خارج المستودع، بلا نافذة، بضغطات Input حقيقية:
-//   --phase create (Brave): مكتبة كبيرة مزروعة، والمحفوظات (1 2 3 والتراجع، والفرز بأعداده، ولوحة «الترجمات…» والسابقة،
+//   --phase create (Brave): مكتبة كبيرة مزروعة، والمحفوظات (1 2 3 والتراجع، والفرز بأعداده، والتوسيع في الصف والسابقة،
 //     وحوار الرفع والاستبدال بأعداد الفروق والإلغاء بلا أثر، والنص الدراسي، والنسخ بالقاموس)، والإعدادات (المصطلحات، وحد
 //     القراءة، ومكان الحفظ بأوضاعه ويتبعه التصدير، والنسخة الاحتياطية)، ثم تُسلَّم النسخة إلى مرحلة الاستعادة.
 //   --phase restore (Chrome): الاستعادة من ملف Brave بالمعاينة (الموجود يُتخطى افتراضيًا، والإعدادات غير مختارة) وتقدم
 //     ظاهر وتقرير، ثم «استبدال كل الموجود» مع الإعدادات، والتالف يُرفض بلا كتابة، والمحفوظات بالأعداد نفسها.
 // لا رابط ولا رمز ولا مسار جهاز في الأدلة (المسارات نسبةً إلى مجلد تنزيلات الاختبار، ويمر الناتج على المنقّي).
+// مواءمة الهوية «بُنّ على ورق» (2026-11-03، docs/identity-redesign.md §٥): شرائح الترجمات في الصف بدل المحدد، والتوسيع في الصف
+// (بطاقة لكل ترجمة وسطر النسخة السابقة في بطاقة خانتها) بدل لوحة «الترجمات…»، و«نسخ التعليمات» من «المزيد»، والشبكة صور
+// i.ytimg.com وحدها بلا مُحيل (و404 صور المعرّفات الاصطناعية في البذرة متوقعة وتُعدّ وحدها).
 //   command node test/live/pages/p13.mjs --browser brave --phase create [--out docs/evidence/P13]
 //   command node test/live/pages/p13.mjs --browser chrome --phase restore [--out docs/evidence/P13]
+//   [--profile <اسم ملف التعريف>] [--handoff <مجلد تسليم النسخة بين المرحلتين>]
 import { execFileSync } from 'node:child_process';
 import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -29,10 +33,11 @@ const browser = val('browser', 'brave');
 const PHASE = val('phase', browser === 'brave' ? 'create' : 'restore');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
 const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P13'));
-const PROFILE = `${browser}-p13`;
+// --profile و--handoff لملف تعريف ومجلد تسليم خاصين بجولة (لا يُعاد استعمال بيئة اختبار جلسة أخرى).
+const PROFILE = val('profile', `${browser}-p13`);
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
-const DL = path.join(PROFILE_ROOT, `downloads-${browser}-p13`, RUN);
-const HANDOFF = path.join(PROFILE_ROOT, 'p13-handoff');
+const DL = path.join(PROFILE_ROOT, `downloads-${PROFILE}`, RUN);
+const HANDOFF = path.resolve(val('handoff', path.join(PROFILE_ROOT, 'p13-handoff')));
 const TED = SEED_IDS.ted;
 
 const result = { browser: null, phase: PHASE, at: new Date().toISOString(), extension: null, checks: [], timings: {}, observations: {}, screenshots: [], errors: {}, network: {} };
@@ -94,19 +99,29 @@ const waitFile = async (sub, match, timeoutMs = 20000) => {
 let b = null;
 let extId = null;
 const pages = [];
+/** صورة الفيديو بمعرّفه في المحفوظات: الطلب الخارجي الوحيد المسموح (قرار سلطان، docs/identity-redesign.md §٥). */
+const THUMB_RE = /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/mqdefault\.jpg$/;
 
 async function openExt(rest) {
   const page = await openTab(b.conn, 'about:blank');
   const errs = collectErrors(page, { extId });
-  const net = { external: 0, hosts: new Set(), total: 0 };
+  const net = { external: 0, hosts: new Set(), total: 0, thumbs: 0, referers: 0, thumb404: 0 };
   await page.send('Network.enable');
   page.on('Network.requestWillBeSent', (p) => {
     net.total++;
     const u = p.request.url;
-    if (!/^(chrome-extension|data|blob|about):/.test(u)) {
-      net.external++;
-      try { net.hosts.add(new URL(u).host); } catch { net.hosts.add('?'); }
+    if (/^(chrome-extension|data|blob|about):/.test(u)) return;
+    if (THUMB_RE.test(u.split('?')[0])) {
+      net.thumbs++;
+      if (p.request.headers?.Referer || p.request.headers?.referer) net.referers++;
+      return;
     }
+    net.external++;
+    try { net.hosts.add(new URL(u).host); } catch { net.hosts.add('?'); }
+  });
+  // 404 صورة لمعرّف غير موجود (معرّفات البذرة الاصطناعية) متوقعة: البلاطة البديلة هي السلوك. تُعدّ وحدها.
+  page.on('Log.entryAdded', ({ entry }) => {
+    if (entry.level === 'error' && entry.source === 'network' && THUMB_RE.test(String(entry.url ?? '').split('?')[0]) && /404/.test(entry.text)) net.thumb404++;
   });
   pages.push({ rest, errs, net });
   await page.goto(`chrome-extension://${extId}/${rest}`);
@@ -123,7 +138,7 @@ async function clickOn(page, expr, label) {
   await human(250, 500);
 }
 const byText = (sel, text, root = 'document') => `[...${root}.querySelectorAll(${JSON.stringify(sel)})].find((e) => e.textContent.replace(/\\s+/g, ' ').trim().startsWith(${JSON.stringify(text)}))`;
-const topDialog = `[...document.querySelectorAll('dialog.tj-dialog[open]:not(.lib-panel)')].at(-1)`;
+const topDialog = `[...document.querySelectorAll('dialog.tj-dialog[open]')].at(-1)`;
 const confirmBtn = `${topDialog}?.querySelector('button[value="confirm"]')`;
 const cancelBtn = `${topDialog}?.querySelector('button[value="cancel"]')`;
 const textOf = (page, expr) => page.eval(`(() => { const e = (${expr}); return e ? e.textContent.replace(/\\s+/g, ' ').trim() : null; })()`);
@@ -227,45 +242,47 @@ async function createPhase() {
 
   // AC1: اختيار 1 2 3 في الصف يفعّل غيرها، و«تراجع».
   const row = `document.querySelector('li.lib-row[data-video="${TED}"]')`;
-  await clickOn(lib, `${row}?.querySelectorAll('.tj-slots button')[1]`, 'الخانة 2 في صف TED');
+  await clickOn(lib, `${row}?.querySelector('.lib-chips button[data-slot="2"]')`, 'شريحة الترجمة 2 في صف TED');
   const toast = await lib.waitFor(() => [...document.querySelectorAll('.tj-toast')].map((t) => t.textContent).join('|') || null, { timeoutMs: 5000 });
   const head2 = (await getKeys(lib, [`bundle:${TED}`]))[`bundle:${TED}`];
   check('ac1-row-activate', head2?.active === 2 && /الترجمة 2/.test(toast ?? ''), { active: head2?.active, toast });
   await clickOn(lib, byText('.tj-toast__action', 'تراجع'), 'تراجع');
   await sleep(600);
   check('ac1-row-undo', (await getKeys(lib, [`bundle:${TED}`]))[`bundle:${TED}`]?.active === 1);
-  const pickerState = await lib.eval((id) => [...document.querySelector(`li.lib-row[data-video="${id}"] .tj-slots`).querySelectorAll('button')].map((x) => ({ checked: x.getAttribute('aria-checked'), label: x.getAttribute('aria-label') })), { args: [TED] });
-  check('ac1-picker-three', pickerState.length === 3 && pickerState[0].checked === 'true', pickerState);
+  const pickerState = await lib.eval((id) => [...document.querySelectorAll(`li.lib-row[data-video="${id}"] .lib-chips button`)].map((x) => ({ slot: x.getAttribute('data-slot'), pressed: x.getAttribute('aria-pressed'), title: x.getAttribute('title') })), { args: [TED] });
+  check('ac1-picker-three', pickerState.length === 3 && pickerState[0].pressed === 'true', pickerState);
 
-  // AC1/AC3: لوحة «الترجمات…» والنسخة السابقة.
-  await clickOn(lib, `${row}?.querySelector('button.lib-more')`, 'المزيد');
-  await clickOn(lib, byText('.tj-menu__list:not([hidden]) [role=menuitem]', 'الترجمات'), 'الترجمات…');
-  const panelOk = await lib.waitFor(() => document.querySelectorAll('dialog.lib-panel[open] section.lib-slot').length, { timeoutMs: 8000 });
-  const panelText = await textOf(lib, `document.querySelector('dialog.lib-panel[open]')`);
-  check('ac1-panel-cards', panelOk === 4 && /الترجمة 1/.test(panelText) && /الترجمة 3/.test(panelText) && /المرجع/.test(panelText) && /الإزاحة/.test(panelText), { sections: panelOk });
-  const prevLine = await textOf(lib, `document.querySelector('dialog.lib-panel .lib-prev__line')`);
-  check('ac3-previous-line', /^من الترجمة 2 · .+ · \d+(\.\d)? (ك|م)\.ب$/.test(prevLine ?? ''), { line: prevLine });
-  await shot(lib, 'translations-panel');
+  // AC1/AC3: التوسيع في الصف (بطاقة لكل ترجمة) والنسخة السابقة في بطاقة خانتها.
+  await clickOn(lib, `${row}?.querySelector('.lib-toggle')`, 'إظهار الترجمات');
+  const panelOk = await lib.waitFor(() => document.querySelectorAll('.lib-exp .lib-card[data-slot]').length, { timeoutMs: 8000 });
+  const panelText = await textOf(lib, `document.querySelector('.lib-exp')`);
+  const emptyCards = await lib.eval(() => document.querySelectorAll('.lib-exp .lib-card--empty').length);
+  check('ac1-panel-cards', panelOk === 3 && emptyCards === 0 && /الترجمة 1/.test(panelText) && /الترجمة 3/.test(panelText) && /المرجع/.test(panelText) && /الإزاحة/.test(panelText), { cards: panelOk, emptyCards });
+  const prevLine = await textOf(lib, `document.querySelector('.lib-card[data-slot="2"] .lib-prevl__text')`);
+  check('ac3-previous-line', /^نسخة سابقة محفوظة · .+ · \d+(\.\d)? (ك|م)\.ب$/.test(prevLine ?? ''), { line: prevLine });
+  await shot(lib, 'translations-expanded');
   const before = await getKeys(lib, [`alts:${TED}`, `prev:${TED}`]);
-  await clickOn(lib, byText('dialog.lib-panel .lib-prev button', 'استعادة'), 'استعادة السابقة');
+  await clickOn(lib, `document.querySelector('.lib-card[data-slot="2"] .lib-prevl__restore')`, 'استعادة السابقة');
   await clickOn(lib, confirmBtn, 'تأكيد الاستعادة');
   await sleep(900);
   const after = await getKeys(lib, [`alts:${TED}`, `prev:${TED}`]);
   const swapped = JSON.stringify(after[`alts:${TED}`].slots[1].track) === JSON.stringify(before[`prev:${TED}`].previous.track)
     && JSON.stringify(after[`prev:${TED}`].previous.track) === JSON.stringify(before[`alts:${TED}`].slots[1].track);
   check('ac3-restore-swap', swapped);
-  await clickOn(lib, byText('dialog.lib-panel .lib-prev button', 'استعادة'), 'استعادة ثانية');
+  await clickOn(lib, `document.querySelector('.lib-card[data-slot="2"] .lib-prevl__restore')`, 'استعادة ثانية');
   await clickOn(lib, confirmBtn, 'تأكيد الاستعادة الثانية');
   await sleep(900);
   const back = await getKeys(lib, [`alts:${TED}`, `prev:${TED}`]);
   // المحتوى يعود كما كان؛ وتاريخ حفظ السابقة (savedAt) يتجدد بكل تبديل.
   const content = (x) => JSON.stringify({ alts: x[`alts:${TED}`].slots, prev: { ...x[`prev:${TED}`].previous, savedAt: null } });
   check('ac3-restore-reversible', content(back) === content(before), { savedAtRenewed: back[`prev:${TED}`].previous.savedAt !== before[`prev:${TED}`].previous.savedAt });
-  await typeInto(lib, `document.querySelector('dialog.lib-panel section[data-slot="3"] input')`, 'حرفية', 'اسم الخانة 3');
+  await clickOn(lib, `document.querySelector('.lib-card[data-slot="3"] .lib-card__rename')`, 'تسمية الترجمة 3');
+  await typeInto(lib, `document.querySelector('.lib-card[data-slot="3"] .lib-card__name')`, 'حرفية', 'اسم الخانة 3');
   await sleep(500);
   check('ac1-slot-rename', (await getKeys(lib, [`bundle:${TED}`]))[`bundle:${TED}`]?.names?.[2] === 'حرفية');
-  await clickOn(lib, `document.querySelector('dialog.lib-panel .lib-panel__head button')`, 'إغلاق اللوحة');
-  check('ac3-no-fourth-slot', (await lib.eval((id) => document.querySelector(`li.lib-row[data-video="${id}"] .tj-slots`).querySelectorAll('button').length, { args: [TED] })) === 3);
+  await clickOn(lib, `${row}?.querySelector('.lib-toggle')`, 'طيّ الترجمات');
+  const chipsAfter = await lib.eval((id) => ({ chips: document.querySelectorAll(`li.lib-row[data-video="${id}"] .lib-chips button`).length, add: document.querySelectorAll(`li.lib-row[data-video="${id}"] .lib-chip--add`).length }), { args: [TED] });
+  check('ac3-no-fourth-slot', chipsAfter.chips === 3 && chipsAfter.add === 0, chipsAfter);
 
   // AC2: حوار الرفع والاستبدال الكامل.
   const bundle = await seed.store.getBundle(TED);
@@ -318,7 +335,8 @@ async function createPhase() {
   const studyFile = await waitFile('', (n) => n === `${TED}.ar-en.study.md`);
   check('ac7-study-saved', Boolean(studyFile) && stripIsolates(studyName).includes(`${TED}.ar-en.study.md`), { name: studyName, file: inDl(studyFile) });
   await lib.eval(() => { window.__copied = []; navigator.clipboard.writeText = async (t) => { window.__copied.push(t); }; });
-  await clickOn(lib, `${row}?.querySelector('.lib-copy__button')`, 'نسخ التعليمات');
+  await clickOn(lib, `${row}?.querySelector('button.lib-more')`, 'المزيد');
+  await clickOn(lib, byText('.tj-menu__list:not([hidden]) [role=menuitem]', 'نسخ التعليمات'), 'نسخ التعليمات');
   await sleep(500);
   const copied = await lib.eval(() => window.__copied[0] ?? null);
   const title = up[`video:${TED}`].title;
@@ -529,10 +547,10 @@ async function restorePhase() {
   result.timings.libraryLoadMs = Date.now() - t0;
   check('ac4-library-same-counts', rows === 50 && JSON.stringify(await chipLabels(lib)) === JSON.stringify(chipText(meta.counts)), { shown: await chipLabels(lib), ms: result.timings.libraryLoadMs });
   await shot(lib, 'library-restored');
-  await clickOn(lib, `document.querySelector('li.lib-row[data-video="${TED}"] button.lib-more')`, 'المزيد');
-  await clickOn(lib, byText('.tj-menu__list:not([hidden]) [role=menuitem]', 'الترجمات'), 'الترجمات…');
-  await lib.waitFor(() => document.querySelectorAll('dialog.lib-panel[open] section.lib-slot').length === 4, { timeoutMs: 8000 });
-  await shot(lib, 'translations-panel-restored');
+  await clickOn(lib, `document.querySelector('li.lib-row[data-video="${TED}"] .lib-toggle')`, 'إظهار الترجمات');
+  const restoredCards = await lib.waitFor(() => document.querySelectorAll('.lib-exp .lib-card[data-slot]').length === 3 && !!document.querySelector('.lib-exp .lib-prevl'), { timeoutMs: 8000 });
+  check('ac4-restored-translations-and-previous', !!restoredCards);
+  await shot(lib, 'translations-expanded-restored');
 }
 
 /** JSON بمفاتيح مرتبة في كل مستوى. */
@@ -559,10 +577,14 @@ try {
 } finally {
   for (const p of pages) {
     result.errors[p.rest] = p.errs.list;
-    result.network[p.rest] = { external: p.net.external, hosts: [...p.net.hosts], total: p.net.total };
+    result.network[p.rest] = { external: p.net.external, hosts: [...p.net.hosts], total: p.net.total, thumbnails: p.net.thumbs, thumb404: p.net.thumb404, referers: p.net.referers };
   }
-  check('no-extension-errors', pages.every((p) => p.errs.list.length === 0), Object.fromEntries(pages.map((p) => [p.rest, p.errs.list.length])));
-  check('no-network', pages.every((p) => p.net.external === 0));
+  const realErrors = (p) => {
+    let skip = p.net.thumb404;
+    return p.errs.list.filter((x) => !(x.kind === 'log.network' && /404/.test(x.text) && skip-- > 0));
+  };
+  check('no-extension-errors', pages.every((p) => realErrors(p).length === 0), Object.fromEntries(pages.map((p) => [p.rest, { errors: realErrors(p).length, expectedThumb404: p.net.thumb404 }])));
+  check('no-network-except-thumbnails', pages.every((p) => p.net.external === 0 && p.net.referers === 0), Object.fromEntries(pages.map((p) => [p.rest, { external: p.net.external, thumbnails: p.net.thumbs }])));
   await b?.close().catch(() => {});
   await mkdir(OUT, { recursive: true });
   const json = JSON.stringify(result, null, 2);

@@ -30,7 +30,7 @@ test('الإدراج قبل أدوات يوتيوب ولا يغيّر ترتيب
   const page = mountPage();
   const ids = page.right.children.map((c) => c.id || c.className);
   assert.deepEqual(ids, ['tarjuman-controls', 'ytp-button ytp-subtitles-button', 'ytp-button ytp-settings-button', 'ytp-button ytp-fullscreen-button']);
-  assert.deepEqual(page.ui.kinds(), ['download', 'upload', 'minus', 'badge', 'plus'], 'ترتيب ثابت LTR');
+  assert.deepEqual(page.ui.kinds(), ['download', 'upload', 'panel', 'minus', 'badge', 'plus'], 'ترتيب ثابت LTR');
 });
 
 test('يوتيوب يعيد رسم الشريط الأيمن بعنصر جديد: تعود المجموعة إلى بدايته دون إعادة بناء الجلسة', () => {

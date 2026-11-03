@@ -23,9 +23,12 @@ test('جارٍ: الهيكل مع العنوان', () => {
 });
 
 test('فيديو بلا ترجمة محفوظة: ملتقط ✓ أو محفوظ ✓ أو غير ملتقط', () => {
-  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'المسار الإنجليزي: غير ملتقط', englishReady: false, saved: false });
+  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'المسار الإنجليزي: غير ملتقط', englishKind: null, englishReady: false, saved: false });
   const captured = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }], saved: [] } });
   assert.equal(describeStatus(captured).englishLine, 'المسار الإنجليزي: ملتقط');
+  assert.equal(describeStatus(captured).englishKind, 'يدوي', 'نوع المسار الملتقط يُعرض بجانب حالته');
+  const auto = reply({ english: { captured: [{ key: 'en|asr', kind: 'asr', cueCount: 5, ok: true }], saved: [] } });
+  assert.equal(describeStatus(auto).englishKind, 'تلقائي');
   const failed = reply({ english: { captured: [{ key: 'en|asr', kind: 'asr', cueCount: 0, ok: false }], saved: [] } });
   assert.equal(describeStatus(failed).englishLine, 'المسار الإنجليزي: غير ملتقط', 'مسار فاشل ليس ملتقطًا');
   const saved = reply({ english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 5 }] } });

@@ -27,7 +27,9 @@ const URL_OK = (u, rel) => u === 'http://www.w3.org/2000/svg'
   || u === YOUTUBE_MATCH
   || u.startsWith('https://www.youtube.com/watch?v=')
   || (rel === 'pages/settings/main.js' && (u === 'https://bysltan.com' || u === 'https://github.com/iSltanX/Tarjuman'))
-  || (rel === WORKER && u === 'https://www.youtube.com/');
+  || (rel === WORKER && u === 'https://www.youtube.com/')
+  // صور الفيديو في المحفوظات من خوادم يوتيوب بمعرّفه، بمفتاح يطفئها (قرار سلطان 2026-11-03، docs/identity-redesign.md).
+  || (rel === 'pages/library/main.js' && u === 'https://i.ytimg.com/vi/');
 /** طلب الشبكة الوحيد في الحزمة: قراءة خط الترجمة من ملفاتها (P6، chrome-extension://). */
 const FETCH_OK = new Map([['content/main.js', [/\bfetch\(runtime\.getURL\(/]]]);
 const FORBIDDEN = [

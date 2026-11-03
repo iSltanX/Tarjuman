@@ -1,7 +1,8 @@
 // الشعار المعتمد «التاء» (اعتمده سلطان في 2026-11-01): التركيب الأفقي، الرمز يمينًا والاسم المخصّص «ترجمان» يسارًا على
 // خط قاعدة واحد. المسارات من مكوّن Figma «التاء / التركيب الأفقي» (14:122) في ملف «ترجمان — الهوية والواجهات» دون تعديل.
-// واللون لون الهوية نفسه (جولة الصقل، بطلب سلطان: «لون الشعار غير لون الهوية»): الرمز بالإبراز النيلي والاسم بالحبر، من
-// رموز الشعار (--tj-logo-glyph و--tj-logo-word) بالوضعين. مكوّن واحد لكل المواضع (الشريط العلوي ونافذة الأيقونة) بحجم يناسب
+// واللون لون الهوية نفسه (جولة الصقل، بطلب سلطان: «لون الشعار غير لون الهوية»)، من
+// رموز الشعار (--tj-logo-glyph و--tj-logo-dots و--tj-logo-word) بالوضعين: الجسد بالإبراز والنقطتان بالذهب والاسم بالمداد
+// (الهوية «بُنّ على ورق»، docs/identity-redesign.md). مكوّن واحد لكل المواضع (الشريط العلوي ونافذة الأيقونة) بحجم يناسب
 // كلًّا منها، ولا يُقلب في RTL.
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -46,7 +47,7 @@ export function logo({ height = 26, label = 'ترجمان', className = '', doc 
     svg.setAttribute('aria-hidden', 'true');
   }
   svg.setAttribute('focusable', 'false');
-  for (const [cls, list] of [['tj-logo__word', WORD], ['tj-logo__glyph', GLYPH]]) {
+  for (const [cls, list] of [['tj-logo__word', WORD], ['tj-logo__glyph', [GLYPH[0]]], ['tj-logo__dots', [GLYPH[1]]]]) {
     const g = doc.createElementNS(SVG, 'g');
     g.setAttribute('class', cls);
     list.forEach((d, i) => {

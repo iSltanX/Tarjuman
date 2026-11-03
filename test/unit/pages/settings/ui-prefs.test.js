@@ -1,0 +1,159 @@
+// مفاتيح الواجهة في «العرض» بالهوية «بُنّ على ورق»: «لوحة النص المتزامن» (prefs.ui.panelOpen، مطفأة افتراضيًا)، و«زر النص
+// المتزامن» في شريط المشغّل (prefs.ui.panelEntry)، و«صور الفيديو في المحفوظات» (prefs.ui.thumbnails). يقرآن التفضيلات ويكتبانها فورًا بعلامة «حُفظ» دون المساس بغيرهما، ويعود المفتاح إلى المحفوظ عند
+// فشل الكتابة، ويتبعان تغيّر التفضيلات من سياق آخر (نافذة الأيقونة أو قائمة اللوحة)؛ ونص «حول» صادق في شأن الصور.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { messageFor } from '../../../../src/core/errors/index.js';
+import { DEFAULT_PREFS } from '../../../../src/core/model/prefs.js';
+import { createStore } from '../../../../src/core/store/index.js';
+import { PRIVACY_LINE } from '../../../../src/pages/settings/about.js';
+import { ENTRY_SWITCH, PANEL_OPEN_SWITCH, THUMBNAILS_SWITCH, createSettings } from '../../../../src/pages/settings/view.js';
+import { createMemoryArea } from '../../../helpers/chrome-storage.js';
+import { NOW } from '../../../helpers/fixtures.js';
+import { buttonNamed, findAll, newDocument, settle, textOf } from '../library/fake-dom.js';
+
+async function mount({ prefs } = {}) {
+  let t = Date.parse(NOW);
+  const area = createMemoryArea({ unlimited: true });
+  const store = createStore({ area, now: () => (t += 1000) });
+  if (prefs) await store.setPrefs(prefs);
+  await area.flush();
+  const doc = newDocument();
+  const timers = [];
+  const settings = createSettings({
+    store, doc, version: '0.2.0',
+    clipboardWrite: async () => {}, diagnosticsText: async () => '{}',
+    setTimer: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimer: () => {},
+  });
+  doc.body.append(settings.root);
+  await settings.load();
+  return { settings, store, area, doc, root: settings.root, timers };
+}
+
+const section = (m, title) => findAll(m.root, (e) => e.tagName === 'section' && textOf(e.querySelector('h2') ?? { textContent: '' }) === title)[0];
+const sw = (m, pref) => findAll(m.root, (e) => e.tagName === 'input' && e.getAttribute('data-pref') === pref)[0];
+const rowOf = (m, label) => findAll(m.root, (e) => e.classList.contains('st-row') && textOf(e.querySelector('.tj-label')) === label)[0];
+const toggle = (input, on) => { input.checked = on; input.dispatchEvent({ type: 'change' }); };
+const marks = (root) => findAll(root, (e) => e.classList.contains('tj-saved')).map(textOf).filter(Boolean);
+
+test('العرض يحوي مفتاحين بتسميتيهما وشرحيهما: «زر النص المتزامن» و«صور الفيديو في المحفوظات»', async () => {
+  const m = await mount();
+  const display = section(m, 'العرض');
+  const entry = rowOf(m, 'زر النص المتزامن');
+  const thumbs = rowOf(m, 'صور الفيديو في المحفوظات');
+  assert.ok(entry && thumbs, 'الصفان في «العرض»');
+  assert.ok(display.contains(entry) && display.contains(thumbs));
+  assert.equal(ENTRY_SWITCH.text, 'يظهر في صفحات الفيديو');
+  assert.ok(textOf(entry).includes('في شريط المشغّل'));
+  assert.ok(textOf(entry).includes('يظهر في صفحات الفيديو'));
+  assert.ok(textOf(entry).includes('إطفاؤه كإخفاء الزر من اللوحة نفسها؛ وإغلاق اللوحة لا يمسّه.'));
+  assert.ok(textOf(thumbs).includes('i.ytimg.com'));
+  assert.ok(textOf(thumbs).includes('بمعرّف الفيديو'));
+  assert.ok(textOf(thumbs).includes('أطفئها ليبقى كل شيء على جهازك'));
+  assert.ok(THUMBNAILS_SWITCH.note.includes('خوادم يوتيوب'));
+  for (const input of [sw(m, 'ui.panelEntry'), sw(m, 'ui.thumbnails')]) {
+    assert.equal(input.getAttribute('role'), 'switch');
+    assert.equal(findAll(m.root, (e) => e.tagName === 'label' && e.getAttribute('for') === input.id).length, 1, 'لكل مفتاح تسمية مربوطة');
+  }
+});
+
+test('«لوحة النص المتزامن» (قرار سلطان 2026-11-03): مطفأة افتراضيًا؛ تشغيلها يفتح اللوحة ويعيد زرها معًا، وإطفاؤها يغلقها وحدها', async () => {
+  const m = await mount({ prefs: { ui: { panelEntry: false } } });
+  const row = rowOf(m, PANEL_OPEN_SWITCH.label);
+  assert.ok(row && section(m, 'العرض').contains(row), 'في «العرض»');
+  assert.ok(textOf(row).includes(PANEL_OPEN_SWITCH.text) && textOf(row).includes('مطفأة افتراضيًا'));
+  assert.equal(DEFAULT_PREFS.ui.panelOpen, false);
+  const input = sw(m, 'ui.panelOpen');
+  assert.equal(input.getAttribute('role'), 'switch');
+  assert.equal(input.checked, false);
+  toggle(input, true);
+  await settle();
+  assert.deepEqual((await m.store.getPrefs()).ui, { thumbnails: true, panelEntry: true, panelOpen: true, panelDual: true }, 'لا لوحة مفتوحة بلا زر يغلقها');
+  assert.equal(sw(m, 'ui.panelEntry').checked, true, 'المفتاح الآخر يتبع');
+  assert.deepEqual(marks(row), ['حُفظ']);
+  toggle(input, false);
+  await settle();
+  assert.deepEqual((await m.store.getPrefs()).ui, { thumbnails: true, panelEntry: true, panelOpen: false, panelDual: true });
+  // فتحها من زر الشريط (تفضيل من سياق آخر) يحدّث المفتاح.
+  await m.store.setPrefs({ ui: { panelOpen: true } });
+  await settle();
+  assert.equal(sw(m, 'ui.panelOpen').checked, true);
+});
+
+test('القيم الأولية من prefs.ui: مفعّلان افتراضيًا، والمحفوظ المطفأ يظهر مطفأً', async () => {
+  const fresh = await mount();
+  assert.equal(sw(fresh, 'ui.panelEntry').checked, true);
+  assert.equal(sw(fresh, 'ui.thumbnails').checked, true);
+  assert.deepEqual([DEFAULT_PREFS.ui.panelEntry, DEFAULT_PREFS.ui.thumbnails], [true, true]);
+  const off = await mount({ prefs: { ui: { panelEntry: false, thumbnails: false } } });
+  assert.equal(sw(off, 'ui.panelEntry').checked, false);
+  assert.equal(sw(off, 'ui.thumbnails').checked, false);
+});
+
+test('«زر النص المتزامن»: الإطفاء يكتب panelEntry=false ويغلق اللوحة معه (كإخفائه من قائمتها) بعلامة «حُفظ»، ولا يمسّ غيرهما', async () => {
+  const m = await mount({ prefs: { ui: { panelOpen: true, panelDual: false }, glossary: { attach: false } } });
+  toggle(sw(m, 'ui.panelEntry'), false);
+  await settle();
+  const p = await m.store.getPrefs();
+  assert.deepEqual(p.ui, { thumbnails: true, panelEntry: false, panelOpen: false, panelDual: false }, 'لا تُفتح اللوحة وحدها حين يعود الزر');
+  assert.equal(p.glossary.attach, false);
+  assert.deepEqual(marks(rowOf(m, 'زر النص المتزامن')), ['حُفظ']);
+  toggle(sw(m, 'ui.panelEntry'), true);
+  await settle();
+  assert.deepEqual((await m.store.getPrefs()).ui, { thumbnails: true, panelEntry: true, panelOpen: false, panelDual: false }, 'التشغيل يعيد الزر وحده واللوحة مغلقة');
+});
+
+test('«صور الفيديو في المحفوظات»: يكتب prefs.ui.thumbnails ويبقى panelEntry على حاله', async () => {
+  const m = await mount();
+  toggle(sw(m, 'ui.thumbnails'), false);
+  await settle();
+  const p = await m.store.getPrefs();
+  assert.equal(p.ui.thumbnails, false);
+  assert.equal(p.ui.panelEntry, true);
+  assert.deepEqual(marks(rowOf(m, 'صور الفيديو في المحفوظات')), ['حُفظ']);
+  assert.equal(m.settings.prefs.ui.thumbnails, false, 'حالة الصفحة تتبع المحفوظ');
+});
+
+test('فشل الكتابة: رسالة الخطأ بجانب المفتاح ويعود إلى المحفوظ فلا يناقض التخزين', async () => {
+  const m = await mount();
+  m.area.failNext('set', new Error('boom'));
+  const input = sw(m, 'ui.panelEntry');
+  toggle(input, false);
+  await settle();
+  assert.equal((await m.store.getPrefs()).ui.panelEntry, true, 'لم يُكتب');
+  assert.equal(input.checked, true, 'عاد المفتاح إلى المحفوظ');
+  assert.deepEqual(marks(rowOf(m, 'زر النص المتزامن')), [messageFor('PG_SAVE_FAILED')]);
+});
+
+test('تغيّر التفضيلات من سياق آخر (إظهار الزر من نافذة الأيقونة، أو إخفاؤه من قائمة اللوحة) يحدّث المفتاحين', async () => {
+  const m = await mount({ prefs: { ui: { panelEntry: false } } });
+  assert.equal(sw(m, 'ui.panelEntry').checked, false);
+  await m.store.setPrefs({ ui: { panelEntry: true, thumbnails: false } });
+  await m.area.flush();
+  await settle();
+  assert.equal(sw(m, 'ui.panelEntry').checked, true);
+  assert.equal(sw(m, 'ui.thumbnails').checked, false);
+  m.settings.dispose();
+});
+
+test('«استعادة الافتراضي» في العرض لإعدادات الترجمة وحدها: لا تُعيد مفتاحي الواجهة (تفضيلات الجهاز)', async () => {
+  const m = await mount({ prefs: { ui: { panelEntry: false, thumbnails: false } } });
+  const reset = buttonNamed(section(m, 'العرض'), 'استعادة الافتراضي');
+  assert.equal(reset.getAttribute('aria-disabled'), 'true', 'قيم الترجمة افتراضية، والمفتاحان لا يحسبان');
+  await m.store.setSettings({ displayModeDefault: 'dual' });
+  await m.area.flush();
+  await settle();
+  reset.click();
+  await settle();
+  const p = await m.store.getPrefs();
+  assert.deepEqual([p.ui.panelEntry, p.ui.thumbnails], [false, false]);
+});
+
+test('«حول»: سطر الخصوصية صادق في شأن الصور — البيانات محلية، والصور من خوادم يوتيوب ما دام مفتاحها مفعّلًا', async () => {
+  const m = await mount();
+  const about = textOf(section(m, 'حول'));
+  assert.ok(about.includes('بياناتك كلها على جهازك؛ لا حسابات ولا خادم ولا مفتاح API.'));
+  assert.ok(about.includes('وصور الفيديو في المحفوظات تُطلب من خوادم يوتيوب ما دام مفتاحها مفعّلًا.'));
+  assert.equal(PRIVACY_LINE, 'بياناتك كلها على جهازك؛ لا حسابات ولا خادم ولا مفتاح API. وصور الفيديو في المحفوظات تُطلب من خوادم يوتيوب ما دام مفتاحها مفعّلًا.');
+  assert.equal(about.includes('كل شيء محلي'), false, 'لا ادّعاء مطلق');
+});

@@ -1,11 +1,12 @@
-// نموذج المحفوظات بلا DOM (P7-AC2/AC3، وP13-AC1/AC3/AC6): البحث بالعنوان والمعرّف، والفرز بالحالات الخمس بأعدادها من ملخص
-// الفرز، والترتيب، وتجميع بيانات الصف (شارات الملفات والإزاحة والتاريخ ونماذج 1 2 3)، وخيارات التصدير بأسباب التعطيل،
-// وملخص المقارنة، وبطاقات «الترجمات…» والنسخة السابقة، وأهداف حوار الرفع وأعداد فروقه، وحالة الصفحة في جزء العنوان. كل ما
-// هنا دوال نقية على مدخل المحفوظات (IndexEntry ومعه summary وslots، عقد data-model §٩ و§١٥) فتُختبر بلا متصفح.
+// نموذج المحفوظات بلا DOM (P7-AC2/AC3، وP13-AC1/AC3/AC6، والهوية): البحث بالعنوان والمعرّف، والفرز بالحالات الخمس بأعدادها
+// من ملخص الفرز، والترتيب، والتجميع بالتاريخ (اليوم وهذا الأسبوع وأقدم)، وبيانات الصف (شارة الحالة الوحيدة، وسطر «عُدّل منذ ·
+// N مقطعًا»، والترجمات الموجودة وأول خانة فارغة للرفع)، ومدة الفيديو، وخيارات التصدير بأسباب التعطيل، وملخص المقارنة،
+// وما يسرده حوار الحذف، وأهداف حوار الرفع وأعداد فروقه، وحالة الصفحة في جزء العنوان. كل ما هنا دوال نقية على مدخل المحفوظات
+// (IndexEntry ومعه summary وslots، عقد data-model §٩ و§١٥) فتُختبر بلا متصفح.
 import { diffTranslations } from '../../core/align/index.js';
 import { messageFor } from '../../core/errors/index.js';
 import { isVideoId } from '../../core/model/ids.js';
-import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
 
 /** حجم الدفعة المعروضة: عرض تدريجي لمحفوظات كثيرة. */
 export const PAGE_SIZE = 50;
@@ -176,21 +177,54 @@ export function absoluteTime(iso) {
 
 const EN_KIND = Object.freeze({ manual: 'يدوي', asr: 'تلقائي' });
 
+export const EDIT_FORMS = Object.freeze({ one: 'تعديل يدوي واحد', two: 'تعديلان يدويان', few: 'تعديلات يدوية', many: 'تعديلًا يدويًا', single: 'تعديل يدوي' });
+export const MARK_FORMS = Object.freeze({ one: 'علامة مراجعة واحدة', two: 'علامتا مراجعة', few: 'علامات مراجعة', many: 'علامة مراجعة', single: 'علامة مراجعة' });
+export const TRANSLATION_FORMS = Object.freeze({ one: 'ترجمة واحدة', two: 'ترجمتان', few: 'ترجمات', many: 'ترجمة', single: 'ترجمة' });
+
+/** الخانات الممتلئة بترتيب أرقامها (لا الفارغة): هي وحدها «ترجمات» الفيديو. @param {{ n: number, filled: boolean }[]} slots */
+const filledOf = (slots) => slots.filter((s) => s.filled).sort((a, b) => a.n - b.n);
+
+/** مجموع الترجمات المحفوظة في كل المحفوظات (الخانات الممتلئة)، لرأس الصفحة «N فيديو · M ترجمة». @param {{ slots?: { filled: boolean }[], arabic: unknown }[]} entries */
+export const translationTotal = (entries) => entries.reduce((n, e) => n + (e.slots ? e.slots.filter((s) => s.filled).length : e.arabic ? 1 : 0), 0);
+
+/** نص شريحة الخانة: «1 · Claude»، وبلا اسم مختصر «الترجمة 1». @param {{ n: number, name?: string | null }} s */
+export const chipLabel = (s) => (s.name ? `${s.n} · ${s.name}` : `الترجمة ${s.n}`);
+
+/**
+ * الحالة الوحيدة في الصف (شارة واحدة): الأولى من «تحتاج مراجعة» ثم «تحذير آلي» ثم «معدّلة»، وإلا «مترجمة»؛ وبلا ترجمة «بانتظار
+ * الترجمة». ما سواها من الحالات المنطبقة في تلميح الشارة، وتفاصيلها كلها في بطاقات التوسيع.
+ * @param {import('../../core/model/video.js').IndexEntry & { summary?: object }} e
+ * @returns {{ tone: 'neutral' | 'info' | 'success' | 'warning' | 'edited', text: string, id: string, title: string }}
+ */
+export function rowStatus(e) {
+  if (!e.arabic) return { tone: 'neutral', text: 'بانتظار الترجمة', id: 'awaiting', title: 'لا ترجمة عربية محفوظة لهذا الفيديو بعد' };
+  const s = summaryOf(e);
+  /** @type {{ tone: 'info' | 'warning' | 'edited', text: string, id: string, title: string }[]} */
+  const items = [];
+  if (s.marks.todo > 0) items.push({ tone: 'info', text: `تحتاج مراجعة ${s.marks.todo}`, id: 'review', title: 'مقاطع علّمتها «أعود إليه»' });
+  const warning = warningText(e.arabic);
+  if (warning) items.push({ tone: 'warning', text: warning, id: 'warning', title: 'الفحص الآلي: المقارنة بالأصل الإنجليزي' });
+  if (e.arabic.edited || s.edited > 0) items.push({ tone: 'edited', text: 'معدّلة', id: 'edited', title: 'عُدّلت في المحرّر بعد الرفع' });
+  const lead = items[0] ?? { tone: /** @type {const} */ ('success'), text: 'مترجمة', id: 'translated', title: 'الترجمة العربية محفوظة كما رُفعت' };
+  return { ...lead, title: items.length > 1 ? items.map((i) => i.text).join(' · ') : lead.title };
+}
+
+/** عدد المقاطع في سطر الصف: مقاطع الترجمة النشطة، وإلا مقاطع المسار الإنجليزي (المحفوظ يدويًا أولًا)، وإلا لا شيء. */
+function cueCountText(e) {
+  if (e.arabic) return formatCount(e.arabic.cueCount, COUNT_FORMS.cue);
+  const track = e.english.find((t) => t.kind === 'manual') ?? e.english[0];
+  return track ? `${formatCount(track.cueCount, COUNT_FORMS.cue)} إنجليزيًا` : null;
+}
+
 /**
  * بيانات الصف للعرض: لا DOM هنا.
  * @param {import('../../core/model/video.js').IndexEntry} e @param {number} nowMs
  */
 export function rowModel(e, nowMs) {
-  /** @type {{ tone: 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'edited', text: string, id: string, title?: string }[]} */
-  const badges = [];
-  for (const kind of ['manual', 'asr']) {
-    if (e.english.some((t) => t.kind === kind)) badges.push({ tone: 'neutral', text: `EN ${EN_KIND[kind]}`, id: `en-${kind}`, title: `المسار الإنجليزي ${EN_KIND[kind]} محفوظ` });
-  }
-  if (e.arabic) badges.push(e.arabic.edited ? { tone: 'edited', text: 'AR معدّلة', id: 'ar-edited', title: 'عُدّلت في المحرّر بعد الرفع' } : { tone: 'info', text: 'AR الأصل', id: 'ar-original', title: 'الترجمة العربية كما رُفعت' });
-  const warning = e.arabic ? warningText(e.arabic) : null;
-  if (warning) badges.push({ tone: 'warning', text: warning, id: 'warning', title: 'الفحص الآلي: المقارنة بالأصل الإنجليزي' });
-  const todo = summaryOf(e).marks.todo;
-  if (todo > 0) badges.push({ tone: 'brand', text: `تحتاج مراجعة ${todo}`, id: 'review', title: 'مقاطع علّمتها «أعود إليه»' });
+  /** نماذج 1 2 3 (من الحزمة، أو من الفهرس لسجل الإصدار الأول: النشطة في 1). */
+  const slots = e.slots ?? [1, 2, 3].map((n) => ({ n, filled: n === 1 && Boolean(e.arabic), active: n === 1 && Boolean(e.arabic), name: null, edited: n === 1 && Boolean(e.arabic?.edited), cueCount: n === 1 ? e.arabic?.cueCount ?? 0 : 0 }));
+  const filled = filledOf(slots);
+  const relative = relativeTime(e.updatedAt, nowMs);
   return {
     videoId: e.videoId,
     title: e.title,
@@ -198,16 +232,23 @@ export function rowModel(e, nowMs) {
     hasTitle: Boolean(e.title),
     /** اسم الوصول للأوامر: العنوان إن وُجد وإلا المعرّف. */
     accessName: e.title ?? e.videoId,
-    badges,
+    status: rowStatus(e),
+    /** إزاحة عرض الترجمة النشطة إن لم تكن صفرًا، معزولة LTR (تلميح شريحتها؛ والتفصيل في بطاقة التوسيع). */
     offsetText: e.view.displayOffsetMs !== 0 ? `الإزاحة ${offsetInline(e.view.displayOffsetMs)} ث` : null,
-    relative: relativeTime(e.updatedAt, nowMs),
+    whenText: relative ? `عُدّل ${relative}` : null,
+    countText: cueCountText(e),
+    relative,
     absolute: absoluteTime(e.updatedAt),
     hasArabic: Boolean(e.arabic),
     edited: Boolean(e.arabic?.edited),
     fileName: e.arabic?.fileName ?? null,
     cueText: e.arabic ? formatCount(e.arabic.cueCount, COUNT_FORMS.cue) : null,
-    /** نماذج 1 2 3 (من الحزمة، أو من الفهرس لسجل الإصدار الأول: النشطة في 1). */
-    slots: e.slots ?? [1, 2, 3].map((n) => ({ n, filled: n === 1 && Boolean(e.arabic), active: n === 1 && Boolean(e.arabic), name: null, edited: n === 1 && Boolean(e.arabic?.edited), cueCount: n === 1 ? e.arabic?.cueCount ?? 0 : 0 })),
+    slots,
+    /** الترجمات الموجودة فقط، وأول خانة فارغة (شريحة الرفع)؛ لا تُعرض الفارغة نسخةً. */
+    filled,
+    nextEmpty: /** @type {1 | 2 | 3 | null} */ ([1, 2, 3].find((n) => !filled.some((s) => s.n === n)) ?? null),
+    /** سطر عمود «الترجمات» حين لا ترجمة: حالة الأصل الإنجليزي الحقيقية. */
+    sourceText: e.english.length ? 'الأصل جاهز' : 'الأصل غير ملتقط',
   };
 }
 
@@ -219,6 +260,38 @@ function warningText(a) {
   if (a.extra > 0) parts.push(`${a.extra} زائدة`);
   if (a.drift > 0) parts.push(`توقيت مختلف في ${a.drift}`);
   return parts.join(' · ') || 'غير مطابقة';
+}
+
+export const DATE_GROUPS = Object.freeze([
+  Object.freeze({ key: 'today', label: 'اليوم' }),
+  Object.freeze({ key: 'week', label: 'هذا الأسبوع' }),
+  Object.freeze({ key: 'older', label: 'أقدم' }),
+]);
+
+/**
+ * قسم التاريخ: اليوم (من منتصف ليل الجهاز)، وهذا الأسبوع (الأيام الستة السابقة له)، وأقدم؛ والزمن المستقبلي (ساعة جهاز متقدمة)
+ * اليوم، وغير الصالح أقدم.
+ * @param {string} iso @param {number} nowMs @returns {'today' | 'week' | 'older'}
+ */
+export function dateGroupOf(iso, nowMs) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return 'older';
+  const startOfToday = new Date(nowMs);
+  startOfToday.setHours(0, 0, 0, 0);
+  if (t >= startOfToday.getTime()) return 'today';
+  const weekStart = new Date(startOfToday);
+  weekStart.setDate(weekStart.getDate() - 6);
+  return t >= weekStart.getTime() ? 'week' : 'older';
+}
+
+/**
+ * يجمّع المحفوظات المرتبة بـ«آخر تعديل» في اليوم وهذا الأسبوع وأقدم، بترتيبها داخل كل قسم؛ والأقسام الفارغة لا تُعاد.
+ * @template {{ updatedAt: string }} E
+ * @param {E[]} entries @param {number} nowMs
+ * @returns {{ key: 'today' | 'week' | 'older', label: string, entries: E[] }[]}
+ */
+export function groupEntries(entries, nowMs) {
+  return DATE_GROUPS.map((g) => ({ ...g, entries: entries.filter((e) => dateGroupOf(e.updatedAt, nowMs) === g.key) })).filter((g) => g.entries.length);
 }
 
 /**
@@ -361,14 +434,50 @@ export function nameHintText(hint, titleOf = () => null) {
   return title ? `الاسم يشير إلى فيديو آخر: ${String.fromCodePoint(0x2068)}${title}${String.fromCodePoint(0x2069)}` : `الاسم يشير إلى فيديو آخر (${hint.videoId}).`;
 }
 
+/** «الترجمة 2» و«الترجمتان 1 و3» و«الترجمات 1 و2 و3». @param {number[]} nums */
+export function slotsPhrase(nums) {
+  const list = nums.map(String);
+  if (list.length === 1) return `الترجمة ${list[0]}`;
+  const joined = list.length === 2 ? `${list[0]} و${list[1]}` : `${list.slice(0, -1).join('، ')} و${list.at(-1)}`;
+  return `${list.length === 2 ? 'الترجمتان' : 'الترجمات'} ${joined}`;
+}
+
 /**
- * بطاقة النسخة السابقة: «من الترجمة 2 · قبل ساعة · 0.6 م.ب».
- * @param {{ from: number, savedAt: string, track: { fileName: string, original: unknown[] } } | null} p
- * @param {number | null} bytes @param {number} nowMs @param {(n: number) => string} formatSize
+ * ما يُحذف بالضبط وما يبقى، من الحزمة المقروءة قبل حوار التأكيد (لا نص ثابت): بنود لما يوجد فعلًا وحده، فلا يُذكر ما ليس
+ * محفوظًا. `slot` حذف ترجمة واحدة (النشطة أو غيرها)، و`all` كل بيانات الفيديو.
+ * @param {import('../../core/model/slots.js').Bundle} b @param {{ scope: 'all' } | { scope: 'slot', n: 1 | 2 | 3 }} what
+ * @returns {{ items: string[], keeps: string[] }}
  */
-export function previousCard(p, bytes, nowMs, formatSize) {
-  if (!p) return null;
-  const parts = [`من الترجمة ${p.from}`, relativeTime(p.savedAt, nowMs)];
-  if (Number.isFinite(bytes) && bytes > 0) parts.push(formatSize(bytes));
-  return { from: p.from, line: parts.join(' · '), fileName: p.track.fileName, absolute: absoluteTime(p.savedAt), cueText: formatCount(p.track.original.length, COUNT_FORMS.cue) };
+export function deleteSummary(b, what) {
+  const slots = what.scope === 'slot' ? [b.slots[what.n - 1]] : b.slots.filter((s) => s.track);
+  const items = [];
+  const keeps = [];
+  const named = (s) => (s.name ? `${s.n} «${s.name}»` : String(s.n));
+  if (what.scope === 'slot') {
+    const s = slots[0];
+    items.push(`الترجمة ${named(s)} — ملف ${ltrInline(s.track.fileName)}`);
+  } else if (slots.length) {
+    items.push(slots.length === 1 ? `الترجمة ${named(slots[0])}` : `${slots.length === 2 ? 'الترجمتان' : 'الترجمات'} ${slots.map(named).join(' و')}`);
+  }
+  // النسخة السابقة تُحذف مع الفيديو كله ولو لم تبقَ ترجمة ممتلئة (مراجعة الهوية L5).
+  if (what.scope === 'all' && b.previous) items.push(`النسخة السابقة (من الترجمة ${b.previous.from})`);
+  const edits = slots.reduce((n, s) => n + manualEdits(s.track), 0);
+  if (edits) items.push(formatCount(edits, EDIT_FORMS));
+  const marks = slots.reduce((n, s) => n + s.marks.length, 0);
+  if (marks) items.push(formatCount(marks, MARK_FORMS));
+  const offsets = slots.filter((s) => s.offsetMs !== 0);
+  if (offsets.length) items.push(offsets.length === 1 ? `الإزاحة المحفوظة (${offsetInline(offsets[0].offsetMs)} ث)` : 'الإزاحات المحفوظة');
+  if (slots.some((s) => s.position)) items.push('آخر موضع محفوظ في المحرّر');
+  if (what.scope === 'all') {
+    const en = b.record.english.length;
+    if (en) items.push(en === 1 ? 'المسار الإنجليزي الملتقط' : `${en} مسارات إنجليزية ملتقطة`);
+    if (b.record.fingerprints.length) items.push(`بصمات التصدير (${b.record.fingerprints.length})`);
+    items.push('سجل الفيديو: العنوان والمدة وإعدادات العرض');
+    return { items, keeps };
+  }
+  const others = b.slots.filter((s) => s.track && s.n !== what.n);
+  if (others.length) keeps.push(`${slotsPhrase(others.map((s) => s.n))} تبقى${b.active === what.n ? `، وتصبح الترجمة ${others[0].n} النشطة` : ''}`);
+  if (b.previous) keeps.push('النسخة السابقة تبقى');
+  if (b.record.english.length) keeps.push('المسار الإنجليزي والبصمات تبقى');
+  return { items, keeps };
 }

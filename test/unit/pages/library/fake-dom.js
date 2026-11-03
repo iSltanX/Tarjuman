@@ -60,8 +60,12 @@ export class FakeElement {
     };
   }
 
+  /** كـHTMLCollection في المتصفح: طول وفهرسة وitem وتكرار، بلا دوال المصفوفة (indexOf وmap…) حتى لا تنجح هنا شيفرة ترمي هناك. */
   get children() {
-    return this.childNodes.filter((n) => n.nodeType === 1);
+    const list = this.childNodes.filter((n) => n.nodeType === 1);
+    const coll = { length: list.length, item: (i) => list[i] ?? null, [Symbol.iterator]: () => list[Symbol.iterator]() };
+    list.forEach((n, i) => { coll[i] = n; });
+    return coll;
   }
 
   get className() {
@@ -109,6 +113,11 @@ export class FakeElement {
 
   append(...nodes) {
     for (const n of nodes) this.childNodes.push(this._adopt(n));
+  }
+
+  prepend(...nodes) {
+    const adopted = nodes.map((n) => this._adopt(n));
+    this.childNodes.unshift(...adopted);
   }
 
   appendChild(n) {

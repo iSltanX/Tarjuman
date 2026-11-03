@@ -1,54 +1,45 @@
-// أيقونات الشريط (figma-design-brief §٥.٢): ممتلئة بيضاء على شبكة 24 مثل أيقونات يوتيوب، بلون currentColor
-// فتتبع حالات العادي والمرور والتعطيل. تُبنى بـcreateElementNS وtextContent وحدهما (لا HTML نصي).
-import { UI_FONT_BODY } from '../../ui/ui-fonts.js';
+// أيقونات الشريط — السلسلة «ب» (الهوية «بُنّ على ورق»، قرار سلطان 2026-11-03، docs/identity-redesign.md): خطوط بيضاء
+// على شبكة 24 بسُمك 1.9 ونهايات مدوّرة كأيقونات يوتيوب المجاورة، وحجم بصري واحد في الخمسة. لا حروف ولا صناديق: اسم
+// الوظيفة في التلميح واسم الوصول، واللغة واسم الملف داخل القائمة. اللون currentColor فتتبع حالات العادي والمرور والتعطيل.
+// تُبنى بـcreateElementNS وsetAttribute وحدهما (لا HTML نصي).
 
 const SVG = 'http://www.w3.org/2000/svg';
 
-/** @param {Document} doc @param {string} tag @param {Record<string, string | number>} attrs @param {string} [text] */
-function node(doc, tag, attrs, text) {
+/** @param {Document} doc @param {string} tag @param {Record<string, string | number>} attrs */
+function node(doc, tag, attrs) {
   const n = doc.createElementNS(SVG, tag);
   for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
-  if (text !== undefined) n.textContent = text;
   return n;
 }
 
-const STROKE = { fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
-
-/**
- * مستطيل الترجمة الممتلئ (كأيقونة CC) بحرفين داكنين داخله. خط السطر محسوب لحدود الحرف في المراعي العريض (المضمّن) فيتوسط
- * الإطار (مركزه 10.5): «EN» ارتفاع الحرف الكبير 0.716em، و«ع» من −0.378em إلى 0.472em حول خط السطر.
- */
-function captionBox(doc, label, fontSize, baseline) {
-  return [
-    node(doc, 'rect', { x: 1.5, y: 5, width: 14, height: 11, rx: 2.2, fill: 'currentColor' }),
-    node(doc, 'text', {
-      x: 8.5, y: baseline, 'text-anchor': 'middle', 'font-size': fontSize, 'font-weight': 700, fill: '#000', 'fill-opacity': 0.82,
-      // خط الواجهة المضمّن (ui-fonts.js) لا خط النظام: Brave يحجب غير الافتراضي منها عن صفحة يوتيوب.
-      'font-family': UI_FONT_BODY,
-    }, label),
-  ];
-}
+export const PLAYER_STROKE = 1.9;
+const STROKE = { fill: 'none', stroke: 'currentColor', 'stroke-width': PLAYER_STROKE, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
 
 const SHAPES = {
+  // تحميل الأصل: سهم ينزل على سطر.
   download: (doc) => [
-    ...captionBox(doc, 'EN', 6.4, 12.8),
-    node(doc, 'path', { d: 'M19.5 5.5v9', ...STROKE }),
-    node(doc, 'path', { d: 'M16.6 11.8l2.9 2.9 2.9-2.9', ...STROKE }),
-    node(doc, 'path', { d: 'M16.2 19.2h6.6', ...STROKE }),
+    node(doc, 'path', { d: 'M12 3.5v12.5', ...STROKE }),
+    node(doc, 'path', { d: 'M7 11l5 5 5-5', ...STROKE }),
+    node(doc, 'path', { d: 'M5 20.5h14', ...STROKE }),
   ],
+  // الترجمة: فقاعتا حديث متداخلتان.
   upload: (doc) => [
-    ...captionBox(doc, 'ع', 8.6, 10.9),
-    node(doc, 'path', { d: 'M19.5 15.5v-9', ...STROKE }),
-    node(doc, 'path', { d: 'M16.6 9.2l2.9-2.9 2.9 2.9', ...STROKE }),
-    node(doc, 'path', { d: 'M16.2 19.2h6.6', ...STROKE }),
+    node(doc, 'path', { d: 'M4 3h9a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-3.5 3V12H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z', ...STROKE }),
+    node(doc, 'path', { d: 'M17.5 10H20a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-1v3l-3.5-3H11a2 2 0 0 1-2-2v-1.5', ...STROKE }),
   ],
-  minus: (doc) => [node(doc, 'path', { d: 'M6 12h12', ...STROKE, 'stroke-width': 2.6 })],
-  plus: (doc) => [node(doc, 'path', { d: 'M12 6v12M6 12h12', ...STROKE, 'stroke-width': 2.6 })],
+  // النص المتزامن: إطار المشغّل وعمود اللوحة يمينه بثلاثة أسطر (اللوحة يمين الفيديو).
+  panel: (doc) => [
+    node(doc, 'rect', { x: 2.5, y: 4.5, width: 19, height: 15, rx: 2.5, ...STROKE }),
+    node(doc, 'path', { d: 'M14.5 4.5v15', ...STROKE }),
+    node(doc, 'path', { d: 'M17 9h1.5M17 12h1.5M17 15h1.5', ...STROKE }),
+  ],
+  minus: (doc) => [node(doc, 'path', { d: 'M5.5 12h13', ...STROKE })],
+  plus: (doc) => [node(doc, 'path', { d: 'M12 5.5v13M5.5 12h13', ...STROKE })],
 };
 
 /**
  * @param {Document} doc
- * @param {'download' | 'upload' | 'minus' | 'plus'} kind
+ * @param {'download' | 'upload' | 'panel' | 'minus' | 'plus'} kind upload زر الترجمة (يرفع ملفًا أو يفتح قائمة الترجمة)، وpanel زر اللوحة
  * @returns {SVGSVGElement}
  */
 export function playerIcon(doc, kind) {
