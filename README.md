@@ -18,6 +18,7 @@
 | مواصفة المنتج وقرارات النطاق | [`docs/product-spec.md`](docs/product-spec.md) |
 | التثبيت والاستخدام في المتصفحات الأربعة | [`docs/user-guide.md`](docs/user-guide.md) |
 | بناء الحزم وفحصها (`npm run package`) | [`docs/maintenance.md`](docs/maintenance.md) §٥ |
+| نصوص صفحات الموقع وسياسة الخصوصية | [`docs/site/`](docs/site/README.md) · [`PRIVACY.md`](PRIVACY.md) |
 | سجل التغييرات، والترخيص، وإشعارات الأطراف الثالثة | [`CHANGELOG.md`](CHANGELOG.md) · [`LICENSE`](LICENSE) · [`THIRD_PARTY_NOTICES.txt`](THIRD_PARTY_NOTICES.txt) |
 | ربط المتطلبات بالمراحل ومعايير القبول | [`docs/requirements-map.md`](docs/requirements-map.md) |
 | المراحل | [`docs/phases/`](docs/phases/) |
