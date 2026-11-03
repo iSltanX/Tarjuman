@@ -33,7 +33,7 @@ command node scripts/run-tests.mjs test/e2e/static test/e2e/regression
 command node scripts/release/audit.mjs release/tarjuman-1.0.0
 ```
 
-`check:wave` يبني في `dist/` (متجاهَل). والحزمة `release/tarjuman-1.0.0` مبنية من رأس `main` نفسه، وملف `release/tarjuman-1.0.0.json` يذكر التزامها وبصمات ملفاتها.
+`check:wave` يبني في `dist/` (متجاهَل). والحزمة `release/tarjuman-1.0.0` مبنية من `5fedcb9` (بعد جولة الصقل)، لا من الوسم `tj-v2` (`5ea5bdf`، قبلها)، وملف `release/tarjuman-1.0.0.json` يذكر التزامها وبصمات ملفاتها.
 
 ## مجالات التدقيق المقترحة
 

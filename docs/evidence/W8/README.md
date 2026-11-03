@@ -11,7 +11,7 @@
 | الاختبار | ما يُختبر | Brave | Chrome | الدليل |
 | --- | --- | --- | --- | --- |
 | [`rollback.mjs`](../../../test/e2e/live/v2/rollback.mjs) (دخان W6 الدائم من P15) | `tj-v1` (`0.2.0`) ← الثاني (`1.0.0-dev` من رأس التكامل) ← `tj-v1` يقرأ ويكتب ← الثاني يصالح دون فقد، في مجلد الإضافة نفسه | **18/18** | **18/18** | [`brave/rollback.json`](brave/rollback.json) و[`chrome/rollback.json`](chrome/rollback.json) |
-| [`smoke.mjs`](../../../test/live/harness/smoke.mjs) على `release/tarjuman-1.0.0` | بناء الإنتاج: الشبكة والأذونات وتحذيرات التثبيت والصفحات بالوضعين | **16/16** | **16/16** | [`smoke/brave/smoke.json`](smoke/brave/smoke.json) و[`smoke/chrome/smoke.json`](smoke/chrome/smoke.json) ولقطاتهما |
+| [`smoke.mjs`](../../../test/live/harness/smoke.mjs) على `release/tarjuman-1.0.0` (بناء `b3cc365`، 835,733 بايتًا؛ المجلد أُعيد بناؤه من `5fedcb9` بعد الصقل ولم يُعَد عليه الدخان) | بناء الإنتاج: الشبكة والأذونات وتحذيرات التثبيت والصفحات بالوضعين | **16/16** | **16/16** | [`smoke/brave/smoke.json`](smoke/brave/smoke.json) و[`smoke/chrome/smoke.json`](smoke/chrome/smoke.json) ولقطاتهما |
 
 - **الرجوع إلى رقم أصغر مقبول:** الجلسات الأربع في كل متصفح بالإصدارات `0.2.0` ثم `1.0.0-dev` ثم `0.2.0` ثم `1.0.0-dev`، **بالمعرّف نفسه** (`same-extension-id-all-sessions`)، والأول يقرأ ترجمة الثاني النشطة ويكتب إزاحة وإعدادًا، والثاني يصالح دون فقد (`w6-reconciles-without-loss`).
 - **لا طلب شبكة من الإضافة:** 0 من 94 في Brave و0 من 102 في Chrome، والباقي من يوتيوب، و4 قراءات لخطوط الحزمة.
