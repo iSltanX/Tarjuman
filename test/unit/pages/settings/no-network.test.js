@@ -2,6 +2,7 @@
 // قائمة قصيرة مسماة، ولا رابط خارجي في الصفحات إلا رابطي «حول» في ملفه وحده. يكمل الفحص الثابت (check:static) بما
 // يخص الصفحات، والتجربة الحية (test/live/pages) تقيس الشبكة فعلًا. والاستثناء المسمّى الوحيد (قرار سلطان 2026-11-03): صورة
 // الفيديو في المحفوظات، بادئة `https://i.ytimg.com/vi/` وحدها في `pages/library/thumb.js` وحده، دون أي قناة شبكة جديدة.
+// وقناة البلاغات (جولة النشر T2.1) خارج الصفحات: طلبها في src/core/report/client.js وحده، تستدعيه صفحة الإعدادات بضغطة المستخدم.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';

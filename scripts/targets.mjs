@@ -8,13 +8,14 @@ export const TARGETS = Object.freeze(['chromium', 'firefox']);
 export const DEFAULT_OUT = Object.freeze({ chromium: 'dist', firefox: 'dist-firefox' });
 
 /**
- * إعدادات Gecko المعتمدة (قرار سلطان، store/README.md §٥). لا يُجمع شيء ولا يُرسل إلى ترجمان، فالمطلوب none؛ وحكم صور
- * المحفوظات بتعريفات Mozilla في T5، وقناة البلاغات تضيف فئتها الاختيارية في T2.1.
+ * إعدادات Gecko المعتمدة (قرار سلطان، store/README.md §٥). لا يُجمع شيء دون موافقة، فالمطلوب none؛ وقناة البلاغات (T2.1)
+ * فئتها الاختيارية technicalAndInteraction (اسم المتصفح وإصداره والنظام في البلاغ)، تُطلب مع إذن مضيفها عند أول إرسال. وحكم
+ * صور المحفوظات بتعريفات Mozilla في T5.
  */
 export const GECKO = Object.freeze({
   id: 'tarjuman@bysltan.com',
   strict_min_version: '140.0',
-  data_collection_permissions: Object.freeze({ required: Object.freeze(['none']) }),
+  data_collection_permissions: Object.freeze({ required: Object.freeze(['none']), optional: Object.freeze(['technicalAndInteraction']) }),
 });
 
 /**

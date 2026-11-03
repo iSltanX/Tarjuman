@@ -12,6 +12,7 @@ import { formatBytes, ltrInline } from '../../ui/format.js';
 import { numberField, savedMark, segmented } from '../../ui/forms.js';
 import { SUBTITLE_FONT_LIST, subtitleFontStack } from '../../ui/subtitle-fonts.js';
 import { aboutSection } from './about.js';
+import { reportPanel } from './report.js';
 import { dataControl } from './data.js';
 import { glossaryControl } from './glossary.js';
 import { saveLocationControl } from './location.js';
@@ -59,6 +60,7 @@ const POSITION_LABELS = Object.freeze({ bottom: 'أسفل', raised: 'مرتفع'
  *   pause?: () => Promise<void>,
  *   confirm?: typeof confirmDialog,
  *   nav?: { get: () => string | null, set: (id: string) => void, onChange: (fn: () => void) => () => void },
+ *   report?: import('./report.js').ReportEnv,
  *   setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void,
  * }} SettingsEnv
  */
@@ -565,7 +567,9 @@ export function createSettings(env) {
       })));
 
   // ---- حول ----
-  const about = aboutSection({ version, doc, section: (...kids) => section(byId.about, ...kids) });
+  // «الإبلاغ عن مشكلة» (جولة النشر T2.1): النسخ بحافظة الصفحة نفسها، والباقي من المصادر الحية ما لم تمرّرها البيئة.
+  const report = reportPanel({ doc, env: { copy: env.clipboardWrite, ...env.report } });
+  const about = aboutSection({ version, doc, report: report.root, section: (...kids) => section(byId.about, ...kids) });
 
   async function refreshReminder() {
     // لا مفتاح «أول تشغيل» في التخزين (عقد المفاتيح)؛ فالتذكير يظهر ما دامت المحفوظات فارغة.

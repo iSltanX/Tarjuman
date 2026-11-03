@@ -20,8 +20,14 @@ export const APPROVED_PERMISSIONS = ['storage', 'unlimitedStorage', 'downloads']
 export const WORKER = 'background/worker.js';
 /** الخلفية لكل هدف: عامل خدمة في عائلة Chromium، وسكربت خلفية في Firefox (لا يدعم service_worker). الملف واحد. */
 const BACKGROUND = { chromium: { service_worker: WORKER }, firefox: { scripts: [WORKER] } };
-/** إعدادات Gecko المعتمدة (store/README.md §٥)، حرفية هنا لا مأخوذة من طبقة البناء. */
-const GECKO_SETTINGS = { gecko: { id: 'tarjuman@bysltan.com', strict_min_version: '140.0', data_collection_permissions: { required: ['none'] } } };
+/** إعدادات Gecko المعتمدة (store/README.md §٥)، حرفية هنا لا مأخوذة من طبقة البناء؛ وفئة البلاغ الاختيارية (T2.1). */
+const GECKO_SETTINGS = {
+  gecko: { id: 'tarjuman@bysltan.com', strict_min_version: '140.0', data_collection_permissions: { required: ['none'], optional: ['technicalAndInteraction'] } },
+};
+/** قناة البلاغات (جولة النشر T2.1): إذن مضيف اختياري لخادمها وحده، والطلب والمضيف في حزمة صفحة الإعدادات وحدها. */
+const REPORTS_ORIGIN = 'https://app-reports.isultantf.workers.dev';
+const OPTIONAL_HOSTS = [`${REPORTS_ORIGIN}/*`];
+const SETTINGS_BUNDLE = 'pages/settings/main.js';
 /** شيفرة عالم الصفحة (MAIN): لا واجهات إضافة فيها. */
 const MAIN_WORLD = 'main-world/capture.js';
 const YOUTUBE_MATCH = 'https://www.youtube.com/*';
@@ -35,9 +41,15 @@ const URL_OK = (u, rel) => u === 'http://www.w3.org/2000/svg'
   || (rel === 'pages/settings/main.js' && (u === 'https://bysltan.com' || u === 'https://github.com/iSltanX/Tarjuman'))
   || (rel === WORKER && u === 'https://www.youtube.com/')
   // صور الفيديو في المحفوظات من خوادم يوتيوب بمعرّفه، بمفتاح يطفئها (قرار سلطان 2026-11-03، docs/identity-redesign.md).
-  || (rel === 'pages/library/main.js' && u === 'https://i.ytimg.com/vi/');
-/** طلب الشبكة الوحيد في الحزمة: قراءة خط الترجمة من ملفاتها (P6، chrome-extension://). */
-const FETCH_OK = new Map([['content/main.js', [/\bfetch\(runtime\.getURL\(/]]]);
+  || (rel === 'pages/library/main.js' && u === 'https://i.ytimg.com/vi/')
+  // خادم البلاغات بأصله وحده في حزمة الإعدادات (المسار والنمط يُبنيان منه في الشيفرة)، ونمط إذنه الاختياري في البيان.
+  || (rel === SETTINGS_BUNDLE && u === REPORTS_ORIGIN)
+  || (rel === 'manifest.json' && OPTIONAL_HOSTS.includes(u));
+/**
+ * طلبات الشبكة في الحزمة: قراءة خط الترجمة من ملفاتها (P6، chrome-extension://)، وطلب البلاغ الوحيد من صفحة الإعدادات
+ * بغلافه المسمّى (جولة النشر T2.1) بعد ضغطة المستخدم وإذن مضيفه.
+ */
+const FETCH_OK = new Map([['content/main.js', [/\bfetch\(runtime\.getURL\(/]], [SETTINGS_BUNDLE, [/^fetch\(url, init\)/]]]);
 const FORBIDDEN = [
   { re: /\bnew\s+(?:XMLHttpRequest|WebSocket|EventSource)\b/, why: 'اتصال شبكة جديد' },
   { re: /\bsendBeacon\s*\(|\bimportScripts\s*\(/, why: 'إرسال أو تحميل شيفرة' },
@@ -80,8 +92,10 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   // ---- البيان والأذونات ----
   const perms = [...(manifest.permissions ?? [])].sort();
   check('permissions-approved-only', JSON.stringify(perms) === JSON.stringify([...APPROVED_PERMISSIONS].sort()), { permissions: perms });
-  check('no-host-or-optional-permissions', !manifest.host_permissions && !manifest.optional_permissions && !manifest.optional_host_permissions,
-    { host: manifest.host_permissions ?? null, optional: manifest.optional_permissions ?? null });
+  // لا أذونات مضيف إلزامية ولا أذونات اختيارية، إلا مضيف خادم البلاغات الاختياري وحده (T2.1).
+  check('no-host-or-optional-permissions', !manifest.host_permissions && !manifest.optional_permissions
+    && JSON.stringify(manifest.optional_host_permissions ?? null) === JSON.stringify(OPTIONAL_HOSTS),
+    { host: manifest.host_permissions ?? null, optional: manifest.optional_permissions ?? null, optionalHosts: manifest.optional_host_permissions ?? null });
   const matches = (manifest.content_scripts ?? []).flatMap((c) => c.matches ?? []);
   check('content-scripts-youtube-only', matches.length > 0 && matches.every((m) => m === YOUTUBE_MATCH)
     && (manifest.content_scripts ?? []).every((c) => c.all_frames === false), { matches: [...new Set(matches)] });
@@ -117,6 +131,18 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
     }
   }
   check('no-external-connection-or-forbidden-code', problems.length === 0, { problems: problems.slice(0, 20) });
+
+  // ---- قناة البلاغات (جولة النشر T2.1): مضيفها وطلب إذنها في حزمة الإعدادات وحدها، وفيها طلب fetch واحد بغلافه المسمّى ----
+  const reportHolders = [];
+  let settingsText = '';
+  for (const rel of files.filter((f) => f.endsWith('.js'))) {
+    const text = await readFile(path.join(dir, rel), 'utf8');
+    if (text.includes(REPORTS_ORIGIN.replace('https://', '')) || /\bpermissions\s*\.\s*request\b/.test(text)) reportHolders.push(rel);
+    if (rel === SETTINGS_BUNDLE) settingsText = text;
+  }
+  const reportFetches = [...settingsText.matchAll(/\bfetch\s*\(/g)].length;
+  check('report-channel-settings-only', JSON.stringify(reportHolders) === JSON.stringify([SETTINGS_BUNDLE]) && reportFetches === 1
+    && settingsText.includes('pageFetch = (url, init) => globalThis.fetch(url, init)'), { holders: reportHolders, fetches: reportFetches });
 
   // ---- خطوط الترجمة المضمّنة ورخصها ----
   const fonts = [];

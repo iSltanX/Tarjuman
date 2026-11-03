@@ -65,7 +65,8 @@ test('البنية: الرأس وتسعة أقسام بترتيبها («الب�
   assert.ok(textOf(m.root).includes(SCALE_NOTE));
   assert.ok(textOf(m.root).includes(PREVIEW_NOTE));
   assert.ok(textOf(m.root).includes(MODE_NOTES.normal) && textOf(m.root).includes(MODE_NOTES.long));
-  assert.equal(findAll(m.root, (e) => e.tagName === 'textarea').length, 0);
+  // حقل نصي واحد: وصف «الإبلاغ عن مشكلة» في «حول» (جولة النشر T2.1).
+  assert.deepEqual(findAll(m.root, (e) => e.tagName === 'textarea').map((t) => t.id), ['st-report-text']);
 });
 
 test('القيم الأولية تعكس المحفوظ في كل عنصر', async () => {
@@ -481,7 +482,7 @@ test('كل عنصر إدخال باسم وصول: منزلق الحجم بـaria
     }
   }
   const fieldsets = findAll(m.root, (e) => e.tagName === 'fieldset');
-  assert.equal(fieldsets.length, 7, 'وضع العرض، وخط الترجمة، والخلفية، والموضع، والخطوة، ومكان الحفظ، ووضع التصدير');
+  assert.equal(fieldsets.length, 8, 'وضع العرض، وخط الترجمة، والخلفية، والموضع، والخطوة، ومكان الحفظ، ووضع التصدير، ونوع البلاغ');
   assert.ok(fieldsets.every((f) => textOf(f.querySelector('legend') ?? { textContent: '' })));
 });
 

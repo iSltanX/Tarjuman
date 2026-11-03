@@ -32,10 +32,13 @@ const BACKGROUND = {
   chromium: '{"service_worker":"background/worker.js"}',
   firefox: '{"scripts":["background/worker.js"]}',
 };
-// Gecko المعتمد (store/README.md §٥): المعرّف، وأدنى إصدار 140، ولا جمع بيانات، ولا gecko_android (سطح المكتب وحده).
-const GECKO_SETTINGS = '{"gecko":{"id":"tarjuman@bysltan.com","strict_min_version":"140.0","data_collection_permissions":{"required":["none"]}}}';
+// Gecko المعتمد (store/README.md §٥): المعرّف، وأدنى إصدار 140، ولا جمع بيانات دون موافقة، وفئة البلاغ الاختيارية وحدها
+// (T2.1)، ولا gecko_android (سطح المكتب وحده).
+const GECKO_SETTINGS = '{"gecko":{"id":"tarjuman@bysltan.com","strict_min_version":"140.0","data_collection_permissions":{"required":["none"],"optional":["technicalAndInteraction"]}}}';
+// قناة البلاغات (جولة النشر T2.1): إذن مضيف اختياري لخادمها وحده، يُطلب عند أول إرسال؛ والإلزامية كما هي.
+const OPTIONAL_HOSTS = '["https://app-reports.isultantf.workers.dev/*"]';
 const FORBIDDEN_KEYS = [
-  'host_permissions', 'optional_permissions', 'optional_host_permissions',
+  'host_permissions', 'optional_permissions',
   'externally_connectable', 'content_security_policy', 'sandbox', 'oauth2', 'key', 'chrome_url_overrides',
   'devtools_page', 'options_page', 'options_ui', 'commands', 'side_panel', 'declarative_net_request', 'update_url',
 ];
@@ -68,6 +71,7 @@ for (const target of ['chromium', 'firefox']) {
     problems.push(`${at}: الأذونات ${JSON.stringify(perms)} والمعتمد ${JSON.stringify(ALLOWED_PERMISSIONS)}`);
   }
   for (const k of FORBIDDEN_KEYS) if (k in manifest) problems.push(`${at}: المفتاح ${k} غير مسموح`);
+  if (JSON.stringify(manifest.optional_host_permissions) !== OPTIONAL_HOSTS) problems.push(`${at}: optional_host_permissions غير المعتمد ${JSON.stringify(manifest.optional_host_permissions ?? null)} (المعتمد ${OPTIONAL_HOSTS})`);
   if ('background' in manifest && JSON.stringify(manifest.background) !== BACKGROUND[target]) problems.push(`${at}: background غير المعتمد ${JSON.stringify(manifest.background)} (المعتمد ${BACKGROUND[target]})`);
   if (target === 'firefox' && JSON.stringify(manifest.browser_specific_settings) !== GECKO_SETTINGS) {
     problems.push(`${at}: browser_specific_settings غير المعتمد ${JSON.stringify(manifest.browser_specific_settings ?? null).slice(0, 200)}`);
@@ -138,6 +142,8 @@ const RULES = [
   {
     re: /\bchrome\s*(?:\.|\[\s*['"`])\s*(?:webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen)\b|\bchrome\s*\[\s*['"`]downloads|\bpermissions\s*\.\s*request\b|\btabs\s*\.\s*(?:executeScript|insertCSS)\b/,
     msg: 'واجهة تحتاج إذنًا غير معتمد',
+    // طلب إذن مضيف البلاغات وحده، بسطره المراجَع في ملف القناة (جولة النشر T2.1).
+    allow: (rel, line) => rel === REPORT_FILE && REPORT_LINES.has(line.trim()),
   },
   { re: /\b(?:localStorage|sessionStorage|indexedDB)\b/, msg: 'التخزين عبر src/core/store وحده (لا localStorage ولا IndexedDB)' },
   { re: /\bconsole\b/, msg: 'التسجيل في الكونسول ممنوع؛ الأخطاء برموز وتقرير التشخيص' },
@@ -156,6 +162,14 @@ const PASSTHROUGH = new Set([
   'const XHR = window.XMLHttpRequest.prototype;',
 ]);
 const CAPTURE = path.join('main-world', 'capture.js');
+// قناة البلاغات (جولة النشر T2.1، store-release.md): أضيق استثناء لهذا المضيف وهذا الملف. طلب fetch واحد وطلب إذن واحد بسطريهما
+// المراجَعين حرفيًا، والمضيف رابطًا في هذا الملف وحده. فلا طلب في ملف آخر، ولا مضيف آخر هنا، والعامل وسكربتا المحتوى بلا شبكة.
+const REPORT_FILE = path.join('core', 'report', 'client.js');
+const REPORTS_ORIGIN = 'https://app-reports.isultantf.workers.dev';
+const REPORT_LINES = new Set([
+  'const pageFetch = (url, init) => globalThis.fetch(url, init);',
+  'return Promise.resolve(api.permissions.request(reportPermissions(target))).then((granted) => granted === true, () => false);',
+]);
 // قراءة ملف خط الترجمة من حزمة الإضافة نفسها (chrome-extension://، ليست شبكة) لـFontFace ببياناته (عقد interfaces §٣):
 // في محمّل خطوط الطبقة وحده، والسطر مراجَع حرفيًا كأسطر غلافي الالتقاط (طلب ملف مشترك من P6).
 const PACKAGED_READS = new Map([[path.join('player', 'overlay', 'fonts.js'), new Set(['const res = await fetch(runtime.getURL(path));'])]]);
@@ -169,7 +183,8 @@ const ABOUT_LINKS = new Set(['https://bysltan.com', 'https://github.com/iSltanX/
 // وكلها ممنوعة هنا كما كانت). فلا يمرّ رابط آخر في ذلك الملف، ولا هذا الرابط في ملف آخر.
 const THUMB_FILE = path.join('pages', 'library', 'thumb.js');
 const THUMB_URL = 'https://i.ytimg.com/vi/';
-const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u)) || (rel === THUMB_FILE && u === THUMB_URL);
+const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u)) || (rel === THUMB_FILE && u === THUMB_URL)
+  || (rel === REPORT_FILE && u === REPORTS_ORIGIN);
 const STORAGE = /\bchrome\s*(?:\.|\[\s*['"`])\s*storage\b|\.\s*storage\s*\.\s*(?:local|sync|session|managed|onChanged)\b/;
 // واجهة التنزيلات محصورة في ملفات ترجمان (اعتماد سلطان 2026-11-02، عقد interfaces §١٣): في src/core/save وsrc/background
 // وحدهما؛ والوصول إلى كائنها (.downloads) في أسطر مراجَعة حرفيًا تسلّمه إلى متغير اسمه downloads لا غير؛ ولا يُستدعى منه
@@ -255,8 +270,9 @@ for (const file of await walk(SRC)) {
   codeLines(await readFile(file, 'utf8')).forEach((line, i) => {
     if (!line.trim()) return;
     const at = `${rel}:${i + 1}`;
-    for (const r of RULES) if (r.re.test(line)) problems.push(`${at}: ${r.msg}`);
-    if (NETWORK.test(line) && !(rel === CAPTURE && PASSTHROUGH.has(line.trim())) && !PACKAGED_READS.get(rel)?.has(line.trim())) problems.push(`${at}: طلب شبكة من الإضافة`);
+    for (const r of RULES) if (r.re.test(line) && !r.allow?.(rel, line)) problems.push(`${at}: ${r.msg}`);
+    if (NETWORK.test(line) && !(rel === CAPTURE && PASSTHROUGH.has(line.trim())) && !PACKAGED_READS.get(rel)?.has(line.trim())
+      && !(rel === REPORT_FILE && REPORT_LINES.has(line.trim()))) problems.push(`${at}: طلب شبكة من الإضافة`);
     for (const m of line.matchAll(URL_RE)) if (!URL_OK(m[0], rel)) problems.push(`${at}: نطاق خارجي ${m[0].slice(0, 60)}`);
     if (STORAGE.test(line) && !inStore) problems.push(`${at}: التخزين خارج src/core/store`);
     const inDl = DL_DIRS.some((d) => rel.startsWith(d));

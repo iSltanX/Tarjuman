@@ -1,6 +1,6 @@
-// قسم «حول» (R42، P7-AC10، وجولة الصقل): الإصدار، و«كل شيء محلي»، ودليل الاستخدام، و«ترجمان — تطوير سلطان» مع رابطي
-// bysltan.com والمستودع، ونسب الخطوط المضمّنة (الترجمة وعناوين الواجهة) مع «عرض التراخيص» من ملفات الرخص المحلية. الروابط
-// تُفتح بالضغط وحده في تبويب جديد (noopener)؛ لا طلب شبكة قبل الضغط ولا بعده من الصفحة.
+// قسم «حول» (R42، P7-AC10، وجولة الصقل): الإصدار، و«كل شيء محلي»، ودليل الاستخدام، و«الإبلاغ عن مشكلة» (جولة النشر T2.1،
+// report.js)، و«ترجمان — تطوير سلطان» مع رابطي bysltan.com والمستودع، ونسب الخطوط المضمّنة (الترجمة وعناوين الواجهة) مع
+// «عرض التراخيص» من ملفات الرخص المحلية. الروابط تُفتح بالضغط وحده في تبويب جديد (noopener)؛ ولا طلب شبكة من هذا الملف.
 import { el, icon, ltr } from '../../ui/components.js';
 import { SUBTITLE_FONT_LIST } from '../../ui/subtitle-fonts.js';
 import { UI_FONT_LIST } from '../../ui/ui-fonts.js';
@@ -11,10 +11,11 @@ export const LINKS = Object.freeze({ site: 'https://bysltan.com', repo: 'https:/
 const UI_HEAD_FONT = Object.freeze({ nameAr: 'القاهرة', nameLatin: 'Cairo', license: UI_FONT_LIST[0].license });
 
 /**
- * سطر الخصوصية كما هو صحيح: البيانات كلها على الجهاز، والاستثناء الوحيد صور الفيديو في المحفوظات (i.ytimg.com بمعرّف الفيديو)
- * ما دام مفتاحها «صور الفيديو في المحفوظات» مفعّلًا (prefs.ui.thumbnails، افتراضيًا مفعّل بقرار سلطان). لا يُقال «كل شيء محلي» مطلقًا.
+ * سطر الخصوصية كما هو صحيح: المعالجة والحفظ على الجهاز، ولا يخرج منه شيء إلا صور الفيديو في المحفوظات (i.ytimg.com بمعرّف
+ * الفيديو) ما دام مفتاحها «صور الفيديو في المحفوظات» مفعّلًا (prefs.ui.thumbnails، افتراضيًا مفعّل بقرار سلطان)، وبلاغ يرسله
+ * المستخدم بنفسه من «الإبلاغ عن مشكلة» (جولة النشر T2.1). لا يُقال «كل شيء محلي» مطلقًا.
  */
-export const PRIVACY_LINE = 'بياناتك كلها على جهازك؛ لا حسابات ولا خادم ولا مفتاح API. وصور الفيديو في المحفوظات تُطلب من خوادم يوتيوب ما دام مفتاحها مفعّلًا.';
+export const PRIVACY_LINE = 'بياناتك كلها على جهازك؛ لا حسابات ولا مفتاح API. ولا يخرج منه شيء إلا صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وبلاغ ترسله أنت بنفسك من «الإبلاغ عن مشكلة».';
 
 export const GUIDE_STEPS = Object.freeze([
   'افتح فيديو على يوتيوب وفعّل الترجمة (CC) واختر English.',
@@ -40,10 +41,11 @@ const arabicList = (names) => names.map((n, i) => (i ? `و${n}` : n)).join('، '
 /**
  * @param {{
  *   version: string, doc?: Document, fonts?: typeof SUBTITLE_FONT_LIST,
- *   section?: (...children: HTMLElement[]) => HTMLElement
- * }} o
+ *   section?: (...children: HTMLElement[]) => HTMLElement,
+ *   report?: HTMLElement | null,
+ * }} o report: زر «الإبلاغ عن مشكلة» ونموذجه (report.js)
  */
-export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LIST, section }) {
+export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LIST, section, report = null }) {
   const guide = el('details', {
     className: 'st-details',
     children: [
@@ -73,6 +75,7 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
     el('div', { className: 'st-about__row', children: [el('span', { className: 'tj-label', text: 'الإصدار', doc }), ltr(version, { doc })], doc }),
     el('p', { className: 'tj-body-sm', text: PRIVACY_LINE, doc }),
     guide,
+    report,
     el('hr', { className: 'tj-rule', doc }),
     el('p', { className: 'tj-label', text: 'ترجمان — تطوير سلطان', doc }),
     el('div', {

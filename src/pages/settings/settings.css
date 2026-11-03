@@ -201,6 +201,19 @@
 .st-guide, .st-licenses { margin: var(--tj-space-2) 0 0; padding-inline-start: var(--tj-space-6); display: flex; flex-direction: column; gap: var(--tj-space-2); font: 400 14px/23px var(--tj-font-body); color: var(--tj-text-2); }
 .st-licenses { list-style: none; padding-inline-start: 0; }
 
+/* الإبلاغ عن مشكلة (جولة النشر T2.1): نموذج تحت زره في «حول»، والمعاينة لوحة بما يُرفق ونص البلاغ كاملًا. */
+.st-report { display: flex; flex-direction: column; gap: var(--tj-space-3); max-width: 640px; }
+.st-report__text { min-height: 120px; padding: var(--tj-space-2) 12px; resize: vertical; }
+.st-report__count { align-self: flex-end; }
+.st-report__secret { margin: 0; color: var(--tj-danger); font: 700 14px/22px var(--tj-font-body); }
+.st-report__rows { margin: var(--tj-space-2) 0 0; display: flex; flex-direction: column; }
+.st-report__row { display: flex; justify-content: space-between; gap: var(--tj-space-3); padding: var(--tj-space-1) 0; border-bottom: 1px solid var(--tj-border); }
+.st-report__row:last-child { border-bottom: none; }
+.st-report__row dt { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
+.st-report__row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; text-align: end; }
+.st-report__json { margin: var(--tj-space-2) 0 0; max-height: 280px; overflow: auto; padding: var(--tj-space-2); border-radius: var(--tj-radius-md); background: var(--tj-surface); font: 400 12px/18px var(--tj-font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.st-report__failed .tj-body-sm { color: var(--tj-danger); }
+
 @media (max-width: 760px) {
   .st { grid-template-columns: minmax(0, 1fr); gap: var(--tj-space-4); }
   .st-nav { position: static; margin-top: 0; flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 4px; scrollbar-width: thin; order: 1; }
