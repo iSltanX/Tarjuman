@@ -7,6 +7,8 @@ export const SELECTORS = Object.freeze({
   video: '#movie_player video.html5-main-video',
   rightControls: '#movie_player .ytp-right-controls',
   leftControls: '#movie_player .ytp-left-controls',
+  // منزلق الصوت: يتسع حين يمر المؤشر على زر الصوت ويعود صفرًا بعده.
+  volumePanel: '#movie_player .ytp-left-controls .ytp-volume-panel',
   chromeBottom: '#movie_player .ytp-chrome-bottom',
   progressBar: '#movie_player .ytp-progress-bar-container',
   captionWindow: '#movie_player .ytp-caption-window-container',

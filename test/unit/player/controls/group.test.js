@@ -307,24 +307,34 @@ test('الملاءمة بالمساحة الخالية في الشريط لا ب
   assert.equal(fitSize(bar(10, 'fullscreen'), 5), 'fullscreen');
 });
 
-test('roomFor: من نهاية أدوات يوتيوب اليسرى الأساسية (عنوان الفصل لا يُحسب) إلى نهاية الشريط، ناقص أدوات يوتيوب اليمنى', () => {
+test('roomFor: من نهاية أدوات يوتيوب اليسرى (وسهم الفصل ومنزلق الصوت محجوزان) إلى نهاية الشريط، ناقص أدوات يوتيوب اليمنى، ولا يتغير بمرور المؤشر', () => {
   const page = mountPage({ width: 760 });
   const { env } = page;
-  const mk = (cls, left, right) => {
+  const mk = (cls, left, right, text = '') => {
     const el = env.doc.createElement('div');
     el.className = cls;
+    if (text) el.textContent = text;
     el.rect = { top: 0, bottom: 40, left, right, width: right - left, height: 40 };
     page.left.appendChild(el);
     return el;
   };
   mk('ytp-play-button', 12, 68);
-  mk('ytp-time-display', 120, 242);
-  mk('ytp-chapter-container', 242, 500);
+  const vol = mk('ytp-volume-panel', 70, 70);
+  const time = mk('ytp-time-display', 120, 242);
+  const chapter = mk('ytp-chapter-container', 242, 500, 'Intro');
   page.chrome.rect = { ...page.chrome.rect, left: 12, right: 748, width: 736 };
   page.right.rect = { top: 0, bottom: 40, left: 300, right: 748, width: 448, height: 40 };
   page.ui.groupHost().rect = { top: 0, bottom: 40, left: 300, right: 500, width: 200, height: 40 };
-  // 748 − 242 − (448 − 200) = 258
-  assert.equal(roomFor(env.doc, page.ui.groupHost()), 256, 'مقرَّبة إلى مضاعف 4');
+  // الوقت ينتهي عند 242، ثم سهم الفصل 44 ومنزلق الصوت المطوي 52: 338؛ و748 − 338 − (448 − 200) = 162 ← 160 (مضاعف 4).
+  assert.equal(roomFor(env.doc, page.ui.groupHost()), 160);
+  // المؤشر على زر الصوت: يتسع المنزلق 52 فيُدفع الوقت 52، ويخفي يوتيوب عنوان الفصل؛ والمساحة كما هي.
+  vol.rect = { ...vol.rect, right: 122, width: 52 };
+  time.rect = { ...time.rect, left: 172, right: 294 };
+  chapter.rect = { ...chapter.rect, left: 294, right: 294, width: 0 };
+  assert.equal(roomFor(env.doc, page.ui.groupHost()), 160);
+  // فيديو بلا فصول (العنوان فارغ): لا يُحجز السهم.
+  chapter.textContent = '';
+  assert.equal(roomFor(env.doc, page.ui.groupHost()), 204);
   assert.equal(roomFor(env.doc, null), null);
 });
 
