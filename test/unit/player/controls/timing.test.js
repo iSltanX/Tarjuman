@@ -168,7 +168,7 @@ test('بلوحة المفاتيح: الفتح ينقل التركيز إلى أ�
 test('قائمة واحدة في كل مرة: فتح التوقيت يغلق التحميل، وتلميح الزر لا يظهر وقائمته مفتوحة', () => {
   const page = page0({ captured: [trackInfo()] });
   click(page.ui.btn('download'));
-  assert.equal(page.ui.menuLabel(), 'تحميل الترجمة');
+  assert.equal(page.ui.menuLabel(), 'تحميل الأصل');
   click(page.ui.btn('badge'));
   assert.equal(page.ui.menuLabel(), 'توقيت الترجمة');
   assert.equal(page.ui.btn('download').getAttribute('aria-expanded'), 'false');

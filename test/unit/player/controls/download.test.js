@@ -12,7 +12,7 @@ const DL = 'تنزيل الملف';
 const open = (page) => {
   click(page.ui.btn('download'));
   assert.equal(page.ui.menuOpen(), true);
-  assert.equal(page.ui.menuLabel(), 'تحميل الترجمة');
+  assert.equal(page.ui.menuLabel(), 'تحميل الأصل');
 };
 const lines = (page) => page.ui.menu().querySelectorAll('.line').map((l) => [l.getAttribute('data-fid'), l.getAttribute('data-tone'), l.textContent]);
 const withTrack = (over = {}) => mountPage({ state: makeState({ captured: [trackInfo()], ...over }) });
@@ -60,15 +60,17 @@ test('مسار واحد: سطر الحالة بوصفه، ووضع التصدي�
   const page = mountPage({ state: makeState({ captured: [trackInfo({ warnings: ['EX_MAYBE_INCOMPLETE'], lastEndMs: 760000 })] }) });
   open(page);
   const text = page.ui.menuText();
-  assert.match(text, /English – يدوي، 412 مقطعًا/);
+  assert.match(text, /اللغة/);
+  assert.match(text, /الإنجليزية · يدوية · 412 مقطعًا/);
   assert.ok(page.ui.menu().querySelector('.row.status svg.glyph'), 'علامة الالتقاط رمز SVG لا محرف');
+  assert.equal(page.ui.menu().querySelector('.row.status').getAttribute('data-tone'), 'warn', 'مسار قد يكون ناقصًا: علامة تحذير لا علامة سلامة');
   assert.equal(text.includes('مقاطع كما في يوتيوب'), false, 'لا سطر شرح في المشغّل');
   assert.equal(page.ui.field('mode:normal').getAttribute('title'), 'مقاطع كما في يوتيوب، للتزامن الأدق', 'الشرح في التلميح');
   assert.match(text, /آخر ترجمة عند 12:40 والفيديو 18:05؛ قد يكون النص ناقصًا\./);
   const dl = page.ui.item(DL);
   assert.equal(dl.className, 'primary');
   assert.equal(dl.getAttribute('aria-label'), null, 'اسم الوصول هو النص الظاهر (ومنه «جارٍ التنزيل…»)');
-  assert.equal(dl.getAttribute('aria-description'), 'ملف الترجمة الإنجليزية (SRT) وحده');
+  assert.equal(dl.getAttribute('aria-description'), 'ملف الأصل (SRT) وحده');
   assert.equal(page.ui.field('copy').getAttribute('aria-description'), 'تعليمات الترجمة وحدها، لترفقها مع الملف');
   assert.equal(page.ui.field('copy').className, 'secondary');
   assert.equal(page.ui.field('copy').textContent, 'نسخ التعليمات');
@@ -85,7 +87,7 @@ test('أكثر من مسار: قائمة اختيار (اليدوي أولًا)�
   const page = mountPage({ state: makeState({ captured: [trackInfo({ key: 'en|asr', kind: 'asr', cueCount: 600 }), trackInfo()] }) });
   open(page);
   const radios = page.ui.menu().querySelectorAll('[role="menuitemradio"]');
-  assert.deepEqual(radios.map((r) => r.textContent), ['English – يدوي، 412 مقطعًا', 'English – تلقائي، 600 مقطع']);
+  assert.deepEqual(radios.map((r) => r.textContent), ['الإنجليزية · يدوية · 412 مقطعًا', 'الإنجليزية · تلقائية · 600 مقطع']);
   assert.equal(radios[0].getAttribute('aria-checked'), 'true');
   click(radios[1]);
   click(page.ui.item(DL));
@@ -102,7 +104,7 @@ test('«تنزيل الملف»: الحفظ بـsaveFile ثم البصمة، د�
   page.flows.onSave = () => order.push(['save', page.copied.length]);
   click(page.ui.item(DL));
   assert.match(page.ui.menuText(), /جارٍ التنزيل…/);
-  assert.equal(page.ui.btn('download').querySelector('.spin').hasAttribute('hidden'), false, 'دوّار على الزر');
+  assert.equal(page.ui.btn('download').querySelector('.load').hasAttribute('hidden'), false, 'دوّار على الزر');
   await settle();
   assert.deepEqual(order, [['save', 0]], 'لا نسخ قبل الحفظ ولا بعده');
   assert.deepEqual(page.copied, [], 'التنزيل لا يكتب في الحافظة');
@@ -308,4 +310,50 @@ test('تبدّل الفيديو أثناء الحفظ: لا بصمة تُحفظ 
   await settle();
   assert.equal(page.controller.calls.some((c) => c[0] === 'recordExport'), false);
   assert.equal(page.ui.menuOpen(), false);
+});
+
+// اسم اللغة من رمز المسار الملتقط نفسه (Intl.DisplayNames بالعربية)، لا نص «الإنجليزية» مكتوب في الشيفرة.
+const arName = (code) => new Intl.DisplayNames(['ar'], { type: 'language' }).of(code);
+const languageLine = (page) => page.ui.menu().querySelector('[data-fid="language"]');
+
+test('«اللغة»: سطر القائمة يسمّي لغة المسار الفعلية بالعربية من رمزها، ونوعه وعدد مقاطعه، ولا اسم مكتوبًا في الشيفرة', () => {
+  assert.equal(arName('en'), 'الإنجليزية');
+  assert.notEqual(arName('en-GB'), arName('en'), 'لهجة المنطقة تظهر في اسمها');
+  for (const [lang, kind, expected] of [
+    ['en', 'manual', `${arName('en')} · يدوية · 412 مقطعًا`],
+    ['en-GB', 'manual', `${arName('en-GB')} · يدوية · 412 مقطعًا`],
+    ['fr', 'asr', `${arName('fr')} · تلقائية · 412 مقطعًا`],
+    ['de', 'manual', `${arName('de')} · يدوية · 412 مقطعًا`],
+  ]) {
+    const page = mountPage({ state: makeState({ captured: [trackInfo({ lang, kind, key: `${lang}|${kind}` })] }) });
+    open(page);
+    assert.equal(page.ui.menu().querySelectorAll('.label')[0].textContent, 'اللغة');
+    assert.equal(languageLine(page).textContent, expected, lang);
+    assert.equal(languageLine(page).textContent.includes('الإنجليزية'), lang === 'en' || lang === 'en-GB', 'لا «الإنجليزية» لمسار بلغة أخرى');
+  }
+  const fr = mountPage({ state: makeState({ captured: [trackInfo({ lang: 'fr', kind: 'asr', key: 'fr|asr' })] }) });
+  open(fr);
+  assert.equal(fr.ui.menuText().includes('الإنجليزية'), false, 'ولا في أي موضع آخر من القائمة (ومنها وصف زر التنزيل)');
+  assert.equal(languageLine(fr).getAttribute('data-tone'), 'ok');
+});
+
+test('«اللغة»: رمز لا يعرفه المتصفح أو غير صالح يبقى كما هو (لا خطأ)، وأكثر من مسار يسمّي كلًّا بلغته', () => {
+  const odd = mountPage({ state: makeState({ captured: [trackInfo({ lang: 'xx', key: 'xx|manual' })] }) });
+  open(odd);
+  assert.equal(languageLine(odd).textContent, 'xx · يدوية · 412 مقطعًا');
+  const bad = mountPage({ state: makeState({ captured: [trackInfo({ lang: 'a-b-c', key: 'bad|manual' })] }) });
+  open(bad);
+  assert.equal(languageLine(bad).textContent, 'a-b-c · يدوية · 412 مقطعًا', 'الرمز غير الصالح كما جاء');
+  const many = mountPage({ state: makeState({ captured: [trackInfo({ lang: 'en', kind: 'manual' }), trackInfo({ key: 'fr|asr', lang: 'fr', kind: 'asr', cueCount: 600 })] }) });
+  open(many);
+  assert.deepEqual(many.ui.menu().querySelectorAll('[role="menuitemradio"]').map((r) => r.textContent), [`${arName('en')} · يدوية · 412 مقطعًا`, `${arName('fr')} · تلقائية · 600 مقطع`]);
+});
+
+test('عنوان القائمة «تحميل الأصل»، واسم الوصول لها، ولا «تحميل الترجمة» في أي نص منها أو من تلميح زرها', () => {
+  const page = withTrack();
+  open(page);
+  assert.equal(page.ui.menu().querySelector('.title').textContent, 'تحميل الأصل');
+  assert.equal(page.ui.menuLabel(), 'تحميل الأصل');
+  assert.equal(page.ui.menuText().includes('تحميل الترجمة'), false);
+  assert.equal(page.ui.btn('download').getAttribute('aria-label').includes('الترجمة الإنجليزية'), false);
 });

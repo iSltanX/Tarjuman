@@ -14,7 +14,7 @@ import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
 import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
 import {
   LABELS, badgeTip, comparisonSummary, downloadedLine, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime, syncUndoStale,
-  slotToast,
+  slotToast, withState,
 } from './text.js';
 
 export const TOAST_MS = 3000;
@@ -129,6 +129,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   // ———— نماذج العرض ————
 
+  /**
+   * نموذج الأزرار الخمسة. بلا نقاط حالة على الأزرار: اسم الوظيفة هو اسم الوصول، وهو التلميح عند المرور والتركيز، ومعنى الحالة
+   * (جاهز، مسار ناقص، ترجمة فيها فروق، جارٍ العمل) يلحق التلميح ويُوصف به الزر؛ والسبب يصحب المعطّل والمقيَّد في اسمه وتلميحه.
+   */
   function groupModel(s, bar) {
     const tracks = okTracks(s);
     const noVideo = !s.videoId;
@@ -137,22 +141,27 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const withReason = (label) => (reason ? `${label} — ${reason}` : label);
     const step = s.settings.offsetStepMs;
     const off = s.view.displayOffsetMs;
-    const tone = s.arabic ? comparisonSummary(s.arabic.comparison).tone : null;
+    const summary = s.arabic ? comparisonSummary(s.arabic.comparison) : null;
     const unavailable = flags.live || (!tracks.length && flags.unavailable);
     const dlReason = flags.live ? messageFor('EX_LIVE') : unavailable ? messageFor('CT_NO_CAPTIONS') : null;
+    const dlName = dlReason ? `${LABELS.download} — ${dlReason}` : LABELS.download;
+    const dlState = dlReason ? null : ui.download.busy ? LABELS.stateDownloading : tracks.length ? (tracks.some((t) => t.warnings?.length) ? LABELS.stateIncomplete : LABELS.stateReady) : null;
+    const upState = ui.upload.busy ? LABELS.importing : s.arabic && summary.tone === 'warn' ? LABELS.stateDiffers : null;
+    const upLabel = s.arabic ? `${LABELS.translation}: ${s.arabic.fileName}` : LABELS.upload;
+    const badge = badgeTip(off);
     return {
       size: bar.size,
       download: {
-        label: dlReason ? `${LABELS.download} — ${dlReason}` : LABELS.download, disabled: noVideo, unavailable,
-        loading: ui.download.busy, dot: tracks.length ? 'ready' : null, expanded: ui.open === 'download',
+        label: dlName, tip: withState(dlName, dlState), description: dlState, disabled: noVideo, unavailable,
+        loading: ui.download.busy, expanded: ui.open === 'download',
       },
       upload: {
-        label: s.arabic ? `الترجمة العربية: ${s.arabic.fileName}` : LABELS.upload, disabled: noVideo || s.loading,
-        loading: ui.upload.busy, dot: s.arabic ? (tone === 'warn' ? 'warning' : 'loaded') : null, expanded: ui.open === 'display' || ui.open === 'confirm',
+        label: upLabel, tip: withState(s.arabic ? LABELS.translation : LABELS.upload, upState), description: s.arabic ? summary.text : upState,
+        disabled: noVideo || s.loading, loading: ui.upload.busy, expanded: ui.open === 'display' || ui.open === 'confirm',
       },
-      minus: { label: withReason(minusTip(step)), disabled: viewOff },
-      badge: { label: withReason(badgeTip(off)), disabled: viewOff, text: formatOffset(off), sign: signOf(off), expanded: ui.open === 'timing' },
-      plus: { label: withReason(plusTip(step)), disabled: viewOff },
+      minus: { label: withReason(minusTip(step)), tip: withReason(minusTip(step)), description: null, disabled: viewOff },
+      badge: { label: withReason(badge), tip: withReason(badge), description: null, disabled: viewOff, text: formatOffset(off), sign: signOf(off), expanded: ui.open === 'timing' },
+      plus: { label: withReason(plusTip(step)), tip: withReason(plusTip(step)), description: null, disabled: viewOff },
     };
   }
 
@@ -191,7 +200,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       fileName: a.fileName, count: a.cues.length, edited: a.edited, comparison: a.comparison, notes: a.comparison?.notes ?? [],
       slots, switching: s.loading || ui.switching, uploadLabel: slots.some((x) => !x.filled) ? LABELS.uploadMore : LABELS.replace,
-      warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, busy: ui.upload.busy, error: ui.upload.error,
+      warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, originalLang: s.english?.lang ?? null, busy: ui.upload.busy, error: ui.upload.error,
     };
   }
 
@@ -325,7 +334,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     const kind = ui.hint;
     if (kind && !(ui.open && ANCHOR[ui.open] === kind)) {
-      layer.showTip(lastModel[kind].label, group.button(kind));
+      layer.showTip(lastModel[kind].tip, group.button(kind));
       return;
     }
     layer.showTip(null, null);
@@ -1100,7 +1109,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         group: box(group.host),
         buttons: Object.fromEntries(['download', 'upload', 'minus', 'badge', 'plus'].map((k) => {
           const el = group.button(k);
-          return [k, { box: box(el), label: el.getAttribute('aria-label'), disabled: el.getAttribute('aria-disabled') === 'true', text: k === 'badge' ? el.textContent : null }];
+          return [k, { box: box(el), label: el.getAttribute('aria-label'), tip: lastModel?.[k]?.tip ?? null, description: el.getAttribute('aria-description'), busy: el.getAttribute('aria-busy') === 'true', disabled: el.getAttribute('aria-disabled') === 'true', text: k === 'badge' ? el.textContent : null }];
         })),
         layer: layer.peek(),
         overflow,

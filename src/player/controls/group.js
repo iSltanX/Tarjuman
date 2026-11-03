@@ -1,6 +1,8 @@
-// مجموعة الأزرار الخمسة داخل شريط يوتيوب (figma-design-brief §٥): تحميل، ورفع، و−، والشارة، و+، بهذا الترتيب
-// LTR دائمًا. Shadow DOM مغلق داخل عنصر واحد يُدرج في بداية أدوات الشريط اليمنى، فيظهر ويختفي مع الشريط كأي زر
-// أصلي. الأزرار تبقى قابلة للتركيز وهي معطّلة (aria-disabled) لتقرأ سببها. لا منطق منتج هنا: كل ضغط يُبلَّغ.
+// مجموعة الأزرار الخمسة داخل شريط يوتيوب (figma-design-brief §٥، والهوية «بُنّ على ورق»): تحميل الأصل، والترجمة، و−،
+// والشارة، و+، بهذا الترتيب LTR دائمًا. أيقونات بلا حروف ولا صناديق ولا نقاط حالة: اسم الوظيفة (ومعنى حالتها) في التلميح
+// عند المرور والتركيز وفي اسم الوصول ووصفه، والانشغال ماسّتا نبض مكان الأيقونة. Shadow DOM مغلق داخل عنصر واحد يُدرج في
+// بداية أدوات الشريط اليمنى، فيظهر ويختفي مع الشريط كأي زر أصلي. الأزرار تبقى قابلة للتركيز وهي معطّلة (aria-disabled)
+// لتقرأ سببها. لا منطق منتج هنا: كل ضغط يُبلَّغ.
 import { createSheet } from '../overlay/sheet.js';
 import { playerIcon } from './icons.js';
 import { GROUP_ID, PULSE_MS, groupCss } from './styles.js';
@@ -12,7 +14,8 @@ const MENU_KINDS = { download: 'menu', upload: 'menu', badge: 'dialog' };
 const OWN_KEYS = new Set(['Enter', ' ', 'Spacebar', 'Escape']);
 
 /**
- * @typedef {{ label: string, disabled?: boolean, unavailable?: boolean, loading?: boolean, dot?: 'ready' | 'loaded' | 'warning' | null, expanded?: boolean }} ButtonModel
+ * label اسم الوصول (وفيه السبب إن عُطّل)، وdescription معنى الحالة لقارئ الشاشة (أو null)، وtip نص التلميح البصري (تعرضه الطبقة).
+ * @typedef {{ label: string, tip?: string, description?: string | null, disabled?: boolean, unavailable?: boolean, loading?: boolean, expanded?: boolean }} ButtonModel
  * @typedef {{
  *   size: 'normal' | 'compact' | 'fullscreen',
  *   download: ButtonModel, upload: ButtonModel, minus: ButtonModel, plus: ButtonModel,
@@ -44,7 +47,7 @@ export function createGroup({ doc, win, on }) {
   group.setAttribute('data-size', 'normal');
   root.appendChild(group);
 
-  /** @type {Record<string, { el: HTMLElement, dot: HTMLElement | null, spin: HTMLElement | null, text: HTMLElement | null }>} */
+  /** @type {Record<string, { el: HTMLElement, load: HTMLElement | null, text: HTMLElement | null }>} */
   const buttons = {};
   let lastKey = false;
   let pulseTimer = 0;
@@ -59,8 +62,7 @@ export function createGroup({ doc, win, on }) {
       el.setAttribute('aria-expanded', 'false');
     }
     let text = null;
-    let dot = null;
-    let spin = null;
+    let load = null;
     if (kind === 'badge') {
       text = doc.createElement('span');
       text.textContent = '0.0';
@@ -70,14 +72,14 @@ export function createGroup({ doc, win, on }) {
       el.appendChild(playerIcon(doc, kind));
     }
     if (kind === 'download' || kind === 'upload') {
-      dot = doc.createElement('span');
-      dot.className = 'dot';
-      dot.setAttribute('hidden', '');
-      spin = doc.createElement('span');
-      spin.className = 'spin';
-      spin.setAttribute('hidden', '');
-      el.appendChild(dot);
-      el.appendChild(spin);
+      // الانشغال: ماستان تتناوبان نبضًا في صندوق الأيقونة نفسه (بلا دوّار)، وتحلّان محلّها ما دام العمل جاريًا.
+      load = doc.createElement('span');
+      load.className = 'load';
+      load.setAttribute('aria-hidden', 'true');
+      load.setAttribute('hidden', '');
+      load.appendChild(doc.createElement('i'));
+      load.appendChild(doc.createElement('i'));
+      el.appendChild(load);
     }
     el.addEventListener('click', (ev) => {
       ev.stopPropagation();
@@ -102,7 +104,7 @@ export function createGroup({ doc, win, on }) {
     el.addEventListener('focus', () => on.hint(kind));
     el.addEventListener('blur', () => on.hint(null));
     group.appendChild(el);
-    buttons[kind] = { el, dot, spin, text };
+    buttons[kind] = { el, load, text };
   }
   // النقر المزدوج على الشريط لا يصل إلى المشغّل (ملء الشاشة).
   group.addEventListener('dblclick', (ev) => ev.stopPropagation());
@@ -126,14 +128,13 @@ export function createGroup({ doc, win, on }) {
         const b = buttons[kind];
         const s = m[kind];
         setAttr(b.el, 'aria-label', s.label);
+        setAttr(b.el, 'aria-description', s.description ?? null);
         setAttr(b.el, 'aria-disabled', s.disabled ? 'true' : null);
         setAttr(b.el, 'data-unavailable', s.unavailable ? '' : null);
+        setAttr(b.el, 'aria-busy', s.loading ? 'true' : null);
+        setAttr(b.el, 'data-busy', s.loading ? '' : null);
         if (MENU_KINDS[kind]) setAttr(b.el, 'aria-expanded', s.expanded ? 'true' : 'false');
-        if (b.dot) {
-          setAttr(b.dot, 'hidden', s.dot && !s.loading ? null : '');
-          setAttr(b.dot, 'data-tone', s.dot ?? null);
-        }
-        if (b.spin) setAttr(b.spin, 'hidden', s.loading ? null : '');
+        if (b.load) setAttr(b.load, 'hidden', s.loading ? null : '');
         if (kind === 'badge') {
           if (b.text.textContent !== m.badge.text) b.text.textContent = m.badge.text;
           setAttr(b.el, 'data-sign', m.badge.sign);

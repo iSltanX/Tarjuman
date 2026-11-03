@@ -12,9 +12,10 @@ const B_CUES = AR_CUES.map((c) => ({ ...c, text: `ب ${c.text}` }));
 const three = () => withSlots([slotTrack(), slotTrack({ cues: B_CUES, fileName: 'b.srt' }), null], { offsets: [0, 1200, 0], names: [null, 'نسخة ب', null] });
 const openDisplay = (page) => {
   click(page.ui.btn('upload'));
-  assert.equal(page.ui.menuLabel(), 'الترجمة العربية');
+  assert.equal(page.ui.menuLabel(), 'الترجمة');
 };
 const slotButtons = (page) => page.ui.menu().querySelectorAll('button.slot');
+const LABELS_SLOTS_FULL = 'الخانات الثلاث ممتلئة؛ الرفع استبدال.';
 
 test('محدد الترجمات: ترجمتان تعرضان خيارين فقط (لا خانة فارغة)، والنشطة مميّزة، بلا تسميات ولا شرح', () => {
   const page = mountPage({ state: makeState(three()) });
@@ -173,22 +174,75 @@ test('تعذّر التراجع: رسالة مفهومة باقية، ورمزه
   assert.equal(page.handle.diagnostics().session.lastCode, 'CT_UNDO_FAILED');
 });
 
-test('قائمة العرض مضغوطة بترتيب §١٩.٣: الرأس بالمحدد، والملف، والملخص، والأوضاع الثلاثة في صف، ثم العلامة والرفع في صف', () => {
+test('قائمة العرض بأقسامها: الرأس بالمحدد، وسطر «العربية · N مقطعًا» والملف والملخص، ثم «وضع العرض» بأوضاعه الثلاثة، ثم العلامة والرفع في صف', () => {
   const page = mountPage({ state: makeState(three()) });
   openDisplay(page);
   const menu = page.ui.menu();
   const rows = menu.children.filter((c) => !c.classList.contains('sep'));
-  assert.deepEqual(rows.map((r) => r.className || r.tagName), ['head', 'row file', 'row summary', 'seg', 'actions inline']);
-  const modes = rows[3].children.map((b) => [b.textContent, b.getAttribute('aria-label')]);
-  assert.deepEqual(modes, [['العربية', 'العربية وحدها'], ['فوق الإنجليزية', 'العربية فوق الإنجليزية'], ['إخفاء', 'إخفاء الترجمة']], 'الأوضاع الثلاثة بتسمية قصيرة واسم وصول كامل');
+  assert.deepEqual(rows.map((r) => r.className || r.tagName), ['head', 'row status', 'row file', 'row summary', 'label', 'seg', 'note', 'actions inline']);
+  assert.equal(rows[1].textContent, 'العربية · 5 مقاطع', 'سطر الترجمة بعدد مقاطعها');
+  assert.ok(rows[1].querySelector('svg.glyph'), 'برمز SVG');
+  assert.equal(rows[2].textContent, 'talk.ar.srt', 'اسم الملف وحده في سطره');
+  assert.equal(rows[4].textContent, 'وضع العرض');
+  assert.equal(menu.querySelectorAll('.sep').length, 2, 'فاصلان: بين الملخص والأوضاع، وبين الأوضاع والإجراءات');
+  const modes = rows[5].children.map((b) => [b.textContent, b.getAttribute('aria-label')]);
+  assert.deepEqual(modes, [['العربية', 'العربية وحدها'], ['فوق الأصل', 'العربية فوق الأصل'], ['إخفاء', 'إخفاء الترجمة']], 'بلا أصل: «فوق الأصل» واسم وصول كامل');
   for (const [shown, name] of modes) assert.ok(name.includes(shown), `اسم الوصول يحوي النص الظاهر: ${shown}`);
-  assert.equal(rows[3].getAttribute('role'), 'radiogroup');
-  assert.deepEqual(rows[3].children.map((b) => b.getAttribute('tabindex')), ['0', '-1', '-1'], 'نقطة Tab واحدة للمجموعة (المختار)');
-  assert.deepEqual(rows[4].children.map((b) => b.textContent), ['علّم للمراجعة', 'رفع ترجمة…']);
-  assert.equal(menu.querySelectorAll('.sep').length, 0, 'بلا فواصل زائدة');
+  assert.equal(rows[5].getAttribute('role'), 'radiogroup');
+  assert.deepEqual(rows[5].children.map((b) => b.getAttribute('tabindex')), ['0', '-1', '-1'], 'نقطة Tab واحدة للمجموعة (المختار)');
+  assert.equal(rows[6].textContent, messageFor('CT_DUAL_UNAVAILABLE'), 'سبب تعطيل المزدوج ظاهر');
+  assert.deepEqual(rows[7].children.map((b) => b.textContent), ['علّم للمراجعة', 'رفع ترجمة…']);
+  assert.equal(menu.textContent.includes(LABELS_SLOTS_FULL), false, 'خانة فارغة موجودة: لا سطر امتلاء');
   const full = mountPage({ state: makeState(withSlots([slotTrack(), slotTrack(), slotTrack()])) });
   openDisplay(full);
   assert.ok(full.ui.item('استبدال…'), 'لا خانة فارغة: «استبدال…»');
+  assert.ok(full.ui.menuText().includes(LABELS_SLOTS_FULL), 'ولسانه: الرفع استبدال');
+});
+
+test('سطر الترجمة في قائمتها: «العربية · N مقطعًا» ومعها «· معدّلة» حين عُدّلت', () => {
+  const page = mountPage({ state: makeState(withSlots([slotTrack({ cues: AR_CUES, current: AR_CUES.slice(0, 4) })])) });
+  openDisplay(page);
+  assert.equal(page.ui.menu().querySelector('[data-fid="arabicLine"]').textContent, 'العربية · 4 مقاطع · معدّلة');
+  const plain = mountPage({ state: makeState(withSlots([slotTrack()])) });
+  openDisplay(plain);
+  assert.equal(plain.ui.menu().querySelector('[data-fid="arabicLine"]').textContent, 'العربية · 5 مقاطع');
+});
+
+// اسم الوضع المزدوج من لغة الأصل الملتقط فعلًا لا من «الإنجليزية» ثابتة.
+const arName = (code) => new Intl.DisplayNames(['ar'], { type: 'language' }).of(code);
+const original = (lang) => ({ english: { key: `${lang}|manual`, kind: 'manual', lang, cues: [], source: 'captured' } });
+const dualButton = (page) => page.ui.menu().querySelector('[data-fid="mode:dual"]');
+
+test('الوضع المزدوج: «فوق ‹اسم لغة الأصل›» باسم لغة المسار الفعلية، واسم الوصول الكامل بها، وبلا أصل «فوق الأصل»', () => {
+  const none = mountPage({ state: makeState(three()) });
+  openDisplay(none);
+  assert.equal(dualButton(none).textContent, 'فوق الأصل');
+  assert.equal(dualButton(none).getAttribute('aria-label'), 'العربية فوق الأصل');
+  assert.equal(dualButton(none).getAttribute('aria-disabled'), 'true');
+  assert.match(dualButton(none).getAttribute('aria-description'), /استخرج الإنجليزية لهذا الفيديو أولًا/, 'السبب باقٍ بلا أصل');
+  for (const lang of ['en', 'fr', 'de']) {
+    const page = mountPage({ state: makeState({ ...three(), ...original(lang) }) });
+    openDisplay(page);
+    assert.equal(dualButton(page).textContent, `فوق ${arName(lang)}`, lang);
+    assert.equal(dualButton(page).getAttribute('aria-label'), `العربية فوق ${arName(lang)}`);
+    assert.equal(dualButton(page).getAttribute('aria-disabled'), null);
+    assert.equal(page.ui.menu().querySelector('[data-fid="dualReason"]'), null, 'لا سبب تعطيل مع أصل');
+    assert.equal(page.ui.menuText().includes('الإنجليزية'), lang === 'en', 'لا «الإنجليزية» لأصل بلغة أخرى');
+  }
+});
+
+test('الوضع المزدوج بلهجة: الظاهر باللغة الأساسية (فوق الإنجليزية) والاسم الكامل في اسم الوصول والتلميح؛ ويتبع تبدّل الأصل والقائمة مفتوحة', () => {
+  const page = mountPage({ state: makeState({ ...three(), ...original('en-GB') }) });
+  openDisplay(page);
+  assert.equal(dualButton(page).textContent, `فوق ${arName('en')}`);
+  assert.equal(dualButton(page).getAttribute('aria-label'), `العربية فوق ${arName('en-GB')}`);
+  assert.equal(dualButton(page).getAttribute('title'), `العربية فوق ${arName('en-GB')}`, 'الاسم الكامل في التلميح');
+  assert.ok(dualButton(page).getAttribute('aria-label').includes(dualButton(page).textContent), 'اسم الوصول يحوي النص الظاهر');
+  page.controller.set(original('fr'));
+  assert.equal(dualButton(page).textContent, `فوق ${arName('fr')}`, 'تبدّل الأصل');
+  page.controller.set({ english: null });
+  assert.equal(dualButton(page).textContent, 'فوق الأصل');
+  assert.equal(dualButton(page).getAttribute('aria-disabled'), 'true');
 });
 
 test('الأوضاع الثلاثة: الأسهم تنقل التركيز بين خياراتها داخل الجذر (الأيسر إلى التالي في RTL) دون تطبيق، وEnter يطبّق', () => {
