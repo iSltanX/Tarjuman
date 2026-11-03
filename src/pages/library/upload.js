@@ -6,11 +6,11 @@ import { messageFor } from '../../core/errors/index.js';
 import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { compareWith, uploadImpact } from './actions.js';
-import { absoluteTime, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, targetOptions } from './model.js';
+import { EDIT_FORMS, absoluteTime, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, targetOptions } from './model.js';
+import { segGroup } from './seg.js';
 
 export const DIFF_BATCH = 200;
 let seq = 0;
-const EDIT_FORMS = Object.freeze({ one: 'تعديل يدوي واحد', two: 'تعديلان يدويان', few: 'تعديلات يدوية', many: 'تعديلًا يدويًا', single: 'تعديل يدوي' });
 
 const cueText = (c) => (Array.isArray(c) ? c.map((x) => x.text).join(' · ') : c ? c.text : '—');
 const cueNumber = (ch) => String(ch.n);
@@ -26,8 +26,8 @@ function diffTable(doc, changes) {
       attrs: { 'data-kind': ch.kind },
       children: [
         el('td', { className: 'lib-diff__n', children: [ltr(cueNumber(ch), { doc })], doc }),
-        el('td', { className: 'lib-diff__before', text: cueText(ch.before), dir: textDirection(cueText(ch.before)), doc }),
-        el('td', { className: 'lib-diff__after', text: cueText(ch.after), dir: textDirection(cueText(ch.after)), doc }),
+        el('td', { className: `lib-diff__before${cueText(ch.before) === '—' ? ' lib-diff__none' : ''}`, text: cueText(ch.before), dir: textDirection(cueText(ch.before)), doc }),
+        el('td', { className: `lib-diff__after${cueText(ch.after) === '—' ? ' lib-diff__none' : ''}`, text: cueText(ch.after), dir: textDirection(cueText(ch.after)), doc }),
       ],
       doc,
     })));
@@ -64,37 +64,35 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   let reference = review.suggested ?? result.fingerprintId ?? null;
   let impact = uploadImpact(bundle, target, result.cues);
 
-  // الخانة الهدف بأسمائها: المحفوظة ثم «ترجمة جديدة».
+  // الخانة الهدف مقطّعة «حفظ في» (تصميم LibraryDialogs): الترجمات المحفوظة بأرقامها وأسمائها المختصرة (الحفظ فيها استبدال)
+  // ثم «جديدة» للخانة الفارغة. اسم الوصول يحوي النص الظاهر ويزيد الفعل (WCAG 2.5.3).
   const options = targetOptions(bundle, preferred);
   if (!options.some((o) => o.n === target)) target = options[0].n;
-  const targetInputs = options.map((o) => {
-    const input = el('input', { attrs: { type: 'radio', name: `${id}-target`, value: String(o.n) }, doc });
-    input.checked = o.n === target;
-    input.addEventListener('change', () => {
-      if (!input.checked) return;
-      target = o.n;
+  const segOption = (o) => {
+    if (!o.filled) return { value: String(o.n), label: 'جديدة', ariaLabel: 'جديدة — حفظ كترجمة جديدة' };
+    const label = o.name ? `${o.n} · ${o.name}` : `الترجمة ${o.n}`;
+    return { value: String(o.n), label, ariaLabel: `${label} — استبدال الترجمة ${o.n}${o.active ? '، نشطة' : ''}` };
+  };
+  const targetSeg = segGroup({
+    legend: 'حفظ في', value: String(target), options: options.map(segOption), doc,
+    onChange: (v) => {
+      target = Number(v);
       impact = uploadImpact(bundle, target, result.cues);
       renderImpact();
       onTarget(impact.replace);
-    });
-    return input;
+    },
   });
   // العنوان المرئي فقرة فوق المجموعة: legend يقع على حد fieldset فتُقص نقاط حروفه العليا («حفظ في»)؛ ويبقى اسم الوصول.
   const targetHead = el('p', { className: 'tj-label lib-up__head', text: 'حفظ في', attrs: { 'aria-hidden': 'true' }, doc });
   // بلا ترجمة محفوظة: سطر «تُحفظ ترجمةً جديدة» بلا محدد، كتأكيد المشغّل.
   const onlyNew = options.length === 1 && !options[0].filled;
-  const targetGroup = onlyNew ? el('p', { className: 'tj-body-sm lib-up__only-new', text: 'تُحفظ ترجمةً جديدة.', doc }) : el('fieldset', {
-    className: 'tj-choice lib-up__targets',
-    children: [
-      el('legend', { className: 'tj-sr-only', text: 'حفظ في', doc }),
-      ...options.map((o, i) => el('label', {
-        className: 'tj-choice__option',
-        children: [targetInputs[i], el('span', { className: 'tj-choice__text', children: [el('span', { className: 'tj-choice__label', text: o.label, dir: 'auto', doc }), o.filled ? el('span', { className: 'tj-choice__hint', text: 'ممتلئة: الحفظ فيها استبدال', doc }) : null], doc })],
-        doc,
-      })),
-    ],
-    doc,
-  });
+  const targetGroup = onlyNew
+    ? el('p', { className: 'tj-body-sm lib-up__only-new', text: 'تُحفظ ترجمةً جديدة.', doc })
+    : el('div', {
+      className: 'tj-field lib-up__targets',
+      children: [targetSeg.root, el('span', { className: 'tj-field__hint', text: 'الممتلئة: الحفظ فيها استبدال، وتُحفظ الحالية نسخةً سابقة.', doc })],
+      doc,
+    });
 
   // المرجع.
   const compareHost = el('div', { className: 'lib-up__compare', doc });
@@ -169,7 +167,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       }
       kids.push(el('p', { className: 'tj-caption', text: 'تُحفظ الترجمة المستبدلة نسخةً سابقة يمكن استعادتها.', doc }));
     }
-    if (bundle.active === target && slot.offsetMs !== 0) kids.push(el('p', { className: 'tj-caption', text: `ستُصفَّر إزاحة العرض (${offsetInline(slot.offsetMs)} ث) لأن الملف الجديد يحمل توقيته.`, doc }));
+    if (bundle.active === target && slot.offsetMs !== 0) kids.push(alertBox({ tone: 'info', text: `ستُصفَّر إزاحة العرض (${offsetInline(slot.offsetMs)} ث) لأن الملف الجديد يحمل توقيته.`, doc }));
     impactHost.replaceChildren(...kids);
   }
 

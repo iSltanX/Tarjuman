@@ -1,6 +1,6 @@
 // المحفوظات (P7 ثم P13): تركيب الصفحة في المتصفح وحده: التخزين الحقيقي، وفتح التبويبات بـchrome.tabs.create (لا يحتاج
 // إذن tabs)، والحفظ عبر saveFile (يتبع مكان الحفظ المختار)، والحافظة بضغطة المستخدم، ومنتقي الملفات. المنطق كله في
-// view.js وpanel.js وupload.js وstudy.js وactions.js وmodel.js.
+// view.js وexpand.js وthumb.js وupload.js وstudy.js وdelete.js وactions.js وmodel.js.
 import { saveFile } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';

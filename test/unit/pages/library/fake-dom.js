@@ -111,6 +111,11 @@ export class FakeElement {
     for (const n of nodes) this.childNodes.push(this._adopt(n));
   }
 
+  prepend(...nodes) {
+    const adopted = nodes.map((n) => this._adopt(n));
+    this.childNodes.unshift(...adopted);
+  }
+
   appendChild(n) {
     this.append(n);
     return n;
