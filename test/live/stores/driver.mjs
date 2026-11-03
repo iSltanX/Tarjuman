@@ -164,13 +164,25 @@ async function firefox({ profile, ext, downloadDir, headless }) {
   }
   const chooser = (page, files) => (!chooserSupported ? Promise.resolve(false)
     : conn.waitFor('input.fileDialogOpened', (p) => p.context === page.context, { timeoutMs: 20000 }).then(async (p) => {
-      await conn.send('input.setFiles', { context: p.context, element: p.element, files });
-      return true;
-    }, () => false));
+      if (!p.element) {
+        notes.push(`input.fileDialogOpened بلا عنصر (multiple=${p.multiple})`);
+        return false;
+      }
+      try {
+        await conn.send('input.setFiles', { context: p.context, element: p.element, files });
+        return true;
+      } catch (err) {
+        notes.push(`input.setFiles: ${err.message.slice(0, 160)}`);
+        return false;
+      }
+    }, (err) => {
+      notes.push(`input.fileDialogOpened: ${err.message.slice(0, 120)}`);
+      return false;
+    }));
   const install = async () => (await conn.send('webExtension.install', { extensionData: { type: 'path', path: ext } })).extension;
   let extensionId = await install();
   let base = null;
-  /** صفحة الإطلاق: أي صفحة فيها جسر الحزام (يوتيوب) أو صفحة إضافة، لفتح صفحات الإضافة. */
+  /** صفحة الإطلاق: تبويب يوتيوب بجسر الحزام، يفتح صفحات الإضافة عبر سكربت خلفية الحزام (ولا يُغلق قبل نهاية الجلسة). */
   let launcher = null;
   const reportsBlocked = { count: 0 };
   const extContexts = new Set();
@@ -195,25 +207,21 @@ async function firefox({ profile, ext, downloadDir, headless }) {
     get extensionId() { return extensionId; },
     async youtube(url) {
       const page = bidiPage(conn, await BidiPage.open(conn, url), chooser);
-      launcher = launcher ?? { page, yt: true };
+      launcher = launcher ?? { page };
       return page;
     },
     /** أصل صفحات الإضافة من الجسر (المعرّف عشوائي لكل تثبيت مؤقت). */
     async learnBase(ytPage) {
       const r = await bridge(ytPage, 'base');
       if (r.ok) base = r.value;
-      launcher = { page: ytPage, yt: true };
+      launcher = { page: ytPage };
       return base;
     },
     async extPage(rel) {
       if (!base || !launcher) throw new Error('لا صفحة إطلاق ولا أصل لصفحات الإضافة بعد');
       const before = new Set((await conn.send('browsingContext.getTree', {})).contexts.map((c) => c.context));
-      if (launcher.yt) {
-        const r = await bridge(launcher.page, 'open', [rel]);
-        if (!r.ok || !r.value?.ok) throw new Error(`تعذّر فتح ${rel}: ${JSON.stringify(r).slice(0, 160)}`);
-      } else {
-        await launcher.page.eval((u) => chrome.tabs.create({ url: u }).then(() => true), { args: [base + rel] });
-      }
+      const r = await bridge(launcher.page, 'open', [rel]);
+      if (!r.ok || !r.value?.ok) throw new Error(`تعذّر فتح ${rel}: ${JSON.stringify(r).slice(0, 160)}`);
       const end = Date.now() + 15000;
       let ctx = null;
       while (!ctx && Date.now() < end) {
@@ -225,13 +233,11 @@ async function firefox({ profile, ext, downloadDir, headless }) {
       extContexts.add(ctx);
       const page = bidiPage(conn, new BidiPage(conn, ctx), chooser);
       await page.waitFor(() => document.readyState === 'complete', { timeoutMs: 15000 });
-      launcher = { page, yt: false };
       return page;
     },
     async uninstall() {
       try {
         await conn.send('webExtension.uninstall', { extension: extensionId });
-        launcher = null;
         return { method: 'webExtension.uninstall' };
       } catch (err) {
         return { error: err.message };

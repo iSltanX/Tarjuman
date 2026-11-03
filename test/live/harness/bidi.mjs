@@ -304,6 +304,13 @@ export class BidiPage {
     await this.conn.send('input.setFiles', { context: this.context, element: { sharedId: r.result.sharedId }, files });
   }
 
+  /** يملأ حقل ملف يعيده تعبير في الصفحة (ولو منفصلًا عن المستند، كمنتقي يُنشأ ويُضغط في الشيفرة). */
+  async setFilesExpr(expression, files) {
+    const r = await this.conn.send('script.evaluate', { expression, target: { context: this.context }, awaitPromise: false, resultOwnership: 'root' });
+    if (r.result?.type !== 'node') throw new Error(`التعبير لا يعيد عنصرًا: ${r.result?.type ?? r.type}`);
+    await this.conn.send('input.setFiles', { context: this.context, element: { sharedId: r.result.sharedId }, files });
+  }
+
   async screenshot(file) {
     const { data } = await this.conn.send('browsingContext.captureScreenshot', { context: this.context });
     await mkdir(path.dirname(file), { recursive: true });

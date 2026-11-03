@@ -78,6 +78,12 @@ const BRAND = { brave: 'Brave', chrome: 'Google Chrome', edge: 'Microsoft Edge',
 // ---- صفحة الفيديو ----
 const M = {
   mute: () => { const v = document.querySelector('#movie_player video.html5-main-video'); if (!v) return false; v.muted = true; v.pause(); return v.paused; },
+  play: () => { const v = document.querySelector('#movie_player video.html5-main-video'); if (!v) return false; v.muted = true; v.play().catch(() => {}); return true; },
+  skipBox: () => {
+    const s = document.querySelector('.ytp-skip-ad-button, .ytp-ad-skip-button-modern, .ytp-ad-skip-button');
+    const r = s?.getBoundingClientRect();
+    return r && r.width > 0 && getComputedStyle(s).display !== 'none' ? { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) } : null;
+  },
   seek: (t) => { const v = document.querySelector('#movie_player video.html5-main-video'); v.muted = true; v.pause(); v.currentTime = t; return true; },
   time: () => document.querySelector('#movie_player video.html5-main-video')?.currentTime ?? -1,
   isAd: () => { const p = document.querySelector('#movie_player'); return !!p && (p.classList.contains('ad-showing') || p.classList.contains('ad-interrupting')); },
@@ -109,23 +115,112 @@ const waitBridge = async (op, pred, { timeoutMs = 15000, args = [] } = {}) => {
   }
   return null;
 };
-async function clickButton(kind) {
-  await revealControls(yt);
-  const p = await call('peek');
-  const box = p.buttons[kind]?.box;
-  if (!box) throw new Error(`زر ${kind} غير ظاهر`);
-  const c = centerBox(box);
+/** ما تحت النقطة من مضيفي ترجمان (tarjuman-controls أو طبقة القوائم)؛ فلا تقع ضغطة على إعلان أو رابط في الصفحة. */
+const hostAt = (c) => yt.eval((x, y) => {
+  const e = document.elementFromPoint(x, y);
+  return e?.closest?.('[id^="tarjuman-"]')?.id ?? (e ? `${e.tagName}#${e.id}.${String(e.className).slice(0, 80)}` : null);
+}, { args: [c.x, c.y] });
+/** نافذة ترويج يوتيوب (yt-mealbar-promo-renderer) تغطي زاوية المشغّل: تُغلق بزرها نقرة حقيقية كما في جولة الهوية. */
+async function dismissPromo() {
+  const c = await yt.eval(() => {
+    const promo = document.querySelector('yt-mealbar-promo-renderer');
+    if (!promo || !promo.getClientRects().length) return null;
+    const btn = promo.querySelector('#dismiss-button button, #dismiss-button, yt-button-renderer#dismiss-button');
+    const r = btn?.getBoundingClientRect();
+    return r && r.width ? { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) } : null;
+  });
+  if (!c) return false;
+  await yt.click(c.x, c.y);
+  await sleep(700);
+  result.notes.push('أُغلقت نافذة ترويج يوتيوب فوق المشغّل');
+  return true;
+}
+async function safeClick(c, label) {
+  let at = await hostAt(c);
+  if (!String(at).startsWith('tarjuman-')) {
+    // غطاء من يوتيوب فوق الشريط (نافذة ترويج، أو بقايا إعلان): يُغلق الترويج، ويُحرَّك المؤشر، ثم مرة أخرى.
+    await dismissPromo();
+    await revealControls(yt);
+    await sleep(1500);
+    at = await hostAt(c);
+  }
+  if (!String(at).startsWith('tarjuman-')) throw new Error(`تحت ${label} ليس من أدوات ترجمان: ${at}`);
   await yt.click(c.x, c.y);
   await sleep(500);
+}
+/** حال الصفحة حين يغيب الشريط: العنوان والمشغّل ولقطة، لتسمية السبب (تنقل، أو صفحة تحقق من يوتيوب) لا تخمينه. */
+async function pageState(label) {
+  const st = await yt.eval(() => ({ path: location.pathname, v: new URLSearchParams(location.search).get('v'), title: document.title.slice(0, 80), player: !!document.querySelector('#movie_player'), video: !!document.querySelector('#movie_player video.html5-main-video'), host: !!document.getElementById('tarjuman-controls') })).catch((e) => ({ error: e.message.slice(0, 80) }));
+  await shot(yt, `lost-${label}`);
+  return st;
+}
+async function clickButton(kind, { menu: expectMenu = false } = {}) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await revealControls(yt);
+    let p = await call('peek');
+    if (!p) {
+      // أعاد يوتيوب تحميل الصفحة: يُنتظر المشغّل والشريط مرة، وإلا يُسمّى الحال.
+      const before = await pageState(kind);
+      await ensureCapture(`bar-${kind}`);
+      await revealControls(yt);
+      p = await call('peek');
+      if (!p) throw new Error(`الشريط غائب: ${JSON.stringify(before)}`);
+    }
+    const box = p.buttons[kind]?.box;
+    if (!box) throw new Error(`زر ${kind} غير ظاهر`);
+    await safeClick(centerBox(box), `زر ${kind}`);
+    // الزر يفتح قائمته: إن لم تُفتح (ضغطة وقعت والشريط يختفي) تُعاد مرة.
+    if (!expectMenu || (await waitBridge('peek', (x) => !!x?.layer.menu, { timeoutMs: 3000 }))) return;
+  }
+}
+const MARK_PAGE = () => { window.__t3marker = Date.now(); return true; };
+/** العنوان نفسه والتحميل مكتمل أربع ثوانٍ متتالية (حتى 25 ثانية). */
+async function settlePage() {
+  const end = Date.now() + 25000;
+  let last = null;
+  let since = Date.now();
+  let changes = 0;
+  while (Date.now() < end) {
+    const now = await yt.eval(() => (document.readyState === 'complete' ? location.href.replace(/^https:\/\/www\.youtube\.com/, '') : null)).catch(() => null);
+    if (now !== last) {
+      if (last !== null) changes += 1;
+      last = now;
+      since = Date.now();
+    } else if (now && Date.now() - since >= 4000) {
+      return { url: now, changes };
+    }
+    await sleep(500);
+  }
+  return { url: last, changes, timeout: true };
+}
+/**
+ * الالتقاط قائم قبل ما يحتاجه: إن غاب لأن يوتيوب أعاد تحميل الصفحة (يزول العلَم) يُرسل كما يجلبه المشغّل عند التحميل، ويُسجَّل؛
+ * وإن غاب في المستند نفسه فذاك خلل يُحسب فشلًا.
+ */
+async function ensureCapture(label) {
+  // صفحة يعيد يوتيوب تحميلها: يُنتظر المشغّل والجسر أولًا.
+  await waitForPlayer(yt, VIDEO, 45000);
+  await waitBridge('ping', (v) => v === true, { timeoutMs: 20000 });
+  await waitBridge('state', (v) => v.mounted.controls === 'mounted', { timeoutMs: 15000 });
+  const st = await call('state');
+  if (st.english?.count === CUES.length) return;
+  const reloaded = !(await yt.eval(() => window.__t3marker ?? null));
+  if (reloaded) {
+    await waitAdEnd();
+    await yt.eval(M.mute).catch(() => false);
+  }
+  result.notes.push(`${label}: الالتقاط غائب، ${reloaded ? 'أعاد يوتيوب تحميل الصفحة فأُرسل من جديد' : 'في المستند نفسه'}`);
+  if (!reloaded) check(`capture-kept-${label}`, false, { english: st.english, captured: st.captured });
+  await yt.eval((msg) => { window.postMessage(msg, location.origin); return true; }, { args: [capture] });
+  await waitBridge('state', (v) => v.english?.count === CUES.length, { timeoutMs: 15000 });
+  await yt.eval(MARK_PAGE);
 }
 const menu = async () => (await call('peek')).layer.menu;
 async function clickItem(fid) {
   const m = await menu();
   const it = m?.items.find((x) => x.fid === fid);
   if (!it) throw new Error(`لا بند ${fid} — ${m?.items.map((x) => x.fid).join(',') ?? 'لا قائمة'}`);
-  const c = centerBox(it.box);
-  await yt.click(c.x, c.y);
-  await sleep(500);
+  await safeClick(centerBox(it.box), `بند ${fid}`);
 }
 async function closeMenu() {
   if (await menu()) {
@@ -133,16 +228,26 @@ async function closeMenu() {
     await sleep(300);
   }
 }
-async function waitAdEnd(timeoutMs = 120000) {
+/** الإعلان يعمل مكتومًا حتى ينتهي (الإيقاف يجمّده)، ويُنقر «تخطٍّ» نقرة حقيقية إن ظهر. */
+async function waitAdEnd(timeoutMs = 150000) {
   const end = Date.now() + timeoutMs;
   let seen = false;
+  let skipped = 0;
   while (Date.now() < end) {
-    if (!(await yt.eval(M.isAd))) return { seen };
+    if (!(await yt.eval(M.isAd))) {
+      if (seen) await yt.eval(M.mute);
+      return { seen, skipped };
+    }
     seen = true;
-    await yt.eval(M.skipAd);
-    await sleep(1000);
+    await yt.eval(M.play);
+    const c = await yt.eval(M.skipBox);
+    if (c) {
+      await yt.click(c.x, c.y);
+      skipped += 1;
+    }
+    await sleep(1500);
   }
-  return { seen, stuck: true };
+  return { seen, skipped, stuck: true };
 }
 async function stableSeek(t) {
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -221,14 +326,19 @@ let backupFile = null;
 try {
   s = await startBrowser(browser, { profile: `${browser}-t3-${RUN}`, ext: EXT, downloadDir: DL, headless: HEADLESS });
   result.browser = `${APPS[browser].name} ${appVersion(APPS[browser].app ?? APPS[browser].bin.slice(0, APPS[browser].bin.indexOf('.app/') + 4)) ?? '?'} (${s.version})`;
-  result.notes.push(...(s.notes ?? []));
   check('install', !!s.extensionId, { extension: s.extensionId, version: s.version });
 
   // ---- يوتيوب: الجسر والالتقاط ----
   await step('youtube-open', async () => {
     yt = await s.youtube(WATCH);
+    // يوتيوب في ملف Firefox جديد يعيد التنقل مرة إلى ‎&themeRefresh=1 بعد ثانيتين تقريبًا، بالإضافة وبدونها (ثبت بالمقارنة في
+    // T3): يُنتظر استقرار العنوان والتحميل قبل أي خطوة، فلا يقع الالتقاط على صفحة ستُستبدل.
+    const settled = await settlePage();
+    result.notes.push(`استقرار صفحة يوتيوب: ${JSON.stringify(settled)}`);
     await dismissConsent(yt).catch(() => false);
     const player = await waitForPlayer(yt, VIDEO, 45000);
+    // الإعلان قبل أي ضغطة في الشريط: يعمل مكتومًا حتى ينتهي (الإيقاف يجمّده فوق المشغّل وتقع الضغطات على رابطه).
+    result.notes.push(`إعلان عند الفتح: ${JSON.stringify(await waitAdEnd())}`);
     await yt.eval(M.mute);
     const ready = await waitBridge('ping', (v) => v === true, { timeoutMs: 20000 });
     if (s.kind === 'firefox') await s.learnBase(yt);
@@ -242,6 +352,7 @@ try {
   await step('capture', async () => {
     await yt.eval((msg) => { window.postMessage(msg, location.origin); return true; }, { args: [capture] });
     const st = await waitBridge('state', (v) => v.english?.count === CUES.length, { timeoutMs: 15000 });
+    await yt.eval(MARK_PAGE);
     check('capture-via-bridge', !!st && st.captured.some((t) => t.key === 'en|manual' && t.ok), { captured: st?.captured ?? null, english: st?.english ?? null, expected: CUES.length });
   });
   await step('ui-fonts', async () => {
@@ -251,20 +362,32 @@ try {
 
   // ---- تنزيل SRT ونسخ التعليمات من الشريط ----
   await step('srt-download', async () => {
+    await ensureCapture('srt-download');
     await call('stubClipboard');
-    await clickButton('download');
+    await clickButton('download', { menu: true });
     await clickItem('download');
     const file = await waitFile((n) => n.endsWith('.srt'));
     const text = file ? await readFile(file.path, 'utf8') : null;
-    check('srt-download', !!file && text === EXP.files[0].text, { file: file?.name ?? null, bytes: text?.length ?? null, expectedSha: sha(EXP.files[0].text), sha: text ? sha(text) : null });
+    // سطر الحالة في القائمة بعد التنزيل (كما في P12): «نُزّل».
+    const line = await waitBridge('peek', (p) => /نُزّل|تعذّر حفظ/.test(p.layer.menu?.text ?? ''), { timeoutMs: 10000 });
+    // بالعامل الخلفي وواجهة التنزيلات (المكان المختار)، لا ببديل Blob من الصفحة (SV_FALLBACK_BLOB).
+    const fallback = /تعذّر الحفظ في المكان المختار/.test(line?.layer.menu?.text ?? '');
+    check('srt-download', !!file && text === EXP.files[0].text && !fallback, { file: file?.name ?? null, bytes: text?.length ?? null, expectedSha: sha(EXP.files[0].text), sha: text ? sha(text) : null, line: line ? 'نُزّل' : null, fallback });
   });
   await step('copy-instructions', async () => {
-    if (!(await menu())) await clickButton('download');
+    if (!(await menu())?.items.some((x) => x.fid === 'copy')) {
+      await closeMenu();
+      await ensureCapture('copy-instructions');
+      await call('stubClipboard');
+      await clickButton('download', { menu: true });
+    }
+    const items = (await menu())?.items.map((x) => ({ fid: x.fid, disabled: x.disabled })) ?? null;
     await clickItem('copy');
-    const copies = await waitBridge('copies', (c) => c.length >= 1, { timeoutMs: 8000 });
+    const line = await waitBridge('peek', (p) => /نُسخت التعليمات|تعذّر النسخ/.test(p.layer.menu?.text ?? ''), { timeoutMs: 10000 });
+    const copies = await waitBridge('copies', (c) => c.length >= 1, { timeoutMs: 5000 });
     const st = await call('state');
     const accepted = [instructions({ videoId: VIDEO, title: st.title }), instructions({ videoId: VIDEO, title: st.title, glossary: [] })].map(sha);
-    check('copy-instructions', !!copies && accepted.includes(copies.at(-1).sha), { copies, title: st.title ? 'معروف' : null });
+    check('copy-instructions', !!copies && accepted.includes(copies.at(-1).sha), { copies, items, line: line ? clean(line.layer.menu.text).slice(-80) : null, title: st.title ? 'معروف' : null });
     await closeMenu();
   });
 
@@ -302,17 +425,21 @@ try {
     const ed = await s.extPage(`pages/editor/index.html?v=${VIDEO}&t=1`);
     await ed.waitFor(() => !!document.querySelector('.ed-row[data-index] [data-field="text"]'), { timeoutMs: 20000 });
     await clickOn(ed, `document.querySelector('.ed-row[data-index="0"] [data-field="text"]')`, 'نص المقطع الأول');
-    await ed.press('End');
+    await ed.eval(() => { const ta = document.querySelector('.ed-row[data-index="0"] [data-field="text"]'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); return true; });
     await ed.typeText(MARK);
-    await sleep(200);
-    await ed.press('Tab');
+    await sleep(400);
+    const typed = await ed.eval(() => document.querySelector('.ed-row[data-index="0"] [data-field="text"]').value);
+    // الحفظ صريح في المحرّر (زر «حفظ» في الرأس، أو ⌘S).
+    await clickOn(ed, `[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'حفظ' && b.getClientRects().length && b.getAttribute('aria-disabled') !== 'true')`, 'حفظ');
     const cue = await waitBridge('cueText', (t) => typeof t === 'string' && t.endsWith(MARK), { args: [1], timeoutMs: 15000 });
-    check('editor-edit-reaches-player', !!cue, { cue1: cue ? 'ينتهي بالتعديل' : null });
+    check('editor-edit-reaches-player', !!cue, { typed: typed.endsWith(MARK), cue1: cue ? 'ينتهي بالتعديل' : null });
     await shot(ed, 'editor');
     await ed.close();
   });
   await step('saved-restored', async () => {
     await yt.reload();
+    await waitForPlayer(yt, VIDEO, 45000);
+    await waitAdEnd();
     await yt.eval(M.mute).catch(() => false);
     await waitBridge('ping', (v) => v === true, { timeoutMs: 20000 });
     const st = await waitBridge('state', (v) => v.arabic?.count === AR.length, { timeoutMs: 20000 });
@@ -348,10 +475,18 @@ try {
     const payload = (() => { try { return JSON.parse(json); } catch { return null; } })();
     check('report-preview', rows['diagnostics.build_target'] === TARGET && String(rows['diagnostics.browser · browser_version'] ?? '').startsWith(BRAND) && !!rows.test && payload?.test === true && payload?.product === 'tarjuman',
       { rows, payloadKeys: payload ? Object.keys(payload) : null });
-    await st.eval(() => { window.__t3copied = []; navigator.clipboard.writeText = async (t) => { window.__t3copied.push(t); }; return true; });
-    await clickOn(st, byText('#st-report button', 'انسخ البلاغ'), 'انسخ البلاغ');
-    const copied = await st.waitFor(() => window.__t3copied?.at(-1) ?? null, { timeoutMs: 5000 });
-    check('report-copy-offline', copied === json && !!json, { same: copied === json });
+    await st.eval(() => {
+      window.__t3copied = [];
+      Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async (t) => { window.__t3copied.push(t); } });
+      return true;
+    });
+    let copied = null;
+    for (let attempt = 0; attempt < 2 && !copied; attempt++) {
+      await clickOn(st, byText('#st-report button', 'انسخ البلاغ'), 'انسخ البلاغ');
+      copied = await st.waitFor(() => window.__t3copied?.at(-1) ?? null, { timeoutMs: 5000 });
+    }
+    const result1 = await st.eval(() => document.querySelector('.st-report__result')?.textContent.replace(/\s+/g, ' ').trim() ?? null);
+    check('report-copy-offline', copied === json && !!json, { same: copied === json, copiedLength: copied?.length ?? null, jsonLength: json.length, result: result1 });
     await s.blockReports(st);
     await clickOn(st, byText('#st-report button', 'أرسل البلاغ'), 'أرسل البلاغ');
     const failed = await st.waitFor(() => {
@@ -371,16 +506,33 @@ try {
   // ---- Firefox: إذن يوتيوب المشتق من سكربتات المحتوى، سحبًا ثم منحًا ----
   if (browser === 'firefox') {
     await step('youtube-permission', async () => {
-      const removed = await st.eval(() => chrome.permissions.remove({ origins: ['https://www.youtube.com/*'] }));
-      const has1 = await st.eval(() => chrome.permissions.contains({ origins: ['https://www.youtube.com/*'] }));
+      const YT = ['https://www.youtube.com/*'];
+      const removed = await st.eval((o) => chrome.permissions.remove({ origins: o }), { args: [YT] });
+      const has1 = await st.eval((o) => chrome.permissions.contains({ origins: o }), { args: [YT] });
       await yt.reload();
-      await sleep(3000);
+      await sleep(4000);
       const off = await bridge(yt, 'ping', [], 3000);
-      const granted = await st.eval(() => chrome.permissions.request({ origins: ['https://www.youtube.com/*'] }), { userActivation: true });
+      // Firefox يقبل permissions.request داخل معالج فعل مستخدم وحده: زر مؤقت في الصفحة يُضغط ضغطة حقيقية.
+      await st.eval((o) => {
+        const b = document.createElement('button');
+        b.id = 't3-grant';
+        b.textContent = 'منح';
+        b.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99999;padding:8px';
+        b.addEventListener('click', () => { chrome.permissions.request({ origins: o }).then((g) => { window.__t3grant = g; }, (e) => { window.__t3grant = String(e?.message ?? e); }); });
+        document.body.append(b);
+        return true;
+      }, { args: [YT] });
+      const c = await st.centerOf('#t3-grant', { scroll: false });
+      await st.click(c.x, c.y);
+      const granted = await st.waitFor(() => (window.__t3grant === undefined ? null : { v: window.__t3grant }), { timeoutMs: 10000 });
+      await st.eval(() => { document.getElementById('t3-grant')?.remove(); return true; });
       await yt.reload();
+      await waitForPlayer(yt, VIDEO, 45000);
+      await waitAdEnd();
       await yt.eval(M.mute).catch(() => false);
       const on = await waitBridge('ping', (v) => v === true, { timeoutMs: 20000 });
-      check('youtube-permission-revoke-grant', removed === true && has1 === false && !off.ok && granted === true && on === true, { removed, containsAfterRemove: has1, contentScriptWhileRevoked: off.ok, granted, contentScriptAfterGrant: on });
+      check('youtube-permission-revoke-grant', removed === true && has1 === false && !off.ok && granted?.v === true && on === true,
+        { removed, containsAfterRemove: has1, contentScriptWhileRevoked: off.ok, granted: granted?.v ?? null, contentScriptAfterGrant: on });
     });
   }
 
@@ -411,10 +563,35 @@ try {
       check('backup-restore', null, { note: 'لا نسخة احتياطية من الخطوة السابقة' });
       return;
     }
-    const armed = page.armChooser([backupFile]);
-    await clickOn(page, byText('#data button', 'استعادة من ملف'), 'استعادة من ملف…');
-    const filled = await armed;
-    await page.waitFor(() => !!document.querySelector('dialog.tj-dialog[open] .st-restore'), { timeoutMs: 30000 });
+    let filled;
+    if (s.kind === 'firefox') {
+      // منتقي الاستعادة حقل يُنشأ ويُضغط دون إلحاقه بالمستند، وفي صفحات الإضافة (نطاق مميّز) لا يرسل BiDi له
+      // input.fileDialogOpened ولا يقبل input.setFiles: يُحفظ الحقل عند ضغطه، ويُعطى الملف نفسه بـDataTransfer في عالم الصفحة
+      // ثم change كما يفعل المنتقي. ما بعده (القراءة والتحقق والحوار والكتابة) مسار الاستعادة كما هو.
+      await page.eval(() => {
+        const orig = HTMLInputElement.prototype.click;
+        HTMLInputElement.prototype.click = function click() { if (this.type === 'file') { window.__t3file = this; return undefined; } return orig.call(this); };
+        return true;
+      });
+      await clickOn(page, byText('#data button', 'استعادة من ملف'), 'استعادة من ملف…');
+      filled = Boolean(await page.waitFor(() => !!window.__t3file, { timeoutMs: 5000 }));
+      if (filled) {
+        filled = await page.eval((name, text) => {
+          const dt = new DataTransfer();
+          dt.items.add(new File([text], name, { type: 'application/json' }));
+          window.__t3file.files = dt.files;
+          window.__t3file.dispatchEvent(new Event('change'));
+          return window.__t3file.files.length === 1;
+        }, { args: [path.basename(backupFile), await readFile(backupFile, 'utf8')] });
+      }
+      result.notes.push('الاستعادة في Firefox: الملف يُعطى للحقل بـDataTransfer في الصفحة (BiDi لا يملأ المنتقي في صفحات الإضافة)');
+    } else {
+      const armed = page.armChooser([backupFile]);
+      await clickOn(page, byText('#data button', 'استعادة من ملف'), 'استعادة من ملف…');
+      filled = await armed;
+    }
+    const dialog = await page.waitFor(() => !!document.querySelector('dialog.tj-dialog[open] .st-restore'), { timeoutMs: 30000 });
+    if (!dialog) throw new Error(`لم يظهر حوار الاستعادة (المنتقي ${filled ? 'مُلئ' : 'لم يُملأ'})`);
     await clickOn(page, `[...document.querySelectorAll('dialog.tj-dialog[open]')].at(-1)?.querySelector('button[value="confirm"]')`, 'استعادة');
     const report = await page.waitFor(() => [...document.querySelectorAll('#data .tj-alert')].find((e) => e.textContent.includes('اكتملت الاستعادة'))?.textContent.replace(/\s+/g, ' ').trim() ?? null, { timeoutMs: 30000, intervalMs: 200 });
     const restored = await page.eval(async (id) => !!(await chrome.storage.local.get(`video:${id}`))[`video:${id}`], { args: [VIDEO] });
@@ -425,6 +602,7 @@ try {
   check('run', false, { error: String(err?.message ?? err).replace(/https?:\/\/\S+/g, '[رابط]').slice(0, 300) });
 } finally {
   if (s) {
+    result.notes.push(...(s.notes ?? []).map((n) => `السائق: ${n}`));
     result.errors = s.errors();
     const n = result.errors.reduce((a, e) => a + e.errors.length, 0);
     check('no-extension-errors', n === 0, n ? result.errors.filter((e) => e.errors.length) : null);
