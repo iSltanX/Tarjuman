@@ -19,7 +19,7 @@
 - ما يحفظه، من ترجماتك وإعداداتك، يبقى في تخزين الإضافة في هذا المتصفح على هذا الجهاز. ولا يُزامَن مع حسابك في المتصفح ولا مع أي خدمة.
 - لا حساب، ولا مفتاح API، ولا نموذج ذكاء اصطناعي داخل الإضافة، ولا قياس استخدام، ولا إعلانات.
 - **ليس كل شيء محليًا.** يخرج من الإضافة شيئان فقط:
-  - صور الفيديو في «المحفوظات»، من خوادم يوتيوب، ولها مفتاح يطفئها.
+  - صور الفيديو في «المحفوظات»، من خوادم يوتيوب، ولها مفتاح يطفئها. وفي Firefox لا تُطلب إلا بموافقتك.
   - بلاغ عن مشكلة، ترسله أنت بنفسك بعد أن ترى كل ما فيه.
 - الترجمة إلى العربية تجري خارج الإضافة: أنت تنسخ الملف والتعليمات إلى نموذج تختاره، والإضافة لا تتصل به.
 
@@ -59,7 +59,9 @@
 
 ### صور الفيديو في «المحفوظات» — `#thumbnails`
 
-- **متى:** حين تفتح صفحة «المحفوظات» ومفتاح «صور الفيديو في المحفوظات» مفعّل. وهو مفعّل افتراضيًا.
+- **متى:** حين تفتح صفحة «المحفوظات» ومفتاح «صور الفيديو في المحفوظات» مفعّل.
+  - في Chrome وEdge وBrave: المفتاح مفعّل افتراضيًا.
+  - في Firefox: الصور مطفأة حتى تفعّل المفتاح، فيطلب Firefox موافقتك على «نشاط التصفح». فإن رفضت بقيت مطفأة. وتسحب الموافقة متى شئت من صفحة إضافات Firefox، فتتوقف الصور.
 - **ما يُرسل، وإلى من:**
   - يحمّل المتصفح صورة كل فيديو محفوظ يظهر لك في القائمة من `i.ytimg.com`، وهي خوادم يوتيوب، بمعرّف الفيديو، كما يحمّل أي صورة على الويب.
   - فترى يوتيوب معرّفات الفيديوهات التي في محفوظاتك، ومعها ما يصلها مع أي طلب صورة، كعنوان IP ونوع المتصفح. ولا يُرسل معها عنوان الصفحة التي طلبتها.
@@ -90,7 +92,7 @@
 - **إن تعذّر الإرسال:**
   - «أعد المحاولة» حين ينفع.
   - «انسخ البلاغ» ينسخ ما كان سيُرسل نصًا، بلا شبكة، لترسله إلى بريد الدعم في [«تواصل»](#contact).
-- **المدة:** لا يُحذف البلاغ تلقائيًا. ولحذفه راسل بريد الدعم برقمه **[قرار]**.
+- **المدة:** لا يُحذف البلاغ تلقائيًا. ولحذفه راسل بريد الدعم برقمه.
 
 ### ما لا يتصل بالشبكة — `#offline`
 
@@ -112,6 +114,7 @@
 - **التنزيلات:** لحفظ ملفات ترجمان في المكان الذي تختاره.
 - **صفحات `www.youtube.com`:** لتعمل أدوات ترجمان فوق المشغّل. لا مواقع أخرى، ولا تبويبات.
 - **اختيارية:** الاتصال بخادم البلاغات وحده، تُطلب عند أول إرسال بلاغ.
+- **في Firefox، موافقتان اختياريتان:** «البيانات التقنية والتفاعل» مع البلاغ، و«نشاط التصفح» لصور المحفوظات. لا تُطلب إحداهما إلا حين تستعمل ميزتها، وتسحبهما من صفحة إضافات Firefox.
 - لا صلاحية لسجل التصفح، ولا لملفات الارتباط، ولا للتبويبات.
 
 ## الجهات الخارجية — `#third-parties`
@@ -127,7 +130,7 @@
 ## لا بيع ولا إعلان — `#limited-use`
 
 - لا يبيع ترجمان بياناتك، ولا ينقلها لإعلان أو لتقييم ائتماني أو لغرض آخر.
-- ما يصل في البلاغ يُستعمل لفهم المشكلة وإصلاحها وتحسين ترجمان وحده **[قرار]**.
+- ما يصل في البلاغ يُستعمل لفهم المشكلة وإصلاحها وتحسين ترجمان وحده.
 
 ## المدة والحذف — `#retention`
 
@@ -158,7 +161,7 @@
 | الخلاصة | الترجمة التي جلبها المشغّل | `src/main-world/capture.js` (غلافا fetch وXHR يقرآن الرد)، و`docs/contracts/extraction.md`؛ T3: «الجسر» و«الالتقاط» |
 | الخلاصة، ما يُحفظ | تخزين الإضافة المحلي، ولا مزامنة | `src/core/store/area.js` (`api.storage.local` وحده)، و`scripts/check-static.mjs` (التخزين خارج `src/core/store` ممنوع، ولا `localStorage` ولا IndexedDB)؛ ولا `storage.sync` في `src/` |
 | الخلاصة | لا حساب ولا مفتاح ولا نموذج ولا قياس ولا إعلان | لا طلب شبكة في الحزمة إلا المسمّى: `scripts/release/audit.mjs` (`no-external-connection-or-forbidden-code` و`FETCH_OK` و`URL_OK`) و`scripts/check-static.mjs`؛ `docs/product-spec.md` §١ |
-| الخلاصة، الصور | صور المحفوظات ومفتاحها | `src/pages/library/thumb.js` (`THUMB_BASE`)، و`src/core/model/prefs.js` (`ui.thumbnails` افتراضيًا `true`)، و`src/pages/settings/view.js` (المفتاح ونصه)؛ `docs/identity-redesign.md` §١ |
+| الخلاصة، الصور | صور المحفوظات ومفتاحها، وموافقة Firefox | `src/pages/library/thumb.js` (`THUMB_BASE`)، و`src/core/model/prefs.js` (`ui.thumbnails` افتراضيًا `true`)، و`src/pages/settings/view.js` (المفتاح ونصه)، و`src/core/consent/thumbnails.js` (`thumbnailsShown`: المفتاح والموافقة في Firefox)؛ `docs/identity-redesign.md` §١ |
 | الخلاصة، البلاغ | ترسله بنفسك بعد أن تراه | `src/pages/settings/report.js` (المعاينة ثم «أرسل البلاغ»)، و`src/core/report/payload.js` (`reviewRows` من الجسم نفسه)؛ T3: «الإبلاغ: المعاينة» |
 | الخلاصة، النموذج | الترجمة خارج الإضافة | `docs/product-spec.md` §١ و§٣؛ لا رابط ولا طلب لأي مزوّد في الحزمة (`audit.mjs`) |
 | ما يُحفظ | المعرّف والعنوان والمدة | `docs/contracts/data-model.md` §٦ (`VideoRecord`: `videoId` و`title` و`durationMs`) |
@@ -177,6 +180,7 @@
 | الملفات | التشخيص بلا عناوين ولا نصوص | `src/core/diagnostics/`، و`docs/known-limitations.md` §٧ |
 | يوتيوب | لا طلب جديد | `src/main-world/capture.js` (يقرأ رد طلب المشغّل)؛ `audit.mjs`: لا طلب شبكة في سكربتي المحتوى وعالم الصفحة |
 | الصور | من `i.ytimg.com` بالمعرّف، كأي صورة، لما يظهر في القائمة، وبلا عنوان الصفحة | `src/pages/library/thumb.js` (`<img>` وحده، بلا fetch ولا XHR)، و`test/unit/pages/library/thumb.test.js` (السمات lazy وno-referrer) |
+| الصور | Firefox: مطفأة حتى الموافقة، والتفعيل يطلبها، والرفض يبقيها مطفأة، والسحب يوقفها | `src/core/consent/thumbnails.js` (`requestThumbnailsConsent` بفئة `browsingActivity`، و`thumbnailsConsent` من `permissions.getAll`)، و`scripts/targets.mjs` (`optional` فيه `browsingActivity`)، و`test/unit/consent/thumbnails.test.js` و`test/unit/pages/settings/ui-prefs.test.js` و`test/unit/pages/library/row.test.js` (حالات Firefox)؛ والسحب من صفحة الإضافات: [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) |
 | الصور | الإطفاء يوقف الطلب | `test/unit/pages/library/thumb.test.js` («مُطفأة: بلاطة بأيقونة الفيديو ولا img ولا أي عنوان صورة»)، و`test/unit/pages/settings/no-network.test.js` (الاستثناء في `thumb.js` وحده) |
 | البلاغ | متى، وطلب واحد بلا إعادة | `src/core/report/client.js` (`sendReport`)، و`src/pages/settings/report.js` |
 | البلاغ | الإذن الاختياري وموافقة Firefox | `src/manifest.json` (`optional_host_permissions`)، و`scripts/targets.mjs` (`data_collection_permissions.optional`)، و`src/core/report/client.js` (`reportPermissions`)؛ T3: «طلب الإذن الاختياري الحقيقي في Chrome وFirefox» |
@@ -185,13 +189,14 @@
 | البلاغ | الوجهة والحدود والبصمة المملّحة | README في `iSltanX/app-reports` (`0f0587371f89`): «What the Worker does» و«Limits» و«Shared decisions» |
 | البلاغ | الرقم مرجعك الوحيد | README في `iSltanX/app-reports` («Anonymous… The report number is the user's only handle»)، و`src/pages/settings/report.js` (رسالة النجاح) |
 | البلاغ | «انسخ البلاغ» بلا شبكة | `src/core/report/payload.js` (`serialise`)؛ T3: «الإبلاغ: النسخ بلا شبكة» |
-| البلاغ | لا حذف تلقائي | README في `iSltanX/app-reports` («Retention. Nothing is deleted automatically») |
+| البلاغ | لا حذف تلقائي، والحذف بطلب برقمه | README في `iSltanX/app-reports` («Retention. Nothing is deleted automatically»)؛ والحذف بطلب صاحبه قرار سلطان (2026-11-04، `store/README.md` §٥) |
 | بلا اتصال | المحتوى والعامل والنافذة والمحرّر | `scripts/release/audit.mjs` (`FETCH_OK`: الخطوط من الحزمة، وطلب البلاغ من الإعدادات وحدها)، و`report-channel-settings-only` |
 | بلا اتصال | الخطوط مضمّنة | `src/ui/subtitle-fonts.js` و`src/ui/ui-fonts.js`، و`audit.mjs` (`subtitle-fonts-with-ofl-licenses` و`ui-fonts-with-ofl-licenses`)؛ T3: «خطوط الواجهة من الحزمة» |
 | النموذج | ما في التعليمات | `src/core/export/instructions.js` (`video_title` و`video_url` وفقرة المصطلحات)، و`docs/product-spec.md` ملحق أ |
 | الصلاحيات | الأربع | `src/manifest.json`، و`audit.mjs` (`permissions-approved-only` و`no-host-or-optional-permissions`) |
+| الصلاحيات | موافقتا Firefox الاختياريتان | `scripts/targets.mjs` (`GECKO.data_collection_permissions.optional`)، و`audit.mjs` (`target-browser-settings`)، و`src/core/report/client.js` و`src/core/consent/thumbnails.js` |
 | الجهات الخارجية | يوتيوب وCloudflare وGitHub | `src/pages/library/thumb.js`، وREADME في `iSltanX/app-reports` |
-| لا بيع | لا نقل لغير الوظيفة | لا طلب شبكة غير الصور والبلاغ (`audit.mjs`). والاستعمال الداخلي للبلاغ **[قرار]** |
+| لا بيع | لا نقل لغير الوظيفة | لا طلب شبكة غير الصور والبلاغ (`audit.mjs`). واستعمال البلاغ قرار سلطان (2026-11-04، `store/README.md` §٥) |
 | المدة والحذف | حذف فيديو، ومسح الكل | `src/pages/library/actions.js` (`deleteVideoData`: `arabic` و`all`)، و`src/core/store/index.js` (`clearAll`)، و`src/pages/settings/view.js` |
 | المدة والحذف | الإزالة تحذف التخزين | T3: «الإزالة تمحو التخزين»: 532186 و532189 و532184 و139477 بايتًا قبلها، ولا مجلد بعدها |
 | التغييرات | الصفحة تتبع السلوك | `scripts/site/privacy.mjs --check` في `check`، و`CHANGELOG.md`، و`docs/site/README.md` |
