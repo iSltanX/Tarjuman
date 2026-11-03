@@ -233,7 +233,7 @@ test('الوضع المزدوج: «فوق ‹اسم لغة الأصل›» با�
   assert.equal(dualButton(none).textContent, 'فوق الأصل');
   assert.equal(dualButton(none).getAttribute('aria-label'), 'العربية فوق الأصل');
   assert.equal(dualButton(none).getAttribute('aria-disabled'), 'true');
-  assert.match(dualButton(none).getAttribute('aria-description'), /استخرج الإنجليزية لهذا الفيديو أولًا/, 'السبب باقٍ بلا أصل');
+  assert.match(dualButton(none).getAttribute('aria-description'), /الأصل غير ملتقط لهذا الفيديو/, 'السبب باقٍ بلا أصل');
   for (const lang of ['en', 'fr', 'de']) {
     const page = mountPage({ state: makeState({ ...three(), ...original(lang) }) });
     openDisplay(page);

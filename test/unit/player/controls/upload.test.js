@@ -89,8 +89,8 @@ test('مع ترجمة: قائمة العرض بالأوضاع الثلاثة، �
   assert.deepEqual(radios.map((r) => r.getAttribute('data-fid')), ['mode:ar', 'mode:dual', 'mode:off']);
   assert.equal(radios[0].getAttribute('aria-checked'), 'true');
   assert.equal(radios[1].getAttribute('aria-disabled'), 'true');
-  assert.match(radios[1].getAttribute('aria-description'), /استخرج الإنجليزية لهذا الفيديو أولًا/, 'السبب لقارئ الشاشة');
-  assert.match(radios[1].getAttribute('title'), /استخرج الإنجليزية لهذا الفيديو أولًا/, 'والسبب في التلميح');
+  assert.match(radios[1].getAttribute('aria-description'), /الأصل غير ملتقط لهذا الفيديو/, 'السبب لقارئ الشاشة');
+  assert.match(radios[1].getAttribute('title'), /الأصل غير ملتقط لهذا الفيديو/, 'والسبب في التلميح');
   click(radios[1]);
   assert.equal(page.controller.calls.length, 0, 'المعطّل لا يُطبَّق');
   click(radios[2]);

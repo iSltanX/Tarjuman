@@ -71,7 +71,7 @@ async function upload(page, area, file, { target = null, save = true } = {}) {
   }
   chooseFiles(page.ui, [file]);
   await settle(area);
-  if (page.ui.menuLabel() === 'الترجمة العربية') return;
+  if (page.ui.menuLabel() === 'الترجمة') return;
   if (target) click(page.ui.menu().querySelector(`[data-fid="target:${target}"]`));
   if (save) {
     click(page.ui.item('حفظ') ?? page.ui.item('استبدال'));
