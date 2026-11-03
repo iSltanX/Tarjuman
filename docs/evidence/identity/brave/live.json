@@ -1,6 +1,6 @@
 {
   "browser": "Brave (Chrome/156.0.8078.80)",
-  "at": "2026-11-03T04:21:16.908Z",
+  "at": "2026-11-03T04:55:44.707Z",
   "headless": true,
   "checks": [
     {
@@ -685,6 +685,16 @@
       }
     },
     {
+      "id": "panel-reopens-from-returned-entry",
+      "ok": true,
+      "detail": {
+        "mode": "open",
+        "kind": "ready",
+        "tries": 1,
+        "hit": "div#tarjuman-panel"
+      }
+    },
+    {
       "id": "panel-follows-new-video-without-stale-rows",
       "ok": true,
       "detail": {
@@ -712,16 +722,16 @@
         "place": "below",
         "column": "below",
         "host": {
-          "top": 682,
-          "bottom": 1102,
+          "top": 950,
+          "bottom": 1370,
           "left": 16,
           "right": 884,
           "width": 868,
           "height": 420
         },
         "player": {
-          "top": -223,
-          "bottom": 452,
+          "top": 45,
+          "bottom": 720,
           "left": 0,
           "right": 900,
           "width": 900,
@@ -734,16 +744,16 @@
       "ok": true,
       "detail": {
         "title": {
-          "top": 464,
-          "bottom": 658,
+          "top": 732,
+          "bottom": 926,
           "left": 16,
           "right": 884,
           "width": 868,
           "height": 194
         },
         "host": {
-          "top": 682,
-          "bottom": 1102,
+          "top": 950,
+          "bottom": 1370,
           "left": 16,
           "right": 884,
           "width": 868,
@@ -823,11 +833,64 @@
       "detail": null
     },
     {
-      "id": "panel-arabic-youtube-no-overlap-and-rows",
+      "id": "panel-right-of-video-in-arabic-youtube",
       "ok": true,
       "detail": {
-        "side": "left",
-        "rows": 427
+        "side": "right",
+        "mirrored": true,
+        "mode": "open",
+        "rows": 427,
+        "host": {
+          "top": 68,
+          "bottom": 793,
+          "left": 999,
+          "right": 1384,
+          "width": 385,
+          "height": 725
+        },
+        "player": {
+          "top": 68,
+          "bottom": 793,
+          "left": 16,
+          "right": 983,
+          "width": 967,
+          "height": 725
+        }
+      }
+    },
+    {
+      "id": "arabic-youtube-restored-when-entry-hidden",
+      "ok": true,
+      "detail": {
+        "mode": "none",
+        "mirrored": false,
+        "inline": [
+          "",
+          "",
+          ""
+        ]
+      }
+    },
+    {
+      "id": "arabic-youtube-mirror-keeps-player-width-margins-and-gap",
+      "ok": true,
+      "detail": {
+        "playerWidth": [
+          967,
+          967
+        ],
+        "videoEdge": [
+          16,
+          16
+        ],
+        "columnEdge": [
+          16,
+          16
+        ],
+        "gap": [
+          16,
+          16
+        ]
       }
     },
     {
@@ -1018,16 +1081,16 @@
     },
     "geoNarrow": {
       "player": {
-        "top": -223,
-        "bottom": 452,
+        "top": 45,
+        "bottom": 720,
         "left": 0,
         "right": 900,
         "width": 900,
         "height": 675
       },
       "host": {
-        "top": 682,
-        "bottom": 1102,
+        "top": 950,
+        "bottom": 1370,
         "left": 16,
         "right": 884,
         "width": 868,
@@ -1038,25 +1101,52 @@
     "arabicInterface": {
       "dir": "rtl",
       "lang": "ar",
-      "side": "left",
+      "side": "right",
       "host": {
         "top": 68,
         "bottom": 793,
-        "left": 16,
-        "right": 401,
+        "left": 999,
+        "right": 1384,
         "width": 385,
         "height": 725
       },
       "player": {
         "top": 68,
         "bottom": 793,
-        "left": 417,
-        "right": 1384,
+        "left": 16,
+        "right": 983,
         "width": 967,
         "height": 725
       },
       "mode": "open",
-      "rows": 427
+      "rows": 427,
+      "mirrored": true,
+      "mirroredRow": {
+        "player": {
+          "left": 16,
+          "right": 983,
+          "width": 967
+        },
+        "inner": {
+          "left": 999,
+          "right": 1384,
+          "width": 385
+        },
+        "vw": 1400
+      },
+      "nativeRow": {
+        "player": {
+          "left": 417,
+          "right": 1384,
+          "width": 967
+        },
+        "inner": {
+          "left": 16,
+          "right": 401,
+          "width": 385
+        },
+        "vw": 1400
+      }
     },
     "diagnostics": {
       "state": "mounted",
@@ -1065,11 +1155,11 @@
       "lastCode": null,
       "lastDetail": null,
       "session": {
-        "renders": 11,
+        "renders": 25,
         "renderFailures": 0,
         "hostMoves": 1,
-        "syncs": 34,
-        "rebuilds": 1,
+        "syncs": 14,
+        "rebuilds": 2,
         "actionFailures": 0,
         "lastCode": null,
         "mode": "open",
@@ -1083,7 +1173,8 @@
         "styleMode": "adopted",
         "anchor": 0,
         "toast": false,
-        "video": true
+        "video": true,
+        "mirrored": true
       },
       "fonts": {
         "loaded": [
@@ -1124,8 +1215,7 @@
     "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/brave/watch-panel-arabic-interface.png"
   ],
   "notes": [
-    "الوضع الداكن ليوتيوب: ضُبطت سمة html[dark] يدويًا (يوتيوب غير المسجَّل لم يتبع وضع الجهاز)، ثم أزيلت؛ وعادت اللوحة فاتحة.",
-    "واجهة يوتيوب العربية: اللوحة يسار الفيديو، في عمود يوتيوب الثانوي، بلا تداخل: true."
+    "الوضع الداكن ليوتيوب: ضُبطت سمة html[dark] يدويًا (يوتيوب غير المسجَّل لم يتبع وضع الجهاز)، ثم أزيلت؛ وعادت اللوحة فاتحة."
   ],
   "extension": {
     "version": "1.0.0",
@@ -1138,8 +1228,8 @@
     "hostPermissions": []
   },
   "summary": {
-    "total": 66,
-    "passed": 66,
+    "total": 69,
+    "passed": 69,
     "failed": [],
     "skipped": []
   }

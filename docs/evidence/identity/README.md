@@ -4,8 +4,8 @@
 
 | المتصفح | النتيجة | الملف |
 | --- | --- | --- |
-| Brave (Chrome/156.0.8078.80) | **66/66** | [`brave/live.json`](brave/live.json) |
-| Chrome 156.0.8078.80 | **66/66** | [`chrome/live.json`](chrome/live.json) |
+| Brave (Chrome/156.0.8078.80) | **69/69** | [`brave/live.json`](brave/live.json) |
+| Chrome 156.0.8078.80 | **69/69** | [`chrome/live.json`](chrome/live.json) |
 
 ## ما تحقق
 
@@ -24,6 +24,7 @@
 | الإغلاق والإخفاء | الإغلاق يُبقي الزر، والإخفاء رسالة بتراجع يعيد الزر واللوحة مفتوحة كما كانت، وبعد انقضائها لا زر (`panel-close-*`، `panel-hide-*`، `panel-undo-*`، `panel-hidden-entry-gone-after-message`). |
 | الصمود | تنقّل داخل الموقع إلى مقترح (حالة «لا ترجمة» بلا صفوف قديمة ومضيف واحد) ثم الرجوع بالترجمة نفسها والإزاحة نفسها (`panel-follows-new-video-*`، `panel-back-restores-saved-translation`)؛ والعرض 900 (يوتيوب بعمود واحد) تحت الفيديو وبعد صندوق عنوانه بلا تداخل (`panel-narrow-*`)؛ ووضع المسرح تحت الفيديو، والعودة يمينه (`panel-theater-*`، `panel-back-beside-*`)؛ وملء الشاشة يخفيها ثم تعود بصفوفها وإزاحتها (`panel-hidden-in-fullscreen`، `panel-restored-after-fullscreen-without-loss`). |
 | الشريط | الأيقونتان بلا كلمات ولا نقاط وبحجم واحد مع − و+ (`player-bar-icons-only-*`، `player-bar-icon-buttons-same-size`)، والاسم في التلميح بالتحويم وبالتركيز (`player-bar-tooltip-on-hover/focus`)، وعنوانا القائمتين «تحميل الأصل» و«الترجمة» (`player-menu-titles`). |
+| إعادة الفتح | بعد «إظهاره» من النافذة يُفتح الزر العائد اللوحة بضغطة (`panel-reopens-from-returned-entry`). |
 | عام | تشخيص اللوحة بلا رموز إخفاق، وخطوط اللوحة والشريط المضمّنة محمّلة (`panel-diagnostics-no-failure-codes`، `panel-and-bar-bundled-fonts-loaded`)، ولا أخطاء من الإضافة (`no-extension-errors`). |
 
 ## ما يُعدّ وحده ولا يُحسب خطأً
@@ -32,9 +33,13 @@
 - **«Unsafe attempt to load URL …/ui/fonts/*.woff2»** (`measures.fontReadLogs` = 12): رسالة المتصفح مع كل قراءة **ناجحة** لخطوط الإضافة على يوتيوب، معروفة من [P6](../P6/README.md) وتُعدّ وحدها كما في [P10](../P10/README.md)؛ والخطوط محمّلة فعلًا (`panel-and-bar-bundled-fonts-loaded`).
 - **الإعلان في Chrome** (`measures.adsWaited`): Chrome لا يحجب إعلانات يوتيوب؛ تُترك تعمل مكتومة حتى تنتهي (بنقرة «تخطٍّ» حقيقية إن ظهرت) قبل الفحوص الزمنية، لأن اللوحة لا تحدّث الحالي ولا تقفز أثناء الإعلان (`isAdShowing`).
 
-## قياس لقرار معلّق
+## الواجهة العربية (قرار سلطان 2026-11-03: يمين الفيديو)
 
-**واجهة يوتيوب العربية** (`measures.arabicInterface`، لقطة `watch-panel-arabic-interface`): بلغة `ar` يكون التخطيط RTL ويضع يوتيوب عموده الثانوي **يسار** الفيديو، فتظهر اللوحة يساره بلا تداخل وبصفوفها كاملة (`panel-arabic-youtube-no-overlap-and-rows`). قرار سلطان «يمين الفيديو» متحقق في الواجهة الإنجليزية؛ وفي العربية ينتظر قرارًا ([identity-redesign.md §٦.١](../../identity-redesign.md)).
+بلغة `ar` يكون تخطيط يوتيوب RTL ويضع عموده الثانوي يسار الفيديو. فيعكس ترجمان تخطيط العمودين كالمرآة ما دامت اللوحة ظاهرة (`measures.arabicInterface`، لقطة `watch-panel-arabic-interface`):
+
+- اللوحة يمين الفيديو مفتوحة بصفوفها كاملة بلا تداخل ولا تجاوز أفقي (`panel-right-of-video-in-arabic-youtube`).
+- المعكوس صورة الأصل في الصفحة نفسها: عرض المشغّل، وهامش حافة الفيديو، وهامش حافة العمود، والفاصل بينهما، كلٌّ ضمن 2 بكسل من تخطيط يوتيوب الأصلي (`arabic-youtube-mirror-keeps-player-width-margins-and-gap`، والقيم في `mirroredRow` و`nativeRow`).
+- إخفاء الزر يعيد تخطيط يوتيوب كما كان: العمود يسار الفيديو، ولا نمط سطري باقٍ على `#columns` و`#primary` و`#secondary` (`arabic-youtube-restored-when-entry-hidden`).
 
 ## اللقطات (في كل مجلد متصفح)
 
