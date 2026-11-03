@@ -13,7 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { BROWSERS, PROFILE_ROOT, launch, loadExtension, sleep } from '../harness/browser.mjs';
-import { collectErrors, emulateScheme, fullScreenshot, openTab } from '../harness/extension.mjs';
+import { FONT_READ_LOG, collectErrors, emulateScheme, fullScreenshot, openTab } from '../harness/extension.mjs';
 import { dismissConsent, waitForPlayer } from '../harness/youtube.mjs';
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
 import { englishTrack, fingerprint, makeCues } from '../../helpers/fixtures.js';
@@ -35,7 +35,6 @@ const check = (id, ok, detail = null) => {
   console.log(`${ok ? '✓' : '✗'} ${id}${detail ? ` — ${JSON.stringify(detail).slice(0, 400)}` : ''}`);
 };
 const rel = (f) => path.relative(ROOT, f);
-const FONT_READ_LOG = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/subtitle\/[a-z0-9-]+-(?:400|700)\.woff2 /;
 
 function appVersion(bin) {
   try {

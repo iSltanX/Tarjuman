@@ -14,7 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BROWSERS, launch, loadExtension, sleep } from '../harness/browser.mjs';
-import { collectErrors, openTab } from '../harness/extension.mjs';
+import { FONT_READ_LOG, collectErrors, openTab } from '../harness/extension.mjs';
 import { dismissConsent, relatedIds, revealControls, waitForPlayer } from '../harness/youtube.mjs';
 import { createExtractor } from '../../../src/extract/index.js';
 import { buildExport } from '../../../src/core/export/index.js';
@@ -748,7 +748,6 @@ try {
   check('no-external-requests-from-extension', 'P6-AC9', external.length === 0, { external, fontReads: extensionReads.length });
   // رسالة المتصفح عند قراءة سكربت المحتوى ملف خط من حزمة الإضافة (والقراءة ناجحة): تظهر بـuse_dynamic_url ودونه
   // (test/live/controls/font-fetch-diag.mjs)، فتُعدّ وحدها ولا تُحسب خطأً من الإضافة.
-  const FONT_READ_LOG = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/subtitle\/[a-z0-9-]+-(?:400|700)\.woff2 /;
   const known = errs.list.filter((x) => x.kind === 'log.security' && FONT_READ_LOG.test(x.text));
   const real = errs.list.filter((x) => !known.includes(x));
   result.errors = real;

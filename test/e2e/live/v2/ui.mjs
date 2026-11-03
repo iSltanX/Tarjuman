@@ -9,7 +9,7 @@ import { attach, collectErrors } from '../../../live/harness/extension.mjs';
 export const ISOLATES = new RegExp(`[${String.fromCharCode(0x2066)}-${String.fromCharCode(0x2069)}]`, 'g');
 export const clean = (s) => String(s ?? '').replace(ISOLATES, '').replace(/\s+/g, ' ').trim();
 /** سجل المتصفح لقراءة خط الترجمة من الحزمة (P6) ليس خطأ إضافة. */
-export const FONT_READ_LOG = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/subtitle\/[a-z0-9-]+-(?:400|700)\.woff2 /;
+export { FONT_READ_LOG } from '../../../live/harness/extension.mjs';
 
 export function appVersion(app) {
   try {
