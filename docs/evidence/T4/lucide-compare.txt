@@ -1,0 +1,58 @@
+== src/ui/icons.js
+info         مطابقة كاملة ← info@0.300.0
+warning      مطابقة كاملة ← triangle-alert@0.400.0
+success      مطابقة كاملة ← check-circle@0.300.0
+danger       مطابقة كاملة ← x-circle@0.300.0
+editor       جزئية 4/4 ← file-text@0.400.0
+library      مطابقة كاملة ← library@0.300.0
+settings     مطابقة كاملة ← settings-2@0.300.0
+screen       بلا مقابل
+external     مطابقة كاملة ← external-link@0.400.0
+edit         مطابقة كاملة ← pencil@0.300.0
+replace      مطابقة كاملة ← refresh-cw@0.300.0
+download     مطابقة كاملة ← download@main
+upload       مطابقة كاملة ← upload@main
+chevron      مطابقة كاملة ← chevron-down@0.300.0
+copy         مطابقة كاملة ← copy@0.300.0
+check        مطابقة كاملة ← check@0.300.0
+trash        جزئية 3/5 ← trash-2@0.400.0
+search       مطابقة كاملة ← search@0.300.0
+restore      مطابقة كاملة ← rotate-ccw@0.300.0
+clipboard    مطابقة كاملة ← clipboard@0.300.0
+alert        بلا مقابل
+x            مطابقة كاملة ← x@0.300.0
+play         بلا مقابل
+video        مطابقة كاملة ← video@0.300.0
+folder       مطابقة كاملة ← folder@0.300.0
+clock        مطابقة كاملة ← clock@main
+type         جزئية 2/3 ← type@main
+shield       مطابقة كاملة ← shield@0.400.0
+sliders      جزئية 2/9 ← sliders-vertical@main
+captions     بلا مقابل
+hard-drive   جزئية 2/4 ← hard-drive@main
+activity     مطابقة كاملة ← activity@0.300.0
+list         جزئية 2/6 ← list@main
+layers       بلا مقابل
+plus         مطابقة كاملة ← plus@0.300.0
+== src/pages/popup/icons.js
+eye-off      جزئية 2/4 ← eye-off@0.400.0
+== src/pages/editor/icons.js
+arrow        مطابقة كاملة ← arrow-right@0.300.0
+flag         بلا مقابل
+merge        بلا مقابل
+split        جزئية 2/3 ← scissors@0.300.0
+== src/player/panel/dom.js
+minus        مطابقة كاملة ← minus@0.300.0
+eye-off      مطابقة كاملة ← eye-off@main
+arrow-up     مطابقة كاملة ← arrow-up@0.300.0
+arrow-down   مطابقة كاملة ← arrow-down@0.300.0
+== src/player/controls/glyphs.js
+flag         جزئية 1/2 ← flag@0.400.0
+== src/player/controls/icons.js
+download     بلا مقابل
+upload       بلا مقابل
+panel        بلا مقابل
+minus        بلا مقابل
+plus         بلا مقابل
+
+المسارات المطابقة حرفيًا لمسار في Lucide: 79/124
