@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { HEALTH_MS } from '../../../../src/player/panel/index.js';
+import { FOCUS_REQUEST_MS, createPanelLink } from '../../../../src/player/link.js';
 import { arCues, click, english, hidden, key, layoutList, makeState, prepareVideo, ui, watchPage } from './harness.js';
 
 const classesOf = (rows, cls) => rows.map((r, i) => (r.classList.contains(cls) ? i : -1)).filter((i) => i >= 0);
@@ -23,18 +24,40 @@ test('عزل لوحة المفاتيح: الضغطات داخل اللوحة ل�
   assert.deepEqual(seen, ['k'], 'والمستند نفسه يعمل');
 });
 
-test('التركيز: يعبر من الزر إلى زر الإغلاق عند الفتح من لوحة المفاتيح، ويعود إلى الزر عند الإغلاق', () => {
+test('التركيز مع زر اللوحة في الشريط (صلة link): الفتح بلوحة المفاتيح يدخل زر الإغلاق، والإغلاق يعيده إلى زر الشريط', () => {
+  const link = createPanelLink();
   const page = watchPage({ state: makeState({ prefs: { ...makeState().prefs, ui: { ...makeState().prefs.ui, panelOpen: false } } }) });
-  page.mount();
+  page.mount({ link });
+  const barButton = page.doc.createElement('button');
+  page.doc.body.appendChild(barButton);
+  link.register(() => barButton.focus());
+  barButton.focus();
+  // زر الشريط يطلب التركيز ثم يكتب التفضيل (كما في controls/session.js togglePanel).
+  link.requestPanelFocus();
+  page.controller.set({ prefs: { ...page.controller.getState().prefs, ui: { ...page.controller.getState().prefs.ui, panelOpen: true } } });
   const v = ui(page);
-  v.entry.focus();
-  assert.ok(page.doc._focused === v.entry);
-  v.entry.dispatchEvent({ type: 'click', bubbles: true, detail: 0 });
   assert.equal(page.handle.peek().mode, 'open');
   assert.ok(page.doc._focused === v.qa('.head .b')[1], 'زر الإغلاق');
   click(v.qa('.head .b')[1]);
-  assert.equal(page.handle.peek().mode, 'entry');
-  assert.ok(page.doc._focused === v.entry, 'عاد التركيز إلى الزر');
+  assert.equal(page.handle.peek().mode, 'none');
+  assert.ok(page.doc._focused === barButton, 'عاد التركيز إلى زر اللوحة في الشريط');
+});
+
+test('صلة التركيز: طلب منتهي المهلة لا يخطف التركيز، والتسجيل الأقدم لا يلغي الأحدث', () => {
+  let t = 0;
+  const link = createPanelLink({ now: () => t });
+  link.requestPanelFocus();
+  t = FOCUS_REQUEST_MS + 1;
+  assert.equal(link.takePanelFocus(), false);
+  link.requestPanelFocus();
+  assert.equal(link.takePanelFocus(), true);
+  assert.equal(link.takePanelFocus(), false, 'يُستهلك مرة');
+  const seen = [];
+  const offA = link.register(() => seen.push('a'));
+  link.register(() => seen.push('b'));
+  offA();
+  assert.equal(link.focusButton(), true);
+  assert.deepEqual(seen, ['b']);
 });
 
 test('الفتح من مكان آخر (نافذة الأيقونة) لا يسرق التركيز', () => {
@@ -93,7 +116,7 @@ test('ملء الشاشة: الصفوف تبقى بأعيانها، ولا تت�
   assert.equal(hidden(ui(page).resume), false);
 });
 
-test('ملء الشاشة بلوحة مغلقة: لا صفوف أصلًا، والمضيف مخفي ويعود الزر بالخروج', () => {
+test('ملء الشاشة بلوحة مغلقة: لا صفوف أصلًا، والمضيف مخفي قبله وبعده', () => {
   const page = watchPage({ state: makeState({ prefs: { ...makeState().prefs, ui: { ...makeState().prefs.ui, panelOpen: false } } }) });
   const handle = page.mount();
   page.doc.fullscreenElement = page.player;
@@ -101,8 +124,8 @@ test('ملء الشاشة بلوحة مغلقة: لا صفوف أصلًا، وا
   assert.equal(handle.peek().hostHidden, true);
   page.doc.fullscreenElement = null;
   page.ev('fullscreenchange');
-  assert.equal(handle.peek().hostHidden, false);
-  assert.equal(handle.peek().mode, 'entry');
+  assert.equal(handle.peek().hostHidden, true);
+  assert.equal(handle.peek().mode, 'none');
   assert.equal(handle.peek().rows, 0);
 });
 
@@ -169,12 +192,12 @@ test('حالة ناقصة أو غريبة لا ترمي: بلا view وsettings 
   void base;
 });
 
-test('بلا prefs في الحالة: التفضيلات الافتراضية (زر مغلق)، بلا رمي', () => {
+test('بلا prefs في الحالة: التفضيلات الافتراضية (مغلقة)، بلا رمي', () => {
   const page = watchPage();
   const handle = page.mount();
   assert.doesNotThrow(() => page.controller.set({ prefs: undefined }));
   assert.equal(handle.diagnostics().session.lastCode, null);
-  assert.equal(handle.peek().mode, 'entry');
+  assert.equal(handle.peek().mode, 'none');
 });
 
 test('مقطع بنص فارغ أو طويل جدًا لا يكسر الصف', () => {

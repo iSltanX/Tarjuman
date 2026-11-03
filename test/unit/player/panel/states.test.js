@@ -1,4 +1,4 @@
-// أشكال اللوحة وحالاتها: الزر المغلق والمفتوحة والمخفي (وتراجعه)، وقائمة الخيارات، وسطر الحالة من الحالة الفعلية، ونص اللوحة
+// أشكال اللوحة وحالاتها: المغلقة (لا شيء في الصفحة) والمفتوحة والمخفي زرها (وتراجعه)، وقائمة الخيارات، وسطر الحالة من الحالة الفعلية، ونص اللوحة
 // (العربية وحدها / مع لغة الأصل بسببه حين لا أصل)، وجارٍ التحميل، ولا ترجمة عربية، والخطأ، والعمود الضيق.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,44 +10,30 @@ const prefsWith = (ui) => mergePrefs(DEFAULT_PREFS, { ui });
 const ago = (p, n) => p.controller.calls.filter((c) => c[0] === n);
 const lastPrefs = (p) => ago(p, 'updatePrefs').at(-1)[1];
 
-test('مغلقة: الزر وحده (النص المتزامن، aria-expanded=false)، لا لوحة ولا رسالة', () => {
-  const page = watchPage({ state: makeState({ prefs: prefsWith({ panelOpen: false }) }) });
+test('مغلقة افتراضيًا (قرار سلطان 2026-11-03): لا شيء في صفحة يوتيوب — لا زر في العمود ولا لوحة ولا رسالة؛ وزرها في شريط المشغّل', () => {
+  assert.equal(DEFAULT_PREFS.ui.panelOpen, false);
+  const page = watchPage({ state: makeState({ prefs: DEFAULT_PREFS }) });
   page.mount();
   const v = ui(page);
-  assert.equal(hidden(v.entry), false);
+  assert.equal(page.handle.peek().mode, 'none');
+  assert.equal(hidden(v.host), true, 'المضيف مخفي');
+  assert.equal(v.entry, null, 'لا زر في العمود الجانبي');
   assert.equal(hidden(v.panel), true);
   assert.equal(hidden(v.toast), true);
-  assert.equal(v.entry.getAttribute('aria-expanded'), 'false');
-  assert.ok(v.entry.textContent.includes('النص المتزامن'));
-  assert.equal(v.entry.getAttribute('aria-label'), 'فتح النص المتزامن');
-  assert.equal(hidden(v.qa('.pill')[0]), true, 'لا قيمة إزاحة عند الصفر');
-  assert.equal(v.entry.tagName, 'button');
+  assert.equal(page.handle.peek().rows, 0, 'لا صفوف مبنية');
 });
 
-test('مغلقة والإزاحة ≠ 0: قيمة الإزاحة في الشارة وفي اسم الوصول، وتتبع الإزاحة الحية', () => {
-  const page = watchPage({ state: makeState({ prefs: prefsWith({ panelOpen: false }), view: { displayOffsetMs: 500, displayMode: 'ar' } }) });
-  page.mount();
-  const v = ui(page);
-  const pill = v.qa('.pill')[0];
-  assert.equal(hidden(pill), false);
-  assert.equal(pill.textContent, '+0.5');
-  assert.ok(v.entry.getAttribute('aria-label').includes('الإزاحة'));
-  assert.ok(v.entry.getAttribute('aria-label').includes('+0.5'));
-  page.controller.set({ view: { displayOffsetMs: -1200, displayMode: 'ar' } });
-  assert.equal(pill.textContent, '−1.2');
-  page.controller.set({ view: { displayOffsetMs: 0, displayMode: 'ar' } });
-  assert.equal(hidden(pill), true);
-});
-
-test('الضغط على الزر يفتح اللوحة: updatePrefs({ ui: { panelOpen: true } }) ثم تظهر المفتوحة والزر يختفي', () => {
+test('الفتح من زرها في الشريط أو من الإعدادات (التفضيل نفسه panelOpen=true): تظهر المفتوحة فورًا، والإغلاق يخفيها', () => {
   const page = watchPage({ state: makeState({ prefs: prefsWith({ panelOpen: false }) }) });
   page.mount();
-  click(ui(page).entry);
-  assert.deepEqual(lastPrefs(page), { ui: { panelOpen: true } });
+  page.controller.set({ prefs: prefsWith({ panelOpen: true }) });
   const v = ui(page);
-  assert.equal(hidden(v.panel), false);
-  assert.equal(hidden(v.entry), true);
   assert.equal(page.handle.peek().mode, 'open');
+  assert.equal(hidden(v.host), false);
+  assert.equal(hidden(v.panel), false);
+  page.controller.set({ prefs: prefsWith({ panelOpen: false }) });
+  assert.equal(page.handle.peek().mode, 'none');
+  assert.equal(hidden(v.host), true);
 });
 
 test('الزر مخفي (panelEntry=false): لا شيء يُرسم (المضيف مخفي) ولو كانت اللوحة مفتوحة في التفضيل', () => {
@@ -56,18 +42,20 @@ test('الزر مخفي (panelEntry=false): لا شيء يُرسم (المضيف
   const v = ui(page);
   assert.equal(handle.peek().mode, 'none');
   assert.equal(hidden(v.host), true);
-  assert.equal(hidden(v.entry), true);
   assert.equal(hidden(v.panel), true);
   assert.equal(hidden(v.toast), true);
   assert.equal(handle.peek().rows, 0, 'لا صفوف مبنية');
 });
 
-test('الزر يعود من الإعدادات أو نافذة الأيقونة: تظهر اللوحة فورًا بتغيّر التفضيل', () => {
+test('الزر يعود من الإعدادات أو نافذة الأيقونة: اللوحة كما في تفضيلها (مغلقة لا تظهر، ومفتوحة تظهر فورًا)', () => {
   const page = watchPage({ state: makeState({ prefs: prefsWith({ panelEntry: false, panelOpen: false }) }) });
   const handle = page.mount();
   assert.equal(handle.peek().mode, 'none');
   page.controller.set({ prefs: prefsWith({ panelEntry: true, panelOpen: false }) });
-  assert.equal(handle.peek().mode, 'entry');
+  assert.equal(handle.peek().mode, 'none');
+  assert.equal(hidden(ui(page).host), true);
+  page.controller.set({ prefs: prefsWith({ panelEntry: true, panelOpen: true }) });
+  assert.equal(handle.peek().mode, 'open');
   assert.equal(hidden(ui(page).host), false);
 });
 
@@ -89,14 +77,14 @@ test('المفتوحة: الرأس (الشعار والعنوان) وزرا خي
   assert.ok(v.q('.head .tj-logo__glyph') && v.q('.head .tj-logo__dots'), 'جسد التاء ونقطتاه');
 });
 
-test('الإغلاق: panelOpen=false وحده، فيبقى الزر (panelEntry لا يُمس)', () => {
+test('الإغلاق: panelOpen=false وحده، فتختفي من الصفحة ويبقى زرها في الشريط (panelEntry لا يُمس)', () => {
   const page = watchPage();
   page.mount();
   click(ui(page).qa('.head .b')[1]);
   assert.deepEqual(lastPrefs(page), { ui: { panelOpen: false } });
   const v = ui(page);
-  assert.equal(hidden(v.entry), false);
-  assert.equal(hidden(v.panel), true);
+  assert.equal(page.handle.peek().mode, 'none');
+  assert.equal(hidden(v.host), true);
   assert.equal(page.controller.getState().prefs.ui.panelEntry, true);
 });
 
@@ -138,7 +126,6 @@ test('الإخفاء: panelEntry=false وpanelOpen=false معًا، ثم رسا�
   assert.equal(hidden(v.toast), false);
   assert.ok(v.toast.textContent.includes('أُخفي زر النص المتزامن'));
   assert.ok(v.toast.textContent.includes('تراجع'));
-  assert.equal(hidden(v.entry), true);
   assert.equal(hidden(v.panel), true);
   assert.equal(hidden(v.host), false, 'المضيف باقٍ ليحمل الرسالة');
   assert.equal(hidden(v.q('.menu')), true);
@@ -191,7 +178,7 @@ test('الرسالة تُغلق إن عاد الزر من مكان آخر قبل
   click(ui(page).q('.menu [role="menuitem"]'));
   assert.equal(page.handle.peek().mode, 'toast');
   page.controller.set({ prefs: prefsWith({ panelEntry: true, panelOpen: false }) });
-  assert.equal(page.handle.peek().mode, 'entry');
+  assert.equal(page.handle.peek().mode, 'none');
   assert.equal(hidden(ui(page).toast), true);
   page.controller.set({ prefs: prefsWith({ panelEntry: false, panelOpen: false }) });
   assert.equal(page.handle.peek().mode, 'none', 'إخفاء لاحق من مكان آخر لا يوقظ الرسالة القديمة');

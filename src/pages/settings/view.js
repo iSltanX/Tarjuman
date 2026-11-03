@@ -27,10 +27,14 @@ export const PREVIEW_NOTE = 'الحجم نسبة من ارتفاع المشغّ�
 export const INSTALL_REMINDER = 'ثبّت أيقونة ترجمان في شريط المتصفح من قائمة الإضافات.';
 export const SAVE_HINT = 'كل خيار يُحفظ فورًا على جهازك.';
 export const RESET_LABEL = 'استعادة الافتراضي';
-/** مفتاحا الواجهة على هذا الجهاز في «العرض» (prefs.ui): نصوصهما كما في لوحة الإعدادات المعتمدة. */
+/** مفاتيح الواجهة على هذا الجهاز في «العرض» (prefs.ui). اللوحة مغلقة افتراضيًا (قرار سلطان 2026-11-03)، وزرها في شريط المشغّل. */
 export const ENTRY_SWITCH = Object.freeze({
-  label: 'زر النص المتزامن', hint: 'في رأس عمود يوتيوب الجانبي', text: 'يظهر في صفحات الفيديو',
+  label: 'زر النص المتزامن', hint: 'في شريط المشغّل', text: 'يظهر في صفحات الفيديو',
   note: 'إطفاؤه كإخفاء الزر من اللوحة نفسها؛ وإغلاق اللوحة لا يمسّه.',
+});
+export const PANEL_OPEN_SWITCH = Object.freeze({
+  label: 'لوحة النص المتزامن', hint: 'يمين الفيديو', text: 'مفتوحة في صفحات الفيديو',
+  note: 'مطفأة افتراضيًا. زرها في شريط المشغّل يفتحها ويغلقها أيضًا، ويبقى آخر اختيار في كل الفيديوهات.',
 });
 export const THUMBNAILS_SWITCH = Object.freeze({
   label: 'صور الفيديو في المحفوظات', text: 'تُعرض صورة كل فيديو',
@@ -150,9 +154,12 @@ export function createSettings(env) {
    */
   function uiSwitch(key, text, mark) {
     const input = el('input', { className: 'st-switch__input', attrs: { id: `st-ui-${key}`, type: 'checkbox', role: 'switch', 'data-pref': `ui.${key}` }, doc });
-    // إطفاء «زر النص المتزامن» كإخفائه من قائمة اللوحة: يُغلق اللوحة معه، فلا تُفتح وحدها حين يعود الزر (مراجعة الهوية L4).
+    // إطفاء «زر النص المتزامن» كإخفائه من قائمة اللوحة: يُغلق اللوحة معه، فلا تُفتح وحدها حين يعود الزر (مراجعة الهوية L4)؛ وفتح
+    // اللوحة يعيد زرها، فلا تُفتح لوحة لا زر يغلقها من الشريط.
     input.addEventListener('change', () => {
-      const patch = key === 'panelEntry' && !input.checked ? { panelEntry: false, panelOpen: false } : { [key]: input.checked };
+      let patch = { [key]: input.checked };
+      if (key === 'panelEntry' && !input.checked) patch = { panelEntry: false, panelOpen: false };
+      if (key === 'panelOpen' && input.checked) patch = { panelOpen: true, panelEntry: true };
       savePrefs({ ui: patch }, mark);
     });
     sync.push(() => { input.checked = prefs.ui[key]; });
@@ -204,29 +211,45 @@ export function createSettings(env) {
   });
   sync.push(() => displaySeg.set(settings.displayModeDefault));
 
+  // خط الترجمة (لوحة الإعدادات المعتمدة): شريحة مدمجة لكل خط باسمه بخطه نفسه، و«الافتراضي» وسمٌ صغير في شريحته؛ ووصف المختار
+  // (اسمه اللاتيني وما يميّزه) سطرٌ واحد تحت الشرائح بدل بطاقة لكل خط.
   const fontMark = marks();
   const fontInputs = [];
+  const fontMeta = el('p', { className: 'st-font-meta', attrs: { id: 'st-font-meta' }, doc });
+  const renderFontMeta = (id) => {
+    const f = SUBTITLE_FONT_LIST.find((x) => x.id === id) ?? SUBTITLE_FONT_LIST[0];
+    fontMeta.replaceChildren(el('span', { children: [ltr(f.nameLatin, { mono: false, doc }), ` · ${f.note}`], doc }));
+  };
   const fontList = el('fieldset', {
     className: 'st-fonts',
+    attrs: { 'aria-describedby': 'st-font-meta' },
     children: [
       el('legend', { className: 'tj-sr-only', text: 'خط الترجمة', doc }),
-      ...SUBTITLE_FONT_LIST.map((f) => {
+      ...SUBTITLE_FONT_LIST.map((f, i) => {
         const input = el('input', { attrs: { type: 'radio', name: 'st-font', value: f.id }, doc });
         input.checked = f.id === settings.appearance.font;
-        input.addEventListener('change', () => { if (input.checked) save({ appearance: { font: f.id } }, fontMark); });
+        input.addEventListener('change', () => {
+          if (!input.checked) return;
+          renderFontMeta(f.id);
+          save({ appearance: { font: f.id } }, fontMark);
+        });
         fontInputs.push(input);
         const name = el('span', { className: 'st-font__name', text: f.nameAr, doc });
         name.style.fontFamily = subtitleFontStack(f.id); // اسم كل خط بخطه نفسه
         return el('label', {
           className: 'st-font',
-          children: [input, name, el('span', { className: 'st-font__meta', children: [ltr(f.nameLatin, { mono: false, doc }), ` · ${f.note}`], doc })],
+          children: [input, name, i === 0 ? el('span', { className: 'st-font__tag', text: 'الافتراضي', doc }) : null],
           doc,
         });
       }),
     ],
     doc,
   });
-  sync.push(() => fontInputs.forEach((input, i) => { input.checked = SUBTITLE_FONT_LIST[i].id === settings.appearance.font; }));
+  renderFontMeta(settings.appearance.font);
+  sync.push(() => {
+    fontInputs.forEach((input, i) => { input.checked = SUBTITLE_FONT_LIST[i].id === settings.appearance.font; });
+    renderFontMeta(settings.appearance.font);
+  });
 
   const scaleMark = marks();
   const scaleId = 'st-scale';
@@ -292,7 +315,9 @@ export function createSettings(env) {
   })();
   sync.push(() => preview.update(settings.appearance));
 
-  // مفتاحا الواجهة (prefs.ui) على هذا الجهاز: زر لوحة النص المتزامن في صفحات الفيديو، وصور الفيديو في المحفوظات.
+  // مفاتيح الواجهة (prefs.ui) على هذا الجهاز: لوحة النص المتزامن وزرها في شريط المشغّل، وصور الفيديو في المحفوظات.
+  const openMark = marks();
+  const openSwitch = uiSwitch('panelOpen', PANEL_OPEN_SWITCH.text, openMark);
   const entryMark = marks();
   const entrySwitch = uiSwitch('panelEntry', ENTRY_SWITCH.text, entryMark);
   const thumbsMark = marks();
@@ -300,10 +325,11 @@ export function createSettings(env) {
 
   const display = section(byId.display,
     row('وضع العرض الافتراضي', displayMark, displaySeg.root),
-    row('خط الترجمة', fontMark, fontList, note(SUBTITLE_NOTE)),
+    row('خط الترجمة', fontMark, fontList, fontMeta, note(SUBTITLE_NOTE)),
     row('حجم الخط', scaleMark, sliderBox, note(SCALE_NOTE)),
     row('الخلفية', bgMark, bgSeg.root),
     row('الموضع', posMark, posSeg.root),
+    rowWithHint(PANEL_OPEN_SWITCH.label, PANEL_OPEN_SWITCH.hint, openMark, openSwitch, note(PANEL_OPEN_SWITCH.note)),
     rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)),
     row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(THUMBNAILS_SWITCH.note)),
     row('معاينة حية', null, preview.root, note(PREVIEW_NOTE)));

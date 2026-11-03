@@ -179,7 +179,7 @@ export function ui(page) {
   return {
     host, root, q,
     qa: (sel) => root?.querySelectorAll(sel) ?? [],
-    entry: q('.entry'), panel: q('.panel'), toast: q('.toast'),
+    entry: q('.entry'), panel: q('.panel'), toast: q('.toast'), // entry: لم يعد في اللوحة (زرها في الشريط)؛ يُتحقق أنه null
     rows: () => root?.querySelectorAll('.row') ?? [],
     list: q('.list'),
     status: q('.status'),

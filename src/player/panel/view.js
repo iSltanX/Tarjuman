@@ -6,7 +6,7 @@ import { createSheet } from '../overlay/sheet.js';
 import { el, icon, mark, setAttr, setClass, setHidden, setText } from './dom.js';
 import { HOST_ID, NARROW_MAX, WIDE_MIN, panelCss } from './styles.js';
 import { createTranscript } from './transcript.js';
-import { LABELS, earlierTip, laterTip, offsetMeaningShort, offsetPhrase, offsetValue, statusParts, stepLabel, withOriginal } from './text.js';
+import { LABELS, earlierTip, laterTip, offsetMeaningShort, offsetValue, statusParts, stepLabel, withOriginal } from './text.js';
 
 /** ما يعزله جذر اللوحة عن يوتيوب: اختصارات لوحة المفاتيح (المسافة وk وf والأسهم والأرقام…) وهو يكتب أو يضغط داخلها. */
 const KEYS = ['keydown', 'keyup', 'keypress'];
@@ -62,7 +62,7 @@ function createSegs(doc, label, values, pick) {
  * @param {{
  *   doc: Document, win: Window,
  *   on: {
- *     open: () => void, close: () => void, hide: () => void, undo: () => void, setDual: (v: boolean) => void,
+ *     close: () => void, hide: () => void, undo: () => void, setDual: (v: boolean) => void,
  *     setFollow: (v: boolean) => void, resume: () => void, reset: () => void, nudge: (dir: 1 | -1) => void,
  *     step: (v: string) => void, stepText: (t: string) => void, applyStep: (t: string) => void, retry: () => void,
  *     seek: (ms: number) => void,
@@ -79,19 +79,6 @@ export function createPanelView({ doc, win, on }) {
   root.appendChild(shell);
 
   const transcript = createTranscript({ doc, onSeek: (ms) => on.seek(ms) });
-
-  // ———— الزر (مغلقة) ————
-  const entryPillText = el(doc, 'span', { className: 'ltr' });
-  const entryPill = el(doc, 'span', { className: 'pill' }, [entryPillText]);
-  const entry = el(doc, 'button', {
-    className: 'entry', attrs: { type: 'button', 'aria-expanded': 'false', 'aria-label': LABELS.openEntry }, on: { click: () => on.open() },
-  }, [
-    mark(doc, 20),
-    el(doc, 'span', { className: 'entry__label', text: LABELS.title }),
-    el(doc, 'span', { className: 'spacer' }),
-    entryPill,
-    icon(doc, 'chevron', { size: 'sm' }),
-  ]);
 
   // ———— الرأس والقائمة ————
   const load = el(doc, 'span', { className: 'load', attrs: { role: 'img', 'aria-label': LABELS.loading } }, [el(doc, 'i'), el(doc, 'i')]);
@@ -221,7 +208,7 @@ export function createPanelView({ doc, win, on }) {
     undoBtn,
   ]);
 
-  shell.append(entry, panel, toast);
+  shell.append(panel, toast);
 
   // ———— عزل لوحة المفاتيح، وقائمة الخيارات ————
   let menuOpen = false;
@@ -286,13 +273,6 @@ export function createPanelView({ doc, win, on }) {
     setAttr(shell, 'data-wide', layout.wide ? true : null);
     if (textual && last) render(last.model, last.local);
     return textual;
-  }
-
-  function renderEntry(m) {
-    const shifted = m.offsetMs !== 0;
-    setHidden(entryPill, !shifted);
-    if (shifted) setText(entryPillText, offsetValue(m.offsetMs));
-    setAttr(entry, 'aria-label', shifted ? `${LABELS.openEntry}، الإزاحة ${offsetPhrase(m.offsetMs)}` : LABELS.openEntry);
   }
 
   function renderBar(m, l) {
@@ -385,13 +365,9 @@ export function createPanelView({ doc, win, on }) {
     setAttr(host, 'data-mode', m.mode);
     setHidden(host, m.mode === 'none');
     setAttr(shell, 'data-kind', m.kind);
-    setHidden(entry, m.mode !== 'entry');
     setHidden(panel, m.mode !== 'open');
     setHidden(toast, m.mode !== 'toast');
-    setAttr(entry, 'aria-expanded', m.mode === 'open' ? 'true' : 'false');
     if (m.mode !== 'open') setMenu(false);
-
-    if (m.mode === 'entry') renderEntry(m);
 
     let out = { rebuilt: false, relabeled: false };
     if (m.mode === 'open') {
@@ -420,17 +396,16 @@ export function createPanelView({ doc, win, on }) {
       transcript.clear();
     }
 
-    // التركيز لا يضيع بتبديل الشكل: من الزر إلى اللوحة (زر الإغلاق)، ومن اللوحة إلى الزر.
-    if (prevActive === entry && m.mode === 'open') closeBtn.focus();
-    else if (prevActive && m.mode === 'entry' && (panel.contains(prevActive))) entry.focus();
-    // إخفاء الزر من قائمة اللوحة: التركيز إلى «تراجع» لا إلى body (مراجعة الهوية L10)؛ والتراجع يعيده إلى الزر أو اللوحة.
-    else if (prevActive && m.mode === 'toast' && panel.contains(prevActive)) undoBtn.focus();
-    else if (prevActive === undoBtn && m.mode === 'entry') entry.focus();
+    // التركيز لا يضيع بتبديل الشكل. إخفاء الزر من قائمة اللوحة: إلى «تراجع» لا إلى body (مراجعة الهوية L10)، والتراجع يعيده
+    // إلى اللوحة. والإغلاق (أو تراجع لا يعيدها): يُبلَّغ المستدعي (lostFocus) فيعيده إلى زر اللوحة في شريط المشغّل.
+    let lostFocus = false;
+    if (prevActive && m.mode === 'toast' && panel.contains(prevActive)) undoBtn.focus();
     else if (prevActive === undoBtn && m.mode === 'open') closeBtn.focus();
+    else if (prevActive && m.mode === 'none' && (panel.contains(prevActive) || prevActive === undoBtn)) lostFocus = true;
 
     const becameReady = readyOpen && !wasReady;
     shown = { mode: m.mode, kind: m.kind };
-    return { ...out, becameReady, mode: m.mode, kind: m.kind };
+    return { ...out, becameReady, lostFocus, mode: m.mode, kind: m.kind };
   }
 
   /** @param {boolean} dark وضع يوتيوب الداكن. */
@@ -464,7 +439,6 @@ export function createPanelView({ doc, win, on }) {
       mode: host.getAttribute('data-mode'), kind: shell.getAttribute('data-kind'), theme: shell.getAttribute('data-theme'),
       place: layout.place, width: layout.width, narrow: layout.narrow, wide: layout.wide, heightPx: layout.heightPx,
       hostHidden: host.hasAttribute('hidden'),
-      entry: { hidden: entry.hasAttribute('hidden'), expanded: entry.getAttribute('aria-expanded'), label: entry.getAttribute('aria-label'), pill: entryPill.hasAttribute('hidden') ? null : entryPillText.textContent },
       status: statusEl.textContent,
       dual: segsOf(segs),
       follow: followSwitch.getAttribute('aria-checked') === 'true',
@@ -482,7 +456,7 @@ export function createPanelView({ doc, win, on }) {
       toast: toast.hasAttribute('hidden') ? null : toast.textContent,
       menu: menuOpen,
       boxes: !o.boxes ? undefined : {
-        host: box(host), entry: box(entry), panel: box(panel), opts: box(optsBtn), close: box(closeBtn), hide: box(hideItem), follow: box(followSwitch),
+        host: box(host), panel: box(panel), opts: box(optsBtn), close: box(closeBtn), hide: box(hideItem), follow: box(followSwitch),
         resume: box(resume), reset: box(resetBtn), earlier: box(earlierBtn), later: box(laterBtn), undo: box(undoBtn), list: box(transcript.list),
         dual: Array.from(segs.el.children).map(box),
         rows: (o.rows ?? []).map((i) => ({ i, label: transcript.labelOf(i), box: box(transcript.rowEl(i)), time: box(transcript.rowEl(i)?.firstElementChild ?? null) })),
@@ -494,7 +468,9 @@ export function createPanelView({ doc, win, on }) {
 
   return {
     host, root, shell, styleMode, transcript, render, setResume, setLayout, setTheme, setMenu, destroy, peek,
+    /** فُتحت اللوحة من زرها في الشريط بلوحة المفاتيح: التركيز إلى زر الإغلاق (أول ما فيها). */
+    focusPanel: () => closeBtn.focus(),
     /** عناصر للاختبار والتركيز البرمجي. */
-    parts: { entry, panel, optsBtn, closeBtn, menu, hideItem, segs: segs.el, followSwitch, resume, resetBtn, earlierBtn, laterBtn, stepSegs: stepSegs.el, stepInput, toast, foot, bar, body, err, empty, skel },
+    parts: { panel, optsBtn, closeBtn, menu, hideItem, segs: segs.el, followSwitch, resume, resetBtn, earlierBtn, laterBtn, stepSegs: stepSegs.el, stepInput, toast, foot, bar, body, err, empty, skel },
   };
 }

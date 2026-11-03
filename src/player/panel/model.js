@@ -103,7 +103,7 @@ export function originalLookup(enCues) {
 
 /**
  * @typedef {{
- *   mode: 'none' | 'entry' | 'open' | 'toast',
+ *   mode: 'none' | 'open' | 'toast',
  *   kind: 'loading' | 'empty' | 'error' | 'ready' | null,
  *   sameVideo: boolean, offsetMs: number, stepMs: number,
  *   cues: Cue[] | null, count: number,
@@ -117,7 +117,8 @@ export function originalLookup(enCues) {
 
 /**
  * نموذج العرض من حالة المتحكم وحالة الصفحة والواجهة المحلية. الأولوية: لوحة مخفية خارج صفحة الفيديو وفي ملء الشاشة؛ وزر مخفي
- * (رسالة التراجع وحدها إن كانت)؛ ثم مفتوحة أو زر. والمفتوحة (وكذا المخفية بملء الشاشة وهي مفتوحة): جارٍ التحميل (فيديو الصفحة غير فيديو الحالة، أو تنقّل، أو
+ * (رسالة التراجع وحدها إن كانت)؛ ثم مفتوحة أو لا شيء: المغلقة لا تظهر في صفحة يوتيوب أصلًا، وزرها في شريط المشغّل (قرار سلطان
+ * 2026-11-03: مغلقة افتراضيًا، وتظهر بزرها في المشغّل أو بمفتاحها في الإعدادات). والمفتوحة (وكذا المخفية بملء الشاشة وهي مفتوحة): جارٍ التحميل (فيديو الصفحة غير فيديو الحالة، أو تنقّل، أو
  * قراءة السجل)، فخطأ لا ترجمة معه، فلا ترجمة عربية، وإلا جاهزة.
  * @param {import('../../content/controller.js').ControllerState} state
  * @param {{ videoId: string | null, navigating: boolean, visible: boolean }} page
@@ -131,7 +132,7 @@ export function derive(state, page, ui) {
   let mode;
   if (!page.visible) mode = 'none';
   else if (!entry) mode = ui.toast ? 'toast' : 'none';
-  else mode = prefs.panelOpen === true ? 'open' : 'entry';
+  else mode = prefs.panelOpen === true ? 'open' : 'none';
 
   // ملء الشاشة يخفي المضيف ولا يمسح الصفوف: تبقى (kind غير فارغ مع mode='none') فلا يضيع موضع التمرير ولا يُعاد البناء عند الخروج.
   let kind = null;

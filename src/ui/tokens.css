@@ -51,7 +51,8 @@
   --tj-danger-bg: #FCEAEE;
   --tj-danger-ink: #FFFFFF;
   --tj-info: var(--tj-brand-text);
-  --tj-info-bg: var(--tj-brand-soft);
+  /* المعلومة صامتة: سطح غائر محايد وأيقونتها بالإبراز، لا شريط بُنّي ثقيل (ملاحظة سلطان 2026-11-03). */
+  --tj-info-bg: var(--tj-sunken);
   --tj-edited: #4B423B;
   --tj-edited-bg: #F1EDE6;
 
@@ -129,6 +130,7 @@
     --tj-danger-ink: #120F0D;
     --tj-edited: #D6CDC1;
     --tj-edited-bg: #332E2A;
+    --tj-info-bg: #2D2825;
     --tj-e2: 0 0 0 1px rgb(255 255 255 / 14%), 0 8px 24px rgb(0 0 0 / 40%);
     --tj-e3: 0 0 0 1px rgb(255 255 255 / 14%), 0 16px 40px rgb(0 0 0 / 50%);
   }
@@ -166,6 +168,7 @@
   --tj-danger-ink: #120F0D;
   --tj-edited: #D6CDC1;
   --tj-edited-bg: #332E2A;
+  --tj-info-bg: #2D2825;
   --tj-e2: 0 0 0 1px rgb(255 255 255 / 14%), 0 8px 24px rgb(0 0 0 / 40%);
   --tj-e3: 0 0 0 1px rgb(255 255 255 / 14%), 0 16px 40px rgb(0 0 0 / 50%);
 }

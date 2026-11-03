@@ -8,7 +8,7 @@ import { lookupMs } from '../../core/model/timing.js';
 import { parseSeconds } from '../controls/text.js';
 import { watchNavigation } from '../watch/navigation.js';
 import { getMainVideo, getPlayer, isAdShowing, isPlayerFullscreen, seekMainVideo } from '../youtube-dom.js';
-import { FALLBACK_HEIGHT, createColumnMirror, isBeside, placeHost } from './column.js';
+import { FALLBACK_HEIGHT, createColumnLayout, isBeside, placeHost } from './column.js';
 import { createFollow } from './follow.js';
 import { derive } from './model.js';
 import { createPanelView } from './view.js';
@@ -23,9 +23,10 @@ const VIDEO_EVENTS = ['timeupdate', 'seeking', 'seeked', 'ratechange', 'pause', 
  * @param {{
  *   controller: import('../../content/controller.js').Controller,
  *   doc: Document, win: Window,
+ *   link?: ReturnType<typeof import('../link.js').createPanelLink> | null,
  * }} deps
  */
-export function createPanelSession({ controller, doc, win }) {
+export function createPanelSession({ controller, doc, win, link = null }) {
   const counts = { renders: 0, renderFailures: 0, hostMoves: 0, syncs: 0, rebuilds: 0, actionFailures: 0 };
   let lastCode = null;
   let destroyed = false;
@@ -263,7 +264,7 @@ export function createPanelSession({ controller, doc, win }) {
   };
 
   view = createPanelView({ doc, win, on });
-  const mirror = createColumnMirror({ doc, win });
+  const columns = createColumnLayout({ doc, win });
   follow = createFollow({ win, list: view.transcript.list, rowEl: (i) => view.transcript.rowEl(i), onChange: () => render() });
 
   // ———— الحلقة الوحيدة ————
@@ -281,9 +282,10 @@ export function createPanelSession({ controller, doc, win }) {
         if (prefsUi?.panelEntry === false) toast.seen = true;
         else if (toast.seen) clearToast();
       }
-      // الواجهة العربية: اللوحة يمين الفيديو بتبديل العمودين ما دامت ظاهرة في العمود الثانوي (وتبقى كذلك خلف ملء الشاشة).
+      // اللوحة ظاهرة في العمود الثانوي: عرضه مريح (SIDE_WIDTH)، وفي الواجهة العربية يمين الفيديو بتبديل العمودين (ويبقى كذلك
+      // خلف ملء الشاشة فلا يقفز التخطيط عند الخروج).
       const inSecondary = !!column && column.id !== 'below';
-      mirror.update(inSecondary && (model.mode !== 'none' || (fullscreen && mirror.active)));
+      columns.update(inSecondary && (model.mode !== 'none' || (fullscreen && columns.active)));
       measure();
       const out = view.render(model, {
         follow: follow.on,
@@ -292,6 +294,9 @@ export function createPanelSession({ controller, doc, win }) {
         toast: !!toast,
       });
       ready = out.mode === 'open' && out.kind === 'ready';
+      // التركيز بين اللوحة وزرها في الشريط: فُتحت بلوحة المفاتيح ← زر الإغلاق؛ وأُغلقت وفيها التركيز ← زرها في الشريط.
+      if (out.mode === 'open' && link?.takePanelFocus()) view.focusPanel();
+      if (out.lostFocus) link?.focusButton();
       if (!ready) {
         anchor = -1;
         loc = null;
@@ -345,7 +350,7 @@ export function createPanelSession({ controller, doc, win }) {
     for (const t of VIDEO_EVENTS) video?.removeEventListener(t, onVideoEvent);
     video = null;
     clearToast();
-    mirror?.restore();
+    columns?.restore();
     view?.destroy();
   }
 
@@ -437,7 +442,7 @@ export function createPanelSession({ controller, doc, win }) {
       columnObserver?.disconnect();
       columnObserver = null;
       column = null;
-      mirror.restore();
+      columns.restore();
       view.host.remove();
     },
     check,
@@ -446,12 +451,12 @@ export function createPanelSession({ controller, doc, win }) {
       return column;
     },
     host: view.host,
-    peek: (o) => ({ ...view.peek(o), anchor, follow: follow.on, ready, mirrored: mirror.active }),
+    peek: (o) => ({ ...view.peek(o), anchor, follow: follow.on, ready, mirrored: columns.mirrored, fitted: columns.fitted }),
     diagnostics() {
       const p = view.peek();
       return {
         ...counts, lastCode, mode: p.mode, kind: p.kind, rows: p.rows, follow: follow.on, place: p.place, narrow: p.narrow, wide: p.wide,
-        theme: p.theme, styleMode: view.styleMode, anchor, toast: !!toast, video: !!video, mirrored: mirror.active,
+        theme: p.theme, styleMode: view.styleMode, anchor, toast: !!toast, video: !!video, mirrored: columns.mirrored, fitted: columns.fitted,
       };
     },
     destroy() {

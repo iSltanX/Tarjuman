@@ -68,15 +68,17 @@ test('تصفير: resetOffset، وهو معطّل عند الصفر (لا ندا
   assert.equal(calls(page, 'resetOffset').length, 1, 'لا نداء عند الصفر');
 });
 
-test('الإزاحة واحدة: أزرار المتحكم (الشريط) تظهر في اللوحة والزر المغلق، وأزرار اللوحة تظهر لدى المتحكم', () => {
+test('الإزاحة واحدة: أزرار المتحكم (الشريط) تظهر في اللوحة، وأزرار اللوحة تظهر لدى المتحكم، وتبقى بعد الإغلاق وإعادة الفتح', () => {
   const page = watchPage();
   page.mount();
   page.controller.nudgeOffset(1); // كما يفعل زر + في شريط المشغّل
   assert.equal(foot(page).value, '+0.5');
   click(ui(page).qa('.off .b')[1]);
   assert.equal(page.controller.getState().view.displayOffsetMs, 1000);
-  page.controller.set({ prefs: { ...page.controller.getState().prefs, ui: { ...page.controller.getState().prefs.ui, panelOpen: false } } });
-  assert.equal(ui(page).qa('.pill')[0].textContent, '+1.0');
+  const ui0 = page.controller.getState().prefs.ui;
+  page.controller.set({ prefs: { ...page.controller.getState().prefs, ui: { ...ui0, panelOpen: false } } });
+  page.controller.set({ prefs: { ...page.controller.getState().prefs, ui: { ...ui0, panelOpen: true } } });
+  assert.equal(foot(page).value, '+1.0');
 });
 
 test('الإزاحة واحدة مع الطبقة: ± من اللوحة يغيّر الترجمة المعروضة فوق الفيديو، والعكس', () => {

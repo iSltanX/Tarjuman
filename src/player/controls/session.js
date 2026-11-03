@@ -5,7 +5,7 @@ import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
 import { formatOffset } from '../../ui/format.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isLiveNow } from '../youtube-dom.js';
-import { watchBar } from './bar.js';
+import { fitSize, watchBar } from './bar.js';
 import { attachedGlossary, copyText, loadIntoFor, nameHintFor, partSizes, prepareExport, readFor, recordFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
@@ -78,7 +78,7 @@ function freshUi(videoId) {
  *   now?: () => number,
  * }} deps
  */
-export function createControlsSession({ controller, doc, win, player, flows, now = () => Date.now() }) {
+export function createControlsSession({ controller, doc, win, player, flows, now = () => Date.now(), link = null }) {
   const counts = {
     renders: 0, renderFailures: 0, reinserts: 0, downloads: 0, copies: 0, imports: 0, flowFailures: 0, overflows: 0,
     switches: 0, marks: 0, syncs: 0, undos: 0,
@@ -116,6 +116,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   };
 
   const group = createGroup({ doc, win, on: { action, hint, escape: () => closeMenu(true) } });
+  // زر اللوحة يستقبل التركيز حين تُغلق اللوحة وفيها التركيز (src/player/link.js).
+  const unlink = link?.register(() => group.focus('panel')) ?? null;
   const layer = createLayer({ doc, win, on: { escape: () => closeMenu(true), files: onFiles } });
 
   // ———— قراءات من الصفحة (كل اسم يوتيوب من youtube-dom) ————
@@ -149,8 +151,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const upState = ui.upload.busy ? LABELS.importing : s.arabic && summary.tone === 'warn' ? LABELS.stateDiffers : null;
     const upLabel = s.arabic ? `${LABELS.translation}: ${s.arabic.fileName}` : LABELS.upload;
     const badge = badgeTip(off);
+    const ui$ = s.prefs?.ui;
+    const panelShown = ui$?.panelEntry !== false;
+    const panelOpen = panelShown && ui$?.panelOpen === true;
+    const panelTip = panelOpen ? LABELS.panelClose : LABELS.panelOpen;
     return {
-      size: bar.size,
+      size: fitSize(bar, panelShown ? 5 : 4),
       download: {
         label: dlName, tip: withState(dlName, dlState), description: dlState, disabled: noVideo, unavailable,
         loading: ui.download.busy, expanded: ui.open === 'download',
@@ -159,6 +165,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         label: upLabel, tip: withState(s.arabic ? LABELS.translation : LABELS.upload, upState), description: s.arabic ? summary.text : upState,
         disabled: noVideo || s.loading, loading: ui.upload.busy, expanded: ui.open === 'display' || ui.open === 'confirm',
       },
+      panel: { label: LABELS.panel, tip: panelTip, description: null, disabled: noVideo, hidden: !panelShown, pressed: panelOpen },
       minus: { label: withReason(minusTip(step)), tip: withReason(minusTip(step)), description: null, disabled: viewOff },
       badge: { label: withReason(badge), tip: withReason(badge), description: null, disabled: viewOff, text: formatOffset(off), sign: signOf(off), expanded: ui.open === 'timing' },
       plus: { label: withReason(plusTip(step)), tip: withReason(plusTip(step)), description: null, disabled: viewOff },
@@ -484,6 +491,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     if (kind === 'minus') nudge(-1);
     else if (kind === 'plus') nudge(1);
+    else if (kind === 'panel') togglePanel(keyboard);
     else if (kind === 'download') toggleMenu('download', keyboard);
     else if (kind === 'badge') toggleMenu('timing', keyboard);
     else if (kind === 'upload') {
@@ -493,6 +501,17 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         pick('first');
       }
     }
+  }
+
+  /** زر اللوحة: يفتحها ويغلقها بالتفضيل المحفوظ نفسه الذي يكتبه زر الإغلاق فيها ومفتاح الإعدادات (يبقى آخر اختيار). */
+  function togglePanel(keyboard) {
+    closeMenu(false);
+    const open = controller.getState().prefs?.ui?.panelOpen === true;
+    if (!open && keyboard) link?.requestPanelFocus();
+    controller.updatePrefs({ ui: { panelOpen: !open } })?.catch?.((err) => {
+      fail('CT_PANEL_TOGGLE_FAILED', err);
+      addToast('error', messageFor('CT_PANEL_TOGGLE_FAILED'));
+    });
   }
 
   function nudge(dir) {
@@ -1066,6 +1085,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let off = null;
   function teardown() {
     off?.();
+    unlink?.();
     bar$?.stop();
     doc.removeEventListener('pointerdown', onDocPointer, true);
     doc.removeEventListener('keydown', onDocKey, true);
@@ -1079,7 +1099,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     place();
     flags = readFlags();
     bar$ = watchBar({
-      doc, win, player,
+      doc, win, player, own: () => group.host,
       onChange: (bar) => {
         render();
         measureOverflow(bar);
@@ -1133,9 +1153,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         inRightControls: !!right && right === getRightControls(doc),
         size: bar$.snapshot().size,
         group: box(group.host),
-        buttons: Object.fromEntries(['download', 'upload', 'minus', 'badge', 'plus'].map((k) => {
+        fit: lastModel?.size ?? null,
+        room: bar$.snapshot().room,
+        buttons: Object.fromEntries(['download', 'upload', 'panel', 'minus', 'badge', 'plus'].map((k) => {
           const el = group.button(k);
-          return [k, { box: box(el), label: el.getAttribute('aria-label'), tip: lastModel?.[k]?.tip ?? null, description: el.getAttribute('aria-description'), busy: el.getAttribute('aria-busy') === 'true', disabled: el.getAttribute('aria-disabled') === 'true', text: k === 'badge' ? el.textContent : null }];
+          const shown = !!el.getClientRects?.().length;
+          return [k, { box: shown ? box(el) : null, label: el.getAttribute('aria-label'), tip: lastModel?.[k]?.tip ?? null, description: el.getAttribute('aria-description'), busy: el.getAttribute('aria-busy') === 'true', disabled: el.getAttribute('aria-disabled') === 'true', pressed: el.getAttribute('aria-pressed'), text: k === 'badge' ? el.textContent : null }];
         })),
         layer: layer.peek(),
         overflow,

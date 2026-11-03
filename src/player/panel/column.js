@@ -75,18 +75,27 @@ export const PRIMARY_SELECTOR = 'ytd-watch-flexy #primary';
 export const SECONDARY_SELECTOR = 'ytd-watch-flexy #secondary';
 /** الخصائص الأفقية التي تتبادل جهتيها في المرآة. */
 const SIDES = Object.freeze([['padding-left', 'paddingRight'], ['padding-right', 'paddingLeft'], ['margin-left', 'marginRight'], ['margin-right', 'marginLeft']]);
+/**
+ * عرض العمود الثانوي (المحتوى، px) واللوحة مفتوحة بجانب الفيديو: عرض عمود يوتيوب المعتاد (402)، مريح لسطر عربي وزمن، ولا يزيد.
+ * يوسّع يوتيوب عموده إلى 560 وأكثر حين يضيّق المشغّل لنسبة الفيديو (4:3) أو لقصر النافذة، فتصير اللوحة بعرض الفيديو تقريبًا.
+ */
+export const SIDE_WIDTH = 402;
 
 /**
- * واجهة يوتيوب RTL (العربية): يضع يوتيوب عموده الثانوي يسار الفيديو. ما دامت اللوحة ظاهرة فيه يُعكس تخطيط العمودين كالمرآة
- * (قرار سلطان 2026-11-03: اللوحة يمين الفيديو في الواجهتين): `row-reverse` على الحاوية، ويتبادل كلٌّ من العمودين حشوَيه
- * وهامشَيه الأيمن والأيسر كما حسبها يوتيوب، فيكون التخطيط صورة التخطيط الأصلي المعكوسة بالمقاسات نفسها: الفيديو بعرضه،
- * والهامش الخارجي عند حافة الصفحة، والفاصل بينهما كما هو. أنماط سطرية على العناصر الثلاثة وحدها (لا CSS عام ولا تغطية)،
- * تُستعاد قيمها السابقة كما كانت حين لا حاجة: إخفاء الزر، أو العمود الواحد، أو الواجهة LTR، أو مغادرة صفحة الفيديو، أو إعادة
+ * تخطيط العمودين واللوحة ظاهرة فيهما (أنماط سطرية على #columns و#primary و#secondary وحدها، لا CSS عام ولا تغطية):
+ * - **العرض:** إن كان عمود يوتيوب الثانوي أعرض من SIDE_WIDTH يُضيَّق إليه، فتبقى اللوحة بعرض مريح، ويتوسّط يوتيوب العمودين
+ *   (حاويته justify-content: center) بدل فراغ بين اللوحة والفيديو. ولا يُوسَّع عمود أضيق (نافذة ضيقة).
+ * - **المرآة:** في واجهة يوتيوب RTL (العربية) يضع يوتيوب عموده الثانوي يسار الفيديو، فيُعكس تخطيط العمودين كالمرآة (قرار سلطان
+ *   2026-11-03: اللوحة يمين الفيديو في الواجهتين): `row-reverse` على الحاوية، ويتبادل كلٌّ من العمودين حشوَيه وهامشَيه الأيمن
+ *   والأيسر كما حسبها يوتيوب، فيكون التخطيط صورة الأصل المعكوسة بالمقاسات نفسها. ويُقصّ الفائض الأفقي للحاوية (overflow-x: clip):
+ *   توهّج «الإضاءة السينمائية» خلف المشغّل يمتد خارج حافته، وبعد العكس يمتد خارج حافة الصفحة اليسرى، وهي في صفحة RTL جهة تمرير
+ *   فيظهر شريط تمرير أفقي (ثبت حيًا بعرض 1600). القص لا ينشئ حاوية تمرير، فلا يمس العناصر اللاصقة.
+ * تُستعاد القيم السابقة كما كانت حين لا حاجة: إغلاق اللوحة أو إخفاء زرها، أو العمود الواحد، أو مغادرة صفحة الفيديو، أو إعادة
  * يوتيوب رسم العمودين. وإن غيّر يوتيوب تخطيطه (عرض النافذة أو سمات ytd-watch-flexy) تُستعاد ثم تُعاد بقيمه الجديدة.
  * @param {{ doc: Document, win: Window }} deps
  */
-export function createColumnMirror({ doc, win }) {
-  /** @type {null | { columns: HTMLElement, primary: HTMLElement, secondary: HTMLElement, key: string, prev: Array<[HTMLElement, string, string]> }} */
+export function createColumnLayout({ doc, win }) {
+  /** @type {null | { columns: HTMLElement, primary: HTMLElement, secondary: HTMLElement, key: string, rtl: boolean, fit: boolean, prev: Array<[HTMLElement, string, string]> }} */
   let applied = null;
   const styleOf = (el) => {
     try {
@@ -99,6 +108,10 @@ export function createColumnMirror({ doc, win }) {
     const flexy = doc.querySelector('ytd-watch-flexy');
     const attrs = flexy?.getAttributeNames?.() ?? [];
     return `${win.innerWidth ?? 0}|${attrs.filter((n) => /column|window|theater|full/.test(n)).sort().join(',')}`;
+  };
+  const px = (v) => {
+    const n = Number.parseFloat(v);
+    return Number.isFinite(n) ? n : 0;
   };
 
   function restore() {
@@ -113,7 +126,7 @@ export function createColumnMirror({ doc, win }) {
 
   /**
    * @param {boolean} want اللوحة ظاهرة في العمود الثانوي (لا في #below)
-   * @returns {boolean} هل العمودان معكوسان الآن
+   * @returns {boolean} هل يُضبط التخطيط الآن (عرض أو مرآة أو كلاهما)
    */
   function update(want) {
     const columns = doc.querySelector(COLUMNS_SELECTOR);
@@ -122,24 +135,42 @@ export function createColumnMirror({ doc, win }) {
     const key = layoutKey();
     if (applied && (applied.columns !== columns || applied.primary !== primary || applied.secondary !== secondary || applied.key !== key)) restore();
     const rtl = !!columns && !!primary && !!secondary && styleOf(columns)?.direction === 'rtl';
-    if (!want || !rtl) {
+    if (applied && applied.rtl !== rtl) restore();
+    if (!want || !columns || !primary || !secondary) {
       restore();
       return false;
     }
     if (applied) return true;
     // القيم المحسوبة تُنسخ كلها والتخطيط أصلي قبل أي كتابة: getComputedStyle حيّ، فقراءة جانب بعد كتابة الآخر تعيد المكتوب.
-    const native = [primary, secondary].map((el) => {
-      const cs = styleOf(el);
-      return [el, cs ? Object.fromEntries(SIDES.map(([, from]) => [from, cs[from]])) : null];
-    });
-    const prev = [[columns, 'flex-direction', columns.style.getPropertyValue('flex-direction')]];
-    for (const [el] of native) for (const [prop] of SIDES) prev.push([el, prop, el.style.getPropertyValue(prop)]);
-    columns.style.setProperty('flex-direction', 'row-reverse');
-    for (const [el, cs] of native) {
-      if (!cs) continue;
-      for (const [prop, from] of SIDES) el.style.setProperty(prop, cs[from]);
+    const side = styleOf(secondary);
+    const border = side?.boxSizing === 'border-box';
+    const inset = border ? px(side.paddingLeft) + px(side.paddingRight) + px(side.borderLeftWidth) + px(side.borderRightWidth) : 0;
+    const content = side ? px(side.width) - inset : 0;
+    const fit = content > SIDE_WIDTH + 1;
+    if (!rtl && !fit) return false;
+    const native = rtl
+      ? [primary, secondary].map((el) => {
+        const cs = styleOf(el);
+        return [el, cs ? Object.fromEntries(SIDES.map(([, from]) => [from, cs[from]])) : null];
+      })
+      : [];
+    const prev = [];
+    if (fit) {
+      prev.push([secondary, 'width', secondary.style.getPropertyValue('width')]);
+      secondary.style.setProperty('width', `${SIDE_WIDTH + inset}px`);
     }
-    applied = { columns, primary, secondary, key, prev };
+    if (rtl) {
+      prev.push([columns, 'flex-direction', columns.style.getPropertyValue('flex-direction')]);
+      prev.push([columns, 'overflow-x', columns.style.getPropertyValue('overflow-x')]);
+      for (const [el] of native) for (const [prop] of SIDES) prev.push([el, prop, el.style.getPropertyValue(prop)]);
+      columns.style.setProperty('flex-direction', 'row-reverse');
+      columns.style.setProperty('overflow-x', 'clip');
+      for (const [el, cs] of native) {
+        if (!cs) continue;
+        for (const [prop, from] of SIDES) el.style.setProperty(prop, cs[from]);
+      }
+    }
+    applied = { columns, primary, secondary, key, rtl, fit, prev };
     return true;
   }
 
@@ -148,6 +179,14 @@ export function createColumnMirror({ doc, win }) {
     restore,
     get active() {
       return !!applied;
+    },
+    /** العمودان معكوسان (واجهة RTL). */
+    get mirrored() {
+      return !!applied?.rtl;
+    },
+    /** العمود الثانوي مضيَّق إلى SIDE_WIDTH. */
+    get fitted() {
+      return !!applied?.fit;
     },
   };
 }

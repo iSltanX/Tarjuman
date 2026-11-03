@@ -459,7 +459,7 @@ test('مراجعة الهوية L2: الإغلاق ثم الفتح، أو تحم
   assert.equal(page.handle.peek().follow, false);
   const ui0 = page.controller.getState().prefs.ui;
   page.controller.set({ prefs: { ui: { ...ui0, panelOpen: false } } });
-  assert.equal(page.handle.peek().mode, 'entry');
+  assert.equal(page.handle.peek().mode, 'none');
   page.controller.set({ prefs: { ui: { ...ui0, panelOpen: true } } });
   const p = page.handle.peek();
   assert.equal(p.mode, 'open');

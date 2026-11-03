@@ -32,8 +32,8 @@ export function panelCss() {
 .mark .tj-logo__glyph { fill: var(--tj-brand); }
 .mark .tj-logo__dots { fill: var(--tj-logo-dots); }
 
-.b, .entry, .mitem, .switch, .resume, .act, .t, .segs button { all: unset; box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.b:focus-visible, .entry:focus-visible, .mitem:focus-visible, .switch:focus-visible, .resume:focus-visible, .act:focus-visible, .segs button:focus-visible, .t:focus-visible, .num:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
+.b, .mitem, .switch, .resume, .act, .t, .segs button { all: unset; box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.b:focus-visible, .mitem:focus-visible, .switch:focus-visible, .resume:focus-visible, .act:focus-visible, .segs button:focus-visible, .t:focus-visible, .num:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 
 /* الأزرار */
 .b { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: var(--tj-control-sm); min-width: var(--tj-control-sm); padding: 0 10px; border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-md); background: var(--tj-surface); color: var(--tj-text); font: 700 13px/20px var(--tj-font-body); white-space: nowrap; }
@@ -44,13 +44,6 @@ export function panelCss() {
 .b--icon { padding: 0; width: var(--tj-control-sm); }
 .b[aria-disabled="true"] { opacity: .5; cursor: not-allowed; background-image: none; }
 .b[aria-expanded="true"] { background-image: linear-gradient(var(--tj-pressed), var(--tj-pressed)); }
-
-/* زر اللوحة (مغلقة) */
-.entry { display: flex; align-items: center; gap: 10px; width: 100%; height: 48px; padding: 0 14px 0 10px; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-xl); background: var(--tj-surface); color: var(--tj-text); font: 700 15px/24px var(--tj-font-head); }
-.entry:hover { background-image: linear-gradient(var(--tj-hover), var(--tj-hover)); }
-.entry[aria-expanded="true"] { background: var(--tj-brand-soft); border-color: var(--tj-brand); color: var(--tj-brand-text); }
-.entry .ic { color: var(--tj-text-2); }
-.pill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--tj-brand-soft); color: var(--tj-brand-text); font: 700 12px/18px var(--tj-font-body); white-space: nowrap; }
 
 /* اللوحة */
 .panel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-xl); }

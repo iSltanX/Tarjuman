@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { HEALTH_MS, MAX_FAILURES, mountPanel } from '../../../../src/player/panel/index.js';
+import { SIDE_WIDTH } from '../../../../src/player/panel/column.js';
 import { A, B, makeState, settle, ui, watchPage } from './harness.js';
 
 const hosts = (page) => page.inner.children.filter((c) => c.id === 'tarjuman-panel');
@@ -146,7 +147,6 @@ test('ملء الشاشة: يُخفى المضيف ثم يعود بالخروج 
   page.player.classList.add('ytp-fullscreen');
   page.ev('fullscreenchange');
   assert.equal(host.hasAttribute('hidden'), true);
-  assert.equal(ui(page).panel.hasAttribute('hidden') || ui(page).entry.hasAttribute('hidden'), true);
   page.player.classList.remove('ytp-fullscreen');
   page.ev('fullscreenchange');
   assert.equal(host.hasAttribute('hidden'), false);
@@ -362,8 +362,8 @@ function rtlPage({ dir = 'rtl' } = {}) {
 }
 const SIDE_PROPS = ['padding-left', 'padding-right', 'margin-left', 'margin-right'];
 const sides = (el) => SIDE_PROPS.map((k) => el.style.getPropertyValue(k));
-const mirrored = (page) => ({ flex: page.cols.style.getPropertyValue('flex-direction'), primary: sides(page.primary), secondary: sides(page.secondary) });
-const NONE = { flex: '', primary: ['', '', '', ''], secondary: ['', '', '', ''] };
+const mirrored = (page) => ({ flex: page.cols.style.getPropertyValue('flex-direction'), clip: page.cols.style.getPropertyValue('overflow-x'), primary: sides(page.primary), secondary: sides(page.secondary) });
+const NONE = { flex: '', clip: '', primary: ['', '', '', ''], secondary: ['', '', '', ''] };
 const prefsUi = (page, over) => page.controller.set({ prefs: { ...page.controller.getState().prefs, ui: { ...page.controller.getState().prefs.ui, ...over } } });
 
 test('الواجهة العربية (قرار سلطان): تخطيط العمودين معكوس كالمرآة فاللوحة يمين الفيديو بالمقاسات نفسها؛ والإخفاء يعيد يوتيوب كما كان', () => {
@@ -371,7 +371,8 @@ test('الواجهة العربية (قرار سلطان): تخطيط العمو
   page.cols.style.setProperty('flex-direction', 'row');
   page.mount();
   // المشغّل: حشوه الأيسر (الفاصل) يصير أيمن وهامشه الأيمن (حافة الصفحة) يصير أيسر؛ والعمود: حشوه الأيسر (حافة الصفحة) يصير أيمن.
-  assert.deepEqual(mirrored(page), { flex: 'row-reverse', primary: ['0px', '16px', '16px', '0px'], secondary: ['0px', '16px', '0px', '0px'] });
+  // والفائض الأفقي مقصوص: توهّج الإضاءة السينمائية لا يصنع تمريرًا أفقيًا بعد العكس.
+  assert.deepEqual(mirrored(page), { flex: 'row-reverse', clip: 'clip', primary: ['0px', '16px', '16px', '0px'], secondary: ['0px', '16px', '0px', '0px'] });
   assert.equal(page.handle.peek().mirrored, true);
   assert.equal(page.handle.diagnostics().session.mirrored, true);
   // إخفاء الزر: لا لوحة، فيعود تخطيط يوتيوب وقيمته السطرية السابقة كما كانت.
@@ -380,7 +381,9 @@ test('الواجهة العربية (قرار سلطان): تخطيط العمو
   assert.deepEqual(mirrored(page), { ...NONE, flex: 'row' });
   assert.equal(page.handle.peek().mirrored, false);
   prefsUi(page, { panelEntry: true });
-  assert.equal(mirrored(page).flex, 'row-reverse', 'يعود العكس بعودة الزر');
+  assert.deepEqual(mirrored(page), { ...NONE, flex: 'row' }, 'عاد الزر واللوحة مغلقة: لا شيء في الصفحة');
+  prefsUi(page, { panelOpen: true });
+  assert.equal(mirrored(page).flex, 'row-reverse', 'يعود العكس بفتح اللوحة');
   // يوتيوب يغيّر تخطيطه (عرض النافذة): تُستعاد قيمه ثم تُقرأ الجديدة وتُعكس.
   page.native.primary = { paddingLeft: '24px', paddingRight: '0px', marginLeft: '0px', marginRight: '24px' };
   page.win.innerWidth = 1280;
@@ -389,6 +392,56 @@ test('الواجهة العربية (قرار سلطان): تخطيط العمو
   // الإزالة تستعيد كل شيء.
   page.handle.unmount();
   assert.deepEqual(mirrored(page), { ...NONE, flex: 'row' });
+});
+
+test('عرض اللوحة (ملاحظة سلطان 2026-11-03): عمود يوتيوب الأعرض من 402 يُضيَّق إليه ما دامت مفتوحة بجانب الفيديو، ولا يُوسَّع الأضيق؛ والإغلاق يستعيده', () => {
+  const page = rtlPage({ dir: 'ltr' });
+  page.native.secondary.width = '560px';
+  page.native.secondary.boxSizing = 'content-box';
+  const base = page.win.getComputedStyle;
+  page.win.getComputedStyle = (el) => {
+    const cs = base(el);
+    if (el !== page.secondary) return cs;
+    return { ...cs, boxSizing: page.native.secondary.boxSizing, get width() { return page.secondary.style.getPropertyValue('width') || page.native.secondary.width; } };
+  };
+  page.mount();
+  assert.equal(page.secondary.style.getPropertyValue('width'), `${SIDE_WIDTH}px`);
+  assert.equal(page.handle.peek().fitted, true);
+  assert.equal(page.handle.peek().mirrored, false, 'LTR: لا عكس');
+  page.env.win.advance(HEALTH_MS + 10);
+  assert.equal(page.secondary.style.getPropertyValue('width'), `${SIDE_WIDTH}px`, 'ثابت بين الفحوص (لا يُستعاد ثم يُعاد)');
+  prefsUi(page, { panelOpen: false });
+  assert.equal(page.secondary.style.getPropertyValue('width'), '', 'الإغلاق يستعيد عرض يوتيوب');
+  assert.equal(page.handle.peek().fitted, false);
+  prefsUi(page, { panelOpen: true });
+  assert.equal(page.secondary.style.getPropertyValue('width'), `${SIDE_WIDTH}px`);
+  page.handle.unmount();
+  assert.equal(page.secondary.style.getPropertyValue('width'), '', 'الإزالة تستعيد');
+
+  // border-box: الحشو داخل العرض، فيُضاف إليه ليبقى المحتوى 402.
+  const bb = rtlPage();
+  bb.native.secondary.width = '600px';
+  const base2 = bb.win.getComputedStyle;
+  bb.win.getComputedStyle = (el) => {
+    const cs = base2(el);
+    if (el !== bb.secondary) return cs;
+    return { ...cs, boxSizing: 'border-box', borderLeftWidth: '0px', borderRightWidth: '0px', get width() { return bb.secondary.style.getPropertyValue('width') || bb.native.secondary.width; } };
+  };
+  bb.mount();
+  assert.equal(bb.secondary.style.getPropertyValue('width'), `${SIDE_WIDTH + 16}px`);
+  assert.equal(bb.handle.peek().mirrored, true, 'والعكس معه في الواجهة العربية');
+  bb.handle.unmount();
+  assert.equal(bb.secondary.style.getPropertyValue('width'), '');
+
+  // عمود أضيق (نافذة ضيقة): لا يُمس.
+  const narrow = rtlPage({ dir: 'ltr' });
+  narrow.native.secondary.width = '320px';
+  const base3 = narrow.win.getComputedStyle;
+  narrow.win.getComputedStyle = (el) => (el === narrow.secondary ? { ...base3(el), boxSizing: 'content-box', width: '320px' } : base3(el));
+  narrow.mount();
+  assert.equal(narrow.secondary.style.getPropertyValue('width'), '');
+  assert.equal(narrow.handle.peek().fitted, false);
+  narrow.handle.unmount();
 });
 
 test('الواجهة LTR لا تُمس، والتحوّل إليها يستعيد؛ والعمود الواحد (#below) يستعيد؛ والإزالة تستعيد', () => {

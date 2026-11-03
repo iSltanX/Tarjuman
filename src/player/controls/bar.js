@@ -1,7 +1,7 @@
 // حالة شريط يوتيوب كما تحتاجها الأدوات: ظهوره (ytp-autohide)، وملء الشاشة والوضع الكبير، وعرض المشغّل وارتفاع
-// الشريط، ومنها مقاس الأزرار (عادي، ومضغوط تحت نحو 560px، وملء الشاشة). كل اسم يوتيوب من youtube-dom؛ والمراقبة
+// الشريط، والمساحة الخالية فيه لأزرار ترجمان (room)، ومنها مقاس الأزرار (fitSize). كل اسم يوتيوب من youtube-dom؛ والمراقبة
 // لسمة class على #movie_player وحجمه وحدث ملء الشاشة ومؤقت احتياطي خفيف، لا لشجرة المشغّل كلها.
-import { CLASSES, areControlsHidden, getChromeBottom, isPlayerFullscreen } from '../youtube-dom.js';
+import { CLASSES, areControlsHidden, getChromeBottom, getLeftControls, isPlayerFullscreen } from '../youtube-dom.js';
 
 export const BAR_POLL_MS = 500;
 /** أقل من هذا العرض تُضغط الأزرار الخمسة (figma-design-brief §٥.١) ولا يُخفى منها شيء. */
@@ -9,10 +9,17 @@ export const COMPACT_BELOW_PX = 560;
 /** ارتفاع الشريط حين لا يُقاس (قبل رسمه): كما في الوضع العادي ليوتيوب. */
 const DEFAULT_LIFT = 48;
 
+/** عرض زر الأيقونة وأدنى عرض للشارة بكل مقاس (styles.js)، والفسحة بين أدوات يوتيوب اليسرى وأزرار ترجمان. */
+export const BUTTON_PX = Object.freeze({ normal: 48, compact: 40, tight: 34 });
+export const BADGE_PX = Object.freeze({ normal: 56, compact: 50, tight: 42 });
+export const ROOM_GAP_PX = 8;
+/** المساحة تُقرَّب إلى هذا المضاعف: تغيّر عرض الوقت بكسلًا لا يعيد الرسم. */
+const ROOM_STEP = 4;
+
 /**
  * @typedef {{
  *   hidden: boolean, fullscreen: boolean, size: 'normal' | 'compact' | 'fullscreen',
- *   width: number, height: number, lift: number,
+ *   width: number, height: number, lift: number, room: number | null,
  * }} BarSnapshot
  */
 
@@ -26,13 +33,54 @@ export function sizeFor({ fullscreen, big, small, width }) {
   return 'normal';
 }
 
-const KEYS = ['hidden', 'fullscreen', 'size', 'width', 'height', 'lift'];
+/**
+ * مقاس مجموعة ترجمان في الشريط بحسب المساحة الخالية فيه، لا بعرض المشغّل وحده: مشغّل يوتيوب الحديث بأزراره الكبيرة لا يتسع
+ * للمجموعة بمقاسها العادي دون 800px تقريبًا، فتداخلت مع الوقت (ملاحظة سلطان 2026-11-03). بالترتيب: عادي (48)، فمضغوط (40)،
+ * فأضيق (34)؛ والأزرار كلها باقية في كل مقاس، − و+ منها (product-spec §٦.١: لا تُنقل إلى قائمة ولا تُخفى). وإن لم يتسع الأضيق
+ * يُقاس الفيض ويُبلَّغ (CT_BAR_OVERFLOW). وملء الشاشة كما هو. بلا قياس: المقاس الأساسي.
+ * @param {{ size: 'normal' | 'compact' | 'fullscreen', room: number | null }} bar
+ * @param {number} icons أزرار الأيقونة الظاهرة غير الشارة (− و+ منها)
+ * @returns {'normal' | 'compact' | 'tight' | 'fullscreen'}
+ */
+export function fitSize(bar, icons) {
+  if (bar.size === 'fullscreen' || bar.room === null) return bar.size;
+  const need = (size) => icons * BUTTON_PX[size] + BADGE_PX[size] + ROOM_GAP_PX;
+  if (bar.size === 'normal' && bar.room >= need('normal')) return 'normal';
+  if (bar.room >= need('compact')) return 'compact';
+  return 'tight';
+}
+
+/**
+ * المساحة (px) المتاحة لمجموعة ترجمان: من نهاية أدوات يوتيوب اليسرى الأساسية (التشغيل والصوت والوقت؛ عنوان الفصل يُقتطع فلا
+ * يُحسب) إلى نهاية الشريط، ناقص أدوات يوتيوب اليمنى غير المجموعة. لا تتغير بمقاس المجموعة نفسها، فلا تذبذب بين مقاسين.
+ * @param {Document} doc @param {Element | null} own مضيف المجموعة
+ * @returns {number | null} null إن لم يُرسم الشريط أو المجموعة
+ */
+export function roomFor(doc, own) {
+  const chrome = getChromeBottom(doc);
+  const left = getLeftControls(doc);
+  const right = own?.parentNode;
+  if (!chrome || !left || !right?.getBoundingClientRect) return null;
+  const cb = chrome.getBoundingClientRect();
+  if (!(cb.width > 0)) return null;
+  let edge = cb.left;
+  for (const k of left.children) {
+    if (k.classList?.contains(CLASSES.chapter)) continue;
+    const r = k.getBoundingClientRect();
+    if (r.width > 0 && r.right > edge) edge = r.right;
+  }
+  const others = right.getBoundingClientRect().width - own.getBoundingClientRect().width;
+  return Math.floor((cb.right - edge - others) / ROOM_STEP) * ROOM_STEP;
+}
+
+const KEYS = ['hidden', 'fullscreen', 'size', 'width', 'height', 'lift', 'room'];
 const same = (a, b) => KEYS.every((k) => a[k] === b[k]);
 
 /**
- * @param {{ doc: Document, win: Window, player: HTMLElement, onChange: (s: BarSnapshot) => void, pollMs?: number }} opts
+ * @param {{ doc: Document, win: Window, player: HTMLElement, own?: () => Element | null, onChange: (s: BarSnapshot) => void, pollMs?: number }} opts
+ *   own: مضيف مجموعة ترجمان (لقياس المساحة الخالية)
  */
-export function watchBar({ doc, win, player, onChange, pollMs = BAR_POLL_MS }) {
+export function watchBar({ doc, win, player, own = () => null, onChange, pollMs = BAR_POLL_MS }) {
   let lastLift = DEFAULT_LIFT;
 
   /** @returns {BarSnapshot} */
@@ -52,6 +100,7 @@ export function watchBar({ doc, win, player, onChange, pollMs = BAR_POLL_MS }) {
       width,
       height: Math.round(rect.height),
       lift: lastLift,
+      room: roomFor(doc, own()),
     };
   }
 

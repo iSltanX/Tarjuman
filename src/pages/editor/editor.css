@@ -47,13 +47,13 @@ body.ed-page { overflow: hidden; }
 .ed-toolbar { display: flex; flex-direction: column; gap: 8px; padding: 10px 24px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
 .ed-toolbar__row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 /* مقطّعة النطاق كمقطّعات الصفحات: مسار غائر، والمختار بالإبراز وحدّه (≥ 3:1، CL-011). */
-.ed-seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-md); background: var(--tj-surface-2); }
+.ed-seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); background: var(--tj-surface-2); }
 .ed-seg__opt {
   min-height: 32px; padding: 0 12px; border: 0; border-radius: var(--tj-radius-sm); background: transparent; color: var(--tj-text-2);
   font: 700 13px/18px var(--tj-font-body); cursor: pointer; white-space: nowrap;
 }
 .ed-seg__opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { color: var(--tj-text); }
-.ed-seg__opt[aria-checked="true"] { background: var(--tj-brand-soft); color: var(--tj-brand-text); box-shadow: inset 0 0 0 1.5px var(--tj-brand); }
+.ed-seg__opt[aria-checked="true"] { background: var(--tj-surface); color: var(--tj-brand-text); box-shadow: inset 0 0 0 1px var(--tj-brand); }
 .ed-seg__opt[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .ed-seg__opt:focus-visible { outline-offset: 1px; }
 .ed-amount {

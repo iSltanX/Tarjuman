@@ -21,6 +21,9 @@ export function groupCss() {
 :host { all: initial; display: inline-flex; flex: none; height: 100%; vertical-align: top; position: relative; }
 .group { display: flex; align-items: stretch; height: 100%; direction: ltr; font-family: var(--tj-p-font-body); --w: 48px; --icon: 22px; --badge: 44px; --badge-fs: 13px; --badge-pad: 8px; }
 .group[data-size="compact"] { --w: 40px; --icon: 20px; --badge: 38px; --badge-fs: 12px; --badge-pad: 6px; }
+/* الشريط الأضيق: الأزرار الستة كلها باقية (− و+ منها، product-spec §٦.١) بصندوق 34 وأيقونة 18، فلا تتداخل مع وقت يوتيوب. */
+.group[data-size="tight"] { --w: 34px; --icon: 18px; --badge: 34px; --badge-fs: 11px; --badge-pad: 4px; }
+.btn[hidden] { display: none; }
 .group[data-size="fullscreen"] { --w: 54px; --icon: 26px; --badge: 50px; --badge-fs: 15px; }
 .btn { all: unset; box-sizing: border-box; position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--w); height: 100%; color: var(--tj-p-icon); cursor: pointer; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
 .btn:hover { color: var(--tj-p-icon-hover); }
@@ -34,6 +37,7 @@ export function groupCss() {
 .badge[aria-disabled="true"] { color: var(--tj-p-icon-disabled); }
 .btn[aria-expanded="true"] { background: rgb(255 255 255 / 12%); }
 .btn[aria-expanded="true"] .icon { color: var(--tj-p-accent); }
+.btn[aria-pressed="true"] { color: var(--tj-p-accent); }
 .badge[data-pulse] { animation: tj-pulse ${PULSE_MS}ms ease-out; }
 @keyframes tj-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.14); } 100% { transform: scale(1); } }
 .btn[data-busy] .icon { display: none; }

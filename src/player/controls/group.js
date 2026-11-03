@@ -1,5 +1,6 @@
-// مجموعة الأزرار الخمسة داخل شريط يوتيوب (figma-design-brief §٥، والهوية «بُنّ على ورق»): تحميل الأصل، والترجمة، و−،
-// والشارة، و+، بهذا الترتيب LTR دائمًا. أيقونات بلا حروف ولا صناديق ولا نقاط حالة: اسم الوظيفة (ومعنى حالتها) في التلميح
+// مجموعة الأزرار داخل شريط يوتيوب (figma-design-brief §٥، والهوية «بُنّ على ورق»): تحميل الأصل، والترجمة، والنص المتزامن
+// (يفتح اللوحة ويغلقها؛ مضغوط aria-pressed، ومخفي إن أُخفي زرها)، و−، والشارة، و+، بهذا الترتيب LTR دائمًا، بمقاس يتسع
+// له الشريط (bar.js fitSize) ولا يُخفى منها شيء. أيقونات بلا حروف ولا صناديق ولا نقاط حالة: اسم الوظيفة (ومعنى حالتها) في التلميح
 // عند المرور والتركيز وفي اسم الوصول ووصفه، والانشغال ماسّتا نبض مكان الأيقونة. Shadow DOM مغلق داخل عنصر واحد يُدرج في
 // بداية أدوات الشريط اليمنى، فيظهر ويختفي مع الشريط كأي زر أصلي. الأزرار تبقى قابلة للتركيز وهي معطّلة (aria-disabled)
 // لتقرأ سببها. لا منطق منتج هنا: كل ضغط يُبلَّغ.
@@ -8,17 +9,18 @@ import { playerIcon } from './icons.js';
 import { GROUP_ID, PULSE_MS, groupCss } from './styles.js';
 import { LABELS } from './text.js';
 
-export const KINDS = Object.freeze(['download', 'upload', 'minus', 'badge', 'plus']);
+export const KINDS = Object.freeze(['download', 'upload', 'panel', 'minus', 'badge', 'plus']);
 const MENU_KINDS = { download: 'menu', upload: 'menu', badge: 'dialog' };
 // ضغطات التفعيل والإغلاق لا تصل إلى اختصارات يوتيوب (المسافة توقف التشغيل، وEsc يخرج من ملء الشاشة).
 const OWN_KEYS = new Set(['Enter', ' ', 'Spacebar', 'Escape']);
 
 /**
  * label اسم الوصول (وفيه السبب إن عُطّل)، وdescription معنى الحالة لقارئ الشاشة (أو null)، وtip نص التلميح البصري (تعرضه الطبقة).
- * @typedef {{ label: string, tip?: string, description?: string | null, disabled?: boolean, unavailable?: boolean, loading?: boolean, expanded?: boolean }} ButtonModel
+ * pressed للزر المبدِّل (اللوحة مفتوحة)، وhidden لزر أخفاه المستخدم.
+ * @typedef {{ label: string, tip?: string, description?: string | null, disabled?: boolean, unavailable?: boolean, loading?: boolean, expanded?: boolean, pressed?: boolean, hidden?: boolean }} ButtonModel
  * @typedef {{
- *   size: 'normal' | 'compact' | 'fullscreen',
- *   download: ButtonModel, upload: ButtonModel, minus: ButtonModel, plus: ButtonModel,
+ *   size: 'normal' | 'compact' | 'tight' | 'fullscreen',
+ *   download: ButtonModel, upload: ButtonModel, panel: ButtonModel, minus: ButtonModel, plus: ButtonModel,
  *   badge: ButtonModel & { text: string, sign: 'zero' | 'positive' | 'negative' },
  * }} GroupModel
  */
@@ -61,6 +63,7 @@ export function createGroup({ doc, win, on }) {
       el.setAttribute('aria-haspopup', MENU_KINDS[kind]);
       el.setAttribute('aria-expanded', 'false');
     }
+    if (kind === 'panel') el.setAttribute('aria-pressed', 'false');
     let text = null;
     let load = null;
     if (kind === 'badge') {
@@ -134,6 +137,10 @@ export function createGroup({ doc, win, on }) {
         setAttr(b.el, 'aria-busy', s.loading ? 'true' : null);
         setAttr(b.el, 'data-busy', s.loading ? '' : null);
         if (MENU_KINDS[kind]) setAttr(b.el, 'aria-expanded', s.expanded ? 'true' : 'false');
+        if (kind === 'panel') {
+          setAttr(b.el, 'aria-pressed', s.pressed ? 'true' : 'false');
+          setAttr(b.el, 'hidden', s.hidden ? '' : null);
+        }
         if (b.load) setAttr(b.load, 'hidden', s.loading ? null : '');
         if (kind === 'badge') {
           if (b.text.textContent !== m.badge.text) b.text.textContent = m.badge.text;

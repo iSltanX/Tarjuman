@@ -1,11 +1,14 @@
-// الأزرار الخمسة (P6-AC1 وAC2 وAC10 الجزء الآلي): الحالات والتلميحات بالخطوة الحالية، والمقاسات الثلاثة دون إخفاء
-// − و+، وتبعية القوائم والتلميحات لظهور الشريط، و± يغيّر الإزاحة وحدها بخطوة الإعداد مع نبضة وتلميح عابر.
+// أزرار الشريط (P6-AC1 وAC2 وAC10 الجزء الآلي): الحالات والتلميحات بالخطوة الحالية، والمقاسات بالمساحة الخالية دون إخفاء
+// − و+، وزر النص المتزامن، وتبعية القوائم والتلميحات لظهور الشريط، و± يغيّر الإزاحة وحدها بخطوة الإعداد.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_SETTINGS } from '../../../../src/core/model/settings.js';
 import { FLASH_MS } from '../../../../src/player/controls/session.js';
+import { fitSize, roomFor } from '../../../../src/player/controls/bar.js';
+import { mountControls } from '../../../../src/player/controls/index.js';
 import { groupCss } from '../../../../src/player/controls/styles.js';
-import { arabic, click, key, makeState, mountPage, settle, trackInfo } from './harness.js';
+import { createPanelLink } from '../../../../src/player/link.js';
+import { arabic, click, inspect, key, makeState, mountPage, settle, trackInfo } from './harness.js';
 
 const withArabic = (over = {}) => makeState({ arabic: arabic(), ...over });
 
@@ -87,13 +90,13 @@ test('Enter والمسافة على أزرار الشريط لا تصل إلى �
   assert.deepEqual(seen, ['ArrowRight']);
 });
 
-test('المقاسات: عادي، ومضغوط تحت 560px، وملء الشاشة (والوضع الكبير)؛ الخمسة باقية في كل مقاس', () => {
+test('المقاسات: عادي، ومضغوط تحت 560px، وملء الشاشة (والوضع الكبير)؛ الستة باقية في كل مقاس يتسع لها', () => {
   const page = mountPage({ width: 854, height: 480 });
   assert.equal(page.ui.size(), 'normal');
   page.player.rect = { top: 0, left: 0, width: 426, height: 240, bottom: 240, right: 426 };
   page.env.win.resize(page.player);
   assert.equal(page.ui.size(), 'compact');
-  assert.deepEqual(page.ui.kinds(), ['download', 'upload', 'minus', 'badge', 'plus'], '− و+ لا تُنقلان ولا تُخفيان');
+  assert.deepEqual(page.ui.kinds(), ['download', 'upload', 'panel', 'minus', 'badge', 'plus'], '− و+ لا تُنقلان ولا تُخفيان');
   assert.ok(page.ui.kinds().every((k) => !page.ui.btn(k).hasAttribute('hidden')));
   page.player.classList.add('ytp-fullscreen');
   assert.equal(page.ui.size(), 'fullscreen');
@@ -207,15 +210,16 @@ test('لا ترجمة بعد: تلميح زر الترجمة «رفع الترج
   assert.equal(ui.btn('plus').getAttribute('aria-label'), ui.tip());
 });
 
-test('حجم الأيقونات وسُمكها: مقاس واحد في الخمسة، وسُمك 1.9 (عادي 22، ومضغوط 20، وملء الشاشة 26)', () => {
+test('حجم الأيقونات وسُمكها: مقاس واحد في الستة، وسُمك 1.9 (عادي 22، ومضغوط 20، وأضيق 18، وملء الشاشة 26)', () => {
   const page = mountPage();
-  for (const k of ['download', 'upload', 'minus', 'plus']) {
-    for (const path of page.ui.btn(k).querySelectorAll('svg path')) assert.equal(path.getAttribute('stroke-width'), '1.9', k);
+  for (const k of ['download', 'upload', 'panel', 'minus', 'plus']) {
+    for (const path of page.ui.btn(k).querySelectorAll('svg path, svg rect')) assert.equal(path.getAttribute('stroke-width'), '1.9', k);
     assert.equal(page.ui.btn(k).querySelector('svg').getAttribute('viewBox'), '0 0 24 24');
   }
   const css = groupCss();
   assert.match(css, /\.group \{[^}]*--w: 48px; --icon: 22px/);
   assert.match(css, /\.group\[data-size="compact"\] \{ --w: 40px; --icon: 20px/);
+  assert.match(css, /\.group\[data-size="tight"\] \{ --w: 34px; --icon: 18px/);
   assert.match(css, /\.group\[data-size="fullscreen"\] \{ --w: 54px; --icon: 26px/);
   assert.match(css, /\.btn:focus-visible \{ outline: 2px solid #FFFFFF; outline-offset: -6px/, 'حلقة تركيز بيضاء داخلية');
   assert.match(css, /\.btn\[aria-expanded="true"\] \.icon \{ color: var\(--tj-p-accent\)/, 'القائمة المفتوحة تلوّن الأيقونة بالإبراز');
@@ -250,4 +254,99 @@ test('بث جارٍ أو زر CC معطّل: التحميل «غير متاح» 
   assert.match(page.ui.btn('download').getAttribute('aria-label'), /لا يحتوي ترجمة إنجليزية متاحة/);
   click(page.ui.btn('download'));
   assert.match(page.ui.menuText(), /هذا الفيديو لا يحتوي ترجمة إنجليزية متاحة\./);
+});
+
+// ———— زر اللوحة والملاءمة (ملاحظة سلطان 2026-11-03) ————
+
+test('زر النص المتزامن في الشريط: مغلقة افتراضيًا (aria-pressed=false)، والضغط يكتب panelOpen، ويتبع التفضيل من أي مكان، ويختفي بإخفاء زرها', () => {
+  const page = mountPage({ state: withArabic() });
+  const { ui } = page;
+  const b = ui.btn('panel');
+  assert.equal(b.getAttribute('aria-label'), 'النص المتزامن');
+  assert.equal(b.getAttribute('aria-pressed'), 'false');
+  assert.equal(b.hasAttribute('hidden'), false);
+  b.focus();
+  assert.equal(ui.tip(), 'فتح النص المتزامن');
+  click(b);
+  assert.deepEqual(page.controller.calls.filter((c) => c[0] === 'updatePrefs').at(-1)[1], { ui: { panelOpen: true } });
+  const prefs = page.controller.getState().prefs;
+  page.controller.set({ prefs: { ...prefs, ui: { ...prefs.ui, panelOpen: true } } });
+  assert.equal(b.getAttribute('aria-pressed'), 'true');
+  click(b);
+  assert.deepEqual(page.controller.calls.filter((c) => c[0] === 'updatePrefs').at(-1)[1], { ui: { panelOpen: false } });
+  page.controller.set({ prefs: { ...prefs, ui: { ...prefs.ui, panelEntry: false, panelOpen: false } } });
+  assert.equal(b.hasAttribute('hidden'), true, 'أُخفي زرها من قائمة اللوحة أو الإعدادات');
+});
+
+test('زر اللوحة بلوحة المفاتيح يطلب التركيز داخل اللوحة (صلة link)، والفأرة لا تطلبه؛ واللوحة تعيد التركيز إليه', () => {
+  const link = createPanelLink();
+  const env = mountPage({ state: withArabic() });
+  env.handle.unmount();
+  const handle = mountControls(env.controller, { doc: env.env.doc, win: env.env.win, exportFlow: env.flows.exportFlow, importFlow: env.flows.importFlow, link });
+  const b = inspect(env.env, env).btn('panel');
+  b.dispatchEvent({ type: 'click', bubbles: true, detail: 1 });
+  assert.equal(link.takePanelFocus(), false, 'بالفأرة');
+  b.dispatchEvent({ type: 'click', bubbles: true, detail: 0 });
+  assert.equal(link.takePanelFocus(), true, 'بلوحة المفاتيح');
+  assert.equal(link.focusButton(), true);
+  assert.ok(env.env.doc._focused === b, 'التركيز على زر اللوحة');
+  handle.unmount();
+  assert.equal(link.focusButton(), false, 'الإزالة تلغي التسجيل');
+});
+
+test('الملاءمة بالمساحة الخالية في الشريط لا بعرض المشغّل وحده: عادي (48)، فمضغوط (40)، فأضيق (34)', () => {
+  const bar = (room, size = 'normal') => ({ size, room });
+  assert.equal(fitSize(bar(null), 5), 'normal', 'بلا قياس: المقاس الأساسي');
+  assert.equal(fitSize(bar(5 * 48 + 56 + 8), 5), 'normal');
+  assert.equal(fitSize(bar(5 * 48 + 56 + 7), 5), 'compact');
+  assert.equal(fitSize(bar(5 * 40 + 50 + 8), 5), 'compact');
+  assert.equal(fitSize(bar(5 * 40 + 50 + 7), 5), 'tight');
+  assert.equal(fitSize(bar(100), 5), 'tight', 'لا مقاس أصغر: يُقاس الفيض ويُبلَّغ');
+  assert.equal(fitSize(bar(4 * 40 + 50 + 8), 4), 'compact', 'زر اللوحة مخفي: أربعة');
+  assert.equal(fitSize(bar(2000, 'compact'), 5), 'compact', 'وضع يوتيوب الصغير يبقى مضغوطًا');
+  assert.equal(fitSize(bar(10, 'fullscreen'), 5), 'fullscreen');
+});
+
+test('roomFor: من نهاية أدوات يوتيوب اليسرى الأساسية (عنوان الفصل لا يُحسب) إلى نهاية الشريط، ناقص أدوات يوتيوب اليمنى', () => {
+  const page = mountPage({ width: 760 });
+  const { env } = page;
+  const mk = (cls, left, right) => {
+    const el = env.doc.createElement('div');
+    el.className = cls;
+    el.rect = { top: 0, bottom: 40, left, right, width: right - left, height: 40 };
+    page.left.appendChild(el);
+    return el;
+  };
+  mk('ytp-play-button', 12, 68);
+  mk('ytp-time-display', 120, 242);
+  mk('ytp-chapter-container', 242, 500);
+  page.chrome.rect = { ...page.chrome.rect, left: 12, right: 748, width: 736 };
+  page.right.rect = { top: 0, bottom: 40, left: 300, right: 748, width: 448, height: 40 };
+  page.ui.groupHost().rect = { top: 0, bottom: 40, left: 300, right: 500, width: 200, height: 40 };
+  // 748 − 242 − (448 − 200) = 258
+  assert.equal(roomFor(env.doc, page.ui.groupHost()), 256, 'مقرَّبة إلى مضاعف 4');
+  assert.equal(roomFor(env.doc, null), null);
+});
+
+test('الأضيق (product-spec §٦.١): الأزرار الستة كلها في الشريط، − و+ منها، لا تُنقل إلى قائمة ولا تُخفى', () => {
+  const css = groupCss();
+  assert.doesNotMatch(css, /data-kind="(minus|plus)"\][^{]*\{[^}]*display: none/, 'لا نمط يخفي − أو +');
+  const page = mountPage({ state: withArabic(), width: 760 });
+  const mk = (cls, left, right) => {
+    const el = page.env.doc.createElement('div');
+    el.className = cls;
+    el.rect = { top: 0, bottom: 40, left, right, width: right - left, height: 40 };
+    page.left.appendChild(el);
+  };
+  mk('ytp-time-display', 120, 242);
+  page.chrome.rect = { ...page.chrome.rect, left: 12, right: 748, width: 736 };
+  page.right.rect = { top: 0, bottom: 40, left: 300, right: 748, width: 540, height: 40 };
+  page.ui.groupHost().rect = { top: 0, bottom: 40, left: 300, right: 584, width: 284, height: 40 };
+  page.env.win.resize(page.player);
+  // 748 − 242 − (540 − 284) = 250 ← 248: أقل من المضغوط (5×40+50+8 = 258)، ويتسع للأضيق (5×34+42+8 = 220).
+  assert.equal(page.ui.size(), 'tight');
+  assert.deepEqual(page.ui.kinds(), ['download', 'upload', 'panel', 'minus', 'badge', 'plus']);
+  assert.ok(page.ui.kinds().every((k) => !page.ui.btn(k).hasAttribute('hidden')));
+  click(page.ui.btn('plus'));
+  assert.deepEqual(page.controller.calls.filter((c) => c[0] === 'nudgeOffset').map((c) => c[1]), [1], '+ يعمل في الأضيق');
 });

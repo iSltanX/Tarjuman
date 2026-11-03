@@ -111,9 +111,9 @@ test('الأصل المتداخل يخدم آلاف المقاطع بلا مسح
 
 const page = (over = {}) => ({ videoId: A, navigating: false, visible: true, ...over });
 
-test('derive: الشكل من التفضيلات: مغلقة ← زر، ومفتوحة ← لوحة، وزر مخفي ← لا شيء أو الرسالة وحدها', () => {
+test('derive: الشكل من التفضيلات: مغلقة ← لا شيء (زرها في الشريط)، ومفتوحة ← لوحة، وزر مخفي ← لا شيء أو الرسالة وحدها', () => {
   const withUi = (ui) => makeState({ prefs: { ...makeState().prefs, ui: { ...makeState().prefs.ui, ...ui } } });
-  assert.equal(derive(withUi({ panelOpen: false }), page(), { toast: false }).mode, 'entry');
+  assert.equal(derive(withUi({ panelOpen: false }), page(), { toast: false }).mode, 'none');
   assert.equal(derive(withUi({ panelOpen: true }), page(), { toast: false }).mode, 'open');
   assert.equal(derive(withUi({ panelEntry: false, panelOpen: false }), page(), { toast: false }).mode, 'none');
   assert.equal(derive(withUi({ panelEntry: false, panelOpen: false }), page(), { toast: true }).mode, 'toast');

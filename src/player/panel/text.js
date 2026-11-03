@@ -1,12 +1,11 @@
 // نصوص لوحة النص المتزامن ودوالها النقية (docs/identity-redesign.md §٤، ولوحات التصميم WatchPanel وPanelStates وWatchNarrow).
 // أرقام لاتينية، والإزاحة بعلامتها (formatOffset)، والعدّ بالعربية (formatCount). لا شيء هنا يعرف DOM.
-import { COUNT_FORMS, formatCount, formatOffset, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
 import { languageName as sharedLanguageName } from '../../ui/lang.js';
 
 export const LABELS = Object.freeze({
   title: 'النص المتزامن',
   panel: 'النص المتزامن — ترجمان',
-  openEntry: 'فتح النص المتزامن',
   options: 'خيارات اللوحة',
   close: 'إغلاق اللوحة',
   closeHint: 'إغلاق اللوحة (يبقى زرها)',
@@ -84,9 +83,6 @@ export function offsetMeaningShort(ms) {
 
 /** @param {number} ms «+0.5» أو «−1.0» أو «0.0». */
 export const offsetValue = formatOffset;
-
-/** @param {number} ms إزاحة بعلامتها داخل جملة (معزولة LTR): للتلميح واسم الوصول. */
-export const offsetPhrase = (ms) => `${offsetInline(ms)} ${LABELS.seconds}`;
 
 /** @param {number} stepMs الخطوة بالثواني بلا أصفار زائدة: 500 ← «0.5»، 1500 ← «1.5». */
 export const stepLabel = (stepMs) => String(Math.round(stepMs / 100) / 10);

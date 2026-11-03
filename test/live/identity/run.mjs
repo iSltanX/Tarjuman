@@ -4,7 +4,8 @@
 //   المحفوظات: صورة الفيديو بالمعرّف الحقيقي (تُحمَّل بعرض 320) والبلاطة البديلة للمعرّف غير الموجود، والمدة الحقيقية، والطلب
 //   الخارجي الوحيد (i.ytimg.com بلا مُحيل)، وشرائح الخانات وشريحة الرفع، والتوسيع في الصف؛ ومفتاح «صور الفيديو» يوقف الطلبات.
 //   الإعدادات ونافذة الأيقونة: المفتاحان، ونص الخصوصية، وصف «زر النص المتزامن مخفي · إظهاره» يعيد الزر في يوتيوب.
-//   يوتيوب: مضيف اللوحة أول عمود يوتيوب الثانوي وموضعه من الفيديو بلا تداخل، والفتح والإغلاق والإخفاء والتراجع، وعدد الصفوف،
+//   يوتيوب: اللوحة مغلقة افتراضيًا (لا شيء في الصفحة) وزرها في الشريط يفتحها، ومضيفها أول عمود يوتيوب الثانوي بعرض لا يتجاوز
+//   402 وموضعه من الفيديو بلا تداخل، والإغلاق والإخفاء والتراجع، وعدد الصفوف،
 //   والمقطع الحالي بالإزاحة، والضغط للانتقال، وإيقاف المتابعة بالتمرير والعودة، والإزاحة المشتركة بين اللوحة والشريط،
 //   والأصل مع الترجمة باسم لغته، والتنقل داخل الموقع والرجوع، والعرض الضيق، ووضع المسرح، وملء الشاشة؛ وأيقونات الشريط بلا
 //   كلمات والتلميح بالتحويم والتركيز وعنوانا القائمتين؛ ولقطات بالوضعين. كل فعل نقرة أو عجلة أو مفتاح حقيقي (Input).
@@ -457,22 +458,27 @@ try {
   const CUES = await iso(P.cues);
   result.measures.video = { arabic: s0.arabic, english: s0.english, offset: s0.offset, step: s0.step };
 
-  await step('panel-placement-and-entry', async () => {
+  await step('panel-closed-by-default-and-bar-button', async () => {
+    // قرار سلطان 2026-11-03: مغلقة افتراضيًا ولا شيء منها في صفحة يوتيوب، وزرها في شريط المشغّل.
     const g = await main(M.geo);
     const p = await peek();
     result.measures.geoWide = g;
-    check('panel-host-first-in-youtube-secondary-column', g.hosts === 1 && g.firstInColumn, { hosts: g.hosts, first: g.firstInColumn, column: g.columnId });
-    check('panel-entry-shown-closed-by-default', p.mode === 'entry' && !p.entry.hidden && p.entry.expanded === 'false' && !!p.boxes.entry, { mode: p.mode, entry: p.entry });
-    check('panel-entry-shows-nonzero-offset', p.entry.pill && hasOff(p.entry.pill, s0.offset), { pill: p.entry.pill, offset: s0.offset });
-    const side = g.host && g.player ? (g.host.left >= g.player.right - 4 ? 'right' : g.host.right <= g.player.left + 4 ? 'left' : 'below-or-overlap') : null;
-    result.measures.sideWide = { side, dir: g.dir, lang: g.lang };
-    check('panel-entry-right-of-video-not-overlapping', side === 'right' && !overlaps(g.host, g.player) && g.docWidth <= g.viewport.w, { side, dir: g.dir, host: g.host, player: g.player });
-    await clickBox(p.boxes.entry, 'زر اللوحة');
+    check('panel-closed-by-default-nothing-in-youtube-page', p.mode === 'none' && p.hostHidden && (!g.host || g.host.height === 0) && g.docWidth <= g.viewport.w, { mode: p.mode, host: g.host });
+    await revealControls(yt);
+    const bar0 = await iso(P.bar);
+    check('player-bar-panel-button-shown-not-pressed', !!bar0.buttons.panel.box && bar0.buttons.panel.pressed === 'false' && bar0.buttons.panel.label === 'النص المتزامن', { panel: bar0.buttons.panel });
+    await clickBar('panel');
     const o = await waitPeek((x) => x.mode === 'open' && x.kind === 'ready');
     const ui = await iso(P.prefs);
-    check('panel-opens-from-entry-and-saves', o.mode === 'open' && o.entry.expanded === 'true' && ui?.panelOpen === true, { mode: o.mode, kind: o.kind, ui });
+    const bar1 = await iso(P.bar);
+    check('panel-opens-from-bar-button-and-saves', o.mode === 'open' && bar1.buttons.panel.pressed === 'true' && ui?.panelOpen === true, { mode: o.mode, kind: o.kind, ui, pressed: bar1.buttons.panel.pressed });
     const g2 = await main(M.geo);
     result.measures.geoOpen = g2;
+    check('panel-host-first-in-youtube-secondary-column', g2.hosts === 1 && g2.firstInColumn, { hosts: g2.hosts, first: g2.firstInColumn, column: g2.columnId });
+    const side = g2.host && g2.player ? (g2.host.left >= g2.player.right - 4 ? 'right' : g2.host.right <= g2.player.left + 4 ? 'left' : 'below-or-overlap') : null;
+    result.measures.sideWide = { side, dir: g2.dir, lang: g2.lang };
+    // عرض مريح لا يأكل مساحة الفيديو (ملاحظة سلطان): عمود يوتيوب المعتاد 402 أو أضيق.
+    check('panel-width-comfortable-not-wider-than-402', g2.host.width <= 402 && g2.host.width >= 300, { width: g2.host.width, fitted: o.fitted });
     check('panel-open-right-of-video-same-height-no-overlap', g2.host.left >= g2.player.right - 4 && !overlaps(g2.host, g2.player) && Math.abs(g2.host.height - g2.player.height) <= 24 && g2.docWidth <= g2.viewport.w, { host: g2.host, player: g2.player });
     check('panel-rows-equal-arabic-cues', o.rows === s0.arabic && o.rows > 0, { rows: o.rows, cues: s0.arabic });
     check('panel-status-line-real', /متزامن/.test(o.status) && o.status.includes(String(s0.arabic)), { status: o.status });
@@ -607,10 +613,12 @@ try {
   await step('panel-close-and-hide-entry', async () => {
     let p = await peek();
     await clickBox(p.boxes.close, 'إغلاق اللوحة');
-    p = await waitPeek((x) => x.mode === 'entry');
+    p = await waitPeek((x) => x.mode === 'none');
     let ui = await iso(P.prefs);
-    check('panel-close-keeps-entry', p.mode === 'entry' && !p.entry.hidden && ui?.panelOpen === false && ui?.panelEntry === true, { mode: p.mode, ui });
-    await clickBox(p.boxes.entry, 'زر اللوحة');
+    await revealControls(yt);
+    const bar = await iso(P.bar);
+    check('panel-close-hides-panel-keeps-bar-button', p.mode === 'none' && p.hostHidden && !!bar.buttons.panel.box && bar.buttons.panel.pressed === 'false' && ui?.panelOpen === false && ui?.panelEntry === true, { mode: p.mode, ui, pressed: bar.buttons.panel.pressed });
+    await clickBar('panel');
     p = await waitPeek((x) => x.mode === 'open');
     await clickBox(p.boxes.opts, 'خيارات اللوحة');
     p = await waitPeek((x) => x.menu === true);
@@ -629,7 +637,9 @@ try {
     p = await waitPeek((x) => x.mode === 'none', 9000);
     ui = await iso(P.prefs);
     const g = await main(M.geo);
-    check('panel-hidden-entry-gone-after-message', p.mode === 'none' && p.hostHidden && ui?.panelEntry === false && (!g.host || g.host.height === 0), { mode: p.mode, ui });
+    await revealControls(yt);
+    const barGone = await iso(P.bar);
+    check('panel-hidden-entry-gone-after-message', p.mode === 'none' && p.hostHidden && ui?.panelEntry === false && (!g.host || g.host.height === 0) && !barGone.buttons.panel.box, { mode: p.mode, ui, barButton: barGone.buttons.panel.box });
   });
 
   await step('popup-restores-entry', async () => {
@@ -659,22 +669,18 @@ try {
     check('popup-show-entry-saves-and-reports-real-result', ui?.panelEntry === true && /ظهر زر النص المتزامن/.test(res.result ?? '') && !res.row, { ...res, ui });
     await pop.close();
     await front(yt);
-    const p = await waitPeek((x) => x.mode === 'entry', 6000);
-    check('youtube-entry-returns-after-popup', p.mode === 'entry' && !p.entry.hidden, { mode: p.mode });
-    // فتح اللوحة من الزر العائد: يُتحقق منه، وإن لم يُفتح يُسجَّل ما تحت نقطة الضغط ويُعاد مرة.
-    const hitAt = (box) => main((x, y) => { const e = document.elementFromPoint(x, y); return e ? `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}` : null; }, center(box).x, center(box).y);
-    const hit = await hitAt(p.boxes.entry);
-    await clickBox(p.boxes.entry, 'زر اللوحة');
-    let o = await waitPeek((x) => x.mode === 'open' && x.kind === 'ready', 5000);
-    let tries = 1;
-    if (o.mode !== 'open') {
-      note(`الضغطة الأولى على زر اللوحة بعد النافذة لم تفتحها (تحت النقطة: ${hit}، والوضع ${o.mode}); أُعيدت.`);
-      const again = await peek();
-      await clickBox(again.boxes.entry, 'زر اللوحة');
-      o = await waitPeek((x) => x.mode === 'open' && x.kind === 'ready', 5000);
-      tries = 2;
+    // الزر يعود إلى شريط المشغّل، واللوحة مغلقة (أُخفي زرها وهي مفتوحة فأُغلقت معه): لا شيء في الصفحة حتى تُفتح.
+    let back = null;
+    for (let i = 0; i < 12 && !back?.buttons.panel.box; i++) {
+      await revealControls(yt);
+      back = await iso(P.bar);
+      if (!back.buttons.panel.box) await sleep(500);
     }
-    check('panel-reopens-from-returned-entry', o.mode === 'open' && o.kind === 'ready', { mode: o.mode, kind: o.kind, tries, hit });
+    const p = await peek();
+    check('youtube-entry-returns-after-popup', !!back.buttons.panel.box && p.mode === 'none', { box: back.buttons.panel.box, mode: p.mode });
+    await clickBar('panel');
+    const o = await waitPeek((x) => x.mode === 'open' && x.kind === 'ready', 5000);
+    check('panel-reopens-from-returned-entry', o.mode === 'open' && o.kind === 'ready', { mode: o.mode, kind: o.kind });
   });
 
   await step('panel-site-navigation', async () => {
@@ -835,7 +841,7 @@ try {
     const nativeRow = await rowOf();
     const inline = await main(() => ['#columns', '#primary', '#secondary'].map((sel) => document.querySelector(`ytd-watch-flexy ${sel}`).getAttribute('style') ?? ''));
     result.measures.arabicInterface.nativeRow = nativeRow;
-    check('arabic-youtube-restored-when-entry-hidden', q.mode === 'none' && q.mirrored === false && nativeRow.inner.right <= nativeRow.player.left + 4 && inline.every((x) => !/flex-direction|padding|margin/.test(x)), { mode: q.mode, mirrored: q.mirrored, inline });
+    check('arabic-youtube-restored-when-entry-hidden', q.mode === 'none' && q.mirrored === false && nativeRow.inner.right <= nativeRow.player.left + 4 && inline.every((x) => !/flex-direction|overflow|width|padding|margin/.test(x)), { mode: q.mode, mirrored: q.mirrored, inline });
     // المعكوس صورة الأصل: المشغّل بعرضه، وهامش حافة كلٍّ منهما، والفاصل بينهما كما في تخطيط يوتيوب نفسه.
     const m = mirroredRow;
     const n = nativeRow;
@@ -846,7 +852,9 @@ try {
       columnEdge: [m.vw - m.inner.right, n.inner.left],
       gap: [m.inner.left - m.player.right, n.player.left - n.inner.right],
     };
-    check('arabic-youtube-mirror-keeps-player-width-margins-and-gap', Object.values(geom).every(([a, b2]) => same(a, b2)), geom);
+    // وإن ضُيّق عمود يوتيوب الأعرض من 402 (fitted) فالحافتان تتغيران عمدًا بتوسّط العمودين: يُقارن عرض المشغّل والفاصل وحدهما.
+    const keys = p.fitted ? ['playerWidth', 'gap'] : Object.keys(geom);
+    check('arabic-youtube-mirror-keeps-player-width-margins-and-gap', keys.every((k) => same(...geom[k])), { ...geom, fitted: p.fitted });
     // إعادة الزر (للتنظيف) بفعل المتحكم نفسه الذي تكتبه نافذة الأيقونة.
     await iso(() => globalThis.__tarjuman.controller.updatePrefs({ ui: { panelEntry: true, panelOpen: true } }).then(() => true));
     await waitPeek((x) => x.mode === 'open' && x.mirrored === true, 6000);

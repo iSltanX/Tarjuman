@@ -170,10 +170,10 @@ test('تدقيق 5fedcb9 (CL-011، CL-018): مؤشر الاختيار في ال�
     assert.ok(ratio(hex(block, 'tj-brand-text'), hex(block, 'tj-brand-soft')) >= 4.5, `${name}: النص على الخلفية`);
   }
   const ui = await readFile(path.join(ROOT, 'src/ui/components.css'), 'utf8');
-  assert.match(ui, /\.tj-seg__option input:checked \+ \.tj-seg__label \{[^}]*box-shadow: inset 0 0 0 1\.5px var\(--tj-brand\)/);
+  assert.match(ui, /\.tj-seg__option input:checked \+ \.tj-seg__label \{[^}]*box-shadow: inset 0 0 0 1px var\(--tj-brand\)/);
   assert.match(ui, /\.tj-chip \{[^}]*min-height: 32px/);
   assert.match(ui, /\.tj-slots__slot::after \{ content: ""; position: absolute; inset: -4px 0; \}/);
   const editor = await readFile(path.join(ROOT, 'src/pages/editor/editor.css'), 'utf8');
   assert.match(editor, /\.ed-row__check \{ width: 24px; height: 24px;/);
-  assert.match(editor, /\.ed-seg__opt\[aria-checked="true"\] \{ background: var\(--tj-brand-soft\)/);
+  assert.match(editor, /\.ed-seg__opt\[aria-checked="true"\] \{ background: var\(--tj-surface\); color: var\(--tj-brand-text\); box-shadow: inset 0 0 0 1px var\(--tj-brand\)/);
 });

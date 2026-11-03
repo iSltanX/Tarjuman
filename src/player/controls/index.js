@@ -10,6 +10,7 @@ import { createStore } from '../../core/store/index.js';
 import { loadUiFonts } from '../overlay/fonts.js';
 import { EVENTS, getPlayer, getRightControls } from '../youtube-dom.js';
 import { createControlsSession } from './session.js';
+import { createPanelLink, panelLink } from '../link.js';
 
 export const HEALTH_MS = 1000;
 /** محاولات التركيب الفاشلة المتتالية قبل التوقف (تُصفَّر عند انتقال صفحة جديدة). */
@@ -30,7 +31,8 @@ const DEFAULT_FLOWS = Object.freeze({
 
 /**
  * @param {import('../../content/controller.js').Controller} controller
- * @param {{ doc?: Document, win?: Window, exportFlow?: object, importFlow?: object, now?: () => number, uiFonts?: typeof loadUiFonts | null }} [deps]
+ * @param {{ doc?: Document, win?: Window, exportFlow?: object, importFlow?: object, now?: () => number, uiFonts?: typeof loadUiFonts | null, link?: ReturnType<typeof createPanelLink> }} [deps]
+ *   link صلة التركيز بلوحة النص المتزامن (المشتركة افتراضيًا)
  *   uiFonts للاختبار (null بلا خطوط)
  * @returns {import('../overlay/index.js').MountHandle & { diagnostics: () => object, peek: () => object | null }}
  */
@@ -105,7 +107,7 @@ export function mountControls(controller, deps = {}) {
     if (failures >= MAX_FAILURES) return;
     attempts++;
     try {
-      session = createControlsSession({ controller, doc, win, player, flows, now: deps.now });
+      session = createControlsSession({ controller, doc, win, player, flows, now: deps.now, link: deps.link ?? panelLink });
       state = 'mounted';
       failures = 0;
       if (uiFontsLoader && (uiFonts === null || (uiFonts !== 'pending' && uiFonts.failed.length))) {

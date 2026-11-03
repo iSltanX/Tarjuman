@@ -204,8 +204,8 @@ export function confirmDialog({ title, body, confirmLabel, cancelLabel = 'إلغ
 
 /** صفحات الشريط العلوي بروابطها النسبية (من داخل pages/<page>/). */
 const NAV_PAGES = Object.freeze([
-  { id: 'library', label: 'المحفوظات', href: '../library/index.html' },
-  { id: 'settings', label: 'الإعدادات', href: '../settings/index.html' },
+  { id: 'library', label: 'المحفوظات', href: '../library/index.html', icon: 'library' },
+  { id: 'settings', label: 'الإعدادات', href: '../settings/index.html', icon: 'settings' },
 ]);
 
 /**
@@ -221,7 +221,10 @@ export function topbar({ active, doc = document }) {
         el('a', { className: 'tj-topbar__brand', attrs: { href: NAV_PAGES[0].href, 'aria-label': 'ترجمان — المحفوظات' }, children: [logo({ height: 24, label: null, doc })], doc }),
         el('nav', {
           className: 'tj-topbar__nav', attrs: { 'aria-label': 'صفحات ترجمان' },
-          children: NAV_PAGES.map((p) => el('a', { className: 'tj-topbar__link', text: p.label, attrs: { href: p.href, ...(p.id === active ? { 'aria-current': 'page' } : {}) }, doc })),
+          children: NAV_PAGES.map((p) => el('a', {
+            className: 'tj-topbar__link', attrs: { href: p.href, ...(p.id === active ? { 'aria-current': 'page' } : {}) },
+            children: [icon(p.icon, { doc }), el('span', { text: p.label, doc })], doc,
+          })),
           doc,
         }),
         el('span', { className: 'tj-topbar__end', children: [icon('shield', { doc }), el('span', { text: 'بياناتك على جهازك', doc })], doc }),

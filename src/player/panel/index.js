@@ -7,6 +7,7 @@ import { loadUiFonts } from '../overlay/fonts.js';
 import { EVENTS, videoIdFromLocation } from '../youtube-dom.js';
 import { findColumn } from './column.js';
 import { createPanelSession } from './session.js';
+import { createPanelLink, panelLink } from '../link.js';
 
 /**
  * @typedef {{ state: 'stub' | 'waiting' | 'mounted' | 'error', unmount: () => void }} MountHandle
@@ -19,13 +20,15 @@ const COALESCE_MS = 50;
 
 /**
  * @param {import('../../content/controller.js').Controller} controller
- * @param {{ doc?: Document, win?: Window, uiFonts?: typeof loadUiFonts | null }} [env] uiFonts للاختبار (null بلا خطوط)
+ * @param {{ doc?: Document, win?: Window, uiFonts?: typeof loadUiFonts | null, link?: ReturnType<typeof createPanelLink> }} [env] uiFonts للاختبار
+ *   (null بلا خطوط)، وlink صلة التركيز بزر اللوحة في الشريط (المشتركة افتراضيًا)
  * @returns {MountHandle & { diagnostics: () => object, peek: () => object | null }}
  */
 export function mountPanel(controller, env = {}) {
   const win = env.win ?? window;
   const doc = env.doc ?? win.document;
   const fontsLoader = env.uiFonts !== undefined ? env.uiFonts : loadUiFonts;
+  const link = env.link ?? panelLink;
   /** @type {'stub' | 'waiting' | 'mounted' | 'error'} */
   let state = 'waiting';
   /** @type {ReturnType<typeof createPanelSession> | null} */
@@ -102,7 +105,7 @@ export function mountPanel(controller, env = {}) {
       if (failures >= MAX_FAILURES) return;
       attempts++;
       try {
-        session = createPanelSession({ controller, doc, win });
+        session = createPanelSession({ controller, doc, win, link });
         requestFonts();
       } catch (err) {
         session = null;
