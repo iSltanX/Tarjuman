@@ -123,7 +123,12 @@ const URL_RE = /(?:https?:)?\/\/[A-Za-z0-9][A-Za-z0-9.-]*(?::\d+)?[^\s'"`)]*/g;
 // رابطا «حول» (R42) وحدهما، في ملفه وحده: روابط <a> تُفتح بضغط المستخدم في تبويب جديد، لا طلب شبكة من الإضافة.
 const ABOUT_FILE = path.join('pages', 'settings', 'about.js');
 const ABOUT_LINKS = new Set(['https://bysltan.com', 'https://github.com/iSltanX/Tarjuman']);
-const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u));
+// صور الفيديو في المحفوظات (قرار سلطان 2026-11-03، docs/identity-redesign.md §٥): الاستثناء المسمّى الوحيد لنطاق خارجي. بادئة
+// الصورة `https://i.ytimg.com/vi/` وحدها، في وحدة الصورة المصغّرة وحدها، لعنصر <img> يحمّله المتصفح (لا fetch ولا XHR ولا Image()،
+// وكلها ممنوعة هنا كما كانت). فلا يمرّ رابط آخر في ذلك الملف، ولا هذا الرابط في ملف آخر.
+const THUMB_FILE = path.join('pages', 'library', 'thumb.js');
+const THUMB_URL = 'https://i.ytimg.com/vi/';
+const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u)) || (rel === THUMB_FILE && u === THUMB_URL);
 const STORAGE = /\bchrome\s*(?:\.|\[\s*['"`])\s*storage\b|\.\s*storage\s*\.\s*(?:local|sync|session|managed|onChanged)\b/;
 // واجهة التنزيلات محصورة في ملفات ترجمان (اعتماد سلطان 2026-11-02، عقد interfaces §١٣): في src/core/save وsrc/background
 // وحدهما؛ والوصول إلى كائنها (.downloads) في أسطر مراجَعة حرفيًا تسلّمه إلى متغير اسمه downloads لا غير؛ ولا يُستدعى منه
