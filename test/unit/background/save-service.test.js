@@ -2,7 +2,7 @@
 // التفضيلات لا من الرسالة، ويتحقق قبل أي تنزيل، ويحفظ النص UTF-8 في رابط data:، ويسجّل المعرّف.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createSaveService, dataUrl } from '../../../src/background/save-service.js';
+import { createSaveService, dataUrl, fileUrl } from '../../../src/background/save-service.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { NOW } from '../../helpers/fixtures.js';
@@ -12,14 +12,16 @@ const runtime = { id: ID, getURL: (p) => `chrome-extension://${ID}/${p}`, onMess
 const fromYoutube = { id: ID, tab: { id: 3 }, url: 'https://www.youtube.com/watch?v=iG9CE55wbtY' };
 const fromPage = { id: ID, url: `chrome-extension://${ID}/pages/library/index.html` };
 
-function make({ mode = 'downloads', folder = 'Tarjuman' } = {}) {
+/** عامل الخدمة في Chromium: لا URL.createObjectURL، فرابط data:. */
+const WORKER_ENV = {};
+function make({ mode = 'downloads', folder = 'Tarjuman', env = WORKER_ENV } = {}) {
   const store = createStore({ area: createMemoryArea({ unlimited: true }), now: () => Date.parse(NOW) });
   const calls = [];
   const downloads = {
     async download(o) { calls.push(o); return 12; },
     async search({ id }) { return [{ id, state: 'complete', exists: true, filename: '/x' }]; },
   };
-  const svc = createSaveService({ runtime, downloads, store, settle: { pollMs: 1, timeoutMs: 10, wait: async () => {} } });
+  const svc = createSaveService({ runtime, downloads, store, settle: { pollMs: 1, timeoutMs: 10, wait: async () => {} }, env });
   return { svc, store, calls, ready: store.setPrefs({ saveLocation: { mode, folder } }) };
 }
 const req = (file = { name: 'a.ar.srt', text: 'سطر عربي' }) => ({ type: 'tj:save-file', v: 1, file });
@@ -72,6 +74,26 @@ test('المستمع يرد بوعد (return true) لرسالة الحفظ وح�
   assert.equal(listener({ type: 'x' }, fromYoutube, () => assert.fail('لا رد')), undefined);
   off();
   assert.equal(runtime.onMessage.listeners.size, 0);
+});
+
+test('صفحة خلفية فيها URL.createObjectURL (Firefox يرفض data: في downloads.download، جولة النشر T3): رابط blob: بالنص نفسه، ويُلغى بعد التنزيل', async () => {
+  const made = [];
+  const revoked = [];
+  const env = {
+    Blob,
+    URL: { createObjectURL: (b) => { made.push(b); return `blob:moz-extension://x/${made.length}`; }, revokeObjectURL: (u) => revoked.push(u) },
+    setTimeout: (fn) => fn(),
+  };
+  const { svc, calls, ready } = make({ mode: 'subfolder', folder: 'ترجماتي', env });
+  await ready;
+  assert.deepEqual(await svc.handle(req(), fromYoutube), { v: 1, ok: true, mode: 'subfolder', downloadId: 12 });
+  assert.equal(calls[0].url, 'blob:moz-extension://x/1');
+  assert.equal(calls[0].filename, 'ترجماتي/a.ar.srt', 'مكان الحفظ المختار كما هو');
+  assert.equal(made[0].type, 'application/x-subrip;charset=utf-8');
+  assert.equal(await made[0].text(), 'سطر عربي');
+  assert.deepEqual(revoked, ['blob:moz-extension://x/1']);
+  // والعامل في Chromium بلا createObjectURL: data: كما كان.
+  assert.match(fileUrl('x', 'text/plain', {}).url, /^data:text\/plain;base64,/);
 });
 
 test('dataUrl: نص عربي كبير بدفعات دون فقد', () => {

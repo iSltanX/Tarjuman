@@ -1,8 +1,9 @@
 // خدمة الحفظ في العامل الخلفي (عقد interfaces §١٣ وmessages §٧): للحفظ وحده. تقبل tj:save-file من سكربت ترجمان على
 // يوتيوب أو من صفحة في الإضافة وحدهما، وتقرأ مكان الحفظ من التفضيلات لا من الرسالة، وتتحقق من الاسم والامتداد والحجم،
-// ثم تنزّل النص من رابط data: (العامل بلا URL.createObjectURL) بواجهة التنزيلات، وتسجّل معرّف الملف. لا منطق آخر.
+// ثم تنزّل النص بواجهة التنزيلات من رابط blob: حيث للخلفية URL.createObjectURL، وإلا من رابط data:، وتسجّل معرّف الملف.
+// لا منطق آخر.
 import { isExtensionPage, isOwnContentScript, isSaveRequest, MESSAGE_VERSION } from '../core/model/messages.js';
-import { SAVE_LIMITS, downloadTarget, startDownload, validateSaveFile } from '../core/save/index.js';
+import { PENDING_REVOKE_MS, SAVE_LIMITS, downloadTarget, startDownload, validateSaveFile } from '../core/save/index.js';
 
 /**
  * نص UTF-8 في رابط data: بترميز base64، على دفعات (String.fromCharCode لا يقبل مصفوفة ضخمة).
@@ -16,15 +17,30 @@ export function dataUrl(text, mime) {
 }
 
 /**
+ * رابط النص للتنزيل: blob: حيث للخلفية URL.createObjectURL (صفحة الخلفية في Firefox، الذي يرفض روابط data: في
+ * downloads.download، جولة النشر T3)، وإلا data: (عامل الخدمة في Chromium بلا URL.createObjectURL). والشيفرة واحدة في الهدفين.
+ * @param {string} text @param {string} mime @param {typeof globalThis} env
+ * @returns {{ url: string, release: (pending: boolean) => void }}
+ */
+export function fileUrl(text, mime, env = globalThis) {
+  if (typeof env.URL?.createObjectURL === 'function' && typeof env.Blob === 'function') {
+    const url = env.URL.createObjectURL(new env.Blob([text], { type: mime }));
+    // يبقى الرابط ما دام حوار الحفظ مفتوحًا (pending)، ثم يُلغى كما في صفحات الإضافة.
+    return { url, release: (pending) => (pending ? env.setTimeout(() => env.URL.revokeObjectURL(url), PENDING_REVOKE_MS) : env.URL.revokeObjectURL(url)) };
+  }
+  return { url: dataUrl(text, mime), release: () => {} };
+}
+
+/**
  * @param {{
  *   runtime: typeof chrome.runtime,
  *   downloads: { download: Function, search: Function },
  *   store: { getPrefs: () => Promise<{ saveLocation: object }>, setLastSave: (id: number) => Promise<void> },
- *   settle?: object
- * }} deps
+ *   settle?: object, env?: typeof globalThis
+ * }} deps env: ما فيه URL وBlob وsetTimeout (الخلفية نفسها افتراضيًا؛ والاختبار يمرّر بديلًا)
  * @returns {{ handle: (req: unknown, sender: object) => Promise<object> | null, install: () => () => void }}
  */
-export function createSaveService({ runtime, downloads, store, settle }) {
+export function createSaveService({ runtime, downloads, store, settle, env = globalThis }) {
   /** يعيد وعد الرد، أو null لرسالة لا تخصه (فلا رد). */
   function handle(req, sender) {
     if (!(isOwnContentScript(sender, runtime) || isExtensionPage(sender, runtime)) || !isSaveRequest(req)) return null;
@@ -37,7 +53,13 @@ export function createSaveService({ runtime, downloads, store, settle }) {
       } catch {
         return { v: MESSAGE_VERSION, ok: false, code: 'SV_FAILED' };
       }
-      const r = await startDownload(downloads, { url: dataUrl(req.file.text, v.mime), ...downloadTarget(prefs.saveLocation, req.file.name) }, settle);
+      const link = fileUrl(req.file.text, v.mime, env);
+      let r;
+      try {
+        r = await startDownload(downloads, { url: link.url, ...downloadTarget(prefs.saveLocation, req.file.name) }, settle);
+      } finally {
+        link.release(r?.state === 'pending');
+      }
       if (!r.ok) return { v: MESSAGE_VERSION, ok: false, code: r.code };
       await store.setLastSave(r.downloadId).catch(() => {});
       return { v: MESSAGE_VERSION, ok: true, mode: prefs.saveLocation.mode, downloadId: r.downloadId, ...(r.state === 'pending' ? { pending: true } : {}) };
