@@ -243,6 +243,30 @@ async function closeBarMenus() {
     await sleep(300);
   }
 }
+/**
+ * نافذة ترويج يوتيوب Premium (للحساب غير المسجَّل) تظهر فوق طرف المشغّل وتغطي أزراره (ثبت في Chrome: تحت مركز «تحميل الأصل»).
+ * تُغلق بزر رفضها بنقرة حقيقية كما يفعل المستخدم؛ وتُعدّ في measures.promosDismissed.
+ */
+async function dismissPromo() {
+  const c = await main(() => {
+    const promo = document.querySelector('yt-mealbar-promo-renderer');
+    if (!promo || !promo.getClientRects().length) return null;
+    const btn = promo.querySelector('#dismiss-button button, #dismiss-button, yt-button-renderer#dismiss-button');
+    const r = btn?.getBoundingClientRect();
+    return r && r.width ? { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) } : null;
+  });
+  if (!c) return false;
+  await yt.click(c.x, c.y);
+  await sleep(700);
+  result.measures.promosDismissed = (result.measures.promosDismissed ?? 0) + 1;
+  return true;
+}
+/** لماذا لم يصل المؤشر إلى زر في الشريط: ما تحت النقطة، ومقاس الشريط ومساحته قبل وبعد، وحال الإعلان. */
+async function barWhy(pt, before, after) {
+  const stack = await main((x, y) => document.elementsFromPoint(x, y).slice(0, 5).map((e) => `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}.${String(e.className).split(' ')[0]}`), pt.x, pt.y);
+  const ad = await main(() => document.querySelector('#movie_player')?.classList.contains('ad-showing') ?? null);
+  return { stack, ad, fit: [before?.fit, after?.fit], room: [before?.room, after?.room], hidden: (await main(() => document.querySelector('#movie_player')?.classList.contains('ytp-autohide'))) };
+}
 async function clickBar(kind) {
   await revealControls(yt);
   const p = await iso(P.bar);
@@ -450,8 +474,10 @@ try {
   await sleep(1500);
   isoId = yt.isolatedContextId(extId);
   await yt.waitFor(() => !!document.querySelector('#tarjuman-controls') && !!document.querySelector('#tarjuman-panel'), { timeoutMs: 15000 });
-  await yt.waitFor(() => !globalThis.__tarjuman.controller.getState().loading && globalThis.__tarjuman.mounted.panel.peek()?.ready, { contextId: isoId, timeoutMs: 15000 });
+  // اللوحة مغلقة افتراضيًا: يُنتظر المتحكم وترجمته (لا جاهزية اللوحة).
+  await yt.waitFor(() => !globalThis.__tarjuman.controller.getState().loading && !!globalThis.__tarjuman.controller.getState().arabic, { contextId: isoId, timeoutMs: 15000 });
   await waitNoAd();
+  await dismissPromo();
   await main(() => { const v = document.querySelector('#movie_player video'); v.muted = true; v.pause(); return true; });
   await sleep(600);
   const s0 = await iso(P.state);
@@ -523,7 +549,13 @@ try {
     await clickBox(q.boxes.resume, 'العودة إلى الحالي');
     const r = await waitPeek((x) => x.resume === null, 3000, [x0(q)]);
     const cur = r.current;
-    const back = await peek([cur]);
+    // التمرير إلى الحالي ناعم: يُنتظر استقراره (حتى ثانيتين) قبل قياس موضع الصف.
+    const inside = (b) => { const box = b.boxes.rows[0]?.box; return !!box && box.top >= b.boxes.list.top - 2 && box.bottom <= b.boxes.list.bottom + 2; };
+    let back = await peek([cur]);
+    for (let i = 0; i < 10 && !inside(back); i++) {
+      await sleep(200);
+      back = await peek([cur]);
+    }
     const curBox = back.boxes.rows[0]?.box;
     check('panel-return-to-current-resumes-follow', r.resume === null && !!curBox && curBox.top >= back.boxes.list.top - 2 && curBox.bottom <= back.boxes.list.bottom + 2, { resume: r.resume, current: cur, visible: !!curBox });
   });
@@ -578,6 +610,7 @@ try {
   });
 
   await step('player-bar-icons', async () => {
+    await dismissPromo();
     const dom = await barDom();
     const bar = await iso(P.bar);
     const iconBtns = dom.buttons.filter((x) => ['download', 'upload'].some((k) => x.label === bar.buttons[k].label));
@@ -585,12 +618,15 @@ try {
     check('player-bar-icons-only-no-words-no-dots', iconBtns.length === 2 && iconBtns.every((x) => x.svgs === 1 && x.texts.length === 0) && dom.dots === 0, result.measures.bar);
     const sizes = ['download', 'upload', 'minus', 'plus'].map((k) => [bar.buttons[k].box.width, bar.buttons[k].box.height]);
     check('player-bar-icon-buttons-same-size', sizes.every(([w, h]) => w === sizes[0][0] && h === sizes[0][1]), sizes);
+    // المقاس يتبع المساحة الخالية في الشريط، فيُقرأ موضع الزر بعد إظهار الشريط لا قبله؛ وعند الإخفاق تُسجَّل أسبابه الممكنة.
     await revealControls(yt);
-    const dl = center(bar.buttons.download.box);
+    const fresh = await iso(P.bar);
+    const dl = center(fresh.buttons.download.box);
     await yt.mouseMove(dl.x, dl.y);
     await sleep(700);
-    const hover = (await iso(P.bar)).layer.tip;
-    check('player-bar-tooltip-on-hover', !!hover && hover === bar.buttons.download.tip, { tip: hover, label: bar.buttons.download.label });
+    const after = await iso(P.bar);
+    const hover = after.layer.tip;
+    check('player-bar-tooltip-on-hover', !!hover && hover === fresh.buttons.download.tip, { tip: hover, label: fresh.buttons.download.label, ...(hover ? {} : await barWhy(dl, fresh, after)) });
     await yt.mouseMove(dl.x, dl.y - 260);
     await sleep(500);
     const up = dom.buttons.find((x) => x.label === bar.buttons.upload.label);
@@ -601,10 +637,11 @@ try {
     await main(() => document.activeElement?.blur?.());
     await clickBar('download');
     const m1 = await barMenu();
+    const why1 = m1 ? {} : await barWhy(center((await iso(P.bar)).buttons.download.box), await iso(P.bar), null);
     await closeBarMenus();
     await clickBar('upload');
     const m2 = await barMenu();
-    check('player-menu-titles', m1?.label === 'تحميل الأصل' && m2?.label === 'الترجمة', { download: m1?.label, upload: m2?.label });
+    check('player-menu-titles', m1?.label === 'تحميل الأصل' && m2?.label === 'الترجمة', { download: m1?.label, upload: m2?.label, ...why1 });
     await revealControls(yt);
     await snap(yt, 'watch-player-menu-translation');
     await closeBarMenus();
@@ -852,9 +889,11 @@ try {
       columnEdge: [m.vw - m.inner.right, n.inner.left],
       gap: [m.inner.left - m.player.right, n.player.left - n.inner.right],
     };
-    // وإن ضُيّق عمود يوتيوب الأعرض من 402 (fitted) فالحافتان تتغيران عمدًا بتوسّط العمودين: يُقارن عرض المشغّل والفاصل وحدهما.
-    const keys = p.fitted ? ['playerWidth', 'gap'] : Object.keys(geom);
-    check('arabic-youtube-mirror-keeps-player-width-margins-and-gap', keys.every((k) => same(...geom[k])), { ...geom, fitted: p.fitted });
+    // وإن ضُيّق عمود يوتيوب الأعرض من 402 (fitted) أخذ المشغّل ما فضل فاتسع (أو بقي إن قيّده ارتفاع النافذة): لا يضيق عن الأصل،
+    // والحافتان والفاصل كما هي.
+    const keys = p.fitted ? ['videoEdge', 'columnEdge', 'gap'] : Object.keys(geom);
+    const widthOk = p.fitted ? m.player.width >= n.player.width - 2 : true;
+    check('arabic-youtube-mirror-keeps-player-width-margins-and-gap', widthOk && keys.every((k) => same(...geom[k])), { ...geom, fitted: p.fitted });
     // إعادة الزر (للتنظيف) بفعل المتحكم نفسه الذي تكتبه نافذة الأيقونة.
     await iso(() => globalThis.__tarjuman.controller.updatePrefs({ ui: { panelEntry: true, panelOpen: true } }).then(() => true));
     await waitPeek((x) => x.mode === 'open' && x.mirrored === true, 6000);

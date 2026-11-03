@@ -1,6 +1,6 @@
 {
   "browser": "Chrome (Chrome/156.0.8078.80)",
-  "at": "2026-11-03T04:58:31.988Z",
+  "at": "2026-11-03T08:57:05.435Z",
   "headless": true,
   "checks": [
     {
@@ -301,61 +301,45 @@
       "detail": null
     },
     {
-      "id": "panel-host-first-in-youtube-secondary-column",
+      "id": "panel-closed-by-default-nothing-in-youtube-page",
       "ok": true,
       "detail": {
-        "hosts": 1,
-        "first": true,
-        "column": "secondary-inner"
-      }
-    },
-    {
-      "id": "panel-entry-shown-closed-by-default",
-      "ok": true,
-      "detail": {
-        "mode": "entry",
-        "entry": {
-          "hidden": false,
-          "expanded": "false",
-          "label": "فتح النص المتزامن، الإزاحة ⁦+0.5⁩ ث",
-          "pill": "+0.5"
-        }
-      }
-    },
-    {
-      "id": "panel-entry-shows-nonzero-offset",
-      "ok": true,
-      "detail": {
-        "pill": "+0.5",
-        "offset": 500
-      }
-    },
-    {
-      "id": "panel-entry-right-of-video-not-overlapping",
-      "ok": true,
-      "detail": {
-        "side": "right",
-        "dir": "ltr",
+        "mode": "none",
         "host": {
-          "top": 68,
-          "bottom": 116,
-          "left": 999,
-          "right": 1384,
-          "width": 385,
-          "height": 48
-        },
-        "player": {
-          "top": 68,
-          "bottom": 793,
-          "left": 16,
-          "right": 983,
-          "width": 967,
-          "height": 725
+          "top": 0,
+          "bottom": 0,
+          "left": 0,
+          "right": 0,
+          "width": 0,
+          "height": 0
         }
       }
     },
     {
-      "id": "panel-opens-from-entry-and-saves",
+      "id": "player-bar-panel-button-shown-not-pressed",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "box": {
+            "top": 782,
+            "bottom": 822,
+            "left": 588,
+            "right": 636,
+            "width": 48,
+            "height": 40
+          },
+          "label": "النص المتزامن",
+          "tip": "فتح النص المتزامن",
+          "description": null,
+          "busy": false,
+          "disabled": false,
+          "pressed": "false",
+          "text": null
+        }
+      }
+    },
+    {
+      "id": "panel-opens-from-bar-button-and-saves",
       "ok": true,
       "detail": {
         "mode": "open",
@@ -365,7 +349,25 @@
           "panelEntry": true,
           "panelOpen": true,
           "panelDual": true
-        }
+        },
+        "pressed": "true"
+      }
+    },
+    {
+      "id": "panel-host-first-in-youtube-secondary-column",
+      "ok": true,
+      "detail": {
+        "hosts": 1,
+        "first": true,
+        "column": "secondary-inner"
+      }
+    },
+    {
+      "id": "panel-width-comfortable-not-wider-than-402",
+      "ok": true,
+      "detail": {
+        "width": 336,
+        "fitted": false
       }
     },
     {
@@ -374,19 +376,19 @@
       "detail": {
         "host": {
           "top": 68,
-          "bottom": 793,
-          "left": 999,
+          "bottom": 830,
+          "left": 1048,
           "right": 1384,
-          "width": 385,
-          "height": 725
+          "width": 336,
+          "height": 762
         },
         "player": {
           "top": 68,
-          "bottom": 793,
+          "bottom": 830,
           "left": 16,
-          "right": 983,
-          "width": 967,
-          "height": 725
+          "right": 1032,
+          "width": 1016,
+          "height": 762
         }
       }
     },
@@ -521,6 +523,11 @@
             "svgs": 1
           },
           {
+            "label": "النص المتزامن",
+            "texts": [],
+            "svgs": 1
+          },
+          {
             "label": "تقديم الترجمة 0.5 ث (تظهر أبكر)",
             "texts": [],
             "svgs": 1
@@ -588,16 +595,17 @@
       }
     },
     {
-      "id": "panel-close-keeps-entry",
+      "id": "panel-close-hides-panel-keeps-bar-button",
       "ok": true,
       "detail": {
-        "mode": "entry",
+        "mode": "none",
         "ui": {
           "thumbnails": true,
           "panelEntry": true,
           "panelOpen": false,
           "panelDual": true
-        }
+        },
+        "pressed": "false"
       }
     },
     {
@@ -631,7 +639,8 @@
           "panelEntry": false,
           "panelOpen": false,
           "panelDual": true
-        }
+        },
+        "barButton": null
       }
     },
     {
@@ -681,7 +690,15 @@
       "id": "youtube-entry-returns-after-popup",
       "ok": true,
       "detail": {
-        "mode": "entry"
+        "box": {
+          "top": 782,
+          "bottom": 822,
+          "left": 588,
+          "right": 636,
+          "width": 48,
+          "height": 40
+        },
+        "mode": "none"
       }
     },
     {
@@ -689,9 +706,7 @@
       "ok": true,
       "detail": {
         "mode": "open",
-        "kind": "ready",
-        "tries": 1,
-        "hit": "div#tarjuman-panel"
+        "kind": "ready"
       }
     },
     {
@@ -722,16 +737,16 @@
         "place": "below",
         "column": "below",
         "host": {
-          "top": 575,
-          "bottom": 995,
+          "top": 547,
+          "bottom": 967,
           "left": 16,
           "right": 884,
           "width": 868,
           "height": 420
         },
         "player": {
-          "top": -330,
-          "bottom": 345,
+          "top": -358,
+          "bottom": 317,
           "left": 0,
           "right": 900,
           "width": 900,
@@ -744,16 +759,16 @@
       "ok": true,
       "detail": {
         "title": {
-          "top": 357,
-          "bottom": 551,
+          "top": 329,
+          "bottom": 523,
           "left": 16,
           "right": 884,
           "width": 868,
           "height": 194
         },
         "host": {
-          "top": 575,
-          "bottom": 995,
+          "top": 547,
+          "bottom": 967,
           "left": 16,
           "right": 884,
           "width": 868,
@@ -770,9 +785,9 @@
         "host": {
           "top": 861,
           "bottom": 1281,
-          "left": 999,
+          "left": 1048,
           "right": 1384,
-          "width": 385,
+          "width": 336,
           "height": 420
         },
         "player": {
@@ -842,19 +857,19 @@
         "rows": 427,
         "host": {
           "top": 68,
-          "bottom": 793,
-          "left": 999,
+          "bottom": 830,
+          "left": 1048,
           "right": 1384,
-          "width": 385,
-          "height": 725
+          "width": 336,
+          "height": 762
         },
         "player": {
           "top": 68,
-          "bottom": 793,
+          "bottom": 830,
           "left": 16,
-          "right": 983,
-          "width": 967,
-          "height": 725
+          "right": 1032,
+          "width": 1016,
+          "height": 762
         }
       }
     },
@@ -876,8 +891,8 @@
       "ok": true,
       "detail": {
         "playerWidth": [
-          967,
-          967
+          1016,
+          1016
         ],
         "videoEdge": [
           16,
@@ -890,7 +905,8 @@
         "gap": [
           16,
           16
-        ]
+        ],
+        "fitted": false
       }
     },
     {
@@ -938,6 +954,7 @@
       "hostPermissions": []
     },
     "adsWaited": 1,
+    "promosDismissed": 1,
     "video": {
       "arabic": 427,
       "english": {
@@ -960,26 +977,66 @@
       "columnId": "secondary-inner",
       "player": {
         "top": 68,
-        "bottom": 793,
+        "bottom": 830,
         "left": 16,
-        "right": 983,
-        "width": 967,
-        "height": 725
+        "right": 1032,
+        "width": 1016,
+        "height": 762
+      },
+      "host": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "width": 0,
+        "height": 0
+      },
+      "title": {
+        "top": 842,
+        "bottom": 1036,
+        "left": 16,
+        "right": 1032,
+        "width": 1016,
+        "height": 194
+      },
+      "viewport": {
+        "w": 1400,
+        "h": 950
+      },
+      "scrollX": 0,
+      "docWidth": 1400
+    },
+    "geoOpen": {
+      "dir": "ltr",
+      "lang": "en",
+      "dark": false,
+      "theater": false,
+      "fs": false,
+      "hosts": 1,
+      "firstInColumn": true,
+      "columnId": "secondary-inner",
+      "player": {
+        "top": 68,
+        "bottom": 830,
+        "left": 16,
+        "right": 1032,
+        "width": 1016,
+        "height": 762
       },
       "host": {
         "top": 68,
-        "bottom": 116,
-        "left": 999,
+        "bottom": 830,
+        "left": 1048,
         "right": 1384,
-        "width": 385,
-        "height": 48
+        "width": 336,
+        "height": 762
       },
       "title": {
-        "top": 805,
-        "bottom": 999,
+        "top": 842,
+        "bottom": 1036,
         "left": 16,
-        "right": 983,
-        "width": 967,
+        "right": 1032,
+        "width": 1016,
         "height": 194
       },
       "viewport": {
@@ -993,46 +1050,6 @@
       "side": "right",
       "dir": "ltr",
       "lang": "en"
-    },
-    "geoOpen": {
-      "dir": "ltr",
-      "lang": "en",
-      "dark": false,
-      "theater": false,
-      "fs": false,
-      "hosts": 1,
-      "firstInColumn": true,
-      "columnId": "secondary-inner",
-      "player": {
-        "top": 68,
-        "bottom": 793,
-        "left": 16,
-        "right": 983,
-        "width": 967,
-        "height": 725
-      },
-      "host": {
-        "top": 68,
-        "bottom": 793,
-        "left": 999,
-        "right": 1384,
-        "width": 385,
-        "height": 725
-      },
-      "title": {
-        "top": 805,
-        "bottom": 999,
-        "left": 16,
-        "right": 983,
-        "width": 967,
-        "height": 194
-      },
-      "viewport": {
-        "w": 1400,
-        "h": 950
-      },
-      "scrollX": 0,
-      "docWidth": 1400
     },
     "dual": [
       {
@@ -1061,6 +1078,11 @@
           "svgs": 1
         },
         {
+          "label": "النص المتزامن",
+          "texts": [],
+          "svgs": 1
+        },
+        {
           "label": "تقديم الترجمة 0.5 ث (تظهر أبكر)",
           "texts": [],
           "svgs": 1
@@ -1082,16 +1104,16 @@
     },
     "geoNarrow": {
       "player": {
-        "top": -330,
-        "bottom": 345,
+        "top": -358,
+        "bottom": 317,
         "left": 0,
         "right": 900,
         "width": 900,
         "height": 675
       },
       "host": {
-        "top": 575,
-        "bottom": 995,
+        "top": 547,
+        "bottom": 967,
         "left": 16,
         "right": 884,
         "width": 868,
@@ -1105,19 +1127,19 @@
       "side": "right",
       "host": {
         "top": 68,
-        "bottom": 793,
-        "left": 999,
+        "bottom": 830,
+        "left": 1048,
         "right": 1384,
-        "width": 385,
-        "height": 725
+        "width": 336,
+        "height": 762
       },
       "player": {
         "top": 68,
-        "bottom": 793,
+        "bottom": 830,
         "left": 16,
-        "right": 983,
-        "width": 967,
-        "height": 725
+        "right": 1032,
+        "width": 1016,
+        "height": 762
       },
       "mode": "open",
       "rows": 427,
@@ -1125,26 +1147,26 @@
       "mirroredRow": {
         "player": {
           "left": 16,
-          "right": 983,
-          "width": 967
+          "right": 1032,
+          "width": 1016
         },
         "inner": {
-          "left": 999,
+          "left": 1048,
           "right": 1384,
-          "width": 385
+          "width": 336
         },
         "vw": 1400
       },
       "nativeRow": {
         "player": {
-          "left": 417,
+          "left": 368,
           "right": 1384,
-          "width": 967
+          "width": 1016
         },
         "inner": {
           "left": 16,
-          "right": 401,
-          "width": 385
+          "right": 352,
+          "width": 336
         },
         "vw": 1400
       }
@@ -1156,10 +1178,10 @@
       "lastCode": null,
       "lastDetail": null,
       "session": {
-        "renders": 26,
+        "renders": 25,
         "renderFailures": 0,
         "hostMoves": 1,
-        "syncs": 14,
+        "syncs": 26,
         "rebuilds": 2,
         "actionFailures": 0,
         "lastCode": null,
@@ -1175,7 +1197,8 @@
         "anchor": 0,
         "toast": false,
         "video": true,
-        "mirrored": true
+        "mirrored": true,
+        "fitted": false
       },
       "fonts": {
         "loaded": [
@@ -1192,28 +1215,28 @@
     "fontReadLogs": 12
   },
   "screenshots": [
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/library-light.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/library-dark.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/library-upload-dialog-light.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/library-expanded-light.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/library-expanded-dark.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/settings-display-light.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/settings-display-dark.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/editor-light.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/editor-dark.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/editor-empty-light.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-panel-open.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-panel-resume.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-panel-dual.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-player-menu-translation.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-panel-hidden-toast.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/popup-entry-hidden-light.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/popup-entry-hidden-dark.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-panel-other-video.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-panel-narrow.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-fullscreen.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-panel-dark.png",
-    "../../../../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/b984ccc4-a694-4b8c-95dc-09033650d727/scratchpad/live-identity/chrome/watch-panel-arabic-interface.png"
+    "docs/evidence/identity/chrome/library-light.png",
+    "docs/evidence/identity/chrome/library-dark.png",
+    "docs/evidence/identity/chrome/library-upload-dialog-light.png",
+    "docs/evidence/identity/chrome/library-expanded-light.png",
+    "docs/evidence/identity/chrome/library-expanded-dark.png",
+    "docs/evidence/identity/chrome/settings-display-light.png",
+    "docs/evidence/identity/chrome/settings-display-dark.png",
+    "docs/evidence/identity/chrome/editor-light.png",
+    "docs/evidence/identity/chrome/editor-dark.png",
+    "docs/evidence/identity/chrome/editor-empty-light.png",
+    "docs/evidence/identity/chrome/watch-panel-open.png",
+    "docs/evidence/identity/chrome/watch-panel-resume.png",
+    "docs/evidence/identity/chrome/watch-panel-dual.png",
+    "docs/evidence/identity/chrome/watch-player-menu-translation.png",
+    "docs/evidence/identity/chrome/watch-panel-hidden-toast.png",
+    "docs/evidence/identity/chrome/popup-entry-hidden-light.png",
+    "docs/evidence/identity/chrome/popup-entry-hidden-dark.png",
+    "docs/evidence/identity/chrome/watch-panel-other-video.png",
+    "docs/evidence/identity/chrome/watch-panel-narrow.png",
+    "docs/evidence/identity/chrome/watch-fullscreen.png",
+    "docs/evidence/identity/chrome/watch-panel-dark.png",
+    "docs/evidence/identity/chrome/watch-panel-arabic-interface.png"
   ],
   "notes": [
     "الوضع الداكن ليوتيوب: ضُبطت سمة html[dark] يدويًا (يوتيوب غير المسجَّل لم يتبع وضع الجهاز)، ثم أزيلت؛ وعادت اللوحة فاتحة."
