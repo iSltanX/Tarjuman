@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { messageFor } from '../../../../src/core/errors/index.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { SUBTITLE_FONT_LIST } from '../../../../src/ui/subtitle-fonts.js';
-import { LINKS } from '../../../../src/pages/settings/about.js';
+import { LINKS, PRIVACY_LINE } from '../../../../src/pages/settings/about.js';
 import { createSettings, INSTALL_REMINDER, MODE_NOTES, PREVIEW_NOTE, SCALE_NOTE, SUBTITLE_NOTE } from '../../../../src/pages/settings/view.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, videoRecord } from '../../../helpers/fixtures.js';
@@ -418,11 +418,12 @@ test('تذكير التثبيت: يظهر ما دامت المحفوظات فا�
   assert.equal(textOf((await mount({ videos: 1 })).root).includes(INSTALL_REMINDER), false);
 });
 
-test('حول: الإصدار و«كل شيء محلي» والرابطان بتبويب جديد وnoopener بلا عبارة «خاص حاليًا»، والخطوط ورخصها المحلية', async () => {
+test('حول: الإصدار وسطر الخصوصية الصادق (محلي إلا صور الفيديو) والرابطان بتبويب جديد وnoopener بلا عبارة «خاص حاليًا»، والخطوط ورخصها المحلية', async () => {
   const m = await mount();
   const about = section(m, 'حول');
   assert.deepEqual(about.querySelector('.st-about__row').children.map(textOf), ['الإصدار', '0.2.0']);
-  assert.ok(textOf(about).includes('كل شيء محلي على جهازك'));
+  assert.ok(textOf(about).includes(PRIVACY_LINE));
+  assert.equal(textOf(about).includes('كل شيء محلي على جهازك'), false, 'لا ادّعاء مطلق بأن كل شيء محلي: الصور من يوتيوب');
   assert.ok(textOf(about).includes('ترجمان — تطوير سلطان'));
   const links = findAll(about, (e) => e.tagName === 'a');
   const byText = (t) => links.find((a) => textOf(a) === t);

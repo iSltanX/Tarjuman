@@ -8,7 +8,7 @@ import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { DEFAULT_SETTINGS, SUBTITLE_BACKGROUNDS, SUBTITLE_POSITIONS, SUBTITLE_SCALE } from '../../core/model/settings.js';
 import { alertBox, button, confirmDialog, el, icon, ltr, statusPill } from '../../ui/components.js';
-import { formatBytes } from '../../ui/format.js';
+import { formatBytes, ltrInline } from '../../ui/format.js';
 import { numberField, savedMark, segmented } from '../../ui/forms.js';
 import { SUBTITLE_FONT_LIST, subtitleFontStack } from '../../ui/subtitle-fonts.js';
 import { aboutSection } from './about.js';
@@ -27,6 +27,15 @@ export const PREVIEW_NOTE = 'الحجم نسبة من ارتفاع المشغّ�
 export const INSTALL_REMINDER = 'ثبّت أيقونة ترجمان في شريط المتصفح من قائمة الإضافات.';
 export const SAVE_HINT = 'كل خيار يُحفظ فورًا على جهازك.';
 export const RESET_LABEL = 'استعادة الافتراضي';
+/** مفتاحا الواجهة على هذا الجهاز في «العرض» (prefs.ui): نصوصهما كما في لوحة الإعدادات المعتمدة. */
+export const ENTRY_SWITCH = Object.freeze({
+  label: 'زر النص المتزامن', hint: 'في رأس عمود يوتيوب الجانبي', text: 'يظهر في صفحات الفيديو',
+  note: 'إطفاؤه كإخفاء الزر من اللوحة نفسها؛ وإغلاق اللوحة لا يمسّه.',
+});
+export const THUMBNAILS_SWITCH = Object.freeze({
+  label: 'صور الفيديو في المحفوظات', text: 'تُعرض صورة كل فيديو',
+  note: `تُطلب من خوادم يوتيوب (${ltrInline('i.ytimg.com')}) بمعرّف الفيديو؛ أطفئها ليبقى كل شيء على جهازك.`,
+});
 export const MODE_NOTES = Object.freeze({
   normal: 'عادي: مقاطع كما في يوتيوب، للتزامن الأدق.',
   long: 'مقاطع أطول: جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما.',
@@ -129,6 +138,27 @@ export function createSettings(env) {
     ],
     doc,
   });
+  /** صف بسطر شرح تحت التسمية (قبل علامة الحفظ). */
+  const rowWithHint = (label, hint, mark, control, ...extra) => {
+    const r = row(label, mark, control, ...extra);
+    r.querySelector('.st-row__label').insertBefore(el('span', { className: 'st-row__hint', text: hint, doc }), mark?.root ?? null);
+    return r;
+  };
+  /**
+   * مفتاح لتفضيل واجهة على هذا الجهاز (prefs.ui.<key>): يقرأ من التفضيلات ويكتب فيها فورًا بعلامة «حُفظ»؛ وإن فشل الحفظ عادت
+   * الواجهة إلى المحفوظ (savePrefs يزامنها)، فلا يبقى المفتاح على غير ما في التخزين.
+   */
+  function uiSwitch(key, text, mark) {
+    const input = el('input', { className: 'st-switch__input', attrs: { id: `st-ui-${key}`, type: 'checkbox', role: 'switch', 'data-pref': `ui.${key}` }, doc });
+    input.addEventListener('change', () => { savePrefs({ ui: { [key]: input.checked } }, mark); });
+    sync.push(() => { input.checked = prefs.ui[key]; });
+    input.checked = prefs.ui[key];
+    return el('label', {
+      className: 'st-switch', attrs: { for: `st-ui-${key}` },
+      children: [input, el('span', { className: 'st-switch__track', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'st-switch__label', text, doc })],
+      doc,
+    });
+  }
 
   /** قسم بعنوان ووصف و«استعادة الافتراضي» إن كان له افتراضيات. */
   function section(def, ...children) {
@@ -152,7 +182,7 @@ export function createSettings(env) {
     const head = el('div', {
       className: 'st-section__head',
       children: [
-        el('div', { className: 'st-section__titles', children: [el('h2', { className: 'tj-h2', text: def.title, attrs: { id: `st-${def.id}-title` }, doc }), el('p', { className: 'tj-caption', text: def.desc, doc })], doc }),
+        el('div', { className: 'st-section__titles', children: [el('h2', { className: 'tj-h3', text: def.title, attrs: { id: `st-${def.id}-title` }, doc }), el('p', { className: 'tj-caption', text: def.desc, doc })], doc }),
         resetBtn ? el('div', { className: 'st-section__actions', children: [resetBtn, resetMark.root], doc }) : null,
       ],
       doc,
@@ -258,13 +288,21 @@ export function createSettings(env) {
   })();
   sync.push(() => preview.update(settings.appearance));
 
+  // مفتاحا الواجهة (prefs.ui) على هذا الجهاز: زر لوحة النص المتزامن في صفحات الفيديو، وصور الفيديو في المحفوظات.
+  const entryMark = marks();
+  const entrySwitch = uiSwitch('panelEntry', ENTRY_SWITCH.text, entryMark);
+  const thumbsMark = marks();
+  const thumbsSwitch = uiSwitch('thumbnails', THUMBNAILS_SWITCH.text, thumbsMark);
+
   const display = section(byId.display,
     row('وضع العرض الافتراضي', displayMark, displaySeg.root),
     row('خط الترجمة', fontMark, fontList, note(SUBTITLE_NOTE)),
     row('حجم الخط', scaleMark, sliderBox, note(SCALE_NOTE)),
     row('الخلفية', bgMark, bgSeg.root),
     row('الموضع', posMark, posSeg.root),
-    el('div', { className: 'st-preview-block', children: [el('span', { className: 'tj-label', text: 'معاينة حية', doc }), preview.root, note(PREVIEW_NOTE)], doc }));
+    rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)),
+    row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(THUMBNAILS_SWITCH.note)),
+    row('معاينة حية', null, preview.root, note(PREVIEW_NOTE)));
 
   // ---- التوقيت ----
   const stepMark = marks();
@@ -453,6 +491,7 @@ export function createSettings(env) {
     row('المساحة المستخدمة', null, el('div', { className: 'st-quota', children: [usageText, meter], doc }), capacityAlert),
     row('الترجمات والنسخ السابقة', null, el('div', { className: 'st-library', children: [libraryText, libraryBytes], doc })),
     row('مسح البيانات', storageMark, el('div', { className: 'st-actions', children: [clearBtn], doc }), note('يحذف كل الترجمات المحفوظة والإعدادات من هذا المتصفح. الملفات التي نزّلتها على جهازك لا تتأثر.')));
+  [...storage.children].at(-1)?.querySelector('.tj-label')?.classList.add('st-danger'); // تسمية «مسح البيانات» بنبرة الخطر
 
   // ---- البيانات ----
   const data = dataControl({
@@ -542,7 +581,7 @@ export function createSettings(env) {
     el('div', {
       className: 'st-content',
       children: [
-        el('header', { className: 'st-head', children: [el('h1', { className: 'tj-h1', text: 'الإعدادات', doc }), el('p', { className: 'tj-caption', text: SAVE_HINT, doc })], doc }),
+        el('header', { className: 'st-head', children: [el('h1', { className: 'tj-display', text: 'الإعدادات', doc }), el('p', { className: 'tj-caption', text: SAVE_HINT, doc })], doc }),
         reminderHost, alertHost, display, timing, exporting, comparison, glossarySection, storage, dataSection, diagnostics, about,
       ],
       doc,
