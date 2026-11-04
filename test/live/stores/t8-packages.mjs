@@ -35,6 +35,8 @@ const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const WORK = path.join(PROFILE_ROOT, 't8-work', `${browser}-${RUN}`);
 const EXT = path.join(WORK, 'ext');
 const DL = path.join(WORK, 'downloads');
+/** نمط المضيف بلا مخطط: الأدلة بلا روابط (check-secrets). */
+const host = (u) => String(u).replace(/^[a-z]+:\/\//i, '');
 
 const result = { browser: null, package: ZIP_NAME, at: new Date().toISOString(), headless: true, extension: null, checks: [], notes: [], errors: [] };
 /** ok: true نجح، false فشل، null لم يُختبر (والسبب في التفصيل). */
@@ -95,7 +97,7 @@ try {
       });
       check('manifest-version', m.version === VERSION, { version: m.version });
       check('manifest-name', m.name === 'ترجمان - ترجمتك العربية فوق الفيديو' && m.short === 'ترجمان', { name: m.name, short: m.short });
-      check('manifest-permissions-as-shipped', JSON.stringify(m.perms) === JSON.stringify(shipped.permissions ?? []) && JSON.stringify(m.optional) === JSON.stringify(shipped.optional_host_permissions ?? []), { perms: m.perms, hosts: m.hosts, optional: m.optional });
+      check('manifest-permissions-as-shipped', JSON.stringify(m.perms) === JSON.stringify(shipped.permissions ?? []) && JSON.stringify(m.optional) === JSON.stringify(shipped.optional_host_permissions ?? []), { perms: m.perms, hosts: m.hosts, optional: m.optional.map(host) });
     });
     await step('about', async () => {
       await sleep(600);

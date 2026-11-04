@@ -1,0 +1,330 @@
+{
+  "browser": "Chrome 156.0.8078.80 (Chrome/156.0.8078.80)",
+  "target": "chromium",
+  "at": "2026-11-04T19:17:39.145Z",
+  "headless": true,
+  "video": "iG9CE55wbtY",
+  "extension": null,
+  "checks": [
+    {
+      "id": "install",
+      "ok": true,
+      "detail": {
+        "extension": "inglgbnkjnmjabjblnmomlhacdoldabj",
+        "version": "Chrome/156.0.8078.80"
+      }
+    },
+    {
+      "id": "content-script-mounted",
+      "ok": true,
+      "detail": {
+        "player": true,
+        "mounted": {
+          "overlay": "mounted",
+          "controls": "mounted",
+          "panel": "mounted"
+        },
+        "base": "معروف"
+      }
+    },
+    {
+      "id": "bridge-main-world-wrappers",
+      "ok": true,
+      "detail": {
+        "fetch": true,
+        "xhrOpen": true,
+        "webdriver": true
+      }
+    },
+    {
+      "id": "capture-via-bridge",
+      "ok": true,
+      "detail": {
+        "captured": [
+          {
+            "key": "en|manual",
+            "ok": true
+          }
+        ],
+        "english": {
+          "key": "en|manual",
+          "kind": "manual",
+          "count": 427,
+          "source": "captured"
+        },
+        "expected": 427
+      }
+    },
+    {
+      "id": "ui-fonts-loaded",
+      "ok": true,
+      "detail": {
+        "fonts": [
+          "Tarjuman UI Cairo:600:loaded",
+          "Tarjuman UI Cairo:700:loaded",
+          "Tarjuman UI Almarai:400:loaded",
+          "Tarjuman UI Almarai:700:loaded"
+        ]
+      }
+    },
+    {
+      "id": "srt-download",
+      "ok": true,
+      "detail": {
+        "file": "iG9CE55wbtY.en.manual.normal.srt",
+        "bytes": 32411,
+        "expectedSha": "7770a795775890e6",
+        "sha": "7770a795775890e6",
+        "line": "نُزّل",
+        "fallback": false
+      }
+    },
+    {
+      "id": "copy-instructions",
+      "ok": true,
+      "detail": {
+        "copies": [
+          {
+            "len": 3425,
+            "sha": "110220f811f0fb27"
+          }
+        ],
+        "items": [
+          {
+            "fid": "mode:normal",
+            "disabled": false
+          },
+          {
+            "fid": "mode:long",
+            "disabled": false
+          },
+          {
+            "fid": "download",
+            "disabled": false
+          },
+          {
+            "fid": "copy",
+            "disabled": false
+          },
+          {
+            "fid": "fallback",
+            "disabled": false
+          }
+        ],
+        "line": "سخ التعليماتنُزّل iG9CE55wbtY.en.manual.normal.srtنُسخت التعليماتخيارات احتياطية",
+        "title": "معروف"
+      }
+    },
+    {
+      "id": "arabic-upload-from-player",
+      "ok": true,
+      "detail": {
+        "chooser": true,
+        "arabic": {
+          "count": 427,
+          "fileName": "iG9CE55wbtY.en.manual.normal.ar.srt",
+          "edited": false,
+          "first": "صباح الخير. كيف حالكم؟"
+        },
+        "expected": 427
+      }
+    },
+    {
+      "id": "display-arabic-over-video",
+      "ok": true,
+      "detail": {
+        "ad": {
+          "seen": false,
+          "skipped": 0
+        },
+        "seeks": 1,
+        "at": 62.2295,
+        "cue": 13,
+        "shown": [
+          "والثاني أنه وضعنا في موضع"
+        ]
+      }
+    },
+    {
+      "id": "subtitle-fonts-read-from-package",
+      "ok": true,
+      "detail": {
+        "fonts": [
+          "Tarjuman Subtitle Almarai:400:loaded",
+          "Tarjuman Subtitle Almarai:700:loaded"
+        ]
+      }
+    },
+    {
+      "id": "timing-plus-minus",
+      "ok": true,
+      "detail": {
+        "before": 0,
+        "plus": 500,
+        "back": 0
+      }
+    },
+    {
+      "id": "editor-edit-reaches-player",
+      "ok": true,
+      "detail": {
+        "typed": true,
+        "cue1": "ينتهي بالتعديل"
+      }
+    },
+    {
+      "id": "saved-and-restored-after-reload",
+      "ok": true,
+      "detail": {
+        "arabic": {
+          "count": 427,
+          "fileName": "iG9CE55wbtY.en.manual.normal.ar.srt",
+          "edited": true,
+          "first": "صباح الخير. كيف حالكم؟ — عدّلته في T3"
+        }
+      }
+    },
+    {
+      "id": "backup-created",
+      "ok": true,
+      "detail": {
+        "file": "tarjuman-backup-2026-11-04.json",
+        "counts": {
+          "videos": 1,
+          "translations": 1,
+          "previous": 0,
+          "marks": 0,
+          "settings": true,
+          "prefs": true
+        }
+      }
+    },
+    {
+      "id": "report-preview",
+      "ok": true,
+      "detail": {
+        "rows": {
+          "product": "tarjuman",
+          "kind": "خلل (bug)",
+          "app_version": "1.1.0",
+          "diagnostics.browser · browser_version": "Google Chrome 156.0.8078.80",
+          "diagnostics.build_target": "chromium",
+          "os · os_version · arch": "macos 27.2.0 · arm64",
+          "locale": "ar",
+          "test": "نعم: بناء تطوير"
+        },
+        "payloadKeys": [
+          "product",
+          "app_version",
+          "os",
+          "os_version",
+          "arch",
+          "locale",
+          "kind",
+          "description",
+          "diagnostics",
+          "test"
+        ]
+      }
+    },
+    {
+      "id": "report-copy-offline",
+      "ok": true,
+      "detail": {
+        "same": true,
+        "copiedLength": 339,
+        "jsonLength": 339,
+        "result": "نُسخ البلاغ نصًّا. لم يُرسل شيء."
+      }
+    },
+    {
+      "id": "report-error-row",
+      "ok": null,
+      "detail": {
+        "note": "لم يُرد الإذن ولا الطلب في 25 ثانية بلا نافذة (حوار الإذن ينتظر يدًا)؛ يُختبر في الجلسة اليدوية",
+        "blocked": 0
+      }
+    },
+    {
+      "id": "uninstall-removes-storage",
+      "ok": true,
+      "detail": {
+        "uninstall": {
+          "method": "Extensions.uninstall"
+        },
+        "before": [
+          {
+            "dir": "inglgbnkjnmjabjblnmomlhacdoldabj",
+            "bytes": 532189
+          }
+        ],
+        "after": [
+          {
+            "dir": "inglgbnkjnmjabjblnmomlhacdoldabj",
+            "bytes": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "reinstall-starts-empty",
+      "ok": true,
+      "detail": {
+        "videoKeys": 0
+      }
+    },
+    {
+      "id": "backup-restore-after-reinstall",
+      "ok": true,
+      "detail": {
+        "chooser": true,
+        "report": "اكتملت الاستعادة.أضيف 1 · تُخطّي 0 · استُبدل 0 · تعذّر 0",
+        "restored": true
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "notes": [
+    "استقرار صفحة يوتيوب: {\"url\":\"/watch?v=iG9CE55wbtY\",\"changes\":0}",
+    "إعلان عند الفتح: {\"seen\":false,\"skipped\":0}"
+  ],
+  "screenshots": [
+    "docs/evidence/T8/t3/chrome/youtube-display.png",
+    "docs/evidence/T8/t3/chrome/editor.png",
+    "docs/evidence/T8/t3/chrome/settings-report.png",
+    "docs/evidence/T8/t3/chrome/settings-restore.png"
+  ],
+  "errors": [
+    {
+      "where": "youtube",
+      "errors": [],
+      "fontReadLogs": 8
+    },
+    {
+      "where": "pages/editor/index.html",
+      "errors": [],
+      "fontReadLogs": 0
+    },
+    {
+      "where": "pages/settings/index.html",
+      "errors": [],
+      "fontReadLogs": 0
+    },
+    {
+      "where": "pages/settings/index.html",
+      "errors": [],
+      "fontReadLogs": 0
+    }
+  ],
+  "summary": {
+    "passed": 20,
+    "total": 20,
+    "untested": [
+      "report-error-row"
+    ]
+  }
+}

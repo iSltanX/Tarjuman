@@ -1,0 +1,159 @@
+{
+  "browser": "Firefox 159.0.1 (Firefox/159.0.1)",
+  "package": "tarjuman-1.1.0-firefox.zip",
+  "at": "2026-11-04T19:25:37.940Z",
+  "headless": true,
+  "extension": "tarjuman@bysltan.com",
+  "checks": [
+    {
+      "id": "package-sha256-listed",
+      "ok": true,
+      "detail": {
+        "sha256": "8b6face32435b2a4",
+        "bytes": 1002631
+      }
+    },
+    {
+      "id": "package-has-no-dev-bridge",
+      "ok": true,
+      "detail": {
+        "contentScripts": 2
+      }
+    },
+    {
+      "id": "install",
+      "ok": true,
+      "detail": {
+        "version": "Firefox/159.0.1"
+      }
+    },
+    {
+      "id": "settings-open",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "manifest-version",
+      "ok": true,
+      "detail": {
+        "version": "1.1.0"
+      }
+    },
+    {
+      "id": "manifest-name",
+      "ok": true,
+      "detail": {
+        "name": "ترجمان - ترجمتك العربية فوق الفيديو",
+        "short": "ترجمان"
+      }
+    },
+    {
+      "id": "manifest-permissions-as-shipped",
+      "ok": true,
+      "detail": {
+        "perms": [
+          "storage",
+          "unlimitedStorage",
+          "downloads"
+        ],
+        "hosts": [],
+        "optional": [
+          "app-reports.isultantf.workers.dev/*"
+        ]
+      }
+    },
+    {
+      "id": "about-version",
+      "ok": true,
+      "detail": {
+        "rows": [
+          "الإصدار1.1.0"
+        ]
+      }
+    },
+    {
+      "id": "about-links-site-and-support",
+      "ok": true,
+      "detail": {
+        "links": [
+          {
+            "text": "bysltan.com",
+            "target": "_blank"
+          },
+          {
+            "text": "الدعم والخصوصية",
+            "target": "_blank"
+          }
+        ],
+        "support": true
+      }
+    },
+    {
+      "id": "about-report-button",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "about-lucide-line-and-notices-link",
+      "ok": true,
+      "detail": {
+        "notices": [
+          "أيقونات الواجهة · Lucide — ISC، ومنها Feather — MIT"
+        ]
+      }
+    },
+    {
+      "id": "notices-file-shipped",
+      "ok": true,
+      "detail": {
+        "bytes": 13496
+      }
+    },
+    {
+      "id": "firefox-thumbnails-consent-not-granted-on-install",
+      "ok": true,
+      "detail": {
+        "granted": [],
+        "declared": {
+          "required": [
+            "none"
+          ],
+          "optional": [
+            "technicalAndInteraction",
+            "browsingActivity"
+          ]
+        }
+      }
+    },
+    {
+      "id": "youtube-content-script-mounted",
+      "ok": true,
+      "detail": {
+        "player": true,
+        "controlsHost": true
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": {
+        "count": 0
+      }
+    },
+    {
+      "id": "uninstall",
+      "ok": true,
+      "detail": {
+        "method": "webExtension.uninstall"
+      }
+    }
+  ],
+  "notes": [],
+  "errors": [],
+  "summary": {
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "total": 16
+  }
+}
