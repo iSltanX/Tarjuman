@@ -50,7 +50,7 @@ Optional host permission https://app-reports.isultantf.workers.dev/*: Requested 
 
 **`web_accessible_resources`:** ملفات الخطوط (`ui/fonts/subtitle/*.woff2` و`ui/fonts/ui/*.woff2`) لـ`www.youtube.com` وحده، بعنوان متغير (`use_dynamic_url`)، لترسم الترجمة وأدوات المشغّل بخطوط مضمّنة دون تحميلها من الشبكة. ليس إذنًا، ويُذكر في ملاحظات المراجعين.
 
-**Firefox — `data_collection_permissions`** (من البيان، فلا حقل لها في نموذج AMO): `required: ["none"]`، و`optional: ["technicalAndInteraction", "browsingActivity"]`. «البيانات التقنية والتفاعل» تُطلب مع البلاغ لأنه يحمل إصدار ترجمان والمتصفح والنظام، و«نشاط التصفح» تُطلب حين يفعّل المستخدم صور المحفوظات لأنها تُطلب من يوتيوب بمعرّفات الفيديوهات المحفوظة (قرار سلطان، §٥ من [`README.md`](README.md)). ولا تُطلب إحداهما إلا عند استعمال ميزتها.
+**Firefox — `data_collection_permissions`** (من البيان، فلا حقل لها في نموذج AMO): `required: ["none"]`، و`optional: ["technicalAndInteraction", "browsingActivity"]`. «البيانات التقنية والتفاعل» للبلاغ لأنه يحمل إصدار ترجمان والمتصفح والنظام: يعرضها Firefox وحدها من الاختيارية في نافذة التثبيت، وإن لم تكن ممنوحة تُطلب عند أول إرسال؛ و«نشاط التصفح» تُطلب حين يفعّل المستخدم صور المحفوظات لأنها تُطلب من يوتيوب بمعرّفات الفيديوهات المحفوظة (قرار سلطان، §٥ من [`README.md`](README.md)). ولا يخرج بلاغ إلا حين يضغط المستخدم «أرسل البلاغ»، ولا صورة إلا بالموافقة والمفتاح معًا.
 
 ## ٣. الشيفرة البعيدة
 

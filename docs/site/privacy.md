@@ -34,7 +34,7 @@
 - **علامات المراجعة وآخر موضع:** رقم المقطع، وزمنه، وبصمة قصيرة لنصه، دون النص نفسه.
 - **إعداداتك:** خطوة ضبط التوقيت، ووضع العرض، ومظهر الترجمة، وخيارات التصدير، وحد سرعة القراءة، والمصطلحات التي تكتبها في القاموس، ومكان حفظ الملفات واسم المجلد الفرعي إن سمّيته، ومفاتيح الواجهة.
 - **آخر ملف حفظه ترجمان:** معرّف التنزيل في المتصفح وتاريخه، دون مساره.
-- **ما لا يُحفظ:** روابط الترجمة التي طلبها المشغّل، ورموز جلسة يوتيوب، وملفات ارتباطه، وسجل مشاهدتك.
+- **ما لا يُحفظ:** روابط الترجمة التي طلبها المشغّل، ورموز جلسة يوتيوب، وملفات ارتباطه. ولا سجلّ لكل ما تشاهده: لا يُحفظ إلا الفيديو الذي حفظت له ترجمة.
 
 ## الملفات والحافظة — `#files`
 
@@ -114,7 +114,10 @@
 - **التنزيلات:** لحفظ ملفات ترجمان في المكان الذي تختاره.
 - **صفحات `www.youtube.com`:** لتعمل أدوات ترجمان فوق المشغّل. لا مواقع أخرى، ولا تبويبات.
 - **اختيارية:** الاتصال بخادم البلاغات وحده، تُطلب عند أول إرسال بلاغ.
-- **في Firefox، موافقتان اختياريتان:** «البيانات التقنية والتفاعل» مع البلاغ، و«نشاط التصفح» لصور المحفوظات. لا تُطلب إحداهما إلا حين تستعمل ميزتها، وتسحبهما من صفحة إضافات Firefox.
+- **في Firefox، موافقتان اختياريتان:**
+  - «البيانات التقنية والتفاعل» للبلاغ: يعرضها Firefox في الإعدادات الاختيارية بنافذة التثبيت، فتشغّلها أو تطفئها هناك. وإن لم تكن ممنوحة طُلبت عند أول إرسال. والموافقة وحدها لا ترسل شيئًا: لا يخرج بلاغ إلا حين تضغط «أرسل البلاغ».
+  - «نشاط التصفح» لصور المحفوظات: لا تُطلب إلا حين تفعّل مفتاح الصور.
+  - وتسحبهما من صفحة إضافات Firefox.
 - لا صلاحية لسجل التصفح، ولا لملفات الارتباط، ولا للتبويبات.
 
 ## الجهات الخارجية — `#third-parties`
@@ -183,7 +186,7 @@
 | الصور | Firefox: مطفأة حتى الموافقة، والتفعيل يطلبها، والرفض يبقيها مطفأة، والسحب يوقفها | `src/core/consent/thumbnails.js` (`requestThumbnailsConsent` بفئة `browsingActivity`، و`thumbnailsConsent` من `permissions.getAll`)، و`scripts/targets.mjs` (`optional` فيه `browsingActivity`)، و`test/unit/consent/thumbnails.test.js` و`test/unit/pages/settings/ui-prefs.test.js` و`test/unit/pages/library/row.test.js` (حالات Firefox)؛ والسحب من صفحة الإضافات: [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) |
 | الصور | الإطفاء يوقف الطلب | `test/unit/pages/library/thumb.test.js` («مُطفأة: بلاطة بأيقونة الفيديو ولا img ولا أي عنوان صورة»)، و`test/unit/pages/settings/no-network.test.js` (الاستثناء في `thumb.js` وحده) |
 | البلاغ | متى، وطلب واحد بلا إعادة | `src/core/report/client.js` (`sendReport`)، و`src/pages/settings/report.js` |
-| البلاغ | الإذن الاختياري وموافقة Firefox | `src/manifest.json` (`optional_host_permissions`)، و`scripts/targets.mjs` (`data_collection_permissions.optional`)، و`src/core/report/client.js` (`reportPermissions`)؛ T3: «طلب الإذن الاختياري الحقيقي في Chrome وFirefox» |
+| البلاغ | الإذن الاختياري وموافقة Firefox، وعرض «البيانات التقنية والتفاعل» في نافذة التثبيت | `src/manifest.json` (`optional_host_permissions`)، و`scripts/targets.mjs` (`data_collection_permissions.optional`)، و`src/core/report/client.js` (`reportPermissions`)؛ T3: «طلب الإذن الاختياري الحقيقي في Chrome وFirefox»؛ ونافذة التثبيت: [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) («This choice is available in the optional settings section of the extension installation prompt») |
 | البلاغ | ما يحويه | `src/core/report/payload.js` (`buildPayload` و`diagnosticsOf`)، و`src/core/report/diagnostics.js`؛ T3: المعاينة «بحقول العقد وهدف البناء» |
 | البلاغ | ما لا يحويه، والتنبيه، ومفتاح التكرار | `src/core/report/payload.js` (لا حقل لها)، و`src/pages/settings/report.js` (التنبيه)، و`src/core/report/client.js` (`isIdempotencyKey`: UUID عشوائي) |
 | البلاغ | الوجهة والحدود والبصمة المملّحة | README في `iSltanX/app-reports` (`0f0587371f89`): «What the Worker does» و«Limits» و«Shared decisions» |

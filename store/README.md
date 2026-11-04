@@ -127,7 +127,7 @@
 | Mature content | خانة | — | T6 | [developer-policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) |
 | Single purpose، وتبرير الأذونات، والشيفرة البعيدة، وData usage | صفحة Privacy | الإفصاح الناقص أو غير الدقيق سبب رفض | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
 | Description | مطلوب لكل لغة | من 250 إلى 10,000 محرف | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
-| Extension logo | مطلوب لكل لغة | 1:1، والموصى به 300×300، والأدنى 128×128 | لا أيقونة أكبر من 128. T4 وT6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
+| Extension logo | مطلوب لكل لغة | 1:1، والموصى به 300×300، والأدنى 128×128 | **حُسم في T6:** `store/icons/edge-logo-300.png` | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
 | Small promotional tile | اختياري في صفحة النشر، و«مطلوب» في صفحة النظرة العامة | 440×280، ونقدّمه احتياطًا | T6 | [extensions overview](https://learn.microsoft.com/en-us/microsoft-edge/extensions/) |
 | Large promotional tile | اختياري | 1400×560 PNG | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
 | Screenshots | اختيارية | حتى 6، بمقاس 640×480 أو 1280×800 | T6 | [publish-extension](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/publish-extension) |
@@ -153,7 +153,7 @@
 | Categories | مطلوبة للإدراج | حتى 2 في الوثيقة، و3 في الشيفرة. ومنها Language Support وPhotos, Music & Videos | T6 | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
 | Tags | اختيارية | حتى 10 من قائمة ثابتة، فيها `youtube` و`translate` | T6 | AMO API `/api/v5/addons/tags/` |
 | Support email وwebsite وHomepage | اختيارية | 100 و255 و255 محرفًا | `iSultanBy@gmail.com` و`bysltan.com`. T7 | addons-server |
-| License | مطلوبة للمدرج | منها `all-rights-reserved` | **[قرار]** في T4 | [addons-server licenses](https://mozilla.github.io/addons-server/topics/api/licenses.html) |
+| License | مطلوبة للمدرج | منها `all-rights-reserved` | **حُسم في T4:** All Rights Reserved (§٥) | [addons-server licenses](https://mozilla.github.io/addons-server/topics/api/licenses.html) |
 | Privacy policy | مطلوبة متى نُقلت بيانات من الجهاز | لم تعد تُستضاف في AMO، ويُستحسن رابطها في الإدراج | T5 وT7 | [add-on-policies-faq](https://extensionworkshop.com/documentation/publish/add-on-policies-faq/) |
 | Notes for Reviewers | اختيارية | حتى 3,000، ولا يراها إلا Mozilla | T6 | addons-server |
 | Release notes | اختيارية | حتى 3,000 | T6 | addons-server |
@@ -169,7 +169,7 @@
 - **Firefox: الخطوط.** `use_dynamic_url` غير مدعوم، ورابط `moz-extension://` عشوائي لكل نسخة متصفح أصلًا. وأثر المفتاح في `web-ext lint` لم يُختبر.
 - **Firefox: إصدارات المفاتيح.** `world: "MAIN"` مدعوم منذ 128، و`optional_host_permissions` منذ 128 أيضًا، فالحد الأدنى 140 يغطيهما ويتسق مع `data_collection_permissions`.
 - **Firefox: إذن يوتيوب.** أذونات المضيف المشتقة من `content_scripts.matches` تُمنح عند التثبيت منذ 127، ويستطيع المستخدم سحبها. يختبرها T3.
-- **Firefox: التنزيل.** `downloads.download` بعنوان `data:` لا يذكره MDN، وهو يوثّق طريق `blob`. يختبره T3.
+- **Firefox: التنزيل.** `downloads.download` بعنوان `data:` لا يذكره MDN، وهو يوثّق طريق `blob`. **حُسم في T3:** Firefox يرفض `data:`، فصار التنزيل فيه بـ`blob:` (`3d6a800`).
 - **Firefox: بيئة المراجع.** الافتراضية Ubuntu 24.04.4 على ARM64، وNode 24.14.0، وnpm 11.9.0. وعندنا Node 24.18.1 وnpm 11.16.0، وملف القفل يحوي `@esbuild/linux-arm64`.
 - **Firefox: التصغير.** صفحة شيفرة المصدر لا توصي بالتصغير وإن أجازته، والبناء يستعمل `minifySyntax`. ينظر فيه T4 ولا يغيّره T1. **حُسم في T4:** يبقى `minifySyntax` (لا إعادة تسمية ولا حذف مسافات ولا خرائط مصدر)، وحزمة المصدر تعيد بناء الحزمة بايتًا، وتعليماتها تصفه.
 - **البناء: هدف esbuild.** `target: 'chrome111'`، فيُراجع لهدف Firefox في T2.
@@ -197,7 +197,7 @@
 
 **التأكيدات** (سلطان، 2026-11-03): صفة «غير تاجر» في Chrome، وبريد حساب Google هو بريد الدعم نفسه، و«BySultan» هو الاسم الظاهر للعموم في Edge (Publisher display name). فلم يبقَ قرار قبل الإرسال إلا ما ينتظر مرحلته.
 
-**قرارات تنتظر مرحلتها:** روابط الموقع والدعم في T7. ونص الإدراج وفيديو اللقطات حُسما في T6 (أدناه).
+**قرارات تنتظر مرحلتها:** لا شيء. روابط الموقع والدعم ثُبّتت بعد نشره (2026-11-04، `submission.md` §٥)، ونص الإدراج وفيديو اللقطات حُسما في T6 (أدناه).
 
 **قرارات T4** (اعتمدها سلطان كما أوصي بها في 2026-11-04: «نعم، اعتمدها»):
 
@@ -217,7 +217,7 @@
 | حذف البلاغ بطلب صاحبه | «لحذفه راسل بريد الدعم برقمه» | نُفّذ في `privacy.md` `#report` |
 | استعمال البلاغ | «يُستعمل لفهم المشكلة وإصلاحها وتحسين ترجمان وحده» | نُفّذ في `privacy.md` `#limited-use` |
 
-فلا [قرار] في `privacy.md`، و`PRIVACY.md` بلا تنبيه مسودة. ويبقى تاريخ السريان يوم النشر (T7)، و`--strict` يرفضه قبل تثبيته.
+فلا [قرار] في `privacy.md`، و`PRIVACY.md` بلا تنبيه مسودة. وثُبّت تاريخ السريان 2026-11-04 يوم نشر الموقع، و`--strict` ينجح.
 
 **قرارات T6** (سلطان، 2026-11-04):
 

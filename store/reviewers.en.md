@@ -76,7 +76,7 @@ How subtitles are read: a main-world content script at document_start wraps fetc
 
 Data (data_collection_permissions: required none; optional technicalAndInteraction, browsingActivity):
 - Library thumbnails from i.ytimg.com by video ID: off in Firefox until the user turns them on in Settings, which requests browsingActivity.
-- Problem report from Settings > About > "الإبلاغ عن مشكلة": sent only when the user presses send after a full preview; requests the optional host permission app-reports.isultantf.workers.dev and technicalAndInteraction. No subtitle text, video ID or user ID.
+- Problem report from Settings > About > "الإبلاغ عن مشكلة": sent only when the user presses send after a full preview; requests the optional host permission app-reports.isultantf.workers.dev and, in Firefox, technicalAndInteraction if it was not already granted in the install prompt. No subtitle text, video ID or user ID.
 Everything else stays in storage.local.
 
 Arabic sample (test.ar.srt):
