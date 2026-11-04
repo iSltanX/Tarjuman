@@ -30,7 +30,6 @@ export function panelCss() {
 .ic--xs { width: 14px; height: 14px; stroke-width: 2; }
 .mark { display: block; flex: none; direction: ltr; pointer-events: none; }
 .mark .tj-logo__glyph { fill: var(--tj-brand); }
-.mark .tj-logo__dots { fill: var(--tj-logo-dots); }
 
 .b, .mitem, .switch, .resume, .act, .t, .segs button { all: unset; box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .b:focus-visible, .mitem:focus-visible, .switch:focus-visible, .resume:focus-visible, .act:focus-visible, .segs button:focus-visible, .t:focus-visible, .num:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }

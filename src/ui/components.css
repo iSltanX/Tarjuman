@@ -199,8 +199,8 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-menu__label { font: 400 14px/20px var(--tj-font-body); }
 .tj-menu__hint { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 
-/* ---- الشعار المعتمد (logo.js): لونا الشعار من رموزه لا من لون الإبراز ---- */
-.tj-logo { display: block; flex: none; }
+/* ---- الشعار «المعيّنان المتشابكان» (logo.js): العلامة بالإبراز والاسم بالمداد، من رموز الشعار بالوضعين ---- */
+.tj-logo { display: block; flex: none; direction: ltr; }
 .tj-logo__glyph { fill: var(--tj-logo-glyph); }
 .tj-logo__dots { fill: var(--tj-logo-dots); }
 .tj-logo__word { fill: var(--tj-logo-word); }
