@@ -72,9 +72,9 @@ test('المفتوحة: الرأس (الشعار والعنوان) وزرا خي
   assert.equal(opts.getAttribute('aria-expanded'), 'false');
   assert.equal(close.getAttribute('aria-label'), 'إغلاق اللوحة');
   assert.ok(v.q('.head .mark'), 'رمز الشعار');
-  assert.equal(v.q('.head .mark').getAttribute('viewBox'), '288 0 121 69', 'الرمز وحده دون الاسم');
+  assert.equal(v.q('.head .mark').getAttribute('viewBox'), '1 8 46 32', 'العلامة وحدها دون الاسم (شبكة 48)');
   assert.equal(v.q('.head .tj-logo__word'), null);
-  assert.ok(v.q('.head .tj-logo__glyph') && v.q('.head .tj-logo__dots'), 'جسد التاء ونقطتاه');
+  assert.equal(v.q('.head .tj-logo__glyph path').getAttribute('fill-rule'), 'evenodd', 'المعيّنان المتشابكان والتداخل مفرّغ');
 });
 
 test('الإغلاق: panelOpen=false وحده، فتختفي من الصفحة ويبقى زرها في الشريط (panelEntry لا يُمس)', () => {

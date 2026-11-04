@@ -1,4 +1,4 @@
-/* صفحة الإعدادات (الهوية «بُنّ على ورق»، لوحتا Settings وSettingsData): تنقّل جانبي في البداية (اليمين في RTL) ومحتوى القسم
+/* صفحة الإعدادات (لوحتا Settings وSettingsData، والهوية الثالثة «باذنجاني على رمادي»): تنقّل جانبي في البداية (اليمين في RTL) ومحتوى القسم
    المختار بجواره. القسم بطاقة على الورق: رأسها عنوان ووصف قصير و«استعادة الافتراضي» في النهاية، وصفوفها 184 | 1fr بخط شعري
    كامل العرض بين الصف والصف. التسمية في العمود الأول وتحتها علامة «حُفظ» بمساحة محجوزة فلا تدفع شيئًا، والعنصر في الثاني.
    كل لون من رموز src/ui/tokens.css بالوضعين. العرض الضيق: التنقّل شريط أفقي فوق المحتوى والتسمية فوق عنصرها. */
@@ -9,7 +9,8 @@
 .st-head { display: flex; flex-direction: column; gap: 2px; min-height: var(--st-head-h); }
 .st-reminder:empty { display: none; }
 
-/* التنقّل الجانبي: لاصق تحت الشريط العلوي. الحالي على سطح البطاقة بإطار شعري وأيقونته بالإبراز (والمعنى بالوزن واللون لا باللون وحده). */
+/* التنقّل الجانبي: لاصق تحت الشريط العلوي. القسم الحالي صبغة أهدأ من الإعداد المختار داخله (درجتا التحديد، الهوية الثالثة)
+   بنص أغمق وأيقونة بالإبراز، بلا إطار. */
 .st-nav { position: sticky; top: calc(var(--tj-topbar-h) + var(--tj-space-6)); display: flex; flex-direction: column; gap: 2px; margin-top: calc(var(--st-head-h) + var(--tj-space-4)); }
 .st-nav__link {
   display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: var(--tj-radius-md);
@@ -17,8 +18,8 @@
 }
 .st-nav__link .tj-icon { width: 18px; height: 18px; color: var(--tj-muted); }
 .st-nav__link:hover { background: var(--tj-hover); color: var(--tj-text); }
-.st-nav__link[aria-current="page"] { background: var(--tj-surface); color: var(--tj-text); box-shadow: inset 0 0 0 1px var(--tj-border); }
-.st-nav__link[aria-current="page"] .tj-icon { color: var(--tj-brand); }
+.st-nav__link[aria-current="page"] { background: var(--tj-selected-section); color: var(--tj-selected-section-ink); }
+.st-nav__link[aria-current="page"] .tj-icon { color: var(--tj-selected-section-icon); }
 
 /* القسم. */
 .st-content { display: flex; flex-direction: column; gap: var(--tj-space-4); min-width: 0; }
@@ -53,16 +54,16 @@
 /* علامة «حُفظ» (tj-saved من src/ui) تحت التسمية بمساحة محجوزة (لا تدفع ما تحتها). */
 .st-row__label .tj-saved { min-height: 18px; }
 
-/* خط الترجمة (لوحة الإعدادات المعتمدة): شرائح مدمجة في سطر، اسم كل خط بخطه نفسه و«الافتراضي» وسمٌ صغير؛ والمختار بحدّ الإبراز
-   وصبغته الخفيفة (الحد ≥ 3:1 على البطاقة بالوضعين) بلا إطار مزدوج، والزر الدائري مخفي بصريًا وبقي للوحة المفاتيح وقارئ الشاشة.
-   ووصف المختار سطرٌ واحد تحتها. */
+/* خط الترجمة (لوحة الإعدادات المعتمدة): شرائح مدمجة في سطر، اسم كل خط بخطه نفسه و«الافتراضي» وسمٌ صغير؛ بلا إطار، وغير المختار
+   بخلفية الزر المحايدة والمختار صبغة باذنجانية بنص أغمق (الهوية الثالثة)، والزر الدائري مخفي بصريًا وبقي للوحة المفاتيح وقارئ
+   الشاشة. ووصف المختار سطرٌ واحد تحتها. */
 .st-fonts { display: flex; flex-wrap: wrap; gap: var(--tj-space-2); border: 0; padding: 0; margin: 0; min-width: 0; width: 100%; }
 .st-font {
   position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: var(--tj-control-lg); padding: 0 14px;
-  border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-md); background: var(--tj-surface); color: var(--tj-text); cursor: pointer;
+  border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-control); color: var(--tj-text); cursor: pointer;
 }
-.st-font:hover { border-color: var(--tj-border-input); }
-.st-font:has(input:checked) { background: var(--tj-brand-soft); border-color: var(--tj-brand); color: var(--tj-brand-text); }
+.st-font:hover { background: var(--tj-control-hover); }
+.st-font:has(input:checked) { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .st-font input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .st-font:has(input:focus-visible) { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .st-font__name { font-size: 16px; line-height: 24px; font-weight: 700; }
