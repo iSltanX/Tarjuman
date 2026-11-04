@@ -2,7 +2,7 @@
 
 > **المرحلة:** T1 من [جولة النشر](../docs/store-release.md). قُرئت المصادر الرسمية في **2026-11-03** مباشرة، ما لم يُذكر غير ذلك. ولم تُعدَّل الشيفرة.
 > **الرموز:** **[قرار]** يلزمه قرار سلطان. و«لم يُتحقق» ما لم يوجد في مصدر رسمي. و«استئناس» سابقة لا سياسة، فوجود إضافة في متجر لا يضمن قبول غيرها.
-> **هذا المجلد** للمواد المتتبَّعة (T6). أما الحزم فتُبنى في `release/`، وهو متجاهَل في Git.
+> **هذا المجلد** للمواد المتتبَّعة (T6). أما الحزم فتُبنى في `release/`، وهو متجاهَل في Git. وفهرس مواد T6 وتغطيتها لحقول هذا الجدول في [§٧](#٧-مواد-المتاجر-t6).
 
 ## ١. الخلاصة: خطر الرفض لكل متجر
 
@@ -263,3 +263,55 @@
   - [Video DownloadHelper](https://addons.mozilla.org/en-US/firefox/addon/video-downloadhelper/)
 - **يوتيوب:**
   - [شروط الخدمة](https://www.youtube.com/static?template=terms&hl=en&gl=US): النسخة الأمريكية مؤرخة في 2023-12-15، والعربية سارية منذ 2022-01-05 وفيها استثناء ثالث «ما يسمح به القانون الساري»
+
+## ٧. مواد المتاجر (T6)
+
+أُعدّت في 2026-11-04 على الفرع بعد دمج الهوية الثالثة من `main` (قرار سلطان). ويقيسها كلها `node scripts/release/store-assets.mjs --check` (ضمن `npm run check`): الحقول بحدود §٣، والصور بمقاسها وشفافيتها. والأدلة في [`docs/evidence/T6/`](../docs/evidence/T6/README.md).
+
+| الملف | ما فيه |
+| --- | --- |
+| [`listing.ar.md`](listing.ar.md) | ما يراه المستخدمون: الاسم والوصف القصير من البيان، وملخص AMO، والوصف الكامل بنسختيه، والفئة، وكلمات Edge، ووسم AMO، ورابطه، وسجل الإصدار. **[قرار]** النص كله ينتظر اعتماد سلطان |
+| [`submission.md`](submission.md) | إجابات النماذج: الغرض الواحد، ومبررات الأذونات، والشيفرة البعيدة، وإفصاح البيانات، والروابط، وحقول كل متجر |
+| [`reviewers.en.md`](reviewers.en.md) | ملاحظات المراجعين بالإنجليزية لكل متجر، ومعها مقاطع عربية للتجربة |
+| `icons/` | `chrome-store-icon-128.png` (البلاطة 96 بحشو شفاف 16)، و`edge-logo-300.png`. والبلاطة تطابق أيقونة الإضافة المشحونة (`src/icons/tarjuman-icon-128.png`) إلا تنعيم الزوايا |
+| `promo/` | `small-promo-440x280.png` (Chrome وEdge)، و`marquee-1400x560.png` (Chrome Marquee وEdge Large) |
+| `screenshots/chromium/` | ست لقطات 1280×800: الخمس الأولى لـChrome، والست لـEdge |
+| `screenshots/firefox/` | اللقطات الست بمقاس 1280×960 لـAMO |
+| [`test-files/`](test-files/README.md) | ملف الترجمة الإنجليزية لفيديو اللقطات كما نزّله ترجمان، وترجمته العربية |
+
+**مصدر الصور:** لقطات حقيقية من حزمة المتجر `tarjuman-1.1.0-chrome.zip` (`test/live/stores/t6-shots.mjs`)، داخل إطار بعنوان عربي قصير (`test/live/stores/t6-art.mjs`) بخطوط ترجمان وشعاره وألوانه. وصورة الترويج الكبيرة فيها لقطة حقيقية كذلك. وفيديو اللقطات Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0، بلا أشخاص حقيقيين ولا اسم قناة ولا تعليقات ولا حساب. ولا لقطة من `docs/evidence/` القديمة.
+
+### تغطية حقول §٣
+
+كل حقل مطلوب في جدول T1 وماده. و«سلطان» ما يُنجز بيده عند النشر، و«T7» ما ينتظر نشر الصفحات.
+
+| المتجر | الحقل المطلوب | المادة |
+| --- | --- | --- |
+| Chrome | الحزمة | `release/store/tarjuman-1.1.0-chrome.zip` (T4) |
+| Chrome | الاسم والملخص | `manifest.name` و`manifest.description` في `listing.ar.md` |
+| Chrome | الوصف التفصيلي | `chromium.description` |
+| Chrome | الفئة واللغة | `listing.ar.md` «الفئة»، والعربية |
+| Chrome | أيقونة المتجر | `icons/chrome-store-icon-128.png` |
+| Chrome | لقطات (1 إلى 5) | `screenshots/chromium/01` إلى `05` |
+| Chrome | Single purpose | `reviewer.singlePurpose` في `submission.md` §١ |
+| Chrome | تبرير الأذونات | `reviewer.permission.*` في `submission.md` §٢، ومعها الإذن الاختياري لقناة البلاغات |
+| Chrome | إعلان الشيفرة البعيدة | `submission.md` §٣ |
+| Chrome | Data usage وLimited Use | `submission.md` §٤، ومنه قناة البلاغات |
+| Chrome | رابط سياسة الخصوصية | `submission.md` §٥ (T7) |
+| Chrome | إعلان التاجر | غير تاجر (سلطان، §٥) |
+| Edge | الحزمة | `release/store/tarjuman-1.1.0-edge.zip` (T4) |
+| Edge | Category | `listing.ar.md` «الفئة» |
+| Edge | Privacy policy URL | `submission.md` §٥ (T7) |
+| Edge | Single purpose والأذونات والشيفرة البعيدة وData usage | `submission.md` §١ إلى §٤ |
+| Edge | Description (250 إلى 10,000) | `chromium.description` (2,369 محرفًا، بلا ذكر متصفح آخر) |
+| Edge | Extension logo | `icons/edge-logo-300.png` |
+| Edge | الاسم والوصف القصير | من البيان |
+| Edge | خطوات الاختبار (البند 1.3) | `reviewer.chrome` و`reviewer.edge` في `reviewers.en.md` |
+| Firefox | ملف الإضافة وشيفرة المصدر | `tarjuman-1.1.0-firefox.zip` و`tarjuman-1.1.0-source.zip` (T4) |
+| Firefox | `data_collection_permissions` | في البيان (T2.1 وT5)، وشرحه في `submission.md` §٢ |
+| Firefox | Name وSummary | من البيان، و`amo.summary` |
+| Firefox | Categories | `listing.ar.md` «الفئة» |
+| Firefox | License | All Rights Reserved (`submission.md` §٦) |
+| Firefox | Privacy policy | `submission.md` §٥ (T7) |
+
+والاختياري كله له مادة أيضًا: Small promo وMarquee وLarge tile (`promo/`)، ولقطات Edge وAMO، وكلمات Edge، ووسم AMO ورابطه، وNotes for Reviewers، وRelease notes، وTest instructions. ولا فيديو ترويجي في هذا الإصدار.

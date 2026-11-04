@@ -64,9 +64,9 @@ function cdpPage(b, page) {
   return page;
 }
 
-async function chromium(browser, { profile, ext, downloadDir, headless }) {
+async function chromium(browser, { profile, ext, downloadDir, headless, extraArgs = [] }) {
   await writeChromiumPrefs(profile, downloadDir);
-  const b = await launch({ browser, profile, headless });
+  const b = await launch({ browser, profile, headless, extraArgs });
   let loaded = await loadExtension(b.conn, ext);
   if (loaded.error) throw new Error(`تعذّر تحميل الإضافة: ${loaded.error}`);
   let id = loaded.id;

@@ -1,0 +1,18 @@
+{
+  "at": "2026-11-04T03:43:20.422Z",
+  "browser": "Chrome 156.0.8078.80",
+  "package": "tarjuman-1.1.0-chrome.zip",
+  "manifestVersion": "1.1.0",
+  "video": "Y-rmzh0PI3c",
+  "webdriver": false,
+  "file": {
+    "name": "Y-rmzh0PI3c.en.manual.normal.srt",
+    "bytes": 3699,
+    "sha16": "5af1238b3a36d736",
+    "strict": true,
+    "cues": 60,
+    "firstStartMs": 140000,
+    "lastEndMs": 351000
+  },
+  "notes": []
+}

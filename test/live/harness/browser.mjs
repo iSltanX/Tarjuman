@@ -23,7 +23,7 @@ export const human = (min = 600, max = 1400) => sleep(min + Math.random() * (max
 /**
  * @param {{ browser: 'brave' | 'chrome', extensionPath?: string, flagLoad?: boolean }} opts
  */
-export async function launch({ browser, extensionPath, flagLoad = false, profile = browser, headless = false }) {
+export async function launch({ browser, extensionPath, flagLoad = false, profile = browser, headless = false, extraArgs = [] }) {
   const spec = BROWSERS[browser];
   const profileDir = path.join(PROFILE_ROOT, profile);
   await mkdir(profileDir, { recursive: true });
@@ -43,6 +43,8 @@ export async function launch({ browser, extensionPath, flagLoad = false, profile
   if (flagLoad && extensionPath) args.push(`--load-extension=${extensionPath}`);
   // بلا نافذة ولا تركيز (للتشخيص الذي لا يعتمد على محتوى الجسم). علامة الأتمتة تبقى ظاهرة كما هي.
   if (headless) args.push('--headless=new');
+  // أعلام إضافية لنسخة الاختبار وحدها (مثل منع التشغيل التلقائي في لقطات T6).
+  args.push(...extraArgs);
   args.push('about:blank');
   const child = spawn(spec.bin, args, { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
   let stderrTail = '';

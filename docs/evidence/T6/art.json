@@ -1,0 +1,117 @@
+{
+  "at": "2026-11-04T04:13:05.341Z",
+  "colors": {
+    "bg": "#F6F5F4",
+    "surface": "#FEFEFD",
+    "border": "#E3E1E1",
+    "text": "#221C21",
+    "text2": "#5B575A",
+    "brand": "#6B2D5E",
+    "ink": "#FEFEFD",
+    "soft": "#F5F1F3"
+  },
+  "done": [
+    {
+      "file": "icons/chrome-store-icon-128.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 1619
+    },
+    {
+      "file": "icons/edge-logo-300.png",
+      "width": 300,
+      "height": 300,
+      "bytes": 4586
+    },
+    {
+      "file": "tile-128-check.png",
+      "width": 128,
+      "height": 128,
+      "bytes": 1890
+    },
+    {
+      "file": "promo/small-promo-440x280.png",
+      "width": 440,
+      "height": 280,
+      "bytes": 7112
+    },
+    {
+      "file": "promo/marquee-1400x560.png",
+      "width": 1400,
+      "height": 560,
+      "bytes": 286170
+    },
+    {
+      "file": "screenshots/chromium/01-overlay.png",
+      "width": 1280,
+      "height": 800,
+      "bytes": 382550
+    },
+    {
+      "file": "screenshots/chromium/02-download.png",
+      "width": 1280,
+      "height": 800,
+      "bytes": 484264
+    },
+    {
+      "file": "screenshots/chromium/03-timing.png",
+      "width": 1280,
+      "height": 800,
+      "bytes": 482880
+    },
+    {
+      "file": "screenshots/chromium/04-editor.png",
+      "width": 1280,
+      "height": 800,
+      "bytes": 153161
+    },
+    {
+      "file": "screenshots/chromium/05-library.png",
+      "width": 1280,
+      "height": 800,
+      "bytes": 111538
+    },
+    {
+      "file": "screenshots/chromium/06-settings.png",
+      "width": 1280,
+      "height": 800,
+      "bytes": 94051
+    },
+    {
+      "file": "screenshots/firefox/01-overlay.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 384364
+    },
+    {
+      "file": "screenshots/firefox/02-download.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 486458
+    },
+    {
+      "file": "screenshots/firefox/03-timing.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 484958
+    },
+    {
+      "file": "screenshots/firefox/04-editor.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 192602
+    },
+    {
+      "file": "screenshots/firefox/05-library.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 114009
+    },
+    {
+      "file": "screenshots/firefox/06-settings.png",
+      "width": 1280,
+      "height": 960,
+      "bytes": 117388
+    }
+  ]
+}
