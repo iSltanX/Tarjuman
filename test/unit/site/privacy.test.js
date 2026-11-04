@@ -10,6 +10,8 @@ import { SOURCE, TARGET, effectiveDateOf, generate, withEffectiveDate } from '..
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const source = readFileSync(path.join(ROOT, SOURCE), 'utf8');
+// نسخة من المصدر قبل تثبيت التاريخ، لاختبار سلوك المولّد مع ⟨تاريخ النشر⟩ بعد أن ثُبّت التاريخ المعتمد (2026-11-04).
+const undated = source.replace(/^- \*\*تاريخ السريان:\*\* .+$/m, '- **تاريخ السريان:** ⟨تاريخ النشر⟩');
 const { version } = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 test('PRIVACY.md المتتبَّع هو ما يولّده المولّد من مصدره', () => {
@@ -41,7 +43,7 @@ test('[قرار] يُبقي المولَّد مسودة بتنبيه، و--stric
     assert.ok(draft.text.includes(`> **مسودة:** مواضع [قرار] لم يحسمها الناشر بعد: ${draft.decisions}.`));
     assert.throws(() => generate({ strict: true }), /\[قرار\]/);
   }
-  const resolved = source.replace(/\s*\*\*\[قرار\]\*\*/g, '');
+  const resolved = undated.replace(/\s*\*\*\[قرار\]\*\*/g, '');
   assert.throws(() => generate({ source: resolved, strict: true }), /تاريخ السريان غير مثبت/);
   const dated = withEffectiveDate(resolved, '2026-12-01');
   const ok = generate({ source: dated, strict: true });
@@ -51,16 +53,18 @@ test('[قرار] يُبقي المولَّد مسودة بتنبيه، و--stric
   assert.equal(ok.text.includes('مسودة'), false);
 });
 
-test('تاريخ السريان: ⟨تاريخ النشر⟩ حتى يُثبَّت، وتاريخ غير صالح يُرفض', () => {
-  assert.equal(effectiveDateOf(source), null);
-  assert.throws(() => withEffectiveDate(source, '2026-13-40'), /غير صالح/);
-  assert.throws(() => withEffectiveDate(source, '1 ديسمبر'), /غير صالح/);
-  assert.throws(() => effectiveDateOf(source.replace('- **تاريخ السريان:** ⟨تاريخ النشر⟩', '- **تاريخ السريان:** غدًا')), /غير صالح/);
-  assert.throws(() => withEffectiveDate(source, '2026-02-30'), /غير صالح/, 'تاريخ لا وجود له');
+test('تاريخ السريان: مثبَّت 2026-11-04 بقرار سلطان، و⟨تاريخ النشر⟩ يعني غير مثبت، وتاريخ غير صالح يُرفض', () => {
+  assert.equal(effectiveDateOf(source), '2026-11-04', 'المصدر يحمل تاريخ السريان المعتمد');
+  assert.equal(effectiveDateOf(undated), null);
+  assert.equal(effectiveDateOf(withEffectiveDate(undated, '2026-11-04')), '2026-11-04');
+  assert.throws(() => withEffectiveDate(undated, '2026-13-40'), /غير صالح/);
+  assert.throws(() => withEffectiveDate(undated, '1 ديسمبر'), /غير صالح/);
+  assert.throws(() => effectiveDateOf(undated.replace('- **تاريخ السريان:** ⟨تاريخ النشر⟩', '- **تاريخ السريان:** غدًا')), /غير صالح/);
+  assert.throws(() => withEffectiveDate(undated, '2026-02-30'), /غير صالح/, 'تاريخ لا وجود له');
 });
 
 test('كل مسار في جداول أدلة نصوص الموقع موجود، وكل نص بقسم رأس وجدول أدلة', () => {
-  for (const file of ['privacy.md', 'help.md', 'tarjuman.md']) {
+  for (const file of ['privacy.md', 'help.md', 'tarjuman.md', 'credits.md']) {
     const text = readFileSync(path.join(ROOT, 'docs/site', file), 'utf8');
     assert.ok(text.includes('\n## الرأس\n') || text.includes('\n## البيانات الوصفية\n'), `${file}: قسم الرأس`);
     const at = text.indexOf('## جدول الأدلة (للمراجعة، لا يُنشر)');
