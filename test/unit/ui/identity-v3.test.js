@@ -151,6 +151,7 @@ test('الصفحات: القسم الحالي أهدأ من المختار، و�
   has(lib, '.lib-chip', 'border: 1px solid transparent; background: var(--tj-control)');
   has(lib, '.lib-chip--active', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
   has(lib, '.lib-card--active', 'background: var(--tj-selected-soft)');
+  has(lib, '.lib-toggle[aria-expanded="true"], .lib-toggle[aria-expanded="true"]:hover:not(:disabled):not([aria-disabled="true"])', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
   assert.doesNotMatch(lib, /dashed/, 'لا حد متقطّع في المحفوظات');
   const ed = read('src/pages/editor/editor.css');
   has(ed, '.ed-seg', 'border: 1px solid transparent');

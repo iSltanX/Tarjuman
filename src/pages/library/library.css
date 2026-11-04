@@ -74,7 +74,8 @@
 /* أفعال الصف: «تحرير» و«رفع ترجمة» نصّان، وفتح الفيديو مثلث ممتلئ، وزر التوسيع يدور عند الفتح. */
 .lib-open .tj-icon { fill: currentColor; stroke-width: 1.5; }
 .lib-toggle .tj-icon { transition: transform var(--tj-motion-menu) var(--tj-ease); }
-.lib-toggle[aria-expanded="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); }
+/* المفتوح صبغة المحدد بنصه، ويبقى كذلك تحت المؤشر (كبقية المحدد: لا يغلبه لون المرور). */
+.lib-toggle[aria-expanded="true"], .lib-toggle[aria-expanded="true"]:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .lib-toggle[aria-expanded="true"] .tj-icon { transform: rotate(180deg); }
 
 /* صورة الفيديو: 128×72؛ بلاطة بأيقونة الفيديو عند الإطفاء أو الخطأ (لا توهم بأنها لقطة). والمدة شارة معتمة فوقها. */
