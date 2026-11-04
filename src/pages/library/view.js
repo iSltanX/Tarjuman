@@ -17,7 +17,7 @@ import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, 
 import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
 import { createToaster } from '../../ui/toast.js';
-import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, prepareUpload, studyName } from './actions.js';
+import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, prepareUpload, studyName, studyNote } from './actions.js';
 import { radioGroup } from './choice.js';
 import { createCopyState } from './copy.js';
 import { deleteContent } from './delete.js';
@@ -198,7 +198,7 @@ export function createLibrary(env) {
       await fn();
     } catch (err) {
       fail(err);
-      if (err instanceof TjError && (err.code === 'ST_CONFLICT' || err.code === 'PG_VIDEO_GONE')) await load();
+      if (err instanceof TjError && (err.code === 'ST_CONFLICT' || err.code === 'PG_VIDEO_GONE' || err.code === 'PG_DELETE_STALE')) await load();
     }
   }
 
@@ -246,7 +246,8 @@ export function createLibrary(env) {
 
   /** «نص دراسي…»: الصيغة واللغة ومعاينة الاسم، ثم الحفظ عبر saveFile. */
   const study = (m, entry) => guarded(async () => {
-    const content = studyContent({ doc, hasEnglish: entry.english.length > 0, name: (o) => studyName({ store, videoId: m.videoId, ...o }) });
+    const note = await studyNote({ store, videoId: m.videoId });
+    const content = studyContent({ doc, hasEnglish: entry.english.length > 0, name: (o) => studyName({ store, videoId: m.videoId, ...o }), note });
     await content.ready;
     const ok = await confirm({ title: `نص دراسي لـ"${isolate(clip(m.displayTitle, 80))}"`, body: 'الترجمة النشطة فقرات بأوقاتها، لقراءتها أو مراجعتها خارج الفيديو.', confirmLabel: 'تنزيل', content: content.root, doc });
     if (!ok) return;
@@ -303,22 +304,24 @@ export function createLibrary(env) {
 
   /**
    * حذف بتأكيد يسرد ما يُحذف بالضبط من بيانات الفيديو الفعلية (deleteSummary)، لا نصًا ثابتًا: الترجمة النشطة وحدها
-   * (يبقى غيرها والمسار الإنجليزي والنسخة السابقة) أو كل بيانات الفيديو.
+   * (يبقى غيرها والمسار الإنجليزي والنسخة السابقة) أو كل بيانات الفيديو. التنفيذ بالخانة التي سُردت وبالحزمة التي بُني عليها
+   * الحوار: إن تغيّرت قبل الموافقة (تفعيل ترجمة أخرى من تبويب آخر مثلًا) لا يُحذف شيء وتُعاد القائمة (PG_DELETE_STALE).
    */
   const removeData = (m, scope) => guarded(async () => {
     const b = await store.getBundle(m.videoId);
     if (!b) throw new TjError('PG_VIDEO_GONE');
     if (scope === 'arabic' && b.active === null) throw new TjError('PG_NO_ARABIC');
     const all = scope === 'all';
+    const n = b.active;
     const hasTranslations = b.slots.some((x) => x.track);
-    const summary = deleteSummary(b, all ? { scope: 'all' } : { scope: 'slot', n: b.active });
+    const summary = deleteSummary(b, all ? { scope: 'all' } : { scope: 'slot', n });
     const ok = await confirm({
-      title: all ? 'حذف بيانات هذا الفيديو؟' : `حذف الترجمة النشطة (${b.active})؟`,
+      title: all ? 'حذف بيانات هذا الفيديو؟' : `حذف الترجمة النشطة (${n})؟`,
       confirmLabel: all ? 'حذف نهائيًا' : 'حذف', tone: 'danger', doc,
       content: deleteContent({ doc, subtitle: m.displayTitle, summary, note: hasTranslations ? `لا يمكن التراجع. صدّر ${all ? 'الترجمات' : 'الترجمة'} أولًا إن كنت قد تحتاجها.` : 'لا يمكن التراجع.' }),
     });
     if (!ok) return;
-    await deleteVideoData({ store, videoId: m.videoId, scope, now });
+    await deleteVideoData({ store, videoId: m.videoId, scope, n: all ? undefined : n, expect: b, now });
     done(all ? 'PG_DELETE_ALL_DONE' : 'PG_DELETE_ARABIC_DONE');
     await load();
   });

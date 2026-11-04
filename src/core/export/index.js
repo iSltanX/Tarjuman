@@ -19,7 +19,7 @@ export { download, SRT_MIME } from './download.js';
 export { CONTENT_SPLIT, planParts, planPartsByContent } from './parts.js';
 export { fnv1a64, textHash } from './hash.js';
 export { buildPatchPackage, patchFileName } from './patch.js';
-export { buildStudyText } from './study.js';
+export { buildStudyText, studyTiming, studyTimingNote } from './study.js';
 export { buildReviewReport } from './report.js';
 
 const invalid = (what) => new TjError('MD_INVALID', { detail: `تصدير: ${what}` });

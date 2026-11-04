@@ -12,7 +12,7 @@ import { clip, displayName, toList } from './files.js';
 
 export { MAX_FILES, MAX_FILE_BYTES, mergeParts, selectFingerprint };
 export { applyPatch, cuesKey, partsStatus, readPatch } from './patch.js';
-export { REVIEW_THRESHOLDS, classTransitions, reviewIncoming, videoIdFromName } from './review.js';
+export { REVIEW_THRESHOLDS, classTransitions, reviewIncoming, sameExport, videoIdFromName } from './review.js';
 
 const NAMES_NOTE_CHARS = 300;
 const PART_MARK = /[._ -]?part[._ -]?\d+/i;

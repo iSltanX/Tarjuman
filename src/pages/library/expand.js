@@ -210,7 +210,8 @@ export function createExpansion(env) {
       label: 'حذف', variant: 'ghost', size: 'sm', className: 'lib-prevl__delete', title: 'حذف النسخة السابقة', doc,
       onClick: async () => {
         const ok = await env.confirm({ title: 'حذف النسخة السابقة؟', body: 'لا يمكن استعادتها بعد الحذف.', confirmLabel: 'حذف', tone: 'danger', doc });
-        if (ok) await act(() => deletePrevious({ store, videoId }), messageFor('PG_PREVIOUS_DELETED'));
+        // النسخة المعروضة في السطر وحدها: إن صارت السابقة غيرها قبل الموافقة لا يُحذف شيء (PG_DELETE_STALE).
+        if (ok) await act(() => deletePrevious({ store, videoId, expect: b }), messageFor('PG_PREVIOUS_DELETED'));
       },
     });
     remove.setAttribute('data-fk', fk('prev:delete'));
@@ -234,7 +235,8 @@ export function createExpansion(env) {
       content: deleteContent({ doc, subtitle: env.title, summary: deleteSummary(fresh, { scope: 'slot', n: s.n }), note: 'لا يمكن التراجع. صدّر الترجمة أولًا إن كنت قد تحتاجها.' }),
     });
     if (!ok) return;
-    await act(() => deleteSlot({ store, videoId, n: s.n, now }), messageFor('PG_SLOT_DELETED', { n: s.n }));
+    // ما سُرد هو ما يُحذف: إن تغيّرت الحزمة قبل الموافقة (استُبدلت الخانة من تبويب آخر مثلًا) لا يُحذف شيء (PG_DELETE_STALE).
+    await act(() => deleteSlot({ store, videoId, n: s.n, now, expect: fresh }), messageFor('PG_SLOT_DELETED', { n: s.n }));
   }
 
   const guarded = (fn) => async () => {

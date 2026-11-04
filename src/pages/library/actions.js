@@ -6,8 +6,8 @@
 import { diffTranslations, keepEditsMerge } from '../../core/align/index.js';
 import { compare } from '../../core/compare/index.js';
 import { TjError, messageFor } from '../../core/errors/index.js';
-import { buildArabicExport, buildExport, buildStudyText } from '../../core/export/index.js';
-import { readImport, reviewIncoming } from '../../core/import/index.js';
+import { buildArabicExport, buildExport, buildStudyText, studyTiming, studyTimingNote } from '../../core/export/index.js';
+import { readImport, reviewIncoming, sameExport } from '../../core/import/index.js';
 import {
   applyRecordChange, referencedFingerprints, withActiveSlot, withPreviousRestored, withSlotName, withSlotReference, withSlotUpload, withoutPrevious,
   withoutSlot,
@@ -15,7 +15,7 @@ import {
 import { LIMITS } from '../../core/model/validate.js';
 import { arabicCues } from '../../core/model/video.js';
 import { exportTiming } from '../../core/model/timing.js';
-import { withExport, withoutArabic } from '../../core/model/transitions.js';
+import { withExport } from '../../core/model/transitions.js';
 import { manualEdits } from './model.js';
 
 const iso = (now) => new Date(now()).toISOString();
@@ -84,11 +84,12 @@ async function exportCues({ videoId, source, offset, variant, askTiming, save })
   return { name: file.name, timing: timed.timing, cueCount: timed.cues.length, saved };
 }
 
-const sameFingerprint = (a, b) => a.trackKey === b.trackKey && a.mode === b.mode && a.textHash === b.textHash && a.count === b.count && a.parts === null && b.parts === null;
+// التصدير نفسه بأزمنته (sameExport) وبلا أجزاء: كانت الأزمنة تُهمل فيُرفض تصدير بتوقيت جديد ونصه مطابق، ويبقى المرجع القديم.
+const sameFingerprint = (a, b) => sameExport(a, b) && a.parts === null && b.parts === null;
 
 /**
  * تصدير الإنجليزية المستخرجة من المسار المحفوظ بالوضع «عادي» وحده. البصمة تُحفظ لتصحّ مقارنة ما سيعود به المستخدم،
- * إلا إن وُجدت بصمة مطابقة (المسار والوضع والنص والعدد) فلا تتراكم نسخ متطابقة حتى حد البصمات.
+ * إلا إن وُجدت بصمة للتصدير نفسه (المسار والوضع والنص والعدد والأزمنة) فلا تتراكم نسخ متطابقة حتى حد البصمات.
  * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string, trackKey: string,
  *   save: SaveFn, now: () => number }} o
  * @returns {Promise<{ name: string, cueCount: number, fingerprintSaved: boolean, saveError: unknown, saved: Awaited<ReturnType<SaveFn>> }>}
@@ -133,14 +134,23 @@ export async function exportEnglish({ store, videoId, trackKey, save, now }) {
  */
 export async function exportStudy({ store, videoId, format, bilingual, save }) {
   const record = await requireRecord(store, videoId);
-  const stored = arabicCues(record);
-  if (!stored) throw new TjError('PG_STUDY_NO_ARABIC');
   // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض) كالمحرّر، ومنه يُوزَّع الإنجليزي (تدقيق 5fedcb9، GM-016.1).
-  const timed = exportTiming(stored, record.view.displayOffsetMs, 'shown');
-  const cues = (timed.ok ? timed.cues : stored).map((c) => ({ ...c, startMs: Math.max(0, c.startMs), endMs: Math.max(0, c.endMs) }));
+  const { cues, clamped } = studyCues(record);
   const english = bilingual ? studyEnglish(record) : null;
   const file = buildStudyText({ videoId, title: record.title, cues, english, format, bilingual });
-  return { name: file.name, saved: await save(file) };
+  return { name: file.name, clamped, saved: await save(file) };
+}
+
+/** مقاطع النشطة بتوقيت النص الدراسي (studyTiming): الإزاحة لكلها، وما وقع قبل الصفر وحده من بداية الفيديو في `clamped`. */
+function studyCues(record) {
+  const stored = arabicCues(record);
+  if (!stored) throw new TjError('PG_STUDY_NO_ARABIC');
+  return studyTiming(stored, record.view.displayOffsetMs);
+}
+
+/** إشعار حوار «نص دراسي…» قبل التنزيل: ما ستبدأ روابطه من 0:00 بالإزاحة الحالية، أو '' (studyTimingNote). */
+export async function studyNote({ store, videoId }) {
+  return studyTimingNote(studyCues(await requireRecord(store, videoId)).clamped);
 }
 
 /** المسار الإنجليزي للنص الثنائي: مسار بصمة النشطة، ثم اليدوي، ثم أي مسار. @param {import('../../core/model/video.js').VideoRecord} record */
@@ -159,16 +169,35 @@ export async function studyName({ store, videoId, format, bilingual }) {
 }
 
 /**
- * الحذف: «arabic» يبقي المسار الإنجليزي والبصمات ويصفّر الإزاحة، و«all» يزيل سجل الفيديو ومُلخّصه معًا.
- * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string, scope: 'arabic' | 'all', now: () => number }} o
+ * الحذف مقيّد بما وافق عليه المستخدم: `expect` الحزمة التي بُني عليها حوار التأكيد، فإن تغيّرت منذئذ (تفعيل ترجمة أخرى أو رفع
+ * أو حذف من تبويب آخر) رُفض بـPG_DELETE_STALE ولم يُحذف شيء، ويعيد المستدعي قراءة ما يعرضه. بلا expect يُكتب على الأحدث.
+ * @template T @param {() => Promise<T>} write @returns {Promise<T>}
  */
-export async function deleteVideoData({ store, videoId, scope, now }) {
+async function confirmedDelete(write) {
+  try {
+    return await write();
+  } catch (err) {
+    if (err instanceof TjError && err.code === 'ST_CONFLICT') throw new TjError('PG_DELETE_STALE', { detail: err.detail, cause: err });
+    throw err;
+  }
+}
+
+/**
+ * الحذف: «arabic» ترجمة واحدة بعينها هي الخانة n التي سُردت في التأكيد (لا «النشطة وقت الكتابة»)، فيبقى غيرها والمسار
+ * الإنجليزي والبصمات والسابقة، وحذف النشطة يفعّل أصغر خانة ممتلئة غيرها؛ و«all» يزيل سجل الفيديو وتوابعه ومُلخّصه معًا.
+ * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string, scope: 'arabic' | 'all',
+ *   n?: 1 | 2 | 3, expect?: import('../../core/model/slots.js').Bundle, now: () => number }} o
+ */
+export async function deleteVideoData({ store, videoId, scope, n, expect, now }) {
   if (scope === 'all') {
-    await store.deleteVideo(videoId);
+    if (expect === undefined) await store.deleteVideo(videoId);
+    else await confirmedDelete(() => store.updateBundle(videoId, () => null, { expect }));
     return;
   }
   if (scope !== 'arabic') throw new RangeError(`نطاق حذف غير معروف: ${scope}`);
-  await store.updateVideo(videoId, (rec) => (rec && rec.arabic ? withoutArabic(rec, iso(now)) : undefined));
+  // تدقيق مستقل (2026-11-04): كان «arabic» يحذف النشطة لحظة الكتابة، فتفعيل الترجمة 2 من تبويب آخر بعد فتح تأكيد حذف 1 يحذف 2.
+  if (n !== 1 && n !== 2 && n !== 3) throw new RangeError('حذف ترجمة واحدة يحتاج رقم خانتها كما سُردت في التأكيد');
+  await confirmedDelete(() => store.updateBundle(videoId, (b) => (b?.slots[n - 1]?.track ? withoutSlot(b, n, iso(now)) : undefined), { expect }));
 }
 
 // ---- الإصدار الثاني: الخانات والنسخة السابقة والرفع (P13) ----
@@ -203,14 +232,17 @@ export async function activateSlot({ store, videoId, n, now }) {
 /** الاسم المختصر (≤ 24 محرفًا) أو إزالته بالفارغ. */
 export const renameSlot = ({ store, videoId, n, name }) => onBundle(store, videoId, (b) => withSlotName(b, n, name));
 
-/** حذف ترجمة واحدة باسمها وعلاماتها؛ حذف النشطة يفعّل أصغر خانة ممتلئة غيرها. السابقة تبقى. */
-export const deleteSlot = ({ store, videoId, n, now }) => onBundle(store, videoId, (b) => withoutSlot(b, n, iso(now)));
+/**
+ * حذف ترجمة واحدة باسمها وعلاماتها؛ حذف النشطة يفعّل أصغر خانة ممتلئة غيرها. السابقة تبقى. `expect` الحزمة التي سُرد منها
+ * التأكيد: إن تغيّرت (استُبدلت الخانة من تبويب آخر مثلًا) رُفض بـPG_DELETE_STALE ولم يُحذف شيء.
+ */
+export const deleteSlot = ({ store, videoId, n, now, expect }) => confirmedDelete(() => onBundle(store, videoId, (b) => withoutSlot(b, n, iso(now)), { expect }));
 
 /** استعادة النسخة السابقة: تبديل قابل للعكس مع خانتها. */
 export const restorePrevious = ({ store, videoId, now }) => onBundle(store, videoId, (b) => withPreviousRestored(b, iso(now)));
 
-/** حذف النسخة السابقة. */
-export const deletePrevious = ({ store, videoId }) => onBundle(store, videoId, (b) => withoutPrevious(b));
+/** حذف النسخة السابقة التي عُرضت (`expect`): إن صارت غيرها في الأثناء رُفض بـPG_DELETE_STALE. */
+export const deletePrevious = ({ store, videoId, expect }) => confirmedDelete(() => onBundle(store, videoId, (b) => withoutPrevious(b), { expect }));
 
 /**
  * مقارنة الملف أو الخانة ببصمة بعينها، بعتبة الانحراف من الإعدادات؛ وملاحظات الاستيراد أولًا كما في readImport.

@@ -214,6 +214,7 @@
 .st-report__row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; text-align: end; }
 .st-report__json { margin: var(--tj-space-2) 0 0; max-height: 280px; overflow: auto; padding: var(--tj-space-2); border-radius: var(--tj-radius-md); background: var(--tj-surface); font: 400 12px/18px var(--tj-font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .st-report__failed .tj-body-sm { color: var(--tj-danger); }
+.st-report__copy-failed { color: var(--tj-danger); }
 
 @media (max-width: 760px) {
   .st { grid-template-columns: minmax(0, 1fr); gap: var(--tj-space-4); }

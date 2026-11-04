@@ -59,11 +59,16 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   let diag = null;
   let diagFailed = false;
   let busy = false;
-  /** مفتاح عدم التكرار لهذا الجسم بعينه: يُعاد في محاولاته، وجسم معدَّل يأخذ مفتاحًا جديدًا. */
+  /**
+   * مفتاح عدم التكرار لهذا البلاغ بعينه: يُعاد في محاولاته بعد فشل، وجسم معدَّل يأخذ مفتاحًا جديدًا، والنجاح يختم البلاغ فيأخذ
+   * التالي مفتاحًا جديدًا ولو طابق وصفه الأول (عقد app-reports: مفتاح لكل بلاغ يُعاد في محاولاته وحدها).
+   */
   let key = null;
   let keyBody = null;
-  /** @type {null | { state: 'sent', id: number } | { state: 'failed', failure: string, retryAfterSeconds?: number } | { state: 'copied' | 'copy-failed' | 'id-copied' }} */
+  /** @type {null | { state: 'sent' | 'id-copied' | 'id-copy-failed', id: number } | { state: 'failed', failure: string, retryAfterSeconds?: number } | { state: 'copied' | 'copy-failed' }} */
   let outcome = null;
+  /** آخر فعل في منطقة النتيجة كان عليه التركيز (data-report-action): يعود إليه بعد إعادة رسمها إن بقي. */
+  let focusAction = null;
 
   const regionId = 'st-report';
   const textId = 'st-report-text';
@@ -94,7 +99,8 @@ export function reportPanel({ doc = document, env = {} } = {}) {
 
   const sendBtn = button({ label: 'أرسل البلاغ', variant: 'primary', doc, onClick: () => send() });
   const copyBtn = button({ label: 'انسخ البلاغ', variant: 'secondary', icon: 'copy', doc, onClick: () => copyReport() });
-  const result = el('div', { className: 'st-report__result', attrs: { role: 'status' }, doc });
+  // tabindex=-1: يستقبل التركيز برمجيًا حين يزول الزر الذي كان عليه (renderResult)، ولا يدخل ترتيب Tab.
+  const result = el('div', { className: 'st-report__result', attrs: { role: 'status', tabindex: '-1' }, doc });
 
   const region = el('div', {
     className: 'st-report',
@@ -145,7 +151,28 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     return null;
   }
 
+  /** زر في منطقة النتيجة باسم فعله، ليعود إليه التركيز بعد إعادة الرسم. */
+  const action = (name, opts) => {
+    const b = button({ doc, ...opts });
+    b.setAttribute('data-report-action', name);
+    return b;
+  };
+
+  /**
+   * إعادة الرسم تبدّل عقد النتيجة كلها. فإن كان التركيز فيها («أعد المحاولة» بلوحة المفاتيح مثلًا) لا يسقط إلى الصفحة: يعود إلى
+   * الفعل نفسه في الرسم الجديد إن وُجد، وإلا إلى منطقة النتيجة نفسها فيُقرأ ما فيها («يُرسل البلاغ…» ثم النتيجة).
+   */
   function renderResult() {
+    const active = doc.activeElement;
+    const inside = Boolean(active) && (active === result || result.contains(active));
+    if (inside && active !== result) focusAction = active.getAttribute?.('data-report-action') ?? null;
+    paintResult();
+    if (!inside) return;
+    const target = focusAction ? result.querySelector(`[data-report-action="${focusAction}"]`) : null;
+    (target ?? result).focus?.();
+  }
+
+  function paintResult() {
     if (busy) {
       result.replaceChildren(el('p', { className: 'tj-body-sm', text: 'يُرسل البلاغ…', doc }));
       return;
@@ -154,16 +181,25 @@ export function reportPanel({ doc = document, env = {} } = {}) {
       result.replaceChildren();
       return;
     }
-    if (outcome.state === 'sent' || outcome.state === 'id-copied') {
+    if (outcome.state === 'sent' || outcome.state === 'id-copied' || outcome.state === 'id-copy-failed') {
       const id = outcome.id;
-      const copyId = button({ label: 'نسخ الرقم', variant: 'ghost', size: 'sm', icon: 'copy', doc, onClick: () => {
-        deps.copy(`#${id}`).then(() => { outcome = { state: 'id-copied', id }; render(); }, () => {});
+      const copyId = action('copy-id', { label: 'نسخ الرقم', variant: 'ghost', size: 'sm', icon: 'copy', onClick: () => {
+        // فشل الحافظة (رفض أو غيابها) نتيجة ظاهرة لا صمت: الرقم ظاهر فوقه ليُنسخ باليد.
+        Promise.resolve().then(() => deps.copy(`#${id}`)).then(
+          () => { outcome = { state: 'id-copied', id }; render(); },
+          () => { outcome = { state: 'id-copy-failed', id }; render(); },
+        );
       } });
+      const copyNote = outcome.state === 'id-copied'
+        ? el('span', { className: 'tj-caption', attrs: { 'data-report-copy': 'done' }, text: 'نُسخ الرقم.', doc })
+        : outcome.state === 'id-copy-failed'
+          ? el('span', { className: 'tj-caption st-report__copy-failed', attrs: { role: 'alert', 'data-report-copy': 'failed' }, text: 'تعذّر نسخ الرقم. حدّده من السطر أعلاه وانسخه بيدك.', doc })
+          : null;
       result.replaceChildren(el('div', {
         className: 'st-report__done', attrs: { 'data-report-result': 'sent' },
         children: [
           el('p', { className: 'tj-body-sm', children: ['وصل بلاغك برقم ', ltr(`#${id}`, { doc }), '. احتفظ بالرقم إن أردت المتابعة، واذكره حين تراسل بريد الدعم ', ltr(SUPPORT_EMAIL, { doc }), '؛ لا يُرسل إليك شيء ولا نطلب بريدًا.'], doc }),
-          el('div', { className: 'st-actions', children: [copyId, outcome.state === 'id-copied' ? el('span', { className: 'tj-caption', text: 'نُسخ الرقم.', doc }) : null], doc }),
+          el('div', { className: 'st-actions', children: [copyId, copyNote], doc }),
         ],
         doc,
       }));
@@ -178,8 +214,8 @@ export function reportPanel({ doc = document, env = {} } = {}) {
           el('div', {
             className: 'st-actions',
             children: [
-              again ? button({ label: 'أعد المحاولة', variant: 'secondary', icon: 'restore', doc, onClick: () => send() }) : null,
-              button({ label: 'انسخ البلاغ', variant: 'secondary', icon: 'copy', doc, onClick: () => copyReport() }),
+              again ? action('retry', { label: 'أعد المحاولة', variant: 'secondary', icon: 'restore', onClick: () => send() }) : null,
+              action('copy', { label: 'انسخ البلاغ', variant: 'secondary', icon: 'copy', onClick: () => copyReport() }),
             ],
             doc,
           }),

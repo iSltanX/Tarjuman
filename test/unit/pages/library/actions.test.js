@@ -182,16 +182,16 @@ test('رفع ترجمة لفيديو بلا عربية (استيراد لا اس
   assert.equal(b.previous, null);
 });
 
-test('الحذف: «العربية فقط» يبقي الإنجليزي والبصمة ويصفّر الإزاحة، و«الكل» يزيل السجل ومُلخّصه', async () => {
+test('الحذف: «العربية فقط» (الخانة المسرودة) يبقي الإنجليزي والبصمة ويصفّر الإزاحة، و«الكل» يزيل السجل ومُلخّصه', async () => {
   const { store } = await seeded({ offset: 500 });
-  await deleteVideoData({ store, videoId: ID, scope: 'arabic', now });
+  await deleteVideoData({ store, videoId: ID, scope: 'arabic', n: 1, now });
   const r = await store.getVideo(ID);
   assert.equal(r.arabic, null);
   assert.equal(r.english.length, 1);
   assert.equal(r.fingerprints.length, 1);
   assert.equal(r.view.displayOffsetMs, 0);
   assert.equal((await store.listIndex()).length, 1);
-  await deleteVideoData({ store, videoId: ID, scope: 'arabic', now });
+  await deleteVideoData({ store, videoId: ID, scope: 'arabic', n: 1, now });
   assert.equal((await store.getVideo(ID)).rev, r.rev, 'حذف العربية مرتين لا يكتب ثانية');
 
   await deleteVideoData({ store, videoId: ID, scope: 'all', now });
