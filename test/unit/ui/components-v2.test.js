@@ -155,7 +155,9 @@ test('محدد الترجمات: التحديث بالقائمة نفسها لا
   assert.ok(p.button(3) === before[2], 'زر الخانة 3 هو نفسه بعد حذف الثانية');
 });
 
-test('تدقيق 5fedcb9 (CL-011، CL-018): مؤشر الاختيار في المقطّعة ≥ 3:1 بالوضعين، ونصه ≥ 4.5:1؛ وأهداف الضغط الصغيرة مكبّرة', async () => {
+// الهوية الثالثة (قرار سلطان 2026-11-04) تحل محل حدّ الإبراز في CL-011: المختار صبغة بلا إطار، ودليله نصه بلون أغمق (≥ 4.5:1 على
+// صبغته)، وحلقة التركيز بجواره ≥ 3:1؛ وأهداف الضغط الصغيرة مكبّرة كما هي (CL-018).
+test('المختار في المقطّعات صبغة بلا إطار بنص ≥ 4.5:1 بالوضعين، والتركيز بجواره ≥ 3:1؛ وأهداف الضغط الصغيرة مكبّرة (CL-018)', async () => {
   const tokens = await readFile(path.join(ROOT, 'src/ui/tokens.css'), 'utf8');
   const dark = tokens.slice(tokens.indexOf('@media (prefers-color-scheme: dark)'));
   const light = tokens.slice(0, tokens.indexOf('@media (prefers-color-scheme: dark)'));
@@ -166,14 +168,15 @@ test('تدقيق 5fedcb9 (CL-011، CL-018): مؤشر الاختيار في ال�
   };
   const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
   for (const [name, block] of [['فاتح', light], ['داكن', dark]]) {
-    assert.ok(ratio(hex(block, 'tj-brand'), hex(block, 'tj-surface-2')) >= 3, `${name}: الحد على المسار`);
-    assert.ok(ratio(hex(block, 'tj-brand-text'), hex(block, 'tj-brand-soft')) >= 4.5, `${name}: النص على الخلفية`);
+    assert.ok(ratio(hex(block, 'tj-selected-ink'), hex(block, 'tj-selected')) >= 4.5, `${name}: نص المختار على صبغته`);
+    assert.ok(ratio(hex(block, 'tj-focus'), hex(block, 'tj-selected')) >= 3, `${name}: التركيز بجوار المختار`);
+    assert.ok(ratio(hex(block, 'tj-text-2'), hex(block, 'tj-surface-2')) >= 4.5, `${name}: غير المختار على المسار`);
   }
   const ui = await readFile(path.join(ROOT, 'src/ui/components.css'), 'utf8');
-  assert.match(ui, /\.tj-seg__option input:checked \+ \.tj-seg__label \{[^}]*box-shadow: inset 0 0 0 1px var\(--tj-brand\)/);
+  assert.match(ui, /\.tj-seg__option input:checked \+ \.tj-seg__label \{ background: var\(--tj-selected\); color: var\(--tj-selected-ink\); \}/);
   assert.match(ui, /\.tj-chip \{[^}]*min-height: 32px/);
   assert.match(ui, /\.tj-slots__slot::after \{ content: ""; position: absolute; inset: -4px 0; \}/);
   const editor = await readFile(path.join(ROOT, 'src/pages/editor/editor.css'), 'utf8');
   assert.match(editor, /\.ed-row__check \{ width: 24px; height: 24px;/);
-  assert.match(editor, /\.ed-seg__opt\[aria-checked="true"\] \{ background: var\(--tj-surface\); color: var\(--tj-brand-text\); box-shadow: inset 0 0 0 1px var\(--tj-brand\)/);
+  assert.match(editor, /\.ed-seg__opt\[aria-checked="true"\] \{ background: var\(--tj-selected\); color: var\(--tj-selected-ink\); \}/);
 });

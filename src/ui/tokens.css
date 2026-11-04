@@ -1,60 +1,78 @@
-/* رموز تصميم صفحات ترجمان — الهوية «بُنّ على ورق» (قرار سلطان 2026-11-03، docs/identity-redesign.md). ورقٌ دافئ بثلاث
-   طبقات (الصفحة، والغائر، والبطاقة البيضاء) تفصلها النغمة وخطٌّ شعري لا ظل؛ وإبراز واحد بُنّيّ للإجراء الرئيسي والتحديد
-   والمقطع الحالي والروابط والتركيز وحدها؛ والقرمزي للخطر بعيدًا عن الإبراز؛ والمعلومة بصبغة الإبراز لا بأزرق. الشعار
-   بشكله المعتمد: جسد التاء بالبُنّ، والنقطتان بالذهب، والاسم بالمداد (--tj-logo-*). الوضع يتبع النظام، وdata-theme يفرضه.
-   النسب محسوبة بالوضعين: النص الأساسي ≥ 12:1، والثانوي ≥ 7:1، والخافت ≥ 4.5:1 على كل سطح، وحد الحقل ≥ 3:1. */
+/* رموز تصميم صفحات ترجمان — الهوية الثالثة «باذنجاني على رمادي» (قرار سلطان 2026-11-04، docs/identity-v3.md). ثلاث قواعد لكل
+   وضع (الورق، والمداد، والباذنجاني) والباقي مشتق منها: أرضيات رمادية هادئة تجاور محايدات يوتيوب بثلاث طبقات (الصفحة، والغائر،
+   والبطاقة) تفصلها النغمة وخطٌّ شعري لا ظل؛ وإبراز واحد باذنجاني للإجراء الرئيسي والمفاتيح والمقطع الحالي والتركيز وحدها، بلا
+   أزرق ولا أحمر يوتيوب؛ والأحمر الآجرّي للخطر بعيدًا عن الإبراز؛ والمعلومة بصبغة الإبراز لا بلون. الأزرار والخيارات بلا إطار
+   دائم: غير المحدد بخلفية الزر المحايدة (--tj-control)، والمحدد صبغة باذنجانية بنص أغمق (--tj-selected)، والقسم الحالي أهدأ منه
+   (--tj-selected-section). الشعار «المعيّنان المتشابكان»: العلامة بالإبراز والاسم بالمداد (--tj-logo-*). الوضع يتبع النظام،
+   وdata-theme يفرضه. النسب محسوبة بالوضعين: النص الأساسي ≥ 12:1، والثانوي ≥ 5.7:1، والخافت ≥ 4.6:1 على كل سطح، ونص المحدد
+   ≥ 6.8:1 على صبغته، وحد الحقل ≥ 3.2:1. */
 
 :root {
   color-scheme: light dark;
 
   /* الأسطح: الصفحة، والبطاقة، والغائر (مسار المقطّعة والرقائق)، والمنطقة الغائرة داخل سطح */
-  --tj-bg: #FAF8F4;
-  --tj-surface: #FFFFFF;
-  --tj-surface-2: #F1EDE6;
-  --tj-sunken: #F6F3EE;
-  --tj-hover: rgb(31 26 22 / 4.5%);
-  --tj-pressed: rgb(31 26 22 / 8%);
-  --tj-overlay: rgb(20 16 12 / 32%);
+  --tj-bg: #F6F5F4;
+  --tj-surface: #FEFEFD;
+  --tj-surface-2: #E8E7E6;
+  --tj-sunken: #F0EEEE;
+  --tj-hover: rgb(34 28 33 / 5%);
+  --tj-pressed: rgb(34 28 33 / 9%);
+  --tj-overlay: rgb(34 28 33 / 30%);
 
   /* النص: المداد، والثانوي، والخافت */
-  --tj-text: #1F1A16;
-  --tj-text-2: #4B423B;
-  --tj-muted: #6B5F57;
+  --tj-text: #221C21;
+  --tj-text-2: #5B575A;
+  --tj-muted: #666165;
 
   /* الحدود: الفاصل الشعري، والبارز، وحد الحقل الذي يعرّف العنصر وحده (≥ 3:1) */
-  --tj-border: #E8E3DB;
-  --tj-border-strong: #DAD3C8;
-  --tj-border-input: #867B70;
+  --tj-border: #E3E1E1;
+  --tj-border-strong: #D6D4D4;
+  --tj-border-input: #817E80;
 
-  /* الإبراز: بُنّ */
-  --tj-brand: #5C4434;
-  --tj-brand-hover: #47342A;
-  --tj-brand-ink: #FFFFFF;
-  --tj-brand-soft: #F0E7DD;
-  --tj-brand-text: #4E3A2C;
-  --tj-brand-track: rgb(92 68 52 / 18%);
-  --tj-focus: #5C4434;
+  /* الإبراز: باذنجاني، ومروره وضغطه أغمق منه */
+  --tj-brand: #6B2D5E;
+  --tj-brand-hover: #5B2951;
+  --tj-brand-pressed: #4E2646;
+  --tj-brand-ink: #FEFEFD;
+  --tj-brand-soft: #F5F1F3;
+  --tj-brand-text: #5B2951;
+  --tj-brand-track: rgb(107 45 94 / 18%);
+  --tj-focus: #6B2D5E;
 
-  /* الشعار: الجسد بالإبراز، والنقطتان بالذهب، والاسم بالمداد. والنقطتان لا تظهران في الواجهة إلا في الشعار. */
+  /* الأزرار والخيارات بلا إطار دائم: غير المحدد بخلفية الزر المحايدة، والمرور والضغط أغمق منها */
+  --tj-control: #E8E7E6;
+  --tj-control-hover: #DFDDDD;
+  --tj-control-pressed: #D4D2D2;
+  /* التحديد بدرجتين: الإعداد المختار صبغة باذنجانية بنص أغمق، والصبغة الخفيفة للمقطع والصف والبطاقة النشطة، والعلامة (خط
+     التبويب والصفحة الحاليين) بالإبراز؛ والقسم الحالي في التنقّل أهدأ من المختار داخله. */
+  --tj-selected: #E1D4DD;
+  --tj-selected-ink: #5B2951;
+  --tj-selected-soft: #F5F1F3;
+  --tj-selected-mark: #6B2D5E;
+  --tj-selected-section: rgb(107 45 94 / 6%);
+  --tj-selected-section-ink: #5B2951;
+  --tj-selected-section-icon: #6B2D5E;
+
+  /* الشعار: العلامة بالإبراز، والاسم بالمداد. العلامة مسار واحد بلا نقاط منفصلة، فرمز النقاط يتبعها. */
   --tj-logo-glyph: var(--tj-brand);
-  --tj-logo-dots: #C9A24D;
+  --tj-logo-dots: var(--tj-logo-glyph);
   --tj-logo-word: var(--tj-text);
   /* مؤشر اللحظة الحالية (المعيّن بجانب زمن المقطع الحالي) */
   --tj-mark: var(--tj-brand);
 
   /* الدلالات: مستقلة عن الإبراز، ومع كلٍّ منها كلمة أو أيقونة */
-  --tj-success: #2A7A47;
-  --tj-success-bg: #EAF5EE;
-  --tj-warning: #8A6314;
-  --tj-warning-bg: #FBF2DE;
-  --tj-danger: #B0273F;
-  --tj-danger-bg: #FCEAEE;
-  --tj-danger-ink: #FFFFFF;
+  --tj-success: #2E6A4C;
+  --tj-success-bg: #E9EFEB;
+  --tj-warning: #8A5B10;
+  --tj-warning-bg: #EDE6D9;
+  --tj-danger: #B0302A;
+  --tj-danger-bg: #F6E9E8;
+  --tj-danger-ink: #FEFEFD;
   --tj-info: var(--tj-brand-text);
-  /* المعلومة صامتة: سطح غائر محايد وأيقونتها بالإبراز، لا شريط بُنّي ثقيل (ملاحظة سلطان 2026-11-03). */
+  /* المعلومة صامتة: سطح غائر محايد وأيقونتها بالإبراز، لا شريط ملوّن ثقيل (ملاحظة سلطان 2026-11-03). */
   --tj-info-bg: var(--tj-sunken);
-  --tj-edited: #4B423B;
-  --tj-edited-bg: #F1EDE6;
+  --tj-edited: #5B575A;
+  --tj-edited-bg: #E8E7E6;
 
   /* الخطوط: المضمّنة أولًا (ui-fonts.js) */
   --tj-font-head: "Tarjuman UI Cairo", "Tarjuman UI Almarai", "SF Arabic", Tahoma, sans-serif;
@@ -89,8 +107,8 @@
 
   /* الطبقات مسطّحة: لا ظل للبطاقة، وخط حافة للقوائم والتلميحات والرسائل، وظل واحد للحوار فوق الستارة */
   --tj-e1: none;
-  --tj-e2: 0 0 0 1px rgb(31 26 22 / 10%), 0 8px 24px rgb(31 26 22 / 8%);
-  --tj-e3: 0 0 0 1px rgb(31 26 22 / 10%), 0 16px 40px rgb(31 26 22 / 12%);
+  --tj-e2: 0 0 0 1px rgb(34 28 33 / 10%);
+  --tj-e3: 0 0 0 1px rgb(34 28 33 / 10%), 0 16px 40px rgb(34 28 33 / 12%);
 
   /* الحركة */
   --tj-motion-menu: 140ms;
@@ -100,77 +118,97 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --tj-bg: #1F1C1A;
-    --tj-surface: #292522;
-    --tj-surface-2: #332E2A;
-    --tj-sunken: #1A1816;
-    --tj-hover: rgb(245 240 230 / 6%);
-    --tj-pressed: rgb(245 240 230 / 10%);
-    --tj-overlay: rgb(0 0 0 / 50%);
-    --tj-text: #F5F0E6;
-    --tj-text-2: #D6CDC1;
-    --tj-muted: #ACA297;
-    --tj-border: #352F2A;
-    --tj-border-strong: #3F3832;
-    --tj-border-input: #8A7F74;
-    --tj-brand: #D6B38F;
-    --tj-brand-hover: #E4CBB0;
-    --tj-brand-ink: #2B1B10;
-    --tj-brand-soft: #3A2E25;
-    --tj-brand-text: #E4CBB0;
-    --tj-brand-track: rgb(214 179 143 / 22%);
-    --tj-focus: #E4CBB0;
-    --tj-logo-dots: #E2C27A;
-    --tj-success: #86CF9D;
-    --tj-success-bg: #1B3225;
-    --tj-warning: #E5C170;
-    --tj-warning-bg: #342A14;
-    --tj-danger: #EC8094;
-    --tj-danger-bg: #3E1620;
-    --tj-danger-ink: #120F0D;
-    --tj-edited: #D6CDC1;
-    --tj-edited-bg: #332E2A;
-    --tj-info-bg: #2D2825;
-    --tj-e2: 0 0 0 1px rgb(255 255 255 / 14%), 0 8px 24px rgb(0 0 0 / 40%);
-    --tj-e3: 0 0 0 1px rgb(255 255 255 / 14%), 0 16px 40px rgb(0 0 0 / 50%);
+    --tj-bg: #121112;
+    --tj-surface: #1E1D1E;
+    --tj-surface-2: #2B292A;
+    --tj-sunken: #0D0C0D;
+    --tj-hover: rgb(241 237 239 / 6%);
+    --tj-pressed: rgb(241 237 239 / 10%);
+    --tj-overlay: rgb(0 0 0 / 55%);
+    --tj-text: #F1EDEF;
+    --tj-text-2: #B5B2B3;
+    --tj-muted: #939192;
+    --tj-border: #262526;
+    --tj-border-strong: #313031;
+    --tj-border-input: #827F81;
+    --tj-brand: #D9A7CB;
+    --tj-brand-hover: #E0BCD6;
+    --tj-brand-pressed: #B98FAD;
+    --tj-brand-ink: #0E0E0E;
+    --tj-brand-soft: #312B2F;
+    --tj-brand-text: #E0BCD6;
+    --tj-brand-track: rgb(217 167 203 / 24%);
+    --tj-focus: #D9A7CB;
+    --tj-control: #2B292A;
+    --tj-control-hover: #363435;
+    --tj-control-pressed: #413F40;
+    --tj-selected: #4B3E48;
+    --tj-selected-ink: #E6CEDF;
+    --tj-selected-soft: #312B2F;
+    --tj-selected-mark: #D9A7CB;
+    --tj-selected-section: rgb(217 167 203 / 9%);
+    --tj-selected-section-ink: #E6CEDF;
+    --tj-selected-section-icon: #D9A7CB;
+    --tj-success: #8DCDA9;
+    --tj-success-bg: #292F2C;
+    --tj-warning: #E6C077;
+    --tj-warning-bg: #363129;
+    --tj-danger: #F4A58C;
+    --tj-danger-bg: #382D2B;
+    --tj-danger-ink: #0E0E0E;
+    --tj-edited: #B5B2B3;
+    --tj-edited-bg: #2B292A;
+    --tj-info-bg: #2B292A;
+    --tj-e2: 0 0 0 1px rgb(255 255 255 / 12%);
+    --tj-e3: 0 0 0 1px rgb(255 255 255 / 12%), 0 16px 40px rgb(0 0 0 / 55%);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --tj-bg: #1F1C1A;
-  --tj-surface: #292522;
-  --tj-surface-2: #332E2A;
-  --tj-sunken: #1A1816;
-  --tj-hover: rgb(245 240 230 / 6%);
-  --tj-pressed: rgb(245 240 230 / 10%);
-  --tj-overlay: rgb(0 0 0 / 50%);
-  --tj-text: #F5F0E6;
-  --tj-text-2: #D6CDC1;
-  --tj-muted: #ACA297;
-  --tj-border: #352F2A;
-  --tj-border-strong: #3F3832;
-  --tj-border-input: #8A7F74;
-  --tj-brand: #D6B38F;
-  --tj-brand-hover: #E4CBB0;
-  --tj-brand-ink: #2B1B10;
-  --tj-brand-soft: #3A2E25;
-  --tj-brand-text: #E4CBB0;
-  --tj-brand-track: rgb(214 179 143 / 22%);
-  --tj-focus: #E4CBB0;
-  --tj-logo-dots: #E2C27A;
-  --tj-success: #86CF9D;
-  --tj-success-bg: #1B3225;
-  --tj-warning: #E5C170;
-  --tj-warning-bg: #342A14;
-  --tj-danger: #EC8094;
-  --tj-danger-bg: #3E1620;
-  --tj-danger-ink: #120F0D;
-  --tj-edited: #D6CDC1;
-  --tj-edited-bg: #332E2A;
-  --tj-info-bg: #2D2825;
-  --tj-e2: 0 0 0 1px rgb(255 255 255 / 14%), 0 8px 24px rgb(0 0 0 / 40%);
-  --tj-e3: 0 0 0 1px rgb(255 255 255 / 14%), 0 16px 40px rgb(0 0 0 / 50%);
+  --tj-bg: #121112;
+  --tj-surface: #1E1D1E;
+  --tj-surface-2: #2B292A;
+  --tj-sunken: #0D0C0D;
+  --tj-hover: rgb(241 237 239 / 6%);
+  --tj-pressed: rgb(241 237 239 / 10%);
+  --tj-overlay: rgb(0 0 0 / 55%);
+  --tj-text: #F1EDEF;
+  --tj-text-2: #B5B2B3;
+  --tj-muted: #939192;
+  --tj-border: #262526;
+  --tj-border-strong: #313031;
+  --tj-border-input: #827F81;
+  --tj-brand: #D9A7CB;
+  --tj-brand-hover: #E0BCD6;
+  --tj-brand-pressed: #B98FAD;
+  --tj-brand-ink: #0E0E0E;
+  --tj-brand-soft: #312B2F;
+  --tj-brand-text: #E0BCD6;
+  --tj-brand-track: rgb(217 167 203 / 24%);
+  --tj-focus: #D9A7CB;
+  --tj-control: #2B292A;
+  --tj-control-hover: #363435;
+  --tj-control-pressed: #413F40;
+  --tj-selected: #4B3E48;
+  --tj-selected-ink: #E6CEDF;
+  --tj-selected-soft: #312B2F;
+  --tj-selected-mark: #D9A7CB;
+  --tj-selected-section: rgb(217 167 203 / 9%);
+  --tj-selected-section-ink: #E6CEDF;
+  --tj-selected-section-icon: #D9A7CB;
+  --tj-success: #8DCDA9;
+  --tj-success-bg: #292F2C;
+  --tj-warning: #E6C077;
+  --tj-warning-bg: #363129;
+  --tj-danger: #F4A58C;
+  --tj-danger-bg: #382D2B;
+  --tj-danger-ink: #0E0E0E;
+  --tj-edited: #B5B2B3;
+  --tj-edited-bg: #2B292A;
+  --tj-info-bg: #2B292A;
+  --tj-e2: 0 0 0 1px rgb(255 255 255 / 12%);
+  --tj-e3: 0 0 0 1px rgb(255 255 255 / 12%), 0 16px 40px rgb(0 0 0 / 55%);
 }
 
 :root[data-theme="light"] {

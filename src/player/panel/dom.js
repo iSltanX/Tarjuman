@@ -1,7 +1,7 @@
 // بناء DOM اللوحة (بلا HTML نصي أبدًا: Trusted Types في يوتيوب وقاعدة check-static): عناصر بـcreateElement وtextContent
 // وsetAttribute وحدها، وأدوات تعديل تكتب فقط ما تغيّر فلا عمل DOM بلا لزوم.
 import { ICONS } from '../../ui/icons.js';
-import { logo } from '../../ui/logo.js';
+import { MARK_PATH, MARK_VIEWBOX } from '../../ui/logo.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -54,20 +54,29 @@ export function icon(doc, name, { size = null, fill = false } = {}) {
   return svg;
 }
 
-/** حدود جسد «التاء» ونقطتيها في مسارات الشعار المعتمد (دون الاسم): x من 288.2 إلى 408.2، وy من 0 إلى 68.3. */
-const GLYPH_BOX = Object.freeze({ viewBox: '288 0 121 69', ratio: 121 / 69 });
+/** صندوق العلامة وحدها بلا بلاطة على شبكة 48 (المعيّنان من x 6.4 إلى 41.6 ومن y 12 إلى 36، بهامش متساوٍ حولهما). */
+const GLYPH_BOX = Object.freeze({ viewBox: MARK_VIEWBOX, ratio: 46 / 32 });
 
 /**
- * رمز الشعار وحده (جسد التاء بلون الإبراز ونقطتاه بالذهب) من مسارات src/ui/logo.js نفسها دون تعديلها: يُبنى الشعار الكامل
- * ثم يُنزع منه الاسم ويُضبط إطار العرض. الألوان من أصناف tj-logo__glyph وtj-logo__dots في ورقة اللوحة.
+ * العلامة وحدها («المعيّنان المتشابكان» بلون الإبراز، والتداخل مفرّغ) رأسًا للوحة، من مسار src/ui/logo.js نفسه دون الاسم،
+ * فلا يحمل سكربت المحتوى مسار الاسم. اللون من صنف tj-logo__glyph في ورقة اللوحة.
  * @param {Document} doc @param {number} height
  */
 export function mark(doc, height) {
-  const svg = logo({ height, label: null, className: 'mark', doc });
-  svg.querySelector('.tj-logo__word')?.remove();
+  const svg = doc.createElementNS(SVG, 'svg');
   svg.setAttribute('viewBox', GLYPH_BOX.viewBox);
+  svg.setAttribute('class', 'tj-logo mark');
   svg.setAttribute('width', String(Math.round(height * GLYPH_BOX.ratio)));
   svg.setAttribute('height', String(height));
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  const g = doc.createElementNS(SVG, 'g');
+  g.setAttribute('class', 'tj-logo__glyph');
+  const p = doc.createElementNS(SVG, 'path');
+  p.setAttribute('d', MARK_PATH);
+  p.setAttribute('fill-rule', 'evenodd');
+  g.appendChild(p);
+  svg.appendChild(g);
   return svg;
 }
 

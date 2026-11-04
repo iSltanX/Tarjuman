@@ -1,4 +1,4 @@
-/* صفحة المحرّر (figma-design-brief.md §١١، والهوية «بُنّ على ورق»: لوحات Editor وEditorDark وEditorStates): ملء النافذة،
+/* صفحة المحرّر (figma-design-brief.md §١١، ولوحات Editor وEditorDark وEditorStates، والهوية الثالثة «باذنجاني على رمادي»): ملء النافذة،
    والقائمة وحدها تُمرَّر. الرأس والشريط على سطح البطاقة، والقائمة واللوحة الجانبية بطاقتان على الورق بخط شعري لا ظل، واللوحة
    يسارًا والقائمة يمينًا، والشريط السفلي معكوس الألوان. كل لون من رموز tokens.css بالوضعين. ارتفاع الصف محسوب في virtual.js
    (ROW)، فالحشو وحدود الحقول هنا تطابقه: حشو الصف 8+7 وحده السفلي 1، والنص 24 لكل سطر وحشوه 8+8 وحدّاه 2،
@@ -46,14 +46,14 @@ body.ed-page { overflow: hidden; }
 /* ---- شريط الأدوات والنطاق ---- */
 .ed-toolbar { display: flex; flex-direction: column; gap: 8px; padding: 10px 24px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
 .ed-toolbar__row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-/* مقطّعة النطاق كمقطّعات الصفحات: مسار غائر، والمختار بالإبراز وحدّه (≥ 3:1، CL-011). */
-.ed-seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); background: var(--tj-surface-2); }
+/* مقطّعة النطاق كمقطّعات الصفحات: مسار غائر بلا إطار، والمختار صبغة باذنجانية بنص أغمق، وغير المختار يتلوّن بالمرور. */
+.ed-seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); }
 .ed-seg__opt {
   min-height: 32px; padding: 0 12px; border: 0; border-radius: var(--tj-radius-sm); background: transparent; color: var(--tj-text-2);
   font: 700 13px/18px var(--tj-font-body); cursor: pointer; white-space: nowrap;
 }
-.ed-seg__opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { color: var(--tj-text); }
-.ed-seg__opt[aria-checked="true"] { background: var(--tj-surface); color: var(--tj-brand-text); box-shadow: inset 0 0 0 1px var(--tj-brand); }
+.ed-seg__opt:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-control-hover); color: var(--tj-text); }
+.ed-seg__opt[aria-checked="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .ed-seg__opt[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .ed-seg__opt:focus-visible { outline-offset: 1px; }
 .ed-amount {
@@ -114,12 +114,14 @@ body.ed-page { overflow: hidden; }
 .ed-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .ed-panel__head .tj-h4 { font: 700 13px/20px var(--tj-font-head); }
 .ed-issues { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+/* بند المشكلة زرّ ينقل إلى مقطعها: بلا إطار بخلفية الزر المحايدة، وشريط جانبي بلون نوعها (خطأ أو تحذير) مع كلمته. */
 .ed-issue {
   width: 100%; display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; min-height: 40px;
-  border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); background: var(--tj-surface); color: var(--tj-text);
+  border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-control); color: var(--tj-text);
   font: 400 13px/20px var(--tj-font-body); text-align: start; cursor: pointer;
 }
-.ed-issue:hover { background: var(--tj-brand-soft); }
+.ed-issue:hover { background: var(--tj-control-hover); }
+.ed-issue:active { background: var(--tj-control-pressed); }
 .ed-issue--error { box-shadow: inset -3px 0 0 var(--tj-danger); }
 .ed-issue--warning { box-shadow: inset -3px 0 0 var(--tj-warning); }
 .ed-issue__n { flex: none; min-width: 36px; color: var(--tj-muted); }
@@ -128,8 +130,8 @@ body.ed-page { overflow: hidden; }
 .ed-cmp__line--warning { color: var(--tj-warning); }
 .ed-cmp__line--info { color: var(--tj-text-2); }
 .ed-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.ed-chip { min-width: 40px; min-height: 32px; padding: 0 8px; border: 1px solid var(--tj-border-strong); border-radius: 999px; background: var(--tj-surface); color: var(--tj-text); cursor: pointer; }
-.ed-chip:hover { background: var(--tj-brand-soft); }
+.ed-chip { min-width: 40px; min-height: 32px; padding: 0 8px; border: 1px solid transparent; border-radius: 999px; background: var(--tj-control); color: var(--tj-text); cursor: pointer; }
+.ed-chip:hover { background: var(--tj-control-hover); color: var(--tj-text); }
 /* ---- التبويبان: المراجعة والاستكمال (خط سفلي بالإبراز للحالي) ---- */
 .ed-tabs { display: flex; flex: none; border-bottom: 1px solid var(--tj-border); }
 .ed-tab {
@@ -138,16 +140,18 @@ body.ed-page { overflow: hidden; }
 }
 .ed-tab:hover:not([aria-selected="true"]) { color: var(--tj-text); background: var(--tj-hover); }
 .ed-tab[aria-selected="true"] { color: var(--tj-text); }
-.ed-tab[aria-selected="true"]::after { content: ""; position: absolute; inset-inline: 16px; inset-block-end: -1px; height: 2px; background: var(--tj-brand); }
+.ed-tab[aria-selected="true"]::after { content: ""; position: absolute; inset-inline: 16px; inset-block-end: -1px; height: 2px; background: var(--tj-selected-mark); }
 .ed-tab:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: -4px; border-radius: var(--tj-radius-md); }
 .ed-pane { display: flex; flex-direction: column; gap: 0; }
 .ed-pane__title { margin: 0; padding: 14px 16px 0; color: var(--tj-muted); font: 700 12px/18px var(--tj-font-body); text-transform: none; letter-spacing: 0; }
 .ed-pane > :last-child { border-bottom: 0; }
 .ed-markgroup { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
 .ed-markgroup h3 { margin: 0; }
-.ed-chip--todo { border-color: color-mix(in srgb, var(--tj-warning) 60%, transparent); color: var(--tj-warning); }
-.ed-chip--done { border-color: color-mix(in srgb, var(--tj-success) 60%, transparent); color: var(--tj-success); }
-.ed-chip--moved { border-style: dashed; }
+/* شرائح العلامات بحالتها خلفيةً ونصًا لا حدًّا (والمجموعة بعنوانها، فاللون ليس الدليل الوحيد)؛ والمرور محايد كبقية الشرائح،
+   والمنقولة بخط منقّط تحت رقمها. */
+.ed-chip--todo { background: var(--tj-warning-bg); color: var(--tj-warning); }
+.ed-chip--done { background: var(--tj-success-bg); color: var(--tj-success); }
+.ed-chip--moved { text-decoration: underline dotted 1px; text-underline-offset: 3px; }
 .ed-resume { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .ed-resume__item { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; }
 .ed-resume-chip { margin-inline-end: auto; }
@@ -227,7 +231,7 @@ body.ed-page { overflow: hidden; }
   font: 400 13px/20px var(--tj-font-body); color: var(--tj-warning);
 }
 .ed-row__msg--error { color: var(--tj-danger); }
-.ed-row.is-selected { background: var(--tj-brand-soft); }
+.ed-row.is-selected { background: var(--tj-selected-soft); }
 .ed-row.is-warning { box-shadow: inset -3px 0 0 var(--tj-warning); }
 .ed-row.is-error { box-shadow: inset -3px 0 0 var(--tj-danger); background: color-mix(in srgb, var(--tj-danger-bg) 55%, var(--tj-surface)); }
 .ed-row.is-active { outline: 2px solid var(--tj-focus); outline-offset: -2px; }
@@ -247,8 +251,8 @@ body.ed-page { overflow: hidden; }
   border-radius: var(--tj-radius-card); background: var(--tj-text); color: var(--tj-bg); box-shadow: var(--tj-e2);
 }
 .ed-unsaved .tj-label { color: inherit; font: 400 14px/22px var(--tj-font-body); }
-/* معيّن التغيير غير المحفوظ بذهب الشعار (الأثر الوحيد للذهب خارج الشعار، كما في لوحة Editor). */
-.ed-unsaved__dot { flex: none; width: 7px; height: 7px; border-radius: 1px; transform: rotate(45deg); background: var(--tj-logo-dots); }
+/* معيّن التغيير غير المحفوظ بلون نص الشريط (نقطة الشارة بلون حالتها، الهوية الثالثة): الإبراز لا يُرى على الشريط المعكوس. */
+.ed-unsaved__dot { flex: none; width: 7px; height: 7px; border-radius: 1px; transform: rotate(45deg); background: currentColor; }
 .ed-unsaved .tj-btn--ghost { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .ed-unsaved .tj-btn--ghost:hover:not(:disabled):not([aria-disabled="true"]) { background: color-mix(in srgb, currentColor 14%, transparent); color: inherit; }
 .ed-unsaved .tj-btn--primary { background: var(--tj-bg); color: var(--tj-text); }
