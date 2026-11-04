@@ -2,7 +2,7 @@
 
 > **المرحلة:** T6 من [جولة النشر](../docs/store-release.md)، 2026-11-04. إجابات حقول Chrome Web Store وMicrosoft Edge Add-ons (Partner Center) وFirefox Add-ons (AMO) لحزم `release/store/tarjuman-1.1.0-*` المبنية من الفرع `tj/store-release` بعد دمج الهوية الثالثة. تُطابَق مع نموذج كل متجر وقت التقديم. ولا يُرفع شيء في هذه الجولة.
 > **اللغة:** ما يقرؤه المراجعون وحدهم (الغرض الواحد، ومبررات الأذونات، وملاحظات الاختبار) بالإنجليزية للّصق، وتحته معناه بالعربية. وما يراه المستخدمون في [`listing.ar.md`](listing.ar.md).
-> **العلامات:** **[قرار]** ينتظر سلطان. و`⟨بعد T7⟩` رابط لا يُملأ قبل نشر صفحته والتحقق منها.
+> **العلامات:** **[قرار]** ينتظر سلطان. و`⟨بعد T7⟩` كانت روابط الموقع قبل نشره، وثُبّتت في §٥ بعد أن أعادت 200 (2026-11-04).
 
 ## ١. الغرض الواحد
 
@@ -79,9 +79,9 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 
 | الحقل | القيمة | الحالة |
 | --- | --- | --- |
-| سياسة الخصوصية (المتاجر الثلاثة) | `https://bysltan.com/tarjuman/privacy` | ⟨بعد T7⟩. المتاجر الثلاثة تطلب رابطًا يعمل، فلا تقديم قبله |
-| الصفحة الرئيسية (Homepage، وEdge «Website»، وAMO «Homepage») | `https://bysltan.com/tarjuman` | ⟨بعد T7⟩ |
-| الدعم (Support URL، وEdge «Support contact detail»، وAMO «Support website») | `https://bysltan.com/tarjuman/support` | ⟨بعد T7⟩ |
+| سياسة الخصوصية (المتاجر الثلاثة) | `https://bysltan.com/tarjuman/privacy` | يعمل (200، 2026-11-04، بعد دمج PR ‎#82 في الموقع). المتاجر الثلاثة تطلب رابطًا يعمل |
+| الصفحة الرئيسية (Homepage، وEdge «Website»، وAMO «Homepage») | `https://bysltan.com/tarjuman` | يعمل (200، 2026-11-04) |
+| الدعم (Support URL، وEdge «Support contact detail»، وAMO «Support website») | `https://bysltan.com/tarjuman/support` | يعمل (200، 2026-11-04)، وهو رابط «الدعم والخصوصية» في «حول» |
 | بريد الدعم (AMO «Support email»، وبريد حساب Chrome) | `iSultanBy@gmail.com` | قرار سلطان (§٥ من `README.md`) |
 | المستودع | لا يُذكر: `iSltanX/Tarjuman` خاص ويعطي 404 للعموم | — |
 

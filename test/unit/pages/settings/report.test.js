@@ -108,6 +108,7 @@ test('الإرسال معطّل بلا وصف، والإذن أول ما في ا
   assert.deepEqual(h.log.map((x) => x[0]), ['permission', 'send']);
   assert.deepEqual(h.log[1][1], buildPayload({ kind: 'bug', description: 'لا تظهر الترجمة العربية' }, DIAG));
   assert.ok(textOf(h.result()).includes('وصل بلاغك برقم #41'));
+  assert.ok(textOf(h.result()).includes('واذكره حين تراسل بريد الدعم iSultanBy@gmail.com؛'), 'النجاح يسمّي وجهة المتابعة (قرار T4)');
   assert.equal(h.panel.root.querySelector('textarea').value, '');
   buttonNamed(h.result(), 'نسخ الرقم').click();
   await settle();
@@ -132,6 +133,10 @@ test('جدول الردود: الإعادة لما يعاد (المهلة وال
     [{ ok: false, failure: 'invalid', status: 400 }, false, 'رفض خادم البلاغات البلاغ'],
     [{ ok: false, failure: 'too-large', status: 413 }, false, 'أكبر مما يقبله'],
     [{ ok: false, failure: 'unsupported', status: 415 }, false, 'لم يقبل خادم البلاغات صيغة'],
+    // ما لا يُعاد يُنسخ ويُرسل إلى بريد الدعم بالاسم (قرار T4 في جولة النشر)، لا «بطريقتك».
+    [{ ok: false, failure: 'invalid', status: 400 }, false, 'انسخه وأرسله إلى بريد الدعم iSultanBy@gmail.com.'],
+    [{ ok: false, failure: 'too-large', status: 413 }, false, 'انسخه وأرسله إلى بريد الدعم iSultanBy@gmail.com.'],
+    [{ ok: false, failure: 'unsupported', status: 415 }, false, 'انسخه وأرسله إلى بريد الدعم iSultanBy@gmail.com.'],
     [{ ok: false, failure: 'rate-limited', status: 429, retryAfterSeconds: 120 }, true, 'أعد المحاولة بعد دقيقتين'],
     [{ ok: false, failure: 'server', status: 503 }, true, 'العطل من جهته'],
     [{ ok: false, failure: 'timeout', status: null }, true, 'لم يردّ خادم البلاغات في الوقت'],

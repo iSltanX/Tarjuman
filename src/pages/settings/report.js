@@ -6,7 +6,7 @@
 import { findSecrets } from '../../core/diagnostics/sanitize.js';
 import { REPORTS_ORIGIN, hostGranted, requestReportPermission, retryable, sendReport } from '../../core/report/client.js';
 import { collectDiagnostics } from '../../core/report/diagnostics.js';
-import { failureText } from '../../core/report/messages.js';
+import { SUPPORT_EMAIL, failureText } from '../../core/report/messages.js';
 import { KIND_LABELS, LIMITS, REPORT_KINDS, buildPayload, formError, reviewRows, serialise } from '../../core/report/payload.js';
 import { button, el, ltr } from '../../ui/components.js';
 import { segmented } from '../../ui/forms.js';
@@ -162,7 +162,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
       result.replaceChildren(el('div', {
         className: 'st-report__done', attrs: { 'data-report-result': 'sent' },
         children: [
-          el('p', { className: 'tj-body-sm', children: ['وصل بلاغك برقم ', ltr(`#${id}`, { doc }), '. احتفظ بالرقم إن أردت المتابعة؛ لا يُرسل إليك شيء ولا نطلب بريدًا.'], doc }),
+          el('p', { className: 'tj-body-sm', children: ['وصل بلاغك برقم ', ltr(`#${id}`, { doc }), '. احتفظ بالرقم إن أردت المتابعة، واذكره حين تراسل بريد الدعم ', ltr(SUPPORT_EMAIL, { doc }), '؛ لا يُرسل إليك شيء ولا نطلب بريدًا.'], doc }),
           el('div', { className: 'st-actions', children: [copyId, outcome.state === 'id-copied' ? el('span', { className: 'tj-caption', text: 'نُسخ الرقم.', doc }) : null], doc }),
         ],
         doc,

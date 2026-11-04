@@ -43,7 +43,7 @@ const YOUTUBE_MATCH = 'https://www.youtube.com/*';
 const URL_OK = (u, rel) => u === 'http://www.w3.org/2000/svg'
   || u === YOUTUBE_MATCH
   || u.startsWith('https://www.youtube.com/watch?v=')
-  || (rel === 'pages/settings/main.js' && (u === 'https://bysltan.com' || u === 'https://github.com/iSltanX/Tarjuman'))
+  || (rel === 'pages/settings/main.js' && (u === 'https://bysltan.com' || u === 'https://bysltan.com/tarjuman/support'))
   || (rel === WORKER && u === 'https://www.youtube.com/')
   // صور الفيديو في المحفوظات من خوادم يوتيوب بمعرّفه، بمفتاح يطفئها (قرار سلطان 2026-11-03، docs/identity-redesign.md).
   || (rel === 'pages/library/main.js' && u === 'https://i.ytimg.com/vi/')

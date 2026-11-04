@@ -429,14 +429,16 @@ test('حول: الإصدار وسطر الخصوصية الصادق (محلي إ
   const links = findAll(about, (e) => e.tagName === 'a');
   const byText = (t) => links.find((a) => textOf(a) === t);
   const site = byText('bysltan.com');
-  const repo = byText('المستودع على GitHub');
+  const support = byText('الدعم والخصوصية');
   assert.equal(site.getAttribute('href'), LINKS.site);
-  assert.equal(repo.getAttribute('href'), LINKS.repo);
-  for (const a of [site, repo]) {
+  assert.equal(support.getAttribute('href'), LINKS.support);
+  assert.equal(LINKS.support, 'https://bysltan.com/tarjuman/support', 'صفحة الدعم بدل المستودع الخاص (قرار T4)');
+  assert.equal(byText('المستودع على GitHub'), undefined, 'لا رابط إلى المستودع الخاص');
+  for (const a of [site, support]) {
     assert.equal(a.getAttribute('target'), '_blank');
     assert.match(a.getAttribute('rel'), /noopener/);
   }
-  assert.equal(textOf(about).includes('خاص حاليًا'), false, 'النص المعروض بلا «خاص حاليًا» والرابط باقٍ');
+  assert.equal(textOf(about).includes('خاص حاليًا'), false, 'النص المعروض بلا «خاص حاليًا»');
   assert.ok(textOf(about).includes('خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: المراعي، ونوتو سانس العربي، وتجوّل، ومركزي.'));
   assert.ok(buttonNamed(about, 'عرض التراخيص') === null, 'عرض التراخيص ملخّص details لا زر');
   assert.ok(findAll(about, (e) => e.tagName === 'summary').map(textOf).includes('عرض التراخيص'));
@@ -455,7 +457,7 @@ test('حول: الإصدار وسطر الخصوصية الصادق (محلي إ
   assert.equal(icons.getAttribute('href'), '../../THIRD_PARTY_NOTICES.txt', 'ملف الإشعارات المحلي بمسار نسبي');
   assert.match(icons.getAttribute('rel'), /noopener/);
   const external = links.filter((a) => /^https?:/.test(a.getAttribute('href'))).map((a) => a.getAttribute('href'));
-  assert.deepEqual(external.sort(), [LINKS.site, LINKS.repo].sort(), 'الرابطان الخارجيان الوحيدان');
+  assert.deepEqual(external.sort(), [LINKS.site, LINKS.support].sort(), 'الرابطان الخارجيان الوحيدان');
 });
 
 test('خطوط الواجهة لا تتغير بتغيير خط الترجمة: الخط المضمّن على اسم كل خط وعلى المعاينة وحدهما', async () => {

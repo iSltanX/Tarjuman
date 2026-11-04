@@ -1,12 +1,15 @@
 // قسم «حول» (R42، P7-AC10، وجولة الصقل): الإصدار، و«كل شيء محلي»، ودليل الاستخدام، و«الإبلاغ عن مشكلة» (جولة النشر T2.1،
-// report.js)، و«ترجمان — تطوير سلطان» مع رابطي bysltan.com والمستودع، ونسب الخطوط المضمّنة (الترجمة وعناوين الواجهة) وأيقونات
+// report.js)، و«ترجمان — تطوير سلطان» مع رابطي bysltan.com و«الدعم والخصوصية» (قرار T4 بعد نشر صفحة الدعم في T7)، ونسب الخطوط المضمّنة (الترجمة وعناوين الواجهة) وأيقونات
 // Lucide مع «عرض التراخيص» من ملفات الرخص المحلية وملف إشعارات الأطراف الثالثة (جولة النشر T4). الروابط تُفتح بالضغط وحده في تبويب جديد (noopener)؛ ولا طلب شبكة من هذا الملف.
 import { el, icon, ltr } from '../../ui/components.js';
 import { SUBTITLE_FONT_LIST } from '../../ui/subtitle-fonts.js';
 import { UI_FONT_LIST } from '../../ui/ui-fonts.js';
 
-/** الرابطان الخارجيان الوحيدان في الإضافة (يسمح بهما الفحص الثابت في هذا الملف وحده). */
-export const LINKS = Object.freeze({ site: 'https://bysltan.com', repo: 'https://github.com/iSltanX/Tarjuman' });
+/**
+ * الرابطان الخارجيان الوحيدان في الإضافة (يسمح بهما الفحص الثابت في هذا الملف وحده). صفحة الدعم بدل المستودع الخاص الذي يعطي
+ * 404 للعموم (قرار T4 في جولة النشر، store/README.md §٥)، وفيها الخصوصية والمساعدة والإبلاغ وبريد الدعم.
+ */
+export const LINKS = Object.freeze({ site: 'https://bysltan.com', support: 'https://bysltan.com/tarjuman/support' });
 /** خط عناوين الواجهة المضمّن (المراعي ملفه نفسه في خطوط الترجمة فلا يتكرر). */
 const UI_HEAD_FONT = Object.freeze({ nameAr: 'القاهرة', nameLatin: 'Cairo', license: UI_FONT_LIST[0].license });
 /**
@@ -90,7 +93,7 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
       className: 'st-about__links',
       children: [
         externalLink(doc, { href: LINKS.site, text: 'bysltan.com' }),
-        externalLink(doc, { href: LINKS.repo, text: 'المستودع على GitHub' }),
+        externalLink(doc, { href: LINKS.support, text: 'الدعم والخصوصية' }),
       ],
       doc,
     }),

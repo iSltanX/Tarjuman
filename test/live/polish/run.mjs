@@ -375,9 +375,9 @@ try {
     const about = await st.eval(() => {
       const sec = [...document.querySelectorAll('.st-section')].find((s) => !s.hidden && s.offsetParent);
       const t = sec?.textContent ?? '';
-      const repo = [...(sec?.querySelectorAll('a') ?? [])].find((a) => a.textContent.includes('المستودع'));
+      const repo = [...(sec?.querySelectorAll('a') ?? [])].find((a) => a.textContent.includes('الدعم والخصوصية'));
       // الرابط يُقارن داخل الصفحة ولا يُكتب في الأدلة (لا روابط فيها).
-      return { privateText: t.includes('خاص حاليًا'), repoLink: repo?.getAttribute('href') === 'https://github.com/iSltanX/Tarjuman', target: repo?.getAttribute('target') ?? null };
+      return { privateText: t.includes('خاص حاليًا'), repoLink: repo?.getAttribute('href') === 'https://bysltan.com/tarjuman/support', target: repo?.getAttribute('target') ?? null };
     });
     check('about-no-private-label-link-kept', !about.privateText && about.repoLink && about.target === '_blank', about);
     await shoot(st, 'settings-about', { width: 1280 });
