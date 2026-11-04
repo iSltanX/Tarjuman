@@ -12,7 +12,7 @@ import { buttonNamed, findAll, newDocument, settle, textOf } from '../library/fa
 
 const DIAG = { appVersion: '1.0.0', os: 'macos', osVersion: '15.6.1', arch: 'arm64', browser: 'Google Chrome', browserVersion: '156.0.7650.10', buildTarget: 'chromium', test: false };
 
-function harness({ diag = DIAG, permission = true, outcomes = [{ ok: true, id: 41, replayed: false }], copyFails = false, send = null, diagnostics = null } = {}) {
+function harness({ diag = DIAG, permission = true, outcomes = [{ ok: true, id: 41, replayed: false }], copyFails = false, copy = null, send = null, diagnostics = null } = {}) {
   const doc = newDocument();
   const log = [];
   let n = 0;
@@ -23,7 +23,7 @@ function harness({ diag = DIAG, permission = true, outcomes = [{ ok: true, id: 4
       log.push(['send', payload, key]);
       return send ? send(payload, key) : (outcomes.shift() ?? { ok: false, failure: 'server', status: 500 });
     },
-    copy: async (text) => { log.push(['copy', text]); if (copyFails) throw new Error('denied'); },
+    copy: copy ?? (async (text) => { log.push(['copy', text]); if (copyFails) throw new Error('denied'); }),
     newKey: () => `0000000${++n}-0000-4000-8000-000000000000`,
   };
   const panel = reportPanel({ doc, env });
@@ -247,4 +247,82 @@ test('تعذّر التشخيص: لا إرسال ولا نسخ، والسبب م
   h.type('خلل');
   assert.equal(buttonNamed(h.region, 'أرسل البلاغ').getAttribute('aria-disabled'), 'true');
   assert.ok(textOf(h.region).includes('تعذّرت قراءة إصدار المتصفح والنظام.'));
+});
+
+// ---- المراجعة المستقلة (2026-11-04) ----
+
+test('التركيز بعد «أعد المحاولة» بلوحة المفاتيح: لا يسقط مع إعادة الرسم، بل إلى منطقة النتيجة أثناء الإرسال ثم إلى الزر الجديد', async () => {
+  let release;
+  const h = harness({ send: () => new Promise((r) => { release = r; }) });
+  h.trigger.click();
+  await settle();
+  h.type('خلل في المزامنة');
+  buttonNamed(h.region, 'أرسل البلاغ').click();
+  await settle();
+  release({ ok: false, failure: 'network', status: null });
+  await settle();
+  const retry = buttonNamed(h.result(), 'أعد المحاولة');
+  retry.focus();
+  retry.click(); // Enter على الزر المركّز
+  assert.ok(h.doc.activeElement === h.result(), 'أثناء الإرسال: التركيز على منطقة النتيجة لا على زر أُزيل');
+  assert.equal(h.result().getAttribute('tabindex'), '-1', 'تستقبل التركيز برمجيًا ولا تدخل ترتيب Tab');
+  await settle();
+  release({ ok: false, failure: 'server', status: 503 });
+  await settle();
+  const again = buttonNamed(h.result(), 'أعد المحاولة');
+  assert.ok(again && h.doc.activeElement === again, 'فشل ثانٍ: التركيز على «أعد المحاولة» الجديد');
+  again.click();
+  await settle();
+  release({ ok: true, id: 9, replayed: false });
+  await settle();
+  assert.ok(h.doc.activeElement === h.result(), 'النجاح: التركيز على النتيجة فيُقرأ الرقم');
+  const copyId = buttonNamed(h.result(), 'نسخ الرقم');
+  copyId.focus();
+  copyId.click();
+  await settle();
+  assert.ok(h.doc.activeElement === buttonNamed(h.result(), 'نسخ الرقم'), '«نسخ الرقم» المركّز يبقى مركّزًا بعد إعادة الرسم');
+  // التركيز خارج النتيجة لا يُنقل إليها.
+  const send = buttonNamed(h.region, 'أرسل البلاغ');
+  send.focus();
+  h.type('بلاغ آخر');
+  assert.ok(h.doc.activeElement === send);
+});
+
+test('فشل نسخ رقم البلاغ نتيجة ظاهرة لا صمت، ولو رمت الحافظة متزامنةً', async () => {
+  for (const copy of [async () => { throw new Error('denied'); }, () => { throw new TypeError('no clipboard'); }]) {
+    const h = harness({ copy });
+    h.trigger.click();
+    await settle();
+    h.type('خلل');
+    buttonNamed(h.region, 'أرسل البلاغ').click();
+    await settle();
+    buttonNamed(h.result(), 'نسخ الرقم').click();
+    await settle();
+    const note = h.result().querySelector('[data-report-copy]');
+    assert.ok(note !== null, 'سطر نتيجة النسخ');
+    assert.equal(note.getAttribute('data-report-copy'), 'failed');
+    assert.equal(note.getAttribute('role'), 'alert');
+    assert.ok(textOf(note).includes('تعذّر نسخ الرقم'), textOf(note));
+    assert.ok(textOf(h.result()).includes('#41'), 'الرقم باقٍ ظاهرًا لنسخه باليد');
+  }
+});
+
+test('بلاغان مستقلان بالوصف نفسه من الصفحة نفسها: الثاني بمفتاح جديد فيُنشأ لا يُعاد الأول، والإعادة بعد الفشل بالمفتاح نفسه', async () => {
+  const h = harness({ outcomes: [{ ok: true, id: 41, replayed: false }, { ok: false, failure: 'network', status: null }, { ok: true, id: 42, replayed: false }] });
+  h.trigger.click();
+  await settle();
+  h.type('الترجمة تتأخر');
+  buttonNamed(h.region, 'أرسل البلاغ').click();
+  await settle();
+  assert.ok(textOf(h.result()).includes('#41'));
+  h.type('الترجمة تتأخر');
+  buttonNamed(h.region, 'أرسل البلاغ').click();
+  await settle();
+  buttonNamed(h.result(), 'أعد المحاولة').click();
+  await settle();
+  const keys = h.log.filter((x) => x[0] === 'send').map((x) => x[2]);
+  assert.equal(keys.length, 3);
+  assert.notEqual(keys[1], keys[0], 'الإرسال الثاني بلاغ جديد بمفتاح جديد رغم تطابق الجسم');
+  assert.equal(keys[2], keys[1], 'إعادة المحاولة بالمفتاح نفسه');
+  assert.ok(textOf(h.result()).includes('#42'));
 });
