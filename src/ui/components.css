@@ -1,15 +1,18 @@
 /* المكوّنات المشتركة لصفحات الإضافة: الزر، والحقل، والشارة، والتنبيه، والحالة الفارغة، والحوار، والقائمة المنسدلة،
    والمقطّعة، ومجموعة الاختيار، ورقائق التصفية، ومحدد الترجمات الموجودة، والشعار، وبنود القوائم، والهيكل. كل حالة لها نص أو رمز
-   لا لون وحده، وأقل هدف ضغط 32×32 للأدوات الثانوية و40×40 لما عداها. كل الألوان من رموز tokens.css بالوضعين. */
+   لا لون وحده، وأقل هدف ضغط 32×32 للأدوات الثانوية و40×40 لما عداها. كل الألوان من رموز tokens.css بالوضعين. الهوية الثالثة
+   (docs/identity-v3.md): لا إطار دائم على أي زر أو خيار؛ غير المحدد بخلفية الزر المحايدة (--tj-control) والمرور والضغط أغمق منها،
+   والمحدد صبغة باذنجانية بنص أغمق (--tj-selected و--tj-selected-ink). حلقة التركيز على :focus-visible وحده كما هي، وحقول الكتابة
+   حقول فيبقى حدّها، وشارات الحالة كما هي. */
 
 .tj-icon { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 .tj-icon--sm { width: 16px; height: 16px; }
 
-/* ---- الزر ---- */
+/* ---- الزر: الحد الشفاف 1px يحفظ المقاس بين الأنواع ولا يُرى؛ والحالات بالخلفية وحدها ---- */
 .tj-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: var(--tj-control-md); padding: 0 14px; border-radius: var(--tj-radius-button);
-  border: 1px solid transparent; background: var(--tj-surface-2); color: var(--tj-text);
+  border: 1px solid transparent; background: var(--tj-control); color: var(--tj-text);
   font: 700 14px/20px var(--tj-font-body); cursor: pointer; white-space: nowrap; text-decoration: none;
   transition: background-color var(--tj-motion-menu) var(--tj-ease), border-color var(--tj-motion-menu) var(--tj-ease), color var(--tj-motion-menu) var(--tj-ease);
 }
@@ -18,16 +21,16 @@
 .tj-btn--sm .tj-icon { width: 16px; height: 16px; }
 .tj-btn--lg { min-height: var(--tj-control-lg); padding: 0 18px; font-size: 15px; line-height: 22px; }
 .tj-btn--primary { background: var(--tj-brand); color: var(--tj-brand-ink); }
-.tj-btn--secondary { background: var(--tj-surface); border-color: var(--tj-border-strong); }
+.tj-btn--secondary { background: var(--tj-control); }
 .tj-btn--ghost { background: transparent; color: var(--tj-text-2); }
 .tj-btn--danger { background: var(--tj-danger); color: var(--tj-danger-ink); }
 .tj-btn--icon { width: var(--tj-control-md); padding: 0; }
 .tj-btn--icon.tj-btn--sm { width: var(--tj-control-sm); }
-.tj-btn:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-hover); }
-.tj-btn:active:not(:disabled):not([aria-disabled="true"]):not(.tj-btn--primary):not(.tj-btn--danger) { background: var(--tj-pressed); }
+.tj-btn:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-control-hover); }
+.tj-btn:active:not(:disabled):not([aria-disabled="true"]):not(.tj-btn--primary):not(.tj-btn--danger) { background: var(--tj-control-pressed); }
 .tj-btn--primary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-brand-hover); }
-.tj-btn--secondary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-sunken); border-color: var(--tj-border-input); }
-.tj-btn--ghost:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-hover); color: var(--tj-text); }
+.tj-btn--primary:active:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-brand-pressed); }
+.tj-btn--ghost:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-control-hover); color: var(--tj-text); }
 .tj-btn--danger:hover:not(:disabled):not([aria-disabled="true"]) { background: color-mix(in srgb, var(--tj-danger) 88%, black); }
 .tj-btn:disabled, .tj-btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .tj-btn[aria-busy="true"] { cursor: progress; }
@@ -126,11 +129,12 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 
 /* ---- مجموعة اختيار (radio) بخيارات ذات شرح ---- */
 .tj-choice { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.tj-choice__option { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-md); cursor: pointer; background: var(--tj-surface); }
-.tj-choice__option:hover { background: var(--tj-hover); }
-.tj-choice__option:has(input:checked) { border-color: var(--tj-brand); background: var(--tj-brand-soft); }
+.tj-choice__option { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border: 1px solid transparent; border-radius: var(--tj-radius-md); cursor: pointer; background: var(--tj-control); }
+.tj-choice__option:hover { background: var(--tj-control-hover); }
+.tj-choice__option:has(input:checked) { background: var(--tj-selected); color: var(--tj-selected-ink); }
+.tj-choice__option:has(input:checked) .tj-choice__hint { color: var(--tj-selected-ink); }
 .tj-choice__option:has(input:disabled) { cursor: not-allowed; color: var(--tj-muted); background: var(--tj-sunken); }
-.tj-choice__option > input[type="radio"] { margin: 5px 0 0; accent-color: var(--tj-brand); flex: none; width: 16px; height: 16px; }
+.tj-choice__option > input[type="radio"] { margin: 5px 0 0; accent-color: var(--tj-selected-mark); flex: none; width: 16px; height: 16px; }
 .tj-choice__option > input[type="radio"]:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .tj-choice__text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
 .tj-choice__label { font: 700 14px/22px var(--tj-font-body); }
@@ -138,39 +142,39 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-choice__extra { display: block; margin-top: 8px; }
 
 /* ---- المقطّعة: خيار واحد من قليل (radio حقيقي مخفي بصريًا) ---- */
-.tj-seg { display: inline-flex; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); padding: 3px; margin: 0; min-width: 0; background: var(--tj-surface-2); gap: 2px; max-width: 100%; }
+.tj-seg { display: inline-flex; border: 1px solid transparent; border-radius: var(--tj-radius-md); padding: 3px; margin: 0; min-width: 0; background: var(--tj-surface-2); gap: 2px; max-width: 100%; }
 .tj-seg__option { position: relative; cursor: pointer; min-width: 0; }
 .tj-seg__option input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
 .tj-seg__label { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; min-width: 56px; padding: 0 12px; border-radius: var(--tj-radius-sm); font: 700 13px/18px var(--tj-font-body); color: var(--tj-text-2); white-space: nowrap; }
-/* المختار خانة بيضاء (البطاقة) بحدّ الإبراز الشعري ونصه: الحد ≥ 3:1 على المسار بالوضعين (WCAG 1.4.11، تدقيق 5fedcb9 CL-011) دون
-   صبغة ثقيلة ولا إطار مزدوج (ملاحظة سلطان 2026-11-03)، كمقطّعة المحرّر. */
-.tj-seg__option input:checked + .tj-seg__label { background: var(--tj-surface); color: var(--tj-brand-text); box-shadow: inset 0 0 0 1px var(--tj-brand); }
+/* المختار صبغة باذنجانية بنص أغمق بلا إطار (الهوية الثالثة، قرار سلطان 2026-11-04)، كمقطّعة المحرّر وقوائم المشغّل؛ وغير المختار
+   يتلوّن بالمرور. */
+.tj-seg__option input:checked + .tj-seg__label { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .tj-seg__option input:focus-visible + .tj-seg__label { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
-.tj-seg__option:hover input:not(:checked) + .tj-seg__label { color: var(--tj-text); }
+.tj-seg__option:hover input:not(:checked) + .tj-seg__label { background: var(--tj-control-hover); color: var(--tj-text); }
 
 /* ---- رقائق التصفية بأعدادها ---- */
 .tj-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .tj-chip {
   display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: 999px;
-  border: 1px solid var(--tj-border); background: var(--tj-surface); color: var(--tj-text-2);
+  border: 1px solid transparent; background: var(--tj-control); color: var(--tj-text-2);
   font: 700 13px/18px var(--tj-font-body); cursor: pointer; white-space: nowrap;
 }
-.tj-chip:hover { background: var(--tj-hover); color: var(--tj-text); }
-.tj-chip[aria-pressed="true"] { background: var(--tj-brand-soft); border-color: color-mix(in srgb, var(--tj-brand) 35%, transparent); color: var(--tj-brand-text); }
+.tj-chip:hover { background: var(--tj-control-hover); color: var(--tj-text); }
+.tj-chip[aria-pressed="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .tj-chip__count { font: 500 12px/16px var(--tj-font-mono); color: var(--tj-muted); }
 .tj-chip[aria-pressed="true"] .tj-chip__count { color: inherit; opacity: 0.8; }
 
-/* ---- محدد الترجمات الموجودة: زر لكل ترجمة محفوظة، والنشطة بلون الإبراز. الأرقام تُقرأ من اليسار كخط الأعداد ---- */
+/* ---- محدد الترجمات الموجودة: زر لكل ترجمة محفوظة، والنشطة بصبغة المحدد. الأرقام تُقرأ من اليسار كخط الأعداد ---- */
 .tj-slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); direction: ltr; flex: none; }
 .tj-slots__slot {
   position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 6px; border-radius: 6px; border: 0;
   background: transparent; color: var(--tj-text-2); font: 700 12px/1 var(--tj-font-body); font-variant-numeric: tabular-nums; cursor: pointer;
 }
 .tj-slots--md .tj-slots__slot { min-width: 32px; height: 28px; font-size: 13px; }
-.tj-slots__slot:hover:not([aria-checked="true"]) { background: var(--tj-hover); color: var(--tj-text); }
+.tj-slots__slot:hover:not([aria-checked="true"]) { background: var(--tj-control-hover); color: var(--tj-text); }
 /* هدف الضغط 32 ارتفاعًا مع بقاء الشكل المضغوط (قاعدة ui-redesign §١؛ تدقيق 5fedcb9، CL-018). */
 .tj-slots__slot::after { content: ""; position: absolute; inset: -4px 0; }
-.tj-slots__slot[aria-checked="true"] { background: var(--tj-brand); color: var(--tj-brand-ink); cursor: default; }
+.tj-slots__slot[aria-checked="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); cursor: default; }
 .tj-slots__slot:focus-visible { outline-offset: 1px; }
 
 /* ---- القائمة المنسدلة ---- */
@@ -229,10 +233,10 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 /* رسالة بزر «تراجع» (الإصدار الثاني): الزر قابل للضغط والرسالة تبقى ضعف المدة. */
 .tj-toast--action { pointer-events: auto; }
 .tj-toast__action {
-  margin-inline-start: 6px; padding: 2px 10px; border-radius: 6px; border: 1px solid currentColor; background: transparent;
+  margin-inline-start: 6px; padding: 2px 10px; border-radius: 6px; border: 0; background: color-mix(in srgb, currentColor 12%, transparent);
   color: inherit; font: 700 12px/18px var(--tj-font-body); cursor: pointer;
 }
-.tj-toast__action:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.tj-toast__action:hover { background: color-mix(in srgb, currentColor 20%, transparent); }
 .tj-toast__action:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 
 /* ---- علامة «حُفظ» وحقل الرقم بوحدة (رُفعا من الإعدادات في الإصدار الثاني) ---- */

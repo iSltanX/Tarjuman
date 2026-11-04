@@ -108,3 +108,78 @@ test('رموز المشغّل (داكن بالوضعين): قيم اللوحة،
   assert.ok(ratio(PLAYER_TOKENS.menuText, menu) >= 7 && ratio(PLAYER_TOKENS.menuText2, menu) >= 4.5);
   for (const k of ['warn', 'error', 'ok', 'accent']) assert.ok(ratio(PLAYER_TOKENS[k], menu) >= 4.5, k);
 });
+
+// ---- قواعد الأزرار والخيارات بلا إطار دائم والتحديد بدرجتين في الصفحات واللوحة والمشغّل ----
+const read = (f) => readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+/** تصريحات القاعدة بهذا المحدد حرفيًا (أول ظهور). */
+function rule(sheet, selector) {
+  const at = sheet.indexOf(`${selector} {`);
+  assert.ok(at >= 0, `القاعدة ${selector}`);
+  return sheet.slice(sheet.indexOf('{', at) + 1, sheet.indexOf('}', at)).trim();
+}
+const has = (sheet, selector, decl) => assert.ok(rule(sheet, selector).includes(decl), `${selector} { … ${decl} … } ← ${rule(sheet, selector)}`);
+
+test('المكوّنات المشتركة: الزر الثانوي بلا حد بخلفية الزر، والرئيسي يغمق بالضغط، والمختار صبغة بنص أغمق', () => {
+  const ui = read('src/ui/components.css');
+  has(ui, '.tj-btn', 'border: 1px solid transparent; background: var(--tj-control)');
+  has(ui, '.tj-btn--secondary', 'background: var(--tj-control)');
+  assert.doesNotMatch(rule(ui, '.tj-btn--secondary'), /border/);
+  has(ui, '.tj-btn:hover:not(:disabled):not([aria-disabled="true"])', 'var(--tj-control-hover)');
+  has(ui, '.tj-btn:active:not(:disabled):not([aria-disabled="true"]):not(.tj-btn--primary):not(.tj-btn--danger)', 'var(--tj-control-pressed)');
+  has(ui, '.tj-btn--primary:active:not(:disabled):not([aria-disabled="true"])', 'var(--tj-brand-pressed)');
+  has(ui, '.tj-chip', 'border: 1px solid transparent; background: var(--tj-control)');
+  has(ui, '.tj-chip[aria-pressed="true"]', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
+  has(ui, '.tj-seg__option input:checked + .tj-seg__label', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
+  has(ui, '.tj-slots__slot[aria-checked="true"]', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
+  has(ui, '.tj-choice__option', 'border: 1px solid transparent');
+  has(ui, '.tj-choice__option:has(input:checked)', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
+  assert.match(rule(ui, '.tj-toast__action'), /border: 0;/, 'زر «تراجع» في الرسالة بلا إطار');
+  // ما يبقى بحدّه عمدًا: حقول الكتابة.
+  has(ui, '.tj-field__input', 'border: 1px solid var(--tj-border-input)');
+});
+
+test('الصفحات: القسم الحالي أهدأ من المختار، وشرائح المحفوظات والمحرّر وبطاقات الخط بلا حد، والعلامة تحت الحالي', () => {
+  const base = read('src/ui/base.css');
+  has(base, '.tj-topbar__link[aria-current="page"]::after', 'background: var(--tj-selected-mark)');
+  const st = read('src/pages/settings/settings.css');
+  has(st, '.st-nav__link[aria-current="page"]', 'background: var(--tj-selected-section); color: var(--tj-selected-section-ink)');
+  assert.doesNotMatch(rule(st, '.st-nav__link[aria-current="page"]'), /box-shadow/);
+  has(st, '.st-nav__link[aria-current="page"] .tj-icon', 'var(--tj-selected-section-icon)');
+  has(st, '.st-font', 'border: 1px solid transparent');
+  has(st, '.st-font:has(input:checked)', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
+  const lib = read('src/pages/library/library.css');
+  has(lib, '.lib-chip', 'border: 1px solid transparent; background: var(--tj-control)');
+  has(lib, '.lib-chip--active', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
+  has(lib, '.lib-card--active', 'background: var(--tj-selected-soft)');
+  assert.doesNotMatch(lib, /dashed/, 'لا حد متقطّع في المحفوظات');
+  const ed = read('src/pages/editor/editor.css');
+  has(ed, '.ed-seg', 'border: 1px solid transparent');
+  has(ed, '.ed-seg__opt[aria-checked="true"]', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
+  has(ed, '.ed-chip', 'border: 1px solid transparent');
+  has(ed, '.ed-issue', 'border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-control)');
+  has(ed, '.ed-tab[aria-selected="true"]::after', 'background: var(--tj-selected-mark)');
+  has(ed, '.ed-row.is-selected', 'background: var(--tj-selected-soft)');
+  assert.doesNotMatch(ed, /logo-dots/, 'لا ذهب الشعار في المحرّر');
+  for (const sel of ['.ed-chip--todo', '.ed-chip--done', '.ed-chip--moved']) assert.doesNotMatch(rule(ed, sel), /border/, `${sel} بلا حد`);
+  has(ed, '.ed-row__text', 'border: 1px solid var(--tj-border-strong)');
+  const pop = read('src/pages/popup/popup.css');
+  for (const sel of ['.tj-popup__copy--success', '.tj-popup__copy--error']) has(pop, sel, 'border-color: transparent');
+});
+
+test('اللوحة والمشغّل: أزرار .b و.segs بلا حد بالمحدد، وقوائم المشغّل وزر الشريط المضغوط أو المفتوح بـ--tj-p-selected', async () => {
+  const { panelCss } = await import('../../../src/player/panel/styles.js');
+  const { groupCss, layerCss } = await import('../../../src/player/controls/styles.js');
+  const panel = panelCss();
+  has(panel, '.b', 'border: 1px solid transparent');
+  has(panel, '.b', 'background: var(--tj-control)');
+  has(panel, '.b[aria-expanded="true"]', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
+  has(panel, '.segs button[aria-checked="true"]', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
+  assert.doesNotMatch(panel, /border-strong\); border-radius: var\(--tj-radius-md\); background/, 'لا زر بحد بارز');
+  has(panel, '.num', 'border: 1px solid var(--tj-border-input)');
+  has(groupCss(), '.btn[aria-expanded="true"], .btn[aria-pressed="true"]', 'background: var(--tj-p-selected); color: var(--tj-p-selected-ink)');
+  const layer = layerCss();
+  has(layer, 'button.slot[aria-checked="true"]', 'background: var(--tj-p-selected); color: var(--tj-p-selected-ink)');
+  has(layer, '.seg button[aria-checked="true"]', 'background: var(--tj-p-selected); color: var(--tj-p-selected-ink)');
+  has(layer, 'button.item[aria-checked="true"]', 'background: var(--tj-p-selected); color: var(--tj-p-selected-ink)');
+  has(layer, 'button.primary', 'background: var(--tj-p-accent); color: var(--tj-p-accent-ink)');
+});

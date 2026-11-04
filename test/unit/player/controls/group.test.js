@@ -222,7 +222,7 @@ test('حجم الأيقونات وسُمكها: مقاس واحد في الست�
   assert.match(css, /\.group\[data-size="tight"\] \{ --w: 34px; --icon: 18px/);
   assert.match(css, /\.group\[data-size="fullscreen"\] \{ --w: 54px; --icon: 26px/);
   assert.match(css, /\.btn:focus-visible \{ outline: 2px solid #FFFFFF; outline-offset: -6px/, 'حلقة تركيز بيضاء داخلية');
-  assert.match(css, /\.btn\[aria-expanded="true"\] \.icon \{ color: var\(--tj-p-accent\)/, 'القائمة المفتوحة تلوّن الأيقونة بالإبراز');
+  assert.match(css, /\.btn\[aria-expanded="true"\], \.btn\[aria-pressed="true"\] \{ background: var\(--tj-p-selected\); color: var\(--tj-p-selected-ink\); \}/, 'المفتوح والمضغوط صبغة المحدد بنصها (الهوية الثالثة)');
   assert.doesNotMatch(css, /\.dot|\.spin|tj-spin/, 'لا نقاط ولا دوّار');
 });
 

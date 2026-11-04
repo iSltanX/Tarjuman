@@ -1,4 +1,4 @@
-/* نافذة الأيقونة (الهوية «بُنّ على ورق»، لوحة Popup): 340 عرضًا وارتفاع بحسب المحتوى (الحالات المعتادة بلا تمرير؛ والمتصفح
+/* نافذة الأيقونة (لوحة Popup، والهوية الثالثة «باذنجاني على رمادي»): 340 عرضًا وارتفاع بحسب المحتوى (الحالات المعتادة بلا تمرير؛ والمتصفح
    يحدّها بـ600). رأس 52 بالشعار المعتمد و«بياناتك على جهازك» على سطح البطاقة، وبطاقة الفيديو الحالي على الورق بخط شعري لا ظل،
    وإجراءات 40 بعرضين متساويين، ثم تذييل 48 بمدخل واحد لكل وجهة (المحفوظات والإعدادات). كل لون من رموز src/ui/tokens.css
    بالوضعين، والمعيّن (نقطة التاء) نقطة الحالة وحدها. */
@@ -40,12 +40,16 @@
 .tj-popup__skel-pill--wide { width: 110px; }
 .tj-popup__skel-tools { width: 40%; height: 14px; }
 
-/* «زر النص المتزامن مخفي · إظهاره»: صف على الغائر بأيقونة العين المشطوبة وزر ثانوي. */
+/* «زر النص المتزامن مخفي · إظهاره»: صف على الغائر بأيقونة العين المشطوبة وزر ثانوي. الصف بلون الزر المحايد نفسه، فالزر فيه
+   على سطح البطاقة ليُرى شكله بلا إطار، ومروره وضغطه كبقية الأزرار. */
 .tj-popup__entry-host { display: contents; } /* الحاوية بلا صندوق: الصف ونتيجته عنصران في عمود النافذة، والفارغ منهما بلا فجوة */
 .tj-popup__entry-slot:empty { display: none; }
 .tj-popup__entry { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); color: var(--tj-text); }
 .tj-popup__entry > .tj-icon { color: var(--tj-text-2); }
 .tj-popup__entry-text { flex: 1; min-width: 0; font: 400 13px/20px var(--tj-font-body); }
+.tj-popup__entry .tj-btn--secondary { background: var(--tj-surface); }
+.tj-popup__entry .tj-btn--secondary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-control-hover); }
+.tj-popup__entry .tj-btn--secondary:active:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-control-pressed); }
 .tj-popup__entry-result:empty { position: absolute; }
 .tj-popup__entry-result { display: flex; flex-direction: column; gap: 6px; }
 
@@ -56,8 +60,9 @@
 .tj-popup__actions > .tj-btn:only-child { grid-column: 1 / -1; }
 .tj-popup__actions > .tj-btn .tj-icon { flex: none; width: 16px; height: 16px; }
 .tj-popup__actions > .tj-btn > span { overflow: hidden; text-overflow: ellipsis; }
-.tj-popup__copy--success { background: var(--tj-success-bg) !important; color: var(--tj-success) !important; border-color: var(--tj-success) !important; }
-.tj-popup__copy--error { background: var(--tj-danger-bg) !important; color: var(--tj-danger) !important; border-color: var(--tj-danger) !important; }
+/* نتيجة النسخ على الزر نفسه بالخلفية واللون والنص، بلا إطار. */
+.tj-popup__copy--success { background: var(--tj-success-bg) !important; color: var(--tj-success) !important; border-color: transparent !important; }
+.tj-popup__copy--error { background: var(--tj-danger-bg) !important; color: var(--tj-danger) !important; border-color: transparent !important; }
 /* منطقة حية (role=status): تبقى في الشجرة فارغةً ليعلن قارئ الشاشة ما يُكتب فيها، وتخرج من التدفق فلا تأخذ فجوة. */
 .tj-popup__notice:empty { position: absolute; }
 

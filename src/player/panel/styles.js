@@ -34,15 +34,19 @@ export function panelCss() {
 .b, .mitem, .switch, .resume, .act, .t, .segs button { all: unset; box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .b:focus-visible, .mitem:focus-visible, .switch:focus-visible, .resume:focus-visible, .act:focus-visible, .segs button:focus-visible, .t:focus-visible, .num:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 
-/* الأزرار */
-.b { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: var(--tj-control-sm); min-width: var(--tj-control-sm); padding: 0 10px; border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-md); background: var(--tj-surface); color: var(--tj-text); font: 700 13px/20px var(--tj-font-body); white-space: nowrap; }
-.b:hover { background-image: linear-gradient(var(--tj-hover), var(--tj-hover)); }
-.b:active { background-image: linear-gradient(var(--tj-pressed), var(--tj-pressed)); }
-.b--ghost { border-color: transparent; background: transparent; color: var(--tj-text-2); }
-.b--ghost:hover { color: var(--tj-text); }
+/* الأزرار بلا إطار دائم (الهوية الثالثة): بخلفية الزر المحايدة والمرور والضغط أغمق منها، والشفاف بلا خلفية حتى المرور،
+   والمفتوح (قائمة الخيارات) صبغة المحدد بنصه. الحد الشفاف يحفظ المقاس. */
+.b { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: var(--tj-control-sm); min-width: var(--tj-control-sm); padding: 0 10px; border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-control); color: var(--tj-text); font: 700 13px/20px var(--tj-font-body); white-space: nowrap; }
+.b:hover { background: var(--tj-control-hover); }
+.b:active { background: var(--tj-control-pressed); }
+.b--ghost { background: transparent; color: var(--tj-text-2); }
+.b--ghost:hover { background: var(--tj-control-hover); color: var(--tj-text); }
+.b--ghost:active { background: var(--tj-control-pressed); }
 .b--icon { padding: 0; width: var(--tj-control-sm); }
-.b[aria-disabled="true"] { opacity: .5; cursor: not-allowed; background-image: none; }
-.b[aria-expanded="true"] { background-image: linear-gradient(var(--tj-pressed), var(--tj-pressed)); }
+.b[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+.b[aria-disabled="true"]:hover, .b[aria-disabled="true"]:active { background: var(--tj-control); }
+.b--ghost[aria-disabled="true"]:hover, .b--ghost[aria-disabled="true"]:active { background: transparent; }
+.b[aria-expanded="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); }
 
 /* اللوحة */
 .panel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-xl); }
@@ -68,8 +72,8 @@ export function panelCss() {
 .ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .segs { display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); }
 .segs button { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: var(--tj-radius-sm); color: var(--tj-text-2); font: 700 12px/24px var(--tj-font-body); white-space: nowrap; }
-.segs button:hover { color: var(--tj-text); }
-.segs button[aria-checked="true"] { background: var(--tj-surface); color: var(--tj-text); }
+.segs button:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-control-hover); color: var(--tj-text); }
+.segs button[aria-checked="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .segs button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
 .switch { display: inline-flex; align-items: center; gap: 10px; color: var(--tj-text-2); font: 700 12.5px/20px var(--tj-font-body); }
 .switch__track { width: 34px; height: 20px; flex: none; display: flex; justify-content: flex-start; padding: 2px; border-radius: 999px; background: var(--tj-border-input); transition: background-color var(--tj-motion-menu); }

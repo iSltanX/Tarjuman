@@ -1,4 +1,4 @@
-/* صفحة المحفوظات (الهوية «بُنّ على ورق»، تصميم Library/LibraryStates/LibraryDialogs): رأس بالعنوان والعدد والسعة، وشريط
+/* صفحة المحفوظات (تصميم Library/LibraryStates/LibraryDialogs، والهوية الثالثة «باذنجاني على رمادي»): رأس بالعنوان والعدد والسعة، وشريط
    أدوات (بحث وترتيب ورقائق تصفية)، وأقسام التاريخ بصناديق صفوف مسطّحة مفصولة بخط شعري (لا بطاقة داخل بطاقة): كل صف صورة
    الفيديو ثم العنوان وسطره وشارته، ثم عمود «الترجمات» بشرائح الخانات، ثم الأفعال؛ ويتوسع الصف في مكانه ببطاقات ترجماته. كل لون من
    رموز src/ui/tokens.css بالوضعين، والاستثناء الوحيد المسمّى ثابتا --lib-scrim وlib-scrim-ink لشارة المدة فوق الصورة (نص فوق
@@ -74,7 +74,7 @@
 /* أفعال الصف: «تحرير» و«رفع ترجمة» نصّان، وفتح الفيديو مثلث ممتلئ، وزر التوسيع يدور عند الفتح. */
 .lib-open .tj-icon { fill: currentColor; stroke-width: 1.5; }
 .lib-toggle .tj-icon { transition: transform var(--tj-motion-menu) var(--tj-ease); }
-.lib-toggle[aria-expanded="true"] { background: var(--tj-pressed); color: var(--tj-text); }
+.lib-toggle[aria-expanded="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .lib-toggle[aria-expanded="true"] .tj-icon { transform: rotate(180deg); }
 
 /* صورة الفيديو: 128×72؛ بلاطة بأيقونة الفيديو عند الإطفاء أو الخطأ (لا توهم بأنها لقطة). والمدة شارة معتمة فوقها. */
@@ -90,26 +90,28 @@
   background: var(--lib-scrim); color: var(--lib-scrim-ink); font: 500 11px/16px var(--tj-font-mono); direction: ltr;
 }
 
-/* عمود «الترجمات»: شريحة لكل ترجمة موجودة (النشطة بالإبراز ومعيّن)، وشريحة متقطّعة للخانة الفارغة التالية إجراء رفع. */
+/* عمود «الترجمات»: شريحة لكل ترجمة موجودة بلا إطار (النشطة صبغة المحدد ومعيّن بنصها)، وشريحة شفافة للخانة الفارغة التالية
+   إجراء رفع («3 · فارغة»)، تتلوّن بالمرور. */
 .lib-trs { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
 .lib-trs__label { font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 .lib-trs__none { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
 .lib-trs__chips, .lib-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .lib-chip {
   position: relative; display: inline-flex; align-items: center; gap: 7px; height: 28px; max-width: 220px; padding: 0 11px;
-  border-radius: var(--tj-radius-sm); border: 1px solid var(--tj-border-strong); background: var(--tj-surface); color: var(--tj-text-2);
+  border-radius: var(--tj-radius-sm); border: 1px solid transparent; background: var(--tj-control); color: var(--tj-text-2);
   font: 700 13px/18px var(--tj-font-body); white-space: nowrap; cursor: pointer;
 }
 .lib-chip::after { content: ""; position: absolute; inset: -2px 0; } /* هدف الضغط 32 ارتفاعًا بشكل مضغوط */
 .lib-chip__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .lib-chip__mark { flex: none; width: 6px; height: 6px; border-radius: 1px; transform: rotate(45deg); background: var(--tj-border-input); }
-.lib-chip:hover:not(.lib-chip--active) { background: var(--tj-hover); color: var(--tj-text); border-color: var(--tj-border-input); }
-.lib-chip--active { border-color: var(--tj-brand); background: var(--tj-brand-soft); color: var(--tj-brand-text); cursor: default; }
-.lib-chip--active .lib-chip__mark { background: var(--tj-brand); }
-.lib-chip--add { border-style: dashed; background: transparent; color: var(--tj-muted); font-weight: 400; }
-.lib-chip--add:hover { border-style: solid; background: var(--tj-brand-soft); border-color: var(--tj-brand); color: var(--tj-brand-text); }
+.lib-chip:hover:not(.lib-chip--active) { background: var(--tj-control-hover); color: var(--tj-text); }
+.lib-chip--active { background: var(--tj-selected); color: var(--tj-selected-ink); cursor: default; }
+.lib-chip--active .lib-chip__mark { background: var(--tj-selected-ink); }
+.lib-chip--add { background: transparent; color: var(--tj-text-2); font-weight: 400; }
+.lib-chip--add:hover { background: var(--tj-control-hover); color: var(--tj-text); }
 
-/* التوسيع في الصف: خلفية غائرة وبطاقات الترجمات (والخانة الفارغة بحدّ متقطّع)، وسطر النسخة السابقة. */
+/* التوسيع في الصف: خلفية غائرة وبطاقات الترجمات (النشطة بالصبغة الخفيفة بلا إطار، والخانة الفارغة بخلفية الزر)، وسطر النسخة
+   السابقة. */
 .lib-exp { background: var(--tj-sunken); border-top: 1px solid var(--tj-border); padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
 .lib-row:last-child > .lib-exp { border-end-start-radius: var(--tj-radius-card); border-end-end-radius: var(--tj-radius-card); }
 .lib-exp__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
@@ -118,8 +120,8 @@
 .lib-exp__cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-items: start; }
 .lib-exp__extra:empty { display: none; }
 .lib-card { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 14px 16px; border-radius: var(--tj-radius-card); border: 1px solid var(--tj-border); background: var(--tj-surface); }
-.lib-card--active { border-color: var(--tj-brand); box-shadow: inset 0 0 0 1px var(--tj-brand); }
-.lib-card--empty { border: 1.5px dashed var(--tj-border-strong); background: transparent; justify-content: center; align-self: stretch; }
+.lib-card--active { border-color: transparent; background: var(--tj-selected-soft); }
+.lib-card--empty { border-color: transparent; background: var(--tj-control); justify-content: center; align-self: stretch; }
 .lib-card--empty .lib-card__title { color: var(--tj-text-2); }
 .lib-card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .lib-card__titlerow { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 1; }
