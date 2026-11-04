@@ -89,6 +89,8 @@ async function chromium(browser, { profile, ext, downloadDir, headless, extraArg
     get extensionId() { return id; },
     youtube: (url) => open(url, 'youtube'),
     extPage: (rel) => open(`chrome-extension://${id}/${rel}`, rel.split(/[?#]/)[0]),
+    /** صفحة إضافة بلا جسر الحزام (حزمة المتجر، T8): في Chromium هي extPage نفسها. */
+    openExt: (rel) => open(`chrome-extension://${id}/${rel}`, rel.split(/[?#]/)[0]),
     async uninstall() {
       try {
         await b.conn.send('Extensions.uninstall', { id });
@@ -140,10 +142,12 @@ function bidiPage(conn, page, chooser) {
 
 async function firefox({ profile, ext, downloadDir, headless }) {
   await mkdir(downloadDir, { recursive: true });
+  // معرّف صفحات الإضافة ثابت بتفضيل extensions.webextensions.uuids (bidi.mjs)، فيُعرف أصلها بلا جسر (openExt لحزمة المتجر).
+  const uuid = randomUUID();
   const ff = await launchFirefox({
     profile, headless,
     // الأذونات الاختيارية تُمنح بلا سؤال في نسخة الاختبار (لا نافذة تجيب)، والإذن نفسه وحواره في الجلسة اليدوية.
-    prefs: testPrefs({ downloadDir, extensionId: GECKO_ID, uuid: randomUUID(), extra: { 'extensions.webextOptionalPermissionPrompts': false } }),
+    prefs: testPrefs({ downloadDir, extensionId: GECKO_ID, uuid, extra: { 'extensions.webextOptionalPermissionPrompts': false } }),
   });
   const { conn } = ff;
   const logs = [];
@@ -232,6 +236,14 @@ async function firefox({ profile, ext, downloadDir, headless }) {
       if (!ctx) throw new Error(`لم يظهر تبويب ${rel}`);
       extContexts.add(ctx);
       const page = bidiPage(conn, new BidiPage(conn, ctx), chooser);
+      await page.waitFor(() => document.readyState === 'complete', { timeoutMs: 15000 });
+      return page;
+    },
+    /** صفحة إضافة بلا جسر الحزام (حزمة المتجر، T8): تبويب جديد إلى أصلها المعروف من التفضيل. */
+    async openExt(rel) {
+      base = base ?? `moz-extension://${uuid}/`;
+      const page = bidiPage(conn, await BidiPage.open(conn, `${base}${rel}`), chooser);
+      extContexts.add(page.context);
       await page.waitFor(() => document.readyState === 'complete', { timeoutMs: 15000 });
       return page;
     },
