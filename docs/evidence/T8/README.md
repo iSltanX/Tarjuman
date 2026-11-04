@@ -77,7 +77,7 @@
 
 ## ٦. نصوص الموقع بعد المطابقة
 
-`privacy.md` و`tarjuman.md` و`help.md` تغيّرت في §٤، فأُعيد توليد `src/lib/tarjuman/site-text.ts` في `iSltanX/WebSiteSultan` من `6acf01e` على فرع جديد من `main` هناك. ودمجه نشر جديد ينتظر إذن سلطان. التفصيل في جدول الحالة (صف T8).
+`privacy.md` و`tarjuman.md` و`help.md` تغيّرت في §٤، فأُعيد توليد `src/lib/tarjuman/site-text.ts` في `iSltanX/WebSiteSultan` من `6acf01e` على الفرع `fix/tarjuman-text-sync` من `main` هناك (`4593452`): `site-text --check` مطابق، و`typecheck` و`lint` ناجحان، و`coverage` ‏1969 اختبارًا. وفي PR ‎[#83](https://github.com/iSltanX/WebSiteSultan/pull/83) نجحت `quality` و`e2e-desktop` و`e2e-mobile` و`admin ثم studio` ومعاينة Vercel (و`audit (advisory)` ساقط كما على `main`). ثم دُمج مضغوطًا بإذن سلطان («ادمجه أنت»، `e4755a6`) ونُشر: الصفحات الأربع 200، والنصوص الجديدة ظاهرة («بنافذة التثبيت» و«لا سجلّ لكل ما تشاهده» و«لكل عنوان IP»)، والعبارتان القديمتان زالتا.
 
 ## ٧. لم يُختبر
 
