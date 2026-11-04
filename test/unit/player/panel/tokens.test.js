@@ -45,7 +45,7 @@ test('الوضع الداكن: كل قيمة في اللوحة تساوي رمز
 
 test('المفاتيح نفسها بالوضعين، وبينهما اختلاف حقيقي في الأسطح والنص', () => {
   assert.deepEqual(Object.keys(PANEL_TOKENS.dark).sort(), Object.keys(PANEL_TOKENS.light).sort());
-  for (const k of ['bg', 'surface', 'text', 'brand', 'border', 'logoDots']) assert.notEqual(PANEL_TOKENS.light[k], PANEL_TOKENS.dark[k], k);
+  for (const k of ['bg', 'surface', 'text', 'brand', 'border', 'control', 'selected', 'selectedInk']) assert.notEqual(PANEL_TOKENS.light[k], PANEL_TOKENS.dark[k], k);
 });
 
 test('ما لا يتبدل بالوضع (الزوايا والارتفاعات والحركة والخطوط) يساوي :root', () => {
