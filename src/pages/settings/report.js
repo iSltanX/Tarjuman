@@ -263,6 +263,9 @@ export function reportPanel({ doc = document, env = {} } = {}) {
         busy = false;
         if (r.ok) {
           outcome = { state: 'sent', id: r.id };
+          // البلاغ التالي بلاغ جديد ولو طابق نصّه هذا: المفتاح لإعادة البلاغ نفسه بعد فشل، لا لما بعد النجاح (مراجعة T8).
+          key = null;
+          keyBody = null;
           text = '';
           textarea.value = '';
         } else {

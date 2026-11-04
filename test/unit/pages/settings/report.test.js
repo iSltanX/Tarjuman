@@ -116,6 +116,24 @@ test('الإرسال معطّل بلا وصف، والإذن أول ما في ا
   assert.ok(textOf(h.result()).includes('نُسخ الرقم.'));
 });
 
+test('بعد النجاح: البلاغ التالي بنص مطابق بلاغ جديد بمفتاح جديد، لا إعادة للقديم (مراجعة T8)', async () => {
+  const h = harness({ outcomes: [{ ok: true, id: 41, replayed: false }, { ok: true, id: 42, replayed: false }] });
+  h.trigger.click();
+  await settle();
+  h.type('لا تظهر الترجمة العربية');
+  buttonNamed(h.region, 'أرسل البلاغ').click();
+  await settle();
+  assert.ok(textOf(h.result()).includes('#41'));
+  h.type('لا تظهر الترجمة العربية');
+  buttonNamed(h.region, 'أرسل البلاغ').click();
+  await settle();
+  const sends = h.log.filter((x) => x[0] === 'send');
+  assert.equal(sends.length, 2);
+  assert.deepEqual(sends[0][1], sends[1][1], 'الحمولة نفسها');
+  assert.notEqual(sends[0][2], sends[1][2], 'مفتاح جديد بعد النجاح');
+  assert.ok(textOf(h.result()).includes('#42'));
+});
+
 test('رفض الإذن: لا طلب، ونص الإذن مع «أعد المحاولة» و«انسخ البلاغ»', async () => {
   const h = harness({ permission: false });
   h.trigger.click();
