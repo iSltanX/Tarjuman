@@ -16,10 +16,10 @@
 
 - **العمل:** Cosmos Laundromat — First Cycle (2015)، الحلقة الأولى من الفيلم.
 - **صاحب الحقوق:** Blender Foundation.
-- **سطر النسبة كما يطلبه صاحب الحقوق:** (CC) Blender Foundation | gooseberry.blender.org
+- **سطر النسبة كما يطلبه صاحب الحقوق:** `(CC) Blender Foundation | gooseberry.blender.org`
 - **الصنّاع:** إخراج Mathieu Auvray، وتأليف Esther Wouda، وإنتاج Ton Roosendaal، في استوديو Blender Institute بأمستردام.
 - **الرخصة:** [Creative Commons Attribution 3.0 Unported (CC BY 3.0)](https://creativecommons.org/licenses/by/3.0/).
-- **مصدر الرخصة:** [صفحة المشروع](https://gooseberry.blender.org/about/)، ووسم الفيلم في يوتيوب «Creative Commons Attribution license (reuse allowed)».
+- **مصدر الرخصة:** [صفحة المشروع](https://gooseberry.blender.org/about/)، ووسم الفيلم في يوتيوب `Creative Commons Attribution license (reuse allowed)`.
 - **المصدر:** [Cosmos Laundromat - First Cycle. Official Blender Foundation release.](https://www.youtube.com/watch?v=Y-rmzh0PI3c) على قناة Blender في يوتيوب، رُفع في 10 أغسطس 2015.
 - **موقع المشروع:** [gooseberry.blender.org](https://gooseberry.blender.org)
 
