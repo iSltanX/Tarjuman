@@ -120,7 +120,7 @@ MountHandle = { state: "stub" | "waiting" | "mounted" | "error", unmount(): void
 - `deps` للاختبار فقط: الأدوات تستورد تدفقي التصدير (§٥) والاستيراد (§٦) بنفسها، فلا يعرفهما `main.js`.
 - البديلان الحاليان لا يلمسان DOM ويعيدان `state: "stub"`، ويظهر ذلك في رد نافذة الأيقونة (`mounted`) والدخان الحي.
 - **الطبقة (P5، والخط والحجم P6):** حاوية Shadow DOM داخل `#movie_player`، و`textContent` فقط، والمظهر من `state.settings.appearance` بما فيه الخط (`font`) والحجم النسبي (`scale`، نسبة فوق الحجم النسبي لارتفاع المشغّل)، والخطوط من ملفات الإضافة (§٩) عبر `FontFace` ببياناتها لا برابطها، وعند التعذّر المراعي المضمّن ثم خط النظام العربي برمز في التشخيص، والإنجليزي للوضع المزدوج من `state.english`، والإعلان والشريط وملء الشاشة عبر `youtube-dom`، والبحث بـ`lookupMs` (عقد التوقيت). تغيّر `state.videoId` يمسح الطبقة فورًا. وإخفاء ترجمة يوتيوب الأصلية بنمط تحقنه الطبقة نفسها على `SELECTORS.captionWindow` ما دامت نشطة.
-- **الأدوات (P6):** مجموعة داخل بداية `getRightControls()`، والقوائم داخل `#movie_player`، وعزل الضغطات في الحقول، والرسائل من `messageFor(code)`، والخطوة بـ`controller.updateSettings({ offsetStepMs })`.
+- **الأدوات (P6):** مجموعة داخل بداية `getRightControls()`، والقوائم داخل `#movie_player`، وعزل الضغطات في الحقول، والرسائل من `messageFor(code)`، والخطوة بـ`controller.updateSettings({ offsetStepMs })`. ونوافذ الشريط الأربع حوارات غير نمطية (`role="dialog"`، وأزرارها `aria-haspopup="dialog"`، وزر الرفع بلا ترجمة بلا `aria-haspopup` لأنه يفتح المنتقي)، تُغلق بخروج التركيز إلى ما خارج الطبقة والمجموعة إلا قرارًا ينتظر أو عملًا جاريًا. والرسائل تُحدَّث بمعرّفاتها فلا يُعاد إنشاء القائم، و«علّم للمراجعة» و«مزامنة بجملة…» معطّلان أثناء الإعلان (`CT_AD_SHOWING`) (تدقيق 7a66f91، C6).
 - الرموز داخل المشغّل نصًا من `playerTokensCss()` (§٩)، فسكربت المحتوى لا يحمّل ملفات CSS من الإضافة.
 
 ## ٤. نقطة الدخول — `src/content/main.js` (مجمَّد)
@@ -207,7 +207,7 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 | `tokens.css` | ألوان `Pages` بالوضعين (§٣.١ من مواصفة التصميم) بالبادئة `--tj-`، والخطوط وبدائلها، والمسافات والزوايا والظلال والحركة. الوضع يتبع النظام، و`data-theme` يفرضه. |
 | `base.css` | RTL، وسلّم الخطوط (`tj-display`…`tj-mono-sm`)، و`tj-ltr` لعزل الأزمنة والمعرّفات، والحاويات، وحلقة التركيز، وتقليل الحركة. |
 | `components.css` و`components.js` | `button` (أربعة أنواع وثلاثة مقاسات، والتحميل، و«معطّل بسبب»)، و`field` (تسمية وتلميح وخطأ، وLTR أحادي للأرقام)، و`confirmDialog` (`<dialog>`، Esc إلغاء)، و`alertBox` (أربع نبرات)، و`emptyState`، و`statusPill` (ست نبرات)، و`el` و`ltr` و`icon`. DOM وtextContent فقط. |
-| `format.js` | `formatOffset` (`+0.5` `−1.0` `0.0`)، و`formatTimecode` (`HH:MM:SS,mmm`)، و`formatCount` بصيغ `COUNT_FORMS` («مقطع واحد»، «مقطعان»، «3 مقاطع»، «11 مقطعًا»)، و`formatBytes`. |
+| `format.js` | `formatOffset` (`+0.5` `−1.0` `0.0`)، و`formatTimecode` (`HH:MM:SS,mmm`)، و`formatCount` بصيغ `COUNT_FORMS` («مقطع واحد»، «مقطعان»، «3 مقاطع»، «11 مقطعًا»)، و`formatBytes`. والعزل داخل جملة عربية: `ltrInline` (LRI…PDI لاسم ملف أو رقم موقّع)، و`isolate` (FSI…PDI لنص حر كعنوان فيديو؛ تدقيق 7a66f91، C6، U49). |
 | `player-tokens.js` | رموز `Player` (§٣.٢) و`playerTokensCss(selector)` لطبقة العرض والأدوات. |
 | `page.js` | `startPage({ title, render })` بحدّ أخطاء، و`openPage`، و`extensionVersion`. |
 | `subtitle-fonts.js` | بيانات خطوط الترجمة فوق الفيديو وحدها (من «تهيئة W4»): لكل خط معرّفه (`SUBTITLE_FONTS` في نموذج الإعدادات)، واسمه العربي واللاتيني، واسم عائلة فريد داخل الإضافة، وملفّا وزنيه 400 و700، وسلسلة البدائل (المراعي المضمّن ثم خطوط النظام العربية). بلا DOM. |
