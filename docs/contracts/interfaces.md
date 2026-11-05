@@ -136,7 +136,7 @@ MountHandle = { state: "stub" | "waiting" | "mounted" | "error", unmount(): void
 ```js
 buildExport({ videoId, title, track: { key, lang, kind, cues }, mode: "normal" | "long", split: null | { size, by?: "count" | "content" } , now })
   → { files: [{ name, text }], fingerprint: Fingerprint, instructions: string, warnings: string[] }   // يرمي TjError(EX_…)
-buildArabicExport({ videoId, cues, variant: "current" | "original" }) → { name, text }   // cues بعد exportTiming
+buildArabicExport({ videoId, cues, variant: "current" | "original" }) → { name, text, notes: string[] }   // cues بعد exportTiming؛ notes (C5، U99)
 fileName({ videoId, lang: "en" | "ar", kind?, mode?, variant?, part? }) → string        // مثل VIDEOID.en.asr.normal.srt
 instructions({ videoId, title, parts? }) → string                                     // تعليمات الترجمة: الملحق أ حرفيًا (P7)
 describeTrack(trackInfo) → string                                                      // «English – يدوي، 412 مقطعًا»
@@ -147,6 +147,9 @@ download(file, { doc? })                                                        
 
 - **التقسيم بالمحتوى (إضافة W6 بطلب P11، R60):** `split.by` اختياري؛ `"count"` (الافتراضي) التوزيع المتوازن القديم `planParts`، و`"content"` عند حدود الجمل أو الصمت `planPartsByContent` (§١٦). الأسماء وأجزاء البصمة والضمّ المطابق للملف الكامل كما في التقسيم القديم، وقيمة غيرهما `MD_INVALID`.
 
+- **ما يُكتب يُقرأ بالعدد نفسه (تدقيق 7a66f91، C5):** `assertWritable(cues, { arabic? })` يرفض نصًا فيه سطر يُقرأ رأسَ مقطع (`breaksSrtText` في `src/core/srt/lenient.js`: سطر زمن كامل، أو رقم يليه ما يشبه الزمن، أو سياج أو عنوان) برمز `EX_TEXT_BREAKS_SRT` للعربي و`EX_TRACK_BREAKS_SRT` للإنجليزي (U78)، والإنجليزي على ما يغيّر العدد في أي قارئ SRT وحده (سطر زمن، أو رقم يليه زمن؛ `breaksSrtText(text, { markdown: false })`) فالسياج والعنوان فيه نص. وفي العربي الفارغ بصريًا (`isBlankText` في `src/core/model/cue.js`) فارغ (U80)، وبعد الثابت السادس يُعاد قراءة ملفه بالمحلّل المتسامح (`verifyReread`): العدد والأرقام والأزمنة نفسها، وإلا `EX_INVARIANT_FAILED`. والعربي يُكتب بنصه كما يقرؤه الاستيراد (`writableArabic`: بلا محارف تحكم ولا تجاوز اتجاه ولا مسافات أطراف الأسطر)، و`notes` ما جُرّد منه (`EX_NOTE_CONTROL_STRIPPED`) وما يجرّده الاستيراد عند إعادة القراءة (`EX_NOTE_REREAD_CHANGES`) بأرقام المقاطع في الملف (U99). والإنجليزي بنصه كما هو، فنواتج العيّنات الحقيقية مطابقة بايتًا.
+- **حد الرفع في التقسيم (تدقيق 7a66f91، C5، U31 والقرار Q23):** `splitPlan(cues, split, limits = UPLOAD_LIMITS) → { ranges, size, raised } | null` في `src/core/export/parts.js`، و`UPLOAD_LIMITS = { files: MAX_FILES, bytes: MAX_FILE_BYTES }` حدّا الاستيراد نفسيهما (50 ملفًا و5 م.ب). حجم الجزء لا يقل عن ceil(count/50)، فيُرفع المطلوب بتحذير `EX_SPLIT_SIZE_RAISED` في `warnings`؛ وجزء بتقدير حجمه العربي فوق حد البايتات `EX_SPLIT_PART_TOO_LARGE` إن كفى حجم أصغر، وإلا `EX_SPLIT_IMPOSSIBLE`، قبل أي ملف.
+- **النص الدراسي (تدقيق 7a66f91، C5، U30):** `studyTiming(cues, displayOffsetMs, english?) → { cues, clamped, english }` يزيح الإنجليزي للثنائي بالإزاحة نفسها (عقد التوقيت، القاعدة ٩)، فيُوزَّع على الفقرات بمرجعها الزمني، في المحفوظات والمحرّر.
 - **في المشغّل (P6):** `controller.convertCaptured(key, { mode })` ← `buildExport` ← `download` لكل ملف ← `controller.recordExport({ trackKey: key, fingerprint })`.
 - **في الصفحات (P7، P8):** الإنجليزية من المسار المحفوظ بالوضع «عادي» وحده؛ والعربية بـ`exportTiming` (عقد التوقيت §٥) ثم `buildArabicExport`؛ وحفظ أي بصمة بـ`store.updateVideo` و`withExport`.
 - البصمة بحسب عقد البيانات §٤، وتُحفظ لكل تصدير.
@@ -167,6 +170,8 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 - **اختيار البصمة:** الأحدث بين المطابقة عددًا، وإلا الأحدث؛ ويُسجَّل في `fingerprintId` وفي `comparison.fingerprintId`.
 - الناتج الناجح هو مدخل `controller.loadArabic(result, { replace })` في المشغّل، أو `withArabicImport` في المحفوظات. لا كتابة في التخزين داخل وحدة الاستيراد.
 - كل تحويل للنص يُذكر في `notes`، ولا تعديل للتوقيت إلا بالاستعادة المؤكدة.
+- **المحلّل المتسامح (تدقيق 7a66f91، C5):** سطر يشبه الزمن داخل نص مقطع (بعد سطر زمن صالح وقبل أول حدّ) وليس قبله رقم نصٌّ منه («1 --> 2» و«10:30 --> 11:00»)، فما يصدّره ترجمان يقرؤه ترجمان (U35)؛ والرقم ثم ما يشبه الزمن رأس معيب `IM_BAD_TIME`، وسطر الزمن الكامل بلا رقم `IM_MISSING_NUMBER` كما كانا. والسطر الفارغ والسياج والعنوان (`#` إلى `######` ثم مسافة) حدود لنص أي مقطع: الأسوار بين المقاطع تُزال بملاحظة، والعنوان بينها `IM_STRAY_TEXT` برقم سطره، وبعد آخر مقطع شرح يُزال (U38). وفي سطر الزمن تُطبَّع الفاصلة العربية «٫» و«،» والأسهم «→» و«⟶» و«->» و«–>» و«—>» بملاحظة `IM_NOTE_TIME_MARKS`، والزمن السالب `IM_BAD_TIME` على سطره. وUTF-16 بلا BOM `IM_NOT_UTF8`، واسم الأجزاء المدموجة بلا «partNNofMM».
+- **ملف التصحيح (تدقيق 7a66f91، C5):** `readPatch` يتحقق من كل ملف عند قراءته (التكرار، والرقم داخل البصمة، والزمن) فيتوقف عند أول ملف باطل، وبحد تراكمي `IM_TOO_MANY_CUES` (U40).
 - **في الإصدار الثاني (P11):** `compare` يتيح `restoreTimingAvailable` بمحاذاة هوية متحققة وحدها (§١٦)، وإن طابق العدد والترقيم ولم تتحقق المحاذاة فالسبب `CMP_RESTORE_UNVERIFIED` في `comparison.notes` دون حقل جديد؛ و`readImport` يضم في `comparison.notes` ملاحظات القراءة ثم ملاحظات المقارن. والقارئ يقبل أغلفة Markdown المحددة (السياج ``` أو ~~~، وعلامات التأكيد حول أسطر الأرقام والتوقيت، وأسطر الشرح والعناوين حول الملف) بملاحظة لكلٍّ، ويرفض النص بلا توقيت بـ`IM_NO_TIMING`.
 
 ## ٧. محددات يوتيوب — `src/player/youtube-dom.js` (مشترك)
@@ -358,7 +363,7 @@ mergeThreeWay({ base, mine, theirs }: { base: Cue[], mine: Cue[], theirs: Cue[] 
 // src/core/compare
 rankReferences(cues: Cue[], fingerprints: Fingerprint[]) → { fingerprintId, score, matched, why }[]   // الأفضل أولًا
 fingerprintCoverage(fingerprint, cues) → { ok: true, numbersOf, windowOf, pairs, missing, extra, structural } | { ok: false }   // تدقيق 5fedcb9
-currentComparison(cues, fingerprint, { driftMs?, coverage? }) → ComparisonReport   // النقص والزيادة والانحراف بالمحاذاة، والباقي من compare
+currentComparison(cues, fingerprint, { driftMs?, coverage? }) → ComparisonReport   // النقص والزيادة والانحراف بالمحاذاة، والباقي من compare؛ ولا matched مع دمج أو شطر (C5، U29)
 trackComparison(track, fingerprints) → ComparisonReport | null                     // الحاضر لترجمة محفوظة، والمحفوظ بلا مرجع
 compare(...)   // التوقيع نفسه؛ restoreTimingAvailable لا يصح إلا بمحاذاة متحققة، والسبب في notes
 
@@ -367,11 +372,12 @@ reviewIncoming({ fileName, cues, videoId, fingerprints, knownVideoIds? })
   → { references: ReturnType<rankReferences>, suggested: string | null, certain: boolean, nameHint: null | { videoId: string, differs: boolean } }
 readPatch(fileOrFiles, { fingerprint, cues }) → Promise<{ ok: true, plan } | { ok: false, error: { code, message, line? } }>
 applyPatch(cues: Cue[], plan, { only?: number[] }) → Cue[]
+applyPatchDetailed(cues, plan, { only? }) → { cues: Cue[], renumbered: boolean }   // C5، U96: الترقيم من 1 إن كسر الإدراج تسلسل ترجمة متسلسلة
 
 // src/core/export
 instructions({ videoId, title, parts?, glossary? }) → string            // glossary: مصطلحات القاموس أعلاه
 planPartsByContent(cues: Cue[], size: number) → { index, from, to }[] | null   // planParts القديم باقٍ
-buildPatchPackage({ videoId, title, fingerprint, englishTracks, numbers, glossary? }) → { ok: true, file: { name, text }, instructions: string, count } | { ok: false, code }   // glossary (W6): فقرة القاموس في instructions وحدها
+buildPatchPackage({ videoId, title, fingerprint, englishTracks, numbers, glossary? }) → { ok: true, file: { name, text }, instructions: string, count } | { ok: false, code, params? }   // glossary (W6): فقرة القاموس في instructions وحدها؛ ولا يرمي: EX_PATCH_SOURCE_UNWRITABLE بـparams.list (C5، U79)
 buildStudyText({ videoId, title, cues, english?, format: 'txt' | 'md', bilingual: boolean }) → { name, text }
 buildReviewReport({ videoId, title, items, includeText: boolean, format: 'txt' | 'md' }) → { name, text }   // items: بنود التقرير أعلاه
 

@@ -83,6 +83,8 @@ ComparisonReport = {
 }
 ```
 
+**التقرير الحاضر** (`currentComparison`، تدقيق 5fedcb9) يحكم بالمحاذاة فلا يحسب الدمج والشطر نقصًا وزيادة وانحرافًا، لكنه لا يجعل `matched` صحيحًا معهما ولو توازن العدد: «مطابق للأصل» يعني الأرقام والتوقيت (تدقيق 7a66f91، C5، U29).
+
 **قيود يفرضها المدقق:** بلا بصمة ← `countSource=null` و`matched=false` و`restoreTimingAvailable=false`. و`restoreTimingAvailable` يعني `countSource = countTarget` و`numbering = same`. و`matched` يعني ذلك وغياب `missing` و`extra` و`drift`.
 
 ## ٦. الترجمة العربية وسجل الفيديو — `tracks.js` و`video.js`
