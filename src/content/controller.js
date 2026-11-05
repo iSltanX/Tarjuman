@@ -77,7 +77,12 @@ export function createController({ store, extractor = null, page = {}, now = () 
   let loadSeq = 0;
   let pendingWrites = 0;
   let writeEpoch = 0;
-  let externalWhileWriting = false;
+  // أحداث وصلت والكتابة جارية: نسخها، أو 'reload' لما لا نسخة له (حذف، أو مسح، أو قراءة تزامنت مع كتابة، أو كتابة فشلت).
+  // بعد الكتابات تُعاد القراءة إلا إن كانت كلها صدى ما كُتب هنا: مع الكاتب الواحد (تدقيق 7a66f91، C2) يصل حدث الكتابة نفسها
+  // قبل ردها عادةً، فلا تتبع كل ± قراءةٌ كاملة زائدة.
+  let deferred = new Set();
+  // نسخ ما كتبه هذا المتحكم في النافذة نفسها (رشقة ± تمر بنسخ وسيطة كلها صداه).
+  let written = new Set();
   let listenerFailures = 0;
   let lastListenerError = null;
   // مراجع المقاطع ثابتة ما لم يتغير مصدرها، وإن نُسخ السجل عند كل حفظ (الطبقة تبني فهرسها عليها).
@@ -163,6 +168,16 @@ export function createController({ store, extractor = null, page = {}, now = () 
     return videoId;
   }
 
+  /** بعد آخر كتابة جارية: يُعاد قراءة السجل إن وصل أثناءها حدث غير صدى ما انتهت إليه الحالة. */
+  function settleDeferred() {
+    if (pendingWrites || !deferred.size) return;
+    const seen = deferred;
+    const own = written;
+    deferred = new Set();
+    written = new Set();
+    if ([...seen].some((v) => !own.has(v))) reloadIfNewer();
+  }
+
   /** كتابة واحدة في سجل الفيديو الحالي؛ الأحداث الخارجية أثناءها تؤجَّل حتى تنتهي. */
   async function writeRecord(fn) {
     const id = requireVideo();
@@ -170,14 +185,15 @@ export function createController({ store, extractor = null, page = {}, now = () 
     try {
       const next = await store.updateVideo(id, fn);
       if (id === videoId) saved = next;
+      written.add(versionOf(next));
       writeEpoch++;
       return { id, next };
+    } catch (err) {
+      deferred.add('reload');
+      throw err;
     } finally {
       pendingWrites--;
-      if (!pendingWrites && externalWhileWriting) {
-        externalWhileWriting = false;
-        reloadIfNewer();
-      }
+      settleDeferred();
     }
   }
 
@@ -188,14 +204,15 @@ export function createController({ store, extractor = null, page = {}, now = () 
     try {
       const next = await store.updateBundle(id, fn, opts);
       if (id === videoId) saved = next ? next.record : null;
+      written.add(versionOf(next ? next.record : null));
       writeEpoch++;
       return { id, next };
+    } catch (err) {
+      deferred.add('reload');
+      throw err;
     } finally {
       pendingWrites--;
-      if (!pendingWrites && externalWhileWriting) {
-        externalWhileWriting = false;
-        reloadIfNewer();
-      }
+      settleDeferred();
     }
   }
 
@@ -209,7 +226,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       if (id !== videoId || seq !== loadSeq) return;
       // كتابة بدأت أثناء القراءة: تُطبَّق القراءة بعد انتهائها، فلا تطمس نقرة ± جارية.
       if (pendingWrites) {
-        externalWhileWriting = true;
+        deferred.add('reload');
         return;
       }
       if (!force && versionOf(rec) === versionOf(saved)) return;
@@ -555,7 +572,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       if (nv && versionOf(nv) === versionOf(saved)) return;
       if (nv && saved && Number.isInteger(nv.rev) && nv.rev < saved.rev) return;
       if (pendingWrites) {
-        externalWhileWriting = true;
+        deferred.add(nv ? versionOf(nv) : 'reload');
         return;
       }
       reloadIfNewer();

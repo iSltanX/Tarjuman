@@ -128,3 +128,35 @@ test('U12 (ضابط المراجعة): ± معلّقة من التبويب نف�
   assert.equal(fin.previous.track.fileName, original);
 });
 
+
+test('C2 (أداء ±): حدث الكتابة نفسها يصل قبل ردها (كما مع العامل الخلفي) — لا قراءة كاملة زائدة بعد كل ضغطة', async () => {
+  const area = createMemoryArea({ unlimited: true, eventsBeforeResolve: true });
+  const s = createStore({ area });
+  await seedBundle(s, sampleBundle({ videoId: ID }));
+  const c = createController({ store: s, page: {}, extractor: null });
+  s.onChange((ch) => c.handleStoreChange(ch));
+  await c.start(ID);
+  await turns(5);
+  const get = area.get;
+  let reads = 0;
+  area.get = async (keys) => {
+    if (Array.isArray(keys) && keys.includes(`video:${ID}`)) reads++;
+    return get(keys);
+  };
+  for (let i = 0; i < 5; i++) await c.nudgeOffset(1);
+  await turns(10);
+  area.get = get;
+  assert.equal(reads, 5, `قراءة واحدة لكل ضغطة (قراءة الكتابة نفسها)، لا إعادة قراءة: ${reads}`);
+});
+
+test('C2 (ضابط): كتابة من سياق آخر تصل أثناء ± — تُعاد القراءة بعدها ويظهر تغييرها', async () => {
+  const { area, sB, A } = await pair();
+  const get = sB.getBundle(ID);
+  void get;
+  const p = A.nudgeOffset(1);
+  await sB.updateBundle(ID, (b) => ({ ...b, slots: b.slots.map((x) => (x.n === 2 ? { ...x, name: 'من الآخر' } : x)) }));
+  await p;
+  await area.flush();
+  await turns(10);
+  assert.equal(A.getState().bundle.slots[1].name, 'من الآخر');
+});
