@@ -1,0 +1,78 @@
+{
+  "browser": "firefox",
+  "startedAt": "2026-11-05T02:18:04.897Z",
+  "versions": {
+    "firefox": "Firefox/159.0.1"
+  },
+  "steps": {
+    "consent": {
+      "ok": false,
+      "error": "Error: تقييم فشل: Error: permissions.request may only be called from a user input handler\n    at BidiPage.eval (<repo>/test/live/audit-c1/run.mjs:59:45)\n ",
+      "ms": 5707
+    },
+    "reportRequests": [
+      {
+        "method": "POST",
+        "path": "/v1/reports",
+        "headers": {
+          "host": "app-reports.isultantf.workers.dev",
+          "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:159.0) Gecko/20100101 Firefox/159.0",
+          "accept": "*/*",
+          "accept-language": "en-US,en;q=0.9",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "content-type": "application/json",
+          "idempotency-key": "d3150f70-d62c-4855-9788-58b0dab32f64",
+          "content-length": "279",
+          "origin": "moz-extension://c4b4fc99-6a9c-4860-80da-abf85e29e36b",
+          "connection": "keep-alive",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin"
+        }
+      }
+    ],
+    "report": {
+      "ok": true,
+      "ms": 6440
+    }
+  },
+  "checks": [
+    {
+      "id": "i14-firefox-captured",
+      "ok": true,
+      "outcome": "failed",
+      "requests": [
+        "POST"
+      ],
+      "notDelivered": true
+    },
+    {
+      "id": "i14-firefox-origin",
+      "ok": false,
+      "origin": "moz-extension://c4b4fc99-6a9c-4860-80da-abf85e29e36b",
+      "originHasInstallUuid": true,
+      "referer": null,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:159.0) Gecko/20100101 Firefox/159.0",
+      "acceptLanguage": "en-US,en;q=0.9",
+      "preflight": false,
+      "headerNames": [
+        "accept",
+        "accept-encoding",
+        "accept-language",
+        "connection",
+        "content-length",
+        "content-type",
+        "host",
+        "idempotency-key",
+        "origin",
+        "sec-fetch-dest",
+        "sec-fetch-mode",
+        "sec-fetch-site",
+        "user-agent"
+      ]
+    }
+  ],
+  "notes": [],
+  "finishedAt": "2026-11-05T02:18:17.064Z",
+  "profilesRemoved": 2
+}

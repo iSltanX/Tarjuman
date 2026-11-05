@@ -115,6 +115,14 @@ async function chromium(browser, { profile, ext, downloadDir, headless, extraArg
       });
     },
     reportsBlocked,
+    /** يعترض طلبات صفحة إلى مضيفات بعينها: يسجّل عنوانها ثم يُفشلها قبل خروجها (تدقيق 7a66f91، C1). */
+    async interceptPage(page, hosts, onRequest) {
+      await page.send('Fetch.enable', { patterns: hosts.map((h) => ({ urlPattern: `*://${h}/*` })) });
+      page.on('Fetch.requestPaused', ({ requestId, request }) => {
+        try { onRequest(request.url, request); } catch { /* المسجّل لا يوقف الاعتراض */ }
+        page.send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' }).catch(() => {});
+      });
+    },
     errors() {
       return tracked.map((t) => {
         const list = t.errs.list;
@@ -282,6 +290,22 @@ async function firefox({ profile, ext, downloadDir, headless }) {
       });
     },
     reportsBlocked,
+    /**
+     * يعترض كل طلب إلى مضيفات بعينها عند beforeRequestSent: يسلّم بياناته (الطريقة والعنوان والترويسات كما سيرسلها Firefox)
+     * ثم failRequest فلا يخرج (تدقيق 7a66f91، C1: I14 وطلبات الصور).
+     */
+    async interceptHosts(hosts, onRequest) {
+      await conn.send('session.subscribe', { events: ['network.beforeRequestSent'] });
+      await conn.send('network.addIntercept', { phases: ['beforeRequestSent'], urlPatterns: hosts.map((h) => ({ type: 'pattern', protocol: 'https', hostname: h })) });
+      conn.on('network.beforeRequestSent', (p) => {
+        if (!p.isBlocked) return;
+        let host = '';
+        try { host = new URL(p.request.url).hostname; } catch { /* عنوان غير صالح */ }
+        if (!hosts.includes(host)) return;
+        try { onRequest(p.request); } catch { /* المسجّل لا يوقف الاعتراض */ }
+        conn.send('network.failRequest', { request: p.request.request }).catch(() => {});
+      });
+    },
     errors() {
       const mine = logs.filter((e) => e.level === 'error' && ((base && (String(e.text).includes(base) || JSON.stringify(e.stackTrace ?? {}).includes(base))) || extContexts.has(e.source?.context)));
       return [{ where: 'firefox', errors: mine.map((e) => ({ kind: `log.${e.type}`, text: String(e.text).slice(0, 200) })), fontReadLogs: 0 }];

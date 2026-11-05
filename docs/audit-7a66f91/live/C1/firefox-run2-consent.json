@@ -1,0 +1,55 @@
+{
+  "browser": "firefox",
+  "startedAt": "2026-11-05T02:22:37.388Z",
+  "versions": {
+    "firefox": "Firefox/159.0.1"
+  },
+  "steps": {
+    "consentErrors": [
+      {
+        "where": "firefox",
+        "errors": [],
+        "fontReadLogs": 0
+      }
+    ],
+    "consent": {
+      "ok": true,
+      "ms": 19734
+    }
+  },
+  "checks": [
+    {
+      "id": "consent-granted",
+      "ok": true,
+      "granted": true,
+      "prefsOn": "default"
+    },
+    {
+      "id": "thumbs-requested-before-revoke",
+      "ok": true,
+      "requests": 6,
+      "imgsWithSrc": 0
+    },
+    {
+      "id": "zero-thumb-requests-after-revoke",
+      "ok": true,
+      "removed": true,
+      "requestsAfterRevoke": 0,
+      "rowsShown": 50,
+      "afterImgs": {
+        "img": 0,
+        "fallback": 50
+      },
+      "storageUnchanged": true
+    },
+    {
+      "id": "regrant-requests-again",
+      "ok": true,
+      "regrant": true,
+      "requestsAfterRegrant": 18
+    }
+  ],
+  "notes": [],
+  "finishedAt": "2026-11-05T02:22:57.139Z",
+  "profilesRemoved": 1
+}
