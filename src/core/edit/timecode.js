@@ -32,6 +32,16 @@ export function parseTimecode(text) {
 }
 
 /**
+ * رقم مقطع كما يُكتب (أرقام لاتينية أو عربية): عدد صحيح موجب، وإلا null (تدقيق 7a66f91، U27: مرساة الانجراف كانت ترفض «١٢»).
+ * @param {unknown} text @returns {number | null}
+ */
+export function parseCueNumber(text) {
+  if (typeof text !== 'string') return null;
+  const m = /^\d{1,7}$/.exec(latin(text));
+  return m ? Number(m[0]) : null;
+}
+
+/**
  * مقدار النقل بالثواني بإشارة اختيارية وثلاث خانات عشرية على الأكثر («+0.5» و«−1.25» و«٫٥»).
  * @param {unknown} text
  * @returns {{ ok: true, ms: number } | { ok: false }}

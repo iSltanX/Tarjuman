@@ -1,6 +1,10 @@
 // DOM وهمي لتركيب المحرّر كاملًا في اختبارات الوحدة (تدقيق 5fedcb9): يبني على test/unit/pages/library/fake-dom.js بما يحتاجه
 // mountEditor وحده: dataset، و`:scope >`، وخيارات select، ونافذة بمؤقتات وإطارات يدوية لا تمضي إلا بـflush. يكفي لتسلسلات
 // الحفظ والتبديل والتغيّر الخارجي؛ والتخطيط والرسم الفعليان في الاختبار الحي.
+//
+// وكما في المتصفح (تدقيق 7a66f91، U71): `type` يعكس السمة (الافتراضي text للحقل)، وinstanceof HTMLInputElement وHTMLTextAreaElement
+// بالوسم لا لكل عنصر (كان كل عنصر «حقل كتابة» فلا يُختبر ⌘Z ولا ⌘Y)، والمؤقتات بساعة وهمية منفصلة عن الإطارات: advance(ms)
+// يمضي ما حان من المؤقتات بترتيب مهلها، وflushFrames() الإطارات وحدها، وflush() كل شيء بترتيب الجدولة كما كان.
 import { FakeDocument, FakeElement, settle } from '../unit/pages/library/fake-dom.js';
 
 let patched = false;
@@ -28,7 +32,29 @@ function patchElements() {
     parentElement: { get() { return this.parentNode; } },
     firstChild: { get() { return this.childNodes[0] ?? null; } },
     scrollTop: { writable: true, value: 0 },
+    type: {
+      configurable: true,
+      get() { return this.getAttribute('type') ?? (this.tagName === 'input' ? 'text' : this.tagName === 'button' ? 'submit' : ''); },
+      set(v) { this.setAttribute('type', v); },
+    },
+    isContentEditable: {
+      configurable: true,
+      get() {
+        for (let n = this; n && n.nodeType === 1; n = n.parentNode) {
+          const v = n.getAttribute('contenteditable');
+          if (v === '' || v === 'true') return true;
+          if (v === 'false') return false;
+        }
+        return false;
+      },
+    },
   });
+  // كما في المتصفح: إزالة السمة تفرّغ خاصيتها (التلميح القديم كان يبقى في .title).
+  const removeAttr = FakeElement.prototype.removeAttribute;
+  FakeElement.prototype.removeAttribute = function removeAttribute(k) {
+    removeAttr.call(this, k);
+    if (k === 'title') this.title = '';
+  };
   FakeElement.prototype.setSelectionRange = function setSelectionRange(a, b) {
     this.selectionStart = a;
     this.selectionEnd = b;
@@ -49,39 +75,70 @@ function patchElements() {
   };
 }
 
+/** صنف لا يُنشأ، وinstanceof به بالوسم كما في المتصفح. @param {string} tag */
+const tagClass = (tag) => class {
+  static [Symbol.hasInstance](x) { return x?.nodeType === 1 && x.tagName === tag; }
+};
+
 /**
- * مستند ونافذة للمحرّر. المؤقتات والإطارات لا تُنفَّذ حتى flush() (فالترتيب في الاختبار صريح).
+ * مستند ونافذة للمحرّر. المؤقتات والإطارات لا تُنفَّذ حتى flush() أو advance() أو flushFrames() (فالترتيب في الاختبار صريح).
  * @param {{ videoId: string }} o
  */
 export function editorDocument({ videoId }) {
   patchElements();
   const doc = new FakeDocument();
-  const scheduled = new Map();
+  let clock = 0;
   let id = 0;
-  const later = (fn) => { scheduled.set(++id, fn); return id; };
+  /** @type {Map<number, { fn: () => void, due: number }>} */
+  const timers = new Map();
+  /** @type {Map<number, () => void>} */
+  const frames = new Map();
   const listeners = new Map();
   doc.defaultView = {
-    setTimeout: later,
-    clearTimeout: (t) => scheduled.delete(t),
-    requestAnimationFrame: later,
-    cancelAnimationFrame: (t) => scheduled.delete(t),
+    setTimeout: (fn, ms = 0) => { timers.set(++id, { fn, due: clock + Math.max(0, Number(ms) || 0) }); return id; },
+    clearTimeout: (t) => timers.delete(t),
+    requestAnimationFrame: (fn) => { frames.set(++id, fn); return id; },
+    cancelAnimationFrame: (t) => frames.delete(t),
     addEventListener: (type, fn) => listeners.set(type, [...(listeners.get(type) ?? []), fn]),
     removeEventListener() {},
     location: { href: `chrome-extension://tj/pages/editor/index.html?v=${videoId}`, assign(url) { this.assigned = url; } },
     history: { replaceState() {} },
-    HTMLTextAreaElement: FakeElement,
-    HTMLInputElement: FakeElement,
+    HTMLTextAreaElement: tagClass('textarea'),
+    HTMLInputElement: tagClass('input'),
   };
   const root = doc.createElement('main');
   doc.body.append(root);
-  /** ينفّذ المؤقتات والإطارات المعلّقة (وما تجدوله) ثم ينتظر الوعود. */
+  /** ينفّذ المؤقتات والإطارات المعلّقة (وما تجدوله) بترتيب جدولتها ثم ينتظر الوعود؛ والساعة تتقدم إلى مهلة ما نُفّذ. */
   const flush = async (rounds = 3) => {
     for (let r = 0; r < rounds; r++) {
-      const due = [...scheduled.entries()];
-      scheduled.clear();
+      const due = [...[...timers].map(([k, t]) => [k, () => { clock = Math.max(clock, t.due); t.fn(); }]), ...frames].sort((a, b) => a[0] - b[0]);
+      timers.clear();
+      frames.clear();
       for (const [, fn] of due) fn();
       await settle();
     }
+  };
+  /** يقدّم الساعة ms وينفّذ ما حان من المؤقتات (وما تجدوله في المدة نفسها) بترتيب مهلها؛ لا يمس الإطارات. */
+  const advance = async (ms) => {
+    const target = clock + ms;
+    for (;;) {
+      let next = null;
+      for (const [k, t] of timers) if (t.due <= target && (!next || t.due < next[1].due)) next = [k, t];
+      if (!next) break;
+      timers.delete(next[0]);
+      clock = next[1].due;
+      next[1].fn();
+      await settle();
+    }
+    clock = target;
+    await settle();
+  };
+  /** ينفّذ الإطارات المعلّقة وحدها (لا المؤقتات) ثم ينتظر الوعود. */
+  const flushFrames = async () => {
+    const due = [...frames.values()];
+    frames.clear();
+    for (const fn of due) fn();
+    await settle();
   };
   /** يطلق حدثًا على مستمعي المستند (keydown مثلًا). */
   const fireDoc = (event) => {
@@ -89,7 +146,19 @@ export function editorDocument({ videoId }) {
     for (const fn of doc._listeners.get(e.type) ?? []) fn(e);
     return e;
   };
-  return { doc, root, flush, fireDoc, pending: () => scheduled.size };
+  /** يطلق حدثًا على مستمعي النافذة (beforeunload مثلًا). */
+  const fireWin = (type) => {
+    const e = { type, defaultPrevented: false, returnValue: undefined, preventDefault() { this.defaultPrevented = true; } };
+    for (const fn of listeners.get(type) ?? []) fn(e);
+    return e;
+  };
+  return {
+    doc, root, flush, advance, flushFrames, fireDoc, fireWin,
+    pending: () => timers.size + frames.size,
+    /** عدد المؤقتات والإطارات المعلّقة كلٌّ وحده. */
+    queued: () => ({ timers: timers.size, frames: frames.size }),
+    get now() { return clock; },
+  };
 }
 
 export { settle };

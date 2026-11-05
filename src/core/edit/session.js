@@ -82,6 +82,9 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
   let redoStack = [];
   let openGroup = null;
   const drafts = new Map();
+  // ما ثُبّت من الإزاحة في التوقيت ولم يدخل المحفوظ: عدّاد صريح يزيد بالتثبيت وإعادته وينقص بالتراجع عنه، ويُطرح منه ما دخل
+  // المحفوظ في markSaved. كان يُشتق من التاريخ فيبقى بعد الحفظ ويسقط مع حد التاريخ (تدقيق 7a66f91، U24).
+  let committed = 0;
   let version = 0;
   let issuesCache = null;
   const listeners = new Set();
@@ -124,6 +127,13 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     if (indices === null) drafts.clear();
     else for (const i of indices) for (const f of ['start', 'end']) drafts.delete(`${i}:${f}`);
   };
+  // النقل والتثبيت يحرّكان التوقيت المحفوظ ولا يجعلان نصًا غير صالح في حقل زمن صالحًا: المسودة تبقى خطأً ظاهرًا، ولا يمحوها
+  // الفعل ولا التراجع عنه بصمت (تدقيق 7a66f91، U101).
+  const keepsDrafts = (kind) => kind === 'shift' || kind === 'commit';
+  /** مقدار التثبيت في خطوة «commit» (الإزاحة قبلها ناقص بعدها). */
+  const committedBy = (entry) => (entry.kind === 'commit' ? entry.offset[0] - entry.offset[1] : 0);
+  /** الإزاحة بفرق الخطوة لا بقيمتها المطلقة: إزاحة تُبنّيت من المشغّل بعد الخطوة تبقى بعد التراجع عنها. */
+  const moveOffset = (pair, forward) => { offset += forward ? pair[1] - pair[0] : pair[0] - pair[1]; };
   /** @param {Omit<ChangeEvent, 'version'>} e */
   const emit = (e) => {
     version++;
@@ -176,7 +186,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     if (entry.swap) {
       work = (forward ? entry.swap[1] : entry.swap[0]).slice();
       recount();
-      if (entry.offset) offset = forward ? entry.offset[1] : entry.offset[0];
+      if (entry.offset) moveOffset(entry.offset, forward);
       return null;
     }
     const d = forward ? entry.delta : -entry.delta;
@@ -187,7 +197,8 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     } else {
       for (const i of entry.indices) put(i, move(work[i]));
     }
-    if (entry.offset) offset = forward ? entry.offset[1] : entry.offset[0];
+    if (entry.offset) moveOffset(entry.offset, forward);
+    committed += forward ? committedBy(entry) : -committedBy(entry);
     return entry.indices;
   };
 
@@ -238,8 +249,11 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     get offsetMs() { return offset; },
     get baseOffsetMs() { return baseOffset; },
     get offsetChanged() { return offset !== baseOffset; },
-    /** ما ثُبّت من الإزاحة في التوقيت منذ الفتح («تثبيت الإزاحة» المطبَّق): يغيّر الإزاحة ولا يغيّر الظاهر (GM-014.1). */
-    get committedMs() { return undoStack.filter((e) => e.kind === 'commit').reduce((sum, e) => sum + e.offset[0] - e.offset[1], 0); },
+    /**
+     * ما ثُبّت من الإزاحة في التوقيت ولم يدخل المحفوظ («تثبيت الإزاحة» المطبَّق): يغيّر الإزاحة ولا يغيّر الظاهر (GM-014.1).
+     * عدّاد صريح لا يُشتق من التاريخ المحدود (U24).
+     */
+    get committedMs() { return committed; },
     get changedCount() { return Math.max(added, removed); },
     get dirty() { return added > 0 || removed > 0 || offset !== baseOffset; },
     get canUndo() { return undoStack.length > 0; },
@@ -253,9 +267,11 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
         || undoStack.some((e) => structural(e) && !baked.has(e)) || redoStack.some((e) => baked.has(e));
     },
     /** لقطة البنية عند أخذ ما يُحفظ، تُمرَّر إلى markSaved فلا يُعدّ ما دخل المحفوظ تغييرًا في البنية. */
-    checkpoint: () => ({ entries: new Set(undoStack.filter(structural)), dropped: droppedStructural }),
+    checkpoint: () => ({ entries: new Set(undoStack.filter(structural)), dropped: droppedStructural, committed }),
     get version() { return version; },
     get hasDrafts() { return drafts.size > 0; },
+    /** عدد حقول الزمن بنص لم يُقرأ بعد. */
+    get draftCount() { return drafts.size; },
     /** @param {number} i */
     cueAt: (i) => work[i],
     /** المقطع كما فُتح (للمقارنة بالمعدَّل). @param {number} i */
@@ -330,7 +346,6 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       if (!r.ok) return { ok: false, code: 'ED_SHIFT_NEGATIVE', negative: r.negative };
       push({ kind: 'shift', indices, delta: deltaMs });
       openGroup = null;
-      clearDrafts(indices);
       emit({ kind: 'shift', indices, offset: false });
       return { ok: true, count: indices ? indices.length : work.length, indices };
     },
@@ -351,9 +366,9 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       push({ kind: 'commit', indices: null, delta: offset, offset: [offset, r.displayOffsetMs] });
       work = r.cues.map(Object.freeze);
       recount();
+      committed += offset - r.displayOffsetMs;
       offset = r.displayOffsetMs;
       openGroup = null;
-      clearDrafts(null);
       emit({ kind: 'commit', indices: null, offset: true });
       return { ok: true, count: work.length };
     },
@@ -384,7 +399,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       const indices = replay(entry, false);
       redoStack.push(entry);
       openGroup = null;
-      clearDrafts(indices);
+      if (!keepsDrafts(entry.kind)) clearDrafts(indices);
       emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), structural: STRUCTURAL_KINDS.includes(entry.kind), undo: true });
       return { ok: true, kind: entry.kind };
     },
@@ -395,7 +410,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       const indices = replay(entry, true);
       undoStack.push(entry);
       openGroup = null;
-      clearDrafts(indices);
+      if (!keepsDrafts(entry.kind)) clearDrafts(indices);
       emit({ kind: entry.kind, indices, offset: Boolean(entry.offset), structural: STRUCTURAL_KINDS.includes(entry.kind), redo: true });
       return { ok: true, kind: entry.kind };
     },
@@ -407,6 +422,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       recount();
       droppedStructural = false;
       baked = new Set();
+      committed = 0;
       undoStack = [];
       redoStack = [];
       openGroup = null;
@@ -436,6 +452,8 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       baseOffset = savedOffset;
       baked = at.entries;
       if (at.dropped) droppedStructural = false;
+      // ما ثُبّت حتى لقطة المحفوظ دخل فيه: لا يبقى معلّقًا فيرفض تبنّي ± المشغّل أو يُطرح مرة ثانية في الإنقاذ.
+      committed -= at.committed ?? committed;
       recount();
       emit({ kind: 'text', indices: [], offset: true });
     },
@@ -446,12 +464,13 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
      * @param {{ cues: Cue[], offsetMs: number }} latest @param {{ cues: Cue[], offsetMs: number }} merged
      */
     /**
-     * إزاحة جديدة من مكان آخر (± في المشغّل) والجلسة لم تغيّر إزاحتها ولا في تاريخها خطوة إزاحة: تصبح الإزاحة وأساسها،
-     * وتبقى التعديلات والتاريخ (تدقيق 5fedcb9، GM-014.2). وإلا false فيبقى القرار للتعارض.
+     * إزاحة جديدة من مكان آخر (± في المشغّل) والجلسة لم تغيّر إزاحتها ولا ثبّتت منها شيئًا لم يُحفظ: تصبح الإزاحة وأساسها،
+     * وتبقى التعديلات والتاريخ (تدقيق 5fedcb9، GM-014.2). وإلا false فيبقى القرار للتعارض. الحكم على الإزاحة غير المحفوظة لا على
+     * وجود خطوة إزاحة في التاريخ (تثبيت دخل المحفوظ لا يمنع التبنّي؛ U24)، والتراجع عن خطوة إزاحة بعد التبنّي بفرقها لا بقيمتها.
      * @param {number} offsetMs
      */
     adoptOffset(offsetMs) {
-      if (offset !== baseOffset || undoStack.some((e) => e.offset) || redoStack.some((e) => e.offset)) return false;
+      if (offset !== baseOffset || committed !== 0) return false;
       if (offsetMs === offset) return true;
       baseOffset = offsetMs;
       offset = offsetMs;

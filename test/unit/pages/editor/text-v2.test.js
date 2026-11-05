@@ -9,10 +9,12 @@ test('خانة التحرير والنشطة: الاسم والسطر يفرّق
   assert.equal(editSlotLabel({ n: 2, filled: true, active: false }, { editing: true }), 'الترجمة 2، قيد التحرير');
   assert.equal(editSlotLabel({ n: 1, filled: true, active: true }, { editing: false }), 'الترجمة 1، النشطة في المشغّل');
   assert.equal(editSlotLabel({ n: 3, filled: false, active: false }, { editing: false }), 'الترجمة 3، فارغة');
-  assert.match(activeSlotLine(2, 1, 'مراجعة'), /تحرّر الترجمة 2 «مراجعة»\. النشطة في المشغّل الترجمة 1، والحفظ هنا لا يغيّرها/);
+  // اسم الخانة معزول اتجاهًا (FSI…PDI) فلا تنقلب علامات ترقيم اسم إنجليزي (تدقيق 7a66f91، U27).
+  const iso = (t) => `${String.fromCodePoint(0x2068)}${t}${String.fromCodePoint(0x2069)}`;
+  assert.ok(activeSlotLine(2, 1, 'مراجعة').startsWith(`تحرّر الترجمة 2 «${iso('مراجعة')}». النشطة في المشغّل الترجمة 1، والحفظ هنا لا يغيّرها`));
   assert.equal(activeSlotLine(1, 1, null), 'تحرّر الترجمة 1، وهي النشطة في المشغّل.');
   assert.equal(refOptionLabel('en'), 'الإنجليزية');
-  assert.equal(refOptionLabel(3, 'قديمة'), 'الترجمة 3 — قديمة');
+  assert.equal(refOptionLabel(3, 'قديمة'), `الترجمة 3 — ${iso('قديمة')}`);
   assert.equal(slotFallback(3, 1), 'الترجمة 3 فارغة، فعُرضت الترجمة 1.');
 });
 

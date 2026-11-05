@@ -3,6 +3,11 @@
 import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 
 const MAX_LIST = 8;
+const FSI = String.fromCodePoint(0x2068);
+const PDI = String.fromCodePoint(0x2069);
+
+/** اسم يكتبه المستخدم (قد يكون إنجليزيًا) معزولًا اتجاهًا داخل جملة عربية، فلا تنقلب علامات ترقيمه (تدقيق 7a66f91، U27). @param {string} s */
+export const isolate = (s) => `${FSI}${s}${PDI}`;
 
 // صيغ العدّ بصيغة formatCount. «error» للعدّ المستقل في رأس اللوحة، و«errorToFix» مفعولًا به لـ«صحّح».
 export const COUNT = Object.freeze({
@@ -11,6 +16,7 @@ export const COUNT = Object.freeze({
   warning: Object.freeze({ one: 'تحذير واحد', two: 'تحذيران', few: 'تحذيرات', many: 'تحذيرًا', single: 'تحذير' }),
   match: Object.freeze({ one: 'موضع واحد', two: 'موضعان', few: 'مواضع', many: 'موضعًا', single: 'موضع' }),
   mark: Object.freeze({ one: 'علامة واحدة', two: 'علامتان', few: 'علامات', many: 'علامة', single: 'علامة' }),
+  markOther: Object.freeze({ one: 'علامة أخرى', two: 'علامتان أخريان', few: 'علامات أخرى', many: 'علامة أخرى', single: 'علامة أخرى' }),
 });
 
 /** صيغة العدد: one وtwo وfew وmany وsingle كما في formatCount. @param {number} n */
@@ -50,8 +56,34 @@ export function unsavedSentence(n) {
   return `لديك ${formatCount(n, COUNT_FORMS.change)} ${adj}`;
 }
 
-/** مؤشر الرأس: «تغييرات غير محفوظة (12)» أو «محفوظ» (الرمز من الشارة لا من نص بخط آخر). @param {number} n @param {boolean} dirty */
-export const saveStatus = (n, dirty) => (dirty ? `تغييرات غير محفوظة (${n})` : 'محفوظ');
+/**
+ * مؤشر الرأس: «تغييرات غير محفوظة (12)»، أو «زمن غير صالح» لمسودة زمن وحدها (كانت «محفوظ»؛ U27)، أو «محفوظ» (الرمز من الشارة
+ * لا من نص بخط آخر).
+ * @param {number} n @param {boolean} dirty @param {number} [drafts] حقول زمن بنص لم يُقرأ
+ */
+export const saveStatus = (n, dirty, drafts = 0) => (dirty ? `تغييرات غير محفوظة (${n})` : drafts ? 'زمن غير صالح' : 'محفوظ');
+
+const FIELD_FORMS = Object.freeze({ one: 'حقل زمن واحد', two: 'حقلا زمن', few: 'حقول زمن', many: 'حقل زمن', single: 'حقل زمن' });
+
+/**
+ * ما يضيع بالمغادرة أو التبديل: التغييرات غير المحفوظة، وحقول الزمن بنص غير صالح لم يُعتمد. كانت مسودة الزمن وحدها تُكتب
+ * «لديك 0 تغيير غير محفوظ» (تدقيق 7a66f91، U27).
+ * @param {number} n @param {number} drafts
+ */
+export function pendingSentence(n, drafts) {
+  const field = drafts ? `${formatCount(drafts, FIELD_FORMS)} ${agree(drafts, { one: 'غير صالح', two: 'غير صالحين', few: 'غير صالحة', many: 'غير صالح', single: 'غير صالح' })}` : '';
+  if (!n && drafts) return `لديك ${field}`;
+  return drafts ? `${unsavedSentence(n)}، و${field}` : unsavedSentence(n);
+}
+
+/**
+ * تلميح اختصار بحسب المنصة: «⌘Z» و«⇧⌘Z» في ماك، و«Ctrl+Z» و«Ctrl+Shift+Z» في غيره (U27: كانت برموز ماك وحدها).
+ * @param {string} key الحرف @param {{ mac: boolean, shift?: boolean }} o
+ */
+export const keyHint = (key, { mac, shift = false }) => (mac ? `${shift ? '⇧' : ''}⌘${key}` : `Ctrl+${shift ? 'Shift+' : ''}${key}`);
+
+/** ماك أم لا، من النافذة (userAgentData ثم platform). @param {Window | null | undefined} win */
+export const isMac = (win) => /mac/i.test(String(win?.navigator?.userAgentData?.platform ?? win?.navigator?.platform ?? ''));
 
 /**
  * تسمية خيار النطاق: «المقطع 57» و«المحددة (3)» و«الملف كله».
@@ -104,7 +136,7 @@ export function editSlotLabel(slot, { editing }) {
  * @param {number} editing @param {number | null} active @param {string | null} name
  */
 export function activeSlotLine(editing, active, name) {
-  const who = name ? `تحرّر الترجمة ${editing} «${name}»` : `تحرّر الترجمة ${editing}`;
+  const who = name ? `تحرّر الترجمة ${editing} «${isolate(name)}»` : `تحرّر الترجمة ${editing}`;
   if (editing === active) return `${who}، وهي النشطة في المشغّل.`;
   return `${who}. النشطة في المشغّل الترجمة ${active}، والحفظ هنا لا يغيّرها.`;
 }
@@ -122,7 +154,7 @@ export function refLabel(fp) {
 }
 
 /** خيار العمود المرجعي: «الإنجليزية» أو «الترجمة 3 — مراجعة». @param {'en' | number} v @param {string | null} [name] */
-export const refOptionLabel = (v, name = null) => (v === 'en' ? 'الإنجليزية' : name ? `الترجمة ${v} — ${name}` : `الترجمة ${v}`);
+export const refOptionLabel = (v, name = null) => (v === 'en' ? 'الإنجليزية' : name ? `الترجمة ${v} — ${isolate(name)}` : `الترجمة ${v}`);
 
 // ---- العلامات (R53): «أعود إليه» و«راجعته»، والتبديل بينهما من زر الصف ----
 export const MARK_LABEL = Object.freeze({ todo: 'أعود إليه', done: 'راجعته' });
@@ -142,8 +174,8 @@ export function markActionLabel(n, mark) {
  */
 export const markBadge = (m) => ({ icon: m.kind === 'todo' ? 'flag' : 'check', suffix: m.state === 'moved' ? '؟' : '' });
 
-/** @param {{ kind: 'todo' | 'done', state: string }} m */
-export const markTitle = (m) => `${MARK_LABEL[m.kind]}${m.state === 'moved' ? ' — قد تكون انتقلت: تحقق أنها على المقطع الصحيح' : ''}`;
+/** @param {{ kind: 'todo' | 'done', state: string, others?: number }} m others علامات أخرى على المقطع نفسه (بعد دمج؛ U100) */
+export const markTitle = (m) => `${MARK_LABEL[m.kind]}${m.state === 'moved' ? ' — قد تكون انتقلت: تحقق أنها على المقطع الصحيح' : ''}${m.others ? ` (ومعها ${formatCount(m.others, COUNT.markOther)} على المقطع نفسه)` : ''}`;
 
 // ---- البنية والقفز ----
 /** معاينة الدمج قبل التطبيق. @param {{ n: number }} a @param {{ n: number }} b @param {{ startMs: number, endMs: number, text: string }} merged @param {(ms: number) => string} tc */

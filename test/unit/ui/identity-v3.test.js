@@ -162,7 +162,8 @@ test('الصفحات: القسم الحالي أهدأ من المختار، و�
   has(ed, '.ed-row.is-selected', 'background: var(--tj-selected-soft)');
   assert.doesNotMatch(ed, /logo-dots/, 'لا ذهب الشعار في المحرّر');
   for (const sel of ['.ed-chip--todo', '.ed-chip--done', '.ed-chip--moved']) assert.doesNotMatch(rule(ed, sel), /border/, `${sel} بلا حد`);
-  has(ed, '.ed-row__text', 'border: 1px solid var(--tj-border-strong)');
+  // حقل نص المقطع بحدّ حقول الكتابة (3:1 على السطح؛ كان الحد الشعري بتباين 1.46:1، تدقيق 7a66f91، U26).
+  has(ed, '.ed-row__text', 'border: 1px solid var(--tj-border-input)');
   const pop = read('src/pages/popup/popup.css');
   for (const sel of ['.tj-popup__copy--success', '.tj-popup__copy--error']) has(pop, sel, 'border-color: transparent');
 });

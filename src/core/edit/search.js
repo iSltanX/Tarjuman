@@ -2,13 +2,18 @@
 // وفواصل الأسطر مسافة؛ ومع ignoreMarks تسقط علامات التشكيل والتطويل (فتطابق «كتب» «كَتَبَ»، وتطابق ا «أ» و«إ» و«آ» لأن
 // الهمزة والمدة علامتان بعد التفكيك). المواضع بمحارف النص الأصلي، والمطابقة تشمل ما يليها من تشكيل. الاستبدال حرفي في
 // تلك المواضع وحدها: لا يمس التوقيت ولا الرقم ولا المرجع الإنجليزي، ولا استبدال لغويًا تخمينيًا.
+//
+// والمطابقة التي تحمل نصها كما وُجد (text، تضيفه الصفحة عند البحث) يرفض الاستبدال موضعها إن تغيّر نصه بعده (حفظ من تبويب آخر،
+// أو تراجع أو كتابة قبل إعادة البحث)، فلا يُستبدل نص لا يحوي الاستعلام. وفاصل السطر داخل المطابقة يبقى في موضعه من البديل
+// (تدقيق 7a66f91، U23 وU27).
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
-/** @typedef {{ index: number, start: number, end: number }} Match */
+/** @typedef {{ index: number, start: number, end: number, text?: string }} Match text نص المطابقة كما وُجد عند البحث */
 
 const TATWEEL = String.fromCharCode(0x0640);
 const MARKS = /\p{M}/gu;
 const WORD = /[\p{L}\p{N}\p{M}]/u;
+const MARK = /\p{M}/u;
 
 /**
  * الصورة المطبّعة ومواضع كل وحدة فيها في الأصل.
@@ -61,7 +66,10 @@ export function searchCues(cues, query, { field = 'ar', english = null, wholeWor
         from = k + 1;
         continue;
       }
-      if (wholeWord && ((k > 0 && WORD.test(norm[k - 1])) || (last + 1 < norm.length && WORD.test(norm[last + 1])))) {
+      // حدّ الكلمة بعد ما يلي المطابقة من تشكيل (فـ«محمد» كلمة كاملة في «محمدٌ»؛ CLA-X4).
+      let after = last + 1;
+      while (after < norm.length && MARK.test(norm[after])) after++;
+      if (wholeWord && ((k > 0 && WORD.test(norm[k - 1])) || (after < norm.length && WORD.test(norm[after])))) {
         from = k + 1;
         continue;
       }
@@ -81,7 +89,7 @@ export function searchCues(cues, query, { field = 'ar', english = null, wholeWor
  * @param {string} replacement نص حرفي (لا أنماط)
  * @param {{ only?: number[] }} [opts] مواضع المطابقات المختارة في matches (الافتراضي كلها)
  * @returns {{ changes: { index: number, n: number, before: string, after: string }[] }} مقطع لكل تغيير بترتيب المقاطع
- * @throws {RangeError} لمطابقة خارج نصها أو متداخلة
+ * @throws {RangeError} لمطابقة خارج نصها أو متداخلة، أو تغيّر نصها بعد البحث (text)
  */
 export function planReplace(cues, matches, replacement, { only } = {}) {
   if (typeof replacement !== 'string') throw new RangeError('نص الاستبدال ليس نصًا');
@@ -93,6 +101,7 @@ export function planReplace(cues, matches, replacement, { only } = {}) {
     if (!cue || !Number.isInteger(m.start) || !Number.isInteger(m.end) || m.start < 0 || m.end <= m.start || m.end > cue.text.length) {
       throw new RangeError(`مطابقة غير صالحة عند ${k}`);
     }
+    if (typeof m.text === 'string' && cue.text.slice(m.start, m.end) !== m.text) throw new RangeError(`تغيّر النص عند المطابقة ${k} بعد البحث`);
     if (!byCue.has(m.index)) byCue.set(m.index, []);
     byCue.get(m.index).push(m);
   });
@@ -102,8 +111,20 @@ export function planReplace(cues, matches, replacement, { only } = {}) {
     list.forEach((m, i) => { if (i && m.start < list[i - 1].end) throw new RangeError(`مطابقتان متداخلتان في المقطع ${index}`); });
     const before = cues[index].text;
     let after = before;
-    for (let i = list.length - 1; i >= 0; i--) after = after.slice(0, list[i].start) + replacement + after.slice(list[i].end);
+    for (let i = list.length - 1; i >= 0; i--) after = after.slice(0, list[i].start) + keepBreaks(before.slice(list[i].start, list[i].end), replacement) + after.slice(list[i].end);
     if (after !== before) changes.push({ index, n: cues[index].n, before, after });
   }
   return { changes };
+}
+
+/**
+ * البديل بفواصل أسطر المطابقة في مواضعها: الفراغ رقم k في البديل يصير فاصل سطر إن كان الفراغ رقم k في النص المطابق فاصلًا
+ * («في\nالمدينة» ← «في القرية» يصير «في\nالقرية»)، فلا يُدمج سطران خفيةً. بديل فيه فاصل سطر يبقى كما كُتب.
+ * @param {string} matched نص المطابقة في المقطع @param {string} replacement
+ */
+export function keepBreaks(matched, replacement) {
+  if (!matched.includes('\n') || replacement.includes('\n')) return replacement;
+  const gaps = matched.match(/\s+/gu) ?? [];
+  let k = 0;
+  return replacement.replace(/\s+/gu, (ws) => (gaps[k++]?.includes('\n') ? '\n' : ws));
 }

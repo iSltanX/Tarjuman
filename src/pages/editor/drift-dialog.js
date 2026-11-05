@@ -2,7 +2,7 @@
 // −0.8 ث)، ومعاينة حية بما سيتغير من المحرّك نفسه (driftCorrect في P11) قبل التطبيق، والمرفوض يذكر سببه ولا يُطبَّق. يعيد
 // المرساتين أو null، والتطبيق خطوة واحدة في الجلسة (app.js).
 import { driftCorrect } from '../../core/edit/drift.js';
-import { parseSeconds, parseTimecode } from '../../core/edit/index.js';
+import { parseCueNumber, parseSeconds, parseTimecode } from '../../core/edit/index.js';
 import { isTjError, messageFor } from '../../core/errors/index.js';
 import { alertBox, el, ltr } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatTimecode, ltrInline } from '../../ui/format.js';
@@ -85,8 +85,9 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
   let result = null;
 
   const readAnchor = (x) => {
-    const n = Number(x.nIn.value.trim());
-    const i = Number.isInteger(n) ? (cues[x.start]?.n === n ? x.start : byN.get(n)) : undefined;
+    // الرقم بالأرقام العربية أو اللاتينية كحقل الزمن المجاور (U27).
+    const n = parseCueNumber(x.nIn.value);
+    const i = n !== null ? (cues[x.start]?.n === n ? x.start : byN.get(n)) : undefined;
     if (i === undefined) {
       x.note.textContent = 'لا مقطع بهذا الرقم.';
       return null;

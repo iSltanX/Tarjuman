@@ -2,19 +2,26 @@
 // بحث المتصفح صفوفها المخفية)، وخيارات منبثقة (العربية أو الإنجليزية للقراءة فقط، وكلمة كاملة، وتجاهل التشكيل)، وعدّاد
 // «3 من 41» بـ↑↓، وصف استبدال: «استبدال هنا» و«معاينة استبدال الكل…» بمربعات اختيار. المطابقة في searchCues والاستبدال
 // الحرفي في planReplace (P11)، وتطبيقه خطوة واحدة في الجلسة. هنا الحالة والعناصر فقط؛ لا يمس التوقيت ولا المرجع.
-import { planReplace, searchCues } from '../../core/edit/index.js';
+//
+// كل مطابقة تحمل نصها كما وُجد، فلا يُستبدل موضع تغيّر نصه بعد البحث، والبحث المعلّق يُنفَّذ قبل الاستبدال (U23). وما أُدرج
+// باستبدال هنا لا يصير مطابقة حالية حتى بحث جديد أو تنقّل صريح، فلا يعشّش البديل في نفسه (U74). وفواصل الأسطر ظاهرة «↵» في
+// المقتطفات (U27). تدقيق 7a66f91.
+import { keepBreaks, planReplace, searchCues } from '../../core/edit/index.js';
 import { button, el } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, textDirection } from '../../ui/format.js';
 import { openDialog, setDisabled } from './dialogs.js';
-import { COUNT } from './text.js';
+import { COUNT, isMac, keyHint } from './text.js';
 
 const DELAY_MS = 120;
 const MAX_PREVIEW = 400;
 const CONTEXT = 24;
 
-/** مقتطف حول المطابقة بأجزائه الثلاثة: قبلها، وهي، وبعدها (بلا فواصل أسطر). */
+/** نص في سطر واحد، وفاصل السطر «↵» ظاهر فيه (فيرى المستخدم أن المطابقة تعبره). @param {string} s */
+export const flatten = (s) => s.replace(/\s*\n\s*/g, ' ↵ ');
+
+/** مقتطف حول المطابقة بأجزائه الثلاثة: قبلها، وهي، وبعدها (في سطر واحد، وفواصل الأسطر «↵»). */
 export function snippet(text, start, end, around = CONTEXT) {
-  const flat = (s) => s.replace(/\s*\n\s*/g, ' ');
+  const flat = flatten;
   const from = Math.max(0, start - around);
   const to = Math.min(text.length, end + around);
   return {
@@ -33,20 +40,25 @@ export function snippet(text, start, end, around = CONTEXT) {
  *   active: () => number | null,
  *   onChange: () => void,
  *   reveal: (index: number, match: { start: number, end: number } | null, opts: { focus: boolean, field: 'ar' | 'en' }) => void,
- *   replace: (matches: { index: number, start: number, end: number }[], replacement: string, only: number[]) => { ok: boolean, count: number },
- * }} o
+ *   replace: (matches: { index: number, start: number, end: number, text?: string }[], replacement: string, only: number[]) => { ok: boolean, count: number },
+ *   extra?: HTMLElement | null,
+ * }} o extra عنصر يُلحق بآخر صف البحث (زر طي الأدوات)
  */
-export function createSearch({ doc, cues, english, readOnly, active, onChange, reveal, replace }) {
+export function createSearch({ doc, cues, english, readOnly, active, onChange, reveal, replace, extra = null }) {
   const win = doc.defaultView;
   const S = {
     query: '', key: '', field: /** @type {'ar' | 'en'} */ ('ar'), wholeWord: false, ignoreMarks: false,
-    matches: /** @type {{ index: number, start: number, end: number }[]} */ ([]), current: -1,
+    matches: /** @type {{ index: number, start: number, end: number, text?: string }[]} */ ([]), current: -1,
     byIndex: /** @type {Map<number, number[]>} */ (new Map()), replaceOpen: false, timer: 0,
+    /** ما أُدرج باستبدال هنا منذ آخر بحث جديد أو تنقّل. @type {{ index: number, start: number, end: number }[]} */
+    inserted: [],
   };
+  const inserted = (m) => S.inserted.some((r) => r.index === m.index && m.start >= r.start && m.end <= r.end);
+  const mac = isMac(win);
 
   const input = el('input', {
     className: 'ed-search__input',
-    attrs: { type: 'search', placeholder: 'بحث في المقاطع (⌘F)', 'aria-label': 'بحث في المقاطع', autocomplete: 'off', spellcheck: 'false' },
+    attrs: { type: 'search', placeholder: `بحث في المقاطع (${keyHint('F', { mac })})`, 'aria-label': 'بحث في المقاطع', autocomplete: 'off', spellcheck: 'false' },
     on: {
       input: () => schedule(),
       keydown: (e) => {
@@ -74,14 +86,15 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     const box = el('input', { attrs: { type: 'checkbox' }, on: { change: () => { S[key] = box.checked; run(); } }, doc });
     return el('label', { className: 'ed-radio', children: [box, el('span', { text: label, doc })], doc });
   };
+  // لوحة خيارات لا قائمة: الزر يتحكم بها (aria-expanded وaria-controls) بلا aria-haspopup الذي يعني قائمة (I06).
   const optsPanel = el('div', {
-    className: 'ed-search__opts', attrs: { role: 'group', 'aria-label': 'خيارات البحث', hidden: '' },
+    className: 'ed-search__opts', attrs: { role: 'group', id: 'ed-search-opts', 'aria-label': 'خيارات البحث', hidden: '' },
     children: [fieldSel, check('كلمة كاملة', 'wholeWord'), check('تجاهل التشكيل', 'ignoreMarks')],
     doc,
   });
   const optsBtn = button({ label: 'الخيارات', size: 'sm', variant: 'ghost', onClick: () => toggleOpts(), doc });
   optsBtn.setAttribute('aria-expanded', 'false');
-  optsBtn.setAttribute('aria-haspopup', 'true');
+  optsBtn.setAttribute('aria-controls', optsPanel.id);
   const counter = el('span', { className: 'ed-search__count tj-caption', attrs: { 'aria-live': 'polite' }, doc });
   const prevBtn = button({ label: '↑', size: 'sm', title: 'السابقة (⇧ Enter)', onClick: () => step(-1, { focus: true }), doc });
   const nextBtn = button({ label: '↓', size: 'sm', title: 'التالية (Enter)', onClick: () => step(1, { focus: true }), doc });
@@ -108,8 +121,8 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
         className: 'ed-toolbar__row',
         children: [
           el('span', { className: 'ed-search__box', children: [input, optsBtn, optsPanel], doc }),
-          counter, prevBtn, nextBtn, replaceToggle,
-        ],
+          counter, prevBtn, nextBtn, replaceToggle, extra,
+        ].filter(Boolean),
         doc,
       }),
       replaceRow, where,
@@ -153,14 +166,18 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
    */
   function run({ after = null } = {}) {
     win.clearTimeout(S.timer);
+    S.timer = 0;
     const key = `${input.value}|${S.field}|${S.wholeWord}|${S.ignoreMarks}`;
     const fresh = key !== S.key;
     S.key = key;
     S.query = input.value;
+    if (fresh) S.inserted = [];
     // بعد «استبدال هنا» تكون الحالية أول نتيجة بعد النص المُدرَج، لا داخله (وإلا عشّش الاستبدال في نفسه).
     const was = fresh ? null : after ?? S.matches[S.current];
     const list = cues();
-    S.matches = S.query.trim() ? searchCues(list, S.query, { field: S.field, english: S.field === 'en' ? english() : null, wholeWord: S.wholeWord, ignoreMarks: S.ignoreMarks }) : [];
+    const found = S.query.trim() ? searchCues(list, S.query, { field: S.field, english: S.field === 'en' ? english() : null, wholeWord: S.wholeWord, ignoreMarks: S.ignoreMarks }) : [];
+    // نص كل مطابقة عربية كما وُجد: الاستبدال يرفض موضعًا تغيّر بعده.
+    S.matches = S.field === 'ar' ? found.map((m) => ({ ...m, text: list[m.index].text.slice(m.start, m.end) })) : found;
     S.byIndex = new Map();
     S.matches.forEach((m, k) => {
       if (!S.byIndex.has(m.index)) S.byIndex.set(m.index, []);
@@ -171,10 +188,13 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
       const from = active() ?? 0;
       const k = S.matches.findIndex((m) => m.index >= from);
       S.current = k < 0 ? 0 : k;
-    } else if (!was) S.current = Math.min(Math.max(S.current, 0), S.matches.length - 1);
-    else {
-      const k = S.matches.findIndex((m) => m.index > was.index || (m.index === was.index && m.start >= was.start));
-      S.current = k < 0 ? S.matches.length - 1 : k;
+    } else if (!was) {
+      const k = Math.min(Math.max(S.current, 0), S.matches.length - 1);
+      S.current = inserted(S.matches[k]) ? S.matches.findIndex((m) => !inserted(m)) : k;
+    } else {
+      // الأولى بعد الموضع خارج ما أُدرج، وإلا الالتفاف إلى أول ما لم يُدرج، وإلا لا حالية (لا التفاف إلى المُدرَج نفسه؛ U74).
+      const k = S.matches.findIndex((m) => (m.index > was.index || (m.index === was.index && m.start >= was.start)) && !inserted(m));
+      S.current = k >= 0 ? k : S.inserted.length ? S.matches.findIndex((m) => !inserted(m)) : S.matches.length - 1;
     }
     render();
     onChange();
@@ -184,6 +204,8 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
 
   function step(dir, { focus }) {
     if (!S.matches.length) return;
+    // التنقّل الصريح يجعل أي نتيجة حالية، ومنها ما أُدرج.
+    S.inserted = [];
     S.current = S.current < 0 ? (dir > 0 ? 0 : S.matches.length - 1) : (S.current + dir + S.matches.length) % S.matches.length;
     render();
     onChange();
@@ -199,18 +221,31 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     return null;
   }
 
+  /** «استبدال هنا» وحده: لا مطابقة خارج ما استُبدل للتو (التنقّل بـ↑↓ يختارها صراحةً). */
+  function hereWhy() {
+    return replaceWhy() ?? (S.current < 0 && S.matches.every(inserted) ? 'لا مطابقات أخرى خارج ما استُبدل؛ اختر نتيجة بـ↑↓ لتستبدلها.' : null);
+  }
+
   function replaceHere() {
-    if (replaceWhy()) return;
-    if (S.current < 0) S.current = 0;
+    // بحث معلّق بعد تغيّر المقاطع (تراجع أو كتابة) يُنفَّذ أولًا، فالاستبدال في موضع حاضر لا قديم (U23).
+    if (S.timer) run();
+    if (hereWhy()) return;
+    if (S.current < 0) S.current = S.matches.findIndex((m) => !inserted(m));
     const m = S.matches[S.current];
     const r = replace(S.matches, replaceIn.value, [S.current]);
     if (!r.ok) return;
-    run({ after: { index: m.index, start: m.start + replaceIn.value.length } });
-    if (S.matches.length) reveal(S.matches[S.current].index, S.matches[S.current], { focus: false, field: 'ar' });
+    const len = keepBreaks(m.text ?? '', replaceIn.value).length;
+    const delta = len - (m.end - m.start);
+    S.inserted = S.inserted.map((x) => (x.index === m.index && x.start >= m.end ? { ...x, start: x.start + delta, end: x.end + delta } : x));
+    S.inserted.push({ index: m.index, start: m.start, end: m.start + len });
+    run({ after: { index: m.index, start: m.start + len } });
+    const cur = S.matches[S.current];
+    if (cur) reveal(cur.index, cur, { focus: false, field: 'ar' });
     else reveal(m.index, null, { focus: false, field: 'ar' });
   }
 
   async function previewAll() {
+    if (S.timer) run();
     if (replaceWhy()) return;
     const list = cues();
     const replacement = replaceIn.value;
@@ -228,7 +263,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
           el('span', { className: 'ed-replace-item__n tj-mono-sm', text: String(c.n), doc }),
           el('span', {
             className: 'ed-replace-item__text', dir: textDirection(`${sn.before}${sn.hit}${sn.after}`),
-            children: [sn.before, el('del', { text: sn.hit, doc }), el('ins', { text: replacement || '∅', doc }), sn.after],
+            children: [sn.before, el('del', { text: sn.hit, doc }), el('ins', { text: flatten(keepBreaks(c.text.slice(m.start, m.end), replacement)) || '∅', doc }), sn.after],
             doc,
           }),
         ],
@@ -274,9 +309,8 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     const n = S.matches.length;
     counter.textContent = !S.query.trim() ? '' : n ? `${S.current < 0 ? 0 : S.current + 1} من ${n}` : 'لا نتائج';
     for (const b of [prevBtn, nextBtn]) setDisabled(b, n ? null : 'لا نتائج');
-    const why = replaceWhy();
-    setDisabled(hereBtn, why);
-    setDisabled(allBtn, why);
+    setDisabled(hereBtn, hereWhy());
+    setDisabled(allBtn, replaceWhy());
     const m = S.matches[S.current];
     if (m) {
       const list = cues();

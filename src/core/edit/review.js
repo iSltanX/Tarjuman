@@ -8,13 +8,15 @@ import { DENSITY_CODES } from './issues.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 /** @typedef {import('../model/marks.js').Mark} Mark */
-/** @typedef {{ index: number, n: number, kind: 'todo' | 'done', state: 'linked' | 'moved', mark: Mark }} MarkEntry */
+/** @typedef {{ index: number, n: number, kind: 'todo' | 'done', state: 'linked' | 'moved', mark: Mark, others?: number }} MarkEntry */
 
 const RANK = Object.freeze({ linked: 2, moved: 1, orphan: 0 });
 
 /**
  * العلامات على المقاطع المعروضة: لكل علامة أفضل حلٍّ (على المعروضة، أو على المفتوحة بالمواضع نفسها حين لم تتغير البنية،
- * فيبقى مقطعٌ عُدّل نصه ولم يُحفظ مرتبطًا)، ولكل مقطع علامة واحدة (المرتبطة قبل التي قد تكون انتقلت)، واليتيمة منفصلة.
+ * فيبقى مقطعٌ عُدّل نصه ولم يُحفظ مرتبطًا)، ولصف كل مقطع علامة واحدة (المرتبطة قبل التي قد تكون انتقلت) بعدد ما معها،
+ * واليتيمة منفصلة. وentries كل علامة على مقطع، فعلامتان على مقطعين دُمجا تظهران كلتاهما في اللوحة لا واحدة تختفي
+ * (تدقيق 7a66f91، U100).
  * @param {Mark[]} marks
  * @param {Cue[]} shown المقاطع المعروضة
  * @param {{ opened?: Cue[] | null }} [o] المفتوحة بالمواضع نفسها، أو null بعد دمج أو شطر
@@ -29,16 +31,20 @@ export function resolveSlotMarks(marks, shown, { opened = null } = {}) {
   });
   const byIndex = new Map();
   const orphans = [];
+  const entries = [];
   for (const r of all) {
     if (r.state === 'orphan' || r.index === null || r.index >= shown.length) {
       orphans.push(r.mark);
       continue;
     }
+    const entry = { index: r.index, n: shown[r.index].n, kind: r.mark.kind, state: r.state, mark: r.mark };
+    entries.push(entry);
     const prev = byIndex.get(r.index);
     if (prev && !(prev.state === 'moved' && r.state === 'linked')) continue;
-    byIndex.set(r.index, { index: r.index, n: shown[r.index].n, kind: r.mark.kind, state: r.state, mark: r.mark });
+    byIndex.set(r.index, entry);
   }
-  const entries = [...byIndex.values()].sort((a, b) => a.index - b.index);
+  entries.sort((a, b) => a.index - b.index);
+  for (const e of byIndex.values()) e.others = entries.filter((x) => x.index === e.index).length - 1;
   return { byIndex, entries, orphans, all };
 }
 
@@ -139,7 +145,8 @@ export function reviewItems({ cues, issues, comparison, fingerprint, marks, engl
     if (auto) {
       for (const x of issues.byIndex.get(i) ?? []) if (!problems.includes(x.code)) problems.push(x.code);
       if (driftN.has(c.n)) problems.push(REVIEW_CODES.drift);
-      if (noArabicN.has(c.n) && !problems.includes(REVIEW_CODES.noArabic)) problems.push(REVIEW_CODES.noArabic);
+      // «بلا حروف عربية» بنص القطعة نفسها لا برقمها: قطعتا شطر أو رقم مكرر لا تُنسب إحداهما بالأخرى (تدقيق 7a66f91، U25).
+      if (noArabicN.has(c.n) && lacksArabic(c.text) && !problems.includes(REVIEW_CODES.noArabic)) problems.push(REVIEW_CODES.noArabic);
     }
     const m = withMarks ? marks.byIndex.get(i) : null;
     if (!problems.length && !m) return;

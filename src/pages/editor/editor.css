@@ -1,17 +1,20 @@
 /* صفحة المحرّر (figma-design-brief.md §١١، ولوحات Editor وEditorDark وEditorStates، والهوية الثالثة «باذنجاني على رمادي»): ملء النافذة،
-   والقائمة وحدها تُمرَّر. الرأس والشريط على سطح البطاقة، والقائمة واللوحة الجانبية بطاقتان على الورق بخط شعري لا ظل، واللوحة
+   والقائمة وحدها تُمرَّر، وحين لا يتسع الارتفاع لحدّ القائمة الأدنى تتمرر الصفحة نفسها بدل قصّها (تدقيق 7a66f91، U16). الرأس والشريط على سطح البطاقة، والقائمة واللوحة الجانبية بطاقتان على الورق بخط شعري لا ظل، واللوحة
    يسارًا والقائمة يمينًا، والشريط السفلي معكوس الألوان. كل لون من رموز tokens.css بالوضعين. ارتفاع الصف محسوب في virtual.js
    (ROW)، فالحشو وحدود الحقول هنا تطابقه: حشو الصف 8+7 وحده السفلي 1، والنص 24 لكل سطر وحشوه 8+8 وحدّاه 2،
    وسطر الرسالة 22. أي تغيير في هذه الأرقام يُغيَّر في ROW معه. */
 
 html, body.ed-page { height: 100%; }
-body.ed-page { overflow: hidden; }
 
+/* الحاوية بارتفاع النافذة على الأقل، وصف الجسم يملأ الباقي ولا يقل عن حدّ القائمة الأدنى (شريطها ورأسها وصفّان من 82 في
+   virtual.js)؛ فإن لم يتسع تطول الصفحة وتتمرر. القائمة واللوحة الجانبية بلا حجم ذاتي (contain: size) فتأخذان ارتفاع صفّهما لا
+   طول محتواهما، فلا تطول الصفحة بطول الملف. */
 .tj-container.ed-app {
   --ed-cols: 28px 52px 128px 128px 40px minmax(0, 1.5fr) minmax(0, 1fr) 108px;
   --ed-cols-no-en: 28px 52px 128px 128px 40px minmax(0, 1fr) 108px;
-  max-width: none; margin: 0; padding: 0; gap: 0; height: 100vh;
-  display: grid; grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+  --ed-list-min: 260px;
+  max-width: none; margin: 0; padding: 0; gap: 0; min-height: 100vh;
+  display: grid; grid-template-rows: auto auto auto auto minmax(var(--ed-list-min), 1fr) auto;
 }
 .ed-app [hidden] { display: none !important; }
 /* كل جزء في صفّه صراحةً: إخفاء التنبيه أو الشريط السفلي لا يزيح القائمة إلى صف بارتفاع محتواها. */
@@ -67,8 +70,9 @@ body.ed-page { overflow: hidden; }
 /* ---- البحث والاستبدال ---- */
 .ed-search { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--tj-border); }
 .ed-search__box { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.ed-search__box { max-width: 100%; min-width: 0; }
 .ed-search__input {
-  width: 280px; min-height: 32px; padding: 0 10px; border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-field);
+  width: 280px; max-width: 100%; min-width: 0; min-height: 32px; padding: 0 10px; border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-field);
   background: var(--tj-surface); color: var(--tj-text); font: 400 14px/20px var(--tj-font-body);
 }
 .ed-search__input::placeholder { color: var(--tj-muted); }
@@ -109,7 +113,7 @@ body.ed-page { overflow: hidden; }
 
 /* ---- الجسم: القائمة (يمينًا) واللوحة الجانبية (يسارًا) بطاقتان على الورق ---- */
 .ed-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; padding: 12px 24px 0; min-height: 0; }
-.ed-side { overflow: auto; padding: 0; display: flex; flex-direction: column; gap: 0; background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); min-height: 0; }
+.ed-side { overflow: auto; padding: 0; display: flex; flex-direction: column; gap: 0; background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); min-height: 0; contain: size; }
 .ed-panel { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 14px; border-bottom: 1px solid var(--tj-border); }
 .ed-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .ed-panel__head .tj-h4 { font: 700 13px/20px var(--tj-font-head); }
@@ -133,7 +137,9 @@ body.ed-page { overflow: hidden; }
 .ed-chip { min-width: 40px; min-height: 32px; padding: 0 8px; border: 1px solid transparent; border-radius: 999px; background: var(--tj-control); color: var(--tj-text); cursor: pointer; }
 .ed-chip:hover { background: var(--tj-control-hover); color: var(--tj-text); }
 /* ---- التبويبان: المراجعة والاستكمال (خط سفلي بالإبراز للحالي) ---- */
-.ed-tabs { display: flex; flex: none; border-bottom: 1px solid var(--tj-border); }
+.ed-side__bar { display: flex; flex: none; align-items: center; border-bottom: 1px solid var(--tj-border); }
+.ed-tabs { display: flex; flex: 1; align-self: stretch; }
+.ed-side__bar .ed-fold--side { margin-inline: 4px 8px; }
 .ed-tab {
   position: relative; flex: 1; min-height: 44px; border: 0; background: transparent; color: var(--tj-text-2);
   font: 700 14px/20px var(--tj-font-body); cursor: pointer;
@@ -177,7 +183,7 @@ body.ed-page { overflow: hidden; }
 .ed-list__head > span { display: flex; align-items: center; min-width: 0; }
 .ed-ref-select { min-height: 26px; max-width: 100%; padding: 0 6px; font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 .ed-ref-select:disabled { opacity: 1; border-color: transparent; background: transparent; padding: 0; appearance: none; }
-.ed-list { overflow-y: auto; overflow-x: hidden; position: relative; }
+.ed-list { overflow-y: auto; overflow-x: hidden; position: relative; contain: size; }
 .ed-list__spacer { position: relative; width: 100%; }
 
 /* ---- صف المقطع ---- */
@@ -198,12 +204,14 @@ body.ed-page { overflow: hidden; }
   background: var(--tj-surface); color: var(--tj-text); font: 500 14px/20px var(--tj-font-mono); font-variant-numeric: tabular-nums;
   direction: ltr; text-align: left;
 }
+/* حقل الزمن بعرض عموده لا أعرض منه (كان 128 في عمود 112 تحت 1100 فيتراكب الحقلان؛ CLA-X8). */
+.ed-row .ed-time { width: 100%; }
 .ed-time:hover:not([readonly]) { border-color: var(--tj-text-2); }
 .ed-time[aria-invalid="true"] { border-color: var(--tj-danger); background: var(--tj-danger-bg); }
 .ed-row__dur { display: flex; align-items: center; min-height: 40px; color: var(--tj-muted); }
 .ed-row__text {
   display: block; width: 100%; box-sizing: border-box; resize: none; overflow-y: auto; padding: 8px 10px;
-  border: 1px solid var(--tj-border-strong); border-radius: var(--tj-radius-field); background: var(--tj-surface); color: var(--tj-text);
+  border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-field); background: var(--tj-surface); color: var(--tj-text);
   font: 400 16px/24px var(--tj-font-body);
 }
 .ed-time:focus-visible, .ed-row__text:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 0; border-color: var(--tj-focus); }
@@ -246,9 +254,11 @@ body.ed-page { overflow: hidden; }
 .ed-row__missing { grid-column: 3; font: 400 13px/28px var(--tj-font-body); }
 
 /* ---- شريط التغييرات غير المحفوظة (معكوس الألوان: نص المداد خلفيةً ولون الورق نصًّا بالوضعين)، والرسالة العابرة ---- */
+/* لاصق أسفل النافذة حين تتمرر الصفحة (U16)، فيبقى «حفظ» في متناول اليد. */
 .ed-unsaved {
   display: flex; align-items: center; gap: 12px; margin: 12px 24px 16px; padding: 10px 12px 10px 16px;
   border-radius: var(--tj-radius-card); background: var(--tj-text); color: var(--tj-bg); box-shadow: var(--tj-e2);
+  position: sticky; bottom: 8px; z-index: 5;
 }
 .ed-unsaved .tj-label { color: inherit; font: 400 14px/22px var(--tj-font-body); }
 /* معيّن التغيير غير المحفوظ بلون نص الشريط (نقطة الشارة بلون حالتها، الهوية الثالثة): الإبراز لا يُرى على الشريط المعكوس. */
@@ -267,6 +277,7 @@ body.ed-page { overflow: hidden; }
   transition: opacity var(--tj-motion-toast) var(--tj-ease), transform var(--tj-motion-toast) var(--tj-ease);
 }
 .ed-toast.is-shown { opacity: 1; transform: none; }
+.ed-toast { max-width: calc(100vw - 40px); }
 .ed-toast--danger { background: var(--tj-danger-bg); color: var(--tj-danger); }
 .ed-toast--info { background: var(--tj-info-bg); color: var(--tj-info); }
 
@@ -293,15 +304,47 @@ body.ed-page { overflow: hidden; }
    أسطر النص (virtual.js) لا من العرض، فلا يتغير ROW. */
 @media (max-width: 1100px) {
   .tj-container.ed-app {
-    --ed-cols: 24px 44px 112px 112px 36px minmax(240px, 1.5fr) minmax(160px, 1fr) 104px;
-    --ed-cols-no-en: 24px 44px 112px 112px 36px minmax(240px, 1fr) 104px;
+    --ed-cols: 24px 44px 120px 120px 36px minmax(240px, 1.5fr) minmax(160px, 1fr) 104px;
+    --ed-cols-no-en: 24px 44px 120px 120px 36px minmax(240px, 1fr) 104px;
   }
   .ed-body { grid-template-columns: minmax(0, 1fr) 240px; padding-inline: 16px; }
   .ed-main { overflow-x: auto; }
-  .ed-list__head, .ed-list { min-width: 940px; }
+  .ed-list__head, .ed-list { min-width: 944px; }
   .ed-list__head.ed-list--no-en, .ed-list.ed-list--no-en { min-width: 780px; }
 }
+
+/* ---- الطي في النوافذ القصيرة أو الضيقة (U16، قرار Q17): زرّا الطي ظاهران هناك وحدها ---- */
+.ed-fold { display: none; }
+.ed-fold .tj-icon { width: 16px; height: 16px; transition: transform var(--tj-motion-menu) var(--tj-ease); }
+.ed-fold[aria-expanded="true"] .tj-icon { transform: rotate(180deg); }
+/* تحت ارتفاع 700 (نصف شاشة، أو تكبير 125% فما فوق على 768) أو عرض 900: يُطوى النطاق والتوقيت (± والخطوة والمقدار وسطر
+   الإزاحة) خلف زر في صف البحث حتى يفتحه المستخدم، ويصغر الرأس والشريط السفلي، فتبقى للقائمة صفوف قابلة للتحرير. */
+@media (max-height: 700px), (max-width: 900px) {
+  .ed-fold--tools { display: inline-flex; }
+  .ed-app:not(.ed-tools-open) .ed-scope-row,
+  .ed-app:not(.ed-tools-open) .ed-preview,
+  .ed-app:not(.ed-tools-open) .ed-notice,
+  .ed-app:not(.ed-tools-open) .ed-offset { display: none; }
+  .ed-app:not(.ed-tools-open) .ed-search { padding-bottom: 0; border-bottom: 0; }
+  .ed-head { padding-block: 8px; gap: 6px; }
+  .ed-toolbar { padding-block: 8px; }
+  .ed-unsaved { margin: 8px 16px; padding-block: 6px; }
+}
+/* تحت عرض 900 تصعد اللوحة الجانبية فوق القائمة مطويةً إلى تبويبيها وزرها، وتُفتح باختيار تبويب أو بالزر بحد نصف النافذة. */
 @media (max-width: 900px) {
-  .ed-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 30vh) minmax(0, 1fr); }
-  .ed-side { order: -1; }
+  .ed-fold--side { display: inline-flex; }
+  .ed-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(var(--ed-list-min), 1fr); }
+  .ed-side { order: -1; contain: none; max-height: 50vh; }
+  .ed-app:not(.ed-side-open) .ed-side > .ed-pane { display: none; }
+  .ed-head, .ed-toolbar, .ed-offset { padding-inline: 16px; }
+  .ed-offset { flex-wrap: wrap; }
+  .ed-banner { padding-inline: 16px; }
+  .ed-banner .tj-alert__body { grid-template-columns: minmax(0, 1fr); }
+  .ed-banner .ed-group { grid-column: 1; grid-row: 3; }
+  .ed-unsaved { flex-wrap: wrap; }
+}
+/* الهاتف وتكبير 400% (عرض 320–480): صندوق البحث بعرض الصف فلا يتجاوز النافذة (CDX-N3). */
+@media (max-width: 480px) {
+  .ed-search__box { flex: 1 1 100%; }
+  .ed-search__input { flex: 1 1 auto; width: auto; }
 }

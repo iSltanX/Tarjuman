@@ -30,7 +30,8 @@ async function exportDialog({ doc, title, intro, controls, build }) {
   let btn = null;
   let last = null;
   const nameLine = el('p', { className: 'tj-body-sm', doc });
-  const noteLine = el('p', { className: 'tj-caption', doc });
+  // سطر العدد يتغيّر مع الخيارات فيُعلَن بهدوء؛ والأسطر الفارغة مخفية فلا تضيف فجوات (تدقيق 7a66f91، U26).
+  const noteLine = el('p', { className: 'tj-caption', attrs: { 'aria-live': 'polite' }, doc });
   const errBox = el('div', { doc });
   const refresh = () => {
     try {
@@ -40,8 +41,11 @@ async function exportDialog({ doc, title, intro, controls, build }) {
       last = { file: null, why: messageFor(err.code) };
     }
     nameLine.replaceChildren(...(last.file ? ['اسم الملف: ', ltr(last.file.name, { doc })] : []));
+    nameLine.hidden = !last.file;
     noteLine.textContent = last.note ?? '';
+    noteLine.hidden = !last.note;
     errBox.replaceChildren(...(last.why ? [alertBox({ tone: 'info', title: 'لا يُصدَّر الآن', text: last.why, doc })] : []));
+    errBox.hidden = !last.why;
     if (btn) setDisabled(btn, last.why);
   };
   const content = el('div', { className: 'tj-stack', children: [el('p', { className: 'tj-body-sm', text: intro, doc }), ...controls, nameLine, noteLine, errBox], doc });

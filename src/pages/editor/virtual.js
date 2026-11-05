@@ -88,7 +88,9 @@ export class RowLayout {
 }
 
 /**
- * قائمة افتراضية فوق حاوية تمرير. الصف المركَّز لا يُزال وإن خرج من المدى، فلا يضيع ما يكتبه المستخدم.
+ * قائمة افتراضية فوق حاوية تمرير. الصف المركَّز لا يُزال وإن خرج من المدى، فلا يضيع ما يكتبه المستخدم. والصفوف في الـDOM
+ * بترتيبها (يُدرج الجديد قبل أول صف بعده)، فيتبع Tab وقارئ الشاشة الترتيب البصري بعد التمرير للخلف، وكل صف بموضعه من الكل
+ * (aria-posinset وaria-setsize؛ تدقيق 7a66f91، U20).
  * @param {{
  *   doc: Document, scroller: HTMLElement, layout: RowLayout,
  *   create: (row: number) => HTMLElement, update: (el: HTMLElement, row: number, force: boolean) => void,
@@ -108,6 +110,14 @@ export function createVirtualList({ doc, scroller, layout, create, update, onRan
   const place = (el, row) => {
     el.style.top = `${layout.offsetOf(row)}px`;
     el.style.height = `${layout.heights[row]}px`;
+    el.setAttribute('aria-posinset', String(row + 1));
+    el.setAttribute('aria-setsize', String(layout.count));
+  };
+  /** أول صف مرسوم بعد row (ليُدرج قبله)، أو null. */
+  const nextShown = (row) => {
+    let best = null;
+    for (const r of shown.keys()) if (r > row && (best === null || r < best)) best = r;
+    return best === null ? null : shown.get(best);
   };
 
   function render() {
@@ -126,8 +136,8 @@ export function createVirtualList({ doc, scroller, layout, create, update, onRan
       let el = shown.get(row);
       if (!el) {
         el = create(row);
+        spacer.insertBefore(el, nextShown(row));
         shown.set(row, el);
-        spacer.append(el);
       }
       place(el, row);
     }

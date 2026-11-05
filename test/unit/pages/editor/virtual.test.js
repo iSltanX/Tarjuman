@@ -51,8 +51,10 @@ test('تدقيق 5fedcb9 (CL-004): المحرّر تحت 1100 بعمود عرب�
   const block = (q) => { const i = css.indexOf(`@media (max-width: ${q}px)`); return i < 0 ? '' : css.slice(i, css.indexOf('\n}', i)); };
   assert.match(block(1100), /--ed-cols: [^;]*minmax\(240px, 1\.5fr\)/);
   assert.match(block(1100), /\.ed-main \{ overflow-x: auto; \}/);
-  assert.match(block(1100), /\.ed-list__head, \.ed-list \{ min-width: 940px; \}/);
+  assert.match(block(1100), /\.ed-list__head, \.ed-list \{ min-width: 944px; \}/);
   assert.match(block(900), /\.ed-body \{ grid-template-columns: minmax\(0, 1fr\);/);
-  // الأعمدة الثابتة والدنيا تتسع في 940: 432 ثابتة + 240 + 160 + سبع فجوات 10 + حشو 24.
-  assert.ok(432 + 240 + 160 + 70 + 24 <= 940);
+  // الأعمدة الثابتة والدنيا تتسع في 944: 448 ثابتة (حقلا الزمن 120 يتسعان لـ«00:00:00,000»؛ تدقيق 7a66f91، CLA-X8) + 240 + 160
+  // + سبع فجوات 10 + حشو 24.
+  assert.match(block(1100), /--ed-cols: 24px 44px 120px 120px 36px /);
+  assert.ok(448 + 240 + 160 + 70 + 24 <= 944);
 });

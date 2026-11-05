@@ -4,7 +4,7 @@
 // (تراجع أو نقل)، فلا يقفز المؤشر أثناء الكتابة.
 import { messageFor } from '../../core/errors/index.js';
 import { el } from '../../ui/components.js';
-import { formatTimecode } from '../../ui/format.js';
+import { formatTimecode, ltrInline } from '../../ui/format.js';
 import { editorIcon } from './icons.js';
 import { durationText, markActionLabel, markBadge, markTitle, seconds } from './text.js';
 import { ROW, textLines } from './virtual.js';
@@ -130,6 +130,10 @@ export function createRows(doc, ctx) {
     if ((force || active !== text) && text.value !== cue.text) text.value = cue.text;
     text.dir = textDir(text.value);
     text.readOnly = c.readOnly;
+    // خطأ النص مربوط بحقله كحقلي الزمن: الرسالة وصفه، وaria-invalid للخطأ المانع وحده (تدقيق 7a66f91، U26).
+    text.setAttribute('aria-invalid', issues.some((x) => x.tone === 'error' && x.field === 'text') ? 'true' : 'false');
+    if (first && first.field === 'text') text.setAttribute('aria-describedby', `ed-msg-${i}`);
+    else text.removeAttribute('aria-describedby');
     text.style.height = `${textLines(cue.text) * ROW.line + ROW.fieldChrome}px`;
 
     const ref = c.refs[i] ?? '';
@@ -185,7 +189,8 @@ export function createRows(doc, ctx) {
     msg.id = `ed-msg-${i}`;
     msg.hidden = !first;
     msg.className = `ed-row__msg${error ? ' ed-row__msg--error' : ''}`;
-    msg.textContent = first ? `${messageFor(first.code, first.params ?? undefined)}${issues.length > 1 ? ` (+${issues.length - 1})` : ''}` : '';
+    // «(+N)» معزول LTR فلا يُرسم «(2+)» داخل الجملة العربية (U27).
+    msg.textContent = first ? `${messageFor(first.code, first.params ?? undefined)}${issues.length > 1 ? ` (${ltrInline(`+${issues.length - 1}`)})` : ''}` : '';
   }
 
   return { create, update };
