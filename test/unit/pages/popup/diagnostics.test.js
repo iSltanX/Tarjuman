@@ -4,7 +4,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { messageFor } from '../../../../src/core/errors/index.js';
 import { pageDiagnosticsRequest } from '../../../../src/core/model/messages.js';
-import { attachedGlossary, browserLabel, captureLine, pageReport, queryPageDiagnostics, toolsStatus } from '../../../../src/pages/popup/status.js';
+import { browserLabel as reportBrowserLabel, liveSources } from '../../../../src/core/report/diagnostics.js';
+import { attachedGlossary, captureLine, pageReport, queryPageDiagnostics, toolsStatus } from '../../../../src/pages/popup/status.js';
+
+/** كشف المتصفح في النافذة هو كشف قناة البلاغ نفسه (تدقيق 7a66f91، U53). */
+const browserLabel = (nav) => reportBrowserLabel(liveSources({ nav, api: {} }));
 
 const reply = (over = {}) => ({
   v: 1, ok: true, watch: true, videoId: 'iG9CE55wbtY', title: 'عنوان سري للفيديو', loading: false,
@@ -80,11 +84,14 @@ test('التقرير منقّى: رموز وأعداد، بلا عنوان ول�
   assert.deepEqual(none.sections.page, { unavailable: true }, 'لا رد من الصفحة: يُقال ذلك ولا يسقط التقرير');
 });
 
-test('اسم المتصفح ورقمه الرئيسي وحدهما؛ والقاموس المرفق وحده', () => {
-  assert.equal(browserLabel({ userAgentData: { brands: [{ brand: 'Not A(Brand', version: '99' }, { brand: 'Brave', version: '156.1.98' }, { brand: 'Chromium', version: '156' }] } }), 'Brave 156');
-  assert.equal(browserLabel({ userAgentData: { brands: [{ brand: 'Google Chrome', version: '156' }, { brand: 'Chromium', version: '156' }] } }), 'Chrome 156');
-  assert.equal(browserLabel({ userAgent: 'Mozilla/5.0 … Chrome/156.0.0.0 Safari/537.36' }), 'Chrome 156');
-  assert.equal(browserLabel({}), 'غير معروف');
+test('اسم المتصفح ورقمه الرئيسي وحدهما (Firefox وEdge باسميهما، U53)؛ والقاموس المرفق وحده', async () => {
+  assert.equal(await browserLabel({ userAgentData: { brands: [{ brand: 'Not A(Brand', version: '99' }, { brand: 'Brave', version: '156.1.98' }, { brand: 'Chromium', version: '156' }] } }), 'Brave 156');
+  assert.equal(await browserLabel({ userAgentData: { brands: [{ brand: 'Google Chrome', version: '156' }, { brand: 'Chromium', version: '156' }] } }), 'Chrome 156');
+  assert.equal(await browserLabel({ userAgentData: { brands: [{ brand: 'Chromium', version: '156' }, { brand: 'Microsoft Edge', version: '156' }] } }), 'Microsoft Edge 156');
+  assert.equal(await browserLabel({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:159.0) Gecko/20100101 Firefox/159.0' }), 'Firefox 159');
+  assert.equal(await browserLabel({ userAgent: 'Mozilla/5.0 … Chrome/156.0.0.0 Safari/537.36 Edg/156.0.1.2' }), 'Microsoft Edge 156');
+  assert.equal(await browserLabel({ userAgent: 'Mozilla/5.0 … Chrome/156.0.0.0 Safari/537.36' }), 'Chrome 156');
+  assert.equal(await browserLabel({}), 'غير معروف');
   const terms = [{ source: 'prompt', target: 'موجِّه', note: null }];
   assert.strictEqual(attachedGlossary({ glossary: { attach: true, terms } }), terms);
   assert.equal(attachedGlossary({ glossary: { attach: false, terms } }), null);

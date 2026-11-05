@@ -53,7 +53,9 @@ test('حقل الرقم بوحدة: الخطأ تحت الحقل بلا حفظ،
   await new Promise((r) => setTimeout(r, 0));
   assert.deepEqual(commits, [250]);
   assert.equal(f.input.getAttribute('aria-invalid'), 'false');
+  doc.body.append(f.root); // كالمتصفح: المفصول لا يُركَّز (U72)
   f.input.focus();
+  assert.ok(doc.activeElement === f.input);
   f.set('999');
   assert.equal(f.input.value, '250', 'لا تُمحى كتابة المستخدم');
   f.set('999', { force: true });

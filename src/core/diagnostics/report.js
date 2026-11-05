@@ -2,7 +2,9 @@
 // لا يتضمن أبدًا نص ترجمة ولا جسمًا ولا رابطًا ولا رمز جلسة: المفاتيح النصية تُسقط، ثم يُنقّى الباقي.
 import { sanitizeDeep } from './sanitize.js';
 
-const DROP = /^(?:text|texts|cues|body|srt|original|current|title|fileName|lines|words)$/i;
+// والحقول الحرة التي قد تحمل نصًا أو معرّفًا من خطأ (detail وlastDetail) ومعرّف الفيديو واسم الخطأ أو الملف (name) تُسقط هنا
+// أيضًا، فلا يعتمد إخفاؤها على أسماء مفاتيح كل مصدر (تدقيق 7a66f91، I07 بقرار Q30). الرمز code يبقى.
+const DROP = /^(?:text|texts|cues|body|srt|original|current|title|fileName|lines|words|detail|lastDetail|videoId|name)$/i;
 
 function strip(value) {
   if (Array.isArray(value)) return value.map(strip);

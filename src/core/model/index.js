@@ -25,7 +25,7 @@ export {
   withExport, withArabicImport, withView, withArabicEdit, withOriginalRestored, withoutArabic,
 } from './transitions.js';
 export {
-  MESSAGE_VERSION, MSG, isExtensionPage, isVideoStateRequest, videoStateRequest, buildVideoStateReply, isVideoStateReply,
+  MESSAGE_VERSION, MSG, isExtensionPage, isVideoStateRequest, videoStateRequest, videoIdRequest, isVideoIdRequest, isVideoIdReply, buildVideoStateReply, isVideoStateReply,
   isVideoStateReplyV2, isOwnContentScript, pageDiagnosticsRequest, isPageDiagnosticsRequest, seekRequest, isSeekRequest, isSeekReply,
   saveRequest, isSaveRequest, isSaveReply,
 } from './messages.js';

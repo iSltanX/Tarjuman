@@ -2,7 +2,7 @@
 // وتشخيص الصفحة (أعداد ورموز)، والقفز إلى زمن في الفيديو المعروض وحده. لا يُقبل شيء إلا من صفحة في الإضافة نفسها،
 // والقفز لا يغيّر إلا الزمن. ما عدا ذلك تغيّره الصفحات في التخزين، والمتحكم يسمع تغيّره.
 import {
-  MESSAGE_VERSION, buildVideoStateReply, isExtensionPage, isPageDiagnosticsRequest, isSeekRequest, isVideoStateRequest, MSG,
+  MESSAGE_VERSION, buildVideoStateReply, isExtensionPage, isPageDiagnosticsRequest, isSeekRequest, isVideoIdRequest, isVideoStateRequest, MSG,
 } from '../core/model/messages.js';
 import { seekMainVideo } from '../player/youtube-dom.js';
 
@@ -46,6 +46,9 @@ export function installMessageHandler({ controller, mounted, runtime = globalThi
         controls: mounted.controls?.state ?? 'none',
         code: toolsCode(mounted),
       }));
+    } else if (isVideoIdRequest(req)) {
+      // المعرّف وحده للقفز من الصفحات (U102).
+      sendResponse({ v: MESSAGE_VERSION, ok: true, videoId: safe(() => controller.getState().videoId) ?? null });
     } else if (isPageDiagnosticsRequest(req)) {
       sendResponse({
         v: MESSAGE_VERSION, ok: true,

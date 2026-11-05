@@ -4,7 +4,8 @@
 import { button, el } from '../../ui/components.js';
 
 /**
- * يعطّل زرًا بسبب ظاهر ومقروء (§١٢ «معطّل بسبب») أو يعيده. الزر يبقى قابلًا للتركيز.
+ * يعطّل زرًا بسبب ظاهر ومقروء (§١٢ «معطّل بسبب») أو يعيده. الزر يبقى قابلًا للتركيز. والسبب وصفٌ في عنصر aria-hidden فلا يدخل
+ * اسم الزر المحسوب من محتواه (كان يُقرأ مرتين؛ تدقيق 7a66f91، U91).
  * @param {HTMLButtonElement} b @param {string | null} reason
  */
 export function setDisabled(b, reason) {
@@ -19,7 +20,7 @@ export function setDisabled(b, reason) {
   b.setAttribute('aria-disabled', 'true');
   b.title = reason;
   if (!sr) {
-    sr = el('span', { className: 'tj-sr-only', attrs: { id: `ed-reason-${Math.random().toString(36).slice(2, 8)}` }, doc: b.ownerDocument });
+    sr = el('span', { className: 'tj-sr-only', attrs: { id: `ed-reason-${Math.random().toString(36).slice(2, 8)}`, 'aria-hidden': 'true' }, doc: b.ownerDocument });
     b.append(sr);
   }
   sr.textContent = reason;

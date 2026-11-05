@@ -2,7 +2,7 @@
 // تبويب الفيديو المفتوح يُعرف بسؤال كل تبويب عن حالته (يرد سكربت ترجمان في تبويبات يوتيوب وحدها بمعرّف فيديوه)، لا
 // بقراءة عنوانه. فإن وُجد جُلب إلى الأمام وأُرسل إليه tj:seek، وإلا فُتح تبويب جديد عند الزمن.
 import { watchUrl } from '../core/model/ids.js';
-import { isSeekReply, isVideoStateReply, seekRequest, videoStateRequest } from '../core/model/messages.js';
+import { isSeekReply, isVideoIdReply, seekRequest, videoIdRequest } from '../core/model/messages.js';
 
 export const ASK_TIMEOUT_MS = 800;
 export const MAX_TABS = 200;
@@ -12,17 +12,20 @@ const withTimeout = (promise, ms) => new Promise((resolve) => {
   Promise.resolve(promise).then((v) => { clearTimeout(timer); resolve(v); }, () => { clearTimeout(timer); resolve(null); });
 });
 
+/** الأحدث استعمالًا أولًا ثم النشط. */
+const recentFirst = (a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0) || Number(b.active) - Number(a.active);
+
 /**
- * التبويبات التي تعرض الفيديو المطلوب الآن، الأحدث استعمالًا أولًا ثم النشط.
+ * التبويبات التي تعرض الفيديو المطلوب الآن، الأحدث استعمالًا أولًا ثم النشط. يُسأل كل تبويب عن معرّف فيديوه وحده (U102)،
+ * والتبويبات المهملة (discarded، لا سكربت يعمل فيها) خارج السؤال، والحد على الأحدث استعمالًا لا على أول ما يعيده المتصفح:
+ * كان الفيديو في التبويب الثالث بعد المئتين يُفتح مكررًا.
  * @param {string} videoId
  * @param {{ tabs: typeof chrome.tabs, timeoutMs?: number }} deps
  */
 export async function findVideoTabs(videoId, { tabs, timeoutMs = ASK_TIMEOUT_MS }) {
-  const all = (await tabs.query({})).filter((t) => Number.isInteger(t.id)).slice(0, MAX_TABS);
-  const replies = await Promise.all(all.map((t) => withTimeout(tabs.sendMessage(t.id, videoStateRequest()), timeoutMs)));
-  return all
-    .filter((t, i) => isVideoStateReply(replies[i]) && replies[i].videoId === videoId)
-    .sort((a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0) || Number(b.active) - Number(a.active));
+  const all = (await tabs.query({})).filter((t) => Number.isInteger(t.id) && !t.discarded).sort(recentFirst).slice(0, MAX_TABS);
+  const replies = await Promise.all(all.map((t) => withTimeout(tabs.sendMessage(t.id, videoIdRequest()), timeoutMs)));
+  return all.filter((t, i) => isVideoIdReply(replies[i]) && replies[i].videoId === videoId);
 }
 
 /**

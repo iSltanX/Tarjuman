@@ -76,10 +76,13 @@ export const COUNT_FORMS = Object.freeze({
 });
 
 /**
- * حجم بالبايت بوحدة عربية مختصرة: «820 ك.ب» و«2.1 م.ب».
+ * حجم بالبايت بوحدة عربية مختصرة: «820 ك.ب» و«2.1 م.ب» و«3.0 غ.ب». الصفر «0 ك.ب» لا «1 ك.ب»، وما دون الكيلوبايت «1 ك.ب»،
+ * وما فوق 1024 م.ب بالغيغابايت (كانت «3072.0 م.ب»؛ تدقيق 7a66f91، U59).
  * @param {number} bytes
  */
 export function formatBytes(bytes) {
+  if (!(bytes > 0)) return '0 ك.ب';
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} ك.ب`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} م.ب`;
+  if (bytes < 1024 ** 3) return `${(bytes / (1024 * 1024)).toFixed(1)} م.ب`;
+  return `${(bytes / 1024 ** 3).toFixed(1)} غ.ب`;
 }

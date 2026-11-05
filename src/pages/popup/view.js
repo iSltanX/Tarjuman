@@ -110,11 +110,11 @@ export function guideList(steps, doc = document) {
   });
 }
 
-/** ملاحظة «ليست صفحة فيديو»: أيقونة الفيديو والنص. @param {Document} [doc] */
-export function notVideoNote(doc = document) {
+/** ملاحظة «ليست صفحة فيديو» أو «أعد تحميل الصفحة»: أيقونة الفيديو والنص. @param {Document} [doc] @param {string} [text] */
+export function notVideoNote(doc = document, text = NOT_VIDEO_TEXT) {
   return el('div', {
     className: 'tj-popup__note tj-popup__status', attrs: { role: 'status' },
-    children: [popupIcon('video', { doc }), el('span', { text: NOT_VIDEO_TEXT, doc })],
+    children: [popupIcon('video', { doc }), el('span', { text, doc })],
     doc,
   });
 }

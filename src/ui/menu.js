@@ -1,10 +1,24 @@
 // قائمة منسدلة بزر (مشتركة بين الصفحات): role=menu بالأسهم وHome/End وEsc والإغلاق بالنقر خارجها، وبند معطّل يذكر
 // سببه دائمًا، وعناوين مجموعات وفواصل. قائمة واحدة مفتوحة في الصفحة. textContent وsetAttribute فقط.
+//
+// عنوان المجموعة role=group باسمه يضم بنودها حتى الفاصل التالي (تدقيق 7a66f91، U58): كان role=presentation فلا يصل «تصدير»
+// إلى من يتنقل بالأسهم، فيسمع «العربية — النسخة الحالية» اختيارًا لا تصديرًا. وcloseMenuWithin يغلق القائمة المفتوحة قبل هدم
+// حاويتها (تحديث في الخلفية)، فلا يبقى مستمع pointerdown عالقًا على المستند.
 import { el, icon } from './components.js';
 
 let seq = 0;
-/** إغلاق القائمة المفتوحة حاليًا (واحدة في أي وقت). */
-let closeCurrent = null;
+/** القائمة المفتوحة حاليًا (واحدة في أي وقت): إغلاقها وجذرها. @type {{ close: () => void, root: HTMLElement } | null} */
+let current = null;
+
+/**
+ * يغلق القائمة المفتوحة إن كانت داخل الحاوية (بلا إعادة تركيز؛ من يهدم الحاوية يعيده بنفسه). يعيد هل أُغلقت.
+ * @param {HTMLElement} container
+ */
+export function closeMenuWithin(container) {
+  if (!current || !container.contains(current.root)) return false;
+  current.close();
+  return true;
+}
 
 /**
  * @typedef {{ kind: 'separator' } | { kind: 'group', label: string }} MenuDivider
@@ -31,9 +45,31 @@ export function createMenu({ label, ariaLabel, icon: iconName, chevron = false, 
     doc,
   });
   const itemButtons = [];
-  const nodes = items.map((it) => {
-    if ('kind' in it && it.kind === 'separator') return el('div', { className: 'tj-menu__sep', attrs: { role: 'separator' }, doc });
-    if ('kind' in it && it.kind === 'group') return el('div', { className: 'tj-menu__group', attrs: { role: 'presentation' }, text: it.label, doc });
+  /** @type {HTMLElement[]} */
+  const nodes = [];
+  /** المجموعة المفتوحة: بنودها تُلحق بها حتى فاصل أو مجموعة أخرى. @type {HTMLElement | null} */
+  let group = null;
+  for (const it of items) {
+    if ('kind' in it && it.kind === 'separator') {
+      group = null;
+      nodes.push(el('div', { className: 'tj-menu__sep', attrs: { role: 'separator' }, doc }));
+      continue;
+    }
+    if ('kind' in it && it.kind === 'group') {
+      // العنوان مرئي ومخفي عن شجرة الوصول، والاسم على المجموعة نفسها فيُقرأ مرة.
+      group = el('div', {
+        className: 'tj-menu__grp', attrs: { role: 'group', 'aria-label': it.label },
+        children: [el('div', { className: 'tj-menu__group', attrs: { 'aria-hidden': 'true' }, text: it.label, doc })],
+        doc,
+      });
+      nodes.push(group);
+      continue;
+    }
+    const node = itemNode(it);
+    if (group) group.append(node);
+    else nodes.push(node);
+  }
+  function itemNode(it) {
     const b = el('button', {
       className: `tj-menu__item${it.tone === 'danger' ? ' tj-menu__item--danger' : ''}`,
       attrs: { type: 'button', role: 'menuitem', tabindex: '-1', 'data-item': it.id, ...(it.disabledReason ? { 'aria-disabled': 'true' } : {}) },
@@ -55,7 +91,7 @@ export function createMenu({ label, ariaLabel, icon: iconName, chevron = false, 
     });
     itemButtons.push(b);
     return b;
-  });
+  }
   const menu = el('div', { className: `tj-menu__list${align === 'start' ? ' tj-menu__list--start' : ''}`, attrs: { id, role: 'menu', 'aria-label': ariaLabel ?? label }, children: nodes, doc });
   menu.hidden = true;
   const root = el('div', { className: 'tj-menu', children: [button, menu], doc });
@@ -73,12 +109,12 @@ export function createMenu({ label, ariaLabel, icon: iconName, chevron = false, 
 
   function open() {
     if (opened) return;
-    closeCurrent?.();
+    current?.close();
     opened = true;
     menu.hidden = false;
     button.setAttribute('aria-expanded', 'true');
     doc.addEventListener('pointerdown', onPointerDown, true);
-    closeCurrent = close;
+    current = { close: () => close(), root };
     focusItem(0);
   }
 
@@ -88,7 +124,7 @@ export function createMenu({ label, ariaLabel, icon: iconName, chevron = false, 
     menu.hidden = true;
     button.setAttribute('aria-expanded', 'false');
     doc.removeEventListener('pointerdown', onPointerDown, true);
-    if (closeCurrent === close) closeCurrent = null;
+    if (current?.root === root) current = null;
     if (restoreFocus) button.focus();
   }
 

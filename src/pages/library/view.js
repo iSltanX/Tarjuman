@@ -15,7 +15,7 @@ import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 const PREFS_UNREADABLE = Object.freeze({ ...DEFAULT_PREFS, ui: Object.freeze({ ...DEFAULT_PREFS.ui, thumbnails: false }) });
 import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
-import { createMenu } from '../../ui/menu.js';
+import { closeMenuWithin, createMenu } from '../../ui/menu.js';
 import { createToaster } from '../../ui/toast.js';
 import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, prepareUpload, studyName, studyNote, undoActivation } from './actions.js';
 import { radioGroup } from './choice.js';
@@ -110,6 +110,12 @@ export function createLibrary(env) {
   const watchers = new Map();
   let loadSeq = 0;
   let reloadTimer = null;
+  /** مفتاحا التنبيهين المعروضين الآن (رمز السعة، ونص الخطأ) ولوحة الخطأ: لا يُعاد ما لم يتغير (U90). */
+  let shownCapKey = '';
+  /** @type {string | null} */
+  let shownErrKey = null;
+  /** @type {HTMLElement | null} */
+  let errorPanel = null;
   let disposed = false;
   let consentGen = 0;
   /** @type {Promise<boolean>} */
@@ -130,11 +136,15 @@ export function createLibrary(env) {
     search.value = '';
     state.query = '';
     state.limit = PAGE_SIZE;
+    syncClear();
     render();
     announceResults();
     remember();
     search.focus();
   } });
+  // زر المسح مخفي والحقل فارغ: كان بشفافية 0 وهو في ترتيب Tab، فيصل إليه التركيز ولا يُرى (تدقيق 7a66f91، U58).
+  const syncClear = () => { clearSearch.hidden = search.value === ''; };
+  syncClear();
   const sortId = `lib-sort-${++seq}`;
   const sort = el('select', {
     className: 'tj-field__input lib-sort__select', attrs: { id: sortId, 'aria-label': 'الترتيب' },
@@ -177,14 +187,18 @@ export function createLibrary(env) {
   });
   const root = el('div', { className: 'lib', children: [header, capacityAlert, toolbar, resultsLive, listHost, toaster.root, toaster.live], doc });
 
-  /** يعلن عدد المطابقات لقارئ الشاشة، ويفرّغ الإعلان بمسح البحث فلا يبقى «لا نتائج» قديمًا. */
+  /**
+   * يعلن عدد المطابقات لقارئ الشاشة، ويفرّغ الإعلان بمسح البحث فلا يبقى «لا نتائج» قديمًا. «النتائج: 3 فيديوهات» بلا صفة
+   * تطابق العدد («فيديوهان مطابق» كانت خطأ نحويًا، U59).
+   */
   const announceResults = () => {
     const n = visible().length;
-    resultsLive.textContent = state.query.trim() || state.filter !== 'all' ? (n ? `${formatCount(n, COUNT_FORMS.video)} مطابق` : 'لا نتائج') : '';
+    resultsLive.textContent = state.query.trim() || state.filter !== 'all' ? (n ? `النتائج: ${formatCount(n, COUNT_FORMS.video)}` : 'لا نتائج') : '';
   };
   search.addEventListener('input', () => {
     state.query = search.value;
     state.limit = PAGE_SIZE;
+    syncClear();
     render();
     announceResults();
     remember();
@@ -344,14 +358,27 @@ export function createLibrary(env) {
     return wrote;
   }
 
-  /** اختيار شريحة في الصف: يفعّل الخانة برسالة عابرة فيها «تراجع». */
+  /** شريحة الترجمة النشطة في صف الفيديو (وجهة التركيز بعد زوال رسالة «تراجع» وهو فيها). */
+  const activeChipOf = (videoId) => listHost.querySelector(`li[data-video="${videoId}"] .lib-chip--active`)
+    ?? listHost.querySelector(`li[data-video="${videoId}"]`);
+
+  /**
+   * اختيار شريحة في الصف: يفعّل الخانة برسالة عابرة فيها «تراجع». والإعلان يذكر الفعل وطريقي التراجع (U58): الرسالة في آخر
+   * الصفحة بعيدة عن لوحة المفاتيح، والضغط على الشريحة السابقة يعيدها؛ والرسالة تثبت ما دام المؤشر أو التركيز فيها، وزوالها
+   * وفيها التركيز يعيده إلى الشريحة النشطة في الصف.
+   */
   const activate = (m, n) => guarded(async () => {
     const { before, after } = await activateSlot({ store, videoId: m.videoId, n, now });
     await load();
     // «تراجع» على الحزمة التي تركها التفعيل وحدها: تفعيلٌ من تبويب آخر في الأثناء لا يُفرض فوقه (U95).
-    toaster.show(messageFor('PG_SLOT_ACTIVATED', { n }), 'success', before && before !== n ? {
-      action: { label: 'تراجع', onClick: () => guarded(async () => { await undoActivation({ store, videoId: m.videoId, n: before, expect: after, now }); await load(); }) },
-    } : undefined);
+    const undo = before && before !== n;
+    toaster.show(messageFor('PG_SLOT_ACTIVATED', { n }), 'success', {
+      ...(undo ? {
+        action: { label: 'تراجع', onClick: () => guarded(async () => { await undoActivation({ store, videoId: m.videoId, n: before, expect: after, now }); await load(); }) },
+        announce: `${messageFor('PG_SLOT_ACTIVATED', { n })}. ${messageFor('PG_SLOT_UNDO_HINT', { n: before })}`,
+      } : {}),
+      focusAfter: () => activeChipOf(m.videoId),
+    });
   }, m);
 
   /**
@@ -599,8 +626,9 @@ export function createLibrary(env) {
     const open = keyed(button({ label: name('فتح الفيديو'), iconOnly: true, icon: 'play', variant: 'ghost', size: 'sm', className: 'lib-open', title: 'فتح الفيديو على يوتيوب', doc, onClick: () => guarded(async () => { await env.openTab(watchUrl(entry.videoId)); }) }), 'open');
 
     // التوسيع في الصف: بطاقات الترجمات الموجودة (expand.js)، يُنشأ عند أول فتح ويبقى عبر إعادة الرسم.
+    // الصف نفسه وجهة تركيز (بعد زوال صف مجاور، والرجوع من المحرّر): بمفتاح فيبقى عبر إعادة الرسم في الخلفية (U50).
     const li = el('li', {
-      className: 'lib-row', attrs: { 'aria-labelledby': titleId, 'data-video': entry.videoId, tabindex: '-1' },
+      className: 'lib-row', attrs: { 'aria-labelledby': titleId, 'data-video': entry.videoId, 'data-fk': fk('row'), tabindex: '-1' },
       doc,
     });
     const expandable = m.filled.length > 0;
@@ -685,8 +713,14 @@ export function createLibrary(env) {
     countPill.hidden = state.status !== 'ready';
     chips.setCounts(state.status === 'ready' ? filterCounts(state.entries) : {});
     quotaHost.replaceChildren();
-    capacityAlert.replaceChildren();
     const cap = state.capacity;
+    // التنبيه role=alert يُعاد بناؤه حين يتغير رمزه وحده: كان يُدرج من جديد مع كل حرف في البحث فيُقرأ مرة بعد مرة (U90).
+    const capKey = cap?.code ? `${cap.code}|${cap.level}` : '';
+    if (capKey !== shownCapKey) {
+      shownCapKey = capKey;
+      capacityAlert.replaceChildren();
+      if (cap?.code) capacityAlert.append(alertBox({ tone: cap.level === 'full' ? 'danger' : 'warning', text: messageFor(cap.code), doc }));
+    }
     if (!cap) return;
     const text = cap.quotaBytes ? `المستخدم ${formatBytes(cap.bytesInUse)} من ${formatBytes(cap.quotaBytes)}` : `المستخدم ${formatBytes(cap.bytesInUse)}`;
     const children = [el('span', { className: 'tj-caption lib-quota__text', text, doc })];
@@ -697,7 +731,6 @@ export function createLibrary(env) {
       children.push(el('span', { className: `tj-meter tj-meter--${cap.level}`, attrs: { role: 'meter', 'aria-label': 'المساحة المستخدمة', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(pct) }, children: [fill], doc }));
     }
     quotaHost.append(el('div', { className: 'lib-quota', children, doc }));
-    if (cap.code) capacityAlert.append(alertBox({ tone: cap.level === 'full' ? 'danger' : 'warning', text: messageFor(cap.code), doc }));
   }
 
   /** أقسام التاريخ حين الترتيب «آخر تعديل»، وقائمة واحدة حين الترتيب بالعنوان. أعداد الأقسام على كل المطابقات لا المعروض وحده. */
@@ -716,8 +749,16 @@ export function createLibrary(env) {
   }
 
   function render() {
+    // بند «المزيد» المفتوح يُلتقط بمفتاح زره، والقائمة تُغلق قبل الهدم فلا يبقى مستمعها على المستند (U58).
     const keep = captureFocus(doc, listHost);
+    closeMenuWithin(listHost);
+    // ترتيب الصفوف قبل الرسم: إن زال صف التركيز (حذف بيانات الفيديو) فإلى الصف بعده أو قبله (U50).
+    const rowsBefore = keep ? [...listHost.querySelectorAll('li.lib-row')].map((r) => r.getAttribute('data-video')) : [];
     renderMeta();
+    // لوحة الخطأ role=alert نفسها تبقى ما دام الخطأ نفسه: كانت تُدرج من جديد مع كل حرف في البحث (U90).
+    const errKey = state.status === 'error' ? `${state.error?.code ?? ''}|${state.error?.message ?? ''}` : null;
+    if (errKey !== null && errKey === shownErrKey && listHost.contains(errorPanel)) return;
+    shownErrKey = errKey;
     listHost.replaceChildren();
     for (const c of copyStates) c.dispose();
     copyStates.clear();
@@ -752,11 +793,12 @@ export function createLibrary(env) {
         },
       });
       const retry = button({ label: 'إعادة المحاولة', icon: 'restore', variant: 'secondary', size: 'sm', doc, onClick: () => { state.status = 'loading'; render(); load(); } });
-      listHost.append(statePanel(emptyState({
+      errorPanel = statePanel(emptyState({
         icon: 'danger', title: 'تعذّرت قراءة المحفوظات',
         text: `${state.error?.message ?? messageFor('PG_LIST_FAILED')} (${state.error?.code ?? 'ST_READ_FAILED'})`,
         action: el('div', { className: 'lib-state__actions', children: [retry, copyDiag], doc }), doc,
-      }), 'error'));
+      }), 'error');
+      listHost.append(errorPanel);
       return;
     }
     if (!state.entries.length) {
@@ -794,10 +836,23 @@ export function createLibrary(env) {
     if (shown.length > slice.length) {
       listHost.append(button({
         label: `عرض المزيد (${formatCount(shown.length - slice.length, COUNT_FORMS.video)})`, variant: 'secondary', className: 'lib-more-rows', doc,
-        onClick: () => { state.limit += PAGE_SIZE; render(); },
+        // الزر يزول بإعادة الرسم: التركيز إلى أول صف جديد (U58)، لا إلى body.
+        onClick: () => {
+          const first = state.limit;
+          state.limit += PAGE_SIZE;
+          render();
+          listHost.querySelectorAll('li.lib-row')[first]?.focus?.({ preventScroll: false });
+        },
       }));
     }
-    restoreFocus(listHost, keep, keep ? toggleKeyOf(keep) : null);
+    if (keep && !restoreFocus(listHost, keep, toggleKeyOf(keep))) {
+      const gone = keep.split(':')[0];
+      const at = rowsBefore.indexOf(gone);
+      const near = [...rowsBefore.slice(at + 1), ...rowsBefore.slice(0, Math.max(0, at)).reverse()];
+      const row = near.map((id) => listHost.querySelector(`li[data-video="${id}"]`)).find(Boolean);
+      if (row) row.focus?.({ preventScroll: true });
+      else search.focus?.({ preventScroll: true });
+    }
     // الرجوع من المحرّر: الصف المقصود يُبرَز ويُمرَّر إليه مرة واحدة، حين تظهر الصفحة للمستخدم؛ فلا يستهلكه تحديث في الخلفية
     // (حفظ المحرّر في تبويب آخر) قبل أن يعود (GM-016.3).
     if (state.focusId && doc.visibilityState !== 'hidden') {

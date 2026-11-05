@@ -261,6 +261,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       hint: p.hint ? nameOtherLine(p.hint.title) : null, slots, target: target.n, filled, edits: plan.edits,
       keepAvailable: keepOk, keep: keepOk && p.keep, conflicts: keepOk ? plan.keep.conflicts : 0,
       offsetNote: filled && target.active && Math.round(s.view.displayOffsetMs / 100) !== 0,
+      // استبدال ممتلئة والنسخة السابقة موجودة: تُمحى (U76).
+      previousFrom: filled && s.bundle?.previous ? s.bundle.previous.from : null,
       busy: ui.upload.busy, error: ui.upload.error,
     };
   }

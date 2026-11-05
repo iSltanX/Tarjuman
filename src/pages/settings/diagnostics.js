@@ -3,18 +3,14 @@
 // يُجمع على حدة، وفشل قسم يظهر رمزه ولا يُسقط التقرير. يمر كله بمنقّي src/core/diagnostics.
 import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagnostics/report.js';
 import { toErrorInfo } from '../../core/errors/index.js';
+import { browserLabel, liveSources } from '../../core/report/diagnostics.js';
 
-/** «Brave 1.98» أو «Chrome 156» أو «Chromium 156»: الاسم والرقم الرئيسي وحدهما (لا سلسلة وكيل المستخدم كاملة). */
-export function detectBrowser(nav = globalThis.navigator) {
-  const brands = nav?.userAgentData?.brands;
-  if (Array.isArray(brands)) {
-    const real = brands.filter((b) => b && typeof b.brand === 'string' && !/not.?a.?brand/i.test(b.brand));
-    const pick = real.find((b) => /brave/i.test(b.brand)) ?? real.find((b) => /chrome$/i.test(b.brand)) ?? real.find((b) => /chromium/i.test(b.brand)) ?? real[0];
-    if (pick) return `${pick.brand.replace(/^Google /, '')} ${String(pick.version).split('.')[0]}`.slice(0, 40);
-  }
-  const m = /(Chrome|Chromium)\/(\d+)/.exec(String(nav?.userAgent ?? ''));
-  return m ? `${m[1]} ${m[2]}` : 'غير معروف';
-}
+/**
+ * «Microsoft Edge 156» أو «Firefox 159» أو «Brave 156»: الاسم والرقم الرئيسي وحدهما، بكشف قناة البلاغ نفسه (U53).
+ * @param {Navigator} [nav] @param {typeof chrome} [api]
+ * @returns {Promise<string>}
+ */
+export const detectBrowser = (nav = globalThis.navigator, api = globalThis.chrome) => browserLabel({ ...liveSources({ nav, api }), platformInfo: async () => null });
 
 /** أعداد المحفوظات من الفهرس فقط. @param {import('../../core/model/video.js').IndexEntry[]} entries */
 export function librarySummary(entries) {
@@ -29,10 +25,10 @@ export function librarySummary(entries) {
 }
 
 /**
- * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, version: string, nav?: Navigator, at?: string }} o
+ * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, version: string, nav?: Navigator, api?: typeof chrome, at?: string }} o
  * @returns {Promise<string>} نص JSON منسَّق جاهز للنسخ
  */
-export async function collectDiagnostics({ store, version, nav = globalThis.navigator, at }) {
+export async function collectDiagnostics({ store, version, nav = globalThis.navigator, api = globalThis.chrome, at }) {
   const sections = {};
   const section = async (name, fn) => {
     try {
@@ -54,5 +50,5 @@ export async function collectDiagnostics({ store, version, nav = globalThis.navi
       splitThreshold: s.export.splitThreshold, driftMs: s.thresholds.driftMs, completeness: s.thresholds.completeness,
     };
   });
-  return formatDiagnosticReport(createDiagnosticReport({ version, browser: detectBrowser(nav), ...(at ? { at } : {}), sections }));
+  return formatDiagnosticReport(createDiagnosticReport({ version, browser: await detectBrowser(nav, api), ...(at ? { at } : {}), sections }));
 }

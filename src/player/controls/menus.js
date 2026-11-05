@@ -7,8 +7,8 @@ import { messageFor } from '../../core/errors/index.js';
 import { formatOffset, textDirection } from '../../ui/format.js';
 import { glyph } from './glyphs.js';
 import {
-  LABELS, comparisonSummary, cueCount, dualLabels, editsLine, glossaryTag, keptLine, offsetMeaning, partRow, shortTime, slotLabel, stepSeconds, syncAt,
-  trackLine, translationLine,
+  LABELS, comparisonSummary, cueCount, dualLabels, editsLine, glossaryTag, keptLine, offsetMeaning, partRow, previousLostLine, shortTime, slotLabel, stepSeconds,
+  syncAt, trackLine, translationLine,
 } from './text.js';
 
 /**
@@ -383,7 +383,7 @@ export function displayMenu(h, act, m, root = null) {
  * @param {{
  *   fileName: string, count: number, comparison: object | null, warnings: string[], hint: string | null,
  *   slots: SlotModel[], target: number, filled: boolean, edits: number, keepAvailable: boolean, keep: boolean, conflicts: number,
- *   offsetNote: boolean, busy: boolean, error: string | null,
+ *   offsetNote: boolean, previousFrom?: number | null, busy: boolean, error: string | null,
  * }} m
  * @param {ShadowRoot | null} [root]
  */
@@ -419,6 +419,7 @@ export function confirmMenu(h, act, m, root = null) {
     }));
   }
   if (m.offsetNote) out.push(alert(h, 'info', LABELS.offsetResetNote));
+  if (m.previousFrom) out.push(alert(h, 'warn', previousLostLine(m.previousFrom, m.target)));
   out.push(sep(h));
   out.push(h('div', {
     className: 'actions inline',

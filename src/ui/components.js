@@ -54,7 +54,9 @@ let seq = 0;
 const uid = (p) => `${p}-${++seq}`;
 
 /**
- * زر. المعطّل يبقى قابلًا للتركيز ويذكر سببه دائمًا («معطّل بسبب»). iconOnly يجعل النص اسم وصول فقط.
+ * زر. المعطّل يبقى قابلًا للتركيز ويذكر سببه دائمًا («معطّل بسبب»). iconOnly يجعل النص اسم وصول فقط. والسبب وصفٌ للزر
+ * (aria-describedby) في عنصر aria-hidden، فلا يدخل اسمه المحسوب من محتواه (كان يُقرأ مرتين: «حفظ، لا تغييرات للحفظ»
+ * ثم الوصف نفسه؛ تدقيق 7a66f91، U91). والإحالة إلى عنصر مخفي تبقى صالحة للوصف.
  * @param {{
  *   label: string, variant?: 'primary' | 'secondary' | 'ghost' | 'danger', size?: 'sm' | 'md' | 'lg',
  *   icon?: keyof typeof ICONS, iconOnly?: boolean, title?: string, className?: string,
@@ -71,14 +73,18 @@ export function button({ label, variant = 'secondary', size = 'md', icon: iconNa
   if (iconName) b.append(icon(iconName, { doc }));
   if (!iconOnly) b.append(el('span', { text: label, doc }));
   if (title || iconOnly) b.title = title ?? label;
-  if (value !== undefined) b.value = value;
+  // الخاصية والسمة معًا: في المتصفح تعكس إحداهما الأخرى، والـDOM الوهمي لا يعكس ومحدد [value=…] يقرأ السمة.
+  if (value !== undefined) {
+    b.value = value;
+    b.setAttribute('value', value);
+  }
   if (loading) b.setAttribute('aria-busy', 'true');
   if (disabledReason) {
     b.setAttribute('aria-disabled', 'true');
     b.title = disabledReason;
     const id = uid('tj-reason');
     b.setAttribute('aria-describedby', id);
-    b.append(el('span', { className: 'tj-sr-only', text: disabledReason, attrs: { id }, doc }));
+    b.append(el('span', { className: 'tj-sr-only', text: disabledReason, attrs: { id, 'aria-hidden': 'true' }, doc }));
   }
   b.addEventListener('click', (e) => {
     if (b.getAttribute('aria-disabled') === 'true' || b.getAttribute('aria-busy') === 'true') {
@@ -167,18 +173,23 @@ export function statusPill({ tone = 'neutral', text, plain = false, title, doc =
 }
 
 /**
- * حوار تأكيد عبر <dialog>. الزر الخطِر يذكر الفعل. Esc والإلغاء يعيدان false.
+ * حوار تأكيد عبر <dialog>. الزر الخطِر يذكر الفعل. Esc والإلغاء يعيدان false. اسمه عنوانه ووصفه نصه أو محتواه
+ * (aria-labelledby وaria-describedby؛ كان بلا اسم ولا وصف، فلا يُقرأ ما سيُحذف، تدقيق 7a66f91، U51).
  * @param {{ title: string, body?: string, confirmLabel: string, cancelLabel?: string, tone?: 'default' | 'danger', content?: HTMLElement, doc?: Document }} o
  * @returns {Promise<boolean>}
  */
 export function confirmDialog({ title, body, confirmLabel, cancelLabel = 'إلغاء', tone = 'default', content, doc = document }) {
   return new Promise((resolve) => {
-    const dialog = el('dialog', { className: `tj-dialog${tone === 'danger' ? ' tj-dialog--danger' : ''}`, doc });
+    const id = uid('tj-dialog');
+    const dialog = el('dialog', { className: `tj-dialog${tone === 'danger' ? ' tj-dialog--danger' : ''}`, attrs: { 'aria-labelledby': `${id}-title` }, doc });
+    if (content && !content.getAttribute('id')) content.setAttribute('id', `${id}-content`);
+    const describedBy = body ? `${id}-body` : content ? content.getAttribute('id') : null;
+    if (describedBy) dialog.setAttribute('aria-describedby', describedBy);
     const form = el('form', {
       className: 'tj-dialog__form', attrs: { method: 'dialog' },
       children: [
-        el('h2', { className: 'tj-dialog__title', text: title, doc }),
-        body ? el('p', { className: 'tj-dialog__body', text: body, doc }) : null,
+        el('h2', { className: 'tj-dialog__title', text: title, attrs: { id: `${id}-title` }, doc }),
+        body ? el('p', { className: 'tj-dialog__body', text: body, attrs: { id: `${id}-body` }, doc }) : null,
         content ?? null,
         el('div', {
           className: 'tj-dialog__footer',

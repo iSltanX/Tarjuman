@@ -9,6 +9,7 @@ import { LIMITS, isPlainObject } from './validate.js';
 export const MESSAGE_VERSION = 1;
 export const MSG = Object.freeze({
   getVideoState: 'tj:get-video-state',
+  getVideoId: 'tj:get-video-id',
   getPageDiagnostics: 'tj:get-page-diagnostics',
   seek: 'tj:seek',
   saveFile: 'tj:save-file',
@@ -55,6 +56,17 @@ export const isVideoStateRequest = (req) => !!req && typeof req === 'object' && 
 
 /** @returns {{ type: string, v: 1 }} */
 export const videoStateRequest = () => ({ type: MSG.getVideoState, v: MESSAGE_VERSION });
+
+/**
+ * معرّف الفيديو المعروض وحده (§٥، تدقيق 7a66f91، U102): القفز من صفحات الإضافة يسأل كل تبويب عن معرّفه، فلا يُنقل عنوان
+ * الفيديو ولا اسم ملفه ولا أسماء خاناته من كل تبويب يوتيوب مفتوح كما في رد الحالة الكامل.
+ * @returns {{ type: string, v: 1 }}
+ */
+export const videoIdRequest = () => ({ type: MSG.getVideoId, v: MESSAGE_VERSION });
+/** @param {unknown} req */
+export const isVideoIdRequest = (req) => isTyped(req, MSG.getVideoId) && Object.keys(req).length === 2;
+/** @param {unknown} r @returns {r is { v: 1, ok: true, videoId: string | null }} */
+export const isVideoIdReply = (r) => isPlainObject(r) && r.v === MESSAGE_VERSION && r.ok === true && (r.videoId === null || isVideoId(r.videoId));
 
 const SLOT_NUMBERS = [1, 2, 3];
 

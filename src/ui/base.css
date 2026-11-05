@@ -88,6 +88,19 @@ a { color: var(--tj-brand-text); }
   .tj-topbar__end { display: none; }
 }
 
+/* عرض 320 (WCAG 1.4.10؛ تدقيق 7a66f91، U86): الشريط كان 362px لا يلتف. تحت 400 تسقط أيقونتا الرابطين وتضيق الحشوات
+   (نحو 280px)، وتحت 360 يلتف احتياطًا لتكبير النص بدل أن يفيض أفقيًا. */
+@media (max-width: 400px) {
+  .tj-topbar__inner { padding: 0 var(--tj-space-3); gap: var(--tj-space-2); }
+  .tj-topbar__nav { margin-inline-start: 0; }
+  .tj-topbar__link { padding: 0 6px; }
+  .tj-topbar__link .tj-icon { display: none; }
+}
+@media (max-width: 360px) {
+  .tj-topbar__inner { height: auto; min-height: var(--tj-topbar-h); flex-wrap: wrap; row-gap: 0; }
+  .tj-topbar__nav { min-height: 40px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }

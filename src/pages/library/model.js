@@ -361,6 +361,22 @@ export function comparisonSummary(r) {
 export const studyGate = (e) => (e.arabic ? null : messageFor('PG_STUDY_NO_ARABIC'));
 
 const MODE_LABEL = Object.freeze({ normal: 'عادي', long: 'مقاطع أطول' });
+/** صيغ عدد الأجزاء («جزآن» و«11 جزءًا»؛ كانت «2 أجزاء»، U59). */
+export const PART_FORMS = Object.freeze({ one: 'جزء واحد', two: 'جزآن', few: 'أجزاء', many: 'جزءًا', single: 'جزء' });
+/** صيغ المسارات الإنجليزية الملتقطة في ملخص الحذف (كانت «2 مسارات إنجليزية ملتقطة»، U59). */
+export const EN_TRACK_FORMS = Object.freeze({
+  one: 'المسار الإنجليزي الملتقط', two: 'المساران الإنجليزيان الملتقطان', few: 'مسارات إنجليزية ملتقطة', many: 'مسارًا إنجليزيًا ملتقطًا', single: 'مسار إنجليزي ملتقط',
+});
+
+/**
+ * سطر حوار الرفع حين يمحو الاستبدالُ النسخة السابقة المحفوظة (تدقيق 7a66f91، U76): تُسمّى خانتها وتاريخها، فلا يُظن أنها
+ * سابقة الخانة الهدف وحدها. والسطر نفسه في تأكيد المشغّل (player/controls/text.js previousLostLine).
+ * @param {{ from: number, savedAt: string }} prev @param {number} target @param {string} [date]
+ */
+export function previousLostText(prev, target, date = '') {
+  const whose = prev.from === target ? 'من هذه الترجمة' : `من الترجمة ${prev.from}`;
+  return `تحل الترجمة المستبدلة محل النسخة السابقة المحفوظة الآن (${whose}${date ? `، ${date}` : ''})، فلا يمكن استعادة تلك بعدها.`;
+}
 
 /**
  * وصف بصمة مرجع المقارنة: نوع المسار والوضع والعدد وتاريخ التصدير (والتقسيم إن وُجد).
@@ -369,7 +385,7 @@ const MODE_LABEL = Object.freeze({ normal: 'عادي', long: 'مقاطع أطو�
 export function fingerprintLabel(fp, date = '') {
   const kind = EN_KIND[String(fp.trackKey).split('|')[1]] ?? '';
   const parts = [`الإنجليزية ${kind}`.trim(), MODE_LABEL[fp.mode] ?? fp.mode, formatCount(fp.count, COUNT_FORMS.cue)];
-  if (fp.parts) parts.push(`${fp.parts.length} أجزاء`);
+  if (fp.parts) parts.push(formatCount(fp.parts.length, PART_FORMS));
   if (date) parts.push(date);
   return parts.join(' · ');
 }
@@ -470,7 +486,7 @@ export function deleteSummary(b, what) {
   if (slots.some((s) => s.position)) items.push('آخر موضع محفوظ في المحرّر');
   if (what.scope === 'all') {
     const en = b.record.english.length;
-    if (en) items.push(en === 1 ? 'المسار الإنجليزي الملتقط' : `${en} مسارات إنجليزية ملتقطة`);
+    if (en) items.push(formatCount(en, EN_TRACK_FORMS));
     if (b.record.fingerprints.length) items.push(`بصمات التصدير (${b.record.fingerprints.length})`);
     items.push('سجل الفيديو: العنوان والمدة وإعدادات العرض');
     return { items, keeps };

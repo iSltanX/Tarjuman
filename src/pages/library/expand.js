@@ -68,12 +68,43 @@ export function createExpansion(env) {
     await env.onChanged();
   }
 
+  /** رقم البطاقة التي فيها التركيز الآن (لبدائله إن زال عنصره). */
+  const focusedSlot = () => {
+    for (let n = doc.activeElement; n && n !== root; n = n.parentNode) {
+      if (n.tagName === 'section' && n.hasAttribute?.('data-slot')) return Number(n.getAttribute('data-slot'));
+    }
+    return null;
+  };
+  const firstKeyIn = (node) => node?.querySelector('[data-fk]')?.getAttribute('data-fk') ?? null;
+
+  /**
+   * بدائل التركيز بعد إعادة الرسم حين يزول العنصر المركّز (تدقيق 7a66f91، U50): «تفعيل» إلى «تصدير SRT» في بطاقته (صارت
+   * النشطة)، وحقل الاسم إلى زر التسمية، وغيرهما إلى أول عنصر في بطاقته، ثم في أقرب بطاقة بعدها أو قبلها (بطاقة حُذفت)، ثم
+   * إلى أول عنصر في التوسيع، ثم إلى زر التوسيع في الصف (خارج الجذر؛ كان يُبحث عنه داخله فلا يوجد أبدًا).
+   */
+  function fallbacks(keep, slot) {
+    const m = /:card-(\d):([\w-]+)$/.exec(keep);
+    const out = [];
+    if (m?.[2] === 'activate') out.push(fk(`card-${m[1]}:export`));
+    if (m?.[2] === 'name') out.push(fk(`card-${m[1]}:rename`));
+    const at = (n) => cards.querySelector(`section[data-slot="${n}"]`);
+    if (slot) {
+      out.push(firstKeyIn(at(slot)));
+      const shown = [...cards.children].map((c) => Number(c.getAttribute('data-slot'))).filter(Boolean);
+      const near = shown.find((n) => n > slot) ?? [...shown].reverse().find((n) => n < slot);
+      if (near) out.push(firstKeyIn(at(near)));
+    }
+    out.push(firstKeyIn(root), { key: toggleKeyOf(keep), scope: root.parentNode });
+    return out;
+  }
+
   const paint = (cardNodes, extraNodes = []) => {
     const keep = captureFocus(doc, root);
+    const slot = keep ? focusedSlot() : null;
     cards.replaceChildren(...cardNodes);
     extra.replaceChildren(...extraNodes);
     root.setAttribute('aria-busy', 'false');
-    restoreFocus(root, keep, keep ? toggleKeyOf(keep) : null);
+    if (keep) restoreFocus(root, keep, fallbacks(keep, slot));
   };
 
   /** رأس البطاقة: «الترجمة 2 · Claude» وزر التسمية، والتحرير في مكانه بحقل حتى 24 محرفًا (Enter يحفظ وEsc يلغي). */
@@ -136,11 +167,16 @@ export function createExpansion(env) {
           cancel();
         }
       });
+      // مغادرة الحقل بلا تغيير تغلقه. ويُفحص بعد إعادة الرسم الجارية: فصلُه بتحديث في الخلفية (يطلق Chromium عليه blur) يعيده
+      // مع صفه ويُعاد التركيز إليه، فلا يُغلق تحت المستخدم (تدقيق 7a66f91، I05).
       input.addEventListener('blur', () => {
-        if (!settled && typed() === (s.name ?? '')) {
-          settled = true;
-          showTitle();
-        }
+        Promise.resolve().then(() => {
+          if (settled || !input.isConnected || doc.activeElement === input) return;
+          if (typed() === (s.name ?? '')) {
+            settled = true;
+            showTitle();
+          }
+        });
       });
       row.replaceChildren(input);
       input.focus?.();

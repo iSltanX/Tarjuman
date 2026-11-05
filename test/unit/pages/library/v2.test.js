@@ -91,7 +91,7 @@ const LRI = String.fromCodePoint(0x2066);
 const PDI = String.fromCodePoint(0x2069);
 const txt = (e) => e.textContent;
 
-test('الصف: شريحة لكل ترجمة موجودة تميّز النشطة، والضغط على غيرها يفعّلها برسالة «الترجمة 2» و«تراجع»، ولا شريحة لفارغ سوى شريحة الرفع', async () => {
+test('الصف: شريحة لكل ترجمة موجودة تميّز النشطة، والضغط على غيرها يفعّلها برسالة «فُعّلت الترجمة 2» و«تراجع»، ولا شريحة لفارغ سوى شريحة الرفع', async () => {
   const m = await mount();
   let chips = chipsOf(m, IDS[0]);
   assert.deepEqual(chips.map((b) => [textOf(b), b.getAttribute('aria-pressed')]), [['الترجمة 1', 'true'], ['2 · مراجعة', 'false'], ['الترجمة 3', 'false']], 'الاسم المختصر إن وُجد');
@@ -103,7 +103,7 @@ test('الصف: شريحة لكل ترجمة موجودة تميّز النشط�
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).active, 2);
   const toast = m.root.querySelector('.tj-toast--success');
-  assert.ok(textOf(toast).startsWith('الترجمة 2'));
+  assert.ok(textOf(toast).startsWith('فُعّلت الترجمة 2'), 'الفعل في النص (U58)');
   assert.deepEqual(chipsOf(m, IDS[0]).map((b) => b.getAttribute('aria-pressed')), ['false', 'true', 'false']);
   buttonNamed(toast, 'تراجع').click();
   await settle(10);

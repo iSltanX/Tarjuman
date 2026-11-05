@@ -19,14 +19,16 @@ async function seeded() {
   return { area, store };
 }
 
-test('detectBrowser: الاسم والرقم الرئيسي فقط (بريف أولًا، ثم كروم، ثم كروميوم، ثم وكيل المستخدم)', () => {
+test('detectBrowser: الاسم والرقم الرئيسي فقط بكشف قناة البلاغ (Edge قبل Chrome، وFirefox باسمه؛ تدقيق 7a66f91، U53)', async () => {
   const brands = (...b) => ({ userAgentData: { brands: b.map(([brand, version]) => ({ brand, version })) }, userAgent: 'Mozilla/5.0 (X) Chrome/156.0.0.0 Safari/537.36' });
-  assert.equal(detectBrowser(brands(['Not.A/Brand', '99'], ['Chromium', '156'], ['Brave', '156'])), 'Brave 156');
-  assert.equal(detectBrowser(brands(['Not)A;Brand', '8'], ['Chromium', '156'], ['Google Chrome', '156'])), 'Chrome 156');
-  assert.equal(detectBrowser(brands(['Not A Brand', '8'], ['Chromium', '131'])), 'Chromium 131');
-  assert.equal(detectBrowser({ userAgent: 'Mozilla/5.0 (X) Chrome/156.0.6723.91 Safari/537.36' }), 'Chrome 156');
-  assert.equal(detectBrowser({ userAgent: 'curl/8' }), 'غير معروف');
-  assert.equal(detectBrowser(undefined), 'غير معروف');
+  assert.equal(await detectBrowser(brands(['Not.A/Brand', '99'], ['Chromium', '156'], ['Brave', '156']), {}), 'Brave 156');
+  assert.equal(await detectBrowser(brands(['Not)A;Brand', '8'], ['Chromium', '156'], ['Google Chrome', '156']), {}), 'Chrome 156');
+  assert.equal(await detectBrowser(brands(['Not A Brand', '8'], ['Chromium', '131']), {}), 'Chromium 131');
+  assert.equal(await detectBrowser(brands(['Not A Brand', '8'], ['Chromium', '156'], ['Microsoft Edge', '156']), {}), 'Microsoft Edge 156', 'كان «Chromium 156»');
+  assert.equal(await detectBrowser({ userAgent: 'Mozilla/5.0 (Macintosh; rv:159.0) Gecko/20100101 Firefox/159.0' }, {}), 'Firefox 159', 'كان «غير معروف»');
+  assert.equal(await detectBrowser({ userAgent: 'x' }, { runtime: { getBrowserInfo: async () => ({ name: 'Firefox', version: '159.0.1' }) } }), 'Firefox 159', 'وفي Firefox من getBrowserInfo');
+  assert.equal(await detectBrowser({ userAgent: 'Mozilla/5.0 (X) Chrome/156.0.6723.91 Safari/537.36' }, {}), 'Chrome 156');
+  assert.equal(await detectBrowser({ userAgent: 'curl/8' }, {}), 'غير معروف');
 });
 
 test('ملخص المحفوظات: أعداد من الفهرس وحده', async () => {
@@ -36,7 +38,7 @@ test('ملخص المحفوظات: أعداد من الفهرس وحده', async
 
 test('التقرير: الإصدار والمتصفح وأقسام الأحجام والأعداد والإعدادات، وبلا عنوان ولا اسم ملف ولا رابط', async () => {
   const { store } = await seeded();
-  const text = await collectDiagnostics({ store, version: '0.2.0', nav: { userAgentData: { brands: [{ brand: 'Brave', version: '1.98' }] } }, at: '2026-11-02T12:00:00.000Z' });
+  const text = await collectDiagnostics({ store, version: '0.2.0', nav: { userAgentData: { brands: [{ brand: 'Brave', version: '1.98' }] } }, api: {}, at: '2026-11-02T12:00:00.000Z' });
   const report = JSON.parse(text);
   assert.equal(report.tarjuman, '0.2.0');
   assert.equal(report.browser, 'Brave 1');

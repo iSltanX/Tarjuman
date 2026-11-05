@@ -1,13 +1,14 @@
 // منطق نافذة الأيقونة بلا DOM (P7-AC1، وإعادة التصميم، وP12-AC6): استعلام حالة الفيديو الحالي من سكربت المحتوى في
 // التبويب النشط، ووصف الحالة الأربع للبطاقة (ومؤشر «محفوظ»)، وسطر حالة أدوات المشغّل والطبقة بسببه، وسطر رفض الالتقاط،
 // والإجراءات السريعة بحسب السياق، ووجهة مدخل «المحفوظات» الواحد، وشرط تفعيل «المحرّر»، وتقرير تشخيص الصفحة المنقّى (R64).
-// الاستعلام يعيد null لكل ما ليس رد صفحة فيديو صالحًا («افتح فيديو على يوتيوب»): تبويب ليس يوتيوب، أو سكربت لم
-// يُحمَّل، أو نسخة أقدم، أو لا رد في المهلة.
+// الاستعلام يعيد null لكل ما ليس رد صفحة فيديو صالحًا، ومعه سببه: صفحة يوتيوب بلا سكربت أو بنسخة أقدم («أعد تحميل الصفحة»)،
+// أو تبويب ليس يوتيوب («افتح فيديو على يوتيوب»)، أو لا يُعرف العنوان (الاثنان في جملة).
 import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagnostics/report.js';
 import { messageFor } from '../../core/errors/index.js';
 import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 import { MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest } from '../../core/model/messages.js';
 import { relativeTime } from '../library/model.js';
+import { NOT_VIDEO_TEXT } from './view.js';
 
 /** مهلة الرد: سكربت لا يردّ لا يترك النافذة هيكلًا إلى الأبد. */
 export const REPLY_TIMEOUT_MS = 1500;
@@ -20,19 +21,76 @@ const withTimeout = (promise, ms) => new Promise((resolve, reject) => {
 });
 
 /**
+ * أين التبويب النشط إن كشف المتصفح عنوانه (بلا إذن tabs يكشفه حيث للإضافة إذن موقع، ويخفيه غالبًا): يوتيوب، أو غيره، أو
+ * لا يُعرف. @param {{ url?: string }} tab @returns {'youtube' | 'other' | null}
+ */
+export function tabPlace(tab) {
+  if (typeof tab?.url !== 'string' || tab.url === '') return null;
+  return /^https:\/\/www\.youtube\.com\//.test(tab.url) ? 'youtube' : 'other';
+}
+
+/**
+ * حالة النافذة: رد الصفحة، أو سبب غيابه (تدقيق 7a66f91، Q31): `stale` صفحة يوتيوب بلا سكربت ترجمان أو بنسخة أقدم (فُتحت قبل
+ * التثبيت أو التحديث، وChromium لا يحقن سكربتات البيان في التبويبات المفتوحة) فتُعاد تحميلًا، و`elsewhere` ليست يوتيوب، و`unknown`
+ * لا يُعرف العنوان (الاحتمالان معًا في نص واحد).
+ * @param {{ tabs?: typeof chrome.tabs, timeoutMs?: number }} [env]
+ * @returns {Promise<{ reply: import('../../core/model/messages.js').VideoStateReply | null, miss: null | 'stale' | 'elsewhere' | 'unknown' }>}
+ */
+export async function queryPopupState({ tabs = globalThis.chrome?.tabs, timeoutMs = REPLY_TIMEOUT_MS } = {}) {
+  let tab;
+  try {
+    [tab] = await withTimeout(tabs.query({ active: true, lastFocusedWindow: true }), timeoutMs);
+  } catch {
+    return { reply: null, miss: 'unknown' };
+  }
+  if (!tab || tab.id === undefined) return { reply: null, miss: 'unknown' };
+  const place = tabPlace(tab);
+  const miss = place === 'youtube' ? 'stale' : place === 'other' ? 'elsewhere' : 'unknown';
+  try {
+    const reply = await withTimeout(tabs.sendMessage(tab.id, videoStateRequest()), timeoutMs);
+    return isVideoStateReply(reply) ? { reply, miss: null } : { reply: null, miss };
+  } catch {
+    return { reply: null, miss };
+  }
+}
+
+/**
  * @param {{ tabs?: typeof chrome.tabs, timeoutMs?: number }} [env]
  * @returns {Promise<import('../../core/model/messages.js').VideoStateReply | null>}
  */
-export async function queryVideoState({ tabs = globalThis.chrome?.tabs, timeoutMs = REPLY_TIMEOUT_MS } = {}) {
-  try {
-    const [tab] = await withTimeout(tabs.query({ active: true, lastFocusedWindow: true }), timeoutMs);
-    if (!tab || tab.id === undefined) return null;
-    const reply = await withTimeout(tabs.sendMessage(tab.id, videoStateRequest()), timeoutMs);
-    return isVideoStateReply(reply) ? reply : null;
-  } catch {
-    return null;
-  }
+export async function queryVideoState(env = {}) {
+  return (await queryPopupState(env)).reply;
 }
+
+/** فترة إعادة الاستعلام ما دام الرد «جارٍ القراءة»، وحدها الأقصى (L-25). */
+export const LOADING_POLL_MS = 400;
+export const LOADING_MAX_MS = 5000;
+
+/**
+ * يعيد الاستعلام ما دام الرد «جارٍ القراءة» حتى يستقر أو تنقضي المدة (تدقيق 7a66f91، U59 L-25): كانت النافذة تبقى هيكلًا و«تحرير
+ * الترجمة» معطّلًا حتى تُفتح من جديد. يعيد آخر حالة مستقرة، أو الأخيرة إن انقضت المدة.
+ * @template {{ reply: { loading?: boolean } | null }} S
+ * @param {() => Promise<S>} query @param {S} first
+ * @param {{ intervalMs?: number, maxMs?: number, sleep?: (ms: number) => Promise<void> }} [o]
+ * @returns {Promise<S>}
+ */
+export async function untilSettled(query, first, { intervalMs = LOADING_POLL_MS, maxMs = LOADING_MAX_MS, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
+  let state = first;
+  for (let waited = 0; state.reply?.loading && waited < maxMs; waited += intervalMs) {
+    await sleep(intervalMs);
+    const next = await query();
+    // انقطاع الرد أثناء الانتظار (تنقل بين الصفحات) لا يمحو آخر حالة معروفة.
+    if (!next.reply) break;
+    state = next;
+  }
+  return state;
+}
+
+/**
+ * نص الملاحظة حين لا رد صفحة فيديو.
+ * @param {null | 'stale' | 'elsewhere' | 'unknown'} miss
+ */
+export const missText = (miss) => (miss === 'stale' ? messageFor('TJ_RELOAD_PAGE') : miss === 'unknown' ? messageFor('TJ_OPEN_OR_RELOAD') : NOT_VIDEO_TEXT);
 
 const MODE_TEXT = Object.freeze({ ar: 'العربية وحدها', dual: 'العربية فوق الإنجليزية', off: 'الترجمة مخفية' });
 /** نوع مسار الأصل كما يُعرض بجانب حالته: «ملتقط · يدوي». */
@@ -165,15 +223,6 @@ export async function queryPageDiagnostics({ tabs = globalThis.chrome?.tabs, tim
   } catch {
     return null;
   }
-}
-
-/** «Brave 156» أو «Chrome 156»: الاسم والرقم الرئيسي وحدهما، لا سلسلة وكيل المستخدم. @param {Navigator | undefined} nav */
-export function browserLabel(nav = globalThis.navigator) {
-  const brands = Array.isArray(nav?.userAgentData?.brands) ? nav.userAgentData.brands.filter((b) => b && typeof b.brand === 'string' && !/not.?a.?brand/i.test(b.brand)) : [];
-  const pick = brands.find((b) => /brave/i.test(b.brand)) ?? brands.find((b) => /chrome$/i.test(b.brand)) ?? brands.find((b) => /chromium/i.test(b.brand)) ?? brands[0];
-  if (pick) return `${pick.brand.replace(/^Google /, '')} ${String(pick.version).split('.')[0]}`.slice(0, 40);
-  const m = /(Chrome|Chromium)\/(\d+)/.exec(String(nav?.userAgent ?? ''));
-  return m ? `${m[1]} ${m[2]}` : 'غير معروف';
 }
 
 /**

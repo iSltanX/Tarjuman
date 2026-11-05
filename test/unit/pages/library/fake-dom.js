@@ -5,6 +5,27 @@
 // لا تُمرَّر عقدة إلى assert.equal أو deepEqual أو notEqual؛ قارن بـassert.ok(a === b) أو assert.ok(x === null) أو بقيمة
 // بسيطة. فشل تلك التأكيدات على عقدة يفحص الـDOM الوهمي المترابط كله ويبني فرقًا بذاكرة تربيعية خارج كومة V8 (التفصيل في
 // test/unit/player/overlay/fake-dom.js).
+//
+// التركيز كما في المتصفح (تدقيق 7a66f91، U72): فصل العقدة المركّزة أو أحد آبائها بأي طريق (removeChild وremove
+// وreplaceChildren وreplaceWith وضبط textContent ونقلها بـappend) يعيد activeElement إلى body ويطلق blur وfocusout عليها،
+// والعنصر المفصول أو المخفي (hidden عليه أو على أب) أو المعطّل لا يقبل focus(). كان التركيز يبقى على المفصول فتمر اختبارات
+// تسقط فيها الأفعال تركيزها في المتصفح. وfocus() يطلق focus وfocusin (وblur وfocusout على السابق)، وblur() يعيده إلى body.
+
+/** متصل بالمستند: يصعد من العقدة إلى جذره. */
+const connected = (node) => {
+  const root = node?.ownerDocument?.documentElement;
+  for (let n = node; n; n = n.parentNode) if (n === root) return true;
+  return false;
+};
+
+/** بعد كل فصل: إن لم يعد المركّز متصلًا عاد التركيز إلى body وأُطلق blur وfocusout على المفصول (كما يطلقهما Chromium). */
+const fixFocus = (doc) => {
+  const el = doc?._focused;
+  if (!el || el === doc.body || connected(el)) return;
+  doc._focused = doc.body;
+  el.dispatchEvent({ type: 'blur', bubbles: false });
+  el.dispatchEvent({ type: 'focusout', bubbles: true });
+};
 
 class FakeText {
   constructor(text) {
@@ -83,6 +104,11 @@ export class FakeElement {
   set textContent(v) {
     this.childNodes.forEach((n) => (n.parentNode = null));
     this.childNodes = String(v) === '' ? [] : [Object.assign(new FakeText(v), { parentNode: this })];
+    fixFocus(this.ownerDocument);
+  }
+
+  get isConnected() {
+    return connected(this);
   }
 
   setAttribute(k, v) {
@@ -141,6 +167,7 @@ export class FakeElement {
     if (i > -1) {
       this.childNodes.splice(i, 1);
       n.parentNode = null;
+      fixFocus(this.ownerDocument);
     }
     return n;
   }
@@ -152,6 +179,7 @@ export class FakeElement {
   replaceChildren(...nodes) {
     this.childNodes.forEach((n) => (n.parentNode = null));
     this.childNodes = [];
+    fixFocus(this.ownerDocument);
     this.append(...nodes);
   }
 
@@ -163,6 +191,7 @@ export class FakeElement {
     node.remove?.();
     node.parentNode = p;
     p.childNodes.splice(i, 1, node);
+    fixFocus(this.ownerDocument);
   }
 
   contains(other) {
@@ -170,8 +199,28 @@ export class FakeElement {
     return false;
   }
 
+  /** كالمتصفح: لا يُركَّز المفصول ولا المخفي (hidden عليه أو على أب) ولا المعطّل. */
   focus() {
-    this.ownerDocument.activeElement = this;
+    const doc = this.ownerDocument;
+    if (!connected(this) || this.disabled) return;
+    for (let n = this; n && n.nodeType === 1; n = n.parentNode) if (n.hidden) return;
+    const prev = doc._focused;
+    if (prev === this) return;
+    doc._focused = this;
+    if (prev && prev !== doc.body) {
+      prev.dispatchEvent({ type: 'blur', bubbles: false });
+      prev.dispatchEvent({ type: 'focusout', bubbles: true });
+    }
+    this.dispatchEvent({ type: 'focus', bubbles: false });
+    this.dispatchEvent({ type: 'focusin', bubbles: true });
+  }
+
+  blur() {
+    const doc = this.ownerDocument;
+    if (doc._focused !== this) return;
+    doc._focused = doc.body;
+    this.dispatchEvent({ type: 'blur', bubbles: false });
+    this.dispatchEvent({ type: 'focusout', bubbles: true });
   }
 
   /** <dialog> (P13): الفتح يضع open، والإغلاق يزيله ويطلق close بالقيمة المعادة. */
@@ -227,11 +276,13 @@ export class FakeElement {
     this._listeners.get(type)?.delete(fn);
   }
 
-  /** يصعد الحدث من الهدف إلى الجذر، ويتوقف إن stopPropagation. */
+  /** يصعد الحدث من الهدف إلى الجذر، ويتوقف إن stopPropagation، ولا يصعد ما bubbles: false فيه (focus وblur). */
   dispatchEvent(event) {
     const e = Object.assign({ target: this, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; }, stopPropagation() { this.stopped = true; } }, event);
     for (let n = this; n && !e.stopped; n = n.parentNode ?? (n === this.ownerDocument.documentElement ? this.ownerDocument : null)) {
-      for (const fn of n._listeners?.get(e.type) ?? []) fn(e);
+      e.currentTarget = n;
+      for (const fn of [...(n._listeners?.get(e.type) ?? [])]) fn(e);
+      if (e.bubbles === false) break;
     }
     return !e.defaultPrevented;
   }
@@ -246,9 +297,19 @@ export class FakeDocument {
     this.documentElement = new FakeElement('html', this);
     this.body = new FakeElement('body', this);
     this.documentElement.append(this.body);
-    this.activeElement = this.body;
+    this._focused = this.body;
     this._listeners = new Map();
     this.title = '';
+  }
+
+  /** العنصر المركّز، أو body إن فُصل (الفصل يعيده أصلًا عبر fixFocus؛ وهذا احتياط لطرق فصل لا يراها). */
+  get activeElement() {
+    return connected(this._focused) ? this._focused : this.body;
+  }
+
+  /** يبقى للاختبارات القديمة التي تضبطه مباشرة. */
+  set activeElement(el) {
+    this._focused = el ?? this.body;
   }
 
   createElement(tag) {

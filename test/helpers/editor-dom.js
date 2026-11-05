@@ -67,9 +67,7 @@ function patchElements() {
     }
     return null;
   };
-  FakeElement.prototype.blur = function blur() {
-    if (this.ownerDocument.activeElement === this) this.ownerDocument.activeElement = this.ownerDocument.body;
-  };
+  // blur() والتركيز عند الفصل من fake-dom نفسه (U72): يطلق blur وfocusout كالمتصفح.
   FakeDocument.prototype.querySelector = function querySelector(s) {
     return this.documentElement.querySelector(s);
   };

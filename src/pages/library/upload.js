@@ -6,7 +6,7 @@ import { messageFor } from '../../core/errors/index.js';
 import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { compareWith, uploadImpact } from './actions.js';
-import { EDIT_FORMS, absoluteTime, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, targetOptions } from './model.js';
+import { EDIT_FORMS, absoluteTime, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, previousLostText, targetOptions } from './model.js';
 import { segGroup } from './seg.js';
 
 export const DIFF_BATCH = 200;
@@ -124,17 +124,21 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       doc,
     });
     select.value = reference ?? '';
-    const why = review.references.find((r) => r.fingerprintId === review.suggested)?.why ?? '';
+    // سبب المرجع المختار لا المقترح وحده: السطر وصف القائمة، فيتبع الاختيار (كان يبقى «مطابقة لهذا التصدير»، U59).
+    const whyOf = (fid) => review.references.find((r) => r.fingerprintId === fid)?.why ?? '';
+    const why = whyOf(reference);
     select.addEventListener('change', () => {
       reference = select.value || null;
+      whyEl.textContent = whyOf(reference);
       renderCompare();
     });
+    const whyEl = el('span', { className: 'tj-field__hint', text: why, attrs: { id: `${sid}-why` }, doc });
     referenceBlock = el('div', {
       className: 'tj-field lib-up__field',
       children: [
         el('div', { className: 'lib-up__label', children: [el('label', { className: 'tj-field__label', text: 'المرجع', attrs: { for: sid }, doc }), fps.length > 1 && !review.certain ? statusPill({ tone: 'warning', text: 'غير مؤكد', title: 'المرجعان متقاربان؛ تأكد من اختيار التصدير الذي ترجمته.', doc }) : null], doc }),
         select,
-        el('span', { className: 'tj-field__hint', text: why, attrs: { id: `${sid}-why` }, doc }),
+        whyEl,
       ],
       doc,
     });
@@ -166,6 +170,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
         kids.push(keepLabel);
       }
       kids.push(el('p', { className: 'tj-caption', text: 'تُحفظ الترجمة المستبدلة نسخةً سابقة يمكن استعادتها.', doc }));
+      if (bundle.previous) kids.push(alertBox({ tone: 'warning', text: previousLostText(bundle.previous, target, absoluteTime(bundle.previous.savedAt)), doc }));
     }
     if (bundle.active === target && slot.offsetMs !== 0) kids.push(alertBox({ tone: 'info', text: `ستُصفَّر إزاحة العرض (${offsetInline(slot.offsetMs)} ث) لأن الملف الجديد يحمل توقيته.`, doc }));
     impactHost.replaceChildren(...kids);

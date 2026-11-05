@@ -188,6 +188,8 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 }
 .tj-menu__list[hidden] { display: none !important; }
 .tj-menu__list--start { inset-inline-end: auto; inset-inline-start: 0; }
+/* مجموعة بنود بعنوانها (role=group، U58): عمود كبنود القائمة نفسها. */
+.tj-menu__grp { display: flex; flex-direction: column; gap: 1px; }
 .tj-menu__group { padding: 6px 10px 2px; font: 700 11px/16px var(--tj-font-body); color: var(--tj-muted); letter-spacing: 0.02em; }
 .tj-menu__sep { height: 1px; margin: 4px 6px; background: var(--tj-border); }
 .tj-menu__item {

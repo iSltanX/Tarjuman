@@ -168,6 +168,13 @@ export function nameOtherLine(title) {
   return `${LABELS.nameOther} · ${isolate(chars.length > 40 ? `${chars.slice(0, 39).join('').trimEnd()}…` : t)}`;
 }
 
+/**
+ * الاستبدال يمحو النسخة السابقة المحفوظة الآن، ولو كانت من خانة أخرى (تدقيق 7a66f91، U76): تُسمّى خانتها، والسطر نفسه في حوار
+ * المحفوظات (library/model.js previousLostText).
+ * @param {number} from خانة السابقة @param {number} target الخانة الهدف
+ */
+export const previousLostLine = (from, target) => `تحل المستبدلة محل النسخة السابقة المحفوظة الآن (${from === target ? 'من هذه الترجمة' : `من الترجمة ${from}`})، فلا تُستعاد تلك بعدها.`;
+
 /** عدد المحارف بأرقام مجمّعة: «18,400 محرف»، «12 محرفًا»، «5 محارف». @param {number} n */
 export function charsText(n) {
   const mod = n % 100;
