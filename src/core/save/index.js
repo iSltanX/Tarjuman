@@ -5,9 +5,13 @@
 import { download as blobDownload } from '../export/download.js';
 import { isSaveReply, saveRequest } from '../model/messages.js';
 import { DEFAULT_PREFS, normalizePrefs } from '../model/prefs.js';
+import { utf8Length } from '../model/validate.js';
 import { createStore } from '../store/index.js';
 
-export const SAVE_LIMITS = Object.freeze({ maxNameChars: 150, maxPageChars: 256 * 1024 * 1024, maxMessageChars: 16 * 1024 * 1024 });
+// حد صفحات الإضافة بالبايت الفعلي، وهو حد قراءة النسخة الاحتياطية نفسه (BACKUP_LIMITS.maxBytes): ما يُنشأ ويُحفظ من هنا
+// يُقرأ (تدقيق 7a66f91، U55، قرار Q28؛ كان 256 مليون وحدة UTF-16، فتُحفظ نسخة CJK فوق 512 م.ب ثم تُرفض). وقناة سكربت
+// المحتوى بوحدات الرسالة كما هي.
+export const SAVE_LIMITS = Object.freeze({ maxNameChars: 150, maxPageBytes: 512 * 1024 * 1024, maxMessageChars: 16 * 1024 * 1024 });
 /** النوع من الامتداد وحده، لا من المستدعي. */
 export const SAVE_TYPES = Object.freeze({
   srt: 'application/x-subrip;charset=utf-8',
@@ -32,17 +36,17 @@ const NAME_RE = /^[\p{L}\p{N}_-][\p{L}\p{M}\p{N} ._()-]*$/u;
 
 /**
  * @param {unknown} file
- * @param {{ maxChars?: number }} [opts]
+ * @param {{ maxChars?: number, maxBytes?: number }} [opts] حد بوحدات النص (قناة الرسائل) أو بالبايت (صفحات الإضافة)
  * @returns {{ ok: true, ext: keyof typeof SAVE_TYPES, mime: string } | { ok: false, code: 'SV_BAD_FILE' | 'SV_TOO_LARGE' }}
  */
-export function validateSaveFile(file, { maxChars = SAVE_LIMITS.maxPageChars } = {}) {
+export function validateSaveFile(file, { maxChars = Infinity, maxBytes = SAVE_LIMITS.maxPageBytes } = {}) {
   if (!file || typeof file !== 'object' || typeof file.name !== 'string' || typeof file.text !== 'string') return { ok: false, code: 'SV_BAD_FILE' };
   const { name, text } = file;
   const ext = /\.([a-z]+)$/.exec(name)?.[1];
   if (name.length > SAVE_LIMITS.maxNameChars || !NAME_RE.test(name) || name.includes('..') || !ext || !Object.hasOwn(SAVE_TYPES, ext) || /[ .]\.[a-z]+$/.test(name)) {
     return { ok: false, code: 'SV_BAD_FILE' };
   }
-  if (text.length > maxChars) return { ok: false, code: 'SV_TOO_LARGE' };
+  if (text.length > maxChars || text.length > maxBytes || (text.length * 3 > maxBytes && utf8Length(text) > maxBytes)) return { ok: false, code: 'SV_TOO_LARGE' };
   return { ok: true, ext: /** @type {keyof typeof SAVE_TYPES} */ (ext), mime: SAVE_TYPES[ext] };
 }
 
@@ -159,7 +163,7 @@ export async function saveFile(file, { api = globalThis.chrome, store = null, do
   const downloads = api?.downloads;
   // صفحة إضافة: واجهة التنزيلات مباشرة، والوضع من التفضيلات في التخزين.
   if (downloads && typeof downloads.download === 'function') {
-    const v = validateSaveFile(file, { maxChars: SAVE_LIMITS.maxPageChars });
+    const v = validateSaveFile(file, { maxBytes: SAVE_LIMITS.maxPageBytes });
     if (!v.ok) return { ok: false, code: v.code };
     const s = store ?? createStore();
     let prefs;

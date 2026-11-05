@@ -4,11 +4,11 @@
 // الإعدادات والقاموس» غير مختارة، ورابط «نزّل نسخة من بياناتك الحالية أولًا». ثم تقدم ظاهر وتقرير بما أضيف وما تُخطّي وما
 // استُبدل وما تعذّر، مع «أعد المحاولة» لما تعذّر وحده. لا يدخل شيء من محتوى النسخة التشخيص ولا السجلات.
 import {
-  createBackup, mergeReports, planRestore, readBackup, reportCode, restoreItems, retryItems, runRestore, yieldToPage,
+  createBackup, mergeReports, planRestore, readBackup, reportCode, restoreItems, retryItems, retrySettings, runRestore, settingsFailureCode, yieldToPage,
 } from '../../core/backup/index.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { alertBox, button, el, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, textDirection } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, ltrInline, textDirection } from '../../ui/format.js';
 
 let seq = 0;
 const PREVIEW_FRESH_MAX = 100;
@@ -37,9 +37,16 @@ export function countsLine(c) {
   return parts.join(' · ');
 }
 
-/** سطر التقرير: «أضيف 2 · تُخطّي 1 · استُبدل 0 · تعذّر 0». @param {import('../../core/backup/restore.js').RestoreReport} r */
 /** صور المحفوظات مطفأة في النسخة فتبقى مطفأة (تدقيق 7a66f91، U05، قرار Q10): في كل استعادة، ولا تُشغَّل بالاستعادة أبدًا. */
 export const THUMBNAILS_STAY_OFF = 'صور الفيديو في المحفوظات مطفأة في هذه النسخة، فتبقى مطفأة على هذا الجهاز بعد الاستعادة.';
+
+/** أجزاء الفيديو التي تُستبعد من نسخة جزئية بأسمائها للمستخدم (U94). */
+export const PART_NAMES = Object.freeze({ head: 'أسماء الترجمات واختيار النشطة', alts: 'الترجمات غير النشطة', prev: 'النسخة السابقة', marks: 'العلامات وآخر موضع' });
+
+/** معرّف فيديو معزول LTR في سطر عربي (كانت الشرطة في أوله تنتقل إلى آخره؛ تدقيق 7a66f91، U59 DS-F11). @param {string} id */
+const idText = (id) => ltrInline(id);
+
+/** سطر التقرير: «أضيف 2 · تُخطّي 1 · استُبدل 0 · تعذّر 0». @param {import('../../core/backup/restore.js').RestoreReport} r */
 export const reportLine = (r) => `أضيف ${r.added.length} · تُخطّي ${r.skipped.length} · استُبدل ${r.replaced.length} · تعذّر ${r.failed.length + r.remaining.length}`;
 
 /** شريط تقدم بنصه («جارٍ الاستعادة: 120 من 300»)، مخفي حتى يبدأ عمل. @param {Document} doc */
@@ -114,10 +121,21 @@ export function dataControl(env) {
       if (saved.mode === 'blob') kids.push(alertBox({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB'), doc }));
       if (saved.pending) kids.push(alertBox({ tone: 'info', text: messageFor('SV_PENDING'), doc }));
     } else {
-      kids.push(alertBox({ tone: saved.code === 'SV_CANCELLED' ? 'info' : 'danger', text: messageFor(saved.code), doc }));
+      // «صدّره من المحفوظات» (SV_TOO_LARGE) لا معنى له هنا: المحفوظات لا تنشئ نسخًا (U55).
+      const code = saved.code === 'SV_TOO_LARGE' ? 'BK_CREATE_TOO_LARGE' : saved.code;
+      const sizes = { size: `${Math.ceil((built.bytes ?? 0) / (1024 * 1024))} م.ب`, max: '512 م.ب' };
+      kids.push(alertBox({ tone: code === 'SV_CANCELLED' ? 'info' : 'danger', text: messageFor(code, sizes), doc }));
+    }
+    // نسخة جزئية بعينها (U94، Q29): ما استُبعد من كل فيديو، والأصل التالف باقٍ.
+    if (built.partial?.length) {
+      kids.push(alertBox({
+        tone: 'warning', title: messageFor('BK_CREATED_PARTIAL', { videos: formatCount(built.partial.length, COUNT_FORMS.video) }),
+        text: built.partial.slice(0, 20).map((x) => `${idText(x.videoId)}: استُبعد ${x.dropped.map((k) => PART_NAMES[k] ?? k).join('، ')}`).join('\n'),
+        doc,
+      }));
     }
     if (built.skipped.length) {
-      kids.push(alertBox({ tone: 'warning', text: `لم يُضمَّن ${formatCount(built.skipped.length, COUNT_FORMS.video)} لتعذّر قراءة سجله: ${built.skipped.map((s) => s.videoId).join('، ')}`, doc }));
+      kids.push(alertBox({ tone: 'warning', text: `لم يُضمَّن ${formatCount(built.skipped.length, COUNT_FORMS.video)} لتعذّر قراءة سجله: ${built.skipped.map((x) => idText(x.videoId)).join('، ')}`, doc }));
     }
     host.replaceChildren(...kids);
   }
@@ -144,6 +162,16 @@ export function dataControl(env) {
     }
   }
 
+  /** ما لا يُقرأ من النسخة وسببه، والمعرّف معزولًا. «لا يُقرأ من النسخة: 3 فيديوهات» بلا صفة تطابق العدد (U59). */
+  function invalidBox(invalid) {
+    return alertBox({
+      tone: 'warning',
+      title: `لا يُقرأ من النسخة: ${formatCount(invalid.length, COUNT_FORMS.video)}، ويُتخطى وحده`,
+      text: invalid.slice(0, 20).map((x) => `${x.videoId ? idText(x.videoId) : `#${x.index + 1}`}: ${messageFor(x.code)}`).join('\n'),
+      doc,
+    });
+  }
+
   /** المعاينة داخل الحوار، وحالتها: الاستبدال المختار وخيار الإعدادات. */
   function preview(read, plan, existingById) {
     const replace = new Set();
@@ -151,14 +179,7 @@ export function dataControl(env) {
     const kids = [];
     kids.push(el('p', { className: 'tj-body-sm st-restore__meta', text: `أُنشئت ${backupDate(read.header.createdAt)} · ترجمان ${read.header.app.version}`, doc }));
     kids.push(el('p', { className: 'tj-body-sm st-restore__counts', text: countsLine(plan.counts), doc }));
-    if (plan.invalid.length) {
-      kids.push(alertBox({
-        tone: 'warning',
-        title: `تعذّرت قراءة ${formatCount(plan.invalid.length, COUNT_FORMS.video)} من النسخة، وسيُتخطى`,
-        text: plan.invalid.slice(0, 20).map((x) => `${x.videoId ?? `#${x.index + 1}`}: ${messageFor(x.code)}`).join('\n'),
-        doc,
-      }));
-    }
+    if (plan.invalid.length) kids.push(invalidBox(plan.invalid));
     for (const w of read.warnings) kids.push(alertBox({ tone: 'warning', text: messageFor(w.code, w.params), doc }));
     if (read.thumbnailsOff) kids.push(el('p', { className: 'tj-body-sm st-restore__thumbs', text: THUMBNAILS_STAY_OFF, doc }));
 
@@ -275,8 +296,12 @@ export function dataControl(env) {
     const code = reportCode(report);
     const tone = code === 'BK_RESTORE_DONE' ? 'success' : code === 'BK_RESTORE_STOPPED' ? 'danger' : 'warning';
     const lines = [reportLine(report)];
-    if (report.settings === 'restored') lines.push('استُعيدت الإعدادات والقاموس.');
-    if (report.settings === 'failed') lines.push(messageFor('BK_RESTORE_SETTINGS_FAILED'));
+    // حال كل قسم بعينه (U54): لا «بقيت الحالية كما هي» وقد تغيّر أحدهما.
+    if (report.settings === 'restored') {
+      const p = report.parts ?? {};
+      lines.push(p.settings && !p.prefs ? 'استُعيدت الإعدادات.' : p.prefs && !p.settings ? 'استُعيد القاموس والتفضيلات.' : 'استُعيدت الإعدادات والقاموس.');
+    }
+    if (report.settings === 'failed') lines.push(messageFor(settingsFailureCode(report) ?? 'BK_RESTORE_SETTINGS_FAILED'));
     if (report.changed?.length) lines.push(messageFor('BK_RESTORE_CHANGED', { n: report.changed.length }));
     if (report.thumbnails === 'off') lines.push('بقيت صور الفيديو في المحفوظات مطفأة كما في النسخة.');
     if (report.thumbnails === 'failed') lines.push('تعذّر إبقاء صور الفيديو في المحفوظات مطفأة؛ أطفئها من «العرض» في الإعدادات.');
@@ -299,9 +324,11 @@ export function dataControl(env) {
       const report = await runRestore({ store, items, skipped, settings, prefs, thumbnailsOff, pause, onProgress: restoreMeter.show('جارٍ الاستعادة') });
       restoreMeter.hide();
       const merged = before ? mergeReports(before, report) : report;
+      // إعادة المحاولة تكتب القسم المتعذّر وحده، فلا تمحو تغييرًا أجراه المستخدم بعد التقرير في القسم الذي نجح (U54).
+      const again = retrySettings(merged, { settings, prefs });
       renderReport(merged, titles, () => run({
         items: retryItems(merged, items), skipped: [],
-        settings: merged.settings === 'failed' ? settings : null, prefs: merged.settings === 'failed' ? prefs : null,
+        settings: again.settings, prefs: again.prefs,
         thumbnailsOff: merged.thumbnails === 'failed' && thumbnailsOff,
         titles, before: merged,
       }));
@@ -345,7 +372,8 @@ export function dataControl(env) {
     // كل موجود يحمل نسخته كما عُرض، فلا يُستبدل ما حُفظ بعد المعاينة (تدقيق 7a66f91، U11).
     const plan = planRestore(read, [...existingById.keys(), ...unreadable], existingById);
     if (!plan.counts.videos && !plan.hasSettings) {
-      restoreResult.replaceChildren(alertBox({ tone: 'warning', text: messageFor('BK_NOTHING'), doc }));
+      // «لا شيء يمكن استعادته» ومعه السبب إن كان في النسخة ما لا يُقرأ (U59 L-24): كانت الجملة وحدها.
+      restoreResult.replaceChildren(alertBox({ tone: 'warning', text: messageFor('BK_NOTHING'), doc }), ...(plan.invalid.length ? [invalidBox(plan.invalid)] : []));
       return null;
     }
     const view = preview(read, plan, existingById);

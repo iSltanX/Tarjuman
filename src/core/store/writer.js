@@ -228,9 +228,23 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
     } catch (err) {
       throw new TjError('ST_WRITE_FAILED', { detail: String(err && err.message), cause: err });
     }
-    await migrate(area, { schema, migrations, now: at });
-    if (thumbsOff) await write({ [KEY_PREFS]: mergePrefs(DEFAULT_PREFS, { ui: { thumbnails: false } }) });
-    return {};
+    // بعد المسح: التهيئة وإبقاء إطفاء الصور كلٌّ بنتيجته، ولا يُرمى بعد أن مُسحت البيانات (U56). التهيئة تُعاد عند أول قراءة.
+    let reinit = 'ok';
+    try {
+      await migrate(area, { schema, migrations, now: at });
+    } catch {
+      reinit = 'failed';
+    }
+    let thumbs = null;
+    if (thumbsOff) {
+      try {
+        await write({ [KEY_PREFS]: mergePrefs(DEFAULT_PREFS, { ui: { thumbnails: false } }) });
+        thumbs = 'kept';
+      } catch {
+        thumbs = 'failed';
+      }
+    }
+    return { reinit, thumbs };
   }
 
   function dispatch(req) {

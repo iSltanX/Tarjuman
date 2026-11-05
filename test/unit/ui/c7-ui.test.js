@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { createDiagnosticReport } from '../../../src/core/diagnostics/report.js';
 import { messageFor } from '../../../src/core/errors/index.js';
 import { installMessageHandler } from '../../../src/content/messages.js';
+import { setDisabled } from '../../../src/pages/editor/dialogs.js';
+import { editorDocument } from '../../helpers/editor-dom.js';
 import { button, confirmDialog } from '../../../src/ui/components.js';
 import { formatBytes } from '../../../src/ui/format.js';
 import { findVideoTabs, jumpToVideo } from '../../../src/ui/seek.js';
@@ -55,6 +57,18 @@ test('U91: سبب التعطيل وصف الزر (aria-describedby) ولا يد�
   assert.equal(reason.getAttribute('aria-hidden'), 'true');
   assert.equal(b.getAttribute('aria-disabled'), 'true');
   assert.equal(b.title, 'لا تغييرات للحفظ.');
+});
+
+test('U91 (المحرّر): setDisabled يضع السبب وصفًا aria-hidden فلا يدخل اسم الزر، ويزيله عند التفعيل', () => {
+  const { doc } = editorDocument({ videoId: A });
+  const b = button({ label: 'حفظ', doc });
+  doc.body.append(b);
+  setDisabled(b, 'لا تغييرات للحفظ.');
+  assert.equal(nameFromContent(b), 'حفظ');
+  assert.equal(textOf(doc.getElementById(b.getAttribute('aria-describedby'))), 'لا تغييرات للحفظ.');
+  setDisabled(b, null);
+  assert.equal(b.hasAttribute('aria-describedby'), false);
+  assert.equal(nameFromContent(b), 'حفظ');
 });
 
 test('U59: formatBytes — الصفر «0 ك.ب» لا «1 ك.ب»، وما فوق 1024 م.ب بالغيغابايت', () => {

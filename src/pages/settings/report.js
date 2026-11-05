@@ -70,6 +70,10 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   let outcome = null;
   /** آخر فعل في منطقة النتيجة كان عليه التركيز (data-report-action): يعود إليه بعد إعادة رسمها إن بقي. */
   let focusAction = null;
+  /** نتيجة نسخ أثناء الإرسال (النسخ لا يمس الشبكة فيعمل والإرسال جارٍ؛ تدقيق 7a66f91، U59 L-20). */
+  let copiedWhileBusy = null;
+  /** حال منطقة النتيجة المرسومة: تُعاد حين تتغير وحدها، لا مع كل حرف في الوصف (كانت role=alert تُدرج من جديد؛ U52). */
+  let painted = null;
 
   const regionId = 'st-report';
   const textId = 'st-report-text';
@@ -99,6 +103,8 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   const personalNote = el('p', { className: 'st-report__hint', attrs: { id: 'st-report-hint', role: 'status' }, doc });
   personalNote.hidden = true;
   const rows = el('dl', { className: 'st-report__rows', doc });
+  // حال قراءة التشخيص فقرة شقيقة للقائمة لا ابنًا لها (أبناء dl أزواج dt/dd وحدها؛ U58).
+  const rowsStatus = el('p', { className: 'tj-caption st-report__rows-status', doc });
   const json = el('pre', { className: 'st-report__json', attrs: { dir: 'ltr' }, doc });
 
   const sendBtn = button({ label: 'أرسل البلاغ', variant: 'primary', doc, onClick: () => send() });
@@ -123,6 +129,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
         className: 'st-panel st-report__review',
         children: [
           el('strong', { className: 'st-panel__title', text: 'ما يُرفق تلقائيًا (تراه كله قبل الإرسال)', doc }),
+          rowsStatus,
           rows,
           el('details', {
             className: 'st-details',
@@ -168,6 +175,9 @@ export function reportPanel({ doc = document, env = {} } = {}) {
    * الفعل نفسه في الرسم الجديد إن وُجد، وإلا إلى منطقة النتيجة نفسها فيُقرأ ما فيها («يُرسل البلاغ…» ثم النتيجة).
    */
   function renderResult() {
+    const state = JSON.stringify({ busy, outcome, copiedWhileBusy });
+    if (state === painted) return;
+    painted = state;
     const active = doc.activeElement;
     const inside = Boolean(active) && (active === result || result.contains(active));
     if (inside && active !== result) focusAction = active.getAttribute?.('data-report-action') ?? null;
@@ -179,7 +189,8 @@ export function reportPanel({ doc = document, env = {} } = {}) {
 
   function paintResult() {
     if (busy) {
-      result.replaceChildren(el('p', { className: 'tj-body-sm', text: 'يُرسل البلاغ…', doc }));
+      const note = copiedWhileBusy ? el('p', { className: 'tj-caption', text: copiedWhileBusy === 'copied' ? 'نُسخ البلاغ نصًّا.' : 'تعذّر النسخ. افتح «نص البلاغ كاملًا» وانسخه بيدك.', doc }) : null;
+      result.replaceChildren(el('p', { className: 'tj-body-sm', text: 'يُرسل البلاغ…', doc }), ...(note ? [note] : []));
       return;
     }
     if (!outcome) {
@@ -242,7 +253,9 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     counter.replaceChildren(ltr(`${count.format(length)} / ${count.format(LIMITS.description)}`, { doc }));
     const found = secrets();
     secretAlert.hidden = found.length === 0;
-    secretAlert.textContent = found.length ? 'في وصفك ما يشبه رمز جلسة أو ملف ارتباط أو توقيعًا. احذفه قبل الإرسال أو النسخ؛ لا يحتاج البلاغ شيئًا منها.' : '';
+    // النص يُكتب حين يتغير وحده: كتابته مع كل حرف تعيد إعلان role=alert (U52، N13).
+    const secretText = found.length ? 'في وصفك ما يشبه رمز جلسة أو ملف ارتباط أو توقيعًا. احذفه قبل الإرسال أو النسخ؛ لا يحتاج البلاغ شيئًا منها.' : '';
+    if (secretAlert.textContent !== secretText) secretAlert.textContent = secretText;
     const hint = found.length ? '' : personalHintText(personalHints(text));
     if (personalNote.textContent !== hint) personalNote.textContent = hint;
     personalNote.hidden = !hint;
@@ -251,15 +264,19 @@ export function reportPanel({ doc = document, env = {} } = {}) {
       className: 'st-report__row', attrs: { 'data-report-field': row.field },
       children: [el('dt', { text: row.label, doc }), el('dd', { children: [ltr(row.value, { doc })], doc })],
       doc,
-    })) : [el('p', { className: 'tj-caption', text: diagFailed ? 'تعذّرت قراءة إصدار المتصفح والنظام.' : 'يُقرأ إصدار المتصفح والنظام…', doc })]));
+    })) : []));
+    rows.hidden = !p;
+    rowsStatus.hidden = Boolean(p);
+    rowsStatus.textContent = p ? '' : diagFailed ? 'تعذّرت قراءة إصدار المتصفح والنظام.' : 'يُقرأ إصدار المتصفح والنظام…';
     json.textContent = p ? serialise(p) : '';
     const firefox = diag?.buildTarget === 'firefox';
     permissionNote.textContent = `عند أول إرسال يطلب المتصفح إذنك بالاتصال بخادم البلاغات وحده (${REPORTS_HOST})${firefox ? '، ومعه موافقة «البيانات التقنية والتفاعل» لأن البلاغ يحمل إصدار المتصفح والنظام' : ''}، وتسحبه متى شئت من صفحة إضافات المتصفح.`;
     const reason = blockedReason();
     setDisabled(sendBtn, busy ? null : reason);
-    setDisabled(copyBtn, busy ? null : reason);
+    // النسخ يعمل أثناء الإرسال (لا يمس الشبكة)، فلا يبدو مفعّلًا ثم يسكت (U59 L-20)؛ والانشغال على زر الإرسال وحده.
+    setDisabled(copyBtn, reason);
     sendBtn.setAttribute('aria-busy', busy ? 'true' : 'false');
-    copyBtn.setAttribute('aria-busy', busy ? 'true' : 'false');
+    copyBtn.setAttribute('aria-busy', 'false');
     textarea.disabled = busy;
     kinds.inputs.forEach((input) => { input.disabled = busy; });
     renderResult();
@@ -299,6 +316,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     const k = key;
     busy = true;
     outcome = null;
+    copiedWhileBusy = null;
     render();
     Promise.resolve(asked)
       .then((granted) => (granted ? deps.send(payload, k) : { ok: false, failure: 'permission', status: null }))
@@ -320,11 +338,12 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   }
 
   function copyReport() {
-    if (busy || blockedReason()) return;
+    if (blockedReason()) return;
     const body = serialise(buildPayload({ kind, description: text }, diag));
+    const during = busy;
     Promise.resolve().then(() => deps.copy(body)).then(
-      () => { outcome = { state: 'copied' }; render(); },
-      () => { outcome = { state: 'copy-failed' }; render(); },
+      () => { if (during && busy) copiedWhileBusy = 'copied'; else outcome = { state: 'copied' }; render(); },
+      () => { if (during && busy) copiedWhileBusy = 'copy-failed'; else outcome = { state: 'copy-failed' }; render(); },
     );
   }
 

@@ -71,5 +71,39 @@ export function itemsFor(next, raw, { forceHead = false } = {}) {
 }
 
 
+/**
+ * إنقاذ ما يصح من حزمة تالفة للنسخة الاحتياطية وحدها (تدقيق 7a66f91، U94، قرار Q29): السجل إن صح، وكل تابع يجتاز مدققه ويتسق
+ * معه؛ والتالف يُسقط ويُسمّى. بلا رأس صالح لا تُقرأ التوابع (الرأس يربطها بالسجل)، فتُسمّى مستبعدة هي أيضًا. لا كتابة هنا: الأصل
+ * التالف يبقى كما هو في التخزين.
+ * @param {RawBundle} raw @param {string} id
+ * @returns {{ raw: RawBundle, dropped: ('head' | 'alts' | 'prev' | 'marks')[] } | null} null إن كان السجل نفسه تالفًا أو غائبًا
+ */
+export function salvageRaw(raw, id) {
+  if (raw.record === null || !validateVideoRecord(raw.record).ok || raw.record.videoId !== id) return null;
+  const out = { ...raw };
+  const dropped = [];
+  for (const kind of ['head', ...COMPANIONS]) {
+    const v = out[kind];
+    if (v === null) continue;
+    const r = COMPANION_VALIDATORS[kind](v);
+    if (!r.ok || v.videoId !== id) {
+      out[kind] = null;
+      dropped.push(kind);
+    }
+  }
+  if (out.head && out.alts && out.head.active !== null && out.alts.slots[out.head.active - 1] !== null) {
+    out.alts = null;
+    dropped.push('alts');
+  }
+  if (!out.head) {
+    for (const kind of COMPANIONS) {
+      if (out[kind] === null) continue;
+      out[kind] = null;
+      dropped.push(kind);
+    }
+  }
+  return { raw: out, dropped };
+}
+
 /** هل في القراءة توابع (لسجل محذوف = يتيمة). @param {RawBundle} raw */
 export const hasCompanions = (raw) => raw.head !== null || raw.alts !== null || raw.prev !== null || raw.marks !== null;

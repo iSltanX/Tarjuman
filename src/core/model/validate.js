@@ -38,6 +38,28 @@ export const isIntIn = (x, min, max) => Number.isInteger(x) && x >= min && x <= 
 /** @param {unknown} s @param {number} max */
 export const isText = (s, max) => typeof s === 'string' && s.length <= max && !s.includes('\u0000');
 
+/**
+ * طول النص بايتاتٍ في UTF-8 دون نسخه (الأزواج البديلة أربعة، والبديل اليتيم ثلاثة كما يكتبه TextEncoder). حد النسخة الاحتياطية
+ * والحفظ بالبايت الفعلي لا بوحدات UTF-16 (تدقيق 7a66f91، U55، قرار Q28).
+ * @param {string} s
+ */
+export function utf8Length(s) {
+  let n = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    if (c < 0x80) n += 1;
+    else if (c < 0x800) n += 2;
+    else if (c >= 0xd800 && c <= 0xdbff && i + 1 < s.length) {
+      const d = s.charCodeAt(i + 1);
+      if (d >= 0xdc00 && d <= 0xdfff) {
+        n += 4;
+        i++;
+      } else n += 3;
+    } else n += 3;
+  }
+  return n;
+}
+
 // سطر واحد مشذّب بلا محارف تحكم ولا تنسيق ولا فواصل أسطر (الأسماء المختصرة والمصطلحات).
 const LINE_BAD_RE = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
 /** @param {unknown} s @param {number} max @param {number} [min] */

@@ -5,4 +5,6 @@ export {
 } from './format.js';
 export { createBackup, yieldToPage } from './create.js';
 export { readBackup } from './read.js';
-export { mergeReports, planRestore, reportCode, restoreDiagnostics, restoreItems, retryItems, runRestore } from './restore.js';
+export {
+  mergeReports, planRestore, reportCode, restoreDiagnostics, restoreItems, retryItems, retrySettings, runRestore, settingsFailureCode,
+} from './restore.js';

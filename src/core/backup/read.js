@@ -100,6 +100,28 @@ function checkEntry(entry) {
 }
 
 const SETTINGS_GROUPS = ['offsetStepMs', 'displayModeDefault', 'appearance', 'export', 'thresholds'];
+/** أسماء المجموعات للمستخدم في تحذير الاستبعاد (كانت المفاتيح الداخلية «settings.appearance»؛ U59). */
+const GROUP_NAMES = Object.freeze({
+  settings: 'الإعدادات', prefs: 'القاموس والتفضيلات',
+  'settings.offsetStepMs': 'خطوة الإزاحة', 'settings.displayModeDefault': 'وضع العرض الافتراضي', 'settings.appearance': 'مظهر الترجمة',
+  'settings.export': 'التصدير', 'settings.thresholds': 'عتبات المقارنة',
+  'prefs.glossary': 'القاموس', 'prefs.review': 'حد سرعة القراءة', 'prefs.saveLocation': 'مكان الحفظ',
+});
+/** @param {string} key مثل «prefs.glossary (جزئيًا)» */
+const groupName = (key) => {
+  const m = /^(\S+)( \(جزئيًا\))?$/.exec(key);
+  const name = GROUP_NAMES[m?.[1] ?? key] ?? key;
+  return m?.[2] ? `${name}، جزئيًا` : name;
+};
+
+/** محارف تجاوز الاتجاه وعزله تُجرَّد من العنوان واسم الملف كما في الاستيراد (import/files.js؛ U59): تنتحل عرض الاسم. */
+const BIDI_CONTROLS = /[\u202A-\u202E\u2066-\u2069]/g;
+function stripBidi(value, key = '') {
+  if (typeof value === 'string') return key === 'title' || key === 'fileName' ? value.replace(BIDI_CONTROLS, '') : value;
+  if (Array.isArray(value)) return value.map((v) => stripBidi(v));
+  if (isPlainObject(value)) return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, stripBidi(v, k)]));
+  return value;
+}
 // ui (تفضيلات الواجهة على الجهاز) لا تُستعاد عمدًا: تبقى قيم هذا الجهاز (docs/identity-redesign.md)؛ إلا إطفاء الصور (thumbnailsOff).
 const PREFS_GROUPS = ['glossary', 'review', 'saveLocation'];
 
@@ -134,7 +156,16 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   if (!shape.ok) return reject('BK_NOT_BACKUP', `${shape.path} — ${shape.reason}`);
 
   const { data } = file;
-  if (await sha256Hex(JSON.stringify(data)) !== file.integrity.hash) return reject('BK_INTEGRITY', 'hash');
+  // ملف مصنوع بتداخل عميق جدًا: JSON.parse يقبله في V8 والتسلسل العودي يرمي RangeError؛ فهو «ليس نسخة» لا «خطأ غير متوقع» (U59).
+  let dataJson;
+  try {
+    dataJson = JSON.stringify(data);
+  } catch (err) {
+    if (err instanceof RangeError) return reject('BK_NOT_BACKUP', 'depth');
+    throw err;
+  }
+  if (await sha256Hex(dataJson) !== file.integrity.hash) return reject('BK_INTEGRITY', 'hash');
+  dataJson = null;
   if (JSON.stringify(countData(data)) !== JSON.stringify(file.counts)) return reject('BK_INTEGRITY', 'counts');
   if (!file.options.previous && data.videos.some((v) => isPlainObject(v) && v.previous !== null)) return reject('BK_INTEGRITY', 'options.previous');
 
@@ -143,7 +174,7 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   const prefs = readSection(data.prefs, normalizePrefs, validatePrefs, PREFS_GROUPS, 'prefs', normalizePrefs(DEFAULT_PREFS), ['glossary']);
   const excluded = [...(settings?.excluded ?? []), ...(prefs?.excluded ?? [])];
   const thumbnailsOff = isPlainObject(data.prefs) && isPlainObject(data.prefs.ui) && data.prefs.ui.thumbnails === false;
-  if (excluded.length) warnings.push({ code: 'BK_SETTINGS_INVALID', params: { groups: excluded.join('، ') } });
+  if (excluded.length) warnings.push({ code: 'BK_SETTINGS_INVALID', params: { groups: excluded.map(groupName).join('، ') } });
 
   /** @type {Map<string, number[]>} */
   const seen = new Map();
@@ -152,8 +183,15 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   const invalid = [];
   const total = data.videos.length;
   onProgress({ done: 0, total });
-  for (const [index, entry] of data.videos.entries()) {
-    const r = checkEntry(entry);
+  for (const [index, raw] of data.videos.entries()) {
+    const entry = stripBidi(raw);
+    let r;
+    try {
+      r = checkEntry(entry);
+    } catch (err) {
+      if (!(err instanceof RangeError)) throw err;
+      r = fail('entry', 'تداخل عميق جدًا');
+    }
     if (!r.ok) {
       const id = isPlainObject(entry) && isPlainObject(entry.record) && isVideoId(entry.record.videoId) ? entry.record.videoId : null;
       invalid.push({ index, videoId: id, code: 'BK_VIDEO_INVALID', detail: sanitizeText(`${r.path} — ${r.reason}`).slice(0, 300) });

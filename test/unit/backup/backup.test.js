@@ -180,7 +180,7 @@ test('فشل جزئي صادق: فيديو تالف أو مكرر يُستبعد
   assert.deepEqual(r.invalid.map((x) => [x.index, x.code]), [[1, 'BK_VIDEO_INVALID'], [2, 'BK_VIDEO_DUPLICATE'], [3, 'BK_VIDEO_DUPLICATE']]);
   assert.ok(r.invalid[0].videoId, 'المعرّف الصالح يظهر مع التالف');
   assert.doesNotMatch(r.invalid[0].detail, /أولى|ثانية|سطر/, 'السبب مسار لا نص');
-  assert.deepEqual(r.warnings, [{ code: 'BK_SETTINGS_INVALID', params: { groups: 'settings.appearance، prefs.saveLocation' } }]);
+  assert.deepEqual(r.warnings, [{ code: 'BK_SETTINGS_INVALID', params: { groups: 'مظهر الترجمة، مكان الحفظ' } }], 'أسماء للمستخدم لا مفاتيح داخلية (تدقيق 7a66f91، U59)');
   assert.deepEqual(Object.keys(r.settings.patch), ['offsetStepMs', 'displayModeDefault', 'export', 'thresholds']);
   assert.deepEqual(Object.keys(r.prefs.patch), ['glossary', 'review']);
   // الاستعادة بالمجموعات الصالحة: المستبعدة تبقى قيمتها الحالية.
@@ -403,7 +403,7 @@ test('تدقيق 5fedcb9 (GM-015.5): مجموعة صالحة بترتيب مفا
   const original = JSON.parse(text).data.prefs;
   assert.deepEqual(r.prefs.patch.saveLocation, { folder: original.saveLocation.folder, mode: original.saveLocation.mode }, 'لا يُستبعد لترتيب مفاتيحه');
   assert.deepEqual(r.prefs.patch.glossary.terms, original.glossary.terms, 'يبقى القاموس بلا المكرر');
-  assert.deepEqual(r.warnings, [{ code: 'BK_SETTINGS_INVALID', params: { groups: 'prefs.glossary (جزئيًا)' } }]);
+  assert.deepEqual(r.warnings, [{ code: 'BK_SETTINGS_INVALID', params: { groups: 'القاموس، جزئيًا' } }]);
 });
 
 test('تدقيق 5fedcb9 (GM-015.4): مدخل لا يطابق ثوابت الحزمة (اسم لخانة فارغة، أو مرجع بصمة غائبة) «تعذّر» بسببه لا يُطبَّع بصمت', async () => {

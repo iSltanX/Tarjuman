@@ -16,8 +16,12 @@ import { BACKUP_LIMITS } from './format.js';
  *   failed: { videoId: string, code: string, message: string }[],
  *   remaining: string[], stopped: boolean,
  *   settings: 'restored' | 'failed' | null, settingsCode: string | null,
+ *   parts?: { settings: SectionState, prefs: SectionState },
  *   thumbnails?: 'off' | 'failed' | null
  * }} RestoreReport
+ *   settings خلاصة القسمين (failed إن تعذّر أحدهما)، وparts حال كل قسم وحده: الإعدادات والقاموس كتابتان، فإن نجحت الأولى وتعذّرت
+ *   الثانية قيل ذلك بعينه، وإعادة المحاولة تكتب المتعذّر وحده فلا تمحو تغييرًا أجراه المستخدم بعدها (تدقيق 7a66f91، U54).
+ * @typedef {'restored' | 'failed' | null} SectionState
  */
 
 /**
@@ -71,7 +75,10 @@ export function restoreItems(plan, replace) {
  */
 export async function runRestore({ store, items, skipped = [], settings = null, prefs = null, thumbnailsOff = false, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch }) {
   /** @type {RestoreReport} */
-  const report = { added: [], skipped: [...skipped], replaced: [], changed: [], failed: [], remaining: [], stopped: false, settings: null, settingsCode: null, thumbnails: null };
+  const report = {
+    added: [], skipped: [...skipped], replaced: [], changed: [], failed: [], remaining: [], stopped: false,
+    settings: null, settingsCode: null, parts: { settings: null, prefs: null }, thumbnails: null,
+  };
   if (thumbnailsOff) {
     try {
       await store.setPrefs({ ui: { thumbnails: false } });
@@ -80,16 +87,19 @@ export async function runRestore({ store, items, skipped = [], settings = null, 
       report.thumbnails = 'failed';
     }
   }
-  if (settings || prefs) {
+  // كل قسم بحاله: تعذّر أحدهما لا يمنع الآخر ولا يُقال عنه «بقي كما هو» وقد تغيّر (U54).
+  for (const [part, patch, write] of [['settings', settings, (x) => store.setSettings(x)], ['prefs', prefs, (x) => store.setPrefs(x)]]) {
+    if (!patch || !Object.keys(patch).length) continue;
     try {
-      if (settings && Object.keys(settings).length) await store.setSettings(settings);
-      if (prefs && Object.keys(prefs).length) await store.setPrefs(prefs);
-      report.settings = 'restored';
+      await write(patch);
+      report.parts[part] = 'restored';
     } catch (err) {
-      report.settings = 'failed';
-      report.settingsCode = toErrorInfo(err).code;
+      report.parts[part] = 'failed';
+      report.settingsCode ??= toErrorInfo(err).code;
     }
   }
+  const states = Object.values(report.parts).filter(Boolean);
+  if (states.length) report.settings = states.includes('failed') ? 'failed' : 'restored';
   onProgress({ done: 0, total: items.length });
   for (const [i, item] of items.entries()) {
     try {
@@ -137,10 +147,41 @@ export function mergeReports(before, retry) {
     failed: retry.failed,
     remaining: retry.remaining,
     stopped: retry.stopped,
-    settings: retry.settings ?? before.settings,
-    settingsCode: retry.settings ? retry.settingsCode : before.settingsCode,
+    ...mergeSettings(before, retry),
     thumbnails: retry.thumbnails ?? before.thumbnails ?? null,
   };
+}
+
+/** حال القسمين بعد إعادة المحاولة: ما أُعيد يأخذ نتيجته الجديدة، وما لم يُعد يبقى على حاله. */
+function mergeSettings(before, retry) {
+  const parts = { settings: retry.parts?.settings ?? before.parts?.settings ?? null, prefs: retry.parts?.prefs ?? before.parts?.prefs ?? null };
+  const states = Object.values(parts).filter(Boolean);
+  const settings = states.length ? (states.includes('failed') ? 'failed' : 'restored') : (retry.settings ?? before.settings);
+  return { settings, settingsCode: settings === 'failed' ? retry.settingsCode ?? before.settingsCode : null, parts };
+}
+
+/**
+ * ما تُعاد كتابته من القسمين: المتعذّر وحده (U54).
+ * @param {RestoreReport} report @param {{ settings: object | null, prefs: object | null }} chosen
+ * @returns {{ settings: object | null, prefs: object | null }}
+ */
+export function retrySettings(report, chosen) {
+  return {
+    settings: report.parts?.settings === 'failed' ? chosen.settings : null,
+    prefs: report.parts?.prefs === 'failed' ? chosen.prefs : null,
+  };
+}
+
+/**
+ * رمز سطر الإعدادات في التقرير بحال القسمين، أو null إن لم يتعذّر شيء.
+ * @param {RestoreReport} r
+ */
+export function settingsFailureCode(r) {
+  if (r.settings !== 'failed') return null;
+  const { settings, prefs } = r.parts ?? {};
+  if (settings === 'failed' && prefs === 'restored') return 'BK_RESTORE_SETTINGS_PART_FAILED';
+  if (prefs === 'failed' && settings === 'restored') return 'BK_RESTORE_PREFS_PART_FAILED';
+  return 'BK_RESTORE_SETTINGS_FAILED';
 }
 
 /** رمز خلاصة التقرير. @param {RestoreReport} r */

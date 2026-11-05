@@ -20,13 +20,21 @@ export const retryable = (failure) => !['invalid', 'too-large', 'unsupported'].i
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 export const isIdempotencyKey = (value) => typeof value === 'string' && UUID.test(value);
 
-/** Retry-After بالثواني أو بتاريخ HTTP. @param {string | null} header */
+/** أقصى انتظار يُعرض: يوم. ما فوقه خطأ إعداد في الخادم لا مدة حقيقية (تدقيق 7a66f91، U85: «38 مليون دقيقة»). */
+export const RETRY_AFTER_MAX_S = 24 * 60 * 60;
+const HTTP_DATE = /^[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/;
+
+/**
+ * Retry-After بالثواني (عدد صحيح غير سالب) أو بتاريخ HTTP وحدهما (RFC 9110)، بسقف يوم. وما سواهما (‎-1 و1e308 ونص) لا شيء.
+ * @param {string | null} header
+ */
 export function parseRetryAfter(header, now = Date.now()) {
   if (!header) return undefined;
-  const seconds = Number(header);
-  if (Number.isFinite(seconds) && seconds >= 0) return Math.ceil(seconds);
-  const at = Date.parse(header);
-  return Number.isFinite(at) ? Math.max(0, Math.ceil((at - now) / 1000)) : undefined;
+  const text = String(header).trim();
+  if (/^\d+$/.test(text)) return Math.min(RETRY_AFTER_MAX_S, Number(text));
+  if (!HTTP_DATE.test(text)) return undefined;
+  const at = Date.parse(text);
+  return Number.isFinite(at) ? Math.min(RETRY_AFTER_MAX_S, Math.max(0, Math.ceil((at - now) / 1000))) : undefined;
 }
 
 /** يفسّر الرد بجدول العقد. @param {Response} response @returns {Promise<SendOutcome>} */
@@ -104,7 +112,10 @@ export async function sendReport(payload, key, { granted, request = pageFetch, t
       referrerPolicy: 'no-referrer',
       signal: controller.signal,
     });
-    return await classify(response);
+    const outcome = await classify(response);
+    // انقضت المهلة أثناء قراءة الجسم: «لم يردّ في الوقت» (وإن استلمه أعاد رقمه نفسه)، لا «ردّ بما لا يُفهم» (U85).
+    if (!outcome.ok && timedOut) return { ok: false, failure: 'timeout', status: null };
+    return outcome;
   } catch {
     return { ok: false, failure: timedOut ? 'timeout' : 'network', status: null };
   } finally {

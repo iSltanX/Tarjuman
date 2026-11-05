@@ -53,6 +53,7 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
   const lastPath = el('span', { className: 'st-last-save__path', doc });
   const last = el('p', { className: 'tj-caption st-last-save', children: ['آخر ملف حُفظ: ', lastPath], doc });
   last.hidden = true;
+  // اسم وصول يميّزه عن «استعادة الافتراضي» في رأس القسم (كانا باسم واحد؛ تدقيق 7a66f91، U58).
   const reset = button({
     label: 'استعادة الافتراضي', variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-location__reset', doc,
     onClick: () => {
@@ -61,6 +62,8 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
       savePrefs({ saveLocation: structuredClone(DEFAULT_PREFS.saveLocation) }, mark);
     },
   });
+
+  reset.setAttribute('aria-label', 'استعادة افتراضي مكان الحفظ');
 
   function sync(force = false) {
     const loc = getPrefs().saveLocation;

@@ -34,7 +34,13 @@ export async function migrate(area, { schema = STORAGE_SCHEMA, migrations = MIGR
     from = keys.some((k) => parseKey(k) && k !== KEY_META) ? 0 : null;
   }
   if (from === null) {
-    await area.set({ [KEY_META]: { schema, createdAt: now, migratedAt: null } });
+    // ملفوفة كبقية كتابات التخزين (storage §٣، تدقيق 7a66f91 U56): كانت تخرج خامًا فتُعرض «خطأ غير متوقع».
+    try {
+      await area.set({ [KEY_META]: { schema, createdAt: now, migratedAt: null } });
+    } catch (err) {
+      if (err instanceof TjError) throw err;
+      throw new TjError('ST_WRITE_FAILED', { detail: String(err && err.message), cause: err });
+    }
     return { from: null, to: schema, migrated: false };
   }
   if (from > schema) throw new TjError('ST_SCHEMA_NEWER', { detail: `المخزَّن ${from} والمدعوم ${schema}` });

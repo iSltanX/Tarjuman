@@ -227,12 +227,19 @@ export function createSettings(env) {
     });
     sync.push(() => { input.checked = shown(); });
     input.checked = shown();
+    // الاسم تسمية الصف ثم نص الحال («لوحة النص المتزامن، مفتوحة في صفحات الفيديو»)، لا نص الحال وحده (تدقيق 7a66f91، U87).
+    input.setAttribute('aria-labelledby', `st-ui-${key}-row st-ui-${key}-text`);
     return el('label', {
       className: 'st-switch', attrs: { for: `st-ui-${key}` },
-      children: [input, el('span', { className: 'st-switch__track', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'st-switch__label', text, doc })],
+      children: [input, el('span', { className: 'st-switch__track', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'st-switch__label', text, attrs: { id: `st-ui-${key}-text` }, doc })],
       doc,
     });
   }
+  /** صف مفتاح: تسميته بمعرّف يشير إليه اسم المفتاح. */
+  const named = (r, key) => {
+    r.querySelector('.tj-label').setAttribute('id', `st-ui-${key}-row`);
+    return r;
+  };
 
   /** قسم بعنوان ووصف و«استعادة الافتراضي» إن كان له افتراضيات. */
   function section(def, ...children) {
@@ -244,9 +251,13 @@ export function createSettings(env) {
       resetBtn = button({ label: RESET_LABEL, variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: async () => {
         const r = sectionReset(settings, def.id, prefs);
         if (!r || r.isDefault) return;
+        // الاستعادة قيمة جاهزة لا من الحقل المخصص: «مخصص» لا يبقى محددًا بعدها (تدقيق 7a66f91، U59).
+        if (def.id === 'timing') stepCustom = false;
         if (Object.keys(r.patch).length) await save(r.patch, resetMark);
         if (Object.keys(r.prefsPatch).length) await savePrefs(r.prefsPatch, resetMark);
       } });
+      // اسم يسمّي القسم: في «التصدير» زرّان كانا باسم واحد (U58).
+      resetBtn.setAttribute('aria-label', `${RESET_LABEL}: ${def.title}`);
       sync.push(() => {
         const r = sectionReset(settings, def.id, prefs);
         resetBtn.setAttribute('aria-disabled', r.isDefault ? 'true' : 'false');
@@ -392,9 +403,9 @@ export function createSettings(env) {
     row('حجم الخط', scaleMark, sliderBox, note(SCALE_NOTE)),
     row('الخلفية', bgMark, bgSeg.root),
     row('الموضع', posMark, posSeg.root),
-    rowWithHint(PANEL_OPEN_SWITCH.label, PANEL_OPEN_SWITCH.hint, openMark, openSwitch, note(PANEL_OPEN_SWITCH.note)),
-    rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)),
-    row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsConsent.needed ? THUMBNAILS_SWITCH.noteFirefox : THUMBNAILS_SWITCH.note)),
+    named(rowWithHint(PANEL_OPEN_SWITCH.label, PANEL_OPEN_SWITCH.hint, openMark, openSwitch, note(PANEL_OPEN_SWITCH.note)), 'panelOpen'),
+    named(rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)), 'panelEntry'),
+    named(row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsConsent.needed ? THUMBNAILS_SWITCH.noteFirefox : THUMBNAILS_SWITCH.note)), 'thumbnails'),
     row('معاينة حية', null, preview.root, note(PREVIEW_NOTE)));
 
   // ---- التوقيت ----
@@ -550,16 +561,24 @@ export function createSettings(env) {
       gate();
     }
     if (!(await pending) || !confirmWordOk(typed.value)) return;
+    let result;
     try {
-      await store.clearAll();
-      [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs()]);
-      storageMark.flash(messageFor('PG_CLEAR_DONE'), 'success');
-      syncAll();
-      await Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage(), location.refreshLast()]);
+      result = await store.clearAll();
     } catch (err) {
       storageMark.flash(toErrorInfo(err).message, 'danger');
+      return;
     }
+    // المسح نجح: يُقال ذلك، وما تعذّر بعده (التهيئة، وإبقاء إطفاء الصور) تنبيه منفصل لا «خطأ غير متوقع» (تدقيق 7a66f91، U56).
+    storageMark.flash(messageFor('PG_CLEAR_DONE'), 'success');
+    const warnings = [];
+    if (result?.reinit === 'failed') warnings.push(messageFor('PG_CLEAR_REINIT_FAILED'));
+    if (result?.thumbs === 'failed') warnings.push(messageFor('PG_CLEAR_THUMBS_FAILED'));
+    clearAlert.replaceChildren(...(warnings.length ? [alertBox({ tone: 'warning', title: messageFor('PG_CLEAR_DONE'), text: warnings.join('\n'), doc })] : []));
+    [settings, prefs] = await Promise.all([store.getSettings().catch(() => DEFAULT_SETTINGS), store.getPrefs().catch(() => DEFAULT_PREFS)]);
+    syncAll();
+    await Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage(), location.refreshLast()]).catch(() => {});
   }
+  const clearAlert = el('div', { className: 'st-clear-alert', doc });
   // سعة الترجمات والسوابق: الأعداد من المحفوظات، والأحجام بالبايت لكل فيديو (bundleBytes)، بعد عرض الصفحة.
   const libraryText = el('span', { className: 'tj-body-sm st-library-usage', doc });
   const libraryBytes = el('span', { className: 'tj-caption st-library-bytes', doc });
@@ -591,7 +610,7 @@ export function createSettings(env) {
   const storage = section(byId.storage,
     row('المساحة المستخدمة', null, el('div', { className: 'st-quota', children: [usageText, meter], doc }), capacityAlert),
     row('الترجمات والنسخ السابقة', null, el('div', { className: 'st-library', children: [libraryText, libraryBytes], doc })),
-    row('مسح البيانات', storageMark, el('div', { className: 'st-actions', children: [clearBtn], doc }), note('يحذف كل الترجمات المحفوظة والإعدادات من هذا المتصفح. الملفات التي نزّلتها على جهازك لا تتأثر.')));
+    row('مسح البيانات', storageMark, el('div', { className: 'st-actions', children: [clearBtn], doc }), clearAlert, note('يحذف كل الترجمات المحفوظة والإعدادات من هذا المتصفح. الملفات التي نزّلتها على جهازك لا تتأثر.')));
   [...storage.children].at(-1)?.querySelector('.tj-label')?.classList.add('st-danger'); // تسمية «مسح البيانات» بنبرة الخطر
 
   // ---- البيانات ----
@@ -666,7 +685,11 @@ export function createSettings(env) {
   }));
   const sideNav = el('nav', { className: 'st-nav', attrs: { 'aria-label': 'أقسام الإعدادات' }, children: navLinks, doc });
 
-  function select(id, { focus = false } = {}) {
+  /**
+   * @param {string} id @param {{ focus?: boolean, remember?: boolean }} [o] remember: يُكتب القسم في جزء العنوان. لا يُكتب عند
+   * الفتح الأول بلا جزء: كتابته المتزامنة أثناء التحليل تمرّر الصفحة إلى القسم فيختفي عنوانها تحت الرأس (تدقيق 7a66f91، U57).
+   */
+  function select(id, { focus = false, remember = true } = {}) {
     if (!isSectionId(id)) id = DEFAULT_SECTION;
     active = id;
     for (const [key, sec] of Object.entries(sections)) sec.hidden = key !== id;
@@ -674,7 +697,7 @@ export function createSettings(env) {
       if (link.getAttribute('data-section') === id) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     }
-    nav.set(id);
+    if (remember) nav.set(id);
     if (focus) sections[id].querySelector('h2')?.focus?.();
   }
   const offNav = nav.onChange(() => { if (isSectionId(nav.get()) && nav.get() !== active) select(nav.get()); });
@@ -692,14 +715,21 @@ export function createSettings(env) {
   );
   for (const sec of Object.values(sections)) sec.querySelector('h2').tabIndex = -1;
   syncAll();
-  select(active);
+  select(active, { remember: false });
 
   // المساحة والترجمات والتذكير تتبع المحفوظات حين تتغير من تبويب آخر (حفظ، أو رفع، أو حذف)، بعد سكون قصير لا مع كل كتابة
   // (تدقيق 5fedcb9، GM-027.1).
   let usageTimer = null;
   const later = doc.defaultView?.setTimeout?.bind(doc.defaultView) ?? setTimeout;
   const unsubscribe = store.onChange((change) => {
-    if (change.settings || change.cleared) store.getSettings().then((s) => { settings = s; syncAll(); }).catch(() => {});
+    if (change.settings || change.cleared) {
+      store.getSettings().then((s) => {
+        settings = s;
+        // قيمة جاهزة من سياق آخر أو بعد المسح: «مخصص» لا يبقى محددًا إلا والمستخدم يكتب في حقله (U59).
+        if (stepChoice(s.offsetStepMs) !== 'custom' && doc.activeElement !== stepField.input) stepCustom = false;
+        syncAll();
+      }).catch(() => {});
+    }
     if (change.prefs || change.cleared) {
       Promise.all([store.getPrefs(), readConsent()]).then(([p]) => { prefs = p; syncAll(); location.refreshLast(); }).catch(() => {});
     }

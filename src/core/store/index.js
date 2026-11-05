@@ -15,7 +15,7 @@ import {
 } from '../model/bundle.js';
 import { validateAltsValue, validateBundle, validateHead, validateMarksValue } from '../model/slots.js';
 import { chromeLocalArea } from './area.js';
-import { bundleReadKeys, checkRaw, hasCompanions, itemsFor, rawBundle } from './bundles.js';
+import { bundleReadKeys, checkRaw, hasCompanions, itemsFor, rawBundle, salvageRaw } from './bundles.js';
 import { computeCapacity } from './capacity.js';
 import {
   COMPANION_KINDS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, indexKey, marksKey, parseKey, prevKey, videoKey,
@@ -397,6 +397,21 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
     },
 
     /**
+     * للنسخة الاحتياطية وحدها (U94): حزمة فيديو تابعٌ له تالف، من سجله وتوابعه السليمة، وأسماء ما استُبعد. قراءة فقط، والأصل
+     * التالف يبقى (لا يُحذف ولا يُصلَح هنا). null إن كان السجل نفسه لا يُقرأ.
+     * @param {string} videoId
+     * @returns {Promise<{ bundle: Bundle, dropped: ('head' | 'alts' | 'prev' | 'marks')[] } | null>}
+     */
+    async salvageBundle(videoId) {
+      checkId(videoId);
+      await ready();
+      const s = salvageRaw(rawBundle(await read(bundleReadKeys(videoId)), videoId), videoId);
+      if (!s) return null;
+      const { bundle } = unpackBundle(s.raw);
+      return bundle ? { bundle: structuredClone(bundle), dropped: s.dropped } : null;
+    },
+
+    /**
      * مثل updateVideo على الحزمة: fn(نسخة أو null) تعيد حزمة أو null أو undefined. كتابة ذرية واحدة.
      * @param {string} videoId
      * @param {(b: Bundle | null) => Bundle | null | undefined | Promise<Bundle | null | undefined>} fn
@@ -596,13 +611,17 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
     /**
      * «مسح كل البيانات»: كل المحفوظات والإعدادات، ثم meta جديد. التأكيد شأن الواجهة. وإطفاء «صور الفيديو في المحفوظات» وحده
      * يبقى بعده (تدقيق 7a66f91، U05، قرار Q10): المسح لا يعيد الصور إلى افتراضيها فيُطلب من يوتيوب ما رفضه المستخدم.
+     * @returns {Promise<{ reinit: 'ok' | 'failed', thumbs: 'kept' | 'failed' | null }>}
      */
     clearAll() {
-      // الكاتب ينتظر كل كتابة جارية ثم يمسح، وما يصل بعده على نسخة قديمة يُرفض (N22).
+      // الكاتب ينتظر كل كتابة جارية ثم يمسح، وما يصل بعده على نسخة قديمة يُرفض (N22). يُرمى ST_WRITE_FAILED إن تعذّر المسح
+      // نفسه وحده؛ وبعد نجاحه يُعاد ما تعذّر من التهيئة وإبقاء إطفاء الصور نتيجةً لا خطأً (تدقيق 7a66f91، U56): كانت الصفحة تقول
+      // «خطأ غير متوقع» والبيانات قد مُسحت.
       return exclusive(async () => {
-        await call('clear', { at: iso() });
+        const r = await call('clear', { at: iso() });
         readyPromise = null;
         cache.clear();
+        return { reinit: r?.reinit === 'failed' ? 'failed' : 'ok', thumbs: r?.thumbs === 'failed' ? 'failed' : r?.thumbs === 'kept' ? 'kept' : null };
       });
     },
 

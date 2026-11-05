@@ -97,13 +97,19 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
     inputs.source.focus?.();
   });
 
-  function rowOf(term) {
+  function rowOf(term, i) {
     const remove = button({
       label: `حذف المصطلح ${term.source}`, iconOnly: true, icon: 'trash', variant: 'ghost', size: 'sm', title: 'حذف', doc,
       onClick: async () => {
-        if (await removeTerm(term.source, listMark)) listMark.flash(messageFor('PG_TERM_REMOVED'), 'success');
+        if (await removeTerm(term.source, listMark)) {
+          listMark.flash(messageFor('PG_TERM_REMOVED'), 'success');
+          // الزر زال مع صفه: التركيز إلى حذف الصف الذي حلّ محله، أو السابق، أو حقل الإضافة (تدقيق 7a66f91، U58).
+          const rows = body.querySelectorAll('button');
+          (rows[Math.min(i, rows.length - 1)] ?? inputs.source).focus?.();
+        }
       },
     });
+    remove.setAttribute('data-term', term.source);
     return el('tr', {
       children: [
         el('td', { className: 'st-gl__source', text: term.source, dir: 'ltr', attrs: { lang: 'en' }, doc }),
@@ -115,11 +121,20 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
     });
   }
 
+  /** آخر قائمة رُسمت: الجدول يُعاد بناؤه حين تتغير المصطلحات وحدها، لا مع كل حفظ في الصفحة (كان يُسقط تركيز زر حذف، U58). */
+  let drawn = null;
   function sync() {
     const g = getPrefs().glossary;
     attach.checked = g.attach;
     counter.textContent = glossaryCounter(g.terms.length);
-    body.replaceChildren(...g.terms.map(rowOf));
+    const key = JSON.stringify(g.terms);
+    if (key !== drawn) {
+      drawn = key;
+      // التركيز على زر حذف مصطلح باقٍ يعود إليه بعد إعادة البناء (تغيّر من تبويب آخر).
+      const focused = body.contains(doc.activeElement) ? doc.activeElement.getAttribute?.('data-term') : null;
+      body.replaceChildren(...g.terms.map(rowOf));
+      if (focused) [...body.querySelectorAll('button')].find((b) => b.getAttribute('data-term') === focused)?.focus?.();
+    }
     tableWrap.hidden = !g.terms.length;
     empty.hidden = Boolean(g.terms.length);
     const full = g.terms.length >= GLOSSARY_LIMITS.maxTerms;
