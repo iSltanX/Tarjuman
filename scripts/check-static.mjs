@@ -200,7 +200,7 @@ const DL_DIRS = [path.join('core', 'save') + path.sep, 'background' + path.sep];
 const DL_OBJECT = /\b(?:chrome|api)\s*\??\.\s*downloads\b/;
 const DL_SOURCES = new Set([
   'const downloads = api?.downloads;',
-  'export async function savedPath(downloadId, { downloads = globalThis.chrome?.downloads } = {}) {',
+  'export async function savedPath(downloadId, { downloads = globalThis.chrome?.downloads, extensionId = globalThis.chrome?.runtime?.id ?? null } = {}) {',
   'createSaveService({ runtime: chrome.runtime, downloads: chrome.downloads, store: createStore() }).install();',
 ]);
 const DL_MEMBER = /\bdownloads\s*\??\.\s*([A-Za-z_$][\w$]*)/g;

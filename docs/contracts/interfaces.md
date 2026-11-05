@@ -264,7 +264,7 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 saveFile(file: { name, text, mime? }, deps?) → Promise<{ ok: true, mode: 'downloads' | 'subfolder' | 'ask' | 'blob', downloadId: number | null, pending?: true } | { ok: false, code }>
 validateSaveFile(file, { maxChars }) → { ok: true } | { ok: false, code: 'SV_BAD_FILE' | 'SV_TOO_LARGE' }
 downloadTarget(saveLocation, name) → { filename, saveAs? }
-savedPath(downloadId, { downloads }) → Promise<string | null>     // المكان الفعلي لملف نزّله ترجمان
+savedPath(downloadId, { downloads, extensionId }) → Promise<string | null>     // المكان الفعلي لملف نزّله ترجمان (byExtensionId === extensionId)
 SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 16777216 }
 ```
 
@@ -283,6 +283,7 @@ SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 167
 - **الإذن محصور في ملفات ترجمان** (اعتماد سلطان 2026-11-02)، ويفرضه `check-static`:
   - `chrome.downloads` في `src/core/save/**` و`src/background/**` وحدهما.
   - لا يُستدعى منه إلا `download` و`search`، و`search` بالمعرّف وحده `search({ id })` لمعرّف نزّلته الإضافة نفسها (من نتيجة `download` أو `getLastSave`).
+  - **«آخر ملف»:** `savedPath` لا يعيد مسارًا إلا لعنصر `byExtensionId` فيه معرّف الإضافة (`runtime.id`)، فلا يُعرض مسار تنزيل آخر صار يحمل الرقم المحفوظ (Firefox يعيد ترقيم السجل كل جلسة، ويفقد `byExtensionId` بعد إعادة التشغيل فيغيب السطر؛ تدقيق 7a66f91، U04).
   - لا `open` ولا `show` ولا `showDefaultFolder` ولا `erase` ولا `removeFile` ولا `cancel` ولا `pause` ولا `resume` ولا `acceptDanger` ولا `getFileIcon` ولا `setUiOptions` ولا `setShelfEnabled` ولا `drag`، ولا مستمع `onCreated` أو `onChanged` أو `onErased` أو `onDeterminingFilename` (تمس كل تنزيلات المتصفح).
 - **المكان الفعلي** `savedPath(id)`: من `downloads.search({ id })` لذلك الملف وحده، إن كانت حالته `complete` و`exists`؛ وإلا `null` فلا يُعرض مسار. **لا يُخزَّن مسار**، ولا يدخل التشخيص.
 - **البيان:** `permissions` = `storage` و`unlimitedStorage` و`downloads` وحدها (تحذير التثبيت الجديد الوحيد «إدارة التنزيلات»)، و`background: { service_worker: "background/worker.js" }`. لا `tabs` ولا `host_permissions`.

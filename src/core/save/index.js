@@ -78,16 +78,19 @@ export async function settleDownload(downloads, id, { pollMs = SETTLE.pollMs, ti
 }
 
 /**
- * المكان الفعلي لملف نزّله ترجمان: من سجل المتصفح لذلك الملف وحده، إن اكتمل ووُجد؛ وإلا null. لا يُخزَّن.
+ * المكان الفعلي لملف نزّله ترجمان: من سجل المتصفح لذلك الملف وحده، إن اكتمل ووُجد ونزّلته هذه الإضافة؛ وإلا null. لا يُخزَّن.
+ * المعرّف وحده لا يكفي (تدقيق 7a66f91، U04): Firefox يعيد ترقيم السجل كل جلسة، فقد يصير الرقم المحفوظ لتنزيل آخر لا علاقة
+ * له بترجمان. فيُشترط byExtensionId مطابقًا لمعرّف الإضافة، ويغيب السطر إن غاب (Firefox يفقده بعد إعادة التشغيل).
  * @param {number} downloadId
- * @param {{ downloads?: { search: (q: { id: number }) => Promise<object[]> } }} [deps]
+ * @param {{ downloads?: { search: (q: { id: number }) => Promise<object[]> }, extensionId?: string | null }} [deps]
  * @returns {Promise<string | null>}
  */
-export async function savedPath(downloadId, { downloads = globalThis.chrome?.downloads } = {}) {
-  if (!Number.isInteger(downloadId) || downloadId < 0 || !downloads) return null;
+export async function savedPath(downloadId, { downloads = globalThis.chrome?.downloads, extensionId = globalThis.chrome?.runtime?.id ?? null } = {}) {
+  if (!Number.isInteger(downloadId) || downloadId < 0 || !downloads || typeof extensionId !== 'string' || !extensionId) return null;
   try {
     const [item] = await downloads.search({ id: downloadId });
-    return item && item.state === 'complete' && item.exists === true && typeof item.filename === 'string' && item.filename ? item.filename : null;
+    if (!item || item.byExtensionId !== extensionId) return null;
+    return item.state === 'complete' && item.exists === true && typeof item.filename === 'string' && item.filename ? item.filename : null;
   } catch {
     return null;
   }

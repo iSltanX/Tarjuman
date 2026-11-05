@@ -105,13 +105,28 @@ test('سكربت المحتوى: إلى العامل بالاسم والنص و�
   assert.equal(sent.length, before, 'ما يتجاوز حد القناة لا يُرسل');
 });
 
+const EXT = 'tarjuman@bysltan.com';
+const mine = (o = {}) => ({ byExtensionId: EXT, ...o });
+
 test('المكان الفعلي: من سجل المتصفح لذلك الملف وحده بعد اكتماله ووجوده، وإلا لا مسار', async () => {
-  assert.equal(await savedPath(40, { downloads: fakeDownloads({ item: { name: 'a.srt' } }) }), '/Users/t/Downloads/a.srt');
-  assert.equal(await savedPath(40, { downloads: fakeDownloads({ states: ['in_progress'] }) }), null);
-  assert.equal(await savedPath(40, { downloads: fakeDownloads({ item: { exists: false } }) }), null);
-  assert.equal(await savedPath(40, { downloads: fakeDownloads({ states: ['missing'] }) }), null);
-  assert.equal(await savedPath(-1, { downloads: fakeDownloads() }), null);
-  assert.equal(await savedPath(40, { downloads: null }), null);
+  const deps = (o) => ({ downloads: fakeDownloads(o), extensionId: EXT });
+  assert.equal(await savedPath(40, deps({ item: mine({ name: 'a.srt' }) })), '/Users/t/Downloads/a.srt');
+  assert.equal(await savedPath(40, deps({ states: ['in_progress'], item: mine() })), null);
+  assert.equal(await savedPath(40, deps({ item: mine({ exists: false }) })), null);
+  assert.equal(await savedPath(40, deps({ states: ['missing'] })), null);
+  assert.equal(await savedPath(-1, deps({ item: mine() })), null);
+  assert.equal(await savedPath(40, { downloads: null, extensionId: EXT }), null);
+});
+
+test('تدقيق 7a66f91 (U04): رقم محفوظ صار لتنزيل لا يخص ترجمان (إعادة ترقيم Firefox، أو إعادة استعمال المعرّف) لا يُعرض مساره', async () => {
+  // Firefox بعد إعادة التشغيل: السجل يُرقَّم من جديد، والعنصر بالرقم المحفوظ تنزيل عادي لغير الإضافة.
+  assert.equal(await savedPath(40, { downloads: fakeDownloads({ item: { name: 'bank-statement.pdf' } }), extensionId: EXT }), null, 'بلا byExtensionId');
+  assert.equal(await savedPath(40, { downloads: fakeDownloads({ item: { name: 'x.pdf', byExtensionId: 'other@ext' } }), extensionId: EXT }), null, 'لإضافة أخرى');
+  // Firefox يفقد byExtensionId بعد الإعادة حتى لملفات ترجمان نفسها: السطر يغيب، ولا يُخمَّن.
+  assert.equal(await savedPath(40, { downloads: fakeDownloads({ item: { byExtensionId: undefined } }), extensionId: EXT }), null);
+  // بلا معرّف إضافة معروف لا مسار أبدًا.
+  assert.equal(await savedPath(40, { downloads: fakeDownloads({ item: mine() }), extensionId: null }), null);
+  assert.equal(await savedPath(40, { downloads: fakeDownloads({ item: mine() }), extensionId: '' }), null);
 });
 
 test('انتظار التنزيل: من «جارٍ» إلى الاكتمال أو الإلغاء أو الفشل، وبمهلة', async () => {
