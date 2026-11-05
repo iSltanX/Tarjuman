@@ -1572,6 +1572,9 @@ export async function mountEditor(app, {
   async function onRestoreOriginal() {
     if (!S.edited || S.external) return;
     const dirty = S.session.dirty;
+    // التأكيد على الحزمة التي عُرض عليها: إن أُعيد فتح أحدث خلفه (حفظ من تبويب آخر) لا يمحو التأكيدُ الحفظَ الجديد، بل يظهر
+    // التعارض (تدقيق 7a66f91، U09).
+    const seen = S.opened;
     const v = await openDialog({
       doc, tone: 'danger', title: 'استعادة الأصل المستورد؟', focus: 'cancel',
       body: `ستُستبدل النسخة المعدّلة المحفوظة بالأصل المستورد كما رُفع${dirty ? `، وتُفقد التغييرات غير المحفوظة (${changes()})` : ''}. لا تراجع بعد التأكيد، والأصل نفسه لا يتغير.`,
@@ -1584,7 +1587,7 @@ export async function mountEditor(app, {
     renderHeader();
     try {
       const n = S.slot;
-      const saved = await queue((opened) => restoreSlotOriginal(store, videoId, opened, n, { now }));
+      const saved = await queue(() => restoreSlotOriginal(store, videoId, seen, n, { now }));
       S.view = 'edit';
       S.result = null;
       load(saved, S.slot, { keepUi: true });

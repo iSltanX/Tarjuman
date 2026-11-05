@@ -12,10 +12,12 @@ let seq = 0;
  * @param {{
  *   doc: Document, getPrefs: () => import('../../core/model/prefs.js').Prefs,
  *   savePrefs: (patch: object, mark: { flash: Function }) => Promise<unknown>,
+ *   addTerm: (term: import('../../core/model/prefs.js').GlossaryTerm, mark: { flash: Function }) => Promise<{ added: boolean, reason: 'duplicate' | 'limit' | null } | null>,
+ *   removeTerm: (source: string, mark: { flash: Function }) => Promise<{ removed: boolean } | null>,
  *   attachMark: { root: HTMLElement, flash: Function }, listMark: { root: HTMLElement, flash: Function },
- * }} o
+ * }} o addTerm وremoveTerm على أحدث تفضيلات بالمفتاح الموحّد لا بقائمة من العرض (تدقيق 7a66f91، U13)؛ وnull عند الفشل
  */
-export function glossaryControl({ doc, getPrefs, savePrefs, attachMark, listMark }) {
+export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm, attachMark, listMark }) {
   const id = `st-gl-${++seq}`;
   const attach = el('input', { className: 'st-switch__input', attrs: { id: `${id}-attach`, type: 'checkbox', role: 'switch' }, doc });
   attach.addEventListener('change', () => savePrefs({ glossary: { attach: attach.checked } }, attachMark));
@@ -72,7 +74,11 @@ export function glossaryControl({ doc, getPrefs, savePrefs, attachMark, listMark
     e.preventDefault?.();
     clearErrors();
     const terms = getPrefs().glossary.terms;
-    const r = termDraft({ source: inputs.source.value, target: inputs.target.value, note: inputs.note.value }, terms);
+    let r = termDraft({ source: inputs.source.value, target: inputs.target.value, note: inputs.note.value }, terms);
+    // المكرر والحد يُفحصان مرة ثانية على المخزَّن نفسه: صفحة أخرى لم يصل إشعارها ربما أضافت المصطلح أو ملأت القاموس.
+    const saved = r.ok ? await addTerm(r.term, listMark) : null;
+    if (r.ok && !saved) return;
+    if (saved && !saved.added) r = saved.reason === 'duplicate' ? { ok: false, code: 'PG_TERM_DUPLICATE', field: 'source' } : { ok: false, code: 'PG_TERM_LIMIT', field: null };
     if (!r.ok) {
       if (r.field) {
         errors[r.field].textContent = messageFor(r.code);
@@ -86,20 +92,16 @@ export function glossaryControl({ doc, getPrefs, savePrefs, attachMark, listMark
       }
       return;
     }
-    const saved = await savePrefs({ glossary: { terms: [...terms, r.term] } }, listMark);
-    if (saved) {
-      for (const k of Object.keys(inputs)) inputs[k].value = '';
-      listMark.flash(messageFor('PG_TERM_ADDED'), 'success');
-      inputs.source.focus?.();
-    }
+    for (const k of Object.keys(inputs)) inputs[k].value = '';
+    listMark.flash(messageFor('PG_TERM_ADDED'), 'success');
+    inputs.source.focus?.();
   });
 
-  function rowOf(term, index) {
+  function rowOf(term) {
     const remove = button({
       label: `حذف المصطلح ${term.source}`, iconOnly: true, icon: 'trash', variant: 'ghost', size: 'sm', title: 'حذف', doc,
       onClick: async () => {
-        const terms = getPrefs().glossary.terms.filter((_, i) => i !== index);
-        if (await savePrefs({ glossary: { terms } }, listMark)) listMark.flash(messageFor('PG_TERM_REMOVED'), 'success');
+        if (await removeTerm(term.source, listMark)) listMark.flash(messageFor('PG_TERM_REMOVED'), 'success');
       },
     });
     return el('tr', {

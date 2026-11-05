@@ -12,6 +12,7 @@ export const MSG = Object.freeze({
   getPageDiagnostics: 'tj:get-page-diagnostics',
   seek: 'tj:seek',
   saveFile: 'tj:save-file',
+  store: 'tj:store',
 });
 export const SAVE_REPLY_MODES = Object.freeze(['downloads', 'subfolder', 'ask']);
 
@@ -158,3 +159,21 @@ export function isSaveReply(r) {
   if (r.ok === true) return SAVE_REPLY_MODES.includes(r.mode) && Number.isInteger(r.downloadId) && r.downloadId >= 0;
   return r.ok === false && typeof r.code === 'string' && /^SV_[A-Z_]+$/.test(r.code);
 }
+
+// ---- الكاتب الواحد (عقد messages §٨، storage §١٢؛ تدقيق 7a66f91، C2) ----
+
+/** عمليات الكتابة التي يقبلها الكاتب في العامل الخلفي، ولا غيرها. */
+export const STORE_OPS = Object.freeze(['ready', 'put', 'delete', 'orphan', 'index', 'settings', 'prefs', 'saves', 'clear']);
+
+/**
+ * طلب كتابة: العملية ومعاملاتها بيانات لا شيفرة، ومعرّف عشوائي يجعل إعادة الإرسال بعد خطأ قناة لا تطبّق الكتابة مرتين.
+ * @param {string} op @param {Record<string, unknown>} args @param {string} wid
+ */
+export const storeRequest = (op, args, wid) => ({ ...args, type: MSG.store, v: MESSAGE_VERSION, wid, op });
+
+/** @param {unknown} req */
+export const isStoreRequest = (req) => isTyped(req, MSG.store) && typeof req.wid === 'string' && req.wid.length >= 8 && req.wid.length <= 64
+  && STORE_OPS.includes(req.op);
+
+/** @param {unknown} r رد الكاتب: { v, ok: true, value? } أو { v, ok: false, code, detail? } */
+export const isStoreReply = (r) => isPlainObject(r) && r.v === MESSAGE_VERSION && (r.ok === true || (r.ok === false && typeof r.code === 'string'));

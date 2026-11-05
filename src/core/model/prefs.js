@@ -59,7 +59,8 @@ export function validateTerm(t, path = 'term') {
   ]);
 }
 
-const sourceKey = (s) => s.toLocaleLowerCase('en');
+/** المفتاح الموحّد للمصطلح: الإنجليزي بلا اعتبار لحالة الأحرف (لا مكرر في القاموس). @param {string} s */
+export const sourceKey = (s) => s.toLocaleLowerCase('en');
 
 /** @param {unknown} list @param {string} path */
 function validateTerms(list, path) {
@@ -134,4 +135,32 @@ export function mergePrefs(base, patch) {
     else out[k] = structuredClone(v);
   }
   return out;
+}
+
+/**
+ * إضافة مصطلح على أحدث تفضيلات (تدقيق 7a66f91، U13): بالمفتاح الموحّد لا بقائمة تبنيها الصفحة من عرضها، فلا تُسقط إضافةٌ
+ * مصطلحًا أضافته صفحة أخرى. المكرر والحد يُفحصان هنا على المخزَّن نفسه.
+ * @param {Prefs} prefs كاملة @param {GlossaryTerm} term
+ * @returns {{ prefs: Prefs, added: boolean, reason: 'duplicate' | 'limit' | null }}
+ */
+export function addTerm(prefs, term) {
+  const terms = prefs.glossary.terms;
+  if (terms.some((t) => sourceKey(t.source) === sourceKey(term.source))) return { prefs, added: false, reason: 'duplicate' };
+  if (terms.length >= GLOSSARY_LIMITS.maxTerms) return { prefs, added: false, reason: 'limit' };
+  const next = structuredClone(prefs);
+  next.glossary.terms.push({ source: term.source, target: term.target, note: term.note });
+  return { prefs: next, added: true, reason: null };
+}
+
+/**
+ * حذف مصطلح بمفتاحه الموحّد على أحدث تفضيلات (U13): حذفٌ من عرض قديم لا يمس مصطلحًا أضيف بعده.
+ * @param {Prefs} prefs كاملة @param {string} key sourceKey(source)
+ * @returns {{ prefs: Prefs, removed: boolean }}
+ */
+export function removeTerm(prefs, key) {
+  const terms = prefs.glossary.terms.filter((t) => sourceKey(t.source) !== key);
+  if (terms.length === prefs.glossary.terms.length) return { prefs, removed: false };
+  const next = structuredClone(prefs);
+  next.glossary.terms = terms;
+  return { prefs: next, removed: true };
 }

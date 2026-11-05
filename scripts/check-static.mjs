@@ -193,6 +193,10 @@ const THUMB_URL = 'https://i.ytimg.com/vi/';
 const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u)) || (rel === THUMB_FILE && u === THUMB_URL)
   || (rel === REPORT_FILE && u === REPORTS_ORIGIN);
 const STORAGE = /\bchrome\s*(?:\.|\[\s*['"`])\s*storage\b|\.\s*storage\s*\.\s*(?:local|sync|session|managed|onChanged)\b/;
+// الكتابة في المساحة للكاتب الواحد وحده (عقد storage §١٢، تدقيق 7a66f91، C2): لا set ولا remove ولا clear خارج writer.js
+// والترحيل الذي يستدعيه الكاتب، فلا يعود سياق يكتب بنفسه.
+const STORE_WRITE = /\barea\s*\.\s*(?:set|remove|clear)\s*\(/;
+const STORE_WRITERS = new Set([path.join('core', 'store', 'writer.js'), path.join('core', 'store', 'migrate.js')]);
 // واجهة التنزيلات محصورة في ملفات ترجمان (اعتماد سلطان 2026-11-02، عقد interfaces §١٣): في src/core/save وsrc/background
 // وحدهما؛ والوصول إلى كائنها (.downloads) في أسطر مراجَعة حرفيًا تسلّمه إلى متغير اسمه downloads لا غير؛ ولا يُستدعى منه
 // إلا download وsearch، وsearch بالمعرّف وحده. فلا بحث في تنزيلات المستخدم، ولا فتح ولا حذف، ولا مستمعات تمس كل التنزيلات.
@@ -201,7 +205,7 @@ const DL_OBJECT = /\b(?:chrome|api)\s*\??\.\s*downloads\b/;
 const DL_SOURCES = new Set([
   'const downloads = api?.downloads;',
   'export async function savedPath(downloadId, { downloads = globalThis.chrome?.downloads, extensionId = globalThis.chrome?.runtime?.id ?? null } = {}) {',
-  'createSaveService({ runtime: chrome.runtime, downloads: chrome.downloads, store: createStore() }).install();',
+  'createSaveService({ runtime: chrome.runtime, downloads: chrome.downloads, store: createStore({ area, transport: localTransport(writer) }) }).install();',
 ]);
 const DL_MEMBER = /\bdownloads\s*\??\.\s*([A-Za-z_$][\w$]*)/g;
 const DL_SEARCH_BY_ID = /\bdownloads\s*\.\s*search\s*\(\s*\{\s*id(?:\s*:\s*[A-Za-z_$][\w$]*)?\s*\}\s*\)/;
@@ -282,6 +286,7 @@ for (const file of await walk(SRC)) {
       && !(rel === REPORT_FILE && REPORT_LINES.has(line.trim()))) problems.push(`${at}: طلب شبكة من الإضافة`);
     for (const m of line.matchAll(URL_RE)) if (!URL_OK(m[0], rel)) problems.push(`${at}: نطاق خارجي ${m[0].slice(0, 60)}`);
     if (STORAGE.test(line) && !inStore) problems.push(`${at}: التخزين خارج src/core/store`);
+    if (STORE_WRITE.test(line) && !STORE_WRITERS.has(rel)) problems.push(`${at}: الكتابة في التخزين عبر الكاتب الواحد وحده (writer.js)`);
     const inDl = DL_DIRS.some((d) => rel.startsWith(d));
     const members = [...line.matchAll(DL_MEMBER)].map((m) => m[1]);
     if (!inDl && (DL_OBJECT.test(line) || members.length)) problems.push(`${at}: واجهة التنزيلات خارج src/core/save وsrc/background`);

@@ -12,6 +12,7 @@ import { isVideoId } from '../core/model/ids.js';
 import { DEFAULT_PREFS, normalizePrefs } from '../core/model/prefs.js';
 import { DEFAULT_SETTINGS, normalizeSettings } from '../core/model/settings.js';
 import { normalizeOffset } from '../core/model/timing.js';
+import { markAnchor, sameAnchor } from '../core/model/marks.js';
 import { withArabicImport, withExport, withView } from '../core/model/transitions.js';
 import { DISPLAY_MODES } from '../core/model/video.js';
 
@@ -180,11 +181,11 @@ export function createController({ store, extractor = null, page = {}, now = () 
   }
 
   /** كتابة واحدة في حزمة الفيديو الحالي (الإصدار الثاني)، بقواعد writeRecord نفسها. */
-  async function writeBundle(fn) {
+  async function writeBundle(fn, opts) {
     const id = requireVideo();
     pendingWrites++;
     try {
-      const next = await store.updateBundle(id, fn);
+      const next = await store.updateBundle(id, fn, opts);
       if (id === videoId) saved = next ? next.record : null;
       writeEpoch++;
       return { id, next };
@@ -221,18 +222,38 @@ export function createController({ store, extractor = null, page = {}, now = () 
     changed();
   }
 
+  /** هوية الترجمة النشطة في السجل: ملفها ووقت استيرادها (لكل خانة ملفها، والاستبدال يغيّر الوقت). */
+  const activeKey = (rec) => (rec?.arabic ? `${rec.arabic.fileName}|${rec.arabic.importedAt}` : null);
+
   /**
    * الإزاحة ووضع العرض: يتغيّران فورًا في الحالة، ويُحفظان في السجل إن وُجد؛ وبلا سجل يبقيان للجلسة.
    * أثناء قراءة سجل الفيديو (loading) لا أثر لها: الأدوات تعطّلها حتى تكتمل.
+   * الإزاحة للترجمة التي يراها المستخدم وحدها (تدقيق 7a66f91، U12): إن صارت النشطة غيرها من مكان آخر قبل وصول إشعاره لا تُكتب،
+   * ويُعرض المخزَّن مع CT_ACTIVE_CHANGED. و± فرقٌ (`delta`) يُضاف إلى المخزَّن، فلا تمحو ضغطةٌ ضغطةً من تبويب آخر.
+   * @param {Partial<{ displayOffsetMs: number, displayMode: string }>} patch @param {{ delta?: number }} [opts]
    */
-  async function setView(patch) {
+  async function setView(patch, { delta } = {}) {
     if (loading) return state;
+    const seen = activeKey(saved);
+    const offsetChange = 'displayOffsetMs' in patch;
     view = { ...view, ...patch };
     changed();
     if (!saved) return state;
+    let stale = false;
     try {
-      await writeRecord((rec) => (rec ? withView(rec, patch, iso()) : undefined));
+      await writeRecord((rec) => {
+        if (!rec) return undefined;
+        if (offsetChange && activeKey(rec) !== seen) {
+          stale = true;
+          return undefined;
+        }
+        const p = delta === undefined ? patch : { ...patch, displayOffsetMs: normalizeOffset(rec.view.displayOffsetMs + delta) };
+        return withView(rec, p, iso());
+      });
       error = null;
+      if (stale) notice = { code: 'CT_ACTIVE_CHANGED', tone: 'info', at: now() };
+      // المخزَّن هو المعروض حين لا كتابة أخرى جارية: ± من تبويب آخر تظهر هنا، والمرفوضة لا تبقى.
+      if (saved && !pendingWrites && (stale || delta !== undefined)) view = { ...saved.view };
     } catch (err) {
       error = toErrorInfo(err);
       // لم تُحفظ: يعود العرض إلى المحفوظ (ما لم تبقَ كتابة أخرى جارية تحسمه)، فلا تُعرض إزاحة تزول عند إعادة الفتح
@@ -324,7 +345,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
     /** @param {1 | -1} dir + تأخير (تظهر لاحقًا)، − تقديم (تظهر أبكر)، بمقدار خطوة الإعدادات */
     nudgeOffset(dir) {
       if (dir !== 1 && dir !== -1) throw new RangeError('الاتجاه 1 أو -1');
-      return setView({ displayOffsetMs: normalizeOffset(view.displayOffsetMs + dir * settings.offsetStepMs) });
+      return setView({ displayOffsetMs: normalizeOffset(view.displayOffsetMs + dir * settings.offsetStepMs) }, { delta: dir * settings.offsetStepMs });
     },
 
     resetOffset: () => setView({ displayOffsetMs: 0 }),
@@ -432,13 +453,22 @@ export function createController({ store, extractor = null, page = {}, now = () 
       const englishTrack = preferredCapturedTrack();
       const activeBefore = bundleFor(saved)?.active ?? null;
       let result = { replaced: false, offsetWas: 0 };
-      const { id, next } = await writeBundle((b) => {
-        result = withSlotUpload(b, n, {
-          videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, ...input,
-          englishTrack, displayModeDefault: settings.displayModeDefault,
-        }, iso(), { replace, activate });
-        return result.bundle;
-      });
+      // الاستبدال تأكيدٌ على ما رآه المستخدم (U12): إن تغيّرت الحزمة قبله رُفض بـST_CONFLICT، فلا تُسقط نسخةٌ كان يمكن استعادتها.
+      const seen = replace ? bundleFor(saved) : undefined;
+      let wrote;
+      try {
+        wrote = await writeBundle((b) => {
+          result = withSlotUpload(b, n, {
+            videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, ...input,
+            englishTrack, displayModeDefault: settings.displayModeDefault,
+          }, iso(), { replace, activate });
+          return result.bundle;
+        }, seen ? { expect: seen } : undefined);
+      } catch (err) {
+        if (err instanceof TjError && err.code === 'ST_CONFLICT') await reloadIfNewer();
+        throw err;
+      }
+      const { id, next } = wrote;
       const activated = next.active === n && activeBefore !== n;
       if (id === videoId) {
         view = { ...next.record.view };
@@ -459,10 +489,15 @@ export function createController({ store, extractor = null, page = {}, now = () 
       requireVideo();
       const slot = bundleFor(saved)?.active ?? null;
       if (!slot) throw new TjError('ST_NO_RECORD');
+      // المقطع الذي يراه المستخدم برقمه (FS-2): إن تغيّر محتوى الخانة من مكان آخر فصار الرقم لمقطع آخر رُفضت العلامة.
+      const seenCue = state.arabic?.cues[index] ?? null;
       let before = [];
       let mark = null;
       const { id, next } = await writeBundle((b) => {
         if (!b || b.active !== slot) throw new TjError('ST_NO_RECORD');
+        const track = b.slots[slot - 1].track;
+        const cue = track ? (track.current ?? track.original)[index] : null;
+        if (seenCue && (!cue || !sameAnchor(markAnchor(cue), markAnchor(seenCue)))) throw new TjError('ST_CONFLICT', { detail: `cue=${index}` });
         const r = withMark(b, slot, { index, kind }, iso());
         before = r.before;
         mark = r.mark;

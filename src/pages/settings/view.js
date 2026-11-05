@@ -158,6 +158,27 @@ export function createSettings(env) {
     return prefs;
   }
 
+  /**
+   * تغيير القاموس بمصطلح واحد على أحدث تفضيلات في الكاتب (U13)؛ يعيد نتيجة العملية، أو null عند الفشل كما في savePrefs.
+   * @param {() => Promise<{ prefs: object }>} op @param {{ flash: Function }} mark
+   */
+  async function changeTerms(op, mark) {
+    let r;
+    try {
+      r = await op();
+    } catch {
+      mark.flash(messageFor('PG_SAVE_FAILED'), 'danger');
+      prefs = await store.getPrefs().catch(() => prefs);
+      syncAll(true);
+      return null;
+    }
+    prefs = r.prefs;
+    syncAll();
+    return r;
+  }
+  const addTerm = (term, mark) => changeTerms(() => store.addTerm(term), mark);
+  const removeTerm = (source, mark) => changeTerms(() => store.removeTerm(source), mark);
+
   // ---- البُنى المشتركة ----
   const note = (text) => el('p', { className: 'tj-caption st-note', text, doc });
   /** صف: التسمية في البداية وتحتها علامة الحفظ، والعنصر بعدها. */
@@ -473,7 +494,7 @@ export function createSettings(env) {
   // ---- المصطلحات ----
   const glossaryAttachMark = marks();
   const glossaryListMark = marks();
-  const glossary = glossaryControl({ doc, getPrefs: () => prefs, savePrefs, attachMark: glossaryAttachMark, listMark: glossaryListMark });
+  const glossary = glossaryControl({ doc, getPrefs: () => prefs, savePrefs, addTerm, removeTerm, attachMark: glossaryAttachMark, listMark: glossaryListMark });
   sync.push(() => glossary.sync());
   const glossarySection = section(byId.glossary,
     row('الإرفاق', glossaryAttachMark, glossary.attachRow, note('حين يكون في القاموس مصطلحات، تُرفق بتعليمات الترجمة التي تنسخها من المشغّل أو المحفوظات.')),

@@ -1016,8 +1016,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const stillOpen = ui.open === 'confirm';
     if (!r.ok) {
       counts.flowFailures++;
-      // امتلأت الخانة من سياق آخر قبل الحفظ: يبقى التأكيد مفتوحًا بحالتها الجديدة (فيصير «استبدال») مع سببه.
-      if (r.error.code === 'ST_ARABIC_EXISTS' && stillOpen) {
+      // امتلأت الخانة من سياق آخر قبل الحفظ، أو تغيّرت الخانة المستبدلة (تدقيق 7a66f91، U12): يبقى التأكيد مفتوحًا بحالتها
+      // الجديدة (فيصير «استبدال» أو يسمّي ما فيها الآن) مع سببه.
+      if ((r.error.code === 'ST_ARABIC_EXISTS' || r.error.code === 'ST_CONFLICT') && stillOpen) {
         u.error = r.error.message;
         render();
         return;

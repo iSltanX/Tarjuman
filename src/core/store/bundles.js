@@ -5,6 +5,7 @@ import { TjError } from '../errors/index.js';
 import { COMPANION_VALIDATORS, isEmptyCompanion, isTrivialBundle, packBundle } from '../model/bundle.js';
 import { summarizeVideo, validateVideoRecord } from '../model/video.js';
 import { altsKey, bundleKey, indexKey, marksKey, prevKey, videoKey } from './keys.js';
+import { canonical } from './version.js';
 
 /** @typedef {{ record: object | null, head: object | null, alts: object | null, prev: object | null, marks: object | null }} RawBundle */
 
@@ -69,8 +70,6 @@ export function itemsFor(next, raw, { forceHead = false } = {}) {
   return items;
 }
 
-/** JSON بمفاتيح مرتبة في كل مستوى (ترتيب المصفوفات كما هو). */
-const canonical = (v) => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, x[k]])) : x));
 
 /** هل في القراءة توابع (لسجل محذوف = يتيمة). @param {RawBundle} raw */
 export const hasCompanions = (raw) => raw.head !== null || raw.alts !== null || raw.prev !== null || raw.marks !== null;

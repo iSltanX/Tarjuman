@@ -9,9 +9,10 @@ import { BACKUP_LIMITS } from './format.js';
 /**
  * @typedef {import('./read.js').BackupRead} BackupRead
  * @typedef {import('./read.js').BackupItem} BackupItem
- * @typedef {{ videoId: string, entry: object, replace: boolean }} RestoreItem
+ * @typedef {{ videoId: string, entry: object, replace: boolean, expect?: { rev: number, updatedAt: string } }} RestoreItem
+ *   expect: نسخة الموجود عند المعاينة؛ إن تغيّر بعدها لا يُستبدل ويُعدّ في changed (تدقيق 7a66f91، U11)
  * @typedef {{
- *   added: string[], skipped: string[], replaced: string[],
+ *   added: string[], skipped: string[], replaced: string[], changed: string[],
  *   failed: { videoId: string, code: string, message: string }[],
  *   remaining: string[], stopped: boolean,
  *   settings: 'restored' | 'failed' | null, settingsCode: string | null,
@@ -22,11 +23,15 @@ import { BACKUP_LIMITS } from './format.js';
 /**
  * المعاينة: الجديدة (معرّفها غير محفوظ) والموجودة، بترتيب النسخة، وأعداد ما سيُضاف.
  * @param {BackupRead} backup @param {Iterable<string>} existingIds معرّفات المحفوظات الآن
+ * @param {Map<string, { rev: number, updatedAt: string }>} [seen] مُلخّص كل موجود كما عُرض، فيحمل عنصره نسخته (U11)
  */
-export function planRestore(backup, existingIds) {
+export function planRestore(backup, existingIds, seen = new Map()) {
   const have = new Set(existingIds);
   const fresh = backup.videos.filter((v) => !have.has(v.videoId));
-  const existing = backup.videos.filter((v) => have.has(v.videoId));
+  const existing = backup.videos.filter((v) => have.has(v.videoId)).map((v) => {
+    const e = seen.get(v.videoId);
+    return e ? { ...v, expect: { rev: e.rev, updatedAt: e.updatedAt } } : v;
+  });
   const sum = (list, k) => list.reduce((s, v) => s + (typeof v.counts[k] === 'number' ? v.counts[k] : v.counts[k] ? 1 : 0), 0);
   return {
     fresh, existing, invalid: backup.invalid,
@@ -48,7 +53,7 @@ export function restoreItems(plan, replace) {
   return {
     items: [
       ...plan.fresh.map((v) => ({ videoId: v.videoId, entry: v.entry, replace: false })),
-      ...plan.existing.filter((v) => chosen(v.videoId)).map((v) => ({ videoId: v.videoId, entry: v.entry, replace: true })),
+      ...plan.existing.filter((v) => chosen(v.videoId)).map((v) => ({ videoId: v.videoId, entry: v.entry, replace: true, ...(v.expect ? { expect: v.expect } : {}) })),
     ],
     skipped: plan.existing.filter((v) => !chosen(v.videoId)).map((v) => v.videoId),
   };
@@ -66,7 +71,7 @@ export function restoreItems(plan, replace) {
  */
 export async function runRestore({ store, items, skipped = [], settings = null, prefs = null, thumbnailsOff = false, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch }) {
   /** @type {RestoreReport} */
-  const report = { added: [], skipped: [...skipped], replaced: [], failed: [], remaining: [], stopped: false, settings: null, settingsCode: null, thumbnails: null };
+  const report = { added: [], skipped: [...skipped], replaced: [], changed: [], failed: [], remaining: [], stopped: false, settings: null, settingsCode: null, thumbnails: null };
   if (thumbnailsOff) {
     try {
       await store.setPrefs({ ui: { thumbnails: false } });
@@ -88,7 +93,7 @@ export async function runRestore({ store, items, skipped = [], settings = null, 
   onProgress({ done: 0, total: items.length });
   for (const [i, item] of items.entries()) {
     try {
-      const { status } = await store.restoreVideo(item.entry, { replace: item.replace });
+      const { status } = await store.restoreVideo(item.entry, { replace: item.replace, ...(item.expect ? { expect: item.expect } : {}) });
       report[status].push(item.videoId);
     } catch (err) {
       const info = toErrorInfo(err);
@@ -128,6 +133,7 @@ export function mergeReports(before, retry) {
     added: [...before.added, ...retry.added],
     skipped: [...before.skipped, ...retry.skipped],
     replaced: [...before.replaced, ...retry.replaced],
+    changed: [...(before.changed ?? []), ...(retry.changed ?? [])],
     failed: retry.failed,
     remaining: retry.remaining,
     stopped: retry.stopped,
@@ -140,7 +146,7 @@ export function mergeReports(before, retry) {
 /** رمز خلاصة التقرير. @param {RestoreReport} r */
 export function reportCode(r) {
   if (r.stopped) return 'BK_RESTORE_STOPPED';
-  return r.failed.length || r.settings === 'failed' ? 'BK_RESTORE_PARTIAL' : 'BK_RESTORE_DONE';
+  return r.failed.length || r.settings === 'failed' || r.changed?.length ? 'BK_RESTORE_PARTIAL' : 'BK_RESTORE_DONE';
 }
 
 /**
@@ -151,7 +157,7 @@ export function restoreDiagnostics(r) {
   const codes = {};
   for (const f of r.failed) codes[f.code] = (codes[f.code] ?? 0) + 1;
   return {
-    added: r.added.length, skipped: r.skipped.length, replaced: r.replaced.length, failed: r.failed.length,
+    added: r.added.length, skipped: r.skipped.length, replaced: r.replaced.length, changed: r.changed?.length ?? 0, failed: r.failed.length,
     remaining: r.remaining.length, stopped: r.stopped, settings: r.settings, settingsCode: r.settingsCode, codes,
   };
 }

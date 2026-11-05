@@ -1,10 +1,13 @@
 // وحدة التخزين (عقد docs/contracts/storage.md) فوق chrome.storage.local. سجل لكل فيديو ومُلخّصه في
-// مفتاح فهرس مستقل يُكتبان في عملية set واحدة، فلا يتسابق سياقان على مفتاح فهرس مشترك. الكتابة داخل
-// السياق الواحد متسلسلة، والتعارض بين السياقات يُكشف بنسخة السجل (rev وupdatedAt) قبل الكتابة وبـexpect.
+// مفتاح فهرس مستقل يُكتبان في عملية set واحدة، فلا يتسابق سياقان على مفتاح فهرس مشترك. القراءة مباشرة في كل سياق،
+// والكتابة كلها عبر الكاتب الواحد في العامل الخلفي (writer.js، §١٢؛ تدقيق 7a66f91، C2): السياق يحسب ما يكتبه من قراءته
+// ويرسله مع النسخة التي بنى عليها، فيقارنها الكاتب بالحاضرة ويكتب في الخطوة نفسها أو يرفض بـST_CONFLICT. وكتابات السياق
+// الواحد متسلسلة هنا أيضًا، فتُبنى كل كتابة على نتيجة التي قبلها.
 import { TjError } from '../errors/index.js';
 import { assertValid } from '../model/validate.js';
-import { DEFAULT_SETTINGS, mergeSettings, normalizeSettings, validateSettings } from '../model/settings.js';
-import { DEFAULT_PREFS, mergePrefs, normalizePrefs, validatePrefs } from '../model/prefs.js';
+import { DEFAULT_SETTINGS, normalizeSettings } from '../model/settings.js';
+import { DEFAULT_PREFS, normalizePrefs, sourceKey } from '../model/prefs.js';
+import { storeRequest } from '../model/messages.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { isVideoId } from '../model/ids.js';
 import {
@@ -15,17 +18,23 @@ import { chromeLocalArea } from './area.js';
 import { bundleReadKeys, checkRaw, hasCompanions, itemsFor, rawBundle } from './bundles.js';
 import { computeCapacity } from './capacity.js';
 import {
-  COMPANION_KINDS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, companionKeys, indexKey, marksKey, parseKey, prevKey, videoKey,
+  COMPANION_KINDS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, indexKey, marksKey, parseKey, prevKey, videoKey,
 } from './keys.js';
 // واجهة التخزين تعرض للصفحات والمتحكم ما تحتاجه من النموذج للحزمة دون استيراد إضافي.
 export { bundleFromRecord, slotModels } from '../model/bundle.js';
-import { MIGRATIONS, STORAGE_SCHEMA, migrate } from './migrate.js';
+import { MIGRATIONS, STORAGE_SCHEMA } from './migrate.js';
+import { createWriter } from './writer.js';
+import { localTransport, messageTransport } from './transport.js';
+import { printKeys, rawPrint, versionOf } from './version.js';
 
 export { STORAGE_SCHEMA, MIGRATIONS } from './migrate.js';
 export { computeCapacity, WARN_RATIO, FULL_RATIO, ADVISORY_BYTES } from './capacity.js';
 export {
   videoKey, indexKey, bundleKey, altsKey, prevKey, marksKey, companionKeys, parseKey, KEY_META, KEY_SETTINGS, KEY_PREFS, KEY_SAVES,
 } from './keys.js';
+export { createWriter } from './writer.js';
+export { localTransport, messageTransport } from './transport.js';
+export { versionOf } from './version.js';
 
 /**
  * @typedef {import('../model/video.js').VideoRecord} VideoRecord
@@ -42,7 +51,27 @@ export {
  * }} StoreChange
  */
 
-const isQuotaError = (err) => /quota|QUOTA_BYTES/i.test(String(err && err.message));
+// كاتب واحد لكل مساحة في السياق نفسه (الاختبارات والأدوات): مخزنان على المساحة نفسها يمرّان به كما يمرّ سياقان في المتصفح
+// بالعامل الخلفي. المساحة المغلّفة بنسخ خصائصها ({ ...area }) تحمل origin إلى الأصل، فتشاركه ما دامت تكتب به (غلاف قراءة).
+// وغلاف يستبدل set أو remove أو clear (حقن فشل الكتابة) يأخذ كاتبًا يكتب من خلاله، كعامل خلفي تفشل كتابته.
+const writers = new WeakMap();
+
+/**
+ * @param {import('./area.js').StorageArea & { origin?: import('./area.js').StorageArea }} area
+ * @param {{ schema?: number, migrations?: Record<number, import('./migrate.js').MigrationStep> }} [opts]
+ */
+export function sharedWriter(area, { schema = STORAGE_SCHEMA, migrations = MIGRATIONS } = {}) {
+  const origin = area.origin ?? area;
+  const base = area.set === origin.set && area.remove === origin.remove && area.clear === origin.clear ? origin : area;
+  let byMigrations = writers.get(base);
+  if (!byMigrations) writers.set(base, (byMigrations = new Map()));
+  let bySchema = byMigrations.get(migrations);
+  if (!bySchema) byMigrations.set(migrations, (bySchema = new Map()));
+  if (!bySchema.has(schema)) bySchema.set(schema, createWriter({ area: base, schema, migrations }));
+  return bySchema.get(schema);
+}
+
+const newWid = () => globalThis.crypto.randomUUID();
 
 /**
  * @param {{
@@ -50,9 +79,13 @@ const isQuotaError = (err) => /quota|QUOTA_BYTES/i.test(String(err && err.messag
  *   now?: () => number,
  *   schema?: number,
  *   migrations?: Record<number, import('./migrate.js').MigrationStep>,
- * }} [opts]
+ *   transport?: import('./transport.js').StoreTransport,
+ * }} [opts] بلا area ولا transport: chrome.storage.local للقراءة والعامل الخلفي للكتابة (الإنتاج). وبـarea وحدها: الكاتب
+ *   المشترك لتلك المساحة في السياق نفسه. والعامل الخلفي يمرّر transport إلى كاتبه.
  */
-export function createStore({ area = chromeLocalArea(), now = () => Date.now(), schema = STORAGE_SCHEMA, migrations = MIGRATIONS } = {}) {
+export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCHEMA, migrations = MIGRATIONS, transport } = {}) {
+  if (!transport) transport = area ? localTransport(sharedWriter(area, { schema, migrations })) : messageTransport(globalThis.chrome.runtime);
+  area ??= chromeLocalArea();
   const iso = () => new Date(now()).toISOString();
   let readyPromise = null;
   let chain = Promise.resolve();
@@ -63,8 +96,21 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     return p;
   };
 
+  /** طلب إلى الكاتب الواحد؛ رده المرفوض TjError برمزه. */
+  async function call(op, args = {}) {
+    const r = await transport.send(storeRequest(op, args, newWid()));
+    if (r.ok) return r.value;
+    throw new TjError(r.code, { detail: r.detail ?? undefined });
+  }
+  const isConflict = (err) => err instanceof TjError && err.code === 'ST_CONFLICT';
+
+  // الترحيل مرة لكل سياق: meta بالإصدار الحالي يكفي بلا رسالة (الحالة الدائمة)، وإلا يرحّل الكاتب أو يرفض الأحدث.
   const ready = () => {
-    readyPromise ??= migrate(area, { schema, migrations, now: iso() }).catch((err) => {
+    readyPromise ??= (async () => {
+      const { [KEY_META]: meta } = await read(KEY_META);
+      if (meta && typeof meta === 'object' && meta.schema === schema) return { from: schema, to: schema, migrated: false };
+      return call('ready', { at: iso() });
+    })().catch((err) => {
       readyPromise = null;
       throw err;
     });
@@ -79,22 +125,6 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     }
   }
 
-  async function write(items) {
-    try {
-      await area.set(items);
-    } catch (err) {
-      throw new TjError(isQuotaError(err) ? 'ST_QUOTA_EXCEEDED' : 'ST_WRITE_FAILED', { detail: String(err && err.message), cause: err });
-    }
-  }
-
-  async function removeKeys(keys) {
-    try {
-      await area.remove(keys);
-    } catch (err) {
-      throw new TjError('ST_WRITE_FAILED', { detail: String(err && err.message), cause: err });
-    }
-  }
-
   async function listKeys() {
     try {
       return await area.getKeys();
@@ -106,12 +136,6 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
   function checkId(videoId) {
     if (!isVideoId(videoId)) throw new TjError('TJ_BAD_VIDEO_ID', { detail: String(videoId).slice(0, 20) });
   }
-
-  /** نسخة السجل للمقارنة: المراجعة وتاريخ آخر حفظ معًا (فلا يخدع حذفٌ ثم إنشاءٌ بالمراجعة نفسها). */
-  const versionOf = (r) => {
-    const rec = r && r.record ? r.record : r;
-    return rec ? `${rec.rev}|${rec.updatedAt}` : 'none';
-  };
 
   // آخر حزمة قُرئت أو كُتبت لكل فيديو في هذا السياق (لـbundleOf)، بحد صغير.
   const cache = new Map();
@@ -134,11 +158,8 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     return { raw, ...unpackBundle(raw) };
   }
 
-  /** يحذف توابع فيديو لا سجل له، بعد إعادة التحقق من غياب السجل قبل الحذف مباشرة. */
-  async function removeOrphan(videoId) {
-    const { [videoKey(videoId)]: rec } = await read(videoKey(videoId));
-    if (rec === undefined) await removeKeys(companionKeys(videoId));
-  }
+  /** يحذف توابع فيديو لا سجل له: الكاتب يعيد التحقق من غياب السجل داخل طابور الفيديو، فلا يسبقه استعادة (I01). */
+  const removeOrphan = (videoId) => call('orphan', { videoIds: [videoId] });
 
   /**
    * الحزمة بعد المصالحة؛ وما غيّرته المصالحة يُكتب مرة كتابةً عادية بنسخة متحققة، واليتيم يُنظَّف.
@@ -158,8 +179,9 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
   }
 
   /**
-   * لبّ الكتابة (داخل exclusive): قراءة ومصالحة، ثم fn، ثم إعادة فحص النسخة، ثم set واحدة (عقد storage §٨).
-   * fn تعيد حزمة أو null للحذف أو undefined لعدم التغيير (وما غيّرته المصالحة يُكتب حينئذ).
+   * لبّ الكتابة (داخل exclusive): قراءة ومصالحة، ثم fn، ثم طلب «مقارنة ثم تبديل» إلى الكاتب على النسخة المقروءة (عقد storage
+   * §٨ و§١٢). fn تعيد حزمة أو null للحذف أو undefined لعدم التغيير (وما غيّرته المصالحة يُكتب حينئذ). إن كتب سياق آخر بين
+   * القراءة والطلب رفضه الكاتب، فتُعاد fn على الأحدث (حتى ثلاث مرات)، أو يُرمى ST_CONFLICT إن مُرِّر expect.
    * @param {string} videoId
    * @param {(b: Bundle | null) => Bundle | null | undefined | Promise<Bundle | null | undefined>} fn
    * @param {{ expect?: VideoRecord | Bundle | null }} [opts]
@@ -176,47 +198,28 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
         if (!cur.changed && !cur.orphan) return remember(cur.bundle);
         draft = cur.bundle;
       }
-      const { [videoKey(videoId)]: latest } = await read(videoKey(videoId));
-      if (versionOf(latest) !== versionOf(cur.raw.record)) {
-        if (expect !== undefined || attempt >= 3) throw new TjError('ST_CONFLICT', { detail: `تغيّر أثناء التعديل: ${versionOf(cur.raw.record)} ← ${versionOf(latest)}` });
-        continue;
-      }
-      if (draft === null) {
+      const base = versionOf(cur.raw.record);
+      try {
+        if (draft === null) {
+          if (cur.raw.record || hasCompanions(cur.raw)) await call('delete', { videoId, base });
+          wrote(videoId);
+          cache.delete(videoId);
+          return null;
+        }
+        const at = iso();
+        const prior = cur.raw.record;
+        const next = structuredClone(draft);
+        next.videoId = videoId;
+        next.record = { ...next.record, videoId, rev: (prior?.rev ?? 0) + 1, createdAt: prior?.createdAt ?? at, updatedAt: at };
+        syncActive(next);
+        assertValid(validateBundle(next), 'video');
+        // سجل جديد لمعرّف بقيت له توابع يتيمة (حذفه الأول): رأس جديد، والتوابع القديمة تُطمس بقيمها الجديدة.
+        await call('put', { videoId, base, items: itemsFor(next, cur.raw, { forceHead: !prior && hasCompanions(cur.raw) }) });
         wrote(videoId);
-        cache.delete(videoId);
-        if (cur.raw.record || hasCompanions(cur.raw)) await removeKeys([videoKey(videoId), indexKey(videoId), ...companionKeys(videoId)]);
-        return null;
+        return remember(next);
+      } catch (err) {
+        if (!isConflict(err) || expect !== undefined || attempt >= 3) throw err;
       }
-      const at = iso();
-      const prior = cur.raw.record;
-      const next = structuredClone(draft);
-      next.videoId = videoId;
-      next.record = { ...next.record, videoId, rev: (prior?.rev ?? 0) + 1, createdAt: prior?.createdAt ?? at, updatedAt: at };
-      syncActive(next);
-      assertValid(validateBundle(next), 'video');
-      // سجل جديد لمعرّف بقيت له توابع يتيمة (حذفه الأول): رأس جديد، والتوابع القديمة تُطمس بقيمها الجديدة.
-      await write(itemsFor(next, cur.raw, { forceHead: !prior && hasCompanions(cur.raw) }));
-      wrote(videoId);
-      return remember(next);
-    }
-  }
-
-  /**
-   * تعديل جزئي لمفتاح عام (الإعدادات أو التفضيلات) كما في writeBundle: قراءة ثم دمج ثم إعادة قراءة قبل الكتابة مباشرة؛ إن
-   * كتب سياق آخر بينهما يُعاد الدمج على الأحدث (حتى ثلاث مرات ثم ST_CONFLICT)، فلا يمحو تغيير مجموعةٍ تغييرَ أخرى في سياق
-   * آخر (تدقيق 5fedcb9، CX-H3: مصطلح أضيف وتغيير مكان الحفظ معًا كانا يُسقطان المصطلح).
-   */
-  async function mergeWrite(key, merge) {
-    for (let attempt = 1; ; attempt++) {
-      const { [key]: raw } = await read(key);
-      const next = merge(raw);
-      const { [key]: latest } = await read(key);
-      if (JSON.stringify(latest ?? null) !== JSON.stringify(raw ?? null)) {
-        if (attempt >= 3) throw new TjError('ST_CONFLICT', { detail: key });
-        continue;
-      }
-      await write({ [key]: next });
-      return next;
     }
   }
 
@@ -240,10 +243,9 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     const ids = (kind) => new Set(keys.map(parseKey).filter((k) => k && k.kind === kind).map((k) => k.videoId));
     const videos = ids('video');
     const index = ids('index');
-    const orphan = [...index].filter((id) => !videos.has(id));
-    if (orphan.length) await removeKeys(orphan.map(indexKey));
-    const companionOrphans = new Set(COMPANION_KINDS.flatMap((kind) => [...ids(kind)]).filter((id) => !videos.has(id)));
-    for (const id of companionOrphans) await removeOrphan(id);
+    // مُلخّصات وتوابع بلا سجل: يزيلها الكاتب بعد إعادة التحقق داخل طابور كل فيديو (I01).
+    const orphans = new Set([...index, ...COMPANION_KINDS.flatMap((kind) => [...ids(kind)])].filter((id) => !videos.has(id)));
+    if (orphans.size) await call('orphan', { videoIds: [...orphans] });
     const present = [...index].filter((id) => videos.has(id));
     const items = present.length ? await read(present.map(indexKey)) : {};
     const entries = new Map();
@@ -254,15 +256,14 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     const missing = [...videos].filter((id) => !entries.has(id));
     if (missing.length) {
       const recs = await read(missing.map(videoKey));
-      const repaired = {};
+      const repaired = [];
       for (const id of missing) {
         const rec = recs[videoKey(id)];
         if (!validateVideoRecord(rec).ok) continue;
-        const e = summarizeVideo(rec);
-        repaired[indexKey(id)] = e;
-        entries.set(id, e);
+        entries.set(id, summarizeVideo(rec));
+        repaired.push(id);
       }
-      if (Object.keys(repaired).length) await write(repaired);
+      if (repaired.length) await call('index', { videoIds: repaired });
     }
     return { entries: [...entries.values()], unreadable: [...videos].filter((id) => !entries.has(id)).sort() };
   }
@@ -283,13 +284,10 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
      * @returns {Promise<Settings>}
      */
     setSettings(patch) {
+      // الدمج على القيمة الحاضرة في الكاتب نفسه: رقعتا مجموعتين من سياقين لا تمحو إحداهما الأخرى (N21).
       return exclusive(async () => {
         await ready();
-        return mergeWrite(KEY_SETTINGS, (raw) => {
-          const next = mergeSettings(normalizeSettings(raw ?? DEFAULT_SETTINGS), patch);
-          assertValid(validateSettings(next), 'settings');
-          return next;
-        });
+        return call('settings', { patch });
       });
     },
 
@@ -307,11 +305,31 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
     setPrefs(patch) {
       return exclusive(async () => {
         await ready();
-        return mergeWrite(KEY_PREFS, (raw) => {
-          const next = mergePrefs(normalizePrefs(raw ?? DEFAULT_PREFS), patch);
-          assertValid(validatePrefs(next), 'prefs');
-          return next;
-        });
+        return call('prefs', { patch });
+      });
+    },
+
+    /**
+     * يضيف مصطلحًا إلى القاموس على أحدث تفضيلات، بمفتاحه الموحّد (تدقيق 7a66f91، U13): لا يُسقط مصطلحًا أضافته صفحة أخرى، والمكرر
+     * والحد يُفحصان على المخزَّن نفسه.
+     * @param {import('../model/prefs.js').GlossaryTerm} term
+     * @returns {Promise<{ prefs: import('../model/prefs.js').Prefs, added: boolean, reason: 'duplicate' | 'limit' | null }>}
+     */
+    addTerm(term) {
+      return exclusive(async () => {
+        await ready();
+        return call('prefs', { term });
+      });
+    },
+
+    /**
+     * يحذف مصطلحًا بإنجليزيه (بلا اعتبار لحالة الأحرف) على أحدث تفضيلات (U13).
+     * @param {string} source @returns {Promise<{ prefs: import('../model/prefs.js').Prefs, removed: boolean }>}
+     */
+    removeTerm(source) {
+      return exclusive(async () => {
+        await ready();
+        return call('prefs', { removeKey: sourceKey(String(source)) });
       });
     },
 
@@ -328,7 +346,7 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       if (!Number.isInteger(downloadId) || downloadId < 0) return Promise.reject(new TjError('MD_INVALID', { detail: 'downloadId' }));
       return exclusive(async () => {
         await ready();
-        await write({ [KEY_SAVES]: { schema: 1, last: { downloadId, at: iso() } } });
+        await call('saves', { downloadId, at: iso() });
       });
     },
 
@@ -404,24 +422,39 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       return hit && versionOf(hit.record) === versionOf(record) ? hit : bundleFromRecord(record);
     },
 
-    /** @param {string} videoId */
-    deleteVideo(videoId) {
+    /**
+     * يحذف الفيديو كله. `expect` (سجل أو حزمة أو مُلخّص) يقيّده بنسخة رآها المستخدم، و`print` (من rawPrint) بقيم سجل لا يُقرأ
+     * كما عُرض في تأكيده (تدقيق 7a66f91، U08)؛ فإن تغيّر منذئذ رُفض بـST_CONFLICT ولم يُحذف شيء.
+     * @param {string} videoId @param {{ expect?: VideoRecord | Bundle | IndexEntry | null, print?: string }} [opts]
+     */
+    deleteVideo(videoId, { expect, print } = {}) {
       checkId(videoId);
       return exclusive(async () => {
         await ready();
         wrote(videoId);
         cache.delete(videoId);
-        await removeKeys([videoKey(videoId), indexKey(videoId), ...companionKeys(videoId)]);
+        await call('delete', { videoId, ...(expect !== undefined ? { base: versionOf(expect) } : {}), ...(print !== undefined ? { print } : {}) });
       });
+    },
+
+    /**
+     * بصمة القيم الخام لمفاتيح الفيديو الستة كما هي ولو لم تُقرأ (لتأكيد حذف السجل التالف، U08).
+     * @param {string} videoId @returns {Promise<string>}
+     */
+    async rawPrint(videoId) {
+      checkId(videoId);
+      await ready();
+      return rawPrint(await read(printKeys(videoId)), videoId);
     },
 
     /**
      * واجهة كتابة الاستعادة (عقد storage §١٠، backup.md §٦): الموجود يُتخطى افتراضيًا، والتواريخ كما في النسخة.
      * @param {unknown} entry مدخل فيديو من النسخة الاحتياطية
-     * @param {{ replace?: boolean }} [opts]
-     * @returns {Promise<{ status: 'added' | 'skipped' | 'replaced' }>}
+     * @param {{ replace?: boolean, expect?: VideoRecord | Bundle | IndexEntry | null }} [opts] expect نسخة الفيديو عند المعاينة
+     *   (null = لم يكن موجودًا): إن تغيّر بعدها لا يُكتب شيء والحالة changed (تدقيق 7a66f91، U11)
+     * @returns {Promise<{ status: 'added' | 'skipped' | 'replaced' | 'changed' }>}
      */
-    restoreVideo(entry, { replace = false } = {}) {
+    restoreVideo(entry, { replace = false, expect } = {}) {
       const parsed = bundleFromBackup(entry);
       if (!parsed.ok) return Promise.reject(new TjError('MD_INVALID', { detail: `${parsed.path} — ${parsed.reason}` }));
       const videoId = parsed.bundle.videoId;
@@ -432,20 +465,21 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
           // بلا checkRaw: الموجود (ولو تالفًا) يُتخطى افتراضيًا فلا يُكتب فوقه دون اختيار، والاستبدال الصريح يطمسه كله بما
           // في النسخة فيصلحه (تدقيق 5fedcb9، GM-006؛ كان التالف يرفض في الحالتين).
           const raw = rawBundle(await read(bundleReadKeys(videoId)), videoId);
+          if (expect !== undefined && versionOf(raw.record) !== versionOf(expect)) return { status: 'changed' };
           if (raw.record !== null && !replace) return { status: 'skipped' };
           const prior = raw.record !== null && Number.isInteger(raw.record.rev) && raw.record.rev > 0 ? raw.record.rev : 0;
           const next = structuredClone(parsed.bundle);
           next.record.rev = prior + 1;
           syncActive(next);
           assertValid(validateBundle(next), 'bundle');
-          // كما في writeBundle: إعادة فحص السجل قبل الكتابة مباشرة، فسجلٌ أنشأه سياق آخر بين القراءة والكتابة يُعاد تقييم
-          // تخطيه بدل الكتابة فوقه بتقرير «أضيف» (CX-003). والتوابع اليتيمة لسجل غائب تُطمس برأس جديد.
-          const { [videoKey(videoId)]: latest } = await read(videoKey(videoId));
-          if (versionOf(latest) !== versionOf(raw.record)) {
-            if (attempt >= 3) throw new TjError('ST_CONFLICT', { detail: `تغيّر أثناء الاستعادة: ${versionOf(raw.record)} ← ${versionOf(latest)}` });
-            continue;
+          // كما في writeBundle: الكاتب يقارن بالنسخة المقروءة، فسجلٌ أنشأه سياق آخر بين القراءة والكتابة يُعاد تقييم تخطيه بدل
+          // الكتابة فوقه بتقرير «أضيف» (CX-003). والتوابع اليتيمة لسجل غائب تُطمس برأس جديد.
+          try {
+            await call('put', { videoId, base: versionOf(raw.record), items: itemsFor(next, raw, { forceHead: raw.record === null && hasCompanions(raw) }) });
+          } catch (err) {
+            if (isConflict(err) && attempt < 3) continue;
+            throw err;
           }
-          await write(itemsFor(next, raw, { forceHead: raw.record === null && hasCompanions(raw) }));
           wrote(videoId);
           remember(next);
           return { status: raw.record ? 'replaced' : 'added' };
@@ -564,22 +598,11 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
      * يبقى بعده (تدقيق 7a66f91، U05، قرار Q10): المسح لا يعيد الصور إلى افتراضيها فيُطلب من يوتيوب ما رفضه المستخدم.
      */
     clearAll() {
+      // الكاتب ينتظر كل كتابة جارية ثم يمسح، وما يصل بعده على نسخة قديمة يُرفض (N22).
       return exclusive(async () => {
-        let thumbsOff = false;
-        try {
-          const { [KEY_PREFS]: raw } = await area.get(KEY_PREFS);
-          thumbsOff = raw?.ui?.thumbnails === false;
-        } catch {
-          thumbsOff = false;
-        }
-        try {
-          await area.clear();
-        } catch (err) {
-          throw new TjError('ST_WRITE_FAILED', { detail: String(err && err.message), cause: err });
-        }
+        await call('clear', { at: iso() });
         readyPromise = null;
-        await ready();
-        if (thumbsOff) await write({ [KEY_PREFS]: mergePrefs(DEFAULT_PREFS, { ui: { thumbnails: false } }) });
+        cache.clear();
       });
     },
 

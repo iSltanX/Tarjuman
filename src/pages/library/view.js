@@ -17,7 +17,7 @@ import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, 
 import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
 import { createToaster } from '../../ui/toast.js';
-import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, prepareUpload, studyName, studyNote } from './actions.js';
+import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, prepareUpload, studyName, studyNote, undoActivation } from './actions.js';
 import { radioGroup } from './choice.js';
 import { createCopyState } from './copy.js';
 import { deleteContent } from './delete.js';
@@ -202,14 +202,51 @@ export function createLibrary(env) {
   const done = (code) => toaster.show(messageFor(code), 'success');
 
   // ---- الأوامر ----
-  async function guarded(fn) {
+  /** رموز تعني أن ما يعرضه الصف لم يعد ما في التخزين، فتُعاد القائمة بعد رسالتها. */
+  const STALE = new Set(['ST_CONFLICT', 'PG_VIDEO_GONE', 'PG_DELETE_STALE', 'PG_RESTORE_STALE', 'PG_UNDO_STALE', 'PG_SLOT_GONE']);
+  /**
+   * أمر برسالة خطئه. وإن كان على صف سجله لا يُقرأ (`m`) عُرضت الرسالة ومعها «حذف السجل…»، فلا تبقى مسدودة (تدقيق 7a66f91، U08).
+   * @param {() => Promise<void>} fn @param {{ videoId: string, displayTitle: string } | null} [m]
+   */
+  async function guarded(fn, m = null) {
     try {
       await fn();
     } catch (err) {
+      if (m && err instanceof TjError && err.code === 'ST_CORRUPT_RECORD') {
+        toaster.show(toErrorInfo(err).message, 'danger', { action: { label: 'حذف السجل…', onClick: () => removeUnreadable(m) } });
+        return;
+      }
       fail(err);
-      if (err instanceof TjError && (err.code === 'ST_CONFLICT' || err.code === 'PG_VIDEO_GONE' || err.code === 'PG_DELETE_STALE')) await load();
+      if (err instanceof TjError && STALE.has(err.code)) await load();
     }
   }
+
+  /**
+   * حذف فيديو سجله أو أحد توابعه لا يُقرأ (U08): تأكيد خاص من مُلخّص الفهرس بالعنوان والمعرّف وحدهما، والحذف ببصمة القيم كما
+   * عُرضت، فإن تغيّرت قبل الموافقة لم يُحذف شيء (PG_DELETE_STALE).
+   * @param {{ videoId: string, displayTitle: string }} m
+   */
+  async function deleteUnreadable(m) {
+    const print = await store.rawPrint(m.videoId);
+    const ok = await confirm({
+      title: 'حذف السجل التالف لهذا الفيديو؟', confirmLabel: 'حذف نهائيًا', tone: 'danger', doc,
+      content: deleteContent({
+        doc, subtitle: m.displayTitle,
+        summary: { items: ['كل ما حُفظ لهذا الفيديو، ومنه ما لا يمكن قراءته'], keeps: [] },
+        note: `معرّف الفيديو ${isolate(m.videoId)}. لا يمكن التراجع، ولا تصدير ما لا يُقرأ.`,
+      }),
+    });
+    if (!ok) return;
+    try {
+      await store.deleteVideo(m.videoId, { print });
+    } catch (err) {
+      if (err instanceof TjError && err.code === 'ST_CONFLICT') throw new TjError('PG_DELETE_STALE', { detail: err.detail, cause: err });
+      throw err;
+    }
+    done('PG_UNREADABLE_DELETED');
+    await load();
+  }
+  const removeUnreadable = (m) => guarded(() => deleteUnreadable(m));
 
   function askTiming(offsetMs) {
     const group = radioGroup({
@@ -245,13 +282,13 @@ export function createLibrary(env) {
       if (r.saveError) toaster.show(messageFor('PG_FINGERPRINT_NOT_SAVED'), 'info');
       else savedToast(r.saved);
     }
-  });
+  }, m);
 
   /** «تصدير SRT» في بطاقة ترجمة (نشطة أو لا). */
   const exportSlotFile = (m, n) => guarded(async () => {
     const r = await exportSlot({ store, videoId: m.videoId, n, askTiming, save: env.saveFile });
     if (r) savedToast(r.saved);
-  });
+  }, m);
 
   /** «نص دراسي…»: الصيغة واللغة ومعاينة الاسم، ثم الحفظ عبر saveFile. */
   const study = (m, entry) => guarded(async () => {
@@ -262,7 +299,7 @@ export function createLibrary(env) {
     if (!ok) return;
     const r = await exportStudy({ store, videoId: m.videoId, ...content.value(), save: env.saveFile });
     savedToast(r.saved);
-  });
+  }, m);
 
   /**
    * الرفع إلى خانة (حوار الفحص الكامل): المنتقي، ثم القراءة والفحص، ثم الحوار، ثم الكتابة بالحزمة التي بُني عليها. يعيد هل كُتب.
@@ -298,18 +335,19 @@ export function createLibrary(env) {
       if (info.offsetWas !== 0) toaster.show(messageFor('ST_OFFSET_RESET'), 'info');
       wrote = true;
       await load();
-    });
+    }, m);
     return wrote;
   }
 
   /** اختيار شريحة في الصف: يفعّل الخانة برسالة عابرة فيها «تراجع». */
   const activate = (m, n) => guarded(async () => {
-    const { before } = await activateSlot({ store, videoId: m.videoId, n, now });
+    const { before, after } = await activateSlot({ store, videoId: m.videoId, n, now });
     await load();
+    // «تراجع» على الحزمة التي تركها التفعيل وحدها: تفعيلٌ من تبويب آخر في الأثناء لا يُفرض فوقه (U95).
     toaster.show(messageFor('PG_SLOT_ACTIVATED', { n }), 'success', before && before !== n ? {
-      action: { label: 'تراجع', onClick: () => guarded(async () => { await activateSlot({ store, videoId: m.videoId, n: before, now }); await load(); }) },
+      action: { label: 'تراجع', onClick: () => guarded(async () => { await undoActivation({ store, videoId: m.videoId, n: before, expect: after, now }); await load(); }) },
     } : undefined);
-  });
+  }, m);
 
   /**
    * حذف بتأكيد يسرد ما يُحذف بالضبط من بيانات الفيديو الفعلية (deleteSummary)، لا نصًا ثابتًا: الترجمة النشطة وحدها
@@ -317,7 +355,14 @@ export function createLibrary(env) {
    * الحوار: إن تغيّرت قبل الموافقة (تفعيل ترجمة أخرى من تبويب آخر مثلًا) لا يُحذف شيء وتُعاد القائمة (PG_DELETE_STALE).
    */
   const removeData = (m, scope) => guarded(async () => {
-    const b = await store.getBundle(m.videoId);
+    let b;
+    try {
+      b = await store.getBundle(m.videoId);
+    } catch (err) {
+      // «حذف بيانات الفيديو…» على سجل لا يُقرأ: التأكيد الخاص به (U08). والحذف الجزئي يعرض الرسالة ومعها المخرج نفسه.
+      if (scope === 'all' && err instanceof TjError && err.code === 'ST_CORRUPT_RECORD') return deleteUnreadable(m);
+      throw err;
+    }
     if (!b) throw new TjError('PG_VIDEO_GONE');
     if (scope === 'arabic' && b.active === null) throw new TjError('PG_NO_ARABIC');
     const all = scope === 'all';
@@ -333,7 +378,7 @@ export function createLibrary(env) {
     await deleteVideoData({ store, videoId: m.videoId, scope, n: all ? undefined : n, expect: b, now });
     done(all ? 'PG_DELETE_ALL_DONE' : 'PG_DELETE_ARABIC_DONE');
     await load();
-  });
+  }, m);
 
   /** «نسخ التعليمات» من «المزيد»: النص يُبنى عند الضغطة وحدها من العنوان والمعرّف والقاموس المرفق، ويُسلَّم إلى الحافظة ولا يُعرض. */
   const copyInstructions = (m, entry) => {

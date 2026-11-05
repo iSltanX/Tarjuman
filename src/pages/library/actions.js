@@ -174,10 +174,19 @@ export async function studyName({ store, videoId, format, bilingual }) {
  * @template T @param {() => Promise<T>} write @returns {Promise<T>}
  */
 async function confirmedDelete(write) {
+  return confirmedAs('PG_DELETE_STALE', write);
+}
+
+/**
+ * فعل مقيّد بالحالة التي بُني عليها تأكيده (تدقيق 7a66f91، C2): تعارضها (ST_CONFLICT) يصير رمز الفعل نفسه، فيقول للمستخدم ما
+ * لم يقع ولماذا، ويعيد المستدعي قراءة ما يعرضه.
+ * @template T @param {string} code @param {() => Promise<T>} write @returns {Promise<T>}
+ */
+async function confirmedAs(code, write) {
   try {
     return await write();
   } catch (err) {
-    if (err instanceof TjError && err.code === 'ST_CONFLICT') throw new TjError('PG_DELETE_STALE', { detail: err.detail, cause: err });
+    if (err instanceof TjError && err.code === 'ST_CONFLICT') throw new TjError(code, { detail: err.detail, cause: err });
     throw err;
   }
 }
@@ -217,17 +226,24 @@ async function onBundle(store, videoId, fn, opts) {
 }
 
 /**
- * تبديل الترجمة النشطة (withActiveSlot). يعيد النشطة قبلها للتراجع.
+ * تبديل الترجمة النشطة (withActiveSlot). يعيد النشطة قبلها والحزمة بعده، للتراجع.
  * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string, n: 1 | 2 | 3, now: () => number }} o
+ * @returns {Promise<{ before: 1 | 2 | 3 | null, after: import('../../core/model/slots.js').Bundle | null }>}
  */
 export async function activateSlot({ store, videoId, n, now }) {
   let before = null;
-  await onBundle(store, videoId, (b) => {
+  const after = await onBundle(store, videoId, (b) => {
     before = b.active;
     return b.active === n ? undefined : withActiveSlot(b, n, iso(now));
   });
-  return { before };
+  return { before, after };
 }
+
+/**
+ * «تراجع» عن تفعيل: يعيد الخانة السابقة ما دامت الحزمة كما تركها التفعيل (`expect`)، كحارس syncUndoStale في المشغّل. وإن
+ * تغيّرت من مكان آخر رُفض بـPG_UNDO_STALE ولم يُفرض شيء (تدقيق 7a66f91، U95).
+ */
+export const undoActivation = ({ store, videoId, n, expect, now }) => confirmedAs('PG_UNDO_STALE', () => onBundle(store, videoId, (b) => (b.active === n ? undefined : withActiveSlot(b, n, iso(now))), { expect }));
 
 /** الاسم المختصر (≤ 24 محرفًا) أو إزالته بالفارغ. */
 export const renameSlot = ({ store, videoId, n, name }) => onBundle(store, videoId, (b) => withSlotName(b, n, name));
@@ -238,8 +254,11 @@ export const renameSlot = ({ store, videoId, n, name }) => onBundle(store, video
  */
 export const deleteSlot = ({ store, videoId, n, now, expect }) => confirmedDelete(() => onBundle(store, videoId, (b) => withoutSlot(b, n, iso(now)), { expect }));
 
-/** استعادة النسخة السابقة: تبديل قابل للعكس مع خانتها. */
-export const restorePrevious = ({ store, videoId, now }) => onBundle(store, videoId, (b) => withPreviousRestored(b, iso(now)));
+/**
+ * استعادة النسخة السابقة: تبديل قابل للعكس مع خانتها. `expect` الحزمة التي عرضها الحوار: إن تغيّرت (استبدال من تبويب آخر
+ * يغيّر السابقة أو خانتها) رُفض بـPG_RESTORE_STALE ولم يُستبدل شيء (تدقيق 7a66f91، U10).
+ */
+export const restorePrevious = ({ store, videoId, now, expect }) => confirmedAs('PG_RESTORE_STALE', () => onBundle(store, videoId, (b) => withPreviousRestored(b, iso(now)), { expect }));
 
 /** حذف النسخة السابقة التي عُرضت (`expect`): إن صارت غيرها في الأثناء رُفض بـPG_DELETE_STALE. */
 export const deletePrevious = ({ store, videoId, expect }) => confirmedDelete(() => onBundle(store, videoId, (b) => withoutPrevious(b), { expect }));

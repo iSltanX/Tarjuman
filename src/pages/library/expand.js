@@ -202,7 +202,7 @@ export function createExpansion(env) {
             : `تعود النسخة السابقة إلى الترجمة ${p.from} الفارغة.`,
           confirmLabel: 'استعادة', doc,
         });
-        if (ok) await act(() => restorePrevious({ store, videoId, now }), messageFor('PG_PREVIOUS_RESTORED', { n: p.from }));
+        if (ok) await act(() => restorePrevious({ store, videoId, now, expect: b }), messageFor('PG_PREVIOUS_RESTORED', { n: p.from }));
       },
     });
     restore.setAttribute('data-fk', fk('prev:restore'));
@@ -229,7 +229,9 @@ export function createExpansion(env) {
   async function removeSlot(s) {
     // الملخص من أحدث حزمة لا من لقطة الرسم: ما يُسرد هو ما سيُحذف فعلًا.
     const fresh = await store.getBundle(videoId);
-    if (!fresh?.slots[s.n - 1]?.track) throw new TjError('PG_VIDEO_GONE');
+    if (!fresh) throw new TjError('PG_VIDEO_GONE');
+    // خانة حذفها تبويب آخر والفيديو باقٍ: رسالتها هي، لا «لم يعد الفيديو محفوظًا» (تدقيق 7a66f91، U14).
+    if (!fresh.slots[s.n - 1]?.track) throw new TjError('PG_SLOT_GONE', { detail: String(s.n) });
     const ok = await env.confirm({
       title: `حذف الترجمة ${s.n}؟`, confirmLabel: 'حذف', tone: 'danger', doc,
       content: deleteContent({ doc, subtitle: env.title, summary: deleteSummary(fresh, { scope: 'slot', n: s.n }), note: 'لا يمكن التراجع. صدّر الترجمة أولًا إن كنت قد تحتاجها.' }),
@@ -245,6 +247,12 @@ export function createExpansion(env) {
     } catch (err) {
       fail(err);
       if (err instanceof TjError && err.code === 'PG_VIDEO_GONE') await env.onChanged();
+      // الخانة الغائبة: تُعاد البطاقات، أو تُزال بطاقتها وحدها والمستخدم يسمّي خانة أخرى فلا يضيع ما يكتبه.
+      if (err instanceof TjError && err.code === 'PG_SLOT_GONE') {
+        if (editing || busy) cards.querySelector(`section[data-slot="${err.detail}"]`)?.remove();
+        else await render();
+        await env.onChanged();
+      }
     }
   };
 

@@ -12,6 +12,7 @@ import { readBackup } from '../../../src/core/backup/read.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { NOW, VIDEO_ID as A } from '../../helpers/fixtures.js';
 import { sampleBundle, seedBundle } from '../../helpers/fixtures-v2.js';
+import { armBeforeSet } from '../../helpers/store-race.js';
 
 let t = Date.parse(NOW);
 const now = () => (t += 1000);
@@ -137,11 +138,13 @@ test('CX-H4: سجل تالف بلا مُلخّص لا يظهر في المحفو
 });
 
 test('CX-H3: إضافة مصطلح وتغيير مكان الحفظ من سياقين معًا لا يُسقط أحدهما الآخر', async () => {
-  const { gate, a, b } = shared();
+  const { area, a, b } = shared();
   await a.setPrefs({ glossary: { attach: true, terms: [{ source: 'one', target: 'واحد', note: null }] } });
-  // بعد قراءة السياق الأول للتفضيلات يغيّر الآخر مكان الحفظ.
-  gate.armed = { match: (keys) => keys === 'prefs', run: () => b.setPrefs({ saveLocation: { mode: 'subfolder', folder: 'ترجماتي' } }) };
+  // السياق الآخر يغيّر مكان الحفظ في فاصل كتابة الأول: قبل C2 بين قراءته وset، ومع الكاتب الواحد (تدقيق 7a66f91) ينتظر في
+  // طابور التفضيلات حتى تنتهي، ثم يُدمج على الأحدث. وخطاف القراءة في السياق الأول لم يعد موضع الفاصل.
+  const other = armBeforeSet(area, 'prefs', () => b.setPrefs({ saveLocation: { mode: 'subfolder', folder: 'ترجماتي' } }));
   await a.setPrefs({ glossary: { attach: true, terms: [{ source: 'one', target: 'واحد', note: null }, { source: 'two', target: 'اثنان', note: null }] } });
+  assert.ok((await other).ok);
   const p = await b.getPrefs();
   assert.equal(p.glossary.terms.length, 2, 'المصطلح باقٍ');
   assert.deepEqual(p.saveLocation, { mode: 'subfolder', folder: 'ترجماتي' }, 'ومكان الحفظ باقٍ');

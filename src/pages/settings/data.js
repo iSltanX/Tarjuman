@@ -277,6 +277,7 @@ export function dataControl(env) {
     const lines = [reportLine(report)];
     if (report.settings === 'restored') lines.push('استُعيدت الإعدادات والقاموس.');
     if (report.settings === 'failed') lines.push(messageFor('BK_RESTORE_SETTINGS_FAILED'));
+    if (report.changed?.length) lines.push(messageFor('BK_RESTORE_CHANGED', { n: report.changed.length }));
     if (report.thumbnails === 'off') lines.push('بقيت صور الفيديو في المحفوظات مطفأة كما في النسخة.');
     if (report.thumbnails === 'failed') lines.push('تعذّر إبقاء صور الفيديو في المحفوظات مطفأة؛ أطفئها من «العرض» في الإعدادات.');
     for (const f of report.failed.slice(0, 20)) lines.push(`${titles.get(f.videoId) ?? f.videoId}: ${f.message}`);
@@ -341,7 +342,8 @@ export function dataControl(env) {
       return null;
     }
     const existingById = new Map(library.map((x) => [x.entry.videoId, x.entry]));
-    const plan = planRestore(read, [...existingById.keys(), ...unreadable]);
+    // كل موجود يحمل نسخته كما عُرض، فلا يُستبدل ما حُفظ بعد المعاينة (تدقيق 7a66f91، U11).
+    const plan = planRestore(read, [...existingById.keys(), ...unreadable], existingById);
     if (!plan.counts.videos && !plan.hasSettings) {
       restoreResult.replaceChildren(alertBox({ tone: 'warning', text: messageFor('BK_NOTHING'), doc }));
       return null;

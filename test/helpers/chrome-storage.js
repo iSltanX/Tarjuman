@@ -47,7 +47,7 @@ export function createMemoryArea({ quotaBytes = 10485760, unlimited = false, ini
   };
   const keysOf = (keys) => (keys === null || keys === undefined ? [...data.keys()] : Array.isArray(keys) ? keys : [keys]);
 
-  return {
+  const api = {
     async get(keys) {
       maybeFail('get');
       const out = {};
@@ -121,6 +121,9 @@ export function createMemoryArea({ quotaBytes = 10485760, unlimited = false, ini
       emit({ [key]: { oldValue: clone(old), newValue: clone(value) } });
     },
   };
+  // الأصل لكل نسخة مغلّفة ({ ...area, get }): المخازن فوقها تشترك في كاتب واحد يكتب في المساحة نفسها (C2).
+  api.origin = api;
+  return api;
 }
 
 /**
