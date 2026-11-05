@@ -1,0 +1,451 @@
+{
+  "browser": "brave",
+  "startedAt": "2026-11-05T04:27:54.191Z",
+  "versions": {
+    "stress": "Chrome/156.0.8078.80",
+    "i02": "Chrome/156.0.8078.80",
+    "restart": "Chrome/156.0.8078.80"
+  },
+  "steps": {
+    "stress": {
+      "ok": true,
+      "value": {
+        "saveNudge": {
+          "pairs": 200,
+          "corrupt": 0,
+          "silent": 0,
+          "conflicts": 76,
+          "notices": 0,
+          "errors": []
+        },
+        "prefsPrefs": {
+          "pairs": 200,
+          "silent": 0,
+          "errors": []
+        },
+        "positionActivate": {
+          "pairs": 200,
+          "corrupt": 0,
+          "silent": 0,
+          "conflicts": 55,
+          "errors": []
+        },
+        "saveSave": {
+          "pairs": 200,
+          "corrupt": 0,
+          "bothOk": 0,
+          "oneOk": 200,
+          "errors": []
+        },
+        "nudgeClear": {
+          "pairs": 200,
+          "leftovers": 0,
+          "errors": []
+        },
+        "errors": [
+          {
+            "where": "tests/c2.html",
+            "errors": [],
+            "fontReadLogs": 0
+          },
+          {
+            "where": "tests/c2.html",
+            "errors": [],
+            "fontReadLogs": 0
+          }
+        ]
+      },
+      "ms": 6165
+    },
+    "i02": {
+      "ok": true,
+      "value": {
+        "cycles": 200,
+        "mismatches": 0,
+        "samples": []
+      },
+      "ms": 6644
+    },
+    "restart": {
+      "ok": true,
+      "value": {
+        "wakes": [
+          {
+            "ok": true,
+            "code": null,
+            "ms": 10,
+            "stoppedBefore": true,
+            "runningAfter": true
+          },
+          {
+            "ok": true,
+            "code": null,
+            "ms": 7,
+            "stoppedBefore": true,
+            "runningAfter": true
+          },
+          {
+            "ok": true,
+            "code": null,
+            "ms": 8,
+            "stoppedBefore": true,
+            "runningAfter": true
+          },
+          {
+            "ok": true,
+            "code": null,
+            "ms": 7,
+            "stoppedBefore": true,
+            "runningAfter": true
+          },
+          {
+            "ok": true,
+            "code": null,
+            "ms": 7,
+            "stoppedBefore": true,
+            "runningAfter": true
+          },
+          {
+            "ok": true,
+            "code": null,
+            "ms": 8,
+            "stoppedBefore": true,
+            "runningAfter": true
+          },
+          {
+            "ok": true,
+            "code": null,
+            "ms": 7,
+            "stoppedBefore": true,
+            "runningAfter": true
+          },
+          {
+            "ok": true,
+            "code": null,
+            "ms": 8,
+            "stoppedBefore": true,
+            "runningAfter": true
+          },
+          {
+            "ok": true,
+            "code": null,
+            "ms": 8,
+            "stoppedBefore": true,
+            "runningAfter": true
+          },
+          {
+            "ok": true,
+            "code": null,
+            "ms": 9,
+            "stoppedBefore": true,
+            "runningAfter": true
+          }
+        ],
+        "restore": {
+          "ok": true,
+          "value": [
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added",
+            "added"
+          ]
+        },
+        "transitions": [
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running",
+          "stopping",
+          "stopped",
+          "starting",
+          "running"
+        ],
+        "after": {
+          "ok": true,
+          "value": {
+            "complete": 20,
+            "missing": 0,
+            "incomplete": 0
+          }
+        },
+        "errors": [
+          {
+            "where": "tests/c2.html",
+            "errors": [],
+            "fontReadLogs": 0
+          },
+          {
+            "where": "tests/c2.html",
+            "errors": [],
+            "fontReadLogs": 0
+          }
+        ]
+      },
+      "ms": 1599
+    }
+  },
+  "checks": [
+    {
+      "id": "stress-save-nudge",
+      "ok": true,
+      "pairs": 200,
+      "corrupt": 0,
+      "silent": 0,
+      "conflicts": 76,
+      "notices": 0,
+      "errors": []
+    },
+    {
+      "id": "stress-prefs-prefs",
+      "ok": true,
+      "pairs": 200,
+      "silent": 0,
+      "errors": []
+    },
+    {
+      "id": "stress-position-activate",
+      "ok": true,
+      "pairs": 200,
+      "corrupt": 0,
+      "silent": 0,
+      "conflicts": 55,
+      "errors": []
+    },
+    {
+      "id": "stress-save-save",
+      "ok": true,
+      "pairs": 200,
+      "corrupt": 0,
+      "bothOk": 0,
+      "oneOk": 200,
+      "errors": []
+    },
+    {
+      "id": "stress-nudge-clear",
+      "ok": true,
+      "pairs": 200,
+      "leftovers": 0,
+      "errors": []
+    },
+    {
+      "id": "stress-no-extension-errors",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "i02-delete-restore-watching",
+      "ok": true,
+      "cycles": 200,
+      "mismatches": 0,
+      "samples": []
+    },
+    {
+      "id": "restart-wake-writes",
+      "ok": true,
+      "wakes": [
+        {
+          "ok": true,
+          "code": null,
+          "ms": 10,
+          "stoppedBefore": true,
+          "runningAfter": true
+        },
+        {
+          "ok": true,
+          "code": null,
+          "ms": 7,
+          "stoppedBefore": true,
+          "runningAfter": true
+        },
+        {
+          "ok": true,
+          "code": null,
+          "ms": 8,
+          "stoppedBefore": true,
+          "runningAfter": true
+        },
+        {
+          "ok": true,
+          "code": null,
+          "ms": 7,
+          "stoppedBefore": true,
+          "runningAfter": true
+        },
+        {
+          "ok": true,
+          "code": null,
+          "ms": 7,
+          "stoppedBefore": true,
+          "runningAfter": true
+        },
+        {
+          "ok": true,
+          "code": null,
+          "ms": 8,
+          "stoppedBefore": true,
+          "runningAfter": true
+        },
+        {
+          "ok": true,
+          "code": null,
+          "ms": 7,
+          "stoppedBefore": true,
+          "runningAfter": true
+        },
+        {
+          "ok": true,
+          "code": null,
+          "ms": 8,
+          "stoppedBefore": true,
+          "runningAfter": true
+        },
+        {
+          "ok": true,
+          "code": null,
+          "ms": 8,
+          "stoppedBefore": true,
+          "runningAfter": true
+        },
+        {
+          "ok": true,
+          "code": null,
+          "ms": 9,
+          "stoppedBefore": true,
+          "runningAfter": true
+        }
+      ],
+      "transitions": [
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "starting",
+        "running"
+      ]
+    },
+    {
+      "id": "restart-mid-restore",
+      "ok": true,
+      "restore": {
+        "ok": true,
+        "value": [
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added"
+        ]
+      },
+      "after": {
+        "ok": true,
+        "value": {
+          "complete": 20,
+          "missing": 0,
+          "incomplete": 0
+        }
+      }
+    }
+  ],
+  "notes": [],
+  "finishedAt": "2026-11-05T04:28:08.797Z",
+  "profilesRemoved": 3
+}

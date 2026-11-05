@@ -1,0 +1,335 @@
+{
+  "browser": "Brave 156.1.98.63 (Chrome/156.0.8078.80)",
+  "at": "2026-11-05T04:28:35.497Z",
+  "video": "iG9CE55wbtY",
+  "sessions": [
+    {
+      "label": "1-v1-create",
+      "extensionId": "mjkgjnipcbialgnjgklgedkpfoeijejp",
+      "version": "0.2.0"
+    },
+    {
+      "label": "2-v2-extend",
+      "extensionId": "mjkgjnipcbialgnjgklgedkpfoeijejp",
+      "version": "1.1.0-dev"
+    },
+    {
+      "label": "3-v1-again",
+      "extensionId": "mjkgjnipcbialgnjgklgedkpfoeijejp",
+      "version": "0.2.0"
+    },
+    {
+      "label": "4-v2-reads-result",
+      "extensionId": "mjkgjnipcbialgnjgklgedkpfoeijejp",
+      "version": "1.1.0-dev"
+    }
+  ],
+  "checks": [
+    {
+      "id": "v1-package-built",
+      "ok": true,
+      "detail": {
+        "from": "tj-v1 scripts/release/package.mjs",
+        "dir": "tarjuman-0.2.0"
+      }
+    },
+    {
+      "id": "v1-creates-data",
+      "ok": true,
+      "detail": {
+        "rev": 2,
+        "valid": true,
+        "keys": [
+          "index:iG9CE55wbtY",
+          "meta",
+          "settings",
+          "video:iG9CE55wbtY"
+        ]
+      }
+    },
+    {
+      "id": "v1-player-shows-it",
+      "ok": true,
+      "detail": {
+        "arabic": {
+          "fileName": "v1-first.ar.srt",
+          "cueCount": 6,
+          "edited": false,
+          "matched": null
+        },
+        "mounted": {
+          "overlay": "mounted",
+          "controls": "mounted"
+        }
+      }
+    },
+    {
+      "id": "v2-reads-v1-data",
+      "ok": true,
+      "detail": {
+        "active": 1,
+        "file": "v1-first.ar.srt",
+        "settings": "dual",
+        "schema": 1
+      }
+    },
+    {
+      "id": "v2-install-warnings-only-downloads",
+      "ok": true,
+      "detail": {
+        "actual": [
+          "قراءة بياناتك وتغييرها في www.youtube.com",
+          "إدارة عمليات التنزيل"
+        ],
+        "v1": [
+          "قراءة بياناتك وتغييرها في www.youtube.com"
+        ],
+        "downloads": [
+          "قراءة بياناتك وتغييرها في www.youtube.com",
+          "إدارة عمليات التنزيل"
+        ]
+      }
+    },
+    {
+      "id": "v2-adds-second-translation-mark-prefs",
+      "ok": true,
+      "detail": {
+        "activated": true,
+        "active": 2,
+        "slots": [
+          [
+            1,
+            true,
+            false
+          ],
+          [
+            2,
+            true,
+            true
+          ],
+          [
+            3,
+            false,
+            false
+          ]
+        ],
+        "mark": "todo",
+        "terms": 2
+      }
+    },
+    {
+      "id": "v2-popup-reply-has-slots",
+      "ok": true,
+      "detail": {
+        "slots": [
+          {
+            "n": 1,
+            "filled": true,
+            "active": false,
+            "name": null
+          },
+          {
+            "n": 2,
+            "filled": true,
+            "active": true,
+            "name": null
+          },
+          {
+            "n": 3,
+            "filled": false,
+            "active": false,
+            "name": null
+          }
+        ],
+        "capture": {
+          "state": "none",
+          "count": 0,
+          "code": null
+        },
+        "tools": {
+          "overlay": "mounted",
+          "controls": "mounted",
+          "code": null
+        }
+      }
+    },
+    {
+      "id": "v1-reads-v2-active-translation",
+      "ok": true,
+      "detail": {
+        "arabic": {
+          "fileName": "v2-second.ar.srt",
+          "cueCount": 6,
+          "edited": false,
+          "matched": null
+        },
+        "mounted": {
+          "overlay": "mounted",
+          "controls": "mounted"
+        },
+        "popupShowsVideo": false
+      }
+    },
+    {
+      "id": "v1-library-lists-it",
+      "ok": true,
+      "detail": {
+        "rows": 1,
+        "failed": false
+      }
+    },
+    {
+      "id": "v1-writes-offset-and-setting",
+      "ok": true,
+      "detail": {
+        "valid": true,
+        "offset": 1500,
+        "step": 1000,
+        "mode": "dual",
+        "index": 1
+      }
+    },
+    {
+      "id": "v2-reads-result-intact",
+      "ok": true,
+      "detail": {
+        "active": 2,
+        "files": [
+          "v1-first.ar.srt",
+          "v2-second.ar.srt",
+          null
+        ],
+        "offsets": [
+          0,
+          1500,
+          0
+        ],
+        "marks": [
+          0,
+          1,
+          0
+        ],
+        "terms": 2,
+        "save": "subfolder",
+        "step": 1000,
+        "mode": "dual",
+        "reconciled": true,
+        "schema": 1
+      }
+    },
+    {
+      "id": "v2-player-shows-result",
+      "ok": true,
+      "detail": {
+        "active": 2,
+        "offset": 1500,
+        "first": "ترجمة الثاني 1"
+      }
+    },
+    {
+      "id": "same-extension-id-all-sessions",
+      "ok": true,
+      "detail": [
+        {
+          "label": "1-v1-create",
+          "extensionId": "mjkgjnipcbialgnjgklgedkpfoeijejp",
+          "version": "0.2.0"
+        },
+        {
+          "label": "2-v2-extend",
+          "extensionId": "mjkgjnipcbialgnjgklgedkpfoeijejp",
+          "version": "1.1.0-dev"
+        },
+        {
+          "label": "3-v1-again",
+          "extensionId": "mjkgjnipcbialgnjgklgedkpfoeijejp",
+          "version": "0.2.0"
+        },
+        {
+          "label": "4-v2-reads-result",
+          "extensionId": "mjkgjnipcbialgnjgklgedkpfoeijejp",
+          "version": "1.1.0-dev"
+        }
+      ]
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "errors": {
+    "1-v1-create": [
+      {
+        "where": "pages/settings/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      },
+      {
+        "where": "youtube",
+        "errors": [],
+        "fontReadLogs": 0
+      },
+      {
+        "where": "pages/popup/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      }
+    ],
+    "2-v2-extend": [
+      {
+        "where": "ui/gallery/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      },
+      {
+        "where": "youtube",
+        "errors": [],
+        "fontReadLogs": 6
+      },
+      {
+        "where": "pages/popup/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      }
+    ],
+    "3-v1-again": [
+      {
+        "where": "youtube",
+        "errors": [],
+        "fontReadLogs": 2
+      },
+      {
+        "where": "pages/popup/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      },
+      {
+        "where": "pages/library/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      },
+      {
+        "where": "pages/settings/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      }
+    ],
+    "4-v2-reads-result": [
+      {
+        "where": "ui/gallery/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      },
+      {
+        "where": "youtube",
+        "errors": [],
+        "fontReadLogs": 6
+      }
+    ]
+  },
+  "screenshots": [
+    "$SCRATCH/gallery-brave-light.png",
+    "$SCRATCH/gallery-brave-dark.png"
+  ]
+}
