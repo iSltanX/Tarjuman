@@ -8,6 +8,8 @@ const BAND = Object.freeze({ top: 0.08, bottom: 0.6, rest: 0.3 });
 /** مسافة تمرير أبعد من هذا (بأضعاف ارتفاع القائمة) تنتقل فورًا لا بسلاسة. */
 const SMOOTH_MAX = 3;
 const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End']);
+/** تركيز يقع بعد ضغط المؤشر بأقل من هذا من أثر النقرة لا من لوحة المفاتيح. */
+const POINTER_FOCUS_MS = 1000;
 
 /**
  * @param {{
@@ -37,18 +39,19 @@ export function createFollow({ win, list, rowEl, onChange }) {
   });
   // التركيز بلوحة المفاتيح داخل القائمة (Tab إليها أو الأسهم فيها) يوقف التتبّع، فلا تُسحب القائمة من تحت المركّز (تدقيق
   // 7a66f91، U45). والتركيز الذي تحدثه نقرة على صف (يقفز بالفيديو) لا يوقفه: أول تركيز بعد ضغط المؤشر يُستهلك.
-  let pointer = false;
+  // والضغط المنتهي خارج القائمة لا يعلّق العلم: يسقط بعد ثانية (POINTER_FOCUS_MS) ولو لم يصل pointerup (مراجعة C6).
+  let pointerAt = 0;
   list.addEventListener('pointerdown', () => {
-    pointer = true;
+    pointerAt = Date.now();
   });
   const release = () => win.setTimeout(() => {
-    pointer = false;
+    pointerAt = 0;
   }, 0);
   list.addEventListener('pointerup', release);
   list.addEventListener('pointercancel', release);
   list.addEventListener('focusin', () => {
-    if (pointer) {
-      pointer = false;
+    if (pointerAt && Date.now() - pointerAt < POINTER_FOCUS_MS) {
+      pointerAt = 0;
       return;
     }
     stop();

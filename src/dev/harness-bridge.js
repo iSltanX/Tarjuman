@@ -33,6 +33,9 @@ const OPS = {
   cueText: (n) => hook().controller.getState().arabic?.cues.find((c) => c.n === n)?.text ?? null,
   peek: () => hook().mounted.controls.peek(),
   overlay: () => (hook().mounted.overlay.peek(true)?.lines ?? []).map((l) => l.text),
+  // تدقيق 7a66f91، C6: صناديق أسطر الطبقة (تراكب قائمة التوقيت مع السطر)، وما يُرى في اللوحة (نقاط Tab والمركّز ولون الأصل).
+  overlayBoxes: () => hook().mounted.overlay.peek(true) ?? null,
+  panel: (o) => hook().mounted.panel?.peek?.(o) ?? null,
   diagnostics: () => ({ controls: hook().mounted.controls.diagnostics?.() ?? null, overlay: hook().mounted.overlay.diagnostics?.() ?? null }),
   fonts: () => [...document.fonts].map((f) => ({ family: f.family, weight: String(f.weight), status: f.status })),
   /** حافظة بديلة في العالم المعزول (لا تُمسّ حافظة الجهاز)، تحفظ طول المنسوخ وبصمته. */

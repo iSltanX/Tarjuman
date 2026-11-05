@@ -302,7 +302,8 @@ test('U89: Esc يخفي التلميح والمؤشر فوق الزر أو ال�
   const btn = ui.btn('download');
   btn.dispatchEvent({ type: 'pointerenter' });
   assert.ok(ui.tip());
-  H.key(btn, 'Escape');
+  // المؤشر فوق الزر والتركيز في الصفحة: الضغطة تصل المستند لا الزر.
+  env.doc.dispatchEvent({ type: 'keydown', key: 'Escape' });
   assert.equal(ui.tip(), null, 'Esc والمؤشر فوق الزر');
   btn.dispatchEvent({ type: 'pointerleave' });
   env.win.advance(1000);
@@ -384,4 +385,22 @@ test('U49 (P-11): قائمة التوقيت فوق سطر الترجمة حين 
   H.click(page.ui.btn('badge'), 0);
   await settleN(2);
   assert.equal(menu.style.getPropertyValue('--y'), '60px', 'لا مكان فوق السطر: فوق زرها كما كانت');
+});
+
+test('مراجعة C6: تلميح أُخفي والمؤشر فوقه لا يعلّق إخفاء التلميحات بعده', () => {
+  const page = H.mountPage({ state: H.makeState({ arabic: H.arabic() }) });
+  const { ui, env } = page;
+  const btn = ui.btn('download');
+  const tip = layerRoot(page).querySelector('.tip');
+  btn.dispatchEvent({ type: 'pointerenter' });
+  btn.dispatchEvent({ type: 'pointerleave' });
+  tip.dispatchEvent({ type: 'pointerenter' });
+  env.doc.dispatchEvent({ type: 'keydown', key: 'Escape' }); // يُخفى والمؤشر فوقه: لا pointerleave من مخفي
+  assert.equal(ui.tip(), null);
+  const up = ui.btn('upload');
+  up.dispatchEvent({ type: 'pointerenter' });
+  assert.ok(ui.tip());
+  up.dispatchEvent({ type: 'pointerleave' });
+  env.win.advance(TIP_HIDE_MS + 10);
+  assert.equal(ui.tip(), null, 'يزول بعد المغادرة كالمعتاد');
 });

@@ -368,6 +368,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       layer.showTip(lastModel[kind].tip, group.button(kind));
       return;
     }
+    // تلميح أُخفي والمؤشر فوقه لا يطلق pointerleave: لا يبقى «المؤشر فوق التلميح» عالقًا فيمنع إخفاءه لاحقًا (مراجعة C6).
+    tipHover = false;
     layer.showTip(null, null);
   }
 
@@ -411,6 +413,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     for (const t of toasts) clearTimer(t.id);
     clearTimer('flash');
     clearTimer('preview');
+    clearTimer('tipHide');
+    tipHover = false;
     toasts = [];
     toastActions.clear();
   }
@@ -547,6 +551,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       closeMenu(true);
       return;
     }
+    muteTip();
+  }
+
+  /** يُخفي التلميح الظاهر (والعابر بعد ±) حتى يغادر المؤشر زره أو التركيز (WCAG 1.4.13: يُصرف دون تحريك المؤشر). */
+  function muteTip() {
+    if (!ui.hint && !ui.flash) return;
     if (ui.flash) {
       ui.flash = null;
       clearTimer('flash');
@@ -1144,8 +1154,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (group.owns(path) || layer.owns(path)) return;
     closeMenu(false);
   };
+  // Esc في الصفحة يغلق القائمة المفتوحة، وبلا قائمة يُخفي التلميح الظاهر: المؤشر فوق الزر والتركيز في مكان آخر، فلا تصل الضغطة
+  // إلى الزر نفسه (U89). ولا يُوقف انتشارها: ليوتيوب أن يفعل بها ما يفعل.
   const onDocKey = (ev) => {
-    if (ui.open && ev.key === 'Escape') closeMenu(doc.activeElement === layer.host);
+    if (ev.key !== 'Escape') return;
+    if (ui.open) closeMenu(doc.activeElement === layer.host);
+    else muteTip();
   };
 
   // ———— الموضع والشريط ————
@@ -1259,8 +1273,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         buttons: Object.fromEntries(['download', 'upload', 'panel', 'minus', 'badge', 'plus'].map((k) => {
           const el = group.button(k);
           const shown = !!el.getClientRects?.().length;
-          return [k, { box: shown ? box(el) : null, label: el.getAttribute('aria-label'), tip: lastModel?.[k]?.tip ?? null, description: el.getAttribute('aria-description'), busy: el.getAttribute('aria-busy') === 'true', disabled: el.getAttribute('aria-disabled') === 'true', pressed: el.getAttribute('aria-pressed'), text: k === 'badge' ? el.textContent : null }];
+          return [k, { box: shown ? box(el) : null, label: el.getAttribute('aria-label'), tip: lastModel?.[k]?.tip ?? null, description: el.getAttribute('aria-description'), busy: el.getAttribute('aria-busy') === 'true', disabled: el.getAttribute('aria-disabled') === 'true', pressed: el.getAttribute('aria-pressed'), popup: el.getAttribute('aria-haspopup'), expanded: el.getAttribute('aria-expanded'), text: k === 'badge' ? el.textContent : null }];
         })),
+        focusedKind: group.focused(),
         layer: layer.peek(),
         overflow,
       };

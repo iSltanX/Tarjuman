@@ -151,7 +151,7 @@ export function createLayer({ doc, win, on }) {
     if (avoidLine) {
       const line = stageTop();
       const need = menu.scrollHeight || menu.getBoundingClientRect().height || 0;
-      const fits = (top) => bar.height <= 0 || bar.height - top - EDGE_PX >= need;
+      const fits = (top) => bar.height > 0 && bar.height - top - EDGE_PX >= need;
       if (Number.isFinite(line) && line + GAP_PX > liftY && fits(line + GAP_PX)) liftY = line + GAP_PX;
       if (liftY > y && fits(liftY)) y = liftY;
     }
@@ -234,6 +234,8 @@ export function createLayer({ doc, win, on }) {
 
     /** @param {{ size: string, width: number, height: number, lift: number, hidden: boolean }} b */
     setBar(b) {
+      // تغيّر المشغّل (ملء الشاشة، أو المسرح) والقائمة مفتوحة: يُحسب الرفع من جديد لا بقيمة المشغّل السابق (مراجعة C6).
+      if (b.height !== bar.height || b.size !== bar.size) liftY = 0;
       bar = b;
       if (layer.getAttribute('data-size') !== b.size) layer.setAttribute('data-size', b.size);
       if (toasts.getAttribute('data-size') !== b.size) toasts.setAttribute('data-size', b.size);
@@ -402,6 +404,7 @@ export function createLayer({ doc, win, on }) {
         opacity: win.getComputedStyle ? win.getComputedStyle(layer).opacity : null,
         menu: menu.hasAttribute('hidden') ? null : { label: menu.getAttribute('aria-label'), text: menu.textContent, box: box(menu), items },
         tip: tip.hasAttribute('hidden') ? null : tip.textContent,
+        tipBox: tip.hasAttribute('hidden') ? null : box(tip),
         toasts: [...toasts.children].map((t) => ({ tone: t.getAttribute('data-tone'), text: t.textContent, box: box(t) })),
         focusedFid: root.activeElement?.getAttribute?.('data-fid') ?? null,
         // خط الرسالة وخط القائمة كما يحسبهما المتصفح (U42)، والمنطقة الحية (U48)، والعنصر المركّز داخل الطبقة.

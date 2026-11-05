@@ -177,6 +177,9 @@ export function createGroup({ doc, win, on }) {
       buttons[kind].el.focus();
     },
 
+    /** نوع الزر المركّز داخل المجموعة (للحزام الحي)، أو null. */
+    focused: () => root.activeElement?.getAttribute?.('data-kind') ?? null,
+
     /** هل العقدة (من composedPath) داخل المجموعة؟ @param {EventTarget[]} path */
     owns: (path) => path.includes(host),
 

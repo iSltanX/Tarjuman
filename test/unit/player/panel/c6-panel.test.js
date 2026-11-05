@@ -153,3 +153,33 @@ test('U49 (CL-X2): سطر الحالة نص واحد يُقص بـ«…» داخ
   const rule = panelCss().match(/\.status__text \{[^}]*\}/)?.[0] ?? '';
   for (const d of ['min-width: 0', 'overflow: hidden', 'text-overflow: ellipsis', 'white-space: nowrap']) assert.ok(rule.includes(d), d);
 });
+
+test('مراجعة C6: تحديد باقٍ في الصفحة خارج اللوحة لا يعطّل النقر على نص صف، وتحديد داخلها يعطّله', async () => {
+  const { page, u } = await mounted();
+  const row = u.rows()[1];
+  const elsewhere = page.doc.createElement('p');
+  page.doc.body.appendChild(elsewhere);
+  let anchor = elsewhere;
+  u.list.getRootNode = () => ({ host: u.host, getSelection: () => ({ isCollapsed: false, toString: () => 'نص', anchorNode: anchor }) });
+  page.video.writes.length = 0;
+  P.click(row.querySelector('.ar'));
+  assert.equal(page.video.writes.length, 1, 'تحديد في الصفحة: النقر يقفز');
+  anchor = u.host;
+  P.click(row.querySelector('.ar'));
+  assert.equal(page.video.writes.length, 1, 'تحديد داخل اللوحة (المرساة مضيفها): لا قفز');
+});
+
+test('مراجعة C6: ضغط مؤشر انتهى خارج القائمة لا يمنع إيقاف التتبّع بتركيز لوحة المفاتيح بعد ثانية', async () => {
+  const { u } = await mounted({ arabic: { cues: P.arCues(20), edited: false, fileName: 'x.srt', comparison: null } });
+  const t = u.qa('.t')[3];
+  t.dispatchEvent({ type: 'pointerdown', bubbles: true });
+  const real = Date.now;
+  Date.now = () => real() + 2000;
+  try {
+    t.dispatchEvent({ type: 'focusin', bubbles: true });
+  } finally {
+    Date.now = real;
+  }
+  await flushN(2);
+  assert.equal(u.switchEl.getAttribute('aria-checked'), 'false');
+});

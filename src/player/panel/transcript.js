@@ -58,17 +58,26 @@ export function createTranscript({ doc, onSeek }) {
     if (timeEls[i].getAttribute('tabindex') !== '0') timeEls[i].setAttribute('tabindex', '0');
   }
 
+  /**
+   * هل يحدد المستخدم نصًا داخل القائمة؟ التحديد من الجذر المظلل إن أتاحه المتصفح (Chromium)، وإلا من المستند؛ ومرساته في القائمة أو
+   * مضيفها (يُعاد استهدافها إليه في الجذر المغلق)، فتحديدٌ باقٍ في الصفحة لا يعطّل النقر هنا (مراجعة C6).
+   */
+  function selecting() {
+    const root = list.getRootNode?.();
+    const sel = root?.getSelection?.() ?? doc.getSelection?.();
+    if (!sel || sel.isCollapsed || !String(sel).length) return false;
+    const a = sel.anchorNode ?? null;
+    if (!a || !root?.host) return true;
+    return a === root.host || list.contains(a);
+  }
+
   // النقر على الزمن يقفز دائمًا؛ وعلى نص الصف يقفز إلا إن كان المستخدم يحدد نصًا (سحب أو نقر مزدوج لكلمة؛ U49، L-27).
   list.addEventListener('click', (ev) => {
     const i = rowIndexOf(ev.target);
     if (i < 0 || !cues || i >= cues.length) return;
     const t = timeEls[i];
     const onTime = !!t && (ev.target === t || t.contains?.(ev.target));
-    if (!onTime) {
-      if (ev.detail > 1) return;
-      const sel = doc.getSelection?.();
-      if (sel && !sel.isCollapsed && String(sel).length) return;
-    }
+    if (!onTime && (ev.detail > 1 || selecting())) return;
     onSeek(seekMs(i));
   });
   list.addEventListener('keydown', (ev) => {
@@ -105,6 +114,8 @@ export function createTranscript({ doc, onSeek }) {
     pastRank = 0;
     lastFraction = -1;
     tabRow = 0;
+    // الصف المركّز أُزيل (Firefox لا يطلق focusout عند الإزالة): لا يبقى «التركيز داخل القائمة» معلّقًا.
+    focusInside = false;
     generation++;
   }
 

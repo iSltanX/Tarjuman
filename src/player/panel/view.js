@@ -433,6 +433,22 @@ export function createPanelView({ doc, win, on }) {
     host.remove();
   }
 
+  /** أين التركيز داخل اللوحة (للحزام الحي): صف القائمة برقمه، أو منطقة اللوحة، أو null. */
+  function focusInfo() {
+    const f = root.activeElement ?? null;
+    if (!f) return null;
+    let row = null;
+    for (let n = f; n && n !== shell; n = n.parentNode) {
+      const i = n.getAttribute?.('data-i');
+      if (i !== null && i !== undefined) {
+        row = Number(i);
+        break;
+      }
+    }
+    const area = [['list', transcript.list], ['foot', foot], ['bar', bar], ['head', head], ['toast', toast]].find(([, e]) => e.contains(f))?.[0] ?? null;
+    return { row, area, cls: f.className ?? null };
+  }
+
   /**
    * لقطة نصية لما يُرى (للحزام الحي والاختبارات): عدّادات ونصوص الواجهة، لا نصوص المقاطع.
    * @param {{ boxes?: boolean, rows?: number[] }} [o] boxes: مواضع الأزرار وصفوف rows (للحزام الحي يضغطها بنقرة حقيقية داخل الجذر المغلق)
@@ -467,9 +483,14 @@ export function createPanelView({ doc, win, on }) {
       error: err.hasAttribute('hidden') ? null : errText.textContent,
       inlineError: inlineError.hasAttribute('hidden') ? null : inlineText.textContent,
       actionError: actionErr.hasAttribute('hidden') ? null : actionText.textContent,
-      // للحزام الحي: نقاط Tab في القائمة، ولغة الجذر.
+      // للحزام الحي: نقاط Tab في القائمة، ولغة الجذر، والمركّز (صفه أو منطقته)، ولون الأصل في الصف الحالي كما يحسبه المتصفح.
       tabStops: Array.from(transcript.list.querySelectorAll('.t')).filter((b) => b.getAttribute('tabindex') !== '-1').length,
       lang: shell.getAttribute('lang'),
+      focused: focusInfo(),
+      curEn: (() => {
+        const en = transcript.current >= 0 ? transcript.rowEl(transcript.current)?.querySelector('.en') : null;
+        return en && win.getComputedStyle ? { color: win.getComputedStyle(en).color, lang: en.getAttribute('lang'), back: win.getComputedStyle(transcript.rowEl(transcript.current)).backgroundColor } : null;
+      })(),
       toast: toast.hasAttribute('hidden') ? null : toast.textContent,
       menu: menuOpen,
       boxes: !o.boxes ? undefined : {
