@@ -113,8 +113,9 @@ export async function sendReport(payload, key, { granted, request = pageFetch, t
       signal: controller.signal,
     });
     const outcome = await classify(response);
-    // انقضت المهلة أثناء قراءة الجسم: «لم يردّ في الوقت» (وإن استلمه أعاد رقمه نفسه)، لا «ردّ بما لا يُفهم» (U85).
-    if (!outcome.ok && timedOut) return { ok: false, failure: 'timeout', status: null };
+    // انقضت المهلة أثناء قراءة الجسم: «لم يردّ في الوقت» (وإن استلمه أعاد رقمه نفسه)، لا «ردّ بما لا يُفهم» (U85). وحدها النتيجة
+    // التي سببها جسم لم يُقرأ؛ ورد نهائي بحالته (400 أو 413 مثلًا) يبقى كما هو فلا يُعاد بلا جدوى.
+    if (!outcome.ok && outcome.failure === 'unexpected' && timedOut) return { ok: false, failure: 'timeout', status: null };
     return outcome;
   } catch {
     return { ok: false, failure: timedOut ? 'timeout' : 'network', status: null };

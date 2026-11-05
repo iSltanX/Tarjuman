@@ -4,7 +4,7 @@
 // الإعدادات والقاموس» غير مختارة، ورابط «نزّل نسخة من بياناتك الحالية أولًا». ثم تقدم ظاهر وتقرير بما أضيف وما تُخطّي وما
 // استُبدل وما تعذّر، مع «أعد المحاولة» لما تعذّر وحده. لا يدخل شيء من محتوى النسخة التشخيص ولا السجلات.
 import {
-  createBackup, mergeReports, planRestore, readBackup, reportCode, restoreItems, retryItems, retrySettings, runRestore, settingsFailureCode, yieldToPage,
+  BACKUP_LIMITS, createBackup, mergeReports, planRestore, readBackup, reportCode, restoreItems, retryItems, retrySettings, runRestore, settingsFailureCode, yieldToPage,
 } from '../../core/backup/index.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { alertBox, button, el, statusPill } from '../../ui/components.js';
@@ -123,7 +123,7 @@ export function dataControl(env) {
     } else {
       // «صدّره من المحفوظات» (SV_TOO_LARGE) لا معنى له هنا: المحفوظات لا تنشئ نسخًا (U55).
       const code = saved.code === 'SV_TOO_LARGE' ? 'BK_CREATE_TOO_LARGE' : saved.code;
-      const sizes = { size: `${Math.ceil((built.bytes ?? 0) / (1024 * 1024))} م.ب`, max: '512 م.ب' };
+      const sizes = { size: `${Math.ceil((built.bytes ?? 0) / (1024 * 1024))} م.ب`, max: `${Math.round(BACKUP_LIMITS.maxBytes / (1024 * 1024))} م.ب` };
       kids.push(alertBox({ tone: code === 'SV_CANCELLED' ? 'info' : 'danger', text: messageFor(code, sizes), doc }));
     }
     // نسخة جزئية بعينها (U94، Q29): ما استُبعد من كل فيديو، والأصل التالف باقٍ.

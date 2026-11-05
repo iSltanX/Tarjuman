@@ -341,10 +341,14 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     if (blockedReason()) return;
     const body = serialise(buildPayload({ kind, description: text }, diag));
     const during = busy;
-    Promise.resolve().then(() => deps.copy(body)).then(
-      () => { if (during && busy) copiedWhileBusy = 'copied'; else outcome = { state: 'copied' }; render(); },
-      () => { if (during && busy) copiedWhileBusy = 'copy-failed'; else outcome = { state: 'copy-failed' }; render(); },
-    );
+    // يُحسم بحال الإرسال لحظة انتهاء النسخ: نسخٌ بدأ أثناء الإرسال وانتهى بعده لا يكتب فوق نتيجة الإرسال (رقم البلاغ أو سبب
+    // فشله؛ ملاحظة المراجعة المستقلة)، وأثناءه يُقال تحت «يُرسل البلاغ…».
+    const settle = (state) => {
+      if (busy) copiedWhileBusy = state;
+      else if (!during) outcome = { state };
+      render();
+    };
+    Promise.resolve().then(() => deps.copy(body)).then(() => settle('copied'), () => settle('copy-failed'));
   }
 
   render();

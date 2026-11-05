@@ -281,3 +281,32 @@ test('U87: اسم كل مفتاح في «العرض» يبدأ بتسمية صف
   const names = switches.map((s) => s.getAttribute('aria-labelledby').split(' ').map((id) => textOf(m.doc.getElementById(id))).join('، '));
   assert.ok(names.some((n) => n.startsWith('لوحة النص المتزامن، ')), names.join(' | '));
 });
+
+test('U59 (المراجعة المستقلة): نسخٌ بدأ أثناء الإرسال وانتهى بعده لا يكتب فوق نتيجة الإرسال', async () => {
+  let finishSend;
+  let finishCopy;
+  const doc = newDocument();
+  const panel = reportPanel({
+    doc,
+    env: {
+      diagnostics: async () => DIAG, requestPermission: () => Promise.resolve(true),
+      send: () => new Promise((r) => { finishSend = r; }), copy: () => new Promise((r) => { finishCopy = r; }),
+      newKey: () => '00000001-0000-4000-8000-000000000000',
+    },
+  });
+  doc.body.append(panel.root);
+  panel.open();
+  await settle();
+  const ta = panel.root.querySelector('textarea');
+  ta.value = 'وصف';
+  ta.dispatchEvent({ type: 'input' });
+  buttonNamed(panel.root, 'أرسل البلاغ').click();
+  await settle(3);
+  buttonNamed(panel.root, 'انسخ البلاغ').click();
+  await settle(3);
+  finishSend({ ok: true, id: 9, replayed: false });
+  await settle(3);
+  finishCopy();
+  await settle(3);
+  assert.match(textOf(panel.root.querySelector('.st-report__result')), /#9/, 'رقم البلاغ باقٍ');
+});

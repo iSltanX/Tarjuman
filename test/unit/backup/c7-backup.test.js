@@ -201,3 +201,13 @@ test('U85: انقضاء المهلة أثناء قراءة جسم الرد «tim
   const r = await sendReport({}, key, { granted: async () => true, request, timeoutMs: 20 });
   assert.deepEqual(r, { ok: false, failure: 'timeout', status: null });
 });
+
+test('U85 (المراجعة المستقلة): رد نهائي غير قابل للإعادة يبقى كما هو ولو انقضت المهلة بعده', async () => {
+  const key = '123e4567-e89b-42d3-a456-426614174000';
+  const request = async (_url, init) => {
+    await new Promise((r) => init.signal.addEventListener('abort', r));
+    return { status: 413, headers: { get: () => null }, json: async () => ({}) };
+  };
+  const r = await sendReport({}, key, { granted: async () => true, request, timeoutMs: 10 });
+  assert.equal(r.failure, 'too-large');
+});

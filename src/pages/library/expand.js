@@ -71,7 +71,8 @@ export function createExpansion(env) {
   /** رقم البطاقة التي فيها التركيز الآن (لبدائله إن زال عنصره). */
   const focusedSlot = () => {
     for (let n = doc.activeElement; n && n !== root; n = n.parentNode) {
-      if (n.tagName === 'section' && n.hasAttribute?.('data-slot')) return Number(n.getAttribute('data-slot'));
+      // الوسم بلا اعتبار لحالة الأحرف: tagName في المتصفح «SECTION» وفي الـDOM الوهمي «section» (ملاحظة المراجعة المستقلة).
+      if (String(n.tagName).toLowerCase() === 'section' && n.hasAttribute?.('data-slot')) return Number(n.getAttribute('data-slot'));
     }
     return null;
   };

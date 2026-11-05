@@ -340,3 +340,17 @@ test('U76: حوار الرفع إلى خانة ممتلئة يحذّر من مح
   await settle(20);
   assert.equal(textOf(n.confirms.at(-1).content).includes('تحل الترجمة المستبدلة'), false);
 });
+
+test('U50 (المراجعة المستقلة): بديل «البطاقة المجاورة» يعمل وtagName بحروف كبيرة كما في المتصفح', async () => {
+  const m = await mount();
+  await expand(m, IDS[0]);
+  const del = buttonNamed(cardOf(m, IDS[0], 3), 'حذف…');
+  // في المتصفح tagName للعنصر «SECTION»؛ والـDOM الوهمي يخفضها، فتُرفع هنا للبطاقات القائمة قبل الفعل.
+  for (const sec of rowFor(m, IDS[0]).querySelectorAll('.lib-exp section[data-slot]')) Object.defineProperty(sec, 'tagName', { value: 'SECTION' });
+  m.answers.push(true);
+  press(del);
+  await quiesce(m);
+  // الخانة 3 صارت البطاقة الفارغة: أول عنصر في بطاقة الخانة نفسها («رفع ترجمة…»)، لا أول عنصر في التوسيع (card-1:rename) كما كان
+  // يحدث في المتصفح حين لا تُعرف البطاقة.
+  assert.equal(fkOf(m.doc.activeElement), `${IDS[0]}:empty:upload`);
+});
