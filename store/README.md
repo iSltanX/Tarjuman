@@ -141,7 +141,7 @@
 
 | الحقل | مطلوب؟ | الحد أو المقاس | ترجمان | المصدر |
 | --- | --- | --- | --- | --- |
-| حساب Mozilla واتفاقية التوزيع | مطلوبان | الاتفاقية المحدّثة تُقبل عند الطلب ابتداءً من 2026-12-01 | سلطان بيده | [distribution agreement](https://extensionworkshop.com/documentation/publish/firefox-add-on-distribution-agreement/) |
+| حساب Mozilla واتفاقية التوزيع | مطلوبان | التحقق بخطوتين إلزامي للدخول إلى حساب المطوّر منذ 2021-03-15. والاتفاقية السارية نسخة 2021-12-01، والمحدّثة تسري في 2026-12-01، و«الاستمرار في التوزيع بعد السريان قبول لها» بنصها، بلا خطوة قبول منفصلة (مراجعة 2026-11-05) | سلطان بيده | [distribution agreement](https://extensionworkshop.com/documentation/publish/firefox-add-on-distribution-agreement/)، [2FA](https://blog.mozilla.org/addons/2021/03/11/two-factor-authentication-required-for-extension-developers/) |
 | ملف الإضافة | مطلوب | zip أو xpi حتى 200MB. وبلا `gecko_android` يُتاح لسطح المكتب وحده | T2 وT4 | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
 | `browser_specific_settings.gecko.id` | لازم للتوقيع في MV3 | نص شبيه بالبريد حتى 80 محرفًا، أو GUID. و`tarjuman@bysltan.com` يطابق الصيغة | معتمد، ويربط الإدراج وتحديثاته. T2 | [MDN browser_specific_settings](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings) |
 | `data_collection_permissions` | إلزامي لكل إضافة جديدة منذ 2025-11-03 | `required: ["none"]` إن لم يُجمع شيء دون موافقة، و`technicalAndInteraction` لا يكون إلا اختياريًا | T2 وT2.1، ويحكم T5 في الصور | [firefox-builtin-data-consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) |
@@ -257,6 +257,8 @@
   - [Trader disclosure](https://developer.chrome.com/docs/webstore/program-policies/trader-disclosure) (2024-02-09)
   - [Branding](https://developer.chrome.com/docs/webstore/branding)
   - [بلاغ الرفض](https://groups.google.com/a/chromium.org/g/chromium-extensions/c/K17UE-7Bjgs) (2026-03-12)
+  - [Policy updates 2026](https://developer.chrome.com/blog/cws-policy-updates-2026) (نُشر 2026-07-01، قُرئ 2026-11-05): ما يُجمع من بيانات يلزم الغرض الواحد وحده، وكل جمع يُفصَح عنه للمستخدم إفصاحًا بارزًا، ويُبلَّغ المستخدم إن تغيّرت ممارسات البيانات بعد التثبيت. وترجمان لا يجمع شيئًا إلا البلاغ الذي يرسله المستخدم بعد معاينته، وصور المحفوظات طلب إلى يوتيوب لا جمع لدى المطوّر، وكلاهما مذكور في الإدراج والسياسة وإجابات §٤ من `submission.md`
+  - [Review updates 2026](https://developer.chrome.com/blog/cws-review-updates-2026) (2026-08-20، قُرئ 2026-11-05): اختبار تثبيت آلي عند رفع الحزمة، وإيقاف شارة «Featured» لاحقًا في 2026، فسوابق «Featured» في §١ استئناس يضعف
   - [Transcript for YouTube™](https://chromewebstore.google.com/detail/mjmghnkcbdmdbkolinkcbapglcinoahd)
 - **Microsoft Edge Add-ons:**
   - [Developer policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (ms.date 2026-07-24)
@@ -317,7 +319,7 @@
 | Edge | Category | `listing.ar.md` «الفئة» |
 | Edge | Privacy policy URL | `submission.md` §٥ (T7) |
 | Edge | Single purpose والأذونات والشيفرة البعيدة وData usage | `submission.md` §١ إلى §٤ |
-| Edge | Description (250 إلى 10,000) | `chromium.description` (2,369 محرفًا، بلا ذكر متصفح آخر) |
+| Edge | Description (250 إلى 10,000) | `chromium.description` (2,387 محرفًا بعد نصوص C1 في تدقيق 7a66f91، بلا ذكر متصفح آخر) |
 | Edge | Extension logo | `icons/edge-logo-300.png` |
 | Edge | الاسم والوصف القصير | من البيان |
 | Edge | خطوات الاختبار (البند 1.3) | `reviewer.chrome` و`reviewer.edge` في `reviewers.en.md` |
