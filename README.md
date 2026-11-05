@@ -29,7 +29,6 @@
 
 لا نموذج مدمج، ولا مفتاح API، ولا حساب، ولا خادم ترجمة، ولا تنزيل للفيديو أو الصوت.
 
-> [!NOTE]
 > **الحالة:** الإصدار `1.1.0` مجهّز للرفع إلى Chrome Web Store وMicrosoft Edge Add-ons وFirefox Add-ons، ولم يُنشر في أي متجر بعد. وحتى نشره يُثبَّت من الشيفرة كما في [التثبيت](#التثبيت).
 
 ## كيف يعمل
@@ -71,7 +70,7 @@
   </tr>
 </table>
 
-<sub>لقطات حقيقية من الإصدار 1.1.0 في Chrome، وهي لقطات المتاجر نفسها في <a href="store/screenshots/"><code>store/screenshots/</code></a>. الفيلم Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0.</sub>
+<sub>لقطات حقيقية من الإصدار 1.1.0 في Chrome، وهي لقطات المتاجر نفسها في <a href="store/screenshots/"><code>store/screenshots</code></a>. الفيلم Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0.</sub>
 
 ## المتصفحات المدعومة
 
@@ -99,10 +98,10 @@ npm run package
 
 </div>
 
-يبني الأمر الحزم ويدقّقها: مجلد الإضافة في `release/tarjuman-1.1.0/`، وحزم المتاجر في `release/store/`.
+يبني الأمر الحزم ويدقّقها: مجلد الإضافة في `release/tarjuman-1.1.0`، وحزم المتاجر في `release/store`.
 
-- **Chrome وEdge وBrave:** انسخ `release/tarjuman-1.1.0/` إلى مجلد ثابت لا تنقله، ثم افتح صفحة الإضافات (`chrome://extensions` أو `edge://extensions` أو `brave://extensions`)، وفعّل «وضع المطوّر»، واضغط «تحميل غير معبأ» واختر المجلد. المتصفح يشتق معرّف الإضافة من مسار المجلد، والمحفوظات مربوطة به.
-- **Firefox:** افتح `about:debugging#/runtime/this-firefox`، واضغط «تحميل إضافة مؤقتة» واختر `release/store/tarjuman-1.1.0-firefox.zip`. تُزال الإضافة المؤقتة عند إغلاق Firefox، فخذ نسخة احتياطية قبل الإغلاق.
+- **في Chrome وEdge وBrave:** انسخ `release/tarjuman-1.1.0` إلى مجلد ثابت لا تنقله، ثم افتح صفحة الإضافات (`chrome://extensions` أو `edge://extensions` أو `brave://extensions`)، وفعّل «وضع المطوّر»، واضغط «تحميل غير معبأ» واختر المجلد. المتصفح يشتق معرّف الإضافة من مسار المجلد، والمحفوظات مربوطة به.
+- **في Firefox:** افتح `about:debugging#/runtime/this-firefox`، واضغط «تحميل إضافة مؤقتة» واختر `release/store/tarjuman-1.1.0-firefox.zip`. تُزال الإضافة المؤقتة عند إغلاق Firefox، فخذ نسخة احتياطية قبل الإغلاق.
 
 التفصيل في [دليل الاستخدام](docs/user-guide.md) §١، ومعه الأذونات والدورة الكاملة وحل المشكلات.
 
@@ -141,8 +140,8 @@ npm run package
 
 | الأمر | ما يفعله |
 | --- | --- |
-| `npm run build` | يبني نسخة Chromium في `dist/`. |
-| `npm run build:firefox` | يبني نسخة Firefox في `dist-firefox/`. |
+| `npm run build` | يبني نسخة Chromium في `dist`. |
+| `npm run build:firefox` | يبني نسخة Firefox في `dist-firefox`. |
 | `npm test` | اختبارات الوحدة. |
 | `npm run check` | الفحص الثابت والأسرار والإشعارات والخصوصية ومواد المتاجر والوحدة والبناءان. |
 | `npm run check:wave` | ما سبق مع التكامل و`web-ext lint` وفحص الخطة. |
@@ -151,13 +150,13 @@ npm run package
 
 | المجلد | ما فيه |
 | --- | --- |
-| [`src/`](src/) | شيفرة الإضافة: البيان، والعامل الخلفي، وسكربتا المحتوى، والمشغّل، والصفحات، والواجهة المشتركة. |
-| [`test/`](test/) | اختبارات الوحدة والتكامل وe2e، والاختبارات الحية بلا نافذة في `test/live/`. |
-| [`scripts/`](scripts/) | البناء وطبقة Firefox والفحوص والتغليف وتدقيق الحزم. |
-| [`store/`](store/README.md) | مواد المتاجر: النصوص والأيقونات والبلاطات واللقطات وإجابات نماذج التقديم. |
-| [`docs/`](docs/README.md) | المواصفة والعقود والمراحل والموجات والأدلة والتدقيقات ودليلا الاستخدام والصيانة. |
-| [`tools/`](tools/) | أدوات لوحة الخطة، ومولّد صور هذا الملف (`tools/readme-assets/`). |
-| [`plan/`](plan/) و[`dashboard/`](dashboard/) | الخطة الآلية ولوحتها. |
+| [`src`](src/) | شيفرة الإضافة: البيان، والعامل الخلفي، وسكربتا المحتوى، والمشغّل، والصفحات، والواجهة المشتركة. |
+| [`test`](test/) | اختبارات الوحدة والتكامل وe2e، والاختبارات الحية بلا نافذة في `test/live`. |
+| [`scripts`](scripts/) | البناء وطبقة Firefox والفحوص والتغليف وتدقيق الحزم. |
+| [`store`](store/README.md) | مواد المتاجر: النصوص والأيقونات والبلاطات واللقطات وإجابات نماذج التقديم. |
+| [`docs`](docs/README.md) | المواصفة والعقود والمراحل والموجات والأدلة والتدقيقات ودليلا الاستخدام والصيانة. |
+| [`tools`](tools/) | أدوات لوحة الخطة، ومولّد صور هذا الملف (`tools/readme-assets`). |
+| [`plan`](plan/) و[`dashboard`](dashboard/) | الخطة الآلية ولوحتها. |
 
 فهرس الوثائق في [`docs/README.md`](docs/README.md)، والصيانة والإصدار في [`docs/maintenance.md`](docs/maintenance.md)، والقيود المعروفة في [`docs/known-limitations.md`](docs/known-limitations.md).
 
@@ -171,6 +170,6 @@ npm run package
 
 جميع الحقوق محفوظة © 2026 سلطان ([BySultan](https://bysltan.com)). ترجمان غير مطروح بأي ترخيص مفتوح المصدر، والتفصيل في [`LICENSE`](LICENSE). والخطوط المضمّنة (OFL 1.1) والأيقونات (Lucide برخصة ISC) لأصحابها، ونسبتها في [`THIRD_PARTY_NOTICES.txt`](THIRD_PARTY_NOTICES.txt).
 
-YouTube علامة تجارية لشركة Google LLC. وترجمان لا صلة له بيوتيوب ولا بـGoogle، ولا يحظى بتأييدهما.
+يوتيوب (YouTube) علامة تجارية لشركة Google LLC. وترجمان لا صلة له بيوتيوب ولا بـGoogle، ولا يحظى بتأييدهما.
 
 </div>
