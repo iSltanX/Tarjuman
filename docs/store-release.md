@@ -82,7 +82,7 @@
 ### T2: هدف Firefox وحزمة Edge
 يعتمد على: T1.
 - Edge يستعمل بناء Chromium نفسه، ولا فرع له إلا بفرق يثبته الاختبار.
-- Firefox هدف بناء ثانٍ بأصغر طبقة فوق البيان: `background.scripts`، و`browser_specific_settings.gecko` بالمعرّف `tarjuman@bysltan.com`، و`strict_min_version` لا يقل عن 140.0، و`data_collection_permissions`، وبلا `gecko_android`.
+- Firefox هدف بناء ثانٍ بأصغر طبقة فوق البيان: `background.scripts`، و`browser_specific_settings.gecko` بالمعرّف `tarjuman@bysltan.com`، و`strict_min_version` لا يقل عن 140.0 (ورُفع إلى 144.0 في تدقيق 7a66f91، قرار Q08)، و`data_collection_permissions`، وبلا `gecko_android`.
 - وسّع `check-static.mjs` و`audit.mjs` والاختبارات لتغطي الهدفين بالصرامة نفسها.
 - الانتهاء: `npm run check:wave` أخضر، و`web-ext lint` بلا أخطاء، و`npm run build` و`dist/` واختبار الرجوع إلى `tj-v1` كما كانت.
 

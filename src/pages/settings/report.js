@@ -129,7 +129,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
             children: [el('summary', { className: 'st-details__summary', text: 'نص البلاغ كاملًا كما سيُرسل', doc }), json],
             doc,
           }),
-          el('p', { className: 'tj-caption', text: 'لا يُرفق نص ترجمة، ولا معرّف فيديو أو عنوانه أو رابطه، ولا معرّف لك أو لجهازك. رقم البلاغ مرجعك الوحيد.', doc }),
+          el('p', { className: 'tj-caption', text: 'لا يُرفق تلقائيًا نص ترجمة، ولا معرّف فيديو أو عنوانه أو رابطه، ولا حساب. ويضيف المتصفح ما يضيفه إلى أي طلب، ومنه عنوان الإضافة. رقم البلاغ مرجعك الوحيد.', doc }),
           el('p', { className: 'tj-caption st-report__permission', doc }),
         ],
         doc,

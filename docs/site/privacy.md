@@ -43,7 +43,7 @@
   - تُحفظ في مجلد التنزيلات، أو مجلد فرعي داخله، أو حيث تختار عند كل تنزيل، بحسب إعدادك.
   - اسم الملف يحمل معرّف الفيديو، مثل `iG9CE55wbtY.en.manual.normal.srt`.
   - هي ملفات على جهازك، تبقى بعد إزالة الإضافة حتى تحذفها أنت.
-- **النسخة الاحتياطية:** ملف JSON فيه محفوظاتك كلها وإعداداتك وقاموسك. فيه ترجماتك وعناوين الفيديوهات، فاحفظه حيث تأمنه.
+- **النسخة الاحتياطية:** ملف JSON فيه محفوظاتك كلها وإعداداتك وقاموسك. فيه ترجماتك وعناوين الفيديوهات، فاحفظه حيث تأمنه. وإن أطفأت «صور الفيديو في المحفوظات» حملت النسخة ذلك، فتبقى مطفأة حيث تستعيدها.
 - **إذن التنزيلات:** يحفظ به ترجمان ملفاته وحدها، ويستعلم عنها بمعرّفاتها. لا يقرأ تنزيلاتك الأخرى، ولا يفتحها، ولا يحذفها.
 - **الحافظة:** لا يكتب فيها ترجمان إلا حين تضغط زر نسخ، ولا يقرأ منها أبدًا.
 - **تقارير التشخيص** («نسخ تشخيص الصفحة» و«نسخ تقرير التشخيص»): فيها الإصدار، والمتصفح، وأحجام، وأعداد، ورموز أخطاء. لا عناوين، ولا معرّفات فيديو، ولا نصوص، ولا روابط. تُنسخ إلى الحافظة وحدها ولا تُرسل.
@@ -65,7 +65,7 @@
 - **ما يُرسل، وإلى من:**
   - يحمّل المتصفح صورة كل فيديو محفوظ يظهر لك في القائمة من `i.ytimg.com`، وهي خوادم يوتيوب، بمعرّف الفيديو، كما يحمّل أي صورة على الويب.
   - فترى يوتيوب معرّفات الفيديوهات التي في محفوظاتك، ومعها ما يصلها مع أي طلب صورة، كعنوان IP ونوع المتصفح. ولا يُرسل معها عنوان الصفحة التي طلبتها.
-- **كيف توقفه:** الإعدادات ← «العرض» ← أطفئ «صور الفيديو في المحفوظات». فتظهر أيقونة بدل الصورة، ولا يُطلب شيء.
+- **كيف توقفه:** الإعدادات ← «العرض» ← أطفئ «صور الفيديو في المحفوظات». فتظهر أيقونة بدل الصورة، ولا يُطلب شيء. ويبقى الإطفاء بعد «مسح كل البيانات».
 - لا يحفظ ترجمان الصور. يحتفظ بها المتصفح في ذاكرته المؤقتة كأي صورة.
 
 ### خادم البلاغات، حين ترسل بلاغًا — `#report`
@@ -80,10 +80,14 @@
   - إصدار ترجمان، واسم المتصفح وإصداره، وحزمة البناء (Chromium أو Firefox).
   - النظام وإصداره ومعماره، ولغة الواجهة (العربية).
   - وترى ذلك كله قبل الإرسال.
-- **ما لا يحويه:**
+- **ما لا يُرفق تلقائيًا:**
   - لا نص ترجمة، ولا معرّف فيديو أو عنوانه أو رابطه، ولا شيء من محفوظاتك، ولا مرفقات.
-  - لا معرّف لك أو لجهازك. ومفتاح منع التكرار رقم عشوائي لكل بلاغ، لا يعرّفك.
-  - وتنبّهك الصفحة إن بدا في وصفك ما يشبه رمز جلسة أو ملف ارتباط.
+  - ولا حساب ولا معرّف يضعه ترجمان لك. ومفتاح منع التكرار رقم عشوائي لكل بلاغ، لا يعرّفك.
+- **وصفك كما كتبته:** يُرسل الوصف حرفيًا، فإن كتبت فيه رابطًا أو معرّف فيديو أو بريدًا أُرسل معه. وتذكّرك الصفحة إن بدا فيه شيء من ذلك، وتمنع الإرسال والنسخ حتى تزيل ما يشبه رمز جلسة أو ملف ارتباط.
+- **ما يضيفه المتصفح إلى الطلب:**
+  - نوعه وإصداره ونظامه (`User-Agent`)، ولغاته المفضلة (`Accept-Language`)، وفي Chrome وEdge وBrave تلميحات المتصفح (`Sec-CH-UA`).
+  - وترويسة الأصل (`Origin`) بعنوان الإضافة: في Chrome وEdge وBrave معرّف ترجمان نفسه، وهو واحد لكل من يثبّته؛ وفي Firefox معرّف عشوائي يولّده Firefox لتثبيت ترجمان في ملفك الشخصي، ويبقى حتى تزيل الإضافة.
+  - ولا يُرسل ملف ارتباط ولا عنوان الصفحة.
 - **الوجهة:** يستقبل البلاغَ عاملٌ على Cloudflare، فيفتحه مشكلةً (issue) في مستودع خاص على GitHub يطّلع عليه مطوّر ترجمان. ولا يُنشر البلاغ.
 - **حدود الخادم:**
   - خمسة بلاغات في الساعة لكل عنوان IP، ومئة في اليوم لكل التطبيقات معًا.
@@ -177,18 +181,19 @@
 | ما يُحفظ | لا روابط ولا رموز ولا ملفات ارتباط | `src/core/diagnostics/sanitize.js` (`findSecrets` و`sanitizeText`)، و`docs/contracts/extraction.md`، و`scripts/check-secrets.mjs` على العيّنات والأدلة |
 | الملفات | مكان الحفظ الثلاثي | `src/core/save/index.js`، و`docs/contracts/interfaces.md` §١٣، و`docs/user-guide.md` §٧ |
 | الملفات | اسم الملف بمعرّف الفيديو | `src/core/export/names.js`، و`docs/contracts/data-model.md` §٤ (`fileName`) |
-| الملفات | النسخة الاحتياطية بمحتواها | `docs/contracts/backup.md`؛ T3: «النسخة الاحتياطية» و«الاستعادة بعد إعادة التثبيت» |
+| الملفات | النسخة الاحتياطية بمحتواها، وتحمل إطفاء الصور | `docs/contracts/backup.md` (§٦: `thumbnailsOff`)؛ T3: «النسخة الاحتياطية» و«الاستعادة بعد إعادة التثبيت»؛ و`test/unit/backup/thumbnails-off.test.js` (تدقيق 7a66f91، U05) |
 | الملفات | التنزيلات محصورة في ملفات ترجمان | `scripts/release/audit.mjs` (التنزيلات في `download` و`search` وحدهما)، و`docs/contracts/interfaces.md` §١٣ |
 | الملفات | الحافظة عند الضغط ولا قراءة | لا `clipboard.read` ولا `readText` في `src/`؛ الكتابة من أزرار النسخ (`src/pages/settings/report.js` و`src/player/controls/` و`src/pages/popup/`) |
 | الملفات | التشخيص بلا عناوين ولا نصوص | `src/core/diagnostics/`، و`docs/known-limitations.md` §٧ |
 | يوتيوب | لا طلب جديد | `src/main-world/capture.js` (يقرأ رد طلب المشغّل)؛ `audit.mjs`: لا طلب شبكة في سكربتي المحتوى وعالم الصفحة |
 | الصور | من `i.ytimg.com` بالمعرّف، كأي صورة، لما يظهر في القائمة، وبلا عنوان الصفحة | `src/pages/library/thumb.js` (`<img>` وحده، بلا fetch ولا XHR)، و`test/unit/pages/library/thumb.test.js` (السمات lazy وno-referrer) |
-| الصور | Firefox: مطفأة حتى الموافقة، والتفعيل يطلبها، والرفض يبقيها مطفأة، والسحب يوقفها | `src/core/consent/thumbnails.js` (`requestThumbnailsConsent` بفئة `browsingActivity`، و`thumbnailsConsent` من `permissions.getAll`)، و`scripts/targets.mjs` (`optional` فيه `browsingActivity`)، و`test/unit/consent/thumbnails.test.js` و`test/unit/pages/settings/ui-prefs.test.js` و`test/unit/pages/library/row.test.js` (حالات Firefox)؛ والسحب من صفحة الإضافات: [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) |
+| الصور | Firefox: مطفأة حتى الموافقة، والتفعيل يطلبها، والرفض يبقيها مطفأة، والسحب يوقفها | `src/core/consent/thumbnails.js` (`requestThumbnailsConsent` بفئة `browsingActivity`، و`thumbnailsConsent` من `permissions.getAll`)، و`scripts/targets.mjs` (`optional` فيه `browsingActivity`)، و`test/unit/consent/thumbnails.test.js` و`test/unit/pages/settings/ui-prefs.test.js` و`test/unit/pages/library/row.test.js` (حالات Firefox)؛ والسحب من صفحة الإضافات: [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/)؛ والسحب والصفحة مفتوحة: `test/unit/pages/library/consent-capacity.test.js`، وحيًا في Firefox 159 صفر طلبات بعده (`docs/audit-7a66f91/live/C1/firefox-run2-consent.json`، تدقيق 7a66f91، U01) |
 | الصور | الإطفاء يوقف الطلب | `test/unit/pages/library/thumb.test.js` («مُطفأة: بلاطة بأيقونة الفيديو ولا img ولا أي عنوان صورة»)، و`test/unit/pages/settings/no-network.test.js` (الاستثناء في `thumb.js` وحده) |
 | البلاغ | متى، وطلب واحد بلا إعادة | `src/core/report/client.js` (`sendReport`)، و`src/pages/settings/report.js` |
 | البلاغ | الإذن الاختياري وموافقة Firefox، وعرض «البيانات التقنية والتفاعل» في نافذة التثبيت | `src/manifest.json` (`optional_host_permissions`)، و`scripts/targets.mjs` (`data_collection_permissions.optional`)، و`src/core/report/client.js` (`reportPermissions`)؛ T3: «طلب الإذن الاختياري الحقيقي في Chrome وFirefox»؛ ونافذة التثبيت: [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) («This choice is available in the optional settings section of the extension installation prompt») |
 | البلاغ | ما يحويه | `src/core/report/payload.js` (`buildPayload` و`diagnosticsOf`)، و`src/core/report/diagnostics.js`؛ T3: المعاينة «بحقول العقد وهدف البناء» |
-| البلاغ | ما لا يحويه، والتنبيه، ومفتاح التكرار | `src/core/report/payload.js` (لا حقل لها)، و`src/pages/settings/report.js` (التنبيه)، و`src/core/report/client.js` (`isIdempotencyKey`: UUID عشوائي) |
+| البلاغ | ما لا يُرفق تلقائيًا، والوصف حرفيًا مع التذكير والمنع، ومفتاح التكرار | `src/core/report/payload.js` (لا حقل لها)، و`src/core/report/personal.js` (التذكير غير المانع)، و`src/core/diagnostics/sanitize.js` و`src/pages/settings/report.js` (المنع)، و`src/core/report/client.js` (`isIdempotencyKey`: UUID عشوائي)؛ و`test/unit/report/personal-secrets.test.js` (تدقيق 7a66f91، U84) |
+| البلاغ | ما يضيفه المتصفح، ومعرّف تثبيت Firefox في `Origin` | حيًا (تدقيق 7a66f91، I14): Firefox 159 باعتراض BiDi قبل الخروج (`docs/audit-7a66f91/live/C1/firefox-run1-report.json`)، وChrome 156 إلى خادم وهمي على 127.0.0.1 (`chrome-run2-report.json`). ولا يثبت الاختبار ما يسجّله الخادم الحقيقي |
 | البلاغ | الوجهة والحدود والبصمة المملّحة | README في `iSltanX/app-reports` (`0f0587371f89`): «What the Worker does» و«Limits» و«Shared decisions» |
 | البلاغ | الرقم مرجعك الوحيد | README في `iSltanX/app-reports` («Anonymous… The report number is the user's only handle»)، و`src/pages/settings/report.js` (رسالة النجاح) |
 | البلاغ | «انسخ البلاغ» بلا شبكة | `src/core/report/payload.js` (`serialise`)؛ T3: «الإبلاغ: النسخ بلا شبكة» |

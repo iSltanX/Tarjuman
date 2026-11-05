@@ -128,7 +128,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | الحقل | القيمة |
 | --- | --- |
 | ملف الإضافة | `release/store/tarjuman-1.1.0-firefox.zip` |
-| التوافق | Firefox للحاسوب وحده، 140 فأحدث. لا يُختار Firefox for Android، ولا `gecko_android` في البيان |
+| التوافق | Firefox للحاسوب وحده، 144 فأحدث (تدقيق 7a66f91، قرار Q08). لا يُختار Firefox for Android، ولا `gecko_android` في البيان |
 | شيفرة المصدر | نعم، `release/store/tarjuman-1.1.0-source.zip` وفيه `SOURCE-README.txt`. ويطابق إعادة بنائه الحزمة بايتًا (T4) |
 | Name | من البيان |
 | Add-on URL | `tarjuman` (`listing.ar.md`) |
