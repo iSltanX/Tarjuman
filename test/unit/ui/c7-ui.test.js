@@ -181,3 +181,35 @@ test('U86: الشريط العلوي تحت 400px بلا أيقونتي الرا
   const at360 = /@media \(max-width: 360px\) \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
   assert.match(at360, /flex-wrap: wrap/);
 });
+
+test('I03: منتقي الملفات ملحق بالمستند (مخفي وخارج Tab) ما دام مفتوحًا، ويُزال بعد الاختيار أو الإلغاء', async () => {
+  const { pickFiles } = await import('../../../src/ui/picker.js');
+  const doc = newDocument();
+  let clicked = null;
+  const origin = doc.createElement;
+  doc.createElement = (tag) => {
+    const n = origin.call(doc, tag);
+    if (tag === 'input') n.addEventListener('click', () => { clicked = { attached: doc.documentElement.contains(n), hidden: n.hidden, tab: n.tabIndex }; });
+    return n;
+  };
+  const p = pickFiles({ doc, accept: '.json', multiple: false });
+  assert.deepEqual(clicked, { attached: true, hidden: true, tab: -1 }, 'ملحق لحظة النقر');
+  const input = doc.body.querySelector('input');
+  input.files = [{ name: 'a.json' }];
+  input.dispatchEvent({ type: 'change' });
+  assert.deepEqual((await p).map((f) => f.name), ['a.json']);
+  assert.equal(doc.body.querySelector('input'), null, 'أُزيل بعد الاختيار');
+  const q = pickFiles({ doc, accept: '.srt', multiple: true });
+  doc.body.querySelector('input').dispatchEvent({ type: 'cancel' });
+  assert.equal(await q, null);
+  assert.equal(doc.body.querySelector('input'), null, 'وبعد الإلغاء');
+});
+
+test('I09: المقطّعة تلتف إن ضاق عمودها، وتذييل نافذة الأيقونة لاصق في أسفلها (أسوأ حالة فوق 600px)', async () => {
+  const css = await readFile(path.join(ROOT, 'src/ui/components.css'), 'utf8');
+  assert.match(/\.tj-seg \{[^}]*\}/.exec(css)?.[0] ?? '', /flex-wrap: wrap/);
+  const popup = await readFile(path.join(ROOT, 'src/pages/popup/popup.css'), 'utf8');
+  const nav = /\.tj-popup__nav \{[^}]*\}/.exec(popup)?.[0] ?? '';
+  assert.match(nav, /position: sticky/);
+  assert.match(nav, /bottom: 0/);
+});

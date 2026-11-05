@@ -5,20 +5,12 @@ import { buildTarget, needsConsent, requestThumbnailsConsent, thumbnailsConsent,
 import { saveFile, savedPath } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { extensionVersion, startPage } from '../../ui/page.js';
+import { pickFiles } from '../../ui/picker.js';
 import { collectDiagnostics } from './diagnostics.js';
 import { createSettings } from './view.js';
 
-/** منتقي ملف JSON واحد: يُنشأ ويُنقر داخل ضغطة المستخدم، ويعيد null عند الإلغاء. */
-function pickFile(doc = document) {
-  return new Promise((resolve) => {
-    const input = doc.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,application/json';
-    input.addEventListener('change', () => resolve(input.files && input.files.length ? input.files[0] : null), { once: true });
-    input.addEventListener('cancel', () => resolve(null), { once: true });
-    input.click();
-  });
-}
+/** منتقي ملف JSON واحد داخل ضغطة المستخدم، ملحقًا بالمستند ما دام مفتوحًا (I03)؛ null عند الإلغاء. */
+const pickFile = () => pickFiles({ accept: '.json,application/json' }).then((files) => files?.[0] ?? null);
 
 startPage({
   title: 'الإعدادات',

@@ -5,21 +5,12 @@ import { buildTarget, needsConsent, thumbnailsConsent, watchThumbnailsConsent } 
 import { saveFile } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
+import { pickFiles } from '../../ui/picker.js';
 import { collectDiagnostics } from '../settings/diagnostics.js';
 import { createLibrary } from './view.js';
 
-/** منتقي ملفات SRT (أو أجزاؤها): يُنشأ ويُنقر داخل ضغطة المستخدم، ويعيد null عند الإلغاء. */
-function pickFiles(doc = document) {
-  return new Promise((resolve) => {
-    const input = doc.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.accept = '.srt,.txt,.md,text/plain,text/markdown,application/x-subrip';
-    input.addEventListener('change', () => resolve(input.files && input.files.length ? Array.from(input.files) : null), { once: true });
-    input.addEventListener('cancel', () => resolve(null), { once: true });
-    input.click();
-  });
-}
+/** منتقي ملفات SRT (أو أجزاؤها) داخل ضغطة المستخدم، ملحقًا بالمستند ما دام مفتوحًا (I03)؛ null عند الإلغاء. */
+const pickSrtFiles = () => pickFiles({ accept: '.srt,.txt,.md,text/plain,text/markdown,application/x-subrip', multiple: true });
 
 startPage({
   title: 'المحفوظات',
@@ -34,7 +25,7 @@ startPage({
       openPage,
       saveFile: (file) => saveFile(file, { store }),
       clipboardWrite: (text) => navigator.clipboard.writeText(text),
-      pickFiles: () => pickFiles(),
+      pickFiles: () => pickSrtFiles(),
       diagnosticsText: () => collectDiagnostics({ store, version: extensionVersion() }),
       // صور المحفوظات في Firefox بموافقة «نشاط التصفح» (core/consent/thumbnails.js) تُقرأ وتُراقَب؛ وفي Chromium بلا مدخل («نعم»).
       ...(needsConsent(target) ? {

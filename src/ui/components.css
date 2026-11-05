@@ -142,7 +142,8 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-choice__extra { display: block; margin-top: 8px; }
 
 /* ---- المقطّعة: خيار واحد من قليل (radio حقيقي مخفي بصريًا) ---- */
-.tj-seg { display: inline-flex; border: 1px solid transparent; border-radius: var(--tj-radius-md); padding: 3px; margin: 0; min-width: 0; background: var(--tj-surface-2); gap: 2px; max-width: 100%; }
+/* تلتف خياراتها إن ضاق عمودها (تدقيق 7a66f91، I09: «العربية فوق الإنجليزية» فاضت 2px عند عرض 770 في الإعدادات). */
+.tj-seg { display: inline-flex; flex-wrap: wrap; border: 1px solid transparent; border-radius: var(--tj-radius-md); padding: 3px; margin: 0; min-width: 0; background: var(--tj-surface-2); gap: 2px; max-width: 100%; }
 .tj-seg__option { position: relative; cursor: pointer; min-width: 0; }
 .tj-seg__option input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
 .tj-seg__label { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; min-width: 56px; padding: 0 12px; border-radius: var(--tj-radius-sm); font: 700 13px/18px var(--tj-font-body); color: var(--tj-text-2); white-space: nowrap; }

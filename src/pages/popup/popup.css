@@ -106,7 +106,8 @@
 .tj-popup__recent-actions { display: inline-flex; gap: 2px; flex: none; }
 
 /* التذييل: مدخل واحد لكل وجهة، بارتفاع 48، يفصل بينهما خط. */
-.tj-popup__nav { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--tj-border); background: var(--tj-surface); }
+/* لاصق في أسفل النافذة: أسوأ حالة نحو 770px فوق حد المتصفح 600، فيبقى مدخلا المحفوظات والإعدادات ظاهرين (تدقيق 7a66f91، I09). */
+.tj-popup__nav { position: sticky; bottom: 0; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--tj-border); background: var(--tj-surface); }
 .tj-popup__nav-item {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 10px;
   border: 0; border-radius: 0; background: transparent; color: var(--tj-text); cursor: pointer; font: 700 14px/20px var(--tj-font-body);

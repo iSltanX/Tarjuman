@@ -9,9 +9,12 @@ const { BACKUP_LIMITS } = await load('src/core/backup/format.js');
 const { messageFor } = await load('src/core/errors/index.js');
 
 const DIV = 1024;
-const saveCap = SAVE_LIMITS.maxPageChars / DIV;
+// بعد C7 (U55، Q28) حد الحفظ من الصفحات بالبايت (maxPageBytes) وهو حد القراءة؛ وقبلها بوحدات UTF-16 (maxPageChars).
+const BYTES = SAVE_LIMITS.maxPageBytes !== undefined;
+const saveCap = (BYTES ? SAVE_LIMITS.maxPageBytes : SAVE_LIMITS.maxPageChars) / DIV;
+const saveOpts = () => (BYTES ? { maxBytes: saveCap } : { maxChars: saveCap });
 const readCap = BACKUP_LIMITS.maxBytes / DIV;
-out('limits', { maxPageChars: SAVE_LIMITS.maxPageChars, maxBytes: BACKUP_LIMITS.maxBytes, v8MaxStringLength: constants.MAX_STRING_LENGTH, scaled: { saveCap, readCap } });
+out('limits', { saveUnit: BYTES ? 'bytes' : 'utf16', maxPage: BYTES ? SAVE_LIMITS.maxPageBytes : SAVE_LIMITS.maxPageChars, maxBytes: BACKUP_LIMITS.maxBytes, v8MaxStringLength: constants.MAX_STRING_LENGTH, scaled: { saveCap, readCap } });
 
 const KINDS = {
   ascii: 'a',
@@ -31,7 +34,7 @@ for (const [kind, ch] of Object.entries(KINDS)) {
   const file = await libraryOf(ch, 380, 600);
   const units = file.text.length;
   const bytes = new Blob([file.text]).size;
-  const save = validateSaveFile({ name: file.name, text: file.text }, { maxChars: saveCap });
+  const save = validateSaveFile({ name: file.name, text: file.text }, saveOpts());
   const read = await readBackup(new Blob([file.text]), { maxBytes: readCap, pause: noPause });
   out(`scaled-${kind}`, { units, bytes, bytesPerUnit: +(bytes / units).toFixed(3), passesSave: save.ok, saveCode: save.code ?? null, readOk: read.ok, readCode: read.code ?? null });
 }
@@ -39,8 +42,8 @@ for (const [kind, ch] of Object.entries(KINDS)) {
 // الحدّان الفعليان حسابيًا: أكبر ملف يجتاز الحفظ = 256 Mi وحدة × (بايت/وحدة)؛ يتجاوز 512 MiB فقط إن زادت النسبة على 2.
 const MiB = 1024 * 1024;
 for (const r of [1.0, 1.42, 2.0, 2.01, 2.5, 3.0]) {
-  const maxFileMiB = (SAVE_LIMITS.maxPageChars * r) / MiB;
-  out('full-scale', { bytesPerUnit: r, maxSavableMiB: +maxFileMiB.toFixed(1), rejectedByReader: SAVE_LIMITS.maxPageChars * r > BACKUP_LIMITS.maxBytes });
+  const maxFileBytes = BYTES ? SAVE_LIMITS.maxPageBytes : SAVE_LIMITS.maxPageChars * r;
+  out('full-scale', { bytesPerUnit: r, maxSavableMiB: +(maxFileBytes / MiB).toFixed(1), rejectedByReader: maxFileBytes > BACKUP_LIMITS.maxBytes });
 }
 
 // M-17 (الرسالة): مكتبة فوق حد الحفظ في صفحة الإعدادات → رمز SV_TOO_LARGE ونصه كما يظهر.
@@ -49,10 +52,10 @@ for (const r of [1.0, 1.42, 2.0, 2.01, 2.5, 3.0]) {
   const b = sampleBundle({ videoId: IDS[0] });
   b.slots[1].track.original = Array.from({ length: 400 }, (_, i) => ({ n: i + 1, startMs: i * 1000, endMs: i * 1000 + 800, text: 'a'.repeat(800) }));
   await seedBundle(store, b);
-  const m = await mountSettings({ store, area, env: { saveFile: async (f) => { const v = validateSaveFile(f, { maxChars: saveCap }); return v.ok ? { ok: true, mode: 'downloads', downloadId: 1 } : { ok: false, code: v.code }; } } });
+  const m = await mountSettings({ store, area, env: { saveFile: async (f) => { const v = validateSaveFile(f, saveOpts()); return v.ok ? { ok: true, mode: 'downloads', downloadId: 1 } : { ok: false, code: v.code }; } } });
   const sec = section(m, 'البيانات');
   [...sec.descendants()].find((e) => e.tagName === 'button' && e.textContent.includes('إنشاء نسخة احتياطية')).click();
   await settle(15);
   const t = textOf(sec);
-  out('sv-too-large-ui', { message: messageFor('SV_TOO_LARGE'), shown: t.includes(messageFor('SV_TOO_LARGE')) });
+  out('sv-too-large-ui', { message: messageFor('SV_TOO_LARGE'), shown: t.includes(messageFor('SV_TOO_LARGE')), backupCodeShown: /أكبر من أن تُنسخ في ملف واحد/.test(t) });
 }
