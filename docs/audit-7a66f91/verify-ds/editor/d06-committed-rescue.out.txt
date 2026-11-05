@@ -1,0 +1,10 @@
+[ب] بعد التثبيت: أول بداية = 1500 | offset = 0 | committedMs = 500 | الظاهر = 1500
+[ب] بعد 205 تعديلات نص على مقطعين بالتناوب: historySize = 200 | committedMs = 0 | أول بداية = 1500 | offset = 0 | baseOffset = 500
+[ب] adoptOffset(1000) = false (فيظهر تعارض، وهذا متوقع لأن التثبيت غير محفوظ)
+[ب] الإنقاذ الفعلي: offsets={"base":500,"mine":0,"theirs":1000,"committed":0} → ok=true | offsetConflict=true | offsetMs المطبَّق=1000 | أول مقطع ظاهر=2500
+[ب] للمقارنة بـcommitted=500: offsetConflict=false | offsetMs=500 | أول مقطع ظاهر=2000 (المتوقع: أول مقطع محفوظ 1000 + إزاحة المشغّل 1000 = 2000)
+[ب ضابط: 150 خطوة] offsets={"base":500,"mine":0,"theirs":1000,"committed":500} → ok=true | offsetConflict=false | offsetMs المطبَّق=500 | أول مقطع ظاهر=2000
+[أ] بعد الحفظ (markSaved): baseOffset = 0 | committedMs = 500 | أول بداية محفوظة = 1500
+[أ] بعد ± المشغّل إلى 300: external = changed (المتوقع null: يُتبنّى لأن المحرّر لم يغيّر إزاحته منذ المحفوظ)
+[أ] مدخل onRescue: offsets={"base":0,"mine":0,"theirs":300,"committed":500} → ok=true | offsetConflict=true | offsetMs المطبَّق=-200 | أول مقطع ظاهر=1300
+[أ] المتوقع: offsetConflict=false وoffsetMs=300، فأول مقطع ظاهر = المحفوظ +300

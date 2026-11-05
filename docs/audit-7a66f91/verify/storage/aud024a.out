@@ -1,0 +1,3 @@
+{"scenario":"TJ-AUD-024a-normal","revBefore":4,"storedRev":1,"controllerHasArabic":true,"controllerRev":1,"stale":false}
+{"scenario":"TJ-AUD-024a-pending-write","revBefore":4,"storedRev":1,"controllerHasArabic":true,"controllerRev":1,"stale":false}
+{"scenario":"TJ-AUD-024a-adversarial","revBefore":4,"storedRev":1,"controllerHasArabic":false,"controllerRev":null,"stale":true}

@@ -1,0 +1,13 @@
+src/background/worker.js
+src/content/main.js
+src/dev/harness-background.js
+src/dev/harness-bridge.js
+src/main-world/capture.js
+src/pages/editor/main.js
+src/pages/library/icons.js
+src/pages/library/main.js
+src/pages/library/menu.js
+src/pages/popup/main.js
+src/pages/settings/main.js
+src/ui/gallery/gallery.js
+src/ui/page.js

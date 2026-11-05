@@ -1,0 +1,14 @@
+تعريفات --fs: [
+ ".layer { --fs: 13px }",
+ ".layer[data-size=\"fullscreen\"] { --fs: 15px }"
+]
+استعمالات var(--fs): [
+ ".menu { font: 400 var(--fs)/1.5 var(--tj-p-font-body) }",
+ "input.num { font: 500 var(--fs)/1 var(--tj-p-font-mono) }",
+ ".toast { font: 400 var(--fs)/1.5 var(--tj-p-font-body) }"
+]
+:host: :host { all: initial; position: absolute; inset: 0; display: block; z-index: 65; pointer-events: none; direction: ltr; }
+سلسلة آباء .toast داخل الجذر: div.toast <- div.toasts <- #shadow-root
+أبناء الجذر المظلل: layer , toasts , input
+هل .toasts داخل .layer؟ false
+نص الرسالة: استُعيدت ترجمتك المحفوظة لهذا الفيديو.

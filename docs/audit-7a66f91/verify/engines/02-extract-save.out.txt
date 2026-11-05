@@ -1,0 +1,19 @@
+S2 good                      {"ok":true,"r":{"accepted":true,"code":null}}
+S2 tracks after good         [["en|manual",true]]
+S2 segs[0]=1                 {"handle":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in 1"},"tracks":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in 1"},"diag":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in 1"},"convert":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in 1"}}
+S2 segs[0]="str"             {"handle":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in str"},"tracks":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in str"},"diag":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in str"},"convert":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in str"}}
+S2 segs[0]=true              {"handle":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in true"},"tracks":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in true"},"diag":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in true"},"convert":{"threw":"TypeError: Cannot use 'in' operator to search for 'acAsrConf' in true"}}
+S2 segs[0]=null              {"handle":{"ok":true,"r":{"accepted":true,"code":null}},"tracks":{"ok":true,"r":"array(1)"},"diag":{"ok":true,"r":{"currentVideoId":"AAAAAAAAAAA","navigations":1,"accepted":1,"rejected":{},"pending":0,"listenerFailures":0,"tracks":[{"key":"en|manual","lang":"en","kind":"manual","ok":true,"code":null,"warnings":[],"cueCount":1,"bodyLength":73,"format":"json3","transport":"fetch","completeness":1,"inferredKind":"manual","invariants":[{"id":1,"key":"words","ok":true},{"id":2,"key":"noOverlap","ok":true},{"id":3,"key":"noEmpty","ok":true},{"id":4,"key":"monotonic","ok":true},{"id":5,"key":"bounds","ok":true},{"id":6,"key":"reparse","ok":true}]}],"recentRejections":[]}},"convert":{"ok":true,"r":true}}
+S2 other key unaffected?     {"ok":true,"r":"array(2)"}
+S2 recovers same key         {"ok":true,"r":"array(1)"}
+S3 diagnostics               {"submitted":64,"accepted":64,"visibleTracks":8}
+S3 same key x64              {"accepted":1,"tracks":1}
+S3 after navigation          {"accepted":0,"tracks":0}
+S4 page search rejects       {"rejected":"synthetic search failure","fallback":0,"blobUrlRevokedImmediately":true}
+S4 page search returns []    {"result":{"ok":true,"mode":"blob","downloadId":null},"fallbackCalls":1}
+S4 worker search rejects     {"browserDownloads":1,"blobFallbacks":1,"result":{"ok":true,"mode":"blob","downloadId":null}}
+S4 port closed after send    {"sendMessageCalls":1,"blobFallbacks":1,"result":{"ok":true,"mode":"blob","downloadId":null}}
+S8 session1 savedPath        /Users/u/Downloads/AAAAAAAAAAA.en.manual.normal.srt
+S8 session2 savedPath        /Users/u/Downloads/bank-statement.pdf
+S8 restart no removal        /Users/u/Downloads/AAAAAAAAAAA.en.manual.normal.srt
+S8 own erased then restart   /Users/u/Downloads/bank-statement.pdf

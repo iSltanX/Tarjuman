@@ -1,0 +1,37 @@
+=== 1) validateSaveFile ===
+{"name":"CON.srt","chars":7,"utf8Bytes":7,"ok":true,"code":null}
+{"name":"con.txt","chars":7,"utf8Bytes":7,"ok":true,"code":null}
+{"name":"NUL.json","chars":8,"utf8Bytes":8,"ok":true,"code":null}
+{"name":"AUX.md","chars":6,"utf8Bytes":6,"ok":true,"code":null}
+{"name":"PRN.srt","chars":7,"utf8Bytes":7,"ok":true,"code":null}
+{"name":"COM1.srt","chars":8,"utf8Bytes":8,"ok":true,"code":null}
+{"name":"LPT9.txt","chars":8,"utf8Bytes":8,"ok":true,"code":null}
+{"name":"COMU+00B9.srt","chars":8,"utf8Bytes":9,"ok":true,"code":null}
+{"name":"CONIN$.srt","chars":10,"utf8Bytes":10,"ok":false,"code":"SV_BAD_FILE"}
+{"name":"U+3164.srt","chars":5,"utf8Bytes":7,"ok":true,"code":null}
+{"name":"U+115FU+1160.srt","chars":6,"utf8Bytes":10,"ok":true,"code":null}
+{"name":"aU+FE0F.srt","chars":6,"utf8Bytes":8,"ok":true,"code":null}
+{"name":"aU+200B.srt","chars":6,"utf8Bytes":8,"ok":false,"code":"SV_BAD_FILE"}
+{"name":"aU+202E.srt","chars":6,"utf8Bytes":8,"ok":false,"code":"SV_BAD_FILE"}
+{"name":"U+0639U+0639U+0639U+0639U+0639U+0639U+06","chars":150,"utf8Bytes":296,"ok":true,"code":null}
+{"name":"Y-rmzh0PI3c.ar.srt","chars":18,"utf8Bytes":18,"ok":true,"code":null}
+{"maxNameChars":150}
+
+=== 2) isValidFolderName (اسم يكتبه المستخدم في الإعدادات) ===
+{"folder":"Tarjuman","ok":true,"target":"Tarjuman/x.srt"}
+{"folder":"CON","ok":false,"target":null}
+{"folder":"con.txt","ok":false,"target":null}
+{"folder":"COM1","ok":false,"target":null}
+{"folder":"CONIN$","ok":true,"target":"CONIN$/x.srt"}
+{"folder":"CONOUT$","ok":true,"target":"CONOUT$/x.srt"}
+{"folder":"clock$","ok":true,"target":"clock$/x.srt"}
+{"folder":"COMU+00B9","ok":true,"target":"COM¹/x.srt"}
+{"folder":"LPTU+00B2","ok":true,"target":"LPT²/x.srt"}
+{"folder":"U+3164","ok":true,"target":"ㅤ/x.srt"}
+{"folder":"a..b","ok":true,"target":"a..b/x.srt"}
+{"folder":"aU+202Eb","ok":false,"target":null}
+{"folder":"U+062AU+0631U+062CU+0645U+0627U+0646","ok":true,"target":"ترجمان/x.srt"}
+
+=== 3) هل يصل اسم منتج إلى المحجوز؟ fileName يشترط معرّفًا من 11 محرفًا ===
+[{"id":"CON","isVideoId":false,"threw":"TJ_BAD_VIDEO_ID"},{"id":"CON.srt","isVideoId":false,"threw":"TJ_BAD_VIDEO_ID"},{"id":"CONxxxxxxxx","isVideoId":true,"name":"CONxxxxxxxx.ar.srt"},{"id":"NULabcdefgh","isVideoId":true,"name":"NULabcdefgh.ar.srt"}]
+{"reservedBaseOfProductName":false}

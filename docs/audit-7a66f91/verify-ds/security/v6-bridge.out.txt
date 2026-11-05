@@ -1,0 +1,6 @@
+{"first":"Genuine caption from the player","afterForge":"Injected by page script","afterOthers":"Injected by page script","tracks":[{"key":"en|manual","ok":true,"cueCount":2}],"accepted":1}
+
+--- ذاكرة الانتظار: التقاطات لفيديوهات أخرى (المشغّل يسبق تغيّر العنوان) ---
+{"sizeAfter12Adds":8,"note":"الحد 8"}
+{"sizeLongAfterWindowWithoutAddOrTake":8,"note":"لا مؤقت: التقليم عند add أو take فقط"}
+{"sizeAfterTake":0}

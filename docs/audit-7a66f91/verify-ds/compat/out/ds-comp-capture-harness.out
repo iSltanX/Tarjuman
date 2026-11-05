@@ -1,0 +1,9 @@
+PASS - fetch returns original promise type 
+PASS - page still reads body after clone 
+PASS - fetch passthrough count (5 page calls → 5 underlying calls) 
+PASS - messages posted (4 fetch timedtext + 4 xhr; document type ignored, non-timedtext ignored) (8)
+PASS - postMessage targetOrigin is page origin 
+PASS - every message passes validateCaptureMessage 
+PASS - no pot value / URL leaked in message 
+PASS - oversized body → truncated:true, body:"" (and still valid) 
+INFO - xhr transports seen ["{\"a\":1}","{\"a\":1}","{\"a\":1}","{\"a\":1}"]

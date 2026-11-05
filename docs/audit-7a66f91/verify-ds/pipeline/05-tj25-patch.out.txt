@@ -1,0 +1,4 @@
+«1 --> 2 is the arrow» :: {"convertOk":true,"cueN":11,"withCue":"TjError(IM_BAD_TIME): السطر 7: صيغة الزمن غير صالحة. المتوقع مثل 00:00:01,000 --> 00:00:03,500. صحّحه في الملف ثم أعد الاستيراد.","withoutCue":"ok"}
+سطر زمن كامل بلا رقم :: {"convertOk":true,"cueN":11,"withCue":"TjError(IM_MISSING_NUMBER): السطر 8: سطر الزمن ليس قبله رقم مقطع. أضف رقم المقطع في السطر السابق ثم أعد الاستيراد.","withoutCue":"ok"}
+رقم ثم سطر زمن :: {"convertOk":true,"cueN":11,"withCue":"EX_INVARIANT_FAILED","withoutCue":"ok"}
+محاكاة نقرة «تنزيل ملف الاستكمال» :: {"toasts":[],"unhandledRejections":["TjError(IM_BAD_TIME)"]}

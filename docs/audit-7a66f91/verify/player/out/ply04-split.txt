@@ -1,0 +1,6 @@
+2501 مقطعًا بحجم 50: 51 ملفًا | readImport: IM_TOO_MANY_FILES | MAX_FILES=50
+2500 مقطعًا بحجم 50: 50 ملفًا | readImport: ok (2500 مقطعًا) | MAX_FILES=50
+5000 مقطعًا بحجم 100: 50 ملفًا | readImport: ok (5000 مقطعًا) | MAX_FILES=50
+50000 مقطعًا بحجم 2000: 25 ملفًا | readImport: ok (50000 مقطعًا) | MAX_FILES=50
+10001 مقطعًا بحجم 200: 51 ملفًا | readImport: IM_TOO_MANY_FILES | MAX_FILES=50
+أقصى مقاطع بأجزاء ≤ 50 عند الحجم 50: 2500 | maxCues = 50000 | الحجم الأدنى المطلوب لـmaxCues كي تبقى ≤ 50 جزءًا: 1000

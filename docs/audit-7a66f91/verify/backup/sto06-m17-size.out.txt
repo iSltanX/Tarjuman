@@ -1,0 +1,12 @@
+{"label":"limits","maxPageChars":268435456,"maxBytes":536870912,"v8MaxStringLength":536870888,"scaled":{"saveCap":262144,"readCap":524288}}
+{"label":"scaled-ascii","units":252073,"bytes":252184,"bytesPerUnit":1,"passesSave":true,"saveCode":null,"readOk":true,"readCode":null}
+{"label":"scaled-arabicLetters","units":252073,"bytes":480184,"bytesPerUnit":1.905,"passesSave":true,"saveCode":null,"readOk":true,"readCode":null}
+{"label":"scaled-arabicPresentation","units":252073,"bytes":708184,"bytesPerUnit":2.809,"passesSave":true,"saveCode":null,"readOk":false,"readCode":"BK_TOO_LARGE"}
+{"label":"scaled-cjk","units":252073,"bytes":708184,"bytesPerUnit":2.809,"passesSave":true,"saveCode":null,"readOk":false,"readCode":"BK_TOO_LARGE"}
+{"label":"full-scale","bytesPerUnit":1,"maxSavableMiB":256,"rejectedByReader":false}
+{"label":"full-scale","bytesPerUnit":1.42,"maxSavableMiB":363.5,"rejectedByReader":false}
+{"label":"full-scale","bytesPerUnit":2,"maxSavableMiB":512,"rejectedByReader":false}
+{"label":"full-scale","bytesPerUnit":2.01,"maxSavableMiB":514.6,"rejectedByReader":true}
+{"label":"full-scale","bytesPerUnit":2.5,"maxSavableMiB":640,"rejectedByReader":true}
+{"label":"full-scale","bytesPerUnit":3,"maxSavableMiB":768,"rejectedByReader":true}
+{"label":"sv-too-large-ui","message":"الملف أكبر من أن يُحفظ من هنا. صدّره من المحفوظات.","shown":true}

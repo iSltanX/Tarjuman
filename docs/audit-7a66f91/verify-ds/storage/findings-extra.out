@@ -1,0 +1,2 @@
+{"scenario":"meta مشوّه (schema نصًا)","read":"ok","metaAfter":{"schema":1,"createdAt":"2026-11-05T00:39:35.754Z","migratedAt":"2026-11-05T00:39:35.754Z"}}
+{"scenario":"ST_SCHEMA_NEWER ثم clearAll","write":"ST_SCHEMA_NEWER","clearAll":"ok","metaAfter":{"schema":1,"createdAt":"2026-11-05T00:39:35.757Z","migratedAt":null},"keys":["meta"]}

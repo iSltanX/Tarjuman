@@ -1,0 +1,8 @@
+L-17 (close) مع فشل updatePrefs: الوضع=open | تنبيهات ظاهرة=0 | رسالة=false | التشخيص actionFailures=1 lastCode=TJ_UNEXPECTED
+L-17 (dual) مع فشل updatePrefs: الوضع=open | تنبيهات ظاهرة=0 | رسالة=false | التشخيص actionFailures=1 lastCode=TJ_UNEXPECTED
+L-27: النقر على .ar في الصف 2 كتب currentTime = [6]
+L-27: هل يفحص المستمع getSelection أو isCollapsed؟ false
+L-27: user-select في الورقة؟ false | .row cursor: true
+L-14: إسناد سمة lang في src/player: 0 []
+CL-X2: .status { display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 18px; color: var(--tj-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+CL-X2: أبناء .status (view.js:283-286): statusEl.replaceChildren(el(doc, 'span', { className: 'dot' }), ...parts.flatMap((p, i) => [ ...(i ? [el(doc, 'span', { className: 'muted', text: ' · ' })] : []), el(doc, 'span', { className: i === parts.length - 1 && i > 0 ? 'muted' : '', text: p }), ]));

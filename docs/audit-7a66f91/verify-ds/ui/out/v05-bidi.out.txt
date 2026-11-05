@@ -1,0 +1,37 @@
+== المعايرة ==
+CL-001 بلا عزل (خلل معروف «0.5+»)
+   منطقي: "الإزاحة +0.5 ث" (rtl) ⇒ يُرسم يسارًا←يمينًا: ث 0.5+ ةحازإلا
+CL-001 معزولة (الإصلاح المعتمد)
+   منطقي: "الإزاحة ⁦+0.5⁩ ث" (rtl) ⇒ يُرسم يسارًا←يمينًا: ث +0.5 ةحازإلا
+CL-002 المحفوظات تعزل العنوان
+   منطقي: "الاسم يشير إلى فيديو آخر: ⁨What is AI?⁩" (rtl) ⇒ يُرسم يسارًا←يمينًا: What is AI? :رخآ ويديف ىلإ ريشي مسالا
+
+== تنبيه الاسم في تأكيد الرفع (menus.js:375 ← text.js:156–161) ==
+العنوان «What is AI?»
+   منطقي: "الاسم يشير إلى فيديو آخر · What is AI?" (rtl) ⇒ يُرسم يسارًا←يمينًا: ?What is AI · رخآ ويديف ىلإ ريشي مسالا
+العنوان «Is it real?!»
+   منطقي: "الاسم يشير إلى فيديو آخر · Is it real?!" (rtl) ⇒ يُرسم يسارًا←يمينًا: !?Is it real · رخآ ويديف ىلإ ريشي مسالا
+العنوان «10 Tips for Beginners»
+   منطقي: "الاسم يشير إلى فيديو آخر · 10 Tips for Beginners" (rtl) ⇒ يُرسم يسارًا←يمينًا: Tips for Beginners 10 · رخآ ويديف ىلإ ريشي مسالا
+العنوان «React 19 in 100 Seconds»
+   منطقي: "الاسم يشير إلى فيديو آخر · React 19 in 100 Seconds" (rtl) ⇒ يُرسم يسارًا←يمينًا: React 19 in 100 Seconds · رخآ ويديف ىلإ ريشي مسالا
+بالإصلاح (FSI…PDI حول العنوان)
+   منطقي: "الاسم يشير إلى فيديو آخر · ⁨10 Tips for Beginners⁩" (rtl) ⇒ يُرسم يسارًا←يمينًا: 10 Tips for Beginners · رخآ ويديف ىلإ ريشي مسالا
+
+== سطر «نُزّل» (menus.js:185، .line__text unicode-bidi: plaintext ⇒ الاتجاه من أول حرف قوي «ن» = RTL) ==
+الاسم «-dQw4w9WgXcQ.en.manual.normal.srt»
+   منطقي: "نُزّل -dQw4w9WgXcQ.en.manual.normal.srt" (rtl) ⇒ يُرسم يسارًا←يمينًا: dQw4w9WgXcQ.en.manual.normal.srt- لّزُن
+الاسم «_abcDEF1234.en.asr.long.srt»
+   منطقي: "نُزّل _abcDEF1234.en.asr.long.srt" (rtl) ⇒ يُرسم يسارًا←يمينًا: abcDEF1234.en.asr.long.srt_ لّزُن
+الاسم «dQw4w9WgXcQ.en.manual.normal.srt»
+   منطقي: "نُزّل dQw4w9WgXcQ.en.manual.normal.srt" (rtl) ⇒ يُرسم يسارًا←يمينًا: dQw4w9WgXcQ.en.manual.normal.srt لّزُن
+الاسم «1a2B3c4D5e6.en.manual.normal.srt»
+   منطقي: "نُزّل 1a2B3c4D5e6.en.manual.normal.srt" (rtl) ⇒ يُرسم يسارًا←يمينًا: 1a2B3c4D5e6.en.manual.normal.srt لّزُن
+بالإصلاح ltrInline (LRI…PDI)
+   منطقي: "نُزّل ⁦-dQw4w9WgXcQ.en.manual.normal.srt⁩" (rtl) ⇒ يُرسم يسارًا←يمينًا: -dQw4w9WgXcQ.en.manual.normal.srt لّزُن
+
+== settings/data.js (FINDINGS UI-010 البند 2، لم ينتقل إلى التقرير) ==
+data.js:118 قائمة المعرّفات المتخطاة
+   منطقي: "لم يُضمَّن فيديوهان لتعذّر قراءة سجله: -AAAAAAAAAA، BBBBBBBBBBB" (rtl) ⇒ يُرسم يسارًا←يمينًا: AAAAAAAAAA، BBBBBBBBBBB- :هلجس ةءارق رّذعتل ناهويديف نَّمضُي مل
+data.js:156 سطر «معرّف: رسالة»
+   منطقي: "-dQw4w9WgXcQ: السجل تالف" (rtl) ⇒ يُرسم يسارًا←يمينًا: فلات لجسلا :dQw4w9WgXcQ-

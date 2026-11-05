@@ -1,0 +1,22 @@
+== DS-TJ-41: الشريط العلوي عند ≤640 ==
+.tj-topbar__inner: height: var(--tj-topbar-h); display: flex; align-items: center; gap: var(--tj-space-5); width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 var(--tj-space-5);
+  flex-wrap؟ false | overflow؟ false | min-width:0 على العناصر؟ false | .tj-topbar__end مخفي ≤640؟ true
+  الثابت دون نصي الرابطين: حشو 32 + الشعار 105 (101+4) + فجوة 12 + هامش التنقل 12 + رابطان 84 + فجوة 4 = 249px
+  يفيض عن 320 متى زاد نصا «المحفوظات» و«الإعدادات» (700 14px) معًا على 71px؛ وقياس DeepSeek الحي 362 يعني نصين بنحو 113px
+  تعليق base.css:7 يقرر: «التمرير الأفقي يُمنع بالتخطيط نفسه (min-width: 0 والالتفاف) لا بالقص» ⇐ الشريط يخالف ذلك
+
+== DS-TJ-48 ==
+ملفات فيها forced-colors أو prefers-contrast: 0
+  مسار المفتاح: border أو outline؟ false | الإبهام: border؟ false | المدخل opacity:0؟ true
+  مفتاح اللوحة .switch__track border؟ false | width: 34px; height: 20px; flex: none; display: flex; justify-content: flex-start; padding: 2px; border-radius: 999px; background: var(--tj-border-input); trans
+  المقطّعة المختارة: .tj-seg__option input:checked + .tj-seg__label { background: var(--tj-selected); color: var(--tj-selected-ink); }
+
+== DS-TJ-51 ==
+index.html فيه <h1>؟ false | عناوين تبنيها شيفرة النافذة: h2 | الصفحات الأخرى: المحفوظات h1؟ true، الإعدادات h1؟ true
+
+== FINDINGS «رابعًا» ==
+(10) .tj-tip/.tj-tipwrap مستعمل خارج components.css؟ لا (CSS ميت)
+(8) روابط «حول»: target=_blank؟ true | نص «تبويب جديد» في الاسم؟ false | الأيقونة aria-hidden (components.js:22)
+(9) تعيين lang في src/pages: لا شيء | .ed-row__en dir=ltr (rows.js:85) و.st-gl__source dir=ltr (glossary.js:107) بلا lang
+(4) النافذة: notice role=status يُدرج فيه alertBox (role=alert للخطر)؟ true | المشغّل: .toasts role=status aria-live وفي كل رسالة role=alert/status (layer.js:39–40 و:253)
+(6) تقدم النسخ الاحتياطي role=status aria-live (data.js:48)؛ ويتحدث كل 25 عنصرًا (create.js:42) لا كل عنصر | حاوية نتيجة الاستعادة بلا role ولا aria-live (data.js:93)؟ true

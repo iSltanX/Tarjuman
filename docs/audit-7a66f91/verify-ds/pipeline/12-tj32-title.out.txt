@@ -1,0 +1,4 @@
+Cc الباقية :: []
+Cf الباقية :: ["U+600–605","U+6DD","U+70F","U+890–891","U+8E2","U+110BD","U+110CD","U+13430–1343F","U+1BCA0–1BCA3"]
+Default_Ignorable غير Cf الباقية :: ["U+180F","U+FFF0–FFF8","U+E0080–E00FF","U+E01F0–E0FFF"]
+مثال :: "Talk𓐰𛲠 title"

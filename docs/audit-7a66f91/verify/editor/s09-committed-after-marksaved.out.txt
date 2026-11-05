@@ -1,0 +1,10 @@
+[013-أ] بعد التثبيت: offset = 0 | committedMs = 1000 | أول بداية = 3000
+[013-أ] بعد markSaved: base offset = 0 | offset = 0 | committedMs = 1000 (المتوقع 0: التثبيت صار في الأساس) | dirty = true
+[013-أ] adoptOffset(500) = false
+[013-أ] planRescue بـcommitted = 1000 → offsetConflict = true | offsetMs = -500 | ومع offsetChoice=mine → 0
+[013-أ] للمقارنة بـcommitted = 0 → offsetConflict = false | offsetMs = 500
+[013-ب] الإزاحة عند الفتح = 500
+[013-ب] بعد التثبيت: offset = 0 | committedMs = 500
+[013-ب] بعد الحفظ (مسار markSaved): dirty = true | baseOffset = 0 | committedMs = 500 | external = null
+[013-ب] بعد ± من المشغّل (500): external = changed | offset الجلسة = 0
+[013-ب] مدخل onRescue offsets = {"base":0,"mine":0,"theirs":500,"committed":500} → offsetConflict = false | offsetMs المقترح = 0

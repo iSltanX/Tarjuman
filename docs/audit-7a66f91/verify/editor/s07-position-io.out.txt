@@ -1,0 +1,4 @@
+كتابة 1: video:AAAAAAAAAAA=401.8KB + index:AAAAAAAAAAA=0.4KB + bundle:AAAAAAAAAAA=0.2KB + marks:AAAAAAAAAAA=0.3KB = 402.7KB
+كتابة 2: video:AAAAAAAAAAA=401.8KB + index:AAAAAAAAAAA=0.4KB + bundle:AAAAAAAAAAA=0.2KB + marks:AAAAAAAAAAA=0.3KB = 402.7KB
+كتابة 3: video:AAAAAAAAAAA=401.8KB + index:AAAAAAAAAAA=0.4KB + bundle:AAAAAAAAAAA=0.2KB + marks:AAAAAAAAAAA=0.3KB = 402.7KB
+عدد الكتابات لثلاثة مقاطع بسكون 4 ث: 3

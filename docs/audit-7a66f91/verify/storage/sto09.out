@@ -1,0 +1,3 @@
+{"scenario":"STO-09-concurrent-adds","stored":["beta"],"p1View":["beta"],"p2View":["beta"]}
+{"scenario":"STO-09-add-then-stale-remove","stored":["two"],"expected":["two","gamma"]}
+{"scenario":"STO-09-control-after-event","stored":["alpha","beta"]}

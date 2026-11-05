@@ -1,0 +1,11 @@
+بعد الشطر: 1:1000-3000:"سطر عربي 1" | 2:3500-4250:"سطر" | 2:4250-5500:"عربي 2" | 3:6000-8000:"سطر عربي 3" | 4:8500-10500:"سطر عربي 4" | 5:11000-13000:"سطر عربي 5"
+المقارنة: noArabic = [2] | drift = []
+بند التقرير: 2 "سطر" ED_REVIEW_NO_ARABIC
+بند التقرير: 2 "untranslated piece" ED_REVIEW_NO_ARABIC
+للمقارنة completionGroups.noArabic (يفحص نص المقطع نفسه): [2]
+انحراف قطعة مشطورة: drift = [] | pairs تشمل القطعتين؟ [[0,0],[2,3],[3,4],[4,5]]
+بند (انحراف): 2 4250 ED_REVIEW_NO_ARABIC
+بند (انحراف): 2 4400 ED_END_BEFORE_START,ED_REVIEW_NO_ARABIC
+أرقام مكررة في الملف: noArabic = [3]
+بند (مكرر): 3 "سطر عربي 3" ED_REVIEW_NO_ARABIC
+بند (مكرر): 3 "English only" ED_REVIEW_NO_ARABIC

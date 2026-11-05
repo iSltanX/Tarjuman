@@ -1,0 +1,9 @@
+layer.js: 'Tab'=false focusout=3 (focusout يُستعمل لـdata-typing وحده)
+session.js: 'Tab'=false focusout=0 (focusout يُستعمل لـdata-typing وحده)
+group.js: 'Tab'=false focusout=0 (focusout يُستعمل لـdata-typing وحده)
+menus.js: 'Tab'=false focusout=0 (focusout يُستعمل لـdata-typing وحده)
+بعد الفتح بلوحة المفاتيح: المركّز داخل القائمة = offset | دور القائمة dialog
+بعد خروج التركيز والشريط ظاهر: القائمة مفتوحة؟ true | document.activeElement = yt-below-player
+بعد Escape: القائمة مفتوحة؟ false | التركيز عاد إلى زر الشارة؟ false | document.activeElement = yt-below-player
+Escape من داخل القائمة: مغلقة؟ true | التركيز على زر: badge
+بعد خروج التركيز ثم اختفاء الشريط: القائمة مفتوحة؟ false

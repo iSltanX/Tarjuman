@@ -1,0 +1,3 @@
+{"replyKeys":["v","ok","watch","videoId","title","loading","english","arabic","view","mounted","slots","capture","tools"],"title":"عنوان الفيديو","fileName":"ملفي-الخاص.srt","slotNames":["ترجمة صديقي",null,null]}
+{"tabs":5,"result":{"ok":true,"via":"open","tabId":3},"stateRequests":5,"types":["tj:get-video-state","tj:seek"]}
+{"tabs":205,"videoTabAt":203,"MAX_TABS":200,"result":{"ok":true,"via":"new","tabId":999},"stateRequests":200}

@@ -1,0 +1,5 @@
+بعد التقاط سليم: english= 1 version= 5
+handleMessage رمى TypeError
+nudgeOffset(+1) رمى TypeError Cannot use 'in' operator to search for 'acAsrConf' in 1
+setVideo(other) نجح
+الحالة: version قبل/بعد 5 9 english ما زال يعرض undefined

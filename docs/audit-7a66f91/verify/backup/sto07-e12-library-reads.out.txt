@@ -1,0 +1,4 @@
+{"label":"listLibrary-codex-1x1500x200","rows":1,"getCalls":3,"bytesByKind":{"index":373,"bundle":250,"alts":1361695,"marks":454},"totalBytes":1362772,"indexPlusHeadBytes":623,"altsShare":0.999,"ms":3.8}
+{"label":"getVideo-for-duration-codex-1x1500x200","durationMs":3600000,"getCalls":1,"keysByKind":{"video":1,"bundle":1,"alts":1,"prev":1,"marks":1},"bytesByKind":{"video":2547,"bundle":250,"alts":1361695,"prev":469,"marks":454}}
+{"label":"listLibrary-realistic-50x900x45","rows":50,"getCalls":3,"bytesByKind":{"index":18650,"bundle":12500,"alts":12894650,"marks":22700},"totalBytes":12948500,"indexPlusHeadBytes":31150,"altsShare":0.996,"ms":66.6}
+{"label":"getVideo-for-duration-realistic-50x900x45","durationMs":3600000,"getCalls":1,"keysByKind":{"video":1,"bundle":1,"alts":1,"prev":1,"marks":1},"bytesByKind":{"video":2547,"bundle":250,"alts":257893,"prev":469,"marks":454}}

@@ -1,0 +1,2 @@
+{"scenario":"STO-03-rename","itemCarriesVersion":["entry","replace","videoId"],"newerPillAtPreview":false,"wouldBeNewerNow":true,"report":{"replaced":1,"failed":0},"after":{"name1":null,"text0":"أولى 1 (معدّل)","previous":"AAAAAAAAAAA.سابقة.ar.srt"},"retryReplacesToo":[true]}
+{"scenario":"STO-03-edit","itemCarriesVersion":["entry","replace","videoId"],"newerPillAtPreview":false,"wouldBeNewerNow":true,"report":{"replaced":1,"failed":0},"after":{"name1":null,"text0":"أولى 1 (معدّل)","previous":"AAAAAAAAAAA.سابقة.ar.srt"},"retryReplacesToo":[true]}

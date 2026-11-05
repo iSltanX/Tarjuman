@@ -1,0 +1,12 @@
+[M-14] الرسالة العابرة: role = status | aria-live = polite | داخل الرأس؟ true
+[M-14] بعد تبديل علامة: النص = "المقطع 2: «أعود إليه».تراجع" | زر: true
+[M-14] بعد المهلة: is-shown؟ false | الزر في الـDOM؟ true | hidden = false | inert = null | tabindex = null | aria-hidden = null
+[M-14] أزرار الرأس بترتيب الـDOM (آخر أربعة): الترجمة 1، قيد التحرير، النشطة في المشغّل | الترجمة 2 | استعادة الأصل… | تراجع | عدد الأزرار باسم «تراجع»: 2
+[M-14] تفعيل الزر غير الظاهر (Enter بعد Tab): العلامات المحفوظة 3 → 2 | النص الظاهر الآن: "أُعيدت العلامات كما كانت." | is-shown؟ false
+[L-28] أدوار: status = status | notice = alert | result = status polite
+[L-28] شارة الحالة (role=status): "تغييرات غير محفوظة (1)" → "تغييرات غير محفوظة (1)" | عقدة جديدة بالنص نفسه؟ true
+[L-28] تنبيه الإزاحة (role=alert): مخفي؟ false | النص "إزاحة العرض ⁦+0.5⁩ ث مفعّلة؛ النقل هنا يُضاف إليها." | عقدة نص جديدة بالنص نفسه؟ true
+[L-28] سطر النتيجة (role=status) عند تنقّل التركيز بين صفين: عقدة نص جديدة بالنص نفسه؟ true "نتيجة سابقة"
+[L-30] مشكلات المقطع 1 بعد تفريغ النص: ED_TEXT_EMPTY/text/warning | الرسالة: "المقطع بلا نص. يمنع التصدير حتى يُترجم." id = ed-msg-0 hidden = false
+[L-30] textarea: aria-describedby = null | aria-invalid = null
+[L-30] للمقارنة حقل البداية: aria-describedby = null | aria-invalid = false

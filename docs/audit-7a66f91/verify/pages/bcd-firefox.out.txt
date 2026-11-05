@@ -1,0 +1,11 @@
+@mdn/browser-compat-data 8.1.4
+storage.local.getBytesInUse firefox={"version_added":"144"}
+storage.local.getKeys firefox={"version_added":"143"}
+storage.sync.getBytesInUse firefox={"version_added":"78"}
+storage.sync.getKeys firefox={"version_added":"143"}
+storage.session.getBytesInUse firefox={"version_added":"131"}
+storage.session.getKeys firefox={"version_added":"143"}
+storage.managed.getBytesInUse firefox={"version_added":"144"}
+storage.managed.getKeys firefox={"version_added":"143"}
+StorageArea.getBytesInUse firefox notes= ["Supported by the <code>sync</code> storage area from Firefox 78.","Supported by the <code>session</code> storage area from Firefox 131.","Supported by the <code>local</code> and <code>managed</code> storage areas from Firefox 144."]
+permissions.Permissions.data_collection firefox= {"version_added":"140"}

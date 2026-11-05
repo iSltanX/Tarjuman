@@ -1,0 +1,4 @@
+readPatch بخمسين ملفًا مكررًا: قراءات arrayBuffer = 50 | النتيجة = IM_PATCH_DUPLICATE
+حد تراكمي للمقاطع في readPatch؟ false | مقابل readImport (index.js:63-67): true
+عشرون ملفًا بأرقام 1..400 لمرجع من مقطعين: قراءات = 20 | النتيجة = IM_PATCH_DUPLICATE
+مستدعو readPatch خارج core: src/pages/editor/app.js:926 (المحرّر وحده، لا المشغّل)

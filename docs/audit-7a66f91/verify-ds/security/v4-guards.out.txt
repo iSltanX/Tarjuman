@@ -1,0 +1,46 @@
+=== 0) هل في src الحقيقي استعمال لهذه الصيغ؟ (بحث نصي) ===
+{"pattern":"Reflect.get/apply","hits":0}
+{"pattern":"globalThis/window/self[...]","hits":0}
+{"pattern":"chrome[...]","hits":0}
+{"pattern":"navigator[...] / document[...]","hits":0}
+{"pattern":"تفكيك chrome أو globalThis","hits":0}
+{"pattern":"atob(","hits":0}
+{"pattern":"import( بمتغير","hits":0}
+{"pattern":".constructor(","hits":0}
+
+=== 1) check-static على نسخة من src مع ملف مسبار واحد لكل صيغة ===
+{"variant":"ضابط: fetch بأقواس حرفية","detected":true,"msg":"- pages/popup/probe.js:1: وصول بالأقواس إلى اسم ممنوع | - pages/popup/probe.js:1: نطاق خارجي https://x.invalid"}
+{"variant":"fetch بوصل نصين","detected":false,"msg":""}
+{"variant":"fetch بـReflect.get","detected":false,"msg":""}
+{"variant":"fetch بتفكيك globalThis","detected":true,"msg":"- pages/popup/probe.js:1: طلب شبكة من الإضافة"}
+{"variant":"XMLHttpRequest بالوصل","detected":false,"msg":""}
+{"variant":"sendBeacon بالوصل","detected":false,"msg":""}
+{"variant":"رابط مقسوم إلى img.src","detected":false,"msg":""}
+{"variant":"chrome.downloads بالتفكيك ثم erase","detected":false,"msg":""}
+{"variant":"chrome[downloads] بالوصل","detected":false,"msg":""}
+{"variant":"chrome.storage بالوصل","detected":false,"msg":""}
+{"variant":"Function عبر constructor","detected":false,"msg":""}
+{"variant":"innerHTML بالوصل","detected":false,"msg":""}
+{"checkStaticOnRealSrc":"ناجح","tail":"check-static: ناجح (بيانا Chromium وFirefox والأذونات المعتمدة، ولا HTML نصي ولا eval ولا شيفرة بعيدة ولا نطاقات خارجية ولا طلبات ولا تسجيل)"}
+
+=== 2) البناء الإنتاجي (chromium وfirefox) في مجلد العمل، ثم audit.mjs على نسخة ملحق بها كل صيغة ===
+{"target":"chromium","build":"ناجح"}
+{"target":"firefox","build":"ناجح"}
+{"target":"chromium","auditClean":true,"passed":15,"total":15}
+{"target":"firefox","auditClean":true,"passed":15,"total":15}
+{"variant":"ضابط: fetch بأقواس حرفية","detected":true,"failed":["no-external-connection-or-forbidden-code"]}
+{"variant":"fetch بوصل نصين","detected":false,"failed":[]}
+{"variant":"fetch بـReflect.get","detected":false,"failed":[]}
+{"variant":"fetch بتفكيك globalThis","detected":false,"failed":[]}
+{"variant":"XMLHttpRequest بالوصل","detected":false,"failed":[]}
+{"variant":"sendBeacon بالوصل","detected":false,"failed":[]}
+{"variant":"رابط مقسوم إلى img.src","detected":false,"failed":[]}
+{"variant":"chrome.downloads بالتفكيك ثم erase","detected":false,"failed":[]}
+{"variant":"chrome[downloads] بالوصل","detected":false,"failed":[]}
+{"variant":"chrome.storage بالوصل","detected":false,"failed":[]}
+{"variant":"Function عبر constructor","detected":false,"failed":[]}
+{"variant":"innerHTML بالوصل","detected":false,"failed":[]}
+
+=== 3) T-10: جسر الحزام غائب عن الإنتاج؟ ===
+{"target":"chromium","devDir":false,"harnessString":[],"hookString":[],"contentScripts":[["main-world/capture.js"],["content/main.js"]]}
+{"target":"firefox","devDir":false,"harnessString":[],"hookString":[],"contentScripts":[["main-world/capture.js"],["content/main.js"]]}

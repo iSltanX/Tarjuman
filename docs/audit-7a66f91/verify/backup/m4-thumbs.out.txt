@@ -1,0 +1,5 @@
+{"label":"profile-A","thumbnailsPref":false,"ytimgRequests":0,"backupCarriesUi":{"thumbnails":false,"panelEntry":true,"panelOpen":false,"panelDual":true}}
+{"label":"profile-B-restoreSettings=true","thumbnailsPref":true,"ytimgRequests":["https://i.ytimg.com/vi/BBBBBBBBBBB/mqdefault.jpg","https://i.ytimg.com/vi/AAAAAAAAAAA/mqdefault.jpg"]}
+{"label":"profile-B-restoreSettings=false","thumbnailsPref":true,"ytimgRequests":["https://i.ytimg.com/vi/BBBBBBBBBBB/mqdefault.jpg","https://i.ytimg.com/vi/AAAAAAAAAAA/mqdefault.jpg"]}
+{"label":"profile-C-already-off","thumbnailsPref":false,"ytimgRequests":0}
+{"label":"profile-A-clearAll-then-restore","clearMark":["مُسحت كل البيانات والإعدادات."],"dialogBody":"تُحذف كل الترجمات المحفوظة والإعدادات من هذا المتصفح، ولا يمكن التراجع عن ذلك.","thumbnailsAfterClear":true,"ytimgAfterClear":0,"thumbnailsAfterRestore":true,"ytimgAfterRestore":2}

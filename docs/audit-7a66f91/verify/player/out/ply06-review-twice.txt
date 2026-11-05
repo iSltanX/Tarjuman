@@ -1,0 +1,3 @@
+25000 مقطعًا، 10 بصمة: readFor 886ms (استدعاءات review 1) | nameHintFor 670ms (المجموع 2) | زمن review الكلي 1422ms | القرينة=null | videoIdFromName مباشرة 0.02ms => null
+25000 مقطعًا، 1 بصمة: readFor 71ms (استدعاءات review 0) | nameHintFor 72ms (المجموع 1) | زمن review الكلي 72ms | القرينة=null | videoIdFromName مباشرة 0.01ms => null
+3000 مقطعًا، 2 بصمة: readFor 30ms (استدعاءات review 1) | nameHintFor 19ms (المجموع 2) | زمن review الكلي 36ms | القرينة=null | videoIdFromName مباشرة 0.01ms => null

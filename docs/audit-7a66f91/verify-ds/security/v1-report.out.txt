@@ -1,0 +1,41 @@
+=== A) نصوص اللوحة الحرفية (report.js:115 و:120 و:127) ===
+["يُرسل نصك كما كتبته. لا تضع فيه نص ترجمة ولا بيانات شخصية لا يحتاجها البلاغ.","لا يُرفق نص ترجمة، ولا معرّف فيديو أو عنوانه أو رابطه، ولا معرّف لك أو لجهازك. رقم البلاغ مرجعك الوحيد."]
+["ما يُرفق تلقائيًا (تراه كله قبل الإرسال)"]
+
+=== B) وصف فيه رابط فيديو ومعرّفه وعنوانه وبريد: هل يُمنع أو يُنبَّه؟ وما الذي يُرسل؟ ===
+{"secretsSeenByPanel":[],"secretsIfUrlNotIgnored":["url"],"alertHidden":true,"sendDisabled":null}
+{"sendCalled":1,"descriptionVerbatim":true,"payloadKeys":["product","app_version","os","os_version","arch","locale","kind","description","diagnostics"]}
+
+=== C) صيغ أسرار: هل تمنع اللوحة الإرسال (aria-disabled) وتُظهر التنبيه؟ (قيم اصطناعية) ===
+{"label":"SAPISID= (ضابط)","blocked":true,"alert":true,"types":["cookie"]}
+{"label":"sapisid= حروف صغيرة","blocked":false,"alert":false,"types":[]}
+{"label":"SAPISID: بنقطتين","blocked":false,"alert":false,"types":[]}
+{"label":"__Secure-3PSID=","blocked":true,"alert":true,"types":["cookie"]}
+{"label":"Cookie: ترويسة","blocked":true,"alert":true,"types":["header","cookie"]}
+{"label":"Authorization: Bearer","blocked":true,"alert":true,"types":["header"]}
+{"label":"Bearer وحده + JWT","blocked":false,"alert":false,"types":[]}
+{"label":"JWT وحده","blocked":false,"alert":false,"types":[]}
+{"label":"pot= 16 محرفًا","blocked":true,"alert":true,"types":["param"]}
+{"label":"pot= 15 محرفًا","blocked":false,"alert":false,"types":[]}
+{"label":"pot%3D مرمّز","blocked":false,"alert":false,"types":[]}
+{"label":"رمز 79 محرفًا","blocked":false,"alert":false,"types":[]}
+{"label":"رمز 80 محرفًا","blocked":true,"alert":true,"types":["token"]}
+{"label":"base64 بـ+/ طوله 120","blocked":false,"alert":false,"types":[]}
+{"label":"SAPISIDHASH","blocked":true,"alert":true,"types":["header"]}
+{"label":"ya29. (رمز OAuth لغوغل، 60 محرفًا)","blocked":false,"alert":false,"types":[]}
+
+=== D) TJ-40: Retry-After بلا سقف ===
+{"header":"120","retryAfterSeconds":120,"text":"أعد المحاولة بعد دقيقتين."}
+{"header":"1e308","retryAfterSeconds":1e+308,"text":"أعد المحاولة بعد 1,666,666,666,666,666,500,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000 دقيقة."}
+{"header":"Wed, 21 Oct 2099 07:28:00 GMT","retryAfterSeconds":2302414080,"text":"أعد المحاولة بعد 38,373,568 دقيقة."}
+{"header":"-1","retryAfterSeconds":0,"text":"أعد المحاولة بعد دقيقة."}
+{"header":"1.5","retryAfterSeconds":2,"text":"أعد المحاولة بعد دقيقة."}
+{"header":"abc","text":null}
+
+=== E) TJ-40: انقضاء المهلة أثناء قراءة جسم 201 ===
+{"headersNeverArrive":"timeout","bodyNeverArrives":"unexpected","retryableBoth":true}
+{"textTimeout":"لم يردّ خادم البلاغات في الوقت. أعد المحاولة؛ وإن كان قد استلم البلاغ فسيعيد رقمه نفسه.","textUnexpected":"ردّ خادم البلاغات بما لا يُفهم. أعد المحاولة، أو انسخ البلاغ."}
+
+=== F) H-01: ما يمرّره العميل إلى fetch، وما يفترضه fetch لما لم يُمرّر ===
+{"url":"https://app-reports.isultantf.workers.dev/v1/reports","init":{"method":"POST","headers":{"Content-Type":"application/json","Idempotency-Key":"123e4567-e89b-42d3-a456-426614174000"},"credentials":"omit","cache":"no-store","redirect":"error","referrerPolicy":"no-referrer"},"hasModeKey":false}
+{"defaultModeIfAbsent":"cors","referrerPolicy":"no-referrer","credentials":"omit","redirect":"error"}

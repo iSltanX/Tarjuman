@@ -1,0 +1,4 @@
+{"scenario":"DS-I4 alts تالف","skipped":[{"videoId":"DDDDDDDDDDD","code":"ST_CORRUPT_RECORD"}],"included":0,"recordValid":true,"getVideo":"ST_CORRUPT_RECORD","salvageActiveFile":"AAAAAAAAAAA.أولى.ar.srt","salvageLosesSlots23":true}
+{"scenario":"DS-I4 prev تالف","skipped":[{"videoId":"DDDDDDDDDDD","code":"ST_CORRUPT_RECORD"}],"included":0,"recordValid":true,"getVideo":"ST_CORRUPT_RECORD","salvageActiveFile":"AAAAAAAAAAA.أولى.ar.srt","salvageLosesSlots23":true}
+{"scenario":"DS-I4 marks تالف","skipped":[{"videoId":"DDDDDDDDDDD","code":"ST_CORRUPT_RECORD"}],"included":0,"recordValid":true,"getVideo":"ST_CORRUPT_RECORD","salvageActiveFile":"AAAAAAAAAAA.أولى.ar.srt","salvageLosesSlots23":true}
+{"scenario":"DS-I4 bundle تالف","skipped":[{"videoId":"DDDDDDDDDDD","code":"ST_CORRUPT_RECORD"}],"included":0,"recordValid":true,"getVideo":"ST_CORRUPT_RECORD","salvageActiveFile":"AAAAAAAAAAA.أولى.ar.srt","salvageLosesSlots23":true}

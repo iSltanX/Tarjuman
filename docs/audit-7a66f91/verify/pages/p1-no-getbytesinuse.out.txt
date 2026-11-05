@@ -1,0 +1,16 @@
+
+=== storage.local.getBytesInUse موجودة ===
+capacity: {"bytesInUse":4899,"quotaBytes":null,"unlimited":true,"ratio":null,"level":"normal","code":null}
+library.status = ready | entries = 1 | rows = 1
+التوسيع: بطاقات=3
+التخزين/المساحة: المستخدم 5 ك.ب (بلا حد ثابت)
+التخزين/الترجمات: الترجمات المحفوظة: 2 · الفيديوهات المترجمة: 1 || الترجمات غير النشطة 1 ك.ب · النسخ السابقة 1 ك.ب
+التشخيص/storage: {"bytesInUse":4899,"quotaBytes":null,"unlimited":true,"level":"normal","code":null}
+
+=== storage.local.getBytesInUse غائبة (Firefox 140–143) ===
+capacity يرمي: ST_READ_FAILED | local.getBytesInUse is not a function
+library.status = error | entries = 0 | rows = 0
+نص الخطأ: تعذّرت قراءة المحفوظاتلم يُحذف شيء. أعد المحاولة، وإن تكرر فانسخ تقرير التشخيص. تعذّرت قراءة المحفوظات. أعد تحميل الصفحة، وإن تكرر فانسخ تقرير التشخيص. (ST_READ_FAILED)إعادة المحاولةنسخ تقرير التشخيص
+التخزين/المساحة: تعذّرت قراءة المحفوظات. أعد تحميل الصفحة، وإن تكرر فانسخ تقرير التشخيص.
+التخزين/الترجمات: تعذّرت قراءة المحفوظات. أعد تحميل الصفحة، وإن تكرر فانسخ تقرير التشخيص. || 
+التشخيص/storage: {"errorCode":"ST_READ_FAILED"}

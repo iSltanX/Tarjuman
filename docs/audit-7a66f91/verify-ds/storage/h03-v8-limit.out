@@ -1,0 +1,4 @@
+{"label":"H-03 (1) حد V8","node":"v24.18.1","MAX_STRING_LENGTH":536870888,"maxBytes512MiB":536870912,"diff":24,"jsonStringifyTwo270M":"RangeError: Invalid string length"}
+{"label":"H-03 (2) RangeError من JSON.stringify داخل createBackup","saves":0,"alerts":["تعذّر إنشاء النسخة الاحتياطيةحدث خطأ غير متوقع. أعد المحاولة، وإن تكرر فانسخ تقرير التشخيص."]}
+{"label":"H-03 (3) text() يرمي لملف تحت 512 MiB","ok":false,"code":"BK_READ_FAILED","message":"تعذّرت قراءة الملف. تأكد أنه ما زال في مكانه ثم أعد المحاولة."}
+{"label":"H-03 (4) أقصى ما ينشئه ترجمان","maxSavedUnits":268435456,"belowV8":true,"note":"النص المحفوظ ≤ 256 Mi وحدة، فقراءته تعطي النص نفسه ≤ 256 Mi وحدة أيًا كان حجمه بالبايت"}

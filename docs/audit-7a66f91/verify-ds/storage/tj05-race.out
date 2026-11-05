@@ -1,0 +1,8 @@
+{"scenario":"TJ-05(أ) editor-first","editorSave":"ok","nudge":"ok","editsKept":false,"offsetBefore":500,"offsetStored":1000,"playerView":1000,"storedRev":2,"eventsSeenByEditorCtx":["1@00:02 → 2@00:08","2@00:08 → 2@00:09"],"winnerEventSameRev":true}
+{"scenario":"TJ-05(أ) player-first","editorSave":"ok","nudge":"ok","editsKept":false,"offsetBefore":500,"offsetStored":1000,"playerView":1000,"storedRev":2,"eventsSeenByEditorCtx":["1@00:02 → 2@00:08","2@00:08 → 2@00:09"],"winnerEventSameRev":true}
+{"scenario":"TJ-05(ب) applyUpload(expect) و± معًا","upload":{"replaced":true,"offsetWas":500,"activated":true},"nudge":"ok","activeFile":"أولى.ar.srt","previous":"1:أولى.ar.srt","uploadLost":true}
+{"scenario":"TJ-05(هـ) ضياع صامت (نجح الطرفان وضاع أحدهما) بتأخير IPC عشوائي","rows":[{"gapUpToMs":0,"rounds":150,"silentLoss":146},{"gapUpToMs":2,"rounds":150,"silentLoss":143},{"gapUpToMs":5,"rounds":150,"silentLoss":121},{"gapUpToMs":10,"rounds":150,"silentLoss":68},{"gapUpToMs":20,"rounds":150,"silentLoss":31}]}
+{"scenario":"TJ-05(02b) setPrefs لمجموعتين من سياقين دافئين","rounds":50,"lost":50}
+{"scenario":"TJ-05(02b) setPrefs لمجموعتين من سياقين (الثاني بارد)","rounds":50,"lost":0}
+{"scenario":"TJ-05(02b) setSettings لمجموعتين من سياقين دافئين","okA":true,"okB":true,"offsetStepMs":500,"displayModeDefault":"dual","lost":true}
+{"scenario":"TJ-05(06) ± في الطريق ثم clearAll","nudge":"ok","keysAfter":["bundle:AAAAAAAAAAA","index:AAAAAAAAAAA","meta","video:AAAAAAAAAAA"],"librarySummaryBeforeRead":[{"id":"AAAAAAAAAAA","filled":3}],"bundleRead":{"filled":[1],"previous":false,"marks":[0,0,0]},"librarySummaryAfterRead":[{"id":"AAAAAAAAAAA","filled":3}],"playerSaved":"rev 2"}

@@ -1,0 +1,5 @@
+عيّنة TED الحقيقية :: {"textEvents":427,"equalStarts":0,"overlappingPairs":0}
+أ. الطويل أولًا (3958) ثم القصير (500) :: [{"startMs":79119,"endMs":79619,"text":"FIRST long\n- second speaker"},{"startMs":84000,"endMs":86000,"text":"NEXT"}]
+ب. القصير أولًا (500) ثم الطويل (3958) :: [{"startMs":79119,"endMs":83077,"text":"- second speaker\nFIRST long"},{"startMs":84000,"endMs":86000,"text":"NEXT"}]
+ج. U36: قصير 80ms ثم فجوة 25ث :: [{"startMs":1000,"endMs":28000,"text":"Yes.\nWelcome back."},{"startMs":30000,"endMs":31000,"text":"NEXT"}]
+د. على العيّنة (DeepSeek) :: {"ok":true,"cue":{"n":21,"startMs":79119,"endMs":79619,"text":"If you're at a dinner party,\nand you say you work in education --\n- second speaker"},"original20":{"start":79119,"dur":3958},"report":{"trimmed":1,"merged":1,"filledEnds":0}}

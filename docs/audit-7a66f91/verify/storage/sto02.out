@@ -1,0 +1,2 @@
+{"scenario":"STO-02-clean","atDialog":{"rev":1,"text0":"أولى 1 (معدّل)","seededRev":1},"behindDialog":{"openedRev":2,"text0":"تحرير-التبويب-الآخر","external":null,"dialogStillOpen":true},"afterConfirm":{"rev":3,"current":null,"external":null},"otherEditLost":true}
+{"scenario":"STO-02-dirty","atDialog":{"rev":1,"text0":"أولى 1 (معدّل)","seededRev":1},"behindDialog":{"openedRev":1,"text0":"أولى 1 (معدّل)","external":"changed","dialogStillOpen":true},"afterConfirm":{"rev":2,"current":"تحرير-التبويب-الآخر","external":"changed"},"otherEditLost":false}

@@ -1,0 +1,22 @@
+== DS-TJ-09 ==
+1) «تفعيل» الخانة 2 من البطاقة: منفصل (⇐ body) كان data-fk=AAAAAAAAAAA:card-2:activate | النشطة=2
+2) «حذف بيانات الفيديو…» من «المزيد» (الصف الأوسط): منفصل (⇐ body) كان data-fk=BBBBBBBBBBB:more | الصف باقٍ؟ false | الصفوف الآن: CCCCCCCCCCC، AAAAAAAAAAA | البديل المطلوب toggleKeyOf = BBBBBBBBBBB:toggle (زال مع الصف)
+3) بند «حذف الترجمة النشطة…» في صف الوسط موجود؟ true
+   «حذف الترجمة النشطة…» لصف فيه ترجمات (الصف يبقى): متصل data-fk=AAAAAAAAAAA:more
+
+== DS-TJ-43 ==
+البحث «» | الزر في ترتيب Tab؟ true | aria-label=«مسح البحث» | library.css:32: .lib-search:has(.lib-search__input:placeholder-shown) .lib-search__clear { opacity: 0; pointer-events: none; }
+  library.css:31: .lib-search:not(:focus-within) .lib-search__clear:not(:focus-visible) { opacity: 0; pointer-events: none; }
+
+== DS-TJ-44 (toast.js في المحفوظات) ==
+المؤقتات=[30,6000] (TOAST_MS=3000) | مستمعو إيقاف: لا شيء | بعد الانقضاء والتركيز على «تراجع»: منفصل (⇐ body) | الإعلان «الترجمة 2» يذكر «تراجع»؟ false
+  تفعيل «تراجع» بلوحة المفاتيح: الرسالة باقية؟ false | التركيز: منفصل (⇐ body)
+تفعيل شريحة الخانة 2 في الصف: نص الرسالة «الترجمة 2تراجع» | المنطقة الحية «الترجمة 2» | الحاوية بعد القائمة؟ tj-page-head ← lib-capacity-alert ← lib-toolbar ← tj-sr-only ← lib-list-host ← tj-toasts ← tj-sr-only
+
+== DS-TJ-49 ==
+السعة (unlimited، 300 م.ب): code=ST_LARGE_LIBRARY level=warning | التنبيه «حجم المحفوظات كبير. صدّر ما لا تحتاجه أو احذفه لتبقى الإضافة سريعة.» | عقد role=alert مختلفة بعد التحميل و3 أحرف وتغيير ترتيب: 5
+  مع unlimitedStorage و50 م.ب: code=null (لا تنبيه)
+حالة الخطأ: شريط الأدوات ظاهر؟ true | عقد role=alert للخطأ بعد 3 أحرف: 3
+
+== DS-S5 ==
+أبناء القائمة: presentation:«تصدير» | menuitem:«العربية — النسخة الحالية» | menuitem:«العربية — الأصل المستورد» | menuitem:«الإنجليزية — المستخرجة5 » | menuitem:«نص دراسي…» | separator:«» | menuitem:«رفع ترجمة…» | menuitem:«نسخ التعليماتينسخ تعليما» | separator:«» | menuitem:«حذف الترجمة النشطة…» | menuitem:«حذف بيانات الفيديو…»

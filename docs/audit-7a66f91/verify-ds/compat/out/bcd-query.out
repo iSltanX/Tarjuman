@@ -1,0 +1,45 @@
+@mdn/browser-compat-data 8.1.4 __meta {"timestamp":"2026-10-01T10:12:15.059Z","version":"8.1.4"}
+webextensions.api.storage.StorageArea.getBytesInUse | chrome 19 | edge 14 | firefox 78 notes=["Supported by the <code>sync</code> storage area from Firefox 78.","Supported by the <code>session</code> storage area from Firefox 131.","Supported by the <code>local</code> and <code>managed</code> storage areas from Firefox 144."]
+webextensions.api.storage.local.getBytesInUse | chrome 19 | edge 14 | firefox 144
+webextensions.api.storage.local.getKeys | chrome 130 | edge 130 | firefox 143
+webextensions.api.storage.StorageArea.getKeys | chrome 130 | edge 130 | firefox 143
+webextensions.api.storage.local.QUOTA_BYTES : غير موجود في البيانات
+webextensions.manifest.content_scripts.world | chrome 111 | edge 111 | firefox 128
+webextensions.manifest.content_scripts.world.MAIN : غير موجود في البيانات
+webextensions.manifest.optional_host_permissions | chrome 102 notes="Available for use in Manifest V3 or later." | edge 102 notes="Available for use in Manifest V3 or later." | firefox 128 notes="Available for use in Manifest V3 or later."
+webextensions.manifest.web_accessible_resources.use_dynamic_url | chrome 130 | 88 notes="Setting the property had no effect." | edge 130 | 88 notes="Setting the property had no effect." | firefox false
+webextensions.manifest.background.service_worker | chrome 88 notes="Available for use in Manifest V2 or later." | edge 88 notes="Available for use in Manifest V2 or later." | firefox false
+webextensions.manifest.background.scripts | chrome ≤72 notes="Available for use in Manifest V2 only." | edge 14 | firefox 48 notes="Before Firefox 50, when the debugger is open, scripts are not always loaded in the order given in the array."
+webextensions.api.downloads.download | chrome 22 | edge 79 | firefox 47
+webextensions.api.downloads.download.conflictAction | chrome 28 | edge 79 | firefox 47
+webextensions.api.downloads.download.saveAs | chrome 22 | edge 79 | firefox 52 notes="Before version 58, if this option was omitted, Firefox would never show the file chooser, regardless of the value of the browser's preference."
+webextensions.api.downloads.search | chrome 22 | edge 79 | firefox 47
+webextensions.api.runtime.getBrowserInfo | chrome false | edge false | firefox 51
+webextensions.manifest.browser_specific_settings.gecko.data_collection_permissions | chrome false | edge false | firefox 140
+webextensions.api.permissions.Permissions.data_collection | chrome false | edge false | firefox 140
+webextensions.manifest.background.persistent | chrome ≤58 notes="Available for use in Manifest V2 only." | edge 14 notes=["Available for use in Manifest V2 only.","Before Edge 79, this property was required."] | firefox 48 notes=["Available for use in Manifest V2 only.","From Firefox 106, persistent and non-persistent pages are supported for Manifest V2.","To Firefox 105, only persistent pages are supported.","Before version 66, Firefox would log a warning even if the value was set to <code>true</code>."]
+css.properties.scrollbar-color | chrome 121 | edge 121 | firefox 64
+css.properties.scrollbar-width | chrome 121 | edge 121 | firefox 64
+css.types.color.color-mix | chrome 111 | edge 111 | firefox 113
+css.selectors.has | chrome 105 | edge 105 | firefox 121
+css.properties.backdrop-filter | chrome 76 | edge 79 | 17 | firefox 103 notes="Before Firefox 123, the property was not supported on systems with unknown GPU vendor (see bug <a href=\"https://bugzil.la/1868737#c12\">1868737</a>)."
+api.HTMLElement.cancel_event : غير موجود في البيانات
+api.HTMLInputElement.cancel_event | chrome 113 | edge 113 | firefox 91
+api.structuredClone | chrome 98 | edge 98 | firefox 94
+javascript.builtins.Intl.DisplayNames | chrome 81 | edge 81 | firefox 86
+javascript.builtins.Object.hasOwn | chrome 93 | edge 93 | firefox 92
+javascript.builtins.Array.at | chrome 92 | edge 92 | firefox 90
+api.Document.adoptedStyleSheets | chrome 73 | edge 79 | firefox 101
+api.CSSStyleSheet.replaceSync | chrome 73 | edge 79 | firefox 101
+firefox 128 {"engine":"Gecko","engine_version":"128","index":130,"release_date":"2024-07-09","release_notes":"https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/128","status":"retired"}
+firefox 140 {"engine":"Gecko","engine_version":"140","index":142,"release_date":"2025-06-24","release_notes":"https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/140","status":"retired"}
+firefox 141 {"engine":"Gecko","engine_version":"141","index":143,"release_date":"2025-07-22","release_notes":"https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/141","status":"retired"}
+firefox 142 {"engine":"Gecko","engine_version":"142","index":144,"release_date":"2025-08-19","release_notes":"https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/142","status":"retired"}
+firefox 143 {"engine":"Gecko","engine_version":"143","index":145,"release_date":"2025-09-16","release_notes":"https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/143","status":"retired"}
+firefox 144 {"engine":"Gecko","engine_version":"144","index":146,"release_date":"2025-10-14","release_notes":"https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/144","status":"retired"}
+firefox 153 {"engine":"Gecko","engine_version":"153","index":155,"release_date":"2026-07-21","release_notes":"https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/153","status":"esr"}
+firefox 159 {"engine":"Gecko","engine_version":"159","index":161,"release_date":"2026-10-27","release_notes":"https://developer.mozilla.org/docs/Mozilla/Firefox/Releases/159","status":"nightly"}
+chrome 111 {"engine":"Blink","engine_version":"111","index":109,"release_date":"2023-03-07","release_notes":"https://developer.chrome.com/blog/new-in-chrome-111","status":"retired"}
+chrome 130 {"engine":"Blink","engine_version":"130","index":128,"release_date":"2024-10-15","release_notes":"https://developer.chrome.com/release-notes/130","status":"retired"}
+chrome 156 {"engine":"Blink","engine_version":"156","index":154,"release_date":"2026-10-20","status":"nightly"}
+chrome 157 {"engine":"Blink","engine_version":"157","index":155,"status":"planned"}

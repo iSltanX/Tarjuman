@@ -1,0 +1,5 @@
+isAdShowing = true | seekMainVideo أثناء الإعلان يرفض؟ true
+نداءات markCue أثناء الإعلان: [["markCue",1,"todo"]]
+الرسائل: [{"tone":"success","text":"عُلِّم المقطع 2 للمراجعةتراجع"}]
+رأس المزامنة: عند 0:04 | الجمل المعروضة: 5
+نداءات setOffset: [["setOffset",3000]] | الإزاحة الآن 3000

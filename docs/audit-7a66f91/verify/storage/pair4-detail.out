@@ -1,0 +1,1 @@
+{"scenario":"pair4-detail","before":["أولى.ar.srt","ثانية.ar.srt","ثالثة.ar.srt"],"afterBDeleteSlot1":[null,"ثانية.ar.srt","ثالثة.ar.srt"],"final":["أولى.ar.srt",null,"ثالثة.ar.srt"],"finalActive":1,"finalNames":[null,null,null]}

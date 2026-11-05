@@ -1,0 +1,9 @@
+{"scenario":"TJ-19 before-event","upload":{"replaced":true,"offsetWas":500,"activated":true},"viewAtClick":500,"step":500,"activeFile":"جديد.ar.srt","storedOffset":1000,"expected":500}
+{"scenario":"TJ-19 after-event","upload":{"replaced":true,"offsetWas":500,"activated":true},"viewAtClick":0,"step":500,"activeFile":"جديد.ar.srt","storedOffset":500,"expected":500}
+{"scenario":"markCue before-event","oldCueAtIndex2":"أولى 3 (معدّل)","userClickedText":"أولى 3 (معدّل)","mark":"ok","newMarkLandsOn":"مختلف 3","newFileIndex2":"مختلف 3"}
+{"scenario":"markCue after-event","oldCueAtIndex2":"أولى 3 (معدّل)","userClickedText":"مختلف 3","mark":"ok","newMarkLandsOn":"مختلف 3","newFileIndex2":"مختلف 3"}
+{"scenario":"TJ-20 forced-reply-after-event","revBefore":5,"heldReplies":1,"controllerSaved":null,"controllerArabic":null,"stored":"rev 1"}
+{"scenario":"TJ-20 natural-back-to-back","revBefore":5,"heldReplies":0,"controllerSaved":"rev 1","controllerArabic":"أولى.ar.srt","stored":"rev 1"}
+{"scenario":"TJ-20 delete-event-then-restore","revBefore":5,"heldReplies":0,"controllerSaved":"rev 1","controllerArabic":"أولى.ar.srt","stored":"rev 1"}
+{"scenario":"H-04 before-event","planOk":true,"trackAtClickHasEditorEdit":false,"upload":"ok","editorEditMergedIntoNew":false,"editorEditInPrevious":true,"previousFrom":1}
+{"scenario":"H-04 after-event","planOk":true,"trackAtClickHasEditorEdit":true,"upload":"ok","editorEditMergedIntoNew":true,"editorEditInPrevious":true,"previousFrom":1}
