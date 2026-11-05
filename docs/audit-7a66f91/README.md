@@ -63,7 +63,7 @@ TJ_ROOT="$DIR" command node docs/audit-7a66f91/verify/storage/sto01.mjs
 | [`02-verification.md`](02-verification.md) | الحصيلة، وأخطاء أوصاف التقارير، والبنود الموحّدة `U01`–`U104`، وما أضافه DeepSeek إلى القائم، ومستوى الدليل، وقائمة التحقيق `I01`–`I16`، وغير القائم، والاقتراحات، وجدولا التتبّع (277 صفًا، منها 23 من `FINDINGS.md` عند DeepSeek). |
 | [`03-plan.md`](03-plan.md) | خطة الإصلاح C1–C9، والقرارات المطلوبة، وأين يُحسم كل بند تحقيق. |
 | [`c2-design.md`](c2-design.md) | تصميم الكاتب الواحد في C2 وتعديلات عقودها، اعتمده سلطان قبل التنفيذ (Q15)، وما اختلف عنه في التنفيذ. |
-| `live/C1/` و`live/C2/` | نتائج الاختبارات الحية للمرحلتين (`test/live/audit-c1/run.mjs` و`test/live/audit-c2/run.mjs`)، بلا مسار محلي. |
+| `live/C1/` و`live/C2/` و`live/C3/` | نتائج الاختبارات الحية للمراحل (`test/live/audit-c1/run.mjs` و`audit-c2/run.mjs` و`audit-c3/run.mjs`)، بلا مسار محلي. وفي `live/C3/` لوحتا «قبل وبعد» لتخطيط المحرّر (D-C3-1). |
 | `verify/<المجال>/` | سكربتات الجولة الأولى ومخرجاتها و`RESULTS.md`: `storage` و`backup` و`editor` و`player` و`pages` و`engines` و`tooling`. |
 | `verify-ds/<المجال>/` | سكربتات التحقق من DeepSeek ومخرجاتها و`RESULTS.md`: `storage` و`editor` و`pipeline` و`security` و`ui` و`compat`. |
 
