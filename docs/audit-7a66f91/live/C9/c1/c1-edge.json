@@ -1,0 +1,126 @@
+{
+  "browser": "edge",
+  "startedAt": "2026-11-05T17:52:09.262Z",
+  "versions": {
+    "edge": "Edg/156.0.4314.58"
+  },
+  "steps": {
+    "pagesErrors": [
+      {
+        "where": "pages/settings/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      },
+      {
+        "where": "pages/library/index.html",
+        "errors": [
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          },
+          {
+            "kind": "log.network",
+            "text": "Failed to load resource: net::ERR_BLOCKED_BY_CLIENT.Inspector"
+          }
+        ],
+        "fontReadLogs": 0
+      },
+      {
+        "where": "pages/settings/index.html",
+        "errors": [],
+        "fontReadLogs": 0
+      }
+    ],
+    "pages": {
+      "ok": true,
+      "ms": 7915
+    }
+  },
+  "checks": [
+    {
+      "id": "pages-library",
+      "ok": true,
+      "rows": 50,
+      "more": true,
+      "error": false,
+      "quota": "المستخدم 696 ك.ب",
+      "imgsWithSrc": 33,
+      "thumbRequests": 17
+    },
+    {
+      "id": "pages-settings-storage",
+      "ok": true,
+      "usage": "المستخدم 696 ك.ب (بلا حد ثابت)",
+      "library": "الترجمات المحفوظة: 47 · الفيديوهات المترجمة: 47",
+      "bytes": "الترجمات غير النشطة 0 ك.ب · النسخ السابقة 0 ك.ب"
+    },
+    {
+      "id": "pages-no-extension-errors",
+      "ok": true,
+      "errors": []
+    }
+  ],
+  "notes": [],
+  "finishedAt": "2026-11-05T17:52:17.210Z",
+  "profilesRemoved": 1
+}

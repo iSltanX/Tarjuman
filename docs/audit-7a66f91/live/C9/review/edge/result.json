@@ -1,0 +1,331 @@
+{
+  "browser": "Edge 156.0.4314.58 (Edg/156.0.4314.58)",
+  "at": "2026-11-05T17:50:46.142Z",
+  "commit": "0a54b43",
+  "extension": {
+    "version": "1.1.0",
+    "testCopy": "dist + host_permissions لمضيف البلاغات"
+  },
+  "checks": [
+    {
+      "id": "delete-active-stale",
+      "ok": true,
+      "detail": {
+        "dialog": true,
+        "otherTabActivated2": true,
+        "dialogStillOpen": true,
+        "toast": "| تغيّرت ترجمات هذا الفيديو من مكان آخر بعد فتح التأكيد، فلم يُحذف شيء. راجع ما يظهر الآن ثم أعد الحذف إن أردت. | تغيّرت ترجمات هذا الفيديو من مكان آخر بعد فتح التأكيد، فلم يُحذف شيء. راجع ما يظهر الآن ثم أعد الحذف إن أردت.",
+        "filled": [
+          true,
+          true,
+          true
+        ],
+        "active": 2,
+        "listReloadedPressed2": "true"
+      }
+    },
+    {
+      "id": "delete-active-after-refresh",
+      "ok": true,
+      "detail": {
+        "dialog2": true,
+        "filled": [
+          true,
+          false,
+          true
+        ],
+        "active": 1
+      }
+    },
+    {
+      "id": "delete-card-stale",
+      "ok": true,
+      "detail": {
+        "dialog": true,
+        "otherTabRenamed": true,
+        "toast": "| تغيّرت ترجمات هذا الفيديو من مكان آخر بعد فتح التأكيد، فلم يُحذف شيء. راجع ما يظهر الآن ثم أعد الحذف إن أردت. | تغيّرت ترجمات هذا الفيديو من مكان آخر بعد فتح التأكيد، فلم يُحذف شيء. راجع ما يظهر الآن ثم أعد الحذف إن أردت.",
+        "slot2Kept": true,
+        "name": "محتوى آخر"
+      }
+    },
+    {
+      "id": "delete-previous-stale",
+      "ok": true,
+      "detail": {
+        "dialog": true,
+        "otherTabRestored": true,
+        "toast": "| تغيّرت ترجمات هذا الفيديو من مكان آخر بعد فتح التأكيد، فلم يُحذف شيء. راجع ما يظهر الآن ثم أعد الحذف إن أردت. | تغيّرت ترجمات هذا الفيديو من مكان آخر بعد فتح التأكيد، فلم يُحذف شيء. راجع ما يظهر الآن ثم أعد الحذف إن أردت.",
+        "previousKept": true
+      }
+    },
+    {
+      "id": "delete-all-stale",
+      "ok": true,
+      "detail": {
+        "dialog": true,
+        "otherTabRenamed": true,
+        "toast": "| تغيّرت ترجمات هذا الفيديو من مكان آخر بعد فتح التأكيد، فلم يُحذف شيء. راجع ما يظهر الآن ثم أعد الحذف إن أردت. | تغيّرت ترجمات هذا الفيديو من مكان آخر بعد فتح التأكيد، فلم يُحذف شيء. راجع ما يظهر الآن ثم أعد الحذف إن أردت.",
+        "videoKept": true
+      }
+    },
+    {
+      "id": "delete-all-after-refresh",
+      "ok": true,
+      "detail": {
+        "keysLeft": []
+      }
+    },
+    {
+      "id": "study-library-negative-offset",
+      "ok": true,
+      "detail": {
+        "offsetMs": -2000,
+        "note": "بإزاحة العرض الحالية يقع قبل بداية الفيديو ما رقمه 1، فيبدأ رابطه في النص الدراسي من 0:00، وبقية المقاطع بإزاحتها كما تظهر. صحّح الإزاحة أو توقيته إن أردت رابطه الدقيق.",
+        "role": "note",
+        "file": "RvStudyNeg1.ar.study.md",
+        "links": [
+          0,
+          4,
+          9
+        ],
+        "expected": [
+          0,
+          4,
+          9
+        ],
+        "beforeFix": [
+          1,
+          6,
+          11
+        ]
+      }
+    },
+    {
+      "id": "study-library-positive-offset",
+      "ok": true,
+      "detail": {
+        "offsetMs": 500,
+        "note": null,
+        "role": null,
+        "file": "RvStudyPos1.ar.study.md",
+        "links": [
+          1,
+          6,
+          11
+        ],
+        "expected": [
+          1,
+          6,
+          11
+        ]
+      }
+    },
+    {
+      "id": "study-editor-negative-offset",
+      "ok": true,
+      "detail": {
+        "note": true,
+        "file": "RvStudyNeg1.ar.study (1).md",
+        "links": [
+          0,
+          4,
+          9
+        ]
+      }
+    },
+    {
+      "id": "fingerprint-new-timing-saved",
+      "ok": true,
+      "detail": {
+        "file": "RvFingerpr1.en.manual.normal.srt",
+        "fingerprints": 2,
+        "freshStarts": [
+          2500,
+          5000,
+          7500,
+          10000,
+          12500
+        ]
+      }
+    },
+    {
+      "id": "fingerprint-upload-no-false-drift",
+      "ok": true,
+      "detail": {
+        "fingerprintId": "الجديدة",
+        "matched": true,
+        "drift": 0,
+        "dialog": "رفع ترجمة لـ\"⁨مراجعة: بصمة التصدير⁩\"RvFingerpr1-2026-11-05T17-50-46-141Z.ar.srt · 5 مقاطعتُحفظ ترجمةً جديدة.المرجعالإنجليزية يدوي · عادي · 5 مقاطع · 05‏/11‏/2026، 8:51 م — الأقربالإنجليزية يدوي · عادي"
+      }
+    },
+    {
+      "id": "report-focus-keyboard-retry",
+      "ok": true,
+      "detail": {
+        "duringSend": {
+          "tag": "DIV",
+          "action": null,
+          "isResult": true,
+          "body": false
+        },
+        "tabindex": "-1",
+        "afterFail": {
+          "tag": "BUTTON",
+          "action": "retry",
+          "isResult": false,
+          "body": false
+        },
+        "duringSend2": {
+          "tag": "DIV",
+          "action": null,
+          "isResult": true,
+          "body": false
+        },
+        "afterSent": {
+          "tag": "DIV",
+          "action": null,
+          "isResult": true,
+          "body": false
+        }
+      }
+    },
+    {
+      "id": "report-same-key-across-retries",
+      "ok": true,
+      "detail": {
+        "attempts": 3,
+        "sameKey": true
+      }
+    },
+    {
+      "id": "report-copy-id-failure-visible",
+      "ok": true,
+      "detail": {
+        "note": {
+          "role": "alert",
+          "text": "تعذّر نسخ الرقم. حدّده من السطر أعلاه وانسخه بيدك."
+        },
+        "idStillShown": true,
+        "focus": {
+          "tag": "BUTTON",
+          "action": "copy-id",
+          "isResult": false,
+          "body": false
+        }
+      }
+    },
+    {
+      "id": "report-copy-id-success",
+      "ok": true,
+      "detail": {
+        "done": "نُسخ الرقم.",
+        "copied": "#9001"
+      }
+    },
+    {
+      "id": "report-next-report-new-key",
+      "ok": true,
+      "detail": {
+        "newKey": true,
+        "shown9002": true
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": {
+        "library-A": {
+          "errors": 0,
+          "expectedReportFailures": 0
+        },
+        "library-B": {
+          "errors": 0,
+          "expectedReportFailures": 0
+        },
+        "editor": {
+          "errors": 0,
+          "expectedReportFailures": 0
+        },
+        "settings": {
+          "errors": 0,
+          "expectedReportFailures": 2
+        }
+      }
+    },
+    {
+      "id": "no-external-network",
+      "ok": true,
+      "detail": {
+        "library-A": 0,
+        "library-B": 0,
+        "editor": 0,
+        "settings": 0
+      }
+    }
+  ],
+  "observations": {
+    "seed": {
+      "videos": [
+        "RvDelActive",
+        "RvDelCard01",
+        "RvDelPrev01",
+        "RvDelAll001",
+        "RvStudyNeg1",
+        "RvStudyPos1",
+        "RvFingerpr1"
+      ],
+      "bytes": 26627
+    },
+    "report-permission-stub": true,
+    "report-requests": {
+      "paused": 4,
+      "allIntercepted": true,
+      "note": "كل طلب إلى مضيف البلاغات أُوقف ورُدّ عليه من الحزام؛ لم يُتابَع أي طلب إلى الشبكة"
+    }
+  },
+  "screenshots": [
+    "docs/audit-7a66f91/live/C9/review/edge/delete-active-stale.png",
+    "docs/audit-7a66f91/live/C9/review/edge/study-library-note.png",
+    "docs/audit-7a66f91/live/C9/review/edge/study-editor-note.png",
+    "docs/audit-7a66f91/live/C9/review/edge/fingerprint-upload-dialog.png",
+    "docs/audit-7a66f91/live/C9/review/edge/report-failed-focus.png",
+    "docs/audit-7a66f91/live/C9/review/edge/report-copy-id-failed.png"
+  ],
+  "errors": {
+    "library-A": [],
+    "library-B": [],
+    "editor": [],
+    "settings": [
+      {
+        "kind": "log.network",
+        "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+      },
+      {
+        "kind": "log.network",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      }
+    ]
+  },
+  "network": {
+    "library-A": {
+      "external": 0,
+      "hosts": [],
+      "reportsIntercepted": 0
+    },
+    "library-B": {
+      "external": 0,
+      "hosts": [],
+      "reportsIntercepted": 0
+    },
+    "editor": {
+      "external": 0,
+      "hosts": [],
+      "reportsIntercepted": 0
+    },
+    "settings": {
+      "external": 0,
+      "hosts": [],
+      "reportsIntercepted": 4
+    }
+  }
+}
