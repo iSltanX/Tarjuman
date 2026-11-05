@@ -1,0 +1,365 @@
+{
+  "browser": "brave",
+  "tree": "current",
+  "at": "2026-11-05T14:46:55.646Z",
+  "headless": true,
+  "version": "Chrome/156.0.8078.80",
+  "checks": [
+    {
+      "id": "install",
+      "ok": true,
+      "detail": {
+        "version": "Chrome/156.0.8078.80"
+      }
+    },
+    {
+      "id": "mounted",
+      "ok": true,
+      "detail": {
+        "mounted": {
+          "overlay": "mounted",
+          "controls": "mounted",
+          "panel": "mounted"
+        }
+      }
+    },
+    {
+      "id": "arabic-shown",
+      "ok": true,
+      "detail": {
+        "arabic": 427,
+        "lines": 2
+      }
+    },
+    {
+      "id": "roles-dialog",
+      "ok": true,
+      "detail": {
+        "popups": {
+          "download": "dialog",
+          "upload": "dialog",
+          "badge": "dialog"
+        },
+        "roles": {
+          "download": "dialog",
+          "display": "dialog",
+          "timing": "dialog"
+        }
+      }
+    },
+    {
+      "id": "toast-font-matches-menu",
+      "ok": true,
+      "detail": {
+        "toast": {
+          "family": "\"Tarjuman UI Almarai\", \"SF Arabic\", \"Noto Sans Arabic\", Tahoma, sans-serif",
+          "size": "13px",
+          "weight": "400",
+          "lineHeight": "19.5px"
+        },
+        "menu": {
+          "family": "\"Tarjuman UI Almarai\", \"SF Arabic\", \"Noto Sans Arabic\", Tahoma, sans-serif",
+          "size": "13px",
+          "weight": "400",
+          "lineHeight": "19.5px"
+        }
+      }
+    },
+    {
+      "id": "undo-focus-returns-to-bar",
+      "ok": true,
+      "detail": {
+        "shiftTabs": 8,
+        "onAct": true,
+        "menuStill": true,
+        "after": {
+          "focusedKind": "upload",
+          "active": "tarjuman-controls",
+          "toasts": 0
+        }
+      }
+    },
+    {
+      "id": "dialog-closes-when-focus-leaves",
+      "ok": true,
+      "detail": {
+        "opened": true,
+        "tabs": 4,
+        "focusNow": "A",
+        "menu": false
+      }
+    },
+    {
+      "id": "tooltip-esc-and-hoverable",
+      "ok": true,
+      "detail": {
+        "shown": true,
+        "afterEsc": null,
+        "overTip": true,
+        "away": null
+      }
+    },
+    {
+      "id": "panel-one-tab-stop-arrows-and-lang",
+      "ok": true,
+      "detail": {
+        "rows": 427,
+        "tabStops": 1,
+        "lang": "ar",
+        "startFocus": {
+          "row": null,
+          "area": "head",
+          "cls": "b b--ghost b--icon"
+        },
+        "inList": {
+          "row": 13,
+          "area": "list",
+          "cls": "t"
+        },
+        "followAfterFocus": false,
+        "down": {
+          "row": 14,
+          "area": "list",
+          "cls": "t"
+        },
+        "afterTab": {
+          "row": null,
+          "area": null,
+          "cls": "resume"
+        }
+      }
+    },
+    {
+      "id": "panel-keyboard-focus-stops-follow",
+      "ok": true,
+      "detail": {
+        "follow": false
+      }
+    },
+    {
+      "id": "short-gap-keeps-line",
+      "ok": true,
+      "detail": {
+        "cue": 13,
+        "gapMs": 24,
+        "at": 63313,
+        "shown": 1,
+        "overlay": {
+          "hidden": false,
+          "empty": false,
+          "fading": false,
+          "diag": {
+            "state": "mounted",
+            "attempts": 1,
+            "failures": 0,
+            "lastCode": null,
+            "lastDetail": null,
+            "session": {
+              "renders": 6,
+              "renderFailures": 0,
+              "refreshes": 11,
+              "hostMoves": 0,
+              "fullscreenUnreachable": 0,
+              "lastCode": null,
+              "styleMode": "adopted",
+              "captionsHidden": true,
+              "hidden": false,
+              "engine": {
+                "frames": 0,
+                "lookups": 6,
+                "emits": 6,
+                "loopStarts": 0,
+                "evals": 13,
+                "running": false,
+                "tracks": 1,
+                "ar": {
+                  "from": 63301,
+                  "to": 63325,
+                  "cue": 13,
+                  "size": 427
+                },
+                "video": {
+                  "connected": true,
+                  "timeSec": 63.31
+                }
+              },
+              "fontRequested": "almarai"
+            },
+            "fonts": {
+              "requested": "almarai",
+              "active": "almarai",
+              "code": null,
+              "loaded": [
+                "almarai"
+              ],
+              "failed": [],
+              "lastDetail": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "timing-menu-clear-of-line-1280",
+      "ok": true,
+      "detail": {
+        "menu": {
+          "top": 291,
+          "bottom": 549,
+          "left": 441,
+          "right": 721,
+          "width": 280,
+          "height": 258
+        },
+        "lines": 2,
+        "overlap": false
+      }
+    },
+    {
+      "id": "timing-menu-clear-of-line-1920",
+      "ok": true,
+      "detail": {
+        "menu": {
+          "top": 543,
+          "bottom": 801,
+          "left": 927,
+          "right": 1207,
+          "width": 280,
+          "height": 258
+        },
+        "lines": 2,
+        "overlap": false
+      }
+    }
+  ],
+  "measures": {
+    "font": {
+      "toast": {
+        "family": "\"Tarjuman UI Almarai\", \"SF Arabic\", \"Noto Sans Arabic\", Tahoma, sans-serif",
+        "size": "13px",
+        "weight": "400",
+        "lineHeight": "19.5px"
+      },
+      "menu": {
+        "family": "\"Tarjuman UI Almarai\", \"SF Arabic\", \"Noto Sans Arabic\", Tahoma, sans-serif",
+        "size": "13px",
+        "weight": "400",
+        "lineHeight": "19.5px"
+      }
+    },
+    "undo": {
+      "shiftTabs": 8,
+      "onAct": true,
+      "menuStill": true,
+      "after": {
+        "focusedKind": "upload",
+        "active": "tarjuman-controls",
+        "toasts": 0
+      }
+    },
+    "panel": {
+      "rows": 427,
+      "tabStops": 1,
+      "lang": "ar",
+      "startFocus": {
+        "row": null,
+        "area": "head",
+        "cls": "b b--ghost b--icon"
+      },
+      "inList": {
+        "row": 13,
+        "area": "list",
+        "cls": "t"
+      },
+      "followAfterFocus": false,
+      "down": {
+        "row": 14,
+        "area": "list",
+        "cls": "t"
+      },
+      "afterTab": {
+        "row": null,
+        "area": null,
+        "cls": "resume"
+      }
+    },
+    "timing1280": {
+      "menu": {
+        "top": 291,
+        "bottom": 549,
+        "left": 441,
+        "right": 721,
+        "width": 280,
+        "height": 258
+      },
+      "lines": [
+        {
+          "top": 561,
+          "bottom": 610,
+          "left": 374,
+          "right": 538,
+          "width": 165,
+          "height": 49
+        },
+        {
+          "top": 612,
+          "bottom": 661,
+          "left": 348,
+          "right": 564,
+          "width": 216,
+          "height": 49
+        }
+      ],
+      "player": {
+        "top": 68,
+        "bottom": 728,
+        "left": 16,
+        "right": 896,
+        "width": 880,
+        "height": 660
+      }
+    },
+    "timing1920": {
+      "menu": {
+        "top": 543,
+        "bottom": 801,
+        "left": 927,
+        "right": 1207,
+        "width": 280,
+        "height": 258
+      },
+      "lines": [
+        {
+          "top": 813,
+          "bottom": 883,
+          "left": 634,
+          "right": 868,
+          "width": 234,
+          "height": 70
+        },
+        {
+          "top": 885,
+          "bottom": 955,
+          "left": 596,
+          "right": 906,
+          "width": 309,
+          "height": 70
+        }
+      ],
+      "player": {
+        "top": 68,
+        "bottom": 1032,
+        "left": 108,
+        "right": 1394,
+        "width": 1285,
+        "height": 964
+      }
+    },
+    "seeksWithoutMedia": 6
+  },
+  "notes": [
+    "إعلان عند الفتح: {\"seen\":false}",
+    "اللقطات الكاملة لم تُحفظ في المستودع؛ المقصوص منها في c6-toast-font-before-after.jpg وc6-muted-before-after.jpg"
+  ],
+  "screenshots": []
+}
