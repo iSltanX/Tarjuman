@@ -1,0 +1,355 @@
+{
+  "browser": "firefox",
+  "startedAt": "2026-11-05T16:08:24.206Z",
+  "version": "Firefox/159.0.1",
+  "steps": {
+    "keys": {
+      "ok": true,
+      "value": true,
+      "ms": 20113
+    },
+    "blur": {
+      "ok": true,
+      "value": {
+        "seen": [
+          "after-remove"
+        ],
+        "active": "body"
+      },
+      "ms": 3175
+    },
+    "narrow": {
+      "ok": true,
+      "value": true,
+      "ms": 12083
+    },
+    "top": {
+      "ok": true,
+      "value": {
+        "scrollY": 0,
+        "hash": "",
+        "h1Top": 81,
+        "barBottom": 57,
+        "h1Visible": true
+      },
+      "ms": 2320
+    },
+    "widths": {
+      "ok": true,
+      "value": {
+        "vh": 600,
+        "docH": 768,
+        "navBottom": 600,
+        "cardH": 327
+      },
+      "ms": 8789
+    },
+    "picker": {
+      "ok": true,
+      "value": null,
+      "ms": 0
+    },
+    "tabs": {
+      "ok": true,
+      "value": {
+        "total": 10,
+        "withUrl": 9,
+        "youtubeVisible": 1,
+        "sample": [
+          "لا عنوان",
+          "moz-extension:",
+          "moz-extension:",
+          "moz-extension:",
+          "moz-extension:",
+          "moz-extension:",
+          "moz-extension:",
+          "moz-extension:",
+          "moz-extension:",
+          "https:"
+        ]
+      },
+      "ms": 5670
+    }
+  },
+  "checks": [
+    {
+      "id": "seed",
+      "ok": true,
+      "count": 55
+    },
+    {
+      "id": "U50-activate-keeps-focus",
+      "ok": true,
+      "tag": "button",
+      "fk": "C7aaaaaaaaa:card-2:export",
+      "cls": "tj-btn tj-btn--secondary tj-btn--sm",
+      "role": null,
+      "body": false,
+      "label": "تصدير SRT: الترجمة 2"
+    },
+    {
+      "id": "U50-rename-keeps-focus",
+      "ok": true,
+      "typing": {
+        "tag": "input",
+        "fk": "C7aaaaaaaaa:card-3:name",
+        "cls": "tj-field__input lib-card__name",
+        "role": null,
+        "body": false,
+        "label": "الاسم المختصر للترجمة 3"
+      },
+      "after": {
+        "tag": "button",
+        "fk": "C7aaaaaaaaa:card-3:rename",
+        "cls": "tj-btn tj-btn--ghost tj-btn--sm tj-btn--icon lib-card__rename",
+        "role": null,
+        "body": false,
+        "label": "إعادة تسمية الترجمة 3"
+      }
+    },
+    {
+      "id": "U58-menu-background-update",
+      "ok": true,
+      "opened": "true",
+      "fk": "C7aaaaaaaaa:more",
+      "body": false,
+      "expanded": "false"
+    },
+    {
+      "id": "U58-clear-search-not-in-tab-order",
+      "ok": true,
+      "tag": "select",
+      "fk": null,
+      "cls": "tj-field__input lib-sort__select",
+      "role": null,
+      "body": false,
+      "label": "الترتيب"
+    },
+    {
+      "id": "U58-toast-held-while-focused",
+      "ok": true,
+      "live": "فُعّلت الترجمة 1.. للتراجع: «تراجع» في الرسالة، أو اضغط شريحة الترجمة 2."
+    },
+    {
+      "id": "U58-undo-by-keyboard-focus",
+      "ok": true,
+      "tag": "button",
+      "fk": "C7aaaaaaaaa:chip-1",
+      "cls": "lib-chip",
+      "role": null,
+      "body": false,
+      "label": "الترجمة 1"
+    },
+    {
+      "id": "U58-announce-undo-hint",
+      "ok": true,
+      "live": "فُعّلت الترجمة 1.. للتراجع: «تراجع» في الرسالة، أو اضغط شريحة الترجمة 2."
+    },
+    {
+      "id": "U58-show-more-focus-first-new-row",
+      "ok": true,
+      "before": 50,
+      "rows": 55,
+      "isRow": true,
+      "body": false
+    },
+    {
+      "id": "U51-dialog-labelled",
+      "ok": true,
+      "title": "حذف بيانات هذا الفيديو؟",
+      "describes": true,
+      "focus": "إلغاء"
+    },
+    {
+      "id": "U50-delete-video-focus-neighbour-row",
+      "ok": true,
+      "gone": true,
+      "tag": "li",
+      "fk": "C7ccccccccc:row",
+      "body": false
+    },
+    {
+      "id": "I05-name-field-survives-background-rebuild",
+      "ok": true,
+      "open1": true,
+      "field": true,
+      "focused": true
+    },
+    {
+      "id": "U57-settings-opens-at-top",
+      "ok": true,
+      "scrollY": 0,
+      "hash": "",
+      "h1Top": 81,
+      "barBottom": 57,
+      "h1Visible": true
+    },
+    {
+      "id": "I09-settings-770-segmented-fits",
+      "ok": true,
+      "vw": 770,
+      "segScrollW": 242,
+      "segClientW": 242,
+      "overflowing": [],
+      "pageScrollW": 770,
+      "pageClientW": 770
+    },
+    {
+      "id": "I09-settings-790-segmented-fits",
+      "ok": true,
+      "vw": 790,
+      "segScrollW": 250,
+      "segClientW": 250,
+      "overflowing": [],
+      "pageScrollW": 790,
+      "pageClientW": 790
+    },
+    {
+      "id": "I09-settings-810-segmented-fits",
+      "ok": true,
+      "vw": 810,
+      "segScrollW": 250,
+      "segClientW": 250,
+      "overflowing": [],
+      "pageScrollW": 810,
+      "pageClientW": 810
+    },
+    {
+      "id": "I09-settings-830-segmented-fits",
+      "ok": true,
+      "vw": 830,
+      "segScrollW": 250,
+      "segClientW": 250,
+      "overflowing": [],
+      "pageScrollW": 830,
+      "pageClientW": 830
+    },
+    {
+      "id": "I09-popup-footer-visible-at-600",
+      "ok": true,
+      "vh": 600,
+      "docH": 768,
+      "navBottom": 600,
+      "cardH": 327
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "errors": []
+    }
+  ],
+  "measures": {
+    "blurOnDetach": {
+      "seen": [
+        "after-remove"
+      ],
+      "active": "body"
+    },
+    "narrow-library-320": {
+      "vw": 500,
+      "scrollW": 500,
+      "clientW": 500,
+      "topbarH": 56,
+      "barScrollW": 500,
+      "barClientW": 500
+    },
+    "narrow-library-360": {
+      "vw": 500,
+      "scrollW": 500,
+      "clientW": 500,
+      "topbarH": 56,
+      "barScrollW": 500,
+      "barClientW": 500
+    },
+    "narrow-settings-320": {
+      "vw": 500,
+      "scrollW": 500,
+      "clientW": 500,
+      "topbarH": 56,
+      "barScrollW": 500,
+      "barClientW": 500
+    },
+    "narrow-settings-360": {
+      "vw": 500,
+      "scrollW": 500,
+      "clientW": 500,
+      "topbarH": 56,
+      "barScrollW": 500,
+      "barClientW": 500
+    },
+    "settingsTop": {
+      "scrollY": 0,
+      "hash": "",
+      "h1Top": 81,
+      "barBottom": 57,
+      "h1Visible": true
+    },
+    "settings-770": {
+      "vw": 770,
+      "segScrollW": 242,
+      "segClientW": 242,
+      "overflowing": [],
+      "pageScrollW": 770,
+      "pageClientW": 770
+    },
+    "settings-790": {
+      "vw": 790,
+      "segScrollW": 250,
+      "segClientW": 250,
+      "overflowing": [],
+      "pageScrollW": 790,
+      "pageClientW": 790
+    },
+    "settings-810": {
+      "vw": 810,
+      "segScrollW": 250,
+      "segClientW": 250,
+      "overflowing": [],
+      "pageScrollW": 810,
+      "pageClientW": 810
+    },
+    "settings-830": {
+      "vw": 830,
+      "segScrollW": 250,
+      "segClientW": 250,
+      "overflowing": [],
+      "pageScrollW": 830,
+      "pageClientW": 830
+    },
+    "popupWorst": {
+      "vh": 600,
+      "docH": 768,
+      "navBottom": 600,
+      "cardH": 327
+    },
+    "tabsUrl": {
+      "total": 10,
+      "withUrl": 9,
+      "youtubeVisible": 1,
+      "sample": [
+        "لا عنوان",
+        "moz-extension:",
+        "moz-extension:",
+        "moz-extension:",
+        "moz-extension:",
+        "moz-extension:",
+        "moz-extension:",
+        "moz-extension:",
+        "moz-extension:",
+        "https:"
+      ]
+    }
+  },
+  "notes": [
+    "blur عند الفصل في firefox: after-remove | المركّز بعده: body",
+    "U86: عرض 320 لم يُبلغ في firefox (نافذة العرض 500)، فلم يُقس library",
+    "U86: عرض 360 لم يُبلغ في firefox (نافذة العرض 500)، فلم يُقس library",
+    "U86: عرض 320 لم يُبلغ في firefox (نافذة العرض 500)، فلم يُقس settings",
+    "U86: عرض 360 لم يُبلغ في firefox (نافذة العرض 500)، فلم يُقس settings",
+    "النافذة في أسوأ حالة (I09): ارتفاع المستند 768px (حد المتصفح 600)، وأسفل التذييل 600px، والبطاقة 327px",
+    "أسماء الوصول من شجرة الوصول في Chromium وحده (CDP)؛ وفي Firefox لم تُقرأ.",
+    "I03: لا أمر لجمع القمامة في WebDriver BiDi، فلم يُختبر المنتقي مع gc() في Firefox.",
+    "Q31: tabs.query من صفحة إضافة — تبويبات 10، بعنوان مكشوف 9، ويوتيوب مكشوف 1 (لا عنوان، moz-extension:، moz-extension:، moz-extension:، moz-extension:، moz-extension:، moz-extension:، moz-extension:، moz-extension:، https:)"
+  ],
+  "summary": "19/19"
+}
