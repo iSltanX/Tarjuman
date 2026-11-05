@@ -62,6 +62,7 @@ TJ_ROOT="$DIR" command node docs/audit-7a66f91/verify/storage/sto01.mjs
 | [`01-inventory.md`](01-inventory.md) | الملفات التي وُجدت وما نقص منها، وحصر 254 بندًا من التقارير الأربعة بمصادرها وتصنيفاتها الأصلية، واختلاف الأعداد داخلها. |
 | [`02-verification.md`](02-verification.md) | الحصيلة، وأخطاء أوصاف التقارير، والبنود الموحّدة `U01`–`U104`، وما أضافه DeepSeek إلى القائم، ومستوى الدليل، وقائمة التحقيق `I01`–`I16`، وغير القائم، والاقتراحات، وجدولا التتبّع (277 صفًا، منها 23 من `FINDINGS.md` عند DeepSeek). |
 | [`03-plan.md`](03-plan.md) | خطة الإصلاح C1–C9، والقرارات المطلوبة، وأين يُحسم كل بند تحقيق. |
+| [`c2-design.md`](c2-design.md) | تصميم الكاتب الواحد في C2 وتعديلات عقودها، معروضة للموافقة قبل التنفيذ (Q15). |
 | `verify/<المجال>/` | سكربتات الجولة الأولى ومخرجاتها و`RESULTS.md`: `storage` و`backup` و`editor` و`player` و`pages` و`engines` و`tooling`. |
 | `verify-ds/<المجال>/` | سكربتات التحقق من DeepSeek ومخرجاتها و`RESULTS.md`: `storage` و`editor` و`pipeline` و`security` و`ui` و`compat`. |
 
