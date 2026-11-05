@@ -169,12 +169,19 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
 
   const eachId = (ids, fn) => {
     if (!Array.isArray(ids) || ids.length > 100000) throw new TjError('MD_INVALID', { detail: 'videoIds' });
+    ids.forEach(checkId); // معرّف سيئ يرفض الطلب كله قبل أي كتابة
     return Promise.all(ids.map((id) => inLane(`video:${id}`, () => fn(id)))).then((r) => r.filter(Boolean).length);
+  };
+  /** رقعة بنسخة JSON كما تصل من قناة Chrome، فتتساوى Firefox (نسخ هيكلي يُبقي undefined وNaN) بها. */
+  const jsonPatch = (patch) => (patch === undefined ? undefined : JSON.parse(JSON.stringify(patch)));
+  const checkAt = (at) => {
+    if (typeof at !== 'string' || Number.isNaN(Date.parse(at))) throw new TjError('MD_INVALID', { detail: 'at' });
+    return at;
   };
 
   async function settings({ patch }) {
     const { [KEY_SETTINGS]: raw } = await read(KEY_SETTINGS);
-    const next = mergeSettings(normalizeSettings(raw ?? DEFAULT_SETTINGS), patch);
+    const next = mergeSettings(normalizeSettings(raw ?? DEFAULT_SETTINGS), jsonPatch(patch));
     assertValid(validateSettings(next), 'settings');
     await write({ [KEY_SETTINGS]: next });
     return next;
@@ -195,27 +202,27 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
       if (r.removed) await write({ [KEY_PREFS]: r.prefs });
       return r;
     }
-    const next = mergePrefs(cur, req.patch);
+    const next = mergePrefs(cur, jsonPatch(req.patch));
     assertValid(validatePrefs(next), 'prefs');
     await write({ [KEY_PREFS]: next });
     return next;
   }
 
   async function saves({ downloadId, at }) {
-    if (!Number.isInteger(downloadId) || downloadId < 0 || typeof at !== 'string') throw new TjError('MD_INVALID', { detail: 'downloadId' });
+    if (!Number.isInteger(downloadId) || downloadId < 0) throw new TjError('MD_INVALID', { detail: 'downloadId' });
+    checkAt(at);
     await write({ [KEY_SAVES]: { schema: 1, last: { downloadId, at } } });
     return {};
   }
 
-  /** «مسح كل البيانات»: كل شيء ثم meta جديد، ويبقى إطفاء صور المحفوظات وحده (U05، Q10). */
+  /**
+   * «مسح كل البيانات»: كل شيء ثم meta جديد، ويبقى إطفاء صور المحفوظات وحده (U05، Q10). وتعذّر قراءة التفضيلات يرفض المسح
+   * (ST_READ_FAILED) ولا يُعيد الصور بصمت: رفض المستخدم السابق لا يُتجاوز.
+   */
   async function clear({ at }) {
-    let thumbsOff = false;
-    try {
-      const { [KEY_PREFS]: raw } = await area.get(KEY_PREFS);
-      thumbsOff = raw?.ui?.thumbnails === false;
-    } catch {
-      thumbsOff = false;
-    }
+    checkAt(at);
+    const { [KEY_PREFS]: raw } = await read(KEY_PREFS);
+    const thumbsOff = raw?.ui?.thumbnails === false;
     try {
       await area.clear();
     } catch (err) {
@@ -228,7 +235,7 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
 
   function dispatch(req) {
     switch (req.op) {
-      case 'ready': return inLane(KEY_META, () => migrate(area, { schema, migrations, now: req.at }));
+      case 'ready': return inLane(KEY_META, () => migrate(area, { schema, migrations, now: checkAt(req.at) }));
       case 'put': return inLane(`video:${req.videoId}`, () => put(req));
       case 'delete': return inLane(`video:${req.videoId}`, () => del(req));
       case 'orphan': return eachId(req.videoIds, orphan);

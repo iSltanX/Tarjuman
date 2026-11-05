@@ -114,3 +114,17 @@ test('U12 (FS-2): علامة برقم مقطع من محتوى قديم — تُ
   assert.deepEqual(marksAfter, marksBefore, 'لا علامة جديدة');
   assert.ok(seen[1], 'المقطع الذي رآه المستخدم');
 });
+
+test('U12 (ضابط المراجعة): ± معلّقة من التبويب نفسه ثم استبدال فوري — لا تعارض كاذب، والمستبدَل نسخةً سابقة', async () => {
+  const { area, sB, A } = await pair();
+  const original = A.getState().bundle.slots[0].track.fileName;
+  const nudge = A.nudgeOffset(1);
+  const r = await loadIntoFor({ controller: A, n: 1, replace: true, read: { videoId: ID, input: upload('C.srt') } });
+  await nudge;
+  await area.flush();
+  assert.equal(r.ok, true, r.error?.code);
+  const fin = await sB.getBundle(ID);
+  assert.ok(fin.slots[0].track.fileName.endsWith('C.srt'));
+  assert.equal(fin.previous.track.fileName, original);
+});
+

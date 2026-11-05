@@ -4,6 +4,7 @@
 // أبدًا: «حفظ» وحده يكتب في خانة التحرير، بـexpect الحزمة المفتوحة، فإن تغيّر محتوى الخانة من المشغّل أو تبويب آخر رُفض.
 /* global __TJ_DEV__ */
 import { compare, currentComparison, fingerprintCoverage, previewRestoreTiming, rankReferences } from '../../core/compare/index.js';
+import { canonical } from '../../core/store/version.js';
 import { planRescue } from '../../core/edit/rescue.js';
 import { normalizeSettings } from '../../core/model/settings.js';
 import { LIMITS } from '../../core/model/validate.js';
@@ -1587,7 +1588,9 @@ export async function mountEditor(app, {
     renderHeader();
     try {
       const n = S.slot;
-      const saved = await queue(() => restoreSlotOriginal(store, videoId, seen, n, { now }));
+      // كتابة سابقة من المحرّر نفسه (علامة أو موضع) لا تمس ترجمة الخانة: تُبنى الاستعادة على الحاضرة إن بقيت ترجمتها كما عُرضت.
+      const sameTrack = (b) => canonical(b?.slots[n - 1]?.track ?? null) === canonical(seen?.slots[n - 1]?.track ?? null);
+      const saved = await queue((opened) => restoreSlotOriginal(store, videoId, sameTrack(opened) ? opened : seen, n, { now }));
       S.view = 'edit';
       S.result = null;
       load(saved, S.slot, { keepUi: true });

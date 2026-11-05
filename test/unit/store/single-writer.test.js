@@ -165,6 +165,19 @@ test('Q15: «مسح كل البيانات» ينتظر كتابة وصلت ال�
   assert.deepEqual(Object.keys(area.dump()), ['meta']);
 });
 
+test('المسح: تعذّر قراءة التفضيلات يرفضه بـST_READ_FAILED ولا يمحو شيئًا، فلا يعود إطفاء الصور إلى افتراضه بصمت', async () => {
+  const area = createMemoryArea({ unlimited: true });
+  const s = createStore({ area });
+  await s.setPrefs({ ui: { thumbnails: false } });
+  await s.updateVideo(ID, () => videoRecord({ videoId: ID }));
+  const before = area.dump();
+  area.failNext('get');
+  await assert.rejects(s.clearAll(), { code: 'ST_READ_FAILED' });
+  assert.deepEqual(area.dump(), before);
+  await s.clearAll();
+  assert.equal((await s.getPrefs()).ui.thumbnails, false, 'والمسح الناجح يبقي الإطفاء');
+});
+
 // ── سياقان على النسخة نفسها عبر العامل ──────────────────────────────────────
 
 test('Q15: حفظان من محرّرين على النسخة نفسها، والثاني يصل الكاتب بعد الأول — ST_CONFLICT للثاني', async () => {

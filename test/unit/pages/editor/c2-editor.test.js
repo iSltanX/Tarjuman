@@ -6,6 +6,7 @@ import { createStore } from '../../../../src/core/store/index.js';
 import { mountEditor } from '../../../../src/pages/editor/app.js';
 import { saveSlot } from '../../../../src/pages/editor/persist.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
+import { withMark } from '../../../../src/core/model/bundle.js';
 import { sampleBundle, seedBundle } from '../../../helpers/fixtures-v2.js';
 import { editorDocument } from '../../../helpers/editor-dom.js';
 
@@ -42,3 +43,29 @@ for (const dirty of [false, true]) {
     assert.equal(editor.state.external, 'changed', 'التعارض ظاهر');
   });
 }
+
+test('U09 (ضابط المراجعة): علامة من مكان آخر لا تمس ترجمة الخانة والحوار مفتوح — الاستعادة تنجح بلا تعارض كاذب', async () => {
+  const area = createMemoryArea({ unlimited: true });
+  let t = Date.parse('2026-11-01T12:00:00.000Z');
+  const now = () => (t += 1000);
+  const store = createStore({ area, now });
+  const other = createStore({ area, now });
+  await seedBundle(store, sampleBundle({ videoId: ID }));
+  const env = editorDocument({ videoId: ID });
+  const editor = await mountEditor(env.root, { videoId: ID, store, doc: env.doc, now });
+  await env.flush();
+  env.root.querySelectorAll('button').find((x) => x.textContent.includes('استعادة الأصل')).click();
+  await env.flush();
+  const dialog = env.doc.querySelector('dialog[open]');
+  await other.updateBundle(ID, (b) => withMark(b, 1, { index: 3, kind: 'todo' }, new Date(now()).toISOString()).bundle);
+  await area.flush();
+  await env.flush(8);
+  dialog.close('restore');
+  await env.flush(8);
+  await area.flush();
+  const final = await other.getBundle(ID);
+  assert.equal(final.slots[0].track.current, null, 'استُعيد الأصل');
+  assert.ok(final.slots[0].marks.length >= 3, 'والعلامة الجديدة باقية');
+  assert.notEqual(editor.state.external, 'changed');
+});
+

@@ -13,6 +13,7 @@ import { DEFAULT_PREFS, normalizePrefs } from '../core/model/prefs.js';
 import { DEFAULT_SETTINGS, normalizeSettings } from '../core/model/settings.js';
 import { normalizeOffset } from '../core/model/timing.js';
 import { markAnchor, sameAnchor } from '../core/model/marks.js';
+import { canonical } from '../core/store/version.js';
 import { withArabicImport, withExport, withView } from '../core/model/transitions.js';
 import { DISPLAY_MODES } from '../core/model/video.js';
 
@@ -453,17 +454,20 @@ export function createController({ store, extractor = null, page = {}, now = () 
       const englishTrack = preferredCapturedTrack();
       const activeBefore = bundleFor(saved)?.active ?? null;
       let result = { replaced: false, offsetWas: 0 };
-      // الاستبدال تأكيدٌ على ما رآه المستخدم (U12): إن تغيّرت الحزمة قبله رُفض بـST_CONFLICT، فلا تُسقط نسخةٌ كان يمكن استعادتها.
-      const seen = replace ? bundleFor(saved) : undefined;
+      // الاستبدال تأكيدٌ على ما رآه المستخدم (U12): إن تغيّرت ترجمة الخانة أو النسخة السابقة قبله رُفض بـST_CONFLICT، فلا تُسقط
+      // نسخةٌ كان يمكن استعادتها. والمقارنة بالمحتوى لا بالنسخة، فـ± معلّقة من هذا التبويب نفسه لا ترفضه.
+      const basis = (b) => canonical({ track: b?.slots[n - 1]?.track ?? null, previous: b?.previous ?? null });
+      const seen = replace ? basis(bundleFor(saved)) : null;
       let wrote;
       try {
         wrote = await writeBundle((b) => {
+          if (seen !== null && basis(b) !== seen) throw new TjError('ST_CONFLICT', { detail: `slot=${n}` });
           result = withSlotUpload(b, n, {
             videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, ...input,
             englishTrack, displayModeDefault: settings.displayModeDefault,
           }, iso(), { replace, activate });
           return result.bundle;
-        }, seen ? { expect: seen } : undefined);
+        });
       } catch (err) {
         if (err instanceof TjError && err.code === 'ST_CONFLICT') await reloadIfNewer();
         throw err;
