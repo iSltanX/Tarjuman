@@ -6,15 +6,15 @@
 
 html, body.ed-page { height: 100%; }
 
-/* الحاوية بارتفاع النافذة على الأقل، وصف الجسم يملأ الباقي ولا يقل عن حدّ القائمة الأدنى (شريطها ورأسها وصفّان من 82 في
-   virtual.js)؛ فإن لم يتسع تطول الصفحة وتتمرر. القائمة واللوحة الجانبية بلا حجم ذاتي (contain: size) فتأخذان ارتفاع صفّهما لا
-   طول محتواهما، فلا تطول الصفحة بطول الملف. */
+/* الحاوية بارتفاع النافذة على الأقل، وصف الجسم يملأ الباقي ولا يقل عن حدّ القائمة الأدنى (شريطها ورأسها وصفّان بسطر رسالة،
+   104 لكلٍّ في virtual.js)؛ فإن لم يتسع تطول الصفحة وتتمرر. القائمة واللوحة الجانبية بلا حجم ذاتي (contain: size) فتأخذان ارتفاع
+   صفّهما لا طول محتواهما، فلا تطول الصفحة بطول الملف. والعمود بعرض النافذة لا بأعرض محتوى (كان يتسع إلى 354 عند 320). */
 .tj-container.ed-app {
   --ed-cols: 28px 52px 128px 128px 40px minmax(0, 1.5fr) minmax(0, 1fr) 108px;
   --ed-cols-no-en: 28px 52px 128px 128px 40px minmax(0, 1fr) 108px;
-  --ed-list-min: 260px;
+  --ed-list-min: 300px;
   max-width: none; margin: 0; padding: 0; gap: 0; min-height: 100vh;
-  display: grid; grid-template-rows: auto auto auto auto minmax(var(--ed-list-min), 1fr) auto;
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto minmax(var(--ed-list-min), 1fr) auto;
 }
 .ed-app [hidden] { display: none !important; }
 /* كل جزء في صفّه صراحةً: إخفاء التنبيه أو الشريط السفلي لا يزيح القائمة إلى صف بارتفاع محتواها. */
@@ -254,11 +254,9 @@ html, body.ed-page { height: 100%; }
 .ed-row__missing { grid-column: 3; font: 400 13px/28px var(--tj-font-body); }
 
 /* ---- شريط التغييرات غير المحفوظة (معكوس الألوان: نص المداد خلفيةً ولون الورق نصًّا بالوضعين)، والرسالة العابرة ---- */
-/* لاصق أسفل النافذة حين تتمرر الصفحة (U16)، فيبقى «حفظ» في متناول اليد. */
 .ed-unsaved {
   display: flex; align-items: center; gap: 12px; margin: 12px 24px 16px; padding: 10px 12px 10px 16px;
   border-radius: var(--tj-radius-card); background: var(--tj-text); color: var(--tj-bg); box-shadow: var(--tj-e2);
-  position: sticky; bottom: 8px; z-index: 5;
 }
 .ed-unsaved .tj-label { color: inherit; font: 400 14px/22px var(--tj-font-body); }
 /* معيّن التغيير غير المحفوظ بلون نص الشريط (نقطة الشارة بلون حالتها، الهوية الثالثة): الإبراز لا يُرى على الشريط المعكوس. */

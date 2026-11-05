@@ -17,6 +17,48 @@ export function rowHeight({ type, lines = 1, message = false }) {
 /** عدد أسطر النص كما يُكتب (بين 2 و4 في الحقل، وما زاد يُمرَّر داخله). @param {string} text */
 export const textLines = (text) => Math.min(ROW.maxLines, Math.max(ROW.minLines, text.split('\n').length));
 
+/** أسطر سطر واحد ملتفًّا بالكلمات في عرض معلوم (الفراغ عند موضع الالتفاف لا يُحسب). */
+function wrapCount(line, measure, width) {
+  if (!line || measure(line) <= width) return 1;
+  let n = 1;
+  let cur = 0;
+  let space = 0;
+  for (const tok of line.split(/(\s+)/)) {
+    if (!tok) continue;
+    if (/^\s+$/.test(tok)) {
+      space = measure(tok);
+      continue;
+    }
+    const w = measure(tok);
+    if (cur > 0 && cur + space + w > width) {
+      n++;
+      cur = 0;
+    } else if (cur > 0) cur += space;
+    space = 0;
+    if (w > width) {
+      const extra = Math.ceil(w / width) - 1;
+      n += extra;
+      cur = w - extra * width;
+    } else cur += w;
+  }
+  return n;
+}
+
+/**
+ * الأسطر المرئية لنص في حقل بعرض محتوى معلوم: كل سطر بفاصله وما يلتف منه بالكلمات (measure عرض نص بالبكسل)، بين 2 و4.
+ * كان الارتفاع بعدد فواصل الأسطر وحده، فسطران طويلان في عمود ضيق يُخفى نصفهما (تدقيق 7a66f91، I08). بلا قياس: textLines.
+ * @param {string} text @param {((s: string) => number) | null} measure @param {number} width
+ */
+export function wrappedLines(text, measure, width) {
+  if (!measure || !(width > 0)) return textLines(text);
+  let n = 0;
+  for (const line of text.split('\n')) {
+    n += wrapCount(line, measure, width);
+    if (n >= ROW.maxLines) return ROW.maxLines;
+  }
+  return Math.min(ROW.maxLines, Math.max(ROW.minLines, n));
+}
+
 /** تخطيط صفوف بارتفاعات معروفة: الموضع، والصف عند موضع، والمدى المرئي. */
 export class RowLayout {
   /** @param {ArrayLike<number>} heights */

@@ -43,7 +43,7 @@ import {
   pendingSentence, refLabel, refOptionLabel, saveMessage, saveStatus, scopeOption, scopeTarget, seconds, seekResult, shiftSentence, slotFallback,
   splitPreview,
 } from './text.js';
-import { RowLayout, createVirtualList, rowHeight, textLines } from './virtual.js';
+import { RowLayout, createVirtualList, rowHeight, textLines, wrappedLines } from './virtual.js';
 
 const KIND_LABEL = Object.freeze({
   text: 'تعديل النص', time: 'تعديل الزمن', shift: 'نقل التوقيت', commit: 'تثبيت الإزاحة', restore: 'استعادة التوقيت',
@@ -379,7 +379,53 @@ export async function mountEditor(app, {
     unsavedEl,
   );
 
+  // ---- أسطر النص بالتفاف عرض العمود (تدقيق 7a66f91، I08): خط الحقل وعرض محتواه من صف مرسوم، والقياس بلوحة رسم ----
+  const measureCtx = (() => {
+    try {
+      return doc.createElement('canvas').getContext?.('2d') ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  const fit = { width: 0, font: '', cache: new Map() };
+  /** أسطر النص المرئية في حقله (2–4)، وبلا قياس بفواصل الأسطر وحدها. @param {string} text */
+  const lines = (text) => {
+    if (!measureCtx || !fit.width) return textLines(text);
+    let n = fit.cache.get(text);
+    if (n === undefined) {
+      if (fit.cache.size > 5000) fit.cache.clear();
+      n = wrappedLines(text, (str) => measureCtx.measureText(str).width, fit.width);
+      fit.cache.set(text, n);
+    }
+    return n;
+  };
+  /** يقرأ عرض محتوى حقل النص وخطه من صف مرسوم؛ وإن تغيّرا أُعيدت ارتفاعات الصفوف (تغيّر الحجم أو العمود المرجعي أو الخط). */
+  function refit() {
+    if (!measureCtx || !S.list) return;
+    const t = scroller.querySelector('[data-field="text"]');
+    const cs = t && win.getComputedStyle?.(t);
+    if (!cs) return;
+    const width = t.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2;
+    const font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    if (!(width > 0) || (width === fit.width && font === fit.font)) return;
+    fit.width = width;
+    fit.font = font;
+    fit.cache.clear();
+    measureCtx.font = font;
+    const s = act();
+    const report = s.issues();
+    S.rows.forEach((r, k) => S.layout.setHeight(k, heightOf(r, s, report)));
+    S.list.refresh(null);
+  }
+  let refitFrame = 0;
+  const scheduleRefit = () => {
+    if (!refitFrame) refitFrame = win.requestAnimationFrame(() => { refitFrame = 0; refit(); });
+  };
+  win.addEventListener('resize', scheduleRefit);
+  doc.fonts?.ready?.then(() => scheduleRefit(), () => {});
+
   const rowView = createRows(doc, () => ({
+    lines,
     rows: S.rows, session: act(), report: act().issues(), refs: S.colRefs, refDir: S.refCol === 'en' ? 'ltr' : 'rtl',
     showEnglish: S.showEnglish, readOnly: readOnly(), selection: S.selection, activeIndex: S.activeIndex, stepMs: S.stepMs,
     match: (i) => search.rowState(i), refRanges: (i) => (S.refCol === 'en' ? search.englishRanges(i) : null),
@@ -459,7 +505,7 @@ export async function mountEditor(app, {
 
   function heightOf(r, s, report) {
     if (r.type === 'missing') return rowHeight({ type: 'missing' });
-    return rowHeight({ type: 'cue', lines: textLines(s.cueAt(r.index).text), message: report.byIndex.has(r.index) });
+    return rowHeight({ type: 'cue', lines: lines(s.cueAt(r.index).text), message: report.byIndex.has(r.index) });
   }
 
   function rebuildList() {
@@ -496,6 +542,7 @@ export async function mountEditor(app, {
     }
     listHead.classList.toggle('ed-list--no-en', !S.showEnglish);
     search.refresh();
+    scheduleRefit();
   }
 
   /** تقرير النسخة المعروضة بالمحاذاة (current.js): لا نقص زائف بعد إعادة ترقيم أو دمج أو شطر. */
@@ -1237,6 +1284,7 @@ export async function mountEditor(app, {
     scroller.classList.toggle('ed-list--no-en', !on);
     listHead.classList.toggle('ed-list--no-en', !on);
     S.list.refresh(null);
+    scheduleRefit();
   }
 
   /** @param {number | null} i @param {{ track?: boolean }} [o] track=false لتنقّل برمجي (نتائج البحث) لا يُكتب موضعًا */

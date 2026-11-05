@@ -23,8 +23,8 @@ export const textDir = (text) => (HAS_ARABIC.test(text) || !HAS_LETTER.test(text
  *   refs: string[], refDir: 'ltr' | 'rtl', showEnglish: boolean, readOnly: boolean,
  *   match?: (index: number) => 'current' | 'match' | null, refRanges?: (index: number) => { start: number, end: number }[] | null,
  *   markOf?: (index: number) => { kind: 'todo' | 'done', state: 'linked' | 'moved' } | null,
- *   selection: Set<number>, activeIndex: number | null, stepMs: number
- * }} RowContext
+ *   selection: Set<number>, activeIndex: number | null, stepMs: number, lines?: (text: string) => number
+ * }} RowContext lines أسطر النص المرئية بالتفاف العمود (الافتراضي بفواصل الأسطر)
  */
 
 /** @param {Document} doc @param {() => RowContext} ctx */
@@ -134,7 +134,7 @@ export function createRows(doc, ctx) {
     text.setAttribute('aria-invalid', issues.some((x) => x.tone === 'error' && x.field === 'text') ? 'true' : 'false');
     if (first && first.field === 'text') text.setAttribute('aria-describedby', `ed-msg-${i}`);
     else text.removeAttribute('aria-describedby');
-    text.style.height = `${textLines(cue.text) * ROW.line + ROW.fieldChrome}px`;
+    text.style.height = `${(c.lines ?? textLines)(cue.text) * ROW.line + ROW.fieldChrome}px`;
 
     const ref = c.refs[i] ?? '';
     const ranges = c.refRanges?.(i);

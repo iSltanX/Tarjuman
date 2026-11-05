@@ -613,3 +613,13 @@ test('I06: زر خيارات البحث يتحكم بلوحة لا قائمة: a
   const id = opts.getAttribute('aria-controls');
   assert.ok(id && m.env.root.querySelector(`#${id}`)?.classList.contains('ed-search__opts'));
 });
+
+test('I08: ارتفاع حقل النص بالتفاف السطور في عرض العمود، بين سطرين وأربعة', async () => {
+  const { wrappedLines, textLines } = await import('../../../../src/pages/editor/virtual.js');
+  const measure = (s) => s.length * 10; // عشرة بكسلات للمحرف
+  assert.equal(wrappedLines('قصير', measure, 200), 2, 'الأدنى سطران');
+  assert.equal(wrappedLines('كلمة كلمة كلمة كلمة كلمة', measure, 120), 3, 'سطر يلتف إلى ثلاثة (كلمتان في كل سطر)');
+  assert.equal(wrappedLines('أربعون محرفًا تقريبًا في هذا السطر الأول\nوأربعون محرفًا تقريبًا في السطر الثاني', measure, 202), 4, 'سطران طويلان في 202px أربعة أسطر');
+  assert.equal(wrappedLines('ا'.repeat(500), measure, 100), 4, 'لا يتجاوز أربعة (وما زاد يُمرَّر داخله)');
+  assert.equal(wrappedLines('سطر\nسطر\nسطر', null, 0), textLines('سطر\nسطر\nسطر'), 'بلا قياس: بفواصل الأسطر');
+});
