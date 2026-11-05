@@ -12,6 +12,7 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CODE_RULES } from '../code-rules.mjs';
 import { SUBTITLE_FONT_LIST } from '../../src/ui/subtitle-fonts.js';
 import { UI_FONT_LIST } from '../../src/ui/ui-fonts.js';
 
@@ -66,11 +67,14 @@ const FORBIDDEN = [
   // download وsearch (بالنقطة أو ?. ؛ كان النمط القديم لا يطابق chrome?.downloads، تدقيق 5fedcb9).
   { re: /\bdownloads\s*\??\.\s*(?:open|show|showDefaultFolder|removeFile|erase|acceptDanger|pause|resume|cancel|setShelfEnabled|setUiOptions|getFileIcon|onDeterminingFilename|onCreated|onChanged|onErased)\b/, why: 'استعمال للتنزيلات خارج الحفظ' },
   { re: /\bdownloads\s*\??\.\s*(?!(?:download|search)\b)[A-Za-z_$][\w$]*\s*\(/, why: 'استعمال للتنزيلات خارج الحفظ' },
+  // والبحث بالمعرّف وحده ({ id }) كما في check-static (تدقيق 7a66f91، U61): بحث بنص أو بلا وسيط يقرأ تنزيلات المستخدم.
+  { re: /\bdownloads\s*\??\.\s*search\s*\((?!\s*\{\s*id(?:\s*:\s*[A-Za-z_$][\w$]*)?\s*\}\s*\))/, why: 'بحث في التنزيلات بغير المعرّف' },
   { re: /<script[^>]+src=["']https?:/i, why: 'شيفرة بعيدة' },
   { re: /__tarjuman\b|__TJ_DEV__/, why: 'خطاف تطوير' },
   { re: /\bconsole\.(?:log|info|warn|error|debug)\s*\(/, why: 'تسجيل في الكونسول' },
 ];
-const URL_RE = /https?:\/\/[^\s"'`)<>\\]+/g;
+// الروابط بالبروتوكول، وبلا بروتوكول (//مضيف) كما في check-static (تدقيق 7a66f91، U61: كان //evil.example يمر).
+const URL_RE = /https?:\/\/[^\s"'`)<>\\]+|(?<![\w:])\/\/[A-Za-z0-9][\w.-]*(?::\d+)?[^\s"'`)<>\\]*/g;
 
 async function walk(dir, base = dir) {
   const out = [];
@@ -127,6 +131,8 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   for (const rel of files.filter((f) => /\.(?:js|html|css|json)$/.test(f))) {
     const text = await readFile(path.join(dir, rel), 'utf8');
     for (const { re, why, except = [], only = null } of FORBIDDEN) if (!except.includes(rel) && (!only || only.includes(rel)) && re.test(text)) problems.push({ file: rel, why });
+    // قواعد الفحص الثابت التي بلا استثناء (scripts/code-rules.mjs، U61)، ومنها الصيغ الديناميكية: التدقيق لا يكون أضيق منه.
+    for (const r of CODE_RULES) if (r.re.test(text)) problems.push({ file: rel, why: r.msg, rule: r.id });
     const calls = [...text.matchAll(/\bfetch\s*\(/g)].map((m) => text.slice(m.index, m.index + 40));
     const allowed = FETCH_OK.get(rel) ?? [];
     for (const c of calls) if (!allowed.some((re) => re.test(c))) problems.push({ file: rel, why: 'طلب شبكة', sample: c.slice(0, 30) });

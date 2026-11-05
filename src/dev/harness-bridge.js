@@ -2,9 +2,15 @@
 // العالم المعزول نفسه، فيقرأ خطاف التطوير globalThis.__tarjuman. وWebDriver BiDi في Firefox لا يبلغ العالم المعزول كما يبلغه CDP
 // في Chromium، فيجيب هذا الجسر عن رسائل الصفحة المسمّاة بعمليات قراءة الحزام: الحالة، ومواضع أزرار الشريط والطبقة، والمعروض فوق
 // الفيديو، والخطوط، وحافظة بديلة. لا يدخل بناء الإنتاج ولا البيان الأساسي، ولا يكتب في التخزين.
+// ولا يجيب إلا جلسة الحزام (تدقيق 7a66f91، U65؛ كان يجيب أي سكربت في صفحة يوتيوب بنصوص المقاطع كلها واسم الملف، ويستبدل
+// الحافظة): رمز عشوائي لكل بناء تطوير يضعه scripts/build.mjs هنا وفي dev/harness-token.txt، ويقرؤه السائق من مجلد الإضافة
+// (test/live/stores/driver.mjs) ويرسله مع كل طلب. فبناء تطوير مثبّت في ملف تعريف حقيقي لا يجيب صفحة لا تعرف الرمز، والرمز لا
+// يصل إلى الصفحة ما لم يشغّل أحد الحزام فيها.
 
 const REQUEST = 'tarjuman-harness';
 const REPLY = 'tarjuman-harness-reply';
+// __TJ_HARNESS_TOKEN__ ثابت يعرّفه البناء (define)، وفي اختبار الوحدة متغير عام.
+const TOKEN = typeof __TJ_HARNESS_TOKEN__ === 'string' && __TJ_HARNESS_TOKEN__.length >= 16 ? __TJ_HARNESS_TOKEN__ : null;
 const copies = [];
 
 const hook = () => {
@@ -61,6 +67,8 @@ window.addEventListener('message', async (event) => {
   if (event.source !== window) return;
   const d = event.data;
   if (!d || typeof d !== 'object' || d.source !== REQUEST || !Object.hasOwn(OPS, d.op)) return;
+  // بلا رمز صحيح لا رد أصلًا (ولا «مرفوض»)، فلا تعرف الصفحة أن الجسر موجود.
+  if (!TOKEN || d.token !== TOKEN) return;
   let reply;
   try {
     reply = { ok: true, value: await OPS[d.op](...(Array.isArray(d.args) ? d.args : [])) };

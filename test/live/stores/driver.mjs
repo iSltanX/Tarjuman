@@ -3,7 +3,7 @@
 // الإضافة بصفحات لها eval وclick وtypeText وpress وsetFiles وarmChooser، وحجب طلبات خادم البلاغات، وأخطاء الإضافة، ومجلدات
 // تخزينها في ملف التعريف (لقياس المحو عند الإزالة). ملفات التعريف خارج المستودع، والصوت مكتوم في الأربعة.
 import { randomUUID } from 'node:crypto';
-import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { BROWSERS, PROFILE_ROOT, launch, loadExtension, sleep } from '../harness/browser.mjs';
 import { FONT_READ_LOG, collectErrors, openTab } from '../harness/extension.mjs';
@@ -16,9 +16,21 @@ export const APPS = { ...BROWSERS, firefox: FIREFOX };
 const CDP_KEYS = { Escape: ['Escape', 'Escape', 27], Tab: ['Tab', 'Tab', 9], Enter: ['Enter', 'Enter', 13], End: ['End', 'End', 35] };
 const BIDI_KEYS = { Escape: '', Tab: '', Enter: '', End: '' };
 
-/** يرسل طلبًا إلى جسر الحزام (src/dev/harness-bridge.js) من العالم الرئيسي لصفحة يوتيوب، وينتظر رده. */
+/**
+ * رمز جلسة الحزام لبناء التطوير (تدقيق 7a66f91، U65): يكتبه scripts/build.mjs في dev/harness-token.txt، والجسر لا يجيب بغيره.
+ * وبلا الملف (حزمة المتجر، T8) لا جسر أصلًا. @param {string} ext مجلد الإضافة المبنية
+ */
+export async function harnessToken(ext) {
+  try {
+    return (await readFile(path.join(ext, 'dev', 'harness-token.txt'), 'utf8')).trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+/** يرسل طلبًا إلى جسر الحزام (src/dev/harness-bridge.js) من العالم الرئيسي لصفحة يوتيوب برمز جلستها، وينتظر رده. */
 export function bridge(page, op, args = [], timeoutMs = 8000) {
-  return page.eval((o, a, ms) => new Promise((resolve) => {
+  return page.eval((o, a, ms, tok) => new Promise((resolve) => {
     const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
     const t = setTimeout(() => { window.removeEventListener('message', h); resolve({ ok: false, error: 'timeout' }); }, ms);
     function h(e) {
@@ -29,8 +41,8 @@ export function bridge(page, op, args = [], timeoutMs = 8000) {
       }
     }
     window.addEventListener('message', h);
-    window.postMessage({ source: 'tarjuman-harness', id, op: o, args: a }, '*');
-  }), { args: [op, args, timeoutMs] });
+    window.postMessage({ source: 'tarjuman-harness', id, op: o, args: a, token: tok }, '*');
+  }), { args: [op, args, timeoutMs, page.harnessToken ?? null] });
 }
 
 // ---------------------------------------------------------------- Chromium (CDP)
@@ -66,6 +78,7 @@ function cdpPage(b, page) {
 
 async function chromium(browser, { profile, ext, downloadDir, headless, extraArgs = [] }) {
   await writeChromiumPrefs(profile, downloadDir);
+  const token = await harnessToken(ext);
   const b = await launch({ browser, profile, headless, extraArgs });
   let loaded = await loadExtension(b.conn, ext);
   if (loaded.error) throw new Error(`تعذّر تحميل الإضافة: ${loaded.error}`);
@@ -79,7 +92,9 @@ async function chromium(browser, { profile, ext, downloadDir, headless, extraArg
     await page.send('Emulation.setDeviceMetricsOverride', { width: 1360, height: 900, deviceScaleFactor: 1, mobile: false });
     tracked.push({ where, errs: collectErrors(page, { extId: id, onlyExtension: where === 'youtube' }) });
     await page.goto(url);
-    return cdpPage(b, page);
+    const p = cdpPage(b, page);
+    p.harnessToken = token;
+    return p;
   };
   return {
     kind: 'chromium',
@@ -150,6 +165,7 @@ function bidiPage(conn, page, chooser) {
 
 async function firefox({ profile, ext, downloadDir, headless }) {
   await mkdir(downloadDir, { recursive: true });
+  const token = await harnessToken(ext);
   // معرّف صفحات الإضافة ثابت بتفضيل extensions.webextensions.uuids (bidi.mjs)، فيُعرف أصلها بلا جسر (openExt لحزمة المتجر).
   const uuid = randomUUID();
   const ff = await launchFirefox({
@@ -219,6 +235,7 @@ async function firefox({ profile, ext, downloadDir, headless }) {
     get extensionId() { return extensionId; },
     async youtube(url) {
       const page = bidiPage(conn, await BidiPage.open(conn, url), chooser);
+      page.harnessToken = token;
       launcher = launcher ?? { page };
       return page;
     },

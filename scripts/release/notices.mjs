@@ -149,6 +149,11 @@ export function generate() {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const file = path.join(ROOT, NOTICES_FILE);
+  // الإشعارات تقرأ تراخيص أدوات البناء من حزمها المثبتة (تدقيق 7a66f91، U62: كان غيابها ENOENT بلا تفسير).
+  if (!existsSync(path.join(ROOT, 'node_modules', 'esbuild', 'package.json'))) {
+    console.error('notices: node_modules غير مثبتة (الإشعارات تقرأ تراخيص أدوات البناء منها)؛ شغّل npm ci أولًا');
+    process.exit(1);
+  }
   const text = generate();
   if (process.argv.includes('--check')) {
     const current = existsSync(file) ? readFileSync(file, 'utf8') : '';

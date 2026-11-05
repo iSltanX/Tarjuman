@@ -10,7 +10,7 @@
 // مفتاح. وحزمة المصدر من قائمة صريحة (لا أدلة ولا تقارير ولا اختبارات ولا node_modules)، ويُعاد منها البناء في مجلد مؤقت فيطابق
 // حزمتي Firefox وChromium بايتًا، وهو ما يفعله مراجع AMO. والأرشيف حتمي (zip.mjs)، فالشجرة نفسها تعطي البصمات نفسها.
 //   node scripts/release/store.mjs [--out <مجلد>]      (npm run package يبني معها حزمة التثبيت الشخصي package.mjs)
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -18,10 +18,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { auditPackage } from './audit.mjs';
 import { createZip, readZip } from './zip.mjs';
+import { buildEnvironment, dirtyNote, sourceState, staticCheck } from './provenance.mjs';
+import { insidePath } from '../targets.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
-const inside = (child, parent) => !path.relative(parent, child).startsWith('..') && !path.isAbsolute(path.relative(parent, child));
+// بمقاطع المسار لا بالنص (src/..foo داخل src؛ تدقيق 7a66f91، U60).
+const inside = insidePath;
 
 /** المتاجر وهدف بناء كل منها. */
 export const STORES = Object.freeze([
@@ -63,14 +66,6 @@ export async function scanLeaks(root, files) {
     for (const { why, re } of LEAKS) if (re.test(text)) problems.push(`${f}: ${why}`);
   }
   return problems;
-}
-
-function git(args) {
-  try {
-    return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-  } catch {
-    return null;
-  }
 }
 
 /** ملفات حزمة المصدر بمساراتها في المستودع. */
@@ -157,12 +152,18 @@ export async function makeStorePackages({ out = path.join(ROOT, 'release', 'stor
   const problems = [];
   const work = await mkdtemp(path.join(os.tmpdir(), 'tj-store-'));
   const meta = {
-    name, version, commit: git(['rev-parse', '--short=12', 'HEAD']),
-    dirty: Boolean(git(['status', '--porcelain', '--', 'src', 'scripts', 'package.json', 'package-lock.json', 'LICENSE', 'THIRD_PARTY_NOTICES.txt'])),
+    name, version, ...sourceState(ROOT, ['src', 'scripts', 'package.json', 'package-lock.json', 'LICENSE', 'THIRD_PARTY_NOTICES.txt']),
     licenseDraft: /^\[قرار\]/.test(await readFile(path.join(ROOT, 'LICENSE'), 'utf8')),
-    node: process.versions.node, builtAt: new Date().toISOString(), packages: {}, source: null,
+    // بيئة البناء مع البصمات (U63): بصمة كل أرشيف تتبع zlib المربوطة بـNode، وبصمات الملفات داخله لا تتبعها.
+    node: process.versions.node, build: buildEnvironment(),
+    reproducibility: 'files', builtAt: new Date().toISOString(), packages: {}, source: null,
   };
   try {
+    // ---- الفحص الثابت على المصدر قبل البناء (U61): لا حزمة من شيفرة يمنعها ----
+    const check = staticCheck(ROOT);
+    log(`${check.ok ? '✓' : '✗'} check-static`);
+    if (!check.ok) return { ok: false, problems: [`check-static: ${check.output.split('\n').slice(0, 6).join(' ')}`], meta, dir: OUT };
+
     // ---- البناءان من الجذر، وتدقيق كل هدف ----
     const built = {};
     for (const target of ['chromium', 'firefox']) {
@@ -255,6 +256,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     process.exit(1);
   }
   const rel = path.relative(ROOT, r.dir);
-  console.log(`\nحزم المتاجر ${r.meta.name} في ${rel.startsWith('..') ? r.dir : rel}/ · الالتزام ${r.meta.commit ?? 'غير معروف'}${r.meta.dirty ? ' (من شجرة فيها تغييرات غير ملتزمة)' : ''}`);
+  console.log(`\nحزم المتاجر ${r.meta.name} في ${rel.startsWith('..') ? r.dir : rel}/ · الالتزام ${r.meta.commit ?? 'غير معروف'}${dirtyNote(r.meta.dirty)}`);
+  console.log(`البيئة: Node ${r.meta.build.node} · zlib ${r.meta.build.zlib} · ${r.meta.build.platform}-${r.meta.build.arch} (بصمات الأرشيفات تتبع zlib، وبصمات الملفات لا تتبعها)`);
   if (r.meta.licenseDraft) console.log('تنبيه: LICENSE ما زال مسودة [قرار]؛ لا تُرفع الحزم قبل اعتماده.');
 }

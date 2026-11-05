@@ -5,6 +5,7 @@
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CODE_RULES } from './code-rules.mjs';
 import { targetManifest } from './targets.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -129,28 +130,16 @@ for (const p of PAGES) {
 
 // ٢. أنماط ممنوعة في الشيفرة والصفحات والأنماط. الأسماء الخطرة ممنوعة معرّفاتٍ أينما وردت (لا بعد نقطة
 // فقط)، والوصول إليها بالأقواس ممنوع كذلك. الفحص سطرًا بسطر بعد نزع التعليقات؛ هو حدّ أدنى لا محلل كامل.
+// القواعد بلا استثناء مشتركة مع تدقيق الحزمة (scripts/code-rules.mjs، تدقيق 7a66f91، U61)، ومنها الصيغ الديناميكية؛ وهنا ما له
+// استثناء مسمّى بملفه وسطره.
 const RULES = [
-  {
-    re: /\b(?:innerHTML|outerHTML|insertAdjacentHTML|setHTMLUnsafe|parseHTMLUnsafe|createContextualFragment|srcdoc)\b|\bdocument\s*\.\s*write(?:ln)?\b|parseFromString\([^)]*text\/html/,
-    msg: 'إدراج HTML نصي ممنوع؛ textContent وDOM فقط',
-  },
-  { re: /(?<![\w$.])eval\b|(?<![\w$])Function\s*\(|set(?:Timeout|Interval)\s*\(\s*['"`]/, msg: 'تنفيذ نص كشيفرة ممنوع' },
-  { re: /\bimport\s*\(\s*['"`](?:https?:)?\/\/|\bimportScripts\b|<script[^>]*\bsrc\s*=\s*["'](?:https?:)?\/\//i, msg: 'شيفرة بعيدة ممنوعة' },
-  { re: /\bsetOption\s*\(|\bloadModule\s*\(/, msg: 'تفعيل المشغّل برمجيًا ممنوع دون قرار سلطان' },
-  { re: /youtubei\/v1|innertube|get_transcript|get_panel/i, msg: 'طلبات InnerTube ممنوعة' },
-  { re: /\b(?:sendBeacon|WebSocket|EventSource|RTCPeerConnection|WebTransport)\b|\bnew\s+(?:Request|Image)\s*\(/, msg: 'قنوات شبكة ممنوعة' },
+  ...CODE_RULES,
   {
     re: /\bchrome\s*(?:\.|\[\s*['"`])\s*(?:webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen)\b|\bchrome\s*\[\s*['"`]downloads|\bpermissions\s*\.\s*request\b|\btabs\s*\.\s*(?:executeScript|insertCSS)\b/,
     msg: 'واجهة تحتاج إذنًا غير معتمد',
     // طلب إذن مضيف البلاغات وحده، بسطره المراجَع في ملف القناة (جولة النشر T2.1)؛ وطلب موافقة صور المحفوظات في Firefox بسطره
     // المراجَع في ملف الموافقة (قرار سلطان 2026-11-04، core/consent/thumbnails.js).
     allow: (rel, line) => (rel === REPORT_FILE && REPORT_LINES.has(line.trim())) || (rel === CONSENT_FILE && CONSENT_LINES.has(line.trim())),
-  },
-  { re: /\b(?:localStorage|sessionStorage|indexedDB)\b/, msg: 'التخزين عبر src/core/store وحده (لا localStorage ولا IndexedDB)' },
-  { re: /\bconsole\b/, msg: 'التسجيل في الكونسول ممنوع؛ الأخطاء برموز وتقرير التشخيص' },
-  {
-    re: /\[\s*['"`](?:innerHTML|outerHTML|insertAdjacentHTML|setHTMLUnsafe|eval|fetch|sendBeacon|storage|write|writeln|XMLHttpRequest)['"`]\s*\]/,
-    msg: 'وصول بالأقواس إلى اسم ممنوع',
   },
 ];
 // الشبكة: fetch وXMLHttpRequest معرّفين ممنوعان، إلا أسطر غلافي الالتقاط في capture.js التي تمرّر طلب

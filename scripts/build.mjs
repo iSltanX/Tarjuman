@@ -2,14 +2,15 @@
 // بناء الإضافة غير المعبأة في dist/: سكربتا المحتوى وسكربتات الصفحات مجمّعة بـesbuild (IIFE، فسكربتات
 // المحتوى لا تقبل وحدات ES)، والبيان وملفات HTML وCSS منسوخة كما هي. لا شيفرة بعيدة ولا خطوط من الشبكة.
 //   --dev       بناء التطوير: خطاف الحزام الحي في العالم المعزول ومعرض المكوّنات، وversion_name ينتهي بـ-dev
-//   --out <dir> مجلد آخر (مثل نسخة جلسة يدوية خارج المستودع) دون مسّ dist/
+//   --out <dir> مجلد آخر (مثل نسخة جلسة يدوية خارج المستودع) دون مسّ dist/؛ غائب أو فارغ أو مجلد بناء سابق، وإلا يُرفض
 //   --target <chromium|firefox>  الهدف (scripts/targets.mjs): chromium افتراضيًا في dist/، وfirefox في dist-firefox/. الشيفرة
 //               واحدة، ويختلف البيان وحده بطبقة Firefox.
 import { build } from 'esbuild';
+import { randomBytes } from 'node:crypto';
 import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_OUT, TARGETS, targetManifest } from './targets.mjs';
+import { DEFAULT_OUT, TARGETS, outDirProblem, targetManifest } from './targets.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'src');
@@ -23,14 +24,16 @@ if (!TARGETS.includes(TARGET)) {
 }
 const outArg = argv.indexOf('--out');
 const OUT = outArg > -1 ? path.resolve(argv[outArg + 1]) : path.join(ROOT, DEFAULT_OUT[TARGET]);
-// المجلد يُمسح قبل البناء: لا يكون جذر المستودع ولا أبًا له ولا داخل src.
-const inside = (child, parent) => !path.relative(parent, child).startsWith('..') && !path.isAbsolute(path.relative(parent, child));
-if (inside(ROOT, OUT) || inside(OUT, SRC)) {
-  console.error(`build: مجلد الإخراج غير آمن للمسح: ${OUT}`);
+// المجلد يُمسح قبل البناء، فلا يُمسح إلا ما يملكه البناء (تدقيق 7a66f91، U60، scripts/targets.mjs): غائب أو فارغ أو مجلد بناء سابق.
+const unsafe = await outDirProblem(OUT, { root: ROOT });
+if (unsafe) {
+  console.error(`build: مجلد الإخراج ليس مجلد بناء يُمسح (${unsafe}): ${OUT}\nاختر مجلدًا غائبًا أو فارغًا، أو مجلد بناء سابقًا.`);
   process.exit(1);
 }
 
 const PAGES = ['popup', 'library', 'settings', 'editor'];
+// رمز جلسة الحزام لبناء التطوير وحده (تدقيق 7a66f91، U65): يُضمَّن في جسر الحزام ويُكتب في dev/harness-token.txt للسائق.
+const HARNESS_TOKEN = DEV ? randomBytes(16).toString('hex') : null;
 
 const entries = {
   'main-world/capture': 'main-world/capture.js',
@@ -54,6 +57,16 @@ async function walk(dir) {
 
 await rm(OUT, { recursive: true, force: true });
 await mkdir(OUT, { recursive: true });
+// البيان أولًا (تدقيق 7a66f91، U60): بناء انقطع بعده يبقى مجلد بناء يملكه البناء (بيان ترجمان في جذره)، فيُمسح في البناء التالي.
+const manifest = targetManifest(JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8')), TARGET);
+if (DEV) {
+  manifest.version_name = `${manifest.version}-dev`;
+  // جسر الحزام الحي (جولة النشر T3) بعد سكربت المحتوى في عالمه المعزول نفسه: بناء التطوير وحده.
+  manifest.content_scripts.find((c) => c.js.includes('content/main.js')).js.push('dev/harness-bridge.js');
+  // وفي Firefox سكربت خلفية يفتح صفحات الإضافة لجسر الحزام (عامل Chromium ملف واحد، وCDP ينتقل إليها بنفسه).
+  if (TARGET === 'firefox') manifest.background.scripts.push('dev/harness-background.js');
+}
+await writeFile(path.join(OUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 await build({
   entryPoints: Object.fromEntries(Object.entries(entries).map(([out, src]) => [out, path.join(SRC, src)])),
   outdir: OUT,
@@ -68,9 +81,12 @@ await build({
   legalComments: 'none',
   logLevel: 'warning',
   // بناء الإنتاج يحذف خطاف التطوير نصًا (لا شيفرة ميتة في الحزمة).
-  define: { __TJ_DEV__: DEV ? 'true' : 'false' },
+  define: { __TJ_DEV__: DEV ? 'true' : 'false', __TJ_HARNESS_TOKEN__: JSON.stringify(HARNESS_TOKEN) },
   minifySyntax: true,
 });
+
+// الرمز في ملف داخل مجلد الإضافة (بناء التطوير): لا تبلغه الصفحة (ليس من web_accessible_resources)، ويقرؤه السائق من القرص.
+if (DEV) await writeFile(path.join(OUT, 'dev', 'harness-token.txt'), `${HARNESS_TOKEN}\n`);
 
 // HTML وCSS: الصفحات وأساس الواجهة، وملفات الخطوط (الترجمة والواجهة) ورخصها، وأيقونات الإضافة كما هي. معرض المكوّنات
 // للتطوير وحده.
@@ -91,16 +107,6 @@ try {
   console.error(`build: ${NOTICES} غائب عن جذر المستودع؛ شغّل node scripts/release/notices.mjs`);
   process.exit(1);
 }
-
-const manifest = targetManifest(JSON.parse(await readFile(path.join(SRC, 'manifest.json'), 'utf8')), TARGET);
-if (DEV) {
-  manifest.version_name = `${manifest.version}-dev`;
-  // جسر الحزام الحي (جولة النشر T3) بعد سكربت المحتوى في عالمه المعزول نفسه: بناء التطوير وحده.
-  manifest.content_scripts.find((c) => c.js.includes('content/main.js')).js.push('dev/harness-bridge.js');
-  // وفي Firefox سكربت خلفية يفتح صفحات الإضافة لجسر الحزام (عامل Chromium ملف واحد، وCDP ينتقل إليها بنفسه).
-  if (TARGET === 'firefox') manifest.background.scripts.push('dev/harness-background.js');
-}
-await writeFile(path.join(OUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
 // حزمة الإنتاج بلا خطاف تطوير (سكربت المحتوى وصفحات الإضافة): يفشل البناء إن بقي.
 if (!DEV) {

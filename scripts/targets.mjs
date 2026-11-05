@@ -1,11 +1,59 @@
 // أهداف البناء (جولة النشر T2، docs/store-release.md): chromium لـChrome وBrave وEdge، والبيان فيه src/manifest.json كما هو؛
 // وfirefox بأصغر طبقة فوقه، والشيفرة والملفات واحدة في الهدفين. Edge لا فرع له إلا بفرق يثبته الاختبار.
 //   الطبقة: العامل الخلفي سكربت خلفية (Firefox لا يدعم background.service_worker)، وbrowser_specific_settings.gecko بالمعرّف
-//   وأدنى إصدار (140: موافقة جمع البيانات المدمجة) وdata_collection_permissions، وبلا gecko_android (سطح المكتب وحده).
+//   وأدنى إصدار (144: getBytesInUse، وموافقة جمع البيانات المدمجة منذ 140) وdata_collection_permissions، وبلا gecko_android (سطح المكتب وحده).
+import { lstat, readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
+
 export const TARGETS = Object.freeze(['chromium', 'firefox']);
 
 /** مجلد البناء الافتراضي لكل هدف: dist/ لعائلة Chromium كما كان. */
 export const DEFAULT_OUT = Object.freeze({ chromium: 'dist', firefox: 'dist-firefox' });
+
+/** ما يكتبه البناء في جذر مجلده. */
+export const BUILD_TOP = Object.freeze(['manifest.json', 'THIRD_PARTY_NOTICES.txt', 'background', 'content', 'main-world', 'pages', 'ui', 'icons', 'dev']);
+/** ملفات يضعها مدير الملفات في أي مجلد (Finder وExplorer): لا تجعل المجلد غير مملوك ولا غير فارغ. */
+export const OS_JUNK = Object.freeze(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
+
+/** هل child هو parent أو داخله؟ بمقاطع المسار لا بالنص (فـsrc/..foo داخل src). */
+export function insidePath(child, parent) {
+  const rel = path.relative(parent, child);
+  return rel === '' || (!path.isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${path.sep}`));
+}
+
+/**
+ * لماذا لا يُمسح مجلد إخراج قبل البناء، أو null إن جاز (تدقيق 7a66f91، U60؛ كان البناء يمسح أي مجلد إلا الجذر وsrc، ومنه .git
+ * وأشجار العمل ومجلد المستخدم). يجوز ما يملكه البناء وحده: لا جذر المستودع ولا أبًا له، ولا داخل src ولا .git، ولا رابطًا رمزيًا،
+ * وهو غائب أو فارغ أو مجلد بناء سابق (بيان ترجمان في جذره، ولا شيء فيه غير BUILD_TOP).
+ * @param {string} out مسار مطلق @param {{ root: string }} o جذر المستودع
+ * @returns {Promise<string|null>}
+ */
+export async function outDirProblem(out, { root }) {
+  const src = path.join(root, 'src');
+  if (insidePath(root, out)) return 'جذر المستودع أو أب له';
+  if (insidePath(out, src)) return 'داخل src';
+  if (out.split(path.sep).includes('.git')) return 'داخل .git';
+  let info;
+  try {
+    info = await lstat(out);
+  } catch (err) {
+    if (err.code === 'ENOENT') return null;
+    throw err;
+  }
+  if (info.isSymbolicLink()) return 'رابط رمزي';
+  if (!info.isDirectory()) return 'ليس مجلدًا';
+  const names = (await readdir(out)).filter((n) => !OS_JUNK.includes(n));
+  if (!names.length) return null;
+  const foreign = names.filter((n) => !BUILD_TOP.includes(n));
+  if (foreign.length) return `فيه ما لا يكتبه البناء: ${foreign.slice(0, 5).join('، ')}`;
+  try {
+    const { name } = JSON.parse(await readFile(path.join(out, 'manifest.json'), 'utf8'));
+    const own = JSON.parse(await readFile(path.join(src, 'manifest.json'), 'utf8')).name;
+    return name === own ? null : 'بيانه ليس بيان ترجمان';
+  } catch {
+    return 'لا بيان ترجمان في جذره';
+  }
+}
 
 /**
  * إعدادات Gecko المعتمدة (قرار سلطان، store/README.md §٥). لا يُجمع شيء دون موافقة، فالمطلوب none؛ وقناة البلاغات (T2.1)
