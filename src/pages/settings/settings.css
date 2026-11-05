@@ -207,6 +207,7 @@
 .st-report__text { min-height: 120px; padding: var(--tj-space-2) 12px; resize: vertical; }
 .st-report__count { align-self: flex-end; }
 .st-report__secret { margin: 0; color: var(--tj-danger); font: 700 14px/22px var(--tj-font-body); }
+.st-report__hint { margin: 0; color: var(--tj-text); font: 400 14px/22px var(--tj-font-body); }
 .st-report__rows { margin: var(--tj-space-2) 0 0; display: flex; flex-direction: column; }
 .st-report__row { display: flex; justify-content: space-between; gap: var(--tj-space-3); padding: var(--tj-space-1) 0; border-bottom: 1px solid var(--tj-border); }
 .st-report__row:last-child { border-bottom: none; }

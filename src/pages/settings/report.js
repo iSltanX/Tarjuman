@@ -4,6 +4,7 @@
 // قبل الضغطة، ولا إعادة تلقائية، ومحاولة واحدة في كل مرة. والنجاح يعرض رقم البلاغ مع نسخه، والفشل يتبع جدول الردود في العقد
 // بـ«أعد المحاولة» و«انسخ البلاغ»، والنسخ يعمل بلا شبكة. والطلب نفسه في src/core/report/client.js وحده.
 import { findSecrets } from '../../core/diagnostics/sanitize.js';
+import { personalHintText, personalHints } from '../../core/report/personal.js';
 import { REPORTS_ORIGIN, hostGranted, requestReportPermission, retryable, sendReport } from '../../core/report/client.js';
 import { collectDiagnostics } from '../../core/report/diagnostics.js';
 import { SUPPORT_EMAIL, failureText } from '../../core/report/messages.js';
@@ -85,7 +86,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   });
   const textarea = el('textarea', {
     className: 'tj-field__input st-report__text',
-    attrs: { id: textId, rows: '5', maxlength: String(LIMITS.description), 'aria-describedby': `${countId} st-report-warn` },
+    attrs: { id: textId, rows: '5', maxlength: String(LIMITS.description), 'aria-describedby': `${countId} st-report-warn st-report-hint` },
     doc,
   });
   textarea.addEventListener('input', () => {
@@ -94,6 +95,9 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   });
   const counter = el('span', { className: 'tj-caption st-report__count', attrs: { id: countId }, doc });
   const secretAlert = el('p', { className: 'st-report__secret', attrs: { role: 'alert' }, doc });
+  // تذكير غير مانع برابط يوتيوب أو بريد أو معرّف في الوصف (تدقيق 7a66f91، U84): يُحدَّث نصه حين يتغير وحده فلا يُعاد إعلانه.
+  const personalNote = el('p', { className: 'st-report__hint', attrs: { id: 'st-report-hint', role: 'status' }, doc });
+  personalNote.hidden = true;
   const rows = el('dl', { className: 'st-report__rows', doc });
   const json = el('pre', { className: 'st-report__json', attrs: { dir: 'ltr' }, doc });
 
@@ -114,6 +118,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
       counter,
       el('p', { className: 'tj-caption', text: 'يُرسل نصك كما كتبته. لا تضع فيه نص ترجمة ولا بيانات شخصية لا يحتاجها البلاغ.', attrs: { id: 'st-report-warn' }, doc }),
       secretAlert,
+      personalNote,
       el('div', {
         className: 'st-panel st-report__review',
         children: [
@@ -238,6 +243,9 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     const found = secrets();
     secretAlert.hidden = found.length === 0;
     secretAlert.textContent = found.length ? 'في وصفك ما يشبه رمز جلسة أو ملف ارتباط أو توقيعًا. احذفه قبل الإرسال أو النسخ؛ لا يحتاج البلاغ شيئًا منها.' : '';
+    const hint = found.length ? '' : personalHintText(personalHints(text));
+    if (personalNote.textContent !== hint) personalNote.textContent = hint;
+    personalNote.hidden = !hint;
     const p = preview();
     rows.replaceChildren(...(p ? reviewRows(p).map((row) => el('div', {
       className: 'st-report__row', attrs: { 'data-report-field': row.field },
