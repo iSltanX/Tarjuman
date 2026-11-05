@@ -15,6 +15,9 @@ export const LOAD_MS = 900;
 const FOCUS = 'outline: 2px solid #FFFFFF; outline-offset: -3px; box-shadow: 0 0 0 4px rgb(0 0 0 / 55%);';
 /** حلقة تركيز أزرار الشريط: بيضاء داخلية حول الأيقونة (تُرى على الشريط الداكن والفاتح وفوق أي فيديو). */
 const BAR_FOCUS = 'outline: 2px solid #FFFFFF; outline-offset: -6px; border-radius: 8px;';
+/** مقاسات الطبقة: على الطبقة وعلى حاوية الرسائل معًا، فهي شقيقتها لا ابنتها (تدقيق 7a66f91، U42: كانت الرسائل بخط المتصفح و16px). */
+const SIZES = '--fs: 13px; --title-fs: 14px; --tip-fs: 12px; --big-fs: 28px; --row: 32px;';
+const SIZES_FULL = '--fs: 15px; --title-fs: 16px; --tip-fs: 14px; --big-fs: 32px; --row: 38px;';
 
 export function groupCss() {
   return `${playerTokensCss(':host')}
@@ -53,16 +56,18 @@ export function groupCss() {
 export function layerCss() {
   return `${playerTokensCss(':host')}
 :host { all: initial; position: absolute; inset: 0; display: block; z-index: ${LAYER_Z}; pointer-events: none; direction: ltr; }
-.layer { position: absolute; inset: 0; pointer-events: none; opacity: 1; transition: opacity ${BAR_FADE_MS}ms linear; font-family: var(--tj-p-font-body); color: var(--tj-p-menu-text); --fs: 13px; --title-fs: 14px; --tip-fs: 12px; --big-fs: 28px; --row: 32px; }
-.layer[data-size="fullscreen"] { --fs: 15px; --title-fs: 16px; --tip-fs: 14px; --big-fs: 32px; --row: 38px; }
+.layer { position: absolute; inset: 0; pointer-events: none; opacity: 1; transition: opacity ${BAR_FADE_MS}ms linear; font-family: var(--tj-p-font-body); color: var(--tj-p-menu-text); }
+.layer, .toasts { ${SIZES} }
+.layer[data-size="fullscreen"], .toasts[data-size="fullscreen"] { ${SIZES_FULL} }
 .layer[data-bar="hidden"]:not([data-typing]):not([data-keep]) { opacity: 0; }
 .layer[data-bar="hidden"]:not([data-typing]):not([data-keep]) * { pointer-events: none !important; }
 .layer[data-bar="hidden"][data-keep] .tip { display: none; }
 .layer[data-bar="hidden"][data-typing] .tip { display: none; }
 .menu, .toast, .tip { -webkit-font-smoothing: antialiased; }
 
-/* التلميح: اسم الزر (ومعنى حالته) فوقه عند المرور والتركيز. بعرض محتواه (فلا ينحصر عند طرف المشغّل) وبسطرين إن طال. */
-.tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); width: max-content; max-width: min(360px, calc(100% - 16px)); box-sizing: border-box; padding: 5px 9px; border-radius: 4px; background: var(--tj-p-tooltip-bg); color: #FFFFFF; font: 700 var(--tip-fs)/1.5 var(--tj-p-font-body); text-align: center; overflow-wrap: anywhere; direction: rtl; pointer-events: none; }
+/* التلميح: اسم الزر (ومعنى حالته) فوقه عند المرور والتركيز. بعرض محتواه (فلا ينحصر عند طرف المشغّل) وبسطرين إن طال. يلتقط
+   المؤشر فيمكن المرور فوقه دون أن يزول، ويُخفيه Esc (WCAG 1.4.13؛ تدقيق 7a66f91، U89). */
+.tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); width: max-content; max-width: min(360px, calc(100% - 16px)); box-sizing: border-box; padding: 5px 9px; border-radius: 4px; background: var(--tj-p-tooltip-bg); color: #FFFFFF; font: 700 var(--tip-fs)/1.5 var(--tj-p-font-body); text-align: center; overflow-wrap: anywhere; direction: rtl; pointer-events: auto; }
 .tip[hidden] { display: none; }
 
 /* القائمة: زجاج من ليل النظام شفاف بعرض 280 (264 في المشغّل الضيق و320 في ملء الشاشة من layer.js)، صفوف 32، وتمرير داخلي منضبط حين
@@ -137,7 +142,7 @@ svg.glyph--btn { width: 16px; height: 16px; margin: 0; }
 button.item { all: unset; box-sizing: border-box; min-height: var(--row); display: flex; align-items: center; gap: 8px; padding: 0 8px; border-radius: 6px; cursor: pointer; width: 100%; }
 button.item:hover { background: var(--tj-p-menu-hover); }
 button.item[aria-disabled="true"] { color: rgb(255 255 255 / 45%); cursor: default; background: none; }
-button.item[role="menuitemradio"]::before { content: ""; flex: none; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgb(255 255 255 / 60%); }
+button.item[role="radio"]::before { content: ""; flex: none; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgb(255 255 255 / 60%); }
 /* الخيار المحدد في القائمة صبغة المحدد بنصها، ودائرته ممتلئة بلونه. */
 button.item[aria-checked="true"] { background: var(--tj-p-selected); color: var(--tj-p-selected-ink); font-weight: 700; }
 button.item[aria-checked="true"]::before { box-shadow: inset 0 0 0 2px currentColor; background: radial-gradient(circle, currentColor 0 3.5px, transparent 4px); }
@@ -205,5 +210,6 @@ label.item:hover { background: var(--tj-p-menu-hover); }
 
 .menu :focus-visible, .toast :focus-visible { ${FOCUS} }
 input.num:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--tj-p-accent); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .menu, .toast { animation: none; } .layer { transition: none; } }`;
 }

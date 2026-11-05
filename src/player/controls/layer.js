@@ -16,7 +16,9 @@ const ISOLATE = ['keydown', 'keyup', 'keypress', 'click', 'dblclick', 'mousedown
 const typable = (el) => String(el?.tagName).toLowerCase() === 'input' && !['checkbox', 'radio', 'file', 'button'].includes(el.getAttribute('type') ?? 'text');
 
 /**
- * @param {{ doc: Document, win: Window, on: { escape: () => void, files: (files: File[]) => void } }} deps
+ * focusLeave: خرج التركيز من القائمة إلى عنصر خارج الطبقة (يقرر المستدعي الإغلاق؛ U46). tipHover: المؤشر دخل التلميح أو غادره
+ * (U89). focusLost: زالت رسالة كان فيها التركيز (انقضت أو فُعّل زرها بلوحة المفاتيح)، فيعيده المستدعي إلى زر ظاهر (U88).
+ * @param {{ doc: Document, win: Window, on: { escape: () => void, files: (files: File[]) => void, focusLeave?: (to: Element) => void, tipHover?: (inside: boolean) => void, focusLost?: () => void } }} deps
  */
 export function createLayer({ doc, win, on }) {
   const host = doc.createElement('div');
@@ -28,6 +30,8 @@ export function createLayer({ doc, win, on }) {
   const layer = doc.createElement('div');
   layer.className = 'layer';
   layer.setAttribute('data-size', 'normal');
+  // واجهة عربية داخل صفحة قد تكون بأي لغة: lang للقارئ الآلي (WCAG 3.1.2؛ تدقيق 7a66f91، U48).
+  layer.setAttribute('lang', 'ar');
   const tip = doc.createElement('div');
   tip.className = 'tip';
   tip.setAttribute('role', 'tooltip');
@@ -39,6 +43,14 @@ export function createLayer({ doc, win, on }) {
   toasts.className = 'toasts';
   toasts.setAttribute('role', 'status');
   toasts.setAttribute('aria-live', 'polite');
+  toasts.setAttribute('lang', 'ar');
+  toasts.setAttribute('data-size', 'normal');
+  // إعلان ما لا يُرى نصه في مكان مركّز (الإزاحة بعد ± من الشريط، U48): منطقة حية مخفية بصريًا.
+  const live = doc.createElement('div');
+  live.className = 'sr';
+  live.setAttribute('aria-live', 'polite');
+  live.setAttribute('aria-atomic', 'true');
+  live.setAttribute('lang', 'ar');
   const input = doc.createElement('input');
   input.setAttribute('type', 'file');
   // SRT، وTXT وMarkdown بمحتوى موقّت (R48): القارئ يزيل أغلفتها الواضحة بملاحظات.
@@ -50,6 +62,7 @@ export function createLayer({ doc, win, on }) {
   layer.appendChild(tip);
   root.appendChild(layer);
   root.appendChild(toasts);
+  root.appendChild(live);
   root.appendChild(input);
 
   for (const type of ISOLATE) {
@@ -58,7 +71,11 @@ export function createLayer({ doc, win, on }) {
       ev.stopPropagation();
     });
     toasts.addEventListener(type, (ev) => ev.stopPropagation());
+    tip.addEventListener(type, (ev) => ev.stopPropagation());
   }
+  // التلميح يلتقط المؤشر (U89): الجلسة تبقيه ما دام المؤشر فوقه أو فوق زره.
+  tip.addEventListener('pointerenter', () => on.tipHover?.(true));
+  tip.addEventListener('pointerleave', () => on.tipHover?.(false));
   // الكتابة في حقل القائمة تبقيها ظاهرة والشريط مخفي (data-typing)؛ ومغادرة الحقل تعيدها إلى قاعدة الشريط. التركيز
   // المنتقل بين حقلين يمر بـfocusout ثم focusin في المهمة نفسها، فلا ترمش القائمة.
   const syncTyping = (el) => {
@@ -66,7 +83,13 @@ export function createLayer({ doc, win, on }) {
     else layer.removeAttribute('data-typing');
   };
   menu.addEventListener('focusin', (ev) => syncTyping(ev.target));
-  menu.addEventListener('focusout', () => syncTyping(null));
+  // خروج التركيز إلى ما خارج الطبقة (Tab من آخر بند، أو نقرة في الصفحة) يُبلَّغ (U46). والوجهة الغائبة (المتصفح نفسه فقد
+  // التركيز، أو أُزيل العنصر المركّز في تحديث) ليست خروجًا. والوجهة داخل جذر مظلل آخر تصل مضيفَه (المجموعة).
+  menu.addEventListener('focusout', (ev) => {
+    syncTyping(null);
+    const to = ev.relatedTarget ?? null;
+    if (to && !root.contains(to) && to !== host) on.focusLeave?.(to);
+  });
   // بعد نقرة الفأرة على بند لا يبقى التركيز فيه (كأزرار الشريط، group.js): وإلا بقيت القائمة «مركّزة» فلا تُغلق مع اختفاء
   // الشريط، وتلتقط المسافة وEnter وهي خفية فتنفّذ بندًا لا يُرى (تدقيق 5fedcb9، GM-003). ولوحة المفاتيح (detail = 0) تبقي
   // التركيز، والحقول تبقيه للكتابة.
@@ -93,6 +116,14 @@ export function createLayer({ doc, win, on }) {
   let tipAnchor = null;
   /** المسافة من أسفل المشغّل إلى أعلى القائمة المفتوحة. */
   let menuTop = 0;
+  /** القائمة المفتوحة تضبط سطر الترجمة (التوقيت): تُرفع فوقه حين يتسع المشغّل (تدقيق 7a66f91، P-11). */
+  let avoidLine = false;
+  /** أعلى ما رُفعت إليه القائمة المفتوحة: ترتفع إن كبر السطر ولا تنزل بين المقاطع، فلا تقفز مع كل مقطع. */
+  let liftY = 0;
+  /** صناديق الرسائل بمعرّفاتها: تُحدَّث بالفرق فلا يُعاد إعلان القائم ولا يُفصل زر مركّز (U48 N08، U88). */
+  const boxes = new Map();
+  let liveText = '';
+  let stageObserver = null;
 
   const setVar = (el, k, v) => el.style.setProperty(k, v);
 
@@ -103,12 +134,27 @@ export function createLayer({ doc, win, on }) {
     return { cx: r.left - p.left + r.width / 2, above: Math.max(0, p.bottom - r.top), playerW: p.width || bar.width };
   }
 
+  /** أعلى سطر الترجمة الظاهر عن أسفل المشغّل (تنشره طبقة الترجمة data-stage-top)، أو NaN. */
+  function stageTop() {
+    const overlay = host.parentNode?.querySelector?.('#tarjuman-overlay');
+    const v = overlay && !overlay.hasAttribute('hidden') ? Number(overlay.getAttribute('data-stage-top')) : NaN;
+    return Number.isFinite(v) && v > 0 ? v : NaN;
+  }
+
   function placeMenu() {
     if (menu.hasAttribute('hidden') || !anchor) return;
     const { cx, above, playerW } = relative(anchor);
     const w = Math.min(MENU_W[bar.size] ?? MENU_W.normal, Math.max(0, playerW - 2 * EDGE_PX));
     const x = Math.max(EDGE_PX, Math.min(cx - w / 2, playerW - w - EDGE_PX));
-    const y = Math.max(above, bar.lift) + GAP_PX;
+    let y = Math.max(above, bar.lift) + GAP_PX;
+    // قائمة التوقيت لا تغطي السطر الذي تضبطه: فوقه إن اتسع المشغّل لارتفاعها كاملًا، وإلا فوق زرها كما كانت.
+    if (avoidLine) {
+      const line = stageTop();
+      const need = menu.scrollHeight || menu.getBoundingClientRect().height || 0;
+      const fits = (top) => bar.height <= 0 || bar.height - top - EDGE_PX >= need;
+      if (Number.isFinite(line) && line + GAP_PX > liftY && fits(line + GAP_PX)) liftY = line + GAP_PX;
+      if (liftY > y && fits(liftY)) y = liftY;
+    }
     setVar(menu, '--w', `${Math.round(w)}px`);
     setVar(menu, '--x', `${Math.round(x)}px`);
     setVar(menu, '--y', `${Math.round(y)}px`);
@@ -124,9 +170,8 @@ export function createLayer({ doc, win, on }) {
    */
   function placeToasts() {
     let y = menu.hasAttribute('hidden') ? bar.lift + GAP_PX : Math.max(bar.lift + GAP_PX, menuTop + GAP_PX);
-    const overlay = host.parentNode?.querySelector?.('#tarjuman-overlay');
-    const stageTop = overlay && !overlay.hasAttribute('hidden') ? Number(overlay.getAttribute('data-stage-top')) : NaN;
-    if (Number.isFinite(stageTop) && stageTop > 0) y = Math.max(y, stageTop + GAP_PX);
+    const top = stageTop();
+    if (Number.isFinite(top)) y = Math.max(y, top + GAP_PX);
     const h = toasts.getBoundingClientRect?.()?.height ?? 0;
     if (bar.height > 0 && h > 0 && y + h > bar.height - EDGE_PX) y = Math.max(EDGE_PX, bar.height - h - EDGE_PX);
     setVar(toasts, '--y', `${Math.round(y)}px`);
@@ -141,6 +186,47 @@ export function createLayer({ doc, win, on }) {
     setVar(tip, '--y', `${Math.round(Math.max(above, bar.lift) + GAP_PX)}px`);
   }
 
+  /** صندوق رسالة واحدة: رمزها ونصها، وفعلها (تراجع) وزر إغلاقها إن دامت. */
+  function toastBox(t, dismiss, run) {
+    const box = doc.createElement('div');
+    box.className = 'toast';
+    box.setAttribute('data-tone', t.tone);
+    box.setAttribute('data-id', t.id);
+    box.setAttribute('role', t.tone === 'error' || t.tone === 'warning' ? 'alert' : 'status');
+    const g = glyph(doc, t.icon ?? t.tone);
+    const tx = doc.createElement('span');
+    tx.className = 'text';
+    tx.textContent = t.text;
+    box.appendChild(g);
+    box.appendChild(tx);
+    if (t.action) {
+      const a = doc.createElement('button');
+      a.setAttribute('type', 'button');
+      a.className = 'act';
+      a.textContent = t.action.label;
+      a.addEventListener('click', () => run(t.id));
+      box.appendChild(a);
+    }
+    if (t.persist) {
+      const x = doc.createElement('button');
+      x.setAttribute('type', 'button');
+      x.className = 'x';
+      x.setAttribute('aria-label', 'إغلاق الرسالة');
+      x.appendChild(glyph(doc, 'x', 'glyph glyph--x'));
+      x.addEventListener('click', () => dismiss(t.id));
+      box.appendChild(x);
+    }
+    return box;
+  }
+
+  // نقرة الفأرة على زر رسالة لا تُبقي التركيز فيه (كأزرار الشريط والقوائم): فلا تلتقط المسافة بعدها ولا يُنقل التركيز إلى الشريط
+  // حين تزول الرسالة. ولوحة المفاتيح (detail = 0) تبقيه، فتعيده الجلسة إلى زر ظاهر عند زوالها (U88).
+  toasts.addEventListener('click', (ev) => {
+    if (!(ev.detail > 0)) return;
+    const f = root.activeElement;
+    if (f && toasts.contains(f)) f.blur();
+  }, true);
+
   return {
     host,
     root,
@@ -150,6 +236,7 @@ export function createLayer({ doc, win, on }) {
     setBar(b) {
       bar = b;
       if (layer.getAttribute('data-size') !== b.size) layer.setAttribute('data-size', b.size);
+      if (toasts.getAttribute('data-size') !== b.size) toasts.setAttribute('data-size', b.size);
       const state = b.hidden ? 'hidden' : 'shown';
       if (layer.getAttribute('data-bar') !== state) layer.setAttribute('data-bar', state);
       placeToasts();
@@ -172,12 +259,14 @@ export function createLayer({ doc, win, on }) {
 
     /**
      * يعرض محتوى القائمة فوق زرها. المحتوى عقدة جاهزة (تبنيها وحدات القوائم)؛ وتبديله لا يغيّر موضعها.
-     * @param {Node[]} children @param {Element} el @param {{ label: string, role?: string }} a11y
+     * @param {Node[]} children @param {Element} el @param {{ label: string, role?: string, avoidLine?: boolean }} a11y
      */
     openMenu(children, el, a11y) {
       anchor = el;
+      avoidLine = !!a11y.avoidLine;
+      liftY = 0;
       menu.replaceChildren(...children);
-      menu.setAttribute('role', a11y.role ?? 'menu');
+      menu.setAttribute('role', a11y.role ?? 'dialog');
       menu.setAttribute('aria-label', a11y.label);
       menu.removeAttribute('hidden');
       // استبدال المحتوى قد يزيل الحقل المركّز دون focusout.
@@ -199,6 +288,8 @@ export function createLayer({ doc, win, on }) {
 
     closeMenu() {
       anchor = null;
+      avoidLine = false;
+      liftY = 0;
       menu.setAttribute('hidden', '');
       menu.replaceChildren();
       syncTyping(null);
@@ -237,53 +328,55 @@ export function createLayer({ doc, win, on }) {
     },
 
     /**
-     * الرسالة بفعل («تراجع») تحمل زره بعد نصها؛ الضغط يُبلَّغ إلى الجلسة وحدها.
+     * الرسالة بفعل («تراجع») تحمل زره بعد نصها؛ الضغط يُبلَّغ إلى الجلسة وحدها. تُحدَّث بالفرق بمعرّفاتها (U48 N08، U88): الباقية
+     * تبقى عقدها بأعيانها في مكانها (فلا يُعاد إعلان خطأ قديم ولا يُفصل «تراجع» مركّز)، والزائلة تُزال، والجديدة تُلحق. وإن زالت
+     * رسالة فيها التركيز أُبلغ focusLost فلا يسقط إلى الصفحة.
      * @param {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action?: { label: string } | null, icon?: 'clock' | null }[]} list
      * @param {(id: string) => void} dismiss
      * @param {(id: string) => void} [run] فعل الرسالة
      */
     renderToasts(list, dismiss, run = () => {}) {
-      const key = list.map((t) => `${t.id}`).join('|');
-      if (toasts.getAttribute('data-key') === key) return;
-      toasts.setAttribute('data-key', key);
-      toasts.replaceChildren(...list.map((t) => {
-        const box = doc.createElement('div');
-        box.className = 'toast';
-        box.setAttribute('data-tone', t.tone);
-        box.setAttribute('role', t.tone === 'error' || t.tone === 'warning' ? 'alert' : 'status');
-        const g = glyph(doc, t.icon ?? t.tone);
-        const tx = doc.createElement('span');
-        tx.className = 'text';
-        tx.textContent = t.text;
-        box.appendChild(g);
-        box.appendChild(tx);
-        if (t.action) {
-          const a = doc.createElement('button');
-          a.setAttribute('type', 'button');
-          a.className = 'act';
-          a.textContent = t.action.label;
-          a.addEventListener('click', () => run(t.id));
-          box.appendChild(a);
+      const ids = new Set(list.map((t) => t.id));
+      const focused = root.activeElement ?? null;
+      let lost = false;
+      for (const [id, box] of boxes) {
+        if (ids.has(id)) continue;
+        if (focused && box.contains(focused)) lost = true;
+        box.remove();
+        boxes.delete(id);
+      }
+      list.forEach((t, i) => {
+        let box = boxes.get(t.id);
+        if (!box) {
+          box = toastBox(t, dismiss, run);
+          boxes.set(t.id, box);
         }
-        if (t.persist) {
-          const x = doc.createElement('button');
-          x.setAttribute('type', 'button');
-          x.className = 'x';
-          x.setAttribute('aria-label', 'إغلاق الرسالة');
-          x.appendChild(glyph(doc, 'x', 'glyph glyph--x'));
-          x.addEventListener('click', () => dismiss(t.id));
-          box.appendChild(x);
-        }
-        return box;
-      }));
+        // لا تُنقل عقدة قائمة (النقل يُسقط تركيزها): الترتيب ثابت بالإلحاق، فلا يُدرج إلا الجديد في موضعه.
+        if (toasts.children[i] !== box) toasts.insertBefore(box, toasts.children[i] ?? null);
+      });
       // ارتفاع الرسائل الجديد يحدد ما يتسع فوقها (CL-016).
       placeToasts();
+      if (lost) on.focusLost?.();
+    },
+
+    /** يعلن نصًا في المنطقة الحية المخفية (الإزاحة بعد ± من الشريط؛ U48). النص نفسه مرتين يُعاد إعلانه. @param {string} text */
+    announce(text) {
+      liveText = liveText === text ? `${text}\u00A0` : text;
+      live.textContent = liveText;
     },
 
     /** @param {Element} player يضع الطبقة آخر أبناء المشغّل إن لم تكن فيه. */
     attachTo(player) {
       if (host.parentNode === player) return false;
       player.appendChild(host);
+      // سطر الترجمة يكبر أو يصغر بعد ظهور رسالة أو قائمة (CL-X3): يُعاد الموضع بتغيّر data-stage-top وحده.
+      const MO = win.MutationObserver ?? globalThis.MutationObserver;
+      stageObserver?.disconnect();
+      stageObserver = MO ? new MO(() => {
+        placeMenu();
+        placeToasts();
+      }) : null;
+      stageObserver?.observe(player, { attributes: true, attributeFilter: ['data-stage-top'], subtree: true });
       return true;
     },
 
@@ -291,6 +384,11 @@ export function createLayer({ doc, win, on }) {
 
     /** للحزام الحي: ما يظهر في الطبقة الآن (بلا نص تعليمات أبدًا؛ لا يُنسخ إليها). */
     peek() {
+      const fontOf = (e) => {
+        if (!e || !win.getComputedStyle) return null;
+        const cs = win.getComputedStyle(e);
+        return { family: cs.fontFamily, size: cs.fontSize, weight: cs.fontWeight, lineHeight: cs.lineHeight };
+      };
       const box = (e) => {
         const r = e.getBoundingClientRect();
         return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width), height: Math.round(r.height) };
@@ -306,10 +404,20 @@ export function createLayer({ doc, win, on }) {
         tip: tip.hasAttribute('hidden') ? null : tip.textContent,
         toasts: [...toasts.children].map((t) => ({ tone: t.getAttribute('data-tone'), text: t.textContent, box: box(t) })),
         focusedFid: root.activeElement?.getAttribute?.('data-fid') ?? null,
+        // خط الرسالة وخط القائمة كما يحسبهما المتصفح (U42)، والمنطقة الحية (U48)، والعنصر المركّز داخل الطبقة.
+        fonts: {
+          toast: fontOf(toasts.querySelector('.toast .text')),
+          menu: menu.hasAttribute('hidden') ? null : fontOf(menu),
+        },
+        role: menu.hasAttribute('hidden') ? null : menu.getAttribute('role'),
+        live: live.textContent,
+        focused: root.activeElement ? { tag: root.activeElement.tagName, cls: root.activeElement.className, text: root.activeElement.textContent } : null,
       };
     },
 
     destroy() {
+      stageObserver?.disconnect();
+      stageObserver = null;
       sheet.release();
       host.remove();
     },

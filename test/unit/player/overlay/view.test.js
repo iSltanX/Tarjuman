@@ -89,7 +89,9 @@ test('النص يدخل textContent وحده: لا عناصر ولا سمات م
   assert.equal(stage.children.length, 1);
   assert.equal(stage.children[0].children.length, 0, 'لا أبناء داخل السطر');
   assert.equal(stage.children[0].textContent, evil);
-  assert.deepEqual([...stage.children[0]._attrs.keys()].sort(), ['dir']);
+  // dir من حروف النص، وlang من نوع السطر (تدقيق 7a66f91، C6، U48): لا سمة من نص المقطع نفسه.
+  assert.deepEqual([...stage.children[0]._attrs.keys()].sort(), ['dir', 'lang']);
+  assert.equal(stage.children[0].getAttribute('lang'), 'ar');
 });
 
 test('التلاشي: الفراغ يلاشي 80ms ثم يُزال المحتوى، وعودة مقطع قبل ذلك تلغي الإزالة', () => {

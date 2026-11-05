@@ -25,7 +25,8 @@ const DARK = decls(':root[data-theme="dark"]');
 /** قيمة الرمز في الوضع: الداكن يتجاوز الفاتح فيما يذكره وحده. */
 const value = (mode, name) => (mode === 'dark' ? DARK.get(name) ?? LIGHT.get(name) : LIGHT.get(name));
 
-// قيم لوحة التصميم «ترجمان — الهوية والشاشات» (project/tj.css، الإصدار 1793758690-fa7d).
+// قيم لوحة التصميم «ترجمان — الهوية والشاشات» (project/tj.css، الإصدار 1793758690-fa7d)، إلا الخافت الداكن: فُتّح من #939192
+// إلى #979596 بقرار سلطان Q26 (تدقيق 7a66f91، C6، U48)، ليبلغ 4.5:1 على صبغة المحدد الخفيفة أيضًا.
 const BOARD = {
   light: {
     '--tj-bg': '#F6F5F4', '--tj-surface': '#FEFEFD', '--tj-surface-2': '#E8E7E6', '--tj-control': '#E8E7E6',
@@ -39,7 +40,7 @@ const BOARD = {
   dark: {
     '--tj-bg': '#121112', '--tj-surface': '#1E1D1E', '--tj-surface-2': '#2B292A', '--tj-control': '#2B292A',
     '--tj-control-hover': '#363435', '--tj-control-pressed': '#413F40',
-    '--tj-text': '#F1EDEF', '--tj-text-2': '#B5B2B3', '--tj-muted': '#939192', '--tj-border-input': '#827F81',
+    '--tj-text': '#F1EDEF', '--tj-text-2': '#B5B2B3', '--tj-muted': '#979596', '--tj-border-input': '#827F81',
     '--tj-brand': '#D9A7CB', '--tj-brand-hover': '#E0BCD6', '--tj-brand-pressed': '#B98FAD', '--tj-brand-ink': '#0E0E0E',
     '--tj-selected': '#4B3E48', '--tj-selected-ink': '#E6CEDF', '--tj-selected-soft': '#312B2F', '--tj-selected-mark': '#D9A7CB',
     '--tj-selected-section': 'rgb(217 167 203 / 9%)', '--tj-selected-section-ink': '#E6CEDF', '--tj-selected-section-icon': '#D9A7CB',
@@ -78,6 +79,8 @@ test('التباين بالوضعين كما نجح في المعاينة: ال�
     ...SURFACES.map((s) => ['--tj-text', s, 7]),
     ...SURFACES.map((s) => ['--tj-text-2', s, 4.5]),
     ...SURFACES.map((s) => ['--tj-muted', s, 4.5]),
+    // والخافت على الصبغة الخفيفة: الصف الحالي في اللوحة، والبطاقة النشطة والصف المقصود في المحفوظات، وصف المحرّر المحدد (U48).
+    ['--tj-muted', '--tj-selected-soft', 4.5], ['--tj-muted', '--tj-brand-soft', 4.5],
     ...SURFACES.map((s) => ['--tj-brand-text', s, 4.5]),
     ...SURFACES.map((s) => ['--tj-border-input', s, 3]),
     ...SURFACES.map((s) => ['--tj-focus', s, 3]),

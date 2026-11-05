@@ -1,6 +1,6 @@
 // نصوص أدوات الشريط (figma-design-brief §٥.٢ و§٦ و§١٦.١) ودوالها النقية: التلميحات بالخطوة الحالية، ومعنى
 // الإزاحة بالكلمات، وملخص المقارنة في سطر، وقراءة الثواني من حقل. أرقام لاتينية، والإزاحة بعلامتها (formatOffset).
-import { COUNT_FORMS, formatCount, formatTimecode, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatTimecode, isolate, ltrInline, offsetInline } from '../../ui/format.js';
 import { languageName as sharedLanguageName } from '../../ui/lang.js';
 
 export const LABELS = Object.freeze({
@@ -137,8 +137,13 @@ export const slotToast = (n) => `الترجمة ${n}`;
 export const markToast = (n) => `عُلِّم المقطع ${n} للمراجعة`;
 /** @param {number} ms «الإزاحة −3.2 ث» */
 export const offsetToast = (ms) => `الإزاحة ${offsetInline(ms)} ث`;
-/** @param {string} name «نُزّل VIDEOID.en.manual.normal.srt» أو «نُزّل 3 أجزاء» (رمز النجاح SVG بجانبه في القائمة) */
-export const downloadedLine = (name) => `نُزّل ${name}`;
+/**
+ * «نُزّل VIDEOID.en.manual.normal.srt» (رمز النجاح SVG بجانبه في القائمة): الاسم معزول LTR، فشرطة أول معرّف مثل «-xyz…» لا
+ * تنتقل إلى آخره (تدقيق 7a66f91، U49). @param {string} name
+ */
+export const downloadedLine = (name) => `نُزّل ${ltrInline(name)}`;
+/** «نُزّل 3 أجزاء». @param {string} parts عدد الأجزاء بكلماته */
+export const downloadedParts = (parts) => `نُزّل ${parts}`;
 /** @param {number} n «+ القاموس (12)»: القاموس مرفق بالتعليمات المنسوخة */
 export const glossaryTag = (n) => `+ القاموس (${n})`;
 
@@ -152,12 +157,15 @@ export function editsLine(n) {
 /** @param {number} conflicts ما يأخذه الملف الجديد لتعارضه مع التعديلات */
 export const keptLine = (conflicts) => (conflicts ? `تُبقى تعديلاتك، ويأخذ الملف الجديد مواضع التعارض (${conflicts})` : 'تُبقى تعديلاتك اليدوية');
 
-/** «الاسم يشير إلى فيديو آخر · ‹العنوان مقصوصًا إلى 40 محرفًا›». @param {string | null} title */
+/**
+ * «الاسم يشير إلى فيديو آخر · ‹العنوان مقصوصًا إلى 40 محرفًا›». العنوان معزول (FSI…PDI) كما في المحفوظات، فلا تنقلب كلمات
+ * «10 Tips for Beginners» ولا تنتقل «?» إلى أوله (تدقيق 7a66f91، U49، DS-TJ-46). @param {string | null} title
+ */
 export function nameOtherLine(title) {
   const t = String(title ?? '').replace(/\s+/g, ' ').trim();
   if (!t) return LABELS.nameOther;
   const chars = Array.from(t);
-  return `${LABELS.nameOther} · ${chars.length > 40 ? `${chars.slice(0, 39).join('').trimEnd()}…` : t}`;
+  return `${LABELS.nameOther} · ${isolate(chars.length > 40 ? `${chars.slice(0, 39).join('').trimEnd()}…` : t)}`;
 }
 
 /** عدد المحارف بأرقام مجمّعة: «18,400 محرف»، «12 محرفًا»، «5 محارف». @param {number} n */

@@ -47,7 +47,7 @@ const DARK = Object.freeze({
   pressed: 'rgb(241 237 239 / 10%)',
   text: '#F1EDEF',
   text2: '#B5B2B3',
-  muted: '#939192',
+  muted: '#979596', // فُتّح من #939192 (Q26، تدقيق 7a66f91): ≥ 4.5:1 على الصف الحالي (brandSoft)
   border: '#262526',
   borderStrong: '#313031',
   borderInput: '#827F81',

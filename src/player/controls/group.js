@@ -10,14 +10,16 @@ import { GROUP_ID, PULSE_MS, groupCss } from './styles.js';
 import { LABELS } from './text.js';
 
 export const KINDS = Object.freeze(['download', 'upload', 'panel', 'minus', 'badge', 'plus']);
-const MENU_KINDS = { download: 'menu', upload: 'menu', badge: 'dialog' };
+// النوافذ الثلاث حوارات غير نمطية لا قوائم (فيها عناوين ومجموعات اختيار وحقول؛ تدقيق 7a66f91، U44). وزر الرفع بلا ترجمة يفتح
+// منتقي الملفات مباشرة، فلا يعلن نافذة (popup: null في نموذجه).
+const MENU_KINDS = { download: 'dialog', upload: 'dialog', badge: 'dialog' };
 // ضغطات التفعيل والإغلاق لا تصل إلى اختصارات يوتيوب (المسافة توقف التشغيل، وEsc يخرج من ملء الشاشة).
 const OWN_KEYS = new Set(['Enter', ' ', 'Spacebar', 'Escape']);
 
 /**
  * label اسم الوصول (وفيه السبب إن عُطّل)، وdescription معنى الحالة لقارئ الشاشة (أو null)، وtip نص التلميح البصري (تعرضه الطبقة).
- * pressed للزر المبدِّل (اللوحة مفتوحة)، وhidden لزر أخفاه المستخدم.
- * @typedef {{ label: string, tip?: string, description?: string | null, disabled?: boolean, unavailable?: boolean, loading?: boolean, expanded?: boolean, pressed?: boolean, hidden?: boolean }} ButtonModel
+ * pressed للزر المبدِّل (اللوحة مفتوحة)، وhidden لزر أخفاه المستخدم، وpopup نوع ما يفتحه الزر إن خالف نوعه الثابت (null: لا نافذة).
+ * @typedef {{ label: string, tip?: string, description?: string | null, disabled?: boolean, unavailable?: boolean, loading?: boolean, expanded?: boolean, pressed?: boolean, hidden?: boolean, popup?: string | null }} ButtonModel
  * @typedef {{
  *   size: 'normal' | 'compact' | 'tight' | 'fullscreen',
  *   download: ButtonModel, upload: ButtonModel, panel: ButtonModel, minus: ButtonModel, plus: ButtonModel,
@@ -30,7 +32,7 @@ const OWN_KEYS = new Set(['Enter', ' ', 'Spacebar', 'Escape']);
  *   doc: Document, win: Window,
  *   on: {
  *     action: (kind: string, info: { keyboard: boolean }) => void,
- *     hint: (kind: string | null) => void,
+ *     hint: (kind: string | null, info?: { pointer?: boolean }) => void,
  *     escape: () => void,
  *   },
  * }} deps
@@ -46,6 +48,7 @@ export function createGroup({ doc, win, on }) {
   group.className = 'group';
   group.setAttribute('role', 'group');
   group.setAttribute('aria-label', LABELS.group);
+  group.setAttribute('lang', 'ar');
   group.setAttribute('data-size', 'normal');
   root.appendChild(group);
 
@@ -103,7 +106,8 @@ export function createGroup({ doc, win, on }) {
       if (OWN_KEYS.has(ev.key)) ev.stopPropagation();
     });
     el.addEventListener('pointerenter', () => on.hint(kind));
-    el.addEventListener('pointerleave', () => on.hint(null));
+    // مغادرة المؤشر تُبلَّغ بأنها مغادرة مؤشر: يبقى التلميح لحظة فيمكن المرور فوقه (U89)؛ وفقد التركيز يخفيه فورًا.
+    el.addEventListener('pointerleave', () => on.hint(null, { pointer: true }));
     el.addEventListener('focus', () => on.hint(kind));
     el.addEventListener('blur', () => on.hint(null));
     group.appendChild(el);
@@ -136,7 +140,11 @@ export function createGroup({ doc, win, on }) {
         setAttr(b.el, 'data-unavailable', s.unavailable ? '' : null);
         setAttr(b.el, 'aria-busy', s.loading ? 'true' : null);
         setAttr(b.el, 'data-busy', s.loading ? '' : null);
-        if (MENU_KINDS[kind]) setAttr(b.el, 'aria-expanded', s.expanded ? 'true' : 'false');
+        if (MENU_KINDS[kind]) {
+          const popup = s.popup === undefined ? MENU_KINDS[kind] : s.popup;
+          setAttr(b.el, 'aria-haspopup', popup);
+          setAttr(b.el, 'aria-expanded', popup ? (s.expanded ? 'true' : 'false') : null);
+        }
         if (kind === 'panel') {
           setAttr(b.el, 'aria-pressed', s.pressed ? 'true' : 'false');
           setAttr(b.el, 'hidden', s.hidden ? '' : null);

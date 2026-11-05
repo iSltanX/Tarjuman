@@ -82,7 +82,8 @@ export function createRows(doc, ctx) {
         timeInput('end', cue.n),
         el('span', { className: 'ed-row__dur tj-mono-sm', doc }),
         el('textarea', { className: 'ed-row__text', attrs: { 'data-field': 'text', 'aria-label': `نص المقطع ${cue.n}` }, doc }),
-        el('p', { className: 'ed-row__en', dir: 'ltr', doc }),
+        // المرجع جملة إنجليزية: بلغتها فيُنطق بصوتها لا بصوت الصفحة العربية (WCAG 3.1.2؛ تدقيق 7a66f91، U48).
+        el('p', { className: 'ed-row__en', dir: 'ltr', attrs: { lang: 'en' }, doc }),
         el('span', { className: 'ed-row__nudge', children: [nudge(-1), nudge(1), action('seek', 'play'), action('mark', 'flag'), action('merge', 'merge'), action('split', 'split')], doc }),
         el('p', { className: 'ed-row__msg', doc }),
       ],

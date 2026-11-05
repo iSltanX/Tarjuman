@@ -24,6 +24,8 @@ H.click(ui.item('مزامنة'), 0);
 await settleN(2);
 log('رأس المزامنة:', ui.menu().querySelector('h2')?.textContent, '| الجمل المعروضة:', ui.menu().querySelectorAll('button').filter((b) => (b.getAttribute('data-fid') ?? '').startsWith('sentence:')).length);
 const first = ui.menu().querySelector('[data-fid="sentence:0"]');
-H.click(first, 0);
+// بعد C6 (U47) لا يُفتح عرض الجمل أثناء الإعلان: الزر معطّل بسببه، فلا جملة تُضغط.
+if (first) H.click(first, 0);
+else log('لا عرض جمل أثناء الإعلان: «مزامنة بجملة…» aria-disabled =', ui.field('sync')?.getAttribute('aria-disabled'), '| السبب:', ui.field('sync')?.getAttribute('aria-description'));
 await settleN(4);
 log('نداءات setOffset:', JSON.stringify(controller.calls.filter((c) => c[0] === 'setOffset')), '| الإزاحة الآن', controller.getState().view.displayOffsetMs);

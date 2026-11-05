@@ -1,7 +1,8 @@
 // قائمة الصفوف: صف لكل مقطع عربي، بزمنه (بداية المقطع + الإزاحة) ونصه (واتجاهه من حروفه) والأصل تحته إن طُلب وتوفر.
 // مصمّمة لآلاف المقاطع: تُبنى الصفوف مرة لكل (المقاطع، الأصل)؛ وتغيّر الإزاحة لا يعيد البناء بل يحدّث نص الأزمنة وحدها
 // (فيبقى موضع التمرير والتركيز)؛ وتحديث الحالي والماضي والتقدم عند تغيّر الزمن يمس صفوفًا قليلة لا القائمة كلها. والنقر يُفوَّض
-// إلى القائمة نفسها (مستمع واحد لا مستمع لكل صف).
+// إلى القائمة نفسها (مستمع واحد لا مستمع لكل صف). والقائمة نقطة Tab واحدة: زر زمن واحد بـtabindex=0 (الحالي، أو آخر ما ركّزه
+// المستخدم)، والأسهم وPage وHome وEnd تنقل التركيز بين الصفوف؛ وكل زر موصوف بنص صفه (تدقيق 7a66f91، U45).
 import { textDirection } from '../../ui/format.js';
 import { el } from './dom.js';
 import { createTimeline, originalLookup } from './model.js';
@@ -9,6 +10,9 @@ import { LABELS, clockLabel, flatText } from './text.js';
 
 /** صفوف تُلحق دفعات: وسائط append الكثيرة جدًا تفشل في المتصفحات. */
 const CHUNK = 500;
+/** خطوة PageUp وPageDown بين الصفوف. */
+const PAGE_ROWS = 10;
+const NAV = Object.freeze({ ArrowDown: 1, ArrowUp: -1, PageDown: PAGE_ROWS, PageUp: -PAGE_ROWS });
 
 /**
  * @param {{ doc: Document, onSeek: (ms: number) => void }} deps
@@ -31,6 +35,10 @@ export function createTranscript({ doc, onSeek }) {
   let pastRank = 0;
   let lastFraction = -1;
   let generation = 0;
+  let originalLang = null;
+  /** الصف الذي يحمل نقطة Tab، وهل التركيز داخل القائمة (فلا تُنقل النقطة من تحته مع تقدّم التشغيل). */
+  let tabRow = 0;
+  let focusInside = false;
 
   const seekMs = (i) => Math.max(0, cues[i].startMs + offsetMs);
 
@@ -42,9 +50,45 @@ export function createTranscript({ doc, onSeek }) {
     return -1;
   }
 
+  /** يضع نقطة Tab على زر صف i وحده. @param {number} i */
+  function setTabRow(i) {
+    if (!timeEls[i]) return;
+    if (i !== tabRow) timeEls[tabRow]?.setAttribute('tabindex', '-1');
+    tabRow = i;
+    if (timeEls[i].getAttribute('tabindex') !== '0') timeEls[i].setAttribute('tabindex', '0');
+  }
+
+  // النقر على الزمن يقفز دائمًا؛ وعلى نص الصف يقفز إلا إن كان المستخدم يحدد نصًا (سحب أو نقر مزدوج لكلمة؛ U49، L-27).
   list.addEventListener('click', (ev) => {
     const i = rowIndexOf(ev.target);
-    if (i >= 0 && cues && i < cues.length) onSeek(seekMs(i));
+    if (i < 0 || !cues || i >= cues.length) return;
+    const t = timeEls[i];
+    const onTime = !!t && (ev.target === t || t.contains?.(ev.target));
+    if (!onTime) {
+      if (ev.detail > 1) return;
+      const sel = doc.getSelection?.();
+      if (sel && !sel.isCollapsed && String(sel).length) return;
+    }
+    onSeek(seekMs(i));
+  });
+  list.addEventListener('keydown', (ev) => {
+    const i = rowIndexOf(ev.target);
+    if (i < 0 || ev.target !== timeEls[i]) return;
+    const last = timeEls.length - 1;
+    const next = ev.key === 'Home' ? 0 : ev.key === 'End' ? last : NAV[ev.key] ? Math.max(0, Math.min(last, i + NAV[ev.key])) : -1;
+    if (next < 0) return;
+    ev.preventDefault();
+    setTabRow(next);
+    timeEls[next].focus();
+  });
+  list.addEventListener('focusin', (ev) => {
+    focusInside = true;
+    const i = rowIndexOf(ev.target);
+    if (i >= 0 && ev.target === timeEls[i]) setTabRow(i);
+  });
+  list.addEventListener('focusout', (ev) => {
+    const to = ev.relatedTarget ?? null;
+    if (!to || !list.contains(to)) focusInside = false;
   });
 
   function clear() {
@@ -60,6 +104,7 @@ export function createTranscript({ doc, onSeek }) {
     curRow = -1;
     pastRank = 0;
     lastFraction = -1;
+    tabRow = 0;
     generation++;
   }
 
@@ -67,22 +112,31 @@ export function createTranscript({ doc, onSeek }) {
     const cue = cues[i];
     const label = clockLabel(seekMs(i));
     labels[i] = label;
-    const t = el(doc, 'button', { className: 't', text: label, attrs: { type: 'button', 'aria-label': `${LABELS.seekTo} ${label}` } });
-    timeEls[i] = t;
     const text = flatText(cue.text);
+    const arId = `tj-r${i}-ar`;
     const body = el(doc, 'div', { className: 'b2' }, [
-      el(doc, 'span', { className: 'ar', text, attrs: { dir: textDirection(text) } }),
+      el(doc, 'span', { className: 'ar', text, attrs: { id: arId, dir: textDirection(text) } }),
     ]);
+    let described = arId;
     if (original) {
       const en = original(cue.startMs, cue.endMs);
-      if (en) body.appendChild(el(doc, 'span', { className: 'en', text: en }));
+      if (en) {
+        // الأصل بلغة مساره (U48)، فيُنطق بصوتها لا بصوت العربية.
+        body.appendChild(el(doc, 'span', { className: 'en', text: en, attrs: { id: `tj-r${i}-en`, lang: originalLang ?? 'en' } }));
+        described = `${arId} tj-r${i}-en`;
+      }
     }
+    const t = el(doc, 'button', {
+      className: 't', text: label,
+      attrs: { type: 'button', 'aria-label': `${LABELS.seekTo} ${label}`, 'aria-describedby': described, tabindex: i === 0 ? '0' : '-1' },
+    });
+    timeEls[i] = t;
     return el(doc, 'div', { className: 'row', attrs: { role: 'listitem', 'data-i': i } }, [t, body]);
   }
 
   /**
    * يضمن أن الصفوف تطابق (المقاطع، الأصل، الإزاحة). مرجعا المقاطع والأصل يحكمان إعادة البناء؛ والإزاحة وحدها تحدّث الأزمنة.
-   * @param {{ cues: import('../../core/model/cue.js').Cue[], originalCues: import('../../core/model/cue.js').Cue[] | null, offsetMs: number }} s
+   * @param {{ cues: import('../../core/model/cue.js').Cue[], originalCues: import('../../core/model/cue.js').Cue[] | null, offsetMs: number, originalLang?: string | null }} s
    * @returns {{ rebuilt: boolean, relabeled: boolean }}
    */
   function sync(s) {
@@ -101,6 +155,7 @@ export function createTranscript({ doc, onSeek }) {
     clear();
     cues = s.cues;
     originalRef = s.originalCues;
+    originalLang = s.originalLang ?? null;
     offsetMs = s.offsetMs;
     timeline = createTimeline(cues);
     const original = s.originalCues ? originalLookup(s.originalCues) : null;
@@ -133,6 +188,8 @@ export function createTranscript({ doc, onSeek }) {
         cur.classList.add('cur');
         cur.setAttribute('aria-current', 'true');
         cur.children[1].appendChild(prog);
+        // Tab إلى القائمة يصل الحالي، ما لم يكن المستخدم يتنقل فيها الآن.
+        if (!focusInside) setTabRow(row);
       }
     }
     if (past !== pastRank) {

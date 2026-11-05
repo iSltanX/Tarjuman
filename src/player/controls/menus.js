@@ -226,12 +226,27 @@ export function downloadMenu(h, act, m, root = null) {
   // «اللغة»: لغة الأصل الملتقط الفعلية باسمها (من رمز مساره) ونوعه وعدد مقاطعه، لا لغة مفترضة.
   out.push(label(h, LABELS.languageTitle));
   if (m.tracks.length > 1) {
+    // مجموعة اختيار واحد في حوار (لا بنود قائمة؛ تدقيق 7a66f91، U44): نقطة Tab واحدة على المختار، والأسهم تنقل التركيز بين المسارات.
     out.push(h('div', {
-      attrs: { role: 'group', 'aria-label': LABELS.trackChoice },
-      children: m.tracks.map((t, i) => h('button', {
+      attrs: { role: 'radiogroup', 'aria-label': LABELS.trackChoice },
+      on: {
+        keydown: (ev) => {
+          const step = ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' ? 1 : ev.key === 'ArrowUp' || ev.key === 'ArrowRight' ? -1 : 0;
+          if (!step) return;
+          const list = [...ev.currentTarget.children];
+          const at = list.indexOf(root?.activeElement ?? null);
+          if (at === -1 || list.length < 2) return;
+          ev.preventDefault();
+          list[(at + step + list.length) % list.length].focus();
+        },
+      },
+      children: m.tracks.map((t) => h('button', {
         className: 'item',
         text: trackLine(t),
-        attrs: { type: 'button', role: 'menuitemradio', 'aria-checked': t.key === sel.key ? 'true' : 'false', 'data-fid': `track:${t.key}`, 'data-first': i === 0 ? '' : null },
+        attrs: {
+          type: 'button', role: 'radio', 'aria-checked': t.key === sel.key ? 'true' : 'false', 'data-fid': `track:${t.key}`,
+          'data-first': t.key === sel.key ? '' : null, tabindex: t.key === sel.key ? '0' : '-1',
+        },
         on: { click: () => act('track', t.key) },
       })),
     }));
@@ -287,14 +302,18 @@ export function downloadMenu(h, act, m, root = null) {
     check.checked = m.split;
     out.push(h('label', { className: 'item', children: [check, h('span', { text: LABELS.split })] }));
     if (m.split) {
+      // التسمية المرئية مربوطة بالحقل، ورسالة خطئه وصفه (U48)، كحقلَي الإزاحة والخطوة.
       const size = h('input', {
         className: 'num',
-        attrs: { type: 'text', inputmode: 'numeric', 'data-fid': 'splitSize', 'aria-label': LABELS.splitSize, 'aria-invalid': m.splitError ? 'true' : 'false', autocomplete: 'off', spellcheck: 'false' },
+        attrs: {
+          type: 'text', inputmode: 'numeric', id: 'tj-split', 'data-fid': 'splitSize', 'aria-invalid': m.splitError ? 'true' : 'false',
+          'aria-describedby': 'tj-split-error', autocomplete: 'off', spellcheck: 'false',
+        },
         on: { input: (ev) => act('splitSize', ev.target.value) },
       });
       size.value = m.splitSize;
-      out.push(h('div', { className: 'row field', children: [h('label', { text: LABELS.splitSize }), size] }));
-      out.push(h('div', { className: 'field-error', text: m.splitError ?? '', attrs: { 'aria-live': 'polite' } }));
+      out.push(h('div', { className: 'row field', children: [h('label', { text: LABELS.splitSize, attrs: { for: 'tj-split' } }), size] }));
+      out.push(h('div', { className: 'field-error', text: m.splitError ?? '', attrs: { id: 'tj-split-error', 'aria-live': 'polite' } }));
       if (m.parts) {
         out.push(h('div', {
           className: 'parts', attrs: { role: 'list', 'aria-label': LABELS.partsLabel },
@@ -315,7 +334,8 @@ export function downloadMenu(h, act, m, root = null) {
  *   fileName: string, count: number, edited: boolean, comparison: object | null, notes: string[], slots: SlotModel[],
  *   switching: boolean, uploadLabel: string,
  *   warnings: string[], mode: 'ar' | 'dual' | 'off', dualAvailable: boolean, originalLang: string | null, busy: boolean, error: string | null,
- * }} m originalLang رمز لغة مسار الأصل الفعلي (يسمّي وضع «فوق الأصل»)، أو null
+ *   ad?: boolean,
+ * }} m originalLang رمز لغة مسار الأصل الفعلي (يسمّي وضع «فوق الأصل»)، أو null؛ وad إعلان يُعرض الآن
  * @param {ShadowRoot | null} [root] جذر القائمة (للتركيز بالأسهم في المحدد)
  */
 export function displayMenu(h, act, m, root = null) {
@@ -345,7 +365,8 @@ export function displayMenu(h, act, m, root = null) {
   out.push(h('div', {
     className: 'actions inline',
     children: [
-      button(h, 'secondary', LABELS.markReview, { act, name: 'mark', fid: 'mark', icon: 'flag' }),
+      // أثناء الإعلان زمن الفيديو زمن الإعلان: معطّل بسببه (U47).
+      button(h, 'secondary', LABELS.markReview, { act, name: 'mark', fid: 'mark', icon: 'flag', disabled: !!m.ad, reason: m.ad ? messageFor('CT_AD_SHOWING') : null }),
       button(h, 'secondary', m.busy ? LABELS.importing : m.uploadLabel, { act, name: 'replace', fid: 'replace', disabled: m.busy, icon: 'upload', extra: { 'aria-busy': m.busy ? 'true' : null } }),
     ],
   }));
@@ -413,7 +434,7 @@ export function confirmMenu(h, act, m, root = null) {
 /**
  * قائمة خيارات التوقيت (§٦.٣): مكمّلة لزرّي − و+ لا بديل عنهما.
  * @param {H} h @param {Act} act
- * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null }} m
+ * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null, ad?: boolean }} m
  */
 export function timingMenu(h, act, m, root = null) {
   if (m.sync) return syncView(h, act, m.sync);
@@ -470,7 +491,7 @@ export function timingMenu(h, act, m, root = null) {
   out.push(h('div', {
     className: 'actions inline',
     children: [
-      button(h, 'secondary', LABELS.sync, { act, name: 'sync', fid: 'sync' }),
+      button(h, 'secondary', LABELS.sync, { act, name: 'sync', fid: 'sync', disabled: !!m.ad, reason: m.ad ? messageFor('CT_AD_SHOWING') : null }),
       button(h, 'secondary', LABELS.reset, { act, name: 'reset', fid: 'reset', icon: 'restore', title: LABELS.resetHint, extra: { 'aria-description': LABELS.resetHint } }),
     ],
   }));

@@ -234,9 +234,10 @@ test('قرينة الاسم: سطر «الاسم يشير إلى فيديو آخ
   assert.equal(loads(page).length, 0, 'لا حفظ قبل التأكيد');
   assert.equal(page.flows.reviews[0].knownVideoIds[0], 'BBBBBBBBBBB');
   const line = page.ui.menu().querySelectorAll('.alert').map((a) => a.textContent).find((t) => t.includes('الاسم يشير'));
-  assert.ok(line.startsWith('الاسم يشير إلى فيديو آخر · محاضرة طويلة'));
-  assert.ok(line.endsWith('…'));
-  assert.equal(Array.from(line.split(' · ')[1]).length, 40);
+  // العنوان معزول FSI…PDI (تدقيق 7a66f91، C6، U49).
+  assert.ok(line.startsWith(`الاسم يشير إلى فيديو آخر · ${String.fromCodePoint(0x2068)}محاضرة طويلة`));
+  assert.ok(line.endsWith(`…${String.fromCodePoint(0x2069)}`));
+  assert.equal(Array.from(line.split(' · ')[1]).length, 42);
   assert.deepEqual(targets(page), [], 'لا ترجمة محفوظة: لا محدد');
   assert.match(page.ui.menu().querySelector('.row.target').textContent, /حفظ فيتُحفظ ترجمةً جديدة/);
   click(page.ui.item('إلغاء'));

@@ -291,9 +291,9 @@ export function addBar(env, parts, { width = 640 } = {}) {
 
 /**
  * صفحة مشاهدة بمشغّل وشريط وأدوات مركّبة.
- * @param {{ state?: object, controllerOpts?: object, width?: number, height?: number, withBar?: boolean, clipboard?: 'ok' | 'fail' | 'none' }} [o]
+ * @param {{ state?: object, controllerOpts?: object, width?: number, height?: number, withBar?: boolean, clipboard?: 'ok' | 'fail' | 'none', link?: object }} [o] link صلة اللوحة (افتراضيًا المشتركة)
  */
-export function mountPage({ state = makeState(), controllerOpts = {}, width = 640, height = 360, withBar = true, clipboard = 'ok', brave = false } = {}) {
+export function mountPage({ state = makeState(), controllerOpts = {}, width = 640, height = 360, withBar = true, clipboard = 'ok', brave = false, link = undefined } = {}) {
   const env = createFakeEnv({ href: `https://www.youtube.com/watch?v=${A}` });
   const parts = addPlayer(env, { width, height });
   const bar = withBar ? addBar(env, parts, { width }) : {};
@@ -309,7 +309,7 @@ export function mountPage({ state = makeState(), controllerOpts = {}, width = 64
   if (brave) env.win.navigator.brave = { isBrave: async () => true };
   const controller = fakeController(state, controllerOpts);
   const flows = fakeFlows();
-  const handle = mountControls(controller, { doc: env.doc, win: env.win, exportFlow: flows.exportFlow, importFlow: flows.importFlow, now: () => Date.parse(NOW) });
+  const handle = mountControls(controller, { doc: env.doc, win: env.win, exportFlow: flows.exportFlow, importFlow: flows.importFlow, now: () => Date.parse(NOW), link });
   return { env, ...parts, ...bar, controller, flows, handle, copied, ui: inspect(env, parts) };
 }
 

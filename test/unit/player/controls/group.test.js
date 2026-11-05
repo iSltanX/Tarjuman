@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_SETTINGS } from '../../../../src/core/model/settings.js';
-import { FLASH_MS } from '../../../../src/player/controls/session.js';
+import { FLASH_MS, TIP_HIDE_MS } from '../../../../src/player/controls/session.js';
 import { fitSize, roomFor } from '../../../../src/player/controls/bar.js';
 import { mountControls } from '../../../../src/player/controls/index.js';
 import { groupCss } from '../../../../src/player/controls/styles.js';
@@ -52,6 +52,8 @@ test('التلميحات بالخطوة الحالية ومعنى الإشارة
   ui.btn('plus').dispatchEvent({ type: 'pointerenter' });
   assert.equal(ui.tip(), 'تأخير الترجمة 1 ث (تظهر لاحقًا)');
   ui.btn('plus').dispatchEvent({ type: 'pointerleave' });
+  // يبقى لحظة بعد المغادرة فيمكن المرور فوقه (تدقيق 7a66f91، C6، U89).
+  page.env.win.advance(TIP_HIDE_MS + 10);
   assert.equal(ui.tip(), null);
   ui.btn('download').focus();
   assert.equal(ui.tip(), 'تحميل الأصل (SRT)');
@@ -189,6 +191,8 @@ test('الاسم تلميح عند المرور وعند التركيز بلوح
     b.dispatchEvent({ type: 'pointerenter' });
     assert.equal(ui.tip(), text, `${kind}: عند المرور`);
     b.dispatchEvent({ type: 'pointerleave' });
+    assert.equal(ui.tip(), text, `${kind}: يبقى لحظة بعد المغادرة (U89)`);
+    page.env.win.advance(TIP_HIDE_MS + 10);
     assert.equal(ui.tip(), null, `${kind}: يزول بالمغادرة`);
     b.focus();
     assert.equal(ui.tip(), text, `${kind}: عند التركيز بلوحة المفاتيح`);

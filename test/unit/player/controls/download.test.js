@@ -9,6 +9,8 @@ import { PREVIEW_MS } from '../../../../src/player/controls/session.js';
 import { INSTRUCTIONS, click, makeState, mountPage, settle, trackInfo } from './harness.js';
 
 const DL = 'تنزيل الملف';
+// اسم الملف في «نُزّل» معزول LTR (تدقيق 7a66f91، C6، U49).
+const named = (name) => `نُزّل ${String.fromCodePoint(0x2066)}${name}${String.fromCodePoint(0x2069)}`;
 const open = (page) => {
   click(page.ui.btn('download'));
   assert.equal(page.ui.menuOpen(), true);
@@ -86,7 +88,7 @@ test('مسار واحد: سطر الحالة بوصفه، ووضع التصدي�
 test('أكثر من مسار: قائمة اختيار (اليدوي أولًا)، والتنزيل للمختار', async () => {
   const page = mountPage({ state: makeState({ captured: [trackInfo({ key: 'en|asr', kind: 'asr', cueCount: 600 }), trackInfo()] }) });
   open(page);
-  const radios = page.ui.menu().querySelectorAll('[role="menuitemradio"]');
+  const radios = page.ui.menu().querySelectorAll('button.item[role="radio"]');
   assert.deepEqual(radios.map((r) => r.textContent), ['الإنجليزية · يدوية · 412 مقطعًا', 'الإنجليزية · تلقائية · 600 مقطع']);
   assert.equal(radios[0].getAttribute('aria-checked'), 'true');
   click(radios[1]);
@@ -119,7 +121,7 @@ test('«تنزيل الملف»: الحفظ بـsaveFile ثم البصمة، د�
   assert.equal(spec.track.cues[0].startMs, 1000, 'المقاطع كما أعطاها المتحكم: لا إزاحة فيها (+3 ث مهملة)');
   assert.deepEqual(page.flows.downloads, [{ name: 'AAAAAAAAAAA.en.manual.long.srt', hasDoc: true }]);
   assert.deepEqual(page.controller.calls[1][1], { trackKey: 'en|manual', fingerprint: { id: 'fp_new0000001', mode: 'long', parts: null } });
-  assert.deepEqual(lines(page), [['saveLine', 'ok', 'نُزّل AAAAAAAAAAA.en.manual.long.srt']]);
+  assert.deepEqual(lines(page), [['saveLine', 'ok', named('AAAAAAAAAAA.en.manual.long.srt')]]);
   assert.ok(page.ui.menu().querySelector('[data-fid="saveLine"] svg.glyph'), 'رمز النجاح SVG');
   assert.equal(page.ui.toasts().length, 0, 'النتيجة في القائمة لا رسالة فوق الفيديو');
   assert.equal(page.handle.diagnostics().session.downloads, 1);
@@ -137,7 +139,7 @@ test('الفعلان مستقلان: تعذّر النسخ لا يمس التن�
   assert.equal(page.flows.downloads.length, 0, 'النسخ لا ينزّل');
   click(page.ui.item(DL));
   await settle();
-  assert.deepEqual(lines(page), [['saveLine', 'ok', 'نُزّل AAAAAAAAAAA.en.manual.normal.srt'], ['copyLine', 'error', 'تعذّر النسخ — أعد المحاولة']], 'التنزيل لا يمحو سطر النسخ ولا ينسخ');
+  assert.deepEqual(lines(page), [['saveLine', 'ok', named('AAAAAAAAAAA.en.manual.normal.srt')], ['copyLine', 'error', 'تعذّر النسخ — أعد المحاولة']], 'التنزيل لا يمحو سطر النسخ ولا ينسخ');
   const retry = page.ui.menu().querySelector('[data-fid="copyLine"]');
   assert.equal(retry.tagName, 'button');
   page.env.doc.execCommand = () => true;
@@ -247,7 +249,7 @@ test('إلغاء حوار الحفظ في جزء يوقف بقية الأجزا�
   click(page.ui.item(DL));
   await settle();
   assert.equal(page.flows.downloads.length, 1);
-  assert.deepEqual(lines(page)[0], ['saveLine', 'ok', 'نُزّل AAAAAAAAAAA.en.manual.normal.part1of3.srt']);
+  assert.deepEqual(lines(page)[0], ['saveLine', 'ok', named('AAAAAAAAAAA.en.manual.normal.part1of3.srt')]);
   assert.ok(page.ui.menuText().includes(messageFor('SV_CANCELLED')));
 });
 
@@ -346,7 +348,7 @@ test('«اللغة»: رمز لا يعرفه المتصفح أو غير صالح
   assert.equal(languageLine(bad).textContent, 'a-b-c · يدوية · 412 مقطعًا', 'الرمز غير الصالح كما جاء');
   const many = mountPage({ state: makeState({ captured: [trackInfo({ lang: 'en', kind: 'manual' }), trackInfo({ key: 'fr|asr', lang: 'fr', kind: 'asr', cueCount: 600 })] }) });
   open(many);
-  assert.deepEqual(many.ui.menu().querySelectorAll('[role="menuitemradio"]').map((r) => r.textContent), [`${arName('en')} · يدوية · 412 مقطعًا`, `${arName('fr')} · تلقائية · 600 مقطع`]);
+  assert.deepEqual(many.ui.menu().querySelectorAll('button.item[role="radio"]').map((r) => r.textContent), [`${arName('en')} · يدوية · 412 مقطعًا`, `${arName('fr')} · تلقائية · 600 مقطع`]);
 });
 
 test('عنوان القائمة «تحميل الأصل»، واسم الوصول لها، ولا «تحميل الترجمة» في أي نص منها أو من تلميح زرها', () => {

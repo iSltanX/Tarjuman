@@ -185,7 +185,8 @@ test('قرينة الاسم من المحفوظات الحقيقية: ملف ب�
   const before = print(area);
   await upload(page, area, srtFile(AR1, `${B}.en.manual.normal.ar.srt`), { save: false });
   assert.equal(page.ui.menuLabel(), 'رفع ترجمة');
-  assert.ok(page.ui.menuText().includes('الاسم يشير إلى فيديو آخر · محاضرة عن البحر'));
+  // العنوان معزول FSI…PDI (تدقيق 7a66f91، C6، U49).
+  assert.ok(page.ui.menuText().includes(`الاسم يشير إلى فيديو آخر · ${String.fromCodePoint(0x2068)}محاضرة عن البحر${String.fromCodePoint(0x2069)}`));
   assert.equal(print(area), before, 'لا كتابة قبل التأكيد');
   click(page.ui.item('حفظ'));
   await settle(area);

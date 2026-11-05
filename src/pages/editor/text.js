@@ -1,6 +1,6 @@
 // نصوص المحرّر العربية (figma-design-brief.md §١١ و§١٦): النطاق قبل الفعل وبعده، والعدّ بالعربية بمطابقة
 // الصفة للمعدود، والإزاحة بعلامتها، وتقرير المقارنة سطورًا. دوال نقية بلا DOM.
-import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
 
 const MAX_LIST = 8;
 const FSI = String.fromCodePoint(0x2068);
@@ -203,13 +203,15 @@ export function seekResult(r, at, message) {
  * @param {{ mode: string, folder: string } | undefined} location @param {(code: string) => string} message
  */
 export function saveMessage(r, name, location, message) {
-  if (!r.ok) return { tone: r.code === 'SV_CANCELLED' ? 'info' : 'danger', text: `${name}: ${message(r.code)}` };
-  if (r.mode === 'blob') return { tone: 'info', text: `${name}: ${message('SV_FALLBACK_BLOB')}` };
-  if (r.pending) return { tone: 'info', text: `${name}: ${message('SV_PENDING')}` };
+  // الاسم معزول LTR: شرطة أول معرّف مثل «-xyz…» لا تنتقل إلى آخره (تدقيق 7a66f91، U49، GEM-022b).
+  const file = ltrInline(name);
+  if (!r.ok) return { tone: r.code === 'SV_CANCELLED' ? 'info' : 'danger', text: `${file}: ${message(r.code)}` };
+  if (r.mode === 'blob') return { tone: 'info', text: `${file}: ${message('SV_FALLBACK_BLOB')}` };
+  if (r.pending) return { tone: 'info', text: `${file}: ${message('SV_PENDING')}` };
   // «مجلد X داخل التنزيلات» لا «التنزيلات/X»: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص.
-  if (r.mode === 'subfolder') return { tone: 'success', text: `حُفظ ${name} في مجلد ${location?.folder ?? 'Tarjuman'} داخل التنزيلات.` };
-  if (r.mode === 'ask') return { tone: 'success', text: `حُفظ ${name} حيث اخترت.` };
-  return { tone: 'success', text: `حُفظ ${name} في مجلد التنزيلات.` };
+  if (r.mode === 'subfolder') return { tone: 'success', text: `حُفظ ${file} في مجلد ${location?.folder ?? 'Tarjuman'} داخل التنزيلات.` };
+  if (r.mode === 'ask') return { tone: 'success', text: `حُفظ ${file} حيث اخترت.` };
+  return { tone: 'success', text: `حُفظ ${file} في مجلد التنزيلات.` };
 }
 
 /** طُلبت خانة فارغة فعُرضت النشطة. @param {number | null} requested @param {number} opened */

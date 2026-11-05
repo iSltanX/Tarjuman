@@ -4,7 +4,7 @@
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
 import { formatOffset } from '../../ui/format.js';
-import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isLiveNow } from '../youtube-dom.js';
+import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
 import { fitSize, watchBar } from './bar.js';
 import { attachedGlossary, copyText, loadIntoFor, nameHintFor, partSizes, prepareExport, readFor, recordFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
@@ -13,7 +13,7 @@ import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu }
 import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
 import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
 import {
-  LABELS, badgeTip, comparisonSummary, downloadedLine, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime, syncUndoStale,
+  LABELS, badgeTip, comparisonSummary, downloadedLine, downloadedParts, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime, syncUndoStale,
   slotToast, withState,
 } from './text.js';
 
@@ -23,6 +23,8 @@ export const FLASH_MS = 1000;
 export const PREVIEW_MS = 250;
 /** رسالة فيها «تراجع» تبقى أطول قليلًا من العابرة: وقت كافٍ للقرار دون أن تبقى فوق الفيديو. */
 export const UNDO_MS = 6000;
+/** التلميح يبقى هذه المدة بعد مغادرة المؤشر زرَّه، فيمكن المرور فوقه (WCAG 1.4.13؛ تدقيق 7a66f91، U89). */
+export const TIP_HIDE_MS = 300;
 const MAX_TOASTS = 3;
 const MAX_OFFSET_S = 600;
 const SPLIT = Object.freeze({ min: 50, max: 2000 });
@@ -41,7 +43,8 @@ const splitSizeOf = (raw) => {
 };
 /** زر كل قائمة: موضعها فوقه، وإليه يعود التركيز عند إغلاقها. */
 const ANCHOR = { download: 'download', display: 'upload', confirm: 'upload', timing: 'badge' };
-const ROLE = { download: 'menu', display: 'menu', confirm: 'dialog', timing: 'dialog' };
+// حوارات غير نمطية كلها: فيها عناوين ومجموعات اختيار وحقول وأزرار، لا بنود قائمة (تدقيق 7a66f91، U44).
+const ROLE = { download: 'dialog', display: 'dialog', confirm: 'dialog', timing: 'dialog' };
 const TITLE = { download: LABELS.downloadTitle, display: LABELS.displayTitle, confirm: LABELS.confirmTitle, timing: LABELS.timingTitle };
 
 /** «جزآن»، «3 أجزاء»، «11 جزءًا» بعد «✓ نُزّل». @param {number} n */
@@ -58,6 +61,8 @@ function freshUi(videoId) {
     videoId,
     open: /** @type {null | 'download' | 'display' | 'confirm' | 'timing'} */ (null),
     hint: /** @type {string | null} */ (null),
+    /** تلميح الزر الذي أخفاه Esc: لا يعود حتى يغادره المؤشر أو التركيز (U89). */
+    tipMuted: /** @type {string | null} */ (null),
     flash: /** @type {string | null} */ (null),
     copyBusy: false,
     switching: false,
@@ -91,8 +96,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let menuKind = null;
   let lastModel = null;
   let overflow = null;
-  let flags = { live: false, unavailable: false, brave: false };
-  /** @type {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action: { label: string } | null, icon: 'clock' | null }[]} */
+  let flags = { live: false, unavailable: false, brave: false, ad: false };
+  /** المؤشر فوق التلميح (U89). */
+  let tipHover = false;
+  /** channel قناة الرسالة: رسائل الاستيراد ('import') تُمسح ببدء استيراد جديد، فلا تتراكم أخطاء قديمة بعد نجاحه (U43). */
+  /** @type {{ id: string, tone: 'success' | 'info' | 'warning' | 'error', text: string, persist: boolean, action: { label: string } | null, icon: 'clock' | null, channel: string | null }[]} */
   let toasts = [];
   /** فعل كل رسالة بفعل («تراجع») بمعرّفها؛ لا يدخل العرض. */
   const toastActions = new Map();
@@ -115,10 +123,18 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }, ms));
   };
 
-  const group = createGroup({ doc, win, on: { action, hint, escape: () => closeMenu(true) } });
-  // زر اللوحة يستقبل التركيز حين تُغلق اللوحة وفيها التركيز (src/player/link.js).
-  const unlink = link?.register(() => group.focus('panel')) ?? null;
-  const layer = createLayer({ doc, win, on: { escape: () => closeMenu(true), files: onFiles } });
+  const group = createGroup({ doc, win, on: { action, hint, escape: onEscape } });
+  // زر اللوحة يستقبل التركيز حين تُغلق اللوحة وفيها التركيز (src/player/link.js)؛ وإن أخفاه المستخدم فـ«الترجمة» الظاهر، فلا
+  // يُعطى عنصرًا لا يُرسم فيسقط التركيز إلى الصفحة (تدقيق 7a66f91، U88).
+  const unlink = link?.register(() => group.focus(group.button('panel').hasAttribute('hidden') ? 'upload' : 'panel')) ?? null;
+  const layer = createLayer({
+    doc, win,
+    on: {
+      escape: () => closeMenu(true), files: onFiles, focusLeave, tipHover: onTipHover,
+      // زالت رسالة فيها التركيز (انقضت أو فُعّل «تراجع» بلوحة المفاتيح): إلى «الترجمة» في الشريط لا إلى الصفحة (U88).
+      focusLost: () => { if (!destroyed) group.focus('upload'); },
+    },
+  });
 
   // ———— قراءات من الصفحة (كل اسم يوتيوب من youtube-dom) ————
 
@@ -127,7 +143,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const b = doc.querySelector(SELECTORS.subtitlesButton);
     return !!b && (b.getAttribute('aria-disabled') === 'true' || b.hasAttribute('disabled'));
   }
-  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator) });
+  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc) });
 
   // ———— نماذج العرض ————
 
@@ -150,6 +166,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const dlState = dlReason ? null : ui.download.busy ? LABELS.stateDownloading : tracks.length ? (tracks.some((t) => t.warnings?.length) ? LABELS.stateIncomplete : LABELS.stateReady) : null;
     const upState = ui.upload.busy ? LABELS.importing : s.arabic && summary.tone === 'warn' ? LABELS.stateDiffers : null;
     const upLabel = s.arabic ? `${LABELS.translation}: ${s.arabic.fileName}` : LABELS.upload;
+    // بلا ترجمة يفتح الزر منتقي الملفات مباشرة: لا يعلن نافذة (U44).
+    const upPopup = s.arabic ? undefined : null;
     const badge = badgeTip(off);
     const ui$ = s.prefs?.ui;
     const panelShown = ui$?.panelEntry !== false;
@@ -163,7 +181,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       },
       upload: {
         label: upLabel, tip: withState(s.arabic ? LABELS.translation : LABELS.upload, upState), description: s.arabic ? summary.text : upState,
-        disabled: noVideo || s.loading, loading: ui.upload.busy, expanded: ui.open === 'display' || ui.open === 'confirm',
+        disabled: noVideo || s.loading, loading: ui.upload.busy, expanded: ui.open === 'display' || ui.open === 'confirm', popup: upPopup,
       },
       panel: { label: LABELS.panel, tip: panelTip, description: null, disabled: noVideo, hidden: !panelShown, pressed: panelOpen },
       minus: { label: withReason(minusTip(step)), tip: withReason(minusTip(step)), description: null, disabled: viewOff },
@@ -211,6 +229,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       fileName: a.fileName, count: a.cues.length, edited: a.edited, comparison: a.comparison, notes: a.comparison?.notes ?? [],
       slots, switching: s.loading || ui.switching, uploadLabel: slots.some((x) => !x.filled) ? LABELS.uploadMore : LABELS.replace,
       warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, originalLang: s.english?.lang ?? null, busy: ui.upload.busy, error: ui.upload.error,
+      // الإعلان لحظة الرسم (فتح القائمة بعد بدئه)؛ وتغيّره والقائمة مفتوحة يعيد الرسم من الفحص الدوري (flags.ad).
+      ad: isAdShowing(doc),
     };
   }
 
@@ -253,6 +273,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       offsetMs: off, offsetText: t.offsetText ?? formatOffset(off), offsetError: t.offsetError,
       stepMs: step, custom: t.custom || !PRESET_STEPS.includes(step), stepText: t.stepText ?? stepText(step), stepError: t.stepError, sync,
+      ad: isAdShowing(doc),
     };
   }
 
@@ -301,7 +322,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const nodes = spec.build();
     const label = spec.label ?? TITLE[spec.kind];
     if (spec.kind !== menuKind || !layer.menuOpen()) {
-      layer.openMenu(nodes, group.button(ANCHOR[spec.kind]), { label, role: ROLE[spec.kind] });
+      layer.openMenu(nodes, group.button(ANCHOR[spec.kind]), { label, role: ROLE[spec.kind], avoidLine: spec.kind === 'timing' });
     } else {
       layer.patchMenu(nodes, label);
     }
@@ -343,7 +364,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       return;
     }
     const kind = ui.hint;
-    if (kind && !(ui.open && ANCHOR[ui.open] === kind)) {
+    if (kind && kind !== ui.tipMuted && !(ui.open && ANCHOR[ui.open] === kind)) {
       layer.showTip(lastModel[kind].tip, group.button(kind));
       return;
     }
@@ -430,9 +451,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
    * رسالة عابرة: النجاح والمعلومة تختفيان بعد 3 ثوانٍ، والتحذير والخطأ يبقيان حتى الإغلاق. ومعها فعل اختياري («تراجع»)
    * يُنفَّذ مرة ثم تختفي، وتبقى الرسالة بفعلها 6 ثوانٍ.
    * @param {'success' | 'info' | 'warning' | 'error'} tone @param {string} text
-   * @param {{ action?: { label: string, run: () => unknown } | null, icon?: 'clock' | null }} [o] icon رمز غير رمز النغمة (الساعة لرسالة الإزاحة)
+   * @param {{ action?: { label: string, run: () => unknown } | null, icon?: 'clock' | null, channel?: string | null }} [o] icon رمز غير رمز
+   *   النغمة (الساعة لرسالة الإزاحة)، وchannel قناتها (clearChannel)
    */
-  function addToast(tone, text, { action = null, icon = null } = {}) {
+  function addToast(tone, text, { action = null, icon = null, channel = null } = {}) {
     const id = `t${++toastSeq}`;
     const persist = tone === 'warning' || tone === 'error';
     const dropped = toasts.filter((t) => t.text === text);
@@ -440,7 +462,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       clearTimer(t.id);
       toastActions.delete(t.id);
     }
-    toasts = [...toasts.filter((t) => t.text !== text), { id, tone, text, persist, action: action ? { label: action.label } : null, icon }];
+    toasts = [...toasts.filter((t) => t.text !== text), { id, tone, text, persist, action: action ? { label: action.label } : null, icon, channel }];
     if (action) toastActions.set(id, action.run);
     while (toasts.length > MAX_TOASTS) {
       const old = toasts.shift();
@@ -448,6 +470,18 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       toastActions.delete(old.id);
     }
     if (!persist) later(id, action ? UNDO_MS : TOAST_MS, () => dismissToast(id));
+    renderToasts();
+  }
+
+  /** يمسح رسائل قناة (الاستيراد عند بدء استيراد جديد): الخطأ السابق لم يعد خبرًا عن الملف الذي يُقرأ الآن (U43). @param {string} ch */
+  function clearChannel(ch) {
+    const gone = toasts.filter((t) => t.channel === ch);
+    if (!gone.length) return;
+    for (const t of gone) {
+      clearTimer(t.id);
+      toastActions.delete(t.id);
+    }
+    toasts = toasts.filter((t) => t.channel !== ch);
     renderToasts();
   }
 
@@ -478,9 +512,59 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   // ———— الأفعال من الشريط ————
 
-  function hint(kind) {
+  /**
+   * تلميح زر بالمرور أو التركيز. مغادرة المؤشر لا تخفيه فورًا (TIP_HIDE_MS) فيمكن المرور فوقه؛ وفقد التركيز يخفيه فورًا (U89).
+   * @param {string | null} kind @param {{ pointer?: boolean }} [o]
+   */
+  function hint(kind, { pointer = false } = {}) {
+    clearTimer('tipHide');
+    if (kind === null && pointer && ui.hint) {
+      later('tipHide', TIP_HIDE_MS, hideTip);
+      return;
+    }
+    if (kind !== ui.hint) ui.tipMuted = null;
     ui.hint = kind;
     renderTip();
+  }
+
+  function hideTip() {
+    if (tipHover) return;
+    ui.hint = null;
+    ui.tipMuted = null;
+    renderTip();
+  }
+
+  /** المؤشر دخل التلميح (يبقى ظاهرًا) أو غادره (يُخفى بعد المهلة). @param {boolean} inside */
+  function onTipHover(inside) {
+    tipHover = inside;
+    clearTimer('tipHide');
+    if (!inside && ui.hint) later('tipHide', TIP_HIDE_MS, hideTip);
+  }
+
+  /** Esc على زر الشريط: يغلق قائمته المفتوحة؛ وبلا قائمة يُخفي التلميح الظاهر حتى المغادرة (U89). */
+  function onEscape() {
+    if (ui.open) {
+      closeMenu(true);
+      return;
+    }
+    if (ui.flash) {
+      ui.flash = null;
+      clearTimer('flash');
+    }
+    if (ui.hint) ui.tipMuted = ui.hint;
+    renderTip();
+  }
+
+  /**
+   * خرج التركيز من النافذة إلى ما خارج الطبقة والمجموعة (Tab من آخر بند، أو نقرة في الصفحة): تُغلق ويبقى التركيز حيث ذهب، كما
+   * تُغلق قائمة خيارات اللوحة (U46). إلا قرار ينتظر (تأكيد الرفع، أو اختيار جملة للمزامنة) أو عمل جارٍ، كما مع اختفاء الشريط.
+   * @param {Element} to
+   */
+  function focusLeave(to) {
+    if (!ui.open || to === group.host) return;
+    const pending = ui.open === 'confirm' || (ui.open === 'timing' && !!ui.timing.sync);
+    if (pending || ui.download.busy || ui.upload.busy) return;
+    closeMenu(false);
   }
 
   function action(kind, { keyboard }) {
@@ -522,6 +606,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     ui.timing.offsetText = null;
     ui.timing.offsetError = null;
     ui.flash = nudgeFlash(controller.getState().view.displayOffsetMs);
+    // التلميح العابر لا يُقرأ: الإزاحة الجديدة تُعلن في منطقة حية، كما تعلنها قيمة التذييل في اللوحة (U48).
+    layer.announce(ui.flash);
     group.pulse();
     later('flash', FLASH_MS, () => {
       ui.flash = null;
@@ -664,6 +750,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const s = controller.getState();
     const cues = s.arabic?.cues;
     if (!cues || typeof controller.markCue !== 'function') return;
+    // زمن الفيديو أثناء الإعلان زمن الإعلان: لا علامة على مقطع لا يُرى (U47).
+    if (isAdShowing(doc)) {
+      addToast('info', messageFor('CT_AD_SHOWING'));
+      return;
+    }
     const video = getMainVideo(doc);
     const at = video && Number.isFinite(video.currentTime) ? lookupMs(video.currentTime, s.view.displayOffsetMs) : NaN;
     const index = visibleCueIndex(cues, at);
@@ -707,6 +798,10 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const cues = s.arabic?.cues;
     const video = getMainVideo(doc);
     if (!cues?.length || !video || !Number.isFinite(video.currentTime)) return;
+    if (isAdShowing(doc)) {
+      addToast('info', messageFor('CT_AD_SHOWING'));
+      return;
+    }
     const atMs = Math.round(video.currentTime * 1000);
     const at = lookupMs(video.currentTime, s.view.displayOffsetMs);
     const visible = visibleCueIndex(cues, at);
@@ -893,7 +988,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       // بدأ التنزيل وما زال حوار الحفظ مفتوحًا (pending): لا يُقال «نُزّل» قبل أن يكتمل، بل ما ينتظره المستخدم.
       d.saveLine = r.pending
         ? { tone: 'info', text: messageFor('SV_PENDING') }
-        : { tone: 'ok', text: downloadedLine(r.saved.length > 1 ? partsLabel(r.saved.length) : r.saved[0]) };
+        : { tone: 'ok', text: r.saved.length > 1 ? downloadedParts(partsLabel(r.saved.length)) : downloadedLine(r.saved[0]) };
     }
     if (r.stopped) {
       if (r.stopped.code !== 'SV_CANCELLED') {
@@ -945,7 +1040,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     ui.upload.pickFor = null;
     // فُتح المنتقي لفيديو سابق (التنقل يصفّر الحالة) أو لم يُفتح منّا: لا يُقرأ الملف ولا يُحمَّل.
     if (!p || p.videoId !== controller.getState().videoId) {
-      addToast('warning', messageFor('CT_VIDEO_CHANGED'));
+      clearChannel('import');
+      addToast('warning', messageFor('CT_VIDEO_CHANGED'), { channel: 'import' });
       render();
       return;
     }
@@ -961,6 +1057,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (u.busy) return;
     u.busy = true;
     u.error = null;
+    clearChannel('import');
     render();
     const read = await readFor({ controller, importFlow: flows.importFlow, files });
     if (destroyed || ui.upload !== u) return;
@@ -968,7 +1065,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       u.busy = false;
       counts.flowFailures++;
       if (replacing && ui.open === 'display') u.error = read.error.message;
-      else addToast('error', read.error.message);
+      else addToast('error', read.error.message, { channel: 'import' });
       render();
       return;
     }
@@ -988,7 +1085,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       }
       if (r.error.code !== 'ST_ARABIC_EXISTS') {
         counts.flowFailures++;
-        addToast('error', r.error.message);
+        addToast('error', r.error.message, { channel: 'import' });
         render();
         return;
       }
@@ -1028,7 +1125,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       }
       u.pending = null;
       u.error = r.error.message;
-      if (!stillOpen) addToast('error', r.error.message);
+      if (!stillOpen) addToast('error', r.error.message, { channel: 'import' });
     } else {
       counts.imports++;
       u.pending = null;
@@ -1129,7 +1226,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       try {
         place();
         const next = readFlags();
-        if (next.live !== flags.live || next.unavailable !== flags.unavailable) {
+        if (next.live !== flags.live || next.unavailable !== flags.unavailable || next.ad !== flags.ad) {
           flags = next;
           render();
         }

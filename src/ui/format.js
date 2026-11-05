@@ -37,6 +37,13 @@ export const textDirection = (s) => (ARABIC.test(String(s ?? '')) ? 'rtl' : 'ltr
 /** نص LTR معزول داخل جملة عربية (فرق موقّع، أو مثال «+1.2»). @param {string} s */
 export const ltrInline = (s) => `${LRI}${s}${PDI}`;
 
+const FSI = String.fromCodePoint(0x2068);
+/**
+ * نص حر اتجاهه من أول حرف قوي فيه، معزول داخل جملة عربية (عنوان فيديو): «10 Tips…» لا تنقلب كلماته و«?» لا تنتقل إلى أوله
+ * (FSI…PDI؛ تدقيق 7a66f91، U49). @param {string} s
+ */
+export const isolate = (s) => `${FSI}${s}${PDI}`;
+
 /**
  * زمن بصيغة HH:MM:SS,mmm (للعرض؛ الكاتب في src/core/srt يكتب الصيغة نفسها في الملف).
  * @param {number} ms

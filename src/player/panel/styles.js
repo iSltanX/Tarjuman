@@ -67,7 +67,8 @@ export function panelCss() {
 
 /* الشريط: الحالة والنص والمتابعة */
 .bar { grid-area: bar; flex: none; display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--tj-border); }
-.status { display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 18px; color: var(--tj-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status { display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 18px; color: var(--tj-text-2); white-space: nowrap; overflow: hidden; }
+.status__text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dot { width: 5px; height: 5px; flex: none; background: var(--tj-success); transform: rotate(45deg); border-radius: 1px; }
 .ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .segs { display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); }
@@ -80,9 +81,11 @@ export function panelCss() {
 .switch__thumb { width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgb(0 0 0 / 25%); }
 .switch[aria-checked="true"] .switch__track { background: var(--tj-brand); justify-content: flex-end; }
 .switch[aria-checked="true"] .switch__thumb { background: var(--tj-brand-ink); }
-.inline-error { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: var(--tj-radius-md); background: var(--tj-danger-bg); font-size: 12px; line-height: 18px; }
-.inline-error .ic { color: var(--tj-danger); margin-top: 1px; }
+.inline-error, .act-error { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: var(--tj-radius-md); background: var(--tj-danger-bg); font-size: 12px; line-height: 18px; }
+.inline-error .ic, .act-error .ic { color: var(--tj-danger); margin-top: 1px; }
 .inline-error .b { margin-inline-start: auto; }
+.act-error { flex: none; grid-area: note; margin: 8px 14px 0; align-items: center; }
+.act-error .b { margin-inline-start: auto; height: 24px; min-width: 24px; width: 24px; }
 
 /* الجسم: الصفوف، والهيكل، والخطوات، والخطأ */
 .body { grid-area: body; flex: 1 1 auto; min-height: 0; position: relative; display: flex; flex-direction: column; }
@@ -163,7 +166,7 @@ export function panelCss() {
 .root[data-narrow] .foot__hint { display: none; }
 
 /* عريض (≥ ${WIDE_MIN}px، اللوحة تحت الفيديو): القائمة وعمود التوقيت جنبًا إلى جنب */
-.root[data-wide][data-kind="ready"] .panel { display: grid; grid-template-columns: minmax(0, 1fr) 248px; grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "head head" "bar side" "body side"; }
+.root[data-wide][data-kind="ready"] .panel { display: grid; grid-template-columns: minmax(0, 1fr) 248px; grid-template-rows: auto auto auto minmax(0, 1fr); grid-template-areas: "head head" "note note" "bar side" "body side"; }
 .root[data-wide][data-kind="ready"] .foot { border-top: 0; border-inline-start: 1px solid var(--tj-border); justify-content: center; }
 .root[data-wide][data-kind="ready"] .foot__hint { display: none; }
 .root[data-wide][data-kind="ready"] .off .lbl, .root[data-wide][data-kind="ready"] .off__val .mean { display: none; }

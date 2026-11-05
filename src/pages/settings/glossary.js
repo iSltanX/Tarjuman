@@ -106,7 +106,7 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
     });
     return el('tr', {
       children: [
-        el('td', { className: 'st-gl__source', text: term.source, dir: 'ltr', doc }),
+        el('td', { className: 'st-gl__source', text: term.source, dir: 'ltr', attrs: { lang: 'en' }, doc }),
         el('td', { className: 'st-gl__target', text: term.target, dir: 'rtl', doc }),
         el('td', { className: 'st-gl__note', text: term.note ?? '', dir: 'auto', doc }),
         el('td', { className: 'st-gl__del', children: [remove], doc }),

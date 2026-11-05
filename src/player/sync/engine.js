@@ -1,6 +1,7 @@
 // محرّك المزامنة (P5، عقد التوقيت §١): يقرأ video.currentTime ولا يكتب فيه أبدًا، ويبحث بـ lookupMs
 // (currentTime × 1000 − الإزاحة). حلقة requestAnimationFrame تعمل أثناء التشغيل وحده؛ وعند seeked وratechange
-// وpause وما شابهها يتحدّث الجواب فورًا. لا يستدعي onFrame إلا عند تغيّر المقطع الظاهر، فلا عمل DOM بلا لزوم.
+// وpause وما شابهها يتحدّث الجواب فورًا. لا يستدعي onFrame إلا عند تغيّر المقطع الظاهر، فلا عمل DOM بلا لزوم. وبـbridgeMs تُوصل
+// الفجوة الأقصر منه بين مقطع انتهى وتالٍ يبدأ: يبقى الأول ظاهرًا حتى يبدأ الثاني، فلا يبدأ تلاشٍ لا يكتمل (تدقيق 7a66f91، CL-X1).
 import { lookupMs } from '../../core/model/timing.js';
 import { indexFor } from './cue-index.js';
 
@@ -18,9 +19,10 @@ const PLAY_EVENTS = ['play', 'playing'];
  * @param {{
  *   win: { requestAnimationFrame: (cb: () => void) => number, cancelAnimationFrame: (id: number) => void },
  *   onFrame: (frame: Frame) => void,
- * }} deps
+ *   bridgeMs?: number,
+ * }} deps bridgeMs أطول فجوة تُوصل (0: لا وصل)
  */
-export function createSyncEngine({ win, onFrame }) {
+export function createSyncEngine({ win, onFrame, bridgeMs = 0 }) {
   /** @type {any} */
   let video = null;
   /** @type {{ ar: Cue[] | null, en: Cue[] | null }} */
@@ -62,6 +64,9 @@ export function createSyncEngine({ win, onFrame }) {
         stats.lookups++;
         t.from = hit.from;
         t.to = hit.to;
+        // فجوة قصيرة بدأت بنهاية الظاهر الآن نفسه: يبقى حتى يبدأ التالي (نافذتها [from, to) فلا بحث في إطاراتها).
+        if (!hit.cue && t.cue && bridgeMs > 0 && Number.isFinite(hit.from) && Number.isFinite(hit.to)
+          && hit.to - hit.from < bridgeMs && Math.abs(t.cue.endMs - hit.from) < 1) continue;
         if (hit.cue !== t.cue) {
           t.cue = hit.cue;
           changed = true;

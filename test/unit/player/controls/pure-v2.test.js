@@ -91,8 +91,9 @@ test('أسطر مختصرة بصيغ العدد: التعديلات، والإب
   assert.equal(keptLine(0), 'تُبقى تعديلاتك اليدوية');
   assert.equal(keptLine(2), 'تُبقى تعديلاتك، ويأخذ الملف الجديد مواضع التعارض (2)');
   assert.equal(nameOtherLine(null), 'الاسم يشير إلى فيديو آخر');
-  assert.equal(nameOtherLine('  قصير\n'), 'الاسم يشير إلى فيديو آخر · قصير');
-  assert.equal(Array.from(nameOtherLine('ع'.repeat(60)).split(' · ')[1]).length, 40);
+  // العنوان معزول FSI…PDI (تدقيق 7a66f91، C6، U49): المحرفان خارج حد الأربعين.
+  assert.equal(nameOtherLine('  قصير\n'), `الاسم يشير إلى فيديو آخر · ${String.fromCodePoint(0x2068)}قصير${String.fromCodePoint(0x2069)}`);
+  assert.equal(Array.from(nameOtherLine('ع'.repeat(60)).split(' · ')[1]).length, 42);
   assert.deepEqual([1, 2, 5, 12, 100, 18400].map(charsText), ['محرف واحد', 'محرفان', '5 محارف', '12 محرفًا', '100 محرف', '18,400 محرف']);
   assert.equal(partRow({ index: 1, from: 1, to: 200, chars: 18400 }), '1 · 1–200 · 18,400 محرف');
 });

@@ -1,5 +1,5 @@
 // تتبّع التشغيل في قائمة الصفوف: ما دام «متابعة التشغيل» مفعّلًا يبقى الصف المرساة (الحالي) ظاهرًا داخل القائمة نفسها
-// (بحساب scrollTop لا scrollIntoView، فلا تتحرك الصفحة كلها). تمرير المستخدم (عجلة أو لمس أو لوحة مفاتيح أو شريط التمرير)
+// (بحساب scrollTop لا scrollIntoView، فلا تتحرك الصفحة كلها). تمرير المستخدم (عجلة أو لمس أو لوحة مفاتيح أو شريط التمرير) وتركيزه بلوحة المفاتيح
 // يوقف التتبّع فيظهر «العودة إلى ‹الزمن›»؛ والتمرير البرمجي لا يُعدّ تمريرًا للمستخدم لأنه لا يطلق هذه الأحداث (لا نستمع إلى scroll). حالة الجلسة
 // وحدها (مفعّلة افتراضيًا)، لا تُحفظ، وتعود مفعّلة كلما خرجت اللوحة من حالة الصفوف (الإغلاق أو تحميل فيديو آخر).
 
@@ -34,6 +34,24 @@ export function createFollow({ win, list, rowEl, onChange }) {
   // سحب شريط التمرير أو النقر على حاشية القائمة (الهدف القائمة نفسها لا صف فيها).
   list.addEventListener('mousedown', (ev) => {
     if (ev.target === list) stop();
+  });
+  // التركيز بلوحة المفاتيح داخل القائمة (Tab إليها أو الأسهم فيها) يوقف التتبّع، فلا تُسحب القائمة من تحت المركّز (تدقيق
+  // 7a66f91، U45). والتركيز الذي تحدثه نقرة على صف (يقفز بالفيديو) لا يوقفه: أول تركيز بعد ضغط المؤشر يُستهلك.
+  let pointer = false;
+  list.addEventListener('pointerdown', () => {
+    pointer = true;
+  });
+  const release = () => win.setTimeout(() => {
+    pointer = false;
+  }, 0);
+  list.addEventListener('pointerup', release);
+  list.addEventListener('pointercancel', release);
+  list.addEventListener('focusin', () => {
+    if (pointer) {
+      pointer = false;
+      return;
+    }
+    stop();
   });
 
   const reducedMotion = () => {

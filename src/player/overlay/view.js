@@ -26,6 +26,8 @@ export function createOverlayView({ doc, win }) {
   /** @type {{ ar: string[], en: string[] }} */
   let shown = { ar: [], en: [] };
   let fadeTimer = 0;
+  /** لغة سطر الأصل في الوضع المزدوج (رمز مساره)؛ والعربي lang="ar" (U48). */
+  let enLang = 'en';
   let layout = { anchor: 'bottom', offsetPx: 0 };
 
   /**
@@ -45,6 +47,7 @@ export function createOverlayView({ doc, win }) {
     const el = doc.createElement('div');
     el.className = `line ${kind}`;
     el.setAttribute('dir', lineDirection(text));
+    el.setAttribute('lang', kind === 'en' ? enLang : 'ar');
     el.textContent = text;
     return el;
   }
@@ -69,8 +72,8 @@ export function createOverlayView({ doc, win }) {
     styleMode,
 
     /**
-     * أسطر الظاهر الآن. عند الفراغ تتلاشى الطبقة 80ms ثم يُزال المحتوى؛ وبين مقطعين متتاليين يتبدل النص
-     * في مكانه بلا وميض.
+     * أسطر الظاهر الآن. عند الفراغ تتلاشى الطبقة 80ms ثم يُزال المحتوى؛ وبين مقطعين متتاليين يتبدل النص في مكانه بلا وميض
+     * (والفجوة الأقصر من التلاشي يصلها محرّك المزامنة، فلا يصل هنا فراغ بينهما؛ تدقيق 7a66f91، U49، CL-X1).
      * @param {{ ar: string[], en: string[] }} lines
      */
     render({ ar, en }) {
@@ -101,6 +104,11 @@ export function createOverlayView({ doc, win }) {
       } else {
         host.removeAttribute('hidden');
       }
+    },
+
+    /** @param {string | null | undefined} lang رمز لغة مسار الأصل (يُطبَّق على الأسطر التالية). */
+    setLang(lang) {
+      enLang = lang ? String(lang) : 'en';
     },
 
     /** @param {{ background: 'none' | 'soft' | 'solid' }} a */

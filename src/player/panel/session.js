@@ -30,6 +30,8 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   const counts = { renders: 0, renderFailures: 0, hostMoves: 0, syncs: 0, rebuilds: 0, actionFailures: 0 };
   let lastCode = null;
   let destroyed = false;
+  /** إخفاق فعل من أفعال اللوحة يراه المستخدم داخلها (U49)، أو null. */
+  let actionError = null;
   /** @type {HTMLElement | null} */
   let column = null;
   /** @type {{ restore: boolean, seen: boolean } | null} */
@@ -53,11 +55,23 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     if (code === 'PL_RENDER_FAILED') counts.renderFailures++;
     return new TjError(code, { cause: err, detail: err instanceof Error ? `${err.name}: ${err.message}` : undefined });
   };
-  /** فعل على المتحكم: لا يرمي ولا يترك وعدًا مرفوضًا بلا معالج؛ الإخفاق رمز في التشخيص. */
-  const act = (fn) => {
+  /**
+   * فعل على المتحكم: لا يرمي ولا يترك وعدًا مرفوضًا بلا معالج؛ الإخفاق رمز في التشخيص. وإخفاق ما يحفظه المستخدم من اللوحة
+   * (visible) يُقال داخلها أيضًا (تدقيق 7a66f91، U49: كان إغلاقها من زرها و«فوق الأصل» و«إخفاء الزر» تفشل صامتة). وكل فعل
+   * جديد يمسح ما قيل عن سابقه.
+   */
+  const act = (fn, { visible = false } = {}) => {
+    if (actionError) {
+      actionError = null;
+      render();
+    }
     const onError = (err) => {
       counts.actionFailures++;
       lastCode = toErrorInfo(err).code;
+      if (visible && !destroyed) {
+        actionError = messageFor('PL_PREFS_FAILED');
+        render();
+      }
     };
     try {
       const r = fn();
@@ -66,7 +80,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       onError(err);
     }
   };
-  const setPrefs = (patch) => act(() => controller.updatePrefs(patch));
+  const setPrefs = (patch) => act(() => controller.updatePrefs(patch), { visible: true });
   const offset = () => controller.getState().view?.displayOffsetMs ?? 0;
 
   // ———— التتبّع والاستئناف ————
@@ -201,7 +215,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
           render();
           throw err;
         }
-      });
+      }, { visible: true });
     },
     undo() {
       // الرسالة تبقى حتى يُحفظ الإظهار (صدى التخزين أو نهاية الحفظ)، فلا تختفي اللوحة لحظةً بينهما (مراجعة الهوية L3).
@@ -257,6 +271,10 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       saveStep(ms);
     },
     retry: () => act(() => controller.reload?.()),
+    dismissError() {
+      actionError = null;
+      render();
+    },
     seek(ms) {
       seekMainVideo(ms, doc);
       syncPlayback();
@@ -277,6 +295,8 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       const nav = nav$.state();
       const fullscreen = isPlayerFullscreen(doc);
       const model = derive(s, { videoId: nav.videoId, navigating: nav.navigating, visible: nav.videoId !== null && !fullscreen }, { toast: !!toast });
+      // ما قيل عن فعل في لوحة مفتوحة لا يبقى إلى فتح لاحق.
+      if (model.mode !== 'open') actionError = null;
       // رسالة التراجع تُغلق إن عاد الزر من مكان آخر (نافذة الأيقونة أو الإعدادات) بعد أن رُصد مخفيًا.
       if (toast) {
         if (prefsUi?.panelEntry === false) toast.seen = true;
@@ -292,6 +312,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
         resume: resumeState,
         step,
         toast: !!toast,
+        actionError,
       });
       ready = out.mode === 'open' && out.kind === 'ready';
       // التركيز بين اللوحة وزرها في الشريط: فُتحت بلوحة المفاتيح ← زر الإغلاق؛ وأُغلقت وفيها التركيز ← زرها في الشريط.

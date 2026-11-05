@@ -65,7 +65,7 @@ function createSegs(doc, label, values, pick) {
  *     close: () => void, hide: () => void, undo: () => void, setDual: (v: boolean) => void,
  *     setFollow: (v: boolean) => void, resume: () => void, reset: () => void, nudge: (dir: 1 | -1) => void,
  *     step: (v: string) => void, stepText: (t: string) => void, applyStep: (t: string) => void, retry: () => void,
- *     seek: (ms: number) => void,
+ *     seek: (ms: number) => void, dismissError?: () => void,
  *   },
  * }} deps
  */
@@ -75,7 +75,8 @@ export function createPanelView({ doc, win, on }) {
   const root = host.attachShadow({ mode: 'closed' });
   const sheet = createSheet({ doc, win }, panelCss());
   const styleMode = sheet.adopt(root);
-  const shell = el(doc, 'div', { className: 'root', attrs: { dir: 'rtl', 'data-theme': 'light' } });
+  // واجهة عربية داخل يوتيوب بأي لغة: lang للقارئ الآلي (WCAG 3.1.2؛ تدقيق 7a66f91، U48).
+  const shell = el(doc, 'div', { className: 'root', attrs: { dir: 'rtl', lang: 'ar', 'data-theme': 'light' } });
   root.appendChild(shell);
 
   const transcript = createTranscript({ doc, onSeek: (ms) => on.seek(ms) });
@@ -105,6 +106,14 @@ export function createPanelView({ doc, win, on }) {
     ]),
   ]);
   const menu = el(doc, 'div', { className: 'menu', attrs: { role: 'menu', 'aria-label': LABELS.options, hidden: '' } }, [hideItem]);
+  // إخفاق فعل من أفعال اللوحة (الإغلاق، و«فوق الأصل»، و«إخفاء الزر») يُقال هنا بدل أن يمر صامتًا (تدقيق 7a66f91، U49)، في أي
+  // شكل للّوحة المفتوحة؛ ويزول بالفعل التالي أو بإغلاقه.
+  const actionText = el(doc, 'span');
+  const actionErr = el(doc, 'div', { className: 'act-error', attrs: { role: 'alert', hidden: '' } }, [
+    icon(doc, 'danger', { size: 'sm' }),
+    actionText,
+    el(doc, 'button', { className: 'b b--ghost b--icon', attrs: { type: 'button', 'aria-label': LABELS.dismiss }, on: { click: () => on.dismissError?.() } }, [icon(doc, 'x', { size: 'sm' })]),
+  ]);
 
   // ———— الشريط: الحالة والنص والمتابعة ————
   const statusEl = el(doc, 'div', { className: 'status', attrs: { 'data-fid': 'status' } });
@@ -172,7 +181,7 @@ export function createPanelView({ doc, win, on }) {
   const stepSegs = createSegs(doc, LABELS.stepGroup, ['500', '1000', 'custom'], (v) => on.step(v));
   const stepInput = el(doc, 'input', {
     className: 'num',
-    attrs: { type: 'text', inputmode: 'decimal', autocomplete: 'off', spellcheck: 'false', 'aria-label': LABELS.stepCustomField, hidden: '' },
+    attrs: { type: 'text', inputmode: 'decimal', autocomplete: 'off', spellcheck: 'false', 'aria-label': LABELS.stepCustomField, 'aria-describedby': 'tj-panel-step-error', hidden: '' },
     on: {
       input: (ev) => on.stepText(ev.target.value),
       keydown: (ev) => {
@@ -181,7 +190,7 @@ export function createPanelView({ doc, win, on }) {
       change: (ev) => on.applyStep(ev.target.value),
     },
   });
-  const stepError = el(doc, 'div', { className: 'field-error', attrs: { 'aria-live': 'polite', hidden: '' } });
+  const stepError = el(doc, 'div', { className: 'field-error', attrs: { id: 'tj-panel-step-error', 'aria-live': 'polite', hidden: '' } });
   const foot = el(doc, 'footer', { className: 'foot' }, [
     el(doc, 'div', { className: 'foot__row' }, [
       el(doc, 'span', { className: 'foot__title', text: LABELS.timing }),
@@ -198,7 +207,7 @@ export function createPanelView({ doc, win, on }) {
     stepError,
   ]);
 
-  const panel = el(doc, 'section', { className: 'panel', attrs: { 'aria-label': LABELS.panel } }, [head, menu, bar, body, foot]);
+  const panel = el(doc, 'section', { className: 'panel', attrs: { 'aria-label': LABELS.panel } }, [head, menu, actionErr, bar, body, foot]);
 
   // ———— رسالة التراجع ————
   const undoBtn = el(doc, 'button', { className: 'act', attrs: { type: 'button' }, text: LABELS.undo, on: { click: () => on.undo() } });
@@ -280,10 +289,11 @@ export function createPanelView({ doc, win, on }) {
     const key = parts.join('|');
     if (statusEl.getAttribute('data-key') !== key) {
       statusEl.setAttribute('data-key', key);
-      statusEl.replaceChildren(el(doc, 'span', { className: 'dot' }), ...parts.flatMap((p, i) => [
+      // نص الحالة كله في عنصر واحد يُقص بـ«…»: text-overflow لا يعمل على حاوية flex نفسها (تدقيق 7a66f91، U49، CL-X2).
+      statusEl.replaceChildren(el(doc, 'span', { className: 'dot' }), el(doc, 'span', { className: 'status__text' }, parts.flatMap((p, i) => [
         ...(i ? [el(doc, 'span', { className: 'muted', text: ' · ' })] : []),
         el(doc, 'span', { className: i === parts.length - 1 && i > 0 ? 'muted' : '', text: p }),
-      ]));
+      ])));
     }
     const lang = m.original?.name ?? null;
     segs.update(m.dual ? 'dual' : 'ar', [
@@ -353,7 +363,7 @@ export function createPanelView({ doc, win, on }) {
 
   /**
    * @param {import('./model.js').PanelModel} m
-   * @param {{ follow: boolean, resume: { visible: boolean, label: string }, step: { custom: boolean, text: string | null, error: string | null }, toast: boolean }} l
+   * @param {{ follow: boolean, resume: { visible: boolean, label: string }, step: { custom: boolean, text: string | null, error: string | null }, toast: boolean, actionError?: string | null }} l
    * @returns {{ rebuilt: boolean, relabeled: boolean, becameReady: boolean, mode: string, kind: string | null }}
    */
   function render(m, l) {
@@ -368,6 +378,9 @@ export function createPanelView({ doc, win, on }) {
     setHidden(panel, m.mode !== 'open');
     setHidden(toast, m.mode !== 'toast');
     if (m.mode !== 'open') setMenu(false);
+    const actionError = m.mode === 'open' ? l.actionError ?? null : null;
+    setHidden(actionErr, !actionError);
+    if (actionError) setText(actionText, actionError);
 
     let out = { rebuilt: false, relabeled: false };
     if (m.mode === 'open') {
@@ -381,7 +394,7 @@ export function createPanelView({ doc, win, on }) {
       setHidden(err, m.kind !== 'error');
       setAttr(panel, 'aria-busy', m.kind === 'loading' ? 'true' : null);
       if (readyOpen) {
-        out = transcript.sync({ cues: m.cues, originalCues: m.dual ? m.original.cues : null, offsetMs: m.offsetMs });
+        out = transcript.sync({ cues: m.cues, originalCues: m.dual ? m.original.cues : null, offsetMs: m.offsetMs, originalLang: m.dual ? m.original.lang : null });
         renderBar(m, l);
         renderFoot(m, l);
         setResume(l.resume.visible, l.resume.label);
@@ -453,6 +466,10 @@ export function createPanelView({ doc, win, on }) {
       steps: Array.from(steps.children).map((li) => ({ state: li.className, text: li.textContent })),
       error: err.hasAttribute('hidden') ? null : errText.textContent,
       inlineError: inlineError.hasAttribute('hidden') ? null : inlineText.textContent,
+      actionError: actionErr.hasAttribute('hidden') ? null : actionText.textContent,
+      // للحزام الحي: نقاط Tab في القائمة، ولغة الجذر.
+      tabStops: Array.from(transcript.list.querySelectorAll('.t')).filter((b) => b.getAttribute('tabindex') !== '-1').length,
+      lang: shell.getAttribute('lang'),
       toast: toast.hasAttribute('hidden') ? null : toast.textContent,
       menu: menuOpen,
       boxes: !o.boxes ? undefined : {

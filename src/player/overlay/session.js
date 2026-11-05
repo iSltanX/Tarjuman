@@ -14,6 +14,7 @@ import { createCaptionHider } from './caption-hider.js';
 import { decide } from './decision.js';
 import { layoutFor } from './layout.js';
 import { splitLines } from './text.js';
+import { FADE_MS } from './styles.js';
 import { createOverlayView } from './view.js';
 
 const linesOf = (cue) => (cue ? splitLines(cue.text) : []);
@@ -45,6 +46,8 @@ export function createOverlaySession({ controller, doc, win, player, fonts = nul
   const hider = createCaptionHider({ doc, win });
   const engine = createSyncEngine({
     win,
+    // فجوة أقصر من التلاشي بين مقطعين لا تعطي إطارات فارغة (تدقيق 7a66f91، U49، CL-X1).
+    bridgeMs: FADE_MS,
     onFrame(frame) {
       try {
         view.render({ ar: linesOf(frame.ar), en: linesOf(frame.en) });
@@ -86,6 +89,7 @@ export function createOverlaySession({ controller, doc, win, player, fonts = nul
       engine.setVideo(getMainVideo(doc));
       hider.set(d.hideNative);
       view.setAppearance({ background: d.appearance.background });
+      view.setLang(controller.getState().english?.lang ?? null);
       view.setFont({ ar: subtitleFontStack(d.appearance.font), en: subtitleFontStack('almarai') });
       if (d.engaged && fonts && fontRequested !== d.appearance.font) {
         fontRequested = d.appearance.font;
