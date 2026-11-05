@@ -1,6 +1,6 @@
 # ترجمان — تعليمات وكلاء التدقيق (Codex وGemini)
 
-ترجمان إضافة Chrome وBrave للحاسوب تعمل على يوتيوب: تستخرج الترجمة الإنجليزية إلى SRT، ويترجمها المستخدم بنموذج خارجي، ثم تعرض الملف العربي فوق الفيديو مع ضبط التوقيت والتحرير والحفظ لكل فيديو. **كل المعالجة والحفظ محليان.** الإصدار الثاني (`1.0.0`) موسوم `tj-v2`، ثم دُمجت جولة صقل الواجهات على `main` بعده.
+ترجمان إضافة للحاسوب تعمل على يوتيوب في Chrome وBrave (ومعهما Edge وFirefox على فرع النشر `tj/store-release`): تستخرج الترجمة الإنجليزية إلى SRT، ويترجمها المستخدم بنموذج خارجي، ثم تعرض الملف العربي فوق الفيديو مع ضبط التوقيت والتحرير والحفظ لكل فيديو. **كل المعالجة والحفظ محليان.** الإصدار الثاني (`1.0.0`) موسوم `tj-v2`، ثم دُمجت بعده جولات الواجهات والهوية على `main`. وجولة النشر للمتاجر على الفرع `tj/store-release` بالإصدار `1.1.0` (`docs/store-release.md` فيه)، وفيه خطة إصلاح تدقيق `7a66f91` منجزة كلها (C1–C9)، ولم يُرفع شيء إلى متجر.
 
 ## المهمة: تدقيق قراءة فقط
 
@@ -14,7 +14,8 @@
 1. [`CLAUDE.md`](CLAUDE.md): الحالة والقواعد الثابتة.
 2. [`docs/delivery/runbook.md`](docs/delivery/runbook.md): الأدوار والفحوص.
 3. [`docs/product-spec.md`](docs/product-spec.md): النطاق والقرارات، والعقود في [`docs/contracts/`](docs/contracts/).
-4. [`docs/ui-polish.md`](docs/ui-polish.md) و[`docs/ui-redesign.md`](docs/ui-redesign.md): الواجهات بعد الإصدار الأول.
+4. [`docs/ui-polish.md`](docs/ui-polish.md) و[`docs/ui-redesign.md`](docs/ui-redesign.md) و[`docs/identity-v3.md`](docs/identity-v3.md): الواجهات بعد الإصدار الأول.
+   وعلى فرع النشر `tj/store-release` وحده: `docs/store-release.md` و`store/README.md`، وخطة إصلاح تدقيق `7a66f91` في `docs/audit-7a66f91/`.
 5. [`docs/known-limitations.md`](docs/known-limitations.md) والملاحظات المسجّلة في [`docs/waves/W8.md`](docs/waves/W8.md): معروفة، فلا تُبلَّغ خللًا جديدًا إلا بدليل يتجاوزها.
 
 ## الفحوص المحلية (بلا شبكة ولا متصفح)
