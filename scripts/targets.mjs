@@ -13,10 +13,12 @@ export const DEFAULT_OUT = Object.freeze({ chromium: 'dist', firefox: 'dist-fire
  * وصور المحفوظات تنقل معرّفات المحفوظات إلى i.ytimg.com (حكم T5 بتعريفات Mozilla، docs/site/README.md)، فتُعلن
  * browsingActivity اختيارية، ويطلبها مفتاح الصور عند تفعيله، والصور مطفأة حتى الموافقة (قرار سلطان 2026-11-04،
  * src/core/consent/thumbnails.js). فيبقى none صادقًا: لا يُجمع شيء دون موافقة.
+ * والحد الأدنى 144 (تدقيق 7a66f91، U03 وU83، قرار سلطان Q08 في 2026-11-05): storage.local.getBytesInUse منذ 144 وgetKeys منذ 143،
+ * و140–143 متقاعدة (ESR 140 انتهى دعمه في 2026-09-29). ويقابله minimum_chrome_version ‏130 في البيان (getKeys، قرار Q09).
  */
 export const GECKO = Object.freeze({
   id: 'tarjuman@bysltan.com',
-  strict_min_version: '140.0',
+  strict_min_version: '144.0',
   data_collection_permissions: Object.freeze({ required: Object.freeze(['none']), optional: Object.freeze(['technicalAndInteraction', 'browsingActivity']) }),
 });
 

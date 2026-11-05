@@ -27,7 +27,8 @@ export function chromeLocalArea(api = globalThis.chrome) {
     set: (items) => local.set(items),
     remove: (keys) => local.remove(keys),
     clear: () => local.clear(),
-    // getKeys منذ Chrome 130؛ وإلا تُقرأ القيم كلها ويُكتفى بمفاتيحها.
+    // getKeys منذ Chrome وEdge ‏130 وFirefox ‏143، والحدان الأدنيان 130 و144 (تدقيق 7a66f91، U83)؛ فالبديل (قراءة القيم كلها
+    // والاكتفاء بمفاتيحها) لا يُبلغ في إصدار يقبله البيان، ويبقى احتياطًا.
     getKeys: async () => (typeof local.getKeys === 'function' ? local.getKeys() : Object.keys(await local.get(null))),
     getBytesInUse: (keys) => local.getBytesInUse(keys),
     onChanged(fn) {

@@ -62,7 +62,8 @@ await build({
   absWorkingDir: ROOT,
   bundle: true,
   format: 'iife',
-  target: 'chrome111',
+  // الحدان الأدنيان في البيان (تدقيق 7a66f91، قرارا سلطان Q08 وQ09): Chrome وEdge وBrave ‏130، وFirefox ‏144.
+  target: ['chrome130', 'firefox144'],
   charset: 'utf8',
   legalComments: 'none',
   logLevel: 'warning',

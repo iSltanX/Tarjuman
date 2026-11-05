@@ -4,7 +4,7 @@
   "short_name": "ترجمان",
   "version": "1.1.0",
   "description": "يستخرج ترجمة يوتيوب الإنجليزية إلى SRT، ويعرض ترجمتك العربية فوق الفيديو بضبط التوقيت والتحرير. كل المعالجة والحفظ محليان.",
-  "minimum_chrome_version": "111",
+  "minimum_chrome_version": "130",
   "icons": {
     "16": "icons/tarjuman-icon-16.png",
     "32": "icons/tarjuman-icon-32.png",

@@ -27,7 +27,7 @@ export const WORKER = 'background/worker.js';
 const BACKGROUND = { chromium: { service_worker: WORKER }, firefox: { scripts: [WORKER] } };
 /** إعدادات Gecko المعتمدة (store/README.md §٥)، حرفية هنا لا مأخوذة من طبقة البناء؛ وفئتا البلاغ (T2.1) وصور المحفوظات (2026-11-04) الاختياريتان. */
 const GECKO_SETTINGS = {
-  gecko: { id: 'tarjuman@bysltan.com', strict_min_version: '140.0', data_collection_permissions: { required: ['none'], optional: ['technicalAndInteraction', 'browsingActivity'] } },
+  gecko: { id: 'tarjuman@bysltan.com', strict_min_version: '144.0', data_collection_permissions: { required: ['none'], optional: ['technicalAndInteraction', 'browsingActivity'] } },
 };
 /** قناة البلاغات (جولة النشر T2.1): إذن مضيف اختياري لخادمها وحده، والطلب والمضيف في حزمة صفحة الإعدادات وحدها. */
 const REPORTS_ORIGIN = 'https://app-reports.isultantf.workers.dev';
