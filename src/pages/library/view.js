@@ -50,6 +50,7 @@ let seq = 0;
  *   confirm?: typeof confirmDialog,
  *   nav?: { get: () => string, set: (hash: string) => void },
  *   setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void,
+ *   thumbsConsent?: () => Promise<boolean>, thumbsConsentWatch?: (fn: (e: { revoked: boolean }) => void) => () => void,
  * }} LibraryEnv
  */
 
@@ -73,8 +74,11 @@ export function createLibrary(env) {
   const { store, doc = document, now = Date.now } = env;
   const setTimer = env.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
   const clearTimer = env.clearTimer ?? ((id) => clearTimeout(id));
-  // موافقة صور المحفوظات (Firefox وحده، core/consent/thumbnails.js): تُقرأ عند التحميل ومع كل تغيّر للتفضيلات، وفي Chromium «نعم».
-  const thumbsCheck = () => Promise.resolve().then(() => (env.thumbsConsent ? env.thumbsConsent() : true)).then((g) => g === true, () => false);
+  // موافقة صور المحفوظات (Firefox وحده، core/consent/thumbnails.js)، وفي Chromium «نعم» بلا مدخل. سحبها من صفحة إضافات Firefox
+  // لا يكتب في التخزين (تدقيق 7a66f91، U01)، فتُقرأ عند التحميل، ومع تغيّر التفضيلات، ومع أحداث الأذونات، وعند ظهور الصفحة، وقبل
+  // إسناد عنوان كل صورة (gate في thumb.js). وكل قراءة بجيل: الأقدم من آخر قراءة بدأت لا يُطبَّق، بل يتبع الأحدث.
+  const consentNeeded = typeof env.thumbsConsent === 'function';
+  const thumbsCheck = () => Promise.resolve().then(() => (consentNeeded ? env.thumbsConsent() : true)).then((g) => g === true, () => false);
   const confirm = env.confirm ?? confirmDialog;
   const nav = env.nav ?? hashNav(doc);
   const toaster = createToaster({ doc, setTimer, clearTimer });
@@ -107,6 +111,11 @@ export function createLibrary(env) {
   let loadSeq = 0;
   let reloadTimer = null;
   let disposed = false;
+  let consentGen = 0;
+  /** @type {Promise<boolean>} */
+  let consentLatest = Promise.resolve(false);
+  /** @type {Promise<boolean> | null} قراءة جارية تشترك فيها الصور (قراءة واحدة لكل دفعة صفوف لا لكل صف). */
+  let consentShared = null;
 
   const remember = () => nav.set(serializePageState(state));
 
@@ -375,6 +384,40 @@ export function createLibrary(env) {
     visibility.observe(node);
   }
 
+  // ---- موافقة الصور ----
+  const thumbsOn = () => thumbnailsShown(state.prefs.ui.thumbnails, state.thumbsGranted);
+  const applyThumbs = () => { for (const t of thumbs) t.setEnabled(thumbsOn()); };
+  /** قراءة الموافقة الآن: آخر قراءة بدأت هي الحاكمة، فتُطبَّق على الحالة والصور الحالية، والأقدم تعيد نتيجتها. */
+  function readConsent() {
+    const gen = ++consentGen;
+    const p = thumbsCheck().then((g) => {
+      if (gen !== consentGen) return consentLatest;
+      if (!disposed && state.thumbsGranted !== g) {
+        state.thumbsGranted = g;
+        applyThumbs();
+      }
+      return g;
+    });
+    consentLatest = p;
+    return p;
+  }
+  /** بوابة الصورة قبل إسناد عنوانها: قراءة مشتركة جارية أو جديدة، والموافقة والمفتاح معًا. */
+  const thumbGate = () => {
+    if (!consentShared) consentShared = readConsent().finally(() => { consentShared = null; });
+    return consentShared.then(() => !disposed && thumbsOn());
+  };
+  /** سحبٌ من صفحة الإضافات: الصور تُطفأ في الحال، والقراءات الجارية قبله تُسقط، ثم قراءة تؤكد. */
+  function onConsentEvent({ revoked }) {
+    if (disposed) return;
+    if (revoked) {
+      consentGen++;
+      consentLatest = Promise.resolve(false);
+      state.thumbsGranted = false;
+      applyThumbs();
+    }
+    readConsent();
+  }
+
   // ---- الصف ----
   /**
    * شريحة خانة موجودة: الرقم والاسم المختصر، والنشطة بالإبراز ومعيّن وaria-pressed؛ والضغط على غير النشطة يفعّلها. زر تبديل في
@@ -459,9 +502,12 @@ export function createLibrary(env) {
 
     // الصورة والمدة.
     const cached = durations.get(`${entry.videoId}|${entry.rev}`);
-    const thumb = thumbnail({ doc, videoId: entry.videoId, enabled: thumbnailsShown(state.prefs.ui.thumbnails, state.thumbsGranted), durationMs: cached ?? null });
+    const thumb = thumbnail({ doc, videoId: entry.videoId, enabled: thumbsOn(), durationMs: cached ?? null, gate: consentNeeded ? thumbGate : null });
     thumbs.add(thumb);
-    whenVisible(thumb.root, () => wantDuration(entry, thumb));
+    whenVisible(thumb.root, () => {
+      thumb.arm();
+      wantDuration(entry, thumb);
+    });
 
     // الشارة الوحيدة.
     const st = m.status;
@@ -658,7 +704,7 @@ export function createLibrary(env) {
       const retry = button({ label: 'إعادة المحاولة', icon: 'restore', variant: 'secondary', size: 'sm', doc, onClick: () => { state.status = 'loading'; render(); load(); } });
       listHost.append(statePanel(emptyState({
         icon: 'danger', title: 'تعذّرت قراءة المحفوظات',
-        text: `لم يُحذف شيء. أعد المحاولة، وإن تكرر فانسخ تقرير التشخيص. ${state.error?.message ?? messageFor('PG_LIST_FAILED')} (${state.error?.code ?? 'ST_READ_FAILED'})`,
+        text: `${state.error?.message ?? messageFor('PG_LIST_FAILED')} (${state.error?.code ?? 'ST_READ_FAILED'})`,
         action: el('div', { className: 'lib-state__actions', children: [retry, copyDiag], doc }), doc,
       }), 'error'));
       return;
@@ -719,7 +765,8 @@ export function createLibrary(env) {
   async function load() {
     const mine = ++loadSeq;
     try {
-      const [items, capacity, prefs, thumbsGranted] = await Promise.all([store.listLibrary(), store.capacity(), store.getPrefs().catch(() => PREFS_UNREADABLE), thumbsCheck()]);
+      // السعة معلومة جانبية: فشل قياسها (getBytesInUse غائبة أو رفض عابر، تدقيق 7a66f91 U03) يخفي سطرها ولا يُسقط القائمة.
+      const [items, capacity, prefs, thumbsGranted] = await Promise.all([store.listLibrary(), store.capacity().catch(() => null), store.getPrefs().catch(() => PREFS_UNREADABLE), readConsent()]);
       if (mine !== loadSeq) return;
       Object.assign(state, { entries: libraryEntries(items), capacity, prefs, thumbsGranted, status: 'ready', error: null });
     } catch (err) {
@@ -734,10 +781,9 @@ export function createLibrary(env) {
     // التفضيلات: القاموس يُقرأ عند ضغطة النسخ، و«صور الفيديو» تُطبَّق على الصور الحالية دون إعادة بناء القائمة.
     if (change.prefs) {
       // والموافقة تُقرأ معها (Firefox): تفعيل المفتاح من الإعدادات يمنحها ثم يكتب التفضيل.
-      Promise.all([store.getPrefs(), thumbsCheck()]).then(([p, granted]) => {
+      Promise.all([store.getPrefs(), readConsent()]).then(([p]) => {
         state.prefs = p;
-        state.thumbsGranted = granted;
-        for (const t of thumbs) t.setEnabled(thumbnailsShown(p.ui.thumbnails, granted));
+        applyThumbs();
       }).catch(() => {});
     }
     // تغيّر الإعدادات من صفحة أخرى لا يمسّ القائمة: إعادة بنائها تهدم التركيز والقائمة المفتوحة.
@@ -749,8 +795,17 @@ export function createLibrary(env) {
     }, 200);
   });
 
-  const onVisible = () => { if (doc.visibilityState === 'visible' && state.focusId && state.status === 'ready') render(); };
+  const onVisible = () => {
+    if (doc.visibilityState === 'hidden') return;
+    // العودة من صفحة إضافات Firefox بعد سحب الموافقة: تُعاد القراءة قبل أي تمرير (U01).
+    if (consentNeeded) readConsent();
+    if (state.focusId && state.status === 'ready') render();
+  };
   doc.addEventListener?.('visibilitychange', onVisible);
+  const win = doc.defaultView ?? null;
+  const onPageShow = () => { if (consentNeeded) readConsent(); };
+  win?.addEventListener?.('pageshow', onPageShow);
+  const unwatchConsent = consentNeeded && typeof env.thumbsConsentWatch === 'function' ? env.thumbsConsentWatch(onConsentEvent) : () => {};
 
   render();
 
@@ -759,7 +814,9 @@ export function createLibrary(env) {
     dispose() {
       disposed = true;
       unsubscribe();
+      unwatchConsent();
       doc.removeEventListener?.('visibilitychange', onVisible);
+      win?.removeEventListener?.('pageshow', onPageShow);
       if (reloadTimer !== null) clearTimer(reloadTimer);
       visibility?.disconnect();
       for (const c of copyStates) c.dispose();

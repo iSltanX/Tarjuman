@@ -33,16 +33,19 @@ export function formatDuration(ms) {
 export const thumbUrl = (videoId) => (isVideoId(videoId) ? `${THUMB_BASE}${videoId}/${THUMB_FILE}` : null);
 
 /**
- * @param {{ doc?: Document, videoId: string, enabled: boolean, durationMs?: number | null }} o
+ * gate (Firefox، تدقيق 7a66f91 U01): موافقة تُقرأ لحظة إسناد العنوان. بها لا يُسند `src` إلا بعد arm() (حين يقترب الصف من
+ * الشاشة) ثم «نعم» من gate؛ و«لا» أو الفشل بلاطة حتى setEnabled(true) لاحقًا. وبلا gate (Chromium) يُسند فورًا كما كان.
+ * @param {{ doc?: Document, videoId: string, enabled: boolean, durationMs?: number | null, gate?: (() => Promise<boolean>) | null }} o
  * @returns {{
- *   root: HTMLElement, setEnabled: (on: boolean) => void, setDuration: (ms: number | null | undefined) => void,
+ *   root: HTMLElement, setEnabled: (on: boolean) => void, setDuration: (ms: number | null | undefined) => void, arm: () => void,
  *   state: () => 'image' | 'fallback', hasImage: () => boolean
  * }}
  */
-export function thumbnail({ doc = document, videoId, enabled, durationMs = null }) {
+export function thumbnail({ doc = document, videoId, enabled, durationMs = null, gate = null }) {
   const root = el('div', { className: 'lib-thumb', attrs: { 'data-state': 'fallback' }, doc });
   let on = Boolean(enabled);
   let failed = false;
+  let armed = !gate;
   let duration = durationMs;
   let media = null;
   let img = null;
@@ -59,6 +62,24 @@ export function thumbnail({ doc = document, videoId, enabled, durationMs = null 
     paint();
   }
 
+  /** يسند العنوان: فورًا بلا gate، ومعها بعد «نعم» لهذه العقدة نفسها ما دامت معروضة؛ وإلا تعود البلاطة. */
+  function source(node, url) {
+    if (!gate) {
+      node.setAttribute('src', url);
+      return;
+    }
+    const refuse = () => {
+      if (media !== node) return;
+      on = false;
+      paint();
+    };
+    Promise.resolve().then(gate).then((ok) => {
+      if (media !== node) return;
+      if (ok === true) node.setAttribute('src', url);
+      else refuse();
+    }, refuse);
+  }
+
   function paint() {
     const url = on && !failed ? thumbUrl(videoId) : null;
     img = null;
@@ -68,9 +89,9 @@ export function thumbnail({ doc = document, videoId, enabled, durationMs = null 
       node.addEventListener('load', () => {
         if (!(node.naturalWidth > PLACEHOLDER_MAX_WIDTH)) giveUp(node);
       });
-      node.setAttribute('src', url);
       img = node;
       media = node;
+      if (armed) source(node, url);
     } else {
       media = el('span', { className: 'lib-thumb__fallback', children: [icon('video', { doc })], doc });
     }
@@ -95,6 +116,12 @@ export function thumbnail({ doc = document, videoId, enabled, durationMs = null 
       durNode?.remove();
       durNode = durationNode();
       if (durNode) root.append(durNode);
+    },
+    /** الصف اقترب من الشاشة: يُسند عنوان الصورة المعلّقة (مع gate وحدها). */
+    arm() {
+      if (armed) return;
+      armed = true;
+      if (img && !img.hasAttribute('src')) source(img, thumbUrl(videoId));
     },
     state: () => (img ? 'image' : 'fallback'),
     hasImage: () => img !== null,

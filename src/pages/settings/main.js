@@ -1,7 +1,7 @@
 // الإعدادات (P7 ثم P13): تركيب الصفحة في المتصفح وحده: التخزين الحقيقي والحافظة بضغطة المستخدم وإصدار البيان، والحفظ
 // عبر saveFile (يتبع مكان الحفظ المختار)، والمكان الفعلي لآخر ملف من سجل المتصفح وحده، ومنتقي ملف النسخة الاحتياطية.
 // المنطق كله في view.js وmodel.js وdata.js وglossary.js وlocation.js وdiagnostics.js. خطوط المعاينة من ملفات الإضافة.
-import { buildTarget, needsConsent, requestThumbnailsConsent, thumbnailsConsent } from '../../core/consent/thumbnails.js';
+import { buildTarget, needsConsent, requestThumbnailsConsent, thumbnailsConsent, watchThumbnailsConsent } from '../../core/consent/thumbnails.js';
 import { saveFile, savedPath } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { extensionVersion, startPage } from '../../ui/page.js';
@@ -40,6 +40,7 @@ startPage({
         needed: needsConsent(target),
         check: () => thumbnailsConsent(chrome, target),
         request: () => requestThumbnailsConsent(chrome, target),
+        watch: (fn) => watchThumbnailsConsent(chrome, target, fn),
       },
     });
     app.append(settings.root);

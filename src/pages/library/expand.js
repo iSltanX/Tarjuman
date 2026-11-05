@@ -316,7 +316,8 @@ export function createExpansion(env) {
     let bytes = null;
     try {
       b = await store.getBundle(videoId);
-      bytes = b?.previous ? (await store.bundleBytes(videoId)).previous : null;
+      // الحجم تفصيل في سطر النسخة السابقة: فشل قياسه (تدقيق 7a66f91، U03) يحذفه وحده ولا يُسقط البطاقات وأزرارها.
+      bytes = b?.previous ? await store.bundleBytes(videoId).then((x) => x.previous, () => null) : null;
     } catch (err) {
       paint([alertBox({ tone: 'danger', text: toErrorInfo(err).message, doc })]);
       return;

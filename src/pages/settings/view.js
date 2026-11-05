@@ -29,6 +29,9 @@ export const PREVIEW_NOTE = 'الحجم نسبة من ارتفاع المشغّ�
 export const INSTALL_REMINDER = 'ثبّت أيقونة ترجمان في شريط المتصفح من قائمة الإضافات.';
 export const SAVE_HINT = 'كل خيار يُحفظ فورًا على جهازك.';
 export const RESET_LABEL = 'استعادة الافتراضي';
+/** تعذّر قياس المساحة أو الأحجام وحده (تدقيق 7a66f91، U03): المحفوظات سليمة، فلا «تعذّرت قراءة المحفوظات» ولا «لم يُحذف شيء». */
+export const CAPACITY_UNAVAILABLE = 'قياس المساحة المستخدمة غير متاح الآن.';
+export const SIZES_UNAVAILABLE = 'أحجام الترجمات غير النشطة والنسخ السابقة غير متاحة الآن.';
 /** مفاتيح الواجهة على هذا الجهاز في «العرض» (prefs.ui). اللوحة مغلقة افتراضيًا (قرار سلطان 2026-11-03)، وزرها في شريط المشغّل. */
 export const ENTRY_SWITCH = Object.freeze({
   label: 'زر النص المتزامن', hint: 'في شريط المشغّل', text: 'يظهر في صفحات الفيديو',
@@ -66,6 +69,7 @@ const POSITION_LABELS = Object.freeze({ bottom: 'أسفل', raised: 'مرتفع'
  *   nav?: { get: () => string | null, set: (id: string) => void, onChange: (fn: () => void) => () => void },
  *   report?: import('./report.js').ReportEnv,
  *   setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void,
+ *   thumbsConsent?: { needed: boolean, check: () => Promise<boolean>, request: () => Promise<boolean>, watch?: (fn: (e: { revoked: boolean }) => void) => () => void },
  * }} SettingsEnv
  */
 
@@ -102,6 +106,20 @@ export function createSettings(env) {
   // موافقة صور المحفوظات (Firefox وحده؛ core/consent/thumbnails.js): الصور تظهر بالمفتاح والموافقة معًا، وفي Chromium بالمفتاح.
   const thumbsConsent = env.thumbsConsent ?? { needed: false, check: () => Promise.resolve(true), request: () => Promise.resolve(true) };
   let thumbsGranted = !thumbsConsent.needed;
+  // سحب الموافقة من صفحة إضافات Firefox لا يكتب في التخزين (تدقيق 7a66f91، U02)، فتُعاد قراءتها مع تغيّر التفضيلات، ومع أحداث
+  // الأذونات، وعند ظهور الصفحة؛ وآخر قراءة بدأت هي الحاكمة.
+  let consentGen = 0;
+  function readConsent() {
+    if (!thumbsConsent.needed) return Promise.resolve(thumbsGranted);
+    const gen = ++consentGen;
+    return thumbsConsent.check().then((g) => g === true, () => false).then((g) => {
+      if (gen === consentGen && g !== thumbsGranted) {
+        thumbsGranted = g;
+        syncAll();
+      }
+      return thumbsGranted;
+    });
+  }
   let stepCustom = false;
   /** مؤشر إلى ما يحدّث الواجهة من الإعدادات (يُملأ أدناه). */
   const sync = [];
@@ -170,6 +188,7 @@ export function createSettings(env) {
       // تفعيل الصور في Firefox: طلب الموافقة أول ما في الضغطة (قبل أي انتظار)، والممنوحة تعود بلا سؤال؛ والرفض يبقيها مطفأة.
       if (key === 'thumbnails' && thumbsConsent.needed && input.checked) {
         thumbsConsent.request().then((granted) => {
+          consentGen++;
           thumbsGranted = granted === true;
           if (!thumbsGranted) {
             input.checked = false;
@@ -478,8 +497,11 @@ export function createSettings(env) {
         meter.className = `tj-meter tj-meter--${cap.level}`;
       }
       capacityAlert.replaceChildren(...(cap.code ? [alertBox({ tone: cap.level === 'full' ? 'danger' : 'warning', text: messageFor(cap.code), doc })] : []));
-    } catch (err) {
-      usageText.textContent = toErrorInfo(err).message;
+    } catch {
+      // قياس المساحة وحده تعذّر (getBytesInUse غائبة أو رفض عابر، تدقيق 7a66f91 U03): المحفوظات نفسها سليمة.
+      usageText.textContent = CAPACITY_UNAVAILABLE;
+      meter.hidden = true;
+      capacityAlert.replaceChildren();
     }
   }
   const clearBtn = button({ label: 'مسح كل البيانات', variant: 'danger', icon: 'trash', doc, onClick: () => { clearAll(); } });
@@ -530,12 +552,17 @@ export function createSettings(env) {
       if (mine !== usageSeq) return;
       libraryText.textContent = translations ? `الترجمات المحفوظة: ${translations} · الفيديوهات المترجمة: ${videos}` : 'لا ترجمات محفوظة بعد.';
       libraryBytes.textContent = '';
-      // الأحجام معًا لا واحدًا بعد آخر (GM-009): رحلة لكل فيديو بالتوازي بدل أربع متتالية.
-      const sizes = await Promise.all(list.map((x) => store.bundleBytes(x.entry.videoId)));
+      if (!list.length) return;
+      // الأحجام معًا لا واحدًا بعد آخر (GM-009): رحلة لكل فيديو بالتوازي بدل أربع متتالية. وفشل قياسها لا يمحو الأعداد (U03).
+      const sizes = await Promise.all(list.map((x) => store.bundleBytes(x.entry.videoId))).catch(() => null);
+      if (mine !== usageSeq) return;
+      if (!sizes) {
+        libraryBytes.textContent = SIZES_UNAVAILABLE;
+        return;
+      }
       const alts = sizes.reduce((s, b) => s + b.alts, 0);
       const previous = sizes.reduce((s, b) => s + b.previous, 0);
-      if (mine !== usageSeq) return;
-      libraryBytes.textContent = list.length ? `الترجمات غير النشطة ${formatBytes(alts)} · النسخ السابقة ${formatBytes(previous)}` : '';
+      libraryBytes.textContent = `الترجمات غير النشطة ${formatBytes(alts)} · النسخ السابقة ${formatBytes(previous)}`;
     } catch (err) {
       if (mine === usageSeq) libraryText.textContent = toErrorInfo(err).message;
     }
@@ -652,7 +679,9 @@ export function createSettings(env) {
   const later = doc.defaultView?.setTimeout?.bind(doc.defaultView) ?? setTimeout;
   const unsubscribe = store.onChange((change) => {
     if (change.settings || change.cleared) store.getSettings().then((s) => { settings = s; syncAll(); }).catch(() => {});
-    if (change.prefs || change.cleared) store.getPrefs().then((p) => { prefs = p; syncAll(); location.refreshLast(); }).catch(() => {});
+    if (change.prefs || change.cleared) {
+      Promise.all([store.getPrefs(), readConsent()]).then(([p]) => { prefs = p; syncAll(); location.refreshLast(); }).catch(() => {});
+    }
     if ((Object.keys(change.videos ?? {}).length || change.index || change.bundles?.length || change.cleared) && usageTimer === null) {
       usageTimer = later(() => {
         usageTimer = null;
@@ -661,6 +690,23 @@ export function createSettings(env) {
     }
   });
 
+  const onVisible = () => { if (doc.visibilityState !== 'hidden') readConsent(); };
+  doc.addEventListener?.('visibilitychange', onVisible);
+  const win = doc.defaultView ?? null;
+  win?.addEventListener?.('pageshow', onVisible);
+  const unwatchConsent = thumbsConsent.needed && typeof thumbsConsent.watch === 'function'
+    ? thumbsConsent.watch(({ revoked }) => {
+      if (revoked) {
+        consentGen++;
+        if (thumbsGranted) {
+          thumbsGranted = false;
+          syncAll();
+        }
+      }
+      readConsent();
+    })
+    : () => {};
+
   return {
     root, preview, slider, select, data, location, glossary,
     get active() { return active; },
@@ -668,7 +714,7 @@ export function createSettings(env) {
     get prefs() { return prefs; },
     async load() {
       try {
-        [settings, prefs, thumbsGranted] = await Promise.all([store.getSettings(), store.getPrefs(), thumbsConsent.check().then((g) => g === true, () => false)]);
+        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent()]);
         syncAll();
       } catch (err) {
         const info = toErrorInfo(err);
@@ -679,6 +725,9 @@ export function createSettings(env) {
     dispose() {
       unsubscribe();
       offNav();
+      unwatchConsent();
+      doc.removeEventListener?.('visibilitychange', onVisible);
+      win?.removeEventListener?.('pageshow', onVisible);
     },
   };
 }

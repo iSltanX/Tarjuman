@@ -195,7 +195,9 @@ test('الخطأ: تنبيه بالرمز وزر «نسخ تقرير التشخ�
   assert.ok(alert);
   assert.equal(alert.getAttribute('role'), 'alert');
   assert.match(textOf(alert), /تعذّرت قراءة المحفوظات/);
-  assert.match(textOf(alert), /لم يُحذف شيء/);
+  // تدقيق 7a66f91 (U03، CLA-L-5): لا «لم يُحذف شيء» في فشل قراءة لا حذف فيه، ولا تكرار لجملة الرسالة.
+  assert.equal(textOf(alert).includes('لم يُحذف شيء'), false);
+  assert.equal(textOf(alert).split('أعد تحميل الصفحة').length, 2, 'الرسالة مرة واحدة');
   assert.match(textOf(alert), /ST_READ_FAILED/);
   buttonNamed(alert, 'نسخ تقرير التشخيص').click();
   await settle();

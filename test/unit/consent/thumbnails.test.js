@@ -3,7 +3,7 @@
 // والصور تظهر بالمفتاح والموافقة معًا.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { THUMBS_DATA, buildTarget, needsConsent, requestThumbnailsConsent, thumbnailsConsent, thumbnailsShown } from '../../../src/core/consent/thumbnails.js';
+import { THUMBS_DATA, buildTarget, needsConsent, requestThumbnailsConsent, thumbnailsConsent, thumbnailsShown, watchThumbnailsConsent } from '../../../src/core/consent/thumbnails.js';
 
 const api = ({ granted = [], answer = true, throwOn = null } = {}) => {
   const calls = [];
@@ -54,4 +54,29 @@ test('الصور تظهر بالمفتاح والموافقة معًا', () => {
   assert.equal(thumbnailsShown(true, false), false);
   assert.equal(thumbnailsShown(false, true), false);
   assert.equal(thumbnailsShown(undefined, true), false);
+});
+
+test('تدقيق 7a66f91 (U01): المراقبة في Firefox بحدثي onRemoved وonAdded، وrevoked للسحب الذي يذكر browsingActivity وحده', () => {
+  const sets = { added: new Set(), removed: new Set() };
+  const ev = (set) => ({ addListener: (fn) => set.add(fn), removeListener: (fn) => set.delete(fn) });
+  const a = { permissions: { onAdded: ev(sets.added), onRemoved: ev(sets.removed) } };
+  const seen = [];
+  const off = watchThumbnailsConsent(a, 'firefox', (e) => seen.push(e));
+  for (const fn of sets.removed) fn({ data_collection: ['browsingActivity'] });
+  for (const fn of sets.removed) fn({ origins: ['https://example.com/*'] });
+  for (const fn of sets.removed) fn({ data_collection: ['technicalAndInteraction'] });
+  for (const fn of sets.added) fn({ data_collection: ['browsingActivity'] });
+  assert.deepEqual(seen, [{ revoked: true }, { revoked: false }, { revoked: false }, { revoked: false }]);
+  off();
+  assert.equal(sets.added.size + sets.removed.size, 0, 'الإلغاء يزيل المستمعين');
+  off();
+});
+
+test('تدقيق 7a66f91 (U01): Chromium وغياب الحدثين أو رميهما: لا اشتراك ولا رمي', () => {
+  const a = { permissions: { onAdded: { addListener: () => { throw new Error('x'); } } } };
+  assert.doesNotThrow(() => watchThumbnailsConsent(a, 'firefox', () => {})());
+  assert.doesNotThrow(() => watchThumbnailsConsent({}, 'firefox', () => {})());
+  let subscribed = false;
+  watchThumbnailsConsent({ permissions: { onRemoved: { addListener: () => { subscribed = true; } } } }, 'chromium', () => {});
+  assert.equal(subscribed, false);
 });

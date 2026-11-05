@@ -168,7 +168,9 @@ test('Firefox: رفض الموافقة يبقي المفتاح مطفأً برس
   toggle(sw(m2, 'ui.thumbnails'), false);
   await settle();
   assert.equal((await m2.store.getPrefs()).ui.thumbnails, false);
-  assert.deepEqual(on.state.calls, ['check'], 'الإطفاء لا يطلب شيئًا');
+  // الإطفاء لا يطلب موافقة؛ وتغيّر التفضيلات يعيد قراءتها فقط (تدقيق 7a66f91، U02).
+  assert.equal(on.state.calls.includes('request'), false, 'الإطفاء لا يطلب شيئًا');
+  assert.ok(on.state.calls.every((c) => c === 'check'));
 });
 
 test('فشل الكتابة: رسالة الخطأ بجانب المفتاح ويعود إلى المحفوظ فلا يناقض التخزين', async () => {
