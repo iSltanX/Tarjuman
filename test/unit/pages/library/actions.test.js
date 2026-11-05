@@ -35,7 +35,7 @@ test('تصدير العربية: إزاحة صفر ← المحفوظ دون س�
   const { store } = await seeded();
   const { files, save } = sink();
   const r = await exportArabic({ store, videoId: ID, variant: 'current', askTiming: noAsk, save });
-  assert.deepEqual(r, { name: `${ID}.ar.srt`, timing: 'saved', cueCount: 5, saved: { ok: true, mode: 'downloads', downloadId: 1 } });
+  assert.deepEqual(r, { name: `${ID}.ar.srt`, timing: 'saved', cueCount: 5, saved: { ok: true, mode: 'downloads', downloadId: 1 }, notes: [] });
   assert.equal(files.length, 1);
   const back = parseSrtStrict(files[0].text);
   assert.deepEqual(back.map(({ startMs, endMs, text }) => ({ startMs, endMs, text })), makeCues(5).map(({ startMs, endMs, text }) => ({ startMs, endMs, text })));

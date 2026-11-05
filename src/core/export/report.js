@@ -23,6 +23,7 @@ export const PROBLEM_LABELS = Object.freeze({
   ED_GAP: 'فجوة كبيرة بعده',
   ED_TEXT_EMPTY: 'بلا نص',
   ED_TEXT_BLANK_LINE: 'سطر فارغ في النص',
+  ED_TEXT_BREAKS_SRT: 'سطر يُقرأ رأسَ مقطع',
   ED_READING_FAST: 'قراءة سريعة',
   ED_LINE_LONG: 'سطر طويل',
 });

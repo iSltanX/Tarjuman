@@ -255,7 +255,8 @@ test('رأس مبتور أو مكسور عند أطراف الملف خطأ بر
   const good = `${block(1, T1, 'أ')}\n${block(2, '00:00:04,000 --> 00:00:05,000', 'ب')}`;
   const cut = fail(`${good}\n3\n00:00:06,000\n`);
   assert.deepEqual([cut.code, cut.params.line], ['IM_STRAY_TEXT', 9], 'ناتج مبتور بعد رقم المقطع الأخير');
-  const noArrow = fail(`${block(1, '00:00:01,000 -> 00:00:03,000', 'أ')}\n${block(2, '00:00:04,000 --> 00:00:05,000', 'ب')}`);
+  // «->» و«→» صارا يُطبَّعان بملاحظة (تدقيق 7a66f91، U38، في c5-srt.test.js)؛ والسهم المكسور فعلًا يبقى خطأ.
+  const noArrow = fail(`${block(1, '00:00:01,000 > 00:00:03,000', 'أ')}\n${block(2, '00:00:04,000 --> 00:00:05,000', 'ب')}`);
   assert.deepEqual([noArrow.code, noArrow.params.line], ['IM_STRAY_TEXT', 1], 'سهم مكسور في أول مقطع');
   const tail = fail(`${good}\n00:00:09,000 --> 00:00:10,000\nمقطع بلا رقم\n`);
   assert.equal(tail.code, 'IM_MISSING_NUMBER');

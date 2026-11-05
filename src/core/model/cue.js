@@ -8,6 +8,12 @@ import { LIMITS, OK, eachOf, exactKeys, fail, firstFailure, isIntIn, isText } fr
 const CUE_KEYS = ['n', 'startMs', 'endMs', 'text'];
 const TIME_KEYS = ['n', 'startMs', 'endMs'];
 
+// فارغ بصريًا: مسافات أو محارف تنسيق لا تُرى (ZWSP وRLM وWJ…) وحدها. التعريف الواحد للفراغ في المقارن ولوحة المشكلات
+// والاستكمال والتصدير العربي (تدقيق 7a66f91، U80). والتصدير الإنجليزي يبقى على السطر الفارغ وحده: نصه من يوتيوب كما هو.
+const BLANK_RE = /^[\s\p{Cf}]*$/u;
+/** @param {string} text */
+export const isBlankText = (text) => BLANK_RE.test(String(text));
+
 /** @param {unknown} c @param {string} [path] */
 export function validateCue(c, path = 'cue') {
   return firstFailure([

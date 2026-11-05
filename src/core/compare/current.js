@@ -89,7 +89,10 @@ export function currentComparison(cues, fingerprint, { driftMs = DEFAULT_DRIFT_M
   const missing = [...cov.missing].sort((a, b) => a - b);
   const extra = [...new Set(cov.extra.map((j) => cues[j].n))].sort((a, b) => a - b);
   drift.sort((a, b) => a.n - b.n);
-  const matched = base.matched || (base.countSource === base.countTarget && base.numbering === 'same' && !missing.length && !extra.length && !drift.length);
+  // «مطابق للأصل» يعني الأرقام والتوقيت (user-guide)، فالدمج والشطر يمنعانه ولو توازنا عددًا؛ وتبقى خارج النقص والزيادة
+  // والانحراف (تدقيق 7a66f91، U29: كان ملف بدمج وشطر «مطابقًا» وتقرير استيراده «توقيت مختلف في 11»).
+  const matched = base.matched || (base.countSource === base.countTarget && base.numbering === 'same' && !cov.structural.size
+    && !missing.length && !extra.length && !drift.length);
   return { ...base, matched, missing, extra, drift };
 }
 

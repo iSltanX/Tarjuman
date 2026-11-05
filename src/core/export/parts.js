@@ -3,6 +3,8 @@
 // planPartsByContent: العدد نفسه من الأجزاء، وكل حد يُنقل إلى نهاية جملة أو صمت قريب ضمن تفاوت مكتوب، فلا تنقطع جملة بين
 // جزأين ما أمكن.
 import { endsSentence } from '../convert/text.js';
+import { TjError } from '../errors/index.js';
+import { MAX_FILES, MAX_FILE_BYTES } from '../import/read-file.js';
 
 /**
  * @param {number} count عدد المقاطع
@@ -71,4 +73,51 @@ export function planPartsByContent(cues, size) {
   }
   parts.push({ index: total, from, to: count });
   return parts;
+}
+
+/**
+ * حد الرفع الذي تُقرأ به الأجزاء العربية معًا: عدد الملفات وحجم كل ملف، من قراءة الاستيراد نفسها (read-file.js).
+ */
+export const UPLOAD_LIMITS = Object.freeze({ files: MAX_FILES, bytes: MAX_FILE_BYTES });
+
+// رأس المقطع في الملف: الرقم (حتى 6 أرقام) وسطر الزمن (29 محرفًا) وأسطر جديدة وسطر فاصل.
+const HEADER_BYTES = 40;
+const encoder = new TextEncoder();
+
+/**
+ * حجم الملف العربي المتوقع لكل مقطع: رأسه، ونصه بايتات UTF-8 ومثلها مرة أخرى بعدد محارفه، فالحرف العربي بايتان في UTF-8
+ * والإنجليزي بايت واحد. تقدير أعلى، فيُرفض ما قد لا يُرفع ولا يُقبل ما يُرفض بعد الترجمة.
+ * @param {{ text: string }[]} cues
+ */
+function uploadEstimates(cues) {
+  return cues.map((c) => HEADER_BYTES + encoder.encode(String(c.text)).length + String(c.text).length);
+}
+
+/**
+ * خطة التقسيم الاحتياطي ضمن حد الرفع (تدقيق 7a66f91، U31، القرار Q23): حجم الجزء لا يقل عن ceil(count/files)، فلا يتجاوز
+ * عدد الأجزاء حد الملفات، ويُرفع الحجم المطلوب إليه بتنبيه (raised). وكل جزء بحجمه المتوقع ضمن حد البايتات، وإلا خطأ قبل
+ * التنزيل: EX_SPLIT_PART_TOO_LARGE إن كان حجم أصغر يكفي، وEX_SPLIT_IMPOSSIBLE إن لم يكفِ أي حجم ضمن حد الملفات.
+ * @param {{ startMs: number, endMs: number, text: string }[]} cues
+ * @param {{ size: number, by?: 'count' | 'content' }} split
+ * @param {{ files: number, bytes: number }} [limits]
+ * @returns {{ ranges: { index: number, from: number, to: number }[], size: number, raised: boolean } | null} null إن لم يلزم تقسيم
+ */
+export function splitPlan(cues, split, limits = UPLOAD_LIMITS) {
+  const minSize = Math.ceil(cues.length / limits.files);
+  const size = Math.max(split.size, minSize);
+  const plan = (n) => (split.by === 'content' ? planPartsByContent(cues, n) : planParts(cues.length, n));
+  const ranges = plan(size);
+  if (!ranges) return null;
+  const est = uploadEstimates(cues);
+  const fits = (rs) => rs.every((r) => {
+    let sum = 0;
+    for (let i = r.from - 1; i < r.to; i++) sum += est[i];
+    return sum <= limits.bytes;
+  });
+  if (!fits(ranges)) {
+    const smallest = size > minSize ? plan(minSize) : null;
+    const max = `${Math.round((limits.bytes / (1024 * 1024)) * 10) / 10} م.ب`;
+    throw new TjError(smallest && fits(smallest) ? 'EX_SPLIT_PART_TOO_LARGE' : 'EX_SPLIT_IMPOSSIBLE', { params: { max, files: limits.files } });
+  }
+  return { ranges, size, raised: size > split.size };
 }

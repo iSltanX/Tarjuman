@@ -11,7 +11,7 @@
 // لأن مواضعه انزاحت. وعدد التغييرات أكبر العددين: ما في العمل وليس في المفتوح، وما في المفتوح وليس في العمل.
 import { applyRestoreTiming, canRestore } from '../compare/index.js';
 import { isTjError } from '../errors/index.js';
-import { applyPatch as applyPatchPlan } from '../import/patch.js';
+import { applyPatchDetailed } from '../import/patch.js';
 import { commitOffset as commitOffsetCues, shiftCues } from '../model/timing.js';
 import { driftCorrect } from './drift.js';
 import { findIssues } from './issues.js';
@@ -554,13 +554,14 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     applyPatchPlan(plan, { only } = {}) {
       let next;
       try {
-        next = applyPatchPlan(work, plan, { only });
+        next = applyPatchDetailed(work, plan, { only });
       } catch (err) {
         return refusal(err);
       }
       const before = work.length;
-      const changedAny = swapAll('patch', next);
-      return { ok: true, applied: changedAny, inserted: next.length - before };
+      const changedAny = swapAll('patch', next.cues);
+      // renumbered: أُعيد ترقيم ما بعد المُدرج لأن الترجمة كانت متسلسلة (U96)، فيقوله السطح.
+      return { ok: true, applied: changedAny, inserted: next.cues.length - before, renumbered: next.renumbered };
     },
   };
   return session;

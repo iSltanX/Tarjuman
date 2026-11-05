@@ -14,20 +14,24 @@ export const STUDY_PARAGRAPH = Object.freeze({ gapMs: 2000, sentenceCues: 6, max
  * توقيت روابط النص الدراسي في المحفوظات والمحرّر معًا: حيث يظهر كل مقطع في الفيديو (المحفوظ + إزاحة العرض). وما تجعله الإزاحة
  * (أو خطأ توقيت في المحرّر) قبل بداية الفيديو يبدأ رابطه من 0:00 وحده، وأرقامه في `clamped` ليعلنها السطح؛ ولا تسقط الإزاحة
  * عن بقية المقاطع (تدقيق مستقل 2026-11-04: كان مقطع سالب واحد يعيد كل المقاطع إلى المحفوظ بلا إزاحة وبلا تنبيه).
- * @param {Cue[]} cues @param {number} displayOffsetMs
- * @returns {{ cues: Cue[], clamped: number[] }}
+ * والإنجليزي للثنائي بالإزاحة نفسها (عقد التوقيت، القاعدة ٩: الإزاحة لطبقة ترجمان كلها)، فيُوزَّع على الفقرات بالمرجع الزمني
+ * الذي بُنيت به، لا بالمحفوظ وهي مزاحة (تدقيق 7a66f91، U30: كانت ±1 ث تنقل 8–10 أسطر من TED إلى فقرة أخرى). ما يقع منه قبل
+ * الصفر يُقص إليه ولا يُعلن، فهو لا يحمل رابطًا.
+ * @param {Cue[]} cues @param {number} displayOffsetMs @param {Cue[] | null} [english]
+ * @returns {{ cues: Cue[], clamped: number[], english: Cue[] | null }}
  */
-export function studyTiming(cues, displayOffsetMs) {
+export function studyTiming(cues, displayOffsetMs, english = null) {
   const shift = Number.isInteger(displayOffsetMs) ? displayOffsetMs : 0;
   const clamped = [];
-  const out = cues.map((c) => {
+  const move = (c, onClamp) => {
     const startMs = c.startMs + shift;
     const endMs = c.endMs + shift;
     if (startMs >= 0 && endMs >= 0) return { ...c, startMs, endMs };
-    clamped.push(c.n);
+    onClamp?.(c.n);
     return { ...c, startMs: Math.max(0, startMs), endMs: Math.max(0, endMs) };
-  });
-  return { cues: out, clamped };
+  };
+  const out = cues.map((c) => move(c, (n) => clamped.push(n)));
+  return { cues: out, clamped, english: Array.isArray(english) ? english.map((c) => move(c)) : null };
 }
 
 const NOTE_LIST = 8;

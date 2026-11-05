@@ -7,6 +7,7 @@ import { ALIGN_DEFAULTS, alignCues, iou, toBlocks } from '../align/index.js';
 import { isBlankText, lacksArabic } from '../compare/compare.js';
 import { TjError, toErrorInfo } from '../errors/index.js';
 import { fnv1a64 } from '../export/hash.js';
+import { LIMITS } from '../model/validate.js';
 import { parseSrtLenient } from '../srt/lenient.js';
 import { displayName, toList } from './files.js';
 import { MAX_FILES, readFileText } from './read-file.js';
@@ -111,25 +112,12 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [] } = {}) {
     if (files.length > MAX_FILES) throw new TjError('IM_TOO_MANY_FILES', { params: { count: files.length, max: MAX_FILES } });
     multi = files.length > 1;
 
-    const incoming = [];
-    const notes = [];
-    const warnings = [];
-    for (const file of files) {
-      current = displayName(file);
-      const parsed = parseSrtLenient(await readFileText(file));
-      incoming.push(...parsed.cues);
-      for (const note of parsed.notes) notes.push(multi ? `«${current}»: ${note}` : note);
-      const hint = videoIdFromName(current, { videoId: fingerprint.videoId });
-      if (hint?.differs) warnings.push({ code: 'IM_PATCH_NAME_OTHER_VIDEO', params: { videoId: hint.videoId } });
-    }
-    current = null;
-
-    // التحقق: الرقم داخل البصمة، والزمن زمنها حرفيًا، ولا تكرار.
-    incoming.sort((x, y) => x.n - y.n);
+    // التحقق أثناء القراءة: الرقم داخل البصمة، والزمن زمنها حرفيًا، ولا تكرار. فيتوقف عند أول ملف يثبت بطلانه ولا يقرأ
+    // البقية (تدقيق 7a66f91، U40)، والمجموع لا يتجاوز عدد البصمة لأن الأرقام فريدة داخلها.
     const byStart = new Map();
     fingerprint.cues.forEach((c, i) => { if (!byStart.has(c.startMs)) byStart.set(c.startMs, i); });
     const seen = new Set();
-    for (const c of incoming) {
+    const check = (c) => {
       if (seen.has(c.n)) throw new TjError('IM_PATCH_DUPLICATE', { params: { n: c.n } });
       seen.add(c.n);
       if (c.n > fingerprint.count) throw new TjError('IM_PATCH_OUT_OF_RANGE', { params: { n: c.n, count: fingerprint.count } });
@@ -139,7 +127,25 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [] } = {}) {
         if (k !== undefined && fingerprint.cues[k].endMs === c.endMs) throw new TjError('IM_PATCH_RENUMBERED', { params: { n: c.n, expected: k + 1 } });
         throw new TjError('IM_PATCH_TIME_MISMATCH', { params: { n: c.n } });
       }
+    };
+    const incoming = [];
+    const notes = [];
+    const warnings = [];
+    let total = 0;
+    for (const file of files) {
+      current = displayName(file);
+      const parsed = parseSrtLenient(await readFileText(file));
+      // الحد على المجموع كما في readImport؛ والأرقام الفريدة داخل البصمة تحدّه بعددها، فهو حارس لا مسار معتاد.
+      total += parsed.cues.length;
+      if (total > LIMITS.maxCues) throw new TjError('IM_TOO_MANY_CUES', { params: { max: LIMITS.maxCues } });
+      for (const c of [...parsed.cues].sort((x, y) => x.n - y.n)) check(c);
+      incoming.push(...parsed.cues);
+      for (const note of parsed.notes) notes.push(multi ? `«${current}»: ${note}` : note);
+      const hint = videoIdFromName(current, { videoId: fingerprint.videoId });
+      if (hint?.differs) warnings.push({ code: 'IM_PATCH_NAME_OTHER_VIDEO', params: { videoId: hint.videoId } });
     }
+    current = null;
+    incoming.sort((x, y) => x.n - y.n);
 
     const map = mapToFingerprint(fingerprint, cues);
     if (!map.ok) throw new TjError('IM_PATCH_UNALIGNED', { params: { reasons: map.reasons.join(' ') } });
@@ -191,14 +197,16 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [] } = {}) {
 }
 
 /**
- * تطبيق الخطة بعد المعاينة: الاستبدال نصًا في موضعه، والإدراج قبل موضعه بترتيب الأرقام، وكل ما عداها كما هو.
+ * تطبيق الخطة بعد المعاينة: الاستبدال نصًا في موضعه، والإدراج قبل موضعه بترتيب الأرقام، وكل ما عداها كما هو. وإن كانت الترجمة
+ * متسلسلة الأرقام تصاعديًا وكسر الإدراج ذلك (ترجمة أُعيد ترقيمها بعد نقص، فيأخذ المُدرج رقم مقطع قائم)، أُعيد الترقيم من 1 فلا
+ * يتكرر رقم (تدقيق 7a66f91، U96). ولا يُمس ترقيم كان شاذًا قبل الإدراج.
  * @param {Cue[]} cues الترجمة التي قُرئت عليها الخطة نفسها
  * @param {PatchPlan} plan
  * @param {{ only?: number[] }} [opts] أرقام المقاطع المختارة من الخطة (الافتراضي كلها)
- * @returns {Cue[]}
+ * @returns {{ cues: Cue[], renumbered: boolean }}
  * @throws {TjError} IM_PATCH_STALE إن تغيّرت الترجمة بعد القراءة
  */
-export function applyPatch(cues, plan, { only } = {}) {
+export function applyPatchDetailed(cues, plan, { only } = {}) {
   if (!plan?.base || plan.base.count !== cues.length || plan.base.key !== cuesKey(cues)) throw new TjError('IM_PATCH_STALE');
   const pick = Array.isArray(only) ? new Set(only) : null;
   const replace = new Map();
@@ -216,6 +224,16 @@ export function applyPatch(cues, plan, { only } = {}) {
     for (const c of (inserts.get(k) ?? []).sort((x, y) => x.n - y.n)) out.push(one(c));
     if (k < cues.length) out.push(one(replace.get(k) ?? cues[k]));
   }
-  return out;
+  const increasing = (list) => list.every((c, i) => i === 0 || c.n > list[i - 1].n);
+  if (out.length > cues.length && increasing(cues) && !increasing(out)) {
+    return { cues: out.map((c, i) => ({ ...c, n: i + 1 })), renumbered: true };
+  }
+  return { cues: out, renumbered: false };
 }
 
+/**
+ * applyPatchDetailed بالمقاطع وحدها (عقد interfaces §١٥).
+ * @param {Cue[]} cues @param {PatchPlan} plan @param {{ only?: number[] }} [opts]
+ * @returns {Cue[]}
+ */
+export const applyPatch = (cues, plan, opts) => applyPatchDetailed(cues, plan, opts).cues;

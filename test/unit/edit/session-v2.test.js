@@ -115,7 +115,7 @@ test('ملف التصحيح: الناقص يُدرج في موضعه والفا�
   const read = await readPatch(fileOf(patch, 'AAAAAAAAAAA.ar.manual.normal.patch.srt'), { fingerprint: fp, cues: s.snapshot() });
   assert.equal(read.ok, true, JSON.stringify(read.error));
   const r = s.applyPatchPlan(read.plan);
-  assert.deepEqual(r, { ok: true, applied: true, inserted: 1 });
+  assert.deepEqual(r, { ok: true, applied: true, inserted: 1, renumbered: false });
   assert.deepEqual(texts(s), ['ترجمة 1', 'مكمّل 2', 'ترجمة 3', 'مكمّل 4', 'ترجمة 5', 'ترجمة 6']);
   assert.equal(s.historySize, 1);
   assert.equal(s.isChanged(0), false);

@@ -1,11 +1,11 @@
 // تدفقا الشريط فوق وحدات W3 وW6 (عقد interfaces §٥ و§٦ و§١٣) دون منطق تصدير أو استيراد هنا:
 // التحميل: controller.convertCaptured ← buildExport (والتقسيم عند الجمل أو الصمت) ← تعليمات الترجمة بالقاموس إن أُرفق ←
 // saveFile لكل ملف (مكان الحفظ من الإعدادات) ← controller.recordExport (البصمة).
-// الرفع: readImport (فحص ومقارنة) ← reviewIncoming (قرينة الاسم) ← controller.loadArabicInto إلى الخانة المختارة (بتأكيد
+// الرفع: readImport (فحص ومقارنة) ← reviewIncoming (المرجع الأقرب) وvideoIdFromName (قرينة الاسم) ← controller.loadArabicInto إلى الخانة المختارة (بتأكيد
 // مضغوط إن وُجدت ترجمة أو دل الاسم على فيديو آخر).
 // كل تدفق يثبّت معرّف الفيديو عند بدئه، فنتيجة تأخرت حتى تبدّل الفيديو لا تُطبَّق على الجديد أبدًا.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
-import { withSuggestedReference } from '../../core/import/index.js';
+import { videoIdFromName, withSuggestedReference } from '../../core/import/index.js';
 
 const infoOf = (code, params) => ({ code, message: messageFor(code, params) });
 
@@ -82,14 +82,17 @@ export async function recordFor({ controller, key, built, videoId }) {
 }
 
 /**
- * أحجام أجزاء التقسيم الاحتياطي قبل التنزيل (R60): لكل جزء رقمه ومداه وعدد محارف ملفه. null إن لم يلزم تقسيم أو تعذّر.
- * @returns {{ index: number, from: number, to: number, chars: number }[] | null}
+ * أحجام أجزاء التقسيم الاحتياطي قبل التنزيل (R60): لكل جزء رقمه ومداه وعدد محارف ملفه، وraised إن رُفع حجم الجزء ليبقى عدد
+ * الأجزاء ضمن حد الرفع (تدقيق 7a66f91، U31)، فيُقال قبل التنزيل. null إن لم يلزم تقسيم أو تعذّر.
+ * @returns {{ rows: { index: number, from: number, to: number, chars: number }[], raised: boolean } | null}
  */
 export function partSizes(p) {
   const r = prepareExport(p);
   if (!r.ok) return null;
   const parts = r.built.files.filter((f) => f.part);
-  return parts.length > 1 ? parts.map((f) => ({ index: f.part.index, from: f.part.from, to: f.part.to, chars: f.text.length })) : null;
+  if (parts.length <= 1) return null;
+  const rows = parts.map((f) => ({ index: f.part.index, from: f.part.from, to: f.part.to, chars: f.text.length }));
+  return { rows, raised: r.built.warnings.includes('EX_SPLIT_SIZE_RAISED') };
 }
 
 /**
@@ -171,8 +174,9 @@ export async function readFor({ controller, importFlow, files }) {
 
 /**
  * قرينة اسم الملف (R48): يدل على فيديو آخر؟ ومعها عنوانه إن كان في المحفوظات. تنبيه لا رفض؛ وتعذّر قراءة المحفوظات
- * يسقط العنوان وحده. قراءة فقط: لا كتابة في التخزين.
- * @param {{ controller: object, importFlow: { reviewIncoming: Function, knownVideos?: () => Promise<{ videoId: string, title: string | null }[]> }, read: { videoId: string, input: { fileName: string, cues: object[] } } }} p
+ * يسقط العنوان وحده. قراءة فقط: لا كتابة في التخزين. من الاسم وحده (videoIdFromName، أو importFlow.videoIdFromName إن
+ * حُقن)، فلا يُعاد ترتيب المراجع بعد readFor (تدقيق 7a66f91، القرار Q24: 670 م.ث لخمسة وعشرين ألف مقطع بعشر بصمات).
+ * @param {{ controller: object, importFlow: { videoIdFromName?: typeof videoIdFromName, knownVideos?: () => Promise<{ videoId: string, title: string | null }[]> }, read: { videoId: string, input: { fileName: string, cues: object[] } } }} p
  * @returns {Promise<{ videoId: string, title: string | null } | null>}
  */
 export async function nameHintFor({ controller, importFlow, read }) {
@@ -183,12 +187,10 @@ export async function nameHintFor({ controller, importFlow, read }) {
     known = [];
   }
   try {
-    const r = importFlow.reviewIncoming({
-      fileName: read.input.fileName, cues: read.input.cues, videoId: read.videoId,
-      fingerprints: controller.getState().saved?.fingerprints ?? [], knownVideoIds: known.map((e) => e.videoId),
-    });
-    if (!r.nameHint || !r.nameHint.differs) return null;
-    return { videoId: r.nameHint.videoId, title: known.find((e) => e.videoId === r.nameHint.videoId)?.title ?? null };
+    const fromName = importFlow.videoIdFromName ?? videoIdFromName;
+    const hint = fromName(read.input.fileName, { videoId: read.videoId, knownVideoIds: known.map((e) => e.videoId) });
+    if (!hint || !hint.differs) return null;
+    return { videoId: hint.videoId, title: known.find((e) => e.videoId === hint.videoId)?.title ?? null };
   } catch {
     return null;
   }

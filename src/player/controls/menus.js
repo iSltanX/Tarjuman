@@ -196,8 +196,8 @@ function resultLine(h, act, line, fid) {
  *   why: boolean, fallbackOpen: boolean, split: boolean, splitSize: string, splitError: string | null,
  *   busy: boolean, copyBusy: boolean, saveLine: { tone: string, text: string } | null, copyLine: { tone: string, text: string } | null,
  *   result: { tone: 'info' | 'warn' | 'error', text: string }[], glossary: number, englishGuide: { brave: boolean } | null,
- *   parts: { index: number, from: number, to: number, chars: number }[] | null,
- * }} m
+ *   parts: { index: number, from: number, to: number, chars: number }[] | null, partsRaised: boolean,
+ * }} m partsRaised: رُفع حجم الجزء ليبقى عدد الأجزاء ضمن حد الرفع (U31)، فيُقال تحت الأحجام قبل التنزيل
  */
 export function downloadMenu(h, act, m, root = null) {
   const out = [h('h2', { className: 'title', text: LABELS.downloadTitle })];
@@ -300,6 +300,7 @@ export function downloadMenu(h, act, m, root = null) {
           className: 'parts', attrs: { role: 'list', 'aria-label': LABELS.partsLabel },
           children: m.parts.map((p) => h('div', { className: 'row part', attrs: { role: 'listitem' }, children: [h('bdi', { text: partRow(p), attrs: { dir: 'ltr' } })] })),
         }));
+        if (m.partsRaised) out.push(h('div', { className: 'note', text: messageFor('EX_SPLIT_SIZE_RAISED'), attrs: { 'data-fid': 'partsRaised' } }));
       }
     }
   }

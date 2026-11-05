@@ -80,8 +80,9 @@ async function exportCues({ videoId, source, offset, variant, askTiming, save })
   const timed = exportTiming(source, offset, choice);
   if (!timed.ok) throw new TjError('MD_NEGATIVE_TIME', { params: { list: listNumbers(timed.negative) } });
   const file = buildArabicExport({ videoId, cues: timed.cues, variant });
-  const saved = await save(file);
-  return { name: file.name, timing: timed.timing, cueCount: timed.cues.length, saved };
+  const saved = await save({ name: file.name, text: file.text });
+  // notes: ما جُرّد عند الكتابة وما يتغير عند إعادة الاستيراد (تدقيق 7a66f91، U99)، تُقال بعد الحفظ.
+  return { name: file.name, timing: timed.timing, cueCount: timed.cues.length, saved, notes: file.notes };
 }
 
 // التصدير نفسه بأزمنته (sameExport) وبلا أجزاء: كانت الأزمنة تُهمل فيُرفض تصدير بتوقيت جديد ونصه مطابق، ويبقى المرجع القديم.
@@ -135,17 +136,20 @@ export async function exportEnglish({ store, videoId, trackKey, save, now }) {
 export async function exportStudy({ store, videoId, format, bilingual, save }) {
   const record = await requireRecord(store, videoId);
   // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض) كالمحرّر، ومنه يُوزَّع الإنجليزي (تدقيق 5fedcb9، GM-016.1).
-  const { cues, clamped } = studyCues(record);
-  const english = bilingual ? studyEnglish(record) : null;
+  // والإنجليزي بالإزاحة نفسها، فيُوزَّع بالمرجع الزمني للفقرات (تدقيق 7a66f91، U30).
+  const { cues, clamped, english } = studyCues(record, bilingual ? studyEnglish(record) : null);
   const file = buildStudyText({ videoId, title: record.title, cues, english, format, bilingual });
   return { name: file.name, clamped, saved: await save(file) };
 }
 
-/** مقاطع النشطة بتوقيت النص الدراسي (studyTiming): الإزاحة لكلها، وما وقع قبل الصفر وحده من بداية الفيديو في `clamped`. */
-function studyCues(record) {
+/**
+ * مقاطع النشطة بتوقيت النص الدراسي (studyTiming): الإزاحة لكلها ولمرجعها الإنجليزي إن أُعطي، وما وقع قبل الصفر وحده من بداية
+ * الفيديو في `clamped`.
+ */
+function studyCues(record, english = null) {
   const stored = arabicCues(record);
   if (!stored) throw new TjError('PG_STUDY_NO_ARABIC');
-  return studyTiming(stored, record.view.displayOffsetMs);
+  return studyTiming(stored, record.view.displayOffsetMs, english);
 }
 
 /** إشعار حوار «نص دراسي…» قبل التنزيل: ما ستبدأ روابطه من 0:00 بالإزاحة الحالية، أو '' (studyTimingNote). */

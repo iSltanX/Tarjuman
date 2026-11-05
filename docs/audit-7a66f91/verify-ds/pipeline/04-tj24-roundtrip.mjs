@@ -32,7 +32,9 @@ for (const [label, t1] of [
   const d = TED();
   d.events[10].segs = [{ utf8: 'line one\n12\n00:00:01,000 --> 00:00:02,000' }];
   const r = convertTrack({ body: JSON.stringify(d), trackKind: 'manual', durationMs: TED_DUR });
-  const ex = buildExport({ videoId: VID, track: { key: 'en|manual', lang: 'en', kind: 'manual', cues: r.cues }, mode: 'normal', now: '2026-11-05T00:00:00.000Z', rand: () => 0.5 });
-  const lenient = tryIt(() => parseSrtLenient(ex.files[0].text).cues.length);
-  out('د. إنجليزي من json3 بسطر رقم ثم زمن', { convertOk: r.ok, invariants: r.invariants.results.filter((x) => x.ok).length, cues: r.cues.length, exportFiles: ex.files.length, lenientCount: lenient.value ?? lenient.threw });
+  // بعد C5 (U78) يُرفض هذا التصدير برمزه، فيُطبع الرفض بدل أن ينتهي السكربت بخطأ.
+  const built = tryIt(() => buildExport({ videoId: VID, track: { key: 'en|manual', lang: 'en', kind: 'manual', cues: r.cues }, mode: 'normal', now: '2026-11-05T00:00:00.000Z', rand: () => 0.5 }));
+  const ex = built.value;
+  const lenient = ex ? tryIt(() => parseSrtLenient(ex.files[0].text).cues.length) : { threw: 'لا ملف' };
+  out('د. إنجليزي من json3 بسطر رقم ثم زمن', { convertOk: r.ok, invariants: r.invariants.results.filter((x) => x.ok).length, cues: r.cues.length, exportFiles: ex ? ex.files.length : built.threw, lenientCount: lenient.value ?? lenient.threw });
 }

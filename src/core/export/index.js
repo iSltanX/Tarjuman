@@ -1,7 +1,7 @@
 // تدفق التصدير (عقد interfaces §٥): وحدة نقية تستهلكها أدوات الشريط (P6) والمحفوظات (P7) والمحرّر (P8).
 // الإنجليزي: controller.convertCaptured(key, { mode }) ← buildExport ← download لكل ملف ← controller.recordExport.
 // العربي: exportTiming (عقد التوقيت §٥) ← buildArabicExport ← download. لا كتابة في التخزين هنا.
-import { TjError } from '../errors/index.js';
+import { TjError, messageFor } from '../errors/index.js';
 import { validateCues } from '../model/cue.js';
 import { newFingerprintId, isVideoId, parseTrackKey } from '../model/ids.js';
 import { EXPORT_MODES, validateFingerprint } from '../model/tracks.js';
@@ -9,14 +9,14 @@ import { assertValid } from '../model/validate.js';
 import { textHash } from './hash.js';
 import { instructions } from './instructions.js';
 import { fileName } from './names.js';
-import { planParts, planPartsByContent } from './parts.js';
-import { assertWritable, verifyRoundTrip, writeSrtFrom } from './write.js';
+import { splitPlan } from './parts.js';
+import { assertWritable, verifyReread, verifyRoundTrip, writableArabic, writeSrtFrom } from './write.js';
 
 export { fileName } from './names.js';
 export { GLOSSARY_LIMITS, glossaryParagraph, instructions, patchInstructions } from './instructions.js';
 export { describeTrack, languageLabel, trackLabel } from './describe.js';
 export { download, SRT_MIME } from './download.js';
-export { CONTENT_SPLIT, planParts, planPartsByContent } from './parts.js';
+export { CONTENT_SPLIT, UPLOAD_LIMITS, planParts, planPartsByContent, splitPlan } from './parts.js';
 export { fnv1a64, textHash } from './hash.js';
 export { buildPatchPackage, patchFileName } from './patch.js';
 export { buildStudyText, studyTiming, studyTimingNote } from './study.js';
@@ -63,8 +63,12 @@ export function buildExport({ videoId, title = null, track, mode, split = null, 
 
   const full = writeSrtFrom(cues);
   verifyRoundTrip(full, cues);
-  const ranges = split ? (split.by === 'content' ? planPartsByContent(cues, split.size) : planParts(cues.length, split.size)) : null;
+  // لا إعادة قراءة متسامحة للإنجليزي: قارئه النموذج وffmpeg لا الاستيراد، وما يغيّر عدده عندهما يرفضه assertWritable.
+  // الأجزاء ضمن حد الرفع (U31): حجم الجزء يُرفع بتنبيه حتى لا تتجاوز 50 ملفًا، وما لا يتسع خطأ قبل أي تنزيل.
+  const plan = split ? splitPlan(cues, { size: split.size, by: split.by === 'content' ? 'content' : 'count' }) : null;
+  const ranges = plan ? plan.ranges : null;
   if (split && !ranges) warnings.push('EX_SPLIT_NOT_NEEDED');
+  if (plan?.raised) warnings.push('EX_SPLIT_SIZE_RAISED');
   const name = (part) => fileName({ videoId, lang: track.lang, kind: track.kind, mode, part });
   /** @type {ExportFile[]} */
   const files = ranges
@@ -96,17 +100,28 @@ export function buildExport({ videoId, title = null, track, mode, split = null, 
 }
 
 /**
- * ملف SRT العربي من مقاطع بتوقيت التصدير النهائي (بعد exportTiming). يُرقَّم من 1، ولا يعدّل نصًا ولا زمنًا.
+ * ملف SRT العربي من مقاطع بتوقيت التصدير النهائي (بعد exportTiming). يُرقَّم من 1، ولا يعدّل زمنًا. والنص كما يقرؤه الاستيراد:
+ * بلا محارف تحكم ولا تجاوز اتجاه ولا مسافات أطراف (writableArabic)، فلا يحمل الملف U+202E. وnotes (إضافة على العقد، تدقيق
+ * 7a66f91، U99) ما جُرّد من النص، وما يقرؤه الاستيراد على غير ما كُتب (وسم تنسيق يُجرَّد)، بأرقام المقاطع في الملف.
  * @param {{ videoId: string, cues: import('../model/cue.js').Cue[], variant?: 'current' | 'original' }} spec
- * @returns {{ name: string, text: string }}
+ * @returns {{ name: string, text: string, notes: string[] }}
  */
 export function buildArabicExport({ videoId, cues, variant = 'current' }) {
   if (!isVideoId(videoId)) throw new TjError('TJ_BAD_VIDEO_ID');
   if (!Array.isArray(cues) || cues.length === 0) throw new TjError('ST_NO_RECORD');
   assertValid(validateCues(cues, 'cues'), 'cues');
-  assertWritable(cues);
   const name = fileName({ videoId, lang: 'ar', variant });
-  const text = writeSrtFrom(cues);
-  verifyRoundTrip(text, cues);
-  return { name, text };
+  const { cues: clean, stripped } = writableArabic(cues);
+  assertWritable(clean, { arabic: true });
+  const text = writeSrtFrom(clean);
+  verifyRoundTrip(text, clean);
+  const changed = verifyReread(text, clean);
+  const notes = [];
+  if (stripped.length) notes.push(messageFor('EX_NOTE_CONTROL_STRIPPED', { list: shortNumbers(stripped) }));
+  if (changed.length) notes.push(messageFor('EX_NOTE_REREAD_CHANGES', { list: shortNumbers(changed) }));
+  return { name, text, notes };
 }
+
+const NOTE_LIST = 8;
+/** أول ثمانية أرقام ثم «…». @param {number[]} ns */
+const shortNumbers = (ns) => ns.slice(0, NOTE_LIST).join('، ') + (ns.length > NOTE_LIST ? '…' : '');

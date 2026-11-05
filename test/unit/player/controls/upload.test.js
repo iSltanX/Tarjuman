@@ -41,7 +41,7 @@ test('اختيار ملف: فحص ومقارنة بالبصمات المحفوظ
   assert.deepEqual(Object.keys(load[2]).sort(), ['comparison', 'cues', 'fileName', 'fingerprintId', 'notes'], 'مدخل loadArabic بعقده');
   assert.deepEqual(load[3], { replace: false, activate: undefined });
   assert.equal(page.flows.reviews[0].fileName, 'talk.ar.srt', 'فُحص الاسم قبل الحفظ');
-  assert.strictEqual(page.flows.reviews[0].fingerprints, fps);
+  assert.equal('fingerprints' in page.flows.reviews[0], false, 'قرينة الاسم من الاسم وحده بلا ترتيب ثانٍ (تدقيق 7a66f91، Q24)');
   assert.equal(page.ui.menuLabel(), 'الترجمة');
   const text = page.ui.menuText();
   assert.match(text, /talk\.ar\.srt/);

@@ -253,6 +253,11 @@ export function fakeFlows() {
         reviews.push(args);
         return { references: [], suggested: null, certain: false, nameHint: flows.nameHint };
       },
+      // قرينة الاسم من الاسم وحده (تدقيق 7a66f91، Q24): تُسجَّل في reviews كما كانت تُسجَّل مع الترتيب.
+      videoIdFromName(fileName, ctx) {
+        reviews.push({ fileName, ...ctx });
+        return flows.nameHint;
+      },
       async knownVideos() {
         if (flows.knownFails) throw new Error('storage');
         return flows.known;

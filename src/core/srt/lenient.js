@@ -18,9 +18,16 @@ const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202
 const CUE_FRAGMENT_RE = /^\d+$|-->|\d:\d\d:\d\d/;
 
 const NUMBER_RE = /^\d+$/;
-const TIME_LIKE_RE = /^\d[^\s>]*\s*-->/;
+// يشبه سطر زمن: رقم ثم «-->» بعد timeForm، أو إشارة سالبة قبل زمن بنقطتين («-00:00:01,000 -->»)، فالسالب خطأ زمن برقم سطره لا
+// نص (تدقيق 7a66f91، U38)؛ و«-5 --> 3» نثر كما كان.
+const TIME_LIKE_RE = /^(?:[-\u2212](?=\d+:))?\d[^\s>]*\s*-->/;
 const TIME_RE = /^(\d+):([0-5]\d):([0-5]\d)[,.](\d{3})\s*-->\s*(\d+):([0-5]\d):([0-5]\d)[,.](\d{3})$/;
 const FENCE_RE = /^(?:`{3,}|~{3,})[\w+-]*$/;
+// عنوان Markdown: من علامة # إلى ست ثم مسافة. «#ترجمان» بلا مسافة نص.
+const HEADING_RE = /^#{1,6}\s+\S/;
+// ما تكتبه النماذج في سطر الزمن بدل صيغة SRT: الفاصلة العربية «٫» و«،»، والأسهم «→» و«⟶» و«->» و«–>» و«—>» (U38).
+const TIME_COMMA_RE = /[\u066B\u060C]/g;
+const ARROW_RE = /\s*(?:-->|->|[\u2013\u2014]-?>|[\u2192\u27F6])\s*/g;
 // غلاف تأكيد واحد يحيط بسطر الرأس كله: ** أو __ أو * أو _ أو `.
 const EMPHASIS_RE = /^(\*\*|__|\*|_|`)(\S(?:.*\S)?)\1$/;
 
@@ -43,8 +50,53 @@ const bare = (line) => {
 };
 const wrapped = (line) => EMPHASIS_RE.test(headerForm(line));
 
+/**
+ * صورة سطر يبدأ بزمن (أرقام ثم نقطتان) لمطابقته: الفاصلة العربية «,» والأسهم «-->». وما سواه كما هو، فلا يصير «10 -> 20» أو
+ * «1 → 2» شبيهًا بالزمن (مراجعة C5).
+ */
+const timeForm = (form) => (/^[-\u2212]?\d+:\d/.test(form)
+  ? form.replace(TIME_COMMA_RE, ',').replace(ARROW_RE, (m) => (m.trim() === '-->' ? m : ' --> '))
+  : form);
+/** حدّ لنص المقطع أينما وقع: سطر فارغ أو سياج أو عنوان (U38). @param {string} line */
+const textBoundary = (line) => {
+  const t = line.trim();
+  return t === '' || FENCE_RE.test(t) || HEADING_RE.test(t);
+};
+
 const excerpt = (s) => (s.length > EXCERPT_CHARS ? `${s.slice(0, EXCERPT_CHARS - 1)}…` : s);
 const cleanLines = (text) => text.split('\n').map((l) => l.trim()).filter(Boolean).join('\n');
+
+/**
+ * نص مقطع كما يقرؤه هذا المحلّل من حيث المحارف: بلا محارف تحكم ولا تجاوز اتجاه، وبلا مسافات أطراف الأسطر، وبلا سطر صار
+ * فارغًا بالتجريد. يكتب به التصدير العربي فلا يحمل الملف U+202E الذي يقلب العرض في مشغّلات أخرى (تدقيق 7a66f91، U99).
+ * @param {string} text @returns {{ text: string, stripped: boolean }}
+ */
+export function readableText(text) {
+  const s = String(text);
+  const noControls = s.replace(CONTROL_CHARS, '');
+  const stripped = noControls !== s;
+  const lines = noControls.split('\n').map((l) => l.trim());
+  return { text: (stripped ? lines.filter(Boolean) : lines).join('\n'), stripped };
+}
+
+/**
+ * نص مقطع فيه سطر يقرؤه هذا المحلّل (ومثله ffmpeg) رأسَ مقطع أو حدًّا له، فيتغير عدد المقاطع أو نصها عند قراءة الملف:
+ * سطر زمن كامل، أو رقم يليه ما يشبه الزمن، أو سياج أو عنوان Markdown. والسطر الشبيه بالزمن بلا رقم قبله («1 --> 2») نص
+ * يُقرأ كما هو (تدقيق 7a66f91، U78 وU35). السطر الفارغ شأن فحص الفراغ. وmarkdown: false يقصره على ما يغيّر عدد المقاطع في أي
+ * قارئ SRT (سطر الزمن، والرقم يليه زمن)، للمسار الإنجليزي الذي يقرؤه النموذج وffmpeg لا هذا المحلّل: «# of people» فيه نص (مراجعة C5).
+ * @param {string} text @param {{ markdown?: boolean }} [opts]
+ * @returns {boolean}
+ */
+export function breaksSrtText(text, { markdown = true } = {}) {
+  const lines = String(text).split('\n');
+  return lines.some((line, i) => {
+    const t = line.trim();
+    if (markdown && t !== '' && (FENCE_RE.test(t) || HEADING_RE.test(t))) return true;
+    const form = timeForm(bare(line));
+    if (!TIME_LIKE_RE.test(form)) return false;
+    return TIME_RE.test(form) || (i > 0 && NUMBER_RE.test(bare(lines[i - 1])));
+  });
+}
 
 /**
  * @typedef {import('../model/cue.js').Cue} Cue
@@ -57,19 +109,33 @@ export function parseSrtLenient(input) {
   const text = input.charCodeAt(0) === 0xfeff ? input.slice(1) : input;
   const lines = text.replace(/\r\n?|\u2028|\u2029/g, '\n').split('\n');
 
-  // رأس المقطع: سطر رقم ثم سطر زمن. سطر يشبه الزمن وهو غير صالح أو بلا رقم قبله خطأ، لا نص يلتحق بما قبله.
+  // رأس المقطع: سطر رقم ثم سطر زمن. سطر زمن كامل بلا رقم قبله خطأ، وكذا سطر يشبه الزمن وهو غير صالح، إلا داخل نص مقطع
+  // (بعد سطر زمن صالح وقبل أول حدّ) وليس قبله رقم: «1 --> 2» و«10:30 --> 11:00» نص منه، فما يصدّره ترجمان يقرؤه ترجمان
+  // (تدقيق 7a66f91، U35). والرقم ثم ما يشبه الزمن رأس معيب ولو داخل نص.
   const heads = [];
   let indicDigits = false;
   let emphasized = 0;
+  let timeMarks = 0;
+  let inText = false;
   for (let i = 0; i < lines.length; i++) {
-    const form = bare(lines[i]);
-    if (!TIME_LIKE_RE.test(form)) continue;
+    const raw = bare(lines[i]);
+    const form = timeForm(raw);
+    if (!TIME_LIKE_RE.test(form)) {
+      if (textBoundary(lines[i])) inText = false;
+      continue;
+    }
     const m = TIME_RE.exec(form);
-    if (!m) throw new TjError('IM_BAD_TIME', { params: { line: i + 1 } });
-    if (i === 0 || !NUMBER_RE.test(bare(lines[i - 1]))) throw new TjError('IM_MISSING_NUMBER', { params: { line: i + 1 } });
+    const numbered = i > 0 && NUMBER_RE.test(bare(lines[i - 1]));
+    if (!m) {
+      if (inText && !numbered) continue;
+      throw new TjError('IM_BAD_TIME', { params: { line: i + 1 } });
+    }
+    if (!numbered) throw new TjError('IM_MISSING_NUMBER', { params: { line: i + 1 } });
     if (HAS_INDIC.test(lines[i]) || HAS_INDIC.test(lines[i - 1])) indicDigits = true;
+    if (form !== raw) timeMarks++;
     emphasized += Number(wrapped(lines[i])) + Number(wrapped(lines[i - 1]));
     heads.push({ num: i - 1, time: i, m });
+    inText = true;
   }
   if (!heads.length) {
     if (lines.every((l) => l.trim() === '')) throw new TjError('IM_EMPTY_FILE');
@@ -105,14 +171,18 @@ export function parseSrtLenient(input) {
   heads.forEach((h, k) => {
     const last = k === heads.length - 1;
     const body = lines.slice(h.time + 1, last ? lines.length : heads[k + 1].num);
-    // النص حتى أول سطر فارغ (أو سياج ختامي في آخر مقطع)؛ ما بعده نص ضائع، أو ذيل الشرح في آخر مقطع.
-    const stop = body.findIndex((l) => l.trim() === '' || (last && FENCE_RE.test(l.trim())));
+    // النص حتى أول حدّ: سطر فارغ أو سياج أو عنوان، في أي مقطع (كتلتان مسيّجتان متلاصقتان، أو عنوان ملاصق؛ U38). ما بعده:
+    // الأسوار والأسطر الفارغة تُتجاوز، وغيرها نص ضائع برقم سطره، أو ذيل الشرح في آخر مقطع.
+    const stop = body.findIndex(textBoundary);
     const textLines = stop === -1 ? body : body.slice(0, stop);
     const rest = stop === -1 ? [] : body.slice(stop);
     if (last) sortOut(rest, chatterAfter, h.time + 1 + stop, true);
     else {
-      const j = rest.findIndex((l) => l.trim() !== '');
-      if (j !== -1) throw new TjError('IM_STRAY_TEXT', { params: { line: h.time + 1 + stop + j + 1 } });
+      rest.forEach((l, j) => {
+        const t = l.trim();
+        if (FENCE_RE.test(t)) fence = true;
+        else if (t !== '') throw new TjError('IM_STRAY_TEXT', { params: { line: h.time + 1 + stop + j + 1 } });
+      });
     }
 
     let t = textLines.map((l) => l.trim()).join('\n');
@@ -146,6 +216,7 @@ export function parseSrtLenient(input) {
   if (chatterAfter.length) notes.push(messageFor('IM_NOTE_CHATTER_AFTER', { count: chatterAfter.length, first: excerpt(chatterAfter[0]) }));
   if (emphasized) notes.push(messageFor('IM_NOTE_MD_EMPHASIS', { count: emphasized }));
   if (indicDigits) notes.push(messageFor('IM_NOTE_DIGITS'));
+  if (timeMarks) notes.push(messageFor('IM_NOTE_TIME_MARKS', { count: timeMarks }));
   if (tagged) notes.push(messageFor('IM_NOTE_TAGS', { count: tagged }));
   if (controlled) notes.push(messageFor('IM_NOTE_CONTROL', { count: controlled }));
 

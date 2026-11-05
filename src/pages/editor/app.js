@@ -921,10 +921,11 @@ export async function mountEditor(app, {
     const file = await openStudyDialog({
       doc, hasEnglish: english.length > 0,
       build: ({ bilingual, format }) => {
-        // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض)، ومنه يُوزَّع الإنجليزي بمنتصف زمنه. أخطاء التوقيت لا
-        // تمنع النص الدراسي (GM-026.4): ما وقع قبل الصفر وحده رابطه من بداية الفيديو ويُذكر في الحوار، وبقية المقاطع بإزاحتها.
-        const { cues, clamped } = studyTiming(act().snapshot(), S.view === 'original' ? 0 : S.session.offsetMs);
-        return { file: buildStudyText({ videoId, title: S.opened.record.title, cues, english: bilingual ? english : null, format, bilingual }), note: studyTimingNote(clamped) };
+        // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض)، والإنجليزي بالإزاحة نفسها فيُوزَّع بمنتصف زمنه على
+        // المرجع الزمني للفقرات (تدقيق 7a66f91، U30). أخطاء التوقيت لا تمنع النص الدراسي (GM-026.4): ما وقع قبل الصفر وحده رابطه
+        // من بداية الفيديو ويُذكر في الحوار، وبقية المقاطع بإزاحتها.
+        const timed = studyTiming(act().snapshot(), S.view === 'original' ? 0 : S.session.offsetMs, bilingual ? english : null);
+        return { file: buildStudyText({ videoId, title: S.opened.record.title, cues: timed.cues, english: timed.english, format, bilingual }), note: studyTimingNote(timed.clamped) };
       },
     });
     if (file) await saveText(file);
@@ -1003,11 +1004,18 @@ export async function mountEditor(app, {
 
   async function downloadPatch() {
     if (completeReason() || S.completeBusy) return;
-    const pkg = buildPatchPackage({
-      videoId, title: S.opened.record.title, fingerprint: S.fp, englishTracks: S.opened.record.english, numbers: S.completeNumbers, glossary: glossary(),
-    });
+    // لا يهرب خطأ من الزر بلا رسالة (تدقيق 7a66f91، U79): الرفض برمزه ومعاملاته، وغير المتوقع برسالته.
+    let pkg;
+    try {
+      pkg = buildPatchPackage({
+        videoId, title: S.opened.record.title, fingerprint: S.fp, englishTracks: S.opened.record.english, numbers: S.completeNumbers, glossary: glossary(),
+      });
+    } catch (err) {
+      toast(toErrorInfo(err).message, 'danger');
+      return;
+    }
     if (!pkg.ok) {
-      toast(messageFor(pkg.code), 'danger');
+      toast(messageFor(pkg.code, pkg.params), 'danger');
       return;
     }
     S.completeBusy = true;
@@ -1062,7 +1070,8 @@ export async function mountEditor(app, {
       toast(messageFor(r.code), 'danger');
       return;
     }
-    S.result = { tone: 'success', text: `طُبّق ملف التصحيح على ${formatCount(only.length, COUNT_FORMS.cue)}${r.inserted ? ` (أُدرج ${r.inserted})` : ''}. احفظ لتثبيت ذلك، والتراجع يعيده خطوةً واحدة.` };
+    const inserted = r.inserted ? ` (أُدرج ${r.inserted}${r.renumbered ? '، وأُعيد ترقيم المقاطع من 1 فلا يتكرر رقم' : ''})` : '';
+    S.result = { tone: 'success', text: `طُبّق ملف التصحيح على ${formatCount(only.length, COUNT_FORMS.cue)}${inserted}. احفظ لتثبيت ذلك، والتراجع يعيده خطوةً واحدة.` };
     computeParts();
     renderToolbar();
     renderComplete();
@@ -1817,6 +1826,8 @@ export async function mountEditor(app, {
     const nameLine = el('p', { className: 'tj-body-sm', doc });
     const noteLine = el('p', { className: 'tj-caption', doc });
     const errorBox = el('div', { doc });
+    // ما جُرّد عند الكتابة وما يتغير عند إعادة الاستيراد، قبل التنزيل (تدقيق 7a66f91، U99).
+    const notesBox = el('div', { attrs: { 'data-fid': 'exportNotes' }, doc });
     // إزاحة العرض المحفوظة للخانة للأصل (كما تصدّره المحفوظات)، وإزاحة الجلسة للنسخة الحالية. والسؤال عند إزاحة غير صفرية في
     // النسختين، فالأصل يُصدَّر بتوقيت واحد من السطحين (عقد التوقيت §٥؛ تدقيق 7a66f91، U75 وقرار Q19).
     const offsetOf = (v) => (v === 'original' ? S.original.offsetMs : offset);
@@ -1843,13 +1854,16 @@ export async function mountEditor(app, {
       const why = plan.ok ? null : exportError(plan);
       errorBox.replaceChildren(...(why ? [alertBox({ tone: 'danger', title: 'لا يمكن التصدير', text: why, doc })] : []));
       errorBox.hidden = !why;
+      const notes = plan.ok ? plan.notes ?? [] : [];
+      notesBox.replaceChildren(...notes.map((text) => alertBox({ tone: 'warning', text, doc })));
+      notesBox.hidden = !notes.length;
       if (confirmBtn) setDisabled(confirmBtn, why);
     };
     const content = el('div', {
       className: 'tj-stack',
       children: [
         hasOriginal ? radios('ed-variant', { legend: 'النسخة', options: [['current', 'النسخة الحالية (ما تراه في المحرّر)'], ['original', 'الأصل المستورد كما رُفع']] }, variant, (v) => { variant = v; refresh(); }) : null,
-        timingBox, nameLine, noteLine, errorBox,
+        timingBox, nameLine, noteLine, notesBox, errorBox,
       ],
       doc,
     });

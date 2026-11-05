@@ -3,6 +3,7 @@
 // الاستعادة الشاملة (R50) لا تصح إلا بمحاذاة متحققة؛ وإن طابق البناء ولم تتحقق المحاذاة فالسبب في notes دون حقل جديد.
 import { isIdentity } from '../align/index.js';
 import { messageFor } from '../errors/index.js';
+import { isBlankText } from '../model/cue.js';
 import { LIMITS } from '../model/validate.js';
 import { alignToFingerprint, sameStructure } from './restore.js';
 
@@ -16,14 +17,11 @@ const MAX_DRIFT_MS = 60000;
 const HAS_LETTER = /\p{L}/u;
 // حرف عربي فعلي: الأرقام الهندية من الكتابة العربية لكنها ليست حروفًا، فلا تُخفي مقطعًا إنجليزيًا.
 const HAS_ARABIC_LETTER = /(?=\p{Script=Arabic})\p{L}/u;
-// مقطع فارغ بصريًا: مسافات أو محارف تنسيق غير مرئية (ZWSP وRLM…) فقط.
-const BLANK = /^[\s\p{Cf}]*$/u;
+// الفراغ بتعريفه الواحد في نموذج المقطع (تدقيق 7a66f91، U80)، ويُصدَّر من هنا كما كان.
+export { isBlankText };
 const ascending = (a, b) => a - b;
-
-/** مقطع فارغ بصريًا. */
-export const isBlankText = (text) => BLANK.test(text);
 /** مقطع بحروف غير عربية فقط (الرموز والأرقام وحدها ليست ترجمة ناقصة). */
-export const lacksArabic = (text) => !BLANK.test(text) && HAS_LETTER.test(text) && !HAS_ARABIC_LETTER.test(text);
+export const lacksArabic = (text) => !isBlankText(text) && HAS_LETTER.test(text) && !HAS_ARABIC_LETTER.test(text);
 const HIGH_SURROGATE = /[\uD800-\uDBFF]/;
 /** ملاحظة في حد النموذج (500 محرف) دون شطر زوج بديل. */
 const clipNote = (s) => (s.length <= LIMITS.maxNoteChars ? s : `${s.slice(0, LIMITS.maxNoteChars - (HIGH_SURROGATE.test(s[LIMITS.maxNoteChars - 2]) ? 2 : 1))}…`);
@@ -48,7 +46,7 @@ export function compare(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS } = {}) 
   cues.forEach((cue, i) => {
     if (cue.n !== i + 1) sequential = false;
     const text = cue.text;
-    if (BLANK.test(text)) empty.add(cue.n);
+    if (isBlankText(text)) empty.add(cue.n);
     // المقطع الذي لا حروف فيه (♪ أو أرقام أو رموز) ليس ترجمة ناقصة؛ المقصود ما بقي بحروف غير عربية.
     else if (HAS_LETTER.test(text) && !HAS_ARABIC_LETTER.test(text)) noArabic.add(cue.n);
     if (!source) return;

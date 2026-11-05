@@ -273,10 +273,15 @@ export function createLibrary(env) {
     return false;
   }
 
+  /** ما جُرّد من SRT العربي عند كتابته وما يتغير عند إعادة استيراده (تدقيق 7a66f91، U99)، بعد إشعار الحفظ. */
+  const exportNotes = (notes) => {
+    for (const note of notes ?? []) toaster.show(note, 'info');
+  };
+
   const exportFile = (m, option) => guarded(async () => {
     if (option.action.type === 'ar') {
       const r = await exportArabic({ store, videoId: m.videoId, variant: option.action.variant, askTiming, save: env.saveFile });
-      if (r) savedToast(r.saved);
+      if (r && savedToast(r.saved)) exportNotes(r.notes);
     } else {
       const r = await exportEnglish({ store, videoId: m.videoId, trackKey: option.action.trackKey, save: env.saveFile, now });
       if (r.saveError) toaster.show(messageFor('PG_FINGERPRINT_NOT_SAVED'), 'info');
@@ -287,7 +292,7 @@ export function createLibrary(env) {
   /** «تصدير SRT» في بطاقة ترجمة (نشطة أو لا). */
   const exportSlotFile = (m, n) => guarded(async () => {
     const r = await exportSlot({ store, videoId: m.videoId, n, askTiming, save: env.saveFile });
-    if (r) savedToast(r.saved);
+    if (r && savedToast(r.saved)) exportNotes(r.notes);
   }, m);
 
   /** «نص دراسي…»: الصيغة واللغة ومعاينة الاسم، ثم الحفظ عبر saveFile. */

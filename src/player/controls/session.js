@@ -185,20 +185,23 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       busy: d.busy, copyBusy: ui.copyBusy, saveLine: d.saveLine, copyLine: d.copyLine, result: d.result,
       glossary: attachedGlossary(s.prefs)?.length ?? 0,
       englishGuide: !tracks.length && NOT_ENGLISH.has(s.captureIssue?.code ?? '') ? { brave: flags.brave } : null,
-      parts: previewParts(s, tracks),
+      ...previewParts(s, tracks),
     };
   }
 
-  /** أحجام الأجزاء للمسار والوضع والحجم الحاليين، تُحسب مرة لكل تغيّر فيها (والكتابة في الحقل مؤجلة قليلًا). */
+  /**
+   * أحجام الأجزاء للمسار والوضع والحجم الحاليين، تُحسب مرة لكل تغيّر فيها (والكتابة في الحقل مؤجلة قليلًا)، ومعها هل رُفع
+   * الحجم ليبقى عدد الأجزاء ضمن حد الرفع (U31).
+   */
   function previewParts(s, tracks) {
     const d = ui.download;
     const t = tracks.find((x) => x.key === d.key) ?? tracks[0];
     const size = d.split ? splitSizeOf(d.splitSize ?? s.settings.export.splitThreshold) : null;
-    if (!t || !size) return null;
+    if (!t || !size) return { parts: null, partsRaised: false };
     const mode = d.mode ?? s.settings.export.modeDefault;
     const key = `${t.key}|${t.capturedAt}|${mode}|${size}`;
-    if (d.preview?.key !== key) d.preview = { key, rows: partSizes({ controller, exportFlow: flows.exportFlow, key: t.key, mode, split: { size, by: 'content' }, now: now() }) };
-    return d.preview.rows;
+    if (d.preview?.key !== key) d.preview = { key, sizes: partSizes({ controller, exportFlow: flows.exportFlow, key: t.key, mode, split: { size, by: 'content' }, now: now() }) };
+    return { parts: d.preview.sizes?.rows ?? null, partsRaised: d.preview.sizes?.raised ?? false };
   }
 
   function displayModel(s) {

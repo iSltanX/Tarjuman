@@ -2,7 +2,9 @@
 // ونص لا يقبله التخزين) تمنع الحفظ والتصدير. والتحذيرات (تداخل، ومدة قصيرة جدًا، وفجوة كبيرة، ونص فارغ) لا تمنع
 // الحفظ؛ لكن التداخل والنص الفارغ يمنعان التصدير وحده لأن كاتب SRT يرفضهما (EX_TIMING_INVALID وEX_EMPTY_TEXT في P3).
 // وتنبيهات الكثافة (R55: قراءة سريعة وسطر طويل) تحذيرات لا تمنع الحفظ ولا التصدير، بعتبة من التفضيلات أو المعايرة.
+import { isBlankText } from '../model/cue.js';
 import { LIMITS } from '../model/validate.js';
+import { breaksSrtText } from '../srt/lenient.js';
 import { READING_DEFAULTS, densityIssues, readingMetrics } from './density.js';
 
 /**
@@ -22,6 +24,8 @@ export const ISSUE_LIMITS = Object.freeze({ shortMs: 300, largeGapMs: 30000 });
 
 const seconds = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
 const ERRORS = new Set(['ED_END_BEFORE_START', 'ED_NEGATIVE_TIME', 'ED_TIME_FORMAT', 'ED_TIME_RANGE', 'ED_TEXT_INVALID']);
+// تمنع التصدير وحده: لا يُكتب منها SRT يُقرأ بالعدد نفسه (U78: سطر يُقرأ رأسَ مقطع).
+const EXPORT_ONLY = new Set(['ED_OVERLAP', 'ED_TEXT_EMPTY', 'ED_TEXT_BLANK_LINE', 'ED_TEXT_BREAKS_SRT']);
 /** رموز الكثافة: مجموعة «الكثافة» في لوحة المراجعة، منفصلة عن التوقيت والنص. */
 export const DENSITY_CODES = Object.freeze(['ED_READING_FAST', 'ED_LINE_LONG']);
 
@@ -44,7 +48,7 @@ export function findIssues(cues, { drafts, density = null } = {}) {
   }
   const add = (code, index, field = null, params = null) => {
     const error = ERRORS.has(code);
-    const exportOnly = code === 'ED_OVERLAP' || code === 'ED_TEXT_EMPTY' || code === 'ED_TEXT_BLANK_LINE';
+    const exportOnly = EXPORT_ONLY.has(code);
     list.push({
       code, tone: error ? 'error' : 'warning', index, n: cues[index].n, field, params, blocksSave: error, blocksExport: error || exportOnly,
       density: DENSITY_CODES.includes(code),
@@ -63,8 +67,10 @@ export function findIssues(cues, { drafts, density = null } = {}) {
 
     // ما يرفضه مدقق المقطع (isText في النموذج) خطأ هنا، فلا يصل إلى التخزين ليفشل برسالة عامة.
     if (c.text.length > LIMITS.maxTextChars || c.text.includes('\u0000')) add('ED_TEXT_INVALID', i, 'text', { max: LIMITS.maxTextChars });
-    else if (c.text === '') add('ED_TEXT_EMPTY', i, 'text');
+    // الفارغ بصريًا (محارف لا تُرى وحدها) فارغ كما في المقارن والتصدير العربي (تدقيق 7a66f91، U80).
+    else if (isBlankText(c.text)) add('ED_TEXT_EMPTY', i, 'text');
     else if (c.text.split('\n').some((l) => l.trim() === '')) add('ED_TEXT_BLANK_LINE', i, 'text');
+    else if (breaksSrtText(c.text)) add('ED_TEXT_BREAKS_SRT', i, 'text');
 
     const next = cues[i + 1];
     if (broken(c)) continue;

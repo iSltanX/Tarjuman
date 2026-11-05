@@ -34,7 +34,8 @@ test('Windows-1256 وUTF-16 وبايتات UTF-8 غير صالحة: IM_NOT_UTF8 
 
 test('بايت NUL يعني ملفًا ثنائيًا لا نصًا', async () => {
   assert.equal((await code(readFileText(fileOf('1\n\u0000\n')))).code, 'IM_NOT_TEXT');
-  assert.equal((await code(readFileText(fileOf(Buffer.from('1\n2\n', 'utf16le'))))).code, 'IM_NOT_TEXT', 'UTF-16 لاتيني بلا BOM');
+  // UTF-16 بلا BOM ترميز لا ثنائي: رسالته تقول ما يُفعل (تدقيق 7a66f91، U38؛ كان IM_NOT_TEXT).
+  assert.equal((await code(readFileText(fileOf(Buffer.from('1\n2\n', 'utf16le'))))).code, 'IM_NOT_UTF8', 'UTF-16 لاتيني بلا BOM');
 });
 
 test('الحجم يُفحص قبل القراءة: ما فوق الحد لا يُقرأ أصلًا', async () => {

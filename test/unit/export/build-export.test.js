@@ -215,5 +215,7 @@ test('buildArabicExport: يرفض الفراغ والتوقيت الخاطئ و�
   assert.equal(code([{ ...ok[0], extra: 1 }, ok[1]]), 'MD_INVALID');
   assert.equal(code(ok, { videoId: 'x' }), 'TJ_BAD_VIDEO_ID');
   assert.equal(code(ok, { variant: 'x' }), 'MD_INVALID');
-  assert.equal(code([{ ...ok[0], text: 'a\r\nb' }, ok[1]]), 'EX_INVARIANT_FAILED', 'CR داخل النص لا يُعاد تحليله مطابقًا');
+  // CR في طرف سطر يُكتب بما يقرؤه الاستيراد (طرف السطر يُقص، تدقيق 7a66f91، U99)، فلا رفض بل «a» ثم «b».
+  assert.equal(code([{ ...ok[0], text: 'a\r\nb' }, ok[1]]), null);
+  assert.match(buildArabicExport({ videoId: 'iG9CE55wbtY', cues: [{ ...ok[0], text: 'a\r\nb' }, ok[1]] }).text, /^1\n00:00:00,000 --> 00:00:01,000\na\nb\n/);
 });

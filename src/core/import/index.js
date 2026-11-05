@@ -11,11 +11,12 @@ import { MAX_FILES, MAX_FILE_BYTES, readFileText } from './read-file.js';
 import { clip, displayName, toList } from './files.js';
 
 export { MAX_FILES, MAX_FILE_BYTES, mergeParts, selectFingerprint };
-export { applyPatch, cuesKey, partsStatus, readPatch } from './patch.js';
+export { applyPatch, applyPatchDetailed, cuesKey, partsStatus, readPatch } from './patch.js';
 export { REVIEW_THRESHOLDS, classTransitions, reviewIncoming, sameExport, videoIdFromName } from './review.js';
 
 const NAMES_NOTE_CHARS = 300;
-const PART_MARK = /[._ -]?part[._ -]?\d+/i;
+// «part01of02» بنمط أسماء ترجمان كله، لا «part01» وحده فيبقى «of02» في الاسم (تدقيق 7a66f91، U38).
+const PART_MARK = /[._ -]?part[._ -]?\d+(?:of\d+)?/i;
 
 /** اسم الجزء الأول بحسب الأرقام بلا علامة «part N» إن بقي اسم صالح، وإلا كما هو. */
 function mergedFileName(order) {
