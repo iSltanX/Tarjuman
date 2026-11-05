@@ -93,12 +93,14 @@ extractor.convert(key, { mode })     // ConvertResult؛ نسخة مستقلة ك
 extractor.lastRejection()            // { code, at, videoId } | null — ما يخص المستخدم فقط
 extractor.subscribe(fn)              // fn() عند أي تغيّر؛ يعيد دالة إلغاء
 extractor.diagnostics()              // أعداد ورموز فقط، بلا جسم ولا نص ولا رابط
+extractor.setCompleteness(ratio)     // عتبة EX_MAYBE_INCOMPLETE من الإعدادات (0.5..1، وغير الصالح 0.85)؛ المتحكم يمرّرها (تدقيق 7a66f91، U37)
 
 TrackInfo = { key: "en|manual", lang, kind, capturedAt: "ISO", ok, code, warnings: string[], cueCount, completeness, lastEndMs }
 ConvertResult = { ok, code, key, lang, kind, mode: "normal" | "long", cues: Cue[], warnings: string[], report }
 ```
 
 - `mode: "long"` («مقاطع أطول») نفّذته P3 في W3. الوضعان تحت الثوابت نفسها.
+- **تدقيق 7a66f91 (C4):** المتحكم يستدعي `setCompleteness` عند كل إعدادات جديدة (البدء، و`updateSettings`، وتغيّرها من سياق آخر)، و`main.js` بلا تغيير. والتقاط لا يُحوَّل لا يحل محل التقاط سليم للمفتاح نفسه، بل يُعاد `{ accepted: false, code }` ويُسجَّل في `diagnostics().recentRejections` (U32)، إلا فشل الحدود وحده (`EX_BEYOND_DURATION`) فيتبع المدة اللحظية ويحل الأحدث محل السابق كما كان. ومخزن الالتقاط مالك الأجسام، وما يُطرد من الخانات (فوق ثمانية، أو فوق حد إجمالي `MAX_CAPTURED_CHARS` = ضعف حد الرسالة) يُحرَّر منه، والأحدث يبقى دائمًا؛ و`diagnostics().accepted` عدد المحتفظ به (U33). والبيئة تقبل `maxCapturedChars` اختياريًا (للاختبار).
 - `setVideo` متكرر بأمان (المعرّف نفسه لا يفرّغ شيئًا)، والمتحكم يستدعيه قبل `main.js`. والمشتركون يُبلَّغون كلٌّ على حدة، وإخفاقاتهم تُعدّ في `diagnostics().listenerFailures`.
 - لا ترسل وحدة الاستخراج طلبًا ولا تخزّن شيئًا؛ الحفظ عبر `controller.recordExport`.
 - `src/extract/youtube-page.js` و`video-id.js` (من P1) حلّ محلهما `src/player/youtube-dom.js`، ولم يعد سكربت المحتوى يستوردهما؛ لـP3 أن تحذفهما وتقرأ من `youtube-dom` إن احتاجت.
@@ -268,7 +270,7 @@ savedPath(downloadId, { downloads, extensionId }) → Promise<string | null>    
 SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 16777216 }
 ```
 
-- **ثلاثة مسارات بالدالة نفسها:** الصفحات (فيها `chrome.downloads`) تحفظ مباشرة: `Blob` ورابطه ثم `downloads.download`. وسكربت المحتوى (لا يصل إلى `chrome.downloads`) يرسل `tj:save-file` إلى العامل (عقد الرسائل §٧). وعند تعذّر الواجهة أو القناة يرجع إلى `download` القديم (Blob و`<a download>`) و`mode: 'blob'`، ويعرض المستدعي `SV_FALLBACK_BLOB`. وانقضاء مهلة رد العامل لا يرجع إلى Blob (`SV_NO_REPLY`)، والتنزيل الباقي «جاريًا» بعد مهلة الانتظار `pending: true` فيعرض المستدعي `SV_PENDING`.
+- **ثلاثة مسارات بالدالة نفسها:** الصفحات (فيها `chrome.downloads`) تحفظ مباشرة: `Blob` ورابطه ثم `downloads.download`. وسكربت المحتوى (لا يصل إلى `chrome.downloads`) يرسل `tj:save-file` إلى العامل (عقد الرسائل §٧). وعند تعذّر الواجهة أو القناة يرجع إلى `download` القديم (Blob و`<a download>`) و`mode: 'blob'`، ويعرض المستدعي `SV_FALLBACK_BLOB`. وانقضاء مهلة رد العامل أو انغلاق القناة بعد الإرسال لا يرجع إلى Blob (`SV_NO_REPLY`)، والتنزيل الباقي «جاريًا» بعد مهلة الانتظار `pending: true` فيعرض المستدعي `SV_PENDING`. ومتى صدر معرّف التنزيل فلا بديل Blob إلا بفشل يعلنه المتصفح نفسه (`interrupted`)؛ وتعذّر `search` أو غياب العنصر `SV_UNSETTLED`، والرابط يبقى عشر دقائق كالجاري (تدقيق 7a66f91، U34).
 - **الأوضاع** من `prefs.saveLocation` وحدها، يقرؤها `saveFile` في الصفحة أو العامل من التخزين، لا من المستدعي:
 
 | الوضع | `downloads.download` | السلوك |

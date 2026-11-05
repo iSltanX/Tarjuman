@@ -56,7 +56,8 @@ const tryIt = (fn) => { try { const r = fn(); return { ok: true, r: Array.isArra
   let fallback = 0;
   const api = { downloads: { download: async () => 17, search: async () => { throw new Error('synthetic search failure'); } } };
   const store = { getPrefs: async () => ({ saveLocation: { mode: 'downloads' } }), setLastSave: async () => {} };
-  const fakeWin = { URL: { createObjectURL: () => 'blob:x', revokeObjectURL: () => { fakeWin.revoked = (fakeWin.revoked ?? 0) + 1; } }, Blob: class { constructor() {} }, setTimeout };
+  const fakeWin = { URL: { createObjectURL: () => 'blob:x', revokeObjectURL: () => { fakeWin.revoked = (fakeWin.revoked ?? 0) + 1; } }, Blob: class { constructor() {} }, setTimeout: (fn, ms) => setTimeout(fn, ms).unref() };
+  // unref: بعد C4 يبقى الرابط عشر دقائق في حالة «غير محسوم» (U34)، فلا يُبقي المؤقتُ السكربتَ حيًا.
   const doc = { defaultView: fakeWin };
   const r = await saveFile({ name: 'a.srt', text: 'x' }, { api, store, doc, fallback: () => { fallback++; } }).then((v) => ({ resolved: v }), (e) => ({ rejected: e.message }));
   out('S4 page search rejects', { ...r, fallback, blobUrlRevokedImmediately: fakeWin.revoked === 1 });
