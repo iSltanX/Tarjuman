@@ -1,0 +1,289 @@
+{
+  "browser": "Firefox 159.0.1 (Firefox/159.0.1)",
+  "target": "firefox",
+  "at": "2026-11-05T17:08:34.549Z",
+  "headless": true,
+  "video": "iG9CE55wbtY",
+  "extension": null,
+  "checks": [
+    {
+      "id": "install",
+      "ok": true,
+      "detail": {
+        "extension": "tarjuman@bysltan.com",
+        "version": "Firefox/159.0.1"
+      }
+    },
+    {
+      "id": "content-script-mounted",
+      "ok": false,
+      "detail": {
+        "player": false,
+        "mounted": {
+          "overlay": "mounted",
+          "controls": "mounted",
+          "panel": "mounted"
+        },
+        "base": "معروف"
+      }
+    },
+    {
+      "id": "bridge-main-world-wrappers",
+      "ok": true,
+      "detail": {
+        "fetch": true,
+        "xhrOpen": true,
+        "webdriver": true
+      }
+    },
+    {
+      "id": "capture-via-bridge",
+      "ok": false,
+      "detail": {
+        "captured": null,
+        "english": null,
+        "expected": 427
+      }
+    },
+    {
+      "id": "ui-fonts-loaded",
+      "ok": true,
+      "detail": {
+        "fonts": [
+          "Tarjuman UI Cairo:600:loaded",
+          "Tarjuman UI Cairo:700:loaded",
+          "Tarjuman UI Almarai:400:loaded",
+          "Tarjuman UI Almarai:700:loaded"
+        ]
+      }
+    },
+    {
+      "id": "capture-kept-srt-download",
+      "ok": false,
+      "detail": {
+        "english": null,
+        "captured": []
+      }
+    },
+    {
+      "id": "srt-download",
+      "ok": false,
+      "detail": {
+        "error": "لا بند download — why"
+      }
+    },
+    {
+      "id": "capture-kept-copy-instructions",
+      "ok": false,
+      "detail": {
+        "english": null,
+        "captured": []
+      }
+    },
+    {
+      "id": "copy-instructions",
+      "ok": false,
+      "detail": {
+        "error": "لا بند copy — why"
+      }
+    },
+    {
+      "id": "arabic-upload-from-player",
+      "ok": false,
+      "detail": {
+        "chooser": true,
+        "arabic": null,
+        "expected": 427
+      }
+    },
+    {
+      "id": "display-arabic-over-video",
+      "ok": false,
+      "detail": {
+        "ad": {
+          "seen": false,
+          "skipped": 0
+        },
+        "seeks": 1,
+        "at": 62.2295,
+        "cue": 13,
+        "shown": null
+      }
+    },
+    {
+      "id": "subtitle-fonts-read-from-package",
+      "ok": false,
+      "detail": {
+        "fonts": []
+      }
+    },
+    {
+      "id": "timing-plus-minus",
+      "ok": false,
+      "detail": {
+        "before": 0,
+        "plus": null,
+        "back": 0
+      }
+    },
+    {
+      "id": "editor",
+      "ok": false,
+      "detail": {
+        "error": "لم يوجد: نص المقطع الأول"
+      }
+    },
+    {
+      "id": "saved-and-restored-after-reload",
+      "ok": false,
+      "detail": {
+        "arabic": null
+      }
+    },
+    {
+      "id": "backup-created",
+      "ok": false,
+      "detail": {
+        "file": "tarjuman-backup-2026-11-05.json",
+        "counts": {
+          "videos": 0,
+          "translations": 0,
+          "previous": 0,
+          "marks": 0,
+          "settings": true,
+          "prefs": true
+        }
+      }
+    },
+    {
+      "id": "report-preview",
+      "ok": true,
+      "detail": {
+        "rows": {
+          "product": "tarjuman",
+          "kind": "خلل (bug)",
+          "app_version": "1.1.0",
+          "diagnostics.browser · browser_version": "Firefox 159.0.1",
+          "diagnostics.build_target": "firefox",
+          "os · os_version · arch": "macos unknown · arm64",
+          "locale": "ar",
+          "test": "نعم: بناء تطوير"
+        },
+        "payloadKeys": [
+          "product",
+          "app_version",
+          "os",
+          "os_version",
+          "arch",
+          "locale",
+          "kind",
+          "description",
+          "diagnostics",
+          "test"
+        ]
+      }
+    },
+    {
+      "id": "report-copy-offline",
+      "ok": true,
+      "detail": {
+        "same": true,
+        "copiedLength": 327,
+        "jsonLength": 327,
+        "result": "نُسخ البلاغ نصًّا. لم يُرسل شيء."
+      }
+    },
+    {
+      "id": "report-error-row",
+      "ok": true,
+      "detail": {
+        "failed": {
+          "failure": "network",
+          "retry": true,
+          "copy": true,
+          "text": "تعذّر الوصول إلى خادم البلاغات. تحقق من اتصالك ثم أعد المحاولة.أعد المحاولةانسخ البلاغ"
+        },
+        "sent": false,
+        "blockedRequests": 1
+      }
+    },
+    {
+      "id": "youtube-permission-revoke-grant",
+      "ok": true,
+      "detail": {
+        "removed": true,
+        "containsAfterRemove": false,
+        "contentScriptWhileRevoked": false,
+        "granted": true,
+        "contentScriptAfterGrant": true
+      }
+    },
+    {
+      "id": "uninstall-removes-storage",
+      "ok": true,
+      "detail": {
+        "uninstall": {
+          "method": "webExtension.uninstall"
+        },
+        "before": [
+          {
+            "dir": "moz-extension+++58819f5f-4719-46bb-abf6-87f9eba21700^userContextId=4294967295",
+            "bytes": 49365
+          }
+        ],
+        "after": [
+          {
+            "dir": "moz-extension+++58819f5f-4719-46bb-abf6-87f9eba21700^userContextId=4294967295",
+            "bytes": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "reinstall-starts-empty",
+      "ok": true,
+      "detail": {
+        "videoKeys": 0
+      }
+    },
+    {
+      "id": "backup-restore-after-reinstall",
+      "ok": false,
+      "detail": {
+        "chooser": true,
+        "report": "اكتملت الاستعادة.أضيف 0 · تُخطّي 0 · استُبدل 0 · تعذّر 0",
+        "restored": false
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "notes": [
+    "استقرار صفحة يوتيوب: {\"url\":\"/watch?v=iG9CE55wbtY\",\"changes\":1}",
+    "إعلان عند الفتح: {\"seen\":false,\"skipped\":0}",
+    "srt-download: الالتقاط غائب، في المستند نفسه",
+    "أُغلقت نافذة ترويج يوتيوب فوق المشغّل",
+    "copy-instructions: الالتقاط غائب، في المستند نفسه",
+    "الاستعادة في Firefox: الملف يُعطى للحقل بـDataTransfer في الصفحة (BiDi لا يملأ المنتقي في صفحات الإضافة)"
+  ],
+  "screenshots": [
+    "docs/audit-7a66f91/live/C8/t3-firefox/youtube-display.png",
+    "docs/audit-7a66f91/live/C8/t3-firefox/settings-report.png",
+    "docs/audit-7a66f91/live/C8/t3-firefox/settings-restore.png"
+  ],
+  "errors": [
+    {
+      "where": "firefox",
+      "errors": [],
+      "fontReadLogs": 0
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "total": 24,
+    "untested": []
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "browser": "firefox",
+  "startedAt": "2026-11-05T17:06:32.185Z",
+  "version": "Firefox/159.0.1",
+  "checks": [
+    {
+      "id": "dev-build-token",
+      "ok": true,
+      "length": 32
+    },
+    {
+      "id": "install",
+      "ok": true,
+      "version": "Firefox/159.0.1"
+    },
+    {
+      "id": "page-token-from-build",
+      "ok": true
+    },
+    {
+      "id": "bridge-answers-with-session-token",
+      "ok": true,
+      "reply": {
+        "ok": true,
+        "value": true
+      }
+    },
+    {
+      "id": "bridge-state-with-token",
+      "ok": true,
+      "videoId": "iG9CE55wbtY",
+      "mounted": {
+        "overlay": "mounted",
+        "controls": "mounted",
+        "panel": "waiting"
+      }
+    },
+    {
+      "id": "bridge-silent-token-none",
+      "ok": true,
+      "state": {
+        "ok": false,
+        "error": "timeout"
+      },
+      "cueText": {
+        "ok": false,
+        "error": "timeout"
+      }
+    },
+    {
+      "id": "bridge-silent-token-wrong",
+      "ok": true,
+      "state": {
+        "ok": false,
+        "error": "timeout"
+      },
+      "cueText": {
+        "ok": false,
+        "error": "timeout"
+      }
+    },
+    {
+      "id": "bridge-silent-token-empty",
+      "ok": true,
+      "state": {
+        "ok": false,
+        "error": "timeout"
+      },
+      "cueText": {
+        "ok": false,
+        "error": "timeout"
+      }
+    },
+    {
+      "id": "bridge-answers-again-with-token",
+      "ok": true
+    },
+    {
+      "id": "firefox-open-via-bridge-with-token",
+      "ok": true,
+      "base": "moz-extension:"
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "errors": []
+    }
+  ],
+  "measures": {},
+  "notes": [
+    "Firefox: لا getPermissionWarningsByManifest؛ ومخطط بيانه يضع unlimitedStorage في PermissionNoPrompt (docs/contracts/storage.md)"
+  ],
+  "summary": "11/11"
+}

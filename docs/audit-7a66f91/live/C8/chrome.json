@@ -1,0 +1,124 @@
+{
+  "browser": "chrome",
+  "startedAt": "2026-11-05T17:05:23.763Z",
+  "version": "Chrome/156.0.8078.80",
+  "checks": [
+    {
+      "id": "dev-build-token",
+      "ok": true,
+      "length": 32
+    },
+    {
+      "id": "install",
+      "ok": true,
+      "version": "Chrome/156.0.8078.80"
+    },
+    {
+      "id": "page-token-from-build",
+      "ok": true
+    },
+    {
+      "id": "bridge-answers-with-session-token",
+      "ok": true,
+      "reply": {
+        "ok": true,
+        "value": true
+      }
+    },
+    {
+      "id": "bridge-state-with-token",
+      "ok": true,
+      "videoId": "iG9CE55wbtY",
+      "mounted": {
+        "overlay": "mounted",
+        "controls": "mounted",
+        "panel": "waiting"
+      }
+    },
+    {
+      "id": "bridge-silent-token-none",
+      "ok": true,
+      "state": {
+        "ok": false,
+        "error": "timeout"
+      },
+      "cueText": {
+        "ok": false,
+        "error": "timeout"
+      }
+    },
+    {
+      "id": "bridge-silent-token-wrong",
+      "ok": true,
+      "state": {
+        "ok": false,
+        "error": "timeout"
+      },
+      "cueText": {
+        "ok": false,
+        "error": "timeout"
+      }
+    },
+    {
+      "id": "bridge-silent-token-empty",
+      "ok": true,
+      "state": {
+        "ok": false,
+        "error": "timeout"
+      },
+      "cueText": {
+        "ok": false,
+        "error": "timeout"
+      }
+    },
+    {
+      "id": "bridge-answers-again-with-token",
+      "ok": true
+    },
+    {
+      "id": "unlimitedStorage-adds-no-warning",
+      "ok": true,
+      "approved": [
+        "قراءة بياناتك وتغييرها في www.youtube.com",
+        "إدارة عمليات التنزيل"
+      ],
+      "withoutUnlimited": [
+        "قراءة بياناتك وتغييرها في www.youtube.com",
+        "إدارة عمليات التنزيل"
+      ]
+    },
+    {
+      "id": "tabs-control-adds-warning",
+      "ok": true,
+      "withTabs": 3,
+      "approved": 2
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "errors": []
+    }
+  ],
+  "measures": {
+    "warnings": {
+      "approved": [
+        "قراءة بياناتك وتغييرها في www.youtube.com",
+        "إدارة عمليات التنزيل"
+      ],
+      "withoutUnlimited": [
+        "قراءة بياناتك وتغييرها في www.youtube.com",
+        "إدارة عمليات التنزيل"
+      ],
+      "storageOnly": [
+        "قراءة بياناتك وتغييرها في www.youtube.com"
+      ],
+      "withTabs": [
+        "قراءة بياناتك وتغييرها في www.youtube.com",
+        "قراءة سجل التصفح التابع لك",
+        "إدارة عمليات التنزيل"
+      ]
+    }
+  },
+  "notes": [],
+  "summary": "12/12"
+}

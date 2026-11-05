@@ -60,6 +60,7 @@
 **القرار (Q5):** `unlimitedStorage` مع `chrome.storage.local`، لا IndexedDB:
 
 - **لا تحذير تثبيت — ثبت حيًا** في Brave 1.98.60 وChrome 156 بـ`chrome.management.getPermissionWarningsByManifest` (لا يحتاج إذن `management`): تحذيرات البيان بـ`["storage", "unlimitedStorage"]` تساوي تحذيراته بـ`["storage"]` وحده (تحذير سكربتي المحتوى على www.youtube.com فقط)، بينما يضيف `tabs` تحذيرًا (ضابط). الأدلة: [`docs/evidence/P2/`](../evidence/P2/README.md).
+  - **وEdge وBrave وChrome 156** (تدقيق 7a66f91، C8، DS-D-05، `test/live/audit-c8/run.mjs`، النتائج في `docs/audit-7a66f91/live/C8/`): بالواجهة نفسها على البيان المعتمد، التحذيرات بـ`unlimitedStorage` تساوي التحذيرات بدونه (يوتيوب والتنزيلات وحدهما)، و`tabs` ضابط يضيف تحذيرًا.
   - **وFirefox** (تدقيق 7a66f91، C8، DS-D-05): مخطط بيان Firefox يضع `unlimitedStorage` مع `storage` و`alarms` في `PermissionNoPrompt`، وهي الأذونات التي لا تُعرض في نافذة التثبيت (مخططات `addons-linter` 10.14.0 المضمّنة في `web-ext` المقفول). لم تُشاهَد نافذة تثبيت من AMO بعد.
 - IndexedDB في أصل الإضافة لا يصل إليه سكربت المحتوى إلا برسائل إلى صفحة أو عامل خلفي، والمواصفة لا تريد عاملًا خلفيًا دون حاجة مثبتة؛ و`unlimitedStorage` يرفع الحد عن `chrome.storage.local` نفسه.
 
