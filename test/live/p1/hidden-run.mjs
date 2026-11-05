@@ -10,7 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PROFILE_ROOT, sleep } from '../harness/browser.mjs';
-import { randomPositions } from './positions.mjs';
+import { randomPositions } from '../../helpers/positions.mjs';
 import { unpackedIdOf } from './ext-id.mjs';
 import { findSecrets, sanitizeDeep } from '../../../src/core/diagnostics/sanitize.js';
 

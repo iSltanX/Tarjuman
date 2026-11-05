@@ -22,6 +22,7 @@ import { messageFor } from '../../../src/core/errors/index.js';
 import { REPORTS_HOST_PATTERN } from '../../../src/core/report/client.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
+import { makeStep } from '../../helpers/live-step.mjs';
 import { BROWSERS, PROFILE_ROOT, human, launch, loadExtension, sleep } from '../harness/browser.mjs';
 import { collectErrors, openTab } from '../harness/extension.mjs';
 import { FP_SHIFT, IDS, STUDY, arabicForNewTiming, buildReviewSeed, englishAt } from './seed.mjs';
@@ -48,13 +49,8 @@ const observe = (id, value) => {
   result.observations[id] = value;
   console.log(`• ${id} — ${JSON.stringify(value)}`);
 };
-async function step(name, fn) {
-  try {
-    await fn();
-  } catch (err) {
-    check(name, false, { error: String(err?.message ?? err).replace(/https?:\/\/\S+/g, '[رابط]').slice(0, 300) });
-  }
-}
+// الخطوة وفحوصها المتوقعة (U69): كل فحص لم يُنفّذ بسبب استثناء يُسجَّل باسمه فاشلًا (test/helpers/live-step.mjs).
+const step = makeStep(result, check);
 
 function appVersion(bin) {
   try {
@@ -250,7 +246,7 @@ async function deletions(A, B) {
     await sleep(1000);
     const final = await bundleOf(A, id);
     check('delete-active-after-refresh', !!title2 && JSON.stringify(filled(final)) === '[true,false,true]', { dialog2: !!title2, filled: filled(final), active: final?.active });
-  });
+  }, ['delete-active-stale', 'delete-active-after-refresh']);
 
   await step('delete-card-stale', async () => {
     const id = IDS.card;
@@ -315,7 +311,7 @@ async function deletions(A, B) {
     await sleep(1000);
     const gone = await getKeys(A, [`video:${id}`, `bundle:${id}`]);
     check('delete-all-after-refresh', Object.keys(gone).length === 0, { keysLeft: Object.keys(gone) });
-  });
+  }, ['delete-all-stale', 'delete-all-after-refresh']);
 }
 
 // ---- ٢) النص الدراسي ----
@@ -388,7 +384,7 @@ async function fingerprint(A, oldId) {
     const ar = after?.arabic;
     check('fingerprint-upload-no-false-drift', ar?.fingerprintId === fresh?.id && ar?.comparison?.matched === true && (ar?.comparison?.drift?.length ?? -1) === 0,
       { fingerprintId: ar?.fingerprintId === fresh?.id ? 'الجديدة' : ar?.fingerprintId === oldId ? 'القديمة' : ar?.fingerprintId ?? null, matched: ar?.comparison?.matched ?? null, drift: ar?.comparison?.drift?.length ?? null, dialog: dialogText?.slice(0, 200) });
-  });
+  }, ['fingerprint-new-timing-saved', 'fingerprint-upload-no-false-drift']);
 }
 
 // ---- ٤) «الإبلاغ عن مشكلة» بخادم محاكى ----
@@ -490,7 +486,7 @@ async function report() {
     check('report-next-report-new-key', !!r4 && keyOf(r4) !== keyOf(r1) && !!second, { newKey: !!r4 && keyOf(r4) !== keyOf(r1), shown9002: !!second });
     observe('report-requests', { paused: paused.length, allIntercepted: true, note: 'كل طلب إلى مضيف البلاغات أُوقف ورُدّ عليه من الحزام؛ لم يُتابَع أي طلب إلى الشبكة' });
     await st.send('Fetch.disable').catch(() => {});
-  });
+  }, ['report-focus-keyboard-retry', 'report-same-key-across-retries', 'report-copy-id-failure-visible', 'report-copy-id-success', 'report-next-report-new-key']);
 }
 
 try {

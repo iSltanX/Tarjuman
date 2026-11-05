@@ -66,13 +66,27 @@ test('byIndex للصفوف، والقائمة مرتبة بالموضع، وكل
   for (const i of r.list) assert.ok(hasCode(i.code), i.code);
 });
 
-test('الأداء: 50,000 مقطع تُفحص بسرعة تكفي لكل تعديل', () => {
-  const cues = makeCues(50000);
-  const t = performance.now();
-  const r = findIssues(cues);
-  const ms = performance.now() - t;
-  assert.equal(r.list.length, 0);
-  assert.ok(ms < 200, `${ms.toFixed(1)}ms`);
+test('الأداء: الفحص خطّي، و50,000 مقطع تُفحص بسرعة تكفي لكل تعديل', () => {
+  // عتبة نسبية (تدقيق 7a66f91، U68): كانت 200ms مطلقة فسقطت 3/3 تحت حمل المعالج (300–411ms) وهي 5ms خاملة. والنسبة بين
+  // 50,000 و10,000 مقطع تحت الحمل نفسه نحو 5 للخطي ونحو 25 للتربيعي، وأفضل خمس قراءات تُسقط تقطّع الجدولة. والحد المطلق سخي
+  // يكشف الانهيار وحده.
+  const best = (cues) => {
+    let min = Infinity;
+    for (let i = 0; i < 5; i++) {
+      const t = performance.now();
+      const r = findIssues(cues);
+      min = Math.min(min, performance.now() - t);
+      assert.equal(r.list.length, 0);
+    }
+    return min;
+  };
+  const small = makeCues(10000);
+  const large = makeCues(50000);
+  best(small); // إحماء المترجم الفوري
+  const a = best(small);
+  const b = best(large);
+  assert.ok(b / Math.max(a, 0.05) < 15, `النسبة ${(b / Math.max(a, 0.05)).toFixed(1)} (${a.toFixed(2)}ms ← ${b.toFixed(2)}ms)`);
+  assert.ok(b < 2000, `${b.toFixed(1)}ms`);
 });
 
 test('نص لا يقبله التخزين (أطول من الحد أو فيه NUL) خطأ يمنع الحفظ قبل أن يفشل التخزين برسالة عامة (مراجعة)', () => {

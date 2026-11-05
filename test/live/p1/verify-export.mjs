@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { findSecrets, sanitizeDeep } from '../../../src/core/diagnostics/sanitize.js';
 import { convertTrack } from '../../../src/core/convert/index.js';
 import { parseSrtStrict } from '../../../src/core/srt/parser.js';
-import { judgePosition } from './positions.mjs';
+import { judgePosition } from '../../helpers/positions.mjs';
 import { sha256 } from '../harness/netlog.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');

@@ -14,7 +14,7 @@ import {
   waitForPlayer, playerInfo, clickCC, ccPressed, ensureCC, seekAndRead, relatedIds, clickRelated,
   currentUrlVideoId, dismissConsent, revealControls, toggleCC, pressCaptionKey,
 } from '../harness/youtube.mjs';
-import { randomPositions, judgePosition } from './positions.mjs';
+import { randomPositions, judgePosition } from '../../helpers/positions.mjs';
 import { parseSrtStrict } from '../../../src/core/srt/parser.js';
 import { findSecrets, sanitizeDeep } from '../../../src/core/diagnostics/sanitize.js';
 

@@ -1,7 +1,7 @@
-// اختبار منطق مطابقة المواضع في الحزام الحي (بلا متصفح).
+// اختبار منطق مطابقة المواضع في الحزام الحي (بلا متصفح)، من مساعده خارج test/live (تدقيق 7a66f91، U103).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomPositions, judgePosition } from '../../live/p1/positions.mjs';
+import { randomPositions, judgePosition } from '../../helpers/positions.mjs';
 
 test('randomPositions: عشرة أزمنة موزعة ومستقرة بالبذرة', () => {
   const a = randomPositions(600, 42);

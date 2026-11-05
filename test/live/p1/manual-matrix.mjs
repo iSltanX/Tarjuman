@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { randomPositions } from './positions.mjs';
+import { randomPositions } from '../../helpers/positions.mjs';
 import { findSecrets, sanitizeDeep } from '../../../src/core/diagnostics/sanitize.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');

@@ -1,12 +1,13 @@
 // محاكاة chrome.storage.local بواجهة StorageArea نفسها (src/core/store/area.js)، ومحاكاة دنيا لـchrome
-// للصفحات والمحتوى. الحجم يُقاس كما في Chrome: طول المفتاح + طول JSON للقيمة. onChanged يصل في مهمة
+// للصفحات والمحتوى. الحجم يُقاس كما في Chrome: بايتات المفتاح + بايتات JSON للقيمة بترميز UTF-8 (تدقيق 7a66f91، U104: كان
+// بوحدات UTF-16 فيقلّ حجم العربية إلى النصف في اختبارات الحصة؛ وValueStore في Chromium يحسب طول السلسلة المرمّزة). onChanged يصل في مهمة
 // لاحقة كما في المتصفح؛ flush() ينتظره.
 
 const clone = (v) => (v === undefined ? undefined : structuredClone(v));
 /** نسخة بمفاتيح الكائنات مرتبة أبجديًا كما يعيدها chrome.storage في Chromium (base::Value::Dict). */
 const sorted = (v) => (Array.isArray(v) ? v.map(sorted) : v && typeof v === 'object'
   ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sorted(v[k])])) : v);
-const sizeOf = (key, value) => key.length + JSON.stringify(value).length;
+const sizeOf = (key, value) => Buffer.byteLength(key, 'utf8') + Buffer.byteLength(JSON.stringify(value), 'utf8');
 
 /**
  * @param {{ quotaBytes?: number, unlimited?: boolean, initial?: Record<string, unknown>, eventsBeforeResolve?: boolean, chromiumKeyOrder?: boolean }} [opts]
