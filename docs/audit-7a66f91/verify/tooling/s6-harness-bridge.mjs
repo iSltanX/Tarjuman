@@ -23,7 +23,14 @@ const ask = async (op, args = [], source = win) => {
   for (const fn of listeners) await fn({ source, origin: 'https://www.youtube.com', data: { source: 'tarjuman-harness', op, args, id: 'page-script' } });
   return received[0] ?? null;
 };
-const st = await ask('state');
+// بعد C8 (U65): الجسر لا يجيب بلا رمز جلسة الحزام. فالطلب من «الصفحة» بلا رمز لا رد له؛ ويُطبع ذلك ثم يُكمل السكربت بالرمز.
+const noToken = await ask('state');
+console.log('state بلا رمز (سكربت الصفحة) →', noToken === null ? 'لا رد' : JSON.stringify(noToken.data.value.arabic));
+if (noToken === null) {
+  console.log('الجسر يشترط رمز الجلسة (U65)، فلا تُقرأ النصوص من الصفحة. انتهى.');
+  process.exit(0);
+}
+const st = noToken;
 console.log('state →', JSON.stringify(st.data.value.arabic), 'target:', st.target);
 const all = [];
 for (let n = 1; n <= st.data.value.arabic.count; n++) all.push((await ask('cueText', [n])).data.value);

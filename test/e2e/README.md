@@ -60,10 +60,10 @@ command node scripts/run-tests.mjs test/e2e/regression test/e2e/static
 | `ask.mjs` | مؤتمتة **أمامية** | «اسأل عن مكان الحفظ» مرتين، وسلطان يضغط «حفظ» في حوار النظام. |
 | `journey.mjs` | مؤتمتة | بقية الرحلة على الملف نفسه بترجمات حقيقية طويلة، ومراجعة الواجهة ولقطاتها، وفي Chrome `--restore-from` نسخة Brave. `--reset` يعيد لقطة ما بعد الجلسة اليدوية. |
 | `rollback.mjs` | مؤتمتة | دخان W6 اختبارًا دائمًا: `tj-v1` ← الثاني ← `tj-v1` يقرأ ويكتب ← الثاني يصالح دون فقد. |
-| `surfaces.mjs` | مؤتمتة | دخان W7 اختبارًا دائمًا: الأسطح الثلاثة عبر التخزين الحقيقي حتى الاستعادة في ملف تعريف جديد. |
+| `surfaces.mjs` | مؤتمتة، **مستبدَل** | كان دخان W7 الدائم: الأسطح الثلاثة عبر التخزين الحقيقي حتى الاستعادة في ملف تعريف جديد. انجرف بعد إعادة تصميم الهوية (25/36)، والبديل `test/live/identity/run.mjs` و`test/live/stores/t3.mjs` (تدقيق 7a66f91، U67). |
 | `assemble.mjs` | — | تجميع ترجمة النموذج: النص منه، والأرقام والتوقيت من الأصل حرفيًا. |
 
-الترتيب في كل متصفح: `upgrade` ← `hand` ← `ask` ← `journey` (وفي Chrome بعد Brave: `--restore-from`) ← `rollback` و`surfaces`. والملفات المتغيرة في `~/Library/Application Support/Tarjuman-test/p15-work/`.
+الترتيب في كل متصفح: `upgrade` ← `hand` ← `ask` ← `journey` (وفي Chrome بعد Brave: `--restore-from`) ← `rollback` (و`surfaces` في P15، وهو اليوم مستبدَل). والملفات المتغيرة في `~/Library/Application Support/Tarjuman-test/p15-work/`.
 
 العيّنات الحقيقية الجديدة في `fixtures/` (بإذن سلطان في P15، وبالطريقة نفسها):
 

@@ -22,6 +22,12 @@ for (const url of ['/dashboard/data/state.js', '/api/state.json', '/CLAUDE.md', 
   const h = r.h || {};
   console.log(`${url} → ${r.code} ${h['content-type'] ?? ''} | CORP:${h['cross-origin-resource-policy'] ?? '—'} ACAO:${h['access-control-allow-origin'] ?? '—'} | ${r.body.length} بايت`);
 }
-const js = (await call('/dashboard/data/state.js', xsite)).body;
+const r0 = await call('/dashboard/data/state.js', xsite);
+// بعد C8 (U66): المضيف الأجنبي والطلب العابر مرفوضان، فلا حالة تُقرأ.
+if (r0.code !== 200) {
+  console.log(`state.js للطلب الأجنبي → ${r0.code} «${r0.body}»: لا مسارات تُقرأ (U66). انتهى.`);
+  process.exit(0);
+}
+const js = r0.body;
 const st = JSON.parse(js.slice('window.TJ_STATE = '.length, -2));
 console.log('source keys:', Object.keys(st.source ?? {}).join(','), '| root:', st.source?.root, '| isGit:', st.source?.isGit);

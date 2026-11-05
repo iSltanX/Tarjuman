@@ -111,7 +111,7 @@
 - افحص في Firefox: الجسر، والتنزيل من `data:`، وقراءة الخطوط، ومنح إذن يوتيوب وسحبه، والنسخ إلى الحافظة.
 - قِس محو البيانات عند الإزالة في الأربعة.
 - جلسة الاستخراج اليدوية عندي: جهّزها بأقل خطوات واطلبها مرة واحدة.
-- في Chrome وBrave شغّل أيضًا `test/e2e/static` و`test/e2e/regression` و`surfaces.mjs` و`rollback.mjs`.
+- في Chrome وBrave شغّل أيضًا `test/e2e/static` و`test/e2e/regression` و`surfaces.mjs` و`rollback.mjs`. (وبعد تدقيق 7a66f91 صار `surfaces.mjs` مستبدَلًا بـ`test/live/identity/run.mjs`، U67.)
 - أصلح ما يفشل بأصغر تغيير. وإن تعذّر الاستخراج في Firefox فتوقف واعرض السبب والخيارات.
 - الانتهاء: جدول نتائج في `docs/evidence/T3/` بإصدار كل متصفح.
 

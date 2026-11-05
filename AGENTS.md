@@ -1,6 +1,6 @@
 # ترجمان — تعليمات وكلاء التدقيق (Codex وGemini)
 
-ترجمان إضافة Chrome وBrave للحاسوب تعمل على يوتيوب: تستخرج الترجمة الإنجليزية إلى SRT، ويترجمها المستخدم بنموذج خارجي، ثم تعرض الملف العربي فوق الفيديو مع ضبط التوقيت والتحرير والحفظ لكل فيديو. **كل المعالجة والحفظ محليان.** الإصدار الثاني (`1.0.0`) موسوم `tj-v2`، ثم دُمجت جولة صقل الواجهات على `main` بعده.
+ترجمان إضافة للحاسوب لمتصفحات Chrome وEdge وBrave وFirefox تعمل على يوتيوب: تستخرج الترجمة الإنجليزية إلى SRT، ويترجمها المستخدم بنموذج خارجي، ثم تعرض الملف العربي فوق الفيديو مع ضبط التوقيت والتحرير والحفظ لكل فيديو. **المعالجة والحفظ محليان**، ولا يخرج شيء من الجهاز إلا ما يعلنه [`PRIVACY.md`](PRIVACY.md): صور الفيديو في المحفوظات من خوادم يوتيوب (ولها مفتاح يطفئها)، والبلاغ الذي يرسله المستخدم بنفسه. الإصدار الثاني (`1.0.0`) موسوم `tj-v2`، ثم دُمجت بعده جولات الواجهات والهوية على `main`. وجولة النشر للمتاجر على الفرع `tj/store-release` ([`docs/store-release.md`](docs/store-release.md))، ورقم إصدارها في `src/manifest.json`.
 
 ## المهمة: تدقيق قراءة فقط
 
@@ -14,7 +14,8 @@
 1. [`CLAUDE.md`](CLAUDE.md): الحالة والقواعد الثابتة.
 2. [`docs/delivery/runbook.md`](docs/delivery/runbook.md): الأدوار والفحوص.
 3. [`docs/product-spec.md`](docs/product-spec.md): النطاق والقرارات، والعقود في [`docs/contracts/`](docs/contracts/).
-4. [`docs/ui-polish.md`](docs/ui-polish.md) و[`docs/ui-redesign.md`](docs/ui-redesign.md): الواجهات بعد الإصدار الأول.
+4. [`docs/ui-polish.md`](docs/ui-polish.md) و[`docs/ui-redesign.md`](docs/ui-redesign.md) و[`docs/identity-v3.md`](docs/identity-v3.md): الواجهات بعد الإصدار الأول.
+   وعلى فرع النشر: [`docs/store-release.md`](docs/store-release.md) و[`store/README.md`](store/README.md)، وخطة إصلاح تدقيق `7a66f91` في [`docs/audit-7a66f91/`](docs/audit-7a66f91/README.md).
 5. [`docs/known-limitations.md`](docs/known-limitations.md) والملاحظات المسجّلة في [`docs/waves/W8.md`](docs/waves/W8.md): معروفة، فلا تُبلَّغ خللًا جديدًا إلا بدليل يتجاوزها.
 
 ## الفحوص المحلية (بلا شبكة ولا متصفح)
@@ -30,14 +31,22 @@ command node scripts/run-tests.mjs test/e2e/static test/e2e/regression
 ```
 
 ```bash
-command node scripts/release/audit.mjs release/tarjuman-1.0.0
+command npm run package
 ```
 
-`check:wave` يبني في `dist/` (متجاهَل). والحزمة `release/tarjuman-1.0.0` مبنية من `5fedcb9` (بعد جولة الصقل)، لا من الوسم `tj-v2` (`5ea5bdf`، قبلها)، وملف `release/tarjuman-1.0.0.json` يذكر التزامها وبصمات ملفاتها.
+```bash
+command node scripts/release/audit.mjs "release/tarjuman-$(command node -p "require('./src/manifest.json').version")"
+```
+
+- `check:wave` يبني في `dist/` و`dist-firefox/` (متجاهَلان).
+- `npm run package` يفحص المصدر بـ`check-static` أولًا، ثم يبني ويدقق. ولا يكتب شيئًا إن فشل أحدهما.
+- ناتجه حزمة التثبيت الشخصي في `release/tarjuman-<الإصدار>/` مع أرشيفها وملف `.json`. وفي الملف الالتزام وحال الشجرة (`null` بلا Git) وبيئة البناء وبصمة كل ملف.
+- وناتجه أيضًا حزم المتاجر الأربع في `release/store/`، وبصماتها في `release/store/SHA256SUMS`، ووصفها في `-store.json`.
+- بصمة كل أرشيف تتبع مكتبة zlib المربوطة بـNode. فبيئة أخرى تعطي أرشيفًا آخر بالملفات نفسها بايتًا، وضمان إعادة الإنتاج بصمات الملفات. وتفصيله في `store/README.md`.
 
 ## مجالات التدقيق المقترحة
 
-- **الخصوصية والأمان:** لا اتصال خارجي، والأذونات المعتمدة وحدها (`storage` و`unlimitedStorage` و`downloads`)، والتنزيلات في `src/core/save` (صفحات الإضافة مباشرة) والعامل الخلفي (لسكربت المحتوى) وحدهما، محصورة في `download` و`search({ id })` (عقد interfaces §١٣)، ولا HTML نصي ولا تقييم شيفرة، والتشخيص بلا نصوص ولا روابط.
+- **الخصوصية والأمان:** لا اتصال خارجي إلا الاستثناءين المعلنين في `PRIVACY.md` (صور المحفوظات من `i.ytimg.com`، والبلاغ الاختياري بإذن مضيف اختياري لخادمه وحده)، والأذونات المعتمدة وحدها (`storage` و`unlimitedStorage` و`downloads`)، والتنزيلات في `src/core/save` (صفحات الإضافة مباشرة) والعامل الخلفي (لسكربت المحتوى) وحدهما، محصورة في `download` و`search({ id })` (عقد interfaces §١٣)، ولا HTML نصي ولا تقييم شيفرة، والتشخيص بلا نصوص ولا روابط.
 - **سلامة البيانات:** التخزين والترحيل، والرجوع إلى `tj-v1` دون فقد، والنسخ الاحتياطي والاستعادة، وحماية الاستبدال والتعارض بين تبويبين.
 - **الصحة:** الاستخراج والتصدير، والاستيراد والمقارنة والمحاذاة، والمزامنة والإزاحة، والمحرّر.
 - **الواجهة:** RTL والنص المختلط، والوصول (أسماء الوصول والتركيز ولوحة المفاتيح)، والوضعان الفاتح والداكن.
