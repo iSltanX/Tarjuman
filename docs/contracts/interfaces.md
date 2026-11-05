@@ -272,7 +272,7 @@ saveFile(file: { name, text, mime? }, deps?) → Promise<{ ok: true, mode: 'down
 validateSaveFile(file, { maxChars }) → { ok: true } | { ok: false, code: 'SV_BAD_FILE' | 'SV_TOO_LARGE' }
 downloadTarget(saveLocation, name) → { filename, saveAs? }
 savedPath(downloadId, { downloads, extensionId }) → Promise<string | null>     // المكان الفعلي لملف نزّله ترجمان (byExtensionId === extensionId)
-SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 16777216 }
+SAVE_LIMITS = { maxNameChars: 150, maxPageBytes: 536870912, maxMessageChars: 16777216 }   // C7، U55: الصفحات بالبايت (كان maxPageChars: 268435456 وحدة)
 ```
 
 - **ثلاثة مسارات بالدالة نفسها:** الصفحات (فيها `chrome.downloads`) تحفظ مباشرة: `Blob` ورابطه ثم `downloads.download`. وسكربت المحتوى (لا يصل إلى `chrome.downloads`) يرسل `tj:save-file` إلى العامل (عقد الرسائل §٧). وعند تعذّر الواجهة أو القناة يرجع إلى `download` القديم (Blob و`<a download>`) و`mode: 'blob'`، ويعرض المستدعي `SV_FALLBACK_BLOB`. وانقضاء مهلة رد العامل أو انغلاق القناة بعد الإرسال لا يرجع إلى Blob (`SV_NO_REPLY`)، والتنزيل الباقي «جاريًا» بعد مهلة الانتظار `pending: true` فيعرض المستدعي `SV_PENDING`. ومتى صدر معرّف التنزيل فلا بديل Blob إلا بفشل يعلنه المتصفح نفسه (`interrupted`)؛ وتعذّر `search` أو غياب العنصر `SV_UNSETTLED`، والرابط يبقى عشر دقائق كالجاري (تدقيق 7a66f91، U34).
@@ -285,7 +285,7 @@ SAVE_LIMITS = { maxNameChars: 150, maxPageChars: 268435456, maxMessageChars: 167
 | `ask` | `{ filename: name, saveAs: true }` | حوار الحفظ من النظام عند كل تنزيل؛ والإلغاء `SV_CANCELLED`. |
 
   ودائمًا `conflictAction: 'uniquify'`: **لا كتابة فوق ملف قائم**. وسلوك كل وضع في كل متصفح كما ثبت حيًا في «ما ثبت حيًا» أدناه.
-- **التحقق قبل التنزيل:** الاسم 1..150 محرفًا من الحروف (ومنها العربية) والأرقام و`. _ -` والمسافة، بلا فواصل مسار ولا `..` ولا محارف تحكم، ولا يبدأ بنقطة ولا مسافة (ويبدأ بـ`_` أو `-` كما يبدأ معرّف يوتيوب؛ تدقيق 5fedcb9)؛ وامتداده `.srt` أو `.txt` أو `.md` أو `.json`؛ والنوع من الامتداد لا من المستدعي؛ والحجم حتى `maxMessageChars` عبر العامل و`maxPageChars` من الصفحات. وإلا `SV_BAD_FILE` أو `SV_TOO_LARGE` بلا تنزيل.
+- **التحقق قبل التنزيل:** الاسم 1..150 محرفًا من الحروف (ومنها العربية) والأرقام و`. _ -` والمسافة، بلا فواصل مسار ولا `..` ولا محارف تحكم، ولا يبدأ بنقطة ولا مسافة (ويبدأ بـ`_` أو `-` كما يبدأ معرّف يوتيوب؛ تدقيق 5fedcb9)؛ وامتداده `.srt` أو `.txt` أو `.md` أو `.json`؛ والنوع من الامتداد لا من المستدعي؛ والحجم حتى `maxMessageChars` عبر العامل، و`maxPageBytes` **بالبايت الفعلي** (`utf8Length`) من الصفحات، وهو حد قراءة النسخة الاحتياطية نفسه (عقد [`backup.md`](backup.md) §١؛ تدقيق 7a66f91، U55، قرار Q28). وإلا `SV_BAD_FILE` أو `SV_TOO_LARGE` بلا تنزيل.
 - **العامل الخلفي** `src/background/worker.js` (`background.service_worker` في البيان) **للحفظ وحده**: `createSaveService({ runtime, downloads, store })` في `save-service.js` يستمع لـ`tj:save-file`، ويقبلها من سكربت الإضافة وحده (`sender.id` ثم سكربت محتوى على يوتيوب أو صفحة إضافة)، ويقرأ الوضع من التفضيلات، ويتحقق من الملف، ويحفظ النص في رابط `data:` (لا `URL.createObjectURL` في العامل)، ويسجّل المعرّف بـ`store.setLastSave`. لا منطق آخر فيه.
 - **الإذن محصور في ملفات ترجمان** (اعتماد سلطان 2026-11-02)، ويفرضه `check-static`:
   - `chrome.downloads` في `src/core/save/**` و`src/background/**` وحدهما.
@@ -321,7 +321,7 @@ jumpToVideo({ videoId, ms }, { tabs, windows }) → Promise<{ ok: true, via: 'op
 seekMainVideo(ms, { doc }) → boolean          // video.currentTime = ms / 1000 وحده
 ```
 
-- **بلا إذن `tabs` ولا `host_permissions`:** `tabs.query({})` ثم طلب حالة الفيديو (`tj:get-video-state`) من كل تبويب؛ وحده تبويب يوتيوب فيه سكربت ترجمان يرد بمعرّفه، فيُعرف تبويب الفيديو المفتوح دون قراءة عنوانه. عند التعدد: الأحدث استعمالًا (`lastAccessed`)، ثم النشط.
+- **بلا إذن `tabs` ولا `host_permissions`:** `tabs.query({})` ثم طلب **معرّف الفيديو وحده** (`tj:get-video-id`، عقد الرسائل §٧؛ تدقيق 7a66f91، U102: كان رد الحالة الكامل بالعنوان واسم الملف وأسماء الخانات) من كل تبويب؛ وحده تبويب يوتيوب فيه سكربت ترجمان يرد بمعرّفه، فيُعرف تبويب الفيديو المفتوح دون قراءة عنوانه. والتبويبات المهملة (`discarded`) خارج السؤال، والحد `MAX_TABS` (200) على **الأحدث استعمالًا** لا على أول ما يعيده المتصفح (كان الفيديو في التبويب 203 يُفتح مكررًا). عند التعدد: الأحدث استعمالًا (`lastAccessed`)، ثم النشط.
 - **التبويب المفتوح:** `tabs.update(id, { active: true })` و`windows.update(windowId, { focused: true })` ثم `tj:seek`؛ ورفضه يعيد رمزه.
 - **لا تبويب:** `tabs.create({ url: watchUrl(videoId, { atMs: ms }) })` (`&t=<ثوانٍ>s`)، و`via: 'new'`.
 - معالج الرسائل في سكربت المحتوى يقبل `tj:seek` بشروط عقد الرسائل §٧، ويغيّر الزمن بـ`seekMainVideo` وحدها.
@@ -340,6 +340,13 @@ seekMainVideo(ms, { doc }) → boolean          // video.currentTime = ms / 1000
 | `seek.js` | `jumpToVideo` (§١٤) | P10 |
 
 - أصناف CSS بالبادئة `tj-` في `components.css`. والتوقيعات كما في الشيفرة، ومعرضها `src/ui/gallery/` (بناء التطوير).
+- **تدقيق 7a66f91، C7 (الوصول والتركيز):**
+  - `createToaster().show(text, tone, { action?, announce?, focusAfter? })`: الرسالة تثبت ما دام المؤشر أو التركيز فيها وتعيد مهلتها كاملة بعد مغادرتهما (WCAG 2.2.1)، و`announce` نص الإعلان إن خالف المرئي، و`focusAfter` وجهة التركيز إن زالت الرسالة وفيها التركيز (ضغطة «تراجع» أو إزاحتها برابعة) بدل body (U58).
+  - `createMenu`: عنوان المجموعة (`{ kind: 'group' }`) عنصر `role="group"` باسمه يضم بنود مجموعته حتى الفاصل التالي، والعنوان المرئي `aria-hidden` (كان `role="presentation"` فلا يصل). و`closeMenuWithin(container)` يغلق القائمة المفتوحة داخل حاوية تُعاد بناؤها فلا يبقى مستمعها على المستند (U58).
+  - `confirmDialog`: `aria-labelledby` إلى العنوان، و`aria-describedby` إلى النص أو المحتوى إن لم يكن نص (U51).
+  - `button({ disabledReason })`: السبب في عنصر `aria-hidden` يشير إليه `aria-describedby`، فلا يدخل اسم الزر المحسوب من محتواه (U91؛ ومثله `setDisabled` في المحرّر). والخاصية `value` والسمة معًا.
+  - `formatBytes`: الصفر «0 ك.ب»، وما فوق 1024 م.ب «غ.ب» (U59).
+  - الشريط العلوي تحت 400px بلا أيقونتي الرابطين وبحشوات أضيق، وتحت 360px يلتف (U86، WCAG 1.4.10).
 - `slotPicker` يأخذ `SlotModel[]` من `slotModels(bundle)` أو `state.slots`، والفارغة معطّلة في الاختيار وتصلح هدفًا في حوار الرفع وحده.
 
 ## ١٦. واجهات الربط للإصدار الثاني (مثبتة قبل W6)

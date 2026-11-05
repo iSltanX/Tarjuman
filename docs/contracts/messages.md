@@ -32,7 +32,7 @@ chrome.tabs.sendMessage(tabId, { type: "tj:get-video-state", v: 1 })   // videoS
 ```
 
 - سكربت المحتوى يرد **فقط** إن كان المرسِل صفحة من الإضافة نفسها (`sender.id === chrome.runtime.id` وعنوانه يبدأ بـ`chrome.runtime.getURL("")`) والطلب بالنوع والإصدار (`isExtensionPage` و`isVideoStateRequest`)؛ وما عدا ذلك يُتجاهل بلا رد.
-- النافذة تتحقق من الرد (`isVideoStateReply`) قبل عرضه. **لا رد** (رفض «Receiving end does not exist» أو تبويب ليس يوتيوب أو نسخة أقدم) يعني «افتح فيديو على يوتيوب» (`TJ_NOT_YOUTUBE`).
+- النافذة تتحقق من الرد (`isVideoStateReply`) قبل عرضه. **لا رد** (رفض «Receiving end does not exist»، أو تبويب ليس يوتيوب، أو نسخة أقدم، أو لا رد في المهلة) يُميَّز بعنوان التبويب حين يكشفه المتصفح (تدقيق 7a66f91، Q31؛ `queryPopupState`): صفحة على `https://www.youtube.com/` بلا رد صالح «أعد تحميلها» (`TJ_RELOAD_PAGE`: فُتحت قبل التثبيت أو التحديث، وChromium لا يحقن سكربتات البيان في التبويبات المفتوحة)، وغير يوتيوب «افتح فيديو على يوتيوب»، وبلا عنوان مكشوف الاحتمالان في جملة (`TJ_OPEN_OR_RELOAD`). وفي Chromium لا يُكشف العنوان بأذونات البيان (عقد الواجهات §١٤)، فالجملة الجامعة هي ما يظهر فيه. ولا إذن جديد.
 - `chrome.tabs.query({ active: true, lastFocusedWindow: true })` و`chrome.tabs.sendMessage` و`chrome.tabs.create` لا تحتاج إذن `tabs`.
 - `mounted` حالة نقطتي التركيب للتشخيص والدخان الحي (عقد الواجهات §٣).
 - **ثبت حيًا في P2** في Brave وChrome: نافذة الأيقونة وجدت تبويب يوتيوب النشط وتلقت الرد بالمعرّف و`mounted: stub`.
@@ -88,6 +88,15 @@ chrome.tabs.sendMessage(tabId, { type: "tj:seek", v: 1, videoId: "iG9CE55wbtY", 
 - يُقبل من **صفحات الإضافة وحدها** (`isExtensionPage`)، و`videoId` **يساوي الفيديو المعروض** في المتحكم (`state.videoId`)، و`ms` عدد صحيح من 0 إلى `LIMITS.maxTimeMs` (`isSeekRequest`). وإلا يُرفض برمز ولا يتغير شيء.
 - **لا يتغير إلا الزمن:** `video.currentTime = ms / 1000` عبر `seekMainVideo` في `youtube-dom`، دون تشغيل ولا إيقاف ولا تغيير إعداد. لا يُقبل أي أمر آخر من الصفحات.
 - أداة الصفحات `jumpToVideo` (عقد الواجهات §١٤) تجد التبويب أو تفتحه.
+
+### معرّف الفيديو وحده للقفز (تدقيق 7a66f91، U102) — الصفحات → سكربت المحتوى
+
+```js
+chrome.tabs.sendMessage(tabId, { type: "tj:get-video-id", v: 1 })   // videoIdRequest()
+// الرد: { v: 1, ok: true, videoId: string | null }                  // isVideoIdReply
+```
+
+- بشروط القبول نفسها (صفحات الإضافة وحدها)، ولا يحمل الرد غير المعرّف: `jumpToVideo` كانت تطلب رد الحالة الكامل (العنوان واسم الملف وأسماء الخانات) من كل تبويب وهي تحتاج المعرّف وحده. والرد لا يغادر الإضافة في الحالين.
 
 ### الحفظ عبر العامل الخلفي (R65) — سكربت المحتوى → العامل
 
