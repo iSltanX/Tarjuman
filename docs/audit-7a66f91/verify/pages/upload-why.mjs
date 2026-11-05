@@ -1,5 +1,5 @@
 // TJ-AUD-017b: حوار الرفع بمرجعين: سطر #…-why (aria-describedby للقائمة) لا يتحدث بتغيير المرجع، بينما تنبيه المقارنة يتحدث.
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { createStore } = await import(`${T}/src/core/store/index.js`);
 const { createLibrary } = await import(`${T}/src/pages/library/view.js`);
 const { writeSrt } = await import(`${T}/src/core/srt/writer.js`);

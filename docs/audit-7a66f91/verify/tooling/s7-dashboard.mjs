@@ -3,7 +3,8 @@
 import http from 'node:http';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-const root = process.argv[2];
+import { TJ_ROOT } from '../_root.mjs';
+const root = process.argv[2] ?? TJ_ROOT;
 let handler = null;
 const orig = http.createServer;
 http.createServer = (cb) => { handler = cb; return { on() {}, listen() {} }; };

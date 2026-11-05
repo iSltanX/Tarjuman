@@ -5,8 +5,8 @@ import { cpSync, rmSync, writeFileSync, appendFileSync, existsSync, readFileSync
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 
-const TJ = '$SCRATCH/tj';
-const G = path.join(path.dirname(new URL(import.meta.url).pathname), 'g');
+import { TJ_ROOT as TJ, TJ_SCRATCH } from '../../verify/_root.mjs';
+const G = path.join(TJ_SCRATCH, 'verify-ds-security', 'g');
 rmSync(G, { recursive: true, force: true });
 mkdirSync(G, { recursive: true });
 

@@ -1,6 +1,6 @@
 // تحقق مستقل (TJ-39): منقّي التشخيص وتقريرا التشخيص بمدخلات اصطناعية. لا متصفح ولا شبكة.
 // تشغيل: command node v2-sanitize.mjs
-const TJ = '$SCRATCH/tj';
+import { TJ_ROOT as TJ } from '../../verify/_root.mjs';
 const { sanitizeText } = await import(`${TJ}/src/core/diagnostics/sanitize.js`);
 const { createDiagnosticReport } = await import(`${TJ}/src/core/diagnostics/report.js`);
 const { pageReport } = await import(`${TJ}/src/pages/popup/status.js`);

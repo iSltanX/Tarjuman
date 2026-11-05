@@ -1,5 +1,6 @@
 // أدوات مشتركة لتحقق بنود DeepSeek في مجال التخزين. تستورد المصدر وأدوات الاختبار من النسخة المعزولة بمسارات مطلقة (قراءة فقط).
-export const TJ = '$SCRATCH/tj';
+import { TJ_ROOT } from '../../verify/_root.mjs';
+export const TJ = TJ_ROOT;
 export const load = (rel) => import(`${TJ}/${rel}`);
 export const out = (scenario, obj) => console.log(JSON.stringify({ scenario, ...obj }));
 /** يمرّر عدة مهام setTimeout حتى تنتهي سلاسل الوعود وإعادة القراءة. */

@@ -1,5 +1,5 @@
 // PLY-05: exportStudy الحقيقي من المحفوظات بإزاحة 0 ثم +2s وبـ−2s، والمحرّر يستعمل studyTiming+buildStudyText نفسيهما.
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { exportStudy } = await import(`${T}/src/pages/library/actions.js`);
 const { videoRecord } = await import(`${T}/test/helpers/fixtures.js`);
 const cues = [

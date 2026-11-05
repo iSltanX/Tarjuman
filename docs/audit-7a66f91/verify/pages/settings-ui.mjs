@@ -1,6 +1,6 @@
 // الإعدادات: TJ-AUD-017a (stepCustom بعد استعادة الافتراضي)، وTJ-DES-001 (استعادة «العرض» لا تشمل prefs.ui)، وL-4 (زرّا
 // «استعادة الافتراضي» في التصدير)، وL-1 (كتابة #display عند التحميل)، وTJ-AUD-020 (التركيز بعد حذف مصطلح)، وL-6 (formatBytes).
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { createStore } = await import(`${T}/src/core/store/index.js`);
 const { createSettings } = await import(`${T}/src/pages/settings/view.js`);
 const { formatBytes } = await import(`${T}/src/ui/format.js`);

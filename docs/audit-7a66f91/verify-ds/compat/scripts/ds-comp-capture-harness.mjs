@@ -1,11 +1,23 @@
 // COMP: سد فجوة اختبار: main-world/capture.js لا يحمّله أي اختبار وحدة. هذا الحزام يشغّل الحزمة المبنية الحقيقية
 // (dist/main-world/capture.js، IIFE) في سياق vm بنافذة مصطنعة، ويتحقق من: تمرير طلب الصفحة كما هو، وشكل الرسالة
 // مقابل validateCaptureMessage الحقيقية، وفروع XHR (''/json/arraybuffer/blob)، وتجاهل غير timedtext، والجسم الكبير.
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
-import { validateCaptureMessage } from '$SCRATCH/verify-ds/compat/tj3/src/extract/message.js';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { TJ_ROOT, TJ_SCRATCH } from '../../../verify/_root.mjs';
+const { validateCaptureMessage } = await import(pathToFileURL(path.join(TJ_ROOT, 'src/extract/message.js')).href);
 
-const code = readFileSync('$SCRATCH/verify-ds/compat/tj3/dist/main-world/capture.js', 'utf8');
+// dist/ مجلد بناء غير متتبَّع: إن غاب في TJ_ROOT بُني (غير معبأ، chromium) في مجلد TJ_SCRATCH دون مسّ الجذر.
+let capture = path.join(TJ_ROOT, 'dist/main-world/capture.js');
+if (!existsSync(capture)) {
+  const out = path.join(TJ_SCRATCH, 'verify-ds-compat', 'dist');
+  const r = spawnSync(process.execPath, [path.join(TJ_ROOT, 'scripts/build.mjs'), '--out', out], { cwd: TJ_ROOT, encoding: 'utf8' });
+  if (r.status !== 0) throw new Error(`فشل البناء: ${r.stderr}`);
+  capture = path.join(out, 'main-world/capture.js');
+}
+const code = readFileSync(capture, 'utf8');
 const posted = [];
 const fetchCalls = [];
 class FakeXHR {

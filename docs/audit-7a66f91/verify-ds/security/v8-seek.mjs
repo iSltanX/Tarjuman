@@ -1,7 +1,7 @@
 // تحقق مستقل (DS-I3 = SEC-08): jumpToVideo بواجهة tabs وهمية؛ كم تبويبًا يُسأل، وما الرسالة، وما يحمله الرد الحقيقي
 // (buildVideoStateReply) من حقول لا يحتاجها القفز. بلا متصفح.
 // تشغيل: command node v8-seek.mjs
-const TJ = '$SCRATCH/tj';
+import { TJ_ROOT as TJ } from '../../verify/_root.mjs';
 const { jumpToVideo, MAX_TABS } = await import(`${TJ}/src/ui/seek.js`);
 const { buildVideoStateReply } = await import(`${TJ}/src/core/model/messages.js`);
 

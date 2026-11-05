@@ -2,7 +2,8 @@
 // لا متصفح ولا شبكة: محاكاة التخزين في الذاكرة وDOM وهمي من أدوات المشروع نفسها.
 import { pathToFileURL } from 'node:url';
 
-export const T = '$SCRATCH/tj';
+import { TJ_ROOT } from '../../verify/_root.mjs';
+export const T = TJ_ROOT;
 export const load = (rel) => import(pathToFileURL(`${T}/${rel}`).href);
 
 export const { createStore } = await load('src/core/store/index.js');

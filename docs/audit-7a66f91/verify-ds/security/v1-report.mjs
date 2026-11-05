@@ -1,7 +1,7 @@
 // تحقق مستقل (TJ-37، TJ-40، H-01): لوحة البلاغ الحقيقية بـDOM الاختبارات الوهمي وبيئة وهمية (لا شبكة ولا إذن حقيقي)،
 // وفاحص الأسرار كما تستعمله اللوحة، وعميل البلاغ بطلب وهمي يلتقط init. لا طلب شبكي ولا خادم.
 // تشغيل: command node v1-report.mjs
-const TJ = '$SCRATCH/tj';
+import { TJ_ROOT as TJ } from '../../verify/_root.mjs';
 const { reportPanel } = await import(`${TJ}/src/pages/settings/report.js`);
 const { findSecrets } = await import(`${TJ}/src/core/diagnostics/sanitize.js`);
 const { sendReport, classify, parseRetryAfter, retryable } = await import(`${TJ}/src/core/report/client.js`);

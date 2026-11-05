@@ -1,5 +1,5 @@
 // S2 وS3 (المستخرج)، وS4 (مسارا الحفظ)، وS8 (ترقيم Firefox بنموذج مطابق لـext-downloads.js 159.0.1). بلا شبكة ولا متصفح.
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { createExtractor } = await import(`${T}/src/extract/index.js`);
 const { saveFile, savedPath } = await import(`${T}/src/core/save/index.js`);
 const { createSaveService } = await import(`${T}/src/background/save-service.js`);

@@ -19,7 +19,43 @@
    | `<repo>` | جذر المستودع. |
    | `<reports>` | مجلد التقارير المحلي لدى سلطان، خارج المستودع. |
    | `<snapshot>` | اللقطة المصدَّرة التي دقّق عليها Codex وGemini وDeepSeek. |
-   | `$SCRATCH` و`$TMP` | مجلد المسودة المؤقت للتحقق، وفيه نسخة `git archive` معزولة من `7a66f91`. |
+   | `$SCRATCH` و`$TMP` | مجلد المسودة المؤقت للتحقق، وفيه نسخة `git archive` معزولة من `7a66f91`. في النصوص الوصفية و`*.out` فقط؛ في السكربتات صار `TJ_SCRATCH` للكتابة و`TJ_ROOT` للشيفرة المفحوصة. |
+
+## تشغيل الأدلة
+
+السكربتات تحسب مساراتها بنفسها من وحدة واحدة هي [`verify/_root.mjs`](verify/_root.mjs)، ولا مسار مطلق فيها:
+
+- **`TJ_ROOT`:** جذر الشيفرة المفحوصة. الافتراضي جذر هذا المستودع، فتعمل السكربتات على الشيفرة الحالية.
+- **`TJ_SCRATCH`:** مجلد المخرجات والنسخ المؤقتة (`v4-guards` و`v5-serve` و`v7-capture` و`04b-dump-srt` وبناء `ds-comp-capture-harness`). الافتراضي `tj-audit-verify` داخل `os.tmpdir()`، ولا كتابة داخل المستودع.
+
+**على الشيفرة الحالية** (من جذر المستودع، وفي هذا الجهاز `command node`):
+
+```
+command node docs/audit-7a66f91/verify/storage/sto01.mjs
+python3 -I docs/audit-7a66f91/verify/engines/00-p1-evidence-scan.py docs/evidence
+```
+
+الشيفرة الحالية تتغيّر، فاختلاف النتيجة عن `*.out` ليس فشلًا؛ المهم أن يُحمَّل السكربت وينتهي بلا خطأ مسار أو استيراد.
+
+**على الالتزام الأصلي `7a66f91`** لإعادة إنتاج الأدلة المحفوظة:
+
+```
+DIR=$(mktemp -d)
+git archive 7a66f91 | tar -x -C "$DIR"
+ln -s "$PWD/node_modules" "$DIR/node_modules"   # لـ m1-toast-font وبناء esbuild
+TJ_ROOT="$DIR" command node docs/audit-7a66f91/verify/storage/sto01.mjs
+```
+
+وما عدا القياسات الزمنية والأختام الزمنية والأرقام العشوائية، تطابق المخرجات المحفوظة.
+
+**استثناءات في المعاملات:**
+- `verify/tooling/s018a-secrets-scope.mjs` و`s019a-links.mjs` و`verify-ds/compat/scripts/dsl1-links.mjs` و`verify/tooling/l21-compare.mjs` و`verify-ds/compat/scripts/bcd-query.mjs` و`verify/engines/00-p1-evidence-scan.py` تأخذ مدخلاتها معاملات سطر أوامر (جذر النسخة وقوائم الملفات)، كما في سطر الاستعمال أعلى كل منها.
+- `verify-ds/security/v7-capture.mjs` يقرأ ما كتبه `v4-guards.mjs` في `TJ_SCRATCH`، فيُشغَّل بعده.
+- `verify-ds/compat/scripts/ds-comp-capture-harness.mjs` يبني `dist` غير المعبأ في `TJ_SCRATCH` إن غاب من `TJ_ROOT`.
+
+**لا يفتح أي سكربت متصفحًا ولا يستعمل الشبكة**، فلا شيء منها يحتاج تشغيلًا حيًا بإذن. أي تحقق حي مذكور في `02-verification.md` (Firefox وChrome الحيّان) لم تُكتب له سكربتات هنا، ويُشغَّل بإذن سلطان وفق دليل التشغيل.
+
+## الملفات والحصيلة
 
 | الملف | ما فيه |
 | --- | --- |

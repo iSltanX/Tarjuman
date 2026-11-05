@@ -1,7 +1,7 @@
 // تكملة TJ-37 (ج): صيغ نسخ واقعية للكوكيز من أدوات المطوّر أو إضافات تصدير الكوكيز (قيم اصطناعية)، بفاحص اللوحة نفسه
 // (findSecrets بتجاهل url)، ومن يستعمل الفاحص المشترك نفسه. بلا متصفح.
 // تشغيل: command node v1b-secrets.mjs
-const TJ = '$SCRATCH/tj';
+import { TJ_ROOT as TJ } from '../../verify/_root.mjs';
 const { findSecrets, sanitizeText } = await import(`${TJ}/src/core/diagnostics/sanitize.js`);
 const v = 'AbCdEfGhIjKlMnOp/QrStUvWxYz0123456';
 const samples = {

@@ -3,7 +3,8 @@
 // (أ) مكتبة فارغة بلا getBytesInUse: هل تسقط المحفوظات أيضًا؟
 // (ب) getBytesInUse موجودة لكنها ترفض للمفاتيح المحددة (فشل عابر لـbundleBytes وحده، في أي متصفح): هل يختفي التوسيع كله؟
 // (ج) الحالة نفسها في سطر «الترجمات والنسخ السابقة» في الإعدادات: هل تُمحى الأعداد أيضًا؟
-const T = new URL('../tj3/', import.meta.url).pathname;
+import { TJ_ROOT } from '../../../verify/_root.mjs';
+const T = `${TJ_ROOT}/`;
 const { chromeLocalArea } = await import(`${T}src/core/store/area.js`);
 const { createStore } = await import(`${T}src/core/store/index.js`);
 const { createLibrary } = await import(`${T}src/pages/library/view.js`);

@@ -1,6 +1,6 @@
 // إحصاءات العيّنتين الحقيقيتين (قراءة فقط): أزمنة سالبة/كسرية/صفرية، وتداخل الأحداث، وتكرار الذيل والصدر.
 import { readFileSync } from 'node:fs';
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { parseJson3, dedupeExact, sortEvents } = await import(`${T}/src/core/convert/json3.js`);
 const { splitWords } = await import(`${T}/src/core/convert/text.js`);
 for (const f of ['manual-ted-iG9CE55wbtY.json', 'asr-nwc-Y9rkKtK1b44.json']) {

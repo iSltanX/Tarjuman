@@ -2,7 +2,8 @@
 // ويقرأ الردود. البيانات اصطناعية. لا متصفح ولا شبكة. الاستعمال: command node s6-harness-bridge.mjs <جذر النسخة>
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-const root = process.argv[2];
+import { TJ_ROOT } from '../_root.mjs';
+const root = process.argv[2] ?? TJ_ROOT;
 const listeners = [];
 const received = [];
 const win = {

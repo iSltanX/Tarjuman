@@ -2,7 +2,7 @@
 // التوسيع، وبعد «عرض المزيد»، وحين يصل تحديث تخزين من سياق آخر والقائمة «المزيد» مفتوحة أو حقل التسمية مفتوح.
 // الـDOM الوهمي لا يعيد activeElement إلى body حين تُفصل العقدة المركّزة (المتصفح يفعل)، فالمقياس: هل activeElement
 // متصل بالمستند؟ وإن لم يكن فالمتصفح الحقيقي يضعه على body.
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { createStore } = await import(`${T}/src/core/store/index.js`);
 const { createLibrary } = await import(`${T}/src/pages/library/view.js`);
 const { createMemoryArea } = await import(`${T}/test/helpers/chrome-storage.js`);

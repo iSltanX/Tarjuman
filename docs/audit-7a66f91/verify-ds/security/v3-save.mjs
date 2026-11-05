@@ -1,7 +1,7 @@
 // تحقق مستقل (TJ-38 وDS-S6): validateSaveFile وisValidFolderName وdownloadTarget، وهل تصل أسماء المنتج إلى المحجوز.
 // دوال خالصة، بلا متصفح ولا تنزيل.
 // تشغيل: command node v3-save.mjs
-const TJ = '$SCRATCH/tj';
+import { TJ_ROOT as TJ } from '../../verify/_root.mjs';
 const { validateSaveFile, downloadTarget, SAVE_LIMITS } = await import(`${TJ}/src/core/save/index.js`);
 const { isValidFolderName } = await import(`${TJ}/src/core/model/prefs.js`);
 const { fileName } = await import(`${TJ}/src/core/export/names.js`);

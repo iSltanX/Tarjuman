@@ -1,7 +1,7 @@
 // S1 وTJ-AUD-008b: موافقة صور المحفوظات في Firefox تُقرأ عند load وعند تغيّر prefs وحدهما. نسحبها (permissions.getAll بلا
 // browsingActivity) دون أي كتابة في التخزين، ثم نضغط «عرض المزيد» أو نبحث أو نفرز، ونعدّ عناوين i.ytimg.com الجديدة.
 // وفي الإعدادات: هل يُعاد فحص الموافقة عند تغيّر prefs من تبويب آخر؟
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { createStore } = await import(`${T}/src/core/store/index.js`);
 const { createLibrary } = await import(`${T}/src/pages/library/view.js`);
 const { createSettings } = await import(`${T}/src/pages/settings/view.js`);

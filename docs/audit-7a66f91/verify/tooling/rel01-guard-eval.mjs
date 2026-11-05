@@ -1,7 +1,8 @@
 // يقيّم شرط الحارس في scripts/build.mjs:27-28 (منسوخًا حرفيًا) على مسارات مرشّحة، دون تشغيل البناء ولا الحذف.
 import path from 'node:path';
 import os from 'node:os';
-const ROOT = '<repo>';
+import { TJ_ROOT } from '../_root.mjs';
+const ROOT = TJ_ROOT;
 const SRC = path.join(ROOT, 'src');
 const inside = (child, parent) => !path.relative(parent, child).startsWith('..') && !path.isAbsolute(path.relative(parent, child));
 const refused = (OUT) => inside(ROOT, OUT) || inside(OUT, SRC);

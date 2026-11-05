@@ -1,4 +1,4 @@
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { createExtractor } = await import(`${T}/src/extract/index.js`);
 const VID = 'AAAAAAAAAAA';
 const body = (segs) => JSON.stringify({ events: [{ tStartMs: 0, dDurationMs: 1000, segs }] });

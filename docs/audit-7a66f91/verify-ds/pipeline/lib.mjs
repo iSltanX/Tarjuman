@@ -1,6 +1,7 @@
 // أدوات مشتركة لسكربتات التحقق من بنود DeepSeek (مجال pipeline). كلها تستورد الوحدات الحقيقية من النسخة المعزولة.
 import { readFileSync } from 'node:fs';
-export const T = '$SCRATCH/tj';
+import { TJ_ROOT } from '../../verify/_root.mjs';
+export const T = TJ_ROOT;
 export const mod = (p) => import(`${T}/src/${p}`);
 export const fixture = (p) => readFileSync(`${T}/test/fixtures/${p}`, 'utf8');
 export const TED = () => JSON.parse(fixture('json3/manual-ted-iG9CE55wbtY.json'));

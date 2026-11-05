@@ -1,6 +1,6 @@
 // P-1 وL-5: Firefox 140–143 بلا storage.local.getBytesInUse (وبلا getKeys قبل 143). يمرّ عبر chromeLocalArea الحقيقي
 // بمحاكاة chrome.storage.local تُحذف منها الدالتان، ثم يركّب المحفوظات والإعدادات والتوسيع والتشخيص على DOM وهمي.
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { chromeLocalArea } = await import(`${T}/src/core/store/area.js`);
 const { createStore } = await import(`${T}/src/core/store/index.js`);
 const { createLibrary } = await import(`${T}/src/pages/library/view.js`);

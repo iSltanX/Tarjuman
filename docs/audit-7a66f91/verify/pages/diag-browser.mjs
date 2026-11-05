@@ -1,6 +1,6 @@
 // S5 / TJ-AUD-006 / L-23: اسم المتصفح في تقريري النسخ (الإعدادات ونافذة الأيقونة) مقابل تشخيص البلاغ. وP-5: withoutIds
 // تُسقط المعرّف بالمفتاح وحده، فقيمة حرة فيها معرّف صالح تبقى (مع البحث عن مسار حقيقي يكتبها).
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { detectBrowser } = await import(`${T}/src/pages/settings/diagnostics.js`);
 const { browserLabel, pageReport } = await import(`${T}/src/pages/popup/status.js`);
 const { collectDiagnostics } = await import(`${T}/src/core/report/diagnostics.js`);

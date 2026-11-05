@@ -1,7 +1,7 @@
 // تحقق مستقل (DS-I1 = SEC-03): الجسر الحقيقي بنافذة وهمية، والمستخرج الحقيقي، ورسالة التقاط مزيفة من «شيفرة الصفحة».
 // ثم ذاكرة الانتظار: كم تحتفظ وإلى متى. بيانات اصطناعية، بلا متصفح.
 // تشغيل: command node v6-bridge.mjs
-const TJ = '$SCRATCH/tj';
+import { TJ_ROOT as TJ } from '../../verify/_root.mjs';
 const { installBridge } = await import(`${TJ}/src/content/bridge.js`);
 const { createExtractor } = await import(`${TJ}/src/extract/index.js`);
 const { createPendingBuffer } = await import(`${TJ}/src/extract/pending.js`);

@@ -2,7 +2,8 @@
 // (1) بايتات القراءة واستدعاءات get(null) لكل listLibrary، مع getKeys ودونها.
 // (2) التضخيم: صفحة المحفوظات مفتوحة على البديل، وسياق آخر (المشغّل) يكتب خمس نقرات ± بفاصل 300 م.ث:
 //     كم مرة تُقرأ المساحة كلها؟
-const T = new URL('../tj3/', import.meta.url).pathname;
+import { TJ_ROOT } from '../../../verify/_root.mjs';
+const T = `${TJ_ROOT}/`;
 const { chromeLocalArea } = await import(`${T}src/core/store/area.js`);
 const { createStore } = await import(`${T}src/core/store/index.js`);
 const { createLibrary } = await import(`${T}src/pages/library/view.js`);

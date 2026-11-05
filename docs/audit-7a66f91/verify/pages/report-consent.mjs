@@ -1,6 +1,6 @@
 // TJ-AUD-008a: في Firefox هل يُرسل البلاغ دون موافقة technicalAndInteraction؟ نمرّ بالمسار الحقيقي: requestReportPermission
 // (الطلب يضم origins وdata_collection) ثم sendReport بـhostGranted (يفحص المضيف وحده)، مع fetch وهمي يعدّ الطلبات.
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { reportPanel } = await import(`${T}/src/pages/settings/report.js`);
 const { requestReportPermission, sendReport, hostGranted } = await import(`${T}/src/core/report/client.js`);
 const { newDocument, settle, buttonNamed } = await import(`${T}/test/unit/pages/library/fake-dom.js`);

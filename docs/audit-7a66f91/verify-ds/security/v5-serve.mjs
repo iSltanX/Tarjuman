@@ -5,9 +5,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 
-const TJ = '$SCRATCH/tj';
+import { TJ_ROOT as TJ, TJ_SCRATCH } from '../../verify/_root.mjs';
 const { serve } = await import(`${TJ}/tools/plan/lib/serve.mjs`);
-const HERE = path.dirname(new URL(import.meta.url).pathname);
+const HERE = path.join(TJ_SCRATCH, 'verify-ds-security');
+fs.mkdirSync(HERE, { recursive: true });
 const root = path.join(HERE, 'serve-root');
 const outside = path.join(HERE, 'serve-outside.txt');
 fs.rmSync(root, { recursive: true, force: true });

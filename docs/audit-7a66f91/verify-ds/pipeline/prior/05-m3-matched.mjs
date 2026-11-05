@@ -1,6 +1,6 @@
 // M-3: ترجمة من النموذج على عيّنة TED الحقيقية فيها دمج 10+11 وشطر 20 ثم إعادة ترقيم (العدد 427 كما هو).
 import { readFileSync } from 'node:fs';
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../../../verify/_root.mjs';
 const { convertTrack } = await import(`${T}/src/core/convert/index.js`);
 const { buildExport } = await import(`${T}/src/core/export/index.js`);
 const { compare, trackComparison } = await import(`${T}/src/core/compare/index.js`);

@@ -1,5 +1,5 @@
 // S8 بسيناريو شائع: «امسح التاريخ عند إغلاق Firefox» يفرغ سجل التنزيلات، فيبدأ العدّاد من 1 في الجلسة التالية.
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { savedPath } = await import(`${T}/src/core/save/index.js`);
 const { createStore } = await import(`${T}/src/core/store/index.js`);
 const { createMemoryArea } = await import(`${T}/test/helpers/chrome-storage.js`);

@@ -2,7 +2,8 @@
 // الاستعمال: command node s025b-timing.mjs <جذر النسخة>
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-const root = process.argv[2];
+import { TJ_ROOT } from '../_root.mjs';
+const root = process.argv[2] ?? TJ_ROOT;
 const { createEditSession } = await import(pathToFileURL(path.join(root, 'src/core/edit/index.js')));
 const { makeCues } = await import(pathToFileURL(path.join(root, 'test/helpers/fixtures.js')));
 const s = createEditSession({ cues: makeCues(50000) });

@@ -1,6 +1,6 @@
 // بطارية المحوّل: TJ-AUD-009، TJ-AUD-010a/b (وE-10)، TJ-AUD-011/H-3، P-3، P-4، M-9.
 import { readFileSync } from 'node:fs';
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../../../verify/_root.mjs';
 const { convertTrack } = await import(`${T}/src/core/convert/index.js`);
 const { buildExport } = await import(`${T}/src/core/export/index.js`);
 const fails = (r) => r.invariants?.results.filter((x) => !x.ok).map((x) => `${x.id}:${x.key}:${x.detail}`) ?? [];

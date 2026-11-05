@@ -1,6 +1,6 @@
 // M-15 (اسم حوار التأكيد)، وL-19 (هل القائمة المشار إليها بـaria-controls موجودة في الشجرة؟)، وM-16 (مهلة «تراجع» وموضعه)،
 // وTJ-AUD-020 (زر «إظهاره» في نافذة الأيقونة)، وL-7 (نصوص العدد).
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { confirmDialog } = await import(`${T}/src/ui/components.js`);
 const { createMenu } = await import(`${T}/src/ui/menu.js`);
 const { createToaster, TOAST_MS } = await import(`${T}/src/ui/toast.js`);

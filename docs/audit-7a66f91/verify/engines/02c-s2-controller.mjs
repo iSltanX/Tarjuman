@@ -1,5 +1,5 @@
 // S2: أثر الالتقاط المعيب على المتحكم الحقيقي (الحالة لا تُحدَّث ونداءات المتحكم ترمي).
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { createExtractor } = await import(`${T}/src/extract/index.js`);
 const { createController } = await import(`${T}/src/content/controller.js`);
 const { createStore } = await import(`${T}/src/core/store/index.js`);

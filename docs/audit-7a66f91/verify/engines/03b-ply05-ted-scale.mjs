@@ -1,6 +1,6 @@
 // PLY-05 على عيّنة TED الحقيقية: كم سطرًا إنجليزيًا ينتقل إلى فقرة أخرى عند إزاحات شائعة.
 import { readFileSync } from 'node:fs';
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { convertTrack } = await import(`${T}/src/core/convert/index.js`);
 const { buildStudyText, studyTiming } = await import(`${T}/src/core/export/index.js`);
 const en = convertTrack({ body: readFileSync(`${T}/test/fixtures/json3/manual-ted-iG9CE55wbtY.json`, 'utf8'), trackKind: 'manual', durationMs: 1203421 }).cues;

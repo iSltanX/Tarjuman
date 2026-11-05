@@ -5,7 +5,8 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-const HERE = path.dirname(new URL(import.meta.url).pathname);
+import { TJ_SCRATCH } from '../../verify/_root.mjs';
+const HERE = path.join(TJ_SCRATCH, 'verify-ds-security');
 const code = readFileSync(path.join(HERE, 'g', 'dist-chromium', 'main-world', 'capture.js'), 'utf8');
 const posted = [];
 const calls = [];

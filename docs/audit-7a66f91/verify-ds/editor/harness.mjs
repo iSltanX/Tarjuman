@@ -1,6 +1,7 @@
 // حزمة تحقق مستقلة: تركيب المحرّر (7a66f91) كاملًا فوق التخزين الحقيقي بمحاكاة chrome.storage والـDOM الوهمي من
 // مساعدات الاختبار في النسخة المعزولة. لا متصفح ولا شبكة. تستورد المصدر بمسارات مطلقة للقراءة فقط.
-export const ROOT = '$SCRATCH/tj';
+import { TJ_ROOT } from '../../verify/_root.mjs';
+export const ROOT = TJ_ROOT;
 export const { createStore } = await import(`${ROOT}/src/core/store/index.js`);
 export const { mountEditor } = await import(`${ROOT}/src/pages/editor/app.js`);
 export const { createMemoryArea } = await import(`${ROOT}/test/helpers/chrome-storage.js`);

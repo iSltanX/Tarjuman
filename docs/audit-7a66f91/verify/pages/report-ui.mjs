@@ -1,6 +1,6 @@
 // نموذج البلاغ: UI-03 (ابن dl المباشر p قبل التشخيص أو عند فشله)، وTJ-AUD-016 (عقدة role=alert/status تُبنى من جديد مع
 // كل ضغطة في الوصف)، وL-20 («انسخ البلاغ» أثناء الإرسال: يبدو مفعّلًا ولا يفعل شيئًا، والزران بمؤشر انشغال).
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { reportPanel } = await import(`${T}/src/pages/settings/report.js`);
 const { newDocument, settle, textOf, buttonNamed } = await import(`${T}/test/unit/pages/library/fake-dom.js`);
 

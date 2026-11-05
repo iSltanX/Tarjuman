@@ -1,5 +1,5 @@
 // TJ-AUD-012، L-9، L-10، L-11 (المحلّل المتسامح)، وE-9 (الترميز)، وL-8 (اسم الملف المدمج)، ودورة تصدير→استيراد لنص فيه «-->».
-const T = '$SCRATCH/tj';
+import { TJ_ROOT as T } from '../_root.mjs';
 const { parseSrtLenient } = await import(`${T}/src/core/srt/lenient.js`);
 const { readImport } = await import(`${T}/src/core/import/index.js`);
 const { readFileText } = await import(`${T}/src/core/import/read-file.js`);
