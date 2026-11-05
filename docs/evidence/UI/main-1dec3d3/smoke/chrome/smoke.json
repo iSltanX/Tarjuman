@@ -169,16 +169,16 @@
     "pages": []
   },
   "screenshots": [
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/popup-no-arabic-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/popup-no-arabic-dark.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/library-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/library-dark.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/settings-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/settings-dark.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/popup-with-arabic-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/popup-with-arabic-dark.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/editor-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke2/chrome/editor-dark.png"
+    "$SCRATCH/live/smoke2/chrome/popup-no-arabic-light.png",
+    "$SCRATCH/live/smoke2/chrome/popup-no-arabic-dark.png",
+    "$SCRATCH/live/smoke2/chrome/library-light.png",
+    "$SCRATCH/live/smoke2/chrome/library-dark.png",
+    "$SCRATCH/live/smoke2/chrome/settings-light.png",
+    "$SCRATCH/live/smoke2/chrome/settings-dark.png",
+    "$SCRATCH/live/smoke2/chrome/popup-with-arabic-light.png",
+    "$SCRATCH/live/smoke2/chrome/popup-with-arabic-dark.png",
+    "$SCRATCH/live/smoke2/chrome/editor-light.png",
+    "$SCRATCH/live/smoke2/chrome/editor-dark.png"
   ],
   "notes": [
     "رسائل قراءة خطوط الترجمة من حزمة الإضافة (معروفة، غير محسوبة أخطاءً): 2"

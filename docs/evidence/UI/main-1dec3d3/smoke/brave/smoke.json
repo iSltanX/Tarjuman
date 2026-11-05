@@ -169,16 +169,16 @@
     "pages": []
   },
   "screenshots": [
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/popup-no-arabic-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/popup-no-arabic-dark.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/library-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/library-dark.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/settings-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/settings-dark.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/popup-with-arabic-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/popup-with-arabic-dark.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/editor-light.png",
-    "../../../../private/tmp/claude-501/-Volumes-iSltanXx-Projects-Tarjuman/c88d8f2e-9bf2-47a3-8fc4-769b1f5c1cb3/scratchpad/live/smoke3/brave/editor-dark.png"
+    "$SCRATCH/live/smoke3/brave/popup-no-arabic-light.png",
+    "$SCRATCH/live/smoke3/brave/popup-no-arabic-dark.png",
+    "$SCRATCH/live/smoke3/brave/library-light.png",
+    "$SCRATCH/live/smoke3/brave/library-dark.png",
+    "$SCRATCH/live/smoke3/brave/settings-light.png",
+    "$SCRATCH/live/smoke3/brave/settings-dark.png",
+    "$SCRATCH/live/smoke3/brave/popup-with-arabic-light.png",
+    "$SCRATCH/live/smoke3/brave/popup-with-arabic-dark.png",
+    "$SCRATCH/live/smoke3/brave/editor-light.png",
+    "$SCRATCH/live/smoke3/brave/editor-dark.png"
   ],
   "notes": [
     "رسائل قراءة خطوط الترجمة من حزمة الإضافة (معروفة، غير محسوبة أخطاءً): 2"

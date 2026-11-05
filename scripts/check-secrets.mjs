@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// فحص آلي لخلو العينات والأدلة والسجلات من pot والتواقيع والروابط وملفات الارتباط والرموز.
+// فحص آلي لخلو العينات والأدلة والسجلات من pot والتواقيع والروابط وملفات الارتباط والرموز ومسارات الجهاز المحلية.
 // يمرّ على test/fixtures/ وعينات test/e2e/fixtures/ (ترجمات حقيقية؛ تدقيق 5fedcb9، GM-028) وأدلة كل المراحل في
 // docs/evidence/. الوثائق السردية (.md) قد تذكر روابط مراجع
 // عامة، أما روابط يوتيوب وجوجل والأسرار فممنوعة فيها أيضًا. يخرج برمز 1 عند أي اكتشاف.
@@ -12,6 +12,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCOPES = ['test/fixtures', 'test/e2e/fixtures', 'docs/evidence'];
 const TEXT = /\.(json|srt|txt|log|md|csv|ndjson)$/i;
 const SENSITIVE_HOST = /(?:youtu\.?be|youtube|google|googlevideo|ytimg|ggpht)/i;
+// مسارات الجهاز المحلية (اسم المستخدم والقرص ومجلدات الجلسات المؤقتة) لا تدخل الأدلة؛ تُكتب برمز عام مثل $SCRATCH/.
+const LOCAL_PATH = /(?:\/Users\/[^/\s"'`]+\/|\/private\/(?:tmp|var)\/|\/Volumes\/[^/\s"'`]+\/|\b[A-Za-z]:\\Users\\)/g;
 
 async function walk(dir) {
   let entries;
@@ -41,6 +43,7 @@ for (const scope of SCOPES) {
       if (rel.endsWith('.md') && f.type === 'url' && !SENSITIVE_HOST.test(text.slice(f.index, f.index + f.length))) continue;
       findings.push(`${rel}@${f.index}: ${f.type} ${f.sample}`);
     }
+    for (const m of text.matchAll(LOCAL_PATH)) findings.push(`${rel}@${m.index}: local-path ${m[0]}`);
   }
 }
 
@@ -48,4 +51,4 @@ if (findings.length) {
   console.error(`check-secrets: ${findings.length} اكتشاف في ${scanned} ملف\n- ${findings.slice(0, 50).join('\n- ')}`);
   process.exit(1);
 }
-console.log(`check-secrets: ناجح (${scanned} ملف بلا pot ولا تواقيع ولا روابط ولا ملفات ارتباط)`);
+console.log(`check-secrets: ناجح (${scanned} ملف بلا pot ولا تواقيع ولا روابط ولا ملفات ارتباط ولا مسارات محلية)`);
