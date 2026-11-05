@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: المساعدة وحل المشكلات
+    url: https://bysltan.com/tarjuman/support
+    about: أسئلة الاستخدام والإبلاغ عن مشكلة من داخل الإضافة.
+  - name: سياسة الخصوصية
+    url: https://bysltan.com/tarjuman/privacy
+    about: ما تحفظه الإضافة وما ترسله، وإلى من، ومتى.

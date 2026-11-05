@@ -1,0 +1,81 @@
+name: خلل في الإضافة
+description: سلوك خاطئ أو رسالة خطأ في ترجمان.
+title: "خلل: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        شكرًا لك. قبل الإرسال:
+        - **لا تضع** نص ترجمة، ولا روابط فيديوهات خاصة، ولا رموز جلسات، ولا بيانات شخصية.
+        - إن كان ما وجدته ثغرة أمنية فلا تكتبه هنا؛ اتبع [`SECURITY.md`](https://github.com/iSltanX/Tarjuman/blob/main/.github/SECURITY.md).
+        - القيود المعروفة في [`docs/known-limitations.md`](https://github.com/iSltanX/Tarjuman/blob/main/docs/known-limitations.md).
+  - type: input
+    id: version
+    attributes:
+      label: إصدار ترجمان
+      description: من الإعدادات ← حول.
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: المتصفح
+      options:
+        - Chrome
+        - Edge
+        - Brave
+        - Firefox
+    validations:
+      required: true
+  - type: input
+    id: browser-version
+    attributes:
+      label: إصدار المتصفح والنظام
+      placeholder: "Chrome 156 على macOS 15"
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: أين ظهر الخلل؟
+      options:
+        - أزرار المشغّل أو الترجمة فوق الفيديو
+        - لوحة النص المتزامن
+        - نافذة الأيقونة
+        - المحفوظات
+        - المحرّر
+        - الإعدادات أو النسخ الاحتياطي
+        - تنزيل الأصل أو رفع الترجمة
+        - غير ذلك
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: خطوات إعادة الحدوث
+      placeholder: |
+        1. افتح فيديو بترجمة إنجليزية يدوية…
+        2. اضغط…
+        3. يظهر…
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: ما توقعته وما حدث
+    validations:
+      required: true
+  - type: input
+    id: code
+    attributes:
+      label: رمز الخطأ إن ظهر
+      description: مثل ST_WRITE_FAILED أو PL_MOUNT_FAILED. و«نسخ تشخيص الصفحة» في نافذة الأيقونة رموز وأعداد فقط، فيمكنك لصقه.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: الخصوصية
+      options:
+        - label: لم أضع في هذا البلاغ نص ترجمة ولا رابطًا خاصًا ولا رمزًا ولا بيانات شخصية.
+          required: true

@@ -1,0 +1,34 @@
+name: اقتراح
+description: فكرة أو تحسين في ترجمان.
+title: "اقتراح: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ترجمان يستخرج الترجمة الإنجليزية ويعرض ترجمتك العربية، **ولا يترجم بنفسه ولا يتصل بأي نموذج**، والمعالجة والحفظ على جهازك.
+        وما خارج نطاقه عمدًا مذكور في [`docs/product-spec.md`](https://github.com/iSltanX/Tarjuman/blob/main/docs/product-spec.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: ما المشكلة التي يحلها؟
+      placeholder: حين أراجع ترجمة طويلة لا أستطيع…
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: الاقتراح
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: بدائل فكرت فيها
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: الخصوصية
+      options:
+        - label: الاقتراح لا يحتاج إرسال بيانات من جهاز المستخدم، أو ذكرت ما يُرسل ولماذا.
+          required: true

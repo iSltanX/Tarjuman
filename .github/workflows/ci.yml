@@ -1,0 +1,58 @@
+# الفحوص الآلية: ما يشغّله المطوّر محليًا قبل الدمج (npm run check:wave، وe2e الثابت والانحدار، والتغليف بتدقيقه)،
+# على Node 22 (أدنى ما في engines) و24. بلا أسرار ولا نشر ولا رفع إلى متجر، وبإذن قراءة وحده.
+name: الفحوص
+
+on:
+  push:
+    branches: [main, 'tj/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: الفحص الشامل (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - name: جلب المستودع بتاريخه
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: إعداد Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: تثبيت أدوات البناء والفحص
+        run: npm ci --no-audit --no-fund
+
+      - name: الفحص الثابت والأسرار والإشعارات والخصوصية ومواد المتاجر والوحدة والبناءان
+        run: npm run check
+
+      - name: اختبارات التكامل
+        run: npm run test:integration
+
+      - name: e2e الثابت والانحدار
+        run: node scripts/run-tests.mjs test/e2e/static test/e2e/regression
+
+      - name: web-ext lint لحزمة Firefox
+        run: npm run lint:firefox
+
+      - name: فحص الخطة
+        run: npm run plan:check
+
+      - name: بناء الحزم وتدقيقها وإعادة بنائها من حزمة المصدر
+        run: npm run package
