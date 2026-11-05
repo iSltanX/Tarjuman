@@ -559,9 +559,19 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
       return computeCapacity(bytes, area);
     },
 
-    /** «مسح كل البيانات»: كل المحفوظات والإعدادات، ثم meta جديد. التأكيد شأن الواجهة. */
+    /**
+     * «مسح كل البيانات»: كل المحفوظات والإعدادات، ثم meta جديد. التأكيد شأن الواجهة. وإطفاء «صور الفيديو في المحفوظات» وحده
+     * يبقى بعده (تدقيق 7a66f91، U05، قرار Q10): المسح لا يعيد الصور إلى افتراضيها فيُطلب من يوتيوب ما رفضه المستخدم.
+     */
     clearAll() {
       return exclusive(async () => {
+        let thumbsOff = false;
+        try {
+          const { [KEY_PREFS]: raw } = await area.get(KEY_PREFS);
+          thumbsOff = raw?.ui?.thumbnails === false;
+        } catch {
+          thumbsOff = false;
+        }
         try {
           await area.clear();
         } catch (err) {
@@ -569,6 +579,7 @@ export function createStore({ area = chromeLocalArea(), now = () => Date.now(), 
         }
         readyPromise = null;
         await ready();
+        if (thumbsOff) await write({ [KEY_PREFS]: mergePrefs(DEFAULT_PREFS, { ui: { thumbnails: false } }) });
       });
     },
 

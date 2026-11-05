@@ -23,9 +23,11 @@ import {
  *   ok: true,
  *   header: { createdAt: string, version: number, app: { version: string, storageSchema: number }, options: { previous: boolean },
  *     counts: ReturnType<typeof countData> },
- *   settings: SectionRead, prefs: SectionRead,
+ *   settings: SectionRead, prefs: SectionRead, thumbnailsOff: boolean,
  *   videos: BackupItem[], invalid: InvalidItem[], warnings: { code: string, params?: Record<string, string> }[]
  * }} BackupRead
+ *   thumbnailsOff: «صور الفيديو في المحفوظات» مطفأة في النسخة (prefs.ui.thumbnails === false). تُطبَّق وحدها من ui، ولا تُطبَّق «نعم»
+ *   أبدًا، فلا تعود الصور بالاستعادة؛ والحقل الغائب (نسخة أقدم من الميزة) يُبقي قيمة الجهاز (تدقيق 7a66f91، U05، قرار Q10).
  * @typedef {{ ok: false, code: string, params?: Record<string, string>, detail?: string }} BackupReject
  */
 
@@ -98,7 +100,7 @@ function checkEntry(entry) {
 }
 
 const SETTINGS_GROUPS = ['offsetStepMs', 'displayModeDefault', 'appearance', 'export', 'thresholds'];
-// ui (تفضيلات الواجهة على الجهاز) لا تُستعاد عمدًا: تبقى قيم هذا الجهاز (docs/identity-redesign.md).
+// ui (تفضيلات الواجهة على الجهاز) لا تُستعاد عمدًا: تبقى قيم هذا الجهاز (docs/identity-redesign.md)؛ إلا إطفاء الصور (thumbnailsOff).
 const PREFS_GROUPS = ['glossary', 'review', 'saveLocation'];
 
 /**
@@ -140,6 +142,7 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   const settings = readSection(data.settings, normalizeSettings, validateSettings, SETTINGS_GROUPS, 'settings', normalizeSettings(DEFAULT_SETTINGS));
   const prefs = readSection(data.prefs, normalizePrefs, validatePrefs, PREFS_GROUPS, 'prefs', normalizePrefs(DEFAULT_PREFS), ['glossary']);
   const excluded = [...(settings?.excluded ?? []), ...(prefs?.excluded ?? [])];
+  const thumbnailsOff = isPlainObject(data.prefs) && isPlainObject(data.prefs.ui) && data.prefs.ui.thumbnails === false;
   if (excluded.length) warnings.push({ code: 'BK_SETTINGS_INVALID', params: { groups: excluded.join('، ') } });
 
   /** @type {Map<string, number[]>} */
@@ -174,6 +177,6 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   return {
     ok: true,
     header: { createdAt: file.createdAt, version: file.version, app: file.app, options: file.options, counts: file.counts },
-    settings, prefs, videos, invalid, warnings,
+    settings, prefs, thumbnailsOff, videos, invalid, warnings,
   };
 }

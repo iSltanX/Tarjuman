@@ -14,7 +14,8 @@ import { BACKUP_LIMITS } from './format.js';
  *   added: string[], skipped: string[], replaced: string[],
  *   failed: { videoId: string, code: string, message: string }[],
  *   remaining: string[], stopped: boolean,
- *   settings: 'restored' | 'failed' | null, settingsCode: string | null
+ *   settings: 'restored' | 'failed' | null, settingsCode: string | null,
+ *   thumbnails?: 'off' | 'failed' | null
  * }} RestoreReport
  */
 
@@ -57,14 +58,23 @@ export function restoreItems(plan, replace) {
  * @param {{
  *   store: ReturnType<typeof import('../store/index.js').createStore>,
  *   items: RestoreItem[], skipped?: string[],
- *   settings?: object | null, prefs?: object | null,
+ *   settings?: object | null, prefs?: object | null, thumbnailsOff?: boolean,
  *   onProgress?: (p: { done: number, total: number }) => void, pause?: () => Promise<void>, batch?: number,
- * }} o settings وprefs تعديلا القسمين إن اختار المستخدم «استعادة الإعدادات والقاموس»، وإلا null
+ * }} o settings وprefs تعديلا القسمين إن اختار المستخدم «استعادة الإعدادات والقاموس»، وإلا null. وthumbnailsOff إطفاء صور
+ *   المحفوظات الذي في النسخة: يُطبَّق في كل استعادة ولو لم تُختر الإعدادات، لأنه رفض سابق لا يُتجاوز (U05، Q10)، ولا يشغّلها أبدًا.
  * @returns {Promise<RestoreReport>}
  */
-export async function runRestore({ store, items, skipped = [], settings = null, prefs = null, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch }) {
+export async function runRestore({ store, items, skipped = [], settings = null, prefs = null, thumbnailsOff = false, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch }) {
   /** @type {RestoreReport} */
-  const report = { added: [], skipped: [...skipped], replaced: [], failed: [], remaining: [], stopped: false, settings: null, settingsCode: null };
+  const report = { added: [], skipped: [...skipped], replaced: [], failed: [], remaining: [], stopped: false, settings: null, settingsCode: null, thumbnails: null };
+  if (thumbnailsOff) {
+    try {
+      await store.setPrefs({ ui: { thumbnails: false } });
+      report.thumbnails = 'off';
+    } catch {
+      report.thumbnails = 'failed';
+    }
+  }
   if (settings || prefs) {
     try {
       if (settings && Object.keys(settings).length) await store.setSettings(settings);
@@ -123,6 +133,7 @@ export function mergeReports(before, retry) {
     stopped: retry.stopped,
     settings: retry.settings ?? before.settings,
     settingsCode: retry.settings ? retry.settingsCode : before.settingsCode,
+    thumbnails: retry.thumbnails ?? before.thumbnails ?? null,
   };
 }
 

@@ -385,3 +385,24 @@ test('«التخزين»: عدد الترجمات وأحجام الترجمات 
   assert.ok(textOf(sec).includes('الترجمات المحفوظة: 4 · الفيديوهات المترجمة: 2'), textOf(sec));
   assert.match(textOf(sec), /الترجمات غير النشطة \d+ ك\.ب · النسخ السابقة \d+ ك\.ب/);
 });
+
+test('تدقيق 7a66f91 (U05، Q10): نسخة أُطفئت فيها الصور تُظهر ذلك في المعاينة، وتُبقيها مطفأة بلا اختيار الإعدادات، وتذكره في التقرير', async () => {
+  const src = newStore();
+  await src.store.updateVideo(IDS[0], () => videoRecord({ videoId: IDS[0] }));
+  await src.store.setPrefs({ ui: { thumbnails: false } });
+  await src.area.flush();
+  const built = await createBackup({ store: src.store, appVersion: '1.1.0', pause: noPause });
+  const { area, store } = newStore();
+  const m = await mount({ store, area });
+  assert.equal((await store.getPrefs()).ui.thumbnails, true);
+  m.pick(asFile(built.text));
+  let seen = null;
+  m.answers.push((o) => { seen = o; });
+  await m.settings.data.restoreFromFile();
+  assert.ok(textOf(seen.content).includes('صور الفيديو في المحفوظات مطفأة في هذه النسخة، فتبقى مطفأة على هذا الجهاز بعد الاستعادة.'));
+  await settle(10);
+  assert.equal((await store.getPrefs()).ui.thumbnails, false);
+  const sec = section(m, 'البيانات');
+  assert.ok(textOf(sec).includes('بقيت صور الفيديو في المحفوظات مطفأة كما في النسخة.'));
+  assert.equal(textOf(sec).includes('استُعيدت الإعدادات والقاموس'), false, 'الإعدادات لم تُختر');
+});

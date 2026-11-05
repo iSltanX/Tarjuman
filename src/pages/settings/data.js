@@ -38,6 +38,8 @@ export function countsLine(c) {
 }
 
 /** سطر التقرير: «أضيف 2 · تُخطّي 1 · استُبدل 0 · تعذّر 0». @param {import('../../core/backup/restore.js').RestoreReport} r */
+/** صور المحفوظات مطفأة في النسخة فتبقى مطفأة (تدقيق 7a66f91، U05، قرار Q10): في كل استعادة، ولا تُشغَّل بالاستعادة أبدًا. */
+export const THUMBNAILS_STAY_OFF = 'صور الفيديو في المحفوظات مطفأة في هذه النسخة، فتبقى مطفأة على هذا الجهاز بعد الاستعادة.';
 export const reportLine = (r) => `أضيف ${r.added.length} · تُخطّي ${r.skipped.length} · استُبدل ${r.replaced.length} · تعذّر ${r.failed.length + r.remaining.length}`;
 
 /** شريط تقدم بنصه («جارٍ الاستعادة: 120 من 300»)، مخفي حتى يبدأ عمل. @param {Document} doc */
@@ -158,6 +160,7 @@ export function dataControl(env) {
       }));
     }
     for (const w of read.warnings) kids.push(alertBox({ tone: 'warning', text: messageFor(w.code, w.params), doc }));
+    if (read.thumbnailsOff) kids.push(el('p', { className: 'tj-body-sm st-restore__thumbs', text: THUMBNAILS_STAY_OFF, doc }));
 
     const titleOf = (v) => v.title ?? v.videoId;
     if (plan.fresh.length) {
@@ -274,9 +277,11 @@ export function dataControl(env) {
     const lines = [reportLine(report)];
     if (report.settings === 'restored') lines.push('استُعيدت الإعدادات والقاموس.');
     if (report.settings === 'failed') lines.push(messageFor('BK_RESTORE_SETTINGS_FAILED'));
+    if (report.thumbnails === 'off') lines.push('بقيت صور الفيديو في المحفوظات مطفأة كما في النسخة.');
+    if (report.thumbnails === 'failed') lines.push('تعذّر إبقاء صور الفيديو في المحفوظات مطفأة؛ أطفئها من «العرض» في الإعدادات.');
     for (const f of report.failed.slice(0, 20)) lines.push(`${titles.get(f.videoId) ?? f.videoId}: ${f.message}`);
     if (report.remaining.length) lines.push(`لم يُكتب بعد: ${formatCount(report.remaining.length, COUNT_FORMS.video)}.`);
-    const again = report.failed.length || report.remaining.length || report.settings === 'failed'
+    const again = report.failed.length || report.remaining.length || report.settings === 'failed' || report.thumbnails === 'failed'
       ? button({ label: 'أعد المحاولة', icon: 'restore', size: 'sm', variant: 'secondary', doc, onClick: () => { retry(); } })
       : null;
     extra.clear();
@@ -284,18 +289,19 @@ export function dataControl(env) {
     restoreResult.replaceChildren(alertBox({ tone, title: messageFor(code), text: lines.join('\n'), action: again ?? undefined, doc }));
   }
 
-  async function run({ items, skipped, settings, prefs, titles, before }) {
+  async function run({ items, skipped, settings, prefs, thumbnailsOff = false, titles, before }) {
     // تشغيل واحد في كل وقت: النقر المزدوج على «أعد المحاولة» لا يشغّل تشغيلين من التقرير نفسه.
     if (running) return null;
     running = true;
     setBusy(true);
     try {
-      const report = await runRestore({ store, items, skipped, settings, prefs, pause, onProgress: restoreMeter.show('جارٍ الاستعادة') });
+      const report = await runRestore({ store, items, skipped, settings, prefs, thumbnailsOff, pause, onProgress: restoreMeter.show('جارٍ الاستعادة') });
       restoreMeter.hide();
       const merged = before ? mergeReports(before, report) : report;
       renderReport(merged, titles, () => run({
         items: retryItems(merged, items), skipped: [],
         settings: merged.settings === 'failed' ? settings : null, prefs: merged.settings === 'failed' ? prefs : null,
+        thumbnailsOff: merged.thumbnails === 'failed' && thumbnailsOff,
         titles, before: merged,
       }));
       await env.onRestored?.();
@@ -353,6 +359,7 @@ export function dataControl(env) {
       items, skipped,
       settings: choice.settings ? read.settings?.patch ?? null : null,
       prefs: choice.settings ? read.prefs?.patch ?? null : null,
+      thumbnailsOff: read.thumbnailsOff === true,
       titles, before: null,
     });
   }
