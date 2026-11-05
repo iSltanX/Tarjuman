@@ -30,6 +30,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      # فحص الخطة يقرأ الخطة من فرع main المحلي كما في نسخة المطوّر؛ والجلب ينشئ الفرع الحالي وحده.
+      - name: فرع main المحلي لفحص الخطة
+        run: |
+          if [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
+            git branch --track main origin/main
+          fi
+
+      # اختبار U78 يقرأ ما يصدّره ترجمان بـffmpeg، ويُتخطى إن لم يوجد.
+      - name: تثبيت ffmpeg لاختبار التوافق
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg
+
       - name: إعداد Node.js
         uses: actions/setup-node@v7
         with:
