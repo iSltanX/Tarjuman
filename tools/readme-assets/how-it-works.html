@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="{{THEME}}">
+<head>
+<meta charset="utf-8">
+<title>كيف يعمل ترجمان</title>
+<link rel="stylesheet" href="{{ROOT}}/src/ui/tokens.css">
+<link rel="stylesheet" href="{{ROOT}}/src/ui/fonts.css">
+<style>
+  html, body { margin: 0; width: 1280px; height: 340px; overflow: hidden; }
+  body { background: var(--tj-bg); color: var(--tj-text); font-family: var(--tj-font-body); -webkit-font-smoothing: antialiased; }
+  .row { box-sizing: border-box; height: 100%; padding: 40px 48px; display: flex; align-items: stretch; gap: 0; }
+  .step {
+    flex: 1 1 0; box-sizing: border-box; border-radius: 14px; padding: 26px 28px 22px;
+    background: var(--tj-surface); border: 2px solid transparent; box-shadow: 0 0 0 1px var(--tj-border);
+    display: flex; flex-direction: column;
+  }
+  /* الخطوة الوسطى خارج ترجمان: بلا سطح، وبإطار متقطع. */
+  .step--outside { background: transparent; box-shadow: none; border: 2px dashed var(--tj-border-input); }
+  .head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .num {
+    width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--tj-brand); color: var(--tj-brand-ink); font-family: var(--tj-font-head); font-weight: 700; font-size: 18px;
+  }
+  .step--outside .num { background: var(--tj-control); color: var(--tj-text); }
+  .icon { color: var(--tj-brand); display: grid; margin-inline-start: auto; }
+  .step--outside .icon { color: var(--tj-text-2); }
+  h2 { font-family: var(--tj-font-head); font-weight: 700; font-size: 27px; margin: 0; }
+  p { font-size: 17px; line-height: 1.75; color: var(--tj-text-2); margin: 0; flex: 1; }
+  .where {
+    align-self: flex-start; margin-top: 16px; font-size: 13.5px; font-weight: 700; line-height: 1;
+    padding: 8px 12px; border-radius: 999px; background: var(--tj-selected); color: var(--tj-selected-ink);
+  }
+  .step--outside .where { background: var(--tj-control); color: var(--tj-text-2); }
+  .arrow { flex: 0 0 52px; display: grid; place-items: center; color: var(--tj-muted); }
+</style>
+</head>
+<body>
+  <div class="row">
+    <section class="step">
+      <div class="head"><span class="num">1</span><h2>نزّل الأصل</h2><span class="icon">{{ICON:download:30}}</span></div>
+      <p>من أزرار ترجمان في شريط المشغّل: الترجمة الإنجليزية في ملف SRT، ومعها تعليمات ترجمة جاهزة.</p>
+      <span class="where">في ترجمان · على جهازك</span>
+    </section>
+    <div class="arrow"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></div>
+    <section class="step step--outside">
+      <div class="head"><span class="num">2</span><h2>ترجمه بنموذجك</h2><span class="icon">{{ICON:external:30}}</span></div>
+      <p>أرسل الملف والتعليمات إلى النموذج الذي تختاره، واحفظ ناتجه ملف SRT. ترجمان لا يترجم، ولا يتصل بأي نموذج.</p>
+      <span class="where">خارج ترجمان · بأداتك أنت</span>
+    </section>
+    <div class="arrow"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></div>
+    <section class="step">
+      <div class="head"><span class="num">3</span><h2>شاهد واضبط</h2><span class="icon">{{ICON:captions:30}}</span></div>
+      <p>ارفع الملف العربي فتظهر ترجمتك فوق الفيديو. اضبط توقيتها وحرّرها، وتجدها محفوظة متى عدت.</p>
+      <span class="where">في ترجمان · على جهازك</span>
+    </section>
+  </div>
+</body>
+</html>
