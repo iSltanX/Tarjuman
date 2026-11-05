@@ -50,11 +50,13 @@ Arabic sample (test.ar.srt):
 
 ## Microsoft Edge Add-ons — Notes for certification
 
-نص Chrome نفسه بحرفه، فالحزمة بايتاتها نفسها. ويُضاف إليه سطر واحد لأن الحقل يسأل عن الفروق بحسب المنطقة والإعدادات:
+نص Chrome نفسه بحرفه، فالحزمة بايتاتها نفسها. ويُضاف إليه سطر لأن الحقل يسأل عن الفروق بحسب المنطقة والإعدادات، وفقرة عن سياسة الخصوصية لأن البند 1.5.2 يطلب أن تشير أساسًا إلى Edge (قرار سلطان 2026-11-05: سياسة واحدة، وتوضيح للمراجع). والنص كله نحو 2,994 محرفًا، وحد الحقل غير منشور، فيُطابَق بعدّاده وقت التقديم:
 
 <!-- field: reviewer.edge -->
 ```text
 Expected differences: none by region. Captions must exist for the video (the test video has English manual captions). Tarjuman does not run on Shorts, live streams in progress, or YouTube players embedded in other sites.
+
+Privacy policy: https://bysltan.com/tarjuman/privacy. The same package is published for other browsers, so one policy covers it; where behavior differs by browser, it names Microsoft Edge explicitly (e.g. Library thumbnails are on by default in Microsoft Edge, with a switch in Settings). Nothing reaches the developer unless the user sends a problem report after previewing it.
 ```
 
 ## Firefox Add-ons — Notes for Reviewers
@@ -77,6 +79,7 @@ How subtitles are read: a main-world content script at document_start wraps fetc
 Data (data_collection_permissions: required none; optional technicalAndInteraction, browsingActivity):
 - Library thumbnails from i.ytimg.com by video ID: off in Firefox until the user turns them on in Settings, which requests browsingActivity.
 - Problem report from Settings > About > "الإبلاغ عن مشكلة": sent only when the user presses send after a full preview; requests the optional host permission app-reports.isultantf.workers.dev and, in Firefox, technicalAndInteraction if it was not already granted in the install prompt. Nothing is attached automatically beyond the shown diagnostics: no subtitle text, video ID or account. The description is sent verbatim. As with any extension request, the browser adds User-Agent, Accept-Language and an Origin header with the extension origin (in Firefox, the per-install moz-extension UUID).
+- Why technicalAndInteraction and not personalCommunications: the report is a problem report about Tarjuman (the user's description of the problem plus the shown browser, OS and extension versions) sent only to the developer, which matches "crash and error reports"; it is not a message between people. The Chrome and Edge dashboards disclose the same field conservatively as personal communications.
 Everything else stays in storage.local.
 
 Arabic sample (test.ar.srt):
@@ -105,3 +108,5 @@ Arabic sample (test.ar.srt):
 | الصور والبلاغ وموافقتا Firefox | `docs/site/privacy.md` وجدول أدلته، و`scripts/targets.mjs` |
 | إعادة البناء بايتًا | `docs/evidence/T4/README.md`، و`release/store/tarjuman-1.1.0-store.json` |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
+| سياسة واحدة تسمّي Edge حيث يختلف السلوك، والصور مفعّلة افتراضيًا فيه بمفتاح في الإعدادات | `docs/site/privacy.md` (أسطر «في Chrome وEdge وBrave»)، و`src/core/model/prefs.js` (`ui.thumbnails: true`)، و`src/pages/settings/view.js`؛ والبند 1.5.2 من [سياسات مطوري Edge](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (قُرئ 2026-11-05) |
+| البلاغ من «تقارير الأعطال والأخطاء» لا من الاتصالات الشخصية | تعريفا `technicalAndInteraction` و`personalCommunications` في [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) (قُرئ 2026-11-05)، و`src/core/report/payload.js`، و`submission.md` §٤ |

@@ -233,6 +233,13 @@
 | اللقطات | **معتمدة كما هي**: إطار المشغّل غلاف الفيلم («لقطاتك معتمدة ما يحتاج أرسلك شي»)، فلا لقطات بمشهد حقيقي من النافذة اليدوية | نُفّذ |
 | نص الإدراج والفئات | **معتمد كما هو** («أعتمدها»): نصوص `listing.ar.md` كلها، والفئات (Chrome: Accessibility، وEdge: Accessibility، وAMO: Language Support وPhotos, Music & Videos) | نُفّذ |
 
+**قرارات مراجعة الجاهزية** (سلطان، 2026-11-05: «اعتمد وادفع»، بعد عرض الصياغتين في جولة تنظيم المستودع):
+
+| القرار | المعتمد | التنفيذ |
+| --- | --- | --- |
+| Edge 1.5.2: «the privacy policy should primarily refer to the Microsoft Edge browser» | سياسة خصوصية واحدة كما هي، وفقرة في «Notes for certification» تبيّن أن الحزمة نفسها منشورة لمتصفحات أخرى، وأن السياسة تسمّي Microsoft Edge حيث يختلف السلوك. وإن رفضها المراجع فالبديل قسم خاص بـEdge في صفحة الخصوصية بطلب دمج في الموقع وإذن منفصل | `reviewer.edge` في `reviewers.en.md` |
+| فئة البلاغ في Firefox | يبقى `technicalAndInteraction` في البيان (البلاغ من «crash and error reports» بتعريف Mozilla، لا رسالة بين أشخاص)، وبند في «Notes for Reviewers» يشرح ذلك ويذكر أن Chrome وEdge يُفصحان عن الحقل احتياطًا تحت «Personal communications». فلا تغيير في الشيفرة ولا الحزم | `reviewer.amo` في `reviewers.en.md` |
+
 **بيدك عند النشر، لا في هذه الجولة:** إنشاء الحسابات الثلاثة، ودفع رسوم Chrome، والتحقق بخطوتين، وإعلان صفة التاجر، والرفع.
 
 ## ٦. المصادر
