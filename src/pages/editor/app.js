@@ -1128,6 +1128,7 @@ export async function mountEditor(app, {
     const next = open ?? !app.classList.contains(cls);
     app.classList.toggle(cls, next);
     btn.setAttribute('aria-expanded', String(next));
+    scheduleRefit(); // عرض عمود النص قد يتغيّر بالطي
     btn.title = kind === 'tools' ? (next ? 'طي النطاق والتوقيت' : 'إظهار النطاق والتوقيت') : (next ? 'طي اللوحة الجانبية' : 'إظهار اللوحة الجانبية');
     const area = kind === 'tools' ? [toolbarEl.querySelector('#ed-scope-row'), offsetEl] : [reviewPane, completePane];
     if (!next && area.some((a) => a?.contains(doc.activeElement))) btn.focus();
@@ -1942,6 +1943,8 @@ export async function mountEditor(app, {
   };
   for (const type of ['keyup', 'mouseup', 'input', 'select']) scroller.addEventListener(type, trackCaret);
   scroller.addEventListener('focusout', (e) => {
+    // مغادرة الحقل الذي ركّزه دمج أو شطر تنهي استثناءه: ⌘Z بعد العودة إليه للحقل (مراجعة C3).
+    if (e.target === autoFocused) autoFocused = null;
     if (e.target.dataset?.field === 'text') {
       trackCaret(e);
       S.session.seal();

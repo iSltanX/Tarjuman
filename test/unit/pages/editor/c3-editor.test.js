@@ -623,3 +623,18 @@ test('I08: ارتفاع حقل النص بالتفاف السطور في عرض 
   assert.equal(wrappedLines('ا'.repeat(500), measure, 100), 4, 'لا يتجاوز أربعة (وما زاد يُمرَّر داخله)');
   assert.equal(wrappedLines('سطر\nسطر\nسطر', null, 0), textLines('سطر\nسطر\nسطر'), 'بلا قياس: بفواصل الأسطر');
 });
+
+test('U74 (مراجعة): ما أُدرج لا يحجب مطابقة عادت بالتراجع أو تغيّر مقطعها بعد الاستبدال', async () => {
+  const m = await mounted({ bundle: withTexts(['قال: السلام عليكم']) });
+  await searchFor(m, 'السلام', 'التحية والسلام');
+  hereBtn(m).click();
+  await m.env.flush();
+  assert.equal(m.editor.state.session.cueAt(0).text, 'قال: التحية والسلام عليكم');
+  buttonNamed(m.env.root, 'تراجع').click();
+  await m.env.flush();
+  assert.equal(m.editor.state.session.cueAt(0).text, 'قال: السلام عليكم', 'تراجع');
+  assert.notEqual(hereBtn(m).getAttribute('aria-disabled'), 'true', 'المطابقة العائدة متاحة');
+  hereBtn(m).click();
+  await m.env.flush();
+  assert.equal(m.editor.state.session.cueAt(0).text, 'قال: التحية والسلام عليكم', 'استُبدلت من جديد');
+});

@@ -50,10 +50,15 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     query: '', key: '', field: /** @type {'ar' | 'en'} */ ('ar'), wholeWord: false, ignoreMarks: false,
     matches: /** @type {{ index: number, start: number, end: number, text?: string }[]} */ ([]), current: -1,
     byIndex: /** @type {Map<number, number[]>} */ (new Map()), replaceOpen: false, timer: 0,
-    /** ما أُدرج باستبدال هنا منذ آخر بحث جديد أو تنقّل. @type {{ index: number, start: number, end: number }[]} */
+    /**
+     * ما أُدرج باستبدال هنا منذ آخر بحث جديد أو تنقّل، ونص مقطعه بعده: إن تغيّر المقطع بعدها (تراجع أو كتابة) سقط النطاق،
+     * فلا يحجب مطابقة حقيقية عادت أو انزاحت (مراجعة C3).
+     * @type {{ index: number, start: number, end: number, text: string }[]}
+     */
     inserted: [],
   };
-  const inserted = (m) => S.inserted.some((r) => r.index === m.index && m.start >= r.start && m.end <= r.end);
+  /** حكم «داخل ما أُدرج» على المقاطع الحاضرة (تُمرَّر مرة لكل بحث، لا تُبنى لكل مطابقة). */
+  const insertedIn = (list) => (m) => S.inserted.some((r) => r.index === m.index && list[m.index]?.text === r.text && m.start >= r.start && m.end <= r.end);
   const mac = isMac(win);
 
   const input = el('input', {
@@ -178,6 +183,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     const found = S.query.trim() ? searchCues(list, S.query, { field: S.field, english: S.field === 'en' ? english() : null, wholeWord: S.wholeWord, ignoreMarks: S.ignoreMarks }) : [];
     // نص كل مطابقة عربية كما وُجد: الاستبدال يرفض موضعًا تغيّر بعده.
     S.matches = S.field === 'ar' ? found.map((m) => ({ ...m, text: list[m.index].text.slice(m.start, m.end) })) : found;
+    const inserted = insertedIn(list);
     S.byIndex = new Map();
     S.matches.forEach((m, k) => {
       if (!S.byIndex.has(m.index)) S.byIndex.set(m.index, []);
@@ -223,21 +229,26 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
 
   /** «استبدال هنا» وحده: لا مطابقة خارج ما استُبدل للتو (التنقّل بـ↑↓ يختارها صراحةً). */
   function hereWhy() {
-    return replaceWhy() ?? (S.current < 0 && S.matches.every(inserted) ? 'لا مطابقات أخرى خارج ما استُبدل؛ اختر نتيجة بـ↑↓ لتستبدلها.' : null);
+    return replaceWhy() ?? (S.current < 0 && S.inserted.length && S.matches.every(insertedIn(cues())) ? 'لا مطابقات أخرى خارج ما استُبدل؛ اختر نتيجة بـ↑↓ لتستبدلها.' : null);
   }
 
   function replaceHere() {
     // بحث معلّق بعد تغيّر المقاطع (تراجع أو كتابة) يُنفَّذ أولًا، فالاستبدال في موضع حاضر لا قديم (U23).
     if (S.timer) run();
     if (hereWhy()) return;
-    if (S.current < 0) S.current = S.matches.findIndex((m) => !inserted(m));
+    if (S.current < 0) {
+      const inserted = insertedIn(cues());
+      S.current = S.matches.findIndex((x) => !inserted(x));
+    }
     const m = S.matches[S.current];
     const r = replace(S.matches, replaceIn.value, [S.current]);
     if (!r.ok) return;
     const len = keepBreaks(m.text ?? '', replaceIn.value).length;
     const delta = len - (m.end - m.start);
-    S.inserted = S.inserted.map((x) => (x.index === m.index && x.start >= m.end ? { ...x, start: x.start + delta, end: x.end + delta } : x));
-    S.inserted.push({ index: m.index, start: m.start, end: m.start + len });
+    const now = cues()[m.index]?.text ?? '';
+    // نطاقات المقطع نفسه تنزاح بالفرق وتأخذ نصه الجديد؛ وغيرها كما هي.
+    S.inserted = S.inserted.map((x) => (x.index !== m.index ? x : { ...x, text: now, ...(x.start >= m.end ? { start: x.start + delta, end: x.end + delta } : {}) }));
+    S.inserted.push({ index: m.index, start: m.start, end: m.start + len, text: now });
     run({ after: { index: m.index, start: m.start + len } });
     const cur = S.matches[S.current];
     if (cur) reveal(cur.index, cur, { focus: false, field: 'ar' });
