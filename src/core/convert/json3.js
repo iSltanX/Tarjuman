@@ -43,7 +43,14 @@ export function parseJson3(body) {
   }
   const stats = {
     totalEvents: data.events.length, textEvents: 0, windowEvents: 0, newlineEvents: 0,
-    blankEvents: 0, appendEvents: 0, missingDuration: 0, withOffsets: 0, withAsrConf: 0,
+    blankEvents: 0, appendEvents: 0, missingDuration: 0, withOffsets: 0, withAsrConf: 0, invalidSegs: 0, fractionalTimes: 0,
+  };
+  // الأزمنة أعداد صحيحة بالمللي ثانية في كل ما قيس؛ والكسري (لا يصدر إلا من سكربت في الصفحة) يُقرَّب ويُعدّ، فلا يُسقط
+  // ثابت إعادة التحليل المسار كله (تدقيق 7a66f91، I10).
+  const ms = (v) => {
+    if (Number.isInteger(v)) return v;
+    stats.fractionalTimes++;
+    return Math.round(v);
   };
   /** @type {TextEvent[]} */
   const events = [];
@@ -56,9 +63,13 @@ export function parseJson3(body) {
     if (!Number.isFinite(e.tStartMs) || e.tStartMs < 0) {
       throw new ConvertError('EX_UNSUPPORTED_FORMAT', `tStartMs غير صالح عند ${index}`);
     }
-    const segs = e.segs.map((s) => ({
-      text: s && typeof s.utf8 === 'string' ? s.utf8 : '',
-      offsetMs: s && Number.isFinite(s.tOffsetMs) ? s.tOffsetMs : 0,
+    // القطعة كائن؛ وما سواه (رقم أو نص أو قيمة منطقية أو null) يُتجاهل ويُعدّ، فلا يرمي فحص الخصائص TypeError يُسقط
+    // المستخرج كله (تدقيق 7a66f91، U32).
+    const objs = e.segs.filter((s) => s !== null && typeof s === 'object' && !Array.isArray(s));
+    stats.invalidSegs += e.segs.length - objs.length;
+    const segs = objs.map((s) => ({
+      text: typeof s.utf8 === 'string' ? s.utf8 : '',
+      offsetMs: Number.isFinite(s.tOffsetMs) ? ms(s.tOffsetMs) : 0,
     }));
     const text = segs.map((s) => s.text).join('');
     if (e.aAppend === 1) stats.appendEvents++;
@@ -67,14 +78,15 @@ export function parseJson3(body) {
       else stats.blankEvents++;
       return;
     }
-    const durationMs = Number.isFinite(e.dDurationMs) && e.dDurationMs >= 0 ? e.dDurationMs : null;
+    const startMs = ms(e.tStartMs);
+    const durationMs = Number.isFinite(e.dDurationMs) && e.dDurationMs >= 0 ? ms(e.dDurationMs) : null;
     if (durationMs === null) stats.missingDuration++;
-    const hasOffsets = e.segs.some((s) => s && Number.isFinite(s.tOffsetMs));
-    const hasAsrConf = e.segs.some((s) => s && 'acAsrConf' in s);
+    const hasOffsets = objs.some((s) => Number.isFinite(s.tOffsetMs));
+    const hasAsrConf = objs.some((s) => 'acAsrConf' in s);
     if (hasOffsets) stats.withOffsets++;
     if (hasAsrConf) stats.withAsrConf++;
     events.push({
-      index, startMs: e.tStartMs, durationMs, endMs: durationMs === null ? null : e.tStartMs + durationMs,
+      index, startMs, durationMs, endMs: durationMs === null ? null : startMs + durationMs,
       append: e.aAppend === 1, segs, text, hasOffsets, hasAsrConf,
     });
   });

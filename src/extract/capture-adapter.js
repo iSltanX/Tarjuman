@@ -29,8 +29,8 @@ export function checkAcceptance(msg, ctx) {
 /**
  * @param {{ body: string, trackKind: 'manual' | 'asr' }} capture التقاط مقبول
  * @param {number | null} durationMs
- * @param {{ mode?: 'normal' | 'long', longOptions?: object }} [opts]
+ * @param {{ mode?: 'normal' | 'long', longOptions?: object, completenessRatio?: number }} [opts]
  */
-export function convertCapture(capture, durationMs, { mode = 'normal', longOptions } = {}) {
-  return convertTrack({ body: capture.body, trackKind: capture.trackKind, durationMs, mode, longOptions });
+export function convertCapture(capture, durationMs, { mode = 'normal', longOptions, completenessRatio } = {}) {
+  return convertTrack({ body: capture.body, trackKind: capture.trackKind, durationMs, mode, longOptions, completenessRatio });
 }

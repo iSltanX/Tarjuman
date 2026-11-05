@@ -82,7 +82,7 @@ test('مسار معطوب: لا تصدير، والأداة تقرأ الرمز 
   state.durationMs = 1000;
   extractor.handleMessage(captureMsg({ videoId: VID, body: manual.body }));
   const conv = c.convertCaptured('en|manual', { mode: 'normal' });
-  assert.deepEqual([conv.ok, conv.code, conv.cues.length], [false, 'EX_INVARIANT_FAILED', 0]);
+  assert.deepEqual([conv.ok, conv.code, conv.cues.length], [false, 'EX_BEYOND_DURATION', 0], 'ثابت الحدود وحده (تدقيق 7a66f91، U39)');
   assert.equal(chooseTrack(c.getState().captured), null);
   assert.throws(() => buildExport({
     videoId: VID, mode: 'normal', track: { key: conv.key, lang: conv.lang, kind: conv.kind, cues: conv.cues },

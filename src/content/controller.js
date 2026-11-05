@@ -55,6 +55,11 @@ export function createController({ store, extractor = null, page = {}, now = () 
   const iso = () => new Date(now()).toISOString();
   /** @type {Settings} */
   let settings = normalizeSettings(DEFAULT_SETTINGS);
+  // كل إعدادات جديدة تمر من هنا: عتبة الاكتمال تصل إلى المستخرج قبل أن تُحسب الحالة (تدقيق 7a66f91، U37).
+  const applySettings = (next) => {
+    settings = next;
+    extractor?.setCompleteness?.(settings.thresholds.completeness);
+  };
   let prefs = normalizePrefs(DEFAULT_PREFS);
   /** @type {string | null} */
   let videoId = null;
@@ -307,7 +312,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
     async start(initialVideoId) {
       const seq0 = loadSeq;
       try {
-        settings = await store.getSettings();
+        applySettings(await store.getSettings());
         if (!saved && !loading) view = { ...view, displayMode: settings.displayModeDefault };
         if (typeof store.getPrefs === 'function') prefs = await store.getPrefs();
       } catch (err) {
@@ -436,7 +441,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
 
     /** @param {Parameters<ReturnType<typeof import('../core/store/index.js').createStore>['setSettings']>[0]} patch */
     async updateSettings(patch) {
-      settings = await store.setSettings(patch);
+      applySettings(await store.setSettings(patch));
       changed();
       return settings;
     },
@@ -557,7 +562,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
      */
     handleStoreChange(change) {
       if (change.settings) {
-        settings = normalizeSettings(change.settings.newValue ?? DEFAULT_SETTINGS);
+        applySettings(normalizeSettings(change.settings.newValue ?? DEFAULT_SETTINGS));
         if (!saved && !loading && view.displayOffsetMs === 0) view = { ...view, displayMode: settings.displayModeDefault };
         changed();
       }

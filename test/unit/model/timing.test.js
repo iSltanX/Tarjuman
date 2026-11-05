@@ -25,7 +25,7 @@ test('الإشارة والبحث: + تأخير، والبحث بـcurrentTime �
 
 test('الإزاحة: شبكة 100ms وحد ±10 دقائق', () => {
   assert.equal(normalizeOffset(449), 400);
-  assert.equal(normalizeOffset(-1250), -1200);
+  assert.equal(normalizeOffset(-1250), -1300, 'النصف بعيدًا عن الصفر في الاتجاهين (تدقيق 7a66f91، U97)');
   assert.equal(normalizeOffset(10 ** 9), 600000);
   assert.equal(normalizeOffset(Number.NaN), 0);
   assert.equal(Object.is(normalizeOffset(-20), 0), true, 'لا -0');

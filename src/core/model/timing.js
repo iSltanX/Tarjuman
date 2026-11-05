@@ -9,12 +9,13 @@ export const DEFAULT_OFFSET_STEP_MS = 500;
 export const isValidOffset = (ms) => Number.isInteger(ms) && Math.abs(ms) <= MAX_OFFSET_MS && ms % OFFSET_GRID_MS === 0;
 
 /**
- * يقرّب إلى شبكة 100ms ويقصر على ±10 دقائق؛ غير العددي صفر.
+ * يقرّب إلى شبكة 100ms ويقصر على ±10 دقائق؛ غير العددي صفر. التقريب متناظر حول الصفر (النصف بعيدًا عنه)، فإزاحة
+ * وعكسها تتقابلان: +50 إلى 100 و−50 إلى −100 (تدقيق 7a66f91، U97؛ كان Math.round يقرّب −50 إلى 0).
  * @param {unknown} ms
  */
 export function normalizeOffset(ms) {
   if (typeof ms !== 'number' || !Number.isFinite(ms)) return 0;
-  const r = Math.round(ms / OFFSET_GRID_MS) * OFFSET_GRID_MS;
+  const r = Math.sign(ms) * Math.round(Math.abs(ms) / OFFSET_GRID_MS) * OFFSET_GRID_MS;
   return Math.max(-MAX_OFFSET_MS, Math.min(MAX_OFFSET_MS, r)) || 0;
 }
 

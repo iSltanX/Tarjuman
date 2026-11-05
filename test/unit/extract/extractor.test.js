@@ -122,10 +122,11 @@ test('التقاط تلقائي حقيقي: 1056 مقطعًا عاديًا وأ�
   assert.deepEqual(r, { accepted: true, code: null });
   assert.equal(extractor.convert('en|asr').cues.length, 1056);
   assert.ok(extractor.convert('en|asr', { mode: 'long' }).cues.length < 1056);
-  // جسم JSON صالح البنية لكنه متدحرج: يُقبل التقاطه ويُعلَن فشل تحويله برمزه.
+  // جسم JSON صالح البنية لكنه متدحرج (الثاني يعيد ذيل الأول بأزمنته نفسها؛ تدقيق 7a66f91، U28): يُقبل التقاطه ويُعلَن
+  // فشل تحويله برمزه.
   const rolling = JSON.stringify({ events: [
-    { tStartMs: 0, dDurationMs: 4000, segs: [{ utf8: 'one', acAsrConf: 0 }, { utf8: ' two', tOffsetMs: 200 }, { utf8: ' three', tOffsetMs: 400 }, { utf8: ' four', tOffsetMs: 600 }] },
-    { tStartMs: 1000, dDurationMs: 4000, segs: [{ utf8: 'two', acAsrConf: 0 }, { utf8: ' three', tOffsetMs: 200 }, { utf8: ' four', tOffsetMs: 400 }, { utf8: ' five', tOffsetMs: 600 }] },
+    { tStartMs: 0, dDurationMs: 5000, segs: [{ utf8: 'one', acAsrConf: 0 }, { utf8: ' two', tOffsetMs: 1000 }, { utf8: ' three', tOffsetMs: 2000 }, { utf8: ' four', tOffsetMs: 3000 }] },
+    { tStartMs: 1000, dDurationMs: 5000, segs: [{ utf8: 'two', acAsrConf: 0 }, { utf8: ' three', tOffsetMs: 1000 }, { utf8: ' four', tOffsetMs: 2000 }, { utf8: ' five', tOffsetMs: 3000 }] },
   ] });
   const bad = extractor.handleMessage(captureMsg({ videoId: asr.fixture.videoId, body: rolling, trackKind: 'asr' }, { lang: 'en-GB' }));
   assert.deepEqual(bad, { accepted: true, code: 'EX_UNSUPPORTED_FORMAT' });
@@ -147,9 +148,9 @@ test('المدة تُقرأ عند الطلب: التقاط سبق معرفته�
   state.durationMs = manual.fixture.durationMs * 3; // مدة أطول بكثير: النص يبدو ناقصًا
   assert.deepEqual(extractor.tracks()[0].warnings, ['EX_MAYBE_INCOMPLETE']);
   assert.equal(extractor.convert('en|manual').ok, true, 'تحذير لا رفض');
-  state.durationMs = 1000; // أقصر من النص بكثير: ثابت الحدود يمنع التصدير
+  state.durationMs = 1000; // أقصر من النص بكثير: ثابت الحدود يمنع التصدير برمزه (تدقيق 7a66f91، U39)
   const info = extractor.tracks()[0];
-  assert.deepEqual([info.ok, info.code], [false, 'EX_INVARIANT_FAILED']);
+  assert.deepEqual([info.ok, info.code], [false, 'EX_BEYOND_DURATION']);
   assert.equal(extractor.convert('en|manual').ok, false);
 });
 
@@ -207,6 +208,6 @@ test('التشخيص يذكر فشل الثوابت لا نصها', () => {
   extractor.handleMessage(captureMsg(base));
   state.durationMs = 1000;
   const t = extractor.diagnostics().tracks[0];
-  assert.deepEqual([t.ok, t.code], [false, 'EX_INVARIANT_FAILED']);
+  assert.deepEqual([t.ok, t.code], [false, 'EX_BEYOND_DURATION']);
   assert.deepEqual(t.invariants.filter((x) => !x.ok).map((x) => x.key), ['bounds']);
 });

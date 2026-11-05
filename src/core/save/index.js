@@ -27,6 +27,7 @@ const NAME_RE = /^[\p{L}\p{N}_-][\p{L}\p{M}\p{N} ._()-]*$/u;
  * @typedef {{ name: string, text: string, mime?: string }} SaveFile
  * @typedef {{ ok: true, mode: 'downloads' | 'subfolder' | 'ask' | 'blob', downloadId: number | null, pending?: true } | { ok: false, code: string }} SaveResult
  *   pending: بدأ التنزيل وما زال بعد مهلة الانتظار «جارٍ» (حوار الحفظ مفتوح غالبًا)، فلا يُقال «حُفظ» بعد.
+ *   SV_UNSETTLED: بدأ التنزيل (صدر معرّفه) وتعذّر معرفة نتيجته؛ فلا بديل Blob أبدًا كي لا يتكرر الملف (تدقيق 7a66f91، U34).
  */
 
 /**
@@ -61,15 +62,16 @@ export function downloadTarget(saveLocation, name) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * ينتظر حتى يخرج تنزيل نزّلته الإضافة من «جارٍ»، بالاستعلام بمعرّفه وحده.
+ * ينتظر حتى يخرج تنزيل نزّلته الإضافة من «جارٍ»، بالاستعلام بمعرّفه وحده. غياب عنصره بعد صدور معرّفه لا يعني فشله
+ * (قد يكون اكتمل ثم مُحي من السجل)، فهو «unsettled» لا «failed» (تدقيق 7a66f91، U34).
  * @param {{ search: (q: { id: number }) => Promise<object[]> }} downloads
  * @param {number} id
- * @returns {Promise<'complete' | 'cancelled' | 'failed' | 'pending'>}
+ * @returns {Promise<'complete' | 'cancelled' | 'failed' | 'pending' | 'unsettled'>}
  */
 export async function settleDownload(downloads, id, { pollMs = SETTLE.pollMs, timeoutMs = SETTLE.timeoutMs, wait = sleep } = {}) {
   for (let waited = 0; waited <= timeoutMs; waited += pollMs) {
     const [item] = await downloads.search({ id });
-    if (!item) return 'failed';
+    if (!item) return 'unsettled';
     if (item.state === 'complete') return 'complete';
     if (item.state === 'interrupted') return item.error === 'USER_CANCELED' ? 'cancelled' : 'failed';
     await wait(pollMs);
@@ -97,10 +99,12 @@ export async function savedPath(downloadId, { downloads = globalThis.chrome?.dow
 }
 
 /**
- * تنزيل بواجهة التنزيلات ثم انتظار نتيجته. يُستعمل في الصفحات (رابط Blob) وفي العامل (رابط data:).
+ * تنزيل بواجهة التنزيلات ثم انتظار نتيجته. يُستعمل في الصفحات (رابط Blob) وفي العامل (رابط data:). متى صدر المعرّف فلا
+ * يُعاد SV_FAILED (الذي يرجع إلى Blob) إلا بفشل يعلنه المتصفح نفسه؛ وتعذّر الاستعلام أو غياب العنصر SV_UNSETTLED، ولا
+ * يهرب استثناء (تدقيق 7a66f91، U34).
  * @param {{ download: Function, search: Function }} downloads
  * @param {{ url: string, filename: string, saveAs?: boolean }} options
- * @returns {Promise<{ ok: true, downloadId: number, state: string } | { ok: false, code: 'SV_CANCELLED' | 'SV_FAILED', downloadId: number | null }>}
+ * @returns {Promise<{ ok: true, downloadId: number, state: string } | { ok: false, code: 'SV_CANCELLED' | 'SV_FAILED' | 'SV_UNSETTLED', downloadId: number | null, state?: string }>}
  */
 export async function startDownload(downloads, options, settleOpts) {
   let id;
@@ -110,11 +114,23 @@ export async function startDownload(downloads, options, settleOpts) {
     return { ok: false, code: /cancel/i.test(String(err?.message ?? err)) ? 'SV_CANCELLED' : 'SV_FAILED', downloadId: null };
   }
   if (!Number.isInteger(id)) return { ok: false, code: 'SV_FAILED', downloadId: null };
-  const state = await settleDownload(downloads, id, settleOpts);
+  let state;
+  try {
+    state = await settleDownload(downloads, id, settleOpts);
+  } catch {
+    state = 'unsettled';
+  }
   if (state === 'cancelled') return { ok: false, code: 'SV_CANCELLED', downloadId: id };
   if (state === 'failed') return { ok: false, code: 'SV_FAILED', downloadId: id };
+  if (state === 'unsettled') return { ok: false, code: 'SV_UNSETTLED', downloadId: id, state };
   return { ok: true, downloadId: id, state };
 }
+
+/** التنزيل ربما ما زال يقرأ الرابط (حوار الحفظ مفتوح، أو نتيجته غير محسومة)، فلا يُلغى فورًا. @param {{ state?: string } | undefined} r */
+export const keepsUrl = (r) => r?.state === 'pending' || r?.state === 'unsettled';
+
+// القناة لم توصل الرسالة أصلًا: لا مستقبل، أو سياق الإضافة لم يعد صالحًا. غيرهما بعد الإرسال قد يكون والعامل بدأ التنزيل.
+const NOT_DELIVERED = /Could not establish connection|Receiving end does not exist|Extension context invalidated/i;
 
 function blobFallback(file, { fallback, doc }) {
   try {
@@ -158,15 +174,15 @@ export async function saveFile(file, { api = globalThis.chrome, store = null, do
     try {
       r = await startDownload(downloads, { url, ...downloadTarget(prefs.saveLocation, file.name) }, settle);
     } finally {
-      // الرابط يبقى ما دام حوار الحفظ مفتوحًا (pending)، ثم يُلغى.
-      if (r?.state === 'pending') win.setTimeout(() => win.URL.revokeObjectURL(url), PENDING_REVOKE_MS);
+      // الرابط يبقى ما دام التنزيل ربما يقرؤه (حوار مفتوح أو نتيجة غير محسومة)، ثم يُلغى.
+      if (keepsUrl(r)) win.setTimeout(() => win.URL.revokeObjectURL(url), PENDING_REVOKE_MS);
       else win.URL.revokeObjectURL(url);
     }
     if (r.ok) {
       await s.setLastSave(r.downloadId).catch(() => {});
       return { ok: true, mode: prefs.saveLocation.mode, downloadId: r.downloadId, ...(r.state === 'pending' ? { pending: true } : {}) };
     }
-    if (r.code === 'SV_CANCELLED') return { ok: false, code: 'SV_CANCELLED' };
+    if (r.code === 'SV_CANCELLED' || r.code === 'SV_UNSETTLED') return { ok: false, code: r.code };
     return blobFallback(file, { fallback, doc });
   }
   // سكربت المحتوى: إلى العامل الخلفي، وما يتجاوز حد القناة أو لا يُرد عليه يرجع إلى Blob.
@@ -174,13 +190,21 @@ export async function saveFile(file, { api = globalThis.chrome, store = null, do
     const v = validateSaveFile(file, { maxChars: Number.MAX_SAFE_INTEGER });
     if (!v.ok) return { ok: false, code: v.code };
     if (file.text.length > SAVE_LIMITS.maxMessageChars) return blobFallback(file, { fallback, doc });
+    let sending;
+    try {
+      sending = Promise.resolve(api.runtime.sendMessage(saveRequest(file)));
+    } catch {
+      // رمي متزامن: لم تُرسل الرسالة أصلًا (سياق الإضافة لم يعد صالحًا)، فالرجوع إلى Blob لا يكرر شيئًا.
+      return blobFallback(file, { fallback, doc });
+    }
     let reply;
     try {
-      reply = await withTimeout(Promise.resolve(api.runtime.sendMessage(saveRequest(file))), replyTimeoutMs);
+      reply = await withTimeout(sending, replyTimeoutMs);
     } catch (err) {
-      // وصلت الرسالة ولم يصل ردها في المهلة: قد يكون العامل بدأ التنزيل (أو حوار الحفظ مفتوح)، فلا يُنزَّل بديل Blob يكرر
-      // الملف (تدقيق 5fedcb9، CX-H6). وتعذّر القناة نفسها (لا مستمع) يرجع إلى Blob كما كان.
-      if (err?.message === 'timeout') return { ok: false, code: 'SV_NO_REPLY' };
+      // وصلت الرسالة ولم يصل ردها (انقضت المهلة، أو انغلقت القناة بعد الإرسال كتوقف العامل أثناء حوار الحفظ): قد يكون
+      // العامل بدأ التنزيل، فلا يُنزَّل بديل Blob يكرر الملف (تدقيق 5fedcb9، CX-H6؛ وتدقيق 7a66f91، U34). وما لم يصل
+      // أصلًا (لا مستقبل) يرجع إلى Blob كما كان.
+      if (err?.message === 'timeout' || !NOT_DELIVERED.test(String(err?.message ?? err))) return { ok: false, code: 'SV_NO_REPLY' };
       reply = null;
     }
     if (isSaveReply(reply)) {

@@ -3,27 +3,32 @@ import { ConvertError, parseJson3, dedupeExact, sortEvents, inferKind } from './
 import { convertManual } from './manual.js';
 import { convertAsr } from './asr.js';
 import { mergeLong } from './long.js';
-import { checkInvariants } from './invariants.js';
+import { DURATION_SLACK_MS, checkInvariants } from './invariants.js';
 import { splitWords } from './text.js';
 
 export { ConvertError } from './json3.js';
 export { LONG_DEFAULTS, normalizeLongOptions } from './long.js';
 
+/** عتبة «قد يكون ناقصًا» الافتراضية (Q6)، والإعداد thresholds.completeness يغيّرها في حدود 0.5..1 (تدقيق 7a66f91، U37). */
 export const COMPLETENESS_RATIO = 0.85;
+/** @param {unknown} v @returns {number} العتبة الصالحة، وإلا الافتراضية */
+export const normalizeCompleteness = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0.5 && v <= 1 ? v : COMPLETENESS_RATIO);
 
 /**
  * الوضعان تحت الثوابت نفسها: «عادي» مقطع لكل وحدة نص كما يعطيها المحوّل، و«مقاطع أطول» يضم المتجاورة منها
- * (long.js) حتى سطرين ونحو 12 ثانية. longOptions تضبط أرقام الوضع الطويل.
+ * (long.js) حتى سطرين ونحو 12 ثانية. longOptions تضبط أرقام الوضع الطويل، وcompletenessRatio عتبة تحذير الاكتمال.
+ * وآخر نهاية تتجاوز المدة بأكثر من الهامش ومقطعها يبدأ داخلها تُقص إلى المدة (تدقيق 7a66f91، I10)، فلا يبقى لثابت
+ * الحدود إلا نص يبدأ بعد نهاية الفيديو، ورمزه EX_BEYOND_DURATION لا EX_INVARIANT_FAILED (U39).
  * @param {{
  *   body: string, trackKind: 'manual' | 'asr', durationMs?: number | null, asrOptions?: object,
- *   mode?: 'normal' | 'long', longOptions?: Partial<typeof import('./long.js').LONG_DEFAULTS>
+ *   mode?: 'normal' | 'long', longOptions?: Partial<typeof import('./long.js').LONG_DEFAULTS>, completenessRatio?: number
  * }} input
  * @returns {{
  *   ok: boolean, code: string | null, message: string | null,
  *   cues: object[], srt: string | null, invariants: object | null, warnings: string[], report: object
  * }}
  */
-export function convertTrack({ body, trackKind, durationMs = null, asrOptions, mode = 'normal', longOptions }) {
+export function convertTrack({ body, trackKind, durationMs = null, asrOptions, mode = 'normal', longOptions, completenessRatio }) {
   if (mode !== 'normal' && mode !== 'long') throw new RangeError(`وضع تحويل غير معروف: ${mode}`);
   const report = { trackKind, mode };
   try {
@@ -44,6 +49,10 @@ export function convertTrack({ body, trackKind, durationMs = null, asrOptions, m
       produced = merged.cues;
       report.long = merged.report;
     }
+    const known = Number.isFinite(durationMs) && durationMs > 0;
+    const tail = produced[produced.length - 1];
+    report.endClampedToDuration = Boolean(known && tail && tail.endMs > durationMs + DURATION_SLACK_MS && tail.startMs < durationMs);
+    if (report.endClampedToDuration) produced = [...produced.slice(0, -1), { ...tail, endMs: durationMs }];
     const cues = produced.map((c, i) => ({ n: i + 1, ...c }));
     const invariants = checkInvariants({ sourceWords, cues, durationMs });
     const warnings = [];
@@ -52,15 +61,17 @@ export function convertTrack({ body, trackKind, durationMs = null, asrOptions, m
     report.firstStartMs = cues.length ? cues[0].startMs : null;
     report.cueCount = cues.length;
     report.sourceWords = sourceWords.length;
-    if (Number.isFinite(durationMs) && durationMs > 0) {
+    if (known) {
       report.completeness = Math.round((lastEnd / durationMs) * 1000) / 1000;
-      if (lastEnd < durationMs * COMPLETENESS_RATIO) warnings.push('EX_MAYBE_INCOMPLETE');
+      if (lastEnd < durationMs * normalizeCompleteness(completenessRatio)) warnings.push('EX_MAYBE_INCOMPLETE');
     } else {
       report.completeness = null;
     }
     if (report.inferredKind !== trackKind) warnings.push('KIND_MISMATCH');
     if (!invariants.ok) {
-      return { ok: false, code: 'EX_INVARIANT_FAILED', message: 'فشل ثابت أو أكثر', cues, srt: null, invariants, warnings, report };
+      const boundsOnly = invariants.results.every((r) => r.ok || r.key === 'bounds');
+      const code = boundsOnly ? 'EX_BEYOND_DURATION' : 'EX_INVARIANT_FAILED';
+      return { ok: false, code, message: 'فشل ثابت أو أكثر', cues, srt: null, invariants, warnings, report };
     }
     return { ok: true, code: null, message: null, cues, srt: invariants.srt, invariants, warnings, report };
   } catch (err) {

@@ -81,9 +81,11 @@ test('ASR: كلمة مقسومة على مقطعين جزئيين بلا مسا�
 });
 
 test('ASR: الصيغة المتدحرجة توقف التحويل ولا تُزال تخمينًا', () => {
+  // الحدث الثاني يعيد ذيل الأول بأزمنته نفسها (إعادة عرض). أما التكرار بأزمنة لاحقة فكلام جديد يُحوَّل (تدقيق 7a66f91، U28،
+  // واختباراته في c4-convert.test.js).
   const events = [
-    asrEvent(0, 4000, [[0, 'one'], [200, 'two'], [400, 'three'], [600, 'four']]),
-    asrEvent(1000, 4000, [[0, 'two'], [200, 'three'], [400, 'four'], [600, 'five']]),
+    asrEvent(0, 5000, [[0, 'one'], [1000, 'two'], [2000, 'three'], [3000, 'four']]),
+    asrEvent(1000, 5000, [[0, 'two'], [1000, 'three'], [2000, 'four'], [3000, 'five']]),
   ];
   const p = parseJson3(body(events));
   assert.ok(detectRollingOverlap(p.events, 3));

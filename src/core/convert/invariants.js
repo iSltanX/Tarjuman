@@ -3,7 +3,7 @@ import { splitWords } from './text.js';
 import { writeSrt } from '../srt/writer.js';
 import { parseSrtStrict } from '../srt/parser.js';
 
-const DURATION_SLACK_MS = 2000;
+export const DURATION_SLACK_MS = 2000;
 
 /**
  * @param {{

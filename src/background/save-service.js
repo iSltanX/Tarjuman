@@ -3,7 +3,7 @@
 // ثم تنزّل النص بواجهة التنزيلات من رابط blob: حيث للخلفية URL.createObjectURL، وإلا من رابط data:، وتسجّل معرّف الملف.
 // لا منطق آخر.
 import { isExtensionPage, isOwnContentScript, isSaveRequest, MESSAGE_VERSION } from '../core/model/messages.js';
-import { PENDING_REVOKE_MS, SAVE_LIMITS, downloadTarget, startDownload, validateSaveFile } from '../core/save/index.js';
+import { PENDING_REVOKE_MS, SAVE_LIMITS, downloadTarget, keepsUrl, startDownload, validateSaveFile } from '../core/save/index.js';
 
 /**
  * نص UTF-8 في رابط data: بترميز base64، على دفعات (String.fromCharCode لا يقبل مصفوفة ضخمة).
@@ -58,7 +58,7 @@ export function createSaveService({ runtime, downloads, store, settle, env = glo
       try {
         r = await startDownload(downloads, { url: link.url, ...downloadTarget(prefs.saveLocation, req.file.name) }, settle);
       } finally {
-        link.release(r?.state === 'pending');
+        link.release(keepsUrl(r));
       }
       if (!r.ok) return { v: MESSAGE_VERSION, ok: false, code: r.code };
       await store.setLastSave(r.downloadId).catch(() => {});

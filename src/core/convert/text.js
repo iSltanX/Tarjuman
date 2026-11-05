@@ -32,17 +32,24 @@ export function cleanCueText(text) {
 export function wrapLines(text, lineChars) {
   if (text.length <= lineChars) return text;
   const words = text.split(' ');
-  // سطران متوازنان: أقرب فاصل إلى المنتصف يُبقي السطرين ضمن الحد.
-  let best = null;
+  // سطران متوازنان: أقرب فاصل إلى المنتصف يُبقي السطرين ضمن الحد. طول الشطر الأول بمجموع تراكمي (تدقيق 7a66f91،
+  // U77: كان يُبنى الشطران عند كل فاصل فتصير الكلفة تربيعية)، والأول بأدنى فرق يفوز كما كان.
+  let bestAt = -1;
+  let bestScore = Infinity;
+  let aLen = -1;
   for (let i = 1; i < words.length; i++) {
-    const a = words.slice(0, i).join(' ');
-    const b = words.slice(i).join(' ');
-    if (a.length <= lineChars && b.length <= lineChars) {
-      const score = Math.abs(a.length - b.length);
-      if (best === null || score < best.score) best = { score, text: `${a}\n${b}` };
+    aLen += words[i - 1].length + 1;
+    const bLen = text.length - aLen - 1;
+    if (aLen > lineChars) break;
+    if (bLen <= lineChars) {
+      const score = Math.abs(aLen - bLen);
+      if (score < bestScore) {
+        bestScore = score;
+        bestAt = aLen;
+      }
     }
   }
-  if (best) return best.text;
+  if (bestAt >= 0) return `${text.slice(0, bestAt)}\n${text.slice(bestAt + 1)}`;
   // وإلا لفّ جشع (كلمة أطول من الحد تأخذ سطرًا وحدها).
   const lines = [];
   let line = '';

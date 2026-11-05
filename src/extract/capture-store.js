@@ -44,6 +44,14 @@ export function createCaptureStore({ now = () => Date.now() } = {}) {
       rejected.push({ ...info, id: ++seq, at: now() });
       if (rejected.length > MAX_REJECTED) rejected.shift();
     },
+    /**
+     * يحرّر مدخلًا طُرد من خانات المستخرج، فلا يبقى جسمه محتفظًا به حتى التنقل (تدقيق 7a66f91، U33). لا أثر إن حل محله أحدث.
+     * @param {AcceptedCapture} entry
+     */
+    release(entry) {
+      const key = `${entry.videoId}|${entry.lang}|${entry.trackKind}`;
+      if (accepted.get(key) === entry) accepted.delete(key);
+    },
     accepted() {
       return [...accepted.values()];
     },
