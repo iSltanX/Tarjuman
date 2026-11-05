@@ -24,6 +24,7 @@ test('U45: صفوف كثيرة نقطة Tab واحدة (tabindex متنقل)، �
   const { u } = await mounted({ arabic: { cues: P.arCues(300), edited: false, fileName: 'x.srt', comparison: null } });
   assert.equal(u.rows().length, 300);
   assert.equal(tabbable(u).length, 1, 'نقطة Tab واحدة');
+  assert.equal(u.list.getAttribute('tabindex'), '-1', 'والحاوية القابلة للتمرير خارج ترتيب Tab (Firefox يضعها فيه)');
   const times = u.qa('.t');
   times[0].focus();
   times[0].dispatchEvent({ type: 'focusin', bubbles: true });

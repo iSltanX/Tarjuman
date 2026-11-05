@@ -18,7 +18,9 @@ const NAV = Object.freeze({ ArrowDown: 1, ArrowUp: -1, PageDown: PAGE_ROWS, Page
  * @param {{ doc: Document, onSeek: (ms: number) => void }} deps
  */
 export function createTranscript({ doc, onSeek }) {
-  const list = el(doc, 'div', { className: 'list', attrs: { role: 'list', 'aria-label': LABELS.listLabel } });
+  // الحاوية نفسها خارج ترتيب Tab: Firefox يضع حاويات التمرير فيه، فتصير نقطتين (الحاوية ثم الصف)؛ والوصول إلى المحتوى بالصف
+  // المركّز والأسهم (الحي في Firefox، C6).
+  const list = el(doc, 'div', { className: 'list', attrs: { role: 'list', 'aria-label': LABELS.listLabel, tabindex: '-1' } });
   const prog = el(doc, 'span', { className: 'prog' }, [el(doc, 'i')]);
   const bar = prog.firstChild;
 
