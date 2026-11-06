@@ -53,7 +53,7 @@
 
 ## المهام
 
-1. اقرأ §٦ من [`docs/product-spec.md`](../product-spec.md) و[`figma-design-brief.md`](../../figma-design-brief.md) §٥–§٧ (وتصميم Figma في الصفحتين «03 المكوّنات» و«04 المشغّل»).
+1. اقرأ §٦ من [`docs/product-spec.md`](../product-spec.md) و[`figma-design-brief.md`](../design/figma-design-brief.md) §٥–§٧ (وتصميم Figma في الصفحتين «03 المكوّنات» و«04 المشغّل»).
 2. نفّذ الحقن وإعادة الحقن والأحجام والتلميحات.
 3. نفّذ ± والشارة وقائمة خيارات التوقيت عبر المتحكم.
 4. نفّذ تدفق التحميل فوق وحدات P3.

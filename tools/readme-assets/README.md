@@ -23,8 +23,8 @@
 ## التوليد
 
 ```bash
-command node tools/readme-assets/render.mjs
-command node tools/readme-assets/render.mjs banner
+node tools/readme-assets/render.mjs
+node tools/readme-assets/render.mjs banner
 ```
 
 - الأمر الأول يرسم الصور كلها، والثاني قالبًا واحدًا بالاسم.

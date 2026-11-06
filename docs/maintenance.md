@@ -1,6 +1,6 @@
 # دليل الصيانة والفحص الدوري لترجمان
 
-> ترجمان يعتمد على سلوك يوتيوب غير الموثّق: طلب المشغّل للترجمة وصيغة `json3`، وعناصر المشغّل وفئاته، وأحداث التنقل والإعلانات. أي تحديث ليوتيوب أو للمتصفح قد يكسر جزءًا منه دون إنذار. هذا الدليل يقول **متى تفحص، وكيف، وماذا تراقب، وأين تُصلح**. والأوامر تُشغَّل في مجلد المشروع بـ`command node` و`command npm run` كما في جلسات هذا الجهاز.
+> ترجمان يعتمد على سلوك يوتيوب غير الموثّق: طلب المشغّل للترجمة وصيغة `json3`، وعناصر المشغّل وفئاته، وأحداث التنقل والإعلانات. أي تحديث ليوتيوب أو للمتصفح قد يكسر جزءًا منه دون إنذار. هذا الدليل يقول **متى تفحص، وكيف، وماذا تراقب، وأين تُصلح**. والأوامر تُشغَّل في مجلد المشروع.
 
 ## ١. متى
 
@@ -15,23 +15,23 @@
 ## ٢. الفحص السريع (آلي، دقائق)
 
 ```bash
-command npm run check:wave
+npm run check:wave
 ```
 
 ```bash
-command node scripts/run-tests.mjs test/e2e/static test/e2e/regression
+node scripts/run-tests.mjs test/e2e/static test/e2e/regression
 ```
 
 ```bash
-command node test/live/identity/run.mjs --browser brave
+node test/live/identity/run.mjs --browser brave
 ```
 
 ```bash
-command node test/live/harness/smoke.mjs --browser brave --out docs/evidence/<المجلد>
+node test/live/harness/smoke.mjs --browser brave --out docs/evidence/<المجلد>
 ```
 
 ```bash
-command node test/live/stores/t3.mjs --browser firefox --out docs/evidence/<المجلد>/firefox
+node test/live/stores/t3.mjs --browser firefox --out docs/evidence/<المجلد>/firefox
 ```
 
 - **`check:wave`**: الفحص الثابت، والأسرار، واختبارات الوحدة، والبناء، والتكامل، وفحص الخطة.
@@ -65,7 +65,7 @@ command node test/live/stores/t3.mjs --browser firefox --out docs/evidence/<ال
 1. **الجلسة اليدوية**: نحو خمس دقائق لكل متصفح.
 
    ```bash
-   command node test/e2e/live/hand.mjs --browser brave --live <معرّف البث المسجّل>
+   node test/e2e/live/hand.mjs --browser brave --live <معرّف البث المسجّل>
    ```
 
    - تُفتح نافذة عادية ببناء الإنتاج وأربعة تبويبات: يدوي، وتلقائي، وطويل، وبث مسجّل.
@@ -77,29 +77,29 @@ command node test/live/stores/t3.mjs --browser firefox --out docs/evidence/<ال
 2. **البث المسجّل**: إن حُذف أو أُخفي فاختر غيره (جلسة مؤتمتة لا تحتاج الجسم):
 
    ```bash
-   command node test/e2e/live/find-live.mjs
+   node test/e2e/live/find-live.mjs
    ```
 
 3. **البنود المؤتمتة**: بلا ترجمة، وبإعلان.
 
    ```bash
-   command node test/e2e/live/list.mjs --browser chrome --only nocap,ad
+   node test/e2e/live/list.mjs --browser chrome --only nocap,ad
    ```
 
 4. **الدورة الكاملة** (عند تغيير كبير):
 
    ```bash
-   command node test/e2e/live/cycle.mjs library --browser brave
+   node test/e2e/live/cycle.mjs library --browser brave
    ```
 
 5. **رحلة الإصدار الثاني** (عند تغيير كبير أو قبل حزمة): الترقية ثم الجلسة اليدوية ثم «اسأل» ثم الرحلة، في Brave ثم Chrome. التفاصيل والترتيب في [`test/e2e/README.md`](../test/e2e/README.md) §«الإصدار الثاني».
 
    ```bash
-   command node test/e2e/live/v2/hand.mjs --browser brave --long 8-m7hqOqs9Y
+   node test/e2e/live/v2/hand.mjs --browser brave --long 8-m7hqOqs9Y
    ```
 
    ```bash
-   command node test/e2e/live/v2/journey.mjs --browser brave
+   node test/e2e/live/v2/journey.mjs --browser brave
    ```
 
    - في الجلسة اليدوية: ⤓ EN ← «تنزيل الملف» ثم «نسخ التعليمات» في كل تبويب، وفي الطويل مرة ثانية بعد «خيارات احتياطية» ← «تقسيم الملف إلى أجزاء».
@@ -135,11 +135,11 @@ command node test/live/stores/t3.mjs --browser firefox --out docs/evidence/<ال
 ## ٥. بناء الحزم وإعادة التثبيت
 
 ```bash
-command node scripts/release/package.mjs
+node scripts/release/package.mjs
 ```
 
 ```bash
-command node scripts/release/audit.mjs release/tarjuman-<الإصدار>
+node scripts/release/audit.mjs release/tarjuman-<الإصدار>
 ```
 
 - ينتج المجلد والأرشيف وملف البصمات في `release/` (متجاهَل في Git).
@@ -166,12 +166,12 @@ command node scripts/release/audit.mjs release/tarjuman-<الإصدار>
   - خطوط الترجمة الأربعة بملفيها ورخصة OFL لكل منها.
   - إشعارات الأطراف الثالثة `THIRD_PARTY_NOTICES.txt` في جذر الحزمة: سطر حقوق كل خط مشحون، ونص ترخيص Lucide حرفيًا، وترخيص esbuild (جولة النشر T4).
   - ولا ملف غير متوقع: ويُقبل منذ جولة صقل الواجهات خطا الواجهة المضمّنان `ui/fonts/ui/` (ويكشفهما البيان ليوتيوب وحده كخطوط الترجمة) ورخصتهما، وأيقونات الإضافة الأربع `icons/`، ومنذ T4 ملف الإشعارات.
-- **التدقيق لهدف Firefox:** `command node scripts/release/audit.mjs dist-firefox --target firefox` بالفحوص نفسها، ومعها إعدادات Gecko المعتمدة وسكربت الخلفية بدل عامل الخدمة.
+- **التدقيق لهدف Firefox:** `node scripts/release/audit.mjs dist-firefox --target firefox` بالفحوص نفسها، ومعها إعدادات Gecko المعتمدة وسكربت الخلفية بدل عامل الخدمة.
 
 ### حزم المتاجر (جولة النشر T4)
 
 ```bash
-command npm run package
+npm run package
 ```
 
 - يبني حزمة التثبيت الشخصي السابقة، ثم في `release/store/`:
@@ -191,8 +191,8 @@ command npm run package
 - حزمة المصدر من قائمة صريحة في `scripts/release/store.mjs`: `src/` وسكربتا البناء والأهداف و`package.json` وملف القفل و`LICENSE` والإشعارات. لا أدلة، ولا تقارير، ولا اختبارات، ولا `node_modules`.
 - البناء يكتب مسار كل ملف مصدر في تعليق داخل الحزمة نسبةً إلى جذر المستودع (`absWorkingDir`)، فلا يختلف ببناء من مجلد آخر.
 - `LICENSE` معتمد (سلطان، 2026-11-04). وإن عاد أوله سطر `[قرار]` نبّه الأمر بأنه مسودة، فلا تُرفع الحزم.
-- **عند إضافة خط أو أيقونة:** أعد توليد الإشعارات بـ`command node scripts/release/notices.mjs`. خط بلا نسبة يُفشل التوليد، وأيقونة في `src/ui/icons.js` بلا تصنيف في `LUCIDE_ICONS` أو `ORIGINAL_ICONS` تُفشل اختبار الوحدة. و`check` يفحص المطابقة بـ`--check`.
-- **فحص Firefox:** `command npm run lint:firefox`. المتوقع تحذير واحد عن Firefox لأندرويد، والإضافة لسطح المكتب وحده.
+- **عند إضافة خط أو أيقونة:** أعد توليد الإشعارات بـ`node scripts/release/notices.mjs`. خط بلا نسبة يُفشل التوليد، وأيقونة في `src/ui/icons.js` بلا تصنيف في `LUCIDE_ICONS` أو `ORIGINAL_ICONS` تُفشل اختبار الوحدة. و`check` يفحص المطابقة بـ`--check`.
+- **فحص Firefox:** `npm run lint:firefox`. المتوقع تحذير واحد عن Firefox لأندرويد، والإضافة لسطح المكتب وحده.
 - إعادة التثبيت بنسخ الملفات إلى المجلد الدائم نفسه (دليل الاستخدام §٩).
 - **الرجوع إلى الإصدار الأول** عند خلل يمنع الاستعمال: حزمة الوسم `tj-v1` بسكربت حزمته نفسه (كما يبنيها `buildV1` في `test/e2e/live/v2/lib.mjs`)، ثم نسخ ملفاتها إلى المجلد الدائم نفسه. خذ نسخة احتياطية من الإعدادات قبلها. ثبت في P15 أن الأول يقرأ مكتبة الثاني ويكتب عليها، وأن العودة إلى الثاني بلا فقد.
 

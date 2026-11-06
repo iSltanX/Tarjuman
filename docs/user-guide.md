@@ -17,12 +17,12 @@
 
 ولم يُنشر في Firefox Add-ons بعد، فيُثبَّت فيه من ملف الحزمة كما يلي.
 
-### تجهيز الحزمة (مرة لكل إصدار)
+### من الشيفرة: تجهيز الحزمة (لـFirefox حتى نشره، أو للتجربة)
 
 في مجلد المشروع:
 
 ```bash
-command node scripts/release/package.mjs
+node scripts/release/package.mjs
 ```
 
 ينتج في `release/` ثلاثة أشياء:
@@ -36,7 +36,7 @@ command node scripts/release/package.mjs
 ولـFirefox، أو لحزم المتاجر كلها، الأمر الواحد:
 
 ```bash
-command npm run package
+npm run package
 ```
 
 يبني الحزمة السابقة، ومعها في `release/store/` حزم Chrome وEdge وFirefox وحزمة المصدر وبصماتها (دليل الصيانة §٥). وحزمة Firefox `tarjuman-1.1.0-firefox.zip` هي التي تحمّلها في Firefox.

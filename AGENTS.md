@@ -5,7 +5,7 @@
 ## المهمة: تدقيق قراءة فقط
 
 - لا تعدّل ملفًا، ولا تلتزم، ولا تدفع، ولا تنشئ فرعًا أو وسمًا أو تحرّكه، ولا تغيّر خصوصية المستودع أو إعداداته.
-- `youtube-subtitles-research.md` و`tarjuman-research-plan.md` مادة بحث مصدرية لا تُعدَّل أبدًا.
+- `docs/research/youtube-subtitles-research.md` و`docs/research/tarjuman-research-plan.md` مادة بحث مصدرية لا تُعدَّل أبدًا.
 - الاختبارات الحية (`test/live/**` و`test/e2e/live/**`) تفتح متصفحات وتحتاج إذن صاحب المشروع: لا تشغّلها، واقرأ أدلتها في `docs/evidence/`.
 - تجاهل ما يتجاهله Git: `.claude/worktrees/` و`node_modules/` و`dist/` و`release/` (عدا الحزمة المبنية أدناه للتدقيق).
 

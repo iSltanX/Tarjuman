@@ -46,7 +46,7 @@
 
 ## المهام
 
-1. اقرأ [`docs/contracts/timing.md`](../contracts/timing.md) وواجهات المقارنة، و[`figma-design-brief.md`](../../figma-design-brief.md) §١١ (أو تصميم Figma إن سلّمه سلطان).
+1. اقرأ [`docs/contracts/timing.md`](../contracts/timing.md) وواجهات المقارنة، و[`figma-design-brief.md`](../design/figma-design-brief.md) §١١ (أو تصميم Figma إن سلّمه سلطان).
 2. نفّذ `src/core/edit` بالاختبارات أولًا، ومنها اختبارات «لا تطبيق مزدوج».
 3. نفّذ الصفحة: الرأس، والشريط والنطاق، والقائمة الافتراضية، والحقول.
 4. نفّذ لوحة المشكلات ولوحة المقارنة والاستعادة اليدوية.

@@ -40,7 +40,7 @@
 - **نقاط تركيب مؤقتة** تعمل فارغة: `src/player/overlay/index.js` و`src/player/controls/index.js`، والصفحات الأربع `src/pages/{popup,library,editor,settings}/`، وتوقيعات تدفقي التصدير والاستيراد بتنفيذ مؤقت.
 - `src/player/youtube-dom.js`: كل محددات يوتيوب في ملف واحد.
 - `src/core/errors/index.js` وملف مجال فارغ لكل مرحلة لاحقة (`extract`، و`import`، و`overlay`، و`controls`، و`pages`، و`editor`).
-- `src/ui/`: رموز التصميم من [`figma-design-brief.md`](../../figma-design-brief.md) §٣ ومكوّنات أساسية (زر، وحقل، وحوار تأكيد، وتنبيه، وحالة فارغة، وشارة حالة) بالعربية RTL والوضعين.
+- `src/ui/`: رموز التصميم من [`figma-design-brief.md`](../design/figma-design-brief.md) §٣ ومكوّنات أساسية (زر، وحقل، وحوار تأكيد، وتنبيه، وحالة فارغة، وشارة حالة) بالعربية RTL والوضعين.
 - `src/manifest.json` النهائي: كل نقاط الدخول والصفحات ونافذة الأيقونة والأذونات المعتمدة، فلا تحتاج W3 وW4 إلى لمسه.
 - `scripts/` و`package.json`: البناء، و`check:quick` و`check` و`check:wave` (يضيف `test/integration`)، وفحوص ثابتة (`innerHTML` و`outerHTML` و`insertAdjacentHTML` و`eval` و`new Function` وشيفرة بعيدة ونطاقات خارجية والأذونات).
 - تثبيت حزام الاختبار الحي `test/live/harness/` وأدوات اختبار مشتركة `test/helpers/` (محاكاة `chrome.storage` وغيرها).
@@ -66,7 +66,7 @@
 ## الاعتماديات
 
 - **قبلها:** P1 مدمجة ومتحققة، والبوابة G1 مفتوحة (بنتيجة «نجاح» أو بقرار سلطان).
-- **تستهلك:** تقرير P1 وعقد الاستخراج المحدّث، و[`docs/contracts/timing.md`](../contracts/timing.md)، و[`docs/contracts/data-model.md`](../contracts/data-model.md)، و[`docs/contracts/interfaces.md`](../contracts/interfaces.md)، و§٣ من [`figma-design-brief.md`](../../figma-design-brief.md).
+- **تستهلك:** تقرير P1 وعقد الاستخراج المحدّث، و[`docs/contracts/timing.md`](../contracts/timing.md)، و[`docs/contracts/data-model.md`](../contracts/data-model.md)، و[`docs/contracts/interfaces.md`](../contracts/interfaces.md)، و§٣ من [`figma-design-brief.md`](../design/figma-design-brief.md).
 - **بعدها:** W3 كلها (P3 وP4 وP5) بالتوازي.
 
 ## الملفات والمخرجات المتوقعة
