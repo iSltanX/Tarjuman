@@ -2,7 +2,7 @@
 
 > النص المعتمد للصفحة التعريفية بالترتيب الذي تظهر به. كُتب في جولة النشر T5 (2026-11-04)، ثم أُعيد على التصميم الذي اعتمده سلطان في لوحة التصميم (2026-11-04، «أعتمده»)، من سلوك ترجمان على الفرع `tj/store-release`. ولكل بند دليل في [جدول الأدلة](#جدول-الأدلة-للمراجعة-لا-يُنشر) آخر الملف، وتصميم الصفحة ومكوّناتها في [`spec.md`](spec.md).
 >
-> **البنية التي يقرؤها مولّد الموقع:** في كل قسم أسطر حقول `**الحقل:** القيمة` كلٌّ في فقرة، ثم محتواه (قائمة أو جدول أو ميزات `###`). و`⟨لقطة: …⟩` موضع لقطة حقيقية من حزمة الإصدار (T6) باسمها في المولّد، ولا تُستعمل مكانها لقطات `docs/evidence/`. و«قريبًا» نص بلا رابط حتى يُنشر ترجمان في المتجر.
+> **البنية التي يقرؤها مولّد الموقع:** في كل قسم أسطر حقول `**الحقل:** القيمة` كلٌّ في فقرة، ثم محتواه (قائمة أو جدول أو ميزات `###`). و`⟨لقطة: …⟩` موضع لقطة حقيقية من حزمة الإصدار (T6) باسمها في المولّد، ولا تُستعمل مكانها لقطات `docs/evidence/`. و«قريبًا» نص بلا رابط حتى يُنشر ترجمان في المتجر، والمنشور «متاح» برابط صفحته في متجره.
 
 ## البيانات الوصفية
 
@@ -24,7 +24,7 @@
 
 **السطر التالي:** ترجمان يستخرج ترجمة يوتيوب الإنجليزية إلى ملف، فتترجمه أنت بالنموذج الذي تختاره، ثم يعرض ترجمتك العربية فوق الفيديو نفسه، وتضبط توقيتها وتحرّرها.
 
-**الزر الرئيسي:** «التثبيت» إلى `#install`.
+**الزر الرئيسي:** «أضف ترجمان إلى Chrome» إلى `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj`.
 
 **الرابط الثانوي:** «كيف يعمل» إلى `#how`.
 
@@ -112,12 +112,12 @@
 
 **العنوان:** للحاسوب، في أربعة متصفحات
 
-**المقدمة:** لم يُنشر ترجمان في المتاجر بعد. حين يُنشر تجد رابط كل متجر هنا.
+**المقدمة:** ترجمان منشور في Chrome Web Store، ومنه يثبّته Brave. ولم يُنشر في متجري Edge وFirefox بعد، وحين يُنشر فيهما تجد رابطيهما هنا.
 
 | المتصفح | من أين | الحال |
 | --- | --- | --- |
-| Chrome | من Chrome Web Store، للإصدار 130 فأحدث | قريبًا |
-| Brave | من Chrome Web Store، على Chromium 130 فأحدث | قريبًا |
+| Chrome | من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، للإصدار 130 فأحدث | متاح |
+| Brave | من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، على Chromium 130 فأحدث | متاح |
 | Edge | من Microsoft Edge Add-ons، للإصدار 130 فأحدث | قريبًا |
 | Firefox | من Firefox Add-ons، للإصدار 144 فأحدث | قريبًا |
 
@@ -125,7 +125,7 @@
 
 **العنوان:** من المتجر إلى أول فيديو
 
-1. **ثبّت ترجمان من متجر متصفحك:** قريبًا في Chrome Web Store وMicrosoft Edge Add-ons وFirefox Add-ons. وBrave يثبّته من Chrome Web Store.
+1. **ثبّت ترجمان من متجر متصفحك:** في Chrome وBrave من [صفحته في Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj). وقريبًا في Microsoft Edge Add-ons وFirefox Add-ons.
 2. **ثبّت أيقونته في شريط المتصفح:** من أيقونة الإضافات (قطعة الأحجية)، ثم الدبوس بجوار «ترجمان».
 3. **افتح فيديو على يوتيوب:** وابدأ من [أول استعمال](/tarjuman/support#first-use) في صفحة المساعدة.
 
@@ -159,7 +159,8 @@
 | مظهرها كما تحب | وضع العرض والخط والحجم والخلفية والموضع، والخطوط مضمّنة | `src/pages/settings/view.js` (قسم «العرض»)، و`src/ui/subtitle-fonts.js`، و`store/listing.ar.md` (لقطة الإعدادات)، و`test/live/stores/t6-shots.mjs` (`06-settings-wide`) |
 | أين تذهب بياناتك | كل البنود | جدول أدلة `docs/site/privacy.md` |
 | ما لا يفعله | لا تنزيل فيديو ولا صوت، ولا طلب ترجمة، ولا ترجمة بنفسه، ولا Shorts ولا بث ولا مضمّنة، والحاسوب وحده | `store/listing.ar.md` («ما لا يفعله» المعتمد)، و`docs/contracts/extraction.md`، و`docs/known-limitations.md` §١ |
-| المتصفحات والتثبيت | الأربعة بحدودها الدنيا (Chromium 130 وFirefox 144)، و«قريبًا»، ولم يُنشر بعد | `docs/evidence/T3/README.md`، و`src/manifest.json`، و`scripts/targets.mjs`، و`docs/store-release.md`؛ والحدان بقرار سلطان (تدقيق 7a66f91، Q08 وQ09) |
+| البطل والمتصفحات والتثبيت | زر «أضف ترجمان إلى Chrome» ورابط Chrome Web Store لـChrome وBrave («متاح») | صفحة المتجر لزائر غير مسجَّل (2026-11-07): 200، وترجمان `1.1.0`، والناشر BySultan؛ `store/submission.md` §٥، و`docs/store-release.md` («بعد C9: النشر في Chrome Web Store») |
+| المتصفحات والتثبيت | الأربعة بحدودها الدنيا (Chromium 130 وFirefox 144)، و«قريبًا» لـEdge وFirefox، ولم يُنشر فيهما بعد | `docs/evidence/T3/README.md`، و`src/manifest.json`، و`scripts/targets.mjs`، و`docs/store-release.md`؛ والحدان بقرار سلطان (تدقيق 7a66f91، Q08 وQ09) |
 | التثبيت | الصلاحيات الثلاث والاختيارية وموافقتا Firefox | `src/manifest.json`، و`docs/site/privacy.md` (`#permissions`)، و`docs/site/help.md` (`#install`) |
 | التذييل | الناشر وبريد الدعم والحقوق ونفي الصلة بيوتيوب وعلامته | `store/README.md` §٥، و`LICENSE` (السطر الأول والفقرة الأخيرة)، و`store/listing.ar.md` (سطر العلامة) |
 | التذييل | رابط الحقوق | `docs/site/credits.md` |

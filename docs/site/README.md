@@ -45,14 +45,14 @@
 | `/tarjuman/credits#film` | نسبة الفيلم في اللقطات كاملة، ورابطها «الحقوق» في تذييل كل صفحة |
 | `/tarjuman/privacy#report` و`/tarjuman/support#report` | مراسٍ ثابتة، تحيل إليها المتاجر وقناة البلاغات |
 | بريد الدعم `iSultanBy@gmail.com` | قرار سلطان (T1)، ظاهر للعموم |
-| روابط المتاجر | «قريبًا» نصًا بلا رابط حتى يُنشر ترجمان في كل متجر |
+| روابط المتاجر | Chrome Web Store منشور (ومنه Brave): `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj`، وهو زر البطل ورابط Chrome وBrave في المتصفحات والتثبيت والمساعدة (2026-11-07). وEdge وFirefox «قريبًا» نصًا بلا رابط حتى يُنشر فيهما |
 | سياسات Google وCloudflare وGitHub | في `privacy.md` (`#third-parties`). أعادت 200 في 2026-11-04 |
 
 ## العلامات
 
 - **[قرار]** ينتظر سلطان، ولا يُنشر النص قبل حسمه.
 - `⟨…⟩` قيمة تنتظر النشر، كتاريخ السريان ومواضع اللقطات. لا تُملأ بتخمين.
-- «قريبًا» نص بلا رابط.
+- «قريبًا» نص بلا رابط، و«متاح» لمتجر منشور برابط صفحته.
 
 ## حكم `data_collection_permissions.required: ["none"]` في Firefox
 

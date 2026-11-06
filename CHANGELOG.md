@@ -2,9 +2,9 @@
 
 ما تغيّر في كل إصدار من ترجمان كما يلمسه المستخدم، من الأحدث إلى الأقدم. التفصيل في الوثائق المربوطة، والقرارات في [المواصفة](docs/product-spec.md)، والقيود في [القيود المعروفة](docs/known-limitations.md).
 
-## 1.1.0 — لم يُنشر بعد — أول نسخة للمتاجر
+## 1.1.0 — 2026-11-06 — أول نسخة للمتاجر
 
-ما بعد الوسم `tj-v2` على `main` وفرع النشر `tj/store-release`. لم يُرفع شيء إلى متجر بعد. والحزم الشخصية المبنية من `main` بعد `tj-v2` حملت الرقم `1.0.0` نفسه، فاعتمد سلطان `1.1.0` لأول نسخة في المتاجر (2026-11-04، [`store/README.md`](store/README.md) §٥).
+ما بعد الوسم `tj-v2` على `main` وفرع النشر `tj/store-release`. منشور في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave)، وصفحته تعرض الإصدار `1.1.0` والناشر BySultan وتاريخ التحديث 6 نوفمبر 2026. ولم يُنشر في Microsoft Edge Add-ons ولا Firefox Add-ons بعد. والحزم الشخصية المبنية من `main` بعد `tj-v2` حملت الرقم `1.0.0` نفسه، فاعتمد سلطان `1.1.0` لأول نسخة في المتاجر (2026-11-04، [`store/README.md`](store/README.md) §٥).
 
 **متصفحات أكثر** ([`docs/store-release.md`](docs/store-release.md)، T2 وT3)
 

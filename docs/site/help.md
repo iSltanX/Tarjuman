@@ -2,7 +2,7 @@
 
 > نص صفحة الدعم في الموقع (T7): التثبيت، وأول استعمال، والترجمة بنموذج تختاره، والتوقيت، والمحرّر، والمحفوظات والنسخة الاحتياطية، والانتقال بين النسخ، والإبلاغ عن مشكلة، وحل المشكلات. كُتب في جولة النشر T5 (2026-11-04) من سلوك ترجمان على الفرع `tj/store-release`، ولكل بند دليل في [جدول الأدلة](#جدول-الأدلة-للمراجعة-لا-يُنشر) آخر الملف. والدليل الكامل في المستودع [`docs/user-guide.md`](../user-guide.md)، وهذه الصفحة خلاصته للعموم.
 >
-> **العلامات:** «قريبًا» نص بلا رابط حتى يُنشر ترجمان في المتجر. وما بين `⟨…⟩` لا يُملأ بتخمين.
+> **العلامات:** «قريبًا» نص بلا رابط حتى يُنشر ترجمان في المتجر، والمنشور برابط صفحته في متجره. وما بين `⟨…⟩` لا يُملأ بتخمين.
 
 ## الرأس
 
@@ -17,8 +17,8 @@
 
 | المتصفح | من أين |
 | --- | --- |
-| Chrome (130 فأحدث) | Chrome Web Store — قريبًا |
-| Brave (على Chromium 130 فأحدث) | Chrome Web Store — قريبًا |
+| Chrome (130 فأحدث) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
+| Brave (على Chromium 130 فأحدث) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Edge (130 فأحدث) | Microsoft Edge Add-ons — قريبًا |
 | Firefox (144 فأحدث) | Firefox Add-ons — قريبًا |
 
@@ -118,7 +118,8 @@
 | --- | --- | --- |
 | التثبيت | المتصفحات والحدود الدنيا (Chromium 130 وFirefox 144) | `src/manifest.json` (`minimum_chrome_version` 130) و`scripts/targets.mjs` (`strict_min_version` 144)، بقرار سلطان (تدقيق 7a66f91، Q08 وQ09)؛ والمختبر حيًا الإصدارات الحالية وحدها (Chrome وEdge 156، وBrave 1.98، وFirefox 159): T3 (`docs/evidence/T3/README.md`) وC1 (`docs/audit-7a66f91/live/C1/`) |
 | التثبيت | ما لا يُرفق بالبلاغ تلقائيًا، ومعرّف تثبيت Firefox | `docs/site/privacy.md` (`#report`) وجدول أدلتها |
-| التثبيت | «قريبًا» | لم يُرفع شيء إلى متجر (`docs/store-release.md`) |
+| التثبيت | رابط Chrome Web Store لـChrome وBrave | صفحة المتجر لزائر غير مسجَّل (2026-11-07): 200، وترجمان `1.1.0`، والناشر BySultan؛ `store/submission.md` §٥ |
+| التثبيت | «قريبًا» لـEdge وFirefox | لم يُنشر فيهما بعد (`docs/store-release.md`، «بعد C9: النشر في Chrome Web Store») |
 | التثبيت | الصلاحيات الثلاث والاختيارية | `src/manifest.json`، و`docs/site/privacy.md` `#permissions` |
 | أول استعمال | الخطوات الخمس وأسماء الأزرار | `src/pages/settings/about.js` (`GUIDE_STEPS`)، و`src/player/controls/text.js` (`LABELS`) |
 | أول استعمال | رسالة CC | `docs/user-guide.md` §٣ و§١٠، و`src/core/errors/` |
