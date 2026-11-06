@@ -15,7 +15,7 @@
 
 ## ٢. الجمهور والاستخدام
 
-- **المستخدم الأول:** سلطان، استخدامًا شخصيًا بإضافة غير معبأة (unpacked) على Brave أساسًا ثم Chrome. ثم مستخدمو متاجر Chrome وEdge وFirefox بعد جولة النشر ([`store-release.md`](store-release.md)). ونُشر الإصدار `1.1.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave)، ولم يُنشر في متجري Edge وFirefox بعد.
+- **المستخدم الأول:** سلطان، استخدامًا شخصيًا بإضافة غير معبأة (unpacked) على Brave أساسًا ثم Chrome. ثم مستخدمو متاجر Chrome وEdge وFirefox بعد جولة النشر ([`store-release.md`](store-release.md)). ونُشر الإصدار `1.1.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi)، ولم يُنشر في Firefox Add-ons بعد.
 - **الحاجة:** محتوى إنجليزي طويل (محاضرات، مقابلات، دروس) يريد له ترجمة عربية سياقية أدق من الترجمة الآلية في يوتيوب.
 - **ما يملكه:** إتقان استخدام نماذج الذكاء الاصطناعي، ولا يريد ربط الإضافة بأي خدمة.
 - **ما لا يريده:** واجهة مزدحمة فوق المشاهدة، أو تعديلًا صامتًا لملفاته، أو أداة تتحول دون علمه إلى شيء آخر.

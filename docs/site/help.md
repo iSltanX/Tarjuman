@@ -19,7 +19,7 @@
 | --- | --- |
 | Chrome (130 فأحدث) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Brave (على Chromium 130 فأحدث) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
-| Edge (130 فأحدث) | Microsoft Edge Add-ons — قريبًا |
+| Edge (130 فأحدث) | [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
 | Firefox (144 فأحدث) | Firefox Add-ons — قريبًا |
 
 بعد التثبيت ثبّت أيقونة ترجمان في شريط المتصفح: أيقونة الإضافات (قطعة الأحجية)، ثم الدبوس بجوار «ترجمان».
@@ -118,8 +118,8 @@
 | --- | --- | --- |
 | التثبيت | المتصفحات والحدود الدنيا (Chromium 130 وFirefox 144) | `src/manifest.json` (`minimum_chrome_version` 130) و`scripts/targets.mjs` (`strict_min_version` 144)، بقرار سلطان (تدقيق 7a66f91، Q08 وQ09)؛ والمختبر حيًا الإصدارات الحالية وحدها (Chrome وEdge 156، وBrave 1.98، وFirefox 159): T3 (`docs/evidence/T3/README.md`) وC1 (`docs/audit-7a66f91/live/C1/`) |
 | التثبيت | ما لا يُرفق بالبلاغ تلقائيًا، ومعرّف تثبيت Firefox | `docs/site/privacy.md` (`#report`) وجدول أدلتها |
-| التثبيت | رابط Chrome Web Store لـChrome وBrave | صفحة المتجر لزائر غير مسجَّل (2026-11-07): 200، وترجمان `1.1.0`، والناشر BySultan؛ `store/submission.md` §٥ |
-| التثبيت | «قريبًا» لـEdge وFirefox | لم يُنشر فيهما بعد (`docs/store-release.md`، «بعد C9: النشر في Chrome Web Store») |
+| التثبيت | رابطا Chrome Web Store (لـChrome وBrave) وMicrosoft Edge Add-ons | صفحتا المتجرين لزائر غير مسجَّل (2026-11-07): 200، وترجمان `1.1.0`، والناشر BySultan؛ `store/submission.md` §٥ |
+| التثبيت | «قريبًا» لـFirefox | لم يُنشر فيه بعد (`docs/store-release.md`، «بعد C9: النشر في Chrome Web Store وMicrosoft Edge Add-ons») |
 | التثبيت | الصلاحيات الثلاث والاختيارية | `src/manifest.json`، و`docs/site/privacy.md` `#permissions` |
 | أول استعمال | الخطوات الخمس وأسماء الأزرار | `src/pages/settings/about.js` (`GUIDE_STEPS`)، و`src/player/controls/text.js` (`LABELS`) |
 | أول استعمال | رسالة CC | `docs/user-guide.md` §٣ و§١٠، و`src/core/errors/` |

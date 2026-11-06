@@ -9,6 +9,7 @@
 
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-available-6B2D5E?logo=googlechrome&logoColor=white"></a>
+  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-available-6B2D5E?logo=microsoftedge&logoColor=white"></a>
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="الإصدار 1.1.0" src="https://img.shields.io/badge/version-1.1.0-6B2D5E">
   <img alt="Manifest V3" src="https://img.shields.io/badge/manifest-v3-6B2D5E">
@@ -20,6 +21,7 @@
 
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><b>التثبيت من Chrome Web Store</b></a> ·
+  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><b>التثبيت من Microsoft Edge Add-ons</b></a> ·
   <a href="https://bysltan.com/tarjuman">الموقع</a> ·
   <a href="https://bysltan.com/tarjuman/support">المساعدة</a> ·
   <a href="https://bysltan.com/tarjuman/privacy">سياسة الخصوصية</a> ·
@@ -31,7 +33,7 @@
 
 لا نموذج مدمج، ولا مفتاح API، ولا حساب، ولا خادم ترجمة، ولا تنزيل للفيديو أو الصوت.
 
-> **الحالة:** الإصدار `1.1.0` منشور في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، ومنه يُثبَّت في Chrome وBrave. ولم يُنشر في Microsoft Edge Add-ons ولا Firefox Add-ons بعد، فيُثبَّت فيهما من الشيفرة كما في [التثبيت](#التثبيت).
+> **الحالة:** الإصدار `1.1.0` منشور في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، ومنه يُثبَّت في Chrome وBrave، وفي [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) لـEdge. ولم يُنشر في Firefox Add-ons بعد، فيُثبَّت فيه من الشيفرة كما في [التثبيت](#التثبيت).
 
 ## كيف يعمل
 
@@ -79,7 +81,7 @@
 | المتصفح | أدنى إصدار | الحزمة | المتجر |
 | --- | --- | --- | --- |
 | Google Chrome | 130 | `tarjuman-1.1.0-chrome.zip` | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
-| Microsoft Edge | 130 | `tarjuman-1.1.0-edge.zip` | Microsoft Edge Add-ons (لم يُنشر بعد) |
+| Microsoft Edge | 130 | `tarjuman-1.1.0-edge.zip` | [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
 | Brave | Chromium 130 | حزمة Chrome نفسها | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Mozilla Firefox | 144 | `tarjuman-1.1.0-firefox.zip` | Firefox Add-ons (لم يُنشر بعد) |
 
@@ -87,11 +89,11 @@
 
 ## التثبيت
 
-**من المتجر:** في Chrome وBrave ثبّته من [صفحته في Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj). ولم يُنشر في Microsoft Edge Add-ons ولا Firefox Add-ons بعد، وتُضاف روابطهما هنا عند نشره.
+**من المتجر:** في Chrome وBrave ثبّته من [صفحته في Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، وفي Edge من [صفحته في Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). ولم يُنشر في Firefox Add-ons بعد، ويُضاف رابطه هنا عند نشره.
 
 **إن جرّبته من مجلد قبل نشره:** نسخة المتجر إضافة أخرى بمعرّف جديد، فتبدأ بمحفوظات فارغة. انقل محفوظاتك إليها بالنسخة الاحتياطية، ثم أزل النسخة القديمة، كما في [دليل الاستخدام](docs/user-guide.md) §٩.
 
-**من الشيفرة (للتجربة، ولـEdge وFirefox حتى يُنشر فيهما):** يلزم [Node.js](https://nodejs.org/) ‏22 فأحدث.
+**من الشيفرة (للتجربة، ولـFirefox حتى يُنشر فيه):** يلزم [Node.js](https://nodejs.org/) ‏22 فأحدث.
 
 <div dir="ltr">
 

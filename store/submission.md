@@ -85,7 +85,8 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | بريد الدعم (AMO «Support email»، وبريد حساب Chrome) | `iSultanBy@gmail.com` | قرار سلطان (§٥ من `README.md`) |
 | المستودع | لا يُذكر: `iSltanX/Tarjuman` خاص ويعطي 404 للعموم | — |
 | صفحة ترجمان في Chrome Web Store (ومنه Brave) | `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj` | منشورة: 200 لزائر غير مسجَّل (2026-11-07) باسم ترجمان والإصدار `1.1.0` والناشر BySultan. وهي رابط المتجر في `README.md` وصفحة الموقع |
-| صفحتا Microsoft Edge Add-ons وFirefox Add-ons | — | لم تُنشرا بعد. وما لم يُنشر «قريبًا» نصًّا بلا رابط في الموقع والوثائق |
+| صفحة ترجمان في Microsoft Edge Add-ons | `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi` | منشورة: 200 لزائر غير مسجَّل (2026-11-07)، وواجهة المتجر تعيد اسم ترجمان والإصدار `1.1.0` والناشر BySultan. وهي رابط Edge في `README.md` وصفحة الموقع |
+| صفحة Firefox Add-ons | — | لم تُنشر بعد (AMO يعيد 401 للمعرّف `tarjuman@bysltan.com`). وما لم يُنشر «قريبًا» نصًّا بلا رابط في الموقع والوثائق |
 
 ## ٦. حقول كل متجر
 

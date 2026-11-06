@@ -45,7 +45,7 @@
 | `/tarjuman/credits#film` | نسبة الفيلم في اللقطات كاملة، ورابطها «الحقوق» في تذييل كل صفحة |
 | `/tarjuman/privacy#report` و`/tarjuman/support#report` | مراسٍ ثابتة، تحيل إليها المتاجر وقناة البلاغات |
 | بريد الدعم `iSultanBy@gmail.com` | قرار سلطان (T1)، ظاهر للعموم |
-| روابط المتاجر | Chrome Web Store منشور (ومنه Brave): `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj`، وهو زر البطل ورابط Chrome وBrave في المتصفحات والتثبيت والمساعدة (2026-11-07). وEdge وFirefox «قريبًا» نصًا بلا رابط حتى يُنشر فيهما |
+| روابط المتاجر | منشور في Chrome Web Store (ومنه Brave): `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj`، وفي Microsoft Edge Add-ons: `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi`. وهما زرّا البطل ورابطا المتصفحات والتثبيت والمساعدة (2026-11-07). وFirefox «قريبًا» نصًا بلا رابط حتى يُنشر فيه |
 | سياسات Google وCloudflare وGitHub | في `privacy.md` (`#third-parties`). أعادت 200 في 2026-11-04 |
 
 ## العلامات
