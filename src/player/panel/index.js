@@ -5,7 +5,7 @@
 import { TjError } from '../../core/errors/index.js';
 import { loadUiFonts } from '../overlay/fonts.js';
 import { EVENTS, videoIdFromLocation } from '../youtube-dom.js';
-import { findColumn } from './column.js';
+import { chooseColumn } from './column.js';
 import { createPanelSession } from './session.js';
 import { createPanelLink, panelLink } from '../link.js';
 
@@ -42,6 +42,8 @@ export function mountPanel(controller, env = {}) {
   let lastError = null;
   /** @type {{ loaded: string[], failed: string[] } | 'pending' | null} */
   let fonts = null;
+  /** مفتاح التخطيط الذي وقع فيه العمود فوق المشغّل (FA-22)، فتبقى اللوحة تحت الفيديو حتى يتغير. */
+  const columnMemo = { overlapKey: null };
 
   const MO = win.MutationObserver ?? globalThis.MutationObserver;
 
@@ -93,7 +95,7 @@ export function mountPanel(controller, env = {}) {
       stopObserving();
       return;
     }
-    const column = findColumn(doc);
+    const column = chooseColumn(doc, win, columnMemo);
     if (!column) {
       session?.detach();
       if (state !== 'error' || failures < MAX_FAILURES) state = 'waiting';

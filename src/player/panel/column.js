@@ -2,7 +2,9 @@
 // وتحته في وضع المسرح، ولا يغطي الفيديو ولا أدواته. وفي تخطيط العمود الواحد (عرض ضيق، `is-single-column`) يُخفي يوتيوب
 // العمود الثانوي كله وينقل مقترحاته إلى #below، فتنتقل اللوحة إلى #below بعد صندوق بيانات الفيديو (العنوان والقناة) كما في لوحة
 // WatchNarrow، وتعود إلى العمود بعودة العمودين. هنا وحدها محددات هذه المواضع (مثل محددات youtube-dom.js: غير رسمية،
-// فالحاجة إلى تغييرها في ملف واحد)، وقراءة هندسة المشغّل والعمود.
+// فالحاجة إلى تغييرها في ملف واحد)، وقراءة هندسة المشغّل والعمود. وعمود يقع فوق المشغّل (تخطيط يجرّبه يوتيوب) يُعامل كالعمود
+// الواحد: اللوحة تحت الفيديو (chooseColumn، تدقيق Fable، FA-22).
+import { getPlayer } from '../youtube-dom.js';
 
 /** بالترتيب: الداخلي ثم الخارجي، داخل ytd-watch-flexy أولًا ثم مطلقًا (احتياط لتغيّر البنية). */
 export const COLUMN_SELECTORS = Object.freeze([
@@ -20,7 +22,7 @@ export const BELOW_ANCHOR_TAG = 'ytd-watch-metadata';
 /** ارتفاع احتياطي للوحة قبل أن يُعرف ارتفاع المشغّل. */
 export const FALLBACK_HEIGHT = 480;
 
-/** @param {Document} doc @returns {HTMLElement | null} العمود الثانوي، أو #below في تخطيط العمود الواحد */
+/** @param {Document} doc @returns {HTMLElement | null} العمود الثانوي، أو #below في تخطيط العمود الواحد (بالمحددات وحدها) */
 export function findColumn(doc) {
   if (doc.querySelector('ytd-watch-flexy')?.hasAttribute?.(SINGLE_COLUMN_ATTR)) {
     const below = doc.querySelector(BELOW_SELECTOR);
@@ -31,6 +33,58 @@ export function findColumn(doc) {
     if (found) return found;
   }
   return null;
+}
+
+/** مستطيل عنصر، أو null إن تعذّر. */
+const rectOf = (el) => {
+  try {
+    return el?.getBoundingClientRect?.() ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * مفتاح تخطيط صفحة المشاهدة: عرض النافذة وسمات ytd-watch-flexy التي تغيّر التخطيط (الأعمدة والنافذة والمسرح وملء الشاشة).
+ * @param {Document} doc @param {Window} win
+ */
+export function layoutKeyOf(doc, win) {
+  const flexy = doc.querySelector('ytd-watch-flexy');
+  const attrs = flexy?.getAttributeNames?.() ?? [];
+  return `${win.innerWidth ?? 0}|${attrs.filter((n) => /column|window|theater|full/.test(n)).sort().join(',')}`;
+}
+
+/**
+ * العمود يقع فوق المشغّل: تداخل أفقي ورأسي أكثر من 4 بكسل. بلا هندسة معروفة (عنصر غير مرسوم) لا تداخل، فالحكم للمحددات.
+ * @param {{ top: number, left: number, right: number, bottom: number, width: number, height: number } | null} player
+ * @param {{ top: number, left: number, right: number, bottom: number, width: number, height: number } | null} column
+ */
+export function overlapsPlayer(player, column) {
+  if (!player || !column || !(player.width > 0) || !(player.height > 0) || !(column.width > 0) || !(column.height > 0)) return false;
+  return column.left < player.right - 4 && column.right > player.left + 4 && column.top < player.bottom - 4 && column.bottom > player.top + 4;
+}
+
+/**
+ * العمود الذي تُركَّب فيه اللوحة الآن: findColumn بالمحددات، ثم الهندسة (تدقيق Fable، FA-22). في تخطيط مشاهدة يجرّبه يوتيوب
+ * لبعض ملفات التعريف الجديدة (رُصد في Edge: شريط Description/Comments يمين الفيديو، والتعليقات عمود جانبي) يقع العمود الثانوي
+ * فوق جزء من الفيديو بعرض 320، فكانت اللوحة تغطي أدوات المشغّل اليمنى، والمبدأ ألا تغطي الفيديو ولا أدواته. فإن وقع العمود
+ * فوق المشغّل وُضعت اللوحة في #below بعد بيانات الفيديو كما في العمود الواحد. والقرار ثابت لمفتاح التخطيط حتى يتغير (عرض
+ * النافذة أو سمات ytd-watch-flexy)، فلا تتأرجح اللوحة إن غيّر وجودها هندسة العمود؛ وفي ملء الشاشة لا حكم جديد.
+ * @param {Document} doc @param {Window} win @param {{ overlapKey: string | null }} memo مفتاح التخطيط الذي وقع فيه التداخل
+ * @returns {HTMLElement | null}
+ */
+export function chooseColumn(doc, win, memo) {
+  const column = findColumn(doc);
+  if (!column || column.id === 'below') return column;
+  const below = doc.querySelector(BELOW_SELECTOR);
+  if (!below) return column;
+  if (doc.fullscreenElement) return memo.overlapKey !== null ? below : column;
+  const key = layoutKeyOf(doc, win);
+  if (memo.overlapKey === key) return below;
+  memo.overlapKey = null;
+  if (!overlapsPlayer(rectOf(getPlayer(doc)), rectOf(column))) return column;
+  memo.overlapKey = key;
+  return below;
 }
 
 /**
@@ -104,11 +158,7 @@ export function createColumnLayout({ doc, win }) {
       return null;
     }
   };
-  const layoutKey = () => {
-    const flexy = doc.querySelector('ytd-watch-flexy');
-    const attrs = flexy?.getAttributeNames?.() ?? [];
-    return `${win.innerWidth ?? 0}|${attrs.filter((n) => /column|window|theater|full/.test(n)).sort().join(',')}`;
-  };
+  const layoutKey = () => layoutKeyOf(doc, win);
   const px = (v) => {
     const n = Number.parseFloat(v);
     return Number.isFinite(n) ? n : 0;
