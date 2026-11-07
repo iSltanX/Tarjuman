@@ -83,7 +83,17 @@ async function prepare() {
     await mkdir(path.dirname(f), { recursive: true });
     await writeFile(f, e.data);
   }
-  const bundle = await build({ entryPoints: [path.join(ROOT, 'test/live/aa5/v11-entry.mjs')], bundle: true, format: 'iife', write: false, target: 'chrome120', logLevel: 'silent' });
+  // مساعدات العيّنات (test/helpers/fixtures.js) تستورد node:fs وnode:path وnode:url في مستوى الوحدة لقراءة عيّنات json3 من القرص،
+  // والدوال التي تحتاجها sampleBundle وsamplePrefs لا تقرأ ملفًا. فتُستبدل في التجميع للصفحة وحده ببديل: القراءة ترمي إن استُدعيت.
+  const NODE_STUB = "const no = () => { throw new Error('node:fs غير متاح في الصفحة'); }; export const readFileSync = no; const p = { resolve: (...a) => a.join('/'), dirname: (s) => String(s), join: (...a) => a.join('/') }; export default p; export const fileURLToPath = (u) => String(u ?? '/');";
+  const nodeStub = {
+    name: 'node-stub',
+    setup(b) {
+      b.onResolve({ filter: /^node:/ }, (a) => ({ path: a.path, namespace: 'node-stub' }));
+      b.onLoad({ filter: /.*/, namespace: 'node-stub' }, () => ({ contents: NODE_STUB, loader: 'js' }));
+    },
+  };
+  const bundle = await build({ entryPoints: [path.join(ROOT, 'test/live/aa5/v11-entry.mjs')], bundle: true, format: 'iife', write: false, target: 'chrome120', logLevel: 'silent', plugins: [nodeStub], define: { 'import.meta.url': '"file:///"' } });
   return bundle.outputFiles[0].text;
 }
 
@@ -221,8 +231,9 @@ try {
     await sleep(600);
     await clickText(st, 'dialog[open] label', 'استعادة الإعدادات والقاموس', 'خانة استعادة الإعدادات والقاموس');
     await clickText(st, 'dialog[open] button', 'استعادة', 'زر الاستعادة في الحوار');
-    await st.waitFor(() => /أضيف/.test(document.querySelector('.st-data__result')?.textContent ?? ''), { timeoutMs: 30000 }).catch(() => null);
-    const report = await st.eval(() => document.querySelector('.st-data__result')?.textContent.replace(/\s+/g, ' ').trim() ?? null);
+    // في قسم «البيانات» أكثر من .st-data__result (نتيجة الإنشاء أولًا ثم نتيجة الاستعادة)، فيُقرأ ما فيه سطر التقرير منها.
+    await st.waitFor(() => [...document.querySelectorAll('.st-data__result')].some((e) => /أضيف/.test(e.textContent)), { timeoutMs: 30000 }).catch(() => null);
+    const report = await st.eval(() => [...document.querySelectorAll('.st-data__result')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()).find((t) => /أضيف/.test(t)) ?? null);
     check('restore-report', /أضيف 2/.test(report ?? '') || /أضيف/.test(report ?? ''), { report });
     const after = await dumpOf(st);
     for (const id of [A, B]) {
