@@ -34,6 +34,10 @@ const GECKO_SETTINGS = {
 const REPORTS_ORIGIN = 'https://app-reports.isultantf.workers.dev';
 const OPTIONAL_HOSTS = [`${REPORTS_ORIGIN}/*`];
 const SETTINGS_BUNDLE = 'pages/settings/main.js';
+/** صفحات الإضافة الأربع: يفتحها سكربت (runtime.getURL) لا مرجع في البيان أو HTML، فتُسمّى هنا. */
+const PAGES = ['popup', 'library', 'settings', 'editor'];
+/** أدنى إصدار Chromium في البيان (تدقيق 7a66f91، Q09)، ومثله target chrome130 في البناء (FA-19). */
+const MIN_CHROME = '130';
 /** شيفرة عالم الصفحة (MAIN): لا واجهات إضافة فيها. */
 const MAIN_WORLD = 'main-world/capture.js';
 const YOUTUBE_MATCH = 'https://www.youtube.com/*';
@@ -70,6 +74,10 @@ const FORBIDDEN = [
   // والبحث بالمعرّف وحده ({ id }) كما في check-static (تدقيق 7a66f91، U61): بحث بنص أو بلا وسيط يقرأ تنزيلات المستخدم.
   { re: /\bdownloads\s*\??\.\s*search\s*\((?!\s*\{\s*id(?:\s*:\s*[A-Za-z_$][\w$]*)?\s*\}\s*\))/, why: 'بحث في التنزيلات بغير المعرّف' },
   { re: /<script[^>]+src=["']https?:/i, why: 'شيفرة بعيدة' },
+  // صفحات HTML المشحونة بلا شيفرة داخلها (تدقيق Fable، FA-02): CSP الافتراضية تمنع تنفيذها، فوجودها خطأ صامت.
+  { re: /<script\b(?![^>]*\bsrc\s*=)[^>]*>/i, why: 'سكربت داخل HTML (بلا src)', ext: '.html' },
+  { re: /<[a-z][^>]*\son[a-z]+\s*=/i, why: 'معالج حدث في سمة HTML (on…=)', ext: '.html' },
+  { re: /\bjavascript\s*:/i, why: 'رابط javascript: في HTML', ext: '.html' },
   { re: /__tarjuman\b|__TJ_DEV__/, why: 'خطاف تطوير' },
   { re: /\bconsole\.(?:log|info|warn|error|debug)\s*\(/, why: 'تسجيل في الكونسول' },
 ];
@@ -119,10 +127,44 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   check('manifest-v3-and-no-dev-version-name', manifest.manifest_version === 3 && !manifest.version_name, { version: manifest.version, versionName: manifest.version_name ?? null });
   // إعدادات المتصفح: لا شيء في عائلة Chromium، وفي Firefox المعتمد حرفيًا (المعرّف وأدنى إصدار ولا جمع بيانات ولا أندرويد).
   const bss = manifest.browser_specific_settings ?? null;
-  check('target-browser-settings', target === 'chromium' ? bss === null : JSON.stringify(bss) === JSON.stringify(GECKO_SETTINGS), { target, browserSpecificSettings: bss });
+  // وأدنى إصدار Chromium المعتمد في الهدفين (طبقة Firefox لا تمسه، وFirefox يتجاهله؛ FA-19).
+  check('target-browser-settings', (target === 'chromium' ? bss === null : JSON.stringify(bss) === JSON.stringify(GECKO_SETTINGS))
+    && manifest.minimum_chrome_version === MIN_CHROME, { target, browserSpecificSettings: bss, minimumChromeVersion: manifest.minimum_chrome_version ?? null });
 
+  // ---- كل ما يُشار إليه موجود غير فارغ: البيان، ومراجع الصفحات (src وhref)، وروابط الأنماط (url)، وملفات الخطوط ----
+  // only-expected-files يمنع الزائد وحده؛ فحزمة ينقصها سكربت معلن كانت تنجح (تدقيق 5fedcb9، CX-007).
+  const required = new Set();
+  const add = (p) => { if (typeof p === 'string' && p) required.add(path.posix.normalize(p.replace(/^\//, ''))); };
+  add(manifest.background?.service_worker);
+  for (const s of manifest.background?.scripts ?? []) add(s);
+  for (const c of manifest.content_scripts ?? []) for (const js of c.js ?? []) add(js);
+  add(manifest.action?.default_popup);
+  for (const v of Object.values(manifest.icons ?? {})) add(v);
+  for (const v of Object.values(manifest.action?.default_icon ?? {})) add(v);
+  for (const f of [...SUBTITLE_FONT_LIST, ...UI_FONT_LIST]) for (const p of [...Object.values(f.files), f.license]) add(p);
+  const local = (ref) => !/^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i.test(ref);
+  // المراجع من الجذور وحدها، بالتعدي: صفحات الإضافة الأربع (يفتحها سكربت)، ثم كل HTML وCSS بلغه مرجع؛ فملفان مهملان يشير
+  // أحدهما إلى الآخر لا يصيران «مشارًا إليهما» (تدقيق Fable، FA-02).
+  for (const p of PAGES) add(`pages/${p}/index.html`);
+  const scanned = new Set();
+  for (let more = true; more;) {
+    more = false;
+    for (const rel of [...required].filter((f) => /\.(?:html|css)$/.test(f) && !scanned.has(f) && files.includes(f))) {
+      scanned.add(rel);
+      more = true;
+      const text = await readFile(path.join(dir, rel), 'utf8');
+      const refs = rel.endsWith('.html')
+        ? [...text.matchAll(/\b(?:src|href)\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1])
+        : [...text.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/gi)].map((m) => m[1]);
+      for (const ref of refs.filter(local)) add(path.posix.join(path.posix.dirname(rel), ref.split(/[?#]/)[0]));
+    }
+  }
   // ---- الملفات: لا خرائط مصدر ولا معرض مكوّنات ولا ملفات غير متوقعة ----
-  const unexpected = files.filter((f) => !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt)|ui\/fonts\/ui\/[a-z-]+-(?:600\.woff2|700\.woff2|OFL\.txt)|icons\/tarjuman-icon-(?:16|32|48|128)\.png|THIRD_PARTY_NOTICES\.txt)$/.test(f));
+  // كل ملف مشحون يطابق نمطه **ويُشار إليه**: من البيان، أو من صفحة (src وhref)، أو من نمط (url)، أو من قائمة الخطوط؛ وصفحات
+  // الإضافة الأربع والإشعارات بأسمائها. البناء ينسخ كل .html و.css تحت src/pages وsrc/ui، فكان ملف مهمل (pages/x/scratch.css أو
+  // صفحة تجريبية) يُشحن ويمر بالنمط وحده (تدقيق Fable، FA-02).
+  const expected = new Set(['manifest.json', NOTICES_FILE, ...required]);
+  const unexpected = files.filter((f) => !expected.has(f) || !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt)|ui\/fonts\/ui\/[a-z-]+-(?:600\.woff2|700\.woff2|OFL\.txt)|icons\/tarjuman-icon-(?:16|32|48|128)\.png|THIRD_PARTY_NOTICES\.txt)$/.test(f));
   check('only-expected-files', unexpected.length === 0, { unexpected, files: files.length });
   check('no-source-maps-or-gallery', !files.some((f) => f.endsWith('.map') || f.startsWith('ui/gallery/')), null);
 
@@ -130,7 +172,9 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   const problems = [];
   for (const rel of files.filter((f) => /\.(?:js|html|css|json)$/.test(f))) {
     const text = await readFile(path.join(dir, rel), 'utf8');
-    for (const { re, why, except = [], only = null } of FORBIDDEN) if (!except.includes(rel) && (!only || only.includes(rel)) && re.test(text)) problems.push({ file: rel, why });
+    for (const { re, why, except = [], only = null, ext = null } of FORBIDDEN) {
+      if (!except.includes(rel) && (!only || only.includes(rel)) && (!ext || rel.endsWith(ext)) && re.test(text)) problems.push({ file: rel, why });
+    }
     // قواعد الفحص الثابت التي بلا استثناء (scripts/code-rules.mjs، U61)، ومنها الصيغ الديناميكية: التدقيق لا يكون أضيق منه.
     for (const r of CODE_RULES) if (r.re.test(text)) problems.push({ file: rel, why: r.msg, rule: r.id });
     const calls = [...text.matchAll(/\bfetch\s*\(/g)].map((m) => text.slice(m.index, m.index + 40));
@@ -193,25 +237,6 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   if (!/esbuild[\s\S]*MIT License[\s\S]*Evan Wallace/.test(notices)) missingNotices.push('esbuild (MIT)');
   check('third-party-notices', notices.length > 0 && missingNotices.length === 0, { present: notices.length > 0, missing: missingNotices });
 
-  // ---- كل ما يُشار إليه موجود غير فارغ: البيان، ومراجع الصفحات (src وhref)، وروابط الأنماط (url)، وملفات الخطوط ----
-  // only-expected-files يمنع الزائد وحده؛ فحزمة ينقصها سكربت معلن كانت تنجح (تدقيق 5fedcb9، CX-007).
-  const required = new Set();
-  const add = (p) => { if (typeof p === 'string' && p) required.add(path.posix.normalize(p.replace(/^\//, ''))); };
-  add(manifest.background?.service_worker);
-  for (const s of manifest.background?.scripts ?? []) add(s);
-  for (const c of manifest.content_scripts ?? []) for (const js of c.js ?? []) add(js);
-  add(manifest.action?.default_popup);
-  for (const v of Object.values(manifest.icons ?? {})) add(v);
-  for (const v of Object.values(manifest.action?.default_icon ?? {})) add(v);
-  for (const f of [...SUBTITLE_FONT_LIST, ...UI_FONT_LIST]) for (const p of [...Object.values(f.files), f.license]) add(p);
-  const local = (ref) => !/^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i.test(ref);
-  for (const rel of files.filter((f) => /\.(?:html|css)$/.test(f))) {
-    const text = await readFile(path.join(dir, rel), 'utf8');
-    const refs = rel.endsWith('.html')
-      ? [...text.matchAll(/\b(?:src|href)\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1])
-      : [...text.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/gi)].map((m) => m[1]);
-    for (const ref of refs.filter(local)) add(path.posix.join(path.posix.dirname(rel), ref.split(/[?#]/)[0]));
-  }
   const missing = [];
   for (const p of [...required].sort()) {
     if (!files.includes(p)) missing.push(p);

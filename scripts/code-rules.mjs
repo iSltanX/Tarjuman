@@ -15,7 +15,8 @@ export const CODE_RULES = Object.freeze([
     re: /\b(?:innerHTML|outerHTML|insertAdjacentHTML|setHTMLUnsafe|parseHTMLUnsafe|createContextualFragment|srcdoc)\b|\bdocument\s*\.\s*write(?:ln)?\b|parseFromString\([^)]*text\/html/,
     msg: 'إدراج HTML نصي ممنوع؛ textContent وDOM فقط',
   },
-  { id: 'eval', re: /(?<![\w$.])eval\b|(?<![\w$])Function\s*\(|set(?:Timeout|Interval)\s*\(\s*['"`]/, msg: 'تنفيذ نص كشيفرة ممنوع' },
+  // eval اسمًا أينما ورد، ومنه بعد نقطة: window.eval( وglobalThis.eval( كانا يمرّان من الفحص الثابت (تدقيق Fable، FA-02).
+  { id: 'eval', re: /(?<![\w$])eval\b|(?<![\w$])Function\s*\(|set(?:Timeout|Interval)\s*\(\s*['"`]/, msg: 'تنفيذ نص كشيفرة ممنوع' },
   { id: 'remote-code', re: /\bimport\s*\(\s*['"`](?:https?:)?\/\/|\bimportScripts\b|<script[^>]*\bsrc\s*=\s*["'](?:https?:)?\/\//i, msg: 'شيفرة بعيدة ممنوعة' },
   { id: 'player-api', re: /\bsetOption\s*\(|\bloadModule\s*\(/, msg: 'تفعيل المشغّل برمجيًا ممنوع دون قرار سلطان' },
   { id: 'innertube', re: /youtubei\/v1|innertube|get_transcript|get_panel/i, msg: 'طلبات InnerTube ممنوعة' },

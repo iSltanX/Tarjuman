@@ -181,10 +181,21 @@ const THUMB_FILE = path.join('pages', 'library', 'thumb.js');
 const THUMB_URL = 'https://i.ytimg.com/vi/';
 const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u)) || (rel === THUMB_FILE && u === THUMB_URL)
   || (rel === REPORT_FILE && u === REPORTS_ORIGIN);
-const STORAGE = /\bchrome\s*(?:\.|\[\s*['"`])\s*storage\b|\.\s*storage\s*\.\s*(?:local|sync|session|managed|onChanged)\b/;
+// والسلسلة الاختيارية (?.) كالنقطة: api.storage?.local وchrome?.storage كانا يمرّان (تدقيق Fable، FA-02)، كما تعالجها قاعدة التنزيلات.
+const STORAGE = /\bchrome\s*(?:\??\.|\[\s*['"`]|\?\.\s*\[\s*['"`])\s*storage\b|\.\s*storage\s*(?:\??\.\s*(?:local|sync|session|managed|onChanged)\b|(?:\?\.)?\s*\[)/;
 // الكتابة في المساحة للكاتب الواحد وحده (عقد storage §١٢، تدقيق 7a66f91، C2): لا set ولا remove ولا clear خارج writer.js
-// والترحيل الذي يستدعيه الكاتب، فلا يعود سياق يكتب بنفسه.
-const STORE_WRITE = /\barea\s*\.\s*(?:set|remove|clear)\s*\(/;
+// والترحيل الذي يستدعيه الكاتب، فلا يعود سياق يكتب بنفسه. وarea?.set( مثل area.set( (FA-02).
+const STORE_WRITE = /\barea\s*\??\.\s*(?:set|remove|clear)\s*\(/;
+// صفحات HTML بلا شيفرة داخلها (تدقيق Fable، FA-02): لا <script> بلا src، ولا معالج حدث في سمة (on…=)، ولا رابط javascript:.
+// CSP الافتراضية في MV3 تمنع تنفيذها أصلًا، فوجودها في المصدر خطأ صامت لا يعمل؛ والفحص على الملف كله لا سطرًا بسطر.
+const HTML_INLINE = [
+  { re: /<script\b(?![^>]*\bsrc\s*=)[^>]*>/i, msg: 'سكربت داخل HTML (بلا src)' },
+  { re: /<[a-z][^>]*\son[a-z]+\s*=/i, msg: 'معالج حدث في سمة HTML (on…=)' },
+  { re: /\bjavascript\s*:/i, msg: 'رابط javascript: في HTML' },
+];
+// أدنى إصدار Chromium في البيان (تدقيق 7a66f91، قرار Q09؛ ومثله target chrome130 في البناء): لا يُغيَّر دون قرار (FA-19).
+const MIN_CHROME = '130';
+if (base.minimum_chrome_version !== MIN_CHROME) problems.push(`manifest: minimum_chrome_version ${JSON.stringify(base.minimum_chrome_version ?? null)} والمعتمد ${MIN_CHROME} (Q09)`);
 const STORE_WRITERS = new Set([path.join('core', 'store', 'writer.js'), path.join('core', 'store', 'migrate.js')]);
 // واجهة التنزيلات محصورة في ملفات ترجمان (اعتماد سلطان 2026-11-02، عقد interfaces §١٣): في src/core/save وsrc/background
 // وحدهما؛ والوصول إلى كائنها (.downloads) في أسطر مراجَعة حرفيًا تسلّمه إلى متغير اسمه downloads لا غير؛ ولا يُستدعى منه
@@ -267,7 +278,9 @@ for (const file of await walk(SRC)) {
   if (!/\.(?:m?js|html|css)$/.test(file)) continue;
   const rel = path.relative(SRC, file);
   const inStore = rel.startsWith(path.join('core', 'store') + path.sep);
-  codeLines(await readFile(file, 'utf8')).forEach((line, i) => {
+  const text = await readFile(file, 'utf8');
+  if (rel.endsWith('.html')) for (const r of HTML_INLINE) if (r.re.test(text)) problems.push(`${rel}: ${r.msg}`);
+  codeLines(text).forEach((line, i) => {
     if (!line.trim()) return;
     const at = `${rel}:${i + 1}`;
     for (const r of RULES) if (r.re.test(line) && !r.allow?.(rel, line)) problems.push(`${at}: ${r.msg}`);

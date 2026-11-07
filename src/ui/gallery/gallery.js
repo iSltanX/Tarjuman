@@ -12,8 +12,9 @@ import { createStore } from '../../core/store/index.js';
 import { jumpToVideo } from '../seek.js';
 
 // blobDownload: التنزيل الحالي (الإصدار الأول) للمقارنة بالوضع الافتراضي. والتخزين في صفحة الإضافة وحدها: لقطات المعرض في
-// smoke.mjs تفتحه من file:// بلا chrome.storage، فكان createStore() يرمي قبل الرسم فتخرج صفحة فارغة (تدقيق 5fedcb9).
-const store = globalThis.chrome?.storage?.local ? createStore() : null;
+// smoke.mjs تفتحه من file:// بلا chrome.storage، فكان createStore() يرمي قبل الرسم فتخرج صفحة فارغة (تدقيق 5fedcb9). والسؤال
+// عن صفحة الإضافة بمعرّفها لا بالتخزين: التخزين يُمس من src/core/store وحده (تدقيق Fable، FA-02).
+const store = globalThis.chrome?.runtime?.id ? createStore() : null;
 globalThis.__tarjumanPage = { saveFile, savedPath, blobDownload, store, jumpToVideo };
 
 const TOKENS = ['bg', 'surface', 'surface-2', 'sunken', 'text', 'text-2', 'muted', 'border', 'border-strong', 'brand', 'brand-soft', 'focus', 'success', 'warning', 'danger', 'info', 'edited'];
