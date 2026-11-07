@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// اللقطات الحقيقية لصفحات ترجمان في الموقع (AA4، docs/aa-plan.md) من بناء الإنتاج على هذا الفرع (بلا جسر تطوير)، على طريقة T6 نفسها
+// اللقطات الحقيقية لصفحات ترجمان في الموقع (AA4، docs/aa-plan.md) ولإطارات مواد المتاجر (AA5، tools/store-art) من بناء الإنتاج على هذا الفرع (بلا جسر تطوير)، على طريقة T6 نفسها
 // (test/live/stores/t6-shots.mjs): Chrome بلا نافذة ومكتوم الصوت، بملف تعريف جديد تحت TJ_PROFILE_ROOT، ويوتيوب بواجهته العربية بلا
 // حساب. فيديو اللقطات Cosmos Laundromat (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0 (docs/site/credits.md).
 // تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُرسل جسم json3 مبني من ملف SRT الذي نزّله ترجمان في جلسة T6 اليدوية برسالة
@@ -395,6 +395,9 @@ try {
     check('library-row-shows-pair', /الإنجليزية/.test(pair) && /العربية/.test(pair));
   };
   await extShot(`pages/editor/index.html?v=${VIDEO}`, '04-editor', { width: 1440, height: 732, before: toCue12 });
+  // ولإطار المتاجر (لوحة 18، tools/store-art): المحرّر بمقاس منطقة الواجهة نفسها في 1280×800 و1280×960، فلا مطّ ولا قص.
+  await extShot(`pages/editor/index.html?v=${VIDEO}`, '09-editor-800', { width: 1136, height: 608, before: toCue12 });
+  await extShot(`pages/editor/index.html?v=${VIDEO}`, '09-editor-960', { width: 1136, height: 688, before: toCue12 });
   await extShot(`pages/library/index.html#v=${VIDEO}`, '05-library', { width: 1440, height: 732, before: expandRow });
   await extShot('pages/settings/index.html#display', '06-settings', { width: 1440, height: 732 });
 

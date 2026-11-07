@@ -9,7 +9,8 @@
 // عيّنة رأسية لكل بكسل وتغطية أفقية دقيقة لكل عيّنة، ثم تُركّب بألفا sRGB، ويُكتب PNG بـzlib المدمج. الناتج حتمي: المدخلات
 // نفسها تعطي البايتات نفسها.
 //
-//   command node tools/brand/icons.mjs            يكتب src/icons/tarjuman-icon-{16,32,48,128}.png وملفي المصدر في tools/brand/
+//   command node tools/brand/icons.mjs            يكتب src/icons/tarjuman-icon-{16,32,48,128}.png وملفي المصدر في tools/brand/،
+//                                                 وأيقونة متجر Chrome ‏128 وشعار Edge ‏300 في store/icons/ (لوحة الهوية 18)
 //   command node tools/brand/icons.mjs --check    يفشل إن اختلف ملف متتبَّع عمّا يولّده
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
@@ -212,6 +213,32 @@ export function tileIcon(size) {
   ]));
 }
 
+/**
+ * أيقونة متجر Chrome ‏128 (لوحة الهوية 18): بلاطة 48 نفسها مكبّرة إلى 96 (×2) في وسط لوح شفاف 128، فالحشو الشفاف 16 من كل جهة كما
+ * يطلب المتجر (الرسم 96×96).
+ */
+export function storeIcon128() {
+  const k = 2;
+  const t = MANIFEST_ICONS[48];
+  return png(128, 128, render(128, 128, [
+    { polys: roundedRect(96, 96, t.rx * k).map((poly) => poly.map(([x, y]) => [x + 16, y + 16])), color: PINE },
+    { polys: markPolygons({ tx: 16 + t.tx * k, ty: 16 + t.ty * k, scale: t.scale * k, small: false }), color: IVORY },
+  ]));
+}
+
+/**
+ * شعار Edge ‏300×300 (لوحة الهوية 18): بلاطة صنوبر بزاوية 23% (68 من 300، كما في رسم اللوحة 34 من 150) والرمز عاجًا بعرض 64% (192)
+ * في الوسط تمامًا كما في اللوحة (توسيطٌ بلا رفع بصري).
+ */
+export function edgeLogo300() {
+  const w = 192;
+  const scale = w / 200;
+  return png(300, 300, render(300, 300, [
+    { polys: roundedRect(300, 300, 68), color: PINE },
+    { polys: markPolygons({ tx: (300 - w) / 2, ty: (300 - 176.4 * scale) / 2, scale, small: false }), color: IVORY },
+  ]));
+}
+
 /** ملف المصدر SVG للرمز (الأساسي أو المصحّح) بلون الصنوبر، حرفيًا من مسارات logo.js. */
 export function sourceSvg({ small = false } = {}) {
   const book = small ? MARK_BOOK_SMALL : MARK_BOOK;
@@ -229,6 +256,8 @@ export const OUTPUTS = Object.freeze({
   ...Object.fromEntries(Object.keys(MANIFEST_ICONS).map((n) => [`src/icons/tarjuman-icon-${n}.png`, () => tileIcon(Number(n))])),
   'tools/brand/tarjuman-A-asil.svg': () => Buffer.from(sourceSvg()),
   'tools/brand/tarjuman-A-asil-small.svg': () => Buffer.from(sourceSvg({ small: true })),
+  'store/icons/chrome-store-icon-128.png': () => storeIcon128(),
+  'store/icons/edge-logo-300.png': () => edgeLogo300(),
 });
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>لقطة 01 — الطبقة والشريط واللوحة</title>
+<link rel="stylesheet" href="{{ROOT}}/src/ui/fonts.css">
+<link rel="stylesheet" href="{{HERE}}/base.css">
+<link rel="stylesheet" href="{{HERE}}/shot.css">
+<style>
+  :root { --h: {{H}}px; --band: {{BAND}}px; }
+  /* SCREENSHOT 01 · OVERLAY + BAR + PANEL. اللوحة ترسم صفحة يوتيوب بشريط علوي ونصوص رمادية مجرّدة، وفيها المشغّل 760 واللوحة 400 بارتفاع
+     428 من (24، 80). وهنا الهيكل المجرّد نفسه (لا شعار يوتيوب ولا محتوى غيره)، ومكان المشغّل واللوحة لقطة حقيقية واحدة لهما معًا
+     (01-overlay-panel) بعرض المنطقة نفسها (24 إلى 1208) وبنسبتها الحقيقية بلا مطّ. */
+  .yt { position: absolute; inset: 0; background: #fff; direction: ltr; }
+  .yt .top { height: 56px; border-bottom: 1px solid #E5E5E5; display: flex; align-items: center; padding: 0 24px; gap: 14px; }
+  .yt .top i { display: block; height: 14px; border-radius: 7px; background: #EEE; }
+  .yt .stack { position: absolute; left: 24px; top: 80px; width: 1088px; display: flex; flex-direction: column; gap: 24px; }
+  .yt .real { width: 1088px; height: auto; border-radius: 12px; }
+  .yt .meta { width: 700px; display: flex; flex-direction: column; gap: 10px; }
+  .yt .meta i { display: block; height: 16px; border-radius: 8px; background: #EEE; }
+</style>
+</head>
+<body>
+  <div class="shot">
+    <div class="band"><h3>ترجمتك فوق الفيديو، والنص كله بجانبه</h3><p>طبقة الترجمة وشريط الأدوات ولوحة النص المتزامن — داخل صفحة يوتيوب نفسها.</p></div>
+    <div class="ui"><div class="yt">
+      <div class="top"><i style="width: 90px"></i><i style="width: 360px; margin-left: auto; margin-right: auto"></i><i style="width: 32px; border-radius: 50%; height: 32px"></i></div>
+      <div class="stack"><img class="real" src="{{SHOT:01-overlay-panel.png}}" alt=""><div class="meta"><i style="width: 70%"></i><i style="width: 40%"></i></div></div>
+    </div></div>
+  </div>
+</body>
+</html>

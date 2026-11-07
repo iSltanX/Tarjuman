@@ -1,0 +1,9 @@
+/* مواد المتاجر للإصدار 2.0.0 من لوحة الهوية 18 «تطبيقات الهوية» (الإصدار 1794035287-e3de)، بقيمها وأحجامها حرفيًا، مرسومة بمعامل 1
+   فتخرج بمقاس المتجر تمامًا. الخطوط خطوط ترجمان المضمّنة (src/ui/fonts.css: Cairo 700/800 وAlmarai 400/700، OFL)، والألوان قيم الهوية
+   الرابعة (src/ui/tokens.css). وما ترسمه اللوحة من واجهة ترجمان داخل الإطار يحل محله لقطة حقيقية من حزمة 2.0.0 (test/live/aa4/site-shots.mjs). */
+* { box-sizing: border-box; }
+html, body { margin: 0; overflow: hidden; -webkit-font-smoothing: antialiased; }
+body { font-family: "Tarjuman UI Almarai", "SF Arabic", Tahoma, sans-serif; direction: rtl; }
+.head { font-family: "Tarjuman UI Cairo", "Tarjuman UI Almarai", "SF Arabic", Tahoma, sans-serif; }
+.tm { direction: ltr; unicode-bidi: isolate; }
+img.real { display: block; }

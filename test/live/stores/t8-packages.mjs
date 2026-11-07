@@ -24,6 +24,8 @@ const browser = val('browser', 'chrome');
 if (!APPS[browser]) throw new Error(`متصفح غير معروف: ${browser}`);
 const OUT = path.resolve(ROOT, val('out', `docs/evidence/T8/packages/${browser}`));
 const VERSION = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8')).version;
+/** الاسم من البيان المصدر نفسه (تغيّر في 2.0.0 إلى نص لوحة الهوية 18)، فلا يُثبَّت هنا نصٌّ ينجرف عنه. */
+const NAME = JSON.parse(await readFile(path.join(ROOT, 'src/manifest.json'), 'utf8')).name;
 const FLAVOR = browser === 'firefox' ? 'firefox' : browser === 'edge' ? 'edge' : 'chrome';
 const ZIP_NAME = `tarjuman-${VERSION}-${FLAVOR}.zip`;
 const ZIP = path.join(ROOT, 'release/store', ZIP_NAME);
@@ -97,7 +99,7 @@ try {
         return { version: x.version, name: x.name, short: x.short_name, perms: x.permissions ?? [], hosts: x.host_permissions ?? [], optional: x.optional_host_permissions ?? [] };
       });
       check('manifest-version', m.version === VERSION, { version: m.version });
-      check('manifest-name', m.name === 'ترجمان - ترجمتك العربية فوق الفيديو' && m.short === 'ترجمان', { name: m.name, short: m.short });
+      check('manifest-name', m.name === NAME && m.short === 'ترجمان', { name: m.name, short: m.short });
       check('manifest-permissions-as-shipped', JSON.stringify(m.perms) === JSON.stringify(shipped.permissions ?? []) && JSON.stringify(m.optional) === JSON.stringify(shipped.optional_host_permissions ?? []), { perms: m.perms, hosts: m.hosts, optional: m.optional.map(host) });
     });
     await step('about', async () => {

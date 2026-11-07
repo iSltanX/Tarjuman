@@ -1,0 +1,9 @@
+/* إطار لقطة المتجر من لوحة 18: 1280×800 (Chrome وEdge) بشريط علوي 176، و1280×960 (AMO) بشريط 256 «والواجهة لا تُمط». الشريط عنوان
+   Cairo 800 ‏40/52 وسطر Almarai ‏20/30 يمينًا بحاشية 72، ومنطقة الواجهة من 72 إلى 72 أفقيًا وتحت الشريط بـ16 حتى الأسفل، بزاوية 16
+   وظلّها. والقيمتان {{H}} و{{BAND}} يملؤهما المولّد. */
+html, body { width: 1280px; height: var(--h); }
+.shot { width: 1280px; height: var(--h); background: #F3EFE6; position: relative; overflow: hidden; }
+.band { position: absolute; top: 0; left: 0; right: 0; height: var(--band); display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding: 0 72px; gap: 6px; }
+.band h3 { margin: 0; font: 800 40px/52px "Tarjuman UI Cairo", sans-serif; color: #182E2B; }
+.band p { margin: 0; font: 400 20px/30px "Tarjuman UI Almarai", sans-serif; color: #4A5A58; }
+.ui { position: absolute; left: 72px; right: 72px; top: calc(var(--band) + 16px); bottom: 0; border-radius: 16px 16px 0 0; background: #fff; box-shadow: 0 -1px 0 #E2DDD2, 0 20px 50px rgb(24 46 43 / 16%); overflow: hidden; }
