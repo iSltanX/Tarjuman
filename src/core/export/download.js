@@ -6,7 +6,7 @@ export const SRT_MIME = 'application/x-subrip;charset=utf-8';
 export const REVOKE_AFTER_MS = 10000;
 
 /**
- * @param {{ name: string, text: string }} file
+ * @param {{ name: string, text: string, mime?: string }} file
  * @param {{ doc?: Document }} [env] doc للاختبار بلا متصفح
  * @throws {TjError} EX_DOWNLOAD_FAILED
  */
@@ -14,7 +14,7 @@ export function download(file, { doc = globalThis.document } = {}) {
   const win = doc?.defaultView ?? globalThis;
   let url = null;
   try {
-    url = win.URL.createObjectURL(new win.Blob([file.text], { type: SRT_MIME }));
+    url = win.URL.createObjectURL(new win.Blob([file.text], { type: file.mime ?? SRT_MIME }));
     const a = doc.createElement('a');
     a.href = url;
     a.download = file.name;

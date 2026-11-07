@@ -31,7 +31,7 @@
 
 | البند | القيمة |
 | --- | --- |
-| المسار | `/Volumes/iSltanXx/Projects/Tarjuman` (مستودع `iSltanX/Tarjuman`) |
+| المسار | جذر مستودع ترجمان على جهاز سلطان (`iSltanX/Tarjuman`) |
 | الفرع والالتزام | `main` عند `594e804`، مطابق لـ`origin/main` |
 | الإصدار | `1.1.0` في `package.json` و`src/manifest.json`. منشور في Chrome Web Store (ومنه Brave) وMicrosoft Edge Add-ons، وغير منشور في Firefox Add-ons |
 | حالة الملفات | نظيفة إلا مجلدًا غير متتبَّع: `docs/fable/` (تقرير تدقيق Fable المستقل على `67fa674`). **يبقى كما هو**، فلا يُلتزم ولا يُعدَّل ولا يُحذف |
@@ -42,7 +42,7 @@
 
 ### مجلد الحزم والإصدارات
 
-- **المجلد:** `release/` في جذر المشروع، أي `/Volumes/iSltanXx/Projects/Tarjuman/release`. متجاهَل في Git.
+- **المجلد:** `release/` في جذر المشروع، أي `release/` في جذر النسخة الرئيسية. متجاهَل في Git.
 - **ما فيه الآن (لا يُمس):**
   - `tarjuman-0.2.0/` و`tarjuman-0.2.0.zip` و`tarjuman-0.2.0.json`.
   - `tarjuman-1.0.0/` و`tarjuman-1.0.0.zip` و`tarjuman-1.0.0.json`.
@@ -53,7 +53,7 @@
 
 | البند | القيمة |
 | --- | --- |
-| المستودع | `/Volumes/iSltanXx/Projects/WebSiteSultan` (مستودع `iSltanX/WebSiteSultan`، موقع `bysltan.com`) |
+| المستودع | مجلد مستودع الموقع المجاور لمستودع ترجمان على الجهاز (مستودع `iSltanX/WebSiteSultan`، موقع `bysltan.com`) |
 | الإطار | Next.js 16 (App Router) وReact 19 وPayload CMS. والاختبارات Vitest وPlaywright، والفحوص `typecheck` و`lint` و`tokens:build` |
 | صفحات ترجمان | `/tarjuman` و`/tarjuman/privacy` و`/tarjuman/support` و`/tarjuman/credits`، في `src/app/(tarjuman)/` و`src/components/tarjuman/` و`src/lib/tarjuman/` و`src/design/tarjuman.ts` و`public/tarjuman/` |
 | مصدر النصوص | `docs/site/*.md` في مستودع ترجمان، تُولَّد منها `src/lib/tarjuman/site-text.ts` بـ`scripts/tarjuman/site-text.mjs` |
@@ -63,7 +63,7 @@
 
 ### ملاحظة على `dist/` في النسخة الرئيسية
 
-`dist/` في `/Volumes/iSltanXx/Projects/Tarjuman` بناء قديم بالهوية السابقة. لا أبني في النسخة الرئيسية أبدًا، فكل بناء في worktree الفرع، كي لا يُكتب فوق مجلد قد يكون محمّلًا في أحد متصفحاتك. ولا أحذفه دون سؤالك.
+`dist/` في جذر النسخة الرئيسية بناء قديم بالهوية السابقة. لا أبني في النسخة الرئيسية أبدًا، فكل بناء في worktree الفرع، كي لا يُكتب فوق مجلد قد يكون محمّلًا في أحد متصفحاتك. ولا أحذفه دون سؤالك.
 
 ---
 
@@ -661,7 +661,7 @@
 5. **نصوص المتاجر** من لوحة 18، و`store-assets.mjs --check` ناجح.
 6. **متطلبات المتاجر** قُرئت اليوم من صفحاتها الرسمية بالتاريخ والمصدر (`store/README.md` §٣).
 7. **ملحقات المتاجر** من لوحة 18 بلقطات حقيقية: الأيقونة 128، وشعار Edge ‏300، والبلاطتان، وثلاث لقطات 1280×800 ونسخها 1280×960 لـAMO، والمعاينة الاجتماعية وشعار README بالوضعين. واختلافان عن اللوحة: ورقاقة «Chrome · Edge · Firefox» في Marquee لم تُرسم لأن سياسة Edge تمنع ذكر متصفح آخر، وقص لقطة Marquee من بعد عدّاد الوقت.
-8. **`release/v2/`** في `/Volumes/iSltanXx/Projects/Tarjuman/release/v2/`، يولّده `scripts/release/v2.mjs` من التزام هذا السجل بعد `npm run package`. ولم يُمس شيء آخر في `release/`.
+8. **`release/v2/`** في `release/v2/` بجذر النسخة الرئيسية، يولّده `scripts/release/v2.mjs` من التزام هذا السجل بعد `npm run package`. ولم يُمس شيء آخر في `release/`.
 9. **التقرير النهائي** لسلطان، وهذا السجل.
 
 **بعد السجل، بإذن سلطان («نعم، حدّث وشغّل»):**

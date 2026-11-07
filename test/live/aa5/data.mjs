@@ -11,7 +11,7 @@
 // الحد: تحديث المتجر الحقيقي لا يُختبر قبل النشر؛ والمحاكاة بالمعرّف نفسه أقرب دليل. ولا نص مقاطع في الأدلة.
 // **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (دليل التشغيل، «الاختبارات الحية»).
 //   command npm run package
-//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa5/data.mjs [--v11 <مجلد حزمة 1.1.0>] [--out docs/evidence/AA5/data] [--headed]
+//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa5/data.mjs [--v11 <مجلد حزمة 1.1.0>، أو المتغير TJ_V11_DIR] [--out docs/evidence/AA5/data] [--headed]
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,7 +24,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const HEADED = argv.includes('--headed');
-const V11 = path.resolve(val('v11', '/Volumes/iSltanXx/Projects/Tarjuman/release/browsers/1.1.0/Chrome/manual-install'));
+const V11 = path.resolve(val('v11', process.env.TJ_V11_DIR ?? path.join(ROOT, 'release/browsers/1.1.0/Chrome/manual-install')));
 const OUT = path.resolve(ROOT, val('out', 'docs/evidence/AA5/data'));
 const VERSION = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8')).version;
 const ZIP = path.join(ROOT, 'release/store', `tarjuman-${VERSION}-chrome.zip`);

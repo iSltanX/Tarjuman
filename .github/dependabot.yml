@@ -1,0 +1,7 @@
+# تحديث إجراءات GitHub المثبتة بمعرّف التزام (تدقيق V2، U-046): طلب سحب أسبوعي يرفع المعرّف ويحدّث تعليق الإصدار.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

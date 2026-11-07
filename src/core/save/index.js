@@ -136,9 +136,11 @@ export const keepsUrl = (r) => r?.state === 'pending' || r?.state === 'unsettled
 // القناة لم توصل الرسالة أصلًا: لا مستقبل، أو سياق الإضافة لم يعد صالحًا. غيرهما بعد الإرسال قد يكون والعامل بدأ التنزيل.
 const NOT_DELIVERED = /Could not establish connection|Receiving end does not exist|Extension context invalidated/i;
 
+// نوع Blob من الامتداد وحده (تدقيق V2، U-045): كان الرجوع ينزّل .json و.md و.txt بنوع SRT. اسم غير صالح يبقى على الافتراضي.
 function blobFallback(file, { fallback, doc }) {
+  const v = validateSaveFile(file, { maxBytes: Infinity });
   try {
-    fallback(file, { doc });
+    fallback(v.ok ? { ...file, mime: v.mime } : file, { doc });
     return { ok: true, mode: 'blob', downloadId: null };
   } catch {
     return { ok: false, code: 'SV_FAILED' };
