@@ -2,7 +2,7 @@
 // معاينة صفحات ترجمان الأربع في الموقع (AA4، docs/aa-plan.md) على خادم محلي لفرع الموقع feat/tarjuman-v2 (localhost وحده، بقاعدة
 // ملفية جديدة في الـworktree هناك لا قاعدة الإنتاج)، في Chrome بلا نافذة بملف تعريف جديد تحت TJ_PROFILE_ROOT:
 //   - كل صفحة بالعروض 360 و390 و768 و1024 و1280 و1440 و1920 وبالوضعين: لا فيض أفقي، وh1 واحد، والهوية الرابعة في الألوان المحسوبة.
-//   - لقطة كاملة لكل صفحة بالوضعين على الحاسوب (1440) وعلى الجوال (390)، وللصفحة التعريفية بالعروض كلها في الوضع الفاتح.
+//   - لقطة كاملة لكل صفحة بالوضعين على الحاسوب (1440) وعلى الجوال (390)، بصيغة JPEG (جودة 82) كي لا تثقل المستودع.
 //   - لا طلب إلى غير الخادم المحلي، ولا خطأ في وحدة التحكم.
 // **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (دليل التشغيل، «الاختبارات الحية»).
 //   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa4/site-pages.mjs --base http://localhost:<المنفذ> [--out docs/evidence/AA4/site]
@@ -61,8 +61,12 @@ try {
     const metrics = await page.eval(() => ({ w: innerWidth }));
     await page.send('Emulation.setDeviceMetricsOverride', { width: metrics.w, height: Math.min(Math.max(content, 400), 12000), deviceScaleFactor: 1, mobile: metrics.w < 768 });
     await sleep(400);
-    const { data } = await page.send('Page.captureScreenshot', { format: 'png' });
-    const file = path.join(OUT, `${name}.png`);
+    // الصور كسولة التحميل: بعد تكبير المنفذ إلى طول الصفحة تُنتظر كلها (وإلا التُقطت بطاقة فارغة).
+    const loaded = await page.waitFor(() => [...document.images].every((i) => i.complete && i.naturalWidth > 0), { timeoutMs: 20000 }).then(() => true, () => false);
+    check(`${name}-images-loaded`, loaded);
+    await sleep(300);
+    const { data } = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 82 });
+    const file = path.join(OUT, `${name}.jpg`);
     await writeFile(file, Buffer.from(data, 'base64'));
     result.shots.push(path.relative(ROOT, file));
   };
@@ -95,7 +99,7 @@ try {
         check(`${id}-one-h1`, m.h1 === 1, { h1: m.h1 });
         check(`${id}-identity-v4`, m.bg === IDENTITY[scheme].bg && m.text === IDENTITY[scheme].text && m.logo && m.logoWeight === '800', { bg: m.bg, text: m.text, logo: m.logo, w: m.logoWeight });
         if (p.name === 'home') check(`${id}-primary-pine`, m.primary === IDENTITY[scheme].primary, { primary: m.primary });
-        if ((width === 1440 || width === 390) || (p.name === 'home' && scheme === 'light')) await shoot(`${id}`);
+        if (width === 1440 || width === 390) await shoot(`${id}`);
       }
     }
   }
