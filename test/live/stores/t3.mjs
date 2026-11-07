@@ -2,7 +2,8 @@
 // الاختبار الحي في المتصفحات الأربعة (جولة النشر T3، docs/store-release.md): Brave وChrome وEdge وFirefox بالخطوات نفسها، ببناء
 // التطوير للهدف (chromium أو firefox)، بلا نافذة ومكتوم الصوت، وملف تعريف جديد خارج المستودع، وحساب يوتيوب غير مسجَّل:
 //   التثبيت ← الجسر (غلافا fetch وXHR في عالم الصفحة، ورسالة الالتقاط إلى العالم المعزول) ← تنزيل SRT من شريط المشغّل (في Firefox
-//   عبر رابط blob: من صفحة الخلفية، إذ يرفض روابط data:) ونسخ التعليمات ← رفع العربية من الشريط ← العرض فوق الفيديو ← التوقيت (+ و−) ← خطوط الواجهة
+//   عبر رابط blob: من صفحة الخلفية، إذ يرفض روابط data:) ← نسخ التعليمات من نافذة الإضافة بزوج «من» و«إلى» (منذ 2.0.0، AA3 ق٨؛ وقائمة
+//   المشغّل بلا نسخ) ← رفع العربية من الشريط ← العرض فوق الفيديو ← التوقيت (+ و−) ← خطوط الواجهة
 //   والترجمة ← المحرّر ← الحفظ بعد إعادة التحميل ← النسخة الاحتياطية ← «الإبلاغ عن مشكلة» (المعاينة والنسخ والخطأ، بحجب خادم
 //   البلاغات فلا يُرسل بلاغ) ← في Firefox منح إذن يوتيوب وسحبه ← الإزالة وقياس محو التخزين ← إعادة التثبيت فارغًا ← الاستعادة.
 // تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُرسل جسم P1 الحقيقي للفيديو نفسه من عالم الصفحة برسالة الالتقاط نفسها.
@@ -13,6 +14,8 @@ import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PROFILE_ROOT, human, sleep } from '../harness/browser.mjs';
+import { BidiPage } from '../harness/bidi.mjs';
+import { attach } from '../harness/extension.mjs';
 import { dismissConsent, revealControls, waitForPlayer } from '../harness/youtube.mjs';
 import { createExtractor } from '../../../src/extract/index.js';
 import { buildExport, instructions } from '../../../src/core/export/index.js';
@@ -318,6 +321,26 @@ async function shot(page, name) {
   }
 }
 
+/**
+ * نافذة الإضافة كما تُفتح من شريط المتصفح: تبويب في الخلفية ويوتيوب التبويب النشط في آخر نافذة، فتقرأ حاله بـ
+ * tabs.query({ active, lastFocusedWindow }) كما في الاستعمال الحقيقي (test/live/aa4/site-shots.mjs). بعرضها 340.
+ */
+async function openPopupBehindYoutube() {
+  const url = `${s.base}pages/popup/index.html`;
+  if (s.kind === 'firefox') {
+    await yt.conn.send('browsingContext.activate', { context: yt.context }).catch(() => null);
+    const page = await BidiPage.open(yt.conn, url, { background: true });
+    await yt.conn.send('browsingContext.setViewport', { context: page.context, viewport: { width: 340, height: 720 } }).catch(() => null);
+    return page;
+  }
+  await yt.conn.send('Target.activateTarget', { targetId: yt.targetId }).catch(() => null);
+  const { targetId } = await yt.conn.send('Target.createTarget', { url: 'about:blank', background: true });
+  const page = await attach(yt.conn, targetId);
+  await page.send('Emulation.setDeviceMetricsOverride', { width: 340, height: 720, deviceScaleFactor: 1, mobile: false });
+  await page.goto(url);
+  return page;
+}
+
 // ================================================================ التشغيل
 await mkdir(OUT, { recursive: true });
 await mkdir(WORK, { recursive: true });
@@ -365,6 +388,10 @@ try {
     await ensureCapture('srt-download');
     await call('stubClipboard');
     await clickButton('download', { menu: true });
+    // منذ 2.0.0 (AA3، ق٨) نسخ التعليمات في نافذة الإضافة وحدها: قائمة «تحميل الأصل» بلا بند نسخ. تُقرأ عند فتحها، لأن Edge قد
+    // يغلقها بعد بدء التنزيل.
+    const items = (await menu())?.items.map((x) => x.fid) ?? null;
+    check('player-menu-without-copy', !!items && items.includes('download') && !items.includes('copy'), { items });
     await clickItem('download');
     const file = await waitFile((n) => n.endsWith('.srt'));
     const text = file ? await readFile(file.path, 'utf8') : null;
@@ -375,20 +402,36 @@ try {
     check('srt-download', !!file && text === EXP.files[0].text && !fallback, { file: file?.name ?? null, bytes: text?.length ?? null, expectedSha: sha(EXP.files[0].text), sha: text ? sha(text) : null, line: line ? 'نُزّل' : null, fallback });
   });
   await step('copy-instructions', async () => {
-    if (!(await menu())?.items.some((x) => x.fid === 'copy')) {
-      await closeMenu();
-      await ensureCapture('copy-instructions');
-      await call('stubClipboard');
-      await clickButton('download', { menu: true });
-    }
-    const items = (await menu())?.items.map((x) => ({ fid: x.fid, disabled: x.disabled })) ?? null;
-    await clickItem('copy');
-    const line = await waitBridge('peek', (p) => /نُسخت التعليمات|تعذّر النسخ/.test(p.layer.menu?.text ?? ''), { timeoutMs: 10000 });
-    const copies = await waitBridge('copies', (c) => c.length >= 1, { timeoutMs: 5000 });
-    const st = await call('state');
-    const accepted = [instructions({ videoId: VIDEO, title: st.title }), instructions({ videoId: VIDEO, title: st.title, glossary: [] })].map(sha);
-    check('copy-instructions', !!copies && accepted.includes(copies.at(-1).sha), { copies, items, line: line ? clean(line.layer.menu.text).slice(-80) : null, title: st.title ? 'معروف' : null });
     await closeMenu();
+    await ensureCapture('copy-instructions');
+    const st = await call('state');
+    const pop = await openPopupBehindYoutube();
+    try {
+      await pop.waitFor(() => !!document.querySelector('#app[data-ready]') && document.fonts.status === 'loaded', { timeoutMs: 15000 });
+      // «من» تُعبّأ من رد الصفحة حين يستقر، والزر فعّال حين يكتمل الزوج.
+      const info = await pop.waitFor(() => {
+        const btn = document.querySelector('.tj-popup__copy');
+        const t = (sel) => document.querySelector(sel)?.textContent.replace(/\s+/g, ' ').trim() ?? null;
+        return btn && btn.getAttribute('aria-disabled') !== 'true' ? { status: t('.tj-popup__status'), block: t('.tj-popup__pair') } : null;
+      }, { timeoutMs: 15000 });
+      await pop.eval(() => {
+        window.__t3copied = [];
+        Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async (t) => { window.__t3copied.push(t); } });
+        return true;
+      });
+      const c = await pop.centerOf('.tj-popup__copy');
+      if (!c) throw new Error('زر «نسخ التعليمات» غير ظاهر في النافذة');
+      await pop.click(c.x, c.y);
+      const copied = await pop.waitFor(() => window.__t3copied?.at(-1) ?? null, { timeoutMs: 6000 });
+      const state = await pop.eval(() => document.querySelector('.tj-popup__copy')?.getAttribute('data-state') ?? null);
+      // التعليمات من الإنجليزية (لغة المسار الملتقط) إلى العربية (الافتراضي)، بالقاموس المرفق أو بدونه.
+      const accepted = [null, []].map((glossary) => sha(instructions({ videoId: VIDEO, title: st.title, source: 'en', target: 'ar', glossary })));
+      check('copy-instructions-from-popup', !!info && /^تعليمات الترجمة ?من ?الإنجليزية ?إلى ?العربية/.test(info.block ?? '') && !!copied && accepted.includes(sha(copied)) && state === 'success',
+        { status: info?.status?.slice(0, 80) ?? null, block: info?.block?.slice(0, 40) ?? null, copied: copied ? { chars: copied.length, sha: sha(copied) } : null, accepted, state, title: st.title ? 'معروف' : null });
+      await shot(pop, 'popup');
+    } finally {
+      await pop.close().catch(() => {});
+    }
   });
 
   // ---- رفع العربية، والعرض، والتوقيت ----
