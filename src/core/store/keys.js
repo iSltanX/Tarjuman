@@ -1,17 +1,21 @@
-// مفاتيح التخزين (عقد storage §١ و§٧). لا مفتاح خارج هذه القائمة. مفاتيح الإصدار الثاني لا تبدأ بـvideo: ولا index:
-// وليست meta ولا settings، فيتجاهلها parseKey في حزمة الإصدار الأول (يعيد null) ولا تدخل قراءته ولا أحداثه.
+// مفاتيح التخزين (عقد storage §١ و§٧ و§١٣). لا مفتاح خارج هذه القائمة. مفاتيح الإصدار الثاني لا تبدأ بـvideo: ولا index:
+// وليست meta ولا settings، فيتجاهلها parseKey في حزمة الإصدار الأول (يعيد null) ولا تدخل قراءته ولا أحداثه. ومفاتيح 2.0.0
+// (lang: وlangPrefs، AA1) جديدة كذلك على 1.1.0، فيتجاهلها parseKey فيه ولا تدخل مدققاته.
 import { isVideoId } from '../model/ids.js';
 
 export const KEY_META = 'meta';
 export const KEY_SETTINGS = 'settings';
 export const KEY_PREFS = 'prefs';
 export const KEY_SAVES = 'saves';
+/** تفضيلات اللغات في 2.0.0 (AA1): زوج التعليمات واللغات الأخيرة. مفتاح مستقل لأن prefs يقرؤه 1.1.0 بمدقق صارم. */
+export const KEY_LANG_PREFS = 'langPrefs';
 const VIDEO = 'video:';
 const INDEX = 'index:';
 const BUNDLE = 'bundle:';
 const ALTS = 'alts:';
 const PREV = 'prev:';
 const MARKS = 'marks:';
+const LANG = 'lang:';
 
 /** @param {string} videoId */
 export const videoKey = (videoId) => `${VIDEO}${videoId}`;
@@ -25,23 +29,26 @@ export const altsKey = (videoId) => `${ALTS}${videoId}`;
 export const prevKey = (videoId) => `${PREV}${videoId}`;
 /** @param {string} videoId */
 export const marksKey = (videoId) => `${MARKS}${videoId}`;
+/** بيانات اللغة للفيديو (AA1، عقد storage §١٣). @param {string} videoId */
+export const langKey = (videoId) => `${LANG}${videoId}`;
 
-/** توابع الفيديو في الإصدار الثاني (تُزال معه). */
-export const companionKeys = (videoId) => [bundleKey(videoId), altsKey(videoId), prevKey(videoId), marksKey(videoId)];
+/** توابع الفيديو في الإصدار الثاني و2.0.0 (تُزال معه). */
+export const companionKeys = (videoId) => [bundleKey(videoId), altsKey(videoId), prevKey(videoId), marksKey(videoId), langKey(videoId)];
 
-const PER_VIDEO = [[VIDEO, 'video'], [INDEX, 'index'], [BUNDLE, 'bundle'], [ALTS, 'alts'], [PREV, 'prev'], [MARKS, 'marks']];
-export const COMPANION_KINDS = Object.freeze(['bundle', 'alts', 'prev', 'marks']);
+const PER_VIDEO = [[VIDEO, 'video'], [INDEX, 'index'], [BUNDLE, 'bundle'], [ALTS, 'alts'], [PREV, 'prev'], [MARKS, 'marks'], [LANG, 'lang']];
+export const COMPANION_KINDS = Object.freeze(['bundle', 'alts', 'prev', 'marks', 'lang']);
 
 /**
  * @param {string} key
- * @returns {{ kind: 'meta' | 'settings' | 'prefs' | 'saves' }
- *   | { kind: 'video' | 'index' | 'bundle' | 'alts' | 'prev' | 'marks', videoId: string } | null}
+ * @returns {{ kind: 'meta' | 'settings' | 'prefs' | 'saves' | 'langPrefs' }
+ *   | { kind: 'video' | 'index' | 'bundle' | 'alts' | 'prev' | 'marks' | 'lang', videoId: string } | null}
  */
 export function parseKey(key) {
   if (key === KEY_META) return { kind: 'meta' };
   if (key === KEY_SETTINGS) return { kind: 'settings' };
   if (key === KEY_PREFS) return { kind: 'prefs' };
   if (key === KEY_SAVES) return { kind: 'saves' };
+  if (key === KEY_LANG_PREFS) return { kind: 'langPrefs' };
   for (const [prefix, kind] of PER_VIDEO) {
     if (key.startsWith(prefix)) {
       const videoId = key.slice(prefix.length);

@@ -148,7 +148,7 @@ test('التالف يُرفض كله قبل أي كتابة: JSON، والصيغ
 test('الأحدث إصدارًا يُرفض كله ولو تغيّرت مفاتيحه، والحجم فوق الحد يُرفض دون قراءة، وتعذّر القراءة برمزه', async () => {
   const { store } = await sourceLibrary();
   const { text } = await createBackup({ store, appVersion: '0.3.0', pause: noPause });
-  const newer = { ...JSON.parse(text), version: 2, newSection: {} };
+  const newer = { ...JSON.parse(text), version: 3, newSection: {} }; // 2.0.0 يقرأ حتى الإصدار 2 (AA1)
   const r = await readBackup(JSON.stringify(newer), { pause: noPause });
   assert.equal(r.code, 'BK_VERSION_NEWER');
   assert.match(r.code && new TjError(r.code).message, /حدّث ترجمان/);

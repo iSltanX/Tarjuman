@@ -1,6 +1,11 @@
-// المسار الإنجليزي، والبصمة، والترجمة العربية، وتقرير المقارنة (عقد data-model §٢–§٥).
+// المسار المستخرج، والبصمة، والترجمة، وتقرير المقارنة (عقد data-model §٢–§٥). الأسماء التاريخية باقية في السجل المخزَّن
+// (english للمسارات المستخرجة وarabic للترجمة النشطة) لأن الإصدار الأول و1.1.0 يقرآنه بها. ومنذ 2.0.0 (AA1) المسار بأي لغة
+// أو مترجم آليًا من يوتيوب (via)، والترجمة بلغتها (lang)، في الذاكرة؛ والسجل المخزَّن إسقاطٌ لما يقرؤه 1.1.0 وحده
+// (model/lang-store.js)، فمدققاته الصارمة (validateEnglishTrack ووضع stored) كما كانت.
 import { validateCueTime, validateCues } from './cue.js';
-import { ENGLISH_LANG_RE, FINGERPRINT_ID_RE, TRACK_KINDS, isVideoId, parseTrackKey, trackKey } from './ids.js';
+import {
+  ENGLISH_LANG_RE, FINGERPRINT_ID_RE, TRACK_KINDS, isSourceLang, isVideoId, parseTrackKey, parseV1TrackKey, trackKey,
+} from './ids.js';
 import {
   LIMITS, OK, eachOf, exactKeys, fail, firstFailure, intList, isIntIn, isIsoDate, isText, noteList,
 } from './validate.js';
@@ -32,7 +37,28 @@ export const EXPORT_MODES = Object.freeze(['normal', 'long']);
 const TEXT_HASH_RE = /^[a-z0-9-]{2,16}:[0-9a-f]{8,128}$/;
 
 const ENGLISH_KEYS = ['key', 'lang', 'kind', 'capturedAt', 'source', 'cues'];
-/** @param {unknown} t @param {string} [path] */
+
+/**
+ * المسار المستخرج في الذاكرة (AA1): بأي لغة، والمترجم آليًا من يوتيوب يحمل via (لغة المسار الذي تُرجم عنه) ومفتاحه lang|kind|via.
+ * @param {unknown} t @param {string} [path]
+ */
+export function validateSourceTrack(t, path = 'english') {
+  return firstFailure([
+    () => exactKeys(t, ENGLISH_KEYS, path, ['via']),
+    () => (isSourceLang(t.lang) ? OK : fail(`${path}.lang`, 'رمز لغة غير صالح')),
+    () => (TRACK_KINDS.includes(t.kind) ? OK : fail(`${path}.kind`, 'نوع غير معروف')),
+    () => (!('via' in t) || isSourceLang(t.via) ? OK : fail(`${path}.via`, 'رمز لغة الأصل غير صالح')),
+    () => (t.key === trackKey(t.lang, t.kind, t.via ?? null) ? OK : fail(`${path}.key`, 'المفتاح لا يطابق lang|kind|via')),
+    () => (isIsoDate(t.capturedAt) ? OK : fail(`${path}.capturedAt`, 'تاريخ غير صالح')),
+    () => (t.source === 'capture' ? OK : fail(`${path}.source`, 'مصدر غير معروف')),
+    () => validateCues(t.cues, `${path}.cues`, { min: 1 }),
+  ]);
+}
+
+/** هل يقرأ الإصدار الأول و1.1.0 هذا المسار في السجل: إنجليزي أصلي بمفاتيحه الستة. @param {{ key: string, via?: string }} t */
+export const isV1Track = (t) => !!t && !('via' in t) && parseV1TrackKey(t.key) !== null;
+
+/** المسار كما يقرؤه الإصدار الأول و1.1.0 (السجل المخزَّن): إنجليزي أصلي بمفاتيحه الستة، بلا via. @param {unknown} t @param {string} [path] */
 export function validateEnglishTrack(t, path = 'english') {
   return firstFailure([
     () => exactKeys(t, ENGLISH_KEYS, path),
@@ -46,13 +72,17 @@ export function validateEnglishTrack(t, path = 'english') {
 }
 
 const FP_KEYS = ['id', 'videoId', 'trackKey', 'mode', 'count', 'cues', 'textHash', 'fileName', 'createdAt', 'parts'];
-/** @param {unknown} f @param {string} [path] */
-export function validateFingerprint(f, path = 'fingerprint') {
+/**
+ * @param {unknown} f @param {string} [path]
+ * @param {{ stored?: boolean }} [o] stored: كما يقرؤها 1.1.0 في السجل (مفتاح مسار إنجليزي أصلي وحده)
+ */
+export function validateFingerprint(f, path = 'fingerprint', { stored = false } = {}) {
+  const keyOk = stored ? parseV1TrackKey : parseTrackKey;
   return firstFailure([
     () => exactKeys(f, FP_KEYS, path),
     () => (typeof f.id === 'string' && FINGERPRINT_ID_RE.test(f.id) ? OK : fail(`${path}.id`, 'معرّف بصمة غير صالح')),
     () => (isVideoId(f.videoId) ? OK : fail(`${path}.videoId`, 'معرّف فيديو غير صالح')),
-    () => (parseTrackKey(f.trackKey) ? OK : fail(`${path}.trackKey`, 'مفتاح مسار غير صالح')),
+    () => (keyOk(f.trackKey) ? OK : fail(`${path}.trackKey`, 'مفتاح مسار غير صالح')),
     () => (EXPORT_MODES.includes(f.mode) ? OK : fail(`${path}.mode`, 'وضع تصدير غير معروف')),
     () => (isIntIn(f.count, 1, LIMITS.maxCues) ? OK : fail(`${path}.count`, 'عدد غير صالح')),
     () => eachOf(f.cues, `${path}.cues`, LIMITS.maxCues, validateCueTime),
@@ -116,10 +146,15 @@ export function validateComparisonReport(c, path = 'comparison') {
 }
 
 const AR_KEYS = ['fileName', 'importedAt', 'original', 'current', 'editedAt', 'fingerprintId', 'comparison', 'notes'];
-/** @param {unknown} a @param {string} [path] */
-export function validateArabicTrack(a, path = 'arabic') {
+/**
+ * الترجمة (الاسم التاريخي ArabicTrack). في الذاكرة يجوز lang: رمز لغتها أو null «غير محددة» (AA1)، وغيابه لترجمة حُفظت قبل
+ * 2.0.0 بمعنى null. والمخزَّن (stored) بمفاتيحه الثمانية كما يقرؤه 1.1.0.
+ * @param {unknown} a @param {string} [path] @param {{ stored?: boolean }} [o]
+ */
+export function validateArabicTrack(a, path = 'arabic', { stored = false } = {}) {
   return firstFailure([
-    () => exactKeys(a, AR_KEYS, path),
+    () => exactKeys(a, AR_KEYS, path, stored ? [] : ['lang']),
+    () => (!('lang' in a) || a.lang === null || isSourceLang(a.lang) ? OK : fail(`${path}.lang`, 'رمز لغة غير صالح')),
     () => (isText(a.fileName, LIMITS.maxFileNameChars) && a.fileName.length > 0 ? OK : fail(`${path}.fileName`, 'اسم ملف غير صالح')),
     () => (isIsoDate(a.importedAt) ? OK : fail(`${path}.importedAt`, 'تاريخ غير صالح')),
     () => validateCues(a.original, `${path}.original`, { min: 1 }),

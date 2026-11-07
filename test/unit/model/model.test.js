@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DEFAULT_SETTINGS, LIMITS, assertValid, createVideoRecord, mergeSettings, normalizeSettings, pagePath,
-  parseTrackKey, summarizeVideo, trackKey, validateArabicTrack, validateComparisonReport, validateCue,
+  parseTrackKey, parseV1TrackKey, summarizeVideo, trackKey, validateArabicTrack, validateComparisonReport, validateCue,
   validateEnglishTrack, validateFingerprint, validateIndexEntry, validateSettings, validateVideoRecord, videoParam,
   watchUrl, newFingerprintId, arabicCues,
 } from '../../../src/core/model/index.js';
@@ -45,9 +45,20 @@ test('المسار الإنجليزي: لغة إنجليزية ومفتاح lang
   bad(validateEnglishTrack(englishTrack({ cues: [] })), 'cues');
   bad(validateEnglishTrack({ ...englishTrack(), source: 'innertube' }), 'source');
   assert.equal(trackKey('en', 'asr'), 'en|asr');
-  assert.deepEqual(parseTrackKey('en-GB|manual'), { lang: 'en-GB', kind: 'manual' });
-  assert.equal(parseTrackKey('ar|manual'), null);
-  assert.equal(parseTrackKey('en|manual|x'), null);
+  // ما يقرؤه 1.1.0 في السجل: إنجليزي أصلي وحده.
+  assert.deepEqual(parseV1TrackKey('en-GB|manual'), { lang: 'en-GB', kind: 'manual' });
+  assert.equal(parseV1TrackKey('ar|manual'), null);
+  assert.equal(parseV1TrackKey('ar|asr|en'), null);
+  assert.equal(parseV1TrackKey('en|manual|ja'), null, 'الإنجليزية المترجمة آليًا ليست مسارًا أصليًا');
+});
+
+test('مفتاح المسار بأي لغة (AA1): lang|kind للأصلي وlang|kind|via للمترجم آليًا من يوتيوب', () => {
+  assert.deepEqual(parseTrackKey('en-GB|manual'), { lang: 'en-GB', kind: 'manual', via: null });
+  assert.deepEqual(parseTrackKey('ja|asr'), { lang: 'ja', kind: 'asr', via: null });
+  assert.deepEqual(parseTrackKey('ar|asr|en'), { lang: 'ar', kind: 'asr', via: 'en' });
+  assert.equal(trackKey('ar', 'asr', 'en'), 'ar|asr|en');
+  assert.equal(trackKey('ja', 'manual', null), 'ja|manual');
+  for (const bad of ['en|manual|x1!', 'en|other', 'e|manual', 'en|manual|ja|x', `${'a'.repeat(40)}|manual`, '', null]) assert.equal(parseTrackKey(bad), null, String(bad));
 });
 
 test('البصمة: ترقيم متسلسل، والأجزاء بترقيم مستمر يغطي الكل', () => {

@@ -7,6 +7,7 @@ import { cloneCues } from './cue.js';
 import { markAnchor, markCounts, prepareCues, resolveMark, sameAnchor, validateMarks } from './marks.js';
 import { isValidOffset } from './timing.js';
 import { withArabicEdit, withArabicImport, withOriginalRestored, withoutArabic } from './transitions.js';
+import { LANG_SCHEMA, isEmptyLang, mergeLang, packLang, validateLangValue } from './lang-store.js';
 import { LIMITS, OK, exactKeys, fail, firstFailure, isLine } from './validate.js';
 import {
   COMPANION_SCHEMA, SLOT_NAME_MAX, SLOT_NUMBERS, isSlotNumber, validateAltsValue, validateBundle, validateHead,
@@ -124,10 +125,13 @@ export function withActiveSlot(bundle, n, now) {
 
 function newTrack(input, now) {
   const current = input.current ? cloneCues(input.current) : null;
-  return {
+  const t = {
     fileName: input.fileName, importedAt: now, original: cloneCues(input.cues), current, editedAt: current ? now : null,
     fingerprintId: input.fingerprintId ?? null, comparison: input.comparison ? copy(input.comparison) : null, notes: (input.notes ?? []).slice(),
   };
+  // لغة الترجمة (AA1): تُحمل مع الترجمة في كل انتقال؛ وغيابها «غير محددة».
+  if (input.lang !== undefined) t.lang = input.lang;
+  return t;
 }
 
 /**
@@ -415,31 +419,50 @@ export function isTrivialBundle(b) {
 }
 
 /**
- * تعبئة الحزمة إلى قيم مفاتيح التخزين (عقد storage §٧). base يضبطها التخزين بعد rev.
+ * تعبئة الحزمة إلى قيم مفاتيح التخزين (عقد storage §٧ و§١٣). السجل والتوابع إسقاطٌ لما يقرؤه الإصدار الأول و1.1.0، وبيانات
+ * اللغة في lang (model/lang-store.js، AA1). base يضبطها التخزين بعد rev.
  * @param {Bundle} b
  */
 export function packBundle(b) {
   const { videoId } = b;
+  const p = packLang(b);
   return {
-    record: b.record,
+    record: p.record,
     head: { schema: COMPANION_SCHEMA, videoId, base: null, active: b.active, names: b.slots.map((s) => s.name), summary: summarizeBundle(b) },
-    alts: { schema: COMPANION_SCHEMA, videoId, slots: b.slots.map((s) => (s.n === b.active || !s.track ? null : { track: s.track, offsetMs: s.offsetMs })) },
-    prev: { schema: COMPANION_SCHEMA, videoId, previous: b.previous },
+    alts: { schema: COMPANION_SCHEMA, videoId, slots: b.slots.map((s) => (s.n === b.active || !s.track ? null : { track: p.alts[s.n - 1], offsetMs: s.offsetMs })) },
+    prev: { schema: COMPANION_SCHEMA, videoId, previous: b.previous ? { ...b.previous, track: p.previous } : null },
     marks: { schema: COMPANION_SCHEMA, videoId, slots: b.slots.map((s) => ({ marks: s.marks, position: s.position })) },
+    lang: p.lang,
   };
 }
 
 /** القيمة الفارغة لكل تابع: لا حاجة إلى كتابتها إن لم يكن مفتاحها موجودًا. */
 export const isEmptyCompanion = (kind, v) => (kind === 'alts' ? v.slots.every((x) => x === null)
   : kind === 'prev' ? v.previous === null
-    : v.slots.every((x) => !x.marks.length && x.position === null));
+    : kind === 'lang' ? isEmptyLang(v)
+      : v.slots.every((x) => !x.marks.length && x.position === null));
 
 /**
- * الفك من قيم المفاتيح مع المصالحة (عقد storage §٩). القيم بعد تحقق التخزين منها.
- * @param {{ record: VideoRecord | null, head: object | null, alts: object | null, prev: object | null, marks: object | null }} raw
+ * الفك من قيم المفاتيح مع المصالحة (عقد storage §٩ و§١٣). القيم بعد تحقق التخزين منها. بيانات اللغة (lang) تُدمج بعد فك
+ * قيم الإصدار الأول و1.1.0؛ وإن كُتبت لسجل أُنشئ من جديد بعدها (حذفه إصدار سابق ثم أعاده) لا تُدمج، وتُكتب من جديد.
+ * @param {{ record: VideoRecord | null, head: object | null, alts: object | null, prev: object | null, marks: object | null, lang?: object | null }} raw
  * @returns {{ bundle: Bundle | null, changed: boolean, orphan: boolean, reason: string | null }}
  */
-export function unpackBundle({ record, head, alts, prev, marks }) {
+export function unpackBundle(raw) {
+  const out = unpackV1(raw);
+  const lang = raw.lang ?? null;
+  if (!raw.record) return { ...out, orphan: out.orphan || !!lang };
+  if (!lang) return out;
+  if (lang.base.createdAt !== raw.record.createdAt) return { ...out, changed: true, reason: out.reason ?? 'recreated' };
+  const matches = lang.base.rev === raw.record.rev && lang.base.updatedAt === raw.record.updatedAt;
+  const stale = mergeLang(out.bundle, lang);
+  syncActive(out.bundle);
+  const changed = out.changed || stale || !matches;
+  return { bundle: out.bundle, changed, orphan: false, reason: changed ? (out.reason ?? (matches ? 'repair' : 'v1-write')) : null };
+}
+
+/** فك قيم الإصدار الأول و1.1.0 ومصالحتها (عقد storage §٩) كما كانت قبل 2.0.0. */
+function unpackV1({ record, head, alts, prev, marks }) {
   if (!record) return { bundle: null, changed: false, orphan: !!(head || alts || prev || marks), reason: null };
   if (!head) return { bundle: bundleFromRecord(record), changed: false, orphan: false, reason: null };
   if (head.base.createdAt !== record.createdAt) return { bundle: bundleFromRecord(record), changed: true, orphan: false, reason: 'recreated' };
@@ -475,7 +498,7 @@ export function unpackBundle({ record, head, alts, prev, marks }) {
 }
 
 /** مدققات قيم المفاتيح الجديدة، بمفتاحها. */
-export const COMPANION_VALIDATORS = Object.freeze({ head: validateHead, alts: validateAltsValue, prev: validatePrevValue, marks: validateMarksValue });
+export const COMPANION_VALIDATORS = Object.freeze({ head: validateHead, alts: validateAltsValue, prev: validatePrevValue, marks: validateMarksValue, lang: validateLangValue });
 
 /**
  * مدخل النسخة الاحتياطية من الحزمة (backup.md §٣).
@@ -483,10 +506,14 @@ export const COMPANION_VALIDATORS = Object.freeze({ head: validateHead, alts: va
  */
 export function bundleToBackup(bundle, { includePrevious = true } = {}) {
   const p = packBundle(syncActive(copy(bundle)));
-  return {
+  const entry = {
     record: p.record, active: p.head.active, names: p.head.names, alts: p.alts.slots,
     previous: includePrevious ? p.prev.previous : null, marks: p.marks.slots,
   };
+  // بيانات اللغة (AA1، backup.md §٧): تُكتب حين توجد وحدها، فالنسخة بلا لغات تبقى بصيغة الإصدار 1 التي يقرؤها 1.1.0.
+  const lang = { sources: p.lang.sources, prints: p.lang.prints, slots: p.lang.slots, previous: includePrevious ? p.lang.previous : null };
+  if (!isEmptyLang(lang)) entry.lang = lang;
+  return entry;
 }
 
 /**
@@ -496,7 +523,7 @@ export function bundleToBackup(bundle, { includePrevious = true } = {}) {
  */
 export function bundleFromBackup(entry) {
   const shape = firstFailure([
-    () => exactKeys(entry, ['record', 'active', 'names', 'alts', 'previous', 'marks'], 'entry'),
+    () => exactKeys(entry, ['record', 'active', 'names', 'alts', 'previous', 'marks'], 'entry', ['lang']),
     () => (entry.record && typeof entry.record === 'object' && typeof entry.record.videoId === 'string' ? OK : fail('entry.record', 'ليس سجلًا')),
   ]);
   if (!shape.ok) return shape;
@@ -505,18 +532,20 @@ export function bundleFromBackup(entry) {
   const alts = { schema: COMPANION_SCHEMA, videoId, slots: entry.alts };
   const prev = { schema: COMPANION_SCHEMA, videoId, previous: entry.previous };
   const marks = { schema: COMPANION_SCHEMA, videoId, slots: entry.marks };
-  for (const [k, v] of Object.entries({ head, alts, prev, marks })) {
+  const lang = 'lang' in entry ? { schema: LANG_SCHEMA, videoId, base: head.base, ...(entry.lang && typeof entry.lang === 'object' ? entry.lang : { bad: entry.lang }) } : null;
+  for (const [k, v] of Object.entries({ head, alts, prev, marks, lang })) {
+    if (v === null) continue;
     const r = COMPANION_VALIDATORS[k](v, `entry.${k}`);
     if (!r.ok) return r;
   }
   if (entry.active !== null && entry.alts[entry.active - 1] !== null) return fail('entry.alts', 'خانة النشطة في السجل وحده');
-  const { bundle } = unpackBundle({ record: entry.record, head, alts, prev, marks });
+  const { bundle } = unpackBundle({ record: entry.record, head, alts, prev, marks, lang });
   const r = validateBundle(bundle);
   if (!r.ok) return r;
   // ثوابت الحزمة بلا تطبيع صامت: ما لا يعود مدخلًا مطابقًا (اسم أو علامات لخانة فارغة، أو مرجع بصمة غائبة، أو نشطة بلا
   // ترجمة) تالفٌ يُعرض «تعذّر» بسببه، لا يُصلَح بإسقاط بعضه (backup.md §٥؛ تدقيق 5fedcb9، GM-015.4).
   const back = bundleToBackup(bundle, { includePrevious: entry.previous !== null });
-  for (const k of ['record', 'active', 'names', 'alts', 'previous', 'marks']) {
+  for (const k of ['record', 'active', 'names', 'alts', 'previous', 'marks', 'lang']) {
     if (canonical(back[k]) !== canonical(entry[k])) return fail(`entry.${k}`, 'لا يطابق ثوابت الحزمة');
   }
   return { ok: true, bundle };

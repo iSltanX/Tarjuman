@@ -43,23 +43,23 @@ const triple = (list, path, each) => {
   return OK;
 };
 
-/** @param {unknown} a @param {string} [path] */
-export function validateAltSlot(a, path = 'alt') {
+/** @param {unknown} a @param {string} [path] @param {{ stored?: boolean }} [o] stored: كما يقرؤها 1.1.0 (الافتراضي) */
+export function validateAltSlot(a, path = 'alt', { stored = true } = {}) {
   return firstFailure([
     () => exactKeys(a, ['track', 'offsetMs'], path),
-    () => validateArabicTrack(a.track, `${path}.track`),
+    () => validateArabicTrack(a.track, `${path}.track`, { stored }),
     () => (isValidOffset(a.offsetMs) ? OK : fail(`${path}.offsetMs`, 'إزاحة غير صالحة')),
   ]);
 }
 
-/** @param {unknown} p @param {string} [path] */
-export function validatePrevious(p, path = 'previous') {
+/** @param {unknown} p @param {string} [path] @param {{ stored?: boolean }} [o] stored: كما يقرؤها 1.1.0 (الافتراضي) */
+export function validatePrevious(p, path = 'previous', { stored = true } = {}) {
   if (p === null) return OK;
   return firstFailure([
     () => exactKeys(p, ['from', 'savedAt', 'track', 'offsetMs'], path),
     () => (isSlotNumber(p.from) ? OK : fail(`${path}.from`, 'رقم خانة غير صالح')),
     () => (isIsoDate(p.savedAt) ? OK : fail(`${path}.savedAt`, 'تاريخ غير صالح')),
-    () => validateArabicTrack(p.track, `${path}.track`),
+    () => validateArabicTrack(p.track, `${path}.track`, { stored }),
     () => (isValidOffset(p.offsetMs) ? OK : fail(`${path}.offsetMs`, 'إزاحة غير صالحة')),
   ]);
 }
@@ -123,7 +123,7 @@ function validateSlotView(s, n, path) {
     () => exactKeys(s, ['n', 'name', 'track', 'offsetMs', 'marks', 'position'], path),
     () => (s.n === n ? OK : fail(`${path}.n`, 'ترتيب الخانات غير صحيح')),
     () => validateSlotName(s.name, `${path}.name`),
-    () => (s.track === null ? OK : validateArabicTrack(s.track, `${path}.track`)),
+    () => (s.track === null ? OK : validateArabicTrack(s.track, `${path}.track`, { stored: false })),
     () => (isValidOffset(s.offsetMs) ? OK : fail(`${path}.offsetMs`, 'إزاحة غير صالحة')),
     () => validateMarks(s.marks, `${path}.marks`),
     () => validatePosition(s.position, `${path}.position`),
@@ -140,7 +140,7 @@ export function validateBundle(b) {
   const path = 'bundle';
   return firstFailure([
     () => exactKeys(b, ['videoId', 'record', 'active', 'slots', 'previous'], path),
-    () => validateVideoRecord(b.record),
+    () => validateVideoRecord(b.record, { stored: false }),
     () => (b.videoId === b.record.videoId ? OK : fail(`${path}.videoId`, 'لا يطابق السجل')),
     () => (b.active === null || isSlotNumber(b.active) ? OK : fail(`${path}.active`, 'رقم خانة غير صالح')),
     () => triple(b.slots, `${path}.slots`, (s, p, i) => validateSlotView(s, i + 1, p)),
@@ -149,7 +149,7 @@ export function validateBundle(b) {
     () => (b.active === null || b.slots[b.active - 1].track !== null ? OK : fail(`${path}.active`, 'النشطة فارغة')),
     () => (b.active === null || JSON.stringify(b.slots[b.active - 1].track) === JSON.stringify(b.record.arabic) ? OK : fail(`${path}.active`, 'خانة النشطة لا تطابق السجل')),
     () => (b.active === null || b.slots[b.active - 1].offsetMs === b.record.view.displayOffsetMs ? OK : fail(`${path}.active`, 'إزاحة النشطة لا تطابق السجل')),
-    () => validatePrevious(b.previous, `${path}.previous`),
+    () => validatePrevious(b.previous, `${path}.previous`, { stored: false }),
     () => (b.record.schema === RECORD_SCHEMA ? OK : fail(`${path}.record.schema`, 'إصدار سجل غير معروف')),
   ]);
 }

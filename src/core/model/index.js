@@ -1,13 +1,14 @@
 // نموذج البيانات المشترك (عقد docs/contracts/data-model.md). ثبّتته P2 ووسّعته P10 للإصدار الثاني؛ كل تغيير فيه تغيير عقد.
 export { LIMITS, OK, assertValid } from './validate.js';
 export {
-  VIDEO_ID_RE, ENGLISH_LANG_RE, FINGERPRINT_ID_RE, TRACK_KINDS, PAGES,
-  isVideoId, trackKey, parseTrackKey, newFingerprintId, pagePath, videoParam, watchUrl,
+  VIDEO_ID_RE, ENGLISH_LANG_RE, SOURCE_LANG_RE, FINGERPRINT_ID_RE, TRACK_KINDS, PAGES,
+  isVideoId, isSourceLang, trackKey, parseTrackKey, parseV1TrackKey, newFingerprintId, pagePath, videoParam, watchUrl,
 } from './ids.js';
 export { validateCue, validateCues, validateCueTime, cloneCues, cueTimes } from './cue.js';
 export {
-  EXPORT_MODES, validateEnglishTrack, validateFingerprint, validateComparisonReport, validateArabicTrack,
+  EXPORT_MODES, validateEnglishTrack, validateSourceTrack, isV1Track, validateFingerprint, validateComparisonReport, validateArabicTrack,
 } from './tracks.js';
+export { LANG_SCHEMA, validateLangValue, packLang, mergeLang, splitRecord, isEmptyLang } from './lang-store.js';
 export {
   RECORD_SCHEMA, DISPLAY_MODES, validateView, validateVideoRecord, createVideoRecord, arabicCues, summarizeVideo,
   validateIndexEntry,

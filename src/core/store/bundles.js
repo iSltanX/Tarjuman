@@ -4,16 +4,18 @@
 import { TjError } from '../errors/index.js';
 import { COMPANION_VALIDATORS, isEmptyCompanion, isTrivialBundle, packBundle } from '../model/bundle.js';
 import { summarizeVideo, validateVideoRecord } from '../model/video.js';
-import { altsKey, bundleKey, indexKey, marksKey, prevKey, videoKey } from './keys.js';
+import { altsKey, bundleKey, indexKey, langKey, marksKey, prevKey, videoKey } from './keys.js';
 import { canonical } from './version.js';
 
-/** @typedef {{ record: object | null, head: object | null, alts: object | null, prev: object | null, marks: object | null }} RawBundle */
+/** @typedef {{ record: object | null, head: object | null, alts: object | null, prev: object | null, marks: object | null, lang: object | null }} RawBundle */
 
-const KEY_OF = { head: bundleKey, alts: altsKey, prev: prevKey, marks: marksKey };
+const KEY_OF = { head: bundleKey, alts: altsKey, prev: prevKey, marks: marksKey, lang: langKey };
 const COMPANIONS = ['alts', 'prev', 'marks'];
+/** كل ما يُتحقق منه بجانب السجل: التوابع ورأسها وبيانات اللغة (AA1). */
+const CHECKED = ['head', ...COMPANIONS, 'lang'];
 
 /** مفاتيح قراءة الحزمة. @param {string} id */
-export const bundleReadKeys = (id) => [videoKey(id), bundleKey(id), altsKey(id), prevKey(id), marksKey(id)];
+export const bundleReadKeys = (id) => [videoKey(id), bundleKey(id), altsKey(id), prevKey(id), marksKey(id), langKey(id)];
 
 /**
  * @param {Record<string, unknown>} items نتيجة area.get
@@ -22,7 +24,7 @@ export const bundleReadKeys = (id) => [videoKey(id), bundleKey(id), altsKey(id),
  */
 export function rawBundle(items, id) {
   const get = (k) => (items[k] === undefined ? null : items[k]);
-  return { record: get(videoKey(id)), head: get(bundleKey(id)), alts: get(altsKey(id)), prev: get(prevKey(id)), marks: get(marksKey(id)) };
+  return { record: get(videoKey(id)), head: get(bundleKey(id)), alts: get(altsKey(id)), prev: get(prevKey(id)), marks: get(marksKey(id)), lang: get(langKey(id)) };
 }
 
 /**
@@ -34,7 +36,7 @@ export function checkRaw(raw, id) {
     const r = validateVideoRecord(raw.record);
     if (!r.ok) throw new TjError('ST_CORRUPT_RECORD', { detail: `${id}: ${r.path} — ${r.reason}` });
   }
-  for (const kind of ['head', ...COMPANIONS]) {
+  for (const kind of CHECKED) {
     const v = raw[kind];
     if (v === null) continue;
     const r = COMPANION_VALIDATORS[kind](v);
@@ -67,6 +69,11 @@ export function itemsFor(next, raw, { forceHead = false } = {}) {
     const changed = stored === null ? !isEmptyCompanion(kind, value) : canonical(stored) !== canonical(value);
     if (changed) items[KEY_OF[kind](id)] = value;
   }
+  // بيانات اللغة (AA1): تُكتب مع كل كتابة للسجل متى وُجد مفتاحها أو احتيج إليه، بنسخة السجل كالرأس، فيُعرف عند القراءة
+  // أن إصدارًا سابقًا كتب السجل بعدها.
+  if (raw.lang !== null || !isEmptyCompanion('lang', p.lang)) {
+    items[langKey(id)] = { ...p.lang, base: { rev: p.record.rev, createdAt: p.record.createdAt, updatedAt: p.record.updatedAt } };
+  }
   return items;
 }
 
@@ -76,13 +83,13 @@ export function itemsFor(next, raw, { forceHead = false } = {}) {
  * معه؛ والتالف يُسقط ويُسمّى. بلا رأس صالح لا تُقرأ التوابع (الرأس يربطها بالسجل)، فتُسمّى مستبعدة هي أيضًا. لا كتابة هنا: الأصل
  * التالف يبقى كما هو في التخزين.
  * @param {RawBundle} raw @param {string} id
- * @returns {{ raw: RawBundle, dropped: ('head' | 'alts' | 'prev' | 'marks')[] } | null} null إن كان السجل نفسه تالفًا أو غائبًا
+ * @returns {{ raw: RawBundle, dropped: ('head' | 'alts' | 'prev' | 'marks' | 'lang')[] } | null} null إن كان السجل نفسه تالفًا أو غائبًا
  */
 export function salvageRaw(raw, id) {
   if (raw.record === null || !validateVideoRecord(raw.record).ok || raw.record.videoId !== id) return null;
   const out = { ...raw };
   const dropped = [];
-  for (const kind of ['head', ...COMPANIONS]) {
+  for (const kind of CHECKED) {
     const v = out[kind];
     if (v === null) continue;
     const r = COMPANION_VALIDATORS[kind](v);
@@ -106,4 +113,4 @@ export function salvageRaw(raw, id) {
 }
 
 /** هل في القراءة توابع (لسجل محذوف = يتيمة). @param {RawBundle} raw */
-export const hasCompanions = (raw) => raw.head !== null || raw.alts !== null || raw.prev !== null || raw.marks !== null;
+export const hasCompanions = (raw) => raw.head !== null || raw.alts !== null || raw.prev !== null || raw.marks !== null || (raw.lang ?? null) !== null;

@@ -13,6 +13,10 @@ import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { NOW, VIDEO_ID as A } from '../../helpers/fixtures.js';
 import { sampleBundle, seedBundle } from '../../helpers/fixtures-v2.js';
 import { armBeforeSet } from '../../helpers/store-race.js';
+import { bundleReadKeys } from '../../../src/core/store/bundles.js';
+
+/** عدد مفاتيح قراءة الحزمة الواحدة (ستة منذ مفتاح اللغة lang: في 2.0.0، AA1). */
+const BUNDLE_KEYS = bundleReadKeys(A).length;
 
 let t = Date.parse(NOW);
 const now = () => (t += 1000);
@@ -42,8 +46,8 @@ test('CX-003: استعادة افتراضية وسياق آخر ينشئ الف�
   const source = sampleBundle({ third: true });
   const entry = bundleToBackup(source);
   const theirs = sampleBundle();
-  // بعد لقطة الاستعادة الأولى (مفاتيح الحزمة الخمسة) يكمل السياق الآخر إنشاء الفيديو بخانتين وعلامات.
-  gate.armed = { match: (keys) => Array.isArray(keys) && keys.length === 5 && keys[0] === `video:${A}`, run: () => seedBundle(b, theirs) };
+  // بعد لقطة الاستعادة الأولى (مفاتيح الحزمة الستة، ومنها lang: منذ 2.0.0) يكمل السياق الآخر إنشاء الفيديو بخانتين وعلامات.
+  gate.armed = { match: (keys) => Array.isArray(keys) && keys.length === BUNDLE_KEYS && keys[0] === `video:${A}`, run: () => seedBundle(b, theirs) };
   const r = await a.restoreVideo(entry);
   assert.deepEqual(r, { status: 'skipped' }, 'لا «أضيف» فوق سجل ظهر');
   const got = await b.getBundle(A);
@@ -56,7 +60,7 @@ test('CX-003: الاستبدال الصريح مع كاتب آخر بينهما 
   const { gate, a, b } = shared();
   await seedBundle(b, sampleBundle());
   const entry = bundleToBackup(sampleBundle({ third: true }));
-  gate.armed = { match: (keys) => Array.isArray(keys) && keys.length === 5, run: () => b.updateVideo(A, (r) => withView(r, { displayOffsetMs: 900 }, NOW)) };
+  gate.armed = { match: (keys) => Array.isArray(keys) && keys.length === BUNDLE_KEYS, run: () => b.updateVideo(A, (r) => withView(r, { displayOffsetMs: 900 }, NOW)) };
   const r = await a.restoreVideo(entry, { replace: true });
   assert.deepEqual(r, { status: 'replaced' });
   const got = await b.getBundle(A);
@@ -101,7 +105,7 @@ test('GM-004: قراءة بدأت قبل كتابة في السياق نفسه �
   const area = createMemoryArea({ unlimited: true });
   const gate = { armed: false, release: null };
   const store = createStore({
-    area: { ...area, async get(keys) { const out = await area.get(keys); if (gate.armed && Array.isArray(keys) && keys.length === 5) { gate.armed = false; await new Promise((r) => { gate.release = r; }); } return out; } },
+    area: { ...area, async get(keys) { const out = await area.get(keys); if (gate.armed && Array.isArray(keys) && keys.length === BUNDLE_KEYS) { gate.armed = false; await new Promise((r) => { gate.release = r; }); } return out; } },
     now,
   });
   await seedBundle(store, sampleBundle());

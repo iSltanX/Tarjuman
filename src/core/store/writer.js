@@ -11,7 +11,7 @@ import { DEFAULT_SETTINGS, mergeSettings, normalizeSettings, validateSettings } 
 import { assertValid, isPlainObject } from '../model/validate.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { MESSAGE_VERSION, isStoreRequest } from '../model/messages.js';
-import { KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, companionKeys, indexKey, marksKey, prevKey, videoKey } from './keys.js';
+import { KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, companionKeys, indexKey, langKey, marksKey, prevKey, videoKey } from './keys.js';
 import { MIGRATIONS, STORAGE_SCHEMA, migrate } from './migrate.js';
 import { canonical, printKeys, rawPrint, versionOf } from './version.js';
 
@@ -20,7 +20,7 @@ export const APPLIED_LOG_MAX = 512;
 
 const isQuotaError = (err) => /quota|QUOTA_BYTES/i.test(String(err && err.message));
 /** مفاتيح توابع الفيديو وأنواعها في COMPANION_VALIDATORS. @param {string} id */
-const companionKinds = (id) => [[bundleKey(id), 'head'], [altsKey(id), 'alts'], [prevKey(id), 'prev'], [marksKey(id), 'marks']];
+const companionKinds = (id) => [[bundleKey(id), 'head'], [altsKey(id), 'alts'], [prevKey(id), 'prev'], [marksKey(id), 'marks'], [langKey(id), 'lang']];
 
 /**
  * @param {{ area: import('./area.js').StorageArea, schema?: number, migrations?: Record<number, import('./migrate.js').MigrationStep> }} o
@@ -107,7 +107,7 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
       const v = items[k];
       const c = COMPANION_VALIDATORS[kind](v);
       if (!c.ok || v.videoId !== id) throw bad(`${kind}: ${c.ok ? 'لفيديو آخر' : `${c.path} — ${c.reason}`}`);
-      if (kind === 'head' && (v.base.rev !== rec.rev || v.base.updatedAt !== rec.updatedAt || v.base.createdAt !== rec.createdAt)) throw bad('الرأس لا يطابق السجل');
+      if ((kind === 'head' || kind === 'lang') && (v.base.rev !== rec.rev || v.base.updatedAt !== rec.updatedAt || v.base.createdAt !== rec.createdAt)) throw bad(`${kind === 'head' ? 'الرأس' : 'بيانات اللغة'} لا تطابق السجل`);
     }
   }
 

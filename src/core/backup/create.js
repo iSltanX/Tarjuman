@@ -5,7 +5,7 @@ import { TjError, toErrorInfo } from '../errors/index.js';
 import { bundleToBackup } from '../model/bundle.js';
 import { utf8Length } from '../model/validate.js';
 import { STORAGE_SCHEMA } from '../store/migrate.js';
-import { BACKUP_FORMAT, BACKUP_LIMITS, BACKUP_VERSION, HASH_ALGORITHM, backupFileName, countData, sha256Hex } from './format.js';
+import { BACKUP_FORMAT, BACKUP_LIMITS, BACKUP_VERSION, BACKUP_VERSION_V1, HASH_ALGORITHM, backupFileName, countData, sha256Hex } from './format.js';
 
 /** استراحة للصفحة بين الدفعات فلا تتجمد (والاختبارات تحقن غيرها). */
 export const yieldToPage = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -67,7 +67,8 @@ export async function createBackup({ store, appVersion, includePrevious = true, 
     throw err;
   }
   const header = {
-    format: BACKUP_FORMAT, version: BACKUP_VERSION, createdAt,
+    // الإصدار 2 حين توجد بيانات لغة في مدخل (AA1)، وإلا 1 الذي يستعيده 1.1.0 كما هو.
+    format: BACKUP_FORMAT, version: videos.some((v) => 'lang' in v) ? BACKUP_VERSION : BACKUP_VERSION_V1, createdAt,
     app: { version: String(appVersion), storageSchema: STORAGE_SCHEMA },
     options: { previous: includePrevious },
     counts: countData(data),

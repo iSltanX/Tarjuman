@@ -66,13 +66,13 @@ const LINE_BAD_RE = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
 export const isLine = (s, max, min = 1) => typeof s === 'string' && s === s.trim() && s.length >= min && s.length <= max && !LINE_BAD_RE.test(s);
 
 /**
- * يتحقق أن الكائن بمفاتيح معروفة فقط وكلها موجودة.
- * @param {unknown} obj @param {string[]} keys @param {string} path
+ * يتحقق أن الكائن بمفاتيح معروفة فقط وكلها موجودة. optional مفاتيح معروفة يجوز غيابها (حقول 2.0.0 في الذاكرة وحدها، AA1).
+ * @param {unknown} obj @param {string[]} keys @param {string} path @param {string[]} [optional]
  * @returns {Result}
  */
-export function exactKeys(obj, keys, path) {
+export function exactKeys(obj, keys, path, optional = []) {
   if (!isPlainObject(obj)) return fail(path, 'ليس كائنًا');
-  for (const k of Object.keys(obj)) if (!keys.includes(k)) return fail(`${path}.${k}`, 'مفتاح غير معروف');
+  for (const k of Object.keys(obj)) if (!keys.includes(k) && !optional.includes(k)) return fail(`${path}.${k}`, 'مفتاح غير معروف');
   for (const k of keys) if (!(k in obj)) return fail(`${path}.${k}`, 'مفتاح مفقود');
   return OK;
 }

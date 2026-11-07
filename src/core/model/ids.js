@@ -1,28 +1,49 @@
 // المعرّفات والمفاتيح وعناوين الصفحات (عقد data-model §١ وinterfaces §٦). لا شبكة ولا chrome هنا.
 
 export const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+/** لغة المسار الذي يقرؤه الإصدار الأول و1.1.0 (المسار الإنجليزي الأصلي وحده). يبقى لإسقاط السجل المخزَّن (AA1). */
 export const ENGLISH_LANG_RE = /^en(?:[-_][A-Za-z0-9]{1,8})*$/i;
+/** لغة مسار بأي لغة كما يرسلها يوتيوب في lang أو tlang (BCP-47، حتى 35 محرفًا، تدقيق Fable FA-09). */
+export const SOURCE_LANG_RE = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8}){0,4}$/;
+export const MAX_SOURCE_LANG_CHARS = 35;
 export const FINGERPRINT_ID_RE = /^fp_[a-z0-9]{6,40}$/;
 export const TRACK_KINDS = Object.freeze(['manual', 'asr']);
 
 /** @param {unknown} id */
 export const isVideoId = (id) => typeof id === 'string' && VIDEO_ID_RE.test(id);
 
-/**
- * مفتاح المسار الإنجليزي: lang|kind، مثل en|manual أو en-GB|asr.
- * @param {string} lang @param {'manual' | 'asr'} kind
- */
-export const trackKey = (lang, kind) => `${lang}|${kind}`;
+/** رمز لغة مسار صالح بالصيغة التي يرسلها يوتيوب (يُحفظ كما ورد). @param {unknown} lang */
+export const isSourceLang = (lang) => typeof lang === 'string' && lang.length <= MAX_SOURCE_LANG_CHARS && SOURCE_LANG_RE.test(lang);
 
 /**
+ * مفتاح المسار: lang|kind للمسار الأصلي (en|manual، ja|asr)، وlang|kind|via لمسار ترجمه يوتيوب آليًا إلى lang عن مسار
+ * بلغة via ونوع kind (ar|asr|en: العربية مترجمة آليًا عن الإنجليزية التلقائية؛ قرار سلطان ق٢، AA1).
+ * @param {string} lang @param {'manual' | 'asr'} kind @param {string | null} [via]
+ */
+export const trackKey = (lang, kind, via = null) => (via ? `${lang}|${kind}|${via}` : `${lang}|${kind}`);
+
+/**
+ * مفتاح مسار بأي لغة، أصليًا أو مترجمًا آليًا.
  * @param {unknown} key
- * @returns {{ lang: string, kind: 'manual' | 'asr' } | null}
+ * @returns {{ lang: string, kind: 'manual' | 'asr', via: string | null } | null}
  */
 export function parseTrackKey(key) {
   if (typeof key !== 'string') return null;
-  const [lang, kind, extra] = key.split('|');
-  if (extra !== undefined || !ENGLISH_LANG_RE.test(lang ?? '') || !TRACK_KINDS.includes(kind)) return null;
-  return { lang, kind: /** @type {'manual' | 'asr'} */ (kind) };
+  const [lang, kind, via, extra] = key.split('|');
+  if (extra !== undefined || !isSourceLang(lang) || !TRACK_KINDS.includes(kind)) return null;
+  if (via !== undefined && !isSourceLang(via)) return null;
+  return { lang, kind: /** @type {'manual' | 'asr'} */ (kind), via: via ?? null };
+}
+
+/**
+ * مفتاح مسار يقرؤه الإصدار الأول و1.1.0: إنجليزي أصلي بصيغة lang|kind وحدها. ما سواه يُخزَّن في المفتاح المرافق lang:.
+ * @param {unknown} key
+ * @returns {{ lang: string, kind: 'manual' | 'asr' } | null}
+ */
+export function parseV1TrackKey(key) {
+  const p = parseTrackKey(key);
+  if (!p || p.via !== null || !ENGLISH_LANG_RE.test(p.lang)) return null;
+  return { lang: p.lang, kind: p.kind };
 }
 
 /**

@@ -2,7 +2,7 @@
 import { trackComparison } from '../compare/current.js';
 import { isValidOffset } from './timing.js';
 import { isVideoId } from './ids.js';
-import { validateArabicTrack, validateEnglishTrack, validateFingerprint } from './tracks.js';
+import { validateArabicTrack, validateEnglishTrack, validateFingerprint, validateSourceTrack } from './tracks.js';
 import {
   LIMITS, OK, eachOf, exactKeys, fail, firstFailure, isIntIn, isIsoDate, isText,
 } from './validate.js';
@@ -39,9 +39,14 @@ export function validateView(v, path = 'view') {
   ]);
 }
 
-/** @param {unknown} r */
-export function validateVideoRecord(r) {
+/**
+ * السجل. stored (الافتراضي): كما يُخزَّن ويقرؤه الإصدار الأول و1.1.0، بمسارات إنجليزية أصلية وحدها وترجمة بلا لغة. ووضع
+ * الذاكرة (stored: false، AA1): مسارات بأي لغة ومترجمة آليًا، وترجمة بلغتها، بالثوابت نفسها.
+ * @param {unknown} r @param {{ stored?: boolean }} [o]
+ */
+export function validateVideoRecord(r, { stored = true } = {}) {
   const path = 'video';
+  const trackOf = stored ? validateEnglishTrack : validateSourceTrack;
   return firstFailure([
     () => exactKeys(r, RECORD_KEYS, path),
     () => (r.schema === RECORD_SCHEMA ? OK : fail(`${path}.schema`, `الإصدار ${r.schema} والمتوقع ${RECORD_SCHEMA}`)),
@@ -51,16 +56,16 @@ export function validateVideoRecord(r) {
     () => (isIsoDate(r.createdAt) ? OK : fail(`${path}.createdAt`, 'تاريخ غير صالح')),
     () => (isIsoDate(r.updatedAt) ? OK : fail(`${path}.updatedAt`, 'تاريخ غير صالح')),
     () => (isIntIn(r.rev, 1, Number.MAX_SAFE_INTEGER) ? OK : fail(`${path}.rev`, 'مراجعة غير صالحة')),
-    () => eachOf(r.english, `${path}.english`, LIMITS.maxEnglishTracks, validateEnglishTrack),
+    () => eachOf(r.english, `${path}.english`, LIMITS.maxEnglishTracks, trackOf),
     () => (new Set(r.english.map((t) => t.key)).size === r.english.length ? OK : fail(`${path}.english`, 'مفتاح مسار مكرر')),
-    () => eachOf(r.fingerprints, `${path}.fingerprints`, LIMITS.maxFingerprints, validateFingerprint),
+    () => eachOf(r.fingerprints, `${path}.fingerprints`, LIMITS.maxFingerprints, (f, p) => validateFingerprint(f, p, { stored })),
     () => (new Set(r.fingerprints.map((f) => f.id)).size === r.fingerprints.length ? OK : fail(`${path}.fingerprints`, 'معرّف بصمة مكرر')),
     () => {
       const keys = new Set(r.english.map((t) => t.key));
       const bad = r.fingerprints.findIndex((f) => f.videoId !== r.videoId || !keys.has(f.trackKey));
       return bad === -1 ? OK : fail(`${path}.fingerprints[${bad}]`, 'البصمة لفيديو آخر أو لمسار غير محفوظ');
     },
-    () => (r.arabic === null ? OK : validateArabicTrack(r.arabic, `${path}.arabic`)),
+    () => (r.arabic === null ? OK : validateArabicTrack(r.arabic, `${path}.arabic`, { stored })),
     () => (r.arabic === null || r.arabic.fingerprintId === null || r.fingerprints.some((f) => f.id === r.arabic.fingerprintId)
       ? OK : fail(`${path}.arabic.fingerprintId`, 'البصمة المشار إليها غير محفوظة')),
     () => validateView(r.view, `${path}.view`),
