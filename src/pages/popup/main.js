@@ -243,7 +243,11 @@ startPage({
       card = next;
       if (focused) card.querySelector(`[data-action="${focused}"]`)?.focus();
       diagHost.replaceChildren();
-      refreshPair();
+      // «جارٍ القراءة»: هيكل الكتلة حتى يستقر الرد (لوحة 09، الحالة 6)، فلا يُعرض زوج قبل معرفة مسار الفيديو.
+      if (reply?.watch && reply.loading) {
+        if (picker) picker = null;
+        pairHost.replaceChildren(pairTitle, pairSkeleton());
+      } else refreshPair();
       paintSteps();
       // تشخيص الصفحة حيث تُعرض حالة أدوات المشغّل.
       if (toolsStatus(reply)) diagHost.append(diagnosticsLink(reply));
