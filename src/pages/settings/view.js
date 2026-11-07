@@ -716,6 +716,9 @@ export function createSettings(env) {
   for (const sec of Object.values(sections)) sec.querySelector('h2').tabIndex = -1;
   syncAll();
   select(active, { remember: false });
+  // القيم الظاهرة قبل القراءة افتراضية: الصفحة «مشغولة» حتى تُقرأ المحفوظة (تدقيق Fable، UX-23)، وبفشل القراءة لا تبقى الأدوات
+  // فعّالة فوق قيم افتراضية قد لا تكون المحفوظة (inert)، ورسالة الخطأ وحدها تُقرأ.
+  root.setAttribute('aria-busy', 'true');
 
   // المساحة والترجمات والتذكير تتبع المحفوظات حين تتغير من تبويب آخر (حفظ، أو رفع، أو حذف)، بعد سكون قصير لا مع كل كتابة
   // (تدقيق 5fedcb9، GM-027.1).
@@ -767,9 +770,13 @@ export function createSettings(env) {
       try {
         [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent()]);
         syncAll();
+        for (const sec of Object.values(sections)) sec.removeAttribute('inert');
       } catch (err) {
         const info = toErrorInfo(err);
         alertHost.replaceChildren(alertBox({ tone: 'danger', title: 'تعذّرت قراءة الإعدادات', text: `${info.message} (${info.code})`, doc }));
+        for (const sec of Object.values(sections)) sec.setAttribute('inert', '');
+      } finally {
+        root.removeAttribute('aria-busy');
       }
       await Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage(), location.refreshLast()]);
     },

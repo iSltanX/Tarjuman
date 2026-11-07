@@ -540,3 +540,22 @@ test('تدقيق 5fedcb9 (GM-027.1): إحصاءات «الترجمات والن�
   assert.equal(last.hidden, false, 'السطر ظهر بعد الحفظ');
   assert.ok(textOf(last).includes(answer));
 });
+
+test('تدقيق Fable (UX-23): الصفحة مشغولة حتى تُقرأ الإعدادات، وبفشل القراءة تصير الأقسام inert تحت رسالة الخطأ', async () => {
+  const ok = await mount();
+  assert.equal(ok.root.getAttribute('aria-busy'), null, 'بعد القراءة');
+  assert.equal(findAll(ok.root, (e) => e.tagName === 'section' && e.hasAttribute('inert')).length, 0);
+  let t = Date.parse(NOW);
+  const store = createStore({ area: createMemoryArea({ unlimited: true }), now: () => (t += 1000) });
+  store.getSettings = () => Promise.reject(new Error('read failed'));
+  const doc = newDocument();
+  const settings = createSettings({ store, doc, version: '0.2.0', clipboardWrite: async () => {}, diagnosticsText: async () => '{}' });
+  doc.body.append(settings.root);
+  assert.equal(settings.root.getAttribute('aria-busy'), 'true', 'قبل القراءة');
+  await settings.load();
+  assert.equal(settings.root.getAttribute('aria-busy'), null);
+  assert.ok(textOf(settings.root).includes('تعذّرت قراءة الإعدادات'));
+  const sections = findAll(settings.root, (e) => e.tagName === 'section');
+  assert.equal(sections.length, 9);
+  assert.ok(sections.every((sec) => sec.hasAttribute('inert')), 'لا أدوات فعّالة فوق قيم افتراضية');
+});

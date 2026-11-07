@@ -151,6 +151,9 @@ export function createRows(doc, ctx) {
       en.replaceChildren(...parts);
     } else if (en.childElementCount || en.textContent !== ref) en.textContent = ref;
     en.dir = c.refDir;
+    // ولغته مع اتجاهه: العمود المرجعي قد يعرض ترجمة عربية أخرى، فلا يبقى lang="en" فيُنطق العربي بصوت إنجليزي (تدقيق Fable، UX §٣).
+    const refLang = c.refDir === 'rtl' ? 'ar' : 'en';
+    if (en.getAttribute('lang') !== refLang) en.setAttribute('lang', refLang);
     const match = c.match?.(i) ?? null;
     node.classList.toggle('has-match', match === 'match');
     node.classList.toggle('is-match-current', match === 'current');

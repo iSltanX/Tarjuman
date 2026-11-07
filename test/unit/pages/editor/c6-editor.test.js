@@ -36,3 +36,27 @@ test('U49 (GEM-022b): اسم الملف في رسائل الحفظ معزول LT
   assert.equal(saveMessage({ ok: false, code: 'SV_FAILED' }, name, undefined, messageFor).text, `${iso}: ${messageFor('SV_FAILED')}`);
   assert.ok(saveMessage({ ok: true, mode: 'blob' }, name, undefined, messageFor).text.startsWith(iso));
 });
+
+test('تدقيق Fable: العمود المرجعي بترجمة عربية أخرى بلغتها واتجاهها (lang="ar" وrtl)، ويعود lang="en" بالإنجليزية', async () => {
+  const bundle = sampleBundle();
+  const area = createMemoryArea({ unlimited: true });
+  let at = Date.parse(NOW);
+  const now = () => (at += 1000);
+  const store = createStore({ area, now });
+  await seedBundle(store, bundle);
+  const env = editorDocument({ videoId: bundle.videoId });
+  assert.ok(await mountEditor(env.root, { videoId: bundle.videoId, store, doc: env.doc, now }));
+  await env.flush();
+  const sel = env.root.querySelector('.ed-ref-select');
+  const values = [...sel.children].map((o) => o.getAttribute('value'));
+  assert.ok(values.includes('en') && values.includes('2'), values.join());
+  const langs = () => [...new Set(env.root.querySelectorAll('.ed-row__en').map((e) => `${e.getAttribute('lang')}|${e.dir}`))];
+  sel.value = '2';
+  sel.dispatchEvent({ type: 'change' });
+  await env.flush();
+  assert.deepEqual(langs(), ['ar|rtl']);
+  sel.value = 'en';
+  sel.dispatchEvent({ type: 'change' });
+  await env.flush();
+  assert.deepEqual(langs(), ['en|ltr']);
+});
