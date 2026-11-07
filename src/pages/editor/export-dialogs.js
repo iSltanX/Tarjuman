@@ -73,7 +73,7 @@ export function openReportDialog({ doc, build }) {
           el('legend', { className: 'tj-label', text: 'يدخل التقرير', doc }),
           check(doc, 'الفحص الآلي (التوقيت والمقارنة والكثافة)', o.auto, (v) => { o.auto = v; }),
           check(doc, 'علاماتي («أعود إليه» و«راجعته»)', o.marks, (v) => { o.marks = v; }),
-          check(doc, 'مقتطف النص العربي والإنجليزي لكل بند', o.includeText, (v) => { o.includeText = v; }),
+          check(doc, 'مقتطف نص الترجمة والأصل لكل بند', o.includeText, (v) => { o.includeText = v; }),
         ],
         doc,
       }),
@@ -95,7 +95,7 @@ export function openStudyDialog({ doc, hasEnglish, build }) {
   return exportDialog({
     doc, title: 'نص دراسي', intro: 'الترجمة كما هي فقراتٍ للقراءة، لكل فقرة رابط إلى زمنها في الفيديو. لا تلخيص ولا تغيير في النص.',
     controls: [
-      check(doc, 'ثنائي اللغة (العربية فوق الإنجليزية)', o.bilingual, (v) => { o.bilingual = v; }, {
+      check(doc, 'ثنائي اللغة (الترجمة فوق الأصل)', o.bilingual, (v) => { o.bilingual = v; }, {
         disabled: !hasEnglish, title: hasEnglish ? undefined : messageFor('EX_STUDY_NO_ENGLISH'),
       }),
       formats(doc, 'ed-study-format', o.format, (v) => { o.format = v; }),

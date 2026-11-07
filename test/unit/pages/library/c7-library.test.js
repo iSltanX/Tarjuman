@@ -240,7 +240,7 @@ test('U58 (DS-S5): عنوان «تصدير» في «المزيد» مجموعة 
   assert.equal(group.getAttribute('aria-label'), 'تصدير');
   const items = group.querySelectorAll('[role=menuitem]').map((i) => textOf(i.querySelector('.tj-menu__label')));
   // بنود التصدير حتى الفاصل، ومنها «نص دراسي…» (تنزيل ملف أيضًا) كما تُرى تحت العنوان.
-  assert.ok(items.length >= 3 && items.every((t) => /^(العربية|الإنجليزية|نص دراسي)/.test(t)), items.join(' | '));
+  assert.ok(items.length >= 3 && items.every((t) => /^(الترجمة|العربية|الإنجليزية|نص دراسي)/.test(t)), items.join(' | '));
   assert.equal(more.parentNode.querySelectorAll('[role=menuitem]').filter((i) => !group.contains(i)).map((i) => textOf(i.querySelector('.tj-menu__label')))[0], 'رفع ترجمة…', 'ما بعد الفاصل خارج المجموعة');
   assert.equal(more.parentNode.querySelector('[role=presentation]'), null);
   assert.equal(group.querySelector('.tj-menu__group').getAttribute('aria-hidden'), 'true', 'العنوان المرئي لا يُقرأ مرتين');
@@ -312,12 +312,12 @@ test('U59: سطر سبب المرجع في حوار الرفع يتبع المر
   assert.equal(textOf(why), '', '«بلا مرجع»: لا سبب (كان يبقى «مطابقة لهذا التصدير»)');
 });
 
-test('U59: صيغ العدد — «جزآن» في وصف البصمة، و«المساران الإنجليزيان الملتقطان» في ملخص الحذف، و«النتائج: …» في الإعلان', async () => {
+test('U59: صيغ العدد — «جزآن» في وصف البصمة، و«مسارا الأصل الملتقطان» في ملخص الحذف، و«النتائج: …» في الإعلان', async () => {
   assert.match(fingerprintLabel({ trackKey: 'en|asr', mode: 'normal', count: 12, parts: [{}, {}] }), /جزآن/);
   assert.match(fingerprintLabel({ trackKey: 'en|asr', mode: 'normal', count: 12, parts: Array.from({ length: 11 }, () => ({})) }), /11 جزءًا/);
   const b = sampleBundle({ videoId: IDS[0] });
   const two = { ...b, record: { ...b.record, english: [b.record.english[0], { ...b.record.english[0], key: 'en|asr' }] } };
-  assert.ok(deleteSummary(two, { scope: 'all' }).items.includes('المساران الإنجليزيان الملتقطان'));
+  assert.ok(deleteSummary(two, { scope: 'all' }).items.includes('مسارا الأصل الملتقطان'));
   const m = await mount();
   const search = m.root.querySelector('.lib-search__input');
   search.value = 'ث';

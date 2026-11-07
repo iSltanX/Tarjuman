@@ -10,7 +10,9 @@ import { DEFAULT_PREFS, normalizePrefs, sourceKey } from '../model/prefs.js';
 import { DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../model/lang-prefs.js';
 import { storeRequest } from '../model/messages.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
-import { isVideoId } from '../model/ids.js';
+import { isVideoId, parseTrackKey } from '../model/ids.js';
+import { validateLangValue } from '../model/lang-store.js';
+import { slotPairs } from '../model/pair.js';
 import {
   applyRecordChange, bundleFromBackup, bundleFromRecord, slotModels, summarizeBundle, syncActive, unpackBundle,
 } from '../model/bundle.js';
@@ -19,7 +21,7 @@ import { chromeLocalArea } from './area.js';
 import { bundleReadKeys, checkRaw, hasCompanions, itemsFor, rawBundle, salvageRaw } from './bundles.js';
 import { computeCapacity } from './capacity.js';
 import {
-  COMPANION_KINDS, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, indexKey, marksKey, parseKey, prevKey, videoKey,
+  COMPANION_KINDS, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, indexKey, langKey, marksKey, parseKey, prevKey, videoKey,
 } from './keys.js';
 // واجهة التخزين تعرض للصفحات والمتحكم ما تحتاجه من النموذج للحزمة دون استيراد إضافي.
 export { bundleFromRecord, slotModels } from '../model/bundle.js';
@@ -555,7 +557,26 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         return h !== undefined && validateHead(h).ok && h.videoId === entry.videoId && h.base.rev === entry.rev && h.base.updatedAt === entry.updatedAt;
       };
       const quick = entries.filter(matching).map((e) => e.videoId);
-      const light = quick.length ? await read(quick.flatMap((id) => [altsKey(id), marksKey(id)])) : {};
+      const light = quick.length ? await read(quick.flatMap((id) => [altsKey(id), marksKey(id), langKey(id)])) : {};
+      /**
+       * الزوج اللغوي لكل خانة (AA3) من المُلخّص ومرافق اللغة دون قراءة السجلات: لغة الترجمة من المرافق إن طابقت هويتها ترجمة الخانة
+       * (اسم الملف للنشطة، ومعه تاريخ الاستيراد لغيرها)، والأصل أول مسار بترتيب قائمة التحميل. القيمة التالفة كأنها غائبة.
+       */
+      const pairsFromHead = (entry, alts) => {
+        const lv = light[langKey(entry.videoId)] ?? null;
+        const lang = lv && validateLangValue(lv).ok && lv.videoId === entry.videoId ? lv : null;
+        const sources = [...entry.english.map((t) => parseTrackKey(t.key)), ...(lang?.sources ?? []).map((t) => parseTrackKey(t.key))].filter(Boolean)
+          .sort((a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || (a.kind === b.kind ? 0 : a.kind === 'manual' ? -1 : 1));
+        const from = sources[0] ?? null;
+        return [1, 2, 3].map((n) => {
+          const meta = lang?.slots[n - 1] ?? null;
+          const t = alts?.slots[n - 1]?.track ?? null;
+          const activeHere = entry.arabic && !t;
+          if (!t && !activeHere) return null;
+          const same = meta && (t ? meta.importedAt === t.importedAt && meta.fileName === t.fileName : meta.fileName === entry.arabic.fileName);
+          return { from: from?.lang ?? null, to: same ? meta.lang ?? null : null, via: from?.via ?? null };
+        });
+      };
       const fromHead = (entry, head) => {
         const alts = light[altsKey(entry.videoId)] ?? null;
         const marks = light[marksKey(entry.videoId)] ?? null;
@@ -569,13 +590,22 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
             cueCount: active ? entry.arabic?.cueCount ?? 0 : t ? (t.current ?? t.original).length : 0,
           };
         });
-        return { entry, summary: head.summary, slots };
+        const pairs = pairsFromHead(entry, alts);
+        // مسارات الأصل بغير الإنجليزية في المرافق (AA1): تُضم إلى مُلخّص الصف كما في القراءة الكاملة، فتُصدَّر وتُعدّ من المحفوظات.
+        const lv = light[langKey(entry.videoId)] ?? null;
+        const extra = lv && validateLangValue(lv).ok && lv.videoId === entry.videoId
+          ? lv.sources.filter((t) => !entry.english.some((x) => x.key === t.key)).map((t) => ({ key: t.key, kind: t.kind, cueCount: t.cues.length })) : [];
+        const shown = extra.length ? { ...entry, english: [...entry.english, ...extra] } : entry;
+        return { entry: shown, summary: head.summary, slots, pairs: slots.map((x) => (x.filled ? pairs[x.n - 1] : null)) };
       };
       const out = [];
       for (const entry of entries) {
         const head = heads[bundleKey(entry.videoId)];
         if (head === undefined) {
-          out.push({ entry, summary: trivialSummary(entry), slots: slotModelsFromIndex(entry) });
+          // سجل الإصدار الأول بلا رأس: لغة الأصل من مُلخّصه، والترجمة «غير محددة».
+          const src = parseTrackKey(entry.english[0]?.key);
+          const slots = slotModelsFromIndex(entry);
+          out.push({ entry, summary: trivialSummary(entry), slots, pairs: slots.map((x) => (x.filled ? { from: src?.lang ?? null, to: null, via: src?.via ?? null } : null)) });
           continue;
         }
         const row = quick.includes(entry.videoId) ? fromHead(entry, head) : null;
@@ -591,7 +621,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           b = null;
         }
         const fresh = b ? summarizeVideo(b.record) : entry;
-        out.push({ entry: fresh, summary: b ? summarizeBundle(b) : trivialSummary(entry), slots: b ? slotModels(b) : slotModelsFromIndex(entry) });
+        out.push({ entry: fresh, summary: b ? summarizeBundle(b) : trivialSummary(entry), slots: b ? slotModels(b) : slotModelsFromIndex(entry), pairs: b ? slotPairs(b) : [null, null, null] });
       }
       return out;
     },

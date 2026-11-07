@@ -84,7 +84,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     className: 'ed-select',
     attrs: { 'aria-label': 'البحث في' },
     on: { change: () => { S.field = fieldSel.value === 'en' ? 'en' : 'ar'; run(); } },
-    children: [el('option', { text: 'في العربية', attrs: { value: 'ar' }, doc }), el('option', { text: 'في الإنجليزية (قراءة فقط)', attrs: { value: 'en' }, doc })],
+    children: [el('option', { text: 'في الترجمة', attrs: { value: 'ar' }, doc }), el('option', { text: 'في الأصل (قراءة فقط)', attrs: { value: 'en' }, doc })],
     doc,
   });
   const check = (label, key) => {
@@ -222,7 +222,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
   function replaceWhy() {
     const ro = readOnly();
     if (ro) return ro;
-    if (S.field === 'en') return 'الإنجليزية للقراءة فقط: ابحث في العربية للاستبدال.';
+    if (S.field === 'en') return 'الأصل للقراءة فقط: ابحث في الترجمة للاستبدال.';
     if (!S.matches.length) return S.query.trim() ? 'لا نتائج لاستبدالها.' : 'اكتب ما تبحث عنه أولًا.';
     return null;
   }

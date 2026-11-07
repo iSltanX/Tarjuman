@@ -83,12 +83,17 @@ function englishByParagraph(paras, english) {
   return out;
 }
 
+/** مقطع لغة في اسم ملف: الرمز الصالح بـ«-»، وإلا البديل (لا تخمين، AA3). @param {unknown} lang @param {string} fallback */
+const namePart = (lang, fallback) => (typeof lang === 'string' && /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8}){0,4}$/.test(lang) ? lang.replace(/_/g, '-') : fallback);
+
 /**
- * @param {{ videoId: string, title?: string | null, cues: Cue[], english?: Cue[] | null, format: 'txt' | 'md', bilingual: boolean }} spec
+ * الاسم بلغتي الملف الفعليتين منذ AA3: VIDEOID.<لغة الترجمة>.study.<format>، وللثنائي VIDEOID.<لغة الترجمة>-<لغة الأصل>.study؛ ولغة
+ * الترجمة غير المحددة «translation» كملف الترجمة نفسه (names.js)، والأصل غير المعروف «source». كانت ar وar-en ثابتتين.
+ * @param {{ videoId: string, title?: string | null, cues: Cue[], english?: Cue[] | null, format: 'txt' | 'md', bilingual: boolean, lang?: string | null, sourceLang?: string | null }} spec
  * @returns {{ name: string, text: string }}
  * @throws {TjError} TJ_BAD_VIDEO_ID أو ST_NO_RECORD أو EX_STUDY_NO_ENGLISH أو MD_INVALID
  */
-export function buildStudyText({ videoId, title = null, cues, english = null, format, bilingual = false }) {
+export function buildStudyText({ videoId, title = null, cues, english = null, format, bilingual = false, lang = null, sourceLang = null }) {
   const url = videoUrl(videoId);
   checkFormat(format);
   if (!Array.isArray(cues) || !cues.length) throw new TjError('ST_NO_RECORD');
@@ -116,5 +121,6 @@ export function buildStudyText({ videoId, title = null, cues, english = null, fo
     }
     lines.push('');
   });
-  return { name: `${videoId}.${bilingual ? 'ar-en' : 'ar'}.study.${format}`, text: lines.join('\n') };
+  const langs = `${namePart(lang, 'translation')}${bilingual ? `-${namePart(sourceLang, 'source')}` : ''}`;
+  return { name: `${videoId}.${langs}.study.${format}`, text: lines.join('\n') };
 }

@@ -512,7 +512,7 @@ test('«نص دراسي…»: الصيغة واللغة ومعاينة الاس�
     assert.equal(fileName(), `${IDS[0]}.ar.study.txt`);
     // مقطّعتان (الصيغة واللغة) بخيارات radio حقيقية، والمعاينة تحت «اسم الملف».
     assert.equal(o.content.querySelectorAll('fieldset.tj-seg').length, 2);
-    assert.deepEqual(findAll(o.content, (e) => e.classList.contains('tj-seg__label')).map(textOf), ['TXT', 'Markdown', 'العربية وحدها', 'ثنائي · العربية والإنجليزية']);
+    assert.deepEqual(findAll(o.content, (e) => e.classList.contains('tj-seg__label')).map(textOf), ['TXT', 'Markdown', 'الترجمة وحدها', 'ثنائي · الترجمة والأصل']);
     const hint = findAll(o.content, (e) => e.classList.contains('tj-field__hint') && textOf(e) === MD_HINT)[0];
     assert.equal(hint.hidden, true, 'تلميح روابط الأوقات لـMarkdown وحده');
     const md = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('value') === 'md')[0];
@@ -554,7 +554,7 @@ test('«نص دراسي…» بلا مسار إنجليزي: الثنائي مع
   });
   openMore(m, IDS[0], 'نص دراسي');
   await settle(10);
-  assert.deepEqual(seen && { disabled: seen.disabled, why: seen.why }, { disabled: true, why: 'لا مسار إنجليزي محفوظ لهذا الفيديو.' });
+  assert.deepEqual(seen && { disabled: seen.disabled, why: seen.why }, { disabled: true, why: 'لا مسار أصل محفوظ لهذا الفيديو.' });
   assert.ok(seen.described, 'السبب مرتبط بالخيار');
 });
 
@@ -566,7 +566,7 @@ test('التصدير يتبع saveFile: الإلغاء رسالة معلومة،
   assert.equal(textOf(m.root.querySelector('.tj-toast--info')), 'أُلغي الحفظ.');
   assert.equal((await m.store.getVideo(IDS[1])).fingerprints.length, 1, 'لا بصمة لتصدير أُلغي');
   reply = { ok: true, mode: 'blob', downloadId: null };
-  openMore(m, IDS[1], 'العربية — النسخة الحالية');
+  openMore(m, IDS[1], 'الترجمة — النسخة الحالية');
   await settle(10);
   assert.ok(findAll(m.root, (e) => e.classList.contains('tj-toast--info')).some((t) => textOf(t).includes('تعذّر الحفظ في المكان المختار')));
 });

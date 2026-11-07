@@ -138,7 +138,7 @@ export async function exportStudy({ store, videoId, format, bilingual, save }) {
   // روابط التوقيت حيث يظهر المقطع في الفيديو (المحفوظ + إزاحة العرض) كالمحرّر، ومنه يُوزَّع الإنجليزي (تدقيق 5fedcb9، GM-016.1).
   // والإنجليزي بالإزاحة نفسها، فيُوزَّع بالمرجع الزمني للفقرات (تدقيق 7a66f91، U30).
   const { cues, clamped, english } = studyCues(record, bilingual ? studyEnglish(record) : null);
-  const file = buildStudyText({ videoId, title: record.title, cues, english, format, bilingual });
+  const file = buildStudyText({ videoId, title: record.title, cues, english, format, bilingual, ...studyLangs(record) });
   return { name: file.name, clamped, saved: await save(file) };
 }
 
@@ -157,19 +157,26 @@ export async function studyNote({ store, videoId }) {
   return studyTimingNote(studyCues(await requireRecord(store, videoId)).clamped);
 }
 
-/** المسار الإنجليزي للنص الثنائي: مسار بصمة النشطة، ثم اليدوي، ثم أي مسار. @param {import('../../core/model/video.js').VideoRecord} record */
-export function studyEnglish(record) {
+/** مسار الأصل للنص الثنائي: مسار بصمة النشطة، ثم اليدوي، ثم أي مسار. @param {import('../../core/model/video.js').VideoRecord} record */
+function studySource(record) {
   const fp = record.fingerprints.find((f) => f.id === record.arabic?.fingerprintId);
-  const track = record.english.find((t) => t.key === fp?.trackKey) ?? record.english.find((t) => t.kind === 'manual') ?? record.english[0];
-  return track ? track.cues : null;
+  return record.english.find((t) => t.key === fp?.trackKey) ?? record.english.find((t) => t.kind === 'manual') ?? record.english[0] ?? null;
 }
+
+/** مقاطع مسار الأصل للنص الثنائي (الاسم التاريخي studyEnglish). @param {import('../../core/model/video.js').VideoRecord} record */
+export function studyEnglish(record) {
+  return studySource(record)?.cues ?? null;
+}
+
+/** لغتا اسم النص الدراسي (AA3): لغة الترجمة النشطة ولغة مسار الأصل. @param {import('../../core/model/video.js').VideoRecord} record */
+const studyLangs = (record) => ({ lang: translationLang(record.arabic), sourceLang: studySource(record)?.lang ?? null });
 
 /** اسم الملف الدراسي للمعاينة دون حفظ (الاسم من buildStudyText نفسه). */
 export async function studyName({ store, videoId, format, bilingual }) {
   const record = await requireRecord(store, videoId);
   const cues = arabicCues(record);
   if (!cues) throw new TjError('PG_STUDY_NO_ARABIC');
-  return buildStudyText({ videoId, title: record.title, cues, english: bilingual ? studyEnglish(record) : null, format, bilingual }).name;
+  return buildStudyText({ videoId, title: record.title, cues, english: bilingual ? studyEnglish(record) : null, format, bilingual, ...studyLangs(record) }).name;
 }
 
 /**
@@ -334,18 +341,20 @@ export function uploadImpact(bundle, n, incoming) {
  * الكتابة نفسها. `expect` الحزمة التي بُني عليها الحوار: إن تغيّرت منذئذ رُفض بـST_CONFLICT ولم يُكتب شيء.
  * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, bundle: import('../../core/model/slots.js').Bundle,
  *   settings: import('../../core/model/settings.js').Settings, result: Extract<Awaited<ReturnType<typeof readImport>>, { ok: true }>,
- *   n: 1 | 2 | 3, fingerprintId: string | null, keepCues?: import('../../core/model/cue.js').Cue[] | null, now: () => number }} o
+ *   n: 1 | 2 | 3, fingerprintId: string | null, keepCues?: import('../../core/model/cue.js').Cue[] | null, now: () => number, lang?: string | null }} o
  * @returns {Promise<{ replaced: boolean, offsetWas: number, activated: boolean }>}
  */
-export async function applyUpload({ store, bundle, settings, result, n, fingerprintId, keepCues = null, now }) {
+export async function applyUpload({ store, bundle, settings, result, n, fingerprintId, keepCues = null, now, lang }) {
+  // لغة الترجمة التي اختارها المستخدم في الحوار (AA3)، وإلا ما قرأه الاستيراد من اسم الملف.
+  const tl = lang === undefined ? result.lang ?? null : lang;
   const fp = fingerprintId ? bundle.record.fingerprints.find((f) => f.id === fingerprintId) ?? null : null;
-  const comparison = fingerprintId === result.fingerprintId ? result.comparison : compareWith(result.cues, fp, settings, result.notes, result.lang ?? null);
+  const comparison = fingerprintId === result.fingerprintId && tl === (result.lang ?? null) ? result.comparison : compareWith(result.cues, fp, settings, result.notes, tl);
   const filled = Boolean(bundle.slots[n - 1].track);
   let info = { replaced: false, offsetWas: 0, activated: false };
   await onBundle(store, bundle.videoId, (b) => {
     const out = withSlotUpload(b, n, {
       videoId: b.videoId, fileName: result.fileName, cues: result.cues, comparison, fingerprintId: fp ? fp.id : null,
-      notes: result.notes, displayModeDefault: settings.displayModeDefault, current: keepCues, lang: result.lang ?? null,
+      notes: result.notes, displayModeDefault: settings.displayModeDefault, current: keepCues, lang: tl,
     }, iso(now), { replace: filled });
     info = { replaced: out.replaced, offsetWas: out.offsetWas, activated: out.bundle.active === n };
     return out.bundle;

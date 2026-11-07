@@ -42,11 +42,12 @@ function validItem(it) {
 }
 
 /**
- * @param {{ videoId: string, title?: string | null, items: ReviewItem[], includeText: boolean, format: 'txt' | 'md' }} spec
+ * الاسم بلغة الترجمة الفعلية منذ AA3: VIDEOID.<لغتها>.review.<format>، وغير المحددة «translation» (كانت ar ثابتة).
+ * @param {{ videoId: string, title?: string | null, items: ReviewItem[], includeText: boolean, format: 'txt' | 'md', lang?: string | null }} spec
  * @returns {{ name: string, text: string }}
  * @throws {TjError} TJ_BAD_VIDEO_ID أو MD_INVALID
  */
-export function buildReviewReport({ videoId, title = null, items, includeText = false, format }) {
+export function buildReviewReport({ videoId, title = null, items, includeText = false, format, lang = null }) {
   const url = videoUrl(videoId);
   checkFormat(format);
   if (!Array.isArray(items) || !items.every(validItem)) throw new TjError('MD_INVALID', { detail: 'تقرير مراجعة: بنود غير صالحة' });
@@ -66,8 +67,9 @@ export function buildReviewReport({ videoId, title = null, items, includeText = 
     lines.push(`- المشكلات: ${it.problems.length ? it.problems.map((p) => esc(label(p))).join('، ') : 'لا شيء'}`);
     if (it.mark) lines.push(`- العلامة: ${MARK_LABELS[it.mark]}`);
     if (includeText && it.text !== null) lines.push(`- النص: ${esc(oneLine(it.text))}`);
-    if (includeText && it.english !== null) lines.push(`- الإنجليزي: ${esc(oneLine(it.english))}`);
+    if (includeText && it.english !== null) lines.push(`- الأصل: ${esc(oneLine(it.english))}`);
     lines.push('');
   }
-  return { name: `${videoId}.ar.review.${format}`, text: lines.join('\n') };
+  const tl = typeof lang === 'string' && /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8}){0,4}$/.test(lang) ? lang.replace(/_/g, '-') : 'translation';
+  return { name: `${videoId}.${tl}.review.${format}`, text: lines.join('\n') };
 }

@@ -17,7 +17,7 @@ const LINK_MD = /^\[(\d{2}):(\d{2}):(\d{2})\]\(https:\/\/www\.youtube\.com\/watc
 const LINK_TXT = /^\[(\d{2}):(\d{2}):(\d{2})\] https:\/\/www\.youtube\.com\/watch\?v=iG9CE55wbtY&t=(\d+)s$/;
 
 test('النص الدراسي (Markdown): فقرات بروابط صحيحة، ونص الترجمة كما هو حرفًا بحرف بعد فك التهريب', () => {
-  const { name, text } = buildStudyText({ videoId: VIDEO, title: 'Do schools kill creativity?', cues: AR, format: 'md', bilingual: false });
+  const { name, text } = buildStudyText({ videoId: VIDEO, title: 'Do schools kill creativity?', cues: AR, format: 'md', bilingual: false, lang: 'ar' });
   assert.equal(name, 'iG9CE55wbtY.ar.study.md');
   const lines = text.split('\n');
   assert.equal(lines[0], '# Do schools kill creativity?');
@@ -35,7 +35,7 @@ test('النص الدراسي (Markdown): فقرات بروابط صحيحة، �
 });
 
 test('النص الدراسي (TXT) ثنائي اللغة: كل نص عربي وكل نص إنجليزي مرة واحدة بترتيبه، بلا تهريب', () => {
-  const { name, text } = buildStudyText({ videoId: VIDEO, title: null, cues: AR, english: EN, format: 'txt', bilingual: true });
+  const { name, text } = buildStudyText({ videoId: VIDEO, title: null, cues: AR, english: EN, format: 'txt', bilingual: true, lang: 'ar', sourceLang: 'en' });
   assert.equal(name, 'iG9CE55wbtY.ar-en.study.txt');
   const lines = text.split('\n');
   assert.deepEqual(lines.slice(0, 2), ['غير متوفر', 'https://www.youtube.com/watch?v=iG9CE55wbtY']);
@@ -79,7 +79,7 @@ test('تقرير المراجعة: البنود بترتيبها وروابطه�
     { n: 40, startMs: 3_725_000, endMs: 3_727_500, problems: [], mark: 'done', text: null, english: null },
     { n: 41, startMs: 3_728_000, endMs: 3_729_000, problems: ['XX_UNKNOWN', 'ED_GAP'], mark: null, text: 'نص', english: null },
   ];
-  const md = buildReviewReport({ videoId: VIDEO, title: 'محاضرة', items, includeText: true, format: 'md' });
+  const md = buildReviewReport({ videoId: VIDEO, title: 'محاضرة', items, includeText: true, format: 'md', lang: 'ar' });
   assert.equal(md.name, 'iG9CE55wbtY.ar.review.md');
   const lines = md.text.split('\n');
   assert.equal(lines[0], '# تقرير مراجعة: محاضرة');
@@ -90,13 +90,13 @@ test('تقرير المراجعة: البنود بترتيبها وروابطه�
   assert.ok(lines.includes('- المشكلات: XX\\_UNKNOWN، فجوة كبيرة بعده'));
   assert.ok(lines.includes('- العلامة: أعود إليه') && lines.includes('- العلامة: راجعته'));
   assert.ok(lines.includes('- النص: سطر أول سطر \\*ثانٍ\\*'));
-  assert.ok(lines.includes('- الإنجليزي: first line'));
+  assert.ok(lines.includes('- الأصل: first line'), 'مقتطف الأصل بلا افتراض لغته (AA3)');
   assert.ok(md.text.indexOf('المقطع 12') < md.text.indexOf('المقطع 40') && md.text.indexOf('المقطع 40') < md.text.indexOf('المقطع 41'));
 
   const txt = buildReviewReport({ videoId: VIDEO, title: 'محاضرة', items, includeText: false, format: 'txt' });
-  assert.equal(txt.name, 'iG9CE55wbtY.ar.review.txt');
+  assert.equal(txt.name, 'iG9CE55wbtY.translation.review.txt', 'لغة غير محددة: «translation» لا ar (AA3)');
   assert.ok(txt.text.includes('المقطع 12 · 00:01:23 → 00:01:25 · https://www.youtube.com/watch?v=iG9CE55wbtY&t=83s'));
-  assert.equal(/- النص:|- الإنجليزي:/.test(txt.text), false, 'بلا مقتطفات دون اختيارها');
+  assert.equal(/- النص:|- الأصل:/.test(txt.text), false, 'بلا مقتطفات دون اختيارها');
   assert.ok(txt.text.includes('- المشكلات: لا شيء'));
 });
 
@@ -105,4 +105,11 @@ test('مدخلات غير صالحة: صيغة مجهولة، ومعرّف غي�
   assert.throws(() => buildStudyText({ videoId: 'x', cues: AR, format: 'md', bilingual: false }), (e) => e.code === 'TJ_BAD_VIDEO_ID');
   assert.throws(() => buildStudyText({ videoId: VIDEO, cues: [], format: 'md', bilingual: false }), (e) => e.code === 'ST_NO_RECORD');
   assert.throws(() => buildReviewReport({ videoId: VIDEO, items: [{ n: 1 }], includeText: false, format: 'md' }), (e) => e.code === 'MD_INVALID');
+});
+
+test('أسماء النص الدراسي بلغتي الملف (AA3): لغة الترجمة ولغة الأصل للثنائي، وغير المحددة «translation» والأصل المجهول «source»', () => {
+  assert.equal(buildStudyText({ videoId: VIDEO, cues: AR, format: 'md', bilingual: false, lang: 'fr' }).name, 'iG9CE55wbtY.fr.study.md');
+  assert.equal(buildStudyText({ videoId: VIDEO, cues: AR, english: EN, format: 'txt', bilingual: true, lang: 'en', sourceLang: 'ja' }).name, 'iG9CE55wbtY.en-ja.study.txt');
+  assert.equal(buildStudyText({ videoId: VIDEO, cues: AR, format: 'md', bilingual: false }).name, 'iG9CE55wbtY.translation.study.md');
+  assert.equal(buildStudyText({ videoId: VIDEO, cues: AR, english: EN, format: 'md', bilingual: true, lang: 'pt_BR' }).name, 'iG9CE55wbtY.pt-BR-source.study.md');
 });

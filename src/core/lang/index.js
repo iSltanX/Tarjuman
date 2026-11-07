@@ -271,3 +271,24 @@ export function searchLanguages(query, list = knownLanguages()) {
   }
   return hits;
 }
+
+/**
+ * هل يوافق نص الملف نص كتابة اللغة المقترحة (AA3): أكثر حروف أول المقاطع من نصها. لا يستنتج لغة من النص أبدًا، وإنما يمنع وسم ملف
+ * فرنسي بالعربية لأن «إلى» في النافذة عربية فيُعرض بغير اتجاهه. اللغة التي لا يُعرف نصها تُقبل، ونص بلا حروف يُقبل.
+ * @param {{ text: string }[]} cues @param {string} lang
+ */
+export function textFitsLang(cues, lang) {
+  const re = scriptLetterPattern(lang);
+  if (!re) return true;
+  let letters = 0;
+  let fit = 0;
+  for (const c of cues.slice(0, 200)) {
+    for (const ch of String(c?.text ?? '')) {
+      if (!/\p{L}/u.test(ch)) continue;
+      letters++;
+      if (re.test(ch)) fit++;
+    }
+  }
+  return letters === 0 || fit / letters >= 0.5;
+}
+

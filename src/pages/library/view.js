@@ -8,8 +8,7 @@
 // ونتيجة بحث فارغة وقسم فارغ وخطأ. كل نص عبر textContent، ونص تعليمات الترجمة لا يدخل DOM في أي حال.
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
-import { parseTrackKey, watchUrl } from '../../core/model/ids.js';
-import { DEFAULT_TARGET_LANG } from '../../core/model/lang-prefs.js';
+import { watchUrl } from '../../core/model/ids.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 
 /** تعذّرت قراءة التفضيلات: الافتراضي، لكن بلا صور (لا طلب خارجي ما لم يُعرف أن المستخدم يريده؛ مراجعة الهوية L9). */
@@ -25,7 +24,7 @@ import { deleteContent } from './delete.js';
 import { createExpansion } from './expand.js';
 import { captureFocus, restoreFocus, toggleKeyOf } from './focus.js';
 import {
-  FILTERS, PAGE_SIZE, SORTS, TRANSLATION_FORMS, chipLabel, copyGate, deleteSummary, exportOptions, filterCounts, filterEntries, groupEntries,
+  FILTERS, PAGE_SIZE, SORTS, TRANSLATION_FORMS, chipLabel, copyGate, copyPair, deleteSummary, exportOptions, filterCounts, filterEntries, groupEntries, pairText,
   libraryEntries, parsePageState, rowModel, searchEntries, serializePageState, sortEntries, studyGate, translationTotal,
 } from './model.js';
 import { studyContent } from './study.js';
@@ -91,6 +90,8 @@ export function createLibrary(env) {
     capacity: /** @type {import('../../core/store/capacity.js').Capacity | null} */ (null),
     /** التفضيلات: القاموس يُرفق بالتعليمات المنسوخة، و«صور الفيديو» تحكم الصورة في الصف. */
     prefs: /** @type {import('../../core/model/prefs.js').Prefs} */ (DEFAULT_PREFS),
+    /** تفضيلات اللغات (AA3): زوج كل فيديو في نافذة الإضافة، لسطر الصف ونسخ التعليمات. */
+    langPrefs: /** @type {import('../../core/model/lang-prefs.js').LangPrefs | null} */ (null),
     thumbsGranted: false,
     query: initial.query, filter: initial.filter, order: /** @type {'updated' | 'title'} */ (initial.order), limit: PAGE_SIZE,
     /** الصف المقصود بعد الرجوع من المحرّر (#v=…): يُبرَز مرة ثم يُنسى. */
@@ -338,8 +339,11 @@ export function createLibrary(env) {
       const titleOf = (id) => state.entries.find((e) => e.videoId === id)?.title ?? null;
       let confirmBtn = null;
       const labelFor = (replace) => (replace ? 'استبدال' : 'حفظ');
+      // «إلى» المختارة لهذا الفيديو في نافذة الإضافة، ثم الافتراضية، ثم الأخيرة: مقترحات لغة الملف (AA3).
+      const lp = state.langPrefs;
+      const suggested = lp ? [lp.videos?.[m.videoId]?.to, lp.pair?.to, ...(lp.recent ?? [])].filter(Boolean) : [];
       const view = uploadContent({
-        doc, prep, preferred, titleOf,
+        doc, prep, preferred, titleOf, suggested,
         onTarget: (replace) => {
           if (!confirmBtn) return;
           const label = confirmBtn.querySelector('span') ?? confirmBtn;
@@ -413,13 +417,16 @@ export function createLibrary(env) {
     await load();
   }, m);
 
-  /** «نسخ التعليمات» من «المزيد»: النص يُبنى عند الضغطة وحدها من العنوان والمعرّف والقاموس المرفق، ويُسلَّم إلى الحافظة ولا يُعرض. */
+  /**
+   * «نسخ التعليمات» من «المزيد»: النص يُبنى عند الضغطة وحدها من العنوان والمعرّف وزوج الفيديو (AA3) والقاموس المرفق، ويُسلَّم إلى
+   * الحافظة ولا يُعرض.
+   */
   const copyInstructions = (m, entry) => {
+    const pair = copyPair(entry, state.langPrefs);
     const copy = createCopyState({
-      // AA3: بزوج الفيديو المحفوظ. حتى ذلك الحين لغة أول مسار محفوظ (وإلا en كما كانت) والهدف الافتراضي.
       buildText: () => instructions({
         videoId: entry.videoId, title: entry.title, glossary: state.prefs.glossary.attach ? state.prefs.glossary.terms : null,
-        source: (entry.english?.[0] && parseTrackKey(entry.english[0].key)?.lang) || 'en', target: DEFAULT_TARGET_LANG,
+        source: pair.from, target: pair.to, via: pair.via,
       }),
       write: (text) => env.clipboardWrite(text),
       announce: (code) => {
@@ -540,7 +547,7 @@ export function createLibrary(env) {
     const labelId = `lib-trs-${++seq}`;
     const label = el('span', { className: 'lib-trs__label', text: 'الترجمات', attrs: { id: labelId }, doc });
     if (!m.filled.length) {
-      return el('div', { className: 'lib-trs lib-trs--none', children: [label, el('span', { className: 'lib-trs__none', text: `لا ترجمة عربية بعد · ${m.sourceText}`, doc })], doc });
+      return el('div', { className: 'lib-trs lib-trs--none', children: [label, el('span', { className: 'lib-trs__none', text: `لا ترجمة بعد · ${m.sourceText}`, doc })], doc });
     }
     const focusAt = m.filled.find((s) => s.active) ?? m.filled[0];
     const group = el('div', { className: 'lib-chips', attrs: { role: 'toolbar', 'aria-labelledby': labelId }, children: m.filled.map((s) => slotChip(m, s, s.n === focusAt.n)), doc });
@@ -598,8 +605,11 @@ export function createLibrary(env) {
 
     // سطر «المعرّف · عُدّل منذ · N مقطعًا».
     const sep = () => el('span', { className: 'lib-row__sep', text: '·', attrs: { 'aria-hidden': 'true' }, doc });
+    // الزوج اللغوي في كل صف (AA3، لوحة 19 البند ٢): «الإنجليزية ← العربية».
+    const langs = pairText(entry, state.langPrefs?.videos?.[entry.videoId] ?? null);
     const line = [
       el('span', { className: 'lib-row__id', children: [ltr(entry.videoId, { doc }), idCopy], doc }),
+      langs ? el('span', { className: 'tj-caption lib-row__pair', text: langs, doc }) : null,
       m.whenText ? el('span', { className: 'tj-caption lib-row__when', text: m.whenText, attrs: { title: m.absolute }, doc }) : null,
       m.countText ? el('span', { className: 'tj-caption lib-row__count', text: m.countText, doc }) : null,
     ].filter(Boolean);
@@ -607,7 +617,7 @@ export function createLibrary(env) {
 
     // الأفعال.
     const exportItems = exportOptions(entry).map((o) => ({ id: o.id, label: o.label, hint: o.hint, disabledReason: o.disabledReason, icon: 'download', onSelect: () => exportFile(m, o) }));
-    const gate = copyGate(entry);
+    const gate = copyGate(entry, copyPair(entry, state.langPrefs));
     const moreMenu = createMenu({
       label: 'المزيد', ariaLabel: name('المزيد'), icon: 'more', iconOnly: true, variant: 'ghost', className: 'lib-more', doc,
       items: [
@@ -809,7 +819,7 @@ export function createLibrary(env) {
     if (!state.entries.length) {
       listHost.append(statePanel(emptyState({
         icon: 'library', title: 'لا ترجمات محفوظة بعد', text: 'كل فيديو تحمّل أصله أو ترفع ترجمته يُحفظ هنا تلقائيًا.',
-        steps: ['افتح فيديو على يوتيوب', 'اضغط زر التنزيل في شريط المشغّل', 'ارفع ملفك العربي من زر الترجمة'], doc,
+        steps: ['افتح فيديو على يوتيوب', 'اضغط زر التنزيل في شريط المشغّل', 'ارفع ترجمتك من زر الرفع في الشريط'], doc,
       })));
       return;
     }
@@ -876,9 +886,12 @@ export function createLibrary(env) {
     const mine = ++loadSeq;
     try {
       // السعة معلومة جانبية: فشل قياسها (getBytesInUse غائبة أو رفض عابر، تدقيق 7a66f91 U03) يخفي سطرها ولا يُسقط القائمة.
-      const [items, capacity, prefs, thumbsGranted] = await Promise.all([store.listLibrary(), store.capacity().catch(() => null), store.getPrefs().catch(() => PREFS_UNREADABLE), readConsent()]);
+      const [items, capacity, prefs, thumbsGranted, langPrefs] = await Promise.all([
+        store.listLibrary(), store.capacity().catch(() => null), store.getPrefs().catch(() => PREFS_UNREADABLE), readConsent(),
+        typeof store.getLangPrefs === 'function' ? store.getLangPrefs().catch(() => null) : null,
+      ]);
       if (mine !== loadSeq) return;
-      Object.assign(state, { entries: libraryEntries(items), capacity, prefs, thumbsGranted, status: 'ready', error: null });
+      Object.assign(state, { entries: libraryEntries(items), capacity, prefs, thumbsGranted, langPrefs, status: 'ready', error: null });
     } catch (err) {
       if (mine !== loadSeq) return;
       const info = toErrorInfo(err);
@@ -896,8 +909,9 @@ export function createLibrary(env) {
         applyThumbs();
       }).catch(() => {});
     }
-    // تغيّر الإعدادات من صفحة أخرى لا يمسّ القائمة: إعادة بنائها تهدم التركيز والقائمة المفتوحة.
-    if (!Object.keys(change.videos).length && !change.index && !change.cleared && !change.bundles.length) return;
+    // زوج فيديو تغيّر في نافذة الإضافة (AA3): سطر الصف ونسخ التعليمات بالزوج الجديد، بإعادة القراءة كتغيّر المحفوظات.
+    // وتغيّر الإعدادات من صفحة أخرى لا يمسّ القائمة: إعادة بنائها تهدم التركيز والقائمة المفتوحة.
+    if (!Object.keys(change.videos).length && !change.index && !change.cleared && !change.bundles.length && !change.langPrefs) return;
     if (reloadTimer !== null) clearTimer(reloadTimer);
     reloadTimer = setTimer(() => {
       reloadTimer = null;

@@ -5,7 +5,8 @@
 // (IndexEntry ومعه summary وslots، عقد data-model §٩ و§١٥) فتُختبر بلا متصفح.
 import { diffTranslations } from '../../core/align/index.js';
 import { messageFor } from '../../core/errors/index.js';
-import { isVideoId } from '../../core/model/ids.js';
+import { isVideoId, parseTrackKey } from '../../core/model/ids.js';
+import { languageName, pairLabel } from '../../ui/lang.js';
 import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
 
 /** حجم الدفعة المعروضة: عرض تدريجي لمحفوظات كثيرة. */
@@ -42,10 +43,10 @@ const MATCH = {
 };
 
 /**
- * مدخل المحفوظات للعرض: مُلخّص الفهرس ومعه ملخص الفرز ونماذج 1 2 3 من listLibrary.
- * @param {{ entry: import('../../core/model/video.js').IndexEntry, summary: object, slots: object[] }[]} items
+ * مدخل المحفوظات للعرض: مُلخّص الفهرس ومعه ملخص الفرز ونماذج 1 2 3 والزوج اللغوي لكل خانة (AA3) من listLibrary.
+ * @param {{ entry: import('../../core/model/video.js').IndexEntry, summary: object, slots: object[], pairs?: ({ from: string | null, to: string | null } | null)[] }[]} items
  */
-export const libraryEntries = (items) => items.map((x) => ({ ...x.entry, summary: x.summary, slots: x.slots }));
+export const libraryEntries = (items) => items.map((x) => ({ ...x.entry, summary: x.summary, slots: x.slots, pairs: x.pairs ?? null }));
 
 /**
  * @template {{ arabic: null | { edited: boolean, matched: boolean | null } }} E
@@ -197,24 +198,45 @@ export const chipLabel = (s) => (s.name ? `${s.n} · ${s.name}` : `الترجم�
  * @returns {{ tone: 'neutral' | 'info' | 'success' | 'warning' | 'edited', text: string, id: string, title: string }}
  */
 export function rowStatus(e) {
-  if (!e.arabic) return { tone: 'neutral', text: 'بانتظار الترجمة', id: 'awaiting', title: 'لا ترجمة عربية محفوظة لهذا الفيديو بعد' };
+  if (!e.arabic) return { tone: 'neutral', text: 'بانتظار الترجمة', id: 'awaiting', title: 'لا ترجمة محفوظة لهذا الفيديو بعد' };
   const s = summaryOf(e);
   /** @type {{ tone: 'info' | 'warning' | 'edited', text: string, id: string, title: string }[]} */
   const items = [];
   if (s.marks.todo > 0) items.push({ tone: 'info', text: `تحتاج مراجعة ${s.marks.todo}`, id: 'review', title: 'مقاطع علّمتها «أعود إليه»' });
   const warning = warningText(e.arabic);
-  if (warning) items.push({ tone: 'warning', text: warning, id: 'warning', title: 'الفحص الآلي: المقارنة بالأصل الإنجليزي' });
+  if (warning) items.push({ tone: 'warning', text: warning, id: 'warning', title: 'الفحص الآلي: المقارنة بالأصل' });
   if (e.arabic.edited || s.edited > 0) items.push({ tone: 'edited', text: 'معدّلة', id: 'edited', title: 'عُدّلت في المحرّر بعد الرفع' });
-  const lead = items[0] ?? { tone: /** @type {const} */ ('success'), text: 'مترجمة', id: 'translated', title: 'الترجمة العربية محفوظة كما رُفعت' };
+  const lead = items[0] ?? { tone: /** @type {const} */ ('success'), text: 'مترجمة', id: 'translated', title: 'الترجمة محفوظة كما رُفعت' };
   return { ...lead, title: items.length > 1 ? items.map((i) => i.text).join(' · ') : lead.title };
 }
 
-/** عدد المقاطع في سطر الصف: مقاطع الترجمة النشطة، وإلا مقاطع المسار الإنجليزي (المحفوظ يدويًا أولًا)، وإلا لا شيء. */
+/** عدد المقاطع في سطر الصف: مقاطع الترجمة النشطة، وإلا مقاطع مسار الأصل (المحفوظ يدويًا أولًا)، وإلا لا شيء. */
 function cueCountText(e) {
   if (e.arabic) return formatCount(e.arabic.cueCount, COUNT_FORMS.cue);
   const track = e.english.find((t) => t.kind === 'manual') ?? e.english[0];
-  return track ? `${formatCount(track.cueCount, COUNT_FORMS.cue)} إنجليزيًا` : null;
+  return track ? `${formatCount(track.cueCount, COUNT_FORMS.cue)} في الأصل` : null;
 }
+
+/**
+ * زوج الترجمة النشطة في الصف (AA3، لوحة 19 البند ٢): من listLibrary، وإلا لغة أول مسار؛ وفيديو بلا ترجمة بلغة أصله و«إلى» المختارة
+ * له في نافذة الإضافة إن وُجدت. null بلا لغة تُعرف.
+ * @param {{ english: { key: string }[], arabic: object | null, slots?: { n: number, active: boolean }[], pairs?: ({ from: string | null, to: string | null } | null)[] | null }} e
+ * @param {{ from: string | null, to: string | null } | null} [saved] زوج الفيديو في تفضيلات اللغات
+ */
+export function rowPair(e, saved = null) {
+  const active = e.slots?.find((s) => s.active)?.n ?? 1;
+  const p = e.pairs?.[active - 1] ?? null;
+  const first = parseTrackKey(e.english[0]?.key)?.lang ?? null;
+  if (e.arabic) return { from: p?.from ?? first, to: p?.to ?? null };
+  const from = first ?? saved?.from ?? null;
+  return from || saved?.to ? { from, to: saved?.to ?? null } : null;
+}
+
+/** سطر الزوج في الصف: «الإنجليزية ← العربية»، أو null. @param {Parameters<typeof rowPair>[0]} e @param {Parameters<typeof rowPair>[1]} [saved] */
+export const pairText = (e, saved = null) => {
+  const p = rowPair(e, saved);
+  return p ? pairLabel({ ...p, translated: !!e.arabic }) : null;
+};
 
 /**
  * بيانات الصف للعرض: لا DOM هنا.
@@ -247,7 +269,7 @@ export function rowModel(e, nowMs) {
     /** الترجمات الموجودة فقط، وأول خانة فارغة (شريحة الرفع)؛ لا تُعرض الفارغة نسخةً. */
     filled,
     nextEmpty: /** @type {1 | 2 | 3 | null} */ ([1, 2, 3].find((n) => !filled.some((s) => s.n === n)) ?? null),
-    /** سطر عمود «الترجمات» حين لا ترجمة: حالة الأصل الإنجليزي الحقيقية. */
+    /** سطر عمود «الترجمات» حين لا ترجمة: حالة الأصل الحقيقية. */
     sourceText: e.english.length ? 'الأصل جاهز' : 'الأصل غير ملتقط',
   };
 }
@@ -295,29 +317,34 @@ export function groupEntries(entries, nowMs) {
 }
 
 /**
- * أوامر «تصدير SRT»: العربية الحالية، والأصل المستورد، والإنجليزية المستخرجة (مسار لكل نوع محفوظ). المعطّل
- * يذكر سببه دائمًا. المعرّف يحمل ما يحتاجه التنفيذ.
+ * أوامر «تصدير SRT»: الترجمة الحالية، والأصل المستورد، ومسارات الأصل المستخرجة (مسار لكل لغة ونوع محفوظ) بأسماء لغاتها الفعلية
+ * (AA3). المعطّل يذكر سببه دائمًا. المعرّف يحمل ما يحتاجه التنفيذ.
  * @param {import('../../core/model/video.js').IndexEntry} e
  * @returns {{ id: string, label: string, hint?: string, disabledReason: string | null, action: { type: 'ar', variant: 'current' | 'original' } | { type: 'en', trackKey: string } }[]}
  */
 export function exportOptions(e) {
   const noArabic = messageFor('PG_NO_ARABIC');
+  const to = rowPair(e)?.to ?? null;
+  const tName = (to && languageName(to)) || 'الترجمة';
   const out = [
-    { id: 'ar-current', label: 'العربية — النسخة الحالية', disabledReason: e.arabic ? null : noArabic, action: { type: 'ar', variant: 'current' } },
+    { id: 'ar-current', label: `${tName} — النسخة الحالية`, disabledReason: e.arabic ? null : noArabic, action: { type: 'ar', variant: 'current' } },
     {
       id: 'ar-original',
-      label: 'العربية — الأصل المستورد',
+      label: `${tName} — الأصل المستورد`,
       disabledReason: !e.arabic ? noArabic : e.arabic.edited ? null : messageFor('PG_ORIGINAL_SAME'),
       action: { type: 'ar', variant: 'original' },
     },
   ];
   if (!e.english.length) {
-    out.push({ id: 'en', label: 'الإنجليزية — المستخرجة', disabledReason: messageFor('PG_NO_ENGLISH'), action: { type: 'en', trackKey: '' } });
+    out.push({ id: 'en', label: 'الأصل — المستخرج', disabledReason: messageFor('PG_NO_ENGLISH'), action: { type: 'en', trackKey: '' } });
   }
   for (const t of e.english) {
+    const k = parseTrackKey(t.key);
+    const name = (k && languageName(k.lang)) || 'الأصل';
+    const what = k?.via ? `مترجمة آليًا عن ${languageName(k.via) ?? k.via}` : EN_KIND[t.kind];
     out.push({
       id: `en:${t.key}`,
-      label: e.english.length === 1 ? 'الإنجليزية — المستخرجة' : `الإنجليزية — ${EN_KIND[t.kind]}`,
+      label: e.english.length === 1 && !k?.via ? `${name} — المستخرجة` : `${name} — ${what}`,
       hint: formatCount(t.cueCount, COUNT_FORMS.cue),
       disabledReason: null,
       action: { type: 'en', trackKey: t.key },
@@ -326,8 +353,34 @@ export function exportOptions(e) {
   return out;
 }
 
-/** «نسخ» يعمل لكل فيديو بمعرّف صالح؛ غيره معطّل بسببه. @param {{ videoId: string }} e */
-export const copyGate = (e) => (isVideoId(e.videoId) ? { enabled: true, reason: null } : { enabled: false, reason: messageFor('PG_COPY_BAD_ID') });
+/**
+ * زوج نسخ التعليمات من المحفوظات (AA3): زوج الفيديو المحفوظ من نافذة الإضافة، وإلا لغة أصل الترجمة النشطة ولغتها، و«إلى» الافتراضية
+ * لفيديو بلا ترجمة. via لغة أصل ترجمة يوتيوب الآلية حين يكون «من» مسارها.
+ * @param {Parameters<typeof rowPair>[0] & { videoId: string }} e
+ * @param {import('../../core/model/lang-prefs.js').LangPrefs | null} langPrefs
+ * @returns {{ from: string | null, to: string | null, via: string | null }}
+ */
+export function copyPair(e, langPrefs) {
+  const saved = langPrefs?.videos?.[e.videoId] ?? null;
+  const row = rowPair(e, saved);
+  const from = saved?.from ?? row?.from ?? null;
+  const to = saved?.to ?? row?.to ?? langPrefs?.pair?.to ?? null;
+  const active = e.slots?.find((s) => s.active)?.n ?? 1;
+  const p = e.pairs?.[active - 1] ?? null;
+  const viaKey = e.english.map((t) => parseTrackKey(t.key)).find((k) => k?.via && k.lang === from);
+  return { from, to, via: p?.via && p.from === from ? p.via : viaKey?.via ?? null };
+}
+
+/**
+ * «نسخ» يعمل لفيديو بمعرّف صالح وزوج لغتين مختلفتين؛ غيره معطّل بسببه.
+ * @param {{ videoId: string }} e @param {{ from: string | null, to: string | null } | null} [pair]
+ */
+export function copyGate(e, pair = null) {
+  if (!isVideoId(e.videoId)) return { enabled: false, reason: messageFor('PG_COPY_BAD_ID') };
+  if (pair && (!pair.from || !pair.to)) return { enabled: false, reason: messageFor('PG_PAIR_MISSING') };
+  if (pair && pair.from === pair.to) return { enabled: false, reason: messageFor('PG_PAIR_SAME') };
+  return { enabled: true, reason: null };
+}
 
 const NOUN = {
   missing: { one: 'مقطع واحد ناقص', two: 'مقطعان ناقصان', few: 'مقاطع ناقصة', many: 'مقطعًا ناقصًا', single: 'مقطع ناقص' },
@@ -365,9 +418,9 @@ export const studyGate = (e) => (e.arabic ? null : messageFor('PG_STUDY_NO_ARABI
 const MODE_LABEL = Object.freeze({ normal: 'عادي', long: 'مقاطع أطول' });
 /** صيغ عدد الأجزاء («جزآن» و«11 جزءًا»؛ كانت «2 أجزاء»، U59). */
 export const PART_FORMS = Object.freeze({ one: 'جزء واحد', two: 'جزآن', few: 'أجزاء', many: 'جزءًا', single: 'جزء' });
-/** صيغ المسارات الإنجليزية الملتقطة في ملخص الحذف (كانت «2 مسارات إنجليزية ملتقطة»، U59). */
+/** صيغ مسارات الأصل الملتقطة في ملخص الحذف (كانت «2 مسارات إنجليزية ملتقطة»، U59؛ وبلا لغة ثابتة منذ AA3). */
 export const EN_TRACK_FORMS = Object.freeze({
-  one: 'المسار الإنجليزي الملتقط', two: 'المساران الإنجليزيان الملتقطان', few: 'مسارات إنجليزية ملتقطة', many: 'مسارًا إنجليزيًا ملتقطًا', single: 'مسار إنجليزي ملتقط',
+  one: 'مسار الأصل الملتقط', two: 'مسارا الأصل الملتقطان', few: 'مسارات أصل ملتقطة', many: 'مسارًا ملتقطًا', single: 'مسار ملتقط',
 });
 
 /**
@@ -385,8 +438,9 @@ export function previousLostText(prev, target, date = '') {
  * @param {import('../../core/model/tracks.js').Fingerprint} fp @param {string} [date] التاريخ منسقًا
  */
 export function fingerprintLabel(fp, date = '') {
-  const kind = EN_KIND[String(fp.trackKey).split('|')[1]] ?? '';
-  const parts = [`الإنجليزية ${kind}`.trim(), MODE_LABEL[fp.mode] ?? fp.mode, formatCount(fp.count, COUNT_FORMS.cue)];
+  const k = parseTrackKey(fp.trackKey);
+  const kind = k?.via ? 'مترجمة آليًا' : EN_KIND[k?.kind] ?? '';
+  const parts = [`${(k && languageName(k.lang)) || 'الأصل'} ${kind}`.trim(), MODE_LABEL[fp.mode] ?? fp.mode, formatCount(fp.count, COUNT_FORMS.cue)];
   if (fp.parts) parts.push(formatCount(fp.parts.length, PART_FORMS));
   if (date) parts.push(date);
   return parts.join(' · ');
@@ -496,6 +550,6 @@ export function deleteSummary(b, what) {
   const others = b.slots.filter((s) => s.track && s.n !== what.n);
   if (others.length) keeps.push(`${slotsPhrase(others.map((s) => s.n))} تبقى${b.active === what.n ? `، وتصبح الترجمة ${others[0].n} النشطة` : ''}`);
   if (b.previous) keeps.push('النسخة السابقة تبقى');
-  if (b.record.english.length) keeps.push('المسار الإنجليزي والبصمات تبقى');
+  if (b.record.english.length) keeps.push('مسارات الأصل والبصمات تبقى');
   return { items, keeps };
 }

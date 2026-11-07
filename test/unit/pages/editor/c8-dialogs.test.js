@@ -221,7 +221,7 @@ test('لوحة الاستكمال: مربعات المجموعات بأعداد�
     onPick: (k, on) => calls.push(['pick', k, on]), onDownload: () => calls.push(['download']), onCopy: () => calls.push(['copy']),
   }));
   const text = textOf(box);
-  assert.ok(text.includes('الناقص (2)') && text.includes('الفارغ (1)') && text.includes('بلا حروف عربية (0)'), text);
+  assert.ok(text.includes('الناقص (2)') && text.includes('الفارغ (1)') && text.includes('غير مترجمة (0)'), text);
   assert.ok(text.includes('+ القاموس (3)'));
   assert.ok(text.includes('مستلم') && text.includes('10 من 40'), text);
   const boxes = findAll(box, (x) => x.tagName === 'input' && x.getAttribute('type') === 'checkbox');

@@ -24,6 +24,7 @@ import { mergeCues, splitCue } from '../../core/edit/structure.js';
 import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatTimecode, offsetInline, textDirection } from '../../ui/format.js';
 import { createMenu } from '../../ui/menu.js';
+import { pairLabel } from '../../ui/lang.js';
 import { jumpToVideo, openVideo as defaultOpenVideo } from '../../ui/seek.js';
 import { openDriftDialog } from './drift-dialog.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
@@ -89,8 +90,13 @@ export async function mountEditor(app, {
   let bundle;
   let settings;
   let prefs;
+  // تفضيلات اللغات (AA3): «إلى» المختارة لهذا الفيديو لغةُ تعليمات الاستكمال حين تكون الترجمة غير محددة اللغة. تعذّر قراءتها لا يمنع الفتح.
+  let langPrefs = null;
   try {
-    [bundle, settings, prefs] = await Promise.all([store.getBundle(videoId), store.getSettings(), store.getPrefs()]);
+    [bundle, settings, prefs, langPrefs] = await Promise.all([
+      store.getBundle(videoId), store.getSettings(), store.getPrefs(),
+      typeof store.getLangPrefs === 'function' ? store.getLangPrefs().catch(() => null) : null,
+    ]);
   } catch (err) {
     const info = toErrorInfo(err);
     loading.replaceWith(alertBox({ tone: 'danger', title: 'تعذّر فتح المحرّر', text: `${info.message} (${info.code})`, action: libraryAction(`#v=${videoId}`), doc }));
@@ -116,8 +122,8 @@ export async function mountEditor(app, {
     });
     // النص يقول السبب لا يكرر العنوان (كان ST_NO_RECORD بالجملة نفسها؛ تدقيق Fable، UX-13 = F2)، والخطوات بعده.
     loading.replaceWith(emptyState({
-      title: 'لا ترجمة محفوظة لهذا الفيديو', text: 'يعمل المحرّر على ترجمة عربية محفوظة، ولم تُرفع لهذا الفيديو ترجمة بعد.',
-      steps: ['افتح الفيديو على يوتيوب', 'ارفع ملف الترجمة العربية من شريط المشغّل', 'ثم افتح المحرّر من أيقونة الإضافة'], action: actions, doc,
+      title: 'لا ترجمة محفوظة لهذا الفيديو', text: 'يعمل المحرّر على ترجمة محفوظة، ولم تُرفع لهذا الفيديو ترجمة بعد.',
+      steps: ['افتح الفيديو على يوتيوب', 'ارفع ملف الترجمة من زر الرفع في شريط المشغّل', 'ثم افتح المحرّر من أيقونة الإضافة'], action: actions, doc,
     }));
     app.append(emptyNote);
     return null;
@@ -125,7 +131,7 @@ export async function mountEditor(app, {
 
   // ---- الحالة ----
   const S = {
-    opened: bundle, slot: picked.n, info: null, prefs,
+    opened: bundle, slot: picked.n, info: null, prefs, langPrefs,
     fp: null, englishTrack: null, edited: false,
     session: null, offSession: null, original: null,
     view: /** @type {'edit' | 'original'} */ ('edit'),
@@ -168,6 +174,9 @@ export async function mountEditor(app, {
   backBtn.replaceChildren(editorIcon('chev-right', { doc }), el('span', { text: 'المحفوظات', doc })); // سهم الرجوع (يمينًا في RTL) ثم الاسم
   // العنوان بقاعدة «حرف عربي ⇒ RTL» لا أول حرف قوي (قرار سلطان، CL-002)، بمحاذاة يمين حتى الإنجليزي الخالص.
   const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate tj-auto', doc });
+  // الزوج اللغوي في رأس المحرّر (AA3، لوحة 19 البند ٢): لغة مسار الأصل ← لغة الترجمة المفتوحة. يُغيَّر من قائمة «الترجمة» في المشغّل أو من
+  // الإعدادات، لا هنا، فلا تتعارض كتابته مع جلسة تحرير لم تُحفظ.
+  const pairEl = el('span', { className: 'ed-pair tj-caption', attrs: { title: 'لغة الأصل ← لغة الترجمة. تُغيَّر لغة الترجمة من قائمة «الترجمة» في المشغّل أو من «اللغات» في الإعدادات.' }, doc });
   const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'خانة التحرير', onSelect: (n) => switchSlot(n), doc });
   const slotNote = el('span', { className: 'ed-slot-note tj-caption', doc });
   const versionSel = el('select', { className: 'ed-select', attrs: { 'aria-label': 'النسخة المعروضة' }, on: { change: () => setView(versionSel.value) }, doc });
@@ -194,7 +203,7 @@ export async function mountEditor(app, {
   const headEl = el('header', {
     className: 'ed-head',
     children: [
-      el('div', { className: 'ed-head__row', children: [backBtn, titleEl, ltr(videoId, { doc }), el('span', { className: 'ed-spacer', doc }), statusBox, undoBtn, redoBtn, exportBtn, saveBtn], doc }),
+      el('div', { className: 'ed-head__row', children: [backBtn, titleEl, ltr(videoId, { doc }), pairEl, el('span', { className: 'ed-spacer', doc }), statusBox, undoBtn, redoBtn, exportBtn, saveBtn], doc }),
       el('div', { className: 'ed-head__row ed-head__slot', children: [slotLabel, slotsEl.root, slotSep, el('span', { className: 'ed-head__label', text: 'النسخة المعروضة', attrs: { 'aria-hidden': 'true' }, doc }), versionSel, restoreOrigBtn, el('span', { className: 'ed-spacer', doc }), slotNote], doc }),
     ],
     doc,
@@ -319,7 +328,7 @@ export async function mountEditor(app, {
   const issuesEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المشكلات' }, doc });
   const compareEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المقارنة' }, doc });
   const densityEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'الكثافة' }, doc });
-  const refEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المرجع الإنجليزي' }, doc });
+  const refEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'مرجع الأصل' }, doc });
   const marksEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'العلامات' }, doc });
   const resumeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'آخر موضع' }, doc });
   const completeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'الاستكمال' }, doc });
@@ -346,7 +355,7 @@ export async function mountEditor(app, {
   const refSel = el('select', { className: 'ed-select ed-ref-select', attrs: { 'aria-label': 'العمود المرجعي' }, on: { change: () => setRefCol(refSel.value) }, doc });
   const listHead = el('div', {
     className: 'ed-list__head',
-    children: ['', '#', 'البداية', 'النهاية', 'المدة', 'النص العربي', null, ''].map((t, k) => (k === 6
+    children: ['', '#', 'البداية', 'النهاية', 'المدة', 'الترجمة', null, ''].map((t, k) => (k === 6
       ? el('span', { className: 'ed-col-en', children: [refSel], doc })
       : el('span', { text: t, attrs: { 'aria-hidden': 'true' }, doc }))),
     doc,
@@ -494,7 +503,7 @@ export async function mountEditor(app, {
   /** قائمة العمود المرجعي: الإنجليزية (إن حُفظ مسار) والخانات الممتلئة الأخرى. */
   function renderRefSelect() {
     const options = [];
-    if (S.englishTrack?.cues.length) options.push(['en', refOptionLabel('en')]);
+    if (S.englishTrack?.cues.length) options.push(['en', refOptionLabel('en', null, S.englishTrack.lang)]);
     for (const slot of S.opened.slots) if (slot.track && slot.n !== S.slot) options.push([String(slot.n), refOptionLabel(slot.n, slot.name)]);
     if (!options.length) options.push(['en', 'لا مرجع محفوظ']);
     const sig = options.map((o) => o.join(':')).join('|');
@@ -656,6 +665,8 @@ export async function mountEditor(app, {
     const dirty = s.dirty;
     const pendingWork = dirty || s.hasDrafts;
     renderSlots();
+    pairEl.textContent = pairLabel({ from: S.englishTrack?.lang ?? null, to: openedLang(), translated: true }) ?? '';
+    pairEl.hidden = !pairEl.textContent;
     doc.title = `${pendingWork ? '● ' : ''}ترجمان — المحرّر`;
     // منطقة الحالة تُكتب حين يتغير نصها أو نبرتها فقط، لا مع كل ضغطة فيُعاد إعلانها (U26).
     const status = { tone: pendingWork ? 'warning' : 'success', text: saveStatus(changes(), dirty, s.draftCount) };
@@ -921,7 +932,7 @@ export async function mountEditor(app, {
           cues: shownCues(), issues: act().issues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView,
           english: S.view === 'original' ? S.refsOriginal : S.refs, includeText, include: { auto, marks }, target: openedLang(),
         });
-        return { count: items.length, file: items.length ? buildReviewReport({ videoId, title: S.opened.record.title, items, includeText, format }) : null };
+        return { count: items.length, file: items.length ? buildReviewReport({ videoId, title: S.opened.record.title, items, includeText, format, lang: openedLang() }) : null };
       },
     });
     if (file) await saveText(file);
@@ -936,7 +947,7 @@ export async function mountEditor(app, {
         // المرجع الزمني للفقرات (تدقيق 7a66f91، U30). أخطاء التوقيت لا تمنع النص الدراسي (GM-026.4): ما وقع قبل الصفر وحده رابطه
         // من بداية الفيديو ويُذكر في الحوار، وبقية المقاطع بإزاحتها.
         const timed = studyTiming(act().snapshot(), S.view === 'original' ? 0 : S.session.offsetMs, bilingual ? english : null);
-        return { file: buildStudyText({ videoId, title: S.opened.record.title, cues: timed.cues, english: timed.english, format, bilingual }), note: studyTimingNote(timed.clamped) };
+        return { file: buildStudyText({ videoId, title: S.opened.record.title, cues: timed.cues, english: timed.english, format, bilingual, lang: openedLang(), sourceLang: S.englishTrack?.lang ?? null }), note: studyTimingNote(timed.clamped) };
       },
     });
     if (file) await saveText(file);
@@ -980,8 +991,11 @@ export async function mountEditor(app, {
 
   // ---- الاستكمال (R52) ----
   const glossary = () => (S.prefs?.glossary?.attach && S.prefs.glossary.terms.length ? S.prefs.glossary.terms : null);
-  /** اللغة التي يُستكمل لها في تعليمات الاستكمال: لغة الترجمة، وإلا الافتراضي حتى يُتاح اختيارها (AA3). */
-  const patchTarget = () => openedLang() ?? DEFAULT_TARGET_LANG;
+  /**
+   * اللغة التي يُستكمل لها في تعليمات الاستكمال: لغة الترجمة، وإلا «إلى» المختارة لهذا الفيديو في نافذة الإضافة، وإلا الافتراضية في
+   * الإعدادات (AA3). وتحديد لغة الترجمة نفسها من قائمة «الترجمة» في المشغّل أو من «اللغات» في الإعدادات.
+   */
+  const patchTarget = () => openedLang() ?? S.langPrefs?.videos?.[videoId]?.to ?? S.langPrefs?.pair?.to ?? DEFAULT_TARGET_LANG;
 
   function completeReason() {
     if (S.view !== 'edit') return messageFor('ED_READ_ONLY');
@@ -1812,7 +1826,7 @@ export async function mountEditor(app, {
     });
     const v = await openDialog({
       doc, size: 'lg', title: 'استعادة التوقيت الأصلي', content: table, focus: 'cancel',
-      body: 'تُستبدل أزمنة هذه المقاطع بأزمنة الملف الإنجليزي الذي صُدِّر، ويبقى النص كما هو. التغيير غير محفوظ حتى «حفظ»، ويمكن التراجع عنه.',
+      body: 'تُستبدل أزمنة هذه المقاطع بأزمنة ملف الأصل الذي صُدِّر، ويبقى النص كما هو. التغيير غير محفوظ حتى «حفظ»، ويمكن التراجع عنه.',
       actions: [{ label: `تطبيق على ${formatCount(pv.changes.length, COUNT_FORMS.cue)}`, value: 'apply', variant: 'primary' }, { label: 'إلغاء', value: 'cancel' }],
     });
     if (v !== 'apply') return;
@@ -1889,7 +1903,7 @@ export async function mountEditor(app, {
     });
     refresh();
     const v = await openDialog({
-      doc, size: 'md', title: 'تصدير الترجمة العربية (SRT)', content, focus: 'download',
+      doc, size: 'md', title: 'تصدير الترجمة (SRT)', content, focus: 'download',
       actions: [{
         label: 'تنزيل SRT', value: 'download', variant: 'primary',
         ref: (b) => {
@@ -2066,6 +2080,7 @@ export async function mountEditor(app, {
       scheduleChrome();
       renderComparisonPanel();
     }
+    if (change.langPrefs) S.langPrefs = change.langPrefs.newValue ?? null;
     if (change.prefs?.newValue) {
       // حد سرعة القراءة من الإعدادات (R55) يسري فورًا؛ ولا يمس شيئًا محفوظًا.
       S.prefs = change.prefs.newValue;

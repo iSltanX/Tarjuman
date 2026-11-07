@@ -52,9 +52,9 @@ export function renderIssues(box, { doc, report, onJump }) {
  * }} o
  */
 export function renderReference(box, { doc, options, savedId, shownId, preview, readOnly, busy, onChoose, onCommit, onCancel }) {
-  const head = el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: 'المرجع الإنجليزي', doc }), preview ? statusPill({ tone: 'warning', text: 'معاينة غير محفوظة', doc }) : el('span', { doc })], doc });
+  const head = el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: 'مرجع الأصل', doc }), preview ? statusPill({ tone: 'warning', text: 'معاينة غير محفوظة', doc }) : el('span', { doc })], doc });
   if (!options.length) {
-    box.replaceChildren(head, el('p', { className: 'tj-caption', text: 'لا تصدير إنجليزي محفوظ لهذا الفيديو، فلا مرجع للمقارنة. نزّل الترجمة الإنجليزية من المشغّل أولًا.', doc }));
+    box.replaceChildren(head, el('p', { className: 'tj-caption', text: 'لا تصدير للأصل محفوظ لهذا الفيديو، فلا مرجع للمقارنة. نزّل الأصل من زر التنزيل في المشغّل أولًا.', doc }));
     return;
   }
   const sel = el('select', {

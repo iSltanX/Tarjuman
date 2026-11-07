@@ -55,3 +55,16 @@ test('حدث تغيّر تفضيلات اللغات يصل إلى كل السي�
   assert.ok(hit, 'وصل الحدث');
   assert.equal(hit.newValue.pair.to, 'en');
 });
+
+test('المحفوظات (AA3): الزوج اللغوي لكل خانة من المُلخّص والمرافق دون قراءة السجلات، ومسارات الأصل بغير الإنجليزية في الصف', async () => {
+  const { store } = setup();
+  const b = sampleBundle();
+  b.record.english.push({ ...b.record.english[0], key: 'ja|asr', lang: 'ja', kind: 'asr' });
+  await seedBundle(store, b);
+  const at = new Date(Date.parse(NOW) + 60000).toISOString();
+  await store.updateBundle(VIDEO_ID, (x) => withSlotLang(withSlotLang(x, 1, 'ar', at), 2, 'fr', at));
+  const [item] = await store.listLibrary();
+  assert.deepEqual(item.pairs.slice(0, 2).map((p) => [p.from, p.to]), [['en', 'ar'], ['en', 'fr']]);
+  assert.equal(item.pairs[2], null, 'الخانة الفارغة');
+  assert.deepEqual(item.entry.english.map((t) => t.key).sort(), ['en|manual', 'ja|asr'], 'مسار الأصل الياباني من المرافق');
+});

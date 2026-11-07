@@ -347,3 +347,4 @@ html, body.ed-page { height: 100%; }
   .ed-search__box { flex: 1 1 100%; }
   .ed-search__input { flex: 1 1 auto; width: auto; }
 }
+.ed-pair { white-space: nowrap; unicode-bidi: isolate; color: var(--tj-text-2); }

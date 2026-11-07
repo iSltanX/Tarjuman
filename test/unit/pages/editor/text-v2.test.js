@@ -14,7 +14,9 @@ test('خانة التحرير والنشطة: الاسم والسطر يفرّق
   const iso = (t) => `${String.fromCodePoint(0x2068)}${t}${String.fromCodePoint(0x2069)}`;
   assert.ok(activeSlotLine(2, 1, 'مراجعة').startsWith(`تحرّر الترجمة 2 «${iso('مراجعة')}». النشطة في المشغّل الترجمة 1، والحفظ هنا لا يغيّرها`));
   assert.equal(activeSlotLine(1, 1, null), 'تحرّر الترجمة 1، وهي النشطة في المشغّل.');
-  assert.equal(refOptionLabel('en'), 'الإنجليزية');
+  assert.equal(refOptionLabel('en'), 'الأصل', 'بلا لغة معروفة (AA3)');
+  assert.equal(refOptionLabel('en', null, 'en'), 'الإنجليزية');
+  assert.equal(refOptionLabel('en', null, 'ja'), 'اليابانية', 'باسم لغة المسار الفعلية');
   assert.equal(refOptionLabel(3, 'قديمة'), `الترجمة 3 — ${iso('قديمة')}`);
   assert.equal(slotFallback(3, 1), 'الترجمة 3 فارغة، فعُرضت الترجمة 1.');
 });

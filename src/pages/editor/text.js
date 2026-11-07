@@ -1,5 +1,6 @@
 // نصوص المحرّر العربية (figma-design-brief.md §١١ و§١٦): النطاق قبل الفعل وبعده، والعدّ بالعربية بمطابقة
 // الصفة للمعدود، والإزاحة بعلامتها، وتقرير المقارنة سطورًا. دوال نقية بلا DOM.
+import { languageName } from '../../ui/lang.js';
 import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
 import { PART_FORMS, absoluteTime } from '../library/model.js';
 
@@ -155,8 +156,11 @@ export function refLabel(fp) {
   return `${kind} · ${mode}${parts} · ${absoluteTime(fp.createdAt)}`;
 }
 
-/** خيار العمود المرجعي: «الإنجليزية» أو «الترجمة 3 — مراجعة». @param {'en' | number} v @param {string | null} [name] */
-export const refOptionLabel = (v, name = null) => (v === 'en' ? 'الإنجليزية' : name ? `الترجمة ${v} — ${isolate(name)}` : `الترجمة ${v}`);
+/**
+ * خيار العمود المرجعي: مسار الأصل باسم لغته الفعلية («الإنجليزية»، «اليابانية»؛ AA3) أو «الأصل» بلا لغة، أو «الترجمة 3 — مراجعة».
+ * @param {'en' | number} v @param {string | null} [name] @param {string | null} [lang] لغة مسار الأصل
+ */
+export const refOptionLabel = (v, name = null, lang = null) => (v === 'en' ? (lang && languageName(lang)) || 'الأصل' : name ? `الترجمة ${v} — ${isolate(name)}` : `الترجمة ${v}`);
 
 // ---- العلامات (R53): «أعود إليه» و«راجعته»، والتبديل بينهما من زر الصف ----
 export const MARK_LABEL = Object.freeze({ todo: 'أعود إليه', done: 'راجعته' });

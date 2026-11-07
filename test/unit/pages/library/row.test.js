@@ -310,7 +310,7 @@ test('الحالات: الفارغة بخطواتها (زر التنزيل وز�
   // الحالة الفارغة (بعد القراءة).
   assert.equal(textOf(m.root.querySelector('.tj-empty__title')), 'لا ترجمات محفوظة بعد');
   assert.equal(m.root.querySelector('.lib-state').getAttribute('role'), null);
-  assert.deepEqual(m.root.querySelectorAll('.tj-empty__steps li').map(textOf), ['افتح فيديو على يوتيوب', 'اضغط زر التنزيل في شريط المشغّل', 'ارفع ملفك العربي من زر الترجمة']);
+  assert.deepEqual(m.root.querySelectorAll('.tj-empty__steps li').map(textOf), ['افتح فيديو على يوتيوب', 'اضغط زر التنزيل في شريط المشغّل', 'ارفع ترجمتك من زر الرفع في الشريط']);
   assert.ok(m.root.querySelector('.lib-toolbar').hidden, 'لا أدوات بلا محفوظات');
   const data = await mount({ records: [{ id: ID(1), title: 'المطبعة' }] });
   const search = data.root.querySelector('input.lib-search__input');

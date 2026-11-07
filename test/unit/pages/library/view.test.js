@@ -124,7 +124,8 @@ test('الصف: العنوان والمعرّف وعُدّل منذ وعدد ا�
   assert.equal(textOf(when), 'عُدّل قبل 3 ساعات');
   assert.match(when.title, /2026/);
   assert.equal(textOf(row.querySelector('.lib-row__count')), '5 مقاطع', 'مقاطع الترجمة النشطة');
-  assert.equal(row.querySelectorAll('.lib-row__sep').length, 2, 'المعرّف · عُدّل · العدد');
+  assert.equal(row.querySelectorAll('.lib-row__sep').length, 3, 'المعرّف · الزوج · عُدّل · العدد');
+  assert.equal(textOf(row.querySelector('.lib-row__pair')), 'الإنجليزية ← لغة غير محددة', 'الزوج اللغوي في الصف (AA3)؛ وما حُفظ بلا لغة «غير محددة»');
   const pills = findAll(row, (e) => e.classList.contains('tj-pill'));
   assert.deepEqual(pills.map(textOf), ['مترجمة'], 'شارة حالة واحدة');
   assert.ok(!textOf(row).includes('الإزاحة'), 'الإزاحة في بطاقات التوسيع لا في الصف');
@@ -142,7 +143,7 @@ test('بلا عنوان محفوظ: النص الخافت واسم الوصول 
   await empty.lib.load();
   assert.equal(rows(empty).length, 0);
   assert.equal(textOf(empty.root.querySelector('.tj-empty__title')), 'لا ترجمات محفوظة بعد');
-  assert.deepEqual(empty.root.querySelectorAll('.tj-empty__steps li').map(textOf), ['افتح فيديو على يوتيوب', 'اضغط زر التنزيل في شريط المشغّل', 'ارفع ملفك العربي من زر الترجمة']);
+  assert.deepEqual(empty.root.querySelectorAll('.tj-empty__steps li').map(textOf), ['افتح فيديو على يوتيوب', 'اضغط زر التنزيل في شريط المشغّل', 'ارفع ترجمتك من زر الرفع في الشريط']);
   assertNoTemplate(empty, 'فارغة');
 });
 
@@ -240,7 +241,7 @@ test('فتح الفيديو يفتح عنوان المشاهدة وحده، و«
   assert.deepEqual(chips.map((s) => [textOf(s), s.getAttribute('aria-pressed')]), [['الترجمة 1', 'true']], 'شريحة لكل ترجمة موجودة وحدها');
   const none = rowFor(m, IDS[1]);
   assert.equal(findAll(none, (e) => e.classList.contains('lib-chip')).length, 0, 'بلا عربية: لا شرائح ولا خانة فارغة');
-  assert.equal(textOf(none.querySelector('.lib-trs__none')), 'لا ترجمة عربية بعد · الأصل جاهز', 'الأصل الإنجليزي محفوظ فعلًا');
+  assert.equal(textOf(none.querySelector('.lib-trs__none')), 'لا ترجمة بعد · الأصل جاهز', 'الأصل الإنجليزي محفوظ فعلًا');
   assert.ok(none.querySelector('.lib-toggle') === null, 'بلا ترجمة لا توسيع');
   assert.ok(rowFor(m, IDS[0]).querySelector('.lib-toggle'));
 });
@@ -364,7 +365,7 @@ test('تصدير SRT من «المزيد»: قائمة بأسباب التعطي
   assert.equal(menuButton.getAttribute('aria-expanded'), 'true');
   const items = menuItems(menuButton);
   // «الترجمات…» حذفت: صارت بطاقات في الصف نفسه (التوسيع).
-  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['العربية — النسخة الحالية', 'العربية — الأصل المستورد', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'رفع ترجمة…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
+  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الترجمة — الأصل المستورد', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'رفع ترجمة…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
   assert.equal(items[1].getAttribute('aria-disabled'), 'true');
   assert.equal(textOf(items[1].querySelector('.tj-menu__hint')), 'لم تُعدَّل الترجمة، فالأصل المستورد هو النسخة الحالية.');
   assert.ok(items.slice(-2).every((i) => i.classList.contains('tj-menu__item--danger')), 'الحذفان بلون الخطر');
@@ -439,7 +440,7 @@ test('«حذف الترجمة النشطة…»: حوار يسرد ما يُحذ
   assert.equal(dialog.tone, 'danger');
   assert.equal(textOf(dialog.content.querySelector('.lib-del__title')), 'عنوان', 'عنوان الفيديو في الحوار');
   assert.deepEqual(listItems(dialog.content, 0), [`الترجمة 1 — ملف ${LRI}${IDS[0]}.ar.srt${PDI}`], 'ما يُحذف: هذه الترجمة وحدها (بلا تعديلات ولا علامات ولا إزاحة)');
-  assert.deepEqual(listItems(dialog.content, 1), ['المسار الإنجليزي والبصمات تبقى'], 'ما يبقى');
+  assert.deepEqual(listItems(dialog.content, 1), ['مسارات الأصل والبصمات تبقى'], 'ما يبقى');
   assert.match(textOf(dialog.content.querySelector('.lib-del__note')), /لا يمكن التراجع/);
   assert.equal(findAll(dialog.content, (e) => e.tagName === 'input').length, 0, 'لا خيارات: التأكيد على ما سُرد');
   assert.equal((await m.store.getVideo(IDS[0])).arabic !== null, true, 'الإلغاء لم يحذف');
@@ -470,7 +471,7 @@ test('«حذف بيانات الفيديو…»: حوار يسرد ما سيُح
   const only = m.calls.confirms[0];
   assert.equal(only.title, 'حذف بيانات هذا الفيديو؟');
   assert.equal(only.confirmLabel, 'حذف نهائيًا');
-  assert.deepEqual(listItems(only.content), ['المسار الإنجليزي الملتقط', 'بصمات التصدير (1)', 'سجل الفيديو: العنوان والمدة وإعدادات العرض']);
+  assert.deepEqual(listItems(only.content), ['مسار الأصل الملتقط', 'بصمات التصدير (1)', 'سجل الفيديو: العنوان والمدة وإعدادات العرض']);
   assert.equal(textOf(only.content.querySelector('.lib-del__note')), 'لا يمكن التراجع.', 'بلا ترجمات لا «صدّر الترجمات»');
   assert.equal(await m.store.getVideo(IDS[1]), null);
   assert.equal(rows(m).length, 1);
@@ -481,7 +482,7 @@ test('«حذف بيانات الفيديو…»: حوار يسرد ما سيُح
   deleteItem(moreA).click();
   await settle();
   const all = m.calls.confirms[1];
-  assert.deepEqual(listItems(all.content), ['الترجمة 1', `الإزاحة المحفوظة (${LRI}+0.5${PDI} ث)`, 'المسار الإنجليزي الملتقط', 'بصمات التصدير (1)', 'سجل الفيديو: العنوان والمدة وإعدادات العرض']);
+  assert.deepEqual(listItems(all.content), ['الترجمة 1', `الإزاحة المحفوظة (${LRI}+0.5${PDI} ث)`, 'مسار الأصل الملتقط', 'بصمات التصدير (1)', 'سجل الفيديو: العنوان والمدة وإعدادات العرض']);
   assert.match(textOf(all.content.querySelector('.lib-del__note')), /صدّر الترجمات أولًا/);
   assert.equal(findAll(all.content, (e) => e.tagName === 'input').length, 0);
   assert.ok(await m.store.getVideo(IDS[0]), 'الإلغاء لم يحذف');
@@ -630,7 +631,7 @@ test('المرجع عند تعدد التصديرات: قائمة بالمقتر
       pickFiles: async () => [new File([writeSrt(makeCues(5).map((c) => ({ ...c, text: `جديد ${c.n}` })))], 'x.ar.srt')],
       confirm: async (o) => {
         m.calls.confirms.push(o);
-        const select = findAll(o.content, (e) => e.tagName === 'select')[0];
+        const select = findAll(o.content, (e) => e.tagName === 'select' && e.classList.contains('lib-up__ref'))[0];
         const labels = select.childNodes.map(textOf);
         assert.equal(labels.length, 3, 'البصمتان و«بلا مرجع»');
         assert.ok(labels.some((l) => l.endsWith('— الأقرب')));
@@ -828,4 +829,37 @@ test('تدقيق 5fedcb9 (CL-005): بلا ترجمة محفوظة سطر «تُ�
   assert.match(body, /تُحفظ ترجمةً جديدة/);
   assert.doesNotMatch(body, /فارغة/);
   assert.equal(findAll(m.calls.confirms[0].content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio').length, 0);
+});
+
+test('حوار الرفع (AA3): لغة الترجمة من رمز صريح في اسم الملف، أو «إلى» المختارة للفيديو إن وافق النص، ويغيّرها المستخدم فتُحفظ بلغتها', async () => {
+  for (const [name, text, pairTo, choose, expected] of [
+    ['x.ar.srt', 'جديد', null, null, 'ar'],
+    ['x.srt', 'جديد', 'ar', null, 'ar'],
+    ['x.srt', 'nouveau', 'ar', null, null],
+    ['x.srt', 'nouveau', 'ar', 'fr', 'fr'],
+  ]) {
+    let seen = null;
+    const m = await mount({
+      records: [{ id: IDS[0], title: 'عنوان' }],
+      env: {
+        pickFiles: async () => [new File([writeSrt(makeCues(5).map((c) => ({ ...c, text: `${text} ${c.n}` })))], name)],
+        confirm: async (o) => {
+          const sel = findAll(o.content, (e) => e.tagName === 'select' && e.classList.contains('lib-up__lang'))[0];
+          seen = sel.value;
+          if (choose) {
+            sel.value = choose;
+            sel.dispatchEvent({ type: 'change' });
+          }
+          return true;
+        },
+      },
+    });
+    if (pairTo) await m.store.setLangPrefs({ video: { videoId: IDS[0], pair: { from: 'en', to: pairTo } } });
+    await m.lib.load();
+    clickReplace(m);
+    await settle(10);
+    assert.equal(seen, expected === 'fr' ? '' : expected ?? '', `${name}: المقترحة`);
+    const b = await m.store.getBundle(IDS[0]);
+    assert.equal(b.slots[1].track.lang ?? null, expected, `${name}: المحفوظة`);
+  }
 });

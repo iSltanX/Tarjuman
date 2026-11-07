@@ -63,7 +63,7 @@ export function createRows(doc, ctx) {
         attrs: { 'data-row': String(row), role: 'listitem' },
         children: [
           el('span', { className: 'ed-row__n tj-mono', text: String(r.n), doc }),
-          el('p', { className: 'ed-row__missing', text: `المقطع ${r.n} غير موجود في الملف العربي`, doc }),
+          el('p', { className: 'ed-row__missing', text: `المقطع ${r.n} غير موجود في ملف الترجمة`, doc }),
         ],
         doc,
       });

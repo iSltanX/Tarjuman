@@ -9,9 +9,9 @@ import { openDialog, setDisabled } from './dialogs.js';
 import { numberList } from './text.js';
 
 const GROUPS = Object.freeze([
-  ['missing', 'الناقص', 'مقاطع في الأصل الإنجليزي لا تقابلها ترجمة.'],
+  ['missing', 'الناقص', 'مقاطع في الأصل لا تقابلها ترجمة.'],
   ['empty', 'الفارغ', 'مقاطع بلا نص.'],
-  ['noArabic', 'بلا حروف عربية', 'اختياري: نص بلا حرف عربي (قد يكون اسمًا أو رقمًا صحيحًا كما هو).'],
+  ['noArabic', 'غير مترجمة', 'اختياري: نص مطابق للأصل أو بلا حرف من نص لغة الترجمة (قد يكون اسمًا أو رقمًا صحيحًا كما هو).'],
   ['marked', 'المعلّمة «أعود إليه»', null],
   ['selected', 'المحددة', 'بمربعات التحديد في القائمة.'],
 ]);
@@ -79,7 +79,7 @@ export function renderCompletePanel(box, o) {
       children: [el('h2', { className: 'tj-h4', text: 'الاستكمال', doc }), statusPill({ tone: o.numbers.length ? 'info' : 'neutral', text: o.numbers.length ? formatCount(o.numbers.length, COUNT_FORMS.cue) : 'لا مختار', doc })],
       doc,
     }),
-    el('p', { className: 'tj-caption', text: 'ملف صغير بالمقاطع المختارة من الأصل الإنجليزي نفسه، تترجمه بتعليماته، ثم تستورد ما يعيده فيوضع كل مقطع في موضعه.', doc }),
+    el('p', { className: 'tj-caption', text: 'ملف صغير بالمقاطع المختارة من الأصل نفسه، تترجمه بتعليماته، ثم تستورد ما يعيده فيوضع كل مقطع في موضعه.', doc }),
     o.reason ? alertBox({ tone: 'info', title: 'لا يُبنى ملف الاستكمال الآن', text: o.reason, doc }) : null,
     el('fieldset', { className: 'ed-fieldset', children: [el('legend', { className: 'tj-label', text: 'المقاطع', doc }), ...checks], doc }),
     o.numbers.length ? el('p', { className: 'tj-caption', text: `الأرقام: ${numberList(o.numbers)}`, doc }) : null,

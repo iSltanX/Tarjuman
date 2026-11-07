@@ -95,7 +95,7 @@ test('rowModel: سطر «عُدّل منذ · N مقطعًا» والتاريخ 
   assert.equal(rowModel(entry({ updatedAt: 'ليس تاريخًا' }), NOW).whenText, null, 'لا تاريخ مخمّن');
   // بلا ترجمة: مقاطع المسار الإنجليزي (اليدوي أولًا) بوصفها إنجليزية، وإلا لا شيء.
   const en = [{ key: 'en|asr', kind: 'asr', cueCount: 9 }, { key: 'en|manual', kind: 'manual', cueCount: 286 }];
-  assert.equal(rowModel(entry({ arabic: null, english: en }), NOW).countText, '286 مقطعًا إنجليزيًا');
+  assert.equal(rowModel(entry({ arabic: null, english: en }), NOW).countText, '286 مقطعًا في الأصل');
   assert.equal(rowModel(entry({ arabic: null, english: [] }), NOW).countText, null);
 });
 
@@ -171,7 +171,7 @@ test('rowModel: بلا عنوان محفوظ يظهر بنصه واسم الوص
 test('خيارات التصدير: العربية الحالية والأصل والإنجليزية، والمعطّل يذكر سببه', () => {
   const full = exportOptions(entry({ arabic: { fileName: 'x', cueCount: 3, edited: true, matched: true, missing: 0, extra: 0, drift: 0 } }));
   assert.deepEqual(full.map((o) => [o.label, o.disabledReason]), [
-    ['العربية — النسخة الحالية', null], ['العربية — الأصل المستورد', null], ['الإنجليزية — المستخرجة', null],
+    ['الترجمة — النسخة الحالية', null], ['الترجمة — الأصل المستورد', null], ['الإنجليزية — المستخرجة', null],
   ]);
   assert.deepEqual(full[2].action, { type: 'en', trackKey: 'en|manual' });
   assert.equal(full[2].hint, '427 مقطعًا');
@@ -185,7 +185,7 @@ test('خيارات التصدير: العربية الحالية والأصل و
   assert.equal(englishOnly[2].disabledReason, null);
 
   const nothing = exportOptions(entry({ arabic: null, english: [] }));
-  assert.equal(nothing.at(-1).disabledReason, 'لا مسار إنجليزي محفوظ لهذا الفيديو.');
+  assert.equal(nothing.at(-1).disabledReason, 'لا مسار أصل محفوظ لهذا الفيديو.');
 
   const two = exportOptions(entry({ english: [{ key: 'en|manual', kind: 'manual', cueCount: 5 }, { key: 'en|asr', kind: 'asr', cueCount: 9 }] }));
   assert.deepEqual(two.slice(2).map((o) => o.label), ['الإنجليزية — يدوي', 'الإنجليزية — تلقائي']);
@@ -233,23 +233,23 @@ test('deleteSummary: بنود لما يوجد فعلًا وحده، لكل تر�
   assert.deepEqual(deleteSummary(b, { scope: 'all' }), {
     items: [
       'الترجمات 1 و2 «مراجعة» و3', 'النسخة السابقة (من الترجمة 2)', '5 تعديلات يدوية', '3 علامات مراجعة', 'الإزاحات المحفوظة', 'آخر موضع محفوظ في المحرّر',
-      'المسار الإنجليزي الملتقط', 'بصمات التصدير (2)', 'سجل الفيديو: العنوان والمدة وإعدادات العرض',
+      'مسار الأصل الملتقط', 'بصمات التصدير (2)', 'سجل الفيديو: العنوان والمدة وإعدادات العرض',
     ],
     keeps: [],
   });
   // ترجمة نشطة واحدة: الأولى بتعديلاتها وعلاماتها (2) وإزاحتها وموضعها؛ ويبقى غيرها والسابقة والإنجليزي، وتصبح الثانية النشطة.
   const one = deleteSummary(b, { scope: 'slot', n: 1 });
   assert.deepEqual(one.items, [`الترجمة 1 — ملف ${LRI}${b.slots[0].track.fileName}${PDI}`, '5 تعديلات يدوية', 'علامتا مراجعة', `الإزاحة المحفوظة (${LRI}+0.5${PDI} ث)`, 'آخر موضع محفوظ في المحرّر']);
-  assert.deepEqual(one.keeps, ['الترجمتان 2 و3 تبقى، وتصبح الترجمة 2 النشطة', 'النسخة السابقة تبقى', 'المسار الإنجليزي والبصمات تبقى']);
+  assert.deepEqual(one.keeps, ['الترجمتان 2 و3 تبقى، وتصبح الترجمة 2 النشطة', 'النسخة السابقة تبقى', 'مسارات الأصل والبصمات تبقى']);
   // غير نشطة بلا شيء: الثانية بعلامة واحدة وإزاحة؛ لا «تصبح النشطة» لأن النشطة غيرها.
   const two = deleteSummary(b, { scope: 'slot', n: 2 });
   assert.deepEqual(two.items.slice(1), ['علامة مراجعة واحدة', `الإزاحة المحفوظة (${LRI}−1.2${PDI} ث)`]);
   assert.ok(two.items[0].startsWith('الترجمة 2 «مراجعة» — ملف'));
-  assert.deepEqual(two.keeps, ['الترجمتان 1 و3 تبقى', 'النسخة السابقة تبقى', 'المسار الإنجليزي والبصمات تبقى']);
+  assert.deepEqual(two.keeps, ['الترجمتان 1 و3 تبقى', 'النسخة السابقة تبقى', 'مسارات الأصل والبصمات تبقى']);
   // بلا سابقة ولا ترجمة أخرى: لا بنود «تبقى» لها.
   const solo = sampleBundle({ videoId: 'AAAAAAAAAAA', previous: false });
   solo.slots[1] = { n: 2, name: null, track: null, offsetMs: 0, marks: [], position: null };
-  assert.deepEqual(deleteSummary(solo, { scope: 'slot', n: 1 }).keeps, ['المسار الإنجليزي والبصمات تبقى']);
+  assert.deepEqual(deleteSummary(solo, { scope: 'slot', n: 1 }).keeps, ['مسارات الأصل والبصمات تبقى']);
   assert.ok(!deleteSummary(solo, { scope: 'all' }).items.some((t) => t.includes('السابقة')), 'لا سابقة: لا بند لها');
   // مراجعة الهوية L5: لا ترجمة ممتلئة وبقيت نسخة سابقة: تُذكر لأنها تُحذف مع الفيديو.
   const onlyPrev = sampleBundle({ videoId: 'AAAAAAAAAAA' });

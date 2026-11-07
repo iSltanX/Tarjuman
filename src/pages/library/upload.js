@@ -3,7 +3,11 @@
 // الاسم، وأعداد ما سيتغير وجدول قابل للطي (# · الحالي · الجديد) بدفعات من 200، وما سيُفقد من التعديلات اليدوية، و«إبقاء
 // تعديلاتي» بشرط المحاذاة (والسبب في التلميح واسم الوصول). لا كتابة هنا: الحوار يعيد الاختيار، والإلغاء لا يمس التخزين.
 import { messageFor } from '../../core/errors/index.js';
+import { describeLang, knownLanguages, textFitsLang } from '../../core/lang/index.js';
+import { isSourceLang } from '../../core/model/ids.js';
+import { sourceOf } from '../../core/model/pair.js';
 import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
+import { pairLabel } from '../../ui/lang.js';
 import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { previewComparison } from '../../core/import/index.js';
 import { uploadImpact } from './actions.js';
@@ -57,7 +61,7 @@ function diffTable(doc, changes) {
  *   titleOf?: (videoId: string) => string | null, onTarget?: (replace: boolean) => void,
  * }} o
  */
-export function uploadContent({ doc, prep, preferred = null, titleOf = () => null, onTarget = () => {} }) {
+export function uploadContent({ doc, prep, preferred = null, titleOf = () => null, onTarget = () => {}, suggested = [] }) {
   const { bundle, result, review, settings } = prep;
   const id = `lib-up-${++seq}`;
   const fps = bundle.record.fingerprints;
@@ -100,13 +104,13 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   const renderCompare = () => {
     const fp = reference ? fps.find((f) => f.id === reference) ?? null : null;
     // المعاينة بالمحاذاة كما تُعرض بعد الحفظ (FA-04)، لأي مرجع مختار؛ وتقرير الحفظ بالرقم يُحسب عند الحفظ كما كان.
-    const report = previewComparison(result.cues, fp, { settings, notes: result.notes, target: result.lang ?? null });
+    const report = previewComparison(result.cues, fp, { settings, notes: result.notes, target: lang ?? null });
     const s = comparisonSummary(report);
     compareHost.replaceChildren(alertBox({ tone: s.tone, text: s.lines.join('\n'), doc }));
   };
   let referenceBlock;
   if (!fps.length) {
-    referenceBlock = el('p', { className: 'tj-caption', text: 'لا تصدير إنجليزي محفوظ لهذا الفيديو، فلا مرجع للمقارنة؛ يُحفظ الملف كما هو.', doc });
+    referenceBlock = el('p', { className: 'tj-caption', text: 'لا تصدير للأصل محفوظ لهذا الفيديو، فلا مرجع للمقارنة؛ يُحفظ الملف كما هو.', doc });
   } else if (fps.length === 1) {
     // تصدير واحد: لا اختيار، والمرجع سطر.
     referenceBlock = el('p', { className: 'tj-body-sm lib-up__ref-line', children: ['المرجع: ', el('span', { text: fingerprintLabel(fps[0], absoluteTime(fps[0].createdAt)), doc })], doc });
@@ -145,6 +149,39 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       doc,
     });
   }
+
+  // لغة الترجمة (AA3، لوحة 19 البند ٢): رمز صريح في اسم الملف، وإلا «إلى» المختارة لهذا الفيديو إن وافق نص الملف نص كتابتها، وإلا
+  // «غير محددة»؛ ويغيّرها المستخدم قبل الحفظ. والزوج اللغوي سطر تحتها بلغة الأصل.
+  const pairTo = suggested.find((c) => isSourceLang(c)) ?? null;
+  let lang = result.lang ?? (pairTo && textFitsLang(result.cues, pairTo) ? pairTo : null);
+  const lid = `${id}-lang`;
+  const named = (code) => `${describeLang(code)?.arabic ?? code} (${code})`;
+  const sug = [...new Set([result.lang, ...suggested].filter((c) => isSourceLang(c)))];
+  const opt = (code, text) => el('option', { text, attrs: { value: code }, doc });
+  const langSelect = el('select', {
+    className: 'tj-field__input lib-up__lang', attrs: { id: lid, 'aria-describedby': `${lid}-pair` },
+    children: [
+      opt('', 'غير محددة'),
+      sug.length ? el('optgroup', { attrs: { label: 'مقترحة' }, children: sug.map((c) => opt(c, named(c))), doc }) : null,
+      el('optgroup', { attrs: { label: 'كل اللغات' }, children: knownLanguages().filter((l) => !sug.includes(l.code)).map((l) => opt(l.code, `${l.arabic} (${l.code})`)), doc }),
+    ],
+    doc,
+  });
+  langSelect.value = lang ?? '';
+  const pairLine = el('span', { className: 'tj-field__hint', attrs: { id: `${lid}-pair` }, doc });
+  const sourceLang = sourceOf(bundle.record)?.lang ?? null;
+  const paintPair = () => { pairLine.textContent = pairLabel({ from: sourceLang, to: lang, translated: true }) ?? ''; };
+  paintPair();
+  langSelect.addEventListener('change', () => {
+    lang = langSelect.value || null;
+    paintPair();
+    renderCompare();
+  });
+  const langBlock = el('div', {
+    className: 'tj-field lib-up__field',
+    children: [el('label', { className: 'tj-field__label', text: 'لغة الترجمة', attrs: { for: lid }, doc }), langSelect, pairLine],
+    doc,
+  });
 
   // تنبيه الاسم.
   const hint = nameHintText(review.nameHint, titleOf);
@@ -186,6 +223,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
       ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
       hint ? alertBox({ tone: 'warning', text: hint, doc }) : null,
+      langBlock,
       onlyNew ? null : targetHead,
       targetGroup,
       referenceBlock,
@@ -197,6 +235,6 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   return {
     root,
     replace: () => impact.replace,
-    choice: () => ({ n: target, fingerprintId: reference, keepCues: impact.keep.ok && keepBox.checked ? impact.keep.cues : null }),
+    choice: () => ({ n: target, fingerprintId: reference, keepCues: impact.keep.ok && keepBox.checked ? impact.keep.cues : null, lang }),
   };
 }

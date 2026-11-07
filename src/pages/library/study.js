@@ -23,8 +23,8 @@ export function studyContent({ doc, hasEnglish, name, note = '' }) {
   const language = segGroup({
     legend: 'اللغة', value: 'ar', doc,
     options: [
-      { value: 'ar', label: 'العربية وحدها' },
-      { value: 'bi', label: 'ثنائي · العربية والإنجليزية', disabledReason: hasEnglish ? null : 'لا مسار إنجليزي محفوظ لهذا الفيديو.' },
+      { value: 'ar', label: 'الترجمة وحدها' },
+      { value: 'bi', label: 'ثنائي · الترجمة والأصل', disabledReason: hasEnglish ? null : 'لا مسار أصل محفوظ لهذا الفيديو.' },
     ],
     onChange: () => { refresh(); },
   });
