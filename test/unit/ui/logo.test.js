@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LOGO_RATIO, LOGO_VIEWBOX, MARK_BOOK, MARK_BOOK_SMALL, MARK_DOTS, SMALL_BELOW, logo, logoMark } from '../../../src/ui/logo.js';
-import { MANIFEST_ICONS, OUTPUTS, PINE, IVORY } from '../../../tools/brand/icons.mjs';
+import { MANIFEST_ICONS, OUTPUTS, PINE, IVORY, assetContent, png, sameAsset, tileIcon } from '../../../tools/brand/icons.mjs';
 import { newDocument } from '../pages/library/fake-dom.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -72,8 +72,10 @@ test('سكربت المحتوى (رأس اللوحة) يستورد مسارات 
   assert.doesNotMatch(dom, /\blogo\(|logoMark\(/);
 });
 
-test('أصول الشعار المتتبَّعة تطابق ما يولّده tools/brand/icons.mjs بايتًا (المسارات نفسها وقواعد البلاطة في لوحة 03)', () => {
-  for (const [rel, make] of Object.entries(OUTPUTS)) assert.ok(readFileSync(path.join(ROOT, rel)).equals(make()), `${rel}: شغّل command node tools/brand/icons.mjs`);
+// المطابقة بالمحتوى لا ببايتات الضغط: ناتج deflateSync يتبع مكتبة zlib المربوطة بـNode، فسقط هذا الاختبار على GitHub (نسخ Node
+// الرسمية) وهو ينجح على macOS (zlib النظام) والصورة واحدة (main@6824955).
+test('أصول الشعار المتتبَّعة تطابق ما يولّده tools/brand/icons.mjs في رأسها وبكسلاتها، وملفا SVG بايتًا (المسارات نفسها وقواعد البلاطة في لوحة 03)', () => {
+  for (const [rel, make] of Object.entries(OUTPUTS)) assert.ok(sameAsset(readFileSync(path.join(ROOT, rel)), make()), `${rel}: شغّل command node tools/brand/icons.mjs`);
   // البلاطة: زاوية 23% من الضلع (11 عند 48)، والرمز بعرض 75% منها، والمصحّح تحت 48.
   for (const [n, s] of Object.entries(MANIFEST_ICONS)) {
     const size = Number(n);
@@ -86,6 +88,26 @@ test('أصول الشعار المتتبَّعة تطابق ما يولّده to
   assert.equal(IVORY, '#F3EFE6');
   const svg = readFileSync(path.join(ROOT, 'tools/brand/tarjuman-A-asil.svg'), 'utf8');
   for (const d of [...MARK_DOTS, MARK_BOOK]) assert.ok(svg.includes(`d="${d}"`), d);
+});
+
+test('مقارنة أصول PNG بالمحتوى: ضغط آخر للبكسلات نفسها مطابق، وبكسل واحد أو مقاس مختلف أو ملف تالف غير مطابق', () => {
+  const a = tileIcon(16);
+  // البكسلات من محتوى الأصل نفسه (بعد الرأس: بايت المرشّح ثم RGBA لكل صف)، ثم PNG بلا ضغط (المستوى 0) كما يختلف ضغط مكتبتي zlib.
+  const content = assetContent(a);
+  const raw = content.subarray(Buffer.byteLength('PNG-CONTENT\0') + 13);
+  const rgba = Buffer.alloc(16 * 16 * 4);
+  for (let y = 0; y < 16; y++) raw.copy(rgba, y * 64, y * 65 + 1, (y + 1) * 65);
+  const stored = png(16, 16, rgba, { level: 0 });
+  assert.ok(!a.equals(stored), 'الضغطان مختلفان بايتًا');
+  assert.ok(sameAsset(a, stored), 'والمحتوى واحد');
+  const changed = Buffer.from(rgba);
+  changed[16 * 8 * 4 + 32] ^= 1;
+  assert.ok(!sameAsset(a, png(16, 16, changed)), 'بكسل واحد مختلف');
+  assert.ok(!sameAsset(a, tileIcon(32)), 'مقاس مختلف');
+  const broken = Buffer.from(a);
+  broken[40] ^= 0xFF;
+  assert.throws(() => sameAsset(a, broken), /PNG/);
+  assert.ok(sameAsset(Buffer.from('<svg/>'), Buffer.from('<svg/>')) && !sameAsset(Buffer.from('<svg/>'), Buffer.from('<svg />')), 'غير PNG بايتًا');
 });
 
 test('أيقونات البيان PNG بأحجامها الأربعة، وزواياها شفافة ووسطها صنوبر (بلا شفافية في جسم البلاطة)', () => {

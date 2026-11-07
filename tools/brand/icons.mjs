@@ -6,16 +6,17 @@
 // translate(2 2.7) scale(0.06) بزاوية 4، و128 هي بلاطة 48 مكبّرة (128/48).
 //
 // يرسم بلا متصفح ولا شبكة ولا اعتمادية: المسارات تُسطَّح مضلعات (المنحنيات والأقواس بقطع صغيرة)، وتُملأ بقاعدة nonzero بأخذ 16
-// عيّنة رأسية لكل بكسل وتغطية أفقية دقيقة لكل عيّنة، ثم تُركّب بألفا sRGB، ويُكتب PNG بـzlib المدمج. الناتج حتمي: المدخلات
-// نفسها تعطي البايتات نفسها.
+// عيّنة رأسية لكل بكسل وتغطية أفقية دقيقة لكل عيّنة، ثم تُركّب بألفا sRGB، ويُكتب PNG بـzlib المربوط بـNode. الناتج حتمي في
+// بكسلاته: المدخلات نفسها تعطي الرأس والبكسلات نفسها. أما البايتات المضغوطة فتتبع مكتبة zlib (zlib النظام في macOS غير المضمّنة في
+// نسخ Node الرسمية، كما في U63 للأرشيفات)، فالمطابقة والفحص بالمحتوى بعد فك الضغط (assetContent).
 //
 //   command node tools/brand/icons.mjs            يكتب src/icons/tarjuman-icon-{16,32,48,128}.png وملفي المصدر في tools/brand/،
 //                                                 وأيقونة متجر Chrome ‏128 وشعار Edge ‏300 في store/icons/ (لوحة الهوية 18)
-//   command node tools/brand/icons.mjs --check    يفشل إن اختلف ملف متتبَّع عمّا يولّده
+//   command node tools/brand/icons.mjs --check    يفشل إن اختلف ملف متتبَّع عمّا يولّده في رأسه أو بكسلاته (أو بايتاته لغير PNG)
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deflateSync } from 'node:zlib';
+import { deflateSync, inflateSync } from 'node:zlib';
 import { LOGO_VIEWBOX, MARK_BOOK, MARK_BOOK_SMALL, MARK_DOTS } from '../../src/ui/logo.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -185,15 +186,15 @@ function chunk(type, data) {
   crc.writeUInt32BE(crc32(td));
   return Buffer.concat([len, td, crc]);
 }
-/** PNG بعمق 8 RGBA بلا مرشّح، وزلب بمستوى 9 (حتمي). */
-export function png(w, h, rgba) {
+/** PNG بعمق 8 RGBA بلا مرشّح، وزلب بمستوى 9 افتراضيًا (level للاختبار وحده: ضغط آخر للبكسلات نفسها). */
+export function png(w, h, rgba, { level = 9 } = {}) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0);
   ihdr.writeUInt32BE(h, 4);
   ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
   const raw = Buffer.alloc((w * 4 + 1) * h);
   for (let y = 0; y < h; y++) rgba.copy(raw, y * (w * 4 + 1) + 1, y * w * 4, (y + 1) * w * 4);
-  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level })), chunk('IEND', Buffer.alloc(0))]);
 }
 
 // ---- الأصول ----
@@ -252,6 +253,35 @@ export function sourceSvg({ small = false } = {}) {
 `;
 }
 
+/**
+ * ما يحدده المولّد في ملف: لـPNG رأسه (IHDR) وبكسلاته بعد فك الضغط وقطعه الأخرى بأنواعها، بعد التحقق من CRC كل قطعة (ملف تالف
+ * يرمي). ولغير PNG بايتاته كما هي. فضغطٌ آخر للصورة نفسها مطابق، وبكسل واحد أو مقاس أو قطعة مختلفة غير مطابق.
+ * @param {Buffer} buf
+ */
+export function assetContent(buf) {
+  if (buf.length < 8 || buf.readUInt32BE(0) !== 0x89504E47 || buf.readUInt32BE(4) !== 0x0D0A1A0A) return buf;
+  const ihdr = [];
+  const idat = [];
+  const other = [];
+  let end = false;
+  for (let o = 8; o < buf.length && !end;) {
+    if (o + 12 > buf.length) throw new Error('PNG مقطوع');
+    const n = buf.readUInt32BE(o);
+    const td = buf.subarray(o + 4, o + 8 + n);
+    if (o + 12 + n > buf.length || crc32(td) !== buf.readUInt32BE(o + 8 + n)) throw new Error('PNG بقطعة تالفة');
+    const type = td.toString('latin1', 0, 4);
+    if (type === 'IHDR') ihdr.push(td.subarray(4));
+    else if (type === 'IDAT') idat.push(td.subarray(4));
+    else if (type === 'IEND') end = true;
+    else other.push(td);
+    o += 12 + n;
+  }
+  if (ihdr.length !== 1 || !idat.length || !end) throw new Error('PNG بلا IHDR واحد أو IDAT أو IEND');
+  return Buffer.concat([Buffer.from('PNG-CONTENT\0'), ihdr[0], inflateSync(Buffer.concat(idat)), ...other]);
+}
+/** أصلان متطابقان في محتواهما (assetContent). */
+export const sameAsset = (a, b) => assetContent(a).equals(assetContent(b));
+
 export const OUTPUTS = Object.freeze({
   ...Object.fromEntries(Object.keys(MANIFEST_ICONS).map((n) => [`src/icons/tarjuman-icon-${n}.png`, () => tileIcon(Number(n))])),
   'tools/brand/tarjuman-A-asil.svg': () => Buffer.from(sourceSvg()),
@@ -267,7 +297,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const file = path.join(ROOT, rel);
     const bytes = make();
     if (check) {
-      if (!existsSync(file) || !readFileSync(file).equals(bytes)) stale.push(rel);
+      if (!existsSync(file) || !sameAsset(readFileSync(file), bytes)) stale.push(rel);
     } else {
       writeFileSync(file, bytes);
       console.log(`كُتب ${rel} (${bytes.length} بايت)`);
