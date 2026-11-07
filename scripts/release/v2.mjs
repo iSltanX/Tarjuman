@@ -280,6 +280,8 @@ const ev = {
   data: await readJson('docs/evidence/AA5/data/data.json'),
   site: await readJson('docs/evidence/AA5/site/site.json'),
   checks: await readJson('docs/evidence/AA5/checks.json'),
+  t3: Object.fromEntries(await Promise.all(['brave', 'chrome', 'edge', 'firefox'].map(async (b) => [b, await readJson(`docs/evidence/AA5/t3/${b}/t3.json`)]))),
+  identity: Object.fromEntries(await Promise.all(['brave', 'chrome'].map(async (b) => [b, await readJson(`docs/evidence/AA5/identity/${b}/live.json`)]))),
   t8: Object.fromEntries(await Promise.all(['brave', 'chrome', 'edge', 'firefox'].map(async (b) => [b, await readJson(`docs/evidence/AA5/t8/${b}/result.json`)]))),
 };
 const tally = (r) => (r?.checks ? `${r.checks.filter((c) => c.ok).length}/${r.checks.length}` : 'غير متاح');
@@ -320,6 +322,8 @@ const values = {
   SITE_E2E: ev.site ? `${ev.site.e2e.passed}/${ev.site.e2e.passed + ev.site.e2e.failed}` : 'غير متاح',
   CHECK_UNIT: ev.checks ? `${ev.checks.checkWave.unit.pass}/${ev.checks.checkWave.unit.tests}` : 'غير متاح',
   CHECK_INT: ev.checks ? `${ev.checks.checkWave.integration.pass}/${ev.checks.checkWave.integration.tests}` : 'غير متاح',
+  T3: ['brave', 'chrome', 'edge', 'firefox'].map((b) => { const r = ev.t3[b]?.summary; return `${{ brave: 'Brave', chrome: 'Chrome', edge: 'Edge', firefox: 'Firefox' }[b]} ${r ? `${r.passed}/${r.total}` : 'غير متاح'}`; }).join('، '),
+  IDENTITY: ['brave', 'chrome'].map((b) => { const r = ev.identity[b]?.summary; return `${b === 'brave' ? 'Brave' : 'Chrome'} ${r ? `${r.passed}/${r.total}` : 'غير متاح'}`; }).join('، '),
   E2E_STATIC: ev.checks ? `${ev.checks.e2eStaticAndRegression.pass}/${ev.checks.e2eStaticAndRegression.tests}` : 'غير متاح',
 };
 let readme = template;

@@ -1,0 +1,328 @@
+{
+  "browser": "Brave 157.1.99.55 (Chrome/157.0.8103.39)",
+  "target": "chromium",
+  "at": "2026-11-07T19:16:46.903Z",
+  "headless": true,
+  "video": "iG9CE55wbtY",
+  "extension": null,
+  "checks": [
+    {
+      "id": "install",
+      "ok": true,
+      "detail": {
+        "extension": "pfdnopfdljdmapdbpcaekkpelafoanlm",
+        "version": "Chrome/157.0.8103.39"
+      }
+    },
+    {
+      "id": "content-script-mounted",
+      "ok": true,
+      "detail": {
+        "player": true,
+        "mounted": {
+          "overlay": "mounted",
+          "controls": "mounted",
+          "panel": "mounted"
+        },
+        "base": "معروف"
+      }
+    },
+    {
+      "id": "bridge-main-world-wrappers",
+      "ok": true,
+      "detail": {
+        "fetch": true,
+        "xhrOpen": true,
+        "webdriver": true
+      }
+    },
+    {
+      "id": "capture-via-bridge",
+      "ok": true,
+      "detail": {
+        "captured": [
+          {
+            "key": "en|manual",
+            "ok": true
+          }
+        ],
+        "english": {
+          "key": "en|manual",
+          "kind": "manual",
+          "count": 427,
+          "source": "captured"
+        },
+        "expected": 427
+      }
+    },
+    {
+      "id": "ui-fonts-loaded",
+      "ok": true,
+      "detail": {
+        "fonts": [
+          "Tarjuman UI Cairo:700:loaded",
+          "Tarjuman UI Cairo:800:loaded",
+          "Tarjuman UI Almarai:400:loaded",
+          "Tarjuman UI Almarai:700:loaded"
+        ]
+      }
+    },
+    {
+      "id": "player-menu-without-copy",
+      "ok": true,
+      "detail": {
+        "items": [
+          "mode:normal",
+          "mode:long",
+          "download",
+          "fallback"
+        ]
+      }
+    },
+    {
+      "id": "srt-download",
+      "ok": true,
+      "detail": {
+        "file": "iG9CE55wbtY.en.manual.normal.srt",
+        "bytes": 32411,
+        "expectedSha": "7770a795775890e6",
+        "sha": "7770a795775890e6",
+        "line": "نُزّل",
+        "fallback": false
+      }
+    },
+    {
+      "id": "copy-instructions-from-popup",
+      "ok": true,
+      "detail": {
+        "status": "Do schools kill creativity? | Sir Ken Robinson | TEDلا ترجمة محفوظة بعدالإنجليزي",
+        "block": "تعليمات الترجمةمنالإنجليزيةإلىالعربية«من",
+        "copied": {
+          "chars": 3454,
+          "sha": "b8454216eb31e88d"
+        },
+        "accepted": [
+          "b8454216eb31e88d",
+          "b8454216eb31e88d"
+        ],
+        "state": "success",
+        "title": "معروف"
+      }
+    },
+    {
+      "id": "arabic-upload-from-player",
+      "ok": true,
+      "detail": {
+        "chooser": true,
+        "arabic": {
+          "count": 427,
+          "fileName": "iG9CE55wbtY.en.manual.normal.ar.srt",
+          "edited": false,
+          "first": "صباح الخير. كيف حالكم؟"
+        },
+        "expected": 427
+      }
+    },
+    {
+      "id": "display-arabic-over-video",
+      "ok": true,
+      "detail": {
+        "ad": {
+          "seen": false,
+          "skipped": 0
+        },
+        "seeks": 1,
+        "at": 62.2295,
+        "cue": 13,
+        "shown": [
+          "والثاني أنه وضعنا في موضع"
+        ]
+      }
+    },
+    {
+      "id": "subtitle-fonts-read-from-package",
+      "ok": true,
+      "detail": {
+        "fonts": [
+          "Tarjuman Subtitle Almarai:400:loaded",
+          "Tarjuman Subtitle Almarai:700:loaded"
+        ]
+      }
+    },
+    {
+      "id": "timing-plus-minus",
+      "ok": true,
+      "detail": {
+        "before": 0,
+        "plus": 500,
+        "back": 0
+      }
+    },
+    {
+      "id": "editor-edit-reaches-player",
+      "ok": true,
+      "detail": {
+        "typed": true,
+        "cue1": "ينتهي بالتعديل"
+      }
+    },
+    {
+      "id": "saved-and-restored-after-reload",
+      "ok": true,
+      "detail": {
+        "arabic": {
+          "count": 427,
+          "fileName": "iG9CE55wbtY.en.manual.normal.ar.srt",
+          "edited": true,
+          "first": "صباح الخير. كيف حالكم؟ — عدّلته في T3"
+        }
+      }
+    },
+    {
+      "id": "backup-created",
+      "ok": true,
+      "detail": {
+        "file": "tarjuman-backup-2026-11-07.json",
+        "counts": {
+          "videos": 1,
+          "translations": 1,
+          "previous": 0,
+          "marks": 0,
+          "settings": true,
+          "prefs": true
+        }
+      }
+    },
+    {
+      "id": "report-preview",
+      "ok": true,
+      "detail": {
+        "rows": {
+          "product": "tarjuman",
+          "kind": "خلل (bug)",
+          "app_version": "2.0.0",
+          "diagnostics.browser · browser_version": "Brave 157.0.0.0",
+          "diagnostics.build_target": "chromium",
+          "os · os_version · arch": "macos 27.2.0 · arm64",
+          "locale": "ar",
+          "test": "نعم: بناء تطوير"
+        },
+        "payloadKeys": [
+          "product",
+          "app_version",
+          "os",
+          "os_version",
+          "arch",
+          "locale",
+          "kind",
+          "description",
+          "diagnostics",
+          "test"
+        ]
+      }
+    },
+    {
+      "id": "report-copy-offline",
+      "ok": true,
+      "detail": {
+        "same": true,
+        "copiedLength": 327,
+        "jsonLength": 327,
+        "result": "نُسخ البلاغ نصًّا. لم يُرسل شيء."
+      }
+    },
+    {
+      "id": "report-error-row",
+      "ok": null,
+      "detail": {
+        "note": "لم يُرد الإذن ولا الطلب في 25 ثانية بلا نافذة (حوار الإذن ينتظر يدًا)؛ يُختبر في الجلسة اليدوية",
+        "blocked": 0
+      }
+    },
+    {
+      "id": "uninstall-removes-storage",
+      "ok": true,
+      "detail": {
+        "uninstall": {
+          "method": "Extensions.uninstall"
+        },
+        "before": [
+          {
+            "dir": "pfdnopfdljdmapdbpcaekkpelafoanlm",
+            "bytes": 533632
+          }
+        ],
+        "after": [
+          {
+            "dir": "pfdnopfdljdmapdbpcaekkpelafoanlm",
+            "bytes": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "reinstall-starts-empty",
+      "ok": true,
+      "detail": {
+        "videoKeys": 0
+      }
+    },
+    {
+      "id": "backup-restore-after-reinstall",
+      "ok": true,
+      "detail": {
+        "chooser": true,
+        "report": "اكتملت الاستعادة.أضيف 1 · تُخطّي 0 · استُبدل 0 · تعذّر 0",
+        "restored": true
+      }
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "notes": [
+    "استقرار صفحة يوتيوب: {\"url\":\"/watch?v=iG9CE55wbtY\",\"changes\":0}",
+    "إعلان عند الفتح: {\"seen\":false,\"skipped\":0}"
+  ],
+  "screenshots": [
+    "popup.png",
+    "youtube-display.png",
+    "editor.png",
+    "settings-report.png",
+    "settings-restore.png"
+  ],
+  "errors": [
+    {
+      "where": "youtube",
+      "errors": [],
+      "fontReadLogs": 8
+    },
+    {
+      "where": "pages/editor/index.html",
+      "errors": [],
+      "fontReadLogs": 0
+    },
+    {
+      "where": "pages/settings/index.html",
+      "errors": [],
+      "fontReadLogs": 0
+    },
+    {
+      "where": "pages/settings/index.html",
+      "errors": [],
+      "fontReadLogs": 0
+    }
+  ],
+  "summary": {
+    "passed": 21,
+    "total": 21,
+    "untested": [
+      "report-error-row"
+    ]
+  },
+  "screenshotsInRepo": [
+    "popup.png"
+  ]
+}
