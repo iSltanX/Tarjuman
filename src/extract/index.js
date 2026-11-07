@@ -129,9 +129,11 @@ export function createExtractor(env) {
     // يُحوَّل قبل أن يحل محل شيء: التقاط لا يُحوَّل (بنية معيبة، أو بلا أحداث نصية) لا يحل محل التقاط سليم للمفتاح
     // نفسه، بل يُسجَّل رفضًا في التشخيص ويبقى السليم (تدقيق 7a66f91، U32). وبلا سابق سليم يبقى خانةً ليرى المستخدم رمزه.
     // وفشل الحدود وحده يتبع المدة اللحظية (تُعاد قراءتها عند كل طلب)، فلا يُبقي السابق: الأحدث يحل محله كما كان.
-    const probe = { entry: { body: msg.body, trackKind: msg.trackKind }, runs: new Map() };
-    const conv = run(probe, 'normal');
+    // وجسم مطابق لآخر التقاط للمفتاح نفسه (إيقاف CC وتشغيلها، أو رسالة مكررة من الصفحة) لا يُحوَّل من جديد: تحويلاته هي نفسها
+    // (تدقيق Fable، FA-07: نحو 120 م.ث لكل تكرار بستين ألف حدث).
     const prev = slots.get(key);
+    const probe = { entry: { body: msg.body, trackKind: msg.trackKind }, runs: prev && prev.entry.body === msg.body ? prev.runs : new Map() };
+    const conv = run(probe, 'normal');
     if (!conv.ok && conv.code !== 'EX_BEYOND_DURATION' && prev && run(prev, 'normal').ok) {
       captures.reject({
         code: conv.code, detail: 'لم يُحوَّل، والالتقاط السليم السابق باقٍ', videoId: msg.videoId, currentVideoId: current, lang: msg.lang,
@@ -172,6 +174,7 @@ export function createExtractor(env) {
      * @returns {{ accepted: boolean, code: string | null }}
      */
     handleMessage(data) {
+      pending.prune(now());
       const msg = validateCaptureMessage(data);
       return msg ? evaluate(msg) : { accepted: false, code: null };
     },
@@ -227,6 +230,7 @@ export function createExtractor(env) {
       accepted: captures.accepted().length,
       rejected: captures.rejected().reduce((m, r) => ({ ...m, [r.code]: (m[r.code] ?? 0) + 1 }), {}),
       pending: pending.size,
+      pendingChars: pending.chars,
       listenerFailures,
       tracks: [...slots].map(([key, slot]) => {
         const info = infoOf(key, slot);
