@@ -2,8 +2,8 @@
 // دخان حزم المتجر النهائية (جولة النشر T8، docs/store-release.md): الحزمة نفسها التي تُرفع، بلا جسر تطوير، في متصفحها:
 //   Brave وChrome من tarjuman-<الإصدار>-chrome.zip، وEdge من -edge.zip، وFirefox من -firefox.zip. بلا نافذة ومكتوم الصوت، وملف
 //   تعريف جديد خارج المستودع، ويوتيوب بلا حساب. يكمّل t3.mjs (الدورة كلها ببناء التطوير من المصدر نفسه بجسره): هنا ما يخص الحزمة:
-//   بصمتها في SHA256SUMS ← التثبيت ← البيان (الإصدار والاسم والأذونات) ← «حول» (الإصدار، ورابطا الموقع وصفحة الدعم، والإبلاغ،
-//   وسطر Lucide وملف الإشعارات) ← في Firefox موافقة صور المحفوظات غير ممنوحة عند التثبيت ← سكربت المحتوى يركّب شريطه في يوتيوب
+//   بصمتها في SHA256SUMS ← التثبيت ← البيان (الإصدار والاسم والأذونات) ← «حول» (الإصدار، وروابط الموقع والمستودع وصفحة الدعم، والإبلاغ،
+//   وسطر الأيقونات وملف الإشعارات) ← في Firefox موافقة صور المحفوظات غير ممنوحة عند التثبيت ← سكربت المحتوى يركّب شريطه في يوتيوب
 //   ← لا أخطاء من الإضافة ← الإزالة.
 //   command npm run package
 //   command node test/live/stores/t8-packages.mjs --browser brave|chrome|edge|firefox [--out docs/evidence/T8/packages/<browser>]
@@ -31,6 +31,7 @@ const VIDEO = 'Y-rmzh0PI3c';
 const WATCH = `https://www.youtube.com/watch?v=${VIDEO}`;
 const SITE = 'https://bysltan.com';
 const SUPPORT = 'https://bysltan.com/tarjuman/support';
+const REPO = 'https://github.com/iSltanX/Tarjuman';
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const WORK = path.join(PROFILE_ROOT, 't8-work', `${browser}-${RUN}`);
 const EXT = path.join(WORK, 'ext');
@@ -110,16 +111,17 @@ try {
           external: links.filter((l) => /^https?:/.test(l.getAttribute('href') ?? '')).map((l) => ({ href: l.getAttribute('href'), text: l.textContent.trim(), target: l.getAttribute('target'), rel: l.getAttribute('rel') })),
           notices: links.filter((l) => /THIRD_PARTY_NOTICES\.txt$/.test(l.getAttribute('href') ?? '')).map((l) => l.textContent.trim()),
           report: [...(sec?.querySelectorAll('button, summary') ?? [])].some((b) => b.textContent.includes('الإبلاغ عن مشكلة')),
-          lucide: t.includes('وأغلب أيقونات الواجهة من Lucide برخصة ISC، وبعضها مشتق من Feather برخصة MIT.'),
-          repo: t.includes('المستودع على GitHub'),
+          lucide: t.includes('وأيقونات الواجهة رُسمت لهوية ترجمان؛ وترخيصا Lucide (ISC) وFeather (MIT) في ملف الإشعارات لأن الإصدارات السابقة استعملت أيقوناتهما.'),
+          credits: t.includes('التصميم والتطوير') && t.includes('سلطان') && t.includes('© 2026 سلطان (BySultan). جميع الحقوق محفوظة.'),
         };
       });
       const hrefs = a.external.map((x) => x.href).sort();
       check('about-version', a.version.some((r) => r.includes(VERSION)), { rows: a.version });
-      check('about-links-site-and-support', JSON.stringify(hrefs) === JSON.stringify([SITE, SUPPORT].sort()) && a.external.every((x) => x.target === '_blank' && /noopener/.test(x.rel ?? '')) && !a.repo,
+      // روابط «حول» الثلاثة منذ 2.0.0 (الموقع والمستودع العام والدعم) وبطاقة الحقوق بطلب سلطان (2026-11-07).
+      check('about-links-site-repo-and-support', JSON.stringify(hrefs) === JSON.stringify([SITE, REPO, SUPPORT].sort()) && a.external.every((x) => x.target === '_blank' && /noopener/.test(x.rel ?? '')) && a.credits,
         { links: a.external.map((x) => ({ text: x.text, target: x.target })), support: a.external.some((x) => x.href === SUPPORT && x.text === 'الدعم والخصوصية') });
       check('about-report-button', a.report);
-      check('about-lucide-line-and-notices-link', a.lucide && a.notices.length === 1, { notices: a.notices });
+      check('about-icons-line-and-notices-link', a.lucide && a.notices.length === 1, { notices: a.notices });
       const notices = await readFile(path.join(EXT, 'THIRD_PARTY_NOTICES.txt'), 'utf8').catch(() => '');
       check('notices-file-shipped', /Lucide/.test(notices) && /Feather/.test(notices), { bytes: notices.length });
     });

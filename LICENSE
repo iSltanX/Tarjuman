@@ -2,13 +2,13 @@
 
 حقوق النشر © 2026 سلطان (BySultan)، https://bysltan.com. جميع الحقوق محفوظة.
 
-يشمل ذلك شيفرة ترجمان المصدرية والمبنية، وتصميم واجهاته وهويته «باذنجاني على رمادي» وشعاره «المعيّنان المتشابكان» وأيقونات شريط المشغّل الخمس، ونصوص الواجهة والوثائق، وتعليمات الترجمة والاستكمال المضمّنة فيه.
+يشمل ذلك شيفرة ترجمان المصدرية والمبنية، وتصميم واجهاته، وهويته البصرية وشعاره، وأيقونات واجهته المرسومة له، ونصوص الواجهة والوثائق، وتعليمات الترجمة والاستكمال المضمّنة فيه.
 
 ترجمان غير مطروح بأي ترخيص مفتوح المصدر. فلا يجوز نسخه ولا تعديله ولا توزيعه ولا نشره ولا بيعه ولا الترخيص به لغيرك، كله أو بعضه، إلا بإذن مكتوب مسبق من صاحب الحقوق. ومن ثبّت ترجمان من متجر إضافات أو من حزمة نشرها صاحب الحقوق فله أن يستعمله على أجهزته، ولا يمنحه ذلك حقًّا غير الاستعمال.
 
 وما ليس من عمل ترجمان يبقى لأصحابه بتراخيصهم، ولا يغيّر هذا الملف شيئًا منها:
 - الخطوط المضمّنة الخمسة (المراعي، ونوتو سانس العربي، وتجوّل، ومركزي، والقاهرة)، برخصة SIL Open Font License 1.1.
-- أغلب أيقونات الواجهة، من Lucide برخصة ISC، وبعضها مشتق من Feather برخصة MIT.
+- أيقونات Lucide التي استعملتها الإصدارات حتى 1.1.0، برخصة ISC، وبعضها مشتق من Feather برخصة MIT؛ وترخيصهما باقٍ للإسناد.
 - دوال مساعدة صغيرة يدرجها esbuild في الشيفرة المبنية، برخصة MIT.
 - أدوات البناء والفحص (esbuild وweb-ext)، ولا تُشحن مع الإضافة.
 نسبتها ونصوص تراخيصها في THIRD_PARTY_NOTICES.txt، وهو في جذر المستودع وفي كل حزمة.
@@ -21,13 +21,13 @@ Tarjuman
 
 Copyright © 2026 Sultan (BySultan), https://bysltan.com. All rights reserved.
 
-This covers Tarjuman's source and built code, the design of its interfaces, its visual identity and logo, the five player-bar icons, its interface text and documentation, and the translation and completion instructions it includes.
+This covers Tarjuman's source and built code, the design of its interfaces, its visual identity and logo, the interface icons drawn for it, its interface text and documentation, and the translation and completion instructions it includes.
 
 Tarjuman is not offered under any open-source license. No right to copy, modify, distribute, publish, sell or sublicense it, in whole or in part, is granted without prior written permission from the copyright holder. Anyone who installs Tarjuman from a browser extension store, or from a package published by the copyright holder, may use it on their own devices; this grants no right other than use.
 
 Works that are not Tarjuman's own remain with their owners under their own licenses, and nothing in this file changes them:
 - The five bundled fonts (Almarai, Noto Sans Arabic, Tajawal, Markazi Text and Cairo), under the SIL Open Font License 1.1.
-- Most interface icons, from Lucide under the ISC License, some of them derived from Feather under the MIT License.
+- The Lucide icons used by versions up to 1.1.0, under the ISC License, some of them derived from Feather under the MIT License; their license is kept for attribution.
 - Small helper functions that esbuild inserts into the built code, under the MIT License.
 - The build and test tools (esbuild and web-ext), which are not shipped with the extension.
 Their attributions and license texts are in THIRD_PARTY_NOTICES.txt, at the root of the repository and of every package.
