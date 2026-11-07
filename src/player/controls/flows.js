@@ -1,41 +1,41 @@
 // تدفقا الشريط فوق وحدات W3 وW6 (عقد interfaces §٥ و§٦ و§١٣) دون منطق تصدير أو استيراد هنا:
-// التحميل: controller.convertCaptured ← buildExport (والتقسيم عند الجمل أو الصمت) ← تعليمات الترجمة بالقاموس إن أُرفق ←
-// saveFile لكل ملف (مكان الحفظ من الإعدادات) ← controller.recordExport (البصمة).
+// التحميل: controller.convertCaptured ← buildExport (والتقسيم عند الجمل أو الصمت) ← saveFile لكل ملف (مكان الحفظ من
+// الإعدادات) ← controller.recordExport (البصمة). تعليمات الترجمة (من ← إلى) تُنسخ من نافذة الإضافة وحدها منذ AA3.
 // الرفع: readImport (فحص ومقارنة) ← reviewIncoming (المرجع الأقرب) وvideoIdFromName (قرينة الاسم) ← controller.loadArabicInto إلى الخانة المختارة (بتأكيد
-// مضغوط إن وُجدت ترجمة أو دل الاسم على فيديو آخر).
+// مضغوط إن وُجدت ترجمة أو دل الاسم على فيديو آخر)، ولغة الملف من رمز صريح في اسمه، وإلا «إلى» في نافذة الإضافة إن وافق نصها.
 // كل تدفق يثبّت معرّف الفيديو عند بدئه، فنتيجة تأخرت حتى تبدّل الفيديو لا تُطبَّق على الجديد أبدًا.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { previewComparison, videoIdFromName, withSuggestedReference } from '../../core/import/index.js';
-import { DEFAULT_TARGET_LANG } from '../../core/model/lang-prefs.js';
+import { scriptLetterPattern } from '../../core/lang/index.js';
 
 const infoOf = (code, params) => ({ code, message: messageFor(code, params) });
 
 /**
- * مصطلحات القاموس المرفقة بالتعليمات، أو null: «أرفق القاموس» مفعّل وفيه مصطلح (عقد data-model §١٤).
- * @param {import('../../core/model/prefs.js').Prefs | null | undefined} prefs
+ * هل يوافق نص الملف نص كتابة اللغة المقترحة (AA3): أكثر حروف أول المقاطع من نصها. لا يستنتج لغة من النص أبدًا، وإنما يمنع وسم ملف
+ * فرنسي بالعربية لأن «إلى» في النافذة عربية فيُعرض بغير اتجاهه. اللغة التي لا يُعرف نصها تُقبل، ونص بلا حروف يُقبل.
+ * @param {{ text: string }[]} cues @param {string} lang
  */
-export const attachedGlossary = (prefs) => (prefs?.glossary?.attach && prefs.glossary.terms?.length ? prefs.glossary.terms : null);
-
-/**
- * التصدير لمسار ملتقط بوضعه: المقاطع كما يعطيها المتحكم (لا إزاحة فيها أبدًا)، والملفات والبصمة، ونص التعليمات بأجزائه
- * وبالقاموس إن أُرفق (instructions نفسها التي تنسخ بها المحفوظات ونافذة الأيقونة). لا يُعرض النص أبدًا.
- * @param {{ controller: object, exportFlow: { buildExport: Function, instructions?: Function }, key: string, mode: 'normal' | 'long', split: { size: number, by?: string } | null, now: number }} p
- * @returns {{ ok: true, built: { files: { name: string, text: string, part: object | null }[], fingerprint: object, instructions: string, warnings: string[] }, videoId: string, text: string }
- *   | { ok: false, error: { code: string, message: string } }}
- */
-// AA3: اللغة المطلوبة من زوج نافذة الإضافة، ويُزال نسخ التعليمات من المشغّل (قرار سلطان، البند الخامس). حتى ذلك الحين الافتراضي.
-const INTERIM_TARGET = DEFAULT_TARGET_LANG;
-
-/**
- * نص التعليمات بالقاموس إن أُرفق، أو null حين لا تعليمات (لغة المسار هي اللغة المطلوبة نفسها). لا يُعرض النص أبدًا.
- * @param {{ s: object, exportFlow: object, built: { instructions: string | null, fingerprint: { parts: object[] | null } }, track: { lang: string, via?: string | null } }} p
- */
-function withGlossary({ s, exportFlow, built, track }) {
-  const glossary = attachedGlossary(s.prefs);
-  if (!built.instructions || !glossary || !exportFlow.instructions) return built.instructions;
-  return exportFlow.instructions({ videoId: s.videoId, title: s.title, parts: built.fingerprint.parts ?? null, glossary, source: track.lang, target: INTERIM_TARGET, via: track.via ?? null });
+export function textFitsLang(cues, lang) {
+  const re = scriptLetterPattern(lang);
+  if (!re) return true;
+  let letters = 0;
+  let fit = 0;
+  for (const c of cues.slice(0, 200)) {
+    for (const ch of String(c?.text ?? '')) {
+      if (!/\p{L}/u.test(ch)) continue;
+      letters++;
+      if (re.test(ch)) fit++;
+    }
+  }
+  return letters === 0 || fit / letters >= 0.5;
 }
 
+/**
+ * التصدير لمسار ملتقط بوضعه: المقاطع كما يعطيها المتحكم (لا إزاحة فيها أبدًا)، والملفات والبصمة. لا تعليمات هنا (AA3).
+ * @param {{ controller: object, exportFlow: { buildExport: Function }, key: string, mode: 'normal' | 'long', split: { size: number, by?: string } | null, now: number }} p
+ * @returns {{ ok: true, built: { files: { name: string, text: string, part: object | null }[], fingerprint: object, warnings: string[] }, videoId: string }
+ *   | { ok: false, error: { code: string, message: string } }}
+ */
 export function prepareExport({ controller, exportFlow, key, mode, split, now }) {
   const s = controller.getState();
   const conv = controller.convertCaptured(key, { mode });
@@ -44,19 +44,19 @@ export function prepareExport({ controller, exportFlow, key, mode, split, now })
     const built = exportFlow.buildExport({
       videoId: s.videoId, title: s.title,
       track: { key, lang: conv.lang, kind: conv.kind, via: conv.via ?? null, cues: conv.cues, warnings: conv.warnings },
-      mode, split, now, target: INTERIM_TARGET,
+      mode, split, now, target: null,
     });
-    return { ok: true, built, videoId: s.videoId, text: withGlossary({ s, exportFlow, built, track: conv }) };
+    return { ok: true, built, videoId: s.videoId };
   } catch (err) {
     return { ok: false, error: toErrorInfo(err) };
   }
 }
 
 /**
- * تصدير المسار الإنجليزي المحفوظ (تدقيق Fable، FA-17 = B2، بقرار سلطان 2026-11-07): حين لا التقاط حي في هذه الزيارة ومسار
- * الفيديو الإنجليزي محفوظ من تنزيل سابق، يُصدَّر المحفوظ بالوضع العادي كما تفعل المحفوظات (exportEnglish)، بتعليماته وبالقاموس
- * إن أُرفق. المقاطع المحفوظة تحويل الوضع العادي نفسه، فلا وضع طويل ولا تقسيم هنا (يحتاجان التقاطًا حيًا).
- * @param {{ controller: object, exportFlow: { buildExport: Function, instructions?: Function }, now: number }} p
+ * تصدير مسار الأصل المحفوظ (تدقيق Fable، FA-17 = B2، بقرار سلطان 2026-11-07): حين لا التقاط حي في هذه الزيارة والمسار محفوظ من
+ * تنزيل سابق، يُصدَّر المحفوظ بالوضع العادي كما تفعل المحفوظات (exportEnglish). المقاطع المحفوظة تحويل الوضع العادي نفسه، فلا وضع
+ * طويل ولا تقسيم هنا (يحتاجان التقاطًا حيًا).
+ * @param {{ controller: object, exportFlow: { buildExport: Function }, now: number }} p
  */
 export function prepareSavedExport({ controller, exportFlow, now }) {
   const s = controller.getState();
@@ -66,9 +66,9 @@ export function prepareSavedExport({ controller, exportFlow, now }) {
     const built = exportFlow.buildExport({
       videoId: s.videoId, title: s.title,
       track: { key: t.key, lang: t.lang, kind: t.kind, via: t.via ?? null, cues: t.cues },
-      mode: 'normal', split: null, now, target: INTERIM_TARGET,
+      mode: 'normal', split: null, now, target: null,
     });
-    return { ok: true, built, videoId: s.videoId, text: withGlossary({ s, exportFlow, built, track: t }), key: t.key };
+    return { ok: true, built, videoId: s.videoId, key: t.key };
   } catch (err) {
     return { ok: false, error: toErrorInfo(err) };
   }
@@ -139,54 +139,14 @@ export function partSizes(p) {
 }
 
 /**
- * نسخ نص إلى الحافظة: واجهة الحافظة أولًا، ثم نسخ من حقل مؤقت غير ظاهر داخل الجذر المغلق. لا يُعرض النص.
- * @param {string} text
- * @param {{ doc: Document, win: Window, root: ShadowRoot | Element }} env
- * @returns {Promise<boolean>}
- */
-export async function copyText(text, { doc, win, root }) {
-  try {
-    const clip = win.navigator?.clipboard;
-    if (clip && typeof clip.writeText === 'function') {
-      await clip.writeText(text);
-      return true;
-    }
-  } catch {
-    // يسقط إلى البديل
-  }
-  let ta = null;
-  const prev = root.activeElement ?? null;
-  try {
-    ta = doc.createElement('textarea');
-    ta.setAttribute('readonly', '');
-    ta.setAttribute('aria-hidden', 'true');
-    ta.style.setProperty('position', 'fixed');
-    ta.style.setProperty('opacity', '0');
-    ta.style.setProperty('pointer-events', 'none');
-    ta.value = text;
-    root.appendChild(ta);
-    ta.select();
-    return doc.execCommand('copy') === true;
-  } catch {
-    return false;
-  } finally {
-    if (ta) {
-      ta.value = '';
-      ta.remove();
-      // التحديد نقل التركيز إلى الحقل المؤقت: يعود إلى حيث كان (بند القائمة) فلا يضيع موضع لوحة المفاتيح.
-      if (prev && prev.isConnected) prev.focus();
-    }
-  }
-}
-
-/**
  * قراءة ملف أو أجزاء وفحصها ومقارنتها بالبصمات المحفوظة لهذا الفيديو. لا كتابة في التخزين هنا.
  * preview ملخص المعاينة بالمحاذاة كما يُعرض بعد الحفظ (FA-04)، وinput.comparison تقرير الحفظ بالرقم كما كان.
+ * fallbackLang: «إلى» في نافذة الإضافة لهذا الفيديو (AA3)، تُستعمل بلا رمز في الاسم إن وافق نص الملف نصها. fileLang: الرمز الصريح في الاسم.
  * @returns {Promise<
- *   { ok: true, videoId: string, input: { fileName: string, cues: object[], comparison: object | null, fingerprintId: string | null, notes: string[] }, preview: object | null, warnings: string[] }
+ *   { ok: true, videoId: string, input: { fileName: string, cues: object[], comparison: object | null, fingerprintId: string | null, notes: string[], lang: string | null }, fileLang: string | null, preview: object | null, warnings: string[] }
  *   | { ok: false, error: { code: string, message: string } }>}
  */
-export async function readFor({ controller, importFlow, files }) {
+export async function readFor({ controller, importFlow, files, fallbackLang = null }) {
   const s = controller.getState();
   const videoId = s.videoId;
   let res;
@@ -208,8 +168,10 @@ export async function readFor({ controller, importFlow, files }) {
     }
   }
   const { fileName, cues, comparison, fingerprintId, notes } = res;
-  // لغة الملف من رمز صريح في اسمه، وإلا «غير محددة» (AA1)؛ واختيارها في قائمة الرفع (AA3).
-  const lang = res.lang ?? null;
+  // لغة الملف من رمز صريح في اسمه (AA1)، وإلا «إلى» في نافذة الإضافة إن وافق نص الملف نص كتابتها، وإلا «غير محددة»؛ وتُغيَّر في
+  // التأكيد وفي قائمة الترجمة (AA3).
+  const fileLang = res.lang ?? null;
+  const lang = fileLang ?? (fallbackLang && textFitsLang(cues, fallbackLang) ? fallbackLang : null);
   // المعاينة بالمحاذاة بمرجع الحفظ نفسه؛ وبلا مرجع محفوظ أو بتعذّرها يبقى تقرير الرقم كما هو.
   let preview = comparison;
   const fp = fingerprintId ? fingerprints.find((f) => f.id === fingerprintId) ?? null : null;
@@ -224,6 +186,7 @@ export async function readFor({ controller, importFlow, files }) {
     ok: true,
     videoId,
     input: { fileName, cues, comparison, fingerprintId, notes, lang },
+    fileLang,
     preview,
     warnings: (res.warnings ?? []).map((w) => messageFor(w.code, w.params)),
   };
@@ -255,13 +218,15 @@ export async function nameHintFor({ controller, importFlow, read }) {
 
 /**
  * تحميل نتيجة القراءة إلى خانة للفيديو نفسه الذي قُرئت له وحده. current مقاطع «إبقاء تعديلاتي» بعد الدمج إن اختيرت.
- * @param {{ controller: object, read: { videoId: string, input: object }, n: 1 | 2 | 3, replace: boolean, current?: object[] | null }} p
+ * @param {{ controller: object, read: { videoId: string, input: object }, n: 1 | 2 | 3, replace: boolean, current?: object[] | null, lang?: string | null }} p
  * @returns {Promise<{ ok: true } | { ok: false, error: { code: string, message: string } }>}
  */
-export async function loadIntoFor({ controller, read, n, replace, current = null }) {
+export async function loadIntoFor({ controller, read, n, replace, current = null, lang }) {
   if (controller.getState().videoId !== read.videoId) return { ok: false, error: infoOf('CT_VIDEO_CHANGED') };
+  // لغة اختارها المستخدم في التأكيد تحل محل المقترحة (AA3).
+  const input = lang === undefined ? read.input : { ...read.input, lang };
   try {
-    await controller.loadArabicInto(n, current ? { ...read.input, current } : read.input, { replace });
+    await controller.loadArabicInto(n, current ? { ...input, current } : input, { replace });
     return { ok: true };
   } catch (err) {
     return { ok: false, error: toErrorInfo(err) };

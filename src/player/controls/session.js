@@ -6,7 +6,7 @@ import { lookupMs } from '../../core/model/timing.js';
 import { formatOffset } from '../../ui/format.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
 import { fitSize, watchBar } from './bar.js';
-import { attachedGlossary, copyText, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
+import { loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
@@ -32,9 +32,12 @@ const STEP = Object.freeze({ min: 100, max: 10000 });
 const PRESET_STEPS = [500, 1000];
 const SENTENCE_STEP = 7;
 const KIND_ORDER = { manual: 0, asr: 1 };
-/** رفض يعني أن المشغّل يعرض مسارًا غير الإنجليزية الأصلية: يُرشد إلى اختيار English بخطوات (R64). */
-const NOT_ENGLISH = new Set(['EX_NOT_ENGLISH', 'EX_TRANSLATED_TRACK']);
-/** Brave قد يختار العربية أولًا؛ يُعرف من علامته في المتصفح نفسه. @param {Navigator | undefined} nav */
+/**
+ * رفض يعني أن المشغّل يعرض مسارًا لا يُقبل: يُرشد إلى اختيار لغة أخرى من يوتيوب بخطوات (R64). منذ AA1 تُقبل أي لغة وترجمة
+ * يوتيوب الآلية، فيبقى الرمزان لرفض قديم أو مستقبلي فقط.
+ */
+const PICK_AGAIN = new Set(['EX_NOT_ENGLISH', 'EX_TRANSLATED_TRACK']);
+/** Brave قد يختار لغة المتصفح أولًا؛ يُعرف من علامته في المتصفح نفسه. @param {Navigator | undefined} nav */
 const isBrave = (nav) => !!nav && (typeof nav.brave === 'object' || (Array.isArray(nav.userAgentData?.brands) && nav.userAgentData.brands.some((b) => /brave/i.test(String(b?.brand)))));
 /** حجم الجزء من نصه، أو null خارج الحدود. @param {unknown} raw */
 const splitSizeOf = (raw) => {
@@ -50,13 +53,31 @@ const TITLE = { download: LABELS.downloadTitle, display: LABELS.displayTitle, co
 /** «جزآن»، «3 أجزاء»، «11 جزءًا» بعد «✓ نُزّل». @param {number} n */
 const partsLabel = (n) => (n === 2 ? 'جزآن' : n % 100 >= 3 && n % 100 <= 10 ? `${n} أجزاء` : `${n} جزءًا`);
 const signOf = (ms) => (Math.round(ms / 100) === 0 ? 'zero' : ms > 0 ? 'positive' : 'negative');
-const okTracks = (s) => s.captured.filter((t) => t.ok && t.cueCount > 0).sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
+// الأصلي قبل المترجم آليًا من يوتيوب (في آخر القائمة، ق٢)، ثم اليدوي قبل التلقائي.
+const okTracks = (s) => s.captured.filter((t) => t.ok && t.cueCount > 0).sort((a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
 /**
- * المسار الإنجليزي المحفوظ حين لا التقاط صالح في هذه الزيارة (FA-17): يُنزَّل من القائمة بالوضع العادي كما في المحفوظات.
+ * مسارات الفيديو في بيانات المشغّل التي لم تُلتقط في هذه الزيارة (ق١): يختارها المستخدم من يوتيوب، والإضافة لا تبدّلها.
+ * @returns {{ lang: string, kind: 'manual' | 'asr', name: string | null }[]}
+ */
+const notCaptured = (s, tracks) => (Array.isArray(s.available?.tracks) ? s.available.tracks : [])
+  .filter((t) => !tracks.some((c) => !c.via && c.lang === t.lang && c.kind === t.kind))
+  .map((t) => ({ lang: t.lang, kind: t.kind, name: t.name ?? null }));
+/**
+ * لغات مقترحة لترجمة هذا الفيديو (AA3): «إلى» في نافذة الإضافة لهذا الفيديو، وإلا الافتراضي، ثم الأخيرة. للاقتراح لا للتخمين.
+ * @returns {string[]}
+ */
+const pairTargets = (s) => {
+  const lp = s.langPrefs;
+  if (!lp) return [];
+  const saved = s.videoId ? lp.videos?.[s.videoId]?.to ?? null : null;
+  return [...new Set([saved, lp.pair?.to ?? null, ...(lp.recent ?? [])].filter(Boolean))];
+};
+/**
+ * مسار الأصل المحفوظ حين لا التقاط صالح في هذه الزيارة (FA-17): يُنزَّل من القائمة بالوضع العادي كما في المحفوظات.
  * @returns {{ key: string, lang: string, kind: 'manual' | 'asr', cueCount: number } | null}
  */
 const savedEnglish = (s, tracks) => (!tracks.length && s.english?.source === 'saved' && s.english.cues?.length
-  ? { key: s.english.key, lang: s.english.lang, kind: s.english.kind, cueCount: s.english.cues.length } : null);
+  ? { key: s.english.key, lang: s.english.lang, kind: s.english.kind, via: s.english.via ?? null, cueCount: s.english.cues.length } : null);
 /** نماذج 1 2 3 من المتحكم؛ وحالة بلا خانات (متحكم الإصدار الأول) ترجمة واحدة في الخانة 1 نشطة. */
 const slotsOf = (s) => (Array.isArray(s.slots) && s.slots.length === 3 ? s.slots.map(({ n, filled, active, name }) => ({ n, filled, active, name }))
   : [{ n: 1, filled: !!s.arabic, active: !!s.arabic, name: null }, { n: 2, filled: false, active: false, name: null }, { n: 3, filled: false, active: false, name: null }]);
@@ -70,11 +91,10 @@ function freshUi(videoId) {
     /** تلميح الزر الذي أخفاه Esc: لا يعود حتى يغادره المؤشر أو التركيز (U89). */
     tipMuted: /** @type {string | null} */ (null),
     flash: /** @type {string | null} */ (null),
-    copyBusy: false,
     switching: false,
     download: {
       key: null, mode: null, why: false, fallback: false, split: false, splitSize: null, splitError: null, busy: false,
-      saveLine: null, copyLine: null, result: [], preview: null,
+      saveLine: null, result: [], preview: null,
     },
     upload: { busy: false, error: null, warnings: [], pending: null, pickFor: null, plans: new Map() },
     timing: { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null, sync: null },
@@ -91,7 +111,7 @@ function freshUi(videoId) {
  */
 export function createControlsSession({ controller, doc, win, player, flows, now = () => Date.now(), link = null }) {
   const counts = {
-    renders: 0, renderFailures: 0, reinserts: 0, downloads: 0, copies: 0, imports: 0, flowFailures: 0, overflows: 0,
+    renders: 0, renderFailures: 0, reinserts: 0, downloads: 0, imports: 0, flowFailures: 0, overflows: 0,
     switches: 0, marks: 0, syncs: 0, undos: 0,
   };
   let lastCode = null;
@@ -204,13 +224,13 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       live: flags.live, unavailable: flags.unavailable, captureIssue: s.captureIssue?.code ?? null,
       invalid: s.captured.filter((t) => !t.ok).map((t) => ({ code: t.code })),
-      tracks: tracks.map((t) => ({ key: t.key, lang: t.lang, kind: t.kind, ok: t.ok, cueCount: t.cueCount, warnings: t.warnings, lastEndMs: t.lastEndMs, capturedAt: t.capturedAt })),
+      tracks: tracks.map((t) => ({ key: t.key, lang: t.lang, kind: t.kind, via: t.via ?? null, ok: t.ok, cueCount: t.cueCount, warnings: t.warnings, lastEndMs: t.lastEndMs, capturedAt: t.capturedAt })),
       selectedKey: tracks.some((t) => t.key === d.key) ? d.key : tracks[0]?.key ?? null,
       mode: d.mode ?? s.settings.export.modeDefault, durationMs: s.durationMs,
       why: d.why, fallbackOpen: d.fallback, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
-      busy: d.busy, copyBusy: ui.copyBusy, saveLine: d.saveLine, copyLine: d.copyLine, result: d.result,
-      glossary: attachedGlossary(s.prefs)?.length ?? 0,
-      englishGuide: !tracks.length && NOT_ENGLISH.has(s.captureIssue?.code ?? '') ? { brave: flags.brave } : null,
+      busy: d.busy, saveLine: d.saveLine, result: d.result,
+      pickGuide: (!tracks.length && PICK_AGAIN.has(s.captureIssue?.code ?? '')) || notCaptured(s, tracks).length ? { brave: flags.brave } : null,
+      available: notCaptured(s, tracks), translatable: s.available?.translatable === true,
       saved: savedEnglish(s, tracks),
       ...previewParts(s, tracks),
     };
@@ -238,6 +258,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       fileName: a.fileName, count: a.cues.length, edited: a.edited, comparison: a.comparison, notes: a.comparison?.notes ?? [],
       slots, switching: s.loading || ui.switching, uploadLabel: slots.some((x) => !x.filled) ? LABELS.uploadMore : LABELS.replace,
       warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, originalLang: s.english?.lang ?? null, busy: ui.upload.busy, error: ui.upload.error,
+      // لغة الترجمة النشطة (AA3) ومقترحاتها: الحالية، ثم «إلى» في النافذة، ثم الأخيرة.
+      lang: a.lang ?? null, langSuggested: [a.lang, ...pairTargets(s)].filter(Boolean),
       // الإعلان لحظة الرسم (فتح القائمة بعد بدئه)؛ وتغيّره والقائمة مفتوحة يعيد الرسم من الفحص الدوري (flags.ad).
       ad: isAdShowing(doc),
     };
@@ -274,6 +296,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       // استبدال ممتلئة والنسخة السابقة موجودة: تُمحى (U76).
       previousFrom: filled && s.bundle?.previous ? s.bundle.previous.from : null,
       busy: ui.upload.busy, error: ui.upload.error,
+      // لغة الملف (AA3): ما اختاره المستخدم هنا، وإلا رمز صريح في اسمه، وإلا «إلى» في نافذة الإضافة، وإلا «غير محددة».
+      lang: p.lang ?? null, langSuggested: [p.fileLang, ...pairTargets(s)].filter(Boolean),
     };
   }
 
@@ -676,8 +700,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const t = ui.timing;
     switch (name) {
       case 'why': d.why = !d.why; break;
-      case 'track': d.key = value; d.saveLine = null; d.copyLine = null; d.result = []; break;
-      case 'mode': d.mode = value; d.saveLine = null; d.copyLine = null; break;
+      case 'track': d.key = value; d.saveLine = null; d.result = []; break;
+      case 'mode': d.mode = value; d.saveLine = null; break;
       case 'fallback': d.fallback = !d.fallback; break;
       case 'split': d.split = !!value; d.splitError = null; break;
       case 'splitSize':
@@ -685,7 +709,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         later('preview', PREVIEW_MS, render);
         return;
       case 'download': startDownload(); return;
-      case 'copy': startCopy(); return;
+      case 'slotLang': setSlotLang(value); return;
+      case 'uploadLang': if (ui.upload.pending && !ui.upload.busy) ui.upload.pending.lang = value ?? null; break;
       case 'displayMode': setMode(value); return;
       case 'slot': activate(Number(value)); return;
       case 'mark': markVisible(); return;
@@ -738,6 +763,30 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   }
 
   /** تبديل الترجمة النشطة من 1 2 3، ورسالة «الترجمة 2» بتراجع إلى السابقة. لا أثر أثناء القراءة أو تبديل جارٍ. */
+  /**
+   * لغة الترجمة النشطة من قائمتها (AA3): رمز أو null «غير محددة». لا يمس نصها ولا توقيتها؛ وتعذّر الحفظ رسالة.
+   * @param {string | null} lang
+   */
+  async function setSlotLang(lang) {
+    const s = controller.getState();
+    const n = s.activeSlot;
+    if (s.loading || ui.switching || !n || typeof controller.setSlotLang !== 'function') return;
+    if ((s.arabic?.lang ?? null) === (lang ?? null)) return;
+    const mine = ui;
+    mine.switching = true;
+    render();
+    try {
+      await controller.setSlotLang(n, lang ?? null);
+    } catch (err) {
+      if (destroyed || ui !== mine) return;
+      counts.flowFailures++;
+      addToast('error', toErrorInfo(err).message);
+    }
+    if (destroyed || ui !== mine) return;
+    mine.switching = false;
+    render();
+  }
+
   async function activate(n) {
     const s = controller.getState();
     const prev = s.activeSlot;
@@ -971,19 +1020,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return { key: m.selectedKey, mode: m.mode, split: sp.split };
   }
 
-  /** النسخ ونتيجته في سطرها؛ النص لا يُعرض أبدًا. */
-  async function copyInto(d, text) {
-    const ok = await copyText(text, { doc, win, root: layer.root });
-    if (ok) counts.copies++;
-    else counts.flowFailures++;
-    d.copyLine = ok ? { tone: 'ok', text: LABELS.copied } : { tone: 'error', text: LABELS.copyFailed };
-    return ok;
-  }
-
-  /**
-   * «تنزيل الملف» (R61 بعد جولة الصقل): يحفظ ملف SRT وحده بمكان الإعدادات ثم البصمة، ولا ينسخ شيئًا؛ والنسخ زر مستقل
-   * (startCopy). لكلٍّ سطر نتيجته، فلا يمحو أحدهما نتيجة الآخر.
-   */
+  /** «تنزيل الملف» (R61 بعد جولة الصقل): يحفظ ملف SRT وحده بمكان الإعدادات ثم البصمة. تعليمات الترجمة من نافذة الإضافة (AA3). */
   async function startDownload() {
     const d = ui.download;
     if (d.busy) return;
@@ -1032,36 +1069,6 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     render();
   }
 
-  /** «نسخ التعليمات» وحده: تعليمات المسار والوضع والتقسيم المختارة، بالقاموس إن أُرفق. لا ملف ولا بصمة. */
-  async function startCopy() {
-    const d = ui.download;
-    if (ui.copyBusy) return;
-    const spec = exportSpec();
-    if (!spec) return;
-    const prep = spec.saved ? prepareSavedExport({ controller, exportFlow: flows.exportFlow, now: now() }) : prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
-    if (!prep.ok) {
-      counts.flowFailures++;
-      // في سطر النسخ وحده (يعيد المحاولة)، فلا يمحو تحذيرات التنزيل في d.result.
-      d.copyLine = { tone: 'error', text: prep.error.message };
-      render();
-      return;
-    }
-    if (!prep.text) {
-      // لغة المسار هي اللغة المطلوبة نفسها: لا تعليمات لترجمة لغة إلى نفسها (AA1).
-      d.copyLine = { tone: 'error', text: messageFor('PG_PAIR_SAME') };
-      render();
-      return;
-    }
-    const mine = ui;
-    mine.copyBusy = true;
-    d.copyLine = null;
-    render();
-    await copyInto(d, prep.text);
-    if (destroyed || ui !== mine) return;
-    mine.copyBusy = false;
-    render();
-  }
-
   // ———— الرفع ————
 
   function onFiles(files) {
@@ -1088,7 +1095,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     u.error = null;
     clearChannel('import');
     render();
-    const read = await readFor({ controller, importFlow: flows.importFlow, files });
+    const read = await readFor({ controller, importFlow: flows.importFlow, files, fallbackLang: pairTargets(controller.getState())[0] ?? null });
     if (destroyed || ui.upload !== u) return;
     if (!read.ok) {
       u.busy = false;
@@ -1121,7 +1128,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     u.busy = false;
     u.plans.clear();
-    u.pending = { ...read, hint, target: defaultTarget(slotsOf(controller.getState())), keep: false };
+    u.pending = { ...read, hint, target: defaultTarget(slotsOf(controller.getState())), keep: false, lang: read.input.lang ?? null };
     ui.open = 'confirm';
     render();
     layer.focusFirst();
@@ -1138,7 +1145,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     u.busy = true;
     u.error = null;
     render();
-    const r = await loadIntoFor({ controller, read: p, n: m.target, replace: m.filled, current });
+    const r = await loadIntoFor({ controller, read: p, n: m.target, replace: m.filled, current, lang: p.lang ?? null });
     if (destroyed || ui.upload !== u) return;
     u.busy = false;
     // أغلق المستخدم التأكيد أثناء الحفظ (Esc أو النقر خارجه): تُطبَّق النتيجة دون إعادة فتح القائمة ولا نقل التركيز.

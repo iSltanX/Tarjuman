@@ -345,3 +345,56 @@ test('تدقيق 5fedcb9 (GM-011): الرفع من المشغّل يعتمد ا�
   const review = reviewIncoming({ fileName: file.name, cues: (await readImport([file], { fingerprints: [fpNormal, fpLong], settings })).cues, videoId: 'AAAAAAAAAAA', fingerprints: [fpNormal, fpLong] });
   assert.equal(review.suggested, fpNormal.id);
 });
+
+// ---- لغة الملف المرفوع (AA3) ----
+const langPrefs = (to, videos = {}) => ({ schema: 1, pair: { from: 'auto', to }, remember: true, recent: [], videos });
+const loaded = (page) => page.controller.calls.filter((c) => c[0] === 'loadArabicInto').at(-1)[2];
+
+test('لغة الملف: الرمز الصريح في اسمه أولًا، وإلا «إلى» في نافذة الإضافة إن وافق نص الملف نص كتابتها، وإلا «غير محددة»', async () => {
+  // بلا رمز في الاسم، و«إلى» عربية والنص عربي: العربية.
+  const ar = mountPage({ state: makeState({ langPrefs: langPrefs('ar') }) });
+  ar.flows.readResult = () => ({ ok: true, fileName: 'talk.srt', cues: AR_CUES, comparison: null, fingerprintId: null, notes: [], warnings: [], lang: null });
+  click(ar.ui.btn('upload'));
+  chooseFiles(ar.ui, [file('talk.srt')]);
+  await settle();
+  assert.equal(loaded(ar).lang, 'ar');
+  // «إلى» عربية والنص لاتيني: لا يُوسم بالعربية فيُعرض بغير اتجاهه.
+  const latin = mountPage({ state: makeState({ langPrefs: langPrefs('ar') }) });
+  latin.flows.readResult = () => ({ ok: true, fileName: 'talk.srt', cues: AR_CUES.map((c) => ({ ...c, text: 'Bonjour à tous' })), comparison: null, fingerprintId: null, notes: [], warnings: [], lang: null });
+  click(latin.ui.btn('upload'));
+  chooseFiles(latin.ui, [file('talk.srt')]);
+  await settle();
+  assert.equal(loaded(latin).lang, null, '«غير محددة» حتى يختارها المستخدم');
+  // «إلى» لهذا الفيديو من النافذة تتقدّم على الافتراضي.
+  const per = mountPage({ state: makeState({ langPrefs: langPrefs('ar', { AAAAAAAAAAA: { from: 'en', to: 'fr' } }) }) });
+  per.flows.readResult = () => ({ ok: true, fileName: 'talk.srt', cues: AR_CUES.map((c) => ({ ...c, text: 'Bonjour à tous' })), comparison: null, fingerprintId: null, notes: [], warnings: [], lang: null });
+  click(per.ui.btn('upload'));
+  chooseFiles(per.ui, [file('talk.srt')]);
+  await settle();
+  assert.equal(loaded(per).lang, 'fr');
+  // الرمز الصريح في الاسم يحكم.
+  const named = mountPage({ state: makeState({ langPrefs: langPrefs('ar') }) });
+  named.flows.readResult = () => ({ ok: true, fileName: 'talk.ja.srt', cues: AR_CUES, comparison: null, fingerprintId: null, notes: [], warnings: [], lang: 'ja' });
+  click(named.ui.btn('upload'));
+  chooseFiles(named.ui, [file('talk.ja.srt')]);
+  await settle();
+  assert.equal(loaded(named).lang, 'ja');
+});
+
+test('لغة الملف في التأكيد: مقترحة من الاسم و«إلى»، ويغيّرها المستخدم قبل الحفظ', async () => {
+  const page = mountPage({ state: makeState({ ...withSlots([slotTrack()]), langPrefs: langPrefs('ar') }) });
+  page.flows.readResult = () => ({ ok: true, fileName: 'talk.es.srt', cues: AR_CUES, comparison: null, fingerprintId: null, notes: [], warnings: [], lang: 'es' });
+  click(page.ui.btn('upload'));
+  click(page.ui.item('رفع ترجمة…'));
+  chooseFiles(page.ui, [file('talk.es.srt')]);
+  await settle();
+  const sel = page.ui.menu().querySelector('select.lang');
+  assert.ok(sel, 'اختيار لغة الملف في التأكيد');
+  assert.equal(sel.value, 'es');
+  assert.deepEqual(sel.querySelectorAll('optgroup')[0].querySelectorAll('option').map((o) => o.getAttribute('value')), ['es', 'ar']);
+  sel.value = 'pt';
+  sel.dispatchEvent({ type: 'change' });
+  click(page.ui.item('حفظ'));
+  await settle();
+  assert.equal(loaded(page).lang, 'pt');
+});

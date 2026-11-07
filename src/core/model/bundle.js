@@ -4,6 +4,7 @@
 import { trackComparison } from '../compare/current.js';
 import { TjError } from '../errors/index.js';
 import { cloneCues } from './cue.js';
+import { isSourceLang } from './ids.js';
 import { markAnchor, markCounts, prepareCues, resolveMark, sameAnchor, validateMarks } from './marks.js';
 import { isValidOffset } from './timing.js';
 import { withArabicEdit, withArabicImport, withOriginalRestored, withoutArabic } from './transitions.js';
@@ -119,6 +120,23 @@ export function withActiveSlot(bundle, n, now) {
   const target = filledSlot(b, n);
   if (b.active === n) return b;
   setActive(b, n, target.track, target.offsetMs);
+  b.record.updatedAt = now;
+  return syncActive(b);
+}
+
+/**
+ * لغة ترجمة خانة ممتلئة (AA3): رمز لغتها أو null «غير محددة». لا يمس نصها ولا توقيتها ولا مقارنتها؛ وتاريخ الحفظ يتقدم فيرى كل سياق
+ * التغيير. الخانة الفارغة ترمي ST_SLOT_EMPTY، والرمز غير الصالح MD_INVALID.
+ * @param {Bundle} bundle @param {SlotNumber} n @param {string | null} lang @param {string} now
+ * @returns {Bundle}
+ */
+export function withSlotLang(bundle, n, lang, now) {
+  if (lang !== null && !isSourceLang(lang)) throw new TjError('MD_INVALID', { detail: 'lang' });
+  const b = syncActive(copy(bundle));
+  const target = filledSlot(b, n);
+  const track = b.active === n ? b.record.arabic : target.track;
+  if ((track.lang ?? null) === lang) return b;
+  track.lang = lang;
   b.record.updatedAt = now;
   return syncActive(b);
 }

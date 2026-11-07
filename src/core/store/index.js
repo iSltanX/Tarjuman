@@ -48,8 +48,9 @@ export { versionOf } from './version.js';
  *   settings: { oldValue: unknown, newValue: unknown } | null,
  *   index: boolean, cleared: boolean,
  *   prefs: { oldValue: unknown, newValue: unknown } | null,
+ *   langPrefs: { oldValue: unknown, newValue: unknown } | null,
  *   bundles: string[]
- * }} StoreChange
+ * }} StoreChange langPrefs (AA3): تغيّر تفضيلات اللغات من أي سياق
  */
 
 // كاتب واحد لكل مساحة في السياق نفسه (الاختبارات والأدوات): مخزنان على المساحة نفسها يمرّان به كما يمرّ سياقان في المتصفح
@@ -652,7 +653,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
     onChange(fn) {
       return area.onChanged((changes) => {
         /** @type {StoreChange} */
-        const out = { videos: {}, settings: null, index: false, cleared: false, prefs: null, bundles: [] };
+        const out = { videos: {}, settings: null, index: false, cleared: false, prefs: null, langPrefs: null, bundles: [] };
         for (const [key, ch] of Object.entries(changes)) {
           const k = parseKey(key);
           if (!k) continue;
@@ -661,9 +662,11 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           else if (k.kind === 'index') out.index = true;
           else if (k.kind === 'meta' && ch.newValue === undefined) out.cleared = true;
           else if (k.kind === 'prefs') out.prefs = { oldValue: ch.oldValue, newValue: ch.newValue };
+          // تفضيلات اللغات (AA3): الصفحات والمشغّل يتبعون الزوج واللغات الأخيرة حين تتغير من سياق آخر.
+          else if (k.kind === 'langPrefs') out.langPrefs = { oldValue: ch.oldValue ?? null, newValue: ch.newValue ?? null };
           else if (COMPANION_KINDS.includes(k.kind) && !out.bundles.includes(k.videoId)) out.bundles.push(k.videoId);
         }
-        if (Object.keys(out.videos).length || out.settings || out.index || out.cleared || out.prefs || out.bundles.length) fn(out);
+        if (Object.keys(out.videos).length || out.settings || out.index || out.cleared || out.prefs || out.langPrefs || out.bundles.length) fn(out);
       });
     },
   };

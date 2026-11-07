@@ -146,17 +146,6 @@ test('إغلاق القائمة تلقائيًا والتركيز فيها (زا
   assert.ok(page.env.doc._focused === page.ui.btn('download'));
 });
 
-test('بديل النسخ يعيد التركيز إلى بند القائمة بعد الحقل المؤقت', async () => {
-  const page = mountPage({ state: makeState({ captured: [trackInfo()] }), clipboard: 'none' });
-  page.env.doc.execCommand = () => true;
-  click(page.ui.btn('download'), 0);
-  const copy = page.ui.field('copy');
-  copy.focus();
-  click(copy, 0);
-  await settle();
-  assert.ok(page.env.doc._focused === copy);
-});
-
 test('المحدّث في المكان: يحفظ العقد المطابقة، ويدرج الجديد ويزيل الزائد، وينقل السمات والنص والقيمة', () => {
   const { doc } = createFakeEnv();
   const el = (tag, attrs = {}, text) => {

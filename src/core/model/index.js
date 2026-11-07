@@ -40,7 +40,7 @@ export {
   resolveMark, resolveMarks, resolvePosition, markCounts,
 } from './marks.js';
 export {
-  bundleFromRecord, syncActive, applyRecordChange, withActiveSlot, withSlotUpload, withSlotEdit, withSlotOriginalRestored, withSlotOffset,
+  bundleFromRecord, syncActive, applyRecordChange, withActiveSlot, withSlotLang, withSlotUpload, withSlotEdit, withSlotOriginalRestored, withSlotOffset,
   withoutSlot, withPreviousRestored, withoutPrevious, withSlotReference, withSlotName, withMark, withMarksReplaced, withPosition,
   summarizeBundle, slotModels, isTrivialBundle, packBundle, unpackBundle, bundleToBackup, bundleFromBackup, referencedFingerprints,
 } from './bundle.js';

@@ -1,7 +1,7 @@
 // تدقيق Fable (FA-17 = B2 في التقرير السابق، بقرار سلطان 2026-11-07 «بند لتنزيل المحفوظ»): العودة إلى فيديو له مسار إنجليزي
 // محفوظ من تنزيل سابق، بلا التقاط في هذه الزيارة، كانت قائمة «تحميل الأصل» فيه تطلب تفعيل CC وحده ولا تعرض تنزيلًا، مع أن
 // المحفوظات تصدّر المسار نفسه. صارت القائمة تعرض المسار المحفوظ و«تنزيل المحفوظ» (الوضع العادي، بلا تقسيم، كما في المحفوظات)
-// و«نسخ التعليمات»، وتبقى إرشادات CC بعدها لمن يريد التقاطًا جديدًا؛ والبصمة تُحفظ بلا تكرار.
+// (وتعليمات الترجمة من نافذة الإضافة منذ AA3)، وتبقى إرشادات CC بعدها لمن يريد التقاطًا جديدًا؛ والبصمة تُحفظ بلا تكرار.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createController } from '../../../../src/content/controller.js';
@@ -10,19 +10,20 @@ import { buildExport } from '../../../../src/core/export/index.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, VIDEO_ID, fakeExtractor } from '../../../helpers/fixtures.js';
 import { sampleBundle, seedBundle } from '../../../helpers/fixtures-v2.js';
-import { EN_CUES, INSTRUCTIONS, click, makeState, mountPage, settle, trackInfo } from './harness.js';
+import { EN_CUES, click, makeState, mountPage, settle, trackInfo } from './harness.js';
 
 const savedEnglish = { key: 'en|manual', lang: 'en', kind: 'manual', cues: EN_CUES, source: 'saved' };
 const named = (name) => `نُزّل ${String.fromCodePoint(0x2066)}${name}${String.fromCodePoint(0x2069)}`;
 
-test('FA-17: مسار إنجليزي محفوظ بلا التقاط: القائمة تعرضه بـ«محفوظ» و«تنزيل المحفوظ» و«نسخ التعليمات»، وإرشاد CC بعده', () => {
+test('FA-17: مسار محفوظ بلا التقاط: القائمة تعرضه بـ«محفوظ» و«تنزيل المحفوظ» وسطر التعليمات من النافذة، وإرشاد CC بعده', () => {
   const page = mountPage({ state: makeState({ english: savedEnglish }) });
   click(page.ui.btn('download'));
   const text = page.ui.menuText();
   assert.match(text, /الإنجليزية · يدوية · 5 مقاطع · محفوظ/);
   assert.match(text, /لم تُلتقط الترجمة في هذه الزيارة؛ يُنزَّل المسار المحفوظ من تنزيلك السابق\./);
   assert.ok(page.ui.item('تنزيل المحفوظ'), 'زر التنزيل');
-  assert.ok(page.ui.item('نسخ التعليمات'), 'زر النسخ');
+  assert.ok(page.ui.item('نسخ التعليمات') === null, 'لا نسخ في المشغّل (AA3)');
+  assert.match(text, /تعليمات الترجمة \(من ← إلى\) من نافذة الإضافة/);
   assert.match(text, /فعّل الترجمة \(CC\) واختر English، ثم افتح هذه القائمة\./, 'إرشاد CC باقٍ للالتقاط الجديد');
   assert.ok(text.indexOf('تنزيل المحفوظ') < text.indexOf('فعّل الترجمة'), 'المحفوظ أولًا');
   assert.equal(page.ui.btn('download').getAttribute('aria-description'), 'المسار المحفوظ جاهز');
@@ -41,16 +42,6 @@ test('FA-17: «تنزيل المحفوظ» يبني المسار المحفوظ 
   assert.equal(rec[1].trackKey, 'en|manual');
   assert.equal(page.controller.calls.some((c) => c[0] === 'convertCaptured' || c[0] === 'recordExport'), false, 'لا يُطلب التقاط');
   assert.ok(page.ui.menuText().includes(named(`${VIDEO_ID}.en.manual.normal.srt`)));
-});
-
-test('FA-17: «نسخ التعليمات» للمحفوظ ينسخ التعليمات وحدها بلا ملف ولا بصمة', async () => {
-  const page = mountPage({ state: makeState({ english: savedEnglish }) });
-  click(page.ui.btn('download'));
-  click(page.ui.item('نسخ التعليمات'));
-  await settle();
-  assert.deepEqual(page.copied, [INSTRUCTIONS]);
-  assert.equal(page.flows.downloads.length, 0);
-  assert.equal(page.controller.calls.some((c) => c[0] === 'recordSavedExport'), false);
 });
 
 test('FA-17: مع التقاط حي تبقى القائمة المعتادة (الملتقط أولًا) بلا قسم المحفوظ', () => {

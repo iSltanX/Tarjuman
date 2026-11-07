@@ -6,7 +6,7 @@ import { languageName as sharedLanguageName } from '../../ui/lang.js';
 export const LABELS = Object.freeze({
   group: 'أدوات ترجمان',
   download: 'تحميل الأصل (SRT)',
-  upload: 'رفع الترجمة العربية (SRT)',
+  upload: 'رفع الترجمة (SRT)',
   translation: 'الترجمة',
   panel: 'النص المتزامن',
   panelOpen: 'فتح النص المتزامن',
@@ -17,7 +17,8 @@ export const LABELS = Object.freeze({
   originalFallback: 'الأصل',
   kindManual: 'يدوية',
   kindAsr: 'تلقائية',
-  arabicName: 'العربية',
+  // لغة الترجمة باسمها (AA3)، و«لغة غير محددة» لما حُفظ قبل 2.0.0 بلا لغة.
+  translationUnknown: 'لغة غير محددة',
   edited: 'معدّلة',
   timingTitle: 'توقيت الترجمة',
   confirmTitle: 'استبدال الترجمة؟',
@@ -29,15 +30,14 @@ export const LABELS = Object.freeze({
   modeNormalNote: 'مقاطع كما في يوتيوب، للتزامن الأدق',
   modeLongNote: 'جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما',
   checking: 'جارٍ التنزيل…',
-  copyNeedsTrack: 'يتاح النسخ بعد التقاط مسار الأصل.',
   fallback: 'خيارات احتياطية',
   split: 'تقسيم الملف إلى أجزاء (للملفات الطويلة جدًا)',
   splitSize: 'مقاطع لكل جزء',
-  modeAr: 'العربية وحدها',
+  modeAr: 'الترجمة وحدها',
   // بلا مسار أصلي لا لغة تُسمّى: «فوق الأصل». ومعه يُسمّى باسم لغته (dualLabels).
-  modeDual: 'العربية فوق الأصل',
+  modeDual: 'الترجمة فوق الأصل',
   modeOff: 'إخفاء الترجمة',
-  segAr: 'العربية',
+  segAr: 'الترجمة',
   segDual: 'فوق الأصل',
   segOff: 'إخفاء',
   displayMode: 'وضع العرض',
@@ -62,19 +62,26 @@ export const LABELS = Object.freeze({
   back: 'رجوع',
   downloadFile: 'تنزيل الملف',
   downloadFileHint: 'ملف الأصل (SRT) وحده',
-  // المسار الإنجليزي المحفوظ بلا التقاط في هذه الزيارة (تدقيق Fable، FA-17، بقرار سلطان 2026-11-07).
+  // مسار الأصل المحفوظ بلا التقاط في هذه الزيارة (تدقيق Fable، FA-17، بقرار سلطان 2026-11-07).
   downloadSaved: 'تنزيل المحفوظ',
-  downloadSavedHint: 'المسار الإنجليزي المحفوظ من تنزيلك السابق، بالوضع العادي',
+  downloadSavedHint: 'مسار الأصل المحفوظ من تنزيلك السابق، بالوضع العادي',
   savedTag: 'محفوظ',
   savedNote: 'لم تُلتقط الترجمة في هذه الزيارة؛ يُنزَّل المسار المحفوظ من تنزيلك السابق.',
   stateSaved: 'المسار المحفوظ جاهز',
-  copyShort: 'نسخ التعليمات',
-  copyHint: 'تعليمات الترجمة وحدها، لترفقها مع الملف',
-  copied: 'نُسخت التعليمات',
-  copyFailed: 'تعذّر النسخ — أعد المحاولة',
-  // كلمات لا رموز (← و⚙ خارج الخطين المضمّنين، فيرسمها Brave بخطوط نظام متفرقة؛ تدقيق 5fedcb9، CL-017).
-  englishSteps: 'CC ثم الإعدادات ثم «الترجمة» ثم English',
-  braveNote: 'Brave قد يختار العربية أولًا؛ اختر English مرة',
+  // تعليمات الترجمة (من ← إلى) انتقلت إلى نافذة الإضافة (AA3، قرار سلطان، لوحة 10): سطر يدل عليها مكان زر النسخ.
+  instructionsNote: 'تعليمات الترجمة (من ← إلى) من نافذة الإضافة',
+  // اختيار المسار من يوتيوب بيد المستخدم (ق١): كلمات لا رموز (← و⚙ خارج الخطين المضمّنين، فيرسمها Brave بخطوط نظام متفرقة؛
+  // تدقيق 5fedcb9، CL-017).
+  pickSteps: 'CC ثم الإعدادات ثم «الترجمة» ثم اللغة التي تريدها',
+  pickOne: 'اختره من قائمة يوتيوب',
+  braveNote: 'Brave قد يختار لغة المتصفح أولًا؛ اختر اللغة التي تريدها مرة',
+  machine: 'مترجمة آليًا من يوتيوب',
+  machineSteps: 'لترجمة يوتيوب الآلية: CC ثم الإعدادات ثم «الترجمة» ثم «الترجمة التلقائية» ثم اللغة',
+  availableTitle: 'مسارات أخرى في هذا الفيديو',
+  translationLang: 'لغة الترجمة',
+  langUnknownOption: 'غير محددة',
+  langSuggested: 'مقترحة',
+  langAll: 'كل اللغات',
   partsLabel: 'أحجام الأجزاء',
   cancel: 'إلغاء',
   offsetResetNote: 'ستُصفَّر إزاحة العرض لأن الملف الجديد يحمل توقيته.',
@@ -108,8 +115,8 @@ export const LABELS = Object.freeze({
 export const languageName = (lang) => sharedLanguageName(lang);
 
 /**
- * تسمية وضع «العربية فوق الأصل» باسم لغة الأصل الفعلية: الظاهرة بلغتها الأساسية («فوق الإنجليزية»)، واسم الوصول
- * الكامل بلهجتها («العربية فوق الإنجليزية (المملكة المتحدة)»)؛ وبلا أصل «فوق الأصل».
+ * تسمية وضع «الترجمة فوق الأصل» باسم لغة الأصل الفعلية: الظاهرة بلغتها الأساسية («فوق الإنجليزية»)، واسم الوصول الكامل
+ * بلهجتها («الترجمة فوق الإنجليزية (المملكة المتحدة)»)؛ وبلا أصل «فوق الأصل».
  * @param {string | null | undefined} lang
  * @returns {{ short: string, aria: string }}
  */
@@ -117,20 +124,31 @@ export function dualLabels(lang) {
   const full = languageName(lang);
   if (!full) return { short: LABELS.segDual, aria: LABELS.modeDual };
   const base = languageName(String(lang).trim().split(/[-_]/)[0]) ?? full;
-  return { short: `فوق ${base}`, aria: `العربية فوق ${full}` };
+  return { short: `فوق ${base}`, aria: `الترجمة فوق ${full}` };
 }
 
 /**
- * سطر المسار الملتقط في قائمة التحميل: «الإنجليزية · يدوية · 412 مقطعًا» (اسم لغته الفعلي، ونوعه، وعدد مقاطعه).
- * @param {{ lang: string, kind: 'manual' | 'asr', cueCount: number }} t
+ * سطر المسار الملتقط في قائمة التحميل: «الإنجليزية · يدوية · 412 مقطعًا» (اسم لغته الفعلي، ونوعه، وعدد مقاطعه)؛ والمترجم آليًا
+ * من يوتيوب موسوم بلغة أصله: «العربية · مترجمة آليًا من يوتيوب عن الإنجليزية · 412 مقطعًا» (ق٢).
+ * @param {{ lang: string, kind: 'manual' | 'asr', via?: string | null, cueCount: number }} t
  */
 export function trackLine(t) {
-  const kind = t.kind === 'asr' ? LABELS.kindAsr : LABELS.kindManual;
-  return `${languageName(t.lang) ?? LABELS.originalFallback} · ${kind} · ${formatCount(t.cueCount, COUNT_FORMS.cue)}`;
+  const name = languageName(t.lang) ?? LABELS.originalFallback;
+  const what = t.via ? `${LABELS.machine} عن ${languageName(t.via) ?? t.via}` : t.kind === 'asr' ? LABELS.kindAsr : LABELS.kindManual;
+  return `${name} · ${what} · ${formatCount(t.cueCount, COUNT_FORMS.cue)}`;
 }
 
-/** سطر الترجمة في قائمتها: «العربية · 412 مقطعًا» (و«· معدّلة» حين عُدّلت). @param {number} count @param {boolean} edited */
-export const translationLine = (count, edited) => `${LABELS.arabicName} · ${formatCount(count, COUNT_FORMS.cue)}${edited ? ` · ${LABELS.edited}` : ''}`;
+/**
+ * سطر مسار متاح في الفيديو لم يُلتقط بعد (ق١): «الإسبانية · يدوية — اختره من قائمة يوتيوب».
+ * @param {{ lang: string, kind: 'manual' | 'asr' }} t
+ */
+export const availableLine = (t) => `${languageName(t.lang) ?? t.lang} · ${t.kind === 'asr' ? LABELS.kindAsr : LABELS.kindManual} — ${LABELS.pickOne}`;
+
+/**
+ * سطر الترجمة في قائمتها: «العربية · 412 مقطعًا» باسم لغتها (و«· معدّلة» حين عُدّلت)، و«لغة غير محددة» بلا لغة.
+ * @param {number} count @param {boolean} edited @param {string | null} [lang]
+ */
+export const translationLine = (count, edited, lang = null) => `${(lang && languageName(lang)) || LABELS.translationUnknown} · ${formatCount(count, COUNT_FORMS.cue)}${edited ? ` · ${LABELS.edited}` : ''}`;
 
 /** تلميح الزر مع حالته: «تحميل الأصل (SRT) · المسار جاهز»؛ وبلا حالة الاسم وحده. @param {string} name @param {string | null} state */
 export const withState = (name, state) => (state ? `${name} · ${state}` : name);
@@ -150,8 +168,6 @@ export const offsetToast = (ms) => `الإزاحة ${offsetInline(ms)} ث`;
 export const downloadedLine = (name) => `نُزّل ${ltrInline(name)}`;
 /** «نُزّل 3 أجزاء». @param {string} parts عدد الأجزاء بكلماته */
 export const downloadedParts = (parts) => `نُزّل ${parts}`;
-/** @param {number} n «+ القاموس (12)»: القاموس مرفق بالتعليمات المنسوخة */
-export const glossaryTag = (n) => `+ القاموس (${n})`;
 
 /** @param {number} n «سيُستبدل 12 تعديلًا يدويًا» (والمفرد والمثنى بصيغتيهما). */
 export function editsLine(n) {
@@ -272,7 +288,7 @@ export function comparisonSummary(cmp) {
   if (cmp.extra.length) parts.push(`${countWith(cmp.extra.length, ADJ.extra)}: ${listOf(cmp.extra)}`);
   if (cmp.drift.length) parts.push(driftText(cmp.drift.length));
   const untranslated = [...new Set([...cmp.empty, ...cmp.noArabic])].length;
-  if (untranslated) parts.push(`${formatCount(untranslated, COUNT_FORMS.cue)} بلا ترجمة عربية`);
+  if (untranslated) parts.push(`${formatCount(untranslated, COUNT_FORMS.cue)} بلا ترجمة`);
   // معاينة الرفع بالمحاذاة (FA-04): ملف أُعيد ترقيمه يُقال إنه قورن بتوقيته، فلا يُظن النقص من آخره.
   if (cmp.renumbered) parts.push('الترقيم مختلف عن الأصل، والمقارنة بالتوقيت');
   else if (!parts.length && cmp.numbering === 'different') parts.push('ترقيم المقاطع مختلف عن الأصل');

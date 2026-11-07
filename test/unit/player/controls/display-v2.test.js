@@ -188,24 +188,26 @@ test('تعذّر التراجع: رسالة مفهومة باقية، ورمزه
   assert.equal(page.handle.diagnostics().session.lastCode, 'CT_UNDO_FAILED');
 });
 
-test('قائمة العرض بأقسامها: الرأس بالمحدد، وسطر «العربية · N مقطعًا» والملف والملخص، ثم «وضع العرض» بأوضاعه الثلاثة، ثم العلامة والرفع في صف', () => {
+test('قائمة العرض بأقسامها: الرأس بالمحدد، وسطر «‹لغة الترجمة› · N مقطعًا» والملف والملخص ولغة الترجمة، ثم «وضع العرض» بأوضاعه الثلاثة، ثم العلامة والرفع في صف', () => {
   const page = mountPage({ state: makeState(three()) });
   openDisplay(page);
   const menu = page.ui.menu();
   const rows = menu.children.filter((c) => !c.classList.contains('sep'));
-  assert.deepEqual(rows.map((r) => r.className || r.tagName), ['head', 'row status', 'row file', 'row summary', 'label', 'seg', 'note', 'actions inline']);
-  assert.equal(rows[1].textContent, 'العربية · 5 مقاطع', 'سطر الترجمة بعدد مقاطعها');
+  assert.deepEqual(rows.map((r) => r.className || r.tagName), ['head', 'row status', 'row file', 'row summary', 'row field', 'label', 'seg', 'note', 'actions inline']);
+  assert.equal(rows[1].textContent, 'لغة غير محددة · 5 مقاطع', 'سطر الترجمة بعدد مقاطعها؛ وما حُفظ بلا لغة «غير محددة» (AA3)');
   assert.ok(rows[1].querySelector('svg.glyph'), 'برمز SVG');
   assert.equal(rows[2].textContent, 'talk.ar.srt', 'اسم الملف وحده في سطره');
-  assert.equal(rows[4].textContent, 'وضع العرض');
+  assert.equal(rows[4].querySelector('label').textContent, 'لغة الترجمة');
+  assert.equal(rows[4].querySelector('select').value, '', '«غير محددة»');
+  assert.equal(rows[5].textContent, 'وضع العرض');
   assert.equal(menu.querySelectorAll('.sep').length, 2, 'فاصلان: بين الملخص والأوضاع، وبين الأوضاع والإجراءات');
-  const modes = rows[5].children.map((b) => [b.textContent, b.getAttribute('aria-label')]);
-  assert.deepEqual(modes, [['العربية', 'العربية وحدها'], ['فوق الأصل', 'العربية فوق الأصل'], ['إخفاء', 'إخفاء الترجمة']], 'بلا أصل: «فوق الأصل» واسم وصول كامل');
+  const modes = rows[6].children.map((b) => [b.textContent, b.getAttribute('aria-label')]);
+  assert.deepEqual(modes, [['الترجمة', 'الترجمة وحدها'], ['فوق الأصل', 'الترجمة فوق الأصل'], ['إخفاء', 'إخفاء الترجمة']], 'بلا أصل: «فوق الأصل» واسم وصول كامل');
   for (const [shown, name] of modes) assert.ok(name.includes(shown), `اسم الوصول يحوي النص الظاهر: ${shown}`);
-  assert.equal(rows[5].getAttribute('role'), 'radiogroup');
-  assert.deepEqual(rows[5].children.map((b) => b.getAttribute('tabindex')), ['0', '-1', '-1'], 'نقطة Tab واحدة للمجموعة (المختار)');
-  assert.equal(rows[6].textContent, messageFor('CT_DUAL_UNAVAILABLE'), 'سبب تعطيل المزدوج ظاهر');
-  assert.deepEqual(rows[7].children.map((b) => b.textContent), ['علّم للمراجعة', 'رفع ترجمة…']);
+  assert.equal(rows[6].getAttribute('role'), 'radiogroup');
+  assert.deepEqual(rows[6].children.map((b) => b.getAttribute('tabindex')), ['0', '-1', '-1'], 'نقطة Tab واحدة للمجموعة (المختار)');
+  assert.equal(rows[7].textContent, messageFor('CT_DUAL_UNAVAILABLE'), 'سبب تعطيل المزدوج ظاهر');
+  assert.deepEqual(rows[8].children.map((b) => b.textContent), ['علّم للمراجعة', 'رفع ترجمة…']);
   assert.equal(menu.textContent.includes(LABELS_SLOTS_FULL), false, 'خانة فارغة موجودة: لا سطر امتلاء');
   const full = mountPage({ state: makeState(withSlots([slotTrack(), slotTrack(), slotTrack()])) });
   openDisplay(full);
@@ -213,13 +215,32 @@ test('قائمة العرض بأقسامها: الرأس بالمحدد، وسط
   assert.ok(full.ui.menuText().includes(LABELS_SLOTS_FULL), 'ولسانه: الرفع استبدال');
 });
 
-test('سطر الترجمة في قائمتها: «العربية · N مقطعًا» ومعها «· معدّلة» حين عُدّلت', () => {
-  const page = mountPage({ state: makeState(withSlots([slotTrack({ cues: AR_CUES, current: AR_CUES.slice(0, 4) })])) });
+test('سطر الترجمة في قائمتها: «‹لغتها› · N مقطعًا» ومعها «· معدّلة» حين عُدّلت', () => {
+  const edited = makeState(withSlots([slotTrack({ cues: AR_CUES, current: AR_CUES.slice(0, 4) })]));
+  const page = mountPage({ state: { ...edited, arabic: { ...edited.arabic, lang: 'ar' } } });
   openDisplay(page);
   assert.equal(page.ui.menu().querySelector('[data-fid="arabicLine"]').textContent, 'العربية · 4 مقاطع · معدّلة');
-  const plain = mountPage({ state: makeState(withSlots([slotTrack()])) });
-  openDisplay(plain);
-  assert.equal(plain.ui.menu().querySelector('[data-fid="arabicLine"]').textContent, 'العربية · 5 مقاطع');
+  const plain = makeState(withSlots([slotTrack()]));
+  const fr = mountPage({ state: { ...plain, arabic: { ...plain.arabic, lang: 'fr' } } });
+  openDisplay(fr);
+  assert.equal(fr.ui.menu().querySelector('[data-fid="arabicLine"]').textContent, 'الفرنسية · 5 مقاطع', 'بأي لغة');
+});
+
+test('لغة الترجمة من قائمتها (AA3): «غير محددة» ثم المقترحة («إلى» في النافذة) ثم كل اللغات، والاختيار يُحفظ للخانة النشطة', async () => {
+  const st = makeState(three());
+  const page = mountPage({ state: { ...st, langPrefs: { schema: 1, pair: { from: 'auto', to: 'ar' }, remember: true, recent: ['es'], videos: {} } } });
+  openDisplay(page);
+  const sel = page.ui.menu().querySelector('select.lang');
+  const groups = sel.querySelectorAll('optgroup').map((g) => g.getAttribute('label'));
+  assert.deepEqual(groups, ['مقترحة', 'كل اللغات']);
+  assert.deepEqual(sel.querySelectorAll('optgroup')[0].querySelectorAll('option').map((o) => o.getAttribute('value')), ['ar', 'es']);
+  assert.equal(sel.querySelectorAll('option')[0].textContent, 'غير محددة');
+  sel.value = 'ar';
+  sel.dispatchEvent({ type: 'change' });
+  await settle();
+  const n = page.controller.getState().activeSlot;
+  assert.deepEqual(page.controller.calls.filter((c) => c[0] === 'setSlotLang'), [['setSlotLang', n, 'ar']]);
+  assert.equal(page.ui.menu().querySelector('[data-fid="arabicLine"]').textContent.startsWith('العربية ·'), true);
 });
 
 // اسم الوضع المزدوج من لغة الأصل الملتقط فعلًا لا من «الإنجليزية» ثابتة.
@@ -231,17 +252,19 @@ test('الوضع المزدوج: «فوق ‹اسم لغة الأصل›» با�
   const none = mountPage({ state: makeState(three()) });
   openDisplay(none);
   assert.equal(dualButton(none).textContent, 'فوق الأصل');
-  assert.equal(dualButton(none).getAttribute('aria-label'), 'العربية فوق الأصل');
+  assert.equal(dualButton(none).getAttribute('aria-label'), 'الترجمة فوق الأصل');
   assert.equal(dualButton(none).getAttribute('aria-disabled'), 'true');
   assert.match(dualButton(none).getAttribute('aria-description'), /الأصل غير ملتقط لهذا الفيديو/, 'السبب باقٍ بلا أصل');
   for (const lang of ['en', 'fr', 'de']) {
     const page = mountPage({ state: makeState({ ...three(), ...original(lang) }) });
     openDisplay(page);
     assert.equal(dualButton(page).textContent, `فوق ${arName(lang)}`, lang);
-    assert.equal(dualButton(page).getAttribute('aria-label'), `العربية فوق ${arName(lang)}`);
+    assert.equal(dualButton(page).getAttribute('aria-label'), `الترجمة فوق ${arName(lang)}`);
     assert.equal(dualButton(page).getAttribute('aria-disabled'), null);
     assert.ok(page.ui.menu().querySelector('[data-fid="dualReason"]') === null, 'لا سبب تعطيل مع أصل');
-    assert.equal(page.ui.menuText().includes('الإنجليزية'), lang === 'en', 'لا «الإنجليزية» لأصل بلغة أخرى');
+    // خارج اختيار لغة الترجمة (فيه كل اللغات بأسمائها).
+    const shown = page.ui.menu().children.filter((c) => !c.querySelector('select')).map((c) => c.textContent).join(' ');
+    assert.equal(shown.includes('الإنجليزية'), lang === 'en', 'لا «الإنجليزية» لأصل بلغة أخرى');
   }
 });
 
@@ -249,8 +272,8 @@ test('الوضع المزدوج بلهجة: الظاهر باللغة الأسا
   const page = mountPage({ state: makeState({ ...three(), ...original('en-GB') }) });
   openDisplay(page);
   assert.equal(dualButton(page).textContent, `فوق ${arName('en')}`);
-  assert.equal(dualButton(page).getAttribute('aria-label'), `العربية فوق ${arName('en-GB')}`);
-  assert.equal(dualButton(page).getAttribute('title'), `العربية فوق ${arName('en-GB')}`, 'الاسم الكامل في التلميح');
+  assert.equal(dualButton(page).getAttribute('aria-label'), `الترجمة فوق ${arName('en-GB')}`);
+  assert.equal(dualButton(page).getAttribute('title'), `الترجمة فوق ${arName('en-GB')}`, 'الاسم الكامل في التلميح');
   assert.ok(dualButton(page).getAttribute('aria-label').includes(dualButton(page).textContent), 'اسم الوصول يحوي النص الظاهر');
   page.controller.set(original('fr'));
   assert.equal(dualButton(page).textContent, `فوق ${arName('fr')}`, 'تبدّل الأصل');

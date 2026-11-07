@@ -188,6 +188,11 @@ button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decor
 input.num { all: unset; box-sizing: border-box; width: 80px; height: 28px; padding: 0 8px; border-radius: 6px; direction: ltr; text-align: left; font: 700 var(--fs)/1 var(--tj-p-font-mono); color: var(--tj-p-menu-text); background: rgb(0 0 0 / 30%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%); cursor: text; }
 input.num:focus { box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(217 147 123 / 25%); }
 input.num[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--tj-p-error); }
+/* لغة الترجمة عند الرفع وفي قائمتها (AA3): اختيار أصلي من المتصفح على زجاج القائمة، والخيارات بألوان النظام ليقرأها كل متصفح. */
+select.lang { box-sizing: border-box; flex: 0 1 auto; min-width: 0; max-width: 62%; height: 28px; padding: 0 6px; border: 0; border-radius: 6px; font: 700 var(--fs)/1 var(--tj-p-font-body); color: var(--tj-p-menu-text); background: rgb(0 0 0 / 30%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%); cursor: pointer; }
+select.lang:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(217 147 123 / 25%); }
+select.lang[aria-disabled="true"], select.lang:disabled { opacity: 0.45; cursor: default; }
+select.lang option, select.lang optgroup { color: #182E2B; background: #FFFFFF; }
 .field-error { padding: 0 6px 2px; color: var(--tj-p-error); font-size: 0.93em; }
 .field-error:empty, .field-error[hidden] { display: none; }
 input.check { flex: none; width: 16px; height: 16px; margin: 0; accent-color: var(--tj-p-accent); }

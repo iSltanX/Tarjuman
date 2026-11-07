@@ -73,7 +73,7 @@ test('ملخص المقارنة بالمطابقة العددية للصفة، �
   assert.equal(s({ extra: [9, 10, 11] }), '3 مقاطع زائدة: 9، 10، 11');
   assert.equal(s({ drift: [{ n: 1 }, { n: 2 }] }), 'توقيت مختلف في مقطعين');
   assert.equal(s({ drift: Array.from({ length: 12 }, (_, i) => ({ n: i + 1 })) }), 'توقيت مختلف في 12 مقطعًا');
-  assert.equal(s({ empty: [3], noArabic: [3, 4] }), 'مقطعان بلا ترجمة عربية', 'المكرر يُعدّ مرة');
+  assert.equal(s({ empty: [3], noArabic: [3, 4] }), 'مقطعان بلا ترجمة', 'المكرر يُعدّ مرة (وبلا افتراض لغة، AA3)');
   assert.equal(s({ missing: [2], drift: [{ n: 1 }] }), 'مقطع واحد ناقص: 2 · توقيت مختلف في مقطع واحد');
   assert.equal(s({ numbering: 'different' }), 'ترقيم المقاطع مختلف عن الأصل');
   assert.equal(comparisonSummary(matched({ matched: false })).tone, 'warn');

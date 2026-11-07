@@ -20,7 +20,7 @@ test('بلا ترجمة عربية: − والشارة و+ معطّلة بسبب
   }
   assert.equal(ui.btn('upload').getAttribute('aria-disabled'), null);
   assert.equal(ui.btn('download').getAttribute('aria-disabled'), null);
-  assert.equal(ui.btn('upload').getAttribute('aria-label'), 'رفع الترجمة العربية (SRT)');
+  assert.equal(ui.btn('upload').getAttribute('aria-label'), 'رفع الترجمة (SRT)');
   assert.equal(ui.btn('download').getAttribute('aria-label'), 'تحميل الأصل (SRT)');
 });
 
@@ -203,11 +203,11 @@ test('الاسم تلميح عند المرور وعند التركيز بلوح
   for (const kind of ['minus', 'badge', 'plus']) assert.equal(ui.btn(kind).getAttribute('aria-label'), expected[kind]);
 });
 
-test('لا ترجمة بعد: تلميح زر الترجمة «رفع الترجمة العربية (SRT)»؛ والمعطّل يصحب سببه تلميحه واسمه', () => {
+test('لا ترجمة بعد: تلميح زر الترجمة «رفع الترجمة (SRT)»؛ والمعطّل يصحب سببه تلميحه واسمه', () => {
   const page = mountPage();
   const { ui } = page;
   ui.btn('upload').dispatchEvent({ type: 'pointerenter' });
-  assert.equal(ui.tip(), 'رفع الترجمة العربية (SRT)');
+  assert.equal(ui.tip(), 'رفع الترجمة (SRT)');
   ui.btn('upload').dispatchEvent({ type: 'pointerleave' });
   ui.btn('plus').focus();
   assert.match(ui.tip(), /^تأخير الترجمة 0\.5 ث \(تظهر لاحقًا\) — ارفع ترجمة عربية أولًا/);

@@ -1,12 +1,13 @@
-// قائمة التحميل وتدفقه (P6-AC4، وP12-AC4 وP12-AC8 الجزء الآلي، وجولة الصقل): حالة المسار الملتقط، واختيار المسار والوضع،
-// وزرّان مستقلان في صف: «تنزيل الملف» فوق وحدات P3 وP10 (convertCaptured ← buildExport ← saveFile لكل ملف ← recordExport) دون
-// أي نسخ، و«نسخ التعليمات» وحده دون عرض نصها ولا ملف، ولكلٍّ سطر نتيجته؛ وإشارة القاموس، والتقسيم الاحتياطي عند الجمل أو الصمت
-// بأحجام أجزائه، وخطوات اختيار English عند التقاط مسار عربي أو مترجم آليًا، ورسالة واضحة لكل حالة خاصة.
+// قائمة التحميل وتدفقه (P6-AC4، وP12-AC4 وP12-AC8 الجزء الآلي، وجولة الصقل، وAA3 لوحة 10): حالة المسار الملتقط، واختيار المسار
+// والوضع، و«تنزيل الملف» وحده فوق وحدات P3 وP10 (convertCaptured ← buildExport ← saveFile لكل ملف ← recordExport) بسطر نتيجته،
+// وسطر «تعليمات الترجمة من نافذة الإضافة» مكان زر النسخ (AA3)، والمسارات الأخرى في الفيديو بخطوات اختيارها من يوتيوب (ق١)،
+// والتقسيم الاحتياطي عند الجمل أو الصمت بأحجام أجزائه، ورسالة واضحة لكل حالة خاصة.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { messageFor } from '../../../../src/core/errors/index.js';
 import { PREVIEW_MS } from '../../../../src/player/controls/session.js';
-import { INSTRUCTIONS, click, makeState, mountPage, settle, trackInfo } from './harness.js';
+import { LABELS } from '../../../../src/player/controls/text.js';
+import { click, makeState, mountPage, settle, trackInfo } from './harness.js';
 
 const DL = 'تنزيل الملف';
 // اسم الملف في «نُزّل» معزول LTR (تدقيق 7a66f91، C6، U49).
@@ -31,18 +32,42 @@ test('لم يُلتقط مسار: إرشاد لتفعيل CC واختيار Engl
   assert.equal(page.ui.menuText().includes('CC ثم الإعدادات'), false, 'الخطوات لرفض المسار وحده');
 });
 
-test('مسار عربي أو مترجم آليًا: رسالته وخطوات اختيار English بسطر، وملاحظة Brave في Brave وحده', () => {
+test('رفض مسار (قديم أو مستقبلي): رسالته وخطوات اختيار لغة من يوتيوب بسطر عام، وملاحظة Brave في Brave وحده', () => {
   for (const code of ['EX_NOT_ENGLISH', 'EX_TRANSLATED_TRACK']) {
     const chrome = mountPage({ state: makeState({ captureIssue: { code, at: 1 } }) });
     open(chrome);
     const alert = chrome.ui.menu().querySelector('.alert');
     assert.ok(alert.textContent.includes(messageFor(code)));
-    assert.equal(alert.querySelector('.steps').textContent, 'CC ثم الإعدادات ثم «الترجمة» ثم English');
+    assert.equal(alert.querySelector('.steps').textContent, 'CC ثم الإعدادات ثم «الترجمة» ثم اللغة التي تريدها');
     assert.ok(alert.querySelector('.note-in') === null, 'لا ملاحظة Brave في Chrome');
   }
   const brave = mountPage({ state: makeState({ captureIssue: { code: 'EX_NOT_ENGLISH', at: 1 } }), brave: true });
   open(brave);
-  assert.equal(brave.ui.menu().querySelector('.note-in').textContent, 'Brave قد يختار العربية أولًا؛ اختر English مرة');
+  assert.equal(brave.ui.menu().querySelector('.note-in').textContent, 'Brave قد يختار لغة المتصفح أولًا؛ اختر اللغة التي تريدها مرة');
+});
+
+test('المسارات المتاحة في الفيديو (ق١): ما لم يُلتقط بلغته ونوعه واسمه في يوتيوب و«اختره من قائمة يوتيوب»، بلا زر يبدّله', () => {
+  const available = { videoId: 'AAAAAAAAAAA', tracks: [{ lang: 'en', kind: 'manual', name: 'English' }, { lang: 'es', kind: 'manual', name: 'Español' }, { lang: 'ja', kind: 'asr', name: null }], translatable: true };
+  const page = mountPage({ state: makeState({ captured: [trackInfo()], available }) });
+  open(page);
+  const rows = page.ui.menu().querySelectorAll('.row.available');
+  assert.deepEqual(rows.map((r) => r.querySelector('.line__text').textContent), ['الإسبانية · يدوية — اختره من قائمة يوتيوب', 'اليابانية · تلقائية — اختره من قائمة يوتيوب'], 'الملتقط لا يتكرر');
+  assert.equal(rows[0].querySelector('bdi').textContent, 'Español');
+  assert.ok(page.ui.menuText().includes(LABELS.pickSteps));
+  assert.equal(rows.some((r) => r.querySelector('button')), false, 'لا تبديل من الإضافة');
+  // بلا التقاط: الإرشاد العام وخطوات ترجمة يوتيوب الآلية حين يتيحها الفيديو.
+  const none = mountPage({ state: makeState({ available }) });
+  open(none);
+  assert.equal(none.ui.menu().querySelectorAll('.row.available').length, 3);
+  assert.ok(none.ui.menuText().includes(LABELS.machineSteps));
+});
+
+test('ترجمة يوتيوب الآلية الملتقطة موسومة بلغة أصلها وفي آخر القائمة، ولا تُختار افتراضيًا (ق٢)', () => {
+  const page = mountPage({ state: makeState({ captured: [trackInfo({ key: 'ar|asr|en', lang: 'ar', kind: 'asr', via: 'en', cueCount: 30 }), trackInfo({ key: 'en|asr', kind: 'asr', cueCount: 30 })] }) });
+  open(page);
+  const radios = page.ui.menu().querySelectorAll('button.item[role="radio"]');
+  assert.deepEqual(radios.map((r) => r.textContent), ['الإنجليزية · تلقائية · 30 مقطعًا', 'العربية · مترجمة آليًا من يوتيوب عن الإنجليزية · 30 مقطعًا']);
+  assert.equal(radios[0].getAttribute('aria-checked'), 'true');
 });
 
 test('رفض آخر أو مسار تالف أو بث جارٍ: رسالة المجال نفسها (messageFor) بلا خطوات', () => {
@@ -73,13 +98,11 @@ test('مسار واحد: سطر الحالة بوصفه، ووضع التصدي�
   assert.equal(dl.className, 'primary');
   assert.equal(dl.getAttribute('aria-label'), null, 'اسم الوصول هو النص الظاهر (ومنه «جارٍ التنزيل…»)');
   assert.equal(dl.getAttribute('aria-description'), 'ملف الأصل (SRT) وحده');
-  assert.equal(page.ui.field('copy').getAttribute('aria-description'), 'تعليمات الترجمة وحدها، لترفقها مع الملف');
-  assert.equal(page.ui.field('copy').className, 'secondary');
-  assert.equal(page.ui.field('copy').textContent, 'نسخ التعليمات');
-  assert.ok(dl.parentNode === page.ui.field('copy').parentNode, 'الزران في صف واحد');
-  assert.equal(dl.parentNode.className, 'actions inline');
-  assert.equal(page.ui.menu().querySelectorAll('button').filter((b) => /تنزيل ونسخ/.test(b.textContent)).length, 0, 'لا إجراء مركّب');
-  assert.ok(page.ui.menu().querySelector('.tag') === null, 'لا قاموس: لا إشارة');
+  // تعليمات الترجمة من نافذة الإضافة (AA3، لوحة 10): لا زر نسخ في المشغّل، وسطر يدل عليها.
+  assert.ok(page.ui.field('copy') === null, 'لا زر نسخ');
+  assert.equal(page.ui.menu().querySelectorAll('button').filter((b) => /نسخ/.test(b.textContent)).length, 0);
+  assert.equal(page.ui.field('instructionsNote').textContent, 'تعليمات الترجمة (من ← إلى) من نافذة الإضافة');
+  assert.equal(dl.parentNode.className, 'actions');
   click(page.ui.item('مقاطع أطول'));
   assert.equal(page.ui.field('mode:long').getAttribute('title'), 'جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما');
   assert.equal(page.ui.item('مقاطع أطول').getAttribute('aria-checked'), 'true');
@@ -125,39 +148,7 @@ test('«تنزيل الملف»: الحفظ بـsaveFile ثم البصمة، د�
   assert.ok(page.ui.menu().querySelector('[data-fid="saveLine"] svg.glyph'), 'رمز النجاح SVG');
   assert.equal(page.ui.toasts().length, 0, 'النتيجة في القائمة لا رسالة فوق الفيديو');
   assert.equal(page.handle.diagnostics().session.downloads, 1);
-  assert.equal(page.handle.diagnostics().session.copies, 0);
-});
-
-test('الفعلان مستقلان: تعذّر النسخ لا يمس التنزيل وسطره يعيد المحاولة دون تنزيل، وإلغاء الحفظ لا يخفي نجاح نسخ سابق', async () => {
-  const page = withTrack();
-  page.env.win.navigator = {};
-  page.env.doc.execCommand = () => false;
-  open(page);
-  click(page.ui.field('copy'));
-  await settle();
-  assert.deepEqual(lines(page), [['copyLine', 'error', 'تعذّر النسخ — أعد المحاولة']]);
-  assert.equal(page.flows.downloads.length, 0, 'النسخ لا ينزّل');
-  click(page.ui.item(DL));
-  await settle();
-  assert.deepEqual(lines(page), [['saveLine', 'ok', named('AAAAAAAAAAA.en.manual.normal.srt')], ['copyLine', 'error', 'تعذّر النسخ — أعد المحاولة']], 'التنزيل لا يمحو سطر النسخ ولا ينسخ');
-  const retry = page.ui.menu().querySelector('[data-fid="copyLine"]');
-  assert.equal(retry.tagName, 'button');
-  page.env.doc.execCommand = () => true;
-  click(retry);
-  await settle();
-  assert.deepEqual(lines(page).at(-1), ['copyLine', 'ok', 'نُسخت التعليمات']);
-  assert.equal(page.flows.downloads.length, 1, 'إعادة النسخ لا تنزّل ثانية');
-
-  const cancelled = withTrack();
-  cancelled.flows.saveResults = [{ ok: false, code: 'SV_CANCELLED' }];
-  open(cancelled);
-  click(cancelled.ui.field('copy'));
-  await settle();
-  click(cancelled.ui.item(DL));
-  await settle();
-  assert.deepEqual(lines(cancelled), [['saveLine', 'info', messageFor('SV_CANCELLED')], ['copyLine', 'ok', 'نُسخت التعليمات']]);
-  assert.deepEqual(cancelled.copied, [INSTRUCTIONS], 'نسخة واحدة من زر النسخ وحده');
-  assert.equal(cancelled.controller.calls.some((c) => c[0] === 'recordExport'), false, 'لا بصمة لملف لم يُحفظ');
+  assert.equal('copies' in page.handle.diagnostics().session, false, 'لا نسخ في المشغّل');
 });
 
 test('إخفاق البناء أو الحفظ: رسالة الرمز في القائمة ولا بصمة؛ والرجوع إلى Blob يُذكر؛ وإخفاق البصمة يُذكر وحده', async () => {
@@ -251,58 +242,6 @@ test('إلغاء حوار الحفظ في جزء يوقف بقية الأجزا�
   assert.equal(page.flows.downloads.length, 1);
   assert.deepEqual(lines(page)[0], ['saveLine', 'ok', named('AAAAAAAAAAA.en.manual.normal.part1of3.srt')]);
   assert.ok(page.ui.menuText().includes(messageFor('SV_CANCELLED')));
-});
-
-test('«نسخ التعليمات» وحده: نص التعليمات كما هو إلى الحافظة، ولا يظهر في أي مكان، ولا ملف ولا بصمة', async () => {
-  const page = withTrack();
-  open(page);
-  click(page.ui.field('copy'));
-  await settle();
-  assert.deepEqual(page.copied, [INSTRUCTIONS]);
-  assert.equal(page.flows.built[0].title, 'محاضرة', 'بعنوان الفيديو الحالي');
-  assert.equal(page.flows.downloads.length, 0, 'النسخ لا ينزّل ملفًا');
-  assert.equal(page.controller.calls.some((c) => c[0] === 'recordExport'), false);
-  assert.deepEqual(lines(page), [['copyLine', 'ok', 'نُسخت التعليمات']]);
-  const everywhere = [page.ui.menuText(), ...page.ui.toasts().map((t) => t.text), page.ui.tip() ?? '', JSON.stringify(page.handle.diagnostics()), JSON.stringify(page.handle.peek())].join('\n');
-  assert.equal(everywhere.includes(INSTRUCTIONS), false, 'النص لا يُعرض');
-});
-
-test('القاموس المرفق: إشارة «+ القاموس (2)» تحت الزرين، والنسخ بالقاموس، والتنزيل لا ينسخ؛ وغير المرفق بلا إشارة', async () => {
-  const terms = [{ source: 'prompt', target: 'موجِّه', note: null }, { source: 'token', target: 'رمز', note: 'وحدة نص' }];
-  const page = withTrack({ prefs: { schema: 1, glossary: { attach: true, terms }, review: { maxCps: null }, saveLocation: { mode: 'downloads', folder: 'Tarjuman' } } });
-  open(page);
-  assert.equal(page.ui.menu().querySelector('.tag').textContent, '+ القاموس (2)');
-  click(page.ui.field('copy'));
-  await settle();
-  click(page.ui.item(DL));
-  await settle();
-  assert.deepEqual(page.copied, [`${INSTRUCTIONS}+قاموس(2)`], 'نسخة واحدة من زر النسخ، والتنزيل بعده لا ينسخ');
-  assert.equal(page.flows.downloads.length, 1);
-  assert.strictEqual(page.flows.instructionCalls[0].glossary, terms);
-  assert.deepEqual(Object.keys(page.flows.instructionCalls[0]).sort(), ['glossary', 'parts', 'source', 'target', 'title', 'via', 'videoId']);
-  assert.equal(page.flows.instructionCalls[0].source, 'en', 'لغة المسار الملتقط (AA1)');
-
-  const off = withTrack({ prefs: { schema: 1, glossary: { attach: false, terms }, review: { maxCps: null }, saveLocation: { mode: 'downloads', folder: 'Tarjuman' } } });
-  open(off);
-  assert.ok(off.ui.menu().querySelector('.tag') === null);
-  click(off.ui.field('copy'));
-  await settle();
-  assert.deepEqual(off.copied, [INSTRUCTIONS]);
-});
-
-test('تعذّر الحافظة: بديل النسخ من حقل مؤقت داخل الجذر، ثم يُزال', async () => {
-  const ok = mountPage({ state: makeState({ captured: [trackInfo()] }), clipboard: 'fail' });
-  let copiedByExec = null;
-  ok.env.doc.execCommand = (cmd) => {
-    copiedByExec = cmd;
-    return true;
-  };
-  open(ok);
-  click(ok.ui.field('copy'));
-  await settle();
-  assert.equal(copiedByExec, 'copy');
-  assert.deepEqual(lines(ok), [['copyLine', 'ok', 'نُسخت التعليمات']]);
-  assert.equal(ok.ui.layerHost().shadowRoot.querySelectorAll('textarea').length, 0, 'الحقل المؤقت أُزيل');
 });
 
 test('تبدّل الفيديو أثناء الحفظ: لا بصمة تُحفظ للفيديو الجديد، والقائمة تُغلق', async () => {

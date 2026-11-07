@@ -7,10 +7,11 @@ import { trackComparison } from '../core/compare/index.js';
 import { sameExport } from '../core/import/review.js';
 import { TjError, toErrorInfo } from '../core/errors/index.js';
 import {
-  bundleFromRecord, referencedFingerprints, slotModels, withActiveSlot, withMark, withMarksReplaced, withSlotUpload,
+  bundleFromRecord, referencedFingerprints, slotModels, withActiveSlot, withMark, withMarksReplaced, withSlotLang, withSlotUpload,
 } from '../core/model/bundle.js';
 import { isVideoId } from '../core/model/ids.js';
 import { DEFAULT_PREFS, normalizePrefs } from '../core/model/prefs.js';
+import { normalizeLangPrefs } from '../core/model/lang-prefs.js';
 import { DEFAULT_SETTINGS, normalizeSettings } from '../core/model/settings.js';
 import { normalizeOffset } from '../core/model/timing.js';
 import { markAnchor, sameAnchor } from '../core/model/marks.js';
@@ -36,8 +37,9 @@ import { DISPLAY_MODES } from '../core/model/video.js';
  *   error: { code: string, message: string, detail: string | null } | null, version: number,
  *   bundle: import('../core/model/slots.js').Bundle | null, activeSlot: 1 | 2 | 3 | null,
  *   slots: ReturnType<typeof slotModels>, marks: null | { slot: 1 | 2 | 3, items: import('../core/model/marks.js').Mark[] },
- *   previous: null | { from: 1 | 2 | 3, savedAt: string }, prefs: import('../core/model/prefs.js').Prefs
- * }} ControllerState
+ *   previous: null | { from: 1 | 2 | 3, savedAt: string }, prefs: import('../core/model/prefs.js').Prefs,
+ *   langPrefs: import('../core/model/lang-prefs.js').LangPrefs, available: import('../extract/message.js').TrackList | null
+ * }} ControllerState langPrefs (AA3): تفضيلات اللغات لاقتراح لغة الملف عند الرفع («إلى» في نافذة الإضافة)
  * @typedef {ReturnType<typeof createController>} Controller
  */
 
@@ -65,6 +67,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
     extractor?.setCompleteness?.(settings.thresholds.completeness);
   };
   let prefs = normalizePrefs(DEFAULT_PREFS);
+  let langPrefs = normalizeLangPrefs(null);
   /** @type {string | null} */
   let videoId = null;
   /** @type {VideoRecord | null} */
@@ -158,6 +161,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       marks: bundle && activeSlot ? { slot: activeSlot, items: bundle.slots[activeSlot - 1].marks } : null,
       previous: bundle?.previous ? { from: bundle.previous.from, savedAt: bundle.previous.savedAt } : null,
       prefs,
+      langPrefs,
     });
   }
 
@@ -323,6 +327,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
         applySettings(await store.getSettings());
         if (!saved && !loading) view = { ...view, displayMode: settings.displayModeDefault };
         if (typeof store.getPrefs === 'function') prefs = await store.getPrefs();
+        if (typeof store.getLangPrefs === 'function') langPrefs = await store.getLangPrefs();
       } catch (err) {
         error = toErrorInfo(err);
       }
@@ -572,6 +577,22 @@ export function createController({ store, extractor = null, page = {}, now = () 
       };
     },
 
+    /**
+     * لغة ترجمة خانة ممتلئة (AA3): رمز أو null «غير محددة»، من قائمة الترجمة في المشغّل. لا يمس النص ولا التوقيت.
+     * @param {1 | 2 | 3} n @param {string | null} lang
+     */
+    async setSlotLang(n, lang) {
+      if (loading) return state;
+      requireVideo();
+      if (!bundleFor(saved)?.slots[n - 1]?.track) throw new TjError('ST_SLOT_EMPTY', { detail: `slot=${n}` });
+      const { id, next } = await writeBundle((b) => (b ? withSlotLang(b, n, lang, iso()) : undefined));
+      if (id === videoId && next) {
+        error = null;
+        changed();
+      }
+      return state;
+    },
+
     /** تفضيلات الإصدار الثاني. @param {Record<string, unknown>} patch */
     async updatePrefs(patch) {
       prefs = await store.setPrefs(patch);
@@ -601,6 +622,10 @@ export function createController({ store, extractor = null, page = {}, now = () 
       }
       if (change.prefs) {
         prefs = normalizePrefs(change.prefs.newValue ?? DEFAULT_PREFS);
+        changed();
+      }
+      if (change.langPrefs) {
+        langPrefs = normalizeLangPrefs(change.langPrefs.newValue ?? null);
         changed();
       }
       if (!videoId) return;

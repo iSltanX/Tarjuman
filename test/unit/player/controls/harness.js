@@ -150,6 +150,14 @@ export function fakeController(initial = makeState(), opts = {}) {
       if (state.notice) set({ notice: null });
     },
     // ———— الإصدار الثاني (عقد interfaces §١٢) ————
+    // لغة ترجمة الخانة النشطة (AA3).
+    async setSlotLang(n, lang) {
+      calls.push(['setSlotLang', n, lang]);
+      if (opts.langFails) throw new TjError(opts.langFails);
+      if (!state.bundle?.slots[n - 1]?.track) throw new TjError('ST_SLOT_EMPTY');
+      if (state.arabic && state.bundle.active === n) set({ arabic: Object.freeze({ ...state.arabic, lang }) });
+      return state;
+    },
     async activateSlot(n) {
       calls.push(['activateSlot', n]);
       if (opts.activateFails) throw new TjError(opts.activateFails);

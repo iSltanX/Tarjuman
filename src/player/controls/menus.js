@@ -1,13 +1,15 @@
 // محتوى القوائم الصغيرة (مواصفة التصميم §٦ و§١٩): التحميل، والرفع والعرض، والتوقيت، وتأكيد الاستبدال. كل باني دالة
 // نقية من نموذج العرض إلى عقد DOM (textContent وsetAttribute فقط)، والأفعال تُبلَّغ إلى الجلسة. العنصر الذي يُستعاد
 // إليه التركيز بعد إعادة البناء يحمل data-fid، وأول عنصر للتركيز data-first. القوائم إجراءات سريعة مضغوطة بلا فقرات شرح
-// («المشغّل للمشاهدة»): الأدوات المرتبطة في صفوف (أوضاع العرض، والتنزيل والنسخ، والمزامنة والتصفير)، والشرح في التلميح،
-// والتفاصيل في صفحات الإضافة. نص تعليمات الترجمة لا يمر من هنا أبدًا.
+// («المشغّل للمشاهدة»): الأدوات المرتبطة في صفوف (أوضاع العرض، والمزامنة والتصفير)، والشرح في التلميح، والتفاصيل في صفحات
+// الإضافة. تعليمات الترجمة (من ← إلى) في نافذة الإضافة وحدها منذ AA3، فلا يمر نصها من هنا أبدًا.
 import { messageFor } from '../../core/errors/index.js';
+import { knownLanguages } from '../../core/lang/index.js';
 import { formatOffset, textDirection } from '../../ui/format.js';
+import { languageName } from '../../ui/lang.js';
 import { glyph } from './glyphs.js';
 import {
-  LABELS, comparisonSummary, cueCount, dualLabels, editsLine, glossaryTag, keptLine, offsetMeaning, partRow, previousLostLine, shortTime, slotLabel, stepSeconds,
+  LABELS, availableLine, comparisonSummary, cueCount, dualLabels, editsLine, keptLine, offsetMeaning, partRow, previousLostLine, shortTime, slotLabel, stepSeconds,
   syncAt, trackLine, translationLine,
 } from './text.js';
 
@@ -176,26 +178,43 @@ function targetPicker(h, act, slots, target, { disabled = false, root = null } =
   return radioRow(h, act, 'target', items, { disabled, root, label: LABELS.saveTo, first: true });
 }
 
-/** سطر نتيجة مستقل (§١٩.٥): «✓ نُزّل …» أو «✓ نُسخت التعليمات»؛ وتعذّر النسخ زر يعيد المحاولة. */
-function resultLine(h, act, line, fid) {
+/** سطر نتيجة مستقل (§١٩.٥): «✓ نُزّل …». */
+function resultLine(h, line, fid) {
   const tone = line.tone === 'ok' ? 'ok' : line.tone === 'error' ? 'error' : 'info';
-  if (line.tone === 'error' && fid === 'copyLine') {
-    return h('button', { className: 'line', attrs: { type: 'button', 'data-tone': 'error', 'data-fid': fid, 'aria-live': 'polite' }, on: { click: () => act('copy') }, children: [h.glyph?.(tone) ?? null, h('span', { text: line.text })] });
-  }
   return h('div', { className: 'line', attrs: { 'data-tone': line.tone, 'data-fid': fid, role: line.tone === 'error' ? 'alert' : 'status' }, children: [h.glyph?.(tone) ?? null, h('span', { className: 'line__text', text: line.text })] });
 }
 
 /**
- * قائمة التحميل (§٦.١ و§١٩.٥، وجولة الصقل): زرّان مستقلان في صف واحد، «تنزيل الملف» يحفظ ملف SRT وحده و«نسخ التعليمات» ينسخ
- * التعليمات وحدها (بالقاموس إن أُرفق)، ولكلٍّ سطر نتيجته؛ وخطوات اختيار English بسطر عند التقاط مسار عربي أو مترجم آليًا (وملاحظة Brave)؛ وأحجام الأجزاء تحت
- * التقسيم الاحتياطي. لا عرض لنص التعليمات ولا لمكان الحفظ.
+ * مسارات الفيديو المتاحة التي لم تُلتقط (ق١): سطر لكل مسار بلغته ونوعه و«اختره من قائمة يوتيوب»، ثم خطوات الاختيار بكلمات؛
+ * الإضافة لا تبدّل المسار، فلا زر هنا. وتحتها خطوات ترجمة يوتيوب الآلية حين يتيحها الفيديو (ق٢).
+ * @param {H} h @param {{ lang: string, kind: 'manual' | 'asr', name: string | null }[]} list @param {{ brave: boolean, translatable: boolean }} o
+ */
+function availableBlock(h, list, { brave, translatable }) {
+  if (!list.length && !translatable) return [];
+  const out = [label(h, LABELS.availableTitle)];
+  for (const t of list) {
+    out.push(h('div', {
+      className: 'row status available', attrs: { 'data-tone': 'info', 'data-fid': `available:${t.lang}|${t.kind}` },
+      children: [h('span', { className: 'line__text', text: availableLine(t) }), t.name ? h('bdi', { className: 'dim', text: t.name, attrs: { dir: 'auto' } }) : null],
+    }));
+  }
+  const steps = [list.length ? h('span', { className: 'steps', text: LABELS.pickSteps }) : null, translatable ? h('span', { className: 'steps', text: LABELS.machineSteps }) : null, brave && list.length ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null].filter(Boolean);
+  if (steps.length) out.push(h('div', { className: 'note stack', attrs: { 'data-fid': 'pickSteps' }, children: steps }));
+  return out;
+}
+
+/**
+ * قائمة التحميل (§٦.١ و§١٩.٥، وAA3 لوحة 10): اللغة (المسارات الملتقطة بلغتها ونوعها وعددها، والمترجم آليًا موسومًا في آخرها)،
+ * ووضع التصدير، وزر «تنزيل الملف» وحده بسطر نتيجته، وسطر «تعليمات الترجمة (من ← إلى) من نافذة الإضافة»، ثم المسارات الأخرى في
+ * الفيديو بخطوات اختيارها من يوتيوب (لا تبدّلها الإضافة، ق١)، ثم «خيارات احتياطية» (التقسيم) بأحجام الأجزاء. لا عرض لمكان الحفظ.
  * @param {H} h @param {Act} act
  * @param {{
  *   live: boolean, unavailable: boolean, captureIssue: string | null, invalid: { code: string | null }[],
  *   tracks: import('../../extract/index.js').TrackInfo[], selectedKey: string | null, mode: 'normal' | 'long', durationMs: number | null,
  *   why: boolean, fallbackOpen: boolean, split: boolean, splitSize: string, splitError: string | null,
- *   busy: boolean, copyBusy: boolean, saveLine: { tone: string, text: string } | null, copyLine: { tone: string, text: string } | null,
- *   result: { tone: 'info' | 'warn' | 'error', text: string }[], glossary: number, englishGuide: { brave: boolean } | null,
+ *   busy: boolean, saveLine: { tone: string, text: string } | null,
+ *   result: { tone: 'info' | 'warn' | 'error', text: string }[], pickGuide: { brave: boolean } | null,
+ *   available: { lang: string, kind: 'manual' | 'asr', name: string | null }[], translatable: boolean,
  *   parts: { index: number, from: number, to: number, chars: number }[] | null, partsRaised: boolean,
  * }} m partsRaised: رُفع حجم الجزء ليبقى عدد الأجزاء ضمن حد الرفع (U31)، فيُقال تحت الأحجام قبل التنزيل
  */
@@ -205,6 +224,7 @@ export function downloadMenu(h, act, m, root = null) {
     out.push(alert(h, 'info', messageFor('EX_LIVE')));
     return out;
   }
+  const brave = !!m.pickGuide?.brave;
   if (!m.tracks.length) {
     // المسار المحفوظ من تنزيل سابق بلا التقاط في هذه الزيارة: يُنزَّل من هنا كما في المحفوظات (تدقيق Fable، FA-17، بقرار سلطان)،
     // وتبقى إرشادات CC بعده لمن يريد التقاطًا جديدًا (الوضع الطويل أو التقسيم).
@@ -213,27 +233,21 @@ export function downloadMenu(h, act, m, root = null) {
       out.push(statusRow(h, 'ok', `${trackLine(m.saved)} · ${LABELS.savedTag}`, 'language'));
       out.push(h('div', { className: 'note', text: LABELS.savedNote, attrs: { 'data-fid': 'savedNote' } }));
       out.push(h('div', {
-        className: 'actions inline',
+        className: 'actions',
         children: [
           button(h, 'primary', m.busy ? LABELS.checking : LABELS.downloadSaved, {
             act, name: 'download', fid: 'download', first: true, disabled: m.busy, icon: 'download', title: LABELS.downloadSavedHint,
             extra: { 'aria-busy': m.busy ? 'true' : null, 'aria-description': LABELS.downloadSavedHint },
           }),
-          button(h, 'secondary', LABELS.copyShort, {
-            act, name: 'copy', fid: 'copy', disabled: m.copyBusy, icon: 'copy', title: LABELS.copyHint, extra: { 'aria-description': LABELS.copyHint },
-          }),
         ],
       }));
-      if (m.glossary) out.push(h('div', { className: 'tag', text: glossaryTag(m.glossary), attrs: { 'data-fid': 'glossary' } }));
-      if (m.saveLine) out.push(resultLine(h, act, m.saveLine, 'saveLine'));
-      if (m.copyLine) out.push(resultLine(h, act, m.copyLine, 'copyLine'));
+      if (m.saveLine) out.push(resultLine(h, m.saveLine, 'saveLine'));
       for (const r of m.result) out.push(alert(h, r.tone, r.text));
+      out.push(h('div', { className: 'note', text: LABELS.instructionsNote, attrs: { 'data-fid': 'instructionsNote' } }));
       out.push(sep(h));
     }
     if (m.captureIssue) {
-      const guide = m.englishGuide
-        ? [h('span', { className: 'steps', text: LABELS.englishSteps }), m.englishGuide.brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null]
-        : [];
+      const guide = m.pickGuide ? [h('span', { className: 'steps', text: LABELS.pickSteps }), brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null] : [];
       out.push(alert(h, 'warn', messageFor(m.captureIssue), guide.filter(Boolean)));
     }
     for (const t of m.invalid) out.push(alert(h, 'error', messageFor(t.code ?? 'EX_NO_TRACK')));
@@ -243,6 +257,7 @@ export function downloadMenu(h, act, m, root = null) {
       const why = button(h, 'link', LABELS.whyLink, { act, name: 'why', fid: 'why', first: !m.saved, extra: { 'aria-expanded': m.why ? 'true' : 'false' } });
       out.push(alert(h, 'info', messageFor('CT_NOT_CAPTURED'), [h('span', { children: [why] }), m.why ? h('span', { className: 'note', text: LABELS.why }) : null]));
     }
+    out.push(...availableBlock(h, m.available, { brave, translatable: m.translatable }));
     return out;
   }
 
@@ -265,7 +280,7 @@ export function downloadMenu(h, act, m, root = null) {
         },
       },
       children: m.tracks.map((t) => h('button', {
-        className: 'item',
+        className: `item${t.via ? ' item--machine' : ''}`,
         text: trackLine(t),
         attrs: {
           type: 'button', role: 'radio', 'aria-checked': t.key === sel.key ? 'true' : 'false', 'data-fid': `track:${t.key}`,
@@ -291,24 +306,23 @@ export function downloadMenu(h, act, m, root = null) {
     { value: 'long', label: LABELS.modeLong, title: LABELS.modeLongNote },
   ], m.mode, act, 'mode', 'mode', { root }));
 
-  out.push(sep(h));
   out.push(h('div', {
-    className: 'actions inline',
+    className: 'actions',
     children: [
       // اسم الوصول هو النص الظاهر نفسه (ومنه «جارٍ التنزيل…»)، والتفصيل وصف إضافي لا يحل محله.
       button(h, 'primary', m.busy ? LABELS.checking : LABELS.downloadFile, {
         act, name: 'download', fid: 'download', first: m.tracks.length === 1, disabled: m.busy, icon: 'download', title: LABELS.downloadFileHint,
         extra: { 'aria-busy': m.busy ? 'true' : null, 'aria-description': LABELS.downloadFileHint },
       }),
-      button(h, 'secondary', LABELS.copyShort, {
-        act, name: 'copy', fid: 'copy', disabled: m.copyBusy, icon: 'copy', title: LABELS.copyHint, extra: { 'aria-description': LABELS.copyHint },
-      }),
     ],
   }));
-  if (m.glossary) out.push(h('div', { className: 'tag', text: glossaryTag(m.glossary), attrs: { 'data-fid': 'glossary' } }));
-  if (m.saveLine) out.push(resultLine(h, act, m.saveLine, 'saveLine'));
-  if (m.copyLine) out.push(resultLine(h, act, m.copyLine, 'copyLine'));
+  if (m.saveLine) out.push(resultLine(h, m.saveLine, 'saveLine'));
   for (const r of m.result) out.push(alert(h, r.tone, r.text));
+  out.push(h('div', { className: 'note', text: LABELS.instructionsNote, attrs: { 'data-fid': 'instructionsNote' } }));
+  if (m.available.length) {
+    out.push(sep(h));
+    out.push(...availableBlock(h, m.available, { brave, translatable: false }));
+  }
 
   out.push(sep(h));
   out.push(h('button', {
@@ -351,6 +365,35 @@ export function downloadMenu(h, act, m, root = null) {
 }
 
 /**
+ * اختيار لغة الترجمة (AA3): «غير محددة»، ثم المقترحة (رمز صريح في اسم الملف، و«إلى» في نافذة الإضافة، ولغة الترجمة الآن)، ثم كل
+ * اللغات من بيانات المتصفح. اختيار أصلي من المتصفح (قارئ الشاشة ولوحة المفاتيح بسلوك النظام)، والاسم بالعربية والرمز بعده.
+ * @param {H} h @param {Act} act
+ * @param {{ name: string, value: string | null, suggested: string[], fid: string, disabled?: boolean, id: string }} o
+ */
+function langSelect(h, act, { name, value, suggested, fid, disabled = false, id }) {
+  const opt = (code, text) => {
+    const o = h('option', { text, attrs: { value: code } });
+    if ((value ?? '') === code) o.setAttribute('selected', '');
+    return o;
+  };
+  const named = (code) => `${languageName(code) ?? code} (${code})`;
+  const sug = [...new Set(suggested.filter(Boolean))];
+  if (value && !sug.includes(value) && !knownLanguages().some((l) => l.code === value)) sug.push(value);
+  const sel = h('select', {
+    className: 'lang',
+    attrs: { id, 'data-fid': fid, 'aria-disabled': disabled ? 'true' : null, disabled: disabled ? '' : null },
+    on: { change: (ev) => act(name, ev.target.value || null) },
+    children: [
+      opt('', LABELS.langUnknownOption),
+      sug.length ? h('optgroup', { attrs: { label: LABELS.langSuggested }, children: sug.map((c) => opt(c, named(c))) }) : null,
+      h('optgroup', { attrs: { label: LABELS.langAll }, children: knownLanguages().filter((l) => !sug.includes(l.code)).map((l) => opt(l.code, `${l.arabic} (${l.code})`)) }),
+    ],
+  });
+  sel.value = value ?? '';
+  return h('div', { className: 'row field', children: [h('label', { text: LABELS.translationLang, attrs: { for: id } }), sel] });
+}
+
+/**
  * قائمة الرفع والعرض (§٦.٢ و§١٩.٣، وجولة الصقل) بترتيبها: العنوان ومحدد الترجمات الموجودة (حين تكون أكثر من واحدة)، ثم
  * الملف وعدده، وسطر الملخص، وأوضاع العرض الثلاثة في صف واحد، ثم «علّم للمراجعة» و«رفع ترجمة…» (أو «استبدال…») في صف.
  * @param {H} h @param {Act} act
@@ -358,8 +401,8 @@ export function downloadMenu(h, act, m, root = null) {
  *   fileName: string, count: number, edited: boolean, comparison: object | null, notes: string[], slots: SlotModel[],
  *   switching: boolean, uploadLabel: string,
  *   warnings: string[], mode: 'ar' | 'dual' | 'off', dualAvailable: boolean, originalLang: string | null, busy: boolean, error: string | null,
- *   ad?: boolean,
- * }} m originalLang رمز لغة مسار الأصل الفعلي (يسمّي وضع «فوق الأصل»)، أو null؛ وad إعلان يُعرض الآن
+ *   ad?: boolean, lang?: string | null, langSuggested?: string[],
+ * }} m originalLang رمز لغة مسار الأصل الفعلي (يسمّي وضع «فوق الأصل»)، أو null؛ وad إعلان يُعرض الآن؛ وlang لغة الترجمة النشطة أو null
  * @param {ShadowRoot | null} [root] جذر القائمة (للتركيز بالأسهم في المحدد)
  */
 export function displayMenu(h, act, m, root = null) {
@@ -367,10 +410,12 @@ export function displayMenu(h, act, m, root = null) {
   const dual = dualLabels(m.originalLang);
   const out = [
     h('div', { className: 'head', children: [h('h2', { className: 'title', text: LABELS.displayTitle }), slotPicker(h, act, m.slots, { disabled: m.switching, root })] }),
-    statusRow(h, 'ok', translationLine(m.count, m.edited), 'arabicLine'),
+    statusRow(h, 'ok', translationLine(m.count, m.edited, m.lang), 'arabicLine'),
     h('div', { className: 'row file', children: [h('span', { className: 'name', text: m.fileName, attrs: { dir: 'ltr', title: m.fileName } })] }),
     summaryRow(h, summary),
   ];
+  // لغة الترجمة النشطة تُحدَّد أو تُغيَّر هنا (AA3): ما حُفظ قبل 2.0.0 «غير محددة» حتى يختارها المستخدم.
+  out.push(langSelect(h, act, { name: 'slotLang', value: m.lang, suggested: m.langSuggested ?? [], fid: 'slotLang', disabled: m.switching || m.busy, id: 'tj-slot-lang' }));
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
   const notes = m.notes.slice(0, 1);
   for (const n of notes) out.push(h('div', { className: 'note', text: n }));
@@ -407,7 +452,7 @@ export function displayMenu(h, act, m, root = null) {
  * @param {{
  *   fileName: string, count: number, comparison: object | null, warnings: string[], hint: string | null,
  *   slots: SlotModel[], target: number, filled: boolean, edits: number, keepAvailable: boolean, keep: boolean, conflicts: number,
- *   offsetNote: boolean, previousFrom?: number | null, busy: boolean, error: string | null,
+ *   offsetNote: boolean, previousFrom?: number | null, busy: boolean, error: string | null, lang?: string | null, langSuggested?: string[],
  * }} m
  * @param {ShadowRoot | null} [root]
  */
@@ -421,6 +466,8 @@ export function confirmMenu(h, act, m, root = null) {
   if (m.hint) out.push(alert(h, 'warn', m.hint));
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
   out.push(sep(h));
+  // لغة الملف (AA3): من رمز صريح في اسمه، وإلا «إلى» في نافذة الإضافة، وإلا «غير محددة»؛ ويغيّرها المستخدم قبل الحفظ.
+  out.push(langSelect(h, act, { name: 'uploadLang', value: m.lang ?? null, suggested: m.langSuggested ?? [], fid: 'uploadLang', disabled: m.busy, id: 'tj-upload-lang' }));
   out.push(h('div', {
     className: 'row target',
     children: [h('span', { text: LABELS.saveTo }), targetPicker(h, act, m.slots, m.target, { disabled: m.busy, root })],
