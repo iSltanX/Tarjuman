@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { messageFor } from '../../../../src/core/errors/index.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { SUBTITLE_FONT_LIST } from '../../../../src/ui/subtitle-fonts.js';
-import { LINKS, PRIVACY_LINE } from '../../../../src/pages/settings/about.js';
+import { BROWSERS_LINE, CREDITS, LINKS, PRIVACY_LINE } from '../../../../src/pages/settings/about.js';
 import { createSettings, INSTALL_REMINDER, MODE_NOTES, PREVIEW_NOTE, SCALE_NOTE, SUBTITLE_NOTE } from '../../../../src/pages/settings/view.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, videoRecord } from '../../../helpers/fixtures.js';
@@ -419,22 +419,35 @@ test('تذكير التثبيت: يظهر ما دامت المحفوظات فا�
   assert.equal(textOf((await mount({ videos: 1 })).root).includes(INSTALL_REMINDER), false);
 });
 
-test('حول: الإصدار وسطر الخصوصية الصادق (محلي إلا صور الفيديو) والرابطان بتبويب جديد وnoopener بلا عبارة «خاص حاليًا»، والخطوط ورخصها المحلية', async () => {
+test('حول: الإصدار برمز الشعار والاسم، وسطر الخصوصية الصادق، وبطاقة الحقوق (سلطان والموقع والمستودع) بتبويب جديد وnoopener، والدعم، والخطوط ورخصها المحلية', async () => {
   const m = await mount();
   const about = section(m, 'حول');
-  assert.deepEqual([...about.querySelector('.st-about__row').children].map(textOf), ['الإصدار', '0.2.0']);
+  const labels = [...about.querySelectorAll('.st-about__row')].map((r) => textOf(r.querySelector('.st-row__label')));
+  assert.deepEqual(labels, ['الإصدار', 'الحقوق', 'الدعم', 'الدليل', 'التراخيص'], 'صفوف بتسمياتها كبقية الإعدادات (لوحة 15)');
+  const brand = about.querySelector('.st-about__brand');
+  assert.ok(brand.querySelector('svg.tj-logo__mark'), 'رمز الشعار');
+  assert.equal(textOf(brand.querySelector('.st-about__name')), 'ترجمان');
+  assert.equal(textOf(brand.querySelector('.st-about__version')), 'v0.2.0');
+  assert.equal(brand.querySelector('.st-about__version').dir, 'ltr', 'الرقم معزول LTR');
+  assert.equal(textOf(brand.querySelector('.st-about__browsers')), BROWSERS_LINE);
   assert.ok(textOf(about).includes(PRIVACY_LINE));
   assert.equal(textOf(about).includes('كل شيء محلي على جهازك'), false, 'لا ادّعاء مطلق بأن كل شيء محلي: الصور من يوتيوب');
-  assert.ok(textOf(about).includes('ترجمان — تطوير سلطان'));
+  // بطاقة الحقوق بطلب سلطان (2026-11-07): مفتاح وقيمة، والرابطان باسم النطاق LTR معزولًا.
+  const credits = [...about.querySelectorAll('.st-credits__row')].map((r) => [textOf(r.querySelector('dt')), textOf(r.querySelector('dd'))]);
+  assert.deepEqual(credits, [['التصميم والتطوير', 'سلطان'], ['الموقع', 'bysltan.com'], ['المستودع', 'github.com/iSltanX/Tarjuman']]);
+  assert.ok(textOf(about).includes(CREDITS.copyright), 'سطر الحقوق كما في LICENSE');
+  assert.equal(CREDITS.copyright, '© 2026 سلطان (BySultan). جميع الحقوق محفوظة.');
   const links = findAll(about, (e) => e.tagName === 'a');
   const byText = (t) => links.find((a) => textOf(a) === t);
   const site = byText('bysltan.com');
+  const repo = byText('github.com/iSltanX/Tarjuman');
   const support = byText('الدعم والخصوصية');
   assert.equal(site.getAttribute('href'), LINKS.site);
+  assert.equal(repo.getAttribute('href'), LINKS.repo);
   assert.equal(support.getAttribute('href'), LINKS.support);
-  assert.equal(LINKS.support, 'https://bysltan.com/tarjuman/support', 'صفحة الدعم بدل المستودع الخاص (قرار T4)');
-  assert.equal(byText('المستودع على GitHub'), undefined, 'لا رابط إلى المستودع الخاص');
-  for (const a of [site, support]) {
+  assert.deepEqual([LINKS.site, LINKS.repo, LINKS.support], ['https://bysltan.com', 'https://github.com/iSltanX/Tarjuman', 'https://bysltan.com/tarjuman/support']);
+  for (const a of [site, repo]) assert.equal(a.querySelector('bdi').dir, 'ltr', 'اسم النطاق LTR معزول');
+  for (const a of [site, repo, support]) {
     assert.equal(a.getAttribute('target'), '_blank');
     assert.match(a.getAttribute('rel'), /noopener/);
   }
@@ -457,7 +470,7 @@ test('حول: الإصدار وسطر الخصوصية الصادق (محلي إ
   assert.equal(icons.getAttribute('href'), '../../THIRD_PARTY_NOTICES.txt', 'ملف الإشعارات المحلي بمسار نسبي');
   assert.match(icons.getAttribute('rel'), /noopener/);
   const external = links.filter((a) => /^https?:/.test(a.getAttribute('href'))).map((a) => a.getAttribute('href'));
-  assert.deepEqual(external.sort(), [LINKS.site, LINKS.support].sort(), 'الرابطان الخارجيان الوحيدان');
+  assert.deepEqual(external.sort(), [LINKS.site, LINKS.repo, LINKS.support].sort(), 'الروابط الخارجية الثلاثة الوحيدة');
 });
 
 test('خطوط الواجهة لا تتغير بتغيير خط الترجمة: الخط المضمّن على اسم كل خط وعلى المعاينة وحدهما', async () => {

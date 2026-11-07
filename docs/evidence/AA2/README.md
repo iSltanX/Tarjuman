@@ -12,4 +12,6 @@
 
 **اللقطات** (`brave/`، كلٌّ بالوضعين `-light` و`-dark`): `library` و`library-expanded` (المحفوظات وصفها الموسّع)، و`settings-display` و`settings-data` و`settings-about`، و`editor`، و`popup` (340)، و`gallery` (معرض المكوّنات: الألوان والشعار بأحجامه والأيقونات الواحدة والخمسون ونقطة التاء والأزرار والحقول والشارات والتنبيهات والحوار والقوائم والإشعارات).
 
+**بطاقة «الحقوق» في «حول»** (بطلب سلطان، 2026-11-07؛ تشغيل ثانٍ بإذنه بـ`--only about`): 5/5، والروابط الثلاثة بعناوينها (`https://bysltan.com` و`https://github.com/iSltanX/Tarjuman` و`https://bysltan.com/tarjuman/support`) تُفتح في تبويب جديد بـ`noopener` (لم تُفتح في المعاينة)، ولا طلب ولا خطأ ([`brave/about-preview.json`](brave/about-preview.json))، ولقطات `settings-about-credits` بعرض 1280 و`-narrow` بعرض 600 بالوضعين. والروابط نفسها تعمل للعموم بلا تسجيل دخول (200، `curl`)، والمستودع عام (`gh api`: `visibility: public`).
+
 **ما لا تغطيه:** شريط المشغّل وقوائمه ولوحة النص المتزامن وطبقة الترجمة داخل يوتيوب (تحتاج صفحة مشاهدة: `test/live/identity/run.mjs` المحدّث للهوية الرابعة، والجولة الحية في AA5)، وEdge وFirefox، وشكل النافذة الجديد وقائمة التحميل المبسّطة (AA3).

@@ -5,7 +5,8 @@
 // 360. ويُعدّ كل طلب خارج الإضافة وكل خطأ منها (المتوقع صفر). لا رابط ولا نص مقاطع في الأدلة غير نصوص العيّنة.
 // **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (دليل التشغيل، «الاختبارات الحية»).
 //   command npm run build:dev -- --out <مجلد خارج المستودع>
-//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/identity/preview.mjs --browser brave|chrome --ext <مجلد> [--out <مجلد>]
+//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/identity/preview.mjs --browser brave|chrome --ext <مجلد> [--out <مجلد>] [--only about]
+//   --only about: قسم «حول» وحده بعرضين (1280 و600)، وروابط بطاقة الحقوق الثلاثة بعناوينها وتبويبها الجديد (لا تُفتح).
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +21,7 @@ const browser = val('browser', 'brave');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
 const OUT = path.resolve(ROOT, val('out', 'docs/evidence/AA2'), browser);
 const PROFILE = `${browser}-preview-${Date.now()}`;
+const ABOUT_ONLY = val('only') === 'about';
 
 const result = { browser: null, at: new Date().toISOString(), headless: true, extension: null, shots: [], external: [], errors: [], checks: [] };
 const check = (id, ok, detail = null) => {
@@ -77,6 +79,19 @@ try {
   }
   check('thumbnails-off', (await st0.eval(() => document.querySelector('input[data-pref="ui.thumbnails"]')?.checked)) === false);
   await st0.close();
+  if (ABOUT_ONLY) {
+    const st = await openExt('pages/settings/index.html#about');
+    await st.waitFor(() => !!document.querySelector('.st-credits'), { timeoutMs: 10000 });
+    await sleep(600);
+    const links = await st.eval(() => [...document.querySelectorAll('.st-credits a, .st-about__row a[href^="https:"]')]
+      .map((a) => ({ text: a.textContent.trim(), href: a.getAttribute('href'), target: a.getAttribute('target'), rel: a.getAttribute('rel') })));
+    const want = [['bysltan.com', 'https://bysltan.com'], ['github.com/iSltanX/Tarjuman', 'https://github.com/iSltanX/Tarjuman'], ['الدعم والخصوصية', 'https://bysltan.com/tarjuman/support']];
+    // التفصيل بأسماء الروابط لا عناوينها: لا رابط في الأدلة (فحص الأسرار).
+    const named = links.map((l) => ({ ...l, href: { 'https://bysltan.com': 'LINKS.site', 'https://github.com/iSltanX/Tarjuman': 'LINKS.repo', 'https://bysltan.com/tarjuman/support': 'LINKS.support' }[l.href] ?? '[رابط]' }));
+    check('about-credits-links', want.every(([text, href]) => links.some((l) => l.text === text && l.href === href && l.target === '_blank' && /noopener/.test(l.rel ?? ''))), named);
+    await shoot(st, 'settings-about-credits');
+    await shoot(st, 'settings-about-credits-narrow', { width: 600 });
+  } else {
   const lib = await openExt('pages/library/index.html');
   await lib.reload();
   await lib.waitFor(() => document.querySelectorAll('li.lib-row').length >= 3, { timeoutMs: 12000 });
@@ -111,12 +126,13 @@ try {
   await gal.waitFor(() => !!document.querySelector('.g-icons'), { timeoutMs: 10000 });
   await sleep(600);
   await shoot(gal, 'gallery', { width: 1280 });
+  }
 
   const errs = errors.flatMap((e) => e.list.map((x) => ({ page: e.page, ...x })));
   result.errors = errs;
   check('no-external-requests', result.external.length === 0, result.external.slice(0, 5));
   check('no-extension-errors', errs.length === 0, errs.slice(0, 5));
-  check('screenshots', result.shots.length === 16, { n: result.shots.length });
+  check('screenshots', result.shots.length === (ABOUT_ONLY ? 4 : 16), { n: result.shots.length });
 } catch (err) {
   check('run', false, { error: String(err?.message ?? err).slice(0, 300) });
 } finally {

@@ -171,9 +171,9 @@ const CONSENT_LINES = new Set([
 const PACKAGED_READS = new Map([[path.join('player', 'overlay', 'fonts.js'), new Set(['const res = await fetch(runtime.getURL(path));'])]]);
 // الروابط الحرفية بأي مضيف (ومنه localhost): عنوان المشاهدة على يوتيوب وحده، ونطاق أسماء SVG ليس طلبًا.
 const URL_RE = /(?:https?:)?\/\/[A-Za-z0-9][A-Za-z0-9.-]*(?::\d+)?[^\s'"`)]*/g;
-// رابطا «حول» (R42) وحدهما، في ملفه وحده (الموقع وصفحة الدعم، قرار T4 في جولة النشر): روابط <a> تُفتح بضغط المستخدم في تبويب جديد، لا طلب شبكة من الإضافة.
+// روابط «حول» الثلاثة (R42) وحدها، في ملفه وحده (الموقع، والمستودع العام منذ 2026-11-07 بطلب سلطان، وصفحة الدعم من T4): روابط <a> تُفتح بضغط المستخدم في تبويب جديد، لا طلب شبكة من الإضافة.
 const ABOUT_FILE = path.join('pages', 'settings', 'about.js');
-const ABOUT_LINKS = new Set(['https://bysltan.com', 'https://bysltan.com/tarjuman/support']);
+const ABOUT_LINKS = new Set(['https://bysltan.com', 'https://github.com/iSltanX/Tarjuman', 'https://bysltan.com/tarjuman/support']);
 // صور الفيديو في المحفوظات (قرار سلطان 2026-11-03، docs/product-spec.md §٦.٦): الاستثناء المسمّى الوحيد لنطاق خارجي. بادئة
 // الصورة `https://i.ytimg.com/vi/` وحدها، في وحدة الصورة المصغّرة وحدها، لعنصر <img> يحمّله المتصفح (لا fetch ولا XHR ولا Image()،
 // وكلها ممنوعة هنا كما كانت). فلا يمرّ رابط آخر في ذلك الملف، ولا هذا الرابط في ملف آخر.

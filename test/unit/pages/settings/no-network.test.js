@@ -43,7 +43,7 @@ test('صفحات P7 ثلاث، كل منها HTML عربي RTL بأنماط وس
 test('لا شبكة في الصفحات: لا fetch ولا XHR ولا قنوات ولا @import ولا خط من الخارج ولا رابط خارجي', () => {
   const NETWORK = /\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|RTCPeerConnection|importScripts)\b|@import|new\s+Image\s*\(/;
   const URL_RE = /(?:https?:)?\/\/[A-Za-z0-9][A-Za-z0-9.-]*[^\s'"`)]*/g;
-  const allowedLinks = new Set(['https://bysltan.com', 'https://bysltan.com/tarjuman/support', 'https://www.youtube.com/watch?v=']);
+  const allowedLinks = new Set(['https://bysltan.com', 'https://github.com/iSltanX/Tarjuman', 'https://bysltan.com/tarjuman/support', 'https://www.youtube.com/watch?v=']);
   for (const f of files) {
     const text = strip(readFileSync(f, 'utf8'));
     assert.equal(NETWORK.test(text), false, `${rel(f)}: قناة شبكة`);

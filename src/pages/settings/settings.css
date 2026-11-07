@@ -196,9 +196,30 @@
 .st-panel--no .st-panel__title { color: var(--tj-danger); }
 
 /* حول. */
-.st-about { display: flex; flex-direction: column; gap: var(--tj-space-3); padding: 16px 20px; }
-.st-about__row { display: flex; align-items: center; gap: var(--tj-space-3); }
-.st-about__links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--tj-space-5); }
+/* «الإصدار» كلوحة 15: رمز الشعار 28 والاسم Cairo 800 والرقم بالأحادي LTR وشارة المتصفحات في سطر واحد يلتف. */
+.st-about__brand { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-height: 36px; }
+.st-about__brand .tj-logo__mark { flex: none; }
+.st-about__name { font: 800 16px/24px var(--tj-font-head); color: var(--tj-logo-word); }
+.st-about__version { font-size: 12px; line-height: 18px; color: var(--tj-text-2); }
+.st-about__browsers { box-shadow: inset 0 0 0 1px var(--tj-border-strong); background: transparent; }
+/* بطاقة «الحقوق»: صفوف مفتاح وقيمة بخط شعري بينها على سطح البطاقة، والقيمة بالحبر؛ والروابط اسم النطاق LTR معزولًا بأيقونة
+   «فتح خارجي» بخط سفلي هادئ يصير طينيًا بالمرور (لا لون وحده: النص والأيقونة يقولان إنه رابط). */
+.st-credits { width: 100%; max-width: 460px; margin: 0; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); background: var(--tj-surface); overflow: hidden; }
+.st-credits__row { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: center; gap: 4px 16px; min-height: 44px; padding: 6px 14px; }
+.st-credits__row + .st-credits__row { border-top: 1px solid var(--tj-border); }
+.st-credits__k { font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); }
+.st-credits__v { margin: 0; min-width: 0; font: 700 14px/20px var(--tj-font-body); color: var(--tj-text); }
+.st-credits__name { font: 700 15px/22px var(--tj-font-head); }
+.st-credits__link {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 32px; color: var(--tj-text); text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-color: var(--tj-border-input); overflow-wrap: anywhere;
+  transition: color var(--tj-motion-fast) var(--tj-ease), text-decoration-color var(--tj-motion-fast) var(--tj-ease);
+}
+.st-credits__link bdi { font: 700 14px/20px var(--tj-font-body); unicode-bidi: isolate; }
+.st-credits__link .tj-icon { flex: none; color: var(--tj-muted); }
+.st-credits__link:hover { color: var(--tj-accent-text); text-decoration-color: currentColor; }
+.st-credits__link:hover .tj-icon { color: currentColor; }
+.st-credits__link:focus-visible { outline-offset: 2px; border-radius: var(--tj-radius-sm); }
 .st-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 700 14px/20px var(--tj-font-body); color: var(--tj-text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--tj-border-input); }
 .st-link:hover { color: var(--tj-accent-text); text-decoration-color: currentColor; }
 .st-link .tj-icon { width: 14px; height: 14px; }
@@ -232,7 +253,8 @@
   .st-row { grid-template-columns: 1fr; gap: var(--tj-space-2); padding: 14px 16px; }
   .st-row__label { padding-top: 0; flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 2px var(--tj-space-3); }
   .st-section__head { padding: 12px 16px; flex-wrap: wrap; }
-  .st-fields, .st-about { padding: 14px 16px; }
+  .st-fields { padding: 14px 16px; }
+  .st-credits__row { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 8px 14px; }
   .tj-saved { min-height: 0; }
   .st-panels { grid-template-columns: 1fr; }
   .st-gl__add { grid-template-columns: 1fr; }

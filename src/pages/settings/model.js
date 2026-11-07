@@ -27,7 +27,7 @@ export const SECTIONS = Object.freeze([
   Object.freeze({ id: 'storage', title: 'التخزين', icon: 'library', desc: 'المساحة المستخدمة على هذا المتصفح، وسعة الترجمات والنسخ السابقة، ومسح كل البيانات.' }),
   Object.freeze({ id: 'data', title: 'البيانات', icon: 'backup', desc: 'نسخة احتياطية من مكتبتك في ملف على جهازك، تستعيدها هنا أو في متصفح آخر.' }),
   Object.freeze({ id: 'diagnostics', title: 'التشخيص', icon: 'activity', desc: 'تقرير منقّى بلا روابط ولا نصوص، لطلب المساعدة.' }),
-  Object.freeze({ id: 'about', title: 'حول', icon: 'info', desc: 'الإصدار، ودليل الاستخدام، والمطوّر، وتراخيص الخطوط.' }),
+  Object.freeze({ id: 'about', title: 'حول', icon: 'info', desc: 'الإصدار، والحقوق وروابط المشروع، والدعم، ودليل الاستخدام، والتراخيص.' }),
 ]);
 export const DEFAULT_SECTION = SECTIONS[0].id;
 

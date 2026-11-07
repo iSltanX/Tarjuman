@@ -42,13 +42,13 @@ const MIN_CHROME = '130';
 const MAIN_WORLD = 'main-world/capture.js';
 const YOUTUBE_MATCH = 'https://www.youtube.com/*';
 /**
- * الروابط المسموحة في شيفرة الحزمة: نطاق SVG، ورابط الفيديو في تعليمات الترجمة، ورابطا «حول» في صفحة الإعدادات وحدها،
+ * الروابط المسموحة في شيفرة الحزمة: نطاق SVG، ورابط الفيديو في تعليمات الترجمة، وروابط «حول» الثلاثة في صفحة الإعدادات وحدها،
  * وأصل يوتيوب في العامل للتحقق من مرسل الرسالة (لا طلب إليه).
  */
 const URL_OK = (u, rel) => u === 'http://www.w3.org/2000/svg'
   || u === YOUTUBE_MATCH
   || u.startsWith('https://www.youtube.com/watch?v=')
-  || (rel === 'pages/settings/main.js' && (u === 'https://bysltan.com' || u === 'https://bysltan.com/tarjuman/support'))
+  || (rel === 'pages/settings/main.js' && ['https://bysltan.com', 'https://github.com/iSltanX/Tarjuman', 'https://bysltan.com/tarjuman/support'].includes(u))
   || (rel === WORKER && u === 'https://www.youtube.com/')
   // صور الفيديو في المحفوظات من خوادم يوتيوب بمعرّفه، بمفتاح يطفئها (قرار سلطان 2026-11-03، docs/product-spec.md §٦.٦).
   || (rel === 'pages/library/main.js' && u === 'https://i.ytimg.com/vi/')
