@@ -125,8 +125,9 @@ export function withActiveSlot(bundle, n, now) {
 }
 
 /**
- * لغة ترجمة خانة ممتلئة (AA3): رمز لغتها أو null «غير محددة». لا يمس نصها ولا توقيتها ولا مقارنتها؛ وتاريخ الحفظ يتقدم فيرى كل سياق
- * التغيير. الخانة الفارغة ترمي ST_SLOT_EMPTY، والرمز غير الصالح MD_INVALID.
+ * لغة ترجمة خانة ممتلئة (AA3): رمز لغتها أو null «غير محددة». لا يمس نصها ولا توقيتها ولا مقارنتها ولا تاريخ تعديلها؛ والكاتب يقدّم
+ * المراجعة وحدها (updateBundle بـtouch: false) فيرى كل سياق التغيير ولا يتبدل ترتيب المحفوظات. الخانة الفارغة ترمي ST_SLOT_EMPTY،
+ * والرمز غير الصالح MD_INVALID. now باقٍ في التوقيع لتوافق بقية الانتقالات.
  * @param {Bundle} bundle @param {SlotNumber} n @param {string | null} lang @param {string} now
  * @returns {Bundle}
  */
@@ -137,7 +138,6 @@ export function withSlotLang(bundle, n, lang, now) {
   const track = b.active === n ? b.record.arabic : target.track;
   if ((track.lang ?? null) === lang) return b;
   track.lang = lang;
-  b.record.updatedAt = now;
   return syncActive(b);
 }
 

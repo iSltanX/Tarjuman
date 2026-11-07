@@ -137,7 +137,7 @@ export function initialPair(prefs, { videoId = null, sourceLang = null } = {}) {
 }
 
 /**
- * ما يُكتب حين يغيّر المستخدم الزوج في النافذة (AA3): اللغة التي اختارها تتقدّم في «الأخيرة»، والزوج يُحفظ للفيديو، و«إلى»
+ * ما يُكتب حين يغيّر المستخدم الزوج في النافذة (AA3): اللغة التي اختارها تتقدّم في «الأخيرة»، وما غيّره يُحفظ للفيديو، و«إلى»
  * تصير الافتراضي حين يكون «تذكّر آخر زوج» مفعّلًا. «من» لا تُكتب في الافتراضي أبدًا، فلا يُفقد «تلقائي من مسار الفيديو».
  * @param {LangPrefs} prefs
  * @param {{ videoId?: string | null, pair: LangPair, why: 'from' | 'to' | 'swap' }} change
@@ -147,7 +147,15 @@ export function pairPatch(prefs, { videoId = null, pair, why }) {
   const used = why === 'from' ? [pair.from] : why === 'to' ? [pair.to] : [pair.to, pair.from];
   /** @type {Parameters<typeof applyLangPrefs>[1]} */
   const patch = { use: used.filter(isCode) };
-  if (videoId && isVideoId(videoId)) patch.video = { videoId, pair: { from: isCode(pair.from) ? pair.from : null, to: isCode(pair.to) ? pair.to : null } };
+  if (videoId && isVideoId(videoId)) {
+    // ما غيّره المستخدم وحده يُحفظ للفيديو، والآخر كما كان (وإلا null): «من» المكتشفة لا تُثبَّت فتتبع مسارًا يُلتقط لاحقًا، و«إلى»
+    // الافتراضية لا تُثبَّت فتتبع الإعدادات.
+    const saved = prefs.videos?.[videoId] ?? null;
+    const from = why === 'to' ? saved?.from ?? null : pair.from;
+    const to = why === 'from' ? saved?.to ?? null : pair.to;
+    const p = { from: isCode(from) ? from : null, to: isCode(to) ? to : null };
+    patch.video = { videoId, pair: p.from || p.to ? p : null };
+  }
   if (prefs.remember && why !== 'from' && (pair.to === null || isCode(pair.to))) patch.pair = { to: pair.to };
   return patch;
 }

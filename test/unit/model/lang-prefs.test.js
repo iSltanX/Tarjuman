@@ -65,17 +65,23 @@ test('زوج البداية خارج صفحة فيديو: الافتراضي، �
   assert.deepEqual(initialPair(applyLangPrefs(used, { remember: false })), { from: null, to: 'ar', fromDetected: false });
 });
 
-test('تغيير الزوج: اللغة إلى الأخيرة، والزوج للفيديو، و«إلى» افتراضيًا مع التذكّر، و«من» لا تمس «تلقائي»', () => {
+test('تغيير الزوج: اللغة إلى الأخيرة، وما غيّره وحده للفيديو، و«إلى» افتراضيًا مع التذكّر، و«من» لا تمس «تلقائي»', () => {
   const base = normalizeLangPrefs(null);
+  // «إلى» وحدها: «من» المكتشفة لا تُثبَّت للفيديو، فتتبع مسارًا يُلتقط لاحقًا (مراجعة AA3).
   assert.deepEqual(pairPatch(base, { videoId: A, pair: { from: 'ja', to: 'en' }, why: 'to' }), {
-    use: ['en'], video: { videoId: A, pair: { from: 'ja', to: 'en' } }, pair: { to: 'en' },
+    use: ['en'], video: { videoId: A, pair: { from: null, to: 'en' } }, pair: { to: 'en' },
   });
+  // «من» وحدها: «إلى» الافتراضية لا تُثبَّت، فتتبع الإعدادات.
   assert.deepEqual(pairPatch(base, { videoId: A, pair: { from: 'ko', to: 'en' }, why: 'from' }), {
-    use: ['ko'], video: { videoId: A, pair: { from: 'ko', to: 'en' } },
+    use: ['ko'], video: { videoId: A, pair: { from: 'ko', to: null } },
   });
+  // ما اختاره قبلُ للفيديو يبقى.
+  const chosen = applyLangPrefs(base, { video: { videoId: A, pair: { from: 'ko', to: null } } });
+  assert.deepEqual(pairPatch(chosen, { videoId: A, pair: { from: 'ko', to: 'fr' }, why: 'to' }).video, { videoId: A, pair: { from: 'ko', to: 'fr' } });
+  assert.deepEqual(pairPatch(base, { videoId: A, pair: { from: 'ja', to: 'en' }, why: 'swap' }).video, { videoId: A, pair: { from: 'ja', to: 'en' } }, 'المبادلة تختار الاثنتين');
   assert.deepEqual(pairPatch(base, { pair: { from: 'en', to: 'ja' }, why: 'swap' }), { use: ['ja', 'en'], pair: { to: 'ja' } });
   const off = applyLangPrefs(base, { remember: false });
-  assert.deepEqual(pairPatch(off, { videoId: A, pair: { from: 'ja', to: 'en' }, why: 'to' }), { use: ['en'], video: { videoId: A, pair: { from: 'ja', to: 'en' } } });
+  assert.deepEqual(pairPatch(off, { videoId: A, pair: { from: 'ja', to: 'en' }, why: 'to' }), { use: ['en'], video: { videoId: A, pair: { from: null, to: 'en' } } });
   const next = applyLangPrefs(base, pairPatch(base, { videoId: A, pair: { from: 'ja', to: 'en' }, why: 'swap' }));
   assert.equal(next.pair.from, AUTO_SOURCE);
   assert.equal(validateLangPrefs(next).ok, true);

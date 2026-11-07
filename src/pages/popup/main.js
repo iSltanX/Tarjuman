@@ -113,6 +113,10 @@ startPage({
     let state = first;
     reply = state.reply;
     let langPrefs = langRead.v;
+    // تفضيلات اللغات من سياق آخر (الإعدادات أو تبويب آخر): «الأخيرة» وما يُحفظ بعدها يتبعانها.
+    store.onChange((change) => {
+      if (change.langPrefs) langPrefs = normalizeLangPrefs(change.langPrefs.newValue ?? null);
+    });
     // القاموس المرفق في نسخ التعليمات من هنا كما في المحفوظات (النص نفسه من instructions).
     const glossary = attachedGlossary(prefs);
 
@@ -245,7 +249,12 @@ startPage({
       diagHost.replaceChildren();
       // «جارٍ القراءة»: هيكل الكتلة حتى يستقر الرد (لوحة 09، الحالة 6)، فلا يُعرض زوج قبل معرفة مسار الفيديو.
       if (reply?.watch && reply.loading) {
-        if (picker) picker = null;
+        // قائمة مفتوحة تُغلق قبل إزالة حقلها، فلا يبقى مستمع على المستند.
+        if (picker) {
+          picker.fromField.close();
+          picker.toField.close();
+          picker = null;
+        }
         pairHost.replaceChildren(pairTitle, pairSkeleton());
       } else refreshPair();
       paintSteps();

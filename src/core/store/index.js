@@ -191,7 +191,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
    * @param {{ expect?: VideoRecord | Bundle | null }} [opts]
    * @returns {Promise<Bundle | null>}
    */
-  async function writeBundle(videoId, fn, { expect } = {}) {
+  async function writeBundle(videoId, fn, { expect, touch = true } = {}) {
     for (let attempt = 1; ; attempt++) {
       const cur = await loadBundle(videoId);
       if (expect !== undefined && versionOf(cur.bundle) !== versionOf(expect)) {
@@ -214,7 +214,8 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         const prior = cur.raw.record;
         const next = structuredClone(draft);
         next.videoId = videoId;
-        next.record = { ...next.record, videoId, rev: (prior?.rev ?? 0) + 1, createdAt: prior?.createdAt ?? at, updatedAt: at };
+        // touch: false لكتابة لا تعدّل المحتوى (لغة الترجمة، AA3): المراجعة تتقدم فيرى كل سياق التغيير، وتاريخ التعديل وترتيب المحفوظات كما هما.
+        next.record = { ...next.record, videoId, rev: (prior?.rev ?? 0) + 1, createdAt: prior?.createdAt ?? at, updatedAt: touch || !prior ? at : prior.updatedAt };
         syncActive(next);
         assertValid(validateBundle(next), 'video');
         // سجل جديد لمعرّف بقيت له توابع يتيمة (حذفه الأول): رأس جديد، والتوابع القديمة تُطمس بقيمها الجديدة.
@@ -440,11 +441,11 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
      * @param {{ expect?: VideoRecord | Bundle | null }} [opts]
      * @returns {Promise<Bundle | null>}
      */
-    updateBundle(videoId, fn, { expect } = {}) {
+    updateBundle(videoId, fn, { expect, touch = true } = {}) {
       checkId(videoId);
       return exclusive(async () => {
         await ready();
-        const next = await writeBundle(videoId, fn, { expect });
+        const next = await writeBundle(videoId, fn, { expect, touch });
         return next ? structuredClone(next) : null;
       });
     },
@@ -567,6 +568,8 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         const lang = lv && validateLangValue(lv).ok && lv.videoId === entry.videoId ? lv : null;
         const sources = [...entry.english.map((t) => parseTrackKey(t.key)), ...(lang?.sources ?? []).map((t) => parseTrackKey(t.key))].filter(Boolean)
           .sort((a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || (a.kind === b.kind ? 0 : a.kind === 'manual' ? -1 : 1));
+        // أكثر من مسار أصل: مسار بصمة الترجمة في السجل لا في المُلخّص، فيُقرأ الفيديو كاملًا (القراءة البطيئة) بدل تخمين أوله.
+        if (sources.length > 1) return null;
         const from = sources[0] ?? null;
         return [1, 2, 3].map((n) => {
           const meta = lang?.slots[n - 1] ?? null;
@@ -591,6 +594,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           };
         });
         const pairs = pairsFromHead(entry, alts);
+        if (!pairs) return null;
         // مسارات الأصل بغير الإنجليزية في المرافق (AA1): تُضم إلى مُلخّص الصف كما في القراءة الكاملة، فتُصدَّر وتُعدّ من المحفوظات.
         const lv = light[langKey(entry.videoId)] ?? null;
         const extra = lv && validateLangValue(lv).ok && lv.videoId === entry.videoId

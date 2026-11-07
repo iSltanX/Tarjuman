@@ -23,16 +23,18 @@ test('لغة خانة: النشطة وغير النشطة، بلا مساس با
   const a = withSlotLang(before, 1, 'ar', at);
   assert.equal(a.record.arabic.lang, 'ar');
   assert.deepEqual(a.record.arabic.original, before.record.arabic.original);
-  assert.equal(a.record.updatedAt, at);
+  assert.equal(a.record.updatedAt, before.record.updatedAt, 'لا يمس تاريخ التعديل (مراجعة AA3)');
   const b = withSlotLang(a, 2, 'fr', at);
   assert.equal(b.slots[1].track.lang, 'fr');
   const later = new Date(Date.parse(at) + 1000).toISOString();
-  assert.equal(withSlotLang(b, 1, 'ar', later).record.updatedAt, at, 'اللغة نفسها: لا تغيير ولا تاريخ حفظ جديد');
+  assert.deepEqual(withSlotLang(b, 1, 'ar', later), b, 'اللغة نفسها: لا تغيير');
   assert.throws(() => withSlotLang(b, 3, 'ar', at), (e) => e.code === 'ST_SLOT_EMPTY');
   assert.throws(() => withSlotLang(b, 1, 'x!', at), (e) => e.code === 'MD_INVALID');
-  await store.updateBundle(VIDEO_ID, (x) => withSlotLang(withSlotLang(x, 1, 'ar', at), 2, 'fr', at));
+  await store.updateBundle(VIDEO_ID, (x) => withSlotLang(withSlotLang(x, 1, 'ar', at), 2, 'fr', at), { touch: false });
   const read = await store.getBundle(VIDEO_ID);
   assert.equal(read.record.arabic.lang, 'ar');
+  assert.equal(read.record.updatedAt, before.record.updatedAt, 'touch: false يبقي تاريخ التعديل وترتيب المحفوظات');
+  assert.equal(read.record.rev, before.record.rev + 1, 'والمراجعة تتقدم فيرى كل سياق التغيير');
   assert.equal(read.slots[1].track.lang, 'fr');
   // السجل كما يقرؤه 1.1.0: ترجمة بلا حقل lang، واللغة في المرافق وحدها.
   const raw = area.dump()[`video:${VIDEO_ID}`];
@@ -67,4 +69,19 @@ test('المحفوظات (AA3): الزوج اللغوي لكل خانة من ا�
   assert.deepEqual(item.pairs.slice(0, 2).map((p) => [p.from, p.to]), [['en', 'ar'], ['en', 'fr']]);
   assert.equal(item.pairs[2], null, 'الخانة الفارغة');
   assert.deepEqual(item.entry.english.map((t) => t.key).sort(), ['en|manual', 'ja|asr'], 'مسار الأصل الياباني من المرافق');
+});
+
+test('المحفوظات بمسارين للأصل (مراجعة AA3): «من» مسار بصمة الترجمة بالقراءة الكاملة، لا أول مسار', async () => {
+  const { store } = setup();
+  const b = sampleBundle();
+  const es = { ...b.record.english[0], key: 'es|asr', lang: 'es', kind: 'asr' };
+  b.record.english.push(es);
+  // بصمة على المسار الإسباني والترجمة النشطة مرجعها هذه البصمة.
+  const fp = { ...b.record.fingerprints[0], id: 'fp_es00000001', trackKey: 'es|asr' };
+  b.record.fingerprints.push(fp);
+  b.record.arabic.fingerprintId = fp.id;
+  if (b.record.arabic.comparison) b.record.arabic.comparison.fingerprintId = fp.id;
+  await seedBundle(store, b);
+  const [item] = await store.listLibrary();
+  assert.equal(item.pairs[0].from, 'es', 'مسار البصمة لا «الإنجليزية» أول القائمة');
 });

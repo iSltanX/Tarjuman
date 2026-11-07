@@ -129,3 +129,25 @@ test('الصف: المبادلة تقلب اللغتين فورًا، و«تلق
   p.fromField.field.click();
   assert.equal(p.fromField.field.getAttribute('aria-expanded'), 'false', 'المعطّل لا يُفتح');
 });
+
+test('لوحة المفاتيح في المنتقي (مراجعة AA3): Enter أثناء التركيب لا يختار، وEsc لا يصعد إلى الحوار، وTab يعيد التركيز إلى الحقل', () => {
+  const doc = newDocument();
+  const picked = [];
+  const f = langField({ label: LANG_TEXT.to, value: null, onChange: (c) => picked.push(c), doc });
+  doc.body.append(f.root);
+  let bubbled = 0;
+  doc.body.addEventListener('keydown', () => { bubbled++; });
+  f.field.click();
+  const input = f.root.querySelector('.tj-lang-pop__search');
+  input.value = 'en';
+  input.dispatchEvent({ type: 'input' });
+  input.dispatchEvent({ type: 'keydown', key: 'Enter', isComposing: true });
+  assert.deepEqual(picked, [], 'التركيب لا يختار');
+  input.dispatchEvent({ type: 'keydown', key: 'Escape' });
+  assert.equal(f.field.getAttribute('aria-expanded'), 'false');
+  assert.equal(bubbled, 1, 'Esc لا يصل إلى الحاوية (وصلها Enter أثناء التركيب وحده)');
+  f.field.click();
+  f.root.querySelector('.tj-lang-pop__search').dispatchEvent({ type: 'keydown', key: 'Tab' });
+  assert.equal(f.field.getAttribute('aria-expanded'), 'false');
+  assert.ok(doc.activeElement === f.field, 'التركيز على الحقل فيتابع Tab من موضعه');
+});

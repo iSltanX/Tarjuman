@@ -268,10 +268,11 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 **إضافات 2.0.0 (AA3):**
 
 - **في `ControllerState`:** `langPrefs` (تفضيلات اللغات كاملة، تُقرأ في `start` وتتبع `change.langPrefs`)، و`available` (قائمة مسارات الفيديو من المستخرج أو `null`)، و`arabic.lang`.
-- **`setSlotLang(n, lang)`:** لغة ترجمة خانة ممتلئة أو `null` «غير محددة» بكتابة حزمة واحدة (`withSlotLang`)، من قائمة الترجمة في المشغّل. لا أثر أثناء `loading`. الأخطاء `ST_SLOT_EMPTY` و`MD_INVALID` و`ST_*`.
+- **`setSlotLang(n, lang)`:** لغة ترجمة خانة ممتلئة أو `null` «غير محددة» بكتابة حزمة واحدة (`withSlotLang`) بلا مساس بتاريخ التعديل، من قائمة الترجمة في المشغّل. لا أثر أثناء `loading`. الأخطاء `ST_SLOT_EMPTY` و`MD_INVALID` و`ST_*`.
 - **`loadArabicInto` بمدخل `lang`:** لغة الملف كما اختارها المستخدم في التأكيد، أو المقترحة.
 - **`store.onChange`:** الحدث يحمل `langPrefs: { oldValue, newValue } | null` حين تتغير تفضيلات اللغات من أي سياق (النافذة والإعدادات والمحفوظات والمحرّر والمشغّل يتبعونها).
-- **`store.listLibrary()`:** كل بند يحمل `pairs`: الزوج اللغوي `{ from, to, via }` لكل خانة (`null` للفارغة) من المُلخّص ومرافق اللغة دون قراءة السجلات، ويضم إلى `entry.english` مسارات الأصل بغير الإنجليزية من المرافق كما في القراءة الكاملة.
+- **`store.updateBundle(videoId, fn, { expect, touch = true })`:** `touch: false` لكتابة لا تعدّل المحتوى (لغة الترجمة): `rev` يتقدم و`updatedAt` كما كان.
+- **`store.listLibrary()`:** كل بند يحمل `pairs`: الزوج اللغوي `{ from, to, via }` لكل خانة (`null` للفارغة) من المُلخّص ومرافق اللغة دون قراءة السجلات (وبالقراءة الكاملة حين يكون للفيديو أكثر من مسار أصل، لأن مسار بصمة الترجمة في السجل)، ويضم إلى `entry.english` مسارات الأصل بغير الإنجليزية من المرافق كما في القراءة الكاملة.
 - **أدوات المشغّل:** لا نسخ لتعليمات الترجمة فيها (`exportFlow.instructions` لم يعد يُستدعى من الشريط، و`buildExport` بـ`target: null`)؛ والرفع `readFor({ …, fallbackLang })` بلغة «إلى» في النافذة مقترحةً، تُقبل بلا رمز في الاسم إن وافق نص الملف نص كتابتها (`textFitsLang` في `core/lang`).
 
 ## ١٣. مكان حفظ الملفات — `src/core/save/` و`src/background/` (R65)

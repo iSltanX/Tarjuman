@@ -3,7 +3,7 @@
 // («غير محددة»، ومنها كل ما حُفظ قبل 2.0.0) دفعة واحدة بتأكيد صريح. كل الكتابات عبر المخزن (setLangPrefs وupdateBundle)، ولا
 // يمس التعيين نص أي ترجمة ولا توقيتها. textContent وsetAttribute فقط.
 import { messageFor } from '../../core/errors/index.js';
-import { describeLang } from '../../core/lang/index.js';
+import { describeLang, textFitsLang } from '../../core/lang/index.js';
 import { withSlotLang } from '../../core/model/bundle.js';
 import { AUTO_SOURCE, DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../../core/model/lang-prefs.js';
 import { button, el } from '../../ui/components.js';
@@ -31,7 +31,7 @@ export const LANGS_TEXT = Object.freeze({
   unknownLang: 'اللغة',
   apply: 'تعيين لغتها',
   applyNeedsLang: 'اختر اللغة أولًا.',
-  unknownNote: 'يُكتب رمز اللغة وحده لكل ترجمة بلا لغة محددة، ولا يتغير نصها ولا توقيتها. ولغة أي ترجمة تُغيَّر وحدها من قائمة «الترجمة» في المشغّل.',
+  unknownNote: 'يُكتب رمز اللغة وحده لكل ترجمة بلا لغة محددة، ولا يتغير نصها ولا توقيتها ولا تاريخ تعديلها. وتُتخطى الترجمة التي لا يوافق نصها نص كتابة اللغة المختارة. ولغة أي ترجمة تُغيَّر وحدها من قائمة «الترجمة» في المشغّل.',
 });
 
 /** خانات الحزمة الممتلئة بلا لغة محددة. @param {import('../../core/model/slots.js').Bundle} b @returns {(1 | 2 | 3)[]} */
@@ -173,22 +173,36 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
     busy = true;
     paintUnknown();
     let failed = 0;
+    let skipped = 0;
     for (const v of found.videos) {
+      // العدّ داخل الكتابة نفسها: قد تُعاد عند تعارض، فيُحسب لآخر محاولة وحدها.
+      let skippedHere = 0;
       try {
-        // يُعاد الفحص داخل الكتابة: ترجمة حُدّدت لغتها أو استُبدلت من سياق آخر منذ العدّ لا تُكتب فوقها.
+        // يُعاد الفحص داخل الكتابة: ترجمة حُدّدت لغتها أو استُبدلت من سياق آخر منذ العدّ لا تُكتب فوقها. وترجمة لا يوافق نصها نص كتابة
+        // اللغة المختارة تُتخطى (textFitsLang كاقتراح لغة الرفع)، فلا تُوسم ترجمة فرنسية بالعربية. ولا يتغير تاريخ التعديل (touch: false).
         await store.updateBundle(v.videoId, (b) => {
+          skippedHere = 0;
           if (!b) return undefined;
           const now = new Date().toISOString();
           let next = b;
-          for (const n of undeterminedSlots(b)) next = withSlotLang(next, n, chosen, now);
+          for (const n of undeterminedSlots(b)) {
+            const t = n === b.active ? b.record.arabic : b.slots[n - 1].track;
+            if (!textFitsLang(t.current ?? t.original, chosen)) {
+              skippedHere++;
+              continue;
+            }
+            next = withSlotLang(next, n, chosen, now);
+          }
           return next === b ? undefined : next;
-        });
+        }, { touch: false });
+        skipped += skippedHere;
       } catch {
         failed++;
       }
     }
     busy = false;
-    unknownMark.flash(failed ? messageFor('PG_LANG_ASSIGN_PARTIAL', { n: String(failed) }) : messageFor('PG_SAVED'), failed ? 'danger' : 'success');
+    const outcome = failed ? messageFor('PG_LANG_ASSIGN_PARTIAL', { n: String(failed) }) : skipped ? messageFor('PG_LANG_ASSIGN_SKIPPED', { n: formatCount(skipped, TRANSLATION_COUNT) }) : messageFor('PG_SAVED');
+    unknownMark.flash(outcome, failed ? 'danger' : skipped ? 'info' : 'success');
     await countUnknown();
   }
 

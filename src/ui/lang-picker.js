@@ -85,6 +85,8 @@ export function langField({ label, value, onChange, anchor = null, recent = () =
   let options = [];
   let active = -1;
   let opened = false;
+  /** هوية هذا المنتقي في «القائمة المفتوحة الآن». */
+  const self = { close: () => close() };
 
   function option(code, { autoItem = false, name = null } = {}) {
     const d = autoItem ? null : describe(code);
@@ -192,7 +194,7 @@ export function langField({ label, value, onChange, anchor = null, recent = () =
     input.value = '';
     fill();
     doc.addEventListener('pointerdown', onOutside, true);
-    openNow = { close: () => close() };
+    openNow = self;
     input.focus();
   }
 
@@ -204,7 +206,7 @@ export function langField({ label, value, onChange, anchor = null, recent = () =
     field.setAttribute('aria-expanded', 'false');
     field.classList.remove('is-open');
     doc.removeEventListener('pointerdown', onOutside, true);
-    if (openNow && openNow.close) openNow = null;
+    if (openNow === self) openNow = null;
     if (focus) field.focus();
   }
 
@@ -225,15 +227,21 @@ export function langField({ label, value, onChange, anchor = null, recent = () =
   });
   input.addEventListener('input', () => fill());
   input.addEventListener('keydown', (e) => {
+    // أثناء التركيب بمحرر إدخال (IME) يُتمّ Enter الكلمة ولا يختار.
+    if (e.isComposing) return;
     if (e.key === 'ArrowDown') setActive(active + 1);
     else if (e.key === 'ArrowUp') setActive(Math.max(0, active - 1));
     else if (e.key === 'Home' && !input.value) setActive(0);
     else if (e.key === 'End' && !input.value) setActive(options.length - 1);
     else if (e.key === 'Enter') {
       if (active >= 0) pick(options[active].getAttribute('data-code'));
-    } else if (e.key === 'Escape') close({ focus: true });
-    else if (e.key === 'Tab') {
-      close();
+    } else if (e.key === 'Escape') {
+      // يغلق القائمة وحدها، لا الحوار الذي يحويها.
+      e.stopPropagation?.();
+      close({ focus: true });
+    } else if (e.key === 'Tab') {
+      // التركيز إلى الحقل قبل إزالة القائمة، فيتابع Tab وShift+Tab من موضعه.
+      close({ focus: true });
       return;
     } else return;
     e.preventDefault();

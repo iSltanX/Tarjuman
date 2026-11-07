@@ -124,3 +124,24 @@ test('رفض التأكيد لا يكتب شيئًا', async () => {
   await settle(20);
   assert.equal((await m.store.getBundle(VIDEO_ID)).record.arabic.lang ?? null, null);
 });
+
+test('التعيين الجماعي (مراجعة AA3): يتخطى ما لا يوافق نصه نص كتابة اللغة المختارة ويقول عدده، ولا يمس تاريخ التعديل', async () => {
+  const m = await mount({ bundles: [sampleBundle()], answers: [true, true] });
+  const row = rowOf(m.sec, LANGS_TEXT.unknown);
+  const before = await m.store.getBundle(VIDEO_ID);
+  // نصوص العيّنة عربية: الفرنسية لا توافقها، فلا يُوسم شيء.
+  pick(findAll(row, (e) => e.classList.contains('tj-lang'))[0], 'fr');
+  findAll(row, (e) => e.tagName === 'button' && textOf(e) === LANGS_TEXT.apply)[0].click();
+  await settle(40);
+  const skipped = await m.store.getBundle(VIDEO_ID);
+  assert.equal(skipped.record.arabic.lang ?? null, null, 'لم تُوسم بالفرنسية');
+  assert.ok(textOf(row).includes(undeterminedLine(2, 1)), 'ما زالت غير محددة');
+  assert.ok(textOf(m.sec).includes('تُخطّيت ترجمتان'), textOf(m.sec));
+  // العربية توافقها: تُوسم، وتاريخ التعديل وترتيب المحفوظات كما هما.
+  pick(findAll(row, (e) => e.classList.contains('tj-lang'))[0], 'ar');
+  findAll(row, (e) => e.tagName === 'button' && textOf(e) === LANGS_TEXT.apply)[0].click();
+  await settle(40);
+  const after = await m.store.getBundle(VIDEO_ID);
+  assert.equal(after.record.arabic.lang, 'ar');
+  assert.equal(after.record.updatedAt, before.record.updatedAt);
+});

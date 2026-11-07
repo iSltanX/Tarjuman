@@ -585,7 +585,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       if (loading) return state;
       requireVideo();
       if (!bundleFor(saved)?.slots[n - 1]?.track) throw new TjError('ST_SLOT_EMPTY', { detail: `slot=${n}` });
-      const { id, next } = await writeBundle((b) => (b ? withSlotLang(b, n, lang, iso()) : undefined));
+      const { id, next } = await writeBundle((b) => (b ? withSlotLang(b, n, lang, iso()) : undefined), { touch: false });
       if (id === videoId && next) {
         error = null;
         changed();
