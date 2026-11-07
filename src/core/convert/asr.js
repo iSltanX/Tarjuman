@@ -1,7 +1,7 @@
 // محوّل ASR (تقرير كلود §٤.٢): تسطيح إلى كلمات بأزمنتها، ثم تجميع في مقاطع، دون إسقاط أي كلمة
 // ودون إزالة تداخل نصي تخمينًا. الصيغة المتدحرجة (حدث يعيد ذيل السابق إعادةَ عرض لا كلامًا جديدًا) توقف التحويل.
 import { ConvertError } from './json3.js';
-import { wrapLines } from './text.js';
+import { SENTENCE_END, hasNoSpaceScript, joinWords, wrapLines } from './text.js';
 
 export const ASR_DEFAULTS = Object.freeze({
   gapMs: 700, maxChars: 84, maxDurationMs: 6000, lineChars: 42, tailMs: 1500, minDurationMs: 300, rollingWords: 3,
@@ -12,7 +12,6 @@ export const ROLLING_MAX_WORDS = 64;
 // أزواج متتالية متداخلة يتكرر فيها النمط بلا توقيت للكلمات يميّز التكرار الحقيقي، حتى يُحكم بالتدحرج من النمط وحده.
 export const ROLLING_RUN = 2;
 
-const SENTENCE_END = /[.?!]["'”’)\]]*$/u;
 
 /**
  * كلمات الحدث بأزمنتها: زمن الكلمة زمن المقطع الجزئي (seg) الذي تبدأ فيه، محصورًا في نافذة حدثه [البداية، النهاية]،
@@ -158,7 +157,9 @@ export function convertAsr(events, options = {}) {
     if (last.eventEndMs !== null) end = Math.min(end, last.eventEndMs);
     end = Math.max(end, g.startMs + o.minDurationMs);
     if (next) end = Math.min(end, next.startMs);
-    return { startMs: g.startMs, endMs: end, text: wrapLines(g.words.map((w) => w.text).join(' '), o.lineChars) };
+    // كلمات اللغات التي لا تفصل بالمسافات تُوصل بلا مسافة (AA1)؛ وغيرها بمسافة كما كان.
+    const texts = g.words.map((w) => w.text);
+    return { startMs: g.startMs, endMs: end, text: wrapLines(texts.some(hasNoSpaceScript) ? joinWords(texts) : texts.join(' '), o.lineChars) };
   });
   return { cues, report: { words: words.length, clampedWordTimes: clamped, clampedToEvent, options: o } };
 }

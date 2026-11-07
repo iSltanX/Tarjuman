@@ -1,7 +1,10 @@
 // وضع «مقاطع أطول» (R09): يضم مقاطع الوضع العادي المتجاورة في مقطع واحد حتى سطرين ونحو 12 ثانية، فيقلّ
 // عدد المقاطع ويرى النموذج سياقًا أوسع في كل مقطع. يعمل على مقاطع الوضع العادي وحدها، فلا يمس الكلمات
 // ولا ترتيبها؛ والثوابت الستة (invariants.js) تُشغَّل على الناتج كما تُشغَّل على العادي.
-import { endsSentence, wrapLines } from './text.js';
+import { endsSentence, hasNoSpaceScript, joinWords, wrapLines } from './text.js';
+
+/** وصل نصوص المقاطع: بمسافة كما كان، وبلا مسافة بين حروف اللغات التي لا تفصل بالمسافات (AA1). @param {string[]} parts */
+const joinParts = (parts) => (parts.some(hasNoSpaceScript) ? joinWords(parts) : parts.join(' '));
 
 /**
  * الأرقام قابلة للضبط (تُمرَّر إلى convertTrack وextractor.convert).
@@ -34,7 +37,8 @@ export function normalizeLongOptions(options = {}) {
   return out;
 }
 
-const flat = (text) => String(text).replace(/\s+/gu, ' ').trim();
+// سطر واحد: المسافات والأسطر تصير مسافة، إلا بين حروف اللغات التي لا تفصل بالمسافات فلا شيء (AA1).
+const flat = (text) => joinParts(String(text).split(/\s+/u).filter((x) => x !== ''));
 
 /**
  * @param {{ startMs: number, endMs: number, text: string }[]} cues مقاطع الوضع العادي (مرتبة بلا تداخل)
@@ -53,7 +57,7 @@ export function mergeLong(cues, options = {}) {
     let overflow = false;
     for (let k = i + 1; k < cues.length; k++) {
       if (cues[k].startMs - cues[k - 1].endMs > o.maxGapMs) break; // وقفة طبيعية، لا تجاوز
-      const joined = [...parts, flat(cues[k].text)].join(' ');
+      const joined = joinParts([...parts, flat(cues[k].text)]);
       const fits = cues[k].endMs - cues[i].startMs <= o.maxDurationMs && wrapLines(joined, o.lineChars).split('\n').length <= o.maxLines;
       if (!fits) {
         overflow = true;
@@ -65,7 +69,7 @@ export function mergeLong(cues, options = {}) {
     }
     let end = take;
     if (overflow && lastSentence >= i && lastSentence < take) {
-      const joined = parts.slice(0, lastSentence - i + 1).join(' ');
+      const joined = joinParts(parts.slice(0, lastSentence - i + 1));
       const fill = Math.max((cues[lastSentence].endMs - cues[i].startMs) / o.maxDurationMs, joined.length / capacity);
       if (fill >= o.sentenceMinFill) end = lastSentence;
     }
@@ -73,7 +77,7 @@ export function mergeLong(cues, options = {}) {
       // مقطع وحده: يبقى كما هو دون إعادة لفّ، فيحفظ أسطر المصدر.
       out.push({ startMs: cues[i].startMs, endMs: cues[i].endMs, text: cues[i].text });
     } else {
-      out.push({ startMs: cues[i].startMs, endMs: cues[end].endMs, text: wrapLines(parts.slice(0, end - i + 1).join(' '), o.lineChars) });
+      out.push({ startMs: cues[i].startMs, endMs: cues[end].endMs, text: wrapLines(joinParts(parts.slice(0, end - i + 1)), o.lineChars) });
     }
     i = end + 1;
   }
