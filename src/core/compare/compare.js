@@ -5,6 +5,8 @@ import { isIdentity } from '../align/index.js';
 import { messageFor } from '../errors/index.js';
 import { isBlankText } from '../model/cue.js';
 import { LIMITS } from '../model/validate.js';
+import { parseTrackKey } from '../model/ids.js';
+import { langScript, scriptLetterPattern } from '../lang/index.js';
 import { alignToFingerprint, sameStructure } from './restore.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
@@ -20,8 +22,26 @@ const HAS_ARABIC_LETTER = /(?=\p{Script=Arabic})\p{L}/u;
 // الفراغ بتعريفه الواحد في نموذج المقطع (تدقيق 7a66f91، U80)، ويُصدَّر من هنا كما كان.
 export { isBlankText };
 const ascending = (a, b) => a - b;
-/** مقطع بحروف غير عربية فقط (الرموز والأرقام وحدها ليست ترجمة ناقصة). */
-export const lacksArabic = (text) => !isBlankText(text) && HAS_LETTER.test(text) && !HAS_ARABIC_LETTER.test(text);
+/** مقطع بحروف ليست من نص بعينه فقط (الرموز والأرقام وحدها ليست ترجمة ناقصة). @param {string} text @param {RegExp} letter */
+export const lacksScript = (text, letter) => !isBlankText(text) && HAS_LETTER.test(text) && !letter.test(text);
+/** مقطع بحروف غير عربية فقط (حين تكون الترجمة بالعربية). */
+export const lacksArabic = (text) => lacksScript(text, HAS_ARABIC_LETTER);
+
+/**
+ * فحص «غير مترجم» بحسب لغة الترجمة (AA1، حرية اللغات): مقطع بحروف ليس فيها حرف من نص لغة الترجمة. لا يصح إلا حين يُعرف نص
+ * لغة الترجمة ويختلف عن نص لغة المسار (الإنجليزية ← الفرنسية بالنص اللاتيني نفسه لا يُميَّز فيها المترجم من غيره)، وإلا null
+ * فلا فحص. والحقل في التقرير noArabic باسمه التاريخي، لأن 1.1.0 يقرؤه بمدققه.
+ * @param {string | null | undefined} target لغة الترجمة @param {string | null | undefined} [source] لغة المسار
+ * @returns {((text: string) => boolean) | null}
+ */
+export function untranslatedTest(target, source = null) {
+  const t = target ? langScript(target) : null;
+  if (!t) return null;
+  const s = source ? langScript(source) : null;
+  if (s && s === t) return null;
+  const letter = scriptLetterPattern(target);
+  return letter ? (text) => lacksScript(text, letter) : null;
+}
 const HIGH_SURROGATE = /[\uD800-\uDBFF]/;
 /** ملاحظة في حد النموذج (500 محرف) دون شطر زوج بديل. */
 const clipNote = (s) => (s.length <= LIMITS.maxNoteChars ? s : `${s.slice(0, LIMITS.maxNoteChars - (HIGH_SURROGATE.test(s[LIMITS.maxNoteChars - 2]) ? 2 : 1))}…`);
@@ -29,11 +49,13 @@ const clipNote = (s) => (s.length <= LIMITS.maxNoteChars ? s : `${s.slice(0, LIM
 /**
  * @param {Cue[]} cues الملف العربي كما استُورد (الأرقام كما وردت)
  * @param {Fingerprint | null} fingerprint بصمة التصدير، أو null فلا مقارنة بالأصل
- * @param {{ driftMs?: number }} [opts] عتبة الانحراف بالملي ثانية (الافتراضي 100)؛ يُبلَّغ عمّا يزيد عليها وحدها
+ * @param {{ driftMs?: number, target?: string | null }} [opts] عتبة الانحراف بالملي ثانية (الافتراضي 100)؛ يُبلَّغ عمّا يزيد عليها
+ *   وحدها. وtarget لغة الترجمة لفحص «غير مترجم» (AA1): null لا فحص، والافتراضي العربية كما كان قبل 2.0.0.
  * @returns {ComparisonReport}
  */
-export function compare(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS } = {}) {
+export function compare(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS, target = 'ar' } = {}) {
   if (!Number.isInteger(driftMs) || driftMs < 0 || driftMs > MAX_DRIFT_MS) throw new RangeError(`عتبة الانحراف غير صالحة: ${driftMs}`);
+  const untranslated = untranslatedTest(target, fingerprint ? parseTrackKey(fingerprint.trackKey)?.lang ?? null : null);
 
   const source = fingerprint ? new Map(fingerprint.cues.map((c) => [c.n, c])) : null;
   const found = new Set();
@@ -47,8 +69,8 @@ export function compare(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS } = {}) 
     if (cue.n !== i + 1) sequential = false;
     const text = cue.text;
     if (isBlankText(text)) empty.add(cue.n);
-    // المقطع الذي لا حروف فيه (♪ أو أرقام أو رموز) ليس ترجمة ناقصة؛ المقصود ما بقي بحروف غير عربية.
-    else if (HAS_LETTER.test(text) && !HAS_ARABIC_LETTER.test(text)) noArabic.add(cue.n);
+    // المقطع الذي لا حروف فيه (♪ أو أرقام أو رموز) ليس ترجمة ناقصة؛ المقصود ما بقي بحروف ليست من نص لغة الترجمة.
+    else if (untranslated && untranslated(text)) noArabic.add(cue.n);
     if (!source) return;
 
     const src = source.get(cue.n);

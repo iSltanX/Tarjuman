@@ -4,6 +4,7 @@
 import { DEFAULT_DRIFT_MS, compare, currentComparison, fingerprintCoverage } from '../compare/index.js';
 import { TjError, messageFor, toErrorInfo } from '../errors/index.js';
 import { LIMITS } from '../model/validate.js';
+import { langFromFileName } from '../lang/index.js';
 import { parseSrtLenient } from '../srt/lenient.js';
 import { selectFingerprint } from './fingerprint.js';
 import { mergeParts } from './merge.js';
@@ -39,13 +40,16 @@ function capNotes(notes) {
 
 /**
  * @param {File | File[] | FileList} fileOrFiles أكثر من ملف = أجزاء احتياطية تُدمج بالأرقام
- * @param {{ fingerprints?: import('../model/tracks.js').Fingerprint[], settings?: import('../model/settings.js').Settings }} [opts]
+ * @param {{ fingerprints?: import('../model/tracks.js').Fingerprint[], settings?: import('../model/settings.js').Settings, lang?: string | null }} [opts]
+ *   lang لغة الملف التي اختارها المستخدم (AA1/AA3)؛ وبلا اختيار من رمز صريح في اسم الملف، وإلا null
  * @returns {Promise<
  *   { ok: true, fileName: string, cues: import('../model/cue.js').Cue[], comparison: import('../model/tracks.js').ComparisonReport | null,
- *     fingerprintId: string | null, notes: string[], warnings: { code: string, params?: Record<string, string | number> }[] }
+ *     fingerprintId: string | null, notes: string[], warnings: { code: string, params?: Record<string, string | number> }[],
+ *     lang: string | null }
+ *   lang: لغة الملف من رمز صريح في اسمه (talk.ja.srt)، وإلا null «غير محددة» حتى يختارها المستخدم (AA1؛ لا تخمين من النص)
  *   | { ok: false, error: { code: string, message: string, line?: number } }>}
  */
-export async function readImport(fileOrFiles, { fingerprints = [], settings } = {}) {
+export async function readImport(fileOrFiles, { fingerprints = [], settings, lang: chosen } = {}) {
   let multi = false;
   let current = null;
   try {
@@ -94,10 +98,11 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings } = 
 
     const fingerprint = selectFingerprint(fingerprints, cues.length);
     const finalNotes = capNotes(notes);
-    const report = compare(cues, fingerprint, { driftMs: threshold(settings) });
+    const lang = chosen !== undefined ? chosen : langFromFileName(fileName);
+    const report = compare(cues, fingerprint, { driftMs: threshold(settings), target: lang });
     // ملاحظات الاستيراد أولًا ثم ما يضيفه المقارن (سبب تعذّر الاستعادة الشاملة).
     const comparison = { ...report, notes: capNotes([...notes, ...report.notes]) };
-    return { ok: true, fileName, cues, comparison, fingerprintId: fingerprint ? fingerprint.id : null, notes: finalNotes, warnings };
+    return { ok: true, fileName, cues, comparison, fingerprintId: fingerprint ? fingerprint.id : null, notes: finalNotes, warnings, lang };
   } catch (err) {
     const info = toErrorInfo(err);
     const line = err instanceof TjError ? err.params?.line : undefined;
@@ -115,13 +120,14 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings } = 
  * «ناقص: 427 · توقيت مختلف في 422» ثم «ناقص: 5». وrenumbered حين قابلت المحاذاة مقاطع بأرقام غير أرقام التصدير، فتقول المعاينة
  * إن المقارنة بالتوقيت. وبثقة محاذاة منخفضة يبقى حكم الرقم كما في currentComparison، وبلا بصمة لا مقارنة.
  * @param {import('../model/cue.js').Cue[]} cues @param {import('../model/tracks.js').Fingerprint | null} fingerprint
- * @param {{ settings?: { thresholds?: { driftMs?: number } }, notes?: string[] }} [o] notes ملاحظات القراءة قبل ملاحظات المقارن
+ * @param {{ settings?: { thresholds?: { driftMs?: number } }, notes?: string[], target?: string | null }} [o] notes ملاحظات القراءة قبل
+ *   ملاحظات المقارن، وtarget لغة الملف لفحص «غير مترجم» (AA1، null لا فحص)
  * @returns {import('../model/tracks.js').ComparisonReport & { renumbered: boolean }}
  */
-export function previewComparison(cues, fingerprint, { settings, notes = [] } = {}) {
+export function previewComparison(cues, fingerprint, { settings, notes = [], target = null } = {}) {
   const driftMs = threshold(settings);
   const coverage = fingerprint ? fingerprintCoverage(fingerprint, cues) : { ok: false };
-  const report = fingerprint ? currentComparison(cues, fingerprint, { driftMs, coverage }) : compare(cues, null, { driftMs });
+  const report = fingerprint ? currentComparison(cues, fingerprint, { driftMs, coverage, target }) : compare(cues, null, { driftMs, target });
   const renumbered = !!coverage.ok && coverage.pairs.some(([i, j]) => fingerprint.cues[i].n !== cues[j].n);
   return { ...report, renumbered, notes: capNotes([...notes, ...report.notes]) };
 }
@@ -138,6 +144,6 @@ export function withSuggestedReference(result, suggested, fingerprints, settings
   if (!result?.ok || !suggested || suggested === result.fingerprintId) return result;
   const fp = (fingerprints ?? []).find((f) => f.id === suggested);
   if (!fp) return result;
-  const report = compare(result.cues, fp, { driftMs: threshold(settings) });
+  const report = compare(result.cues, fp, { driftMs: threshold(settings), target: result.lang ?? null });
   return { ...result, fingerprintId: fp.id, comparison: { ...report, notes: capNotes([...result.notes, ...report.notes]) } };
 }

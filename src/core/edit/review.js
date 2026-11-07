@@ -2,7 +2,11 @@
 // البشرية، وحلّ العلامات على المقاطع المعروضة («أعود إليه» و«راجعته»، و«تحتاج تحقق» لما قد يكون انتقل، واليتيمة منفصلة)،
 // وتبديل علامة مقطع بخطة إزالة وإضافة قابلة للتراجع الدقيق، وإعادة ربط العلامات بمقاطعها عند الحفظ، وبنود تقرير المراجعة،
 // ومجموعات الاستكمال بأرقام الملف الكامل. دوال نقية بلا DOM ولا تخزين.
-import { isBlankText, lacksArabic } from '../compare/index.js';
+import { isBlankText, untranslatedTest } from '../compare/index.js';
+import { parseTrackKey } from '../model/ids.js';
+
+/** فحص «غير مترجم» بلغة الترجمة ولغة مسار البصمة (AA1)، أو «لا شيء» حين لا يصح الفحص. */
+const untranslatedFor = (target, fingerprint) => untranslatedTest(target, fingerprint ? parseTrackKey(fingerprint.trackKey)?.lang ?? null : null) ?? (() => false);
 import { cueTextHash, markAnchor, resolveMarks, sameAnchor } from '../model/marks.js';
 import { DENSITY_CODES } from './issues.js';
 
@@ -132,7 +136,8 @@ export const REVIEW_CODES = Object.freeze({ missing: 'ED_REVIEW_MISSING', drift:
  * }} o
  * @returns {import('../export/report.js').ReviewItem[]}
  */
-export function reviewItems({ cues, issues, comparison, fingerprint, marks, english = [], includeText = false, include = {} }) {
+export function reviewItems({ cues, issues, comparison, fingerprint, marks, english = [], includeText = false, include = {}, target = 'ar' }) {
+  const lacksTarget = untranslatedFor(target, fingerprint);
   const auto = include.auto !== false;
   const withMarks = include.marks !== false;
   const cmp = comparison && comparison.fingerprintId !== null ? comparison : null;
@@ -146,7 +151,7 @@ export function reviewItems({ cues, issues, comparison, fingerprint, marks, engl
       for (const x of issues.byIndex.get(i) ?? []) if (!problems.includes(x.code)) problems.push(x.code);
       if (driftN.has(c.n)) problems.push(REVIEW_CODES.drift);
       // «بلا حروف عربية» بنص القطعة نفسها لا برقمها: قطعتا شطر أو رقم مكرر لا تُنسب إحداهما بالأخرى (تدقيق 7a66f91، U25).
-      if (noArabicN.has(c.n) && lacksArabic(c.text) && !problems.includes(REVIEW_CODES.noArabic)) problems.push(REVIEW_CODES.noArabic);
+      if (noArabicN.has(c.n) && lacksTarget(c.text) && !problems.includes(REVIEW_CODES.noArabic)) problems.push(REVIEW_CODES.noArabic);
     }
     const m = withMarks ? marks.byIndex.get(i) : null;
     if (!problems.length && !m) return;
@@ -173,7 +178,8 @@ export function reviewItems({ cues, issues, comparison, fingerprint, marks, engl
  *   marks: ReturnType<typeof resolveSlotMarks>, selection: Iterable<number>, numbersOf?: number[][] | null
  * }} o
  */
-export function completionGroups({ cues, comparison, fingerprint, marks, selection, numbersOf = null }) {
+export function completionGroups({ cues, comparison, fingerprint, marks, selection, numbersOf = null, target = 'ar' }) {
+  const lacksTarget = untranslatedFor(target, fingerprint);
   const count = fingerprint?.count ?? 0;
   const inRange = (n) => Number.isInteger(n) && n >= 1 && n <= count;
   const uniq = (ns) => [...new Set(ns.filter(inRange))].sort((a, b) => a - b);
@@ -183,7 +189,7 @@ export function completionGroups({ cues, comparison, fingerprint, marks, selecti
   return {
     missing: uniq(comparison && comparison.fingerprintId === fingerprint?.id ? comparison.missing : []),
     empty: uniq(indices((c) => isBlankText(c.text))),
-    noArabic: uniq(indices((c) => lacksArabic(c.text))),
+    noArabic: uniq(indices((c) => lacksTarget(c.text))),
     marked: uniq(marks.entries.filter((e) => e.kind === 'todo').flatMap((e) => numbers(e.index))),
     selected: uniq([...selection].flatMap((i) => numbers(i))),
   };

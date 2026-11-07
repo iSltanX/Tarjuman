@@ -76,8 +76,8 @@ export function withExport(record, input, now, { keep = [] } = {}) {
  * @param {{
  *   videoId: string, title?: string | null, durationMs?: number | null, fileName: string, cues: Cue[],
  *   comparison?: ComparisonReport | null, fingerprintId?: string | null, notes?: string[],
- *   englishTrack?: EnglishTrack | null, displayModeDefault?: 'ar' | 'dual'
- * }} input
+ *   englishTrack?: EnglishTrack | null, displayModeDefault?: 'ar' | 'dual', lang?: string | null
+ * }} input lang لغة الترجمة (AA1)
  * @param {string} now ISO
  * @param {{ replace?: boolean }} [opts]
  * @returns {{ record: VideoRecord, offsetWas: number, replaced: boolean }}
@@ -97,6 +97,8 @@ export function withArabicImport(record, input, now, { replace = false } = {}) {
     fingerprintId: input.fingerprintId ?? null, comparison: input.comparison ? copy(input.comparison) : null,
     notes: (input.notes ?? []).slice(),
   };
+  // لغة الترجمة (AA1): رمزها أو null «غير محددة»؛ وغياب الحقل من المدخل (مستدعٍ قبل 2.0.0) لا يضيفه.
+  if (input.lang !== undefined) r.arabic.lang = input.lang;
   r.view = { displayOffsetMs: 0, displayMode: r.view.displayMode === 'off' ? fallbackMode : r.view.displayMode };
   r.fingerprints = pruneFingerprints(r.fingerprints, r.arabic.fingerprintId);
   return { record: r, offsetWas, replaced: Boolean(record?.arabic) };

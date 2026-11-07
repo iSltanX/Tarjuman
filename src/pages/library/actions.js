@@ -272,8 +272,9 @@ export const deletePrevious = ({ store, videoId, expect }) => confirmedDelete(()
  * @param {import('../../core/model/cue.js').Cue[]} cues @param {import('../../core/model/tracks.js').Fingerprint | null} fp
  * @param {import('../../core/model/settings.js').Settings} settings @param {string[]} [notes]
  */
-export function compareWith(cues, fp, settings, notes = []) {
-  const report = compare(cues, fp, { driftMs: settings.thresholds.driftMs });
+export function compareWith(cues, fp, settings, notes = [], target = 'ar') {
+  // target لغة الترجمة لفحص «غير مترجم» (AA1): null لا فحص؛ والافتراضي العربية كما كان للمستدعين القدماء.
+  const report = compare(cues, fp, { driftMs: settings.thresholds.driftMs, target });
   return { ...report, notes: [...notes, ...report.notes].slice(0, LIMITS.maxNotes) };
 }
 
@@ -290,7 +291,7 @@ export async function changeReference({ store, videoId, n, fingerprintId, now })
     const fp = fingerprintId ? b.record.fingerprints.find((f) => f.id === fingerprintId) ?? null : null;
     if (fingerprintId && !fp) throw new TjError('MD_INVALID', { detail: 'fingerprintId' });
     // التقرير وصف للملف المستورد كما في readImport وapplyUpload: الأصل لا النسخة المعدّلة، فلا يتغير بإعادة اختيار المرجع.
-    return withSlotReference(b, n, { fingerprintId, comparison: fp ? compareWith(s.track.original, fp, settings, s.track.notes) : null }, iso(now));
+    return withSlotReference(b, n, { fingerprintId, comparison: fp ? compareWith(s.track.original, fp, settings, s.track.notes, s.track.lang ?? null) : null }, iso(now));
   });
 }
 
@@ -338,13 +339,13 @@ export function uploadImpact(bundle, n, incoming) {
  */
 export async function applyUpload({ store, bundle, settings, result, n, fingerprintId, keepCues = null, now }) {
   const fp = fingerprintId ? bundle.record.fingerprints.find((f) => f.id === fingerprintId) ?? null : null;
-  const comparison = fingerprintId === result.fingerprintId ? result.comparison : compareWith(result.cues, fp, settings, result.notes);
+  const comparison = fingerprintId === result.fingerprintId ? result.comparison : compareWith(result.cues, fp, settings, result.notes, result.lang ?? null);
   const filled = Boolean(bundle.slots[n - 1].track);
   let info = { replaced: false, offsetWas: 0, activated: false };
   await onBundle(store, bundle.videoId, (b) => {
     const out = withSlotUpload(b, n, {
       videoId: b.videoId, fileName: result.fileName, cues: result.cues, comparison, fingerprintId: fp ? fp.id : null,
-      notes: result.notes, displayModeDefault: settings.displayModeDefault, current: keepCues,
+      notes: result.notes, displayModeDefault: settings.displayModeDefault, current: keepCues, lang: result.lang ?? null,
     }, iso(now), { replace: filled });
     info = { replaced: out.replaced, offsetWas: out.offsetWas, activated: out.bundle.active === n };
     return out.bundle;

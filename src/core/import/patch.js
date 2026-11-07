@@ -4,7 +4,8 @@
 // بزمن البصمة بين جاريه. المواضع من محاذاة الترجمة بالبصمة لا من الرقم وحده. والتطبيق دالة منفصلة بعد المعاينة.
 import { shortList } from '../align/align.js';
 import { ALIGN_DEFAULTS, alignCues, iou, toBlocks } from '../align/index.js';
-import { isBlankText, lacksArabic } from '../compare/compare.js';
+import { isBlankText, untranslatedTest } from '../compare/compare.js';
+import { parseTrackKey } from '../model/ids.js';
 import { TjError, toErrorInfo } from '../errors/index.js';
 import { fnv1a64 } from '../export/hash.js';
 import { LIMITS } from '../model/validate.js';
@@ -99,10 +100,11 @@ export function partsStatus(fingerprint, cues) {
 
 /**
  * @param {File | File[] | FileList} fileOrFiles ملف التصحيح، أو أجزاء مستلمة (أكثر من ملف يُجمع بالأرقام)
- * @param {{ fingerprint: Fingerprint, cues: Cue[] }} ctx البصمة التي بُني عليها ملف الاستكمال أو التقسيم، والترجمة الحالية
+ * @param {{ fingerprint: Fingerprint, cues: Cue[], target?: string | null }} ctx البصمة التي بُني عليها ملف الاستكمال أو التقسيم، والترجمة
+ *   الحالية، ولغتها لفحص «غير مترجم» (AA1: null لا فحص، والافتراضي العربية كما كان)
  * @returns {Promise<{ ok: true, plan: PatchPlan } | { ok: false, error: { code: string, message: string, line?: number } }>}
  */
-export async function readPatch(fileOrFiles, { fingerprint, cues = [] } = {}) {
+export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 'ar' } = {}) {
   let multi = false;
   let current = null;
   try {
@@ -171,7 +173,8 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [] } = {}) {
     const empty = skipped.filter((x) => x.reason === 'empty').map((x) => x.n);
     const structural = skipped.filter((x) => x.reason === 'structure').map((x) => x.n);
     const weakOnes = skipped.filter((x) => x.reason === 'weak').map((x) => x.n);
-    const noArabic = items.filter((x) => lacksArabic(x.after.text)).map((x) => x.n);
+    const untranslated = untranslatedTest(target, parseTrackKey(fingerprint.trackKey)?.lang ?? null);
+    const noArabic = untranslated ? items.filter((x) => untranslated(x.after.text)).map((x) => x.n) : [];
     if (empty.length) warnings.push({ code: 'IM_PATCH_SKIPPED_EMPTY', params: listOf(empty) });
     if (structural.length) warnings.push({ code: 'IM_PATCH_SKIPPED_STRUCTURE', params: listOf(structural) });
     if (weakOnes.length) warnings.push({ code: 'IM_PATCH_SKIPPED_WEAK', params: listOf(weakOnes) });

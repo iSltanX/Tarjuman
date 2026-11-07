@@ -208,12 +208,14 @@ export async function readFor({ controller, importFlow, files }) {
     }
   }
   const { fileName, cues, comparison, fingerprintId, notes } = res;
+  // لغة الملف من رمز صريح في اسمه، وإلا «غير محددة» (AA1)؛ واختيارها في قائمة الرفع (AA3).
+  const lang = res.lang ?? null;
   // المعاينة بالمحاذاة بمرجع الحفظ نفسه؛ وبلا مرجع محفوظ أو بتعذّرها يبقى تقرير الرقم كما هو.
   let preview = comparison;
   const fp = fingerprintId ? fingerprints.find((f) => f.id === fingerprintId) ?? null : null;
   if (fp) {
     try {
-      preview = previewComparison(cues, fp, { settings: s.settings, notes });
+      preview = previewComparison(cues, fp, { settings: s.settings, notes, target: lang });
     } catch {
       preview = comparison;
     }
@@ -221,7 +223,7 @@ export async function readFor({ controller, importFlow, files }) {
   return {
     ok: true,
     videoId,
-    input: { fileName, cues, comparison, fingerprintId, notes },
+    input: { fileName, cues, comparison, fingerprintId, notes, lang },
     preview,
     warnings: (res.warnings ?? []).map((w) => messageFor(w.code, w.params)),
   };

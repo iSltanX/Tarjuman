@@ -27,8 +27,9 @@ const failed = async (input, opts) => {
 test('ملف نظيف مع بصمته: مطابقة تامة، وكل حقول النتيجة بصيغة العقد', async () => {
   const r = await run(fixture('clean.ar.srt', 'iG9CE55wbtY.ar.srt'));
   assert.equal(r.ok, true);
-  assert.deepEqual(Object.keys(r).sort(), ['comparison', 'cues', 'fileName', 'fingerprintId', 'notes', 'ok', 'warnings']);
+  assert.deepEqual(Object.keys(r).sort(), ['comparison', 'cues', 'fileName', 'fingerprintId', 'lang', 'notes', 'ok', 'warnings']);
   assert.equal(r.fileName, 'iG9CE55wbtY.ar.srt');
+  assert.equal(r.lang, 'ar', 'لغة الملف من رمز صريح في اسمه (AA1)');
   assert.equal(r.cues.length, 8);
   assert.equal(r.fingerprintId, fp.id);
   assert.equal(r.comparison.fingerprintId, fp.id);
@@ -223,7 +224,8 @@ test('نتيجة الاستيراد تدخل withArabicImport كما هي وين
   const record = videoRecord({ arabic: false, cues: baseCues() });
   assert.equal(record.fingerprints[0].id, r.fingerprintId);
   const { record: next } = withArabicImport(record, { videoId: VIDEO_ID, ...r }, NOW);
-  assert.deepEqual(validateVideoRecord(next), { ok: true });
+  assert.deepEqual(validateVideoRecord(next, { stored: false }), { ok: true });
+  assert.equal(next.arabic.lang, 'ar', 'الترجمة بلغتها في الذاكرة، والإسقاط المخزَّن بلاها (AA1)');
   assert.deepEqual(next.arabic.original, r.cues);
   assert.deepEqual(next.arabic.comparison, r.comparison);
   assert.equal(next.view.displayOffsetMs, 0);

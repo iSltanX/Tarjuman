@@ -915,7 +915,7 @@ export async function mountEditor(app, {
       build: ({ auto, marks, includeText, format }) => {
         const items = reviewItems({
           cues: shownCues(), issues: act().issues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView,
-          english: S.view === 'original' ? S.refsOriginal : S.refs, includeText, include: { auto, marks },
+          english: S.view === 'original' ? S.refsOriginal : S.refs, includeText, include: { auto, marks }, target: openedLang(),
         });
         return { count: items.length, file: items.length ? buildReviewReport({ videoId, title: S.opened.record.title, items, includeText, format }) : null };
       },
@@ -976,8 +976,10 @@ export async function mountEditor(app, {
 
   // ---- الاستكمال (R52) ----
   const glossary = () => (S.prefs?.glossary?.attach && S.prefs.glossary.terms.length ? S.prefs.glossary.terms : null);
-  /** لغة الترجمة المفتوحة التي يُستكمل لها (AA1): لغتها المحفوظة أو رمز صريح في اسم ملفها، وإلا الافتراضي حتى يُتاح اختيارها (AA3). */
-  const patchTarget = () => translationLang(S.opened?.slots[S.slot - 1]?.track) ?? DEFAULT_TARGET_LANG;
+  /** لغة الترجمة المفتوحة (AA1): لغتها المحفوظة أو رمز صريح في اسم ملفها، وإلا null «غير محددة» فلا فحص «غير مترجم». */
+  const openedLang = () => translationLang(S.opened?.slots[S.slot - 1]?.track);
+  /** اللغة التي يُستكمل لها في تعليمات الاستكمال: لغة الترجمة، وإلا الافتراضي حتى يُتاح اختيارها (AA3). */
+  const patchTarget = () => openedLang() ?? DEFAULT_TARGET_LANG;
 
   function completeReason() {
     if (S.view !== 'edit') return messageFor('ED_READ_ONLY');
@@ -995,7 +997,7 @@ export async function mountEditor(app, {
     if (completePane.hidden || !S.markView) return;
     const groups = completionGroups({
       cues: shownCues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView, selection: S.selection,
-      numbersOf: S.view === 'edit' && S.coverage?.ok ? S.coverage.numbersOf : null,
+      numbersOf: S.view === 'edit' && S.coverage?.ok ? S.coverage.numbersOf : null, target: openedLang(),
     });
     S.completeNumbers = completionNumbers(groups, S.picks);
     keepFocus(completeEl, () => renderCompletePanel(completeEl, {
@@ -1062,7 +1064,7 @@ export async function mountEditor(app, {
     const fp = S.fp;
     const before = session.version;
     const stale = () => S.session !== session || S.fp !== fp || session.version !== before;
-    const read = await readPatch(files, { fingerprint: fp, cues: session.snapshot() });
+    const read = await readPatch(files, { fingerprint: fp, cues: session.snapshot(), target: openedLang() });
     if (!read.ok) {
       await openDialog({
         doc, tone: 'danger', title: 'تعذّر قراءة ملف التصحيح',

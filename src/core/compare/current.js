@@ -73,8 +73,8 @@ export function fingerprintCoverage(fingerprint, cues) {
  * @param {{ driftMs?: number, coverage?: Coverage }} [opts] coverage إن حُسبت (فلا تُعاد المحاذاة)
  * @returns {ComparisonReport}
  */
-export function currentComparison(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS, coverage } = {}) {
-  const base = compare(cues, fingerprint, { driftMs });
+export function currentComparison(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS, coverage, target = 'ar' } = {}) {
+  const base = compare(cues, fingerprint, { driftMs, target });
   if (!fingerprint) return base;
   const cov = coverage ?? fingerprintCoverage(fingerprint, cues);
   if (!cov.ok) return base;
@@ -114,9 +114,11 @@ export function trackComparison(track, fingerprints) {
   if (track.current === null && stored && stored.fingerprintId === fp.id && !stored.missing.length && !stored.extra.length && !stored.drift.length) return stored;
   let byFp = memo.get(cues);
   if (!byFp) memo.set(cues, (byFp = new Map()));
-  const key = `${fp.id}|${stored?.driftThresholdMs ?? DEFAULT_DRIFT_MS}`;
+  // لغة الترجمة لفحص «غير مترجم» (AA1): لغتها المحفوظة، وما حُفظ قبل 2.0.0 بلا لغة لا يُفحص به (لا تُفترض العربية).
+  const target = track.lang ?? null;
+  const key = `${fp.id}|${stored?.driftThresholdMs ?? DEFAULT_DRIFT_MS}|${target ?? ''}`;
   if (!byFp.has(key)) {
-    const report = currentComparison(cues, fp, { driftMs: stored?.driftThresholdMs ?? DEFAULT_DRIFT_MS });
+    const report = currentComparison(cues, fp, { driftMs: stored?.driftThresholdMs ?? DEFAULT_DRIFT_MS, target });
     byFp.set(key, { ...report, notes: stored ? [...stored.notes] : report.notes });
   }
   return byFp.get(key);

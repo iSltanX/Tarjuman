@@ -87,7 +87,8 @@ const baseExpected = (fp, countTarget) => ({
   drift: [], empty: [], noArabic: [], restoreTimingAvailable: false, driftThresholdMs: 100, notes: [],
 });
 
-const doImport = (files, fp) => readImport(files, { fingerprints: [fp], settings: DEFAULT_SETTINGS });
+// الترجمة عربية كما يختارها المستخدم عند الرفع (AA1: بلا لغة معروفة لا فحص «غير مترجم»).
+const doImport = (files, fp) => readImport(files, { fingerprints: [fp], settings: DEFAULT_SETTINGS, lang: 'ar' });
 
 // --- السيناريوهات (تُعاد لكل مصدّر) -------------------------------------------------------------------------
 
@@ -181,7 +182,7 @@ function defineRoundtrip(label, exporter) {
     record.fingerprints = [fp];
     record.english = [{ ...manual, cues: source }];
     const { record: next } = withArabicImport(record, { videoId: VIDEO_ID, ...r }, NOW);
-    assert.deepEqual(validateVideoRecord(next), { ok: true });
+    assert.deepEqual(validateVideoRecord(next, { stored: false }), { ok: true });
   });
 
   test(`${label}: استيراد الملف الإنجليزي بالخطأ ← مطابق توقيتًا لكن كل مقاطعه بلا حرف عربي`, { skip }, async () => {

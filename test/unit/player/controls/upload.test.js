@@ -38,7 +38,7 @@ test('اختيار ملف: فحص ومقارنة بالبصمات المحفوظ
   assert.strictEqual(page.flows.reads[0].opts.settings, page.controller.getState().settings);
   const load = page.controller.calls.find((c) => c[0] === 'loadArabicInto');
   assert.equal(load[1], 1, 'فيديو بلا ترجمة ولا قرينة: الخانة 1 مباشرة');
-  assert.deepEqual(Object.keys(load[2]).sort(), ['comparison', 'cues', 'fileName', 'fingerprintId', 'notes'], 'مدخل loadArabic بعقده');
+  assert.deepEqual(Object.keys(load[2]).sort(), ['comparison', 'cues', 'fileName', 'fingerprintId', 'lang', 'notes'], 'مدخل loadArabic بعقده، ولغة الملف (AA1)');
   assert.deepEqual(load[3], { replace: false, activate: undefined });
   assert.equal(page.flows.reviews[0].fileName, 'talk.ar.srt', 'فُحص الاسم قبل الحفظ');
   assert.equal('fingerprints' in page.flows.reviews[0], false, 'قرينة الاسم من الاسم وحده بلا ترتيب ثانٍ (تدقيق 7a66f91، Q24)');

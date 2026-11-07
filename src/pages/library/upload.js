@@ -100,7 +100,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   const renderCompare = () => {
     const fp = reference ? fps.find((f) => f.id === reference) ?? null : null;
     // المعاينة بالمحاذاة كما تُعرض بعد الحفظ (FA-04)، لأي مرجع مختار؛ وتقرير الحفظ بالرقم يُحسب عند الحفظ كما كان.
-    const report = previewComparison(result.cues, fp, { settings, notes: result.notes });
+    const report = previewComparison(result.cues, fp, { settings, notes: result.notes, target: result.lang ?? null });
     const s = comparisonSummary(report);
     compareHost.replaceChildren(alertBox({ tone: s.tone, text: s.lines.join('\n'), doc }));
   };
