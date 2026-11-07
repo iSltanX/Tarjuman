@@ -4,6 +4,9 @@
 
 export const PREFIXES = Object.freeze(['ED_']);
 
+// الأمثلة الموقّعة داخل جملة عربية معزولة LTR (LRI…PDI): بلا عزل تُرسم «0.5+» و«1.25−» (تدقيق Fable، FA-05).
+const LTR = (s) => `${String.fromCodePoint(0x2066)}${s}${String.fromCodePoint(0x2069)}`;
+
 export const MESSAGES = Object.freeze({
   // أخطاء التوقيت: تمنع الحفظ والتصدير، ولا إصلاح تلقائي.
   ED_END_BEFORE_START: 'النهاية قبل البداية أو مساوية لها. عدّل أحد الزمنين.',
@@ -23,7 +26,7 @@ export const MESSAGES = Object.freeze({
   // رفض الأفعال: لا شيء يتغير.
   ED_SHIFT_NEGATIVE: 'النقل يجعل بعض المقاطع قبل بداية الفيديو: {list}. لم يُنقل شيء.',
   ED_SHIFT_ZERO: 'أدخل مقدارًا غير الصفر.',
-  ED_SHIFT_INVALID: 'قيمة النقل غير صالحة. اكتب ثواني بإشارة اختيارية مثل +0.5 أو −1.25.',
+  ED_SHIFT_INVALID: `قيمة النقل غير صالحة. اكتب ثواني بإشارة اختيارية مثل ${LTR('+0.5')} أو ${LTR('−1.25')}.`,
   ED_COMMIT_NEGATIVE: 'تثبيت الإزاحة يجعل بعض المقاطع قبل بداية الفيديو: {list}. لم يتغير شيء.',
   ED_NO_OFFSET: 'إزاحة العرض صفر، فلا شيء لتثبيته.',
 
