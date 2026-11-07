@@ -43,6 +43,32 @@ export function prepareExport({ controller, exportFlow, key, mode, split, now })
 }
 
 /**
+ * تصدير المسار الإنجليزي المحفوظ (تدقيق Fable، FA-17 = B2، بقرار سلطان 2026-11-07): حين لا التقاط حي في هذه الزيارة ومسار
+ * الفيديو الإنجليزي محفوظ من تنزيل سابق، يُصدَّر المحفوظ بالوضع العادي كما تفعل المحفوظات (exportEnglish)، بتعليماته وبالقاموس
+ * إن أُرفق. المقاطع المحفوظة تحويل الوضع العادي نفسه، فلا وضع طويل ولا تقسيم هنا (يحتاجان التقاطًا حيًا).
+ * @param {{ controller: object, exportFlow: { buildExport: Function, instructions?: Function }, now: number }} p
+ */
+export function prepareSavedExport({ controller, exportFlow, now }) {
+  const s = controller.getState();
+  const t = s.english?.source === 'saved' && s.english.cues?.length ? s.english : null;
+  if (!t) return { ok: false, error: infoOf('EX_NO_TRACK') };
+  try {
+    const built = exportFlow.buildExport({
+      videoId: s.videoId, title: s.title,
+      track: { key: t.key, lang: t.lang, kind: t.kind, cues: t.cues },
+      mode: 'normal', split: null, now,
+    });
+    const glossary = attachedGlossary(s.prefs);
+    const text = glossary && exportFlow.instructions
+      ? exportFlow.instructions({ videoId: s.videoId, title: s.title, parts: built.fingerprint.parts ?? null, glossary })
+      : built.instructions;
+    return { ok: true, built, videoId: s.videoId, text, key: t.key };
+  } catch (err) {
+    return { ok: false, error: toErrorInfo(err) };
+  }
+}
+
+/**
  * حفظ ملفات التصدير بالترتيب عبر saveFile (مكان الحفظ من الإعدادات، لا من هنا). يتوقف عند أول إلغاء أو إخفاق: حوار حفظ
  * ألغاه المستخدم لا يتبعه حوار آخر.
  * @param {{ exportFlow: { saveFile: Function }, files: { name: string, text: string }[], doc: Document }} p
@@ -75,6 +101,17 @@ export async function recordFor({ controller, key, built, videoId }) {
   if (controller.getState().videoId !== videoId) return { saved: false, error: infoOf('CT_VIDEO_CHANGED') };
   try {
     await controller.recordExport({ trackKey: key, fingerprint: built.fingerprint });
+    return { saved: true, error: null };
+  } catch (err) {
+    return { saved: false, error: toErrorInfo(err) };
+  }
+}
+
+/** بصمة تنزيل المحفوظ بعد نزول ملفه، للفيديو نفسه وحده، بلا تكرار (FA-17). */
+export async function recordSavedFor({ controller, key, built, videoId }) {
+  if (controller.getState().videoId !== videoId) return { saved: false, error: infoOf('CT_VIDEO_CHANGED') };
+  try {
+    await controller.recordSavedExport({ trackKey: key, fingerprint: built.fingerprint });
     return { saved: true, error: null };
   } catch (err) {
     return { saved: false, error: toErrorInfo(err) };

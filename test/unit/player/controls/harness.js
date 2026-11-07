@@ -127,6 +127,12 @@ export function fakeController(initial = makeState(), opts = {}) {
       if (opts.recordFails) throw new TjError('ST_WRITE_FAILED');
       return state;
     },
+    // تنزيل المسار الإنجليزي المحفوظ بلا التقاط (تدقيق Fable، FA-17).
+    async recordSavedExport(p) {
+      calls.push(['recordSavedExport', p]);
+      if (opts.recordFails) throw new TjError('ST_WRITE_FAILED');
+      return { stored: true };
+    },
     convertCaptured(key, { mode = 'normal' } = {}) {
       calls.push(['convertCaptured', key, mode]);
       const t = state.captured.find((x) => x.key === key);

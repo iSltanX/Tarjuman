@@ -206,6 +206,30 @@ export function downloadMenu(h, act, m, root = null) {
     return out;
   }
   if (!m.tracks.length) {
+    // المسار المحفوظ من تنزيل سابق بلا التقاط في هذه الزيارة: يُنزَّل من هنا كما في المحفوظات (تدقيق Fable، FA-17، بقرار سلطان)،
+    // وتبقى إرشادات CC بعده لمن يريد التقاطًا جديدًا (الوضع الطويل أو التقسيم).
+    if (m.saved) {
+      out.push(label(h, LABELS.languageTitle));
+      out.push(statusRow(h, 'ok', `${trackLine(m.saved)} · ${LABELS.savedTag}`, 'language'));
+      out.push(h('div', { className: 'note', text: LABELS.savedNote, attrs: { 'data-fid': 'savedNote' } }));
+      out.push(h('div', {
+        className: 'actions inline',
+        children: [
+          button(h, 'primary', m.busy ? LABELS.checking : LABELS.downloadSaved, {
+            act, name: 'download', fid: 'download', first: true, disabled: m.busy, icon: 'download', title: LABELS.downloadSavedHint,
+            extra: { 'aria-busy': m.busy ? 'true' : null, 'aria-description': LABELS.downloadSavedHint },
+          }),
+          button(h, 'secondary', LABELS.copyShort, {
+            act, name: 'copy', fid: 'copy', disabled: m.copyBusy, icon: 'copy', title: LABELS.copyHint, extra: { 'aria-description': LABELS.copyHint },
+          }),
+        ],
+      }));
+      if (m.glossary) out.push(h('div', { className: 'tag', text: glossaryTag(m.glossary), attrs: { 'data-fid': 'glossary' } }));
+      if (m.saveLine) out.push(resultLine(h, act, m.saveLine, 'saveLine'));
+      if (m.copyLine) out.push(resultLine(h, act, m.copyLine, 'copyLine'));
+      for (const r of m.result) out.push(alert(h, r.tone, r.text));
+      out.push(sep(h));
+    }
     if (m.captureIssue) {
       const guide = m.englishGuide
         ? [h('span', { className: 'steps', text: LABELS.englishSteps }), m.englishGuide.brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null]
@@ -216,7 +240,7 @@ export function downloadMenu(h, act, m, root = null) {
     if (m.unavailable && !m.captureIssue) {
       out.push(alert(h, 'info', messageFor('CT_NO_CAPTIONS')));
     } else {
-      const why = button(h, 'link', LABELS.whyLink, { act, name: 'why', fid: 'why', first: true, extra: { 'aria-expanded': m.why ? 'true' : 'false' } });
+      const why = button(h, 'link', LABELS.whyLink, { act, name: 'why', fid: 'why', first: !m.saved, extra: { 'aria-expanded': m.why ? 'true' : 'false' } });
       out.push(alert(h, 'info', messageFor('CT_NOT_CAPTURED'), [h('span', { children: [why] }), m.why ? h('span', { className: 'note', text: LABELS.why }) : null]));
     }
     return out;

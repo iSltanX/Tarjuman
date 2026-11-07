@@ -6,7 +6,7 @@ import { lookupMs } from '../../core/model/timing.js';
 import { formatOffset } from '../../ui/format.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
 import { fitSize, watchBar } from './bar.js';
-import { attachedGlossary, copyText, loadIntoFor, nameHintFor, partSizes, prepareExport, readFor, recordFor, saveFiles } from './flows.js';
+import { attachedGlossary, copyText, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
@@ -51,6 +51,12 @@ const TITLE = { download: LABELS.downloadTitle, display: LABELS.displayTitle, co
 const partsLabel = (n) => (n === 2 ? 'جزآن' : n % 100 >= 3 && n % 100 <= 10 ? `${n} أجزاء` : `${n} جزءًا`);
 const signOf = (ms) => (Math.round(ms / 100) === 0 ? 'zero' : ms > 0 ? 'positive' : 'negative');
 const okTracks = (s) => s.captured.filter((t) => t.ok && t.cueCount > 0).sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
+/**
+ * المسار الإنجليزي المحفوظ حين لا التقاط صالح في هذه الزيارة (FA-17): يُنزَّل من القائمة بالوضع العادي كما في المحفوظات.
+ * @returns {{ key: string, lang: string, kind: 'manual' | 'asr', cueCount: number } | null}
+ */
+const savedEnglish = (s, tracks) => (!tracks.length && s.english?.source === 'saved' && s.english.cues?.length
+  ? { key: s.english.key, lang: s.english.lang, kind: s.english.kind, cueCount: s.english.cues.length } : null);
 /** نماذج 1 2 3 من المتحكم؛ وحالة بلا خانات (متحكم الإصدار الأول) ترجمة واحدة في الخانة 1 نشطة. */
 const slotsOf = (s) => (Array.isArray(s.slots) && s.slots.length === 3 ? s.slots.map(({ n, filled, active, name }) => ({ n, filled, active, name }))
   : [{ n: 1, filled: !!s.arabic, active: !!s.arabic, name: null }, { n: 2, filled: false, active: false, name: null }, { n: 3, filled: false, active: false, name: null }]);
@@ -160,10 +166,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const step = s.settings.offsetStepMs;
     const off = s.view.displayOffsetMs;
     const summary = s.arabic ? comparisonSummary(s.arabic.comparison) : null;
-    const unavailable = flags.live || (!tracks.length && flags.unavailable);
+    const saved = savedEnglish(s, tracks);
+    const unavailable = flags.live || (!tracks.length && !saved && flags.unavailable);
     const dlReason = flags.live ? messageFor('EX_LIVE') : unavailable ? messageFor('CT_NO_CAPTIONS') : null;
     const dlName = dlReason ? `${LABELS.download} — ${dlReason}` : LABELS.download;
-    const dlState = dlReason ? null : ui.download.busy ? LABELS.stateDownloading : tracks.length ? (tracks.some((t) => t.warnings?.length) ? LABELS.stateIncomplete : LABELS.stateReady) : null;
+    const dlState = dlReason ? null : ui.download.busy ? LABELS.stateDownloading : tracks.length ? (tracks.some((t) => t.warnings?.length) ? LABELS.stateIncomplete : LABELS.stateReady)
+      : saved ? LABELS.stateSaved : null;
     const upState = ui.upload.busy ? LABELS.importing : s.arabic && summary.tone === 'warn' ? LABELS.stateDiffers : null;
     const upLabel = s.arabic ? `${LABELS.translation}: ${s.arabic.fileName}` : LABELS.upload;
     // بلا ترجمة يفتح الزر منتقي الملفات مباشرة: لا يعلن نافذة (U44).
@@ -203,6 +211,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       busy: d.busy, copyBusy: ui.copyBusy, saveLine: d.saveLine, copyLine: d.copyLine, result: d.result,
       glossary: attachedGlossary(s.prefs)?.length ?? 0,
       englishGuide: !tracks.length && NOT_ENGLISH.has(s.captureIssue?.code ?? '') ? { brave: flags.brave } : null,
+      saved: savedEnglish(s, tracks),
       ...previewParts(s, tracks),
     };
   }
@@ -951,7 +960,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   /** ما يُصدَّر الآن: المسار المختار بوضعه وتقسيمه، أو null مع خطأ الحقل. */
   function exportSpec() {
     const m = downloadModel(controller.getState());
-    if (!m.selectedKey) return null;
+    // بلا التقاط: المسار المحفوظ بالوضع العادي، بلا تقسيم (FA-17).
+    if (!m.selectedKey) return m.saved ? { key: m.saved.key, saved: true } : null;
     const sp = splitSpec();
     if (!sp.ok) {
       render();
@@ -983,7 +993,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     d.saveLine = null;
     d.result = [];
     render();
-    const prep = prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
+    const prep = spec.saved ? prepareSavedExport({ controller, exportFlow: flows.exportFlow, now: now() }) : prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
     if (!prep.ok) {
       d.busy = false;
       counts.flowFailures++;
@@ -1015,7 +1025,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (r.blob) d.result.push({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB') });
     d.result.push(...prep.built.warnings.map((code) => ({ tone: code === 'EX_SPLIT_NOT_NEEDED' ? 'info' : 'warn', text: messageFor(code) })));
     if (r.saved.length) {
-      const rec = await recordFor({ controller, key: spec.key, built: prep.built, videoId: prep.videoId });
+      const rec = await (spec.saved ? recordSavedFor : recordFor)({ controller, key: spec.key, built: prep.built, videoId: prep.videoId });
       if (destroyed || ui.download !== d) return;
       if (!rec.saved) d.result.push({ tone: 'warn', text: rec.error.code === 'CT_VIDEO_CHANGED' ? rec.error.message : messageFor('CT_FINGERPRINT_NOT_SAVED') });
     }
@@ -1028,7 +1038,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (ui.copyBusy) return;
     const spec = exportSpec();
     if (!spec) return;
-    const prep = prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
+    const prep = spec.saved ? prepareSavedExport({ controller, exportFlow: flows.exportFlow, now: now() }) : prepareExport({ controller, exportFlow: flows.exportFlow, ...spec, now: now() });
     if (!prep.ok) {
       counts.flowFailures++;
       // في سطر النسخ وحده (يعيد المحاولة)، فلا يمحو تحذيرات التنزيل في d.result.

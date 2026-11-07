@@ -4,6 +4,7 @@
 // الحالة وتشتركان في تغيّرها، ولا تكتبان في التخزين إلا عبر أفعاله. وفي الإصدار الثاني (عقد interfaces §١٢) يعرف حزمة
 // الفيديو (الترجمات الثلاث والسابقة والعلامات) والتفضيلات، ويبدّل النشطة ويرفع إلى خانة ويعلّم المقطع بتراجع.
 import { trackComparison } from '../core/compare/index.js';
+import { sameExport } from '../core/import/review.js';
 import { TjError, toErrorInfo } from '../core/errors/index.js';
 import {
   bundleFromRecord, referencedFingerprints, slotModels, withActiveSlot, withMark, withMarksReplaced, withSlotUpload,
@@ -428,6 +429,31 @@ export function createController({ store, extractor = null, page = {}, now = () 
       }, iso(), { keep }));
       if (id === videoId) changed();
       return next;
+    },
+
+    /**
+     * بعد تنزيل المسار الإنجليزي المحفوظ من المشغّل بلا التقاط حي (تدقيق Fable، FA-17، بقرار سلطان 2026-11-07): البصمة تُحفظ
+     * كما يحفظها تصدير المحفوظات (exportEnglish) إن لم تكن بصمة التصدير نفسه محفوظة، فلا تتراكم نسخ متطابقة؛ والمسار المحفوظ
+     * كما هو. الإزاحة لا تدخل.
+     * @param {{ trackKey: string, fingerprint: import('../core/model/tracks.js').Fingerprint }} p
+     * @returns {Promise<{ stored: boolean }>}
+     */
+    async recordSavedExport({ trackKey, fingerprint }) {
+      const vid = requireVideo();
+      const track = saved?.english.find((t) => t.key === trackKey) ?? null;
+      if (!track) throw new TjError('EX_NO_TRACK');
+      const keep = referencedFingerprints(bundleFor(saved));
+      let stored = false;
+      const { id } = await writeRecord((rec) => {
+        if (!rec || rec.fingerprints.some((f) => sameExport(f, fingerprint) && f.parts === null && fingerprint.parts === null)) return undefined;
+        stored = true;
+        return withExport(rec, {
+          videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, englishTrack: rec.english.find((t) => t.key === trackKey) ?? track, fingerprint,
+          displayMode: view.displayMode === 'off' ? settings.displayModeDefault : view.displayMode,
+        }, iso(), { keep });
+      });
+      if (stored && id === videoId) changed();
+      return { stored };
     },
 
     /**
