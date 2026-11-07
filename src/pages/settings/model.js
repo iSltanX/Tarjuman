@@ -20,9 +20,11 @@ export const CONFIRM_WORD = 'امسح';
 /** أقسام الصفحة بترتيبها: المعرّف هو جزء العنوان (#display)، والأيقونة من مجموعة src/ui. */
 export const SECTIONS = Object.freeze([
   Object.freeze({ id: 'display', title: 'العرض', icon: 'eye', desc: 'وضع العرض الافتراضي، وخط الترجمة وحجمها وخلفيتها وموضعها فوق الفيديو.' }),
+  // قسم «اللغات» (AA3، لوحة 15): بعد «العرض» كترتيب اللوحة.
+  Object.freeze({ id: 'langs', title: 'اللغات', icon: 'swap', desc: 'الزوج الافتراضي لتعليمات الترجمة في نافذة الإضافة، واللغات الأخيرة، ولغة الترجمات المحفوظة بلا لغة.' }),
   Object.freeze({ id: 'timing', title: 'التوقيت', icon: 'clock', desc: 'خطوة زرّي − و+ في شريط المشغّل.' }),
   Object.freeze({ id: 'export', title: 'التصدير', icon: 'download', desc: 'مكان حفظ الملفات، ووضع التصدير الافتراضي، وعتبة التقسيم الاحتياطي.' }),
-  Object.freeze({ id: 'compare', title: 'المقارنة والمراجعة', icon: 'compare', desc: 'عتبات مقارنة الملف العربي بالأصل الإنجليزي عند الرفع، وحد سرعة القراءة في المراجعة.' }),
+  Object.freeze({ id: 'compare', title: 'المقارنة والمراجعة', icon: 'compare', desc: 'عتبات مقارنة ملف الترجمة بالأصل عند الرفع، وحد سرعة القراءة في المراجعة.' }),
   Object.freeze({ id: 'glossary', title: 'المصطلحات', icon: 'glossary', desc: 'مقابلاتك المفضّلة للمصطلحات، تُرفق بتعليمات الترجمة حين تنسخها.' }),
   Object.freeze({ id: 'storage', title: 'التخزين', icon: 'library', desc: 'المساحة المستخدمة على هذا المتصفح، وسعة الترجمات والنسخ السابقة، ومسح كل البيانات.' }),
   Object.freeze({ id: 'data', title: 'البيانات', icon: 'backup', desc: 'نسخة احتياطية من مكتبتك في ملف على جهازك، تستعيدها هنا أو في متصفح آخر.' }),

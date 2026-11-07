@@ -12,6 +12,7 @@ import { alertBox, button, confirmDialog, el, icon, ltr, statusPill } from '../.
 import { formatBytes, ltrInline } from '../../ui/format.js';
 import { numberField, savedMark, segmented } from '../../ui/forms.js';
 import { SUBTITLE_FONT_LIST, subtitleFontStack } from '../../ui/subtitle-fonts.js';
+import { createLanguages } from './langs.js';
 import { aboutSection } from './about.js';
 import { reportPanel } from './report.js';
 import { dataControl } from './data.js';
@@ -246,7 +247,17 @@ export function createSettings(env) {
     const reset = sectionReset(settings, def.id, prefs);
     let resetBtn = null;
     let resetMark = null;
-    if (reset) {
+    // «اللغات» (AA3): افتراضياتها في تفضيلات اللغات لا في الإعدادات، فاستعادتها من القسم نفسه.
+    const custom = customResets[def.id] ?? null;
+    if (custom) {
+      resetMark = marks();
+      resetBtn = button({ label: RESET_LABEL, variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: () => (custom.isDefault() ? undefined : custom.run(resetMark)) });
+      resetBtn.setAttribute('aria-label', `${RESET_LABEL}: ${def.title}`);
+      sync.push(() => {
+        resetBtn.setAttribute('aria-disabled', custom.isDefault() ? 'true' : 'false');
+        resetBtn.title = custom.isDefault() ? 'إعدادات هذا القسم افتراضية بالفعل.' : '';
+      });
+    } else if (reset) {
       resetMark = marks();
       resetBtn = button({ label: RESET_LABEL, variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: async () => {
         const r = sectionReset(settings, def.id, prefs);
@@ -275,6 +286,8 @@ export function createSettings(env) {
     return el('section', { className: 'st-section', attrs: { id: def.id, 'aria-labelledby': `st-${def.id}-title`, 'data-section': def.id }, children: [head, ...children], doc });
   }
   const byId = Object.fromEntries(SECTIONS.map((s) => [s.id, s]));
+  /** استعادة افتراضي لأقسام بلا مفاتيح إعدادات (اللغات). @type {Record<string, { isDefault: () => boolean, run: (mark: object) => unknown }>} */
+  const customResets = {};
 
   // ---- العرض ----
   const displayMark = marks();
@@ -407,6 +420,12 @@ export function createSettings(env) {
     named(rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)), 'panelEntry'),
     named(row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsConsent.needed ? THUMBNAILS_SWITCH.noteFirefox : THUMBNAILS_SWITCH.note)), 'thumbnails'),
     row('معاينة حية', null, preview.root, note(PREVIEW_NOTE)));
+
+  // ---- اللغات (AA3، لوحة 15) ----
+  const langs = createLanguages({ store, doc, marks, row, rowWithHint, note, confirm });
+  customResets.langs = { isDefault: langs.reset.isDefault, run: async (mark) => { await langs.reset.run(mark); syncAll(); } };
+  const langsSection = section(byId.langs, ...langs.rows);
+  let unknownCounted = false;
 
   // ---- التوقيت ----
   const stepMark = marks();
@@ -675,7 +694,7 @@ export function createSettings(env) {
   }
 
   // ---- التنقّل بين الأقسام ----
-  const sections = { display, timing, export: exporting, compare: comparison, glossary: glossarySection, storage, data: dataSection, diagnostics, about };
+  const sections = { display, langs: langsSection, timing, export: exporting, compare: comparison, glossary: glossarySection, storage, data: dataSection, diagnostics, about };
   let active = isSectionId(nav.get()) ? nav.get() : DEFAULT_SECTION;
   const navLinks = SECTIONS.map((s) => el('a', {
     className: 'st-nav__link', attrs: { href: `#${s.id}`, 'data-section': s.id },
@@ -699,6 +718,11 @@ export function createSettings(env) {
     }
     if (remember) nav.set(id);
     if (focus) sections[id].querySelector('h2')?.focus?.();
+    // عدّ الترجمات بلا لغة يقرأ المحفوظات كلها: عند فتح القسم أول مرة، لا مع كل صفحة.
+    if (id === 'langs' && !unknownCounted) {
+      unknownCounted = true;
+      langs.countUnknown().catch(() => {});
+    }
   }
   const offNav = nav.onChange(() => { if (isSectionId(nav.get()) && nav.get() !== active) select(nav.get()); });
 
@@ -708,7 +732,7 @@ export function createSettings(env) {
       className: 'st-content',
       children: [
         el('header', { className: 'st-head', children: [el('h1', { className: 'tj-display', text: 'الإعدادات', doc }), el('p', { className: 'tj-caption', text: SAVE_HINT, doc })], doc }),
-        reminderHost, alertHost, display, timing, exporting, comparison, glossarySection, storage, dataSection, diagnostics, about,
+        reminderHost, alertHost, display, langsSection, timing, exporting, comparison, glossarySection, storage, dataSection, diagnostics, about,
       ],
       doc,
     }),
@@ -736,10 +760,14 @@ export function createSettings(env) {
     if (change.prefs || change.cleared) {
       Promise.all([store.getPrefs(), readConsent()]).then(([p]) => { prefs = p; syncAll(); location.refreshLast(); }).catch(() => {});
     }
+    if (change.langPrefs || change.cleared) {
+      langs.apply(change.langPrefs?.newValue ?? null);
+      syncAll();
+    }
     if ((Object.keys(change.videos ?? {}).length || change.index || change.bundles?.length || change.cleared) && usageTimer === null) {
       usageTimer = later(() => {
         usageTimer = null;
-        Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage()]).catch(() => {});
+        Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage(), unknownCounted ? langs.countUnknown() : null]).catch(() => {});
       }, 300);
     }
   });
@@ -762,13 +790,13 @@ export function createSettings(env) {
     : () => {};
 
   return {
-    root, preview, slider, select, data, location, glossary,
+    root, preview, slider, select, data, location, glossary, langs,
     get active() { return active; },
     get settings() { return settings; },
     get prefs() { return prefs; },
     async load() {
       try {
-        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent()]);
+        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent(), langs.load()]);
         syncAll();
         for (const sec of Object.values(sections)) sec.removeAttribute('inert');
       } catch (err) {

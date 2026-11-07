@@ -54,9 +54,9 @@ const field = (m, label) => findAll(m.root, (e) => e.classList.contains('tj-num'
 const type = (f, text) => { const i = f.querySelector('input'); i.value = text; i.dispatchEvent({ type: 'change' }); };
 const errorOf = (f) => { const e = f.querySelector('.tj-field__error'); return e.hidden ? '' : textOf(e); };
 
-const SECTION_TITLES = ['العرض', 'التوقيت', 'التصدير', 'المقارنة والمراجعة', 'المصطلحات', 'التخزين', 'البيانات', 'التشخيص', 'حول'];
+const SECTION_TITLES = ['العرض', 'اللغات', 'التوقيت', 'التصدير', 'المقارنة والمراجعة', 'المصطلحات', 'التخزين', 'البيانات', 'التشخيص', 'حول'];
 
-test('البنية: الرأس وتسعة أقسام بترتيبها («البيانات» بعد «التخزين»)، وكل خيار بتسمية', async () => {
+test('البنية: الرأس وعشرة أقسام بترتيبها («اللغات» بعد «العرض»، و«البيانات» بعد «التخزين»)، وكل خيار بتسمية', async () => {
   const m = await mount();
   assert.equal(textOf(m.root.querySelector('h1')), 'الإعدادات');
   assert.deepEqual(findAll(m.root, (e) => e.tagName === 'h2').map(textOf), SECTION_TITLES);
@@ -167,7 +167,7 @@ test('«استعادة الافتراضي» لقسم العرض: معطّلة ب
   assert.ok(buttonNamed(section(m, 'حول'), 'استعادة الافتراضي') === null);
 });
 
-test('التنقّل الجانبي: تسعة أقسام، المختار بـaria-current وقسمه وحده ظاهر، والاختيار يُحفظ في جزء العنوان ويُقرأ منه', async () => {
+test('التنقّل الجانبي: عشرة أقسام، المختار بـaria-current وقسمه وحده ظاهر، والاختيار يُحفظ في جزء العنوان ويُقرأ منه', async () => {
   let hash = 'export';
   const nav = { get: () => hash, set: (id) => { hash = id; }, onChange: () => () => {} };
   const m = await mount({ env: { nav } });
@@ -176,14 +176,14 @@ test('التنقّل الجانبي: تسعة أقسام، المختار بـar
   assert.equal(m.settings.active, 'export', 'فُتحت على القسم المذكور في العنوان');
   assert.equal(section(m, 'التصدير').hidden, false);
   assert.equal(section(m, 'العرض').hidden, true);
-  assert.equal(links[2].getAttribute('aria-current'), 'page');
-  links[5].click();
+  assert.equal(links[3].getAttribute('aria-current'), 'page');
+  links[6].click();
   assert.equal(m.settings.active, 'storage');
   assert.equal(hash, 'storage', 'حُفظ في جزء العنوان');
   assert.equal(section(m, 'التخزين').hidden, false);
   assert.equal(section(m, 'التصدير').hidden, true);
-  assert.equal(links[2].getAttribute('aria-current'), null);
-  assert.equal(links[5].getAttribute('aria-current'), 'page');
+  assert.equal(links[3].getAttribute('aria-current'), null);
+  assert.equal(links[6].getAttribute('aria-current'), 'page');
 });
 
 test('مكان حفظ ملفات الترجمة (R65، P13-AC8) أول بند في التصدير: الأوضاع الثلاثة، والمجلد الفرعي بتحقق، و«استعادة الافتراضي»، وسطر المكان المختار وصفًا', async () => {
@@ -569,6 +569,6 @@ test('تدقيق Fable (UX-23): الصفحة مشغولة حتى تُقرأ ال
   assert.equal(settings.root.getAttribute('aria-busy'), null);
   assert.ok(textOf(settings.root).includes('تعذّرت قراءة الإعدادات'));
   const sections = findAll(settings.root, (e) => e.tagName === 'section');
-  assert.equal(sections.length, 9);
+  assert.equal(sections.length, 10);
   assert.ok(sections.every((sec) => sec.hasAttribute('inert')), 'لا أدوات فعّالة فوق قيم افتراضية');
 });

@@ -261,3 +261,16 @@
   .st-gl__submit { padding-top: 0; }
   .tj-seg__label { min-width: 48px; padding: 0 10px; }
 }
+
+/* قسم «اللغات» (AA3، لوحة 15): صف «من ⇄ إلى» بعرض مريح، واللغات الأخيرة رقائق بأسمائها بلغاتها، ولغة الواجهة نصًا، وتعيين لغة
+   الترجمات بلا لغة بحقل لغة وزر في صف. */
+.st-section .tj-lang-row { max-width: 440px; }
+.st-lang-recent { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.st-lang-chip bdi { unicode-bidi: isolate; }
+.st-lang-ui { font: 700 14px/22px var(--tj-font-body); color: var(--tj-text); }
+.st-lang-unknown__line { margin: 0; font: 400 14px/22px var(--tj-font-body); color: var(--tj-text); }
+.st-lang-unknown { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 440px; }
+.st-lang-unknown[hidden] { display: none; }
+.st-lang-unknown > .tj-lang-pick { flex: 1 1 220px; position: relative; }
+.st-lang-unknown > .tj-btn { flex: none; }
+.st-lang-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
