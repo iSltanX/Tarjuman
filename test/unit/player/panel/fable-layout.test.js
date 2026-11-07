@@ -1,11 +1,12 @@
 // تدقيق Fable (FA-22، UX-25): في تخطيط مشاهدة يجرّبه يوتيوب لبعض ملفات التعريف الجديدة (رُصد في Edge بشريط
 // Description/Comments يمين الفيديو) وقع العمود الثانوي فوق جزء من الفيديو بعرض 320، فوُضعت اللوحة فيه وغطّت أدوات المشغّل
 // اليمنى («place: below» لأن الهندسة تداخل). الإصلاح بالهندسة لا بمحددات تخطيط لم يُرَ: عمود فوق المشغّل يُعامل كالعمود الواحد،
-// فاللوحة في #below بعد بيانات الفيديو، والقرار ثابت لمفتاح التخطيط حتى يتغير، ولا حكم جديد في ملء الشاشة.
+// فاللوحة في #below بعد بيانات الفيديو، والقرار ثابت لمفتاح التخطيط حتى يتغير، ولا حكم جديد في ملء الشاشة. ولا يُحكم بالتداخل إلا إن
+// دام ثانية (OVERLAP_SETTLE_MS) في التخطيط نفسه، فقياس لحظي أثناء انتقال لا ينقل اللوحة (ملاحظة المراجعة المستقلة).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { HEALTH_MS } from '../../../../src/player/panel/index.js';
-import { chooseColumn, overlapsPlayer } from '../../../../src/player/panel/column.js';
+import { OVERLAP_SETTLE_MS, chooseColumn, overlapsPlayer } from '../../../../src/player/panel/column.js';
 import { watchPage } from './harness.js';
 
 const rect = (left, top, width, height) => ({ left, top, width, height, right: left + width, bottom: top + height });
@@ -40,10 +41,19 @@ test('FA-22: overlapsPlayer — بجانب المشغّل وتحته لا تدا
   assert.equal(overlapsPlayer(null, rect(500, 0, 320, 700)), false, 'مشغّل غير معروف');
 });
 
-test('FA-22: عمود ثانوي فوق المشغّل ← اللوحة في #below بعد بيانات الفيديو، لا فوق الفيديو', () => {
+/** ساعة الاختبار مع مؤقتات النافذة الوهمية: تقدّمهما معًا. */
+function clocked(page) {
+  let t = 0;
+  return { now: () => t, tick: (ms) => { t += ms; page.env.win.advance(ms); } };
+}
+
+test('FA-22: عمود ثانوي فوق المشغّل ثانيةً ← اللوحة في #below بعد بيانات الفيديو، لا فوق الفيديو', () => {
   const { page, below, meta } = pageWithBelow();
   overlapping(page);
-  page.mount();
+  const clock = clocked(page);
+  page.mount({ now: clock.now });
+  assert.ok(page.hostEl(), 'أول رصد للتداخل لا ينقل بعد');
+  clock.tick(OVERLAP_SETTLE_MS + HEALTH_MS + 10);
   const host = below.children.find((c) => c.id === 'tarjuman-panel');
   assert.ok(host, 'في #below');
   assert.ok(below.children[0] === meta && below.children[1] === host, 'بعد بيانات الفيديو');
@@ -52,22 +62,38 @@ test('FA-22: عمود ثانوي فوق المشغّل ← اللوحة في #be
   page.handle.unmount();
 });
 
+test('FA-22: تداخل لحظي يزول قبل ثانية (انتقال تخطيط) لا ينقل اللوحة', () => {
+  const { page, below } = pageWithBelow();
+  overlapping(page);
+  const clock = clocked(page);
+  page.mount({ now: clock.now });
+  clock.tick(300);
+  page.setGeometry(true);
+  clock.tick(OVERLAP_SETTLE_MS + HEALTH_MS + 10);
+  assert.ok(page.hostEl() && page.inner.children[0] === page.hostEl(), 'بقيت أول العمود');
+  assert.equal(below.children.some((c) => c.id === 'tarjuman-panel'), false);
+  assert.equal(page.handle.peek().place, 'beside');
+  page.handle.unmount();
+});
+
 test('FA-22: القرار ثابت لمفتاح التخطيط فلا تتأرجح اللوحة، ويُعاد الحكم إذا تغيّر التخطيط', () => {
   const { page, below } = pageWithBelow();
   page.win.innerWidth = 1360;
   overlapping(page);
-  page.mount();
+  const clock = clocked(page);
+  page.mount({ now: clock.now });
+  clock.tick(OVERLAP_SETTLE_MS + HEALTH_MS + 10);
   const host = below.children.find((c) => c.id === 'tarjuman-panel');
   assert.ok(host);
   // خروج اللوحة غيّر هندسة العمود فلم يعد فوق المشغّل، والتخطيط نفسه: تبقى تحت الفيديو.
   page.inner.rect = rect(950, 56, 320, 830);
-  page.env.win.advance(HEALTH_MS + 10);
+  clock.tick(HEALTH_MS + 10);
   assert.ok(host.parentNode === below, 'لا تأرجح في التخطيط نفسه');
   // تغيّر التخطيط (عرض النافذة) والعمود بجانب المشغّل الآن: تعود إلى أول العمود الثانوي بالجلسة نفسها.
   page.win.innerWidth = 1600;
   page.player.rect = rect(0, 0, 640, 360);
   page.inner.rect = rect(664, 0, 402, 700);
-  page.env.win.advance(HEALTH_MS + 10);
+  clock.tick(HEALTH_MS + 10);
   assert.ok(page.hostEl() === host && page.inner.children[0] === host, 'عادت أول العمود');
   assert.equal(page.handle.peek().place, 'beside');
   page.handle.unmount();

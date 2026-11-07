@@ -10,6 +10,10 @@ import { findSecrets } from '../src/core/diagnostics/sanitize.js';
 
 // --root <مجلد> لفحص شجرة أخرى (لاختبار الفحص نفسه، تدقيق Fable، FA-11).
 const rootArg = process.argv.indexOf('--root');
+if (rootArg > -1 && !process.argv[rootArg + 1]) {
+  console.error('check-secrets: --root يحتاج مجلدًا');
+  process.exit(2);
+}
 const ROOT = rootArg > -1 ? path.resolve(process.argv[rootArg + 1]) : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCOPES = ['test/fixtures', 'test/e2e/fixtures', 'docs/evidence'];
 const TEXT = /\.(json|srt|txt|log|md|csv|ndjson)$/i;

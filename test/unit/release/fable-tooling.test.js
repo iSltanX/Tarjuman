@@ -86,6 +86,13 @@ test('FA-11: نطاق غائب، أو نطاقات بلا ملف نصي، فشل
   assert.match(none.stderr, /لا ملف نصيًا في نطاقات الفحص/);
 });
 
+test('FA-11: --root بلا مجلد خطأ استعمال برسالة لا TypeError خام (ملاحظة المراجعة المستقلة)', () => {
+  const r = node([path.join(ROOT, 'scripts/check-secrets.mjs'), '--root']);
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /--root يحتاج مجلدًا/);
+  assert.doesNotMatch(r.stderr, /TypeError/);
+});
+
 test('FA-11: المستودع نفسه ينجح بأكثر من مئتي ملف مفحوص', () => {
   const r = node([path.join(ROOT, 'scripts/check-secrets.mjs')]);
   assert.equal(r.status, 0, r.stderr);

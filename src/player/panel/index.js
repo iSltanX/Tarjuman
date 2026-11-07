@@ -20,8 +20,8 @@ const COALESCE_MS = 50;
 
 /**
  * @param {import('../../content/controller.js').Controller} controller
- * @param {{ doc?: Document, win?: Window, uiFonts?: typeof loadUiFonts | null, link?: ReturnType<typeof createPanelLink> }} [env] uiFonts للاختبار
- *   (null بلا خطوط)، وlink صلة التركيز بزر اللوحة في الشريط (المشتركة افتراضيًا)
+ * @param {{ doc?: Document, win?: Window, uiFonts?: typeof loadUiFonts | null, link?: ReturnType<typeof createPanelLink>, now?: () => number }} [env] uiFonts للاختبار
+ *   (null بلا خطوط)، وlink صلة التركيز بزر اللوحة في الشريط (المشتركة افتراضيًا)، وnow ساعة الاختبار
  * @returns {MountHandle & { diagnostics: () => object, peek: () => object | null }}
  */
 export function mountPanel(controller, env = {}) {
@@ -42,8 +42,9 @@ export function mountPanel(controller, env = {}) {
   let lastError = null;
   /** @type {{ loaded: string[], failed: string[] } | 'pending' | null} */
   let fonts = null;
-  /** مفتاح التخطيط الذي وقع فيه العمود فوق المشغّل (FA-22)، فتبقى اللوحة تحت الفيديو حتى يتغير. */
-  const columnMemo = { overlapKey: null };
+  /** مفتاح التخطيط الذي ثبت فيه العمود فوق المشغّل (FA-22)، فتبقى اللوحة تحت الفيديو حتى يتغير؛ وأول رصد لم يثبت بعد. */
+  const columnMemo = { overlapKey: null, pending: null };
+  const now = env.now ?? (() => Date.now());
 
   const MO = win.MutationObserver ?? globalThis.MutationObserver;
 
@@ -95,7 +96,7 @@ export function mountPanel(controller, env = {}) {
       stopObserving();
       return;
     }
-    const column = chooseColumn(doc, win, columnMemo);
+    const column = chooseColumn(doc, win, columnMemo, now);
     if (!column) {
       session?.detach();
       if (state !== 'error' || failures < MAX_FAILURES) state = 'waiting';

@@ -68,12 +68,17 @@ export function overlapsPlayer(player, column) {
  * العمود الذي تُركَّب فيه اللوحة الآن: findColumn بالمحددات، ثم الهندسة (تدقيق Fable، FA-22). في تخطيط مشاهدة يجرّبه يوتيوب
  * لبعض ملفات التعريف الجديدة (رُصد في Edge: شريط Description/Comments يمين الفيديو، والتعليقات عمود جانبي) يقع العمود الثانوي
  * فوق جزء من الفيديو بعرض 320، فكانت اللوحة تغطي أدوات المشغّل اليمنى، والمبدأ ألا تغطي الفيديو ولا أدواته. فإن وقع العمود
- * فوق المشغّل وُضعت اللوحة في #below بعد بيانات الفيديو كما في العمود الواحد. والقرار ثابت لمفتاح التخطيط حتى يتغير (عرض
- * النافذة أو سمات ytd-watch-flexy)، فلا تتأرجح اللوحة إن غيّر وجودها هندسة العمود؛ وفي ملء الشاشة لا حكم جديد.
- * @param {Document} doc @param {Window} win @param {{ overlapKey: string | null }} memo مفتاح التخطيط الذي وقع فيه التداخل
+ * فوق المشغّل وُضعت اللوحة في #below بعد بيانات الفيديو كما في العمود الواحد. ولا يُحكم بالتداخل إلا إن دام OVERLAP_SETTLE_MS في
+ * مفتاح التخطيط نفسه، فقياس لحظي أثناء انتقال (تبديل المسرح مثلًا: تتغير السمة قبل أن يُنقل المشغّل) لا ينقل اللوحة (المراجعة
+ * المستقلة). ثم القرار ثابت لمفتاح التخطيط حتى يتغير (عرض النافذة أو سمات ytd-watch-flexy)، فلا تتأرجح اللوحة إن غيّر وجودها
+ * هندسة العمود؛ وفي ملء الشاشة لا حكم جديد.
+ * @param {Document} doc @param {Window} win
+ * @param {{ overlapKey: string | null, pending?: { key: string, since: number } | null }} memo مفتاح التخطيط الذي ثبت فيه التداخل
+ *   وأول رصد له لم يثبت بعد
+ * @param {() => number} [now] ساعة بالملي ثانية (الاختبار يحقنها)
  * @returns {HTMLElement | null}
  */
-export function chooseColumn(doc, win, memo) {
+export function chooseColumn(doc, win, memo, now = Date.now) {
   const column = findColumn(doc);
   if (!column || column.id === 'below') return column;
   const below = doc.querySelector(BELOW_SELECTOR);
@@ -82,10 +87,23 @@ export function chooseColumn(doc, win, memo) {
   const key = layoutKeyOf(doc, win);
   if (memo.overlapKey === key) return below;
   memo.overlapKey = null;
-  if (!overlapsPlayer(rectOf(getPlayer(doc)), rectOf(column))) return column;
+  if (!overlapsPlayer(rectOf(getPlayer(doc)), rectOf(column))) {
+    memo.pending = null;
+    return column;
+  }
+  const t = now();
+  if (memo.pending?.key !== key) {
+    memo.pending = { key, since: t };
+    return column;
+  }
+  if (t - memo.pending.since < OVERLAP_SETTLE_MS) return column;
   memo.overlapKey = key;
+  memo.pending = null;
   return below;
 }
+
+/** مدة دوام التداخل قبل نقل اللوحة تحت الفيديو: دورة فحص الصحة (HEALTH_MS في index.js). */
+export const OVERLAP_SETTLE_MS = 1000;
 
 /**
  * ابن #below الذي يحمل بيانات الفيديو (يوتيوب يضع ytd-watch-metadata داخل صندوق في #below لا ابنًا مباشرًا)، أو null.
