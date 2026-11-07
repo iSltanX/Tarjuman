@@ -116,9 +116,19 @@ const groupName = (key) => {
 
 /** محارف تجاوز الاتجاه وعزله تُجرَّد من العنوان واسم الملف كما في الاستيراد (import/files.js؛ U59): تنتحل عرض الاسم. */
 const BIDI_CONTROLS = /[\u202A-\u202E\u2066-\u2069]/g;
+/**
+ * وفي نصوص المقاطع (text) والملاحظات (notes) محارف التحكم وتجاوز الاتجاه وعزله، كما يجرّدها المحلّل المتسامح عند الاستيراد
+ * (lenient.js، CONTROL_CHARS) والتصدير عند الكتابة: كان مقطع في نسخة مصنوعة يحمل U+202E فيُخزَّن ويُعرض مقلوبًا (تدقيق Fable،
+ * FA-08). وNUL يبقى ليرفضه مدقق المقطع كما كان، وLRM وRLM وALM وZWNJ مشروعة في العربية فتبقى.
+ */
+const TEXT_CONTROLS = /[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
 function stripBidi(value, key = '') {
-  if (typeof value === 'string') return key === 'title' || key === 'fileName' ? value.replace(BIDI_CONTROLS, '') : value;
-  if (Array.isArray(value)) return value.map((v) => stripBidi(v));
+  if (typeof value === 'string') {
+    if (key === 'title' || key === 'fileName') return value.replace(BIDI_CONTROLS, '');
+    if (key === 'text' || key === 'notes') return value.replace(TEXT_CONTROLS, '');
+    return value;
+  }
+  if (Array.isArray(value)) return value.map((v) => stripBidi(v, key === 'notes' ? 'notes' : ''));
   if (isPlainObject(value)) return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, stripBidi(v, k)]));
   return value;
 }
