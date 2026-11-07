@@ -89,8 +89,9 @@ try {
   let st = null;
   await step('settings-open', async () => {
     st = await s.openExt('pages/settings/index.html#about');
-    await st.waitFor(() => !!document.querySelector('.st-about'), { timeoutMs: 15000 });
-    check('settings-open', true);
+    // قسم «حول» منذ AA2 (0bd902e) بغلاف الأقسام العام: section#about.st-section بلا الصنف st-about، فيُطلب بمعرّفه.
+    const found = await st.waitFor(() => !!document.querySelector('section#about h2'), { timeoutMs: 15000 }).then((v) => !!v, () => false);
+    check('settings-open', found);
   });
   if (st) {
     await step('manifest', async () => {
@@ -105,7 +106,7 @@ try {
     await step('about', async () => {
       await sleep(600);
       const a = await st.eval(() => {
-        const sec = document.querySelector('.st-about');
+        const sec = document.querySelector('section#about');
         const t = (sec?.textContent ?? '').replace(/\s+/g, ' ');
         const links = [...(sec?.querySelectorAll('a') ?? [])];
         return {
