@@ -14,11 +14,14 @@ const walk = async (dir, pred) => (await readdir(dir, { withFileTypes: true, rec
   .map((e) => path.join(e.parentPath ?? e.path, e.name));
 const SUPERSEDED = /مستبدَل/;
 const head = (text) => text.split('\n').slice(0, 8).join('\n');
+// سكربتات تقرأ صفحات الموقع (iSltanX/WebSiteSultan) لا الإضافة: فئاتها (tj-skip وtj-btn--primary…) في مستودع الموقع وتحرسها
+// اختباراته (tests/e2e/tarjuman.spec.ts هناك)، فلا تُطلب في src.
+const SITE_SCRIPTS = new Set(['test/live/aa4/site-pages.mjs']);
 
 test('FA-06: فئات ترجمان في محدِّدات السكربتات الحية غير المستبدَلة موجودة في src', async () => {
   const src = (await Promise.all((await walk(path.join(ROOT, 'src'), (n) => /\.(?:js|css|html)$/.test(n))).map((f) => readFile(f, 'utf8')))).join('\n');
   const scripts = [...await walk(path.join(ROOT, 'test/live'), (n) => n.endsWith('.mjs')), ...await walk(path.join(ROOT, 'test/e2e/live'), (n) => n.endsWith('.mjs'))]
-    .filter((f) => !f.includes(`${path.sep}harness${path.sep}`));
+    .filter((f) => !f.includes(`${path.sep}harness${path.sep}`) && !SITE_SCRIPTS.has(path.relative(ROOT, f).split(path.sep).join('/')));
   const SEL = /['"`]([^'"`\n]*\.(?:tj|lib|st|ed)-[\w-]+[^'"`\n]*)['"`]/g;
   const missing = [];
   let checked = 0;

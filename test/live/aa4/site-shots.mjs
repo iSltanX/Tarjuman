@@ -235,6 +235,35 @@ async function openYoutube() {
   return { ready: !!ready, ads };
 }
 const frontYt = () => yt.conn.send('Target.activateTarget', { targetId: yt.targetId }).catch(() => null);
+const isTheater = () => main(() => !!document.querySelector('ytd-watch-flexy')?.hasAttribute('theater'));
+/** وضع المسرح بنقرة زر الحجم في المشغّل (كما في test/live/controls/run.mjs)، لمشغّل أطول تظهر فيه القائمة بطولها. */
+async function setTheater(on) {
+  if ((await isTheater()) === on) return true;
+  await revealControls(yt);
+  const c = await main(() => { const b = document.querySelector('#movie_player .ytp-size-button'); const r = b?.getBoundingClientRect(); return r && r.width ? { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) } : null; });
+  if (c) await yt.click(c.x, c.y);
+  await sleep(1800);
+  return (await isTheater()) === on;
+}
+/** يمرّر القائمة المفتوحة حتى أول «مسار آخر» قرب أعلاها (العنصر داخل جذر ظل مغلق، فبالعقدة من DOM المخترق). */
+async function scrollMenuToAvailable() {
+  const menu = await inShadow(yt, 'tarjuman-controls-layer', '[role="menu"], [role="dialog"], .menu');
+  if (!menu) return false;
+  const { object } = await yt.send('DOM.resolveNode', { nodeId: menu.nodeId });
+  const { result: r } = await yt.send('Runtime.callFunctionOn', {
+    objectId: object.objectId, returnByValue: true,
+    functionDeclaration: `function () {
+      const sc = [this, ...this.querySelectorAll('*')].find((e) => e.scrollHeight > e.clientHeight + 20 && /auto|scroll/.test(getComputedStyle(e).overflowY));
+      const t = this.querySelector('[data-fid^="available:"]');
+      if (!sc || !t) return false;
+      const head = t.previousElementSibling ?? t;
+      sc.scrollTop += head.getBoundingClientRect().top - sc.getBoundingClientRect().top - 12;
+      return true;
+    }`,
+  });
+  await sleep(400);
+  return r.value === true;
+}
 async function clickExpr(page, expr, what) {
   const ok = await page.eval(`(() => { for (const e of document.querySelectorAll('[data-aa4]')) e.removeAttribute('data-aa4'); const el = (${expr}); if (!el) return false; el.setAttribute('data-aa4', '1'); return true; })()`);
   if (!ok) throw new Error(`لم يوجد: ${what}`);
@@ -311,12 +340,16 @@ async function popupShot(name, { scheme = 'light' } = {}) {
       };
     });
     check('popup-reads-youtube-tab', !!info.status && !/افتح فيديو على يوتيوب/.test(info.status), { status: info.status?.slice(0, 120) });
-    check('popup-from-detected-english', /الإنجليزية/.test(info.block ?? ''), { block: info.block?.slice(0, 160) });
+    check('popup-from-detected-english', /^تعليمات الترجمةمنالإنجليزيةإلىالعربية/.test(info.block ?? ''), { block: info.block?.slice(0, 40) });
     check('popup-copy-enabled', info.copyDisabled === false, { copyDisabled: info.copyDisabled });
     await page.send('Emulation.setDeviceMetricsOverride', { width: 340, height: Math.min(info.h, 1200), deviceScaleFactor: DSF, mobile: false });
     await sleep(500);
     result.geometry.popup = { width: info.w, height: info.h };
-    await rawShot(page, name, null);
+    await rawShot(page, `${name}-full`, null);
+    // حتى نهاية كتلة «تعليمات الترجمة» وسطرها (الرأس والفيديو الحالي والكتلة)، فتجاور خطوات «كيف يعمل» في الموقع.
+    const bottom = await page.eval(() => Math.ceil(Math.max(...[...document.querySelectorAll('.tj-popup__pair, .tj-popup__pair *')].map((e) => e.getBoundingClientRect().bottom))));
+    check('popup-instructions-block-measured', bottom > 200 && bottom < info.h, { bottom });
+    await rawShot(page, name, { left: 0, top: 0, width: 340, height: Math.min(bottom + 20, info.h) });
   } finally {
     await yt.conn.send('Target.closeTarget', { targetId }).catch(() => null);
     await frontYt();
@@ -340,6 +373,9 @@ try {
   await sleep(1500);
 
   // ===== ٢. قائمة «تحميل الأصل» بالمسار بلغته والمسارات الأخرى من بيانات المشغّل، ثم «تنزيل الملف» يعيد الملف اليدوي =====
+  // في وضع المسرح: المشغّل أطول، فتظهر القائمة بطولها (والفيلم بنسبة عرضه، فالمشغّل العادي قصير).
+  check('theater-for-download-menu', await setTheater(true));
+  await showFrame(182);
   await clickBar('download');
   const dlItem = await layer('button[data-fid="download"]');
   const menuHtml = (await inShadow(yt, 'tarjuman-controls-layer', '[role="menu"], [role="dialog"], .menu'))?.html;
@@ -353,11 +389,24 @@ try {
   await sleep(400);
   let g = await geo();
   await rawShot(yt, '02-download-menu', g.player);
+  result.geometry.theaterPlayer = g.player;
   await clickBox(yt, dlItem.box, 'تنزيل الملف');
   const file = await waitFile();
   const got = file ? await readFile(path.join(DL, file), 'utf8') : null;
   check('download-equals-manual-file', got !== null && sha16(got) === manual.file.sha16, { file: file ? path.basename(file) : null, sha16: got ? sha16(got) : null });
+  // والقائمة نفسها ممرَّرة إلى «مسارات أخرى في هذا الفيديو» (لغاتها من بيانات المشغّل، وخطوات اختيارها من يوتيوب).
+  if (others) {
+    await sleep(800);
+    if (!(await layer('button[data-fid="download"]'))?.box) await clickBar('download');
+    const scrolled = await scrollMenuToAvailable();
+    check('download-menu-scrolled-to-available', scrolled);
+    await revealControls(yt);
+    await sleep(300);
+    g = await geo();
+    await rawShot(yt, '02b-download-menu-available', g.player);
+  }
   await escape();
+  check('back-to-default-view', await setTheater(false));
 
   // ===== ٣. نافذة الإضافة: «من» مكتشفة من المسار، و«إلى» الافتراضية، و«نسخ التعليمات» مفعّل (قبل الترجمة، خطوة «كيف يعمل» الثانية) =====
   await popupShot('07-popup');
@@ -411,7 +460,8 @@ try {
   const arLine = await inShadow(yt, 'tarjuman-overlay', '.line.ar');
   const enLine = await inShadow(yt, 'tarjuman-overlay', '.line.en');
   check('overlay-translation-over-original', /\p{Script=Arabic}/u.test(textOf(arLine?.html)) && /[A-Za-z]/.test(textOf(enLine?.html)));
-  check('overlay-line-lang-and-dir', /lang="ar"/.test(String(arLine?.html)) && /dir="rtl"/.test(String(arLine?.html)), { ar: String(arLine?.html ?? '').slice(0, 80) });
+  const attrs = String(arLine?.html ?? '').match(/^<div[^>]*>/)?.[0] ?? null;
+  check('overlay-line-lang-and-dir', /lang="ar"/.test(String(attrs)) && /dir="rtl"/.test(String(attrs)), { attrs });
   g = await geo();
   result.geometry.player = g.player;
   result.geometry.panel = g.panel;
