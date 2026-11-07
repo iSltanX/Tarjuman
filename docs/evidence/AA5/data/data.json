@@ -1,0 +1,284 @@
+{
+  "at": "2026-11-07T14:32:39.388Z",
+  "browser": "Chrome/156.0.8078.80",
+  "v11": {
+    "version": "1.1.0",
+    "name": "ترجمان - ترجمتك العربية فوق الفيديو",
+    "from": "release/browsers/1.1.0/Chrome/manual-install"
+  },
+  "v2": "2.0.0",
+  "sessions": [
+    {
+      "label": "1-v11-write",
+      "extensionId": "plmgdheimkiemhlcklgbdbhoocapgnmk",
+      "version": "1.1.0"
+    },
+    {
+      "label": "2-v2-update-in-place",
+      "extensionId": "plmgdheimkiemhlcklgbdbhoocapgnmk",
+      "version": "2.0.0"
+    },
+    {
+      "label": "3-v2-separate-restore",
+      "extensionId": "kedlllggifidmfpedclcfaappjddpajl",
+      "version": "2.0.0"
+    }
+  ],
+  "checks": [
+    {
+      "id": "packages-ready",
+      "ok": true,
+      "detail": {
+        "v11": {
+          "version": "1.1.0",
+          "name": "ترجمان - ترجمتك العربية فوق الفيديو",
+          "from": "release/browsers/1.1.0/Chrome/manual-install"
+        },
+        "v2": "tarjuman-2.0.0-chrome.zip"
+      }
+    },
+    {
+      "id": "v11-wrote-data",
+      "ok": true,
+      "detail": {
+        "keys": [
+          "alts:Y-rmzh0PI3c",
+          "bundle:Y-rmzh0PI3c",
+          "index:Y-rmzh0PI3c",
+          "index:iG9CE55wbtY",
+          "marks:Y-rmzh0PI3c",
+          "meta",
+          "prefs",
+          "prev:Y-rmzh0PI3c",
+          "settings",
+          "video:Y-rmzh0PI3c",
+          "video:iG9CE55wbtY"
+        ],
+        "counts": {
+          "videos": 2,
+          "translations": 4,
+          "previous": 1,
+          "marks": 3,
+          "settings": true,
+          "prefs": true
+        }
+      }
+    },
+    {
+      "id": "1-v11-write-no-extension-errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "same-extension-id",
+      "ok": true,
+      "detail": {
+        "before": "plmgdheimkiemhlcklgbdbhoocapgnmk",
+        "after": "plmgdheimkiemhlcklgbdbhoocapgnmk"
+      }
+    },
+    {
+      "id": "every-v11-key-kept",
+      "ok": true,
+      "detail": {
+        "missing": []
+      }
+    },
+    {
+      "id": "v11-data-unchanged-after-reading",
+      "ok": true,
+      "detail": {
+        "changed": []
+      }
+    },
+    {
+      "id": "v2-library-shows-both-videos",
+      "ok": true,
+      "detail": {
+        "rows": 2
+      }
+    },
+    {
+      "id": "v2-library-old-translations-language-unset",
+      "ok": true,
+      "detail": {
+        "sample": [
+          "الإنجليزية ← لغة غير محددة",
+          "الإنجليزية ← لغة غير محددة"
+        ]
+      }
+    },
+    {
+      "id": "v2-settings-display-default-dual",
+      "ok": true,
+      "detail": {
+        "display": [
+          "الترجمة فوق الأصل",
+          "المراعيالافتراضي",
+          "خفيفة",
+          "أسفل",
+          "يظهر في صفحات الفيديو",
+          "تُعرض صورة كل فيديو",
+          "تفتح نافذة الإضافة على آخر «إلى» اخترتها",
+          "0.5 ث",
+          "مجلد التنزيلات (الافتراضي)حيث يحفظ المتصفح تنزيلاته، وبإعداده في السؤال عن مكان الحفظ.",
+          "عادي",
+          "أرفق القاموس بتعليمات الترجمة",
+          "تضمين النسخ السابقة",
+          "خلل"
+        ]
+      }
+    },
+    {
+      "id": "v2-glossary-terms-shown",
+      "ok": true,
+      "detail": {
+        "glossary": [
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "id": "v2-editor-opens-old-translation",
+      "ok": true,
+      "detail": {
+        "timeInputs": 10
+      }
+    },
+    {
+      "id": "2-v2-update-in-place-no-extension-errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "separate-install-other-id",
+      "ok": true,
+      "detail": {
+        "id": "kedlllggifidmfpedclcfaappjddpajl"
+      }
+    },
+    {
+      "id": "separate-install-starts-empty",
+      "ok": true,
+      "detail": {
+        "keys": [
+          "meta"
+        ]
+      }
+    },
+    {
+      "id": "restore-report",
+      "ok": true,
+      "detail": {
+        "report": "اكتملت الاستعادة.أضيف 2 · تُخطّي 0 · استُبدل 0 · تعذّر 0 استُعيدت الإعدادات والقاموس."
+      }
+    },
+    {
+      "id": "restored-content-equal-three-slots",
+      "ok": true,
+      "detail": {
+        "before": "c781d4055ebc5108",
+        "after": "c781d4055ebc5108"
+      }
+    },
+    {
+      "id": "restored-content-equal-single",
+      "ok": true,
+      "detail": {
+        "before": "56f46a7d7512a7fa",
+        "after": "56f46a7d7512a7fa"
+      }
+    },
+    {
+      "id": "restored-settings-and-glossary",
+      "ok": true,
+      "detail": {
+        "display": "dual",
+        "terms": 3
+      }
+    },
+    {
+      "id": "separate-library-shows-both-videos",
+      "ok": true,
+      "detail": {
+        "rows": 2
+      }
+    },
+    {
+      "id": "separate-editor-opens-restored-translation",
+      "ok": true,
+      "detail": {
+        "timeInputs": 10
+      }
+    },
+    {
+      "id": "3-v2-separate-restore-no-extension-errors",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "notes": [],
+  "backup": {
+    "name": "tarjuman-backup-2026-11-07.json",
+    "bytes": 8422,
+    "version": 1,
+    "counts": {
+      "videos": 2,
+      "translations": 4,
+      "previous": 1,
+      "marks": 3,
+      "settings": true,
+      "prefs": true
+    }
+  },
+  "v11Keys": [
+    {
+      "key": "alts:‹id›",
+      "sha": "5cc83a3f922c8e22"
+    },
+    {
+      "key": "bundle:‹id›",
+      "sha": "9fa4a2fec54f8cb6"
+    },
+    {
+      "key": "index:‹id›",
+      "sha": "d43f7c594acfff3d"
+    },
+    {
+      "key": "index:‹id›",
+      "sha": "b480b6d36becd1c4"
+    },
+    {
+      "key": "marks:‹id›",
+      "sha": "3dfa308dc20a8ac3"
+    },
+    {
+      "key": "meta",
+      "sha": "41c1cc5cc7b665ca"
+    },
+    {
+      "key": "prefs",
+      "sha": "48ecd6722d6b0589"
+    },
+    {
+      "key": "prev:‹id›",
+      "sha": "0c819814c4a6ac5b"
+    },
+    {
+      "key": "settings",
+      "sha": "d41b201637157740"
+    },
+    {
+      "key": "video:‹id›",
+      "sha": "75efb965fa6eba18"
+    },
+    {
+      "key": "video:‹id›",
+      "sha": "bef5d0f8739a091a"
+    }
+  ],
+  "newKeysAfterUpdate": [],
+  "summary": "21/21"
+}

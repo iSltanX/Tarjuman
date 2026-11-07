@@ -83,7 +83,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | الصفحة الرئيسية (Homepage، وEdge «Website»، وAMO «Homepage») | `https://bysltan.com/tarjuman` | يعمل (200، 2026-11-04) |
 | الدعم (Support URL، وEdge «Support contact detail»، وAMO «Support website») | `https://bysltan.com/tarjuman/support` | يعمل (200، 2026-11-04)، وهو رابط «الدعم والخصوصية» في «حول» |
 | بريد الدعم (AMO «Support email»، وبريد حساب Chrome) | `iSultanBy@gmail.com` | قرار سلطان (§٥ من `README.md`) |
-| المستودع | لا يُذكر: `iSltanX/Tarjuman` خاص ويعطي 404 للعموم | — |
+| المستودع | `https://github.com/iSltanX/Tarjuman` | عام: 200 لزائر غير مسجَّل (2026-11-07)، ورابطه في بطاقة «الحقوق» في «حول» منذ 2.0.0. ولا يطلبه حقل في المتاجر الثلاثة |
 | صفحة ترجمان في Chrome Web Store (ومنه Brave) | `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj` | منشورة: 200 لزائر غير مسجَّل (2026-11-07) باسم ترجمان والإصدار `1.1.0` والناشر BySultan. وهي رابط المتجر في `README.md` وصفحة الموقع |
 | صفحة ترجمان في Microsoft Edge Add-ons | `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi` | منشورة: 200 لزائر غير مسجَّل (2026-11-07)، وواجهة المتجر تعيد اسم ترجمان والإصدار `1.1.0` والناشر BySultan. وهي رابط Edge في `README.md` وصفحة الموقع |
 | صفحة Firefox Add-ons | — | لم تُنشر بعد (AMO يعيد 401 للمعرّف `tarjuman@bysltan.com`). وما لم يُنشر «قريبًا» نصًّا بلا رابط في الموقع والوثائق |
