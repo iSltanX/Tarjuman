@@ -100,7 +100,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | Primary category | Make Chrome Yours › Accessibility (`listing.ar.md` «الفئة») |
 | Language | العربية |
 | Store icon | `store/icons/chrome-store-icon-128.png` |
-| Screenshots | `store/screenshots/chromium/` الخمس الأولى |
+| Screenshots | `store/screenshots/chromium/` الثلاث |
 | Small promo tile | `store/promo/small-promo-440x280.png` |
 | Marquee promo tile | `store/promo/marquee-1400x560.png` |
 | Mature content | لا |
@@ -122,7 +122,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | Description | `chromium.description` في `listing.ar.md` (لا ذكر لمتصفح آخر، وطوله بين 250 و10,000) |
 | Extension logo | `store/icons/edge-logo-300.png` |
 | Small / Large promotional tile | `store/promo/small-promo-440x280.png` و`store/promo/marquee-1400x560.png` |
-| Screenshots | `store/screenshots/chromium/` الست |
+| Screenshots | `store/screenshots/chromium/` الثلاث |
 | Search terms | `edge.searchTerms` في `listing.ar.md` |
 | Notes for certification | `reviewers.en.md` (`reviewer.edge`) |
 

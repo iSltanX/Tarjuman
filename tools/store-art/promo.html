@@ -8,7 +8,9 @@
 <style>
   /* SMALL PROMO TILE 440×280 (Chrome وEdge)، لوحة 18 حرفيًا: صنوبر، والرمز العاجي بنقطتي طين 92، والعنوان Cairo 800، وسطر الرسالة، وشريط طيني. */
   html, body { width: 440px; height: 280px; }
-  .promo { width: 440px; height: 280px; background: #1E4A44; color: #F3EFE6; position: relative; overflow: hidden; }
+  /* Chrome بلا نافذة لا يضيّق النافذة دون نحو 500 بكسل، فتُرسم الصفحة أعرض من 440 ويلتقط المخرج يسارها، والاتجاه من اليمين يدفع البلاطة
+     إلى طرف النافذة الأيمن. فتُثبَّت في أعلى اليسار بلا اعتماد على عرض النافذة. */
+  .promo { width: 440px; height: 280px; background: #1E4A44; color: #F3EFE6; position: absolute; left: 0; top: 0; overflow: hidden; }
   .mark { position: absolute; right: 36px; top: 36px; width: 92px; color: #F3EFE6; }
   .mark .dots { color: #D9937B; }
   h3 { position: absolute; right: 36px; top: 150px; margin: 0; font: 800 34px/42px "Tarjuman UI Cairo", sans-serif; }

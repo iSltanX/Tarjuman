@@ -104,7 +104,7 @@
 - **AMO:** [create-an-appealing-listing](https://extensionworkshop.com/documentation/develop/create-an-appealing-listing/)، آخر تحديث 2019-03-18.
   - الملخص 250.
   - اللقطات بالموصى 1280×800 (1.6:1)، ولا حد عملي لعددها.
-  - فحزمة لقطات AMO الأولى 1280×800، ومعها 1280×960 من لوحة 18 احتياطًا لشرط 4:3 الذي لم يُتحقق منه (الصف أدناه).
+  - فلقطات AMO بمقاس 1280×960 بقاعدة لوحة 18، لأنه يُقبل في الحالتين: الموصى به، وشرط 4:3 الذي لم يُتحقق منه (الصف أدناه).
 
 ### Chrome Web Store
 
@@ -318,11 +318,11 @@
 | [`reviewers.en.md`](reviewers.en.md) | ملاحظات المراجعين بالإنجليزية لكل متجر، ومعها مقاطع عربية للتجربة |
 | `icons/` | `chrome-store-icon-128.png` (البلاطة 96 بحشو شفاف 16)، و`edge-logo-300.png`. والبلاطة تطابق أيقونة الإضافة المشحونة (`src/icons/tarjuman-icon-128.png`) إلا تنعيم الزوايا |
 | `promo/` | `small-promo-440x280.png` (Chrome وEdge)، و`marquee-1400x560.png` (Chrome Marquee وEdge Large) |
-| `screenshots/chromium/` | ست لقطات 1280×800: الخمس الأولى لـChrome، والست لـEdge |
-| `screenshots/firefox/` | اللقطات الست بمقاس 1280×960 لـAMO |
+| `screenshots/chromium/` | ثلاث لقطات 1280×800 لـChrome وEdge: ‏`01-overlay` الطبقة والشريط واللوحة، و`02-popup` النافذة والزوج اللغوي، و`03-editor` المحرّر |
+| `screenshots/firefox/` | اللقطات الثلاث نفسها بمقاس 1280×960 لـAMO (الشريط العلوي 256 بدل 176، والواجهة لا تُمط) |
 | [`test-files/`](test-files/README.md) | ملف الترجمة الإنجليزية لفيديو اللقطات كما نزّله ترجمان، وترجمته العربية |
 
-**مصدر الصور:** لقطات حقيقية من حزمة المتجر `tarjuman-1.1.0-chrome.zip` (`test/live/stores/t6-shots.mjs`)، داخل إطار بعنوان عربي قصير (`test/live/stores/t6-art.mjs`) بخطوط ترجمان وشعاره وألوانه. وصورة الترويج الكبيرة فيها لقطة حقيقية كذلك. وفيديو اللقطات Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0، بلا أشخاص حقيقيين ولا اسم قناة ولا تعليقات ولا حساب. ولا لقطة من `docs/evidence/` القديمة.
+**مصدر الصور (2.0.0، AA5):** إطارات لوحة الهوية 18 وعناوينها ونصوصها كما هي (`tools/store-art/`، ويرسمها `tools/store-art/render.mjs` في Chrome بلا نافذة بمعامل 1)، وما ترسمه اللوحة من واجهة داخل الإطار لقطة حقيقية من حزمة 2.0.0 للحالة نفسها (`test/live/aa4/site-shots.mjs`). وصورة الترويج الكبيرة فيها لقطة حقيقية كذلك. والأيقونتان من `tools/brand/icons.mjs` بلا متصفح. وفيديو اللقطات Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0، بلا أشخاص حقيقيين ولا اسم قناة ولا تعليقات ولا حساب. ولا لقطة من `docs/evidence/` القديمة.
 
 ### تغطية حقول §٣
 
@@ -330,19 +330,19 @@
 
 | المتجر | الحقل المطلوب | المادة |
 | --- | --- | --- |
-| Chrome | الحزمة | `release/store/tarjuman-1.1.0-chrome.zip` (T4) |
+| Chrome | الحزمة | `release/store/tarjuman-2.0.0-chrome.zip` (T4، وأعاد AA5 بناءها) |
 | Chrome | الاسم والملخص | `manifest.name` و`manifest.description` في `listing.ar.md` |
 | Chrome | الوصف التفصيلي | `chromium.description` |
 | Chrome | الفئة واللغة | `listing.ar.md` «الفئة»، والعربية |
 | Chrome | أيقونة المتجر | `icons/chrome-store-icon-128.png` |
-| Chrome | لقطات (1 إلى 5) | `screenshots/chromium/01` إلى `05` |
+| Chrome | لقطات (1 إلى 5) | `screenshots/chromium/` الثلاث |
 | Chrome | Single purpose | `reviewer.singlePurpose` في `submission.md` §١ |
 | Chrome | تبرير الأذونات | `reviewer.permission.*` في `submission.md` §٢، ومعها الإذن الاختياري لقناة البلاغات |
 | Chrome | إعلان الشيفرة البعيدة | `submission.md` §٣ |
 | Chrome | Data usage وLimited Use | `submission.md` §٤، ومنه قناة البلاغات |
 | Chrome | رابط سياسة الخصوصية | `submission.md` §٥ (T7) |
 | Chrome | إعلان التاجر | غير تاجر (سلطان، §٥) |
-| Edge | الحزمة | `release/store/tarjuman-1.1.0-edge.zip` (T4) |
+| Edge | الحزمة | `release/store/tarjuman-2.0.0-edge.zip` (T4، وأعاد AA5 بناءها) |
 | Edge | Category | `listing.ar.md` «الفئة» |
 | Edge | Privacy policy URL | `submission.md` §٥ (T7) |
 | Edge | Single purpose والأذونات والشيفرة البعيدة وData usage | `submission.md` §١ إلى §٤ |
@@ -350,7 +350,7 @@
 | Edge | Extension logo | `icons/edge-logo-300.png` |
 | Edge | الاسم والوصف القصير | من البيان |
 | Edge | خطوات الاختبار (البند 1.3) | `reviewer.chrome` و`reviewer.edge` في `reviewers.en.md` |
-| Firefox | ملف الإضافة وشيفرة المصدر | `tarjuman-1.1.0-firefox.zip` و`tarjuman-1.1.0-source.zip` (T4) |
+| Firefox | ملف الإضافة وشيفرة المصدر | `tarjuman-2.0.0-firefox.zip` و`tarjuman-2.0.0-source.zip` (T4، وأعاد AA5 بناءهما) |
 | Firefox | `data_collection_permissions` | في البيان (T2.1 وT5)، وشرحه في `submission.md` §٢ |
 | Firefox | Name وSummary | من البيان، و`amo.summary` |
 | Firefox | Categories | `listing.ar.md` «الفئة» |
