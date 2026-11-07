@@ -347,7 +347,7 @@ export function createExpansion(env) {
       className: 'lib-card lib-card--empty', attrs: { 'data-slot': String(n), 'aria-labelledby': `${id}-t${n}` },
       children: [
         el('h4', { className: 'tj-h4 lib-card__title', text: `الترجمة ${n} · خانة فارغة`, attrs: { id: `${id}-t${n}` }, doc }),
-        el('p', { className: 'tj-caption', text: 'ارفع ملفًا عربيًا آخر لتقارن بين الترجمات وتختار أدقّها.', doc }),
+        el('p', { className: 'tj-caption', text: 'ارفع ملفًا آخر لتقارن بين الترجمات وتختار أدقّها.', doc }),
         b.previous && b.previous.from === n ? previousLine(b, bytes, true) : null,
         el('div', { className: 'lib-card__actions', children: [up], doc }),
       ],

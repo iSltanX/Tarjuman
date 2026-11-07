@@ -191,7 +191,7 @@ export async function mountEditor(app, {
     items: [
       { id: 'srt', label: 'الترجمة SRT…', hint: 'النسخة الحالية أو الأصل، بتوقيت المشاهدة أو المحفوظ', onSelect: () => onExport() },
       { id: 'report', label: 'تقرير مراجعة…', hint: 'المقاطع ومشكلاتها وعلاماتك بأزمنتها', onSelect: () => onReport() },
-      { id: 'study', label: 'نص دراسي…', hint: 'فقرات للقراءة بروابط توقيت، عربي أو ثنائي اللغة', onSelect: () => onStudy() },
+      { id: 'study', label: 'نص دراسي…', hint: 'فقرات للقراءة بروابط توقيت، بلغة الترجمة أو باللغتين', onSelect: () => onStudy() },
     ],
   });
   const exportBtn = exportMenu.root;

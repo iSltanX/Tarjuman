@@ -558,14 +558,26 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         return h !== undefined && validateHead(h).ok && h.videoId === entry.videoId && h.base.rev === entry.rev && h.base.updatedAt === entry.updatedAt;
       };
       const quick = entries.filter(matching).map((e) => e.videoId);
-      const light = quick.length ? await read(quick.flatMap((id) => [altsKey(id), marksKey(id), langKey(id)])) : {};
+      // وبلا رأس (سجل الإصدار الأول، أو فيديو بترجمة واحدة كتبه 2.0.0 فلا رأس له): مرافق اللغة وحدها، في القراءة نفسها.
+      const headless = entries.filter((e) => heads[bundleKey(e.videoId)] === undefined).map((e) => e.videoId);
+      const light = quick.length || headless.length ? await read([...quick.flatMap((id) => [altsKey(id), marksKey(id), langKey(id)]), ...headless.map(langKey)]) : {};
+      /** مرافق اللغة الصالحة للفيديو، وإلا null (التالف كأنه غائب). */
+      const langOf = (entry) => {
+        const lv = light[langKey(entry.videoId)] ?? null;
+        return lv && validateLangValue(lv).ok && lv.videoId === entry.videoId ? lv : null;
+      };
+      // مسارات الأصل بغير الإنجليزية في المرافق (AA1): تُضم إلى مُلخّص الصف كما في القراءة الكاملة، فتُصدَّر وتُعدّ من المحفوظات.
+      const withSources = (entry) => {
+        const lv = langOf(entry);
+        const extra = lv ? lv.sources.filter((t) => !entry.english.some((x) => x.key === t.key)).map((t) => ({ key: t.key, kind: t.kind, cueCount: t.cues.length })) : [];
+        return extra.length ? { ...entry, english: [...entry.english, ...extra] } : entry;
+      };
       /**
        * الزوج اللغوي لكل خانة (AA3) من المُلخّص ومرافق اللغة دون قراءة السجلات: لغة الترجمة من المرافق إن طابقت هويتها ترجمة الخانة
        * (اسم الملف للنشطة، ومعه تاريخ الاستيراد لغيرها)، والأصل أول مسار بترتيب قائمة التحميل. القيمة التالفة كأنها غائبة.
        */
       const pairsFromHead = (entry, alts) => {
-        const lv = light[langKey(entry.videoId)] ?? null;
-        const lang = lv && validateLangValue(lv).ok && lv.videoId === entry.videoId ? lv : null;
+        const lang = langOf(entry);
         const sources = [...entry.english.map((t) => parseTrackKey(t.key)), ...(lang?.sources ?? []).map((t) => parseTrackKey(t.key))].filter(Boolean)
           .sort((a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || (a.kind === b.kind ? 0 : a.kind === 'manual' ? -1 : 1));
         // أكثر من مسار أصل: مسار بصمة الترجمة في السجل لا في المُلخّص، فيُقرأ الفيديو كاملًا (القراءة البطيئة) بدل تخمين أوله.
@@ -595,24 +607,24 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         });
         const pairs = pairsFromHead(entry, alts);
         if (!pairs) return null;
-        // مسارات الأصل بغير الإنجليزية في المرافق (AA1): تُضم إلى مُلخّص الصف كما في القراءة الكاملة، فتُصدَّر وتُعدّ من المحفوظات.
-        const lv = light[langKey(entry.videoId)] ?? null;
-        const extra = lv && validateLangValue(lv).ok && lv.videoId === entry.videoId
-          ? lv.sources.filter((t) => !entry.english.some((x) => x.key === t.key)).map((t) => ({ key: t.key, kind: t.kind, cueCount: t.cues.length })) : [];
-        const shown = extra.length ? { ...entry, english: [...entry.english, ...extra] } : entry;
-        return { entry: shown, summary: head.summary, slots, pairs: slots.map((x) => (x.filled ? pairs[x.n - 1] : null)) };
+        return { entry: withSources(entry), summary: head.summary, slots, pairs: slots.map((x) => (x.filled ? pairs[x.n - 1] : null)) };
       };
       const out = [];
       for (const entry of entries) {
         const head = heads[bundleKey(entry.videoId)];
         if (head === undefined) {
-          // سجل الإصدار الأول بلا رأس: لغة الأصل من مُلخّصه، والترجمة «غير محددة».
-          const src = parseTrackKey(entry.english[0]?.key);
+          // بلا رأس: الترجمة النشطة في الخانة 1. وبمرافق لغة (كتبها 2.0.0) يُقرأ الزوج منها كما مع الرأس: لغة الترجمة إن طابق اسم
+          // ملفها، والأصل بترتيب قائمة التحميل، وأكثر من مسار أصل يمر بالقراءة الكاملة أدناه. وسجل الإصدار الأول بلا مرافق: لغة
+          // الأصل من مُلخّصه، والترجمة «غير محددة» (المحفوظات تعرض ما كان يُعرض قبل 2.0.0 بلا قراءة السجل).
           const slots = slotModelsFromIndex(entry);
-          out.push({ entry, summary: trivialSummary(entry), slots, pairs: slots.map((x) => (x.filled ? { from: src?.lang ?? null, to: null, via: src?.via ?? null } : null)) });
-          continue;
+          const src = parseTrackKey(entry.english[0]?.key);
+          const pairs = langOf(entry) ? pairsFromHead(entry, null) : [1, 2, 3].map(() => ({ from: src?.lang ?? null, to: null, via: src?.via ?? null }));
+          if (pairs) {
+            out.push({ entry: withSources(entry), summary: trivialSummary(entry), slots, pairs: slots.map((x) => (x.filled ? pairs[x.n - 1] : null)) });
+            continue;
+          }
         }
-        const row = quick.includes(entry.videoId) ? fromHead(entry, head) : null;
+        const row = head !== undefined && quick.includes(entry.videoId) ? fromHead(entry, head) : null;
         if (row) {
           out.push(row);
           continue;

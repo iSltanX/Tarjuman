@@ -85,3 +85,38 @@ test('المحفوظات بمسارين للأصل (مراجعة AA3): «من» 
   const [item] = await store.listLibrary();
   assert.equal(item.pairs[0].from, 'es', 'مسار البصمة لا «الإنجليزية» أول القائمة');
 });
+
+/** حزمة بترجمة واحدة في الخانة 1 بلا اسم ولا علامات ولا سابقة: يمثّلها الإصدار الأول كاملة، فلا رأس لها (isTrivialBundle). */
+function singleBundle({ lang = null, extraSource = null } = {}) {
+  const b = sampleBundle({ previous: false });
+  b.slots[1] = { ...b.slots[1], name: null, track: null, offsetMs: 0, marks: [], position: null };
+  b.slots[0] = { ...b.slots[0], marks: [], position: null, track: { ...b.slots[0].track, lang } };
+  b.record.arabic = structuredClone(b.slots[0].track);
+  if (extraSource) b.record.english.push({ ...b.record.english[0], ...extraSource });
+  return b;
+}
+
+test('المحفوظات بلا رأس (AA4): ترجمة واحدة رفعها 2.0.0 بلغتها تظهر بلغتها لا «غير محددة»، دون قراءة السجل', async () => {
+  const { area, store } = setup();
+  await seedBundle(store, singleBundle({ lang: 'ar' }));
+  const keys = Object.keys(area.dump());
+  assert.equal(keys.includes(`bundle:${VIDEO_ID}`), false, 'الحزمة البسيطة بلا رأس');
+  assert.equal(keys.includes(`lang:${VIDEO_ID}`), true, 'واللغة في المرافق');
+  const [item] = await store.listLibrary();
+  assert.deepEqual([item.pairs[0].from, item.pairs[0].to], ['en', 'ar']);
+  assert.equal(item.pairs[1], null);
+});
+
+test('المحفوظات بلا رأس: سجل 1.1.0 بلا مرافق «غير محددة» كما كان، ومسار أصل بغير الإنجليزية من المرافق يظهر في الصف', async () => {
+  const a = setup();
+  await seedBundle(a.store, singleBundle());
+  const [old] = await a.store.listLibrary();
+  assert.deepEqual([old.pairs[0].from, old.pairs[0].to], ['en', null], 'لا مرافق لغة: الترجمة «غير محددة»');
+  const b = setup();
+  await seedBundle(b.store, singleBundle({ lang: 'ar', extraSource: { key: 'ja|asr', lang: 'ja', kind: 'asr' } }));
+  assert.equal(Object.keys(b.area.dump()).includes(`bundle:${VIDEO_ID}`), false);
+  const [item] = await b.store.listLibrary();
+  assert.deepEqual(item.entry.english.map((t) => t.key).sort(), ['en|manual', 'ja|asr'], 'مسار الأصل الياباني من المرافق');
+  assert.equal(item.pairs[0].from, 'en', 'مساران للأصل: القراءة الكاملة تأخذ مسار البصمة');
+  assert.equal(item.pairs[0].to, 'ar');
+});
