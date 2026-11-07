@@ -7,7 +7,7 @@ const LANG = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8})*$/;
 /**
  * @typedef {{
  *   videoId: string | null, lang: string | null, trackKind: 'manual' | 'asr',
- *   kindParam: string | null, capsAsr: boolean, hasTlang: boolean,
+ *   kindParam: string | null, capsAsr: boolean, hasTlang: boolean, tlang: string | null,
  *   format: 'json3' | 'srv3' | 'other' | 'default', hasPot: boolean
  * }} TimedtextMeta
  */
@@ -37,6 +37,8 @@ export function readTimedtextParams(rawUrl, base) {
     kindParam: kind && /^[a-z]{1,16}$/.test(kind) ? kind : null,
     capsAsr: p.get('caps') === 'asr',
     hasTlang: p.has('tlang'),
+    // لغة ترجمة يوتيوب الآلية إن وُجدت (AA1، قرار سلطان ق٢): المسار يُقبل موسومًا بها وبلغة أصله lang.
+    tlang: p.get('tlang') && LANG.test(p.get('tlang')) ? p.get('tlang') : null,
     format: fmt === null ? 'default' : fmt === 'json3' ? 'json3' : fmt === 'srv3' ? 'srv3' : 'other',
     hasPot: p.has('pot'),
   };

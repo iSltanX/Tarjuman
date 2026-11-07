@@ -5,18 +5,21 @@ const MAX_REJECTED = 100;
 
 /**
  * @typedef {{
- *   id: number, at: number, videoId: string, lang: string, trackKind: 'manual' | 'asr', format: string,
+ *   id: number, at: number, videoId: string, lang: string, trackKind: 'manual' | 'asr', via: string | null, format: string,
  *   transport: string, bodyLength: number, body: string, acceptedFor: string,
  *   meta: { hasPot: boolean, capsAsr: boolean, kindParam: string | null }
  * }} AcceptedCapture
  */
+
+/** @param {{ videoId: string, lang: string, trackKind: string, via?: string | null }} c */
+const keyOf = (c) => `${c.videoId}|${c.lang}|${c.trackKind}${c.via ? `|${c.via}` : ''}`;
 
 /** @param {{ now?: () => number }} [opts] */
 export function createCaptureStore({ now = () => Date.now() } = {}) {
   let currentVideoId = null;
   let seq = 0;
   let navigations = 0;
-  /** @type {Map<string, AcceptedCapture>} المفتاح videoId|lang|kind */
+  /** @type {Map<string, AcceptedCapture>} المفتاح videoId|lang|kind ثم |via للمترجم آليًا (AA1) */
   const accepted = new Map();
   const rejected = [];
 
@@ -35,8 +38,8 @@ export function createCaptureStore({ now = () => Date.now() } = {}) {
     /** @param {Omit<AcceptedCapture, 'id' | 'at'>} capture */
     accept(capture) {
       if (capture.videoId !== currentVideoId) throw new Error('محاولة قبول التقاط لا يخص الفيديو الحالي');
-      const entry = { ...capture, id: ++seq, at: now() };
-      accepted.set(`${capture.videoId}|${capture.lang}|${capture.trackKind}`, entry);
+      const entry = { via: null, ...capture, id: ++seq, at: now() };
+      accepted.set(keyOf(entry), entry);
       return entry;
     },
     /** @param {{ code: string, detail: string, videoId: string | null, lang: string | null, trackKind: string, hasTlang: boolean, format: string, bodyLength: number, currentVideoId: string | null }} info */
@@ -49,7 +52,7 @@ export function createCaptureStore({ now = () => Date.now() } = {}) {
      * @param {AcceptedCapture} entry
      */
     release(entry) {
-      const key = `${entry.videoId}|${entry.lang}|${entry.trackKind}`;
+      const key = keyOf(entry);
       if (accepted.get(key) === entry) accepted.delete(key);
     },
     accepted() {

@@ -20,7 +20,7 @@ export const normalizeCompleteness = (v) => (typeof v === 'number' && Number.isF
  * وآخر نهاية تتجاوز المدة بأكثر من الهامش ومقطعها يبدأ داخلها تُقص إلى المدة (تدقيق 7a66f91، I10)، فلا يبقى لثابت
  * الحدود إلا نص يبدأ بعد نهاية الفيديو، ورمزه EX_BEYOND_DURATION لا EX_INVARIANT_FAILED (U39).
  * @param {{
- *   body: string, trackKind: 'manual' | 'asr', durationMs?: number | null, asrOptions?: object,
+ *   body: string, trackKind: 'manual' | 'asr' | 'auto', durationMs?: number | null, asrOptions?: object,
  *   mode?: 'normal' | 'long', longOptions?: Partial<typeof import('./long.js').LONG_DEFAULTS>, completenessRatio?: number
  * }} input
  * @returns {{
@@ -28,13 +28,20 @@ export const normalizeCompleteness = (v) => (typeof v === 'number' && Number.isF
  *   cues: object[], srt: string | null, invariants: object | null, warnings: string[], report: object
  * }}
  */
-export function convertTrack({ body, trackKind, durationMs = null, asrOptions, mode = 'normal', longOptions, completenessRatio }) {
+export function convertTrack({ body, trackKind: requested, durationMs = null, asrOptions, mode = 'normal', longOptions, completenessRatio }) {
   if (mode !== 'normal' && mode !== 'long') throw new RangeError(`وضع تحويل غير معروف: ${mode}`);
+  // auto (AA1): النوع من البنية نفسها، لمسار ترجمه يوتيوب آليًا فلا يُعرف شكل جسمه من نوع أصله.
+  let trackKind = requested === 'auto' ? 'manual' : requested;
   const report = { trackKind, mode };
   try {
     const parsed = parseJson3(body);
     report.stats = parsed.stats;
     report.inferredKind = inferKind(parsed);
+    if (requested === 'auto') {
+      trackKind = report.inferredKind;
+      report.trackKind = trackKind;
+      report.kindFromStructure = true;
+    }
     const deduped = dedupeExact(parsed.events);
     report.duplicatesRemoved = deduped.removed;
     const sorted = sortEvents(deduped.events);

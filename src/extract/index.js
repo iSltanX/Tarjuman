@@ -2,11 +2,12 @@
 // إلى الاستخراج. تملكها P3 وتحفظ التوقيعات أدناه لأن src/content مجمَّد؛ وما خلفها يتغير كما يشاء.
 // ذاكرة المسارات للفيديو الحالي وحده وفي الجلسة فقط: الجسم الخام لا يُخزَّن ولا يُرسَل، ولا رابط ولا رمز.
 import { LIMITS } from '../core/model/validate.js';
+import { parseTrackKey, trackKey } from '../core/model/ids.js';
 import { COMPLETENESS_RATIO, normalizeCompleteness, normalizeLongOptions } from '../core/convert/index.js';
-import { checkAcceptance, convertCapture } from './capture-adapter.js';
+import { checkAcceptance, convertCapture, trackOf } from './capture-adapter.js';
 import { createCaptureStore } from './capture-store.js';
 import { createPendingBuffer } from './pending.js';
-import { MAX_BODY_CHARS, validateCaptureMessage } from './message.js';
+import { MAX_BODY_CHARS, validateCaptureMessage, validateTracklistMessage } from './message.js';
 
 const MODES = Object.freeze(['normal', 'long']);
 const MAX_RUNS_PER_TRACK = 6;
@@ -19,12 +20,12 @@ export const MAX_CAPTURED_CHARS = 2 * MAX_BODY_CHARS;
 
 /**
  * @typedef {{
- *   key: string, lang: string, kind: 'manual' | 'asr', capturedAt: string,
+ *   key: string, lang: string, kind: 'manual' | 'asr', via: string | null, capturedAt: string,
  *   ok: boolean, code: string | null, warnings: string[], cueCount: number,
  *   completeness: number | null, lastEndMs: number | null
- * }} TrackInfo
+ * }} TrackInfo via: لغة المسار الذي ترجمه يوتيوب آليًا عنه، وnull للأصلي (AA1)
  * @typedef {{
- *   ok: boolean, code: string | null, key: string, lang: string, kind: 'manual' | 'asr', mode: 'normal' | 'long',
+ *   ok: boolean, code: string | null, key: string, lang: string, kind: 'manual' | 'asr', via: string | null, mode: 'normal' | 'long',
  *   cues: { n: number, startMs: number, endMs: number, text: string }[], warnings: string[], report: object | null
  * }} ConvertResult
  * @typedef {{ code: string, at: number, videoId: string | null }} Rejection
@@ -57,6 +58,8 @@ export function createExtractor(env) {
   const slots = new Map();
   /** @type {Rejection | null} */
   let lastRejection = null;
+  /** قائمة مسارات الفيديو الحالي كما في بيانات المشغّل (AA1)، أو null قبل وصولها. @type {import('./message.js').TrackList | null} */
+  let listed = null;
   const listeners = new Set();
   let listenerFailures = 0;
   // كل مشترك على حدة: استثناء في أحدهم لا يخرج من معالج رسالة الجسر ولا يحرم غيره.
@@ -74,6 +77,7 @@ export function createExtractor(env) {
     if (!captures.setCurrentVideo(current)) return;
     slots.clear();
     lastRejection = null;
+    if (listed && listed.videoId !== current) listed = null;
   }
 
   /**
@@ -98,7 +102,7 @@ export function createExtractor(env) {
   function infoOf(key, slot) {
     const conv = run(slot, 'normal');
     return {
-      key, lang: slot.entry.lang, kind: slot.entry.trackKind, capturedAt: new Date(slot.entry.at).toISOString(),
+      key, lang: slot.entry.lang, kind: slot.entry.trackKind, via: slot.entry.via ?? null, capturedAt: new Date(slot.entry.at).toISOString(),
       ok: conv.ok, code: conv.code, warnings: conv.warnings.slice(), cueCount: conv.ok ? conv.cues.length : 0,
       completeness: conv.report.completeness ?? null, lastEndMs: conv.report.lastEndMs ?? null,
     };
@@ -125,14 +129,15 @@ export function createExtractor(env) {
       }
       return { accepted: false, code: decision.code };
     }
-    const key = `${msg.lang}|${msg.trackKind}`;
+    const track = trackOf(msg);
+    const key = trackKey(track.lang, track.kind, track.via);
     // يُحوَّل قبل أن يحل محل شيء: التقاط لا يُحوَّل (بنية معيبة، أو بلا أحداث نصية) لا يحل محل التقاط سليم للمفتاح
     // نفسه، بل يُسجَّل رفضًا في التشخيص ويبقى السليم (تدقيق 7a66f91، U32). وبلا سابق سليم يبقى خانةً ليرى المستخدم رمزه.
     // وفشل الحدود وحده يتبع المدة اللحظية (تُعاد قراءتها عند كل طلب)، فلا يُبقي السابق: الأحدث يحل محله كما كان.
     // وجسم مطابق لآخر التقاط للمفتاح نفسه (إيقاف CC وتشغيلها، أو رسالة مكررة من الصفحة) لا يُحوَّل من جديد: تحويلاته هي نفسها
     // (تدقيق Fable، FA-07: نحو 120 م.ث لكل تكرار بستين ألف حدث).
     const prev = slots.get(key);
-    const probe = { entry: { body: msg.body, trackKind: msg.trackKind }, runs: prev && prev.entry.body === msg.body ? prev.runs : new Map() };
+    const probe = { entry: { body: msg.body, trackKind: msg.trackKind, via: track.via }, runs: prev && prev.entry.body === msg.body ? prev.runs : new Map() };
     const conv = run(probe, 'normal');
     if (!conv.ok && conv.code !== 'EX_BEYOND_DURATION' && prev && run(prev, 'normal').ok) {
       captures.reject({
@@ -142,7 +147,7 @@ export function createExtractor(env) {
       return { accepted: false, code: conv.code };
     }
     const entry = captures.accept({
-      videoId: msg.videoId, lang: msg.lang, trackKind: msg.trackKind, format: msg.format, transport: msg.transport,
+      videoId: msg.videoId, lang: track.lang, trackKind: track.kind, via: track.via, format: msg.format, transport: msg.transport,
       bodyLength: msg.bodyLength, body: msg.body, acceptedFor: current,
       meta: { hasPot: msg.hasPot, capsAsr: msg.capsAsr, kindParam: msg.kindParam },
     });
@@ -167,6 +172,22 @@ export function createExtractor(env) {
     }
   }
 
+  /**
+   * قائمة المسارات من بيانات المشغّل (AA1): تُقبل للفيديو المعروض وحده، وتُبلَّغ المشتركين إن تغيّرت.
+   * @param {unknown} data
+   */
+  function handleTracklist(data) {
+    const list = validateTracklistMessage(data);
+    if (!list) return { accepted: false, code: null };
+    const current = env.currentVideoId();
+    sync(current);
+    if (list.videoId !== current) return { accepted: false, code: 'EX_WRONG_VIDEO' };
+    const changed = JSON.stringify(list) !== JSON.stringify(listed);
+    listed = list;
+    if (changed) emit();
+    return { accepted: true, code: null };
+  }
+
   return {
     /**
      * بيانات MAIN → ISOLATED كما مرّرها الجسر (غير موثوقة): تُتحقق بنيتها هنا ثم تُقيَّم بقواعد القبول.
@@ -175,9 +196,16 @@ export function createExtractor(env) {
      */
     handleMessage(data) {
       pending.prune(now());
+      if (data && typeof data === 'object' && data.kind === 'tracklist') return handleTracklist(data);
       const msg = validateCaptureMessage(data);
       return msg ? evaluate(msg) : { accepted: false, code: null };
     },
+    /**
+     * قائمة مسارات الفيديو الحالي كما في بيانات المشغّل (AA1): اللغة والنوع والاسم المعروض، وهل يترجم يوتيوب آليًا. null قبل
+     * وصولها أو لفيديو آخر. لا تعني أن المسار جُلب: الملتقط في tracks().
+     * @returns {import('./message.js').TrackList | null}
+     */
+    available: () => (listed && listed.videoId === env.currentVideoId() ? structuredClone(listed) : null),
     /** يُستدعى عند تغيّر الفيديو المعروض: يفرّغ ما لا يخصه ويعيد تقييم ما انتظر له. */
     setVideo(videoId) {
       sync(videoId);
@@ -192,16 +220,17 @@ export function createExtractor(env) {
      * @returns {ConvertResult} نسخة مستقلة كل مرة
      */
     convert(key, { mode = 'normal', long } = {}) {
+      const parsed = parseTrackKey(key);
       const [rawLang = '', rawKind] = String(key).split('|');
-      const failed = (code, lang = rawLang, kind = rawKind) => ({
-        ok: false, code, key, lang, kind: kind === 'asr' ? 'asr' : 'manual', mode, cues: [], warnings: [], report: null,
+      const failed = (code, lang = parsed?.lang ?? rawLang, kind = parsed?.kind ?? rawKind) => ({
+        ok: false, code, key, lang, kind: kind === 'asr' ? 'asr' : 'manual', via: parsed?.via ?? null, mode, cues: [], warnings: [], report: null,
       });
       if (!MODES.includes(mode)) return failed('MD_INVALID');
       const slot = slots.get(key);
       if (!slot) return failed('EX_NO_TRACK');
       const conv = run(slot, mode, long);
       return {
-        ok: conv.ok, code: conv.code, key, lang: slot.entry.lang, kind: slot.entry.trackKind, mode,
+        ok: conv.ok, code: conv.code, key, lang: slot.entry.lang, kind: slot.entry.trackKind, via: slot.entry.via ?? null, mode,
         cues: conv.ok ? conv.cues.map((c) => ({ ...c })) : [], warnings: conv.warnings.slice(), report: structuredClone(conv.report),
       };
     },
@@ -231,12 +260,13 @@ export function createExtractor(env) {
       rejected: captures.rejected().reduce((m, r) => ({ ...m, [r.code]: (m[r.code] ?? 0) + 1 }), {}),
       pending: pending.size,
       pendingChars: pending.chars,
+      listed: listed ? { tracks: listed.tracks.length, translatable: listed.translatable } : null,
       listenerFailures,
       tracks: [...slots].map(([key, slot]) => {
         const info = infoOf(key, slot);
         const conv = run(slot, 'normal');
         return {
-          key, lang: info.lang, kind: info.kind, ok: info.ok, code: info.code, warnings: info.warnings, cueCount: info.cueCount,
+          key, lang: info.lang, kind: info.kind, via: info.via, ok: info.ok, code: info.code, warnings: info.warnings, cueCount: info.cueCount,
           bodyLength: slot.entry.bodyLength, format: slot.entry.format, transport: slot.entry.transport,
           completeness: info.completeness, inferredKind: conv.report.inferredKind ?? null,
           invariants: conv.invariants ? conv.invariants.results.map(({ id, key: name, ok }) => ({ id, key: name, ok })) : null,

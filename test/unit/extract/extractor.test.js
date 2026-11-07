@@ -23,7 +23,9 @@ test('مسارات متعددة: يدوي وتلقائي ولهجة، كل بم�
   assert.ok(tracks.every((x) => x.ok && x.cueCount > 0));
   assert.equal(tracks.find((x) => x.key === 'en|asr').cueCount, 1056);
   assert.equal(tracks.find((x) => x.key === 'en|manual').cueCount, 427);
-  assert.equal(chooseTrack(tracks).key, 'en|manual');
+  // اليدويان بزمن واحد: أولهما التقاطًا (لا تفضيل لـen على en-GB منذ 2.0.0، AA1).
+  assert.equal(chooseTrack(tracks).key, 'en-GB|manual');
+  assert.equal(chooseTrack(tracks, 'en|manual').key, 'en|manual');
   assert.equal(chooseTrack(tracks, 'en|asr').key, 'en|asr');
   assert.equal(extractor.convert('en-GB|manual').lang, 'en-GB');
   assert.equal(extractor.convert('en|asr').kind, 'asr');
@@ -43,14 +45,12 @@ test('إعادة الالتقاط للمفتاح نفسه تحل محل السا
   assert.equal(extractor.tracks()[0].capturedAt, '1970-01-01T00:00:06.000Z', 'الأحدث يحل محل الأقدم');
 });
 
-test('الرفض: فيديو آخر، وغير إنجليزي، وترجمة آلية، وفارغ، وصيغة غير مدعومة، وبث، وحالة غير 200', () => {
+test('الرفض: فيديو آخر، ولغة غير صالحة، وترجمة آلية بلا لغة، وفارغ، وصيغة غير مدعومة، وبث، وحالة غير 200', () => {
   const { extractor, state } = makeExtractor({ videoId: VID, durationMs: manual.fixture.durationMs });
   const cases = [
     [{ videoId: 'ZZZZZZZZZZZ' }, 'EX_WRONG_VIDEO'],
-    [{ lang: 'ar' }, 'EX_NOT_ENGLISH'],
-    [{ lang: 'de-DE' }, 'EX_NOT_ENGLISH'],
-    [{ hasTlang: true }, 'EX_TRANSLATED_TRACK'],
-    [{ hasTlang: true, lang: 'ar' }, 'EX_TRANSLATED_TRACK'],
+    [{ lang: 'a!' }, 'EX_BAD_LANG'],
+    [{ hasTlang: true }, 'EX_BAD_LANG'],
     [{ body: '', bodyLength: 0 }, 'EX_EMPTY_BODY'],
     [{ status: 403 }, 'EX_EMPTY_BODY'],
     [{ truncated: true }, 'EX_EMPTY_BODY'],
@@ -183,7 +183,7 @@ test('التشخيص المنقّى: نوع الفشل وحجم الجسم وح�
   }] });
   extractor.handleMessage(captureMsg({ videoId: VID, body: hostile }));
   extractor.handleMessage(captureMsg(base, { lang: 'en-GB' }));
-  extractor.handleMessage(captureMsg(base, { hasTlang: true, lang: 'en-US' }));
+  extractor.handleMessage(captureMsg(base, { hasTlang: true, lang: 'en-US' })); // بلا tlang صالح: EX_BAD_LANG (AA1)
   extractor.handleMessage(captureMsg(base, { body: '', bodyLength: 0, lang: 'en-AU' }));
   const d = extractor.diagnostics();
   assert.equal(d.tracks.length, 2);
@@ -192,8 +192,8 @@ test('التشخيص المنقّى: نوع الفشل وحجم الجسم وح�
   assert.equal(gb.format, 'json3');
   assert.equal(gb.invariants.length, 6);
   assert.ok(gb.invariants.every((x) => x.ok === true && typeof x.id === 'number' && typeof x.key === 'string'));
-  assert.deepEqual(d.rejected, { EX_TRANSLATED_TRACK: 1, EX_EMPTY_BODY: 1 });
-  assert.deepEqual(d.recentRejections.map((x) => x.code), ['EX_TRANSLATED_TRACK', 'EX_EMPTY_BODY']);
+  assert.deepEqual(d.rejected, { EX_BAD_LANG: 1, EX_EMPTY_BODY: 1 });
+  assert.deepEqual(d.recentRejections.map((x) => x.code), ['EX_BAD_LANG', 'EX_EMPTY_BODY']);
   const report = createDiagnosticReport({ version: '0.3.0', browser: 'Brave 1.98', at: '2026-11-01T12:00:00.000Z', sections: { extract: d } });
   const text = formatDiagnosticReport(report);
   assert.deepEqual(findSecrets(text), [], text);

@@ -78,7 +78,7 @@ test('fetch: طلب timedtext يُمرَّر كما هو، والصفحة تقر
   assert.equal(origin, ORIGIN, 'targetOrigin أصل الصفحة لا *');
   assert.deepEqual(plain(msg), {
     source: 'tarjuman', v: 1, kind: 'timedtext', videoId: 'AAAAAAAAAAA', lang: 'en', trackKind: 'asr', kindParam: 'asr',
-    capsAsr: false, hasTlang: false, format: 'json3', hasPot: true, transport: 'fetch', status: 200,
+    capsAsr: false, hasTlang: false, tlang: null, format: 'json3', hasPot: true, transport: 'fetch', status: 200,
     bodyLength: 13, body: '{"events":[]}', truncated: false,
   });
   assert.notEqual(validateCaptureMessage(plain(msg)), null, 'تجتاز المصادقة الحقيقية');

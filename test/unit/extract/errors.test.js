@@ -24,7 +24,7 @@ test('كل رمز في المجال ببادئته ورسالته عربية ت�
 
 test('رموز عقد الاستخراج كلها حاضرة', () => {
   for (const code of [
-    'EX_WRONG_VIDEO', 'EX_NO_VIDEO', 'EX_NOT_ENGLISH', 'EX_TRANSLATED_TRACK', 'EX_EMPTY_BODY',
+    'EX_WRONG_VIDEO', 'EX_NO_VIDEO', 'EX_BAD_LANG', 'EX_EMPTY_BODY',
     'EX_UNSUPPORTED_FORMAT', 'EX_INVARIANT_FAILED', 'EX_BEYOND_DURATION', 'EX_MAYBE_INCOMPLETE', 'EX_LIVE', 'KIND_MISMATCH', 'EX_NO_TRACK',
   ]) assert.ok(MESSAGES[code], code);
 });

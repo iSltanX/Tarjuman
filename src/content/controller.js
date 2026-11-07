@@ -42,7 +42,10 @@ import { DISPLAY_MODES } from '../core/model/video.js';
  */
 
 const KIND_ORDER = { manual: 0, asr: 1 };
-const byKind = (a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
+// الأصلي قبل المترجم آليًا من يوتيوب (لا يُختار افتراضيًا أبدًا، قرار سلطان ق٢)، ثم اليدوي قبل التلقائي. بلا تفضيل للغة (AA1).
+const byKind = (a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
+/** المسار المستخرج كما يُحفظ في السجل، والمترجم آليًا بلغة أصله via. */
+const sourceTrack = (t, cues) => ({ key: t.key, lang: t.lang, kind: t.kind, capturedAt: t.capturedAt, source: 'capture', cues, ...(t.via ? { via: t.via } : {}) });
 
 /**
  * @param {{
@@ -111,12 +114,12 @@ export function createController({ store, extractor = null, page = {}, now = () 
     if (captured.length) {
       const t = captured[0];
       const cues = stable('english', `${videoId}|captured:${t.key}@${t.capturedAt}`, () => extractor.convert(t.key).cues);
-      return { key: t.key, kind: t.kind, lang: t.lang, cues, source: 'captured' };
+      return { key: t.key, kind: t.kind, lang: t.lang, via: t.via ?? null, cues, source: 'captured' };
     }
     const s = saved ? saved.english.slice().sort(byKind)[0] : null;
     if (!s) return null;
     const cues = stable('english', `${videoId}|saved:${s.key}@${s.capturedAt}`, () => s.cues);
-    return { key: s.key, kind: s.kind, lang: s.lang, cues, source: 'saved' };
+    return { key: s.key, kind: s.kind, lang: s.lang, via: s.via ?? null, cues, source: 'saved' };
   }
 
   /** @returns {ControllerState} */
@@ -131,11 +134,15 @@ export function createController({ store, extractor = null, page = {}, now = () 
       loading,
       saved,
       captured: extractor ? extractor.tracks() : [],
+      // قائمة مسارات الفيديو كما في بيانات المشغّل (AA1): ما يمكن أن يختاره المستخدم من يوتيوب، لا ما التُقط.
+      available: extractor?.available ? extractor.available() : null,
       captureIssue: extractor ? extractor.lastRejection() : null,
       arabic: a ? {
         // الخانة والملف في المفتاح: ترجمتان بتاريخ استيراد واحد لا تلتبسان بعد التبديل.
         cues: stable('arabic', `${videoId}|${activeSlot}|${a.fileName}|${a.importedAt}|${a.editedAt}`, () => a.current ?? a.original),
         edited: a.current !== null, fileName: a.fileName,
+        // لغة الترجمة (AA1)، وnull «غير محددة» لما حُفظ قبل 2.0.0 أو بلا لغة.
+        lang: a.lang ?? null,
         // تقرير النسخة المعروضة (شارة المشغّل وقائمته) لا تقرير الاستيراد وحده (GM-013).
         comparison: stable('comparison', `${videoId}|${activeSlot}|${a.fileName}|${a.importedAt}|${a.editedAt}|${a.fingerprintId}|${saved.rev}`, () => trackComparison(a, saved.fingerprints)),
       } : null,
@@ -293,7 +300,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
     const t = extractor.tracks().filter((x) => x.ok && x.cueCount > 0).sort(byKind)[0];
     if (!t) return null;
     const conv = extractor.convert(t.key, { mode: 'normal' });
-    return conv.ok ? { key: t.key, lang: t.lang, kind: t.kind, capturedAt: t.capturedAt, source: 'capture', cues: conv.cues } : null;
+    return conv.ok ? sourceTrack(t, conv.cues) : null;
   }
 
   const controller = {
@@ -420,7 +427,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       const info = extractor.tracks().find((t) => t.key === trackKey);
       const conv = extractor.convert(trackKey, { mode: 'normal' });
       if (!info || !conv.ok) throw new TjError(conv.code ?? 'EX_NO_TRACK');
-      const englishTrack = { key: conv.key, lang: conv.lang, kind: conv.kind, capturedAt: info.capturedAt, source: 'capture', cues: conv.cues };
+      const englishTrack = sourceTrack({ ...info, key: conv.key, lang: conv.lang, kind: conv.kind, via: conv.via }, conv.cues);
       // بصمات الترجمات غير النشطة والسابقة لا يسقطها حد البصمات (الإصدار الثاني).
       const keep = referencedFingerprints(bundleFor(saved));
       const { id, next } = await writeRecord((rec) => withExport(rec, {

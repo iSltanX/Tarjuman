@@ -72,7 +72,7 @@ test('FA-07: جسم مطابق لآخر التقاط للمفتاح نفسه ل�
   assert.equal(extractor.tracks()[0].cueCount < 60000, true);
 });
 
-test('FA-09: وسم لغة أطول من 35 محرفًا أو بأكثر من أربعة مقاطع يُسقط فيُرفض المسار بـEX_NOT_ENGLISH', () => {
+test('FA-09: وسم لغة أطول من 35 محرفًا أو بأكثر من أربعة مقاطع يُسقط فيُرفض المسار بـEX_BAD_LANG (كان EX_NOT_ENGLISH قبل 2.0.0)', () => {
   const ctx = { currentVideoId: VID };
   const base = { source: 'tarjuman', v: 1, kind: 'timedtext', videoId: VID, trackKind: 'manual', format: 'json3', status: 200, body: '{"events":[{}]}', bodyLength: 15 };
   for (const lang of ['en', 'en-GB', 'en-x-autogen', 'zh-Hans-CN', 'en-a-b-c-d']) assert.equal(validateCaptureMessage({ ...base, lang }).lang, lang, lang);
@@ -80,7 +80,7 @@ test('FA-09: وسم لغة أطول من 35 محرفًا أو بأكثر من أ
   for (const lang of [long, 'en-a-b-c-d-e', `en-${'a'.repeat(8)}-${'b'.repeat(8)}-${'c'.repeat(8)}-${'d'.repeat(8)}`]) {
     const m = validateCaptureMessage({ ...base, lang });
     assert.equal(m.lang, null, `${lang.length} محرفًا`);
-    assert.equal(checkAcceptance(m, ctx).code, 'EX_NOT_ENGLISH');
+    assert.equal(checkAcceptance(m, ctx).code, 'EX_BAD_LANG');
   }
   assert.equal(MAX_LANG_CHARS, 35);
 });

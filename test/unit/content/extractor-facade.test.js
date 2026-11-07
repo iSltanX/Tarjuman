@@ -52,11 +52,11 @@ test('بيانات غير صالحة تُهمل، والرفض الذي يخص �
   const x = createExtractor(env().opts);
   assert.deepEqual(x.handleMessage({ source: 'tarjuman', v: 2 }), { accepted: false, code: null });
   assert.deepEqual(x.handleMessage('نص'), { accepted: false, code: null });
-  assert.equal(x.handleMessage(msg({ hasTlang: true })).code, 'EX_TRANSLATED_TRACK');
-  assert.equal(x.lastRejection().code, 'EX_TRANSLATED_TRACK');
-  assert.equal(x.handleMessage(msg({ lang: 'ar' })).code, 'EX_NOT_ENGLISH');
+  assert.equal(x.handleMessage(msg({ hasTlang: true })).code, 'EX_BAD_LANG', 'ترجمة آلية بلا لغة صالحة (AA1)');
+  assert.equal(x.lastRejection().code, 'EX_BAD_LANG');
+  assert.equal(x.handleMessage(msg({ lang: 'a!' })).code, 'EX_BAD_LANG');
   assert.equal(x.handleMessage(msg({ videoId: 'ZZZZZZZZZZZ' })).code, 'EX_WRONG_VIDEO');
-  assert.equal(x.lastRejection().code, 'EX_NOT_ENGLISH', 'رفض فيديو آخر لا يُعرض للمستخدم');
+  assert.equal(x.lastRejection().code, 'EX_BAD_LANG', 'رفض فيديو آخر لا يُعرض للمستخدم');
   assert.equal(x.tracks().length, 0);
 });
 

@@ -29,10 +29,12 @@ test('readTimedtextParams: القيم المسموح بها فقط', () => {
   const m = readTimedtextParams(fake('&kind=asr'));
   assert.deepEqual(m, {
     videoId: 'AAAAAAAAAAA', lang: 'en', trackKind: 'asr', kindParam: 'asr', capsAsr: true,
-    hasTlang: false, format: 'json3', hasPot: true,
+    hasTlang: false, tlang: null, format: 'json3', hasPot: true,
   });
   assert.equal(readTimedtextParams(fake('')).trackKind, 'manual', 'caps=asr وحده لا يعني تلقائيًا');
   assert.equal(readTimedtextParams(fake('&tlang=ar')).hasTlang, true);
+  assert.equal(readTimedtextParams(fake('&tlang=ar')).tlang, 'ar', 'لغة ترجمة يوتيوب الآلية (AA1)');
+  assert.equal(readTimedtextParams(fake('&tlang=a!')).tlang, null);
   assert.equal(JSON.stringify(m).includes('FAKE'), false);
   assert.equal(readTimedtextParams('/api/timedtext?v=AAAAAAAAAAA&lang=en', 'https://www.youtube.com/watch?v=x').videoId, 'AAAAAAAAAAA');
   assert.equal(readTimedtextParams('https://evil.example/api/timedtext?v=AAAAAAAAAAA'), null);
@@ -66,10 +68,14 @@ test('checkAcceptance: قواعد العقد بالترتيب', () => {
   assert.equal(v({}).accepted, true);
   assert.equal(v({}, { currentVideoId: null }).code, 'EX_NO_VIDEO');
   assert.equal(v({ videoId: 'BBBBBBBBBBB' }).code, 'EX_WRONG_VIDEO');
-  assert.equal(v({ hasTlang: true }).code, 'EX_TRANSLATED_TRACK');
-  assert.equal(v({ lang: 'de' }).code, 'EX_NOT_ENGLISH');
+  // منذ 2.0.0 (AA1): أي لغة صالحة، والمترجم آليًا بلغة صالحة (قرار سلطان ق٢)؛ والمرفوض الرمز غير الصالح وحده.
+  assert.equal(v({ lang: 'de' }).accepted, true);
+  assert.equal(v({ lang: 'ja' }).accepted, true);
   assert.equal(v({ lang: 'en-GB' }).accepted, true);
-  assert.equal(v({ lang: 'eng' }).code, 'EX_NOT_ENGLISH');
+  assert.equal(v({ lang: 'eng' }).accepted, true);
+  assert.equal(v({ lang: 'e!' }).code, 'EX_BAD_LANG');
+  assert.equal(v({ hasTlang: true, tlang: 'ar' }).accepted, true);
+  assert.equal(v({ hasTlang: true }).code, 'EX_BAD_LANG', 'tlang بلا لغة صالحة');
   assert.equal(v({ status: 403 }).code, 'EX_EMPTY_BODY');
   assert.equal(v({ body: '', bodyLength: 0 }).code, 'EX_EMPTY_BODY');
   assert.equal(v({ format: 'srv3', body: '<timedtext/>' }).code, 'EX_UNSUPPORTED_FORMAT');

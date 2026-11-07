@@ -1,4 +1,5 @@
-// اختيار المسار عند تعدد المسارات الإنجليزية (P3-AC1).
+// اختيار المسار عند تعدد المسارات (P3-AC1). منذ 2.0.0 (AA1) لا تفضيل للغة ولا للهجة: اليدوي قبل التلقائي ثم الأحدث، والأصلي قبل
+// المترجم آليًا (aa1-languages.test.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chooseTrack, rankTracks } from '../../../src/extract/select.js';
@@ -9,7 +10,7 @@ const t = (key, over = {}) => {
 };
 const keys = (list) => list.map((x) => x.key);
 
-test('rankTracks: اليدوي قبل التلقائي، و«en» قبل اللهجات، ثم الأحدث', () => {
+test('rankTracks: اليدوي قبل التلقائي، ثم الأحدث، ثم ترتيب الالتقاط (بلا تفضيل «en» على اللهجات منذ 2.0.0)', () => {
   const list = [
     t('en|asr'),
     t('en-GB|manual'),
@@ -17,7 +18,7 @@ test('rankTracks: اليدوي قبل التلقائي، و«en» قبل الل�
     t('en|manual', { key: 'en_x|manual', lang: 'en_x' }),
     t('en-GB|asr'),
   ];
-  assert.deepEqual(keys(rankTracks(list)), ['en|manual', 'en-GB|manual', 'en_x|manual', 'en|asr', 'en-GB|asr']);
+  assert.deepEqual(keys(rankTracks(list)), ['en-GB|manual', 'en_x|manual', 'en|manual', 'en|asr', 'en-GB|asr']);
 });
 
 test('rankTracks: الأحدث التقاطًا أولًا عند التساوي، والصالح قبل المعطوب، والمدخل لا يتغير', () => {
@@ -27,7 +28,7 @@ test('rankTracks: الأحدث التقاطًا أولًا عند التساوي
   const bad = t('en|manual', { key: 'en-US|manual', lang: 'en-US', ok: false, cueCount: 0, code: 'EX_INVARIANT_FAILED' });
   const input = [bad, newerAsr, newer, older];
   const snapshot = keys(input);
-  assert.deepEqual(keys(rankTracks(input)), ['en|manual', 'en|asr', 'en-GB|asr', 'en-US|manual']);
+  assert.deepEqual(keys(rankTracks(input)), ['en|manual', 'en-GB|asr', 'en|asr', 'en-US|manual']);
   assert.deepEqual(keys(input), snapshot);
   const sameLang = [t('en|asr', { key: 'a|asr', capturedAt: '2026-11-01T08:00:00.000Z' }), t('en|asr', { key: 'b|asr', capturedAt: '2026-11-01T09:00:00.000Z' })];
   assert.deepEqual(keys(rankTracks(sameLang)), ['b|asr', 'a|asr']);
