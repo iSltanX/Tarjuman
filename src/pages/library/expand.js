@@ -313,7 +313,7 @@ export function createExpansion(env) {
     const actions = [
       active ? null : mark(act1('تفعيل', { variant: 'primary', onClick: () => act(() => activateSlot({ store, videoId, n: s.n, now }), messageFor('PG_SLOT_ACTIVATED', { n: s.n })) }), 'activate'),
       mark(act1('تصدير SRT', { variant: 'secondary', icon: 'download', onClick: guarded(() => env.exportSlot(s.n)) }), 'export'),
-      mark(act1('ملف بديل…', { variant: 'ghost', icon: 'replace', onClick: () => env.upload(s.n) }), 'replace'),
+      mark(act1('ملف بديل…', { variant: 'ghost', icon: 'upload', onClick: () => env.upload(s.n) }), 'replace'),
       mark(act1('حذف…', { variant: 'ghost', className: 'lib-card__delete', onClick: guarded(() => removeSlot(s)) }), 'delete'),
     ];
     return el('section', {

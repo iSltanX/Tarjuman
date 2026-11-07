@@ -79,7 +79,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   const textId = 'st-report-text';
   const countId = 'st-report-count';
 
-  const trigger = button({ label: REPORT_LABEL, variant: 'secondary', icon: 'alert', doc, onClick: () => (opened ? close() : open()) });
+  const trigger = button({ label: REPORT_LABEL, variant: 'secondary', icon: 'flag', doc, onClick: () => (opened ? close() : open()) });
   trigger.setAttribute('aria-expanded', 'false');
   trigger.setAttribute('aria-controls', regionId);
 

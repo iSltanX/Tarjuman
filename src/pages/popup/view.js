@@ -114,7 +114,7 @@ export function guideList(steps, doc = document) {
 export function notVideoNote(doc = document, text = NOT_VIDEO_TEXT) {
   return el('div', {
     className: 'tj-popup__note tj-popup__status', attrs: { role: 'status' },
-    children: [popupIcon('video', { doc }), el('span', { text, doc })],
+    children: [popupIcon('info', { doc }), el('span', { text, doc })],
     doc,
   });
 }

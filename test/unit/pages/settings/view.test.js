@@ -451,9 +451,9 @@ test('حول: الإصدار وسطر الخصوصية الصادق (محلي إ
     assert.match(a.getAttribute('rel'), /noopener/);
   });
   assert.ok(textOf(about).includes('وعناوين الواجهة بخط القاهرة (Cairo) بالرخصة نفسها.'));
-  // أيقونات Lucide (جولة النشر T4): نسبتها في الملاحظة، ورابطها ملف الإشعارات المحلي في جذر الحزمة.
-  assert.ok(textOf(about).includes('وأغلب أيقونات الواجهة من Lucide برخصة ISC، وبعضها مشتق من Feather برخصة MIT.'));
-  const icons = links.find((a) => textOf(a) === 'أيقونات الواجهة · Lucide — ISC، ومنها Feather — MIT');
+  // الأيقونات مرسومة لترجمان، وترخيص Lucide باقٍ للإسناد (جولة النشر T4 والهوية الرابعة): في الملاحظة، ورابطه ملف الإشعارات المحلي.
+  assert.ok(textOf(about).includes('وأيقونات الواجهة رُسمت لهوية ترجمان؛ وترخيصا Lucide (ISC) وFeather (MIT) في ملف الإشعارات لأن الإصدارات السابقة استعملت أيقوناتهما.'));
+  const icons = links.find((a) => textOf(a) === 'إشعارات الأطراف الأخرى · Lucide — ISC، وFeather — MIT');
   assert.equal(icons.getAttribute('href'), '../../THIRD_PARTY_NOTICES.txt', 'ملف الإشعارات المحلي بمسار نسبي');
   assert.match(icons.getAttribute('rel'), /noopener/);
   const external = links.filter((a) => /^https?:/.test(a.getAttribute('href'))).map((a) => a.getAttribute('href'));

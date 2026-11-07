@@ -1,4 +1,4 @@
-// أنماط الأدوات (figma-design-brief §٥ و§٦ و§٣.٢): ورقتان داخل Shadow DOM مغلق، فلا تتسرب أنماط يوتيوب إليهما
+// أنماط الأدوات (figma-design-brief §٥ و§٦ و§٣.٢، والهوية الرابعة لوحة 10): ورقتان داخل Shadow DOM مغلق، فلا تتسرب أنماط يوتيوب إليهما
 // ولا أنماطهما إلى يوتيوب. المجموعة في بداية أدوات الشريط اليمنى LTR، والقوائم والتلميحات والرسائل في طبقة واحدة
 // داخل #movie_player محتواها RTL. القيم المتغيرة (المواضع) بمتغيرات CSS عبر CSSOM، لا بنص ولا بسمة style.
 import { playerTokensCss } from '../../ui/player-tokens.js';
@@ -29,7 +29,7 @@ export function groupCss() {
 .btn[hidden] { display: none; }
 .group[data-size="fullscreen"] { --w: 54px; --icon: 26px; --badge: 50px; --badge-fs: 15px; }
 .btn { all: unset; box-sizing: border-box; position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--w); height: 100%; color: var(--tj-p-icon); cursor: pointer; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
-.btn:hover { color: var(--tj-p-icon-hover); }
+.btn:hover { color: var(--tj-p-icon-hover); background: rgb(255 255 255 / 8%); }
 .btn:focus-visible { ${BAR_FOCUS} }
 .btn[aria-disabled="true"], .btn[data-unavailable] { color: var(--tj-p-icon-disabled); }
 .btn[aria-disabled="true"] { cursor: default; }
@@ -38,8 +38,9 @@ export function groupCss() {
 .badge[data-sign="zero"] { color: rgb(255 255 255 / 70%); }
 .badge[data-sign="positive"], .badge[data-sign="negative"] { color: var(--tj-p-accent); }
 .badge[aria-disabled="true"] { color: var(--tj-p-icon-disabled); }
-/* المفتوح (قائمته ظاهرة) والمضغوط (اللوحة مفتوحة): صبغة المحدد الباذنجانية الداكنة بأيقونة بنصها (الهوية الثالثة). */
-.btn[aria-expanded="true"], .btn[aria-pressed="true"] { background: var(--tj-p-selected); color: var(--tj-p-selected-ink); }
+/* المفتوح (قائمته ظاهرة) والمضغوط (اللوحة مفتوحة): الأيقونة بالطين الليلي وخطٌّ طيني 14×2 تحتها (لوحة 10: الطين للحالة المفتوحة). */
+.btn[aria-expanded="true"], .btn[aria-pressed="true"] { color: var(--tj-p-accent); }
+.btn[aria-expanded="true"]::after, .btn[aria-pressed="true"]::after { content: ""; position: absolute; left: 50%; bottom: 4px; width: 14px; height: 2px; margin-left: -7px; border-radius: 1px; background: var(--tj-p-accent); pointer-events: none; }
 .badge[data-pulse] { animation: tj-pulse ${PULSE_MS}ms ease-out; }
 @keyframes tj-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.14); } 100% { transform: scale(1); } }
 .btn[data-busy] .icon { display: none; }
@@ -67,12 +68,12 @@ export function layerCss() {
 
 /* التلميح: اسم الزر (ومعنى حالته) فوقه عند المرور والتركيز. بعرض محتواه (فلا ينحصر عند طرف المشغّل) وبسطرين إن طال. يلتقط
    المؤشر فيمكن المرور فوقه دون أن يزول، ويُخفيه Esc (WCAG 1.4.13؛ تدقيق 7a66f91، U89). */
-.tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); width: max-content; max-width: min(360px, calc(100% - 16px)); box-sizing: border-box; padding: 5px 9px; border-radius: 4px; background: var(--tj-p-tooltip-bg); color: #FFFFFF; font: 700 var(--tip-fs)/1.5 var(--tj-p-font-body); text-align: center; overflow-wrap: anywhere; direction: rtl; pointer-events: auto; }
+.tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); width: max-content; max-width: min(360px, calc(100% - 16px)); box-sizing: border-box; padding: 5px 9px; border-radius: 6px; background: var(--tj-p-tooltip-bg); box-shadow: 0 0 0 1px var(--tj-p-menu-line); color: #FFFFFF; font: 700 var(--tip-fs)/1.5 var(--tj-p-font-body); text-align: center; overflow-wrap: anywhere; direction: rtl; pointer-events: auto; }
 .tip[hidden] { display: none; }
 
-/* القائمة: زجاج من ليل النظام شفاف بعرض 280 (264 في المشغّل الضيق و320 في ملء الشاشة من layer.js)، صفوف 32، وتمرير داخلي منضبط حين
+/* القائمة: زجاج ليلي من الصنوبر 92% بتمويه 14 وزاوية 12 (لوحة 10) بعرض 280 (264 في المشغّل الضيق و320 في ملء الشاشة من layer.js)، صفوف 32، وتمرير داخلي منضبط حين
    يضيق ارتفاع المشغّل فقط (أقصى الارتفاع من layer.js)، دون تمرير أفقي. أقسامها تفصلها خطوط (.sep) بعرضها كله. */
-.menu { position: absolute; left: var(--x, 8px); bottom: var(--y, 60px); box-sizing: border-box; width: var(--w, 280px); max-width: calc(100% - 16px); max-height: var(--max-h, 70%); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 8px; display: flex; flex-direction: column; gap: 4px; background: var(--tj-p-menu-bg); color: var(--tj-p-menu-text); border-radius: var(--tj-p-menu-radius); box-shadow: 0 12px 32px rgb(0 0 0 / 45%), 0 0 0 1px var(--tj-p-menu-line); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); direction: rtl; text-align: right; font: 400 var(--fs)/1.5 var(--tj-p-font-body); pointer-events: auto; animation: tj-in var(--tj-p-motion-menu) ease-out; scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 30%) transparent; }
+.menu { position: absolute; left: var(--x, 8px); bottom: var(--y, 60px); box-sizing: border-box; width: var(--w, 280px); max-width: calc(100% - 16px); max-height: var(--max-h, 70%); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 8px; display: flex; flex-direction: column; gap: 4px; background: var(--tj-p-menu-bg); color: var(--tj-p-menu-text); border-radius: var(--tj-p-menu-radius); box-shadow: 0 12px 32px rgb(0 0 0 / 45%), 0 0 0 1px var(--tj-p-menu-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); direction: rtl; text-align: right; font: 400 var(--fs)/1.5 var(--tj-p-font-body); pointer-events: auto; animation: tj-in var(--tj-p-motion-menu) ease-out; scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 30%) transparent; }
 .menu[hidden] { display: none; }
 @keyframes tj-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .title { margin: 0; padding: 2px 6px; font: 700 var(--title-fs)/1.5 var(--tj-p-font-head); }
@@ -80,12 +81,12 @@ export function layerCss() {
 .head .title { padding: 2px 6px; }
 .label { padding: 0 6px; font-size: 0.93em; line-height: 1.5; font-weight: 700; color: var(--tj-p-menu-text-2); }
 
-/* مجموعة أزرار الخانات (الترجمات الموجودة، و«حفظ في»): المختارة صبغة المحدد بنصها، بلا إطار. */
-.slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; background: rgb(255 255 255 / 8%); direction: ltr; flex: none; }
+/* مجموعة أزرار الخانات (الترجمات الموجودة، و«حفظ في»): كالمقطّعة، المختارة بالطين الليلي بحبر داكن (لوحة 10)، بلا إطار. */
+.slots { display: inline-flex; gap: 2px; padding: 3px; border-radius: 8px; background: rgb(255 255 255 / 7%); direction: ltr; flex: none; }
 button.slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 7px; border-radius: 4px; font: 700 12px/1 var(--tj-p-font-body); font-variant-numeric: tabular-nums; color: var(--tj-p-menu-text-2); cursor: pointer; }
 button.slot.slot--new { direction: rtl; padding: 0 9px; }
 button.slot::after { content: ""; position: absolute; inset: -4px 0; } /* هدف 32 ارتفاعًا (CL-018) */
-button.slot[aria-checked="true"] { background: var(--tj-p-selected); color: var(--tj-p-selected-ink); cursor: default; }
+button.slot[aria-checked="true"] { background: var(--tj-p-accent); color: var(--tj-p-accent-ink); cursor: default; }
 button.slot:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); color: #FFFFFF; }
 button.slot[aria-disabled="true"] { cursor: default; }
 .slots[aria-disabled="true"] button.slot { opacity: 0.6; }
@@ -156,22 +157,22 @@ button.item[aria-expanded="true"]::after { transform: rotate(-135deg); }
 .actions { display: flex; flex-direction: column; gap: 6px; padding: 2px 0 0; }
 .actions.inline { flex-direction: row; }
 .actions.inline > * { flex: 1 1 0; min-width: 0; }
-button.primary, button.secondary, button.danger { all: unset; box-sizing: border-box; min-height: var(--row); display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 6px; font-weight: 700; cursor: pointer; text-align: center; line-height: 1.25; }
+button.primary, button.secondary, button.danger { all: unset; box-sizing: border-box; min-height: var(--row); display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 8px; font-weight: 700; cursor: pointer; text-align: center; line-height: 1.25; }
 button.primary > .stack, button.secondary > .stack { min-width: 0; }
 button.primary { background: var(--tj-p-accent); color: var(--tj-p-accent-ink); }
 button.primary:hover { filter: brightness(1.08); }
-button.secondary { background: rgb(255 255 255 / 8%); color: #FFFFFF; }
-button.secondary:hover { background: rgb(255 255 255 / 14%); }
+button.secondary { background: rgb(255 255 255 / 10%); color: var(--tj-p-menu-text); }
+button.secondary:hover { background: rgb(255 255 255 / 16%); }
 button.danger { background: var(--tj-p-error); color: var(--tj-p-accent-ink); }
 button.primary[aria-disabled="true"], button.secondary[aria-disabled="true"] { opacity: 0.45; cursor: default; filter: none; }
 button.primary[aria-busy="true"] { cursor: progress; }
 button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; font-size: 0.93em; font-weight: 700; padding: 7px 4px; margin: -7px -4px; } /* «لماذا؟» بهدف 32 دون تغيير السطر (CL-018) */
 
-/* المقطّعة: خيار واحد من قليل في صف (وضع التصدير، وأوضاع العرض، والخطوة)؛ المختار صبغة المحدد بنصها، بلا إطار. */
-.seg { display: flex; gap: 2px; padding: 2px; border-radius: 6px; background: rgb(255 255 255 / 8%); }
+/* المقطّعة: خيار واحد من قليل في صف (وضع التصدير، وأوضاع العرض، والخطوة)؛ المختار بالطين الليلي بحبر داكن (لوحة 10)، بلا إطار. */
+.seg { display: flex; gap: 2px; padding: 3px; border-radius: 8px; background: rgb(255 255 255 / 7%); }
 .seg button { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; min-height: calc(var(--row) - 4px); display: flex; align-items: center; justify-content: center; padding: 0 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tj-p-menu-text-2); font-weight: 700; }
 .seg button:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); color: #FFFFFF; }
-.seg button[aria-checked="true"] { background: var(--tj-p-selected); color: var(--tj-p-selected-ink); }
+.seg button[aria-checked="true"] { background: var(--tj-p-accent); color: var(--tj-p-accent-ink); }
 .seg button[aria-disabled="true"] { opacity: 0.45; cursor: default; }
 /* المقطّعة بجوار تسميتها في صف (خطوة الأزرار): بعرض محتواها فلا يُقص «مخصص»، والتسمية تأخذ الباقي. */
 .row.field > .seg { flex: none; }
@@ -184,8 +185,8 @@ button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decor
 .field label, .field .flabel { flex: 1; white-space: nowrap; font-weight: 700; color: var(--tj-p-menu-text-2); font-size: 0.93em; }
 .row.field > .seg + * { flex: none; }
 .field .unit { color: var(--tj-p-menu-text-2); }
-input.num { all: unset; box-sizing: border-box; width: 80px; height: 28px; padding: 0 8px; border-radius: 6px; direction: ltr; text-align: left; font: 500 var(--fs)/1 var(--tj-p-font-mono); color: #FFFFFF; background: rgb(255 255 255 / 6%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 35%); cursor: text; }
-input.num:focus { box-shadow: inset 0 0 0 2px var(--tj-p-accent); }
+input.num { all: unset; box-sizing: border-box; width: 80px; height: 28px; padding: 0 8px; border-radius: 6px; direction: ltr; text-align: left; font: 700 var(--fs)/1 var(--tj-p-font-mono); color: var(--tj-p-menu-text); background: rgb(0 0 0 / 30%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%); cursor: text; }
+input.num:focus { box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(217 147 123 / 25%); }
 input.num[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--tj-p-error); }
 .field-error { padding: 0 6px 2px; color: var(--tj-p-error); font-size: 0.93em; }
 .field-error:empty, .field-error[hidden] { display: none; }
@@ -195,7 +196,7 @@ label.item:hover { background: var(--tj-p-menu-hover); }
 
 /* الرسائل العابرة فوق سطر الترجمة: ثلاث على الأكثر بعرض واحد، والإجراء («تراجع») بالإبراز مسطّرًا في طرفها. */
 .toasts { position: absolute; left: 50%; bottom: var(--y, 60px); transform: translateX(-50%); width: min(420px, calc(100% - 24px)); display: flex; flex-direction: column; align-items: stretch; gap: 8px; pointer-events: none; }
-.toast { box-sizing: border-box; max-width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: var(--tj-p-menu-bg); color: #FFFFFF; direction: rtl; font: 400 var(--fs)/1.5 var(--tj-p-font-body); box-shadow: 0 8px 24px rgb(0 0 0 / 40%), 0 0 0 1px var(--tj-p-menu-line); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); pointer-events: auto; animation: tj-in var(--tj-p-motion-toast) ease-out; }
+.toast { box-sizing: border-box; max-width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: var(--tj-p-menu-bg); color: #FFFFFF; direction: rtl; font: 400 var(--fs)/1.5 var(--tj-p-font-body); box-shadow: 0 8px 24px rgb(0 0 0 / 40%), 0 0 0 1px var(--tj-p-menu-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); pointer-events: auto; animation: tj-in var(--tj-p-motion-toast) ease-out; }
 .toast[data-tone="error"] { box-shadow: 0 8px 24px rgb(0 0 0 / 40%), inset 0 0 0 1px color-mix(in srgb, var(--tj-p-error) 50%, transparent); }
 .toast svg.glyph { margin-top: 0; width: 16px; height: 16px; }
 .toast[data-tone="success"] .glyph { color: var(--tj-p-ok); }
@@ -212,7 +213,7 @@ label.item:hover { background: var(--tj-p-menu-hover); }
 .toast button.act:hover { background: var(--tj-p-menu-hover); }
 
 .menu :focus-visible, .toast :focus-visible { ${FOCUS} }
-input.num:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--tj-p-accent); }
+input.num:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(217 147 123 / 25%); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .menu, .toast { animation: none; } .layer { transition: none; } }`;
 }

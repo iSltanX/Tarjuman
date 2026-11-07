@@ -175,9 +175,9 @@ test('حوار تبديل الخانة بتغييرات غير محفوظة: «�
   assert.equal(editor.state.slot, 1, 'البقاء لا يبدّل');
 });
 
-test('أنماط المحرّر: لا لون صلب (ألوانها من الرموز بالوضعين)، وأيقونة الإعادة معكوسة، والشريط السفلي معكوس بالرموز', () => {
+test('أنماط المحرّر: لا لون صلب (ألوانها من الرموز بالوضعين)، وأيقونة الإعادة برسمها في الهوية لا بقلب أيقونة التراجع، والشريط السفلي معكوس بالرموز', () => {
   const css = readFileSync(new URL('../../../../src/pages/editor/editor.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.equal(/#[0-9a-fA-F]{3,8}\b|\brgba?\(/.test(css), false, 'لون صلب في editor.css');
-  assert.match(css, /\.ed-redo \.tj-icon \{ transform: scaleX\(-1\); \}/);
+  assert.doesNotMatch(css, /\.ed-redo \.tj-icon \{ transform/, 'لا قلب: «إعادة» أيقونة الهوية redo (لوحة 14)');
   assert.match(css, /\.ed-unsaved \{[^}]*background: var\(--tj-text\)[^}]*color: var\(--tj-bg\)/);
 });

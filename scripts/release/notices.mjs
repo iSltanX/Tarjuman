@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // إشعارات الأطراف الثالثة لترجمان (جولة النشر T4، docs/store-release.md): يولّد THIRD_PARTY_NOTICES.txt في جذر المستودع من مصادره
 // الحرفية في ترجمان نفسه، لا من نص يُكتب بيد: رخص الخطوط المضمّنة في src/ui/fonts (بقائمتي subtitle-fonts.js وui-fonts.js)،
-// وترخيص Lucide المنسوخ حرفيًا في src/ui/lucide-LICENSE.txt لأيقونات الواجهة، وترخيص esbuild لدوالّه المساعدة التي يدرجها في
+// وترخيص Lucide المنسوخ حرفيًا في src/ui/lucide-LICENSE.txt (إسنادًا لأيقونات الإصدارات السابقة)، وترخيص esbuild لدوالّه المساعدة التي يدرجها في
 // الحزمة، وأدوات البناء والفحص بإصداراتها في package-lock.json. ولا يضيف ترخيصًا لترجمان نفسه (ذلك في LICENSE).
 // ويُنسخ الملف إلى جذر كل حزمة (scripts/build.mjs)، ويتحقق التدقيق من وجوده وتغطيته (scripts/release/audit.mjs).
 //   node scripts/release/notices.mjs [--check]   (--check يفشل إن اختلف الملف المتتبَّع عمّا يولّده)
@@ -10,6 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SUBTITLE_FONT_LIST } from '../../src/ui/subtitle-fonts.js';
 import { UI_FONT_LIST } from '../../src/ui/ui-fonts.js';
+import { IDENTITY_ICONS } from '../../src/ui/icons.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const NOTICES_FILE = 'THIRD_PARTY_NOTICES.txt';
@@ -26,32 +27,11 @@ const FONT_META = Object.freeze({
 });
 
 /**
- * أيقونات الواجهة من Lucide، بمقارنة مساراتها بأصول Lucide في مستودعه (lucide-icons/lucide، الفرع main والوسوم 0.200.0
- * و0.300.0 و0.400.0، في 2026-11-04؛ الدليل docs/evidence/T4). اسم ترجمان ← اسم Lucide. «unchanged»: الشكل نفسه (وإن كُتب الخط
- * أو المضلّع مسارًا)، و«adapted»: مأخوذة ومعدّلة. وما لم يُعثر له على مقابل في Lucide في ORIGINAL_ICONS.
+ * أيقونات الواجهة كلها من مجموعة الهوية الرابعة (src/ui/icons.js): رُسمت لترجمان في لوحة الهوية (لوحة 06) على شبكة 20، ولا
+ * أيقونة منقولة من مجموعة أخرى. والأيقونات في المحرّر والنافذة واللوحة والشريط تُؤخذ منها. والإصدارات حتى 1.1.0 استعملت
+ * أيقونات Lucide، فبقي ترخيصه (ومعه Feather) في الإشعارات للإسناد، لأن أشكالًا كثيرة تتبع أعراف تلك المجموعات المفتوحة.
  */
-export const LUCIDE_ICONS = Object.freeze({
-  'src/ui/icons.js': Object.freeze({
-    unchanged: {
-      info: 'info', warning: 'triangle-alert', success: 'circle-check-big', danger: 'circle-x', library: 'library',
-      settings: 'settings-2', external: 'external-link', edit: 'pencil', replace: 'refresh-cw', download: 'download',
-      upload: 'upload', chevron: 'chevron-down', copy: 'copy', check: 'check', more: 'ellipsis', search: 'search',
-      restore: 'rotate-ccw', clipboard: 'clipboard', alert: 'circle-alert', x: 'x', play: 'play', video: 'video',
-      folder: 'folder', clock: 'clock', shield: 'shield', activity: 'activity', plus: 'plus',
-    },
-    adapted: { editor: 'file-text', trash: 'trash-2', type: 'type', sliders: 'sliders-vertical', 'hard-drive': 'hard-drive', list: 'list', captions: 'captions' },
-  }),
-  'src/player/panel/dom.js': Object.freeze({ unchanged: { minus: 'minus', 'eye-off': 'eye-off', 'arrow-up': 'arrow-up', 'arrow-down': 'arrow-down' }, adapted: {} }),
-  'src/pages/editor/icons.js': Object.freeze({ unchanged: { arrow: 'arrow-right' }, adapted: { split: 'scissors' } }),
-  'src/pages/popup/icons.js': Object.freeze({ unchanged: {}, adapted: { 'eye-off': 'eye-off' } }),
-  'src/player/controls/glyphs.js': Object.freeze({ unchanged: {}, adapted: { flag: 'flag' } }),
-});
-/** أيقونات رُسمت لترجمان: لا مقابل لها في Lucide بالمقارنة نفسها. */
-export const ORIGINAL_ICONS = Object.freeze({
-  'src/ui/icons.js': ['screen', 'layers'],
-  'src/pages/editor/icons.js': ['flag', 'merge'],
-  'src/player/controls/icons.js': ['download', 'upload', 'panel', 'minus', 'plus'],
-});
+export const ORIGINAL_ICONS = Object.freeze({ 'src/ui/icons.js': Object.freeze(Object.keys(IDENTITY_ICONS)) });
 
 const rule = (title) => `\n${'='.repeat(78)}\n${title}\n${'='.repeat(78)}\n`;
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n').trimEnd();
@@ -112,17 +92,13 @@ export function generate() {
   out.push(oflBody);
 
   out.push('');
-  out.push('1.2 Icons — Lucide (ISC License), including icons that Lucide derives from Feather (MIT License).');
-  out.push('Most interface icons are taken from Lucide (https://lucide.dev), some unchanged and some adapted. Tarjuman name ← Lucide name:');
-  for (const [file, { unchanged, adapted }] of Object.entries(LUCIDE_ICONS)) {
-    const list = (o) => Object.entries(o).map(([ours, theirs]) => (ours === theirs ? ours : `${ours} ← ${theirs}`)).join(', ');
-    out.push('');
-    out.push(`  ${file}`);
-    if (Object.keys(unchanged).length) out.push(`    unchanged: ${list(unchanged)}`);
-    if (Object.keys(adapted).length) out.push(`    adapted:   ${list(adapted)}`);
+  out.push('1.2 Icons — drawn for Tarjuman.');
+  for (const [file, names] of Object.entries(ORIGINAL_ICONS)) {
+    out.push(`The interface icons in ${file} (${names.length}) were drawn for Tarjuman's visual identity on a 20-unit grid,`);
+    out.push(`and every other part of the interface takes its icons from that set: ${names.join(', ')}.`);
   }
-  out.push('');
-  out.push('Drawn for Tarjuman (no Lucide counterpart found by the comparison): ' +Object.entries(ORIGINAL_ICONS).map(([file, names]) => `${names.join(', ')} in ${file}`).join('; ') + '.');
+  out.push('Their shapes follow the common conventions of open icon sets. Tarjuman 1.1.0 and earlier used icons from Lucide');
+  out.push('(ISC License), including icons that Lucide derives from Feather (MIT License); that license is kept below for attribution.');
   out.push('');
   out.push(`Lucide license, as published in the Lucide repository (copied verbatim to ${LUCIDE_LICENSE}):`);
   out.push('');

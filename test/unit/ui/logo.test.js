@@ -1,70 +1,99 @@
-// الشعار «المعيّنان المتشابكان» (docs/identity-v3.md): التركيب بصندوق لوحة التصميم ونسبتها، والاسم بقاعدة nonzero (لا تقطيع)
-// والعلامة بقاعدة evenodd (التداخل مفرّغ)، والمجموعات الثلاث باقية لثبات الواجهة، وعلامة شبكة 48 هي علامة التركيب نفسها مصغّرة.
+// الشعار «كتابٌ مفتوح» (docs/identity-v4.md): مسارات الرمزين #logo و#logoS حرفيًا من لوحة الهوية بنسب φ من D = 100، والنسخة
+// المصحّحة تحت 32 بكسل، والتركيب (الرمز ثم الاسم نصًّا بـCairo 800)، وأصول الشعار المولّدة (ملفا المصدر وأيقونات الإضافة) تطابق
+// ما يولّده tools/brand/icons.mjs من المسارات نفسها، وسكربت المحتوى لا يحمل غير الرمز.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LOGO_RATIO, LOGO_VIEWBOX, MARK_PATH, MARK_VIEWBOX, logo } from '../../../src/ui/logo.js';
+import { LOGO_RATIO, LOGO_VIEWBOX, MARK_BOOK, MARK_BOOK_SMALL, MARK_DOTS, SMALL_BELOW, logo, logoMark } from '../../../src/ui/logo.js';
+import { MANIFEST_ICONS, OUTPUTS, PINE, IVORY } from '../../../tools/brand/icons.mjs';
 import { newDocument } from '../pages/library/fake-dom.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const nums = (d) => [...d.matchAll(/-?\d+(?:\.\d+)?/g)].map((m) => Number(m[0]));
+const PHI = (1 + Math.sqrt(5)) / 2;
+const D = 100;
 
-test('التركيب: صندوق اللوحة ونسبتها، والعرض من الارتفاع، والاسم المقروء أو الزخرفي', () => {
-  assert.equal(LOGO_VIEWBOX, '0 8.5 190.27 45.21');
-  assert.equal(LOGO_RATIO, 190.27 / 45.21);
+test('الرمزان حرفيًا من لوحة الهوية (الإصدار 1794035287-e3de)', () => {
+  assert.equal(LOGO_VIEWBOX, '0 0 200 176.4');
+  assert.equal(LOGO_RATIO, 200 / 176.4);
+  assert.deepEqual(MARK_DOTS, ['M50 0L100 50 50 100 0 50Z', 'M150 0L200 50 150 100 100 50Z']);
+  assert.equal(MARK_BOOK, 'M0 114.6H23.6C46.5 114.6 71 124.2 100 152.8C129 124.2 153.5 114.6 176.4 114.6H200V176.4H0Z');
+  assert.equal(MARK_BOOK_SMALL, 'M0 123.6H23.6C50 123.6 76 132 100 158C124 132 150 123.6 176.4 123.6H200V176.4H0Z');
+  assert.equal(SMALL_BELOW, 32);
+});
+
+test('هندسة φ: الكتاب بارتفاع D/φ، والفجوة D/φ⁴ في الأساسي وD/φ³ في المصحّح، وكتف الصفحة D/φ³ وغور الكعب D/φ²', () => {
+  const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 0.06, `${msg}: ${a} ≠ ${b.toFixed(2)}`);
+  near(176.4 - 114.6, D / PHI, 'ارتفاع الكتاب');
+  near(114.6 - D, D / PHI ** 4, 'الفجوة في الأساسي');
+  near(123.6 - D, D / PHI ** 3, 'الفجوة في المصحّح');
+  near(23.6, D / PHI ** 3, 'كتف الصفحة المسطّح');
+  near(152.8 - 114.6, D / PHI ** 2, 'غور الكعب');
+  near(176.4, 1.764 * D, 'الارتفاع الكلي');
+});
+
+test('الرمز وحده: الأساسي من 32 فأكثر والمصحّح تحته، بارتفاع من النسبة، وزخرفي', () => {
   const doc = newDocument();
-  const svg = logo({ height: 24, doc });
-  assert.equal(svg.getAttribute('viewBox'), LOGO_VIEWBOX);
-  assert.equal(svg.getAttribute('class'), 'tj-logo');
-  assert.equal(svg.getAttribute('height'), '24');
-  assert.equal(svg.getAttribute('width'), String(Math.round(24 * LOGO_RATIO)));
-  assert.equal(svg.getAttribute('role'), 'img');
-  assert.equal(svg.getAttribute('aria-label'), 'ترجمان');
-  const deco = logo({ height: 18, label: null, className: 'x', doc });
+  for (const [w, small] of [[16, true], [24, true], [31, true], [32, false], [48, false]]) {
+    const svg = logoMark({ width: w, doc });
+    assert.equal(svg.getAttribute('viewBox'), LOGO_VIEWBOX);
+    assert.equal(svg.getAttribute('width'), String(w));
+    assert.equal(Number(svg.getAttribute('height')), Math.round((w / LOGO_RATIO) * 10) / 10);
+    assert.equal(svg.getAttribute('aria-hidden'), 'true');
+    const ds = [...svg.children].map((p) => p.getAttribute('d'));
+    assert.deepEqual(ds, [...MARK_DOTS, small ? MARK_BOOK_SMALL : MARK_BOOK], `${w}`);
+    assert.deepEqual([...svg.children].map((p) => p.getAttribute('class')), ['tj-logo__dots', 'tj-logo__dots', 'tj-logo__book']);
+  }
+});
+
+test('التركيب: الرمز ثم الاسم «ترجمان» نصًّا (Cairo 800 من الأنماط)، باسم وصول واحد أو زخرفيًا', () => {
+  const doc = newDocument();
+  const root = logo({ width: 24, wordSize: 18, doc });
+  assert.equal(root.tagName.toLowerCase(), 'span');
+  assert.equal(root.className, 'tj-logo');
+  assert.equal(root.getAttribute('role'), 'img');
+  assert.equal(root.getAttribute('aria-label'), 'ترجمان');
+  const [mark, word] = root.children;
+  assert.equal(mark.getAttribute('class'), 'tj-logo__mark');
+  assert.equal(word.className, 'tj-logo__word');
+  assert.equal(word.textContent, 'ترجمان');
+  assert.equal(word.getAttribute('aria-hidden'), 'true');
+  assert.equal(word.style.fontSize, '18px');
+  const deco = logo({ label: null, word: false, doc });
   assert.equal(deco.getAttribute('aria-hidden'), 'true');
   assert.equal(deco.getAttribute('role'), null);
-  assert.equal(deco.getAttribute('class'), 'tj-logo x');
+  assert.equal(deco.children.length, 1);
 });
 
-test('الاسم مسار واحد بقاعدة nonzero، والعلامة بقاعدة evenodd، ومجموعة النقاط فارغة', () => {
-  const svg = logo({ doc: newDocument() });
-  const groups = [...svg.children];
-  assert.deepEqual(groups.map((g) => g.getAttribute('class')), ['tj-logo__word', 'tj-logo__glyph', 'tj-logo__dots']);
-  const [word, glyph, dots] = groups;
-  assert.equal([...word.children].length, 1);
-  assert.equal([...word.children][0].getAttribute('fill-rule'), 'nonzero', 'evenodd كان سبب التقطيع المرفوض');
-  assert.equal([...glyph.children].length, 1);
-  assert.equal([...glyph.children][0].getAttribute('fill-rule'), 'evenodd', 'تداخل المعيّنين مفرّغ');
-  assert.equal([...dots.children].length, 0, 'لا نقاط منفصلة');
-  // الاسم داخل الصندوق ويسار العلامة؛ والعلامة معيّنان متساويان.
-  const w = nums([...word.children][0].getAttribute('d'));
-  const g = nums([...glyph.children][0].getAttribute('d'));
-  const xs = (a) => a.filter((_, i) => i % 2 === 0);
-  const ys = (a) => a.filter((_, i) => i % 2 === 1);
-  assert.ok(Math.max(...xs(g)) <= 190.27 && Math.min(...xs(g)) > 140, 'العلامة يمين التركيب');
-  assert.ok(Math.min(...ys(g)) >= 8.5 && Math.max(...ys(g)) <= 8.5 + 45.21);
-  assert.ok(Math.min(...w) >= 0 && Math.max(...w) < 140, 'الاسم يسار العلامة داخل الصندوق');
-});
-
-test('علامة شبكة 48 هي علامة التركيب نفسها (×1.2 ثم نقل)، وصندوقها وحدها بهامش متساوٍ', () => {
-  const svg = logo({ doc: newDocument() });
-  const big = nums([...[...svg.children][1].children][0].getAttribute('d'));
-  const small = nums(MARK_PATH);
-  assert.equal(big.length, small.length);
-  const [dx, dy] = [big[0] - small[0] * 1.2, big[1] - small[1] * 1.2];
-  small.forEach((v, i) => assert.ok(Math.abs(big[i] - (v * 1.2 + (i % 2 ? dy : dx))) < 0.011, `النقطة ${i}`));
-  assert.equal(MARK_VIEWBOX, '1 8 46 32');
-  const [x0, y0, w, h] = MARK_VIEWBOX.split(' ').map(Number);
-  const mx = small.filter((_, i) => i % 2 === 0);
-  const my = small.filter((_, i) => i % 2 === 1);
-  assert.equal(+(Math.min(...mx) - x0).toFixed(2), +(x0 + w - Math.max(...mx)).toFixed(2), 'هامش أفقي متساوٍ');
-  assert.equal(+(Math.min(...my) - y0).toFixed(2), +(y0 + h - Math.max(...my)).toFixed(2), 'هامش رأسي متساوٍ');
-});
-
-test('سكربت المحتوى لا يستورد إلا العلامة: dom.js بلا logo() ولا مسار الاسم', () => {
+test('سكربت المحتوى (رأس اللوحة) يستورد مسارات الرمز وحدها، لا التركيب ولا الاسم', () => {
   const dom = readFileSync(path.join(ROOT, 'src/player/panel/dom.js'), 'utf8');
-  assert.match(dom, /import \{ MARK_PATH, MARK_VIEWBOX \} from '..\/..\/ui\/logo.js';/);
-  assert.doesNotMatch(dom, /\blogo\(/);
+  assert.match(dom, /import \{ LOGO_RATIO, LOGO_VIEWBOX, MARK_BOOK, MARK_BOOK_SMALL, MARK_DOTS, SMALL_BELOW \} from '..\/..\/ui\/logo.js';/);
+  assert.doesNotMatch(dom, /\blogo\(|logoMark\(/);
+});
+
+test('أصول الشعار المتتبَّعة تطابق ما يولّده tools/brand/icons.mjs بايتًا (المسارات نفسها وقواعد البلاطة في لوحة 03)', () => {
+  for (const [rel, make] of Object.entries(OUTPUTS)) assert.ok(readFileSync(path.join(ROOT, rel)).equals(make()), `${rel}: شغّل command node tools/brand/icons.mjs`);
+  // البلاطة: زاوية 23% من الضلع (11 عند 48)، والرمز بعرض 75% منها، والمصحّح تحت 48.
+  for (const [n, s] of Object.entries(MANIFEST_ICONS)) {
+    const size = Number(n);
+    assert.ok(Math.abs(s.rx / size - 0.23) < 0.02, `${n}: الزاوية`);
+    assert.ok(Math.abs((200 * s.scale) / size - 0.75) < 0.001, `${n}: عرض الرمز`);
+    assert.equal(s.small, size < 48, `${n}: المصحّح تحت 48`);
+    assert.ok(s.ty < (size - 176.4 * s.scale) / 2, `${n}: مرفوع فوق المركز الهندسي`);
+  }
+  assert.equal(PINE, '#1E4A44');
+  assert.equal(IVORY, '#F3EFE6');
+  const svg = readFileSync(path.join(ROOT, 'tools/brand/tarjuman-A-asil.svg'), 'utf8');
+  for (const d of [...MARK_DOTS, MARK_BOOK]) assert.ok(svg.includes(`d="${d}"`), d);
+});
+
+test('أيقونات البيان PNG بأحجامها الأربعة، وزواياها شفافة ووسطها صنوبر (بلا شفافية في جسم البلاطة)', () => {
+  for (const n of [16, 32, 48, 128]) {
+    const b = readFileSync(path.join(ROOT, `src/icons/tarjuman-icon-${n}.png`));
+    assert.equal(b.subarray(1, 4).toString('latin1'), 'PNG');
+    assert.equal(b.readUInt32BE(16), n);
+    assert.equal(b.readUInt32BE(20), n);
+    assert.equal(b[25], 6, 'RGBA');
+  }
 });

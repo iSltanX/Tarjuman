@@ -165,7 +165,7 @@ export async function mountEditor(app, {
   app.replaceChildren();
   app.classList.add('ed-app');
   const backBtn = button({ label: 'المحفوظات', variant: 'ghost', size: 'sm', className: 'ed-back', onClick: () => goLibrary(), doc });
-  backBtn.replaceChildren(editorIcon('arrow', { doc }), el('span', { text: 'المحفوظات', doc })); // سهم الرجوع (يمينًا في RTL) ثم الاسم
+  backBtn.replaceChildren(editorIcon('chev-right', { doc }), el('span', { text: 'المحفوظات', doc })); // سهم الرجوع (يمينًا في RTL) ثم الاسم
   // العنوان بقاعدة «حرف عربي ⇒ RTL» لا أول حرف قوي (قرار سلطان، CL-002)، بمحاذاة يمين حتى الإنجليزي الخالص.
   const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate tj-auto', doc });
   const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'خانة التحرير', onSelect: (n) => switchSlot(n), doc });
@@ -174,8 +174,8 @@ export async function mountEditor(app, {
   const restoreOrigBtn = button({ label: 'استعادة الأصل…', variant: 'ghost', size: 'sm', onClick: () => onRestoreOriginal(), doc });
   const statusBox = el('span', { className: 'ed-status', attrs: { role: 'status' }, doc });
   // أيقونتان بلا نص (اسمهما في aria-label، وما سيتراجع عنه أو يعاد في التلميح): الإعادة هي أيقونة التراجع معكوسة بـCSS.
-  const undoBtn = button({ label: 'تراجع', icon: 'restore', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-undo', onClick: () => doUndo(), doc });
-  const redoBtn = button({ label: 'إعادة', icon: 'restore', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-redo', onClick: () => doRedo(), doc });
+  const undoBtn = button({ label: 'تراجع', icon: 'undo', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-undo', onClick: () => doUndo(), doc });
+  const redoBtn = button({ label: 'إعادة', icon: 'redo', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-redo', onClick: () => doRedo(), doc });
   // «تصدير ▾» (§١٩.٩): الترجمة SRT، وتقرير المراجعة، والنص الدراسي؛ وكلها عبر saveFile (R65).
   const exportMenu = createMenu({
     label: 'تصدير', chevron: true, doc,

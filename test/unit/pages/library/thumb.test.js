@@ -46,7 +46,7 @@ test('مفعّلة: عنصر img واحد بالسمات المعتمدة وعن
   assert.deepEqual(urls, [`https://i.ytimg.com/vi/${ID}/mqdefault.jpg`]);
 });
 
-test('مُطفأة (prefs.ui.thumbnails = false): بلاطة بأيقونة الفيديو ولا img ولا أي عنوان صورة', () => {
+test('مُطفأة (prefs.ui.thumbnails = false): بلاطة بأيقونة التشغيل ولا img ولا أي عنوان صورة', () => {
   const t = make({ enabled: false });
   assert.equal(imgOf(t), null);
   assert.equal(t.state(), 'fallback');
@@ -56,7 +56,7 @@ test('مُطفأة (prefs.ui.thumbnails = false): بلاطة بأيقونة ال
   const svg = tile.children[0];
   assert.equal(svg.tagName, 'svg');
   assert.equal(svg.getAttribute('aria-hidden'), 'true', 'الأيقونة زخرفية');
-  assert.deepEqual([...svg.children].map((c) => c.tagName), ['path', 'rect'], 'أيقونة الفيديو (كاميرا) لا لقطة');
+  assert.deepEqual([...svg.children].map((c) => c.tagName), ['path'], 'أيقونة التشغيل (لوحة 13) لا لقطة');
   const everything = findAll(t.root, () => true).flatMap((e) => [...e._attrs.values(), e.textContent]).join('|');
   assert.equal(/ytimg|\.jpg|https?:/.test(everything), false, 'لا طلب ولا عنوان حين تُطفأ');
 });

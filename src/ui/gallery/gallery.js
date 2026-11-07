@@ -1,6 +1,7 @@
 // معرض مكوّنات src/ui في حالاتها (بناء التطوير وحده): مرجع بصري للمراحل اللاحقة ولقطات P2-AC6. وهو صفحة إضافة،
 // فيكشف للحزام الحي (P10) saveFile والتخزين وأداة القفز في صفحة إضافة حقيقية؛ بناء الإنتاج لا يحويه.
-import { alertBox, button, chipGroup, choiceGroup, el, emptyState, field, ltr, slotPicker, statusPill } from '../components.js';
+import { ICON_NAMES, alertBox, button, chipGroup, choiceGroup, el, emptyState, field, icon, ltr, slotPicker, statusPill } from '../components.js';
+import { logo, logoMark } from '../logo.js';
 import { COUNT_FORMS, formatCount, formatOffset, formatTimecode, textDirection } from '../format.js';
 import { numberField, savedMark, segmented } from '../forms.js';
 import { createMenu } from '../menu.js';
@@ -17,7 +18,7 @@ import { jumpToVideo } from '../seek.js';
 const store = globalThis.chrome?.runtime?.id ? createStore() : null;
 globalThis.__tarjumanPage = { saveFile, savedPath, blobDownload, store, jumpToVideo };
 
-const TOKENS = ['bg', 'surface', 'surface-2', 'sunken', 'text', 'text-2', 'muted', 'border', 'border-strong', 'brand', 'brand-soft', 'focus', 'success', 'warning', 'danger', 'info', 'edited'];
+const TOKENS = ['bg', 'surface', 'surface-2', 'surface-3', 'text', 'text-2', 'muted', 'border', 'border-strong', 'border-input', 'brand', 'selected-soft', 'accent', 'accent-text', 'accent-fill', 'accent-soft', 'focus', 'success', 'warning', 'danger', 'info', 'edited'];
 
 const section = (title, ...children) => el('section', { className: 'tj-card g-section', children: [el('h2', { className: 'tj-h3', text: title }), ...children] });
 
@@ -30,6 +31,18 @@ startPage({
       className: 'g-swatches',
       children: TOKENS.map((t) => el('div', { className: 'g-swatch', children: [el('span', { attrs: { style: `background: var(--tj-${t})` } }), el('code', { text: t })] })),
     })));
+    // الشعار «كتابٌ مفتوح» بأحجامه (الرمز المصحّح تحت 32) والأيقونات الواحدة والخمسون على شبكة 20 (الهوية الرابعة).
+    app.append(section('الشعار',
+      el('div', { className: 'tj-row', children: [logo({ width: 24, wordSize: 18 }), logo({ width: 40, wordSize: 28 }), ...[16, 24, 32, 48, 64].map((w) => logoMark({ width: w, className: 'tj-logo__mark g-mark' }))] }),
+    ));
+    app.append(section('الأيقونات', el('div', {
+      className: 'g-icons',
+      children: ICON_NAMES.filter((n) => !['success', 'danger', 'chevron', 'arrow-up', 'arrow-down'].includes(n)).map((n) => el('span', { className: 'g-icon', attrs: { title: n }, children: [icon(n), el('code', { text: n })] })),
+    })));
+    app.append(section('نقطة التاء', el('div', { className: 'tj-row', children: [
+      el('span', { className: 'tj-row', children: [el('i', { className: 'tj-sinnah', attrs: { style: 'color: var(--tj-success)' } }), el('span', { className: 'tj-caption', text: 'أدوات المشغّل تعمل' })] }),
+      el('span', { className: 'tj-row', children: [el('i', { className: 'tj-sinnah tj-sinnah--accent tj-sinnah--pulse' }), el('span', { className: 'tj-caption', text: 'بانتظار المشغّل' })] }),
+    ] })));
     app.append(section('الخطوط',
       el('p', { className: 'tj-h1', text: 'المحفوظات — عنوان h1' }),
       el('p', { className: 'tj-h4', children: ['عنوان فيديو إنجليزي معزول: ', ltr('Do schools kill creativity? | TED', { mono: false })] }),
@@ -39,10 +52,10 @@ startPage({
       el('p', { className: 'tj-caption', children: ['التوقيت ', ltr(formatTimecode(724500)), ' والمعرّف ', ltr('dQw4w9WgXcQ'), ' والإزاحة ', ltr(formatOffset(500), { mono: false }), ' و', ltr(formatOffset(-1000), { mono: false })] }),
       el('p', { className: 'tj-body-sm', text: [1, 2, 3, 11, 100].map((n) => formatCount(n, COUNT_FORMS.cue)).join(' · ') }),
     ));
-    const variants = ['primary', 'secondary', 'ghost', 'danger'];
+    const variants = ['primary', 'secondary', 'outline', 'ghost', 'danger', 'accent'];
     app.append(section('الأزرار',
-      el('div', { className: 'tj-row', children: variants.map((v) => button({ label: v === 'danger' ? 'حذف' : 'حفظ', variant: v })) }),
-      el('div', { className: 'tj-row', children: [button({ label: 'صغير', size: 'sm' }), button({ label: 'متوسط' }), button({ label: 'كبير', size: 'lg', variant: 'primary' }), button({ label: 'بأيقونة', icon: 'library' })] }),
+      el('div', { className: 'tj-row', children: variants.map((v) => button({ label: v === 'danger' ? 'حذف' : v === 'accent' ? 'الآن' : 'حفظ', variant: v })) }),
+      el('div', { className: 'tj-row', children: [button({ label: 'دقيق', size: 'xs' }), button({ label: 'صغير', size: 'sm' }), button({ label: 'متوسط' }), button({ label: 'كبير', size: 'lg', variant: 'primary' }), button({ label: 'بطولي', size: 'xl', variant: 'primary' }), button({ label: 'بأيقونة', icon: 'library' })] }),
       el('div', { className: 'tj-row', children: [button({ label: 'جارٍ الحفظ', variant: 'primary', loading: true }), button({ label: 'تصدير', variant: 'primary', disabledReason: 'صحّح 3 أخطاء توقيت أولًا' }), el('span', { className: 'tj-btn__reason', text: 'صحّح 3 أخطاء توقيت أولًا' })] }),
     ));
     const err = field({ label: 'الإزاحة بالثواني', value: '0.25', mono: true, hint: 'بخطوة 0.1 ث', error: 'القيمة من مضاعفات 0.1 فقط' });
@@ -83,7 +96,7 @@ startPage({
     ));
     const menu = createMenu({ label: 'المزيد', chevron: true, items: [
       { kind: 'group', label: 'الترجمات' },
-      { id: 'tracks', label: 'الترجمات…', icon: 'captions', onSelect: () => {} },
+      { id: 'tracks', label: 'الترجمات…', icon: 'cc', onSelect: () => {} },
       { id: 'restore', label: 'استعادة النسخة السابقة', disabledReason: 'لا نسخة سابقة', onSelect: () => {} },
       { kind: 'separator' },
       { id: 'delete', label: 'حذف', tone: 'danger', onSelect: () => {} },
@@ -113,6 +126,7 @@ startPage({
     toaster.show('حُفظ.', 'success');
     toaster.show('الترجمة 2', 'info', { action: { label: 'تراجع', onClick: () => {} } });
     toaster.show('تعذّر الحفظ. أعد المحاولة.', 'danger');
+    toaster.show('نُسخت التعليمات.', 'info');
     app.append(section('الرسالة العابرة', toaster.root, toaster.live));
   },
 });

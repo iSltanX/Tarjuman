@@ -1,47 +1,83 @@
-// مجموعة أيقونات الواجهة الواحدة (بيانات بلا DOM): الصفحات عبر icon() في components.js، ورموز الحالة في قوائم المشغّل
-// (player/controls/glyphs.js). وحدة مستقلة فلا يسحب سكربت المحتوى مكوّنات الصفحات ولا مسارات الشعار معها.
+// مجموعة أيقونات الواجهة الواحدة (بيانات بلا DOM): الصفحات عبر icon() في components.js، ولوحة النص المتزامن (player/panel/dom.js)،
+// ورموز الحالة في قوائم المشغّل (player/controls/glyphs.js)، وأدوات الشريط (player/controls/icons.js). وحدة مستقلة فلا يسحب سكربت
+// المحتوى مكوّنات الصفحات ولا الشعار معها.
+
+/** شبكة الأيقونات: 20 بحشو 2 (منطقة الرسم 16)، وسماكة الخط 1.75 من الـCSS (2 في 16 و14، و1.9 في المشغّل). */
+export const ICON_VIEWBOX = '0 0 20 20';
 
 /**
- * أيقونات بخط 2px على شبكة 24، أغلبها مأخوذ من Lucide (ISC، وبعضه مشتق من Feather، MIT): منها ما نُقل كما هو ومنها ما
- * عُدّل، وscreen وlayers رُسمتا لترجمان. القائمة بأسمائها ونص الترخيصين في THIRD_PARTY_NOTICES.txt (scripts/release/notices.mjs،
- * والترخيص حرفيًا في lucide-LICENSE.txt بجوار هذا الملف)؛ وأي أيقونة تُضاف من Lucide تُسجَّل هناك. الاتجاهية منها (external،
- * chevron) تُقلب بالـCSS عند الحاجة لا هنا.
+ * أيقونات الهوية الرابعة (لوحة 06 «الأيقونات»، ومعها «مبادلة» من لوحة النافذة 09): رُسمت لترجمان في لوحة الهوية على شبكة 20
+ * بخط واحد وزوايا مستديرة، والمصمتة منها (التشغيل والإيقاف والمزيد والرمز) بكتلة تعادل المخطّطة. المسارات حرفيًا من رموز
+ * #i-* في project/*.dc.html (الإصدار 1794035287-e3de). الاتجاهية منها (chev-left/right، undo/redo) تُقلب بالـCSS عند الحاجة لا هنا،
+ * وأيقونات الزمن والوسائط لا تُقلب. والنسبة في THIRD_PARTY_NOTICES.txt (scripts/release/notices.mjs).
  */
+export const IDENTITY_ICONS = Object.freeze({
+  download: [['path', { d: 'M10 3v10M6 9l4 4 4-4' }], ['path', { d: 'M3 15v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1' }]],
+  upload: [['path', { d: 'M10 13V3M6 7l4-4 4 4' }], ['path', { d: 'M3 15v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1' }]],
+  copy: [['rect', { x: 7, y: 7, width: 10, height: 10, rx: 2 }], ['path', { d: 'M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2' }]],
+  edit: [['path', { d: 'M13.5 3.5a1.8 1.8 0 0 1 2.6 2.6L7 15.2 3.5 16.5l1.3-3.5z' }]],
+  library: [['rect', { x: 3, y: 4, width: 4, height: 12, rx: 1 }], ['rect', { x: 8, y: 4, width: 4, height: 12, rx: 1 }], ['path', { d: 'M13.5 4.5l3 11' }]],
+  settings: [['path', { d: 'M3 6h7.5M14.5 6H17M3 10h2.5M9.5 10H17M3 14h9.5M16.5 14H17' }], ['circle', { cx: 12.5, cy: 6, r: 1.75 }], ['circle', { cx: 7.5, cy: 10, r: 1.75 }], ['circle', { cx: 14.5, cy: 14, r: 1.75 }]],
+  search: [['circle', { cx: 9, cy: 9, r: 5.5 }], ['path', { d: 'M13 13l4 4' }]],
+  panel: [['rect', { x: 3, y: 4, width: 14, height: 12, rx: 2 }], ['path', { d: 'M12 4v12M6 8h3M6 11h3' }]],
+  clock: [['circle', { cx: 10, cy: 10, r: 7 }], ['path', { d: 'M10 6v4l2.5 2' }]],
+  sync: [['path', { d: 'M3.5 10a6.5 6.5 0 0 1 11-4.7L16 7M16.5 10a6.5 6.5 0 0 1-11 4.7L4 13' }], ['path', { d: 'M16 3v4h-4M4 17v-4h4' }]],
+  minus: [['path', { d: 'M5 10h10' }]],
+  plus: [['path', { d: 'M10 5v10M5 10h10' }]],
+  check: [['path', { d: 'M4 10.5l4 4 8-9' }]],
+  x: [['path', { d: 'M5 5l10 10M15 5L5 15' }]],
+  more: [['circle', { cx: 5, cy: 10, r: 1.25, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 10, cy: 10, r: 1.25, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 15, cy: 10, r: 1.25, fill: 'currentColor', stroke: 'none' }]],
+  'chev-down': [['path', { d: 'M5 8l5 5 5-5' }]],
+  'chev-up': [['path', { d: 'M5 12l5-5 5 5' }]],
+  'chev-left': [['path', { d: 'M12 5l-5 5 5 5' }]],
+  'chev-right': [['path', { d: 'M8 5l5 5-5 5' }]],
+  external: [['path', { d: 'M9 4H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-4M12 3h5v5M17 3l-8 8' }]],
+  info: [['circle', { cx: 10, cy: 10, r: 7 }], ['path', { d: 'M10 9v5M10 6.5v.5' }]],
+  warning: [['path', { d: 'M10 3l8 14H2z' }], ['path', { d: 'M10 8v4M10 14.5v.5' }]],
+  error: [['circle', { cx: 10, cy: 10, r: 7 }], ['path', { d: 'M7.5 7.5l5 5M12.5 7.5l-5 5' }]],
+  play: [['path', { d: 'M6 4l10 6-10 6z', fill: 'currentColor', stroke: 'none' }]],
+  pause: [['rect', { x: 5, y: 4, width: 3.5, height: 12, rx: 1, fill: 'currentColor', stroke: 'none' }], ['rect', { x: 11.5, y: 4, width: 3.5, height: 12, rx: 1, fill: 'currentColor', stroke: 'none' }]],
+  eye: [['path', { d: 'M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z' }], ['circle', { cx: 10, cy: 10, r: 2.5 }]],
+  'eye-off': [['path', { d: 'M3 3l14 14M8.5 4.3A8 8 0 0 1 18 10s-1 2-3 3.7M5 6.2C3 7.7 2 10 2 10s3 6 8 6c1.3 0 2.5-.3 3.5-.8' }]],
+  trash: [['path', { d: 'M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10' }]],
+  undo: [['path', { d: 'M8 5L4 9l4 4' }], ['path', { d: 'M4 9h8a4 4 0 0 1 0 8h-2' }]],
+  redo: [['path', { d: 'M12 5l4 4-4 4' }], ['path', { d: 'M16 9H8a4 4 0 0 0 0 8h2' }]],
+  save: [['path', { d: 'M4 4h9l3 3v9H4z' }], ['path', { d: 'M7 4v4h5V4M7 16v-5h6v5' }]],
+  split: [['path', { d: 'M10 3v14' }], ['path', { d: 'M4 7h3M4 13h3M13 7h3M13 13h3' }]],
+  merge: [['path', { d: 'M4 6h5M4 14h5M9 6v8M9 10h7' }], ['path', { d: 'M13 7l3 3-3 3' }]],
+  flag: [['path', { d: 'M5 17V4h9l-2 3 2 3H5' }]],
+  file: [['path', { d: 'M5 3h7l4 4v10H5z' }], ['path', { d: 'M12 3v4h4' }]],
+  shield: [['path', { d: 'M10 3l6 2v5c0 4-2.5 6.5-6 7.5C6.5 16.5 4 14 4 10V5z' }]],
+  compare: [['rect', { x: 3, y: 4, width: 6, height: 12, rx: 1.5 }], ['rect', { x: 11, y: 4, width: 6, height: 12, rx: 1.5 }], ['path', { d: 'M5 8h2M5 11h2M13 8h2M13 11h2' }]],
+  restore: [['path', { d: 'M3.5 10a6.5 6.5 0 1 1 2 4.7' }], ['path', { d: 'M3 15v-4h4' }], ['path', { d: 'M10 7v3l2 1.5' }]],
+  filter: [['path', { d: 'M3 5h14l-5.5 6.5V16l-3-1.5v-3z' }]],
+  sort: [['path', { d: 'M6 4v12M3 13l3 3 3-3M14 16V4M11 7l3-3 3 3' }]],
+  'text-size': [['path', { d: 'M3 15l4-10 4 10M4.5 12h5M12 15l2.5-6 2.5 6M13 13h3' }]],
+  position: [['rect', { x: 3, y: 4, width: 14, height: 12, rx: 2 }], ['path', { d: 'M6 13h8' }]],
+  glossary: [['path', { d: 'M4 4h7a3 3 0 0 1 3 3v9H7a3 3 0 0 1-3-3z' }], ['path', { d: 'M4 4v9a3 3 0 0 1 3-3h7' }]],
+  backup: [['path', { d: 'M4 8a6 6 0 0 1 11.5-2.3A3.5 3.5 0 0 1 14.5 13H6a3 3 0 0 1-2-5z' }], ['path', { d: 'M10 9v6M7.5 12.5l2.5 2.5 2.5-2.5' }]],
+  activity: [['path', { d: 'M2 10h3l2-5 3 10 2-7 2 2h4' }]],
+  keyboard: [['rect', { x: 2.5, y: 5, width: 15, height: 10, rx: 2 }], ['path', { d: 'M6 8h1M9 8h1M12 8h1M6 11h1M9 11h1M12 11h1M7 13.5h6' }]],
+  sun: [['circle', { cx: 10, cy: 10, r: 3.5 }], ['path', { d: 'M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M4.3 15.7l1.4-1.4M14.3 5.7l1.4-1.4' }]],
+  moon: [['path', { d: 'M16 12.5A6.5 6.5 0 0 1 7.5 4a6.5 6.5 0 1 0 8.5 8.5z' }]],
+  cc: [['rect', { x: 2.5, y: 5, width: 15, height: 11, rx: 2 }], ['path', { d: 'M8.5 9.3a1.6 1.6 0 1 0 0 2.4M14 9.3a1.6 1.6 0 1 0 0 2.4' }]],
+  'logo-t': [['path', { d: 'M7 3l3 3-3 3-3-3zM13 3l3 3-3 3-3-3z', fill: 'currentColor', stroke: 'none' }], ['path', { d: 'M3 12h2.4c2.3 0 3.6 1 4.6 2.6 1-1.6 2.3-2.6 4.6-2.6H17v5H3z', fill: 'currentColor', stroke: 'none' }]],
+  swap: [['path', { d: 'M4 7h11M12 4l3 3-3 3M16 13H5M8 10l-3 3 3 3' }]],
+});
+
+/**
+ * أسماء دلالية في الشيفرة ← أيقونة الهوية: نغمات الرسائل والتنبيهات (success وdanger)، والسهم المنسدل، وسهما اللوحة. لا رسم
+ * خاص بها: كلٌّ منها يشير إلى أيقونة من المجموعة.
+ */
+export const ICON_ALIASES = Object.freeze({
+  success: 'check',
+  danger: 'error',
+  chevron: 'chev-down',
+  'arrow-up': 'chev-up',
+  'arrow-down': 'chev-down',
+});
+
 export const ICONS = Object.freeze({
-  info: [['circle', { cx: 12, cy: 12, r: 10 }], ['path', { d: 'M12 16v-4' }], ['path', { d: 'M12 8h.01' }]],
-  warning: [['path', { d: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' }], ['path', { d: 'M12 9v4' }], ['path', { d: 'M12 17h.01' }]],
-  success: [['path', { d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14' }], ['path', { d: 'm9 11 3 3L22 4' }]],
-  danger: [['circle', { cx: 12, cy: 12, r: 10 }], ['path', { d: 'm15 9-6 6' }], ['path', { d: 'm9 9 6 6' }]],
-  editor: [['path', { d: 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z' }], ['path', { d: 'M14 2v4a2 2 0 0 0 2 2h4' }], ['path', { d: 'M16 13H8' }], ['path', { d: 'M16 17H8' }]],
-  library: [['path', { d: 'm16 6 4 14' }], ['path', { d: 'M12 6v14' }], ['path', { d: 'M8 8v12' }], ['path', { d: 'M4 4v16' }]],
-  settings: [['path', { d: 'M20 7h-9' }], ['path', { d: 'M14 17H5' }], ['circle', { cx: 17, cy: 17, r: 3 }], ['circle', { cx: 7, cy: 7, r: 3 }]],
-  screen: [['rect', { x: 3, y: 4, width: 18, height: 13, rx: 2 }], ['path', { d: 'M7 13h10' }], ['path', { d: 'M9 10h6' }], ['path', { d: 'M8 21h8' }]],
-  external: [['path', { d: 'M15 3h6v6' }], ['path', { d: 'M10 14 21 3' }], ['path', { d: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6' }]],
-  edit: [['path', { d: 'M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z' }], ['path', { d: 'm15 5 4 4' }]],
-  replace: [['path', { d: 'M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' }], ['path', { d: 'M21 3v5h-5' }], ['path', { d: 'M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' }], ['path', { d: 'M8 16H3v5' }]],
-  download: [['path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }], ['path', { d: 'm7 10 5 5 5-5' }], ['path', { d: 'M12 15V3' }]],
-  upload: [['path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }], ['path', { d: 'm17 8-5-5-5 5' }], ['path', { d: 'M12 3v12' }]],
-  chevron: [['path', { d: 'm6 9 6 6 6-6' }]],
-  copy: [['rect', { x: 8, y: 8, width: 14, height: 14, rx: 2 }], ['path', { d: 'M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2' }]],
-  check: [['path', { d: 'M20 6 9 17l-5-5' }]],
-  more: [['circle', { cx: 12, cy: 12, r: 1 }], ['circle', { cx: 19, cy: 12, r: 1 }], ['circle', { cx: 5, cy: 12, r: 1 }]],
-  trash: [['path', { d: 'M3 6h18' }], ['path', { d: 'M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6' }], ['path', { d: 'M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2' }], ['path', { d: 'M10 11v6' }], ['path', { d: 'M14 11v6' }]],
-  search: [['circle', { cx: 11, cy: 11, r: 8 }], ['path', { d: 'm21 21-4.3-4.3' }]],
-  restore: [['path', { d: 'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8' }], ['path', { d: 'M3 3v5h5' }]],
-  clipboard: [['rect', { x: 8, y: 2, width: 8, height: 4, rx: 1 }], ['path', { d: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' }]],
-  alert: [['circle', { cx: 12, cy: 12, r: 10 }], ['path', { d: 'M12 8v4' }], ['path', { d: 'M12 16h.01' }]],
-  x: [['path', { d: 'M18 6 6 18' }], ['path', { d: 'm6 6 12 12' }]],
-  play: [['path', { d: 'm6 3 14 9-14 9V3z' }]],
-  video: [['path', { d: 'm22 8-6 4 6 4V8Z' }], ['rect', { x: 2, y: 6, width: 14, height: 12, rx: 2 }]],
-  folder: [['path', { d: 'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z' }]],
-  clock: [['circle', { cx: 12, cy: 12, r: 10 }], ['path', { d: 'M12 6v6l4 2' }]],
-  type: [['path', { d: 'M4 7V4h16v3' }], ['path', { d: 'M9 20h6' }], ['path', { d: 'M12 4v16' }]],
-  shield: [['path', { d: 'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z' }]],
-  sliders: [['path', { d: 'M4 21v-7' }], ['path', { d: 'M4 10V3' }], ['path', { d: 'M12 21v-9' }], ['path', { d: 'M12 8V3' }], ['path', { d: 'M20 21v-5' }], ['path', { d: 'M20 12V3' }], ['path', { d: 'M1 14h6' }], ['path', { d: 'M9 8h6' }], ['path', { d: 'M17 16h6' }]],
-  captions: [['rect', { x: 2, y: 5, width: 20, height: 14, rx: 2 }], ['path', { d: 'M7 13h4' }], ['path', { d: 'M15 13h2' }], ['path', { d: 'M7 17h2' }], ['path', { d: 'M13 17h4' }]],
-  'hard-drive': [['path', { d: 'M22 12H2' }], ['path', { d: 'M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z' }], ['path', { d: 'M6 16h.01' }], ['path', { d: 'M10 16h.01' }]],
-  activity: [['path', { d: 'M22 12h-4l-3 9L9 3l-3 9H2' }]],
-  list: [['path', { d: 'M8 6h13' }], ['path', { d: 'M8 12h13' }], ['path', { d: 'M8 18h13' }], ['path', { d: 'M3 6h.01' }], ['path', { d: 'M3 12h.01' }], ['path', { d: 'M3 18h.01' }]],
-  layers: [['path', { d: 'm12 2 9 4.5-9 4.5-9-4.5L12 2Z' }], ['path', { d: 'm3 11.5 9 4.5 9-4.5' }], ['path', { d: 'm3 16.5 9 4.5 9-4.5' }]],
-  plus: [['path', { d: 'M5 12h14' }], ['path', { d: 'M12 5v14' }]],
+  ...IDENTITY_ICONS,
+  ...Object.fromEntries(Object.entries(ICON_ALIASES).map(([alias, name]) => [alias, IDENTITY_ICONS[name]])),
 });

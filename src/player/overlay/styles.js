@@ -16,7 +16,7 @@ export function overlayCss() {
 .stage { position: absolute; left: 4%; right: 4%; bottom: var(--tj-offset, 8%); display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; font-family: var(--tj-sub-font, var(--tj-p-font-body)); font-size: var(--tj-fs, 22px); line-height: 1.5; opacity: 1; transition: opacity var(--tj-p-motion-subtitle) linear, bottom ${LIFT_MS}ms ease; }
 :host([data-anchor="top"]) .stage { top: var(--tj-offset, 8%); bottom: auto; }
 .stage[data-empty] { opacity: 0; }
-.line { box-sizing: border-box; width: fit-content; max-width: 100%; margin: 0; padding: 2px 8px; border-radius: 4px; text-align: center; unicode-bidi: isolate; overflow-wrap: anywhere; color: var(--tj-p-sub-text); pointer-events: none; }
+.line { box-sizing: border-box; width: fit-content; max-width: 100%; margin: 0; padding: 2px 10px; border-radius: 4px; text-align: center; unicode-bidi: isolate; overflow-wrap: anywhere; color: var(--tj-p-sub-text); pointer-events: none; }
 .line[dir="rtl"] { direction: rtl; }
 .line[dir="ltr"] { direction: ltr; }
 .ar { font-weight: 700; }

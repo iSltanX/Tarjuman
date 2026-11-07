@@ -1,5 +1,5 @@
-/* نافذة الأيقونة (لوحة Popup، والهوية الثالثة «باذنجاني على رمادي»): 340 عرضًا وارتفاع بحسب المحتوى (الحالات المعتادة بلا تمرير؛ والمتصفح
-   يحدّها بـ600). رأس 52 بالشعار المعتمد و«بياناتك على جهازك» على سطح البطاقة، وبطاقة الفيديو الحالي على الورق بخط شعري لا ظل،
+/* نافذة الأيقونة (الهوية الرابعة «كتابٌ مفتوح»، لوحة 09): 340 عرضًا وارتفاع بحسب المحتوى (الحالات المعتادة بلا تمرير؛ والمتصفح
+   يحدّها بـ600). رأس 52 بالشعار (الرمز 24 والاسم 18) و«بياناتك على جهازك» على سطح البطاقة، وبطاقة الفيديو الحالي على العاج بخط شعري لا ظل،
    وإجراءات 40 بعرضين متساويين، ثم تذييل 48 بمدخل واحد لكل وجهة (المحفوظات والإعدادات). كل لون من رموز src/ui/tokens.css
    بالوضعين، والمعيّن (نقطة التاء) نقطة الحالة وحدها. */
 .tj-popup { width: 340px; min-height: 0; background: var(--tj-bg); }
@@ -93,8 +93,9 @@
 .tj-popup__diag-result[data-tone="danger"] { color: var(--tj-danger); }
 
 /* ليست صفحة فيديو: ملاحظة معلومة ثم آخر الترجمات في بطاقة، لكل ترجمة سطر عنوانها وسطر عمرها وعدد مقاطعها. */
-.tj-popup__note { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-info-bg); color: var(--tj-text); font: 400 13px/20px var(--tj-font-body); }
-.tj-popup__note .tj-icon { color: var(--tj-info); }
+/* الملاحظة تنبيه محايد كلوحتي 08 و09: سطح غائر وأيقونتها بالطين. */
+.tj-popup__note { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); color: var(--tj-text); font: 400 13px/20px var(--tj-font-body); }
+.tj-popup__note .tj-icon { color: var(--tj-accent); }
 .tj-popup__recent:empty { display: none; }
 .tj-popup__card--list { padding: 4px 12px; gap: 0; }
 .tj-popup__recent-list { display: flex; flex-direction: column; }

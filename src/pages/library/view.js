@@ -613,7 +613,7 @@ export function createLibrary(env) {
       items: [
         { kind: 'group', label: 'تصدير' },
         ...exportItems,
-        { id: 'study', label: 'نص دراسي…', icon: 'editor', disabledReason: studyGate(entry), onSelect: () => study(m, entry) },
+        { id: 'study', label: 'نص دراسي…', icon: 'file', disabledReason: studyGate(entry), onSelect: () => study(m, entry) },
         { kind: 'separator' },
         { id: 'upload', label: 'رفع ترجمة…', icon: 'upload', onSelect: () => upload(m) },
         { id: 'copy', label: 'نسخ التعليمات', icon: 'copy', hint: COPY_TIP, disabledReason: gate.enabled ? null : gate.reason, onSelect: () => copyInstructions(m, entry) },
@@ -820,7 +820,7 @@ export function createLibrary(env) {
         listHost.append(statePanel(emptyState({ icon: 'search', title: `لا نتائج لـ«${isolate(clip(state.query.trim(), 60))}»`, text: 'البحث في العناوين والمعرّفات. جرّب كلمة أقصر أو المعرّف.', action: clear, doc })));
       } else {
         const all = button({ label: 'عرض الكل', variant: 'secondary', size: 'sm', doc, onClick: () => { state.filter = 'all'; chips.set('all'); render(); announceResults(); remember(); } });
-        listHost.append(statePanel(emptyState({ icon: 'list', title: 'لا فيديوهات في هذا القسم', text: 'اختر قسمًا آخر أو اعرض الكل.', action: all, doc })));
+        listHost.append(statePanel(emptyState({ icon: 'filter', title: 'لا فيديوهات في هذا القسم', text: 'اختر قسمًا آخر أو اعرض الكل.', action: all, doc })));
       }
       return;
     }

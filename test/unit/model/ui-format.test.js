@@ -30,11 +30,11 @@ test('الأحجام ورموز المشغّل', () => {
   assert.equal(formatBytes(820 * 1024), '820 ك.ب');
   const css = playerTokensCss();
   assert.match(css, /^:host \{ /);
-  assert.ok(css.includes('--tj-p-accent: #D9A7CB;'));
-  assert.ok(css.includes('--tj-p-accent-ink: #0E0E0E;'));
-  assert.ok(css.includes('--tj-p-selected: #4B3E48;'));
-  assert.ok(css.includes('--tj-p-selected-ink: #E6CEDF;'));
-  assert.ok(css.includes('--tj-p-menu-bg: rgb(18 17 18 / 94%);'));
+  assert.ok(css.includes('--tj-p-accent: #D9937B;'));
+  assert.ok(css.includes('--tj-p-accent-ink: #0F1917;'));
+  assert.ok(css.includes('--tj-p-selected: rgb(217 147 123 / 18%);'));
+  assert.ok(css.includes('--tj-p-selected-ink: #D9937B;'));
+  assert.ok(css.includes('--tj-p-menu-bg: rgb(15 25 23 / 92%);'));
   assert.ok(css.includes('--tj-p-sub-bg-soft: rgb(0 0 0 / 72%);'));
   assert.equal(Object.keys(PLAYER_TOKENS).length, (css.match(/--tj-p-/g) || []).length);
 });

@@ -218,7 +218,7 @@ test('حجم الأيقونات وسُمكها: مقاس واحد في الست�
   const page = mountPage();
   for (const k of ['download', 'upload', 'panel', 'minus', 'plus']) {
     for (const path of page.ui.btn(k).querySelectorAll('svg path, svg rect')) assert.equal(path.getAttribute('stroke-width'), '1.9', k);
-    assert.equal(page.ui.btn(k).querySelector('svg').getAttribute('viewBox'), '0 0 24 24');
+    assert.equal(page.ui.btn(k).querySelector('svg').getAttribute('viewBox'), '0 0 20 20', 'أيقونات الهوية على شبكة 20');
   }
   const css = groupCss();
   assert.match(css, /\.group \{[^}]*--w: 48px; --icon: 22px/);
@@ -226,7 +226,8 @@ test('حجم الأيقونات وسُمكها: مقاس واحد في الست�
   assert.match(css, /\.group\[data-size="tight"\] \{ --w: 34px; --icon: 18px/);
   assert.match(css, /\.group\[data-size="fullscreen"\] \{ --w: 54px; --icon: 26px/);
   assert.match(css, /\.btn:focus-visible \{ outline: 2px solid #FFFFFF; outline-offset: -6px/, 'حلقة تركيز بيضاء داخلية');
-  assert.match(css, /\.btn\[aria-expanded="true"\], \.btn\[aria-pressed="true"\] \{ background: var\(--tj-p-selected\); color: var\(--tj-p-selected-ink\); \}/, 'المفتوح والمضغوط صبغة المحدد بنصها (الهوية الثالثة)');
+  assert.match(css, /\.btn\[aria-expanded="true"\], \.btn\[aria-pressed="true"\] \{ color: var\(--tj-p-accent\); \}/, 'المفتوح والمضغوط بالطين الليلي (الهوية الرابعة، لوحة 10)');
+  assert.match(css, /\.btn\[aria-expanded="true"\]::after, \.btn\[aria-pressed="true"\]::after \{ content: ""; position: absolute; left: 50%; bottom: 4px; width: 14px; height: 2px;[^}]*background: var\(--tj-p-accent\)/, 'وخطٌّ طيني تحت الأيقونة');
   assert.doesNotMatch(css, /\.dot|\.spin|tj-spin/, 'لا نقاط ولا دوّار');
 });
 

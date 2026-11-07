@@ -51,7 +51,7 @@ test('ملف مؤخَّر 3 ثوانٍ يُضبط باختيار جملة واح
   const [toast] = p.ui.toasts();
   assert.equal(toast.tone, 'info', 'الإزاحة معلومة بتراجع لا «نجاح»');
   const glyphEl = p.ui.layerHost().shadowRoot.querySelector('.toasts .toast svg.glyph');
-  assert.ok(glyphEl.children.map((n) => n.getAttribute('d')).includes('M12 6v6l4 2'), 'بساعة لا بعلامة نجاح');
+  assert.ok(glyphEl.children.map((n) => n.getAttribute('d')).includes('M10 6v4l2.5 2'), 'بساعة لا بعلامة نجاح');
   assert.equal(toast.text, 'الإزاحة \u2066−3.0\u2069 ثتراجع');
   click(p.ui.layerHost().shadowRoot.querySelector('.toasts button.act'));
   await settle();

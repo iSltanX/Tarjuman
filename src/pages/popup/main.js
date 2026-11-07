@@ -85,7 +85,7 @@ startPage({
     // عنوان الصفحة الوحيد (axe page-has-heading-one؛ تدقيق 7a66f91، U92): اسم المنتج مخفيًا بصريًا، والشعار يمثله مرئيًا.
     app.append(el('header', {
       className: 'tj-popup__head',
-      children: [el('h1', { className: 'tj-sr-only', text: 'ترجمان' }), logo({ height: 22 }), el('span', { className: 'tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: 'بياناتك على جهازك' })] })],
+      children: [el('h1', { className: 'tj-sr-only', text: 'ترجمان' }), logo({ width: 24, wordSize: 18 }), el('span', { className: 'tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: 'بياناتك على جهازك' })] })],
     }));
     const main = el('div', { className: 'tj-popup__main' });
     const eyebrow = el('span', { className: 'tj-popup__eyebrow', text: 'الفيديو الحالي' });

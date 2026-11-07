@@ -93,7 +93,7 @@ export function thumbnail({ doc = document, videoId, enabled, durationMs = null,
       media = node;
       if (armed) source(node, url);
     } else {
-      media = el('span', { className: 'lib-thumb__fallback', children: [icon('video', { doc })], doc });
+      media = el('span', { className: 'lib-thumb__fallback', children: [icon('play', { doc })], doc });
     }
     root.setAttribute('data-state', img ? 'image' : 'fallback');
     durNode = durationNode();

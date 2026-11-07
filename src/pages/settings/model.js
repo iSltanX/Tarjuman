@@ -19,13 +19,13 @@ export const CONFIRM_WORD = 'امسح';
 
 /** أقسام الصفحة بترتيبها: المعرّف هو جزء العنوان (#display)، والأيقونة من مجموعة src/ui. */
 export const SECTIONS = Object.freeze([
-  Object.freeze({ id: 'display', title: 'العرض', icon: 'type', desc: 'وضع العرض الافتراضي، وخط الترجمة وحجمها وخلفيتها وموضعها فوق الفيديو.' }),
+  Object.freeze({ id: 'display', title: 'العرض', icon: 'eye', desc: 'وضع العرض الافتراضي، وخط الترجمة وحجمها وخلفيتها وموضعها فوق الفيديو.' }),
   Object.freeze({ id: 'timing', title: 'التوقيت', icon: 'clock', desc: 'خطوة زرّي − و+ في شريط المشغّل.' }),
   Object.freeze({ id: 'export', title: 'التصدير', icon: 'download', desc: 'مكان حفظ الملفات، ووضع التصدير الافتراضي، وعتبة التقسيم الاحتياطي.' }),
-  Object.freeze({ id: 'compare', title: 'المقارنة والمراجعة', icon: 'sliders', desc: 'عتبات مقارنة الملف العربي بالأصل الإنجليزي عند الرفع، وحد سرعة القراءة في المراجعة.' }),
-  Object.freeze({ id: 'glossary', title: 'المصطلحات', icon: 'list', desc: 'مقابلاتك المفضّلة للمصطلحات، تُرفق بتعليمات الترجمة حين تنسخها.' }),
-  Object.freeze({ id: 'storage', title: 'التخزين', icon: 'hard-drive', desc: 'المساحة المستخدمة على هذا المتصفح، وسعة الترجمات والنسخ السابقة، ومسح كل البيانات.' }),
-  Object.freeze({ id: 'data', title: 'البيانات', icon: 'layers', desc: 'نسخة احتياطية من مكتبتك في ملف على جهازك، تستعيدها هنا أو في متصفح آخر.' }),
+  Object.freeze({ id: 'compare', title: 'المقارنة والمراجعة', icon: 'compare', desc: 'عتبات مقارنة الملف العربي بالأصل الإنجليزي عند الرفع، وحد سرعة القراءة في المراجعة.' }),
+  Object.freeze({ id: 'glossary', title: 'المصطلحات', icon: 'glossary', desc: 'مقابلاتك المفضّلة للمصطلحات، تُرفق بتعليمات الترجمة حين تنسخها.' }),
+  Object.freeze({ id: 'storage', title: 'التخزين', icon: 'library', desc: 'المساحة المستخدمة على هذا المتصفح، وسعة الترجمات والنسخ السابقة، ومسح كل البيانات.' }),
+  Object.freeze({ id: 'data', title: 'البيانات', icon: 'backup', desc: 'نسخة احتياطية من مكتبتك في ملف على جهازك، تستعيدها هنا أو في متصفح آخر.' }),
   Object.freeze({ id: 'diagnostics', title: 'التشخيص', icon: 'activity', desc: 'تقرير منقّى بلا روابط ولا نصوص، لطلب المساعدة.' }),
   Object.freeze({ id: 'about', title: 'حول', icon: 'info', desc: 'الإصدار، ودليل الاستخدام، والمطوّر، وتراخيص الخطوط.' }),
 ]);

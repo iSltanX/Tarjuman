@@ -1,16 +1,16 @@
-/* صفحة الإعدادات (لوحتا Settings وSettingsData، والهوية الثالثة «باذنجاني على رمادي»): تنقّل جانبي في البداية (اليمين في RTL) ومحتوى القسم
-   المختار بجواره. القسم بطاقة على الورق: رأسها عنوان ووصف قصير و«استعادة الافتراضي» في النهاية، وصفوفها 184 | 1fr بخط شعري
+/* صفحة الإعدادات (الهوية الرابعة «كتابٌ مفتوح»، لوحة 15): تنقّل جانبي 208 في البداية (اليمين في RTL) ومحتوى القسم المختار
+   بجواره. القسم بطاقة بزاوية 16 على العاج: رأسها عنوان ووصف قصير و«استعادة الافتراضي» في النهاية، وصفوفها 184 | 1fr بخط شعري
    كامل العرض بين الصف والصف. التسمية في العمود الأول وتحتها علامة «حُفظ» بمساحة محجوزة فلا تدفع شيئًا، والعنصر في الثاني.
    كل لون من رموز src/ui/tokens.css بالوضعين. العرض الضيق: التنقّل شريط أفقي فوق المحتوى والتسمية فوق عنصرها. */
 
-.st { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: var(--tj-space-7); align-items: start; --st-head-h: 62px; }
-/* ارتفاع الرأس ثابت بسلّم الطباعة (display 40 + 2 + caption 20)، فيبدأ التنقّل الجانبي مع أول بطاقة تمامًا: هامشه ارتفاع الرأس
+.st { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: var(--tj-space-7); align-items: start; --st-head-h: 60px; }
+/* ارتفاع الرأس ثابت بسلّم الطباعة (display 40 + 2 + caption 18)، فيبدأ التنقّل الجانبي مع أول بطاقة تمامًا: هامشه ارتفاع الرأس
    وفجوة المحتوى. والرأس لا يلتف في هذا العرض (العرض الضيق عمود واحد بلا هامش). */
 .st-head { display: flex; flex-direction: column; gap: 2px; min-height: var(--st-head-h); }
 .st-reminder:empty { display: none; }
 
-/* التنقّل الجانبي: لاصق تحت الشريط العلوي. القسم الحالي صبغة أهدأ من الإعداد المختار داخله (درجتا التحديد، الهوية الثالثة)
-   بنص أغمق وأيقونة بالإبراز، بلا إطار. */
+/* التنقّل الجانبي: لاصق تحت الشريط العلوي. القسم الحالي صبغة صنوبرية خفيفة بنصها وأيقونته بالطين (لوحة 15)، أهدأ من الإعداد
+   المختار داخله (صنوبر كامل)، بلا إطار. */
 .st-nav { position: sticky; top: calc(var(--tj-topbar-h) + var(--tj-space-6)); display: flex; flex-direction: column; gap: 2px; margin-top: calc(var(--st-head-h) + var(--tj-space-4)); }
 .st-nav__link {
   display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: var(--tj-radius-md);
@@ -26,15 +26,15 @@
 /* حاويتا التذكير والتنبيه فارغتين لا تأخذان فجوة فتزيحان القسم عن محاذاة التنقّل؛ وتبقيان في الشجرة (منطقة التنبيه حية
    role=status فيعلن قارئ الشاشة ما يُكتب فيها). */
 .st-content > div:empty { position: absolute; }
-.st-section { background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); padding: 0; display: flex; flex-direction: column; }
+.st-section { background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card-lg); padding: 0; display: flex; flex-direction: column; }
 /* فتح الصفحة على قسم (#display أو #export) لا يمرّرها: القسم الظاهر وحده تحت رأس الصفحة مباشرة، وقفزة المرساة الأصلية كانت
    تمرّر 87 بكسل فيختفي عنوان الصفحة تحت الشريط اللاصق (تدقيق Fable، FA-13 = B3؛ في Chromium للقسم الظاهر عند التحليل، وفي
    Firefox بعد إظهاره أيضًا). هامش بارتفاع النافذة يجعل هدف القفزة قبل أول الصفحة فيبقى التمرير صفرًا، فيظهر العنوانان معًا (وهو
    مقصد CL-008 في تدقيق 5fedcb9: ألا يختبئ عنوان القسم تحت الشريط). ولا تمرير آخر إلى القسم: التنقّل يركّز عنوانه وحده. */
 .st-section { scroll-margin-top: 100vh; }
-.st-section__head { display: flex; align-items: center; gap: var(--tj-space-3); padding: 14px 20px; border-bottom: 1px solid var(--tj-border); }
+.st-section__head { display: flex; align-items: center; gap: var(--tj-space-4); padding: 16px 20px 12px; border-bottom: 1px solid var(--tj-border); }
 .st-section__titles { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px var(--tj-space-3); min-width: 0; flex: 1; }
-.st-section__titles h2 { font: 700 17px/27px var(--tj-font-head); }
+.st-section__titles h2 { font: 700 18px/26px var(--tj-font-head); }
 .st-section__titles h2:focus-visible { outline-offset: 4px; border-radius: 4px; }
 .st-section__titles .tj-caption { font-size: 12px; line-height: 18px; }
 .st-section__actions { display: flex; align-items: center; gap: var(--tj-space-2); flex: none; }
@@ -57,16 +57,15 @@
 /* علامة «حُفظ» (tj-saved من src/ui) تحت التسمية بمساحة محجوزة (لا تدفع ما تحتها). */
 .st-row__label .tj-saved { min-height: 18px; }
 
-/* خط الترجمة (لوحة الإعدادات المعتمدة): شرائح مدمجة في سطر، اسم كل خط بخطه نفسه و«الافتراضي» وسمٌ صغير؛ بلا إطار، وغير المختار
-   بخلفية الزر المحايدة والمختار صبغة باذنجانية بنص أغمق (الهوية الثالثة)، والزر الدائري مخفي بصريًا وبقي للوحة المفاتيح وقارئ
-   الشاشة. ووصف المختار سطرٌ واحد تحتها. */
+/* خط الترجمة: شرائح مدمجة في سطر، اسم كل خط بخطه نفسه و«الافتراضي» وسمٌ صغير؛ بلا إطار، وغير المختار بخلفية الزر المحايدة
+   والمختار صنوبر بنص عاج (لوحة 08)، والزر الدائري مخفي بصريًا وبقي للوحة المفاتيح وقارئ الشاشة. ووصف المختار سطرٌ واحد تحتها. */
 .st-fonts { display: flex; flex-wrap: wrap; gap: var(--tj-space-2); border: 0; padding: 0; margin: 0; min-width: 0; width: 100%; }
 .st-font {
   position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: var(--tj-control-lg); padding: 0 14px;
   border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-control); color: var(--tj-text); cursor: pointer;
 }
 .st-font:hover { background: var(--tj-control-hover); }
-.st-font:hover .st-font__tag { color: var(--tj-text-2); } /* الخافت على المرور دون 4.5:1 (تدقيق Fable، UX-16) */
+.st-font:hover .st-font__tag { color: var(--tj-text); } /* الخافت والثانوي على المرور دون 4.5:1 (تدقيق Fable، UX-16) */
 .st-font:has(input:checked) { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .st-font input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .st-font:has(input:focus-visible) { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
@@ -78,17 +77,17 @@
 /* المنزلق: القيمة ثم مسار بامتلاء من البداية، وعلامة للافتراضي 100%. */
 .st-scale__box { display: flex; align-items: center; gap: var(--tj-space-3); width: 100%; max-width: 420px; }
 .st-scale__track { position: relative; flex: 1; display: flex; align-items: center; }
-.st-scale__input { width: 100%; margin: 0; accent-color: var(--tj-brand); height: 24px; cursor: pointer; }
+.st-scale__input { width: 100%; margin: 0; accent-color: var(--tj-accent); height: 24px; cursor: pointer; }
 .st-scale__input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 4px; border-radius: 6px; }
 .st-scale__mark { position: absolute; inset-block-start: 100%; width: 2px; height: 6px; background: var(--tj-muted); border-radius: 1px; margin-inline-start: -1px; pointer-events: none; }
 .st-scale__value { min-width: 48px; text-align: end; direction: ltr; }
 
-/* المعاينة الحية: فيديو داكن بسطرين (داكن بالوضعين: هو الفيديو لا الواجهة). */
+/* المعاينة الحية: فيديو داكن بسطرين (داكن بالوضعين: هو الفيديو لا الواجهة؛ تدرّج لوحة 15). */
 .st-preview { display: flex; }
 .st-preview__screen {
   --st-sub-text: #fff; --st-sub-bg-soft: rgb(0 0 0 / 72%); --st-sub-bg-solid: rgb(0 0 0 / 92%);
   position: relative; max-width: 100%; overflow: hidden; border-radius: var(--tj-radius-lg);
-  background: radial-gradient(circle at 55% 40%, #4a463f 0%, #26231f 38%, #0e0e10 100%); border: 1px solid var(--tj-border-strong);
+  background: linear-gradient(160deg, #2A2F33, #0F1416); border: 1px solid var(--tj-border-strong);
 }
 .st-preview__stage { position: absolute; inset-inline: 4%; display: flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.5; font-weight: 400; }
 .st-preview__line { margin: 0; padding: 2px 8px; border-radius: 4px; color: var(--st-sub-text); text-align: center; unicode-bidi: isolate; width: fit-content; max-width: 100%; overflow-wrap: anywhere; font: inherit; }
@@ -119,17 +118,18 @@
 .st-last-save__path bdi { display: block; direction: ltr; unicode-bidi: plaintext; text-align: right; }
 .st-last-save[hidden] { display: none; }
 
-/* مربع الاختيار والمفتاح. المفتاح: النص في البداية ومساره في النهاية، المطفأ بحد الحقل (≥ 3:1) والمشغّل بالإبراز، والإبهام من سطح البطاقة. */
+/* مربع الاختيار والمفتاح (لوحة 08). الخانة بالحبر، والمفتاح: النص في البداية ومساره 36×20 في النهاية، المطفأ بحد الحقل (≥ 3:1)
+   والمشغّل بالطين (اللحظة: شيء يعمل الآن)، والإبهام 16 من سطح البطاقة وبحبر الطين حين يعمل. */
 .st-check { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; font: 400 14px/22px var(--tj-font-body); cursor: pointer; }
-.st-check input { accent-color: var(--tj-brand); width: 16px; height: 16px; margin: 0; flex: none; }
+.st-check input { accent-color: var(--tj-text); width: 16px; height: 16px; margin: 0; flex: none; }
 .st-check input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .st-check:has(input:disabled) { color: var(--tj-muted); cursor: not-allowed; }
 .st-switch { position: relative; display: inline-flex; flex-direction: row-reverse; align-items: center; gap: 10px; min-height: 32px; cursor: pointer; font: 700 14px/22px var(--tj-font-body); }
 .st-switch__input { position: absolute; opacity: 0; width: 36px; height: 20px; margin: 0; inset-inline-start: auto; inset-inline-end: 0; cursor: pointer; }
-.st-switch__track { position: relative; width: 36px; height: 20px; border-radius: 999px; background: var(--tj-border-input); flex: none; transition: background var(--tj-motion-menu); }
-.st-switch__track::after { content: ""; position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--tj-surface); box-shadow: var(--tj-e1); transition: inset-inline-start var(--tj-motion-menu); }
-.st-switch__input:checked + .st-switch__track { background: var(--tj-brand); }
-.st-switch__input:checked + .st-switch__track::after { inset-inline-start: 18px; background: var(--tj-brand-ink); }
+.st-switch__track { position: relative; width: 36px; height: 20px; border-radius: 999px; background: var(--tj-border-input); flex: none; transition: background var(--tj-motion-menu) var(--tj-ease); }
+.st-switch__track::after { content: ""; position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--tj-surface); box-shadow: var(--tj-e1); transition: inset-inline-start var(--tj-motion-menu) var(--tj-ease); }
+.st-switch__input:checked + .st-switch__track { background: var(--tj-accent); }
+.st-switch__input:checked + .st-switch__track::after { inset-inline-start: 18px; background: var(--tj-accent-ink); }
 .st-switch__input:focus-visible + .st-switch__track { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .st-switch--danger .st-switch__input:checked + .st-switch__track { background: var(--tj-danger); }
 .st-switch--danger .st-switch__input:checked + .st-switch__track::after { background: var(--tj-danger-ink); }
@@ -141,7 +141,7 @@
 .st-gl__wrap { width: 100%; overflow-x: auto; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); }
 .st-gl__wrap[hidden], .st-gl__empty[hidden] { display: none; }
 .st-gl__table { width: 100%; border-collapse: collapse; font: 400 14px/22px var(--tj-font-body); }
-.st-gl__table th { text-align: start; font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); padding: 7px 12px; background: var(--tj-sunken); border-bottom: 1px solid var(--tj-border); }
+.st-gl__table th { text-align: start; font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); padding: 7px 12px; background: var(--tj-surface-2); border-bottom: 1px solid var(--tj-border); }
 .st-gl__table td { padding: 6px 12px; border-top: 1px solid var(--tj-border); vertical-align: middle; overflow-wrap: anywhere; }
 .st-gl__table tr:first-child td { border-top: 0; }
 .st-gl__source { font-family: var(--tj-font-mono); unicode-bidi: plaintext; text-align: right; }
@@ -159,11 +159,11 @@
 .st-progress { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 420px; }
 .st-progress[hidden] { display: none; }
 .st-progress__text { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
-/* شريط التقدم برسمنا لا بالأصلي: مسار الغائر وامتلاء الإبراز بزاوية البطاقة. */
-.st-progress__bar { appearance: none; -webkit-appearance: none; width: 100%; height: 6px; border: 0; border-radius: 3px; overflow: hidden; background: var(--tj-surface-2); accent-color: var(--tj-brand); }
-.st-progress__bar::-webkit-progress-bar { background: var(--tj-surface-2); }
-.st-progress__bar::-webkit-progress-value { background: var(--tj-brand); border-radius: 3px; }
-.st-progress__bar::-moz-progress-bar { background: var(--tj-brand); border-radius: 3px; }
+/* شريط التقدم برسمنا لا بالأصلي (لوحة 08): مسار 4 بالحد البارز وامتلاء بالطين. */
+.st-progress__bar { appearance: none; -webkit-appearance: none; width: 100%; height: 4px; border: 0; border-radius: 2px; overflow: hidden; background: var(--tj-border-strong); accent-color: var(--tj-accent); }
+.st-progress__bar::-webkit-progress-bar { background: var(--tj-border-strong); }
+.st-progress__bar::-webkit-progress-value { background: var(--tj-accent); border-radius: 2px; }
+.st-progress__bar::-moz-progress-bar { background: var(--tj-accent); border-radius: 2px; }
 /* حوار الاستعادة: الفئتان (الجديدة والموجودة) بطاقتان بخط شعري، والعدّ الكلي عنوان الحوار الثانوي. */
 .st-restore { display: flex; flex-direction: column; gap: var(--tj-space-3); }
 .st-restore__meta { color: var(--tj-muted); font-size: 13px; line-height: 20px; }
@@ -190,7 +190,7 @@
 
 /* التشخيص. */
 .st-panels { display: grid; grid-template-columns: 1fr 1fr; gap: var(--tj-space-3); width: 100%; max-width: 640px; }
-.st-panel { padding: var(--tj-space-3) var(--tj-space-4); border-radius: var(--tj-radius-lg); background: var(--tj-sunken); border: 1px solid var(--tj-border); display: flex; flex-direction: column; gap: 2px; }
+.st-panel { padding: var(--tj-space-3) var(--tj-space-4); border-radius: var(--tj-radius-lg); background: var(--tj-surface-2); border: 1px solid transparent; display: flex; flex-direction: column; gap: 2px; }
 .st-panel__title { font: 700 13px/20px var(--tj-font-body); }
 .st-panel--ok .st-panel__title { color: var(--tj-success); }
 .st-panel--no .st-panel__title { color: var(--tj-danger); }
@@ -199,11 +199,12 @@
 .st-about { display: flex; flex-direction: column; gap: var(--tj-space-3); padding: 16px 20px; }
 .st-about__row { display: flex; align-items: center; gap: var(--tj-space-3); }
 .st-about__links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--tj-space-5); }
-.st-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 700 14px/20px var(--tj-font-body); color: var(--tj-brand-text); text-decoration: none; }
-.st-link:hover { text-decoration: underline; }
+.st-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font: 700 14px/20px var(--tj-font-body); color: var(--tj-text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--tj-border-input); }
+.st-link:hover { color: var(--tj-accent-text); text-decoration-color: currentColor; }
 .st-link .tj-icon { width: 14px; height: 14px; }
-.st-details__summary { cursor: pointer; font: 700 14px/20px var(--tj-font-body); color: var(--tj-brand-text); min-height: 32px; display: flex; align-items: center; }
-.st-guide, .st-licenses { margin: var(--tj-space-2) 0 0; padding-inline-start: var(--tj-space-6); display: flex; flex-direction: column; gap: var(--tj-space-2); font: 400 14px/23px var(--tj-font-body); color: var(--tj-text-2); }
+.st-details__summary { cursor: pointer; font: 700 14px/20px var(--tj-font-body); color: var(--tj-text); min-height: 32px; display: flex; align-items: center; }
+.st-details__summary:hover { color: var(--tj-accent-text); }
+.st-guide, .st-licenses { margin: var(--tj-space-2) 0 0; padding-inline-start: var(--tj-space-6); display: flex; flex-direction: column; gap: var(--tj-space-2); font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
 .st-licenses { list-style: none; padding-inline-start: 0; }
 
 /* الإبلاغ عن مشكلة (جولة النشر T2.1): نموذج تحت زره في «حول»، والمعاينة لوحة بما يُرفق ونص البلاغ كاملًا. */

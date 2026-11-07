@@ -1,4 +1,4 @@
-// حارس أنماط الهوية الثالثة «باذنجاني على رمادي» (docs/identity-v3.md) في نافذة الأيقونة والإعدادات والمحرّر: كل رمز --tj-* مستعمل معرَّف في tokens.css (خطأ في
+// حارس أنماط الهوية الرابعة «كتابٌ مفتوح» (docs/identity-v4.md) في نافذة الأيقونة والإعدادات والمحرّر: كل رمز --tj-* مستعمل معرَّف في tokens.css (خطأ في
 // اسم رمز يسقط بصمت إلى قيمة موروثة ولا يظهر إلا في الوضع الداكن)، ولا لون صلب في أنماطها (فيكسر الوضع الداكن) إلا ما هو فيديو
 // بطبيعته (معاينة الترجمة الحية، داكنة بالوضعين)، وكل نص بلون من الرموز لا بقيمة. المظهر الفعلي في الاختبار الحي.
 import { test } from 'node:test';
@@ -27,7 +27,7 @@ test('لا لون صلب في أنماط نافذة الأيقونة والمح�
   for (const f of ['src/pages/popup/popup.css', 'src/pages/editor/editor.css']) assert.equal(HARD.test(strip(read(f))), false, f);
   const lines = strip(read('src/pages/settings/settings.css')).split('\n').filter((l) => HARD.test(l));
   assert.ok(lines.length > 0 && lines.length <= 4, 'المعاينة وحدها');
-  for (const l of lines) assert.match(l, /--st-sub-|st-preview__screen|st-preview__stage|text-shadow|radial-gradient/, `سطر غير المعاينة بلون صلب: ${l.trim()}`);
+  for (const l of lines) assert.match(l, /--st-sub-|st-preview__screen|st-preview__stage|text-shadow|linear-gradient\(160deg/, `سطر غير المعاينة بلون صلب: ${l.trim()}`);
 });
 
 test('النص الأساسي بالمداد والثانوي والخافت من الرموز: كل color: في الصفحات الثلاث من الرموز (أو inherit أو currentColor، ولون ترجمة المعاينة وحده من متغيرها المحلي)', () => {
@@ -40,7 +40,7 @@ test('النص الأساسي بالمداد والثانوي والخافت م�
 
 test('الشريط السفلي في المحرّر معكوس من الرموز: خلفيته المداد ونصه الورق بالوضعين (تتبادل القيمتان في الداكن تلقائيًا)', () => {
   const dark = tokens.slice(tokens.indexOf('@media (prefers-color-scheme: dark)'));
-  assert.match(dark, /--tj-text: #F1EDEF/, 'المداد في الداكن فاتح');
-  assert.match(dark, /--tj-bg: #121112/, 'ليل الداكن');
+  assert.match(dark, /--tj-text: #EDE9E0/, 'الحبر في الداكن عاج');
+  assert.match(dark, /--tj-bg: #0F1917/, 'ليل الصنوبر');
   assert.match(strip(read('src/pages/editor/editor.css')), /\.ed-unsaved \{[^}]*background: var\(--tj-text\)[^}]*color: var\(--tj-bg\)/);
 });

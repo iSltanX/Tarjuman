@@ -91,7 +91,7 @@ export function createPanelView({ doc, win, on }) {
     className: 'b b--ghost b--icon', attrs: { type: 'button', 'aria-label': LABELS.close, title: LABELS.closeHint }, on: { click: () => on.close() },
   }, [icon(doc, 'x')]);
   const head = el(doc, 'header', { className: 'head' }, [
-    el(doc, 'span', { className: 'head__mark' }, [mark(doc, 20)]),
+    el(doc, 'span', { className: 'head__mark' }, [mark(doc, 22)]),
     el(doc, 'h2', { className: 'title', text: LABELS.title }),
     el(doc, 'span', { className: 'spacer' }),
     load, optsBtn, closeBtn,

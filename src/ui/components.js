@@ -2,7 +2,7 @@
 // هنا: الأيقونات، والزر، والحقل، والشارة، والتنبيه، والحالة الفارغة، وحوار التأكيد، والشريط العلوي، ومجموعة الاختيار،
 // ورقائق التصفية، ومحدد الترجمات الموجودة. الأيقونات في icons.js، والقائمة المنسدلة في menu.js، والشعار في logo.js.
 
-import { ICONS } from './icons.js';
+import { ICONS, ICON_VIEWBOX } from './icons.js';
 import { logo } from './logo.js';
 
 export { ICONS };
@@ -17,7 +17,7 @@ export const ICON_NAMES = Object.freeze(Object.keys(ICONS));
  */
 export function icon(name, { doc = document, className = 'tj-icon' } = {}) {
   const svg = doc.createElementNS(SVG, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('viewBox', ICON_VIEWBOX);
   svg.setAttribute('class', className);
   svg.setAttribute('aria-hidden', 'true');
   for (const [tag, attrs] of ICONS[name] ?? []) {
@@ -58,7 +58,7 @@ const uid = (p) => `${p}-${++seq}`;
  * (aria-describedby) في عنصر aria-hidden، فلا يدخل اسمه المحسوب من محتواه (كان يُقرأ مرتين: «حفظ، لا تغييرات للحفظ»
  * ثم الوصف نفسه؛ تدقيق 7a66f91، U91). والإحالة إلى عنصر مخفي تبقى صالحة للوصف.
  * @param {{
- *   label: string, variant?: 'primary' | 'secondary' | 'ghost' | 'danger', size?: 'sm' | 'md' | 'lg',
+ *   label: string, variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'accent', size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl',
  *   icon?: keyof typeof ICONS, iconOnly?: boolean, title?: string, className?: string,
  *   disabledReason?: string | null, loading?: boolean, type?: 'button' | 'submit',
  *   value?: string, onClick?: (e: MouseEvent) => void, doc?: Document
@@ -146,7 +146,7 @@ export function alertBox({ tone = 'info', title, text, action, doc = document })
  * حالة فارغة: أيقونة وجملة وخطوات أو زر.
  * @param {{ title: string, text?: string, steps?: string[], action?: HTMLElement, icon?: keyof typeof ICONS, doc?: Document }} o
  */
-export function emptyState({ title, text, steps, action, icon: iconName = 'captions', doc = document }) {
+export function emptyState({ title, text, steps, action, icon: iconName = 'file', doc = document }) {
   return el('section', {
     className: 'tj-empty',
     children: [
@@ -229,7 +229,7 @@ export function topbar({ active, doc = document }) {
     children: [el('div', {
       className: 'tj-topbar__inner',
       children: [
-        el('a', { className: 'tj-topbar__brand', attrs: { href: NAV_PAGES[0].href, 'aria-label': 'ترجمان — المحفوظات' }, children: [logo({ height: 24, label: null, doc })], doc }),
+        el('a', { className: 'tj-topbar__brand', attrs: { href: NAV_PAGES[0].href, 'aria-label': 'ترجمان — المحفوظات' }, children: [logo({ width: 24, wordSize: 18, label: null, doc })], doc }),
         el('nav', {
           className: 'tj-topbar__nav', attrs: { 'aria-label': 'صفحات ترجمان' },
           children: NAV_PAGES.map((p) => el('a', {

@@ -72,9 +72,12 @@ test('المفتوحة: الرأس (الشعار والعنوان) وزرا خي
   assert.equal(opts.getAttribute('aria-expanded'), 'false');
   assert.equal(close.getAttribute('aria-label'), 'إغلاق اللوحة');
   assert.ok(v.q('.head .mark'), 'رمز الشعار');
-  assert.equal(v.q('.head .mark').getAttribute('viewBox'), '1 8 46 32', 'العلامة وحدها دون الاسم (شبكة 48)');
+  assert.equal(v.q('.head .mark').getAttribute('viewBox'), '0 0 200 176.4', 'رمز الشعار وحده دون الاسم (إطار 200 × 176.4)');
+  assert.equal(v.q('.head .mark').getAttribute('width'), '22', 'رأس اللوحة 22 كلوحة 12');
   assert.equal(v.q('.head .tj-logo__word'), null);
-  assert.equal(v.q('.head .tj-logo__glyph path').getAttribute('fill-rule'), 'evenodd', 'المعيّنان المتشابكان والتداخل مفرّغ');
+  const ds = v.q('.head .mark').children.map((p) => p.getAttribute('d'));
+  assert.deepEqual(ds.slice(0, 2), ['M50 0L100 50 50 100 0 50Z', 'M150 0L200 50 150 100 100 50Z'], 'نقطتا التاء');
+  assert.match(ds[2], /^M0 123\.6H23\.6/, 'الكتاب بالنسخة المصحّحة تحت 32 بكسل');
 });
 
 test('الإغلاق: panelOpen=false وحده، فتختفي من الصفحة ويبقى زرها في الشريط (panelEntry لا يُمس)', () => {

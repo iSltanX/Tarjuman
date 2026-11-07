@@ -126,27 +126,11 @@ DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
-1.2 Icons — Lucide (ISC License), including icons that Lucide derives from Feather (MIT License).
-Most interface icons are taken from Lucide (https://lucide.dev), some unchanged and some adapted. Tarjuman name ← Lucide name:
-
-  src/ui/icons.js
-    unchanged: info, warning ← triangle-alert, success ← circle-check-big, danger ← circle-x, library, settings ← settings-2, external ← external-link, edit ← pencil, replace ← refresh-cw, download, upload, chevron ← chevron-down, copy, check, more ← ellipsis, search, restore ← rotate-ccw, clipboard, alert ← circle-alert, x, play, video, folder, clock, shield, activity, plus
-    adapted:   editor ← file-text, trash ← trash-2, type, sliders ← sliders-vertical, hard-drive, list, captions
-
-  src/player/panel/dom.js
-    unchanged: minus, eye-off, arrow-up, arrow-down
-
-  src/pages/editor/icons.js
-    unchanged: arrow ← arrow-right
-    adapted:   split ← scissors
-
-  src/pages/popup/icons.js
-    adapted:   eye-off
-
-  src/player/controls/glyphs.js
-    adapted:   flag
-
-Drawn for Tarjuman (no Lucide counterpart found by the comparison): screen, layers in src/ui/icons.js; flag, merge in src/pages/editor/icons.js; download, upload, panel, minus, plus in src/player/controls/icons.js.
+1.2 Icons — drawn for Tarjuman.
+The interface icons in src/ui/icons.js (51) were drawn for Tarjuman's visual identity on a 20-unit grid,
+and every other part of the interface takes its icons from that set: download, upload, copy, edit, library, settings, search, panel, clock, sync, minus, plus, check, x, more, chev-down, chev-up, chev-left, chev-right, external, info, warning, error, play, pause, eye, eye-off, trash, undo, redo, save, split, merge, flag, file, shield, compare, restore, filter, sort, text-size, position, glossary, backup, activity, keyboard, sun, moon, cc, logo-t, swap.
+Their shapes follow the common conventions of open icon sets. Tarjuman 1.1.0 and earlier used icons from Lucide
+(ISC License), including icons that Lucide derives from Feather (MIT License); that license is kept below for attribution.
 
 Lucide license, as published in the Lucide repository (copied verbatim to src/ui/lucide-LICENSE.txt):
 

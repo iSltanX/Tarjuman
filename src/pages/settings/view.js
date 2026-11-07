@@ -634,7 +634,7 @@ export function createSettings(env) {
 
   // ---- التشخيص ----
   const diagMark = marks();
-  const diagBtn = button({ label: 'نسخ تقرير التشخيص', variant: 'secondary', icon: 'clipboard', doc, onClick: async () => {
+  const diagBtn = button({ label: 'نسخ تقرير التشخيص', variant: 'secondary', icon: 'copy', doc, onClick: async () => {
     try {
       await env.clipboardWrite(await env.diagnosticsText());
       diagMark.flash(messageFor('PG_DIAGNOSTICS_DONE'), 'success');

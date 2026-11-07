@@ -49,7 +49,7 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
     onChange: (mode) => savePrefs({ saveLocation: { mode } }, mark),
   });
   const statusText = el('span', { doc });
-  const status = el('p', { className: 'st-status', children: [icon('folder', { doc }), statusText], doc });
+  const status = el('p', { className: 'st-status', children: [icon('info', { doc }), statusText], doc });
   const lastPath = el('span', { className: 'st-last-save__path', doc });
   const last = el('p', { className: 'tj-caption st-last-save', children: ['آخر ملف حُفظ: ', lastPath], doc });
   last.hidden = true;
