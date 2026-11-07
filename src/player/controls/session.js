@@ -56,12 +56,15 @@ const signOf = (ms) => (Math.round(ms / 100) === 0 ? 'zero' : ms > 0 ? 'positive
 // الأصلي قبل المترجم آليًا من يوتيوب (في آخر القائمة، ق٢)، ثم اليدوي قبل التلقائي.
 const okTracks = (s) => s.captured.filter((t) => t.ok && t.cueCount > 0).sort((a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
 /**
- * مسارات الفيديو في بيانات المشغّل التي لم تُلتقط في هذه الزيارة (ق١): يختارها المستخدم من يوتيوب، والإضافة لا تبدّلها.
- * @returns {{ lang: string, kind: 'manual' | 'asr', name: string | null }[]}
+ * عدد لغات الفيديو في بيانات المشغّل التي لم يُلتقط لها مسار أصلي في هذه الزيارة (ق١): يختارها المستخدم من يوتيوب، والإضافة لا
+ * تبدّلها. لغاتٌ مختلفة لا مسارات (التلقائي بلغة ملتقطة ليس لغة أخرى)، وnull حين لا تُعرف قائمة الفيديو.
+ * @returns {number | null}
  */
-const notCaptured = (s, tracks) => (Array.isArray(s.available?.tracks) ? s.available.tracks : [])
-  .filter((t) => !tracks.some((c) => !c.via && c.lang === t.lang && c.kind === t.kind))
-  .map((t) => ({ lang: t.lang, kind: t.kind, name: t.name ?? null }));
+const otherLangs = (s, tracks) => {
+  if (!Array.isArray(s.available?.tracks)) return null;
+  const have = new Set(tracks.filter((c) => !c.via).map((c) => c.lang));
+  return new Set(s.available.tracks.map((t) => t.lang).filter((l) => !have.has(l))).size;
+};
 /**
  * لغات مقترحة لترجمة هذا الفيديو (AA3): «إلى» في نافذة الإضافة لهذا الفيديو، وإلا الافتراضي، ثم الأخيرة. للاقتراح لا للتخمين.
  * @returns {string[]}
@@ -229,8 +232,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       mode: d.mode ?? s.settings.export.modeDefault, durationMs: s.durationMs,
       why: d.why, fallbackOpen: d.fallback, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
       busy: d.busy, saveLine: d.saveLine, result: d.result,
-      pickGuide: (!tracks.length && PICK_AGAIN.has(s.captureIssue?.code ?? '')) || notCaptured(s, tracks).length ? { brave: flags.brave } : null,
-      available: notCaptured(s, tracks), translatable: s.available?.translatable === true,
+      pickGuide: (!tracks.length && PICK_AGAIN.has(s.captureIssue?.code ?? '')) || otherLangs(s, tracks) ? { brave: flags.brave } : null,
+      otherLangs: otherLangs(s, tracks), translatable: s.available?.translatable === true,
       saved: savedEnglish(s, tracks),
       ...previewParts(s, tracks),
     };

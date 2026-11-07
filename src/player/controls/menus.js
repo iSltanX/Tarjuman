@@ -9,7 +9,7 @@ import { formatOffset, textDirection } from '../../ui/format.js';
 import { languageName } from '../../ui/lang.js';
 import { glyph } from './glyphs.js';
 import {
-  LABELS, availableLine, comparisonSummary, cueCount, dualLabels, editsLine, keptLine, offsetMeaning, partRow, previousLostLine, shortTime, slotLabel, stepSeconds,
+  LABELS, comparisonSummary, cueCount, dualLabels, editsLine, keptLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, shortTime, slotLabel, stepSeconds,
   syncAt, trackLine, translationLine,
 } from './text.js';
 
@@ -185,28 +185,27 @@ function resultLine(h, line, fid) {
 }
 
 /**
- * مسارات الفيديو المتاحة التي لم تُلتقط (ق١): سطر لكل مسار بلغته ونوعه و«اختره من قائمة يوتيوب»، ثم خطوات الاختيار بكلمات؛
- * الإضافة لا تبدّل المسار، فلا زر هنا. وتحتها خطوات ترجمة يوتيوب الآلية حين يتيحها الفيديو (ق٢).
- * @param {H} h @param {{ lang: string, kind: 'manual' | 'asr', name: string | null }[]} list @param {{ brave: boolean, translatable: boolean }} o
+ * لغات الفيديو الأخرى (قرار سلطان 2026-11-07 بعد لقطات AA4، يعدّل عرض ق١): سطر واحد بعددها وخطوات اختيارها من يوتيوب، بدل صفٍّ لكل
+ * مسار؛ فالصفوف لا تُضغط (الاختيار من يوتيوب وحده، والإضافة لا تبدّل المسار)، وكانت تطيل القائمة وتكرر اسم اللغة. العدد لغاتٌ مختلفة
+ * لم تُلتقط، وبلا قائمة معروفة الخطوات وحدها بعد مسار ملتقط (وقبله يكفي تنبيه CC)، ولا سطر حين يُعرف أن لا لغة أخرى. وخطوات
+ * ترجمة يوتيوب الآلية حين يتيحها الفيديو، وملاحظة Brave مع سطر اللغات.
+ * @param {H} h @param {{ langs: number | null, other: boolean, brave: boolean, translatable: boolean }} o
  */
-function availableBlock(h, list, { brave, translatable }) {
-  if (!list.length && !translatable) return [];
-  const out = [label(h, LABELS.availableTitle)];
-  for (const t of list) {
-    out.push(h('div', {
-      className: 'row status available', attrs: { 'data-tone': 'info', 'data-fid': `available:${t.lang}|${t.kind}` },
-      children: [h('span', { className: 'line__text', text: availableLine(t) }), t.name ? h('bdi', { className: 'dim', text: t.name, attrs: { dir: 'auto' } }) : null],
-    }));
-  }
-  const steps = [list.length ? h('span', { className: 'steps', text: LABELS.pickSteps }) : null, translatable ? h('span', { className: 'steps', text: LABELS.machineSteps }) : null, brave && list.length ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null].filter(Boolean);
-  if (steps.length) out.push(h('div', { className: 'note stack', attrs: { 'data-fid': 'pickSteps' }, children: steps }));
-  return out;
+function otherLanguages(h, { langs, other, brave, translatable }) {
+  const pick = langs === null ? other : langs > 0;
+  const lines = [
+    pick ? h('span', { className: 'steps', text: otherLanguagesLine(langs, { other }) }) : null,
+    translatable ? h('span', { className: 'steps', text: LABELS.machineSteps }) : null,
+    pick && brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null,
+  ].filter(Boolean);
+  if (!lines.length) return [];
+  return [h('div', { className: 'note stack', attrs: { 'data-fid': 'otherLangs', 'data-count': langs === null ? null : String(langs) }, children: lines })];
 }
 
 /**
  * قائمة التحميل (§٦.١ و§١٩.٥، وAA3 لوحة 10): اللغة (المسارات الملتقطة بلغتها ونوعها وعددها، والمترجم آليًا موسومًا في آخرها)،
- * ووضع التصدير، وزر «تنزيل الملف» وحده بسطر نتيجته، وسطر «تعليمات الترجمة (من ← إلى) من نافذة الإضافة»، ثم المسارات الأخرى في
- * الفيديو بخطوات اختيارها من يوتيوب (لا تبدّلها الإضافة، ق١)، ثم «خيارات احتياطية» (التقسيم) بأحجام الأجزاء. لا عرض لمكان الحفظ.
+ * ووضع التصدير، وزر «تنزيل الملف» وحده بسطر نتيجته، وسطر «تعليمات الترجمة (من ← إلى) من نافذة الإضافة»، ثم سطر لغات الفيديو
+ * الأخرى بعددها وخطوات اختيارها من يوتيوب (لا تبدّلها الإضافة، ق١)، ثم «خيارات احتياطية» (التقسيم) بأحجام الأجزاء. لا عرض لمكان الحفظ.
  * @param {H} h @param {Act} act
  * @param {{
  *   live: boolean, unavailable: boolean, captureIssue: string | null, invalid: { code: string | null }[],
@@ -214,7 +213,7 @@ function availableBlock(h, list, { brave, translatable }) {
  *   why: boolean, fallbackOpen: boolean, split: boolean, splitSize: string, splitError: string | null,
  *   busy: boolean, saveLine: { tone: string, text: string } | null,
  *   result: { tone: 'info' | 'warn' | 'error', text: string }[], pickGuide: { brave: boolean } | null,
- *   available: { lang: string, kind: 'manual' | 'asr', name: string | null }[], translatable: boolean,
+ *   otherLangs: number | null, translatable: boolean,
  *   parts: { index: number, from: number, to: number, chars: number }[] | null, partsRaised: boolean,
  * }} m partsRaised: رُفع حجم الجزء ليبقى عدد الأجزاء ضمن حد الرفع (U31)، فيُقال تحت الأحجام قبل التنزيل
  */
@@ -257,7 +256,7 @@ export function downloadMenu(h, act, m, root = null) {
       const why = button(h, 'link', LABELS.whyLink, { act, name: 'why', fid: 'why', first: !m.saved, extra: { 'aria-expanded': m.why ? 'true' : 'false' } });
       out.push(alert(h, 'info', messageFor('CT_NOT_CAPTURED'), [h('span', { children: [why] }), m.why ? h('span', { className: 'note', text: LABELS.why }) : null]));
     }
-    out.push(...availableBlock(h, m.available, { brave, translatable: m.translatable }));
+    out.push(...otherLanguages(h, { langs: m.otherLangs, other: false, brave, translatable: m.translatable }));
     return out;
   }
 
@@ -319,10 +318,8 @@ export function downloadMenu(h, act, m, root = null) {
   if (m.saveLine) out.push(resultLine(h, m.saveLine, 'saveLine'));
   for (const r of m.result) out.push(alert(h, r.tone, r.text));
   out.push(h('div', { className: 'note', text: LABELS.instructionsNote, attrs: { 'data-fid': 'instructionsNote' } }));
-  if (m.available.length) {
-    out.push(sep(h));
-    out.push(...availableBlock(h, m.available, { brave, translatable: false }));
-  }
+  const others = otherLanguages(h, { langs: m.otherLangs, other: true, brave, translatable: false });
+  if (others.length) out.push(sep(h), ...others);
 
   out.push(sep(h));
   out.push(h('button', {

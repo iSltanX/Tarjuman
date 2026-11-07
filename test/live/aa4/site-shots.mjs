@@ -4,7 +4,7 @@
 // حساب. فيديو اللقطات Cosmos Laundromat (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0 (docs/site/credits.md).
 // تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُرسل جسم json3 مبني من ملف SRT الذي نزّله ترجمان في جلسة T6 اليدوية برسالة
 // الالتقاط نفسها من عالم الصفحة، أي عبر الجسر الحقيقي، ويُتحقق أن «تنزيل الملف» يعيد الملف اليدوي نفسه بايتًا. وقائمة مسارات الفيديو
-// الأخرى تقرؤها الإضافة من بيانات المشغّل في الصفحة كما هي (لا تُحقن). ثم الدورة كما يفعلها المستخدم في 2.0.0: قائمة التحميل،
+// الأخرى (عددها في سطر قائمة التحميل) تقرؤها الإضافة من بيانات المشغّل في الصفحة كما هي (لا تُحقن). ثم الدورة كما يفعلها المستخدم في 2.0.0: قائمة التحميل،
 // ونافذة الإضافة بكتلة «تعليمات الترجمة» (تُفتح في تبويب خلفي ويوتيوب هو التبويب النشط، فتقرأ حالته كما تقرؤها من شريط المتصفح)،
 // ورفع الملف العربي من زر الشريط، ووضع «فوق الأصل»، واللوحة، والتوقيت، ثم المحرّر والمحفوظات والإعدادات. كل فعل نقرة حقيقية
 // (Input)، وعناصر جذور الظل المغلقة تُحدَّد بـDOM المخترق في CDP دون مساس بالمنتج. اللقطات بمعامل 2.
@@ -245,117 +245,6 @@ async function setTheater(on) {
   await sleep(1800);
   return (await isTheater()) === on;
 }
-/** يمرّر القائمة المفتوحة حتى أول «مسار آخر» قرب أعلاها (العنصر داخل جذر ظل مغلق، فبالعقدة من DOM المخترق). */
-async function scrollMenuToAvailable() {
-  const menu = await inShadow(yt, 'tarjuman-controls-layer', '[role="menu"], [role="dialog"], .menu');
-  if (!menu) return false;
-  const { object } = await yt.send('DOM.resolveNode', { nodeId: menu.nodeId });
-  const { result: r } = await yt.send('Runtime.callFunctionOn', {
-    objectId: object.objectId, returnByValue: true,
-    functionDeclaration: `function () {
-      const sc = [this, ...this.querySelectorAll('*')].find((e) => e.scrollHeight > e.clientHeight + 20 && /auto|scroll/.test(getComputedStyle(e).overflowY));
-      const t = this.querySelector('[data-fid^="available:"]');
-      if (!sc || !t) return false;
-      const head = t.previousElementSibling ?? t;
-      sc.scrollTop += head.getBoundingClientRect().top - sc.getBoundingClientRect().top - 12;
-      return true;
-    }`,
-  });
-  await sleep(400);
-  return r.value === true;
-}
-async function clickExpr(page, expr, what) {
-  const ok = await page.eval(`(() => { for (const e of document.querySelectorAll('[data-aa4]')) e.removeAttribute('data-aa4'); const el = (${expr}); if (!el) return false; el.setAttribute('data-aa4', '1'); return true; })()`);
-  if (!ok) throw new Error(`لم يوجد: ${what}`);
-  const c = await page.centerOf('[data-aa4="1"]');
-  if (!c) throw new Error(`غير ظاهر: ${what}`);
-  await page.click(c.x, c.y);
-  await human(300, 500);
-}
-
-/** لقطة منطقة بمعامل العرض إلى المجلد الخام، وتُسجَّل بمقاسها وبصمتها ومنطقتها. */
-async function rawShot(page, name, clip) {
-  const params = { format: 'png', captureBeyondViewport: false };
-  if (clip) params.clip = { x: clip.left, y: clip.top, width: clip.width, height: clip.height, scale: 1 };
-  const { data } = await page.send('Page.captureScreenshot', params);
-  const buf = Buffer.from(data, 'base64');
-  await writeFile(path.join(RAW, `${name}.png`), buf);
-  result.raw.push({ name, width: buf.readUInt32BE(16), height: buf.readUInt32BE(20), sha16: createHash('sha256').update(buf).digest('hex').slice(0, 16), clip: clip ?? null });
-  console.log(`  ⤷ ${name}.png ${buf.readUInt32BE(16)}×${buf.readUInt32BE(20)}`);
-}
-const union = (a, b) => {
-  const left = Math.min(a.left, b.left);
-  const top = Math.min(a.top, b.top);
-  return { left, top, width: Math.max(a.right, b.right) - left, height: Math.max(a.bottom, b.bottom) - top };
-};
-
-async function waitFile(timeoutMs = 25000) {
-  const end = Date.now() + timeoutMs;
-  while (Date.now() < end) {
-    const list = (await readdir(DL, { recursive: true }).catch(() => [])).filter((n) => n.endsWith('.srt'));
-    if (list.length) {
-      await sleep(600);
-      return list[0];
-    }
-    await sleep(400);
-  }
-  return null;
-}
-
-async function extShot(relPath, name, { width, height, scheme = 'light', before = null } = {}) {
-  const page = await s.extPage(relPath);
-  await page.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: DSF, mobile: false });
-  await page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
-  await page.waitFor(() => document.readyState === 'complete' && document.fonts.status === 'loaded', { timeoutMs: 15000 }).catch(() => null);
-  await sleep(1200);
-  if (before) await before(page);
-  await sleep(500);
-  await rawShot(page, name, null);
-  return page;
-}
-
-/**
- * نافذة الإضافة كما تُفتح من شريط المتصفح: يوتيوب التبويب النشط في النافذة الأخيرة، والنافذة في تبويب خلفي، فتقرأ حالته بـ
- * tabs.query({ active, lastFocusedWindow }) كما في test/live/ui/run.mjs. بعرضها الحقيقي 340 وطولها كما يرسمه المحتوى.
- */
-async function popupShot(name, { scheme = 'light' } = {}) {
-  await frontYt();
-  await sleep(400);
-  const { targetId } = await yt.conn.send('Target.createTarget', { url: 'about:blank', background: true });
-  const page = await attach(yt.conn, targetId, { url: `${s.base}pages/popup/index.html` });
-  try {
-    await page.send('Emulation.setDeviceMetricsOverride', { width: 340, height: 640, deviceScaleFactor: DSF, mobile: false });
-    await page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
-    await page.waitFor(() => !!document.querySelector('#app[data-ready]') && document.fonts.status === 'loaded', { timeoutMs: 12000 });
-    await sleep(1500);
-    const info = await page.eval(() => {
-      const t = (sel) => document.querySelector(sel)?.textContent.replace(/\s+/g, ' ').trim() ?? null;
-      const copy = [...document.querySelectorAll('button')].find((b) => /نسخ التعليمات/.test(b.textContent));
-      return {
-        status: t('.tj-popup__status'),
-        block: t('.tj-popup__pair'),
-        copyDisabled: copy ? copy.getAttribute('aria-disabled') === 'true' || copy.disabled : null,
-        h: Math.ceil(document.documentElement.scrollHeight),
-        w: document.documentElement.clientWidth,
-      };
-    });
-    check('popup-reads-youtube-tab', !!info.status && !/افتح فيديو على يوتيوب/.test(info.status), { status: info.status?.slice(0, 120) });
-    check('popup-from-detected-english', /^تعليمات الترجمةمنالإنجليزيةإلىالعربية/.test(info.block ?? ''), { block: info.block?.slice(0, 40) });
-    check('popup-copy-enabled', info.copyDisabled === false, { copyDisabled: info.copyDisabled });
-    await page.send('Emulation.setDeviceMetricsOverride', { width: 340, height: Math.min(info.h, 1200), deviceScaleFactor: DSF, mobile: false });
-    await sleep(500);
-    result.geometry.popup = { width: info.w, height: info.h };
-    await rawShot(page, `${name}-full`, null);
-    // حتى نهاية كتلة «تعليمات الترجمة» وسطرها (الرأس والفيديو الحالي والكتلة)، فتجاور خطوات «كيف يعمل» في الموقع.
-    const bottom = await page.eval(() => Math.ceil(Math.max(...[...document.querySelectorAll('.tj-popup__pair, .tj-popup__pair *')].map((e) => e.getBoundingClientRect().bottom))));
-    check('popup-instructions-block-measured', bottom > 200 && bottom < info.h, { bottom });
-    await rawShot(page, name, { left: 0, top: 0, width: 340, height: Math.min(bottom + 7, info.h) });
-  } finally {
-    await yt.conn.send('Target.closeTarget', { targetId }).catch(() => null);
-    await frontYt();
-    await sleep(1200);
-  }
-}
 
 try {
   // لا تشغيل تلقائي في نسخة الاختبار (كما في T6): الفيديو موقوف عند 3:02 من الرابط (إطاره إن حمّله يوتيوب، وإلا غلافه)، وترجمان يعرض المقطع الحالي فوقه.
@@ -381,11 +270,14 @@ try {
   const dlItem = await layer('button[data-fid="download"]');
   const menuHtml = (await inShadow(yt, 'tarjuman-controls-layer', '[role="menu"], [role="dialog"], .menu'))?.html;
   const menuText = textOf(menuHtml);
-  const others = (String(menuHtml ?? '').match(/data-fid="available:/g) ?? []).length;
+  // سطر لغات الفيديو الأخرى (قرار سلطان 2026-11-07): عددها من قائمة مسارات الفيديو في بيانات المشغّل، لا صف لكل مسار.
+  const countAttr = /data-fid="otherLangs"[^>]*data-count="(\d+)"/.exec(String(menuHtml ?? ''))?.[1];
+  const others = countAttr === undefined ? null : Number(countAttr);
   check('download-menu-track-by-language', !!dlItem?.box && /الإنجليزية/.test(menuText) && /60/.test(menuText), { hasDownload: !!dlItem?.box });
   check('download-menu-no-copy-button', !/data-fid="copy"/.test(String(menuHtml ?? '')));
-  result.geometry.availableTracks = others;
-  note(others ? `قائمة التحميل تعرض ${others} مسارًا آخر من بيانات المشغّل (قائمة المسارات المتاحة، لم تُحقن)` : 'لا مسارات أخرى في القائمة: لم تُقرأ قائمة المسارات المتاحة من بيانات المشغّل في هذا التشغيل');
+  check('download-menu-other-languages-line', /data-fid="otherLangs"/.test(String(menuHtml ?? '')) && !/data-fid="available:/.test(String(menuHtml ?? '')));
+  result.geometry.otherLanguages = others;
+  note(others !== null ? `قائمة التحميل تقول إن في الفيديو ${others} لغة أخرى، من قائمة مسارات الفيديو في بيانات المشغّل (لم تُحقن)` : 'سطر اللغات الأخرى بلا عدد: لم تُقرأ قائمة مسارات الفيديو من بيانات المشغّل في هذا التشغيل');
   await revealControls(yt);
   await sleep(400);
   let g = await geo();
@@ -395,17 +287,6 @@ try {
   const file = await waitFile();
   const got = file ? await readFile(path.join(DL, file), 'utf8') : null;
   check('download-equals-manual-file', got !== null && sha16(got) === manual.file.sha16, { file: file ? path.basename(file) : null, sha16: got ? sha16(got) : null });
-  // والقائمة نفسها ممرَّرة إلى «مسارات أخرى في هذا الفيديو» (لغاتها من بيانات المشغّل، وخطوات اختيارها من يوتيوب).
-  if (others) {
-    await sleep(800);
-    if (!(await layer('button[data-fid="download"]'))?.box) await clickBar('download');
-    const scrolled = await scrollMenuToAvailable();
-    check('download-menu-scrolled-to-available', scrolled);
-    await revealControls(yt);
-    await sleep(300);
-    g = await geo();
-    await rawShot(yt, '02b-download-menu-available', g.player);
-  }
   await escape();
   check('back-to-default-view', await setTheater(false));
 

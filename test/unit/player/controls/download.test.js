@@ -46,20 +46,37 @@ test('رفض مسار (قديم أو مستقبلي): رسالته وخطوات 
   assert.equal(brave.ui.menu().querySelector('.note-in').textContent, 'Brave قد يختار لغة المتصفح أولًا؛ اختر اللغة التي تريدها مرة');
 });
 
-test('المسارات المتاحة في الفيديو (ق١): ما لم يُلتقط بلغته ونوعه واسمه في يوتيوب و«اختره من قائمة يوتيوب»، بلا زر يبدّله', () => {
-  const available = { videoId: 'AAAAAAAAAAA', tracks: [{ lang: 'en', kind: 'manual', name: 'English' }, { lang: 'es', kind: 'manual', name: 'Español' }, { lang: 'ja', kind: 'asr', name: null }], translatable: true };
+test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-07): سطر واحد بعددها وخطوات اختيارها من يوتيوب، لا صف لكل مسار ولا زر يبدّله', () => {
+  // en يدوي ملتقط، وen تلقائي ليس لغة أخرى، وes وja لغتان أخريان.
+  const available = { videoId: 'AAAAAAAAAAA', tracks: [{ lang: 'en', kind: 'manual', name: 'English' }, { lang: 'en', kind: 'asr', name: null }, { lang: 'es', kind: 'manual', name: 'Español' }, { lang: 'ja', kind: 'asr', name: null }], translatable: true };
   const page = mountPage({ state: makeState({ captured: [trackInfo()], available }) });
   open(page);
-  const rows = page.ui.menu().querySelectorAll('.row.available');
-  assert.deepEqual(rows.map((r) => r.querySelector('.line__text').textContent), ['الإسبانية · يدوية — اختره من قائمة يوتيوب', 'اليابانية · تلقائية — اختره من قائمة يوتيوب'], 'الملتقط لا يتكرر');
-  assert.equal(rows[0].querySelector('bdi').textContent, 'Español');
-  assert.ok(page.ui.menuText().includes(LABELS.pickSteps));
-  assert.equal(rows.some((r) => r.querySelector('button')), false, 'لا تبديل من الإضافة');
-  // بلا التقاط: الإرشاد العام وخطوات ترجمة يوتيوب الآلية حين يتيحها الفيديو.
+  const menu = page.ui.menu();
+  assert.equal(menu.querySelectorAll('.row.available').length, 0, 'لا صف لكل مسار');
+  const note = menu.querySelector('[data-fid="otherLangs"]');
+  assert.equal(note.getAttribute('data-count'), '2');
+  assert.equal(note.querySelector('.steps').textContent, `في هذا الفيديو لغتان أخريان. لاختيار إحداها: ${LABELS.pickSteps}`);
+  assert.equal(note.querySelector('button'), null, 'لا تبديل من الإضافة');
+  assert.equal(page.ui.menuText().includes('Español'), false, 'ولا أسماء المسارات');
+  assert.equal(page.ui.menuText().includes(LABELS.machineSteps), false, 'الترجمة الآلية بلا التقاط وحده');
+  // بلا التقاط: عدد كل لغات الفيديو، وخطوات ترجمة يوتيوب الآلية حين يتيحها.
   const none = mountPage({ state: makeState({ available }) });
   open(none);
-  assert.equal(none.ui.menu().querySelectorAll('.row.available').length, 3);
-  assert.ok(none.ui.menuText().includes(LABELS.machineSteps));
+  const n2 = none.ui.menu().querySelector('[data-fid="otherLangs"]');
+  assert.equal(n2.getAttribute('data-count'), '3');
+  assert.ok(n2.textContent.startsWith('في هذا الفيديو 3 لغات. لاختيار إحداها:'));
+  assert.ok(n2.textContent.includes(LABELS.machineSteps));
+  // قائمة الفيديو غير معروفة بعد مسار ملتقط: الخطوات وحدها؛ ولا لغة أخرى معروفة: لا سطر.
+  const unknown = mountPage({ state: makeState({ captured: [trackInfo()] }) });
+  open(unknown);
+  assert.equal(unknown.ui.menu().querySelector('[data-fid="otherLangs"] .steps').textContent, `لاختيار لغة أخرى: ${LABELS.pickSteps}`);
+  const only = mountPage({ state: makeState({ captured: [trackInfo()], available: { ...available, tracks: available.tracks.slice(0, 2), translatable: false } }) });
+  open(only);
+  assert.equal(only.ui.menu().querySelector('[data-fid="otherLangs"]'), null);
+  // وفي Brave ملاحظته مع سطر اللغات.
+  const brave = mountPage({ state: makeState({ captured: [trackInfo()], available }), brave: true });
+  open(brave);
+  assert.equal(brave.ui.menu().querySelector('[data-fid="otherLangs"] .note-in').textContent, LABELS.braveNote);
 });
 
 test('ترجمة يوتيوب الآلية الملتقطة موسومة بلغة أصلها وفي آخر القائمة، ولا تُختار افتراضيًا (ق٢)', () => {

@@ -73,11 +73,9 @@ export const LABELS = Object.freeze({
   // اختيار المسار من يوتيوب بيد المستخدم (ق١): كلمات لا رموز (← و⚙ خارج الخطين المضمّنين، فيرسمها Brave بخطوط نظام متفرقة؛
   // تدقيق 5fedcb9، CL-017).
   pickSteps: 'CC ثم الإعدادات ثم «الترجمة» ثم اللغة التي تريدها',
-  pickOne: 'اختره من قائمة يوتيوب',
   braveNote: 'Brave قد يختار لغة المتصفح أولًا؛ اختر اللغة التي تريدها مرة',
   machine: 'مترجمة آليًا من يوتيوب',
   machineSteps: 'لترجمة يوتيوب الآلية: CC ثم الإعدادات ثم «الترجمة» ثم «الترجمة التلقائية» ثم اللغة',
-  availableTitle: 'مسارات أخرى في هذا الفيديو',
   translationLang: 'لغة الترجمة',
   langUnknownOption: 'غير محددة',
   langSuggested: 'مقترحة',
@@ -142,7 +140,18 @@ export function trackLine(t) {
  * سطر مسار متاح في الفيديو لم يُلتقط بعد (ق١): «الإسبانية · يدوية — اختره من قائمة يوتيوب».
  * @param {{ lang: string, kind: 'manual' | 'asr' }} t
  */
-export const availableLine = (t) => `${languageName(t.lang) ?? t.lang} · ${t.kind === 'asr' ? LABELS.kindAsr : LABELS.kindManual} — ${LABELS.pickOne}`;
+/**
+ * سطر لغات الفيديو الأخرى في قائمة التحميل (قرار سلطان 2026-11-07 بعد لقطات AA4): عددها حين تُعرف قائمة مسارات الفيديو، ثم خطوات
+ * اختيارها من يوتيوب؛ وبلا قائمة معروفة الخطوات وحدها. «أخرى» بعد مسار ملتقط، وبلا التقاط «في هذا الفيديو 13 لغة».
+ * @param {number | null} n عدد اللغات المختلفة التي لم تُلتقط، وnull حين لا تُعرف
+ * @param {{ other?: boolean }} [o]
+ */
+export function otherLanguagesLine(n, { other = true } = {}) {
+  if (n === null || n < 1) return `لاختيار لغة أخرى: ${LABELS.pickSteps}`;
+  const what = !other ? formatCount(n, COUNT_FORMS.language)
+    : n === 1 ? 'لغة أخرى' : n === 2 ? 'لغتان أخريان' : `${formatCount(n, COUNT_FORMS.language)} أخرى`;
+  return `في هذا الفيديو ${what}. ${n === 1 ? 'لاختيارها' : 'لاختيار إحداها'}: ${LABELS.pickSteps}`;
+}
 
 /**
  * سطر الترجمة في قائمتها: «العربية · 412 مقطعًا» باسم لغتها (و«· معدّلة» حين عُدّلت)، و«لغة غير محددة» بلا لغة.
