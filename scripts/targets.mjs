@@ -47,9 +47,10 @@ export async function outDirProblem(out, { root }) {
   const foreign = names.filter((n) => !BUILD_TOP.includes(n));
   if (foreign.length) return `فيه ما لا يكتبه البناء: ${foreign.slice(0, 5).join('، ')}`;
   try {
-    const { name } = JSON.parse(await readFile(path.join(out, 'manifest.json'), 'utf8'));
-    const own = JSON.parse(await readFile(path.join(src, 'manifest.json'), 'utf8')).name;
-    return name === own ? null : 'بيانه ليس بيان ترجمان';
+    const built = JSON.parse(await readFile(path.join(out, 'manifest.json'), 'utf8'));
+    const own = JSON.parse(await readFile(path.join(src, 'manifest.json'), 'utf8'));
+    // الاسم المختصر «ترجمان» ثابت عبر الإصدارات، والاسم الكامل تغيّر في 2.0.0 (لوحة الهوية 18): فبناء سابق بالاسم القديم بناءُ ترجمان.
+    return built.name === own.name || (typeof own.short_name === 'string' && built.short_name === own.short_name) ? null : 'بيانه ليس بيان ترجمان';
   } catch {
     return 'لا بيان ترجمان في جذره';
   }

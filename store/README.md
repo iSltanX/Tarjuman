@@ -93,7 +93,7 @@
 | حساب المطوّر | مطلوب | رسوم تسجيل لمرة واحدة. مبلغها 5 دولارات في تدوينة Chromium (2020-03-12)، والصفحة الحالية لا تذكره. والتحقق بخطوتين إلزامي، وبريد التواصل موثّق، واسم الناشر مطلوب | سلطان بيده عند النشر | [register](https://developer.chrome.com/docs/webstore/register)، [policies](https://developer.chrome.com/docs/webstore/program-policies/policies) |
 | إعلان تاجر أو غير تاجر (DSA) | مطلوب من كل المطوّرين | التاجر يُنشر اسمه القانوني وهاتفه وعنوانه أسفل الإدراج | غير تاجر (§٥) | [trader-disclosure](https://developer.chrome.com/docs/webstore/program-policies/trader-disclosure) |
 | الحزمة | مطلوبة | ZIP حتى 2GB، والبيان في جذرها، ورقم الإصدار يزيد مع كل رفع، وللناشر الجديد إضافتان منشورتان | T4 | [publish](https://developer.chrome.com/docs/webstore/publish)، [prepare](https://developer.chrome.com/docs/webstore/prepare) |
-| الاسم | من `name` في البيان | حتى 75 محرفًا، و`short_name` حتى 12 | «ترجمان - ترجمتك العربية فوق الفيديو» (35)، و`short_name` «ترجمان». T2 | [prepare](https://developer.chrome.com/docs/webstore/prepare) |
+| الاسم | من `name` في البيان | حتى 75 محرفًا، و`short_name` حتى 12 | «ترجمان — ترجمتك فوق الفيديو» (27) منذ 2.0.0، و`short_name` «ترجمان». T2 وAA5 | [prepare](https://developer.chrome.com/docs/webstore/prepare) |
 | الملخص | من `description` في البيان | حتى 132 محرفًا، نص عادي | الحالي 122 محرفًا، ويُراجع بعد T2.1 | [best-listing](https://developer.chrome.com/docs/webstore/best-listing) |
 | الوصف التفصيلي | مطلوب، والفارغ يُرفض | بلا حد منشور. ممنوع حشو الكلمات (Yellow Argon): لا قوائم مواقع أو علامات، ولا تكرار الكلمة أكثر من 5 مرات | T6 | [listing-requirements](https://developer.chrome.com/docs/webstore/program-policies/listing-requirements) |
 | الفئة واللغة | في Product details | الإلزام وقائمة الفئات لم يُتحقق منهما | T6 | [cws-dashboard-listing](https://developer.chrome.com/docs/webstore/cws-dashboard-listing) |
@@ -146,7 +146,7 @@
 | `browser_specific_settings.gecko.id` | لازم للتوقيع في MV3 | نص شبيه بالبريد حتى 80 محرفًا، أو GUID. و`tarjuman@bysltan.com` يطابق الصيغة | معتمد، ويربط الإدراج وتحديثاته. T2 | [MDN browser_specific_settings](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings) |
 | `data_collection_permissions` | إلزامي لكل إضافة جديدة منذ 2025-11-03 | `required: ["none"]` إن لم يُجمع شيء دون موافقة، و`technicalAndInteraction` لا يكون إلا اختياريًا | T2 وT2.1، ويحكم T5 في الصور | [firefox-builtin-data-consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) |
 | شيفرة المصدر | إلزامية لكل إصدار | README فيه نظام التشغيل والأدوات وإصداراتها وكل أوامر البناء، وملف القفل، وأدوات مفتوحة المصدر. والمطابقة تامة | T4 | [source-code-submission](https://extensionworkshop.com/documentation/publish/source-code-submission/) |
-| Name | مطلوب | حتى 50 محرفًا | «ترجمان - ترجمتك العربية فوق الفيديو» (35). T2 | addons-server (`max_length=50`) |
+| Name | مطلوب | حتى 50 محرفًا | «ترجمان — ترجمتك فوق الفيديو» (27) منذ 2.0.0. T2 وAA5 | addons-server (`max_length=50`) |
 | Add-on URL (slug) | يُولَّد ويُعدَّل | فريد، حتى 30 محرفًا | T6 | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |
 | Summary | مطلوب | حتى 250 محرفًا، بلا روابط | T6 | [create-an-appealing-listing](https://extensionworkshop.com/documentation/develop/create-an-appealing-listing/) |
 | Description | اختياري | حتى 15,000، وMarkdown محدود. ويذكر ما تنقله الإضافة («No Surprises») | T6 | [add-on-policies](https://extensionworkshop.com/documentation/publish/add-on-policies/) |
@@ -193,7 +193,7 @@
 | حساب Edge | حساب Partner Center الحالي من نوع **Individual**، دون حساب جديد ولا تغيير في نوعه. والنوع الفردي إعلان بأن التوزيع ليس عملًا تجاريًا (اتفاقية المطوّر §2) | — |
 | حساب Google للنشر | حساب مخصص باسم الناشر BySultan، لا الحساب الشخصي. وبريده `iSultanBy@gmail.com`، وهو بريد التواصل الظاهر في متجر Chrome وبريد الدعم | — |
 | صفة التاجر في Chrome | **غير تاجر**، متسقة مع حساب Edge الفردي | T8 |
-| الاسم | `name`: **«ترجمان - ترجمتك العربية فوق الفيديو»** (35 محرفًا) على نمط مِجهَر («مِجهَر - مساعدك على GitHub»). و`short_name` و`default_title`: «ترجمان». وتبقى علامة يوتيوب خارج العنوان. ومتجرا Chrome وEdge يأخذان العنوان من البيان، فيظهر الاسم الكامل في صفحة الإضافات بالمتصفح أيضًا | T2 يعدّله في البيان للهدفين |
+| الاسم | `name`: **«ترجمان — ترجمتك فوق الفيديو»** (27 محرفًا) منذ 2.0.0، نص لوحة الهوية 18 (`docs/aa-plan.md` §٢ وAA5)، وكان «ترجمان - ترجمتك العربية فوق الفيديو» (35 محرفًا) في 1.1.0 على نمط مِجهَر. و`short_name` و`default_title`: «ترجمان». وتبقى علامة يوتيوب خارج العنوان. ومتجرا Chrome وEdge يأخذان العنوان من البيان، فيظهر الاسم الكامل في صفحة الإضافات بالمتصفح أيضًا | T2 يعدّله في البيان للهدفين، وAA5 للاسم الجديد |
 | لغة الإدراج | العربية وحدها بلا `_locales`، وملاحظات المراجعين بالإنجليزية | T6 |
 | الظهور | عام (Public) في المتاجر الثلاثة، وكل المناطق | T6 وT8 |
 | Firefox | `tarjuman@bysltan.com` (على نمط `mijhar@bysltan.com`)، لسطح المكتب وحده بلا `gecko_android` | T2 |

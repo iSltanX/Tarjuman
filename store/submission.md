@@ -1,6 +1,6 @@
-# إجابات نماذج التقديم — ترجمان 1.1.0
+# إجابات نماذج التقديم — ترجمان 2.0.0
 
-> **المرحلة:** T6 من [جولة النشر](../docs/store-release.md)، 2026-11-04. إجابات حقول Chrome Web Store وMicrosoft Edge Add-ons (Partner Center) وFirefox Add-ons (AMO) لحزم `release/store/tarjuman-1.1.0-*` المبنية من الفرع `tj/store-release` بعد دمج الهوية الثالثة. تُطابَق مع نموذج كل متجر وقت التقديم. ولا يُرفع شيء في هذه الجولة.
+> **المرحلة:** T6 من [جولة النشر](../docs/store-release.md)، 2026-11-04. إجابات حقول Chrome Web Store وMicrosoft Edge Add-ons (Partner Center) وFirefox Add-ons (AMO) لحزم `release/store/tarjuman-2.0.0-*` المبنية من الفرع `tj/store-release` بعد دمج الهوية الثالثة. تُطابَق مع نموذج كل متجر وقت التقديم. ولا يُرفع شيء في هذه الجولة.
 > **اللغة:** ما يقرؤه المراجعون وحدهم (الغرض الواحد، ومبررات الأذونات، وملاحظات الاختبار) بالإنجليزية للّصق، وتحته معناه بالعربية. وما يراه المستخدمون في [`listing.ar.md`](listing.ar.md).
 > **العلامات:** **[قرار]** ينتظر سلطان. و`⟨بعد T7⟩` كانت روابط الموقع قبل نشره، وثُبّتت في §٥ بعد أن أعادت 200 (2026-11-04).
 
@@ -10,10 +10,10 @@ Chrome («Single purpose description») وEdge («Single Purpose Description»):
 
 <!-- field: reviewer.singlePurpose -->
 ```text
-Tarjuman lets a user watch a YouTube video with Arabic subtitles that the user prepares. On www.youtube.com watch pages it saves the English subtitles that the YouTube player already loaded as an SRT file, so the user can translate that file outside the extension with a tool of their choice, and then it displays the user's Arabic SRT file over the same video, with timing adjustment, editing and local per-video storage.
+Tarjuman lets a user watch a YouTube video with subtitles that the user prepares, from any language into their own. On www.youtube.com watch pages it saves the subtitles that the YouTube player already loaded, in whatever language the user picked in the player, as an SRT file, so the user can translate that file outside the extension with a tool of their choice, and then it displays the user's translated SRT file over the same video, with timing adjustment, editing and local per-video storage.
 ```
 
-المعنى: يتيح للمستخدم مشاهدة فيديو يوتيوب بترجمة عربية يجهّزها هو. على صفحات المشاهدة يحفظ الترجمة الإنجليزية التي جلبها المشغّل في ملف SRT ليترجمه المستخدم خارج الإضافة، ثم يعرض ملفه العربي فوق الفيديو نفسه، مع ضبط التوقيت والتحرير والحفظ المحلي لكل فيديو.
+المعنى: يتيح للمستخدم مشاهدة فيديو يوتيوب بترجمة يجهّزها هو، من أي لغة إلى لغته. على صفحات المشاهدة يحفظ الترجمة التي جلبها المشغّل، باللغة التي اختارها المستخدم فيه، في ملف SRT ليترجمه خارج الإضافة، ثم يعرض ملفه المترجم فوق الفيديو نفسه، مع ضبط التوقيت والتحرير والحفظ المحلي لكل فيديو.
 
 ## ٢. مبررات الأذونات
 
@@ -21,28 +21,28 @@ Tarjuman lets a user watch a YouTube video with Arabic subtitles that the user p
 
 <!-- field: reviewer.permission.storage -->
 ```text
-storage: Saves the user's data in the extension's local storage on the device: the user's Arabic translations (up to three per video, plus one previous version), the English reference track and export fingerprints used for comparison, review marks, and settings. Nothing is synced or sent to the developer.
+storage: Saves the user's data in the extension's local storage on the device: the user's translations and their languages (up to three per video, plus one previous version), the original subtitle track and export fingerprints used for comparison, review marks, language preferences, and settings. Nothing is synced or sent to the developer.
 ```
 
 <!-- field: reviewer.permission.unlimitedStorage -->
 ```text
-unlimitedStorage: A saved video keeps full subtitle files (Arabic and English text with timings). A two-hour video takes about 0.7 MB, so the default 10 MB local quota fills after about fifteen long videos and saving would then fail. The data stays on the device and is removed with the extension. This permission adds no install warning.
+unlimitedStorage: A saved video keeps full subtitle files (translation and original text with timings). A two-hour video takes about 0.7 MB, so the default 10 MB local quota fills after about fifteen long videos and saving would then fail. The data stays on the device and is removed with the extension. This permission adds no install warning.
 ```
 
 <!-- field: reviewer.permission.downloads -->
 ```text
-downloads: Saves only the files the user asks for (the English SRT, exported translations, and the backup JSON) to the Downloads folder, a subfolder of it, or a location chosen at each download, according to the user's setting. The extension looks up only the download IDs it created; it does not read, open, rename or delete any other download.
+downloads: Saves only the files the user asks for (the original SRT, exported translations, and the backup JSON) to the Downloads folder, a subfolder of it, or a location chosen at each download, according to the user's setting. The extension looks up only the download IDs it created; it does not read, open, rename or delete any other download.
 ```
 
 <!-- field: reviewer.permission.host -->
 ```text
-Host access (content scripts on https://www.youtube.com/*): Required to add Tarjuman's buttons to the YouTube player, to read a copy of the subtitle response that the YouTube player itself requested when the user turned captions on (a document_start main-world script reads only /api/timedtext responses and makes no request of its own), and to draw the user's Arabic subtitles over the video. It runs on no other site.
+Host access (content scripts on https://www.youtube.com/*): Required to add Tarjuman's buttons to the YouTube player, to read a copy of the subtitle response that the YouTube player itself requested when the user turned captions on (a document_start main-world script reads only /api/timedtext responses and makes no request of its own), and to draw the user's subtitles over the video. It also reads, from the player data already on the page, the list of caption languages the video offers (language, kind and name only, no URLs or tokens, no request, no track switching) to show how many other languages exist. It runs on no other site.
 
 Optional host permission https://app-reports.isultantf.workers.dev/*: Requested only when the user presses "Send report" in Settings > About > Report a problem, after a preview of every field that will be sent. It is the developer's problem-report endpoint (HTTPS, one JSON request, no credentials, no automatic retry). If the user declines, nothing is sent. It is not used for anything else.
 ```
 
 المعنى بالترتيب:
-- **التخزين:** حفظ ترجمات المستخدم ومرجعها الإنجليزي وبصمات التصدير والعلامات والإعدادات في تخزين الإضافة على الجهاز، بلا مزامنة ولا إرسال.
+- **التخزين:** حفظ ترجمات المستخدم ولغاتها ومسار الأصل وبصمات التصدير والعلامات وتفضيلات اللغات والإعدادات في تخزين الإضافة على الجهاز، بلا مزامنة ولا إرسال.
 - **التخزين غير المحدود:** فيديو بساعتين نحو 0.7 م.ب، فالحد الافتراضي 10 م.ب يمتلئ بنحو خمسة عشر فيديو طويلًا فيفشل الحفظ ([`docs/contracts/storage.md`](../docs/contracts/storage.md) §٥). ولا يضيف تحذير تثبيت (ثبت في P2).
 - **التنزيلات:** الملفات التي يطلبها المستخدم وحدها، في المكان الذي يختاره، والاستعلام بمعرّفات ما نزّلته الإضافة وحدها.
 - **يوتيوب:** أزرار المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل بلا طلب جديد، ورسم الترجمة العربية. ولا موقع غيره.
@@ -64,7 +64,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 
 | الفئة | تُعلَّم؟ | لماذا |
 | --- | --- | --- |
-| Website content | **نعم** | يقرأ نص الترجمة الإنجليزية من رد يوتيوب وعنوان الفيديو، ويعالجهما ويحفظهما على الجهاز. لا يُرسلان إلى أحد |
+| Website content | **نعم** | يقرأ نص الترجمة الأصلية من رد يوتيوب وعنوان الفيديو وقائمة لغات مساراته من بيانات المشغّل، ويعالجها ويحفظ الأولين على الجهاز. لا يُرسل شيء منها إلى أحد |
 | Web history | **نعم** | المحفوظات قائمة بالفيديوهات التي حفظ لها المستخدم ترجمة (المعرّف والعنوان والمدة) على الجهاز، وصورها تُطلب من يوتيوب بمعرّفاتها ولها مفتاح يطفئها. وهي الفئة نفسها التي عُدّت بها الصور في Firefox (`browsingActivity`)، فيتسق الإعلان في المتاجر الثلاثة |
 | Personal communications | **نعم** | «الإبلاغ عن مشكلة»: الوصف الذي يكتبه المستخدم ويرسله بنفسه إلى المطوّر. يُفصَح عنه احتياطًا لأنه رسالة منه |
 | Personally identifiable information | لا | لا اسم ولا بريد ولا معرّف مستخدم أو جهاز، والبلاغ بلا شيء من ذلك |
@@ -94,7 +94,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 
 | الحقل | القيمة |
 | --- | --- |
-| الحزمة | `release/store/tarjuman-1.1.0-chrome.zip` |
+| الحزمة | `release/store/tarjuman-2.0.0-chrome.zip` |
 | الاسم والملخص | من البيان (`listing.ar.md`) |
 | الوصف التفصيلي | `chromium.description` في `listing.ar.md` |
 | Primary category | Make Chrome Yours › Accessibility (`listing.ar.md` «الفئة») |
@@ -113,7 +113,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 
 | الحقل | القيمة |
 | --- | --- |
-| الحزمة | `release/store/tarjuman-1.1.0-edge.zip` (بايتات حزمة Chrome نفسها، بلا `update_url`) |
+| الحزمة | `release/store/tarjuman-2.0.0-edge.zip` (بايتات حزمة Chrome نفسها، بلا `update_url`) |
 | Availability | Public، وكل الأسواق |
 | Category | Accessibility (`listing.ar.md`) |
 | Website وSupport contact detail | §٥ |
@@ -130,9 +130,9 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 
 | الحقل | القيمة |
 | --- | --- |
-| ملف الإضافة | `release/store/tarjuman-1.1.0-firefox.zip` |
+| ملف الإضافة | `release/store/tarjuman-2.0.0-firefox.zip` |
 | التوافق | Firefox للحاسوب وحده، 144 فأحدث (تدقيق 7a66f91، قرار Q08). لا يُختار Firefox for Android، ولا `gecko_android` في البيان |
-| شيفرة المصدر | نعم، `release/store/tarjuman-1.1.0-source.zip` وفيه `SOURCE-README.txt`. ويطابق إعادة بنائه الحزمة بايتًا (T4) |
+| شيفرة المصدر | نعم، `release/store/tarjuman-2.0.0-source.zip` وفيه `SOURCE-README.txt`. ويطابق إعادة بنائه الحزمة بايتًا (T4) |
 | Name | من البيان |
 | Add-on URL | `tarjuman` (`listing.ar.md`) |
 | Summary | `amo.summary` في `listing.ar.md` |

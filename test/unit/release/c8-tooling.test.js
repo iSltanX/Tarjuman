@@ -66,6 +66,12 @@ test('U60: الجذر وأبوه وsrc وما تحتها (ومنه src/..foo) و
   await mkdir(path.join(tmp, 'other-ext'));
   await writeFile(path.join(tmp, 'other-ext', 'manifest.json'), JSON.stringify({ name: 'غيره' }));
   assert.match(await outDirProblem(path.join(tmp, 'other-ext'), root), /ليس بيان ترجمان/);
+  // بناء سابق بالاسم الكامل القديم (1.1.0) والاسم المختصر نفسه «ترجمان»: بناء ترجمان (AA5، تغيّر الاسم في 2.0.0)؛ ومختصر غيره مرفوض.
+  await mkdir(path.join(tmp, 'old-name'));
+  await writeFile(path.join(tmp, 'old-name', 'manifest.json'), JSON.stringify({ name: 'ترجمان - ترجمتك العربية فوق الفيديو', short_name: 'ترجمان' }));
+  assert.equal(await outDirProblem(path.join(tmp, 'old-name'), root), null);
+  await writeFile(path.join(tmp, 'other-ext', 'manifest.json'), JSON.stringify({ name: 'غيره', short_name: 'غيره' }));
+  assert.match(await outDirProblem(path.join(tmp, 'other-ext'), root), /ليس بيان ترجمان/);
   await mkdir(path.join(tmp, 'no-manifest', 'pages'), { recursive: true });
   assert.match(await outDirProblem(path.join(tmp, 'no-manifest'), root), /لا بيان ترجمان/);
   // ملفات مدير الملفات وحدها كالفارغ (ملاحظة المراجعة المستقلة: كان مجلد فيه .DS_Store وحده يُرفض).

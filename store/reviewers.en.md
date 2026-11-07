@@ -1,4 +1,4 @@
-# ملاحظات المراجعين — ترجمان 1.1.0
+# ملاحظات المراجعين — ترجمان 2.0.0
 
 > **المرحلة:** T6 من [جولة النشر](../docs/store-release.md)، 2026-11-04. بالإنجليزية لأن المراجعين يقرؤونها (قرار سلطان: «ملاحظات المراجعين بالإنجليزية»)، ولا يراها المستخدمون. تصف ما يحدث فعلًا فقط، ولا تدّعي أن التصدير مسموح ولا تخفيه (§١ من [`README.md`](README.md)).
 > **الحقول:** Chrome «Test instructions» (اختياري ونوصي به)، وEdge «Notes for certification» (البند 1.3 يوجب خطوات الاختبار)، وAMO «Notes for Reviewers» (حتى 3,000 محرف). والكتل تُلصق كما هي، ويقيس `scripts/release/store-assets.mjs --check` أطوالها.
@@ -12,11 +12,11 @@ No account, login or payment is needed. Tarjuman works only on www.youtube.com w
 
 Test video (Cosmos Laundromat, Blender Foundation, CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3c
 
-1. Open the video and turn on English captions (CC) in the YouTube player. Tarjuman adds its buttons to the player's control bar; hover shows each name.
-2. "تحميل الأصل (SRT)" (Download original) > "تنزيل الملف" (Download file) saves Y-rmzh0PI3c.en.manual.normal.srt to the Downloads folder. "نسخ التعليمات" (Copy instructions) copies ready translation instructions to the clipboard.
+1. Open the video and turn on captions (CC) in the YouTube player. Any caption language works; English is used here. Tarjuman adds its buttons to the player's control bar; hover shows each name.
+2. "تحميل الأصل (SRT)" (Download original) > "تنزيل الملف" (Download file) saves Y-rmzh0PI3c.en.manual.normal.srt to the Downloads folder. Then the toolbar popup, under "تعليمات الترجمة" (Translation instructions), shows From (detected as English from the captured track) and To (Arabic by default, any language can be chosen); "نسخ التعليمات" (Copy instructions) copies ready translation instructions to the clipboard.
 3. The translation itself happens outside the extension: the user sends the file to any AI model or translates it by hand. To skip this step, save the Arabic sample at the end of these notes as test.ar.srt (UTF-8).
-4. "رفع الترجمة العربية (SRT)" (Upload Arabic translation) > choose the file. The Arabic lines appear over the video from 3:00. Because the sample has only 6 of the 60 lines, Tarjuman reports the missing lines; it never changes the file silently. The − and + buttons shift the timing.
-5. The toolbar icon opens a popup with Library (saved videos), Editor and Settings.
+4. "رفع الترجمة (SRT)" (Upload translation) > choose the file. The Arabic lines appear over the video from 3:00. Because the sample has only 6 of the 60 lines, Tarjuman reports the missing lines; it never changes the file silently. The − and + buttons shift the timing.
+5. The toolbar popup also opens Library (saved videos), Editor and Settings.
 
 What it does not do: it does not download video or audio, and it never requests subtitle files itself. A main-world script at document_start wraps fetch and XMLHttpRequest to read a copy of the /api/timedtext response that the YouTube player requested when captions were turned on; it makes no request of its own and passes the page's call through unchanged.
 
@@ -65,13 +65,13 @@ Privacy policy: https://bysltan.com/tarjuman/privacy. The same package is publis
 ```text
 No account, login or payment is needed. Desktop only; the interface is Arabic only.
 
-Source code: tarjuman-1.1.0-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild bundles each entry with syntax-level minification only: no renamed identifiers, no source maps, no obfuscation.
+Source code: tarjuman-2.0.0-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild bundles each entry with syntax-level minification only: no renamed identifiers, no source maps, no obfuscation.
 
 Test video (Cosmos Laundromat, Blender Foundation, CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3c
-1. Turn on English captions (CC). Tarjuman adds buttons to the player's control bar.
-2. "تحميل الأصل (SRT)" (Download original) > "تنزيل الملف" (Download file) saves the English .srt (via a blob: URL in the background script). "نسخ التعليمات" copies translation instructions.
+1. Turn on captions (CC); any language works, English is used here. Tarjuman adds buttons to the player's control bar.
+2. "تحميل الأصل (SRT)" (Download original) > "تنزيل الملف" (Download file) saves the English .srt (via a blob: URL in the background script). The toolbar popup copies translation instructions ("نسخ التعليمات") for the chosen From and To languages.
 3. Translation happens outside the extension. To skip it, save the Arabic sample below as test.ar.srt.
-4. "رفع الترجمة العربية (SRT)" (Upload Arabic translation) > choose the file. Arabic lines appear over the video from 3:00; the missing lines are reported, never changed silently. − and + shift the timing.
+4. "رفع الترجمة (SRT)" (Upload translation) > choose the file. Arabic lines appear over the video from 3:00; the missing lines are reported, never changed silently. − and + shift the timing.
 5. The toolbar popup opens Library, Editor and Settings.
 
 How subtitles are read: a main-world content script at document_start wraps fetch and XMLHttpRequest and reads a copy of the /api/timedtext response the YouTube player requested. It sends no request and passes the page's call through unchanged.

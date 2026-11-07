@@ -62,8 +62,8 @@ test('هدف غير معروف مرفوض في الطبقة والبناء', () 
   assert.match(r.stderr, /هدف غير معروف safari/);
 });
 
-test('اسم المتاجر (قرار سلطان، store/README.md §٥): الاسم بعبارته، و«ترجمان» اسمًا مختصرًا وتلميحًا', () => {
-  assert.equal(base.name, 'ترجمان - ترجمتك العربية فوق الفيديو');
+test('اسم المتاجر (قرار سلطان، store/README.md §٥، ولوحة الهوية 18 منذ 2.0.0): الاسم بعبارته، و«ترجمان» اسمًا مختصرًا وتلميحًا', () => {
+  assert.equal(base.name, 'ترجمان — ترجمتك فوق الفيديو', 'منذ 2.0.0 نص لوحة الهوية 18 (docs/aa-plan.md §٢)');
   assert.equal(base.short_name, 'ترجمان');
   assert.equal(base.action.default_title, 'ترجمان');
 });

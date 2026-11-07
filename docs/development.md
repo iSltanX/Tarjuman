@@ -28,8 +28,8 @@ npm ci
 npm run package
 ```
 
-- **في Chrome وEdge وBrave:** انسخ `release/tarjuman-1.1.0` إلى مجلد ثابت لا تنقله، ثم افتح صفحة الإضافات (`chrome://extensions` أو `edge://extensions` أو `brave://extensions`)، وفعّل «وضع المطوّر»، واضغط «تحميل غير معبأ» واختر المجلد. المتصفح يشتق معرّف الإضافة من مسار المجلد، والمحفوظات مربوطة به.
-- **في Firefox:** افتح `about:debugging#/runtime/this-firefox`، واضغط «تحميل إضافة مؤقتة» واختر `release/store/tarjuman-1.1.0-firefox.zip`. تُزال الإضافة المؤقتة عند إغلاق Firefox، فخذ نسخة احتياطية قبل الإغلاق.
+- **في Chrome وEdge وBrave:** انسخ `release/tarjuman-2.0.0` إلى مجلد ثابت لا تنقله، ثم افتح صفحة الإضافات (`chrome://extensions` أو `edge://extensions` أو `brave://extensions`)، وفعّل «وضع المطوّر»، واضغط «تحميل غير معبأ» واختر المجلد. المتصفح يشتق معرّف الإضافة من مسار المجلد، والمحفوظات مربوطة به.
+- **في Firefox:** افتح `about:debugging#/runtime/this-firefox`، واضغط «تحميل إضافة مؤقتة» واختر `release/store/tarjuman-2.0.0-firefox.zip`. تُزال الإضافة المؤقتة عند إغلاق Firefox، فخذ نسخة احتياطية قبل الإغلاق.
 
 ونسخة المتجر إضافة أخرى بمعرّف آخر، فلا ترى محفوظات النسخة المحلية. والنسخة الاحتياطية تنقلها ([دليل الاستخدام](user-guide.md) §١ و§٩).
 

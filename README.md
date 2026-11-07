@@ -10,7 +10,7 @@
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-available-6B2D5E?logo=googlechrome&logoColor=white"></a>
   <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-available-6B2D5E?logo=microsoftedge&logoColor=white"></a>
-  <img alt="الإصدار 1.1.0" src="https://img.shields.io/badge/version-1.1.0-5B575A">
+  <img alt="الإصدار 2.0.0" src="https://img.shields.io/badge/version-2.0.0-1E4A44">
   <img alt="المعالجة والحفظ على جهازك" src="https://img.shields.io/badge/data-on--device-2E6A4C">
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
 </p>

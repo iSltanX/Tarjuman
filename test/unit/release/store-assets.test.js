@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { deflateSync } from 'node:zlib';
 import { AMO_TAGS, FIELD_RULES, checkField, checkImage, checkStore, decodePng, parseFields } from '../../../scripts/release/store-assets.mjs';
 
-const MANIFEST = { name: 'ترجمان - ترجمتك العربية فوق الفيديو', description: 'وصف قصير' };
+const MANIFEST = { name: 'ترجمان — ترجمتك فوق الفيديو', description: 'وصف قصير' };
 
 /** PNG صغير RGBA بمرشّح 0 لكل سطر: fill(x, y) يعيد [r, g, b, a]. */
 function png(w, h, fill, { rgb = false } = {}) {
