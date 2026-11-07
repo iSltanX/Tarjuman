@@ -32,7 +32,9 @@ test('الخطوات: الأصل غير ملتقط فالأولى هي الحا�
   const steps = guideSteps(reply());
   assert.deepEqual(steps.map((s) => s.text), [...GUIDE_TEXT]);
   assert.deepEqual(steps.map((s) => s.state), ['now', 'pending', 'pending']);
-  assert.deepEqual(GUIDE_TEXT, ['نزّل الأصل من زر التنزيل وانسخ التعليمات', 'ترجمها بنموذجك المفضّل', 'ارفع العربية من زر الترجمة في الشريط']);
+  assert.deepEqual(GUIDE_TEXT, ['نزّل الأصل من زر التنزيل في الشريط', 'انسخ التعليمات وترجمه بنموذجك', 'ارفع الترجمة من زر الرفع في الشريط']);
+  // بالزوج المختار يُذكر بلغتيه (AA3)، لا «الإنجليزي» و«العربية» الثابتان.
+  assert.deepEqual(guideSteps(reply(), { from: 'ja', to: 'en' }).map((s) => s.text), ['نزّل الأصل (اليابانية) من زر التنزيل في الشريط', 'انسخ التعليمات وترجمه إلى الإنجليزية بنموذجك', 'ارفع الترجمة من زر الرفع في الشريط']);
 });
 
 test('الخطوات: الأصل ملتقط أو محفوظ فالأولى منجزة والثانية هي الحالية، وتتبع الحالة الفعلية لا النية', () => {
@@ -62,7 +64,7 @@ test('قائمة الخطوات: منجزة بعلامة ✓، والحالية 
   assert.equal(findAll(items[1], (e) => e.tagName === 'svg').length, 0, 'الحالية برقمها');
   assert.equal(textOf(items[1].querySelector('.tj-popup__step-n')), '2');
   assert.ok(textOf(items[0]).includes('تمّت') && textOf(items[1]).includes('الخطوة الحالية') && textOf(items[2]).includes('لاحقًا'));
-  assert.ok(textOf(items[0]).includes('نزّل الأصل من زر التنزيل وانسخ التعليمات'));
+  assert.ok(textOf(items[0]).includes('نزّل الأصل من زر التنزيل في الشريط'));
 });
 
 test('صف «زر النص المتزامن مخفي»: لا يظهر والزر ظاهر، ويظهر حين panelEntry=false', async () => {
@@ -159,25 +161,25 @@ test('بطاقة فيديو بترجمة: العنوان والسطر والشا
   const card = statusCard(describeStatus(r), toolsStatus(r), null, doc);
   assert.equal(textOf(card.querySelector('h2')), 'How the Printing Press Changed Everything');
   assert.equal(card.querySelector('h2').dir, 'ltr');
-  assert.ok(textOf(card.querySelector('.tj-popup__line')).startsWith('ترجمة عربية · 412 مقطعًا'));
+  assert.ok(textOf(card.querySelector('.tj-popup__line')).startsWith('ترجمة بلغة غير محددة · 412 مقطعًا'));
   const pills = findAll(card, (e) => e.classList.contains('tj-pill')).map(textOf);
-  assert.deepEqual(pills, ['محفوظ', 'العربية فوق الإنجليزية', 'معدّلة', 'تختلف عن الأصل']);
+  assert.deepEqual(pills, ['محفوظ', 'الترجمة فوق الأصل', 'معدّلة', 'تختلف عن الأصل']);
   assert.ok(textOf(card.querySelector('.tj-popup__tools')).includes('أدوات المشغّل تعمل'));
   assert.equal(findAll(card, (e) => e.classList.contains('tj-popup__tools--success')).length, 1);
 });
 
-test('بطاقة بلا ترجمة عربية: سطر المسار الإنجليزي بنوعه وأيقونة ✓ حين يتوفر، وبلاها حين لا', () => {
+test('بطاقة بلا ترجمة: سطر مسار الأصل بلغته ونوعه وأيقونة ✓ حين يتوفر، وبلاها حين لا', () => {
   const doc = newDocument();
   const ready = reply({ english: captured });
   const card = statusCard(describeStatus(ready), toolsStatus(ready), null, doc);
-  assert.ok(textOf(card.querySelector('.tj-popup__line')) === 'لا ترجمة عربية محفوظة');
+  assert.ok(textOf(card.querySelector('.tj-popup__line')) === 'لا ترجمة محفوظة بعد');
   const line = card.querySelector('.tj-popup__english');
-  assert.equal(textOf(line), 'المسار الإنجليزي: ملتقط · يدوي');
+  assert.equal(textOf(line), 'الإنجليزية ملتقطة · يدوية · 5 مقاطع');
   assert.equal(findAll(line, (e) => e.tagName === 'svg').length, 1);
   const none = reply();
   const bare = statusCard(describeStatus(none), toolsStatus(none), null, doc);
   const bareLine = bare.querySelector('.tj-popup__english');
-  assert.equal(textOf(bareLine), 'المسار الإنجليزي: غير ملتقط');
+  assert.equal(textOf(bareLine), 'لم تُلتقط ترجمة الفيديو بعد');
   assert.equal(findAll(bareLine, (e) => e.tagName === 'svg').length, 0);
 });
 

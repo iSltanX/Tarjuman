@@ -1,40 +1,30 @@
-// نافذة الأيقونة (P7-AC1، وإعادة التصميم، وجولة الصقل، والهوية البصرية docs/identity-v4.md): نافذة استخدام سريعة لا مجرد روابط: رأس
-// بالشعار المعتمد و«بياناتك على جهازك»، وبطاقة الفيديو الحالي (العنوان والحالة ومؤشر «محفوظ» وسطر الأدوات)، وصف «زر النص
-// المتزامن مخفي» بزر إظهاره حين أخفاه المستخدم، وإجراءات سريعة بحسب السياق (تحرير الترجمة، ونسخ تعليمات الترجمة من هنا
-// مباشرة)، وثلاث خطوات تُرشد فيديو بلا ترجمة عربية من حالة الأصل الفعلية، وعلى غير صفحة فيديو آخر الترجمات لفتحها أو
-// تحريرها؛ ثم تذييل بمدخل واحد لكل وجهة: المحفوظات (على صف الفيديو الحالي إن كان محفوظًا) والإعدادات. كل وجهة تفتح صفحتها
-// في تبويب جديد وتُغلق النافذة. لا طلبات شبكة، وكل نص عبر textContent، ونص التعليمات يُنسخ ولا يُعرض. البناة في view.js
-// والمنطق في status.js وصف الإظهار في entry.js.
+// نافذة الأيقونة (P7-AC1، وإعادة التصميم، وجولة الصقل، والهوية البصرية docs/identity-v4.md، وAA3 لوحة 09): نافذة استخدام سريعة لا مجرد
+// روابط: رأس بالشعار المعتمد و«بياناتك على جهازك»، وبطاقة الفيديو الحالي (العنوان والحالة ومؤشر «محفوظ» وسطر الأدوات و«تحرير
+// الترجمة» مؤطّرًا)، وصف «زر النص المتزامن مخفي» بزر إظهاره حين أخفاه المستخدم، ثم كتلة «تعليمات الترجمة»: «من» (تُعبّأ من
+// لغة مسار الفيديو الملتقط أو المنزَّل كما أرسلها يوتيوب، قرار سلطان ق٥) و«إلى» (آخر لغة اختيرت أو الافتراضي) وزر مبادلة، وزر
+// نسخ واحد معطّل حتى تُحدَّد اللغتان وتختلفا؛ ثم ثلاث خطوات تُرشد فيديو بلا ترجمة، وعلى غير صفحة فيديو آخر الترجمات لفتحها أو
+// تحريرها؛ ثم تذييل بمدخل واحد لكل وجهة. كل وجهة تفتح صفحتها في تبويب جديد وتُغلق النافذة. لا طلبات شبكة، وكل نص عبر
+// textContent، ونص التعليمات يُنسخ ولا يُعرض. البناة في view.js والمنطق في status.js وصف الإظهار في entry.js والمنتقي في
+// ui/lang-picker.js.
 import { messageFor } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
-import { parseTrackKey, watchUrl } from '../../core/model/ids.js';
-import { DEFAULT_TARGET_LANG } from '../../core/model/lang-prefs.js';
+import { watchUrl } from '../../core/model/ids.js';
+import { initialPair, normalizeLangPrefs, pairPatch } from '../../core/model/lang-prefs.js';
+import { recordPair } from '../../core/model/pair.js';
 import { browserLabel } from '../../core/report/diagnostics.js';
 import { createStore } from '../../core/store/index.js';
 import { alertBox, button, el, icon } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
+import { langPair } from '../../ui/lang-picker.js';
 import { logo } from '../../ui/logo.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
-
-/**
- * AA3: تحل محلها خانة «من» في كتلة «تعليمات الترجمة». لغة المسار الملتقط أو المحفوظ من مفتاحه (lang|kind|via)، وإلا en كما
- * كانت النافذة تنسخ قبل 2.0.0. لا تخمين من نص.
- * @param {{ english?: { captured?: { key: string, ok: boolean }[], saved?: { key: string }[] } }} reply
- */
-const interimSource = (reply) => {
-  const t = reply.english?.captured?.find((x) => x.ok) ?? reply.english?.saved?.[0] ?? null;
-  return (t && parseTrackKey(t.key)?.lang) || 'en';
-};
 import { bindEntryRow } from './entry.js';
 import {
-  attachedGlossary, captureLine, describeStatus, editorGate, guideSteps, libraryHash, missText, pageReport, queryPageDiagnostics, queryPopupState,
-  quickActions, recentEntries, recentLine, toolsStatus, untilSettled,
+  PAIR_TEXT, attachedGlossary, captureLine, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, missText, pageReport,
+  pairState, queryPageDiagnostics, queryPopupState, quickActions, recentEntries, recentLine, toolsStatus, untilSettled, videoLangs,
 } from './status.js';
-import { guideList, notVideoNote, skeletonCard, statusCard } from './view.js';
-
-/** زر النسخ: اسمه الكامل حين يكون رئيسيًا بعرض النافذة، ومختصرًا حين يجاور زرًا آخر. */
-const COPY_LABEL = Object.freeze({ idle: 'نسخ تعليمات الترجمة', idleShort: 'نسخ التعليمات', success: 'نُسخت التعليمات', error: 'أعد المحاولة' });
+import { guideList, notVideoNote, pairSkeleton, skeletonCard, statusCard } from './view.js';
 
 /** «نسخ تشخيص الصفحة» (§١٩.٦): رابط صغير ونتيجته بسطر. التقرير رموز وأعداد منقّاة، ولا يُعرض. */
 function diagnosticsLink(reply) {
@@ -91,11 +81,15 @@ startPage({
     const eyebrow = el('span', { className: 'tj-popup__eyebrow', text: 'الفيديو الحالي' });
     let card = skeletonCard();
     const entryHost = el('div', { className: 'tj-popup__entry-host' });
-    const actionsHost = el('div', { className: 'tj-popup__actions' });
+    // كتلة «تعليمات الترجمة» (لوحة 09): عنوانها وهيكلها حتى يصل الرد وتفضيلات اللغات.
+    const pairTitle = el('h2', { className: 'tj-popup__eyebrow', text: PAIR_TEXT.title, attrs: { id: 'tj-pair-title' } });
+    const pairHost = el('section', { className: 'tj-popup__pair', attrs: { 'aria-labelledby': 'tj-pair-title' }, children: [pairTitle, pairSkeleton()] });
     const stepsHost = el('div', { className: 'tj-popup__guide' });
     const diagHost = el('div', { className: 'tj-popup__diag-host' });
+    const recentTitle = el('span', { className: 'tj-popup__eyebrow', text: 'آخر الترجمات' });
+    recentTitle.hidden = true;
     const recentHost = el('div', { className: 'tj-popup__recent' });
-    main.append(eyebrow, card, entryHost, actionsHost, stepsHost, diagHost, recentHost, notice);
+    main.append(eyebrow, card, entryHost, pairHost, stepsHost, diagHost, recentTitle, recentHost, notice);
     app.append(main);
     // مدخل واحد لكل وجهة، ولا ينتظر حالة الفيديو (قد تتأخر حتى مهلتها إن علق سكربت المحتوى). المحفوظات تُفتح على صف الفيديو
     // الحالي إن كان محفوظًا (تُعرف بعد الرد).
@@ -111,79 +105,146 @@ startPage({
     // «زر النص المتزامن مخفي» لا ينتظر رد الصفحة هو الآخر: التفضيلات من التخزين مباشرة.
     const entry = bindEntryRow({ store, host: entryHost });
 
-    let state = await queryPopupState();
+    const [first, langRead, prefs] = await Promise.all([
+      queryPopupState(),
+      store.getLangPrefs().then((v) => ({ ok: true, v }), () => ({ ok: false, v: normalizeLangPrefs(null) })),
+      store.getPrefs().catch(() => null),
+    ]);
+    let state = first;
     reply = state.reply;
-    // القاموس المرفق في نسخ التعليمات من هنا كما في المشغّل والمحفوظات (النص نفسه من instructions).
-    let glossary = null;
-    try {
-      glossary = attachedGlossary(await store.getPrefs());
-    } catch {
-      glossary = null;
+    let langPrefs = langRead.v;
+    // القاموس المرفق في نسخ التعليمات من هنا كما في المحفوظات (النص نفسه من instructions).
+    const glossary = attachedGlossary(prefs);
+
+    // ---- كتلة «تعليمات الترجمة» ----
+    /** الزوج الظاهر الآن؛ ولمس المستخدم له يوقف التعبئة التلقائية عند استقرار الرد. */
+    let pair = { from: null, to: null };
+    let touched = false;
+    let picker = null;
+    const sourceNote = el('p', { className: 'tj-popup__pair-note' });
+    const caption = el('p', { className: 'tj-popup__pair-caption', attrs: { id: 'tj-pair-caption', 'aria-live': 'polite' } });
+    const copyLabel = el('span', { text: PAIR_TEXT.copy });
+    let copyGlyph = icon('copy');
+    const copyBtn = el('button', {
+      className: 'tj-btn tj-btn--lg tj-btn--primary tj-popup__copy',
+      attrs: { type: 'button', 'data-action': 'copy', 'data-state': 'idle', 'aria-describedby': 'tj-pair-caption', title: PAIR_TEXT.hint },
+      children: [copyGlyph, copyLabel],
+    });
+    let copyState = 'idle';
+
+    function paintPair() {
+      const st = pairState({ reply, pair });
+      sourceNote.textContent = st.sourceNote ?? '';
+      if (st.ready) copyBtn.removeAttribute('aria-disabled');
+      else copyBtn.setAttribute('aria-disabled', 'true');
+      // النتيجة على الزر نفسه لثانيتين (لونًا وأيقونةً وكلمة)، ثم يعود؛ والشرح تحت الزر بحسب الحالة.
+      copyLabel.textContent = copyState === 'success' ? PAIR_TEXT.copied : copyState === 'error' ? PAIR_TEXT.failed : PAIR_TEXT.copy;
+      const glyph = icon(copyState === 'success' ? 'check' : copyState === 'error' ? 'restore' : 'copy');
+      copyGlyph.replaceWith(glyph);
+      copyGlyph = glyph;
+      copyBtn.setAttribute('data-state', copyState);
+      copyBtn.classList.toggle('tj-popup__copy--success', copyState === 'success');
+      copyBtn.classList.toggle('tj-popup__copy--error', copyState === 'error');
+      caption.textContent = copyState === 'success' ? st.done : st.caption;
+      caption.setAttribute('data-tone', copyState === 'success' ? 'success' : copyState === 'error' ? 'danger' : st.ready ? 'neutral' : 'muted');
     }
 
-    /** يرسم البطاقة والإجراءات والخطوات والتشخيص من الحالة؛ ويُعاد بعد «جارٍ القراءة»، والزر المركّز يبقى مركّزًا. */
+    const copy = createCopyState({
+      buildText: () => instructions(copyArgs({ reply, pair, glossary })),
+      write: (text) => navigator.clipboard.writeText(text),
+      announce: (code) => notice.replaceChildren(code === 'PG_COPY_DONE' ? el('span', { className: 'tj-sr-only', text: messageFor(code) }) : alertBox({ tone: 'danger', text: messageFor(code) })),
+      onState: (st) => {
+        copyState = st;
+        paintPair();
+      },
+    });
+    copyBtn.addEventListener('click', () => {
+      if (copyBtn.getAttribute('aria-disabled') === 'true') return;
+      copy.copy();
+    });
+
+    async function savePair(why) {
+      const videoId = reply?.watch && !reply.loading ? reply.videoId : null;
+      try {
+        langPrefs = await store.setLangPrefs(pairPatch(langPrefs, { videoId, pair, why }));
+      } catch {
+        // الزوج يبقى كما اختير في النافذة الآن؛ تعذّر حفظه يُقال ولا يمحوه.
+        notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_PAIR_NOT_SAVED') }));
+      }
+    }
+
+    function buildPair() {
+      pair = (() => {
+        const p = initialPair(langPrefs, { videoId: reply?.watch && !reply.loading ? reply.videoId : null, sourceLang: detectedSource(reply) });
+        return { from: p.from, to: p.to };
+      })();
+      picker = langPair({
+        from: pair.from, to: pair.to,
+        recent: () => langPrefs.recent,
+        video: () => videoLangs(reply),
+        onChange: (next, why) => {
+          touched = true;
+          pair = next;
+          if (copyState !== 'idle') copy.dispose();
+          copyState = 'idle';
+          paintPair();
+          paintSteps();
+          savePair(why);
+        },
+      });
+      pairHost.replaceChildren(pairTitle, picker.root, sourceNote, copyBtn, caption);
+      paintPair();
+    }
+
+    /** يعيد التعبئة بعد استقرار الرد ما لم يلمس المستخدم الزوج. */
+    function refreshPair() {
+      if (!picker) return buildPair();
+      if (touched) return paintPair();
+      const p = initialPair(langPrefs, { videoId: reply?.watch && !reply.loading ? reply.videoId : null, sourceLang: detectedSource(reply) });
+      pair = { from: p.from, to: p.to };
+      picker.set(pair);
+      return paintPair();
+    }
+
+    function paintSteps() {
+      stepsHost.replaceChildren();
+      // فيديو بلا ترجمة: ثلاث خطوات من حالة الأصل الفعلية (ملتقط أو محفوظ أو لا)، بالزوج المختار.
+      const steps = guideSteps(reply, pair);
+      if (steps) stepsHost.append(guideList(steps));
+    }
+
+    /** يرسم البطاقة والكتلة والخطوات والتشخيص من الحالة؛ ويُعاد بعد «جارٍ القراءة»، والزر المركّز يبقى مركّزًا. */
     function paint() {
       const status = describeStatus(reply);
-      const focused = actionsHost.contains(document.activeElement) ? document.activeElement.getAttribute('data-action') : null;
+      const focused = card.contains(document.activeElement) ? document.activeElement.getAttribute('data-action') : null;
       let next;
       if (status.kind === 'not-video') {
-        eyebrow.textContent = 'آخر الترجمات';
+        eyebrow.hidden = true;
         next = notVideoNote(document, missText(state.miss));
-        main.insertBefore(eyebrow, recentHost);
       } else {
-        next = statusCard(status, toolsStatus(reply), captureLine(reply));
-      }
-      card.replaceWith(next);
-      card = next;
-      actionsHost.replaceChildren();
-      stepsHost.replaceChildren();
-      diagHost.replaceChildren();
-
-      // الإجراءات السريعة للفيديو الحالي.
-      const gate = editorGate(reply);
-      for (const a of quickActions(reply)) {
-        let b;
-        if (a.id === 'editor') {
-          b = button({ label: a.label, icon: 'edit', size: 'lg', variant: a.primary ? 'primary' : 'secondary', disabledReason: a.disabledReason, onClick: async () => {
+        // «تحرير الترجمة» مؤطّرًا داخل البطاقة (لوحة 09).
+        const gate = editorGate(reply);
+        const a = quickActions(reply)[0] ?? null;
+        const action = a ? button({
+          label: a.label, icon: 'edit', size: 'sm', variant: 'outline', disabledReason: a.disabledReason,
+          onClick: async () => {
             try {
               await openPage('editor', { v: gate.videoId });
               window.close();
             } catch {
               notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
             }
-          } });
-        } else {
-          const idle = a.primary ? COPY_LABEL.idle : COPY_LABEL.idleShort;
-          const label = el('span', { text: idle });
-          let glyph = icon('copy');
-          // الاسم هو النص الظاهر نفسه في كل حالة (WCAG 2.5.3؛ تدقيق 5fedcb9، CL-007 وGM-027.2)، والشرح في التلميح.
-          b = el('button', { className: `tj-btn tj-btn--lg tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', title: 'ينسخ تعليمات الترجمة وحدها لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
-          const shown = reply;
-          const copy = createCopyState({
-            // AA3: الزوج من كتلة «تعليمات الترجمة» في النافذة. حتى ذلك الحين: لغة المسار المعروف وإلا en، والهدف الافتراضي.
-            buildText: () => instructions({ videoId: shown.videoId, title: shown.title, glossary, source: interimSource(shown), target: DEFAULT_TARGET_LANG }),
-            write: (text) => navigator.clipboard.writeText(text),
-            announce: (code) => notice.replaceChildren(code === 'PG_COPY_DONE' ? el('span', { className: 'tj-sr-only', text: messageFor(code) }) : alertBox({ tone: 'danger', text: messageFor(code) })),
-            onState: (st) => {
-              label.textContent = st === 'idle' ? idle : COPY_LABEL[st];
-              const fresh = icon(st === 'success' ? 'check' : 'copy');
-              glyph.replaceWith(fresh);
-              glyph = fresh;
-              b.setAttribute('data-state', st);
-              b.classList.toggle('tj-popup__copy--success', st === 'success');
-              b.classList.toggle('tj-popup__copy--error', st === 'error');
-            },
-          });
-          b.addEventListener('click', () => { copy.copy(); });
-        }
-        b.setAttribute('data-action', a.id);
-        if (a.primary) b.classList.add('tj-popup__primary');
-        actionsHost.append(b);
-        if (focused === a.id) b.focus();
+          },
+        }) : null;
+        action?.setAttribute('data-action', a.id);
+        next = statusCard(status, toolsStatus(reply), captureLine(reply), document, action);
       }
-      // فيديو بلا ترجمة عربية: ثلاث خطوات من حالة الأصل الفعلية (ملتقط أو محفوظ أو لا).
-      const steps = guideSteps(reply);
-      if (steps) stepsHost.append(guideList(steps));
+      card.replaceWith(next);
+      card = next;
+      if (focused) card.querySelector(`[data-action="${focused}"]`)?.focus();
+      diagHost.replaceChildren();
+      refreshPair();
+      paintSteps();
       // تشخيص الصفحة حيث تُعرض حالة أدوات المشغّل.
       if (toolsStatus(reply)) diagHost.append(diagnosticsLink(reply));
       return status;
@@ -198,18 +259,22 @@ startPage({
         status = paint();
       }
     }
+    if (!langRead.ok) notice.replaceChildren(alertBox({ tone: 'warning', text: messageFor('PG_LANG_PREFS_UNREAD') }));
 
-    // ليست صفحة فيديو: آخر الترجمات من المحفوظات.
+    // ليست صفحة فيديو: آخر الترجمات من المحفوظات، ولكلٍّ زوجه اللغوي.
     if (status.kind === 'not-video') {
       try {
         const recent = recentEntries(await store.listIndex());
         if (recent.length) {
+          const pairs = await Promise.all(recent.map((e) => store.getBundle(e.videoId).then((b) => (b ? recordPair(b.record) : null), () => null)));
           const list = el('div', { className: 'tj-popup__recent-list' });
           const nowMs = Date.now();
-          for (const e of recent) {
+          for (const [i, e] of recent.entries()) {
             const name = e.title ?? e.videoId;
+            const saved = langPrefs.videos[e.videoId] ?? null;
+            const p = pairs[i] ? { from: pairs[i].from ?? saved?.from ?? null, to: pairs[i].to ?? (e.arabic ? null : saved?.to ?? null) } : saved;
             const title = el('span', { className: 'tj-popup__recent-title tj-truncate tj-auto', text: name, dir: textDirection(name), attrs: { title: name } });
-            const meta = el('span', { className: 'tj-popup__recent-meta', text: recentLine(e, nowMs) });
+            const meta = el('span', { className: 'tj-popup__recent-meta', text: recentLine(e, nowMs, p) });
             // تعذّر فتح التبويب أو الصفحة يُقال كما في أزرار الحالة، لا رفضٌ صامت (تدقيق 5fedcb9، GM-027.2).
             const go = (fn) => async () => {
               try {
@@ -223,13 +288,11 @@ startPage({
             const editBtn = button({ label: `تحرير: ${name}`, iconOnly: true, icon: 'edit', variant: 'ghost', size: 'sm', title: 'تحرير الترجمة', disabledReason: e.arabic ? null : messageFor('PG_NO_ARABIC'), onClick: go(() => openPage('editor', { v: e.videoId })) });
             list.append(el('div', { className: 'tj-popup__recent-row', children: [el('span', { className: 'tj-popup__recent-text', children: [title, meta] }), el('span', { className: 'tj-popup__recent-actions', children: [editBtn, openBtn] })] }));
           }
+          recentTitle.hidden = false;
           recentHost.append(el('div', { className: 'tj-popup__card tj-popup__card--list', children: [list] }));
-        } else {
-          eyebrow.remove();
         }
       } catch {
         // المحفوظات غير متاحة الآن: تبقى النافذة بمدخليها.
-        eyebrow.remove();
       }
     }
     await entry.ready;

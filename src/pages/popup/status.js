@@ -5,7 +5,10 @@
 // أو تبويب ليس يوتيوب («افتح فيديو على يوتيوب»)، أو لا يُعرف العنوان (الاثنان في جملة).
 import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagnostics/report.js';
 import { messageFor } from '../../core/errors/index.js';
+import { describeLang } from '../../core/lang/index.js';
+import { isSourceLang, parseTrackKey } from '../../core/model/ids.js';
 import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
+import { pairLabel } from '../../ui/lang.js';
 import { MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest } from '../../core/model/messages.js';
 import { relativeTime } from '../library/model.js';
 import { NOT_VIDEO_TEXT } from './view.js';
@@ -92,62 +95,91 @@ export async function untilSettled(query, first, { intervalMs = LOADING_POLL_MS,
  */
 export const missText = (miss) => (miss === 'stale' ? messageFor('TJ_RELOAD_PAGE') : miss === 'unknown' ? messageFor('TJ_OPEN_OR_RELOAD') : NOT_VIDEO_TEXT);
 
-const MODE_TEXT = Object.freeze({ ar: 'العربية وحدها', dual: 'العربية فوق الإنجليزية', off: 'الترجمة مخفية' });
-/** نوع مسار الأصل كما يُعرض بجانب حالته: «ملتقط · يدوي». */
-const KIND_TEXT = Object.freeze({ manual: 'يدوي', asr: 'تلقائي' });
+/** اسم لغة للعرض بالعربية من رمزها، والرمز الذي لا يعرف المتصفح اسمه يبقى رمزه. @param {string} code */
+export const langLabel = (code) => describeLang(code)?.arabic ?? code;
+
+/** وضع العرض في سطر الأدوات بلغة الأصل الفعلية: «الترجمة فوق اليابانية». @param {string} mode @param {string | null} source */
+const modeText = (mode, source) => (mode === 'dual' ? `الترجمة فوق ${source ? langLabel(source) : 'الأصل'}` : mode === 'off' ? 'الترجمة مخفية' : 'الترجمة وحدها');
+/** نوع مسار الأصل كما يُعرض بجانب حالته: «ملتقطة · يدوية». */
+const KIND_TEXT = Object.freeze({ manual: 'يدوية', asr: 'تلقائية' });
 
 /**
- * وصف بطاقة الفيديو الحالي: حالة واحدة من أربع.
+ * مسار الأصل الذي تُبنى عليه حالة البطاقة: مسار «من» في الرد (ق٥)، وإلا أول ملتقط سليم، وإلا أول محفوظ.
+ * @param {import('../../core/model/messages.js').VideoStateReply} reply
+ * @returns {{ lang: string, kind: 'manual' | 'asr', via: string | null, cueCount: number, captured: boolean } | null}
+ */
+function baseTrack(reply) {
+  const captured = reply.english.captured.filter((t) => t.ok);
+  const saved = reply.english.saved;
+  const pick = (key) => captured.find((t) => t.key === key) ?? saved.find((t) => t.key === key) ?? null;
+  const t = (reply.source ? pick(reply.source.key) : null) ?? captured[0] ?? saved[0] ?? null;
+  const k = t ? parseTrackKey(t.key) : null;
+  return k ? { lang: k.lang, kind: k.kind, via: k.via, cueCount: t.cueCount, captured: captured.includes(t) } : null;
+}
+
+/**
+ * وصف بطاقة الفيديو الحالي: حالة واحدة من أربع. نصوصها بلغة المسار والترجمة الفعليتين (AA3)، لا «الإنجليزي» و«العربية».
  * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
  * saved: للفيديو سجل في المحفوظات (مؤشر حالة «محفوظ» في البطاقة، لا رابط).
  * @returns {{ kind: 'not-video' }
  *   | { kind: 'loading', title: string }
  *   | { kind: 'no-subtitle', title: string, englishLine: string, englishKind: string | null, englishReady: boolean, saved: boolean }
  *   | { kind: 'has-subtitle', title: string, line: string, edited: boolean, matched: boolean | null, mode: string, fileName: string, saved: true }}
+ *   englishLine/englishReady (الاسمان التاريخيان): سطر مسار الأصل وجاهزيته
  */
 export function describeStatus(reply) {
   if (!reply || !reply.watch) return { kind: 'not-video' };
   const title = reply.title ?? reply.videoId ?? '';
   if (reply.loading) return { kind: 'loading', title };
+  const base = baseTrack(reply);
   if (!reply.arabic) {
-    const capturedTrack = reply.english.captured.find((t) => t.ok);
-    const captured = Boolean(capturedTrack);
     const saved = reply.english.saved.length > 0;
-    // نوع المسار (يدوي أو تلقائي) من المسار الذي تُبنى عليه الحالة: الملتقط أولًا ثم المحفوظ، وإلا لا شيء.
-    const englishKind = KIND_TEXT[(capturedTrack ?? reply.english.saved[0])?.kind] ?? null;
-    return { kind: 'no-subtitle', title, englishLine: `المسار الإنجليزي: ${captured ? 'ملتقط' : saved ? 'محفوظ' : 'غير ملتقط'}`, englishKind, englishReady: captured || saved, saved };
+    const name = base ? `${langLabel(base.lang)}${base.via ? ' (ترجمة يوتيوب الآلية)' : ''}` : null;
+    const kind = base ? KIND_TEXT[base.kind] ?? null : null;
+    const line = !base ? 'لم تُلتقط ترجمة الفيديو بعد' : [`${name} ${base.captured ? 'ملتقطة' : 'محفوظة'}`, kind, formatCount(base.cueCount, COUNT_FORMS.cue)].filter(Boolean).join(' · ');
+    return { kind: 'no-subtitle', title, englishLine: line, englishKind: kind, englishReady: !!base, saved };
   }
   const a = reply.arabic;
   return {
     kind: 'has-subtitle',
     title,
-    line: ['ترجمة عربية', formatCount(a.cueCount, COUNT_FORMS.cue), `الإزاحة ${offsetInline(reply.view.displayOffsetMs)} ث`].join(' · '),
+    line: [a.lang ? `ترجمة ${langLabel(a.lang)}` : 'ترجمة بلغة غير محددة', formatCount(a.cueCount, COUNT_FORMS.cue), `الإزاحة ${offsetInline(reply.view.displayOffsetMs)} ث`].join(' · '),
     edited: a.edited,
     matched: a.matched,
-    mode: MODE_TEXT[reply.view.displayMode] ?? MODE_TEXT.ar,
+    mode: modeText(reply.view.displayMode, base?.lang ?? null),
     fileName: a.fileName,
     saved: true,
   };
 }
 
-/** خطوات الإرشاد لفيديو بلا ترجمة عربية، بنصوصها كما في اللوحة المعتمدة. */
-export const GUIDE_TEXT = Object.freeze([
-  'نزّل الأصل من زر التنزيل وانسخ التعليمات',
-  'ترجمها بنموذجك المفضّل',
-  'ارفع العربية من زر الترجمة في الشريط',
-]);
+/**
+ * خطوات الإرشاد لفيديو بلا ترجمة: الأصل، ثم التعليمات من هنا والترجمة بنموذجك، ثم الرفع؛ والزوج المختار يُذكر بلغتيه.
+ * @param {{ from?: string | null, to?: string | null }} [pair]
+ */
+export function guideText(pair = {}) {
+  const from = isSourceLang(pair.from) ? langLabel(pair.from) : null;
+  const to = isSourceLang(pair.to) ? langLabel(pair.to) : null;
+  return [
+    from ? `نزّل الأصل (${from}) من زر التنزيل في الشريط` : 'نزّل الأصل من زر التنزيل في الشريط',
+    to ? `انسخ التعليمات وترجمه إلى ${to} بنموذجك` : 'انسخ التعليمات وترجمه بنموذجك',
+    'ارفع الترجمة من زر الرفع في الشريط',
+  ];
+}
+/** نصوص الخطوات بلا زوج. */
+export const GUIDE_TEXT = Object.freeze(guideText());
 
 /**
- * خطوات «بلا ترجمة عربية» من الحالة الفعلية لا من نية: ما دام الأصل الإنجليزي غير ملتقط ولا محفوظ فالخطوة الأولى هي الحالية
- * والباقيتان منتظرتان؛ وإن التُقط أو حُفظ فالأولى منجزة والثانية هي الحالية والثالثة منتظرة. لا خطوات لغير هذه الحالة.
+ * خطوات «بلا ترجمة» من الحالة الفعلية لا من نية: ما دام الأصل غير ملتقط ولا محفوظ فالخطوة الأولى هي الحالية والباقيتان
+ * منتظرتان؛ وإن التُقط أو حُفظ فالأولى منجزة والثانية هي الحالية والثالثة منتظرة. لا خطوات لغير هذه الحالة.
  * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
+ * @param {{ from?: string | null, to?: string | null }} [pair]
  * @returns {{ n: 1 | 2 | 3, text: string, state: 'done' | 'now' | 'pending' }[] | null}
  */
-export function guideSteps(reply) {
+export function guideSteps(reply, pair = {}) {
   const s = describeStatus(reply);
   if (s.kind !== 'no-subtitle') return null;
   const now = s.englishReady ? 1 : 0;
-  return GUIDE_TEXT.map((text, i) => ({ n: /** @type {1 | 2 | 3} */ (i + 1), text, state: i < now ? 'done' : i === now ? 'now' : 'pending' }));
+  return guideText(pair).map((text, i) => ({ n: /** @type {1 | 2 | 3} */ (i + 1), text, state: i < now ? 'done' : i === now ? 'now' : 'pending' }));
 }
 
 /**
@@ -157,11 +189,13 @@ export function guideSteps(reply) {
 export const entryHidden = (prefs) => prefs?.ui?.panelEntry === false;
 
 /**
- * سطر آخر ترجمة: «قبل ساعتين · 412 مقطعًا»، أو «… · بانتظار الترجمة» لفيديو بلا عربية.
+ * سطر آخر ترجمة: «قبل ساعتين · الإنجليزية ← العربية · 412 مقطعًا»، أو «… · بانتظار الترجمة» لفيديو بلا ترجمة (لوحة 09، الحالة 5).
  * @param {{ updatedAt: string, arabic: { cueCount: number } | null }} entry @param {number} nowMs
+ * @param {{ from: string | null, to: string | null } | null} [pair] زوج الفيديو إن عُرف
  */
-export function recentLine(entry, nowMs) {
-  return [relativeTime(entry.updatedAt, nowMs), entry.arabic ? formatCount(entry.arabic.cueCount, COUNT_FORMS.cue) : 'بانتظار الترجمة'].filter(Boolean).join(' · ');
+export function recentLine(entry, nowMs, pair = null) {
+  const langs = pair ? pairLabel({ ...pair, translated: !!entry.arabic }) : null;
+  return [relativeTime(entry.updatedAt, nowMs), langs, entry.arabic ? formatCount(entry.arabic.cueCount, COUNT_FORMS.cue) : 'بانتظار الترجمة'].filter(Boolean).join(' · ');
 }
 
 /**
@@ -270,22 +304,96 @@ export function editorGate(reply) {
 }
 
 /**
- * الإجراءات السريعة للفيديو الحالي بترتيب أولويتها: الأول رئيسي. لا شيء لغير صفحة الفيديو (تُعرض آخر الترجمات بدلها). لا
- * تنقّل هنا: المحفوظات والإعدادات مدخلان في تذييل النافذة وحده.
+ * الإجراءات السريعة للفيديو الحالي: «تحرير الترجمة» داخل البطاقة وحده (لوحة 09)؛ ونسخ التعليمات صار كتلة «تعليمات الترجمة»
+ * (AA3). لا شيء لغير صفحة الفيديو ولا لفيديو بلا ترجمة.
  * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
- * @returns {{ id: 'editor' | 'copy', label: string, primary: boolean, disabledReason: string | null }[]}
+ * @returns {{ id: 'editor', label: string, primary: boolean, disabledReason: string | null }[]}
  */
 export function quickActions(reply) {
   if (!reply || !reply.watch || !reply.videoId) return [];
   const gate = editorGate(reply);
-  if (reply.loading) return [{ id: 'editor', label: 'تحرير الترجمة', primary: true, disabledReason: gate.reason }];
-  if (reply.arabic) {
-    return [
-      { id: 'editor', label: 'تحرير الترجمة', primary: true, disabledReason: null },
-      { id: 'copy', label: 'نسخ التعليمات', primary: false, disabledReason: null },
-    ];
-  }
-  return [{ id: 'copy', label: 'نسخ تعليمات الترجمة', primary: true, disabledReason: null }];
+  if (reply.loading) return [{ id: 'editor', label: 'تحرير الترجمة', primary: false, disabledReason: gate.reason }];
+  if (reply.arabic) return [{ id: 'editor', label: 'تحرير الترجمة', primary: false, disabledReason: null }];
+  return [];
+}
+
+// ---- كتلة «تعليمات الترجمة» (AA3، لوحة 09، قرارا سلطان ق٢ وق٥) ----
+
+export const PAIR_TEXT = Object.freeze({
+  title: 'تعليمات الترجمة',
+  copy: 'نسخ التعليمات',
+  copied: 'نُسخت التعليمات',
+  failed: 'تعذّر النسخ — أعد المحاولة',
+  hint: 'ينسخ تعليمات ترجمة ملف SRT باللغتين المختارتين، لترفقها مع الملف في محادثة نموذجك.',
+  detected: '«من» مكتشفة من ترجمة الفيديو',
+  noVideo: 'افتح فيديو على يوتيوب لتُنسخ تعليماته بعنوانه ورابطه.',
+  loading: 'جارٍ قراءة الفيديو…',
+  needBoth: 'يُفعّل الزر حين تُحدَّد اللغتان وتختلفان.',
+  needFrom: 'اختر لغة الملف الذي ستترجمه («من»).',
+  needTo: 'اختر اللغة التي تريد الترجمة إليها.',
+  same: 'اللغتان متطابقتان؛ اختر لغة أخرى لإحداهما.',
+});
+
+/** ترجمة يوتيوب الآلية: ««من» ترجمة آلية من يوتيوب عن الإنجليزية». @param {string} via */
+export const machineNote = (via) => `«من» ترجمة آلية من يوتيوب عن ${langLabel(via)}`;
+
+/**
+ * لغات مسارات الفيديو لقائمة «من» (مجموعة «في هذا الفيديو»): الملتقطة والمحفوظة ثم ما في بيانات المشغّل، بلا تكرار.
+ * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
+ * @returns {string[]}
+ */
+export function videoLangs(reply) {
+  if (!reply?.watch) return [];
+  const keys = [reply.source?.key, ...reply.english.captured.filter((t) => t.ok).map((t) => t.key), ...reply.english.saved.map((t) => t.key)];
+  const out = keys.map((k) => parseTrackKey(k)?.lang).filter(Boolean);
+  for (const t of Array.isArray(reply.available) ? reply.available : []) if (isSourceLang(t?.lang)) out.push(t.lang);
+  return [...new Set(out)];
+}
+
+/**
+ * لغة «من» المكتشفة بدقة (ق٥): لغة مسار «من» في الرد كما أرسلها يوتيوب، وإلا null. لا تخمين من نص.
+ * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
+ */
+export const detectedSource = (reply) => (reply?.watch && !reply.loading && isSourceLang(reply.source?.lang) ? reply.source.lang : null);
+
+/**
+ * حالة الكتلة: هل يُتاح النسخ وسببه إن لم يُتح، وسطر المصدر تحت الحقلين، والشرح تحت الزر.
+ * @param {{ reply: import('../../core/model/messages.js').VideoStateReply | null, pair: { from: string | null, to: string | null } }} p
+ * @returns {{ ready: boolean, reason: string | null, sourceNote: string | null, caption: string, done: string }}
+ */
+export function pairState({ reply, pair }) {
+  const from = isSourceLang(pair.from) ? pair.from : null;
+  const to = isSourceLang(pair.to) ? pair.to : null;
+  const detected = detectedSource(reply);
+  const via = from && reply?.source?.via && from === reply.source.lang ? reply.source.via : null;
+  const sourceNote = via ? machineNote(via) : from && from === detected ? PAIR_TEXT.detected : null;
+  let reason = null;
+  if (!reply?.watch || !reply.videoId) reason = PAIR_TEXT.noVideo;
+  else if (reply.loading) reason = PAIR_TEXT.loading;
+  else if (!from && !to) reason = PAIR_TEXT.needBoth;
+  else if (!from) reason = PAIR_TEXT.needFrom;
+  else if (!to) reason = PAIR_TEXT.needTo;
+  else if (from === to) reason = PAIR_TEXT.same;
+  const names = from && to ? { from: langLabel(from), to: langLabel(to) } : null;
+  return {
+    ready: reason === null,
+    reason,
+    sourceNote,
+    caption: reason ?? `تعليمات لنموذجك: ترجمة ملف SRT من ${names.from} إلى ${names.to} مع الحفاظ على أرقام المقاطع والتوقيت والصيغة.`,
+    done: names ? `${names.from} ← ${names.to} · ألصقها في نموذجك مع الملف.` : '',
+  };
+}
+
+/**
+ * معاملات instructions للزوج المختار: العنوان والرابط، والقاموس إن أُرفق، والمصدر المترجم آليًا إن كان «من» لغة ترجمة يوتيوب
+ * الآلية، وفقرة الأجزاء إن كان آخر تنزيل لهذا الفيديو مقسّمًا بلغة «من» نفسها (فلا تُفقد وظيفة التقسيم الاحتياطي).
+ * @param {{ reply: import('../../core/model/messages.js').VideoStateReply, pair: { from: string, to: string }, glossary: object[] | null }} p
+ */
+export function copyArgs({ reply, pair, glossary }) {
+  const via = reply.source?.via && pair.from === reply.source.lang ? reply.source.via : null;
+  const last = reply.lastExport ?? null;
+  const parts = last && last.lang === pair.from && (last.via ?? null) === via && Array.isArray(last.parts) && last.parts.length >= 2 ? last.parts : null;
+  return { videoId: reply.videoId, title: reply.title, source: pair.from, target: pair.to, via, parts, glossary };
 }
 
 /**

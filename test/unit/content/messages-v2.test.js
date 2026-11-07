@@ -56,6 +56,39 @@ test('رد الحالة لحالة بلا slots (سجل الإصدار الأو�
   assert.deepEqual(r.capture, { state: 'captured', count: 1, code: null });
 });
 
+test('رد الحالة (AA3): مسار «من» وآخر تنزيل بأجزائه والمسارات المتاحة ولغة الترجمة، بلا رابط ولا نص', async () => {
+  const rec = videoRecord();
+  const fp = (id, trackKey, createdAt, parts = null) => ({ ...rec.fingerprints[0], id, trackKey, createdAt, parts });
+  const saved = {
+    ...rec,
+    english: [...rec.english, { ...rec.english[0], key: 'ja|asr', lang: 'ja', kind: 'asr' }],
+    fingerprints: [fp('fp_aaaaaa1', 'en|manual', '2026-11-01T10:00:00.000Z'), fp('fp_aaaaaa2', 'ja|asr', '2026-11-02T10:00:00.000Z', [{ index: 1, from: 1, to: 3 }, { index: 2, from: 4, to: 5 }])],
+    arabic: { ...rec.arabic, lang: 'ar' },
+  };
+  const { fake } = setup({
+    s: state({
+      saved, english: { key: 'en|manual', kind: 'manual', lang: 'en', via: null, cues: [], source: 'saved' },
+      available: { videoId: A, tracks: [{ lang: 'ja', kind: 'asr', name: '日本語 (自動生成)' }, { lang: 'en', kind: 'manual', name: null }], translatable: true },
+    }),
+  });
+  const r = await fake.dispatchMessage(videoStateRequest());
+  assert.equal(isVideoStateReplyV2(r), true);
+  assert.deepEqual(r.source, { key: 'ja|asr', lang: 'ja', kind: 'asr', via: null, from: 'export' }, 'آخر ما نُزّل');
+  assert.deepEqual(r.lastExport, { key: 'ja|asr', lang: 'ja', via: null, parts: [{ index: 1, from: 1, to: 3 }, { index: 2, from: 4, to: 5 }] });
+  assert.deepEqual(r.available, [{ lang: 'ja', kind: 'asr', name: '日本語 (自動生成)' }, { lang: 'en', kind: 'manual', name: null }]);
+  assert.equal(r.arabic.lang, 'ar');
+  // بلا تنزيل: مسار المتحكم المختار.
+  const plain = setup({ s: state({ saved: { ...rec, fingerprints: [] }, english: { key: 'fr|manual|en', kind: 'manual', lang: 'fr', via: 'en', cues: [], source: 'captured' } }) });
+  const p = await plain.fake.dispatchMessage(videoStateRequest());
+  assert.deepEqual(p.source, { key: 'fr|manual|en', lang: 'fr', kind: 'manual', via: 'en', from: 'captured' });
+  assert.equal(p.lastExport, null);
+  assert.equal(p.available, null);
+  assert.equal(p.arabic.lang, null, 'غير محددة');
+  const none = setup({ s: state({ videoId: null, saved: null }) });
+  const n = await none.fake.dispatchMessage(videoStateRequest());
+  assert.equal(n.source, null);
+});
+
 test('تشخيص الصفحة: أعداد ورموز من المتحكم ونقطتي التركيب، لصفحات الإضافة وحدها', async () => {
   const { fake } = setup();
   const r = await fake.dispatchMessage(pageDiagnosticsRequest());

@@ -198,3 +198,76 @@ export function langFromFileName(fileName) {
   const code = normalizeLang(m[1]);
   return code && arabicName(code) ? code : null;
 }
+
+const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
+let knownCache = null;
+
+/**
+ * كل اللغات التي يعرف المتصفح اسمها العربي، من رموز ISO 639-1 الثنائية كلها (aa…zz) بلا قائمة مكتوبة: ما لا اسم له في بيانات
+ * CLDR عند المتصفح لا يدخل، والرمز القديم الذي له رمز معياري (iw، in، ji…) يُسقط لصالح معياره. مرتبة بالاسم العربي. الرموز
+ * الأطول (pt-BR وzh-Hant وfil) تُكتب في البحث أو تأتي من مسارات الفيديو، فلا تُستثنى لغة.
+ * @returns {{ code: string, arabic: string, native: string | null, dir: 'rtl' | 'ltr' | null }[]}
+ */
+export function knownLanguages() {
+  if (knownCache) return knownCache;
+  const out = [];
+  for (const a of LETTERS) {
+    for (const b of LETTERS) {
+      const code = a + b;
+      if (safe(() => Intl.getCanonicalLocales(code)[0], null) !== code) continue;
+      const arabic = arabicName(code);
+      if (arabic) out.push({ code, arabic, native: nativeName(code), dir: langDirection(code) });
+    }
+  }
+  // الترتيب بالاسم بلا «ال» في أوله، فتتجاور «الإنجليزية» و«إنجليزية» و«دزونكا» بحروفها لا بأداة التعريف.
+  const collator = safe(() => new Intl.Collator('ar'), null);
+  const key = (x) => foldForSearch(x.arabic);
+  out.sort((x, y) => (collator ? collator.compare(key(x), key(y)) : key(x) < key(y) ? -1 : 1));
+  knownCache = Object.freeze(out.map((x) => Object.freeze(x)));
+  return knownCache;
+}
+
+/** نص للمطابقة: بلا تشكيل ولا تطويل، وألفات موحّدة، والتاء المربوطة هاءً، وبلا «ال» في أول كل كلمة، وبحروف صغيرة. */
+export function foldForSearch(text) {
+  return String(text ?? '')
+    .normalize('NFKD')
+    .replace(/[ً-ٰٟـ̀-ͯ]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .toLowerCase()
+    .replace(/(^|\s)ال/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * اللغات المطابقة لنص بحث في اسمها العربي أو الأصلي أو رمزها، بترتيب القائمة؛ ورمز صالح يعرف المتصفح اسمه ولا يرد فيها
+ * (pt-BR، zh-Hant) يتقدّمها. نص فارغ يعيد القائمة كما هي.
+ * @param {string} query
+ * @param {readonly { code: string, arabic: string, native: string | null }[]} [list]
+ * @returns {{ code: string, arabic: string, native: string | null, dir: 'rtl' | 'ltr' | null }[]}
+ */
+export function searchLanguages(query, list = knownLanguages()) {
+  const q = foldForSearch(query);
+  if (!q) return [...list];
+  // الأقرب أولًا: الرمز نفسه، ثم رمز يبدأ بالنص، ثم اسم يبدأ به، ثم اسم يحويه؛ وبالترتيب الأصلي داخل كل درجة.
+  const rank = (l) => {
+    const code = l.code.toLowerCase();
+    const names = [foldForSearch(l.arabic), foldForSearch(l.native)];
+    if (code === q) return 0;
+    if (code.startsWith(q)) return 1;
+    if (names.some((n) => n.startsWith(q) || n.split(' ').some((w) => w.startsWith(q)))) return 2;
+    if (names.some((n) => n.includes(q))) return 3;
+    return -1;
+  };
+  const hits = list.map((l, i) => ({ l, i, r: rank(l) })).filter((x) => x.r >= 0).sort((a, b) => a.r - b.r || a.i - b.i).map((x) => x.l);
+  // رمز مكتوب بلهجته أو نصه (pt-BR، zh-Hant) يتقدّم النتائج؛ والرمز البديل لرمز في القائمة (deu، iw) لا يكرّرها.
+  const typed = normalizeLang(String(query).trim());
+  const canon = typed ? safe(() => Intl.getCanonicalLocales(typed)[0], null) : null;
+  if (typed && arabicName(typed) && !list.some((l) => l.code === typed || l.code === canon)) {
+    const d = describeLang(typed);
+    hits.unshift({ code: d.code, arabic: d.arabic, native: d.native, dir: d.dir });
+  }
+  return hits;
+}

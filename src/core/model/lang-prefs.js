@@ -105,15 +105,39 @@ export function applyLangPrefs(cur, patch) {
 }
 
 /**
- * زوج التعليمات المبدئي لفيديو (AA3 تعرضه): المحفوظ له، وإلا الافتراضي، و«من» التلقائي يأخذ لغة المسار الملتقط إن عُرفت
- * بدقة (قرار سلطان ق٥) وإلا null «اختر لغة»؛ و«إلى» آخر زوج إن تُذكّر وإلا الافتراضي.
+ * زوج التعليمات المبدئي في نافذة الإضافة (AA3، قرار سلطان ق٥):
+ * - «من» لفيديو: ما اختاره المستخدم لهذا الفيديو، وإلا لغة المسار الملتقط أو المنزَّل إن عُرفت بدقة (sourceLang من يوتيوب)
+ *   حين يكون الافتراضي «تلقائي»، أو لغة الافتراضي إن كانت لغةً بعينها؛ وإلا null «اختر لغة». لا تخمين من نص أبدًا.
+ * - «إلى»: المحفوظ لهذا الفيديو، وإلا الافتراضي (وهو آخر «إلى» اختيرت حين يكون «تذكّر آخر زوج» مفعّلًا، pairPatch).
+ * - خارج صفحة فيديو: الافتراضي، و«من» التلقائي يأخذ «من» آخر زوج اختير لفيديو إن كان التذكّر مفعّلًا.
+ * fromDetected: «من» هي اللغة المكتشفة نفسها (يُكتب تحتها «مكتشفة من ترجمة الفيديو»).
  * @param {LangPrefs} prefs @param {{ videoId?: string | null, sourceLang?: string | null }} [ctx]
  * @returns {{ from: string | null, to: string | null, fromDetected: boolean }}
  */
 export function initialPair(prefs, { videoId = null, sourceLang = null } = {}) {
-  const saved = videoId ? prefs.videos[videoId] : null;
-  if (saved && (saved.from || saved.to)) return { from: saved.from, to: saved.to, fromDetected: false };
   const detected = isCode(sourceLang) ? sourceLang : null;
-  const from = prefs.pair.from === AUTO_SOURCE ? detected : prefs.pair.from;
-  return { from, to: prefs.pair.to, fromDetected: prefs.pair.from === AUTO_SOURCE && detected !== null };
+  const auto = prefs.pair.from === AUTO_SOURCE;
+  if (!videoId) {
+    const last = prefs.remember ? Object.values(prefs.videos).at(-1) ?? null : null;
+    return { from: auto ? last?.from ?? null : prefs.pair.from, to: prefs.pair.to, fromDetected: false };
+  }
+  const saved = prefs.videos[videoId] ?? null;
+  const from = saved?.from ?? (auto ? detected : prefs.pair.from);
+  return { from, to: saved?.to ?? prefs.pair.to, fromDetected: detected !== null && from === detected };
+}
+
+/**
+ * ما يُكتب حين يغيّر المستخدم الزوج في النافذة (AA3): اللغة التي اختارها تتقدّم في «الأخيرة»، والزوج يُحفظ للفيديو، و«إلى»
+ * تصير الافتراضي حين يكون «تذكّر آخر زوج» مفعّلًا. «من» لا تُكتب في الافتراضي أبدًا، فلا يُفقد «تلقائي من مسار الفيديو».
+ * @param {LangPrefs} prefs
+ * @param {{ videoId?: string | null, pair: LangPair, why: 'from' | 'to' | 'swap' }} change
+ * @returns {Parameters<typeof applyLangPrefs>[1]}
+ */
+export function pairPatch(prefs, { videoId = null, pair, why }) {
+  const used = why === 'from' ? [pair.from] : why === 'to' ? [pair.to] : [pair.to, pair.from];
+  /** @type {Parameters<typeof applyLangPrefs>[1]} */
+  const patch = { use: used.filter(isCode) };
+  if (videoId && isVideoId(videoId)) patch.video = { videoId, pair: { from: isCode(pair.from) ? pair.from : null, to: isCode(pair.to) ? pair.to : null } };
+  if (prefs.remember && why !== 'from' && (pair.to === null || isCode(pair.to))) patch.pair = { to: pair.to };
+  return patch;
 }

@@ -22,42 +22,49 @@ test('جارٍ: الهيكل مع العنوان', () => {
   assert.deepEqual(describeStatus(reply({ loading: true })), { kind: 'loading', title: 'عنوان تجريبي' });
 });
 
-test('فيديو بلا ترجمة محفوظة: ملتقط ✓ أو محفوظ ✓ أو غير ملتقط', () => {
-  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'المسار الإنجليزي: غير ملتقط', englishKind: null, englishReady: false, saved: false });
+test('فيديو بلا ترجمة محفوظة: مسار الأصل بلغته الفعلية ملتقطًا أو محفوظًا، أو لم يُلتقط', () => {
+  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'لم تُلتقط ترجمة الفيديو بعد', englishKind: null, englishReady: false, saved: false });
   const captured = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }], saved: [] } });
-  assert.equal(describeStatus(captured).englishLine, 'المسار الإنجليزي: ملتقط');
-  assert.equal(describeStatus(captured).englishKind, 'يدوي', 'نوع المسار الملتقط يُعرض بجانب حالته');
-  const auto = reply({ english: { captured: [{ key: 'en|asr', kind: 'asr', cueCount: 5, ok: true }], saved: [] } });
-  assert.equal(describeStatus(auto).englishKind, 'تلقائي');
+  assert.equal(describeStatus(captured).englishLine, 'الإنجليزية ملتقطة · يدوية · 5 مقاطع');
+  assert.equal(describeStatus(captured).englishKind, 'يدوية', 'نوع المسار الملتقط');
+  const auto = reply({ english: { captured: [{ key: 'ja|asr', kind: 'asr', cueCount: 212, ok: true }], saved: [] } });
+  assert.equal(describeStatus(auto).englishLine, 'اليابانية ملتقطة · تلقائية · 212 مقطعًا', 'بأي لغة (AA3)');
+  const machine = reply({ english: { captured: [{ key: 'ar|asr|en', kind: 'asr', cueCount: 9, ok: true }], saved: [] } });
+  assert.equal(describeStatus(machine).englishLine, 'العربية (ترجمة يوتيوب الآلية) ملتقطة · تلقائية · 9 مقاطع', 'موسومة (ق٢)');
   const failed = reply({ english: { captured: [{ key: 'en|asr', kind: 'asr', cueCount: 0, ok: false }], saved: [] } });
-  assert.equal(describeStatus(failed).englishLine, 'المسار الإنجليزي: غير ملتقط', 'مسار فاشل ليس ملتقطًا');
+  assert.equal(describeStatus(failed).englishLine, 'لم تُلتقط ترجمة الفيديو بعد', 'مسار فاشل ليس ملتقطًا');
   const saved = reply({ english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 5 }] } });
-  assert.equal(describeStatus(saved).englishLine, 'المسار الإنجليزي: محفوظ');
-  assert.equal(describeStatus(saved).saved, true, 'مؤشر «محفوظ» لسجل بلا عربية');
+  assert.equal(describeStatus(saved).englishLine, 'الإنجليزية محفوظة · يدوية · 5 مقاطع');
+  assert.equal(describeStatus(saved).saved, true, 'مؤشر «محفوظ» لسجل بلا ترجمة');
   assert.equal(describeStatus(captured).saved, false, 'الملتقط وحده ليس محفوظًا');
+  // مسار «من» في الرد يتقدّم (آخر ما نُزّل، ق٥).
+  const two = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }, { key: 'ja|asr', kind: 'asr', cueCount: 7, ok: true }], saved: [] }, source: { key: 'ja|asr', lang: 'ja', kind: 'asr', via: null, from: 'export' } });
+  assert.ok(describeStatus(two).englishLine.startsWith('اليابانية ملتقطة'));
 });
 
 test('العنوان الغائب يعود إلى المعرّف', () => {
   assert.equal(describeStatus(reply({ title: null })).title, 'iG9CE55wbtY');
 });
 
-test('فيديو بترجمة: «ترجمة عربية · 412 مقطعًا · الإزاحة +0.5 ث» وشارة معدّلة', () => {
-  assert.deepEqual(describeStatus(withArabic()), {
-    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة عربية · 412 مقطعًا · الإزاحة \u2066+0.5\u2069 ث', edited: false, matched: true, mode: 'العربية وحدها', fileName: 'x.ar.srt', saved: true,
+test('فيديو بترجمة: «ترجمة ‹لغتها› · 412 مقطعًا · الإزاحة +0.5 ث»، وغير المحددة بلا لغة، والوضع بلغة الأصل', () => {
+  assert.deepEqual(describeStatus(withArabic({ arabic: { fileName: 'x.ar.srt', cueCount: 412, edited: false, matched: true, lang: 'ar' } })), {
+    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة العربية · 412 مقطعًا · الإزاحة \u2066+0.5\u2069 ث', edited: false, matched: true, mode: 'الترجمة وحدها', fileName: 'x.ar.srt', saved: true,
   });
-  const edited = describeStatus(withArabic({ arabic: { fileName: 'x', cueCount: 1, edited: true, matched: null }, view: { displayOffsetMs: -1000, displayMode: 'dual' } }));
-  assert.equal(edited.line, 'ترجمة عربية · مقطع واحد · الإزاحة \u2066−1.0\u2069 ث');
+  const edited = describeStatus(withArabic({ arabic: { fileName: 'x', cueCount: 1, edited: true, matched: null }, view: { displayOffsetMs: -1000, displayMode: 'dual' }, english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 1 }] } }));
+  assert.equal(edited.line, 'ترجمة بلغة غير محددة · مقطع واحد · الإزاحة \u2066−1.0\u2069 ث', 'ترجمة حُفظت قبل 2.0.0');
+  assert.equal(edited.mode, 'الترجمة فوق الإنجليزية');
   assert.equal(edited.edited, true);
+  assert.equal(describeStatus(withArabic({ view: { displayOffsetMs: 0, displayMode: 'dual' } })).mode, 'الترجمة فوق الأصل', 'بلا مسار أصل معروف');
 });
 
-test('الإجراءات السريعة: تحرير ونسخ للفيديو بترجمة، ونسخ وحده بلا ترجمة، ولا وجهة تنقّل بينها (لا «في المحفوظات»)', () => {
-  assert.deepEqual(quickActions(withArabic()).map((a) => [a.id, a.label, a.primary]), [['editor', 'تحرير الترجمة', true], ['copy', 'نسخ التعليمات', false]]);
-  assert.deepEqual(quickActions(reply()).map((a) => [a.id, a.label, a.primary]), [['copy', 'نسخ تعليمات الترجمة', true]]);
+test('الإجراءات السريعة: «تحرير الترجمة» وحده للفيديو بترجمة (والنسخ كتلة «تعليمات الترجمة»)، ولا شيء بلا ترجمة ولا وجهة تنقّل', () => {
+  assert.deepEqual(quickActions(withArabic()).map((a) => [a.id, a.label]), [['editor', 'تحرير الترجمة']]);
+  assert.deepEqual(quickActions(reply()), []);
   const saved = reply({ english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 5 }] } });
-  assert.deepEqual(quickActions(saved).map((a) => a.id), ['copy']);
+  assert.deepEqual(quickActions(saved), []);
   assert.deepEqual(quickActions(withArabic({ loading: true })).map((a) => [a.id, a.disabledReason]), [['editor', 'جارٍ قراءة ترجمة الفيديو…']]);
   assert.deepEqual(quickActions(null), []);
-  for (const r of [withArabic(), reply(), saved]) assert.equal(quickActions(r).some((a) => a.id === 'find' || /المحفوظات/.test(a.label)), false);
+  for (const r of [withArabic(), reply(), saved]) assert.equal(quickActions(r).some((a) => a.id !== 'editor' || /المحفوظات/.test(a.label)), false);
 });
 
 test('مدخل المحفوظات الواحد: يفتح على صف الفيديو المحفوظ (#v=) دون تصفية، وإلا المحفوظات كلها', () => {

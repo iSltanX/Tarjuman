@@ -2,8 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  arabicName, baseLang, describeLang, hasRtlLetter, langDirection, langFromFileName, langScript, nativeName, normalizeLang,
-  sameBaseLang, scriptLetterPattern, textDirection,
+  arabicName, baseLang, describeLang, hasRtlLetter, langDirection, langFromFileName, langScript, nativeName, normalizeLang, sameBaseLang, scriptLetterPattern, textDirection, knownLanguages, searchLanguages, foldForSearch,
 } from '../../../src/core/lang/index.js';
 
 test('التطبيع: الحالة والشرطة بقواعد BCP-47، واللغة كما وردت (iw يبقى iw)، وغير الصالح null', () => {
@@ -73,4 +72,29 @@ test('رمز اللغة من اسم الملف: الصريح قبل .srt وحد�
   assert.equal(langFromFileName('t.xx.srt'), null, 'رمز لا يعرف المتصفح اسمه');
   assert.equal(langFromFileName('talk.srt'), null);
   assert.equal(langFromFileName(null), null);
+});
+
+test('كل اللغات من المتصفح (AA3): رموز ISO الثنائية التي يعرف اسمها العربي، بلا رمز قديم مكرر، مرتبة بالاسم بلا «ال»', () => {
+  const all = knownLanguages();
+  assert.ok(all.length > 150, `عدد اللغات ${all.length}`);
+  const codes = all.map((l) => l.code);
+  assert.ok(codes.includes('en') && codes.includes('ar') && codes.includes('ja') && codes.includes('he') && codes.includes('ur'));
+  assert.equal(codes.includes('iw'), false, 'iw رمز قديم للعبرية');
+  assert.equal(new Set(codes).size, codes.length);
+  assert.ok(all.every((l) => l.arabic && !/[A-Za-z]/.test(l.arabic)));
+  assert.equal(all.find((l) => l.code === 'he').dir, 'rtl');
+  assert.equal(knownLanguages(), all, 'تُحسب مرة');
+  assert.equal(foldForSearch('الإنجليزيّة'), 'انجليزيه');
+});
+
+test('البحث عن لغة: بالاسم العربي بلا همزة ولا «ال»، وبالاسم الأصلي، وبالرمز أولًا، والرمز المكتوب بلهجته', () => {
+  assert.equal(searchLanguages('انجليزي')[0].code, 'en');
+  assert.equal(searchLanguages('en')[0].code, 'en');
+  assert.equal(searchLanguages('日本')[0].code, 'ja');
+  assert.equal(searchLanguages('اردو')[0].code, 'ur');
+  assert.equal(searchLanguages('pt-BR')[0].code, 'pt-BR');
+  assert.equal(searchLanguages('zh-Hant')[0].code, 'zh-Hant');
+  assert.equal(searchLanguages('deu').filter((l) => l.code === 'deu').length, 0, 'الرمز البديل لا يكرر الألمانية');
+  assert.deepEqual(searchLanguages('qqqq'), []);
+  assert.equal(searchLanguages('').length, knownLanguages().length);
 });

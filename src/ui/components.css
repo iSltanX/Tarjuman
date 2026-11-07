@@ -308,3 +308,56 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-kv { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .tj-kv__k { font: 700 13px/20px var(--tj-font-body); color: var(--tj-muted); }
 .tj-kv__v { font: 400 14px/20px var(--tj-font-body); }
+
+/* ---- حقل اللغة ومنتقيها (AA3، lang-picker.js؛ مكوّنا .lang و.lang-swap في لوحة 19، ولوحتا 09 و15): حقل 40 بتسميته الصغيرة
+   واسم اللغة بالعربية، وزر مبادلة 32 على الغائر، وصف بعمودين متساويين بينهما المبادلة بفجوة 6. القائمة تأخذ عرض الصف: بحث،
+   ثم المجموعات بعناوينها، ولكل لغة اسمها العربي وفي آخر سطرها اسمها بلغتها ورمزها معزولين. ---- */
+.tj-lang-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); gap: 6px; align-items: center; }
+.tj-lang-pick { min-width: 0; display: flex; }
+.tj-lang {
+  display: flex; align-items: center; gap: 8px; width: 100%; height: 40px; min-width: 0; padding: 0 10px;
+  border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-md); background: var(--tj-surface);
+  cursor: pointer; text-align: start; font: 400 13px/18px var(--tj-font-body); color: var(--tj-text);
+  transition: border-color var(--tj-motion-fast) var(--tj-ease), box-shadow var(--tj-motion-fast) var(--tj-ease);
+}
+.tj-lang__k { flex: none; font: 700 11px/16px var(--tj-font-body); color: var(--tj-muted); }
+.tj-lang__v { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; unicode-bidi: isolate; }
+.tj-lang__v.is-empty { color: var(--tj-muted); font-weight: 400; }
+.tj-lang .tj-icon { flex: none; width: 16px; height: 16px; stroke-width: 2; color: var(--tj-muted); }
+.tj-lang:hover:not([aria-disabled="true"]) { border-color: var(--tj-text-2); }
+.tj-lang:focus-visible, .tj-lang.is-open { outline: none; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
+.tj-lang[aria-disabled="true"] { cursor: not-allowed; background: var(--tj-surface-2); color: var(--tj-muted); border-color: var(--tj-border-strong); }
+.tj-lang-swap {
+  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
+  border: 0; border-radius: var(--tj-radius-md); background: var(--tj-surface-3); color: var(--tj-text-2); cursor: pointer;
+}
+.tj-lang-swap:hover:not([aria-disabled="true"]) { background: var(--tj-border-strong); color: var(--tj-text); }
+.tj-lang-swap[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+.tj-lang-swap .tj-icon { width: 16px; height: 16px; stroke-width: 2; }
+.tj-lang-pop {
+  position: absolute; inset-block-start: calc(100% + 4px); inset-inline: 0; z-index: 30; min-width: 240px;
+  display: flex; flex-direction: column; gap: 4px; padding: 8px;
+  background: var(--tj-surface); border-radius: var(--tj-radius-lg); box-shadow: var(--tj-e2);
+  animation: tj-pop var(--tj-motion-menu) var(--tj-ease);
+}
+.tj-lang-pop[hidden] { display: none !important; }
+.tj-lang-pick > .tj-lang-pop { inset-inline: 0 auto; width: max(100%, 260px); }
+.tj-lang-pop__search-wrap { position: relative; display: flex; align-items: center; }
+.tj-lang-pop__search-wrap > .tj-icon { position: absolute; inset-inline-start: 10px; width: 16px; height: 16px; color: var(--tj-muted); pointer-events: none; }
+.tj-lang-pop__search { width: 100%; height: 32px; padding-inline-start: 32px; font-size: 13px; }
+.tj-lang-pop__list { display: flex; flex-direction: column; gap: 1px; max-height: 248px; overflow-y: auto; overscroll-behavior: contain; }
+.tj-lang-pop__label { padding: 6px 10px 2px; font: 700 11px/16px var(--tj-font-body); color: var(--tj-muted); }
+.tj-lang-pop__none { padding: 10px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
+.tj-lang-item {
+  display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 10px; border-radius: var(--tj-radius-md);
+  cursor: pointer; color: var(--tj-text); font: 700 13px/18px var(--tj-font-body);
+}
+.tj-lang-item:hover, .tj-lang-item.is-active { background: var(--tj-hover); }
+.tj-lang-item.is-active { box-shadow: inset 0 0 0 2px var(--tj-focus); }
+.tj-lang-item.is-on { background: var(--tj-selected-soft); color: var(--tj-selected-soft-ink); }
+.tj-lang-item__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tj-lang-item__n { margin-inline-start: auto; flex: none; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/16px var(--tj-font-body); color: var(--tj-muted); unicode-bidi: isolate; }
+.tj-lang-item__c { font: 600 11px/14px var(--tj-font-mono); }
+.tj-lang-item .tj-icon { flex: none; width: 16px; height: 16px; stroke-width: 2.25; color: var(--tj-accent); }
+.tj-lang-item.is-on .tj-lang-item__n { color: inherit; }
+@media (prefers-reduced-motion: reduce) { .tj-lang-pop { animation: none; } .tj-lang { transition: none; } }

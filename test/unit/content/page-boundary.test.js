@@ -104,7 +104,7 @@ test('رد نافذة الأيقونة: لصفحات الإضافة وحدها،
   const reply = await fake.dispatchMessage(videoStateRequest());
   assert.equal(isVideoStateReply(reply), true);
   assert.equal(reply.watch, true);
-  assert.deepEqual(reply.arabic, { fileName: rec.arabic.fileName, cueCount: 5, edited: false, matched: true });
+  assert.deepEqual(reply.arabic, { fileName: rec.arabic.fileName, cueCount: 5, edited: false, matched: true, lang: null });
   assert.deepEqual(reply.view, { displayOffsetMs: 500, displayMode: 'ar' });
   assert.deepEqual(reply.mounted, { overlay: 'stub', controls: 'stub' });
   assert.equal(JSON.stringify(reply).includes('سطر'), false, 'لا نص مقاطع في الرد');

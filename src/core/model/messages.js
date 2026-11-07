@@ -3,7 +3,7 @@
 // لا يراسل إلا العامل الخلفي برسالة الحفظ (§٧). كلها بالإصدار v: 1، ورد الحالة موسّع بحقول تتجاهلها النافذة القديمة.
 import { trackComparison } from '../compare/current.js';
 import { DISPLAY_MODES } from './video.js';
-import { isVideoId } from './ids.js';
+import { isVideoId, parseTrackKey } from './ids.js';
 import { LIMITS, isPlainObject } from './validate.js';
 
 export const MESSAGE_VERSION = 1;
@@ -22,13 +22,19 @@ export const SAVE_REPLY_MODES = Object.freeze(['downloads', 'subfolder', 'ask'])
  * @typedef {{
  *   v: 1, ok: true, watch: boolean, videoId: string | null, title: string | null, loading: boolean,
  *   english: { captured: { key: string, kind: 'manual' | 'asr', cueCount: number, ok: boolean }[], saved: { key: string, kind: 'manual' | 'asr', cueCount: number }[] },
- *   arabic: null | { fileName: string, cueCount: number, edited: boolean, matched: boolean | null },
+ *   arabic: null | { fileName: string, cueCount: number, edited: boolean, matched: boolean | null, lang?: string | null },
  *   view: { displayOffsetMs: number, displayMode: 'ar' | 'dual' | 'off' },
  *   mounted: { overlay: string, controls: string },
  *   slots?: SlotSummary[],
  *   capture?: { state: 'captured' | 'rejected' | 'none', count: number, code: string | null },
- *   tools?: { overlay: string, controls: string, code: string | null }
+ *   tools?: { overlay: string, controls: string, code: string | null },
+ *   source?: SourceRef | null, lastExport?: LastExport | null, available?: { lang: string, kind: 'manual' | 'asr', name: string | null }[] | null
  * }} VideoStateReply
+ * source (AA3، ق٥): مسار الفيديو الذي تُعبّأ منه «من» في النافذة بلغته كما أرسلها يوتيوب: آخر ما نُزّل منه إن بقي ملتقطًا أو
+ * محفوظًا، وإلا ما تختاره قائمة التحميل افتراضيًا (الملتقط ثم المحفوظ). lastExport: آخر تنزيل لهذا الفيديو بأجزائه إن قُسّم، لفقرة
+ * الأجزاء في التعليمات المنسوخة من النافذة. available: مسارات الفيديو كما في بيانات المشغّل (لغة ونوع واسم، بلا رابط).
+ * @typedef {{ key: string, lang: string, kind: 'manual' | 'asr', via: string | null, from: 'export' | 'captured' | 'saved' }} SourceRef
+ * @typedef {{ key: string, lang: string, via: string | null, parts: { index: number, from: number, to: number }[] | null }} LastExport
  */
 
 /**
@@ -77,6 +83,31 @@ function slotSummaries(s) {
   return SLOT_NUMBERS.map((n) => ({ n, filled: has && n === 1, active: has && n === 1, name: null }));
 }
 
+/** البصمات من الأحدث. @param {{ createdAt: string }[]} prints */
+const newestFirst = (prints) => prints.slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+
+/**
+ * مسار «من» (ق٥): آخر ما نُزّل إن بقي مساره في الزيارة أو المحفوظ، وإلا مسار المتحكم المختار (الملتقط ثم المحفوظ)، وإلا null.
+ * @param {import('../../content/controller.js').ControllerState} s
+ * @returns {SourceRef | null}
+ */
+export function sourceRef(s) {
+  const present = new Set([...s.captured.filter((t) => t.ok && t.cueCount > 0).map((t) => t.key), ...(s.saved?.english ?? []).map((t) => t.key)]);
+  for (const f of newestFirst(s.saved?.fingerprints ?? [])) {
+    const t = present.has(f.trackKey) ? parseTrackKey(f.trackKey) : null;
+    if (t) return { key: f.trackKey, lang: t.lang, kind: t.kind, via: t.via, from: 'export' };
+  }
+  const e = s.english;
+  return e ? { key: e.key, lang: e.lang, kind: e.kind, via: e.via ?? null, from: e.source === 'saved' ? 'saved' : 'captured' } : null;
+}
+
+/** آخر تنزيل بأجزائه، أو null. @param {import('../../content/controller.js').ControllerState} s @returns {LastExport | null} */
+export function lastExportOf(s) {
+  const f = newestFirst(s.saved?.fingerprints ?? [])[0];
+  const t = f ? parseTrackKey(f.trackKey) : null;
+  return t ? { key: f.trackKey, lang: t.lang, via: t.via, parts: Array.isArray(f.parts) ? f.parts.map(({ index, from, to }) => ({ index, from, to })) : null } : null;
+}
+
 /**
  * يبني الرد من حالة المتحكم: أعداد وملخصات فقط، بلا نص مقاطع.
  * @param {import('../../content/controller.js').ControllerState} s
@@ -100,12 +131,17 @@ export function buildVideoStateReply(s, mounted) {
         const c = trackComparison(a, s.saved.fingerprints);
         return c && c.fingerprintId ? c.matched : null;
       })(),
+      // لغة الترجمة (AA1)، وnull «غير محددة».
+      lang: a.lang ?? null,
     } : null,
     view: { ...s.view },
     mounted: { overlay: String(mounted.overlay), controls: String(mounted.controls) },
     slots: slotSummaries(s),
     capture: { state: okTracks.length ? 'captured' : issue ? 'rejected' : 'none', count: okTracks.length, code: okTracks.length ? null : issue },
     tools: { overlay: String(mounted.overlay), controls: String(mounted.controls), code: mounted.code ?? null },
+    source: isVideoId(s.videoId) ? sourceRef(s) : null,
+    lastExport: isVideoId(s.videoId) ? lastExportOf(s) : null,
+    available: Array.isArray(s.available?.tracks) ? s.available.tracks.map((t) => ({ lang: t.lang, kind: t.kind, name: t.name ?? null })) : null,
   };
 }
 

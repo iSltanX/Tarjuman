@@ -45,3 +45,19 @@ export function languageName(code, { region = true, DisplayNames = globalThis.In
   }
   return raw;
 }
+
+/** اسم لغة بالعربية من رمز للعرض: المعروف باسمه، والمجهول برمزه، وبلا رمز null. @param {string | null | undefined} code */
+const nameOf = (code) => (code ? languageName(code, { region: true }) : null);
+
+/**
+ * الزوج اللغوي في سطر (AA3، لوحة 19 البند ٢): «الإنجليزية ← العربية»، أو «الإنجليزية ← لغة غير محددة» لترجمة حُفظت بلا لغة، أو لغة
+ * الأصل وحدها لفيديو بلا ترجمة؛ وبلا أصل ولا ترجمة null. السهم في اتجاه القراءة من اليمين: من الأصل إلى الترجمة.
+ * @param {{ from?: string | null, to?: string | null, translated?: boolean }} p translated: للفيديو ترجمة (فغياب «إلى» «غير محددة»)
+ * @returns {string | null}
+ */
+export function pairLabel({ from = null, to = null, translated = false } = {}) {
+  const f = nameOf(from);
+  const t = nameOf(to) ?? (translated ? 'لغة غير محددة' : null);
+  if (f && t) return `${f} ← ${t}`;
+  return f ?? (t ? `؟ ← ${t}` : null);
+}

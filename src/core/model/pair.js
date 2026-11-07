@@ -1,0 +1,45 @@
+// الزوج اللغوي لترجمة محفوظة (AA3، لوحة 19 البند ٢): لغة الأصل الذي تُرجم عنه ولغة الترجمة، من السجل في الذاكرة (بعد دمج
+// المرافق lang:، model/lang-store.js). الأصل مسار بصمة الترجمة إن وُجد (الملف الذي نُزّل وتُرجم)، وإلا أول مسار بترتيب قائمة
+// التحميل (الأصلي قبل المترجم آليًا، واليدوي قبل التلقائي)؛ والترجمة بلغتها أو null «غير محددة». لا تخمين من نص.
+import { parseTrackKey } from './ids.js';
+
+const KIND_ORDER = { manual: 0, asr: 1 };
+const byOrder = (a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
+
+/**
+ * مسار الأصل لترجمة: مسار بصمتها، وإلا الأول بالترتيب، وإلا null.
+ * @param {{ english: { key: string, lang: string, kind: 'manual' | 'asr', via?: string | null }[], fingerprints: { id: string, trackKey: string }[] }} record
+ * @param {{ fingerprintId?: string | null } | null} [track]
+ * @returns {{ key: string, lang: string, via: string | null } | null}
+ */
+export function sourceOf(record, track = null) {
+  const fp = track?.fingerprintId ? record.fingerprints.find((f) => f.id === track.fingerprintId) ?? null : null;
+  const t = fp ? parseTrackKey(fp.trackKey) : null;
+  if (t) return { key: fp.trackKey, lang: t.lang, via: t.via };
+  const first = record.english.slice().sort(byOrder)[0];
+  return first ? { key: first.key, lang: first.lang, via: first.via ?? null } : null;
+}
+
+/**
+ * زوج الترجمة النشطة في السجل.
+ * @param {import('./video.js').VideoRecord} record
+ * @returns {{ from: string | null, to: string | null, via: string | null }}
+ */
+export function recordPair(record) {
+  const src = sourceOf(record, record.arabic);
+  return { from: src?.lang ?? null, to: record.arabic?.lang ?? null, via: src?.via ?? null };
+}
+
+/**
+ * زوج كل خانة في الحزمة (null للفارغة)، والنشطة من السجل.
+ * @param {import('./slots.js').Bundle} bundle
+ * @returns {({ from: string | null, to: string | null, via: string | null } | null)[]}
+ */
+export function slotPairs(bundle) {
+  return bundle.slots.map((s) => {
+    const t = s.n === bundle.active ? bundle.record.arabic : s.track;
+    if (!t) return null;
+    const src = sourceOf(bundle.record, t);
+    return { from: src?.lang ?? null, to: t.lang ?? null, via: src?.via ?? null };
+  });
+}

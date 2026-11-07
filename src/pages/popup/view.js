@@ -1,5 +1,5 @@
 // بُناة DOM لنافذة الأيقونة بلا اتصال بالتخزين ولا بالتبويبات (لوحة النافذة في الهوية، docs/identity-v4.md): هيكل القراءة، وبطاقة الفيديو
-// الحالي بحالاتها، وخطوات «بلا ترجمة عربية»، وملاحظة «ليست صفحة فيديو». textContent وsetAttribute فقط. المنطق والبيانات
+// الحالي بحالاتها، وهيكل كتلة «تعليمات الترجمة»، وخطوات «بلا ترجمة»، وملاحظة «ليست صفحة فيديو». textContent وsetAttribute فقط. المنطق والبيانات
 // في status.js، والتركيب في main.js. الصنف التاريخي tj-popup__status باقٍ على البطاقة والهيكل والملاحظة: يقرؤه الحزام الحي.
 import { el, statusPill } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
@@ -64,7 +64,7 @@ function toolsRow(tools, doc) {
  * @param {ReturnType<typeof import('./status.js').captureLine>} capture
  * @param {Document} [doc]
  */
-export function statusCard(s, tools, capture, doc = document) {
+export function statusCard(s, tools, capture, doc = document, action = null) {
   const card = el('section', { className: 'tj-popup__card tj-popup__status', attrs: { 'aria-live': 'polite' }, doc });
   card.append(el('h2', { className: 'tj-popup__title tj-clamp-2 tj-auto', text: s.title, dir: textDirection(s.title), attrs: { title: s.title }, doc }));
   if (s.kind === 'loading') {
@@ -76,8 +76,9 @@ export function statusCard(s, tools, capture, doc = document) {
     if (s.matched === false) pills.push(iconPill({ text: 'تختلف عن الأصل', iconName: 'warning', tone: 'warning', doc }));
     card.append(el('div', { className: 'tj-popup__pills', children: pills, doc }));
   } else {
-    card.append(el('p', { className: 'tj-popup__line', text: 'لا ترجمة عربية محفوظة', doc }));
-    const text = s.englishKind ? `${s.englishLine} · ${s.englishKind}` : s.englishLine;
+    card.append(el('p', { className: 'tj-popup__line', text: 'لا ترجمة محفوظة بعد', doc }));
+    // سطر مسار الأصل بلغته ونوعه وعدده (AA3): «اليابانية ملتقطة · تلقائية · 212 مقطعًا».
+    const text = s.englishLine;
     card.append(s.englishReady
       ? resultLine({ tone: 'ok', iconName: 'check', text, className: 'tj-popup__english', doc })
       : el('p', { className: 'tj-popup__result tj-popup__english', text, doc }));
@@ -85,6 +86,8 @@ export function statusCard(s, tools, capture, doc = document) {
   }
   if (capture) card.append(resultLine({ tone: 'warn', iconName: 'warning', text: capture.text, className: 'tj-popup__capture', doc }));
   if (tools) card.append(el('hr', { className: 'tj-rule', doc }), toolsRow(tools, doc));
+  // «تحرير الترجمة» زر مؤطّر داخل البطاقة (لوحة 09): الزر الرئيسي الوحيد في النافذة نسخ التعليمات.
+  if (action) card.append(el('div', { className: 'tj-popup__actions', children: [action], doc }));
   return card;
 }
 
@@ -115,6 +118,18 @@ export function notVideoNote(doc = document, text = NOT_VIDEO_TEXT) {
   return el('div', {
     className: 'tj-popup__note tj-popup__status', attrs: { role: 'status' },
     children: [popupIcon('info', { doc }), el('span', { text, doc })],
+    doc,
+  });
+}
+
+/** هيكل كتلة «تعليمات الترجمة» أثناء القراءة (لوحة 09، الحالة 6): الحقلان والمبادلة والزر. @param {Document} [doc] */
+export function pairSkeleton(doc = document) {
+  return el('div', {
+    className: 'tj-popup__pair-skel', attrs: { 'aria-hidden': 'true' },
+    children: [
+      el('div', { className: 'tj-popup__pair-skel-row', children: [el('div', { className: 'tj-skeleton', doc }), el('div', { className: 'tj-skeleton tj-popup__pair-skel-swap', doc }), el('div', { className: 'tj-skeleton', doc })], doc }),
+      el('div', { className: 'tj-skeleton tj-popup__pair-skel-btn', doc }),
+    ],
     doc,
   });
 }

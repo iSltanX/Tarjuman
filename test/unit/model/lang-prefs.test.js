@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  AUTO_SOURCE, DEFAULT_LANG_PREFS, DEFAULT_TARGET_LANG, LANG_PREFS_LIMITS, applyLangPrefs, initialPair, normalizeLangPrefs,
+  AUTO_SOURCE, DEFAULT_LANG_PREFS, DEFAULT_TARGET_LANG, LANG_PREFS_LIMITS, applyLangPrefs, initialPair, normalizeLangPrefs, pairPatch,
   validateLangPrefs, withRecent,
 } from '../../../src/core/model/lang-prefs.js';
 import { createStore } from '../../../src/core/store/index.js';
@@ -51,6 +51,34 @@ test('زوج البداية: المحفوظ للفيديو، وإلا «من» �
   assert.deepEqual(initialPair(fixed, { sourceLang: 'ja' }), { from: 'en', to: 'fr', fromDetected: false }, '«من» محددة في الإعدادات');
   const saved = applyLangPrefs(base, { video: { videoId: A, pair: { from: 'ko', to: 'en' } } });
   assert.deepEqual(initialPair(saved, { videoId: A, sourceLang: 'ja' }), { from: 'ko', to: 'en', fromDetected: false });
+  // «إلى» وحدها محفوظة قبل أن يُلتقط شيء: «من» تُعبّأ حين يُلتقط المسار لاحقًا.
+  const toOnly = applyLangPrefs(base, { video: { videoId: A, pair: { from: null, to: 'en' } } });
+  assert.deepEqual(initialPair(toOnly, { videoId: A, sourceLang: 'ja' }), { from: 'ja', to: 'en', fromDetected: true });
+  const same = applyLangPrefs(base, { video: { videoId: A, pair: { from: 'ja', to: 'en' } } });
+  assert.equal(initialPair(same, { videoId: A, sourceLang: 'ja' }).fromDetected, true, 'المحفوظ هو المكتشف نفسه');
+});
+
+test('زوج البداية خارج صفحة فيديو: الافتراضي، و«من» آخر زوج لفيديو حين يكون التذكّر مفعّلًا', () => {
+  const base = normalizeLangPrefs(null);
+  const used = applyLangPrefs(base, { video: { videoId: A, pair: { from: 'ja', to: 'en' } } });
+  assert.deepEqual(initialPair(used), { from: 'ja', to: 'ar', fromDetected: false });
+  assert.deepEqual(initialPair(applyLangPrefs(used, { remember: false })), { from: null, to: 'ar', fromDetected: false });
+});
+
+test('تغيير الزوج: اللغة إلى الأخيرة، والزوج للفيديو، و«إلى» افتراضيًا مع التذكّر، و«من» لا تمس «تلقائي»', () => {
+  const base = normalizeLangPrefs(null);
+  assert.deepEqual(pairPatch(base, { videoId: A, pair: { from: 'ja', to: 'en' }, why: 'to' }), {
+    use: ['en'], video: { videoId: A, pair: { from: 'ja', to: 'en' } }, pair: { to: 'en' },
+  });
+  assert.deepEqual(pairPatch(base, { videoId: A, pair: { from: 'ko', to: 'en' }, why: 'from' }), {
+    use: ['ko'], video: { videoId: A, pair: { from: 'ko', to: 'en' } },
+  });
+  assert.deepEqual(pairPatch(base, { pair: { from: 'en', to: 'ja' }, why: 'swap' }), { use: ['ja', 'en'], pair: { to: 'ja' } });
+  const off = applyLangPrefs(base, { remember: false });
+  assert.deepEqual(pairPatch(off, { videoId: A, pair: { from: 'ja', to: 'en' }, why: 'to' }), { use: ['en'], video: { videoId: A, pair: { from: 'ja', to: 'en' } } });
+  const next = applyLangPrefs(base, pairPatch(base, { videoId: A, pair: { from: 'ja', to: 'en' }, why: 'swap' }));
+  assert.equal(next.pair.from, AUTO_SOURCE);
+  assert.equal(validateLangPrefs(next).ok, true);
 });
 
 test('التخزين: افتراضي بلا مفتاح، وتعديلان من سياقين لا يُسقط أحدهما الآخر', async () => {
