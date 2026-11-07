@@ -73,6 +73,10 @@ function tool(name) {
   const lock = JSON.parse(read('package-lock.json'));
   const entry = lock.packages[`node_modules/${name}`];
   if (!entry) throw new Error(`${name} غائب عن package-lock.json`);
+  // اعتمادية تطوير مقفلة غير مثبتة (مثل web-ext بعد npm install قديم): رسالة تقول ما يُفعل لا ENOENT خام (تدقيق Fable، FA-11).
+  if (!existsSync(path.join(ROOT, 'node_modules', name, 'package.json'))) {
+    throw new Error(`${name} ${entry.version} في package-lock.json وغير مثبت في node_modules؛ شغّل npm ci (الإشعارات تقرأ ترخيصه من حزمته)`);
+  }
   const meta = JSON.parse(read(`node_modules/${name}/package.json`));
   const repo = String(meta.homepage ?? meta.repository?.url ?? '').replace(/^git\+/, '').replace(/\.git$/, '');
   return { name, version: entry.version, license: meta.license, repo };
@@ -154,7 +158,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.error('notices: node_modules غير مثبتة (الإشعارات تقرأ تراخيص أدوات البناء منها)؛ شغّل npm ci أولًا');
     process.exit(1);
   }
-  const text = generate();
+  let text;
+  try {
+    text = generate();
+  } catch (err) {
+    console.error(`notices: ${err.message}`);
+    process.exit(1);
+  }
   if (process.argv.includes('--check')) {
     const current = existsSync(file) ? readFileSync(file, 'utf8') : '';
     if (current !== text) {
