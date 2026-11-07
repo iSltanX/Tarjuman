@@ -7,7 +7,7 @@ import { instructions } from '../../../../src/core/export/instructions.js';
 
 const ID = 'aB3kL9mPq2X';
 
-function harness({ write = async () => {}, buildText = () => instructions({ videoId: ID, title: 'عنوان' }) } = {}) {
+function harness({ write = async () => {}, buildText = () => instructions({ videoId: ID, title: 'عنوان', source: 'en', target: 'ar' }) } = {}) {
   const log = { states: [], announced: [], written: [], timers: [] };
   const copy = createCopyState({
     buildText,
@@ -24,7 +24,7 @@ test('النجاح: يكتب النص المعتمد، ثم «تم النسخ» 
   const { copy, log } = harness();
   assert.equal(copy.state(), 'idle');
   assert.equal(await copy.copy(), 'success');
-  assert.deepEqual(log.written, [instructions({ videoId: ID, title: 'عنوان' })]);
+  assert.deepEqual(log.written, [instructions({ videoId: ID, title: 'عنوان', source: 'en', target: 'ar' })]);
   assert.deepEqual(log.states, ['success']);
   assert.deepEqual(log.announced, ['PG_COPY_DONE']);
   assert.equal(log.timers.length, 1);
@@ -66,7 +66,7 @@ test('ضغطة ثانية أثناء «تم النسخ» تنسخ ثانية و�
 });
 
 test('معرّف غير صالح: لا نسخ ولا كتابة، والإعلان برمز المعرّف لا بالحافظة', async () => {
-  const { copy, log } = harness({ buildText: () => instructions({ videoId: 'bad', title: 'x' }) });
+  const { copy, log } = harness({ buildText: () => instructions({ videoId: 'bad', title: 'x', source: 'en', target: 'ar' }) });
   assert.equal(await copy.copy(), 'error');
   assert.deepEqual(log.written, []);
   assert.deepEqual(log.announced, ['PG_COPY_BAD_ID']);

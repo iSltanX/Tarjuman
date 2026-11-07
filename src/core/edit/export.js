@@ -9,13 +9,13 @@ import { findIssues } from './issues.js';
 /**
  * @param {{
  *   videoId: string, cues: { n: number, startMs: number, endMs: number, text: string }[], offsetMs: number,
- *   choice?: 'shown' | 'saved', variant?: 'current' | 'original', drafts?: Map<string, string>
- * }} o choice يُسأل عنه المستخدم إن كانت الإزاحة غير صفرية؛ «shown» هو الافتراضي
+ *   choice?: 'shown' | 'saved', variant?: 'current' | 'original', drafts?: Map<string, string>, lang?: string | null
+ * }} o lang لغة الترجمة لاسم الملف (AA1) choice يُسأل عنه المستخدم إن كانت الإزاحة غير صفرية؛ «shown» هو الافتراضي
  * @returns {{ ok: true, name: string, text: string, timing: 'saved' | 'shown', askUser: boolean, count: number, notes: string[] }
  *   | { ok: false, code: string, count?: number, list?: number[], negative?: number[], message?: string }}
  *   notes ما جُرّد عند الكتابة وما يتغير عند إعادة الاستيراد (buildArabicExport)، يُعرض قبل التنزيل.
  */
-export function planArabicExport({ videoId, cues, offsetMs, choice = 'shown', variant = 'current', drafts }) {
+export function planArabicExport({ videoId, cues, offsetMs, choice = 'shown', variant = 'current', drafts, lang = null }) {
   if (!isVideoId(videoId)) return { ok: false, code: 'TJ_BAD_VIDEO_ID' };
   if (!Array.isArray(cues) || !cues.length) return { ok: false, code: 'ST_NO_RECORD' };
   // الإزاحة عدد صحيح دائمًا من الجلسة؛ وغيره رفض برمز لا RangeError من exportTiming (تدقيق 7a66f91، U98).
@@ -26,7 +26,7 @@ export function planArabicExport({ videoId, cues, offsetMs, choice = 'shown', va
   const timed = exportTiming(cues, offsetMs, choice);
   if (!timed.ok) return { ok: false, code: timed.code, negative: timed.negative };
   try {
-    const file = buildArabicExport({ videoId, cues: timed.cues, variant });
+    const file = buildArabicExport({ videoId, cues: timed.cues, variant, lang });
     return { ok: true, name: file.name, text: file.text, timing: timed.timing, askUser: timed.askUser, count: timed.cues.length, notes: file.notes };
   } catch (err) {
     if (!isTjError(err)) throw err;

@@ -1046,6 +1046,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       render();
       return;
     }
+    if (!prep.text) {
+      // لغة المسار هي اللغة المطلوبة نفسها: لا تعليمات لترجمة لغة إلى نفسها (AA1).
+      d.copyLine = { tone: 'error', text: messageFor('PG_PAIR_SAME') };
+      render();
+      return;
+    }
     const mine = ui;
     mine.copyBusy = true;
     d.copyLine = null;

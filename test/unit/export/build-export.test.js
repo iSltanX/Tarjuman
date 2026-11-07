@@ -186,13 +186,16 @@ test('buildArabicExport: اسم VIDEOID.ar.srt وترقيم من 1 وأزمنة 
     { n: 5, startMs: 1000, endMs: 2500, text: 'مرحبًا بكم' },
     { n: 6, startMs: 2500, endMs: 4000, text: 'سطر أول\nسطر ثانٍ' },
   ];
-  const out = buildArabicExport({ videoId: 'iG9CE55wbtY', cues });
+  const out = buildArabicExport({ videoId: 'iG9CE55wbtY', cues, lang: 'ar' });
   assert.equal(out.name, 'iG9CE55wbtY.ar.srt');
+  // بلا لغة معروفة لا تُفترض العربية (AA1): الاسم «translation».
+  assert.equal(buildArabicExport({ videoId: 'iG9CE55wbtY', cues }).name, 'iG9CE55wbtY.translation.srt');
+  assert.equal(buildArabicExport({ videoId: 'iG9CE55wbtY', cues, lang: 'ja' }).name, 'iG9CE55wbtY.ja.srt');
   assert.equal(out.text, writeSrt(cues));
   assert.deepEqual(parseSrtStrict(out.text).map((c) => [c.n, c.startMs, c.endMs, c.text]), [[1, 1000, 2500, 'مرحبًا بكم'], [2, 2500, 4000, 'سطر أول\nسطر ثانٍ']]);
   assert.equal(out.text.charCodeAt(0) === 0xfeff, false, 'بلا BOM');
   assert.equal(out.text.includes('\r'), false, 'LF');
-  assert.equal(buildArabicExport({ videoId: 'iG9CE55wbtY', cues, variant: 'original' }).name, 'iG9CE55wbtY.ar.original.srt');
+  assert.equal(buildArabicExport({ videoId: 'iG9CE55wbtY', cues, variant: 'original', lang: 'ar' }).name, 'iG9CE55wbtY.ar.original.srt');
 });
 
 test('buildArabicExport: يرفض الفراغ والتوقيت الخاطئ والمدخل التالف برموز ثابتة', () => {

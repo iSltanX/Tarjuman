@@ -581,7 +581,7 @@ test('«نسخ» يرفق القاموس بالنص نفسه الذي تبنيه
   openMore(m, IDS[0], 'نسخ التعليمات');
   await settle(5);
   const terms = samplePrefs().glossary.terms;
-  assert.equal(m.calls.clipboard[0], instructions({ videoId: IDS[0], title: 'عنوان', glossary: terms }));
+  assert.equal(m.calls.clipboard[0], instructions({ videoId: IDS[0], title: 'عنوان', glossary: terms, source: 'en', target: 'ar' }));
   assert.ok(m.calls.clipboard[0].includes('- prompt = موجِّه'));
   await m.store.setPrefs({ glossary: { attach: false } });
   await m.area.flush();
@@ -589,7 +589,7 @@ test('«نسخ» يرفق القاموس بالنص نفسه الذي تبنيه
   await m.clock.runAll();
   openMore(m, IDS[0], 'نسخ التعليمات');
   await settle(5);
-  assert.equal(m.calls.clipboard.at(-1), instructions({ videoId: IDS[0], title: 'عنوان' }));
+  assert.equal(m.calls.clipboard.at(-1), instructions({ videoId: IDS[0], title: 'عنوان', source: 'en', target: 'ar' }));
 });
 
 test('manualEdits: يعدّ المقاطع المختلفة عن الأصل وما زاد أو نقص، وصفر بلا تعديل', () => {

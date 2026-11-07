@@ -6,13 +6,14 @@ import { validateCues } from '../model/cue.js';
 import { newFingerprintId, isVideoId, parseTrackKey } from '../model/ids.js';
 import { EXPORT_MODES, validateFingerprint } from '../model/tracks.js';
 import { assertValid } from '../model/validate.js';
+import { DEFAULT_TARGET_LANG } from '../model/lang-prefs.js';
 import { textHash } from './hash.js';
 import { instructions } from './instructions.js';
 import { fileName } from './names.js';
 import { splitPlan } from './parts.js';
 import { assertWritable, verifyReread, verifyRoundTrip, writableArabic, writeSrtFrom } from './write.js';
 
-export { fileName } from './names.js';
+export { fileName, translationLang } from './names.js';
 export { GLOSSARY_LIMITS, glossaryParagraph, instructions, patchInstructions } from './instructions.js';
 export { describeTrack, languageLabel, trackLabel } from './describe.js';
 export { download, SRT_MIME } from './download.js';
@@ -41,17 +42,18 @@ function toMs(now) {
  * controller.convertCaptured؛ و`mode` هنا يسمّي الملف والبصمة والتعليمات. يرمي TjError برمز واضح.
  * @param {{
  *   videoId: string, title?: string | null,
- *   track: { key: string, lang: string, kind: 'manual' | 'asr', cues: import('../model/cue.js').Cue[], warnings?: string[] },
+ *   track: { key: string, lang: string, kind: 'manual' | 'asr', via?: string | null, cues: import('../model/cue.js').Cue[], warnings?: string[] },
+ *   target?: string | null,
  *   mode: 'normal' | 'long', split?: { size: number, by?: 'count' | 'content' } | null, now?: number | string | Date, rand?: () => number
  * }} spec title لا يُكتب في أي ملف ولا بصمة (خصوصية)، ويدخل نص التعليمات وحده بوصفه بيانات. split.by (إضافة P11 على العقد):
  *   'count' التوزيع المتوازن القديم (الافتراضي)، و'content' عند حدود الجمل أو الصمت (planPartsByContent).
  * @returns {{ files: ExportFile[], fingerprint: import('../model/tracks.js').Fingerprint, instructions: string, warnings: string[] }}
  */
-export function buildExport({ videoId, title = null, track, mode, split = null, now = Date.now(), rand }) {
+export function buildExport({ videoId, title = null, track, mode, split = null, now = Date.now(), rand, target = DEFAULT_TARGET_LANG }) {
   if (!isVideoId(videoId)) throw new TjError('TJ_BAD_VIDEO_ID');
   if (!EXPORT_MODES.includes(mode)) throw invalid('mode');
   const parsed = parseTrackKey(track?.key);
-  if (!parsed || parsed.lang !== track.lang || parsed.kind !== track.kind) throw invalid('track.key');
+  if (!parsed || parsed.lang !== track.lang || parsed.kind !== track.kind || parsed.via !== (track.via ?? null)) throw invalid('track.key');
   const cues = track.cues;
   if (!Array.isArray(cues) || cues.length === 0) throw new TjError('EX_NO_TRACK');
   assertValid(validateCues(cues, 'track.cues'), 'track.cues');
@@ -69,7 +71,7 @@ export function buildExport({ videoId, title = null, track, mode, split = null, 
   const ranges = plan ? plan.ranges : null;
   if (split && !ranges) warnings.push('EX_SPLIT_NOT_NEEDED');
   if (plan?.raised) warnings.push('EX_SPLIT_SIZE_RAISED');
-  const name = (part) => fileName({ videoId, lang: track.lang, kind: track.kind, mode, part });
+  const name = (part) => fileName({ videoId, lang: track.lang, kind: track.kind, via: track.via ?? null, mode, part });
   /** @type {ExportFile[]} */
   const files = ranges
     ? ranges.map((p) => ({
@@ -96,7 +98,9 @@ export function buildExport({ videoId, title = null, track, mode, split = null, 
     parts: ranges ? ranges.map(({ index, from, to }) => ({ index, from, to })) : null,
   };
   assertValid(validateFingerprint(fingerprint), 'fingerprint');
-  return { files, fingerprint, instructions: instructions({ videoId, title, parts: ranges }), warnings };
+  // اللغة المطلوبة من المستدعي (الزوج المختار)؛ واللغة نفسها لا تُترجم إلى نفسها، فلا تعليمات حينها (null).
+  const text = target && target !== track.lang ? instructions({ videoId, title, parts: ranges, source: track.lang, target, via: track.via ?? null }) : null;
+  return { files, fingerprint, instructions: text, warnings };
 }
 
 /**
@@ -106,11 +110,12 @@ export function buildExport({ videoId, title = null, track, mode, split = null, 
  * @param {{ videoId: string, cues: import('../model/cue.js').Cue[], variant?: 'current' | 'original' }} spec
  * @returns {{ name: string, text: string, notes: string[] }}
  */
-export function buildArabicExport({ videoId, cues, variant = 'current' }) {
+export function buildArabicExport({ videoId, cues, variant = 'current', lang = null }) {
   if (!isVideoId(videoId)) throw new TjError('TJ_BAD_VIDEO_ID');
   if (!Array.isArray(cues) || cues.length === 0) throw new TjError('ST_NO_RECORD');
   assertValid(validateCues(cues, 'cues'), 'cues');
-  const name = fileName({ videoId, lang: 'ar', variant });
+  // لغة الترجمة في الاسم (AA1): translationLang(track) من المستدعي، وبلا لغة «translation».
+  const name = fileName({ videoId, lang, translation: true, variant });
   const { cues: clean, stripped } = writableArabic(cues);
   assertWritable(clean, { arabic: true });
   const text = writeSrtFrom(clean);

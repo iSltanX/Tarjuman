@@ -8,7 +8,8 @@
 // ونتيجة بحث فارغة وقسم فارغ وخطأ. كل نص عبر textContent، ونص تعليمات الترجمة لا يدخل DOM في أي حال.
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
-import { watchUrl } from '../../core/model/ids.js';
+import { parseTrackKey, watchUrl } from '../../core/model/ids.js';
+import { DEFAULT_TARGET_LANG } from '../../core/model/lang-prefs.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 
 /** تعذّرت قراءة التفضيلات: الافتراضي، لكن بلا صور (لا طلب خارجي ما لم يُعرف أن المستخدم يريده؛ مراجعة الهوية L9). */
@@ -415,7 +416,11 @@ export function createLibrary(env) {
   /** «نسخ التعليمات» من «المزيد»: النص يُبنى عند الضغطة وحدها من العنوان والمعرّف والقاموس المرفق، ويُسلَّم إلى الحافظة ولا يُعرض. */
   const copyInstructions = (m, entry) => {
     const copy = createCopyState({
-      buildText: () => instructions({ videoId: entry.videoId, title: entry.title, glossary: state.prefs.glossary.attach ? state.prefs.glossary.terms : null }),
+      // AA3: بزوج الفيديو المحفوظ. حتى ذلك الحين لغة أول مسار محفوظ (وإلا en كما كانت) والهدف الافتراضي.
+      buildText: () => instructions({
+        videoId: entry.videoId, title: entry.title, glossary: state.prefs.glossary.attach ? state.prefs.glossary.terms : null,
+        source: (entry.english?.[0] && parseTrackKey(entry.english[0].key)?.lang) || 'en', target: DEFAULT_TARGET_LANG,
+      }),
       write: (text) => env.clipboardWrite(text),
       announce: (code) => {
         if (code === 'PG_COPY_DONE') toaster.show(`${messageFor(code)} ‹${isolate(clip(m.accessName, 40))}›`, 'success');

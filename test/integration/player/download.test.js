@@ -62,7 +62,7 @@ test('القاموس المرفق من التفضيلات المخزنة: الت
   assert.equal(page.ui.menu().querySelector('.tag').textContent, '+ القاموس (2)');
   click(page.ui.field('copy'));
   await settle(area);
-  const expected = instructions({ videoId: A, title: 'محاضرة تجريبية', glossary: TERMS });
+  const expected = instructions({ videoId: A, title: 'محاضرة تجريبية', glossary: TERMS, source: 'en', target: 'ar' });
   assert.deepEqual(page.events, [['copy', expected]], 'النص نفسه الذي تنسخه المحفوظات ونافذة الأيقونة');
   assert.match(expected, /موجِّه/);
 

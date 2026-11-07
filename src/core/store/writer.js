@@ -8,10 +8,11 @@ import { COMPANION_VALIDATORS } from '../model/bundle.js';
 import { isVideoId } from '../model/ids.js';
 import { DEFAULT_PREFS, addTerm, mergePrefs, normalizePrefs, removeTerm, validatePrefs, validateTerm } from '../model/prefs.js';
 import { DEFAULT_SETTINGS, mergeSettings, normalizeSettings, validateSettings } from '../model/settings.js';
+import { applyLangPrefs, normalizeLangPrefs, validateLangPrefs } from '../model/lang-prefs.js';
 import { assertValid, isPlainObject } from '../model/validate.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { MESSAGE_VERSION, isStoreRequest } from '../model/messages.js';
-import { KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, companionKeys, indexKey, langKey, marksKey, prevKey, videoKey } from './keys.js';
+import { KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, companionKeys, indexKey, langKey, marksKey, prevKey, videoKey } from './keys.js';
 import { MIGRATIONS, STORAGE_SCHEMA, migrate } from './migrate.js';
 import { canonical, printKeys, rawPrint, versionOf } from './version.js';
 
@@ -208,6 +209,15 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
     return next;
   }
 
+  /** تفضيلات اللغات (AA1): تعديل جزئي على المخزَّن نفسه، فلا يُسقط سياقٌ ما كتبه آخر. */
+  async function langPrefs(req) {
+    const { [KEY_LANG_PREFS]: raw } = await read(KEY_LANG_PREFS);
+    const next = applyLangPrefs(normalizeLangPrefs(raw), jsonPatch(req.patch));
+    assertValid(validateLangPrefs(next), 'langPrefs');
+    await write({ [KEY_LANG_PREFS]: next });
+    return next;
+  }
+
   async function saves({ downloadId, at }) {
     if (!Number.isInteger(downloadId) || downloadId < 0) throw new TjError('MD_INVALID', { detail: 'downloadId' });
     checkAt(at);
@@ -256,6 +266,7 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
       case 'index': return eachId(req.videoIds, repairIndex);
       case 'settings': return inLane(KEY_SETTINGS, () => settings(req));
       case 'prefs': return inLane(KEY_PREFS, () => prefs(req));
+      case 'langPrefs': return inLane(KEY_LANG_PREFS, () => langPrefs(req));
       case 'saves': return inLane(KEY_SAVES, () => saves(req));
       case 'clear': return exclusiveAll(() => clear(req));
       default: return Promise.reject(new TjError('TJ_BAD_MESSAGE', { detail: String(req.op).slice(0, 20) }));

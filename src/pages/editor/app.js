@@ -15,7 +15,8 @@ import {
 } from '../../core/edit/index.js';
 import { resolvePosition } from '../../core/model/marks.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
-import { buildPatchPackage, buildReviewReport, buildStudyText, patchInstructions, studyTiming, studyTimingNote } from '../../core/export/index.js';
+import { buildPatchPackage, buildReviewReport, buildStudyText, patchInstructions, studyTiming, studyTimingNote, translationLang } from '../../core/export/index.js';
+import { DEFAULT_TARGET_LANG } from '../../core/model/lang-prefs.js';
 import { partsStatus, readPatch } from '../../core/import/index.js';
 import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
@@ -975,6 +976,8 @@ export async function mountEditor(app, {
 
   // ---- الاستكمال (R52) ----
   const glossary = () => (S.prefs?.glossary?.attach && S.prefs.glossary.terms.length ? S.prefs.glossary.terms : null);
+  /** لغة الترجمة المفتوحة التي يُستكمل لها (AA1): لغتها المحفوظة أو رمز صريح في اسم ملفها، وإلا الافتراضي حتى يُتاح اختيارها (AA3). */
+  const patchTarget = () => translationLang(S.opened?.slots[S.slot - 1]?.track) ?? DEFAULT_TARGET_LANG;
 
   function completeReason() {
     if (S.view !== 'edit') return messageFor('ED_READ_ONLY');
@@ -1015,6 +1018,7 @@ export async function mountEditor(app, {
     try {
       pkg = buildPatchPackage({
         videoId, title: S.opened.record.title, fingerprint: S.fp, englishTracks: S.opened.record.english, numbers: S.completeNumbers, glossary: glossary(),
+        target: patchTarget(),
       });
     } catch (err) {
       toast(toErrorInfo(err).message, 'danger');
@@ -1037,7 +1041,13 @@ export async function mountEditor(app, {
   async function copyPatchInstructions() {
     if (completeReason()) return;
     try {
-      await win.navigator.clipboard.writeText(patchInstructions({ videoId, title: S.opened.record.title, glossary: glossary() }));
+      const source = S.opened.record.english.find((t) => t.key === S.fp?.trackKey)?.lang ?? null;
+      const target = patchTarget();
+      if (!source || !target || source === target) {
+        toast(messageFor('PG_PAIR_SAME'), 'danger');
+        return;
+      }
+      await win.navigator.clipboard.writeText(patchInstructions({ videoId, title: S.opened.record.title, glossary: glossary(), source, target }));
       toast('نُسخت تعليمات الاستكمال. الصقها مع الملف في المحادثة.', 'success');
     } catch {
       toast('تعذّر النسخ. أعد المحاولة.', 'danger');
@@ -1843,7 +1853,7 @@ export async function mountEditor(app, {
       const off = offsetOf(variant);
       plan = errs
         ? { ok: false, code: 'ED_EXPORT_HAS_ERRORS', count: errs }
-        : planArabicExport({ videoId, cues: s.snapshot(), offsetMs: off, choice, variant });
+        : planArabicExport({ videoId, cues: s.snapshot(), offsetMs: off, choice, variant, lang: translationLang(S.opened?.slots[S.slot - 1]?.track) });
       timingBox.replaceChildren(...(off !== 0
         ? [radios('ed-timing', {
           legend: 'التوقيت المصدَّر',

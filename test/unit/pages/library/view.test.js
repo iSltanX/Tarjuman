@@ -298,8 +298,8 @@ test('«نسخ التعليمات» من «المزيد»: يكتب تعليما
   menuItem(m, IDS[1], 'نسخ التعليمات').click();
   await settle();
   assert.deepEqual(m.calls.clipboard, [
-    instructions({ videoId: IDS[0], title: 'الأول — عنوان' }),
-    instructions({ videoId: IDS[1], title: 'How Browsers Render Arabic Text' }),
+    instructions({ videoId: IDS[0], title: 'الأول — عنوان', source: 'en', target: 'ar' }),
+    instructions({ videoId: IDS[1], title: 'How Browsers Render Arabic Text', source: 'en', target: 'ar' }),
   ]);
   assert.ok(m.calls.clipboard[0].includes(`https://www.youtube.com/watch?v=${IDS[0]}`));
   assert.ok(m.calls.clipboard[1].includes('- العنوان: How Browsers Render Arabic Text\n'));

@@ -1,7 +1,7 @@
 // وحدات التصدير الصغيرة: التسمية، وبصمة النص، وتخطيط الأجزاء، ووصف المسار (P3-AC2، AC3، AC5).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describeTrack, fileName, fnv1a64, languageLabel, planParts, textHash, trackLabel } from '../../../src/core/export/index.js';
+import { describeTrack, fileName, fnv1a64, languageLabel, planParts, textHash, trackLabel, translationLang } from '../../../src/core/export/index.js';
 import { TjError } from '../../../src/core/errors/index.js';
 
 const VID = 'iG9CE55wbtY';
@@ -27,8 +27,9 @@ test('fileName: مدخلات خاطئة ترمي رمزًا لا نصًا حرً
   const bad = [
     [{ videoId: 'short', lang: 'en', kind: 'asr', mode: 'normal' }, 'TJ_BAD_VIDEO_ID'],
     [{ videoId: '../../etc/pw', lang: 'en', kind: 'asr', mode: 'normal' }, 'TJ_BAD_VIDEO_ID'],
-    [{ videoId: VID, lang: 'de', kind: 'asr', mode: 'normal' }, 'MD_INVALID'],
     [{ videoId: VID, lang: 'en/../x', kind: 'asr', mode: 'normal' }, 'MD_INVALID'],
+    [{ videoId: VID, lang: 'ja', via: '../x', kind: 'asr', mode: 'normal' }, 'MD_INVALID'],
+    [{ videoId: VID, lang: '../x', translation: true }, 'MD_INVALID'],
     [{ videoId: VID, lang: 'en', kind: 'other', mode: 'normal' }, 'MD_INVALID'],
     [{ videoId: VID, lang: 'en', kind: 'asr', mode: 'huge' }, 'MD_INVALID'],
     [{ videoId: VID, lang: 'en', kind: 'asr' }, 'MD_INVALID'],
@@ -38,6 +39,19 @@ test('fileName: مدخلات خاطئة ترمي رمزًا لا نصًا حرً
   ];
   for (const [spec, code] of bad) assert.throws(() => fileName(spec), (e) => e instanceof TjError && e.code === code, JSON.stringify(spec));
   assert.match(fileName({ videoId: 'a-_B1234567', lang: 'en', kind: 'asr', mode: 'normal' }), /^[A-Za-z0-9_.-]+$/);
+});
+
+test('fileName بأي لغة (AA1): المسار بلغته، والمترجم آليًا بلغة أصله، والترجمة بلغتها أو «translation»', () => {
+  assert.equal(fileName({ videoId: VID, lang: 'de', kind: 'asr', mode: 'normal' }), `${VID}.de.asr.normal.srt`);
+  assert.equal(fileName({ videoId: VID, lang: 'zh_Hant', kind: 'manual', mode: 'long' }), `${VID}.zh-Hant.manual.long.srt`);
+  assert.equal(fileName({ videoId: VID, lang: 'ar', via: 'en', kind: 'asr', mode: 'normal' }), `${VID}.ar.from-en.asr.normal.srt`);
+  assert.equal(fileName({ videoId: VID, lang: 'ja', translation: true }), `${VID}.ja.srt`);
+  assert.equal(fileName({ videoId: VID, lang: 'fr', translation: true, variant: 'original' }), `${VID}.fr.original.srt`);
+  assert.equal(fileName({ videoId: VID, lang: null, translation: true }), `${VID}.translation.srt`);
+  assert.equal(fileName({ videoId: VID, lang: 'ar' }), `${VID}.ar.srt`, 'صيغة ما قبل 2.0.0');
+  assert.equal(translationLang({ lang: 'ko', fileName: 'x.ja.srt' }), 'ko');
+  assert.equal(translationLang({ fileName: 'talk.ja.srt' }), 'ja', 'من رمز صريح في اسم الملف');
+  assert.equal(translationLang({ lang: null, fileName: 'talk.srt' }), null);
 });
 
 test('fnv1a64: متجهات الاختبار المرجعية', () => {

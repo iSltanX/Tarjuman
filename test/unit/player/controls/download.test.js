@@ -279,7 +279,8 @@ test('القاموس المرفق: إشارة «+ القاموس (2)» تحت ا
   assert.deepEqual(page.copied, [`${INSTRUCTIONS}+قاموس(2)`], 'نسخة واحدة من زر النسخ، والتنزيل بعده لا ينسخ');
   assert.equal(page.flows.downloads.length, 1);
   assert.strictEqual(page.flows.instructionCalls[0].glossary, terms);
-  assert.deepEqual(Object.keys(page.flows.instructionCalls[0]).sort(), ['glossary', 'parts', 'title', 'videoId']);
+  assert.deepEqual(Object.keys(page.flows.instructionCalls[0]).sort(), ['glossary', 'parts', 'source', 'target', 'title', 'via', 'videoId']);
+  assert.equal(page.flows.instructionCalls[0].source, 'en', 'لغة المسار الملتقط (AA1)');
 
   const off = withTrack({ prefs: { schema: 1, glossary: { attach: false, terms }, review: { maxCps: null }, saveLocation: { mode: 'downloads', folder: 'Tarjuman' } } });
   open(off);

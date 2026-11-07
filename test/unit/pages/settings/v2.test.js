@@ -159,7 +159,7 @@ test('«المصطلحات»: إضافة وحذف بتحقق، والعدّاد 
 
   // النص الذي تنسخه المحفوظات وقائمة التحميل: instructions بالقاموس المحفوظ.
   const prefs = await m.store.getPrefs();
-  const text = instructions({ videoId: IDS[0], title: 'x', glossary: prefs.glossary.terms });
+  const text = instructions({ videoId: IDS[0], title: 'x', glossary: prefs.glossary.terms, source: 'en', target: 'ar' });
   assert.ok(text.includes('- prompt = موجِّه') && text.includes('- token = رمز (في سياق النماذج)'));
 
   buttonNamed(rows[0], 'حذف المصطلح prompt').click();

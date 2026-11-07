@@ -6,7 +6,7 @@
 import { diffTranslations, keepEditsMerge } from '../../core/align/index.js';
 import { compare } from '../../core/compare/index.js';
 import { TjError, messageFor } from '../../core/errors/index.js';
-import { buildArabicExport, buildExport, buildStudyText, studyTiming, studyTimingNote } from '../../core/export/index.js';
+import { buildArabicExport, buildExport, buildStudyText, studyTiming, studyTimingNote, translationLang } from '../../core/export/index.js';
 import { readImport, reviewIncoming, sameExport } from '../../core/import/index.js';
 import {
   applyRecordChange, referencedFingerprints, withActiveSlot, withPreviousRestored, withSlotName, withSlotReference, withSlotUpload, withoutPrevious,
@@ -49,7 +49,7 @@ export async function exportArabic({ store, videoId, variant, askTiming, save })
   const record = await requireRecord(store, videoId);
   if (!record.arabic) throw new TjError('PG_NO_ARABIC');
   const source = variant === 'original' ? record.arabic.original : arabicCues(record);
-  return exportCues({ videoId, source, offset: record.view.displayOffsetMs, variant, askTiming, save });
+  return exportCues({ videoId, source, offset: record.view.displayOffsetMs, variant, askTiming, save, lang: translationLang(record.arabic) });
 }
 
 /**
@@ -66,11 +66,11 @@ export async function exportSlot({ store, videoId, n, askTiming, save }) {
   const s = b.slots[n - 1];
   if (!s?.track) throw new TjError('PG_NO_ARABIC');
   const offset = b.active === n ? b.record.view.displayOffsetMs : s.offsetMs;
-  return exportCues({ videoId, source: s.track.current ?? s.track.original, offset, variant: 'current', askTiming, save });
+  return exportCues({ videoId, source: s.track.current ?? s.track.original, offset, variant: 'current', askTiming, save, lang: translationLang(s.track) });
 }
 
 /** الجزء المشترك: توقيت التصدير (سؤال عند إزاحة غير صفر، والإلغاء null، والزمن السالب يرفض) ثم بناء الملف وحفظه. */
-async function exportCues({ videoId, source, offset, variant, askTiming, save }) {
+async function exportCues({ videoId, source, offset, variant, askTiming, save, lang = null }) {
   let choice = 'shown';
   if (offset !== 0) {
     const picked = await askTiming(offset);
@@ -79,7 +79,7 @@ async function exportCues({ videoId, source, offset, variant, askTiming, save })
   }
   const timed = exportTiming(source, offset, choice);
   if (!timed.ok) throw new TjError('MD_NEGATIVE_TIME', { params: { list: listNumbers(timed.negative) } });
-  const file = buildArabicExport({ videoId, cues: timed.cues, variant });
+  const file = buildArabicExport({ videoId, cues: timed.cues, variant, lang });
   const saved = await save({ name: file.name, text: file.text });
   // notes: ما جُرّد عند الكتابة وما يتغير عند إعادة الاستيراد (تدقيق 7a66f91، U99)، تُقال بعد الحفظ.
   return { name: file.name, timing: timed.timing, cueCount: timed.cues.length, saved, notes: file.notes };
@@ -101,7 +101,7 @@ export async function exportEnglish({ store, videoId, trackKey, save, now }) {
   if (!track) throw new TjError('PG_NO_ENGLISH');
   const built = buildExport({
     videoId, title: record.title, mode: 'normal', now: now(),
-    track: { key: track.key, lang: track.lang, kind: track.kind, cues: track.cues },
+    track: { key: track.key, lang: track.lang, kind: track.kind, via: track.via ?? null, cues: track.cues },
   });
   const [file] = built.files;
   const result = await save(file);

@@ -7,6 +7,7 @@ import { TjError } from '../errors/index.js';
 import { assertValid } from '../model/validate.js';
 import { DEFAULT_SETTINGS, normalizeSettings } from '../model/settings.js';
 import { DEFAULT_PREFS, normalizePrefs, sourceKey } from '../model/prefs.js';
+import { DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../model/lang-prefs.js';
 import { storeRequest } from '../model/messages.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { isVideoId } from '../model/ids.js';
@@ -18,7 +19,7 @@ import { chromeLocalArea } from './area.js';
 import { bundleReadKeys, checkRaw, hasCompanions, itemsFor, rawBundle, salvageRaw } from './bundles.js';
 import { computeCapacity } from './capacity.js';
 import {
-  COMPANION_KINDS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, indexKey, marksKey, parseKey, prevKey, videoKey,
+  COMPANION_KINDS, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, indexKey, marksKey, parseKey, prevKey, videoKey,
 } from './keys.js';
 // واجهة التخزين تعرض للصفحات والمتحكم ما تحتاجه من النموذج للحزمة دون استيراد إضافي.
 export { bundleFromRecord, slotModels } from '../model/bundle.js';
@@ -30,7 +31,7 @@ import { printKeys, rawPrint, versionOf } from './version.js';
 export { STORAGE_SCHEMA, MIGRATIONS } from './migrate.js';
 export { computeCapacity, WARN_RATIO, FULL_RATIO, ADVISORY_BYTES } from './capacity.js';
 export {
-  videoKey, indexKey, bundleKey, altsKey, prevKey, marksKey, companionKeys, parseKey, KEY_META, KEY_SETTINGS, KEY_PREFS, KEY_SAVES,
+  videoKey, indexKey, bundleKey, altsKey, prevKey, marksKey, langKey, companionKeys, parseKey, KEY_META, KEY_SETTINGS, KEY_PREFS, KEY_SAVES, KEY_LANG_PREFS,
 } from './keys.js';
 export { createWriter } from './writer.js';
 export { localTransport, messageTransport } from './transport.js';
@@ -306,6 +307,24 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
       return exclusive(async () => {
         await ready();
         return call('prefs', { patch });
+      });
+    },
+
+    /** @returns {Promise<import('../model/lang-prefs.js').LangPrefs>} تفضيلات اللغات كاملة دائمًا (AA1، عقد storage §١٣) */
+    async getLangPrefs() {
+      await ready();
+      const { [KEY_LANG_PREFS]: raw } = await read(KEY_LANG_PREFS);
+      return normalizeLangPrefs(raw ?? DEFAULT_LANG_PREFS);
+    },
+
+    /**
+     * @param {Parameters<typeof import('../model/lang-prefs.js').applyLangPrefs>[1]} patch
+     * @returns {Promise<import('../model/lang-prefs.js').LangPrefs>}
+     */
+    setLangPrefs(patch) {
+      return exclusive(async () => {
+        await ready();
+        return call('langPrefs', { patch });
       });
     },
 

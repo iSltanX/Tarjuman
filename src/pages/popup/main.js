@@ -7,7 +7,8 @@
 // والمنطق في status.js وصف الإظهار في entry.js.
 import { messageFor } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
-import { watchUrl } from '../../core/model/ids.js';
+import { parseTrackKey, watchUrl } from '../../core/model/ids.js';
+import { DEFAULT_TARGET_LANG } from '../../core/model/lang-prefs.js';
 import { browserLabel } from '../../core/report/diagnostics.js';
 import { createStore } from '../../core/store/index.js';
 import { alertBox, button, el, icon } from '../../ui/components.js';
@@ -15,6 +16,16 @@ import { textDirection } from '../../ui/format.js';
 import { logo } from '../../ui/logo.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
+
+/**
+ * AA3: تحل محلها خانة «من» في كتلة «تعليمات الترجمة». لغة المسار الملتقط أو المحفوظ من مفتاحه (lang|kind|via)، وإلا en كما
+ * كانت النافذة تنسخ قبل 2.0.0. لا تخمين من نص.
+ * @param {{ english?: { captured?: { key: string, ok: boolean }[], saved?: { key: string }[] } }} reply
+ */
+const interimSource = (reply) => {
+  const t = reply.english?.captured?.find((x) => x.ok) ?? reply.english?.saved?.[0] ?? null;
+  return (t && parseTrackKey(t.key)?.lang) || 'en';
+};
 import { bindEntryRow } from './entry.js';
 import {
   attachedGlossary, captureLine, describeStatus, editorGate, guideSteps, libraryHash, missText, pageReport, queryPageDiagnostics, queryPopupState,
@@ -149,7 +160,8 @@ startPage({
           b = el('button', { className: `tj-btn tj-btn--lg tj-btn--${a.primary ? 'primary' : 'secondary'}`, attrs: { type: 'button', 'data-state': 'idle', title: 'ينسخ تعليمات الترجمة وحدها لترفقها مع ملف SRT الإنجليزي.' }, children: [glyph, label] });
           const shown = reply;
           const copy = createCopyState({
-            buildText: () => instructions({ videoId: shown.videoId, title: shown.title, glossary }),
+            // AA3: الزوج من كتلة «تعليمات الترجمة» في النافذة. حتى ذلك الحين: لغة المسار المعروف وإلا en، والهدف الافتراضي.
+            buildText: () => instructions({ videoId: shown.videoId, title: shown.title, glossary, source: interimSource(shown), target: DEFAULT_TARGET_LANG }),
             write: (text) => navigator.clipboard.writeText(text),
             announce: (code) => notice.replaceChildren(code === 'PG_COPY_DONE' ? el('span', { className: 'tj-sr-only', text: messageFor(code) }) : alertBox({ tone: 'danger', text: messageFor(code) })),
             onState: (st) => {

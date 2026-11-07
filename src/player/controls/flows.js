@@ -6,6 +6,7 @@
 // كل تدفق يثبّت معرّف الفيديو عند بدئه، فنتيجة تأخرت حتى تبدّل الفيديو لا تُطبَّق على الجديد أبدًا.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { previewComparison, videoIdFromName, withSuggestedReference } from '../../core/import/index.js';
+import { DEFAULT_TARGET_LANG } from '../../core/model/lang-prefs.js';
 
 const infoOf = (code, params) => ({ code, message: messageFor(code, params) });
 
@@ -22,6 +23,19 @@ export const attachedGlossary = (prefs) => (prefs?.glossary?.attach && prefs.glo
  * @returns {{ ok: true, built: { files: { name: string, text: string, part: object | null }[], fingerprint: object, instructions: string, warnings: string[] }, videoId: string, text: string }
  *   | { ok: false, error: { code: string, message: string } }}
  */
+// AA3: اللغة المطلوبة من زوج نافذة الإضافة، ويُزال نسخ التعليمات من المشغّل (قرار سلطان، البند الخامس). حتى ذلك الحين الافتراضي.
+const INTERIM_TARGET = DEFAULT_TARGET_LANG;
+
+/**
+ * نص التعليمات بالقاموس إن أُرفق، أو null حين لا تعليمات (لغة المسار هي اللغة المطلوبة نفسها). لا يُعرض النص أبدًا.
+ * @param {{ s: object, exportFlow: object, built: { instructions: string | null, fingerprint: { parts: object[] | null } }, track: { lang: string, via?: string | null } }} p
+ */
+function withGlossary({ s, exportFlow, built, track }) {
+  const glossary = attachedGlossary(s.prefs);
+  if (!built.instructions || !glossary || !exportFlow.instructions) return built.instructions;
+  return exportFlow.instructions({ videoId: s.videoId, title: s.title, parts: built.fingerprint.parts ?? null, glossary, source: track.lang, target: INTERIM_TARGET, via: track.via ?? null });
+}
+
 export function prepareExport({ controller, exportFlow, key, mode, split, now }) {
   const s = controller.getState();
   const conv = controller.convertCaptured(key, { mode });
@@ -29,14 +43,10 @@ export function prepareExport({ controller, exportFlow, key, mode, split, now })
   try {
     const built = exportFlow.buildExport({
       videoId: s.videoId, title: s.title,
-      track: { key, lang: conv.lang, kind: conv.kind, cues: conv.cues, warnings: conv.warnings },
-      mode, split, now,
+      track: { key, lang: conv.lang, kind: conv.kind, via: conv.via ?? null, cues: conv.cues, warnings: conv.warnings },
+      mode, split, now, target: INTERIM_TARGET,
     });
-    const glossary = attachedGlossary(s.prefs);
-    const text = glossary && exportFlow.instructions
-      ? exportFlow.instructions({ videoId: s.videoId, title: s.title, parts: built.fingerprint.parts ?? null, glossary })
-      : built.instructions;
-    return { ok: true, built, videoId: s.videoId, text };
+    return { ok: true, built, videoId: s.videoId, text: withGlossary({ s, exportFlow, built, track: conv }) };
   } catch (err) {
     return { ok: false, error: toErrorInfo(err) };
   }
@@ -55,14 +65,10 @@ export function prepareSavedExport({ controller, exportFlow, now }) {
   try {
     const built = exportFlow.buildExport({
       videoId: s.videoId, title: s.title,
-      track: { key: t.key, lang: t.lang, kind: t.kind, cues: t.cues },
-      mode: 'normal', split: null, now,
+      track: { key: t.key, lang: t.lang, kind: t.kind, via: t.via ?? null, cues: t.cues },
+      mode: 'normal', split: null, now, target: INTERIM_TARGET,
     });
-    const glossary = attachedGlossary(s.prefs);
-    const text = glossary && exportFlow.instructions
-      ? exportFlow.instructions({ videoId: s.videoId, title: s.title, parts: built.fingerprint.parts ?? null, glossary })
-      : built.instructions;
-    return { ok: true, built, videoId: s.videoId, text, key: t.key };
+    return { ok: true, built, videoId: s.videoId, text: withGlossary({ s, exportFlow, built, track: t }), key: t.key };
   } catch (err) {
     return { ok: false, error: toErrorInfo(err) };
   }

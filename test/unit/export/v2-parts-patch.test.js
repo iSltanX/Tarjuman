@@ -73,10 +73,10 @@ test('ملف الاستكمال (عادي، عيّنة P1): الأرقام ال�
     assert.deepEqual([c.startMs, c.endMs], [fingerprint.cues[c.n - 1].startMs, fingerprint.cues[c.n - 1].endMs]);
     assert.equal(c.text, cues[c.n - 1].text);
   });
-  assert.equal(r.instructions, patchInstructions({ videoId: 'iG9CE55wbtY', title: 'Do schools kill creativity?' }));
+  assert.equal(r.instructions, patchInstructions({ videoId: 'iG9CE55wbtY', title: 'Do schools kill creativity?', source: 'en', target: 'ar' }));
   const glossary = [{ source: 'creativity', target: 'الإبداع', note: null }];
   const withGlossary = buildPatchPackage({ videoId: 'iG9CE55wbtY', title: 'Do schools kill creativity?', fingerprint, englishTracks: [track], numbers: [201, 57, 58], glossary });
-  assert.equal(withGlossary.instructions, patchInstructions({ videoId: 'iG9CE55wbtY', title: 'Do schools kill creativity?', glossary }));
+  assert.equal(withGlossary.instructions, patchInstructions({ videoId: 'iG9CE55wbtY', title: 'Do schools kill creativity?', glossary, source: 'en', target: 'ar' }));
   assert.ok(withGlossary.instructions.includes('- creativity = الإبداع'));
   assert.equal(withGlossary.file.text, r.file.text, 'القاموس في التعليمات وحدها لا في الملف');
 });

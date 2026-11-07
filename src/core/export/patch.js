@@ -8,16 +8,18 @@ import { breaksSrtText, parseSrtLenient } from '../srt/lenient.js';
 import { formatSrtTime } from '../srt/time.js';
 import { textHash } from './hash.js';
 import { patchInstructions } from './instructions.js';
+import { DEFAULT_TARGET_LANG } from '../model/lang-prefs.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 /** @typedef {import('../model/tracks.js').Fingerprint} Fingerprint */
 /** @typedef {import('../model/tracks.js').EnglishTrack} EnglishTrack */
 
 /**
- * اسم ملف الاستكمال: VIDEOID.en.<kind>.<mode>.patch.srt، فيعيده النموذج بـar مكان en كما تطلب التعليمات.
- * @param {{ videoId: string, lang: string, kind: string, mode: string }} spec
+ * اسم ملف الاستكمال: VIDEOID.<lang>.<kind>.<mode>.patch.srt (والمترجم آليًا .from-<via>)، فيعيده النموذج برمز لغة الترجمة مكان
+ * رمز لغة المسار كما تطلب التعليمات.
+ * @param {{ videoId: string, lang: string, kind: string, mode: string, via?: string | null }} spec
  */
-export const patchFileName = ({ videoId, lang, kind, mode }) => `${videoId}.${lang.replace(/_/g, '-')}.${kind}.${mode}.patch.srt`;
+export const patchFileName = ({ videoId, lang, kind, mode, via = null }) => `${videoId}.${lang.replace(/_/g, '-')}${via ? `.from-${via.replace(/_/g, '-')}` : ''}.${kind}.${mode}.patch.srt`;
 
 /**
  * المقاطع التي تعيد البصمة من المسار المحفوظ، أو null إن لم تطابقها.
@@ -42,13 +44,13 @@ const validNumbers = (numbers, count) => Array.isArray(numbers) && numbers.lengt
 /**
  * @param {{
  *   videoId: string, title?: string | null, fingerprint: Fingerprint, englishTracks: EnglishTrack[], numbers: number[],
- *   glossary?: { source: string, target: string, note?: string | null }[] | null
- * }} spec numbers أرقام المقاطع في الملف الكامل (1..count)
+ *   glossary?: { source: string, target: string, note?: string | null }[] | null, target?: string | null
+ * }} spec numbers أرقام المقاطع في الملف الكامل (1..count)، وtarget لغة الترجمة التي يُستكمل لها (AA1)
  * @returns {{ ok: true, file: { name: string, text: string }, instructions: string, count: number } | { ok: false, code: string, params?: { list: string } }}
  *   instructions بفقرة القاموس عند وجوده (إضافة W6 على العقد بطلب P11)، كـpatchInstructions({ videoId, title, glossary }).
  *   لا يرمي: نص مختار يُقرأ رأسَ مقطع EX_PATCH_SOURCE_UNWRITABLE بأرقامه في params.list (تدقيق 7a66f91، U79).
  */
-export function buildPatchPackage({ videoId, title = null, fingerprint, englishTracks, numbers, glossary = null }) {
+export function buildPatchPackage({ videoId, title = null, fingerprint, englishTracks, numbers, glossary = null, target = DEFAULT_TARGET_LANG }) {
   if (!isVideoId(videoId)) return { ok: false, code: 'TJ_BAD_VIDEO_ID' };
   if (!fingerprint || !Array.isArray(fingerprint.cues)) return { ok: false, code: 'EX_PATCH_NO_SOURCE' };
   if (fingerprint.videoId !== videoId) return { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' };
@@ -78,8 +80,8 @@ export function buildPatchPackage({ videoId, title = null, fingerprint, englishT
   if (!same) return { ok: false, code: 'EX_INVARIANT_FAILED' };
   return {
     ok: true,
-    file: { name: patchFileName({ videoId, lang: track.lang, kind: track.kind, mode: fingerprint.mode }), text },
-    instructions: patchInstructions({ videoId, title, glossary }),
+    file: { name: patchFileName({ videoId, lang: track.lang, kind: track.kind, mode: fingerprint.mode, via: track.via ?? null }), text },
+    instructions: target && target !== track.lang ? patchInstructions({ videoId, title, glossary, source: track.lang, target }) : null,
     count: picked.length,
   };
 }
