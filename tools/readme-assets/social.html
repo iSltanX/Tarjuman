@@ -1,33 +1,30 @@
 <!doctype html>
-<html lang="ar" dir="rtl" data-theme="light">
+<html lang="ar" dir="rtl" data-theme="{{THEME}}">
 <head>
 <meta charset="utf-8">
 <title>معاينة ترجمان</title>
 <link rel="stylesheet" href="{{ROOT}}/src/ui/tokens.css">
 <link rel="stylesheet" href="{{ROOT}}/src/ui/fonts.css">
 <style>
-  /* صورة المعاينة الاجتماعية للمستودع (1280×640): بلاطة الباذنجاني كأيقونة الإضافة، والعلامة والاسم بحبرها الأبيض. */
+  /* صورة المعاينة الاجتماعية للمستودع (لوحة الهوية 18، 1280×640، داكنة): ليل الصنوبر، ومعيّنا التاء علامةً مائية خافتة، والرمز
+     العاجي بنقطتي طين، والاسم Cairo 800 والرسالة، وشريط طيني في الأسفل. */
   html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; }
-  body { background: var(--tj-brand); color: var(--tj-brand-ink); font-family: var(--tj-font-body); -webkit-font-smoothing: antialiased; }
-  .wrap { box-sizing: border-box; height: 100%; padding: 72px 80px 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
-  .tj-logo__glyph, .tj-logo__word { fill: var(--tj-brand-ink); }
-  h1 { font-family: var(--tj-font-head); font-weight: 700; font-size: 50px; line-height: 1.3; margin: 30px 0 10px; }
-  p { font-size: 22px; line-height: 1.7; margin: 0; color: rgb(254 254 253 / 84%); }
-  /* لقطة حقيقية من لقطات المتجر (01-overlay)، مقصوصة من أسفلها بحافة الصورة. */
-  .shot {
-    margin-top: 40px; width: 760px; height: 318px; border-radius: 16px 16px 0 0; overflow: hidden;
-    background: url("{{ROOT}}/store/screenshots/chromium/01-overlay.png") no-repeat;
-    background-size: 1148.5px auto; background-position: -36.79px -250.35px;
-    box-shadow: 0 -10px 40px -10px rgb(0 0 0 / 35%);
-  }
+  body { background: var(--tj-bg); color: var(--tj-text); font-family: var(--tj-font-body); -webkit-font-smoothing: antialiased; position: relative; }
+  .diamonds { position: absolute; left: -60px; top: -60px; width: 520px; height: 520px; opacity: 0.12; }
+  .diamonds path { fill: var(--tj-text); }
+  .tj-mark { position: absolute; right: 96px; top: 96px; color: var(--tj-logo-glyph); }
+  .tj-mark__book { fill: currentColor; }
+  .tj-mark__dots { fill: var(--tj-logo-dots-accent); }
+  h1 { position: absolute; right: 96px; top: 300px; margin: 0; font: 800 64px/76px var(--tj-font-head); color: var(--tj-logo-word); }
+  p { position: absolute; right: 96px; top: 400px; margin: 0; max-width: 720px; font: 400 24px/36px var(--tj-font-body); color: var(--tj-text-2); }
+  .strip { position: absolute; left: 0; bottom: 0; width: 100%; height: 10px; background: var(--tj-accent); }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    {{LOGO:64}}
-    <h1>ترجمتك العربية فوق الفيديو</h1>
-    <p>نزّل الترجمة الإنجليزية، وترجمها بالنموذج الذي تختاره، ثم شاهدها بالعربية بتوقيتها.</p>
-    <div class="shot" role="img" aria-label="لقطة حقيقية: ترجمة عربية فوق الإنجليزية على مشغّل يوتيوب"></div>
-  </div>
+  <svg class="diamonds" viewBox="0 0 200 100" aria-hidden="true"><path d="M50 0L100 50 50 100 0 50Z"/><path d="M150 0L200 50 150 100 100 50Z"/></svg>
+  {{MARK:140}}
+  <h1>ترجمان</h1>
+  <p>اقرأ الفيديو بلغتك: احفظ الترجمة، ترجمها بالنموذج الذي تختاره، واعرضها فوق الفيديو.</p>
+  <div class="strip"></div>
 </body>
 </html>

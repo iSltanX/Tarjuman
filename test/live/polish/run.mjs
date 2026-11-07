@@ -10,7 +10,7 @@
 // تكبير متصفح فعلي) مع تدقيق التجاوز الأفقي والتمرير. كل فعل على
 // الأدوات نقرة مستخدم حقيقية (Input). تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُمرَّر جسم P1 الحقيقي الملتقط
 // للفيديو نفسه إلى المستخرج عبر خطاف التطوير. الحافظة تُستبدل في العالم المعزول فلا تُمس حافظة الجهاز. لا رابط ولا رمز في الأدلة.
-// مواءمة الهوية «بُنّ على ورق» (2026-11-03، docs/identity-redesign.md): الشعار واللوحة وأيقونة الإضافة بقيمها الجديدة، وعنوانا
+// مواءمة الهوية «بُنّ على ورق» (2026-11-03، docs/product-spec.md §٦.٦ (وثيقة الهوية «بُنّ على ورق» حُذفت في AA2)): الشعار واللوحة وأيقونة الإضافة بقيمها الجديدة، وعنوانا
 // قائمتي الشريط «تحميل الأصل» و«الترجمة»، وشرائح المحفوظات والحذف من التوسيع في الصف بدل لوحة «الترجمات…»، والشبكة من صفحات
 // الإضافة صور i.ytimg.com وحدها بلا مُحيل (و404 صور المعرّفات الوهمية في البذرة متوقعة وتُعدّ وحدها).
 //   command npm run build:dev -- --out <مجلد خارج المستودع>
@@ -76,7 +76,7 @@ let extId = null;
 async function openExt(restPath, { background = false } = {}) {
   const page = await openTab(b.conn, 'about:blank', { background });
   errors.push(collectErrors(page, { extId }));
-  // صور الفيديو في المحفوظات (قرار سلطان، docs/identity-redesign.md §٥) الطلب الخارجي الوحيد المسموح: تُعدّ وحدها، وبلا مُحيل.
+  // صور الفيديو في المحفوظات (قرار سلطان، docs/product-spec.md §٦.٦) الطلب الخارجي الوحيد المسموح: تُعدّ وحدها، وبلا مُحيل.
   const net = { external: 0, thumbs: 0, referers: 0, hosts: new Set() };
   nets.push(net);
   page.on('Network.requestWillBeSent', (p) => {
@@ -356,7 +356,7 @@ try {
     const libFonts = await renderedFonts(lib, { limit: 14 });
     result.fonts.library = brief(libFonts);
     check('pages-fonts-bundled-rendered', allBundled(libFonts), brief(libFonts));
-    // الهوية «بُنّ على ورق» (docs/identity-redesign.md): الإبراز البُنّي على الورق الدافئ، والكراميل على الداكن.
+    // الهوية «بُنّ على ورق» (docs/product-spec.md §٦.٦ (وثيقة الهوية «بُنّ على ورق» حُذفت في AA2)): الإبراز البُنّي على الورق الدافئ، والكراميل على الداكن.
     check('palette-coffee-on-paper-both-schemes', palLight.brand === '#5C4434' && palLight.bg === 'rgb(250, 248, 244)' && palDark.brand === '#D6B38F' && palDark.bg === 'rgb(31, 28, 26)', { palLight, palDark });
     // شرائح الصفوف (الهوية §٥): شريحة لكل ترجمة موجودة وحدها، والخانة الفارغة التالية إجراء رفع لا نسخة.
     const rowChips = await lib.eval(() => [...document.querySelectorAll('li.lib-row')].slice(0, 12).map((r) => ({ chips: r.querySelectorAll('.lib-chips button').length, add: r.querySelectorAll('.lib-chip--add').length, none: !!r.querySelector('.lib-trs--none') })));

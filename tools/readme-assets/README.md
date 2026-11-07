@@ -8,17 +8,19 @@
 
 - **الألوان:** [`src/ui/tokens.css`](../../src/ui/tokens.css)، بالوضعين.
 - **الخطوط:** [`src/ui/fonts.css`](../../src/ui/fonts.css)، وهي Cairo للعناوين وAlmarai للنص.
-- **الشعار:** [`src/ui/logo.js`](../../src/ui/logo.js).
-- **الأيقونات:** [`src/ui/icons.js`](../../src/ui/icons.js)، من Lucide برخصة ISC.
-- **اللقطات:** [`store/screenshots/chromium/`](../../store/screenshots/chromium/)، وهي لقطات حقيقية من الإصدار 1.1.0.
+- **الشعار:** رمز «كتابٌ مفتوح» من [`src/ui/logo.js`](../../src/ui/logo.js)، والاسم نصًّا بخط Cairo 800.
+- **الأيقونات:** [`src/ui/icons.js`](../../src/ui/icons.js)، أيقونات الهوية على شبكة 20.
+- **الإصدار:** من [`package.json`](../../package.json) في شارة الغلاف.
+- **التصميم:** الغلاف والمعاينة الاجتماعية من لوحة الهوية 18 «تطبيقات الهوية» ([`docs/identity-v4.md`](../../docs/identity-v4.md))، و«كيف يعمل» لا لوحة له فهو القالب السابق برموز الهوية الجديدة.
+- **اللقطات:** لا تستعمل القوالب الحالية لقطات. والصور المولّدة في `.github/assets/` ما زالت من الهوية السابقة حتى يُعاد رسمها في AA5 (جولة 2.0.0، [`docs/aa-plan.md`](../../docs/aa-plan.md)).
 
 ## القوالب
 
 | القالب | الناتج | المقاس |
 | --- | --- | --- |
-| `banner.html` | `banner-light.png` و`banner-dark.png` | 1280×400 بمعامل 2 |
+| `banner.html` | `banner-light.png` و`banner-dark.png` | 1200×300 بمعامل 2 (لوحة 18، بلا شارة «MIT» لأن ترجمان «جميع الحقوق محفوظة») |
 | `how-it-works.html` | `how-it-works-light.png` و`how-it-works-dark.png` | 1280×340 بمعامل 2 |
-| `social.html` | `social-preview.png` | 1280×640، مقاس «Social preview» في إعدادات GitHub |
+| `social.html` | `social-preview.png` | 1280×640 داكنة (لوحة 18)، مقاس «Social preview» في إعدادات GitHub |
 
 ## التوليد
 

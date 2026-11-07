@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// مولّد صور واجهة المستودع (README وصورة المعاينة) من قوالب HTML في هذا المجلد، بالهوية المعتمدة نفسها التي تشحنها
-// الإضافة: الألوان من src/ui/tokens.css، والخطوط من src/ui/fonts.css، والشعار من src/ui/logo.js، والأيقونات من
-// src/ui/icons.js، واللقطات الحقيقية من store/screenshots/. فلا لون ولا شعار منسوخ يمكن أن ينجرف عن المنتج.
+// مولّد صور واجهة المستودع (README وصورة المعاينة) من قوالب HTML في هذا المجلد، بالهوية المعتمدة نفسها التي تشحنها الإضافة
+// (الرابعة «كتابٌ مفتوح»، docs/identity-v4.md): الألوان من src/ui/tokens.css، والخطوط من src/ui/fonts.css، والرمز من
+// src/ui/logo.js، والأيقونات من src/ui/icons.js، والإصدار من package.json. فلا لون ولا شعار منسوخ يمكن أن ينجرف عن المنتج.
+// والقالبان banner وsocial من لوحة الهوية 18 «تطبيقات الهوية» بمقاسيهما؛ وhow-it-works لا لوحة له، فهو القالب السابق نفسه
+// برموز الهوية الجديدة.
 //
 //   command node tools/readme-assets/render.mjs            يرسم كل الصور في .github/assets/
 //   command node tools/readme-assets/render.mjs banner     يرسم قالبًا واحدًا (banner أو how-it-works أو social)
@@ -13,58 +15,49 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync, statSync 
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { logo, MARK_PATH } from '../../src/ui/logo.js';
-import { ICONS } from '../../src/ui/icons.js';
+import { LOGO_VIEWBOX, MARK_BOOK, MARK_BOOK_SMALL, MARK_DOTS, SMALL_BELOW } from '../../src/ui/logo.js';
+import { ICONS, ICON_VIEWBOX } from '../../src/ui/icons.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
 const OUT = path.join(ROOT, '.github/assets');
+const VERSION = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 
-/** القوالب: المقاس بالبكسل المنطقي، والوضعان، ومعامل الرسم. */
+/** القوالب: المقاس بالبكسل المنطقي، والوضعان، ومعامل الرسم. banner وsocial بمقاسَي لوحة 18. */
 const JOBS = {
-  banner: { size: [1280, 400], themes: ['light', 'dark'], scale: 2 },
+  banner: { size: [1200, 300], themes: ['light', 'dark'], scale: 2 },
   'how-it-works': { size: [1280, 340], themes: ['light', 'dark'], scale: 2 },
-  social: { size: [1280, 640], themes: ['brand'], scale: 1, out: 'social-preview.png' },
+  social: { size: [1280, 640], themes: ['dark'], scale: 1, out: 'social-preview.png' },
 };
 
 const CHROME = process.env.TJ_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
-/** مستند وهمي صغير يكفي logo() لتبني SVG، ثم يُسلسل نصًّا. */
-function fakeDoc() {
-  const make = (tag) => ({
-    tag, attrs: {}, kids: [],
-    setAttribute(k, v) { this.attrs[k] = String(v); },
-    append(...k) { this.kids.push(...k); },
-  });
-  return { createElementNS: (_ns, tag) => make(tag) };
-}
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-function serialize(n) {
-  const attrs = Object.entries(n.attrs).map(([k, v]) => ` ${k}="${esc(v)}"`).join('');
-  const xmlns = n.tag === 'svg' ? ' xmlns="http://www.w3.org/2000/svg"' : '';
-  return `<${n.tag}${xmlns}${attrs}>${n.kids.map(serialize).join('')}</${n.tag}>`;
-}
 
-function logoSvg(height) {
-  return serialize(logo({ height, label: 'ترجمان', doc: fakeDoc() }));
+/**
+ * رمز الشعار SVG بعرضه: النقطتان بصنف tj-mark__dots (بالطين في القالب من 48 فأكثر، كلوحة 18) والكتاب بصنف tj-mark__book،
+ * والمصحّح تحت 32.
+ */
+function markSvg(width) {
+  const book = width < SMALL_BELOW ? MARK_BOOK_SMALL : MARK_BOOK;
+  const paths = [...MARK_DOTS.map((d) => ['tj-mark__dots', d]), ['tj-mark__book', book]].map(([c, d]) => `<path class="${c}" d="${d}"/>`).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" class="tj-mark" viewBox="${LOGO_VIEWBOX}" width="${width}" aria-hidden="true">${paths}</svg>`;
 }
-function markSvg(size) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><path fill-rule="evenodd" d="${MARK_PATH}"/></svg>`;
-}
+/** أيقونة الهوية على شبكة 20 بخط 1.75. */
 function iconSvg(name, size) {
   const parts = ICONS[name];
   if (!parts) throw new Error(`أيقونة غير معروفة: ${name}`);
   const body = parts.map(([tag, a]) => `<${tag}${Object.entries(a).map(([k, v]) => ` ${k}="${esc(String(v))}"`).join('')}/>`).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${ICON_VIEWBOX}" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 }
 
-/** يملأ القالب: {{ROOT}} مسار المستودع، و{{THEME}}، و{{LOGO:h}} و{{MARK:s}} و{{ICON:name:s}}. */
+/** يملأ القالب: {{ROOT}} مسار المستودع، و{{THEME}}، و{{VERSION}}، و{{MARK:w}}، و{{ICON:name:s}}. */
 function fill(html, theme) {
   return html
     .replaceAll('{{ROOT}}', pathToFileURL(ROOT).href)
     .replaceAll('{{THEME}}', theme)
-    .replace(/\{\{LOGO:(\d+)\}\}/g, (_, h) => logoSvg(Number(h)))
-    .replace(/\{\{MARK:(\d+)\}\}/g, (_, s) => markSvg(Number(s)))
+    .replaceAll('{{VERSION}}', VERSION)
+    .replace(/\{\{MARK:(\d+)\}\}/g, (_, w) => markSvg(Number(w)))
     .replace(/\{\{ICON:([a-z-]+):(\d+)\}\}/g, (_, n, s) => iconSvg(n, Number(s)));
 }
 
