@@ -861,18 +861,22 @@ try {
     check('library-replace-keeps-edits', '1', s1?.fileName === path.basename(TED_HAIKU) && cur.filter((c) => c.text.endsWith(EDITED)).length === 3 && e.previous?.from === 1
       && cur.find((c) => c.n === 100)?.text === tedHaiku.find((c) => c.n === 100).text, { file: s1?.fileName, edited: cur.filter((c) => c.text.endsWith(EDITED)).length, previous: e.previous && { from: e.previous.from, file: e.previous.track.fileName } });
     const prevFile = e.previous?.track.fileName;
-    await clickOn(lib, await rowMenu(TED, 'الترجمات'), 'الترجمات…');
-    await lib.waitFor(() => !!document.querySelector('dialog.lib-panel[open] .lib-prev'), { timeoutMs: 8000 });
+    // بعد إعادة تصميم الهوية: «الترجمات…» توسيع في الصف (زر .lib-toggle) وسطر النسخة السابقة .lib-prevl فيه، لا حوار .lib-panel
+    // (تدقيق Fable، FA-06؛ كانت الخطوة تنتظر محددات الحوار القديم).
+    if ((await lib.eval((sel) => document.querySelector(`${sel} .lib-toggle`)?.getAttribute('aria-expanded'), { args: [`li.lib-row[data-video="${TED}"]`] })) !== 'true') {
+      await clickOn(lib, `${rowOf(TED)}?.querySelector('.lib-toggle')`, 'إظهار الترجمات');
+    }
+    await lib.waitFor(() => !!document.querySelector('.lib-prevl .lib-prevl__restore'), { timeoutMs: 8000 });
     await sleep(500);
     p0 = await lib.eval(storagePrint);
-    await clickOn(lib, byText('dialog.lib-panel[open] .lib-prev button', 'استعادة'), 'استعادة');
-    await lib.waitFor(() => !!document.querySelector('dialog.tj-dialog[open]:not(.lib-panel)'), { timeoutMs: 8000 });
+    await clickOn(lib, `document.querySelector('.lib-prevl .lib-prevl__restore')`, 'استعادة');
+    await lib.waitFor(() => !!document.querySelector('dialog.tj-dialog[open]'), { timeoutMs: 8000 });
     await clickOn(lib, cancelBtn, 'إلغاء');
     await sleep(600);
     d = printDiff(p0, await lib.eval(storagePrint));
     check('restore-previous-cancel-no-write', '3', noDiff(d), noDiff(d) ? null : d);
-    await clickOn(lib, byText('dialog.lib-panel[open] .lib-prev button', 'استعادة'), 'استعادة');
-    await lib.waitFor(() => !!document.querySelector('dialog.tj-dialog[open]:not(.lib-panel)'), { timeoutMs: 8000 });
+    await clickOn(lib, `document.querySelector('.lib-prevl .lib-prevl__restore')`, 'استعادة');
+    await lib.waitFor(() => !!document.querySelector('dialog.tj-dialog[open]'), { timeoutMs: 8000 });
     await clickOn(lib, confirmBtn, 'استعادة');
     await sleep(1200);
     e = await lib.eval(S.entry, { args: [TED] });
@@ -880,7 +884,8 @@ try {
     const back = s1?.current ?? s1?.original ?? [];
     check('restore-previous-brings-back-edited', '1', s1?.fileName === prevFile && back.filter((c) => c.text.endsWith(EDITED)).length === 3 && e.previous?.track.fileName === path.basename(TED_HAIKU),
       { file: s1?.fileName, edited: back.filter((c) => c.text.endsWith(EDITED)).length, previous: e.previous?.track.fileName });
-    await clickOn(lib, `document.querySelector('dialog.lib-panel .lib-panel__head button')`, 'إغلاق اللوحة');
+    // التوسيع في الصف يبقى مفتوحًا (لا لوحة تُغلق)؛ يُطوى بزره فيعود الصف كما كان.
+    await clickOn(lib, `${rowOf(TED)}?.querySelector('.lib-toggle')`, 'إخفاء الترجمات');
     await openVideo(TED);
     await sleep(800);
     const st = await iso(I.state);

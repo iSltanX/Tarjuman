@@ -51,7 +51,7 @@ async function session(label, run) {
 // صف الأول بلا data-video، ومعرّفه في أول عنصر من .lib-row__id (معزولًا باتجاهه).
 const rowsOf = (lib) => lib.eval(() => [...document.querySelectorAll('li.lib-row')]
   .map((r) => r.dataset.video ?? r.querySelector('.lib-row__id')?.firstElementChild?.textContent.replace(/[\u2066-\u2069]/g, '').trim()).sort());
-const waitRows = (lib) => lib.waitFor(() => document.querySelectorAll('li.lib-row').length > 0 || !!document.querySelector('.lib-empty:not([hidden])'), { timeoutMs: 15000 });
+const waitRows = (lib) => lib.waitFor(() => document.querySelectorAll('li.lib-row').length > 0 || !!document.querySelector('.tj-empty'), { timeoutMs: 15000 });
 /** المفاتيح الخام لكل فيديو: هل له ترجمة عربية وعدد مقاطعها وعدد بصماته (للمقارنة بين الإصدارين). */
 const libraryRaw = () => chrome.storage.local.get(null).then((all) => Object.keys(all).filter((k) => k.startsWith('video:')).sort()
   .map((k) => ({ id: k.slice(6), arabic: all[k].arabic ? (all[k].arabic.current ?? all[k].arabic.original).length : 0, fingerprints: (all[k].fingerprints ?? []).length })));

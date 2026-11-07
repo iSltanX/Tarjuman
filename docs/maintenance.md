@@ -86,11 +86,18 @@ node test/live/stores/t3.mjs --browser firefox --out docs/evidence/<المجلد
    node test/e2e/live/list.mjs --browser chrome --only nocap,ad
    ```
 
-4. **الدورة الكاملة** (عند تغيير كبير):
+4. **الدورة الكاملة** (عند تغيير كبير): بناء التطوير في المتصفحات الأربعة، من التثبيت والالتقاط والتنزيل والرفع والعرض والمحرّر حتى
+   النسخة الاحتياطية والإزالة والاستعادة (جولة النشر T3). كان هنا `test/e2e/live/cycle.mjs`، وهو مستبدَل منذ إعادة تصميم الهوية
+   (تدقيق Fable، FA-06).
 
    ```bash
-   node test/e2e/live/cycle.mjs library --browser brave
+   node test/live/stores/t3.mjs --browser brave --out <مجلد خارج المستودع>
    ```
+
+   - ثم `--browser chrome` و`edge` و`firefox`. وأسطح الهوية ولوحة اللوحة الجانبية في `test/live/identity/run.mjs`.
+   - **تخطيط صفحة المشاهدة:** يوتيوب يجرّب لبعض ملفات التعريف الجديدة تخطيطًا يقع فيه العمود الثانوي فوق جزء من الفيديو (رُصد في
+     Edge، تدقيق Fable FA-22). اللوحة تنتقل فيه تحت الفيديو (`chooseColumn` في `src/player/panel/column.js`)؛ فإن ظهر في جولة فتحقق أن
+     `place` «below» وأن مضيف اللوحة في `#below` لا فوق المشغّل، وإن ظهر تخطيط بلا `ytd-watch-flexy` فالمحددات في `column.js` وحدها.
 
 5. **رحلة الإصدار الثاني** (عند تغيير كبير أو قبل حزمة): الترقية ثم الجلسة اليدوية ثم «اسأل» ثم الرحلة، في Brave ثم Chrome. التفاصيل والترتيب في [`test/e2e/README.md`](../test/e2e/README.md) §«الإصدار الثاني».
 
