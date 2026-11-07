@@ -54,5 +54,6 @@
 | `evidence/<ID>/` | أدلة كل مرحلة وجولة: النتائج واللقطات والسجلات. |
 | [`audit-7a66f91/`](audit-7a66f91/README.md) | مراجعة تدقيقات `7a66f91` الأربعة: الحصر والتحقق والتتبّع، وخطة الإصلاح C1–C9 وسجل قراراتها. |
 | [`evidence/Audit-5fedcb9/`](evidence/Audit-5fedcb9/README.md) | التدقيق المستقل السابق على `5fedcb9` وإصلاحاته. |
+| [`audit-fable-67fa674/`](audit-fable-67fa674/README.md) | إصلاحات تدقيق Fable على `67fa674`: تصنيف كل ملاحظة على الشيفرة الحالية، وما تغيّر، وقرارات سلطان الثلاثة، والفحوص والاختبار الحي. |
 | [`research/`](research/) | التقريران المصدران للفكرة: [`youtube-subtitles-research.md`](research/youtube-subtitles-research.md) و[`tarjuman-research-plan.md`](research/tarjuman-research-plan.md). مادة بحث لا تُعدَّل. |
 | لوحة الخطة | `npm run dashboard` ثم http://127.0.0.1:4317، أو [`../dashboard/index.html`](../dashboard/index.html) بعد `npm run plan:sync`. وفحصها `npm run plan:check`. |
