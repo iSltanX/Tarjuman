@@ -1,0 +1,247 @@
+{
+  "browser": "Brave (Chrome/157.0.8103.39)",
+  "at": "2026-11-07T11:43:08.371Z",
+  "headless": true,
+  "extension": {
+    "version": "1.1.0",
+    "versionName": "1.1.0-dev"
+  },
+  "shots": [
+    "popup-1-active-light.png",
+    "popup-1-active-dark.png",
+    "popup-2-target-empty-light.png",
+    "popup-2-target-empty-dark.png",
+    "popup-3-picker-open-light.png",
+    "popup-3-picker-open-dark.png",
+    "popup-4-copied-light.png",
+    "popup-4-copied-dark.png",
+    "popup-5-not-video-light.png",
+    "popup-5-not-video-dark.png",
+    "popup-6-loading-light.png",
+    "popup-6-loading-dark.png",
+    "popup-7-error-light.png",
+    "popup-7-error-dark.png",
+    "popup-A-nothing-light.png",
+    "popup-A-nothing-dark.png",
+    "popup-D-rtl-source-light.png",
+    "popup-D-rtl-source-dark.png",
+    "settings-langs-light.png",
+    "settings-langs-dark.png",
+    "library-light.png",
+    "library-dark.png",
+    "editor-light.png",
+    "editor-dark.png"
+  ],
+  "external": [],
+  "errors": [],
+  "checks": [
+    {
+      "id": "thumbnails-off",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "popup-1-active",
+      "ok": true,
+      "detail": {
+        "values": [
+          "الإنجليزية",
+          "العربية"
+        ],
+        "copy": null,
+        "caption": "تعليمات لنموذجك: ترجمة ملف SRT من الإنجليزية إلى العربية مع الحفاظ على أرقام المقاطع والتوقيت والصيغة.",
+        "note": "«من» مكتشفة من ترجمة الفيديو",
+        "skeleton": false,
+        "overflow": false,
+        "state": "idle",
+        "picker": false
+      }
+    },
+    {
+      "id": "popup-2-target-empty",
+      "ok": true,
+      "detail": {
+        "values": [
+          "اليابانية",
+          "اختر لغة"
+        ],
+        "copy": "true",
+        "caption": "اختر اللغة التي تريد الترجمة إليها.",
+        "note": "«من» مكتشفة من ترجمة الفيديو",
+        "skeleton": false,
+        "overflow": false,
+        "state": "idle",
+        "picker": false
+      }
+    },
+    {
+      "id": "popup-3-picker-open",
+      "ok": true,
+      "detail": {
+        "values": [
+          "اليابانية",
+          "اختر لغة"
+        ],
+        "copy": "true",
+        "caption": "اختر اللغة التي تريد الترجمة إليها.",
+        "note": "«من» مكتشفة من ترجمة الفيديو",
+        "skeleton": false,
+        "overflow": false,
+        "state": "idle",
+        "picker": true
+      }
+    },
+    {
+      "id": "popup-4-copied",
+      "ok": true,
+      "detail": {
+        "values": [
+          "اليابانية",
+          "الإنجليزية"
+        ],
+        "copy": null,
+        "caption": "تعليمات لنموذجك: ترجمة ملف SRT من اليابانية إلى الإنجليزية مع الحفاظ على أرقام المقاطع والتوقيت والصيغة.",
+        "note": "«من» مكتشفة من ترجمة الفيديو",
+        "skeleton": false,
+        "overflow": false,
+        "state": "success",
+        "picker": false
+      }
+    },
+    {
+      "id": "popup-5-not-video",
+      "ok": true,
+      "detail": {
+        "values": [
+          "الإنجليزية",
+          "العربية"
+        ],
+        "copy": "true",
+        "caption": "افتح فيديو على يوتيوب لتُنسخ تعليماته بعنوانه ورابطه.",
+        "note": "",
+        "skeleton": false,
+        "overflow": false,
+        "state": "idle",
+        "picker": false
+      }
+    },
+    {
+      "id": "popup-6-loading",
+      "ok": true,
+      "detail": {
+        "values": [],
+        "copy": null,
+        "caption": null,
+        "note": null,
+        "skeleton": true,
+        "overflow": false,
+        "state": null,
+        "picker": false
+      }
+    },
+    {
+      "id": "popup-7-error",
+      "ok": true,
+      "detail": {
+        "values": [
+          "الإنجليزية",
+          "العربية"
+        ],
+        "copy": null,
+        "caption": "تعليمات لنموذجك: ترجمة ملف SRT من الإنجليزية إلى العربية مع الحفاظ على أرقام المقاطع والتوقيت والصيغة.",
+        "note": "«من» مكتشفة من ترجمة الفيديو",
+        "skeleton": false,
+        "overflow": false,
+        "state": "error",
+        "picker": false
+      }
+    },
+    {
+      "id": "popup-A-nothing",
+      "ok": true,
+      "detail": {
+        "values": [
+          "اختر لغة",
+          "اختر لغة"
+        ],
+        "copy": "true",
+        "caption": "يُفعّل الزر حين تُحدَّد اللغتان وتختلفان.",
+        "note": "",
+        "skeleton": false,
+        "overflow": false,
+        "state": "idle",
+        "picker": false
+      }
+    },
+    {
+      "id": "popup-D-rtl-source",
+      "ok": true,
+      "detail": {
+        "values": [
+          "العربية",
+          "الإنجليزية"
+        ],
+        "copy": null,
+        "caption": "تعليمات لنموذجك: ترجمة ملف SRT من العربية إلى الإنجليزية مع الحفاظ على أرقام المقاطع والتوقيت والصيغة.",
+        "note": "«من» مكتشفة من ترجمة الفيديو",
+        "skeleton": false,
+        "overflow": false,
+        "state": "idle",
+        "picker": false
+      }
+    },
+    {
+      "id": "settings-langs",
+      "ok": true,
+      "detail": {
+        "pair": [
+          "تلقائي من مسار الفيديو",
+          "العربية"
+        ],
+        "unknown": "3 ترجمات في 3 فيديوهات",
+        "chips": [
+          "العربية",
+          "English"
+        ]
+      }
+    },
+    {
+      "id": "library-pairs",
+      "ok": true,
+      "detail": [
+        "الإنجليزية ← لغة غير محددة",
+        "الإنجليزية",
+        "الإنجليزية ← لغة غير محددة",
+        "الإنجليزية ← لغة غير محددة"
+      ]
+    },
+    {
+      "id": "editor-pair-search",
+      "ok": true,
+      "detail": {
+        "pair": "الإنجليزية ← لغة غير محددة",
+        "search": [
+          "في الترجمة",
+          "في الأصل (قراءة فقط)"
+        ]
+      }
+    },
+    {
+      "id": "no-external-requests",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "screenshots",
+      "ok": true,
+      "detail": {
+        "n": 24
+      }
+    }
+  ]
+}

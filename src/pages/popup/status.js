@@ -98,6 +98,13 @@ export const missText = (miss) => (miss === 'stale' ? messageFor('TJ_RELOAD_PAGE
 /** اسم لغة للعرض بالعربية من رمزها، والرمز الذي لا يعرف المتصفح اسمه يبقى رمزه. @param {string} code */
 export const langLabel = (code) => describeLang(code)?.arabic ?? code;
 
+/** «بالعربية» و«باليابانية»، و«بلغة xx» للرمز الذي لا يعرف المتصفح اسمه. @param {string} code */
+const inLang = (code) => {
+  const d = describeLang(code);
+  if (!d?.known) return `بلغة ${code}`;
+  return d.arabic.startsWith('ال') ? `ب${d.arabic}` : `بـ${d.arabic}`;
+};
+
 /** وضع العرض في سطر الأدوات بلغة الأصل الفعلية: «الترجمة فوق اليابانية». @param {string} mode @param {string | null} source */
 const modeText = (mode, source) => (mode === 'dual' ? `الترجمة فوق ${source ? langLabel(source) : 'الأصل'}` : mode === 'off' ? 'الترجمة مخفية' : 'الترجمة وحدها');
 /** نوع مسار الأصل كما يُعرض بجانب حالته: «ملتقطة · يدوية». */
@@ -143,7 +150,7 @@ export function describeStatus(reply) {
   return {
     kind: 'has-subtitle',
     title,
-    line: [a.lang ? `ترجمة ${langLabel(a.lang)}` : 'ترجمة بلغة غير محددة', formatCount(a.cueCount, COUNT_FORMS.cue), `الإزاحة ${offsetInline(reply.view.displayOffsetMs)} ث`].join(' · '),
+    line: [a.lang ? `ترجمة ${inLang(a.lang)}` : 'ترجمة بلغة غير محددة', formatCount(a.cueCount, COUNT_FORMS.cue), `الإزاحة ${offsetInline(reply.view.displayOffsetMs)} ث`].join(' · '),
     edited: a.edited,
     matched: a.matched,
     mode: modeText(reply.view.displayMode, base?.lang ?? null),

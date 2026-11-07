@@ -665,7 +665,8 @@ export async function mountEditor(app, {
     const dirty = s.dirty;
     const pendingWork = dirty || s.hasDrafts;
     renderSlots();
-    pairEl.textContent = pairLabel({ from: S.englishTrack?.lang ?? null, to: openedLang(), translated: true }) ?? '';
+    // لغة الترجمة المحفوظة كما في المحفوظات والمشغّل («لغة غير محددة» لما حُفظ قبل 2.0.0)، لا رمز اسم الملف الذي تستعمله الفحوص.
+    pairEl.textContent = pairLabel({ from: S.englishTrack?.lang ?? null, to: S.opened?.slots[S.slot - 1]?.track?.lang ?? null, translated: true }) ?? '';
     pairEl.hidden = !pairEl.textContent;
     doc.title = `${pendingWork ? '● ' : ''}ترجمان — المحرّر`;
     // منطقة الحالة تُكتب حين يتغير نصها أو نبرتها فقط، لا مع كل ضغطة فيُعاد إعلانها (U26).

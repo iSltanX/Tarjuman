@@ -149,7 +149,8 @@ startPage({
       copyBtn.setAttribute('data-state', copyState);
       copyBtn.classList.toggle('tj-popup__copy--success', copyState === 'success');
       copyBtn.classList.toggle('tj-popup__copy--error', copyState === 'error');
-      caption.textContent = copyState === 'success' ? st.done : st.caption;
+      // تعذّر النسخ: الزر والتنبيه يقولانه، فلا سطر مكرر تحته (لوحة 09، الحالة 7).
+      caption.textContent = copyState === 'success' ? st.done : copyState === 'error' ? '' : st.caption;
       caption.setAttribute('data-tone', copyState === 'success' ? 'success' : copyState === 'error' ? 'danger' : st.ready ? 'neutral' : 'muted');
     }
 

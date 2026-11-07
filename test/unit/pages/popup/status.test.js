@@ -48,7 +48,7 @@ test('العنوان الغائب يعود إلى المعرّف', () => {
 
 test('فيديو بترجمة: «ترجمة ‹لغتها› · 412 مقطعًا · الإزاحة +0.5 ث»، وغير المحددة بلا لغة، والوضع بلغة الأصل', () => {
   assert.deepEqual(describeStatus(withArabic({ arabic: { fileName: 'x.ar.srt', cueCount: 412, edited: false, matched: true, lang: 'ar' } })), {
-    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة العربية · 412 مقطعًا · الإزاحة \u2066+0.5\u2069 ث', edited: false, matched: true, mode: 'الترجمة وحدها', fileName: 'x.ar.srt', saved: true,
+    kind: 'has-subtitle', title: 'عنوان تجريبي', line: 'ترجمة بالعربية · 412 مقطعًا · الإزاحة \u2066+0.5\u2069 ث', edited: false, matched: true, mode: 'الترجمة وحدها', fileName: 'x.ar.srt', saved: true,
   });
   const edited = describeStatus(withArabic({ arabic: { fileName: 'x', cueCount: 1, edited: true, matched: null }, view: { displayOffsetMs: -1000, displayMode: 'dual' }, english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 1 }] } }));
   assert.equal(edited.line, 'ترجمة بلغة غير محددة · مقطع واحد · الإزاحة \u2066−1.0\u2069 ث', 'ترجمة حُفظت قبل 2.0.0');

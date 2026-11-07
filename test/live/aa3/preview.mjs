@@ -58,7 +58,7 @@ const LP = (pair, videos = {}) => ({ schema: 1, pair, remember: true, recent: ['
 const STATES = [
   { name: '1-active', reply: withArabic('ar'), langPrefs: LP({ from: 'auto', to: 'ar' }), expect: { from: 'الإنجليزية', to: 'العربية', copy: null } },
   { name: '2-target-empty', reply: japanese, langPrefs: LP({ from: 'auto', to: null }), expect: { from: 'اليابانية', to: 'اختر لغة', copy: 'true' } },
-  { name: '3-picker-open', reply: japanese, langPrefs: LP({ from: 'auto', to: null }), act: () => document.querySelectorAll('.tj-popup__pair .tj-lang')[1]?.click(), expect: { from: 'اليابانية', to: 'اختر لغة', copy: 'true', picker: true } },
+  { name: '3-picker-open', reply: japanese, langPrefs: LP({ from: 'auto', to: null }), act: () => { const f = document.querySelectorAll('.tj-popup__pair .tj-lang')[1]; if (f?.getAttribute('aria-expanded') !== 'true') f?.click(); }, expect: { from: 'اليابانية', to: 'اختر لغة', copy: 'true', picker: true } },
   { name: '4-copied', reply: japanese, langPrefs: LP({ from: 'auto', to: 'en' }), act: () => document.querySelector('[data-action="copy"]')?.click(), expect: { from: 'اليابانية', to: 'الإنجليزية', state: 'success' } },
   { name: '5-not-video', reply: null, tab: tabOf(false), langPrefs: LP({ from: 'auto', to: 'ar' }, { [VID]: { from: 'en', to: 'ar' } }), expect: { from: 'الإنجليزية', to: 'العربية', copy: 'true' } },
   { name: '6-loading', reply: base({ loading: true }), langPrefs: LP({ from: 'auto', to: 'ar' }), wait: () => !!document.querySelector('.tj-popup__pair-skel'), expect: { skeleton: true } },

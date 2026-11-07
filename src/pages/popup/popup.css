@@ -67,6 +67,7 @@
 .tj-popup__copy .tj-icon { flex: none; width: 16px; height: 16px; }
 .tj-popup__copy[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .tj-popup__pair-caption { margin: 0; font: 400 12px/18px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-popup__pair-caption:empty { display: none; }
 .tj-popup__pair-caption[data-tone="muted"] { color: var(--tj-muted); }
 .tj-popup__pair-caption[data-tone="success"] { color: var(--tj-success); }
 .tj-popup__pair-caption[data-tone="danger"] { color: var(--tj-danger); }
