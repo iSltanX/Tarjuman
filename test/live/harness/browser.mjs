@@ -14,7 +14,11 @@ export const BROWSERS = {
   edge: { name: 'Edge', bin: '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge' },
 };
 
-export const PROFILE_ROOT = path.join(os.homedir(), 'Library/Application Support/Tarjuman-test');
+// TJ_PROFILE_ROOT يوجّه ملفات التعريف ومجلدات العمل إلى مجلد آخر لجولة بعينها (تدقيق Fable: جولة معزولة باسمها لا تمس ما في
+// المجلد المشترك، بعد حادثة حذفه في التدقيق السابق). وبلا المتغير المجلد المعتاد.
+export const PROFILE_ROOT = process.env.TJ_PROFILE_ROOT
+  ? path.resolve(process.env.TJ_PROFILE_ROOT)
+  : path.join(os.homedir(), 'Library/Application Support/Tarjuman-test');
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /** وتيرة بشرية: انتظار بين min وmax. */

@@ -26,6 +26,10 @@ const GALLERY = val('gallery') ? path.resolve(val('gallery')) : null;
 const VIDEO = val('video', 'iG9CE55wbtY');
 const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P2'), browser);
 const rel = (f) => path.relative(ROOT, f);
+// صورة الفيديو المصغّرة في المحفوظات (قرار سلطان 2026-11-03، Q35: مفعّلة افتراضيًا في Chromium) الطلب الخارجي الوحيد المسموح
+// من صفحات الإضافة: من صفحة المحفوظات وحدها، بمعرّف الفيديو، وبلا مُحيل؛ تُعدّ وحدها كما في test/live/polish/run.mjs. كان
+// الدخان يعدّها طلبًا خارجيًا فيسقط page-library على أي حزمة حالية (تدقيق Fable، FA-03).
+const THUMB_RE = /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/mqdefault\.jpg$/;
 
 const manifest = JSON.parse(await readFile(path.join(EXT, 'manifest.json'), 'utf8'));
 const result = { browser: null, at: new Date().toISOString(), extension: { version: manifest.version, versionName: manifest.version_name ?? null, permissions: manifest.permissions }, video: VIDEO, checks: [], errors: {}, screenshots: [], notes: [] };
@@ -168,9 +172,17 @@ try {
     seen.add(page.targetId);
     const errs = collectErrors(page, { extId });
     pageErrors.push(errs);
-    const pnet = { other: 0 };
+    const pnet = { other: 0, hosts: new Set(), thumbs: 0, referers: 0 };
     page.on('Network.requestWillBeSent', (p) => {
-      if (!p.request.url.startsWith('chrome-extension://') && !p.request.url.startsWith('data:')) pnet.other++;
+      const u = p.request.url;
+      if (u.startsWith('chrome-extension://') || u.startsWith('data:')) return;
+      if (name === 'library' && THUMB_RE.test(u.split('?')[0])) {
+        pnet.thumbs++;
+        if (p.request.headers?.Referer || p.request.headers?.referer) pnet.referers++;
+        return;
+      }
+      pnet.other++;
+      try { pnet.hosts.add(new URL(u).host); } catch { pnet.hosts.add('?'); }
     });
     await page.send('Network.enable');
     // إعادة التحميل بعد الالتحاق تلتقط أخطاء التحميل من أوله.
@@ -185,7 +197,10 @@ try {
     }
     const text = await page.eval(() => document.body.innerText);
     const dir = await page.eval(() => getComputedStyle(document.documentElement).direction);
-    check(`page-${name}`, expect[name](text) && dir === 'rtl' && pnet.other === 0, { openedVia: via, rtl: dir === 'rtl', externalRequests: pnet.other });
+    check(`page-${name}`, expect[name](text) && dir === 'rtl' && pnet.other === 0 && pnet.referers === 0, {
+      openedVia: via, rtl: dir === 'rtl', externalRequests: pnet.other, externalHosts: [...pnet.hosts],
+      ...(name === 'library' ? { thumbnails: pnet.thumbs, thumbnailReferers: pnet.referers } : {}),
+    });
     await shoot(page, name);
     if (name === 'settings') {
       const warnings = await page.eval(async () => {
