@@ -246,6 +246,99 @@ async function setTheater(on) {
   return (await isTheater()) === on;
 }
 
+async function clickExpr(page, expr, what) {
+  const ok = await page.eval(`(() => { for (const e of document.querySelectorAll('[data-aa4]')) e.removeAttribute('data-aa4'); const el = (${expr}); if (!el) return false; el.setAttribute('data-aa4', '1'); return true; })()`);
+  if (!ok) throw new Error(`لم يوجد: ${what}`);
+  const c = await page.centerOf('[data-aa4="1"]');
+  if (!c) throw new Error(`غير ظاهر: ${what}`);
+  await page.click(c.x, c.y);
+  await human(300, 500);
+}
+
+/** لقطة منطقة بمعامل العرض إلى المجلد الخام، وتُسجَّل بمقاسها وبصمتها ومنطقتها. */
+async function rawShot(page, name, clip) {
+  const params = { format: 'png', captureBeyondViewport: false };
+  if (clip) params.clip = { x: clip.left, y: clip.top, width: clip.width, height: clip.height, scale: 1 };
+  const { data } = await page.send('Page.captureScreenshot', params);
+  const buf = Buffer.from(data, 'base64');
+  await writeFile(path.join(RAW, `${name}.png`), buf);
+  result.raw.push({ name, width: buf.readUInt32BE(16), height: buf.readUInt32BE(20), sha16: createHash('sha256').update(buf).digest('hex').slice(0, 16), clip: clip ?? null });
+  console.log(`  ⤷ ${name}.png ${buf.readUInt32BE(16)}×${buf.readUInt32BE(20)}`);
+}
+const union = (a, b) => {
+  const left = Math.min(a.left, b.left);
+  const top = Math.min(a.top, b.top);
+  return { left, top, width: Math.max(a.right, b.right) - left, height: Math.max(a.bottom, b.bottom) - top };
+};
+
+async function waitFile(timeoutMs = 25000) {
+  const end = Date.now() + timeoutMs;
+  while (Date.now() < end) {
+    const list = (await readdir(DL, { recursive: true }).catch(() => [])).filter((n) => n.endsWith('.srt'));
+    if (list.length) {
+      await sleep(600);
+      return list[0];
+    }
+    await sleep(400);
+  }
+  return null;
+}
+
+async function extShot(relPath, name, { width, height, scheme = 'light', before = null } = {}) {
+  const page = await s.extPage(relPath);
+  await page.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: DSF, mobile: false });
+  await page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
+  await page.waitFor(() => document.readyState === 'complete' && document.fonts.status === 'loaded', { timeoutMs: 15000 }).catch(() => null);
+  await sleep(1200);
+  if (before) await before(page);
+  await sleep(500);
+  await rawShot(page, name, null);
+  return page;
+}
+
+/**
+ * نافذة الإضافة كما تُفتح من شريط المتصفح: يوتيوب التبويب النشط في النافذة الأخيرة، والنافذة في تبويب خلفي، فتقرأ حالته بـ
+ * tabs.query({ active, lastFocusedWindow }) كما في test/live/ui/run.mjs. بعرضها الحقيقي 340 وطولها كما يرسمه المحتوى.
+ */
+async function popupShot(name, { scheme = 'light' } = {}) {
+  await frontYt();
+  await sleep(400);
+  const { targetId } = await yt.conn.send('Target.createTarget', { url: 'about:blank', background: true });
+  const page = await attach(yt.conn, targetId, { url: `${s.base}pages/popup/index.html` });
+  try {
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 340, height: 640, deviceScaleFactor: DSF, mobile: false });
+    await page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
+    await page.waitFor(() => !!document.querySelector('#app[data-ready]') && document.fonts.status === 'loaded', { timeoutMs: 12000 });
+    await sleep(1500);
+    const info = await page.eval(() => {
+      const t = (sel) => document.querySelector(sel)?.textContent.replace(/\s+/g, ' ').trim() ?? null;
+      const copy = [...document.querySelectorAll('button')].find((b) => /نسخ التعليمات/.test(b.textContent));
+      return {
+        status: t('.tj-popup__status'),
+        block: t('.tj-popup__pair'),
+        copyDisabled: copy ? copy.getAttribute('aria-disabled') === 'true' || copy.disabled : null,
+        h: Math.ceil(document.documentElement.scrollHeight),
+        w: document.documentElement.clientWidth,
+      };
+    });
+    check('popup-reads-youtube-tab', !!info.status && !/افتح فيديو على يوتيوب/.test(info.status), { status: info.status?.slice(0, 120) });
+    check('popup-from-detected-english', /^تعليمات الترجمةمنالإنجليزيةإلىالعربية/.test(info.block ?? ''), { block: info.block?.slice(0, 40) });
+    check('popup-copy-enabled', info.copyDisabled === false, { copyDisabled: info.copyDisabled });
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 340, height: Math.min(info.h, 1200), deviceScaleFactor: DSF, mobile: false });
+    await sleep(500);
+    result.geometry.popup = { width: info.w, height: info.h };
+    await rawShot(page, `${name}-full`, null);
+    // حتى نهاية كتلة «تعليمات الترجمة» وسطرها (الرأس والفيديو الحالي والكتلة)، فتجاور خطوات «كيف يعمل» في الموقع.
+    const bottom = await page.eval(() => Math.ceil(Math.max(...[...document.querySelectorAll('.tj-popup__pair, .tj-popup__pair *')].map((e) => e.getBoundingClientRect().bottom))));
+    check('popup-instructions-block-measured', bottom > 200 && bottom < info.h, { bottom });
+    await rawShot(page, name, { left: 0, top: 0, width: 340, height: Math.min(bottom + 7, info.h) });
+  } finally {
+    await yt.conn.send('Target.closeTarget', { targetId }).catch(() => null);
+    await frontYt();
+    await sleep(1200);
+  }
+}
+
 try {
   // لا تشغيل تلقائي في نسخة الاختبار (كما في T6): الفيديو موقوف عند 3:02 من الرابط (إطاره إن حمّله يوتيوب، وإلا غلافه)، وترجمان يعرض المقطع الحالي فوقه.
   s = await startBrowser('chrome', { profile: `chrome-aa4-shots-${RUN}`, ext: EXT, downloadDir: DL, headless: !HEADED, extraArgs: ['--autoplay-policy=user-gesture-required'] });
@@ -256,9 +349,9 @@ try {
   const first = await openYoutube();
   check('youtube-player-ready', first.ready);
   note('أُخفيت العلامة المائية لقناة الفيلم وزر التشغيل الكبير بنمط في صفحة الاختبار وحدها');
-  note(f0.ready >= 2 ? 'الإطار عند 3:02 إطار من الفيلم نفسه (حمّله يوتيوب في هذا التشغيل)' : 'الإطار عند 3:02 صورة غلاف الفيلم (لم يحمّل يوتيوب الفيديو تحت الأتمتة)');
   const f0 = await showFrame(182);
   check('frame-at-3-02-complete', !f0.error && !f0.spinner && Math.abs(f0.t - 182) < 1, f0);
+  note(f0.ready >= 2 ? 'الإطار عند 3:02 إطار من الفيلم نفسه (حمّله يوتيوب في هذا التشغيل)' : 'الإطار عند 3:02 صورة غلاف الفيلم (لم يحمّل يوتيوب الفيديو تحت الأتمتة)');
   await yt.eval((msg) => { window.postMessage(msg, location.origin); return true; }, { args: [capture] });
   await sleep(1500);
 
