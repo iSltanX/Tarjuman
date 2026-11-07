@@ -1,0 +1,24 @@
+{
+  "editor": {
+    "shown": {
+      "text": "المقطع 2: «أعود إليه».تراجع",
+      "isShown": true,
+      "inert": false,
+      "hasUndo": true
+    },
+    "focusedBefore": true,
+    "actual_after7s_withFocusAndPointerOnToast": {
+      "isShown": false,
+      "inert": true,
+      "note": "الزر المركّز صار داخل عنصر inert: في المتصفح يسقط التركيز منه إلى body (الـDOM الوهمي لا يحاكي ذلك)"
+    },
+    "expected": {
+      "isShown": true,
+      "note": "تُمسك ما دام التركيز أو المؤشر فيها (كما src/ui/toast.js:44-57)"
+    }
+  },
+  "control_sharedToaster": {
+    "dismissTimersBeforeFocus": 1,
+    "dismissTimersAfterFocusin": 0
+  }
+}

@@ -1,0 +1,6 @@
+50k vs 50k identical timing                        65 ms high 50000 
+50k vs 50k shifted +700ms                          98 ms high 50000 بين الطرفين إزاحة عامة 0.7 ث، فطُرحت قبل المحاذاة.
+50k dense (10ms cues) vs same                      39 ms low 100000 أزمنة المقاطع متكدسة في مدى ضيق، فلا تُحاذى بثقة.
+50k all at 0..1000 vs same                        240 ms low 100000 أزمنة المقاطع متكدسة في مدى ضيق، فلا تُحاذى بثقة.
+50k vs 5 cues                                       8 ms high 50000 مقاطع في الأصل بلا مقابل (عددها 49995)، منها 6، 7،
+50k normal vs 50k reversed-ish (shuffled)          86 ms high 50000 

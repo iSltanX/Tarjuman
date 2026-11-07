@@ -1,0 +1,12 @@
+A1 old hand.mjs HEADER (from lib.mjs specInstructions): ترجمة ملف ترجمة فيديو (SRT) من {{source_language}} إلى {{target_language}}
+A1 old HEADER still has unfilled placeholders: true
+A1 current instructions(en→ar) first line: ترجمة ملف ترجمة فيديو (SRT) من الإنجليزية (en) إلى العربية (ar)
+A1 current text startsWith old HEADER (ours() in hand.mjs:77): false
+A1 current text === specInstructions(TED) (check hand-copy-from-player-bar): false
+A2 v2/hand.mjs HEADER: ترجمة ملف ترجمة فيديو (SRT) من الإنجليزية إلى العربية
+A2 current en→ar startsWith v2 HEADER: false
+A2 instructions() without source/target (v2/hand.mjs:156): {"threw":true,"code":"MD_INVALID","message":"بيانات غير صالحة، فلم يُحفظ شيء. انسخ تقرير التشخيص."}
+A3 old expected() iG9CE55wbtY manual/normal: {"accepted":{"accepted":true,"code":null},"convOk":true,"cues":427,"file":"iG9CE55wbtY.en.manual.normal.srt","matchesOldFileRegex":true}
+A3 old expected() Y9rkKtK1b44 asr/long: {"accepted":{"accepted":true,"code":null},"convOk":true,"cues":729,"file":"Y9rkKtK1b44.en.asr.long.srt","matchesOldFileRegex":true}
+A4 player menus/session/text mention copy-instructions or clipboard write: {"menus":false,"session":false,"text":false}
+A4 player panel step text: نزّل الأصل من زر التنزيل، وانسخ التعليمات من نافذة الإضافة، وترجمه بنموذجك

@@ -1,0 +1,96 @@
+=== ضابط: 2.0.0 وحده لا يتجاوز الحد بمسارات ذات بصمات؟ (8 مسارات بثماني بصمات ثم مسار تاسع) ===
+  بعد 8 تصديرات لثماني لغات
+    الفعلي:   {"recordEnglish":1,"recordPrints":1,"langSources":7,"langPrints":7}
+    المتوقع:  {"recordEnglish":1,"recordPrints":1,"langSources":7,"langPrints":7}
+    مطابق
+  تصدير مسار تاسع (ru) في 2.0.0 وحده
+    الفعلي:   {"code":"MD_INVALID","detail":null}
+    المتوقع:  null
+    مختلف
+    (ملاحظة مستقلة: putEnglish في transitions.js لا يُسقط مسارًا له بصمة، فالتصدير التاسع يُرفض MD_INVALID قبل أي كتابة.)
+
+=== السيناريو أ (البصمات): ترجمة مرجعها بصمة يابانية + بصمات إنجليزية تملأ الحد في 1.1.0 ===
+  2.0.0 قبل الرجوع: الحزمة في الحدود
+    الفعلي:   {"ok":true,"english":2,"prints":10}
+    المتوقع:  {"ok":true,"english":2,"prints":10}
+    مطابق
+  2.0.0 قبل الرجوع: الإسقاط
+    الفعلي:   {"recordEnglish":1,"recordPrints":9,"langSources":1,"langPrints":1}
+    المتوقع:  {"recordEnglish":1,"recordPrints":9,"langSources":1,"langPrints":1}
+    مطابق
+  بعد تصدير واحد في 1.1.0: الإسقاط (1.1.0 في حدوده: 10 بصمات إنجليزية)
+    الفعلي:   {"recordEnglish":1,"recordPrints":10,"langSources":1,"langPrints":1}
+    المتوقع:  {"recordEnglish":1,"recordPrints":10,"langSources":1,"langPrints":1}
+    مطابق
+  سجل 1.1.0 صالح بمدققه
+    الفعلي:   true
+    المتوقع:  true
+    مطابق
+  -- أثر الحالة (أ) --
+  getBundle في 2.0.0 (المشغّل والمحرّر والتوسيع يقرؤون الحزمة)
+    الفعلي:   {"ok":false,"code":"MD_INVALID","detail":"video: video.fingerprints — أكثر من 10 عنصر"}
+    المتوقع:  {"ok":true,"english":"<= 8","prints":"<= 10"}
+    مختلف
+  getBundle مرة ثانية (لا تعافٍ ذاتي)
+    الفعلي:   false
+    المتوقع:  true
+    مختلف
+  listLibrary: الصف يظهر (بمُلخّص الفهرس)
+    الفعلي:   [["AAAAAAAAAAA",1]]
+    المتوقع:  [["AAAAAAAAAAA",1]]
+    مطابق
+  createBackup: {videos, skipped}
+    الفعلي:   {"videos":0,"skipped":[{"videoId":"AAAAAAAAAAA","code":"MD_INVALID"}]}
+    المتوقع:  {"videos":1,"skipped":[]}
+    مختلف
+  التخزين لم يتغير بالقراءة الفاشلة (البيانات على القرص كما هي)
+    الفعلي:   true
+    المتوقع:  true
+    مطابق
+  1.1.0 يقرأ التخزين نفسه
+    الفعلي:   true
+    المتوقع:  true
+    مطابق
+  deleteVideo في 2.0.0 ينجح (الخروج الوحيد يحذف الفيديو كله)
+    الفعلي:   []
+    المتوقع:  []
+    مطابق
+
+=== السيناريو ب (المسارات): ستة مسارات بغير الإنجليزية لها بصمات + مساران إنجليزيان، ثم 1.1.0 يضيف en-GB ===
+  2.0.0 قبل الرجوع
+    الفعلي:   {"ok":true,"english":8,"prints":8}
+    المتوقع:  {"ok":true,"english":8,"prints":8}
+    مطابق
+  بعد تصدير en-GB في 1.1.0: الإسقاط
+    الفعلي:   {"recordEnglish":3,"recordPrints":3,"langSources":6,"langPrints":6}
+    المتوقع:  {"recordEnglish":3,"recordPrints":3,"langSources":6,"langPrints":6}
+    مطابق
+  -- أثر الحالة (ب) --
+  getBundle في 2.0.0 (المشغّل والمحرّر والتوسيع يقرؤون الحزمة)
+    الفعلي:   {"ok":false,"code":"MD_INVALID","detail":"video: video.english — أكثر من 8 عنصر"}
+    المتوقع:  {"ok":true,"english":"<= 8","prints":"<= 10"}
+    مختلف
+  getBundle مرة ثانية (لا تعافٍ ذاتي)
+    الفعلي:   false
+    المتوقع:  true
+    مختلف
+  listLibrary: الصف يظهر (بمُلخّص الفهرس)
+    الفعلي:   [["AAAAAAAAAAA",1]]
+    المتوقع:  [["AAAAAAAAAAA",1]]
+    مطابق
+  createBackup: {videos, skipped}
+    الفعلي:   {"videos":0,"skipped":[{"videoId":"AAAAAAAAAAA","code":"MD_INVALID"}]}
+    المتوقع:  {"videos":1,"skipped":[]}
+    مختلف
+  التخزين لم يتغير بالقراءة الفاشلة (البيانات على القرص كما هي)
+    الفعلي:   true
+    المتوقع:  true
+    مطابق
+  1.1.0 يقرأ التخزين نفسه
+    الفعلي:   true
+    المتوقع:  true
+    مطابق
+  deleteVideo في 2.0.0 ينجح (الخروج الوحيد يحذف الفيديو كله)
+    الفعلي:   []
+    المتوقع:  []
+    مطابق

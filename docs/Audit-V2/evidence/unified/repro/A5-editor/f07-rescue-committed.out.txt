@@ -1,0 +1,183 @@
+[
+  {
+    "scenario": "A: theirs nudged cue 6 by +100ms (offset unchanged 2000)",
+    "afterCommit": {
+      "offsetMs": 0,
+      "committedMs": 2000,
+      "baseOffsetMs": 2000,
+      "cue1Start": 3000
+    },
+    "bannerState": "changed",
+    "rescueInput": {
+      "offsets": {
+        "base": 2000,
+        "mine": 0,
+        "theirs": 2000,
+        "committed": 2000
+      },
+      "baseCue6Start": 13500,
+      "mineCue6Start": 15500,
+      "theirsCue6Start": 13600
+    },
+    "firstPlan": {
+      "ok": true,
+      "counts": {
+        "mine": 13,
+        "theirs": 1
+      },
+      "conflicts": [
+        {
+          "n": 6,
+          "mine": [
+            [
+              15500,
+              "سطر 6"
+            ]
+          ],
+          "theirs": [
+            [
+              13600,
+              "سطر 6"
+            ]
+          ]
+        }
+      ],
+      "offsetMs": 0,
+      "offsetConflict": false,
+      "kept": 11
+    },
+    "dialogText": "مقارنة تغييراتي بالنسخة الأحدثتعديلاتي: 13 مقطعًا · تغييرات الأحدث: مقطع واحد · متعارضة: 1.يُعاد تطبيق ما لا يتعارض من تعديلاتك فوق النسخة الأحدث، ويبقى كل ما غيّره الأحدث. وفي المتعارض يبقى الأحدث ما لم تختر تعديلك. لا يُكتب شيء حتى «حفظ»، والتراجع يعيد الأحدث كما هو.المقطع 6الأحدث: سطر 6تعديلي: سطر 6تطبيق غير المتعارض (11)تصدير نسختي…إلغاء",
+    "actual": {
+      "sessionOffsetMs": 0,
+      "cue1": {
+        "startMs": 3000,
+        "text": "مقطع أول معدّل",
+        "shownStartMs": 3000
+      },
+      "cue2ShownStartMs": 5500,
+      "cue6": {
+        "startMs": 13600,
+        "shownStartMs": 13600
+      },
+      "cue7ShownStartMs": 18000,
+      "dirty": true
+    },
+    "expected": {
+      "note": "الظاهر المقصود: كل المقاطع بإزاحة +2000 كما كانت، والمقطع 6 +100 فوقها؛ تعديل واحد مني (نص المقطع 1)، ولا تعارض",
+      "counts_mine": 1,
+      "conflicts": 0,
+      "cue1ShownStartMs": 3000,
+      "cue2ShownStartMs": 5500,
+      "cue6ShownStartMs": 15600,
+      "cue7ShownStartMs": 18000
+    }
+  },
+  {
+    "scenario": "B: theirs committed the same offset (cues +2000, offset 0)",
+    "afterCommit": {
+      "offsetMs": 0,
+      "committedMs": 2000,
+      "baseOffsetMs": 2000,
+      "cue1Start": 3000
+    },
+    "bannerState": "changed",
+    "rescueInput": {
+      "offsets": {
+        "base": 2000,
+        "mine": 0,
+        "theirs": 0,
+        "committed": 2000
+      },
+      "baseCue6Start": 13500,
+      "mineCue6Start": 15500,
+      "theirsCue6Start": 15500
+    },
+    "firstPlan": {
+      "ok": true,
+      "counts": {
+        "mine": 13,
+        "theirs": 12
+      },
+      "conflicts": [],
+      "offsetMs": -2000,
+      "offsetConflict": false,
+      "kept": 1
+    },
+    "dialogText": "مقارنة تغييراتي بالنسخة الأحدثتعديلاتي: 13 مقطعًا · تغييرات الأحدث: 12 مقطعًا · متعارضة: 0.يُعاد تطبيق ما لا يتعارض من تعديلاتك فوق النسخة الأحدث، ويبقى كل ما غيّره الأحدث. وفي المتعارض يبقى الأحدث ما لم تختر تعديلك. لا يُكتب شيء حتى «حفظ»، والتراجع يعيد الأحدث كما هو.تطبيق غير المتعارض (1)تصدير نسختي…إلغاء",
+    "actual": {
+      "sessionOffsetMs": -2000,
+      "cue1": {
+        "startMs": 3000,
+        "text": "مقطع أول معدّل",
+        "shownStartMs": 1000
+      },
+      "cue2ShownStartMs": 3500,
+      "cue6": {
+        "startMs": 15500,
+        "shownStartMs": 13500
+      },
+      "cue7ShownStartMs": 16000,
+      "dirty": true
+    },
+    "expected": {
+      "note": "الطرفان ثبّتا +2000: الظاهر يبقى base+2000 لكل مقطع، والإزاحة 0",
+      "sessionOffsetMs": 0,
+      "cue1ShownStartMs": 3000,
+      "cue6ShownStartMs": 15500
+    }
+  },
+  {
+    "scenario": "C (control): player changed offset only 2000 -> 2500",
+    "afterCommit": {
+      "offsetMs": 0,
+      "committedMs": 2000,
+      "baseOffsetMs": 2000,
+      "cue1Start": 3000
+    },
+    "bannerState": "changed",
+    "rescueInput": {
+      "offsets": {
+        "base": 2000,
+        "mine": 0,
+        "theirs": 2500,
+        "committed": 2000
+      },
+      "baseCue6Start": 13500,
+      "mineCue6Start": 15500,
+      "theirsCue6Start": 13500
+    },
+    "firstPlan": {
+      "ok": true,
+      "counts": {
+        "mine": 13,
+        "theirs": 0
+      },
+      "conflicts": [],
+      "offsetMs": 500,
+      "offsetConflict": false,
+      "kept": 12
+    },
+    "dialogText": "مقارنة تغييراتي بالنسخة الأحدثتعديلاتي: 13 مقطعًا · تغييرات الأحدث: 0 مقطع · متعارضة: 0.يُعاد تطبيق ما لا يتعارض من تعديلاتك فوق النسخة الأحدث، ويبقى كل ما غيّره الأحدث. وفي المتعارض يبقى الأحدث ما لم تختر تعديلك. لا يُكتب شيء حتى «حفظ»، والتراجع يعيد الأحدث كما هو.تطبيق غير المتعارض (12)تصدير نسختي…إلغاء",
+    "actual": {
+      "sessionOffsetMs": 500,
+      "cue1": {
+        "startMs": 3000,
+        "text": "مقطع أول معدّل",
+        "shownStartMs": 3500
+      },
+      "cue2ShownStartMs": 6000,
+      "cue6": {
+        "startMs": 15500,
+        "shownStartMs": 16000
+      },
+      "cue7ShownStartMs": 18500,
+      "dirty": true
+    },
+    "expected": {
+      "note": "الظاهر المقصود base+2500 لكل مقطع؛ تعديل واحد مني",
+      "cue1ShownStartMs": 3500,
+      "cue6ShownStartMs": 16000,
+      "counts_mine": 1
+    }
+  }
+]

@@ -1,0 +1,42 @@
+# A6 — حفظ ملف فوق حد القناة من صفحة يوتيوب (CL-N3)
+docs/known-limitations.md:94 يعد بـ: «الملف أكبر من أن يُحفظ من هنا. صدّره من المحفوظات.» و«لا فشل صامت»
+SAVE_LIMITS.maxMessageChars = 16777216
+
+## ١. سكربت المحتوى، ملف SRT بـmaxMessageChars+1 محرف، والوضع المختار في الإعدادات «مجلد فرعي»
+- نتيجة saveFile
+  الفعلي:   {"result":{"ok":true,"mode":"blob","downloadId":null},"sentToWorker":0,"blobDownloads":[{"name":"AAAAAAAAAAA.en.manual.srt","type":"application/x-subrip;charset=utf-8"}]}
+  المتوقع:  {"result":{"ok":false,"code":"SV_TOO_LARGE"},"sentToWorker":0,"blobDownloads":[]}
+  غير مطابق (يثبت الادعاء)
+  ما يراه المستخدم في قائمة التحميل (saveFiles ثم session.js:1065): {"saved":["AAAAAAAAAAA.en.manual.srt"],"blob":true,"line":"تعذّر الحفظ في المكان المختار، فنُزّل الملف إلى مجلد التنزيلات كالمعتاد."}
+  ⇒ ليس فشلًا صامتًا: يُنزَّل إلى مجلد التنزيلات (أو حسب سؤال المتصفح) مع إشعار SV_FALLBACK_BLOB؛ والوثيقة تصف رسالة أخرى بلا تنزيل.
+
+## ٢. مسارات الرجوع الأخرى من سكربت المحتوى
+  العامل يرد SV_FAILED: {"ok":true,"mode":"blob","downloadId":null} ← Blob: ["application/x-subrip;charset=utf-8"]
+  لا مستقبل (Receiving end does not exist): {"ok":true,"mode":"blob","downloadId":null} ← Blob: ["application/x-subrip;charset=utf-8"]
+  سياق الإضافة لم يعد صالحًا (رمي متزامن بعد تحديث الإضافة): {"ok":true,"mode":"blob","downloadId":null} ← Blob: ["application/x-subrip;charset=utf-8"]
+
+## ٣. نوع Blob في الرجوع من صفحة إضافة (getPrefs يفشل)
+- tarjuman-backup.json
+  الفعلي:   {"result":"blob","blobType":"application/x-subrip;charset=utf-8"}
+  المتوقع:  {"result":"blob","blobType":"application/json;charset=utf-8"}
+  غير مطابق (يثبت الادعاء)
+- study.md
+  الفعلي:   {"result":"blob","blobType":"application/x-subrip;charset=utf-8"}
+  المتوقع:  {"result":"blob","blobType":"text/markdown;charset=utf-8"}
+  غير مطابق (يثبت الادعاء)
+- study.txt
+  الفعلي:   {"result":"blob","blobType":"application/x-subrip;charset=utf-8"}
+  المتوقع:  {"result":"blob","blobType":"text/plain;charset=utf-8"}
+  غير مطابق (يثبت الادعاء)
+- AAAAAAAAAAA.ar.srt
+  الفعلي:   {"result":"blob","blobType":"application/x-subrip;charset=utf-8"}
+  المتوقع:  {"result":"blob","blobType":"application/x-subrip;charset=utf-8"}
+  مطابق
+  setLastSave في الرجوع: 0 (لا معرّف تنزيل لرابط <a download>، فلا «آخر ملف»)
+
+## ٤. هل يبلغ ملف SRT من المشغّل 16 مليون محرف؟
+  manual: json3 59007 محرفًا ← SRT 32411 (النسبة 0.549)
+  asr: json3 953282 محرفًا ← SRT 84419 (النسبة 0.089)
+  أقصى SRT تقديري = MAX_BODY_CHARS 20971520 × 0.549 ≈ 11519107 < 16777216؛ ففرع الحجم شبه غير قابل للبلوغ من المشغّل، والفروع في §٢ هي القابلة للبلوغ.
+
+الخلاصة: 4 حالة غير مطابقة (المتوقع: ١ للحجم مقابل الوثيقة، و٣ لنوع MIME بغير .srt).

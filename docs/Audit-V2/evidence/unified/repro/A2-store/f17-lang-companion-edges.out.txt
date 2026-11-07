@@ -1,0 +1,79 @@
+=== أ) تحذير النسخة الجزئية حين يُستبعد lang:<id> التالف ===
+  getBundle مع lang:<id> تالف
+    الفعلي:   "ST_CORRUPT_RECORD"
+    المتوقع:  "ST_CORRUPT_RECORD"
+    مطابق
+  createBackup: partial
+    الفعلي:   [{"videoId":"AAAAAAAAAAA","dropped":["lang"]}]
+    المتوقع:  [{"videoId":"AAAAAAAAAAA","dropped":["lang"]}]
+    مطابق
+  سطر التحذير كما تبنيه data.js:133
+    الفعلي:   ["AAAAAAAAAAA: استُبعد lang"]
+    المتوقع:  ["AAAAAAAAAAA: استُبعد بيانات اللغات"]
+    مختلف
+
+=== ب) salvageRaw برأس تالف: هل «يندمج lang.slots على خانات أُفرغت»؟ وما أثر إبقاء lang؟ ===
+  -- النشطة الأصلية 1 (fileName=one.ar.srt، lang=fr) --
+  salvage: dropped (لا مفتاح marks: لا علامات)
+    الفعلي:   ["head","alts"]
+    المتوقع:  ["head","alts"]
+    مطابق
+  salvage: الخانات الممتلئة {n, fileName, lang}
+    الفعلي:   [{"n":1,"fileName":"one.ar.srt","lang":"fr"}]
+    المتوقع:  [{"n":1,"fileName":"one.ar.srt","lang":"fr"}]
+    مطابق
+  salvage: المسار الياباني والبصمة (من lang)
+    الفعلي:   [["ja|manual"],1]
+    المتوقع:  [["ja|manual"],1]
+    مطابق
+  -- النشطة الأصلية 2 (fileName=two.ar.srt، lang=ar) --
+  salvage: dropped (لا مفتاح marks: لا علامات)
+    الفعلي:   ["head","alts"]
+    المتوقع:  ["head","alts"]
+    مطابق
+  salvage: الخانات الممتلئة {n, fileName, lang}
+    الفعلي:   [{"n":1,"fileName":"two.ar.srt","lang":null}]
+    المتوقع:  [{"n":1,"fileName":"two.ar.srt","lang":"ar"}]
+    مختلف
+  salvage: المسار الياباني والبصمة (من lang)
+    الفعلي:   [["ja|manual"],1]
+    المتوقع:  [["ja|manual"],1]
+    مطابق
+
+=== ج) bundleBytes ومستهلكوه ===
+  bundleBytes = {"record":571,"alts":408,"previous":0,"marks":0}، وlang:<id> = 1001 بايت (منه المسار الياباني بمقاطعه)
+  المستهلكون:
+    settings/view.js:616: const sizes = await Promise.all(list.map((x) => store.bundleBytes(x.entry.videoId))).catch(() => null);
+    settings/view.js:622: const alts = sizes.reduce((s, b) => s + b.alts, 0);
+    settings/view.js:623: const previous = sizes.reduce((s, b) => s + b.previous, 0);
+    library/expand.js:365: bytes = b?.previous ? await store.bundleBytes(videoId).then((x) => x.previous, () => null) : null;
+  حقول bundleBytes المعروضة للمستخدم
+    الفعلي:   ["alts","previous"]
+    المتوقع:  ["alts","previous"]
+    مطابق
+
+=== د) بصمات مكررة المعرّف في lang.prints ===
+  الكاتب: lang.prints فريدة (يمر بمدقق السجل الذي يرفض «معرّف بصمة مكرر»)
+    الفعلي:   true
+    المتوقع:  true
+    مطابق
+  validateLangValue يقبل التكرار
+    الفعلي:   true
+    المتوقع:  false
+    مختلف
+  getBundle بعدها {code, fingerprints}
+    الفعلي:   {"code":null,"n":2}
+    المتوقع:  {"code":"ST_CORRUPT_RECORD","n":null}
+    مختلف
+  أول كتابة بعدها
+    الفعلي:   "MD_INVALID"
+    المتوقع:  "ST_CORRUPT_RECORD"
+    مختلف
+  createBackup {partial, skipped}
+    الفعلي:   {"partial":0,"skipped":[]}
+    المتوقع:  {"partial":1,"skipped":[]}
+    مختلف
+  النسخة نفسها تُقرأ في 2.0.0 {videos, invalid}
+    الفعلي:   {"videos":0,"invalid":["video.fingerprints — معرّف بصمة مكرر"]}
+    المتوقع:  {"videos":1,"invalid":[]}
+    مختلف

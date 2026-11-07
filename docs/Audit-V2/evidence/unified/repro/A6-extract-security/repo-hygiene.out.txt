@@ -1,0 +1,48 @@
+# A6 — صحة المستودع (HEAD 5b9a5845625af20cda5449087e3ba63087c367ba)
+
+## ١. .github/workflows/ci.yml
+  سطر 11: permissions:
+  سطر 12: contents: read
+  سطر 29: actions/checkout@v7 — وسم متحرك (ليس SHA)
+  سطر 45: actions/setup-node@v7 — وسم متحرك (ليس SHA)
+  سطر 51: run: npm ci --no-audit --no-fund — سكربتات التثبيت تعمل
+  pull_request_target أو secrets.*: لا شيء
+  .github/dependabot.yml: غائب
+  .github/dependabot.yaml: غائب
+  حزم بسكربت تثبيت في package-lock.json: ["esbuild@0.28.2 (dev)"]
+  dependencies: {}، devDependencies: {"esbuild":"0.28.2","web-ext":"10.8.0"}
+
+## ٢. نطاق scripts/check-secrets.mjs
+  SCOPES=["test/fixtures","test/e2e/fixtures","docs/evidence"]، TEXT=/\.(json|srt|txt|log|md|csv|ndjson)$/i
+  الملفات المتتبَّعة: 2375؛ داخل النطاقات: 1259؛ يفحصها فعلًا (امتداد نصي): 291؛ خارج الفحص: 2084
+  الصور المتتبَّعة: 914 (في docs/evidence: 889)، ولا يفحص أيًّا منها
+
+## ٣. مسح الأنماط على كل الملفات المتتبَّعة (لا تُطبع القيم)
+  GitHub token (ghp_/gho_/ghu_/ghs_/ghr_): 0 مطابقة في 0 ملف
+  GitHub fine-grained PAT: 0 مطابقة في 0 ملف
+  AWS access key (AKIA): 0 مطابقة في 0 ملف
+  Google API key (AIza): 0 مطابقة في 0 ملف
+  Slack token (xox?-): 0 مطابقة في 0 ملف
+  Private key block: 1 مطابقة في 1 ملف
+    test/unit/release/store.test.js
+  OpenAI/Anthropic key (sk-/sk-ant-): 0 مطابقة في 0 ملف
+  /Users/<name>/: 32 مطابقة في 11 ملف؛ الأسماء: ["u","someone","test","t"]
+    docs/audit-7a66f91/verify-ds/pipeline/prior/02-extract-save.mjs
+    docs/audit-7a66f91/verify-ds/pipeline/prior/02d-s8-clear-on-close.mjs
+    docs/audit-7a66f91/verify-ds/security/v2-sanitize.mjs
+    docs/audit-7a66f91/verify-ds/security/v2-sanitize.out.txt
+    docs/audit-7a66f91/verify/engines/02-extract-save.mjs
+    docs/audit-7a66f91/verify/engines/02-extract-save.out.txt
+    docs/audit-7a66f91/verify/engines/02d-s8-clear-on-close.mjs
+    docs/audit-7a66f91/verify/engines/02d-s8-clear-on-close.out.txt
+    test/unit/pages/settings/view.test.js
+    test/unit/release/store.test.js
+    test/unit/save/save.test.js
+  /Volumes/<name>/: 6 مطابقة في 2 ملف؛ الأسماء: ["<VOLUME>"]
+    docs/aa-plan.md
+    test/live/aa5/data.mjs
+  /private/tmp|var/: 0 مطابقة في 0 ملف
+  اسم المستخدم المحلي الحقيقي: 0 مطابقة في 0 ملف
+
+## ٤. بيانات الصور الوصفية (PNG tEXt/iTXt/zTXt/eXIf وJPEG EXIF)
+  كتل نصية في PNG: 0؛ كتل EXIF: 51، منها بنص مقروء (5 محارف فأكثر): 0

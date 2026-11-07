@@ -1,0 +1,31 @@
+
+## أ-١. ملفات src التي تذكر sameBaseLang
+الفعلي: ["src/core/lang/index.js"]
+المتوقع: "إن صح ادعاء Gemini: src/pages/popup/status.js بين المستعملين"
+ملاحظة: التعريف وحده في src/core/lang/index.js؛ لا مستدعي في المنتج.
+
+## أ-٢. pairState في النافذة (المنطق الذي يمنع النسخ)
+الفعلي: [{"from":"ar-EG","to":"ar","popupReady":true,"reason":null,"sameBaseLang":true},{"from":"iw","to":"he","popupReady":true,"reason":null,"sameBaseLang":false},{"from":"en","to":"en-GB","popupReady":true,"reason":null,"sameBaseLang":true},{"from":"ar","to":"ar","popupReady":false,"reason":"اللغتان متطابقتان؛ اختر لغة أخرى لإحداهما.","sameBaseLang":true}]
+المتوقع: "إن صح الادعاء: popupReady=false حيث sameBaseLang=true"
+ملاحظة: النافذة تقارن from === to حرفيًا (status.js:383)، كالتصدير والاستكمال والمحرّر والمحفوظات.
+
+## أ-٣. التصدير والاستكمال بزوج ar-EG ← ar
+الفعلي: {"exportInstructionsFirstLine":"ترجمة ملف ترجمة فيديو (SRT) من العربية (مصر) (ar-EG) إلى العربية (ar)","patchHasInstructions":true}
+المتوقع: "سلوك متسق مع النافذة (كلها تسمح، فلا تعارض)"
+
+## ب-١. normalizeLang
+الفعلي: {"zh-hakka":{"normalizeLang":"zh","canonical":"hak"},"zh-min-nan":{"normalizeLang":null,"canonical":null},"zh-xiang":{"normalizeLang":"zh","canonical":"hsn"},"zh-guoyu":{"normalizeLang":"zh","canonical":"zh"},"no-bok":{"normalizeLang":null,"canonical":null},"art-lojban":{"normalizeLang":"art","canonical":"jbo"},"sh":{"normalizeLang":"sh-Latn","canonical":"sr-Latn"},"hak":{"normalizeLang":"hak","canonical":"hak"},"hak-TW":{"normalizeLang":"hak-TW","canonical":"hak-TW"},"yue-HK":{"normalizeLang":"yue-HK","canonical":"yue-HK"},"zh-Hant":{"normalizeLang":"zh-Hant","canonical":"zh-Hant"},"zh-HK":{"normalizeLang":"zh-HK","canonical":"zh-HK"},"es-419":{"normalizeLang":"es-419","canonical":"es-419"},"fil":{"normalizeLang":"fil","canonical":"fil"},"iw":{"normalizeLang":"iw","canonical":"he"},"pt-BR":{"normalizeLang":"pt-BR","canonical":"pt-BR"}}
+المتوقع: "لا يُسقط وسمًا يميّز اللغة (zh-hakka لا يصير zh)"
+
+## ب-٢. أين يصل الرمز إلى normalizeLang؟ اسم ملف مرفوع
+الفعلي: {"v.zh-hakka.srt":"zh","v.hak.srt":"hak"}
+المتوقع: "v.zh-hakka.srt → hak أو null، لا zh"
+ملاحظة: رموز مسارات يوتيوب لا تمر بـnormalizeLang (message.js يتحقق بالنمط فقط).
+
+## ج-١. قرينة الاسم لفيديو آخر غير معروف (classTransitions=2)
+الفعلي: [{"case":"ar (ثنائي)","name":"abcdeFGHIJ1.ar.manual.normal.srt","hint":{"videoId":"abcdeFGHIJ1","differs":true}},{"case":"zh-Hant","name":"abcdeFGHIJ1.zh-Hant.manual.normal.srt","hint":{"videoId":"abcdeFGHIJ1","differs":true}},{"case":"fil (ثلاثي)","name":"abcdeFGHIJ1.fil.manual.normal.srt","hint":null},{"case":"yue (ثلاثي)","name":"abcdeFGHIJ1.yue.asr.normal.srt","hint":null},{"case":"es-419 (رقمي)","name":"abcdeFGHIJ1.es-419.manual.normal.srt","hint":null},{"case":"مترجم آليًا .from-en","name":"abcdeFGHIJ1.es.from-en.asr.normal.srt","hint":null},{"case":"ما يعيده النموذج للمترجم آليًا","name":"abcdeFGHIJ1.ar.from-en.asr.normal.srt","hint":null}]
+المتوقع: "قرينة {videoId: abcdeFGHIJ1, differs: true} لكل أسماء ترجمان"
+
+## ج-٢. نسبة المعرّفات العشوائية التي تبدّل أصنافها أقل من 6
+الفعلي: {"below":5080,"of":20000,"ratio":0.254}
+المتوقع: "معلومة: هذه وحدها تعتمد على TARJUMAN_TAIL حين لا يكون الفيديو الحالي ولا في المحفوظات"
