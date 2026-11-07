@@ -1,0 +1,53 @@
+{
+  "browser": "Brave (Chrome/157.0.8103.39)",
+  "at": "2026-11-07T10:11:03.505Z",
+  "headless": true,
+  "extension": {
+    "version": "1.1.0",
+    "versionName": "1.1.0-dev"
+  },
+  "shots": [
+    "library-light.png",
+    "library-dark.png",
+    "library-expanded-light.png",
+    "library-expanded-dark.png",
+    "settings-display-light.png",
+    "settings-display-dark.png",
+    "settings-data-light.png",
+    "settings-data-dark.png",
+    "settings-about-light.png",
+    "settings-about-dark.png",
+    "editor-light.png",
+    "editor-dark.png",
+    "popup-light.png",
+    "popup-dark.png",
+    "gallery-light.png",
+    "gallery-dark.png"
+  ],
+  "external": [],
+  "errors": [],
+  "checks": [
+    {
+      "id": "thumbnails-off",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "no-external-requests",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "no-extension-errors",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "id": "screenshots",
+      "ok": true,
+      "detail": {
+        "n": 16
+      }
+    }
+  ]
+}
