@@ -20,10 +20,22 @@ async function walk(dir) {
   return out;
 }
 
-test('لقطة tj-v1 مطابقة للوسم ملفًا ملفًا', async () => {
-  const snap = JSON.parse(await readFile(path.join(DIR, 'SNAPSHOT.json'), 'utf8'));
-  assert.equal(snap.tag, 'tj-v1');
-  const files = (await walk(path.join(DIR, 'src'))).map((f) => path.relative(DIR, f).split(path.sep).join('/')).sort();
+async function checkSnapshot(dir) {
+  const snap = JSON.parse(await readFile(path.join(dir, 'SNAPSHOT.json'), 'utf8'));
+  const files = (await walk(path.join(dir, 'src'))).map((f) => path.relative(dir, f).split(path.sep).join('/')).sort();
   assert.deepEqual(files, Object.keys(snap.blobs).sort(), 'لا ملف زائد ولا ناقص');
-  for (const f of files) assert.equal(blobSha(await readFile(path.join(DIR, f))), snap.blobs[f], f);
+  for (const f of files) assert.equal(blobSha(await readFile(path.join(dir, f))), snap.blobs[f], f);
+  return snap;
+}
+
+test('لقطة tj-v1 مطابقة للوسم ملفًا ملفًا', async () => {
+  const snap = await checkSnapshot(DIR);
+  assert.equal(snap.tag, 'tj-v1');
+});
+
+// لقطة 1.1.0 (AA1): نموذج التخزين والنسخ الاحتياطي كما نُشر في المتاجر، لتثبت اختبارات التوافق أن 1.1.0 يقرأ ما يكتبه 2.0.0.
+test('لقطة 1.1.0 مطابقة لالتزامها ملفًا ملفًا', async () => {
+  const snap = await checkSnapshot(path.resolve(DIR, '../v1.1'));
+  assert.equal(snap.version, '1.1.0');
+  assert.equal(snap.commit, '594e8043c7323da1dc5af10a1e0c8c1ecb472edc');
 });
