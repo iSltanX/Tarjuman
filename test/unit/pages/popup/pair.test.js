@@ -69,23 +69,23 @@ test('لغات الفيديو لقائمة «من»: المسار المختار
   assert.deepEqual(videoLangs(reply({ watch: false })), []);
 });
 
-test('المنتقي: الحقل باسم اللغة بالعربية، والقائمة ببحث ولغات الفيديو والأخيرة وكل اللغات، والاختيار بالنقر أو Enter', () => {
+test('المنتقي: الحقل باسم اللغة بالعربية، والقائمة ببحث ثم العربية والإنجليزية أولًا ثم لغات الفيديو والأخيرة وكل اللغات، والاختيار بالنقر أو Enter', () => {
   const doc = newDocument();
   const picked = [];
-  const f = langField({ label: LANG_TEXT.to, value: null, recent: () => ['ar'], video: () => ['ja'], onChange: (c) => picked.push(c), doc });
+  const f = langField({ label: LANG_TEXT.to, value: null, recent: () => ['ar', 'fr'], video: () => ['ja', 'en'], onChange: (c) => picked.push(c), doc });
   doc.body.append(f.root);
   assert.equal(textOf(f.field.querySelector('.tj-lang__v')), LANG_TEXT.empty);
   assert.equal(f.field.getAttribute('aria-label'), 'إلى: اختر لغة');
   f.field.click();
   assert.equal(f.field.getAttribute('aria-expanded'), 'true');
   const labels = findAll(f.root, (e) => e.classList.contains('tj-lang-pop__label')).map(textOf);
-  assert.deepEqual(labels, [LANG_TEXT.video, LANG_TEXT.recent, LANG_TEXT.all]);
+  assert.deepEqual(labels, [LANG_TEXT.quick, LANG_TEXT.video, LANG_TEXT.recent, LANG_TEXT.all]);
   const options = findAll(f.root, (e) => e.getAttribute('role') === 'option');
   assert.ok(options.length > 150, 'كل اللغات من المتصفح');
-  assert.equal(options[0].getAttribute('data-code'), 'ja');
-  assert.equal(options[1].getAttribute('data-code'), 'ar');
-  assert.equal(options.filter((o) => o.getAttribute('data-code') === 'ar').length, 1, 'لا تكرار بين المجموعات');
-  assert.ok(textOf(options[0]).includes('日本語') && textOf(options[0]).includes('ja'));
+  // العربية والإنجليزية أول لغتين للوصول السريع (قرار سلطان)، ثم لغات الفيديو والأخيرة بلا تكرار.
+  assert.deepEqual(options.slice(0, 4).map((o) => o.getAttribute('data-code')), ['ar', 'en', 'ja', 'fr']);
+  for (const c of ['ar', 'en']) assert.equal(options.filter((o) => o.getAttribute('data-code') === c).length, 1, `لا تكرار: ${c}`);
+  assert.ok(textOf(options[2]).includes('日本語') && textOf(options[2]).includes('ja'));
   // البحث بالاسم بلا «ال» ولا همزة، ثم Enter.
   const input = f.root.querySelector('.tj-lang-pop__search');
   input.value = 'انجليزي';
@@ -150,4 +150,22 @@ test('لوحة المفاتيح في المنتقي (مراجعة AA3): Enter أ
   f.root.querySelector('.tj-lang-pop__search').dispatchEvent({ type: 'keydown', key: 'Tab' });
   assert.equal(f.field.getAttribute('aria-expanded'), 'false');
   assert.ok(doc.activeElement === f.field, 'التركيز على الحقل فيتابع Tab من موضعه');
+});
+
+test('العربية والإنجليزية أولًا ترتيبٌ لا إلزام (قرار سلطان): أي لغة أخرى تُختار، والبحث بالأقرب كما هو، و«تلقائي» قبلهما في الإعدادات', () => {
+  const doc = newDocument();
+  const picked = [];
+  const f = langField({ label: LANG_TEXT.from, value: 'ja', auto: LANG_TEXT.auto, onChange: (c) => picked.push(c), doc });
+  doc.body.append(f.root);
+  f.field.click();
+  const codes = findAll(f.root, (e) => e.getAttribute('role') === 'option').map((o) => o.getAttribute('data-code'));
+  assert.deepEqual(codes.slice(0, 3), [AUTO, 'ar', 'en']);
+  findAll(f.root, (e) => e.getAttribute('data-code') === 'tr')[0].click();
+  assert.deepEqual(picked, ['tr'], 'لغة أخرى تُختار');
+  f.field.click();
+  const input = f.root.querySelector('.tj-lang-pop__search');
+  input.value = 'اليابانية';
+  input.dispatchEvent({ type: 'input' });
+  assert.equal(findAll(f.root, (e) => e.getAttribute('role') === 'option')[0].getAttribute('data-code'), 'ja', 'البحث بالأقرب لا بالمثبّت');
+  assert.equal(findAll(f.root, (e) => e.classList.contains('tj-lang-pop__label')).map(textOf).includes(LANG_TEXT.quick), false);
 });

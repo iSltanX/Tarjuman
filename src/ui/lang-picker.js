@@ -1,5 +1,6 @@
 // منتقي اللغة المشترك لصفحات الإضافة (AA3، لوحتا 09 و15، ومكوّنا .lang و.lang-swap في لوحة 19): حقل بارتفاع 40 فيه تسميته
-// («من» أو «إلى») واسم اللغة بالعربية، وقائمة منسدلة فيها بحث، ثم «تلقائي» إن أُتيح، ثم لغات الفيديو، ثم الأخيرة، ثم كل اللغات؛
+// («من» أو «إلى») واسم اللغة بالعربية، وقائمة منسدلة فيها بحث، ثم «تلقائي» إن أُتيح، ثم العربية والإنجليزية للوصول السريع (قرار سلطان)،
+// ثم لغات الفيديو، ثم الأخيرة، ثم كل اللغات؛
 // ولكل لغة اسمها العربي، وفي سطرها اسمها بلغتها ورمزها، وكل اسم معزول الاتجاه باتجاه لغته. الأسماء والقائمة من بيانات المتصفح
 // (src/core/lang)، فلا قائمة لغات مكتوبة هنا. نمط combobox وlistbox: الحقل المكتوب يملك التركيز، والأسهم تنقل الخيار النشط
 // (aria-activedescendant)، وEnter يختار، وEsc يغلق ويعيد التركيز إلى الحقل. textContent وsetAttribute فقط.
@@ -8,12 +9,18 @@ import { el, icon } from './components.js';
 
 export const LANG_TEXT = Object.freeze({
   from: 'من', to: 'إلى', empty: 'اختر لغة', search: 'ابحث عن لغة', auto: 'تلقائي من مسار الفيديو', autoShort: 'تلقائي',
-  video: 'في هذا الفيديو', recent: 'الأخيرة', all: 'كل اللغات', results: 'النتائج', none: 'لا لغة بهذا الاسم أو الرمز',
+  quick: 'للوصول السريع', video: 'في هذا الفيديو', recent: 'الأخيرة', all: 'كل اللغات', results: 'النتائج', none: 'لا لغة بهذا الاسم أو الرمز',
   swap: 'مبادلة اللغتين', list: 'اللغات',
 });
 
 /** القيمة «تلقائي» في حقل «من» بالإعدادات (lang-prefs AUTO_SOURCE). */
 export const AUTO = 'auto';
+
+/**
+ * أول لغتين في قائمتي «من» و«إلى» للوصول السريع (قرار سلطان، 2026-11-07): العربية ثم الإنجليزية، ثم بقية اللغات. ترتيبٌ لا إلزام: أي
+ * لغة أخرى تُختار كما هي، والبحث كما هو، والافتراضي لا يتغير.
+ */
+export const QUICK_LANGS = Object.freeze(['ar', 'en']);
 
 let seq = 0;
 /** القائمة المفتوحة الآن (واحدة في الصفحة). @type {{ close: () => void } | null} */
@@ -40,7 +47,7 @@ export function valueLabel(value, autoLabel = LANG_TEXT.auto) {
  * }} o auto: نص خيار «تلقائي» إن أُتيح (حقل «من» في الإعدادات)؛ video: رموز لغات مسارات الفيديو؛ note: سطر تحت الحقل
  * @returns {{ root: HTMLElement, field: HTMLButtonElement, set: (v: string | null) => void, get: () => string | null, open: () => void, close: () => void, setDisabled: (d: boolean) => void }}
  */
-export function langField({ label, value, onChange, anchor = null, recent = () => [], video = () => [], auto = null, disabled = false, doc = document }) {
+export function langField({ label, value, onChange, anchor = null, recent = () => [], video = () => [], auto = null, quick = QUICK_LANGS, disabled = false, doc = document }) {
   const id = `tj-lang-${++seq}`;
   let current = value;
   const k = el('span', { className: 'tj-lang__k', text: label, doc });
@@ -132,7 +139,16 @@ export function langField({ label, value, onChange, anchor = null, recent = () =
       if (auto) {
         nodes.push(option(AUTO, { autoItem: true, name: auto }));
       }
-      const fromVideo = [...new Set(video())].filter(Boolean);
+      // العربية والإنجليزية أولًا (QUICK_LANGS)، ثم لغات الفيديو والأخيرة وكل اللغات بلا تكرار.
+      const first = [...new Set(quick)].filter(Boolean);
+      if (first.length) {
+        nodes.push(groupHead(LANG_TEXT.quick));
+        for (const c of first) {
+          seen.add(c);
+          nodes.push(option(c));
+        }
+      }
+      const fromVideo = [...new Set(video())].filter((c) => c && !seen.has(c));
       if (fromVideo.length) {
         nodes.push(groupHead(LANG_TEXT.video));
         for (const c of fromVideo) {
