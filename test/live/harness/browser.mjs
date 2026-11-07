@@ -55,7 +55,8 @@ export async function launch({ browser, extensionPath, flagLoad = false, profile
   child.stderr.setEncoding('utf8');
   child.stderr.on('data', (d) => { stderrTail = (stderrTail + d).slice(-4000); });
   const conn = new CdpConnection(pipeTransport(child));
-  const version = await conn.send('Browser.getVersion', {}, undefined, 30000);
+  // أول تشغيل لـEdge مستخرج حديثًا تجاوز 30 ث فأسقط جولة T3 قبل أن تبدأ (تدقيق Fable، FA-21): مهلة أطول له، والبقية كما كانت.
+  const version = await conn.send('Browser.getVersion', {}, undefined, browser === 'edge' ? 120000 : 30000);
   const close = async () => {
     try {
       await conn.send('Browser.close', {}, undefined, 5000);
