@@ -152,6 +152,8 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       const dropped = undoStack.splice(0, undoStack.length - maxHistory);
       if (dropped.some((e) => structural(e) && !baked.has(e))) droppedStructural = true;
     }
+    // خطوة بنية محفوظة في redoStack ستسقط: بنية المفتوح لم تعد تقابل المواضع (U-039).
+    if (redoStack.some((e) => baked.has(e))) droppedStructural = true;
     redoStack = [];
   };
   const checkIndex = (i) => {
@@ -267,7 +269,11 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
         || undoStack.some((e) => structural(e) && !baked.has(e)) || redoStack.some((e) => baked.has(e));
     },
     /** لقطة البنية عند أخذ ما يُحفظ، تُمرَّر إلى markSaved فلا يُعدّ ما دخل المحفوظ تغييرًا في البنية. */
-    checkpoint: () => ({ entries: new Set(undoStack.filter(structural)), dropped: droppedStructural, committed }),
+    checkpoint: () => {
+      // بدء الحفظ يختم مجموعة الكتابة المفتوحة (U-038): ما يُكتب أثناء انتظاره خطوة جديدة لا تُدمج في مدخل ما قبل الحفظ.
+      openGroup = null;
+      return { entries: new Set(undoStack.filter(structural)), dropped: droppedStructural, committed };
+    },
     get version() { return version; },
     get hasDrafts() { return drafts.size > 0; },
     /** عدد حقول الزمن بنص لم يُقرأ بعد. */
@@ -451,6 +457,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       base = Object.freeze(saved.map(freezeCue));
       baseOffset = savedOffset;
       baked = at.entries;
+      openGroup = null;
       if (at.dropped) droppedStructural = false;
       // ما ثُبّت حتى لقطة المحفوظ دخل فيه: لا يبقى معلّقًا فيرفض تبنّي ± المشغّل أو يُطرح مرة ثانية في الإنقاذ.
       committed -= at.committed ?? committed;

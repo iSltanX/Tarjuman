@@ -74,7 +74,7 @@ export function searchCues(cues, query, { field = 'ar', english = null, wholeWor
         continue;
       }
       // ما بين آخر محرف مطابق والمحرف المطبّع التالي تشكيل سقط في التطبيع: يدخل في المطابقة.
-      const end = last + 1 < norm.length ? starts[last + 1] : text.length;
+      const end = after < norm.length ? starts[after] : text.length;
       out.push({ index, start: starts[k], end: Math.max(ends[last], end) });
       from = last + 1;
     }

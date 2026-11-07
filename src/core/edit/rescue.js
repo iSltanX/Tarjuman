@@ -18,21 +18,32 @@ import { diffTranslations, mergeThreeWay } from '../align/index.js';
  *   counts: ما غيّره كل طرف عن المفتوح (للعرض)؛ وconflicts ما بقي بلا اختيار.
  */
 export function planRescue({ base, mine, theirs, offsets, resolve = {}, offsetChoice = 'theirs' }) {
-  const merged = mergeThreeWay({ base, mine, theirs }, { resolve });
+  // الدمج كله في إطار الأساس (U-036): «تثبيت الإزاحة» (committed) نقلٌ لا يغيّر الظاهر، فيُرد توقيتي إلى إطار الأساس قبل
+  // الدمج والعدّ، وإلا ظهر كل مقطع «معدَّلًا» وتعارض توقيتي الإزاحي مع توقيت الأحدث. والإزاحات تُقارن في إطار الأساس أيضًا:
+  // إزاحتي الفعلية mineEff = offsets.mine + committed، وإزاحة الأحدث offsets.theirs كما هي (الأحدث لم يثبّت ما ثبّتُّه أنا،
+  // وإن ثبّت مثله فقيمته في توقيت مقاطعه فتحمله نسخته بالدمج؛ GM-014.1 ثم التدقيق الموحد V2).
+  const committed = offsets.committed ?? 0;
+  const mineB = committed ? mine.map((c) => ({ ...c, startMs: c.startMs - committed, endMs: c.endMs - committed })) : mine;
+  const merged = mergeThreeWay({ base, mine: mineB, theirs }, { resolve });
   if (!merged.ok) return merged;
+  // عدّ المقاطع لا الحقول: المقطع الذي تغيّر نصه وتوقيته مقطع واحد.
   const changed = (side) => {
     const d = diffTranslations(base, side);
-    return d.counts.textChanged + d.counts.timingChanged + d.counts.added + d.counts.removed;
+    return d.aligned ? d.changes.length : d.counts.added + d.counts.removed;
   };
-  // ما ثبّتُّه من الإزاحة في توقيت المقاطع (committed) نقلٌ لا يغيّر الظاهر: لا يُعدّ تحريكًا للإزاحة، وإزاحة الأحدث تُطبَّق فوق
-  // توقيتي بعد طرحه، فلا تُجمع مرتين (كانت +1.0 مثبّتة و+1.5 من المشغّل تصير +2.5؛ تدقيق 5fedcb9، GM-014.1).
-  const committed = offsets.committed ?? 0;
-  const theirsOnMine = offsets.theirs - committed;
-  const mineMoved = offsets.mine + committed !== offsets.base;
+  const mineEff = offsets.mine + committed;
+  const mineMoved = mineEff !== offsets.base;
   const theirsMoved = offsets.theirs !== offsets.base;
-  const offsetConflict = mineMoved && theirsMoved && offsets.mine + committed !== offsets.theirs;
-  const offsetMs = offsetConflict ? (offsetChoice === 'mine' ? offsets.mine : theirsOnMine) : mineMoved ? offsets.mine : theirsOnMine;
-  return { ...merged, offsetMs, offsetConflict, counts: { mine: changed(mine), theirs: changed(theirs) } };
+  const offsetConflict = mineMoved && theirsMoved && mineEff !== offsets.theirs;
+  let offsetMs = offsetConflict ? (offsetChoice === 'mine' ? mineEff : offsets.theirs) : mineMoved ? mineEff : offsets.theirs;
+  let cues = merged.cues;
+  // يُعاد التثبيت بمقدار committed فقط إن بقي في الإزاحة الناتجة ما يساويه بالإشارة نفسها وبقيمة لا تقل عنه؛ وإلا فالظاهر
+  // محفوظ بلا تثبيت (لا إضافة غير مشروطة: تثبيت مضاعف إن ثبّت الأحدث الإزاحة نفسها).
+  if (committed && Math.sign(offsetMs) === Math.sign(committed) && Math.abs(offsetMs) >= Math.abs(committed)) {
+    cues = cues.map((c) => ({ ...c, startMs: c.startMs + committed, endMs: c.endMs + committed }));
+    offsetMs -= committed;
+  }
+  return { ...merged, cues, offsetMs, offsetConflict, counts: { mine: changed(mineB), theirs: changed(theirs) } };
 }
 
 /**

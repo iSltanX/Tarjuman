@@ -2,10 +2,13 @@
 // تعارض (والأحدث افتراضيًا فلا يُكتب فوقه بصمت)، و«تطبيق غير المتعارض (N)». يعيد الاختيارات أو 'export' أو null؛ والتطبيق
 // في الجلسة (app.js) لا يكتب شيئًا حتى «حفظ».
 import { alertBox, el } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatTimecode, ltrInline, offsetInline } from '../../ui/format.js';
 import { openDialog } from './dialogs.js';
 
 let seq = 0;
+const span = (cues) => (cues.length ? `${formatTimecode(cues[0].startMs)} ← ${formatTimecode(cues[cues.length - 1].endMs)}` : '');
+// التعارض الزمني نصّاه متطابقان فيُذكر الزمن بجانب النص ليتميّز الخياران (U-037)؛ ويُذكر كلما اختلف زمنا الطرفين.
+const side = (cues, other) => (span(cues) && span(cues) !== span(other) ? `${flat(cues)} (${ltrInline(span(cues))})` : flat(cues));
 const flat = (cues) => (cues.length ? cues.map((c) => c.text.replace(/\s*\n\s*/g, ' / ')).join(' | ') : '(حُذف)');
 
 /**
@@ -40,8 +43,8 @@ export async function openRescueDialog({ doc, first, offsets }) {
       className: 'ed-fieldset',
       children: [
         el('legend', { className: 'tj-label', text: `المقطع ${c.n}`, doc }),
-        radio(name, 'theirs', `الأحدث: ${flat(c.theirs)}`, true, () => { resolve[c.key] = 'theirs'; }),
-        radio(name, 'mine', `تعديلي: ${flat(c.mine)}`, false, () => { resolve[c.key] = 'mine'; }),
+        radio(name, 'theirs', `الأحدث: ${side(c.theirs, c.mine)}`, true, () => { resolve[c.key] = 'theirs'; }),
+        radio(name, 'mine', `تعديلي: ${side(c.mine, c.theirs)}`, false, () => { resolve[c.key] = 'mine'; }),
       ],
       doc,
     });

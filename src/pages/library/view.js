@@ -826,7 +826,7 @@ export function createLibrary(env) {
     const shown = visible();
     if (!shown.length) {
       if (state.query.trim()) {
-        const clear = button({ label: 'مسح البحث', icon: 'x', variant: 'secondary', size: 'sm', doc, onClick: () => { search.value = ''; state.query = ''; render(); announceResults(); remember(); search.focus(); } });
+        const clear = button({ label: 'مسح البحث', icon: 'x', variant: 'secondary', size: 'sm', doc, onClick: () => { search.value = ''; state.query = ''; state.limit = PAGE_SIZE; syncClear(); render(); announceResults(); remember(); search.focus(); } });
         listHost.append(statePanel(emptyState({ icon: 'search', title: `لا نتائج لـ«${isolate(clip(state.query.trim(), 60))}»`, text: 'البحث في العناوين والمعرّفات. جرّب كلمة أقصر أو المعرّف.', action: clear, doc })));
       } else {
         const all = button({ label: 'عرض الكل', variant: 'secondary', size: 'sm', doc, onClick: () => { state.filter = 'all'; chips.set('all'); render(); announceResults(); remember(); } });
