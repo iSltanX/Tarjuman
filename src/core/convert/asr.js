@@ -1,7 +1,7 @@
 // محوّل ASR (تقرير كلود §٤.٢): تسطيح إلى كلمات بأزمنتها، ثم تجميع في مقاطع، دون إسقاط أي كلمة
 // ودون إزالة تداخل نصي تخمينًا. الصيغة المتدحرجة (حدث يعيد ذيل السابق إعادةَ عرض لا كلامًا جديدًا) توقف التحويل.
 import { ConvertError } from './json3.js';
-import { SENTENCE_END, hasNoSpaceScript, joinWords, wrapLines } from './text.js';
+import { SENTENCE_END, hasNoSpaceScript, joinWords, splitWords, wrapLines } from './text.js';
 
 export const ASR_DEFAULTS = Object.freeze({
   gapMs: 700, maxChars: 84, maxDurationMs: 6000, lineChars: 42, tailMs: 1500, minDurationMs: 300, rollingWords: 3,
@@ -11,13 +11,19 @@ export const ASR_DEFAULTS = Object.freeze({
 export const ROLLING_MAX_WORDS = 64;
 // أزواج متتالية متداخلة يتكرر فيها النمط بلا توقيت للكلمات يميّز التكرار الحقيقي، حتى يُحكم بالتدحرج من النمط وحده.
 export const ROLLING_RUN = 2;
+// في الكتابة المتصلة وحدة المقارنة حرف، فلا يُحكم بالنمط وحده من تكرار أقل من هذا العدد من الوحدات (AV2 U-002): تكرار قصير
+// مثل «はいはいはい» كلام حقيقي لا إعادة عرض.
+export const ROLLING_PATTERN_MIN_UNITS = 6;
 
 
 /**
  * كلمات الحدث بأزمنتها: زمن الكلمة زمن المقطع الجزئي (seg) الذي تبدأ فيه، محصورًا في نافذة حدثه [البداية، النهاية]،
  * فلا يصير زمن سالب ولا يجر زمن شاذ بقية المسار (تدقيق 7a66f91، I10). والعيّنات الحقيقية كلها داخل نوافذها.
+ * وكلمة `\S+` الممتدة عبر حدود قطع تُشطر عند كل حد يجاوره حرف من نص لا يفصل بالمسافات (AV2 U-001)، فلكل جزء زمن قطعته
+ * وعلامة `glue`: يوتيوب يرسل الياباني قطعًا متصلة بلا مسافة، فكانت كلمة واحدة بزمن أول قطعة. والحد بين قطعتين لاتينيتين
+ * («don» و«'t») لا يُشطر.
  * @param {import('./json3.js').TextEvent} e
- * @returns {{ words: { t: number, text: string, eventEndMs: number | null }[], clamped: number }}
+ * @returns {{ words: { t: number, text: string, eventEndMs: number | null, glue?: boolean }[], clamped: number }}
  */
 export function eventWords(e) {
   const hi = e.endMs ?? Infinity;
@@ -32,12 +38,31 @@ export function eventWords(e) {
   const words = [];
   let clamped = 0;
   let b = 0;
-  for (const m of e.text.matchAll(/\S+/gu)) {
-    while (b + 1 < bounds.length && bounds[b + 1].pos <= m.index) b++;
+  const push = (index, text, glue) => {
+    while (b + 1 < bounds.length && bounds[b + 1].pos <= index) b++;
     if (bounds[b].clamped) clamped++;
-    words.push({ t: bounds[b].t, text: m[0], eventEndMs: e.endMs });
+    words.push({ t: bounds[b].t, text, eventEndMs: e.endMs, ...(glue ? { glue: true } : {}) });
+  };
+  for (const m of e.text.matchAll(/\S+/gu)) {
+    const end = m.index + m[0].length;
+    let from = m.index;
+    let glue = false;
+    for (const bd of bounds) {
+      if (bd.pos <= from || bd.pos >= end) continue;
+      if (hasNoSpaceScript(e.text[bd.pos - 1]) || hasNoSpaceScript(e.text[bd.pos])) {
+        push(from, e.text.slice(from, bd.pos), glue);
+        from = bd.pos;
+        glue = true;
+      }
+    }
+    push(from, e.text.slice(from, end), glue);
   }
   return { words, clamped };
+}
+
+/** وحدات المقارنة: كلمة الكتابة المتصلة حروفًا بزمن كلمتها (بوحدات `splitWords`)، وغيرها كما هي. @param {{ t: number, text: string }[]} ws */
+function charUnits(ws) {
+  return ws.flatMap((w) => (hasNoSpaceScript(w.text) ? splitWords(w.text).map((x) => ({ ...w, text: x })) : [w]));
 }
 
 /**
@@ -74,11 +99,12 @@ function tailHeadOverlap(aw, bw) {
  */
 export function detectRollingOverlap(events, minWords, words = events.map((e) => eventWords(e).words)) {
   let run = 0;
+  const units = words.map(charUnits);
   for (let i = 1; i < events.length; i++) {
     const a = events[i - 1];
     const b = events[i];
-    const aw = words[i - 1];
-    const bw = words[i];
+    const aw = units[i - 1];
+    const bw = units[i];
     const k = b.startMs < (a.endMs ?? a.startMs) ? tailHeadOverlap(aw, bw) : 0;
     if (k < minWords) {
       run = 0;
@@ -91,7 +117,9 @@ export function detectRollingOverlap(events, minWords, words = events.map((e) =>
       if (bw[j].t !== bw[0].t) untimed = false;
     }
     if (notLater) return { eventIndex: b.index, repeatedWords: k, basis: 'time' };
-    run = untimed ? run + 1 : 0;
+    // حكم النمط وحده في الكتابة المتصلة يشترط تكرارًا بطول كافٍ بالحروف (AV2 U-002).
+    const shortCjk = k < ROLLING_PATTERN_MIN_UNITS && bw.slice(0, k).some((w) => hasNoSpaceScript(w.text));
+    run = untimed && !shortCjk ? run + 1 : 0;
     if (run >= ROLLING_RUN) return { eventIndex: b.index, repeatedWords: k, basis: 'pattern' };
   }
   return null;
@@ -158,8 +186,14 @@ export function convertAsr(events, options = {}) {
     end = Math.max(end, g.startMs + o.minDurationMs);
     if (next) end = Math.min(end, next.startMs);
     // كلمات اللغات التي لا تفصل بالمسافات تُوصل بلا مسافة (AA1)؛ وغيرها بمسافة كما كان.
-    const texts = g.words.map((w) => w.text);
-    return { startMs: g.startMs, endMs: end, text: wrapLines(texts.some(hasNoSpaceScript) ? joinWords(texts) : texts.join(' '), o.lineChars) };
+    // وأجزاء الكلمة الملتصقة (glue، قطع متصلة) تبقى نصًا موصولًا كما هو؛ وNFC قبل اللف فلا يُكسر حرف عن علامته (AV2 U-003).
+    const texts = [];
+    g.words.forEach((w, i) => {
+      if (i > 0 && w.glue) texts[texts.length - 1] += w.text;
+      else texts.push(w.text);
+    });
+    const joined = (texts.some(hasNoSpaceScript) ? joinWords(texts) : texts.join(' ')).normalize('NFC');
+    return { startMs: g.startMs, endMs: end, text: wrapLines(joined, o.lineChars) };
   });
   return { cues, report: { words: words.length, clampedWordTimes: clamped, clampedToEvent, options: o } };
 }

@@ -293,3 +293,25 @@ test('U32: قطعة json3 ليست كائنًا لا ترمي TypeError: تُت�
   assert.equal(p.events[0].text, 'hi there');
   assert.equal(p.stats.invalidSegs, 2);
 });
+
+// ---- التدقيق الموحد V2 (WG-1): U-002 كشف التدحرج في الكتابة المتصلة ----
+
+test('AV2 U-002: تدحرج ياباني بالزمن وبالنمط يُرفض بـEX_UNSUPPORTED_FORMAT، والتكرار الحقيقي يُقبل', () => {
+  const seg = (t, w) => ({ utf8: w, ...(t ? { tOffsetMs: t } : {}), acAsrConf: 0 });
+  const timed = asr([
+    { tStartMs: 0, dDurationMs: 5000, wWinId: 1, segs: [seg(0, '一'), seg(1000, '二'), seg(2000, '三'), seg(3000, '四')] },
+    { tStartMs: 1000, dDurationMs: 5000, wWinId: 1, segs: [seg(0, '二'), seg(1000, '三'), seg(2000, '四'), seg(3000, '五')] },
+  ], 8000);
+  assert.deepEqual([timed.ok, timed.code], [false, 'EX_UNSUPPORTED_FORMAT']);
+  const lines = ['今日はとてもいい天気', '散歩に行きましょう', '公園で休みます', 'それから帰ります'];
+  const rolling = lines.map((l, i) => untimedEvent(i * 2000, 4000, i ? `${lines[i - 1]}\n${l}` : l));
+  const byPattern = asr(rolling, 20000);
+  assert.deepEqual([byPattern.ok, byPattern.code], [false, 'EX_UNSUPPORTED_FORMAT']);
+  assert.equal(byPattern.report.errorDetail.basis, 'pattern');
+  // تكرار حقيقي: «はいはいはい» ثم تكراره بأزمنة لاحقة.
+  const real = asr([
+    { tStartMs: 0, dDurationMs: 4000, wWinId: 1, segs: [seg(0, 'はい'), seg(300, 'はい'), seg(600, 'はい'), seg(900, 'です')] },
+    { tStartMs: 2000, dDurationMs: 4000, wWinId: 1, segs: [seg(0, 'はい'), seg(300, 'はい'), seg(600, 'はい'), seg(900, 'ね')] },
+  ], 8000);
+  assert.equal(real.ok, true, real.code);
+});

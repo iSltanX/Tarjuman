@@ -113,3 +113,22 @@ test('أسماء النص الدراسي بلغتي الملف (AA3): لغة ا�
   assert.equal(buildStudyText({ videoId: VIDEO, cues: AR, format: 'md', bilingual: false }).name, 'iG9CE55wbtY.translation.study.md');
   assert.equal(buildStudyText({ videoId: VIDEO, cues: AR, english: EN, format: 'md', bilingual: true, lang: 'pt_BR' }).name, 'iG9CE55wbtY.pt-BR-source.study.md');
 });
+
+// ---- التدقيق الموحد V2 (WG-1): U-007 ----
+
+const sc = (n, text, gap = 100) => ({ n, startMs: (n - 1) * (1000 + gap), endMs: (n - 1) * (1000 + gap) + 1000, text });
+
+test('AV2 U-007: الياباني فقرتان من ستة مقاطع بلا مسافات، وسطر الأصل الياباني موصول، والعربية والإنجليزية كما كانتا', () => {
+  const ja = Array.from({ length: 12 }, (_, i) => sc(i + 1, `文${i + 1}です。`));
+  const out = buildStudyText({ videoId: VIDEO, cues: ja, format: 'txt', bilingual: false }).text;
+  const paras = out.split('\n').filter((l) => l.startsWith('文'));
+  assert.deepEqual(paras, ['文1です。文2です。文3です。文4です。文5です。文6です。', '文7です。文8です。文9です。文10です。文11です。文12です。']);
+  const split = buildStudyText({ videoId: VIDEO, cues: [sc(1, '今日は\nいい天気です。')], format: 'txt', bilingual: false }).text;
+  assert.ok(split.includes('今日はいい天気です。'));
+  // العربية والإنجليزية: المسافة بين الأسطر والمقاطع كما كانت، وفقرة تنتهي بـ«…» تنقطع عندها.
+  const ar = Array.from({ length: 12 }, (_, i) => sc(i + 1, i === 5 ? 'جملة\nمعلّقة…' : `جملة ${i + 1}.`));
+  const arOut = buildStudyText({ videoId: VIDEO, cues: ar, format: 'txt', bilingual: false }).text.split('\n').filter((l) => l.startsWith('جملة'));
+  assert.deepEqual(arOut, ['جملة 1. جملة 2. جملة 3. جملة 4. جملة 5. جملة معلّقة…', 'جملة 7. جملة 8. جملة 9. جملة 10. جملة 11. جملة 12.']);
+  const urdu = Array.from({ length: 12 }, (_, i) => sc(i + 1, `جملہ ${i + 1}${String.fromCharCode(0x06d4)}`));
+  assert.equal(buildStudyText({ videoId: VIDEO, cues: urdu, format: 'txt', bilingual: false }).text.split('\n').filter((l) => l.startsWith('جملہ')).length, 2, '۔ نهاية فقرة');
+});

@@ -15,6 +15,7 @@ import { findIssues } from '../../../src/core/edit/issues.js';
 import { planArabicExport } from '../../../src/core/edit/export.js';
 import { readImport } from '../../../src/core/import/index.js';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
+import { assertWritable } from '../../../src/core/export/write.js';
 import { TjError, messageFor } from '../../../src/core/errors/index.js';
 import { exportStudy } from '../../../src/pages/library/actions.js';
 import { fileOf } from '../../fixtures/srt/index.js';
@@ -170,6 +171,22 @@ test('U79: نص إنجليزي مختار فيه سطر زمن كامل أو ر�
   const fine = buildPatchPackage(patchSpec(makeCues(12, { text: (i) => (i === 10 ? '1 --> 2 is the arrow' : `line ${i}`) }), [10]));
   assert.equal(fine.ok, true, 'U35: «1 --> 2» يُكتب ويُقرأ');
   assert.equal(parseSrtLenient(fine.file.text).cues[0].text, '1 --> 2 is the arrow');
+});
+
+test('AV2 U-004: ملف الاستكمال يقبل ما يقبله التصدير الكامل — عنوان وسياج ووسوم ومحارف اتجاه — والنص حرفي', () => {
+  const texts = ['# of people', '```', '~~~', '<i>Hello</i>', '<font color="#ff0">Warn</font>', '\u202Bمرحبا\u202C', 'line one\n# two'];
+  const en = makeCues(12, { text: (i) => (i >= 1 && i <= texts.length ? texts[i - 1] : `line ${i}`) });
+  const numbers = texts.map((_, k) => k + 2);
+  const r = buildPatchPackage(patchSpec(en, numbers));
+  assert.equal(r.ok, true, JSON.stringify(r));
+  const body = r.file.text;
+  for (const n of numbers) assert.ok(body.includes(`${n}\n`) && body.includes(en[n - 1].text), `المقطع ${n} حرفي في الملف`);
+  assert.deepEqual(body.split('\n\n').map((blk) => Number(blk.split('\n')[0])), numbers, 'ترقيم الملف الكامل');
+  // التصدير الكامل يقبل المجموعة نفسها (عقد interfaces: السياج والعنوان في الإنجليزي نص).
+  assert.doesNotThrow(() => assertWritable(en, { arabic: false }));
+  // سطر الزمن يبقى رمز U79.
+  const bad = buildPatchPackage(patchSpec(makeCues(12, { text: (i) => (i === 10 ? 'he said\n00:00:01,000 --> 00:00:02,000' : `line ${i}`) }), [10]));
+  assert.equal(bad.code, 'EX_PATCH_SOURCE_UNWRITABLE');
 });
 
 // ---- U30: النص الدراسي بمرجع زمني واحد ----

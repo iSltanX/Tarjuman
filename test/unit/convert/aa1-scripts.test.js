@@ -70,3 +70,68 @@ test('تلقائي ياباني: كلمات المقطع موصولة بلا م�
   assert.equal(text.includes(' '), false, text);
   assert.ok(text.startsWith('今日はいい天気'));
 });
+
+// ---- التدقيق الموحد V2 (WG-1): U-001 وU-003 وU-008 ----
+
+/** حدث ASR بقطع [إزاحة، نص] بلا مسافة بادئة (الكتابة المتصلة)؛ القطعة الأولى بلا tOffsetMs كما في يوتيوب. */
+const connectedEvent = (start, dur, segs) => ({
+  tStartMs: start, dDurationMs: dur, wWinId: 1,
+  segs: segs.map(([t, w], i) => ({ utf8: w, ...(i ? { tOffsetMs: t } : {}), acAsrConf: 0 })),
+});
+const asrFrom = (events, durationMs) => convertTrack({ body: JSON.stringify({ wireMagic: 'pb3', events }), trackKind: 'asr', durationMs });
+const URDU_FULL_STOP = String.fromCharCode(0x06d4);
+
+test('AV2 U-001: قطع يابانية متصلة تحفظ زمن كل قطعة، فلا تُختزل النهاية إلى زمن أول قطعة والنص بلا مسافة', () => {
+  const r = asrFrom([connectedEvent(1000, 6000, [[0, '今日'], [1800, 'は'], [3600, 'いい'], [5400, '天気']])], 7000);
+  assert.equal(r.ok, true, r.code);
+  assert.ok(r.cues.at(-1).endMs >= 6400, `النهاية ${r.cues.at(-1).endMs}`);
+  assert.equal(r.cues.map((c) => c.text).join('').replace(/\s/g, ''), '今日はいい天気');
+  assert.ok(r.cues.every((c) => !/\s/.test(c.text.replace(/\n/g, ''))), 'لا مسافة دخيلة');
+});
+
+test('AV2 U-001: 。 وسط الحدث المتصل يشطر مقطعين، وفجوة 3000 م.ث داخل الحدث تشطر مقطعين', () => {
+  const words = ['きょう', 'は', 'とても', 'いい', 'てんき', 'です', 'ね', '。', 'あした', 'も', 'はれる'];
+  const sentence = asrFrom([connectedEvent(0, 6000, words.map((w, k) => [k * 350, w]))], 10000);
+  assert.equal(sentence.cues.length, 2);
+  assert.ok(sentence.cues[0].text.endsWith('。'));
+  const gap = asrFrom([connectedEvent(0, 6000, [[0, '今日は'], [200, 'いい'], [3200, '天気'], [3400, 'です']])], 7000);
+  assert.equal(gap.cues.length, 2);
+  assert.equal(gap.cues[1].startMs, 3200);
+});
+
+test('AV2 U-001: كلمة لاتينية مقسومة بين قطعتين تبقى واحدة، والحدّ بين لاتيني وياباني يبقى ملتصقًا', () => {
+  const latin = asrFrom([connectedEvent(0, 3000, [[0, 'don'], [200, "'t"], [400, ' stop']])], 4000);
+  assert.deepEqual(latin.cues.map((c) => c.text), ["don't stop"]);
+  const mixed = asrFrom([connectedEvent(0, 3000, [[0, 'AI'], [300, '技術'], [600, 'です']])], 4000);
+  assert.deepEqual(mixed.cues.map((c) => c.text), ['AI技術です']);
+});
+
+test('AV2 U-008: «۔» الأردية نهاية جملة، ويُشطر ASR عندها كما عند النقطة', () => {
+  assert.equal(endsSentence(`یہ ٹھیک ہے${URDU_FULL_STOP}`), true);
+  const r = asrFrom([{
+    tStartMs: 0, dDurationMs: 4000, wWinId: 1,
+    segs: [`ٹھیک${URDU_FULL_STOP}`, ' اب', ' چلو'].map((w, i) => ({ utf8: w, ...(i ? { tOffsetMs: i * 300 } : {}), acAsrConf: 0 })),
+  }], 5000);
+  assert.equal(r.cues.length, 2);
+});
+
+test('AV2 U-003: لفّ التايلاندية لا يبدأ سطرًا بحركة، وكسر «2026年» لا يقع بين الرقم والحرف', () => {
+  const thai = 'วันนี้อากาศดีมากเราจะไปเดินเล่นที่สวนสาธารณะใกล้บ้านกันนะครับ';
+  for (let n = 10; n <= 30; n++) {
+    const out = wrapLines(thai, n);
+    assert.ok(out.split('\n').every((l) => !/^\p{M}/u.test(l)), `lineChars ${n}`);
+    assert.equal(out.replace(/\n/g, ''), thai);
+  }
+  const year = `${'あ'.repeat(20)}2026年${'あ'.repeat(20)}`;
+  assert.ok(!wrapLines(year, 21).includes('2026\n'), 'لا كسر بين 2026 و年');
+  assert.equal(wrapLines(year, 21).replace(/\n/g, ''), year);
+});
+
+test('AV2 U-003: نص NFD (داكوتين) يجتاز التحويل في ASR أيًّا كان موضع اللف، ولا يُكسر بين الحرف وعلامته', () => {
+  for (let lead = 15; lead <= 30; lead++) {
+    const nfd = `${'あ'.repeat(lead)}で${'あ'.repeat(21)}`.normalize('NFD');
+    const r = asrFrom([connectedEvent(0, 4000, [[0, nfd]])], 5000);
+    assert.equal(r.ok, true, `${lead} ${r.code} ${JSON.stringify(r.report?.errorDetail)}`);
+    assert.ok(r.cues.every((c) => c.text.split('\n').every((l) => !/^\p{M}/u.test(l))), String(lead));
+  }
+});

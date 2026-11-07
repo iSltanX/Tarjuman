@@ -98,3 +98,12 @@ test('البحث عن لغة: بالاسم العربي بلا همزة ولا �
   assert.deepEqual(searchLanguages('qqqq'), []);
   assert.equal(searchLanguages('').length, knownLanguages().length);
 });
+
+test('AV2 U-005: الوسوم المركبة القديمة لا تُطوى إلى أساسها العام، والرموز المعتادة كما هي', () => {
+  assert.notEqual(normalizeLang('zh-hakka'), 'zh');
+  assert.equal(normalizeLang('zh-hakka'), 'hak');
+  assert.equal(normalizeLang('zh-xiang'), 'hsn');
+  assert.equal(normalizeLang('art-lojban'), 'jbo');
+  assert.equal(normalizeLang('iw'), 'iw');
+  for (const c of ['zh-Hant', 'es-419', 'fil', 'en-GB', 'pt-BR']) assert.equal(normalizeLang(c), c, c);
+});

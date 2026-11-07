@@ -5,6 +5,8 @@ import { endsSentence, hasNoSpaceScript, joinWords, wrapLines } from './text.js'
 
 /** وصل نصوص المقاطع: بمسافة كما كان، وبلا مسافة بين حروف اللغات التي لا تفصل بالمسافات (AA1). @param {string[]} parts */
 const joinParts = (parts) => (parts.some(hasNoSpaceScript) ? joinWords(parts) : parts.join(' '));
+// المقطع الموحَّد يُلفّ بعد NFC فلا يُكسر حرف عن علامته (AV2 U-003).
+const wrapNfc = (text, lineChars) => wrapLines(text.normalize('NFC'), lineChars);
 
 /**
  * الأرقام قابلة للضبط (تُمرَّر إلى convertTrack وextractor.convert).
@@ -58,7 +60,7 @@ export function mergeLong(cues, options = {}) {
     for (let k = i + 1; k < cues.length; k++) {
       if (cues[k].startMs - cues[k - 1].endMs > o.maxGapMs) break; // وقفة طبيعية، لا تجاوز
       const joined = joinParts([...parts, flat(cues[k].text)]);
-      const fits = cues[k].endMs - cues[i].startMs <= o.maxDurationMs && wrapLines(joined, o.lineChars).split('\n').length <= o.maxLines;
+      const fits = cues[k].endMs - cues[i].startMs <= o.maxDurationMs && wrapNfc(joined, o.lineChars).split('\n').length <= o.maxLines;
       if (!fits) {
         overflow = true;
         break;
@@ -77,7 +79,7 @@ export function mergeLong(cues, options = {}) {
       // مقطع وحده: يبقى كما هو دون إعادة لفّ، فيحفظ أسطر المصدر.
       out.push({ startMs: cues[i].startMs, endMs: cues[i].endMs, text: cues[i].text });
     } else {
-      out.push({ startMs: cues[i].startMs, endMs: cues[end].endMs, text: wrapLines(joinParts(parts.slice(0, end - i + 1)), o.lineChars) });
+      out.push({ startMs: cues[i].startMs, endMs: cues[end].endMs, text: wrapNfc(joinParts(parts.slice(0, end - i + 1)), o.lineChars) });
     }
     i = end + 1;
   }

@@ -12,7 +12,8 @@ const ID_LEN = 11;
 const RANDOM_TRANSITIONS = 6;
 const PATTERN_TRANSITIONS = 2;
 // نمط أسماء ترجمان بعد المعرّف: .en.manual.normal أو .ar.asr.long، أو .manual.normal مباشرة.
-const TARJUMAN_TAIL = /^\.(?:[A-Za-z]{2}(?:-[A-Za-z]+)?\.)?(?:manual|asr)\.(?:normal|long)\b/;
+// ورمز اللغة بصيغة fileName() (names.js): ٢–٣ حروف ثم مقاطع بحروف وأرقام (fil وyue وes-419 وzh-Hant)، ولغة الأصل .from-<via> للمترجم آليًا.
+const TARJUMAN_TAIL = /^\.(?:[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*\.)?(?:from-[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*\.)?(?:manual|asr)\.(?:normal|long)\b/;
 
 const charClass = (ch) => (/[A-Z]/.test(ch) ? 1 : /[a-z]/.test(ch) ? 2 : /\d/.test(ch) ? 3 : 4);
 /** عدد مرات تبدّل صنف المحرف (كبير، صغير، رقم، شرطة) بين محرفين متجاورين. */

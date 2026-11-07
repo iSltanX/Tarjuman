@@ -96,6 +96,13 @@ export function wrapLines(text, lineChars) {
   return lines.join('\n');
 }
 
+/** هل يجوز كسر ملتصق بين الجزء السابق والتالي: التالي يبدأ بحرف أساسي من نص لا يفصل بالمسافات، والسابق ينتهي بحرف منه أو بعلامة. */
+function breakableBefore(prev, next) {
+  const first = String.fromCodePoint(next.codePointAt(0));
+  const last = String.fromCodePoint(Array.from(prev).pop().codePointAt(0));
+  return NO_SPACE_CHAR.test(first) && !/^\p{M}/u.test(first) && (NO_SPACE_CHAR.test(last) || /^\p{M}/u.test(last));
+}
+
 /**
  * لفّ نص فيه حروف لا تُفصل بالمسافات (AA1): كل حرف منها وحدة قابلة للكسر بلا مسافة، والكلمات الأخرى كما هي، بسطرين متوازنين
  * إن كفيا وإلا لفّ جشع. لا يُشطر زوج بديل لأن الوحدات محارف كاملة.
@@ -105,7 +112,13 @@ function wrapUnits(text, lineChars) {
   const units = [];
   for (const w of text.split(' ')) {
     const parts = NO_SPACE_CHAR.test(w) ? w.split(NO_SPACE_SPLIT).filter((x) => x !== '') : [w];
-    parts.forEach((p, i) => units.push({ text: p, glue: i > 0 }));
+    parts.forEach((p, i) => {
+      // الكسر الملتصق لا يُقبل إلا بين حرفين من نص لا يفصل بالمسافات، ولا قبل علامة (حركة أو داكوتين)؛ وإلا التحم الجزء بسابقه
+      // فلا يبدأ سطر بحركة يتيمة ولا يُفصل «2026» عن «年» (AV2 U-003).
+      const prev = units[units.length - 1];
+      if (i > 0 && !breakableBefore(prev.text, p)) prev.text += p;
+      else units.push({ text: p, glue: i > 0 });
+    });
   }
   const join = (list) => list.reduce((s, u) => (s === '' ? u.text : `${s}${u.glue ? '' : ' '}${u.text}`), '');
   const total = join(units);
@@ -134,9 +147,9 @@ function wrapUnits(text, lineChars) {
   return lines.length ? lines.join('\n') : total;
 }
 
-// نهاية الجملة بعلامات اللغات المختلفة (AA1): النقطة والاستفهام والتعجب، والاستفهام العربي، والنقطة الصينية واليابانية وعلامتاها
+// نهاية الجملة بعلامات اللغات المختلفة (AA1): النقطة والاستفهام والتعجب، والاستفهام العربي، والنقطة الأردية «۔» (U+06D4)، والنقطة الصينية واليابانية وعلامتاها
 // كاملتا العرض، والدنده الهندية، والأرمنية والحبشية، وربما بعدها إغلاق اقتباس أو قوس بأنواعه.
-export const SENTENCE_END = /[.?!؟。！？।॥։።]["'”’»)\]」』）]*$/u;
+export const SENTENCE_END = /[.?!؟۔。！？।॥։።]["'”’»)\]」』）]*$/u;
 
 /**
  * هل ينتهي النص بنهاية جملة (نقطة أو علامة استفهام أو تعجب بأي لغة، وربما بعدها إغلاق اقتباس أو قوس)؟

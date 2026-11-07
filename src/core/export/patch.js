@@ -4,7 +4,8 @@
 // رفض برمز. الملف يُعاد قراءته فيعطي الأرقام والأزمنة نفسها قبل التسليم. لا كتابة في التخزين.
 import { mergeLong } from '../convert/long.js';
 import { isVideoId } from '../model/ids.js';
-import { breaksSrtText, parseSrtLenient } from '../srt/lenient.js';
+import { breaksSrtText } from '../srt/lenient.js';
+import { parseSrtStrict } from '../srt/parser.js';
 import { formatSrtTime } from '../srt/time.js';
 import { textHash } from './hash.js';
 import { patchInstructions } from './instructions.js';
@@ -64,19 +65,23 @@ export function buildPatchPackage({ videoId, title = null, fingerprint, englishT
   if (picked.some((c) => !(c.startMs < c.endMs) || String(c.text).split('\n').some((l) => l.trim() === ''))) {
     return { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' };
   }
-  // سطر زمن أو رقم يليه زمن في النص يقطع الملف عند قراءته: رمز يسمّي المقاطع، لا خطأ يهرب من الزر (U79).
-  const unwritable = picked.filter((c) => breaksSrtText(c.text)).map((c) => c.n);
+  // سطر زمن أو رقم يليه زمن في النص يقطع الملف عند قراءته: رمز يسمّي المقاطع، لا خطأ يهرب من الزر (U79). والعنوان والسياج والوسوم
+  // ومحارف الاتجاه نص إنجليزي كما في التصدير الكامل (markdown:false، عقد interfaces)، لا تحجب الملف (AV2 U-004).
+  const unwritable = picked.filter((c) => breaksSrtText(c.text, { markdown: false })).map((c) => c.n);
   if (unwritable.length) return { ok: false, code: 'EX_PATCH_SOURCE_UNWRITABLE', params: { list: numberList(unwritable) } };
   const text = picked.map((c) => `${c.n}\n${formatSrtTime(c.startMs)} --> ${formatSrtTime(c.endMs)}\n${c.text}\n`).join('\n');
-  // الذهاب والإياب: الملف يُقرأ بالأرقام والأزمنة والنص نفسها.
+  // الذهاب والإياب بالمحلل الصارم كما في التصدير الكامل (verifyRoundTrip): لا تجريد وسوم ولا محارف، والعنوان والسياج نص. والمحلل
+  // الصارم يشترط ترقيمًا متسلسلًا وأرقام الاستكمال غير متتالية عن قصد، فيُقرأ الملف بعد إعادة ترقيم كتله ويُفحص ترقيمه الأصلي
+  // كتلةً كتلة؛ والمتسامح لا يصلح هنا لأنه يرفض «# » ويجرّد الوسوم (AV2 U-004).
+  const blocks = text.split('\n\n');
   let back;
   try {
-    back = parseSrtLenient(text);
+    back = parseSrtStrict(blocks.map((blk, i) => `${i + 1}${blk.slice(blk.indexOf('\n'))}`).join('\n\n'));
   } catch {
     return { ok: false, code: 'EX_INVARIANT_FAILED' };
   }
-  const same = back.cues.length === picked.length && back.notes.length === 0
-    && back.cues.every((c, i) => c.n === picked[i].n && c.startMs === picked[i].startMs && c.endMs === picked[i].endMs && c.text === picked[i].text);
+  const same = back.length === picked.length && blocks.every((blk, i) => blk.slice(0, blk.indexOf('\n')) === String(picked[i].n))
+    && back.every((c, i) => c.startMs === picked[i].startMs && c.endMs === picked[i].endMs && c.text === picked[i].text);
   if (!same) return { ok: false, code: 'EX_INVARIANT_FAILED' };
   return {
     ok: true,

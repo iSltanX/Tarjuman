@@ -46,6 +46,9 @@ export function normalizeLang(code) {
   // getCanonicalLocales قد يستبدل الرمز القديم (iw ← he)؛ نبقي اللغة كما وردت ونأخذ الحالة الموحدة لبقية المقاطع.
   const first = dashed.split('-')[0].toLowerCase();
   const rest = canon.split('-').slice(1);
+  // وسم قديم مركب يُطوى في الشكل القياسي إلى مقاطع أقل (zh-hakka ← hak، art-lojban ← jbo): يُعاد القياسي كله، فلا تُمسخ اللغة
+  // إلى أساسها العام zh أو art (AV2 U-005). والرمز القديم المفرد (iw) مقاطعه متساوية فيبقى كما ورد.
+  if (canon.split('-').length < dashed.split('-').length) return canon;
   return [first, ...rest].join('-');
 }
 

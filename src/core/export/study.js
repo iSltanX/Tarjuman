@@ -4,7 +4,8 @@
 import { TjError, messageFor } from '../errors/index.js';
 import { validateCues } from '../model/cue.js';
 import { assertValid } from '../model/validate.js';
-import { checkFormat, clock, docTitle, mdEscape, mdEscapeLine, oneLine, timeUrl, videoUrl } from './doc.js';
+import { joinWords, endsSentence } from '../convert/text.js';
+import { checkFormat, clock, docTitle, mdEscape, mdEscapeLine, timeUrl, videoUrl } from './doc.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 
@@ -41,7 +42,16 @@ export function studyTimingNote(clamped) {
   const list = clamped.length > NOTE_LIST ? `${clamped.slice(0, NOTE_LIST).join('، ')}…` : clamped.join('، ');
   return messageFor('EX_STUDY_CLAMPED', { list });
 }
+// علامات نهاية الفقرة: اتحاد علامات التحويل (endsSentence: 。 وغيرها) و«…» التي يحفظها النص الدراسي منذ R58 (AV2 U-007).
 const SENTENCE_END = /[.!?؟…]["'”’»)\]]*$/u;
+const endsParagraph = (t) => SENTENCE_END.test(t) || endsSentence(t);
+const LINE_SPLIT = new RegExp('\\r\\n|[\\r\\n\\u0085\\u2028\\u2029]');
+/**
+ * نص المقطع في سطر واحد: فواصل الأسطر داخله مسافة كـ`oneLine`، إلا بين حرفين من نص لا يفصل بالمسافات (ياباني، صيني، تايلاندي…)
+ * فلا شيء (AV2 U-007)؛ فمخرجات العربية والإنجليزية كما كانت بايتًا. وهو في هذا الملف وحده، و`oneLine` المشترك لم يُمس.
+ * @param {unknown} text
+ */
+const oneLine = (text) => joinWords(String(text).split(LINE_SPLIT).map((l) => l.trim()).filter(Boolean));
 
 /** @param {Cue[]} cues */
 function paragraphs(cues) {
@@ -52,7 +62,7 @@ function paragraphs(cues) {
     const brk = !cur
       || c.startMs - prev.endMs >= STUDY_PARAGRAPH.gapMs
       || cur.cues.length >= STUDY_PARAGRAPH.maxCues
-      || (cur.cues.length >= STUDY_PARAGRAPH.sentenceCues && SENTENCE_END.test(oneLine(prev.text)));
+      || (cur.cues.length >= STUDY_PARAGRAPH.sentenceCues && endsParagraph(oneLine(prev.text)));
     if (brk) {
       cur = { startMs: c.startMs, cues: [] };
       out.push(cur);
@@ -109,9 +119,9 @@ export function buildStudyText({ videoId, title = null, cues, english = null, fo
   const heading = docTitle(title);
   const lines = md ? [`# ${mdEscape(heading)}`, '', `[مشاهدة على يوتيوب](${url})`, ''] : [heading, url, ''];
   paras.forEach((p, k) => {
-    const ar = p.cues.map((c) => oneLine(c.text)).filter(Boolean).join(' ');
+    const ar = joinWords(p.cues.map((c) => oneLine(c.text)).filter(Boolean));
     const link = timeUrl(videoId, p.startMs);
-    const enLine = enText && enText[k].length ? enText[k].join(' ') : null;
+    const enLine = enText && enText[k].length ? joinWords(enText[k]) : null;
     if (md) {
       lines.push(`[${clock(p.startMs)}](${link}) ${mdEscape(ar)}`);
       if (enLine) lines.push('', `> ${mdEscapeLine(enLine)}`);

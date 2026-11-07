@@ -153,3 +153,15 @@ for (const f of index.fixtures) {
     assert.equal(long.report.completeness, normal.report.completeness);
   });
 }
+
+// ---- التدقيق الموحد V2 (WG-1): U-003 ----
+
+test('AV2 U-003: «مقاطع أطول» لا يحقن مسافة في «2026年» ويقبل نصًا مفككًا (NFD)', () => {
+  const a = `${'あ'.repeat(20)}2026年${'あ'.repeat(10)}`;
+  const merged = mergeLong([cue(0, 2000, a), cue(2100, 4000, 'いいです')]);
+  assert.ok(merged.cues[0].text.replace(/\n/g, '').includes('2026年'));
+  assert.ok(!merged.cues.some((c) => c.text.includes('2026 年')));
+  const nfd = mergeLong([cue(0, 2000, 'あ'.repeat(30)), cue(2100, 4000, `${'あ'.repeat(10)}で${'あ'.repeat(30)}`.normalize('NFD'))]);
+  assert.ok(nfd.cues.every((c) => c.text.normalize('NFC') === c.text), 'النص بعد الدمج NFC');
+  assert.ok(nfd.cues.every((c) => c.text.split('\n').every((l) => !/^\p{M}/u.test(l))));
+});

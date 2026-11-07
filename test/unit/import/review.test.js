@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { rankReferences } from '../../../src/core/compare/index.js';
 import { classTransitions, reviewIncoming, videoIdFromName } from '../../../src/core/import/index.js';
 import { convertTrack } from '../../../src/core/convert/index.js';
+import { fileName } from '../../../src/core/export/names.js';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
 import { englishTrack, fingerprint, realTrack } from '../../helpers/fixtures.js';
 import { REAL_ARABIC, arabicTwin, dropAt, longTrack, realArabic } from '../../fixtures/v2/index.js';
@@ -97,4 +98,19 @@ test('تدقيق 5fedcb9 (GM-026.1): المعرّف وسط اسم أطول بي�
   assert.deepEqual(videoIdFromName('ar_iG9CE55wbtY_final.srt', { videoId: 'iG9CE55wbtY' }), { videoId: 'iG9CE55wbtY', differs: false });
   assert.equal(videoIdFromName('ar_123456789_v1.srt', { videoId: 'AAAAAAAAAAA' }), null);
   assert.equal(videoIdFromName('translation_v2_final_2026.srt', { videoId: 'AAAAAAAAAAA' }), null);
+});
+
+test('AV2 U-006: كل اسم يبنيه fileName() — رموز ثلاثية وأرقام ولغة الأصل — يعطي قرينة فيديو آخر غير معروف', () => {
+  const id = 'abcdeFGHIJ1';
+  const names = [
+    fileName({ videoId: id, lang: 'fil', kind: 'manual', mode: 'normal' }),
+    fileName({ videoId: id, lang: 'yue', kind: 'asr', mode: 'normal' }),
+    fileName({ videoId: id, lang: 'es-419', kind: 'manual', mode: 'long' }),
+    fileName({ videoId: id, lang: 'en', via: 'ar', kind: 'asr', mode: 'normal' }),
+    fileName({ videoId: id, lang: 'zh-Hant', via: 'fil', kind: 'manual', mode: 'long' }),
+    fileName({ videoId: id, lang: 'ar', kind: 'manual', mode: 'normal' }),
+    // ما يعيده النموذج: اسم الأصل ثم لغة الترجمة قبل .srt.
+    `${fileName({ videoId: id, lang: 'fil', kind: 'manual', mode: 'normal' }).replace(/\.srt$/, '')}.ar.srt`,
+  ];
+  for (const name of names) assert.deepEqual(videoIdFromName(name, { videoId: VIDEO }), { videoId: id, differs: true }, name);
 });
