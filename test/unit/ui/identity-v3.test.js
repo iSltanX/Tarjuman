@@ -188,3 +188,15 @@ test('اللوحة والمشغّل: أزرار .b و.segs بلا حد بالم�
   has(layer, 'button.item[aria-checked="true"]', 'background: var(--tj-p-selected); color: var(--tj-p-selected-ink)');
   has(layer, 'button.primary', 'background: var(--tj-p-accent); color: var(--tj-p-accent-ink)');
 });
+
+test('تدقيق Fable (UX-16): النص الصغير داخل الزر المحايد عند المرور ≥ 4.5:1 بالوضعين (الشرح وعدّاد الرقاقة ووسم الخط)', () => {
+  for (const mode of ['light', 'dark']) {
+    const hover = value(mode, '--tj-control-hover');
+    assert.ok(ratio(value(mode, '--tj-muted'), hover) < 4.5, `${mode}: الخافت على المرور دون الحد، فلا يُستعمل هناك`);
+    assert.ok(ratio(value(mode, '--tj-text-2'), hover) >= 4.5, `${mode}: الثانوي على المرور`);
+  }
+  const comp = read('src/ui/components.css');
+  const settings = read('src/pages/settings/settings.css');
+  assert.match(comp, /\.tj-choice__option:hover \.tj-choice__hint, \.tj-chip:hover \.tj-chip__count \{ color: var\(--tj-text-2\); \}/);
+  assert.match(settings, /\.st-font:hover \.st-font__tag \{ color: var\(--tj-text-2\); \}/);
+});

@@ -138,6 +138,9 @@ test('الحالة الفارغة: «فتح الفيديو» يفتحه بلا �
   const empty = env.root.querySelector('.tj-empty');
   assert.ok(empty, 'حالة فارغة');
   assert.ok(text(empty).includes('لا ترجمة محفوظة لهذا الفيديو'));
+  // العنوان لا يتكرر نصًا (تدقيق Fable، UX-13): النص يقول السبب.
+  assert.equal(text(empty).split('لا ترجمة محفوظة لهذا الفيديو').length - 1, 1);
+  assert.ok(text(empty).includes('يعمل المحرّر على ترجمة عربية محفوظة'));
   named(empty, 'فتح الفيديو').click();
   await settle();
   assert.deepEqual(calls, [videoId]);

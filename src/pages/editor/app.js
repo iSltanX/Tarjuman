@@ -113,8 +113,9 @@ export async function mountEditor(app, {
       ],
       doc,
     });
+    // النص يقول السبب لا يكرر العنوان (كان ST_NO_RECORD بالجملة نفسها؛ تدقيق Fable، UX-13 = F2)، والخطوات بعده.
     loading.replaceWith(emptyState({
-      title: 'لا ترجمة محفوظة لهذا الفيديو', text: messageFor('ST_NO_RECORD'),
+      title: 'لا ترجمة محفوظة لهذا الفيديو', text: 'يعمل المحرّر على ترجمة عربية محفوظة، ولم تُرفع لهذا الفيديو ترجمة بعد.',
       steps: ['افتح الفيديو على يوتيوب', 'ارفع ملف الترجمة العربية من شريط المشغّل', 'ثم افتح المحرّر من أيقونة الإضافة'], action: actions, doc,
     }));
     app.append(emptyNote);

@@ -313,7 +313,7 @@ try {
   const c2 = await copyFlow(SEED_IDS.typo, seed.expectTitles[SEED_IDS.typo], null);
   const c3 = await copyFlow(SEED_IDS.untitled, null, null);
   check('ac6-clipboard-row-1', c1.ok && c1.equal && c1.label === 'تم النسخ', { equal: c1.equal, label: c1.label, chars: c1.len, under: c1.under });
-  check('ac7-copy-announced-to-screen-reader-after-each-copy', [c1, c2, c3].every((c) => /^تم نسخ تعليمات الترجمة\. ‹.+›$/.test(c.liveAfter[1] ?? '') && c.liveAfter[0] === ''), [c1, c2, c3].map((c) => c.liveAfter));
+  check('ac7-copy-announced-to-screen-reader-after-each-copy', [c1, c2, c3].every((c) => /^نُسخت تعليمات الترجمة\. ‹.+›$/.test(c.liveAfter[1] ?? '') && c.liveAfter[0] === ''), [c1, c2, c3].map((c) => c.liveAfter));
   check('ac6-clipboard-row-2-different-video', c2.ok && c2.equal, { equal: c2.equal, chars: c2.len });
   check('ac6-clipboard-untitled-row-uses-unavailable', c3.ok && c3.equal, { equal: c3.equal });
   check('ac7-no-template-in-dom-after-copy', [c1, c2, c3].every((c) => c.scan.hits.length === 0 && c.scan.textareas === 0 && c.scan.textInputs === 0 && c.scan.editable === 0), c1.scan);
@@ -321,7 +321,7 @@ try {
   const reverted = await lib.eval(() => [...document.querySelectorAll('.lib-copy__button')].map((x) => x.getAttribute('data-state')));
   check('ac7-copy-success-reverts-to-idle', reverted.every((s) => s === 'idle'), reverted);
   const aria = await lib.eval(() => ({ name: document.querySelector('.lib-copy__button').getAttribute('aria-label'), tip: document.querySelector('.lib-copy__tip').textContent, live: [...document.querySelectorAll('.lib > .tj-sr-only[role="status"]')].map((x) => x.textContent).join('|') }));
-  check('ac7-copy-accessibility', aria.name.startsWith('نسخ تعليمات ترجمة: Do schools kill creativity?') && aria.tip === 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.' && /تم نسخ تعليمات الترجمة\./.test(aria.live ?? '') && !/لا نتائج/.test(aria.live ?? ''), aria);
+  check('ac7-copy-accessibility', aria.name.startsWith('نسخ تعليمات ترجمة: Do schools kill creativity?') && aria.tip === 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.' && /نُسخت تعليمات الترجمة\./.test(aria.live ?? '') && !/لا نتائج/.test(aria.live ?? ''), aria);
 
   // فشل الحافظة: «أعد المحاولة» ورسالة عابرة (برفض مصطنع للكتابة).
   await lib.eval(() => { Object.defineProperty(Clipboard.prototype, 'writeText', { configurable: true, value: () => Promise.reject(new DOMException('رفض اختباري', 'NotAllowedError')) }); });

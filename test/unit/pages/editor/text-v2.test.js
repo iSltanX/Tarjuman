@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { activeSlotLine, editSlotLabel, refLabel, refOptionLabel, saveMessage, slotFallback } from '../../../../src/pages/editor/text.js';
 import { messageFor } from '../../../../src/core/errors/index.js';
+import { absoluteTime } from '../../../../src/pages/library/model.js';
 
 test('خانة التحرير والنشطة: الاسم والسطر يفرّقان بينهما، والحفظ هنا لا يغيّر النشطة', () => {
   assert.equal(editSlotLabel({ n: 2, filled: true, active: false }, { editing: true }), 'الترجمة 2، قيد التحرير');
@@ -24,8 +25,12 @@ test('رسالة الحفظ تتبع «مكان حفظ ملفات الترجمة
   const a = `${String.fromCodePoint(0x2066)}a.srt${String.fromCodePoint(0x2069)}`;
   assert.equal(saveMessage({ ok: true, mode: 'downloads' }, 'a.srt', loc, messageFor).text, `حُفظ ${a} في مجلد التنزيلات.`);
   assert.equal(saveMessage({ ok: true, mode: 'subfolder' }, 'a.srt', loc, messageFor).text, `حُفظ ${a} في مجلد ترجمات داخل التنزيلات.`);
-  assert.equal(refLabel({ trackKey: 'en|manual', mode: 'normal', parts: [{}, {}, {}], createdAt: '2026-11-02T10:05:00.000Z' }), 'يدوي · عادي · 3 أجزاء · 2026-11-02 10:05');
-  assert.equal(refLabel({ trackKey: 'en|asr', mode: 'long', parts: null, createdAt: '2026-11-02T10:05:00.000Z' }), 'تلقائي · مقاطع أطول · 2026-11-02 10:05');
+  // التاريخ بصيغة المحفوظات وتوقيت الجهاز (تدقيق Fable، UX-07: كان ISO خامًا بتوقيت UTC)، والعدّ بصيغه («جزآن»).
+  const at = absoluteTime('2026-11-02T10:05:00.000Z');
+  assert.ok(at && !at.includes('T'), at);
+  assert.equal(refLabel({ trackKey: 'en|manual', mode: 'normal', parts: [{}, {}, {}], createdAt: '2026-11-02T10:05:00.000Z' }), `يدوي · عادي · 3 أجزاء · ${at}`);
+  assert.equal(refLabel({ trackKey: 'en|manual', mode: 'normal', parts: [{}, {}], createdAt: '2026-11-02T10:05:00.000Z' }), `يدوي · عادي · جزآن · ${at}`);
+  assert.equal(refLabel({ trackKey: 'en|asr', mode: 'long', parts: null, createdAt: '2026-11-02T10:05:00.000Z' }), `تلقائي · مقاطع أطول · ${at}`);
   assert.equal(saveMessage({ ok: true, mode: 'ask' }, 'a.srt', loc, messageFor).text, `حُفظ ${a} حيث اخترت.`);
   const blob = saveMessage({ ok: true, mode: 'blob' }, 'a.srt', loc, messageFor);
   assert.equal(blob.tone, 'info');

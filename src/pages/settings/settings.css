@@ -66,6 +66,7 @@
   border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-control); color: var(--tj-text); cursor: pointer;
 }
 .st-font:hover { background: var(--tj-control-hover); }
+.st-font:hover .st-font__tag { color: var(--tj-text-2); } /* الخافت على المرور دون 4.5:1 (تدقيق Fable، UX-16) */
 .st-font:has(input:checked) { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .st-font input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .st-font:has(input:focus-visible) { outline: 2px solid var(--tj-focus); outline-offset: 2px; }

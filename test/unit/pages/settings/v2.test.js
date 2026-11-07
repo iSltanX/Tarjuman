@@ -75,7 +75,8 @@ test('النموذج: حد القراءة 5..40 أو فارغ للافتراضي
   assert.equal(readingText(22), '22');
   assert.deepEqual(parseFolder('  Tarjuman 2 '), { ok: true, value: 'Tarjuman 2' });
   for (const bad of ['', 'a/b', 'a\\b', '..', 'CON', 'x'.repeat(61), 'a:b']) assert.equal(parseFolder(bad).code, 'SV_BAD_FOLDER', bad);
-  assert.equal(saveLocationStatus('subfolder', 'ترجماتي'), 'المكان المختار: مجلد التنزيلات/ترجماتي');
+  // «مجلد X داخل التنزيلات» بالاسم معزولًا (تدقيق Fable، UX-08).
+  assert.equal(saveLocationStatus('subfolder', 'ترجماتي'), `المكان المختار: مجلد ${String.fromCodePoint(0x2068)}ترجماتي${String.fromCodePoint(0x2069)} داخل التنزيلات`);
   assert.equal(glossaryCounter(12), '12 من 100');
 
   const terms = samplePrefs().glossary.terms;

@@ -212,7 +212,7 @@ test('مكان حفظ ملفات الترجمة (R65، P13-AC8) أول بند ف
   await settle();
   assert.equal((await m.store.getPrefs()).saveLocation.mode, 'subfolder');
   assert.equal(folder.disabled, false);
-  assert.ok(textOf(exp).includes('المكان المختار: مجلد التنزيلات/Tarjuman'));
+  assert.ok(textOf(exp).includes(`المكان المختار: مجلد ${String.fromCodePoint(0x2068)}Tarjuman${String.fromCodePoint(0x2069)} داخل التنزيلات`));
   folder.value = 'a/b';
   folder.dispatchEvent({ type: 'change' });
   await settle();
@@ -223,7 +223,7 @@ test('مكان حفظ ملفات الترجمة (R65، P13-AC8) أول بند ف
   folder.dispatchEvent({ type: 'change' });
   await settle();
   assert.equal((await m.store.getPrefs()).saveLocation.folder, 'ترجماتي');
-  assert.ok(textOf(exp).includes('المكان المختار: مجلد التنزيلات/ترجماتي'));
+  assert.ok(textOf(exp).includes(`المكان المختار: مجلد ${String.fromCodePoint(0x2068)}ترجماتي${String.fromCodePoint(0x2069)} داخل التنزيلات`));
   assert.equal(reset.getAttribute('aria-disabled'), 'false');
   reset.click();
   await settle();

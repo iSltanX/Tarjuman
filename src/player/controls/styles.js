@@ -147,7 +147,8 @@ button.item[role="radio"]::before { content: ""; flex: none; width: 14px; height
 button.item[aria-checked="true"] { background: var(--tj-p-selected); color: var(--tj-p-selected-ink); font-weight: 700; }
 button.item[aria-checked="true"]::before { box-shadow: inset 0 0 0 2px currentColor; background: radial-gradient(circle, currentColor 0 3.5px, transparent 4px); }
 button.item[aria-expanded]::after { content: ""; margin-inline-start: auto; width: 6px; height: 6px; border-inline-start: 2px solid currentColor; border-block-end: 2px solid currentColor; transform: rotate(45deg); transition: transform 140ms; opacity: 0.8; }
-button.item[aria-expanded="true"]::after { transform: rotate(-45deg); }
+/* المغلق يشير إلى أسفل (45°) والمفتوح إلى أعلى (−135°)؛ كان المفتوح −45° فيشير إلى الجانب (تدقيق Fable، UX-10). */
+button.item[aria-expanded="true"]::after { transform: rotate(-135deg); }
 .reason { display: block; font-size: 0.93em; font-weight: 400; color: rgb(255 255 255 / 55%); }
 .stack { display: flex; flex-direction: column; min-width: 0; }
 
@@ -205,7 +206,9 @@ label.item:hover { background: var(--tj-p-menu-hover); }
 .toast button.x { all: unset; flex: none; cursor: pointer; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: rgb(255 255 255 / 8%); color: #FFFFFF; }
 .toast button.x .glyph { color: inherit; width: 14px; height: 14px; }
 .toast button.x:hover { background: var(--tj-p-menu-hover); }
-.toast button.act { all: unset; flex: none; cursor: pointer; padding: 2px 8px; border-radius: 6px; font-weight: 700; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; }
+.toast button.act { all: unset; position: relative; flex: none; cursor: pointer; padding: 2px 8px; border-radius: 6px; font-weight: 700; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; }
+/* هدف «تراجع» نحو 32 بكسل بامتداد غير مرئي والشكل كما هو (كان نحو 23.5؛ تدقيق Fable، UX-09). */
+.toast button.act::after { content: ""; position: absolute; inset: -5px -2px; }
 .toast button.act:hover { background: var(--tj-p-menu-hover); }
 
 .menu :focus-visible, .toast :focus-visible { ${FOCUS} }

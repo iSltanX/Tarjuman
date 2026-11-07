@@ -6,6 +6,7 @@ import { DEFAULT_FOLDER, DEFAULT_PREFS, GLOSSARY_LIMITS, READING_SPEED, isValidF
 import { DEFAULT_SETTINGS, SUBTITLE_SCALE } from '../../core/model/settings.js';
 import { PLAYER_TOKENS } from '../../ui/player-tokens.js';
 import { subtitleFontStack } from '../../ui/subtitle-fonts.js';
+import { isolate } from '../../ui/format.js';
 
 /** أزرار الخطوة المعروضة: 0.5 و1 ثانية، وما عداهما «مخصص». */
 export const STEP_PRESETS_MS = Object.freeze([500, 1000]);
@@ -72,7 +73,8 @@ export const SAVE_LOCATION_NOTE = 'لا تسمح المتصفحات للإضاف
  * @param {'downloads' | 'subfolder' | 'ask'} mode @param {string} [subfolder]
  */
 export function saveLocationStatus(mode, subfolder = DEFAULT_SUBFOLDER) {
-  if (mode === 'subfolder') return `المكان المختار: مجلد التنزيلات/${subfolder}`;
+  // «مجلد X داخل التنزيلات» كما في رسالة الحفظ بالمحرّر: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص (تدقيق Fable، UX-08).
+  if (mode === 'subfolder') return `المكان المختار: مجلد ${isolate(subfolder)} داخل التنزيلات`;
   if (mode === 'ask') return 'المكان المختار: يُسأل عند كل تنزيل';
   return 'المكان المختار: مجلد التنزيلات';
 }

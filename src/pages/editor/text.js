@@ -1,6 +1,7 @@
 // نصوص المحرّر العربية (figma-design-brief.md §١١ و§١٦): النطاق قبل الفعل وبعده، والعدّ بالعربية بمطابقة
 // الصفة للمعدود، والإزاحة بعلامتها، وتقرير المقارنة سطورًا. دوال نقية بلا DOM.
 import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
+import { PART_FORMS, absoluteTime } from '../library/model.js';
 
 const MAX_LIST = 8;
 const FSI = String.fromCodePoint(0x2068);
@@ -149,8 +150,9 @@ export function refLabel(fp) {
   if (!fp) return 'مرجع غير محفوظ';
   const kind = fp.trackKey.endsWith('|asr') ? 'تلقائي' : 'يدوي';
   const mode = fp.mode === 'long' ? 'مقاطع أطول' : 'عادي';
-  const parts = fp.parts ? ` · ${fp.parts.length} أجزاء` : '';
-  return `${kind} · ${mode}${parts} · ${fp.createdAt.slice(0, 10)} ${fp.createdAt.slice(11, 16)}`;
+  // التاريخ بصيغة المحفوظات ونافذة الأيقونة وبتوقيت الجهاز، لا ISO خامًا بتوقيت UTC (تدقيق Fable، UX-07)، و«جزآن» لا «2 أجزاء».
+  const parts = fp.parts ? ` · ${formatCount(fp.parts.length, PART_FORMS)}` : '';
+  return `${kind} · ${mode}${parts} · ${absoluteTime(fp.createdAt)}`;
 }
 
 /** خيار العمود المرجعي: «الإنجليزية» أو «الترجمة 3 — مراجعة». @param {'en' | number} v @param {string | null} [name] */

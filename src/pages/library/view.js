@@ -314,7 +314,7 @@ export function createLibrary(env) {
     const note = await studyNote({ store, videoId: m.videoId });
     const content = studyContent({ doc, hasEnglish: entry.english.length > 0, name: (o) => studyName({ store, videoId: m.videoId, ...o }), note });
     await content.ready;
-    const ok = await confirm({ title: `نص دراسي لـ"${isolate(clip(m.displayTitle, 80))}"`, body: 'الترجمة النشطة فقرات بأوقاتها، لقراءتها أو مراجعتها خارج الفيديو.', confirmLabel: 'تنزيل', content: content.root, doc });
+    const ok = await confirm({ title: `نص دراسي لـ«${isolate(clip(m.displayTitle, 80))}»`, body: 'الترجمة النشطة فقرات بأوقاتها، لقراءتها أو مراجعتها خارج الفيديو.', confirmLabel: 'تنزيل', content: content.root, doc });
     if (!ok) return;
     const r = await exportStudy({ store, videoId: m.videoId, ...content.value(), save: env.saveFile });
     savedToast(r.saved);
@@ -345,7 +345,7 @@ export function createLibrary(env) {
           label.textContent = labelFor(replace);
         },
       });
-      const pending = confirm({ title: `رفع ترجمة لـ"${isolate(clip(m.displayTitle, 80))}"`, confirmLabel: labelFor(view.replace()), content: view.root, doc });
+      const pending = confirm({ title: `رفع ترجمة لـ«${isolate(clip(m.displayTitle, 80))}»`, confirmLabel: labelFor(view.replace()), content: view.root, doc });
       confirmBtn = view.root.closest?.('form')?.querySelector('button[value="confirm"]') ?? null;
       if (!(await pending)) return;
       const choice = view.choice();

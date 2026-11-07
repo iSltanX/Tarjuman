@@ -131,6 +131,8 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-choice { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .tj-choice__option { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border: 1px solid transparent; border-radius: var(--tj-radius-md); cursor: pointer; background: var(--tj-control); }
 .tj-choice__option:hover { background: var(--tj-control-hover); }
+/* الخافت على مرور الزر المحايد دون 4.5:1 (4.48 فاتحًا و4.15 داكنًا)، فيصير بالثانوي عند المرور (≥ 5.2:1؛ تدقيق Fable، UX-16). */
+.tj-choice__option:hover .tj-choice__hint, .tj-chip:hover .tj-chip__count { color: var(--tj-text-2); }
 .tj-choice__option:has(input:checked) { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .tj-choice__option:has(input:checked) .tj-choice__hint { color: var(--tj-selected-ink); }
 .tj-choice__option:has(input:disabled) { cursor: not-allowed; color: var(--tj-muted); background: var(--tj-sunken); }
@@ -236,9 +238,11 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 /* رسالة بزر «تراجع» (الإصدار الثاني): الزر قابل للضغط والرسالة تبقى ضعف المدة. */
 .tj-toast--action { pointer-events: auto; }
 .tj-toast__action {
-  margin-inline-start: 6px; padding: 2px 10px; border-radius: 6px; border: 0; background: color-mix(in srgb, currentColor 12%, transparent);
+  position: relative; margin-inline-start: 6px; padding: 2px 10px; border-radius: 6px; border: 0; background: color-mix(in srgb, currentColor 12%, transparent);
   color: inherit; font: 700 12px/18px var(--tj-font-body); cursor: pointer;
 }
+/* هدف الضغط 32 بكسل كقاعدة المشروع وفوق 24 (WCAG 2.5.8) بامتداد غير مرئي، والشكل كما هو (22؛ تدقيق Fable، UX-09). */
+.tj-toast__action::after { content: ""; position: absolute; inset: -5px -2px; }
 .tj-toast__action:hover { background: color-mix(in srgb, currentColor 20%, transparent); }
 .tj-toast__action:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 

@@ -306,10 +306,10 @@ test('«نسخ التعليمات» من «المزيد»: يكتب تعليما
   assert.notEqual(m.calls.clipboard[0], m.calls.clipboard[1]);
   const toasts = m.root.querySelectorAll('.tj-toast--success').map(textOf);
   assert.equal(toasts.length, 2);
-  assert.ok(toasts[1].startsWith('تم نسخ تعليمات الترجمة.') && toasts[1].includes(iso('How Browsers Render Arabic Text')), 'الرسالة تسمّي الفيديو');
+  assert.ok(toasts[1].startsWith('نُسخت تعليمات الترجمة.') && toasts[1].includes(iso('How Browsers Render Arabic Text')), 'الرسالة تسمّي الفيديو');
   assertNoTemplate(m, 'تم النسخ');
   await m.clock.runAll();
-  assert.ok(textOf(m.lib.toaster.live).startsWith('تم نسخ تعليمات الترجمة.'), 'إعلان لقارئ الشاشة');
+  assert.ok(textOf(m.lib.toaster.live).startsWith('نُسخت تعليمات الترجمة.'), 'إعلان لقارئ الشاشة');
   assertNoTemplate(m, 'عادي بعد النسخ');
 });
 
@@ -507,7 +507,8 @@ test('الرفع: حوار الفحص الكامل — الافتراضي أول
   clickReplace(m);
   await settle();
   const dialog = m.calls.confirms[0];
-  assert.equal(dialog.title, `رفع ترجمة لـ"${iso('عنوان')}"`);
+  // التنصيص العربي «…» كعنوان «لا نتائج لـ«…»» (تدقيق Fable، UX-12 = F1).
+  assert.equal(dialog.title, `رفع ترجمة لـ«${iso('عنوان')}»`);
   assert.equal(dialog.confirmLabel, 'حفظ', 'الهدف الافتراضي فارغ: حفظ لا استبدال');
   const body = allText(dialog.content);
   assert.match(body, /مطابق للأصل/);
