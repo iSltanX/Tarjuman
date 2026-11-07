@@ -267,7 +267,9 @@ export function comparisonSummary(cmp) {
   if (cmp.drift.length) parts.push(driftText(cmp.drift.length));
   const untranslated = [...new Set([...cmp.empty, ...cmp.noArabic])].length;
   if (untranslated) parts.push(`${formatCount(untranslated, COUNT_FORMS.cue)} بلا ترجمة عربية`);
-  if (!parts.length && cmp.numbering === 'different') parts.push('ترقيم المقاطع مختلف عن الأصل');
+  // معاينة الرفع بالمحاذاة (FA-04): ملف أُعيد ترقيمه يُقال إنه قورن بتوقيته، فلا يُظن النقص من آخره.
+  if (cmp.renumbered) parts.push('الترقيم مختلف عن الأصل، والمقارنة بالتوقيت');
+  else if (!parts.length && cmp.numbering === 'different') parts.push('ترقيم المقاطع مختلف عن الأصل');
   if (!parts.length) return { tone: cmp.matched ? 'ok' : 'warn', text: cmp.matched ? 'مطابق للأصل' : 'يختلف عن الأصل' };
   return { tone: 'warn', text: parts.join(' · ') };
 }

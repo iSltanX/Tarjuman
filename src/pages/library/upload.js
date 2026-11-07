@@ -5,7 +5,8 @@
 import { messageFor } from '../../core/errors/index.js';
 import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
-import { compareWith, uploadImpact } from './actions.js';
+import { previewComparison } from '../../core/import/index.js';
+import { uploadImpact } from './actions.js';
 import { EDIT_FORMS, absoluteTime, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, previousLostText, targetOptions } from './model.js';
 import { segGroup } from './seg.js';
 
@@ -98,7 +99,8 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   const compareHost = el('div', { className: 'lib-up__compare', doc });
   const renderCompare = () => {
     const fp = reference ? fps.find((f) => f.id === reference) ?? null : null;
-    const report = reference === result.fingerprintId ? result.comparison : compareWith(result.cues, fp, settings, result.notes);
+    // المعاينة بالمحاذاة كما تُعرض بعد الحفظ (FA-04)، لأي مرجع مختار؛ وتقرير الحفظ بالرقم يُحسب عند الحفظ كما كان.
+    const report = previewComparison(result.cues, fp, { settings, notes: result.notes });
     const s = comparisonSummary(report);
     compareHost.replaceChildren(alertBox({ tone: s.tone, text: s.lines.join('\n'), doc }));
   };

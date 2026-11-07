@@ -5,7 +5,7 @@
 // مضغوط إن وُجدت ترجمة أو دل الاسم على فيديو آخر).
 // كل تدفق يثبّت معرّف الفيديو عند بدئه، فنتيجة تأخرت حتى تبدّل الفيديو لا تُطبَّق على الجديد أبدًا.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
-import { videoIdFromName, withSuggestedReference } from '../../core/import/index.js';
+import { previewComparison, videoIdFromName, withSuggestedReference } from '../../core/import/index.js';
 
 const infoOf = (code, params) => ({ code, message: messageFor(code, params) });
 
@@ -138,8 +138,9 @@ export async function copyText(text, { doc, win, root }) {
 
 /**
  * قراءة ملف أو أجزاء وفحصها ومقارنتها بالبصمات المحفوظة لهذا الفيديو. لا كتابة في التخزين هنا.
+ * preview ملخص المعاينة بالمحاذاة كما يُعرض بعد الحفظ (FA-04)، وinput.comparison تقرير الحفظ بالرقم كما كان.
  * @returns {Promise<
- *   { ok: true, videoId: string, input: { fileName: string, cues: object[], comparison: object | null, fingerprintId: string | null, notes: string[] }, warnings: string[] }
+ *   { ok: true, videoId: string, input: { fileName: string, cues: object[], comparison: object | null, fingerprintId: string | null, notes: string[] }, preview: object | null, warnings: string[] }
  *   | { ok: false, error: { code: string, message: string } }>}
  */
 export async function readFor({ controller, importFlow, files }) {
@@ -164,10 +165,21 @@ export async function readFor({ controller, importFlow, files }) {
     }
   }
   const { fileName, cues, comparison, fingerprintId, notes } = res;
+  // المعاينة بالمحاذاة بمرجع الحفظ نفسه؛ وبلا مرجع محفوظ أو بتعذّرها يبقى تقرير الرقم كما هو.
+  let preview = comparison;
+  const fp = fingerprintId ? fingerprints.find((f) => f.id === fingerprintId) ?? null : null;
+  if (fp) {
+    try {
+      preview = previewComparison(cues, fp, { settings: s.settings, notes });
+    } catch {
+      preview = comparison;
+    }
+  }
   return {
     ok: true,
     videoId,
     input: { fileName, cues, comparison, fingerprintId, notes },
+    preview,
     warnings: (res.warnings ?? []).map((w) => messageFor(w.code, w.params)),
   };
 }

@@ -349,7 +349,9 @@ export function comparisonSummary(r) {
   if (r.countSource !== null && r.countSource !== r.countTarget) lines.push(`عدد المقاطع: ${r.countTarget} من ${r.countSource}`);
   if (r.missing.length) lines.push(`${formatCount(r.missing.length, NOUN.missing)}: ${numbers(r.missing)}`);
   if (r.extra.length) lines.push(`${formatCount(r.extra.length, NOUN.extra)}: ${numbers(r.extra)}`);
-  if (r.numbering === 'different' && !r.missing.length && !r.extra.length) lines.push('ترقيم المقاطع يختلف عن الملف المصدَّر.');
+  // معاينة الرفع بالمحاذاة (FA-04): ملف أُعيد ترقيمه يُقال إنه قورن بتوقيته، فلا يُظن النقص من آخره.
+  if (r.renumbered) lines.push('ترقيم المقاطع يختلف عن الملف المصدَّر، فقورنت بتوقيتها.');
+  else if (r.numbering === 'different' && !r.missing.length && !r.extra.length) lines.push('ترقيم المقاطع يختلف عن الملف المصدَّر.');
   if (r.drift.length) lines.push(r.drift.length === 1 ? 'توقيت مختلف في مقطع واحد' : r.drift.length === 2 ? 'توقيت مختلف في مقطعين' : `توقيت مختلف في ${formatCount(r.drift.length, COUNT_FORMS.cue)}`);
   if (r.empty.length) lines.push(`${formatCount(r.empty.length, NOUN.empty)} (لم يترجمها النموذج): ${numbers(r.empty)}`);
   return { tone: 'warning', lines: lines.length ? lines : ['الملف لا يطابق الملف المصدَّر.'] };

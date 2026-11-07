@@ -257,7 +257,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const plan = filled ? planFor(s, p, target.n) : { edits: 0, keep: null };
     const keepOk = !!plan.keep?.ok;
     return {
-      fileName: p.input.fileName, count: p.input.cues.length, comparison: p.input.comparison, warnings: p.warnings,
+      // المعاينة بالمحاذاة كما بعد الحفظ (FA-04)، وتقرير الحفظ بالرقم يبقى في input.
+      fileName: p.input.fileName, count: p.input.cues.length, comparison: p.preview ?? p.input.comparison, warnings: p.warnings,
       hint: p.hint ? nameOtherLine(p.hint.title) : null, slots, target: target.n, filled, edits: plan.edits,
       keepAvailable: keepOk, keep: keepOk && p.keep, conflicts: keepOk ? plan.keep.conflicts : 0,
       offsetNote: filled && target.active && Math.round(s.view.displayOffsetMs / 100) !== 0,

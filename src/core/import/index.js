@@ -1,7 +1,7 @@
 // تدفق الاستيراد (عقد interfaces §٦): قراءة آمنة لملف أو أجزاء، وتحليل متسامح بملاحظات، ودمج بالأرقام، واختيار البصمة،
 // ومقارنة تُرفق بالنتيجة. لا كتابة في التخزين هنا (يتولاها المتحكم أو withArabicImport)، ولا تعديل للتوقيت ولا للنص إلا
 // ما يُذكر في notes. الاستعادة اليدوية للتوقيت من src/core/compare ولا يستدعيها هذا التدفق أبدًا.
-import { DEFAULT_DRIFT_MS, compare } from '../compare/index.js';
+import { DEFAULT_DRIFT_MS, compare, currentComparison, fingerprintCoverage } from '../compare/index.js';
 import { TjError, messageFor, toErrorInfo } from '../errors/index.js';
 import { LIMITS } from '../model/validate.js';
 import { parseSrtLenient } from '../srt/lenient.js';
@@ -106,6 +106,24 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings } = 
     if (info.code === 'TJ_UNEXPECTED') error.detail = info.detail;
     return { ok: false, error };
   }
+}
+
+/**
+ * تقرير معاينة الرفع قبل الحفظ (تدقيق Fable، FA-04 = B1؛ بند DS-S2 بقرار سلطان 2026-11-07 بعد تأجيله في Q25 ب): ما تعرضه
+ * الأسطح بعد الحفظ (التقرير الحاضر بالمحاذاة، currentComparison عبر trackComparison)، لا تقرير الحفظ بالرقم الذي يبقى وصفًا
+ * للملف كما رُفع (عقد data-model §١٠، ويُحفظ كما كان). فملف أُعيد ترقيمه ينقصه المقطع 5 يُعرض «ناقص: 5» قبل الحفظ وبعده، لا
+ * «ناقص: 427 · توقيت مختلف في 422» ثم «ناقص: 5». وrenumbered حين قابلت المحاذاة مقاطع بأرقام غير أرقام التصدير، فتقول المعاينة
+ * إن المقارنة بالتوقيت. وبثقة محاذاة منخفضة يبقى حكم الرقم كما في currentComparison، وبلا بصمة لا مقارنة.
+ * @param {import('../model/cue.js').Cue[]} cues @param {import('../model/tracks.js').Fingerprint | null} fingerprint
+ * @param {{ settings?: { thresholds?: { driftMs?: number } }, notes?: string[] }} [o] notes ملاحظات القراءة قبل ملاحظات المقارن
+ * @returns {import('../model/tracks.js').ComparisonReport & { renumbered: boolean }}
+ */
+export function previewComparison(cues, fingerprint, { settings, notes = [] } = {}) {
+  const driftMs = threshold(settings);
+  const coverage = fingerprint ? fingerprintCoverage(fingerprint, cues) : { ok: false };
+  const report = fingerprint ? currentComparison(cues, fingerprint, { driftMs, coverage }) : compare(cues, null, { driftMs });
+  const renumbered = !!coverage.ok && coverage.pairs.some(([i, j]) => fingerprint.cues[i].n !== cues[j].n);
+  return { ...report, renumbered, notes: capNotes([...notes, ...report.notes]) };
 }
 
 /**
