@@ -394,7 +394,7 @@ export function createPanelView({ doc, win, on }) {
       setHidden(err, m.kind !== 'error');
       setAttr(panel, 'aria-busy', m.kind === 'loading' ? 'true' : null);
       if (readyOpen) {
-        out = transcript.sync({ cues: m.cues, originalCues: m.dual ? m.original.cues : null, offsetMs: m.offsetMs, originalLang: m.dual ? m.original.lang : null });
+        out = transcript.sync({ cues: m.cues, originalCues: m.dual ? m.original.cues : null, offsetMs: m.offsetMs, originalLang: m.dual ? m.original.lang : null, translationLang: m.translationLang ?? null });
         renderBar(m, l);
         renderFoot(m, l);
         setResume(l.resume.visible, l.resume.label);

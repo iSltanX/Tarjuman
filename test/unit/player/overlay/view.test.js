@@ -79,7 +79,13 @@ test('الوضع المزدوج: العربي أولًا ثم الإنجليزي
   assert.deepEqual(dirs(stage), ['rtl', 'ltr']);
   assert.deepEqual(texts(stage), ['مرحبًا بكم في المحاضرة', 'Welcome to the lecture']);
   view.render({ ar: ['سطر'], en: ['API بالعربية؟'] });
-  assert.deepEqual(dirs(stage), ['rtl', 'rtl'], 'الإنجليزي نفسه يتبع حروفه');
+  assert.deepEqual(dirs(stage), ['rtl', 'ltr'], 'سطر الأصل بلغة مساره الإنجليزية (AA1)');
+  view.setLang('ar');
+  view.render({ ar: ['Hello there'], en: ['API بالعربية؟'] });
+  assert.deepEqual(dirs(stage), ['ltr', 'rtl'], 'الترجمة بلا لغة من حروفها، والأصل العربي RTL');
+  view.setTranslationLang('he');
+  view.render({ ar: ['Shalom'], en: [] });
+  assert.deepEqual(dirs(stage), ['rtl'], 'لغة الترجمة المعروفة أقوى من حروفها');
 });
 
 test('النص يدخل textContent وحده: لا عناصر ولا سمات من نص المقطع', () => {
@@ -91,7 +97,7 @@ test('النص يدخل textContent وحده: لا عناصر ولا سمات م
   assert.equal(stage.children[0].textContent, evil);
   // dir من حروف النص، وlang من نوع السطر (تدقيق 7a66f91، C6، U48): لا سمة من نص المقطع نفسه.
   assert.deepEqual([...stage.children[0]._attrs.keys()].sort(), ['dir', 'lang']);
-  assert.equal(stage.children[0].getAttribute('lang'), 'ar');
+  assert.equal(stage.children[0].getAttribute('lang'), 'und', 'لغة ترجمة غير محددة (AA1؛ كانت ar ثابتة)');
 });
 
 test('التلاشي: الفراغ يلاشي 80ms ثم يُزال المحتوى، وعودة مقطع قبل ذلك تلغي الإزالة', () => {

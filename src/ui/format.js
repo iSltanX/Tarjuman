@@ -1,5 +1,6 @@
 // صيغ العرض المشتركة بين المشغّل والصفحات (figma-design-brief.md §٤): أرقام لاتينية، والإزاحة بعلامتها،
 // والأزمنة بصيغة SRT، والعدّ بالعربية.
+import { textDirection as langTextDirection } from '../core/lang/index.js';
 
 const MINUS = '−';
 
@@ -24,15 +25,13 @@ const PDI = String.fromCodePoint(0x2069);
  */
 export const offsetInline = (ms) => `${LRI}${formatOffset(ms)}${PDI}`;
 
-// العربية الأساسية والمكمّلة والممتدتان وأشكال العرض أ وب، كما في سطر الطبقة (player/overlay/text.js).
-const ARABIC = /[\u0600-\u06FF\u0750-\u077F\u0870-\u089F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-
 /**
- * اتجاه نص مقطع عربي معروض في الواجهة: RTL إن احتوى أي حرف عربي ولو بدأ بكلمة لاتينية («API هو الواجهة»)، وإلا LTR
- * (مواصفة التصميم §٤ لسطر الترجمة؛ كان dir="auto" يأخذ أول حرف قوي فيقلب ترتيبها؛ تدقيق 5fedcb9، CL-002).
- * @param {string} s @returns {'rtl' | 'ltr'}
+ * اتجاه نص معروض في الواجهة: من لغته إن عُرفت، وإلا RTL إن احتوى أي حرف من نص يُكتب من اليمين ولو بدأ بكلمة لاتينية
+ * («API هو الواجهة»)، وإلا LTR (مواصفة التصميم §٤ لسطر الترجمة؛ كان dir="auto" يأخذ أول حرف قوي فيقلب ترتيبها؛ تدقيق
+ * 5fedcb9، CL-002). ومنذ 2.0.0 (AA1) العبرية والفارسية والأردية وغيرها مثل العربية، لا العربية وحدها.
+ * @param {string} s @param {string | null} [lang] @returns {'rtl' | 'ltr'}
  */
-export const textDirection = (s) => (ARABIC.test(String(s ?? '')) ? 'rtl' : 'ltr');
+export const textDirection = (s, lang = null) => langTextDirection(s, lang);
 
 /** نص LTR معزول داخل جملة عربية (فرق موقّع، أو مثال «+1.2»). @param {string} s */
 export const ltrInline = (s) => `${LRI}${s}${PDI}`;

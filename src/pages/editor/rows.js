@@ -5,22 +5,26 @@
 import { messageFor } from '../../core/errors/index.js';
 import { el } from '../../ui/components.js';
 import { formatTimecode, ltrInline } from '../../ui/format.js';
+import { langDirection, textDirection } from '../../core/lang/index.js';
 import { editorIcon } from './icons.js';
 import { durationText, markActionLabel, markBadge, markTitle, seconds } from './text.js';
 import { ROW, textLines } from './virtual.js';
 
-const HAS_ARABIC = /\p{Script=Arabic}/u;
 const HAS_LETTER = /\p{L}/u;
 
-/** سطر الترجمة RTL إن احتوى حرفًا عربيًا ولو بدأ بكلمة لاتينية، وLTR إن خلا منه (§٤). @param {string} text */
-export const textDir = (text) => (HAS_ARABIC.test(text) || !HAS_LETTER.test(text) ? 'rtl' : 'ltr');
+/**
+ * اتجاه حقل الترجمة (§٤): من لغتها إن عُرفت (AA1)، وإلا RTL إن احتوى حرفًا من نص يُكتب من اليمين ولو بدأ بكلمة لاتينية، أو
+ * خلا من الحروف (حقل فارغ في واجهة عربية)، وLTR ما سوى ذلك.
+ * @param {string} text @param {string | null} [lang]
+ */
+export const textDir = (text, lang = null) => (lang && langDirection(lang)) || (!HAS_LETTER.test(text) ? 'rtl' : textDirection(text));
 
 /**
  * @typedef {{
  *   rows: ({ type: 'cue', index: number } | { type: 'missing', n: number })[],
  *   session: ReturnType<typeof import('../../core/edit/index.js').createEditSession>,
  *   report: import('../../core/edit/issues.js').IssueReport,
- *   refs: string[], refDir: 'ltr' | 'rtl', showEnglish: boolean, readOnly: boolean,
+ *   refs: string[], refLang?: string | null, lang?: string | null, showEnglish: boolean, readOnly: boolean,
  *   match?: (index: number) => 'current' | 'match' | null, refRanges?: (index: number) => { start: number, end: number }[] | null,
  *   markOf?: (index: number) => { kind: 'todo' | 'done', state: 'linked' | 'moved' } | null,
  *   selection: Set<number>, activeIndex: number | null, stepMs: number, lines?: (text: string) => number
@@ -83,7 +87,7 @@ export function createRows(doc, ctx) {
         el('span', { className: 'ed-row__dur tj-mono-sm', doc }),
         el('textarea', { className: 'ed-row__text', attrs: { 'data-field': 'text', 'aria-label': `نص المقطع ${cue.n}` }, doc }),
         // المرجع جملة إنجليزية: بلغتها فيُنطق بصوتها لا بصوت الصفحة العربية (WCAG 3.1.2؛ تدقيق 7a66f91، U48).
-        el('p', { className: 'ed-row__en', dir: 'ltr', attrs: { lang: 'en' }, doc }),
+        el('p', { className: 'ed-row__en', dir: 'ltr', attrs: { lang: 'und' }, doc }),
         el('span', { className: 'ed-row__nudge', children: [nudge(-1), nudge(1), action('seek', 'play'), action('mark', 'flag'), action('merge', 'merge'), action('split', 'split')], doc }),
         el('p', { className: 'ed-row__msg', doc }),
       ],
@@ -129,7 +133,11 @@ export function createRows(doc, ctx) {
     dur.textContent = cue.endMs > cue.startMs ? durationText(cue.endMs - cue.startMs) : '—';
 
     if ((force || active !== text) && text.value !== cue.text) text.value = cue.text;
-    text.dir = textDir(text.value);
+    text.dir = textDir(text.value, c.lang ?? null);
+    if ((c.lang ?? null) !== (text.getAttribute('lang') || null)) {
+      if (c.lang) text.setAttribute('lang', c.lang);
+      else text.removeAttribute('lang');
+    }
     text.readOnly = c.readOnly;
     // خطأ النص مربوط بحقله كحقلي الزمن: الرسالة وصفه، وaria-invalid للخطأ المانع وحده (تدقيق 7a66f91، U26).
     text.setAttribute('aria-invalid', issues.some((x) => x.tone === 'error' && x.field === 'text') ? 'true' : 'false');
@@ -150,9 +158,9 @@ export function createRows(doc, ctx) {
       parts.push(ref.slice(at));
       en.replaceChildren(...parts);
     } else if (en.childElementCount || en.textContent !== ref) en.textContent = ref;
-    en.dir = c.refDir;
-    // ولغته مع اتجاهه: العمود المرجعي قد يعرض ترجمة عربية أخرى، فلا يبقى lang="en" فيُنطق العربي بصوت إنجليزي (تدقيق Fable، UX §٣).
-    const refLang = c.refDir === 'rtl' ? 'ar' : 'en';
+    // اتجاهه ولغته من لغة العمود (لغة المسار أو الترجمة الأخرى، AA1)، وإلا من نصه؛ فلا يُنطق نص بصوت لغة أخرى (تدقيق Fable، UX §٣).
+    en.dir = c.refLang ? langDirection(c.refLang) ?? textDirection(ref) : textDirection(ref);
+    const refLang = c.refLang ?? 'und';
     if (en.getAttribute('lang') !== refLang) en.setAttribute('lang', refLang);
     const match = c.match?.(i) ?? null;
     node.classList.toggle('has-match', match === 'match');

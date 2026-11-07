@@ -99,7 +99,7 @@ export function panelCss() {
 .row:hover .t::before { display: block; }
 .b2 { min-width: 0; }
 .ar { display: block; font-size: 15px; line-height: 26px; color: var(--tj-text); text-align: right; overflow-wrap: anywhere; unicode-bidi: isolate; }
-.en { display: block; margin-top: 1px; font-size: 12px; line-height: 18px; color: var(--tj-muted); direction: ltr; text-align: right; unicode-bidi: plaintext; overflow-wrap: anywhere; }
+.en { display: block; margin-top: 1px; font-size: 12px; line-height: 18px; color: var(--tj-muted); text-align: right; unicode-bidi: isolate; overflow-wrap: anywhere; }
 .row.past .ar { color: var(--tj-text-2); }
 .row.cur { background: var(--tj-brand-soft); }
 .row.cur .t { color: var(--tj-brand-text); font-weight: 700; }

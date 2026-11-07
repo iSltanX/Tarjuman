@@ -60,9 +60,10 @@ test('U49 (CL-X1): الوصل للفجوة القصيرة وحدها: فجوة �
   engine.destroy();
 });
 
-test('U48: سطر الترجمة العربي بـlang="ar"، والأصل بلغة مساره', () => {
+test('U48: سطر الترجمة بـlang لغتها (العربية هنا)، والأصل بلغة مساره', () => {
   const { view, stage } = overlay();
   view.setLang?.('en-GB');
+  view.setTranslationLang?.('ar');
   view.render({ ar: ['سطر'], en: ['line'] });
   const [ar, en] = stage.children;
   assert.equal(ar.getAttribute('lang'), 'ar');

@@ -106,7 +106,7 @@ export function originalLookup(enCues) {
  *   mode: 'none' | 'open' | 'toast',
  *   kind: 'loading' | 'empty' | 'error' | 'ready' | null,
  *   sameVideo: boolean, offsetMs: number, stepMs: number,
- *   cues: Cue[] | null, count: number,
+ *   cues: Cue[] | null, count: number, translationLang: string | null,
  *   status: { slot: number | null, name: string | null, count: number } | null,
  *   original: { lang: string, name: string, cues: Cue[] } | null,
  *   dualPref: boolean, dual: boolean,
@@ -157,6 +157,8 @@ export function derive(state, page, ui) {
     stepMs: state.settings?.offsetStepMs ?? 500,
     cues: arabic ? arabic.cues : null,
     count: arabic ? arabic.cues.length : 0,
+    // لغة الترجمة المعروضة لاتجاه أسطرها ونطقها (AA1)، وnull «غير محددة».
+    translationLang: arabic?.lang ?? null,
     status: arabic ? { slot, name: slotName, count: arabic.cues.length } : null,
     original,
     dualPref,

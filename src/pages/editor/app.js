@@ -431,9 +431,13 @@ export async function mountEditor(app, {
   win.addEventListener('resize', scheduleRefit);
   doc.fonts?.ready?.then(() => scheduleRefit(), () => {});
 
+  /** لغة العمود المرجعي (AA1): لغة المسار المستخرج، أو لغة الترجمة الأخرى المختارة مرجعًا، وإلا null فيُحسب الاتجاه من النص. */
+  const refColumnLang = () => (S.refCol === 'en' ? S.englishTrack?.lang ?? null : translationLang(S.opened?.slots[S.refCol - 1]?.track));
+  /** لغة الترجمة المفتوحة (AA1): لغتها المحفوظة أو رمز صريح في اسم ملفها، وإلا null «غير محددة» فلا فحص «غير مترجم». */
+  const openedLang = () => translationLang(S.opened?.slots[S.slot - 1]?.track);
   const rowView = createRows(doc, () => ({
     lines,
-    rows: S.rows, session: act(), report: act().issues(), refs: S.colRefs, refDir: S.refCol === 'en' ? 'ltr' : 'rtl',
+    rows: S.rows, session: act(), report: act().issues(), refs: S.colRefs, refLang: refColumnLang(), lang: openedLang(),
     showEnglish: S.showEnglish, readOnly: readOnly(), selection: S.selection, activeIndex: S.activeIndex, stepMs: S.stepMs,
     match: (i) => search.rowState(i), refRanges: (i) => (S.refCol === 'en' ? search.englishRanges(i) : null),
     markOf: (i) => (S.view === 'edit' ? S.markView?.byIndex.get(i) ?? null : null),
@@ -976,8 +980,6 @@ export async function mountEditor(app, {
 
   // ---- الاستكمال (R52) ----
   const glossary = () => (S.prefs?.glossary?.attach && S.prefs.glossary.terms.length ? S.prefs.glossary.terms : null);
-  /** لغة الترجمة المفتوحة (AA1): لغتها المحفوظة أو رمز صريح في اسم ملفها، وإلا null «غير محددة» فلا فحص «غير مترجم». */
-  const openedLang = () => translationLang(S.opened?.slots[S.slot - 1]?.track);
   /** اللغة التي يُستكمل لها في تعليمات الاستكمال: لغة الترجمة، وإلا الافتراضي حتى يُتاح اختيارها (AA3). */
   const patchTarget = () => openedLang() ?? DEFAULT_TARGET_LANG;
 

@@ -26,8 +26,9 @@ export function createOverlayView({ doc, win }) {
   /** @type {{ ar: string[], en: string[] }} */
   let shown = { ar: [], en: [] };
   let fadeTimer = 0;
-  /** لغة سطر الأصل في الوضع المزدوج (رمز مساره)؛ والعربي lang="ar" (U48). */
+  /** لغة سطر الأصل في الوضع المزدوج (رمز مساره)، ولغة سطر الترجمة (رمزها أو null «غير محددة»، AA1؛ كانت ar ثابتة، U48). */
   let enLang = 'en';
+  let trLang = null;
   let layout = { anchor: 'bottom', offsetPx: 0 };
 
   /**
@@ -46,8 +47,10 @@ export function createOverlayView({ doc, win }) {
   function line(text, kind) {
     const el = doc.createElement('div');
     el.className = `line ${kind}`;
-    el.setAttribute('dir', lineDirection(text));
-    el.setAttribute('lang', kind === 'en' ? enLang : 'ar');
+    const lang = kind === 'en' ? enLang : trLang;
+    el.setAttribute('dir', lineDirection(text, lang));
+    // لغة غير معروفة «und» (BCP-47)، فلا يُنطق السطر بلغة مفترضة.
+    el.setAttribute('lang', lang ?? 'und');
     el.textContent = text;
     return el;
   }
@@ -109,6 +112,11 @@ export function createOverlayView({ doc, win }) {
     /** @param {string | null | undefined} lang رمز لغة مسار الأصل (يُطبَّق على الأسطر التالية). */
     setLang(lang) {
       enLang = lang ? String(lang) : 'en';
+    },
+
+    /** @param {string | null | undefined} lang رمز لغة الترجمة، أو null «غير محددة» (AA1؛ يُطبَّق على الأسطر التالية). */
+    setTranslationLang(lang) {
+      trLang = lang ? String(lang) : null;
     },
 
     /** @param {{ background: 'none' | 'soft' | 'solid' }} a */

@@ -38,6 +38,8 @@ export function createTranscript({ doc, onSeek }) {
   let lastFraction = -1;
   let generation = 0;
   let originalLang = null;
+  /** لغة الترجمة المعروضة (AA1)، وnull «غير محددة». */
+  let translationLang = null;
   /** الصف الذي يحمل نقطة Tab، وهل التركيز داخل القائمة (فلا تُنقل النقطة من تحته مع تقدّم التشغيل). */
   let tabRow = 0;
   let focusInside = false;
@@ -128,14 +130,14 @@ export function createTranscript({ doc, onSeek }) {
     const text = flatText(cue.text);
     const arId = `tj-r${i}-ar`;
     const body = el(doc, 'div', { className: 'b2' }, [
-      el(doc, 'span', { className: 'ar', text, attrs: { id: arId, dir: textDirection(text) } }),
+      el(doc, 'span', { className: 'ar', text, attrs: { id: arId, dir: textDirection(text, translationLang), lang: translationLang ?? 'und' } }),
     ]);
     let described = arId;
     if (original) {
       const en = original(cue.startMs, cue.endMs);
       if (en) {
         // الأصل بلغة مساره (U48)، فيُنطق بصوتها لا بصوت العربية.
-        body.appendChild(el(doc, 'span', { className: 'en', text: en, attrs: { id: `tj-r${i}-en`, lang: originalLang ?? 'en' } }));
+        body.appendChild(el(doc, 'span', { className: 'en', text: en, attrs: { id: `tj-r${i}-en`, lang: originalLang ?? 'en', dir: textDirection(en, originalLang) } }));
         described = `${arId} tj-r${i}-en`;
       }
     }
@@ -149,7 +151,7 @@ export function createTranscript({ doc, onSeek }) {
 
   /**
    * يضمن أن الصفوف تطابق (المقاطع، الأصل، الإزاحة). مرجعا المقاطع والأصل يحكمان إعادة البناء؛ والإزاحة وحدها تحدّث الأزمنة.
-   * @param {{ cues: import('../../core/model/cue.js').Cue[], originalCues: import('../../core/model/cue.js').Cue[] | null, offsetMs: number, originalLang?: string | null }} s
+   * @param {{ cues: import('../../core/model/cue.js').Cue[], originalCues: import('../../core/model/cue.js').Cue[] | null, offsetMs: number, originalLang?: string | null, translationLang?: string | null }} s
    * @returns {{ rebuilt: boolean, relabeled: boolean }}
    */
   function sync(s) {
@@ -169,6 +171,7 @@ export function createTranscript({ doc, onSeek }) {
     cues = s.cues;
     originalRef = s.originalCues;
     originalLang = s.originalLang ?? null;
+    translationLang = s.translationLang ?? null;
     offsetMs = s.offsetMs;
     timeline = createTimeline(cues);
     const original = s.originalCues ? originalLookup(s.originalCues) : null;

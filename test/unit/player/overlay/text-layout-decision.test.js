@@ -19,7 +19,11 @@ test('اتجاه كل سطر من حروفه: RTL إن احتوى عربيًا �
   assert.equal(lineDirection('ok مرحبا'), 'rtl');
   assert.equal(hasArabic('ﷲ'), true, 'أشكال العرض');
   assert.equal(hasArabic('ݐ'), true, 'العربية المكمّلة');
-  assert.equal(hasArabic('שלום'), false, 'العبرية ليست عربية');
+  // منذ 2.0.0 (AA1): كل نص يُكتب من اليمين، لا العربية وحدها؛ ولغة السطر المعروفة أقوى من حروفه.
+  assert.equal(hasArabic('שלום'), true, 'العبرية تُكتب من اليمين');
+  assert.equal(lineDirection('שלום world'), 'rtl');
+  assert.equal(lineDirection('سلام', 'en'), 'ltr', 'سطر بلغة معروفة يتبعها');
+  assert.equal(lineDirection('hello', 'fa'), 'rtl');
 });
 
 test('تقسيم الأسطر: لا فراغات طرفية ولا أسطر فارغة، وكل أنواع نهاية السطر', () => {

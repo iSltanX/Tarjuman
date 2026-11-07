@@ -90,6 +90,7 @@ export function createOverlaySession({ controller, doc, win, player, fonts = nul
       hider.set(d.hideNative);
       view.setAppearance({ background: d.appearance.background });
       view.setLang(controller.getState().english?.lang ?? null);
+      view.setTranslationLang?.(controller.getState().arabic?.lang ?? null);
       view.setFont({ ar: subtitleFontStack(d.appearance.font), en: subtitleFontStack('almarai') });
       if (d.engaged && fonts && fontRequested !== d.appearance.font) {
         fontRequested = d.appearance.font;
