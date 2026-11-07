@@ -157,7 +157,7 @@
 | البطل | العنوان «ترجمتك فوق الفيديو، من أي لغة إلى لغتك» | لوحة الهوية 18 (غلاف README والبلاطة الصغيرة: «ترجمتك فوق الفيديو» و«من أي لغة إلى لغتك»)، و`docs/product-spec.md` §١ («منذ 2.0.0: من أي لغة إلى لغتك») |
 | البطل وكيف يعمل | الدورة، ولا اتصال بنموذج | `docs/product-spec.md` §١ و§٣، و`docs/user-guide.md` §٣ |
 | البطل | الحقائق: المتصفحات الأربعة، والحفظ على الجهاز، ولا حساب ولا مفتاح، والنموذج تختاره | `docs/evidence/T3/README.md` (الأربعة)، و`docs/site/privacy.md` (`#summary`)، و`docs/product-spec.md` §١ |
-| البطل | اللقطة: المشغّل ولوحة النص المتزامن | `test/live/aa4/site-shots.mjs` (`01-overlay-panel`) |
+| البطل | اللقطة: المشغّل ولوحة النص المتزامن | `test/live/aa4/site-shots.mjs` (`01-overlay-panel`)، وبصمات اللقطات ونتيجة تشغيلها في `docs/evidence/AA4/README.md` |
 | كيف يعمل | اختيار اللغة من CC، والتنزيل من زر الشريط | `docs/user-guide.md` §٣ الخطوتان ١ و٢، و`src/player/controls/text.js` (`LABELS.download`)، وقرار سلطان ق١ (`docs/aa-plan.md` §٤) |
 | كيف يعمل | «انسخ التعليمات» من النافذة، و«من» من لغة الملف كما أرسلها يوتيوب | `docs/user-guide.md` §٣ الخطوة ٣، و`src/pages/popup/` (كتلة «تعليمات الترجمة»)، وقرارا سلطان ق٥ وق٨ (`docs/aa-plan.md` §٤) |
 | كيف يعمل | لقطة نافذة الإضافة وتعليمات الترجمة | `test/live/aa4/site-shots.mjs` (`07-popup`) |

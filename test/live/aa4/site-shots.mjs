@@ -349,7 +349,7 @@ async function popupShot(name, { scheme = 'light' } = {}) {
     // حتى نهاية كتلة «تعليمات الترجمة» وسطرها (الرأس والفيديو الحالي والكتلة)، فتجاور خطوات «كيف يعمل» في الموقع.
     const bottom = await page.eval(() => Math.ceil(Math.max(...[...document.querySelectorAll('.tj-popup__pair, .tj-popup__pair *')].map((e) => e.getBoundingClientRect().bottom))));
     check('popup-instructions-block-measured', bottom > 200 && bottom < info.h, { bottom });
-    await rawShot(page, name, { left: 0, top: 0, width: 340, height: Math.min(bottom + 20, info.h) });
+    await rawShot(page, name, { left: 0, top: 0, width: 340, height: Math.min(bottom + 7, info.h) });
   } finally {
     await yt.conn.send('Target.closeTarget', { targetId }).catch(() => null);
     await frontYt();
@@ -358,7 +358,7 @@ async function popupShot(name, { scheme = 'light' } = {}) {
 }
 
 try {
-  // لا تشغيل تلقائي في نسخة الاختبار (كما في T6): يبقى غلاف الفيلم عند 3:02 من الرابط، وترجمان يعرض المقطع الحالي فوقه.
+  // لا تشغيل تلقائي في نسخة الاختبار (كما في T6): الفيديو موقوف عند 3:02 من الرابط (إطاره إن حمّله يوتيوب، وإلا غلافه)، وترجمان يعرض المقطع الحالي فوقه.
   s = await startBrowser('chrome', { profile: `chrome-aa4-shots-${RUN}`, ext: EXT, downloadDir: DL, headless: !HEADED, extraArgs: ['--autoplay-policy=user-gesture-required'] });
   result.browser = s.version;
   check('install-production-build', !!s.extensionId, { version: s.version, build: result.build });
@@ -366,7 +366,8 @@ try {
   // ===== ١. يوتيوب بالواجهة العربية، والالتقاط عبر الجسر =====
   const first = await openYoutube();
   check('youtube-player-ready', first.ready);
-  note('أُخفيت العلامة المائية لقناة الفيلم وزر التشغيل الكبير بنمط في صفحة الاختبار وحدها؛ والإطار صورة غلاف الفيلم لأن التشغيل تحت الأتمتة يعطي خطأ يوتيوب');
+  note('أُخفيت العلامة المائية لقناة الفيلم وزر التشغيل الكبير بنمط في صفحة الاختبار وحدها');
+  note(f0.ready >= 2 ? 'الإطار عند 3:02 إطار من الفيلم نفسه (حمّله يوتيوب في هذا التشغيل)' : 'الإطار عند 3:02 صورة غلاف الفيلم (لم يحمّل يوتيوب الفيديو تحت الأتمتة)');
   const f0 = await showFrame(182);
   check('frame-at-3-02-complete', !f0.error && !f0.spinner && Math.abs(f0.t - 182) < 1, f0);
   await yt.eval((msg) => { window.postMessage(msg, location.origin); return true; }, { args: [capture] });
