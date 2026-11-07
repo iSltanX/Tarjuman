@@ -121,10 +121,17 @@ npm run build:firefox      # dist-firefox/  ← Firefox
 const md = {};
 for (const f of ['listing.ar.md', 'submission.md', 'reviewers.en.md']) md[f] = await readFile(path.join(ROOT, 'store', f), 'utf8');
 const field = Object.fromEntries(Object.values(md).flatMap((t) => parseFields(t)).map((x) => [x.id, x.text]));
+/**
+ * قسم من ملف في store/ بنصه، لنسخه خارج المستودع: الروابط النسبية تصير نصها (تنكسر خارج المستودع، والنص اسم الملف غالبًا)،
+ * وأرقام الأقسام تُحذف من العناوين.
+ */
 const section = (text, from, to) => {
   const a = text.indexOf(from);
   const b = to ? text.indexOf(to, a + from.length) : -1;
-  return a < 0 ? '' : text.slice(a, b < 0 ? undefined : b).trim();
+  if (a < 0) return '';
+  return text.slice(a, b < 0 ? undefined : b).trim()
+    .replace(/\[([^\]]+)\]\((?!https?:|#)[^)]+\)/g, '$1')
+    .replace(/^(#{2,3}) [٠-٩]+\. /gm, '$1 ');
 };
 const block = (t) => `\`\`\`text\n${t}\n\`\`\``;
 const shots = async (set) => (await readdir(path.join(ROOT, 'store/screenshots', set))).filter((n) => n.endsWith('.png')).sort();
@@ -276,6 +283,8 @@ const ev = {
   t8: Object.fromEntries(await Promise.all(['brave', 'chrome', 'edge', 'firefox'].map(async (b) => [b, await readJson(`docs/evidence/AA5/t8/${b}/result.json`)]))),
 };
 const tally = (r) => (r?.checks ? `${r.checks.filter((c) => c.ok).length}/${r.checks.length}` : 'غير متاح');
+/** «15/15 (Brave 157.1.99.55)»: اسم المتصفح ورقمه بلا سلسلة المحرّك. */
+const t8 = (r) => `${tally(r)} (${String(r?.browser ?? '؟').split(' (')[0]})`;
 const size = async (rel) => (await stat(path.join(OUT, rel))).size;
 const kb = (n) => `${(n / 1024 / 1024).toFixed(2)} م.ب`;
 const template = await readFile(path.join(ROOT, 'scripts/release/v2-readme.md'), 'utf8');
@@ -297,12 +306,13 @@ const values = {
   FIREFOX_SHA: desc.packages.firefox.sha256,
   SOURCE_SHA: desc.source.sha256,
   FILES: String(desc.packages.chrome.files.length),
+  CHROME_MIN: chromiumManifest.minimum_chrome_version ?? '؟',
   GECKO_MIN: firefoxManifest.browser_specific_settings?.gecko?.strict_min_version ?? '؟',
   GECKO_ID: firefoxManifest.browser_specific_settings?.gecko?.id ?? '؟',
-  T8_BRAVE: `${tally(ev.t8.brave)} (${ev.t8.brave?.browser ?? '؟'})`,
-  T8_CHROME: `${tally(ev.t8.chrome)} (${ev.t8.chrome?.browser ?? '؟'})`,
-  T8_EDGE: `${tally(ev.t8.edge)} (${ev.t8.edge?.browser ?? '؟'})`,
-  T8_FIREFOX: `${tally(ev.t8.firefox)} (${ev.t8.firefox?.browser ?? '؟'})`,
+  T8_BRAVE: t8(ev.t8.brave),
+  T8_CHROME: t8(ev.t8.chrome),
+  T8_EDGE: t8(ev.t8.edge),
+  T8_FIREFOX: t8(ev.t8.firefox),
   DATA: tally(ev.data),
   SHOTS: tally(ev.shots),
   HAND: ev.hand?.passed ? 'ناجح' : 'غير مكتمل',

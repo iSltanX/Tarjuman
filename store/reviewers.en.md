@@ -106,7 +106,7 @@ Arabic sample (test.ar.srt):
 | غلافا fetch وXHR يقرآن الرد ولا يطلبان | `src/main-world/capture.js` |
 | `blob:` في Firefox | `docs/evidence/T3/README.md` (`3d6a800`) |
 | الصور والبلاغ وموافقتا Firefox | `docs/site/privacy.md` وجدول أدلته، و`scripts/targets.mjs` |
-| إعادة البناء بايتًا | `docs/evidence/T4/README.md`، و`release/store/tarjuman-1.1.0-store.json` |
+| إعادة البناء بايتًا | `docs/evidence/T4/README.md` (الطريقة)، و`release/store/tarjuman-2.0.0-store.json` (`source.reproduced`)، و`docs/evidence/AA5/checks.json` |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
 | سياسة واحدة تسمّي Edge حيث يختلف السلوك، والصور مفعّلة افتراضيًا فيه بمفتاح في الإعدادات | `docs/site/privacy.md` (أسطر «في Chrome وEdge وBrave»)، و`src/core/model/prefs.js` (`ui.thumbnails: true`)، و`src/pages/settings/view.js`؛ والبند 1.5.2 من [سياسات مطوري Edge](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (قُرئ 2026-11-05) |
 | البلاغ من «تقارير الأعطال والأخطاء» لا من الاتصالات الشخصية | تعريفا `technicalAndInteraction` و`personalCommunications` في [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) (قُرئ 2026-11-05)، و`src/core/report/payload.js`، و`submission.md` §٤ |

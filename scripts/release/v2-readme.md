@@ -25,7 +25,7 @@
 
 **البصمات:** Chrome وEdge `{{CHROME_SHA}}`، وFirefox `{{FIREFOX_SHA}}`، والمصدر `{{SOURCE_SHA}}`.
 
-**الحد الأدنى للإصدار:** Chrome وEdge وBrave ‏130، وFirefox للحاسوب {{GECKO_MIN}} (المعرّف `{{GECKO_ID}}`).
+**الحد الأدنى للإصدار:** Chrome وEdge وBrave ‏{{CHROME_MIN}}، وFirefox للحاسوب {{GECKO_MIN}} (المعرّف `{{GECKO_ID}}`).
 
 ### مواد المتاجر
 
