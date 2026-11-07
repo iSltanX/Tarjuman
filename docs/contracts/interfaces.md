@@ -72,6 +72,7 @@ controller.diagnostics()         // أعداد ورموز: الكتابات ال
 | `setDisplayMode("ar" \| "dual" \| "off")` | يُحفظ لكل فيديو. | `MD_INVALID` (متزامن) |
 | `loadArabic(input, { replace })` | `input = { fileName, cues, comparison, fingerprintId, notes }` من تدفق الاستيراد (§٦). يصفّر الإزاحة بإشعار، ويحفظ المسار الملتقط مرجعًا إن لم يكن محفوظًا. | `ST_ARABIC_EXISTS` دون `replace`، `MD_INVALID`، `ST_*` |
 | `recordExport({ trackKey, fingerprint })` | بعد تنزيل SRT إنجليزي: يحفظ المسار بوضعه العادي كما استُخرج والبصمة. لا إزاحة فيه. | `EX_NO_TRACK`، `MD_INVALID`، `ST_*` |
+| `recordSavedExport({ trackKey, fingerprint })` → `{ stored }` | بعد «تنزيل المحفوظ» من المشغّل بلا التقاط (تدقيق Fable، FA-17، بقرار سلطان 2026-11-07): يحفظ البصمة إن لم تكن بصمة التصدير نفسه محفوظة (`sameExport`)، والمسار المحفوظ كما هو. | `EX_NO_TRACK`، `ST_*` |
 | `convertCaptured(key, { mode })` | مقاطع مسار ملتقط بوضع التصدير (متزامن) — `ConvertResult` (§٢). | — |
 | `updateSettings(patch)` | مثل اختيار الخطوة من قائمة الشارة. | `MD_INVALID`، `ST_*` |
 | `dismissNotice()` | متزامن. | — |
@@ -372,6 +373,7 @@ mergeThreeWay({ base, mine, theirs }: { base: Cue[], mine: Cue[], theirs: Cue[] 
 rankReferences(cues: Cue[], fingerprints: Fingerprint[]) → { fingerprintId, score, matched, why }[]   // الأفضل أولًا
 fingerprintCoverage(fingerprint, cues) → { ok: true, numbersOf, windowOf, pairs, missing, extra, structural } | { ok: false }   // تدقيق 5fedcb9
 currentComparison(cues, fingerprint, { driftMs?, coverage? }) → ComparisonReport   // النقص والزيادة والانحراف بالمحاذاة، والباقي من compare؛ ولا matched مع دمج أو شطر (C5، U29)
+previewComparison(cues, fingerprint, { settings?, notes? }) → ComparisonReport & { renumbered }   // core/import: معاينة الرفع بالمحاذاة كما بعد الحفظ، وrenumbered حين قابلت المحاذاة أرقامًا غير أرقام التصدير؛ وتقرير الحفظ بالرقم كما هو (تدقيق Fable، FA-04، بقرار سلطان 2026-11-07)
 trackComparison(track, fingerprints) → ComparisonReport | null                     // الحاضر لترجمة محفوظة، والمحفوظ بلا مرجع
 compare(...)   // التوقيع نفسه؛ restoreTimingAvailable لا يصح إلا بمحاذاة متحققة، والسبب في notes
 
