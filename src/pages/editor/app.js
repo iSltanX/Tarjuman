@@ -358,26 +358,31 @@ export async function mountEditor(app, {
   const toastEl = el('div', { className: 'ed-toast', attrs: { role: 'status', 'aria-live': 'polite', inert: '' }, doc });
   // الرسالة العابرة تحت الرأس عند طرفه (تحت «حفظ»)، لا فوق العنوان (ملاحظة W4 من لقطة w4-editor-saved).
   headEl.appendChild(toastEl);
-  app.append(
-    headEl, toolbarEl, offsetEl, bannerEl,
-    el('div', {
-      className: 'ed-body',
-      // القائمة أولًا ثم اللوحة الجانبية: في RTL القائمة يمينًا واللوحة يسارًا (لوحة Editor)، فيطابق ترتيب التركيز الترتيب البصري.
-      children: [
-        el('section', { className: 'ed-main', attrs: { 'aria-label': 'قائمة المقاطع' }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc }),
-        el('aside', {
-          className: 'ed-side',
-          children: [
-            el('div', { className: 'ed-side__bar', children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': 'اللوحة الجانبية' }, children: sideTabs, on: { keydown: onTabsKey }, doc }), sideBtn], doc }),
-            reviewPane, completePane,
-          ],
-          doc,
-        }),
-      ],
-      doc,
-    }),
-    unsavedEl,
-  );
+  const mainEl = el('section', { className: 'ed-main', attrs: { 'aria-label': 'قائمة المقاطع' }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc });
+  const sideEl = el('aside', {
+    className: 'ed-side',
+    children: [
+      el('div', { className: 'ed-side__bar', children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': 'اللوحة الجانبية' }, children: sideTabs, on: { keydown: onTabsKey }, doc }), sideBtn], doc }),
+      reviewPane, completePane,
+    ],
+    doc,
+  });
+  // القائمة أولًا ثم اللوحة الجانبية: في RTL القائمة يمينًا واللوحة يسارًا (لوحة Editor)، فيطابق ترتيب التركيز الترتيب البصري.
+  const bodyEl = el('div', { className: 'ed-body', children: [mainEl, sideEl], doc });
+  app.append(headEl, toolbarEl, offsetEl, bannerEl, bodyEl, unsavedEl);
+  // وتحت 900 تصعد اللوحة المطوية فوق القائمة، فتُنقل قبلها في الشجرة نفسها لا بـorder بصري وحده: يصل Tab وقارئ الشاشة إلى
+  // تبويبيها أولًا كما تُرى (تدقيق Fable، FA-14 = UX-05، بقرار سلطان 2026-11-07؛ كان قرارًا معلّقًا في identity-redesign §٦.١).
+  // تُنقل اللوحة وحدها (القائمة الافتراضية بتمريرها تبقى)، ويعود التركيز إلى عنصره إن كان فيها.
+  const narrowQuery = win?.matchMedia?.('(max-width: 900px)') ?? null;
+  const placeSide = () => {
+    const before = narrowQuery?.matches ? mainEl : null;
+    if (sideEl.nextSibling === before && sideEl.parentNode === bodyEl) return;
+    const focused = doc.activeElement && sideEl.contains(doc.activeElement) ? doc.activeElement : null;
+    bodyEl.insertBefore(sideEl, before);
+    if (focused && doc.activeElement !== focused) focused.focus?.({ preventScroll: true });
+  };
+  placeSide();
+  narrowQuery?.addEventListener?.('change', placeSide);
 
   // ---- أسطر النص بالتفاف عرض العمود (تدقيق 7a66f91، I08): خط الحقل وعرض محتواه من صف مرسوم، والقياس بلوحة رسم ----
   const measureCtx = (() => {

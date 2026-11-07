@@ -332,7 +332,8 @@ html, body.ed-page { height: 100%; }
 @media (max-width: 900px) {
   .ed-fold--side { display: inline-flex; }
   .ed-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(var(--ed-list-min), 1fr); }
-  .ed-side { order: -1; contain: none; max-height: 50vh; }
+  /* فوق القائمة بترتيب الشجرة نفسه (app.js ينقلها قبلها تحت 900؛ FA-14)، لا بـorder بصري يخالف ترتيب التركيز. */
+  .ed-side { contain: none; max-height: 50vh; }
   .ed-app:not(.ed-side-open) .ed-side > .ed-pane { display: none; }
   .ed-head, .ed-toolbar, .ed-offset { padding-inline: 16px; }
   .ed-offset { flex-wrap: wrap; }
