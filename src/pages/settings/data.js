@@ -41,7 +41,7 @@ export function countsLine(c) {
 export const THUMBNAILS_STAY_OFF = 'صور الفيديو في المحفوظات مطفأة في هذه النسخة، فتبقى مطفأة على هذا الجهاز بعد الاستعادة.';
 
 /** أجزاء الفيديو التي تُستبعد من نسخة جزئية بأسمائها للمستخدم (U94). */
-export const PART_NAMES = Object.freeze({ head: 'أسماء الترجمات واختيار النشطة', alts: 'الترجمات غير النشطة', prev: 'النسخة السابقة', marks: 'العلامات وآخر موضع' });
+export const PART_NAMES = Object.freeze({ head: 'أسماء الترجمات واختيار النشطة', alts: 'الترجمات غير النشطة', prev: 'النسخة السابقة', marks: 'العلامات وآخر موضع', lang: 'بيانات اللغات' });
 
 /** معرّف فيديو معزول LTR في سطر عربي (كانت الشرطة في أوله تنتقل إلى آخره؛ تدقيق 7a66f91، U59 DS-F11). @param {string} id */
 const idText = (id) => ltrInline(id);

@@ -108,6 +108,11 @@ export function salvageRaw(raw, id) {
       out[kind] = null;
       dropped.push(kind);
     }
+    // بلا رأس تصير النشطة في الخانة 1 مهما كانت خانتها الأصلية، فيُنقل وصفها في مرافق اللغة إلى الخانة 1 بمطابقة الهوية
+    // (importedAt وfileName) عبر الخانات كلها، فلا تضيع لغتها ومرجعها (تدقيق V2، U-016). أوصاف الباقي سقطت معهما.
+    const arabic = raw.record.arabic;
+    const at = out.lang && arabic ? out.lang.slots.findIndex((m) => m && m.importedAt === arabic.importedAt && m.fileName === arabic.fileName) : -1;
+    if (at > 0) out.lang = { ...out.lang, slots: [out.lang.slots[at], null, null] };
   }
   return { raw: out, dropped };
 }

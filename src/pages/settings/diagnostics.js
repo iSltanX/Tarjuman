@@ -12,7 +12,7 @@ import { browserLabel, liveSources } from '../../core/report/diagnostics.js';
  */
 export const detectBrowser = (nav = globalThis.navigator, api = globalThis.chrome) => browserLabel({ ...liveSources({ nav, api }), platformInfo: async () => null });
 
-/** أعداد المحفوظات من الفهرس فقط. @param {import('../../core/model/video.js').IndexEntry[]} entries */
+/** أعداد المحفوظات من مُلخّصات الصفوف فقط. @param {import('../../core/model/video.js').IndexEntry[]} entries */
 export function librarySummary(entries) {
   return {
     videos: entries.length,
@@ -41,7 +41,8 @@ export async function collectDiagnostics({ store, version, nav = globalThis.navi
     const cap = await store.capacity();
     return { bytesInUse: cap.bytesInUse, quotaBytes: cap.quotaBytes, unlimited: cap.unlimited, level: cap.level, code: cap.code };
   });
-  await section('library', async () => librarySummary(await store.listIndex()));
+  // من listLibrary لا listIndex: الفهرس المسقَط يخفي مسارات اللغات الأخرى وبصماتها ومقارنة مرجعها (تدقيق V2، U-010).
+  await section('library', async () => librarySummary((await store.listLibrary()).map((x) => x.entry)));
   await section('settings', async () => {
     const s = await store.getSettings();
     return {

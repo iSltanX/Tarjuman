@@ -2,6 +2,7 @@
 // فتبقى القواعد واحدة أينما حُفظ السجل. كل دالة تعيد سجلًا جديدًا ولا تغيّر مدخلها، والتخزين يتحقق ويضبط rev.
 import { TjError } from '../errors/index.js';
 import { cloneCues } from './cue.js';
+import { fitLimits } from './lang-store.js';
 import { LIMITS } from './validate.js';
 import { createVideoRecord } from './video.js';
 
@@ -31,18 +32,15 @@ function pruneFingerprints(list, keepId, keep = []) {
 }
 
 /**
- * يضيف مسارًا إنجليزيًا أو يستبدل مسار مفتاحه. عند امتلاء الحد يُسقط أقدم مسار لا تشير إليه بصمة.
- * @param {EnglishTrack[]} list @param {EnglishTrack} track @param {Fingerprint[]} fingerprints
+ * يضيف مسارًا إنجليزيًا أو يستبدل مسار مفتاحه. عند امتلاء الحد يُسقط بقاعدة مرافق اللغة نفسها (fitLimits): أقدم مسار كل بصماته
+ * غير مشار إليها (غير الإنجليزي أولًا) مع بصماته، فلا يُرفض التصدير التاسع بـMD_INVALID (تدقيق V2، U-013).
+ * @param {EnglishTrack[]} list @param {EnglishTrack} track @param {Fingerprint[]} fingerprints @param {Set<string>} referenced
+ * @returns {{ english: EnglishTrack[], fingerprints: Fingerprint[] }}
  */
-function putEnglish(list, track, fingerprints) {
+function putEnglish(list, track, fingerprints, referenced) {
   const out = [...list.filter((x) => x.key !== track.key), { ...track, cues: cloneCues(track.cues) }];
-  const used = new Set(fingerprints.map((f) => f.trackKey));
-  while (out.length > LIMITS.maxEnglishTracks) {
-    const i = out.findIndex((x) => x.key !== track.key && !used.has(x.key));
-    if (i === -1) break;
-    out.splice(i, 1);
-  }
-  return out;
+  const fit = fitLimits(out, fingerprints, referenced, track.key);
+  return { english: fit.english, fingerprints: fit.fingerprints };
 }
 
 function base(record, { videoId, title, durationMs, displayMode }, now) {
@@ -65,7 +63,9 @@ function base(record, { videoId, title, durationMs, displayMode }, now) {
 export function withExport(record, input, now, { keep = [] } = {}) {
   const r = base(record, input, now);
   r.fingerprints = pruneFingerprints([...r.fingerprints.filter((f) => f.id !== input.fingerprint.id), copy(input.fingerprint)], r.arabic?.fingerprintId ?? null, keep);
-  r.english = putEnglish(r.english, input.englishTrack, r.fingerprints);
+  const fit = putEnglish(r.english, input.englishTrack, r.fingerprints, new Set([r.arabic?.fingerprintId ?? null, ...keep].filter(Boolean)));
+  r.english = fit.english;
+  r.fingerprints = fit.fingerprints;
   return r;
 }
 

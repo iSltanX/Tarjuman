@@ -33,8 +33,10 @@ export function storedTrack(t, v1Prints) {
   const out = copy(rest);
   let ref = null;
   const foreign = (id) => id !== null && id !== undefined && !v1Prints.has(id);
-  if (foreign(out.fingerprintId) || (out.comparison && foreign(out.comparison.fingerprintId))) {
-    if (out.fingerprintId !== null) ref = { fingerprintId: out.fingerprintId, comparison: out.comparison ? copy(out.comparison) : null };
+  // المسح لمرجع بصمة لا يراها 1.1.0 وحده. ترجمة مرجعها فارغ ومقارنتها باقية لبصمة غائبة (أخلاها إصدار سابق) تبقى كما هي:
+  // مدققا الأول و1.1.0 يقبلانها، والمسح كان يُسقط تحذيرها ويجعل نسخة 1.1.0 الاحتياطية تُرفض (تدقيق V2، U-011).
+  if (out.fingerprintId !== null && out.fingerprintId !== undefined && (foreign(out.fingerprintId) || (out.comparison && foreign(out.comparison.fingerprintId)))) {
+    ref = { fingerprintId: out.fingerprintId, comparison: out.comparison ? copy(out.comparison) : null };
     out.fingerprintId = null;
     out.comparison = null;
   }
@@ -104,23 +106,50 @@ export function mergeLang(b, v) {
   else if (v.previous) stale = true;
   // الحدود بعد الدمج: إصدار سابق قد يكون أضاف مسارات أو بصمات إنجليزية فوق ما يُحفظ هنا.
   const referenced = new Set([r.arabic?.fingerprintId, ...b.slots.map((s) => s.track?.fingerprintId), b.previous?.track.fingerprintId].filter(Boolean));
-  while (r.fingerprints.length > LIMITS.maxFingerprints) {
-    const i = r.fingerprints.findIndex((f) => !referenced.has(f.id) && !isV1Key(f.trackKey, r));
-    if (i === -1) break;
-    r.fingerprints.splice(i, 1);
-    stale = true;
-  }
-  const used = new Set(r.fingerprints.map((f) => f.trackKey));
-  while (r.english.length > LIMITS.maxEnglishTracks) {
-    const i = r.english.findIndex((t) => !isV1Track(t) && !used.has(t.key));
-    if (i === -1) break;
-    r.english.splice(i, 1);
+  const fit = fitLimits(r.english, r.fingerprints, referenced);
+  if (fit.changed) {
+    r.english = fit.english;
+    r.fingerprints = fit.fingerprints;
     stale = true;
   }
   return stale;
 }
 
-const isV1Key = (key, r) => r.english.some((t) => t.key === key && isV1Track(t));
+/**
+ * يعيد المسارات والبصمات إلى حدودها بقاعدة واحدة (تدقيق V2، U-012 وU-013؛ عقد storage §١٣): تُسقط الأقدم من البصمات غير المشار
+ * إليها (بصمات المسارات بغير الإنجليزية أولًا ثم الإنجليزية)، ثم الأقدم من المسارات التي كل بصماتها غير مشار إليها (ولا بصمة
+ * لها كذلك) مع بصماتها، والأجنبي أولًا. protectKey مسار لا يُسقط (المصدَّر الآن). ما هو مشار إليه لا يُسقط أبدًا، فإن امتلأ
+ * بالمشار إليه وقف الإسقاط.
+ * @param {object[]} english @param {object[]} fingerprints @param {Set<string>} referenced @param {string | null} [protectKey]
+ * @returns {{ english: object[], fingerprints: object[], changed: boolean }}
+ */
+export function fitLimits(english, fingerprints, referenced, protectKey = null) {
+  let en = english.slice();
+  let fps = fingerprints.slice();
+  let changed = false;
+  /** الأقدم المقبول، وغير الإنجليزي أولًا. */
+  const oldest = (list, ok, foreign) => {
+    const f = list.findIndex((x) => ok(x) && foreign(x));
+    return f !== -1 ? f : list.findIndex(ok);
+  };
+  while (fps.length > LIMITS.maxFingerprints) {
+    const v1Keys = new Set(en.filter(isV1Track).map((t) => t.key));
+    const i = oldest(fps, (f) => !referenced.has(f.id) && f.trackKey !== protectKey, (f) => !v1Keys.has(f.trackKey));
+    if (i === -1) break;
+    fps.splice(i, 1);
+    changed = true;
+  }
+  while (en.length > LIMITS.maxEnglishTracks) {
+    const droppable = (t) => t.key !== protectKey && !fps.some((f) => f.trackKey === t.key && referenced.has(f.id));
+    const i = oldest(en, droppable, (t) => !isV1Track(t));
+    if (i === -1) break;
+    const { key } = en[i];
+    en.splice(i, 1);
+    fps = fps.filter((f) => f.trackKey !== key);
+    changed = true;
+  }
+  return { english: en, fingerprints: fps, changed };
+}
 
 /**
  * قيمة المرافق لحزمة، مع إسقاط ترجماتها (الخانات غير النشطة والسابقة) لما يقرؤه 1.1.0. base يضبطها التخزين بعد rev.
@@ -188,6 +217,7 @@ export function validateLangValue(v, path = 'lang') {
     ])),
     () => (new Set(v.sources.map((t) => t.key)).size === v.sources.length ? OK : fail(`${path}.sources`, 'مفتاح مسار مكرر')),
     () => eachOf(v.prints, `${path}.prints`, LIMITS.maxFingerprints, (f, p) => validateFingerprint(f, p)),
+    () => (new Set(v.prints.map((f) => f.id)).size === v.prints.length ? OK : fail(`${path}.prints`, 'معرّف بصمة مكرر')),
     () => {
       const keys = new Set(v.sources.map((t) => t.key));
       const bad = v.prints.findIndex((f) => f.videoId !== v.videoId || !keys.has(f.trackKey));

@@ -178,7 +178,16 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
       return null;
     }
     // undefined: يُكتب ما غيّرته المصالحة إن بقي (قراءتان متزامنتان لا تكتبان مرتين).
-    if (cur.changed) return exclusive(() => writeBundle(videoId, () => undefined));
+    if (cur.changed) {
+      try {
+        return await exclusive(() => writeBundle(videoId, () => undefined));
+      } catch (err) {
+        // فشل كتابة المصالحة (حصة أو انقطاع أو بيانات لا تجتاز التحقق) لا يجعل الفيديو غير مقروء ما دامت الحزمة المصالحة في
+        // الذاكرة صالحة: تُخدَم دون تذكّر، وتُعاد الكتابة في القراءة التالية (تدقيق V2، U-012). الحزمة غير الصالحة تبقى خطأً.
+        if (!validateBundle(cur.bundle).ok) throw err;
+        return cur.bundle;
+      }
+    }
     return (writes.get(videoId) ?? 0) === gen ? remember(cur.bundle) : cur.bundle;
   }
 
@@ -566,6 +575,22 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         const lv = light[langKey(entry.videoId)] ?? null;
         return lv && validateLangValue(lv).ok && lv.videoId === entry.videoId ? lv : null;
       };
+      /**
+       * مرافق لغة صالح لكنه لا يطابق سجل الصف (كتب السجلَّ إصدارٌ سابق دونه: حذفه ثم رفع سجل جديد، أو استبدل ترجمة باسمها): لا يُقرن
+       * بالصف، ويمر الفيديو بالقراءة الكاملة التي تصالحه (تدقيق V2، U-014).
+       */
+      const staleLang = (entry) => {
+        const lv = langOf(entry);
+        return !!lv && (lv.base.rev !== entry.rev || lv.base.updatedAt !== entry.updatedAt);
+      };
+      /**
+       * مرجع في مرافق اللغة لخانة ممتلئة (مرجعها بصمة مسار بغير الإنجليزية): مُلخّص الصف من السجل المسقَط يصفّر المقارنة، فيُقرأ
+       * الفيديو كاملًا كما مع أكثر من مسار أصل (تدقيق V2، U-009). ولا تُنسخ المقارنة إلى الصف: تعود متقادمة بعد الاستكمال.
+       */
+      const hasForeignRef = (entry, filled) => {
+        const lv = langOf(entry);
+        return !!lv && lv.slots.some((m, i) => m && m.ref && filled[i]);
+      };
       // مسارات الأصل بغير الإنجليزية في المرافق (AA1): تُضم إلى مُلخّص الصف كما في القراءة الكاملة، فتُصدَّر وتُعدّ من المحفوظات.
       const withSources = (entry) => {
         const lv = langOf(entry);
@@ -577,6 +602,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
        * (اسم الملف للنشطة، ومعه تاريخ الاستيراد لغيرها)، والأصل أول مسار بترتيب قائمة التحميل. القيمة التالفة كأنها غائبة.
        */
       const pairsFromHead = (entry, alts) => {
+        if (staleLang(entry)) return null;
         const lang = langOf(entry);
         const sources = [...entry.english.map((t) => parseTrackKey(t.key)), ...(lang?.sources ?? []).map((t) => parseTrackKey(t.key))].filter(Boolean)
           .sort((a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || (a.kind === b.kind ? 0 : a.kind === 'manual' ? -1 : 1));
@@ -606,7 +632,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           };
         });
         const pairs = pairsFromHead(entry, alts);
-        if (!pairs) return null;
+        if (!pairs || hasForeignRef(entry, slots.map((x) => x.filled))) return null;
         return { entry: withSources(entry), summary: head.summary, slots, pairs: slots.map((x) => (x.filled ? pairs[x.n - 1] : null)) };
       };
       const out = [];
@@ -619,7 +645,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           const slots = slotModelsFromIndex(entry);
           const src = parseTrackKey(entry.english[0]?.key);
           const pairs = langOf(entry) ? pairsFromHead(entry, null) : [1, 2, 3].map(() => ({ from: src?.lang ?? null, to: null, via: src?.via ?? null }));
-          if (pairs) {
+          if (pairs && !staleLang(entry) && !hasForeignRef(entry, slots.map((x) => x.filled))) {
             out.push({ entry: withSources(entry), summary: trivialSummary(entry), slots, pairs: slots.map((x) => (x.filled ? pairs[x.n - 1] : null)) });
             continue;
           }
