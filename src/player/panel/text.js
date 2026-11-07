@@ -1,4 +1,4 @@
-// نصوص لوحة النص المتزامن ودوالها النقية (docs/identity-redesign.md §٤، ولوحات التصميم WatchPanel وPanelStates وWatchNarrow).
+// نصوص لوحة النص المتزامن ودوالها النقية (docs/product-spec.md §٦.٦، ولوحات التصميم WatchPanel وPanelStates وWatchNarrow).
 // أرقام لاتينية، والإزاحة بعلامتها (formatOffset)، والعدّ بالعربية (formatCount). لا شيء هنا يعرف DOM.
 import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
 import { languageName as sharedLanguageName } from '../../ui/lang.js';

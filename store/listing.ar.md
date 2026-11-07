@@ -171,7 +171,7 @@ tarjuman
 | التوقيت ومزامنة بجملة | `docs/user-guide.md` §٤، و`docs/contracts/data-model.md` §٦ و§١٠ |
 | مقارنة بالأصل بلا تعديل صامت | `docs/contracts/data-model.md` §٥، و`docs/user-guide.md` §٣ |
 | المحرّر والاستكمال | `docs/user-guide.md` §٥ |
-| النص المتزامن مغلق افتراضيًا | `src/core/model/prefs.js` (`panelOpen: false`)، و`docs/identity-redesign.md` §١ |
+| النص المتزامن مغلق افتراضيًا | `src/core/model/prefs.js` (`panelOpen: false`)، و`docs/product-spec.md` §٦.٦ |
 | المحفوظات والنسخة الاحتياطية | `docs/user-guide.md` §٦ و§٧، و`docs/contracts/backup.md` |
 | لا تنزيل فيديو، ولا طلب ترجمة | `src/main-world/capture.js` (يقرأ رد طلب المشغّل وحده)، و`scripts/release/audit.mjs` (لا طلب شبكة في سكربتي المحتوى وعالم الصفحة) |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |

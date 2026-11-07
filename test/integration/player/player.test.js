@@ -97,7 +97,7 @@ test('الدورة كاملة: تحميل بالبصمة ثم رفع الترج�
   assert.equal(record(area).arabic.fileName, 'talk.ar.srt');
   assert.equal(page.ui.menuLabel(), 'الترجمة');
   assert.match(page.ui.menuText(), /مطابق للأصل/);
-  // الهوية «بُنّ على ورق»: لا نقطة حالة على الزر؛ الحالة في الوصف والتلميح.
+  // الوضع العادي (product-spec §٦.٦): لا نقطة حالة على الزر؛ الحالة في الوصف والتلميح.
   assert.equal(page.ui.btn('upload').querySelector('.dot'), null);
   assert.match(page.ui.btn('upload').getAttribute('aria-description') ?? '', /مطابق للأصل/);
 

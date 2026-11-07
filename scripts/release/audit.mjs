@@ -50,7 +50,7 @@ const URL_OK = (u, rel) => u === 'http://www.w3.org/2000/svg'
   || u.startsWith('https://www.youtube.com/watch?v=')
   || (rel === 'pages/settings/main.js' && (u === 'https://bysltan.com' || u === 'https://bysltan.com/tarjuman/support'))
   || (rel === WORKER && u === 'https://www.youtube.com/')
-  // صور الفيديو في المحفوظات من خوادم يوتيوب بمعرّفه، بمفتاح يطفئها (قرار سلطان 2026-11-03، docs/identity-redesign.md).
+  // صور الفيديو في المحفوظات من خوادم يوتيوب بمعرّفه، بمفتاح يطفئها (قرار سلطان 2026-11-03، docs/product-spec.md §٦.٦).
   || (rel === 'pages/library/main.js' && u === 'https://i.ytimg.com/vi/')
   // خادم البلاغات بأصله وحده في حزمة الإعدادات (المسار والنمط يُبنيان منه في الشيفرة)، ونمط إذنه الاختياري في البيان.
   || (rel === SETTINGS_BUNDLE && u === REPORTS_ORIGIN)

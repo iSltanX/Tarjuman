@@ -14,7 +14,7 @@
 1. [`CLAUDE.md`](CLAUDE.md): الحالة والقواعد الثابتة.
 2. [`docs/delivery/runbook.md`](docs/delivery/runbook.md): الأدوار والفحوص.
 3. [`docs/product-spec.md`](docs/product-spec.md): النطاق والقرارات، والعقود في [`docs/contracts/`](docs/contracts/).
-4. [`docs/ui-polish.md`](docs/ui-polish.md) و[`docs/ui-redesign.md`](docs/ui-redesign.md) و[`docs/identity-v3.md`](docs/identity-v3.md): الواجهات بعد الإصدار الأول.
+4. [`docs/ui-polish.md`](docs/ui-polish.md) و[`docs/ui-redesign.md`](docs/ui-redesign.md) و[`docs/identity-v4.md`](docs/identity-v4.md): الواجهات بعد الإصدار الأول، والهوية البصرية المعتمدة.
    وعلى فرع النشر: [`docs/store-release.md`](docs/store-release.md) و[`store/README.md`](store/README.md)، وخطة إصلاح تدقيق `7a66f91` في [`docs/audit-7a66f91/`](docs/audit-7a66f91/README.md).
 5. [`docs/known-limitations.md`](docs/known-limitations.md) والملاحظات المسجّلة في [`docs/waves/W8.md`](docs/waves/W8.md): معروفة، فلا تُبلَّغ خللًا جديدًا إلا بدليل يتجاوزها.
 

@@ -112,7 +112,7 @@ test('التفعيل من المحفوظات ينعكس في المشغّل ال
   doc.body.append(lib.root);
   await lib.load();
   const row = lib.root.querySelector(`li[data-video="${A}"]`);
-  // الهوية «بُنّ على ورق»: التفعيل من بطاقة الترجمة في الصف الموسّع (بدل محدد الخانات في الصف).
+  // الوضع العادي (product-spec §٦.٦): التفعيل من بطاقة الترجمة في الصف الموسّع (بدل محدد الخانات في الصف).
   row.querySelector('.lib-toggle').click();
   await settle(10);
   const card = row.querySelector('.lib-card[data-slot="2"]');

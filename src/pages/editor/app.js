@@ -373,7 +373,7 @@ export async function mountEditor(app, {
   const bodyEl = el('div', { className: 'ed-body', children: [mainEl, sideEl], doc });
   app.append(headEl, toolbarEl, offsetEl, bannerEl, bodyEl, unsavedEl);
   // وتحت 900 تصعد اللوحة المطوية فوق القائمة، فتُنقل قبلها في الشجرة نفسها لا بـorder بصري وحده: يصل Tab وقارئ الشاشة إلى
-  // تبويبيها أولًا كما تُرى (تدقيق Fable، FA-14 = UX-05، بقرار سلطان 2026-11-07؛ كان قرارًا معلّقًا في identity-redesign §٦.١).
+  // تبويبيها أولًا كما تُرى (تدقيق Fable، FA-14 = UX-05، بقرار سلطان 2026-11-07؛ كان قرارًا معلّقًا في product-spec §٦.٦).
   // تُنقل اللوحة وحدها (القائمة الافتراضية بتمريرها تبقى)، ويعود التركيز إلى عنصره إن كان فيها.
   const narrowQuery = win?.matchMedia?.('(max-width: 900px)') ?? null;
   const placeSide = () => {

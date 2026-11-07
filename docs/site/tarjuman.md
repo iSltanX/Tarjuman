@@ -155,7 +155,7 @@
 | مقارنة بالأصل | النقص والزيادة والانحراف، ولا تعديل صامت | `docs/contracts/data-model.md` §٥، و`docs/user-guide.md` §٣ الخطوة ٥ |
 | محرّر | الأدوات والاستكمال | `docs/user-guide.md` §٥، و`test/live/stores/t6-shots.mjs` (`04-editor-wide`) |
 | محفوظاتك | الترجمات الثلاث والسابقة والتصدير والنسخة الاحتياطية | `docs/user-guide.md` §٦ و§٧، و`docs/contracts/data-model.md` §١٠ و§١١، و`test/live/stores/t6-shots.mjs` (`05-library-wide`) |
-| النص المتزامن | يمين الفيديو، مغلقة افتراضيًا، واللقطة | `docs/identity-redesign.md` §١ و§٤، و`src/core/model/prefs.js` (`panelOpen: false`)، واللقطة جزء اللوحة من `01-overlay-panel` |
+| النص المتزامن | يمين الفيديو، مغلقة افتراضيًا، واللقطة | `docs/product-spec.md` §٦.٦، و`src/core/model/prefs.js` (`panelOpen: false`)، واللقطة جزء اللوحة من `01-overlay-panel` |
 | مظهرها كما تحب | وضع العرض والخط والحجم والخلفية والموضع، والخطوط مضمّنة | `src/pages/settings/view.js` (قسم «العرض»)، و`src/ui/subtitle-fonts.js`، و`store/listing.ar.md` (لقطة الإعدادات)، و`test/live/stores/t6-shots.mjs` (`06-settings-wide`) |
 | أين تذهب بياناتك | كل البنود | جدول أدلة `docs/site/privacy.md` |
 | ما لا يفعله | لا تنزيل فيديو ولا صوت، ولا طلب ترجمة، ولا ترجمة بنفسه، ولا Shorts ولا بث ولا مضمّنة، والحاسوب وحده | `store/listing.ar.md` («ما لا يفعله» المعتمد)، و`docs/contracts/extraction.md`، و`docs/known-limitations.md` §١ |

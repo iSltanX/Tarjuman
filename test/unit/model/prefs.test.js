@@ -76,7 +76,7 @@ test('التخزين: مفتاح prefs مستقل؛ كتابة الإعدادا�
   assert.ok(events.some((e) => e.prefs && e.prefs.newValue.saveLocation.mode === 'ask'));
 });
 
-test('تفضيلات الواجهة (الهوية «بُنّ على ورق»): صور الفيديو وزر اللوحة مفعّلان، واللوحة مغلقة ومع الأصل افتراضيًا؛ والقراءة متسامحة والكتابة صارمة', () => {
+test('تفضيلات الواجهة (product-spec §٦.٦): صور الفيديو وزر اللوحة مفعّلان، واللوحة مغلقة ومع الأصل افتراضيًا؛ والقراءة متسامحة والكتابة صارمة', () => {
   assert.deepEqual(DEFAULT_PREFS.ui, { thumbnails: true, panelEntry: true, panelOpen: false, panelDual: true });
   const old = structuredClone(DEFAULT_PREFS);
   delete old.ui;

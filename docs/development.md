@@ -74,7 +74,7 @@ npm run package
 - [`product-spec.md`](product-spec.md): النطاق والقرارات والحدود.
 - [`contracts`](contracts/README.md): العقود بين الطبقات: الاستخراج، والتوقيت، ونموذج البيانات، والتخزين، والرسائل، والواجهات، والأخطاء، والنسخ الاحتياطي.
 - [`known-limitations.md`](known-limitations.md): القيود المعروفة وما لم يُختبر.
-- [`identity-v3.md`](identity-v3.md): الهوية البصرية المعتمدة، و[`design/figma-design-brief.md`](design/figma-design-brief.md) مواصفة الواجهات.
+- [`identity-v4.md`](identity-v4.md): الهوية البصرية المعتمدة، و[`design/figma-design-brief.md`](design/figma-design-brief.md) مواصفة الواجهات.
 
 ## الملفات المولّدة
 

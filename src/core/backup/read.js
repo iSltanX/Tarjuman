@@ -132,7 +132,7 @@ function stripBidi(value, key = '') {
   if (isPlainObject(value)) return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, stripBidi(v, k)]));
   return value;
 }
-// ui (تفضيلات الواجهة على الجهاز) لا تُستعاد عمدًا: تبقى قيم هذا الجهاز (docs/identity-redesign.md)؛ إلا إطفاء الصور (thumbnailsOff).
+// ui (تفضيلات الواجهة على الجهاز) لا تُستعاد عمدًا: تبقى قيم هذا الجهاز (docs/product-spec.md §٦.٦)؛ إلا إطفاء الصور (thumbnailsOff).
 const PREFS_GROUPS = ['glossary', 'review', 'saveLocation'];
 
 /**

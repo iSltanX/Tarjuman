@@ -1,5 +1,5 @@
 // منطق اللوحة النقي (بلا DOM): الجدول الزمني للمقاطع (المقطع الحالي بقاعدة الطبقة نفسها)، والنص الأصلي المتداخل مع كل
-// مقطع عربي، ونموذج العرض من حالة المتحكم (أي شكل يظهر الآن وبأي نص). docs/identity-redesign.md §٤.
+// مقطع عربي، ونموذج العرض من حالة المتحكم (أي شكل يظهر الآن وبأي نص). docs/product-spec.md §٦.٦.
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { indexFor } from '../sync/cue-index.js';
 import { flatText, languageName } from './text.js';

@@ -174,7 +174,7 @@ const URL_RE = /(?:https?:)?\/\/[A-Za-z0-9][A-Za-z0-9.-]*(?::\d+)?[^\s'"`)]*/g;
 // رابطا «حول» (R42) وحدهما، في ملفه وحده (الموقع وصفحة الدعم، قرار T4 في جولة النشر): روابط <a> تُفتح بضغط المستخدم في تبويب جديد، لا طلب شبكة من الإضافة.
 const ABOUT_FILE = path.join('pages', 'settings', 'about.js');
 const ABOUT_LINKS = new Set(['https://bysltan.com', 'https://bysltan.com/tarjuman/support']);
-// صور الفيديو في المحفوظات (قرار سلطان 2026-11-03، docs/identity-redesign.md §٥): الاستثناء المسمّى الوحيد لنطاق خارجي. بادئة
+// صور الفيديو في المحفوظات (قرار سلطان 2026-11-03، docs/product-spec.md §٦.٦): الاستثناء المسمّى الوحيد لنطاق خارجي. بادئة
 // الصورة `https://i.ytimg.com/vi/` وحدها، في وحدة الصورة المصغّرة وحدها، لعنصر <img> يحمّله المتصفح (لا fetch ولا XHR ولا Image()،
 // وكلها ممنوعة هنا كما كانت). فلا يمرّ رابط آخر في ذلك الملف، ولا هذا الرابط في ملف آخر.
 const THUMB_FILE = path.join('pages', 'library', 'thumb.js');

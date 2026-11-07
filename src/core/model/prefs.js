@@ -26,7 +26,7 @@ export const DEFAULT_PREFS = Object.freeze({
   glossary: Object.freeze({ attach: true, terms: Object.freeze([]) }),
   review: Object.freeze({ maxCps: null }),
   saveLocation: Object.freeze({ mode: 'downloads', folder: DEFAULT_FOLDER }),
-  // تفضيلات الواجهة على هذا الجهاز (الهوية «بُنّ على ورق»، docs/identity-redesign.md): صور الفيديو في المحفوظات من
+  // تفضيلات الواجهة على هذا الجهاز (docs/product-spec.md §٦.٦): صور الفيديو في المحفوظات من
   // خوادم يوتيوب (مفعّلة افتراضيًا بقرار سلطان)، وزر لوحة النص المتزامن في صفحة الفيديو، وحالة اللوحة (مفتوحة؟ ومع
   // الأصل؟). لا تُستعاد من النسخة الاحتياطية (backup/read.js: PREFS_GROUPS)، فهي للجهاز لا للبيانات.
   ui: Object.freeze({ thumbnails: true, panelEntry: true, panelOpen: false, panelDual: true }),

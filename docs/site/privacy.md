@@ -168,7 +168,7 @@
 | الخلاصة | الترجمة التي جلبها المشغّل | `src/main-world/capture.js` (غلافا fetch وXHR يقرآن الرد)، و`docs/contracts/extraction.md`؛ T3: «الجسر» و«الالتقاط» |
 | الخلاصة، ما يُحفظ | تخزين الإضافة المحلي، ولا مزامنة | `src/core/store/area.js` (`api.storage.local` وحده)، و`scripts/check-static.mjs` (التخزين خارج `src/core/store` ممنوع، ولا `localStorage` ولا IndexedDB)؛ ولا `storage.sync` في `src/` |
 | الخلاصة | لا حساب ولا مفتاح ولا نموذج ولا قياس ولا إعلان | لا طلب شبكة في الحزمة إلا المسمّى: `scripts/release/audit.mjs` (`no-external-connection-or-forbidden-code` و`FETCH_OK` و`URL_OK`) و`scripts/check-static.mjs`؛ `docs/product-spec.md` §١ |
-| الخلاصة، الصور | صور المحفوظات ومفتاحها، وموافقة Firefox | `src/pages/library/thumb.js` (`THUMB_BASE`)، و`src/core/model/prefs.js` (`ui.thumbnails` افتراضيًا `true`)، و`src/pages/settings/view.js` (المفتاح ونصه)، و`src/core/consent/thumbnails.js` (`thumbnailsShown`: المفتاح والموافقة في Firefox)؛ `docs/identity-redesign.md` §١ |
+| الخلاصة، الصور | صور المحفوظات ومفتاحها، وموافقة Firefox | `src/pages/library/thumb.js` (`THUMB_BASE`)، و`src/core/model/prefs.js` (`ui.thumbnails` افتراضيًا `true`)، و`src/pages/settings/view.js` (المفتاح ونصه)، و`src/core/consent/thumbnails.js` (`thumbnailsShown`: المفتاح والموافقة في Firefox)؛ `docs/product-spec.md` §٦.٦ |
 | الخلاصة، البلاغ | ترسله بنفسك بعد أن تراه | `src/pages/settings/report.js` (المعاينة ثم «أرسل البلاغ»)، و`src/core/report/payload.js` (`reviewRows` من الجسم نفسه)؛ T3: «الإبلاغ: المعاينة» |
 | الخلاصة، النموذج | الترجمة خارج الإضافة | `docs/product-spec.md` §١ و§٣؛ لا رابط ولا طلب لأي مزوّد في الحزمة (`audit.mjs`) |
 | ما يُحفظ | المعرّف والعنوان والمدة | `docs/contracts/data-model.md` §٦ (`VideoRecord`: `videoId` و`title` و`durationMs`) |
