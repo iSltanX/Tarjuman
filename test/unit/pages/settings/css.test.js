@@ -32,6 +32,9 @@ test('الإعدادات: الصف شبكة من عمودين (التسمية ث
   const narrow = media(s, 'max-width: 760px');
   assert.match(narrow, /\.st-row\s*\{[^}]*grid-template-columns:\s*1fr/);
   assert.match(narrow, /\.st-nav\s*\{[^}]*flex-direction:\s*row/, 'التنقّل الجانبي يصير شريطًا أفقيًا');
+  // تدقيق Fable (FA-12): يلتف ولا يُقص، فالأقسام التسعة ظاهرة.
+  assert.match(narrow, /\.st-nav\s*\{[^}]*flex-wrap:\s*wrap/);
+  assert.doesNotMatch(narrow, /\.st-nav\s*\{[^}]*overflow-x:\s*auto/);
 });
 
 test('المحفوظات: شبكة الصف (الصورة، والبيانات، والترجمات، والإجراءات) تُعاد ترتيبًا في العرض الضيق فتنزل الإجراءات صفًّا وحدها', () => {
@@ -42,10 +45,10 @@ test('المحفوظات: شبكة الصف (الصورة، والبيانات،
   assert.match(narrow, /\.lib-row__grid\s*\{[^}]*grid-template-areas:\s*"thumb main" "thumb trs" "acts acts"/, 'الإجراءات في صف مستقل تحت البيانات');
 });
 
-test('تدقيق 5fedcb9 (CL-008، CL-009): القسم المفتوح بجزء العنوان لا يختبئ تحت الشريط اللاصق، وسطر «آخر الترجمات» يتسع للكسرات', () => {
+test('تدقيق 5fedcb9 (CL-008، CL-009) وFable (FA-13): القسم المفتوح بجزء العنوان لا يمرّر الصفحة فلا يختبئ عنوانها ولا عنوانه، وسطر «آخر الترجمات» يتسع للكسرات', () => {
   const settings = css('settings/settings.css');
   const all = [...settings.matchAll(/(?:^|\n)\.st-section\s*\{([^}]*)\}/g)].map((m) => m[1]).join(';');
-  assert.match(all, /scroll-margin-top:\s*calc\(var\(--tj-topbar-h/);
+  assert.match(all, /scroll-margin-top:\s*100vh/);
   const popup = css('popup/popup.css');
   assert.match(rule(popup, '.tj-popup__recent-title'), /14px\/22px/);
 });
