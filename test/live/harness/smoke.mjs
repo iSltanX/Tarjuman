@@ -130,6 +130,10 @@ try {
   // الطبقة (P5) وأدوات الشريط (P6) ركّبتاهما مرحلتاهما: كل منهما تنتظر المشغّل أو مركّبة.
   check('mount-points-stub', ['waiting', 'mounted'].includes(r1?.mounted?.overlay) && ['waiting', 'mounted'].includes(r1?.mounted?.controls), r1?.mounted ?? null);
   // بعد جولة الصقل: مدخل واحد لكل صفحة في تذييل النافذة، والمحرّر إجراء سريع [data-action="editor"] حين تكون للفيديو ترجمة.
+  // الأفعال تُرسم بعد رد سكربت المحتوى والتذييل لا ينتظره، فيُنتظر رسمها لا لحظة ظهور التذييل. أما رد يتجاوز مهلة النافذة
+  // (REPLY_TIMEOUT_MS = 1.5 ث) فتعرض فيه النافذة «افتح فيديو…» بلا أفعال، ويسقط الفحص كما ينبغي: رُصد في Edge بلا نافذة، وأول
+  // رد قيس هناك فوق المهلة في حزمة الأساس 67fa674 أيضًا (تدقيق Fable، FA-21 وFA-23).
+  await popup.waitFor(() => document.querySelectorAll('.tj-popup__actions [data-action]').length > 0, { timeoutMs: 10000 }).catch(() => null);
   const items1 = await popup.eval(() => ({
     menu: [...document.querySelectorAll('.tj-popup__nav [data-action]')].map((x) => ({ name: x.textContent.trim(), disabled: x.getAttribute('aria-disabled') === 'true' })),
     actions: [...document.querySelectorAll('.tj-popup__actions [data-action]')].map((x) => x.getAttribute('data-action')),
@@ -141,9 +145,16 @@ try {
   // ٣. كتابة سجل من صفحة إضافة تنعكس في المشغّل عبر أحداث التخزين (مسار المحرّر والمحفوظات).
   const rec = { ...videoRecord({ videoId: VIDEO, offset: 500 }), title: 'Smoke test record' };
   await popup.eval((r, s) => chrome.storage.local.set({ [`video:${r.videoId}`]: r, [`index:${r.videoId}`]: s }), { args: [rec, summarizeVideo(rec)] });
-  await sleep(1000);
-  const r2 = (await stateFromPopup(popup)).reply;
-  check('storage-change-reaches-player', r2?.arabic?.cueCount === 5 && r2?.view?.displayOffsetMs === 500, r2 && { arabic: r2.arabic, view: r2.view });
+  // الانعكاس يُنتظر حتى 15 ث ويُسجَّل زمنه (كان ثانية ثابتة، وفي Edge بلا نافذة قيس 1.3–6.2 ث في حزمة الأساس 67fa674
+  // و0.9–21.7 ث بعد إصلاحات Fable)، فالفحص يقيس الوصول لا سرعة محرّك بعينه (تدقيق Fable، FA-21).
+  const sentAt = Date.now();
+  let r2 = null;
+  for (;;) {
+    await sleep(250);
+    r2 = (await stateFromPopup(popup)).reply;
+    if ((r2?.arabic?.cueCount === 5 && r2?.view?.displayOffsetMs === 500) || Date.now() - sentAt > 15000) break;
+  }
+  check('storage-change-reaches-player', r2?.arabic?.cueCount === 5 && r2?.view?.displayOffsetMs === 500, r2 && { arabic: r2.arabic, view: r2.view, reflectedMs: Date.now() - sentAt });
   await popup.close();
 
   // ٤. فتح الصفحات الأربع من نافذة الأيقونة، وكل صفحة بلا أخطاء وبمحتواها من التخزين.
