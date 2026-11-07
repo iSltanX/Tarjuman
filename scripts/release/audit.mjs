@@ -164,7 +164,7 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   // الإضافة الأربع والإشعارات بأسمائها. البناء ينسخ كل .html و.css تحت src/pages وsrc/ui، فكان ملف مهمل (pages/x/scratch.css أو
   // صفحة تجريبية) يُشحن ويمر بالنمط وحده (تدقيق Fable، FA-02).
   const expected = new Set(['manifest.json', NOTICES_FILE, ...required]);
-  const unexpected = files.filter((f) => !expected.has(f) || !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt)|ui\/fonts\/ui\/[a-z-]+-(?:600\.woff2|700\.woff2|OFL\.txt)|icons\/tarjuman-icon-(?:16|32|48|128)\.png|THIRD_PARTY_NOTICES\.txt)$/.test(f));
+  const unexpected = files.filter((f) => !expected.has(f) || !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt)|ui\/fonts\/ui\/[a-z-]+-(?:700\.woff2|800\.woff2|OFL\.txt)|icons\/tarjuman-icon-(?:16|32|48|128)\.png|THIRD_PARTY_NOTICES\.txt)$/.test(f));
   check('only-expected-files', unexpected.length === 0, { unexpected, files: files.length });
   check('no-source-maps-or-gallery', !files.some((f) => f.endsWith('.map') || f.startsWith('ui/gallery/')), null);
 

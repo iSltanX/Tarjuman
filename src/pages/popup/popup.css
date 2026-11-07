@@ -13,7 +13,7 @@
 /* بطاقة الفيديو الحالي. */
 .tj-popup__card { display: flex; flex-direction: column; gap: 10px; align-items: stretch; padding: 14px; border-radius: var(--tj-radius-card); background: var(--tj-surface); border: 1px solid var(--tj-border); }
 .tj-popup__card .tj-rule { margin: 0; }
-.tj-popup__title { font: 600 15px/23px var(--tj-font-head); }
+.tj-popup__title { font: 700 15px/23px var(--tj-font-head); }
 .tj-popup__line { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
 .tj-popup__pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .tj-popup__pills .tj-pill .tj-icon { width: 14px; height: 14px; }
@@ -101,7 +101,7 @@
 .tj-popup__recent-row { display: flex; align-items: center; gap: 6px; padding: 8px 0; border-top: 1px solid var(--tj-border); }
 .tj-popup__recent-row:first-child { border-top: 0; }
 .tj-popup__recent-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.tj-popup__recent-title { font: 600 14px/22px var(--tj-font-head); } /* 22 تتسع لكسرات المراعي والنقاط في السطر المقتطع (CL-009) */
+.tj-popup__recent-title { font: 700 14px/22px var(--tj-font-head); } /* 22 تتسع لكسرات المراعي والنقاط في السطر المقتطع (CL-009) */
 .tj-popup__recent-meta { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 .tj-popup__recent-actions { display: inline-flex; gap: 2px; flex: none; }
 

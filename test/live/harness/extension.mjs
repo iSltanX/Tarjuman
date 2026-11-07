@@ -46,10 +46,10 @@ export async function waitForTarget(conn, match, { timeoutMs = 10000, exclude = 
 
 /**
  * رسالة المتصفح مع كل قراءة ناجحة لخط من حزمة الإضافة: خطوط الترجمة (`ui/fonts/subtitle/`، معروفة من P6) وخطا الواجهة
- * Cairo 600 و700 (`ui/fonts/ui/`، منذ جولة الصقل). تُعدّ وحدها ولا تُحسب خطأً. تعريف واحد للسكربتات الحية كلها (تدقيق
+ * Cairo 700 و800 (`ui/fonts/ui/`، منذ جولة الصقل، و800 بدل 600 منذ الهوية الرابعة). تُعدّ وحدها ولا تُحسب خطأً. تعريف واحد للسكربتات الحية كلها (تدقيق
  * 5fedcb9، GM-022: كانت نسخه المحلية لا تطابق `ui/` ولا 600).
  */
-export const FONT_READ_LOG = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/(?:subtitle|ui)\/[a-z0-9-]+-(?:400|600|700)\.woff2 /;
+export const FONT_READ_LOG = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/(?:subtitle|ui)\/[a-z0-9-]+-(?:400|700|800)\.woff2 /;
 
 /**
  * يجمع أخطاء الإضافة: الاستثناءات وأخطاء الكونسول وسجل المتصفح. في صفحة يوتيوب يُحسب ما وقع في العالم

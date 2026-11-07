@@ -28,7 +28,7 @@ PART 1 — Included in the extension package
   Copyright 2017 The Markazi Text Project Authors (https://github.com/BornaIz/markazitext)
   License: SIL Open Font License 1.1 (full text below; the font's own copy ships as ui/fonts/subtitle/markazi-OFL.txt).
 
-* Cairo — ui/fonts/ui/cairo-600.woff2, ui/fonts/ui/cairo-700.woff2 — used as: interface headings
+* Cairo — ui/fonts/ui/cairo-700.woff2, ui/fonts/ui/cairo-800.woff2 — used as: interface headings
   Copyright 2009 The Cairo Project Authors (https://github.com/Gue3bara/Cairo)
   License: SIL Open Font License 1.1 (full text below; the font's own copy ships as ui/fonts/ui/cairo-OFL.txt).
 
@@ -36,7 +36,7 @@ SIL Open Font License, Version 1.1 — full text:
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
-http://scripts.sil.org/OFL
+https://openfontlicense.org
 
 
 -----------------------------------------------------------

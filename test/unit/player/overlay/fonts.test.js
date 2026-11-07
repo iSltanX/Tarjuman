@@ -193,8 +193,8 @@ test('خطوط واجهة الأدوات: Cairo وAlmarai بعائلتيهما �
   const f = fontEnv();
   const r = await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read });
   assert.deepEqual(r, { loaded: ['cairo', 'almarai'], failed: [] });
-  assert.deepEqual(f.reads.sort(), ['ui/fonts/subtitle/almarai-400.woff2', 'ui/fonts/subtitle/almarai-700.woff2', 'ui/fonts/ui/cairo-600.woff2', 'ui/fonts/ui/cairo-700.woff2']);
-  assert.deepEqual(f.added.map((x) => `${x.family}/${x.weight}`).sort(), ['Tarjuman UI Almarai/400', 'Tarjuman UI Almarai/700', 'Tarjuman UI Cairo/600', 'Tarjuman UI Cairo/700']);
+  assert.deepEqual(f.reads.sort(), ['ui/fonts/subtitle/almarai-400.woff2', 'ui/fonts/subtitle/almarai-700.woff2', 'ui/fonts/ui/cairo-700.woff2', 'ui/fonts/ui/cairo-800.woff2']);
+  assert.deepEqual(f.added.map((x) => `${x.family}/${x.weight}`).sort(), ['Tarjuman UI Almarai/400', 'Tarjuman UI Almarai/700', 'Tarjuman UI Cairo/700', 'Tarjuman UI Cairo/800']);
   assert.ok(f.built.every((x) => x.source instanceof ArrayBuffer), 'بيانات الملف، لا url()');
   assert.equal(f.added.some((x) => x.family.startsWith('Tarjuman Subtitle')), false, 'لا تمس عائلات الترجمة');
   await loadUiFonts({ doc: f.env.doc, win: f.env.win, read: f.read });

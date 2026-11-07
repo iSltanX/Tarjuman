@@ -59,7 +59,7 @@
 .lib-trs { grid-area: trs; }
 .lib-row__actions { grid-area: acts; display: flex; align-items: center; gap: 4px; flex: none; }
 
-.lib-row__title { font: 600 16px/25px var(--tj-font-head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.lib-row__title { font: 700 16px/25px var(--tj-font-head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .lib-row__title--empty { color: var(--tj-muted); font-weight: 400; }
 .lib-row__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; min-height: 24px; }
 .lib-row__id { display: inline-flex; align-items: center; gap: 2px; color: var(--tj-muted); font-size: 12px; }

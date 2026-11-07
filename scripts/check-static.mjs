@@ -114,7 +114,7 @@ for (const target of ['chromium', 'firefox']) {
 // الملفات التي يشير إليها البيان: واحدة في الهدفين. وأيقونات الإضافة PNG بأحجام البيان وحدها.
 const manifest = base;
 if ('background' in manifest && !(await exists(path.join(SRC, 'background', 'worker.js')))) problems.push('manifest: background/worker.js مفقود');
-for (const [dir, weights] of [[SUBTITLE_FONTS, '400|700'], [UI_FONTS, '600|700']]) {
+for (const [dir, weights] of [[SUBTITLE_FONTS, '400|700'], [UI_FONTS, '700|800']]) {
   if (!(await exists(path.join(SRC, dir)))) continue;
   for (const f of await walk(path.join(SRC, dir))) {
     const rel = path.relative(path.join(SRC, dir), f);

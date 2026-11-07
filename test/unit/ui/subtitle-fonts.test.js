@@ -55,7 +55,7 @@ test('سلسلة الخط: المختار، ثم المراعي المضمّن،
   assert.equal(SYSTEM_ARABIC_FALLBACK.at(-1), 'sans-serif');
 });
 
-test('خطوط الواجهة مضمّنة: Cairo بوزنيه 600 و700 والمراعي بملفه نفسه، WOFF2 برخصة OFL، بعائلات فريدة غير عائلات الترجمة', () => {
+test('خطوط الواجهة مضمّنة: Cairo بوزنيه 700 و800 والمراعي بملفه نفسه، WOFF2 برخصة OFL، بعائلات فريدة غير عائلات الترجمة', () => {
   assert.deepEqual(UI_FONT_LIST.map((f) => f.id), ['cairo', 'almarai']);
   const subtitleFamilies = new Set(SUBTITLE_FONT_LIST.map((f) => f.family));
   for (const f of UI_FONT_LIST) {
@@ -68,7 +68,7 @@ test('خطوط الواجهة مضمّنة: Cairo بوزنيه 600 و700 وال�
     }
     assert.match(readFileSync(path.join(SRC, f.license), 'utf8'), /SIL OPEN FONT LICENSE Version 1\.1/, f.license);
   }
-  assert.deepEqual(Object.keys(UI_FONT_LIST[0].files), ['600', '700']);
+  assert.deepEqual(Object.keys(UI_FONT_LIST[0].files), ['700', '800']);
   assert.equal(UI_FONT_LIST[1].files[400], SUBTITLE_FONT_LIST[0].files[400], 'ملف المراعي واحد للواجهة والترجمة');
 });
 

@@ -14,7 +14,7 @@ export const UI_FONT_DIR = 'ui/fonts/ui';
 export const UI_FONT_LIST = Object.freeze([
   Object.freeze({
     id: 'cairo', family: 'Tarjuman UI Cairo',
-    files: Object.freeze({ 600: `${UI_FONT_DIR}/cairo-600.woff2`, 700: `${UI_FONT_DIR}/cairo-700.woff2` }),
+    files: Object.freeze({ 700: `${UI_FONT_DIR}/cairo-700.woff2`, 800: `${UI_FONT_DIR}/cairo-800.woff2` }),
     license: `${UI_FONT_DIR}/cairo-OFL.txt`,
   }),
   Object.freeze({

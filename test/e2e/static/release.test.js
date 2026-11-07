@@ -107,7 +107,7 @@ test('تدقيق 5fedcb9 (CX-007، GM-028): حزمة ينقصها ملف يشي�
     ['pages/popup/index.html', 'required-assets-present'],
     ['icons/tarjuman-icon-48.png', 'required-assets-present'],
     ['ui/tokens.css', 'required-assets-present'],
-    ['ui/fonts/ui/cairo-600.woff2', 'ui-fonts-with-ofl-licenses'],
+    ['ui/fonts/ui/cairo-800.woff2', 'ui-fonts-with-ofl-licenses'],
     ['ui/fonts/ui/cairo-OFL.txt', 'ui-fonts-with-ofl-licenses'],
   ];
   for (const [file, id] of cases) {
