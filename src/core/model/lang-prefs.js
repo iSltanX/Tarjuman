@@ -84,7 +84,7 @@ export const withRecent = (list, code) => [code, ...list.filter((c) => c !== cod
  * تعديل جزئي: pair (جزئي)، remember، recent (استبدال)، use (لغات استُعملت للتو تتقدّم في الأخيرة)، video ({ videoId, pair | null }:
  * زوج فيديو أو إزالته، والأحدث آخرًا فيُسقط الأقدم عند الحد).
  * @param {LangPrefs} cur
- * @param {{ pair?: Partial<LangPair>, remember?: boolean, recent?: string[], use?: string[], video?: { videoId: string, pair: LangPair | null } }} patch
+ * @param {{ pair?: Partial<LangPair>, remember?: boolean, recent?: string[], use?: string[], video?: { videoId: string, pair: LangPair | null }, videos?: Record<string, LangPair> }} patch
  * @returns {LangPrefs}
  */
 export function applyLangPrefs(cur, patch) {
@@ -94,6 +94,16 @@ export function applyLangPrefs(cur, patch) {
   if (patch.remember !== undefined) next.remember = patch.remember;
   if (patch.recent !== undefined) next.recent = patch.recent;
   if (Array.isArray(patch.use)) for (const c of [...patch.use].reverse()) if (isCode(c)) next.recent = withRecent(next.recent, c);
+  // أزواج فيديوهات من نسخة احتياطية (AA3): تُضاف إلى الموجود ولا تمحوه، والأحدث آخرًا فيُسقط الأقدم عند الحد.
+  if (isPlainObject(patch.videos)) {
+    for (const [videoId, pair] of Object.entries(patch.videos)) {
+      if (!isVideoId(videoId) || !isPlainObject(pair)) continue;
+      delete next.videos[videoId];
+      next.videos[videoId] = { from: pair.from ?? null, to: pair.to ?? null };
+    }
+    const ids = Object.keys(next.videos);
+    for (const id of ids.slice(0, Math.max(0, ids.length - LANG_PREFS_LIMITS.videos))) delete next.videos[id];
+  }
   if (isPlainObject(patch.video)) {
     const { videoId, pair } = patch.video;
     delete next.videos[videoId];

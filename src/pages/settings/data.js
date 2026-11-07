@@ -315,13 +315,13 @@ export function dataControl(env) {
     restoreResult.replaceChildren(alertBox({ tone, title: messageFor(code), text: lines.join('\n'), action: again ?? undefined, doc }));
   }
 
-  async function run({ items, skipped, settings, prefs, thumbnailsOff = false, titles, before }) {
+  async function run({ items, skipped, settings, prefs, langPrefs = null, thumbnailsOff = false, titles, before }) {
     // تشغيل واحد في كل وقت: النقر المزدوج على «أعد المحاولة» لا يشغّل تشغيلين من التقرير نفسه.
     if (running) return null;
     running = true;
     setBusy(true);
     try {
-      const report = await runRestore({ store, items, skipped, settings, prefs, thumbnailsOff, pause, onProgress: restoreMeter.show('جارٍ الاستعادة') });
+      const report = await runRestore({ store, items, skipped, settings, prefs, langPrefs, thumbnailsOff, pause, onProgress: restoreMeter.show('جارٍ الاستعادة') });
       restoreMeter.hide();
       const merged = before ? mergeReports(before, report) : report;
       // إعادة المحاولة تكتب القسم المتعذّر وحده، فلا تمحو تغييرًا أجراه المستخدم بعد التقرير في القسم الذي نجح (U54).
@@ -329,6 +329,7 @@ export function dataControl(env) {
       renderReport(merged, titles, () => run({
         items: retryItems(merged, items), skipped: [],
         settings: again.settings, prefs: again.prefs,
+        langPrefs: report.langPrefs === 'failed' ? langPrefs : null,
         thumbnailsOff: merged.thumbnails === 'failed' && thumbnailsOff,
         titles, before: merged,
       }));
@@ -389,6 +390,8 @@ export function dataControl(env) {
       items, skipped,
       settings: choice.settings ? read.settings?.patch ?? null : null,
       prefs: choice.settings ? read.prefs?.patch ?? null : null,
+      // تفضيلات اللغات (AA3) مع «استعادة الإعدادات والقاموس».
+      langPrefs: choice.settings ? read.langPrefs ?? null : null,
       thumbnailsOff: read.thumbnailsOff === true,
       titles, before: null,
     });

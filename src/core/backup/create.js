@@ -3,6 +3,7 @@
 // الباقي. النص يُبنى بلصق data المسلسلة مرة واحدة بعد الترويسة، فلا يُسلسل محتوى المكتبة مرتين.
 import { TjError, toErrorInfo } from '../errors/index.js';
 import { bundleToBackup } from '../model/bundle.js';
+import { DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../model/lang-prefs.js';
 import { utf8Length } from '../model/validate.js';
 import { STORAGE_SCHEMA } from '../store/migrate.js';
 import { BACKUP_FORMAT, BACKUP_LIMITS, BACKUP_VERSION, BACKUP_VERSION_V1, HASH_ALGORITHM, backupFileName, countData, sha256Hex } from './format.js';
@@ -29,7 +30,13 @@ const byCreated = (a, b) => (a.record.createdAt < b.record.createdAt ? -1 : a.re
  */
 export async function createBackup({ store, appVersion, includePrevious = true, now = Date.now, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch, maxBytes = BACKUP_LIMITS.maxBytes }) {
   const createdAt = new Date(now()).toISOString();
-  const [settings, prefs, library] = await Promise.all([store.getSettings(), store.getPrefs(), store.listLibrary()]);
+  const [settings, prefs, library, langRaw] = await Promise.all([
+    store.getSettings(), store.getPrefs(), store.listLibrary(),
+    typeof store.getLangPrefs === 'function' ? store.getLangPrefs().catch(() => null) : null,
+  ]);
+  // تفضيلات اللغات (AA3): تُضمَّن حين تختلف عن الافتراضي، فتصير النسخة بالإصدار 2 الذي يرفضه 1.1.0 برسالة لا بفساد صامت.
+  const langPrefs = langRaw ? normalizeLangPrefs(langRaw) : null;
+  const langChanged = !!langPrefs && JSON.stringify(langPrefs) !== JSON.stringify(normalizeLangPrefs(DEFAULT_LANG_PREFS));
   const ids = library.map((item) => item.entry.videoId);
   const videos = [];
   // سجل بمفتاح لا يُقرأ ولا مُلخّص له لا يظهر في المحفوظات، فيُذكر «تعذّر» بدل أن يغيب عن التقرير (تدقيق 5fedcb9، CX-H4).
@@ -57,7 +64,8 @@ export async function createBackup({ store, appVersion, includePrevious = true, 
     }
   }
   videos.sort(byCreated);
-  const data = { settings, prefs, videos };
+  const v2 = langChanged || videos.some((v) => 'lang' in v);
+  const data = langChanged ? { settings, prefs, videos, langPrefs } : { settings, prefs, videos };
   let dataJson;
   try {
     dataJson = JSON.stringify(data);
@@ -67,8 +75,8 @@ export async function createBackup({ store, appVersion, includePrevious = true, 
     throw err;
   }
   const header = {
-    // الإصدار 2 حين توجد بيانات لغة في مدخل (AA1)، وإلا 1 الذي يستعيده 1.1.0 كما هو.
-    format: BACKUP_FORMAT, version: videos.some((v) => 'lang' in v) ? BACKUP_VERSION : BACKUP_VERSION_V1, createdAt,
+    // الإصدار 2 حين توجد بيانات لغة في مدخل (AA1) أو تفضيلات لغات غير افتراضية (AA3)، وإلا 1 الذي يستعيده 1.1.0 كما هو.
+    format: BACKUP_FORMAT, version: v2 ? BACKUP_VERSION : BACKUP_VERSION_V1, createdAt,
     app: { version: String(appVersion), storageSchema: STORAGE_SCHEMA },
     options: { previous: includePrevious },
     counts: countData(data),

@@ -452,7 +452,7 @@ test('«حذف الترجمة النشطة…»: حوار يسرد ما يُحذ
   const after = await m.store.getVideo(IDS[0]);
   assert.equal(after.arabic, null);
   assert.equal(after.english.length, 1);
-  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'حُذفت الترجمة العربية، وبقي المسار الإنجليزي والبصمة.');
+  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'حُذفت الترجمة، وبقي مسار الأصل والبصمة.');
   assert.equal(rows(m)[0].querySelectorAll('.tj-pill').map(textOf)[0], 'بانتظار الترجمة', 'القائمة تحدّثت');
   assert.ok(buttonNamed(rows(m)[0], 'المزيد'), 'الصف باقٍ');
   const again = buttonNamed(rows(m)[0], 'المزيد');

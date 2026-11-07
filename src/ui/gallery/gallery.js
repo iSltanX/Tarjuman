@@ -72,7 +72,7 @@ startPage({
       alertBox({ tone: 'warning', title: 'قد يكون النص ناقصًا', text: 'آخر ترجمة عند 12:40 والفيديو 18:05.', action: button({ label: 'التفاصيل', size: 'sm', variant: 'ghost' }) }),
       alertBox({ tone: 'danger', title: 'تعذّرت قراءة الملف', text: 'تعذّرت قراءة الملف عند السطر 214: توقيت غير صالح.' }),
     ));
-    app.append(section('الحالة الفارغة', emptyState({ title: 'لا ترجمات محفوظة بعد', steps: ['افتح فيديو', 'اضغط تحميل الترجمة', 'ارفع ملفك العربي'], action: button({ label: 'مسح البحث', variant: 'secondary' }) })));
+    app.append(section('الحالة الفارغة', emptyState({ title: 'لا ترجمات محفوظة بعد', steps: ['افتح فيديو', 'اضغط تحميل الأصل', 'ارفع ترجمتك'], action: button({ label: 'مسح البحث', variant: 'secondary' }) })));
     // حوار التأكيد معروضًا ثابتًا للقطة؛ في الصفحات يُفتح بـconfirmDialog.
     const dlg = el('div', { className: 'tj-dialog tj-dialog--danger g-dialog', attrs: { role: 'dialog', 'aria-label': 'مثال حوار' } });
     dlg.append(el('div', { className: 'tj-dialog__form', children: [

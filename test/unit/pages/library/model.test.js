@@ -180,8 +180,8 @@ test('خيارات التصدير: العربية الحالية والأصل و
   assert.equal(plain[1].disabledReason, 'لم تُعدَّل الترجمة، فالأصل المستورد هو النسخة الحالية.');
 
   const englishOnly = exportOptions(entry({ arabic: null }));
-  assert.equal(englishOnly[0].disabledReason, 'لا ترجمة عربية محفوظة لهذا الفيديو.');
-  assert.equal(englishOnly[1].disabledReason, 'لا ترجمة عربية محفوظة لهذا الفيديو.');
+  assert.equal(englishOnly[0].disabledReason, 'لا ترجمة محفوظة لهذا الفيديو.');
+  assert.equal(englishOnly[1].disabledReason, 'لا ترجمة محفوظة لهذا الفيديو.');
   assert.equal(englishOnly[2].disabledReason, null);
 
   const nothing = exportOptions(entry({ arabic: null, english: [] }));

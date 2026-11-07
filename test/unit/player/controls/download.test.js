@@ -23,7 +23,7 @@ const withTrack = (over = {}) => mountPage({ state: makeState({ captured: [track
 test('لم يُلتقط مسار: إرشاد لتفعيل CC واختيار English، و«لماذا؟» يكشف سطري الشرح، ولا زر تنزيل', () => {
   const page = mountPage();
   open(page);
-  assert.match(page.ui.menuText(), /فعّل الترجمة \(CC\) واختر English، ثم افتح هذه القائمة\./);
+  assert.match(page.ui.menuText(), /فعّل الترجمة \(CC\) واختر لغة المسار الذي تريده، ثم افتح هذه القائمة\./);
   assert.ok(page.ui.item(DL) === null);
   assert.equal(page.ui.menuText().includes('لا يرسل أي طلب'), false);
   click(page.ui.item('لماذا؟'));

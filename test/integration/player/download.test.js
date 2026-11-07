@@ -1,12 +1,13 @@
-// تكامل قائمة التحميل (P12-AC4 وP12-AC8): المتحكم والتخزين الحقيقيان ووحدتا التصدير الحقيقيتان. القاموس من التفضيلات
-// المخزنة يُرفق بالتعليمات المنسوخة بالنص نفسه الذي تعطيه instructions لأي سطح آخر (المحفوظات ونافذة الأيقونة)؛ والتقسيم
-// الاحتياطي عند الجمل أو الصمت بأحجام أجزائه الفعلية قبل التنزيل، وضمّها يطابق الملف الكامل؛ والنسخ والتنزيل فعلان مستقلان
-// بزرّين (جولة الصقل): النسخ لا يحفظ، والتنزيل لا ينسخ.
+// تكامل قائمة التحميل (P12-AC4 وP12-AC8، وAA3): المتحكم والتخزين الحقيقيان ووحدتا التصدير الحقيقيتان. التقسيم الاحتياطي عند الجمل
+// أو الصمت بأحجام أجزائه الفعلية قبل التنزيل، وضمّها يطابق الملف الكامل؛ والتنزيل لا ينسخ. ونسخ التعليمات انتقل إلى نافذة الإضافة
+// (AA3): رد حالة الفيديو من المتحكم الحقيقي يحمل أجزاء آخر تنزيل، فتُبنى منه تعليمات النافذة بفقرة الأجزاء والقاموس المخزّن.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createController } from '../../../src/content/controller.js';
 import { buildExport, instructions } from '../../../src/core/export/index.js';
+import { buildVideoStateReply } from '../../../src/core/model/messages.js';
 import { createStore } from '../../../src/core/store/index.js';
+import { attachedGlossary, copyArgs } from '../../../src/pages/popup/status.js';
 import { mountControls } from '../../../src/player/controls/index.js';
 import { charsText } from '../../../src/player/controls/text.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
@@ -54,24 +55,24 @@ async function openPage(area) {
   return { env, store, controller, events, ui: inspect(env, parts) };
 }
 
-test('القاموس المرفق من التفضيلات المخزنة: التعليمات المنسوخة هي instructions بالقاموس حرفيًا، وإشارته بعدده', async () => {
+test('لا نسخ في المشغّل (AA3): القائمة بلا زر نسخ ولا إشارة قاموس، وتعليمات النافذة من الرد بالقاموس المخزّن حرفيًا', async () => {
   const area = createMemoryArea();
   await createStore({ area }).setPrefs({ glossary: { attach: true, terms: TERMS } });
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  assert.equal(page.ui.menu().querySelector('.tag').textContent, '+ القاموس (2)');
-  click(page.ui.field('copy'));
-  await settle(area);
-  const expected = instructions({ videoId: A, title: 'محاضرة تجريبية', glossary: TERMS, source: 'en', target: 'ar' });
-  assert.deepEqual(page.events, [['copy', expected]], 'النص نفسه الذي تنسخه المحفوظات ونافذة الأيقونة');
-  assert.match(expected, /موجِّه/);
-
-  await page.store.setPrefs({ glossary: { attach: false, terms: TERMS } });
-  await settle(area);
-  assert.ok(page.ui.menu().querySelector('.tag') === null, 'إيقاف الإرفاق من الإعدادات يصل إلى المشغّل');
+  assert.ok(page.ui.menu().querySelector('.tag') === null, 'لا إشارة قاموس في المشغّل');
+  assert.ok(page.ui.field('copy') === null, 'لا زر نسخ');
+  assert.equal(page.ui.field('instructionsNote').textContent, 'تعليمات الترجمة (من ← إلى) من نافذة الإضافة');
+  const reply = buildVideoStateReply(page.controller.getState(), { overlay: 'mounted', controls: 'mounted' });
+  assert.deepEqual(reply.source, { key: 'en|manual', lang: 'en', kind: 'manual', via: null, from: 'captured' }, '«من» من المسار الملتقط (ق٥)');
+  const glossary = attachedGlossary(await page.store.getPrefs());
+  const text = instructions(copyArgs({ reply, pair: { from: reply.source.lang, to: 'ar' }, glossary }));
+  assert.equal(text, instructions({ videoId: A, title: 'محاضرة تجريبية', glossary: TERMS, source: 'en', target: 'ar' }), 'النص نفسه الذي تنسخه المحفوظات');
+  assert.match(text, /موجِّه/);
+  assert.deepEqual(page.events, [], 'لا حافظة ولا حفظ');
 });
 
-test('التقسيم عند الجمل أو الصمت: أحجام الأجزاء الفعلية قبل التنزيل، والنسخ والتنزيل بزرّيهما، وضمّ الأجزاء يطابق الكامل', async () => {
+test('التقسيم عند الجمل أو الصمت: أحجام الأجزاء الفعلية قبل التنزيل، والتنزيل بلا نسخ، وضمّ الأجزاء يطابق الكامل، وفقرة الأجزاء في تعليمات النافذة', async () => {
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
@@ -85,18 +86,18 @@ test('التقسيم عند الجمل أو الصمت: أحجام الأجزا�
   assert.equal(ranges[0][0], 1);
   assert.equal(ranges.at(-1)[1], 420);
   for (const [, to] of ranges.slice(0, -1)) assert.equal(to % 5, 0, `الحد ${to} عند نهاية جملة وصمت`);
-  click(page.ui.item('نسخ التعليمات'));
-  await settle(area);
-  assert.deepEqual(page.events.map((e) => e[0]), ['copy'], 'النسخ وحده لا يحفظ');
   click(page.ui.item('تنزيل الملف'));
   await settle(area);
-  assert.deepEqual(page.events.map((e) => e[0]), ['copy', 'save', 'save', 'save'], 'التنزيل يحفظ الأجزاء ولا ينسخ ثانية');
+  assert.deepEqual(page.events.map((e) => e[0]), ['save', 'save', 'save'], 'التنزيل يحفظ الأجزاء ولا ينسخ');
   const saved = page.events.filter((e) => e[0] === 'save');
   rows.forEach((r, i) => assert.ok(r.endsWith(` · ${charsText(saved[i][2].length)}`), `حجم الجزء ${i + 1} هو حجم ملفه`));
   const full = buildExport({ videoId: A, track: { key: 'en|manual', lang: 'en', kind: 'manual', cues: EN }, mode: 'normal', now: Date.parse(NOW) }).files[0].text;
   assert.equal(saved.map((e) => e[2]).join('\n'), full, 'ضمّ الأجزاء يطابق الملف الكامل');
-  assert.match(page.events[0][1], /الجزء 1 \(المقاطع 1–/, 'فقرة الأجزاء في التعليمات');
   const rec = (await page.store.getBundle(A)).record;
   assert.equal(rec.fingerprints.length, 1);
   assert.equal(rec.fingerprints[0].parts.length, 3);
+  // نافذة الإضافة: آخر تنزيل مقسّم بلغة «من» نفسها، ففقرة الأجزاء في التعليمات المنسوخة (لا تُفقد وظيفة التقسيم الاحتياطي).
+  const reply = buildVideoStateReply(page.controller.getState(), { overlay: 'mounted', controls: 'mounted' });
+  assert.equal(reply.lastExport.parts.length, 3);
+  assert.match(instructions(copyArgs({ reply, pair: { from: 'en', to: 'ar' }, glossary: null })), /الجزء 1 \(المقاطع 1–/, 'فقرة الأجزاء في تعليمات النافذة');
 });

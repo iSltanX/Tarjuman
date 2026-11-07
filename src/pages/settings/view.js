@@ -293,7 +293,7 @@ export function createSettings(env) {
   const displayMark = marks();
   const displaySeg = segmented({
     legend: 'وضع العرض الافتراضي', value: settings.displayModeDefault, doc,
-    options: [{ value: 'ar', label: 'العربية وحدها' }, { value: 'dual', label: 'العربية فوق الإنجليزية' }],
+    options: [{ value: 'ar', label: 'الترجمة وحدها' }, { value: 'dual', label: 'الترجمة فوق الأصل' }],
     onChange: (v) => save({ displayModeDefault: v }, displayMark),
   });
   sync.push(() => displaySeg.set(settings.displayModeDefault));

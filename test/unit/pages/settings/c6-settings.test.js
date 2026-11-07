@@ -7,7 +7,7 @@ import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW } from '../../../helpers/fixtures.js';
 import { findAll, newDocument, settle } from '../library/fake-dom.js';
 
-test('U48: المصطلح الإنجليزي في جدول القاموس بـlang="en"', async () => {
+test('U48 بعد AA3: المصطلح ومقابله بأي لغتين، واتجاه كلٍّ من نصه بلا lang مفترض', async () => {
   let t = Date.parse(NOW);
   const area = createMemoryArea({ unlimited: true });
   const store = createStore({ area, now: () => (t += 1000) });
@@ -27,5 +27,7 @@ test('U48: المصطلح الإنجليزي في جدول القاموس بـla
   await settle();
   const cells = findAll(settings.root, (e) => e.classList?.contains('st-gl__source'));
   assert.equal(cells.length, 1);
-  assert.equal(cells[0].getAttribute('lang'), 'en');
+  assert.equal(cells[0].getAttribute('lang'), null, 'لا لغة مفترضة للمصطلح');
+  assert.equal(cells[0].dir, 'ltr');
+  assert.equal(findAll(settings.root, (e) => e.classList?.contains('st-gl__target'))[0].dir, 'rtl', 'المقابل العربي من حروفه');
 });

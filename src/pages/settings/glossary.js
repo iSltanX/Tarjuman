@@ -1,6 +1,7 @@
 // بطاقة «المصطلحات» (R62، P13-AC7، مواصفة التصميم §١٩.٨): جدول (الإنجليزية · العربية المفضّلة · ملاحظة) بإضافة وحذف،
 // وعدّاد «12 من 100»، ومفتاح «أرفق القاموس بتعليمات الترجمة». الحفظ فوري في التفضيلات (prefs.glossary) بتحقق النموذج
 // نفسه، والقاموس يُرفق بالنص نفسه أينما نُسخت التعليمات (instructions في P11). DOM وtextContent فقط.
+import { textDirection } from '../../core/lang/index.js';
 import { messageFor } from '../../core/errors/index.js';
 import { GLOSSARY_LIMITS } from '../../core/model/prefs.js';
 import { button, el } from '../../ui/components.js';
@@ -33,12 +34,12 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
     className: 'st-gl__table',
     children: [
       el('caption', { className: 'tj-sr-only', text: 'مصطلحات القاموس', doc }),
-      el('thead', { children: [el('tr', { children: ['الإنجليزية', 'العربية المفضّلة', 'ملاحظة', ''].map((h, i) => el('th', { text: h, attrs: { scope: 'col', ...(i === 3 ? { 'aria-label': 'حذف' } : {}) }, doc })), doc })], doc }),
+      el('thead', { children: [el('tr', { children: ['المصطلح', 'المقابل المفضّل', 'ملاحظة', ''].map((h, i) => el('th', { text: h, attrs: { scope: 'col', ...(i === 3 ? { 'aria-label': 'حذف' } : {}) }, doc })), doc })], doc }),
       body,
     ],
     doc,
   });
-  const empty = el('p', { className: 'tj-caption st-gl__empty', text: 'لا مصطلحات بعد. أضف المصطلح الإنجليزي ومقابله الذي تفضّله، فيُطلب من النموذج التزامه.', doc });
+  const empty = el('p', { className: 'tj-caption st-gl__empty', text: 'لا مصطلحات بعد. أضف المصطلح بلغة الأصل ومقابله الذي تفضّله بلغة الترجمة، فيُطلب من النموذج التزامه.', doc });
   const tableWrap = el('div', { className: 'st-gl__wrap', children: [table], doc });
 
   // حقول الإضافة: كل حقل بتسميته، والخطأ تحت الحقل المعني.
@@ -52,8 +53,8 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
     return el('div', { className: `tj-field st-gl__field st-gl__field--${key}`, children: [el('label', { className: 'tj-field__label', text: label, attrs: { for: fid }, doc }), inputs[key], errors[key]], doc });
   };
   const fields = [
-    fieldOf('source', 'المصطلح الإنجليزي', GLOSSARY_LIMITS.maxSource, 'ltr'),
-    fieldOf('target', 'العربية المفضّلة', GLOSSARY_LIMITS.maxTarget, 'rtl'),
+    fieldOf('source', 'المصطلح', GLOSSARY_LIMITS.maxSource, 'auto'),
+    fieldOf('target', 'المقابل المفضّل', GLOSSARY_LIMITS.maxTarget, 'auto'),
     fieldOf('note', 'ملاحظة (اختيارية)', GLOSSARY_LIMITS.maxNote, 'auto'),
   ];
   const formError = el('p', { className: 'tj-field__error st-gl__error', attrs: { role: 'alert' }, doc });
@@ -112,8 +113,9 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
     remove.setAttribute('data-term', term.source);
     return el('tr', {
       children: [
-        el('td', { className: 'st-gl__source', text: term.source, dir: 'ltr', attrs: { lang: 'en' }, doc }),
-        el('td', { className: 'st-gl__target', text: term.target, dir: 'rtl', doc }),
+        // المصطلح ومقابله بأي لغتين (AA3): اتجاه كلٍّ من نصه، بلا lang مفترض.
+        el('td', { className: 'st-gl__source', text: term.source, dir: textDirection(term.source), doc }),
+        el('td', { className: 'st-gl__target', text: term.target, dir: textDirection(term.target), doc }),
         el('td', { className: 'st-gl__note', text: term.note ?? '', dir: 'auto', doc }),
         el('td', { className: 'st-gl__del', children: [remove], doc }),
       ],

@@ -219,12 +219,12 @@ test('سطر الحالة يتبع تبديل الخانة وعدد المقاط
   assert.equal(ui(page).status.textContent, 'متزامن · الترجمة 3 · مقطع واحد');
 });
 
-test('نص اللوحة: «العربية وحدها» و«مع ‹اسم لغة الأصل›» باسم اللغة الحقيقي', () => {
+test('نص اللوحة: «الترجمة وحدها» و«مع ‹اسم لغة الأصل›» باسم اللغة الحقيقي', () => {
   const page = watchPage({ state: makeState({ english: english({ lang: 'en' }) }) });
   page.mount();
   const [ar, dual] = ui(page).segs();
   const names = new Intl.DisplayNames(['ar'], { type: 'language' });
-  assert.equal(ar.textContent, 'العربية وحدها');
+  assert.equal(ar.textContent, 'الترجمة وحدها');
   assert.equal(dual.textContent, `مع ${names.of('en')}`);
   assert.equal(ar.getAttribute('aria-checked'), 'false', 'التفضيل الافتراضي panelDual=true');
   assert.equal(dual.getAttribute('aria-checked'), 'true');
@@ -241,7 +241,7 @@ test('اسم لغة الأصل ليس «الإنجليزية» مكتوبة: ل�
   }
 });
 
-test('تبديل النص: الضغط على «مع …» يكتب panelDual=true، و«العربية وحدها» تكتب false', () => {
+test('تبديل النص: الضغط على «مع …» يكتب panelDual=true، و«الترجمة وحدها» تكتب false', () => {
   const page = watchPage({ state: makeState({ english: english(), prefs: prefsWith({ panelOpen: true, panelDual: false }) }) });
   page.mount();
   const [ar, dual] = ui(page).segs();
@@ -322,13 +322,13 @@ test('جارٍ التحميل: هيكل صفوف وaria-busy ومؤشر، بلا
   assert.equal(handle.peek().rows, 3);
 });
 
-test('لا ترجمة عربية: خطوات تدل على «زر التنزيل» و«زر الترجمة» بالاسم دون تكرارهما (لا أزرار تحميل ولا رفع في اللوحة)', () => {
+test('لا ترجمة: خطوات تدل على «زر التنزيل» و«زر الرفع» بالاسم دون تكرارهما (لا أزرار تحميل ولا رفع في اللوحة)', () => {
   const page = watchPage({ state: makeState({ arabic: null, activeSlot: null, english: english({ cues: enCues(412) }) }) });
   const handle = page.mount();
   const v = ui(page);
   assert.equal(handle.peek().kind, 'empty');
   assert.equal(hidden(v.q('.empty')), false);
-  assert.ok(v.q('.empty__title').textContent.includes('لا ترجمة عربية'));
+  assert.ok(v.q('.empty__title').textContent.includes('لا ترجمة لهذا الفيديو'));
   const steps = handle.peek().steps;
   assert.equal(steps.length, 3);
   const names = new Intl.DisplayNames(['ar'], { type: 'language' });
@@ -336,7 +336,7 @@ test('لا ترجمة عربية: خطوات تدل على «زر التنزيل
   assert.equal(steps[0].state, 'done');
   assert.ok(steps[1].text.includes('زر التنزيل'));
   assert.equal(steps[1].state, 'now');
-  assert.ok(steps[2].text.includes('زر الترجمة'));
+  assert.ok(steps[2].text.includes('زر الرفع'));
   assert.ok(v.q('.empty__note').textContent.includes('متزامنًا'));
   assert.equal(v.qa('.empty button').length, 0, 'لا زر يكرر زرّي الشريط');
   assert.equal(handle.peek().rows, 0);
@@ -387,26 +387,26 @@ test('خطأ مع ترجمة معروضة (كالكتابة المرفوضة): �
   assert.equal(handle.peek().inlineError, null);
 });
 
-test('عمود ضيق (≤ 320): تسميات مختصرة «العربية»/«مزدوج»/«متابعة» وبقاء الأسماء الكاملة في اسم الوصول', () => {
+test('عمود ضيق (≤ 320): تسميات مختصرة «الترجمة»/«مزدوج»/«متابعة» وبقاء الأسماء الكاملة في اسم الوصول', () => {
   const page = watchPage({ state: makeState({ english: english({ lang: 'en' }) }) });
   const handle = page.mount();
   const host = ui(page).host;
   const full = ui(page).segs().map((b) => b.textContent);
-  assert.deepEqual(full[0], 'العربية وحدها');
+  assert.deepEqual(full[0], 'الترجمة وحدها');
   host.rect = { left: 664, top: 0, width: 300, height: 360, right: 964, bottom: 360 };
   page.env.win.resize(host);
   assert.equal(handle.peek().narrow, true);
   const [ar, dual] = ui(page).segs();
-  assert.equal(ar.textContent, 'العربية');
+  assert.equal(ar.textContent, 'الترجمة');
   assert.equal(dual.textContent, 'مزدوج');
   assert.ok(dual.getAttribute('aria-label').includes('مع'), 'اسم الوصول الكامل');
-  assert.equal(ar.getAttribute('aria-label'), 'العربية وحدها');
+  assert.equal(ar.getAttribute('aria-label'), 'الترجمة وحدها');
   assert.equal(ui(page).switchEl.textContent, 'متابعة');
   assert.equal(ui(page).switchEl.getAttribute('aria-label'), 'متابعة التشغيل');
   assert.equal(ui(page).q('.root').hasAttribute('data-narrow'), true);
   host.rect = { ...host.rect, width: 402 };
   page.env.win.resize(host);
-  assert.equal(ui(page).segs()[0].textContent, 'العربية وحدها');
+  assert.equal(ui(page).segs()[0].textContent, 'الترجمة وحدها');
   assert.equal(ui(page).switchEl.textContent, 'متابعة التشغيل');
 });
 

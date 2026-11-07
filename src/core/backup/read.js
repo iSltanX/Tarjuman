@@ -5,6 +5,7 @@
 import { sanitizeText } from '../diagnostics/sanitize.js';
 import { bundleFromBackup } from '../model/bundle.js';
 import { isVideoId } from '../model/ids.js';
+import { normalizeLangPrefs } from '../model/lang-prefs.js';
 import { DEFAULT_PREFS, normalizePrefs, validatePrefs } from '../model/prefs.js';
 import { DEFAULT_SETTINGS, normalizeSettings, validateSettings } from '../model/settings.js';
 import { validateVideoRecord } from '../model/video.js';
@@ -23,7 +24,7 @@ import {
  *   ok: true,
  *   header: { createdAt: string, version: number, app: { version: string, storageSchema: number }, options: { previous: boolean },
  *     counts: ReturnType<typeof countData> },
- *   settings: SectionRead, prefs: SectionRead, thumbnailsOff: boolean,
+ *   settings: SectionRead, prefs: SectionRead, thumbnailsOff: boolean, langPrefs?: import('../model/lang-prefs.js').LangPrefs | null,
  *   videos: BackupItem[], invalid: InvalidItem[], warnings: { code: string, params?: Record<string, string> }[]
  * }} BackupRead
  *   thumbnailsOff: «صور الفيديو في المحفوظات» مطفأة في النسخة (prefs.ui.thumbnails === false). تُطبَّق وحدها من ui، ولا تُطبَّق «نعم»
@@ -50,7 +51,8 @@ function checkShape(file) {
       ? OK : fail('backup.counts', 'قيمة غير صالحة')),
     () => exactKeys(file.integrity, ['algorithm', 'hash'], 'backup.integrity'),
     () => (file.integrity.algorithm === HASH_ALGORITHM && /^[0-9a-f]{64}$/.test(file.integrity.hash) ? OK : fail('backup.integrity', 'قيمة غير صالحة')),
-    () => exactKeys(file.data, ['settings', 'prefs', 'videos'], 'backup.data'),
+    // تفضيلات اللغات اختيارية في الإصدار 2 (AA3)، ولا تُقبل في الإصدار 1.
+    () => exactKeys(file.data, ['settings', 'prefs', 'videos'], 'backup.data', file.version >= 2 ? ['langPrefs'] : []),
     () => (Array.isArray(file.data.videos) ? OK : fail('backup.data.videos', 'ليست قائمة')),
   ]);
 }
@@ -226,5 +228,7 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
     ok: true,
     header: { createdAt: file.createdAt, version: file.version, app: file.app, options: file.options, counts: file.counts },
     settings, prefs, thumbnailsOff, videos, invalid, warnings,
+    // قراءة متسامحة لكل حقل: التالف يعود افتراضيه ولا يسقط غيره، ويُطبَّق مع «استعادة الإعدادات والقاموس» وحدها.
+    langPrefs: isPlainObject(data.langPrefs) ? normalizeLangPrefs(data.langPrefs) : null,
   };
 }

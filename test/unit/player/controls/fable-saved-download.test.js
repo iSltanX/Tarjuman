@@ -24,7 +24,7 @@ test('FA-17: مسار محفوظ بلا التقاط: القائمة تعرضه 
   assert.ok(page.ui.item('تنزيل المحفوظ'), 'زر التنزيل');
   assert.ok(page.ui.item('نسخ التعليمات') === null, 'لا نسخ في المشغّل (AA3)');
   assert.match(text, /تعليمات الترجمة \(من ← إلى\) من نافذة الإضافة/);
-  assert.match(text, /فعّل الترجمة \(CC\) واختر English، ثم افتح هذه القائمة\./, 'إرشاد CC باقٍ للالتقاط الجديد');
+  assert.match(text, /فعّل الترجمة \(CC\) واختر لغة المسار الذي تريده، ثم افتح هذه القائمة\./, 'إرشاد CC باقٍ للالتقاط الجديد');
   assert.ok(text.indexOf('تنزيل المحفوظ') < text.indexOf('فعّل الترجمة'), 'المحفوظ أولًا');
   assert.equal(page.ui.btn('download').getAttribute('aria-description'), 'المسار المحفوظ جاهز');
 });

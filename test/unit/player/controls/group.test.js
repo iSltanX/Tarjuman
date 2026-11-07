@@ -16,7 +16,7 @@ test('بلا ترجمة عربية: − والشارة و+ معطّلة بسبب
   const { ui } = mountPage();
   for (const k of ['minus', 'badge', 'plus']) {
     assert.equal(ui.btn(k).getAttribute('aria-disabled'), 'true', k);
-    assert.match(ui.btn(k).getAttribute('aria-label'), /ارفع ترجمة عربية أولًا/);
+    assert.match(ui.btn(k).getAttribute('aria-label'), /ارفع ترجمة أولًا/);
   }
   assert.equal(ui.btn('upload').getAttribute('aria-disabled'), null);
   assert.equal(ui.btn('download').getAttribute('aria-disabled'), null);
@@ -210,7 +210,7 @@ test('لا ترجمة بعد: تلميح زر الترجمة «رفع الترج
   assert.equal(ui.tip(), 'رفع الترجمة (SRT)');
   ui.btn('upload').dispatchEvent({ type: 'pointerleave' });
   ui.btn('plus').focus();
-  assert.match(ui.tip(), /^تأخير الترجمة 0\.5 ث \(تظهر لاحقًا\) — ارفع ترجمة عربية أولًا/);
+  assert.match(ui.tip(), /^تأخير الترجمة 0\.5 ث \(تظهر لاحقًا\) — ارفع ترجمة أولًا/);
   assert.equal(ui.btn('plus').getAttribute('aria-label'), ui.tip());
 });
 
@@ -256,9 +256,9 @@ test('بث جارٍ أو زر CC معطّل: التحميل «غير متاح» 
   page.cc.setAttribute('aria-disabled', 'true');
   page.env.win.advance(1100);
   assert.equal(page.ui.btn('download').hasAttribute('data-unavailable'), true);
-  assert.match(page.ui.btn('download').getAttribute('aria-label'), /لا يحتوي ترجمة إنجليزية متاحة/);
+  assert.match(page.ui.btn('download').getAttribute('aria-label'), /لا يحتوي ترجمة متاحة في يوتيوب/);
   click(page.ui.btn('download'));
-  assert.match(page.ui.menuText(), /هذا الفيديو لا يحتوي ترجمة إنجليزية متاحة\./);
+  assert.match(page.ui.menuText(), /هذا الفيديو لا يحتوي ترجمة متاحة في يوتيوب\./);
 });
 
 // ———— زر اللوحة والملاءمة (ملاحظة سلطان 2026-11-03) ————

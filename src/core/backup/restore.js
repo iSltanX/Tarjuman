@@ -43,7 +43,7 @@ export function planRestore(backup, existingIds, seen = new Map()) {
       videos: backup.videos.length, translations: sum(backup.videos, 'translations'), marks: sum(backup.videos, 'marks'),
       previous: sum(backup.videos, 'previous'), fresh: fresh.length, existing: existing.length, invalid: backup.invalid.length,
     },
-    hasSettings: Boolean(backup.settings && Object.keys(backup.settings.patch).length) || Boolean(backup.prefs && Object.keys(backup.prefs.patch).length),
+    hasSettings: Boolean(backup.settings && Object.keys(backup.settings.patch).length) || Boolean(backup.prefs && Object.keys(backup.prefs.patch).length) || Boolean(backup.langPrefs),
   };
 }
 
@@ -67,13 +67,13 @@ export function restoreItems(plan, replace) {
  * @param {{
  *   store: ReturnType<typeof import('../store/index.js').createStore>,
  *   items: RestoreItem[], skipped?: string[],
- *   settings?: object | null, prefs?: object | null, thumbnailsOff?: boolean,
+ *   settings?: object | null, prefs?: object | null, langPrefs?: import('../model/lang-prefs.js').LangPrefs | null, thumbnailsOff?: boolean,
  *   onProgress?: (p: { done: number, total: number }) => void, pause?: () => Promise<void>, batch?: number,
  * }} o settings وprefs تعديلا القسمين إن اختار المستخدم «استعادة الإعدادات والقاموس»، وإلا null. وthumbnailsOff إطفاء صور
  *   المحفوظات الذي في النسخة: يُطبَّق في كل استعادة ولو لم تُختر الإعدادات، لأنه رفض سابق لا يُتجاوز (U05، Q10)، ولا يشغّلها أبدًا.
  * @returns {Promise<RestoreReport>}
  */
-export async function runRestore({ store, items, skipped = [], settings = null, prefs = null, thumbnailsOff = false, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch }) {
+export async function runRestore({ store, items, skipped = [], settings = null, prefs = null, langPrefs = null, thumbnailsOff = false, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch }) {
   /** @type {RestoreReport} */
   const report = {
     added: [], skipped: [...skipped], replaced: [], changed: [], failed: [], remaining: [], stopped: false,
@@ -98,7 +98,17 @@ export async function runRestore({ store, items, skipped = [], settings = null, 
       report.settingsCode ??= toErrorInfo(err).code;
     }
   }
-  const states = Object.values(report.parts).filter(Boolean);
+  // تفضيلات اللغات من النسخة (AA3) مع الإعدادات: الزوج والتذكّر والأخيرة كما هي، وأزواج الفيديوهات تُضاف إلى الموجود.
+  if (langPrefs && typeof store.setLangPrefs === 'function') {
+    try {
+      await store.setLangPrefs({ pair: { ...langPrefs.pair }, remember: langPrefs.remember, recent: [...langPrefs.recent], videos: { ...langPrefs.videos } });
+      report.langPrefs = 'restored';
+    } catch (err) {
+      report.langPrefs = 'failed';
+      report.settingsCode ??= toErrorInfo(err).code;
+    }
+  }
+  const states = [...Object.values(report.parts), report.langPrefs ?? null].filter(Boolean);
   if (states.length) report.settings = states.includes('failed') ? 'failed' : 'restored';
   onProgress({ done: 0, total: items.length });
   for (const [i, item] of items.entries()) {
