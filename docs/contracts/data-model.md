@@ -299,3 +299,25 @@ SortSummary = {
 ## ١٦. حدود الإصدار الثاني
 
 `LIMITS.maxMarks` = 5,000 علامة لكل خانة، و`SLOT_NAME_MAX` = 24، و`GLOSSARY_LIMITS` = 100 مصطلح (80 و80 و120)، و`FOLDER_MAX` = 60. والأرقام 1 2 3 لاتينية في الواجهة (المواصفة §١٠).
+
+## ١٧. اللغات — 2.0.0 (AA1، حرية اللغات)
+
+الأسماء التاريخية باقية في السجل المخزَّن لأن الإصدار الأول و1.1.0 يقرآنه بها (`english` للمسارات المستخرجة، و`arabic` للترجمة النشطة، و`noArabic` في تقرير المقارنة). والجديد في الذاكرة، ويُسقط في التخزين (عقد storage §١٣):
+
+- **المسار المستخرج (`SourceTrack`):** `EnglishTrack` بأي لغة (`isSourceLang`: BCP-47 حتى 35 محرفًا)، ومعه `via` اختياريًا للمسار الذي ترجمه يوتيوب آليًا: لغة المسار الذي تُرجم عنه. المفتاح `lang|kind` للأصلي و`lang|kind|via` للمترجم آليًا (`trackKey`، `parseTrackKey`)، و`parseV1TrackKey` لما يقرؤه السجل المخزَّن (إنجليزي أصلي وحده). المدققان: `validateSourceTrack` (الذاكرة) و`validateEnglishTrack` (المخزَّن، كما كان).
+- **الترجمة:** حقل `lang` اختياري في الذاكرة: رمز لغتها أو `null` «غير محددة»، وغيابه (ما حُفظ قبل 2.0.0) بمعنى `null`. يُحمل مع الترجمة في كل انتقال. ويأتي من اختيار المستخدم عند الرفع، أو من رمز صريح في اسم الملف (`langFromFileName`)، ولا يُخمَّن من النص.
+- **المدققات بوضعين:** `validateVideoRecord(r, { stored })` و`validateArabicTrack(a, path, { stored })` و`validateFingerprint(f, path, { stored })` و`validateAltSlot`/`validatePrevious`: المخزَّن (الافتراضي في التخزين) كما يقرؤه 1.1.0 حرفيًا، والذاكرة (`stored: false`) بالحقول الجديدة. و`validateBundle` بوضع الذاكرة.
+- **«غير مترجم» بلغة الترجمة:** `untranslatedTest(target, source)`: مقطع بحروف ليس فيها حرف من نص لغة الترجمة، حين يُعرف نصها ويختلف عن نص لغة المسار؛ وإلا لا فحص. يملأ `noArabic` باسمه التاريخي في المقارن والمقارنة الحاضرة والاستكمال والمراجعة.
+- **`LangPrefs`** (`model/lang-prefs.js`، المفتاح `langPrefs`):
+
+```js
+LangPrefs = {
+  schema: 1,
+  pair: { from: 'auto' | string, to: string | null },   // الزوج الافتراضي؛ to الافتراضية 'ar' قيمةً يغيّرها المستخدم
+  remember: boolean,                                    // تذكّر آخر زوج
+  recent: string[],                                     // اللغات الأخيرة، حتى 8، بلا تكرار
+  videos: Record<videoId, { from: string | null, to: string | null }>,  // الزوج لكل فيديو، حتى 200، الأحدث آخرًا
+}
+```
+
+و`initialPair(prefs, { videoId, sourceLang })`: المحفوظ للفيديو، وإلا «من» التلقائي من لغة المسار الملتقط إن عُرفت بدقة وإلا `null` (قرار سلطان ق٥)، و«إلى» الافتراضي.

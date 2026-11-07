@@ -386,6 +386,9 @@ applyPatchDetailed(cues, plan, { only? }) → { cues: Cue[], renumbered: boolean
 
 // src/core/export
 instructions({ videoId, title, parts?, glossary? }) → string            // glossary: مصطلحات القاموس أعلاه
+// 2.0.0 (AA1): instructions({ videoId, title, source, target, via?, parts?, glossary? }) → string — لغة الملف المرفق واللغة المطلوبة
+//   (رمزان صالحان مختلفان وإلا MD_INVALID)، وvia لغة أصل مسار ترجمه يوتيوب آليًا؛ وpatchInstructions({ videoId, title, source, target, glossary? })
+//   وglossaryParagraph(glossary, { source, target }) كذلك. وbuildExport يقبل target (اللغة المطلوبة) ويعيد instructions null حين تساوي لغة المسار.
 planPartsByContent(cues: Cue[], size: number) → { index, from, to }[] | null   // planParts القديم باقٍ
 buildPatchPackage({ videoId, title, fingerprint, englishTracks, numbers, glossary? }) → { ok: true, file: { name, text }, instructions: string, count } | { ok: false, code, params? }   // glossary (W6): فقرة القاموس في instructions وحدها؛ ولا يرمي: EX_PATCH_SOURCE_UNWRITABLE بـparams.list (C5، U79)
 buildStudyText({ videoId, title, cues, english?, format: 'txt' | 'md', bilingual: boolean }) → { name, text }
