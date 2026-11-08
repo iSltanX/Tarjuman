@@ -299,7 +299,10 @@ export function dataControl(env) {
     // حال كل قسم بعينه (U54): لا «بقيت الحالية كما هي» وقد تغيّر أحدهما.
     if (report.settings === 'restored') {
       const p = report.parts ?? {};
-      lines.push(p.settings && !p.prefs ? 'استُعيدت الإعدادات.' : p.prefs && !p.settings ? 'استُعيد القاموس والتفضيلات.' : 'استُعيدت الإعدادات والقاموس.');
+      if (p.settings || p.prefs || !p.langPrefs) {
+        lines.push(p.settings && !p.prefs ? 'استُعيدت الإعدادات.' : p.prefs && !p.settings ? 'استُعيد القاموس والتفضيلات.' : 'استُعيدت الإعدادات والقاموس.');
+      }
+      if (p.langPrefs === 'restored') lines.push('استُعيدت تفضيلات اللغات.');
     }
     if (report.settings === 'failed') lines.push(messageFor(settingsFailureCode(report) ?? 'BK_RESTORE_SETTINGS_FAILED'));
     if (report.changed?.length) lines.push(messageFor('BK_RESTORE_CHANGED', { n: report.changed.length }));
@@ -315,7 +318,8 @@ export function dataControl(env) {
     restoreResult.replaceChildren(alertBox({ tone, title: messageFor(code), text: lines.join('\n'), action: again ?? undefined, doc }));
   }
 
-  async function run({ items, skipped, settings, prefs, langPrefs = null, thumbnailsOff = false, titles, before }) {
+  // chosen: ما اختاره المستخدم من الأقسام الثلاثة كاملًا، ويُمرَّر كما هو في كل إعادة محاولة، فيبقى المتعذّر مرتين متاحًا للثالثة.
+  async function run({ items, skipped, settings, prefs, langPrefs = null, thumbnailsOff = false, titles, before, chosen = { settings, prefs, langPrefs } }) {
     // تشغيل واحد في كل وقت: النقر المزدوج على «أعد المحاولة» لا يشغّل تشغيلين من التقرير نفسه.
     if (running) return null;
     running = true;
@@ -325,11 +329,10 @@ export function dataControl(env) {
       restoreMeter.hide();
       const merged = before ? mergeReports(before, report) : report;
       // إعادة المحاولة تكتب القسم المتعذّر وحده، فلا تمحو تغييرًا أجراه المستخدم بعد التقرير في القسم الذي نجح (U54).
-      const again = retrySettings(merged, { settings, prefs });
+      const again = retrySettings(merged, chosen);
       renderReport(merged, titles, () => run({
         items: retryItems(merged, items), skipped: [],
-        settings: again.settings, prefs: again.prefs,
-        langPrefs: report.langPrefs === 'failed' ? langPrefs : null,
+        settings: again.settings, prefs: again.prefs, langPrefs: again.langPrefs, chosen,
         thumbnailsOff: merged.thumbnails === 'failed' && thumbnailsOff,
         titles, before: merged,
       }));
@@ -354,11 +357,14 @@ export function dataControl(env) {
     let read;
     let library;
     let unreadable = [];
+    // بصمة كل سجل غير مقروء كما عُرضت المعاينة: تُقارَن عند التأكيد فلا تطمس استعادةٌ إصلاحًا أحدث (تدقيق V2، U-023).
+    const prints = new Map();
     try {
       read = await readBackup(file, { pause, onProgress: restoreMeter.show('جارٍ فحص النسخة') });
       library = read.ok ? await store.listLibrary() : [];
       // سجل محلي تالف لا يظهر في المحفوظات «موجود» أيضًا: يُتخطى افتراضيًا، ويُختار استبداله لإصلاحه (CX-H4، GM-006).
       unreadable = read.ok && typeof store.unreadableVideos === 'function' ? await store.unreadableVideos() : [];
+      if (typeof store.rawPrint === 'function') for (const id of unreadable) prints.set(id, await store.rawPrint(id));
     } catch (err) {
       read = { ok: false, code: toErrorInfo(err).code, message: toErrorInfo(err).message };
     } finally {
@@ -371,7 +377,7 @@ export function dataControl(env) {
     }
     const existingById = new Map(library.map((x) => [x.entry.videoId, x.entry]));
     // كل موجود يحمل نسخته كما عُرض، فلا يُستبدل ما حُفظ بعد المعاينة (تدقيق 7a66f91، U11).
-    const plan = planRestore(read, [...existingById.keys(), ...unreadable], existingById);
+    const plan = planRestore(read, [...existingById.keys(), ...unreadable], existingById, prints);
     if (!plan.counts.videos && !plan.hasSettings) {
       // «لا شيء يمكن استعادته» ومعه السبب إن كان في النسخة ما لا يُقرأ (U59 L-24): كانت الجملة وحدها.
       restoreResult.replaceChildren(alertBox({ tone: 'warning', text: messageFor('BK_NOTHING'), doc }), ...(plan.invalid.length ? [invalidBox(plan.invalid)] : []));

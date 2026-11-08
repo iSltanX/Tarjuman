@@ -116,9 +116,12 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
    * كتابة حزمة على النسخة base. إن كانت الحاضرة بنسخة الطلب نفسه وقيمه نفسها فقد طُبّق قبل توقف العامل، فلا يُعاد. ونسخة
    * مطابقة بقيم أخرى كاتبٌ آخر بنى على base نفسها في الملي ثانية نفسها: تعارض (N02)، لا صدى.
    */
-  async function put({ videoId: id, base, items }) {
+  async function put({ videoId: id, base, items, print }) {
     checkId(id);
     checkItems(id, items);
+    // استبدال سجل غير مقروء بُني على بصمة قيمه الخام عند المعاينة: تتغيّر البصمة فيعني أن كاتبًا آخر أصلحه بعدها، فتعارض لا
+    // طمس (تدقيق V2، U-023؛ النسخة لا تكفي لسجل لا يُقرأ). ويُقارَن داخل الطابور كما في الحذف.
+    if (typeof print === 'string' && rawPrint(await read(printKeys(id)), id) !== print) throw new TjError('ST_CONFLICT', { detail: `${id}: تغيّر السجل بعد عرض التأكيد` });
     const target = versionOf(items[videoKey(id)]);
     const now = await versionNow(id, base);
     if (now !== base) {

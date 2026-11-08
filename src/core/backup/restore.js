@@ -9,18 +9,19 @@ import { BACKUP_LIMITS } from './format.js';
 /**
  * @typedef {import('./read.js').BackupRead} BackupRead
  * @typedef {import('./read.js').BackupItem} BackupItem
- * @typedef {{ videoId: string, entry: object, replace: boolean, expect?: { rev: number, updatedAt: string } }} RestoreItem
- *   expect: نسخة الموجود عند المعاينة؛ إن تغيّر بعدها لا يُستبدل ويُعدّ في changed (تدقيق 7a66f91، U11)
+ * @typedef {{ videoId: string, entry: object, replace: boolean, expect?: { rev: number, updatedAt: string } | { print: string } }} RestoreItem
+ *   expect: نسخة الموجود عند المعاينة؛ إن تغيّر بعدها لا يُستبدل ويُعدّ في changed (تدقيق 7a66f91، U11). وللسجل غير المقروء
+ *   (بلا مُلخّص ولا نسخة) بصمة قيمه الخام { print } من store.rawPrint (تدقيق V2، U-023)
  * @typedef {{
  *   added: string[], skipped: string[], replaced: string[], changed: string[],
  *   failed: { videoId: string, code: string, message: string }[],
  *   remaining: string[], stopped: boolean,
  *   settings: 'restored' | 'failed' | null, settingsCode: string | null,
- *   parts?: { settings: SectionState, prefs: SectionState },
+ *   parts?: { settings: SectionState, prefs: SectionState, langPrefs: SectionState },
  *   thumbnails?: 'off' | 'failed' | null
  * }} RestoreReport
- *   settings خلاصة القسمين (failed إن تعذّر أحدهما)، وparts حال كل قسم وحده: الإعدادات والقاموس كتابتان، فإن نجحت الأولى وتعذّرت
- *   الثانية قيل ذلك بعينه، وإعادة المحاولة تكتب المتعذّر وحده فلا تمحو تغييرًا أجراه المستخدم بعدها (تدقيق 7a66f91، U54).
+ *   settings خلاصة الأقسام الثلاثة (failed إن تعذّر أحدها)، وparts حال كل قسم وحده: الإعدادات والقاموس واللغات ثلاث كتابات، فإن نجح بعضها وتعذّر غيره
+ *   قيل ذلك بعينه (U-021 وU-022)، وإعادة المحاولة تكتب المتعذّر وحده فلا تمحو تغييرًا أجراه المستخدم بعدها (تدقيق 7a66f91، U54).
  * @typedef {'restored' | 'failed' | null} SectionState
  */
 
@@ -28,13 +29,16 @@ import { BACKUP_LIMITS } from './format.js';
  * المعاينة: الجديدة (معرّفها غير محفوظ) والموجودة، بترتيب النسخة، وأعداد ما سيُضاف.
  * @param {BackupRead} backup @param {Iterable<string>} existingIds معرّفات المحفوظات الآن
  * @param {Map<string, { rev: number, updatedAt: string }>} [seen] مُلخّص كل موجود كما عُرض، فيحمل عنصره نسخته (U11)
+ * @param {Map<string, string>} [prints] بصمة القيم الخام (store.rawPrint) لكل سجل غير مقروء عند المعاينة، فيحملها عنصره (U-023)
  */
-export function planRestore(backup, existingIds, seen = new Map()) {
+export function planRestore(backup, existingIds, seen = new Map(), prints = new Map()) {
   const have = new Set(existingIds);
   const fresh = backup.videos.filter((v) => !have.has(v.videoId));
   const existing = backup.videos.filter((v) => have.has(v.videoId)).map((v) => {
     const e = seen.get(v.videoId);
-    return e ? { ...v, expect: { rev: e.rev, updatedAt: e.updatedAt } } : v;
+    if (e) return { ...v, expect: { rev: e.rev, updatedAt: e.updatedAt } };
+    const print = prints.get(v.videoId);
+    return typeof print === 'string' ? { ...v, expect: { print } } : v;
   });
   const sum = (list, k) => list.reduce((s, v) => s + (typeof v.counts[k] === 'number' ? v.counts[k] : v.counts[k] ? 1 : 0), 0);
   return {
@@ -77,7 +81,7 @@ export async function runRestore({ store, items, skipped = [], settings = null, 
   /** @type {RestoreReport} */
   const report = {
     added: [], skipped: [...skipped], replaced: [], changed: [], failed: [], remaining: [], stopped: false,
-    settings: null, settingsCode: null, parts: { settings: null, prefs: null }, thumbnails: null,
+    settings: null, settingsCode: null, parts: { settings: null, prefs: null, langPrefs: null }, thumbnails: null,
   };
   if (thumbnailsOff) {
     try {
@@ -101,14 +105,19 @@ export async function runRestore({ store, items, skipped = [], settings = null, 
   // تفضيلات اللغات من النسخة (AA3) مع الإعدادات: الزوج والتذكّر والأخيرة كما هي، وأزواج الفيديوهات تُضاف إلى الموجود.
   if (langPrefs && typeof store.setLangPrefs === 'function') {
     try {
-      await store.setLangPrefs({ pair: { ...langPrefs.pair }, remember: langPrefs.remember, recent: [...langPrefs.recent], videos: { ...langPrefs.videos } });
-      report.langPrefs = 'restored';
+      // الأزواج بترتيب النسخة (الأحدث آخرًا) صراحة: ترتيب مفاتيح الكائن لا يُعتمد (U-018).
+      const order = (langPrefs.order ?? Object.keys(langPrefs.videos)).filter((id) => Object.hasOwn(langPrefs.videos, id));
+      await store.setLangPrefs({
+        pair: { ...langPrefs.pair }, remember: langPrefs.remember, recent: [...langPrefs.recent],
+        videos: Object.fromEntries(order.map((id) => [id, langPrefs.videos[id]])), order,
+      });
+      report.parts.langPrefs = report.langPrefs = 'restored';
     } catch (err) {
-      report.langPrefs = 'failed';
+      report.parts.langPrefs = report.langPrefs = 'failed';
       report.settingsCode ??= toErrorInfo(err).code;
     }
   }
-  const states = [...Object.values(report.parts), report.langPrefs ?? null].filter(Boolean);
+  const states = Object.values(report.parts).filter(Boolean);
   if (states.length) report.settings = states.includes('failed') ? 'failed' : 'restored';
   onProgress({ done: 0, total: items.length });
   for (const [i, item] of items.entries()) {
@@ -164,33 +173,43 @@ export function mergeReports(before, retry) {
 
 /** حال القسمين بعد إعادة المحاولة: ما أُعيد يأخذ نتيجته الجديدة، وما لم يُعد يبقى على حاله. */
 function mergeSettings(before, retry) {
-  const parts = { settings: retry.parts?.settings ?? before.parts?.settings ?? null, prefs: retry.parts?.prefs ?? before.parts?.prefs ?? null };
+  const parts = {
+    settings: retry.parts?.settings ?? before.parts?.settings ?? null,
+    prefs: retry.parts?.prefs ?? before.parts?.prefs ?? null,
+    // قديمًا كان حال اللغات في report.langPrefs وحده ويُسقطه الدمج (U-021)؛ يُقرأ منه إن غاب من parts.
+    langPrefs: retry.parts?.langPrefs ?? retry.langPrefs ?? before.parts?.langPrefs ?? before.langPrefs ?? null,
+  };
   const states = Object.values(parts).filter(Boolean);
   const settings = states.length ? (states.includes('failed') ? 'failed' : 'restored') : (retry.settings ?? before.settings);
-  return { settings, settingsCode: settings === 'failed' ? retry.settingsCode ?? before.settingsCode : null, parts };
+  return { settings, settingsCode: settings === 'failed' ? retry.settingsCode ?? before.settingsCode : null, parts, langPrefs: parts.langPrefs };
 }
 
 /**
- * ما تُعاد كتابته من القسمين: المتعذّر وحده (U54).
- * @param {RestoreReport} report @param {{ settings: object | null, prefs: object | null }} chosen
- * @returns {{ settings: object | null, prefs: object | null }}
+ * ما تُعاد كتابته من الأقسام: المتعذّر وحده (U54، U-021).
+ * @param {RestoreReport} report @param {{ settings: object | null, prefs: object | null, langPrefs?: object | null }} chosen
+ * @returns {{ settings: object | null, prefs: object | null, langPrefs: object | null }}
  */
 export function retrySettings(report, chosen) {
   return {
     settings: report.parts?.settings === 'failed' ? chosen.settings : null,
     prefs: report.parts?.prefs === 'failed' ? chosen.prefs : null,
+    langPrefs: report.parts?.langPrefs === 'failed' ? chosen.langPrefs ?? null : null,
   };
 }
 
 /**
- * رمز سطر الإعدادات في التقرير بحال القسمين، أو null إن لم يتعذّر شيء.
+ * رمز سطر الإعدادات في التقرير بحال الأقسام الثلاثة، أو null إن لم يتعذّر شيء. تعذّر قسم واحد يُسمّى بعينه، وأكثر من قسم
+ * رسالة الإعدادات العامة.
  * @param {RestoreReport} r
  */
 export function settingsFailureCode(r) {
   if (r.settings !== 'failed') return null;
-  const { settings, prefs } = r.parts ?? {};
-  if (settings === 'failed' && prefs === 'restored') return 'BK_RESTORE_SETTINGS_PART_FAILED';
-  if (prefs === 'failed' && settings === 'restored') return 'BK_RESTORE_PREFS_PART_FAILED';
+  const { settings, prefs, langPrefs } = r.parts ?? {};
+  const failed = [settings, prefs, langPrefs].filter((x) => x === 'failed').length;
+  if (failed === 1 && settings === 'failed' && prefs === 'restored') return 'BK_RESTORE_SETTINGS_PART_FAILED';
+  if (failed === 1 && prefs === 'failed' && settings === 'restored') return 'BK_RESTORE_PREFS_PART_FAILED';
+  if (failed === 1 && langPrefs === 'failed') return 'BK_RESTORE_LANGS_PART_FAILED';
+  if (langPrefs === 'failed') return 'BK_RESTORE_SETTINGS_LANGS_FAILED';
   return 'BK_RESTORE_SETTINGS_FAILED';
 }
 

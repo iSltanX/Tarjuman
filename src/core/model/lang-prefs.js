@@ -14,8 +14,10 @@ export const LANG_PREFS_LIMITS = Object.freeze({ recent: 8, videos: 200 });
 /**
  * @typedef {{ from: string | null, to: string | null }} LangPair from: رمز أو 'auto' (في الافتراضي) أو null «اختر لغة»
  * @typedef {{
- *   schema: 1, pair: { from: string, to: string | null }, remember: boolean, recent: string[], videos: Record<string, LangPair>
- * }} LangPrefs
+ *   schema: 1, pair: { from: string, to: string | null }, remember: boolean, recent: string[], videos: Record<string, LangPair>,
+ *   order: string[]
+ * }} LangPrefs order: معرّفات videos بترتيب الاختيار، الأحدث آخرًا (تدقيق V2، U-018)، ومجموعته تطابق مفاتيح videos. الأحدثية
+ *   والطرد عند الحد منه لا من ترتيب مفاتيح الكائن، لأن Chromium يرتّب المفاتيح المتداخلة عند القراءة.
  */
 
 /** @type {Readonly<LangPrefs>} */
@@ -25,6 +27,7 @@ export const DEFAULT_LANG_PREFS = Object.freeze({
   remember: true,
   recent: Object.freeze([]),
   videos: Object.freeze({}),
+  order: Object.freeze([]),
 });
 
 const isCode = (x) => isSourceLang(x);
@@ -43,7 +46,7 @@ function validatePair(p, path, { allowAuto = false, allowNullFrom = false } = {}
 export function validateLangPrefs(p) {
   const path = 'langPrefs';
   return firstFailure([
-    () => exactKeys(p, ['schema', 'pair', 'remember', 'recent', 'videos'], path),
+    () => exactKeys(p, ['schema', 'pair', 'remember', 'recent', 'videos', 'order'], path),
     () => (p.schema === LANG_PREFS_SCHEMA ? OK : fail(`${path}.schema`, 'إصدار غير معروف')),
     () => validatePair(p.pair, `${path}.pair`, { allowAuto: true }),
     () => (typeof p.remember === 'boolean' ? OK : fail(`${path}.remember`, 'ليس منطقيًا')),
@@ -51,6 +54,8 @@ export function validateLangPrefs(p) {
       ? OK : fail(`${path}.recent`, 'قائمة لغات غير صالحة')),
     () => (isPlainObject(p.videos) && Object.keys(p.videos).length <= LANG_PREFS_LIMITS.videos ? OK : fail(`${path}.videos`, 'ليست قائمة فيديوهات')),
     () => firstFailure(Object.entries(p.videos).map(([id, v]) => () => (isVideoId(id) ? validatePair(v, `${path}.videos.${id}`, { allowNullFrom: true }) : fail(`${path}.videos`, 'معرّف فيديو غير صالح')))),
+    () => (Array.isArray(p.order) && p.order.length === Object.keys(p.videos).length && new Set(p.order).size === p.order.length && p.order.every((id) => Object.hasOwn(p.videos, id))
+      ? OK : fail(`${path}.order`, 'ترتيب لا يطابق الفيديوهات')),
   ]);
 }
 
@@ -64,16 +69,21 @@ export function normalizeLangPrefs(raw) {
   const pair = isPlainObject(r.pair) ? r.pair : {};
   const videos = {};
   if (isPlainObject(r.videos)) {
-    for (const [id, v] of Object.entries(r.videos).slice(-LANG_PREFS_LIMITS.videos)) {
+    for (const [id, v] of Object.entries(r.videos)) {
       if (isVideoId(id) && isPlainObject(v) && (v.from === null || isCode(v.from)) && (v.to === null || isCode(v.to))) videos[id] = { from: v.from, to: v.to };
     }
   }
+  // الترتيب المحفوظ يُحترم إن صلح، وما غاب منه (قيمة قديمة بلا order) يُلحق بترتيب مفاتيح videos: حتمي. ثم يُقصّ إلى الحد من أقدمه.
+  const known = Array.isArray(r.order) ? r.order.filter((id) => typeof id === 'string' && Object.hasOwn(videos, id)) : [];
+  const order = [...new Set([...known, ...Object.keys(videos)])];
+  for (const id of order.splice(0, Math.max(0, order.length - LANG_PREFS_LIMITS.videos))) delete videos[id];
   return {
     schema: LANG_PREFS_SCHEMA,
     pair: { from: isFrom(pair.from) ? pair.from : DEFAULT_LANG_PREFS.pair.from, to: pair.to === null || isCode(pair.to) ? pair.to : DEFAULT_LANG_PREFS.pair.to },
     remember: typeof r.remember === 'boolean' ? r.remember : DEFAULT_LANG_PREFS.remember,
     recent: Array.isArray(r.recent) ? [...new Set(r.recent.filter(isCode))].slice(0, LANG_PREFS_LIMITS.recent) : [],
     videos,
+    order,
   };
 }
 
@@ -84,7 +94,7 @@ export const withRecent = (list, code) => [code, ...list.filter((c) => c !== cod
  * تعديل جزئي: pair (جزئي)، remember، recent (استبدال)، use (لغات استُعملت للتو تتقدّم في الأخيرة)، video ({ videoId, pair | null }:
  * زوج فيديو أو إزالته، والأحدث آخرًا فيُسقط الأقدم عند الحد).
  * @param {LangPrefs} cur
- * @param {{ pair?: Partial<LangPair>, remember?: boolean, recent?: string[], use?: string[], video?: { videoId: string, pair: LangPair | null }, videos?: Record<string, LangPair> }} patch
+ * @param {{ pair?: Partial<LangPair>, remember?: boolean, recent?: string[], use?: string[], video?: { videoId: string, pair: LangPair | null }, videos?: Record<string, LangPair>, order?: string[] }} patch
  * @returns {LangPrefs}
  */
 export function applyLangPrefs(cur, patch) {
@@ -94,23 +104,25 @@ export function applyLangPrefs(cur, patch) {
   if (patch.remember !== undefined) next.remember = patch.remember;
   if (patch.recent !== undefined) next.recent = patch.recent;
   if (Array.isArray(patch.use)) for (const c of [...patch.use].reverse()) if (isCode(c)) next.recent = withRecent(next.recent, c);
-  // أزواج فيديوهات من نسخة احتياطية (AA3): تُضاف إلى الموجود ولا تمحوه، والأحدث آخرًا فيُسقط الأقدم عند الحد.
-  if (isPlainObject(patch.videos)) {
-    for (const [videoId, pair] of Object.entries(patch.videos)) {
-      if (!isVideoId(videoId) || !isPlainObject(pair)) continue;
-      delete next.videos[videoId];
-      next.videos[videoId] = { from: pair.from ?? null, to: pair.to ?? null };
-    }
-    const ids = Object.keys(next.videos);
-    for (const id of ids.slice(0, Math.max(0, ids.length - LANG_PREFS_LIMITS.videos))) delete next.videos[id];
-  }
-  if (isPlainObject(patch.video)) {
-    const { videoId, pair } = patch.video;
+  // الأحدث آخرًا في order لا في ترتيب مفاتيح videos (Chromium يرتّبها)، فيُسقط الأقدم عند الحد (تدقيق V2، U-018).
+  next.order = Array.isArray(cur.order) ? [...cur.order] : Object.keys(next.videos);
+  const put = (videoId, pair) => {
     delete next.videos[videoId];
-    if (pair) next.videos[videoId] = { from: pair.from ?? null, to: pair.to ?? null };
-    const ids = Object.keys(next.videos);
-    for (const id of ids.slice(0, Math.max(0, ids.length - LANG_PREFS_LIMITS.videos))) delete next.videos[id];
+    next.order = next.order.filter((id) => id !== videoId);
+    if (pair) {
+      next.videos[videoId] = { from: pair.from ?? null, to: pair.to ?? null };
+      next.order.push(videoId);
+    }
+  };
+  // أزواج فيديوهات من نسخة احتياطية (AA3): تُضاف إلى الموجود ولا تمحوه، بترتيب إدراجها (الأحدث آخرًا).
+  if (isPlainObject(patch.videos)) {
+    // patch.order (من النسخة الاحتياطية) يحدّد ترتيب الإدراج صراحة، فلا يتوقف على ترتيب مفاتيح الكائن بعد قناة الرسائل.
+    const keys = Object.keys(patch.videos);
+    const ordered = Array.isArray(patch.order) ? [...patch.order.filter((id) => keys.includes(id)), ...keys.filter((id) => !patch.order.includes(id))] : keys;
+    for (const videoId of ordered) if (isVideoId(videoId) && isPlainObject(patch.videos[videoId])) put(videoId, patch.videos[videoId]);
   }
+  if (isPlainObject(patch.video)) put(patch.video.videoId, patch.video.pair);
+  for (const id of next.order.splice(0, Math.max(0, next.order.length - LANG_PREFS_LIMITS.videos))) delete next.videos[id];
   return next;
 }
 
@@ -128,7 +140,7 @@ export function initialPair(prefs, { videoId = null, sourceLang = null } = {}) {
   const detected = isCode(sourceLang) ? sourceLang : null;
   const auto = prefs.pair.from === AUTO_SOURCE;
   if (!videoId) {
-    const last = prefs.remember ? Object.values(prefs.videos).at(-1) ?? null : null;
+    const last = prefs.remember ? prefs.videos[(prefs.order ?? Object.keys(prefs.videos)).at(-1)] ?? null : null;
     return { from: auto ? last?.from ?? null : prefs.pair.from, to: prefs.pair.to, fromDetected: false };
   }
   const saved = prefs.videos[videoId] ?? null;

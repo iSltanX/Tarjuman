@@ -106,6 +106,15 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
     if (r.ok) return r.value;
     throw new TjError(r.code, { detail: r.detail ?? undefined });
   }
+  /**
+   * بعد حذف بيانات فيديو: يزيل زوج لغاته من langPrefs فلا يبقى معرّفه محليًا ولا في النسخة الاحتياطية (تدقيق V2، U-019). عبر
+   * طابور التفضيلات في الكاتب نفسه فتبقى كتابات التفضيلات الأخرى سليمة، وبلا كتابة إن لم يكن له زوج. وحذف ترجمة واحدة لا يمرّ
+   * من هنا فيبقى الزوج؛ واختيارات ما قبل الحفظ لا تُكنس إلا بحذف فيديو بعينه.
+   */
+  async function dropLangPair(videoId) {
+    const { [KEY_LANG_PREFS]: raw } = await read(KEY_LANG_PREFS);
+    if (raw !== undefined && Object.hasOwn(normalizeLangPrefs(raw).videos, videoId)) await call('langPrefs', { patch: { video: { videoId, pair: null } } });
+  }
   const isConflict = (err) => err instanceof TjError && err.code === 'ST_CONFLICT';
 
   // الترحيل مرة لكل سياق: meta بالإصدار الحالي يكفي بلا رسالة (الحالة الدائمة)، وإلا يرحّل الكاتب أو يرفض الأحدث.
@@ -217,6 +226,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           if (cur.raw.record || hasCompanions(cur.raw)) await call('delete', { videoId, base });
           wrote(videoId);
           cache.delete(videoId);
+          await dropLangPair(videoId);
           return null;
         }
         const at = iso();
@@ -481,6 +491,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         wrote(videoId);
         cache.delete(videoId);
         await call('delete', { videoId, ...(expect !== undefined ? { base: versionOf(expect) } : {}), ...(print !== undefined ? { print } : {}) });
+        await dropLangPair(videoId);
       });
     },
 
@@ -497,8 +508,9 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
     /**
      * واجهة كتابة الاستعادة (عقد storage §١٠، backup.md §٦): الموجود يُتخطى افتراضيًا، والتواريخ كما في النسخة.
      * @param {unknown} entry مدخل فيديو من النسخة الاحتياطية
-     * @param {{ replace?: boolean, expect?: VideoRecord | Bundle | IndexEntry | null }} [opts] expect نسخة الفيديو عند المعاينة
-     *   (null = لم يكن موجودًا): إن تغيّر بعدها لا يُكتب شيء والحالة changed (تدقيق 7a66f91، U11)
+     * @param {{ replace?: boolean, expect?: VideoRecord | Bundle | IndexEntry | null | { print: string } }} [opts] expect نسخة الفيديو
+     *   عند المعاينة (null = لم يكن موجودًا): إن تغيّر بعدها لا يُكتب شيء والحالة changed (تدقيق 7a66f91، U11). وللسجل غير المقروء
+     *   { print } من rawPrint: تُقارَن القيم الخام هنا ثم داخل طابور الكاتب (تدقيق V2، U-023؛ النسخة لا تكفي لسجل لا يُقرأ)
      * @returns {Promise<{ status: 'added' | 'skipped' | 'replaced' | 'changed' }>}
      */
     restoreVideo(entry, { replace = false, expect } = {}) {
@@ -512,7 +524,10 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           // بلا checkRaw: الموجود (ولو تالفًا) يُتخطى افتراضيًا فلا يُكتب فوقه دون اختيار، والاستبدال الصريح يطمسه كله بما
           // في النسخة فيصلحه (تدقيق 5fedcb9، GM-006؛ كان التالف يرفض في الحالتين).
           const raw = rawBundle(await read(bundleReadKeys(videoId)), videoId);
-          if (expect !== undefined && versionOf(raw.record) !== versionOf(expect)) return { status: 'changed' };
+          const byPrint = expect !== undefined && expect !== null && typeof expect.print === 'string';
+          if (byPrint) {
+            if (rawPrint(await read(printKeys(videoId)), videoId) !== expect.print) return { status: 'changed' };
+          } else if (expect !== undefined && versionOf(raw.record) !== versionOf(expect)) return { status: 'changed' };
           if (raw.record !== null && !replace) return { status: 'skipped' };
           const prior = raw.record !== null && Number.isInteger(raw.record.rev) && raw.record.rev > 0 ? raw.record.rev : 0;
           const next = structuredClone(parsed.bundle);
@@ -522,7 +537,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           // كما في writeBundle: الكاتب يقارن بالنسخة المقروءة، فسجلٌ أنشأه سياق آخر بين القراءة والكتابة يُعاد تقييم تخطيه بدل
           // الكتابة فوقه بتقرير «أضيف» (CX-003). والتوابع اليتيمة لسجل غائب تُطمس برأس جديد.
           try {
-            await call('put', { videoId, base: versionOf(raw.record), items: itemsFor(next, raw, { forceHead: raw.record === null && hasCompanions(raw) }) });
+            await call('put', { videoId, base: versionOf(raw.record), ...(byPrint ? { print: expect.print } : {}), items: itemsFor(next, raw, { forceHead: raw.record === null && hasCompanions(raw) }) });
           } catch (err) {
             if (isConflict(err) && attempt < 3) continue;
             throw err;
