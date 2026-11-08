@@ -286,7 +286,7 @@ try {
       const glossary = prefs.glossary.attach ? prefs.glossary.terms : null;
       // التعليمات لأي زوج منذ AA1 (2.0.0): source وtarget لازمان، وإلا MD_INVALID (كشفه الاختبار الحي، التدقيق الموحد V2).
       const withG = instructions({ videoId: id, title, glossary, source: 'en', target: 'ar' });
-      const para = glossaryParagraph(prefs.glossary.terms);
+      const para = glossaryParagraph(prefs.glossary.terms, { source: 'en', target: 'ar' });
       const review = reviewIncoming({ fileName: `${id}.ar.srt`, cues: cuesOf(b.slots[0]), videoId: id, fingerprints: b.record.fingerprints });
       const diff = diffTranslations(cuesOf(b.slots[0]), cuesOf(b.slots[1]));
       return {
