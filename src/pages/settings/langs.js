@@ -8,6 +8,7 @@ import { describeLang, textFitsLang } from '../../core/lang/index.js';
 import { withSlotLang } from '../../core/model/bundle.js';
 import { AUTO_SOURCE, DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../../core/model/lang-prefs.js';
 import { button, el } from '../../ui/components.js';
+import { whileHeld } from '../../ui/page-hold.js';
 import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 import { LANG_TEXT, langField, langPair } from '../../ui/lang-picker.js';
 
@@ -101,7 +102,7 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
   let chosen = null;
   let found = { total: 0, videos: [] };
   let busy = false;
-  const applyBtn = button({ label: LANGS_TEXT.apply, size: 'sm', doc, onClick: () => applyAll() });
+  const applyBtn = button({ label: LANGS_TEXT.apply, size: 'sm', doc, onClick: () => whileHeld(() => applyAll()) });
   const target = langField({ label: LANGS_TEXT.unknownLang, value: null, recent: () => langPrefs.recent, doc, onChange: (c) => { chosen = c; paintUnknown(); } });
   const unknownControls = el('div', { className: 'st-lang-unknown', children: [target.root, applyBtn], doc });
 

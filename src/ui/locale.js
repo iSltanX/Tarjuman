@@ -56,19 +56,43 @@ export async function bootLocale({ store, youtube = null, browser = browserLangu
 }
 
 /**
- * يتبع تغيّر لغة الواجهة من أي سياق. لا يُبلَّغ إلا بتغيّر فعلي عن لغة هذا السياق، والقيمة الممسوحة لا تغيّر شيئًا.
+ * يتبع تغيّر لغة الواجهة من أي سياق. لا يُبلَّغ إلا بتغيّر فعلي عن لغة هذا السياق، والقيمة الممسوحة لا تغيّر شيئًا. وما وصل والسياق مشغول
+ * (held) يُعلَّق كله، ولا تتغير لغة السياق نفسها، فلا يختلط نصان بلغتين في عمل جارٍ؛ وflush يطبّق آخر قيمة حين يفرغ، وoffer يعرض قيمة قُرئت من التخزين.
  * @param {{ onChange: (fn: (c: { uiLocale?: { newValue: unknown } | null }) => void) => () => void }} store
  * @param {(locale: 'ar' | 'en') => void} onChange
- * @returns {() => void}
+ * @param {{ held?: () => boolean }} [o]
+ * @returns {(() => void) & { flush: () => void, offer: (locale: 'ar' | 'en') => void, pending: () => 'ar' | 'en' | null }}
  */
-export function watchLocale(store, onChange) {
-  return store.onChange((change) => {
+export function watchLocale(store, onChange, { held = () => false } = {}) {
+  let pending = null;
+  const apply = (locale) => {
+    if (locale === getLocale()) return;
+    setLocale(locale);
+    onChange(locale);
+  };
+  const offer = (locale) => {
+    if (held()) {
+      pending = locale;
+      return;
+    }
+    pending = null;
+    apply(locale);
+  };
+  const off = store.onChange((change) => {
     if (!change.uiLocale) return;
     const next = normalizeUiLocale(change.uiLocale.newValue)?.locale;
-    if (!next || next === getLocale()) return;
-    setLocale(next);
-    onChange(next);
+    if (next) offer(next);
   });
+  const dispose = () => off();
+  dispose.offer = offer;
+  dispose.flush = () => {
+    if (pending === null || held()) return;
+    const next = pending;
+    pending = null;
+    apply(next);
+  };
+  dispose.pending = () => pending;
+  return dispose;
 }
 
 /** يضبط lang وdir على عنصر الجذر للصفحة. @param {Document} doc */

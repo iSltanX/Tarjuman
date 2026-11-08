@@ -11,6 +11,7 @@ import { collectDiagnostics } from '../../core/report/diagnostics.js';
 import { SUPPORT_EMAIL, failureText } from '../../core/report/messages.js';
 import { KIND_LABELS, LIMITS, REPORT_KINDS, buildPayload, formError, reviewRows, serialise } from '../../core/report/payload.js';
 import { button, el, ltr } from '../../ui/components.js';
+import { holdPage } from '../../ui/page-hold.js';
 import { segmented } from '../../ui/forms.js';
 
 /** عنوان اللوحة وزرها بلغة الواجهة الحالية. */
@@ -326,6 +327,8 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     outcome = null;
     copiedWhileBusy = null;
     render();
+    // إعادة التحميل أثناء الإرسال تُضيع رقم البلاغ أو سبب فشله.
+    const release = holdPage();
     Promise.resolve(asked)
       .then((granted) => (granted ? deps.send(payload, k) : { ok: false, failure: 'permission', status: null }))
       .catch(() => ({ ok: false, failure: 'unexpected', status: null }))
@@ -342,6 +345,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
           outcome = { state: 'failed', failure: r.failure, ...(r.retryAfterSeconds === undefined ? {} : { retryAfterSeconds: r.retryAfterSeconds }) };
         }
         render();
+        release();
       });
   }
 

@@ -516,6 +516,7 @@ export function createPanelView({ doc, win, on }) {
     host, root, shell, styleMode, transcript, render, setResume, setLayout, setTheme, setMenu, destroy, peek,
     /** فُتحت اللوحة من زرها في الشريط بلوحة المفاتيح: التركيز إلى زر الإغلاق (أول ما فيها). */
     focusPanel: () => closeBtn.focus(),
+    typing: () => root.activeElement === stepInput,
     /** عناصر للاختبار والتركيز البرمجي. */
     parts: { panel, optsBtn, closeBtn, menu, hideItem, segs: segs.el, followSwitch, resume, resetBtn, earlierBtn, laterBtn, stepSegs: stepSegs.el, stepInput, toast, foot, bar, body, err, empty, skel },
   };

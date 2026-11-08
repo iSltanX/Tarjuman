@@ -443,6 +443,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   }
 
   return {
+    holdsFlow: () => !destroyed && view.typing(),
     /** يضع المضيف أول ابن في العمود (ينقله من عمود قديم)، ويربط الفيديو والمراقبة، ويعيد الرسم. */
     attach(next) {
       if (destroyed) return;

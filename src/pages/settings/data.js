@@ -9,6 +9,7 @@ import {
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { getLocale, joinList, t, texts } from '../../i18n/index.js';
 import { alertBox, button, el, statusPill } from '../../ui/components.js';
+import { holdPage } from '../../ui/page-hold.js';
 import { COUNT_FORMS, formatCount, ltrInline, textDirection } from '../../ui/format.js';
 
 let seq = 0;
@@ -101,14 +102,26 @@ export function dataControl(env) {
   const restoreMeter = progressMeter(doc);
   const restoreResult = el('div', { className: 'st-data__result', doc });
 
+  /** قبضة الأعمال الجارية، وقبضة تقرير الاستعادة الظاهر: إعادة التحميل تقطع الأولى وتمحو الثاني ومعه «أعد المحاولة». */
+  let workHold = null;
+  let reportHold = null;
+  const releaseReport = () => {
+    reportHold?.();
+    reportHold = null;
+  };
   const setBusy = (on) => {
     busy = Math.max(0, busy + (on ? 1 : -1));
     const off = busy > 0;
+    if (off) workHold ??= holdPage();
     for (const b of [createBtn, restoreBtn, ...extra]) {
       b.setAttribute('aria-disabled', off ? 'true' : 'false');
       b.setAttribute('aria-busy', off ? 'true' : 'false');
     }
     if (!off) idleWaiters.splice(0).forEach((resolve) => resolve());
+    if (!off) {
+      workHold?.();
+      workHold = null;
+    }
   };
   /** يُحل حين لا عمل جاريًا: الاستعادة تبدأ بعد اكتمال «نسخة من بياناتك الحالية» التي بدأت في المعاينة. */
   const idle = () => (busy ? new Promise((resolve) => idleWaiters.push(resolve)) : Promise.resolve());
@@ -315,6 +328,7 @@ export function dataControl(env) {
       : null;
     extra.clear();
     if (again) extra.add(again);
+    reportHold ??= holdPage();
     restoreResult.replaceChildren(alertBox({ tone, title: messageFor(code), text: lines.join('\n'), action: again ?? undefined, doc }));
   }
 
@@ -352,7 +366,19 @@ export function dataControl(env) {
     if (busy) return null;
     const file = await env.pickFile();
     if (!file) return null;
-    restoreResult.replaceChildren();
+    // من اختيار الملف إلى نهاية الاستعادة قبضة واحدة، فلا يفلت تبديل لغة بين الفحص والمعاينة والكتابة. وتقرير سابق يُطوى هنا.
+    const flow = holdPage();
+    try {
+      restoreResult.replaceChildren();
+      releaseReport();
+      return await restoreChosen(file);
+    } finally {
+      flow();
+    }
+  }
+
+  /** @param {File} file */
+  async function restoreChosen(file) {
     setBusy(true);
     let read;
     let library;
@@ -406,7 +432,7 @@ export function dataControl(env) {
   return {
     createRow: el('div', { className: 'st-data', children: [prevLabel, el('div', { className: 'st-actions', children: [createBtn], doc }), createMeter.root, createResult], doc }),
     restoreRow: el('div', { className: 'st-data', children: [el('div', { className: 'st-actions', children: [restoreBtn], doc }), restoreMeter.root, restoreResult], doc }),
-    makeBackup, restoreFromFile,
+    makeBackup, restoreFromFile, releaseReport,
     get busy() { return busy > 0; },
   };
 }

@@ -3,6 +3,8 @@
 import { bootLocale, watchLocale } from '../ui/locale.js';
 import { youtubeUiLanguage } from '../player/youtube-dom.js';
 
+const RETRY_MS = 1000;
+
 /**
  * @param {Document} doc @returns {Promise<string | null>} html[lang]، وعند document_start قد لا يكون كُتب بعد فيُنتظر DOMContentLoaded
  */
@@ -28,6 +30,14 @@ export function installContentLocale({ store, mounted, doc = document }) {
     relocalize();
     return locale;
   });
-  const dispose = watchLocale(store, relocalize);
+  // تدفق جارٍ في أدوات المشغّل يؤجّل التبديل كله: لا يختلط نصان بلغتين في حوار رفع مفتوح، ويُعاد الفحص كل ثانية حتى ينتهي.
+  const watcher = watchLocale(store, relocalize, { held: () => Object.values(mounted).some((h) => h?.holdsFlow?.()) });
+  const win = doc.defaultView ?? globalThis;
+  const timer = win.setInterval(() => watcher.flush(), RETRY_MS);
+  timer?.unref?.();
+  const dispose = () => {
+    watcher();
+    win.clearInterval(timer);
+  };
   return { ready, dispose };
 }

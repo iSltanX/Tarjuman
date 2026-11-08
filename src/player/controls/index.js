@@ -153,6 +153,9 @@ export function mountControls(controller, deps = {}) {
       return state;
     },
 
+    /** تدفق جارٍ (رفع أو تأكيد أو كتابة في حقل): يؤجَّل له تبديل اللغة كله (content/locale.js). */
+    holdsFlow: () => session?.holdsFlow() ?? false,
+
     /** تبدّلت لغة الواجهة (أو هُيّئت بعد التركيب): تُبنى الجلسة من جديد بلغتها، ويؤجَّل ذلك ما دام تدفق مفتوح. */
     relocalize() {
       if (!stopped && session && builtLocale !== getLocale()) tryMount();

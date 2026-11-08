@@ -150,6 +150,9 @@ export function mountPanel(controller, env = {}) {
       return state;
     },
 
+    /** كتابة في حقل «مخصص» للخطوة: يؤجَّل لها تبديل اللغة كله (content/locale.js). */
+    holdsFlow: () => session?.holdsFlow?.() ?? false,
+
     /** تبدّلت لغة الواجهة (أو هُيّئت بعد التركيب): تُبنى الجلسة من جديد بلغتها فتعيد كل نص من مسار البناء الأول. */
     relocalize() {
       if (!stopped && session && builtLocale !== getLocale()) safeMount();

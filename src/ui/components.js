@@ -5,6 +5,7 @@
 import { ICONS, ICON_VIEWBOX } from './icons.js';
 import { logo } from './logo.js';
 import { LazyText, t } from '../i18n/index.js';
+import { holdPage } from './page-hold.js';
 
 export { ICONS };
 
@@ -208,6 +209,8 @@ export function statusPill({ tone = 'neutral', text, plain = false, title, doc =
  */
 export function confirmDialog({ title, body, confirmLabel, cancelLabel = t('common.cancel'), tone = 'default', content, doc = document }) {
   return new Promise((resolve) => {
+    // حوار مفتوح يوقف تبديل اللغة حتى يُغلق: لا يضيع قرار قيد الاتخاذ ولا يختلط نصه بلغتين.
+    const release = holdPage();
     const id = uid('tj-dialog');
     const dialog = el('dialog', { className: `tj-dialog${tone === 'danger' ? ' tj-dialog--danger' : ''}`, attrs: { 'aria-labelledby': `${id}-title` }, doc });
     if (content && !content.getAttribute('id')) content.setAttribute('id', `${id}-content`);
@@ -234,6 +237,7 @@ export function confirmDialog({ title, body, confirmLabel, cancelLabel = t('comm
     dialog.addEventListener('close', () => {
       resolve(dialog.returnValue === 'confirm');
       dialog.remove();
+      release();
     }, { once: true });
     doc.body.append(dialog);
     dialog.showModal();

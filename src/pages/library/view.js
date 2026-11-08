@@ -17,6 +17,7 @@ const PREFS_UNREADABLE = Object.freeze({ ...DEFAULT_PREFS, ui: Object.freeze({ .
 import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { closeMenuWithin, createMenu } from '../../ui/menu.js';
+import { holdPage } from '../../ui/page-hold.js';
 import { createToaster } from '../../ui/toast.js';
 import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, prepareUpload, studyName, studyNote, undoActivation } from './actions.js';
 import { radioGroup } from './choice.js';
@@ -224,6 +225,8 @@ export function createLibrary(env) {
    * @param {() => Promise<void>} fn @param {{ videoId: string, displayTitle: string } | null} [m]
    */
   async function guarded(fn, m = null) {
+    // كل فعل من اختيار الملف إلى الحفظ قبضة واحدة: تبديل اللغة ينتظر انتهاءه ولا يقطعه بإعادة تحميل.
+    const release = holdPage();
     try {
       await fn();
     } catch (err) {
@@ -233,6 +236,8 @@ export function createLibrary(env) {
       }
       fail(err);
       if (err instanceof TjError && STALE.has(err.code)) await load();
+    } finally {
+      release();
     }
   }
 

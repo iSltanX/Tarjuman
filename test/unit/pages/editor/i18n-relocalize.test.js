@@ -176,3 +176,70 @@ test('نصوص المحرّر الدقيقة بالإنجليزية: العدّ 
   }).map((l) => l.text);
   assert.deepEqual(lines, ['Segments: 3 of 5', '2 segments missing: 4, 5']);
 });
+
+/** يكتب في حقل زمن ويتركه مركَّزًا بلا تثبيت، كما يكون حين تُبدَّل اللغة من نافذة أخرى. */
+function typeTime(env, value, field = 'start') {
+  const input = env.root.querySelector(`[data-field="${field}"]`);
+  input.focus();
+  input.value = value;
+  return input;
+}
+
+test('زمن مكتوب في حقل مركَّز يبقى بعد التبديل ويُحسب تعديلًا، والتراجع يعيده', async (ctx) => {
+  ctx.after(() => setLocale('ar'));
+  const { editor, env } = await mounted();
+  const session = editor.state.session;
+  const before = session.cueAt(0).startMs;
+  assert.equal(session.dirty, false);
+  typeTime(env, '00:00:01,250');
+  setLocale('en');
+  editor.relocalize();
+  await env.flush();
+  const after = env.root.querySelector('[data-field="start"]');
+  assert.equal(after.value, '00:00:01,250');
+  assert.equal(session.cueAt(0).startMs, 1250);
+  assert.equal(session.dirty, true);
+  assert.equal(env.doc.activeElement, after, 'يعود التركيز إلى حقله');
+  session.undo();
+  assert.equal(session.cueAt(0).startMs, before);
+});
+
+test('زمن غير صالح يبقى مسودة كما كُتب بعد التبديل', async (ctx) => {
+  ctx.after(() => setLocale('ar'));
+  const { editor, env } = await mounted();
+  typeTime(env, '12:ab', 'end');
+  setLocale('en');
+  editor.relocalize();
+  await env.flush();
+  assert.equal(env.root.querySelector('[data-field="end"]').value, '12:ab');
+  assert.equal(editor.state.session.hasDrafts, true);
+});
+
+test('موضع المؤشر في حقل الزمن يبقى بعد التبديل', async (ctx) => {
+  ctx.after(() => setLocale('ar'));
+  const { editor, env } = await mounted();
+  const input = typeTime(env, '00:00:01,250');
+  input.selectionStart = 4;
+  input.selectionEnd = 7;
+  const calls = [];
+  const proto = Object.getPrototypeOf(input);
+  const had = Object.hasOwn(proto, 'setSelectionRange') ? proto.setSelectionRange : undefined;
+  proto.setSelectionRange = function setSelectionRange(a, b) { calls.push([this.dataset.field, a, b]); };
+  ctx.after(() => { if (had) proto.setSelectionRange = had; else delete proto.setSelectionRange; });
+  setLocale('en');
+  editor.relocalize();
+  await env.flush();
+  assert.deepEqual(calls.at(-1), ['start', 4, 7]);
+});
+
+test('الحقل غير المعدَّل لا يصنع تعديلًا عند التبديل', async (ctx) => {
+  ctx.after(() => setLocale('ar'));
+  const { editor, env } = await mounted();
+  const input = env.root.querySelector('[data-field="start"]');
+  input.focus();
+  setLocale('en');
+  editor.relocalize();
+  await env.flush();
+  assert.equal(editor.state.session.dirty, false);
+  assert.equal(editor.state.session.canUndo, false);
+});

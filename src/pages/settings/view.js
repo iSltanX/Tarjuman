@@ -18,6 +18,7 @@ import { aboutSection } from './about.js';
 import { reportPanel } from './report.js';
 import { dataControl } from './data.js';
 import { glossaryControl } from './glossary.js';
+import { whileHeld } from '../../ui/page-hold.js';
 import { saveLocationControl } from './location.js';
 import {
   DEFAULT_SCALE_MARK_PCT, DEFAULT_SECTION, PREVIEW_BOX, READING_DEFAULT_CPS, SECTIONS, completenessText, confirmWord,
@@ -586,7 +587,7 @@ export function createSettings(env) {
       capacityAlert.replaceChildren();
     }
   }
-  const clearBtn = button({ label: t('settings.storage.clearButton'), variant: 'danger', icon: 'trash', doc, onClick: () => { clearAll(); } });
+  const clearBtn = button({ label: t('settings.storage.clearButton'), variant: 'danger', icon: 'trash', doc, onClick: () => { whileHeld(() => clearAll()); } });
   async function clearAll() {
     const typed = el('input', { className: 'tj-field__input', attrs: { id: 'st-confirm-word', type: 'text', autocomplete: 'off', placeholder: confirmWord() }, doc });
     const content = el('div', {
@@ -741,6 +742,8 @@ export function createSettings(env) {
    */
   function select(id, { focus = false, remember = true } = {}) {
     if (!isSectionId(id)) id = DEFAULT_SECTION;
+    // مغادرة قسم النسخ الاحتياطي بعد ظهور تقرير الاستعادة تعني أنه قُرئ: يصير تبديل لغة معلّق ممكنًا.
+    if (active === 'data' && id !== 'data') data.releaseReport();
     active = id;
     for (const [key, sec] of Object.entries(sections)) sec.hidden = key !== id;
     for (const link of navLinks) {

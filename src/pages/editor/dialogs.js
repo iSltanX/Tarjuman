@@ -3,6 +3,7 @@
 // تتعطّل بسببها أثناء فتح الحوار.
 import { t } from '../../i18n/index.js';
 import { button, el } from '../../ui/components.js';
+import { holdPage } from '../../ui/page-hold.js';
 
 /**
  * يعطّل زرًا بسبب ظاهر ومقروء (§١٢ «معطّل بسبب») أو يعيده. الزر يبقى قابلًا للتركيز. والسبب وصفٌ في عنصر aria-hidden فلا يدخل
@@ -39,6 +40,8 @@ export function setDisabled(b, reason) {
  */
 export function openDialog({ doc, title, body, content = null, size = 'sm', tone = 'default', actions, focus }) {
   return new Promise((resolve) => {
+    // تبديل اللغة يُؤجَّل حتى يُغلق الحوار، فلا تتبدّل الصفحة خلفه ويبقى هو بلغة أخرى.
+    const release = holdPage();
     const dialog = el('dialog', { className: `tj-dialog ed-dialog ed-dialog--${size}${tone === 'danger' ? ' tj-dialog--danger' : ''}`, attrs: { 'aria-labelledby': 'ed-dialog-title' }, doc });
     const buttons = actions.map((a) => {
       const b = button({ label: a.label, variant: a.variant ?? 'secondary', className: a.className ?? '', type: 'submit', value: a.value, doc });
@@ -58,6 +61,7 @@ export function openDialog({ doc, title, body, content = null, size = 'sm', tone
     dialog.addEventListener('close', () => {
       resolve(dialog.returnValue || null);
       dialog.remove();
+      release();
     }, { once: true });
     dialog.addEventListener('cancel', () => {
       dialog.returnValue = '';

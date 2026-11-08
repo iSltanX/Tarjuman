@@ -2145,9 +2145,11 @@ export async function mountEditor(app, {
   /**
    * تبديل لغة الواجهة في مكانه (startPage يستدعيها بدل إعادة التحميل): في المحرّر تعديلات غير محفوظة وسجل تراجع في الذاكرة لا
    * يعيشان عبر إعادة تحميل. لا يمس الجلسة (S.session وS.original) ولا نصوص المستخدم ولا حالة dirty ولا التحديد ولا موضع التمرير؛
-   * ويعيد تركيز حقل الصف ومؤشره إن كان فيه. الحوارات المفتوحة لحظة التبديل تبقى بلغتها حتى تُغلق.
+   * ويعيد تركيز حقل الصف ومؤشره إن كان فيه. والحوار المفتوح يؤجّل التبديل كله حتى يُغلق (page-hold.js).
    */
   function relocalize() {
+    // زمن مكتوب في حقل لم يُغادَر يُعتمد أولًا كما قبل كل إعادة بناء للصفوف، وإلا عاد الحقل إلى قيمته المحفوظة وضاع ما كُتب.
+    commitFocusedTime();
     // عناصر بُنيت مرة بنص كسول (LazyText): الهيكل والقوائم والبحث والتسميات.
     relabel(doc);
     // ما يحمل نصًا محسوبًا عند التحميل أو التركيب: تسميات المراجع، واسما زرّي التنقّل في البحث، وتلميحا زرّي الطي.
@@ -2169,7 +2171,7 @@ export async function mountEditor(app, {
       const target = sel ? row?.querySelector(sel) : null;
       if (target) {
         target.focus({ preventScroll: true });
-        if (focus.field === 'text' && typeof focus.start === 'number') target.setSelectionRange?.(focus.start, focus.end);
+        if (focus.field && typeof focus.start === 'number') target.setSelectionRange?.(focus.start, focus.end);
       }
     }
     renderAll();

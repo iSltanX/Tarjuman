@@ -6,6 +6,8 @@ import { createStore } from '../core/store/index.js';
 import { t } from '../i18n/index.js';
 import { alertBox, el, topbar } from './components.js';
 import { applyDocumentLocale, bootLocale, watchLocale } from './locale.js';
+import { normalizeUiLocale } from '../core/model/ui-locale.js';
+import { onPageReleased, pageHeld } from './page-hold.js';
 
 const KEPT = 'tjKept';
 
@@ -72,8 +74,15 @@ export async function startPage({ title, render, wide = false, nav = null, doc =
   const bar = nav ? topbar({ active: nav, doc }) : null;
   if (bar) app.parentNode?.insertBefore(bar, app);
   const page = { relocalize: /** @type {(() => void) | null} */ (null) };
+  /** حقل يكتب فيه المستخدم ولا تحفظه keepForReload (مقدار لم يُثبَّت، أو اسم يُعاد تسميته): تُنتظر مغادرته قبل إعادة التحميل. */
+  const typing = () => {
+    const a = doc.activeElement;
+    return !!a && /^(input|textarea)$/i.test(a.tagName ?? '') && !/^(radio|checkbox|range|button|submit|file)$/i.test(a.type ?? '') && !a.closest?.('[data-tj-keep]');
+  };
+  /** @type {ReturnType<typeof watchLocale> | null} */
+  let watcher = null;
   if (localeStore) {
-    watchLocale(localeStore, () => {
+    watcher = watchLocale(localeStore, () => {
       applyDocumentLocale(doc);
       if (page.relocalize) {
         doc.title = titleText();
@@ -82,11 +91,18 @@ export async function startPage({ title, render, wide = false, nav = null, doc =
       }
       keepForReload(doc);
       (reload ?? (() => doc.defaultView?.location.reload()))();
-    });
+    }, { held: () => pageHeld() || (!page.relocalize && typing()) });
+    onPageReleased(() => watcher.flush());
+    doc.documentElement?.addEventListener?.('focusout', () => { setTimeout(() => watcher.flush(), 0); });
   }
   try {
     await render(app, page);
     restoreKept(doc);
+    // تغيّر وصل بين قراءة اللغة قبل العرض والاشتراك في أحداثها.
+    if (watcher) {
+      const latest = normalizeUiLocale(await localeStore.getUiLocale().catch(() => null));
+      if (latest) watcher.offer(latest.locale);
+    }
   } catch (err) {
     const info = toErrorInfo(err);
     app.append(alertBox({ tone: 'danger', title: t('common.page.renderFailed'), text: `${info.message} (${info.code})`, doc }));
