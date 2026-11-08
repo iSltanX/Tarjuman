@@ -68,7 +68,7 @@ function pageLink({ action, iconName, name, onOpen }, notice) {
 }
 
 startPage({
-  title: 'نافذة الأيقونة',
+  title: 'نافذة الإضافة',
   async render(app) {
     const store = createStore();
     const notice = el('div', { className: 'tj-popup__notice', attrs: { role: 'status' } });
@@ -131,7 +131,7 @@ startPage({
     let copyGlyph = icon('copy');
     const copyBtn = el('button', {
       className: 'tj-btn tj-btn--lg tj-btn--primary tj-popup__copy',
-      attrs: { type: 'button', 'data-action': 'copy', 'data-state': 'idle', 'aria-describedby': 'tj-pair-caption', title: PAIR_TEXT.hint },
+      attrs: { type: 'button', 'data-action': 'copy', 'data-state': 'idle', 'aria-describedby': 'tj-pair-caption' },
       children: [copyGlyph, copyLabel],
     });
     let copyState = 'idle';

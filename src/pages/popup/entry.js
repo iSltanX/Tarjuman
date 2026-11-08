@@ -9,7 +9,7 @@ import { entryHidden } from './status.js';
 
 export const ENTRY_TEXT = Object.freeze({
   hidden: 'زر النص المتزامن مخفي',
-  show: 'إظهاره',
+  show: 'إظهار',
   done: 'ظهر زر النص المتزامن في صفحات الفيديو.',
 });
 

@@ -25,8 +25,8 @@ test('الزر معطّل بسببه: ليست صفحة فيديو، وجارٍ 
   assert.equal(pairState({ reply: r, pair: { from: 'en', to: 'en' } }).reason, PAIR_TEXT.same);
   const ok = pairState({ reply: r, pair: { from: 'ja', to: 'en' } });
   assert.equal(ok.ready, true);
-  assert.equal(ok.caption, 'تعليمات لنموذجك: ترجمة ملف SRT من اليابانية إلى الإنجليزية مع الحفاظ على أرقام المقاطع والتوقيت والصيغة.');
-  assert.equal(ok.done, 'اليابانية ← الإنجليزية · ألصقها في نموذجك مع الملف.');
+  assert.equal(ok.caption, 'تعليمات لنموذجك تحافظ على أرقام المقاطع وتوقيتها وصيغة SRT.');
+  assert.equal(ok.done, 'ألصقها مع ملف الأصل في محادثة نموذجك.');
   assert.equal(pairState({ reply: r, pair: { from: 'ar', to: 'en' } }).ready, true, 'أي اتجاه (الحالة D)');
 });
 
@@ -38,7 +38,7 @@ test('«من» مكتشفة من مسار الفيديو وحده (ق٥)، وا�
   assert.equal(pairState({ reply: reply({ source: ja }), pair: { from: 'ko', to: 'en' } }).sourceNote, null, 'غيّرها المستخدم');
   const machine = reply({ source: { key: 'ar|asr|en', lang: 'ar', kind: 'asr', via: 'en', from: 'captured' } });
   assert.equal(pairState({ reply: machine, pair: { from: 'ar', to: 'fr' } }).sourceNote, machineNote('en'));
-  assert.equal(machineNote('en'), '«من» ترجمة آلية من يوتيوب عن الإنجليزية');
+  assert.equal(machineNote('en'), 'الأصل ترجمة آلية من يوتيوب عن الإنجليزية.');
 });
 
 test('ما يُنسخ: الزوج المختار، والمصدر المترجم آليًا، وأجزاء آخر تنزيل بلغة «من» نفسها وحدها، والقاموس', () => {

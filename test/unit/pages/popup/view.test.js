@@ -32,9 +32,9 @@ test('الخطوات: الأصل غير ملتقط فالأولى هي الحا�
   const steps = guideSteps(reply());
   assert.deepEqual(steps.map((s) => s.text), [...GUIDE_TEXT]);
   assert.deepEqual(steps.map((s) => s.state), ['now', 'pending', 'pending']);
-  assert.deepEqual(GUIDE_TEXT, ['نزّل الأصل من زر التنزيل في الشريط', 'انسخ التعليمات وترجمه بنموذجك', 'ارفع الترجمة من زر الرفع في الشريط']);
+  assert.deepEqual(GUIDE_TEXT, ['نزّل الأصل من زر التنزيل في الشريط', 'انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه', 'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في شريط المشغّل']);
   // بالزوج المختار يُذكر بلغتيه (AA3)، لا «الإنجليزي» و«العربية» الثابتان.
-  assert.deepEqual(guideSteps(reply(), { from: 'ja', to: 'en' }).map((s) => s.text), ['نزّل الأصل (اليابانية) من زر التنزيل في الشريط', 'انسخ التعليمات وترجمه إلى الإنجليزية بنموذجك', 'ارفع الترجمة من زر الرفع في الشريط']);
+  assert.deepEqual(guideSteps(reply(), { from: 'ja', to: 'en' }).map((s) => s.text), ['نزّل الأصل (اليابانية) من زر التنزيل في الشريط', 'انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه إلى الإنجليزية', 'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في شريط المشغّل']);
 });
 
 test('الخطوات: الأصل ملتقط أو محفوظ فالأولى منجزة والثانية هي الحالية، وتتبع الحالة الفعلية لا النية', () => {
@@ -83,17 +83,17 @@ test('صف «زر النص المتزامن مخفي»: لا يظهر والزر
   const row = host2.querySelector('.tj-popup__entry');
   assert.ok(row, 'الصف ظاهر');
   assert.ok(textOf(row).includes(ENTRY_TEXT.hidden) && ENTRY_TEXT.hidden === 'زر النص المتزامن مخفي');
-  assert.ok(buttonNamed(row, 'إظهاره'), 'زر «إظهاره»');
+  assert.ok(buttonNamed(row, 'إظهار'), 'زر «إظهار»');
 });
 
-test('«إظهاره» يكتب prefs.ui.panelEntry=true في التخزين ويزول الصف، ويقول النتيجة، ولا يمسّ بقية التفضيلات', async () => {
+test('«إظهار» يكتب prefs.ui.panelEntry=true في التخزين ويزول الصف، ويقول النتيجة، ولا يمسّ بقية التفضيلات', async () => {
   const doc = newDocument();
   const { store } = newStore();
   await store.setPrefs({ ui: { panelEntry: false, thumbnails: false, panelOpen: true }, glossary: { attach: false } });
   const host = doc.createElement('div');
   const entry = bindEntryRow({ store, host, doc });
   await entry.ready;
-  buttonNamed(host.querySelector('.tj-popup__entry'), 'إظهاره').click();
+  buttonNamed(host.querySelector('.tj-popup__entry'), 'إظهار').click();
   await settle();
   const prefs = await store.getPrefs();
   assert.equal(prefs.ui.panelEntry, true, 'كُتب في التخزين');
@@ -111,7 +111,7 @@ test('فشل الكتابة: يقال الفشل والصف باقٍ ليُعا�
   const entry = bindEntryRow({ store, host, doc });
   await entry.ready;
   area.failNext('set');
-  buttonNamed(host.querySelector('.tj-popup__entry'), 'إظهاره').click();
+  buttonNamed(host.querySelector('.tj-popup__entry'), 'إظهار').click();
   await settle();
   assert.equal((await store.getPrefs()).ui.panelEntry, false, 'لم يُكتب');
   assert.ok(host.querySelector('.tj-popup__entry'), 'الصف باقٍ');
@@ -119,7 +119,7 @@ test('فشل الكتابة: يقال الفشل والصف باقٍ ليُعا�
   assert.ok(live.includes(messageFor('PG_SAVE_FAILED')));
   assert.equal(live.includes(ENTRY_TEXT.done), false);
   // المحاولة الثانية تنجح.
-  buttonNamed(host.querySelector('.tj-popup__entry'), 'إظهاره').click();
+  buttonNamed(host.querySelector('.tj-popup__entry'), 'إظهار').click();
   await settle();
   assert.equal((await store.getPrefs()).ui.panelEntry, true);
   assert.equal(host.querySelector('.tj-popup__entry'), null);
@@ -192,7 +192,7 @@ test('خطأ ربط الأدوات: النص والسبب في البطاقة، 
   const card = statusCard(describeStatus(r), toolsStatus(r), { tone: 'warning', text: messageFor('EX_NOT_ENGLISH') }, doc);
   const tools = card.querySelector('.tj-popup__tools');
   assert.ok(tools.classList.contains('tj-popup__tools--danger'));
-  assert.ok(textOf(tools).includes('تعذّر ربط الأدوات بالمشغّل — أعد تحميل الصفحة'));
+  assert.ok(textOf(tools).includes('تعذّر تشغيل أدوات ترجمان في المشغّل'));
   assert.ok(textOf(tools.querySelector('.tj-popup__reason')).includes(messageFor('CT_MOUNT_FAILED')));
   assert.ok(textOf(card.querySelector('.tj-popup__capture')).includes(messageFor('EX_NOT_ENGLISH')));
 });

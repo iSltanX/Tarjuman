@@ -25,12 +25,13 @@ test('سطر الأدوات: تعمل، وبانتظار المشغّل، وتع
   assert.deepEqual(toolsStatus(reply()), { tone: 'success', text: 'أدوات المشغّل تعمل', reason: null });
   assert.deepEqual(toolsStatus(reply({ mounted: { overlay: 'waiting', controls: 'waiting' } })), { tone: 'info', text: 'بانتظار المشغّل', reason: null });
   const controls = toolsStatus(reply({ mounted: { overlay: 'mounted', controls: 'error' }, tools: { overlay: 'mounted', controls: 'error', code: 'CT_MOUNT_FAILED' } }));
-  assert.deepEqual(controls, { tone: 'danger', text: 'تعذّر ربط الأدوات بالمشغّل — أعد تحميل الصفحة', reason: messageFor('CT_MOUNT_FAILED') });
+  assert.deepEqual(controls, { tone: 'danger', text: 'تعذّر تشغيل أدوات ترجمان في المشغّل', reason: messageFor('CT_MOUNT_FAILED') });
+  assert.equal(controls.text.includes('أعد تحميل'), false, 'الإجراء يأتي مرة واحدة من رسالة الرمز');
   const overlay = toolsStatus(reply({ mounted: { overlay: 'error', controls: 'mounted' }, tools: { overlay: 'error', controls: 'mounted', code: 'PL_MOUNT_FAILED' } }));
-  assert.equal(overlay.text, 'تعذّر ربط طبقة الترجمة بالمشغّل — أعد تحميل الصفحة');
+  assert.equal(overlay.text, 'تعذّر عرض الترجمة فوق الفيديو');
   assert.equal(overlay.reason, messageFor('PL_MOUNT_FAILED'));
   const old = toolsStatus(reply({ mounted: { overlay: 'error', controls: 'mounted' }, tools: undefined }));
-  assert.equal(old.reason, null, 'رد الإصدار الأول بلا رمز: السطر وحده');
+  assert.equal(old.reason, 'أعد تحميل صفحة الفيديو ثم حاول مجددًا.', 'بلا رمز يحمل إجراءً: الإجراء الاحتياطي مرة واحدة');
   assert.equal(toolsStatus(null), null);
   assert.equal(toolsStatus(reply({ watch: false })), null);
 });

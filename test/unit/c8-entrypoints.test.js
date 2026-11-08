@@ -100,7 +100,7 @@ for (const [entry, title] of [
   ['pages/editor/main.js', 'المحرّر'],
   ['pages/library/main.js', 'المحفوظات'],
   ['pages/settings/main.js', 'الإعدادات'],
-  ['pages/popup/main.js', 'نافذة الأيقونة'],
+  ['pages/popup/main.js', 'نافذة الإضافة'],
 ]) {
   test(`${entry}: يُحمَّل ويضبط عنوان الصفحة ويركّب واجهته بلا تنبيه خطأ`, async () => {
     const env = await load(entry, { search: '?v=AAAAAAAAAAA' });

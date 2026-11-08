@@ -168,8 +168,8 @@ export function guideText(pair = {}) {
   const to = isSourceLang(pair.to) ? langLabel(pair.to) : null;
   return [
     from ? `نزّل الأصل (${from}) من زر التنزيل في الشريط` : 'نزّل الأصل من زر التنزيل في الشريط',
-    to ? `انسخ التعليمات وترجمه إلى ${to} بنموذجك` : 'انسخ التعليمات وترجمه بنموذجك',
-    'ارفع الترجمة من زر الرفع في الشريط',
+    to ? `انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه إلى ${to}` : 'انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه',
+    'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في شريط المشغّل',
   ];
 }
 /** نصوص الخطوات بلا زوج. */
@@ -216,6 +216,9 @@ export function libraryHash(reply) {
   return reply.arabic || reply.english.saved.length > 0 ? `v=${reply.videoId}` : undefined;
 }
 
+/** الإجراء حين يتعطل الربط بلا رمز يحمل سببًا وإجراءً. */
+const TOOLS_RELOAD_ACTION = 'أعد تحميل صفحة الفيديو ثم حاول مجددًا.';
+
 /**
  * سطر حالة أدوات المشغّل وطبقة الترجمة في بطاقة الفيديو (مواصفة التصميم §١٩.٦): تعمل، أو بانتظار المشغّل، أو تعذّر الربط؛
  * وعند التعطل سببه المفهوم من آخر رمز (عقد messages §٥).
@@ -228,8 +231,9 @@ export function toolsStatus(reply) {
   const code = typeof reply.tools?.code === 'string' ? reply.tools.code : null;
   const reason = code ? messageFor(code) : null;
   if (controls === 'mounted' && overlay === 'mounted') return { tone: 'success', text: 'أدوات المشغّل تعمل', reason: null };
-  if (controls === 'error') return { tone: 'danger', text: 'تعذّر ربط الأدوات بالمشغّل — أعد تحميل الصفحة', reason };
-  if (overlay === 'error') return { tone: 'danger', text: 'تعذّر ربط طبقة الترجمة بالمشغّل — أعد تحميل الصفحة', reason };
+  // العنوان عام، والسبب والإجراء من رسالة الرمز مرة واحدة؛ وبلا رمز يبقى الإجراء الاحتياطي.
+  if (controls === 'error') return { tone: 'danger', text: 'تعذّر تشغيل أدوات ترجمان في المشغّل', reason: reason ?? TOOLS_RELOAD_ACTION };
+  if (overlay === 'error') return { tone: 'danger', text: 'تعذّر عرض الترجمة فوق الفيديو', reason: reason ?? TOOLS_RELOAD_ACTION };
   return { tone: 'info', text: 'بانتظار المشغّل', reason: null };
 }
 
@@ -331,18 +335,17 @@ export const PAIR_TEXT = Object.freeze({
   copy: 'نسخ التعليمات',
   copied: 'نُسخت التعليمات',
   failed: 'تعذّر النسخ — أعد المحاولة',
-  hint: 'ينسخ تعليمات ترجمة ملف SRT باللغتين المختارتين، لترفقها مع الملف في محادثة نموذجك.',
-  detected: '«من» مكتشفة من ترجمة الفيديو',
-  noVideo: 'افتح فيديو على يوتيوب لتُنسخ تعليماته بعنوانه ورابطه.',
+  detected: 'لغة الأصل مكتشفة من ترجمة الفيديو.',
+  noVideo: 'يُتاح النسخ في صفحة فيديو على يوتيوب.',
   loading: 'جارٍ قراءة الفيديو…',
-  needBoth: 'يُفعّل الزر حين تُحدَّد اللغتان وتختلفان.',
+  needBoth: 'اختر لغة الأصل ولغة الترجمة ليُتاح النسخ.',
   needFrom: 'اختر لغة الملف الذي ستترجمه («من»).',
   needTo: 'اختر اللغة التي تريد الترجمة إليها.',
   same: 'اللغتان متطابقتان؛ اختر لغة أخرى لإحداهما.',
 });
 
-/** ترجمة يوتيوب الآلية: ««من» ترجمة آلية من يوتيوب عن الإنجليزية». @param {string} via */
-export const machineNote = (via) => `«من» ترجمة آلية من يوتيوب عن ${langLabel(via)}`;
+/** ترجمة يوتيوب الآلية: «الأصل ترجمة آلية من يوتيوب عن الإنجليزية.». @param {string} via */
+export const machineNote = (via) => `الأصل ترجمة آلية من يوتيوب عن ${langLabel(via)}.`;
 
 /**
  * لغات مسارات الفيديو لقائمة «من» (مجموعة «في هذا الفيديو»): الملتقطة والمحفوظة ثم ما في بيانات المشغّل، بلا تكرار.
@@ -381,13 +384,12 @@ export function pairState({ reply, pair }) {
   else if (!from) reason = PAIR_TEXT.needFrom;
   else if (!to) reason = PAIR_TEXT.needTo;
   else if (from === to) reason = PAIR_TEXT.same;
-  const names = from && to ? { from: langLabel(from), to: langLabel(to) } : null;
   return {
     ready: reason === null,
     reason,
     sourceNote,
-    caption: reason ?? `تعليمات لنموذجك: ترجمة ملف SRT من ${names.from} إلى ${names.to} مع الحفاظ على أرقام المقاطع والتوقيت والصيغة.`,
-    done: names ? `${names.from} ← ${names.to} · ألصقها في نموذجك مع الملف.` : '',
+    caption: reason ?? 'تعليمات لنموذجك تحافظ على أرقام المقاطع وتوقيتها وصيغة SRT.',
+    done: from && to ? 'ألصقها مع ملف الأصل في محادثة نموذجك.' : '',
   };
 }
 
