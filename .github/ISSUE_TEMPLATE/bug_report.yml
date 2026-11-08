@@ -15,7 +15,7 @@ body:
     attributes:
       label: إصدار ترجمان
       description: من الإعدادات ← حول.
-      placeholder: "2.0.0"
+      placeholder: "2.1.0"
     validations:
       required: true
   - type: dropdown

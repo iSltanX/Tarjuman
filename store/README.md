@@ -214,7 +214,7 @@
 | حساب Google للنشر | حساب مخصص باسم الناشر BySultan، لا الحساب الشخصي. وبريده `iSultanBy@gmail.com`، وهو بريد التواصل الظاهر في متجر Chrome وبريد الدعم | — |
 | صفة التاجر في Chrome | **غير تاجر**، متسقة مع حساب Edge الفردي | T8 |
 | الاسم | `name`: **«ترجمان — ترجمتك فوق الفيديو»** (27 محرفًا) منذ 2.0.0، نص لوحة الهوية 18 ([`docs/identity.md`](../docs/identity.md)، AA5)، وكان «ترجمان - ترجمتك العربية فوق الفيديو» (35 محرفًا) في 1.1.0 على نمط مِجهَر. و`short_name` و`default_title`: «ترجمان». وتبقى علامة يوتيوب خارج العنوان. ومتجرا Chrome وEdge يأخذان العنوان من البيان، فيظهر الاسم الكامل في صفحة الإضافات بالمتصفح أيضًا | T2 يعدّله في البيان للهدفين، وAA5 للاسم الجديد |
-| لغة الإدراج | العربية وحدها بلا `_locales`، وملاحظات المراجعين بالإنجليزية. وواجهة الإضافة صارت بالعربية والإنجليزية بعد 2.0.0، والإدراج باقٍ بالعربية ما لم يقرر سلطان غير ذلك | T6 |
+| لغة الإدراج | العربية وحدها بلا `_locales`، وملاحظات المراجعين بالإنجليزية. وواجهة الإضافة صارت بالعربية والإنجليزية في 2.1.0، والإدراج باقٍ بالعربية ما لم يقرر سلطان غير ذلك | T6 |
 | الظهور | عام (Public) في المتاجر الثلاثة، وكل المناطق | T6 وT8 |
 | Firefox | `tarjuman@bysltan.com` (على نمط `mijhar@bysltan.com`)، لسطح المكتب وحده بلا `gecko_android` | T2 |
 | الموقع | `bysltan.com`، وصفحات ترجمان فيه من T7 | T7 |
@@ -322,7 +322,7 @@
 | `screenshots/firefox/` | اللقطات الثلاث نفسها بمقاس 1280×960 لـAMO (الشريط العلوي 256 بدل 176، والواجهة لا تُمط) |
 | [`test-files/`](test-files/README.md) | ملف الترجمة الإنجليزية لفيديو اللقطات كما نزّله ترجمان، وترجمته العربية |
 
-**مصدر الصور (2.0.0، AA5):** إطارات لوحة الهوية 18 وعناوينها ونصوصها كما هي (`tools/store-art/`، ويرسمها `tools/store-art/render.mjs` في Chrome بلا نافذة بمعامل 1)، وما ترسمه اللوحة من واجهة داخل الإطار لقطة حقيقية من حزمة 2.0.0 للحالة نفسها (`test/live/aa4/site-shots.mjs`). وصورة الترويج الكبيرة فيها لقطة حقيقية كذلك. والأيقونتان من `tools/brand/icons.mjs` بلا متصفح. وفيديو اللقطات Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0، بلا أشخاص حقيقيين ولا اسم قناة ولا تعليقات ولا حساب. ولا لقطة اختبار قديمة. وهذه اللقطات تطابق 2.0.0 المنشور، وتحتاج إعادة التقاط قبل التحديث التالي لأن نصوص الواجهة تغيّرت بعده.
+**مصدر الصور (2.0.0، AA5):** إطارات لوحة الهوية 18 وعناوينها ونصوصها كما هي (`tools/store-art/`، ويرسمها `tools/store-art/render.mjs` في Chrome بلا نافذة بمعامل 1)، وما ترسمه اللوحة من واجهة داخل الإطار لقطة حقيقية من حزمة 2.0.0 للحالة نفسها (`test/live/aa4/site-shots.mjs`). وصورة الترويج الكبيرة فيها لقطة حقيقية كذلك. والأيقونتان من `tools/brand/icons.mjs` بلا متصفح. وفيديو اللقطات Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0، بلا أشخاص حقيقيين ولا اسم قناة ولا تعليقات ولا حساب. ولا لقطة اختبار قديمة. وهذه اللقطات تطابق 2.0.0 المنشور، وتحتاج إعادة التقاط قبل رفع 2.1.0 لأن نصوص الواجهة تغيّرت بعده.
 
 ### تغطية حقول §٣
 
@@ -330,7 +330,7 @@
 
 | المتجر | الحقل المطلوب | المادة |
 | --- | --- | --- |
-| Chrome | الحزمة | `release/store/tarjuman-2.0.0-chrome.zip` (T4، وأعاد AA5 بناءها) |
+| Chrome | الحزمة | `release/store/tarjuman-2.1.0-chrome.zip` (يبنيها `npm run package`) |
 | Chrome | الاسم والملخص | `manifest.name` و`manifest.description` في `listing.ar.md` |
 | Chrome | الوصف التفصيلي | `chromium.description` |
 | Chrome | الفئة واللغة | `listing.ar.md` «الفئة»، والعربية |
@@ -342,7 +342,7 @@
 | Chrome | Data usage وLimited Use | `submission.md` §٤، ومنه قناة البلاغات |
 | Chrome | رابط سياسة الخصوصية | `submission.md` §٥ (T7) |
 | Chrome | إعلان التاجر | غير تاجر (سلطان، §٥) |
-| Edge | الحزمة | `release/store/tarjuman-2.0.0-edge.zip` (T4، وأعاد AA5 بناءها) |
+| Edge | الحزمة | `release/store/tarjuman-2.1.0-edge.zip` (يبنيها `npm run package`) |
 | Edge | Category | `listing.ar.md` «الفئة» |
 | Edge | Privacy policy URL | `submission.md` §٥ (T7) |
 | Edge | Single purpose والأذونات والشيفرة البعيدة وData usage | `submission.md` §١ إلى §٤ |
@@ -350,7 +350,7 @@
 | Edge | Extension logo | `icons/edge-logo-300.png` |
 | Edge | الاسم والوصف القصير | من البيان |
 | Edge | خطوات الاختبار (البند 1.3) | `reviewer.chrome` و`reviewer.edge` في `reviewers.en.md` |
-| Firefox | ملف الإضافة وشيفرة المصدر | `tarjuman-2.0.0-firefox.zip` و`tarjuman-2.0.0-source.zip` (T4، وأعاد AA5 بناءهما) |
+| Firefox | ملف الإضافة وشيفرة المصدر | `tarjuman-2.1.0-firefox.zip` و`tarjuman-2.1.0-source.zip` (يبنيهما `npm run package`) |
 | Firefox | `data_collection_permissions` | في البيان (T2.1 وT5)، وشرحه في `submission.md` §٢ |
 | Firefox | Name وSummary | من البيان، و`amo.summary` |
 | Firefox | Categories | `listing.ar.md` «الفئة» |

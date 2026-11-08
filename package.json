@@ -1,7 +1,7 @@
 {
   "name": "tarjuman",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "ترجمان: إضافة لمتصفحات Chrome وEdge وBrave وFirefox على الحاسوب تترجم فيديوهات يوتيوب من أي لغة إلى لغتك: تستخرج الترجمة إلى SRT فتترجمها بنفسك، وتعرض ترجمتك فوق الفيديو. المعالجة والحفظ محليان.",
   "license": "SEE LICENSE IN LICENSE",
   "author": {
