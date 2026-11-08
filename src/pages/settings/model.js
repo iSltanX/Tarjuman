@@ -4,6 +4,7 @@
 import { READING_DEFAULTS } from '../../core/edit/density.js';
 import { DEFAULT_FOLDER, DEFAULT_PREFS, GLOSSARY_LIMITS, READING_SPEED, isValidFolderName, validateTerm } from '../../core/model/prefs.js';
 import { DEFAULT_SETTINGS, SUBTITLE_SCALE } from '../../core/model/settings.js';
+import { t } from '../../i18n/index.js';
 import { PLAYER_TOKENS } from '../../ui/player-tokens.js';
 import { subtitleFontStack } from '../../ui/subtitle-fonts.js';
 
@@ -14,21 +15,29 @@ export const STEP_RANGE_MS = Object.freeze({ min: 100, max: 10000, grid: 100 });
 export const SPLIT_RANGE = Object.freeze({ min: 50, max: 2000 });
 export const DRIFT_RANGE_MS = Object.freeze({ min: 10, max: 5000 });
 export const COMPLETENESS_RANGE_PCT = Object.freeze({ min: 50, max: 100 });
-export const CONFIRM_WORD = 'امسح';
+/** كلمة تأكيد «مسح كل البيانات» بلغة الواجهة الحالية (تُحسب عند الاستدعاء لا عند تحميل الوحدة). */
+export const confirmWord = () => t('settings.storage.confirmWord');
+
+/** عنوان القسم ووصفه من الفهرس عند القراءة، فيتبعان لغة الواجهة. */
+const section = (id, icon, desc = false) => Object.freeze({
+  id, icon,
+  get title() { return t(`settings.sections.${id}.title`); },
+  get desc() { return desc ? t(`settings.sections.${id}.desc`) : undefined; },
+});
 
 /** أقسام الصفحة بترتيبها: المعرّف هو جزء العنوان (#display)، والأيقونة من مجموعة src/ui. */
 export const SECTIONS = Object.freeze([
-  Object.freeze({ id: 'display', title: 'العرض', icon: 'eye', desc: 'شكل الترجمة فوق الفيديو، ولوحة النص المتزامن وزرها، وصور الفيديو في المحفوظات.' }),
+  section('display', 'eye', true),
   // قسم «اللغات» (AA3، لوحة 15): بعد «العرض» كترتيب اللوحة.
-  Object.freeze({ id: 'langs', title: 'اللغات', icon: 'swap', desc: 'اللغتان اللتان تبدأ بهما تعليمات الترجمة، وتعيين لغة الترجمات المحفوظة بلا لغة.' }),
-  Object.freeze({ id: 'timing', title: 'التوقيت', icon: 'clock' }),
-  Object.freeze({ id: 'export', title: 'التصدير', icon: 'download', desc: 'أين تُحفظ الملفات المنزَّلة، وشكل مقاطع الأصل، ومتى يُقترح تقسيمه إلى أجزاء.' }),
-  Object.freeze({ id: 'compare', title: 'المقارنة والمراجعة', icon: 'compare', desc: 'متى يُعدّ توقيت الترجمة مختلفًا عن الأصل، ومتى يُنبَّه إلى سرعة القراءة.' }),
-  Object.freeze({ id: 'glossary', title: 'المصطلحات', icon: 'glossary', desc: 'مقابلاتك المفضّلة للمصطلحات، تُرفق بتعليمات الترجمة حين تنسخها.' }),
-  Object.freeze({ id: 'storage', title: 'التخزين', icon: 'library', desc: 'المساحة التي يشغلها ترجمان في هذا المتصفح، ومسح بياناته.' }),
-  Object.freeze({ id: 'data', title: 'النسخ الاحتياطي', icon: 'backup', desc: 'احفظ نسخة من محفوظاتك وإعداداتك في ملف، واستعدها هنا أو في متصفح آخر.' }),
-  Object.freeze({ id: 'diagnostics', title: 'التشخيص', icon: 'activity', desc: 'تقرير تقني ترفقه حين تطلب المساعدة.' }),
-  Object.freeze({ id: 'about', title: 'حول', icon: 'info' }),
+  section('langs', 'swap', true),
+  section('timing', 'clock'),
+  section('export', 'download', true),
+  section('compare', 'compare', true),
+  section('glossary', 'glossary', true),
+  section('storage', 'library', true),
+  section('data', 'backup', true),
+  section('diagnostics', 'activity', true),
+  section('about', 'info'),
 ]);
 export const DEFAULT_SECTION = SECTIONS[0].id;
 
@@ -43,8 +52,7 @@ const RESETTABLE = Object.freeze({
   compare: Object.freeze({ settings: Object.freeze([]), thresholds: Object.freeze(['driftMs']), prefs: Object.freeze(['review']) }),
 });
 
-// زر «العرض» لا يمس مفاتيح لوحة النص المتزامن وزرها وصور المحفوظات، فالتلميح يسمّي ما يشمله.
-const DISPLAY_DEFAULT_NOTE = 'وضع العرض وخط الترجمة وحجمها وخلفيتها وموضعها على قيمها الافتراضية بالفعل.';
+// زر «العرض» لا يمس مفاتيح لوحة النص المتزامن وزرها وصور المحفوظات ولا لغة الواجهة، فالتلميح يسمّي ما يشمله.
 
 const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -65,17 +73,22 @@ export function sectionReset(settings, sectionId, prefs = DEFAULT_PREFS) {
   const isDefault = keys.settings.every((k) => sameJson(settings[k], DEFAULT_SETTINGS[k]))
     && thresholds.every((k) => settings.thresholds[k] === DEFAULT_SETTINGS.thresholds[k])
     && keys.prefs.every((k) => sameJson(prefs[k], DEFAULT_PREFS[k]));
-  return { isDefault, patch, prefsPatch, disabledReason: isDefault ? (sectionId === 'display' ? DISPLAY_DEFAULT_NOTE : 'إعدادات هذا القسم افتراضية بالفعل.') : null };
+  return { isDefault, patch, prefsPatch, disabledReason: isDefault ? t(sectionId === 'display' ? 'settings.reset.displayDefault' : 'settings.reset.sectionDefault') : null };
 }
 
 /** مكان حفظ ملفات الترجمة (R65، مواصفة التصميم §١٩.٨): الأوضاع الثلاثة، والافتراضي كالسلوك الحالي. */
 export const DEFAULT_SUBFOLDER = DEFAULT_FOLDER;
+const saveLocation = (value, key, withHint = true) => Object.freeze({
+  value,
+  get label() { return t(`settings.location.${key}Label`); },
+  get hint() { return withHint ? t(`settings.location.${key}Hint`) : undefined; },
+});
 export const SAVE_LOCATIONS = Object.freeze([
-  Object.freeze({ value: 'downloads', label: 'مجلد التنزيلات (الافتراضي)', hint: 'حيث يحفظ المتصفح تنزيلاته عادةً، ويسأل عن المكان إن ضبطته على ذلك.' }),
-  Object.freeze({ value: 'subfolder', label: 'مجلد فرعي داخل التنزيلات', hint: 'يُنشأ داخل التنزيلات عند الحاجة. وإن كان المتصفح مضبوطًا على السؤال عن مكان كل تنزيل فسيسألك.' }),
-  Object.freeze({ value: 'ask', label: 'اسأل عن مكان الحفظ عند كل تنزيل' }),
+  saveLocation('downloads', 'downloads'),
+  saveLocation('subfolder', 'subfolder'),
+  saveLocation('ask', 'ask', false),
 ]);
-export const SAVE_LOCATION_NOTE = 'للحفظ في مجلد آخر اختر «اسأل عن مكان الحفظ عند كل تنزيل»؛ فالمتصفحات لا تسمح للإضافات بالحفظ التلقائي خارج مجلد التنزيلات.';
+export const saveLocationNote = () => t('settings.location.note');
 
 /** @param {{ mode: string, folder: string }} loc */
 export const isDefaultLocation = (loc) => loc.mode === DEFAULT_PREFS.saveLocation.mode && loc.folder === DEFAULT_PREFS.saveLocation.folder;
@@ -145,7 +158,7 @@ export function parseReadingSpeed(text) {
 export const readingText = (maxCps) => (maxCps === null ? '' : String(maxCps));
 
 /** عدّاد القاموس «12 من 100». @param {number} n */
-export const glossaryCounter = (n) => `${n} من ${GLOSSARY_LIMITS.maxTerms}`;
+export const glossaryCounter = (n) => t('settings.glossary.counter', { n, max: GLOSSARY_LIMITS.maxTerms });
 
 const oneLine = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
 
@@ -184,7 +197,7 @@ export const completenessText = (fraction) => String(Math.round(fraction * 100))
  */
 export function resetState(appearance) {
   const isDefault = appearance.font === DEFAULT_SETTINGS.appearance.font && appearance.scale === DEFAULT_SETTINGS.appearance.scale;
-  return { isDefault, disabledReason: isDefault ? 'الخط والحجم افتراضيان بالفعل.' : null };
+  return { isDefault, disabledReason: isDefault ? t('settings.reset.appearanceDefault') : null };
 }
 
 /** يقرّب قيمة المنزلق إلى شبكته (70..160 بخطوة 5). @param {unknown} v */
@@ -205,7 +218,8 @@ export const PREVIEW_REFERENCE_HEIGHT = 400;
 export const PREVIEW_BASE_RATIO = 0.046;
 export const PREVIEW_MIN_FONT_PX = 12;
 export const PREVIEW_POSITION_PCT = Object.freeze({ bottom: 8, raised: 20, top: 8 });
-export const PREVIEW_LINES = Object.freeze(['هكذا تظهر الترجمة فوق الفيديو،', 'وهذا سطرها الثاني.']);
+/** سطرا المعاينة بلغة الواجهة الحالية. */
+export const previewLines = () => [t('settings.display.previewLine1'), t('settings.display.previewLine2')];
 
 /**
  * أنماط المعاينة الحية من إعدادات المظهر.
@@ -226,4 +240,4 @@ export function previewStyle(a) {
 }
 
 /** كلمة تأكيد «مسح كل البيانات»: الكلمة نفسها بعد تجريد المسافات الطرفية. @param {string} typed */
-export const confirmWordOk = (typed) => String(typed ?? '').trim() === CONFIRM_WORD;
+export const confirmWordOk = (typed) => String(typed ?? '').trim().toLocaleLowerCase() === confirmWord().toLocaleLowerCase();

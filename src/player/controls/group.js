@@ -4,6 +4,7 @@
 // عند المرور والتركيز وفي اسم الوصول ووصفه، والانشغال ماسّتا نبض مكان الأيقونة. Shadow DOM مغلق داخل عنصر واحد يُدرج في
 // بداية أدوات الشريط اليمنى، فيظهر ويختفي مع الشريط كأي زر أصلي. الأزرار تبقى قابلة للتركيز وهي معطّلة (aria-disabled)
 // لتقرأ سببها. لا منطق منتج هنا: كل ضغط يُبلَّغ.
+import { getLocale } from '../../i18n/index.js';
 import { createSheet } from '../overlay/sheet.js';
 import { playerIcon } from './icons.js';
 import { GROUP_ID, PULSE_MS, groupCss } from './styles.js';
@@ -48,7 +49,8 @@ export function createGroup({ doc, win, on }) {
   group.className = 'group';
   group.setAttribute('role', 'group');
   group.setAttribute('aria-label', LABELS.group);
-  group.setAttribute('lang', 'ar');
+  // لغة الواجهة للقارئ الآلي؛ وترتيب الأزرار LTR ثابت لأنه ترتيب شريط يوتيوب نفسه (الاتجاه على القوائم والرسائل في layer.js).
+  group.setAttribute('lang', getLocale());
   group.setAttribute('data-size', 'normal');
   root.appendChild(group);
 

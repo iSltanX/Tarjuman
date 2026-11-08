@@ -6,12 +6,13 @@ import { messageFor } from '../../core/errors/index.js';
 import { describeLang, knownLanguages, textFitsLang } from '../../core/lang/index.js';
 import { isSourceLang } from '../../core/model/ids.js';
 import { sourceOf } from '../../core/model/pair.js';
+import { getLocale, t as tr } from '../../i18n/index.js';
 import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
 import { pairLabel } from '../../ui/lang.js';
 import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { previewComparison } from '../../core/import/index.js';
 import { uploadImpact } from './actions.js';
-import { EDIT_FORMS, absoluteTime, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, previousLostText, targetOptions } from './model.js';
+import { EDIT_FORMS, absoluteTime, chipLabel, comparisonSummary, defaultTarget, diffCountLines, fingerprintLabel, nameHintText, previousLostText, targetOptions } from './model.js';
 import { segGroup } from './seg.js';
 
 export const DIFF_BATCH = 200;
@@ -37,19 +38,19 @@ function diffTable(doc, changes) {
       doc,
     })));
     shown += next.length;
-    more.textContent = `عرض ${Math.min(DIFF_BATCH, changes.length - shown)} أخرى`;
+    more.textContent = tr('library.upload.diffMore', { n: Math.min(DIFF_BATCH, changes.length - shown) });
     more.hidden = shown >= changes.length;
   };
   more.addEventListener('click', step);
   step();
   const table = el('table', {
     className: 'lib-diff',
-    children: [el('thead', { children: [el('tr', { children: ['#', 'الحالي', 'الجديد'].map((h) => el('th', { text: h, attrs: { scope: 'col' }, doc })), doc })], doc }), tbody],
+    children: [el('thead', { children: [el('tr', { children: ['#', tr('library.upload.diffCurrent'), tr('library.upload.diffNew')].map((h) => el('th', { text: h, attrs: { scope: 'col' }, doc })), doc })], doc }), tbody],
     doc,
   });
   return el('details', {
     className: 'lib-diff__box',
-    children: [el('summary', { className: 'lib-diff__summary', text: `جدول الفروق (${changes.length})`, doc }), el('div', { className: 'lib-diff__wrap', children: [table], doc }), more],
+    children: [el('summary', { className: 'lib-diff__summary', text: tr('library.upload.diffSummary', { n: changes.length }), doc }), el('div', { className: 'lib-diff__wrap', children: [table], doc }), more],
     doc,
   });
 }
@@ -74,12 +75,12 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   const options = targetOptions(bundle, preferred);
   if (!options.some((o) => o.n === target)) target = options[0].n;
   const segOption = (o) => {
-    if (!o.filled) return { value: String(o.n), label: 'جديدة', ariaLabel: 'جديدة — حفظ كترجمة جديدة' };
-    const label = o.name ? `${o.n} · ${o.name}` : `الترجمة ${o.n}`;
-    return { value: String(o.n), label, ariaLabel: `${label} — استبدال الترجمة ${o.n}${o.active ? '، نشطة' : ''}` };
+    if (!o.filled) return { value: String(o.n), label: tr('library.upload.newOne'), ariaLabel: tr('library.upload.newAria') };
+    const label = chipLabel(o);
+    return { value: String(o.n), label, ariaLabel: tr(o.active ? 'library.upload.replaceAriaActive' : 'library.upload.replaceAria', { label, n: o.n }) };
   };
   const targetSeg = segGroup({
-    legend: 'حفظ في', value: String(target), options: options.map(segOption), doc,
+    legend: tr('library.upload.saveIn'), value: String(target), options: options.map(segOption), doc,
     onChange: (v) => {
       target = Number(v);
       impact = uploadImpact(bundle, target, result.cues);
@@ -88,14 +89,14 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
     },
   });
   // العنوان المرئي فقرة فوق المجموعة: legend يقع على حد fieldset فتُقص نقاط حروفه العليا («حفظ في»)؛ ويبقى اسم الوصول.
-  const targetHead = el('p', { className: 'tj-label lib-up__head', text: 'حفظ في', attrs: { 'aria-hidden': 'true' }, doc });
+  const targetHead = el('p', { className: 'tj-label lib-up__head', text: tr('library.upload.saveIn'), attrs: { 'aria-hidden': 'true' }, doc });
   // بلا ترجمة محفوظة: سطر «تُحفظ ترجمةً جديدة» بلا محدد، كتأكيد المشغّل.
   const onlyNew = options.length === 1 && !options[0].filled;
   const targetGroup = onlyNew
-    ? el('p', { className: 'tj-body-sm lib-up__only-new', text: 'تُحفظ ترجمةً جديدة.', doc })
+    ? el('p', { className: 'tj-body-sm lib-up__only-new', text: tr('library.upload.onlyNew'), doc })
     : el('div', {
       className: 'tj-field lib-up__targets',
-      children: [targetSeg.root, el('span', { className: 'tj-field__hint', text: 'الممتلئة: الحفظ فيها استبدال، وتُحفظ الحالية نسخةً سابقة.', doc })],
+      children: [targetSeg.root, el('span', { className: 'tj-field__hint', text: tr('library.upload.filledHint'), doc })],
       doc,
     });
 
@@ -110,10 +111,10 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   };
   let referenceBlock;
   if (!fps.length) {
-    referenceBlock = el('p', { className: 'tj-caption', text: 'لم يُنزَّل الأصل من ترجمان لهذا الفيديو، فلا مرجع للمقارنة؛ يُحفظ الملف كما هو.', doc });
+    referenceBlock = el('p', { className: 'tj-caption', text: tr('library.upload.noReference'), doc });
   } else if (fps.length === 1) {
     // تصدير واحد: لا اختيار، والمرجع سطر.
-    referenceBlock = el('p', { className: 'tj-body-sm lib-up__ref-line', children: ['المرجع: ', el('span', { text: fingerprintLabel(fps[0], absoluteTime(fps[0].createdAt)), doc })], doc });
+    referenceBlock = el('p', { className: 'tj-body-sm lib-up__ref-line', children: [tr('library.upload.referenceLine'), el('span', { text: fingerprintLabel(fps[0], absoluteTime(fps[0].createdAt)), doc })], doc });
   } else {
     const ranked = review.references.map((r) => r.fingerprintId);
     const order = [...ranked, ...fps.map((f) => f.id).filter((x) => !ranked.includes(x))];
@@ -123,9 +124,9 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       children: [
         ...order.map((fid) => {
           const fp = fps.find((f) => f.id === fid);
-          return el('option', { text: `${fingerprintLabel(fp, absoluteTime(fp.createdAt))}${fid === review.suggested ? ' — الأقرب' : ''}`, attrs: { value: fid }, doc });
+          return el('option', { text: `${fingerprintLabel(fp, absoluteTime(fp.createdAt))}${fid === review.suggested ? tr('library.upload.closest') : ''}`, attrs: { value: fid }, doc });
         }),
-        el('option', { text: 'بلا مرجع', attrs: { value: '' }, doc }),
+        el('option', { text: tr('library.upload.noRef'), attrs: { value: '' }, doc }),
       ],
       doc,
     });
@@ -142,7 +143,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
     referenceBlock = el('div', {
       className: 'tj-field lib-up__field',
       children: [
-        el('div', { className: 'lib-up__label', children: [el('label', { className: 'tj-field__label', text: 'المرجع', attrs: { for: sid }, doc }), fps.length > 1 && !review.certain ? statusPill({ tone: 'warning', text: 'غير مؤكد', title: 'المرجعان متقاربان؛ تأكد من اختيار التصدير الذي ترجمته.', doc }) : null], doc }),
+        el('div', { className: 'lib-up__label', children: [el('label', { className: 'tj-field__label', text: tr('library.upload.reference'), attrs: { for: sid }, doc }), fps.length > 1 && !review.certain ? statusPill({ tone: 'warning', text: tr('library.upload.uncertain'), title: tr('library.upload.uncertainTitle'), doc }) : null], doc }),
         select,
         whyEl,
       ],
@@ -155,15 +156,15 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   const pairTo = suggested.find((c) => isSourceLang(c)) ?? null;
   let lang = result.lang ?? (pairTo && textFitsLang(result.cues, pairTo) ? pairTo : null);
   const lid = `${id}-lang`;
-  const named = (code) => `${describeLang(code)?.arabic ?? code} (${code})`;
+  const named = (code) => `${describeLang(code, getLocale())?.name ?? code} (${code})`;
   const sug = [...new Set([result.lang, ...suggested].filter((c) => isSourceLang(c)))];
   const opt = (code, text) => el('option', { text, attrs: { value: code }, doc });
   const langSelect = el('select', {
     className: 'tj-field__input lib-up__lang', attrs: { id: lid, 'aria-describedby': `${lid}-pair` },
     children: [
-      opt('', 'غير محددة'),
-      sug.length ? el('optgroup', { attrs: { label: 'مقترحة' }, children: sug.map((c) => opt(c, named(c))), doc }) : null,
-      el('optgroup', { attrs: { label: 'كل اللغات' }, children: knownLanguages().filter((l) => !sug.includes(l.code)).map((l) => opt(l.code, `${l.arabic} (${l.code})`)), doc }),
+      opt('', tr('library.upload.langUnset')),
+      sug.length ? el('optgroup', { attrs: { label: tr('library.upload.langSuggested') }, children: sug.map((c) => opt(c, named(c))), doc }) : null,
+      el('optgroup', { attrs: { label: tr('library.upload.langAll') }, children: knownLanguages(getLocale()).filter((l) => !sug.includes(l.code)).map((l) => opt(l.code, `${l.name} (${l.code})`)), doc }),
     ],
     doc,
   });
@@ -179,7 +180,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   });
   const langBlock = el('div', {
     className: 'tj-field lib-up__field',
-    children: [el('label', { className: 'tj-field__label', text: 'لغة الترجمة', attrs: { for: lid }, doc }), langSelect, pairLine],
+    children: [el('label', { className: 'tj-field__label', text: tr('library.upload.langLabel'), attrs: { for: lid }, doc }), langSelect, pairLine],
     doc,
   });
 
@@ -190,28 +191,28 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   const impactHost = el('div', { className: 'lib-up__impact', doc });
   const keepBox = el('input', { attrs: { id: `${id}-keep`, type: 'checkbox' }, doc });
   const keepWhy = el('span', { className: 'tj-sr-only', attrs: { id: `${id}-keep-why` }, doc });
-  const keepLabel = el('label', { className: 'lib-check', attrs: { for: `${id}-keep` }, children: [keepBox, el('span', { text: 'إبقاء تعديلاتي', doc }), keepWhy], doc });
+  const keepLabel = el('label', { className: 'lib-check', attrs: { for: `${id}-keep` }, children: [keepBox, el('span', { text: tr('library.upload.keepEdits'), doc }), keepWhy], doc });
   function renderImpact() {
     const kids = [];
     const slot = bundle.slots[target - 1];
     if (impact.replace) {
-      kids.push(...diffCountLines(impact.diff).map((t) => el('p', { className: 'tj-body-sm lib-up__counts', text: t, doc })));
+      kids.push(...diffCountLines(impact.diff).map((line) => el('p', { className: 'tj-body-sm lib-up__counts', text: line, doc })));
       if (impact.diff.changes.length) kids.push(diffTable(doc, impact.diff.changes));
       if (impact.edits) {
-        kids.push(el('p', { className: 'tj-body-sm lib-up__lost', text: `في الترجمة الحالية ${formatCount(impact.edits, EDIT_FORMS)}.`, doc }));
+        kids.push(el('p', { className: 'tj-body-sm lib-up__lost', text: tr('library.upload.currentEdits', { edits: formatCount(impact.edits, EDIT_FORMS) }), doc }));
         keepBox.checked = false;
         keepBox.disabled = !impact.keep.ok;
         keepBox.setAttribute('aria-disabled', impact.keep.ok ? 'false' : 'true');
-        keepLabel.title = impact.keep.ok ? 'تبقى تعديلاتك حيث لم يغيّر الملف الجديد موضعها، وعند التعارض يُعتمد الملف الجديد.' : impact.keep.reason ?? '';
+        keepLabel.title = impact.keep.ok ? tr('library.upload.keepTitle') : impact.keep.reason ?? '';
         keepWhy.textContent = impact.keep.ok ? '' : ` (${impact.keep.reason ?? ''})`;
         if (impact.keep.ok) keepBox.removeAttribute('aria-describedby');
         else keepBox.setAttribute('aria-describedby', keepWhy.getAttribute('id'));
         kids.push(keepLabel);
       }
-      kids.push(el('p', { className: 'tj-caption', text: 'تُحفظ الترجمة المستبدلة نسخةً سابقة يمكن استعادتها.', doc }));
+      kids.push(el('p', { className: 'tj-caption', text: tr('library.upload.previousKept'), doc }));
       if (bundle.previous) kids.push(alertBox({ tone: 'warning', text: previousLostText(bundle.previous, target, absoluteTime(bundle.previous.savedAt)), doc }));
     }
-    if (bundle.active === target && slot.offsetMs !== 0) kids.push(alertBox({ tone: 'info', text: `ستُصفَّر إزاحة العرض (${offsetInline(slot.offsetMs)} ث) لأن الملف الجديد يحمل توقيته.`, doc }));
+    if (bundle.active === target && slot.offsetMs !== 0) kids.push(alertBox({ tone: 'info', text: tr('library.upload.offsetReset', { offset: offsetInline(slot.offsetMs) }), doc }));
     impactHost.replaceChildren(...kids);
   }
 

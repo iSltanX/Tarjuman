@@ -2,6 +2,7 @@
 // على دفعات باستراحة للصفحة وتقدم ظاهر؛ والفيديو الذي تعذّرت قراءته (سجل تالف أو حُذف في الأثناء) يُبلَّغ برمزه ولا يوقف
 // الباقي. النص يُبنى بلصق data المسلسلة مرة واحدة بعد الترويسة، فلا يُسلسل محتوى المكتبة مرتين.
 import { TjError, toErrorInfo } from '../errors/index.js';
+import { t } from '../../i18n/index.js';
 import { bundleToBackup } from '../model/bundle.js';
 import { DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../model/lang-prefs.js';
 import { utf8Length } from '../model/validate.js';
@@ -97,10 +98,14 @@ export async function createBackup({ store, appVersion, includePrevious = true, 
 }
 
 const MB = 1024 * 1024;
+const mb = (n) => t('common.bytes.mb', { n });
 /** @param {number | null} bytes @param {number} [max] */
 function tooLarge(bytes, max = BACKUP_LIMITS.maxBytes) {
   return new TjError('BK_CREATE_TOO_LARGE', {
     detail: bytes === null ? 'string-length' : `bytes=${bytes}`,
-    params: { size: bytes === null ? `أكثر من ${Math.round(max / MB)} م.ب` : `${Math.ceil(bytes / MB)} م.ب`, max: `${Math.round(max / MB)} م.ب` },
+    params: {
+      size: bytes === null ? t('core.backup.moreThan', { size: mb(Math.round(max / MB)) }) : mb(Math.ceil(bytes / MB)),
+      max: mb(Math.round(max / MB)),
+    },
   });
 }

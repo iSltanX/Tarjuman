@@ -138,7 +138,7 @@ chrome.runtime.sendMessage({ type: "tj:save-file", v: 1, file: { name: "iG9CE55w
 
 ```js
 chrome.runtime.sendMessage({ type: "tj:store", v: 1, wid: "…", op: "put", videoId, base: "3|2026-11-05T10:00:00.000Z", items: { … } })   // storeRequest(op, args, wid)
-// العمليات: ready · put · delete · orphan · index · settings · prefs · langPrefs · saves · clear (STORE_OPS؛ langPrefs منذ 2.0.0، AA1)
+// العمليات: ready · put · delete · orphan · index · settings · prefs · langPrefs · saves · clear · uiLocale · uiLocaleInit (STORE_OPS؛ langPrefs منذ 2.0.0، AA1؛ ولغة الواجهة في عقد storage §١٤)
 // الرد: { v: 1, ok: true, value? } | { v: 1, ok: false, code: "ST_CONFLICT" | "MD_INVALID" | "ST_QUOTA_EXCEEDED" | "ST_WRITE_FAILED" | "ST_SCHEMA_NEWER" | "ST_MIGRATION_FAILED" | …, detail }
 ```
 

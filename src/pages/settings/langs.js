@@ -1,7 +1,8 @@
 // قسم «اللغات» في الإعدادات (AA3، لوحة 15): الزوج الافتراضي لتعليمات الترجمة في نافذة الإضافة («من» تلقائي من مسار الفيديو أو لغة
-// بعينها، و«إلى»)، و«تذكّر آخر زوج»، واللغات الأخيرة بمسحها، ولغة الواجهة عرضًا فقط؛ ثم تعيين لغة الترجمات المحفوظة بلا لغة
+// بعينها، و«إلى»)، و«تذكّر آخر زوج»، واللغات الأخيرة بمسحها؛ (ولغة الواجهة خيار مستقل في «العرض» لا هنا)؛ ثم تعيين لغة الترجمات المحفوظة بلا لغة
 // («غير محددة»، ومنها كل ما حُفظ قبل 2.0.0) دفعة واحدة بتأكيد صريح. كل الكتابات عبر المخزن (setLangPrefs وupdateBundle)، ولا
 // يمس التعيين نص أي ترجمة ولا توقيتها. textContent وsetAttribute فقط.
+import { getLocale, joinList, t, texts } from '../../i18n/index.js';
 import { messageFor } from '../../core/errors/index.js';
 import { describeLang, textFitsLang } from '../../core/lang/index.js';
 import { withSlotLang } from '../../core/model/bundle.js';
@@ -10,31 +11,10 @@ import { button, el } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 import { LANG_TEXT, langField, langPair } from '../../ui/lang-picker.js';
 
-export const TRANSLATION_COUNT = Object.freeze({ one: 'ترجمة واحدة', two: 'ترجمتان', few: 'ترجمات', many: 'ترجمة', single: 'ترجمة' });
+const translationForms = () => t('settings.langs.translationCount');
 
-export const LANGS_TEXT = Object.freeze({
-  pair: 'اللغتان الافتراضيتان',
-  pairNote: 'تبدأ بهما تعليمات الترجمة في نافذة الإضافة لكل فيديو لم تختر له لغتين، وما تختاره لفيديو يُحفظ له وحده. و«تلقائي» يعني لغة ترجمة يوتيوب في الفيديو.',
-  remember: 'تذكّر آخر لغة ترجمة',
-  rememberText: 'آخر لغة ترجمة تختارها تصبح الافتراضية للفيديوهات التالية.',
-  recent: 'اللغات المستخدمة مؤخرًا',
-  recentNote: 'تظهر في مجموعة خاصة قرب أعلى قائمة اختيار اللغة.',
-  recentEmpty: 'لا لغات بعد',
-  clear: 'مسح',
-  ui: 'لغة الواجهة',
-  uiValue: 'العربية',
-  uiNote: 'واجهة ترجمان وتعليمات الترجمة بالعربية دائمًا، أيًّا كانت لغتا الترجمة.',
-  unknown: 'ترجمات بلا لغة محددة',
-  unknownHint: 'ومنها ما حُفظ قبل الإصدار 2.0.0',
-  unknownNone: 'كل ترجماتك المحفوظة محددة اللغة.',
-  unknownCounting: 'جارٍ عدّ الترجمات…',
-  unknownUnread: 'تعذّر التحقق من لغات الترجمات المحفوظة. أعد فتح القسم للمحاولة مجددًا.',
-  unknownPartial: 'تعذّرت قراءة بعض الترجمات؛ الأعداد المعروضة تخص ما أمكن قراءته.',
-  unknownLang: 'اللغة',
-  apply: 'تعيين لغتها',
-  applyNeedsLang: 'اختر اللغة أولًا.',
-  unknownNote: 'تُضاف اللغة وحدها دون أن يتغير نص الترجمة أو توقيتها أو تاريخ تعديلها، وتُتخطى الترجمة التي لا توافق حروفها اللغة المختارة. ولتغيير لغة ترجمة واحدة استعمل قائمة «الترجمة» في المشغّل.',
-});
+/** نصوص قسم «اللغات» بلغة الواجهة الحالية عند كل قراءة. */
+export const LANGS_TEXT = texts('settings.langs');
 
 /** خانات الحزمة الممتلئة بلا لغة محددة. @param {import('../../core/model/slots.js').Bundle} b @returns {(1 | 2 | 3)[]} */
 export function undeterminedSlots(b) {
@@ -45,7 +25,10 @@ export function undeterminedSlots(b) {
 }
 
 /** «3 ترجمات في فيديوهين» بلا لغة. @param {number} n @param {number} videos */
-export const undeterminedLine = (n, videos) => `${formatCount(n, TRANSLATION_COUNT)} في ${videos === 1 ? 'فيديو واحد' : videos === 2 ? 'فيديوهين' : formatCount(videos, COUNT_FORMS.video)}`;
+export const undeterminedLine = (n, videos) => t('settings.langs.line', {
+  count: formatCount(n, translationForms()),
+  videos: t('settings.langs.videosIn', { n: videos, formatted: formatCount(videos, COUNT_FORMS.video) }),
+});
 
 /**
  * @param {{
@@ -97,11 +80,12 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
   clearBtn.setAttribute('aria-label', `${LANGS_TEXT.clear}: ${LANGS_TEXT.recent}`);
   function paintRecent() {
     const nodes = langPrefs.recent.map((code) => {
-      const d = describeLang(code);
-      const native = d?.native ?? d?.arabic ?? code;
-      // الاسم بلغته واتجاهها، والاسم العربي في التلميح واسم الوصول.
+      const d = describeLang(code, getLocale());
+      const name = d?.name ?? code;
+      const native = d?.native ?? name;
+      // الاسم بلغته واتجاهها، واسم اللغة بلغة الواجهة في التلميح واسم الوصول.
       return el('span', {
-        className: 'tj-pill tj-pill--plain st-lang-chip', attrs: { role: 'listitem', title: `${d?.arabic ?? code} (${code})`, 'aria-label': `${d?.arabic ?? code}، ${native}` },
+        className: 'tj-pill tj-pill--plain st-lang-chip', attrs: { role: 'listitem', title: `${name} (${code})`, 'aria-label': joinList([name, native]) },
         children: [el('bdi', { text: native, dir: d?.dir === 'rtl' ? 'rtl' : 'ltr', doc })],
         doc,
       });
@@ -110,9 +94,6 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
     if (langPrefs.recent.length) clearBtn.removeAttribute('aria-disabled');
     else clearBtn.setAttribute('aria-disabled', 'true');
   }
-
-  // ---- لغة الواجهة (عرض فقط) ----
-  const uiValue = el('span', { className: 'st-lang-ui', text: LANGS_TEXT.uiValue, doc });
 
   // ---- الترجمات بلا لغة ----
   const unknownMark = marks();
@@ -175,9 +156,9 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
 
   async function applyAll() {
     if (busy || !chosen || !found.total) return;
-    const name = describeLang(chosen)?.arabic ?? chosen;
+    const name = describeLang(chosen, getLocale())?.name ?? chosen;
     const ok = await confirm({
-      title: `تعيين ${name} لـ${formatCount(found.total, TRANSLATION_COUNT)}؟`,
+      title: t('settings.langs.assignTitle', { name, count: formatCount(found.total, translationForms()) }),
       body: LANGS_TEXT.unknownNote, confirmLabel: LANGS_TEXT.apply, doc,
     });
     if (!ok) return;
@@ -212,7 +193,7 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
       }
     }
     busy = false;
-    const outcome = failed ? messageFor('PG_LANG_ASSIGN_PARTIAL', { n: String(failed) }) : skipped ? messageFor('PG_LANG_ASSIGN_SKIPPED', { n: formatCount(skipped, TRANSLATION_COUNT) }) : messageFor('PG_SAVED');
+    const outcome = failed ? messageFor('PG_LANG_ASSIGN_PARTIAL', { n: String(failed) }) : skipped ? messageFor('PG_LANG_ASSIGN_SKIPPED', { n: formatCount(skipped, translationForms()) }) : messageFor('PG_SAVED');
     unknownMark.flash(outcome, failed ? 'danger' : skipped ? 'info' : 'success');
     await countUnknown();
   }
@@ -229,7 +210,6 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
     row(LANGS_TEXT.pair, pairMark, pair.root, note(LANGS_TEXT.pairNote)),
     row(LANGS_TEXT.remember, rememberMark, rememberSwitch),
     row(LANGS_TEXT.recent, recentMark, el('div', { className: 'st-lang-inline', children: [chips, clearBtn], doc }), note(LANGS_TEXT.recentNote)),
-    row(LANGS_TEXT.ui, null, uiValue, note(LANGS_TEXT.uiNote)),
     rowWithHint(LANGS_TEXT.unknown, LANGS_TEXT.unknownHint, unknownMark, unknownLine, unknownControls, note(LANGS_TEXT.unknownNote)),
   ];
   rows[1].querySelector('.tj-label').setAttribute('id', 'st-lang-remember-row');
@@ -239,7 +219,7 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
     get langPrefs() { return langPrefs; },
     /** استعادة الافتراضي: الزوج والتذكّر، وتبقى الأخيرة وأزواج الفيديوهات. */
     reset: {
-      defaultNote: 'اللغتان وخيار التذكّر على قيمها الافتراضية بالفعل.',
+      defaultNote: LANGS_TEXT.defaultNote,
       isDefault: () => langPrefs.pair.from === DEFAULT_LANG_PREFS.pair.from && langPrefs.pair.to === DEFAULT_LANG_PREFS.pair.to && langPrefs.remember === DEFAULT_LANG_PREFS.remember,
       run: (mark) => save({ pair: { ...DEFAULT_LANG_PREFS.pair }, remember: DEFAULT_LANG_PREFS.remember }, mark),
     },

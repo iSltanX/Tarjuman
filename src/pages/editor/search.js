@@ -7,6 +7,7 @@
 // باستبدال هنا لا يصير مطابقة حالية حتى بحث جديد أو تنقّل صريح، فلا يعشّش البديل في نفسه (U74). وفواصل الأسطر ظاهرة «↵» في
 // المقتطفات (U27). تدقيق 7a66f91.
 import { keepBreaks, planReplace, searchCues } from '../../core/edit/index.js';
+import { lt, t } from '../../i18n/index.js';
 import { button, el } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, textDirection } from '../../ui/format.js';
 import { openDialog, setDisabled } from './dialogs.js';
@@ -63,7 +64,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
 
   const input = el('input', {
     className: 'ed-search__input',
-    attrs: { type: 'search', placeholder: `بحث في المقاطع (${keyHint('F', { mac })})`, 'aria-label': 'بحث في المقاطع', autocomplete: 'off', spellcheck: 'false' },
+    attrs: { type: 'search', placeholder: lt('editor.search.placeholder', () => ({ hint: keyHint('F', { mac }) })), 'aria-label': lt('editor.search.aria'), autocomplete: 'off', spellcheck: 'false' },
     on: {
       input: () => schedule(),
       keydown: (e) => {
@@ -82,9 +83,9 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
   });
   const fieldSel = el('select', {
     className: 'ed-select',
-    attrs: { 'aria-label': 'البحث في' },
+    attrs: { 'aria-label': lt('editor.search.fieldAria') },
     on: { change: () => { S.field = fieldSel.value === 'en' ? 'en' : 'ar'; run(); } },
-    children: [el('option', { text: 'في الترجمة', attrs: { value: 'ar' }, doc }), el('option', { text: 'في الأصل (قراءة فقط)', attrs: { value: 'en' }, doc })],
+    children: [el('option', { text: lt('editor.search.inTranslation'), attrs: { value: 'ar' }, doc }), el('option', { text: lt('editor.search.inOriginal'), attrs: { value: 'en' }, doc })],
     doc,
   });
   const check = (label, key) => {
@@ -93,29 +94,33 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
   };
   // لوحة خيارات لا قائمة: الزر يتحكم بها (aria-expanded وaria-controls) بلا aria-haspopup الذي يعني قائمة (I06).
   const optsPanel = el('div', {
-    className: 'ed-search__opts', attrs: { role: 'group', id: 'ed-search-opts', 'aria-label': 'خيارات البحث', hidden: '' },
-    children: [fieldSel, check('كلمة كاملة', 'wholeWord'), check('تجاهل التشكيل', 'ignoreMarks')],
+    className: 'ed-search__opts', attrs: { role: 'group', id: 'ed-search-opts', 'aria-label': lt('editor.search.optionsAria'), hidden: '' },
+    children: [fieldSel, check(lt('editor.search.wholeWord'), 'wholeWord'), check(lt('editor.search.ignoreMarks'), 'ignoreMarks')],
     doc,
   });
-  const optsBtn = button({ label: 'الخيارات', size: 'sm', variant: 'ghost', onClick: () => toggleOpts(), doc });
+  const optsBtn = button({ label: lt('editor.search.options'), size: 'sm', variant: 'ghost', onClick: () => toggleOpts(), doc });
   optsBtn.setAttribute('aria-expanded', 'false');
   optsBtn.setAttribute('aria-controls', optsPanel.id);
   const counter = el('span', { className: 'ed-search__count tj-caption', attrs: { 'aria-live': 'polite' }, doc });
-  const prevBtn = button({ label: '↑', size: 'sm', title: 'السابقة (⇧ Enter)', onClick: () => step(-1, { focus: true }), doc });
-  const nextBtn = button({ label: '↓', size: 'sm', title: 'التالية (Enter)', onClick: () => step(1, { focus: true }), doc });
-  prevBtn.setAttribute('aria-label', 'النتيجة السابقة');
-  nextBtn.setAttribute('aria-label', 'النتيجة التالية');
-  const replaceToggle = button({ label: 'استبدال', size: 'sm', onClick: () => toggleReplace(), doc });
+  const prevBtn = button({ label: '↑', size: 'sm', title: lt('editor.search.prevTitle'), onClick: () => step(-1, { focus: true }), doc });
+  const nextBtn = button({ label: '↓', size: 'sm', title: lt('editor.search.nextTitle'), onClick: () => step(1, { focus: true }), doc });
+  // اسما زرّي التنقّل يُكتبان هنا ويُعاد كتابتهما في relocalize() (button لا يقبل aria-label مستقلًا عن تسميته).
+  const nameNav = () => {
+    prevBtn.setAttribute('aria-label', t('editor.search.prevAria'));
+    nextBtn.setAttribute('aria-label', t('editor.search.nextAria'));
+  };
+  nameNav();
+  const replaceToggle = button({ label: lt('editor.search.replace'), size: 'sm', onClick: () => toggleReplace(), doc });
   replaceToggle.setAttribute('aria-expanded', 'false');
 
   const replaceIn = el('input', {
     className: 'ed-search__input',
-    attrs: { type: 'text', placeholder: 'استبدل بـ', 'aria-label': 'نص الاستبدال', autocomplete: 'off', spellcheck: 'false' },
+    attrs: { type: 'text', placeholder: lt('editor.search.replaceWith'), 'aria-label': lt('editor.search.replaceAria'), autocomplete: 'off', spellcheck: 'false' },
     on: { keydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); replaceHere(); } }, input: () => render() },
     doc,
   });
-  const hereBtn = button({ label: 'استبدال هنا', size: 'sm', onClick: () => replaceHere(), doc });
-  const allBtn = button({ label: 'معاينة استبدال الكل…', size: 'sm', onClick: () => previewAll(), doc });
+  const hereBtn = button({ label: lt('editor.search.replaceHere'), size: 'sm', onClick: () => replaceHere(), doc });
+  const allBtn = button({ label: lt('editor.search.replaceAll'), size: 'sm', onClick: () => previewAll(), doc });
   const replaceRow = el('div', { className: 'ed-toolbar__row ed-search__replace', attrs: { hidden: '' }, children: [replaceIn, hereBtn, allBtn], doc });
   const where = el('p', { className: 'ed-search__where tj-caption', doc });
 
@@ -222,14 +227,14 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
   function replaceWhy() {
     const ro = readOnly();
     if (ro) return ro;
-    if (S.field === 'en') return 'الأصل للقراءة فقط: ابحث في الترجمة للاستبدال.';
-    if (!S.matches.length) return S.query.trim() ? 'لا نتائج لاستبدالها.' : 'اكتب ما تبحث عنه أولًا.';
+    if (S.field === 'en') return t('editor.search.originalReadOnly');
+    if (!S.matches.length) return S.query.trim() ? t('editor.search.nothingToReplace') : t('editor.search.typeFirst');
     return null;
   }
 
   /** «استبدال هنا» وحده: لا مطابقة خارج ما استُبدل للتو (التنقّل بـ↑↓ يختارها صراحةً). */
   function hereWhy() {
-    return replaceWhy() ?? (S.current < 0 && S.inserted.length && S.matches.every(insertedIn(cues())) ? 'لا مطابقات أخرى خارج ما استُبدل؛ اختر نتيجة بـ↑↓ لتستبدلها.' : null);
+    return replaceWhy() ?? (S.current < 0 && S.inserted.length && S.matches.every(insertedIn(cues())) ? t('editor.search.noOthers') : null);
   }
 
   function replaceHere() {
@@ -266,7 +271,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     const rows = matches.slice(0, MAX_PREVIEW).map((m, k) => {
       const c = list[m.index];
       const sn = snippet(c.text, m.start, m.end);
-      const box = el('input', { attrs: { type: 'checkbox', checked: '', 'aria-label': `استبدال في المقطع ${c.n}` }, on: { change: () => { if (box.checked) picked.add(k); else picked.delete(k); sync(); } }, doc });
+      const box = el('input', { attrs: { type: 'checkbox', checked: '', 'aria-label': t('editor.search.replaceInAria', { n: c.n }) }, on: { change: () => { if (box.checked) picked.add(k); else picked.delete(k); sync(); } }, doc });
       return el('label', {
         className: 'ed-replace-item',
         children: [
@@ -283,31 +288,32 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     });
     let applyBtn = null;
     const total = el('p', { className: 'tj-caption', doc });
+    const applyLabel = () => t('editor.search.applyN', { n: picked.size, count: formatCount(picked.size, COUNT.match) });
     const sync = () => {
       const cuesTouched = new Set([...picked].map((k) => matches[k].index)).size;
-      total.textContent = `المختار: ${formatCount(picked.size, COUNT.match)} في ${formatCount(cuesTouched, COUNT_FORMS.cue)}.`;
+      total.textContent = t('editor.search.picked', { matches: formatCount(picked.size, COUNT.match), cues: formatCount(cuesTouched, COUNT_FORMS.cue) });
       if (applyBtn) {
-        applyBtn.firstChild.textContent = `استبدال ${picked.size === 2 ? 'موضعين' : formatCount(picked.size, COUNT.match)}`;
-        setDisabled(applyBtn, picked.size ? null : 'اختر موضعًا واحدًا على الأقل.');
+        applyBtn.firstChild.textContent = applyLabel();
+        setDisabled(applyBtn, picked.size ? null : t('editor.search.pickOne'));
       }
     };
     const plan = planReplace(list, matches, replacement);
     const content = el('div', {
       className: 'tj-stack',
       children: [
-        el('p', { className: 'tj-body-sm', text: `«${S.query}» ← «${replacement}». حرفيًا في المواضع المختارة وحدها؛ التوقيت والأرقام كما هي، وكل الاستبدال خطوة واحدة في التراجع.`, doc }),
+        el('p', { className: 'tj-body-sm', text: t('editor.search.previewIntro', { query: S.query, replacement }), doc }),
         el('div', { className: 'ed-preview-table ed-replace-list', children: rows, doc }),
-        matches.length > MAX_PREVIEW ? el('p', { className: 'tj-caption', text: `تُعرض أول ${MAX_PREVIEW} موضع؛ والباقي (${matches.length - MAX_PREVIEW}) يُستبدل معها.`, doc }) : null,
+        matches.length > MAX_PREVIEW ? el('p', { className: 'tj-caption', text: t('editor.search.truncated', { max: MAX_PREVIEW, rest: matches.length - MAX_PREVIEW }), doc }) : null,
         total,
       ],
       doc,
     });
     sync();
     const v = await openDialog({
-      doc, size: 'lg', title: 'معاينة استبدال الكل', content, focus: 'cancel',
+      doc, size: 'lg', title: t('editor.search.previewTitle'), content, focus: 'cancel',
       actions: [
-        { label: `استبدال ${picked.size === 2 ? 'موضعين' : formatCount(picked.size, COUNT.match)}`, value: 'apply', variant: 'primary', ref: (b) => { applyBtn = b; sync(); } },
-        { label: 'إلغاء', value: 'cancel' },
+        { label: applyLabel(), value: 'apply', variant: 'primary', ref: (b) => { applyBtn = b; sync(); } },
+        { label: t('common.cancel'), value: 'cancel' },
       ],
     });
     if (v !== 'apply' || !picked.size) return;
@@ -317,8 +323,8 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
 
   function render() {
     const n = S.matches.length;
-    counter.textContent = !S.query.trim() ? '' : n ? `${S.current < 0 ? 0 : S.current + 1} من ${n}` : 'لا نتائج';
-    for (const b of [prevBtn, nextBtn]) setDisabled(b, n ? null : 'لا نتائج');
+    counter.textContent = !S.query.trim() ? '' : n ? t('editor.search.counter', { cur: S.current < 0 ? 0 : S.current + 1, n }) : t('editor.search.noResults');
+    for (const b of [prevBtn, nextBtn]) setDisabled(b, n ? null : t('editor.search.noResults'));
     setDisabled(hereBtn, hereWhy());
     setDisabled(allBtn, replaceWhy());
     const m = S.matches[S.current];
@@ -326,7 +332,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
       const list = cues();
       const text = S.field === 'en' ? english()[m.index] ?? '' : list[m.index].text;
       const sn = snippet(text, m.start, m.end);
-      where.replaceChildren(`المقطع ${list[m.index].n}: `, el('span', { dir: S.field === 'en' ? 'ltr' : textDirection(`${sn.before}${sn.hit}${sn.after}`), children: [sn.before, el('mark', { text: sn.hit, doc }), sn.after], doc }));
+      where.replaceChildren(t('editor.search.where', { n: list[m.index].n }), el('span', { dir: S.field === 'en' ? 'ltr' : textDirection(`${sn.before}${sn.hit}${sn.after}`), children: [sn.before, el('mark', { text: sn.hit, doc }), sn.after], doc }));
       where.hidden = false;
     } else {
       where.replaceChildren();
@@ -349,6 +355,11 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
       else render();
     },
     render,
+    /** تبديل اللغة في مكانه: ما لا يتبع relabel (اسما زرّي التنقّل) ثم ما يُرسم من الحالة. */
+    relocalize() {
+      nameNav();
+      render();
+    },
     /** حالة صف لتمييزه: 'current' أو 'match' أو null. @param {number} index */
     rowState(index) {
       const ks = S.byIndex.get(index);

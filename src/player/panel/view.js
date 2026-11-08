@@ -1,20 +1,21 @@
 // عرض اللوحة: مضيف واحد بجذر Shadow DOM مغلق، يبني العناصر مرة ويحدّثها في مكانها (فيبقى التركيز وموضع التمرير)، والنصوص كلها
 // بـtextContent وعناصر DOM (لا HTML نصي أبدًا). أشكال أربعة بحسب النموذج: لا شيء، وزر مغلقة، ولوحة مفتوحة (هيكل التحميل،
 // وخطوات «لا ترجمة»، وخطأ، وصفوف جاهزة)، ورسالة التراجع. لا يعرف المتحكم: يستقبل النموذج ويستدعي on.* لأفعال المستخدم.
+import { getDir, getLocale } from '../../i18n/index.js';
 import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 import { focusQuietly, onHold } from '../../ui/hold.js';
 import { createSheet } from '../overlay/sheet.js';
 import { el, icon, mark, setAttr, setClass, setHidden, setText } from './dom.js';
 import { HOST_ID, NARROW_MAX, WIDE_MIN, panelCss } from './styles.js';
 import { createTranscript } from './transcript.js';
-import { LABELS, earlierTip, laterTip, offsetMeaningShort, offsetValue, statusParts, stepLabel, withOriginal } from './text.js';
+import { LABELS, captureLine, earlierTip, laterTip, offsetMeaningShort, offsetValue, statusParts, stepLabel, withOriginal } from './text.js';
 
 /** ما يعزله جذر اللوحة عن يوتيوب: اختصارات لوحة المفاتيح (المسافة وk وf والأسهم والأرقام…) وهو يكتب أو يضغط داخلها. */
 const KEYS = ['keydown', 'keyup', 'keypress'];
 const STEP_PRESETS = Object.freeze([500, 1000]);
 
 /**
- * مقطّعة اختيار واحد (radiogroup) بتنقّل الأسهم: في RTL أول عنصر أقصى اليمين، فالتالي بالسهم الأيسر. المعطّل لا يُختار ولا
+ * مقطّعة اختيار واحد (radiogroup) بتنقّل الأسهم: التالي بالسهم نحو آخر الصف (الأيسر في RTL والأيمن في LTR). المعطّل لا يُختار ولا
  * يُتنقَّل إليه.
  * @param {Document} doc @param {string} label @param {string[]} values @param {(v: string) => void} pick
  */
@@ -31,7 +32,9 @@ function createSegs(doc, label, values, pick) {
   const btnOf = (v) => buttons[values.indexOf(v)];
   group.append(...buttons);
   group.addEventListener('keydown', (ev) => {
-    const step = ev.key === 'ArrowLeft' || ev.key === 'ArrowDown' ? 1 : ev.key === 'ArrowRight' || ev.key === 'ArrowUp' ? -1 : 0;
+    const forward = getDir() === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
+    const backward = getDir() === 'rtl' ? 'ArrowRight' : 'ArrowLeft';
+    const step = ev.key === forward || ev.key === 'ArrowDown' ? 1 : ev.key === backward || ev.key === 'ArrowUp' ? -1 : 0;
     if (!step) return;
     const enabled = buttons.filter((b) => b.getAttribute('aria-disabled') !== 'true');
     const current = buttons.find((b) => b.getAttribute('aria-checked') === 'true');
@@ -76,8 +79,10 @@ export function createPanelView({ doc, win, on }) {
   const root = host.attachShadow({ mode: 'closed' });
   const sheet = createSheet({ doc, win }, panelCss());
   const styleMode = sheet.adopt(root);
-  // واجهة عربية داخل يوتيوب بأي لغة: lang للقارئ الآلي (WCAG 3.1.2؛ تدقيق 7a66f91، U48).
-  const shell = el(doc, 'div', { className: 'root', attrs: { dir: 'rtl', lang: 'ar', 'data-theme': 'light' } });
+  // لغة الواجهة واتجاهها على مضيف اللوحة وجذرها وحدهما (لا يُلمس شيء من يوتيوب): lang للقارئ الآلي (WCAG 3.1.2؛ تدقيق 7a66f91، U48).
+  host.setAttribute('dir', getDir());
+  host.setAttribute('lang', getLocale());
+  const shell = el(doc, 'div', { className: 'root', attrs: { dir: getDir(), lang: getLocale(), 'data-theme': 'light' } });
   root.appendChild(shell);
 
   const transcript = createTranscript({ doc, onSeek: (ms) => on.seek(ms) });
@@ -171,13 +176,13 @@ export function createPanelView({ doc, win, on }) {
   const resetBtn = el(doc, 'button', {
     className: 'b b--ghost', attrs: { type: 'button', title: LABELS.resetHint }, on: { click: () => on.reset() },
   }, [icon(doc, 'restore', { size: 'sm' }), el(doc, 'span', { text: LABELS.reset })]);
-  const earlierLbl = el(doc, 'span', { className: 'lbl', text: LABELS.earlier });
-  const laterLbl = el(doc, 'span', { className: 'lbl', text: LABELS.later });
+  const earlierLbl = el(doc, 'span', { className: 'lbl', text: LABELS.earlier, attrs: { dir: getDir() } });
+  const laterLbl = el(doc, 'span', { className: 'lbl', text: LABELS.later, attrs: { dir: getDir() } });
   const earlierBtn = el(doc, 'button', { className: 'b', attrs: { type: 'button' }, on: { click: () => on.nudge(-1) } }, [icon(doc, 'minus', { size: 'sm' }), earlierLbl]);
   const laterBtn = el(doc, 'button', { className: 'b', attrs: { type: 'button' }, on: { click: () => on.nudge(1) } }, [laterLbl, icon(doc, 'plus', { size: 'sm' })]);
   const valNum = el(doc, 'b');
   const valMean = el(doc, 'span', { className: 'mean' });
-  const val = el(doc, 'div', { className: 'off__val', attrs: { dir: 'rtl', 'aria-live': 'polite' } }, [valNum, el(doc, 'span', { text: ` ${LABELS.seconds}` }), valMean]);
+  const val = el(doc, 'div', { className: 'off__val', attrs: { dir: getDir(), 'aria-live': 'polite' } }, [valNum, el(doc, 'span', { text: ` ${LABELS.seconds}` }), valMean]);
   const stepSegs = createSegs(doc, LABELS.stepGroup, ['500', '1000', 'custom'], (v) => on.step(v));
   const stepInput = el(doc, 'input', {
     className: 'num',
@@ -302,7 +307,7 @@ export function createPanelView({ doc, win, on }) {
       { text: layout.narrow ? LABELS.arOnlyShort : LABELS.arOnly, aria: layout.narrow ? LABELS.arOnly : null },
       m.original
         ? { text: layout.narrow ? LABELS.dualShort : withOriginal(lang), aria: layout.narrow ? withOriginal(lang) : null }
-        : { text: layout.narrow ? LABELS.dualShort : withOriginal('الأصل'), aria: `${withOriginal('الأصل')} — ${LABELS.noOriginal}`, title: LABELS.noOriginal, disabled: true },
+        : { text: layout.narrow ? LABELS.dualShort : withOriginal(LABELS.originalFallback), aria: `${withOriginal(LABELS.originalFallback)} — ${LABELS.noOriginal}`, title: LABELS.noOriginal, disabled: true },
     ]);
     setText(followLabel, layout.narrow ? LABELS.followShort : LABELS.follow);
     setAttr(followSwitch, 'aria-label', layout.narrow ? LABELS.follow : null);
@@ -326,7 +331,7 @@ export function createPanelView({ doc, win, on }) {
   function renderSteps(m) {
     const cap = m.capture;
     const items = [
-      { state: cap ? 'done' : 'now', text: cap ? (cap.via ? `${cap.langName} · ترجمة يوتيوب الآلية عن ${cap.via} · ${cap.saved ? 'محفوظة' : 'ملتقطة'} · ${formatCount(cap.count, COUNT_FORMS.cue)}` : `${cap.langName} ${cap.kind === 'manual' ? 'اليدوية' : 'التلقائية'} ${cap.saved ? 'محفوظة' : 'ملتقطة'} · ${formatCount(cap.count, COUNT_FORMS.cue)}`) : LABELS.stepCapture },
+      { state: cap ? 'done' : 'now', text: cap ? captureLine(cap) : LABELS.stepCapture },
       { state: cap ? 'now' : '', text: LABELS.stepDownload },
       { state: '', text: LABELS.stepUpload },
     ];

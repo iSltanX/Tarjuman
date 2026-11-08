@@ -3,6 +3,7 @@
 // صيغ النسخ الواقعية لملفات الارتباط ورموز الدخول (تدقيق 7a66f91، U84): الاسم بأي حالة أحرف لما لا يلتبس بكلمة عادية، وبـ«:»
 // أو Tab (صف جدول أدوات المطوّر) أو JSON (إضافات التصدير) أو سطر cookies.txt؛ والقصيرة الملتبسة (SID وHSID وSSID وYSC وPREF)
 // بحروفها الكبيرة وحدها وقيمة من 8 محارف فأكثر. وJWT وBearer ورمز OAuth لغوغل (ya29.) وpot المرمّزة (pot%3D).
+import { t } from '../../i18n/index.js';
 const COOKIE_LONG = 'SAPISID|APISID|SIDCC|__Secure-[0-9A-Za-z_-]+|LOGIN_INFO|VISITOR_INFO1_LIVE|VISITOR_PRIVACY_METADATA';
 const COOKIE_SHORT = 'HSID|SSID|SID|YSC|PREF';
 
@@ -56,7 +57,7 @@ export function sanitizeText(text) {
   let s = String(text);
   for (const { type, re } of PATTERNS) {
     re.lastIndex = 0;
-    s = s.replace(re, `[${type}-محذوف]`);
+    s = s.replace(re, t('core.diagnostics.removedType', { type }));
   }
   return s;
 }
@@ -73,7 +74,7 @@ export function sanitizeDeep(value) {
     const out = {};
     for (const [k, v] of Object.entries(value)) {
       if (/^(?:url|href|baseUrl|cookie|cookies|headers|pot|signature|sig|authorization)$/i.test(k)) {
-        out[k] = '[محذوف]';
+        out[k] = t('core.diagnostics.removed');
       } else {
         out[k] = sanitizeDeep(v);
       }

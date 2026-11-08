@@ -12,7 +12,7 @@ const CONTRACT_FIELDS = ['product', 'app_version', 'os', 'os_version', 'arch', '
 test('المنتج tarjuman ثابت، والأنواع خلل واقتراح وأخرى، والسقوف من العقد', () => {
   assert.equal(PRODUCT_ID, 'tarjuman');
   assert.deepEqual(REPORT_KINDS, ['bug', 'suggestion', 'other']);
-  assert.deepEqual(KIND_LABELS, { bug: 'خلل', suggestion: 'اقتراح', other: 'أخرى' });
+  assert.deepEqual(REPORT_KINDS.map((k) => KIND_LABELS[k]), ['خلل', 'اقتراح', 'أخرى']);
   assert.deepEqual(LIMITS, { description: 2000, diagnostics: 16 * 1024 });
 });
 

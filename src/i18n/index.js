@@ -4,14 +4,15 @@
 // قيم الفهرس: نص بقوالب {name}، أو دالة (params) ← نص لما تختلف فيه الصياغة بين اللغتين، أو كائن صيغ جمع (له one).
 // الاسترجاع عند نقص مفتاح: اللغة الحالية، ثم الإنجليزية، ثم عبارة عامة باللغة الحالية؛ ولا يظهر مفتاح خام أبدًا.
 import { CATALOG } from './catalog.js';
-import { DEFAULT_LOCALE, LOCALES, REFERENCE_LOCALE, isLocale, localeDir } from './locale.js';
+import { DEFAULT_LOCALE, LOCALES, LOCALE_NAMES, REFERENCE_LOCALE, isLocale, localeDir } from './locale.js';
 
-export { DEFAULT_LOCALE, LOCALES, REFERENCE_LOCALE, isLocale, localeDir };
+export { DEFAULT_LOCALE, LOCALES, LOCALE_NAMES, REFERENCE_LOCALE, isLocale, localeDir };
 
 /** عبارة النقص الأخيرة: خارج الفهرس عمدًا، فلا تنقص هي نفسها. */
 const UNAVAILABLE = Object.freeze({ ar: 'نص غير متاح', en: 'Text unavailable' });
 
-const isForms = (v) => typeof v === 'object' && v !== null && typeof v.one === 'string';
+/** صيغ جمع: one ومعها other (إنجليزية) أو two وfew (عربية)؛ فلا يُحسب قسم فيه مفتاح اسمه one صيغًا. */
+const isForms = (v) => typeof v === 'object' && v !== null && typeof v.one === 'string' && (typeof v.other === 'string' || (typeof v.two === 'string' && typeof v.few === 'string'));
 
 /** يسطّح فهرسًا متداخلًا إلى خريطة مفاتيح منقّطة، وكائن صيغ الجمع ورقة. */
 function flatten(node, prefix, out) {
@@ -87,7 +88,9 @@ export const hasKey = (key) => TABLES[current].has(key);
 export function texts(section) {
   const prefix = `${section}.`;
   const keys = () => [...TABLES[current].keys()].filter((k) => k.startsWith(prefix) && !k.slice(prefix.length).includes('.')).map((k) => k.slice(prefix.length));
-  return new Proxy(Object.freeze({}), {
+  return new Proxy({}, {
+    set: () => false,
+    defineProperty: () => false,
     get: (_, k) => (typeof k === 'string' ? lookup(prefix + k) ?? UNAVAILABLE[current] : undefined),
     has: (_, k) => typeof k === 'string' && TABLES[current].has(prefix + k),
     ownKeys: () => keys(),

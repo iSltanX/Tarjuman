@@ -2,6 +2,8 @@
 // أو معرّف فيديو أو بريد ذُكّر به ليحذفه إن لم يحتجه البلاغ؛ ويبقى الإرسال ممكنًا. منفصل عمدًا عن findSecrets (المانع، ومعه
 // check-secrets وsanitizeText). ولا يَعِد بأن الوصف الحر يخلو من البيانات الشخصية: هو تذكير بأشكال شائعة لا أكثر.
 
+import { t } from '../../i18n/index.js';
+
 /** رابط من نطاقات يوتيوب، بمخطط أو بدونه. */
 const YT_LINK = /(?<![\p{L}\p{N}_-])(?:[a-z0-9-]+\.)*(?:youtube(?:-nocookie)?\.com|youtu\.be)\b/iu;
 /** بريد: محارف بلا مسافة ثم @ ثم نطاق بنقطة وامتداد حرفي. */
@@ -27,12 +29,8 @@ export function personalHints(text) {
   return out;
 }
 
-const NAMES = Object.freeze({ 'youtube-link': 'رابط يوتيوب', email: 'عنوان بريد', 'video-id': 'معرّف فيديو' });
-
-/** نص التنبيه، أو '' بلا شيء. @param {ReturnType<typeof personalHints>} hints */
+/** نص التنبيه، أو '' بلا شيء. بلغة الواجهة الحالية. @param {ReturnType<typeof personalHints>} hints */
 export function personalHintText(hints) {
   if (!hints.length) return '';
-  const names = hints.map((h) => NAMES[h]);
-  const list = names.length > 1 ? `${names.slice(0, -1).join('، ')} أو ${names.at(-1)}` : names[0];
-  return `يبدو أن في وصفك ${list}. يُرسل الوصف كما كتبته، فاحذفه إن لم يحتجه البلاغ.`;
+  return t('settings.report.personal.text', { names: hints.map((h) => t(`settings.report.personal.names.${h}`)) });
 }

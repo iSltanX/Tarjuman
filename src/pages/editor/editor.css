@@ -40,6 +40,8 @@ html, body.ed-page { height: 100%; }
 .ed-title { flex: 1 1 240px; min-width: 0; font: 700 18px/28px var(--tj-font-head); }
 .ed-back { padding-inline-end: 12px; }
 .ed-back .tj-icon { width: 16px; height: 16px; }
+/* سهم الرجوع يشير إلى جهة البداية: يمينًا في RTL كما رُسم، وينعكس في LTR. */
+[dir="ltr"] .ed-back .tj-icon { transform: scaleX(-1); }
 .ed-head__label { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); white-space: nowrap; }
 .ed-head__sep { width: 1px; height: 24px; background: var(--tj-border); flex: none; }
 .ed-slot-note { color: var(--tj-muted); }

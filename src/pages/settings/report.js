@@ -3,6 +3,7 @@
 // أول ضغطة «أرسل البلاغ» تطلب إذن مضيف خادم البلاغات (وفي Firefox موافقة «البيانات التقنية والتفاعل») قبل أي انتظار. ولا طلب
 // قبل الضغطة، ولا إعادة تلقائية، ومحاولة واحدة في كل مرة. والنجاح يعرض رقم البلاغ مع نسخه، والفشل يتبع جدول الردود في العقد
 // بـ«أعد المحاولة» و«انسخ البلاغ»، والنسخ يعمل بلا شبكة. والطلب نفسه في src/core/report/client.js وحده.
+import { getLocale, t } from '../../i18n/index.js';
 import { findSecrets } from '../../core/diagnostics/sanitize.js';
 import { personalHintText, personalHints } from '../../core/report/personal.js';
 import { REPORTS_ORIGIN, hostGranted, requestReportPermission, retryable, sendReport } from '../../core/report/client.js';
@@ -12,10 +13,12 @@ import { KIND_LABELS, LIMITS, REPORT_KINDS, buildPayload, formError, reviewRows,
 import { button, el, ltr } from '../../ui/components.js';
 import { segmented } from '../../ui/forms.js';
 
-export const REPORT_LABEL = 'الإبلاغ عن مشكلة';
+/** عنوان اللوحة وزرها بلغة الواجهة الحالية. */
+export const reportLabel = () => t('settings.report.label');
 const REPORTS_HOST = new URL(REPORTS_ORIGIN).host;
-const TEXT_PROMPTS = Object.freeze({ bug: 'ماذا حدث؟', suggestion: 'ما اقتراحك؟', other: 'اكتب رسالتك' });
-const count = new Intl.NumberFormat('ar-u-nu-latn', { useGrouping: false });
+const promptOf = (kind) => t(`settings.report.prompts.${kind}`);
+/** أرقام لاتينية بلا فواصل آلاف في اللغتين. */
+const count = { format: (n) => new Intl.NumberFormat(`${getLocale()}-u-nu-latn`, { useGrouping: false }).format(n) };
 
 /**
  * @typedef {{
@@ -80,26 +83,28 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   const textId = 'st-report-text';
   const countId = 'st-report-count';
 
-  const trigger = button({ label: REPORT_LABEL, variant: 'secondary', icon: 'flag', doc, onClick: () => (opened ? close() : open()) });
+  const trigger = button({ label: reportLabel(), variant: 'secondary', icon: 'flag', doc, onClick: () => (opened ? close() : open()) });
   trigger.setAttribute('aria-expanded', 'false');
   trigger.setAttribute('aria-controls', regionId);
 
   const kinds = segmented({
-    legend: 'نوع البلاغ', value: kind, doc,
+    legend: t('settings.report.kindLegend'), value: kind, doc,
     options: REPORT_KINDS.map((k) => ({ value: k, label: KIND_LABELS[k] })),
-    onChange: (v) => { kind = v; textLabel.textContent = TEXT_PROMPTS[v]; render(); },
+    onChange: (v) => { kind = v; textLabel.textContent = promptOf(v); render(); },
   });
   const textarea = el('textarea', {
     className: 'tj-field__input st-report__text',
-    attrs: { id: textId, rows: '5', maxlength: String(LIMITS.description), 'aria-describedby': `${countId} st-report-warn st-report-hint` },
+    attrs: { id: textId, 'data-tj-keep': 'settings.report.text', rows: '5', maxlength: String(LIMITS.description), 'aria-describedby': `${countId} st-report-warn st-report-hint` },
     doc,
   });
   textarea.addEventListener('input', () => {
     text = String(textarea.value ?? '');
+    // عودة النص بعد تبديل لغة الواجهة (data-tj-keep) تفتح اللوحة التي فيها حقله، فلا يبقى مخبوءًا.
+    if (!opened && text) open();
     render();
   });
   // عنوان الحقل بحسب نوع البلاغ (ق-6).
-  const textLabel = el('label', { className: 'tj-field__label', text: TEXT_PROMPTS[kind], attrs: { for: textId }, doc });
+  const textLabel = el('label', { className: 'tj-field__label', text: promptOf(kind), attrs: { for: textId }, doc });
   const counter = el('span', { className: 'tj-caption st-report__count', attrs: { id: countId }, doc });
   const secretAlert = el('p', { className: 'st-report__secret', attrs: { role: 'alert' }, doc });
   // تذكير غير مانع برابط يوتيوب أو بريد أو معرّف في الوصف (تدقيق 7a66f91، U84): يُحدَّث نصه حين يتغير وحده فلا يُعاد إعلانه.
@@ -110,8 +115,8 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   const rowsStatus = el('p', { className: 'tj-caption st-report__rows-status', doc });
   const json = el('pre', { className: 'st-report__json', attrs: { dir: 'ltr' }, doc });
 
-  const sendBtn = button({ label: 'إرسال البلاغ', variant: 'primary', doc, onClick: () => send() });
-  const copyBtn = button({ label: 'نسخ البلاغ', variant: 'secondary', icon: 'copy', doc, onClick: () => copyReport() });
+  const sendBtn = button({ label: t('settings.report.send'), variant: 'primary', doc, onClick: () => send() });
+  const copyBtn = button({ label: t('settings.report.copy'), variant: 'secondary', icon: 'copy', doc, onClick: () => copyReport() });
   // tabindex=-1: يستقبل التركيز برمجيًا حين يزول الزر الذي كان عليه (renderResult)، ولا يدخل ترتيب Tab.
   const result = el('div', { className: 'st-report__result', attrs: { role: 'status', tabindex: '-1' }, doc });
 
@@ -119,27 +124,27 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     className: 'st-report',
     attrs: { id: regionId, role: 'group', 'aria-labelledby': 'st-report-title' },
     children: [
-      el('h3', { className: 'tj-h4', text: REPORT_LABEL, attrs: { id: 'st-report-title' }, doc }),
-      el('p', { className: 'tj-body-sm', text: 'يصل البلاغ إلى مطوّر ترجمان في قناة خاصة لا تُنشر، ولا يُرسل شيء قبل أن تراجعه وتضغط «إرسال البلاغ» بنفسك.', doc }),
+      el('h3', { className: 'tj-h4', text: reportLabel(), attrs: { id: 'st-report-title' }, doc }),
+      el('p', { className: 'tj-body-sm', text: t('settings.report.intro'), doc }),
       kinds.root,
       textLabel,
       textarea,
       counter,
-      el('p', { className: 'tj-caption', text: 'يُرسل نصك كما كتبته. لا تضع فيه نص ترجمة ولا بيانات شخصية لا يحتاجها البلاغ.', attrs: { id: 'st-report-warn' }, doc }),
+      el('p', { className: 'tj-caption', text: t('settings.report.warn'), attrs: { id: 'st-report-warn' }, doc }),
       secretAlert,
       personalNote,
       el('div', {
         className: 'st-panel st-report__review',
         children: [
-          el('strong', { className: 'st-panel__title', text: 'ما يُرفق تلقائيًا (تراه كله قبل الإرسال)', doc }),
+          el('strong', { className: 'st-panel__title', text: t('settings.report.reviewTitle'), doc }),
           rowsStatus,
           rows,
           el('details', {
             className: 'st-details',
-            children: [el('summary', { className: 'st-details__summary', text: 'نص البلاغ كاملًا كما سيُرسل', doc }), json],
+            children: [el('summary', { className: 'st-details__summary', text: t('settings.report.fullText'), doc }), json],
             doc,
           }),
-          el('p', { className: 'tj-caption', text: 'لا يُرفق تلقائيًا نص ترجمة، ولا معرّف فيديو أو عنوانه أو رابطه، ولا حساب. ويضيف المتصفح ما يضيفه إلى أي طلب، ومنه عنوان الإضافة. رقم البلاغ مرجعك الوحيد.', doc }),
+          el('p', { className: 'tj-caption', text: t('settings.report.notAttached'), doc }),
           el('p', { className: 'tj-caption st-report__permission', doc }),
         ],
         doc,
@@ -158,11 +163,11 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   const secrets = () => [...new Set(findSecrets(text, ['url']).map((f) => f.type))];
   /** سبب منع الإرسال والنسخ، أو null. */
   function blockedReason() {
-    if (!diag) return diagFailed ? 'تعذّرت قراءة إصدار المتصفح والنظام.' : 'يُقرأ إصدار المتصفح والنظام…';
+    if (!diag) return t(diagFailed ? 'settings.report.diagFailed' : 'settings.report.diagReading');
     const error = formError({ kind, description: text });
-    if (error === 'empty') return 'اكتب وصفًا أولًا.';
-    if (error === 'too-long') return `الوصف أطول من ${count.format(LIMITS.description)} حرف؛ اختصره.`;
-    if (secrets().length) return 'احذف ما يشبه رمز جلسة أو ملف ارتباط من الوصف.';
+    if (error === 'empty') return t('settings.report.writeFirst');
+    if (error === 'too-long') return t('settings.report.tooLong', { n: count.format(LIMITS.description) });
+    if (secrets().length) return t('settings.report.removeSecret');
     return null;
   }
 
@@ -192,8 +197,8 @@ export function reportPanel({ doc = document, env = {} } = {}) {
 
   function paintResult() {
     if (busy) {
-      const note = copiedWhileBusy ? el('p', { className: 'tj-caption', text: copiedWhileBusy === 'copied' ? 'نُسخ البلاغ نصًّا.' : 'تعذّر النسخ. افتح «نص البلاغ كاملًا كما سيُرسل» وانسخه يدويًا.', doc }) : null;
-      result.replaceChildren(el('p', { className: 'tj-body-sm', text: 'يُرسل البلاغ…', doc }), ...(note ? [note] : []));
+      const note = copiedWhileBusy ? el('p', { className: 'tj-caption', text: t(copiedWhileBusy === 'copied' ? 'settings.report.copied' : 'settings.report.copyFailed'), doc }) : null;
+      result.replaceChildren(el('p', { className: 'tj-body-sm', text: t('settings.report.sending'), doc }), ...(note ? [note] : []));
       return;
     }
     if (!outcome) {
@@ -202,7 +207,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     }
     if (outcome.state === 'sent' || outcome.state === 'id-copied' || outcome.state === 'id-copy-failed') {
       const id = outcome.id;
-      const copyId = action('copy-id', { label: 'نسخ الرقم', variant: 'ghost', size: 'sm', icon: 'copy', onClick: () => {
+      const copyId = action('copy-id', { label: t('settings.report.copyId'), variant: 'ghost', size: 'sm', icon: 'copy', onClick: () => {
         // فشل الحافظة (رفض أو غيابها) نتيجة ظاهرة لا صمت: الرقم ظاهر فوقه ليُنسخ باليد.
         Promise.resolve().then(() => deps.copy(`#${id}`)).then(
           () => { outcome = { state: 'id-copied', id }; render(); },
@@ -210,14 +215,14 @@ export function reportPanel({ doc = document, env = {} } = {}) {
         );
       } });
       const copyNote = outcome.state === 'id-copied'
-        ? el('span', { className: 'tj-caption', attrs: { 'data-report-copy': 'done' }, text: 'نُسخ الرقم.', doc })
+        ? el('span', { className: 'tj-caption', attrs: { 'data-report-copy': 'done' }, text: t('settings.report.idCopied'), doc })
         : outcome.state === 'id-copy-failed'
-          ? el('span', { className: 'tj-caption st-report__copy-failed', attrs: { role: 'alert', 'data-report-copy': 'failed' }, text: 'تعذّر نسخ الرقم. حدّده أعلاه وانسخه يدويًا.', doc })
+          ? el('span', { className: 'tj-caption st-report__copy-failed', attrs: { role: 'alert', 'data-report-copy': 'failed' }, text: t('settings.report.idCopyFailed'), doc })
           : null;
       result.replaceChildren(el('div', {
         className: 'st-report__done', attrs: { 'data-report-result': 'sent' },
         children: [
-          el('p', { className: 'tj-body-sm', children: ['وصل بلاغك برقم ', ltr(`#${id}`, { doc }), '. احتفظ به إن أردت المتابعة عبر بريد الدعم ', ltr(SUPPORT_EMAIL, { doc }), '؛ لا يُرسل إليك شيء ولا نطلب بريدًا.'], doc }),
+          el('p', { className: 'tj-body-sm', children: [t('settings.report.sentA'), ltr(`#${id}`, { doc }), t('settings.report.sentB'), ltr(SUPPORT_EMAIL, { doc }), t('settings.report.sentC')], doc }),
           el('div', { className: 'st-actions', children: [copyId, copyNote], doc }),
         ],
         doc,
@@ -233,8 +238,8 @@ export function reportPanel({ doc = document, env = {} } = {}) {
           el('div', {
             className: 'st-actions',
             children: [
-              again ? action('retry', { label: 'أعد المحاولة', variant: 'secondary', icon: 'restore', onClick: () => send() }) : null,
-              action('copy', { label: 'نسخ البلاغ', variant: 'secondary', icon: 'copy', onClick: () => copyReport() }),
+              again ? action('retry', { label: t('settings.report.retry'), variant: 'secondary', icon: 'restore', onClick: () => send() }) : null,
+              action('copy', { label: t('settings.report.copy'), variant: 'secondary', icon: 'copy', onClick: () => copyReport() }),
             ],
             doc,
           }),
@@ -246,7 +251,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     const copied = outcome.state === 'copied';
     result.replaceChildren(el('p', {
       className: 'tj-body-sm', attrs: { 'data-report-result': outcome.state },
-      text: copied ? 'نُسخ البلاغ نصًّا. لم يُرسل شيء.' : 'تعذّر النسخ. افتح «نص البلاغ كاملًا كما سيُرسل» وانسخه يدويًا.',
+      text: t(copied ? 'settings.report.copiedNothingSent' : 'settings.report.copyFailed'),
       doc,
     }));
   }
@@ -257,7 +262,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     const found = secrets();
     secretAlert.hidden = found.length === 0;
     // النص يُكتب حين يتغير وحده: كتابته مع كل حرف تعيد إعلان role=alert (U52، N13).
-    const secretText = found.length ? 'في وصفك ما يشبه رمز جلسة أو ملف ارتباط أو توقيع طلب. احذفه قبل الإرسال أو النسخ؛ لا يحتاج البلاغ شيئًا منها.' : '';
+    const secretText = found.length ? t('settings.report.secretAlert') : '';
     if (secretAlert.textContent !== secretText) secretAlert.textContent = secretText;
     const hint = found.length ? '' : personalHintText(personalHints(text));
     if (personalNote.textContent !== hint) personalNote.textContent = hint;
@@ -270,10 +275,10 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     })) : []));
     rows.hidden = !p;
     rowsStatus.hidden = Boolean(p);
-    rowsStatus.textContent = p ? '' : diagFailed ? 'تعذّرت قراءة إصدار المتصفح والنظام.' : 'يُقرأ إصدار المتصفح والنظام…';
+    rowsStatus.textContent = p ? '' : t(diagFailed ? 'settings.report.diagFailed' : 'settings.report.diagReading');
     json.textContent = p ? serialise(p) : '';
     const firefox = diag?.buildTarget === 'firefox';
-    permissionNote.textContent = `عند أول إرسال يطلب المتصفح إذنك بالاتصال بخادم البلاغات وحده (${REPORTS_HOST})${firefox ? '، ومعه موافقة «البيانات التقنية والتفاعل» لأن البلاغ يحمل إصدار المتصفح والنظام' : ''}، وتسحبه متى شئت من صفحة إضافات المتصفح.`;
+    permissionNote.textContent = t('settings.report.permission', { host: REPORTS_HOST, firefox });
     const reason = blockedReason();
     setDisabled(sendBtn, busy ? null : reason);
     // النسخ يعمل أثناء الإرسال (لا يمس الشبكة)، فلا يبدو مفعّلًا ثم يسكت (U59 L-20)؛ والانشغال على زر الإرسال وحده.

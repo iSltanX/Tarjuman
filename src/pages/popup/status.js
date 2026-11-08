@@ -6,12 +6,13 @@
 import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagnostics/report.js';
 import { messageFor } from '../../core/errors/index.js';
 import { describeLang } from '../../core/lang/index.js';
+import { getLocale, t, texts } from '../../i18n/index.js';
 import { isSourceLang, parseTrackKey } from '../../core/model/ids.js';
 import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 import { pairLabel } from '../../ui/lang.js';
 import { MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest } from '../../core/model/messages.js';
 import { relativeTime } from '../library/model.js';
-import { NOT_VIDEO_TEXT } from './view.js';
+import { notVideoText } from './view.js';
 
 /** مهلة الرد: سكربت لا يردّ لا يترك النافذة هيكلًا إلى الأبد. */
 export const REPLY_TIMEOUT_MS = 1500;
@@ -93,22 +94,21 @@ export async function untilSettled(query, first, { intervalMs = LOADING_POLL_MS,
  * نص الملاحظة حين لا رد صفحة فيديو.
  * @param {null | 'stale' | 'elsewhere' | 'unknown'} miss
  */
-export const missText = (miss) => (miss === 'stale' ? messageFor('TJ_RELOAD_PAGE') : miss === 'unknown' ? messageFor('TJ_OPEN_OR_RELOAD') : NOT_VIDEO_TEXT);
+export const missText = (miss) => (miss === 'stale' ? messageFor('TJ_RELOAD_PAGE') : miss === 'unknown' ? messageFor('TJ_OPEN_OR_RELOAD') : notVideoText());
 
-/** اسم لغة للعرض بالعربية من رمزها، والرمز الذي لا يعرف المتصفح اسمه يبقى رمزه. @param {string} code */
-export const langLabel = (code) => describeLang(code)?.arabic ?? code;
+/** اسم لغة للعرض بلغة الواجهة من رمزها، والرمز الذي لا يعرف المتصفح اسمه يبقى رمزه. @param {string} code */
+export const langLabel = (code) => describeLang(code, getLocale())?.name ?? code;
 
-/** «بالعربية» و«باليابانية»، و«بلغة xx» للرمز الذي لا يعرف المتصفح اسمه. @param {string} code */
-const inLang = (code) => {
-  const d = describeLang(code);
-  if (!d?.known) return `بلغة ${code}`;
-  return d.arabic.startsWith('ال') ? `ب${d.arabic}` : `بـ${d.arabic}`;
+/** «ترجمة بالعربية» و«ترجمة باليابانية»، و«ترجمة بلغة xx» للرمز الذي لا يعرف المتصفح اسمه (وبالإنجليزية «Japanese translation»). @param {string} code */
+const translationIn = (code) => {
+  const d = describeLang(code, getLocale());
+  return t('popup.status.translationIn', { name: d?.name ?? code, code, known: Boolean(d?.known) });
 };
 
 /** وضع العرض في سطر الأدوات بلغة الأصل الفعلية: «الترجمة فوق اليابانية». @param {string} mode @param {string | null} source */
-const modeText = (mode, source) => (mode === 'dual' ? `الترجمة فوق ${source ? langLabel(source) : 'الأصل'}` : mode === 'off' ? 'الترجمة مخفية' : 'الترجمة وحدها');
+const modeText = (mode, source) => (mode === 'dual' ? t('popup.status.modeDual', { source: source ? langLabel(source) : t('popup.status.original') }) : mode === 'off' ? t('popup.status.modeOff') : t('popup.status.modeSingle'));
 /** نوع مسار الأصل كما يُعرض بجانب حالته: «ملتقطة · يدوية». */
-const KIND_TEXT = Object.freeze({ manual: 'يدوية', asr: 'تلقائية' });
+const kindText = (kind) => (kind === 'manual' || kind === 'asr' ? t(`popup.status.kind.${kind}`) : null);
 
 /**
  * مسار الأصل الذي تُبنى عليه حالة البطاقة: مسار «من» في الرد (ق٥)، وإلا أول ملتقط سليم، وإلا أول محفوظ.
@@ -141,16 +141,16 @@ export function describeStatus(reply) {
   const base = baseTrack(reply);
   if (!reply.arabic) {
     const saved = reply.english.saved.length > 0;
-    const name = base ? `${langLabel(base.lang)}${base.via ? ' (ترجمة يوتيوب الآلية)' : ''}` : null;
-    const kind = base ? KIND_TEXT[base.kind] ?? null : null;
-    const line = !base ? 'لم تُلتقط ترجمة الفيديو بعد' : [`${name} ${base.captured ? 'ملتقطة' : 'محفوظة'}`, kind, formatCount(base.cueCount, COUNT_FORMS.cue)].filter(Boolean).join(' · ');
+    const name = base ? `${langLabel(base.lang)}${base.via ? t('popup.status.viaMachine') : ''}` : null;
+    const kind = base ? kindText(base.kind) : null;
+    const line = !base ? t('popup.status.notCaptured') : [t(base.captured ? 'popup.status.captured' : 'popup.status.savedTrack', { name }), kind, formatCount(base.cueCount, COUNT_FORMS.cue)].filter(Boolean).join(' · ');
     return { kind: 'no-subtitle', title, englishLine: line, englishKind: kind, englishReady: !!base, saved };
   }
   const a = reply.arabic;
   return {
     kind: 'has-subtitle',
     title,
-    line: [a.lang ? `ترجمة ${inLang(a.lang)}` : 'ترجمة بلغة غير محددة', formatCount(a.cueCount, COUNT_FORMS.cue), `الإزاحة ${offsetInline(reply.view.displayOffsetMs)} ث`].join(' · '),
+    line: [a.lang ? translationIn(a.lang) : t('popup.status.translationUnknown'), formatCount(a.cueCount, COUNT_FORMS.cue), t('popup.status.offset', { offset: offsetInline(reply.view.displayOffsetMs) })].join(' · '),
     edited: a.edited,
     matched: a.matched,
     mode: modeText(reply.view.displayMode, base?.lang ?? null),
@@ -167,13 +167,11 @@ export function guideText(pair = {}) {
   const from = isSourceLang(pair.from) ? langLabel(pair.from) : null;
   const to = isSourceLang(pair.to) ? langLabel(pair.to) : null;
   return [
-    from ? `نزّل الأصل (${from}) من زر التنزيل في الشريط` : 'نزّل الأصل من زر التنزيل في الشريط',
-    to ? `انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه إلى ${to}` : 'انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه',
-    'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في شريط المشغّل',
+    from ? t('popup.steps.downloadFrom', { from }) : t('popup.steps.download'),
+    to ? t('popup.steps.copyTo', { to }) : t('popup.steps.copy'),
+    t('popup.steps.upload'),
   ];
 }
-/** نصوص الخطوات بلا زوج. */
-export const GUIDE_TEXT = Object.freeze(guideText());
 
 /**
  * خطوات «بلا ترجمة» من الحالة الفعلية لا من نية: ما دام الأصل لم يُنزَّل فالخطوة الأولى هي الحالية والباقيتان منتظرتان ولو
@@ -218,7 +216,7 @@ export const entryHidden = (prefs) => prefs?.ui?.panelEntry === false;
  */
 export function recentLine(entry, nowMs, pair = null) {
   const langs = pair ? pairLabel({ ...pair, translated: !!entry.arabic }) : null;
-  return [relativeTime(entry.updatedAt, nowMs), langs, entry.arabic ? formatCount(entry.arabic.cueCount, COUNT_FORMS.cue) : 'بانتظار الترجمة'].filter(Boolean).join(' · ');
+  return [relativeTime(entry.updatedAt, nowMs), langs, entry.arabic ? formatCount(entry.arabic.cueCount, COUNT_FORMS.cue) : t('popup.status.awaiting')].filter(Boolean).join(' · ');
 }
 
 /**
@@ -233,7 +231,7 @@ export function libraryHash(reply) {
 }
 
 /** الإجراء حين يتعطل الربط بلا رمز يحمل سببًا وإجراءً. */
-const TOOLS_RELOAD_ACTION = 'أعد تحميل صفحة الفيديو ثم حاول مجددًا.';
+const toolsReloadAction = () => t('popup.status.reload');
 
 /**
  * سطر حالة أدوات المشغّل وطبقة الترجمة في بطاقة الفيديو (مواصفة التصميم §١٩.٦): تعمل، أو بانتظار المشغّل، أو تعذّر الربط؛
@@ -246,11 +244,11 @@ export function toolsStatus(reply) {
   const { controls, overlay } = reply.mounted;
   const code = typeof reply.tools?.code === 'string' ? reply.tools.code : null;
   const reason = code ? messageFor(code) : null;
-  if (controls === 'mounted' && overlay === 'mounted') return { tone: 'success', text: 'أدوات المشغّل تعمل', reason: null };
+  if (controls === 'mounted' && overlay === 'mounted') return { tone: 'success', text: t('popup.status.toolsOk'), reason: null };
   // العنوان عام، والسبب والإجراء من رسالة الرمز مرة واحدة؛ وبلا رمز يبقى الإجراء الاحتياطي.
-  if (controls === 'error') return { tone: 'danger', text: 'تعذّر تشغيل أدوات ترجمان في المشغّل', reason: reason ?? TOOLS_RELOAD_ACTION };
-  if (overlay === 'error') return { tone: 'danger', text: 'تعذّر عرض الترجمة فوق الفيديو', reason: reason ?? TOOLS_RELOAD_ACTION };
-  return { tone: 'info', text: 'بانتظار المشغّل', reason: null };
+  if (controls === 'error') return { tone: 'danger', text: t('popup.status.toolsControlsError'), reason: reason ?? toolsReloadAction() };
+  if (overlay === 'error') return { tone: 'danger', text: t('popup.status.toolsOverlayError'), reason: reason ?? toolsReloadAction() };
+  return { tone: 'info', text: t('popup.status.toolsWaiting'), reason: null };
 }
 
 /**
@@ -293,7 +291,7 @@ export async function queryPageDiagnostics({ tabs = globalThis.chrome?.tabs, tim
 const ID_KEYS = /video_?ids?$/i;
 function withoutIds(value) {
   if (Array.isArray(value)) return value.map(withoutIds);
-  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, ID_KEYS.test(k) ? '[مستبعد]' : withoutIds(v)]));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, ID_KEYS.test(k) ? t('popup.diag.excluded') : withoutIds(v)]));
   return value;
 }
 
@@ -324,9 +322,9 @@ export function pageReport({ reply, sections, version, browser, at }) {
  * @returns {{ enabled: true, videoId: string, reason: null } | { enabled: false, videoId: null, reason: string }}
  */
 export function editorGate(reply) {
-  if (!reply || !reply.watch || !reply.videoId) return { enabled: false, videoId: null, reason: 'افتح فيديو على يوتيوب أولًا' };
-  if (reply.loading) return { enabled: false, videoId: null, reason: 'جارٍ قراءة ترجمة الفيديو…' };
-  if (!reply.arabic) return { enabled: false, videoId: null, reason: 'لا ترجمة لهذا الفيديو بعد' };
+  if (!reply || !reply.watch || !reply.videoId) return { enabled: false, videoId: null, reason: t('popup.editor.needVideo') };
+  if (reply.loading) return { enabled: false, videoId: null, reason: t('popup.editor.reading') };
+  if (!reply.arabic) return { enabled: false, videoId: null, reason: t('popup.editor.none') };
   return { enabled: true, videoId: reply.videoId, reason: null };
 }
 
@@ -339,29 +337,18 @@ export function editorGate(reply) {
 export function quickActions(reply) {
   if (!reply || !reply.watch || !reply.videoId) return [];
   const gate = editorGate(reply);
-  if (reply.loading) return [{ id: 'editor', label: 'تحرير الترجمة', primary: false, disabledReason: gate.reason }];
-  if (reply.arabic) return [{ id: 'editor', label: 'تحرير الترجمة', primary: false, disabledReason: null }];
+  if (reply.loading) return [{ id: 'editor', label: t('popup.editor.open'), primary: false, disabledReason: gate.reason }];
+  if (reply.arabic) return [{ id: 'editor', label: t('popup.editor.open'), primary: false, disabledReason: null }];
   return [];
 }
 
 // ---- كتلة «تعليمات الترجمة» (AA3، لوحة 09، قرارا سلطان ق٢ وق٥) ----
 
-export const PAIR_TEXT = Object.freeze({
-  title: 'تعليمات الترجمة',
-  copy: 'نسخ التعليمات',
-  copied: 'نُسخت التعليمات',
-  failed: 'تعذّر النسخ — أعد المحاولة',
-  detected: 'لغة الأصل مكتشفة من ترجمة الفيديو.',
-  noVideo: 'يُتاح النسخ في صفحة فيديو على يوتيوب.',
-  loading: 'جارٍ قراءة الفيديو…',
-  needBoth: 'اختر لغة الأصل ولغة الترجمة ليُتاح النسخ.',
-  needFrom: 'اختر لغة الملف الذي ستترجمه («من»).',
-  needTo: 'اختر اللغة التي تريد الترجمة إليها.',
-  same: 'اللغتان متطابقتان؛ اختر لغة أخرى لإحداهما.',
-});
+/** نصوص كتلة «تعليمات الترجمة» بلغة الواجهة الحالية عند كل قراءة (popup.pair). */
+export const PAIR_TEXT = texts('popup.pair');
 
 /** ترجمة يوتيوب الآلية: «الأصل ترجمة آلية من يوتيوب عن الإنجليزية.». @param {string} via */
-export const machineNote = (via) => `الأصل ترجمة آلية من يوتيوب عن ${langLabel(via)}.`;
+export const machineNote = (via) => t('popup.pair.machine', { lang: langLabel(via) });
 
 /**
  * لغات مسارات الفيديو لقائمة «من» (مجموعة «في هذا الفيديو»): الملتقطة والمحفوظة ثم ما في بيانات المشغّل، بلا تكرار.
@@ -404,8 +391,8 @@ export function pairState({ reply, pair }) {
     ready: reason === null,
     reason,
     sourceNote,
-    caption: reason ?? 'تعليمات لنموذجك تحافظ على أرقام المقاطع وتوقيتها وصيغة SRT.',
-    done: from && to ? 'ألصقها مع ملف الأصل في محادثة نموذجك.' : '',
+    caption: reason ?? PAIR_TEXT.caption,
+    done: from && to ? PAIR_TEXT.done : '',
   };
 }
 

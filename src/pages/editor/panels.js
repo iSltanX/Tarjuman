@@ -1,6 +1,7 @@
 // اللوحة الجانبية (مواصفة التصميم §١١.٢): المشكلات بعددها وكل بند يقفز إلى صفه، والمقارنة بملخصها وزر
 // «استعادة التوقيت الأصلي…» حين يتطابق العدد والترقيم وحده، وملاحظات الاستيراد. وصف فقط: لا إصلاح تلقائي.
 import { messageFor } from '../../core/errors/index.js';
+import { t } from '../../i18n/index.js';
 import { button, el, statusPill } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
 import { comparisonLines, issuesSummary, restoreUnavailable } from './text.js';
@@ -22,7 +23,7 @@ export function renderIssues(box, { doc, report, onJump }) {
         attrs: { type: 'button', 'data-index': String(x.index), 'data-field': x.field ?? '' },
         children: [
           el('span', { className: 'ed-issue__n tj-mono-sm', text: String(x.n), doc }),
-          el('span', { className: 'ed-issue__text', text: `${x.tone === 'error' ? 'خطأ' : 'تحذير'}: ${messageFor(x.code, x.params ?? undefined)}`, doc }),
+          el('span', { className: 'ed-issue__text', text: `${t(x.tone === 'error' ? 'editor.issues.error' : 'editor.issues.warning')}: ${messageFor(x.code, x.params ?? undefined)}`, doc }),
         ],
         on: { click: () => onJump(x.index, x.field) },
         doc,
@@ -33,11 +34,11 @@ export function renderIssues(box, { doc, report, onJump }) {
   });
   // replaceChildren يكتب null نصًا، فتُسقط الأجزاء الغائبة قبله.
   box.replaceChildren(...[
-    el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: 'المشكلات', doc }), statusPill({ tone, text: report.list.length ? issuesSummary(report) : 'لا مشكلات ✓', doc })], doc }),
-    report.errors ? el('p', { className: 'tj-caption', text: 'الأخطاء تمنع الحفظ والتصدير، ولا إصلاح تلقائي.', doc }) : null,
-    report.exportBlockers.length ? el('p', { className: 'tj-caption', text: 'التداخل والمقطع بلا نص يمنعان التصدير وحده؛ الحفظ متاح.', doc }) : null,
+    el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: t('editor.issues.title'), doc }), statusPill({ tone, text: report.list.length ? issuesSummary(report) : t('editor.issues.noneChecked'), doc })], doc }),
+    report.errors ? el('p', { className: 'tj-caption', text: t('editor.issues.errorsBlock'), doc }) : null,
+    report.exportBlockers.length ? el('p', { className: 'tj-caption', text: t('editor.issues.exportBlockers'), doc }) : null,
     items.length ? list : null,
-    items.length > MAX_ITEMS ? el('p', { className: 'tj-caption', text: `و${items.length - MAX_ITEMS} أخرى في القائمة.`, doc }) : null,
+    items.length > MAX_ITEMS ? el('p', { className: 'tj-caption', text: t('editor.issues.more', { n: items.length - MAX_ITEMS }), doc }) : null,
   ].filter(Boolean));
 }
 
@@ -52,17 +53,17 @@ export function renderIssues(box, { doc, report, onJump }) {
  * }} o
  */
 export function renderReference(box, { doc, options, savedId, shownId, preview, readOnly, busy, onChoose, onCommit, onCancel }) {
-  const head = el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: 'مرجع الأصل', doc }), preview ? statusPill({ tone: 'warning', text: 'معاينة غير محفوظة', doc }) : el('span', { doc })], doc });
+  const head = el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: t('editor.ref.title'), doc }), preview ? statusPill({ tone: 'warning', text: t('editor.ref.previewUnsaved'), doc }) : el('span', { doc })], doc });
   if (!options.length) {
-    box.replaceChildren(head, el('p', { className: 'tj-caption', text: 'لم يُنزَّل الأصل من ترجمان لهذا الفيديو، فلا مرجع للمقارنة. نزّله من زر «تنزيل الأصل (SRT)» في المشغّل أولًا.', doc }));
+    box.replaceChildren(head, el('p', { className: 'tj-caption', text: t('editor.ref.noOriginal'), doc }));
     return;
   }
   const sel = el('select', {
-    className: 'ed-select ed-ref-choice', attrs: { 'aria-label': 'مرجع المقارنة' },
+    className: 'ed-select ed-ref-choice', attrs: { 'aria-label': t('editor.ref.choiceAria') },
     on: { change: () => onChoose(sel.value || null) },
     children: [
-      ...options.map((o, k) => el('option', { text: `${o.label} — ${Math.round(o.score * 100)}%${k === 0 ? ' — الأقرب' : ''}`, attrs: { value: o.id }, doc })),
-      el('option', { text: 'بلا مرجع', attrs: { value: '' }, doc }),
+      ...options.map((o, k) => el('option', { text: `${o.label} — ${Math.round(o.score * 100)}%${k === 0 ? t('editor.ref.closest') : ''}`, attrs: { value: o.id }, doc })),
+      el('option', { text: t('editor.ref.none'), attrs: { value: '' }, doc }),
     ],
     doc,
   });
@@ -73,17 +74,17 @@ export function renderReference(box, { doc, options, savedId, shownId, preview, 
   box.replaceChildren(...[
     head,
     sel,
-    shown ? el('p', { className: `tj-caption${weak ? ' ed-ref-weak' : ''}`, text: `${weak ? 'ثقة ضعيفة: ' : ''}${shown.why}`, doc }) : el('p', { className: 'tj-caption', text: 'بلا مرجع: يُعرض الملف كما هو، فلا يُحسب ناقص ولا فرق توقيت.', doc }),
-    el('p', { className: 'tj-caption', text: 'المطابقة في العدد والتوقيت لا تعني صحة المعنى.', doc }),
+    shown ? el('p', { className: `tj-caption${weak ? ' ed-ref-weak' : ''}`, text: `${weak ? t('editor.ref.weak') : ''}${shown.why}`, doc }) : el('p', { className: 'tj-caption', text: t('editor.ref.noneNote'), doc }),
+    el('p', { className: 'tj-caption', text: t('editor.ref.matchNote'), doc }),
     preview ? el('div', {
       className: 'ed-group ed-wrap',
       children: [
-        button({ label: 'اعتماد هذا المرجع', variant: 'primary', size: 'sm', loading: busy, onClick: onCommit, doc }),
-        button({ label: 'رجوع إلى المحفوظ', size: 'sm', variant: 'ghost', onClick: onCancel, doc }),
+        button({ label: t('editor.ref.commit'), variant: 'primary', size: 'sm', loading: busy, onClick: onCommit, doc }),
+        button({ label: t('editor.ref.cancel'), size: 'sm', variant: 'ghost', onClick: onCancel, doc }),
       ],
       doc,
     }) : null,
-    !preview && savedId === null && options.length ? el('p', { className: 'tj-caption', text: 'لا مرجع محفوظ لهذه الترجمة؛ اختر الأنسب من القائمة.', doc }) : null,
+    !preview && savedId === null && options.length ? el('p', { className: 'tj-caption', text: t('editor.ref.unsavedNote'), doc }) : null,
   ].filter(Boolean));
 }
 
@@ -102,20 +103,20 @@ export function renderComparison(box, { doc, report, notes, readOnly, onRestore,
     : [];
   const restore = reason
     ? el('p', { className: 'tj-caption', text: reason, doc })
-    : button({ label: 'استعادة التوقيت الأصلي…', variant: 'secondary', size: 'sm', disabledReason: readOnly ? messageFor('ED_READ_ONLY') : null, onClick: onRestore, doc });
+    : button({ label: t('editor.cmp.restore'), variant: 'secondary', size: 'sm', disabledReason: readOnly ? messageFor('ED_READ_ONLY') : null, onClick: onRestore, doc });
   box.replaceChildren(...[
-    el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: 'المقارنة', doc })], doc }),
+    el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: t('editor.cmp.title'), doc })], doc }),
     el('ul', { className: 'ed-cmp', children: lines, doc }),
     jumpable.length ? el('div', {
       className: 'ed-chips',
-      attrs: { role: 'group', 'aria-label': 'انتقال إلى مقاطع في التقرير' },
-      children: jumpable.map((n) => el('button', { className: 'ed-chip tj-mono-sm', text: String(n), attrs: { type: 'button', 'aria-label': `انتقال إلى المقطع ${n}` }, on: { click: () => onJumpN(n) }, doc })),
+      attrs: { role: 'group', 'aria-label': t('editor.cmp.jumpGroup') },
+      children: jumpable.map((n) => el('button', { className: 'ed-chip tj-mono-sm', text: String(n), attrs: { type: 'button', 'aria-label': t('editor.cmp.jumpTo', { n }) }, on: { click: () => onJumpN(n) }, doc })),
       doc,
     }) : null,
     restore,
     notes.length ? el('details', {
       className: 'ed-notes',
-      children: [el('summary', { text: `ملاحظات قراءة الملف (${notes.length})`, doc }), el('ul', { children: notes.map((t) => el('li', { className: 'tj-auto', text: t, dir: textDirection(t), doc })), doc })],
+      children: [el('summary', { text: t('editor.cmp.notes', { n: notes.length }), doc }), el('ul', { children: notes.map((note) => el('li', { className: 'tj-auto', text: note, dir: textDirection(note), doc })), doc })],
       doc,
     }) : null,
   ].filter(Boolean));

@@ -21,7 +21,8 @@ import { partsStatus, readPatch } from '../../core/import/index.js';
 import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
 import { mergeCues, splitCue } from '../../core/edit/structure.js';
-import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
+import { getDir, getLocale, lt, t } from '../../i18n/index.js';
+import { alertBox, button, el, emptyState, ltr, relabel, slotPicker, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatTimecode, offsetInline, textDirection } from '../../ui/format.js';
 import { holdTimer, onHold } from '../../ui/hold.js';
 import { createMenu } from '../../ui/menu.js';
@@ -48,10 +49,8 @@ import {
 } from './text.js';
 import { RowLayout, createVirtualList, rowHeight, textLines, wrappedLines } from './virtual.js';
 
-const KIND_LABEL = Object.freeze({
-  text: 'تعديل النص', time: 'تعديل الزمن', shift: 'نقل التوقيت', commit: 'تثبيت الإزاحة', restore: 'استعادة التوقيت',
-  replace: 'الاستبدال', merge: 'الدمج', split: 'الشطر', drift: 'تصحيح الانجراف', patch: 'الاستكمال المترجم', rescue: 'إعادة تطبيق تعديلاتي',
-});
+/** اسم نوع خطوة التراجع والإعادة باللغة الحالية (editor.kind.*). */
+const kindLabel = (kind) => (kind ? t(`editor.kind.${kind}`) : '');
 const STEPS = [100, 250, 500, 1000, 2000, 5000];
 /** سكون على مقطع قبل كتابة آخر موضع (نقطة طبيعية، لا مع كل تمرير). */
 const POSITION_DELAY_MS = 4000;
@@ -75,19 +74,20 @@ export async function mountEditor(app, {
 }) {
   const win = doc.defaultView;
   const title = (text) => el('h1', { className: 'tj-h1', text, doc });
+  const libraryHref = (hash = '') => new URL(`../library/index.html${hash}`, win.location.href).href;
   // مخرج حالتي الخطأ إلى المحفوظات (الصفحة بلا شريط علوي، وتُفتح عادةً في تبويب جديد بلا رجوع؛ U27).
   const libraryAction = (hash = '') => button({
-    label: 'المحفوظات', variant: 'secondary', size: 'sm',
-    onClick: () => { win?.location.assign(new URL(`../library/index.html${hash}`, win.location.href).href); },
+    label: t('common.nav.library'), variant: 'secondary', size: 'sm',
+    onClick: () => { win?.location.assign(libraryHref(hash)); },
     doc,
   });
 
   if (!videoId) {
-    app.append(title('المحرّر'), alertBox({ tone: 'danger', title: 'تعذّر فتح المحرّر', text: messageFor('TJ_BAD_VIDEO_ID'), action: libraryAction(), doc }));
+    app.append(title(t('common.nav.editor')), alertBox({ tone: 'danger', title: t('editor.open.failed'), text: messageFor('TJ_BAD_VIDEO_ID'), action: libraryAction(), doc }));
     return null;
   }
   const loading = el('div', { className: 'tj-stack', attrs: { 'aria-busy': 'true' }, children: Array.from({ length: 6 }, () => el('div', { className: 'tj-skeleton ed-skeleton', doc })), doc });
-  app.append(title('المحرّر'), loading);
+  app.append(title(t('common.nav.editor')), loading);
   let bundle;
   let settings;
   let prefs;
@@ -100,7 +100,7 @@ export async function mountEditor(app, {
     ]);
   } catch (err) {
     const info = toErrorInfo(err);
-    loading.replaceWith(alertBox({ tone: 'danger', title: 'تعذّر فتح المحرّر', text: `${info.message} (${info.code})`, action: libraryAction(`#v=${videoId}`), doc }));
+    loading.replaceWith(alertBox({ tone: 'danger', title: t('editor.open.failed'), text: `${info.message} (${info.code})`, action: libraryAction(`#v=${videoId}`), doc }));
     return null;
   }
   const picked = pickSlot(bundle, requested);
@@ -111,20 +111,20 @@ export async function mountEditor(app, {
       className: 'ed-empty__actions',
       children: [
         button({
-          label: 'فتح الفيديو', icon: 'external', size: 'sm', doc,
+          label: t('editor.empty.openVideo'), icon: 'external', size: 'sm', doc,
           onClick: async () => {
             const r = await openVideo(videoId);
             emptyNote.replaceChildren(...(r?.ok ? [] : [alertBox({ tone: 'danger', text: messageFor(r?.code ?? 'PG_OPEN_FAILED'), doc })]));
           },
         }),
-        button({ label: 'المحفوظات', variant: 'ghost', size: 'sm', onClick: () => { win?.location.assign(new URL(`../library/index.html#v=${videoId}`, win.location.href).href); }, doc }),
+        button({ label: t('common.nav.library'), variant: 'ghost', size: 'sm', onClick: () => { win?.location.assign(libraryHref(`#v=${videoId}`)); }, doc }),
       ],
       doc,
     });
     // النص يقول السبب لا يكرر العنوان (كان ST_NO_RECORD بالجملة نفسها؛ تدقيق Fable، UX-13 = F2)، والخطوات بعده.
     loading.replaceWith(emptyState({
-      title: 'لا ترجمة محفوظة لهذا الفيديو',
-      steps: ['افتح الفيديو على يوتيوب', 'ارفع ملف الترجمة من زر الرفع في شريط المشغّل', 'ثم افتح المحرّر من نافذة الإضافة'], action: actions, doc,
+      title: t('editor.empty.title'),
+      steps: [t('editor.empty.step1'), t('editor.empty.step2'), t('editor.empty.step3')], action: actions, doc,
     }));
     app.append(emptyNote);
     return null;
@@ -158,12 +158,16 @@ export async function mountEditor(app, {
     comparison: null, compareTimer: 0, frame: 0,
   };
   const act = () => (S.view === 'original' ? S.original : S.session);
+  /** نتيجة الفعل الأخير سطرًا تحت شريط الأدوات: النص يُحسب من make عند كل قراءة، فيتبع تبديل اللغة في مكانه. @param {string} tone @param {string | (() => string)} make */
+  const setResult = (tone, make) => {
+    S.result = { tone, get text() { return typeof make === 'function' ? make() : make; } };
+  };
   const readOnly = () => S.view === 'original';
   const changes = () => S.session.changedCount || (S.session.offsetChanged ? 1 : 0);
   /** ما يضيع بالمغادرة أو التبديل: التغييرات ومسودات الزمن غير الصالحة (كانت المسودة وحدها «0 تغيير»؛ U27). */
   const pending = () => pendingSentence(changes(), S.session.draftCount);
-  /** فعل الفقد بصيغة ما يضيع: المسودة وحدها مذكّر («حقل زمن»)، وإلا التغييرات. */
-  const lose = (fem, masc) => (S.session.hasDrafts && !S.session.dirty ? masc : fem);
+  /** ما يضيع مسودة زمن وحدها، لا تغييرات (الفعل في العربية مذكّر مع «حقل زمن» ومؤنث مع التغييرات). */
+  const draftsOnly = () => S.session.hasDrafts && !S.session.dirty;
   const mac = isMac(win);
   /** الحقل الذي ركّزه فعل بنيوي (دمج أو شطر) ولم يُكتب فيه بعد: ⌘Z الأول فيه تراجع المحرّر (U18). */
   let autoFocused = null;
@@ -171,47 +175,47 @@ export async function mountEditor(app, {
   // ---- الهيكل ----
   app.replaceChildren();
   app.classList.add('ed-app');
-  const backBtn = button({ label: 'المحفوظات', variant: 'ghost', size: 'sm', className: 'ed-back', onClick: () => goLibrary(), doc });
-  backBtn.replaceChildren(editorIcon('chev-right', { doc }), el('span', { text: 'المحفوظات', doc })); // سهم الرجوع (يمينًا في RTL) ثم الاسم
+  const backBtn = button({ label: lt('common.nav.library'), variant: 'ghost', size: 'sm', className: 'ed-back', onClick: () => goLibrary(), doc });
+  backBtn.replaceChildren(editorIcon('chev-right', { doc }), el('span', { text: lt('common.nav.library'), doc })); // سهم الرجوع (يمينًا في RTL، وينعكس في LTR بالـCSS) ثم الاسم
   // العنوان بقاعدة «حرف عربي ⇒ RTL» لا أول حرف قوي (قرار سلطان، CL-002)، بمحاذاة يمين حتى الإنجليزي الخالص.
   const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate tj-auto', doc });
   // الزوج اللغوي في رأس المحرّر (AA3، لوحة 19 البند ٢): لغة مسار الأصل ← لغة الترجمة المفتوحة. يُغيَّر من قائمة «الترجمة» في المشغّل أو من
   // الإعدادات، لا هنا، فلا تتعارض كتابته مع جلسة تحرير لم تُحفظ.
-  const pairEl = el('span', { className: 'ed-pair tj-caption', attrs: { title: 'لغة الأصل ← لغة الترجمة. تُغيَّر لغة الترجمة من قائمة «الترجمة» في المشغّل.' }, doc });
-  const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'الترجمة المفتوحة', onSelect: (n) => switchSlot(n), doc });
+  const pairEl = el('span', { className: 'ed-pair tj-caption', attrs: { title: lt('editor.head.pairTitle') }, doc });
+  const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: lt('editor.head.slots'), onSelect: (n) => switchSlot(n), doc });
   const slotNote = el('span', { className: 'ed-slot-note tj-caption', doc });
-  const versionSel = el('select', { className: 'ed-select', attrs: { 'aria-label': 'النسخة المعروضة' }, on: { change: () => setView(versionSel.value) }, doc });
-  const restoreOrigBtn = button({ label: 'الرجوع إلى النسخة المرفوعة…', variant: 'ghost', size: 'sm', onClick: () => onRestoreOriginal(), doc });
+  const versionSel = el('select', { className: 'ed-select', attrs: { 'aria-label': lt('editor.head.version') }, on: { change: () => setView(versionSel.value) }, doc });
+  const restoreOrigBtn = button({ label: lt('editor.head.restoreOriginal'), variant: 'ghost', size: 'sm', onClick: () => onRestoreOriginal(), doc });
   const statusBox = el('span', { className: 'ed-status', attrs: { role: 'status' }, doc });
   // أيقونتان بلا نص (اسمهما في aria-label، وما سيتراجع عنه أو يعاد في التلميح): الإعادة هي أيقونة التراجع معكوسة بـCSS.
-  const undoBtn = button({ label: 'تراجع', icon: 'undo', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-undo', onClick: () => doUndo(), doc });
-  const redoBtn = button({ label: 'إعادة', icon: 'redo', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-redo', onClick: () => doRedo(), doc });
+  const undoBtn = button({ label: lt('editor.action.undo'), icon: 'undo', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-undo', onClick: () => doUndo(), doc });
+  const redoBtn = button({ label: lt('editor.action.redo'), icon: 'redo', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-redo', onClick: () => doRedo(), doc });
   // «تصدير ▾» (§١٩.٩): الترجمة SRT، وتقرير المراجعة، والنص الدراسي؛ وكلها عبر saveFile (R65).
   const exportMenu = createMenu({
-    label: 'تصدير', chevron: true, doc,
+    label: lt('editor.action.export'), chevron: true, doc,
     items: [
-      { id: 'srt', label: 'الترجمة SRT…', hint: 'النسخة الحالية أو المرفوعة، بتوقيت المشاهدة أو المحفوظ', onSelect: () => onExport() },
-      { id: 'report', label: 'تقرير مراجعة…', hint: 'المقاطع ومشكلاتها وعلاماتك بأزمنتها', onSelect: () => onReport() },
-      { id: 'study', label: 'نص دراسي…', hint: 'فقرات للقراءة بروابط توقيت، بلغة الترجمة أو باللغتين', onSelect: () => onStudy() },
+      { id: 'srt', label: lt('editor.export.srt'), hint: lt('editor.export.srtHint'), onSelect: () => onExport() },
+      { id: 'report', label: lt('editor.export.report'), hint: lt('editor.export.reportHint'), onSelect: () => onReport() },
+      { id: 'study', label: lt('editor.export.study'), hint: lt('editor.export.studyHint'), onSelect: () => onStudy() },
     ],
   });
   const exportBtn = exportMenu.root;
-  const saveBtn = button({ label: 'حفظ', variant: 'primary', size: 'sm', onClick: () => save(), doc });
+  const saveBtn = button({ label: lt('editor.action.save'), variant: 'primary', size: 'sm', onClick: () => save(), doc });
   // الرأس صفّان (لوحة Editor): الأول للوجهة والعنوان ثم الحالة والتراجع والتصدير والحفظ، والثاني لخانة التحرير والنسخة المعروضة
   // وسطر الخانة النشطة. تسمية «خانة التحرير» تختفي مع المحدد (ترجمة واحدة لا محدد).
-  const slotLabel = el('span', { className: 'ed-head__label', text: 'الترجمة المفتوحة', attrs: { 'aria-hidden': 'true' }, doc });
+  const slotLabel = el('span', { className: 'ed-head__label', text: lt('editor.head.slots'), attrs: { 'aria-hidden': 'true' }, doc });
   const slotSep = el('span', { className: 'ed-head__sep', attrs: { 'aria-hidden': 'true' }, doc });
   const headEl = el('header', {
     className: 'ed-head',
     children: [
       el('div', { className: 'ed-head__row', children: [backBtn, titleEl, ltr(videoId, { doc }), pairEl, el('span', { className: 'ed-spacer', doc }), statusBox, undoBtn, redoBtn, exportBtn, saveBtn], doc }),
-      el('div', { className: 'ed-head__row ed-head__slot', children: [slotLabel, slotsEl.root, slotSep, el('span', { className: 'ed-head__label', text: 'النسخة المعروضة', attrs: { 'aria-hidden': 'true' }, doc }), versionSel, restoreOrigBtn, el('span', { className: 'ed-spacer', doc }), slotNote], doc }),
+      el('div', { className: 'ed-head__row ed-head__slot', children: [slotLabel, slotsEl.root, slotSep, el('span', { className: 'ed-head__label', text: lt('editor.head.version'), attrs: { 'aria-hidden': 'true' }, doc }), versionSel, restoreOrigBtn, el('span', { className: 'ed-spacer', doc }), slotNote], doc }),
     ],
     doc,
   });
 
   // مقطّعة النطاق بنمط مجموعة الخيارات (WAI-ARIA Radio Group): المختار وحده في ترتيب Tab، والأسهم بين المتاح منها (الأيسر إلى
-  // التالي في RTL) تختار وتركّز، وHome وEnd إلى الطرفين (تدقيق 7a66f91، U26).
+  // التالي في RTL، والأيمن في LTR) تختار وتركّز، وHome وEnd إلى الطرفين (تدقيق 7a66f91، U26).
   const scopeBtns = /** @type {const} */ (['cue', 'selection', 'all']).map((kind) => el('button', {
     className: 'ed-seg__opt', attrs: { type: 'button', role: 'radio', 'data-scope': kind },
     on: { click: (e) => { if (e.currentTarget.getAttribute('aria-disabled') !== 'true') setScope(kind); }, keydown: (e) => onScopeKey(e) },
@@ -223,8 +227,9 @@ export async function mountEditor(app, {
     if (at === -1 || !open.length) return;
     const k = open.indexOf(scopeBtns[at]);
     const last = open.length - 1;
+    const [next, prev] = getDir() === 'rtl' ? ['ArrowLeft', 'ArrowRight'] : ['ArrowRight', 'ArrowLeft'];
     const to = {
-      ArrowLeft: k >= last ? 0 : k + 1, ArrowDown: k >= last ? 0 : k + 1, ArrowRight: k <= 0 ? last : k - 1, ArrowUp: k <= 0 ? last : k - 1, Home: 0, End: last,
+      [next]: k >= last ? 0 : k + 1, ArrowDown: k >= last ? 0 : k + 1, [prev]: k <= 0 ? last : k - 1, ArrowUp: k <= 0 ? last : k - 1, Home: 0, End: last,
     }[e.key];
     if (to === undefined) return;
     e.preventDefault();
@@ -240,16 +245,16 @@ export async function mountEditor(app, {
   };
   const minusBtn = hover(button({ label: '−', size: 'sm', onClick: () => applyShift(scopeObj(), -S.stepMs, currentTarget()), doc }), -1);
   const plusBtn = hover(button({ label: '+', size: 'sm', onClick: () => applyShift(scopeObj(), S.stepMs, currentTarget()), doc }), 1);
-  const stepSel = el('select', { className: 'ed-select', attrs: { 'aria-label': 'خطوة الأزرار' }, on: { change: () => { S.stepMs = Number(stepSel.value); renderToolbar(); S.list.refresh(null); } }, doc });
-  for (const ms of [...new Set([...STEPS, S.stepMs])].sort((a, b) => a - b)) stepSel.append(el('option', { text: `${seconds(ms)} ث`, attrs: { value: String(ms) }, doc }));
+  const stepSel = el('select', { className: 'ed-select', attrs: { 'aria-label': lt('editor.toolbar.stepAria') }, on: { change: () => { S.stepMs = Number(stepSel.value); renderToolbar(); S.list.refresh(null); } }, doc });
+  for (const ms of [...new Set([...STEPS, S.stepMs])].sort((a, b) => a - b)) stepSel.append(el('option', { text: lt('editor.toolbar.stepOption', () => ({ sec: seconds(ms) })), attrs: { value: String(ms) }, doc }));
   stepSel.value = String(S.stepMs);
   const amountIn = el('input', {
     className: 'ed-amount', dir: 'ltr',
-    attrs: { type: 'text', placeholder: '+0.5', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'مقدار النقل بالثواني: + تأخير و− تقديم' },
+    attrs: { type: 'text', placeholder: '+0.5', autocomplete: 'off', spellcheck: 'false', 'aria-label': lt('editor.toolbar.amountAria') },
     on: { input: () => renderToolbar(), keydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); applyAmount(); } } },
     doc,
   });
-  const applyBtn = button({ label: 'تطبيق', size: 'sm', onClick: () => applyAmount(), doc });
+  const applyBtn = button({ label: lt('editor.action.apply'), size: 'sm', onClick: () => applyAmount(), doc });
   const enToggle = el('input', { attrs: { type: 'checkbox', id: 'ed-show-en' }, on: { change: () => setShowEnglish(enToggle.checked) }, doc });
   const previewEl = el('p', { className: 'ed-preview', doc });
   const noticeEl = el('p', { className: 'ed-notice', attrs: { role: 'alert' }, doc });
@@ -263,8 +268,8 @@ export async function mountEditor(app, {
     if (kind === 'tools') b.append(b.querySelector('svg')); // السهم بعد الاسم كقوائم الشريط
     return b;
   };
-  const toolsBtn = foldBtn('tools', 'النطاق والتوقيت', 'ed-scope-row ed-offset');
-  const sideBtn = foldBtn('side', 'اللوحة الجانبية', 'ed-pane-review ed-pane-complete');
+  const toolsBtn = foldBtn('tools', lt('editor.toolbar.tools'), 'ed-scope-row ed-offset');
+  const sideBtn = foldBtn('side', lt('editor.side.aria'), 'ed-pane-review ed-pane-complete');
   const search = createSearch({
     doc, extra: toolsBtn,
     cues: () => {
@@ -282,32 +287,32 @@ export async function mountEditor(app, {
         r = S.session.replaceMatches(matches, replacement, { only });
       } catch {
         // تغيّرت المقاطع بعد البحث فلم تعد المواضع صالحة: لا استبدال، والبحث يُعاد.
-        S.result = { tone: 'danger', text: 'تغيّرت المقاطع بعد البحث؛ أعد المعاينة.' };
+        setResult('danger', () => t('editor.search.changed'));
         renderToolbar();
         return { ok: false, count: 0 };
       }
-      S.result = { tone: r.count ? 'success' : 'info', text: r.count ? `استُبدل النص في ${formatCount(r.count, COUNT_FORMS.cue)}. التراجع يعيده خطوةً واحدة.` : 'لا تغيير.' };
+      setResult(r.count ? 'success' : 'info', () => (r.count ? t('editor.search.replaced', { count: formatCount(r.count, COUNT_FORMS.cue) }) : t('editor.search.noChange')));
       renderToolbar();
       return r;
     },
   });
   const timingMenu = createMenu({
-    label: 'أدوات التوقيت', chevron: true, align: 'start', doc,
-    items: [{ id: 'drift', label: 'تصحيح الانجراف…', hint: 'يصحّح تقدّمًا أو تأخرًا يزداد تدريجيًا على طول الفيديو، بنقطتين تعرف زمنهما الصحيح', onSelect: () => onDrift() }],
+    label: lt('editor.toolbar.timingTools'), chevron: true, align: 'start', doc,
+    items: [{ id: 'drift', label: lt('editor.drift.menu'), hint: lt('editor.drift.menuHint'), onSelect: () => onDrift() }],
   });
   const toolbarEl = el('section', {
-    className: 'ed-toolbar', attrs: { 'aria-label': 'أدوات التحرير' },
+    className: 'ed-toolbar', attrs: { 'aria-label': lt('editor.toolbar.aria') },
     children: [
       search.root,
       el('div', {
         className: 'ed-toolbar__row ed-scope-row', attrs: { id: 'ed-scope-row' },
         children: [
-          el('span', { className: 'tj-label', text: 'النطاق:', doc }),
-          el('div', { className: 'ed-seg', attrs: { role: 'radiogroup', 'aria-label': 'النطاق' }, children: scopeBtns, doc }),
-          el('span', { className: 'ed-group', children: [minusBtn, el('span', { className: 'tj-caption', text: 'خطوة', doc }), stepSel, plusBtn], doc }),
+          el('span', { className: 'tj-label', text: lt('editor.scope.label'), doc }),
+          el('div', { className: 'ed-seg', attrs: { role: 'radiogroup', 'aria-label': lt('editor.scope.aria') }, children: scopeBtns, doc }),
+          el('span', { className: 'ed-group', children: [minusBtn, el('span', { className: 'tj-caption', text: lt('editor.toolbar.step'), doc }), stepSel, plusBtn], doc }),
           el('span', { className: 'ed-group', children: [amountIn, applyBtn], doc }),
           timingMenu.root,
-          el('label', { className: 'ed-group ed-toggle', attrs: { for: 'ed-show-en' }, children: [enToggle, el('span', { text: 'إظهار المرجع', doc })], doc }),
+          el('label', { className: 'ed-group ed-toggle', attrs: { for: 'ed-show-en' }, children: [enToggle, el('span', { text: lt('editor.toolbar.showRef'), doc })], doc }),
         ],
         doc,
       }),
@@ -318,23 +323,23 @@ export async function mountEditor(app, {
 
   const offsetText = el('p', { className: 'ed-offset__text tj-label', doc });
   const offsetSub = el('p', { className: 'tj-caption', doc });
-  const commitBtn = button({ label: 'تثبيت الإزاحة في التوقيت', size: 'sm', onClick: () => onCommit(), doc });
+  const commitBtn = button({ label: lt('editor.offset.commit'), size: 'sm', onClick: () => onCommit(), doc });
   const offsetEl = el('section', {
-    className: 'ed-offset', attrs: { id: 'ed-offset', 'aria-label': 'إزاحة العرض' },
+    className: 'ed-offset', attrs: { id: 'ed-offset', 'aria-label': lt('editor.offset.aria') },
     children: [editorIcon('info', { doc }), el('div', { className: 'ed-offset__body', children: [offsetText, offsetSub], doc }), commitBtn],
     doc,
   });
 
   const bannerEl = el('div', { className: 'ed-banner', doc });
-  const issuesEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المشكلات' }, doc });
-  const compareEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المقارنة' }, doc });
-  const densityEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'سرعة القراءة وطول السطر' }, doc });
-  const refEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'مرجع الأصل' }, doc });
-  const marksEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'العلامات' }, doc });
-  const resumeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'آخر موضع' }, doc });
-  const completeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'الاستكمال' }, doc });
+  const issuesEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': lt('editor.issues.title') }, doc });
+  const compareEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': lt('editor.cmp.title') }, doc });
+  const densityEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': lt('editor.density.title') }, doc });
+  const refEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': lt('editor.ref.title') }, doc });
+  const marksEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': lt('editor.marks.title') }, doc });
+  const resumeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': lt('editor.resume.title') }, doc });
+  const completeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': lt('editor.complete.title') }, doc });
   // اللوحة الجانبية بتبويبين (§١٩.٩): «المراجعة» (الفحص الآلي ثم العلامات وآخر موضع) و«الاستكمال».
-  const sideTabs = [['review', 'المراجعة'], ['complete', 'الاستكمال']].map(([id, label]) => el('button', {
+  const sideTabs = [['review', t('editor.tabs.review')], ['complete', t('editor.complete.title')]].map(([id, label]) => el('button', {
     className: 'ed-tab', text: label, attrs: { type: 'button', role: 'tab', id: `ed-tab-${id}`, 'aria-controls': `ed-pane-${id}`, 'data-tab': id },
     // اختيار تبويب يفتح اللوحة إن كانت مطوية (النوافذ الضيقة).
     on: { click: () => { setSideTab(id); setFold('side', true); } },
@@ -343,8 +348,8 @@ export async function mountEditor(app, {
   const reviewPane = el('div', {
     className: 'ed-pane', attrs: { role: 'tabpanel', id: 'ed-pane-review', 'aria-labelledby': 'ed-tab-review' },
     children: [
-      el('p', { className: 'ed-pane__title tj-label', text: 'الفحص الآلي', doc }), issuesEl, refEl, compareEl, densityEl,
-      el('p', { className: 'ed-pane__title tj-label', text: 'مراجعتك', doc }), marksEl, resumeEl,
+      el('p', { className: 'ed-pane__title tj-label', text: lt('editor.pane.auto'), doc }), issuesEl, refEl, compareEl, densityEl,
+      el('p', { className: 'ed-pane__title tj-label', text: lt('editor.pane.mine'), doc }), marksEl, resumeEl,
     ],
     doc,
   });
@@ -353,28 +358,28 @@ export async function mountEditor(app, {
   resumeChip.hidden = true;
   const counterEl = el('span', { className: 'ed-counter tj-caption', attrs: { 'aria-live': 'off' }, doc });
   // العمود المرجعي (§١٩.٩): الإنجليزية أو ترجمة أخرى من خانات الفيديو، باختيار في رأس عموده.
-  const refSel = el('select', { className: 'ed-select ed-ref-select', attrs: { 'aria-label': 'العمود المرجعي' }, on: { change: () => setRefCol(refSel.value) }, doc });
+  const refSel = el('select', { className: 'ed-select ed-ref-select', attrs: { 'aria-label': lt('editor.col.refAria') }, on: { change: () => setRefCol(refSel.value) }, doc });
   const listHead = el('div', {
     className: 'ed-list__head',
-    children: ['', '#', 'البداية', 'النهاية', 'المدة', 'الترجمة', null, ''].map((t, k) => (k === 6
+    children: ['', '#', lt('editor.col.start'), lt('editor.col.end'), lt('editor.col.duration'), lt('editor.col.translation'), null, ''].map((head, k) => (k === 6
       ? el('span', { className: 'ed-col-en', children: [refSel], doc })
-      : el('span', { text: t, attrs: { 'aria-hidden': 'true' }, doc }))),
+      : el('span', { text: head, attrs: { 'aria-hidden': 'true' }, doc }))),
     doc,
   });
-  const scroller = el('div', { className: 'ed-list', attrs: { role: 'list', 'aria-label': 'المقاطع' }, doc });
+  const scroller = el('div', { className: 'ed-list', attrs: { role: 'list', 'aria-label': lt('editor.list.aria') }, doc });
   const unsavedText = el('p', { className: 'tj-label', doc });
-  const unsavedSave = button({ label: 'حفظ', variant: 'primary', size: 'sm', onClick: () => save(), doc });
-  const unsavedDiscard = button({ label: 'تجاهل التغييرات', variant: 'ghost', size: 'sm', onClick: () => onDiscard(), doc });
+  const unsavedSave = button({ label: lt('editor.action.save'), variant: 'primary', size: 'sm', onClick: () => save(), doc });
+  const unsavedDiscard = button({ label: lt('editor.unsaved.discard'), variant: 'ghost', size: 'sm', onClick: () => onDiscard(), doc });
   // الشريط السفلي معكوس الألوان (لوحة Editor): معيّن ثم الجملة، وفي النهاية «تجاهل» ثم «حفظ» (الحفظ أقصى النهاية).
-  const unsavedEl = el('div', { className: 'ed-unsaved', attrs: { role: 'region', 'aria-label': 'تغييرات غير محفوظة' }, children: [el('span', { className: 'ed-unsaved__dot', attrs: { 'aria-hidden': 'true' }, doc }), unsavedText, el('span', { className: 'ed-spacer', doc }), unsavedDiscard, unsavedSave], doc });
+  const unsavedEl = el('div', { className: 'ed-unsaved', attrs: { role: 'region', 'aria-label': lt('editor.unsaved.region') }, children: [el('span', { className: 'ed-unsaved__dot', attrs: { 'aria-hidden': 'true' }, doc }), unsavedText, el('span', { className: 'ed-spacer', doc }), unsavedDiscard, unsavedSave], doc });
   const toastEl = el('div', { className: 'ed-toast', attrs: { role: 'status', 'aria-live': 'polite', inert: '' }, doc });
   // الرسالة العابرة تحت الرأس عند طرفه (تحت «حفظ»)، لا فوق العنوان (ملاحظة W4 من لقطة w4-editor-saved).
   headEl.appendChild(toastEl);
-  const mainEl = el('section', { className: 'ed-main', attrs: { 'aria-label': 'قائمة المقاطع' }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc });
+  const mainEl = el('section', { className: 'ed-main', attrs: { 'aria-label': lt('editor.list.region') }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc });
   const sideEl = el('aside', {
     className: 'ed-side',
     children: [
-      el('div', { className: 'ed-side__bar', children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': 'اللوحة الجانبية' }, children: sideTabs, on: { keydown: onTabsKey }, doc }), sideBtn], doc }),
+      el('div', { className: 'ed-side__bar', children: [el('div', { className: 'ed-tabs', attrs: { role: 'tablist', 'aria-label': lt('editor.side.aria') }, children: sideTabs, on: { keydown: onTabsKey }, doc }), sideBtn], doc }),
       reviewPane, completePane,
     ],
     doc,
@@ -480,13 +485,18 @@ export async function mountEditor(app, {
     if (S.refCol !== 'en' && (S.refCol === n || !b.slots[S.refCol - 1].track)) S.refCol = 'en';
     S.external = null;
     S.showEnglish = !S.hideEnglish && ((S.englishTrack?.cues.length ?? 0) > 0 || S.refCol !== 'en');
-    titleEl.textContent = b.record.title ?? 'بلا عنوان محفوظ';
-    titleEl.dir = textDirection(titleEl.textContent);
+    showTitle(b.record.title);
     titleEl.title = b.record.title ?? '';
     rebuildList();
     renderAll();
     // «تابع من المقطع N» عند الفتح أو تبديل الخانة، لا بعد كل حفظ.
     if (!keepUi) renderResumeChip();
+  }
+
+  /** عنوان الفيديو المحفوظ (بياناته)، وبلا عنوان عبارة الفهرس باتجاه الواجهة. */
+  function showTitle(text) {
+    titleEl.textContent = text ?? t('editor.head.untitled');
+    titleEl.dir = text ? textDirection(text) : getDir();
   }
 
   /** نص المرجع لكل مقطع في النسخة المعروضة: الإنجليزية دائمًا (للبحث فيها قراءةً)، والعمود المرجعي بحسب الاختيار. */
@@ -506,10 +516,10 @@ export async function mountEditor(app, {
     const options = [];
     if (S.englishTrack?.cues.length) options.push(['en', refOptionLabel('en', null, S.englishTrack.lang)]);
     for (const slot of S.opened.slots) if (slot.track && slot.n !== S.slot) options.push([String(slot.n), refOptionLabel(slot.n, slot.name)]);
-    if (!options.length) options.push(['en', 'لا مرجع محفوظ']);
-    const sig = options.map((o) => o.join(':')).join('|');
+    if (!options.length) options.push(['en', t('editor.ref.noneSaved')]);
+    const sig = `${getLocale()}|${options.map((o) => o.join(':')).join('|')}`;
     if (refSel.dataset.sig !== sig) {
-      refSel.replaceChildren(...options.map(([v, t]) => el('option', { text: t, attrs: { value: v }, doc })));
+      refSel.replaceChildren(...options.map(([v, label]) => el('option', { text: label, attrs: { value: v }, doc })));
       refSel.dataset.sig = sig;
     }
     refSel.value = String(S.refCol);
@@ -635,9 +645,9 @@ export async function mountEditor(app, {
   }
 
   function saveBlockReason() {
-    if (readOnly()) return 'اختر «النسخة المعدّلة» للحفظ.';
+    if (readOnly()) return t('editor.save.chooseEdited');
     if (S.external === 'removed') return messageFor('ED_RECORD_REMOVED');
-    if (S.external === 'changed') return 'تغيّر السجل من مكان آخر؛ أعد الفتح أولًا.';
+    if (S.external === 'changed') return t('editor.external.changedReopen');
     const { errors } = S.session.issues();
     if (errors) return messageFor('ED_SAVE_HAS_ERRORS', { count: errorsToFix(errors) });
     if (!S.session.dirty) return messageFor('ED_NOTHING_TO_SAVE');
@@ -669,26 +679,26 @@ export async function mountEditor(app, {
     // لغة الترجمة المحفوظة كما في المحفوظات والمشغّل («لغة غير محددة» لما حُفظ قبل 2.0.0)، لا رمز اسم الملف الذي تستعمله الفحوص.
     pairEl.textContent = pairLabel({ from: S.englishTrack?.lang ?? null, to: S.opened?.slots[S.slot - 1]?.track?.lang ?? null, translated: true }) ?? '';
     pairEl.hidden = !pairEl.textContent;
-    doc.title = `${pendingWork ? '● ' : ''}ترجمان — المحرّر`;
+    doc.title = `${pendingWork ? '● ' : ''}${t('common.page.title', { page: t('common.nav.editor') })}`;
     // منطقة الحالة تُكتب حين يتغير نصها أو نبرتها فقط، لا مع كل ضغطة فيُعاد إعلانها (U26).
     const status = { tone: pendingWork ? 'warning' : 'success', text: saveStatus(changes(), dirty, s.draftCount) };
-    const sig = `${status.tone}|${status.text}`;
+    const sig = `${getLocale()}|${status.tone}|${status.text}`;
     if (statusBox.dataset.sig !== sig) {
       statusBox.replaceChildren(statusPill({ ...status, doc }));
       statusBox.dataset.sig = sig;
     }
-    const options = [['edit', S.edited || dirty ? 'النسخة المعدّلة' : 'النسخة الحالية (لم تُعدَّل بعد)']];
-    if (S.edited) options.push(['original', 'النسخة المرفوعة (للعرض والتصدير)']);
-    if (versionSel.options.length !== options.length || versionSel.options[0].text !== options[0][1]) {
-      versionSel.replaceChildren(...options.map(([v, t]) => el('option', { text: t, attrs: { value: v }, doc })));
+    const options = [['edit', S.edited || dirty ? t('editor.version.edited') : t('editor.version.current')]];
+    if (S.edited) options.push(['original', t('editor.version.uploaded')]);
+    if (versionSel.options.length !== options.length || options.some(([, label], k) => versionSel.options[k].text !== label)) {
+      versionSel.replaceChildren(...options.map(([v, label]) => el('option', { text: label, attrs: { value: v }, doc })));
     }
     versionSel.value = S.view;
-    setDisabled(restoreOrigBtn, S.external ? 'تغيّر السجل من مكان آخر؛ أعد الفتح أولًا.' : S.edited ? null : 'لا نسخة معدّلة محفوظة؛ المعروض هو النسخة المرفوعة.');
+    setDisabled(restoreOrigBtn, S.external ? t('editor.external.changedReopen') : S.edited ? null : t('editor.version.noEdited'));
     const ro = readOnly() ? messageFor('ED_READ_ONLY') : null;
-    setDisabled(undoBtn, ro ?? (s.canUndo ? null : 'لا شيء للتراجع'));
-    undoBtn.title = undoBtn.title || `تراجع عن: ${KIND_LABEL[s.undoKind]} (${keyHint('Z', { mac })})`;
-    setDisabled(redoBtn, ro ?? (s.canRedo ? null : 'لا شيء للإعادة'));
-    redoBtn.title = redoBtn.title || `إعادة: ${KIND_LABEL[s.redoKind]} (${keyHint('Z', { mac, shift: true })})`;
+    setDisabled(undoBtn, ro ?? (s.canUndo ? null : t('editor.action.nothingToUndo')));
+    undoBtn.title = undoBtn.title || t('editor.action.undoTitle', { kind: kindLabel(s.undoKind), key: keyHint('Z', { mac }) });
+    setDisabled(redoBtn, ro ?? (s.canRedo ? null : t('editor.action.nothingToRedo')));
+    redoBtn.title = redoBtn.title || t('editor.action.redoTitle', { kind: kindLabel(s.redoKind), key: keyHint('Z', { mac, shift: true }) });
     // «تصدير ▾» يبقى متاحًا: التقرير والنص الدراسي لا تمنعهما أخطاء التوقيت، وحوار SRT يذكر سبب منعه.
     const reason = saveBlockReason();
     for (const b of [saveBtn, unsavedSave]) {
@@ -696,7 +706,7 @@ export async function mountEditor(app, {
       if (S.saving) b.setAttribute('aria-busy', 'true');
       else b.removeAttribute('aria-busy');
     }
-    if (!reason) saveBtn.title = `حفظ (${keyHint('S', { mac })})`;
+    if (!reason) saveBtn.title = t('editor.action.saveTitle', { key: keyHint('S', { mac }) });
   }
 
   const activeN = () => (S.activeIndex === null ? null : act().cueAt(S.activeIndex).n);
@@ -719,26 +729,26 @@ export async function mountEditor(app, {
       b.textContent = scopeOption(kind, { activeN: activeN(), selected: S.selection.size });
       b.setAttribute('aria-checked', String(S.scope === kind));
       b.tabIndex = S.scope === kind ? 0 : -1;
-      const why = ro ?? (kind === 'cue' && S.activeIndex === null ? 'اختر مقطعًا من القائمة أولًا.' : kind === 'selection' && !S.selection.size ? 'حدّد مقاطع بمربعات التحديد أولًا.' : null);
+      const why = ro ?? (kind === 'cue' && S.activeIndex === null ? t('editor.scope.pickCue') : kind === 'selection' && !S.selection.size ? t('editor.scope.pickSelection') : null);
       setDisabled(b, why);
     }
     const target = currentTarget();
     const step = seconds(S.stepMs);
     for (const b of [minusBtn, plusBtn, applyBtn]) setDisabled(b, ro);
     if (!ro) {
-      minusBtn.title = `تقديم ${target} ${step} ث (تظهر أبكر)`;
-      plusBtn.title = `تأخير ${target} ${step} ث (تظهر لاحقًا)`;
+      minusBtn.title = t('editor.toolbar.earlier', { target, step });
+      plusBtn.title = t('editor.toolbar.later', { target, step });
       minusBtn.setAttribute('aria-label', minusBtn.title);
       plusBtn.setAttribute('aria-label', plusBtn.title);
       const raw = amountIn.value.trim();
       const p = parseSeconds(raw);
-      setDisabled(applyBtn, !raw ? 'اكتب مقدارًا بالثواني أولًا.' : !p.ok ? messageFor('ED_SHIFT_INVALID') : p.ms === 0 ? messageFor('ED_SHIFT_ZERO') : null);
+      setDisabled(applyBtn, !raw ? t('editor.toolbar.typeAmount') : !p.ok ? messageFor('ED_SHIFT_INVALID') : p.ms === 0 ? messageFor('ED_SHIFT_ZERO') : null);
     }
     amountIn.readOnly = Boolean(ro);
     stepSel.disabled = Boolean(ro);
     const delta = S.hoverDelta || amountDelta();
     const structure = !ro && S.hoverAct ? structurePreview(S.hoverAct.kind, S.hoverAct.index) : null;
-    previewEl.textContent = ro ? messageFor('ED_READ_ONLY') : structure ?? (delta ? shiftSentence(target, delta, 'before') : `النطاق: ${target} · الخطوة ${step} ث`);
+    previewEl.textContent = ro ? messageFor('ED_READ_ONLY') : structure ?? (delta ? shiftSentence(target, delta, 'before') : t('editor.toolbar.preview', { target, step }));
     const notice = ro ? 0 : S.session.shiftNotice(scopeObj());
     // التنبيه (alert) وسطر النتيجة (status) منطقتان حيّتان: يُكتبان حين يتغير نصهما فقط، فلا يُعاد إعلانهما مع كل ضغطة (U26).
     noticeEl.hidden = !notice;
@@ -747,18 +757,19 @@ export async function mountEditor(app, {
     resultEl.hidden = !S.result;
     const resultClass = `ed-result${S.result ? ` ed-result--${S.result.tone}` : ''}`;
     if (resultEl.className !== resultClass) resultEl.className = resultClass;
-    if (resultEl.textContent !== (S.result?.text ?? '')) resultEl.textContent = S.result?.text ?? '';
+    const resultText = S.result?.text ?? '';
+    if (resultEl.textContent !== resultText) resultEl.textContent = resultText;
     enToggle.checked = S.showEnglish;
     enToggle.disabled = !S.englishTrack?.cues.length && !S.opened.slots.some((x) => x.track && x.n !== S.slot);
-    enToggle.parentElement.title = enToggle.disabled ? 'لا أصل محفوظ ولا ترجمة أخرى لهذا الفيديو تُعرض مرجعًا.' : '';
+    enToggle.parentElement.title = enToggle.disabled ? t('editor.toolbar.noRef') : '';
   }
 
   function renderOffset() {
     const s = S.session;
     offsetText.textContent = offsetLine(s.offsetMs);
     offsetSub.textContent = s.offsetChanged
-      ? `ثُبّتت الإزاحة ${offsetInline(s.baseOffsetMs)} ث في التوقيت ولم يُحفظ ذلك بعد. التراجع يعيدهما معًا.`
-      : '+ تأخير · − تقديم. تُغيَّر من أزرار ± في شريط المشغّل.';
+      ? t('editor.offset.committed', { off: offsetInline(s.baseOffsetMs) })
+      : t('editor.offset.hint');
     setDisabled(commitBtn, readOnly() ? messageFor('ED_READ_ONLY') : s.offsetMs === 0 ? messageFor('ED_NO_OFFSET') : null);
   }
 
@@ -774,16 +785,17 @@ export async function mountEditor(app, {
       // الأصل المستورد للقراءة فقط (لوحة EditorStates): ملاحظة بمخرجين موجودين أصلًا، الانتقال إلى «النسخة المعدّلة» وتصدير الأصل.
       // تُبنى مرة لهذه الحالة، فلا يُسقط إعادة الرسم تركيزًا على أحد زرّيها.
       if (readOnly()) {
-        if (bannerEl.getAttribute('data-kind') === 'readonly') return;
+        if (bannerEl.getAttribute('data-kind') === 'readonly' && bannerEl.getAttribute('data-locale') === getLocale()) return;
         bannerEl.setAttribute('data-kind', 'readonly');
+        bannerEl.setAttribute('data-locale', getLocale());
         bannerEl.hidden = false;
         bannerEl.replaceChildren(alertBox({
-          tone: 'info', title: 'تعرض النسخة المرفوعة — للقراءة فقط', text: 'التعديل في «النسخة المعدّلة».',
+          tone: 'info', title: t('editor.banner.readOnlyTitle'), text: t('editor.banner.readOnlyText'),
           action: el('div', {
             className: 'ed-group',
             children: [
-              button({ label: 'الانتقال إلى النسخة المعدّلة', variant: 'ghost', size: 'sm', onClick: () => setView('edit'), doc }),
-              button({ label: 'تصدير النسخة المرفوعة', variant: 'ghost', size: 'sm', onClick: () => onExport(), doc }),
+              button({ label: t('editor.banner.toEdited'), variant: 'ghost', size: 'sm', onClick: () => setView('edit'), doc }),
+              button({ label: t('editor.banner.exportUploaded'), variant: 'ghost', size: 'sm', onClick: () => onExport(), doc }),
             ],
             doc,
           }),
@@ -801,15 +813,15 @@ export async function mountEditor(app, {
     const actions = el('div', {
       className: 'ed-group',
       children: [
-        S.external === 'changed' && S.session.dirty ? button({ label: 'مقارنة وإعادة التطبيق…', variant: 'primary', size: 'sm', onClick: () => onRescue(), doc }) : null,
-        S.external === 'changed' ? button({ label: 'إعادة الفتح', variant: 'secondary', size: 'sm', onClick: () => reopen(), doc }) : null,
-        button({ label: 'تصدير نسختي…', variant: 'ghost', size: 'sm', onClick: () => onExport(), doc }),
+        S.external === 'changed' && S.session.dirty ? button({ label: t('editor.banner.rescue'), variant: 'primary', size: 'sm', onClick: () => onRescue(), doc }) : null,
+        S.external === 'changed' ? button({ label: t('editor.banner.reopen'), variant: 'secondary', size: 'sm', onClick: () => reopen(), doc }) : null,
+        button({ label: t('editor.rescue.export'), variant: 'ghost', size: 'sm', onClick: () => onExport(), doc }),
       ],
       doc,
     });
     bannerEl.replaceChildren(S.external === 'changed'
-      ? alertBox({ tone: 'warning', title: 'تغيّر السجل من مكان آخر', text: messageFor('ED_EXTERNAL_CHANGE'), action: actions, doc })
-      : alertBox({ tone: 'danger', title: 'حُذفت الترجمة', text: messageFor('ED_RECORD_REMOVED'), action: actions, doc }));
+      ? alertBox({ tone: 'warning', title: t('editor.banner.changedTitle'), text: messageFor('ED_EXTERNAL_CHANGE'), action: actions, doc })
+      : alertBox({ tone: 'danger', title: t('editor.banner.removedTitle'), text: messageFor('ED_RECORD_REMOVED'), action: actions, doc }));
   }
 
   function renderComparisonPanel() {
@@ -869,10 +881,10 @@ export async function mountEditor(app, {
       const b = await queue((opened) => writeReference(store, videoId, opened, n, { fingerprintId: fp?.id ?? null, comparison }, { now }));
       S.refPreview = undefined;
       afterCompanionWrite(b);
-      toast(fp ? 'حُفظ المرجع لهذه الترجمة.' : 'حُفظت الترجمة بلا مرجع.', 'success');
+      toast(fp ? t('editor.ref.saved') : t('editor.ref.savedNone'), 'success');
     } catch (err) {
       const info = toErrorInfo(err);
-      toast(`تعذّر حفظ المرجع: ${info.message}`, 'danger');
+      toast(t('editor.ref.saveFailed', { reason: info.message }), 'danger');
     } finally {
       S.refBusy = false;
       renderAll();
@@ -885,7 +897,7 @@ export async function mountEditor(app, {
     try {
       latest = await store.getBundle(videoId);
     } catch (err) {
-      toast(`تعذّرت قراءة آخر نسخة: ${toErrorInfo(err).message}`, 'danger');
+      toast(t('editor.external.readFailed', { reason: toErrorInfo(err).message }), 'danger');
       return;
     }
     if (!latest?.slots[S.slot - 1].track) {
@@ -918,10 +930,8 @@ export async function mountEditor(app, {
     S.session.rebaseMerged({ cues: theirs.cues, offsetMs: theirs.offsetMs }, { cues: plan.cues, offsetMs: plan.offsetMs });
     rankRefs();
     rebuildList();
-    S.result = {
-      tone: 'success',
-      text: `أُعيد تطبيق ${formatCount(plan.kept.length, COUNT_FORMS.change)} من تعديلاتك فوق النسخة الأحدث وفق اختياراتك في المواضع المتعارضة. لم يُكتب شيء بعد: راجعها ثم احفظ.`,
-    };
+    const kept = plan.kept.length;
+    setResult('success', () => t('editor.rescue.done', { count: formatCount(kept, COUNT_FORMS.change) }));
     renderAll();
   }
 
@@ -964,7 +974,7 @@ export async function mountEditor(app, {
       const r = S.rows[top];
       n = r ? (r.type === 'cue' ? s.cueAt(r.index).n : r.n) : s.cueAt(0).n;
     }
-    counterEl.textContent = `المقطع ${n} من ${s.count}`;
+    counterEl.textContent = t('editor.counter', { n, total: s.count });
   }
 
   /** مؤقت زوال الرسالة الحالية: يُمسك ما دام المؤشر فوقها أو التركيز فيها (WCAG 2.2.1)، كالرسالة المشتركة src/ui/toast.js (U-042). */
@@ -1018,7 +1028,7 @@ export async function mountEditor(app, {
   function completeReason() {
     if (S.view !== 'edit') return messageFor('ED_READ_ONLY');
     if (!S.fp) return messageFor('ED_NO_REFERENCE');
-    if (!S.opened.record.english.some((t) => t.key === S.fp.trackKey)) return messageFor('EX_PATCH_NO_SOURCE');
+    if (!S.opened.record.english.some((track) => track.key === S.fp.trackKey)) return messageFor('EX_PATCH_NO_SOURCE');
     return null;
   }
 
@@ -1027,8 +1037,9 @@ export async function mountEditor(app, {
     S.parts = S.fp?.parts && S.view === 'edit' ? partsStatus(S.fp, S.session.snapshot()) : null;
   }
 
-  function renderComplete() {
-    if (completePane.hidden || !S.markView) return;
+  /** @param {boolean} [force] يرسم اللوحة وإن كانت مخفية (تبديل اللغة: لوحة مخفية لا تبقى بلغة قديمة) */
+  function renderComplete(force = false) {
+    if ((completePane.hidden && !force) || !S.markView) return;
     const groups = completionGroups({
       cues: shownCues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView, selection: S.selection,
       numbersOf: S.view === 'edit' && S.coverage?.ok ? S.coverage.numbersOf : null, target: openedLang(),
@@ -1077,16 +1088,16 @@ export async function mountEditor(app, {
   async function copyPatchInstructions() {
     if (completeReason()) return;
     try {
-      const source = S.opened.record.english.find((t) => t.key === S.fp?.trackKey)?.lang ?? null;
+      const source = S.opened.record.english.find((track) => track.key === S.fp?.trackKey)?.lang ?? null;
       const target = patchTarget();
       if (!source || !target || source === target) {
         toast(messageFor('PG_PAIR_SAME'), 'danger');
         return;
       }
       await win.navigator.clipboard.writeText(patchInstructions({ videoId, title: S.opened.record.title, glossary: glossary(), source, target }));
-      toast('نُسخت تعليمات الاستكمال. الصقها مع الملف في المحادثة.', 'success');
+      toast(t('editor.complete.copied'), 'success');
     } catch {
-      toast('تعذّر النسخ. أعد المحاولة.', 'danger');
+      toast(t('editor.complete.copyFailed'), 'danger');
     }
   }
 
@@ -1101,9 +1112,9 @@ export async function mountEditor(app, {
     const read = await readPatch(files, { fingerprint: fp, cues: session.snapshot(), target: openedLang() });
     if (!read.ok) {
       await openDialog({
-        doc, tone: 'danger', title: 'تعذّرت قراءة الاستكمال المترجم',
-        body: `${read.error.message}${read.error.line ? ` (السطر ${read.error.line})` : ''}`,
-        actions: [{ label: 'حسنًا', value: 'ok', variant: 'primary' }],
+        doc, tone: 'danger', title: t('editor.complete.readFailed'),
+        body: `${read.error.message}${read.error.line ? ` (${t('editor.complete.line', { n: read.error.line })})` : ''}`,
+        actions: [{ label: t('editor.action.ok'), value: 'ok', variant: 'primary' }],
       });
       return;
     }
@@ -1122,8 +1133,11 @@ export async function mountEditor(app, {
       toast(messageFor(r.code), 'danger');
       return;
     }
-    const inserted = r.inserted ? ` (أُدرج ${r.inserted}${r.renumbered ? '، وأُعيد ترقيم المقاطع من 1 فلا يتكرر رقم' : ''})` : '';
-    S.result = { tone: 'success', text: `طُبّق الاستكمال المترجم على ${formatCount(only.length, COUNT_FORMS.cue)}${inserted}. احفظ لتثبيت ذلك، والتراجع يعيده خطوةً واحدة.` };
+    const { inserted: added, renumbered } = r;
+    setResult('success', () => {
+      const inserted = added ? ` (${t('editor.complete.inserted', { n: added })}${renumbered ? t('editor.complete.renumbered') : ''})` : '';
+      return t('editor.complete.applied', { count: formatCount(only.length, COUNT_FORMS.cue), inserted });
+    });
     computeParts();
     renderToolbar();
     renderComplete();
@@ -1158,19 +1172,20 @@ export async function mountEditor(app, {
     keepFocus(densityEl, () => renderDensity(densityEl, { doc, items: groups.auto.density, maxCps: limits.maxCps, maxLineChars: READING_DEFAULTS.maxLineChars, onJump: (i) => jumpTo(i, 'text') }));
     keepFocus(marksEl, () => renderMarks(marksEl, { doc, marks: groups.marks, readOnly: readOnly(), onJump: (i) => jumpTo(i, 'text'), onRemoveOrphans: () => removeOrphans() }));
     keepFocus(resumeEl, () => renderResume(resumeEl, { doc, items: resumeItems(), onResume: (n) => resumeSlot(n) }));
-    for (const t of sideTabs) t.textContent = t.dataset.tab === 'review' ? `المراجعة${groups.counts.todo ? ` (${groups.counts.todo})` : ''}` : 'الاستكمال';
+    for (const tab of sideTabs) tab.textContent = tab.dataset.tab === 'review' ? `${t('editor.tabs.review')}${groups.counts.todo ? ` (${groups.counts.todo})` : ''}` : t('editor.complete.title');
   }
 
   /**
    * التبويبات بلوحة المفاتيح (نمط WAI-ARIA Tabs): التبويب المختار وحده في ترتيب Tab، والأسهم بين التبويبات (الصفحة RTL: الأيسر
-   * إلى التالي)، وHome وEnd إلى الطرفين؛ والتنقل يختار التبويب ويركّزه. كان «الاستكمال» بـtabIndex=-1 بلا أسهم فلا يُبلَغ
+   * إلى التالي، وفي LTR الأيمن)، وHome وEnd إلى الطرفين؛ والتنقل يختار التبويب ويركّزه. كان «الاستكمال» بـtabIndex=-1 بلا أسهم فلا يُبلَغ
    * بلوحة المفاتيح (تدقيق 5fedcb9، GM-008).
    */
   function onTabsKey(e) {
     const at = sideTabs.indexOf(doc.activeElement);
     if (at === -1) return;
     const last = sideTabs.length - 1;
-    const to = { ArrowLeft: at === last ? 0 : at + 1, ArrowRight: at === 0 ? last : at - 1, Home: 0, End: last }[e.key];
+    const [next, prev] = getDir() === 'rtl' ? ['ArrowLeft', 'ArrowRight'] : ['ArrowRight', 'ArrowLeft'];
+    const to = { [next]: at === last ? 0 : at + 1, [prev]: at === 0 ? last : at - 1, Home: 0, End: last }[e.key];
     if (to === undefined) return;
     e.preventDefault();
     setSideTab(sideTabs[to].dataset.tab);
@@ -1183,6 +1198,11 @@ export async function mountEditor(app, {
    * غيرها. وطيّ ما فيه التركيز يعيد التركيز إلى زره فلا يسقط.
    * @param {'tools' | 'side'} kind @param {boolean} [open]
    */
+  /** تلميح زر الطي بحسب حالته. @param {'tools' | 'side'} kind @param {boolean} open */
+  const foldTitle = (kind, open) => t(`editor.fold.${kind}${open ? 'Close' : 'Open'}`);
+  /** حالة ما طُوي أو فُتح بفعل صريح (لإعادة كتابة تلميحه عند تبديل اللغة دون المساس بالتركيز). @type {Map<'tools' | 'side', boolean>} */
+  const foldOpen = new Map();
+
   function setFold(kind, open) {
     const cls = kind === 'tools' ? 'ed-tools-open' : 'ed-side-open';
     const btn = kind === 'tools' ? toolsBtn : sideBtn;
@@ -1190,7 +1210,8 @@ export async function mountEditor(app, {
     app.classList.toggle(cls, next);
     btn.setAttribute('aria-expanded', String(next));
     scheduleRefit(); // عرض عمود النص قد يتغيّر بالطي
-    btn.title = kind === 'tools' ? (next ? 'طي النطاق والتوقيت' : 'إظهار النطاق والتوقيت') : (next ? 'طي اللوحة الجانبية' : 'إظهار اللوحة الجانبية');
+    foldOpen.set(kind, next);
+    btn.title = foldTitle(kind, next);
     const area = kind === 'tools' ? [toolbarEl.querySelector('#ed-scope-row'), offsetEl] : [reviewPane, completePane];
     if (!next && area.some((a) => a?.contains(doc.activeElement))) btn.focus();
   }
@@ -1241,10 +1262,10 @@ export async function mountEditor(app, {
     try {
       const b = await queue((opened) => writeMarks(store, videoId, opened, S.slot, plan, { now }));
       afterCompanionWrite(b);
-      toast(message, 'success', undoable ? { action: { label: 'تراجع', onClick: () => writeMarkPlan({ remove: plan.add, add: plan.remove }, 'أُعيدت العلامات كما كانت.', { undoable: false }) } } : {});
+      toast(message, 'success', undoable ? { action: { label: t('editor.action.undo'), onClick: () => writeMarkPlan({ remove: plan.add, add: plan.remove }, t('editor.marks.restored'), { undoable: false }) } } : {});
     } catch (err) {
       const info = toErrorInfo(err);
-      toast(info.code === 'ST_CONFLICT' ? 'تغيّرت الترجمة من مكان آخر؛ أعد المحاولة بعد تحديثها.' : `${messageFor('ED_MARK_FAILED')} (${info.code})`, 'danger');
+      toast(info.code === 'ST_CONFLICT' ? t('editor.marks.conflict') : `${messageFor('ED_MARK_FAILED')} (${info.code})`, 'danger');
     }
   }
 
@@ -1262,13 +1283,13 @@ export async function mountEditor(app, {
     }
     const n = act().cueAt(i).n;
     // علامتان على مقطع واحد (بعد دمج؛ U100): الإزالة تزيلهما معًا وتقول ذلك.
-    const many = plan.remove.length > 1 ? ` (كانت عليه ${formatCount(plan.remove.length, COUNT.mark)}، فصارت واحدة)` : '';
-    writeMarkPlan(plan, kind ? `المقطع ${n}: «${MARK_LABEL[kind]}»${many}.` : plan.remove.length > 1 ? `أُزيلت ${formatCount(plan.remove.length, COUNT.mark)} عن المقطع ${n}.` : `أُزيلت علامة المقطع ${n}.`);
+    const many = plan.remove.length > 1 ? t('editor.marks.many', { count: formatCount(plan.remove.length, COUNT.mark) }) : '';
+    writeMarkPlan(plan, kind ? t('editor.marks.toggled', { n, label: MARK_LABEL[kind], many }) : plan.remove.length > 1 ? t('editor.marks.removedMany', { count: formatCount(plan.remove.length, COUNT.mark), n }) : t('editor.marks.removedOne', { n }));
   }
 
   function removeOrphans() {
     if (readOnly() || !S.markView.orphans.length) return;
-    writeMarkPlan({ remove: S.markView.orphans, add: [] }, `أُزيلت ${formatCount(S.markView.orphans.length, COUNT.mark)} فقدت مقطعها.`);
+    writeMarkPlan({ remove: S.markView.orphans, add: [] }, t('editor.marks.orphansRemoved', { count: formatCount(S.markView.orphans.length, COUNT.mark) }));
   }
 
   /** مواضع الخانات الممتلئة: لكلٍّ رقم المقطع الأقرب إلى موضعها المحفوظ. */
@@ -1299,7 +1320,13 @@ export async function mountEditor(app, {
     S.resumeFrom = S.info.position;
     const i = S.resumeFrom ? resolvePosition(S.resumeFrom, shownCues()) : null;
     resumeChip.hidden = i === null;
-    if (i !== null) resumeChip.firstChild.textContent = `تابع من المقطع ${act().cueAt(i).n}`;
+    labelResumeChip();
+  }
+
+  /** نص زر «تابع من المقطع N» من نقطة المتابعة المحفوظة عند الفتح (S.resumeFrom)، دون تغييرها. */
+  function labelResumeChip() {
+    const i = S.resumeFrom ? resolvePosition(S.resumeFrom, shownCues()) : null;
+    if (i !== null) resumeChip.firstChild.textContent = t('editor.resume.from', { n: act().cueAt(i).n });
   }
 
   /** آخر موضع يُكتب عند نقاط طبيعية: بعد سكون على مقطع، وعند مغادرة الصفحة أو الخانة (لا مع كل تمرير). */
@@ -1376,9 +1403,8 @@ export async function mountEditor(app, {
   function applyShift(scope, delta, target) {
     if (readOnly()) return;
     const r = S.session.shift(scope, delta);
-    S.result = r.ok
-      ? { tone: 'success', text: shiftSentence(target, delta, 'after') }
-      : { tone: 'danger', text: messageFor(r.code, r.negative ? { list: numberList(r.negative) } : undefined) };
+    if (r.ok) setResult('success', () => shiftSentence(target, delta, 'after'));
+    else setResult('danger', () => messageFor(r.code, r.negative ? { list: numberList(r.negative) } : undefined));
     renderToolbar();
   }
 
@@ -1386,7 +1412,7 @@ export async function mountEditor(app, {
     if (readOnly()) return;
     const p = parseSeconds(amountIn.value);
     if (!p.ok || p.ms === 0) {
-      S.result = { tone: 'danger', text: messageFor(p.ok ? 'ED_SHIFT_ZERO' : 'ED_SHIFT_INVALID') };
+      setResult('danger', () => messageFor(p.ok ? 'ED_SHIFT_ZERO' : 'ED_SHIFT_INVALID'));
       renderToolbar();
       return;
     }
@@ -1397,23 +1423,22 @@ export async function mountEditor(app, {
     if (readOnly()) return;
     const was = S.session.offsetMs;
     const r = S.session.commitOffset();
-    S.result = r.ok
-      ? { tone: 'success', text: `ثُبّتت إزاحة العرض ${offsetInline(was)} ث في توقيت الملف كله (${formatCount(r.count, COUNT_FORMS.cue)})، وصارت الإزاحة 0.0. احفظ لتثبيت ذلك.` }
-      : { tone: 'danger', text: messageFor(r.code, r.negative ? { list: numberList(r.negative) } : undefined) };
+    if (r.ok) setResult('success', () => t('editor.offset.done', { off: offsetInline(was), count: formatCount(r.count, COUNT_FORMS.cue) }));
+    else setResult('danger', () => messageFor(r.code, r.negative ? { list: numberList(r.negative) } : undefined));
     renderAll();
   }
 
   function doUndo() {
     if (readOnly()) return;
     const r = S.session.undo();
-    if (r.ok) S.result = { tone: 'info', text: `تراجعتَ عن: ${KIND_LABEL[r.kind]}.` };
+    if (r.ok) setResult('info', () => t('editor.action.undone', { kind: kindLabel(r.kind) }));
     scheduleChrome();
   }
 
   function doRedo() {
     if (readOnly()) return;
     const r = S.session.redo();
-    if (r.ok) S.result = { tone: 'info', text: `أُعيد: ${KIND_LABEL[r.kind]}.` };
+    if (r.ok) setResult('info', () => t('editor.action.redone', { kind: kindLabel(r.kind) }));
     scheduleChrome();
   }
 
@@ -1446,7 +1471,7 @@ export async function mountEditor(app, {
         return mergePreview(s.cueAt(i), s.cueAt(i + 1), merged, formatTimecode);
       }
       const at = caretOf(i);
-      if (at === null) return `ضع المؤشر في نص المقطع ${s.cueAt(i).n} حيث تريد الشطر، ثم اضغط «شطر».`;
+      if (at === null) return t('editor.structure.putCaret', { n: s.cueAt(i).n });
       const [head, tail] = splitCue([s.cueAt(i)], 0, at);
       return splitPreview(s.cueAt(i).n, head.text, tail.text);
     } catch (err) {
@@ -1457,7 +1482,7 @@ export async function mountEditor(app, {
   function afterStructure(i, text) {
     S.caret = null;
     S.hoverAct = null;
-    S.result = { tone: 'success', text };
+    setResult('success', text);
     jumpTo(Math.min(i, act().count - 1), 'text');
     // التركيز نُقل برمجيًا إلى نص لم يكتب فيه المستخدم: ⌘Z الأول فيه يتراجع عن الدمج أو الشطر كما تعد الرسالة (U18).
     const f = doc.activeElement;
@@ -1469,9 +1494,9 @@ export async function mountEditor(app, {
     if (readOnly()) return;
     const [a, b] = [S.session.cueAt(i), S.session.cueAt(i + 1)];
     const r = S.session.merge(i);
-    if (r.ok) afterStructure(i, `دُمج المقطع ${a.n} مع ${b.n}. احفظ لتثبيت ذلك، والتراجع يعيدهما.`);
+    if (r.ok) afterStructure(i, () => t('editor.structure.merged', { a: a.n, b: b.n }));
     else {
-      S.result = { tone: 'danger', text: messageFor(r.code) };
+      setResult('danger', () => messageFor(r.code));
       renderToolbar();
     }
   }
@@ -1481,15 +1506,15 @@ export async function mountEditor(app, {
     const at = caretOf(i);
     const n = S.session.cueAt(i).n;
     if (at === null) {
-      S.result = { tone: 'info', text: `ضع المؤشر في نص المقطع ${n} حيث تريد الشطر، ثم اضغط «شطر» مرة أخرى.` };
+      setResult('info', () => t('editor.structure.putCaretAgain', { n }));
       jumpTo(i, 'text');
       renderToolbar();
       return;
     }
     const r = S.session.split(i, at);
-    if (r.ok) afterStructure(i, `شُطر المقطع ${n} إلى قطعتين برقمه نفسه. احفظ لتثبيت ذلك، والتراجع يعيده.`);
+    if (r.ok) afterStructure(i, () => t('editor.structure.splitDone', { n }));
     else {
-      S.result = { tone: 'danger', text: messageFor(r.code) };
+      setResult('danger', () => messageFor(r.code));
       renderToolbar();
     }
   }
@@ -1515,9 +1540,8 @@ export async function mountEditor(app, {
     const anchors = await openDriftDialog({ doc, cues: S.session.snapshot(), activeIndex: S.activeIndex });
     if (!anchors) return;
     const r = S.session.drift(anchors);
-    S.result = r.ok
-      ? { tone: r.count ? 'success' : 'info', text: r.count ? `صُحّح انجراف التوقيت في الملف كله (${formatCount(r.count, COUNT_FORMS.cue)}). احفظ لتثبيت ذلك، والتراجع يعيده.` : 'التوقيت مطابق للنقطتين؛ لا شيء تغيّر.' }
-      : { tone: 'danger', text: messageFor(r.code, r.negative ? { list: numberList(r.negative) } : undefined) };
+    if (r.ok) setResult(r.count ? 'success' : 'info', () => (r.count ? t('editor.drift.done', { count: formatCount(r.count, COUNT_FORMS.cue) }) : t('editor.drift.unchanged')));
+    else setResult('danger', () => messageFor(r.code, r.negative ? { list: numberList(r.negative) } : undefined));
     renderToolbar();
   }
 
@@ -1580,14 +1604,14 @@ export async function mountEditor(app, {
         S.edited = S.info.edited;
         session.markSaved({ cues: S.info.cues, offsetMs: S.info.offsetMs }, shape);
       } else load(saved, n, { keepUi: true });
-      toast('حُفظ.', 'success');
+      toast(t('editor.save.done'), 'success');
     } catch (err) {
       const info = toErrorInfo(err);
       if (info.code === 'ST_CONFLICT') {
         // الرفض قد يكون من تغيّر لا يمس محتوى الخانة (حدث لم يُعالَج بعد): يُعاد الفحص فيُتبنّى الأحدث أو تظهر اللافتة.
         await recheck();
-        toast(S.external ? `تعذّر الحفظ: ${info.message}` : 'تغيّرت الحزمة من مكان آخر دون أن يمس ذلك هذه الترجمة؛ اضغط «حفظ» مرة أخرى.', S.external ? 'danger' : 'info');
-      } else toast(`تعذّر الحفظ: ${info.message}`, 'danger');
+        toast(S.external ? t('editor.save.failed', { reason: info.message }) : t('editor.save.retry'), S.external ? 'danger' : 'info');
+      } else toast(t('editor.save.failed', { reason: info.message }), 'danger');
     } finally {
       S.saving = false;
       done();
@@ -1619,7 +1643,7 @@ export async function mountEditor(app, {
   }
 
   async function reopen() {
-    if ((S.session.dirty || S.session.hasDrafts) && !(await confirmLeave(doc, `${pending()}. ${lose('ستُفقد', 'سيُفقد')} عند إعادة الفتح وتظهر آخر نسخة محفوظة.`))) return;
+    if ((S.session.dirty || S.session.hasDrafts) && !(await confirmLeave(doc, t('editor.reopen.body', { pending: pending(), drafts: draftsOnly() })))) return;
     try {
       const b = await store.getBundle(videoId);
       if (!b?.slots[S.slot - 1].track) {
@@ -1658,7 +1682,7 @@ export async function mountEditor(app, {
       try {
         latest = await store.getBundle(videoId);
       } catch (err) {
-        toast(`تعذّرت قراءة آخر نسخة: ${toErrorInfo(err).message}`, 'danger');
+        toast(t('editor.external.readFailed', { reason: toErrorInfo(err).message }), 'danger');
         return;
       }
       const kind = latest?.slots[S.slot - 1].track ? slotChange(S.opened, latest, S.slot) : 'removed';
@@ -1693,8 +1717,7 @@ export async function mountEditor(app, {
       S.englishTrack = pickEnglishTrack(latest.record.english, S.fp);
       rebuildList();
     } else computeRefs(shownCues());
-    titleEl.textContent = latest.record.title ?? 'بلا عنوان محفوظ';
-    titleEl.dir = textDirection(titleEl.textContent);
+    showTitle(latest.record.title);
     // العلامات والموضع من الحزمة الأحدث (علامة من المشغّل مثلًا) على الصفوف المعروضة. بلا فرض: المحتوى لم يتغير، فلا يُطمس
     // ما يُكتب في الحقل المركّز.
     computeMarks();
@@ -1718,12 +1741,12 @@ export async function mountEditor(app, {
       // الترتيب كما في لوحة EditorStates: «حفظ ثم التبديل» الأساسي (إن أمكن الحفظ)، ثم «البقاء» (وعليه التركيز الأول)، و«التبديل دون
       // حفظ» الصريح في آخر الصف بنبرة خطر هادئة. العنوان بلون النص: الخطر في الزر لا في السؤال.
       const v = await openDialog({
-        doc, title: `التبديل إلى الترجمة ${n}؟`, focus: 'stay',
-        body: `${pending()} في الترجمة ${S.slot}. التبديل دون حفظ ${lose('يُفقدها', 'يُفقده')}.`,
+        doc, title: t('editor.switch.title', { n }), focus: 'stay',
+        body: t('editor.switch.body', { pending: pending(), slot: S.slot, drafts: draftsOnly() }),
         actions: [
-          canSave ? { label: 'حفظ ثم التبديل', value: 'save', variant: 'primary' } : null,
-          { label: 'البقاء', value: 'stay', variant: canSave ? 'secondary' : 'primary' },
-          { label: 'التبديل دون حفظ', value: 'switch', variant: 'ghost', className: 'ed-btn--danger-quiet' },
+          canSave ? { label: t('editor.switch.saveThen'), value: 'save', variant: 'primary' } : null,
+          { label: t('editor.leave.stay'), value: 'stay', variant: canSave ? 'secondary' : 'primary' },
+          { label: t('editor.switch.without'), value: 'switch', variant: 'ghost', className: 'ed-btn--danger-quiet' },
         ].filter(Boolean),
       });
       if (v === 'save') {
@@ -1740,11 +1763,11 @@ export async function mountEditor(app, {
       try {
         target = await store.getBundle(videoId);
       } catch (err) {
-        toast(`تعذّرت قراءة آخر نسخة: ${toErrorInfo(err).message}`, 'danger');
+        toast(t('editor.external.readFailed', { reason: toErrorInfo(err).message }), 'danger');
         return;
       }
       if (!target?.slots[n - 1]?.track) {
-        toast(`الترجمة ${n} لم تعد موجودة.`, 'danger');
+        toast(t('editor.switch.gone', { n }), 'danger');
         return;
       }
     } else writePositionNow();
@@ -1752,7 +1775,7 @@ export async function mountEditor(app, {
     S.result = null;
     load(target, n);
     rememberSlot(n);
-    toast(`الترجمة ${n}`, 'info');
+    toast(t('common.slot.label', { n }), 'info');
     if (resume) resumeHere();
   }
 
@@ -1769,12 +1792,12 @@ export async function mountEditor(app, {
 
   async function onDiscard() {
     const v = await openDialog({
-      doc, tone: 'danger', title: 'تجاهل التغييرات؟', body: `${pending()}. ${lose('ستُفقد', 'سيُفقد')} ويعود الملف كما فُتح.`, focus: 'cancel',
-      actions: [{ label: 'تجاهل التغييرات', value: 'discard', variant: 'danger' }, { label: 'إلغاء', value: 'cancel' }],
+      doc, tone: 'danger', title: t('editor.discard.title'), body: t('editor.discard.body', { pending: pending(), drafts: draftsOnly() }), focus: 'cancel',
+      actions: [{ label: t('editor.unsaved.discard'), value: 'discard', variant: 'danger' }, { label: t('common.cancel'), value: 'cancel' }],
     });
     if (v !== 'discard') return;
     S.session.discard();
-    S.result = { tone: 'info', text: 'عاد الملف كما فُتح.' };
+    setResult('info', () => t('editor.discard.done'));
     renderAll();
   }
 
@@ -1785,9 +1808,9 @@ export async function mountEditor(app, {
     // التعارض (تدقيق 7a66f91، U09).
     const seen = S.opened;
     const v = await openDialog({
-      doc, tone: 'danger', title: 'الرجوع إلى النسخة المرفوعة؟', focus: 'cancel',
-      body: `ستحل النسخة المرفوعة محل نسختك المعدّلة المحفوظة${dirty ? `، وتُفقد التغييرات غير المحفوظة (${changes()})` : ''}. لا تراجع بعد التأكيد، والنسخة المرفوعة نفسها لا تتغير.`,
-      actions: [{ label: 'الرجوع إلى النسخة المرفوعة', value: 'restore', variant: 'danger' }, { label: 'إلغاء', value: 'cancel' }],
+      doc, tone: 'danger', title: t('editor.restoreOriginal.title'), focus: 'cancel',
+      body: t('editor.restoreOriginal.body', { lost: dirty ? t('editor.restoreOriginal.lost', { n: changes() }) : '' }),
+      actions: [{ label: t('editor.restoreOriginal.confirm'), value: 'restore', variant: 'danger' }, { label: t('common.cancel'), value: 'cancel' }],
     });
     if (v !== 'restore') return;
     S.saving = true;
@@ -1806,7 +1829,7 @@ export async function mountEditor(app, {
     } catch (err) {
       const info = toErrorInfo(err);
       if (info.code === 'ST_CONFLICT') S.external = 'changed';
-      toast(`تعذّرت الاستعادة: ${info.message}`, 'danger');
+      toast(t('editor.restoreOriginal.failed', { reason: info.message }), 'danger');
     } finally {
       S.saving = false;
       done();
@@ -1823,15 +1846,15 @@ export async function mountEditor(app, {
       return;
     }
     if (!pv.changes.length) {
-      await openDialog({ doc, title: 'التوقيت مطابق للأصل', body: 'لا مقطع يختلف توقيته عن الملف الذي صُدِّر، فلا شيء لاستعادته.', actions: [{ label: 'حسنًا', value: 'ok', variant: 'primary' }] });
+      await openDialog({ doc, title: t('editor.restoreTiming.sameTitle'), body: t('editor.restoreTiming.sameBody'), actions: [{ label: t('editor.action.ok'), value: 'ok', variant: 'primary' }] });
       return;
     }
-    const span = (t) => el('td', { children: [ltr(t, { doc })], doc });
+    const span = (range) => el('td', { children: [ltr(range, { doc })], doc });
     const table = el('div', {
       className: 'ed-preview-table',
       children: [el('table', {
         children: [
-          el('thead', { children: [el('tr', { children: ['#', 'الحالي', 'الأصل'].map((t) => el('th', { text: t, attrs: { scope: 'col' }, doc })), doc })], doc }),
+          el('thead', { children: [el('tr', { children: ['#', t('editor.restoreTiming.colCurrent'), t('editor.restoreTiming.colOriginal')].map((head) => el('th', { text: head, attrs: { scope: 'col' }, doc })), doc })], doc }),
           el('tbody', {
             children: pv.changes.slice(0, MAX_PREVIEW_ROWS).map((c) => el('tr', {
               children: [
@@ -1845,19 +1868,18 @@ export async function mountEditor(app, {
           }),
         ],
         doc,
-      }), pv.changes.length > MAX_PREVIEW_ROWS ? el('p', { className: 'tj-caption', text: `و${pv.changes.length - MAX_PREVIEW_ROWS} أخرى.`, doc }) : null],
+      }), pv.changes.length > MAX_PREVIEW_ROWS ? el('p', { className: 'tj-caption', text: t('editor.restoreTiming.more', { n: pv.changes.length - MAX_PREVIEW_ROWS }), doc }) : null],
       doc,
     });
     const v = await openDialog({
-      doc, size: 'lg', title: 'استعادة التوقيت الأصلي', content: table, focus: 'cancel',
-      body: 'تُستبدل أزمنة هذه المقاطع بأزمنة ملف الأصل الذي صُدِّر، ويبقى النص كما هو. التغيير غير محفوظ حتى «حفظ»، ويمكن التراجع عنه.',
-      actions: [{ label: `تطبيق على ${formatCount(pv.changes.length, COUNT_FORMS.cue)}`, value: 'apply', variant: 'primary' }, { label: 'إلغاء', value: 'cancel' }],
+      doc, size: 'lg', title: t('editor.cmp.restoreTitle'), content: table, focus: 'cancel',
+      body: t('editor.restoreTiming.body'),
+      actions: [{ label: t('editor.complete.applyAll', { count: formatCount(pv.changes.length, COUNT_FORMS.cue) }), value: 'apply', variant: 'primary' }, { label: t('common.cancel'), value: 'cancel' }],
     });
     if (v !== 'apply') return;
     const r = S.session.restoreTiming(S.fp);
-    S.result = r.ok
-      ? { tone: 'success', text: `استُعيد توقيت ${formatCount(r.count, COUNT_FORMS.cue)} من الأصل. احفظ لتثبيت ذلك.` }
-      : { tone: 'danger', text: messageFor(r.code) };
+    if (r.ok) setResult('success', () => t('editor.restoreTiming.done', { count: formatCount(r.count, COUNT_FORMS.cue) }));
+    else setResult('danger', () => messageFor(r.code));
     scheduleChrome();
   }
 
@@ -1872,9 +1894,9 @@ export async function mountEditor(app, {
       className: 'ed-fieldset',
       children: [
         el('legend', { className: 'tj-label', text: items.legend, doc }),
-        ...items.options.map(([v, t]) => el('label', {
+        ...items.options.map(([v, label]) => el('label', {
           className: 'ed-radio',
-          children: [el('input', { attrs: { type: 'radio', name, value: v, ...(v === value ? { checked: '' } : {}) }, on: { change: () => onPick(v) }, doc }), el('span', { text: t, doc })],
+          children: [el('input', { attrs: { type: 'radio', name, value: v, ...(v === value ? { checked: '' } : {}) }, on: { change: () => onPick(v) }, doc }), el('span', { text: label, doc })],
           doc,
         })),
       ],
@@ -1898,19 +1920,19 @@ export async function mountEditor(app, {
         : planArabicExport({ videoId, cues: s.snapshot(), offsetMs: off, choice, variant, lang: translationLang(S.opened?.slots[S.slot - 1]?.track) });
       timingBox.replaceChildren(...(off !== 0
         ? [radios('ed-timing', {
-          legend: 'التوقيت المصدَّر',
-          options: [['shown', `توقيت المشاهدة (المحفوظ + الإزاحة ${offsetInline(off)} ث)`], ['saved', 'التوقيت المحفوظ (دون الإزاحة)']],
+          legend: t('editor.export.timingLegend'),
+          options: [['shown', t('editor.export.timingShown', { off: offsetInline(off) })], ['saved', t('editor.export.timingSaved')]],
         }, choice, (v) => { choice = v; refresh(); })]
         : []));
       timingBox.hidden = off === 0;
       const name = plan.ok ? plan.name : `${videoId}.ar${variant === 'original' ? '.original' : ''}.srt`;
-      nameLine.replaceChildren('اسم الملف: ', ltr(name, { doc }));
+      nameLine.replaceChildren(t('editor.export.fileName'), ltr(name, { doc }));
       noteLine.textContent = variant === 'original'
-        ? (off === 0 ? 'النسخة المرفوعة كما هي، بتوقيتها المحفوظ.' : 'النسخة المرفوعة كما هي، بالتوقيت الذي تختاره.')
-        : S.session.dirty ? `يُصدَّر ما تراه الآن، ومنه تغييرات غير محفوظة (${changes()}).` : off === 0 ? 'إزاحة العرض صفر، فيُصدَّر التوقيت المحفوظ كما هو.' : '';
+        ? (off === 0 ? t('editor.export.noteUploadedSaved') : t('editor.export.noteUploadedChoose'))
+        : S.session.dirty ? t('editor.export.noteDirty', { n: changes() }) : off === 0 ? t('editor.export.noteZeroOffset') : '';
       noteLine.hidden = !noteLine.textContent;
       const why = plan.ok ? null : exportError(plan);
-      errorBox.replaceChildren(...(why ? [alertBox({ tone: 'danger', title: 'لا يمكن التصدير', text: why, doc })] : []));
+      errorBox.replaceChildren(...(why ? [alertBox({ tone: 'danger', title: t('editor.export.cannot'), text: why, doc })] : []));
       errorBox.hidden = !why;
       const notes = plan.ok ? plan.notes ?? [] : [];
       notesBox.replaceChildren(...notes.map((text) => alertBox({ tone: 'warning', text, doc })));
@@ -1920,21 +1942,21 @@ export async function mountEditor(app, {
     const content = el('div', {
       className: 'tj-stack',
       children: [
-        hasOriginal ? radios('ed-variant', { legend: 'النسخة', options: [['current', 'النسخة الحالية (ما تراه في المحرّر)'], ['original', 'النسخة المرفوعة كما هي']] }, variant, (v) => { variant = v; refresh(); }) : null,
+        hasOriginal ? radios('ed-variant', { legend: t('editor.export.variantLegend'), options: [['current', t('editor.export.variantCurrent')], ['original', t('editor.export.variantUploaded')]] }, variant, (v) => { variant = v; refresh(); }) : null,
         timingBox, nameLine, noteLine, notesBox, errorBox,
       ],
       doc,
     });
     refresh();
     const v = await openDialog({
-      doc, size: 'md', title: 'تصدير الترجمة (SRT)', content, focus: 'download',
+      doc, size: 'md', title: t('editor.export.title'), content, focus: 'download',
       actions: [{
-        label: 'تنزيل SRT', value: 'download', variant: 'primary',
+        label: t('editor.export.downloadSrt'), value: 'download', variant: 'primary',
         ref: (b) => {
           confirmBtn = b;
           setDisabled(b, plan.ok ? null : exportError(plan));
         },
-      }, { label: 'إلغاء', value: 'cancel' }],
+      }, { label: t('common.cancel'), value: 'cancel' }],
     });
     if (v !== 'download' || !plan?.ok) return;
     await saveText({ name: plan.name, text: plan.text });
@@ -2120,11 +2142,46 @@ export async function mountEditor(app, {
     else handleExternal(c);
   });
 
+  /**
+   * تبديل لغة الواجهة في مكانه (startPage يستدعيها بدل إعادة التحميل): في المحرّر تعديلات غير محفوظة وسجل تراجع في الذاكرة لا
+   * يعيشان عبر إعادة تحميل. لا يمس الجلسة (S.session وS.original) ولا نصوص المستخدم ولا حالة dirty ولا التحديد ولا موضع التمرير؛
+   * ويعيد تركيز حقل الصف ومؤشره إن كان فيه. الحوارات المفتوحة لحظة التبديل تبقى بلغتها حتى تُغلق.
+   */
+  function relocalize() {
+    // عناصر بُنيت مرة بنص كسول (LazyText): الهيكل والقوائم والبحث والتسميات.
+    relabel(doc);
+    // ما يحمل نصًا محسوبًا عند التحميل أو التركيب: تسميات المراجع، واسما زرّي التنقّل في البحث، وتلميحا زرّي الطي.
+    rankRefs();
+    search.relocalize();
+    for (const [kind, open] of foldOpen) (kind === 'tools' ? toolsBtn : sideBtn).title = foldTitle(kind, open);
+    showTitle(S.opened.record.title);
+    // الصفوف تحمل نصوصًا ثابتة عند create: تُبنى من جديد بالتخطيط نفسه، ويعود التركيز إلى حقله.
+    const active = doc.activeElement;
+    const rowNode = active && scroller.contains(active) ? rowOfNode(active) : null;
+    const focus = rowNode ? {
+      index: Number(rowNode.dataset.index), field: active.dataset?.field ?? null, act: active.dataset?.act ?? null,
+      start: active.selectionStart, end: active.selectionEnd,
+    } : null;
+    S.list.reset(S.layout);
+    if (focus && !Number.isNaN(focus.index)) {
+      const row = S.list.elementOf(S.rowOf[focus.index]);
+      const sel = focus.field ? `[data-field="${focus.field}"]` : focus.act ? `[data-act="${focus.act}"]` : null;
+      const target = sel ? row?.querySelector(sel) : null;
+      if (target) {
+        target.focus({ preventScroll: true });
+        if (focus.field === 'text' && typeof focus.start === 'number') target.setSelectionRange?.(focus.start, focus.end);
+      }
+    }
+    renderAll();
+    if (!resumeChip.hidden) labelResumeChip();
+    renderComplete(true);
+  }
+
   load(bundle, picked.n);
   rememberSlot(picked.n);
   setSideTab('review');
   if (picked.fallback) toast(slotFallback(requested, picked.n), 'info');
-  const api = { get state() { return S; }, save, jumpTo, setView, switchSlot };
+  const api = { get state() { return S; }, save, jumpTo, setView, switchSlot, relocalize };
   if (typeof __TJ_DEV__ !== 'undefined' && __TJ_DEV__) globalThis.__tarjumanEditor = api;
   return api;
 }

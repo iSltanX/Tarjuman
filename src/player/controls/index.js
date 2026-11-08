@@ -3,6 +3,7 @@
 // جلسة عليهما، وتعيد المجموعة إلى بداية الشريط إن أعاد يوتيوب رسمه (مراقب على الشريط وفحص خفيف كل ثانية وعند أحداث
 // يوتيوب). لا ترمي أبدًا: الإخفاق رمز في state وفي diagnostics، ويبقى المشغّل سليمًا. deps للاختبار وحده.
 import { TjError } from '../../core/errors/index.js';
+import { getLocale } from '../../i18n/index.js';
 import { buildExport, instructions } from '../../core/export/index.js';
 import { readImport, reviewIncoming } from '../../core/import/index.js';
 import { saveFile } from '../../core/save/index.js';
@@ -47,6 +48,8 @@ export function mountControls(controller, deps = {}) {
   let state = 'waiting';
   /** @type {ReturnType<typeof createControlsSession> | null} */
   let session = null;
+  /** لغة الواجهة التي بُنيت بها الجلسة الحالية: كل نصوصها من مسار البناء الأول، فتبدّل اللغة يعيد بناءها (relocalize). */
+  let builtLocale = getLocale();
   /** @type {MutationObserver | null} */
   let pageObserver = null;
   /** @type {MutationObserver | null} */
@@ -88,6 +91,8 @@ export function mountControls(controller, deps = {}) {
 
   function tryMount() {
     if (stopped) return;
+    // لغة الواجهة تبدّلت: تُعاد الجلسة بلغتها، إلا إن كان فيها تدفق رفع أو مراجعة أو تأكيد أو كتابة مفتوحة فيؤجَّل إلى الفحص التالي بعد انتهائه.
+    if (session && builtLocale !== getLocale() && !session.holdsFlow()) dropSession();
     const player = getPlayer(doc);
     const right = player ? getRightControls(doc) : null;
     if (!player || !right) {
@@ -107,6 +112,7 @@ export function mountControls(controller, deps = {}) {
     if (failures >= MAX_FAILURES) return;
     attempts++;
     try {
+      builtLocale = getLocale();
       session = createControlsSession({ controller, doc, win, player, flows, now: deps.now, link: deps.link ?? panelLink });
       state = 'mounted';
       failures = 0;
@@ -145,6 +151,11 @@ export function mountControls(controller, deps = {}) {
   return {
     get state() {
       return state;
+    },
+
+    /** تبدّلت لغة الواجهة (أو هُيّئت بعد التركيب): تُبنى الجلسة من جديد بلغتها، ويؤجَّل ذلك ما دام تدفق مفتوح. */
+    relocalize() {
+      if (!stopped && session && builtLocale !== getLocale()) tryMount();
     },
 
     unmount() {

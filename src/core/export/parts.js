@@ -4,6 +4,7 @@
 // جزأين ما أمكن.
 import { endsSentence } from '../convert/text.js';
 import { TjError } from '../errors/index.js';
+import { t } from '../../i18n/index.js';
 import { MAX_FILES, MAX_FILE_BYTES } from '../import/read-file.js';
 
 /**
@@ -117,7 +118,7 @@ export function splitPlan(cues, split, limits = UPLOAD_LIMITS) {
   });
   if (!fits(ranges)) {
     const smallest = size > minSize ? plan(minSize) : null;
-    const max = `${Math.round((limits.bytes / (1024 * 1024)) * 10) / 10} م.ب`;
+    const max = t('common.bytes.mb', { n: Math.round((limits.bytes / (1024 * 1024)) * 10) / 10 });
     throw new TjError(smallest && fits(smallest) ? 'EX_SPLIT_PART_TOO_LARGE' : 'EX_SPLIT_IMPOSSIBLE', { params: { max, files: limits.files } });
   }
   return { ranges, size, raised: size > split.size };

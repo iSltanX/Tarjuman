@@ -1,4 +1,4 @@
-/* أساس صفحات الإضافة: RTL أساسًا للتخطيط (خصائص منطقية start/end لا يمين/يسار)، وسلّم الخطوط (الهوية الرابعة، لوحة 05: Cairo
+/* أساس صفحات الإضافة: الاتجاه من dir على الجذر بحسب لغة الواجهة (خصائص منطقية start/end لا يمين/يسار)، وسلّم الخطوط (الهوية الرابعة، لوحة 05: Cairo
    للعناوين وAlmarai للنص، والسطر ≥ 1.5 بلا تباعد حروف)، وعزل الأزمنة والمعرّفات والأسماء اللاتينية LTR، وهيكل الصفحة (شريط
    علوي 56 ورأس ومحتوى بحاوية 1200 وهوامش 32، لوحتا 13 و15)، وتقليل الحركة. */
 
@@ -43,9 +43,12 @@ a:hover { color: var(--tj-accent-text); }
 /* الأزمنة والمعرّفات والأسماء الإنجليزية: LTR معزولة داخل الجمل العربية. والعنوان المختلط اتجاهه صريح في dir من
    textDirection (src/ui/format.js): RTL إن احتوى حرفًا عربيًا ولو بدأ بكلمة لاتينية («API هو الواجهة»)، وإلا LTR؛ لا أول
    حرف قوي (قرار سلطان 2026-11-03، تدقيق 5fedcb9، CL-002). ويبقى في موضع العناوين العربية نفسه بمحاذاة يمين فعلية.
-   القيمة الفعلية الوحيدة هنا، والصفحات كلها RTL. */
+   القيمة الفعلية الوحيدة هنا. */
 .tj-ltr { direction: ltr; unicode-bidi: isolate; display: inline-block; max-width: 100%; }
-.tj-auto { unicode-bidi: isolate; text-align: right; }
+.tj-auto { unicode-bidi: isolate; }
+/* الاتجاه من محتوى النص (dir)، والمحاذاة من لغة الواجهة: العنوان في موضع العناوين دائمًا أيًّا كانت لغته. */
+:root[dir="rtl"] .tj-auto { text-align: right; }
+:root[dir="ltr"] .tj-auto { text-align: left; }
 .tj-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tj-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 

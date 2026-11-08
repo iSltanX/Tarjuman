@@ -3,6 +3,7 @@
 // ما يُذكر في notes. الاستعادة اليدوية للتوقيت من src/core/compare ولا يستدعيها هذا التدفق أبدًا.
 import { DEFAULT_DRIFT_MS, compare, currentComparison, fingerprintCoverage } from '../compare/index.js';
 import { TjError, messageFor, toErrorInfo } from '../errors/index.js';
+import { joinList, t } from '../../i18n/index.js';
 import { LIMITS } from '../model/validate.js';
 import { langFromFileName } from '../lang/index.js';
 import { parseSrtLenient } from '../srt/lenient.js';
@@ -87,15 +88,15 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
       const merged = mergeParts(parts);
       if (merged.overlaps.length) {
         const o = merged.overlaps[0];
-        if (o.stray) throw new TjError('IM_PARTS_STRAY_NUMBER', { params: { a: o.a, b: o.b, list: o.stray.join('، ') } });
+        if (o.stray) throw new TjError('IM_PARTS_STRAY_NUMBER', { params: { a: o.a, b: o.b, list: joinList(o.stray) } });
         throw new TjError('IM_PARTS_OVERLAP', { params: o });
       }
       for (const gap of merged.gaps) warnings.push({ code: 'IM_PARTS_GAP', params: gap });
       cues = merged.cues;
       fileName = mergedFileName(merged.order);
-      const names = merged.order.join('، ');
+      const names = joinList(merged.order);
       notes.unshift(messageFor('IM_NOTE_MERGED', {
-        verb: isFewCount(files.length) ? 'دُمجت' : 'دُمج',
+        verb: t('core.import.mergedVerb', { few: isFewCount(files.length) }),
         files: formatCount(files.length, COUNT_FORMS.file),
         names: names.length > NAMES_NOTE_CHARS ? `${names.slice(0, NAMES_NOTE_CHARS - 1)}…` : names,
       }));

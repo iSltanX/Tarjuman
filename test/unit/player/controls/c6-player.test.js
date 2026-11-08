@@ -71,7 +71,7 @@ test('U43: خطأ استيراد جديد يحل محل السابق، والا�
   await settleN(2);
   await upload('good.ar.srt');
   assert.ok(controller.getState().arabic, 'حُمّلت الترجمة');
-  assert.deepEqual(ui.toasts().filter((t) => t.tone === 'error').map((t) => t.text), ['تعذّر الحفظ.'], 'رسالة المتحكم باقية ورسائل الاستيراد زالت');
+  assert.deepEqual(ui.toasts().filter((t) => t.tone === 'error').map((t) => t.text), [messageFor('ST_WRITE_FAILED')], 'رسالة المتحكم باقية ورسائل الاستيراد زالت');
 });
 
 // ———— U44 ————

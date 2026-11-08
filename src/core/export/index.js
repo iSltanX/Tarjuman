@@ -2,6 +2,7 @@
 // الإنجليزي: controller.convertCaptured(key, { mode }) ← buildExport ← download لكل ملف ← controller.recordExport.
 // العربي: exportTiming (عقد التوقيت §٥) ← buildArabicExport ← download. لا كتابة في التخزين هنا.
 import { TjError, messageFor } from '../errors/index.js';
+import { joinList } from '../../i18n/index.js';
 import { validateCues } from '../model/cue.js';
 import { newFingerprintId, isVideoId, parseTrackKey } from '../model/ids.js';
 import { EXPORT_MODES, validateFingerprint } from '../model/tracks.js';
@@ -129,4 +130,4 @@ export function buildArabicExport({ videoId, cues, variant = 'current', lang = n
 
 const NOTE_LIST = 8;
 /** أول ثمانية أرقام ثم «…». @param {number[]} ns */
-const shortNumbers = (ns) => ns.slice(0, NOTE_LIST).join('، ') + (ns.length > NOTE_LIST ? '…' : '');
+const shortNumbers = (ns) => joinList(ns.slice(0, NOTE_LIST)) + (ns.length > NOTE_LIST ? '…' : '');

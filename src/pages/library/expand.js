@@ -7,6 +7,7 @@
 import { trackComparison } from '../../core/compare/current.js';
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { SLOT_NAME_MAX } from '../../core/model/slots.js';
+import { t as tr } from '../../i18n/index.js';
 import { alertBox, button, el, icon, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { activateSlot, changeReference, deletePrevious, deleteSlot, renameSlot, restorePrevious } from './actions.js';
@@ -34,11 +35,11 @@ export function createExpansion(env) {
   const cards = el('div', { className: 'lib-exp__cards', doc });
   const extra = el('div', { className: 'lib-exp__extra', doc });
   const root = el('div', {
-    className: 'lib-exp', attrs: { id, role: 'region', 'aria-label': `ترجمات ${isolate(env.title)}`, 'aria-busy': 'true' },
+    className: 'lib-exp', attrs: { id, role: 'region', 'aria-label': tr('library.card.region', { title: isolate(env.title) }), 'aria-busy': 'true' },
     children: [
       el('div', {
         className: 'lib-exp__head',
-        children: [el('h4', { className: 'lib-exp__title', text: 'ترجمات هذا الفيديو', doc }), el('span', { className: 'lib-exp__hint', text: 'النشطة وحدها تُعرض فوق الفيديو وفي اللوحة', doc })],
+        children: [el('h4', { className: 'lib-exp__title', text: tr('library.card.heading'), doc }), el('span', { className: 'lib-exp__hint', text: tr('library.card.hint'), doc })],
         doc,
       }),
       cards, extra,
@@ -111,14 +112,14 @@ export function createExpansion(env) {
 
   /** رأس البطاقة: «الترجمة 2 · Claude» وزر التسمية، والتحرير في مكانه بحقل حتى 24 محرفًا (Enter يحفظ وEsc يلغي). */
   function cardHead(s, active) {
-    const label = `الترجمة ${s.n}`;
+    const label = tr('common.slot.label', { n: s.n });
     const title = el('h4', {
       className: 'tj-h4 lib-card__title', attrs: { id: `${id}-t${s.n}` },
       children: [label, s.name ? ' · ' : null, s.name ? el('bdi', { text: s.name, dir: textDirection(s.name), doc }) : null],
       doc,
     });
     const rename = button({
-      label: s.name ? `إعادة تسمية الترجمة ${s.n}` : `تسمية الترجمة ${s.n}`, iconOnly: true, icon: 'edit', variant: 'ghost', size: 'sm', className: 'lib-card__rename', doc,
+      label: tr(s.name ? 'library.card.rename' : 'library.card.name', { n: s.n }), iconOnly: true, icon: 'edit', variant: 'ghost', size: 'sm', className: 'lib-card__rename', doc,
       onClick: () => showEditor(),
     });
     rename.setAttribute('data-fk', fk(`card-${s.n}:rename`));
@@ -131,7 +132,7 @@ export function createExpansion(env) {
       editing = true;
       const input = el('input', {
         className: 'tj-field__input lib-card__name',
-        attrs: { type: 'text', maxlength: String(SLOT_NAME_MAX), placeholder: 'مثل: مراجعة', autocomplete: 'off', 'aria-label': `الاسم المختصر للترجمة ${s.n}`, 'data-fk': fk(`card-${s.n}:name`) },
+        attrs: { type: 'text', maxlength: String(SLOT_NAME_MAX), placeholder: tr('library.card.namePlaceholder'), autocomplete: 'off', 'aria-label': tr('library.card.nameAria', { n: s.n }), 'data-fk': fk(`card-${s.n}:name`) },
         dir: 'auto', doc,
       });
       input.value = s.name ?? '';
@@ -183,7 +184,7 @@ export function createExpansion(env) {
       row.replaceChildren(input);
       input.focus?.();
     }
-    return el('div', { className: 'lib-card__head', children: [row, active ? statusPill({ tone: 'brand', text: 'نشطة', doc }) : null], doc });
+    return el('div', { className: 'lib-card__head', children: [row, active ? statusPill({ tone: 'brand', text: tr('library.card.active'), doc }) : null], doc });
   }
 
   /**
@@ -191,10 +192,10 @@ export function createExpansion(env) {
    * كشارة الصف والمشغّل والمحرّر، لا لتقرير الرفع المخزّن وحده: بعد الاستكمال أو التعديل في المحرّر لا تبقى نتيجة متقادمة
    * (قرار سلطان D-03، 2026-11-08، تدقيق V2 U-061؛ ومبدأ GM-013). وتقرير الرفع يبقى في البيانات كما هو.
    */
-  function resultLine(t, fingerprints) {
-    const r = trackComparison(t, fingerprints);
+  function resultLine(track, fingerprints) {
+    const r = trackComparison(track, fingerprints);
     const sum = comparisonSummary(r);
-    const text = sum.lines.join('\n') + (sum.tone === 'success' && r && r.countSource !== null ? ` · ${r.countTarget} من ${r.countSource}` : '');
+    const text = sum.lines.join('\n') + (sum.tone === 'success' && r && r.countSource !== null ? tr('library.compare.ofCount', { target: r.countTarget, source: r.countSource }) : '');
     return el('p', {
       className: `lib-result lib-result--${sum.tone}`,
       children: [icon(sum.tone === 'success' ? 'check' : sum.tone === 'warning' ? 'warning' : 'info', { doc }), el('span', { text, doc })],
@@ -205,15 +206,15 @@ export function createExpansion(env) {
   function referenceRow(b, s) {
     const fps = b.record.fingerprints;
     const current = fps.find((f) => f.id === s.track.fingerprintId) ?? null;
-    const label = current ? fingerprintLabel(current, absoluteTime(current.createdAt)) : 'بلا مرجع';
-    const out = [el('p', { className: 'tj-caption lib-card__ref', children: ['المرجع: ', el('span', { text: label, doc })], doc })];
+    const label = current ? fingerprintLabel(current, absoluteTime(current.createdAt)) : tr('library.card.noReference');
+    const out = [el('p', { className: 'tj-caption lib-card__ref', children: [tr('library.card.referenceLine'), el('span', { text: label, doc })], doc })];
     if (fps.length > 1 || (fps.length === 1 && !current)) {
       const sid = `${id}-ref-${s.n}`;
       const select = el('select', {
         className: 'tj-field__input lib-card__select', attrs: { id: sid, 'data-fk': fk(`card-${s.n}:ref`) },
         children: [
           ...fps.map((f) => el('option', { text: fingerprintLabel(f, absoluteTime(f.createdAt)), attrs: { value: f.id }, doc })),
-          el('option', { text: 'بلا مرجع', attrs: { value: '' }, doc }),
+          el('option', { text: tr('library.card.noReference'), attrs: { value: '' }, doc }),
         ],
         doc,
       });
@@ -221,7 +222,7 @@ export function createExpansion(env) {
       select.addEventListener('change', () => {
         act(() => changeReference({ store, videoId, n: s.n, fingerprintId: select.value || null, now }), messageFor('PG_REFERENCE_CHANGED', { n: s.n }));
       });
-      out.push(el('div', { className: 'tj-field lib-card__field', children: [el('label', { className: 'tj-field__label', text: 'مرجع المقارنة', attrs: { for: sid }, doc }), select], doc }));
+      out.push(el('div', { className: 'tj-field lib-card__field', children: [el('label', { className: 'tj-field__label', text: tr('library.card.referenceLabel'), attrs: { for: sid }, doc }), select], doc }));
     }
     return out;
   }
@@ -229,29 +230,29 @@ export function createExpansion(env) {
   /** سطر النسخة السابقة: تاريخها وسعتها، واستعادتها بتبديل قابل للعكس وحذفها بتأكيد. `own` داخل بطاقة خانتها (بلا «من الترجمة N»). */
   function previousLine(b, bytes, own) {
     const p = b.previous;
-    const parts = ['نسخة سابقة محفوظة'];
-    if (!own) parts.push(`من الترجمة ${p.from}`);
+    const parts = [tr('library.card.previous')];
+    if (!own) parts.push(tr('library.card.previousFrom', { n: p.from }));
     parts.push(relativeTime(p.savedAt, now()));
     if (Number.isFinite(bytes) && bytes > 0) parts.push(formatBytes(bytes));
     const target = b.slots[p.from - 1];
     const restore = button({
-      label: 'استعادة', icon: 'restore', variant: 'ghost', size: 'sm', className: 'lib-prevl__restore', title: `استعادة النسخة السابقة إلى الترجمة ${p.from}`, doc,
+      label: tr('library.card.restore'), icon: 'restore', variant: 'ghost', size: 'sm', className: 'lib-prevl__restore', title: tr('library.card.restoreTitle', { n: p.from }), doc,
       onClick: async () => {
         const ok = await env.confirm({
-          title: `استعادة النسخة السابقة إلى الترجمة ${p.from}؟`,
+          title: tr('library.card.restoreDialog', { n: p.from }),
           body: target.track
-            ? `تعود النسخة السابقة إلى الترجمة ${p.from}، وتصبح الحالية فيها هي النسخة السابقة؛ واستعادة ثانية تعكس ذلك.`
-            : `تعود النسخة السابقة إلى الترجمة ${p.from} الفارغة.`,
-          confirmLabel: 'استعادة', doc,
+            ? tr('library.card.restoreBodyFilled', { n: p.from })
+            : tr('library.card.restoreBodyEmpty', { n: p.from }),
+          confirmLabel: tr('library.card.restore'), doc,
         });
         if (ok) await act(() => restorePrevious({ store, videoId, now, expect: b }), messageFor('PG_PREVIOUS_RESTORED', { n: p.from }));
       },
     });
     restore.setAttribute('data-fk', fk('prev:restore'));
     const remove = button({
-      label: 'حذف', variant: 'ghost', size: 'sm', className: 'lib-prevl__delete', title: 'حذف النسخة السابقة', doc,
+      label: tr('library.card.deletePrevious'), variant: 'ghost', size: 'sm', className: 'lib-prevl__delete', title: tr('library.card.deletePreviousTitle'), doc,
       onClick: async () => {
-        const ok = await env.confirm({ title: 'حذف النسخة السابقة؟', body: 'لا يمكن استعادتها بعد الحذف.', confirmLabel: 'حذف', tone: 'danger', doc });
+        const ok = await env.confirm({ title: tr('library.card.deletePreviousDialog'), body: tr('library.card.deletePreviousBody'), confirmLabel: tr('library.card.deletePrevious'), tone: 'danger', doc });
         // النسخة المعروضة في السطر وحدها: إن صارت السابقة غيرها قبل الموافقة لا يُحذف شيء (PG_DELETE_STALE).
         if (ok) await act(() => deletePrevious({ store, videoId, expect: b }), messageFor('PG_PREVIOUS_DELETED'));
       },
@@ -275,8 +276,8 @@ export function createExpansion(env) {
     // خانة حذفها تبويب آخر والفيديو باقٍ: رسالتها هي، لا «لم يعد الفيديو محفوظًا» (تدقيق 7a66f91، U14).
     if (!fresh.slots[s.n - 1]?.track) throw new TjError('PG_SLOT_GONE', { detail: String(s.n) });
     const ok = await env.confirm({
-      title: `حذف الترجمة ${s.n}؟`, confirmLabel: 'حذف', tone: 'danger', doc,
-      content: deleteContent({ doc, subtitle: env.title, summary: deleteSummary(fresh, { scope: 'slot', n: s.n }), note: 'لا يمكن التراجع. صدّر الترجمة أولًا إن كنت قد تحتاجها.' }),
+      title: tr('library.card.deleteDialog', { n: s.n }), confirmLabel: tr('library.card.deletePrevious'), tone: 'danger', doc,
+      content: deleteContent({ doc, subtitle: env.title, summary: deleteSummary(fresh, { scope: 'slot', n: s.n }), note: tr('library.delete.noteExport', { all: false }) }),
     });
     if (!ok) return;
     // ما سُرد هو ما يُحذف: إن تغيّرت الحزمة قبل الموافقة (استُبدلت الخانة من تبويب آخر مثلًا) لا يُحذف شيء (PG_DELETE_STALE).
@@ -300,12 +301,12 @@ export function createExpansion(env) {
 
   function slotCard(b, s, bytes) {
     const active = b.active === s.n;
-    const t = s.track;
-    const cues = t.current ?? t.original;
-    const edits = manualEdits(t);
+    const track = s.track;
+    const cues = track.current ?? track.original;
+    const edits = manualEdits(track);
     const todo = s.marks.filter((m) => m.kind === 'todo').length;
     const done = s.marks.length - todo;
-    const name = `الترجمة ${s.n}`;
+    const name = tr('common.slot.label', { n: s.n });
     const act1 = (label, opts) => {
       const b1 = button({ label, size: 'sm', doc, ...opts });
       b1.setAttribute('aria-label', `${label}: ${name}`);
@@ -316,27 +317,27 @@ export function createExpansion(env) {
       return btn;
     };
     const actions = [
-      active ? null : mark(act1('تفعيل', { variant: 'primary', onClick: () => act(() => activateSlot({ store, videoId, n: s.n, now }), messageFor('PG_SLOT_ACTIVATED', { n: s.n })) }), 'activate'),
-      mark(act1('تصدير SRT', { variant: 'secondary', icon: 'download', onClick: guarded(() => env.exportSlot(s.n)) }), 'export'),
-      mark(act1('استبدال…', { variant: 'ghost', icon: 'upload', onClick: () => env.upload(s.n) }), 'replace'),
-      mark(act1('حذف…', { variant: 'ghost', className: 'lib-card__delete', onClick: guarded(() => removeSlot(s)) }), 'delete'),
+      active ? null : mark(act1(tr('library.card.activate'), { variant: 'primary', onClick: () => act(() => activateSlot({ store, videoId, n: s.n, now }), messageFor('PG_SLOT_ACTIVATED', { n: s.n })) }), 'activate'),
+      mark(act1(tr('library.card.exportSrt'), { variant: 'secondary', icon: 'download', onClick: guarded(() => env.exportSlot(s.n)) }), 'export'),
+      mark(act1(tr('library.card.replace'), { variant: 'ghost', icon: 'upload', onClick: () => env.upload(s.n) }), 'replace'),
+      mark(act1(tr('library.card.delete'), { variant: 'ghost', className: 'lib-card__delete', onClick: guarded(() => removeSlot(s)) }), 'delete'),
     ];
     return el('section', {
       className: `lib-card${active ? ' lib-card--active' : ''}`, attrs: { 'data-slot': String(s.n), 'aria-labelledby': `${id}-t${s.n}` },
       children: [
         cardHead(s, active),
-        el('p', { className: 'lib-card__file', children: [ltr(t.fileName, { mono: true, doc }), ` · ${formatCount(cues.length, COUNT_FORMS.cue)}`], doc }),
+        el('p', { className: 'lib-card__file', children: [ltr(track.fileName, { mono: true, doc }), ` · ${formatCount(cues.length, COUNT_FORMS.cue)}`], doc }),
         el('p', {
           className: 'tj-caption lib-card__meta',
           children: [
-            el('span', { text: `رُفعت ${relativeTime(t.importedAt, now())}`, attrs: { title: absoluteTime(t.importedAt) }, doc }),
-            ` · ${edits ? formatCount(edits, EDIT_FORMS) : 'بلا تعديل'} · الإزاحة ${offsetInline(s.offsetMs)} ث`,
+            el('span', { text: tr('library.card.uploadedAt', { when: relativeTime(track.importedAt, now()) }), attrs: { title: absoluteTime(track.importedAt) }, doc }),
+            tr('library.card.metaTail', { edits: edits ? formatCount(edits, EDIT_FORMS) : tr('library.card.noEdits'), offset: offsetInline(s.offsetMs) }),
           ],
           doc,
         }),
-        resultLine(t, b.record.fingerprints),
+        resultLine(track, b.record.fingerprints),
         ...referenceRow(b, s),
-        s.marks.length ? el('p', { className: 'tj-caption lib-card__marks', text: `العلامات: ${todo} أعود إليه · ${done} راجعته`, doc }) : null,
+        s.marks.length ? el('p', { className: 'tj-caption lib-card__marks', text: tr('library.card.marks', { todo, done }), doc }) : null,
         b.previous && b.previous.from === s.n ? previousLine(b, bytes, true) : null,
         el('div', { className: 'lib-card__actions', children: actions, doc }),
       ],
@@ -345,14 +346,14 @@ export function createExpansion(env) {
   }
 
   function emptyCard(b, n, bytes) {
-    const up = button({ label: 'رفع ترجمة…', icon: 'upload', variant: 'secondary', size: 'sm', doc, onClick: () => env.upload(n) });
-    up.setAttribute('aria-label', `رفع ترجمة…: الترجمة ${n}`);
+    const up = button({ label: tr('library.card.uploadShort'), icon: 'upload', variant: 'secondary', size: 'sm', doc, onClick: () => env.upload(n) });
+    up.setAttribute('aria-label', `${tr('library.card.uploadShort')}: ${tr('common.slot.label', { n })}`);
     up.setAttribute('data-fk', fk('empty:upload'));
     return el('section', {
       className: 'lib-card lib-card--empty', attrs: { 'data-slot': String(n), 'aria-labelledby': `${id}-t${n}` },
       children: [
-        el('h4', { className: 'tj-h4 lib-card__title', text: `الترجمة ${n} · فارغة`, attrs: { id: `${id}-t${n}` }, doc }),
-        el('p', { className: 'tj-caption', text: 'ارفع ملفًا آخر لتقارن بين الترجمات وتختار أدقّها.', doc }),
+        el('h4', { className: 'tj-h4 lib-card__title', text: tr('library.card.emptyTitle', { n }), attrs: { id: `${id}-t${n}` }, doc }),
+        el('p', { className: 'tj-caption', text: tr('library.card.emptyHint'), doc }),
         b.previous && b.previous.from === n ? previousLine(b, bytes, true) : null,
         el('div', { className: 'lib-card__actions', children: [up], doc }),
       ],

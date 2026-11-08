@@ -5,8 +5,8 @@ import assert from 'node:assert/strict';
 import { messageFor } from '../../../../src/core/errors/index.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { SUBTITLE_FONT_LIST } from '../../../../src/ui/subtitle-fonts.js';
-import { BROWSERS_LINE, CREDITS, LINKS, PRIVACY_LINE } from '../../../../src/pages/settings/about.js';
-import { createSettings, INSTALL_REMINDER, MODE_NOTES, SCALE_NOTE, SUBTITLE_NOTE } from '../../../../src/pages/settings/view.js';
+import { BROWSERS_LINE, CREDITS, LINKS, privacyLine } from '../../../../src/pages/settings/about.js';
+import { createSettings, installReminder, MODE_NOTES, scaleNote, subtitleNote } from '../../../../src/pages/settings/view.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, videoRecord } from '../../../helpers/fixtures.js';
 import { buttonNamed, findAll, newDocument, settle, textOf } from '../library/fake-dom.js';
@@ -61,8 +61,8 @@ test('البنية: الرأس وعشرة أقسام بترتيبها («الل�
   assert.equal(textOf(m.root.querySelector('h1')), 'الإعدادات');
   assert.deepEqual(findAll(m.root, (e) => e.tagName === 'h2').map(textOf), SECTION_TITLES);
   assert.ok(textOf(m.root).includes('تُحفظ التغييرات فورًا'));
-  assert.ok(textOf(m.root).includes(SUBTITLE_NOTE));
-  assert.ok(textOf(m.root).includes(SCALE_NOTE));
+  assert.ok(textOf(m.root).includes(subtitleNote()));
+  assert.ok(textOf(m.root).includes(scaleNote()));
   // ق-1: «معاينة حية» بعد «الموضع» مباشرة وقبل المفاتيح الثلاثة، بلا شرح تحتها (م-019).
   const displayRows = findAll(m.root.querySelector('section[data-section="display"]'), (e) => e.classList?.contains('st-row__label')).map((e) => textOf(e.querySelector('.tj-label')));
   const previewAt = displayRows.indexOf('معاينة حية');
@@ -401,7 +401,7 @@ test('التخزين: المستخدم بنص، والمسح بحوار يطلب
   assert.equal((await m.store.getSettings()).appearance.font, 'almarai', 'الإعدادات عادت افتراضية');
   assert.equal(radios(m.root, 'st-font').find((r) => r.checked).getAttribute('value'), 'almarai');
   assert.ok(markText(section(m, 'التخزين')).includes('مُسحت كل البيانات والإعدادات.'));
-  assert.ok(textOf(m.root).includes(INSTALL_REMINDER), 'فارغة بعد المسح: تذكير التثبيت');
+  assert.ok(textOf(m.root).includes(installReminder()), 'فارغة بعد المسح: تذكير التثبيت');
 });
 
 test('التشخيص: زر النسخ ينسخ التقرير، وبيان ما يتضمنه وما لا يتضمنه، والفشل برسالة', async () => {
@@ -422,8 +422,8 @@ test('التشخيص: زر النسخ ينسخ التقرير، وبيان ما 
 });
 
 test('تذكير التثبيت: يظهر ما دامت المحفوظات فارغة ويختفي بوجودها', async () => {
-  assert.ok(textOf((await mount()).root).includes(INSTALL_REMINDER));
-  assert.equal(textOf((await mount({ videos: 1 })).root).includes(INSTALL_REMINDER), false);
+  assert.ok(textOf((await mount()).root).includes(installReminder()));
+  assert.equal(textOf((await mount({ videos: 1 })).root).includes(installReminder()), false);
 });
 
 test('حول: الإصدار برمز الشعار والاسم، وسطر الخصوصية الصادق، وبطاقة الحقوق (سلطان والموقع والمستودع) بتبويب جديد وnoopener، والدعم، والخطوط ورخصها المحلية', async () => {
@@ -437,7 +437,7 @@ test('حول: الإصدار برمز الشعار والاسم، وسطر ال�
   assert.equal(textOf(brand.querySelector('.st-about__version')), 'v0.2.0');
   assert.equal(brand.querySelector('.st-about__version').dir, 'ltr', 'الرقم معزول LTR');
   assert.equal(textOf(brand.querySelector('.st-about__browsers')), BROWSERS_LINE);
-  assert.ok(textOf(about).includes(PRIVACY_LINE));
+  assert.ok(textOf(about).includes(privacyLine()));
   assert.equal(textOf(about).includes('كل شيء محلي على جهازك'), false, 'لا ادّعاء مطلق بأن كل شيء محلي: الصور من يوتيوب');
   // بطاقة الحقوق بطلب سلطان (2026-11-07): مفتاح وقيمة، والرابطان باسم النطاق LTR معزولًا.
   const credits = [...about.querySelectorAll('.st-credits__row')].map((r) => [textOf(r.querySelector('dt')), textOf(r.querySelector('dd'))]);
@@ -509,7 +509,7 @@ test('كل عنصر إدخال باسم وصول: منزلق الحجم بـaria
     }
   }
   const fieldsets = findAll(m.root, (e) => e.tagName === 'fieldset');
-  assert.equal(fieldsets.length, 8, 'وضع العرض، وخط الترجمة، والخلفية، والموضع، والخطوة، ومكان الحفظ، ووضع التصدير، ونوع البلاغ');
+  assert.equal(fieldsets.length, 9, 'لغة الواجهة، ووضع العرض، وخط الترجمة، والخلفية، والموضع، والخطوة، ومكان الحفظ، ووضع التصدير، ونوع البلاغ');
   assert.ok(fieldsets.every((f) => textOf(f.querySelector('legend') ?? { textContent: '' })));
 });
 

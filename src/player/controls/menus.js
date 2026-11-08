@@ -5,12 +5,13 @@
 // الإضافة. تعليمات الترجمة (من ← إلى) في نافذة الإضافة وحدها منذ AA3، فلا يمر نصها من هنا أبدًا.
 import { messageFor } from '../../core/errors/index.js';
 import { knownLanguages } from '../../core/lang/index.js';
+import { getDir, getLocale } from '../../i18n/index.js';
 import { formatOffset, textDirection } from '../../ui/format.js';
 import { languageName } from '../../ui/lang.js';
 import { glyph } from './glyphs.js';
 import {
-  LABELS, comparisonSummary, cueCount, dualLabels, editsLine, keptLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, shortTime, slotLabel, stepSeconds,
-  syncAt, trackLine, translationLine,
+  LABELS, comparisonSummary, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
+  shortTime, slotLabel, stepSeconds, syncAt, trackLine, translationLine,
 } from './text.js';
 
 /**
@@ -35,6 +36,10 @@ export function builder(doc) {
 }
 
 const sign = (ms) => (Math.round(ms / 100) === 0 ? 'zero' : ms > 0 ? 'positive' : 'negative');
+
+/** مفتاح السهم نحو «التالي» في صف أفقي بحسب اتجاه الواجهة: الأيسر في RTL والأيمن في LTR. */
+const nextKey = () => (getDir() === 'rtl' ? 'ArrowLeft' : 'ArrowRight');
+const prevKey = () => (getDir() === 'rtl' ? 'ArrowRight' : 'ArrowLeft');
 
 /** @param {H} h @param {'info' | 'warn' | 'error'} tone @param {string} text @param {Node[]} [extra] */
 function alert(h, tone, text, extra = []) {
@@ -92,15 +97,15 @@ function segmented(h, label, options, current, act, name, fid, { first = false, 
   return h('div', {
     className: 'seg',
     attrs: { role: 'radiogroup', 'aria-label': label },
-    // نقطة Tab واحدة للمجموعة، والأسهم تنقل التركيز بين خياراتها (تُقرأ بترتيب الصفحة RTL: الأيسر إلى التالي).
+    // نقطة Tab واحدة للمجموعة، والأسهم تنقل التركيز بين خياراتها (بترتيب القراءة: التالي نحو آخر الصف، الأيسر في RTL والأيمن في LTR).
     on: {
       keydown: (ev) => {
-        if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+        if (ev.key !== nextKey() && ev.key !== prevKey()) return;
         const list = [...ev.currentTarget.children];
         const at = list.indexOf(root?.activeElement ?? null);
         if (at === -1 || list.length < 2) return;
         ev.preventDefault();
-        list[(at + (ev.key === 'ArrowLeft' ? 1 : -1) + list.length) % list.length].focus();
+        list[(at + (ev.key === nextKey() ? 1 : -1) + list.length) % list.length].focus();
       },
     },
     children: options.map((o) => h('button', {
@@ -173,7 +178,7 @@ function targetPicker(h, act, slots, target, { disabled = false, root = null } =
   const filled = slots.filter((s) => s.filled);
   const free = slots.find((s) => !s.filled) ?? null;
   if (!filled.length) return h('span', { className: 'dim', text: LABELS.savesAsNew });
-  const items = filled.map((s) => ({ n: s.n, value: s.n, text: String(s.n), label: `استبدال ${slotLabel(s)}`, title: s.name ? `استبدال ${slotLabel(s)} — ${s.name}` : `استبدال ${slotLabel(s)}`, checked: s.n === target, fid: `target:${s.n}` }));
+  const items = filled.map((s) => ({ n: s.n, value: s.n, text: String(s.n), label: replaceSlotLabel(s), title: replaceSlotTitle(s), checked: s.n === target, fid: `target:${s.n}` }));
   if (free) items.push({ n: null, value: free.n, text: LABELS.saveNew, label: LABELS.saveNewLabel, title: LABELS.saveNewLabel, checked: free.n === target, fid: `target:${free.n}` });
   return radioRow(h, act, 'target', items, { disabled, root, label: LABELS.saveTo, first: true });
 }
@@ -269,7 +274,7 @@ export function downloadMenu(h, act, m, root = null) {
       attrs: { role: 'radiogroup', 'aria-label': LABELS.trackChoice },
       on: {
         keydown: (ev) => {
-          const step = ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' ? 1 : ev.key === 'ArrowUp' || ev.key === 'ArrowRight' ? -1 : 0;
+          const step = ev.key === 'ArrowDown' || ev.key === nextKey() ? 1 : ev.key === 'ArrowUp' || ev.key === prevKey() ? -1 : 0;
           if (!step) return;
           const list = [...ev.currentTarget.children];
           const at = list.indexOf(root?.activeElement ?? null);
@@ -383,7 +388,7 @@ function langSelect(h, act, { name, value, suggested, fid, disabled = false, id 
     children: [
       opt('', LABELS.langUnknownOption),
       sug.length ? h('optgroup', { attrs: { label: LABELS.langSuggested }, children: sug.map((c) => opt(c, named(c))) }) : null,
-      h('optgroup', { attrs: { label: LABELS.langAll }, children: knownLanguages().filter((l) => !sug.includes(l.code)).map((l) => opt(l.code, `${l.arabic} (${l.code})`)) }),
+      h('optgroup', { attrs: { label: LABELS.langAll }, children: knownLanguages(getLocale()).filter((l) => !sug.includes(l.code)).map((l) => opt(l.code, `${l.name} (${l.code})`)) }),
     ],
   });
   sel.value = value ?? '';
@@ -416,7 +421,7 @@ export function displayMenu(h, act, m, root = null) {
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
   const notes = m.notes.slice(0, 1);
   for (const n of notes) out.push(h('div', { className: 'note', text: n }));
-  if (m.notes.length > notes.length) out.push(h('div', { className: 'note', text: `راجع بقية الملاحظات (${m.notes.length - notes.length}) في المحرّر.` }));
+  if (m.notes.length > notes.length) out.push(h('div', { className: 'note', text: moreNotesLine(m.notes.length - notes.length) }));
   out.push(sep(h));
   out.push(label(h, LABELS.displayMode));
   // «فوق ‹لغة الأصل›»: باسم لغته الفعلية من مساره، وبلا أصل «فوق الأصل» معطّلًا بسببه.

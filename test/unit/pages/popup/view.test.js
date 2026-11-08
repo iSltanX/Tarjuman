@@ -7,8 +7,8 @@ import { messageFor } from '../../../../src/core/errors/index.js';
 import { DEFAULT_PREFS } from '../../../../src/core/model/prefs.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { ENTRY_TEXT, bindEntryRow } from '../../../../src/pages/popup/entry.js';
-import { GUIDE_TEXT, describeStatus, entryHidden, guideSteps, originDownloaded, recentLine, toolsStatus } from '../../../../src/pages/popup/status.js';
-import { NOT_VIDEO_TEXT, guideList, notVideoNote, skeletonCard, statusCard } from '../../../../src/pages/popup/view.js';
+import { describeStatus, entryHidden, guideSteps, guideText, originDownloaded, recentLine, toolsStatus } from '../../../../src/pages/popup/status.js';
+import { notVideoText, guideList, notVideoNote, skeletonCard, statusCard } from '../../../../src/pages/popup/view.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW } from '../../../helpers/fixtures.js';
 import { buttonNamed, findAll, newDocument, settle, textOf } from '../library/fake-dom.js';
@@ -40,9 +40,9 @@ test('ق-3: التنزيل يُعرف من مراجع المقارنة في سج
 
 test('الخطوات: الأصل غير ملتقط فالأولى هي الحالية والباقيتان منتظرتان', () => {
   const steps = guideSteps(reply());
-  assert.deepEqual(steps.map((s) => s.text), [...GUIDE_TEXT]);
+  assert.deepEqual(steps.map((s) => s.text), guideText());
   assert.deepEqual(steps.map((s) => s.state), ['now', 'pending', 'pending']);
-  assert.deepEqual(GUIDE_TEXT, ['نزّل الأصل من زر التنزيل في الشريط', 'انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه', 'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في شريط المشغّل']);
+  assert.deepEqual(guideText(), ['نزّل الأصل من زر التنزيل في الشريط', 'انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه', 'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في شريط المشغّل']);
   // بالزوج المختار يُذكر بلغتيه (AA3)، لا «الإنجليزي» و«العربية» الثابتان.
   assert.deepEqual(guideSteps(reply(), { from: 'ja', to: 'en' }).map((s) => s.text), ['نزّل الأصل (اليابانية) من زر التنزيل في الشريط', 'انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه إلى الإنجليزية', 'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في شريط المشغّل']);
 });
@@ -215,8 +215,8 @@ test('هيكل القراءة منشغل بوصف، وملاحظة «ليست ص
   assert.equal(sk.getAttribute('aria-label'), 'جارٍ قراءة حالة الفيديو');
   assert.ok(findAll(sk, (e) => e.classList.contains('tj-skeleton')).length >= 4);
   const note = notVideoNote(doc);
-  assert.equal(textOf(note), NOT_VIDEO_TEXT);
-  assert.equal(NOT_VIDEO_TEXT, 'افتح فيديو على يوتيوب لتبدأ.');
+  assert.equal(textOf(note), notVideoText());
+  assert.equal(notVideoText(), 'افتح فيديو على يوتيوب لتبدأ.');
   assert.equal(note.getAttribute('role'), 'status');
 });
 

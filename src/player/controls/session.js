@@ -1,7 +1,7 @@
 // جلسة الأدوات على مشغّل بعينه (P6): تجمع حالة المتحكم وحالة الشريط وحالة الواجهة المحلية (أي قائمة مفتوحة، وما
 // يكتبه المستخدم، وما يجري) في عرض واحد: المجموعة في الشريط، والقوائم والتلميحات والرسائل في الطبقة. لا تكتب في
 // التخزين إلا عبر أفعال المتحكم، ولا ترمي إليه: الإخفاق رمز في التشخيص، أو رسالة مفهومة للمستخدم إن خصّ فعله.
-import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
+import { TjError, hasCode, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
 import { rankUsable } from '../../core/model/track-order.js';
 import { formatOffset } from '../../ui/format.js';
@@ -15,7 +15,7 @@ import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu }
 import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
 import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
 import {
-  LABELS, badgeTip, comparisonSummary, downloadedLine, downloadedParts, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, plusTip, shortTime, syncUndoStale,
+  LABELS, badgeTip, comparisonSummary, downloadedLine, downloadedParts, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, partsWord, plusTip, shortTime, syncUndoStaleLine,
   slotToast, withState,
 } from './text.js';
 
@@ -49,10 +49,19 @@ const splitSizeOf = (raw) => {
 const ANCHOR = { download: 'download', display: 'upload', confirm: 'upload', timing: 'badge' };
 // حوارات غير نمطية كلها: فيها عناوين ومجموعات اختيار وحقول وأزرار، لا بنود قائمة (تدقيق 7a66f91، U44).
 const ROLE = { download: 'dialog', display: 'dialog', confirm: 'dialog', timing: 'dialog' };
-const TITLE = { download: LABELS.downloadTitle, display: LABELS.displayTitle, confirm: LABELS.confirmTitle, timing: LABELS.timingTitle };
+const TITLE = (kind) => ({ download: LABELS.downloadTitle, display: LABELS.displayTitle, confirm: LABELS.confirmTitle, timing: LABELS.timingTitle })[kind];
 
-/** «جزآن»، «3 أجزاء»، «11 جزءًا» بعد «✓ نُزّل». @param {number} n */
-const partsLabel = (n) => (n === 2 ? 'جزآن' : n % 100 >= 3 && n % 100 <= 10 ? `${n} أجزاء` : `${n} جزءًا`);
+/**
+ * نص الخطأ بلغة الواجهة الحالية من رمزه؛ ورمز يحتاج معاملات لا نملكها يبقى بنصه المحسوب.
+ * @param {{ code?: string, message?: string }} err
+ */
+const errorText = (err) => {
+  if (err.code && hasCode(err.code)) {
+    const text = messageFor(err.code);
+    if (!/\{\w+\}/.test(text)) return text;
+  }
+  return err.message ?? '';
+};
 const signOf = (ms) => (Math.round(ms / 100) === 0 ? 'zero' : ms > 0 ? 'positive' : 'negative');
 // الترتيب الموحد (model/track-order.js): الأصلي قبل المترجم آليًا من يوتيوب (في آخر القائمة، ق٢)، ثم اليدوي قبل التلقائي، ثم الأحدث.
 const okTracks = (s) => rankUsable(s.captured);
@@ -367,7 +376,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const fid = focused?.getAttribute?.('data-fid') ?? null;
     const caret = fid && typeof focused.selectionStart === 'number' ? focused.selectionStart : null;
     const nodes = spec.build();
-    const label = spec.label ?? TITLE[spec.kind];
+    const label = spec.label ?? TITLE(spec.kind);
     if (spec.kind !== menuKind || !layer.menuOpen()) {
       layer.openMenu(nodes, group.button(ANCHOR[spec.kind]), { label, role: ROLE[spec.kind], avoidLine: spec.kind === 'timing' });
     } else {
@@ -485,7 +494,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       const id = `${e.code}|${e.message}`;
       if (seenError !== id) {
         seenError = id;
-        addToast('error', e.message);
+        addToast('error', errorText(e));
       }
     } else {
       seenError = null;
@@ -956,7 +965,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         run: () => {
           const cur = controller.getState();
           if (cur.videoId === target.videoId && cur.arabic?.cues === target.cues) return controller.setOffset(prev);
-          addToast('info', syncUndoStale);
+          addToast('info', syncUndoStaleLine());
           return null;
         },
       },
@@ -1077,7 +1086,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       // بدأ التنزيل وما زال حوار الحفظ مفتوحًا (pending): لا يُقال «نُزّل» قبل أن يكتمل، بل ما ينتظره المستخدم.
       d.saveLine = r.pending
         ? { tone: 'info', text: messageFor('SV_PENDING') }
-        : { tone: 'ok', text: r.saved.length > 1 ? downloadedParts(partsLabel(r.saved.length)) : downloadedLine(r.saved[0]) };
+        : { tone: 'ok', text: r.saved.length > 1 ? downloadedParts(partsWord(r.saved.length)) : downloadedLine(r.saved[0]) };
     }
     if (r.stopped) {
       if (r.stopped.code !== 'SV_CANCELLED') {
@@ -1289,6 +1298,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   return {
     player,
+    /** فيها ما يضيع بإعادة البناء: رفع جارٍ أو ملف بانتظار التأكيد أو تنزيل جارٍ أو كتابة في حقل أو مزامنة بجملة مفتوحة. */
+    holdsFlow: () => !destroyed && !!(ui.upload.pending || ui.upload.busy || ui.download.busy || ui.open === 'confirm' || ui.timing.sync || layer.isTyping()),
     /** المشغّل والطبقة ما زالا في الصفحة؛ المجموعة تُعاد إلى الشريط في check. */
     healthy: () => !destroyed && player.isConnected && layer.isConnected(),
     /** فحص خفيف دوري: الموضع، وما يُقرأ من الصفحة (بث جارٍ، وزر CC)، وقياس الضيق. */

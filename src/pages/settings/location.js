@@ -1,10 +1,11 @@
 // «مكان حفظ ملفات الترجمة» (R65، P13-AC8، مواصفة التصميم §١٩.٨): أول بند في بطاقة «التصدير». الأوضاع الثلاثة والافتراضي
 // مجلد التنزيلات كالسلوك الحالي، واسم المجلد الفرعي بتحقق (معطّل إلا في وضعه)، و«استعادة الافتراضي»، وسطر المكان المختار
 // وصفًا للإعداد، و«آخر ملف حُفظ» من سجل المتصفح وحده لملف نزّله ترجمان واكتمل ووُجد؛ وإلا لا يُعرض مسار. لا مسار يُخزَّن.
+import { t } from '../../i18n/index.js';
 import { messageFor } from '../../core/errors/index.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { button, choiceGroup, el, ltr } from '../../ui/components.js';
-import { DEFAULT_SUBFOLDER, SAVE_LOCATIONS, SAVE_LOCATION_NOTE, isDefaultLocation, parseFolder } from './model.js';
+import { DEFAULT_SUBFOLDER, SAVE_LOCATIONS, saveLocationNote, isDefaultLocation, parseFolder } from './model.js';
 
 /**
  * @param {{
@@ -21,7 +22,7 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
   folderError.hidden = true;
   const folder = el('input', {
     className: 'tj-field__input tj-field__input--mono st-subfolder',
-    attrs: { id: folderId, type: 'text', 'aria-label': 'اسم المجلد الفرعي', autocomplete: 'off', spellcheck: 'false', placeholder: DEFAULT_SUBFOLDER, maxlength: '60' },
+    attrs: { id: folderId, 'data-tj-keep': 'settings.subfolder', type: 'text', 'aria-label': t('settings.location.folderName'), autocomplete: 'off', spellcheck: 'false', placeholder: DEFAULT_SUBFOLDER, maxlength: '60' },
     dir: 'ltr', doc,
   });
   const setFolderError = (code) => {
@@ -44,16 +45,16 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
   const folderBox = el('span', { className: 'st-subfolder-box', children: [folder, folderError], doc });
 
   const group = choiceGroup({
-    legend: 'مكان حفظ ملفات الترجمة', value: getPrefs().saveLocation.mode, doc,
+    legend: t('settings.export.where'), value: getPrefs().saveLocation.mode, doc,
     options: SAVE_LOCATIONS.map((o) => ({ value: o.value, label: o.label, hint: o.hint, extra: o.value === 'subfolder' ? folderBox : null })),
     onChange: (mode) => savePrefs({ saveLocation: { mode } }, mark),
   });
   const lastPath = el('span', { className: 'st-last-save__path', doc });
-  const last = el('p', { className: 'tj-caption st-last-save', children: ['آخر ملف حُفظ: ', lastPath], doc });
+  const last = el('p', { className: 'tj-caption st-last-save', children: [t('settings.location.last'), lastPath], doc });
   last.hidden = true;
   // اسم وصول يميّزه عن «استعادة الافتراضي» في رأس القسم (كانا باسم واحد؛ تدقيق 7a66f91، U58).
   const reset = button({
-    label: 'استعادة المكان الافتراضي', variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-location__reset', doc,
+    label: t('settings.location.reset'), variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-location__reset', doc,
     onClick: () => {
       if (isDefaultLocation(getPrefs().saveLocation)) return;
       setFolderError(null);
@@ -61,7 +62,7 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
     },
   });
 
-  reset.setAttribute('aria-label', 'استعادة المكان الافتراضي');
+  reset.setAttribute('aria-label', t('settings.location.reset'));
 
   function sync(force = false) {
     const loc = getPrefs().saveLocation;
@@ -73,7 +74,7 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
     }
     const isDefault = isDefaultLocation(loc);
     reset.setAttribute('aria-disabled', isDefault ? 'true' : 'false');
-    reset.title = isDefault ? 'مكان الحفظ افتراضي بالفعل.' : '';
+    reset.title = isDefault ? t('settings.location.resetDefault') : '';
   }
 
   async function refreshLast() {
@@ -89,7 +90,7 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
 
   const root = el('div', {
     className: 'st-location',
-    children: [group.root, last, el('p', { className: 'tj-caption st-note', text: SAVE_LOCATION_NOTE, doc }), el('div', { className: 'st-actions', children: [reset], doc })],
+    children: [group.root, last, el('p', { className: 'tj-caption st-note', text: saveLocationNote(), doc }), el('div', { className: 'st-actions', children: [reset], doc })],
     doc,
   });
   return { root, group, folder, sync, refreshLast };

@@ -7,10 +7,14 @@ import { instructions } from '../../../../src/core/export/instructions.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { withArabicEdit, withView } from '../../../../src/core/model/index.js';
 import { writeSrt } from '../../../../src/core/srt/writer.js';
-import { createLibrary, CAPTION, COPY_TIP } from '../../../../src/pages/library/view.js';
+import { createLibrary } from '../../../../src/pages/library/view.js';
+import { t } from '../../../../src/i18n/index.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, englishTrack, fingerprint, makeCues, videoRecord } from '../../../helpers/fixtures.js';
 import { buttonNamed, findAll, newDocument, settle, textOf } from './fake-dom.js';
+
+const CAPTION = t('library.view.caption');
+const COPY_TIP = t('library.view.copyTip');
 
 const IDS = ['AAAAAAAAAAA', 'BBBBBBBBBBB', 'CCCCCCCCCCC'];
 const iso = (s) => `${String.fromCodePoint(0x2068)}${s}${String.fromCodePoint(0x2069)}`;

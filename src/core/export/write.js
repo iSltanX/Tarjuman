@@ -2,6 +2,7 @@
 // والتقسيم الاحتياطي يحتاج ترقيمًا مستمرًا، فتُكتب الأجزاء اللاحقة هنا بالصيغة نفسها بالحرف، ويُتحقق أن
 // ضمّ الأجزاء بسطر فارغ بينها يعطي الملف الكامل الذي كتبه الكاتب المرجعي (ويعيد المحلل الصارم قراءته).
 import { TjError } from '../errors/index.js';
+import { joinList } from '../../i18n/index.js';
 import { isBlankText } from '../model/cue.js';
 import { breaksSrtText, parseSrtLenient, readableText } from '../srt/lenient.js';
 import { parseSrtStrict } from '../srt/parser.js';
@@ -9,7 +10,7 @@ import { formatSrtTime } from '../srt/time.js';
 import { writeSrt } from '../srt/writer.js';
 
 const MAX_LIST = 8;
-const list = (ns) => ns.slice(0, MAX_LIST).join('، ') + (ns.length > MAX_LIST ? '…' : '');
+const list = (ns) => joinList(ns.slice(0, MAX_LIST)) + (ns.length > MAX_LIST ? '…' : '');
 
 /**
  * يرفض ما لا يُكتب ملف SRT سليمًا منه، برمز عربي واضح لا باستثناء كاتب.

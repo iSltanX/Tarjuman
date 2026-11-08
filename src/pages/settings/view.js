@@ -7,6 +7,7 @@
 import { thumbnailsShown } from '../../core/consent/thumbnails.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
+import { getDir, getLocale, isLocale, t, texts, LOCALE_NAMES } from '../../i18n/index.js';
 import { DEFAULT_SETTINGS, SUBTITLE_BACKGROUNDS, SUBTITLE_POSITIONS, SUBTITLE_SCALE } from '../../core/model/settings.js';
 import { alertBox, button, confirmDialog, el, icon, ltr, statusPill } from '../../ui/components.js';
 import { formatBytes, ltrInline } from '../../ui/format.js';
@@ -19,41 +20,31 @@ import { dataControl } from './data.js';
 import { glossaryControl } from './glossary.js';
 import { saveLocationControl } from './location.js';
 import {
-  CONFIRM_WORD, DEFAULT_SCALE_MARK_PCT, DEFAULT_SECTION, PREVIEW_BOX, PREVIEW_LINES, READING_DEFAULT_CPS, SECTIONS, completenessText,
+  DEFAULT_SCALE_MARK_PCT, DEFAULT_SECTION, PREVIEW_BOX, READING_DEFAULT_CPS, SECTIONS, completenessText, confirmWord,
   confirmWordOk, isSectionId, parseCompleteness, parseDrift, parseReadingSpeed, parseSplit, parseStep, previewStyle, readingText,
-  sectionReset, snapScale, stepChoice, stepText,
+  previewLines, sectionReset, snapScale, stepChoice, stepText,
 } from './model.js';
 
-export const SUBTITLE_NOTE = 'يخص الترجمة فوق الفيديو وحدها.';
-export const SCALE_NOTE = 'الحجم نسبة من ارتفاع المشغّل، فيكبر النص في ملء الشاشة. الافتراضي 100%.';
-export const INSTALL_REMINDER = 'ثبّت أيقونة ترجمان في شريط المتصفح من قائمة الإضافات.';
-export const SAVE_HINT = 'تُحفظ التغييرات فورًا.';
-export const RESET_LABEL = 'استعادة الافتراضي';
+// نصوص الصفحة في فهرس التوطين (settings.*) وتُقرأ بلغة الواجهة الحالية عند كل استعمال، لا عند تحميل الوحدة.
+export const subtitleNote = () => t('settings.display.subtitleNote');
+export const scaleNote = () => t('settings.display.scaleNote');
+export const installReminder = () => t('settings.storage.installReminder');
+export const saveHint = () => t('settings.saveHint');
+export const resetLabel = () => t('settings.reset.label');
 /** تعذّر قياس المساحة أو الأحجام وحده (تدقيق 7a66f91، U03): المحفوظات سليمة، فلا «تعذّرت قراءة المحفوظات» ولا «لم يُحذف شيء». */
-export const CAPACITY_UNAVAILABLE = 'قياس المساحة المستخدمة غير متاح الآن.';
-export const SIZES_UNAVAILABLE = 'أحجام الترجمات غير النشطة والنسخ السابقة غير متاحة الآن.';
+export const capacityUnavailable = () => t('settings.storage.capacityUnavailable');
+export const sizesUnavailable = () => t('settings.storage.sizesUnavailable');
 /** مفاتيح الواجهة على هذا الجهاز في «العرض» (prefs.ui). اللوحة مغلقة افتراضيًا (قرار سلطان 2026-11-03)، وزرها في شريط المشغّل. */
-export const ENTRY_SWITCH = Object.freeze({
-  label: 'زر النص المتزامن', hint: 'في شريط المشغّل', text: 'يظهر في صفحات الفيديو',
-  note: 'إطفاؤه يخفي الزر ويغلق اللوحة معه، وتعيده من هنا أو من نافذة الإضافة. أما إغلاق اللوحة وحده فلا يخفي الزر.',
-});
-export const PANEL_OPEN_SWITCH = Object.freeze({
-  label: 'لوحة النص المتزامن', hint: 'يمين الفيديو', text: 'مفتوحة في صفحات الفيديو',
-  note: 'مغلقة افتراضيًا. زرها في شريط المشغّل يفتحها ويغلقها، وتبقى على آخر حال في كل الفيديوهات.',
-});
-export const THUMBNAILS_SWITCH = Object.freeze({
-  label: 'صور الفيديو في المحفوظات', text: 'تُعرض صورة كل فيديو',
-  note: `تُطلب من خوادم يوتيوب (${ltrInline('i.ytimg.com')}) بمعرّف الفيديو؛ أطفئها إن لم ترد هذا الاتصال.`,
-  // Firefox (قرار سلطان 2026-11-04، core/consent/thumbnails.js): التفعيل يطلب موافقة «نشاط التصفح»، والصور مطفأة حتى يوافق.
-  noteFirefox: `تُطلب من خوادم يوتيوب (${ltrInline('i.ytimg.com')}) بمعرّف الفيديو؛ أطفئها إن لم ترد هذا الاتصال. وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح»، وتسحبها من صفحة إضافات المتصفح.`,
-  refused: 'لم تُمنح الموافقة، فلا تُعرض الصور.',
-});
-export const MODE_NOTES = Object.freeze({
-  normal: 'عادي: مقاطع قصيرة قريبة من تقسيم يوتيوب، للتزامن الأدق مع الكلام.',
-  long: 'مقاطع أطول: يدمج المقاطع المتجاورة في جمل أطول ليفهم النموذج السياق، فيتغير عدد المقاطع وترقيمها وحدود توقيتها.',
-});
-const BG_LABELS = Object.freeze({ none: 'بلا خلفية', soft: 'خفيفة', solid: 'داكنة' });
-const POSITION_LABELS = Object.freeze({ bottom: 'أسفل', raised: 'مرتفع', top: 'أعلى' });
+export const ENTRY_SWITCH = texts('settings.entrySwitch');
+export const PANEL_OPEN_SWITCH = texts('settings.panelOpenSwitch');
+// Firefox (قرار سلطان 2026-11-04، core/consent/thumbnails.js): التفعيل يطلب موافقة «نشاط التصفح»، والصور مطفأة حتى يوافق. note وnoteFirefox قالبان بـ{host}.
+export const THUMBNAILS_SWITCH = texts('settings.thumbsSwitch');
+const thumbsNote = (firefox) => t(firefox ? 'settings.thumbsSwitch.noteFirefox' : 'settings.thumbsSwitch.note', { host: ltrInline('i.ytimg.com') });
+export const MODE_NOTES = texts('settings.modeNotes');
+const BG_KEYS = Object.freeze({ none: 'bgNone', soft: 'bgSoft', solid: 'bgSolid' });
+const POSITION_KEYS = Object.freeze({ bottom: 'posBottom', raised: 'posRaised', top: 'posTop' });
+const bgLabel = (v) => t(`settings.display.${BG_KEYS[v]}`);
+const positionLabel = (v) => t(`settings.display.${POSITION_KEYS[v]}`);
 
 /**
  * @typedef {{
@@ -250,15 +241,15 @@ export function createSettings(env) {
     const custom = customResets[def.id] ?? null;
     if (custom) {
       resetMark = marks();
-      resetBtn = button({ label: RESET_LABEL, variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: () => (custom.isDefault() ? undefined : custom.run(resetMark)) });
-      resetBtn.setAttribute('aria-label', `${RESET_LABEL}: ${def.title}`);
+      resetBtn = button({ label: resetLabel(), variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: () => (custom.isDefault() ? undefined : custom.run(resetMark)) });
+      resetBtn.setAttribute('aria-label', t('settings.reset.aria', { label: resetLabel(), title: def.title }));
       sync.push(() => {
         resetBtn.setAttribute('aria-disabled', custom.isDefault() ? 'true' : 'false');
         resetBtn.title = custom.isDefault() ? custom.defaultNote : '';
       });
     } else if (reset) {
       resetMark = marks();
-      resetBtn = button({ label: RESET_LABEL, variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: async () => {
+      resetBtn = button({ label: resetLabel(), variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: async () => {
         const r = sectionReset(settings, def.id, prefs);
         if (!r || r.isDefault) return;
         // الاستعادة قيمة جاهزة لا من الحقل المخصص: «مخصص» لا يبقى محددًا بعدها (تدقيق 7a66f91، U59).
@@ -267,7 +258,7 @@ export function createSettings(env) {
         if (Object.keys(r.prefsPatch).length) await savePrefs(r.prefsPatch, resetMark);
       } });
       // اسم يسمّي القسم: في «التصدير» زرّان كانا باسم واحد (U58).
-      resetBtn.setAttribute('aria-label', `${RESET_LABEL}: ${def.title}`);
+      resetBtn.setAttribute('aria-label', t('settings.reset.aria', { label: resetLabel(), title: def.title }));
       sync.push(() => {
         const r = sectionReset(settings, def.id, prefs);
         resetBtn.setAttribute('aria-disabled', r.isDefault ? 'true' : 'false');
@@ -291,8 +282,8 @@ export function createSettings(env) {
   // ---- العرض ----
   const displayMark = marks();
   const displaySeg = segmented({
-    legend: 'وضع العرض الافتراضي', value: settings.displayModeDefault, doc,
-    options: [{ value: 'ar', label: 'الترجمة وحدها' }, { value: 'dual', label: 'الترجمة فوق الأصل' }],
+    legend: t('settings.display.mode'), value: settings.displayModeDefault, doc,
+    options: [{ value: 'ar', label: t('settings.display.modeAr') }, { value: 'dual', label: t('settings.display.modeDual') }],
     onChange: (v) => save({ displayModeDefault: v }, displayMark),
   });
   sync.push(() => displaySeg.set(settings.displayModeDefault));
@@ -310,7 +301,7 @@ export function createSettings(env) {
     className: 'st-fonts',
     attrs: { 'aria-describedby': 'st-font-meta' },
     children: [
-      el('legend', { className: 'tj-sr-only', text: 'خط الترجمة', doc }),
+      el('legend', { className: 'tj-sr-only', text: t('settings.display.font'), doc }),
       ...SUBTITLE_FONT_LIST.map((f, i) => {
         const input = el('input', { attrs: { type: 'radio', name: 'st-font', value: f.id }, doc });
         input.checked = f.id === settings.appearance.font;
@@ -324,7 +315,7 @@ export function createSettings(env) {
         name.style.fontFamily = subtitleFontStack(f.id); // اسم كل خط بخطه نفسه
         return el('label', {
           className: 'st-font',
-          children: [input, name, i === 0 ? el('span', { className: 'st-font__tag', text: 'الافتراضي', doc }) : null],
+          children: [input, name, i === 0 ? el('span', { className: 'st-font__tag', text: t('settings.display.fontDefault'), doc }) : null],
           doc,
         });
       }),
@@ -342,7 +333,7 @@ export function createSettings(env) {
   const scaleOut = el('output', { className: 'st-scale__value tj-mono', attrs: { for: scaleId }, doc });
   const slider = el('input', {
     className: 'st-scale__input',
-    attrs: { id: scaleId, type: 'range', min: String(SUBTITLE_SCALE.min), max: String(SUBTITLE_SCALE.max), step: String(SUBTITLE_SCALE.step), 'aria-label': 'حجم خط الترجمة', 'aria-valuetext': '100%' },
+    attrs: { id: scaleId, type: 'range', min: String(SUBTITLE_SCALE.min), max: String(SUBTITLE_SCALE.max), step: String(SUBTITLE_SCALE.step), 'aria-label': t('settings.display.fontSizeAria'), 'aria-valuetext': '100%' },
     doc,
   });
   slider.value = String(settings.appearance.scale);
@@ -361,26 +352,26 @@ export function createSettings(env) {
 
   const bgMark = marks();
   const bgSeg = segmented({
-    legend: 'الخلفية', value: settings.appearance.background, doc,
-    options: SUBTITLE_BACKGROUNDS.map((v) => ({ value: v, label: BG_LABELS[v] })),
+    legend: t('settings.display.background'), value: settings.appearance.background, doc,
+    options: SUBTITLE_BACKGROUNDS.map((v) => ({ value: v, label: bgLabel(v) })),
     onChange: (v) => save({ appearance: { background: v } }, bgMark),
   });
   sync.push(() => bgSeg.set(settings.appearance.background));
   const posMark = marks();
   const posSeg = segmented({
-    legend: 'الموضع', value: settings.appearance.position, doc,
-    options: SUBTITLE_POSITIONS.map((v) => ({ value: v, label: POSITION_LABELS[v] })),
+    legend: t('settings.display.position'), value: settings.appearance.position, doc,
+    options: SUBTITLE_POSITIONS.map((v) => ({ value: v, label: positionLabel(v) })),
     onChange: (v) => save({ appearance: { position: v } }, posMark),
   });
   sync.push(() => posSeg.set(settings.appearance.position));
 
   // المعاينة الحية: صندوق فيديو داكن بسطرين، يتحدث فور تغيير أي من المظهر.
   const preview = (() => {
-    const stage = el('div', { className: 'st-preview__stage', children: PREVIEW_LINES.map((t) => el('p', { className: 'st-preview__line', text: t, attrs: { lang: 'ar', dir: 'rtl' }, doc })), doc });
+    const stage = el('div', { className: 'st-preview__stage', children: previewLines().map((line) => el('p', { className: 'st-preview__line', text: line, attrs: { lang: getLocale(), dir: getDir() }, doc })), doc });
     const screen = el('div', { className: 'st-preview__screen', children: [stage], doc });
     screen.style.width = `${PREVIEW_BOX.width}px`;
     screen.style.aspectRatio = `${PREVIEW_BOX.width} / ${PREVIEW_BOX.height}`;
-    const box = el('div', { className: 'st-preview', attrs: { role: 'img', 'aria-label': 'معاينة حية لشكل الترجمة فوق الفيديو' }, children: [screen], doc });
+    const box = el('div', { className: 'st-preview', attrs: { role: 'img', 'aria-label': t('settings.display.previewAria') }, children: [screen], doc });
     return {
       root: box, stage,
       update(a) {
@@ -409,16 +400,55 @@ export function createSettings(env) {
   const thumbsMark = marks();
   const thumbsSwitch = uiSwitch('thumbnails', THUMBNAILS_SWITCH.text, thumbsMark);
 
+  // لغة الواجهة (أعلى «العرض»): مفتاح مستقل uiLocale عبر المخزن (setUiLocale) لا في settings ولا prefs ولا langPrefs ولا النسخة الاحتياطية،
+  // ولا يمسه «استعادة الافتراضي». التغيير يسمعه startPage (watchLocale) فتعيد الصفحة تحميل نفسها، فلا إعادة رسم هنا. الاسمان بصيغتيهما
+  // في اللغتين: اسم اللغة لا يُترجم، ويُعزل اتجاه كل منهما.
+  const uiLocaleMark = marks();
+  // اسم كل لغة بلغتها نفسها: «العربية» و«English» في الواجهتين.
+  const UI_LOCALE_OPTIONS = Object.freeze([{ value: 'ar', label: LOCALE_NAMES.ar, dir: 'rtl' }, { value: 'en', label: LOCALE_NAMES.en, dir: 'ltr' }]);
+  const uiLocaleSeg = segmented({
+    legend: t('settings.uiLocale.title'), value: getLocale(), doc, className: 'st-ui-locale',
+    options: UI_LOCALE_OPTIONS.map(({ value, label }) => ({ value, label })),
+    onChange: async (v) => {
+      try {
+        await store.setUiLocale(v);
+      } catch {
+        uiLocaleMark.flash(messageFor('PG_SAVE_FAILED'), 'danger');
+        uiLocaleSeg.set(uiLocaleSaved);
+      }
+    },
+  });
+  let uiLocaleSaved = getLocale();
+  uiLocaleSeg.root.setAttribute('data-tj-keep', 'ui-locale');
+  uiLocaleSeg.root.querySelectorAll('.tj-seg__label').forEach((label, i) => {
+    const o = UI_LOCALE_OPTIONS[i];
+    label.replaceChildren(el('bdi', { text: o.label, dir: o.dir, attrs: { lang: o.value }, doc }));
+  });
+  const uiLocaleRow = row(t('settings.uiLocale.title'), uiLocaleMark, uiLocaleSeg.root);
+  /** القيمة المحفوظة في المخزن لا لغة الصفحة الآن: تُقرأ عند التحميل، وتتبع تغيّرها من سياق آخر. */
+  async function readUiLocale() {
+    try {
+      const saved = await store.getUiLocale();
+      if (isLocale(saved?.locale)) {
+        uiLocaleSaved = saved.locale;
+        uiLocaleSeg.set(saved.locale);
+      }
+    } catch {
+      // تبقى لغة الصفحة الحالية.
+    }
+  }
+
   const display = section(byId.display,
-    row('وضع العرض الافتراضي', displayMark, displaySeg.root),
-    row('خط الترجمة', fontMark, fontList, fontMeta, note(SUBTITLE_NOTE)),
-    row('حجم الخط', scaleMark, sliderBox, note(SCALE_NOTE)),
-    row('الخلفية', bgMark, bgSeg.root),
-    row('الموضع', posMark, posSeg.root),
-    row('معاينة حية', null, preview.root),
+    uiLocaleRow,
+    row(t('settings.display.mode'), displayMark, displaySeg.root),
+    row(t('settings.display.font'), fontMark, fontList, fontMeta, note(subtitleNote())),
+    row(t('settings.display.fontSize'), scaleMark, sliderBox, note(scaleNote())),
+    row(t('settings.display.background'), bgMark, bgSeg.root),
+    row(t('settings.display.position'), posMark, posSeg.root),
+    row(t('settings.display.preview'), null, preview.root),
     named(rowWithHint(PANEL_OPEN_SWITCH.label, PANEL_OPEN_SWITCH.hint, openMark, openSwitch, note(PANEL_OPEN_SWITCH.note)), 'panelOpen'),
     named(rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)), 'panelEntry'),
-    named(row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsConsent.needed ? THUMBNAILS_SWITCH.noteFirefox : THUMBNAILS_SWITCH.note)), 'thumbnails'));
+    named(row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsNote(thumbsConsent.needed))), 'thumbnails'));
 
   // ---- اللغات (AA3، لوحة 15) ----
   const langs = createLanguages({ store, doc, marks, row, rowWithHint, note, confirm });
@@ -430,8 +460,8 @@ export function createSettings(env) {
   const stepMark = marks();
   let stepField;
   const stepSeg = segmented({
-    legend: 'خطوة أزرار ±', value: stepChoice(settings.offsetStepMs), doc,
-    options: [{ value: '0.5', label: '0.5 ث' }, { value: '1', label: '1 ث' }, { value: 'custom', label: 'مخصص' }],
+    legend: t('settings.timing.step'), value: stepChoice(settings.offsetStepMs), doc,
+    options: [{ value: '0.5', label: t('settings.timing.halfSec') }, { value: '1', label: t('settings.timing.oneSec') }, { value: 'custom', label: t('settings.timing.custom') }],
     onChange: (v) => {
       stepCustom = v === 'custom';
       customHost.hidden = !stepCustom;
@@ -441,7 +471,7 @@ export function createSettings(env) {
     },
   });
   stepField = numberField({
-    label: 'الخطوة المخصصة', hint: 'بالثواني، من 0.1 إلى 10 بمضاعفات 0.1.', unit: 'ث', value: stepText(settings.offsetStepMs), parse: parseStep, mark: null, doc,
+    label: t('settings.timing.customStep'), hint: t('settings.timing.customHint'), unit: t('settings.timing.unit'), value: stepText(settings.offsetStepMs), parse: parseStep, mark: null, doc,
     commit: (ms) => save({ offsetStepMs: ms }, stepMark),
   });
   const customHost = el('div', { className: 'st-custom', children: [stepField.root], doc });
@@ -453,7 +483,7 @@ export function createSettings(env) {
     stepField.set(stepText(settings.offsetStepMs), { force });
   });
   const timing = section(byId.timing,
-    row('خطوة أزرار ±', stepMark, stepSeg.root, customHost, note('+ تأخير: تظهر الترجمة لاحقًا · − تقديم: تظهر أبكر. الإزاحة تُحفظ لكل فيديو ولا تغيّر ملفك.')));
+    row(t('settings.timing.step'), stepMark, stepSeg.root, customHost, note(t('settings.timing.note'))));
 
   // ---- التصدير ----
   // مكان حفظ ملفات الترجمة (R65) أول بند: يتبعه كل تصدير من المحفوظات والنسخة الاحتياطية.
@@ -467,53 +497,53 @@ export function createSettings(env) {
   });
   sync.push((force) => location.sync(force));
   const exporting = section(byId.export,
-    row('مكان حفظ ملفات الترجمة', locationMark, location.root));
+    row(t('settings.export.where'), locationMark, location.root));
 
   const exportMark = marks();
   const modeSeg = segmented({
-    legend: 'شكل المقاطع الافتراضي', value: settings.export.modeDefault, doc,
-    options: [{ value: 'normal', label: 'عادي' }, { value: 'long', label: 'مقاطع أطول' }],
+    legend: t('settings.export.mode'), value: settings.export.modeDefault, doc,
+    options: [{ value: 'normal', label: t('settings.export.modeNormal') }, { value: 'long', label: t('settings.export.modeLong') }],
     onChange: (v) => save({ export: { modeDefault: v } }, exportMark),
   });
   sync.push(() => modeSeg.set(settings.export.modeDefault));
   const splitMark = marks();
   const splitField = numberField({
-    label: 'يُقترح التقسيم ابتداءً من', unit: 'مقطع', value: String(settings.export.splitThreshold), parse: parseSplit, mark: splitMark.root, doc,
-    hint: `يُقترح تقسيم الأصل إلى أجزاء عند تنزيله إذا تجاوزت مقاطعه هذا العدد. الافتراضي ${DEFAULT_SETTINGS.export.splitThreshold}.`,
+    label: t('settings.export.splitLabel'), unit: t('settings.export.splitUnit'), value: String(settings.export.splitThreshold), parse: parseSplit, mark: splitMark.root, doc,
+    hint: t('settings.export.splitHint', { n: DEFAULT_SETTINGS.export.splitThreshold }),
     commit: (n) => save({ export: { splitThreshold: n } }, splitMark),
   });
   sync.push((force) => splitField.set(String(settings.export.splitThreshold), { force }));
   // يعمل عند تنزيل الأصل لا عند رفع الترجمة، فمكانه هنا قرب «شكل المقاطع الافتراضي» (ق-7).
   const compMark = marks();
   const compField = numberField({
-    label: 'حد التنبيه إلى نقص الأصل', unit: '%', value: completenessText(settings.thresholds.completeness), parse: parseCompleteness, mark: compMark.root, doc,
-    hint: `يُنبَّه إلى أن الأصل قد يكون ناقصًا إذا انتهت ترجمة يوتيوب قبل هذه النسبة من مدة الفيديو. الافتراضي ${completenessText(DEFAULT_SETTINGS.thresholds.completeness)}%.`,
+    label: t('settings.export.completeLabel'), unit: t('settings.export.completeUnit'), value: completenessText(settings.thresholds.completeness), parse: parseCompleteness, mark: compMark.root, doc,
+    hint: t('settings.export.completeHint', { n: completenessText(DEFAULT_SETTINGS.thresholds.completeness) }),
     commit: (v) => save({ thresholds: { completeness: v } }, compMark),
   });
   sync.push((force) => compField.set(completenessText(settings.thresholds.completeness), { force }));
   exporting.append(
-    row('شكل المقاطع الافتراضي', exportMark, modeSeg.root, el('div', { className: 'st-notes', children: [note(MODE_NOTES.normal), note(MODE_NOTES.long)], doc })),
+    row(t('settings.export.mode'), exportMark, modeSeg.root, el('div', { className: 'st-notes', children: [note(MODE_NOTES.normal), note(MODE_NOTES.long)], doc })),
     el('div', { className: 'st-fields', children: [compField.root], doc }),
-    row('تقسيم الملفات الطويلة', null, splitField.root),
+    row(t('settings.export.splitRow'), null, splitField.root),
   );
 
   // ---- المقارنة ----
   const driftMark = marks();
   const driftField = numberField({
-    label: 'فرق التوقيت المقبول', unit: 'ملي ثانية', value: String(settings.thresholds.driftMs), parse: parseDrift, mark: driftMark.root, doc,
-    hint: `يُعدّ توقيت المقطع مختلفًا عن الأصل إذا زاد فرق بدايته أو نهايته عن هذا. الافتراضي ${DEFAULT_SETTINGS.thresholds.driftMs} ملي ثانية.`,
+    label: t('settings.compare.driftLabel'), unit: t('settings.compare.driftUnit'), value: String(settings.thresholds.driftMs), parse: parseDrift, mark: driftMark.root, doc,
+    hint: t('settings.compare.driftHint', { n: DEFAULT_SETTINGS.thresholds.driftMs }),
     commit: (n) => save({ thresholds: { driftMs: n } }, driftMark),
   });
   sync.push((force) => driftField.set(String(settings.thresholds.driftMs), { force }));
   // حد سرعة القراءة (R55): فارغ = الافتراضي المعايَر، بعلامة «الافتراضي» ظاهرة.
   const readingMark = marks();
   const readingField = numberField({
-    label: 'حد سرعة القراءة', unit: 'حرف/ث', value: readingText(prefs.review.maxCps), parse: parseReadingSpeed, mark: readingMark.root, doc,
-    hint: `من 5 إلى 40. اتركه فارغًا للافتراضي ${READING_DEFAULT_CPS}. ينبّه المحرّر إلى المقاطع الأسرع منه ولا يمنع الحفظ.`,
+    label: t('settings.compare.readingLabel'), unit: t('settings.compare.readingUnit'), value: readingText(prefs.review.maxCps), parse: parseReadingSpeed, mark: readingMark.root, doc,
+    hint: t('settings.compare.readingHint', { cps: READING_DEFAULT_CPS }),
     commit: (v) => savePrefs({ review: { maxCps: v } }, readingMark),
   });
   readingField.input.setAttribute('placeholder', String(READING_DEFAULT_CPS));
-  const readingDefault = statusPill({ tone: 'neutral', plain: true, text: `الافتراضي ${READING_DEFAULT_CPS}`, doc });
+  const readingDefault = statusPill({ tone: 'neutral', plain: true, text: t('settings.compare.readingDefault', { cps: READING_DEFAULT_CPS }), doc });
   sync.push((force) => {
     readingField.set(readingText(prefs.review.maxCps), { force });
     readingDefault.hidden = prefs.review.maxCps !== null;
@@ -528,19 +558,19 @@ export function createSettings(env) {
   const glossary = glossaryControl({ doc, getPrefs: () => prefs, savePrefs, addTerm, removeTerm, attachMark: glossaryAttachMark, listMark: glossaryListMark });
   sync.push(() => glossary.sync());
   const glossarySection = section(byId.glossary,
-    row('الإرفاق', glossaryAttachMark, glossary.attachRow, note('تُرفق مع كل تعليمات ترجمة تنسخها، ومنها تعليمات الاستكمال في المحرّر.')),
-    row('القاموس', glossaryListMark, el('div', { className: 'st-gl__head', children: [glossary.counter], doc }), glossary.list));
+    row(t('settings.glossary.attachRow'), glossaryAttachMark, glossary.attachRow, note(t('settings.glossary.attachNote'))),
+    row(t('settings.glossary.listRow'), glossaryListMark, el('div', { className: 'st-gl__head', children: [glossary.counter], doc }), glossary.list));
 
   // ---- التخزين ----
   const usageText = el('span', { className: 'tj-body-sm st-quota__text', doc });
   const meterFill = el('span', { className: 'tj-meter__fill', doc });
-  const meter = el('span', { className: 'tj-meter', attrs: { role: 'meter', 'aria-label': 'المساحة المستخدمة', 'aria-valuemin': '0', 'aria-valuemax': '100' }, children: [meterFill], doc });
+  const meter = el('span', { className: 'tj-meter', attrs: { role: 'meter', 'aria-label': t('settings.storage.used'), 'aria-valuemin': '0', 'aria-valuemax': '100' }, children: [meterFill], doc });
   const storageMark = marks();
   const capacityAlert = el('div', { doc });
   async function refreshCapacity() {
     try {
       const cap = await store.capacity();
-      usageText.textContent = cap.quotaBytes ? `${formatBytes(cap.bytesInUse)} من ${formatBytes(cap.quotaBytes)}` : `${formatBytes(cap.bytesInUse)} (بلا حد ثابت)`;
+      usageText.textContent = cap.quotaBytes ? t('settings.storage.usedOf', { used: formatBytes(cap.bytesInUse), quota: formatBytes(cap.quotaBytes) }) : t('settings.storage.noLimit', { used: formatBytes(cap.bytesInUse) });
       meter.hidden = !cap.quotaBytes;
       if (cap.quotaBytes) {
         const pct = Math.min(100, Math.round((cap.bytesInUse / cap.quotaBytes) * 100));
@@ -551,23 +581,23 @@ export function createSettings(env) {
       capacityAlert.replaceChildren(...(cap.code ? [alertBox({ tone: cap.level === 'full' ? 'danger' : 'warning', text: messageFor(cap.code), doc })] : []));
     } catch {
       // قياس المساحة وحده تعذّر (getBytesInUse غائبة أو رفض عابر، تدقيق 7a66f91 U03): المحفوظات نفسها سليمة.
-      usageText.textContent = CAPACITY_UNAVAILABLE;
+      usageText.textContent = capacityUnavailable();
       meter.hidden = true;
       capacityAlert.replaceChildren();
     }
   }
-  const clearBtn = button({ label: 'مسح كل البيانات', variant: 'danger', icon: 'trash', doc, onClick: () => { clearAll(); } });
+  const clearBtn = button({ label: t('settings.storage.clearButton'), variant: 'danger', icon: 'trash', doc, onClick: () => { clearAll(); } });
   async function clearAll() {
-    const typed = el('input', { className: 'tj-field__input', attrs: { id: 'st-confirm-word', type: 'text', autocomplete: 'off', placeholder: CONFIRM_WORD }, doc });
+    const typed = el('input', { className: 'tj-field__input', attrs: { id: 'st-confirm-word', type: 'text', autocomplete: 'off', placeholder: confirmWord() }, doc });
     const content = el('div', {
       className: 'st-confirm',
-      children: [el('label', { className: 'tj-field__label', text: `اكتب «${CONFIRM_WORD}» للتأكيد`, attrs: { for: 'st-confirm-word' }, doc }), typed],
+      children: [el('label', { className: 'tj-field__label', text: t('settings.storage.confirmLabel', { word: confirmWord() }), attrs: { for: 'st-confirm-word' }, doc }), typed],
       doc,
     });
     const pending = confirm({
-      title: 'مسح كل البيانات؟',
-      body: 'تُحذف كل الترجمات المحفوظة والإعدادات من هذا المتصفح، ولا يمكن التراجع عن ذلك.',
-      confirmLabel: 'مسح كل البيانات', tone: 'danger', content, doc,
+      title: t('settings.storage.confirmTitle'),
+      body: t('settings.storage.confirmBody'),
+      confirmLabel: t('settings.storage.clearButton'), tone: 'danger', content, doc,
     });
     // زر التأكيد لا يعمل حتى تُكتب الكلمة نفسها (والإدخال بـEnter يمرّ بالزر نفسه فيُمنع كذلك).
     const confirmBtn = content.closest?.('form')?.querySelector('button[value="confirm"]');
@@ -610,27 +640,27 @@ export function createSettings(env) {
       const translations = list.reduce((s, x) => s + x.summary.filled, 0);
       const videos = list.filter((x) => x.summary.filled > 0).length;
       if (mine !== usageSeq) return;
-      libraryText.textContent = translations ? `الترجمات المحفوظة: ${translations} · الفيديوهات المترجمة: ${videos}` : 'لا ترجمات محفوظة بعد.';
+      libraryText.textContent = translations ? t('settings.storage.libraryCounts', { translations, videos }) : t('settings.storage.libraryEmpty');
       libraryBytes.textContent = '';
       if (!list.length) return;
       // الأحجام معًا لا واحدًا بعد آخر (GM-009): رحلة لكل فيديو بالتوازي بدل أربع متتالية. وفشل قياسها لا يمحو الأعداد (U03).
       const sizes = await Promise.all(list.map((x) => store.bundleBytes(x.entry.videoId))).catch(() => null);
       if (mine !== usageSeq) return;
       if (!sizes) {
-        libraryBytes.textContent = SIZES_UNAVAILABLE;
+        libraryBytes.textContent = sizesUnavailable();
         return;
       }
       const alts = sizes.reduce((s, b) => s + b.alts, 0);
       const previous = sizes.reduce((s, b) => s + b.previous, 0);
-      libraryBytes.textContent = `الترجمات غير النشطة: ${formatBytes(alts)} · النسخ السابقة: ${formatBytes(previous)}`;
+      libraryBytes.textContent = t('settings.storage.libraryBytes', { alts: formatBytes(alts), previous: formatBytes(previous) });
     } catch (err) {
       if (mine === usageSeq) libraryText.textContent = toErrorInfo(err).message;
     }
   }
   const storage = section(byId.storage,
-    row('المساحة المستخدمة', null, el('div', { className: 'st-quota', children: [usageText, meter], doc }), capacityAlert),
-    row('الترجمات والنسخ السابقة', null, el('div', { className: 'st-library', children: [libraryText, libraryBytes], doc })),
-    row('مسح البيانات', storageMark, el('div', { className: 'st-actions', children: [clearBtn], doc }), clearAlert, note('يحذف كل الترجمات المحفوظة والإعدادات من هذا المتصفح. الملفات التي نزّلتها على جهازك لا تتأثر.')));
+    row(t('settings.storage.used'), null, el('div', { className: 'st-quota', children: [usageText, meter], doc }), capacityAlert),
+    row(t('settings.storage.libraryRow'), null, el('div', { className: 'st-library', children: [libraryText, libraryBytes], doc })),
+    row(t('settings.storage.clearRow'), storageMark, el('div', { className: 'st-actions', children: [clearBtn], doc }), clearAlert, note(t('settings.storage.clearNote'))));
   [...storage.children].at(-1)?.querySelector('.tj-label')?.classList.add('st-danger'); // تسمية «مسح البيانات» بنبرة الخطر
 
   // ---- البيانات ----
@@ -649,12 +679,12 @@ export function createSettings(env) {
     },
   });
   const dataSection = section(byId.data,
-    row('نسخة احتياطية', null, data.createRow, note('ملف واحد فيه ترجماتك وعلاماتك وإعداداتك وقاموسك، يُحفظ حيث تُحفظ ملفات الترجمة، ولا يُرسل إلى أي مكان.')),
-    row('الاستعادة', null, data.restoreRow, note('تُفحص النسخة كلها قبل الاستعادة. وتبقى بيانات الفيديوهات الموجودة كما هي ما لم تختر استبدالها.')));
+    row(t('settings.data.createRow'), null, data.createRow, note(t('settings.data.createNote'))),
+    row(t('settings.data.restoreRow'), null, data.restoreRow, note(t('settings.data.restoreNote'))));
 
   // ---- التشخيص ----
   const diagMark = marks();
-  const diagBtn = button({ label: 'نسخ تقرير التشخيص', variant: 'secondary', icon: 'copy', doc, onClick: async () => {
+  const diagBtn = button({ label: t('settings.diag.copy'), variant: 'secondary', icon: 'copy', doc, onClick: async () => {
     try {
       await env.clipboardWrite(await env.diagnosticsText());
       diagMark.flash(messageFor('PG_DIAGNOSTICS_DONE'), 'success');
@@ -664,12 +694,12 @@ export function createSettings(env) {
   } });
   const panel = (tone, title, text) => el('div', { className: `st-panel st-panel--${tone}`, children: [el('strong', { className: 'st-panel__title', text: title, doc }), el('p', { className: 'tj-body-sm', text, doc })], doc });
   const diagnostics = section(byId.diagnostics,
-    row('تقرير التشخيص', diagMark, el('div', { className: 'st-actions', children: [diagBtn], doc }),
+    row(t('settings.diag.row'), diagMark, el('div', { className: 'st-actions', children: [diagBtn], doc }),
       el('div', {
         className: 'st-panels',
         children: [
-          panel('ok', 'يتضمن', 'الإصدار، والمتصفح، ونوع الخطأ، وأحجامًا وأعدادًا.'),
-          panel('no', 'لا يتضمن أبدًا', 'روابط، أو رموز جلسة، أو ملفات ارتباط، أو نص الترجمة.'),
+          panel('ok', t('settings.diag.includesTitle'), t('settings.diag.includes')),
+          panel('no', t('settings.diag.excludesTitle'), t('settings.diag.excludes')),
         ],
         doc,
       })));
@@ -683,7 +713,7 @@ export function createSettings(env) {
     // لا مفتاح «أول تشغيل» في التخزين (عقد المفاتيح)؛ فالتذكير يظهر ما دامت المحفوظات فارغة.
     try {
       const empty = (await store.listIndex()).length === 0;
-      reminderHost.replaceChildren(...(empty ? [alertBox({ tone: 'info', text: INSTALL_REMINDER, doc })] : []));
+      reminderHost.replaceChildren(...(empty ? [alertBox({ tone: 'info', text: installReminder(), doc })] : []));
     } catch {
       reminderHost.replaceChildren();
     }
@@ -703,7 +733,7 @@ export function createSettings(env) {
     on: { click: (e) => { e.preventDefault?.(); select(s.id, { focus: true }); } },
     doc,
   }));
-  const sideNav = el('nav', { className: 'st-nav', attrs: { 'aria-label': 'أقسام الإعدادات' }, children: navLinks, doc });
+  const sideNav = el('nav', { className: 'st-nav', attrs: { 'aria-label': t('settings.navLabel') }, children: navLinks, doc });
 
   /**
    * @param {string} id @param {{ focus?: boolean, remember?: boolean }} [o] remember: يُكتب القسم في جزء العنوان. لا يُكتب عند
@@ -732,7 +762,7 @@ export function createSettings(env) {
     el('div', {
       className: 'st-content',
       children: [
-        el('header', { className: 'st-head', children: [el('h1', { className: 'tj-display', text: 'الإعدادات', doc }), el('p', { className: 'tj-caption', text: SAVE_HINT, doc })], doc }),
+        el('header', { className: 'st-head', children: [el('h1', { className: 'tj-display', text: t('common.nav.settings'), doc }), el('p', { className: 'tj-caption', text: saveHint(), doc })], doc }),
         reminderHost, alertHost, display, langsSection, timing, exporting, comparison, glossarySection, storage, dataSection, diagnostics, about,
       ],
       doc,
@@ -797,12 +827,12 @@ export function createSettings(env) {
     get prefs() { return prefs; },
     async load() {
       try {
-        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent(), langs.load()]);
+        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent(), langs.load(), readUiLocale()]);
         syncAll();
         for (const sec of Object.values(sections)) sec.removeAttribute('inert');
       } catch (err) {
         const info = toErrorInfo(err);
-        alertHost.replaceChildren(alertBox({ tone: 'danger', title: 'تعذّرت قراءة الإعدادات', text: `${info.message} (${info.code})`, doc }));
+        alertHost.replaceChildren(alertBox({ tone: 'danger', title: t('settings.loadFailed'), text: `${info.message} (${info.code})`, doc }));
         for (const sec of Object.values(sections)) sec.setAttribute('inert', '');
       } finally {
         root.removeAttribute('aria-busy');

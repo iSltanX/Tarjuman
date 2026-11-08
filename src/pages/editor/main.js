@@ -10,5 +10,9 @@ import { slotParam } from './persist.js';
 startPage({
   title: () => t('common.nav.editor'),
   wide: true,
-  render: (app) => mountEditor(app, { videoId: videoParam(location.search), slot: slotParam(location.search), store: createStore(), doc: document }),
+  // المحرّر لا يعيد التحميل عند تبديل اللغة (تعديلات غير محفوظة وسجل تراجع في الذاكرة): relocalize تبدّل نصوصه في مكانها.
+  render: async (app, page) => {
+    const api = await mountEditor(app, { videoId: videoParam(location.search), slot: slotParam(location.search), store: createStore(), doc: document });
+    if (api) page.relocalize = api.relocalize;
+  },
 });

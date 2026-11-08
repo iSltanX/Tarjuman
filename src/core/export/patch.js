@@ -2,6 +2,7 @@
 // ب. النص الإنجليزي من مصدر مثبت: المسار المحفوظ الذي صُدِّرت منه البصمة، ويُتحقق أنه يعيد البصمة نفسها عددًا وأزمنة وبصمة
 // نص. في «مقاطع أطول» يُعاد اشتقاق الوضع من المسار العادي المحفوظ بالخيارات الافتراضية، ولا يُقبل إلا بمطابقة البصمة؛ وإلا
 // رفض برمز. الملف يُعاد قراءته فيعطي الأرقام والأزمنة نفسها قبل التسليم. لا كتابة في التخزين.
+import { joinList } from '../../i18n/index.js';
 import { mergeLong } from '../convert/long.js';
 import { isVideoId } from '../model/ids.js';
 import { breaksSrtText } from '../srt/lenient.js';
@@ -37,7 +38,7 @@ function provenSource(track, fp) {
 
 const LIST_MAX = 8;
 /** أول ثمانية أرقام ثم «…». @param {number[]} ns */
-const numberList = (ns) => ns.slice(0, LIST_MAX).join('، ') + (ns.length > LIST_MAX ? '…' : '');
+const numberList = (ns) => joinList(ns.slice(0, LIST_MAX)) + (ns.length > LIST_MAX ? '…' : '');
 
 const validNumbers = (numbers, count) => Array.isArray(numbers) && numbers.length > 0
   && numbers.every((n) => Number.isInteger(n) && n >= 1 && n <= count) && new Set(numbers).size === numbers.length;

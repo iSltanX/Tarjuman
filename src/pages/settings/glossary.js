@@ -1,6 +1,7 @@
 // بطاقة «المصطلحات» (R62، P13-AC7، مواصفة التصميم §١٩.٨): جدول (الإنجليزية · العربية المفضّلة · ملاحظة) بإضافة وحذف،
 // وعدّاد «12 من 100»، ومفتاح «أرفق القاموس بتعليمات الترجمة». الحفظ فوري في التفضيلات (prefs.glossary) بتحقق النموذج
 // نفسه، والقاموس يُرفق بالنص نفسه أينما نُسخت التعليمات (instructions في P11). DOM وtextContent فقط.
+import { t } from '../../i18n/index.js';
 import { textDirection } from '../../core/lang/index.js';
 import { messageFor } from '../../core/errors/index.js';
 import { GLOSSARY_LIMITS } from '../../core/model/prefs.js';
@@ -24,7 +25,7 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
   attach.addEventListener('change', () => savePrefs({ glossary: { attach: attach.checked } }, attachMark));
   const attachRow = el('label', {
     className: 'st-switch', attrs: { for: `${id}-attach` },
-    children: [attach, el('span', { className: 'st-switch__track', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'st-switch__label', text: 'أرفق القاموس بتعليمات الترجمة', doc })],
+    children: [attach, el('span', { className: 'st-switch__track', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'st-switch__label', text: t('settings.glossary.attachSwitch'), doc })],
     doc,
   });
 
@@ -33,13 +34,13 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
   const table = el('table', {
     className: 'st-gl__table',
     children: [
-      el('caption', { className: 'tj-sr-only', text: 'مصطلحات القاموس', doc }),
-      el('thead', { children: [el('tr', { children: ['المصطلح', 'المقابل المفضّل', 'ملاحظة', ''].map((h, i) => el('th', { text: h, attrs: { scope: 'col', ...(i === 3 ? { 'aria-label': 'حذف' } : {}) }, doc })), doc })], doc }),
+      el('caption', { className: 'tj-sr-only', text: t('settings.glossary.caption'), doc }),
+      el('thead', { children: [el('tr', { children: [t('settings.glossary.colSource'), t('settings.glossary.colTarget'), t('settings.glossary.colNote'), ''].map((h, i) => el('th', { text: h, attrs: { scope: 'col', ...(i === 3 ? { 'aria-label': t('settings.glossary.delete') } : {}) }, doc })), doc })], doc }),
       body,
     ],
     doc,
   });
-  const empty = el('p', { className: 'tj-caption st-gl__empty', text: 'لا مصطلحات بعد. أضف المصطلح ومقابله الذي تفضّله، فيُطلب من النموذج التزامه.', doc });
+  const empty = el('p', { className: 'tj-caption st-gl__empty', text: t('settings.glossary.empty'), doc });
   const tableWrap = el('div', { className: 'st-gl__wrap', children: [table], doc });
 
   // حقول الإضافة: كل حقل بتسميته، والخطأ تحت الحقل المعني.
@@ -47,15 +48,15 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
   const errors = {};
   const fieldOf = (key, label, max, dir) => {
     const fid = `${id}-${key}`;
-    inputs[key] = el('input', { className: 'tj-field__input', attrs: { id: fid, type: 'text', autocomplete: 'off', spellcheck: key === 'source' ? 'false' : 'true', maxlength: String(max) }, dir, doc });
+    inputs[key] = el('input', { className: 'tj-field__input', attrs: { id: fid, type: 'text', autocomplete: 'off', spellcheck: key === 'source' ? 'false' : 'true', maxlength: String(max), 'data-tj-keep': `settings.glossary.${key}` }, dir, doc });
     errors[key] = el('span', { className: 'tj-field__error', attrs: { id: `${fid}-error`, role: 'alert' }, doc });
     errors[key].hidden = true;
     return el('div', { className: `tj-field st-gl__field st-gl__field--${key}`, children: [el('label', { className: 'tj-field__label', text: label, attrs: { for: fid }, doc }), inputs[key], errors[key]], doc });
   };
   const fields = [
-    fieldOf('source', 'المصطلح', GLOSSARY_LIMITS.maxSource, 'auto'),
-    fieldOf('target', 'المقابل المفضّل', GLOSSARY_LIMITS.maxTarget, 'auto'),
-    fieldOf('note', 'ملاحظة (اختيارية)', GLOSSARY_LIMITS.maxNote, 'auto'),
+    fieldOf('source', t('settings.glossary.colSource'), GLOSSARY_LIMITS.maxSource, 'auto'),
+    fieldOf('target', t('settings.glossary.colTarget'), GLOSSARY_LIMITS.maxTarget, 'auto'),
+    fieldOf('note', t('settings.glossary.fieldNote'), GLOSSARY_LIMITS.maxNote, 'auto'),
   ];
   const formError = el('p', { className: 'tj-field__error st-gl__error', attrs: { role: 'alert' }, doc });
   formError.hidden = true;
@@ -69,8 +70,8 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
     formError.hidden = true;
     formError.textContent = '';
   };
-  const add = button({ label: 'إضافة', icon: 'plus', variant: 'secondary', size: 'sm', type: 'submit', doc });
-  const form = el('form', { className: 'st-gl__add', attrs: { 'aria-label': 'إضافة مصطلح' }, children: [...fields, el('div', { className: 'st-gl__submit', children: [add], doc }), formError], doc });
+  const add = button({ label: t('settings.glossary.add'), icon: 'plus', variant: 'secondary', size: 'sm', type: 'submit', doc });
+  const form = el('form', { className: 'st-gl__add', attrs: { 'aria-label': t('settings.glossary.addForm') }, children: [...fields, el('div', { className: 'st-gl__submit', children: [add], doc }), formError], doc });
   form.addEventListener('submit', async (e) => {
     e.preventDefault?.();
     clearErrors();
@@ -100,7 +101,7 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
 
   function rowOf(term, i) {
     const remove = button({
-      label: `حذف المصطلح ${term.source}`, iconOnly: true, icon: 'trash', variant: 'ghost', size: 'sm', title: 'حذف', doc,
+      label: t('settings.glossary.remove', { source: term.source }), iconOnly: true, icon: 'trash', variant: 'ghost', size: 'sm', title: t('settings.glossary.delete'), doc,
       onClick: async () => {
         if (await removeTerm(term.source, listMark)) {
           listMark.flash(messageFor('PG_TERM_REMOVED'), 'success');

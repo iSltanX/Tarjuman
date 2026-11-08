@@ -3,6 +3,7 @@
 // جلسة تضع المضيف أول أبنائه، وتعيد المضيف إلى موضعه إن أعاد يوتيوب رسم العمود أو أدرج قبله (فحص خفيف كل ثانية وعند أحداث
 // يوتيوب)، وتزيله عند مغادرة صفحة الفيديو. لا ترمي أبدًا: الإخفاق رمز في state وفي diagnostics ويبقى المشغّل سليمًا.
 import { TjError } from '../../core/errors/index.js';
+import { getLocale } from '../../i18n/index.js';
 import { loadUiFonts } from '../overlay/fonts.js';
 import { EVENTS, videoIdFromLocation } from '../youtube-dom.js';
 import { chooseColumn } from './column.js';
@@ -33,6 +34,8 @@ export function mountPanel(controller, env = {}) {
   let state = 'waiting';
   /** @type {ReturnType<typeof createPanelSession> | null} */
   let session = null;
+  /** لغة الواجهة التي بُنيت بها الجلسة الحالية: كل نصوصها من مسار البناء الأول، فتبدّل اللغة يعيد بناءها (relocalize). */
+  let builtLocale = getLocale();
   /** @type {MutationObserver | null} */
   let observer = null;
   let stopped = false;
@@ -96,6 +99,7 @@ export function mountPanel(controller, env = {}) {
       stopObserving();
       return;
     }
+    if (session && builtLocale !== getLocale()) dropSession();
     const column = chooseColumn(doc, win, columnMemo, now);
     if (!column) {
       session?.detach();
@@ -108,6 +112,7 @@ export function mountPanel(controller, env = {}) {
       if (failures >= MAX_FAILURES) return;
       attempts++;
       try {
+        builtLocale = getLocale();
         session = createPanelSession({ controller, doc, win, link });
         requestFonts();
       } catch (err) {
@@ -143,6 +148,11 @@ export function mountPanel(controller, env = {}) {
   return {
     get state() {
       return state;
+    },
+
+    /** تبدّلت لغة الواجهة (أو هُيّئت بعد التركيب): تُبنى الجلسة من جديد بلغتها فتعيد كل نص من مسار البناء الأول. */
+    relocalize() {
+      if (!stopped && session && builtLocale !== getLocale()) safeMount();
     },
 
     unmount() {

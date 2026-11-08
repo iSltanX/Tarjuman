@@ -1,37 +1,22 @@
-// نصوص المحرّر العربية (مواصفة التصميم الأولى §١١ و§١٦): النطاق قبل الفعل وبعده، والعدّ بالعربية بمطابقة
-// الصفة للمعدود، والإزاحة بعلامتها، وتقرير المقارنة سطورًا. دوال نقية بلا DOM.
+// نصوص المحرّر (مواصفة التصميم الأولى §١١ و§١٦): النطاق قبل الفعل وبعده، والعدّ بقواعد لغة الواجهة ومطابقة الصفة للمعدود، والإزاحة
+// بعلامتها، وتقرير المقارنة سطورًا. دوال نقية بلا DOM؛ والنصوص في الفهرس (src/i18n/*/editor.js) وتُحسب عند الاستدعاء لا عند تحميل الوحدة.
+import { joinList, t, texts } from '../../i18n/index.js';
 import { languageName } from '../../ui/lang.js';
 import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
-import { PART_FORMS, absoluteTime } from '../library/model.js';
+import { absoluteTime } from '../library/model.js';
 
 const MAX_LIST = 8;
 const FSI = String.fromCodePoint(0x2068);
 const PDI = String.fromCodePoint(0x2069);
 
-/** اسم يكتبه المستخدم (قد يكون إنجليزيًا) معزولًا اتجاهًا داخل جملة عربية، فلا تنقلب علامات ترقيمه (تدقيق 7a66f91، U27). @param {string} s */
+/** اسم يكتبه المستخدم (قد يكون إنجليزيًا) معزولًا اتجاهًا داخل جملة، فلا تنقلب علامات ترقيمه (تدقيق 7a66f91، U27). @param {string} s */
 export const isolate = (s) => `${FSI}${s}${PDI}`;
 
-// صيغ العدّ بصيغة formatCount. «error» للعدّ المستقل في رأس اللوحة، و«errorToFix» مفعولًا به لـ«صحّح».
-export const COUNT = Object.freeze({
-  error: Object.freeze({ one: 'خطأ واحد', two: 'خطآن', few: 'أخطاء', many: 'خطأً', single: 'خطأ' }),
-  errorToFix: Object.freeze({ one: 'خطأ التوقيت', two: 'خطأي التوقيت', few: 'أخطاء توقيت', many: 'خطأ توقيت', single: 'خطأ توقيت' }),
-  warning: Object.freeze({ one: 'تحذير واحد', two: 'تحذيران', few: 'تحذيرات', many: 'تحذيرًا', single: 'تحذير' }),
-  match: Object.freeze({ one: 'موضع واحد', two: 'موضعان', few: 'مواضع', many: 'موضعًا', single: 'موضع' }),
-  mark: Object.freeze({ one: 'علامة واحدة', two: 'علامتان', few: 'علامات', many: 'علامة', single: 'علامة' }),
-  markOther: Object.freeze({ one: 'علامة أخرى', two: 'علامتان أخريان', few: 'علامات أخرى', many: 'علامة أخرى', single: 'علامة أخرى' }),
-});
+// صيغ العدّ بصيغة formatCount من الفهرس باللغة الحالية. «error» للعدّ المستقل في رأس اللوحة، و«errorToFix» مفعولًا به لـ«صحّح».
+export const COUNT = texts('editor.count');
 
-/** صيغة العدد: one وtwo وfew وmany وsingle كما في formatCount. @param {number} n */
-function form(n) {
-  if (n === 1) return 'one';
-  if (n === 2) return 'two';
-  const mod = n % 100;
-  if (mod >= 3 && mod <= 10) return 'few';
-  return mod >= 11 ? 'many' : 'single';
-}
-
-/** «1، 2، 3…» بحد ثمانية أرقام. @param {number[]} ns */
-export const numberList = (ns) => ns.slice(0, MAX_LIST).join('، ') + (ns.length > MAX_LIST ? '…' : '');
+/** «1، 2، 3…» بحد ثمانية أرقام (فاصل اللغة). @param {number[]} ns */
+export const numberList = (ns) => joinList(ns.slice(0, MAX_LIST)) + (ns.length > MAX_LIST ? '…' : '');
 
 /** مقدار بالثواني بخانة عشرية على الأقل وثلاث على الأكثر: 0.5 و1.0 و1.25 و0.001. @param {number} ms */
 export function seconds(ms) {
@@ -40,32 +25,24 @@ export function seconds(ms) {
   return s.endsWith('.') ? `${s}0` : s;
 }
 
-/** صفة تطابق المعدود بحسب صيغة العدد. @param {number} n @param {Record<'one' | 'two' | 'few' | 'many' | 'single', string>} adj */
-const agree = (n, adj) => adj[form(n)];
-
 /** مفعول «صحّح»: «صحّح 3 أخطاء توقيت أولًا» (§١٦.٣). @param {number} n */
 export const errorsToFix = (n) => formatCount(n, COUNT.errorToFix);
 
 /** «3 أخطاء · 5 تحذيرات»، أو «لا مشكلات». @param {{ errors: number, warnings: number }} r */
 export function issuesSummary({ errors, warnings }) {
-  if (!errors && !warnings) return 'لا مشكلات';
+  if (!errors && !warnings) return t('editor.issues.none');
   return [errors ? formatCount(errors, COUNT.error) : null, warnings ? formatCount(warnings, COUNT.warning) : null].filter(Boolean).join(' · ');
 }
 
-/** «لديك 12 تغييرًا غير محفوظ» بمطابقة الصفة: «تغييران غير محفوظين» و«3 تغييرات غير محفوظة». @param {number} n */
-export function unsavedSentence(n) {
-  const adj = agree(n, { one: 'غير محفوظ', two: 'غير محفوظين', few: 'غير محفوظة', many: 'غير محفوظ', single: 'غير محفوظ' });
-  return `لديك ${formatCount(n, COUNT_FORMS.change)} ${adj}`;
-}
+/** «لديك 12 تغييرًا غير محفوظ» بمطابقة الصفة في العربية: «تغييران غير محفوظين» و«3 تغييرات غير محفوظة». @param {number} n */
+export const unsavedSentence = (n) => t('editor.unsaved.sentence', { n, count: formatCount(n, COUNT_FORMS.change) });
 
 /**
  * مؤشر الرأس: «تغييرات غير محفوظة (12)»، أو «زمن غير صالح» لمسودة زمن وحدها (كانت «محفوظ»؛ U27)، أو «محفوظ» (الرمز من الشارة
  * لا من نص بخط آخر).
  * @param {number} n @param {boolean} dirty @param {number} [drafts] حقول زمن بنص لم يُقرأ
  */
-export const saveStatus = (n, dirty, drafts = 0) => (dirty ? `تغييرات غير محفوظة (${n})` : drafts ? 'زمن غير صالح' : 'محفوظ');
-
-const FIELD_FORMS = Object.freeze({ one: 'حقل زمن واحد', two: 'حقلا زمن', few: 'حقول زمن', many: 'حقل زمن', single: 'حقل زمن' });
+export const saveStatus = (n, dirty, drafts = 0) => (dirty ? t('editor.status.unsaved', { n }) : drafts ? t('editor.status.invalidTime') : t('editor.status.saved'));
 
 /**
  * ما يضيع بالمغادرة أو التبديل: التغييرات غير المحفوظة، وحقول الزمن بنص غير صالح لم يُعتمد. كانت مسودة الزمن وحدها تُكتب
@@ -73,9 +50,9 @@ const FIELD_FORMS = Object.freeze({ one: 'حقل زمن واحد', two: 'حقل�
  * @param {number} n @param {number} drafts
  */
 export function pendingSentence(n, drafts) {
-  const field = drafts ? `${formatCount(drafts, FIELD_FORMS)} ${agree(drafts, { one: 'غير صالح', two: 'غير صالحين', few: 'غير صالحة', many: 'غير صالح', single: 'غير صالح' })}` : '';
-  if (!n && drafts) return `لديك ${field}`;
-  return drafts ? `${unsavedSentence(n)}، و${field}` : unsavedSentence(n);
+  const field = drafts ? t('editor.unsaved.field', { n: drafts, count: formatCount(drafts, COUNT.field) }) : '';
+  if (!n && drafts) return t('editor.unsaved.fieldsOnly', { field });
+  return drafts ? t('editor.unsaved.both', { changes: unsavedSentence(n), field }) : unsavedSentence(n);
 }
 
 /**
@@ -92,9 +69,9 @@ export const isMac = (win) => /mac/i.test(String(win?.navigator?.userAgentData?.
  * @param {'cue' | 'selection' | 'all'} kind @param {{ activeN?: number | null, selected?: number }} ctx
  */
 export function scopeOption(kind, { activeN = null, selected = 0 } = {}) {
-  if (kind === 'cue') return activeN === null ? 'المقطع' : `المقطع ${activeN}`;
-  if (kind === 'selection') return selected ? `المحددة (${selected})` : 'المحددة';
-  return 'الملف كله';
+  if (kind === 'cue') return activeN === null ? t('editor.scope.cue') : t('editor.scope.cueN', { n: activeN });
+  if (kind === 'selection') return selected ? t('editor.scope.selectionN', { n: selected }) : t('editor.scope.selection');
+  return t('editor.scope.all');
 }
 
 /**
@@ -102,9 +79,9 @@ export function scopeOption(kind, { activeN = null, selected = 0 } = {}) {
  * @param {'cue' | 'selection' | 'all'} kind @param {{ activeN?: number | null, selected?: number, total: number }} ctx
  */
 export function scopeTarget(kind, { activeN = null, selected = 0, total }) {
-  if (kind === 'cue') return `المقطع ${activeN}`;
-  if (kind === 'selection') return selected === 1 ? 'المقطع المحدد' : formatCount(selected, COUNT_FORMS.cue);
-  return `الملف كله (${formatCount(total, COUNT_FORMS.cue)})`;
+  if (kind === 'cue') return t('editor.scope.cueTarget', { n: activeN });
+  if (kind === 'selection') return selected === 1 ? t('editor.scope.selectedOne') : formatCount(selected, COUNT_FORMS.cue);
+  return t('editor.scope.allTarget', { count: formatCount(total, COUNT_FORMS.cue) });
 }
 
 /**
@@ -113,15 +90,15 @@ export function scopeTarget(kind, { activeN = null, selected = 0, total }) {
  */
 export function shiftSentence(target, deltaMs, when) {
   const later = deltaMs > 0;
-  if (when === 'after') return `${later ? 'أُخِّر' : 'قُدِّم'} ${target} ${seconds(deltaMs)} ث.`;
-  return `${later ? 'سيُؤخَّر' : 'سيُقدَّم'} ${target} ${seconds(deltaMs)} ث (${later ? 'تظهر لاحقًا' : 'تظهر أبكر'}).`;
+  const key = `editor.shift.${when}${later ? 'Later' : 'Earlier'}`;
+  return t(key, { target, sec: seconds(deltaMs) });
 }
 
 /** التنبيه قبل نقل الملف كله والإزاحة مفعّلة (عقد التوقيت §٣). @param {number} offsetMs */
-export const offsetNotice = (offsetMs) => `إزاحة العرض ${offsetInline(offsetMs)} ث مفعّلة؛ النقل هنا يُضاف إليها.`;
+export const offsetNotice = (offsetMs) => t('editor.offset.notice', { off: offsetInline(offsetMs) });
 
 /** سطر الإزاحة الثابت. @param {number} offsetMs */
-export const offsetLine = (offsetMs) => `إزاحة العرض أثناء المشاهدة: ${offsetInline(offsetMs)} ث — منفصلة عن التوقيت المحفوظ`;
+export const offsetLine = (offsetMs) => t('editor.offset.line', { off: offsetInline(offsetMs) });
 
 /**
  * اسم الوصول لخانة في محدد خانة التحرير: «الترجمة 2، قيد التحرير، النشطة في المشغّل» أو «الترجمة 3، فارغة».
@@ -129,8 +106,8 @@ export const offsetLine = (offsetMs) => `إزاحة العرض أثناء الم
  * @param {{ editing: boolean }} o
  */
 export function editSlotLabel(slot, { editing }) {
-  if (!slot.filled) return `الترجمة ${slot.n}، فارغة`;
-  return [`الترجمة ${slot.n}`, editing ? 'قيد التحرير' : null, slot.active ? 'النشطة في المشغّل' : null].filter(Boolean).join('، ');
+  if (!slot.filled) return t('common.slot.labelEmpty', { n: slot.n });
+  return joinList([t('common.slot.label', { n: slot.n }), editing ? t('editor.slot.editing') : null, slot.active ? t('editor.slot.activeInPlayer') : null].filter(Boolean));
 }
 
 /**
@@ -138,21 +115,21 @@ export function editSlotLabel(slot, { editing }) {
  * @param {number} editing @param {number | null} active @param {string | null} name
  */
 export function activeSlotLine(editing, active, name) {
-  const who = name ? `تحرّر الترجمة ${editing} «${isolate(name)}»` : `تحرّر الترجمة ${editing}`;
-  if (editing === active) return `${who}، وهي النشطة في المشغّل.`;
-  return `${who}. النشطة في المشغّل الترجمة ${active}، والحفظ هنا لا يغيّرها.`;
+  const who = name ? t('editor.slot.whoNamed', { n: editing, name: isolate(name) }) : t('editor.slot.who', { n: editing });
+  if (editing === active) return t('editor.slot.lineActive', { who });
+  return t('editor.slot.lineOther', { who, active });
 }
 
 /**
- * اسم مرجع المقارنة في قائمته: نوع المسار ووضعه وأجزاؤه وتاريخ تصديره، قصيرًا بالعربية بدل اسم الملف الطويل.
+ * اسم مرجع المقارنة في قائمته: نوع المسار ووضعه وأجزاؤه وتاريخ تصديره، قصيرًا بدل اسم الملف الطويل.
  * @param {{ trackKey: string, mode: string, parts: unknown[] | null, createdAt: string } | null} fp
  */
 export function refLabel(fp) {
-  if (!fp) return 'مرجع غير محفوظ';
-  const kind = fp.trackKey.endsWith('|asr') ? 'تلقائي' : 'يدوي';
-  const mode = fp.mode === 'long' ? 'مقاطع أطول' : 'عادي';
+  if (!fp) return t('editor.ref.unsaved');
+  const kind = fp.trackKey.endsWith('|asr') ? t('editor.ref.kindAuto') : t('editor.ref.kindManual');
+  const mode = fp.mode === 'long' ? t('editor.ref.modeLong') : t('editor.ref.modeNormal');
   // التاريخ بصيغة المحفوظات ونافذة الأيقونة وبتوقيت الجهاز، لا ISO خامًا بتوقيت UTC (تدقيق Fable، UX-07)، و«جزآن» لا «2 أجزاء».
-  const parts = fp.parts ? ` · ${formatCount(fp.parts.length, PART_FORMS)}` : '';
+  const parts = fp.parts ? ` · ${formatCount(fp.parts.length, COUNT.part)}` : '';
   return `${kind} · ${mode}${parts} · ${absoluteTime(fp.createdAt)}`;
 }
 
@@ -160,17 +137,19 @@ export function refLabel(fp) {
  * خيار العمود المرجعي: مسار الأصل باسم لغته الفعلية («الإنجليزية»، «اليابانية»؛ AA3) أو «الأصل» بلا لغة، أو «الترجمة 3 — مراجعة».
  * @param {'en' | number} v @param {string | null} [name] @param {string | null} [lang] لغة مسار الأصل
  */
-export const refOptionLabel = (v, name = null, lang = null) => (v === 'en' ? (lang && languageName(lang)) || 'الأصل' : name ? `الترجمة ${v} — ${isolate(name)}` : `الترجمة ${v}`);
+export const refOptionLabel = (v, name = null, lang = null) => (v === 'en'
+  ? (lang && languageName(lang)) || t('editor.ref.original')
+  : name ? t('editor.ref.slotNamed', { n: v, name: isolate(name) }) : t('common.slot.label', { n: v }));
 
 // ---- العلامات (R53): «أعود إليه» و«راجعته»، والتبديل بينهما من زر الصف ----
-export const MARK_LABEL = Object.freeze({ todo: 'أعود إليه', done: 'راجعته' });
+export const MARK_LABEL = texts('editor.markLabel');
 /** ما بعد العلامة الحالية في التبديل: بلا ← أعود إليه ← راجعته ← بلا. @param {'todo' | 'done' | null} kind */
 export const nextMark = (kind) => (kind === null ? 'todo' : kind === 'todo' ? 'done' : null);
 
 /** اسم زر العلامة بما سيفعله. @param {number} n @param {{ kind: 'todo' | 'done' } | null} mark */
 export function markActionLabel(n, mark) {
   const next = nextMark(mark?.kind ?? null);
-  return next ? `علّم المقطع ${n} «${MARK_LABEL[next]}»` : `أزل علامة المقطع ${n}`;
+  return next ? t('editor.mark.set', { n, label: MARK_LABEL[next] }) : t('editor.mark.remove', { n });
 }
 
 /**
@@ -178,17 +157,19 @@ export function markActionLabel(n, mark) {
  * قد تكون انتقلت.
  * @param {{ kind: 'todo' | 'done', state: string }} m @returns {{ icon: 'flag' | 'check', suffix: string }}
  */
-export const markBadge = (m) => ({ icon: m.kind === 'todo' ? 'flag' : 'check', suffix: m.state === 'moved' ? '؟' : '' });
+export const markBadge = (m) => ({ icon: m.kind === 'todo' ? 'flag' : 'check', suffix: m.state === 'moved' ? t('editor.mark.movedSuffix') : '' });
 
 /** @param {{ kind: 'todo' | 'done', state: string, others?: number }} m others علامات أخرى على المقطع نفسه (بعد دمج؛ U100) */
-export const markTitle = (m) => `${MARK_LABEL[m.kind]}${m.state === 'moved' ? ' — قد تكون انتقلت: تحقق أنها على المقطع الصحيح' : ''}${m.others ? ` (ومعها ${formatCount(m.others, COUNT.markOther)} على المقطع نفسه)` : ''}`;
+export const markTitle = (m) => `${MARK_LABEL[m.kind]}${m.state === 'moved' ? t('editor.mark.movedNote') : ''}${m.others ? t('editor.mark.others', { count: formatCount(m.others, COUNT.markOther) }) : ''}`;
 
 // ---- البنية والقفز ----
 /** معاينة الدمج قبل التطبيق. @param {{ n: number }} a @param {{ n: number }} b @param {{ startMs: number, endMs: number, text: string }} merged @param {(ms: number) => string} tc */
-export const mergePreview = (a, b, merged, tc) => `سيُدمج المقطع ${a.n} مع ${b.n}: ${tc(merged.startMs)} ← ${tc(merged.endMs)}، والنصان سطرًا بعد سطر (${merged.text.split('\n').length} أسطر). التراجع يعيدهما.`;
+export const mergePreview = (a, b, merged, tc) => t('editor.structure.merge', {
+  a: a.n, b: b.n, range: t('editor.range', { from: tc(merged.startMs), to: tc(merged.endMs) }), lines: merged.text.split('\n').length,
+});
 
 /** معاينة الشطر عند المؤشر. @param {number} n @param {string} head @param {string} tail */
-export const splitPreview = (n, head, tail) => `سيُشطر المقطع ${n} عند المؤشر: «${oneLine(head)}» | «${oneLine(tail)}»، والزمن بنسبة النص. التراجع يعيده.`;
+export const splitPreview = (n, head, tail) => t('editor.structure.split', { n, head: oneLine(head), tail: oneLine(tail) });
 
 const oneLine = (s) => {
   const flat = s.replace(/\s*\n\s*/g, ' ');
@@ -197,10 +178,10 @@ const oneLine = (s) => {
 
 /** نتيجة القفز (R56). @param {{ ok: boolean, via?: 'open' | 'new', code?: string }} r @param {string} at @param {(code: string) => string} message */
 export function seekResult(r, at, message) {
-  if (!r.ok) return { tone: 'danger', text: `تعذّر الانتقال في الفيديو: ${message(r.code)}` };
+  if (!r.ok) return { tone: 'danger', text: t('editor.seek.failed', { reason: message(r.code) }) };
   return r.via === 'open'
-    ? { tone: 'success', text: `انتقل تبويب الفيديو المفتوح إلى ${at}.` }
-    : { tone: 'success', text: `لا تبويب مفتوح لهذا الفيديو، فُتح في تبويب جديد عند ${at}.` };
+    ? { tone: 'success', text: t('editor.seek.opened', { at }) }
+    : { tone: 'success', text: t('editor.seek.newTab', { at }) };
 }
 
 /**
@@ -215,13 +196,13 @@ export function saveMessage(r, name, location, message) {
   if (r.mode === 'blob') return { tone: 'info', text: `${file}: ${message('SV_FALLBACK_BLOB')}` };
   if (r.pending) return { tone: 'info', text: `${file}: ${message('SV_PENDING')}` };
   // «مجلد X داخل التنزيلات» لا «التنزيلات/X»: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص.
-  if (r.mode === 'subfolder') return { tone: 'success', text: `حُفظ ${file} في مجلد ${location?.folder ?? 'Tarjuman'} داخل التنزيلات.` };
-  if (r.mode === 'ask') return { tone: 'success', text: `حُفظ ${file} حيث اخترت.` };
-  return { tone: 'success', text: `حُفظ ${file} في مجلد التنزيلات.` };
+  if (r.mode === 'subfolder') return { tone: 'success', text: t('editor.save.subfolder', { file, folder: location?.folder ?? 'Tarjuman' }) };
+  if (r.mode === 'ask') return { tone: 'success', text: t('editor.save.ask', { file }) };
+  return { tone: 'success', text: t('editor.save.downloads', { file }) };
 }
 
 /** طُلبت خانة فارغة فعُرضت النشطة. @param {number | null} requested @param {number} opened */
-export const slotFallback = (requested, opened) => `الترجمة ${requested} فارغة، فعُرضت الترجمة ${opened}.`;
+export const slotFallback = (requested, opened) => t('editor.slot.fallback', { requested, opened });
 
 /** مدة المقطع بالثواني بخانة عشرية: «2.7». @param {number} ms */
 export const durationText = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
@@ -232,19 +213,16 @@ export const durationText = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
  * @returns {{ tone: 'success' | 'info' | 'warning', text: string }[]}
  */
 export function comparisonLines(r) {
-  if (!r || r.fingerprintId === null) return [{ tone: 'info', text: 'لا مرجع للمقارنة بالأصل، فيُعرض الملف كما هو.' }];
+  if (!r || r.fingerprintId === null) return [{ tone: 'info', text: t('editor.cmp.none') }];
   const lines = [];
-  if (r.matched) lines.push({ tone: 'success', text: 'مطابق للأصل' });
-  lines.push({ tone: r.countSource === r.countTarget ? 'info' : 'warning', text: `عدد المقاطع: ${r.countTarget} من ${r.countSource}` });
-  if (r.numbering === 'different') lines.push({ tone: 'warning', text: 'الترقيم غير متسلسل أو مختلف عن الأصل.' });
-  if (r.missing.length) {
-    const adj = agree(r.missing.length, { one: 'ناقص', two: 'ناقصان', few: 'ناقصة', many: 'ناقصًا', single: 'ناقص' });
-    lines.push({ tone: 'warning', text: `${formatCount(r.missing.length, COUNT_FORMS.cue)} ${adj}: ${numberList(r.missing)}` });
-  }
-  if (r.extra.length) lines.push({ tone: 'warning', text: `مقاطع زائدة: ${numberList(r.extra)}` });
-  if (r.drift.length) lines.push({ tone: 'warning', text: `توقيت مختلف في ${formatCount(r.drift.length, COUNT_FORMS.cue)}` });
-  if (r.empty.length) lines.push({ tone: 'warning', text: `بلا نص: ${numberList(r.empty)}` });
-  if (r.noArabic.length) lines.push({ tone: 'warning', text: `بلا ترجمة: ${numberList(r.noArabic)}` });
+  if (r.matched) lines.push({ tone: 'success', text: t('editor.cmp.matched') });
+  lines.push({ tone: r.countSource === r.countTarget ? 'info' : 'warning', text: t('editor.cmp.count', { target: r.countTarget, source: r.countSource }) });
+  if (r.numbering === 'different') lines.push({ tone: 'warning', text: t('editor.cmp.numbering') });
+  if (r.missing.length) lines.push({ tone: 'warning', text: t('editor.cmp.missing', { n: r.missing.length, count: formatCount(r.missing.length, COUNT_FORMS.cue), list: numberList(r.missing) }) });
+  if (r.extra.length) lines.push({ tone: 'warning', text: t('editor.cmp.extra', { list: numberList(r.extra) }) });
+  if (r.drift.length) lines.push({ tone: 'warning', text: t('editor.cmp.drift', { count: formatCount(r.drift.length, COUNT_FORMS.cue) }) });
+  if (r.empty.length) lines.push({ tone: 'warning', text: t('editor.cmp.empty', { list: numberList(r.empty) }) });
+  if (r.noArabic.length) lines.push({ tone: 'warning', text: t('editor.cmp.untranslated', { list: numberList(r.noArabic) }) });
   return lines;
 }
 
@@ -253,8 +231,8 @@ export function comparisonLines(r) {
  * @param {import('../../core/model/tracks.js').ComparisonReport | null} r
  */
 export function restoreUnavailable(r) {
-  if (!r || r.fingerprintId === null) return 'لا مرجع للمقارنة بالأصل، فلا توقيت أصلي يُستعاد.';
+  if (!r || r.fingerprintId === null) return t('editor.cmp.restoreNoRef');
   if (r.restoreTimingAvailable) return null;
-  if (r.countSource !== r.countTarget) return `العدد مختلف (${r.countTarget} مقابل ${r.countSource})، فلا يمكن مطابقة التوقيت بأمان.`;
-  return 'الترقيم مختلف عن الأصل، فلا يمكن مطابقة التوقيت بأمان.';
+  if (r.countSource !== r.countTarget) return t('editor.cmp.restoreCount', { target: r.countTarget, source: r.countSource });
+  return t('editor.cmp.restoreNumbering');
 }

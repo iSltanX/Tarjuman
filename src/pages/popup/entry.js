@@ -3,15 +3,13 @@
 // نافذة الأيقونة أو الإعدادات). النتيجة تُقال كما حدثت: النجاح من القيمة التي رجعت من التخزين لا من افتراض، والفشل برسالته
 // ويبقى الصف ليُعاد الضغط. ويتبع الصف التفضيلات حين تتغير من سياق آخر (الإعدادات أو قائمة اللوحة). DOM وtextContent فقط.
 import { messageFor } from '../../core/errors/index.js';
+import { t, texts } from '../../i18n/index.js';
 import { alertBox, button, el } from '../../ui/components.js';
 import { popupIcon } from './icons.js';
 import { entryHidden } from './status.js';
 
-export const ENTRY_TEXT = Object.freeze({
-  hidden: 'زر النص المتزامن مخفي',
-  show: 'إظهار',
-  done: 'ظهر زر النص المتزامن في صفحات الفيديو.',
-});
+/** نصوص صف «زر النص المتزامن مخفي» بلغة الواجهة الحالية (popup.entry). */
+export const ENTRY_TEXT = texts('popup.entry');
 
 /**
  * @param {{
@@ -30,11 +28,11 @@ export function bindEntryRow({ store, host, doc = document }) {
   function row() {
     const show = button({
       label: ENTRY_TEXT.show, size: 'sm', doc, onClick: () => { showEntry(); },
-      title: 'يُظهر زر النص المتزامن في صفحات الفيديو',
+      title: t('popup.entry.showTitle'),
     });
     show.setAttribute('data-action', 'show-entry');
     return el('div', {
-      className: 'tj-popup__entry', attrs: { role: 'group', 'aria-label': 'زر النص المتزامن' },
+      className: 'tj-popup__entry', attrs: { role: 'group', 'aria-label': t('popup.entry.group') },
       children: [popupIcon('eye-off', { doc, className: 'tj-icon tj-icon--sm' }), el('span', { className: 'tj-popup__entry-text', text: ENTRY_TEXT.hidden, doc }), show],
       doc,
     });

@@ -11,7 +11,7 @@ import { createStore } from '../../../../src/core/store/index.js';
 import { formatTimecode } from '../../../../src/ui/format.js';
 import { createLibrary } from '../../../../src/pages/library/view.js';
 import { FILTERS, filterCounts, filterEntries, libraryEntries, manualEdits } from '../../../../src/pages/library/model.js';
-import { MD_HINT } from '../../../../src/pages/library/study.js';
+import { t as tt } from '../../../../src/i18n/index.js';
 import { manualEdits as playerManualEdits } from '../../../../src/player/controls/replace.js';
 import { mergeCues, splitCue } from '../../../../src/core/edit/structure.js';
 import { withoutSlot } from '../../../../src/core/model/bundle.js';
@@ -19,6 +19,8 @@ import { writeSrt } from '../../../../src/core/srt/writer.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, makeCues, videoRecord } from '../../../helpers/fixtures.js';
 import { samplePrefs, sampleBundle, seedBundle } from '../../../helpers/fixtures-v2.js';
+
+const MD_HINT = tt('library.study.mdHint');
 import { buttonNamed, findAll, newDocument, settle, textOf } from './fake-dom.js';
 
 const IDS = ['AAAAAAAAAAA', 'BBBBBBBBBBB', 'CCCCCCCCCCC'];
@@ -667,5 +669,7 @@ test('تدقيق 5fedcb9 (CL-002، قرار سلطان): عنوان فيه حر�
   // .tj-auto لا يأخذ أول حرف قوي (plaintext يتجاهل dir)، بل يعزل ويحاذي يمينًا.
   const { readFileSync } = await import('node:fs');
   const css = readFileSync(new URL('../../../../src/ui/base.css', import.meta.url), 'utf8');
-  assert.match(css, /\.tj-auto \{ unicode-bidi: isolate; text-align: right; \}/);
+  assert.match(css, /\.tj-auto \{ unicode-bidi: isolate; \}/);
+  assert.match(css, /:root\[dir="rtl"\] \.tj-auto \{ text-align: right; \}/);
+  assert.match(css, /:root\[dir="ltr"\] \.tj-auto \{ text-align: left; \}/);
 });

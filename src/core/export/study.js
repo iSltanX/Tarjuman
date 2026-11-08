@@ -2,6 +2,7 @@
 // ولا تغيير: نص كل مقطع كما هو، وفواصل الأسطر داخله مسافة. الفقرة تنقطع عند صمت طويل، أو بعد ستة مقاطع عند نهاية جملة، أو
 // عند اثني عشر مقطعًا. الإنجليزي (للثنائي) يُوزَّع على الفقرات بمنتصف زمنه، فيصح مع أي وضع تصدير.
 import { TjError, messageFor } from '../errors/index.js';
+import { joinList, t } from '../../i18n/index.js';
 import { validateCues } from '../model/cue.js';
 import { assertValid } from '../model/validate.js';
 import { joinWords, endsSentence } from '../convert/text.js';
@@ -39,7 +40,7 @@ const NOTE_LIST = 8;
 /** نص الإشعار لما قُصّ إلى بداية الفيديو، أو '' إن لم يُقص شيء. أول ثمانية أرقام ثم «…». @param {number[]} clamped */
 export function studyTimingNote(clamped) {
   if (!clamped.length) return '';
-  const list = clamped.length > NOTE_LIST ? `${clamped.slice(0, NOTE_LIST).join('، ')}…` : clamped.join('، ');
+  const list = clamped.length > NOTE_LIST ? `${joinList(clamped.slice(0, NOTE_LIST))}…` : joinList(clamped);
   return messageFor('EX_STUDY_CLAMPED', { list });
 }
 // علامات نهاية الفقرة: اتحاد علامات التحويل (endsSentence: 。 وغيرها) و«…» التي يحفظها النص الدراسي منذ R58 (AV2 U-007).
@@ -117,7 +118,7 @@ export function buildStudyText({ videoId, title = null, cues, english = null, fo
   const paras = paragraphs(cues);
   const enText = bilingual ? englishByParagraph(paras, en) : null;
   const heading = docTitle(title);
-  const lines = md ? [`# ${mdEscape(heading)}`, '', `[مشاهدة على يوتيوب](${url})`, ''] : [heading, url, ''];
+  const lines = md ? [`# ${mdEscape(heading)}`, '', `[${t('core.export.watch')}](${url})`, ''] : [heading, url, ''];
   paras.forEach((p, k) => {
     const ar = joinWords(p.cues.map((c) => oneLine(c.text)).filter(Boolean));
     const link = timeUrl(videoId, p.startMs);

@@ -4,6 +4,7 @@
 // رقمه، ولا تفرض الرقم على منطقة أزاحها دمج أو شطر)، وتطابق النص الحرفي مرساة بين نسختين من الترجمة نفسها (useText).
 // الثقة منخفضة عند الشك، والأسباب نصوص عربية تُعرض كما هي. لا DOM ولا تخزين، ولا تعديل للمدخلات.
 import { messageFor } from '../errors/index.js';
+import { joinList } from '../../i18n/index.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 /** @typedef {{ a: number | null, b: number | null }} Pair */
@@ -50,7 +51,7 @@ const OP_SPLIT = 5;
 const flat = (s) => String(s).replace(/\s+/gu, ' ').trim();
 
 /** قائمة أرقام قصيرة للرسائل: أول خمسة ثم «…». */
-export const shortList = (ns) => ns.slice(0, LIST_MAX).join('، ') + (ns.length > LIST_MAX ? '…' : '');
+export const shortList = (ns) => joinList(ns.slice(0, LIST_MAX)) + (ns.length > LIST_MAX ? '…' : '');
 
 /** التقاطع ÷ الاتحاد لمجالين زمنيين؛ والمجالان الصفريان متطابقان إن تساوت نقطتاهما. */
 export function iou(s1, e1, s2, e2) {

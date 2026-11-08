@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { messageFor } from '../../../../src/core/errors/index.js';
 import { DEFAULT_PREFS } from '../../../../src/core/model/prefs.js';
 import { createStore } from '../../../../src/core/store/index.js';
-import { PRIVACY_LINE } from '../../../../src/pages/settings/about.js';
+import { privacyLine } from '../../../../src/pages/settings/about.js';
 import { ENTRY_SWITCH, PANEL_OPEN_SWITCH, THUMBNAILS_SWITCH, createSettings } from '../../../../src/pages/settings/view.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW } from '../../../helpers/fixtures.js';
@@ -213,7 +213,7 @@ test('«حول»: سطر الخصوصية صادق في شأن الصور وال
   const about = textOf(section(m, 'حول'));
   assert.ok(about.includes('بياناتك كلها على جهازك؛ لا حسابات ولا مفتاح API.'));
   assert.ok(about.includes('ولا يتصل ترجمان بالإنترنت إلا لجلب صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وحين ترسل أنت بنفسك بلاغًا من «الإبلاغ عن مشكلة».'));
-  assert.equal(PRIVACY_LINE, 'بياناتك كلها على جهازك؛ لا حسابات ولا مفتاح API. ولا يتصل ترجمان بالإنترنت إلا لجلب صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وحين ترسل أنت بنفسك بلاغًا من «الإبلاغ عن مشكلة».');
+  assert.equal(privacyLine(), 'بياناتك كلها على جهازك؛ لا حسابات ولا مفتاح API. ولا يتصل ترجمان بالإنترنت إلا لجلب صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وحين ترسل أنت بنفسك بلاغًا من «الإبلاغ عن مشكلة».');
   assert.equal(about.includes('لا خادم'), false, 'خادم البلاغات موجود، فلا يُنفى الخادم');
   assert.equal(about.includes('كل شيء محلي'), false, 'لا ادّعاء مطلق');
 });

@@ -246,7 +246,7 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 /* ---- التلميح (فوق زر، معكوس الألوان) ---- */
 .tj-tipwrap { position: relative; display: inline-flex; }
 .tj-tip {
-  position: absolute; inset-block-end: calc(100% + 6px); inset-inline-start: 50%; transform: translateX(50%); z-index: 30;
+  position: absolute; inset-block-end: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 30;
   padding: 6px 10px; border-radius: var(--tj-radius-md); background: var(--tj-text); color: var(--tj-on-ink);
   font: 400 12px/18px var(--tj-font-body); white-space: nowrap; box-shadow: var(--tj-e2); pointer-events: none;
   opacity: 0; visibility: hidden; transition: opacity var(--tj-motion-fast) var(--tj-ease);

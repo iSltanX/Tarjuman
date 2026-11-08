@@ -6,27 +6,31 @@
 import { diffTranslations } from '../../core/align/index.js';
 import { messageFor } from '../../core/errors/index.js';
 import { isVideoId, parseTrackKey } from '../../core/model/ids.js';
+import { getLocale, joinList, t as tr } from '../../i18n/index.js';
 import { languageName, pairLabel } from '../../ui/lang.js';
 import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
 
 /** حجم الدفعة المعروضة: عرض تدريجي لمحفوظات كثيرة. */
 export const PAGE_SIZE = 50;
-export const NO_TITLE_TEXT = 'بلا عنوان محفوظ';
+/** نص بلا عنوان محفوظ باللغة الحالية (يُحسب عند كل قراءة). */
+export const noTitleText = () => tr('library.row.noTitle');
+
+/**
+ * صيغ جمع من الفهرس تُقرأ باللغة الحالية عند كل استعمال، فيبقى التصدير قيمةً تُمرَّر إلى formatCount كما كانت.
+ * @param {string} key
+ */
+const formsOf = (key) => new Proxy(Object.freeze({}), { get: (_, k) => (typeof k === 'string' ? tr(key)?.[k] : undefined) });
+
+/** عنصر بقيمة label تُحسب عند القراءة لا عند تحميل الوحدة. */
+const labelled = (value, key) => Object.freeze({ value, get label() { return tr(key); } });
 
 /**
  * أقسام الفرز (R46، مواصفة التصميم §١٩.٧): «الكل» والحالات الخمس، من مُلخّص الفهرس (بانتظار الترجمة ومترجمة) وملخص الفرز
  * (معدّلة، و«تحذيرات آلية» من الفحص الآلي للمقارنة، و«تحتاج مراجعة» من علامات المراجعة البشرية؛ منفصلتان).
  */
-export const FILTERS = Object.freeze([
-  Object.freeze({ value: 'all', label: 'الكل' }),
-  Object.freeze({ value: 'awaiting', label: 'بانتظار الترجمة' }),
-  Object.freeze({ value: 'translated', label: 'مترجمة' }),
-  Object.freeze({ value: 'edited', label: 'معدّلة' }),
-  Object.freeze({ value: 'warnings', label: 'فيها فروق عن الأصل' }),
-  Object.freeze({ value: 'review', label: 'تحتاج مراجعة' }),
-]);
+export const FILTERS = Object.freeze(['all', 'awaiting', 'translated', 'edited', 'warnings', 'review'].map((v) => labelled(v, `library.filter.${v}`)));
 export const FILTER_VALUES = Object.freeze(FILTERS.map((f) => f.value));
-export const SORTS = Object.freeze([Object.freeze({ value: 'updated', label: 'آخر تعديل' }), Object.freeze({ value: 'title', label: 'العنوان' })]);
+export const SORTS = Object.freeze([labelled('updated', 'library.sort.updated'), labelled('title', 'library.sort.title')]);
 
 /** ملخص الفرز لمدخل بلا رأس حزمة (سجل الإصدار الأول): من مُلخّص الفهرس وحده (عقد data-model §١٥). */
 const summaryOf = (e) => e.summary ?? {
@@ -91,7 +95,7 @@ export function serializePageState({ query, filter, order, focusId = null }) {
 
 // يسقط التشكيل والتطويل ويوحّد الألف والياء والهاء المربوطة ليجد البحث «محاضرة» في «مُحاضَرة».
 const MARKS = new RegExp('[\\u064B-\\u065F\\u0670\\u0640]', 'g');
-const FOLD = { 'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ٱ': 'ا', 'ى': 'ي', 'ة': 'ه' };
+const FOLD = { 'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ٱ': 'ا', 'ى': 'ي', 'ة': 'ه' }; // i18n-ignore: بيانات بحث لا نص معروض
 
 /** @param {unknown} s */
 export function normalizeQuery(s) {
@@ -119,7 +123,7 @@ export function searchEntries(entries, query) {
 export function sortEntries(entries, order) {
   const list = entries.slice();
   if (order === 'title') {
-    const collator = new Intl.Collator('ar', { sensitivity: 'base', numeric: true });
+    const collator = new Intl.Collator(getLocale(), { sensitivity: 'base', numeric: true });
     return list.sort((a, b) => {
       if (!a.title !== !b.title) return a.title ? -1 : 1;
       return collator.compare(a.title ?? a.videoId, b.title ?? b.videoId) || collator.compare(a.videoId, b.videoId);
@@ -128,59 +132,43 @@ export function sortEntries(entries, order) {
   return list.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
 }
 
-const AGO = {
-  minute: { one: 'قبل دقيقة', two: 'قبل دقيقتين', few: 'دقائق', many: 'دقيقة' },
-  hour: { one: 'قبل ساعة', two: 'قبل ساعتين', few: 'ساعات', many: 'ساعة' },
-  day: { one: 'أمس', two: 'قبل يومين', few: 'أيام', many: 'يومًا' },
-  week: { one: 'قبل أسبوع', two: 'قبل أسبوعين', few: 'أسابيع', many: 'أسبوعًا' },
-  month: { one: 'قبل شهر', two: 'قبل شهرين', few: 'أشهر', many: 'شهرًا' },
-  year: { one: 'قبل سنة', two: 'قبل سنتين', few: 'سنوات', many: 'سنة' },
-};
-
-/** «قبل 3 ساعات» و«قبل 11 ساعة»؛ العدد 1 و2 كلمة واحدة بحسب الوحدة. */
-function ago(n, forms) {
-  if (n === 1) return forms.one;
-  if (n === 2) return forms.two;
-  const mod = n % 100;
-  return `قبل ${n} ${mod >= 3 && mod <= 10 ? forms.few : forms.many}`;
-}
-
 /**
- * التاريخ نسبيًا بالعربية («قبل ساعتين»). الزمن المستقبلي (ساعة جهاز متقدمة) أو غير الصالح «الآن».
+ * التاريخ نسبيًا بلغة الواجهة («قبل ساعتين» / «2 hours ago»). الزمن المستقبلي (ساعة جهاز متقدمة) «الآن»، وغير الصالح فارغ.
  * @param {string} iso @param {number} nowMs
  */
 export function relativeTime(iso, nowMs) {
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return '';
-  const sec = Math.floor((nowMs - t) / 1000);
-  if (sec < 45) return 'الآن';
+  const at = Date.parse(iso);
+  if (!Number.isFinite(at)) return '';
+  const sec = Math.floor((nowMs - at) / 1000);
+  if (sec < 45) return tr('library.ago.now');
   const min = Math.floor(sec / 60);
-  if (min < 60) return ago(Math.max(1, min), AGO.minute);
+  if (min < 60) return tr('library.ago.minute', { n: Math.max(1, min) });
   const hours = Math.floor(min / 60);
-  if (hours < 24) return ago(hours, AGO.hour);
+  if (hours < 24) return tr('library.ago.hour', { n: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return ago(days, AGO.day);
-  if (days < 30) return ago(Math.floor(days / 7), AGO.week);
-  if (days < 365) return ago(Math.floor(days / 30), AGO.month);
-  return ago(Math.floor(days / 365), AGO.year);
+  if (days < 7) return tr('library.ago.day', { n: days });
+  if (days < 30) return tr('library.ago.week', { n: Math.floor(days / 7) });
+  if (days < 365) return tr('library.ago.month', { n: Math.floor(days / 30) });
+  return tr('library.ago.year', { n: Math.floor(days / 365) });
 }
 
-/** التاريخ المطلق لتلميح الصف، بأرقام لاتينية. @param {string} iso */
+/** التاريخ المطلق لتلميح الصف بلغة الواجهة، بأرقام لاتينية. @param {string} iso */
 export function absoluteTime(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   try {
-    return new Intl.DateTimeFormat('ar-u-nu-latn-ca-gregory', { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+    return new Intl.DateTimeFormat(`${getLocale()}-u-nu-latn-ca-gregory`, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
   } catch {
     return d.toISOString();
   }
 }
 
-const EN_KIND = Object.freeze({ manual: 'يدوي', asr: 'تلقائي' });
+/** نوع مسار الأصل المحفوظ بلغة الواجهة؛ فارغ لما لا يُعرف. @param {string | undefined} kind */
+const kindText = (kind) => (kind === 'manual' || kind === 'asr' ? tr(`library.kind.${kind}`) : '');
 
-export const EDIT_FORMS = Object.freeze({ one: 'تعديل يدوي واحد', two: 'تعديلان يدويان', few: 'تعديلات يدوية', many: 'تعديلًا يدويًا', single: 'تعديل يدوي' });
-export const MARK_FORMS = Object.freeze({ one: 'علامة مراجعة واحدة', two: 'علامتا مراجعة', few: 'علامات مراجعة', many: 'علامة مراجعة', single: 'علامة مراجعة' });
-export const TRANSLATION_FORMS = Object.freeze({ one: 'ترجمة واحدة', two: 'ترجمتان', few: 'ترجمات', many: 'ترجمة', single: 'ترجمة' });
+export const EDIT_FORMS = formsOf('library.forms.edit');
+export const MARK_FORMS = formsOf('library.forms.mark');
+export const TRANSLATION_FORMS = formsOf('library.forms.translation');
 
 /** الخانات الممتلئة بترتيب أرقامها (لا الفارغة): هي وحدها «ترجمات» الفيديو. @param {{ n: number, filled: boolean }[]} slots */
 const filledOf = (slots) => slots.filter((s) => s.filled).sort((a, b) => a.n - b.n);
@@ -189,7 +177,7 @@ const filledOf = (slots) => slots.filter((s) => s.filled).sort((a, b) => a.n - b
 export const translationTotal = (entries) => entries.reduce((n, e) => n + (e.slots ? e.slots.filter((s) => s.filled).length : e.arabic ? 1 : 0), 0);
 
 /** نص شريحة الخانة: «1 · Claude»، وبلا اسم مختصر «الترجمة 1». @param {{ n: number, name?: string | null }} s */
-export const chipLabel = (s) => (s.name ? `${s.n} · ${s.name}` : `الترجمة ${s.n}`);
+export const chipLabel = (s) => (s.name ? tr('library.chip.named', { n: s.n, name: s.name }) : tr('library.chip.plain', { n: s.n }));
 
 /**
  * الحالة الوحيدة في الصف (شارة واحدة): الأولى من «تحتاج مراجعة» ثم «تحذير آلي» ثم «معدّلة»، وإلا «مترجمة»؛ وبلا ترجمة «بانتظار
@@ -198,15 +186,15 @@ export const chipLabel = (s) => (s.name ? `${s.n} · ${s.name}` : `الترجم�
  * @returns {{ tone: 'neutral' | 'info' | 'success' | 'warning' | 'edited', text: string, id: string, title: string }}
  */
 export function rowStatus(e) {
-  if (!e.arabic) return { tone: 'neutral', text: 'بانتظار الترجمة', id: 'awaiting', title: 'لا ترجمة محفوظة لهذا الفيديو بعد' };
+  if (!e.arabic) return { tone: 'neutral', text: tr('library.status.awaiting'), id: 'awaiting', title: tr('library.status.awaitingTitle') };
   const s = summaryOf(e);
   /** @type {{ tone: 'info' | 'warning' | 'edited', text: string, id: string, title: string }[]} */
   const items = [];
-  if (s.marks.todo > 0) items.push({ tone: 'info', text: `تحتاج مراجعة (${s.marks.todo})`, id: 'review', title: 'مقاطع علّمتها «أعود إليه»' });
+  if (s.marks.todo > 0) items.push({ tone: 'info', text: tr('library.status.review', { n: s.marks.todo }), id: 'review', title: tr('library.status.reviewTitle') });
   const warning = warningText(e.arabic);
-  if (warning) items.push({ tone: 'warning', text: warning, id: 'warning', title: 'الفحص الآلي: المقارنة بالأصل' });
-  if (e.arabic.edited || s.edited > 0) items.push({ tone: 'edited', text: 'معدّلة', id: 'edited', title: 'عُدّلت في المحرّر بعد الرفع' });
-  const lead = items[0] ?? { tone: /** @type {const} */ ('success'), text: 'مترجمة', id: 'translated', title: 'الترجمة محفوظة كما رُفعت' };
+  if (warning) items.push({ tone: 'warning', text: warning, id: 'warning', title: tr('library.status.warningTitle') });
+  if (e.arabic.edited || s.edited > 0) items.push({ tone: 'edited', text: tr('library.status.edited'), id: 'edited', title: tr('library.status.editedTitle') });
+  const lead = items[0] ?? { tone: /** @type {const} */ ('success'), text: tr('library.status.translated'), id: 'translated', title: tr('library.status.translatedTitle') };
   return { ...lead, title: items.length > 1 ? items.map((i) => i.text).join(' · ') : lead.title };
 }
 
@@ -214,7 +202,7 @@ export function rowStatus(e) {
 function cueCountText(e) {
   if (e.arabic) return formatCount(e.arabic.cueCount, COUNT_FORMS.cue);
   const track = e.english.find((t) => t.kind === 'manual') ?? e.english[0];
-  return track ? `${formatCount(track.cueCount, COUNT_FORMS.cue)} في الأصل` : null;
+  return track ? tr('library.row.inOriginal', { count: formatCount(track.cueCount, COUNT_FORMS.cue) }) : null;
 }
 
 /**
@@ -250,14 +238,14 @@ export function rowModel(e, nowMs) {
   return {
     videoId: e.videoId,
     title: e.title,
-    displayTitle: e.title ?? NO_TITLE_TEXT,
+    displayTitle: e.title ?? noTitleText(),
     hasTitle: Boolean(e.title),
     /** اسم الوصول للأوامر: العنوان إن وُجد وإلا المعرّف. */
     accessName: e.title ?? e.videoId,
     status: rowStatus(e),
     /** إزاحة عرض الترجمة النشطة إن لم تكن صفرًا، معزولة LTR (تلميح شريحتها؛ والتفصيل في بطاقة التوسيع). */
-    offsetText: e.view.displayOffsetMs !== 0 ? `الإزاحة ${offsetInline(e.view.displayOffsetMs)} ث` : null,
-    whenText: relative ? `عُدّل ${relative}` : null,
+    offsetText: e.view.displayOffsetMs !== 0 ? tr('library.row.offset', { offset: offsetInline(e.view.displayOffsetMs) }) : null,
+    whenText: relative ? tr('library.row.edited', { when: relative }) : null,
     countText: cueCountText(e),
     relative,
     absolute: absoluteTime(e.updatedAt),
@@ -270,7 +258,7 @@ export function rowModel(e, nowMs) {
     filled,
     nextEmpty: /** @type {1 | 2 | 3 | null} */ ([1, 2, 3].find((n) => !filled.some((s) => s.n === n)) ?? null),
     /** سطر عمود «الترجمات» حين لا ترجمة: حالة الأصل الحقيقية. */
-    sourceText: e.english.length ? 'الأصل جاهز' : 'الأصل غير ملتقط',
+    sourceText: tr(e.english.length ? 'library.row.sourceReady' : 'library.row.sourceMissing'),
   };
 }
 
@@ -278,17 +266,16 @@ export function rowModel(e, nowMs) {
 function warningText(a) {
   if (a.matched !== false) return null;
   const parts = [];
-  if (a.missing > 0) parts.push(formatCount(a.missing, { ...NOUN.missing, one: 'مقطع ناقص' }));
-  if (a.extra > 0) parts.push(formatCount(a.extra, { ...NOUN.extra, one: 'مقطع زائد' }));
-  if (a.drift > 0) parts.push(`توقيت مختلف في ${a.drift === 2 ? 'مقطعين' : formatCount(a.drift, COUNT_FORMS.cue)}`);
-  return parts.join(' · ') || 'غير مطابقة';
+  if (a.missing > 0) parts.push(formatCount(a.missing, NOUN.missingBadge));
+  if (a.extra > 0) parts.push(formatCount(a.extra, NOUN.extraBadge));
+  if (a.drift > 0) parts.push(driftText(a.drift));
+  return parts.join(' · ') || tr('library.warn.mismatch');
 }
 
-export const DATE_GROUPS = Object.freeze([
-  Object.freeze({ key: 'today', label: 'اليوم' }),
-  Object.freeze({ key: 'week', label: 'آخر 7 أيام' }),
-  Object.freeze({ key: 'older', label: 'أقدم' }),
-]);
+/** «توقيت مختلف في 12 مقطعًا» / «Timing differs in 12 segments». @param {number} n */
+const driftText = (n) => tr('library.compare.drift', { n, count: formatCount(n, COUNT_FORMS.cue) });
+
+export const DATE_GROUPS = Object.freeze(['today', 'week', 'older'].map((key) => Object.freeze({ key, get label() { return tr(`library.group.${key}`); } })));
 
 /**
  * قسم التاريخ: اليوم (من منتصف ليل الجهاز)، وهذا الأسبوع (الأيام الستة السابقة له)، وأقدم؛ والزمن المستقبلي (ساعة جهاز متقدمة)
@@ -325,26 +312,26 @@ export function groupEntries(entries, nowMs) {
 export function exportOptions(e) {
   const noArabic = messageFor('PG_NO_ARABIC');
   const to = rowPair(e)?.to ?? null;
-  const tName = (to && languageName(to)) || 'الترجمة';
+  const tName = (to && languageName(to)) || tr('library.export.translationName');
   const out = [
-    { id: 'ar-current', label: `${tName} — النسخة الحالية`, disabledReason: e.arabic ? null : noArabic, action: { type: 'ar', variant: 'current' } },
+    { id: 'ar-current', label: tr('library.export.current', { name: tName }), disabledReason: e.arabic ? null : noArabic, action: { type: 'ar', variant: 'current' } },
     {
       id: 'ar-original',
-      label: `${tName} — النسخة المرفوعة`,
+      label: tr('library.export.uploaded', { name: tName }),
       disabledReason: !e.arabic ? noArabic : e.arabic.edited ? null : messageFor('PG_ORIGINAL_SAME'),
       action: { type: 'ar', variant: 'original' },
     },
   ];
   if (!e.english.length) {
-    out.push({ id: 'en', label: 'الأصل — المستخرج', disabledReason: messageFor('PG_NO_ENGLISH'), action: { type: 'en', trackKey: '' } });
+    out.push({ id: 'en', label: tr('library.export.extractedNone'), disabledReason: messageFor('PG_NO_ENGLISH'), action: { type: 'en', trackKey: '' } });
   }
   for (const t of e.english) {
     const k = parseTrackKey(t.key);
-    const name = (k && languageName(k.lang)) || 'الأصل';
-    const what = k?.via ? `مترجمة آليًا عن ${languageName(k.via) ?? k.via}` : EN_KIND[t.kind];
+    const name = (k && languageName(k.lang)) || tr('library.export.originalName');
+    const what = k?.via ? tr('library.export.autoFrom', { from: languageName(k.via) ?? k.via }) : kindText(t.kind);
     out.push({
       id: `en:${t.key}`,
-      label: e.english.length === 1 && !k?.via ? `${name} — المستخرجة` : `${name} — ${what}`,
+      label: e.english.length === 1 && !k?.via ? tr('library.export.extractedOne', { name }) : tr('library.export.track', { name, what }),
       hint: formatCount(t.cueCount, COUNT_FORMS.cue),
       disabledReason: null,
       action: { type: 'en', trackKey: t.key },
@@ -383,12 +370,16 @@ export function copyGate(e, pair = null) {
 }
 
 const NOUN = {
-  missing: { one: 'مقطع واحد ناقص', two: 'مقطعان ناقصان', few: 'مقاطع ناقصة', many: 'مقطعًا ناقصًا', single: 'مقطع ناقص' },
-  extra: { one: 'مقطع واحد زائد', two: 'مقطعان زائدان', few: 'مقاطع زائدة', many: 'مقطعًا زائدًا', single: 'مقطع زائد' },
-  empty: { one: 'مقطع واحد فارغ', two: 'مقطعان فارغان', few: 'مقاطع فارغة', many: 'مقطعًا فارغًا', single: 'مقطع فارغ' },
+  missing: formsOf('library.forms.missing'),
+  extra: formsOf('library.forms.extra'),
+  empty: formsOf('library.forms.empty'),
+  missingBadge: formsOf('library.forms.missingBadge'),
+  extraBadge: formsOf('library.forms.extraBadge'),
 };
 const LIST_LIMIT = 8;
-const numbers = (list) => (list.length > LIST_LIMIT ? `${list.slice(0, LIST_LIMIT).join('، ')}…` : list.join('، '));
+const numbers = (list) => (list.length > LIST_LIMIT ? `${joinList(list.slice(0, LIST_LIMIT))}…` : joinList(list));
+/** «3 مقاطع ناقصة: 4، 5، 6». */
+const listLine = (what, list) => tr('library.compare.listLine', { what, list: numbers(list) });
 
 /**
  * ملخص المقارنة لحوار الاستبدال: نبرة وأسطر قصيرة.
@@ -396,24 +387,24 @@ const numbers = (list) => (list.length > LIST_LIMIT ? `${list.slice(0, LIST_LIMI
  * @returns {{ tone: 'info' | 'success' | 'warning', lines: string[] }}
  */
 export function comparisonSummary(r) {
-  if (!r || r.fingerprintId === null) return { tone: 'info', lines: ['لا مرجع للمقارنة بالأصل، فيُعرض الملف كما هو.'] };
+  if (!r || r.fingerprintId === null) return { tone: 'info', lines: [tr('library.compare.noReference')] };
   // الفارغ وغير المترجم لا يمنعان matched بعقد البيانات، لكنهما تحذير يُقال بعد سطر المطابقة البنيوية (U-027) كما في المحرّر.
   const warn = [];
   const empty = r.empty ?? [];
   const untranslated = r.noArabic ?? [];
-  if (empty.length) warn.push(`${formatCount(empty.length, NOUN.empty)}: ${numbers(empty)}`);
-  if (untranslated.length) warn.push(`${formatCount(untranslated.length, COUNT_FORMS.cue)} بلا ترجمة: ${numbers(untranslated)}`);
-  if (r.matched) return warn.length ? { tone: 'warning', lines: ['مطابق للأصل', ...warn] } : { tone: 'success', lines: ['مطابق للأصل'] };
+  if (empty.length) warn.push(listLine(formatCount(empty.length, NOUN.empty), empty));
+  if (untranslated.length) warn.push(tr('library.compare.untranslated', { count: formatCount(untranslated.length, COUNT_FORMS.cue), list: numbers(untranslated) }));
+  if (r.matched) return warn.length ? { tone: 'warning', lines: [tr('library.compare.matches'), ...warn] } : { tone: 'success', lines: [tr('library.compare.matches')] };
   const lines = [];
-  if (r.countSource !== null && r.countSource !== r.countTarget) lines.push(`عدد المقاطع: ${r.countTarget} من ${r.countSource}`);
-  if (r.missing.length) lines.push(`${formatCount(r.missing.length, NOUN.missing)}: ${numbers(r.missing)}`);
-  if (r.extra.length) lines.push(`${formatCount(r.extra.length, NOUN.extra)}: ${numbers(r.extra)}`);
+  if (r.countSource !== null && r.countSource !== r.countTarget) lines.push(tr('library.compare.countLine', { target: r.countTarget, source: r.countSource }));
+  if (r.missing.length) lines.push(listLine(formatCount(r.missing.length, NOUN.missing), r.missing));
+  if (r.extra.length) lines.push(listLine(formatCount(r.extra.length, NOUN.extra), r.extra));
   // معاينة الرفع بالمحاذاة (FA-04): ملف أُعيد ترقيمه يُقال إنه قورن بتوقيته، فلا يُظن النقص من آخره.
-  if (r.renumbered) lines.push('ترقيم المقاطع يختلف عن الأصل، فقورنت بتوقيتها.');
-  else if (r.numbering === 'different' && !r.missing.length && !r.extra.length) lines.push('ترقيم المقاطع يختلف عن الأصل.');
-  if (r.drift.length) lines.push(r.drift.length === 1 ? 'توقيت مختلف في مقطع واحد' : r.drift.length === 2 ? 'توقيت مختلف في مقطعين' : `توقيت مختلف في ${formatCount(r.drift.length, COUNT_FORMS.cue)}`);
+  if (r.renumbered) lines.push(tr('library.compare.renumbered'));
+  else if (r.numbering === 'different' && !r.missing.length && !r.extra.length) lines.push(tr('library.compare.numbering'));
+  if (r.drift.length) lines.push(driftText(r.drift.length));
   lines.push(...warn);
-  return { tone: 'warning', lines: lines.length ? lines : ['يختلف عن الأصل.'] };
+  return { tone: 'warning', lines: lines.length ? lines : [tr('library.compare.differs')] };
 }
 
 // ---- الإصدار الثاني: الترجمات الثلاث والنسخة السابقة والرفع (P13) ----
@@ -421,13 +412,12 @@ export function comparisonSummary(r) {
 /** «النص الدراسي» يحتاج ترجمة نشطة. @param {{ arabic: unknown }} e */
 export const studyGate = (e) => (e.arabic ? null : messageFor('PG_STUDY_NO_ARABIC'));
 
-const MODE_LABEL = Object.freeze({ normal: 'عادي', long: 'مقاطع أطول' });
+/** وضع التقسيم بلغة الواجهة؛ ما لا يُعرف يبقى كما هو. @param {string} mode */
+const modeLabel = (mode) => (mode === 'normal' || mode === 'long' ? tr(`library.mode.${mode}`) : mode);
 /** صيغ عدد الأجزاء («جزآن» و«11 جزءًا»؛ كانت «2 أجزاء»، U59). */
-export const PART_FORMS = Object.freeze({ one: 'جزء واحد', two: 'جزآن', few: 'أجزاء', many: 'جزءًا', single: 'جزء' });
+export const PART_FORMS = formsOf('library.forms.part');
 /** صيغ مسارات الأصل الملتقطة في ملخص الحذف (كانت «2 مسارات إنجليزية ملتقطة»، U59؛ وبلا لغة ثابتة منذ AA3). */
-export const EN_TRACK_FORMS = Object.freeze({
-  one: 'ملف أصل محفوظ', two: 'ملفا أصل محفوظان', few: 'ملفات أصل محفوظة', many: 'ملف أصل محفوظًا', single: 'ملف أصل محفوظ',
-});
+export const EN_TRACK_FORMS = formsOf('library.forms.enTrack');
 
 /**
  * سطر حوار الرفع حين يمحو الاستبدالُ النسخة السابقة المحفوظة (تدقيق 7a66f91، U76): تُسمّى خانتها وتاريخها، فلا يُظن أنها
@@ -435,8 +425,8 @@ export const EN_TRACK_FORMS = Object.freeze({
  * @param {{ from: number, savedAt: string }} prev @param {number} target @param {string} [date]
  */
 export function previousLostText(prev, target, date = '') {
-  const whose = prev.from === target ? 'من هذه الترجمة' : `من الترجمة ${prev.from}`;
-  return `وتُحذف النسخة السابقة المحفوظة الآن (${whose}${date ? `، ${date}` : ''}) ولا يمكن استعادتها.`;
+  const whose = prev.from === target ? tr('library.previousLost.whoseSame') : tr('library.previousLost.whoseOther', { n: prev.from });
+  return tr('library.previousLost.text', { whose, date });
 }
 
 /**
@@ -445,8 +435,8 @@ export function previousLostText(prev, target, date = '') {
  */
 export function fingerprintLabel(fp, date = '') {
   const k = parseTrackKey(fp.trackKey);
-  const kind = k?.via ? 'مترجمة آليًا' : EN_KIND[k?.kind] ?? '';
-  const parts = [`${(k && languageName(k.lang)) || 'الأصل'} ${kind}`.trim(), MODE_LABEL[fp.mode] ?? fp.mode, formatCount(fp.count, COUNT_FORMS.cue)];
+  const kind = k?.via ? tr('library.kind.autoTranslated') : kindText(k?.kind);
+  const parts = [tr('library.fingerprint.track', { name: (k && languageName(k.lang)) || tr('library.export.originalName'), kind }), modeLabel(fp.mode), formatCount(fp.count, COUNT_FORMS.cue)];
   if (fp.parts) parts.push(formatCount(fp.parts.length, PART_FORMS));
   if (date) parts.push(date);
   return parts.join(' · ');
@@ -470,10 +460,10 @@ export function manualEdits(track) {
  */
 export function diffCountLines(d) {
   const c = d.counts;
-  if (!d.aligned) return [`تعذّرت مطابقة مقاطع الملفين بتوقيتها، فيحل الملف الجديد كله محل الحالي (${c.removed} حالية ← ${c.added} جديدة).`];
+  if (!d.aligned) return [tr('library.diff.unaligned', { removed: c.removed, added: c.added })];
   return [
-    `يتغير النص في ${c.textChanged} · التوقيت في ${c.timingChanged} · يُضاف ${c.added} · يُحذف ${c.removed} · بلا تغيير ${c.unchanged}`,
-    ...(d.confidence === 'low' ? ['مطابقة المقاطع غير مؤكدة، فالأعداد تقريبية.'] : []),
+    tr('library.diff.counts', { text: c.textChanged, timing: c.timingChanged, added: c.added, removed: c.removed, unchanged: c.unchanged }),
+    ...(d.confidence === 'low' ? [tr('library.diff.lowConfidence')] : []),
   ];
 }
 
@@ -488,11 +478,11 @@ export function targetOptions(b, preferred = null) {
   const out = [1, 2, 3].filter(filledAt).map((n) => {
     const s = b.slots[n - 1];
     const active = b.active === n;
-    const desc = [s.name, s.track.fileName].filter(Boolean).join(' · ') + (active ? ' (نشطة)' : '');
-    return { n, filled: true, active, name: s.name ?? null, label: `الترجمة ${n} — ${desc}` };
+    const desc = [s.name, s.track.fileName].filter(Boolean).join(' · ') + (active ? tr('library.target.activeSuffix') : '');
+    return { n, filled: true, active, name: s.name ?? null, label: tr('library.target.option', { n, desc }) };
   });
   const free = (preferred === 1 || preferred === 2 || preferred === 3) && !filledAt(preferred) ? preferred : [1, 2, 3].find((n) => !filledAt(n)) ?? null;
-  if (free) out.push({ n: free, filled: false, active: false, name: null, label: 'ترجمة جديدة' });
+  if (free) out.push({ n: free, filled: false, active: false, name: null, label: tr('library.target.newOne') });
   return out;
 }
 
@@ -509,16 +499,11 @@ export function nameHintText(hint, titleOf = () => null) {
   const t = titleOf(hint.videoId);
   const title = t ? (Array.from(t).length > 40 ? `${Array.from(t).slice(0, 39).join('')}…` : t) : null;
   // العنوان معزول (FSI…PDI) فلا تنقلب علامات ترقيمه داخل الجملة العربية (تدقيق 5fedcb9، CL-002).
-  return title ? `الاسم يشير إلى فيديو آخر: ${String.fromCodePoint(0x2068)}${title}${String.fromCodePoint(0x2069)}` : `الاسم يشير إلى فيديو آخر (${hint.videoId}).`;
+  return title ? tr('library.nameHint.withTitle', { title: `${String.fromCodePoint(0x2068)}${title}${String.fromCodePoint(0x2069)}` }) : tr('library.nameHint.withId', { id: hint.videoId });
 }
 
-/** «الترجمة 2» و«الترجمتان 1 و3» و«الترجمات 1 و2 و3». @param {number[]} nums */
-export function slotsPhrase(nums) {
-  const list = nums.map(String);
-  if (list.length === 1) return `الترجمة ${list[0]}`;
-  const joined = list.length === 2 ? `${list[0]} و${list[1]}` : `${list.slice(0, -1).join('، ')} و${list.at(-1)}`;
-  return `${list.length === 2 ? 'الترجمتان' : 'الترجمات'} ${joined}`;
-}
+/** «الترجمة 2» و«الترجمتان 1 و3» و«الترجمات 1 و2 و3» (وبالإنجليزية «Translations 1 and 3»). @param {number[]} nums */
+export const slotsPhrase = (nums) => tr('library.slots.phrase', { nums: nums.map(String) });
 
 /**
  * ما يُحذف بالضبط وما يبقى، من الحزمة المقروءة قبل حوار التأكيد (لا نص ثابت): بنود لما يوجد فعلًا وحده، فلا يُذكر ما ليس
@@ -531,34 +516,34 @@ export function deleteSummary(b, what, { pair = false } = {}) {
   const slots = what.scope === 'slot' ? [b.slots[what.n - 1]] : b.slots.filter((s) => s.track);
   const items = [];
   const keeps = [];
-  const named = (s) => (s.name ? `${s.n} «${s.name}»` : String(s.n));
+  const named = (s) => (s.name ? tr('library.delete.named', { n: s.n, name: s.name }) : String(s.n));
   if (what.scope === 'slot') {
     const s = slots[0];
-    items.push(`الترجمة ${named(s)} — ملف ${ltrInline(s.track.fileName)}`);
+    items.push(tr('library.delete.slotItem', { name: named(s), file: ltrInline(s.track.fileName) }));
   } else if (slots.length) {
-    items.push(slots.length === 1 ? `الترجمة ${named(slots[0])}` : `${slots.length === 2 ? 'الترجمتان' : 'الترجمات'} ${slots.map(named).join(' و')}`);
+    items.push(slots.length === 1 ? tr('library.delete.allOne', { name: named(slots[0]) }) : tr('library.delete.allMany', { names: slots.map(named) }));
   }
   // النسخة السابقة تُحذف مع الفيديو كله ولو لم تبقَ ترجمة ممتلئة (مراجعة الهوية L5).
-  if (what.scope === 'all' && b.previous) items.push(`النسخة السابقة (من الترجمة ${b.previous.from})`);
+  if (what.scope === 'all' && b.previous) items.push(tr('library.delete.previous', { n: b.previous.from }));
   const edits = slots.reduce((n, s) => n + manualEdits(s.track), 0);
   if (edits) items.push(formatCount(edits, EDIT_FORMS));
   const marks = slots.reduce((n, s) => n + s.marks.length, 0);
   if (marks) items.push(formatCount(marks, MARK_FORMS));
   const offsets = slots.filter((s) => s.offsetMs !== 0);
-  if (offsets.length) items.push(offsets.length === 1 ? `الإزاحة المحفوظة (${offsetInline(offsets[0].offsetMs)} ث)` : 'الإزاحات المحفوظة');
-  if (slots.some((s) => s.position)) items.push('آخر موضع محفوظ في المحرّر');
+  if (offsets.length) items.push(offsets.length === 1 ? tr('library.delete.offsetOne', { offset: offsetInline(offsets[0].offsetMs) }) : tr('library.delete.offsetMany'));
+  if (slots.some((s) => s.position)) items.push(tr('library.delete.position'));
   if (what.scope === 'all') {
     const en = b.record.english.length;
     if (en) items.push(formatCount(en, EN_TRACK_FORMS));
-    if (b.record.fingerprints.length) items.push(`مراجع المقارنة بالأصل (${b.record.fingerprints.length})`);
-    items.push('عنوان الفيديو ومدته وإعدادات عرضه');
-    if (pair) items.push('اللغتان المختارتان لهذا الفيديو');
+    if (b.record.fingerprints.length) items.push(tr('library.delete.fingerprints', { n: b.record.fingerprints.length }));
+    items.push(tr('library.delete.videoMeta'));
+    if (pair) items.push(tr('library.delete.pair'));
     return { items, keeps };
   }
   const others = b.slots.filter((s) => s.track && s.n !== what.n);
-  if (others.length) keeps.push(`${slotsPhrase(others.map((s) => s.n))} تبقى${b.active === what.n ? `، وتصبح الترجمة ${others[0].n} النشطة` : ''}`);
-  if (b.previous) keeps.push('النسخة السابقة تبقى');
-  if (b.record.english.length) keeps.push('ملفات الأصل المحفوظة ومراجع المقارنة تبقى');
-  if (pair) keeps.push('اللغتان المختارتان للفيديو تبقيان');
+  if (others.length) keeps.push(tr('library.delete.slotsStay', { phrase: slotsPhrase(others.map((s) => s.n)), becomes: b.active === what.n ? others[0].n : null }));
+  if (b.previous) keeps.push(tr('library.delete.previousStays'));
+  if (b.record.english.length) keeps.push(tr('library.delete.originalsStay'));
+  if (pair) keeps.push(tr('library.delete.pairStays'));
   return { items, keeps };
 }

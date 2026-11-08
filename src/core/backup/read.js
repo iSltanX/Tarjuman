@@ -3,6 +3,7 @@
 // نسخة»)، ثم المفاتيح بالضبط، ثم بصمة السلامة والأعداد. وبعدها استبعاد جزئي صادق: مجموعة إعدادات تالفة وحدها، وفيديو تالف
 // أو مكرر وحده، والباقي يمضي. الأسباب مسارات ورموز، لا نص ترجمة.
 import { sanitizeText } from '../diagnostics/sanitize.js';
+import { joinList, t } from '../../i18n/index.js';
 import { bundleFromBackup } from '../model/bundle.js';
 import { isVideoId } from '../model/ids.js';
 import { normalizeLangPrefs } from '../model/lang-prefs.js';
@@ -104,16 +105,17 @@ function checkEntry(entry) {
 const SETTINGS_GROUPS = ['offsetStepMs', 'displayModeDefault', 'appearance', 'export', 'thresholds'];
 /** أسماء المجموعات للمستخدم في تحذير الاستبعاد (كانت المفاتيح الداخلية «settings.appearance»؛ U59). */
 const GROUP_NAMES = Object.freeze({
-  settings: 'الإعدادات', prefs: 'القاموس والتفضيلات',
-  'settings.offsetStepMs': 'خطوة الإزاحة', 'settings.displayModeDefault': 'وضع العرض الافتراضي', 'settings.appearance': 'مظهر الترجمة',
-  'settings.export': 'التصدير', 'settings.thresholds': 'عتبات المقارنة',
-  'prefs.glossary': 'القاموس', 'prefs.review': 'حد سرعة القراءة', 'prefs.saveLocation': 'مكان الحفظ',
+  settings: 'settings', prefs: 'prefs',
+  'settings.offsetStepMs': 'offsetStepMs', 'settings.displayModeDefault': 'displayModeDefault', 'settings.appearance': 'appearance',
+  'settings.export': 'export', 'settings.thresholds': 'thresholds',
+  'prefs.glossary': 'glossary', 'prefs.review': 'review', 'prefs.saveLocation': 'saveLocation',
 });
 /** @param {string} key مثل «prefs.glossary (جزئيًا)» */
 const groupName = (key) => {
   const m = /^(\S+)( \(جزئيًا\))?$/.exec(key);
-  const name = GROUP_NAMES[m?.[1] ?? key] ?? key;
-  return m?.[2] ? `${name}، جزئيًا` : name;
+  const id = Object.hasOwn(GROUP_NAMES, m?.[1] ?? key) ? GROUP_NAMES[m?.[1] ?? key] : null;
+  const name = id ? t(`core.backup.group.${id}`) : key;
+  return m?.[2] ? t('core.backup.partial', { name }) : name;
 };
 
 /** محارف تجاوز الاتجاه وعزله تُجرَّد من العنوان واسم الملف كما في الاستيراد (import/files.js؛ U59): تنتحل عرض الاسم. */
@@ -146,7 +148,7 @@ const PREFS_GROUPS = ['glossary', 'review', 'saveLocation'];
 export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, supportedVersion = BACKUP_VERSION, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch } = {}) {
   const size = typeof input === 'string' ? input.length : input?.size;
   if (!Number.isFinite(size)) return reject('BK_READ_FAILED', 'لا ملف');
-  if (size > maxBytes) return reject('BK_TOO_LARGE', `size=${size}`, { max: `${Math.round(maxBytes / MB)} م.ب` });
+  if (size > maxBytes) return reject('BK_TOO_LARGE', `size=${size}`, { max: t('common.bytes.mb', { n: Math.round(maxBytes / MB) }) });
   let text;
   try {
     text = typeof input === 'string' ? input : await input.text();
@@ -186,7 +188,7 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   const prefs = readSection(data.prefs, normalizePrefs, validatePrefs, PREFS_GROUPS, 'prefs', normalizePrefs(DEFAULT_PREFS), ['glossary']);
   const excluded = [...(settings?.excluded ?? []), ...(prefs?.excluded ?? [])];
   const thumbnailsOff = isPlainObject(data.prefs) && isPlainObject(data.prefs.ui) && data.prefs.ui.thumbnails === false;
-  if (excluded.length) warnings.push({ code: 'BK_SETTINGS_INVALID', params: { groups: excluded.map(groupName).join('، ') } });
+  if (excluded.length) warnings.push({ code: 'BK_SETTINGS_INVALID', params: { groups: joinList(excluded.map(groupName)) } });
 
   /** @type {Map<string, number[]>} */
   const seen = new Map();

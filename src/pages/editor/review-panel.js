@@ -2,6 +2,7 @@
 // (panels.js). الفحص الآلي منفصل عن العلامات البشرية، والعلامات التي فقدت مقطعها منفصلة بإزالتها، و«تابع من آخر موضع» لكل
 // ترجمة. وصف وقفز فقط: لا إصلاح تلقائي ولا كتابة هنا.
 import { messageFor } from '../../core/errors/index.js';
+import { joinList, t } from '../../i18n/index.js';
 import { button, el, statusPill } from '../../ui/components.js';
 import { formatCount, formatTimecode } from '../../ui/format.js';
 import { COUNT, MARK_LABEL } from './text.js';
@@ -31,10 +32,10 @@ export function renderDensity(box, { doc, items, maxCps, maxLineChars, onJump })
     doc,
   });
   box.replaceChildren(...[
-    head(doc, 'سرعة القراءة وطول السطر', statusPill({ tone: items.length ? 'warning' : 'success', text: items.length ? formatCount(items.length, COUNT.warning) : 'لا تنبيهات ✓', doc })),
-    el('p', { className: 'tj-caption', text: `الحد ${maxCps} حرفًا في الثانية (من الإعدادات) و${maxLineChars} حرفًا للسطر. تنبيه لا يمنع الحفظ ولا التصدير، ولا يختصر النص.`, doc }),
+    head(doc, t('editor.density.title'), statusPill({ tone: items.length ? 'warning' : 'success', text: items.length ? formatCount(items.length, COUNT.warning) : t('editor.density.none'), doc })),
+    el('p', { className: 'tj-caption', text: t('editor.density.limits', { cps: maxCps, chars: maxLineChars }), doc }),
     items.length ? list : null,
-    items.length > MAX_ITEMS ? el('p', { className: 'tj-caption', text: `و${items.length - MAX_ITEMS} أخرى.`, doc }) : null,
+    items.length > MAX_ITEMS ? el('p', { className: 'tj-caption', text: t('editor.density.more', { n: items.length - MAX_ITEMS }), doc }) : null,
   ].filter(Boolean));
 }
 
@@ -51,7 +52,7 @@ export function renderMarks(box, { doc, marks, readOnly, onJump, onRemoveOrphans
     className: 'ed-chips',
     children: entries.slice(0, MAX_ITEMS).map((e) => el('button', {
       className: `ed-chip tj-mono-sm ed-chip--${e.kind}${e.state === 'moved' ? ' ed-chip--moved' : ''}`,
-      text: String(e.n), attrs: { type: 'button', 'aria-label': `انتقال إلى المقطع ${e.n} (${MARK_LABEL[e.kind]}${e.state === 'moved' ? '، قد تكون انتقلت' : ''})` },
+      text: String(e.n), attrs: { type: 'button', 'aria-label': t('editor.marks.jumpAria', { n: e.n, label: MARK_LABEL[e.kind], moved: e.state === 'moved' }) },
       on: { click: () => onJump(e.index) },
       doc,
     })),
@@ -62,7 +63,7 @@ export function renderMarks(box, { doc, marks, readOnly, onJump, onRemoveOrphans
     children: [
       el('h3', { className: 'tj-label', text: `${title} (${entries.length})`, doc }),
       note ? el('p', { className: 'tj-caption', text: note, doc }) : null,
-      entries.length ? chips(entries) : el('p', { className: 'tj-caption', text: 'لا شيء.', doc }),
+      entries.length ? chips(entries) : el('p', { className: 'tj-caption', text: t('editor.marks.nothing'), doc }),
     ],
     doc,
   });
@@ -70,18 +71,18 @@ export function renderMarks(box, { doc, marks, readOnly, onJump, onRemoveOrphans
   const orphan = marks.orphan.length ? el('section', {
     className: 'ed-markgroup',
     children: [
-      el('h3', { className: 'tj-label', text: `فقدت مقطعها (${marks.orphan.length})`, doc }),
-      el('p', { className: 'tj-caption', text: `لا مقطع يطابقها بعد الاستبدال أو الدمج أو الشطر: ${marks.orphan.slice(0, 8).map((m) => `${m.n} عند ${formatTimecode(m.startMs)}`).join('، ')}${marks.orphan.length > 8 ? '…' : ''}.`, doc }),
-      button({ label: 'إزالة العلامات التي فقدت مقطعها', size: 'sm', variant: 'ghost', disabledReason: readOnly ? messageFor('ED_READ_ONLY') : null, onClick: onRemoveOrphans, doc }),
+      el('h3', { className: 'tj-label', text: t('editor.marks.orphanTitle', { n: marks.orphan.length }), doc }),
+      el('p', { className: 'tj-caption', text: t('editor.marks.orphanNote', { list: `${joinList(marks.orphan.slice(0, 8).map((m) => t('editor.marks.orphanItem', { n: m.n, at: formatTimecode(m.startMs) })))}${marks.orphan.length > 8 ? '…' : ''}` }), doc }),
+      button({ label: t('editor.marks.removeOrphans'), size: 'sm', variant: 'ghost', disabledReason: readOnly ? messageFor('ED_READ_ONLY') : null, onClick: onRemoveOrphans, doc }),
     ],
     doc,
   }) : null;
   box.replaceChildren(...[
-    head(doc, 'العلامات', statusPill({ tone: marks.todo.length ? 'warning' : total ? 'success' : 'neutral', text: total ? formatCount(total, COUNT.mark) : 'لا علامات', doc })),
-    el('p', { className: 'tj-caption', text: 'مراجعتك أنت، منفصلة عن الفحص الآلي. بدّل علامة المقطع من زر العلامة في صفه، أو من المشغّل («علّم للمراجعة»).', doc }),
+    head(doc, t('editor.marks.title'), statusPill({ tone: marks.todo.length ? 'warning' : total ? 'success' : 'neutral', text: total ? formatCount(total, COUNT.mark) : t('editor.marks.none'), doc })),
+    el('p', { className: 'tj-caption', text: t('editor.marks.intro'), doc }),
     group(MARK_LABEL.todo, marks.todo),
     group(MARK_LABEL.done, marks.done),
-    group('تحتاج تحقق', marks.check, marks.check.length ? 'تغيّر نص مقطعها أو زمنه منذ وُضعت: تأكد أنها على المقطع الصحيح ثم بدّلها.' : null),
+    group(t('editor.marks.check'), marks.check, marks.check.length ? t('editor.marks.checkNote') : null),
     orphan,
   ].filter(Boolean));
 }
@@ -95,15 +96,15 @@ export function renderResume(box, { doc, items, onResume }) {
   const rows = items.map((it) => el('li', {
     className: 'ed-resume__item',
     children: [
-      el('span', { className: 'tj-body-sm', text: `الترجمة ${it.slot}${it.name ? ` «${it.name}»` : ''}${it.editing ? ' (قيد التحرير)' : ''}`, doc }),
+      el('span', { className: 'tj-body-sm', text: t('editor.resume.item', { n: it.slot, name: it.name ?? '', editing: it.editing }), doc }),
       it.n === null
-        ? el('span', { className: 'tj-caption', text: 'لا موضع محفوظ', doc })
-        : button({ label: `تابع من المقطع ${it.n}`, size: 'sm', variant: 'ghost', onClick: () => onResume(it.slot), doc }),
+        ? el('span', { className: 'tj-caption', text: t('editor.resume.none'), doc })
+        : button({ label: t('editor.resume.from', { n: it.n }), size: 'sm', variant: 'ghost', onClick: () => onResume(it.slot), doc }),
     ],
     doc,
   }));
   box.replaceChildren(
-    head(doc, 'آخر موضع', el('span', { doc })),
+    head(doc, t('editor.resume.title'), el('span', { doc })),
     el('ul', { className: 'ed-resume', children: rows, doc }),
   );
 }

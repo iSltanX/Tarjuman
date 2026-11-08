@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore } from '../../../../src/core/store/index.js';
-import { CAPACITY_UNAVAILABLE, SIZES_UNAVAILABLE, createSettings } from '../../../../src/pages/settings/view.js';
+import { capacityUnavailable, sizesUnavailable, createSettings } from '../../../../src/pages/settings/view.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { videoRecord } from '../../../helpers/fixtures.js';
 import { findAll, newDocument, settle, textOf } from '../library/fake-dom.js';
@@ -91,10 +91,10 @@ test('U02: dispose يلغي الاشتراك ومستمعي الظهور', async
 
 test('U03: غياب getBytesInUse (Firefox 140–143): سطر المساحة «غير متاح» بلا «لم يُحذف شيء»، والأعداد باقية، والأحجام «غير متاحة»', async () => {
   const m = await mount({ videos: 2, prepare: (area) => { area.getBytesInUse = undefined; } });
-  assert.equal(text(m, 'st-quota__text'), CAPACITY_UNAVAILABLE);
+  assert.equal(text(m, 'st-quota__text'), capacityUnavailable());
   assert.equal(m.root.querySelector('.tj-meter').hidden, true);
   assert.match(text(m, 'st-library-usage'), /الترجمات المحفوظة: 2 · الفيديوهات المترجمة: 2/, 'الأعداد من المحفوظات لا من القياس');
-  assert.equal(text(m, 'st-library-bytes'), SIZES_UNAVAILABLE);
+  assert.equal(text(m, 'st-library-bytes'), sizesUnavailable());
   const all = textOf(m.root);
   assert.equal(all.includes('لم يُحذف شيء'), false);
   assert.equal(all.includes('تعذّرت قراءة المحفوظات'), false, 'المحفوظات سليمة، والقياس وحده تعذّر');
@@ -103,7 +103,7 @@ test('U03: غياب getBytesInUse (Firefox 140–143): سطر المساحة «�
 test('U03: رفض عابر لـbundleBytes لا يمحو الأعداد، والمكتبة الفارغة لا تقيس شيئًا', async () => {
   const m = await mount({ videos: 1, prepare: (area) => { area.getBytesInUse = async (k) => { if (k !== null) throw new Error('bytes'); return 10; }; } });
   assert.match(text(m, 'st-library-usage'), /الترجمات المحفوظة: 1/);
-  assert.equal(text(m, 'st-library-bytes'), SIZES_UNAVAILABLE);
+  assert.equal(text(m, 'st-library-bytes'), sizesUnavailable());
   assert.match(text(m, 'st-quota__text'), /^\d+ ك\.ب/, 'السعة الكلية قيست');
 
   const empty = await mount({ videos: 0, prepare: (area) => { area.getBytesInUse = async () => { throw new Error('x'); }; } });

@@ -3,6 +3,7 @@
 // تُفوَّض من حاوية القائمة (app.js)؛ هنا البناء والتحديث فقط. الحقل المركَّز لا يُكتب فوقه إلا بفعل صريح
 // (تراجع أو نقل)، فلا يقفز المؤشر أثناء الكتابة.
 import { messageFor } from '../../core/errors/index.js';
+import { getDir, t } from '../../i18n/index.js';
 import { el } from '../../ui/components.js';
 import { formatTimecode, ltrInline } from '../../ui/format.js';
 import { langDirection, textDirection } from '../../core/lang/index.js';
@@ -14,10 +15,10 @@ const HAS_LETTER = /\p{L}/u;
 
 /**
  * اتجاه حقل الترجمة (§٤): من لغتها إن عُرفت (AA1)، وإلا RTL إن احتوى حرفًا من نص يُكتب من اليمين ولو بدأ بكلمة لاتينية، أو
- * خلا من الحروف (حقل فارغ في واجهة عربية)، وLTR ما سوى ذلك.
+ * خلا من الحروف (حقل فارغ: اتجاه الواجهة)، وLTR ما سوى ذلك.
  * @param {string} text @param {string | null} [lang]
  */
-export const textDir = (text, lang = null) => (lang && langDirection(lang)) || (!HAS_LETTER.test(text) ? 'rtl' : textDirection(text));
+export const textDir = (text, lang = null) => (lang && langDirection(lang)) || (!HAS_LETTER.test(text) ? getDir() : textDirection(text));
 
 /**
  * @typedef {{
@@ -36,7 +37,7 @@ export function createRows(doc, ctx) {
   const timeInput = (field, n) => el('input', {
     className: 'ed-time',
     dir: 'ltr',
-    attrs: { type: 'text', 'data-field': field, autocomplete: 'off', spellcheck: 'false', 'aria-label': `${field === 'start' ? 'بداية' : 'نهاية'} المقطع ${n}` },
+    attrs: { type: 'text', 'data-field': field, autocomplete: 'off', spellcheck: 'false', 'aria-label': t(field === 'start' ? 'editor.row.startAria' : 'editor.row.endAria', { n }) },
     doc,
   });
   const nudge = (dir) => el('button', {
@@ -63,7 +64,7 @@ export function createRows(doc, ctx) {
         attrs: { 'data-row': String(row), role: 'listitem' },
         children: [
           el('span', { className: 'ed-row__n tj-mono', text: String(r.n), doc }),
-          el('p', { className: 'ed-row__missing', text: `المقطع ${r.n} غير موجود في ملف الترجمة`, doc }),
+          el('p', { className: 'ed-row__missing', text: t('editor.row.missing', { n: r.n }), doc }),
         ],
         doc,
       });
@@ -71,9 +72,9 @@ export function createRows(doc, ctx) {
     const cue = c.session.cueAt(r.index);
     const node = el('div', {
       className: 'ed-row',
-      attrs: { 'data-row': String(row), 'data-index': String(r.index), role: 'listitem', 'aria-label': `المقطع ${cue.n}` },
+      attrs: { 'data-row': String(row), 'data-index': String(r.index), role: 'listitem', 'aria-label': t('editor.row.cueAria', { n: cue.n }) },
       children: [
-        el('input', { className: 'ed-row__check', attrs: { type: 'checkbox', 'data-act': 'select', 'aria-label': `تحديد المقطع ${cue.n}` }, doc }),
+        el('input', { className: 'ed-row__check', attrs: { type: 'checkbox', 'data-act': 'select', 'aria-label': t('editor.row.selectAria', { n: cue.n }) }, doc }),
         el('span', {
           className: 'ed-row__n tj-mono',
           children: [
@@ -85,7 +86,7 @@ export function createRows(doc, ctx) {
         timeInput('start', cue.n),
         timeInput('end', cue.n),
         el('span', { className: 'ed-row__dur tj-mono-sm', doc }),
-        el('textarea', { className: 'ed-row__text', attrs: { 'data-field': 'text', 'aria-label': `نص المقطع ${cue.n}` }, doc }),
+        el('textarea', { className: 'ed-row__text', attrs: { 'data-field': 'text', 'aria-label': t('editor.row.textAria', { n: cue.n }) }, doc }),
         // المرجع جملة إنجليزية: بلغتها فيُنطق بصوتها لا بصوت الصفحة العربية (WCAG 3.1.2؛ تدقيق 7a66f91، U48).
         el('p', { className: 'ed-row__en', dir: 'ltr', attrs: { lang: 'und' }, doc }),
         el('span', { className: 'ed-row__nudge', children: [nudge(-1), nudge(1), action('seek', 'play'), action('mark', 'flag'), action('merge', 'merge'), action('split', 'split')], doc }),
@@ -119,7 +120,7 @@ export function createRows(doc, ctx) {
     const [check, num, start, end, dur, text, en, nudges, msg] = node.children;
     check.checked = c.selection.has(i);
     check.disabled = c.readOnly;
-    num.querySelector('.ed-row__edited').textContent = edited ? 'معدّل' : '';
+    num.querySelector('.ed-row__edited').textContent = edited ? t('editor.row.edited') : '';
 
     for (const [input, field] of [[start, 'start'], [end, 'end']]) {
       const want = c.session.draftAt(i, field) ?? formatTimecode(field === 'start' ? cue.startMs : cue.endMs);
@@ -171,24 +172,24 @@ export function createRows(doc, ctx) {
     const [minus, plus, seek, markBtn, mergeBtn, splitBtn] = nudges.children;
     minus.hidden = c.readOnly;
     plus.hidden = c.readOnly;
-    minus.setAttribute('aria-label', `تقديم المقطع ${cue.n} ${step} ث (يظهر أبكر)`);
-    minus.title = `تقديم هذا المقطع ${step} ث (يظهر أبكر)`;
-    plus.setAttribute('aria-label', `تأخير المقطع ${cue.n} ${step} ث (يظهر لاحقًا)`);
-    plus.title = `تأخير هذا المقطع ${step} ث (يظهر لاحقًا)`;
+    minus.setAttribute('aria-label', t('editor.row.earlierAria', { n: cue.n, step }));
+    minus.title = t('editor.row.earlierTitle', { step });
+    plus.setAttribute('aria-label', t('editor.row.laterAria', { n: cue.n, step }));
+    plus.title = t('editor.row.laterTitle', { step });
     const label = (b, text, why = null) => {
       b.setAttribute('aria-label', why ? `${text} — ${why}` : text);
       b.title = why ? `${text}: ${why}` : text;
       if (why) b.setAttribute('aria-disabled', 'true');
       else b.removeAttribute('aria-disabled');
     };
-    label(seek, `▶ في الفيديو: المقطع ${cue.n} عند ${formatTimecode(Math.max(0, cue.startMs + c.session.offsetMs))}`);
+    label(seek, t('editor.row.seek', { n: cue.n, at: formatTimecode(Math.max(0, cue.startMs + c.session.offsetMs)) }));
     const mark = c.markOf?.(i) ?? null;
-    label(markBtn, markActionLabel(cue.n, mark), c.readOnly ? 'الأصل للعرض فقط' : null);
+    label(markBtn, markActionLabel(cue.n, mark), c.readOnly ? t('editor.row.readOnly') : null);
     markBtn.setAttribute('aria-pressed', mark ? 'true' : 'false');
     markBtn.dataset.kind = mark?.kind ?? '';
     const isLast = i >= c.session.count - 1;
-    label(mergeBtn, `دمج المقطع ${cue.n} مع التالي`, c.readOnly ? 'الأصل للعرض فقط' : isLast ? 'لا مقطع بعده' : null);
-    label(splitBtn, `شطر المقطع ${cue.n} عند المؤشر`, c.readOnly ? 'الأصل للعرض فقط' : null);
+    label(mergeBtn, t('editor.row.merge', { n: cue.n }), c.readOnly ? t('editor.row.readOnly') : isLast ? t('editor.row.noNext') : null);
+    label(splitBtn, t('editor.row.split', { n: cue.n }), c.readOnly ? t('editor.row.readOnly') : null);
     const badge = num.querySelector('.ed-row__mark');
     badge.dataset.kind = mark?.kind ?? '';
     badge.dataset.state = mark?.state ?? '';

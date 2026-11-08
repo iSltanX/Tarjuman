@@ -2,6 +2,7 @@
 // (العربية وحدها / مع لغة الأصل بسببه حين لا أصل)، وجارٍ التحميل، ولا ترجمة عربية، والخطأ، والعمود الضيق.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { messageFor } from '../../../../src/core/errors/index.js';
 import { DEFAULT_PREFS, mergePrefs } from '../../../../src/core/model/prefs.js';
 import { UNDO_MS } from '../../../../src/player/panel/session.js';
 import { A, B, arCues, click, english, enCues, flush, hidden, key, makeState, ui, watchPage } from './harness.js';
@@ -377,7 +378,7 @@ test('الخطأ: ما حدث وإعادة المحاولة → controller.reloa
   assert.equal(handle.peek().kind, 'error');
   assert.equal(hidden(v.q('.err')), false);
   assert.ok(v.q('.alert__title').textContent.includes('تعذّرت قراءة الترجمة المحفوظة'));
-  assert.ok(handle.peek().error.includes('تعذّرت قراءة الحفظ المحلي.'));
+  assert.ok(handle.peek().error.includes(messageFor('ST_READ_FAILED')));
   assert.equal(v.q('.alert').getAttribute('role'), 'alert');
   const retry = v.qa('.err .b')[0];
   assert.ok(retry.textContent.includes('إعادة المحاولة'));

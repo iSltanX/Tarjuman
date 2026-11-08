@@ -2,6 +2,7 @@
 // القوائم ظاهرة في ملء الشاشة)، بـShadow DOM مغلق. القوائم والتلميحات تتبع ظهور الشريط (تختفي معه)، إلا قائمة فيها
 // التركيز يكتب المستخدم في حقلها (product-spec §٦.٤، قرار سلطان في W4): تبقى ظاهرة حتى يغادر حقلها أو يغلقها. والرسائل
 // العابرة غير حاجبة فوق موضع الشريط. لا تلتقط الطبقة النقرات إلا على قائمة أو رسالة، ولا تصل منها ضغطة إلى اختصارات يوتيوب.
+import { getDir, getLocale, t as translate } from '../../i18n/index.js';
 import { onHold } from '../../ui/hold.js';
 import { createSheet } from '../overlay/sheet.js';
 import { glyph } from './glyphs.js';
@@ -31,8 +32,9 @@ export function createLayer({ doc, win, on }) {
   const layer = doc.createElement('div');
   layer.className = 'layer';
   layer.setAttribute('data-size', 'normal');
-  // واجهة عربية داخل صفحة قد تكون بأي لغة: lang للقارئ الآلي (WCAG 3.1.2؛ تدقيق 7a66f91، U48).
-  layer.setAttribute('lang', 'ar');
+  // لغة الواجهة واتجاهها على عناصر ترجمان وحدها (المضيف نفسه يبقى LTR للمواضع المطلقة): lang للقارئ الآلي (WCAG 3.1.2؛ تدقيق 7a66f91، U48).
+  layer.setAttribute('lang', getLocale());
+  layer.setAttribute('dir', getDir());
   const tip = doc.createElement('div');
   tip.className = 'tip';
   tip.setAttribute('role', 'tooltip');
@@ -44,14 +46,16 @@ export function createLayer({ doc, win, on }) {
   toasts.className = 'toasts';
   toasts.setAttribute('role', 'status');
   toasts.setAttribute('aria-live', 'polite');
-  toasts.setAttribute('lang', 'ar');
+  toasts.setAttribute('lang', getLocale());
+  toasts.setAttribute('dir', getDir());
   toasts.setAttribute('data-size', 'normal');
   // إعلان ما لا يُرى نصه في مكان مركّز (الإزاحة بعد ± من الشريط، U48): منطقة حية مخفية بصريًا.
   const live = doc.createElement('div');
   live.className = 'sr';
   live.setAttribute('aria-live', 'polite');
   live.setAttribute('aria-atomic', 'true');
-  live.setAttribute('lang', 'ar');
+  live.setAttribute('lang', getLocale());
+  live.setAttribute('dir', getDir());
   const input = doc.createElement('input');
   input.setAttribute('type', 'file');
   // SRT، وTXT وMarkdown بمحتوى موقّت (R48): القارئ يزيل أغلفتها الواضحة بملاحظات.
@@ -214,7 +218,7 @@ export function createLayer({ doc, win, on }) {
       const x = doc.createElement('button');
       x.setAttribute('type', 'button');
       x.className = 'x';
-      x.setAttribute('aria-label', 'إغلاق الرسالة');
+      x.setAttribute('aria-label', translate('player.controls.dismissMessage'));
       x.appendChild(glyph(doc, 'x', 'glyph glyph--x'));
       x.addEventListener('click', () => dismiss(t.id));
       box.appendChild(x);

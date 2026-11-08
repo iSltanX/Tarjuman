@@ -16,13 +16,14 @@ import { LIMITS } from '../../core/model/validate.js';
 import { arabicCues } from '../../core/model/video.js';
 import { exportTiming } from '../../core/model/timing.js';
 import { withExport, withExportRefreshed } from '../../core/model/transitions.js';
+import { joinList } from '../../i18n/index.js';
 import { manualEdits } from './model.js';
 
 const iso = (now) => new Date(now()).toISOString();
 
 /** أول 8 أرقام ثم «…»: الإزاحة الكبيرة على ملف طويل تعطي مئات الأرقام لا تُقرأ في رسالة عابرة. */
 const LIST_LIMIT = 8;
-const listNumbers = (list) => (list.length > LIST_LIMIT ? `${list.slice(0, LIST_LIMIT).join('، ')}…` : list.join('، '));
+const listNumbers = (list) => (list.length > LIST_LIMIT ? `${joinList(list.slice(0, LIST_LIMIT))}…` : joinList(list));
 
 async function requireRecord(store, videoId) {
   const record = await store.getVideo(videoId);

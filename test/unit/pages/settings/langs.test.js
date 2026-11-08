@@ -39,7 +39,7 @@ const pick = (field, code) => {
   opt.click();
 };
 
-test('القسم بعد «العرض»: الزوج «تلقائي من ترجمة الفيديو ⇄ العربية»، والتذكّر مفعّل، والأخيرة فارغة، ولغة الواجهة عرضًا', async () => {
+test('القسم بعد «العرض»: الزوج «تلقائي من ترجمة الفيديو ⇄ العربية»، والتذكّر مفعّل، والأخيرة فارغة، ولا صف لغة واجهة هنا (خيارها في «العرض»)', async () => {
   const m = await mount();
   assert.ok(m.sec, 'القسم موجود');
   assert.equal(m.sec.hidden, false, 'فُتح على القسم');
@@ -48,8 +48,7 @@ test('القسم بعد «العرض»: الزوج «تلقائي من ترجم�
   assert.deepEqual(values, [LANG_TEXT.auto, 'العربية']);
   assert.equal(m.sec.querySelector('#st-lang-remember').checked, true);
   assert.ok(textOf(rowOf(m.sec, LANGS_TEXT.recent)).includes(LANGS_TEXT.recentEmpty));
-  assert.ok(textOf(rowOf(m.sec, LANGS_TEXT.ui)).includes('العربية'));
-  assert.equal(findAll(rowOf(m.sec, LANGS_TEXT.ui), (e) => e.tagName === 'button' || e.tagName === 'select').length, 0, 'عرض فقط');
+  assert.equal(rowOf(m.sec, 'لغة الواجهة'), undefined, 'لغة الواجهة خيار مستقل في «العرض» لا صف عرض فقط هنا');
 });
 
 test('الزوج والتذكّر يُحفظان فورًا في تفضيلات اللغات، و«تلقائي» خيار «من» وحده', async () => {

@@ -1,11 +1,12 @@
 // قراءة ملف مستورد (R12): الحجم يُفحص قبل القراءة وبعدها، والترميز UTF-8 بتحقق صارم لا تخمين (Windows-1256 وUTF-16
 // يُرفضان برسالة تقول ما يُفعل)، والبايت NUL يعني ملفًا ثنائيًا. الـBOM يبقى في النص ليتعامل معه المحلّل.
 import { TjError } from '../errors/index.js';
+import { t } from '../../i18n/index.js';
 
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
 export const MAX_FILES = 50;
 
-const tooLarge = () => new TjError('IM_FILE_TOO_LARGE', { params: { max: `${MAX_FILE_BYTES / (1024 * 1024)} م.ب` } });
+const tooLarge = () => new TjError('IM_FILE_TOO_LARGE', { params: { max: t('common.bytes.mb', { n: MAX_FILE_BYTES / (1024 * 1024) }) } });
 
 /**
  * UTF-16 بلا BOM يُفك UTF-8 «صالحًا» فيه NUL: الأرقام والفواصل والمسافات وأسطر SRT بايتات ASCII يليها صفر (أو يسبقها)، والعربية

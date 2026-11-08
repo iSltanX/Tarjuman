@@ -2,6 +2,7 @@
 // والمقتطفات باختيار المستخدم، والصيغة؛ والنص العربي أو ثنائي اللغة) بعدد ما سيُكتب واسم الملف قبل التنزيل. البناء من
 // buildReviewReport وbuildStudyText (P11)، والحفظ عبر saveFile في app.js. يعيد الملف أو null.
 import { isTjError, messageFor } from '../../core/errors/index.js';
+import { t } from '../../i18n/index.js';
 import { alertBox, el, ltr } from '../../ui/components.js';
 import { openDialog, setDisabled } from './dialogs.js';
 
@@ -13,10 +14,10 @@ const check = (doc, label, checked, onChange, { disabled = false, title } = {}) 
 const formats = (doc, name, value, onPick) => el('fieldset', {
   className: 'ed-fieldset',
   children: [
-    el('legend', { className: 'tj-label', text: 'الصيغة', doc }),
-    ...[['md', 'Markdown (روابط توقيت قابلة للنقر)'], ['txt', 'نص عادي TXT']].map(([v, t]) => el('label', {
+    el('legend', { className: 'tj-label', text: t('editor.format.legend'), doc }),
+    ...[['md', t('editor.format.md')], ['txt', t('editor.format.txt')]].map(([v, label]) => el('label', {
       className: 'ed-radio',
-      children: [el('input', { attrs: { type: 'radio', name, value: v, ...(v === value ? { checked: '' } : {}) }, on: { change: () => onPick(v) }, doc }), el('span', { text: t, doc })],
+      children: [el('input', { attrs: { type: 'radio', name, value: v, ...(v === value ? { checked: '' } : {}) }, on: { change: () => onPick(v) }, doc }), el('span', { text: label, doc })],
       doc,
     })),
   ],
@@ -40,11 +41,11 @@ async function exportDialog({ doc, title, intro, controls, build }) {
       if (!isTjError(err)) throw err;
       last = { file: null, why: messageFor(err.code) };
     }
-    nameLine.replaceChildren(...(last.file ? ['اسم الملف: ', ltr(last.file.name, { doc })] : []));
+    nameLine.replaceChildren(...(last.file ? [t('editor.export.fileName'), ltr(last.file.name, { doc })] : []));
     nameLine.hidden = !last.file;
     noteLine.textContent = last.note ?? '';
     noteLine.hidden = !last.note;
-    errBox.replaceChildren(...(last.why ? [alertBox({ tone: 'info', title: 'لا يُصدَّر الآن', text: last.why, doc })] : []));
+    errBox.replaceChildren(...(last.why ? [alertBox({ tone: 'info', title: t('editor.export.blocked'), text: last.why, doc })] : []));
     errBox.hidden = !last.why;
     if (btn) setDisabled(btn, last.why);
   };
@@ -53,7 +54,7 @@ async function exportDialog({ doc, title, intro, controls, build }) {
   refresh();
   const v = await openDialog({
     doc, size: 'md', title, content, focus: 'save',
-    actions: [{ label: 'تنزيل', value: 'save', variant: 'primary', ref: (b) => { btn = b; refresh(); } }, { label: 'إلغاء', value: 'cancel' }],
+    actions: [{ label: t('editor.export.download'), value: 'save', variant: 'primary', ref: (b) => { btn = b; refresh(); } }, { label: t('common.cancel'), value: 'cancel' }],
   });
   return v === 'save' && last?.file ? last.file : null;
 }
@@ -65,15 +66,15 @@ async function exportDialog({ doc, title, intro, controls, build }) {
 export function openReportDialog({ doc, build }) {
   const o = { auto: true, marks: true, includeText: false, format: /** @type {'txt' | 'md'} */ ('md') };
   return exportDialog({
-    doc, title: 'تقرير مراجعة', intro: 'قائمة بالمقاطع التي تحتاج انتباهًا: مشكلاتها وأزمنتها بروابطها في الفيديو، وعلاماتك. النص لا يُلخَّص ولا يُغيَّر.',
+    doc, title: t('editor.report.title'), intro: t('editor.report.intro'),
     controls: [
       el('fieldset', {
         className: 'ed-fieldset',
         children: [
-          el('legend', { className: 'tj-label', text: 'محتوى التقرير', doc }),
-          check(doc, 'الفحص الآلي (التوقيت والمقارنة وسرعة القراءة)', o.auto, (v) => { o.auto = v; }),
-          check(doc, 'علاماتي («أعود إليه» و«راجعته»)', o.marks, (v) => { o.marks = v; }),
-          check(doc, 'مقتطف نص الترجمة والأصل لكل بند', o.includeText, (v) => { o.includeText = v; }),
+          el('legend', { className: 'tj-label', text: t('editor.report.content'), doc }),
+          check(doc, t('editor.report.auto'), o.auto, (v) => { o.auto = v; }),
+          check(doc, t('editor.report.marks'), o.marks, (v) => { o.marks = v; }),
+          check(doc, t('editor.report.text'), o.includeText, (v) => { o.includeText = v; }),
         ],
         doc,
       }),
@@ -81,7 +82,7 @@ export function openReportDialog({ doc, build }) {
     ],
     build: () => {
       const r = build(o);
-      return { file: r.count ? r.file : null, why: r.count ? null : 'لا مشكلات ولا علامات بهذه الخيارات.', note: r.count ? `${r.count} بندًا في التقرير.` : '' };
+      return { file: r.count ? r.file : null, why: r.count ? null : t('editor.report.empty'), note: r.count ? t('editor.report.count', { n: r.count }) : '' };
     },
   });
 }
@@ -93,9 +94,9 @@ export function openReportDialog({ doc, build }) {
 export function openStudyDialog({ doc, hasEnglish, build }) {
   const o = { bilingual: false, format: /** @type {'txt' | 'md'} */ ('md') };
   return exportDialog({
-    doc, title: 'نص دراسي', intro: 'الترجمة كما هي فقراتٍ للقراءة، لكل فقرة رابط إلى زمنها في الفيديو. لا تلخيص ولا تغيير في النص.',
+    doc, title: t('editor.study.title'), intro: t('editor.study.intro'),
     controls: [
-      check(doc, 'باللغتين (الترجمة فوق الأصل)', o.bilingual, (v) => { o.bilingual = v; }, {
+      check(doc, t('editor.study.bilingual'), o.bilingual, (v) => { o.bilingual = v; }, {
         disabled: !hasEnglish, title: hasEnglish ? undefined : messageFor('EX_STUDY_NO_ENGLISH'),
       }),
       formats(doc, 'ed-study-format', o.format, (v) => { o.format = v; }),

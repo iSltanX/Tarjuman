@@ -1,6 +1,7 @@
 // حوارات المحرّر فوق <dialog> (مواصفة التصميم §١٤.٢ TJ/Dialog بمقاساتها): أزرار بقيمها، وEsc إلغاء، والتركيز
 // الأول على الخيار الآمن. confirmDialog في src/ui لا يكفي هنا: المعاينة والتصدير يحتاجان مقاسًا أكبر وأزرارًا
 // تتعطّل بسببها أثناء فتح الحوار.
+import { t } from '../../i18n/index.js';
 import { button, el } from '../../ui/components.js';
 
 /**
@@ -73,8 +74,8 @@ export function openDialog({ doc, title, body, content = null, size = 'sm', tone
  */
 export async function confirmLeave(doc, text) {
   const v = await openDialog({
-    doc, title: 'مغادرة دون حفظ؟', body: text, tone: 'danger', focus: 'stay',
-    actions: [{ label: 'البقاء', value: 'stay', variant: 'primary' }, { label: 'المغادرة دون حفظ', value: 'leave', variant: 'danger' }],
+    doc, title: t('editor.leave.title'), body: text, tone: 'danger', focus: 'stay',
+    actions: [{ label: t('editor.leave.stay'), value: 'stay', variant: 'primary' }, { label: t('editor.leave.leave'), value: 'leave', variant: 'danger' }],
   });
   return v === 'leave';
 }

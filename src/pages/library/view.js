@@ -10,6 +10,7 @@ import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
+import { getDir, t as tr } from '../../i18n/index.js';
 
 /** تعذّرت قراءة التفضيلات: الافتراضي، لكن بلا صور (لا طلب خارجي ما لم يُعرف أن المستخدم يريده؛ مراجعة الهوية L9). */
 const PREFS_UNREADABLE = Object.freeze({ ...DEFAULT_PREFS, ui: Object.freeze({ ...DEFAULT_PREFS.ui, thumbnails: false }) });
@@ -34,8 +35,6 @@ import { thumbnailsShown } from '../../core/consent/thumbnails.js';
 import { uploadContent } from './upload.js';
 
 export { isolate };
-export const COPY_TIP = 'ألصقها مع ملف الأصل في محادثة نموذجك.';
-export const CAPTION = 'اضغط «إظهار الترجمات» في أي فيديو لتقارن نسخه وتختار ما يُعرض فوق الفيديو.';
 let seq = 0;
 
 /**
@@ -132,9 +131,9 @@ export function createLibrary(env) {
   const quotaHost = el('div', { className: 'lib-quota-host', doc });
   const capacityAlert = el('div', { className: 'lib-capacity-alert', doc });
   const searchId = `lib-search-${++seq}`;
-  const search = el('input', { className: 'tj-field__input lib-search__input', attrs: { id: searchId, type: 'search', placeholder: 'ابحث بالعنوان أو المعرّف', autocomplete: 'off', spellcheck: 'false' }, doc });
+  const search = el('input', { className: 'tj-field__input lib-search__input', attrs: { id: searchId, type: 'search', placeholder: tr('library.view.searchPlaceholder'), autocomplete: 'off', spellcheck: 'false', 'data-tj-keep': 'library.search' }, doc });
   search.value = state.query;
-  const clearSearch = button({ label: 'مسح البحث', iconOnly: true, icon: 'x', variant: 'ghost', size: 'sm', className: 'lib-search__clear', doc, onClick: () => {
+  const clearSearch = button({ label: tr('library.view.clearSearch'), iconOnly: true, icon: 'x', variant: 'ghost', size: 'sm', className: 'lib-search__clear', doc, onClick: () => {
     search.value = '';
     state.query = '';
     state.limit = PAGE_SIZE;
@@ -149,13 +148,13 @@ export function createLibrary(env) {
   syncClear();
   const sortId = `lib-sort-${++seq}`;
   const sort = el('select', {
-    className: 'tj-field__input lib-sort__select', attrs: { id: sortId, 'aria-label': 'الترتيب' },
+    className: 'tj-field__input lib-sort__select', attrs: { id: sortId, 'aria-label': tr('library.view.sortLabel') },
     children: SORTS.map((x) => el('option', { text: x.label, attrs: { value: x.value }, doc })),
     doc,
   });
   sort.value = state.order;
   const chips = chipGroup({
-    options: FILTERS.map((f) => ({ value: f.value, label: f.label, count: null })), value: state.filter, ariaLabel: 'تصفية المحفوظات', doc,
+    options: FILTERS.map((f) => ({ value: f.value, label: f.label, count: null })), value: state.filter, ariaLabel: tr('library.view.filterLabel'), doc,
     onChange: (v) => {
       state.filter = v;
       state.limit = PAGE_SIZE;
@@ -171,7 +170,7 @@ export function createLibrary(env) {
     children: [
       el('div', {
         className: 'tj-page-head__titles',
-        children: [el('div', { className: 'tj-page-head__title', children: [el('h1', { className: 'tj-display', text: 'المحفوظات', doc }), countPill], doc }), el('p', { className: 'tj-caption lib-caption', text: CAPTION, doc })],
+        children: [el('div', { className: 'tj-page-head__title', children: [el('h1', { className: 'tj-display', text: tr('common.nav.library'), doc }), countPill], doc }), el('p', { className: 'tj-caption lib-caption', text: tr('library.view.caption'), doc })],
         doc,
       }),
       quotaHost,
@@ -181,8 +180,8 @@ export function createLibrary(env) {
   const toolbar = el('div', {
     className: 'lib-toolbar',
     children: [
-      el('div', { className: 'lib-search', children: [el('label', { className: 'tj-sr-only', text: 'بحث بالعنوان أو المعرّف', attrs: { for: searchId }, doc }), icon('search', { doc, className: 'tj-icon lib-search__icon' }), search, clearSearch], doc }),
-      el('div', { className: 'lib-sort', children: [el('label', { className: 'tj-caption', text: 'الترتيب', attrs: { for: sortId }, doc }), sort], doc }),
+      el('div', { className: 'lib-search', children: [el('label', { className: 'tj-sr-only', text: tr('library.view.searchLabel'), attrs: { for: searchId }, doc }), icon('search', { doc, className: 'tj-icon lib-search__icon' }), search, clearSearch], doc }),
+      el('div', { className: 'lib-sort', children: [el('label', { className: 'tj-caption', text: tr('library.view.sortLabel'), attrs: { for: sortId }, doc }), sort], doc }),
       chips.root,
     ],
     doc,
@@ -195,7 +194,7 @@ export function createLibrary(env) {
    */
   const announceResults = () => {
     const n = visible().length;
-    resultsLive.textContent = state.query.trim() || state.filter !== 'all' ? (n ? `النتائج: ${formatCount(n, COUNT_FORMS.video)}` : 'لا نتائج') : '';
+    resultsLive.textContent = state.query.trim() || state.filter !== 'all' ? (n ? tr('library.view.results', { count: formatCount(n, COUNT_FORMS.video) }) : tr('library.view.noResults')) : '';
   };
   search.addEventListener('input', () => {
     state.query = search.value;
@@ -229,7 +228,7 @@ export function createLibrary(env) {
       await fn();
     } catch (err) {
       if (m && err instanceof TjError && err.code === 'ST_CORRUPT_RECORD') {
-        toaster.show(toErrorInfo(err).message, 'danger', { action: { label: 'حذف السجل…', onClick: () => removeUnreadable(m) } });
+        toaster.show(toErrorInfo(err).message, 'danger', { action: { label: tr('library.view.deleteRecord'), onClick: () => removeUnreadable(m) } });
         return;
       }
       fail(err);
@@ -245,11 +244,11 @@ export function createLibrary(env) {
   async function deleteUnreadable(m) {
     const print = await store.rawPrint(m.videoId);
     const ok = await confirm({
-      title: 'حذف السجل التالف لهذا الفيديو؟', confirmLabel: 'حذف نهائيًا', tone: 'danger', doc,
+      title: tr('library.dialog.unreadableTitle'), confirmLabel: tr('library.dialog.deletePermanently'), tone: 'danger', doc,
       content: deleteContent({
         doc, subtitle: m.displayTitle,
-        summary: { items: ['كل ما حُفظ لهذا الفيديو، ومنه ما لا يمكن قراءته'], keeps: [] },
-        note: `معرّف الفيديو ${isolate(m.videoId)}. لا يمكن التراجع، ولا تصدير ما لا يُقرأ.`,
+        summary: { items: [tr('library.dialog.unreadableItem')], keeps: [] },
+        note: tr('library.dialog.unreadableNote', { id: isolate(m.videoId) }),
       }),
     });
     if (!ok) return;
@@ -266,14 +265,14 @@ export function createLibrary(env) {
 
   function askTiming(offsetMs) {
     const group = radioGroup({
-      legend: 'توقيت الملف المصدَّر',
+      legend: tr('library.dialog.timingTitle'),
       options: [
-        { value: 'shown', label: `توقيت المشاهدة (المحفوظ + الإزاحة ${offsetInline(offsetMs)} ث)` },
-        { value: 'saved', label: 'التوقيت المحفوظ (دون الإزاحة)' },
+        { value: 'shown', label: tr('library.dialog.timingShown', { offset: offsetInline(offsetMs) }) },
+        { value: 'saved', label: tr('library.dialog.timingSaved') },
       ],
       doc,
     });
-    return confirm({ title: 'توقيت الملف المصدَّر', body: `لهذه الترجمة إزاحة عرض ${offsetInline(offsetMs)} ث. اختر التوقيت الذي يُكتب في الملف.`, confirmLabel: 'تصدير', content: group.root, doc })
+    return confirm({ title: tr('library.dialog.timingTitle'), body: tr('library.dialog.timingBody', { offset: offsetInline(offsetMs) }), confirmLabel: tr('library.dialog.export'), content: group.root, doc })
       .then((ok) => (ok ? group.value() : null));
   }
 
@@ -316,7 +315,7 @@ export function createLibrary(env) {
     const note = await studyNote({ store, videoId: m.videoId });
     const content = studyContent({ doc, hasEnglish: entry.english.length > 0, name: (o) => studyName({ store, videoId: m.videoId, ...o }), note });
     await content.ready;
-    const ok = await confirm({ title: `نص دراسي لـ«${isolate(clip(m.displayTitle, 80))}»`, body: 'الترجمة النشطة فقرات بأوقاتها، لقراءتها أو مراجعتها خارج الفيديو.', confirmLabel: 'تنزيل', content: content.root, doc });
+    const ok = await confirm({ title: tr('library.dialog.studyTitle', { title: isolate(clip(m.displayTitle, 80)) }), body: tr('library.dialog.studyBody'), confirmLabel: tr('library.dialog.download'), content: content.root, doc });
     if (!ok) return;
     const r = await exportStudy({ store, videoId: m.videoId, ...content.value(), save: env.saveFile });
     savedToast(r.saved);
@@ -338,7 +337,7 @@ export function createLibrary(env) {
       }
       const titleOf = (id) => state.entries.find((e) => e.videoId === id)?.title ?? null;
       let confirmBtn = null;
-      const labelFor = (replace) => (replace ? 'استبدال' : 'حفظ');
+      const labelFor = (replace) => tr(replace ? 'library.dialog.replace' : 'library.dialog.save');
       // «إلى» المختارة لهذا الفيديو في نافذة الإضافة، ثم الافتراضية، ثم الأخيرة: مقترحات لغة الملف (AA3).
       const lp = state.langPrefs;
       const suggested = lp ? [lp.videos?.[m.videoId]?.to, lp.pair?.to, ...(lp.recent ?? [])].filter(Boolean) : [];
@@ -350,7 +349,7 @@ export function createLibrary(env) {
           label.textContent = labelFor(replace);
         },
       });
-      const pending = confirm({ title: `رفع ترجمة لـ«${isolate(clip(m.displayTitle, 80))}»`, confirmLabel: labelFor(view.replace()), content: view.root, doc });
+      const pending = confirm({ title: tr('library.dialog.uploadTitle', { title: isolate(clip(m.displayTitle, 80)) }), confirmLabel: labelFor(view.replace()), content: view.root, doc });
       confirmBtn = view.root.closest?.('form')?.querySelector('button[value="confirm"]') ?? null;
       if (!(await pending)) return;
       const choice = view.choice();
@@ -379,7 +378,7 @@ export function createLibrary(env) {
     const undo = before && before !== n;
     toaster.show(messageFor('PG_SLOT_ACTIVATED', { n }), 'success', {
       ...(undo ? {
-        action: { label: 'تراجع', onClick: () => guarded(async () => { await undoActivation({ store, videoId: m.videoId, n: before, expect: after, now }); await load(); }) },
+        action: { label: tr('library.view.undo'), onClick: () => guarded(async () => { await undoActivation({ store, videoId: m.videoId, n: before, expect: after, now }); await load(); }) },
         announce: `${messageFor('PG_SLOT_ACTIVATED', { n })}. ${messageFor('PG_SLOT_UNDO_HINT', { n: before })}`,
       } : {}),
       focusAfter: () => activeChipOf(m.videoId),
@@ -413,9 +412,9 @@ export function createLibrary(env) {
     }
     const summary = deleteSummary(b, all ? { scope: 'all' } : { scope: 'slot', n }, { pair });
     const ok = await confirm({
-      title: all ? 'حذف بيانات هذا الفيديو؟' : `حذف الترجمة النشطة (${n})؟`,
-      confirmLabel: all ? 'حذف نهائيًا' : 'حذف', tone: 'danger', doc,
-      content: deleteContent({ doc, subtitle: m.displayTitle, summary, note: hasTranslations ? `لا يمكن التراجع. صدّر ${all ? 'الترجمات' : 'الترجمة'} أولًا إن كنت قد تحتاجها.` : 'لا يمكن التراجع.' }),
+      title: all ? tr('library.dialog.deleteAllTitle') : tr('library.dialog.deleteSlotTitle', { n }),
+      confirmLabel: all ? tr('library.dialog.deletePermanently') : tr('library.dialog.delete'), tone: 'danger', doc,
+      content: deleteContent({ doc, subtitle: m.displayTitle, summary, note: hasTranslations ? tr('library.delete.noteExport', { all }) : tr('library.delete.noteNone') }),
     });
     if (!ok) return;
     await deleteVideoData({ store, videoId: m.videoId, scope, n: all ? undefined : n, expect: b, now });
@@ -436,7 +435,7 @@ export function createLibrary(env) {
       }),
       write: (text) => env.clipboardWrite(text),
       announce: (code) => {
-        if (code === 'PG_COPY_DONE') toaster.show(`${messageFor(code)} ‹${isolate(clip(m.accessName, 40))}›`, 'success');
+        if (code === 'PG_COPY_DONE') toaster.show(tr('library.view.copied', { message: messageFor(code), title: isolate(clip(m.accessName, 40)) }), 'success');
         else toaster.show(messageFor(code), 'danger');
       },
       onState: () => {},
@@ -481,7 +480,7 @@ export function createLibrary(env) {
 
   // ---- موافقة الصور ----
   const thumbsOn = () => thumbnailsShown(state.prefs.ui.thumbnails, state.thumbsGranted);
-  const applyThumbs = () => { for (const t of thumbs) t.setEnabled(thumbsOn()); };
+  const applyThumbs = () => { for (const th of thumbs) th.setEnabled(thumbsOn()); };
   /** قراءة الموافقة الآن: آخر قراءة بدأت هي الحاكمة، فتُطبَّق على الحالة والصور الحالية، والأقدم تعيد نتيجتها. */
   function readConsent() {
     const gen = ++consentGen;
@@ -520,12 +519,12 @@ export function createLibrary(env) {
    */
   function slotChip(m, s, focusable) {
     const label = chipLabel(s);
-    const base = s.name ? `الترجمة ${s.n} — ${s.name}` : `الترجمة ${s.n}`;
+    const base = s.name ? tr('library.chipRow.base', { n: s.n, name: s.name }) : tr('common.slot.label', { n: s.n });
     const b = el('button', {
       className: `lib-chip${s.active ? ' lib-chip--active' : ''}`,
       attrs: {
         type: 'button', 'aria-pressed': s.active ? 'true' : 'false', 'data-slot': String(s.n), 'data-fk': `${m.videoId}:chip-${s.n}`,
-        tabindex: focusable ? '0' : '-1', title: s.active ? `${base} (النشطة)${m.offsetText ? ` — ${m.offsetText}` : ''}` : `${base} — اضغط لتفعيلها`,
+        tabindex: focusable ? '0' : '-1', title: s.active ? `${tr('library.chipRow.activeTitle', { base })}${m.offsetText ? ` — ${m.offsetText}` : ''}` : tr('library.chipRow.activateTitle', { base }),
       },
       children: [el('i', { className: 'lib-chip__mark', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'lib-chip__text', text: label, doc })],
       doc,
@@ -540,8 +539,8 @@ export function createLibrary(env) {
   function addChip(m, n) {
     const b = el('button', {
       className: 'lib-chip lib-chip--add',
-      attrs: { type: 'button', 'data-slot': String(n), 'data-fk': `${m.videoId}:chip-add`, title: `رفع الترجمة ${n}`, 'aria-description': `رفع الترجمة ${n}` },
-      children: [el('span', { className: 'lib-chip__text', text: `${n} · فارغة`, doc })],
+      attrs: { type: 'button', 'data-slot': String(n), 'data-fk': `${m.videoId}:chip-add`, title: tr('library.chipRow.addTitle', { n }), 'aria-description': tr('library.chipRow.addTitle', { n }) },
+      children: [el('span', { className: 'lib-chip__text', text: tr('library.chipRow.addText', { n }), doc })],
       doc,
     });
     b.addEventListener('click', () => { upload(m, n); });
@@ -551,17 +550,18 @@ export function createLibrary(env) {
   /** عمود «الترجمات»: شريحة لكل ترجمة موجودة وشريحة الرفع التالية، أو حالة «لا ترجمة» بحال الأصل الإنجليزي الحقيقية. */
   function translationsColumn(m) {
     const labelId = `lib-trs-${++seq}`;
-    const label = el('span', { className: 'lib-trs__label', text: 'الترجمات', attrs: { id: labelId }, doc });
+    const label = el('span', { className: 'lib-trs__label', text: tr('library.trs.label'), attrs: { id: labelId }, doc });
     if (!m.filled.length) {
-      return el('div', { className: 'lib-trs lib-trs--none', children: [label, el('span', { className: 'lib-trs__none', text: `لا ترجمة بعد · ${m.sourceText}`, doc })], doc });
+      return el('div', { className: 'lib-trs lib-trs--none', children: [label, el('span', { className: 'lib-trs__none', text: tr('library.trs.none', { source: m.sourceText }), doc })], doc });
     }
     const focusAt = m.filled.find((s) => s.active) ?? m.filled[0];
     const group = el('div', { className: 'lib-chips', attrs: { role: 'toolbar', 'aria-labelledby': labelId }, children: m.filled.map((s) => slotChip(m, s, s.n === focusAt.n)), doc });
-    // الأسهم تنقل التركيز بين الشرائح (بترتيب العرض: اليسار هو التالي في RTL) ونقطة Tab معه، والتنشيط بـEnter أو المسافة.
+    // الأسهم تنقل التركيز بين الشرائح (بترتيب العرض: اليسار هو التالي في RTL، واليمين في LTR) ونقطة Tab معه، والتنشيط بـEnter أو المسافة.
     // children مجموعة HTMLCollection لا مصفوفة: تُنسخ قبل indexOf.
     group.addEventListener('keydown', (e) => {
-      const forward = e.key === 'ArrowLeft' || e.key === 'ArrowDown';
-      if (!forward && e.key !== 'ArrowRight' && e.key !== 'ArrowUp') return;
+      const [next1, prev1] = getDir() === 'rtl' ? ['ArrowLeft', 'ArrowRight'] : ['ArrowRight', 'ArrowLeft'];
+      const forward = e.key === next1 || e.key === 'ArrowDown';
+      if (!forward && e.key !== prev1 && e.key !== 'ArrowUp') return;
       const list = [...group.children];
       const at = list.indexOf(doc.activeElement);
       if (at === -1 || list.length < 2) return;
@@ -583,7 +583,7 @@ export function createLibrary(env) {
       return node;
     };
     const idCopy = button({
-      label: `نسخ معرّف الفيديو ${entry.videoId}`, iconOnly: true, icon: 'copy', variant: 'ghost', size: 'sm', className: 'lib-idcopy', title: 'نسخ المعرّف', doc,
+      label: tr('library.rowAction.copyId', { id: entry.videoId }), iconOnly: true, icon: 'copy', variant: 'ghost', size: 'sm', className: 'lib-idcopy', title: tr('library.rowAction.copyIdTitle'), doc,
       onClick: async () => {
         try {
           await env.clipboardWrite(entry.videoId);
@@ -625,26 +625,26 @@ export function createLibrary(env) {
     const exportItems = exportOptions(entry).map((o) => ({ id: o.id, label: o.label, hint: o.hint, disabledReason: o.disabledReason, icon: 'download', onSelect: () => exportFile(m, o) }));
     const gate = copyGate(entry, copyPair(entry, state.langPrefs));
     const moreMenu = createMenu({
-      label: 'المزيد', ariaLabel: name('المزيد'), icon: 'more', iconOnly: true, variant: 'ghost', className: 'lib-more', doc,
+      label: tr('library.rowAction.more'), ariaLabel: name(tr('library.rowAction.more')), icon: 'more', iconOnly: true, variant: 'ghost', className: 'lib-more', doc,
       items: [
-        { kind: 'group', label: 'تصدير' },
+        { kind: 'group', label: tr('library.rowAction.groupExport') },
         ...exportItems,
-        { id: 'study', label: 'نص دراسي…', icon: 'file', disabledReason: studyGate(entry), onSelect: () => study(m, entry) },
+        { id: 'study', label: tr('library.rowAction.study'), icon: 'file', disabledReason: studyGate(entry), onSelect: () => study(m, entry) },
         { kind: 'separator' },
-        { id: 'upload', label: 'رفع ترجمة…', icon: 'upload', onSelect: () => upload(m) },
-        { id: 'copy', label: 'نسخ التعليمات', icon: 'copy', hint: COPY_TIP, disabledReason: gate.enabled ? null : gate.reason, onSelect: () => copyInstructions(m, entry) },
+        { id: 'upload', label: tr('library.rowAction.upload'), icon: 'upload', onSelect: () => upload(m) },
+        { id: 'copy', label: tr('library.rowAction.copyInstructions'), icon: 'copy', hint: tr('library.view.copyTip'), disabledReason: gate.enabled ? null : gate.reason, onSelect: () => copyInstructions(m, entry) },
         { kind: 'separator' },
-        ...(m.hasArabic ? [{ id: 'delete-active', label: 'حذف الترجمة النشطة…', tone: /** @type {const} */ ('danger'), icon: 'trash', onSelect: () => removeData(m, 'arabic') }] : []),
-        { id: 'delete-all', label: 'حذف بيانات الفيديو…', tone: /** @type {const} */ ('danger'), icon: 'trash', onSelect: () => removeData(m, 'all') },
+        ...(m.hasArabic ? [{ id: 'delete-active', label: tr('library.rowAction.deleteActive'), tone: /** @type {const} */ ('danger'), icon: 'trash', onSelect: () => removeData(m, 'arabic') }] : []),
+        { id: 'delete-all', label: tr('library.rowAction.deleteAll'), tone: /** @type {const} */ ('danger'), icon: 'trash', onSelect: () => removeData(m, 'all') },
       ],
     });
     keyed(moreMenu.button, 'more');
     const primary = m.hasArabic
-      ? button({ label: 'تحرير', variant: 'secondary', size: 'sm', title: name('تحرير'), doc, onClick: () => guarded(async () => { state.focusId = entry.videoId; remember(); await env.openPage('editor', { v: entry.videoId }); }) })
-      : button({ label: 'رفع ترجمة', icon: 'upload', variant: 'primary', size: 'sm', title: name('رفع ترجمة'), doc, onClick: () => upload(m, m.nextEmpty) });
-    primary.setAttribute('aria-label', name(m.hasArabic ? 'تحرير' : 'رفع ترجمة'));
+      ? button({ label: tr('library.rowAction.edit'), variant: 'secondary', size: 'sm', title: name(tr('library.rowAction.edit')), doc, onClick: () => guarded(async () => { state.focusId = entry.videoId; remember(); await env.openPage('editor', { v: entry.videoId }); }) })
+      : button({ label: tr('library.rowAction.uploadShort'), icon: 'upload', variant: 'primary', size: 'sm', title: name(tr('library.rowAction.uploadShort')), doc, onClick: () => upload(m, m.nextEmpty) });
+    primary.setAttribute('aria-label', name(tr(m.hasArabic ? 'library.rowAction.edit' : 'library.rowAction.uploadShort')));
     keyed(primary, m.hasArabic ? 'edit' : 'upload');
-    const open = keyed(button({ label: name('فتح الفيديو'), iconOnly: true, icon: 'play', variant: 'ghost', size: 'sm', className: 'lib-open', title: 'فتح الفيديو على يوتيوب', doc, onClick: () => guarded(async () => { await env.openTab(watchUrl(entry.videoId)); }) }), 'open');
+    const open = keyed(button({ label: name(tr('library.rowAction.open')), iconOnly: true, icon: 'play', variant: 'ghost', size: 'sm', className: 'lib-open', title: tr('library.rowAction.openTitle'), doc, onClick: () => guarded(async () => { await env.openTab(watchUrl(entry.videoId)); }) }), 'open');
 
     // التوسيع في الصف: بطاقات الترجمات الموجودة (expand.js)، يُنشأ عند أول فتح ويبقى عبر إعادة الرسم.
     // الصف نفسه وجهة تركيز (بعد زوال صف مجاور، والرجوع من المحرّر): بمفتاح فيبقى عبر إعادة الرسم في الخلفية (U50).
@@ -653,7 +653,7 @@ export function createLibrary(env) {
       doc,
     });
     const expandable = m.filled.length > 0;
-    const toggle = expandable ? keyed(button({ label: 'إظهار الترجمات', iconOnly: true, icon: 'chevron', variant: 'ghost', size: 'sm', className: 'lib-toggle', doc, onClick: () => setExpanded(!state.expanded.has(entry.videoId)) }), 'toggle') : null;
+    const toggle = expandable ? keyed(button({ label: tr('library.rowAction.show'), iconOnly: true, icon: 'chevron', variant: 'ghost', size: 'sm', className: 'lib-toggle', doc, onClick: () => setExpanded(!state.expanded.has(entry.videoId)) }), 'toggle') : null;
     function ensureExpansion() {
       let ctl = expansions.get(entry.videoId);
       if (!ctl) {
@@ -681,7 +681,7 @@ export function createLibrary(env) {
         expansions.delete(entry.videoId);
         toggle.removeAttribute('aria-controls');
       }
-      const text = on ? 'إخفاء الترجمات' : 'إظهار الترجمات';
+      const text = tr(on ? 'library.rowAction.hide' : 'library.rowAction.show');
       toggle.setAttribute('aria-expanded', on ? 'true' : 'false');
       toggle.setAttribute('aria-label', name(text));
       toggle.title = text;
@@ -708,8 +708,8 @@ export function createLibrary(env) {
     }));
     if (toggle) {
       toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', name('إظهار الترجمات'));
-      toggle.title = 'إظهار الترجمات';
+      toggle.setAttribute('aria-label', name(tr('library.rowAction.show')));
+      toggle.title = tr('library.rowAction.show');
       if (state.expanded.has(entry.videoId)) setExpanded(true);
     } else state.expanded.delete(entry.videoId);
     return li;
@@ -723,7 +723,7 @@ export function createLibrary(env) {
       children: [el('div', { className: 'tj-skeleton lib-skel-thumb', doc }), el('div', { className: 'lib-skel-lines', children: [el('div', { className: 'tj-skeleton lib-skel-a', doc }), el('div', { className: 'tj-skeleton lib-skel-b', doc })], doc })],
       doc,
     });
-    return el('div', { className: 'lib-skeleton', attrs: { 'aria-busy': 'true', 'aria-label': 'جارٍ قراءة المحفوظات' }, children: [row(), row(), row()], doc });
+    return el('div', { className: 'lib-skeleton', attrs: { 'aria-busy': 'true', 'aria-label': tr('library.view.loading') }, children: [row(), row(), row()], doc });
   }
 
   /** لوحة حالة (فارغة أو بلا نتائج أو خطأ) في صندوق الصفحة. */
@@ -743,13 +743,13 @@ export function createLibrary(env) {
       if (cap?.code) capacityAlert.append(alertBox({ tone: cap.level === 'full' ? 'danger' : 'warning', text: messageFor(cap.code), doc }));
     }
     if (!cap) return;
-    const text = cap.quotaBytes ? `المساحة المستخدمة: ${formatBytes(cap.bytesInUse)} من ${formatBytes(cap.quotaBytes)}` : `المساحة المستخدمة: ${formatBytes(cap.bytesInUse)}`;
+    const text = cap.quotaBytes ? tr('library.view.storageOf', { used: formatBytes(cap.bytesInUse), quota: formatBytes(cap.quotaBytes) }) : tr('library.view.storage', { used: formatBytes(cap.bytesInUse) });
     const children = [el('span', { className: 'tj-caption lib-quota__text', text, doc })];
     if (cap.quotaBytes) {
       const pct = Math.min(100, Math.round((cap.bytesInUse / cap.quotaBytes) * 100));
       const fill = el('span', { className: 'tj-meter__fill', doc });
       fill.style.width = `${pct}%`;
-      children.push(el('span', { className: `tj-meter tj-meter--${cap.level}`, attrs: { role: 'meter', 'aria-label': 'المساحة المستخدمة', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(pct) }, children: [fill], doc }));
+      children.push(el('span', { className: `tj-meter tj-meter--${cap.level}`, attrs: { role: 'meter', 'aria-label': tr('library.view.storageLabel'), 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(pct) }, children: [fill], doc }));
     }
     quotaHost.append(el('div', { className: 'lib-quota', children, doc }));
   }
@@ -757,7 +757,7 @@ export function createLibrary(env) {
   /** أقسام التاريخ حين الترتيب «آخر تعديل»، وقائمة واحدة حين الترتيب بالعنوان. أعداد الأقسام على كل المطابقات لا المعروض وحده. */
   function listNodes(shown, slice, nowMs) {
     const list = (rows) => el('ul', { className: 'lib-list', attrs: { role: 'list' }, children: rows.map((e) => buildRow(e, nowMs)), doc });
-    if (state.order !== 'updated') return [el('h2', { className: 'tj-sr-only', text: 'المحفوظات مرتبة بالعنوان', doc }), list(slice)];
+    if (state.order !== 'updated') return [el('h2', { className: 'tj-sr-only', text: tr('library.view.sortedByTitle'), doc }), list(slice)];
     const totals = Object.fromEntries(groupEntries(shown, nowMs).map((g) => [g.key, g.entries.length]));
     return groupEntries(slice, nowMs).map((g) => el('section', {
       className: 'lib-group', attrs: { 'data-group': g.key },
@@ -803,7 +803,7 @@ export function createLibrary(env) {
     }
     if (state.status === 'error') {
       const copyDiag = button({
-        label: 'نسخ تقرير التشخيص', icon: 'copy', variant: 'ghost', size: 'sm', doc,
+        label: tr('library.view.copyDiagnostics'), icon: 'copy', variant: 'ghost', size: 'sm', doc,
         onClick: async () => {
           try {
             await env.clipboardWrite(await env.diagnosticsText());
@@ -813,9 +813,9 @@ export function createLibrary(env) {
           }
         },
       });
-      const retry = button({ label: 'إعادة المحاولة', icon: 'restore', variant: 'secondary', size: 'sm', doc, onClick: () => { state.status = 'loading'; render(); load(); } });
+      const retry = button({ label: tr('library.view.retry'), icon: 'restore', variant: 'secondary', size: 'sm', doc, onClick: () => { state.status = 'loading'; render(); load(); } });
       errorPanel = statePanel(emptyState({
-        icon: 'danger', title: 'تعذّرت قراءة المحفوظات',
+        icon: 'danger', title: tr('library.view.errorTitle'),
         text: `${state.error?.message ?? messageFor('PG_LIST_FAILED')} (${state.error?.code ?? 'ST_READ_FAILED'})`,
         action: el('div', { className: 'lib-state__actions', children: [retry, copyDiag], doc }), doc,
       }), 'error');
@@ -824,19 +824,19 @@ export function createLibrary(env) {
     }
     if (!state.entries.length) {
       listHost.append(statePanel(emptyState({
-        icon: 'library', title: 'لا ترجمات محفوظة بعد', text: 'كل فيديو تنزّل أصله أو ترفع ترجمته يُحفظ هنا تلقائيًا.',
-        steps: ['افتح فيديو على يوتيوب', 'اضغط زر التنزيل في شريط المشغّل', 'ارفع ترجمتك من زر الرفع في الشريط'], doc,
+        icon: 'library', title: tr('library.view.emptyTitle'), text: tr('library.view.emptyText'),
+        steps: [tr('library.view.step1'), tr('library.view.step2'), tr('library.view.step3')], doc,
       })));
       return;
     }
     const shown = visible();
     if (!shown.length) {
       if (state.query.trim()) {
-        const clear = button({ label: 'مسح البحث', icon: 'x', variant: 'secondary', size: 'sm', doc, onClick: () => { search.value = ''; state.query = ''; state.limit = PAGE_SIZE; syncClear(); render(); announceResults(); remember(); search.focus(); } });
-        listHost.append(statePanel(emptyState({ icon: 'search', title: `لا نتائج لـ«${isolate(clip(state.query.trim(), 60))}»`, text: 'البحث في العناوين والمعرّفات. جرّب كلمة أقصر أو المعرّف.', action: clear, doc })));
+        const clear = button({ label: tr('library.view.clearSearch'), icon: 'x', variant: 'secondary', size: 'sm', doc, onClick: () => { search.value = ''; state.query = ''; state.limit = PAGE_SIZE; syncClear(); render(); announceResults(); remember(); search.focus(); } });
+        listHost.append(statePanel(emptyState({ icon: 'search', title: tr('library.view.noResultsTitle', { query: isolate(clip(state.query.trim(), 60)) }), text: tr('library.view.noResultsText'), action: clear, doc })));
       } else {
-        const all = button({ label: 'عرض الكل', variant: 'secondary', size: 'sm', doc, onClick: () => { state.filter = 'all'; chips.set('all'); render(); announceResults(); remember(); } });
-        listHost.append(statePanel(emptyState({ icon: 'filter', title: 'لا فيديوهات في هذا القسم', text: 'اختر قسمًا آخر أو اعرض الكل.', action: all, doc })));
+        const all = button({ label: tr('library.view.showAll'), variant: 'secondary', size: 'sm', doc, onClick: () => { state.filter = 'all'; chips.set('all'); render(); announceResults(); remember(); } });
+        listHost.append(statePanel(emptyState({ icon: 'filter', title: tr('library.view.sectionEmptyTitle'), text: tr('library.view.sectionEmptyText'), action: all, doc })));
       }
       return;
     }
@@ -856,7 +856,7 @@ export function createLibrary(env) {
     }
     if (shown.length > slice.length) {
       listHost.append(button({
-        label: `عرض المزيد (${formatCount(shown.length - slice.length, COUNT_FORMS.video)})`, variant: 'secondary', className: 'lib-more-rows', doc,
+        label: tr('library.view.showMore', { count: formatCount(shown.length - slice.length, COUNT_FORMS.video) }), variant: 'secondary', className: 'lib-more-rows', doc,
         // الزر يزول بإعادة الرسم: التركيز إلى أول صف جديد (U58)، لا إلى body.
         onClick: () => {
           const first = state.limit;

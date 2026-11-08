@@ -1,18 +1,19 @@
 // بُناة DOM لنافذة الأيقونة بلا اتصال بالتخزين ولا بالتبويبات (لوحة النافذة في الهوية، docs/identity.md): هيكل القراءة، وبطاقة الفيديو
 // الحالي بحالاتها، وهيكل كتلة «تعليمات الترجمة»، وخطوات «بلا ترجمة»، وملاحظة «ليست صفحة فيديو». textContent وsetAttribute فقط. المنطق والبيانات
 // في status.js، والتركيب في main.js. الصنف التاريخي tj-popup__status باقٍ على البطاقة والهيكل والملاحظة: يقرؤه الحزام الحي.
+import { t } from '../../i18n/index.js';
 import { el, statusPill } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
 import { popupIcon } from './icons.js';
 
-/** نص ملاحظة «ليست صفحة فيديو» كما في اللوحة المعتمدة. */
-export const NOT_VIDEO_TEXT = 'افتح فيديو على يوتيوب لتبدأ.';
+/** نص ملاحظة «ليست صفحة فيديو» كما في اللوحة المعتمدة، بلغة الواجهة الحالية. */
+export const notVideoText = () => t('popup.notVideo');
 
 /** هيكل بارتفاع البطاقة: لا تقفز النافذة حين يصل الرد. @param {Document} [doc] */
 export function skeletonCard(doc = document) {
   return el('section', {
     className: 'tj-popup__card tj-popup__status',
-    attrs: { 'aria-busy': 'true', 'aria-label': 'جارٍ قراءة حالة الفيديو' },
+    attrs: { 'aria-busy': 'true', 'aria-label': t('popup.card.loading') },
     children: [
       el('div', { className: 'tj-skeleton tj-popup__skel-title', doc }),
       el('div', { className: 'tj-skeleton tj-popup__skel-line', doc }),
@@ -25,7 +26,7 @@ export function skeletonCard(doc = document) {
 }
 
 /** مؤشر «محفوظ» بنقطته (معيّن الهوية)، لا رابطًا ولا زرًا. @param {Document} [doc] */
-export const savedPill = (doc = document) => statusPill({ tone: 'success', text: 'محفوظ', title: 'هذا الفيديو في المحفوظات', doc });
+export const savedPill = (doc = document) => statusPill({ tone: 'success', text: t('popup.card.saved'), title: t('popup.card.savedTitle'), doc });
 
 /** شارة بلا نقطة وبأيقونة اختيارية قبل نصها (معدّلة، وتختلف عن الأصل)؛ outline لشارات الوصف المحيطية. */
 function iconPill({ text, iconName, tone = 'neutral', outline = false, doc }) {
@@ -72,11 +73,11 @@ export function statusCard(s, tools, capture, doc = document, action = null) {
   } else if (s.kind === 'has-subtitle') {
     card.append(el('p', { className: 'tj-popup__line', text: s.line, doc }));
     const pills = [savedPill(doc), iconPill({ text: s.mode, outline: true, doc })];
-    if (s.edited) pills.push(iconPill({ text: 'معدّلة', iconName: 'edit', outline: true, doc }));
-    if (s.matched === false) pills.push(iconPill({ text: 'تختلف عن الأصل', iconName: 'warning', tone: 'warning', doc }));
+    if (s.edited) pills.push(iconPill({ text: t('popup.card.edited'), iconName: 'edit', outline: true, doc }));
+    if (s.matched === false) pills.push(iconPill({ text: t('popup.card.differs'), iconName: 'warning', tone: 'warning', doc }));
     card.append(el('div', { className: 'tj-popup__pills', children: pills, doc }));
   } else {
-    card.append(el('p', { className: 'tj-popup__line', text: 'لا ترجمة محفوظة بعد', doc }));
+    card.append(el('p', { className: 'tj-popup__line', text: t('popup.card.noTranslation'), doc }));
     // سطر مسار الأصل بلغته ونوعه وعدده (AA3): «اليابانية ملتقطة · تلقائية · 212 مقطعًا».
     const text = s.englishLine;
     card.append(s.englishReady
@@ -97,9 +98,9 @@ export function statusCard(s, tools, capture, doc = document, action = null) {
  * @param {{ n: number, text: string, state: 'done' | 'now' | 'pending' }[]} steps @param {Document} [doc]
  */
 export function guideList(steps, doc = document) {
-  const STATE_TEXT = { done: 'تمّت', now: 'الخطوة الحالية', pending: 'لاحقًا' };
+  const STATE_TEXT = { done: t('popup.steps.done'), now: t('popup.steps.now'), pending: t('popup.steps.pending') };
   return el('ol', {
-    className: 'tj-popup__steps', attrs: { 'aria-label': 'خطوات الترجمة' },
+    className: 'tj-popup__steps', attrs: { 'aria-label': t('popup.steps.label') },
     children: steps.map((st) => el('li', {
       className: `tj-popup__step tj-popup__step--${st.state}`,
       attrs: { 'data-state': st.state, ...(st.state === 'now' ? { 'aria-current': 'step' } : {}) },
@@ -114,7 +115,7 @@ export function guideList(steps, doc = document) {
 }
 
 /** ملاحظة «ليست صفحة فيديو» أو «أعد تحميل الصفحة»: أيقونة الفيديو والنص. @param {Document} [doc] @param {string} [text] */
-export function notVideoNote(doc = document, text = NOT_VIDEO_TEXT) {
+export function notVideoNote(doc = document, text = notVideoText()) {
   return el('div', {
     className: 'tj-popup__note tj-popup__status', attrs: { role: 'status' },
     children: [popupIcon('info', { doc }), el('span', { text, doc })],

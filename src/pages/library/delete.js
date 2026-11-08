@@ -1,5 +1,6 @@
 // محتوى حوار الحذف (تصميم LibraryDialogs): عنوان الفيديو سطرًا، ثم «ما يُحذف» بنودًا من بيانات الفيديو الفعلية
 // (deleteSummary في model.js) و«ما يبقى» إن وُجد، ثم تنبيه التراجع. لا بند لما لا يوجد.
+import { t } from '../../i18n/index.js';
 import { el } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
 
@@ -13,9 +14,9 @@ export function deleteContent({ doc, subtitle, summary, note }) {
     className: 'lib-del',
     children: [
       subtitle ? el('p', { className: 'tj-caption lib-del__title', text: subtitle, dir: textDirection(subtitle), doc }) : null,
-      el('span', { className: 'lib-del__eyebrow', text: 'ما يُحذف', doc }),
+      el('span', { className: 'lib-del__eyebrow', text: t('library.delete.eyebrowDeleted'), doc }),
       list(summary.items),
-      summary.keeps.length ? el('span', { className: 'lib-del__eyebrow', text: 'ما يبقى', doc }) : null,
+      summary.keeps.length ? el('span', { className: 'lib-del__eyebrow', text: t('library.delete.eyebrowKept'), doc }) : null,
       summary.keeps.length ? list(summary.keeps) : null,
       el('p', { className: 'tj-body-sm lib-del__note', text: note, doc }),
     ],

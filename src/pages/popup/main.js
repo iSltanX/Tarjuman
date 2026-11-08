@@ -13,6 +13,7 @@ import { initialPair, normalizeLangPrefs, pairPatch } from '../../core/model/lan
 import { recordPair } from '../../core/model/pair.js';
 import { browserLabel } from '../../core/report/diagnostics.js';
 import { createStore } from '../../core/store/index.js';
+import { t } from '../../i18n/index.js';
 import { alertBox, button, el, icon } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
 import { langPair } from '../../ui/lang-picker.js';
@@ -29,7 +30,7 @@ import { guideList, notVideoNote, pairSkeleton, skeletonCard, statusCard } from 
 /** «نسخ تشخيص الصفحة» (§١٩.٦): رابط صغير ونتيجته بسطر. التقرير رموز وأعداد منقّاة، ولا يُعرض. */
 function diagnosticsLink(reply) {
   const result = el('span', { className: 'tj-popup__diag-result', attrs: { role: 'status', 'aria-live': 'polite' } });
-  const link = el('button', { className: 'tj-popup__diag', text: 'نسخ تشخيص الصفحة', attrs: { type: 'button', 'data-action': 'diagnostics' } });
+  const link = el('button', { className: 'tj-popup__diag', text: t('popup.diag.link'), attrs: { type: 'button', 'data-action': 'diagnostics' } });
   link.addEventListener('click', async () => {
     link.setAttribute('aria-busy', 'true');
     let ok = false;
@@ -43,7 +44,7 @@ function diagnosticsLink(reply) {
       ok = false;
     }
     link.removeAttribute('aria-busy');
-    result.textContent = ok ? 'نُسخ التشخيص' : 'تعذّر النسخ — أعد المحاولة';
+    result.textContent = ok ? t('popup.diag.done') : t('popup.diag.failed');
     result.setAttribute('data-tone', ok ? 'success' : 'danger');
   });
   return el('p', { className: 'tj-popup__diag-row', children: [link, result] });
@@ -68,17 +69,17 @@ function pageLink({ action, iconName, name, onOpen }, notice) {
 }
 
 startPage({
-  title: 'نافذة الإضافة',
+  title: () => t('popup.title'),
   async render(app) {
     const store = createStore();
     const notice = el('div', { className: 'tj-popup__notice', attrs: { role: 'status' } });
     // عنوان الصفحة الوحيد (axe page-has-heading-one؛ تدقيق 7a66f91، U92): اسم المنتج مخفيًا بصريًا، والشعار يمثله مرئيًا.
     app.append(el('header', {
       className: 'tj-popup__head',
-      children: [el('h1', { className: 'tj-sr-only', text: 'ترجمان' }), logo({ width: 24, wordSize: 18 }), el('span', { className: 'tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: 'بياناتك على جهازك' })] })],
+      children: [el('h1', { className: 'tj-sr-only', text: t('common.productName') }), logo({ width: 24, wordSize: 18 }), el('span', { className: 'tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: t('common.nav.yourData') })] })],
     }));
     const main = el('div', { className: 'tj-popup__main' });
-    const eyebrow = el('span', { className: 'tj-popup__eyebrow', text: 'الفيديو الحالي' });
+    const eyebrow = el('span', { className: 'tj-popup__eyebrow', text: t('popup.currentVideo') });
     let card = skeletonCard();
     const entryHost = el('div', { className: 'tj-popup__entry-host' });
     // كتلة «تعليمات الترجمة» (لوحة 09): عنوانها وهيكلها حتى يصل الرد وتفضيلات اللغات.
@@ -86,7 +87,7 @@ startPage({
     const pairHost = el('section', { className: 'tj-popup__pair', attrs: { 'aria-labelledby': 'tj-pair-title' }, children: [pairTitle, pairSkeleton()] });
     const stepsHost = el('div', { className: 'tj-popup__guide' });
     const diagHost = el('div', { className: 'tj-popup__diag-host' });
-    const recentTitle = el('span', { className: 'tj-popup__eyebrow', text: 'آخر الترجمات' });
+    const recentTitle = el('span', { className: 'tj-popup__eyebrow', text: t('popup.recent') });
     recentTitle.hidden = true;
     const recentHost = el('div', { className: 'tj-popup__recent' });
     main.append(eyebrow, card, entryHost, pairHost, stepsHost, diagHost, recentTitle, recentHost, notice);
@@ -96,10 +97,10 @@ startPage({
     let reply = null;
     app.append(el('nav', {
       className: 'tj-popup__nav',
-      attrs: { 'aria-label': 'صفحات ترجمان' },
+      attrs: { 'aria-label': t('common.nav.pages') },
       children: [
-        pageLink({ action: 'library', iconName: 'library', name: 'المحفوظات', onOpen: () => openPage('library', undefined, { hash: libraryHash(reply) }) }, notice),
-        pageLink({ action: 'settings', iconName: 'settings', name: 'الإعدادات', onOpen: () => openPage('settings') }, notice),
+        pageLink({ action: 'library', iconName: 'library', name: t('common.nav.library'), onOpen: () => openPage('library', undefined, { hash: libraryHash(reply) }) }, notice),
+        pageLink({ action: 'settings', iconName: 'settings', name: t('common.nav.settings'), onOpen: () => openPage('settings') }, notice),
       ],
     }));
     // «زر النص المتزامن مخفي» لا ينتظر رد الصفحة هو الآخر: التفضيلات من التخزين مباشرة.
@@ -300,8 +301,8 @@ startPage({
                 notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
               }
             };
-            const openBtn = button({ label: `فتح الفيديو: ${name}`, iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: 'فتح الفيديو', onClick: go(() => chrome.tabs.create({ url: watchUrl(e.videoId) })) });
-            const editBtn = button({ label: `تحرير: ${name}`, iconOnly: true, icon: 'edit', variant: 'ghost', size: 'sm', title: 'تحرير الترجمة', disabledReason: e.arabic ? null : messageFor('PG_NO_ARABIC'), onClick: go(() => openPage('editor', { v: e.videoId })) });
+            const openBtn = button({ label: t('popup.recentRow.open', { name }), iconOnly: true, icon: 'external', variant: 'ghost', size: 'sm', title: t('popup.recentRow.openTitle'), onClick: go(() => chrome.tabs.create({ url: watchUrl(e.videoId) })) });
+            const editBtn = button({ label: t('popup.recentRow.edit', { name }), iconOnly: true, icon: 'edit', variant: 'ghost', size: 'sm', title: t('popup.recentRow.editTitle'), disabledReason: e.arabic ? null : messageFor('PG_NO_ARABIC'), onClick: go(() => openPage('editor', { v: e.videoId })) });
             list.append(el('div', { className: 'tj-popup__recent-row', children: [el('span', { className: 'tj-popup__recent-text', children: [title, meta] }), el('span', { className: 'tj-popup__recent-actions', children: [editBtn, openBtn] })] }));
           }
           recentTitle.hidden = false;

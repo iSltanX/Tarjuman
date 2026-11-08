@@ -14,6 +14,8 @@ export const REFERENCE_LOCALE = 'ar';
  */
 export const DEFAULT_LOCALE = 'en';
 export const LOCALE_SOURCES = Object.freeze(['user', 'youtube', 'browser', 'default']);
+/** اسما اللغتين في خيار «لغة الواجهة»: بهاتين الصيغتين في الواجهتين، فلا يُترجمان ولا يتوقفان على بيانات المتصفح. */
+export const LOCALE_NAMES = Object.freeze({ ar: 'العربية', en: 'English' });
 
 const TAG = /^[A-Za-z]{2,8}(?:[-_][A-Za-z0-9]{1,8})*$/;
 

@@ -2,6 +2,7 @@
 // لا شيء من يوتيوب ولا من المحفوظات ولا من الترجمات. وكل مصدر يتدهور إلى «unknown» صريحة لا إلى غياب الحقل، لأن العقد يشترط
 // الحقول. والشيفرة واحدة في الهدفين: حزمة Firefox تُعرف من عنوان الصفحة (moz-extension:) لا من علم بناء.
 /* global __TJ_DEV__ */
+import { t } from '../../i18n/index.js';
 
 /** runtime.PlatformOs ← قيم العقد. */
 const OS = Object.freeze({ mac: 'macos', win: 'windows', linux: 'linux', cros: 'chromeos', android: 'android', openbsd: 'openbsd', fuchsia: 'fuchsia' });
@@ -65,7 +66,7 @@ const UA_BROWSERS = Object.freeze([
  */
 export async function browserLabel(s = liveSources()) {
   const b = await browserOf(s);
-  if (b.browser === 'unknown') return 'غير معروف';
+  if (b.browser === 'unknown') return t('settings.diag.unknownBrowser');
   const major = String(b.version ?? '').split('.')[0];
   return `${b.browser.replace(/^Google /, '')}${major && major !== 'unknown' ? ` ${major}` : ''}`.slice(0, 40);
 }

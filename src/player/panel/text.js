@@ -1,51 +1,19 @@
 // نصوص لوحة النص المتزامن ودوالها النقية (docs/product-spec.md §٦.٦، ولوحات التصميم WatchPanel وPanelStates وWatchNarrow).
 // أرقام لاتينية، والإزاحة بعلامتها (formatOffset)، والعدّ بالعربية (formatCount). لا شيء هنا يعرف DOM.
+import { t, texts } from '../../i18n/index.js';
 import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
 import { languageName as sharedLanguageName } from '../../ui/lang.js';
 
-export const LABELS = Object.freeze({
-  title: 'النص المتزامن',
-  panel: 'النص المتزامن — ترجمان',
-  options: 'خيارات اللوحة',
-  close: 'إغلاق اللوحة',
-  closeHint: 'إغلاق اللوحة (يبقى زرها)',
-  hideEntry: 'إخفاء زر اللوحة',
-  hideHint: 'من كل صفحات الفيديو. تعيده من نافذة الإضافة أو الإعدادات.',
-  toastHidden: 'أُخفي زر النص المتزامن',
-  undo: 'تراجع',
-  synced: 'متزامن',
-  segGroup: 'نص اللوحة',
-  arOnly: 'الترجمة وحدها',
-  arOnlyShort: 'الترجمة',
-  dualShort: 'مع الأصل',
-  noOriginal: 'الأصل غير ملتقط لهذا الفيديو؛ شغّل ترجمة يوتيوب (CC) ليلتقطه ترجمان.',
-  follow: 'تمرير تلقائي',
-  followShort: 'تمرير تلقائي',
-  resume: 'العودة إلى المقطع الحالي ·',
-  listLabel: 'مقاطع الترجمة',
-  seekTo: 'الانتقال إلى',
-  timing: 'توقيت الترجمة',
-  shared: 'مشترك مع أزرار المشغّل',
-  reset: 'تصفير',
-  resetHint: 'إعادة الإزاحة إلى 0',
-  earlier: 'تقديم',
-  later: 'تأخير',
-  step: 'الخطوة',
-  stepGroup: 'خطوة الأزرار',
-  stepCustom: 'مخصص',
-  stepCustomField: 'الخطوة بالثواني',
-  seconds: 'ث',
-  loading: 'جارٍ قراءة الترجمة',
-  emptyTitle: 'لا ترجمة لهذا الفيديو بعد',
-  stepDownload: 'نزّل الأصل من زر التنزيل، وانسخ تعليمات الترجمة من نافذة الإضافة، وأرسلهما إلى نموذج الذكاء الاصطناعي ليترجمه',
-  stepUpload: 'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في الشريط، فيظهر نصه هنا متزامنًا مع الفيديو',
-  stepCapture: 'شغّل ترجمة يوتيوب (CC) ليلتقط ترجمان الأصل',
-  errorTitle: 'تعذّرت قراءة الترجمة المحفوظة',
-  // خطأ المتحكم أيًّا كان (حفظ أو قراءة أو تعارض): عنوان محايد، ورسالته تقول ما حدث.
-  inlineErrorTitle: 'تعذّرت العملية الأخيرة',
-  retry: 'إعادة المحاولة',
-  dismiss: 'إغلاق الرسالة',
-});
+/** نصوص اللوحة من الفهرس (player.panel) باللغة الحالية عند كل قراءة. */
+export const LABELS = texts('player.panel');
+
+const T = (key, params) => t(`player.panel.${key}`, params);
+
+/**
+ * سطر الخطوة المنجزة في حالة الفراغ: ما التُقط من الأصل ولغته ونوعه وعدد مقاطعه.
+ * @param {{ langName: string, via?: string | null, kind: string, saved: boolean, count: number }} cap
+ */
+export const captureLine = (cap) => T('captureLine', { lang: cap.langName, via: cap.via ?? null, kind: cap.kind, saved: cap.saved, count: formatCount(cap.count, COUNT_FORMS.cue) });
 
 /**
  * اسم لغة الأصل للوحة: اللغة الأساسية وحدها (en-GB ← الإنجليزية) من الدالة المشتركة (src/ui/lang.js)؛ وبلا اسم معروف الرمز
@@ -78,7 +46,7 @@ const sign = (ms) => (Math.round(ms / 100) === 0 ? 0 : Math.sign(ms));
 /** @param {number} ms معنى الإزاحة المختصر تحت قيمتها: «تظهر لاحقًا» أو «تظهر أبكر» أو «في توقيتها المحفوظ». */
 export function offsetMeaningShort(ms) {
   const s = sign(ms);
-  return s > 0 ? 'تظهر لاحقًا' : s < 0 ? 'تظهر أبكر' : 'في توقيتها المحفوظ';
+  return T(s > 0 ? 'meaningLater' : s < 0 ? 'meaningEarlier' : 'meaningZero');
 }
 
 /** @param {number} ms «+0.5» أو «−1.0» أو «0.0». */
@@ -88,12 +56,12 @@ export const offsetValue = formatOffset;
 export const stepLabel = (stepMs) => String(Math.round(stepMs / 100) / 10);
 
 /** @param {number} stepMs */
-export const earlierTip = (stepMs) => `تقديم الترجمة ${stepLabel(stepMs)} ${LABELS.seconds} (تظهر أبكر)`;
+export const earlierTip = (stepMs) => T('earlierTip', { step: stepLabel(stepMs), unit: LABELS.seconds });
 /** @param {number} stepMs */
-export const laterTip = (stepMs) => `تأخير الترجمة ${stepLabel(stepMs)} ${LABELS.seconds} (تظهر لاحقًا)`;
+export const laterTip = (stepMs) => T('laterTip', { step: stepLabel(stepMs), unit: LABELS.seconds });
 
 /** @param {string} langName «مع الإنجليزية». */
-export const withOriginal = (langName) => `مع ${langName}`;
+export const withOriginal = (langName) => T('withOriginal', { name: langName });
 
 /**
  * أجزاء سطر الحالة: «متزامن · الترجمة 2 «مراجعة» · 412 مقطعًا». الاسم يُحذف إن لم يُسمَّ، والرقم إن لم تُعرف الخانة.
@@ -102,7 +70,7 @@ export const withOriginal = (langName) => `مع ${langName}`;
  */
 export function statusParts({ slot, name, count }) {
   const parts = [LABELS.synced];
-  if (slot) parts.push(`الترجمة ${slot}${name ? ` «${name}»` : ''}`);
+  if (slot) parts.push(name ? T('statusSlotNamed', { n: slot, name }) : T('statusSlot', { n: slot }));
   parts.push(formatCount(count, COUNT_FORMS.cue));
   return parts;
 }

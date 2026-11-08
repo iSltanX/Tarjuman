@@ -4,6 +4,7 @@
 // الذاكرة الوحيدة (لا تخزين للصور في الإضافة). عند الإطفاء أو الخطأ أو الصورة البديلة الرمادية: بلاطة بأيقونة الفيديو لا توهم
 // بأنها لقطة. والمدة من `record.durationMs` حين تكون عددًا موجبًا، وإلا لا شيء (لا تُخمَّن).
 import { isVideoId } from '../../core/model/ids.js';
+import { t } from '../../i18n/index.js';
 import { el, icon, ltr } from '../../ui/components.js';
 
 /** البادئة الوحيدة المسموحة (استثناء مسمّى في check-static واختبار «لا شبكة»). */
@@ -53,7 +54,7 @@ export function thumbnail({ doc = document, videoId, enabled, durationMs = null,
 
   const durationNode = () => {
     const text = formatDuration(duration);
-    return text ? el('span', { className: 'lib-thumb__dur', children: [el('span', { className: 'tj-sr-only', text: 'المدة ', doc }), ltr(text, { doc })], doc }) : null;
+    return text ? el('span', { className: 'lib-thumb__dur', children: [el('span', { className: 'tj-sr-only', text: t('library.thumb.duration'), doc }), ltr(text, { doc })], doc }) : null;
   };
 
   function giveUp(from) {

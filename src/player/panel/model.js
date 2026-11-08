@@ -2,7 +2,8 @@
 // مقطع عربي، ونموذج العرض من حالة المتحكم (أي شكل يظهر الآن وبأي نص). docs/product-spec.md §٦.٦.
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { indexFor } from '../sync/cue-index.js';
-import { flatText, languageName } from './text.js';
+import { messageFor, hasCode } from '../../core/errors/index.js';
+import { LABELS, flatText, languageName } from './text.js';
 
 /**
  * @typedef {import('../../core/model/cue.js').Cue} Cue
@@ -116,6 +117,18 @@ export function originalLookup(enCues) {
  */
 
 /**
+ * نص الخطأ بلغة الواجهة الحالية من رمزه (فلا تبقى رسالة حُسبت بلغة سابقة)؛ ورمز يحتاج معاملات لا نملكها يبقى بنصه المحسوب.
+ * @param {{ code?: string, message?: string }} err
+ */
+function errorText(err) {
+  if (err.code && hasCode(err.code)) {
+    const text = messageFor(err.code);
+    if (!/\{\w+\}/.test(text)) return text;
+  }
+  return err.message ?? '';
+}
+
+/**
  * نموذج العرض من حالة المتحكم وحالة الصفحة والواجهة المحلية. الأولوية: لوحة مخفية خارج صفحة الفيديو وفي ملء الشاشة؛ وزر مخفي
  * (رسالة التراجع وحدها إن كانت)؛ ثم مفتوحة أو لا شيء: المغلقة لا تظهر في صفحة يوتيوب أصلًا، وزرها في شريط المشغّل (قرار سلطان
  * 2026-11-03: مغلقة افتراضيًا، وتظهر بزرها في المشغّل أو بمفتاحها في الإعدادات). والمفتوحة (وكذا المخفية بملء الشاشة وهي مفتوحة): جارٍ التحميل (فيديو الصفحة غير فيديو الحالة، أو تنقّل، أو
@@ -145,7 +158,7 @@ export function derive(state, page, ui) {
 
   const arabic = sameVideo && !page.navigating ? state.arabic : null;
   const en = sameVideo && state.english?.cues?.length ? state.english : null;
-  const original = en ? { lang: en.lang, name: languageName(en.lang) || 'الأصل', cues: en.cues } : null;
+  const original = en ? { lang: en.lang, name: languageName(en.lang) || LABELS.originalFallback, cues: en.cues } : null;
   const dualPref = prefs.panelDual !== false;
   const slot = state.activeSlot ?? null;
   const slotName = slot ? state.slots?.find((s) => s.n === slot)?.name ?? null : null;
@@ -164,6 +177,6 @@ export function derive(state, page, ui) {
     dualPref,
     dual: dualPref && !!original,
     capture: en ? { done: true, lang: en.lang, langName: original.name, kind: en.kind, via: en.via ? languageName(en.via) || en.via : null, count: en.cues.length, saved: en.source === 'saved' } : null,
-    error: state.error ? { code: state.error.code, message: state.error.message } : null,
+    error: state.error ? { code: state.error.code, message: errorText(state.error) } : null,
   };
 }

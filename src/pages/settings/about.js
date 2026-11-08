@@ -4,6 +4,7 @@
 // الدعم والخصوصية و«الإبلاغ عن مشكلة» (جولة النشر T2.1، report.js)؛ و«الدليل»؛ و«التراخيص» بنسب الخطوط المضمّنة والأيقونات مع
 // «عرض التراخيص» من ملفات الرخص المحلية وملف إشعارات الأطراف الثالثة (T4). الروابط تُفتح بالضغط وحده في تبويب جديد (noopener)؛
 // ولا طلب شبكة من هذا الملف.
+import { t, texts } from '../../i18n/index.js';
 import { el, icon } from '../../ui/components.js';
 import { logoMark } from '../../ui/logo.js';
 import { SUBTITLE_FONT_LIST } from '../../ui/subtitle-fonts.js';
@@ -15,11 +16,11 @@ import { UI_FONT_LIST } from '../../ui/ui-fonts.js';
  */
 export const LINKS = Object.freeze({ site: 'https://bysltan.com', repo: 'https://github.com/iSltanX/Tarjuman', support: 'https://bysltan.com/tarjuman/support' });
 /** الحقوق كما في LICENSE (لا تغيّر ترخيصًا): المصمم والمطوّر، وسطر حقوق النشر. */
-export const CREDITS = Object.freeze({ author: 'سلطان', copyright: '© 2026 سلطان (BySultan). جميع الحقوق محفوظة.' });
+export const CREDITS = texts('settings.credits');
 /** المتصفحات التي تعمل عليها الإضافة (product-spec §١). */
 export const BROWSERS_LINE = 'Chrome · Edge · Brave · Firefox';
-/** خط عناوين الواجهة المضمّن (المراعي ملفه نفسه في خطوط الترجمة فلا يتكرر). */
-const UI_HEAD_FONT = Object.freeze({ nameAr: 'القاهرة', nameLatin: 'Cairo', license: UI_FONT_LIST[0].license });
+/** خط عناوين الواجهة المضمّن (المراعي ملفه نفسه في خطوط الترجمة فلا يتكرر). اسمه بلغة الواجهة عند القراءة. */
+const UI_HEAD_FONT = Object.freeze({ get nameAr() { return t('settings.about.headFont'); }, nameLatin: 'Cairo', license: UI_FONT_LIST[0].license });
 /**
  * أيقونات الواجهة مرسومة لهوية ترجمان (الهوية الرابعة)، وترخيص Lucide (ISC، ومنه Feather، MIT) باقٍ للإسناد لأن الإصدارات حتى
  * 1.1.0 استعملت أيقوناته: نصّاهما في THIRD_PARTY_NOTICES.txt بجذر الحزمة (جولة النشر T4، scripts/release/notices.mjs)، ويفتحه
@@ -32,28 +33,20 @@ export const NOTICES_FILE = 'THIRD_PARTY_NOTICES.txt';
  * الفيديو) ما دام مفتاحها «صور الفيديو في المحفوظات» مفعّلًا (prefs.ui.thumbnails، افتراضيًا مفعّل بقرار سلطان)، وبلاغ يرسله
  * المستخدم بنفسه من «الإبلاغ عن مشكلة» (جولة النشر T2.1). لا يُقال «كل شيء محلي» مطلقًا.
  */
-export const PRIVACY_LINE = 'بياناتك كلها على جهازك؛ لا حسابات ولا مفتاح API. ولا يتصل ترجمان بالإنترنت إلا لجلب صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وحين ترسل أنت بنفسك بلاغًا من «الإبلاغ عن مشكلة».';
+export const privacyLine = () => t('settings.about.privacy');
 
-export const GUIDE_STEPS = Object.freeze([
-  'افتح فيديو على يوتيوب، وفعّل الترجمة (CC)، واختر اللغة التي تريدها من قائمة يوتيوب.',
-  'من أزرار ترجمان في شريط المشغّل افتح «تنزيل الأصل (SRT)» واضغط «تنزيل الملف».',
-  'من نافذة الإضافة اختر «من» و«إلى» وانسخ التعليمات، ثم أرسلها مع الملف إلى أي نموذج ذكاء اصطناعي تختاره، واحفظ ناتجه ملف SRT.',
-  'ارفعه بزر «رفع الترجمة (SRT)» فتظهر الترجمة فوق الفيديو؛ وعدّل توقيتها بأزرار ± أو من المحرّر.',
-  'تجد كل ما حفظته في «المحفوظات» من نافذة الإضافة، وتصدّره أو تستبدله أو تحذفه من هناك.',
-]);
+/** خطوات الدليل بلغة الواجهة الحالية. */
+export const guideSteps = () => [1, 2, 3, 4, 5].map((n) => t(`settings.about.guideStep${n}`));
 
 /** رابط خارجي بتبويب جديد. ltr للعناوين اللاتينية (اسم النطاق أو المسار) معزولةً داخل الجملة العربية. */
 function externalLink(doc, { href, text, className = 'st-link', latin = false }) {
   return el('a', {
     className,
-    attrs: { href, target: '_blank', rel: 'noopener noreferrer', title: 'يفتح في تبويب جديد' },
+    attrs: { href, target: '_blank', rel: 'noopener noreferrer', title: t('settings.about.newTab') },
     children: [latin ? el('bdi', { text, dir: 'ltr', doc }) : el('span', { text, doc }), icon('external', { doc, className: 'tj-icon tj-icon--xs' })],
     doc,
   });
 }
-
-/** «المراعي، ونوتو سانس العربي، وتجوّل، ومركزي» */
-const arabicList = (names) => names.map((n, i) => (i ? `و${n}` : n)).join('، ');
 
 /**
  * @param {{
@@ -66,21 +59,21 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
   const guide = el('details', {
     className: 'st-details',
     children: [
-      el('summary', { className: 'st-details__summary', text: 'دليل الاستخدام', doc }),
-      el('ol', { className: 'st-guide', children: GUIDE_STEPS.map((s) => el('li', { text: s, doc })), doc }),
+      el('summary', { className: 'st-details__summary', text: t('settings.about.guideSummary'), doc }),
+      el('ol', { className: 'st-guide', children: guideSteps().map((s) => el('li', { text: s, doc })), doc }),
     ],
     doc,
   });
   const licenses = el('details', {
     className: 'st-details',
     children: [
-      el('summary', { className: 'st-details__summary', text: 'عرض التراخيص', doc }),
+      el('summary', { className: 'st-details__summary', text: t('settings.about.licensesSummary'), doc }),
       el('ul', {
         className: 'st-licenses',
         attrs: { role: 'list' },
         children: [
-          ...[...fonts, UI_HEAD_FONT].map((f) => ({ href: f.license, text: `${f.nameAr} · ${f.nameLatin} — SIL OFL 1.1` })),
-          { href: NOTICES_FILE, text: 'إشعارات الأطراف الأخرى · Lucide — ISC، وFeather — MIT' },
+          ...[...fonts, UI_HEAD_FONT].map((f) => ({ href: f.license, text: t('settings.about.licenseLine', { nameAr: f.nameAr, nameLatin: f.nameLatin }) })),
+          { href: NOTICES_FILE, text: t('settings.about.noticesLine') },
         ].map(({ href, text }) => el('li', {
           // ملف الرخصة داخل الإضافة نفسها: رابط نسبي من pages/settings/ بلا شبكة.
           children: [el('a', { className: 'st-link', attrs: { href: `../../${href}`, target: '_blank', rel: 'noopener noreferrer' }, children: [el('span', { text, doc }), icon('external', { doc })], doc })],
@@ -110,7 +103,7 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
     className: 'st-about__brand',
     children: [
       logoMark({ width: 28, doc }),
-      el('span', { className: 'st-about__name', text: 'ترجمان', doc }),
+      el('span', { className: 'st-about__name', text: t('common.productName'), doc }),
       el('bdi', { className: 'tj-ltr tj-mono st-about__version', text: `v${version}`, dir: 'ltr', doc }),
       el('span', { className: 'tj-pill tj-pill--plain st-about__browsers', text: BROWSERS_LINE, dir: 'ltr', doc }),
     ],
@@ -119,24 +112,26 @@ export function aboutSection({ version, doc = document, fonts = SUBTITLE_FONT_LI
   const credits = el('dl', {
     className: 'st-credits',
     children: [
-      credit('التصميم والتطوير', el('span', { className: 'st-credits__name', text: CREDITS.author, doc })),
-      credit('الموقع', externalLink(doc, { href: LINKS.site, text: 'bysltan.com', className: 'st-credits__link', latin: true })),
-      credit('المستودع', externalLink(doc, { href: LINKS.repo, text: 'github.com/iSltanX/Tarjuman', className: 'st-credits__link', latin: true })),
+      credit(t('settings.about.design'), el('span', { className: 'st-credits__name', text: CREDITS.author, doc })),
+      credit(t('settings.about.website'), externalLink(doc, { href: LINKS.site, text: 'bysltan.com', className: 'st-credits__link', latin: true })),
+      credit(t('settings.about.repository'), externalLink(doc, { href: LINKS.repo, text: 'github.com/iSltanX/Tarjuman', className: 'st-credits__link', latin: true })),
     ],
     doc,
   });
   const rows = [
-    row('الإصدار', brand, note(PRIVACY_LINE)),
-    row('الحقوق', credits, note(CREDITS.copyright)),
-    row('الدعم', externalLink(doc, { href: LINKS.support, text: 'الدعم والخصوصية' }), report),
-    row('الدليل', guide),
-    row('التراخيص', note(`خطوط الترجمة المضمّنة لأصحابها، برخصة SIL Open Font License 1.1: ${arabicList(fonts.map((f) => f.nameAr))}. وعناوين الواجهة بخط ${UI_HEAD_FONT.nameAr} (${UI_HEAD_FONT.nameLatin}) بالرخصة نفسها. وأيقونات الواجهة رُسمت لهوية ترجمان؛ وترخيصا Lucide (ISC) وFeather (MIT) في ملف الإشعارات لأن الإصدارات السابقة استعملت أيقوناتهما.`), licenses),
+    row(t('settings.about.version'), brand, note(privacyLine())),
+    row(t('settings.about.credits'), credits, note(CREDITS.copyright)),
+    row(t('settings.about.support'), externalLink(doc, { href: LINKS.support, text: t('settings.about.supportLink') }), report),
+    row(t('settings.about.guide'), guide),
+    row(t('settings.about.licenses'), note(t('settings.about.licensesNote', {
+      fonts: fonts.map((f) => f.nameAr), head: UI_HEAD_FONT.nameAr, headLatin: UI_HEAD_FONT.nameLatin,
+    })), licenses),
   ];
   if (section) return section(...rows);
   return el('section', {
     className: 'st-section st-about',
     attrs: { 'aria-labelledby': 'st-about-title' },
-    children: [el('h2', { className: 'tj-h2', text: 'حول', attrs: { id: 'st-about-title' }, doc }), ...rows],
+    children: [el('h2', { className: 'tj-h2', text: t('settings.sections.about.title'), attrs: { id: 'st-about-title' }, doc }), ...rows],
     doc,
   });
 }

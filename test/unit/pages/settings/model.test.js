@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { DEFAULT_SETTINGS, mergeSettings, validateSettings } from '../../../../src/core/model/settings.js';
 import { SUBTITLE_FONT_LIST } from '../../../../src/ui/subtitle-fonts.js';
 import {
-  CONFIRM_WORD, DEFAULT_SCALE_MARK_PCT, completenessText, confirmWordOk, normalizeNumber, parseCompleteness, parseDrift, parseSplit, parseStep,
+  confirmWord, DEFAULT_SCALE_MARK_PCT, completenessText, confirmWordOk, normalizeNumber, parseCompleteness, parseDrift, parseSplit, parseStep,
   previewStyle, resetState, snapScale, stepChoice, stepText,
 } from '../../../../src/pages/settings/model.js';
 
@@ -104,7 +104,7 @@ test('المعاينة: الحجم نسبي (4.6% من ارتفاع مرجعي)�
 });
 
 test('كلمة تأكيد المسح: «امسح» وحدها (بمسافات طرفية مقبولة)', () => {
-  assert.equal(CONFIRM_WORD, 'امسح');
+  assert.equal(confirmWord(), 'امسح');
   assert.equal(confirmWordOk('امسح'), true);
   assert.equal(confirmWordOk('  امسح '), true);
   for (const bad of ['', 'امسحه', 'امسح كل', 'مسح', 'delete', null, undefined]) assert.equal(confirmWordOk(bad), false, String(bad));

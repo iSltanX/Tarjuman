@@ -15,7 +15,7 @@ import { button, confirmDialog } from '../../../src/ui/components.js';
 import { formatBytes } from '../../../src/ui/format.js';
 import { findVideoTabs, jumpToVideo } from '../../../src/ui/seek.js';
 import { missText, queryPopupState, tabPlace, untilSettled } from '../../../src/pages/popup/status.js';
-import { NOT_VIDEO_TEXT } from '../../../src/pages/popup/view.js';
+import { notVideoText } from '../../../src/pages/popup/view.js';
 import { newDocument, textOf } from '../pages/library/fake-dom.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -115,8 +115,8 @@ test('Q31: صفحة يوتيوب بلا سكربت ترجمان «أعد تحم�
   assert.equal(missText('stale'), messageFor('TJ_RELOAD_PAGE'));
   assert.match(missText('stale'), /أعد تحميلها/);
   assert.match(missText('unknown'), /افتح فيديو على يوتيوب.*فأعد تحميل صفحته/);
-  assert.equal(missText('elsewhere'), NOT_VIDEO_TEXT);
-  assert.equal(missText(null), NOT_VIDEO_TEXT);
+  assert.equal(missText('elsewhere'), notVideoText());
+  assert.equal(missText(null), notVideoText());
 });
 
 test('U59 (L-25): «جارٍ القراءة» يُعاد استعلامه حتى يستقر، وبحد أقصى، وانقطاع الرد لا يمحو آخر حالة', async () => {
@@ -171,7 +171,7 @@ test('U102: سكربت المحتوى يرد على طلب المعرّف بال
 
 test('U92: نافذة الأيقونة فيها h1 (اسم المنتج مخفيًا بصريًا)', async () => {
   const src = await readFile(path.join(ROOT, 'src/pages/popup/main.js'), 'utf8');
-  assert.match(src, /el\('h1', \{ className: 'tj-sr-only', text: 'ترجمان' \}\)/);
+  assert.match(src, /el\('h1', \{ className: 'tj-sr-only', text: t\('common.productName'\) \}\)/);
 });
 
 test('U86: الشريط العلوي تحت 400px بلا أيقونتي الرابطين وبحشوات أضيق، وتحت 360px يلتف', async () => {
