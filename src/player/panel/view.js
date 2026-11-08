@@ -2,7 +2,7 @@
 // بـtextContent وعناصر DOM (لا HTML نصي أبدًا). أشكال أربعة بحسب النموذج: لا شيء، وزر مغلقة، ولوحة مفتوحة (هيكل التحميل،
 // وخطوات «لا ترجمة»، وخطأ، وصفوف جاهزة)، ورسالة التراجع. لا يعرف المتحكم: يستقبل النموذج ويستدعي on.* لأفعال المستخدم.
 import { COUNT_FORMS, formatCount } from '../../ui/format.js';
-import { onHold } from '../../ui/hold.js';
+import { focusQuietly, onHold } from '../../ui/hold.js';
 import { createSheet } from '../overlay/sheet.js';
 import { el, icon, mark, setAttr, setClass, setHidden, setText } from './dom.js';
 import { HOST_ID, NARROW_MAX, WIDE_MIN, panelCss } from './styles.js';
@@ -415,7 +415,8 @@ export function createPanelView({ doc, win, on }) {
     // التركيز لا يضيع بتبديل الشكل. إخفاء الزر من قائمة اللوحة: إلى «تراجع» لا إلى body (مراجعة الهوية L10)، والتراجع يعيده
     // إلى اللوحة. والإغلاق (أو تراجع لا يعيدها): يُبلَّغ المستدعي (lostFocus) فيعيده إلى زر اللوحة في شريط المشغّل.
     let lostFocus = false;
-    if (prevActive && m.mode === 'toast' && panel.contains(prevActive)) undoBtn.focus();
+    // ونقل التركيز إلى «تراجع» لا يُمسك الرسالة (focusQuietly): تزول بعد مدتها ما لم يقصدها المستخدم بالمؤشر أو التركيز.
+    if (prevActive && m.mode === 'toast' && panel.contains(prevActive)) focusQuietly(undoBtn);
     else if (prevActive === undoBtn && m.mode === 'open') closeBtn.focus();
     else if (prevActive && m.mode === 'none' && (panel.contains(prevActive) || prevActive === undoBtn)) lostFocus = true;
 

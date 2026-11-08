@@ -55,15 +55,14 @@ test('U45: التركيز بلوحة المفاتيح داخل القائمة ي
   const { page, u } = await mounted({ arabic: { cues: P.arCues(40), edited: false, fileName: 'x.srt', comparison: null } });
   P.layoutList(u.list, { rowH: 50, viewH: 400 });
   const t = u.qa('.t')[10];
+  // focus() تطلق focusin كما في المتصفح (fake-dom، التدقيق الموحد V2)، فلا يُطلق ثانية بيد الاختبار.
   t.dispatchEvent({ type: 'pointerdown', bubbles: true });
   t.focus();
-  t.dispatchEvent({ type: 'focusin', bubbles: true });
   t.dispatchEvent({ type: 'pointerup', bubbles: true });
   page.win.advance(10);
   assert.equal(u.switchEl.getAttribute('aria-checked'), 'true', 'النقرة لا توقف التتبّع');
   const k = u.qa('.t')[20];
   k.focus();
-  k.dispatchEvent({ type: 'focusin', bubbles: true });
   await flushN(2);
   assert.equal(u.switchEl.getAttribute('aria-checked'), 'false', 'Tab إلى صف يوقفه فلا تُسحب القائمة من تحته');
 });

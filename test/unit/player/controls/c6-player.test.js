@@ -9,6 +9,7 @@ import * as Session from '../../../../src/player/controls/session.js';
 import { layerCss } from '../../../../src/player/controls/styles.js';
 import { nameOtherLine } from '../../../../src/player/controls/text.js';
 import { createPanelLink } from '../../../../src/player/link.js';
+import { focusQuietly } from '../../../../src/ui/hold.js';
 import * as H from './harness.js';
 
 const LRI = '⁦';
@@ -266,7 +267,9 @@ async function undoToast() {
 
 test('U88: رسالة جديدة لا تفصل «تراجع» المركّز، وانقضاء مهلته يعيد التركيز إلى زر ظاهر في الشريط', async () => {
   const { page, act } = await undoToast();
-  act.focus();
+  // التركيز هنا منقول من الشيفرة (focusQuietly) لا من المستخدم: تركيز المستخدم يُمسك الرسالة فلا تنقضي مهلته وهو فيها (U-042،
+  // التدقيق الموحد V2)؛ والانقضاء والتركيز فيها لا يبقى ممكنًا إلا هكذا، فيُمتحن أن وجهته زر ظاهر لا body.
+  focusQuietly(act);
   page.controller.set({ notice: { code: 'ST_OFFSET_RESET', tone: 'info', at: 99 } });
   await settleN(2);
   assert.ok(act.isConnected, 'الزر نفسه باقٍ');

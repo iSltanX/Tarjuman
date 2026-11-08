@@ -389,8 +389,12 @@ export function createFakeEnv({ href = 'https://www.youtube.com/watch?v=AAAAAAAA
       const prev = doc._focused;
       if (prev === el) return;
       doc._focused = el;
+      // ترتيب المتصفح: blur ثم focusout (فقّاعة) على السابق، ثم focus ثم focusin (فقّاعة) على الجديد، في الاستدعاء نفسه؛ فيرى
+      // مستمع focusin التركيز الذي نقلته الشيفرة (التدقيق الموحد V2: كشفه الاختبار الحي لإمساك رسالة اللوحة).
       prev?.dispatchEvent({ type: 'blur' });
+      prev?.dispatchEvent({ type: 'focusout', bubbles: true, relatedTarget: el ?? null });
       el?.dispatchEvent({ type: 'focus' });
+      el?.dispatchEvent({ type: 'focusin', bubbles: true, relatedTarget: prev ?? null });
     },
     /** العنصر المركّز كما يراه المستند: مضيف الظل الأعلى إن كان التركيز داخل جذر مظلل. */
     get activeElement() {

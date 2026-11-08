@@ -284,7 +284,8 @@ try {
       const cuesOf = (slot) => slot.track.current ?? slot.track.original;
       const title = b.record.title ?? null;
       const glossary = prefs.glossary.attach ? prefs.glossary.terms : null;
-      const withG = instructions({ videoId: id, title, glossary });
+      // التعليمات لأي زوج منذ AA1 (2.0.0): source وtarget لازمان، وإلا MD_INVALID (كشفه الاختبار الحي، التدقيق الموحد V2).
+      const withG = instructions({ videoId: id, title, glossary, source: 'en', target: 'ar' });
       const para = glossaryParagraph(prefs.glossary.terms);
       const review = reviewIncoming({ fileName: `${id}.ar.srt`, cues: cuesOf(b.slots[0]), videoId: id, fingerprints: b.record.fingerprints });
       const diff = diffTranslations(cuesOf(b.slots[0]), cuesOf(b.slots[1]));
@@ -294,7 +295,7 @@ try {
         storedFingerprints: b.record.fingerprints.map((f) => f.id),
       };
     }, { args: [VIDEO] });
-    const expected = nodeInstructions({ videoId: VIDEO, title: link.title, glossary: GLOSSARY });
+    const expected = nodeInstructions({ videoId: VIDEO, title: link.title, glossary: GLOSSARY, source: 'en', target: 'ar' });
     check('link-glossary-from-stored-prefs-via-instructions', link.attach === true && JSON.stringify(link.storedTerms) === JSON.stringify(GLOSSARY)
       && link.paragraphInside && link.instructions === expected && expected.includes('- token = رمز (في سياق النماذج)'),
     { attach: link.attach, terms: link.storedTerms.length, paragraphInside: link.paragraphInside, sameAsNode: link.instructions === expected, chars: link.instructions.length });
