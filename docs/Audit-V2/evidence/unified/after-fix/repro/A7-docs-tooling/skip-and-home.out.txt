@@ -1,0 +1,8 @@
+repo: tj-audit-v2-fixes | ffmpeg on PATH: yes
+full PATH        {"file":"test/unit/ui/logo.test.js","status":0,"tests":8,"pass":8,"skip":null,"fail":0,"skipped":[]}
+PATH w/o ffmpeg  {"file":"test/unit/ui/logo.test.js","status":0,"tests":8,"pass":8,"skip":null,"fail":0,"skipped":[]}
+full PATH        {"file":"test/unit/export/c5-export.test.js","status":0,"tests":18,"pass":18,"skip":null,"fail":0,"skipped":[]}
+PATH w/o ffmpeg  {"file":"test/unit/export/c5-export.test.js","status":0,"tests":18,"pass":17,"skip":null,"fail":0,"skipped":["U78 (ffmpeg): ما يصدّره ترجمان يقرؤه ffmpeg بالعدد نفسه، ومنه أسطر النص الشبيهة  — SKIP ffmpeg غير مثبت"]}
+readable fake HOME      {"value":"فيه ما لا يكتبه البناء: .profile"}
+unreadable fake HOME    {"threw":"EACCES"}
+exit=0

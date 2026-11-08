@@ -1,0 +1,14 @@
+١: آخر فيديو اختير فرنسي، لكن initialPair خارج الفيديو أعاد: fr
+١: حذف اختيار AAAAAAAAAAA الأحدث عند إضافة فيديو آخر رغم وجود 199 اختيارًا أقدم.
+
+=== سجل التأكيدات (بقي = التأكيد ما زال صحيحًا فالعيب باقٍ؛ سقط = لم يعد صحيحًا) ===
+سطر 48: assert.equal(selected.from, 'ja');
+    ⇐ سقط: Expected values to be strictly equal: 'fr' !== 'ja'
+سطر 49: assert.notEqual(selected.from, 'fr');
+    ⇐ سقط: Expected "actual" to be strictly unequal to: 'fr'
+سطر 55: assert.ok((await full.getLangPrefs()).videos.AAAAAAAAAAA);
+    ⇐ بقي
+سطر 57: assert.equal((await full.getLangPrefs()).videos.AAAAAAAAAAA, undefined);
+    ⇐ سقط: Expected values to be strictly equal: + actual - expected + { +   from: 'fr', +   to: 'ar' + }
+المجموع: 4 تأكيدًا، بقي 1، وسقط 3
+exit=0

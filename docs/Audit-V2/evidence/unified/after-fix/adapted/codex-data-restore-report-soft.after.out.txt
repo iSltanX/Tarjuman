@@ -1,0 +1,15 @@
+٢: محاولات لغة فاشلة: 2 ؛ تقرير الدمج: {"settings":"failed","code":"BK_RESTORE_PARTIAL","langPrefs":"failed"}
+
+=== سجل التأكيدات (بقي = التأكيد ما زال صحيحًا فالعيب باقٍ؛ سقط = لم يعد صحيحًا) ===
+سطر 49: assert.equal(before.settings, 'failed');
+    ⇐ بقي
+سطر 51: assert.equal(retry.langPrefs, 'failed');
+    ⇐ بقي
+سطر 53: assert.equal(merged.settings, 'restored');
+    ⇐ سقط: Expected values to be strictly equal: + actual - expected + 'failed' - 'restored'
+سطر 54: assert.equal(reportCode(merged), 'BK_RESTORE_DONE');
+    ⇐ سقط: Expected values to be strictly equal: + actual - expected + 'BK_RESTORE_PARTIAL' - 'BK_RESTORE_DONE' ^
+سطر 55: assert.equal(merged.langPrefs, undefined);
+    ⇐ سقط: Expected values to be strictly equal: + actual - expected + 'failed' - undefined
+المجموع: 5 تأكيدًا، بقي 2، وسقط 3
+exit=0

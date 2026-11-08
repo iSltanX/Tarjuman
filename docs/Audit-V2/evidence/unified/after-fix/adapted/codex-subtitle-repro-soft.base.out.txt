@@ -1,0 +1,96 @@
+{
+  "asrTiming": {
+    "description": "أربعة أزمنة للقطع تُختزل إلى توقيت القطعة الأولى؛ النهاية قبل بدء آخر قطعة بـ3900ms",
+    "inputAbsoluteSegmentTimes": [
+      1000,
+      2800,
+      4600,
+      6400
+    ],
+    "outputCues": [
+      {
+        "n": 1,
+        "startMs": 1000,
+        "endMs": 2500,
+        "text": "今日はいい天気"
+      }
+    ],
+    "allInvariantsPassed": true
+  },
+  "languageReport": {
+    "description": "الفحص المخزّن لا يطابق لغة الترجمة المعينة لاحقًا أو المقترحة أثناء الرفع",
+    "afterAssigningArabic": [],
+    "expectedForArabic": [
+      3
+    ],
+    "upload": {
+      "inferredLanguage": "ar",
+      "preview": [
+        3
+      ],
+      "persistedComparison": []
+    }
+  },
+  "savedReexport": {
+    "description": "استدعاء ما بعد نجاح تنزيل الإنجليزية المحفوظة يترك مصدر التعليمات بالإسبانية",
+    "before": {
+      "key": "es|manual",
+      "lang": "es",
+      "kind": "manual",
+      "via": null,
+      "from": "export"
+    },
+    "builtFilename": "AAAAAAAAAAA.en.manual.normal.srt",
+    "recordResult": {
+      "stored": false
+    },
+    "after": {
+      "key": "es|manual",
+      "lang": "es",
+      "kind": "manual",
+      "via": null,
+      "from": "export"
+    },
+    "expectedSourceLanguage": "en"
+  },
+  "machineDefault": {
+    "description": "المسار المترجم آليًا يُعيّن تلقائيًا مصدرًا قبل اختيار صريح داخل ترجمان",
+    "selected": {
+      "key": "ar|manual|en",
+      "lang": "ar",
+      "kind": "manual",
+      "via": "en",
+      "from": "captured"
+    }
+  }
+}
+
+=== سجل التأكيدات (بقي = التأكيد ما زال صحيحًا فالعيب باقٍ؛ سقط = لم يعد صحيحًا) ===
+سطر 59: assert.equal(result.ok,true);
+    ⇐ بقي
+سطر 60: assert.equal(result.cues.at(-1).endMs,2500);
+    ⇐ بقي
+سطر 61: assert.equal(result.invariants.results.every(x=>x.ok),true);
+    ⇐ بقي
+سطر 73: assert.deepEqual(displayed,[]);assert.deepEqual(expected,[3]);
+    ⇐ بقي
+سطر 73: assert.deepEqual(displayed,[]);assert.deepEqual(expected,[3]);
+    ⇐ بقي
+سطر 78: assert.equal(read.ok,true);assert.equal(read.input.lang,'ar');
+    ⇐ بقي
+سطر 78: assert.equal(read.ok,true);assert.equal(read.input.lang,'ar');
+    ⇐ بقي
+سطر 79: assert.deepEqual(read.preview.noArabic,[3]);assert.deepEqual(read.input.comparison.noArabic,[]);
+    ⇐ بقي
+سطر 79: assert.deepEqual(read.preview.noArabic,[3]);assert.deepEqual(read.input.comparison.noArabic,[]);
+    ⇐ بقي
+سطر 96: assert.equal(result.stored,false);assert.equal(state().source.lang,'es');
+    ⇐ بقي
+سطر 96: assert.equal(result.stored,false);assert.equal(state().source.lang,'es');
+    ⇐ بقي
+سطر 108: assert.equal(accepted.accepted,true);
+    ⇐ بقي
+سطر 110: assert.equal(source.key,'ar|manual|en');
+    ⇐ بقي
+المجموع: 13 تأكيدًا، بقي 13، وسقط 0
+exit=0

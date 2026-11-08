@@ -1,0 +1,15 @@
+٢: محاولات لغة فاشلة: 2 ؛ تقرير الدمج: {"settings":"restored","code":"BK_RESTORE_DONE","langPrefs":null}
+
+=== سجل التأكيدات (بقي = التأكيد ما زال صحيحًا فالعيب باقٍ؛ سقط = لم يعد صحيحًا) ===
+سطر 49: assert.equal(before.settings, 'failed');
+    ⇐ بقي
+سطر 51: assert.equal(retry.langPrefs, 'failed');
+    ⇐ بقي
+سطر 53: assert.equal(merged.settings, 'restored');
+    ⇐ بقي
+سطر 54: assert.equal(reportCode(merged), 'BK_RESTORE_DONE');
+    ⇐ بقي
+سطر 55: assert.equal(merged.langPrefs, undefined);
+    ⇐ بقي
+المجموع: 5 تأكيدًا، بقي 5، وسقط 0
+exit=0

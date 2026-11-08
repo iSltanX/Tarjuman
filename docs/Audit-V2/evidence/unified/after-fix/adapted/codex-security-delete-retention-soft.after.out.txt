@@ -1,0 +1,24 @@
+معرّف محفوظ قبل حفظ ترجمة: [ 'AAAAAAAAAAA' ]
+بعد حذف بيانات الفيديو:
+{
+  "library": [],
+  "remainingVideoPrefs": {},
+  "backupVideos": [],
+  "backupVideoPrefs": {}
+}
+
+=== سجل التأكيدات (بقي = التأكيد ما زال صحيحًا فالعيب باقٍ؛ سقط = لم يعد صحيحًا) ===
+سطر 45: assert.equal(await store.getVideo(VIDEO_ID), null);
+    ⇐ بقي
+سطر 50: assert.equal(await store.getVideo(VIDEO_ID), null);
+    ⇐ بقي
+سطر 51: assert.deepEqual(await store.listIndex(), []);
+    ⇐ بقي
+سطر 53: assert.deepEqual(after.videos[VIDEO_ID], {from:'ja',to:'en'});
+    ⇐ سقط: Expected values to be strictly deep-equal: + actual - expected + undefined - { -   from: 'ja', -   to: 'en'
+سطر 55: assert.deepEqual(backup.data.videos, []);
+    ⇐ بقي
+سطر 56: assert.deepEqual(backup.data.langPrefs.videos[VIDEO_ID], {from:'ja',to:'en'});
+    ⇐ سقط: Expected values to be strictly deep-equal: + actual - expected + undefined - { -   from: 'ja', -   to: 'en'
+المجموع: 6 تأكيدًا، بقي 4، وسقط 2
+exit=0

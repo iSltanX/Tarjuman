@@ -1,0 +1,25 @@
+معرّف محفوظ قبل حفظ ترجمة: [ 'AAAAAAAAAAA' ]
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
++ undefined
+- {
+-   from: 'ja',
+-   to: 'en'
+- }
+
+    at file://<tmp>/afterfix/codex/evidence/security-delete-retention.mjs:21:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: { from: 'ja', to: 'en' },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.18.1
+exit=1

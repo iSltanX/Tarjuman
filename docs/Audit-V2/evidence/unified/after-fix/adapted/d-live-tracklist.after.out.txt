@@ -1,0 +1,3 @@
+/watch?v=AAAAAAAAAAA         | isolated-world current video: AAAAAAAAAAA | tracklist messages: 1 [{"lang":"en","kind":"asr","name":"English (auto)"},{"lang":"es","kind":"manual","name":"Spanish"}]
+/live/AAAAAAAAAAA            | isolated-world current video: AAAAAAAAAAA | tracklist messages: 1 [{"lang":"en","kind":"asr","name":"English (auto)"},{"lang":"es","kind":"manual","name":"Spanish"}]
+exit=0
