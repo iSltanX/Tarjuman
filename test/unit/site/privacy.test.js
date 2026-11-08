@@ -11,7 +11,7 @@ import { SOURCE, TARGET, effectiveDateOf, generate, withEffectiveDate } from '..
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const source = readFileSync(path.join(ROOT, SOURCE), 'utf8');
 // نسخة من المصدر بلا تاريخ، لاختبار سلوك المولّد مع ⟨تاريخ النشر⟩ أيًّا كان سطر المصدر (ثُبّت 2026-11-04، ثم 2026-11-05 في تدقيق 7a66f91،
-// C9، ثم عاد ⟨تاريخ النشر⟩ في AA4 لأن ما يحفظه 2.0.0 تغيّر).
+// C9، ثم عاد ⟨تاريخ النشر⟩ في AA4 لأن ما يحفظه 2.0.0 تغيّر، ثم ثُبّت 2026-11-08 يوم نشر موقع 2.0.0 بقرار سلطان).
 const undated = source.replace(/^- \*\*تاريخ السريان:\*\* .+$/m, '- **تاريخ السريان:** ⟨تاريخ النشر⟩');
 const { version } = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
@@ -54,10 +54,11 @@ test('[قرار] يُبقي المولَّد مسودة بتنبيه، و--stric
   assert.equal(ok.text.includes('مسودة'), false);
 });
 
-test('تاريخ السريان: ⟨تاريخ النشر⟩ حتى ينشر سلطان 2.0.0 (AA4: تغيّر ما يُحفظ)، وهو غير مثبت، وتاريخ غير صالح يُرفض', () => {
-  assert.equal(effectiveDateOf(source), null, 'المصدر ينتظر تاريخ نشر 2.0.0؛ يثبّته سلطان بـ--effective يوم النشر');
-  assert.throws(() => generate({ strict: true }), /تاريخ السريان غير مثبت/, '--strict يرفض النشر قبل التاريخ');
+test('تاريخ السريان: ثُبّت 2026-11-08 يوم نشر موقع 2.0.0 بقرار سلطان، وغير المثبت يرفضه --strict، وتاريخ غير صالح يُرفض', () => {
+  assert.equal(effectiveDateOf(source), '2026-11-08', 'ثبّته سلطان بـ--effective يوم نشر الموقع');
+  assert.match(generate({ strict: true }).text, /تسري هذه السياسة اعتبارًا من 2026-11-08\./, '--strict يقبل المصدر المثبت');
   assert.equal(effectiveDateOf(undated), null);
+  assert.throws(() => generate({ source: undated, strict: true }), /تاريخ السريان غير مثبت/, '--strict يرفض النشر قبل التاريخ');
   assert.equal(effectiveDateOf(withEffectiveDate(undated, '2026-11-04')), '2026-11-04');
   assert.throws(() => withEffectiveDate(undated, '2026-13-40'), /غير صالح/);
   assert.throws(() => withEffectiveDate(undated, '1 ديسمبر'), /غير صالح/);
