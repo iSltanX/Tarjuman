@@ -1,0 +1,17 @@
+✓ package-sha256-listed — {"sha256":"09d8e66d49b9a616","bytes":1152890}
+✓ package-has-no-dev-bridge — {"contentScripts":2}
+✓ install — {"version":"Chrome/156.0.8078.80"}
+✓ settings-open
+✓ manifest-version — {"version":"2.0.0"}
+✓ manifest-name — {"name":"ترجمان — ترجمتك فوق الفيديو","short":"ترجمان"}
+✓ manifest-permissions-as-shipped — {"perms":["storage","unlimitedStorage","downloads"],"hosts":[],"optional":["app-reports.isultantf.workers.dev/*"]}
+✓ about-version — {"rows":["الإصدارترجمانv2.0.0Chrome · Edge · Brave · Firefoxبياناتك كلها على جهازك؛ لا حسابات ولا مفتاح API. ولا يخرج منه شيء إلا صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وبلاغ ترسله أنت بنفسك من «الإبلاغ عن مشكلة».","الحقوقالتصميم والتطويرسلطانالموقعbysltan.comالمستودعgithub.com/iSltanX/Tarjuman© 2026 سلطان (BySultan). جميع الحقوق محفوظة.","الدعمالدعم والخصوصيةالإبلاغ عن م
+✓ about-links-site-repo-and-support — {"links":[{"text":"bysltan.com","target":"_blank"},{"text":"github.com/iSltanX/Tarjuman","target":"_blank"},{"text":"الدعم والخصوصية","target":"_blank"}],"support":true}
+✓ about-report-button
+✓ about-icons-line-and-notices-link — {"notices":["إشعارات الأطراف الأخرى · Lucide — ISC، وFeather — MIT"]}
+✓ notices-file-shipped — {"bytes":13140}
+✓ youtube-content-script-mounted — {"player":true,"controlsHost":true}
+✓ no-extension-errors — {"count":0}
+✓ uninstall — {"method":"Extensions.uninstall"}
+
+Chrome 156.0.8078.80 (Chrome/156.0.8078.80): 15/15

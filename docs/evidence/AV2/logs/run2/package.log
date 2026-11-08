@@ -1,0 +1,35 @@
+
+> tarjuman@2.0.0 package
+> node scripts/release/package.mjs && node scripts/release/store.mjs
+
+✓ check-static
+بُني الإنتاج في مجلد مرحلي
+✓ permissions-approved-only
+✓ no-host-or-optional-permissions
+✓ content-scripts-youtube-only
+✓ web-accessible-fonts-only
+✓ save-worker-only-and-no-externally-connectable
+✓ manifest-v3-and-no-dev-version-name
+✓ target-browser-settings
+✓ only-expected-files
+✓ no-source-maps-or-gallery
+✓ no-external-connection-or-forbidden-code
+✓ report-channel-settings-only
+✓ subtitle-fonts-with-ofl-licenses
+✓ ui-fonts-with-ofl-licenses
+✓ third-party-notices
+✓ required-assets-present
+الأرشيف tarjuman-2.0.0.zip: 1154120 بايت، محتواه مطابق للمجلد
+
+الحزمة tarjuman-2.0.0: جاهزة للتثبيت الشخصي · الالتزام b8f94c0d6f28
+✓ check-static
+✓ تدقيق chromium: 15/15، 41 ملفًا
+✓ تدقيق firefox: 15/15، 41 ملفًا
+✓ إعادة البناء من حزمة المصدر تطابق الهدفين بايتًا
+tarjuman-2.0.0-chrome.zip · 1152890 بايت
+tarjuman-2.0.0-edge.zip · 1152890 بايت
+tarjuman-2.0.0-firefox.zip · 1153014 بايت
+tarjuman-2.0.0-source.zip · 1258721 بايت · 269 ملفًا
+
+حزم المتاجر tarjuman-2.0.0 في release/store/ · الالتزام b8f94c0d6f28
+البيئة: Node 24.18.1 · zlib 1.2.12 · darwin-arm64 (بصمات الأرشيفات تتبع zlib، وبصمات الملفات لا تتبعها)

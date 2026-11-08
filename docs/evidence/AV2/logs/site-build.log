@@ -1,0 +1,115 @@
+▲ Next.js 16.3.6 (webpack)
+✓ Running next.config.ts took 111ms
+- Experiments (use with caution):
+  ✓ globalNotFound
+
+  Creating an optimized production build ...
+⚠ Compiled with warnings in 15.6s
+
+
+  Running TypeScript ...
+  Finished TypeScript in 7.5s ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/60) ...
+  Generating static pages using 7 workers (15/60) 
+  Generating static pages using 7 workers (30/60) 
+  Generating static pages using 7 workers (45/60) 
+✓ Generating static pages using 7 workers (60/60) in 1827ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)                                    Revalidate  Expire
+┌ ○ /                                                  1h      1y
+├ ○ /_not-found
+├ ● /[slug]
+├ ○ /about                                             1h      1y
+├ ƒ /admin/[[...segments]]
+├ ƒ /api/[...slug]
+├ ○ /api/fragments/pool                                1h      1y
+├ ƒ /api/newsletter/recipients
+├ ƒ /api/newsletter/send
+├ ƒ /api/newsletter/subscribe
+├ ƒ /api/newsletter/sync
+├ ƒ /api/newsletter/unsubscribe
+├ ƒ /api/rasd/uninstall
+├ ƒ /api/views/[slug]
+├ ƒ /apple-touch-icon
+├ ○ /archive                                           1h      1y
+├ ● /archive/page/[n]
+├ ● /archive/series/[slug]
+├ ● /archive/series/[slug]/page/[n]
+├ ○ /articles                                          1h      1y
+├ ● /articles/[slug]
+├ ○ /articles/[slug]/opengraph-image-13iq0a
+├ ● /articles/page/[n]
+├   /articles/time/[bucket]
+│ ├ ● /articles/time/short                             1h      1y
+│ ├ ● /articles/time/medium                            1h      1y
+│ ├ ● /articles/time/long                              1h      1y
+│ └ ● /articles/time/longest                           1h      1y
+├ ● /articles/time/[bucket]/page/[n]
+├ ○ /categories                                        1h      1y
+├ ● /categories/[slug]
+├ ○ /categories/[slug]/opengraph-image-1olf4b
+├ ● /categories/[slug]/page/[n]
+├ ƒ /exit-preview
+├ ○ /feed.json                                         5m      1y
+├ ○ /fragments                                         1h      1y
+├ ƒ /icon-192
+├ ƒ /icon-512
+├ ƒ /icon-512-maskable
+├ ○ /manifest.webmanifest                              1h      1y
+├ ○ /Mjhr
+├ ○ /Mjhr/privacy
+├ ○ /Mjhr/support
+├ ○ /newsletter                                        1h      1y
+├ ● /newsletter/[slug]
+├ ○ /newsletter/archive                                1h      1y
+├ ● /newsletter/archive/page/[n]
+├ ○ /newsletter/rss.xml                                5m      1y
+├ ƒ /newsletter/unsubscribed
+├ ○ /now                                               1h      1y
+├ ○ /opengraph-image-j8qpfc                            1h      1y
+├ ƒ /preview
+├ ○ /privacy                                           1h      1y
+├ ○ /projects                                          1h      1y
+├ ● /projects/[slug]
+├ ● /projects/[slug]/changelog
+├ ○ /rasd
+├ ○ /rasd/en
+├ ○ /rasd/en/legal
+├ ○ /rasd/en/privacy
+├ ○ /rasd/en/support
+├ ○ /rasd/en/uninstall
+├ ○ /rasd/legal
+├ ○ /rasd/privacy
+├ ○ /rasd/support
+├ ○ /rasd/uninstall
+├ ○ /readings                                          1h      1y
+├ ○ /robots.txt
+├ ○ /rss.xml                                           5m      1y
+├ ƒ /search
+├ ○ /series                                            1h      1y
+├ ● /series/[slug]
+├ ○ /series/[slug]/opengraph-image-19mdqd
+├ ƒ /series/[slug]/rss.xml
+├ ○ /sitemap.xml                                       5m      1y
+├ ○ /tags                                              1h      1y
+├ ● /tags/[slug]
+├ ○ /tags/[slug]/opengraph-image-1n4kll
+├ ● /tags/[slug]/page/[n]
+├ ○ /tarjuman
+├ ○ /tarjuman/credits
+├ ○ /tarjuman/privacy
+├ ○ /tarjuman/support
+├ ○ /threads                                           1h      1y
+└ ● /threads/[slug]
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+build exit=0

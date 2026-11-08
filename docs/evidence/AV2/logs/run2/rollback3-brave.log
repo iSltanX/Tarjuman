@@ -1,0 +1,23 @@
+✓ v1-package-built — {"from":"tj-v1 scripts/release/package.mjs","dir":"tarjuman-0.2.0","v2From":"b8f94c0"}
+— 1-v1-create: الإضافة 0.2.0
+✓ v1-creates-data — {"rev":2,"valid":true,"keys":["index:iG9CE55wbtY","meta","settings","video:iG9CE55wbtY"]}
+✓ v1-player-shows-it — {"arabic":{"fileName":"v1-first.ar.srt","cueCount":6,"edited":false,"matched":null},"mounted":{"overlay":"mounted","controls":"mounted"}}
+— 2-w6-extend: الإضافة 2.0.0-dev
+✓ w6-reads-v1-data — {"active":1,"file":"v1-first.ar.srt","settings":"dual","schema":1}
+✓ w6-adds-second-replaces-it-marks-prefs — {"activated":true,"replaced":true,"active":2,"notice":null,"mark":"todo","terms":2}
+✓ w6-previous-saved — {"from":2,"file":"w6-second.ar.srt","files":["v1-first.ar.srt","w6-second-b.ar.srt",null]}
+✓ w6-popup-reply-has-slots — {"slots":[{"n":1,"filled":true,"active":false,"name":null},{"n":2,"filled":true,"active":true,"name":null},{"n":3,"filled":false,"active":false,"name":null}]}
+— 3-v1-again: الإضافة 0.2.0
+✓ v1-reads-w6-active-translation — {"arabic":{"fileName":"w6-second-b.ar.srt","cueCount":6,"edited":false,"matched":null},"mounted":{"overlay":"mounted","controls":"mounted"}}
+✓ v1-library-lists-it — {"rows":1,"failed":false}
+✓ v1-writes-replace-offset-setting — {"before":"w6-second-b.ar.srt","valid":true,"file":"v1-replace.ar.srt","offset":1500,"step":1000,"mode":"dual","index":1}
+— 4-w6-reconciles: الإضافة 2.0.0-dev
+✓ w6-reconciles-without-loss — {"active":2,"files":["v1-first.ar.srt","v1-replace.ar.srt",null],"offsets":[0,1500,0],"marks":[0,1,0],"previous":{"from":2,"file":"w6-second.ar.srt"},"terms":2,"save":"subfolder","step":1000,"mode":"dual","reconciled":true,"schema":1}
+✓ link-glossary-from-stored-prefs-via-instructions — {"attach":true,"terms":2,"paragraphInside":true,"sameAsNode":true,"chars":3906}
+✓ link-review-incoming-on-stored-fingerprints — {"stored":["fp_w6wave00001"],"review":{"references":[{"fingerprintId":"fp_w6wave00001","score":1,"matched":true,"why":"العدد والترقيم والتوقيت مطابقة لهذا التصدير."}],"suggested":"fp_w6wave00001","certain":true,"nameHint":{"videoId":"iG9CE55wbtY","differs":false}}}
+✓ link-diff-translations-two-slots — {"aligned":true,"confidence":"high","counts":{"textChanged":6,"timingChanged":0,"added":0,"removed":0,"unchanged":0},"first":{"n":1,"kind":"text","before":{"n":1,"startMs":5000,"endMs":7000,"text":"ترجمة الأول 1"},"after":{"n":1,"startMs":5000,"endMs":7000,"text":"ترجمة الاستبدال 1"}}}
+✓ w6-player-shows-result — {"active":2,"offset":1500,"first":"ترجمة الاستبدال 1"}
+✓ jump-reaches-open-video-tab — {"jump":{"ok":true,"via":"open","tabId":1627007782},"before":{"t":1.609675,"paused":false},"after":{"t":61,"paused":false}}
+✓ same-extension-id-all-sessions — [{"label":"1-v1-create","extensionId":"oljpdmhijbkkhlpnpbmeejbkbdmncohh","version":"0.2.0"},{"label":"2-w6-extend","extensionId":"oljpdmhijbkkhlpnpbmeejbkbdmncohh","version":"2.0.0-dev"},{"label":"3-v1-again","extensionId":"oljpdmhijbkkhlpnpbmeejbkbdmncohh","version":"0.2.0"},{"label":"4-w6-reconciles","extensionId":"oljpdmhijbkkhlpnpbmeejbkbdmncohh","version":"2.0.0-dev"}]
+✓ no-extension-errors
+✓ 18/18 — ../../../../../../..<scratch>/out3/rollback/brave/rollback.json

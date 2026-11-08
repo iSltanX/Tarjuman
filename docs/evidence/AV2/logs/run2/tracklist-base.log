@@ -1,0 +1,10 @@
+✓ load-unpacked
+✓ watch-page
+✓ tracklist-on-watch — {"watch":true,"videoId":"Y-rmzh0PI3c","available":["zh-CN|manual","en|manual","fr|manual","de|manual","iw|manual","hu|manual","id|manual","it|manual","ja|manual","pl|manual","pt-BR|manual","ru|manual","es|manual","tr|manual"]}
+✓ spa-to-home — {"clicked":true,"home":true}
+✓ spa-back-to-same-video
+✗ U-031 tracklist-after-return — {"watch":true,"videoId":"Y-rmzh0PI3c","available":null}
+✗ live-page — {"pathname":"/live/<id>","hasV":false}
+✗ U-032 tracklist-on-live — {"watch":true,"videoId":"nx7lhj25__c","available":null,"url":{"pathname":"/live/<id>","hasV":false}}
+✓ no-extension-errors
+فاشل: 6/9

@@ -1,0 +1,25 @@
+✓ install — {"extension":"tarjuman@bysltan.com","version":"Firefox/159.0.1"}
+✓ content-script-mounted — {"player":true,"mounted":{"overlay":"mounted","controls":"mounted","panel":"mounted"},"base":"معروف"}
+✓ bridge-main-world-wrappers — {"fetch":true,"xhrOpen":true,"webdriver":true}
+✓ capture-via-bridge — {"captured":[{"key":"en|manual","ok":true}],"english":{"key":"en|manual","kind":"manual","count":427,"source":"captured"},"expected":427}
+✓ ui-fonts-loaded — {"fonts":["Tarjuman UI Cairo:700:loaded","Tarjuman UI Cairo:800:loaded","Tarjuman UI Almarai:400:loaded","Tarjuman UI Almarai:700:loaded"]}
+✓ player-menu-without-copy — {"items":["mode:normal","mode:long","download","fallback"]}
+✓ srt-download — {"file":"iG9CE55wbtY.en.manual.normal.srt","bytes":32411,"expectedSha":"7770a795775890e6","sha":"7770a795775890e6","line":"نُزّل","fallback":false}
+✓ copy-instructions-from-popup — {"status":"Do schools kill creativity? | Sir Ken Robinson | TEDلا ترجمة محفوظة بعدالإنجليزي","block":"تعليمات الترجمةمنالإنجليزيةإلىالعربية«من","copied":{"chars":3454,"sha":"b8454216eb31e88d"},"accepted":["b8454216eb31e88d","b8454216eb31e88d"],"state":"success","title":"معروف"}
+✓ arabic-upload-from-player — {"chooser":true,"arabic":{"count":427,"fileName":"iG9CE55wbtY.en.manual.normal.ar.srt","edited":false,"first":"صباح الخير. كيف حالكم؟"},"expected":427}
+✓ display-arabic-over-video — {"ad":{"seen":false,"skipped":0},"seeks":1,"at":62.2295,"cue":13,"shown":["والثاني أنه وضعنا في موضع"]}
+✓ subtitle-fonts-read-from-package — {"fonts":["Tarjuman Subtitle Almarai:400:loaded","Tarjuman Subtitle Almarai:700:loaded"]}
+✓ timing-plus-minus — {"before":0,"plus":500,"back":0}
+✓ editor-edit-reaches-player — {"typed":true,"cue1":"ينتهي بالتعديل"}
+✓ saved-and-restored-after-reload — {"arabic":{"count":427,"fileName":"iG9CE55wbtY.en.manual.normal.ar.srt","edited":true,"first":"صباح الخير. كيف حالكم؟ — عدّلته في T3"}}
+✓ backup-created — {"file":"tarjuman-backup-2026-11-08.json","counts":{"videos":1,"translations":1,"previous":0,"marks":0,"settings":true,"prefs":true}}
+✓ report-preview — {"rows":{"product":"tarjuman","kind":"خلل (bug)","app_version":"2.0.0","diagnostics.browser · browser_version":"Firefox 159.0.1","diagnostics.build_target":"firefox","os · os_version · arch":"macos unknown · arm64","locale":"ar","test":"نعم: بناء تطوير"},"payloadKeys":["product","app_version","os","os_version","arch","locale","kind","description","diagnostics","test"]}
+✓ report-copy-offline — {"same":true,"copiedLength":327,"jsonLength":327,"result":"نُسخ البلاغ نصًّا. لم يُرسل شيء."}
+✓ report-error-row — {"failed":{"failure":"network","retry":true,"copy":true,"text":"تعذّر الوصول إلى خادم البلاغات. تحقق من اتصالك ثم أعد المحاولة.أعد المحاولةانسخ البلاغ"},"sent":false,"blockedRequests":1}
+✓ youtube-permission-revoke-grant — {"removed":true,"containsAfterRemove":false,"contentScriptWhileRevoked":false,"granted":true,"contentScriptAfterGrant":true}
+✓ uninstall-removes-storage — {"uninstall":{"method":"webExtension.uninstall"},"before":[{"dir":"moz-extension+++48eb214b-024e-44cc-a3c6-4d491aee8792^userContextId=4294967295","bytes":139477}],"after":[{"dir":"moz-extension+++48eb214b-024e-44cc-a3c6-4d491aee8792^userContextId=4294967295","bytes":null}]}
+✓ reinstall-starts-empty — {"videoKeys":0}
+✓ backup-restore-after-reinstall — {"chooser":true,"report":"اكتملت الاستعادة.أضيف 1 · تُخطّي 0 · استُبدل 0 · تعذّر 0","restored":true}
+✓ no-extension-errors
+
+Firefox 159.0.1 (Firefox/159.0.1): 23/23

@@ -1,0 +1,61 @@
+{
+  "at": "2026-11-08T02:36:39.451Z",
+  "browser": "Brave 157.1.99.55",
+  "package": "tarjuman-2.0.0-chrome.zip",
+  "video": "Y-rmzh0PI3c",
+  "mode": "manual-window-no-automation",
+  "minutes": 12,
+  "files": [
+    {
+      "name": "Y-rmzh0PI3c.es.manual.normal.srt",
+      "lang": "es",
+      "bytes": 3666,
+      "cues": 60,
+      "sha16": "0038b221cba7ca43",
+      "at": "2026-11-08T02:36:56.049Z",
+      "spanish": {
+        "marks": true,
+        "words": 54
+      }
+    },
+    {
+      "name": "Y-rmzh0PI3c.ja.manual.normal.srt",
+      "lang": "ja",
+      "bytes": 4227,
+      "cues": 60,
+      "sha16": "d099535f17fb7a75",
+      "at": "2026-11-08T02:37:33.116Z",
+      "spanish": {
+        "marks": false,
+        "words": 0
+      }
+    },
+    {
+      "name": "Y-rmzh0PI3c.en.manual.normal.srt",
+      "lang": "en",
+      "bytes": 3699,
+      "cues": 60,
+      "sha16": "5af1238b3a36d736",
+      "at": "2026-11-08T02:38:21.458Z",
+      "expectedSha16": "5af1238b3a36d736",
+      "matchesT6ManualFile": true
+    }
+  ],
+  "clipboard": {
+    "chars": 3468,
+    "sha16": "b4e39bcef89d6ad9",
+    "fromSpanish": false,
+    "fromEnglish": false,
+    "toArabic": true,
+    "at": "2026-11-08T02:37:39.518Z"
+  },
+  "notes": [],
+  "ended": "observed-both",
+  "checks": {
+    "englishRealExtraction": true,
+    "englishMatchesT6ManualFile": true,
+    "nonEnglishRealExtraction": true,
+    "nonEnglishLooksSpanish": true
+  },
+  "passed": true
+}
