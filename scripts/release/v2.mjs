@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 // مجلد الإصدار 2.0.0 المستقل (docs/aa-plan.md، AA5 البند ٨، قرار سلطان ق٦): يجمع حزم المتاجر المبنية (release/store) ومواد store/
-// وأدلة AA5 في مجلد واحد خارج المستودع، ولا يمس شيئًا آخر في release/:
+// وأدلة الإصدار (docs/evidence/AA5 افتراضيًا، أو --evidence) في مجلد واحد خارج المستودع، ولا يمس شيئًا آخر في release/:
 //   packages/{chrome,edge,firefox}/        حزمة كل متجر كما تُرفع، وpackages/manual-install/{chromium,firefox}/ مفكوكة للتثبيت اليدوي
 //   source/                                حزمة المصدر لمراجعي AMO، وتعليمات بنائها بالعربية
 //   stores/{chrome-web-store,edge-addons,firefox-amo}/   الأيقونة أو الشعار واللقطات والترويج وlisting.md، وملاحظات مراجعي AMO
 //   provenance/                            وصف الحزم (الالتزام والبيئة والتدقيق وإعادة البناء وبصمة كل ملف)، وبصمات release/store،
 //                                          ونتيجة تحقق هذا السكربت
-//   README.md وSHA256SUMS.txt              الشرح بالعربية من الأدلة نفسها، وبصمة كل ملف في المجلد
+//   README.md وSHA256SUMS.txt              الشرح بالعربية من الأدلة نفسها، وبصمة كل ملف في المجلد. ويذكر التزام الأدلة، ويقول
+//                                          صراحةً إن تغيّرت ملفات المصدر المبني بعده (evidence-scope.mjs، U-068)
 // يرفض قبل أي كتابة إن لم يطابق وصف الحزم الالتزام الحالي بشجرة نظيفة، أو اختلفت بصمة حزمة، أو فشل فحص مواد المتاجر، أو كان مجلد
 // الإخراج موجودًا. ولا يفتح متصفحًا ولا شبكة.
 //   command npm run package
-//   command node scripts/release/v2.mjs --out <مجلد غير موجود، مثل release/v2 في النسخة الرئيسية>
+//   command node scripts/release/v2.mjs --out <مجلد غير موجود، مثل release/v2 في النسخة الرئيسية> [--evidence docs/evidence/AA5]
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
@@ -19,11 +20,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readZip } from './zip.mjs';
 import { checkStore, parseFields } from './store-assets.mjs';
+import { changedSince, evidenceScope } from './evidence-scope.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const OUT = val('out') ? path.resolve(val('out')) : null;
+/** مجلد الأدلة نسبةً إلى جذر المستودع، بشكل docs/evidence/AA5 (checks.json وhand وt3 وt8 وidentity وshots وdata وsite). */
+const EVIDENCE = path.relative(ROOT, path.resolve(ROOT, val('evidence', 'docs/evidence/AA5'))).split(path.sep).join('/');
 const VERSION = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8')).version;
 const STORE = path.join(ROOT, 'release/store');
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
@@ -34,6 +38,8 @@ const fail = (msg) => {
 };
 
 if (!OUT) fail('مرّر --out <مجلد غير موجود>');
+if (!EVIDENCE || EVIDENCE.startsWith('..') || path.isAbsolute(EVIDENCE)) fail(`مجلد الأدلة خارج المستودع: ${val('evidence')}`);
+if (!existsSync(path.join(ROOT, EVIDENCE, 'checks.json'))) fail(`لا checks.json في مجلد الأدلة ${EVIDENCE}`);
 if (existsSync(OUT)) fail(`المجلد موجود: ${OUT}. لا يُكتب فوق مجلد قائم؛ اختر مسارًا جديدًا أو انقل القديم بنفسك.`);
 
 // ---- التحقق قبل أي كتابة ----
@@ -275,15 +281,19 @@ await put('provenance/verification.json', `${JSON.stringify({ at: new Date().toI
 // ---- README من القالب والأدلة ----
 const readJson = async (rel) => JSON.parse(await readFile(path.join(ROOT, rel), 'utf8').catch(() => 'null'));
 const ev = {
-  hand: await readJson('docs/evidence/AA5/hand/hand.json'),
-  shots: await readJson('docs/evidence/AA5/shots/shots.json'),
-  data: await readJson('docs/evidence/AA5/data/data.json'),
-  site: await readJson('docs/evidence/AA5/site/site.json'),
-  checks: await readJson('docs/evidence/AA5/checks.json'),
-  t3: Object.fromEntries(await Promise.all(['brave', 'chrome', 'edge', 'firefox'].map(async (b) => [b, await readJson(`docs/evidence/AA5/t3/${b}/t3.json`)]))),
-  identity: Object.fromEntries(await Promise.all(['brave', 'chrome'].map(async (b) => [b, await readJson(`docs/evidence/AA5/identity/${b}/live.json`)]))),
-  t8: Object.fromEntries(await Promise.all(['brave', 'chrome', 'edge', 'firefox'].map(async (b) => [b, await readJson(`docs/evidence/AA5/t8/${b}/result.json`)]))),
+  hand: await readJson(`${EVIDENCE}/hand/hand.json`),
+  shots: await readJson(`${EVIDENCE}/shots/shots.json`),
+  data: await readJson(`${EVIDENCE}/data/data.json`),
+  site: await readJson(`${EVIDENCE}/site/site.json`),
+  checks: await readJson(`${EVIDENCE}/checks.json`),
+  t3: Object.fromEntries(await Promise.all(['brave', 'chrome', 'edge', 'firefox'].map(async (b) => [b, await readJson(`${EVIDENCE}/t3/${b}/t3.json`)]))),
+  identity: Object.fromEntries(await Promise.all(['brave', 'chrome'].map(async (b) => [b, await readJson(`${EVIDENCE}/identity/${b}/live.json`)]))),
+  t8: Object.fromEntries(await Promise.all(['brave', 'chrome', 'edge', 'firefox'].map(async (b) => [b, await readJson(`${EVIDENCE}/t8/${b}/result.json`)]))),
 };
+// الأدلة سُجّلت على التزام قد يسبق البناء: يُذكر التزامها، ويُقال صراحةً إن تغيّرت ملفات المصدر المبني بعده (U-068).
+const evidenceCommit = ev.checks?.commit ?? null;
+const scope = evidenceScope({ head, evidenceCommit, changed: evidenceCommit ? changedSince(ROOT, evidenceCommit, head, desc.source.paths) : null });
+console.log(`${scope.current ? '✓' : '⚠'} أدلة ${EVIDENCE}: الفحوص ${scope.checks.replaceAll('**', '')}`);
 const tally = (r) => (r?.checks ? `${r.checks.filter((c) => c.ok).length}/${r.checks.length}` : 'غير متاح');
 /** «15/15 (Brave 157.1.99.55)»: اسم المتصفح ورقمه بلا سلسلة المحرّك. */
 const t8 = (r) => `${tally(r)} (${String(r?.browser ?? '؟').split(' (')[0]})`;
@@ -294,6 +304,9 @@ const values = {
   VERSION,
   COMMIT: head.slice(0, 12),
   BRANCH: branch,
+  EVIDENCE_DIR: EVIDENCE,
+  CHECKS_SCOPE: scope.checks,
+  LIVE_SCOPE: scope.live,
   BUILT_AT: desc.builtAt,
   NODE: desc.build.node,
   ZLIB: desc.build.zlib,
