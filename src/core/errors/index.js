@@ -1,6 +1,7 @@
 // فهرس الأخطاء (عقد docs/contracts/errors.md): يجمع ملفات المجالات، ولكل مجال بادئات محجوزة له وحده.
 // الخطأ رمز ثابت ورسالة عربية للمستخدم وتفاصيل تقنية منقّاة للتشخيص فقط.
 import { sanitizeText } from '../diagnostics/sanitize.js';
+import { t } from '../../i18n/index.js';
 import * as base from './base.js';
 import * as extract from './extract.js';
 import * as importDomain from './import.js';
@@ -30,12 +31,13 @@ export function hasCode(code) {
 }
 
 /**
- * الرسالة العربية للرمز، والقوالب {name} تُملأ من params. الرمز المجهول يُعاد كما هو.
+ * رسالة الرمز بلغة الواجهة الحالية (من الفهرس، errors.<code>)، والقوالب {name} تُملأ من params. الرمز المجهول يُعاد كما هو.
  * @param {string} code
  * @param {Record<string, string | number>} [params]
  */
 export function messageFor(code, params) {
-  const text = hasCode(code) ? ALL[code] : String(code);
+  if (hasCode(code)) return t(`errors.${code}`, params);
+  const text = String(code);
   if (!params) return text;
   return text.replace(/\{(\w+)\}/g, (m, k) => (k in params ? String(params[k]) : m));
 }

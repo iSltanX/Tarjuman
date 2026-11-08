@@ -44,6 +44,7 @@ export function createEntryEnv({ permissions = [], tabs = {}, search = '', href 
       onMessage: events.onMessage,
       sendMessage: async () => ({ v: 1, ok: true }),
     },
+    i18n: { getUILanguage: () => 'ar' },
     downloads: {},
     tabs: {
       create: async (o) => { created.push(o); return { id: 1 }; },

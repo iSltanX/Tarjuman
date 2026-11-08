@@ -1,6 +1,7 @@
 // صيغ العرض المشتركة بين المشغّل والصفحات (مواصفة التصميم الأولى §٤): أرقام لاتينية، والإزاحة بعلامتها،
-// والأزمنة بصيغة SRT، والعدّ بالعربية.
+// والأزمنة بصيغة SRT، والعدّ بقواعد لغة الواجهة.
 import { textDirection as langTextDirection } from '../core/lang/index.js';
+import { t, texts } from '../i18n/index.js';
 
 const MINUS = '−';
 
@@ -55,11 +56,12 @@ export function formatTimecode(ms) {
 }
 
 /**
- * العدّ بالعربية: «مقطع واحد»، «مقطعان»، «3 مقاطع»، «11 مقطعًا»، «100 مقطع».
+ * العدّ بصيغ لغة الواجهة: «مقطع واحد»، «مقطعان»، «3 مقاطع»، «11 مقطعًا»، «100 مقطع»؛ وبالإنجليزية «1 segment» و«3 segments».
  * @param {number} n
- * @param {{ one: string, two: string, few: string, many: string, single: string }} forms مثل COUNT_FORMS.cue
+ * @param {{ one: string, two?: string, few?: string, many?: string, single?: string, other?: string }} forms مثل COUNT_FORMS.cue
  */
 export function formatCount(n, forms) {
+  if (forms.other !== undefined) return n === 1 ? forms.one : `${n} ${forms.other}`;
   if (n === 1) return forms.one;
   if (n === 2) return forms.two;
   const mod = n % 100;
@@ -68,22 +70,17 @@ export function formatCount(n, forms) {
   return `${n} ${forms.single}`;
 }
 
-export const COUNT_FORMS = Object.freeze({
-  cue: Object.freeze({ one: 'مقطع واحد', two: 'مقطعان', few: 'مقاطع', many: 'مقطعًا', single: 'مقطع' }),
-  video: Object.freeze({ one: 'فيديو واحد', two: 'فيديوهان', few: 'فيديوهات', many: 'فيديو', single: 'فيديو' }),
-  change: Object.freeze({ one: 'تغيير واحد', two: 'تغييران', few: 'تغييرات', many: 'تغييرًا', single: 'تغيير' }),
-  language: Object.freeze({ one: 'لغة واحدة', two: 'لغتان', few: 'لغات', many: 'لغة', single: 'لغة' }),
-  file: Object.freeze({ one: 'ملف واحد', two: 'ملفان', few: 'ملفات', many: 'ملفًا', single: 'ملف' }),
-});
+/** صيغ العدّ من الفهرس باللغة الحالية (common.count). */
+export const COUNT_FORMS = texts('common.count');
 
 /**
- * حجم بالبايت بوحدة عربية مختصرة: «820 ك.ب» و«2.1 م.ب» و«3.0 غ.ب». الصفر «0 ك.ب» لا «1 ك.ب»، وما دون الكيلوبايت «1 ك.ب»،
+ * حجم بالبايت بوحدة لغة الواجهة المختصرة: «820 ك.ب» و«2.1 م.ب» و«3.0 غ.ب» أو «820 KB». الصفر «0 ك.ب» لا «1 ك.ب»، وما دون الكيلوبايت «1 ك.ب»،
  * وما فوق 1024 م.ب بالغيغابايت (كانت «3072.0 م.ب»؛ تدقيق 7a66f91، U59).
  * @param {number} bytes
  */
 export function formatBytes(bytes) {
-  if (!(bytes > 0)) return '0 ك.ب';
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} ك.ب`;
-  if (bytes < 1024 ** 3) return `${(bytes / (1024 * 1024)).toFixed(1)} م.ب`;
-  return `${(bytes / 1024 ** 3).toFixed(1)} غ.ب`;
+  if (!(bytes > 0)) return t('common.bytes.zero');
+  if (bytes < 1024 * 1024) return t('common.bytes.kb', { n: Math.max(1, Math.round(bytes / 1024)) });
+  if (bytes < 1024 ** 3) return t('common.bytes.mb', { n: (bytes / (1024 * 1024)).toFixed(1) });
+  return t('common.bytes.gb', { n: (bytes / 1024 ** 3).toFixed(1) });
 }

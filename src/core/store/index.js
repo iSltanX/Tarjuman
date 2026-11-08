@@ -8,6 +8,7 @@ import { assertValid } from '../model/validate.js';
 import { DEFAULT_SETTINGS, normalizeSettings } from '../model/settings.js';
 import { DEFAULT_PREFS, normalizePrefs, sourceKey } from '../model/prefs.js';
 import { DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../model/lang-prefs.js';
+import { normalizeUiLocale } from '../model/ui-locale.js';
 import { storeRequest } from '../model/messages.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { isVideoId, parseTrackKey } from '../model/ids.js';
@@ -22,7 +23,7 @@ import { chromeLocalArea } from './area.js';
 import { bundleReadKeys, checkRaw, hasCompanions, itemsFor, rawBundle, salvageRaw } from './bundles.js';
 import { computeCapacity } from './capacity.js';
 import {
-  COMPANION_KINDS, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, indexKey, langKey, marksKey, parseKey, prevKey, videoKey,
+  COMPANION_KINDS, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, indexKey, langKey, marksKey, parseKey, prevKey, videoKey,
 } from './keys.js';
 // واجهة التخزين تعرض للصفحات والمتحكم ما تحتاجه من النموذج للحزمة دون استيراد إضافي.
 export { bundleFromRecord, slotModels } from '../model/bundle.js';
@@ -52,8 +53,8 @@ export { versionOf } from './version.js';
  *   index: boolean, cleared: boolean,
  *   prefs: { oldValue: unknown, newValue: unknown } | null,
  *   langPrefs: { oldValue: unknown, newValue: unknown } | null,
- *   bundles: string[]
- * }} StoreChange langPrefs (AA3): تغيّر تفضيلات اللغات من أي سياق
+ *   bundles: string[], uiLocale?: { oldValue: unknown, newValue: unknown } | null
+ * }} StoreChange langPrefs (AA3): تغيّر تفضيلات اللغات من أي سياق، وuiLocale لغة الواجهة ويغيب إن لم تتغير
  */
 
 // كاتب واحد لكل مساحة في السياق نفسه (الاختبارات والأدوات): مخزنان على المساحة نفسها يمرّان به كما يمرّ سياقان في المتصفح
@@ -350,6 +351,30 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         await ready();
         return call('langPrefs', { patch });
       });
+    },
+
+    /** @returns {Promise<import('../model/ui-locale.js').UiLocale | null>} إعداد لغة الواجهة المحفوظ، وnull قبل التهيئة (عقد storage §١٤) */
+    async getUiLocale() {
+      const { [KEY_UI_LOCALE]: raw } = await read(KEY_UI_LOCALE);
+      return normalizeUiLocale(raw);
+    },
+
+    /**
+     * التهيئة الأولى بإشارات هذا السياق؛ الكاتب يحسم بين السياقات ويعيد القيمة الموحّدة، ولا يغيّر قيمة موجودة.
+     * @param {{ youtube?: unknown, browser?: unknown }} signals
+     * @returns {Promise<import('../model/ui-locale.js').UiLocale>}
+     */
+    initUiLocale({ youtube = null, browser = null } = {}) {
+      return call('uiLocaleInit', { youtube, browser, at: iso() });
+    },
+
+    /**
+     * اختيار المستخدم للغة الواجهة.
+     * @param {'ar' | 'en'} locale
+     * @returns {Promise<import('../model/ui-locale.js').UiLocale>}
+     */
+    setUiLocale(locale) {
+      return call('uiLocale', { locale, at: iso() });
     },
 
     /**
@@ -751,9 +776,10 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           else if (k.kind === 'prefs') out.prefs = { oldValue: ch.oldValue, newValue: ch.newValue };
           // تفضيلات اللغات (AA3): الصفحات والمشغّل يتبعون الزوج واللغات الأخيرة حين تتغير من سياق آخر.
           else if (k.kind === 'langPrefs') out.langPrefs = { oldValue: ch.oldValue ?? null, newValue: ch.newValue ?? null };
+          else if (k.kind === 'uiLocale') out.uiLocale = { oldValue: ch.oldValue ?? null, newValue: ch.newValue ?? null };
           else if (COMPANION_KINDS.includes(k.kind) && !out.bundles.includes(k.videoId)) out.bundles.push(k.videoId);
         }
-        if (Object.keys(out.videos).length || out.settings || out.index || out.cleared || out.prefs || out.langPrefs || out.bundles.length) fn(out);
+        if (Object.keys(out.videos).length || out.settings || out.index || out.cleared || out.prefs || out.langPrefs || out.uiLocale || out.bundles.length) fn(out);
       });
     },
   };

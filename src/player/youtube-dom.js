@@ -3,6 +3,13 @@
 // كل دالة تأخذ doc/win لتُختبر دون متصفح، ولا تغيّر DOM يوتيوب.
 import { videoIdFromLocation } from '../core/model/video-location.js';
 
+/**
+ * لغة واجهة يوتيوب الفعلية كما يعلنها في جذر صفحته (html[lang]، ولا علاقة لها بلغة الفيديو أو ترجماته)، أو null.
+ * @param {Document} [doc]
+ * @returns {string | null}
+ */
+export const youtubeUiLanguage = (doc = document) => doc.documentElement?.getAttribute?.('lang') || null;
+
 export const SELECTORS = Object.freeze({
   player: '#movie_player',
   video: '#movie_player video.html5-main-video',

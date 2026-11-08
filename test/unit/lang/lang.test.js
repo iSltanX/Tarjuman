@@ -58,8 +58,8 @@ test('الأسماء: بالعربية وبلغتها من Intl، والمجهو
   assert.equal(nativeName('ja'), '日本語');
   assert.equal(nativeName('he'), 'עברית');
   assert.equal(nativeName('xx'), null);
-  assert.deepEqual(describeLang('es'), { code: 'es', arabic: 'الإسبانية', native: 'español', dir: 'ltr', known: true });
-  assert.deepEqual(describeLang('xx'), { code: 'xx', arabic: 'xx', native: null, dir: null, known: false });
+  assert.deepEqual(describeLang('es'), { code: 'es', arabic: 'الإسبانية', name: 'الإسبانية', native: 'español', dir: 'ltr', known: true });
+  assert.deepEqual(describeLang('xx'), { code: 'xx', arabic: 'xx', name: 'xx', native: null, dir: null, known: false });
   assert.equal(describeLang('und'), null);
 });
 

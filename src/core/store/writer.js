@@ -9,10 +9,12 @@ import { isVideoId } from '../model/ids.js';
 import { DEFAULT_PREFS, addTerm, mergePrefs, normalizePrefs, removeTerm, validatePrefs, validateTerm } from '../model/prefs.js';
 import { DEFAULT_SETTINGS, mergeSettings, normalizeSettings, validateSettings } from '../model/settings.js';
 import { applyLangPrefs, normalizeLangPrefs, validateLangPrefs } from '../model/lang-prefs.js';
+import { UI_LOCALE_SCHEMA, normalizeUiLocale, validateUiLocale } from '../model/ui-locale.js';
+import { resolveInitialLocale } from '../../i18n/locale.js';
 import { assertValid, isPlainObject } from '../model/validate.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { MESSAGE_VERSION, isStoreRequest } from '../model/messages.js';
-import { KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, altsKey, bundleKey, companionKeys, indexKey, langKey, marksKey, prevKey, videoKey } from './keys.js';
+import { KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, companionKeys, indexKey, langKey, marksKey, prevKey, videoKey } from './keys.js';
 import { MIGRATIONS, STORAGE_SCHEMA, migrate } from './migrate.js';
 import { canonical, printKeys, rawPrint, versionOf } from './version.js';
 
@@ -221,6 +223,34 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
     return next;
   }
 
+  /**
+   * اختيار المستخدم للغة الواجهة: يكتب القيمة ومصدرها user، فتغلب كل إشارة بعدها.
+   * @param {{ locale: unknown, at: string }} req
+   */
+  async function uiLocale({ locale, at }) {
+    checkAt(at);
+    const next = { schema: UI_LOCALE_SCHEMA, locale, source: 'user', at };
+    assertValid(validateUiLocale(next), 'uiLocale');
+    await write({ [KEY_UI_LOCALE]: next });
+    return next;
+  }
+
+  /**
+   * التهيئة الأولى: داخل طابور المفتاح، فأول سياق يصل يحسم وما بعده يأخذ النتيجة نفسها أيًّا كانت إشاراته (واجهات مفتوحة معًا).
+   * قيمة صالحة موجودة تُعاد كما هي ولا تُكتب.
+   * @param {{ youtube?: unknown, browser?: unknown, at: string }} req
+   */
+  async function uiLocaleInit({ youtube = null, browser = null, at }) {
+    checkAt(at);
+    const { [KEY_UI_LOCALE]: raw } = await read(KEY_UI_LOCALE);
+    const current = normalizeUiLocale(raw);
+    if (current) return current;
+    const next = { schema: UI_LOCALE_SCHEMA, ...resolveInitialLocale({ youtube, browser }), at };
+    assertValid(validateUiLocale(next), 'uiLocale');
+    await write({ [KEY_UI_LOCALE]: next });
+    return next;
+  }
+
   async function saves({ downloadId, at }) {
     if (!Number.isInteger(downloadId) || downloadId < 0) throw new TjError('MD_INVALID', { detail: 'downloadId' });
     checkAt(at);
@@ -229,13 +259,15 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
   }
 
   /**
-   * «مسح كل البيانات»: كل شيء ثم meta جديد، ويبقى إطفاء صور المحفوظات وحده (U05، Q10). وتعذّر قراءة التفضيلات يرفض المسح
+   * «مسح كل البيانات»: كل شيء ثم meta جديد، ويبقى إطفاء صور المحفوظات (U05، Q10) ولغة الواجهة (تفضيل جهاز لا بيانات: لا تنقلب
+   * الصفحة المفتوحة إلى لغة أخرى بعد المسح). وتعذّر قراءة التفضيلات يرفض المسح
    * (ST_READ_FAILED) ولا يُعيد الصور بصمت: رفض المستخدم السابق لا يُتجاوز.
    */
   async function clear({ at }) {
     checkAt(at);
-    const { [KEY_PREFS]: raw } = await read(KEY_PREFS);
+    const { [KEY_PREFS]: raw, [KEY_UI_LOCALE]: rawLocale } = await read([KEY_PREFS, KEY_UI_LOCALE]);
     const thumbsOff = raw?.ui?.thumbnails === false;
+    const keptLocale = normalizeUiLocale(rawLocale);
     try {
       await area.clear();
     } catch (err) {
@@ -257,6 +289,10 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
         thumbs = 'failed';
       }
     }
+    if (keptLocale) {
+      // فشل هذه الكتابة لا يغيّر نتيجة المسح: تُعاد التهيئة من الإشارات عند أول واجهة.
+      await write({ [KEY_UI_LOCALE]: keptLocale }).catch(() => {});
+    }
     return { reinit, thumbs };
   }
 
@@ -271,6 +307,8 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
       case 'prefs': return inLane(KEY_PREFS, () => prefs(req));
       case 'langPrefs': return inLane(KEY_LANG_PREFS, () => langPrefs(req));
       case 'saves': return inLane(KEY_SAVES, () => saves(req));
+      case 'uiLocale': return inLane(KEY_UI_LOCALE, () => uiLocale(req));
+      case 'uiLocaleInit': return inLane(KEY_UI_LOCALE, () => uiLocaleInit(req));
       case 'clear': return exclusiveAll(() => clear(req));
       default: return Promise.reject(new TjError('TJ_BAD_MESSAGE', { detail: String(req.op).slice(0, 20) }));
     }

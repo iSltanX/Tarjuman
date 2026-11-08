@@ -4,6 +4,7 @@
 
 import { ICONS, ICON_VIEWBOX } from './icons.js';
 import { logo } from './logo.js';
+import { LazyText, t } from '../i18n/index.js';
 
 export { ICONS };
 
@@ -28,24 +29,47 @@ export function icon(name, { doc = document, className = 'tj-icon' } = {}) {
   return svg;
 }
 
+/** ما يُعاد حسابه عند تبديل اللغة في مكانه لكل مستند: عناصر بُنيت بـLazyText مرة ولا تُرسم ثانية (المحرّر). */
+const LIVE = new WeakMap();
+function trackLive(doc, apply) {
+  let set = LIVE.get(doc);
+  if (!set) LIVE.set(doc, (set = new Set()));
+  set.add(apply);
+}
+
+/** يعيد كتابة كل نص LazyText في المستند باللغة الحالية. @param {Document} doc */
+export function relabel(doc) {
+  for (const apply of LIVE.get(doc) ?? []) apply();
+}
+
 /**
- * عنصر بخصائص آمنة.
+ * عنصر بخصائص آمنة. text وقيم attrs تقبل LazyText فتتبع تبديل اللغة (relabel).
  * @param {string} tag
- * @param {{ className?: string, text?: string, attrs?: Record<string, string>, dir?: 'rtl' | 'ltr' | 'auto', children?: (Node | string | null | false | undefined)[], on?: Record<string, EventListener>, doc?: Document }} [o]
+ * @param {{ className?: string, text?: string | LazyText, attrs?: Record<string, string | LazyText>, dir?: 'rtl' | 'ltr' | 'auto', children?: (Node | string | null | false | undefined)[], on?: Record<string, EventListener>, doc?: Document }} [o]
  */
 export function el(tag, { className, text, attrs, dir, children, on, doc = document } = {}) {
   const node = doc.createElement(tag);
   if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
+  if (text instanceof LazyText) {
+    const apply = () => { node.textContent = String(text); };
+    apply();
+    trackLive(doc, apply);
+  } else if (text !== undefined) node.textContent = text;
   if (dir) node.dir = dir;
-  for (const [k, v] of Object.entries(attrs ?? {})) if (v !== null && v !== undefined) node.setAttribute(k, v);
+  for (const [k, v] of Object.entries(attrs ?? {})) {
+    if (v instanceof LazyText) {
+      const apply = () => node.setAttribute(k, String(v));
+      apply();
+      trackLive(doc, apply);
+    } else if (v !== null && v !== undefined) node.setAttribute(k, v);
+  }
   for (const c of children ?? []) if (c !== null && c !== false && c !== undefined) node.append(c);
   for (const [t, fn] of Object.entries(on ?? {})) node.addEventListener(t, fn);
   return node;
 }
 
 /**
- * نص LTR معزول (زمن، أو معرّف، أو اسم ملف) داخل واجهة عربية.
+ * نص LTR معزول (زمن، أو معرّف، أو اسم ملف) داخل الواجهة أيًّا كان اتجاهها.
  * @param {string} text @param {{ mono?: boolean, doc?: Document }} [o]
  */
 export const ltr = (text, { mono = true, doc = document } = {}) => el('bdi', { className: mono ? 'tj-ltr tj-mono' : 'tj-ltr', text, dir: 'ltr', doc });
@@ -72,7 +96,11 @@ export function button({ label, variant = 'secondary', size = 'md', icon: iconNa
   });
   if (iconName) b.append(icon(iconName, { doc }));
   if (!iconOnly) b.append(el('span', { text: label, doc }));
-  if (title || iconOnly) b.title = title ?? label;
+  if (title || iconOnly) {
+    const tip = title ?? label;
+    b.title = String(tip);
+    if (tip instanceof LazyText) trackLive(doc, () => { if (b.getAttribute('aria-disabled') !== 'true') b.title = String(tip); });
+  }
   // الخاصية والسمة معًا: في المتصفح تعكس إحداهما الأخرى، والـDOM الوهمي لا يعكس ومحدد [value=…] يقرأ السمة.
   if (value !== undefined) {
     b.value = value;
@@ -178,7 +206,7 @@ export function statusPill({ tone = 'neutral', text, plain = false, title, doc =
  * @param {{ title: string, body?: string, confirmLabel: string, cancelLabel?: string, tone?: 'default' | 'danger', content?: HTMLElement, doc?: Document }} o
  * @returns {Promise<boolean>}
  */
-export function confirmDialog({ title, body, confirmLabel, cancelLabel = 'إلغاء', tone = 'default', content, doc = document }) {
+export function confirmDialog({ title, body, confirmLabel, cancelLabel = t('common.cancel'), tone = 'default', content, doc = document }) {
   return new Promise((resolve) => {
     const id = uid('tj-dialog');
     const dialog = el('dialog', { className: `tj-dialog${tone === 'danger' ? ' tj-dialog--danger' : ''}`, attrs: { 'aria-labelledby': `${id}-title` }, doc });
@@ -215,8 +243,8 @@ export function confirmDialog({ title, body, confirmLabel, cancelLabel = 'إلغ
 
 /** صفحات الشريط العلوي بروابطها النسبية (من داخل pages/<page>/). */
 const NAV_PAGES = Object.freeze([
-  { id: 'library', label: 'المحفوظات', href: '../library/index.html', icon: 'library' },
-  { id: 'settings', label: 'الإعدادات', href: '../settings/index.html', icon: 'settings' },
+  { id: 'library', label: 'common.nav.library', href: '../library/index.html', icon: 'library' },
+  { id: 'settings', label: 'common.nav.settings', href: '../settings/index.html', icon: 'settings' },
 ]);
 
 /**
@@ -229,16 +257,16 @@ export function topbar({ active, doc = document }) {
     children: [el('div', {
       className: 'tj-topbar__inner',
       children: [
-        el('a', { className: 'tj-topbar__brand', attrs: { href: NAV_PAGES[0].href, 'aria-label': 'ترجمان — المحفوظات' }, children: [logo({ width: 24, wordSize: 18, label: null, doc })], doc }),
+        el('a', { className: 'tj-topbar__brand', attrs: { href: NAV_PAGES[0].href, 'aria-label': t('common.nav.brand') }, children: [logo({ width: 24, wordSize: 18, label: null, doc })], doc }),
         el('nav', {
-          className: 'tj-topbar__nav', attrs: { 'aria-label': 'صفحات ترجمان' },
+          className: 'tj-topbar__nav', attrs: { 'aria-label': t('common.nav.pages') },
           children: NAV_PAGES.map((p) => el('a', {
             className: 'tj-topbar__link', attrs: { href: p.href, ...(p.id === active ? { 'aria-current': 'page' } : {}) },
-            children: [icon(p.icon, { doc }), el('span', { text: p.label, doc })], doc,
+            children: [icon(p.icon, { doc }), el('span', { text: t(p.label), doc })], doc,
           })),
           doc,
         }),
-        el('span', { className: 'tj-topbar__end', children: [icon('shield', { doc }), el('span', { text: 'بياناتك على جهازك', doc })], doc }),
+        el('span', { className: 'tj-topbar__end', children: [icon('shield', { doc }), el('span', { text: t('common.nav.yourData'), doc })], doc }),
       ],
       doc,
     })],
@@ -342,7 +370,7 @@ export function chipGroup({ options, value, onChange, ariaLabel, doc = document 
  */
 
 /** اسم الوصول لخانة: «الترجمة 2، نشطة» أو «الترجمة 3، فارغة». @param {SlotModel} s */
-export const slotLabel = (s) => `الترجمة ${s.n}${s.active ? '، نشطة' : s.filled ? '' : '، فارغة'}`;
+export const slotLabel = (s) => t(s.active ? 'common.slot.labelActive' : s.filled ? 'common.slot.label' : 'common.slot.labelEmpty', { n: s.n });
 
 /**
  * محدد الترجمات الموجودة (جولة الصقل): زر لكل خانة محفوظة فقط، برقم خانتها (هويتها الثابتة في المشغّل والمحفوظات
@@ -351,7 +379,7 @@ export const slotLabel = (s) => `الترجمة ${s.n}${s.active ? '، نشطة'
  * @param {{ slots: SlotModel[], size?: 'sm' | 'md', ariaLabel?: string, onSelect?: (n: number) => void, doc?: Document }} o
  * @returns {{ root: HTMLElement, update: (slots: SlotModel[]) => void, readonly buttons: HTMLButtonElement[], button: (n: number) => HTMLButtonElement | null }}
  */
-export function slotPicker({ slots, size = 'sm', ariaLabel = 'الترجمة النشطة', onSelect, doc = document }) {
+export function slotPicker({ slots, size = 'sm', ariaLabel = t('common.slot.picker'), onSelect, doc = document }) {
   const root = el('div', { className: `tj-slots${size === 'md' ? ' tj-slots--md' : ''}`, attrs: { role: 'radiogroup', 'aria-label': ariaLabel }, doc });
   /** @type {Map<number, HTMLButtonElement>} */
   const byN = new Map();

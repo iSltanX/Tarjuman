@@ -1,26 +1,95 @@
-// تشغيل صفحة من صفحات الإضافة: العنوان، والشريط العلوي المشترك (اختياري)، وحاوية التطبيق، وحدّ أخطاء يعرض الرمز
-// والرسالة العربية بدل صفحة بيضاء، وفتح الصفحات الأخرى في تبويب. لا طلبات شبكة من الصفحات.
+// تشغيل صفحة من صفحات الإضافة: لغة الواجهة قبل أي عرض، والعنوان، والشريط العلوي المشترك (اختياري)، وحاوية التطبيق، وحدّ أخطاء يعرض الرمز
+// والرسالة بدل صفحة بيضاء، وفتح الصفحات الأخرى في تبويب. لا طلبات شبكة من الصفحات.
 import { toErrorInfo } from '../core/errors/index.js';
 import { pagePath } from '../core/model/ids.js';
+import { createStore } from '../core/store/index.js';
+import { t } from '../i18n/index.js';
 import { alertBox, el, topbar } from './components.js';
+import { applyDocumentLocale, bootLocale, watchLocale } from './locale.js';
+
+const KEPT = 'tjKept';
+
+/**
+ * يحفظ ما سيضيع بإعادة تحميل تبديل اللغة في حالة السجل (تبقى عند reload، ولا تخزين): نص الحقول المعلَّمة data-tj-keep والتركيز والتمرير.
+ * @param {Document} doc
+ */
+function keepForReload(doc) {
+  const win = doc.defaultView;
+  if (!win?.history?.replaceState) return;
+  const fields = {};
+  for (const n of doc.querySelectorAll('[data-tj-keep]')) {
+    if ('value' in n && n.type !== 'radio' && n.type !== 'checkbox' && n.value) fields[n.getAttribute('data-tj-keep')] = n.value;
+  }
+  const focus = doc.activeElement?.closest?.('[data-tj-keep]')?.getAttribute('data-tj-keep') ?? null;
+  win.history.replaceState({ ...(win.history.state ?? {}), [KEPT]: { fields, focus, scroll: win.scrollY ?? 0 } }, '');
+}
+
+/** يعيد ما حفظته keepForReload بعد اكتمال العرض، مرة واحدة. @param {Document} doc */
+function restoreKept(doc) {
+  const win = doc.defaultView;
+  const kept = win?.history?.state?.[KEPT];
+  if (!kept) return;
+  const { [KEPT]: _used, ...rest } = win.history.state;
+  win.history.replaceState(rest, '');
+  for (const n of doc.querySelectorAll('[data-tj-keep]')) {
+    const v = kept.fields[n.getAttribute('data-tj-keep')];
+    if (v === undefined || !('value' in n)) continue;
+    n.value = v;
+    n.dispatchEvent(new win.Event('input', { bubbles: true }));
+  }
+  if (kept.focus) {
+    const node = doc.querySelector(`[data-tj-keep="${kept.focus}"]`);
+    (node?.matches?.('input, textarea, select, button') ? node : node?.querySelector?.('input:checked, input, button') ?? node)?.focus?.();
+  }
+  win.scrollTo?.(0, kept.scroll);
+}
 
 /**
  * @param {{
- *   title: string, render: (app: HTMLElement) => void | Promise<void>, wide?: boolean,
- *   nav?: 'library' | 'settings' | 'editor' | null, doc?: Document
- * }} o nav يضيف الشريط العلوي المشترك قبل الحاوية ويميّز الصفحة الحالية.
+ *   title: string | (() => string), render: (app: HTMLElement, page: { relocalize: (() => void) | null }) => void | Promise<void>, wide?: boolean,
+ *   nav?: 'library' | 'settings' | 'editor' | null, doc?: Document,
+ *   store?: { getUiLocale: () => Promise<unknown>, initUiLocale: (s: object) => Promise<unknown>, onChange: (fn: Function) => () => void } | null,
+ *   reload?: () => void,
+ * }} o nav يضيف الشريط العلوي المشترك قبل الحاوية ويميّز الصفحة الحالية. title يُحسب بعد تحديد اللغة. page.relocalize: تبديل لغة في مكانه
+ *   لصفحة لها ما يضيع بإعادة التحميل (المحرّر)؛ وبدونه تعيد الصفحة تحميل نفسها، فمصدر كل نص هو مسار العرض الأول نفسه.
  */
-export async function startPage({ title, render, wide = false, nav = null, doc = document }) {
-  doc.title = `ترجمان — ${title}`;
+export async function startPage({ title, render, wide = false, nav = null, doc = document, store, reload }) {
+  let localeStore = store;
+  if (localeStore === undefined) {
+    try {
+      localeStore = createStore();
+    } catch {
+      localeStore = null; // خارج سياق الإضافة: تبقى اللغة المرجعية.
+    }
+  }
+  if (localeStore) await bootLocale({ store: localeStore });
+  applyDocumentLocale(doc);
+  const titleText = () => t('common.page.title', { page: typeof title === 'function' ? title() : title });
+  doc.title = titleText();
   const app = doc.getElementById('app') ?? doc.body.appendChild(el('main', { attrs: { id: 'app' }, doc }));
   app.classList.add('tj-container');
   if (wide) app.classList.add('tj-container--wide');
-  if (nav) app.parentNode?.insertBefore(topbar({ active: nav, doc }), app);
+  const bar = nav ? topbar({ active: nav, doc }) : null;
+  if (bar) app.parentNode?.insertBefore(bar, app);
+  const page = { relocalize: /** @type {(() => void) | null} */ (null) };
+  if (localeStore) {
+    watchLocale(localeStore, () => {
+      applyDocumentLocale(doc);
+      if (page.relocalize) {
+        doc.title = titleText();
+        page.relocalize();
+        return;
+      }
+      keepForReload(doc);
+      (reload ?? (() => doc.defaultView?.location.reload()))();
+    });
+  }
   try {
-    await render(app);
+    await render(app, page);
+    restoreKept(doc);
   } catch (err) {
     const info = toErrorInfo(err);
-    app.append(alertBox({ tone: 'danger', title: 'تعذّر عرض الصفحة', text: `${info.message} (${info.code})`, doc }));
+    app.append(alertBox({ tone: 'danger', title: t('common.page.renderFailed'), text: `${info.message} (${info.code})`, doc }));
   }
 }
 

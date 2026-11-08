@@ -4,6 +4,7 @@
 import { buildTarget, needsConsent, thumbnailsConsent, watchThumbnailsConsent } from '../../core/consent/thumbnails.js';
 import { saveFile } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
+import { t } from '../../i18n/index.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { pickFiles } from '../../ui/picker.js';
 import { collectDiagnostics } from '../settings/diagnostics.js';
@@ -13,7 +14,7 @@ import { createLibrary } from './view.js';
 const pickSrtFiles = () => pickFiles({ accept: '.srt,.txt,.md,text/plain,text/markdown,application/x-subrip', multiple: true });
 
 startPage({
-  title: 'المحفوظات',
+  title: () => t('common.nav.library'),
   wide: true,
   nav: 'library',
   async render(app) {

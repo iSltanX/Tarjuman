@@ -11,6 +11,7 @@ import { mountOverlay } from '../player/overlay/index.js';
 import { mountControls } from '../player/controls/index.js';
 import { mountPanel } from '../player/panel/index.js';
 import { isLiveNow, mainVideoDurationMs, videoTitle, watchCurrentVideo } from '../player/youtube-dom.js';
+import { installContentLocale } from './locale.js';
 
 /* global __TJ_DEV__ */
 
@@ -40,6 +41,7 @@ store.onChange((change) => controller.handleStoreChange(change));
 
 const mounted = { overlay: mountOverlay(controller), controls: mountControls(controller), panel: mountPanel(controller) };
 installMessageHandler({ controller, mounted });
+installContentLocale({ store, mounted });
 controller.start(tracker.current());
 
 // بناء التطوير وحده (npm run build:dev): خطاف للحزام الحي في العالم المعزول، لا تراه الصفحة.

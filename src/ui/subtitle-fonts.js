@@ -2,6 +2,8 @@
 // SUBTITLE_FONTS في نموذج الإعدادات، والأول هو الافتراضي. الملفات من مستودع Google Fonts الرسمي برخصة SIL OFL 1.1
 // (fonts/subtitle/)، وتحمّلها الطبقة (P6) عبر FontFace ببياناتها، وتعرضها صفحة الإعدادات (P7). خطوط الواجهة لا تتغير.
 
+import { t } from '../i18n/index.js';
+
 /** مسار ملفات الخطوط داخل الإضافة (المعلن في web_accessible_resources). */
 export const SUBTITLE_FONT_DIR = 'ui/fonts/subtitle';
 
@@ -16,8 +18,11 @@ export const SYSTEM_ARABIC_FALLBACK = Object.freeze(['SF Arabic', 'Geeza Pro', '
  * }} SubtitleFont
  */
 
-const font = (id, nameAr, nameLatin, note) => Object.freeze({
-  id, nameAr, nameLatin, note,
+const font = (id, nameLatin) => Object.freeze({
+  id, nameLatin,
+  /** اسم الخط بلغة الواجهة. */
+  get nameAr() { return t(`common.fonts.${id}.name`); },
+  get note() { return t(`common.fonts.${id}.note`); },
   // اسم عائلة فريد داخل الإضافة، فلا يتصادم مع خط مثبّت على الجهاز ولا مع خطوط يوتيوب.
   family: `Tarjuman Subtitle ${nameLatin}`,
   files: Object.freeze({ 400: `${SUBTITLE_FONT_DIR}/${id}-400.woff2`, 700: `${SUBTITLE_FONT_DIR}/${id}-700.woff2` }),
@@ -26,10 +31,10 @@ const font = (id, nameAr, nameLatin, note) => Object.freeze({
 
 /** @type {readonly SubtitleFont[]} */
 export const SUBTITLE_FONT_LIST = Object.freeze([
-  font('almarai', 'المراعي', 'Almarai', 'واضح ومتوازن للقراءة السريعة'),
-  font('noto-sans-arabic', 'نوتو سانس العربي', 'Noto Sans Arabic', 'يدعم حروفًا وعلامات تشكيل أكثر'),
-  font('tajawal', 'تجوّل', 'Tajawal', 'أضيق، فيحتاج أسطرًا أقل'),
-  font('markazi', 'مركزي', 'Markazi Text', 'نسخي كلاسيكي'),
+  font('almarai', 'Almarai'),
+  font('noto-sans-arabic', 'Noto Sans Arabic'),
+  font('tajawal', 'Tajawal'),
+  font('markazi', 'Markazi Text'),
 ]);
 
 /** @param {string} id @returns {SubtitleFont} الخط بمعرّفه، والافتراضي لمعرّف غير معروف. */

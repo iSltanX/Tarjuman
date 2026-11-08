@@ -4,6 +4,7 @@
 // tools/brand/tarjuman-A-asil.svg وأيقونات الإضافة (tools/brand/icons.mjs). وتحت 32 بكسل تُستعمل النسخة المصحّحة #logoS: الفجوة
 // D/φ³ والكتاب أنحف، فلا تلتحم النقطتان بالكتاب (لوحة 03). الرمز صنوبر (عاج في الداكن) من --tj-logo-glyph، والاسم «ترجمان» نصٌّ
 // بخط Cairo 800 المضمّن بلون الحبر، والرمز في البداية (يمين الاسم في RTL). لا يُقلب في RTL، ولا ينزل الرمز عن 16.
+import { getDir, t } from '../i18n/index.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -46,10 +47,10 @@ export function logoMark({ width = 24, small = width < SMALL_BELOW, className = 
  * والشريط العلوي: رمز 24 واسم 18). label null يجعله زخرفيًا (حين يسمّيه عنصر حوله).
  * @param {{ width?: number, wordSize?: number, word?: boolean, label?: string | null, className?: string, doc?: Document }} [o]
  */
-export function logo({ width = 24, wordSize = 18, word = true, label = 'ترجمان', className = '', doc = document } = {}) {
+export function logo({ width = 24, wordSize = 18, word = true, label = t('common.productName'), className = '', doc = document } = {}) {
   const root = doc.createElement('span');
   root.className = `tj-logo ${className}`.trim();
-  root.setAttribute('dir', 'rtl');
+  root.setAttribute('dir', getDir());
   if (label) {
     root.setAttribute('role', 'img');
     root.setAttribute('aria-label', label);
@@ -63,7 +64,7 @@ export function logo({ width = 24, wordSize = 18, word = true, label = 'ترجم
     w.setAttribute('aria-hidden', 'true');
     w.style.fontSize = `${wordSize}px`;
     w.style.lineHeight = `${Math.round(wordSize * 4 / 3)}px`;
-    w.textContent = 'ترجمان';
+    w.textContent = t('common.productName');
     root.append(w);
   }
   return root;

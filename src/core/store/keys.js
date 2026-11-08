@@ -9,6 +9,8 @@ export const KEY_PREFS = 'prefs';
 export const KEY_SAVES = 'saves';
 /** تفضيلات اللغات في 2.0.0 (AA1): زوج التعليمات واللغات الأخيرة. مفتاح مستقل لأن prefs يقرؤه 1.1.0 بمدقق صارم. */
 export const KEY_LANG_PREFS = 'langPrefs';
+/** لغة واجهة الإضافة (عقد storage §١٤): مفتاح مستقل، لا يقرؤه أي إصدار سابق ولا يمس لغات الفيديو والترجمة. */
+export const KEY_UI_LOCALE = 'uiLocale';
 const VIDEO = 'video:';
 const INDEX = 'index:';
 const BUNDLE = 'bundle:';
@@ -40,7 +42,7 @@ export const COMPANION_KINDS = Object.freeze(['bundle', 'alts', 'prev', 'marks',
 
 /**
  * @param {string} key
- * @returns {{ kind: 'meta' | 'settings' | 'prefs' | 'saves' | 'langPrefs' }
+ * @returns {{ kind: 'meta' | 'settings' | 'prefs' | 'saves' | 'langPrefs' | 'uiLocale' }
  *   | { kind: 'video' | 'index' | 'bundle' | 'alts' | 'prev' | 'marks' | 'lang', videoId: string } | null}
  */
 export function parseKey(key) {
@@ -49,6 +51,7 @@ export function parseKey(key) {
   if (key === KEY_PREFS) return { kind: 'prefs' };
   if (key === KEY_SAVES) return { kind: 'saves' };
   if (key === KEY_LANG_PREFS) return { kind: 'langPrefs' };
+  if (key === KEY_UI_LOCALE) return { kind: 'uiLocale' };
   for (const [prefix, kind] of PER_VIDEO) {
     if (key.startsWith(prefix)) {
       const videoId = key.slice(prefix.length);

@@ -4,7 +4,8 @@ import { MESSAGE_VERSION, isExtensionPage, isOwnContentScript, isStoreRequest } 
 
 // ما يحتاجه جانب يوتيوب فعلًا (تدقيق V2، U-043): الباقي (المسح الكامل وحذف فيديو وتفضيلات اللغات وسجل الحفظ) لصفحات الإضافة
 // وحدها. تحصين في العمق: قائمة السماح لا تمنع سياق عرض مخترقًا يقرأ storage.local مباشرة، لكنها تضيّق ما يقبله الكاتب.
-export const CONTENT_SCRIPT_OPS = Object.freeze(['ready', 'put', 'orphan', 'index', 'settings', 'prefs']);
+// وuiLocaleInit: سكربت يوتيوب يهيّئ لغة الواجهة من لغة يوتيوب إن لم يكن لها قيمة؛ أما تغيير الاختيار (uiLocale) فلصفحة الإعدادات وحدها.
+export const CONTENT_SCRIPT_OPS = Object.freeze(['ready', 'put', 'orphan', 'index', 'settings', 'prefs', 'uiLocaleInit']);
 
 /**
  * @param {{ runtime: typeof chrome.runtime, writer: { handle: (req: unknown) => Promise<object> } }} deps

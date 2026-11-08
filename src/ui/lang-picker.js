@@ -5,13 +5,10 @@
 // (src/core/lang)، فلا قائمة لغات مكتوبة هنا. نمط combobox وlistbox: الحقل المكتوب يملك التركيز، والأسهم تنقل الخيار النشط
 // (aria-activedescendant)، وEnter يختار، وEsc يغلق ويعيد التركيز إلى الحقل. textContent وsetAttribute فقط.
 import { describeLang, knownLanguages, searchLanguages } from '../core/lang/index.js';
+import { getLocale, joinList, texts } from '../i18n/index.js';
 import { el, icon } from './components.js';
 
-export const LANG_TEXT = Object.freeze({
-  from: 'من', to: 'إلى', empty: 'اختر لغة', search: 'ابحث عن لغة', auto: 'تلقائي من ترجمة الفيديو', autoShort: 'تلقائي',
-  quick: 'للوصول السريع', video: 'في هذا الفيديو', recent: 'المستخدمة مؤخرًا', all: 'كل اللغات', results: 'النتائج', none: 'لا لغة بهذا الاسم أو الرمز',
-  swap: 'مبادلة اللغتين', list: 'اللغات',
-});
+export const LANG_TEXT = texts('common.langPicker');
 
 /** القيمة «تلقائي» في حقل «من» بالإعدادات (lang-prefs AUTO_SOURCE). */
 export const AUTO = 'auto';
@@ -27,7 +24,7 @@ let seq = 0;
 let openNow = null;
 
 /** وصف لغة للعرض، والرمز الذي لا يعرفه المتصفح يبقى رمزه. @param {string} code */
-const describe = (code) => describeLang(code) ?? { code, arabic: code, native: null, dir: null, known: false };
+const describe = (code) => describeLang(code, getLocale()) ?? { code, arabic: code, name: code, native: null, dir: null, known: false };
 
 /**
  * اسم الحقل الظاهر: الاسم العربي، و«تلقائي» للقيمة التلقائية، وإلا null («اختر لغة»).
@@ -35,7 +32,7 @@ const describe = (code) => describeLang(code) ?? { code, arabic: code, native: n
  */
 export function valueLabel(value, autoLabel = LANG_TEXT.auto) {
   if (value === AUTO) return autoLabel;
-  return value ? describe(value).arabic : null;
+  return value ? describe(value).name : null;
 }
 
 /**
@@ -100,7 +97,7 @@ export function langField({ label, value, onChange, anchor = null, recent = () =
     const on = code === current;
     const oid = `${id}-o${options.length}`;
     const parts = autoItem ? [] : [
-      d.native && d.native !== d.arabic ? el('bdi', { text: d.native, dir: d.dir === 'rtl' ? 'rtl' : 'ltr', doc }) : null,
+      d.native && d.native !== d.name ? el('bdi', { text: d.native, dir: d.dir === 'rtl' ? 'rtl' : 'ltr', doc }) : null,
       el('bdi', { className: 'tj-lang-item__c', text: d.code, dir: 'ltr', doc }),
     ].filter(Boolean);
     const sub = [];
@@ -112,10 +109,10 @@ export function langField({ label, value, onChange, anchor = null, recent = () =
       className: `tj-lang-item${on ? ' is-on' : ''}`,
       attrs: {
         id: oid, role: 'option', 'aria-selected': on ? 'true' : 'false', 'data-code': code,
-        'aria-label': autoItem ? name : [d.arabic, d.native && d.native !== d.arabic ? d.native : null, d.code].filter(Boolean).join('، '),
+        'aria-label': autoItem ? name : joinList([d.name, d.native && d.native !== d.name ? d.native : null, d.code].filter(Boolean)),
       },
       children: [
-        el('span', { className: 'tj-lang-item__name', text: autoItem ? name : d.arabic, doc }),
+        el('span', { className: 'tj-lang-item__name', text: autoItem ? name : d.name, doc }),
         sub.length ? el('span', { className: 'tj-lang-item__n', children: sub, doc }) : null,
         on ? icon('check', { doc }) : null,
       ],
@@ -165,11 +162,11 @@ export function langField({ label, value, onChange, anchor = null, recent = () =
         }
       }
       nodes.push(groupHead(LANG_TEXT.all));
-      for (const l of knownLanguages()) if (!seen.has(l.code)) nodes.push(option(l.code));
+      for (const l of knownLanguages(getLocale())) if (!seen.has(l.code)) nodes.push(option(l.code));
     } else {
       // لغات الفيديو تدخل البحث وإن لم تكن في قائمة المتصفح الثنائية (en-GB وzh-Hant).
-      const extra = [...new Set([...video(), ...recent()])].filter((c) => c && !knownLanguages().some((l) => l.code === c)).map((c) => describe(c));
-      const hits = searchLanguages(q, [...extra, ...knownLanguages()]);
+      const extra = [...new Set([...video(), ...recent()])].filter((c) => c && !knownLanguages(getLocale()).some((l) => l.code === c)).map((c) => describe(c));
+      const hits = searchLanguages(q, [...extra, ...knownLanguages(getLocale())]);
       if (hits.length) {
         nodes.push(groupHead(LANG_TEXT.results));
         for (const l of hits) nodes.push(option(l.code));
@@ -291,7 +288,7 @@ export function langField({ label, value, onChange, anchor = null, recent = () =
  * }} o
  */
 export function langPair({ from, to, onChange, recent = () => [], video = () => [], autoFrom = null, doc = document }) {
-  const row = el('div', { className: 'tj-lang-row', attrs: { role: 'group', 'aria-label': 'لغتا الترجمة' }, doc });
+  const row = el('div', { className: 'tj-lang-row', attrs: { role: 'group', 'aria-label': LANG_TEXT.row }, doc });
   let pair = { from, to };
   const emit = (why) => onChange({ ...pair }, why);
   const fromField = langField({

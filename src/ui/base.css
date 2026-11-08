@@ -4,7 +4,7 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { direction: rtl; -webkit-text-size-adjust: 100%; scrollbar-color: var(--tj-border-strong) transparent; }
+html { -webkit-text-size-adjust: 100%; scrollbar-color: var(--tj-border-strong) transparent; }
 /* شريط التمرير ظاهر بلون هادئ من الرموز ولا يُخفى؛ والتمرير الأفقي يُمنع بالتخطيط نفسه (min-width: 0 والالتفاف) لا بالقص. */
 
 body {

@@ -4,6 +4,7 @@
 import { buildTarget, needsConsent, requestThumbnailsConsent, thumbnailsConsent, watchThumbnailsConsent } from '../../core/consent/thumbnails.js';
 import { saveFile, savedPath } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
+import { t } from '../../i18n/index.js';
 import { extensionVersion, startPage } from '../../ui/page.js';
 import { pickFiles } from '../../ui/picker.js';
 import { collectDiagnostics } from './diagnostics.js';
@@ -13,7 +14,7 @@ import { createSettings } from './view.js';
 const pickFile = () => pickFiles({ accept: '.json,application/json' }).then((files) => files?.[0] ?? null);
 
 startPage({
-  title: 'الإعدادات',
+  title: () => t('common.nav.settings'),
   nav: 'settings',
   wide: true,
   async render(app) {

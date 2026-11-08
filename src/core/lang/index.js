@@ -161,6 +161,28 @@ export function arabicName(code, { region = true } = {}) {
 }
 
 /**
+ * اسم اللغة بلغة الواجهة: العربية بقواعد arabicName، والإنجليزية من CLDR بلا شظية من الرمز (en-orig ← English).
+ * @param {unknown} code @param {{ locale?: 'ar' | 'en', region?: boolean }} [o]
+ * @returns {string | null}
+ */
+export function localizedName(code, { locale = 'ar', region = true } = {}) {
+  if (locale === 'ar') return arabicName(code, { region });
+  const n = normalizeLang(code);
+  if (!n) return null;
+  const dn = displayNames(locale, 'none');
+  if (!dn) return null;
+  const parts = n.split('-');
+  const tries = region && parts.length > 1 ? [n, parts[0]] : [parts[0], n];
+  for (const c of tries) {
+    const name = safe(() => dn.of(c), null);
+    if (!name || name.toLowerCase() === c.toLowerCase()) continue;
+    if (c.split('-').slice(1).some((p) => p.length > 3 && /[A-Za-z]/.test(p) && name.toLowerCase().includes(p.toLowerCase()))) continue;
+    return name;
+  }
+  return null;
+}
+
+/**
  * اسم اللغة بلغتها نفسها («English»، «日本語»، «עברית»)، أو null إن لم يعرفه المتصفح.
  * @param {unknown} code
  * @returns {string | null}
@@ -178,14 +200,14 @@ export function nativeName(code) {
 
 /**
  * وصف اللغة للواجهة: الاسم العربي، والأصلي، والرمز، والاتجاه. الاسم العربي إن غاب يحل محله الرمز.
- * @param {unknown} code
- * @returns {{ code: string, arabic: string, native: string | null, dir: 'rtl' | 'ltr' | null, known: boolean } | null}
+ * @param {unknown} code @param {'ar' | 'en'} [locale] لغة الواجهة لحقل name، وarabic يبقى الاسم العربي دائمًا
+ * @returns {{ code: string, arabic: string, name: string, native: string | null, dir: 'rtl' | 'ltr' | null, known: boolean } | null}
  */
-export function describeLang(code) {
+export function describeLang(code, locale = 'ar') {
   const n = normalizeLang(code);
   if (!n) return null;
   const arabic = arabicName(n);
-  return { code: n, arabic: arabic ?? n, native: nativeName(n), dir: langDirection(n), known: arabic !== null };
+  return { code: n, arabic: arabic ?? n, name: localizedName(n, { locale }) ?? arabic ?? n, native: nativeName(n), dir: langDirection(n), known: arabic !== null };
 }
 
 /**
@@ -203,31 +225,33 @@ export function langFromFileName(fileName) {
 }
 
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
-let knownCache = null;
+const knownCache = new Map();
 
 /**
  * كل اللغات التي يعرف المتصفح اسمها العربي، من رموز ISO 639-1 الثنائية كلها (aa…zz) بلا قائمة مكتوبة: ما لا اسم له في بيانات
  * CLDR عند المتصفح لا يدخل، والرمز القديم الذي له رمز معياري (iw، in، ji…) يُسقط لصالح معياره. مرتبة بالاسم العربي. الرموز
  * الأطول (pt-BR وzh-Hant وfil) تُكتب في البحث أو تأتي من مسارات الفيديو، فلا تُستثنى لغة.
- * @returns {{ code: string, arabic: string, native: string | null, dir: 'rtl' | 'ltr' | null }[]}
+ * @param {'ar' | 'en'} [locale] لغة الواجهة: تحدد حقل name وترتيب القائمة
+ * @returns {{ code: string, arabic: string, name: string, native: string | null, dir: 'rtl' | 'ltr' | null }[]}
  */
-export function knownLanguages() {
-  if (knownCache) return knownCache;
+export function knownLanguages(locale = 'ar') {
+  if (knownCache.has(locale)) return knownCache.get(locale);
   const out = [];
   for (const a of LETTERS) {
     for (const b of LETTERS) {
       const code = a + b;
       if (safe(() => Intl.getCanonicalLocales(code)[0], null) !== code) continue;
       const arabic = arabicName(code);
-      if (arabic) out.push({ code, arabic, native: nativeName(code), dir: langDirection(code) });
+      if (arabic) out.push({ code, arabic, name: localizedName(code, { locale }) ?? arabic, native: nativeName(code), dir: langDirection(code) });
     }
   }
   // الترتيب بالاسم بلا «ال» في أوله، فتتجاور «الإنجليزية» و«إنجليزية» و«دزونكا» بحروفها لا بأداة التعريف.
-  const collator = safe(() => new Intl.Collator('ar'), null);
-  const key = (x) => foldForSearch(x.arabic);
+  const collator = safe(() => new Intl.Collator(locale), null);
+  const key = (x) => foldForSearch(x.name);
   out.sort((x, y) => (collator ? collator.compare(key(x), key(y)) : key(x) < key(y) ? -1 : 1));
-  knownCache = Object.freeze(out.map((x) => Object.freeze(x)));
-  return knownCache;
+  const frozen = Object.freeze(out.map((x) => Object.freeze(x)));
+  knownCache.set(locale, frozen);
+  return frozen;
 }
 
 /** نص للمطابقة: بلا تشكيل ولا تطويل، وألفات موحّدة، والتاء المربوطة هاءً، وبلا «ال» في أول كل كلمة، وبحروف صغيرة. */
@@ -251,13 +275,13 @@ export function foldForSearch(text) {
  * @param {readonly { code: string, arabic: string, native: string | null }[]} [list]
  * @returns {{ code: string, arabic: string, native: string | null, dir: 'rtl' | 'ltr' | null }[]}
  */
-export function searchLanguages(query, list = knownLanguages()) {
+export function searchLanguages(query, list = knownLanguages(), locale = 'ar') {
   const q = foldForSearch(query);
   if (!q) return [...list];
   // الأقرب أولًا: الرمز نفسه، ثم رمز يبدأ بالنص، ثم اسم يبدأ به، ثم اسم يحويه؛ وبالترتيب الأصلي داخل كل درجة.
   const rank = (l) => {
     const code = l.code.toLowerCase();
-    const names = [foldForSearch(l.arabic), foldForSearch(l.native)];
+    const names = [foldForSearch(l.arabic), foldForSearch(l.native), foldForSearch(l.name)];
     if (code === q) return 0;
     if (code.startsWith(q)) return 1;
     if (names.some((n) => n.startsWith(q) || n.split(' ').some((w) => w.startsWith(q)))) return 2;
@@ -269,8 +293,8 @@ export function searchLanguages(query, list = knownLanguages()) {
   const typed = normalizeLang(String(query).trim());
   const canon = typed ? safe(() => Intl.getCanonicalLocales(typed)[0], null) : null;
   if (typed && arabicName(typed) && !list.some((l) => l.code === typed || l.code === canon)) {
-    const d = describeLang(typed);
-    hits.unshift({ code: d.code, arabic: d.arabic, native: d.native, dir: d.dir });
+    const d = describeLang(typed, locale);
+    hits.unshift({ code: d.code, arabic: d.arabic, name: d.name, native: d.native, dir: d.dir });
   }
   return hits;
 }
