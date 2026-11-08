@@ -130,6 +130,7 @@ test('rowStatus: شارة واحدة بأولوية «تحتاج مراجعة» 
   assert.deepEqual([warned.text, warned.tone, warned.title], ['3 مقاطع ناقصة', 'warning', '3 مقاطع ناقصة · معدّلة'], 'التحذير قبل «معدّلة» وتلميحه يسرد الحالات المنطبقة');
   assert.equal(rowStatus(entry({ arabic: ar({ matched: false, missing: 2, extra: 1, drift: 12 }) })).text, 'مقطعان ناقصان · مقطع زائد · توقيت مختلف في 12 مقطعًا');
   assert.equal(rowStatus(entry({ arabic: ar({ matched: false, missing: 3, extra: 3, drift: 2 }) })).text, '3 مقاطع ناقصة · 3 مقاطع زائدة · توقيت مختلف في مقطعين');
+  assert.equal(rowStatus(entry({ arabic: ar({ matched: false, missing: 3, extra: 3, drift: 2 }) })).text, '3 مقاطع ناقصة · 3 مقاطع زائدة · توقيت مختلف في مقطعين');
   assert.equal(rowStatus(entry({ arabic: ar({ matched: null }) })).tone, 'success', 'لا بصمة: لا تحذير');
   const review = rowStatus(entry({ arabic: ar({ edited: true, matched: false, missing: 1 }), summary: summary({ marks: { todo: 2, done: 0 } }) }));
   assert.deepEqual([review.text, review.tone], ['تحتاج مراجعة (2)', 'info']);

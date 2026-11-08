@@ -543,7 +543,7 @@ test('«نص دراسي…»: الصيغة واللغة ومعاينة الاس�
     assert.equal(fileName(), `${IDS[0]}.ar.study.txt`);
     // مقطّعتان (الصيغة واللغة) بخيارات radio حقيقية، والمعاينة تحت «اسم الملف».
     assert.equal(o.content.querySelectorAll('fieldset.tj-seg').length, 2);
-    assert.deepEqual(findAll(o.content, (e) => e.classList.contains('tj-seg__label')).map(textOf), ['TXT', 'Markdown', 'الترجمة وحدها', 'ثنائي · الترجمة والأصل']);
+    assert.deepEqual(findAll(o.content, (e) => e.classList.contains('tj-seg__label')).map(textOf), ['TXT', 'Markdown', 'الترجمة وحدها', 'باللغتين · الترجمة والأصل']);
     const hint = findAll(o.content, (e) => e.classList.contains('tj-field__hint') && textOf(e) === MD_HINT)[0];
     assert.equal(hint.hidden, true, 'تلميح روابط الأوقات لـMarkdown وحده');
     const md = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('value') === 'md')[0];

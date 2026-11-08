@@ -638,7 +638,7 @@ test('المرجع عند تعدد التصديرات: قائمة بالمقتر
         assert.match(allText(o.content), /غير مؤكد/);
         select.value = '';
         select.dispatchEvent({ type: 'change' });
-        assert.match(allText(o.content), /لا بصمة للمقارنة/);
+        assert.match(allText(o.content), /لا مرجع للمقارنة بالأصل/);
         return true;
       },
     },
