@@ -33,7 +33,7 @@ const BACKGROUND = {
   chromium: '{"service_worker":"background/worker.js"}',
   firefox: '{"scripts":["background/worker.js"]}',
 };
-// Gecko المعتمد (store/README.md §٥): المعرّف، وأدنى إصدار 140، ولا جمع بيانات دون موافقة، والفئتان الاختياريتان وحدهما:
+// Gecko المعتمد (store/README.md §٥): المعرّف، وأدنى إصدار 144 (Q08، مصدره scripts/targets.mjs)، ولا جمع بيانات دون موافقة، والفئتان الاختياريتان وحدهما:
 // البلاغ (T2.1) وصور المحفوظات (قرار سلطان 2026-11-04)، ولا gecko_android (سطح المكتب وحده).
 const GECKO_SETTINGS = '{"gecko":{"id":"tarjuman@bysltan.com","strict_min_version":"144.0","data_collection_permissions":{"required":["none"],"optional":["technicalAndInteraction","browsingActivity"]}}}';
 // قناة البلاغات (جولة النشر T2.1): إذن مضيف اختياري لخادمها وحده، يُطلب عند أول إرسال؛ والإلزامية كما هي.

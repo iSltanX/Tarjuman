@@ -1,6 +1,6 @@
 # ترجمان — تعليمات وكلاء التدقيق (Codex وGemini)
 
-ترجمان إضافة للحاسوب لمتصفحات Chrome وEdge وBrave وFirefox تعمل على يوتيوب: تستخرج الترجمة الإنجليزية إلى SRT، ويترجمها المستخدم بنموذج خارجي، ثم تعرض الملف العربي فوق الفيديو مع ضبط التوقيت والتحرير والحفظ لكل فيديو. **المعالجة والحفظ محليان**، ولا يخرج شيء من الجهاز إلا ما يعلنه [`PRIVACY.md`](PRIVACY.md): صور الفيديو في المحفوظات من خوادم يوتيوب (ولها مفتاح يطفئها)، والبلاغ الذي يرسله المستخدم بنفسه. الإصدار الثاني (`1.0.0`) موسوم `tj-v2`، ثم دُمجت بعده جولات الواجهات والهوية على `main`. وجولة النشر للمتاجر على الفرع `tj/store-release` ([`docs/store-release.md`](docs/store-release.md))، ورقم إصدارها في `src/manifest.json`.
+ترجمان إضافة للحاسوب لمتصفحات Chrome وEdge وBrave وFirefox تعمل على يوتيوب وتترجم من أي لغة إلى لغتك: تستخرج الترجمة التي يوفّرها يوتيوب إلى SRT، ويترجمها المستخدم بنموذج خارجي، ثم تعرض الملف المترجم فوق الفيديو مع ضبط التوقيت والتحرير والحفظ لكل فيديو. **المعالجة والحفظ محليان**، ولا يخرج شيء من الجهاز إلا ما يعلنه [`PRIVACY.md`](PRIVACY.md): صور الفيديو في المحفوظات من خوادم يوتيوب (ولها مفتاح يطفئها)، والبلاغ الذي يرسله المستخدم بنفسه. الإصدار الثاني (`1.0.0`) موسوم `tj-v2`، ثم دُمجت بعده جولات الواجهات والهوية على `main`. وجولة النشر للمتاجر على الفرع `tj/store-release` ([`docs/store-release.md`](docs/store-release.md))، ورقم إصدارها في `src/manifest.json`.
 
 ## المهمة: تدقيق قراءة فقط
 
@@ -14,7 +14,7 @@
 1. [`CLAUDE.md`](CLAUDE.md): الحالة والقواعد الثابتة.
 2. [`docs/delivery/runbook.md`](docs/delivery/runbook.md): الأدوار والفحوص.
 3. [`docs/product-spec.md`](docs/product-spec.md): النطاق والقرارات، والعقود في [`docs/contracts/`](docs/contracts/).
-4. [`docs/ui-polish.md`](docs/ui-polish.md) و[`docs/ui-redesign.md`](docs/ui-redesign.md) و[`docs/identity-v4.md`](docs/identity-v4.md): الواجهات بعد الإصدار الأول، والهوية البصرية المعتمدة.
+4. [`docs/aa-plan.md`](docs/aa-plan.md): جولة 2.0.0 (حرية اللغات والهوية الرابعة)، وهي مدموجة في `main`. و[`docs/ui-polish.md`](docs/ui-polish.md) و[`docs/ui-redesign.md`](docs/ui-redesign.md) و[`docs/identity-v4.md`](docs/identity-v4.md): الواجهات بعد الإصدار الأول، والهوية البصرية المعتمدة.
    وعلى فرع النشر: [`docs/store-release.md`](docs/store-release.md) و[`store/README.md`](store/README.md)، وخطة إصلاح تدقيق `7a66f91` في [`docs/audit-7a66f91/`](docs/audit-7a66f91/README.md).
 5. [`docs/known-limitations.md`](docs/known-limitations.md) والملاحظات المسجّلة في [`docs/waves/W8.md`](docs/waves/W8.md): معروفة، فلا تُبلَّغ خللًا جديدًا إلا بدليل يتجاوزها.
 

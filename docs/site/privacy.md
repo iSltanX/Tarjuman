@@ -17,7 +17,7 @@
 
 ## الخلاصة — `#summary`
 
-- يعمل ترجمان على صفحات مشاهدة يوتيوب وحدها. يستخرج الترجمة التي جلبها مشغّل يوتيوب بنفسه، بأي لغة اخترتها فيه، ويعرض ترجمتك فوق الفيديو، وكل ذلك داخل متصفحك.
+- يُحقن ترجمان في صفحات `www.youtube.com` ويعمل في صفحة المشاهدة. يستخرج الترجمة التي جلبها مشغّل يوتيوب بنفسه، بأي لغة اخترتها فيه، ويعرض ترجمتك فوق الفيديو، وكل ذلك داخل متصفحك.
 - ما يحفظه، من ترجماتك وإعداداتك، يبقى في تخزين الإضافة في هذا المتصفح على هذا الجهاز. ولا يُزامَن مع حسابك في المتصفح ولا مع أي خدمة.
 - لا حساب، ولا مفتاح API، ولا نموذج ذكاء اصطناعي داخل الإضافة، ولا قياس استخدام، ولا إعلانات.
 - **ليس كل شيء محليًا.** يخرج من الإضافة شيئان فقط:
@@ -168,7 +168,7 @@
 
 | القسم | البند | الدليل |
 | --- | --- | --- |
-| الخلاصة | صفحات المشاهدة وحدها | `src/manifest.json`: `content_scripts.matches` = `https://www.youtube.com/*`، و`scripts/check-static.mjs` (`YT`) و`scripts/release/audit.mjs` (`content-scripts-youtube-only`) |
+| الخلاصة | يُحقن في صفحات `www.youtube.com` ويعمل في صفحة المشاهدة | `src/manifest.json`: `content_scripts.matches` = `https://www.youtube.com/*`، و`scripts/check-static.mjs` (`YT`) و`scripts/release/audit.mjs` (`content-scripts-youtube-only`) |
 | الخلاصة | الترجمة التي جلبها المشغّل، بأي لغة | `src/main-world/capture.js` (غلافا fetch وXHR يقرآن الرد)، و`src/extract/capture-adapter.js` (لا شرط لغة منذ AA1)، و`docs/contracts/extraction.md`؛ T3: «الجسر» و«الالتقاط» |
 | الخلاصة، ما يُحفظ | تخزين الإضافة المحلي، ولا مزامنة | `src/core/store/area.js` (`api.storage.local` وحده)، و`scripts/check-static.mjs` (التخزين خارج `src/core/store` ممنوع، ولا `localStorage` ولا IndexedDB)؛ ولا `storage.sync` في `src/` |
 | الخلاصة | لا حساب ولا مفتاح ولا نموذج ولا قياس ولا إعلان | لا طلب شبكة في الحزمة إلا المسمّى: `scripts/release/audit.mjs` (`no-external-connection-or-forbidden-code` و`FETCH_OK` و`URL_OK`) و`scripts/check-static.mjs`؛ `docs/product-spec.md` §١ |

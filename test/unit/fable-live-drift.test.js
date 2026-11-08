@@ -45,10 +45,16 @@ test('FA-06: فئات ترجمان في محدِّدات السكربتات ال
 
 test('FA-06: كل سكربت حي يذكره إجراء الصيانة موجود وغير مستبدَل', async () => {
   const doc = await readFile(path.join(ROOT, 'docs/maintenance.md'), 'utf8');
-  const refs = [...new Set([...doc.matchAll(/node (test\/[\w/.-]+\.mjs)/g)].map((m) => m[1]))];
+  // كل ذكر لمسار سكربت حي، لا ما يلي «node» وحده (تدقيق V2، U-056): ذكر مستبدَل بلا أمر يضلل مثله.
+  const refs = [...new Set([...doc.matchAll(/(test\/[\w/.-]+\.mjs)/g)].map((m) => m[1]))];
   assert.ok(refs.length >= 4, refs.join());
   for (const rel of refs) {
     const text = await readFile(path.join(ROOT, rel), 'utf8');
     assert.equal(SUPERSEDED.test(head(text)), false, `${rel} مستبدَل ويذكره الإجراء`);
   }
+});
+
+test('U-056: دليل الصيانة بلا خطوة نسخ تعليمات من شريط المشغّل (أُزيل في AA3)', async () => {
+  const doc = await readFile(path.join(ROOT, 'docs/maintenance.md'), 'utf8');
+  assert.doesNotMatch(doc, /نسخ تعليمات الترجمة|ثم «نسخ التعليمات» في كل تبويب/);
 });

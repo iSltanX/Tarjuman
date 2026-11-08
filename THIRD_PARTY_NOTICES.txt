@@ -205,7 +205,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 1.4 Nothing else: Tarjuman ships no third-party runtime library, no remote code and no machine-learning model.
-Translation into Arabic is done by the user, outside the extension, with a service of their own choosing.
+Translation from any language into the language of the user's choice is done by the user, outside the extension, with a service of their own choosing.
 
 ==============================================================================
 PART 2 — Build and test tools (not included in the extension package)

@@ -527,7 +527,7 @@ export function createSettings(env) {
   const glossary = glossaryControl({ doc, getPrefs: () => prefs, savePrefs, addTerm, removeTerm, attachMark: glossaryAttachMark, listMark: glossaryListMark });
   sync.push(() => glossary.sync());
   const glossarySection = section(byId.glossary,
-    row('الإرفاق', glossaryAttachMark, glossary.attachRow, note('حين يكون في القاموس مصطلحات، تُرفق بتعليمات الترجمة التي تنسخها من المشغّل أو المحفوظات.')),
+    row('الإرفاق', glossaryAttachMark, glossary.attachRow, note('حين يكون في القاموس مصطلحات، تُرفق بتعليمات الترجمة التي تنسخها من نافذة الإضافة أو المحفوظات، ومع ملف الاستكمال في المحرّر.')),
     row('القاموس', glossaryListMark, el('div', { className: 'st-gl__head', children: [glossary.counter], doc }), glossary.list));
 
   // ---- التخزين ----

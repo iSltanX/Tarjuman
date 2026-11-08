@@ -83,9 +83,10 @@ export async function sourceFiles() {
 export function sourceReadme(version) {
   return `Tarjuman ${version} — source code for Firefox Add-ons review
 
-Tarjuman is a browser extension that works on YouTube watch pages: it exports the video's English
-captions to an SRT file, which the user translates outside the extension, and shows the user's
-Arabic SRT file over the video. This archive holds everything needed to rebuild the submitted package.
+Tarjuman is a browser extension that works on YouTube watch pages: it exports the video's subtitle
+track (in any language the user picks in YouTube's own menu) to an SRT file, which the user translates
+outside the extension into a language of their choice, and shows the user's translated SRT file over
+the video. This archive holds everything needed to rebuild the submitted package.
 
 How the package is built
   scripts/build.mjs bundles each entry point with esbuild into one IIFE file. The only minification

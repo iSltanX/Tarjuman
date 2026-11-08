@@ -56,7 +56,10 @@ test('U60: الجذر وأبوه وsrc وما تحتها (ومنه src/..foo) و
   assert.match(await outDirProblem(path.join(ROOT, '.git'), root), /داخل \.git/);
   assert.match(await outDirProblem(path.join(tmp, 'x', '.git', 'y'), root), /داخل \.git/);
   assert.match(await outDirProblem(path.join(ROOT, 'docs'), root), /ما لا يكتبه البناء/);
-  assert.match(await outDirProblem(os.homedir(), root), /ما لا يكتبه البناء|جذر المستودع/);
+  // مجلد «منزل» وهمي فيه ملف غريب، لا os.homedir(): الاختبار لا يفترض أن منزل المستخدم الحقيقي مقروء (تدقيق V2، U-055).
+  await mkdir(path.join(tmp, 'fake-home'));
+  await writeFile(path.join(tmp, 'fake-home', 'notes.txt'), 'x');
+  assert.match(await outDirProblem(path.join(tmp, 'fake-home'), root), /ما لا يكتبه البناء/);
   assert.equal(await outDirProblem(path.join(tmp, 'absent'), root), null);
   await mkdir(path.join(tmp, 'empty'));
   assert.equal(await outDirProblem(path.join(tmp, 'empty'), root), null);

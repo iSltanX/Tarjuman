@@ -114,7 +114,7 @@ export function generate() {
 
   out.push('');
   out.push('1.4 Nothing else: Tarjuman ships no third-party runtime library, no remote code and no machine-learning model.');
-  out.push('Translation into Arabic is done by the user, outside the extension, with a service of their own choosing.');
+  out.push('Translation from any language into the language of the user\'s choice is done by the user, outside the extension, with a service of their own choosing.');
 
   out.push(rule('PART 2 — Build and test tools (not included in the extension package)'));
   out.push('Used to build and check Tarjuman from source, and listed for attribution. Versions are the ones locked in');

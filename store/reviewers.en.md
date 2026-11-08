@@ -100,7 +100,7 @@ Arabic sample (test.ar.srt):
 
 | الجملة | الدليل |
 | --- | --- |
-| لا حساب ولا دفع، وصفحات المشاهدة وحدها | `src/manifest.json` (`content_scripts.matches`)، و`docs/product-spec.md` §١ |
+| لا حساب ولا دفع، ويُحقن في صفحات www.youtube.com ويعمل في صفحة المشاهدة | `src/manifest.json` (`content_scripts.matches`)، و`docs/product-spec.md` §١ |
 | أسماء الأزرار والملف | `src/player/controls/text.js` (`LABELS`)، و`src/core/export/names.js`؛ واسم الملف كما نزّلته الجلسة اليدوية (`docs/evidence/T6/manual/hand.json`) |
 | المقارنة لا تعدّل بصمت | `docs/contracts/data-model.md` §٥ |
 | غلافا fetch وXHR يقرآن الرد ولا يطلبان | `src/main-world/capture.js` |
