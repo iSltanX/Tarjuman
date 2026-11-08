@@ -16,7 +16,8 @@ function patchAttrs(from, to) {
     const v = to.getAttribute(name);
     if (from.getAttribute(name) !== v) from.setAttribute(name, v);
   }
-  if ('value' in to && from.value !== to.value) from.value = to.value;
+  // قيمة select تُضبط بعد تحديث أبنائه (morphChildren): الخيارات تُطابَق بالموضع، فضبطها قبلها يختار خيارًا مجاورًا (U-029).
+  if (from.tagName !== 'SELECT' && 'value' in to && from.value !== to.value) from.value = to.value;
   if ('checked' in to && from.checked !== to.checked) from.checked = to.checked;
 }
 
@@ -47,8 +48,11 @@ export function morphChildren(parent, next) {
     const old = current[k];
     j = k + 1;
     patchAttrs(old, n);
+    // القيمة المطلوبة تُقرأ قبل أن تنتقل أبناء n إلى old، ثم تُطبَّق بعد استقرار الخيارات.
+    const wanted = old.tagName === 'SELECT' && 'value' in n ? n.value : undefined;
     if (n.children.length) inserted += morphChildren(old, [...n.children]);
     else if (old.children.length || old.textContent !== n.textContent) old.textContent = n.textContent;
+    if (wanted !== undefined && old.value !== wanted) old.value = wanted;
   }
   for (const extra of current.slice(j)) extra.remove();
   return inserted;

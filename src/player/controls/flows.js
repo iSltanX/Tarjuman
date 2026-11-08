@@ -6,11 +6,41 @@
 // كل تدفق يثبّت معرّف الفيديو عند بدئه، فنتيجة تأخرت حتى تبدّل الفيديو لا تُطبَّق على الجديد أبدًا.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { previewComparison, videoIdFromName, withSuggestedReference } from '../../core/import/index.js';
+import { DEFAULT_DRIFT_MS, compare } from '../../core/compare/index.js';
 import { textFitsLang } from '../../core/lang/index.js';
+import { LIMITS } from '../../core/model/validate.js';
 
 export { textFitsLang };
 
 const infoOf = (code, params) => ({ code, message: messageFor(code, params) });
+
+/**
+ * تقرير الحفظ بالرقم بلغة الملف المقترحة أو المختارة (U-026)، كما يحسبه applyUpload في المحفوظات: readImport يحسبه بلغة الاسم وحدها،
+ * فإذا اختلفت لغة الملف عنها (من «إلى» أو من التأكيد) أُعيد بـcompare(…، {target}) كي لا يُحفظ فحص «غير مترجم» غير ما عُرض.
+ */
+function reportForLang(input, fingerprints, settings, lang) {
+  const fp = input.fingerprintId ? fingerprints.find((f) => f.id === input.fingerprintId) ?? null : null;
+  const driftMs = settings?.thresholds?.driftMs ?? DEFAULT_DRIFT_MS;
+  const report = compare(input.cues, fp, { driftMs, target: lang });
+  return { ...report, notes: [...(input.notes ?? []), ...report.notes].slice(0, LIMITS.maxNotes) };
+}
+
+/**
+ * معاينة نتيجة قراءة بلغة ملف أخرى (تغيير «لغة الملف» في التأكيد): المعاينة بالمحاذاة بالمرجع نفسه، واللغة هدفُ فحص «غير مترجم».
+ * @param {{ controller: object, read: { input: object }, lang: string | null }} p
+ */
+export function previewFor({ controller, read, lang }) {
+  const s = controller.getState();
+  const { input } = read;
+  const fingerprints = s.saved?.fingerprints ?? [];
+  const fp = input.fingerprintId ? fingerprints.find((f) => f.id === input.fingerprintId) ?? null : null;
+  if (!fp) return reportForLang(input, fingerprints, s.settings, lang);
+  try {
+    return previewComparison(input.cues, fp, { settings: s.settings, notes: input.notes, target: lang });
+  } catch {
+    return reportForLang(input, fingerprints, s.settings, lang);
+  }
+}
 
 /**
  * التصدير لمسار ملتقط بوضعه: المقاطع كما يعطيها المتحكم (لا إزاحة فيها أبدًا)، والملفات والبصمة. لا تعليمات هنا (AA3).
@@ -149,11 +179,13 @@ export async function readFor({ controller, importFlow, files, fallbackLang = nu
       // فحص المرجع تحسين: تعذّره يُبقي اختيار readImport.
     }
   }
-  const { fileName, cues, comparison, fingerprintId, notes } = res;
+  const { fileName, cues, fingerprintId, notes } = res;
   // لغة الملف من رمز صريح في اسمه (AA1)، وإلا «إلى» في نافذة الإضافة إن وافق نص الملف نص كتابتها، وإلا «غير محددة»؛ وتُغيَّر في
   // التأكيد وفي قائمة الترجمة (AA3).
   const fileLang = res.lang ?? null;
   const lang = fileLang ?? (fallbackLang && textFitsLang(cues, fallbackLang) ? fallbackLang : null);
+  // تقرير الحفظ بلغة الملف المقترحة (U-026): readImport حسبه بلغة الاسم وحدها.
+  const comparison = lang === fileLang ? res.comparison : reportForLang({ cues, fingerprintId, notes }, fingerprints, s.settings, lang);
   // المعاينة بالمحاذاة بمرجع الحفظ نفسه؛ وبلا مرجع محفوظ أو بتعذّرها يبقى تقرير الرقم كما هو.
   let preview = comparison;
   const fp = fingerprintId ? fingerprints.find((f) => f.id === fingerprintId) ?? null : null;
@@ -206,7 +238,12 @@ export async function nameHintFor({ controller, importFlow, read }) {
 export async function loadIntoFor({ controller, read, n, replace, current = null, lang }) {
   if (controller.getState().videoId !== read.videoId) return { ok: false, error: infoOf('CT_VIDEO_CHANGED') };
   // لغة اختارها المستخدم في التأكيد تحل محل المقترحة (AA3).
-  const input = lang === undefined ? read.input : { ...read.input, lang };
+  let input = lang === undefined ? read.input : { ...read.input, lang };
+  // تغيّرت لغة الملف في التأكيد: يُحسب تقرير الحفظ بها (U-026)، فيطابق ما عُرض ما يُحفظ.
+  if (lang !== undefined && lang !== (read.input.lang ?? null)) {
+    const s = controller.getState();
+    input = { ...input, comparison: reportForLang(input, s.saved?.fingerprints ?? [], s.settings, lang) };
+  }
   try {
     await controller.loadArabicInto(n, current ? { ...input, current } : input, { replace });
     return { ok: true };

@@ -2,6 +2,7 @@
 // القوائم ظاهرة في ملء الشاشة)، بـShadow DOM مغلق. القوائم والتلميحات تتبع ظهور الشريط (تختفي معه)، إلا قائمة فيها
 // التركيز يكتب المستخدم في حقلها (product-spec §٦.٤، قرار سلطان في W4): تبقى ظاهرة حتى يغادر حقلها أو يغلقها. والرسائل
 // العابرة غير حاجبة فوق موضع الشريط. لا تلتقط الطبقة النقرات إلا على قائمة أو رسالة، ولا تصل منها ضغطة إلى اختصارات يوتيوب.
+import { onHold } from '../../ui/hold.js';
 import { createSheet } from '../overlay/sheet.js';
 import { glyph } from './glyphs.js';
 import { morphChildren } from './morph.js';
@@ -193,6 +194,8 @@ export function createLayer({ doc, win, on }) {
     box.setAttribute('data-tone', t.tone);
     box.setAttribute('data-id', t.id);
     box.setAttribute('role', t.tone === 'error' || t.tone === 'warning' ? 'alert' : 'status');
+    // المؤشر والتركيز يُمسكان مؤقت زوالها (WCAG 2.2.1؛ U-042)، والجلسة تملك المؤقت.
+    onHold(box, (why, held) => on.toastHold?.(t.id, why, held));
     const g = glyph(doc, t.icon ?? t.tone);
     const tx = doc.createElement('span');
     tx.className = 'text';

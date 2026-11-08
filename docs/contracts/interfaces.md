@@ -354,6 +354,7 @@ seekMainVideo(ms, { doc }) → boolean          // video.currentTime = ms / 1000
 - أصناف CSS بالبادئة `tj-` في `components.css`. والتوقيعات كما في الشيفرة، ومعرضها `src/ui/gallery/` (بناء التطوير).
 - **تدقيق 7a66f91، C7 (الوصول والتركيز):**
   - `createToaster().show(text, tone, { action?, announce?, focusAfter? })`: الرسالة تثبت ما دام المؤشر أو التركيز فيها وتعيد مهلتها كاملة بعد مغادرتهما (WCAG 2.2.1)، و`announce` نص الإعلان إن خالف المرئي، و`focusAfter` وجهة التركيز إن زالت الرسالة وفيها التركيز (ضغطة «تراجع» أو إزاحتها برابعة) بدل body (U58).
+  - **التدقيق الموحد V2، U-042:** آلية الإمساك نفسها في `src/ui/hold.js` (`holdTimer` و`onHold`، وتُصدَّر من `toast.js`) بلا اعتماد على المكوّنات، وعليها رسائل «تراجع» المحلية الثلاث: المشغّل (6 ث، `controls/session.js` و`layer.js`) واللوحة (6 ث، `panel/session.js` و`view.js`) والمحرّر (7 ث، `editor/app.js`، وينتقل التركيز عند زوالها إلى ما كان عليه قبل الرسالة). لا مؤقت يزيل رسالة المؤشر فوقها أو التركيز فيها.
   - `createMenu`: عنوان المجموعة (`{ kind: 'group' }`) عنصر `role="group"` باسمه يضم بنود مجموعته حتى الفاصل التالي، والعنوان المرئي `aria-hidden` (كان `role="presentation"` فلا يصل). و`closeMenuWithin(container)` يغلق القائمة المفتوحة داخل حاوية تُعاد بناؤها فلا يبقى مستمعها على المستند (U58).
   - `confirmDialog`: `aria-labelledby` إلى العنوان، و`aria-describedby` إلى النص أو المحتوى إن لم يكن نص (U51).
   - `button({ disabledReason })`: السبب في عنصر `aria-hidden` يشير إليه `aria-describedby`، فلا يدخل اسم الزر المحسوب من محتواه (U91؛ ومثله `setDisabled` في المحرّر). والخاصية `value` والسمة معًا.

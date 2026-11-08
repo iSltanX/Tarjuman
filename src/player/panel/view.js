@@ -2,6 +2,7 @@
 // بـtextContent وعناصر DOM (لا HTML نصي أبدًا). أشكال أربعة بحسب النموذج: لا شيء، وزر مغلقة، ولوحة مفتوحة (هيكل التحميل،
 // وخطوات «لا ترجمة»، وخطأ، وصفوف جاهزة)، ورسالة التراجع. لا يعرف المتحكم: يستقبل النموذج ويستدعي on.* لأفعال المستخدم.
 import { COUNT_FORMS, formatCount } from '../../ui/format.js';
+import { onHold } from '../../ui/hold.js';
 import { createSheet } from '../overlay/sheet.js';
 import { el, icon, mark, setAttr, setClass, setHidden, setText } from './dom.js';
 import { HOST_ID, NARROW_MAX, WIDE_MIN, panelCss } from './styles.js';
@@ -218,6 +219,8 @@ export function createPanelView({ doc, win, on }) {
   ]);
 
   shell.append(panel, toast);
+  // المؤشر أو التركيز على الرسالة يمسك مؤقت زوالها (WCAG 2.2.1؛ U-042)، والجلسة تملك المؤقت.
+  onHold(toast, (why, held) => on.toastHold?.(why, held));
 
   // ———— عزل لوحة المفاتيح، وقائمة الخيارات ————
   let menuOpen = false;

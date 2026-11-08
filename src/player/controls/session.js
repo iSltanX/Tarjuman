@@ -5,9 +5,10 @@ import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
 import { rankUsable } from '../../core/model/track-order.js';
 import { formatOffset } from '../../ui/format.js';
+import { holdTimer } from '../../ui/hold.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
 import { fitSize, watchBar } from './bar.js';
-import { loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
+import { loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
@@ -95,6 +96,8 @@ function freshUi(videoId) {
     tipMuted: /** @type {string | null} */ (null),
     flash: /** @type {string | null} */ (null),
     switching: false,
+    /** لغة الترجمة المطلوبة أثناء تبديلها (U-029): تُرسم في المنتقي حتى يتم الحفظ، ثم تعود الحالة الحقيقية. undefined = لا تبديل. */
+    pendingLang: /** @type {string | null | undefined} */ (undefined),
     download: {
       key: null, mode: null, why: false, fallback: false, split: false, splitSize: null, splitError: null, busy: false,
       saveLine: null, result: [], preview: null,
@@ -135,6 +138,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   const toastActions = new Map();
   let toastSeq = 0;
   const timers = new Map();
+  /** مؤقتات زوال الرسائل الموقوتة بمعرّفها: يُمسكها المؤشر والتركيز كالرسالة المشتركة (U-042). */
+  const toastHolds = new Map();
   let seenNotice = null;
   let seenError = null;
   const h = builder(doc);
@@ -162,6 +167,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       escape: () => closeMenu(true), files: onFiles, focusLeave, tipHover: onTipHover,
       // زالت رسالة فيها التركيز (انقضت أو فُعّل «تراجع» بلوحة المفاتيح): إلى «الترجمة» في الشريط لا إلى الصفحة (U88).
       focusLost: () => { if (!destroyed) group.focus('upload'); },
+      // المؤشر أو التركيز على رسالة موقوتة (فيها «تراجع» غالبًا) يمسك مؤقتها حتى يغادرها (WCAG 2.2.1؛ U-042).
+      toastHold: (id, why, held) => toastHolds.get(id)?.hold(why, held),
     },
   });
 
@@ -257,12 +264,13 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   function displayModel(s) {
     const a = s.arabic;
     const slots = slotsOf(s);
+    const lang = ui.switching && ui.pendingLang !== undefined ? ui.pendingLang : a.lang ?? null;
     return {
       fileName: a.fileName, count: a.cues.length, edited: a.edited, comparison: a.comparison, notes: a.comparison?.notes ?? [],
       slots, switching: s.loading || ui.switching, uploadLabel: slots.some((x) => !x.filled) ? LABELS.uploadMore : LABELS.replace,
       warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, originalLang: s.english?.lang ?? null, busy: ui.upload.busy, error: ui.upload.error,
       // لغة الترجمة النشطة (AA3) ومقترحاتها: الحالية، ثم «إلى» في النافذة، ثم الأخيرة.
-      lang: a.lang ?? null, langSuggested: [a.lang, ...pairTargets(s)].filter(Boolean),
+      lang, langSuggested: [lang, ...pairTargets(s)].filter(Boolean),
       // الإعلان لحظة الرسم (فتح القائمة بعد بدئه)؛ وتغيّره والقائمة مفتوحة يعيد الرسم من الفحص الدوري (flags.ad).
       ad: isAdShowing(doc),
     };
@@ -485,6 +493,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   }
 
   function clearTimer(key) {
+    toastHolds.get(key)?.cancel();
+    toastHolds.delete(key);
     if (!timers.has(key)) return;
     win.clearTimeout(timers.get(key));
     timers.delete(key);
@@ -512,7 +522,14 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       clearTimer(old.id);
       toastActions.delete(old.id);
     }
-    if (!persist) later(id, action ? UNDO_MS : TOAST_MS, () => dismissToast(id));
+    if (!persist) {
+      const hold = holdTimer({
+        ms: action ? UNDO_MS : TOAST_MS, onExpire: () => { if (!destroyed) dismissToast(id); },
+        setTimer: (fn, ms) => win.setTimeout(fn, ms), clearTimer: (tid) => win.clearTimeout(tid),
+      });
+      toastHolds.set(id, hold);
+      hold.arm();
+    }
     renderToasts();
   }
 
@@ -713,7 +730,14 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         return;
       case 'download': startDownload(); return;
       case 'slotLang': setSlotLang(value); return;
-      case 'uploadLang': if (ui.upload.pending && !ui.upload.busy) ui.upload.pending.lang = value ?? null; break;
+      case 'uploadLang':
+        if (ui.upload.pending && !ui.upload.busy) {
+          const pending = ui.upload.pending;
+          pending.lang = value ?? null;
+          // المعاينة تتبع لغة الملف المختارة (U-026): فحص «غير مترجم» بها لا بلغة الاسم.
+          pending.preview = previewFor({ controller, read: pending, lang: pending.lang });
+        }
+        break;
       case 'displayMode': setMode(value); return;
       case 'slot': activate(Number(value)); return;
       case 'mark': markVisible(); return;
@@ -777,6 +801,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if ((s.arabic?.lang ?? null) === (lang ?? null)) return;
     const mine = ui;
     mine.switching = true;
+    mine.pendingLang = lang ?? null;
     render();
     try {
       await controller.setSlotLang(n, lang ?? null);
@@ -787,6 +812,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     if (destroyed || ui !== mine) return;
     mine.switching = false;
+    mine.pendingLang = undefined;
     render();
   }
 
@@ -1235,6 +1261,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     doc.removeEventListener('keydown', onDocKey, true);
     for (const id of timers.values()) win.clearTimeout(id);
     timers.clear();
+    for (const h of toastHolds.values()) h.cancel();
+    toastHolds.clear();
     group.destroy();
     layer.destroy();
   }

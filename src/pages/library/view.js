@@ -405,7 +405,13 @@ export function createLibrary(env) {
     const all = scope === 'all';
     const n = b.active;
     const hasTranslations = b.slots.some((x) => x.track);
-    const summary = deleteSummary(b, all ? { scope: 'all' } : { scope: 'slot', n });
+    // زوج اللغات المحفوظ لهذا الفيديو يُحذف مع بياناته كلها (U-019، store.deleteVideo)، فيُذكر في الملخص؛ ويُقرأ طازجًا قبل الحوار.
+    let pair = false;
+    if (typeof store.getLangPrefs === 'function') {
+      const lp = await store.getLangPrefs().catch(() => state.langPrefs);
+      pair = Boolean(lp?.videos?.[m.videoId]);
+    }
+    const summary = deleteSummary(b, all ? { scope: 'all' } : { scope: 'slot', n }, { pair });
     const ok = await confirm({
       title: all ? 'حذف بيانات هذا الفيديو؟' : `حذف الترجمة النشطة (${n})؟`,
       confirmLabel: all ? 'حذف نهائيًا' : 'حذف', tone: 'danger', doc,

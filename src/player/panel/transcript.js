@@ -156,6 +156,24 @@ export function createTranscript({ doc, onSeek }) {
    */
   function sync(s) {
     if (cues === s.cues && originalRef === s.originalCues) {
+      // المقاطع نفسها ولغة الخانة أو الأصل تغيّرت (U-030): تُحدَّث lang وdir للعناصر القائمة بلا إعادة بناء.
+      const nextTr = s.translationLang ?? null;
+      const nextEn = s.originalLang ?? null;
+      if (nextTr !== translationLang || nextEn !== originalLang) {
+        translationLang = nextTr;
+        originalLang = nextEn;
+        for (const row of rowEls) {
+          for (const span of row.children[1].children) {
+            if (span.className === 'ar') {
+              span.setAttribute('dir', textDirection(span.textContent, translationLang));
+              span.setAttribute('lang', translationLang ?? 'und');
+            } else if (span.className === 'en') {
+              span.setAttribute('dir', textDirection(span.textContent, originalLang));
+              span.setAttribute('lang', originalLang ?? 'en');
+            }
+          }
+        }
+      }
       if (s.offsetMs === offsetMs) return { rebuilt: false, relabeled: false };
       offsetMs = s.offsetMs;
       for (let i = 0; i < rowEls.length; i++) {

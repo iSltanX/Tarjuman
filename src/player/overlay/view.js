@@ -55,6 +55,13 @@ export function createOverlayView({ doc, win }) {
     return el;
   }
 
+  /** تغيّرت لغة سطر معروض (U-030): يُعاد رسم الظاهر بسمتي lang وdir الجديدتين دون انتظار المقطع التالي. */
+  function redrawShown() {
+    if (!shown.ar.length && !shown.en.length) return;
+    stage.replaceChildren(...shown.ar.map((t) => line(t, 'ar')), ...shown.en.map((t) => line(t, 'en')));
+    publishStage();
+  }
+
   function cancelFade() {
     if (!fadeTimer) return;
     win.clearTimeout(fadeTimer);
@@ -111,12 +118,18 @@ export function createOverlayView({ doc, win }) {
 
     /** @param {string | null | undefined} lang رمز لغة مسار الأصل (يُطبَّق على الأسطر التالية). */
     setLang(lang) {
-      enLang = lang ? String(lang) : 'en';
+      const next = lang ? String(lang) : 'en';
+      if (next === enLang) return;
+      enLang = next;
+      redrawShown();
     },
 
     /** @param {string | null | undefined} lang رمز لغة الترجمة، أو null «غير محددة» (AA1؛ يُطبَّق على الأسطر التالية). */
     setTranslationLang(lang) {
-      trLang = lang ? String(lang) : null;
+      const next = lang ? String(lang) : null;
+      if (next === trLang) return;
+      trLang = next;
+      redrawShown();
     },
 
     /** @param {{ background: 'none' | 'soft' | 'solid' }} a */

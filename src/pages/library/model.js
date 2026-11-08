@@ -397,7 +397,13 @@ const numbers = (list) => (list.length > LIST_LIMIT ? `${list.slice(0, LIST_LIMI
  */
 export function comparisonSummary(r) {
   if (!r || r.fingerprintId === null) return { tone: 'info', lines: ['لا بصمة للمقارنة؛ عُرض الملف كما هو.'] };
-  if (r.matched) return { tone: 'success', lines: ['مطابق للأصل'] };
+  // الفارغ وغير المترجم لا يمنعان matched بعقد البيانات، لكنهما تحذير يُقال بعد سطر المطابقة البنيوية (U-027) كما في المحرّر.
+  const warn = [];
+  const empty = r.empty ?? [];
+  const untranslated = r.noArabic ?? [];
+  if (empty.length) warn.push(`${formatCount(empty.length, NOUN.empty)} (لم يترجمها النموذج): ${numbers(empty)}`);
+  if (untranslated.length) warn.push(`${formatCount(untranslated.length, COUNT_FORMS.cue)} بلا ترجمة: ${numbers(untranslated)}`);
+  if (r.matched) return warn.length ? { tone: 'warning', lines: ['مطابق للأصل', ...warn] } : { tone: 'success', lines: ['مطابق للأصل'] };
   const lines = [];
   if (r.countSource !== null && r.countSource !== r.countTarget) lines.push(`عدد المقاطع: ${r.countTarget} من ${r.countSource}`);
   if (r.missing.length) lines.push(`${formatCount(r.missing.length, NOUN.missing)}: ${numbers(r.missing)}`);
@@ -406,7 +412,7 @@ export function comparisonSummary(r) {
   if (r.renumbered) lines.push('ترقيم المقاطع يختلف عن الملف المصدَّر، فقورنت بتوقيتها.');
   else if (r.numbering === 'different' && !r.missing.length && !r.extra.length) lines.push('ترقيم المقاطع يختلف عن الملف المصدَّر.');
   if (r.drift.length) lines.push(r.drift.length === 1 ? 'توقيت مختلف في مقطع واحد' : r.drift.length === 2 ? 'توقيت مختلف في مقطعين' : `توقيت مختلف في ${formatCount(r.drift.length, COUNT_FORMS.cue)}`);
-  if (r.empty.length) lines.push(`${formatCount(r.empty.length, NOUN.empty)} (لم يترجمها النموذج): ${numbers(r.empty)}`);
+  lines.push(...warn);
   return { tone: 'warning', lines: lines.length ? lines : ['الملف لا يطابق الملف المصدَّر.'] };
 }
 
@@ -518,9 +524,10 @@ export function slotsPhrase(nums) {
  * ما يُحذف بالضبط وما يبقى، من الحزمة المقروءة قبل حوار التأكيد (لا نص ثابت): بنود لما يوجد فعلًا وحده، فلا يُذكر ما ليس
  * محفوظًا. `slot` حذف ترجمة واحدة (النشطة أو غيرها)، و`all` كل بيانات الفيديو.
  * @param {import('../../core/model/slots.js').Bundle} b @param {{ scope: 'all' } | { scope: 'slot', n: 1 | 2 | 3 }} what
+ * @param {{ pair?: boolean }} [o] pair: للفيديو زوج لغات محفوظ (langPrefs.videos): يُحذف مع بيانات الفيديو كلها (U-019) ويبقى مع حذف ترجمة
  * @returns {{ items: string[], keeps: string[] }}
  */
-export function deleteSummary(b, what) {
+export function deleteSummary(b, what, { pair = false } = {}) {
   const slots = what.scope === 'slot' ? [b.slots[what.n - 1]] : b.slots.filter((s) => s.track);
   const items = [];
   const keeps = [];
@@ -545,11 +552,13 @@ export function deleteSummary(b, what) {
     if (en) items.push(formatCount(en, EN_TRACK_FORMS));
     if (b.record.fingerprints.length) items.push(`بصمات التصدير (${b.record.fingerprints.length})`);
     items.push('سجل الفيديو: العنوان والمدة وإعدادات العرض');
+    if (pair) items.push('زوج لغات هذا الفيديو المحفوظ');
     return { items, keeps };
   }
   const others = b.slots.filter((s) => s.track && s.n !== what.n);
   if (others.length) keeps.push(`${slotsPhrase(others.map((s) => s.n))} تبقى${b.active === what.n ? `، وتصبح الترجمة ${others[0].n} النشطة` : ''}`);
   if (b.previous) keeps.push('النسخة السابقة تبقى');
   if (b.record.english.length) keeps.push('مسارات الأصل والبصمات تبقى');
+  if (pair) keeps.push('زوج لغات الفيديو يبقى');
   return { items, keeps };
 }

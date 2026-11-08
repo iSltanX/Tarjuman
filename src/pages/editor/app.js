@@ -23,6 +23,7 @@ import { slotModels } from '../../core/model/bundle.js';
 import { mergeCues, splitCue } from '../../core/edit/structure.js';
 import { alertBox, button, el, emptyState, ltr, slotPicker, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatTimecode, offsetInline, textDirection } from '../../ui/format.js';
+import { holdTimer, onHold } from '../../ui/hold.js';
 import { createMenu } from '../../ui/menu.js';
 import { pairLabel } from '../../ui/lang.js';
 import { jumpToVideo, openVideo as defaultOpenVideo } from '../../ui/seek.js';
@@ -571,7 +572,7 @@ export async function mountEditor(app, {
       const cues = s.snapshot();
       const cov = coverage ?? fingerprintCoverage(S.fp, cues);
       if (s === S.session) S.coverage = cov;
-      return currentComparison(cues, S.fp, { driftMs: settings.thresholds.driftMs, coverage: cov });
+      return currentComparison(cues, S.fp, { driftMs: settings.thresholds.driftMs, coverage: cov, target: openedLang() });
     } catch {
       return null;
     }
@@ -862,7 +863,7 @@ export async function mountEditor(app, {
     S.refBusy = true;
     renderReferencePanel();
     try {
-      const report = fp ? compare(S.info.original, fp, { driftMs: settings.thresholds.driftMs }) : null;
+      const report = fp ? compare(S.info.original, fp, { driftMs: settings.thresholds.driftMs, target: openedLang() }) : null;
       const comparison = report ? { ...report, notes: [...(S.info.track.notes ?? []), ...report.notes].slice(0, LIMITS.maxNotes) } : null;
       const n = S.slot;
       const b = await queue((opened) => writeReference(store, videoId, opened, n, { fingerprintId: fp?.id ?? null, comparison }, { now }));
@@ -966,7 +967,14 @@ export async function mountEditor(app, {
     counterEl.textContent = `المقطع ${n} من ${s.count}`;
   }
 
-  let toastTimer = 0;
+  /** مؤقت زوال الرسالة الحالية: يُمسك ما دام المؤشر فوقها أو التركيز فيها (WCAG 2.2.1)، كالرسالة المشتركة src/ui/toast.js (U-042). */
+  let toastHold = null;
+  /** العنصر الذي كان عليه التركيز قبل انتقاله إلى الرسالة: وجهته حين تزول وهو فيها (WCAG 2.4.3). */
+  let toastReturn = null;
+  onHold(toastEl, (why, on) => toastHold?.hold(why, on));
+  toastEl.addEventListener('focusin', (e) => {
+    if (e.relatedTarget && !toastEl.contains(e.relatedTarget)) toastReturn = e.relatedTarget;
+  });
   /** رسالة عابرة تحت الرأس، و«تراجع» اختياري لما يمس شيئًا محفوظًا (§١٩.١) بمهلة أطول. */
   function toast(text, tone = 'success', { action } = {}) {
     const undo = action ? button({
@@ -980,12 +988,21 @@ export async function mountEditor(app, {
     toastEl.replaceChildren(...[el('span', { text, doc }), undo].filter(Boolean));
     toastEl.className = `ed-toast ed-toast--${tone}${undo ? ' ed-toast--action' : ''} is-shown`;
     toastEl.removeAttribute('inert');
-    win.clearTimeout(toastTimer);
-    toastTimer = win.setTimeout(hideToast, undo ? 7000 : 3000);
+    toastHold?.cancel();
+    toastHold = holdTimer({ ms: undo ? 7000 : 3000, onExpire: hideToast, setTimer: (fn, ms) => win.setTimeout(fn, ms), clearTimer: (id) => win.clearTimeout(id) });
+    toastHold.arm();
   }
 
   /** المخفية خامدة (inert): زرها خارج ترتيب Tab وشجرة الوصول، فلا يُفعَّل وهو غير مرئي (U21). */
   function hideToast() {
+    toastHold?.cancel();
+    toastHold = null;
+    // التركيز في الرسالة (زر «تراجع» أو غيره): ينتقل قبل أن تخمد إلى ما كان عليه، وإلا إلى القائمة، فلا يسقط إلى body (U-042).
+    if (toastEl.contains(doc.activeElement)) {
+      const back = toastReturn?.isConnected && !toastReturn.hasAttribute('disabled') ? toastReturn : scroller.querySelector('textarea, button, [tabindex]');
+      back?.focus?.();
+    }
+    toastReturn = null;
     toastEl.classList.remove('is-shown');
     toastEl.setAttribute('inert', '');
   }
@@ -1664,6 +1681,7 @@ export async function mountEditor(app, {
   /** حزمة أحدث لم يتغير فيها محتوى خانة التحرير: تصبح المفتوحة (فيقبل الحفظ)، وتُحدَّث العلامات والمرجع والخانات. */
   function adopt(latest) {
     const prevFp = S.fp?.id ?? null;
+    const prevLang = openedLang();
     S.opened = latest;
     S.info = openedSlot(latest, S.slot);
     // المحتوى المفتوح صار مطابقًا للأحدث: لا تعارض قائمًا (ولو ظهرت لافتة قبله).
@@ -1680,6 +1698,11 @@ export async function mountEditor(app, {
     // العلامات والموضع من الحزمة الأحدث (علامة من المشغّل مثلًا) على الصفوف المعروضة. بلا فرض: المحتوى لم يتغير، فلا يُطمس
     // ما يُكتب في الحقل المركّز.
     computeMarks();
+    // تغيّرت لغة الخانة من سياق آخر: فحص «غير مترجم» يتبعها (U-028)، فتُعاد المقارنة الحاضرة.
+    if (openedLang() !== prevLang) {
+      S.comparison = compareNow(act());
+      computeParts();
+    }
     S.list.refresh(null);
     renderAll();
   }

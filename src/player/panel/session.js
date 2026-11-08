@@ -5,6 +5,7 @@
 // الإخفاق رمز في التشخيص. والمقطع الحالي بقاعدة الطبقة نفسها (indexFor.find بـlookupMs)، فيتفق الصف المميَّز مع ما على الشاشة.
 import { TjError, toErrorInfo, messageFor } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
+import { holdTimer } from '../../ui/hold.js';
 import { parseSeconds } from '../controls/text.js';
 import { watchNavigation } from '../watch/navigation.js';
 import { getMainVideo, getPlayer, isAdShowing, isPlayerFullscreen, seekMainVideo } from '../youtube-dom.js';
@@ -36,7 +37,8 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   let column = null;
   /** @type {{ restore: boolean, seen: boolean } | null} */
   let toast = null;
-  let toastTimer = 0;
+  /** مؤقت زوال الرسالة: يُمسكه المؤشر والتركيز فيها كالرسالة المشتركة (WCAG 2.2.1؛ U-042). */
+  let toastHold = null;
   const step = { custom: false, text: /** @type {string | null} */ (null), error: /** @type {string | null} */ (null) };
   let anchor = -1;
   let loc = null;
@@ -174,8 +176,8 @@ export function createPanelSession({ controller, doc, win, link = null }) {
 
   // ———— أفعال المستخدم ————
   function clearToast() {
-    if (toastTimer) win.clearTimeout(toastTimer);
-    toastTimer = 0;
+    toastHold?.cancel();
+    toastHold = null;
     toast = null;
   }
 
@@ -198,15 +200,21 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     open: () => setPrefs({ ui: { panelOpen: true } }),
     close: () => setPrefs({ ui: { panelOpen: false } }),
     setDual: (v) => setPrefs({ ui: { panelDual: v } }),
+    toastHold: (why, held) => toastHold?.hold(why, held),
     hide() {
       const restore = controller.getState().prefs?.ui?.panelOpen === true;
       clearToast();
       toast = { restore, seen: false };
-      toastTimer = win.setTimeout(() => {
-        toastTimer = 0;
-        toast = null;
-        render();
-      }, UNDO_MS);
+      toastHold = holdTimer({
+        ms: UNDO_MS,
+        onExpire: () => {
+          toastHold = null;
+          toast = null;
+          render();
+        },
+        setTimer: (fn, ms) => win.setTimeout(fn, ms), clearTimer: (id) => win.clearTimeout(id),
+      });
+      toastHold.arm();
       act(async () => {
         try {
           await controller.updatePrefs({ ui: { panelEntry: false, panelOpen: false } });
@@ -221,8 +229,8 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       // الرسالة تبقى حتى يُحفظ الإظهار (صدى التخزين أو نهاية الحفظ)، فلا تختفي اللوحة لحظةً بينهما (مراجعة الهوية L3).
       if (!toast || toast.undoing) return;
       const restore = toast.restore;
-      if (toastTimer) win.clearTimeout(toastTimer);
-      toastTimer = 0;
+      toastHold?.cancel();
+      toastHold = null;
       toast.undoing = true;
       act(async () => {
         try {

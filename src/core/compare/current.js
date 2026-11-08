@@ -4,7 +4,8 @@
 // ملف أُعيد ترقيمه ناقصًا من آخره، ولا يُحسب دمج أو شطر مقصود نقصًا وزيادة وانحرافًا. وبثقة محاذاة منخفضة يبقى حكم الرقم.
 // لا يمس restoreTimingAvailable ولا الترقيم: الاستعادة الشاملة بشرطها كما هي (R54). منطق نقي مشتق، لا حالة مخزّنة.
 import { alignCues, toBlocks } from '../align/index.js';
-import { DEFAULT_DRIFT_MS, compare } from './compare.js';
+import { parseTrackKey } from '../model/ids.js';
+import { DEFAULT_DRIFT_MS, compare, isBlankText, untranslatedTest } from './compare.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 /** @typedef {import('../model/tracks.js').Fingerprint} Fingerprint */
@@ -111,11 +112,23 @@ export function trackComparison(track, fingerprints) {
   const fp = track.fingerprintId ? (fingerprints ?? []).find((f) => f.id === track.fingerprintId) ?? null : null;
   if (!fp) return stored;
   const cues = track.current ?? track.original;
-  if (track.current === null && stored && stored.fingerprintId === fp.id && !stored.missing.length && !stored.extra.length && !stored.drift.length) return stored;
-  let byFp = memo.get(cues);
-  if (!byFp) memo.set(cues, (byFp = new Map()));
   // لغة الترجمة لفحص «غير مترجم» (AA1): لغتها المحفوظة، وما حُفظ قبل 2.0.0 بلا لغة لا يُفحص به (لا تُفترض العربية).
   const target = track.lang ?? null;
+  let byFp = memo.get(cues);
+  if (!byFp) memo.set(cues, (byFp = new Map()));
+  if (track.current === null && stored && stored.fingerprintId === fp.id && !stored.missing.length && !stored.extra.length && !stored.drift.length) {
+    // ترجمة غير معدّلة مطابقة بنيويًا: لا محاذاة، لكن «بلا نص» و«غير مترجم» يتبعان لغة الخانة الحاضرة لا لغة الاستيراد (U-025).
+    // يبقى المخزّن بعقد البيانات (تقرير الاستيراد التاريخي)، ولا يُعاد إلا حين يتفق معه الحاضر.
+    const key = `stored|${fp.id}|${target ?? ''}`;
+    if (!byFp.has(key)) {
+      const untranslated = untranslatedTest(target, parseTrackKey(fp.trackKey)?.lang ?? null);
+      const empty = cues.filter((c) => isBlankText(c.text)).map((c) => c.n).sort((a, b) => a - b);
+      const noArabic = untranslated ? cues.filter((c) => !isBlankText(c.text) && untranslated(c.text)).map((c) => c.n).sort((a, b) => a - b) : [];
+      const same = (a, b) => a.length === b.length && a.every((n, i) => n === b[i]);
+      byFp.set(key, same(empty, stored.empty ?? []) && same(noArabic, stored.noArabic ?? []) ? stored : { ...stored, empty, noArabic });
+    }
+    return byFp.get(key);
+  }
   const key = `${fp.id}|${stored?.driftThresholdMs ?? DEFAULT_DRIFT_MS}|${target ?? ''}`;
   if (!byFp.has(key)) {
     const report = currentComparison(cues, fp, { driftMs: stored?.driftThresholdMs ?? DEFAULT_DRIFT_MS, target });
