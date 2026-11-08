@@ -8,8 +8,8 @@
 </p>
 
 <p align="center">
-  <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 2.0.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-2.0.0-1E4A44?logo=googlechrome&logoColor=white"></a>
-  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 2.0.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-2.0.0-1E4A44?logo=microsoftedge&logoColor=white"></a>
+  <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 2.1.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-2.1.0-1E4A44?logo=googlechrome&logoColor=white"></a>
+  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 2.1.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-2.1.0-1E4A44?logo=microsoftedge&logoColor=white"></a>
   <img alt="المعالجة والحفظ على جهازك" src="https://img.shields.io/badge/data-on--device-2A6E46">
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
 </p>
@@ -26,11 +26,11 @@
 
 لا نموذج مدمج، ولا مفتاح API، ولا حساب، ولا خادم ترجمة، ولا تنزيل للفيديو أو الصوت. وكل ما تحفظه يبقى في متصفحك.
 
-> **حالة الإصدار:** المنشور الآن في Chrome Web Store وMicrosoft Edge Add-ons هو الإصدار **2.0.0** (من أي لغة إلى لغتك، ونسخ التعليمات من نافذة الإضافة، والهوية الجديدة). وهذا المستودع على الإصدار **2.1.0** (الواجهة بالعربية والإنجليزية، ونصوص أوضح في الأزرار والرسائل)، و**لم يُنشر في المتاجر بعد**؛ فتجربته الآن من الشيفرة. ولم يُنشر ترجمان في Firefox Add-ons بعد.
+> **حالة الإصدار:** المنشور في Chrome Web Store وMicrosoft Edge Add-ons هو الإصدار **2.1.0** (الواجهة بالعربية والإنجليزية، ونصوص أوضح في الأزرار والرسائل). ولم يُنشر ترجمان في Firefox Add-ons بعد.
 
 ## المزايا
 
-ما يلي وصف الإصدار 2.1.0 الذي في المستودع:
+ما يلي وصف الإصدار 2.1.0:
 
 - **من أي لغة إلى لغتك:** كل مسار ترجمة يوفّره يوتيوب للفيديو، وترجمة يوتيوب الآلية موسومةً بلغة أصلها، وأي ملف SRT بأي لغة. واللغات المتاحة لكل فيديو يحددها يوتيوب وحده، وترجمان لا ينشئ مسارًا ولا يبدّله.
 - **ترجمتك فوق الفيديو** باتجاه لغتها، وحدها أو فوق الأصل، في الوضع العادي والمسرح وملء الشاشة. وتختفي أثناء الإعلانات.
@@ -61,9 +61,9 @@
 
 | المتصفح | المتاح الآن |
 | --- | --- |
-| Google Chrome ‏(130 فأحدث) | الإصدار 2.0.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
-| Brave ‏(Chromium 130 فأحدث) | الإصدار 2.0.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، المتجر نفسه |
-| Microsoft Edge ‏(130 فأحدث) | الإصدار 2.0.0 من [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
+| Google Chrome ‏(130 فأحدث) | الإصدار 2.1.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
+| Brave ‏(Chromium 130 فأحدث) | الإصدار 2.1.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، المتجر نفسه |
+| Microsoft Edge ‏(130 فأحدث) | الإصدار 2.1.0 من [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
 | Mozilla Firefox ‏(144 فأحدث) | غير منشور في Firefox Add-ons بعد. وللتجربة: [التثبيت من الشيفرة](docs/development.md#التثبيت-من-الشيفرة) |
 
 وفي كل المتصفحات يُجرَّب الإصدار 2.1.0 من الشيفرة بالطريقة نفسها. ونسخة المتجر ونسخة الشيفرة إضافتان منفصلتان، فانقل محفوظاتك بينهما بالنسخة الاحتياطية ([دليل الاستخدام](docs/user-guide.md) §٩).
@@ -93,7 +93,7 @@
 
 <div dir="ltr">
 
-Tarjuman's interface comes in Arabic and English. It arrives in version 2.1.0, which hasn't reached the stores yet. On first run it follows YouTube's interface language, otherwise the browser's; any other language starts in English. Change it in **Settings › Display › Interface language**. Video, subtitle and translation languages aren't affected.
+Tarjuman's interface comes in Arabic and English. It arrives in version 2.1.0. On first run it follows YouTube's interface language, otherwise the browser's; any other language starts in English. Change it in **Settings › Display › Interface language**. Video, subtitle and translation languages aren't affected.
 
 1. Open a YouTube video, turn on **CC** and pick the subtitle language. From Tarjuman's buttons in the player bar choose **Download original (SRT)** › **Download file**.
 2. In the toolbar popup, under **Translation instructions**, set **From** and **To**, then press **Copy instructions**. The copied instructions are in Arabic whatever the interface language.

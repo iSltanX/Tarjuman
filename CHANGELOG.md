@@ -4,7 +4,7 @@
 
 ## 2.1.0 — 2026-11-08
 
-الإصدار الذي في المستودع، ورقمه في البيان و`package.json`. والمنشور في Chrome Web Store وMicrosoft Edge Add-ons حتى الآن 2.0.0، ولم يُنشر ترجمان في Firefox Add-ons بعد.
+منشور في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). ولم يُنشر ترجمان في Firefox Add-ons بعد.
 
 **الواجهة بالعربية والإنجليزية**
 
