@@ -120,10 +120,12 @@ try {
     await botCheck();
     const where = await yt.eval(() => ({ pathname: location.pathname.replace(/[A-Za-z0-9_-]{11}/, '<id>'), hasV: new URLSearchParams(location.search).has('v') }));
     result.steps.liveUrl = where;
-    check('live-page', !!liveReady, where);
+    // waitForPlayer في الحزام ينتظر ?v= في العنوان، و/live/<id> بلا v؛ فالصفحة تُعرف من رد سكربت المحتوى نفسه (watch وvideoId).
+    result.steps.liveWaitForPlayer = !!liveReady;
     await sleep(3000);
     const s3 = brief(await state());
     result.steps.live = s3;
+    check('live-page', s3?.watch === true && s3.videoId === LIVE, where);
     check('U-032 tracklist-on-live', Array.isArray(s3?.available) && s3.available.length > 0 && s3.videoId === LIVE, { ...s3, url: where });
   }
   const errs = errors.flatMap((e) => e.list).filter((e) => !FONT_READ_LOG.test(e.text));
