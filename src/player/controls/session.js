@@ -3,6 +3,7 @@
 // التخزين إلا عبر أفعال المتحكم، ولا ترمي إليه: الإخفاق رمز في التشخيص، أو رسالة مفهومة للمستخدم إن خصّ فعله.
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
+import { rankUsable } from '../../core/model/track-order.js';
 import { formatOffset } from '../../ui/format.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
 import { fitSize, watchBar } from './bar.js';
@@ -31,7 +32,6 @@ const SPLIT = Object.freeze({ min: 50, max: 2000 });
 const STEP = Object.freeze({ min: 100, max: 10000 });
 const PRESET_STEPS = [500, 1000];
 const SENTENCE_STEP = 7;
-const KIND_ORDER = { manual: 0, asr: 1 };
 /**
  * رفض يعني أن المشغّل يعرض مسارًا لا يُقبل: يُرشد إلى اختيار لغة أخرى من يوتيوب بخطوات (R64). منذ AA1 تُقبل أي لغة وترجمة
  * يوتيوب الآلية، فيبقى الرمزان لرفض قديم أو مستقبلي فقط.
@@ -53,8 +53,8 @@ const TITLE = { download: LABELS.downloadTitle, display: LABELS.displayTitle, co
 /** «جزآن»، «3 أجزاء»، «11 جزءًا» بعد «✓ نُزّل». @param {number} n */
 const partsLabel = (n) => (n === 2 ? 'جزآن' : n % 100 >= 3 && n % 100 <= 10 ? `${n} أجزاء` : `${n} جزءًا`);
 const signOf = (ms) => (Math.round(ms / 100) === 0 ? 'zero' : ms > 0 ? 'positive' : 'negative');
-// الأصلي قبل المترجم آليًا من يوتيوب (في آخر القائمة، ق٢)، ثم اليدوي قبل التلقائي.
-const okTracks = (s) => s.captured.filter((t) => t.ok && t.cueCount > 0).sort((a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
+// الترتيب الموحد (model/track-order.js): الأصلي قبل المترجم آليًا من يوتيوب (في آخر القائمة، ق٢)، ثم اليدوي قبل التلقائي، ثم الأحدث.
+const okTracks = (s) => rankUsable(s.captured);
 /**
  * عدد لغات الفيديو في بيانات المشغّل التي لم يُلتقط لها مسار أصلي في هذه الزيارة (ق١): يختارها المستخدم من يوتيوب، والإضافة لا
  * تبدّلها. لغاتٌ مختلفة لا مسارات (التلقائي بلغة ملتقطة ليس لغة أخرى)، وnull حين لا تُعرف قائمة الفيديو.

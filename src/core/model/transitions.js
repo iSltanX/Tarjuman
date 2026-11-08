@@ -70,6 +70,28 @@ export function withExport(record, input, now, { keep = [] } = {}) {
 }
 
 /**
+ * إعادة تنزيل تصدير بصمته محفوظة (تدقيق V2، U-024): «آخر تنزيل» يُستنتج من أحدث البصمات (model/messages.js)، فتصير البصمة
+ * المطابقة نفسها، بمعرّفها (فلا تنكسر مراجع الخانات ولا مقارناتها)، الأحدث: createdAt جديد لا يقل عن غيرها، وتنتقل إلى آخر القائمة
+ * (الإسقاط عند الحد من الأقدم موضعًا). null إن لم توجد بصمة مطابقة أو كانت الأحدث أصلًا فلا كتابة.
+ * @param {VideoRecord} record
+ * @param {(f: Fingerprint) => boolean} matches
+ * @param {string} now ISO
+ * @returns {VideoRecord | null}
+ */
+export function withExportRefreshed(record, matches, now) {
+  const i = record.fingerprints.findLastIndex(matches);
+  if (i === -1) return null;
+  const target = record.fingerprints[i];
+  const others = record.fingerprints.filter((_, j) => j !== i);
+  if (i === record.fingerprints.length - 1 && others.every((f) => f.createdAt <= target.createdAt)) return null;
+  const newest = others.reduce((m, f) => (f.createdAt > m ? f.createdAt : m), now);
+  const r = copy(record);
+  r.fingerprints = [...others.map((f) => copy(f)), { ...copy(target), createdAt: newest }];
+  r.updatedAt = now;
+  return r;
+}
+
+/**
  * استيراد ملف عربي أو استبداله (عقد التوقيت §٦): يصبح الأصل المستورد، وتُصفَّر الإزاحة دائمًا.
  * وجود ترجمة سابقة دون replace=true يرمي ST_ARABIC_EXISTS (التأكيد شأن الواجهة).
  * @param {VideoRecord | null} record

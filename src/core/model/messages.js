@@ -83,8 +83,9 @@ function slotSummaries(s) {
   return SLOT_NUMBERS.map((n) => ({ n, filled: has && n === 1, active: has && n === 1, name: null }));
 }
 
-/** البصمات من الأحدث. @param {{ createdAt: string }[]} prints */
-const newestFirst = (prints) => prints.slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+/** البصمات من الأحدث؛ وعند تساوي الوقت الأحدث موضعًا (إعادة التنزيل تنقل البصمة إلى آخر القائمة، U-024). @param {{ createdAt: string }[]} prints */
+const newestFirst = (prints) => prints.map((p, i) => ({ p, i }))
+  .sort((a, b) => (a.p.createdAt < b.p.createdAt ? 1 : a.p.createdAt > b.p.createdAt ? -1 : b.i - a.i)).map((x) => x.p);
 
 /**
  * مسار «من» (ق٥): آخر ما نُزّل إن بقي مساره في الزيارة أو المحفوظ، وإلا مسار المتحكم المختار (الملتقط ثم المحفوظ)، وإلا null.

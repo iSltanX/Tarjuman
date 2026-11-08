@@ -15,7 +15,7 @@ import {
 import { LIMITS } from '../../core/model/validate.js';
 import { arabicCues } from '../../core/model/video.js';
 import { exportTiming } from '../../core/model/timing.js';
-import { withExport } from '../../core/model/transitions.js';
+import { withExport, withExportRefreshed } from '../../core/model/transitions.js';
 import { manualEdits } from './model.js';
 
 const iso = (now) => new Date(now()).toISOString();
@@ -115,9 +115,14 @@ export async function exportEnglish({ store, videoId, trackKey, save, now }) {
     // (referencedFingerprints؛ تدقيق 5fedcb9، GM-015.2: كانت تسقط فيُقرأ مرجع تلك الخانة null بصمت).
     await store.updateBundle(videoId, (b) => {
       const rec = b?.record;
-      if (!rec || rec.fingerprints.some((f) => sameFingerprint(f, built.fingerprint))) return undefined;
-      stored = true;
+      if (!rec) return undefined;
       const at = iso(now);
+      // التصدير المعروف لا يُكرَّر، لكنه يصير «آخر تنزيل» (تدقيق V2، U-024): البصمة نفسها تُحدَّث وتنتقل إلى الأحدث.
+      if (rec.fingerprints.some((f) => sameFingerprint(f, built.fingerprint))) {
+        const refreshed = withExportRefreshed(rec, (f) => sameFingerprint(f, built.fingerprint), at);
+        return refreshed ? applyRecordChange(b, refreshed, at) : undefined;
+      }
+      stored = true;
       const next = withExport(rec, { videoId, title: rec.title, durationMs: rec.durationMs, englishTrack: track, fingerprint: built.fingerprint }, at, { keep: referencedFingerprints(b) });
       return applyRecordChange(b, next, at);
     });

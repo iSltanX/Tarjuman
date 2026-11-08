@@ -1,10 +1,8 @@
 // الزوج اللغوي لترجمة محفوظة (AA3، لوحة 19 البند ٢): لغة الأصل الذي تُرجم عنه ولغة الترجمة، من السجل في الذاكرة (بعد دمج
 // المرافق lang:، model/lang-store.js). الأصل مسار بصمة الترجمة إن وُجد (الملف الذي نُزّل وتُرجم)، وإلا أول مسار بترتيب قائمة
-// التحميل (الأصلي قبل المترجم آليًا، واليدوي قبل التلقائي)؛ والترجمة بلغتها أو null «غير محددة». لا تخمين من نص.
+// التحميل (الأصلي قبل المترجم آليًا، واليدوي قبل التلقائي، ثم الأحدث؛ model/track-order.js)؛ والترجمة بلغتها أو null «غير محددة». لا تخمين من نص.
 import { parseTrackKey } from './ids.js';
-
-const KIND_ORDER = { manual: 0, asr: 1 };
-const byOrder = (a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
+import { rankTracks } from './track-order.js';
 
 /**
  * مسار الأصل لترجمة: مسار بصمتها، وإلا الأول بالترتيب، وإلا null.
@@ -16,7 +14,7 @@ export function sourceOf(record, track = null) {
   const fp = track?.fingerprintId ? record.fingerprints.find((f) => f.id === track.fingerprintId) ?? null : null;
   const t = fp ? parseTrackKey(fp.trackKey) : null;
   if (t) return { key: fp.trackKey, lang: t.lang, via: t.via };
-  const first = record.english.slice().sort(byOrder)[0];
+  const first = rankTracks(record.english)[0];
   return first ? { key: first.key, lang: first.lang, via: first.via ?? null } : null;
 }
 

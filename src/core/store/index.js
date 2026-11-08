@@ -13,6 +13,7 @@ import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../mode
 import { isVideoId, parseTrackKey } from '../model/ids.js';
 import { validateLangValue } from '../model/lang-store.js';
 import { slotPairs } from '../model/pair.js';
+import { rankTracks } from '../model/track-order.js';
 import {
   applyRecordChange, bundleFromBackup, bundleFromRecord, slotModels, summarizeBundle, syncActive, unpackBundle,
 } from '../model/bundle.js';
@@ -619,8 +620,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
       const pairsFromHead = (entry, alts) => {
         if (staleLang(entry)) return null;
         const lang = langOf(entry);
-        const sources = [...entry.english.map((t) => parseTrackKey(t.key)), ...(lang?.sources ?? []).map((t) => parseTrackKey(t.key))].filter(Boolean)
-          .sort((a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || (a.kind === b.kind ? 0 : a.kind === 'manual' ? -1 : 1));
+        const sources = rankTracks([...entry.english.map((t) => parseTrackKey(t.key)), ...(lang?.sources ?? []).map((t) => parseTrackKey(t.key))].filter(Boolean));
         // أكثر من مسار أصل: مسار بصمة الترجمة في السجل لا في المُلخّص، فيُقرأ الفيديو كاملًا (القراءة البطيئة) بدل تخمين أوله.
         if (sources.length > 1) return null;
         const from = sources[0] ?? null;

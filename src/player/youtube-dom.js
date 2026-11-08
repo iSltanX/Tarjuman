@@ -1,6 +1,7 @@
 // كل ما يعتمد على أسماء يوتيوب الداخلية غير الرسمية في ملف واحد (R39، عقد interfaces §٧): المحددات،
 // والأصناف، والأحداث، وصيغ العناوين. لا محدد يوتيوب خارج هذا الملف؛ الحاجة إلى محدد جديد طلب ملف مشترك.
 // كل دالة تأخذ doc/win لتُختبر دون متصفح، ولا تغيّر DOM يوتيوب.
+import { videoIdFromLocation } from '../core/model/video-location.js';
 
 export const SELECTORS = Object.freeze({
   player: '#movie_player',
@@ -35,23 +36,10 @@ export const EVENTS = Object.freeze({
   pageDataUpdated: 'yt-page-data-updated',
 });
 
-const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const POLL_MS = 500;
 
-/**
- * معرّف الفيديو المعروض من عنوان الصفحة: /watch?v= و/live/<id> (البث بعد انتهائه يُعامل كفيديو، والجاري
- * يرفضه الاستخراج برسالة). Shorts خارج النطاق فلا معرّف لها. المصدر الوحيد للحقيقة في «الفيديو الحالي».
- * @param {{ pathname: string, search: string }} loc
- * @returns {string | null}
- */
-export function videoIdFromLocation(loc) {
-  if (loc.pathname === '/watch') {
-    const v = new URLSearchParams(loc.search).get('v');
-    return v && VIDEO_ID.test(v) ? v : null;
-  }
-  const m = /^\/live\/([A-Za-z0-9_-]{11})(?:\/|$)/.exec(loc.pathname);
-  return m ? m[1] : null;
-}
+// معرّف الفيديو المعروض من العنوان: المصدر الوحيد للحقيقة في «الفيديو الحالي»، وحدة نقية يستوردها عالم الصفحة أيضًا (U-032).
+export { videoIdFromLocation };
 
 /** @param {Document} [doc] @returns {HTMLElement | null} */
 export const getPlayer = (doc = document) => doc.querySelector(SELECTORS.player);

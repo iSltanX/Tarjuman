@@ -4,6 +4,7 @@
 // ومنذ 2.0.0 (AA1) يقرأ قائمة مسارات الفيديو من بيانات المشغّل التي في الصفحة أصلًا (رمز اللغة والنوع والاسم المعروض وحدها،
 // بلا رابط ولا رمز)، قراءةً لا تبديلًا: لا يختار مسارًا ولا يطلبه (قاعدة player-api وقرار سلطان ق١؛ المستخدم يختار من يوتيوب).
 // لا يقبل هذا السكربت أي رسالة من الصفحة، ولا يسجّل شيئًا.
+import { videoIdFromLocation } from '../core/model/video-location.js';
 import { readTimedtextParams } from '../extract/timedtext-params.js';
 
 const MAX_BODY_CHARS = 20 * 1024 * 1024;
@@ -20,17 +21,16 @@ function post(meta, transport, status, body) {
   scheduleTracks();
 }
 
-const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const MAX_TRACKS = 64;
 // الوثيقة حاضرة دائمًا في عالم الصفحة؛ وغيابها (بيئة اختبار الغلافين) يعطّل قائمة المسارات وحدها.
 const doc = typeof document === 'undefined' ? null : document;
 let lastList = '';
 let timers = [];
 
+// المنطق نفسه الذي يرى به العالم المعزول الفيديو الحالي (/watch?v= و/live/<id>، تدقيق V2، U-032).
 function currentVideoId() {
   try {
-    const v = new URL(window.location.href).searchParams.get('v');
-    return v && VIDEO_ID.test(v) ? v : null;
+    return videoIdFromLocation(new URL(window.location.href));
   } catch {
     return null;
   }
@@ -60,7 +60,13 @@ const textOf = (n) => (!n ? '' : typeof n.simpleText === 'string' ? n.simpleText
 /** يرسل قائمة مسارات الفيديو المعروض إن تغيّرت: اللغة والنوع والاسم وحدها، وهل يترجم يوتيوب آليًا. */
 function postTracks() {
   const id = currentVideoId();
-  const r = id ? playerResponse(id) : null;
+  // صفحة بلا فيديو (الرئيسية والبحث والاشتراكات): تُصفَّر القائمة المرسلة، فالعودة إلى الفيديو نفسه تُرسلها من جديد (U-031)؛
+  // الجهة المعزولة صفّرت قائمتها عند مغادرته، والجسر أحادي الاتجاه.
+  if (!id) {
+    lastList = '';
+    return;
+  }
+  const r = playerResponse(id);
   if (!r) return;
   const rend = r.captions && r.captions.playerCaptionsTracklistRenderer;
   const list = rend && Array.isArray(rend.captionTracks) ? rend.captionTracks : [];

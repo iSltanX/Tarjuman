@@ -1,15 +1,16 @@
 // تدقيق 7a66f91، U103 (T-01): src/main-world/capture.js لم يكن يحمّله أي اختبار (طبقة عالم الصفحة الحساسة). يُشغَّل هنا على الملف المصدر
-// في node:vm بنافذة مصطنعة (على أصل حزام DeepSeek). الاستيراد الوحيد (readTimedtextParams) يُحقن من الوحدة الحقيقية بدل esbuild.
+// في node:vm بنافذة مصطنعة (على أصل حزام DeepSeek). الاستيرادان (readTimedtextParams وvideoIdFromLocation) يُحقنان من الوحدتين الحقيقيتين بدل esbuild.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { videoIdFromLocation } from '../../../src/core/model/video-location.js';
 import { readTimedtextParams } from '../../../src/extract/timedtext-params.js';
 import { validateCaptureMessage } from '../../../src/extract/message.js';
 
 const CAPTURE_URL = new URL('../../../src/main-world/capture.js', import.meta.url);
 const SOURCE = readFileSync(CAPTURE_URL, 'utf8');
-const IMPORT_LINE = /^import \{ readTimedtextParams \} from '[^']+';\s*$/m;
+const IMPORT_LINES = /^import \{ (?:readTimedtextParams|videoIdFromLocation) \} from '[^']+';\s*$/gm;
 const ORIGIN = 'https://www.youtube.com';
 const TT = `${ORIGIN}/api/timedtext?v=AAAAAAAAAAA&lang=en&fmt=json3&pot=SECRET&kind=asr`;
 const MAX = 20 * 1024 * 1024;
@@ -29,7 +30,7 @@ class FakeXHR {
 
 /** يحمّل capture.js في سياق جديد؛ `fetchImpl` يستبدل fetch الأصلي للصفحة. */
 function load({ fetchImpl } = {}) {
-  assert.match(SOURCE, IMPORT_LINE, 'شكل الاستيراد الوحيد تغيّر؛ حدّث الحقن');
+  assert.equal(SOURCE.match(IMPORT_LINES)?.length, 2, 'شكل الاستيرادين تغيّر؛ حدّث الحقن');
   const posted = [];
   const fetchCalls = [];
   const win = {
@@ -44,9 +45,9 @@ function load({ fetchImpl } = {}) {
   const origFetch = win.fetch;
   const origOpen = FakeXHR.prototype.open;
   const origSend = FakeXHR.prototype.send;
-  const ctx = vm.createContext({ window: win, URL, Response, Request, TextDecoder, TextEncoder, WeakMap, queueMicrotask, JSON, String, Promise, Blob, readTimedtextParams });
+  const ctx = vm.createContext({ window: win, URL, Response, Request, TextDecoder, TextEncoder, WeakMap, queueMicrotask, JSON, String, Promise, Blob, readTimedtextParams, videoIdFromLocation });
   // اسم الملف الحقيقي ليُنسب إليه قياس التغطية؛ والسطر المحذوف يبقى فارغًا فلا تتغير أرقام الأسطر.
-  vm.runInContext(SOURCE.replace(IMPORT_LINE, ''), ctx, { filename: CAPTURE_URL.href });
+  vm.runInContext(SOURCE.replace(IMPORT_LINES, ''), ctx, { filename: CAPTURE_URL.href });
   const restore = () => { FakeXHR.prototype.open = origOpen; FakeXHR.prototype.send = origSend; };
   return { win, posted, fetchCalls, origFetch, restore };
 }

@@ -14,9 +14,10 @@ import { DEFAULT_PREFS, normalizePrefs } from '../core/model/prefs.js';
 import { normalizeLangPrefs } from '../core/model/lang-prefs.js';
 import { DEFAULT_SETTINGS, normalizeSettings } from '../core/model/settings.js';
 import { normalizeOffset } from '../core/model/timing.js';
+import { rankUsable } from '../core/model/track-order.js';
 import { markAnchor, sameAnchor } from '../core/model/marks.js';
 import { canonical } from '../core/store/version.js';
-import { withArabicImport, withExport, withView } from '../core/model/transitions.js';
+import { withArabicImport, withExport, withExportRefreshed, withView } from '../core/model/transitions.js';
 import { DISPLAY_MODES } from '../core/model/video.js';
 
 /**
@@ -43,9 +44,6 @@ import { DISPLAY_MODES } from '../core/model/video.js';
  * @typedef {ReturnType<typeof createController>} Controller
  */
 
-const KIND_ORDER = { manual: 0, asr: 1 };
-// الأصلي قبل المترجم آليًا من يوتيوب (لا يُختار افتراضيًا أبدًا، قرار سلطان ق٢)، ثم اليدوي قبل التلقائي. بلا تفضيل للغة (AA1).
-const byKind = (a, b) => Number(Boolean(a.via)) - Number(Boolean(b.via)) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
 /** المسار المستخرج كما يُحفظ في السجل، والمترجم آليًا بلغة أصله via. */
 const sourceTrack = (t, cues) => ({ key: t.key, lang: t.lang, kind: t.kind, capturedAt: t.capturedAt, source: 'capture', cues, ...(t.via ? { via: t.via } : {}) });
 
@@ -113,13 +111,13 @@ export function createController({ store, extractor = null, page = {}, now = () 
   const versionOf = (r) => (r ? `${r.rev}|${r.updatedAt}` : 'none');
 
   function pickEnglish() {
-    const captured = extractor ? extractor.tracks().filter((t) => t.ok && t.cueCount > 0).sort(byKind) : [];
+    const captured = extractor ? rankUsable(extractor.tracks()) : [];
     if (captured.length) {
       const t = captured[0];
       const cues = stable('english', `${videoId}|captured:${t.key}@${t.capturedAt}`, () => extractor.convert(t.key).cues);
       return { key: t.key, kind: t.kind, lang: t.lang, via: t.via ?? null, cues, source: 'captured' };
     }
-    const s = saved ? saved.english.slice().sort(byKind)[0] : null;
+    const s = saved ? rankUsable(saved.english)[0] ?? null : null;
     if (!s) return null;
     const cues = stable('english', `${videoId}|saved:${s.key}@${s.capturedAt}`, () => s.cues);
     return { key: s.key, kind: s.kind, lang: s.lang, via: s.via ?? null, cues, source: 'saved' };
@@ -301,7 +299,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
 
   function preferredCapturedTrack() {
     if (!extractor) return null;
-    const t = extractor.tracks().filter((x) => x.ok && x.cueCount > 0).sort(byKind)[0];
+    const t = rankUsable(extractor.tracks())[0];
     if (!t) return null;
     const conv = extractor.convert(t.key, { mode: 'normal' });
     return conv.ok ? sourceTrack(t, conv.cues) : null;
@@ -456,15 +454,25 @@ export function createController({ store, extractor = null, page = {}, now = () 
       if (!track) throw new TjError('EX_NO_TRACK');
       const keep = referencedFingerprints(bundleFor(saved));
       let stored = false;
+      let refreshed = false;
       const { id } = await writeRecord((rec) => {
-        if (!rec || rec.fingerprints.some((f) => sameExport(f, fingerprint) && f.parts === null && fingerprint.parts === null)) return undefined;
+        stored = false;
+        refreshed = false;
+        if (!rec) return undefined;
+        // التصدير المعروف لا يُكرَّر، لكنه يصير «آخر تنزيل» (تدقيق V2، U-024): البصمة نفسها تُحدَّث وتنتقل إلى الأحدث.
+        const same = (f) => sameExport(f, fingerprint) && f.parts === null && fingerprint.parts === null;
+        if (rec.fingerprints.some(same)) {
+          const next = withExportRefreshed(rec, same, iso());
+          refreshed = next !== null;
+          return next ?? undefined;
+        }
         stored = true;
         return withExport(rec, {
           videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, englishTrack: rec.english.find((t) => t.key === trackKey) ?? track, fingerprint,
           displayMode: view.displayMode === 'off' ? settings.displayModeDefault : view.displayMode,
         }, iso(), { keep });
       });
-      if (stored && id === videoId) changed();
+      if ((stored || refreshed) && id === videoId) changed();
       return { stored };
     },
 
