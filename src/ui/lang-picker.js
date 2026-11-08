@@ -8,8 +8,8 @@ import { describeLang, knownLanguages, searchLanguages } from '../core/lang/inde
 import { el, icon } from './components.js';
 
 export const LANG_TEXT = Object.freeze({
-  from: 'من', to: 'إلى', empty: 'اختر لغة', search: 'ابحث عن لغة', auto: 'تلقائي من مسار الفيديو', autoShort: 'تلقائي',
-  quick: 'للوصول السريع', video: 'في هذا الفيديو', recent: 'الأخيرة', all: 'كل اللغات', results: 'النتائج', none: 'لا لغة بهذا الاسم أو الرمز',
+  from: 'من', to: 'إلى', empty: 'اختر لغة', search: 'ابحث عن لغة', auto: 'تلقائي من ترجمة الفيديو', autoShort: 'تلقائي',
+  quick: 'للوصول السريع', video: 'في هذا الفيديو', recent: 'المستخدمة مؤخرًا', all: 'كل اللغات', results: 'النتائج', none: 'لا لغة بهذا الاسم أو الرمز',
   swap: 'مبادلة اللغتين', list: 'اللغات',
 });
 

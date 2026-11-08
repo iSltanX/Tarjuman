@@ -104,7 +104,7 @@ test('U03: رفض عابر لـbundleBytes لا يمحو الأعداد، وال
   const m = await mount({ videos: 1, prepare: (area) => { area.getBytesInUse = async (k) => { if (k !== null) throw new Error('bytes'); return 10; }; } });
   assert.match(text(m, 'st-library-usage'), /الترجمات المحفوظة: 1/);
   assert.equal(text(m, 'st-library-bytes'), SIZES_UNAVAILABLE);
-  assert.match(text(m, 'st-quota__text'), /المستخدم/, 'السعة الكلية قيست');
+  assert.match(text(m, 'st-quota__text'), /^\d+ ك\.ب/, 'السعة الكلية قيست');
 
   const empty = await mount({ videos: 0, prepare: (area) => { area.getBytesInUse = async () => { throw new Error('x'); }; } });
   assert.equal(text(empty, 'st-library-usage'), 'لا ترجمات محفوظة بعد.');

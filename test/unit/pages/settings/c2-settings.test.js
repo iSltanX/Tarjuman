@@ -11,6 +11,7 @@ import { readBackup } from '../../../../src/core/backup/read.js';
 import { planRestore, restoreItems, runRestore } from '../../../../src/core/backup/restore.js';
 import { withSlotName } from '../../../../src/core/model/bundle.js';
 import { messageFor } from '../../../../src/core/errors/index.js';
+import { restoreChangedLine } from '../../../../src/pages/settings/data.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, videoRecord } from '../../../helpers/fixtures.js';
 import { sampleBundle, seedBundle } from '../../../helpers/fixtures-v2.js';
@@ -141,6 +142,6 @@ test('U11 (الواجهة): تغيّر الفيديو بعد المعاينة �
   await m.settings.data.restoreFromFile();
   await settle(10);
   assert.equal((await other.getVideo(ID)).title, 'تغيير بعد المعاينة', 'ما حُفظ بعد المعاينة باقٍ');
-  const sec = findAll(m.root, (e) => e.tagName === 'section' && textOf(e.querySelector('h2') ?? { textContent: '' }) === 'البيانات')[0];
-  assert.ok(textOf(sec).includes(messageFor('BK_RESTORE_CHANGED', { n: 1 })), textOf(sec));
+  const sec = findAll(m.root, (e) => e.tagName === 'section' && textOf(e.querySelector('h2') ?? { textContent: '' }) === 'النسخ الاحتياطي')[0];
+  assert.ok(textOf(sec).includes(restoreChangedLine(1)), textOf(sec));
 });

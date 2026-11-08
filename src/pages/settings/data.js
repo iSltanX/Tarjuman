@@ -47,7 +47,19 @@ export const PART_NAMES = Object.freeze({ head: 'أسماء الترجمات و�
 const idText = (id) => ltrInline(id);
 
 /** سطر التقرير: «أضيف 2 · تُخطّي 1 · استُبدل 0 · تعذّر 0». @param {import('../../core/backup/restore.js').RestoreReport} r */
-export const reportLine = (r) => `أضيف ${r.added.length} · تُخطّي ${r.skipped.length} · استُبدل ${r.replaced.length} · تعذّر ${r.failed.length + r.remaining.length}`;
+/** الفعل والضمير يطابقان العدد: «تغيّر فيديو واحد…» و«تغيّرت 3 فيديوهات…». @param {number} n */
+export function restoreChangedLine(n) {
+  const mod = n % 100;
+  const few = mod >= 3 && mod <= 10;
+  return messageFor('BK_RESTORE_CHANGED', {
+    verb: few ? 'تغيّرت' : 'تغيّر',
+    videos: formatCount(n, COUNT_FORMS.video),
+    replaced: few ? 'تُستبدل' : n === 2 ? 'يُستبدلا' : 'يُستبدل',
+    again: few ? 'استبدالها' : n === 2 ? 'استبدالهما' : 'استبداله',
+  });
+}
+
+export const reportLine = (r) => `أُضيف: ${r.added.length} · بقي كما هو: ${r.skipped.length} · استُبدل: ${r.replaced.length} · تعذّر: ${r.failed.length + r.remaining.length}`;
 
 /** شريط تقدم بنصه («جارٍ الاستعادة: 120 من 300»)، مخفي حتى يبدأ عمل. @param {Document} doc */
 function progressMeter(doc) {
@@ -166,7 +178,7 @@ export function dataControl(env) {
   function invalidBox(invalid) {
     return alertBox({
       tone: 'warning',
-      title: `لا يُقرأ من النسخة: ${formatCount(invalid.length, COUNT_FORMS.video)}، ويُتخطى وحده`,
+      title: `تعذّرت قراءة ${invalid.length === 2 ? 'فيديوهين' : formatCount(invalid.length, COUNT_FORMS.video)} من النسخة؛ يُتخطى ما تعذّرت قراءته وتُستعاد البقية`,
       text: invalid.slice(0, 20).map((x) => `${x.videoId ? idText(x.videoId) : `#${x.index + 1}`}: ${messageFor(x.code)}`).join('\n'),
       doc,
     });
@@ -190,7 +202,7 @@ export function dataControl(env) {
       const fresh = el('details', {
         className: 'st-restore__group st-restore__fresh',
         children: [
-          el('summary', { className: 'tj-h4 st-restore__summary', text: `جديدة — ستُضاف (${plan.fresh.length})`, doc }),
+          el('summary', { className: 'tj-h4 st-restore__summary', text: `فيديوهات جديدة ستُضاف (${plan.fresh.length})`, doc }),
           el('ul', {
             className: 'st-restore__list', attrs: { role: 'list' },
             children: [
@@ -212,7 +224,7 @@ export function dataControl(env) {
       fresh.open = plan.fresh.length <= 10;
       kids.push(fresh);
     }
-    const replaceNote = el('p', { className: 'tj-caption st-restore__danger', text: 'الاستبدال يكتب فوق الفيديو كاملًا ولا يحفظ له نسخة سابقة.', doc });
+    const replaceNote = el('p', { className: 'tj-caption st-restore__danger', text: 'الاستبدال يحل محل كل بيانات الفيديو المحفوظة في ترجمان (ترجماته وعلاماته وإعداداته) ولا يحفظ لها نسخة سابقة.', doc });
     replaceNote.hidden = true;
     if (plan.existing.length) {
       const boxes = [];
@@ -249,10 +261,10 @@ export function dataControl(env) {
       kids.push(el('section', {
         className: 'st-restore__group',
         children: [
-          el('h3', { className: 'tj-h4', text: `موجودة — تُتخطى افتراضيًا (${plan.existing.length})`, doc }),
+          el('h3', { className: 'tj-h4', text: `فيديوهات موجودة تبقى كما هي ما لم تُستبدل (${plan.existing.length})`, doc }),
           el('label', {
             className: 'st-switch st-switch--danger', attrs: { for: `${id}-all` },
-            children: [all, el('span', { className: 'st-switch__track', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'st-switch__label', text: 'استبدال كل الموجود', doc })],
+            children: [all, el('span', { className: 'st-switch__track', attrs: { 'aria-hidden': 'true' }, doc }), el('span', { className: 'st-switch__label', text: 'استبدال بيانات كل الفيديوهات الموجودة', doc })],
             doc,
           }),
           el('ul', { className: 'st-restore__list', attrs: { role: 'list' }, children: rows, doc }),
@@ -269,7 +281,7 @@ export function dataControl(env) {
     }
     kids.push(el('label', {
       className: 'st-check', attrs: { for: `${id}-settings`, ...(plan.hasSettings ? {} : { title: 'لا إعدادات صالحة في هذه النسخة.' }) },
-      children: [settingsBox, el('span', { text: 'استعادة الإعدادات والقاموس', doc })],
+      children: [settingsBox, el('span', { text: 'استعادة الإعدادات والقاموس وتفضيلات اللغات', doc })],
       doc,
     }));
     const firstResult = el('div', { className: 'st-data__result', attrs: { role: 'status', 'aria-live': 'polite' }, doc });
@@ -305,11 +317,11 @@ export function dataControl(env) {
       if (p.langPrefs === 'restored') lines.push('استُعيدت تفضيلات اللغات.');
     }
     if (report.settings === 'failed') lines.push(messageFor(settingsFailureCode(report) ?? 'BK_RESTORE_SETTINGS_FAILED'));
-    if (report.changed?.length) lines.push(messageFor('BK_RESTORE_CHANGED', { n: report.changed.length }));
+    if (report.changed?.length) lines.push(restoreChangedLine(report.changed.length));
     if (report.thumbnails === 'off') lines.push('بقيت صور الفيديو في المحفوظات مطفأة كما في النسخة.');
     if (report.thumbnails === 'failed') lines.push('تعذّر إبقاء صور الفيديو في المحفوظات مطفأة؛ أطفئها من «العرض» في الإعدادات.');
     for (const f of report.failed.slice(0, 20)) lines.push(`${titles.get(f.videoId) ?? f.videoId}: ${f.message}`);
-    if (report.remaining.length) lines.push(`لم يُكتب بعد: ${formatCount(report.remaining.length, COUNT_FORMS.video)}.`);
+    if (report.remaining.length) lines.push(`لم يُستعد بعد: ${formatCount(report.remaining.length, COUNT_FORMS.video)}.`);
     const again = report.failed.length || report.remaining.length || report.settings === 'failed' || report.thumbnails === 'failed'
       ? button({ label: 'أعد المحاولة', icon: 'restore', size: 'sm', variant: 'secondary', doc, onClick: () => { retry(); } })
       : null;

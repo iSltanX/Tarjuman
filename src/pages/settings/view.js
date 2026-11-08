@@ -24,11 +24,10 @@ import {
   sectionReset, snapScale, stepChoice, stepText,
 } from './model.js';
 
-export const SUBTITLE_NOTE = 'يخص الترجمة فوق الفيديو وحدها، والخطوط مضمّنة في الإضافة.';
-export const SCALE_NOTE = 'من 70% إلى 160% بخطوة 5% · الافتراضي 100%';
-export const PREVIEW_NOTE = 'الحجم نسبة من ارتفاع المشغّل، فيكبر النص في ملء الشاشة.';
+export const SUBTITLE_NOTE = 'يخص الترجمة فوق الفيديو وحدها.';
+export const SCALE_NOTE = 'الحجم نسبة من ارتفاع المشغّل، فيكبر النص في ملء الشاشة. الافتراضي 100%.';
 export const INSTALL_REMINDER = 'ثبّت أيقونة ترجمان في شريط المتصفح من قائمة الإضافات.';
-export const SAVE_HINT = 'كل خيار يُحفظ فورًا على جهازك.';
+export const SAVE_HINT = 'تُحفظ التغييرات فورًا.';
 export const RESET_LABEL = 'استعادة الافتراضي';
 /** تعذّر قياس المساحة أو الأحجام وحده (تدقيق 7a66f91، U03): المحفوظات سليمة، فلا «تعذّرت قراءة المحفوظات» ولا «لم يُحذف شيء». */
 export const CAPACITY_UNAVAILABLE = 'قياس المساحة المستخدمة غير متاح الآن.';
@@ -36,24 +35,24 @@ export const SIZES_UNAVAILABLE = 'أحجام الترجمات غير النشط�
 /** مفاتيح الواجهة على هذا الجهاز في «العرض» (prefs.ui). اللوحة مغلقة افتراضيًا (قرار سلطان 2026-11-03)، وزرها في شريط المشغّل. */
 export const ENTRY_SWITCH = Object.freeze({
   label: 'زر النص المتزامن', hint: 'في شريط المشغّل', text: 'يظهر في صفحات الفيديو',
-  note: 'إطفاؤه كإخفاء الزر من اللوحة نفسها؛ وإغلاق اللوحة لا يمسّه.',
+  note: 'إطفاؤه يخفي الزر ويغلق اللوحة معه، وتعيده من هنا أو من نافذة الإضافة. أما إغلاق اللوحة وحده فلا يخفي الزر.',
 });
 export const PANEL_OPEN_SWITCH = Object.freeze({
   label: 'لوحة النص المتزامن', hint: 'يمين الفيديو', text: 'مفتوحة في صفحات الفيديو',
-  note: 'مطفأة افتراضيًا. زرها في شريط المشغّل يفتحها ويغلقها أيضًا، ويبقى آخر اختيار في كل الفيديوهات.',
+  note: 'مغلقة افتراضيًا. زرها في شريط المشغّل يفتحها ويغلقها، وتبقى على آخر حال في كل الفيديوهات.',
 });
 export const THUMBNAILS_SWITCH = Object.freeze({
   label: 'صور الفيديو في المحفوظات', text: 'تُعرض صورة كل فيديو',
-  note: `تُطلب من خوادم يوتيوب (${ltrInline('i.ytimg.com')}) بمعرّف الفيديو؛ أطفئها ليبقى كل شيء على جهازك.`,
+  note: `تُطلب من خوادم يوتيوب (${ltrInline('i.ytimg.com')}) بمعرّف الفيديو؛ أطفئها إن لم ترد هذا الاتصال.`,
   // Firefox (قرار سلطان 2026-11-04، core/consent/thumbnails.js): التفعيل يطلب موافقة «نشاط التصفح»، والصور مطفأة حتى يوافق.
-  noteFirefox: `تُطلب من خوادم يوتيوب (${ltrInline('i.ytimg.com')}) بمعرّف الفيديو. وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح»، وتسحبها من صفحة إضافات المتصفح.`,
+  noteFirefox: `تُطلب من خوادم يوتيوب (${ltrInline('i.ytimg.com')}) بمعرّف الفيديو؛ أطفئها إن لم ترد هذا الاتصال. وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح»، وتسحبها من صفحة إضافات المتصفح.`,
   refused: 'لم تُمنح الموافقة، فلا تُعرض الصور.',
 });
 export const MODE_NOTES = Object.freeze({
-  normal: 'عادي: مقاطع كما في يوتيوب، للتزامن الأدق.',
-  long: 'مقاطع أطول: جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما.',
+  normal: 'عادي: مقاطع قصيرة قريبة من تقسيم يوتيوب، للتزامن الأدق مع الكلام.',
+  long: 'مقاطع أطول: يدمج المقاطع المتجاورة في جمل أطول ليفهم النموذج السياق، فيتغير عدد المقاطع وترقيمها وحدود توقيتها.',
 });
-const BG_LABELS = Object.freeze({ none: 'بلا', soft: 'خفيفة', solid: 'صلبة' });
+const BG_LABELS = Object.freeze({ none: 'بلا خلفية', soft: 'خفيفة', solid: 'داكنة' });
 const POSITION_LABELS = Object.freeze({ bottom: 'أسفل', raised: 'مرتفع', top: 'أعلى' });
 
 /**
@@ -255,7 +254,7 @@ export function createSettings(env) {
       resetBtn.setAttribute('aria-label', `${RESET_LABEL}: ${def.title}`);
       sync.push(() => {
         resetBtn.setAttribute('aria-disabled', custom.isDefault() ? 'true' : 'false');
-        resetBtn.title = custom.isDefault() ? 'إعدادات هذا القسم افتراضية بالفعل.' : '';
+        resetBtn.title = custom.isDefault() ? custom.defaultNote : '';
       });
     } else if (reset) {
       resetMark = marks();
@@ -278,7 +277,7 @@ export function createSettings(env) {
     const head = el('div', {
       className: 'st-section__head',
       children: [
-        el('div', { className: 'st-section__titles', children: [el('h2', { className: 'tj-h3', text: def.title, attrs: { id: `st-${def.id}-title` }, doc }), el('p', { className: 'tj-caption', text: def.desc, doc })], doc }),
+        el('div', { className: 'st-section__titles', children: [el('h2', { className: 'tj-h3', text: def.title, attrs: { id: `st-${def.id}-title` }, doc }), def.desc ? el('p', { className: 'tj-caption', text: def.desc, doc }) : null], doc }),
         resetBtn ? el('div', { className: 'st-section__actions', children: [resetBtn, resetMark.root], doc }) : null,
       ],
       doc,
@@ -416,14 +415,14 @@ export function createSettings(env) {
     row('حجم الخط', scaleMark, sliderBox, note(SCALE_NOTE)),
     row('الخلفية', bgMark, bgSeg.root),
     row('الموضع', posMark, posSeg.root),
+    row('معاينة حية', null, preview.root),
     named(rowWithHint(PANEL_OPEN_SWITCH.label, PANEL_OPEN_SWITCH.hint, openMark, openSwitch, note(PANEL_OPEN_SWITCH.note)), 'panelOpen'),
     named(rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)), 'panelEntry'),
-    named(row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsConsent.needed ? THUMBNAILS_SWITCH.noteFirefox : THUMBNAILS_SWITCH.note)), 'thumbnails'),
-    row('معاينة حية', null, preview.root, note(PREVIEW_NOTE)));
+    named(row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsConsent.needed ? THUMBNAILS_SWITCH.noteFirefox : THUMBNAILS_SWITCH.note)), 'thumbnails'));
 
   // ---- اللغات (AA3، لوحة 15) ----
   const langs = createLanguages({ store, doc, marks, row, rowWithHint, note, confirm });
-  customResets.langs = { isDefault: langs.reset.isDefault, run: async (mark) => { await langs.reset.run(mark); syncAll(); } };
+  customResets.langs = { isDefault: langs.reset.isDefault, defaultNote: langs.reset.defaultNote, run: async (mark) => { await langs.reset.run(mark); syncAll(); } };
   const langsSection = section(byId.langs, ...langs.rows);
   let unknownCounted = false;
 
@@ -472,42 +471,44 @@ export function createSettings(env) {
 
   const exportMark = marks();
   const modeSeg = segmented({
-    legend: 'الوضع الافتراضي للتصدير', value: settings.export.modeDefault, doc,
+    legend: 'شكل المقاطع الافتراضي', value: settings.export.modeDefault, doc,
     options: [{ value: 'normal', label: 'عادي' }, { value: 'long', label: 'مقاطع أطول' }],
     onChange: (v) => save({ export: { modeDefault: v } }, exportMark),
   });
   sync.push(() => modeSeg.set(settings.export.modeDefault));
   const splitMark = marks();
   const splitField = numberField({
-    label: 'عتبة اقتراح التقسيم الاحتياطي', unit: 'مقطع', value: String(settings.export.splitThreshold), parse: parseSplit, mark: splitMark.root, doc,
-    hint: `الافتراضي ${DEFAULT_SETTINGS.export.splitThreshold}. يُقترح التقسيم للملفات الأطول.`,
+    label: 'يُقترح التقسيم ابتداءً من', unit: 'مقطع', value: String(settings.export.splitThreshold), parse: parseSplit, mark: splitMark.root, doc,
+    hint: `يُقترح تقسيم الأصل إلى أجزاء عند تنزيله إذا تجاوزت مقاطعه هذا العدد. الافتراضي ${DEFAULT_SETTINGS.export.splitThreshold}.`,
     commit: (n) => save({ export: { splitThreshold: n } }, splitMark),
   });
   sync.push((force) => splitField.set(String(settings.export.splitThreshold), { force }));
+  // يعمل عند تنزيل الأصل لا عند رفع الترجمة، فمكانه هنا قرب «شكل المقاطع الافتراضي» (ق-7).
+  const compMark = marks();
+  const compField = numberField({
+    label: 'حد التنبيه إلى نقص الأصل', unit: '%', value: completenessText(settings.thresholds.completeness), parse: parseCompleteness, mark: compMark.root, doc,
+    hint: `يُنبَّه إلى أن الأصل قد يكون ناقصًا إذا انتهت ترجمة يوتيوب قبل هذه النسبة من مدة الفيديو. الافتراضي ${completenessText(DEFAULT_SETTINGS.thresholds.completeness)}%.`,
+    commit: (v) => save({ thresholds: { completeness: v } }, compMark),
+  });
+  sync.push((force) => compField.set(completenessText(settings.thresholds.completeness), { force }));
   exporting.append(
-    row('وضع التصدير الافتراضي', exportMark, modeSeg.root, el('div', { className: 'st-notes', children: [note(MODE_NOTES.normal), note(MODE_NOTES.long)], doc })),
-    row('التقسيم الاحتياطي', null, splitField.root),
+    row('شكل المقاطع الافتراضي', exportMark, modeSeg.root, el('div', { className: 'st-notes', children: [note(MODE_NOTES.normal), note(MODE_NOTES.long)], doc })),
+    el('div', { className: 'st-fields', children: [compField.root], doc }),
+    row('تقسيم الملفات الطويلة', null, splitField.root),
   );
 
   // ---- المقارنة ----
   const driftMark = marks();
   const driftField = numberField({
-    label: 'عتبة انحراف التوقيت', unit: 'ملي ثانية', value: String(settings.thresholds.driftMs), parse: parseDrift, mark: driftMark.root, doc,
-    hint: `الافتراضي ${DEFAULT_SETTINGS.thresholds.driftMs} ملي ثانية.`,
+    label: 'فرق التوقيت المقبول', unit: 'ملي ثانية', value: String(settings.thresholds.driftMs), parse: parseDrift, mark: driftMark.root, doc,
+    hint: `يُعدّ توقيت المقطع مختلفًا عن الأصل إذا زاد فرق بدايته أو نهايته عن هذا. الافتراضي ${DEFAULT_SETTINGS.thresholds.driftMs} ملي ثانية.`,
     commit: (n) => save({ thresholds: { driftMs: n } }, driftMark),
   });
   sync.push((force) => driftField.set(String(settings.thresholds.driftMs), { force }));
-  const compMark = marks();
-  const compField = numberField({
-    label: 'نسبة الاكتمال', unit: '%', value: completenessText(settings.thresholds.completeness), parse: parseCompleteness, mark: compMark.root, doc,
-    hint: `الافتراضي ${completenessText(DEFAULT_SETTINGS.thresholds.completeness)}%.`,
-    commit: (v) => save({ thresholds: { completeness: v } }, compMark),
-  });
-  sync.push((force) => compField.set(completenessText(settings.thresholds.completeness), { force }));
   // حد سرعة القراءة (R55): فارغ = الافتراضي المعايَر، بعلامة «الافتراضي» ظاهرة.
   const readingMark = marks();
   const readingField = numberField({
-    label: 'حد سرعة القراءة (حرف/ث)', unit: 'حرف/ث', value: readingText(prefs.review.maxCps), parse: parseReadingSpeed, mark: readingMark.root, doc,
+    label: 'حد سرعة القراءة', unit: 'حرف/ث', value: readingText(prefs.review.maxCps), parse: parseReadingSpeed, mark: readingMark.root, doc,
     hint: `من 5 إلى 40. اتركه فارغًا للافتراضي ${READING_DEFAULT_CPS}. ينبّه المحرّر إلى المقاطع الأسرع منه ولا يمنع الحفظ.`,
     commit: (v) => savePrefs({ review: { maxCps: v } }, readingMark),
   });
@@ -518,7 +519,7 @@ export function createSettings(env) {
     readingDefault.hidden = prefs.review.maxCps !== null;
   });
   const comparison = section(byId.compare,
-    el('div', { className: 'st-fields', children: [driftField.root, compField.root], doc }),
+    el('div', { className: 'st-fields', children: [driftField.root], doc }),
     el('div', { className: 'st-fields st-fields--review', children: [readingField.root, readingDefault], doc }));
 
   // ---- المصطلحات ----
@@ -527,7 +528,7 @@ export function createSettings(env) {
   const glossary = glossaryControl({ doc, getPrefs: () => prefs, savePrefs, addTerm, removeTerm, attachMark: glossaryAttachMark, listMark: glossaryListMark });
   sync.push(() => glossary.sync());
   const glossarySection = section(byId.glossary,
-    row('الإرفاق', glossaryAttachMark, glossary.attachRow, note('حين يكون في القاموس مصطلحات، تُرفق بتعليمات الترجمة التي تنسخها من نافذة الإضافة أو المحفوظات، ومع ملف الاستكمال في المحرّر.')),
+    row('الإرفاق', glossaryAttachMark, glossary.attachRow, note('تُرفق مع كل تعليمات ترجمة تنسخها، ومنها تعليمات الاستكمال في المحرّر.')),
     row('القاموس', glossaryListMark, el('div', { className: 'st-gl__head', children: [glossary.counter], doc }), glossary.list));
 
   // ---- التخزين ----
@@ -539,7 +540,7 @@ export function createSettings(env) {
   async function refreshCapacity() {
     try {
       const cap = await store.capacity();
-      usageText.textContent = cap.quotaBytes ? `المستخدم ${formatBytes(cap.bytesInUse)} من ${formatBytes(cap.quotaBytes)}` : `المستخدم ${formatBytes(cap.bytesInUse)} (بلا حد ثابت)`;
+      usageText.textContent = cap.quotaBytes ? `${formatBytes(cap.bytesInUse)} من ${formatBytes(cap.quotaBytes)}` : `${formatBytes(cap.bytesInUse)} (بلا حد ثابت)`;
       meter.hidden = !cap.quotaBytes;
       if (cap.quotaBytes) {
         const pct = Math.min(100, Math.round((cap.bytesInUse / cap.quotaBytes) * 100));
@@ -621,7 +622,7 @@ export function createSettings(env) {
       }
       const alts = sizes.reduce((s, b) => s + b.alts, 0);
       const previous = sizes.reduce((s, b) => s + b.previous, 0);
-      libraryBytes.textContent = `الترجمات غير النشطة ${formatBytes(alts)} · النسخ السابقة ${formatBytes(previous)}`;
+      libraryBytes.textContent = `الترجمات غير النشطة: ${formatBytes(alts)} · النسخ السابقة: ${formatBytes(previous)}`;
     } catch (err) {
       if (mine === usageSeq) libraryText.textContent = toErrorInfo(err).message;
     }
@@ -648,8 +649,8 @@ export function createSettings(env) {
     },
   });
   const dataSection = section(byId.data,
-    row('نسخة احتياطية', null, data.createRow, note('ملف JSON واحد فيه ترجماتك وعلاماتك وإعداداتك وقاموسك، يُحفظ في مكان حفظ الملفات المختار. لا يُرسل إلى أي مكان.')),
-    row('الاستعادة', null, data.restoreRow, note('تُفحص النسخة كلها قبل أي كتابة. الموجود يُتخطى ما لم تختر استبداله.')));
+    row('نسخة احتياطية', null, data.createRow, note('ملف واحد فيه ترجماتك وعلاماتك وإعداداتك وقاموسك، يُحفظ حيث تُحفظ ملفات الترجمة، ولا يُرسل إلى أي مكان.')),
+    row('الاستعادة', null, data.restoreRow, note('تُفحص النسخة كلها قبل الاستعادة. وتبقى بيانات الفيديوهات الموجودة كما هي ما لم تختر استبدالها.')));
 
   // ---- التشخيص ----
   const diagMark = marks();

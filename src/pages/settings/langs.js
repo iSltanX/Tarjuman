@@ -7,31 +7,33 @@ import { describeLang, textFitsLang } from '../../core/lang/index.js';
 import { withSlotLang } from '../../core/model/bundle.js';
 import { AUTO_SOURCE, DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../../core/model/lang-prefs.js';
 import { button, el } from '../../ui/components.js';
-import { formatCount } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 import { LANG_TEXT, langField, langPair } from '../../ui/lang-picker.js';
 
 export const TRANSLATION_COUNT = Object.freeze({ one: 'ترجمة واحدة', two: 'ترجمتان', few: 'ترجمات', many: 'ترجمة', single: 'ترجمة' });
 
 export const LANGS_TEXT = Object.freeze({
-  pair: 'الزوج الافتراضي',
-  pairNote: '«تلقائي» يأخذ لغة مسار الترجمة الذي التُقط أو نُزّل من الفيديو. ويمكن تغيير الزوج لكل فيديو من نافذة الإضافة.',
-  remember: 'تذكّر آخر زوج',
-  rememberText: 'تفتح نافذة الإضافة على آخر «إلى» اخترتها',
-  recent: 'اللغات الأخيرة',
-  recentNote: 'تظهر أولًا في قائمة الاختيار. أسماء اللغات بلغتها، واتجاه كل اسم باتجاه لغته.',
+  pair: 'اللغتان الافتراضيتان',
+  pairNote: 'تبدأ بهما تعليمات الترجمة في نافذة الإضافة لكل فيديو لم تختر له لغتين، وما تختاره لفيديو يُحفظ له وحده. و«تلقائي» يعني لغة ترجمة يوتيوب في الفيديو.',
+  remember: 'تذكّر آخر لغة ترجمة',
+  rememberText: 'آخر لغة ترجمة تختارها تصبح الافتراضية للفيديوهات التالية.',
+  recent: 'اللغات المستخدمة مؤخرًا',
+  recentNote: 'تظهر في مجموعة خاصة قرب أعلى قائمة اختيار اللغة.',
   recentEmpty: 'لا لغات بعد',
   clear: 'مسح',
   ui: 'لغة الواجهة',
   uiValue: 'العربية',
-  uiNote: 'واجهة ترجمان وتعليمات التصدير بالعربية؛ لا علاقة لها بلغتي الترجمة.',
+  uiNote: 'واجهة ترجمان وتعليمات الترجمة بالعربية دائمًا، أيًّا كانت لغتا الترجمة.',
   unknown: 'ترجمات بلا لغة محددة',
   unknownHint: 'ومنها ما حُفظ قبل الإصدار 2.0.0',
   unknownNone: 'كل ترجماتك المحفوظة محددة اللغة.',
   unknownCounting: 'جارٍ عدّ الترجمات…',
+  unknownUnread: 'تعذّر التحقق من لغات الترجمات المحفوظة. أعد فتح القسم للمحاولة مجددًا.',
+  unknownPartial: 'تعذّرت قراءة بعض الترجمات؛ الأعداد المعروضة تخص ما أمكن قراءته.',
   unknownLang: 'اللغة',
   apply: 'تعيين لغتها',
   applyNeedsLang: 'اختر اللغة أولًا.',
-  unknownNote: 'يُكتب رمز اللغة وحده لكل ترجمة بلا لغة محددة، ولا يتغير نصها ولا توقيتها ولا تاريخ تعديلها. وتُتخطى الترجمة التي لا يوافق نصها نص كتابة اللغة المختارة. ولغة أي ترجمة تُغيَّر وحدها من قائمة «الترجمة» في المشغّل.',
+  unknownNote: 'تُضاف اللغة وحدها دون أن يتغير نص الترجمة أو توقيتها أو تاريخ تعديلها، وتُتخطى الترجمة التي لا توافق حروفها اللغة المختارة. ولتغيير لغة ترجمة واحدة استعمل قائمة «الترجمة» في المشغّل.',
 });
 
 /** خانات الحزمة الممتلئة بلا لغة محددة. @param {import('../../core/model/slots.js').Bundle} b @returns {(1 | 2 | 3)[]} */
@@ -43,7 +45,7 @@ export function undeterminedSlots(b) {
 }
 
 /** «3 ترجمات في فيديوهين» بلا لغة. @param {number} n @param {number} videos */
-export const undeterminedLine = (n, videos) => `${formatCount(n, TRANSLATION_COUNT)} في ${videos === 1 ? 'فيديو واحد' : videos === 2 ? 'فيديوهين' : `${videos} فيديوهات`}`;
+export const undeterminedLine = (n, videos) => `${formatCount(n, TRANSLATION_COUNT)} في ${videos === 1 ? 'فيديو واحد' : videos === 2 ? 'فيديوهين' : formatCount(videos, COUNT_FORMS.video)}`;
 
 /**
  * @param {{
@@ -138,10 +140,13 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
     const videos = [];
     let total = 0;
     let entries = [];
+    let indexFailed = false;
+    let unread = 0;
     try {
       entries = await store.listIndex();
     } catch {
       entries = [];
+      indexFailed = true;
     }
     for (const e of entries) {
       let b = null;
@@ -149,6 +154,7 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
         b = await store.getBundle(e.videoId);
       } catch {
         b = null;
+        unread++;
       }
       const slots = b ? undeterminedSlots(b) : [];
       if (slots.length) {
@@ -157,7 +163,12 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
       }
     }
     found = { total, videos };
-    unknownLine.textContent = total ? undeterminedLine(total, videos.length) : LANGS_TEXT.unknownNone;
+    // فشل القراءة لا يُقال عنه «كل ترجماتك محددة اللغة»: كلها تعذّرت فلا عدد يُعرض، وبعضها فالعدد لما أمكن قراءته.
+    const allFailed = indexFailed || (entries.length > 0 && unread === entries.length);
+    const counted = total ? undeterminedLine(total, videos.length) : '';
+    unknownLine.textContent = allFailed ? LANGS_TEXT.unknownUnread
+      : unread ? [counted, LANGS_TEXT.unknownPartial].filter(Boolean).join(' · ')
+        : counted || LANGS_TEXT.unknownNone;
     paintUnknown();
     return found;
   }
@@ -228,6 +239,7 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
     get langPrefs() { return langPrefs; },
     /** استعادة الافتراضي: الزوج والتذكّر، وتبقى الأخيرة وأزواج الفيديوهات. */
     reset: {
+      defaultNote: 'اللغتان وخيار التذكّر على قيمها الافتراضية بالفعل.',
       isDefault: () => langPrefs.pair.from === DEFAULT_LANG_PREFS.pair.from && langPrefs.pair.to === DEFAULT_LANG_PREFS.pair.to && langPrefs.remember === DEFAULT_LANG_PREFS.remember,
       run: (mark) => save({ pair: { ...DEFAULT_LANG_PREFS.pair }, remember: DEFAULT_LANG_PREFS.remember }, mark),
     },

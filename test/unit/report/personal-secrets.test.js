@@ -91,7 +91,7 @@ test('U84: في لوحة البلاغ يظهر التنبيه والإرسال �
   const area = panel.root.querySelector('textarea');
   const type = (v) => { area.value = v; area.dispatchEvent({ type: 'input' }); };
   const note = panel.root.querySelector('#st-report-hint');
-  const send = buttonNamed(panel.root, 'أرسل البلاغ');
+  const send = buttonNamed(panel.root, 'إرسال البلاغ');
 
   type('يتعطل على youtu.be/dQw4w9WgXcQ');
   assert.equal(note.hidden, false);

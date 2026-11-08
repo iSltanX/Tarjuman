@@ -6,7 +6,7 @@ import { messageFor } from '../../../../src/core/errors/index.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { SUBTITLE_FONT_LIST } from '../../../../src/ui/subtitle-fonts.js';
 import { BROWSERS_LINE, CREDITS, LINKS, PRIVACY_LINE } from '../../../../src/pages/settings/about.js';
-import { createSettings, INSTALL_REMINDER, MODE_NOTES, PREVIEW_NOTE, SCALE_NOTE, SUBTITLE_NOTE } from '../../../../src/pages/settings/view.js';
+import { createSettings, INSTALL_REMINDER, MODE_NOTES, SCALE_NOTE, SUBTITLE_NOTE } from '../../../../src/pages/settings/view.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, videoRecord } from '../../../helpers/fixtures.js';
 import { buttonNamed, findAll, newDocument, settle, textOf } from '../library/fake-dom.js';
@@ -54,16 +54,23 @@ const field = (m, label) => findAll(m.root, (e) => e.classList.contains('tj-num'
 const type = (f, text) => { const i = f.querySelector('input'); i.value = text; i.dispatchEvent({ type: 'change' }); };
 const errorOf = (f) => { const e = f.querySelector('.tj-field__error'); return e.hidden ? '' : textOf(e); };
 
-const SECTION_TITLES = ['العرض', 'اللغات', 'التوقيت', 'التصدير', 'المقارنة والمراجعة', 'المصطلحات', 'التخزين', 'البيانات', 'التشخيص', 'حول'];
+const SECTION_TITLES = ['العرض', 'اللغات', 'التوقيت', 'التصدير', 'المقارنة والمراجعة', 'المصطلحات', 'التخزين', 'النسخ الاحتياطي', 'التشخيص', 'حول'];
 
 test('البنية: الرأس وعشرة أقسام بترتيبها («اللغات» بعد «العرض»، و«البيانات» بعد «التخزين»)، وكل خيار بتسمية', async () => {
   const m = await mount();
   assert.equal(textOf(m.root.querySelector('h1')), 'الإعدادات');
   assert.deepEqual(findAll(m.root, (e) => e.tagName === 'h2').map(textOf), SECTION_TITLES);
-  assert.ok(textOf(m.root).includes('كل خيار يُحفظ فورًا على جهازك'));
+  assert.ok(textOf(m.root).includes('تُحفظ التغييرات فورًا'));
   assert.ok(textOf(m.root).includes(SUBTITLE_NOTE));
   assert.ok(textOf(m.root).includes(SCALE_NOTE));
-  assert.ok(textOf(m.root).includes(PREVIEW_NOTE));
+  // ق-1: «معاينة حية» بعد «الموضع» مباشرة وقبل المفاتيح الثلاثة، بلا شرح تحتها (م-019).
+  const displayRows = findAll(m.root.querySelector('section[data-section="display"]'), (e) => e.classList?.contains('st-row__label')).map((e) => textOf(e.querySelector('.tj-label')));
+  const previewAt = displayRows.indexOf('معاينة حية');
+  assert.equal(displayRows[previewAt - 1], 'الموضع');
+  assert.equal(displayRows[previewAt + 1], 'لوحة النص المتزامن');
+  assert.deepEqual(displayRows.slice(previewAt + 2, previewAt + 4), ['زر النص المتزامن', 'صور الفيديو في المحفوظات']);
+  assert.equal(findAll(m.root, (e) => e.classList?.contains('st-note') && textOf(e).startsWith('الحجم نسبة')).length, 1, 'شرح الحجم مرة واحدة تحت «حجم الخط»');
+  assert.ok(m.root.querySelector('.st-status') === null, 'لا سطر «المكان المختار» (م-044)');
   assert.ok(textOf(m.root).includes(MODE_NOTES.normal) && textOf(m.root).includes(MODE_NOTES.long));
   // حقل نصي واحد: وصف «الإبلاغ عن مشكلة» في «حول» (جولة النشر T2.1).
   assert.deepEqual(findAll(m.root, (e) => e.tagName === 'textarea').map((t) => t.id), ['st-report-text']);
@@ -80,9 +87,9 @@ test('القيم الأولية تعكس المحفوظ في كل عنصر', asy
   assert.equal(radioByValue(m.root, 'custom').checked, true);
   assert.equal(field(m, 'الخطوة المخصصة').querySelector('input').value, '1.5');
   assert.equal(radioByValue(m.root, 'long').checked, true);
-  assert.equal(field(m, 'عتبة اقتراح التقسيم الاحتياطي').querySelector('input').value, '300');
-  assert.equal(field(m, 'عتبة انحراف التوقيت').querySelector('input').value, '200');
-  assert.equal(field(m, 'نسبة الاكتمال').querySelector('input').value, '90');
+  assert.equal(field(m, 'يُقترح التقسيم ابتداءً من').querySelector('input').value, '300');
+  assert.equal(field(m, 'فرق التوقيت المقبول').querySelector('input').value, '200');
+  assert.equal(field(m, 'حد التنبيه إلى نقص الأصل').querySelector('input').value, '90');
   assert.equal(m.settings.preview.stage.getAttribute('data-font'), 'tajawal');
   assert.equal(m.settings.preview.stage.getAttribute('data-bg'), 'solid');
 });
@@ -141,7 +148,7 @@ test('«استعادة الافتراضي» لقسم العرض: معطّلة ب
   const reset = buttonNamed(section(m, 'العرض'), 'استعادة الافتراضي');
   assert.ok(reset, 'زر الاستعادة في رأس القسم');
   assert.equal(reset.getAttribute('aria-disabled'), 'true');
-  assert.equal(reset.title, 'إعدادات هذا القسم افتراضية بالفعل.');
+  assert.equal(reset.title, 'وضع العرض وخط الترجمة وحجمها وخلفيتها وموضعها على قيمها الافتراضية بالفعل.');
   reset.click();
   await settle();
   assert.equal(markText(m.root).length, 0, 'المعطّل لا يحفظ شيئًا');
@@ -196,8 +203,8 @@ test('مكان حفظ ملفات الترجمة (R65، P13-AC8) أول بند ف
   assert.equal(inputs[0].checked, true, 'الافتراضي مجلد التنزيلات');
   assert.ok(inputs.every((i) => !i.disabled), 'الأوضاع الثلاثة متاحة');
   assert.ok(textOf(exp).includes('مجلد التنزيلات (الافتراضي)'));
-  assert.ok(textOf(exp).includes('المكان المختار: مجلد التنزيلات'));
-  assert.ok(textOf(exp).includes('لا تسمح المتصفحات للإضافات بالحفظ التلقائي خارج مجلد التنزيلات؛ لاختيار مجلد آخر اختر «اسأل عن مكان الحفظ عند كل تنزيل».'));
+  assert.equal(textOf(exp).includes('المكان المختار'), false, 'لا سطر حالة يكرر الخيار (م-044)');
+  assert.ok(textOf(exp).includes('للحفظ في مجلد آخر اختر «اسأل عن مكان الحفظ عند كل تنزيل»؛ فالمتصفحات لا تسمح للإضافات بالحفظ التلقائي خارج مجلد التنزيلات.'));
   const folder = findAll(exp, (e) => e.classList.contains('st-subfolder'))[0];
   assert.equal(folder.value, 'Tarjuman');
   assert.equal(folder.disabled, true, 'معطّل إلا في وضع المجلد الفرعي');
@@ -212,7 +219,7 @@ test('مكان حفظ ملفات الترجمة (R65، P13-AC8) أول بند ف
   await settle();
   assert.equal((await m.store.getPrefs()).saveLocation.mode, 'subfolder');
   assert.equal(folder.disabled, false);
-  assert.ok(textOf(exp).includes(`المكان المختار: مجلد ${String.fromCodePoint(0x2068)}Tarjuman${String.fromCodePoint(0x2069)} داخل التنزيلات`));
+  assert.equal(textOf(exp).includes('المكان المختار'), false);
   folder.value = 'a/b';
   folder.dispatchEvent({ type: 'change' });
   await settle();
@@ -223,7 +230,7 @@ test('مكان حفظ ملفات الترجمة (R65، P13-AC8) أول بند ف
   folder.dispatchEvent({ type: 'change' });
   await settle();
   assert.equal((await m.store.getPrefs()).saveLocation.folder, 'ترجماتي');
-  assert.ok(textOf(exp).includes(`المكان المختار: مجلد ${String.fromCodePoint(0x2068)}ترجماتي${String.fromCodePoint(0x2069)} داخل التنزيلات`));
+  assert.equal(textOf(exp).includes('المكان المختار'), false);
   assert.equal(reset.getAttribute('aria-disabled'), 'false');
   reset.click();
   await settle();
@@ -231,7 +238,7 @@ test('مكان حفظ ملفات الترجمة (R65، P13-AC8) أول بند ف
   assert.equal(folder.disabled, true);
   choose(inputs[2]);
   await settle();
-  assert.ok(textOf(exp).includes('المكان المختار: يُسأل عند كل تنزيل'));
+  assert.equal(textOf(exp).includes('المكان المختار'), false);
 });
 
 test('«آخر ملف حُفظ» من سجل المتصفح وحده: يظهر المسار لملف نزّله ترجمان واكتمل ووُجد، وإلا لا يُعرض مسار', async () => {
@@ -272,7 +279,7 @@ test('الخلفية والموضع: يُحفظان، والمعاينة تتب�
 test('المعاينة: سطران بالعربية معزولان اتجاهًا، وصندوق فيديو بنسبة 16:9', async () => {
   const m = await mount();
   const lines = findAll(m.settings.preview.root, (e) => e.classList.contains('st-preview__line'));
-  assert.deepEqual(lines.map(textOf), ['هذا هو السطر العربي المترجم.', 'والسطر الثاني بعده']);
+  assert.deepEqual(lines.map(textOf), ['هكذا تظهر الترجمة فوق الفيديو،', 'وهذا سطرها الثاني.']);
   assert.ok(lines.every((l) => l.getAttribute('dir') === 'rtl' && l.getAttribute('lang') === 'ar'));
   assert.equal(m.settings.preview.root.getAttribute('role'), 'img');
   assert.ok(m.settings.preview.root.getAttribute('aria-label'));
@@ -312,11 +319,11 @@ test('التصدير: الوضع الافتراضي وعتبة التقسيم ب
   choose(radioByValue(m.root, 'long'));
   await settle();
   assert.equal((await m.store.getSettings()).export.modeDefault, 'long');
-  const f = field(m, 'عتبة اقتراح التقسيم الاحتياطي');
+  const f = field(m, 'يُقترح التقسيم ابتداءً من');
   assert.equal(textOf(f.querySelector('.tj-num__unit')), 'مقطع');
   type(f, '49');
   await settle();
-  assert.equal(errorOf(f), 'عتبة التقسيم عدد صحيح من 50 إلى 2000.');
+  assert.equal(errorOf(f), 'حد التقسيم عدد صحيح من 50 إلى 2000 مقطع.');
   assert.equal((await m.store.getSettings()).export.splitThreshold, 200);
   type(f, '350');
   await settle();
@@ -327,15 +334,15 @@ test('التصدير: الوضع الافتراضي وعتبة التقسيم ب
 
 test('المقارنة: الانحراف بالملي ثانية والاكتمال بالمئة، بتحقق', async () => {
   const m = await mount();
-  const drift = field(m, 'عتبة انحراف التوقيت');
-  const comp = field(m, 'نسبة الاكتمال');
+  const drift = field(m, 'فرق التوقيت المقبول');
+  const comp = field(m, 'حد التنبيه إلى نقص الأصل');
   assert.equal(textOf(drift.querySelector('.tj-num__unit')), 'ملي ثانية');
   assert.equal(textOf(comp.querySelector('.tj-num__unit')), '%');
   type(drift, '9');
   type(comp, '101');
   await settle();
-  assert.equal(errorOf(drift), 'عتبة الانحراف عدد صحيح من 10 إلى 5000 مللي ثانية.');
-  assert.equal(errorOf(comp), 'نسبة الاكتمال عدد صحيح من 50 إلى 100.');
+  assert.equal(errorOf(drift), 'فرق التوقيت المقبول عدد صحيح من 10 إلى 5000 ملي ثانية.');
+  assert.equal(errorOf(comp), 'حد التنبيه إلى نقص الأصل نسبة مئوية صحيحة من 50 إلى 100.');
   type(drift, '250');
   type(comp, '90');
   await settle();
@@ -368,7 +375,7 @@ test('تغيّر الإعدادات من سياق آخر (المشغّل مثل�
 
 test('التخزين: المستخدم بنص، والمسح بحوار يطلب «امسح» ولا يمسح دونها', async () => {
   const m = await mount({ videos: 2, initial: { appearance: { font: 'tajawal' } } });
-  assert.match(textOf(section(m, 'التخزين')), /المستخدم \d+ ك\.ب \(بلا حد ثابت\)/);
+  assert.match(textOf(section(m, 'التخزين')), /\d+ ك\.ب \(بلا حد ثابت\)/);
   const clear = buttonNamed(m.root, 'مسح كل البيانات');
   assert.ok(clear.classList.contains('tj-btn--danger'));
 
@@ -508,10 +515,10 @@ test('كل عنصر إدخال باسم وصول: منزلق الحجم بـaria
 
 test('خطأ التحقق القديم يُمسح حين تُستبدل قيمة الحقل المعروضة بالمحفوظة', async () => {
   const m = await mount();
-  const f = field(m, 'عتبة اقتراح التقسيم الاحتياطي');
+  const f = field(m, 'يُقترح التقسيم ابتداءً من');
   type(f, '5');
   await settle();
-  assert.equal(errorOf(f), 'عتبة التقسيم عدد صحيح من 50 إلى 2000.');
+  assert.equal(errorOf(f), 'حد التقسيم عدد صحيح من 50 إلى 2000 مقطع.');
   choose(radioByValue(m.root, 'long'));
   await settle();
   assert.equal(f.querySelector('input').value, '200');
@@ -521,7 +528,7 @@ test('خطأ التحقق القديم يُمسح حين تُستبدل قيمة
 
 test('فشل حفظ ما كُتب في حقل مركَّز يعيد الحقل إلى المحفوظ (لا تناقض بين المعروض والمخزَّن)', async () => {
   const m = await mount();
-  const f = field(m, 'عتبة اقتراح التقسيم الاحتياطي');
+  const f = field(m, 'يُقترح التقسيم ابتداءً من');
   const input = f.querySelector('input');
   input.focus();
   input.value = '300';

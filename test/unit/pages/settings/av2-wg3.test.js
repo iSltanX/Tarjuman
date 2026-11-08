@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createBackup, readBackup, planRestore, restoreItems, runRestore } from '../../../../src/core/backup/index.js';
 import { TjError, messageFor } from '../../../../src/core/errors/index.js';
+import { restoreChangedLine } from '../../../../src/pages/settings/data.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { videoKey } from '../../../../src/core/store/keys.js';
 import { createSettings } from '../../../../src/pages/settings/view.js';
@@ -63,7 +64,7 @@ async function backupText() {
 
 async function restoreVia(m, text) {
   m.pick(asFile(text));
-  m.answers.push((o) => { checkbox(o.content, 'استعادة الإعدادات والقاموس').checked = true; });
+  m.answers.push((o) => { checkbox(o.content, 'استعادة الإعدادات والقاموس وتفضيلات اللغات').checked = true; });
   await m.settings.data.restoreFromFile();
   await settle(15);
 }
@@ -136,7 +137,7 @@ test('AV2 U-023: معاينة سجل تالف بلا مُلخّص ثم إصلا�
   await m.settings.data.restoreFromFile();
   await settle(20);
   assert.equal((await storeA.getVideo(ID)).title, 'إصلاح أحدث من تبويب آخر');
-  assert.ok(textOf(dataSec(m)).includes(messageFor('BK_RESTORE_CHANGED', { n: 1 })));
+  assert.ok(textOf(dataSec(m)).includes(restoreChangedLine(1)));
 });
 
 test('AV2 U-023: السجل التالف الباقي تالفًا حتى التأكيد يُستبدل كما الآن', async () => {
@@ -160,5 +161,5 @@ test('AV2 U-023: السجل التالف الباقي تالفًا حتى الت
   await m.settings.data.restoreFromFile();
   await settle(20);
   assert.equal((await store.getVideo(ID)).title, 'من النسخة');
-  assert.equal(textOf(dataSec(m)).includes(messageFor('BK_RESTORE_CHANGED', { n: 1 })), false);
+  assert.equal(textOf(dataSec(m)).includes(restoreChangedLine(1)), false);
 });

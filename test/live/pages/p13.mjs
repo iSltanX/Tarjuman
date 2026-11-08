@@ -365,8 +365,8 @@ async function createPhase() {
   check('ac8-first-item', firstLabel === 'مكان حفظ ملفات الترجمة', { firstLabel });
   await clickOn(st, `document.querySelector('.st-location input[value="subfolder"]')`, 'مجلد فرعي');
   await sleep(500);
-  const status = await textOf(st, `document.querySelector('.st-status')`);
-  check('ac8-subfolder-mode', (await getKeys(st, ['prefs'])).prefs.saveLocation.mode === 'subfolder' && status === 'المكان المختار: مجلد التنزيلات/Tarjuman', { status });
+  const status = await st.eval(() => document.querySelector('.st-location input[value="subfolder"]')?.checked === true);
+  check('ac8-subfolder-mode', (await getKeys(st, ['prefs'])).prefs.saveLocation.mode === 'subfolder' && status, { status });
   // المسار الفعلي من سجل المتصفح يحمل مسار الجهاز: يُموَّه في اللقطة وحدها (والنص النسبي في JSON).
   await st.eval(() => { const p = document.querySelector('.st-last-save__path'); if (p) p.style.filter = 'blur(5px)'; });
   await shot(st, 'settings-save-location');
@@ -390,7 +390,7 @@ async function createPhase() {
   const askToast = await lib.waitFor(() => [...document.querySelectorAll('.tj-toast')].map((t) => t.textContent).join('|') || null, { timeoutMs: 20000, intervalMs: 300 });
   observe('ac8-ask-headless', { toast: askToast, note: 'بلا نافذة لا يُظهر المتصفح حوار «اسأل» (W6)، فالنتيجة دليل أن التصدير طلب الحوار؛ والحوار نفسه أُثبت بنافذة في P10.' });
   const beforeReset = (await getKeys(st, ['prefs'])).prefs.saveLocation;
-  const resetState = await st.eval(() => { const r = document.querySelector('.st-location__reset'); return r ? { disabled: r.getAttribute('aria-disabled'), status: document.querySelector('.st-status')?.textContent } : null; });
+  const resetState = await st.eval(() => { const r = document.querySelector('.st-location__reset'); return r ? { disabled: r.getAttribute('aria-disabled') } : null; });
   await clickOn(st, `document.querySelector('.st-location__reset')`, 'استعادة الافتراضي');
   const resetDone = await st.waitFor(() => new Promise((r) => chrome.storage.local.get('prefs').then((x) => r(x.prefs?.saveLocation?.mode === 'downloads' ? x.prefs.saveLocation : null))), { timeoutMs: 5000 });
   check('ac8-reset-default', resetDone?.mode === 'downloads' && resetDone?.folder === 'Tarjuman', { beforeReset, resetState, after: resetDone ?? (await getKeys(st, ['prefs'])).prefs.saveLocation });

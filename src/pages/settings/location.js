@@ -3,8 +3,8 @@
 // وصفًا للإعداد، و«آخر ملف حُفظ» من سجل المتصفح وحده لملف نزّله ترجمان واكتمل ووُجد؛ وإلا لا يُعرض مسار. لا مسار يُخزَّن.
 import { messageFor } from '../../core/errors/index.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
-import { button, choiceGroup, el, icon, ltr } from '../../ui/components.js';
-import { DEFAULT_SUBFOLDER, SAVE_LOCATIONS, SAVE_LOCATION_NOTE, isDefaultLocation, parseFolder, saveLocationStatus } from './model.js';
+import { button, choiceGroup, el, ltr } from '../../ui/components.js';
+import { DEFAULT_SUBFOLDER, SAVE_LOCATIONS, SAVE_LOCATION_NOTE, isDefaultLocation, parseFolder } from './model.js';
 
 /**
  * @param {{
@@ -48,14 +48,12 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
     options: SAVE_LOCATIONS.map((o) => ({ value: o.value, label: o.label, hint: o.hint, extra: o.value === 'subfolder' ? folderBox : null })),
     onChange: (mode) => savePrefs({ saveLocation: { mode } }, mark),
   });
-  const statusText = el('span', { doc });
-  const status = el('p', { className: 'st-status', children: [icon('info', { doc }), statusText], doc });
   const lastPath = el('span', { className: 'st-last-save__path', doc });
   const last = el('p', { className: 'tj-caption st-last-save', children: ['آخر ملف حُفظ: ', lastPath], doc });
   last.hidden = true;
   // اسم وصول يميّزه عن «استعادة الافتراضي» في رأس القسم (كانا باسم واحد؛ تدقيق 7a66f91، U58).
   const reset = button({
-    label: 'استعادة الافتراضي', variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-location__reset', doc,
+    label: 'استعادة المكان الافتراضي', variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-location__reset', doc,
     onClick: () => {
       if (isDefaultLocation(getPrefs().saveLocation)) return;
       setFolderError(null);
@@ -63,7 +61,7 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
     },
   });
 
-  reset.setAttribute('aria-label', 'استعادة افتراضي مكان الحفظ');
+  reset.setAttribute('aria-label', 'استعادة المكان الافتراضي');
 
   function sync(force = false) {
     const loc = getPrefs().saveLocation;
@@ -73,7 +71,6 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
       folder.value = loc.folder;
       if (force) setFolderError(null);
     }
-    statusText.textContent = saveLocationStatus(loc.mode, loc.folder);
     const isDefault = isDefaultLocation(loc);
     reset.setAttribute('aria-disabled', isDefault ? 'true' : 'false');
     reset.title = isDefault ? 'مكان الحفظ افتراضي بالفعل.' : '';
@@ -92,7 +89,7 @@ export function saveLocationControl({ doc, getPrefs, savePrefs, mark, lastSavePa
 
   const root = el('div', {
     className: 'st-location',
-    children: [group.root, status, last, el('p', { className: 'tj-caption st-note', text: SAVE_LOCATION_NOTE, doc }), el('div', { className: 'st-actions', children: [reset], doc })],
+    children: [group.root, last, el('p', { className: 'tj-caption st-note', text: SAVE_LOCATION_NOTE, doc }), el('div', { className: 'st-actions', children: [reset], doc })],
     doc,
   });
   return { root, group, folder, sync, refreshLast };

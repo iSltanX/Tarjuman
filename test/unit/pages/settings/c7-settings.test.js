@@ -72,7 +72,7 @@ test('U52: بعد فشل الإرسال لا تُدرج عقدة role=alert جد
   h.panel.open();
   await settle();
   h.type('وصف أول');
-  buttonNamed(h.root, 'أرسل البلاغ').click();
+  buttonNamed(h.root, 'إرسال البلاغ').click();
   await settle(5);
   const failed = h.root.querySelector('.st-report__failed');
   assert.ok(failed);
@@ -102,15 +102,15 @@ test('U58 (UI-03): قبل قراءة التشخيص وعند فشلها أبنا
   assert.equal(dl.hidden, false);
 });
 
-test('U59 (L-20): «انسخ البلاغ» يعمل أثناء الإرسال ويُقال، والانشغال على زر الإرسال وحده', async () => {
+test('U59 (L-20): «نسخ البلاغ» يعمل أثناء الإرسال ويُقال، والانشغال على زر الإرسال وحده', async () => {
   let finish;
   const h = reportHarness({ send: () => new Promise((r) => { finish = r; }) });
   h.panel.open();
   await settle();
   h.type('وصف');
-  buttonNamed(h.root, 'أرسل البلاغ').click();
+  buttonNamed(h.root, 'إرسال البلاغ').click();
   await settle(3);
-  const copy = buttonNamed(h.root, 'انسخ البلاغ');
+  const copy = buttonNamed(h.root, 'نسخ البلاغ');
   assert.equal(copy.getAttribute('aria-busy'), 'false');
   assert.equal(copy.hasAttribute('aria-disabled'), false);
   copy.click();
@@ -136,7 +136,7 @@ test('U54: الاستعادة عبر الصفحة — تعذّر القاموس 
   faulty.setPrefs = (p) => { calls.prefs++; if (failPrefs) { failPrefs = false; return Promise.reject(new TjError('ST_WRITE_FAILED')); } return dst.store.setPrefs(p); };
   const m = await mount({ store: faulty, area: dst.area });
   m.pick(asFile(built.text));
-  m.answers.push((o) => { checkbox(o.content, 'استعادة الإعدادات والقاموس').checked = true; });
+  m.answers.push((o) => { checkbox(o.content, 'استعادة الإعدادات والقاموس وتفضيلات اللغات').checked = true; });
   await m.settings.data.restoreFromFile();
   await settle(10);
   const sec = sectionOf(m, 'data');
@@ -219,10 +219,10 @@ test('U57: الفتح الأول بلا جزء في العنوان لا يكتب
 
 test('U58: زرّا «استعادة الافتراضي» في «التصدير» باسمين مختلفين، وكل زر قسم يسمّي قسمه', async () => {
   const m = await mount();
-  const names = findAll(sectionOf(m, 'export'), (e) => e.tagName === 'button' && textOf(e).includes('استعادة الافتراضي')).map((b) => b.getAttribute('aria-label') ?? textOf(b));
+  const names = findAll(sectionOf(m, 'export'), (e) => e.tagName === 'button' && /استعادة (المكان )?الافتراضي/.test(textOf(e))).map((b) => b.getAttribute('aria-label') ?? textOf(b));
   assert.equal(names.length, 2);
   assert.equal(new Set(names).size, 2, names.join(' | '));
-  assert.ok(names.includes('استعادة افتراضي مكان الحفظ'));
+  assert.ok(names.includes('استعادة المكان الافتراضي'));
   assert.ok(names.some((n) => n.startsWith('استعادة الافتراضي: ')));
 });
 
@@ -300,9 +300,9 @@ test('U59 (المراجعة المستقلة): نسخٌ بدأ أثناء الإ
   const ta = panel.root.querySelector('textarea');
   ta.value = 'وصف';
   ta.dispatchEvent({ type: 'input' });
-  buttonNamed(panel.root, 'أرسل البلاغ').click();
+  buttonNamed(panel.root, 'إرسال البلاغ').click();
   await settle(3);
-  buttonNamed(panel.root, 'انسخ البلاغ').click();
+  buttonNamed(panel.root, 'نسخ البلاغ').click();
   await settle(3);
   finishSend({ ok: true, id: 9, replayed: false });
   await settle(3);

@@ -6,7 +6,6 @@ import { DEFAULT_FOLDER, DEFAULT_PREFS, GLOSSARY_LIMITS, READING_SPEED, isValidF
 import { DEFAULT_SETTINGS, SUBTITLE_SCALE } from '../../core/model/settings.js';
 import { PLAYER_TOKENS } from '../../ui/player-tokens.js';
 import { subtitleFontStack } from '../../ui/subtitle-fonts.js';
-import { isolate } from '../../ui/format.js';
 
 /** أزرار الخطوة المعروضة: 0.5 و1 ثانية، وما عداهما «مخصص». */
 export const STEP_PRESETS_MS = Object.freeze([500, 1000]);
@@ -19,17 +18,17 @@ export const CONFIRM_WORD = 'امسح';
 
 /** أقسام الصفحة بترتيبها: المعرّف هو جزء العنوان (#display)، والأيقونة من مجموعة src/ui. */
 export const SECTIONS = Object.freeze([
-  Object.freeze({ id: 'display', title: 'العرض', icon: 'eye', desc: 'وضع العرض الافتراضي، وخط الترجمة وحجمها وخلفيتها وموضعها فوق الفيديو.' }),
+  Object.freeze({ id: 'display', title: 'العرض', icon: 'eye', desc: 'شكل الترجمة فوق الفيديو، ولوحة النص المتزامن وزرها، وصور الفيديو في المحفوظات.' }),
   // قسم «اللغات» (AA3، لوحة 15): بعد «العرض» كترتيب اللوحة.
-  Object.freeze({ id: 'langs', title: 'اللغات', icon: 'swap', desc: 'الزوج الافتراضي لتعليمات الترجمة في نافذة الإضافة، واللغات الأخيرة، ولغة الترجمات المحفوظة بلا لغة.' }),
-  Object.freeze({ id: 'timing', title: 'التوقيت', icon: 'clock', desc: 'خطوة زرّي − و+ في شريط المشغّل.' }),
-  Object.freeze({ id: 'export', title: 'التصدير', icon: 'download', desc: 'مكان حفظ الملفات، ووضع التصدير الافتراضي، وعتبة التقسيم الاحتياطي.' }),
-  Object.freeze({ id: 'compare', title: 'المقارنة والمراجعة', icon: 'compare', desc: 'عتبات مقارنة ملف الترجمة بالأصل عند الرفع، وحد سرعة القراءة في المراجعة.' }),
+  Object.freeze({ id: 'langs', title: 'اللغات', icon: 'swap', desc: 'اللغتان اللتان تبدأ بهما تعليمات الترجمة، وتعيين لغة الترجمات المحفوظة بلا لغة.' }),
+  Object.freeze({ id: 'timing', title: 'التوقيت', icon: 'clock' }),
+  Object.freeze({ id: 'export', title: 'التصدير', icon: 'download', desc: 'أين تُحفظ الملفات المنزَّلة، وشكل مقاطع الأصل، ومتى يُقترح تقسيمه إلى أجزاء.' }),
+  Object.freeze({ id: 'compare', title: 'المقارنة والمراجعة', icon: 'compare', desc: 'متى يُعدّ توقيت الترجمة مختلفًا عن الأصل، ومتى يُنبَّه إلى سرعة القراءة.' }),
   Object.freeze({ id: 'glossary', title: 'المصطلحات', icon: 'glossary', desc: 'مقابلاتك المفضّلة للمصطلحات، تُرفق بتعليمات الترجمة حين تنسخها.' }),
-  Object.freeze({ id: 'storage', title: 'التخزين', icon: 'library', desc: 'المساحة المستخدمة على هذا المتصفح، وسعة الترجمات والنسخ السابقة، ومسح كل البيانات.' }),
-  Object.freeze({ id: 'data', title: 'البيانات', icon: 'backup', desc: 'نسخة احتياطية من مكتبتك في ملف على جهازك، تستعيدها هنا أو في متصفح آخر.' }),
-  Object.freeze({ id: 'diagnostics', title: 'التشخيص', icon: 'activity', desc: 'تقرير منقّى بلا روابط ولا نصوص، لطلب المساعدة.' }),
-  Object.freeze({ id: 'about', title: 'حول', icon: 'info', desc: 'الإصدار، والحقوق وروابط المشروع، والدعم، ودليل الاستخدام، والتراخيص.' }),
+  Object.freeze({ id: 'storage', title: 'التخزين', icon: 'library', desc: 'المساحة التي يشغلها ترجمان في هذا المتصفح، ومسح بياناته.' }),
+  Object.freeze({ id: 'data', title: 'النسخ الاحتياطي', icon: 'backup', desc: 'احفظ نسخة من محفوظاتك وإعداداتك في ملف، واستعدها هنا أو في متصفح آخر.' }),
+  Object.freeze({ id: 'diagnostics', title: 'التشخيص', icon: 'activity', desc: 'تقرير تقني ترفقه حين تطلب المساعدة.' }),
+  Object.freeze({ id: 'about', title: 'حول', icon: 'info' }),
 ]);
 export const DEFAULT_SECTION = SECTIONS[0].id;
 
@@ -40,9 +39,12 @@ export const isSectionId = (id) => SECTIONS.some((s) => s.id === id);
 const RESETTABLE = Object.freeze({
   display: Object.freeze({ settings: Object.freeze(['displayModeDefault', 'appearance']), prefs: Object.freeze([]) }),
   timing: Object.freeze({ settings: Object.freeze(['offsetStepMs']), prefs: Object.freeze([]) }),
-  export: Object.freeze({ settings: Object.freeze(['export']), prefs: Object.freeze(['saveLocation']) }),
-  compare: Object.freeze({ settings: Object.freeze(['thresholds']), prefs: Object.freeze(['review']) }),
+  export: Object.freeze({ settings: Object.freeze(['export']), thresholds: Object.freeze(['completeness']), prefs: Object.freeze(['saveLocation']) }),
+  compare: Object.freeze({ settings: Object.freeze([]), thresholds: Object.freeze(['driftMs']), prefs: Object.freeze(['review']) }),
 });
+
+// زر «العرض» لا يمس مفاتيح لوحة النص المتزامن وزرها وصور المحفوظات، فالتلميح يسمّي ما يشمله.
+const DISPLAY_DEFAULT_NOTE = 'وضع العرض وخط الترجمة وحجمها وخلفيتها وموضعها على قيمها الافتراضية بالفعل.';
 
 const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -56,30 +58,24 @@ export function sectionReset(settings, sectionId, prefs = DEFAULT_PREFS) {
   const keys = RESETTABLE[sectionId];
   if (!keys) return null;
   const patch = Object.fromEntries(keys.settings.map((k) => [k, structuredClone(DEFAULT_SETTINGS[k])]));
+  // عتبتا settings.thresholds في قسمين، فلكل قسم عتبته وحدها.
+  const thresholds = keys.thresholds ?? [];
+  if (thresholds.length) patch.thresholds = Object.fromEntries(thresholds.map((k) => [k, DEFAULT_SETTINGS.thresholds[k]]));
   const prefsPatch = Object.fromEntries(keys.prefs.map((k) => [k, structuredClone(DEFAULT_PREFS[k])]));
-  const isDefault = keys.settings.every((k) => sameJson(settings[k], DEFAULT_SETTINGS[k])) && keys.prefs.every((k) => sameJson(prefs[k], DEFAULT_PREFS[k]));
-  return { isDefault, patch, prefsPatch, disabledReason: isDefault ? 'إعدادات هذا القسم افتراضية بالفعل.' : null };
+  const isDefault = keys.settings.every((k) => sameJson(settings[k], DEFAULT_SETTINGS[k]))
+    && thresholds.every((k) => settings.thresholds[k] === DEFAULT_SETTINGS.thresholds[k])
+    && keys.prefs.every((k) => sameJson(prefs[k], DEFAULT_PREFS[k]));
+  return { isDefault, patch, prefsPatch, disabledReason: isDefault ? (sectionId === 'display' ? DISPLAY_DEFAULT_NOTE : 'إعدادات هذا القسم افتراضية بالفعل.') : null };
 }
 
 /** مكان حفظ ملفات الترجمة (R65، مواصفة التصميم §١٩.٨): الأوضاع الثلاثة، والافتراضي كالسلوك الحالي. */
 export const DEFAULT_SUBFOLDER = DEFAULT_FOLDER;
 export const SAVE_LOCATIONS = Object.freeze([
-  Object.freeze({ value: 'downloads', label: 'مجلد التنزيلات (الافتراضي)', hint: 'حيث يحفظ المتصفح تنزيلاته، وبإعداده في السؤال عن مكان الحفظ.' }),
-  Object.freeze({ value: 'subfolder', label: 'مجلد فرعي داخل التنزيلات', hint: 'يُنشأ عند الحاجة، ويُحفظ فيه تلقائيًا ما دام المتصفح لا يسأل عن مكان كل تنزيل.' }),
-  Object.freeze({ value: 'ask', label: 'اسأل عن مكان الحفظ عند كل تنزيل', hint: 'يفتح حوار الحفظ من النظام في كل مرة.' }),
+  Object.freeze({ value: 'downloads', label: 'مجلد التنزيلات (الافتراضي)', hint: 'حيث يحفظ المتصفح تنزيلاته عادةً، ويسأل عن المكان إن ضبطته على ذلك.' }),
+  Object.freeze({ value: 'subfolder', label: 'مجلد فرعي داخل التنزيلات', hint: 'يُنشأ داخل التنزيلات عند الحاجة. وإن كان المتصفح مضبوطًا على السؤال عن مكان كل تنزيل فسيسألك.' }),
+  Object.freeze({ value: 'ask', label: 'اسأل عن مكان الحفظ عند كل تنزيل' }),
 ]);
-export const SAVE_LOCATION_NOTE = 'لا تسمح المتصفحات للإضافات بالحفظ التلقائي خارج مجلد التنزيلات؛ لاختيار مجلد آخر اختر «اسأل عن مكان الحفظ عند كل تنزيل».';
-
-/**
- * سطر المكان المختار: وصف للإعداد لا مسار فعلي (المسار لا يُعرض إلا من سجل المتصفح لملف نزّله ترجمان واكتمل ووُجد).
- * @param {'downloads' | 'subfolder' | 'ask'} mode @param {string} [subfolder]
- */
-export function saveLocationStatus(mode, subfolder = DEFAULT_SUBFOLDER) {
-  // «مجلد X داخل التنزيلات» كما في رسالة الحفظ بالمحرّر: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص (تدقيق Fable، UX-08).
-  if (mode === 'subfolder') return `المكان المختار: مجلد ${isolate(subfolder)} داخل التنزيلات`;
-  if (mode === 'ask') return 'المكان المختار: يُسأل عند كل تنزيل';
-  return 'المكان المختار: مجلد التنزيلات';
-}
+export const SAVE_LOCATION_NOTE = 'للحفظ في مجلد آخر اختر «اسأل عن مكان الحفظ عند كل تنزيل»؛ فالمتصفحات لا تسمح للإضافات بالحفظ التلقائي خارج مجلد التنزيلات.';
 
 /** @param {{ mode: string, folder: string }} loc */
 export const isDefaultLocation = (loc) => loc.mode === DEFAULT_PREFS.saveLocation.mode && loc.folder === DEFAULT_PREFS.saveLocation.folder;
@@ -209,7 +205,7 @@ export const PREVIEW_REFERENCE_HEIGHT = 400;
 export const PREVIEW_BASE_RATIO = 0.046;
 export const PREVIEW_MIN_FONT_PX = 12;
 export const PREVIEW_POSITION_PCT = Object.freeze({ bottom: 8, raised: 20, top: 8 });
-export const PREVIEW_LINES = Object.freeze(['هذا هو السطر العربي المترجم.', 'والسطر الثاني بعده']);
+export const PREVIEW_LINES = Object.freeze(['هكذا تظهر الترجمة فوق الفيديو،', 'وهذا سطرها الثاني.']);
 
 /**
  * أنماط المعاينة الحية من إعدادات المظهر.

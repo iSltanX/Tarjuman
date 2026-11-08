@@ -10,7 +10,7 @@ import { createStore } from '../../../src/core/store/index.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { NOW, VIDEO_ID as A } from '../../helpers/fixtures.js';
 
-test('الافتراضي صالح: «من» تلقائي و«إلى» العربية قيمةً افتراضية، وتذكّر آخر زوج، وبلا لغات أخيرة', () => {
+test('الافتراضي صالح: «من» تلقائي و«إلى» العربية قيمةً افتراضية، وتذكّر آخر لغة ترجمة، وبلا لغات أخيرة', () => {
   assert.equal(validateLangPrefs(DEFAULT_LANG_PREFS).ok, true);
   assert.deepEqual(DEFAULT_LANG_PREFS.pair, { from: AUTO_SOURCE, to: DEFAULT_TARGET_LANG });
   assert.equal(DEFAULT_TARGET_LANG, 'ar');

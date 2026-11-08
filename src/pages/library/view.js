@@ -743,7 +743,7 @@ export function createLibrary(env) {
       if (cap?.code) capacityAlert.append(alertBox({ tone: cap.level === 'full' ? 'danger' : 'warning', text: messageFor(cap.code), doc }));
     }
     if (!cap) return;
-    const text = cap.quotaBytes ? `المستخدم ${formatBytes(cap.bytesInUse)} من ${formatBytes(cap.quotaBytes)}` : `المستخدم ${formatBytes(cap.bytesInUse)}`;
+    const text = cap.quotaBytes ? `المساحة المستخدمة: ${formatBytes(cap.bytesInUse)} من ${formatBytes(cap.quotaBytes)}` : `المساحة المستخدمة: ${formatBytes(cap.bytesInUse)}`;
     const children = [el('span', { className: 'tj-caption lib-quota__text', text, doc })];
     if (cap.quotaBytes) {
       const pct = Math.min(100, Math.round((cap.bytesInUse / cap.quotaBytes) * 100));

@@ -39,7 +39,7 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
     ],
     doc,
   });
-  const empty = el('p', { className: 'tj-caption st-gl__empty', text: 'لا مصطلحات بعد. أضف المصطلح بلغة الأصل ومقابله الذي تفضّله بلغة الترجمة، فيُطلب من النموذج التزامه.', doc });
+  const empty = el('p', { className: 'tj-caption st-gl__empty', text: 'لا مصطلحات بعد. أضف المصطلح ومقابله الذي تفضّله، فيُطلب من النموذج التزامه.', doc });
   const tableWrap = el('div', { className: 'st-gl__wrap', children: [table], doc });
 
   // حقول الإضافة: كل حقل بتسميته، والخطأ تحت الحقل المعني.

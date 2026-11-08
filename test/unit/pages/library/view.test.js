@@ -102,7 +102,7 @@ test('التحميل: هيكل ثم قائمة بالعدد والسطر الت�
   assert.equal(rows(m).length, 3);
   assert.equal(textOf(m.root.querySelector('.lib-count')), '3 فيديوهات · 3 ترجمات', 'عدد الفيديوهات والترجمات الموجودة فعلًا');
   assert.equal(textOf(m.root.querySelector('.lib-caption')), CAPTION);
-  assert.match(textOf(m.root.querySelector('.lib-quota__text')), /^المستخدم \d+ ك\.ب$/);
+  assert.match(textOf(m.root.querySelector('.lib-quota__text')), /^المساحة المستخدمة: \d+ ك\.ب$/);
   assert.equal(m.root.querySelectorAll('.tj-meter').length, 0, 'بلا حد ثابت لا شريط');
   assert.deepEqual(rowTitles(m).sort(), ['عنوان 1', 'عنوان 2', 'عنوان 3']);
   assertNoTemplate(m, 'ممتلئة');
@@ -221,7 +221,7 @@ test('السعة: شريط رفيع بقيمته، وتحذير عند 80% ين�
   assert.equal(meter.getAttribute('role'), 'meter');
   assert.ok(Number(meter.getAttribute('aria-valuenow')) >= 80);
   assert.ok(meter.classList.contains('tj-meter--warning'));
-  assert.match(textOf(m.root.querySelector('.lib-quota__text')), /^المستخدم .* من .*$/);
+  assert.match(textOf(m.root.querySelector('.lib-quota__text')), /^المساحة المستخدمة: .* من .*$/);
   assert.match(textOf(m.root.querySelector('.lib-capacity-alert')), /اقتربت مساحة الحفظ من حدها \(80%\)/);
 });
 

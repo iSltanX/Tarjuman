@@ -26,9 +26,9 @@ const font = (id, nameAr, nameLatin, note) => Object.freeze({
 
 /** @type {readonly SubtitleFont[]} */
 export const SUBTITLE_FONT_LIST = Object.freeze([
-  font('almarai', 'المراعي', 'Almarai', 'الافتراضي'),
-  font('noto-sans-arabic', 'نوتو سانس العربي', 'Noto Sans Arabic', 'أوسع تغطية للحروف والتشكيل'),
-  font('tajawal', 'تجوّل', 'Tajawal', 'أضيق، فيقلّ الالتفاف'),
+  font('almarai', 'المراعي', 'Almarai', 'واضح ومتوازن للقراءة السريعة'),
+  font('noto-sans-arabic', 'نوتو سانس العربي', 'Noto Sans Arabic', 'يدعم حروفًا وعلامات تشكيل أكثر'),
+  font('tajawal', 'تجوّل', 'Tajawal', 'أضيق، فيحتاج أسطرًا أقل'),
   font('markazi', 'مركزي', 'Markazi Text', 'نسخي كلاسيكي'),
 ]);
 

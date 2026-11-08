@@ -86,7 +86,7 @@ test('في Firefox تُذكر موافقة «البيانات التقنية و�
   await settle();
   assert.ok(textOf(h.region).includes('موافقة «البيانات التقنية والتفاعل»'));
   h.type('خلل');
-  buttonNamed(h.region, 'أرسل البلاغ').click();
+  buttonNamed(h.region, 'إرسال البلاغ').click();
   await settle();
   assert.deepEqual(h.log[0], ['permission', 'firefox']);
 });
@@ -95,7 +95,7 @@ test('الإرسال معطّل بلا وصف، والإذن أول ما في ا
   const h = harness();
   h.trigger.click();
   await settle();
-  const send = buttonNamed(h.region, 'أرسل البلاغ');
+  const send = buttonNamed(h.region, 'إرسال البلاغ');
   assert.equal(send.getAttribute('aria-disabled'), 'true');
   send.click();
   await settle();
@@ -108,7 +108,7 @@ test('الإرسال معطّل بلا وصف، والإذن أول ما في ا
   assert.deepEqual(h.log.map((x) => x[0]), ['permission', 'send']);
   assert.deepEqual(h.log[1][1], buildPayload({ kind: 'bug', description: 'لا تظهر الترجمة العربية' }, DIAG));
   assert.ok(textOf(h.result()).includes('وصل بلاغك برقم #41'));
-  assert.ok(textOf(h.result()).includes('واذكره حين تراسل بريد الدعم iSultanBy@gmail.com؛'), 'النجاح يسمّي وجهة المتابعة (قرار T4)');
+  assert.ok(textOf(h.result()).includes('احتفظ به إن أردت المتابعة عبر بريد الدعم iSultanBy@gmail.com؛'), 'النجاح يسمّي وجهة المتابعة (قرار T4)');
   assert.equal(h.panel.root.querySelector('textarea').value, '');
   buttonNamed(h.result(), 'نسخ الرقم').click();
   await settle();
@@ -121,11 +121,11 @@ test('بعد النجاح: البلاغ التالي بنص مطابق بلاغ 
   h.trigger.click();
   await settle();
   h.type('لا تظهر الترجمة العربية');
-  buttonNamed(h.region, 'أرسل البلاغ').click();
+  buttonNamed(h.region, 'إرسال البلاغ').click();
   await settle();
   assert.ok(textOf(h.result()).includes('#41'));
   h.type('لا تظهر الترجمة العربية');
-  buttonNamed(h.region, 'أرسل البلاغ').click();
+  buttonNamed(h.region, 'إرسال البلاغ').click();
   await settle();
   const sends = h.log.filter((x) => x[0] === 'send');
   assert.equal(sends.length, 2);
@@ -134,16 +134,16 @@ test('بعد النجاح: البلاغ التالي بنص مطابق بلاغ 
   assert.ok(textOf(h.result()).includes('#42'));
 });
 
-test('رفض الإذن: لا طلب، ونص الإذن مع «أعد المحاولة» و«انسخ البلاغ»', async () => {
+test('رفض الإذن: لا طلب، ونص الإذن مع «أعد المحاولة» و«نسخ البلاغ»', async () => {
   const h = harness({ permission: false });
   h.trigger.click();
   await settle();
   h.type('خلل');
-  buttonNamed(h.region, 'أرسل البلاغ').click();
+  buttonNamed(h.region, 'إرسال البلاغ').click();
   await settle();
   assert.deepEqual(h.log.map((x) => x[0]), ['permission']);
   assert.equal(h.result().querySelector('[data-report-result]').getAttribute('data-failure'), 'permission');
-  assert.ok(buttonNamed(h.result(), 'أعد المحاولة') && buttonNamed(h.result(), 'انسخ البلاغ'));
+  assert.ok(buttonNamed(h.result(), 'أعد المحاولة') && buttonNamed(h.result(), 'نسخ البلاغ'));
 });
 
 test('جدول الردود: الإعادة لما يعاد (المهلة والشبكة و429 و5xx) لا لـ400 و413 و415، والنسخ في كل فشل، والمفتاح نفسه في الإعادة', async () => {
@@ -165,11 +165,11 @@ test('جدول الردود: الإعادة لما يعاد (المهلة وال
     h.trigger.click();
     await settle();
     h.type('خلل في التوقيت');
-    buttonNamed(h.region, 'أرسل البلاغ').click();
+    buttonNamed(h.region, 'إرسال البلاغ').click();
     await settle();
     assert.ok(textOf(h.result()).includes(text), `${outcome.failure}: ${textOf(h.result())}`);
     assert.equal(Boolean(buttonNamed(h.result(), 'أعد المحاولة')), again, `${outcome.failure}: إعادة`);
-    assert.ok(buttonNamed(h.result(), 'انسخ البلاغ'), `${outcome.failure}: نسخ`);
+    assert.ok(buttonNamed(h.result(), 'نسخ البلاغ'), `${outcome.failure}: نسخ`);
     assert.equal(h.log.filter((x) => x[0] === 'send').length, 1, 'لا إعادة تلقائية');
     if (again) {
       buttonNamed(h.result(), 'أعد المحاولة').click();
@@ -188,7 +188,7 @@ test('تعديل البلاغ بعد فشل يأخذ مفتاحًا جديدًا
   h.trigger.click();
   await settle();
   h.type('الوصف الأول');
-  const send = buttonNamed(h.region, 'أرسل البلاغ');
+  const send = buttonNamed(h.region, 'إرسال البلاغ');
   send.click();
   await settle();
   send.click();
@@ -205,12 +205,12 @@ test('تعديل البلاغ بعد فشل يأخذ مفتاحًا جديدًا
   assert.notEqual(keys[1], firstKey, 'جسم معدَّل بمفتاح جديد');
 });
 
-test('«انسخ البلاغ» يعمل بلا شبكة ولا إذن: الجسم نفسه منسَّقًا، وفشل النسخ يقول البديل', async () => {
+test('«نسخ البلاغ» يعمل بلا شبكة ولا إذن: الجسم نفسه منسَّقًا، وفشل النسخ يقول البديل', async () => {
   const h = harness();
   h.trigger.click();
   await settle();
   h.type('اقتراح: اختصار للمزامنة');
-  buttonNamed(h.region, 'انسخ البلاغ').click();
+  buttonNamed(h.region, 'نسخ البلاغ').click();
   await settle();
   assert.deepEqual(h.log.map((x) => x[0]), ['copy'], 'لا إذن ولا طلب');
   assert.equal(h.log[0][1], serialise(buildPayload({ kind: 'bug', description: 'اقتراح: اختصار للمزامنة' }, DIAG)));
@@ -219,7 +219,7 @@ test('«انسخ البلاغ» يعمل بلا شبكة ولا إذن: الجس
   f.trigger.click();
   await settle();
   f.type('x');
-  buttonNamed(f.region, 'انسخ البلاغ').click();
+  buttonNamed(f.region, 'نسخ البلاغ').click();
   await settle();
   assert.ok(textOf(f.result()).includes('تعذّر النسخ'));
 });
@@ -229,13 +229,13 @@ test('ما يشبه رمز جلسة أو ملف ارتباط في الوصف ي�
   h.trigger.click();
   await settle();
   h.type('الملف من https://www.youtube.com/watch?v=abc فيه خلل');
-  assert.equal(buttonNamed(h.region, 'أرسل البلاغ').getAttribute('aria-disabled'), null);
+  assert.equal(buttonNamed(h.region, 'إرسال البلاغ').getAttribute('aria-disabled'), null);
   h.type('ملف الارتباط SAPISID=abcdef0123456789 ظهر');
-  assert.equal(buttonNamed(h.region, 'أرسل البلاغ').getAttribute('aria-disabled'), 'true');
-  assert.equal(buttonNamed(h.region, 'انسخ البلاغ').getAttribute('aria-disabled'), 'true');
+  assert.equal(buttonNamed(h.region, 'إرسال البلاغ').getAttribute('aria-disabled'), 'true');
+  assert.equal(buttonNamed(h.region, 'نسخ البلاغ').getAttribute('aria-disabled'), 'true');
   assert.ok(textOf(h.region.querySelector('.st-report__secret')).includes('رمز جلسة'));
-  buttonNamed(h.region, 'أرسل البلاغ').click();
-  buttonNamed(h.region, 'انسخ البلاغ').click();
+  buttonNamed(h.region, 'إرسال البلاغ').click();
+  buttonNamed(h.region, 'نسخ البلاغ').click();
   await settle();
   assert.equal(h.log.length, 0);
 });
@@ -245,7 +245,7 @@ test('تعذّر التشخيص: لا إرسال ولا نسخ، والسبب م
   h.trigger.click();
   await settle();
   h.type('خلل');
-  assert.equal(buttonNamed(h.region, 'أرسل البلاغ').getAttribute('aria-disabled'), 'true');
+  assert.equal(buttonNamed(h.region, 'إرسال البلاغ').getAttribute('aria-disabled'), 'true');
   assert.ok(textOf(h.region).includes('تعذّرت قراءة إصدار المتصفح والنظام.'));
 });
 
@@ -257,7 +257,7 @@ test('التركيز بعد «أعد المحاولة» بلوحة المفات�
   h.trigger.click();
   await settle();
   h.type('خلل في المزامنة');
-  buttonNamed(h.region, 'أرسل البلاغ').click();
+  buttonNamed(h.region, 'إرسال البلاغ').click();
   await settle();
   release({ ok: false, failure: 'network', status: null });
   await settle();
@@ -282,7 +282,7 @@ test('التركيز بعد «أعد المحاولة» بلوحة المفات�
   await settle();
   assert.ok(h.doc.activeElement === buttonNamed(h.result(), 'نسخ الرقم'), '«نسخ الرقم» المركّز يبقى مركّزًا بعد إعادة الرسم');
   // التركيز خارج النتيجة لا يُنقل إليها.
-  const send = buttonNamed(h.region, 'أرسل البلاغ');
+  const send = buttonNamed(h.region, 'إرسال البلاغ');
   send.focus();
   h.type('بلاغ آخر');
   assert.ok(h.doc.activeElement === send);
@@ -294,7 +294,7 @@ test('فشل نسخ رقم البلاغ نتيجة ظاهرة لا صمت، ول
     h.trigger.click();
     await settle();
     h.type('خلل');
-    buttonNamed(h.region, 'أرسل البلاغ').click();
+    buttonNamed(h.region, 'إرسال البلاغ').click();
     await settle();
     buttonNamed(h.result(), 'نسخ الرقم').click();
     await settle();
@@ -312,11 +312,11 @@ test('بلاغان مستقلان بالوصف نفسه من الصفحة نفس
   h.trigger.click();
   await settle();
   h.type('الترجمة تتأخر');
-  buttonNamed(h.region, 'أرسل البلاغ').click();
+  buttonNamed(h.region, 'إرسال البلاغ').click();
   await settle();
   assert.ok(textOf(h.result()).includes('#41'));
   h.type('الترجمة تتأخر');
-  buttonNamed(h.region, 'أرسل البلاغ').click();
+  buttonNamed(h.region, 'إرسال البلاغ').click();
   await settle();
   buttonNamed(h.result(), 'أعد المحاولة').click();
   await settle();
@@ -325,4 +325,19 @@ test('بلاغان مستقلان بالوصف نفسه من الصفحة نفس
   assert.notEqual(keys[1], keys[0], 'الإرسال الثاني بلاغ جديد بمفتاح جديد رغم تطابق الجسم');
   assert.equal(keys[2], keys[1], 'إعادة المحاولة بالمفتاح نفسه');
   assert.ok(textOf(h.result()).includes('#42'));
+});
+
+test('ق-6: عنوان حقل الوصف يتبع نوع البلاغ', async () => {
+  const h = harness();
+  h.trigger.click();
+  await settle();
+  const label = () => textOf(h.region.querySelector('label[for="st-report-text"]'));
+  assert.equal(label(), 'ماذا حدث؟');
+  const pick = (kind) => { const r = h.region.querySelector(`input[value="${kind}"]`); r.checked = true; r.dispatchEvent({ type: 'change' }); };
+  pick('suggestion');
+  assert.equal(label(), 'ما اقتراحك؟');
+  pick('other');
+  assert.equal(label(), 'اكتب رسالتك');
+  pick('bug');
+  assert.equal(label(), 'ماذا حدث؟');
 });

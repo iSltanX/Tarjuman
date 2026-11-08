@@ -10,7 +10,7 @@ import { instructions } from '../../../../src/core/export/instructions.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { createSettings } from '../../../../src/pages/settings/view.js';
 import {
-  glossaryCounter, parseFolder, parseReadingSpeed, readingText, saveLocationStatus, sectionReset, termDraft,
+  glossaryCounter, parseFolder, parseReadingSpeed, readingText, sectionReset, termDraft,
 } from '../../../../src/pages/settings/model.js';
 import { DEFAULT_PREFS } from '../../../../src/core/model/prefs.js';
 import { DEFAULT_SETTINGS } from '../../../../src/core/model/settings.js';
@@ -75,8 +75,6 @@ test('النموذج: حد القراءة 5..40 أو فارغ للافتراضي
   assert.equal(readingText(22), '22');
   assert.deepEqual(parseFolder('  Tarjuman 2 '), { ok: true, value: 'Tarjuman 2' });
   for (const bad of ['', 'a/b', 'a\\b', '..', 'CON', 'x'.repeat(61), 'a:b']) assert.equal(parseFolder(bad).code, 'SV_BAD_FOLDER', bad);
-  // «مجلد X داخل التنزيلات» بالاسم معزولًا (تدقيق Fable، UX-08).
-  assert.equal(saveLocationStatus('subfolder', 'ترجماتي'), `المكان المختار: مجلد ${String.fromCodePoint(0x2068)}ترجماتي${String.fromCodePoint(0x2069)} داخل التنزيلات`);
   assert.equal(glossaryCounter(12), '12 من 100');
 
   const terms = samplePrefs().glossary.terms;
@@ -98,7 +96,7 @@ test('النموذج: حد القراءة 5..40 أو فارغ للافتراضي
 test('«المقارنة والمراجعة»: حد سرعة القراءة يُحفظ في التفضيلات، والفارغ يعيد الافتراضي بعلامته، والخاطئ يُرفض', async () => {
   const m = await mount();
   const sec = section(m, 'المقارنة والمراجعة');
-  const field = findAll(sec, (e) => e.classList.contains('tj-num') && textOf(e.querySelector('label')) === 'حد سرعة القراءة (حرف/ث)')[0];
+  const field = findAll(sec, (e) => e.classList.contains('tj-num') && textOf(e.querySelector('label')) === 'حد سرعة القراءة')[0];
   const input = field.querySelector('input');
   const pill = findAll(sec, (e) => e.classList.contains('tj-pill') && textOf(e) === 'الافتراضي 20')[0];
   assert.equal(input.value, '');
@@ -174,7 +172,7 @@ test('«المصطلحات»: إضافة وحذف بتحقق، والعدّاد 
 test('«البيانات» — الإنشاء: ملف tarjuman-backup-YYYY-MM-DD.json عبر saveFile بخيار تضمين السوابق، ونتيجته سطر بلا محتوى', async () => {
   const { store } = await sourceBackup();
   const m = await mount({ store, area: createMemoryArea() });
-  const sec = section(m, 'البيانات');
+  const sec = section(m, 'النسخ الاحتياطي');
   const prev = findAll(sec, (e) => e.tagName === 'input' && e.getAttribute('type') === 'checkbox')[0];
   assert.equal(prev.checked, true, 'تضمين النسخ السابقة مفعّل افتراضيًا');
   buttonNamed(sec, 'إنشاء نسخة احتياطية').click();
@@ -203,17 +201,17 @@ test('«البيانات» — الاستعادة: المعاينة بالأعد
   const text = textOf(seen.content);
   assert.equal(seen.title, 'استعادة من نسخة احتياطية');
   assert.ok(text.includes('3 فيديوهات · 4 ترجمات · 3 علامات · نسخة سابقة واحدة'));
-  assert.ok(text.includes('جديدة — ستُضاف (2)'));
-  assert.ok(text.includes('موجودة — تُتخطى افتراضيًا (1)'));
+  assert.ok(text.includes('فيديوهات جديدة ستُضاف (2)'));
+  assert.ok(text.includes('فيديوهات موجودة تبقى كما هي ما لم تُستبدل (1)'));
   assert.ok(text.includes('نزّل نسخة من بياناتك الحالية أولًا'));
   const boxes = findAll(seen.content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'checkbox');
-  const settingsBox = boxes.find((b) => textOf(b.parentNode) === 'استعادة الإعدادات والقاموس');
+  const settingsBox = boxes.find((b) => textOf(b.parentNode) === 'استعادة الإعدادات والقاموس وتفضيلات اللغات');
   assert.equal(settingsBox.checked, false, 'الإعدادات غير مختارة افتراضيًا');
   assert.ok(boxes.filter((b) => b.getAttribute('data-video')).every((b) => !b.checked), 'الموجود غير مختار للاستبدال');
   await settle(10);
-  const sec = section(m, 'البيانات');
+  const sec = section(m, 'النسخ الاحتياطي');
   assert.ok(textOf(sec).includes(messageFor('BK_RESTORE_DONE')));
-  assert.ok(textOf(sec).includes('أضيف 2 · تُخطّي 1 · استُبدل 0 · تعذّر 0'));
+  assert.ok(textOf(sec).includes('أُضيف: 2 · بقي كما هو: 1 · استُبدل: 0 · تعذّر: 0'));
   assert.equal((await store.getVideo(IDS[1])).title, 'عمل أحدث', 'الموجود لم يُمس');
   assert.ok(await store.getBundle(IDS[0]));
   assert.equal((await store.getSettings()).offsetStepMs, 500, 'الإعدادات لم تُستعد');
@@ -232,9 +230,9 @@ test('«البيانات» — الاستبدال الصريح لصف والإع
     const row = boxes.find((b) => b.getAttribute('data-video') === IDS[1]);
     row.checked = true;
     row.dispatchEvent({ type: 'change' });
-    const s = boxes.find((b) => textOf(b.parentNode) === 'استعادة الإعدادات والقاموس');
+    const s = boxes.find((b) => textOf(b.parentNode) === 'استعادة الإعدادات والقاموس وتفضيلات اللغات');
     s.checked = true;
-    assert.ok(textOf(o.content).includes('الاستبدال يكتب فوق الفيديو كاملًا ولا يحفظ له نسخة سابقة.'));
+    assert.ok(textOf(o.content).includes('الاستبدال يحل محل كل بيانات الفيديو المحفوظة في ترجمان (ترجماته وعلاماته وإعداداته) ولا يحفظ لها نسخة سابقة.'));
   });
   await m.settings.data.restoreFromFile();
   await settle(10);
@@ -244,11 +242,11 @@ test('«البيانات» — الاستبدال الصريح لصف والإع
   assert.equal((await store.getVideo(IDS[1])).title, 'محاضرة عن النماذج', 'استُبدل الصف المختار');
   assert.equal((await store.getSettings()).offsetStepMs, 1000);
   assert.equal((await store.getPrefs()).glossary.terms.length, 3);
-  assert.ok(textOf(section(m, 'البيانات')).includes('أضيف 2 · تُخطّي 0 · استُبدل 1 · تعذّر 0'));
-  assert.ok(textOf(section(m, 'البيانات')).includes('استُعيدت الإعدادات والقاموس.'));
+  assert.ok(textOf(section(m, 'النسخ الاحتياطي')).includes('أُضيف: 2 · بقي كما هو: 0 · استُبدل: 1 · تعذّر: 0'));
+  assert.ok(textOf(section(m, 'النسخ الاحتياطي')).includes('استُعيدت الإعدادات والقاموس.'));
 });
 
-test('«البيانات» — «استبدال كل الموجود» يختار كل الصفوف', async () => {
+test('«البيانات» — «استبدال بيانات كل الفيديوهات الموجودة» يختار كل الصفوف', async () => {
   const { built } = await sourceBackup();
   const { area, store } = newStore();
   for (const id of IDS) await store.updateVideo(id, () => ({ ...videoRecord({ videoId: id }), title: 'محلي' }));
@@ -256,13 +254,13 @@ test('«البيانات» — «استبدال كل الموجود» يختار
   m.pick(asFile(built.text));
   m.answers.push((o) => {
     const all = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('role') === 'switch')[0];
-    assert.ok(textOf(all.parentNode).includes('استبدال كل الموجود'));
+    assert.ok(textOf(all.parentNode).includes('استبدال بيانات كل الفيديوهات الموجودة'));
     all.checked = true;
     all.dispatchEvent({ type: 'change' });
   });
   await m.settings.data.restoreFromFile();
   await settle(10);
-  assert.ok(textOf(section(m, 'البيانات')).includes('أضيف 0 · تُخطّي 0 · استُبدل 3 · تعذّر 0'));
+  assert.ok(textOf(section(m, 'النسخ الاحتياطي')).includes('أُضيف: 0 · بقي كما هو: 0 · استُبدل: 3 · تعذّر: 0'));
   assert.equal((await store.getVideo(IDS[1])).title, 'محاضرة عن النماذج');
 });
 
@@ -283,10 +281,10 @@ test('«البيانات» — الإلغاء لا يغيّر بصمة التخ�
   const confirms = m.calls.confirms.length;
   await m.settings.data.restoreFromFile();
   assert.equal(m.calls.confirms.length, confirms, 'لا معاينة لملف تالف');
-  assert.ok(textOf(section(m, 'البيانات')).includes(messageFor('BK_INTEGRITY')));
+  assert.ok(textOf(section(m, 'النسخ الاحتياطي')).includes(messageFor('BK_INTEGRITY')));
   m.pick(asFile(JSON.stringify({ ...JSON.parse(built.text), version: 9 })));
   await m.settings.data.restoreFromFile();
-  assert.ok(textOf(section(m, 'البيانات')).includes('حدّث ترجمان أولًا'));
+  assert.ok(textOf(section(m, 'النسخ الاحتياطي')).includes('حدّث ترجمان أولًا'));
   assert.equal(JSON.stringify(area.dump()), before);
 });
 
@@ -306,16 +304,16 @@ test('«البيانات» — فشل جزئي: التقرير يذكر ما ت�
   m.answers.push(true);
   await m.settings.data.restoreFromFile();
   await settle(10);
-  const sec = section(m, 'البيانات');
+  const sec = section(m, 'النسخ الاحتياطي');
   assert.ok(textOf(sec).includes(messageFor('BK_RESTORE_PARTIAL')));
-  assert.ok(textOf(sec).includes('أضيف 2 · تُخطّي 0 · استُبدل 0 · تعذّر 1'));
+  assert.ok(textOf(sec).includes('أُضيف: 2 · بقي كما هو: 0 · استُبدل: 0 · تعذّر: 1'));
   assert.ok(textOf(sec).includes(`محاضرة عن النماذج: ${messageFor('ST_WRITE_FAILED')}`));
   broken = false;
   calls.length = 0;
   buttonNamed(sec, 'أعد المحاولة').click();
   await settle(10);
   assert.deepEqual(calls, [IDS[1]], 'إعادة المحاولة لما تعذّر وحده');
-  assert.ok(textOf(sec).includes('أضيف 3 · تُخطّي 0 · استُبدل 0 · تعذّر 0'));
+  assert.ok(textOf(sec).includes('أُضيف: 3 · بقي كما هو: 0 · استُبدل: 0 · تعذّر: 0'));
   assert.ok(textOf(sec).includes(messageFor('BK_RESTORE_DONE')));
 });
 
@@ -370,12 +368,12 @@ test('«أعد المحاولة» معطّل أثناء التشغيل، وال�
   await settle(10);
   broken = false;
   calls.length = 0;
-  const again = buttonNamed(section(m, 'البيانات'), 'أعد المحاولة');
+  const again = buttonNamed(section(m, 'النسخ الاحتياطي'), 'أعد المحاولة');
   again.click();
   again.click();
   await settle(10);
   assert.deepEqual(calls, [IDS[1]], 'تشغيل واحد');
-  assert.ok(textOf(section(m, 'البيانات')).includes('أضيف 3 · تُخطّي 0 · استُبدل 0 · تعذّر 0'));
+  assert.ok(textOf(section(m, 'النسخ الاحتياطي')).includes('أُضيف: 3 · بقي كما هو: 0 · استُبدل: 0 · تعذّر: 0'));
 });
 
 test('«التخزين»: عدد الترجمات وأحجام الترجمات غير النشطة والنسخ السابقة', async () => {
@@ -384,7 +382,7 @@ test('«التخزين»: عدد الترجمات وأحجام الترجمات 
   await settle(10);
   const sec = section(m, 'التخزين');
   assert.ok(textOf(sec).includes('الترجمات المحفوظة: 4 · الفيديوهات المترجمة: 2'), textOf(sec));
-  assert.match(textOf(sec), /الترجمات غير النشطة \d+ ك\.ب · النسخ السابقة \d+ ك\.ب/);
+  assert.match(textOf(sec), /الترجمات غير النشطة: \d+ ك\.ب · النسخ السابقة: \d+ ك\.ب/);
 });
 
 test('تدقيق 7a66f91 (U05، Q10): نسخة أُطفئت فيها الصور تُظهر ذلك في المعاينة، وتُبقيها مطفأة بلا اختيار الإعدادات، وتذكره في التقرير', async () => {
@@ -403,7 +401,7 @@ test('تدقيق 7a66f91 (U05، Q10): نسخة أُطفئت فيها الصور 
   assert.ok(textOf(seen.content).includes('صور الفيديو في المحفوظات مطفأة في هذه النسخة، فتبقى مطفأة على هذا الجهاز بعد الاستعادة.'));
   await settle(10);
   assert.equal((await store.getPrefs()).ui.thumbnails, false);
-  const sec = section(m, 'البيانات');
+  const sec = section(m, 'النسخ الاحتياطي');
   assert.ok(textOf(sec).includes('بقيت صور الفيديو في المحفوظات مطفأة كما في النسخة.'));
   assert.equal(textOf(sec).includes('استُعيدت الإعدادات والقاموس'), false, 'الإعدادات لم تُختر');
 });

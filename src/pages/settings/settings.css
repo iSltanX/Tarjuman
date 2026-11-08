@@ -110,8 +110,6 @@
 .st-location > .tj-choice { width: 100%; max-width: 560px; }
 .st-subfolder-box { display: flex; flex-direction: column; gap: 4px; }
 .st-subfolder { width: 100%; max-width: 220px; min-height: var(--tj-control-sm); }
-.st-status { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--tj-surface-2); color: var(--tj-text-2); font: 700 13px/20px var(--tj-font-body); }
-.st-status .tj-icon { width: 16px; height: 16px; color: var(--tj-muted); }
 .st-last-save { max-width: 560px; overflow-wrap: anywhere; }
 /* المسار سطر مستقل LTR محاذى يمينًا كبقية الصفحة، فلا تنقلب أجزاؤه عند الالتفاف داخل الجملة العربية. */
 .st-last-save__path { display: block; }

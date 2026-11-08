@@ -47,10 +47,10 @@ test('العرض يحوي مفتاحين بتسميتيهما وشرحيهما: 
   assert.equal(ENTRY_SWITCH.text, 'يظهر في صفحات الفيديو');
   assert.ok(textOf(entry).includes('في شريط المشغّل'));
   assert.ok(textOf(entry).includes('يظهر في صفحات الفيديو'));
-  assert.ok(textOf(entry).includes('إطفاؤه كإخفاء الزر من اللوحة نفسها؛ وإغلاق اللوحة لا يمسّه.'));
+  assert.ok(textOf(entry).includes('إطفاؤه يخفي الزر ويغلق اللوحة معه، وتعيده من هنا أو من نافذة الإضافة. أما إغلاق اللوحة وحده فلا يخفي الزر.'));
   assert.ok(textOf(thumbs).includes('i.ytimg.com'));
   assert.ok(textOf(thumbs).includes('بمعرّف الفيديو'));
-  assert.ok(textOf(thumbs).includes('أطفئها ليبقى كل شيء على جهازك'));
+  assert.ok(textOf(thumbs).includes('أطفئها إن لم ترد هذا الاتصال'));
   assert.ok(THUMBNAILS_SWITCH.note.includes('خوادم يوتيوب'));
   for (const input of [sw(m, 'ui.panelEntry'), sw(m, 'ui.thumbnails')]) {
     assert.equal(input.getAttribute('role'), 'switch');
@@ -62,7 +62,7 @@ test('«لوحة النص المتزامن» (قرار سلطان 2026-11-03): �
   const m = await mount({ prefs: { ui: { panelEntry: false } } });
   const row = rowOf(m, PANEL_OPEN_SWITCH.label);
   assert.ok(row && section(m, 'العرض').contains(row), 'في «العرض»');
-  assert.ok(textOf(row).includes(PANEL_OPEN_SWITCH.text) && textOf(row).includes('مطفأة افتراضيًا'));
+  assert.ok(textOf(row).includes(PANEL_OPEN_SWITCH.text) && textOf(row).includes('مغلقة افتراضيًا'));
   assert.equal(DEFAULT_PREFS.ui.panelOpen, false);
   const input = sw(m, 'ui.panelOpen');
   assert.equal(input.getAttribute('role'), 'switch');
@@ -135,7 +135,7 @@ test('Firefox (قرار سلطان 2026-11-04): بلا موافقة يبدو ا�
   assert.equal(sw(m, 'ui.thumbnails').checked, false, 'المعروض = المفتاح والموافقة معًا');
   const row = rowOf(m, 'صور الفيديو في المحفوظات');
   assert.ok(textOf(row).includes('وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح»'));
-  assert.equal(textOf(row).includes('أطفئها ليبقى كل شيء على جهازك'), false);
+  assert.ok(textOf(row).includes('أطفئها إن لم ترد هذا الاتصال') && textOf(row).includes('نشاط التصفح'), 'نسخة Firefox بالجملتين (م-024)');
   assert.deepEqual(c.state.calls, ['check'], 'قراءة بلا طلب عند الفتح');
 });
 
@@ -212,8 +212,8 @@ test('«حول»: سطر الخصوصية صادق في شأن الصور وال
   const m = await mount();
   const about = textOf(section(m, 'حول'));
   assert.ok(about.includes('بياناتك كلها على جهازك؛ لا حسابات ولا مفتاح API.'));
-  assert.ok(about.includes('ولا يخرج منه شيء إلا صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وبلاغ ترسله أنت بنفسك من «الإبلاغ عن مشكلة».'));
-  assert.equal(PRIVACY_LINE, 'بياناتك كلها على جهازك؛ لا حسابات ولا مفتاح API. ولا يخرج منه شيء إلا صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وبلاغ ترسله أنت بنفسك من «الإبلاغ عن مشكلة».');
+  assert.ok(about.includes('ولا يتصل ترجمان بالإنترنت إلا لجلب صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وحين ترسل أنت بنفسك بلاغًا من «الإبلاغ عن مشكلة».'));
+  assert.equal(PRIVACY_LINE, 'بياناتك كلها على جهازك؛ لا حسابات ولا مفتاح API. ولا يتصل ترجمان بالإنترنت إلا لجلب صور الفيديو في المحفوظات من خوادم يوتيوب ما دام مفتاحها مفعّلًا، وحين ترسل أنت بنفسك بلاغًا من «الإبلاغ عن مشكلة».');
   assert.equal(about.includes('لا خادم'), false, 'خادم البلاغات موجود، فلا يُنفى الخادم');
   assert.equal(about.includes('كل شيء محلي'), false, 'لا ادّعاء مطلق');
 });
