@@ -51,10 +51,11 @@ test('النص بلا توقيت يُرفض برسالة تقول ما ينقص 
   const numbered = fail(readV2('untimed-numbered.ar.txt'));
   assert.equal(numbered.code, 'IM_NO_TIMING');
   assert.match(numbered.message, /بلا سطور توقيت/);
-  assert.match(numbered.message, /لا يخترع أزمنة/);
+  assert.match(numbered.message, /ولا يضيف ترجمان توقيتًا من عنده/);
   const prose = fail(readV2('untimed-prose.ar.txt'));
   assert.equal(prose.code, 'IM_NO_CUES');
-  assert.match(prose.message, /لا يخترع أزمنة/);
+  assert.match(prose.message, /لم يُعثر في الملف على أي مقطع/);
+  assert.equal(prose.message.includes('يخترع'), false, 'بلا صياغة جدالية (م-212)');
 });
 
 test('ملف TXT بمحتوى SRT يُقبل كما هو، وMarkdown عبر readImport بملاحظاته في النتيجة والتقرير', async () => {

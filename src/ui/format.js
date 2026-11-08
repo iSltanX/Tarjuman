@@ -73,6 +73,7 @@ export const COUNT_FORMS = Object.freeze({
   video: Object.freeze({ one: 'فيديو واحد', two: 'فيديوهان', few: 'فيديوهات', many: 'فيديو', single: 'فيديو' }),
   change: Object.freeze({ one: 'تغيير واحد', two: 'تغييران', few: 'تغييرات', many: 'تغييرًا', single: 'تغيير' }),
   language: Object.freeze({ one: 'لغة واحدة', two: 'لغتان', few: 'لغات', many: 'لغة', single: 'لغة' }),
+  file: Object.freeze({ one: 'ملف واحد', two: 'ملفان', few: 'ملفات', many: 'ملفًا', single: 'ملف' }),
 });
 
 /**

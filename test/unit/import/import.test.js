@@ -145,7 +145,7 @@ test('أجزاء احتياطية: تُدمج بالأرقام مهما كان �
   assert.equal(r.ok, true);
   assert.deepEqual(r.cues.map((c) => c.n), [1, 2, 3, 4, 5, 6, 7, 8]);
   assert.equal(r.fileName, 'abc.ar.srt');
-  assert.deepEqual(r.notes, [messageFor('IM_NOTE_MERGED', { count: 2, names: 'abc.ar.part1.srt، abc.ar.part2.srt' })]);
+  assert.deepEqual(r.notes, ['دُمج ملفان بحسب أرقام المقاطع: abc.ar.part1.srt، abc.ar.part2.srt.']);
   assert.equal(r.comparison.matched, true);
   assert.deepEqual(r.warnings, []);
   assert.deepEqual(r.cues, (await run(fixture('clean.ar.srt'))).cues);
@@ -195,7 +195,7 @@ test('ملاحظات الأجزاء تُنسب إلى ملفاتها، وملا�
   const fenced = fileOf(`\`\`\`srt\n${readSrtFixture('part1.ar.srt')}\`\`\`\n`, 'first.srt');
   const r = await run([fenced, fixture('part2.ar.srt', 'second.srt')]);
   assert.equal(r.notes.length, 2);
-  assert.match(r.notes[0], /دُمجت 2 ملفات/);
+  assert.match(r.notes[0], /دُمج ملفان/);
   assert.equal(r.notes[1], `«first.srt»: ${messageFor('IM_NOTE_FENCE')}`);
 });
 

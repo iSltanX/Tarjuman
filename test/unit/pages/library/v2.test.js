@@ -295,7 +295,7 @@ test('التوسيع: الاسم المختصر يُحفظ (Enter أو change) �
   long.dispatchEvent({ type: 'change' });
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).slots[1].name, 'نسخة المراجع');
-  assert.ok(textOf(m.root.querySelector('.tj-toast--danger')).includes('24 محرفًا'), 'الرسالة في الصفحة نفسها لا في حوار');
+  assert.ok(textOf(m.root.querySelector('.tj-toast--danger')).includes('24 حرفًا'), 'الرسالة في الصفحة نفسها لا في حوار');
   // Esc يلغي دون كتابة، وEnter بقيمة غير متغيرة يخرج دون كتابة.
   const rev = (await m.store.getBundle(IDS[0])).record.rev;
   buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'تسمية الترجمة 3').click();

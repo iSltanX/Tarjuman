@@ -60,7 +60,7 @@ startPage({
     ));
     const err = field({ label: 'الإزاحة بالثواني', value: '0.25', mono: true, hint: 'بخطوة 0.1 ث', error: 'القيمة من مضاعفات 0.1 فقط' });
     app.append(section('الحقول',
-      el('div', { className: 'tj-row', children: [field({ label: 'البحث', type: 'search', placeholder: 'بالعنوان أو المعرّف' }).root, field({ label: 'عتبة الانحراف', value: '100', mono: true, hint: 'بالملي ثانية' }).root, err.root, field({ label: 'معطّل', value: '—', disabled: true }).root] }),
+      el('div', { className: 'tj-row', children: [field({ label: 'البحث', type: 'search', placeholder: 'بالعنوان أو المعرّف' }).root, field({ label: 'فرق التوقيت المقبول', value: '100', mono: true, hint: 'بالملي ثانية' }).root, err.root, field({ label: 'معطّل', value: '—', disabled: true }).root] }),
     ));
     app.append(section('شارات الحالة', el('div', {
       className: 'tj-row',
@@ -72,7 +72,7 @@ startPage({
       alertBox({ tone: 'warning', title: 'قد يكون النص ناقصًا', text: 'آخر ترجمة عند 12:40 والفيديو 18:05.', action: button({ label: 'التفاصيل', size: 'sm', variant: 'ghost' }) }),
       alertBox({ tone: 'danger', title: 'تعذّرت قراءة الملف', text: 'تعذّرت قراءة الملف عند السطر 214: توقيت غير صالح.' }),
     ));
-    app.append(section('الحالة الفارغة', emptyState({ title: 'لا ترجمات محفوظة بعد', steps: ['افتح فيديو', 'اضغط تحميل الأصل', 'ارفع ترجمتك'], action: button({ label: 'مسح البحث', variant: 'secondary' }) })));
+    app.append(section('الحالة الفارغة', emptyState({ title: 'لا ترجمات محفوظة بعد', steps: ['افتح فيديو', 'اضغط تنزيل الأصل', 'ارفع ترجمتك'], action: button({ label: 'مسح البحث', variant: 'secondary' }) })));
     // حوار التأكيد معروضًا ثابتًا للقطة؛ في الصفحات يُفتح بـconfirmDialog.
     const dlg = el('div', { className: 'tj-dialog tj-dialog--danger g-dialog', attrs: { role: 'dialog', 'aria-label': 'مثال حوار' } });
     dlg.append(el('div', { className: 'tj-dialog__form', children: [
@@ -108,7 +108,7 @@ startPage({
     const markErr = savedMark({ setTimer: () => 0, clearTimer: () => {} });
     markErr.flash('تعذّر الحفظ', 'danger');
     const num = numberField({ label: 'حد سرعة القراءة', unit: 'حرف/ث', hint: 'الافتراضي 17', value: '17', parse: (t) => ({ ok: true, value: Number(t) }), commit: () => {}, mark: mark.root });
-    const numErr = numberField({ label: 'عتبة الانحراف', unit: 'ms', value: '5', parse: () => ({ ok: false, code: 'MD_INVALID' }), commit: () => {} });
+    const numErr = numberField({ label: 'فرق التوقيت المقبول', unit: 'ms', value: '5', parse: () => ({ ok: false, code: 'MD_INVALID' }), commit: () => {} });
     numErr.setError('MD_INVALID');
     app.append(section('المقطّعة وحقل الرقم بوحدة وعلامة «حُفظ»',
       el('div', { className: 'tj-row', children: [seg.root] }),

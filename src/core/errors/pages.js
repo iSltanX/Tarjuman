@@ -58,9 +58,9 @@ export const MESSAGES = Object.freeze({
 
   // الإصدار الثاني (P13): الإعدادات — حد القراءة والقاموس
   PG_READING_INVALID: 'حد سرعة القراءة عدد صحيح من 5 إلى 40 حرفًا في الثانية، أو اتركه فارغًا للافتراضي.',
-  PG_TERM_SOURCE_INVALID: 'المصطلح سطر واحد من 1 إلى 80 محرفًا.',
-  PG_TERM_TARGET_INVALID: 'المقابل سطر واحد من 1 إلى 80 محرفًا.',
-  PG_TERM_NOTE_INVALID: 'الملاحظة سطر واحد حتى 120 محرفًا.',
+  PG_TERM_SOURCE_INVALID: 'المصطلح سطر واحد من 1 إلى 80 حرفًا.',
+  PG_TERM_TARGET_INVALID: 'المقابل سطر واحد من 1 إلى 80 حرفًا.',
+  PG_TERM_NOTE_INVALID: 'الملاحظة سطر واحد حتى 120 حرفًا.',
   PG_TERM_DUPLICATE: 'هذا المصطلح في القاموس بالفعل.',
   PG_TERM_LIMIT: 'بلغ القاموس حده: 100 مصطلح. احذف مصطلحًا لتضيف غيره.',
   PG_TERM_ADDED: 'أُضيف المصطلح.',
@@ -72,7 +72,7 @@ export const MESSAGES = Object.freeze({
   PG_SLOT_UNDO_HINT: 'للتراجع اختر «تراجع» في الرسالة، أو اضغط زر الترجمة {n}.',
   PG_SLOT_DELETED: 'حُذفت الترجمة {n}.',
   PG_SLOT_RENAMED: 'حُفظ الاسم المختصر.',
-  PG_SLOT_NAME_INVALID: 'الاسم المختصر سطر واحد حتى 24 محرفًا.',
+  PG_SLOT_NAME_INVALID: 'الاسم المختصر سطر واحد حتى 24 حرفًا.',
   PG_REFERENCE_CHANGED: 'تغيّر مرجع المقارنة للترجمة {n}.',
   PG_PREVIOUS_RESTORED: 'استُعيدت النسخة السابقة إلى الترجمة {n}، وصارت الحالية هي السابقة.',
   PG_PREVIOUS_DELETED: 'حُذفت النسخة السابقة.',

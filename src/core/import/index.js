@@ -10,6 +10,10 @@ import { selectFingerprint } from './fingerprint.js';
 import { mergeParts } from './merge.js';
 import { MAX_FILES, MAX_FILE_BYTES, readFileText } from './read-file.js';
 import { clip, displayName, toList } from './files.js';
+import { COUNT_FORMS, formatCount } from '../../ui/format.js';
+
+/** العدد الذي يؤنَّث معه الفعل (3 إلى 10، و103…). @param {number} n */
+const isFewCount = (n) => n % 100 >= 3 && n % 100 <= 10;
 
 export { MAX_FILES, MAX_FILE_BYTES, mergeParts, selectFingerprint };
 export { applyPatch, applyPatchDetailed, cuesKey, partsStatus, readPatch } from './patch.js';
@@ -91,7 +95,8 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
       fileName = mergedFileName(merged.order);
       const names = merged.order.join('، ');
       notes.unshift(messageFor('IM_NOTE_MERGED', {
-        count: files.length,
+        verb: isFewCount(files.length) ? 'دُمجت' : 'دُمج',
+        files: formatCount(files.length, COUNT_FORMS.file),
         names: names.length > NAMES_NOTE_CHARS ? `${names.slice(0, NAMES_NOTE_CHARS - 1)}…` : names,
       }));
     }
