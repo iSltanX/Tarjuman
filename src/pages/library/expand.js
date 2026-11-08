@@ -4,6 +4,7 @@
 // ما يُحذف)، وبطاقة متقطّعة واحدة للخانة الفارغة التالية بزر «رفع ترجمة…»، وسطر «نسخة سابقة محفوظة» باستعادتها (تبديل قابل
 // للعكس) وحذفها حيث خانتها. لا خانة فارغة تُعرض نسخةً، ولا خانة رابعة. كل فعل كتابة واحدة عبر actions.js ثم تُقرأ الحزمة من
 // جديد؛ والرسائل العابرة للمحفوظات نفسها.
+import { trackComparison } from '../../core/compare/current.js';
 import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { SLOT_NAME_MAX } from '../../core/model/slots.js';
 import { alertBox, button, el, icon, ltr, statusPill } from '../../ui/components.js';
@@ -185,10 +186,14 @@ export function createExpansion(env) {
     return el('div', { className: 'lib-card__head', children: [row, active ? statusPill({ tone: 'brand', text: 'نشطة', doc }) : null], doc });
   }
 
-  /** نتيجة المقارنة بالأصل: مطابقة بعدّها، أو المقاطع الناقصة بأرقامها، أو لا بصمة للمقارنة. */
-  function resultLine(t) {
-    const sum = comparisonSummary(t.comparison);
-    const r = t.comparison;
+  /**
+   * نتيجة المقارنة بالأصل: مطابقة بعدّها، أو المقاطع الناقصة بأرقامها، أو لا بصمة للمقارنة. للنسخة الحاضرة (trackComparison)
+   * كشارة الصف والمشغّل والمحرّر، لا لتقرير الرفع المخزّن وحده: بعد الاستكمال أو التعديل في المحرّر لا تبقى نتيجة متقادمة
+   * (قرار سلطان D-03، 2026-11-08، تدقيق V2 U-061؛ ومبدأ GM-013). وتقرير الرفع يبقى في البيانات كما هو.
+   */
+  function resultLine(t, fingerprints) {
+    const r = trackComparison(t, fingerprints);
+    const sum = comparisonSummary(r);
     const text = sum.lines.join('\n') + (sum.tone === 'success' && r && r.countSource !== null ? ` · ${r.countTarget} من ${r.countSource}` : '');
     return el('p', {
       className: `lib-result lib-result--${sum.tone}`,
@@ -329,7 +334,7 @@ export function createExpansion(env) {
           ],
           doc,
         }),
-        resultLine(t),
+        resultLine(t, b.record.fingerprints),
         ...referenceRow(b, s),
         s.marks.length ? el('p', { className: 'tj-caption lib-card__marks', text: `العلامات: ${todo} أعود إليه · ${done} راجعته`, doc }) : null,
         b.previous && b.previous.from === s.n ? previousLine(b, bytes, true) : null,

@@ -6,6 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { instructions } from '../../../../src/core/export/instructions.js';
+import { compare } from '../../../../src/core/compare/compare.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { formatTimecode } from '../../../../src/ui/format.js';
 import { createLibrary } from '../../../../src/pages/library/view.js';
@@ -407,9 +408,11 @@ test('التوسيع — تغيير المرجع عند التعدد يعيد ا
 });
 
 test('التوسيع — نتيجة المقارنة: مطابقة بعدّها، والمقاطع الناقصة بأرقامها، وبلا بصمة سطر معلومة', async () => {
+  // حالات حقيقية لا تقارير مصطنعة: البطاقة تعرض المقارنة الحاضرة (قرار سلطان D-03، تدقيق V2 U-061)، فتُحسب من المقاطع والبصمة.
   const b = sampleBundle({ videoId: IDS[0], third: true });
-  b.slots[0].track.comparison = { ...b.slots[0].track.comparison, matched: true, countSource: 5, countTarget: 5 };
-  b.slots[1].track.comparison = { ...b.slots[1].track.comparison, matched: false, missing: [57, 58, 203], countSource: 8, countTarget: 5, restoreTimingAvailable: false };
+  const fp2 = b.record.fingerprints[1];
+  const partial = makeCues(3, { text: (i) => `ثانية ${i}` });
+  b.slots[1].track = { ...b.slots[1].track, original: partial, comparison: compare(partial, fp2, { target: null }) };
   b.slots[2].track.fingerprintId = null;
   b.slots[2].track.comparison = null;
   b.record.arabic = structuredClone(b.slots[0].track);
@@ -417,9 +420,37 @@ test('التوسيع — نتيجة المقارنة: مطابقة بعدّها�
   const exp = await expand(m, IDS[0]);
   assert.equal(textOf(cardOf(exp, 1).querySelector('.lib-result')), 'مطابق للأصل · 5 من 5');
   assert.ok(cardOf(exp, 1).querySelector('.lib-result').classList.contains('lib-result--success'));
-  assert.match(textOf(cardOf(exp, 2).querySelector('.lib-result')), /3 مقاطع ناقصة: 57، 58، 203/);
+  assert.match(textOf(cardOf(exp, 2).querySelector('.lib-result')), /ناقص[^\n]*: 4، 5/);
   assert.ok(cardOf(exp, 2).querySelector('.lib-result').classList.contains('lib-result--warning'));
   assert.match(textOf(cardOf(exp, 3).querySelector('.lib-result')), /لا بصمة للمقارنة/);
+});
+
+test('AV2 U-061 (D-03): بطاقة الخانة تعرض المقارنة الحاضرة — رُفع ناقصًا ثم اكتمل في المحرّر فتقول «مطابق للأصل» كالشارة', async () => {
+  const b = sampleBundle({ videoId: IDS[0], third: true });
+  const fp2 = b.record.fingerprints[1];
+  const full = makeCues(5, { text: (i) => `ثانية ${i}` });
+  const partial = full.slice(0, 4);
+  // تقرير الرفع المخزّن: ينقصه المقطع 5. ثم أُكمل في المحرّر (current) ولم يتغير التقرير المخزّن بعقد البيانات.
+  b.slots[1].track = { ...b.slots[1].track, original: partial, current: full, editedAt: NOW, comparison: compare(partial, fp2, { target: null }) };
+  const m = await mount({ seed: async (store) => { await seedBundle(store, b); } });
+  assert.deepEqual((await m.store.getBundle(IDS[0])).slots[1].track.comparison.missing, [5], 'تقرير الرفع باقٍ في البيانات');
+  const exp = await expand(m, IDS[0]);
+  const line = cardOf(exp, 2).querySelector('.lib-result');
+  assert.equal(textOf(line), 'مطابق للأصل · 5 من 5');
+  assert.ok(line.classList.contains('lib-result--success'));
+});
+
+test('AV2 U-061 (D-03): رُفع مطابقًا ثم تغيّر توقيت مقطع في المحرّر، فتحذّر البطاقة ولا تقول «مطابق للأصل»', async () => {
+  const b = sampleBundle({ videoId: IDS[0], third: true });
+  const t2 = b.slots[1].track;
+  const drifted = t2.original.map((c) => (c.n === 3 ? { ...c, startMs: c.startMs + 3000, endMs: c.endMs + 3000 } : c));
+  b.slots[1].track = { ...t2, current: drifted, editedAt: NOW };
+  const m = await mount({ seed: async (store) => { await seedBundle(store, b); } });
+  assert.equal((await m.store.getBundle(IDS[0])).slots[1].track.comparison.matched, true, 'تقرير الرفع المخزّن مطابق');
+  const exp = await expand(m, IDS[0]);
+  const line = cardOf(exp, 2).querySelector('.lib-result');
+  assert.ok(line.classList.contains('lib-result--warning'), textOf(line));
+  assert.doesNotMatch(textOf(line), /مطابق للأصل/);
 });
 
 test('التوسيع — «النسخة السابقة» في بطاقة خانتها: تاريخها وسعتها، والاستعادة تبديل قابل للعكس بتأكيد، والحذف بتأكيد', async () => {

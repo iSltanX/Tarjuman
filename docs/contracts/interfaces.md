@@ -386,7 +386,7 @@ rankReferences(cues: Cue[], fingerprints: Fingerprint[]) → { fingerprintId, sc
 fingerprintCoverage(fingerprint, cues) → { ok: true, numbersOf, windowOf, pairs, missing, extra, structural } | { ok: false }   // تدقيق 5fedcb9
 currentComparison(cues, fingerprint, { driftMs?, coverage? }) → ComparisonReport   // النقص والزيادة والانحراف بالمحاذاة، والباقي من compare؛ ولا matched مع دمج أو شطر (C5، U29)
 previewComparison(cues, fingerprint, { settings?, notes? }) → ComparisonReport & { renumbered }   // core/import: معاينة الرفع بالمحاذاة كما بعد الحفظ، وrenumbered حين قابلت المحاذاة أرقامًا غير أرقام التصدير؛ وتقرير الحفظ بالرقم كما هو (تدقيق Fable، FA-04، بقرار سلطان 2026-11-07)
-trackComparison(track, fingerprints) → ComparisonReport | null                     // الحاضر لترجمة محفوظة، والمحفوظ بلا مرجع
+trackComparison(track, fingerprints) → ComparisonReport | null                     // الحاضر لترجمة محفوظة، والمحفوظ بلا مرجع؛ ومنه شارة الصف وملخص المشغّل وسطر نتيجة بطاقة الخانة في المحفوظات (قرار سلطان D-03، تدقيق V2 U-061)
 compare(...)   // التوقيع نفسه؛ restoreTimingAvailable لا يصح إلا بمحاذاة متحققة، والسبب في notes
 
 // src/core/import (وsrc/core/srt بالتوقيع نفسه، مع Markdown)
