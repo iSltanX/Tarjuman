@@ -8,8 +8,8 @@
 </p>
 
 <p align="center">
-  <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 1.1.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-1.1.0-1E4A44?logo=googlechrome&logoColor=white"></a>
-  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 1.1.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-1.1.0-1E4A44?logo=microsoftedge&logoColor=white"></a>
+  <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 2.0.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-2.0.0-1E4A44?logo=googlechrome&logoColor=white"></a>
+  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 2.0.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-2.0.0-1E4A44?logo=microsoftedge&logoColor=white"></a>
   <img alt="المعالجة والحفظ على جهازك" src="https://img.shields.io/badge/data-on--device-2A6E46">
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
 </p>
@@ -26,21 +26,22 @@
 
 لا نموذج مدمج، ولا مفتاح API، ولا حساب، ولا خادم ترجمة، ولا تنزيل للفيديو أو الصوت. وكل ما تحفظه يبقى في متصفحك.
 
-> **حالة الإصدار:** المنشور الآن في Chrome Web Store وMicrosoft Edge Add-ons هو الإصدار **1.1.0**، وهو يترجم من الإنجليزية إلى العربية. وهذا المستودع على الإصدار **2.0.0** (من أي لغة إلى لغتك، ونسخ التعليمات من نافذة الإضافة، والهوية الجديدة)، و**لم يُنشر في المتاجر بعد**؛ فتجربته الآن من الشيفرة. ولم يُنشر ترجمان في Firefox Add-ons بعد.
+> **حالة الإصدار:** المنشور الآن في Chrome Web Store وMicrosoft Edge Add-ons هو الإصدار **2.0.0** (من أي لغة إلى لغتك، ونسخ التعليمات من نافذة الإضافة، والهوية الجديدة). وهذا المستودع يضيف بعده ما لم يُنشر بعد: الواجهة بالعربية والإنجليزية، ونصوص أوضح في الأزرار والرسائل؛ فتجربته الآن من الشيفرة. ولم يُنشر ترجمان في Firefox Add-ons بعد.
 
 ## المزايا
 
-ما يلي وصف الإصدار 2.0.0 الذي في المستودع:
+ما يلي وصف النسخة التي في المستودع:
 
 - **من أي لغة إلى لغتك:** كل مسار ترجمة يوفّره يوتيوب للفيديو، وترجمة يوتيوب الآلية موسومةً بلغة أصلها، وأي ملف SRT بأي لغة. واللغات المتاحة لكل فيديو يحددها يوتيوب وحده، وترجمان لا ينشئ مسارًا ولا يبدّله.
 - **ترجمتك فوق الفيديو** باتجاه لغتها، وحدها أو فوق الأصل، في الوضع العادي والمسرح وملء الشاشة. وتختفي أثناء الإعلانات.
-- **ملف الأصل بضغطة:** «تحميل الأصل (SRT)» في شريط المشغّل ينزّل المسار الذي اخترته بلغته. و**تعليمات الترجمة من نافذة الإضافة**: «من» و«إلى» لأي لغتين، وزر نسخ واحد.
+- **ملف الأصل بضغطة:** «تنزيل الأصل (SRT)» في شريط المشغّل ينزّل المسار الذي اخترته بلغته. و**تعليمات الترجمة من نافذة الإضافة**: «من» و«إلى» لأي لغتين، وزر نسخ واحد.
 - **التوقيت بضغطة:** زرّا − و+ يقدّمان الترجمة أو يؤخّرانها، و«مزامنة بجملة» تضبطها على جملة تسمعها. ويُحفظ التوقيت لكل ترجمة.
 - **مقارنة بالأصل:** حين ترفع ملفك يقارنه ترجمان بالأصل الذي نزّلته، فيبيّن ما نقص وما زاد وما انحرف توقيته وما بقي غير مترجم، ولا يعدّل في ملفك شيئًا بصمت.
 - **محرّر للمراجعة:** تعدّل النص والتوقيت، وتدمج المقاطع وتشطرها، وتبحث وتستبدل، وتعلّم ما تعود إليه. ويجهّز لك ملفًا بالمقاطع الناقصة لتستكملها.
 - **النص المتزامن:** لوحة بجانب الفيديو تعرض الترجمة كلها والمقطع الحالي مميز. مغلقة حتى تفتحها من زرها.
 - **المحفوظات:** كل فيديو ترجمته بلغتي كل ترجمة، وحتى ثلاث ترجمات لكل فيديو، ونسخة سابقة لما استبدلته، ونسخة احتياطية تنقلها إلى متصفح آخر.
 - **مظهرها كما تحب:** وضع العرض، والخط، والحجم، والخلفية، والموضع. والخطوط العربية مضمّنة، وما لا تحويه يُرسم بخطوط جهازك.
+- **واجهتها بالعربية أو الإنجليزية:** تختار لغتها من الإعدادات، وتبدأ عند أول تشغيل بلغة يوتيوب أو المتصفح، وأي لغة أخرى تبدأ بالإنجليزية. ولا تتأثر لغات الفيديو والترجمة ولا ملفاتك.
 
 ## لقطات
 
@@ -60,12 +61,12 @@
 
 | المتصفح | المتاح الآن |
 | --- | --- |
-| Google Chrome ‏(130 فأحدث) | الإصدار 1.1.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
-| Brave ‏(Chromium 130 فأحدث) | الإصدار 1.1.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، المتجر نفسه |
-| Microsoft Edge ‏(130 فأحدث) | الإصدار 1.1.0 من [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
+| Google Chrome ‏(130 فأحدث) | الإصدار 2.0.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
+| Brave ‏(Chromium 130 فأحدث) | الإصدار 2.0.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، المتجر نفسه |
+| Microsoft Edge ‏(130 فأحدث) | الإصدار 2.0.0 من [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
 | Mozilla Firefox ‏(144 فأحدث) | غير منشور في Firefox Add-ons بعد. وللتجربة: [التثبيت من الشيفرة](docs/development.md#التثبيت-من-الشيفرة) |
 
-وفي كل المتصفحات يُجرَّب الإصدار 2.0.0 من الشيفرة بالطريقة نفسها. ونسخة المتجر ونسخة الشيفرة إضافتان منفصلتان، فانقل محفوظاتك بينهما بالنسخة الاحتياطية ([دليل الاستخدام](docs/user-guide.md) §٩).
+وفي كل المتصفحات تُجرَّب نسخة المستودع من الشيفرة بالطريقة نفسها. ونسخة المتجر ونسخة الشيفرة إضافتان منفصلتان، فانقل محفوظاتك بينهما بالنسخة الاحتياطية ([دليل الاستخدام](docs/user-guide.md) §٩).
 
 بعد التثبيت ثبّت أيقونة ترجمان في شريط المتصفح: أيقونة الإضافات (قطعة الأحجية)، ثم الدبوس بجوار «ترجمان».
 
@@ -80,12 +81,27 @@
   </picture>
 </p>
 
-1. **استخرج:** افتح فيديو على يوتيوب، واختر لغة الترجمة من CC في المشغّل، ثم «تحميل الأصل (SRT)» ← «تنزيل الملف» من أزرار ترجمان في شريط المشغّل.
+1. **استخرج:** افتح فيديو على يوتيوب، واختر لغة الترجمة من CC في المشغّل، ثم «تنزيل الأصل (SRT)» ← «تنزيل الملف» من أزرار ترجمان في شريط المشغّل.
 2. **انسخ التعليمات:** من نافذة ترجمان في شريط المتصفح: «من» لغة الملف كما أرسلها يوتيوب، واختر «إلى»، ثم «نسخ التعليمات».
 3. **ترجم:** أرسل الملف والتعليمات إلى النموذج الذي تختاره، واحفظ ناتجه ملف SRT. ترجمان لا يترجم، ولا يتصل بأي نموذج.
 4. **شاهد:** ارفع الملف بزر «رفع الترجمة (SRT)»، فتظهر ترجمتك فوق الفيديو. ثم اضبط توقيتها أو حرّرها، وتجدها محفوظة متى عدت.
 
 والشرح الكامل في [دليل الاستخدام](docs/user-guide.md): التوقيت، والمحرّر، والمحفوظات، والإعدادات، والنسخ الاحتياطي، وحل المشكلات. والقيود المعروفة في [`docs/known-limitations.md`](docs/known-limitations.md).
+
+<details>
+<summary><b>English interface</b></summary>
+
+<div dir="ltr">
+
+Tarjuman's interface comes in Arabic and English. This is in the repository version and hasn't reached the stores yet. On first run it follows YouTube's interface language, otherwise the browser's; any other language starts in English. Change it in **Settings › Display › Interface language**. Video, subtitle and translation languages aren't affected.
+
+1. Open a YouTube video, turn on **CC** and pick the subtitle language. From Tarjuman's buttons in the player bar choose **Download original (SRT)** › **Download file**.
+2. In the toolbar popup, under **Translation instructions**, set **From** and **To**, then press **Copy instructions**. The copied instructions are in Arabic whatever the interface language.
+3. Send the file and the instructions to the AI model you choose, and save its output as an SRT file. Tarjuman doesn't translate and doesn't contact any model.
+4. Press **Upload translation (SRT)**. Your translation appears over the video. Adjust its timing with **−** and **+**, or open the editor with **Edit translation** in the popup.
+
+</div>
+</details>
 
 ## الخصوصية
 
@@ -106,7 +122,7 @@
 | `unlimitedStorage` | فيديو بساعتين نحو 0.7 م.ب، فالحد الافتراضي يمتلئ بنحو خمسة عشر فيديو طويلًا. ولا يضيف تحذير تثبيت. |
 | `downloads` | حفظ الملفات التي تطلبها وحدها (ملف SRT الأصلي، والترجمات المصدَّرة، والنسخة الاحتياطية)، والاستعلام عن تنزيلات الإضافة وحدها. |
 | `https://www.youtube.com/*` | سكربتا المحتوى: أزرار ترجمان في المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل وقائمة لغات مساراته من بيانات الصفحة بلا طلب، ورسم ترجمتك فوق الفيديو. |
-| خادم البلاغات (اختياري) | يُطلب عند أول ضغطة «أرسل البلاغ» بعد المعاينة، ولا يُستعمل لغيره. وإن رفضته لا يُرسل شيء. |
+| خادم البلاغات (اختياري) | يُطلب عند أول ضغطة «إرسال البلاغ» بعد المعاينة، ولا يُستعمل لغيره. وإن رفضته لا يُرسل شيء. |
 
 </details>
 

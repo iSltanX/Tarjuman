@@ -4,8 +4,8 @@
 
 ## الحالة
 
-- الإصدار في المستودع `2.0.0` (`src/manifest.json` و`package.json`)، و**لم يُنشر في المتاجر بعد**.
-- المنشور: `1.1.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). ولم يُنشر في Firefox Add-ons.
+- الإصدار في المستودع `2.0.0` (`src/manifest.json` و`package.json`)، وعليه تعديلات لم تُنشر بعد: نصوص الواجهة ودعم العربية والإنجليزية.
+- المنشور: `2.0.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). ولم يُنشر في Firefox Add-ons.
 - رفع الحزم إلى المتاجر ونشر الموقع (`bysltan.com/tarjuman`، مستودع `iSltanX/WebSiteSultan`) بيد سلطان.
 - الوسمان `tj-v1` (`0.2.0`) و`tj-v2` (`1.0.0`) باقيان، واختبارات الرجوع تبني حزمة `tj-v1` من وسمها.
 
@@ -26,7 +26,7 @@
 
 | الأمر | الغرض |
 | --- | --- |
-| `command npm run check:all` | كل ما يشغّله CI قبل الحزم: الثابت والأسرار والإشعارات والخصوصية ومواد المتاجر والوحدة والبناءان والتكامل وe2e الثابت و`web-ext lint`. |
+| `command npm run check:all` | كل ما يشغّله CI قبل الحزم: الثابت والأسرار وتغطية التوطين والإشعارات والخصوصية ومواد المتاجر والوحدة والبناءان والتكامل وe2e الثابت و`web-ext lint`. |
 | `command npm test` | اختبارات الوحدة وحدها. |
 | `command npm run package` | حزمة التثبيت الشخصي وحزم المتاجر وحزمة المصدر في `release/` (متجاهَل)، بعد تدقيقها. |
 
