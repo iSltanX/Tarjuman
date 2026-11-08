@@ -1,5 +1,5 @@
 // تدقيق V2 الموحد، المجموعة WG-2 (U-011 وU-012 وU-014 وU-016): الرجوع إلى tj-v1 وإلى 1.1.0 بلقطتيهما المجمّدتين
-// (test/fixtures/v1 وv1.1) ثم القراءة في 2.0.0. الحالات تُبنى بدوال المنتج كما في برامج الإثبات (docs/Audit-V2/evidence).
+// (test/fixtures/v1 وv1.1) ثم القراءة في 2.0.0. الحالات تُبنى بدوال المنتج كما في برامج إثبات التدقيق.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore as createStoreV1 } from '../../fixtures/v1/src/core/store/index.js';

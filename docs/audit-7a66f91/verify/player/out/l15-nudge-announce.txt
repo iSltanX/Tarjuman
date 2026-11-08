@@ -1,4 +1,0 @@
-الإزاحة بعد +: 500
-قبل: {"label":"تأخير الترجمة 0.5 ث (تظهر لاحقًا)","desc":null,"badge":"الإزاحة: ⁦0.0⁩ ث. اضغط للخيارات","live":[{"cls":"toasts","role":"status","live":"polite","text":""}]}
-بعد: {"label":"تأخير الترجمة 0.5 ث (تظهر لاحقًا)","desc":null,"badge":"الإزاحة: ⁦+0.5⁩ ث (تظهر الترجمة لاحقًا). اضغط للخيارات","live":[{"cls":"toasts","role":"status","live":"polite","text":""}]}
-التلميح: {"role":"tooltip","live":null,"text":"⁦+0.5⁩ ث · تظهر لاحقًا","hidden":false}

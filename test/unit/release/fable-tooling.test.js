@@ -45,13 +45,13 @@ const POT = ['po', 't=', 'Mn'.repeat(12)].join('');
 const LOCAL = ['', 'Users', 'someone', 'Downloads', 'x.srt'].join('/');
 const YT = ['https://www.', 'youtube', '.com/watch?v=abcdefghijk'].join('');
 
-/** شجرة بنطاقات الفحص الثلاثة وملف نصي سليم في كلٍّ، ثم mutate. */
+/** شجرة بنطاقي الفحص (العيّنات) وملفات نصية سليمة فيهما، ثم mutate. */
 async function secretsTree(name, mutate = async () => {}) {
   const t = path.join(tmp, name);
-  for (const scope of ['test/fixtures', 'test/e2e/fixtures', 'docs/evidence/P0']) await mkdir(path.join(t, scope), { recursive: true });
+  for (const scope of ['test/fixtures', 'test/e2e/fixtures']) await mkdir(path.join(t, scope), { recursive: true });
   await writeFile(path.join(t, 'test/fixtures/a.json'), '{"ok": true}\n');
   await writeFile(path.join(t, 'test/e2e/fixtures/b.srt'), '1\n00:00:01,000 --> 00:00:02,000\nمرحبًا\n');
-  await writeFile(path.join(t, 'docs/evidence/P0/README.md'), 'مرجع عام: https://example.org/doc\n');
+  await writeFile(path.join(t, 'test/fixtures/README.md'), 'مرجع عام: https://example.org/doc\n');
   await mutate(t);
   return node([path.join(ROOT, 'scripts/check-secrets.mjs'), '--root', t]);
 }
@@ -62,25 +62,25 @@ test('FA-11: check-secrets على شجرة سليمة ينجح بعدد المل
   assert.match(r.stdout, /ناجح \(3 ملف/);
 });
 
-test('FA-11: check-secrets يكشف pot في عيّنة، ورابط يوتيوب في .md، ومسار الجهاز في دليل', async () => {
+test('FA-11: check-secrets يكشف pot في عيّنة، ورابط يوتيوب في .md، ومسار الجهاز في سجل', async () => {
   const r = await secretsTree('dirty', async (t) => {
     await writeFile(path.join(t, 'test/fixtures/a.json'), `{"q": "${POT}"}\n`);
-    await writeFile(path.join(t, 'docs/evidence/P0/README.md'), `انظر ${YT}\n`);
-    await writeFile(path.join(t, 'docs/evidence/P0/run.log'), `saved to ${LOCAL}\n`);
+    await writeFile(path.join(t, 'test/fixtures/README.md'), `انظر ${YT}\n`);
+    await writeFile(path.join(t, 'test/e2e/fixtures/run.log'), `saved to ${LOCAL}\n`);
   });
   assert.equal(r.status, 1);
   assert.match(r.stderr, /test\/fixtures\/a\.json@\d+: param/);
-  assert.match(r.stderr, /docs\/evidence\/P0\/README\.md@\d+: url/);
-  assert.match(r.stderr, /docs\/evidence\/P0\/run\.log@\d+: local-path/);
+  assert.match(r.stderr, /test\/fixtures\/README\.md@\d+: url/);
+  assert.match(r.stderr, /test\/e2e\/fixtures\/run\.log@\d+: local-path/);
 });
 
 test('FA-11: نطاق غائب، أو نطاقات بلا ملف نصي، فشلٌ لا «ناجح (0 ملف)»', async () => {
-  const gone = await secretsTree('no-evidence', (t) => rm(path.join(t, 'docs'), { recursive: true }));
+  const gone = await secretsTree('no-scope', (t) => rm(path.join(t, 'test/e2e/fixtures'), { recursive: true }));
   assert.equal(gone.status, 1);
-  assert.match(gone.stderr, /docs\/evidence: نطاق الفحص غائب/);
+  assert.match(gone.stderr, /test\/e2e\/fixtures: نطاق الفحص غائب/);
   const none = await secretsTree('no-text', async (t) => {
-    for (const f of ['test/fixtures/a.json', 'test/e2e/fixtures/b.srt', 'docs/evidence/P0/README.md']) await rm(path.join(t, f));
-    await writeFile(path.join(t, 'docs/evidence/P0/shot.png'), 'x');
+    for (const f of ['test/fixtures/a.json', 'test/e2e/fixtures/b.srt', 'test/fixtures/README.md']) await rm(path.join(t, f));
+    await writeFile(path.join(t, 'test/fixtures/shot.png'), 'x');
   });
   assert.equal(none.status, 1);
   assert.match(none.stderr, /لا ملف نصيًا في نطاقات الفحص/);

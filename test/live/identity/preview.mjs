@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// معاينة بصرية محلية للهوية (AA2، docs/identity-v4.md): صفحات الإضافة ومعرض المكوّنات بالوضعين، **بلا يوتيوب ولا شبكة**.
+// معاينة بصرية محلية للهوية (AA2، docs/identity.md): صفحات الإضافة ومعرض المكوّنات بالوضعين، **بلا يوتيوب ولا شبكة**.
 // تُحمَّل حزمة التطوير في ملف تعريف اختبار جديد بلا نافذة ومكتوم الصوت، وتُبذر بيانات عيّنة (صور المحفوظات مطفأة فلا طلب
 // خارجي)، ثم تُلتقط: المعرض، والمحفوظات (والصف الموسّع)، والإعدادات (العرض والبيانات وحول)، والمحرّر، ونافذة الأيقونة بعرض
 // 360. ويُعدّ كل طلب خارج الإضافة وكل خطأ منها (المتوقع صفر). لا رابط ولا نص مقاطع في الأدلة غير نصوص العيّنة.
-// **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (دليل التشغيل، «الاختبارات الحية»).
+// **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (docs/development.md، «الاختبارات الحية»).
 //   command npm run build:dev -- --out <مجلد خارج المستودع>
 //   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/identity/preview.mjs --browser brave|chrome --ext <مجلد> [--out <مجلد>] [--only about]
 //   --only about: قسم «حول» وحده بعرضين (1280 و600)، وروابط بطاقة الحقوق الثلاثة بعناوينها وتبويبها الجديد (لا تُفتح).
@@ -19,7 +19,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/AA2'), browser);
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/AA2'), browser);
 const PROFILE = `${browser}-preview-${Date.now()}`;
 const ABOUT_ONLY = val('only') === 'about';
 

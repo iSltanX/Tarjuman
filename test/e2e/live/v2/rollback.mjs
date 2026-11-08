@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// اختبار دائم (P15): دخان بوابة W6 منقولًا كما هو من docs/evidence/W6/wave-smoke.mjs، بتغيير المسارات والمخرجات وحدها،
+// اختبار دائم (P15): دخان بوابة W6 منقولًا كما هو من سكربته الأول، بتغيير المسارات والمخرجات وحدها،
 // ويعمل في Brave وChrome. يبني حزمة tj-v1 من الوسم في كل تشغيل.
 // دخان بوابة W6 (سكربت المنسّق): التوافق والرجوع حيًا على رأس التكامل، ونقاط الربط بين P10 وP11 على التخزين الحقيقي.
 // مبني على test/live/compat/rollback.mjs (P10) بملف تعريف واحد ومسار إضافة واحد (فالمعرّف نفسه والتخزين نفسه):
@@ -10,7 +10,7 @@
 //      إضافة وعلى ما تقرؤه واجهة التخزين: القاموس المخزّن عبر instructions، وreviewIncoming على البصمات المخزنة،
 //      وdiffTranslations على ترجمتي خانتين؛ والمشغّل يعرض الناتج؛ ورسالة القفز تصل التبويب المفتوح للفيديو.
 // محرّكات P11 تُجمَّع من رأس التكامل وتُحقن في صفحة الإضافة (كشيفرة الأول المجمّدة في rollback.mjs). بلا نافذة افتراضيًا.
-//   command node test/e2e/live/v2/rollback.mjs [--browser brave|chrome] [--headed] [--out docs/evidence/P15/<browser>]
+//   command node test/e2e/live/v2/rollback.mjs [--browser brave|chrome] [--headed] [--out test-results/live/P15/<browser>]
 import { execFileSync } from 'node:child_process';
 import { cp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -29,7 +29,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
 const VIDEO = val('video', 'iG9CE55wbtY');
-const OUT = path.resolve(ROOT, val('out', `docs/evidence/P15/${browser}`));
+const OUT = path.resolve(ROOT, val('out', `test-results/live/P15/${browser}`));
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const WORK = path.join(PROFILE_ROOT, 'p15-work', 'rollback', `${browser}-${RUN}`);
 const EXT = path.join(WORK, 'ext');

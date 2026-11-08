@@ -1,5 +1,4 @@
 # مولّدات ومجلدات عمل محلية
-dashboard/data/
 .claude/worktrees/
 .claude/settings.local.json
 node_modules/
@@ -8,8 +7,6 @@ dist-firefox/
 /release/
 test-results/
 *.log
-# سجلات الأدلة تُحفظ (تدقيق 5fedcb9، GM-020: ضاعت سجلات P4 بتجاهل *.log)
-!docs/evidence/**/*.log
 .DS_Store
-# ملفات التعريف وبيانات الاختبار الحي لا تُحفظ في المستودع
+# ملفات التعريف وبيانات الاختبار الحي ونتائجه (test-results/) لا تُحفظ في المستودع
 .tj-profiles/

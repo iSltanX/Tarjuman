@@ -2,7 +2,7 @@
 // قياس المشغّل الضيق (P6-AC1، «تُقاس الحالة وتُعرض على سلطان»): في كل عرض، أي أزرار يوتيوب الأصلية ظاهرة في الشريط
 // مع مجموعة ترجمان، وأيها ظاهر لو أُخفيت المجموعة مؤقتًا (display:none على عنصرها في الصفحة، ثم تُعاد). الفرق هو ما
 // يطويه يوتيوب بسبب عرض المجموعة. لا تغيير في الإضافة؛ ملف اختبار جديد بلا نافذة.
-//   node test/live/controls/narrow-diag.mjs --browser brave|chrome --ext <مجلد بناء التطوير> [--out docs/evidence/P6]
+//   node test/live/controls/narrow-diag.mjs --browser brave|chrome --ext <مجلد بناء التطوير> [--out test-results/live/P6]
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +14,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P6'), browser, 'narrow.json');
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P6'), browser, 'narrow.json');
 const WIDTHS = [1000, 900, 800, 720, 640, 600, 560, 520, 480, 440, 400];
 
 /** أزرار يوتيوب الظاهرة في الأدوات اليمنى (بأصنافها) وحدود الشريط. */

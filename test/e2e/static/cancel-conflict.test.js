@@ -1,6 +1,6 @@
 // P15-AC3 (آلي): مسارات التعارض والفشل الجزئي ببصمة التخزين قبلها وبعدها، على التخزين ووحدات الاستعادة الحقيقية. ومسارات
 // الإلغاء في الواجهات مثبتة آليًا في test/integration (رفع المشغّل وتأكيده: player/slots.test.js؛ وحوار رفع المحفوظات
-// ومعاينة الاستعادة: backup/backup.test.js)، وحيًا ببصمة التخزين نفسها في test/e2e/live/v2/journey.mjs.
+// ومعاينة الاستعادة: backup/backup.test.js).
 //   node scripts/run-tests.mjs test/e2e/static
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

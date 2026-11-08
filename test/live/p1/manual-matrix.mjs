@@ -43,7 +43,7 @@ function verify(file, label) {
   const args = [path.join(HERE, 'verify-export.mjs'), file, '--label', label];
   if (FIXTURES) args.push('--fixtures', FIXTURES);
   execFileSync(process.execPath, args, { encoding: 'utf8' });
-  return path.join(ROOT, `docs/evidence/P1/manual/${label}.json`);
+  return path.join(ROOT, `test-results/live/P1/manual/${label}.json`);
 }
 
 /** ملخص دورة من ملف أدلتها المنقّى. */
@@ -99,7 +99,7 @@ if (only.includes('tlang')) await run('tlang', 'asr', url(VIDEOS.asr.id, 't=600s
 out.finishedAt = new Date().toISOString();
 const text = `${JSON.stringify(sanitizeDeep(out), null, 2)}\n`;
 if (findSecrets(text).length) throw new Error('ملخص المصفوفة فيه نمط حساس؛ لم يُكتب');
-const rel = `docs/evidence/P1/manual/${browser}-matrix-${out.startedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`;
+const rel = `test-results/live/P1/manual/${browser}-matrix-${out.startedAt.replace(/[:.]/g, '-').slice(0, 19)}.json`;
 await mkdir(path.dirname(path.join(ROOT, rel)), { recursive: true });
 await writeFile(path.join(ROOT, rel), text);
 log(`الملخص: ${rel}`);

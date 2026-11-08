@@ -4,7 +4,7 @@
 // على جسم الترجمة المحجوب تحت الأتمتة). كل سيناريو يقيس بما يراه المستخدم: النص الظاهر في الطبقة وأبعادها.
 //   npm run build:dev -- --out <مجلد>
 //   node test/live/overlay/run.mjs --browser brave|chrome --ext <مجلد> [--only ac1,ac3] [--ad] [--headed]
-//        [--video iG9CE55wbtY] [--perf-video 7xTGNNLPyMI] [--out docs/evidence/P5]
+//        [--video iG9CE55wbtY] [--perf-video 7xTGNNLPyMI] [--out test-results/live/P5]
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +22,7 @@ const EXT = path.resolve(val('ext', 'dist'));
 const VIDEO = val('video', 'iG9CE55wbtY');
 const PERF_VIDEO = val('perf-video', '7xTGNNLPyMI');
 const ONLY = val('only') ? new Set(val('only').split(',')) : null;
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P5'), browser);
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P5'), browser);
 const want = (id) => !ONLY || ONLY.has(id);
 
 const result = { browser: null, at: new Date().toISOString(), headless: !argv.includes('--headed'), video: VIDEO, checks: [], notes: [], screenshots: [], errors: [] };

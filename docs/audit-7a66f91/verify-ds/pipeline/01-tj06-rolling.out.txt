@@ -1,6 +1,0 @@
-عيّنة ASR الحقيقية :: {"textEvents":1266,"pairs":1265,"overlappingPairs":1259,"tailHeadRepeat":{"1":8,"2":2,"3":0},"maxWordsPerEvent":11,"maxCharsPerEvent":40,"detector":null}
-الأساس :: {"ok":true,"cues":1056}
-«no no no | no no no» :: {"ok":false,"code":"EX_UNSUPPORTED_FORMAT","cues":0,"detail":{"eventIndex":53,"repeatedWords":3},"overlapMs":2439,"aWordTimes":[71600,71700,71800],"bWordTimes":[71720,71870,72020],"bAfterA":false}
-«I don't know | I don't know» :: {"ok":false,"code":"EX_UNSUPPORTED_FORMAT","cues":0,"detail":{"eventIndex":53,"repeatedWords":3},"overlapMs":2439,"aWordTimes":[71600,71700,71800],"bWordTimes":[71720,71870,72020],"bAfterA":false}
-«ha ha | ha ha» (كلمتان) :: {"ok":true,"code":null,"cues":1056,"overlapMs":2439,"aWordTimes":[71600,71700],"bWordTimes":[71720,71870],"bAfterA":true}
-صيغة متدحرجة مصطنعة :: {"ok":false,"code":"EX_UNSUPPORTED_FORMAT","detail":{"eventIndex":1,"repeatedWords":4}}

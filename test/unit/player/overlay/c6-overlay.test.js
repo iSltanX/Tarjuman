@@ -1,4 +1,4 @@
-// تدقيق 7a66f91، المرحلة C6 (أسطح المشغّل): طبقة الترجمة. سكربت الإعادة overlay-misc (CL-X1) في docs/audit-7a66f91/verify/player
+// تدقيق 7a66f91، المرحلة C6 (أسطح المشغّل): طبقة الترجمة. من سكربت الإعادة overlay-misc (CL-X1) في التدقيق
 // صار اختبار انحدار يفشل على الشيفرة السابقة للسبب المقصود، ومعه lang الأسطر (U48).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

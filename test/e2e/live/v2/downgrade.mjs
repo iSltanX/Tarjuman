@@ -24,7 +24,7 @@ const { profile, ext } = V2[browser];
 const profileDir = path.join(PROFILE_ROOT, profile);
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const TED = VIDEOS.manual.id;
-const ev = new Evidence(path.join(ROOT, 'docs/evidence/P15', browser), 'downgrade', {
+const ev = new Evidence(path.join(ROOT, 'test-results/live/P15', browser), 'downgrade', {
   step: 'downgrade', browser: `${BROWSERS[browser].name} ${appVersion(BROWSERS[browser].app) ?? '?'}`, profile, headless: HEADLESS,
 });
 

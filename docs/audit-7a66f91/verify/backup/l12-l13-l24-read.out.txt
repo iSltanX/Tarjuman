@@ -1,8 +1,0 @@
-{"label":"L-12 depth=1000","jsonParse":true,"returned":"BK_INTEGRITY"}
-{"label":"L-12 depth=5000","jsonParse":true,"returned":"BK_INTEGRITY"}
-{"label":"L-12 depth=20000","jsonParse":true,"threw":"RangeError: Maximum call stack size exceeded","at":"src/core/backup/read.js:135:28)"}
-{"label":"L-12 depth=200000","jsonParse":true,"threw":"RangeError: Maximum call stack size exceeded","at":"src/core/backup/read.js:135:28)"}
-{"label":"L-12 ui","shownUnexpected":true,"shownNotBackup":false,"text":"البياناتنسخة احتياطية من مكتبتك في ملف على جهازك، تستعيدها هنا أو في متصفح آخر.نسخة احتياطيةتضمين النسخ السابقةإنشاء نسخة احتياطيةملف JSON واحد فيه ترجماتك وعلا"}
-{"label":"L-13","readOk":true,"invalid":0,"storedTitleHasRLO":true,"storedFileNameHasRLO":true,"importDisplayNameStrips":true}
-{"label":"L-24a all-invalid","readOk":true,"valid":0,"invalid":["BK_VIDEO_INVALID:entry.record.rev — مراجعة غير صالحة","BK_VIDEO_INVALID:entry.record.rev — مراجعة غير صالحة"],"confirmsOpened":0,"shownNothing":true,"mentionsReason":false}
-{"label":"L-24b warning","warning":"بعض الإعدادات في النسخة تالفة فاستُبعدت وحدها: settings.appearance، prefs.glossary (جزئيًا)."}

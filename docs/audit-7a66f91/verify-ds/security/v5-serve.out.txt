@@ -1,9 +1,0 @@
-{"url":"/docs/a.md","host":"127.0.0.1:4317","status":200,"corp":null,"body":"doc"}
-{"url":"/docs/link.md","host":"127.0.0.1:4317","status":200,"corp":null,"body":"OUTSIDE-ROOT-CONTENT"}
-{"url":"/plan/up/serve-outside.txt","host":"127.0.0.1:4317","status":200,"corp":null,"body":"OUTSIDE-ROOT-CONTENT"}
-{"url":"/docs/../serve-outside.txt","host":"127.0.0.1:4317","status":404,"corp":null,"body":"غير موجود"}
-{"url":"/api/state.json","host":"rebind.attacker.test:4317","status":200,"corp":null,"body":"{\"schema\":1,\"mode\":\"live\",\"fatal\":\"plan/"}
-{"url":"/dashboard/data/state.js","host":"rebind.attacker.test","status":200,"corp":null,"body":"window.TJ_STATE = {\"schema\":1,\"mode\":\"li"}
-
---- روابط رمزية في dashboard/ وdocs/ وplan/ وملفات .md في الجذر (شجرة الالتزام) ---
-{"symlinks":[]}

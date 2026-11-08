@@ -4,7 +4,7 @@
 // الصفحات الأربع منها، ومن خلو كل ذلك من أخطاء الإضافة، ومن تحذيرات التثبيت وطلبات الشبكة.
 // لا يعتمد على جسم الترجمة، فيصح تحت الأتمتة. لا يكتب رابطًا ولا رمزًا في الأدلة.
 //   node test/live/harness/smoke.mjs --browser brave|chrome [--ext dist] [--gallery <بناء تطوير>]
-//        [--video iG9CE55wbtY] [--out docs/evidence/P2] [--headed]
+//        [--video iG9CE55wbtY] [--out test-results/live/P2] [--headed]
 import { execFileSync } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -24,10 +24,10 @@ const browser = val('browser', 'brave');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
 const GALLERY = val('gallery') ? path.resolve(val('gallery')) : null;
 const VIDEO = val('video', 'iG9CE55wbtY');
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P2'), browser);
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P2'), browser);
 const rel = (f) => path.relative(ROOT, f);
 // صورة الفيديو المصغّرة في المحفوظات (قرار سلطان 2026-11-03، Q35: مفعّلة افتراضيًا في Chromium) الطلب الخارجي الوحيد المسموح
-// من صفحات الإضافة: من صفحة المحفوظات وحدها، بمعرّف الفيديو، وبلا مُحيل؛ تُعدّ وحدها كما في test/live/polish/run.mjs. كان
+// من صفحات الإضافة: من صفحة المحفوظات وحدها، بمعرّف الفيديو، وبلا مُحيل؛ تُعدّ وحدها. كان
 // الدخان يعدّها طلبًا خارجيًا فيسقط page-library على أي حزمة حالية (تدقيق Fable، FA-03).
 const THUMB_RE = /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/mqdefault\.jpg$/;
 
@@ -237,7 +237,7 @@ try {
   check('no-extension-network-requests', ns.extensionOnly === 0, { total: ns.total, extensionOnly: ns.extensionOnly, packageReads: ns.packageReads });
 
   // ٦. أخطاء الإضافة في يوتيوب والصفحات كلها. رسالة المتصفح عند قراءة سكربت المحتوى ملف خط من حزمة الإضافة (والقراءة
-  // ناجحة؛ docs/evidence/P6/font-fetch-diag.json) تُعدّ وحدها ولا تُحسب خطأً.
+  // ناجحة) تُعدّ وحدها ولا تُحسب خطأً.
   const fontReadLogs = ytErrors.list.filter((x) => x.kind === 'log.security' && FONT_READ_LOG.test(x.text));
   if (fontReadLogs.length) result.notes.push(`رسائل قراءة خطوط الترجمة من حزمة الإضافة (معروفة، غير محسوبة أخطاءً): ${fontReadLogs.length}`);
   result.errors = { youtube: ytErrors.list.filter((x) => !fontReadLogs.includes(x)), pages: pageErrors.flatMap((e) => e.list) };

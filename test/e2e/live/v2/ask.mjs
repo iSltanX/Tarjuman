@@ -16,7 +16,7 @@ const { profile, ext } = V2[browser];
 const DL = path.join(WORK, browser, 'downloads');
 const SUB = path.join(DL, 'Tarjuman');
 const VIDEO = VIDEOS.manual.id;
-const ev = new Evidence(path.join(ROOT, 'docs/evidence/P15', browser), 'ask', { step: 'ask', browser: `${BROWSERS[browser].name} ${appVersion(BROWSERS[browser].app) ?? '?'}`, session: 'نافذة أمامية مؤتمتة؛ «حفظ» في حوار النظام بيد سلطان' });
+const ev = new Evidence(path.join(ROOT, 'test-results/live/P15', browser), 'ask', { step: 'ask', browser: `${BROWSERS[browser].name} ${appVersion(BROWSERS[browser].app) ?? '?'}`, session: 'نافذة أمامية مؤتمتة؛ «حفظ» في حوار النظام بيد سلطان' });
 
 const b = await launchBrowser(browser, { profile, ext, debug: true, front: true });
 const tracked = [];

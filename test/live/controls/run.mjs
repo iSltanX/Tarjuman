@@ -6,7 +6,7 @@
 // المعزول وحده (لا تُمسّ حافظة الجهاز)، والتنزيلات إلى مجلد مؤقت يُحذف بعد المقارنة.
 //   npm run build:dev -- --out <مجلد>
 //   node test/live/controls/run.mjs --browser brave|chrome --ext <مجلد> [--only hide,download,upload,nudge,timing,persist,modes]
-//        [--break-font tajawal] [--headed] [--out docs/evidence/P6]
+//        [--break-font tajawal] [--headed] [--out test-results/live/P6]
 // --break-font يكتب بايتات غير صالحة في ملفي خط داخل مجلد البناء المؤقت (لا المستودع) لسيناريو البديل (P6-AC9).
 import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
@@ -28,7 +28,7 @@ const EXT = path.resolve(val('ext', 'dist'));
 const VIDEO = 'iG9CE55wbtY';
 const FIXTURE = path.join(ROOT, 'test/fixtures/json3/manual-ted-iG9CE55wbtY.json');
 const ONLY = val('only') ? new Set(val('only').split(',')) : null;
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P6'), browser);
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P6'), browser);
 const want = (id) => !ONLY || ONLY.has(id);
 const sha = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
 

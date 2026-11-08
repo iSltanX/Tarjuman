@@ -6,7 +6,7 @@
 //   ٤. الإصدار الثاني يقرأ الناتج سليمًا: الخانات والعلامة والتفضيلات والإعدادات، ويصالح ما كتبه الأول.
 // كتابات الأول بشيفرته المجمّدة (test/fixtures/v1 مجمّعة ومحقونة في صفحة من الحزمة) لأن أدوات مشغّله في Shadow DOM مغلق.
 // ومعها لقطات معرض المكوّنات بالوضعين (P10-AC7). بلا نافذة افتراضيًا.
-//   node test/live/compat/rollback.mjs --browser brave|chrome [--headed] [--out docs/evidence/P10]
+//   node test/live/compat/rollback.mjs --browser brave|chrome [--headed] [--out test-results/live/P10]
 import { execFileSync } from 'node:child_process';
 import { cp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -23,7 +23,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
 const VIDEO = val('video', 'iG9CE55wbtY');
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P10'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P10'));
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const WORK = path.join(PROFILE_ROOT, 'p10-work', `${browser}-${RUN}`);
 const EXT = path.join(WORK, 'ext');

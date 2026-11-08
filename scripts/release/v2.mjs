@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// مجلد الإصدار 2.0.0 المستقل (docs/aa-plan.md، AA5 البند ٨، قرار سلطان ق٦): يجمع حزم المتاجر المبنية (release/store) ومواد store/
-// وأدلة الإصدار (docs/evidence/AA5 افتراضيًا، أو --evidence) في مجلد واحد خارج المستودع، ولا يمس شيئًا آخر في release/:
+// مجلد الإصدار المستقل (قرار سلطان ق٦ في جولة 2.0.0): يجمع حزم المتاجر المبنية (release/store) ومواد store/
+// وأدلة الإصدار (مجلد --evidence داخل المستودع، مثل test-results/live/release) في مجلد واحد خارج المستودع، ولا يمس شيئًا آخر في release/:
 //   packages/{chrome,edge,firefox}/        حزمة كل متجر كما تُرفع، وpackages/manual-install/{chromium,firefox}/ مفكوكة للتثبيت اليدوي
 //   source/                                حزمة المصدر لمراجعي AMO، وتعليمات بنائها بالعربية
 //   stores/{chrome-web-store,edge-addons,firefox-amo}/   الأيقونة أو الشعار واللقطات والترويج وlisting.md، وملاحظات مراجعي AMO
@@ -11,7 +11,7 @@
 // يرفض قبل أي كتابة إن لم يطابق وصف الحزم الالتزام الحالي بشجرة نظيفة، أو اختلفت بصمة حزمة، أو فشل فحص مواد المتاجر، أو كان مجلد
 // الإخراج موجودًا. ولا يفتح متصفحًا ولا شبكة.
 //   command npm run package
-//   command node scripts/release/v2.mjs --out <مجلد غير موجود، مثل release/v2 في النسخة الرئيسية> [--evidence docs/evidence/AA5]
+//   command node scripts/release/v2.mjs --out <مجلد غير موجود، مثل release/v2 في النسخة الرئيسية> --evidence <مجلد الأدلة>
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
@@ -26,8 +26,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const OUT = val('out') ? path.resolve(val('out')) : null;
-/** مجلد الأدلة نسبةً إلى جذر المستودع، بشكل docs/evidence/AA5 (checks.json وhand وt3 وt8 وidentity وshots وdata وsite). */
-const EVIDENCE = path.relative(ROOT, path.resolve(ROOT, val('evidence', 'docs/evidence/AA5'))).split(path.sep).join('/');
+/**
+ * مجلد الأدلة نسبةً إلى جذر المستودع، مثل test-results/live/release (checks.json وhand وt3 وt8 وidentity وshots وdata وsite).
+ * إلزامي: الأدلة لا تُحفظ في المستودع، فتُمرَّر من مجلد نتائج الاختبارات الحية لهذا الإصدار.
+ */
+const EVIDENCE = val('evidence') ? path.relative(ROOT, path.resolve(ROOT, val('evidence'))).split(path.sep).join('/') : null;
 const VERSION = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8')).version;
 const STORE = path.join(ROOT, 'release/store');
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
@@ -38,6 +41,7 @@ const fail = (msg) => {
 };
 
 if (!OUT) fail('مرّر --out <مجلد غير موجود>');
+if (!val('evidence')) fail('مرّر --evidence <مجلد أدلة الإصدار داخل المستودع، مثل test-results/live/release>');
 if (!EVIDENCE || EVIDENCE.startsWith('..') || path.isAbsolute(EVIDENCE)) fail(`مجلد الأدلة خارج المستودع: ${val('evidence')}`);
 if (!existsSync(path.join(ROOT, EVIDENCE, 'checks.json'))) fail(`لا checks.json في مجلد الأدلة ${EVIDENCE}`);
 if (existsSync(OUT)) fail(`المجلد موجود: ${OUT}. لا يُكتب فوق مجلد قائم؛ اختر مسارًا جديدًا أو انقل القديم بنفسك.`);

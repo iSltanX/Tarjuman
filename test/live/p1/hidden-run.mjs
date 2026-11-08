@@ -104,7 +104,7 @@ if (val('fixtures')) vArgs.push('--fixtures', val('fixtures'));
 console.log(execFileSync(process.execPath, vArgs, { encoding: 'utf8' }).split('\n')[0]);
 
 // ملخص لكل خطوة من الأدلة المنقّاة.
-const ev = JSON.parse(await readFile(path.join(ROOT, `docs/evidence/P1/manual/${label}.json`), 'utf8'));
+const ev = JSON.parse(await readFile(path.join(ROOT, `test-results/live/P1/manual/${label}.json`), 'utf8'));
 const summary = { label, browser: ev.browser, storage: ev.storage, missing: ev.missing, seed: SEED, steps: [] };
 for (const t of ev.tabs) {
   const kind = (t.step || '').split('-')[0];
@@ -125,7 +125,7 @@ for (const t of ev.tabs) {
 }
 const text = `${JSON.stringify(sanitizeDeep(summary), null, 2)}\n`;
 if (findSecrets(text).length) throw new Error('الملخص فيه نمط حساس');
-const rel = `docs/evidence/P1/manual/${label}-summary.json`;
+const rel = `test-results/live/P1/manual/${label}-summary.json`;
 await mkdir(path.dirname(path.join(ROOT, rel)), { recursive: true });
 await writeFile(path.join(ROOT, rel), text);
 log(`الملخص: ${rel} · ناقص: ${ev.missing.length}`);

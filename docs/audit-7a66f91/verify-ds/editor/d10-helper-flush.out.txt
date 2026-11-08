@@ -1,9 +1,0 @@
-[١] HTMLInputElement === FakeElement؟ true | HTMLTextAreaElement === FakeElement؟ true | FakeElement له type؟ false
-[١] أي عنصر (div) instanceof HTMLInputElement؟ true ⇒ حارس typing في app.js:1842 صحيح دائمًا
-[١] بالمساعد كما هو: ⌘Z في حقل البحث يتراجع؟ لا | defaultPrevented = false ⇒ U17 لا يظهر في اختبار وحدة بهذا المساعد
-[١] ⌘Z وهدفه body: يتراجع؟ لا | defaultPrevented = false ⇒ حتى المسار السليم لا يُختبر
-[٢] معلّق قبل flush: 4
-[٢] بعد flush(1) واحد نُفّذ بترتيب الجدولة لا المهلة: مؤقت 6000ms ← مؤقت 120ms ← إطار ← مؤقت 250ms | معلّق: 0
-[٢] ولا واجهة لتنفيذ الإطارات وحدها: مفاتيح env = doc, root, flush, fireDoc, pending
-[٣] بعد كتابة الاستعلام وقبل flush: معلّق = 1 | عدّاد النتائج = "" (البحث لم يجرِ بعد)
-[٣] بعد flush: العدّاد = "1 من 5"

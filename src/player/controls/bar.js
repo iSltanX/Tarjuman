@@ -4,7 +4,7 @@
 import { CLASSES, SELECTORS, areControlsHidden, getChromeBottom, getLeftControls, isPlayerFullscreen } from '../youtube-dom.js';
 
 export const BAR_POLL_MS = 500;
-/** أقل من هذا العرض تُضغط الأزرار الخمسة (figma-design-brief §٥.١) ولا يُخفى منها شيء. */
+/** أقل من هذا العرض تُضغط الأزرار الخمسة (مواصفة التصميم الأولى §٥.١) ولا يُخفى منها شيء. */
 export const COMPACT_BELOW_PX = 560;
 /** ارتفاع الشريط حين لا يُقاس (قبل رسمه): كما في الوضع العادي ليوتيوب. */
 const DEFAULT_LIFT = 48;

@@ -1,4 +1,0 @@
-أ. رقم ثم سطر زمن داخل نص مقطع :: {"issues":[],"export":"ok","strictReparseCount":2,"reimport":{"ok":true,"count":3,"numbers":[1,2,2],"texts":["انسخ هذا:","نص مدسوس","المقطع الثاني"],"warnings":["IM_NUMBERING_IRREGULAR"]}}
-ب. سطر «1 --> 2» داخل نص مقطع :: {"issues":[],"export":"ok","strictReparseCount":2,"reimport":{"code":"IM_BAD_TIME","message":"السطر 4: صيغة الزمن غير صالحة. المتوقع مثل 00:00:01,000 --> 00:00:03,500. صحّحه في الملف ثم أعد الاستيراد.","line":4}}
-ج. سطر زمن كامل بلا رقم قبله :: {"issues":[],"export":"ok","strictReparseCount":2,"reimport":{"code":"IM_MISSING_NUMBER","message":"السطر 4: سطر الزمن ليس قبله رقم مقطع. أضف رقم المقطع في السطر السابق ثم أعد الاستيراد.","line":4}}
-د. إنجليزي من json3 بسطر رقم ثم زمن :: {"convertOk":true,"invariants":6,"cues":427,"exportFiles":1,"lenientCount":428}

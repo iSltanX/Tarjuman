@@ -15,12 +15,9 @@
 
 <!-- انسخ النتائج كما خرجت، ولا تعلن نجاح فحص لم يُشغَّل. -->
 
-- [ ] `npm run check`
-- [ ] `npm run test:integration`
-- [ ] `node scripts/run-tests.mjs test/e2e/static test/e2e/regression`
-- [ ] `npm run lint:firefox`
+- [ ] `npm run check:all` (الثابت والأسرار والوحدة والتكامل وe2e الثابت والبناءان و`web-ext lint`)
 - [ ] `npm run package` (إن مسّ التغيير ما يُشحن)
-- [ ] اختبار حي بلا نافذة (إن مسّ الواجهة أو المشغّل)، وأدلته في `docs/evidence/`
+- [ ] اختبار حي بلا نافذة بإذن صاحب الحقوق (إن مسّ الواجهة أو المشغّل)، ونتيجته ملخّصة هنا
 
 ## لقطات
 

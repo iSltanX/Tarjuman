@@ -21,7 +21,7 @@ const { profile, ext } = V2[browser];
 const profileDir = path.join(PROFILE_ROOT, profile);
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const DL = path.join(WORK, browser, 'downloads');
-const ev = new Evidence(path.join(ROOT, 'docs/evidence/P15', browser), 'upgrade', {
+const ev = new Evidence(path.join(ROOT, 'test-results/live/P15', browser), 'upgrade', {
   step: 'upgrade', browser: `${BROWSERS[browser].name} ${appVersion(BROWSERS[browser].app) ?? '?'}`, profile, headless: HEADLESS,
 });
 

@@ -43,7 +43,7 @@ for (const tab of data.tabs) {
       shownChecks, shownMatched: shownChecks.filter((c) => c.match).length,
     };
     if (a.srt) {
-      const rel = `docs/evidence/P1/srt/${label}-${a.videoId}.${a.trackKind}.srt`;
+      const rel = `test-results/live/P1/srt/${label}-${a.videoId}.${a.trackKind}.srt`;
       if (findSecrets(a.srt).length === 0) {
         await mkdir(path.dirname(path.join(ROOT, rel)), { recursive: true });
         await writeFile(path.join(ROOT, rel), a.srt);
@@ -62,7 +62,7 @@ for (const tab of data.tabs) {
 
 const text = `${JSON.stringify(sanitizeDeep(out), null, 2)}\n`;
 if (findSecrets(text).length) throw new Error('الأدلة الناتجة فيها نمط حساس؛ لم تُكتب');
-const rel = `docs/evidence/P1/manual/${label}.json`;
+const rel = `test-results/live/P1/manual/${label}.json`;
 await mkdir(path.dirname(path.join(ROOT, rel)), { recursive: true });
 await writeFile(path.join(ROOT, rel), text);
 

@@ -6,7 +6,7 @@
 // السكربت يراقب مجلد التنزيل وحده، ثم يغلق Chrome، ويفحص الملف بالمحلل الصارم، وينسخه إلى مجلد العمل خارج المستودع ليُبنى منه
 // جسم الالتقاط للّقطات المؤتمتة (t6-shots.mjs). الأدلة بلا نص مقاطع: الاسم والحجم والبصمة وعدد المقاطع ومداها.
 //   command npm run package
-//   command node test/live/stores/t6-hand.mjs [--minutes 10] [--out docs/evidence/T6/manual]
+//   command node test/live/stores/t6-hand.mjs [--minutes 10] [--out test-results/live/T6/manual]
 import { execFileSync } from 'node:child_process';
 import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -22,7 +22,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const MINUTES = Number(val('minutes', 10));
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/T6/manual'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/T6/manual'));
 export const SHOTS_VIDEO = 'Y-rmzh0PI3c';
 const WATCH = `https://www.youtube.com/watch?v=${SHOTS_VIDEO}`;
 const VERSION = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8')).version;

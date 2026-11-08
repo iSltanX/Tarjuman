@@ -1,5 +1,4 @@
-# شريط اللغات في GitHub: الأدلة والتدقيقات والوثائق ليست شيفرة المنتج، وعيّنات الاختبار مولّدة أو منقولة.
+# شريط اللغات في GitHub: الوثائق ليست شيفرة المنتج، وعيّنات الاختبار مولّدة أو منقولة.
 docs/** linguist-documentation
 test/fixtures/** linguist-generated
 test/e2e/fixtures/** linguist-generated
-plan/plan.json linguist-generated

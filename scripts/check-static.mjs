@@ -152,7 +152,7 @@ const PASSTHROUGH = new Set([
   'const XHR = window.XMLHttpRequest.prototype;',
 ]);
 const CAPTURE = path.join('main-world', 'capture.js');
-// قناة البلاغات (جولة النشر T2.1، store-release.md): أضيق استثناء لهذا المضيف وهذا الملف. طلب fetch واحد وطلب إذن واحد بسطريهما
+// قناة البلاغات (جولة النشر T2.1): أضيق استثناء لهذا المضيف وهذا الملف. طلب fetch واحد وطلب إذن واحد بسطريهما
 // المراجَعين حرفيًا، والمضيف رابطًا في هذا الملف وحده. فلا طلب في ملف آخر، ولا مضيف آخر هنا، والعامل وسكربتا المحتوى بلا شبكة.
 const REPORT_FILE = path.join('core', 'report', 'client.js');
 const REPORTS_ORIGIN = 'https://app-reports.isultantf.workers.dev';

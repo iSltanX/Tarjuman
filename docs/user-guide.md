@@ -1,6 +1,6 @@
 # دليل استخدام ترجمان
 
-> الإصدار `2.0.0` (وقبله `1.1.0` أول نسخة للمتاجر، والوسم `tj-v2` على `1.0.0`) على **Chrome وEdge وBrave وFirefox للحاسوب**. في Chrome وBrave تثبّته من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، وفي Edge من [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) (§١). ولم يُنشر في Firefox Add-ons بعد، فيُحمَّل فيه من ملف على جهازك (§١)، وحين يُنشر تثبّته من متجره (§٩ للانتقال). كل المعالجة والحفظ على جهازك. وما أضافه الإصدار الثاني: حتى ثلاث ترجمات لكل فيديو، ونسخة سابقة تلقائية، ومكان حفظ الملفات، والقاموس، والمزامنة بالجملة، وأدوات المراجعة والاستكمال في المحرّر، والنسخ الاحتياطي.
+> هذا الدليل للإصدار `2.0.0` الذي في المستودع، على **Chrome وEdge وBrave وFirefox للحاسوب**. والمنشور الآن في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (لـChrome وBrave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) هو الإصدار `1.1.0` (من الإنجليزية إلى العربية)، و2.0.0 لم يُنشر فيهما بعد؛ فيُجرَّب من ملف على جهازك (§١). ولم يُنشر ترجمان في Firefox Add-ons بعد، فيُحمَّل فيه من ملف كذلك، وحين يُنشر تثبّته من متجره (§٩ للانتقال). كل المعالجة والحفظ على جهازك. وما أضافه الإصدار الثاني: حتى ثلاث ترجمات لكل فيديو، ونسخة سابقة تلقائية، ومكان حفظ الملفات، والقاموس، والمزامنة بالجملة، وأدوات المراجعة والاستكمال في المحرّر، والنسخ الاحتياطي.
 
 ترجمان يستخرج ترجمة فيديو يوتيوب بأي لغة يوفّرها يوتيوب له إلى ملف SRT، فترسله أنت مع تعليمات جاهزة إلى أي نموذج ذكاء اصطناعي تختاره لترجمته إلى اللغة التي تريدها. ثم ترفع الملف الناتج فيظهر فوق الفيديو نفسه، وتضبط توقيته وتحرّره، وتجده محفوظًا متى عدت.
 
@@ -13,7 +13,7 @@
 - **في Chrome وBrave:** افتح [صفحة ترجمان في Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj).
 - **في Edge:** افتح [صفحة ترجمان في Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi).
 
-اضغط زر الإضافة، ثم وافق على الأذونات، وانتقل إلى §٢.
+اضغط زر الإضافة، ثم وافق على الأذونات، وانتقل إلى §٢. والمتجران يقدّمان الآن الإصدار `1.1.0`، ويتحدّث تلقائيًا إلى 2.0.0 حين يُنشر فيهما.
 
 وإن كان عندك ترجمان من مجلد قبل نشره، فانقل محفوظاتك إلى نسخة المتجر بالنسخة الاحتياطية (§٩).
 

@@ -1,8 +1,0 @@
-الصفوف: 2000 | أزرار الزمن في ترتيب Tab: 2000 | أي roving tabindex؟ false
-الصف 5: دوره listitem | زره: {"tag":"button","label":"الانتقال إلى 00:13","describedby":null} | نص الصف (ليس في الاسم): سطر 6
-أزرار التذييل بعد القائمة في ترتيب DOM: 6 | رابط تخطٍّ إلى التذييل؟ false
-التتبّع ما زال مفعّلًا بعد التركيز: true | تمريرات برمجية بعد تغيّر المقطع: [{"top":0,"behavior":"auto"}] | الصف المركّز أعلاه عند 30000 وscrollTop الآن 0
-مستمعو follow.js: wheel,touchmove,keydown,mousedown | focusin؟ false
-sync(2400): rebuilt=true الصفوف=2400 نداءات append=5 طلبات إطار=0 الزمن في Node بالـDOM الوهمي≈100.9ms
-sync(8000): rebuilt=true الصفوف=8000 نداءات append=16 طلبات إطار=0 الزمن في Node بالـDOM الوهمي≈123.1ms
-transcript.js:110-111 => for (let i = 0; i < cues.length; i++) rowEls[i] = buildRow(i, original); || for (let i = 0; i < rowEls.length; i += CHUNK) list.append(...rowEls.slice(i, i + CHUNK));

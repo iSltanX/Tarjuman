@@ -1,6 +1,6 @@
 # ملاحظات المراجعين — ترجمان 2.0.0
 
-> **المرحلة:** T6 من [جولة النشر](../docs/store-release.md)، 2026-11-04. بالإنجليزية لأن المراجعين يقرؤونها (قرار سلطان: «ملاحظات المراجعين بالإنجليزية»)، ولا يراها المستخدمون. تصف ما يحدث فعلًا فقط، ولا تدّعي أن التصدير مسموح ولا تخفيه (§١ من [`README.md`](README.md)).
+> **المرحلة:** T6 من جولة النشر، 2026-11-04. بالإنجليزية لأن المراجعين يقرؤونها (قرار سلطان: «ملاحظات المراجعين بالإنجليزية»)، ولا يراها المستخدمون. تصف ما يحدث فعلًا فقط، ولا تدّعي أن التصدير مسموح ولا تخفيه (§١ من [`README.md`](README.md)).
 > **الحقول:** Chrome «Test instructions» (اختياري ونوصي به)، وEdge «Notes for certification» (البند 1.3 يوجب خطوات الاختبار)، وAMO «Notes for Reviewers» (حتى 3,000 محرف). والكتل تُلصق كما هي، ويقيس `scripts/release/store-assets.mjs --check` أطوالها.
 > **ملف التجربة:** مقاطع عربية قليلة داخل الملاحظة نفسها لأن الحقول نص فقط. والملف الكامل (60 مقطعًا بتوقيت الأصل) في [`test-files/Y-rmzh0PI3c.ar.srt`](test-files/Y-rmzh0PI3c.ar.srt)، ترجمه ترجمان في T6 عن الترجمة الإنجليزية للفيلم.
 
@@ -101,12 +101,12 @@ Arabic sample (test.ar.srt):
 | الجملة | الدليل |
 | --- | --- |
 | لا حساب ولا دفع، ويُحقن في صفحات www.youtube.com ويعمل في صفحة المشاهدة | `src/manifest.json` (`content_scripts.matches`)، و`docs/product-spec.md` §١ |
-| أسماء الأزرار والملف | `src/player/controls/text.js` (`LABELS`)، و`src/core/export/names.js`؛ واسم الملف كما نزّلته الجلسة اليدوية (`docs/evidence/T6/manual/hand.json`) |
+| أسماء الأزرار والملف | `src/player/controls/text.js` (`LABELS`)، و`src/core/export/names.js`؛ واسم الملف كما نزّلته الجلسة اليدوية (`store/test-files/README.md`) |
 | المقارنة لا تعدّل بصمت | `docs/contracts/data-model.md` §٥ |
 | غلافا fetch وXHR يقرآن الرد ولا يطلبان | `src/main-world/capture.js` |
-| `blob:` في Firefox | `docs/evidence/T3/README.md` (`3d6a800`) |
+| `blob:` في Firefox | `test/live/stores/t3.mjs` (`3d6a800`) |
 | الصور والبلاغ وموافقتا Firefox | `docs/site/privacy.md` وجدول أدلته، و`scripts/targets.mjs` |
-| إعادة البناء بايتًا | `docs/evidence/T4/README.md` (الطريقة)، و`release/store/tarjuman-2.0.0-store.json` (`source.reproduced`)، و`docs/evidence/AA5/checks.json` |
+| إعادة البناء بايتًا | `scripts/release/store.mjs` (الطريقة)، و`release/store/tarjuman-2.0.0-store.json` (`source.reproduced`) |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
 | سياسة واحدة تسمّي Edge حيث يختلف السلوك، والصور مفعّلة افتراضيًا فيه بمفتاح في الإعدادات | `docs/site/privacy.md` (أسطر «في Chrome وEdge وBrave»)، و`src/core/model/prefs.js` (`ui.thumbnails: true`)، و`src/pages/settings/view.js`؛ والبند 1.5.2 من [سياسات مطوري Edge](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (قُرئ 2026-11-05) |
 | البلاغ من «تقارير الأعطال والأخطاء» لا من الاتصالات الشخصية | تعريفا `technicalAndInteraction` و`personalCommunications` في [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) (قُرئ 2026-11-05)، و`src/core/report/payload.js`، و`submission.md` §٤ |

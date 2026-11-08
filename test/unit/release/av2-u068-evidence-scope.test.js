@@ -1,5 +1,5 @@
 // التدقيق الموحد V2، U-068: README مجلد الإصدار (scripts/release/v2.mjs) كان يقول «الفحوص الآلية على الالتزام نفسه» بأرقام
-// docs/evidence/AA5/checks.json (الالتزام e06f386) أيًّا كان التزام البناء، فنسخها إلى release/v2-198f51e وrelease/v2-b8f94c0.
+// أدلة AA5 (checks.json، الالتزام e06f386) أيًّا كان التزام البناء، فنسخها إلى release/v2-198f51e وrelease/v2-b8f94c0.
 // صار يذكر التزام الأدلة، ويقارنه بالتزام البناء في ملفات المصدر المبني، ويقول صراحةً إن لم تغطِّ الأدلة الشيفرة.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

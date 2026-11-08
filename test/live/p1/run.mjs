@@ -4,7 +4,7 @@
 //   node test/live/p1/run.mjs --browser brave --inspect <ID,ID,…>        (اختيار الفيديوهات: المسارات المتاحة فقط)
 //   node test/live/p1/run.mjs --browser brave --search "<عبارة>" [--cc]   (معرّفات نتائج البحث)
 // الخطوات الافتراضية بالترتيب: measure,load,capture,positions,special,nav,hover,ad,download,storage,experiments
-// النتائج منقّاة في docs/evidence/P1/runs/، ولا يُكتب ملف فيه أي رابط أو رمز (يُفحص قبل الكتابة).
+// النتائج منقّاة في test-results/live/P1/runs/، ولا يُكتب ملف فيه أي رابط أو رمز (يُفحص قبل الكتابة).
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,7 +19,7 @@ import { parseSrtStrict } from '../../../src/core/srt/parser.js';
 import { findSecrets, sanitizeDeep } from '../../../src/core/diagnostics/sanitize.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const EVIDENCE = path.join(ROOT, 'docs/evidence/P1');
+const EVIDENCE = path.join(ROOT, 'test-results/live/P1');
 const DIST = path.join(ROOT, 'dist');
 const ALL_STEPS = ['measure', 'load', 'capture', 'positions', 'special', 'nav', 'hover', 'ad', 'download', 'storage', 'experiments'];
 
@@ -195,7 +195,7 @@ async function captureOne(ctx, label, id) {
     result.capturedBodySha256 = bodyHash;
     result.bodyMatchesNetwork = tt.some((r) => r.bodySha256 === bodyHash);
     if (acc.srt) {
-      result.srtFile = await writeText(`docs/evidence/P1/srt/${browser}-${id}.${acc.trackKind}.srt`, acc.srt);
+      result.srtFile = await writeText(`test-results/live/P1/srt/${browser}-${id}.${acc.trackKind}.srt`, acc.srt);
       ctx.srt[id] = { srt: acc.srt, kind: acc.trackKind };
     }
     ctx.bodies[id] = { body: acc.body, kind: acc.trackKind, lang: acc.lang };

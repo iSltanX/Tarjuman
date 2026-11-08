@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// اللقطات الحقيقية لصفحات ترجمان في الموقع (AA4، docs/aa-plan.md) ولإطارات مواد المتاجر (AA5، tools/store-art) من بناء الإنتاج على هذا الفرع (بلا جسر تطوير)، على طريقة T6 نفسها
+// اللقطات الحقيقية لصفحات ترجمان في الموقع (AA4) ولإطارات مواد المتاجر (AA5، tools/store-art) من بناء الإنتاج على هذا الفرع (بلا جسر تطوير)، على طريقة T6 نفسها
 // (test/live/stores/t6-shots.mjs): Chrome بلا نافذة ومكتوم الصوت، بملف تعريف جديد تحت TJ_PROFILE_ROOT، ويوتيوب بواجهته العربية بلا
 // حساب. فيديو اللقطات Cosmos Laundromat (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0 (docs/site/credits.md).
 // تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُرسل جسم json3 مبني من ملف SRT الذي نزّله ترجمان في جلسة T6 اليدوية برسالة
@@ -9,9 +9,9 @@
 // ورفع الملف العربي من زر الشريط، ووضع «فوق الأصل»، واللوحة، والتوقيت، ثم المحرّر والمحفوظات والإعدادات. كل فعل نقرة حقيقية
 // (Input)، وعناصر جذور الظل المغلقة تُحدَّد بـDOM المخترق في CDP دون مساس بالمنتج. اللقطات بمعامل 2.
 // لا نص مقاطع في الأدلة: الفحوص والمقاسات والبصمات وحدها. والصور الخام خارج المستودع (--raw)، وتُنسخ منها لقطات الموقع بايتًا.
-// **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (دليل التشغيل، «الاختبارات الحية»).
+// **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (docs/development.md، «الاختبارات الحية»).
 //   command node scripts/build.mjs --out <مجلد في المسودة>
-//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa4/site-shots.mjs --ext <المجلد> [--out docs/evidence/AA4] [--raw <مجلد>] [--headed]
+//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa4/site-shots.mjs --ext <المجلد> [--out test-results/live/AA4] [--raw <مجلد>] [--headed]
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
@@ -30,7 +30,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const HEADED = argv.includes('--headed');
 const EXT = val('ext') ? path.resolve(val('ext')) : null;
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/AA4'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/AA4'));
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const WORK = path.join(PROFILE_ROOT, 'aa4-work', `shots-${RUN}`);
 const RAW = path.resolve(val('raw', path.join(PROFILE_ROOT, 'aa4-work', 'raw')));
@@ -76,7 +76,8 @@ const capture = { source: 'tarjuman', v: 1, kind: 'timedtext', videoId: VIDEO, l
   const again = buildExport({ videoId: VIDEO, title: null, track: { key: 'en|manual', lang: conv.lang, kind: conv.kind, cues: conv.cues, warnings: conv.warnings }, mode: 'normal', now: Date.now() }).files[0].text;
   if (again !== enText) throw new Error('جسم الالتقاط المبني لا يعيد الملف اليدوي نفسه');
 }
-const manual = JSON.parse(await readFile(path.join(ROOT, 'docs/evidence/T6/manual/hand.json'), 'utf8'));
+// مرجع الملف اليدوي: ملف الاختبار في store/test-files هو ما نزّله سلطان في الجلسة اليدوية بايتًا (البصمة نفسها).
+const manual = { file: { sha16: sha16(await readFile(EN_SRT, 'utf8')) } };
 check('capture-body-rebuilds-manual-file', sha16(enText) === manual.file.sha16, { cues: enCues.length, sha16: sha16(enText) });
 
 await mkdir(DL, { recursive: true });
@@ -298,7 +299,7 @@ async function extShot(relPath, name, { width, height, scheme = 'light', before 
 
 /**
  * نافذة الإضافة كما تُفتح من شريط المتصفح: يوتيوب التبويب النشط في النافذة الأخيرة، والنافذة في تبويب خلفي، فتقرأ حالته بـ
- * tabs.query({ active, lastFocusedWindow }) كما في test/live/ui/run.mjs. بعرضها الحقيقي 340 وطولها كما يرسمه المحتوى.
+ * tabs.query({ active, lastFocusedWindow }) كما في سكربت إعادة التصميم الأول. بعرضها الحقيقي 340 وطولها كما يرسمه المحتوى.
  */
 async function popupShot(name, { scheme = 'light' } = {}) {
   await frontYt();

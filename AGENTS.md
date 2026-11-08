@@ -1,33 +1,26 @@
 # ترجمان — تعليمات وكلاء التدقيق (Codex وGemini)
 
-ترجمان إضافة للحاسوب لمتصفحات Chrome وEdge وBrave وFirefox تعمل على يوتيوب وتترجم من أي لغة إلى لغتك: تستخرج الترجمة التي يوفّرها يوتيوب إلى SRT، ويترجمها المستخدم بنموذج خارجي، ثم تعرض الملف المترجم فوق الفيديو مع ضبط التوقيت والتحرير والحفظ لكل فيديو. **المعالجة والحفظ محليان**، ولا يخرج شيء من الجهاز إلا ما يعلنه [`PRIVACY.md`](PRIVACY.md): صور الفيديو في المحفوظات من خوادم يوتيوب (ولها مفتاح يطفئها)، والبلاغ الذي يرسله المستخدم بنفسه. الإصدار الثاني (`1.0.0`) موسوم `tj-v2`، ثم دُمجت بعده جولات الواجهات والهوية على `main`. وجولة النشر للمتاجر على الفرع `tj/store-release` ([`docs/store-release.md`](docs/store-release.md))، ورقم إصدارها في `src/manifest.json`.
+ترجمان إضافة للحاسوب لمتصفحات Chrome وEdge وBrave وFirefox تعمل على يوتيوب وتترجم من أي لغة إلى لغتك: تستخرج الترجمة التي يوفّرها يوتيوب إلى SRT، ويترجمها المستخدم بنموذج خارجي، ثم تعرض الملف المترجم فوق الفيديو مع ضبط التوقيت والتحرير والحفظ لكل فيديو. **المعالجة والحفظ محليان**، ولا يخرج شيء من الجهاز إلا ما يعلنه [`PRIVACY.md`](PRIVACY.md): صور الفيديو في المحفوظات من خوادم يوتيوب (ولها مفتاح يطفئها)، والبلاغ الذي يرسله المستخدم بنفسه. ورقم الإصدار في `src/manifest.json` (`2.0.0` في المستودع، والمنشور في المتاجر `1.1.0`).
 
 ## المهمة: تدقيق قراءة فقط
 
 - لا تعدّل ملفًا، ولا تلتزم، ولا تدفع، ولا تنشئ فرعًا أو وسمًا أو تحرّكه، ولا تغيّر خصوصية المستودع أو إعداداته.
-- `docs/research/youtube-subtitles-research.md` و`docs/research/tarjuman-research-plan.md` مادة بحث مصدرية لا تُعدَّل أبدًا.
-- الاختبارات الحية (`test/live/**` و`test/e2e/live/**`) تفتح متصفحات وتحتاج إذن صاحب المشروع: لا تشغّلها، واقرأ أدلتها في `docs/evidence/`.
-- تجاهل ما يتجاهله Git: `.claude/worktrees/` و`node_modules/` و`dist/` و`release/` (عدا الحزمة المبنية أدناه للتدقيق).
+- الاختبارات الحية (`test/live/**` و`test/e2e/live/**`) تفتح متصفحات وتحتاج إذن صاحب المشروع: لا تشغّلها ولا تستوردها.
+- تجاهل ما يتجاهله Git: `.claude/worktrees/` و`node_modules/` و`dist/` و`release/` و`test-results/` (عدا الحزمة المبنية أدناه للتدقيق).
 
 ## الوثائق الحاكمة بالترتيب
 
 1. [`CLAUDE.md`](CLAUDE.md): الحالة والقواعد الثابتة.
-2. [`docs/delivery/runbook.md`](docs/delivery/runbook.md): الأدوار والفحوص.
-3. [`docs/product-spec.md`](docs/product-spec.md): النطاق والقرارات، والعقود في [`docs/contracts/`](docs/contracts/).
-4. [`docs/aa-plan.md`](docs/aa-plan.md): جولة 2.0.0 (حرية اللغات والهوية الرابعة)، وهي مدموجة في `main`. و[`docs/ui-polish.md`](docs/ui-polish.md) و[`docs/ui-redesign.md`](docs/ui-redesign.md) و[`docs/identity-v4.md`](docs/identity-v4.md): الواجهات بعد الإصدار الأول، والهوية البصرية المعتمدة.
-   وعلى فرع النشر: [`docs/store-release.md`](docs/store-release.md) و[`store/README.md`](store/README.md)، وخطة إصلاح تدقيق `7a66f91` في [`docs/audit-7a66f91/`](docs/audit-7a66f91/README.md).
-5. [`docs/known-limitations.md`](docs/known-limitations.md) والملاحظات المسجّلة في [`docs/waves/W8.md`](docs/waves/W8.md): معروفة، فلا تُبلَّغ خللًا جديدًا إلا بدليل يتجاوزها.
+2. [`docs/product-spec.md`](docs/product-spec.md): النطاق والقرارات، والعقود في [`docs/contracts/`](docs/contracts/README.md).
+3. [`docs/development.md`](docs/development.md) و[`docs/maintenance.md`](docs/maintenance.md): البناء والفحوص والحزم. و[`docs/identity.md`](docs/identity.md): الهوية البصرية المعتمدة.
+4. [`docs/known-limitations.md`](docs/known-limitations.md): قيود معروفة، فلا تُبلَّغ خللًا جديدًا إلا بدليل يتجاوزها.
 
 ## الفحوص المحلية (بلا شبكة ولا متصفح)
 
 على هذا الجهاز قد تكون `node` و`npm` دالتين معطوبتين في الصدفة، فاستعمل `command`:
 
 ```bash
-command npm run check:wave
-```
-
-```bash
-command node scripts/run-tests.mjs test/e2e/static test/e2e/regression
+command npm run check:all
 ```
 
 ```bash
@@ -38,7 +31,7 @@ command npm run package
 command node scripts/release/audit.mjs "release/tarjuman-$(command node -p "require('./src/manifest.json').version")"
 ```
 
-- `check:wave` يبني في `dist/` و`dist-firefox/` (متجاهَلان).
+- `check:all` يبني في `dist/` و`dist-firefox/` (متجاهَلان)، ويشغّل الوحدة والتكامل وe2e الثابت و`web-ext lint`.
 - `npm run package` يفحص المصدر بـ`check-static` أولًا، ثم يبني ويدقق. ولا يكتب شيئًا إن فشل أحدهما.
 - ناتجه حزمة التثبيت الشخصي في `release/tarjuman-<الإصدار>/` مع أرشيفها وملف `.json`. وفي الملف الالتزام وحال الشجرة (`null` بلا Git) وبيئة البناء وبصمة كل ملف.
 - وناتجه أيضًا حزم المتاجر الأربع في `release/store/`، وبصماتها في `release/store/SHA256SUMS`، ووصفها في `-store.json`.
@@ -48,7 +41,7 @@ command node scripts/release/audit.mjs "release/tarjuman-$(command node -p "requ
 
 - **الخصوصية والأمان:** لا اتصال خارجي إلا الاستثناءين المعلنين في `PRIVACY.md` (صور المحفوظات من `i.ytimg.com`، والبلاغ الاختياري بإذن مضيف اختياري لخادمه وحده)، والأذونات المعتمدة وحدها (`storage` و`unlimitedStorage` و`downloads`)، والتنزيلات في `src/core/save` (صفحات الإضافة مباشرة) والعامل الخلفي (لسكربت المحتوى) وحدهما، محصورة في `download` و`search({ id })` (عقد interfaces §١٣)، ولا HTML نصي ولا تقييم شيفرة، والتشخيص بلا نصوص ولا روابط.
 - **سلامة البيانات:** التخزين والترحيل، والرجوع إلى `tj-v1` دون فقد، والنسخ الاحتياطي والاستعادة، وحماية الاستبدال والتعارض بين تبويبين.
-- **الصحة:** الاستخراج والتصدير، والاستيراد والمقارنة والمحاذاة، والمزامنة والإزاحة، والمحرّر.
+- **الصحة:** الاستخراج والتصدير، والاستيراد والمقارنة والمحاذاة، والمزامنة والإزاحة، والمحرّر، واللغات.
 - **الواجهة:** RTL والنص المختلط، والوصول (أسماء الوصول والتركيز ولوحة المفاتيح)، والوضعان الفاتح والداكن.
 - **الاتساق:** مطابقة الشيفرة للعقود والمواصفة، وجودة الاختبارات وتغطيتها للحالات الطرفية.
 
@@ -56,5 +49,5 @@ command node scripts/release/audit.mjs "release/tarjuman-$(command node -p "requ
 
 - بالعربية الواضحة، والشيفرة والمسارات والمعرّفات بصيغتها.
 - لكل ملاحظة: الملف والسطر، والخطورة (حرجة/عالية/متوسطة/منخفضة)، وسيناريو ملموس يُظهر الخلل، والدليل.
-- افصل المؤكد بالقراءة أو الفحص عن المحتمل، واذكر التزام `main` الذي دققته (`git rev-parse HEAD`).
+- افصل المؤكد بالقراءة أو الفحص عن المحتمل، واذكر الالتزام الذي دققته (`git rev-parse HEAD`).
 - يُسلَّم التقرير في ردّك، لا ملفًا داخل المستودع.

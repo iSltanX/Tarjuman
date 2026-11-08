@@ -5,7 +5,7 @@
 //   - subfolder: مجلد فرعي داخل التنزيلات تلقائيًا، ولا كتابة فوق ملف قائم.
 //   - ask (بـ--ask ونافذة ظاهرة): حوار الحفظ من النظام، ونقرة «حفظ» من سلطان.
 // ومعها: تحذيرات التثبيت، وقراءة عنوان التبويب بأذونات البيان، والقفز إلى التبويب المفتوح ثم إلى تبويب جديد.
-//   node test/live/compat/save-location.mjs --browser brave|chrome [--headed] [--ask] [--out docs/evidence/P10]
+//   node test/live/compat/save-location.mjs --browser brave|chrome [--headed] [--ask] [--out test-results/live/P10]
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
@@ -23,7 +23,7 @@ const browser = val('browser', 'brave');
 const ASK = argv.includes('--ask');
 const HEADED = argv.includes('--headed') || ASK;
 const VIDEO = val('video', 'iG9CE55wbtY');
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P10'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P10'));
 const PROFILE = `${browser}-p10`;
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const DL = path.join(PROFILE_ROOT, `downloads-${browser}-p10`, RUN);

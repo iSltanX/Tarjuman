@@ -1,6 +1,0 @@
-{"passthroughCalls":1,"sameInit":true,"postedFields":["source","v","kind","videoId","lang","trackKind","kindParam","capsAsr","hasTlang","format","hasPot","transport","status","bodyLength","body","truncated"],"targetOrigin":"https://www.youtube.com","leaksUrlOrPot":false}
-{"fetch":{"nativeName":"fetch","nativeLength":1,"wrappedName":"","wrappedLength":2,"toStringNative":false},"xhrOpen":{"wrappedName":"","wrappedLength":2}}
---- أسطر الغلاف في الحزمة المبنية ---
-   window.fetch = function(input, init) {
-   XHR.open = function(method, url) {
-   XHR.send = function() {

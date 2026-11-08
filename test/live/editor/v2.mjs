@@ -5,7 +5,7 @@
 // والكثافة، والقفز إلى الفيديو (تبويب مفتوح، وغائب، وأكثر من تبويب)، ولوحة المراجعة والعلامات وآخر موضع، والاستكمال على
 // 900 مقطع ينقصها 12 بجزأين، وإنقاذ المسودة عند التعارض، واختيار المرجع، والتقرير والنص الدراسي، ومكان الحفظ؛ ثم الأداء
 // على 2400 مقطع. النص العربي اصطناعي، والإنجليزي الحقيقي يُخفى من اللقطات.
-//   node test/live/editor/v2.mjs [--browser brave] [--headed] [--out docs/evidence/P14] [--dry] [--profile <اسم>] [--ext-out <مجلد>]
+//   node test/live/editor/v2.mjs [--browser brave] [--headed] [--out test-results/live/P14] [--dry] [--profile <اسم>] [--ext-out <مجلد>]
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -28,7 +28,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
 const HEADED = argv.includes('--headed');
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P14'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P14'));
 // --profile و--ext-out لملف تعريف ومجلد بناء خاصين بجولة (لا يُعاد استعمال بيئة اختبار جلسة أخرى).
 const PROFILE = val('profile', `${browser}-p14`);
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');

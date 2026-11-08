@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// يولّد جداول مختصرة من ملفات التشغيل المنقّاة (docs/evidence/P1/runs/*.json) لتُنسخ إلى live-results.md.
+// يولّد جداول مختصرة من ملفات التشغيل المنقّاة (test-results/live/P1/runs/*.json) لتُنسخ إلى تقرير الجولة.
 // التشغيل: node test/live/p1/report.mjs <ملف.json> [ملف.json …]
 import { readFile } from 'node:fs/promises';
 

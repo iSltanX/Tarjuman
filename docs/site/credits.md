@@ -60,13 +60,13 @@
 
 | القسم | البند | الدليل |
 | --- | --- | --- |
-| الفيلم | الرخصة CC BY 3.0، وسطر النسبة، واستثناء الشعارات والعلامات | [صفحة المشروع](https://gooseberry.blender.org/about/): «licensed under the Creative Commons Attribution 3.0»، و«(CC) Blender Foundation \| gooseberry.blender.org»، و«Excluded from the Creative Commons license is: all logos»؛ و`store/test-files/README.md` و`docs/evidence/T6/README.md` (§ المصادر) |
+| الفيلم | الرخصة CC BY 3.0، وسطر النسبة، واستثناء الشعارات والعلامات | [صفحة المشروع](https://gooseberry.blender.org/about/): «licensed under the Creative Commons Attribution 3.0»، و«(CC) Blender Foundation \| gooseberry.blender.org»، و«Excluded from the Creative Commons license is: all logos»؛ و`store/test-files/README.md` |
 | الفيلم | وسم يوتيوب والقناة وتاريخ الرفع والعنوان | صفحة الفيديو `Y-rmzh0PI3c` (القناة «Blender»، و`publishDate` 2015-08-10، وصف «License: Creative Commons Attribution license (reuse allowed)»)، وoEmbed يوتيوب للعنوان |
 | الفيلم | الحلقة الأولى، واستوديو Blender Institute بأمستردام | وصف الفيديو الرسمي: «the 10 minutes pilot "First Cycle", has been made in the Netherlands by the studio of Blender Institute in Amsterdam» |
 | الفيلم | الإخراج والتأليف والإنتاج | [صفحة طاقم الفيلم في Blender Studio](https://studio.blender.org/projects/cosmos-laundromat/pages/credits/): Directed by Mathieu Auvray، وWritten by Esther Wouda، وProduced by Ton Roosendaal |
 | الفيلم | متطلبات الرخصة: رابط الرخصة، والنسبة بطريقة معقولة، وبيان ما أُضيف، ولا إيحاء بتأييد | [CC BY 3.0 Unported](https://creativecommons.org/licenses/by/3.0/legalcode.en) §4(a) و§4(b) |
-| ما يظهر منه | الإطار عند 3:02 وصورة الغلاف، وإخفاء علامة القناة، والسطر الإنجليزي اليدوي، والعربي من ترجمان | `docs/evidence/T6/README.md` (منع التشغيل التلقائي وإخفاء العلامة المائية)، و`store/test-files/README.md` (الملفان)، و`test/live/stores/t6-shots.mjs`، و`test/live/aa4/site-shots.mjs` (لقطات 2.0.0 بالطريقة نفسها)، و`docs/evidence/AA4/README.md` |
+| ما يظهر منه | الإطار عند 3:02 وصورة الغلاف، وإخفاء علامة القناة، والسطر الإنجليزي اليدوي، والعربي من ترجمان | `test/live/stores/t6-shots.mjs` (منع التشغيل التلقائي وإخفاء العلامة المائية)، و`store/test-files/README.md` (الملفان)، و`test/live/aa4/site-shots.mjs` (لقطات 2.0.0 بالطريقة نفسها) |
 | العلامات | YouTube لشركة Google، ونفي الصلة | `store/listing.ar.md` (سطر العلامة)، و`LICENSE` (الفقرة الأخيرة) |
 | الخطوط | Cairo وAlmarai برخصة OFL 1.1 | `src/ui/ui-fonts.js`، و`scripts/release/notices.mjs` |
-| ترجمان | الحقوق، والأيقونات المرسومة له، والمكوّنات وتراخيصها، وإسناد Lucide حتى 1.1.0، و«عرض التراخيص» | `LICENSE` (السطر الأول وقائمة المكوّنات، المصحّح في AA2 `6ee2e5c`)، و`docs/identity-v4.md` §٥، و`THIRD_PARTY_NOTICES.txt`، و`src/pages/settings/about.js` («عرض التراخيص») |
+| ترجمان | الحقوق، والأيقونات المرسومة له، والمكوّنات وتراخيصها، وإسناد Lucide حتى 1.1.0، و«عرض التراخيص» | `LICENSE` (السطر الأول وقائمة المكوّنات، المصحّح في AA2 `6ee2e5c`)، و`docs/identity.md` §٥، و`THIRD_PARTY_NOTICES.txt`، و`src/pages/settings/about.js` («عرض التراخيص») |
 | تواصل | البريد والناشر | `store/README.md` §٥ |

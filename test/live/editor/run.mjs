@@ -5,7 +5,7 @@
 // والمقارنة والاستعادة، وتثبيت الإزاحة، وحارس المغادرة، والحفظ والأصل وانعكاسهما في المشغّل المفتوح، والتعارض؛
 // ثم ملف كبير (2140 مقطعًا) للأداء. النص العربي اصطناعي والإنجليزي الحقيقي لا يظهر في اللقطات (العمود يُخفى).
 //   npm run build:dev -- --out <مجلد خارج المستودع>
-//   node test/live/editor/run.mjs --ext <مجلد> [--browser brave] [--profile brave-p8] [--headed] [--out docs/evidence/P8] [--dry]
+//   node test/live/editor/run.mjs --ext <مجلد> [--browser brave] [--profile brave-p8] [--headed] [--out test-results/live/P8] [--dry]
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,7 +27,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
 const EXT = path.resolve(val('ext', 'dist'));
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P8'), browser);
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P8'), browser);
 const DL = path.join(PROFILE_ROOT, 'downloads-p8');
 const VIDEO = 'iG9CE55wbtY';
 const BIG = 'TJp8big0001';

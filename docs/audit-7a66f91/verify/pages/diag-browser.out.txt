@@ -1,5 +1,0 @@
-Firefox 159 (سطح المكتب): الإعدادات/المحفوظات detectBrowser = «غير معروف» | النافذة browserLabel = «غير معروف» | البلاغ = «Firefox 159.0»
-Edge 156: الإعدادات/المحفوظات detectBrowser = «Chromium 156» | النافذة browserLabel = «Chromium 156» | البلاغ = «Microsoft Edge 156»
-Chrome 156: الإعدادات/المحفوظات detectBrowser = «Chrome 156» | النافذة browserLabel = «Chrome 156» | البلاغ = «Google Chrome 156»
-Brave 156: الإعدادات/المحفوظات detectBrowser = «Brave 156» | النافذة browserLabel = «Brave 156» | البلاغ = «Brave 156»
-P-5) المفتاح videoId مستبعد = true | المعرّف ما زال في قيم حرة = 2 مرة

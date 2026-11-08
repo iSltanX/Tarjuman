@@ -14,7 +14,7 @@ import { writeSrt } from '../../../src/core/srt/writer.js';
 import { captureMsg, makeExtractor, sample } from '../extract/helpers.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const p1Srt = (name) => readFileSync(path.join(ROOT, 'docs/evidence/P1/srt', name), 'utf8');
+const p1Srt = (name) => readFileSync(path.join(ROOT, 'test/fixtures/export', name), 'utf8');
 const NOW = '2026-11-01T12:00:00.000Z';
 const rand = () => 0.5;
 

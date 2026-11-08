@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-// الجلسة اليدوية للاستخراج الحقيقي بلا حقن (AA5، docs/aa-plan.md البند ٢): مسار إنجليزي ومسار بغير الإنجليزية، من حزمة متجر 2.0.0
+// الجلسة اليدوية للاستخراج الحقيقي بلا حقن (AA5): مسار إنجليزي ومسار بغير الإنجليزية، من حزمة متجر 2.0.0
 // نفسها، في Brave بنافذة عادية بلا أي علم تحكم (navigator.webdriver=false)، فيعيد يوتيوب جسم الترجمة كما للمستخدم. على طريقة جلسة
-// Fable الناجحة (docs/fable/scripts/hand-watch.mjs): ملف تعريف اختبار جديد خارج المستودع، ومكتوم الصوت، والإضافة بـ--load-extension.
+// Fable الناجحة: ملف تعريف اختبار جديد خارج المستودع، ومكتوم الصوت، والإضافة بـ--load-extension.
 // لا ينقر السكربت شيئًا: يراقب مجلد التنزيل وحافظة الجهاز فقط (يقرؤها ولا يكتب فيها)، ثم يغلق المتصفح ويفحص كل ملف بالمحلل الصارم.
 // والأدلة بلا نص مقاطع ولا رابط: الاسم والحجم والبصمة وعدد المقاطع ورمز اللغة وعلامات نصها.
 // خطوات سلطان في النافذة (فيلم Cosmos Laundromat، وفيه ترجمات يدوية بلغات عدة):
 //   ١. اضغط CC في المشغّل (الإنجليزية) ثم أول أيقونة ترجمان في يمين الشريط (تحميل الأصل) ← «تنزيل الملف».
 //   ٢. من الترس ⚙ ← الترجمة ← Español (الإسبانية)، ثم أيقونة ترجمان نفسها ← اختر «الإسبانية» إن ظهرت قائمة ← «تنزيل الملف».
 //   ٣. اختياريًا: أيقونة الإضافات (قطعة الأحجية) ← ترجمان ← «نسخ التعليمات».
-// **يفتح متصفحًا بنافذة ظاهرة:** بإذن سلطان وحده، وبيده (دليل التشغيل، «الاختبارات الحية»).
+// **يفتح متصفحًا بنافذة ظاهرة:** بإذن سلطان وحده، وبيده (docs/development.md، «الاختبارات الحية»).
 //   command npm run package
-//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa5/hand.mjs [--minutes 15] [--out docs/evidence/AA5/hand]
+//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa5/hand.mjs [--minutes 15] [--out test-results/live/AA5/hand]
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -26,7 +26,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const MINUTES = Number(val('minutes', 15));
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/AA5/hand'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/AA5/hand'));
 const VERSION = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8')).version;
 const ZIP = path.join(ROOT, 'release/store', `tarjuman-${VERSION}-chrome.zip`);
 const VIDEO = 'Y-rmzh0PI3c';

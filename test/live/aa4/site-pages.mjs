@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// معاينة صفحات ترجمان الأربع في الموقع (AA4، docs/aa-plan.md) على خادم محلي لفرع الموقع feat/tarjuman-v2 (localhost وحده، بقاعدة
+// معاينة صفحات ترجمان الأربع في الموقع (AA4) على خادم محلي لفرع الموقع feat/tarjuman-v2 (localhost وحده، بقاعدة
 // ملفية جديدة في الـworktree هناك لا قاعدة الإنتاج)، في Chrome بلا نافذة بملف تعريف جديد تحت TJ_PROFILE_ROOT:
 //   - كل صفحة بالعروض 360 و390 و768 و1024 و1280 و1440 و1920 وبالوضعين: لا فيض أفقي، وh1 واحد، والهوية الرابعة في الألوان المحسوبة.
 //   - لقطة كاملة لكل صفحة بالوضعين على الحاسوب (1440) وعلى الجوال (390)، بصيغة JPEG (جودة 82) كي لا تثقل المستودع.
 //   - لا طلب إلى غير الخادم المحلي، ولا خطأ في وحدة التحكم.
-// **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (دليل التشغيل، «الاختبارات الحية»).
-//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa4/site-pages.mjs --base http://localhost:<المنفذ> [--out docs/evidence/AA4/site]
+// **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (docs/development.md، «الاختبارات الحية»).
+//   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa4/site-pages.mjs --base http://localhost:<المنفذ> [--out test-results/live/AA4/site]
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,7 +16,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const BASE = val('base');
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/AA4/site'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/AA4/site'));
 if (!BASE || !/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(BASE)) {
   console.error('استعمال: --base http://localhost:<المنفذ> (الخادم المحلي وحده)');
   process.exit(2);

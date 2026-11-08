@@ -1,3 +1,0 @@
-{"scenario":"STO-01-delete","A":{"ok":true,"rev":2},"B":{"afterDeleteKeys":[]},"keysAfter":["video:AAAAAAAAAAA","index:AAAAAAAAAAA","bundle:AAAAAAAAAAA"],"final":{"rev":2,"text0":"نص-A","filledSlots":[1],"slot2Name":null,"previous":false,"marks":[0,0,0]}}
-{"scenario":"STO-01-edit","A":{"ok":true,"rev":2},"B":{"bRev":2,"bText":"نص-B"},"keysAfter":["video:AAAAAAAAAAA","index:AAAAAAAAAAA","bundle:AAAAAAAAAAA","alts:AAAAAAAAAAA","prev:AAAAAAAAAAA","marks:AAAAAAAAAAA"],"final":{"rev":2,"text0":"نص-A","filledSlots":[1,2],"slot2Name":"مراجعة","previous":true,"marks":[2,1,0]}}
-{"scenario":"STO-01-window","cuesPerTrack":2000,"tracks":4,"bytes":1230105,"gapMs":[29.8,23.6,19.6,24.4,19.4],"openedRev":1}

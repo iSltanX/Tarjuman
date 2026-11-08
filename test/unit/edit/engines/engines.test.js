@@ -154,7 +154,7 @@ test('مقاييس الكثافة: المحارف المرئية ومسافات�
 
 test('العتبة الافتراضية مكتوبة بمبررها ومعايرة على العيّنتين العربيتين الحقيقيتين: تنبيه على الشاذ لا على عُشر الكلام', () => {
   assert.deepEqual(READING_DEFAULTS, { maxCps: 20, maxLineChars: 42 });
-  const doc = readFileSync(path.join(ROOT, 'docs/evidence/P11/reading-calibration.md'), 'utf8');
+  const doc = readFileSync(path.join(ROOT, 'docs/reading-calibration.md'), 'utf8');
   assert.match(doc, /\*\*20 محرفًا في الثانية\*\*/);
   assert.match(doc, /\*\*42 محرفًا\*\*/);
   const cues = [REAL_ARABIC.manual, REAL_ARABIC.asrLong].flatMap((name) => parseSrtLenient(realArabic(name)).cues);

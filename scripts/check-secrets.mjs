@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-// فحص آلي لخلو العينات والأدلة والسجلات من pot والتواقيع والروابط وملفات الارتباط والرموز ومسارات الجهاز المحلية.
-// يمرّ على test/fixtures/ وعينات test/e2e/fixtures/ (ترجمات حقيقية؛ تدقيق 5fedcb9، GM-028) وأدلة كل المراحل في
-// docs/evidence/. الوثائق السردية (.md) قد تذكر روابط مراجع
+// فحص آلي لخلو العينات والسجلات من pot والتواقيع والروابط وملفات الارتباط والرموز ومسارات الجهاز المحلية.
+// يمرّ على test/fixtures/ وعينات test/e2e/fixtures/ (ترجمات حقيقية). الوثائق السردية (.md) فيهما قد تذكر روابط مراجع
 // عامة، أما روابط يوتيوب وجوجل والأسرار فممنوعة فيها أيضًا. يخرج برمز 1 عند أي اكتشاف.
 // ويمتد (تدقيق V2، U-047) إلى كل ملف نصي متتبَّع في Git خارج هذه النطاقات: الأسرار ومسارات الجهاز المحلية، دون قاعدة الروابط
 // (الشيفرة والوثائق تذكر روابط عامة بحق)، إلا ما ورد في EXCLUDED أدناه بسببه. وحين لا يتوفر Git يمشي على الشجرة نفسها.
@@ -18,22 +17,19 @@ if (rootArg > -1 && !process.argv[rootArg + 1]) {
   process.exit(2);
 }
 const ROOT = rootArg > -1 ? path.resolve(process.argv[rootArg + 1]) : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SCOPES = ['test/fixtures', 'test/e2e/fixtures', 'docs/evidence'];
+const SCOPES = ['test/fixtures', 'test/e2e/fixtures'];
 const TEXT = /\.(json|srt|txt|log|md|csv|ndjson)$/i;
 const SENSITIVE_HOST = /(?:youtu\.?be|youtube|google|googlevideo|ytimg|ggpht)/i;
-// مسارات الجهاز المحلية (اسم المستخدم والقرص ومجلدات الجلسات المؤقتة) لا تدخل الأدلة؛ تُكتب برمز عام مثل $SCRATCH/.
+// مسارات الجهاز المحلية (اسم المستخدم والقرص ومجلدات الجلسات المؤقتة) لا تدخل العيّنات ولا السجلات؛ تُكتب برمز عام مثل $SCRATCH/.
 const LOCAL_PATH = /(?:\/Users\/[^/\s"'`]+\/|\/private\/(?:tmp|var)\/|\/Volumes\/[^/\s"'`]+\/|\b[A-Za-z]:\\Users\\)/g;
 
-// ما يُستثنى من الفحص الموسَّع وحده (لا من نطاقات الأدلة أعلاه)، وسبب كل بند. إضافة بند تحتاج سببًا يُكتب هنا.
+// ما يُستثنى من الفحص الموسَّع وحده (لا من نطاقات العيّنات أعلاه)، وسبب كل بند. إضافة بند تحتاج سببًا يُكتب هنا.
 const EXTRA_TEXT = /\.(json|srt|txt|log|md|csv|ndjson|js|mjs|cjs|css|html|yml|yaml|svg|webmanifest|toml)$|(^|\/)\.[a-z]+ignore$/i;
 const EXTRA_IGNORED_TYPES = ['url', 'timedtext-path']; // الروابط العامة ومسار timedtext مذكوران في الشيفرة والوثائق بحق
 const EXCLUDED = [
-  // أرشيف التدقيقات: برامج إثبات وخرجها تقتبس أنماط الأسرار والمسارات المحلية عمدًا لإثبات الكشف.
-  ['docs/audit-7a66f91/', 'أرشيف تدقيق 7a66f91: برامج إثبات وخرجها تقتبس أنماطًا مقصودة'],
-  ['docs/Audit-V2/evidence/', 'أدلة تدقيق V2: برامج إثبات وخرجها تقتبس أنماطًا مقصودة'],
   // تعريف الأنماط نفسه وسلسلة التوريد.
   ['src/core/diagnostics/sanitize.js', 'تعريف أنماط التنقية: يحوي أسماء الترويسات وملفات الارتباط'],
-  ['test/fixtures/', 'نسخ مصدرية قديمة مجمَّدة للإصدارات السابقة (تحوي تعريف الأنماط نفسه)؛ ونصوصها غير الشيفرة تُفحص بنطاقات الأدلة أعلاه'],
+  ['test/fixtures/', 'نسخ مصدرية قديمة مجمَّدة للإصدارات السابقة (تحوي تعريف الأنماط نفسه)؛ ونصوصها غير الشيفرة تُفحص بنطاقات العيّنات أعلاه'],
   ['package-lock.json', 'تجزئات سلامة الحزم تشبه الرموز الطويلة'],
   // اختبارات تحوي نماذج وهمية مقصودة لاختبار التنقية والكشف.
   ['test/unit/diagnostics/sanitize.test.js', 'نماذج أسرار وهمية لاختبار التنقية'],
@@ -75,7 +71,7 @@ async function walkAll(dir, base = dir) {
   return out;
 }
 
-// نطاق غائب أو لا يُقرأ فشل لا «صفر ملفات» (FA-11): كان الخطأ يُبتلع فينجح الفحص ولو نُقلت الأدلة كلها.
+// نطاق غائب أو لا يُقرأ فشل لا «صفر ملفات» (FA-11): كان الخطأ يُبتلع فينجح الفحص ولو نُقلت العيّنات كلها.
 async function walk(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
   const out = [];
@@ -100,7 +96,7 @@ for (const scope of SCOPES) {
     continue;
   }
   for (const file of files) {
-    // ملف نصي أكبر من الحد لا يُتخطى بصمت: الأدلة لا تبلغه، وما بلغه يُقسَم أو يُنقَّى قبل حفظه.
+    // ملف نصي أكبر من الحد لا يُتخطى بصمت: العيّنات لا تبلغه، وما بلغه يُقسَم أو يُنقَّى قبل حفظه.
     if ((await stat(file)).size > MAX_BYTES) {
       findings.push(`${path.relative(ROOT, file)}: أكبر من 50 م.ب فلم يُفحص`);
       continue;
@@ -141,9 +137,9 @@ for (const rel of everything) {
   for (const m of text.matchAll(LOCAL_PATH)) findings.push(`${rel}@${m.index}: local-path ${m[0]}`);
 }
 
-if (!scanned) findings.push('لا ملف نصيًا في نطاقات الفحص (test/fixtures وtest/e2e/fixtures وdocs/evidence)');
+if (!scanned) findings.push('لا ملف نصيًا في نطاقات الفحص (test/fixtures وtest/e2e/fixtures)');
 if (findings.length) {
   console.error(`check-secrets: ${findings.length} اكتشاف في ${scanned} ملف\n- ${findings.slice(0, 50).join('\n- ')}`);
   process.exit(1);
 }
-console.log(`check-secrets: ناجح (${scanned} ملف بلا pot ولا تواقيع ولا روابط ولا ملفات ارتباط ولا مسارات محلية؛ منها ${extra} خارج نطاقات الأدلة، و${excluded} مستثنى بسببه)`);
+console.log(`check-secrets: ناجح (${scanned} ملف بلا pot ولا تواقيع ولا روابط ولا ملفات ارتباط ولا مسارات محلية؛ منها ${extra} خارج نطاقات العيّنات، و${excluded} مستثنى بسببه)`);

@@ -1,1 +1,0 @@
-{"label":"E-13","clearNote":"يحذف كل الترجمات المحفوظة والإعدادات من هذا المتصفح.","clearNoteMentions":{"glossary":false,"saveLocation":false,"uiSwitches":false},"previewMentionsGlossaryCount":false,"previewSettingsLabel":true,"localTermsBefore":["agent","embedding"],"termsAfter":["prompt","token","fine-tuning"],"saveModeAfter":"subfolder"}

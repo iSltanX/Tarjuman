@@ -1,9 +1,0 @@
-(أ-1) splitSize: {"invalid":"true","describedby":null,"label":"مقاطع لكل جزء","errId":null,"errText":"أدخل عدد المقاطع لكل جزء بين 50 و2000."}
-(أ-1) <label> مرئي مرتبط بـfor؟ null | مقابل حقل الإزاحة: aria-describedby="tj-offset-error" (menus.js:424)
-(أ-2) stepInput: {"invalid":"true","describedby":null,"errHidden":false,"errId":null,"errText":"أدخل خطوة بين 0.1 و10 ثوانٍ، مثل 0.3."}
-(ب) downloadedLine: "نُزّل -xyz1234567.en.manual.normal.srt" | فيه LRI/PDI؟ false
-(ب) saveMessage: "حُفظ -xyz1234567.en.manual.normal.srt في مجلد Tarjuman داخل التنزيلات." | فيه LRI/PDI؟ false
-(ب) saveMessage (فشل): "-xyz1234567.en.manual.normal.srt: تعذّر الحفظ."
-(ب) CSS سطر النتيجة: .line { all: unset; box-sizing: border-box; display: flex; align-items: flex-sta … .line__text { unicode-bidi: plaintext; text-align: right; min-width: 0; }
-(ج) search.js:82: const optsBtn = button({ label: 'الخيارات', size: 'sm', variant: 'ghost', onClick: () => toggleOpts(), doc }); | اللوحة التي يفتحها: role= group
-(د) refOptionLabel(3, "Draft-2 (v)"): "الترجمة 3 — Draft-2 (v)" | فيه عزل؟ false

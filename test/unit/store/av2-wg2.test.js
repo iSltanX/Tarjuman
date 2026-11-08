@@ -1,5 +1,5 @@
 // تدقيق V2 الموحد، المجموعة WG-2 على التخزين (U-009 وU-016 وU-017): محفوظات الترجمة الناقصة المرجعها مسار بغير الإنجليزية،
-// وإنقاذ الحزمة برأس تالف، وتفرّد بصمات المرافق. الحالات بدوال المنتج كما في docs/Audit-V2/evidence/unified/repro/A2-store.
+// وإنقاذ الحزمة برأس تالف، وتفرّد بصمات المرافق. الحالات بدوال المنتج كما في برنامج إثبات التدقيق A2-store.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore } from '../../../src/core/store/index.js';

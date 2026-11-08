@@ -41,7 +41,7 @@ for (const tab of data.tabs) {
 
 const text = `${JSON.stringify(sanitizeDeep(out), null, 2)}\n`;
 if (findSecrets(text).length) throw new Error('الأدلة فيها نمط حساس؛ لم تُكتب');
-const rel = `docs/evidence/P1/manual/${label}.json`;
+const rel = `test-results/live/P1/manual/${label}.json`;
 await mkdir(path.dirname(path.join(ROOT, rel)), { recursive: true });
 await writeFile(path.join(ROOT, rel), text);
 console.log(`الأدلة: ${rel} · أسرار في الملف الأصلي: ${out.secretsInExport}`);

@@ -11,7 +11,7 @@
 // نسخة الاختبار من dist تحمل إذن مضيف البلاغات في host_permissions (في ملف التعريف، لا في المستودع)، و«طلب الإذن» مستبدل
 // في الصفحة بنعم: حوار الإذن ينتظر يدًا بلا نافذة (T3)، وليس مما تغيّر هنا. والحافظة مستبدلة لتُرفض أو تُقبل عمدًا.
 //   command npm run build
-//   command node test/live/review/run.mjs --browser brave [--out docs/evidence/review-apply]
+//   command node test/live/review/run.mjs --browser brave [--out test-results/live/review-apply]
 //   command node test/live/review/run.mjs --browser chrome
 import { execFileSync } from 'node:child_process';
 import { cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
@@ -32,7 +32,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
 const DIST = path.resolve(ROOT, val('ext', 'dist'));
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/review-apply'), browser);
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/review-apply'), browser);
 const PROFILE = val('profile', `${browser}-review`);
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const DL = path.join(PROFILE_ROOT, `downloads-${PROFILE}`, RUN);

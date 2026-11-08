@@ -62,7 +62,7 @@ async function open(id, waitMs) {
   if (!(await bindIso())) throw new Error('لا سياق معزول للإضافة');
 }
 
-const ev = new Evidence(path.join(ROOT, 'docs/evidence/P9', browser), 'list-auto', { step: 'fixed-list-auto' });
+const ev = new Evidence(path.join(ROOT, 'test-results/live/P9', browser), 'list-auto', { step: 'fixed-list-auto' });
 const state = await loadState(browser);
 const results = [];
 try {

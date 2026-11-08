@@ -1,3 +1,0 @@
-العيّنة الحقيقية :: {"maxTOffsetMs":5000,"offsetsBeyondEventDuration":0}
-tOffsetMs=60000 :: {"ok":true,"invariants":"1:true 2:true 3:true 4:true 5:true 6:true","cues":1035,"clamped":166,"longest":{"startMs":120840,"endMs":121119,"durMs":279,"words":167,"chars":933,"charsPerSec":3344},"buildExport":"ok"}
-tOffsetMs=2000000 :: {"ok":true,"invariants":"1:true 2:true 3:true 4:true 5:true 6:true","cues":360,"clamped":6152,"longest":{"startMs":2060840,"endMs":2061040,"durMs":200,"words":6153,"chars":32371,"charsPerSec":161855},"buildExport":"TjError(MD_INVALID): بيانات غير صالحة، فلم يُحفظ شيء. انسخ تقرير التشخيص."}

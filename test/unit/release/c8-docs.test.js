@@ -42,9 +42,10 @@ test('U67: وثائق الصيانة والتشغيل لا توصي بسكربت
   const scripts = (await walk('test')).filter((f) => f.endsWith('.mjs'));
   const retired = [];
   for (const f of scripts) if (RETIRED.test((await read(f)).split('\n').slice(0, 6).join('\n'))) retired.push(f);
-  assert.ok(retired.includes('test/e2e/live/v2/surfaces.mjs'), 'surfaces.mjs موسوم مستبدَلًا');
+  // الحارس يتعرّف رأس السكربت المستبدَل (حُذفت السكربتات المستبدَلة نفسها في تنظيف المستودع).
+  assert.ok(RETIRED.test('// مستبدَل (سبب): بديله سكربت آخر') && RETIRED.test('// تاريخي: واجهة قديمة') && !RETIRED.test('// اختبار حي دائم'));
   const problems = [];
-  for (const doc of ['docs/maintenance.md', 'AGENTS.md', 'CLAUDE.md', 'docs/delivery/runbook.md']) {
+  for (const doc of ['docs/maintenance.md', 'docs/development.md', 'AGENTS.md', 'CLAUDE.md', 'test/e2e/README.md', 'test/live/harness/README.md']) {
     (await read(doc)).split('\n').forEach((line, i) => {
       for (const f of retired) {
         // بالمسار، أو بالاسم وحده إن لم يشاركه سكربت آخر (فـv2.mjs لا يُنسب إلى غير صاحبه).

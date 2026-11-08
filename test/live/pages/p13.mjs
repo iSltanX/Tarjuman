@@ -9,8 +9,8 @@
 // مواءمة الهوية «بُنّ على ورق» (2026-11-03، docs/product-spec.md §٦.٦): شرائح الترجمات في الصف بدل المحدد، والتوسيع في الصف
 // (بطاقة لكل ترجمة وسطر النسخة السابقة في بطاقة خانتها) بدل لوحة «الترجمات…»، و«نسخ التعليمات» من «المزيد»، والشبكة صور
 // i.ytimg.com وحدها بلا مُحيل (و404 صور المعرّفات الاصطناعية في البذرة متوقعة وتُعدّ وحدها).
-//   command node test/live/pages/p13.mjs --browser brave --phase create [--out docs/evidence/P13]
-//   command node test/live/pages/p13.mjs --browser chrome --phase restore [--out docs/evidence/P13]
+//   command node test/live/pages/p13.mjs --browser brave --phase create [--out test-results/live/P13]
+//   command node test/live/pages/p13.mjs --browser chrome --phase restore [--out test-results/live/P13]
 //   [--profile <اسم ملف التعريف>] [--handoff <مجلد تسليم النسخة بين المرحلتين>]
 import { execFileSync } from 'node:child_process';
 import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
@@ -32,7 +32,7 @@ const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k
 const browser = val('browser', 'brave');
 const PHASE = val('phase', browser === 'brave' ? 'create' : 'restore');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P13'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P13'));
 // --profile و--handoff لملف تعريف ومجلد تسليم خاصين بجولة (لا يُعاد استعمال بيئة اختبار جلسة أخرى).
 const PROFILE = val('profile', `${browser}-p13`);
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');

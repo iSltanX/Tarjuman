@@ -9,7 +9,7 @@
 // المغلقة تُحدَّد بـDOM المخترق في CDP دون مساس بالمنتج. اللقطات بمعامل 2 لتُصغَّر بلا تشويش في الإطارات (t6-art.mjs).
 // لا نص مقاطع في الأدلة: الفحوص والمقاسات والبصمات وحدها.
 //   command npm run package
-//   command node test/live/stores/t6-shots.mjs [--out docs/evidence/T6/shots] [--headed]
+//   command node test/live/stores/t6-shots.mjs [--out test-results/live/T6/shots] [--headed]
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -26,7 +26,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const HEADED = argv.includes('--headed');
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/T6/shots'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/T6/shots'));
 const VIDEO = 'Y-rmzh0PI3c';
 const WATCH = `https://www.youtube.com/watch?v=${VIDEO}&t=182s&hl=ar&persist_hl=1`;
 const VERSION = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8')).version;
@@ -62,7 +62,7 @@ const capture = { source: 'tarjuman', v: 1, kind: 'timedtext', videoId: VIDEO, l
   const again = buildExport({ videoId: VIDEO, title: null, track: { key: 'en|manual', lang: conv.lang, kind: conv.kind, cues: conv.cues, warnings: conv.warnings }, mode: 'normal', now: Date.now() }).files[0].text;
   if (again !== enText) throw new Error('جسم الالتقاط المبني لا يعيد الملف اليدوي نفسه');
 }
-const manual = JSON.parse(await readFile(path.join(ROOT, 'docs/evidence/T6/manual/hand.json'), 'utf8'));
+const manual = JSON.parse(await readFile(path.join(ROOT, 'test-results/live/T6/manual/hand.json'), 'utf8'));
 check('capture-body-rebuilds-manual-file', sha16(enText) === manual.file.sha16, { cues: enCues.length, sha16: sha16(enText) });
 
 // ---- حزمة المتجر ----

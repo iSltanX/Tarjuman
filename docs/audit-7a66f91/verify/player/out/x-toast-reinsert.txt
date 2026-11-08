@@ -1,2 +1,0 @@
-بعد الخطأ الأول: عقدة 52 role alert | الحاوية role status aria-live polite
-بعد الخطأ الثاني: الصناديق 62:alert:خطأ أول | 72:alert:خطأ ثانٍ | هل بقيت عقدة الأول نفسها؟ false

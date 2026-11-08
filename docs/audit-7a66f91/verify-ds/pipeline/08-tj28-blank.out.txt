@@ -1,7 +1,0 @@
-U+200B :: {"importedText":"U+200B","compareEmpty":[1],"isBlankText":true,"issues":[],"export":"ok (كُتب المحرف الخفي سطرَ نص)"}
-U+200F :: {"importedText":"U+200F","compareEmpty":[1],"isBlankText":true,"issues":[],"export":"ok (كُتب المحرف الخفي سطرَ نص)"}
-U+200F U+2060 :: {"importedText":"U+200F U+2060","compareEmpty":[1],"isBlankText":true,"issues":[],"export":"ok (كُتب المحرف الخفي سطرَ نص)"}
-U+2060 :: {"importedText":"U+2060","compareEmpty":[1],"isBlankText":true,"issues":[],"export":"ok (كُتب المحرف الخفي سطرَ نص)"}
-U+FEFF :: {"importedText":"(فارغ)","compareEmpty":[1],"isBlankText":true,"issues":["ED_TEXT_EMPTY"],"export":"ED_EXPORT_BLOCKED"}
-U+202B :: {"importedText":"(فارغ)","compareEmpty":[1],"isBlankText":true,"issues":["ED_TEXT_EMPTY"],"export":"ED_EXPORT_BLOCKED"}
-U+00A0 :: {"importedText":"(فارغ)","compareEmpty":[1],"isBlankText":true,"issues":["ED_TEXT_EMPTY"],"export":"ED_EXPORT_BLOCKED"}

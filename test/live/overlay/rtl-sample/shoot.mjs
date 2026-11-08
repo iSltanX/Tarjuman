@@ -2,7 +2,7 @@
 // يلتقط لقطات صفحة عيّنة RTL (P5-AC2) في متصفح اختبار بلا نافذة، ويتحقق آليًا من اتجاه كل سطر في الصفحة
 // الحقيقية (dir) ومن عدم تجاوز أي سطر لحدود مشغّله.
 //   node test/live/overlay/rtl-sample/build.mjs --page-out <مجلد>
-//   node test/live/overlay/rtl-sample/shoot.mjs --browser brave|chrome --page <مجلد> [--out docs/evidence/P5]
+//   node test/live/overlay/rtl-sample/shoot.mjs --browser brave|chrome --page <مجلد> [--out test-results/live/P5]
 import { mkdir, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -15,7 +15,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/P5'), 'rtl-sample');
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/P5'), 'rtl-sample');
 const PAGE_DIR = path.resolve(val('page', path.join(os.homedir(), 'Library/Application Support/Tarjuman-test/rtl-sample')));
 
 const b = await launch({ browser, profile: `${browser}-p5`, headless: !argv.includes('--headed') });

@@ -6,7 +6,7 @@
 
 - [Node.js](https://nodejs.org/) ‏22 فأحدث (يُفحص CI على 22 و24).
 - `npm ci` يثبّت أدوات البناء والفحص وحدها (esbuild وweb-ext)، ولا اعتمادية تُشحن مع الإضافة.
-- اختبار التوافق `U78` يحتاج `ffmpeg` في المسار، كما في CI.
+- اختبار التوافق `U78` يحتاج `ffmpeg` في المسار، كما في CI، ويُتخطى إن لم يوجد.
 
 ## البناء
 
@@ -21,21 +21,19 @@
 
 ## التثبيت من الشيفرة
 
-للتجربة، ولـFirefox حتى يُنشر في متجره. ابنِ الحزم أولًا:
+لتجربة الإصدار الذي في المستودع، ولـFirefox حتى يُنشر في متجره. ابنِ الحزم أولًا:
 
 ```bash
 npm ci
 npm run package
 ```
 
-- **في Chrome وEdge وBrave:** انسخ `release/tarjuman-2.0.0` إلى مجلد ثابت لا تنقله، ثم افتح صفحة الإضافات (`chrome://extensions` أو `edge://extensions` أو `brave://extensions`)، وفعّل «وضع المطوّر»، واضغط «تحميل غير معبأ» واختر المجلد. المتصفح يشتق معرّف الإضافة من مسار المجلد، والمحفوظات مربوطة به.
-- **في Firefox:** افتح `about:debugging#/runtime/this-firefox`، واضغط «تحميل إضافة مؤقتة» واختر `release/store/tarjuman-2.0.0-firefox.zip`. تُزال الإضافة المؤقتة عند إغلاق Firefox، فخذ نسخة احتياطية قبل الإغلاق.
+- **في Chrome وEdge وBrave:** انسخ `release/tarjuman-<الإصدار>` إلى مجلد ثابت لا تنقله، ثم افتح صفحة الإضافات (`chrome://extensions` أو `edge://extensions` أو `brave://extensions`)، وفعّل «وضع المطوّر»، واضغط «تحميل غير معبأ» واختر المجلد. المتصفح يشتق معرّف الإضافة من مسار المجلد، والمحفوظات مربوطة به.
+- **في Firefox:** افتح `about:debugging#/runtime/this-firefox`، واضغط «تحميل إضافة مؤقتة» واختر `release/store/tarjuman-<الإصدار>-firefox.zip`. تُزال الإضافة المؤقتة عند إغلاق Firefox، فخذ نسخة احتياطية قبل الإغلاق.
 
 ونسخة المتجر إضافة أخرى بمعرّف آخر، فلا ترى محفوظات النسخة المحلية. والنسخة الاحتياطية تنقلها ([دليل الاستخدام](user-guide.md) §١ و§٩).
 
 ## الفحوص
-
-ما يشغّله CI ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) في كل دفع وطلب دمج:
 
 | الأمر | ما يفحصه |
 | --- | --- |
@@ -43,10 +41,21 @@ npm run package
 | `npm run test:integration` | اختبارات التكامل بين الطبقات. |
 | `node scripts/run-tests.mjs test/e2e/static test/e2e/regression` | e2e الثابت والانحدار على الحزمة المبنية، بلا متصفح. |
 | `npm run lint:firefox` | `web-ext lint` على بناء Firefox. |
+| `npm run check:all` | الأربعة أعلاه بالترتيب، وهي ما يشغّله CI ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) في كل دفع وطلب دمج، ومعها `npm run package`. |
 
 وللتطوير السريع `npm test` (الوحدة وحدها) و`npm run check:quick` (الفحص الثابت والوحدة).
 
-**الاختبارات الحية** في `test/live` و`test/e2e/live` تفتح متصفحات حقيقية بلا نافذة بملف تعريف مؤقت، ولا تُشغَّل في CI ولا إلا بإذن صاحب المشروع. وطريقتها في [دليل التشغيل](delivery/runbook.md) («الاختبارات الحية»)، وأدلتها في `docs/evidence`.
+## الاختبارات الحية
+
+في `test/live` و`test/e2e/live` سكربتات تفتح متصفحات حقيقية (Brave وChrome وEdge وFirefox) بملف تعريف اختبار منفصل، وتعمل على يوتيوب الحقيقي أو صفحات الإضافة. لا تُشغَّل في CI، ولا تُستورد من اختبارات الوحدة (استيرادها يشغّلها).
+
+- **بإذن صاحب المشروع قبل كل جولة:** ما سيُفتح، وعدد الاختبارات، والمدة التقريبية، وما يلزم من يده إن وُجد.
+- **ملف تعريف منفصل خارج المستودع:** الافتراضي `~/Library/Application Support/Tarjuman-test/`، و`TJ_PROFILE_ROOT=<مجلد>` يعزل جولة بعينها في مجلد آخر.
+- **بلا نافذة افتراضيًا**، و`--headed` يُظهرها. ووتيرة بشرية، ولا تسجيل دخول ولا إدخال كلمات مرور، ولا تحايل على أي تحدٍّ («لست روبوتًا» يوقف الجولة).
+- **النتائج** في `test-results/live/<المجلد>` (متجاهَل في Git) أو حيث يشير `--out`، منقّاة من الروابط والرموز ومسارات الجهاز. ولا تُحفظ في المستودع.
+- **الاستخراج لا يُؤتمت:** تحت أي تحكم يعيد يوتيوب جسم الترجمة فارغًا، فيمر الاستخراج الحقيقي بجلسة يدوية في نافذة عادية (`test/live/aa5/hand.mjs`)، والباقي آلي.
+
+وما يُشغَّل في الصيانة الدورية في [دليل الصيانة](maintenance.md) §٢ و§٣، وأدوات الحزام في [`test/live/harness`](../test/live/harness/README.md)، وسكربتات e2e الحية في [`test/e2e`](../test/e2e/README.md).
 
 ## هيكل المستودع
 
@@ -61,20 +70,21 @@ npm run package
 | `src/core` | المنطق النقي بلا DOM: النموذج والتخزين، والتحويل إلى SRT، والاستيراد والتصدير والمقارنة والمحاذاة، والتحرير، والنسخ الاحتياطي، والبلاغ، والأخطاء. |
 | `src/ui` | النظام البصري المشترك: الرموز والخطوط والشعار والأيقونات والمكوّنات. |
 | `src/dev` | حزام الاختبارات الحية، في بناء التطوير وحده. |
-| `test` | الوحدة والتكامل وe2e والحية، والعيّنات والمساعدات. |
+| `test` | الوحدة والتكامل وe2e والحية، والعيّنات (`test/fixtures` و`test/e2e/fixtures`) والمساعدات. |
 | `scripts` | البناء وطبقة Firefox والفحوص والتغليف وتدقيق الحزم، ومولّد `PRIVACY.md`. |
-| `store` | مواد المتاجر: النصوص والأيقونات والبلاطات واللقطات وإجابات نماذج التقديم وملاحظات المراجعين. |
+| `store` | مواد المتاجر: النصوص والأيقونات والبلاطات واللقطات وإجابات نماذج التقديم وملاحظات المراجعين وملفا الاختبار. |
 | `docs` | الوثائق، وفهرسها في [`docs/README.md`](README.md). |
+| `tools/brand` | مولّد أيقونات الإضافة من مصدر الشعار، بلا متصفح. |
+| `tools/store-art` | قوالب مواد المتاجر المرئية ومولّدها. |
 | `tools/readme-assets` | مولّد صور README وصورة المعاينة الاجتماعية. |
-
-ومجلدا `plan` و`dashboard` و`tools/plan` أدوات سير العمل الداخلي (الخطة ومراحلها ولوحتها)، ولا يحتاجها بناء الإضافة ولا تشغيلها. وتفصيلها في [دليل التشغيل](delivery/runbook.md)، وأوامرها `npm run plan:check` و`plan:sync` و`plan:render` و`dashboard`.
+| `tools/calibrate-reading.mjs` | مولّد جدول [معايرة كثافة القراءة](reading-calibration.md). |
 
 ## البنية والقرارات
 
-- [`product-spec.md`](product-spec.md): النطاق والقرارات والحدود.
+- [`product-spec.md`](product-spec.md): النطاق والقرارات والحدود، وتعليمات الترجمة المعتمدة (الملحقان أ وب).
 - [`contracts`](contracts/README.md): العقود بين الطبقات: الاستخراج، والتوقيت، ونموذج البيانات، والتخزين، والرسائل، والواجهات، والأخطاء، والنسخ الاحتياطي.
 - [`known-limitations.md`](known-limitations.md): القيود المعروفة وما لم يُختبر.
-- [`identity-v4.md`](identity-v4.md): الهوية البصرية المعتمدة، و[`design/figma-design-brief.md`](design/figma-design-brief.md) مواصفة الواجهات.
+- [`identity.md`](identity.md): الهوية البصرية المعتمدة.
 
 ## الملفات المولّدة
 
@@ -84,11 +94,14 @@ npm run package
 | --- | --- | --- |
 | `PRIVACY.md` | [`site/privacy.md`](site/privacy.md) | `node scripts/site/privacy.mjs` (و`--check` في `npm run check`) |
 | `THIRD_PARTY_NOTICES.txt` | تراخيص الخطوط والأيقونات وأدوات البناء | `npm run notices` |
-| صور `.github/assets` | قوالب [`tools/readme-assets`](../tools/readme-assets/README.md) | `node tools/readme-assets/render.mjs` |
-| نصوص صفحات الموقع | [`site`](site/README.md) | `scripts/tarjuman/site-text.mjs` في مستودع الموقع |
+| أيقونات الإضافة `src/icons` | الشعار في `tools/brand` | `node tools/brand/icons.mjs` |
+| صور `.github/assets` | قوالب [`tools/readme-assets`](../tools/readme-assets/README.md) | `node tools/readme-assets/render.mjs` (يفتح Chrome بلا نافذة) |
+| مواد المتاجر المرئية في `store` | قوالب `tools/store-art` | `node tools/store-art/render.mjs` (يفتح Chrome بلا نافذة) |
+| نصوص صفحات الموقع | [`site`](site/README.md) | مولّد النصوص في مستودع الموقع |
 
 ## الإصدار والمتاجر
 
-- [دليل الصيانة](maintenance.md): الفحص الدوري، وبناء الحزم وبصماتها، ورفع الإصدار.
+- [دليل الصيانة](maintenance.md): الفحص الدوري، وبناء الحزم وبصماتها.
 - [`store/README.md`](../store/README.md): متطلبات المتاجر وموادها وقراراتها، و[`store/submission.md`](../store/submission.md) إجابات نماذج التقديم وروابط المتاجر المنشورة.
+- `scripts/release/v2.mjs`: يجمع حزم المتاجر المبنية ومواد `store` وأدلة الإصدار في مجلد واحد خارج المستودع للرفع اليدوي (`--out <مجلد جديد> --evidence <مجلد الأدلة>`).
 - [`CHANGELOG.md`](../CHANGELOG.md): ما تغيّر في كل إصدار.

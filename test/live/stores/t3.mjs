@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// الاختبار الحي في المتصفحات الأربعة (جولة النشر T3، docs/store-release.md): Brave وChrome وEdge وFirefox بالخطوات نفسها، ببناء
+// الاختبار الحي في المتصفحات الأربعة (جولة النشر T3): Brave وChrome وEdge وFirefox بالخطوات نفسها، ببناء
 // التطوير للهدف (chromium أو firefox)، بلا نافذة ومكتوم الصوت، وملف تعريف جديد خارج المستودع، وحساب يوتيوب غير مسجَّل:
 //   التثبيت ← الجسر (غلافا fetch وXHR في عالم الصفحة، ورسالة الالتقاط إلى العالم المعزول) ← تنزيل SRT من شريط المشغّل (في Firefox
 //   عبر رابط blob: من صفحة الخلفية، إذ يرفض روابط data:) ← نسخ التعليمات من نافذة الإضافة بزوج «من» و«إلى» (منذ 2.0.0، AA3 ق٨؛ وقائمة
@@ -7,7 +7,7 @@
 //   والترجمة ← المحرّر ← الحفظ بعد إعادة التحميل ← النسخة الاحتياطية ← «الإبلاغ عن مشكلة» (المعاينة والنسخ والخطأ، بحجب خادم
 //   البلاغات فلا يُرسل بلاغ) ← في Firefox منح إذن يوتيوب وسحبه ← الإزالة وقياس محو التخزين ← إعادة التثبيت فارغًا ← الاستعادة.
 // تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُرسل جسم P1 الحقيقي للفيديو نفسه من عالم الصفحة برسالة الالتقاط نفسها.
-//   command node test/live/stores/t3.mjs --browser brave|chrome|edge|firefox [--headed] [--out docs/evidence/T3/<browser>]
+//   command node test/live/stores/t3.mjs --browser brave|chrome|edge|firefox [--headed] [--out test-results/live/T3/<browser>]
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
@@ -29,7 +29,7 @@ const browser = val('browser', 'brave');
 if (!APPS[browser]) throw new Error(`متصفح غير معروف: ${browser}`);
 const TARGET = browser === 'firefox' ? 'firefox' : 'chromium';
 const HEADLESS = !argv.includes('--headed');
-const OUT = path.resolve(ROOT, val('out', `docs/evidence/T3/${browser}`));
+const OUT = path.resolve(ROOT, val('out', `test-results/live/T3/${browser}`));
 const VIDEO = 'iG9CE55wbtY';
 const WATCH = `https://www.youtube.com/watch?v=${VIDEO}`;
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');

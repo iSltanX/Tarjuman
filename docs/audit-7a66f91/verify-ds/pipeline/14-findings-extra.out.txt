@@ -1,9 +1,0 @@
-(1) normalizeOffset :: {"49":0,"50":100,"150":200,"250":300,"-50":0,"-150":-100,"-250":-200,"-51":-100}
-(2) planArabicExport offsetMs=undefined :: RangeError: مقدار النقل ليس عددًا صحيحًا
-(2) planArabicExport offsetMs=NaN :: RangeError: مقدار النقل ليس عددًا صحيحًا
-(2) planArabicExport offsetMs=0.5 :: RangeError: مقدار النقل ليس عددًا صحيحًا
-(2) planArabicExport offsetMs=100 :: ok
-(3) مسافات طرفية :: {"issues":[],"export":"ok","same":false,"back":"\"مرحبًا\"","notes":0,"warnings":[]}
-(3) وسم مائل :: {"issues":[],"export":"ok","same":false,"back":"\"مرحبًا\"","notes":1,"warnings":[]}
-(3) تجاوز اتجاه U+202E :: {"issues":[],"export":"ok","same":false,"back":"\"مرحبًا\"","notes":1,"warnings":[]}
-(3) وسم حرفي <script> :: {"issues":[],"export":"ok","same":true,"back":"\"<script>x</script> مرحبًا\"","notes":0,"warnings":["IM_HTML_LITERAL"]}

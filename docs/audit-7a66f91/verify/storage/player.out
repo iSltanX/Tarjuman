@@ -1,5 +1,0 @@
-{"scenario":"PLY-02-before-event","aViewAtClick":500,"step":500,"stored":{"active":2,"s1":500,"s2":1000},"expectedSlot2":"غير مقصودة"}
-{"scenario":"PLY-02-after-event","aViewAtClick":-1200,"step":500,"stored":{"active":2,"s1":500,"s2":-700},"expectedSlot2":-700}
-{"scenario":"PLY-02-burst","pendingWhenEventArrived":0,"stored":{"error":"ST_CORRUPT_RECORD","detail":"AAAAAAAAAAA (alts): خانة النشطة خارج السجل"},"aViewNow":1000,"aError":"ST_CORRUPT_RECORD","rawHeadActive":1,"rawAltsFilled":[true,false,false],"rawRecordArabic":"أولى.ar.srt","rev":2,"headBaseRev":2}
-{"scenario":"PLY-01-before-event","original":"أولى.ar.srt","aSeesInSlot1AtConfirm":"أولى.ar.srt","ok":true,"current":"C.srt","previous":"B.srt","originalRecoverable":false}
-{"scenario":"PLY-01-after-event","original":"أولى.ar.srt","aSeesInSlot1AtConfirm":"B.srt","ok":true,"current":"C.srt","previous":"B.srt","originalRecoverable":false}

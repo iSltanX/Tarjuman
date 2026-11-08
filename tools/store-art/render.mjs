@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// مواد المتاجر المرئية للإصدار 2.0.0 من لوحة الهوية 18 (docs/aa-plan.md، AA5 البند ٧)، تحل محل t6-art.mjs (الهوية الثالثة):
+// مواد المتاجر المرئية للإصدار 2.0.0 من لوحة الهوية 18 (AA5)، تحل محل t6-art.mjs (الهوية الثالثة):
 //   store/promo/small-promo-440x280.png        البلاطة الصغيرة (Chrome وEdge)
 //   store/promo/marquee-1400x560.png           Marquee في Chrome، وLarge tile في Edge
 //   store/screenshots/chromium/0{1,2,3}-*.png  الإطارات الثلاث 1280×800 (Chrome وEdge)
@@ -7,7 +7,7 @@
 // وأيقونة المتجر 128 وشعار Edge ‏300 يولّدهما tools/brand/icons.mjs بلا متصفح. والقوالب في هذا المجلد بقيم اللوحة وأحجامها حرفيًا،
 // والواجهة داخل كل إطار لقطة حقيقية من حزمة 2.0.0 التقطها test/live/aa4/site-shots.mjs (مجلد --shots خارج المستودع).
 // يرسم كل قالب في Chrome بلا نافذة بمعامل 1 فيخرج بمقاس المتجر تمامًا، بملف تعريف مؤقت، ولا يفتح شبكة: القوالب لا تطلب إلا ملفات محلية.
-// **يفتح Chrome بلا نافذة عند تشغيله أو استيراده:** بإذن سلطان وحده (دليل التشغيل، «الاختبارات الحية»).
+// **يفتح Chrome بلا نافذة عند تشغيله أو استيراده:** بإذن سلطان وحده (docs/development.md، «الاختبارات الحية»).
 //   command node tools/store-art/render.mjs --shots <مجلد اللقطات الخام> [--only promo,marquee,shots]
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';

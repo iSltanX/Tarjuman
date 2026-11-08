@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// الاختبار الحي للهوية الرابعة «كتابٌ مفتوح» (docs/identity-v4.md) والوضع العادي الكامل (docs/product-spec.md §٦.٦) على
+// الاختبار الحي للهوية الرابعة «كتابٌ مفتوح» (docs/identity.md) والوضع العادي الكامل (docs/product-spec.md §٦.٦) على
 // بناء التطوير، في ملف تعريف اختبار جديد خاص بهذه الجولة، بلا نافذة ومكتوم الصوت وبحساب غير
 // مسجَّل. الهوية: الشعار والعاج بالوضعين، وأيقونة الإضافة، والأزرار بلا إطار والمختار صنوبرًا والقسم الحالي صبغته كما يحسبها المتصفح في الصفحات
 // وداخل جذور الظل المغلقة للّوحة والشريط وقوائمه (CDP: DOM المخترق وCSS.getComputedStyleForNode، دون مساس بالمنتج). ويغطي:
@@ -13,7 +13,7 @@
 //   كلمات والتلميح بالتحويم والتركيز وعنوانا القائمتين؛ ولقطات بالوضعين. كل فعل نقرة أو عجلة أو مفتاح حقيقي (Input).
 // لا رابط ولا نص مقاطع في الأدلة؛ والتوقف عند تحدّي البوت دون تحايل.
 //   command npm run build:dev -- --out <مجلد خارج المستودع>
-//   command node test/live/identity/run.mjs --browser brave|chrome --ext <مجلد> [--out docs/evidence/identity-v4] [--headed]
+//   command node test/live/identity/run.mjs --browser brave|chrome --ext <مجلد> [--out test-results/live/identity-v4] [--headed]
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -31,7 +31,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/identity-v4'), browser);
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/identity-v4'), browser);
 const HEADED = argv.includes('--headed');
 const VIDEO = SEED_IDS.ted;
 const PROFILE = `${browser}-identity-${Date.now()}`;

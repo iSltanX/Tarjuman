@@ -1,6 +1,6 @@
 # نصوص الإدراج — ترجمان 2.0.0
 
-> **المرحلة:** AA5 من [جولة الإصدار 2.0.0](../docs/aa-plan.md)، 2026-11-07، على الفرع `tj/aa-2.0.0`. الاسم والوصف القصير وملخص AMO **حرفيًا من لوحة الهوية 18** «تطبيقات الهوية» (الإصدار `1794035287-e3de`)، وبقية النصوص من سلوك 2.0.0، ولكل وعد دليل في [جدول الأدلة](#جدول-الأدلة) آخر الملف. وكُتبت نصوص 1.1.0 في جولة النشر T6 (2026-11-04) واعتمدها سلطان، وهذه تحل محلها.
+> **المرحلة:** AA5 من جولة الإصدار 2.0.0، 2026-11-07. الاسم والوصف القصير وملخص AMO **حرفيًا من لوحة الهوية 18** «تطبيقات الهوية» (الإصدار `1794035287-e3de`)، وبقية النصوص من سلوك 2.0.0، ولكل وعد دليل في [جدول الأدلة](#جدول-الأدلة) آخر الملف. وكُتبت نصوص 1.1.0 في جولة النشر T6 (2026-11-04) واعتمدها سلطان، وهذه تحل محلها.
 > **لغة الإدراج** العربية وحدها بلا `_locales` (قرار سلطان، §٥ من [`README.md`](README.md)). وما يقرؤه المراجعون وحدهم بالإنجليزية في [`reviewers.en.md`](reviewers.en.md)، وإجابات نماذج التقديم في [`submission.md`](submission.md).
 > **الفحص:** كل كتلة معلّمة بـ`field:` يقيسها `node scripts/release/store-assets.mjs --check` بحدود جدول T1: الطول بالمحارف، ولا رابط حيث يُمنع، ولا اسم متصفح آخر، ولا «downloader»، وتكرار العلامات التجارية، وإسناد علامة يوتيوب. والنص يُلصق كما هو من داخل الكتلة.
 
@@ -20,7 +20,7 @@
 
 - **Chrome** يعرض الوصف القصير ملخصًا تحت الاسم (حتى 132 محرفًا). و**Edge** يأخذه «Short description» للقراءة فقط.
 - **فرق واحد عن اللوحة:** نص اللوحة 136 محرفًا بعدّ نقاط الترميز (وكتبت اللوحة بجانبه 128)، فيتجاوز حد Chrome 132. فحُذفت كلمة «بنفسك» وحدها («لتترجمه بنفسك بأي نموذج» ← «لتترجمه بأي نموذج»)، فصار 130، والمعنى باقٍ.
-- **تغيّر الاسم** من «ترجمان - ترجمتك العربية فوق الفيديو» إلى نص اللوحة. فيتغير عنوان الإدراج في المتجرين عند رفع 2.0.0، وقد يطيل ذلك المراجعة (`docs/aa-plan.md`، مخاطر AA5).
+- **تغيّر الاسم** من «ترجمان - ترجمتك العربية فوق الفيديو» إلى نص اللوحة. فيتغير عنوان الإدراج في المتجرين عند رفع 2.0.0، وقد يطيل ذلك المراجعة.
 - **علامة يوتيوب:** خارج الاسم والوصف القصير (قرار سلطان)، وجملة إسنادها في الوصف الكامل.
 
 ## ملخص Firefox Add-ons
@@ -173,7 +173,7 @@ tarjuman
 | --- | --- |
 | الاسم والوصف القصير وملخص AMO | لوحة الهوية 18 «تطبيقات الهوية» (`manifest.name` و`manifest.description` و`amo.summary`، الإصدار `1794035287-e3de`)، و`src/manifest.json` |
 | الدورة بخطواتها وأسماء الأزرار | `docs/user-guide.md` §٣، و`src/player/controls/text.js` (`LABELS.download` و`LABELS.upload` و`downloadFile`)، و`src/pages/popup/` (كتلة «تعليمات الترجمة») |
-| من أي لغة إلى لغتك، والآلية موسومة، ولا إنشاء ولا تبديل | `docs/product-spec.md` §١، و`docs/contracts/extraction.md`، وقرارا سلطان ق١ وق٢ (`docs/aa-plan.md` §٤) |
+| من أي لغة إلى لغتك، والآلية موسومة، ولا إنشاء ولا تبديل | `docs/product-spec.md` §١، و`docs/contracts/extraction.md`، و`docs/product-spec.md` §٨ (قرارا سلطان ق١ وق٢) |
 | اليدوية أو التلقائية | `docs/contracts/extraction.md`، و`src/extract/` (المسار `manual` و`asr`) |
 | فوق الفيديو باتجاه لغتها، والأوضاع، والإعلانات | `docs/product-spec.md` §٥، و`docs/user-guide.md` §٣ الخطوة ٦، و`docs/contracts/data-model.md` §١٧ |
 | التوقيت ومزامنة بجملة | `docs/user-guide.md` §٤، و`docs/contracts/data-model.md` §٦ و§١٠ |
@@ -181,11 +181,11 @@ tarjuman
 | المحرّر والاستكمال | `docs/user-guide.md` §٥ |
 | النص المتزامن مغلق افتراضيًا | `src/core/model/prefs.js` (`panelOpen: false`)، و`docs/product-spec.md` §٦.٦ |
 | المحفوظات ولغتا كل ترجمة والنسخة الاحتياطية | `docs/user-guide.md` §٦ و§٧، و`docs/contracts/backup.md`، و`docs/contracts/data-model.md` §١٧ (`recordPair`) |
-| قائمة التحميل بعدد اللغات الأخرى | `src/player/controls/menus.js` (`otherLanguages`)، و`docs/aa-plan.md` (آخر سجل AA4، قرار سلطان) |
+| قائمة التحميل بعدد اللغات الأخرى | `src/player/controls/menus.js` (`otherLanguages`)، بقرار سلطان بعد AA4 |
 | المحفوظات القديمة باقية ولغتها «غير محددة» | `docs/contracts/storage.md` §١٣، و`test/integration/compat/`، والاختبار الحي للتحديث في المكان (`release/v2/README.md`) |
 | لا تنزيل فيديو، ولا طلب ترجمة | `src/main-world/capture.js` (يقرأ رد طلب المشغّل وحده)، و`scripts/release/audit.mjs` (لا طلب شبكة في سكربتي المحتوى وعالم الصفحة) |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
-| بياناتك | جدول أدلة `docs/site/privacy.md`، وقياس المحو عند الإزالة في `docs/evidence/T3/README.md` |
+| بياناتك | جدول أدلة `docs/site/privacy.md`، وقياس المحو عند الإزالة في `test/live/stores/t3.mjs` |
 | Firefox: الصور بموافقة، والبلاغ بموافقة | `src/core/consent/thumbnails.js`، و`scripts/targets.mjs` (`data_collection_permissions`) |
 | إسناد علامة يوتيوب، و«الموقع» بدل تكرار اسمه | [Chrome Web Store Branding](https://developer.chrome.com/docs/webstore/branding)، و`LICENSE` (الفقرة الأخيرة)، وحد التكرار 5 في `scripts/release/store-assets.mjs` (`brandMax`) |
 | نسبة الفيلم | صفحة المشروع الرسمية [gooseberry.blender.org/about](http://gooseberry.blender.org/about/): الفيلم «licensed under the Creative Commons Attribution 3.0 license»، وسطر النسبة «(CC) Blender Foundation \| gooseberry.blender.org»، والشعارات والعلامات مستثناة. ويوتيوب نفسه يعلن رفعه `Y-rmzh0PI3c` «Creative Commons Attribution license (reuse allowed)». قُرئا في 2026-11-04 |

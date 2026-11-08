@@ -52,13 +52,13 @@ const TOKEN = ['po', 't=', 'Mn'.repeat(12)].join('');
 const LOCAL = ['', 'Users', 'someone', 'Downloads', 'x.srt'].join('/');
 const node = (args) => spawnSync(process.execPath, args, { encoding: 'utf8' });
 
-/** شجرة بنطاقات الفحص الثلاثة وملفات خارجها، اختياريًا مستودع Git. */
+/** شجرة بنطاقي الفحص (العيّنات) وملفات خارجهما، اختياريًا مستودع Git. */
 async function tree(name, { git, files }) {
   const t = path.join(tmp, name);
-  for (const scope of ['test/fixtures', 'test/e2e/fixtures', 'docs/evidence/P0']) await mkdir(path.join(t, scope), { recursive: true });
+  for (const scope of ['test/fixtures', 'test/e2e/fixtures']) await mkdir(path.join(t, scope), { recursive: true });
   await writeFile(path.join(t, 'test/fixtures/a.json'), '{"ok": true}\n');
   await writeFile(path.join(t, 'test/e2e/fixtures/b.srt'), '1\n00:00:01,000 --> 00:00:02,000\nمرحبًا\n');
-  await writeFile(path.join(t, 'docs/evidence/P0/README.md'), 'مرجع عام: https://example.org/doc\n');
+  await writeFile(path.join(t, 'test/fixtures/README.md'), 'مرجع عام: https://example.org/doc\n');
   await mkdir(path.join(t, 'src'), { recursive: true });
   await mkdir(path.join(t, 'docs'), { recursive: true });
   for (const [f, body] of Object.entries(files)) await writeFile(path.join(t, f), body);
@@ -72,7 +72,7 @@ const secrets = (t) => node([path.join(ROOT, 'scripts/check-secrets.mjs'), '--ro
 
 for (const git of [true, false]) {
   const how = git ? 'عبر git ls-files' : 'بلا Git (مشي الشجرة)';
-  test(`AV2 U-047: رمز مزروع في src ومسار جهاز في وثيقة خارج الأدلة يلتقطهما الفحص ${how}`, async () => {
+  test(`AV2 U-047: رمز مزروع في src ومسار جهاز في وثيقة خارج العيّنات يلتقطهما الفحص ${how}`, async () => {
     const t = await tree(git ? 'planted-git' : 'planted-walk', { git, files: { 'src/x.js': `export const q = "${TOKEN}";\n`, 'docs/notes.md': `saved to ${LOCAL}\n` } });
     const r = secrets(t);
     assert.equal(r.status, 1, r.stdout + r.stderr);
@@ -80,12 +80,12 @@ for (const git of [true, false]) {
     assert.match(r.stderr, /docs\/notes\.md@\d+: local-path/);
   });
 
-  test(`AV2 U-047: شجرة نظيفة خارج الأدلة تنجح وتعدّ الملفات الموسَّعة ${how}`, async () => {
+  test(`AV2 U-047: شجرة نظيفة خارج العيّنات تنجح وتعدّ الملفات الموسَّعة ${how}`, async () => {
     const t = await tree(git ? 'clean-git' : 'clean-walk', { git, files: { 'src/x.js': 'export const q = 1;\n', 'docs/notes.md': 'روابط عامة: https://example.org/a\n' } });
     const r = secrets(t);
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /ناجح \(5 ملف/);
-    assert.match(r.stdout, /منها 2 خارج نطاقات الأدلة/);
+    assert.match(r.stdout, /منها 2 خارج نطاقات العيّنات/);
   });
 }
 
@@ -98,8 +98,8 @@ test('AV2 U-047: المستودع كله ينجح، ويفحص أكثر من ا�
 
 // ---------------------------------------------------------------- U-049
 
-test('AV2 U-049: خلو docs/aa-plan.md وtest/live/aa5/data.mjs من اسم القرص المحلي', async () => {
+test('AV2 U-049: خلو test/live/aa5/data.mjs من اسم القرص المحلي', async () => {
   const disk = ['', 'Volumes', ''].join('/');
-  for (const f of ['docs/aa-plan.md', 'test/live/aa5/data.mjs']) assert.ok(!(await readFile(path.join(ROOT, f), 'utf8')).includes(disk), f);
+  for (const f of ['test/live/aa5/data.mjs']) assert.ok(!(await readFile(path.join(ROOT, f), 'utf8')).includes(disk), f);
   assert.match(await readFile(path.join(ROOT, 'test/live/aa5/data.mjs'), 'utf8'), /process\.env\.TJ_V11_DIR/);
 });

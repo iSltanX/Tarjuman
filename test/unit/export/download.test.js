@@ -1,5 +1,5 @@
 // download بلا متصفح (P3-AC3 جزؤه الآلي): Blob ثم <a download> ثم إلغاء الرابط، والفشل برمز عربي.
-// التنزيل الفعلي في Brave وChrome في docs/evidence/P3 (اختبار حي).
+// والتنزيل الفعلي في Brave وChrome يُتحقق منه حيًا.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { download, SRT_MIME } from '../../../src/core/export/download.js';

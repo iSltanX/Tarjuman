@@ -6,7 +6,7 @@
 // نقرات سلطان: في كل متصفح ⤓ EN ← «تنزيل الملف» ثم «نسخ التعليمات»؛ وفي Chrome وFirefox الإعدادات ← «حول» ← «الإبلاغ عن مشكلة»
 // ← «أرسل البلاغ» ← قبول الإذن. السكربت يراقب مجلدات التنزيل وحافظة الجهاز والبلاغات الجديدة في app-reports وحدها، ثم يغلق
 // المتصفحات ويقارن، ويتحقق من كل بلاغ برقمه ووسومه (product:tarjuman وkind:* وtest) ثم يغلقه.
-//   command node test/live/stores/hand.mjs [--minutes 30] [--out docs/evidence/T3/manual]
+//   command node test/live/stores/hand.mjs [--minutes 30] [--out test-results/live/T3/manual]
 //   command node test/live/stores/hand.mjs --finalize <مجلد hand-…> --log <سجل الجلسة> [--out …]
 //     إغلاق جلسة انتهت يدها ولم ينتهِ سكربتها: يُتحقق من الملفات (ومنها المجلد الفرعي لمكان الحفظ المختار) ومن أحداث الحافظة في
 //     سجل الجلسة ومن البلاغات، وتُغلق البلاغات المتحقق منها.
@@ -26,7 +26,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const MINUTES = Number(val('minutes', 30));
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/T3/manual'));
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/T3/manual'));
 const FINALIZE = val('finalize');
 const SESSION_LOG = val('log');
 const VIDEO = 'iG9CE55wbtY';

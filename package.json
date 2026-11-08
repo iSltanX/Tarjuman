@@ -21,12 +21,8 @@
     "check:secrets": "node scripts/check-secrets.mjs",
     "check:quick": "node scripts/check-static.mjs && node scripts/run-tests.mjs test/unit",
     "check": "node scripts/check-static.mjs && node scripts/check-secrets.mjs && node scripts/release/notices.mjs --check && node scripts/site/privacy.mjs --check && node scripts/release/store-assets.mjs --check && node scripts/run-tests.mjs test/unit && node scripts/build.mjs && node scripts/build.mjs --target firefox",
-    "check:wave": "npm run check && node scripts/run-tests.mjs test/integration && npm run lint:firefox && npm run plan:check",
+    "check:all": "npm run check && node scripts/run-tests.mjs test/integration && node scripts/run-tests.mjs test/e2e/static test/e2e/regression && npm run lint:firefox",
     "live:smoke": "node test/live/harness/smoke.mjs",
-    "plan:check": "node tools/plan/plan.mjs check",
-    "plan:sync": "node tools/plan/plan.mjs sync",
-    "plan:render": "node tools/plan/plan.mjs render",
-    "dashboard": "node tools/plan/plan.mjs serve",
     "notices": "node scripts/release/notices.mjs"
   },
   "engines": {

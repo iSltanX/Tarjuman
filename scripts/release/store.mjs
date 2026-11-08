@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// حزم المتاجر (جولة النشر T4، docs/store-release.md) بأمر واحد، محليًا بلا رفع ولا نشر:
+// حزم المتاجر بأمر واحد، محليًا بلا رفع ولا نشر:
 //   release/store/tarjuman-<الإصدار>-chrome.zip   ← بناء chromium: Chrome Web Store (ويُثبَّت منه في Brave)
 //   release/store/tarjuman-<الإصدار>-edge.zip     ← البناء نفسه بايتًا لـMicrosoft Edge Add-ons (لا فرع لـEdge بلا فرق مثبت)
 //   release/store/tarjuman-<الإصدار>-firefox.zip  ← بناء firefox: Firefox Add-ons (AMO)

@@ -1,6 +1,6 @@
 # المساعدة — `bysltan.com/tarjuman/support`
 
-> نص صفحة الدعم في الموقع (T7): التثبيت، وأول استعمال، والترجمة بنموذج تختاره، والتوقيت، والمحرّر، والمحفوظات والنسخة الاحتياطية، والانتقال بين النسخ، والإبلاغ عن مشكلة، وحل المشكلات. كُتب في جولة النشر T5 (2026-11-04) من سلوك ترجمان على الفرع `tj/store-release`، ولكل بند دليل في [جدول الأدلة](#جدول-الأدلة-للمراجعة-لا-يُنشر) آخر الملف. والدليل الكامل في المستودع [`docs/user-guide.md`](../user-guide.md)، وهذه الصفحة خلاصته للعموم. ثم حُدّثت للإصدار 2.0.0 في المرحلة AA4 (2026-11-07، [`../aa-plan.md`](../aa-plan.md)): اختيار أي لغة من يوتيوب، ونسخ التعليمات من نافذة الإضافة بزوج «من» و«إلى»، ولغة الترجمة، ورسائل حل المشكلات كما في الشيفرة على `tj/aa-2.0.0`.
+> نص صفحة الدعم في الموقع (T7): التثبيت، وأول استعمال، والترجمة بنموذج تختاره، والتوقيت، والمحرّر، والمحفوظات والنسخة الاحتياطية، والانتقال بين النسخ، والإبلاغ عن مشكلة، وحل المشكلات. كُتب في جولة النشر T5 (2026-11-04) من سلوك ترجمان على الفرع `tj/store-release`، ولكل بند دليل في [جدول الأدلة](#جدول-الأدلة-للمراجعة-لا-يُنشر) آخر الملف. والدليل الكامل في المستودع [`docs/user-guide.md`](../user-guide.md)، وهذه الصفحة خلاصته للعموم. ثم حُدّثت للإصدار 2.0.0 في المرحلة AA4 (2026-11-07): اختيار أي لغة من يوتيوب، ونسخ التعليمات من نافذة الإضافة بزوج «من» و«إلى»، ولغة الترجمة، ورسائل حل المشكلات كما في الشيفرة على `tj/aa-2.0.0`.
 >
 > **العلامات:** «قريبًا» نص بلا رابط حتى يُنشر ترجمان في المتجر، والمنشور برابط صفحته في متجره. وما بين `⟨…⟩` لا يُملأ بتخمين.
 
@@ -121,12 +121,12 @@
 
 | القسم | البند | الدليل |
 | --- | --- | --- |
-| التثبيت | المتصفحات والحدود الدنيا (Chromium 130 وFirefox 144) | `src/manifest.json` (`minimum_chrome_version` 130) و`scripts/targets.mjs` (`strict_min_version` 144)، بقرار سلطان (تدقيق 7a66f91، Q08 وQ09)؛ والمختبر حيًا الإصدارات الحالية وحدها (Chrome وEdge 156، وBrave 1.98، وFirefox 159): T3 (`docs/evidence/T3/README.md`) وC1 (`docs/audit-7a66f91/live/C1/`) |
+| التثبيت | المتصفحات والحدود الدنيا (Chromium 130 وFirefox 144) | `src/manifest.json` (`minimum_chrome_version` 130) و`scripts/targets.mjs` (`strict_min_version` 144)، بقرار سلطان (تدقيق 7a66f91، Q08 وQ09)؛ والمختبر حيًا الإصدارات الحالية وحدها (Chrome وEdge 156، وBrave 1.98، وFirefox 159): T3 (`test/live/stores/t3.mjs`) وC1 (`test/live/audit-c1/run.mjs`) |
 | التثبيت | ما لا يُرفق بالبلاغ تلقائيًا، ومعرّف تثبيت Firefox | `docs/site/privacy.md` (`#report`) وجدول أدلتها |
 | التثبيت | رابطا Chrome Web Store (لـChrome وBrave) وMicrosoft Edge Add-ons | صفحتا المتجرين لزائر غير مسجَّل (2026-11-07): 200، وترجمان `1.1.0`، والناشر BySultan؛ `store/submission.md` §٥ |
-| التثبيت | «قريبًا» لـFirefox | لم يُنشر فيه بعد (`docs/store-release.md`، «بعد C9: النشر في Chrome Web Store وMicrosoft Edge Add-ons») |
+| التثبيت | «قريبًا» لـFirefox | لم يُنشر فيه بعد (`store/submission.md` §٥: روابط المتجرين المنشورين وحدهما) |
 | التثبيت | الصلاحيات الثلاث والاختيارية | `src/manifest.json`، و`docs/site/privacy.md` `#permissions` |
-| أول استعمال | الخطوات الست وأسماء الأزرار، ونسخ التعليمات من النافذة، ولغة الملف المرفوع | `docs/user-guide.md` §٣، و`src/pages/settings/about.js` (`GUIDE_STEPS`)، و`src/player/controls/text.js` (`LABELS`)، و`src/pages/popup/` (كتلة «تعليمات الترجمة»)، و`docs/contracts/data-model.md` §١٧ (`langFromFileName`)؛ وقرارات سلطان ق١ وق٥ وق٨ (`docs/aa-plan.md` §٤) |
+| أول استعمال | الخطوات الست وأسماء الأزرار، ونسخ التعليمات من النافذة، ولغة الملف المرفوع | `docs/user-guide.md` §٣، و`src/pages/settings/about.js` (`GUIDE_STEPS`)، و`src/player/controls/text.js` (`LABELS`)، و`src/pages/popup/` (كتلة «تعليمات الترجمة»)، و`docs/contracts/data-model.md` §١٧ (`langFromFileName`)؛ وقرارات سلطان في جولة 2.0.0 (`docs/product-spec.md` §٦.٢ و§٨) |
 | أول استعمال | رسالة CC | `docs/user-guide.md` §٣ و§١٠، و`src/core/errors/controls.js` (`CT_NOT_CAPTURED`) |
 | الترجمة | اللغات وحدّها، والآلية موسومة | `docs/product-spec.md` §١، و`docs/user-guide.md` (التنبيه أول الملف) و§٣ الخطوة ١، و`docs/contracts/extraction.md`، وقرارا سلطان ق١ وق٢ |
 | الترجمة | التعليمات لأي زوج من النافذة، وعربيتها، والنسخ من صفحة فيديو وحدها، ووضع التصدير والتقسيم وفقرة الأجزاء | `src/core/export/instructions.js` (`source` و`target`)، و`docs/user-guide.md` §٣ الخطوة ٣، وقرار سلطان ق٨، و`src/player/controls/text.js` (`modeNormalNote` و`modeLongNote` و`split`) |

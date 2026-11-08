@@ -1,5 +1,0 @@
-before keys: [ 'meta', 'video:AAAAAAAAAAA', 'index:AAAAAAAAAAA', 'settings' ]
-reply: {"v":1,"ok":true,"value":{"reinit":"ok","thumbs":null}}
-after keys: [ 'meta' ]
-delete other video reply: {"v":1,"ok":true,"value":{}} remaining: [ 'meta' ]
-foreign sender handled? false

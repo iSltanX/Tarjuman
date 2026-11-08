@@ -55,7 +55,7 @@ try {
       console.log('snapshot', JSON.stringify(await page.eval(`(() => { const s = globalThis.__tarjumanPoc.snapshot(); return { current: s.currentVideoId, accepted: s.accepted.map((x) => ({ v: x.videoId, k: x.trackKind, ok: x.ok, code: x.code, len: x.bodyLength, inv: x.invariants && x.invariants.map((r) => r.ok).join(''), completeness: x.report.completeness })), rejected: s.rejected.map((r) => r.code + ':' + r.detail) }; })()`, { contextId: iso })));
     }
   }
-  await page.screenshot(path.join(ROOT, `docs/evidence/P1/screenshots/${browser}-diag-${video}.png`));
+  await page.screenshot(path.join(ROOT, `test-results/live/P1/screenshots/${browser}-diag-${video}.png`));
 } finally {
   await b.close();
 }

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// دخان حزم المتجر النهائية (جولة النشر T8، docs/store-release.md): الحزمة نفسها التي تُرفع، بلا جسر تطوير، في متصفحها:
+// دخان حزم المتجر النهائية (جولة النشر T8): الحزمة نفسها التي تُرفع، بلا جسر تطوير، في متصفحها:
 //   Brave وChrome من tarjuman-<الإصدار>-chrome.zip، وEdge من -edge.zip، وFirefox من -firefox.zip. بلا نافذة ومكتوم الصوت، وملف
 //   تعريف جديد خارج المستودع، ويوتيوب بلا حساب. يكمّل t3.mjs (الدورة كلها ببناء التطوير من المصدر نفسه بجسره): هنا ما يخص الحزمة:
 //   بصمتها في SHA256SUMS ← التثبيت ← البيان (الإصدار والاسم والأذونات) ← «حول» (الإصدار، وروابط الموقع والمستودع وصفحة الدعم، والإبلاغ،
 //   وسطر الأيقونات وملف الإشعارات) ← في Firefox موافقة صور المحفوظات غير ممنوحة عند التثبيت ← سكربت المحتوى يركّب شريطه في يوتيوب
 //   ← لا أخطاء من الإضافة ← الإزالة.
 //   command npm run package
-//   command node test/live/stores/t8-packages.mjs --browser brave|chrome|edge|firefox [--out docs/evidence/T8/packages/<browser>]
+//   command node test/live/stores/t8-packages.mjs --browser brave|chrome|edge|firefox [--out test-results/live/T8/packages/<browser>]
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -22,7 +22,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'chrome');
 if (!APPS[browser]) throw new Error(`متصفح غير معروف: ${browser}`);
-const OUT = path.resolve(ROOT, val('out', `docs/evidence/T8/packages/${browser}`));
+const OUT = path.resolve(ROOT, val('out', `test-results/live/T8/packages/${browser}`));
 const VERSION = JSON.parse(await readFile(path.join(ROOT, 'package.json'), 'utf8')).version;
 /** الاسم من البيان المصدر نفسه (تغيّر في 2.0.0 إلى نص لوحة الهوية 18)، فلا يُثبَّت هنا نصٌّ ينجرف عنه. */
 const NAME = JSON.parse(await readFile(path.join(ROOT, 'src/manifest.json'), 'utf8')).name;

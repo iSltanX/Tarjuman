@@ -1,3 +1,0 @@
-handle threw TypeError
-tracks() threw for ALL slots incl. en-US: TypeError
-convert en-US still works: true

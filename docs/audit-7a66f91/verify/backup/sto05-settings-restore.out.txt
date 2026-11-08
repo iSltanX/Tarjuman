@@ -1,2 +1,0 @@
-{"label":"first-run","before":{"step":500,"terms":0},"afterFirst":{"step":1000,"terms":0,"saveMode":"downloads"},"shownPartial":true,"shownSettingsFailedMsg":true,"settingsFailedMsg":"تعذّرت استعادة الإعدادات والقاموس، وبقيت الحالية كما هي.","reportLine":"أضيف 1 · تُخطّي 0 · استُبدل 0 · تعذّر 0","retryButton":true,"calls":{"setSettings":1,"setPrefs":1}}
-{"label":"retry","userStep":900,"afterRetry":{"step":1000,"terms":3},"settingsRetried":true,"shownDone":true,"shownRestoredLine":true,"calls":{"setSettings":2,"setPrefs":2}}

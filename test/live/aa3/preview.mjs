@@ -3,7 +3,7 @@
 // وقسم «اللغات» في الإعدادات، والزوج اللغوي في المحفوظات ورأس المحرّر، بالوضعين، **بلا يوتيوب ولا شبكة**. تُحمَّل حزمة التطوير في
 // ملف تعريف اختبار جديد بلا نافذة، وتُبذر بيانات عيّنة، ويُحاكى رد صفحة الفيديو في النافذة بحقن chrome.tabs قبل تحميلها (عنوان
 // تبويب ورد حالة مصنوعان، بلا أي طلب)، وتُحاكى الحافظة بنجاح أو فشل. ويُعدّ كل طلب خارج الإضافة وكل خطأ منها (المتوقع صفر).
-// **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (دليل التشغيل، «الاختبارات الحية»).
+// **يفتح متصفحًا عند تشغيله أو استيراده:** بإذن سلطان وحده (docs/development.md، «الاختبارات الحية»).
 //   command npm run build:dev -- --out <مجلد خارج المستودع>
 //   TJ_PROFILE_ROOT=<مجلد في المسودة> command node test/live/aa3/preview.mjs --browser brave|chrome --ext <مجلد> [--out <مجلد>]
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -18,7 +18,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
-const OUT = path.resolve(ROOT, val('out', 'docs/evidence/AA3'), browser);
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/AA3'), browser);
 const PROFILE = `${browser}-aa3-${Date.now()}`;
 
 const result = { browser: null, at: new Date().toISOString(), headless: true, extension: null, shots: [], external: [], errors: [], checks: [] };

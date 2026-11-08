@@ -4,7 +4,7 @@
 >
 > **تاريخ السريان** في قسم الرأس: ثُبّت 4 نوفمبر 2026 بقرار سلطان (2026-11-04) بالأمر `node scripts/site/privacy.mjs --effective 2026-11-04`، ثم 5 نوفمبر 2026 بقراره في تدقيق 7a66f91 (C9، 2026-11-05) بعد نصوص C1 المعتمدة (البلاغ وما يضيفه المتصفح، والنسخة الاحتياطية تحمل إطفاء الصور)، بالأمر نفسه `--effective 2026-11-05`. ثم عاد `⟨تاريخ النشر⟩` في AA4 لأن ما يحفظه 2.0.0 تغيّر، وثُبّت 8 نوفمبر 2026 يوم نشر موقع 2.0.0 بقرار سلطان (2026-11-08) بالأمر نفسه `--effective 2026-11-08`. وحين يتغير ما تحفظه الإضافة أو ترسله يُثبَّت تاريخ جديد بالأمر نفسه.
 >
-> **الإصدار 2.0.0 (AA4، 2026-11-07):** روجعت السياسة على سلوك 2.0.0 ([`../aa-plan.md`](../aa-plan.md)): الترجمة الأصلية بأي لغة، ولغة كل ترجمة، وتفضيلات اللغات وزوج كل فيديو، وقائمة مسارات الفيديو التي تُقرأ من بيانات المشغّل في الصفحة بلا طلب، ولغتا الملف والتعليمات. ولا شيء جديد يخرج من الإضافة. ولأن ما تحفظه تغيّر، عاد تاريخ السريان `⟨تاريخ النشر⟩`: يثبّته سلطان يوم نشر 2.0.0 بالأمر `--effective`، ولا تُبنى صفحة الإنتاج قبله.
+> **الإصدار 2.0.0 (AA4، 2026-11-07):** روجعت السياسة على سلوك 2.0.0: الترجمة الأصلية بأي لغة، ولغة كل ترجمة، وتفضيلات اللغات وزوج كل فيديو، وقائمة مسارات الفيديو التي تُقرأ من بيانات المشغّل في الصفحة بلا طلب، ولغتا الملف والتعليمات. ولا شيء جديد يخرج من الإضافة. ولأن ما تحفظه تغيّر، عاد تاريخ السريان `⟨تاريخ النشر⟩`: يثبّته سلطان يوم نشر 2.0.0 بالأمر `--effective`، ولا تُبنى صفحة الإنتاج قبله.
 >
 > **العلامات:** **[قرار]** ينتظر سلطان، ولا يُنشر النص قبل حسمه (المولّد بـ`--strict` يرفضه). وما بين `⟨…⟩` لا يُملأ بتخمين.
 
@@ -164,7 +164,7 @@
 
 ## جدول الأدلة (للمراجعة، لا يُنشر)
 
-المسارات في مستودع ترجمان على الفرع `tj/aa-2.0.0` (الإصدار 2.0.0). و«T3» قياسات [`docs/evidence/T3/README.md`](../evidence/T3/README.md) في Brave وChrome وEdge وFirefox.
+المسارات في مستودع ترجمان (الإصدار 2.0.0). و«T3» الاختبار الحي `test/live/stores/t3.mjs` في Brave وChrome وEdge وFirefox. ونتائج التشغيلات الحية المؤرشفة ولقطاتها حُذفت من المستودع في تنظيفه (2026-11-08) وبقيت في تاريخ Git، وتُعاد بالسكربتات المذكورة.
 
 | القسم | البند | الدليل |
 | --- | --- | --- |
@@ -194,13 +194,13 @@
 | يوتيوب | لا طلب جديد | `src/main-world/capture.js` (يقرأ رد طلب المشغّل)؛ `audit.mjs`: لا طلب شبكة في سكربتي المحتوى وعالم الصفحة |
 | يوتيوب | قائمة المسارات من بيانات المشغّل في الصفحة، بلا روابط ولا رموز ولا طلب ولا تبديل، وفي الذاكرة | `docs/contracts/extraction.md` («قائمة المسارات المتاحة»: `kind: 'tracklist'`، ولا `baseUrl`)، و`src/main-world/capture.js` و`src/extract/message.js` و`src/extract/index.js` (`available()`)؛ وقاعدة `player-api` في `scripts/code-rules.mjs`. ولم يثبت حيًا بعد (AA5) |
 | الصور | من `i.ytimg.com` بالمعرّف، كأي صورة، لما يظهر في القائمة، وبلا عنوان الصفحة | `src/pages/library/thumb.js` (`<img>` وحده، بلا fetch ولا XHR)، و`test/unit/pages/library/thumb.test.js` (السمات lazy وno-referrer) |
-| الصور | Firefox: مطفأة حتى الموافقة، والتفعيل يطلبها، والرفض يبقيها مطفأة، والسحب يوقفها | `src/core/consent/thumbnails.js` (`requestThumbnailsConsent` بفئة `browsingActivity`، و`thumbnailsConsent` من `permissions.getAll`)، و`scripts/targets.mjs` (`optional` فيه `browsingActivity`)، و`test/unit/consent/thumbnails.test.js` و`test/unit/pages/settings/ui-prefs.test.js` و`test/unit/pages/library/row.test.js` (حالات Firefox)؛ والسحب من صفحة الإضافات: [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/)؛ والسحب والصفحة مفتوحة: `test/unit/pages/library/consent-capacity.test.js`، وحيًا في Firefox 159 صفر طلبات بعده (`docs/audit-7a66f91/live/C1/firefox-run2-consent.json`، تدقيق 7a66f91، U01) |
+| الصور | Firefox: مطفأة حتى الموافقة، والتفعيل يطلبها، والرفض يبقيها مطفأة، والسحب يوقفها | `src/core/consent/thumbnails.js` (`requestThumbnailsConsent` بفئة `browsingActivity`، و`thumbnailsConsent` من `permissions.getAll`)، و`scripts/targets.mjs` (`optional` فيه `browsingActivity`)، و`test/unit/consent/thumbnails.test.js` و`test/unit/pages/settings/ui-prefs.test.js` و`test/unit/pages/library/row.test.js` (حالات Firefox)؛ والسحب من صفحة الإضافات: [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/)؛ والسحب والصفحة مفتوحة: `test/unit/pages/library/consent-capacity.test.js`، وحيًا في Firefox 159 صفر طلبات بعده (`test/live/audit-c1/run.mjs`، تدقيق 7a66f91، U01) |
 | الصور | الإطفاء يوقف الطلب | `test/unit/pages/library/thumb.test.js` («مُطفأة: بلاطة بأيقونة الفيديو ولا img ولا أي عنوان صورة»)، و`test/unit/pages/settings/no-network.test.js` (الاستثناء في `thumb.js` وحده) |
 | البلاغ | متى، وطلب واحد بلا إعادة | `src/core/report/client.js` (`sendReport`)، و`src/pages/settings/report.js` |
 | البلاغ | الإذن الاختياري وموافقة Firefox، وعرض «البيانات التقنية والتفاعل» في نافذة التثبيت | `src/manifest.json` (`optional_host_permissions`)، و`scripts/targets.mjs` (`data_collection_permissions.optional`)، و`src/core/report/client.js` (`reportPermissions`)؛ T3: «طلب الإذن الاختياري الحقيقي في Chrome وFirefox»؛ ونافذة التثبيت: [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) («This choice is available in the optional settings section of the extension installation prompt») |
 | البلاغ | ما يحويه | `src/core/report/payload.js` (`buildPayload` و`diagnosticsOf`)، و`src/core/report/diagnostics.js`؛ T3: المعاينة «بحقول العقد وهدف البناء» |
 | البلاغ | ما لا يُرفق تلقائيًا، والوصف حرفيًا مع التذكير والمنع، ومفتاح التكرار | `src/core/report/payload.js` (لا حقل لها)، و`src/core/report/personal.js` (التذكير غير المانع)، و`src/core/diagnostics/sanitize.js` و`src/pages/settings/report.js` (المنع)، و`src/core/report/client.js` (`isIdempotencyKey`: UUID عشوائي)؛ و`test/unit/report/personal-secrets.test.js` (تدقيق 7a66f91، U84) |
-| البلاغ | ما يضيفه المتصفح، ومعرّف تثبيت Firefox في `Origin` | حيًا (تدقيق 7a66f91، I14): Firefox 159 باعتراض BiDi قبل الخروج (`docs/audit-7a66f91/live/C1/firefox-run1-report.json`)، وChrome 156 إلى خادم وهمي على 127.0.0.1 (`chrome-run2-report.json`). ولا يثبت الاختبار ما يسجّله الخادم الحقيقي |
+| البلاغ | ما يضيفه المتصفح، ومعرّف تثبيت Firefox في `Origin` | حيًا (تدقيق 7a66f91، I14): Firefox 159 باعتراض BiDi قبل الخروج، وChrome 156 إلى خادم وهمي على 127.0.0.1 (`test/live/audit-c1/run.mjs`). ولا يثبت الاختبار ما يسجّله الخادم الحقيقي |
 | البلاغ | الوجهة والحدود والبصمة المملّحة | README في `iSltanX/app-reports` (`0f0587371f89`): «What the Worker does» و«Limits» و«Shared decisions» |
 | البلاغ | الرقم مرجعك الوحيد | README في `iSltanX/app-reports` («Anonymous… The report number is the user's only handle»)، و`src/pages/settings/report.js` (رسالة النجاح) |
 | البلاغ | «انسخ البلاغ» بلا شبكة | `src/core/report/payload.js` (`serialise`)؛ T3: «الإبلاغ: النسخ بلا شبكة» |

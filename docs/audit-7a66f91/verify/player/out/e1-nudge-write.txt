@@ -1,4 +1,0 @@
-المفاتيح المخزنة وأحجامها: [["meta",73],["video:AAAAAAAAAAA",554205],["index:AAAAAAAAAAA",371],["bundle:AAAAAAAAAAA",261],["alts:AAAAAAAAAAA",464663]]
-نقرة 1: زمن الوعد في Node ≈ 65.1ms | المكتوب: [["video:AAAAAAAAAAA",554207],["index:AAAAAAAAAAA",373],["bundle:AAAAAAAAAAA",261]] | المجموع 554841 بايت
-نقرة 2: زمن الوعد في Node ≈ 63.4ms | المكتوب: [["video:AAAAAAAAAAA",554208],["index:AAAAAAAAAAA",374],["bundle:AAAAAAAAAAA",261]] | المجموع 554843 بايت
-نقرة 3: زمن الوعد في Node ≈ 62.0ms | المكتوب: [["video:AAAAAAAAAAA",554208],["index:AAAAAAAAAAA",374],["bundle:AAAAAAAAAAA",261]] | المجموع 554843 بايت

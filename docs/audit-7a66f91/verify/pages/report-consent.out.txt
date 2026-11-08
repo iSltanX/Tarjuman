@@ -1,3 +1,0 @@
-أ) المضيف ممنوح وسُحبت الموافقة وحدها، والمستخدم يرفض: طُلب {"origins":["https://app-reports.isultantf.workers.dev/*"],"data_collection":["technicalAndInteraction"]} | أُرسل fetch = 0 | الموافقة بعدها = false | النتيجة = failed/permission
-ب) المضيف ممنوح وسُحبت الموافقة وحدها، والمستخدم يوافق: طُلب {"origins":["https://app-reports.isultantf.workers.dev/*"],"data_collection":["technicalAndInteraction"]} | أُرسل fetch = 1 | الموافقة بعدها = true | النتيجة = sent/1
-ج) نظري: request يعيد true دون منح الموافقة: طُلب {"origins":["https://app-reports.isultantf.workers.dev/*"],"data_collection":["technicalAndInteraction"]} | أُرسل fetch = 1 | الموافقة بعدها = false | النتيجة = sent/1

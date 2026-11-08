@@ -1,4 +1,4 @@
-// أهداف البناء (جولة النشر T2، docs/store-release.md): chromium لـChrome وBrave وEdge، والبيان فيه src/manifest.json كما هو؛
+// أهداف البناء: chromium لـChrome وBrave وEdge، والبيان فيه src/manifest.json كما هو؛
 // وfirefox بأصغر طبقة فوقه، والشيفرة والملفات واحدة في الهدفين. Edge لا فرع له إلا بفرق يثبته الاختبار.
 //   الطبقة: العامل الخلفي سكربت خلفية (Firefox لا يدعم background.service_worker)، وbrowser_specific_settings.gecko بالمعرّف
 //   وأدنى إصدار (144: getBytesInUse، وموافقة جمع البيانات المدمجة منذ 140) وdata_collection_permissions، وبلا gecko_android (سطح المكتب وحده).

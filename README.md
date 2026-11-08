@@ -8,9 +8,8 @@
 </p>
 
 <p align="center">
-  <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-available-1E4A44?logo=googlechrome&logoColor=white"></a>
-  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-available-1E4A44?logo=microsoftedge&logoColor=white"></a>
-  <img alt="الإصدار 2.0.0" src="https://img.shields.io/badge/version-2.0.0-1E4A44">
+  <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 1.1.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-1.1.0-1E4A44?logo=googlechrome&logoColor=white"></a>
+  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 1.1.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-1.1.0-1E4A44?logo=microsoftedge&logoColor=white"></a>
   <img alt="المعالجة والحفظ على جهازك" src="https://img.shields.io/badge/data-on--device-2A6E46">
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
 </p>
@@ -19,15 +18,19 @@
   <a href="https://bysltan.com/tarjuman">الموقع</a> ·
   <a href="docs/user-guide.md">دليل الاستخدام</a> ·
   <a href="https://bysltan.com/tarjuman/support">المساعدة</a> ·
-  <a href="https://bysltan.com/tarjuman/privacy">الخصوصية</a> ·
+  <a href="PRIVACY.md">الخصوصية</a> ·
   <a href="CHANGELOG.md">سجل التغييرات</a>
 </p>
 
-**ترجمان** إضافة للحاسوب تجعلك تشاهد فيديو يوتيوب بترجمة تصنعها أنت، **من أي لغة إلى لغتك**. تحفظ ترجمة الفيديو التي يوفّرها يوتيوب، اليدوية أو التلقائية وبأي لغة، في ملف SRT، فترسله بنفسك إلى نموذج الذكاء الاصطناعي الذي تختاره ليترجمه. ثم ترفع الملف المترجم فيعرضه ترجمان فوق الفيديو نفسه، وتضبط توقيته وتحرّره، وتجده محفوظًا متى عدت.
+**ترجمان** إضافة للحاسوب تجعلك تشاهد فيديو يوتيوب بترجمة تصنعها أنت، **من أي لغة إلى لغتك**. تحفظ ترجمة الفيديو التي يوفّرها يوتيوب، اليدوية أو التلقائية، في ملف SRT، فترسله بنفسك إلى نموذج الذكاء الاصطناعي الذي تختاره ليترجمه. ثم ترفع الملف المترجم فيعرضه ترجمان فوق الفيديو نفسه، وتضبط توقيته وتحرّره، وتجده محفوظًا متى عدت.
 
 لا نموذج مدمج، ولا مفتاح API، ولا حساب، ولا خادم ترجمة، ولا تنزيل للفيديو أو الصوت. وكل ما تحفظه يبقى في متصفحك.
 
+> **حالة الإصدار:** المنشور الآن في Chrome Web Store وMicrosoft Edge Add-ons هو الإصدار **1.1.0**، وهو يترجم من الإنجليزية إلى العربية. وهذا المستودع على الإصدار **2.0.0** (من أي لغة إلى لغتك، ونسخ التعليمات من نافذة الإضافة، والهوية الجديدة)، و**لم يُنشر في المتاجر بعد**؛ فتجربته الآن من الشيفرة. ولم يُنشر ترجمان في Firefox Add-ons بعد.
+
 ## المزايا
+
+ما يلي وصف الإصدار 2.0.0 الذي في المستودع:
 
 - **من أي لغة إلى لغتك:** كل مسار ترجمة يوفّره يوتيوب للفيديو، وترجمة يوتيوب الآلية موسومةً بلغة أصلها، وأي ملف SRT بأي لغة. واللغات المتاحة لكل فيديو يحددها يوتيوب وحده، وترجمان لا ينشئ مسارًا ولا يبدّله.
 - **ترجمتك فوق الفيديو** باتجاه لغتها، وحدها أو فوق الأصل، في الوضع العادي والمسرح وملء الشاشة. وتختفي أثناء الإعلانات.
@@ -36,7 +39,7 @@
 - **مقارنة بالأصل:** حين ترفع ملفك يقارنه ترجمان بالأصل الذي نزّلته، فيبيّن ما نقص وما زاد وما انحرف توقيته وما بقي غير مترجم، ولا يعدّل في ملفك شيئًا بصمت.
 - **محرّر للمراجعة:** تعدّل النص والتوقيت، وتدمج المقاطع وتشطرها، وتبحث وتستبدل، وتعلّم ما تعود إليه. ويجهّز لك ملفًا بالمقاطع الناقصة لتستكملها.
 - **النص المتزامن:** لوحة بجانب الفيديو تعرض الترجمة كلها والمقطع الحالي مميز. مغلقة حتى تفتحها من زرها.
-- **المحفوظات:** كل فيديو ترجمته بلغتي كل ترجمة، بحتى ثلاث ترجمات لكل فيديو، ونسخة سابقة لما استبدلته، ونسخة احتياطية تنقلها إلى متصفح آخر.
+- **المحفوظات:** كل فيديو ترجمته بلغتي كل ترجمة، وحتى ثلاث ترجمات لكل فيديو، ونسخة سابقة لما استبدلته، ونسخة احتياطية تنقلها إلى متصفح آخر.
 - **مظهرها كما تحب:** وضع العرض، والخط، والحجم، والخلفية، والموضع. والخطوط العربية مضمّنة، وما لا تحويه يُرسم بخطوط جهازك.
 
 ## لقطات
@@ -55,16 +58,18 @@
 
 ## التثبيت
 
-| المتصفح | من أين |
+| المتصفح | المتاح الآن |
 | --- | --- |
-| Google Chrome ‏(130 فأحدث) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
-| Brave ‏(Chromium 130 فأحدث) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، المتجر نفسه |
-| Microsoft Edge ‏(130 فأحدث) | [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
-| Mozilla Firefox ‏(144 فأحدث) | قريبًا في Firefox Add-ons. وللتجربة الآن: [التثبيت من الشيفرة](docs/development.md#التثبيت-من-الشيفرة) |
+| Google Chrome ‏(130 فأحدث) | الإصدار 1.1.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
+| Brave ‏(Chromium 130 فأحدث) | الإصدار 1.1.0 من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، المتجر نفسه |
+| Microsoft Edge ‏(130 فأحدث) | الإصدار 1.1.0 من [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
+| Mozilla Firefox ‏(144 فأحدث) | غير منشور في Firefox Add-ons بعد. وللتجربة: [التثبيت من الشيفرة](docs/development.md#التثبيت-من-الشيفرة) |
+
+وفي كل المتصفحات يُجرَّب الإصدار 2.0.0 من الشيفرة بالطريقة نفسها. ونسخة المتجر ونسخة الشيفرة إضافتان منفصلتان، فانقل محفوظاتك بينهما بالنسخة الاحتياطية ([دليل الاستخدام](docs/user-guide.md) §٩).
 
 بعد التثبيت ثبّت أيقونة ترجمان في شريط المتصفح: أيقونة الإضافات (قطعة الأحجية)، ثم الدبوس بجوار «ترجمان».
 
-ترجمان للحاسوب وحده، ويعمل على صفحات المشاهدة في `www.youtube.com`، لا على Shorts ولا البث المباشر الجاري ولا المشغّلات المضمّنة في مواقع أخرى. وإن جرّبته من مجلد قبل نشره، فانقل محفوظاتك إلى نسخة المتجر بالنسخة الاحتياطية ([دليل الاستخدام](docs/user-guide.md) §٩).
+ترجمان للحاسوب وحده، ويعمل على صفحات المشاهدة في `www.youtube.com`، لا على Shorts ولا البث المباشر الجاري ولا المشغّلات المضمّنة في مواقع أخرى.
 
 ## طريقة الاستخدام
 
@@ -130,11 +135,11 @@
 ```bash
 npm ci
 npm run build
-npm run check
+npm run check:all
 ```
 
 </div>
 
-يبني الأمر الثاني نسخة Chromium في `dist`، والثالث يشغّل الفحوص الثابتة واختبارات الوحدة والبناءين. والبناء لـFirefox، والتثبيت من الشيفرة، وبقية الفحوص، وهيكل المستودع، والتغليف للمتاجر، كلها في [دليل المطوّرين](docs/development.md). وفهرس الوثائق في [`docs/README.md`](docs/README.md).
+يبني الأمر الثاني نسخة Chromium في `dist`، والثالث يشغّل الفحوص كلها كما في CI: الثابتة، والأسرار، والوحدة، والتكامل، وe2e الثابت، والبناءين، و`web-ext lint`. والبناء لـFirefox، والتثبيت من الشيفرة، وهيكل المستودع، والتغليف للمتاجر، كلها في [دليل المطوّرين](docs/development.md). وفهرس الوثائق في [`docs/README.md`](docs/README.md).
 
 </div>

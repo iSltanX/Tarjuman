@@ -1,4 +1,4 @@
-# الفحوص الآلية: ما يشغّله المطوّر محليًا قبل الدمج (npm run check:wave، وe2e الثابت والانحدار، والتغليف بتدقيقه)،
+# الفحوص الآلية: ما يشغّله المطوّر محليًا قبل الدمج (npm run check:all، والتغليف بتدقيقه)،
 # على Node 22 (أدنى ما في engines) و24. بلا أسرار ولا نشر ولا رفع إلى متجر، وبإذن قراءة وحده.
 name: الفحوص
 
@@ -30,13 +30,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # فحص الخطة يقرأ الخطة من فرع main المحلي كما في نسخة المطوّر؛ والجلب ينشئ الفرع الحالي وحده.
-      - name: فرع main المحلي لفحص الخطة
-        run: |
-          if [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
-            git branch --track main origin/main
-          fi
-
       # اختبار U78 يقرأ ما يصدّره ترجمان بـffmpeg، ويُتخطى إن لم يوجد.
       - name: تثبيت ffmpeg لاختبار التوافق
         run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg
@@ -61,9 +54,6 @@ jobs:
 
       - name: web-ext lint لحزمة Firefox
         run: npm run lint:firefox
-
-      - name: فحص الخطة
-        run: npm run plan:check
 
       - name: بناء الحزم وتدقيقها وإعادة بنائها من حزمة المصدر
         run: npm run package

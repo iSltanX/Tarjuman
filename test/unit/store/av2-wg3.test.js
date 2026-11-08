@@ -1,5 +1,5 @@
 // التدقيق الموحد V2، WG-3 (U-019): حذف بيانات الفيديو بكل مساراته يزيل زوج لغاته من langPrefs فلا يبقى معرّفه محليًا ولا في
-// النسخة الاحتياطية، وحذف ترجمة واحدة يُبقي الزوج. الحالات بدوال المنتج كما في docs/Audit-V2/evidence/unified/repro/A3-backup.
+// النسخة الاحتياطية، وحذف ترجمة واحدة يُبقي الزوج. الحالات بدوال المنتج كما في برنامج إثبات التدقيق A3-backup.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore } from '../../../src/core/store/index.js';

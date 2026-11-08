@@ -1,6 +1,0 @@
-{"label":"N=1500 fingerprint=true","writeMs":[59,58,60],"oneComparisonFreshMs":7,"oneComparisonSameArrayMs":0}
-{"label":"N=1500 fingerprint=false","writeMs":[32,33,33],"oneComparisonFreshMs":1,"oneComparisonSameArrayMs":0}
-{"label":"N=5000 fingerprint=true","writeMs":[170,166,166],"oneComparisonFreshMs":16,"oneComparisonSameArrayMs":0}
-{"label":"N=5000 fingerprint=false","writeMs":[112,113,114],"oneComparisonFreshMs":2,"oneComparisonSameArrayMs":0}
-{"label":"N=20000 fingerprint=true","writeMs":[741,717,692],"oneComparisonFreshMs":64,"oneComparisonSameArrayMs":0.01}
-{"label":"N=20000 fingerprint=false","writeMs":[503,470,467],"oneComparisonFreshMs":7,"oneComparisonSameArrayMs":0}

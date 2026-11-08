@@ -1,8 +1,0 @@
-[س١] بعد حفظ عادي: canUndo = false
-[س١] بعد حفظ كُتب أثناءه (markSaved): canUndo = true | historySize = 2
-[س٥] بعد دمج المقطعين 2 و3 (معلَّمين): byIndex = 1 | يتيمة = 0 | all = [{"kind":"todo","state":"moved","index":1},{"kind":"done","state":"moved","index":1}]
-[س٥] إزالة علامة المقطع المدموج تزيل: 2 علامة (المحجوبة معها)
-[س٨] مسودة زمن: hasDrafts = true
-[س٨] بعد نقل الملف كله +0.1: hasDrafts = false
-[س٨] بعد التراجع عن النقل: hasDrafts = false (المسودة لا تعود)
-[س٨] مسودة ثم «تثبيت الإزاحة»: hasDrafts = false
