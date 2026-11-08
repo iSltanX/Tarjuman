@@ -55,7 +55,7 @@
   </tr>
 </table>
 
-<sub>لقطات حقيقية من الإصدار 2.0.0 في Chrome، في إطارات مواد المتاجر. الفيلم Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0.</sub>
+<sub>لقطات حقيقية من الإصدار 2.1.0 في Chrome، في إطارات مواد المتاجر. الفيلم Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0.</sub>
 
 ## التثبيت
 
