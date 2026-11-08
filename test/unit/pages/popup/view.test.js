@@ -7,7 +7,7 @@ import { messageFor } from '../../../../src/core/errors/index.js';
 import { DEFAULT_PREFS } from '../../../../src/core/model/prefs.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { ENTRY_TEXT, bindEntryRow } from '../../../../src/pages/popup/entry.js';
-import { GUIDE_TEXT, describeStatus, entryHidden, guideSteps, recentLine, toolsStatus } from '../../../../src/pages/popup/status.js';
+import { GUIDE_TEXT, describeStatus, entryHidden, guideSteps, originDownloaded, recentLine, toolsStatus } from '../../../../src/pages/popup/status.js';
 import { NOT_VIDEO_TEXT, guideList, notVideoNote, skeletonCard, statusCard } from '../../../../src/pages/popup/view.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW } from '../../../helpers/fixtures.js';
@@ -28,6 +28,16 @@ function newStore() {
   return { area, store: createStore({ area, now: () => (t += 1000) }) };
 }
 
+test('ق-3: التنزيل يُعرف من مراجع المقارنة في سجل الفيديو، وتعذّر القراءة ليس تنزيلًا', async () => {
+  const store = (record) => ({ getVideo: async () => record });
+  const r = { videoId: 'aaaaaaaaaaa' };
+  assert.equal(await originDownloaded(store({ fingerprints: [{ id: 'x' }] }), r), true);
+  assert.equal(await originDownloaded(store({ fingerprints: [] }), r), false, 'سجل بلا تنزيل');
+  assert.equal(await originDownloaded(store(null), r), false, 'لا سجل');
+  assert.equal(await originDownloaded(store({ fingerprints: [{ id: 'x' }] }), { videoId: null }), false, 'لا فيديو');
+  assert.equal(await originDownloaded({ getVideo: async () => { throw new Error('تعذر'); } }, r), false, 'فشل القراءة');
+});
+
 test('الخطوات: الأصل غير ملتقط فالأولى هي الحالية والباقيتان منتظرتان', () => {
   const steps = guideSteps(reply());
   assert.deepEqual(steps.map((s) => s.text), [...GUIDE_TEXT]);
@@ -37,9 +47,10 @@ test('الخطوات: الأصل غير ملتقط فالأولى هي الحا�
   assert.deepEqual(guideSteps(reply(), { from: 'ja', to: 'en' }).map((s) => s.text), ['نزّل الأصل (اليابانية) من زر التنزيل في الشريط', 'انسخ التعليمات وأرسلها مع الملف إلى نموذج الذكاء الاصطناعي ليترجمه إلى الإنجليزية', 'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في شريط المشغّل']);
 });
 
-test('الخطوات: الأصل ملتقط أو محفوظ فالأولى منجزة والثانية هي الحالية، وتتبع الحالة الفعلية لا النية', () => {
+test('ق-3: الأولى منجزة بتنزيل الأصل فعلًا، والتقاطه أو حفظه وحده يبقيها الحالية', () => {
   for (const english of [captured, savedOnly]) {
-    assert.deepEqual(guideSteps(reply({ english })).map((s) => s.state), ['done', 'now', 'pending']);
+    assert.deepEqual(guideSteps(reply({ english })).map((s) => s.state), ['now', 'pending', 'pending'], 'بلا تنزيل');
+    assert.deepEqual(guideSteps(reply({ english }), {}, true).map((s) => s.state), ['done', 'now', 'pending'], 'بعد التنزيل');
   }
   // مسار فاشل ليس ملتقطًا: تبقى الأولى هي الحالية.
   const failed = reply({ english: { captured: [{ key: 'en|asr', kind: 'asr', cueCount: 0, ok: false }], saved: [] } });
@@ -55,7 +66,7 @@ test('الخطوات: لا تظهر إلا لفيديو بلا ترجمة عرب
 
 test('قائمة الخطوات: منجزة بعلامة ✓، والحالية aria-current=step، وكل حالة بنص لقارئ الشاشة', () => {
   const doc = newDocument();
-  const list = guideList(guideSteps(reply({ english: captured })), doc);
+  const list = guideList(guideSteps(reply({ english: captured }), {}, true), doc);
   const items = findAll(list, (e) => e.tagName === 'li');
   assert.equal(items.length, 3);
   assert.deepEqual(items.map((li) => li.getAttribute('data-state')), ['done', 'now', 'pending']);

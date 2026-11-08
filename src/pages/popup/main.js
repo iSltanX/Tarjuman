@@ -21,7 +21,7 @@ import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
 import { bindEntryRow } from './entry.js';
 import {
-  PAIR_TEXT, attachedGlossary, captureLine, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, missText, pageReport,
+  PAIR_TEXT, attachedGlossary, captureLine, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, originDownloaded, missText, pageReport,
   pairState, queryPageDiagnostics, queryPopupState, quickActions, recentEntries, recentLine, toolsStatus, untilSettled, videoLangs,
 } from './status.js';
 import { guideList, notVideoNote, pairSkeleton, skeletonCard, statusCard } from './view.js';
@@ -213,8 +213,8 @@ startPage({
 
     function paintSteps() {
       stepsHost.replaceChildren();
-      // فيديو بلا ترجمة: ثلاث خطوات من حالة الأصل الفعلية (ملتقط أو محفوظ أو لا)، بالزوج المختار.
-      const steps = guideSteps(reply, pair);
+      // فيديو بلا ترجمة: ثلاث خطوات، والأولى منجزة بتنزيل الأصل فعلًا لا بالتقاطه، بالزوج المختار.
+      const steps = guideSteps(reply, pair, downloaded);
       if (steps) stepsHost.append(guideList(steps));
     }
 
@@ -264,12 +264,14 @@ startPage({
       return status;
     }
 
+    let downloaded = await originDownloaded(store, reply);
     let status = paint();
     // «جارٍ القراءة» (بداية الصفحة أو تنقّل فيها): يُعاد الاستعلام حتى يستقر، بحد (L-25).
     if (reply?.loading) {
       state = await untilSettled(queryPopupState, state);
       if (state.reply && !state.reply.loading) {
         reply = state.reply;
+        downloaded = await originDownloaded(store, reply);
         status = paint();
       }
     }

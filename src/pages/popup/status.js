@@ -176,17 +176,33 @@ export function guideText(pair = {}) {
 export const GUIDE_TEXT = Object.freeze(guideText());
 
 /**
- * خطوات «بلا ترجمة» من الحالة الفعلية لا من نية: ما دام الأصل غير ملتقط ولا محفوظ فالخطوة الأولى هي الحالية والباقيتان
- * منتظرتان؛ وإن التُقط أو حُفظ فالأولى منجزة والثانية هي الحالية والثالثة منتظرة. لا خطوات لغير هذه الحالة.
+ * خطوات «بلا ترجمة» من الحالة الفعلية لا من نية: ما دام الأصل لم يُنزَّل فالخطوة الأولى هي الحالية والباقيتان منتظرتان ولو
+ * كان ملتقطًا أو محفوظًا؛ وإن نُزّل فالأولى منجزة والثانية هي الحالية والثالثة منتظرة. لا خطوات لغير هذه الحالة.
  * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
  * @param {{ from?: string | null, to?: string | null }} [pair]
+ * @param {boolean} [downloaded] نُزّل الأصل فعلًا من ترجمان لهذا الفيديو (originDownloaded)
  * @returns {{ n: 1 | 2 | 3, text: string, state: 'done' | 'now' | 'pending' }[] | null}
  */
-export function guideSteps(reply, pair = {}) {
+export function guideSteps(reply, pair = {}, downloaded = false) {
   const s = describeStatus(reply);
   if (s.kind !== 'no-subtitle') return null;
-  const now = s.englishReady ? 1 : 0;
+  const now = downloaded ? 1 : 0;
   return guideText(pair).map((text, i) => ({ n: /** @type {1 | 2 | 3} */ (i + 1), text, state: i < now ? 'done' : i === now ? 'now' : 'pending' }));
+}
+
+/**
+ * هل نُزّل أصل هذا الفيديو من ترجمان؟ كل تنزيل يكتب مرجع مقارنته في record.fingerprints، أما التقاط الأصل وحده فلا يكتب شيئًا.
+ * تعذّر القراءة يبقي الخطوة الأولى هي الحالية، فلا تُعلَّم منجزة بلا دليل.
+ * @param {{ getVideo: (id: string) => Promise<{ fingerprints?: unknown[] } | null> }} store
+ * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
+ */
+export async function originDownloaded(store, reply) {
+  if (!reply?.videoId) return false;
+  try {
+    return ((await store.getVideo(reply.videoId))?.fingerprints?.length ?? 0) > 0;
+  } catch {
+    return false;
+  }
 }
 
 /**
