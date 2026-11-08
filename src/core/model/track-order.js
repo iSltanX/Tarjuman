@@ -17,7 +17,7 @@ export function rankTracks(tracks) {
   return tracks
     .map((t, i) => ({ t, i }))
     .sort((a, b) => isUsableTrack(b.t) - isUsableTrack(a.t)
-      // قرار ق٢ في هذا السطر وحده (U-034، ينتظر D-01): المترجم آليًا لا يتقدّم على أصلي، لكنه يُختار إن كان الوحيد.
+      // قرار ق٢ في هذا السطر وحده، بتوضيح سلطان D-01 (2026-11-08، U-034): المترجم آليًا لا يتقدّم على أصلي، ويُختار موسومًا إن كان الوحيد.
       || Number(Boolean(a.t.via)) - Number(Boolean(b.t.via))
       || KIND_RANK[a.t.kind] - KIND_RANK[b.t.kind]
       || Date.parse(b.t.capturedAt) - Date.parse(a.t.capturedAt)
