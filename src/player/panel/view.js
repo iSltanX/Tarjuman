@@ -153,7 +153,6 @@ export function createPanelView({ doc, win, on }) {
   const empty = el(doc, 'div', { className: 'empty', attrs: { hidden: '' } }, [
     el(doc, 'h3', { className: 'empty__title', text: LABELS.emptyTitle }),
     steps,
-    el(doc, 'p', { className: 'empty__note', text: LABELS.emptyNote }),
   ]);
   const errTitle = el(doc, 'span', { className: 'alert__title', text: LABELS.errorTitle });
   const errText = el(doc, 'span');
@@ -327,7 +326,7 @@ export function createPanelView({ doc, win, on }) {
   function renderSteps(m) {
     const cap = m.capture;
     const items = [
-      { state: cap ? 'done' : 'now', text: cap ? `${cap.langName} ${cap.kind === 'manual' ? 'اليدوية' : 'التلقائية'} ${cap.saved ? 'محفوظة' : 'ملتقطة'} · ${formatCount(cap.count, COUNT_FORMS.cue)}` : LABELS.stepCapture },
+      { state: cap ? 'done' : 'now', text: cap ? (cap.via ? `${cap.langName} · ترجمة يوتيوب الآلية عن ${cap.via} · ${cap.saved ? 'محفوظة' : 'ملتقطة'} · ${formatCount(cap.count, COUNT_FORMS.cue)}` : `${cap.langName} ${cap.kind === 'manual' ? 'اليدوية' : 'التلقائية'} ${cap.saved ? 'محفوظة' : 'ملتقطة'} · ${formatCount(cap.count, COUNT_FORMS.cue)}`) : LABELS.stepCapture },
       { state: cap ? 'now' : '', text: LABELS.stepDownload },
       { state: '', text: LABELS.stepUpload },
     ];

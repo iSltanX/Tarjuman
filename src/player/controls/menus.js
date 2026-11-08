@@ -416,7 +416,7 @@ export function displayMenu(h, act, m, root = null) {
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
   const notes = m.notes.slice(0, 1);
   for (const n of notes) out.push(h('div', { className: 'note', text: n }));
-  if (m.notes.length > notes.length) out.push(h('div', { className: 'note', text: `وملاحظات أخرى (${m.notes.length - notes.length}) في المحرّر.` }));
+  if (m.notes.length > notes.length) out.push(h('div', { className: 'note', text: `راجع بقية الملاحظات (${m.notes.length - notes.length}) في المحرّر.` }));
   out.push(sep(h));
   out.push(label(h, LABELS.displayMode));
   // «فوق ‹لغة الأصل›»: باسم لغته الفعلية من مساره، وبلا أصل «فوق الأصل» معطّلًا بسببه.

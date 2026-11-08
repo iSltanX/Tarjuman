@@ -63,7 +63,7 @@ test('FA-04: الملف المطابق «مطابق للأصل» بلا سطر �
   assert.deepEqual(librarySummary(same).lines, ['مطابق للأصل']);
   const none = previewComparison(full, null, { settings });
   assert.equal(none.fingerprintId, null);
-  assert.equal(playerSummary(none).text, 'لا بصمة للمقارنة؛ عُرض الملف كما هو.');
+  assert.equal(playerSummary(none).text, 'لم يُنزَّل الأصل من ترجمان لهذا الفيديو، فلا مقارنة؛ يُعرض الملف كما هو.');
 });
 
 test('FA-04: قراءة المشغّل تعيد المعاينة بالمحاذاة وتُبقي تقرير الحفظ بالرقم في input', async () => {

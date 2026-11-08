@@ -5,13 +5,13 @@ import { languageName as sharedLanguageName } from '../../ui/lang.js';
 
 export const LABELS = Object.freeze({
   group: 'أدوات ترجمان',
-  download: 'تحميل الأصل (SRT)',
+  download: 'تنزيل الأصل (SRT)',
   upload: 'رفع الترجمة (SRT)',
   translation: 'الترجمة',
   panel: 'النص المتزامن',
   panelOpen: 'فتح النص المتزامن',
   panelClose: 'إغلاق النص المتزامن',
-  downloadTitle: 'تحميل الأصل',
+  downloadTitle: 'تنزيل الأصل',
   displayTitle: 'الترجمة',
   languageTitle: 'اللغة',
   originalFallback: 'الأصل',
@@ -24,14 +24,14 @@ export const LABELS = Object.freeze({
   confirmTitle: 'استبدال الترجمة؟',
   whyLink: 'لماذا؟',
   why: 'ترجمان يقرأ الترجمة التي يجلبها المشغّل لك، ولا يرسل أي طلب من عنده.',
-  trackChoice: 'المسار',
+  trackChoice: 'ترجمة يوتيوب الملتقطة',
   modeNormal: 'عادي',
   modeLong: 'مقاطع أطول',
-  modeNormalNote: 'مقاطع كما في يوتيوب، للتزامن الأدق',
-  modeLongNote: 'جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما',
+  modeNormalNote: 'مقاطع قصيرة قريبة من تقسيم يوتيوب، للتزامن الأدق مع الكلام',
+  modeLongNote: 'يدمج المقاطع المتجاورة في جمل أطول ليفهم النموذج السياق، فيتغير عدد المقاطع وترقيمها وحدود توقيتها',
   checking: 'جارٍ التنزيل…',
-  fallback: 'خيارات احتياطية',
-  split: 'تقسيم الملف إلى أجزاء (للملفات الطويلة جدًا)',
+  fallback: 'تقسيم الملفات الطويلة',
+  split: 'تقسيم الملف إلى أجزاء',
   splitSize: 'مقاطع لكل جزء',
   modeAr: 'الترجمة وحدها',
   // بلا مسار أصلي لا لغة تُسمّى: «فوق الأصل». ومعه يُسمّى باسم لغته (dualLabels).
@@ -41,7 +41,7 @@ export const LABELS = Object.freeze({
   segDual: 'فوق الأصل',
   segOff: 'إخفاء',
   displayMode: 'وضع العرض',
-  exportMode: 'وضع التصدير',
+  exportMode: 'شكل المقاطع',
   replace: 'استبدال…',
   uploadMore: 'رفع ترجمة…',
   replaceConfirm: 'استبدال',
@@ -57,23 +57,23 @@ export const LABELS = Object.freeze({
   undo: 'تراجع',
   sync: 'مزامنة بجملة…',
   syncTitle: 'مزامنة بجملة',
-  earlier: 'أبكر',
-  later: 'أحدث',
+  earlier: 'جمل سابقة',
+  later: 'جمل لاحقة',
   back: 'رجوع',
   downloadFile: 'تنزيل الملف',
   downloadFileHint: 'ملف الأصل (SRT) وحده',
   // مسار الأصل المحفوظ بلا التقاط في هذه الزيارة (تدقيق Fable، FA-17، بقرار سلطان 2026-11-07).
-  downloadSaved: 'تنزيل المحفوظ',
-  downloadSavedHint: 'مسار الأصل المحفوظ من تنزيلك السابق، بالوضع العادي',
+  downloadSaved: 'تنزيل الأصل المحفوظ',
+  downloadSavedHint: 'الأصل المحفوظ من تنزيلك السابق، بمقاطعه العادية. لمقاطع أطول أو للتقسيم شغّل ترجمة يوتيوب (CC) ليُلتقط من جديد.',
   savedTag: 'محفوظ',
-  savedNote: 'لم تُلتقط الترجمة في هذه الزيارة؛ يُنزَّل المسار المحفوظ من تنزيلك السابق.',
-  stateSaved: 'المسار المحفوظ جاهز',
+  savedNote: 'لم تُلتقط ترجمة يوتيوب في هذه الزيارة؛ يُنزَّل الأصل المحفوظ من تنزيلك السابق.',
+  stateSaved: 'الأصل المحفوظ جاهز',
   // تعليمات الترجمة (من ← إلى) انتقلت إلى نافذة الإضافة (AA3، قرار سلطان، لوحة 10): سطر يدل عليها مكان زر النسخ.
-  instructionsNote: 'تعليمات الترجمة (من ← إلى) من نافذة الإضافة',
+  instructionsNote: 'انسخ تعليمات الترجمة من نافذة الإضافة.',
   // اختيار المسار من يوتيوب بيد المستخدم (ق١): كلمات لا رموز (← و⚙ خارج الخطين المضمّنين، فيرسمها Brave بخطوط نظام متفرقة؛
   // تدقيق 5fedcb9، CL-017).
   pickSteps: 'CC ثم الإعدادات ثم «الترجمة» ثم اللغة التي تريدها',
-  braveNote: 'Brave قد يختار لغة المتصفح أولًا؛ اختر اللغة التي تريدها مرة',
+  braveNote: 'في Brave قد تظهر لغة المتصفح أولًا؛ فاختر اللغة التي تريدها من قائمة الترجمة في يوتيوب.',
   machine: 'مترجمة آليًا من يوتيوب',
   machineSteps: 'لترجمة يوتيوب الآلية: CC ثم الإعدادات ثم «الترجمة» ثم «الترجمة التلقائية» ثم اللغة',
   translationLang: 'لغة الترجمة',
@@ -95,12 +95,12 @@ export const LABELS = Object.freeze({
   signLegend: '+ تأخير · − تقديم · تُحفظ لهذا الفيديو',
   close: 'إغلاق',
   // حالة زرّي الشريط في تلميحهما ووصفهما (لا نقطة ملوّنة على الزر).
-  stateReady: 'المسار جاهز',
-  stateIncomplete: 'قد يكون المسار ناقصًا',
+  stateReady: 'الأصل جاهز',
+  stateIncomplete: 'قد يكون الأصل ناقصًا',
   stateDownloading: 'جارٍ التنزيل…',
   stateDiffers: 'فيها فروق عن الأصل',
-  slotsFull: 'الخانات الثلاث ممتلئة؛ الرفع استبدال.',
-  sentenceNow: 'أي جملة تُقال الآن؟',
+  slotsFull: 'بلغت ترجمات هذا الفيديو حدّها (ثلاث)، فالملف الجديد يحل محل إحداها.',
+  sentenceNow: 'أي جملة تُقال عند هذا الوقت؟',
 });
 
 /** @type {Intl.DisplayNames | null} */
@@ -186,7 +186,7 @@ export function editsLine(n) {
 }
 
 /** @param {number} conflicts ما يأخذه الملف الجديد لتعارضه مع التعديلات */
-export const keptLine = (conflicts) => (conflicts ? `تُبقى تعديلاتك، ويأخذ الملف الجديد مواضع التعارض (${conflicts})` : 'تُبقى تعديلاتك اليدوية');
+export const keptLine = (conflicts) => (conflicts ? `تبقى تعديلاتك عدا مواضع التعارض (${conflicts})، فيُعتمد فيها الملف الجديد.` : 'تبقى تعديلاتك اليدوية.');
 
 /**
  * «الاسم يشير إلى فيديو آخر · ‹العنوان مقصوصًا إلى 40 محرفًا›». العنوان معزول (FSI…PDI) كما في المحفوظات، فلا تنقلب كلمات
@@ -204,19 +204,19 @@ export function nameOtherLine(title) {
  * المحفوظات (library/model.js previousLostText).
  * @param {number} from خانة السابقة @param {number} target الخانة الهدف
  */
-export const previousLostLine = (from, target) => `تحل المستبدلة محل النسخة السابقة المحفوظة الآن (${from === target ? 'من هذه الترجمة' : `من الترجمة ${from}`})، فلا تُستعاد تلك بعدها.`;
+export const previousLostLine = (from, target) => `تُحفظ الترجمة الحالية نسخةً سابقة، وتُحذف النسخة السابقة المحفوظة الآن (${from === target ? 'من هذه الترجمة' : `من الترجمة ${from}`}) ولا يمكن استعادتها.`;
 
 /** عدد المحارف بأرقام مجمّعة: «18,400 محرف»، «12 محرفًا»، «5 محارف». @param {number} n */
 export function charsText(n) {
   const mod = n % 100;
   const g = n.toLocaleString('en-US');
-  if (n === 1) return 'محرف واحد';
-  if (n === 2) return 'محرفان';
-  return `${g} ${mod >= 3 && mod <= 10 ? 'محارف' : mod >= 11 ? 'محرفًا' : 'محرف'}`;
+  if (n === 1) return 'حرف واحد';
+  if (n === 2) return 'حرفان';
+  return `${g} ${mod >= 3 && mod <= 10 ? 'أحرف' : mod >= 11 ? 'حرفًا' : 'حرف'}`;
 }
 
 /** صف جزء في التقسيم الاحتياطي: «1 · 1–200 · 18,400 محرف». @param {{ index: number, from: number, to: number, chars: number }} p */
-export const partRow = (p) => `${p.index} · ${p.from}–${p.to} · ${charsText(p.chars)}`;
+export const partRow = (p) => `الجزء ${p.index} · المقاطع ${p.from}–${p.to} · ${charsText(p.chars)}`;
 
 /** اسم الوصول لخانة ترجمة: «الترجمة 2، نشطة» أو «الترجمة 3، فارغة». @param {{ n: number, active: boolean, filled: boolean }} s */
 export const slotLabel = (s) => `الترجمة ${s.n}${s.active ? '، نشطة' : s.filled ? '' : '، فارغة'}`;
@@ -291,7 +291,7 @@ const driftText = (n) => `توقيت مختلف في ${n === 2 ? 'مقطعين' 
  * @returns {{ tone: 'ok' | 'warn' | 'info', text: string }}
  */
 export function comparisonSummary(cmp) {
-  if (!cmp || !cmp.fingerprintId) return { tone: 'info', text: 'لا بصمة للمقارنة؛ عُرض الملف كما هو.' };
+  if (!cmp || !cmp.fingerprintId) return { tone: 'info', text: 'لم يُنزَّل الأصل من ترجمان لهذا الفيديو، فلا مقارنة؛ يُعرض الملف كما هو.' };
   const parts = [];
   if (cmp.missing.length) parts.push(`${countWith(cmp.missing.length, ADJ.missing)}: ${listOf(cmp.missing)}`);
   if (cmp.extra.length) parts.push(`${countWith(cmp.extra.length, ADJ.extra)}: ${listOf(cmp.extra)}`);
@@ -333,4 +333,4 @@ export function parseSeconds(raw) {
 }
 
 /** «تراجع» مزامنة بجملة بعد تبدّل الترجمة النشطة أو استبدالها: لا يُكتب في غيرها (CX-004). */
-export const syncUndoStale = 'تغيّرت الترجمة النشطة، فلم يُتراجع عن مزامنة سابقتها.';
+export const syncUndoStale = 'تغيّرت الترجمة النشطة، فتعذّر التراجع عن مزامنة الترجمة السابقة.';

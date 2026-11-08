@@ -62,7 +62,7 @@ test('لا نسخ في المشغّل (AA3): القائمة بلا زر نسخ �
   click(page.ui.btn('download'));
   assert.ok(page.ui.menu().querySelector('.tag') === null, 'لا إشارة قاموس في المشغّل');
   assert.ok(page.ui.field('copy') === null, 'لا زر نسخ');
-  assert.equal(page.ui.field('instructionsNote').textContent, 'تعليمات الترجمة (من ← إلى) من نافذة الإضافة');
+  assert.equal(page.ui.field('instructionsNote').textContent, 'انسخ تعليمات الترجمة من نافذة الإضافة.');
   const reply = buildVideoStateReply(page.controller.getState(), { overlay: 'mounted', controls: 'mounted' });
   assert.deepEqual(reply.source, { key: 'en|manual', lang: 'en', kind: 'manual', via: null, from: 'captured' }, '«من» من المسار الملتقط (ق٥)');
   const glossary = attachedGlossary(await page.store.getPrefs());

@@ -15,7 +15,7 @@ const openDisplay = (page) => {
   assert.equal(page.ui.menuLabel(), 'الترجمة');
 };
 const slotButtons = (page) => page.ui.menu().querySelectorAll('button.slot');
-const LABELS_SLOTS_FULL = 'الخانات الثلاث ممتلئة؛ الرفع استبدال.';
+const LABELS_SLOTS_FULL = 'بلغت ترجمات هذا الفيديو حدّها (ثلاث)، فالملف الجديد يحل محل إحداها.';
 
 test('محدد الترجمات: ترجمتان تعرضان خيارين فقط (لا خانة فارغة)، والنشطة مميّزة، بلا تسميات ولا شرح', () => {
   const page = mountPage({ state: makeState(three()) });

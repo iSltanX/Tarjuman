@@ -163,7 +163,7 @@ export function derive(state, page, ui) {
     original,
     dualPref,
     dual: dualPref && !!original,
-    capture: en ? { done: true, lang: en.lang, langName: original.name, kind: en.kind, count: en.cues.length, saved: en.source === 'saved' } : null,
+    capture: en ? { done: true, lang: en.lang, langName: original.name, kind: en.kind, via: en.via ? languageName(en.via) || en.via : null, count: en.cues.length, saved: en.source === 'saved' } : null,
     error: state.error ? { code: state.error.code, message: state.error.message } : null,
   };
 }

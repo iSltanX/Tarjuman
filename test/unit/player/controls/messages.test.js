@@ -64,7 +64,7 @@ test('معنى الإزاحة بالكلمات', () => {
 test('ملخص المقارنة بالمطابقة العددية للصفة، وقائمة الأرقام المختصرة', () => {
   const s = (o) => comparisonSummary(matched({ matched: false, ...o })).text;
   assert.deepEqual(comparisonSummary(matched()), { tone: 'ok', text: 'مطابق للأصل' });
-  assert.deepEqual(comparisonSummary(null), { tone: 'info', text: 'لا بصمة للمقارنة؛ عُرض الملف كما هو.' });
+  assert.deepEqual(comparisonSummary(null), { tone: 'info', text: 'لم يُنزَّل الأصل من ترجمان لهذا الفيديو، فلا مقارنة؛ يُعرض الملف كما هو.' });
   assert.equal(comparisonSummary(matched({ fingerprintId: null, matched: false })).tone, 'info');
   assert.equal(s({ missing: [5] }), 'مقطع واحد ناقص: 5');
   assert.equal(s({ missing: [5, 6] }), 'مقطعان ناقصان: 5، 6');

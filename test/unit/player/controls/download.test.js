@@ -15,7 +15,7 @@ const named = (name) => `نُزّل ${String.fromCodePoint(0x2066)}${name}${Stri
 const open = (page) => {
   click(page.ui.btn('download'));
   assert.equal(page.ui.menuOpen(), true);
-  assert.equal(page.ui.menuLabel(), 'تحميل الأصل');
+  assert.equal(page.ui.menuLabel(), 'تنزيل الأصل');
 };
 const lines = (page) => page.ui.menu().querySelectorAll('.line').map((l) => [l.getAttribute('data-fid'), l.getAttribute('data-tone'), l.textContent]);
 const withTrack = (over = {}) => mountPage({ state: makeState({ captured: [trackInfo()], ...over }) });
@@ -23,7 +23,7 @@ const withTrack = (over = {}) => mountPage({ state: makeState({ captured: [track
 test('لم يُلتقط مسار: إرشاد لتفعيل CC واختيار English، و«لماذا؟» يكشف سطري الشرح، ولا زر تنزيل', () => {
   const page = mountPage();
   open(page);
-  assert.match(page.ui.menuText(), /فعّل الترجمة \(CC\) واختر لغة المسار الذي تريده، ثم افتح هذه القائمة\./);
+  assert.match(page.ui.menuText(), /فعّل ترجمة يوتيوب \(CC\) واختر اللغة التي تريدها، ثم افتح هذه القائمة\./);
   assert.ok(page.ui.item(DL) === null);
   assert.equal(page.ui.menuText().includes('لا يرسل أي طلب'), false);
   click(page.ui.item('لماذا؟'));
@@ -43,7 +43,7 @@ test('رفض مسار (قديم أو مستقبلي): رسالته وخطوات 
   }
   const brave = mountPage({ state: makeState({ captureIssue: { code: 'EX_NOT_ENGLISH', at: 1 } }), brave: true });
   open(brave);
-  assert.equal(brave.ui.menu().querySelector('.note-in').textContent, 'Brave قد يختار لغة المتصفح أولًا؛ اختر اللغة التي تريدها مرة');
+  assert.equal(brave.ui.menu().querySelector('.note-in').textContent, 'في Brave قد تظهر لغة المتصفح أولًا؛ فاختر اللغة التي تريدها من قائمة الترجمة في يوتيوب.');
 });
 
 test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-07): سطر واحد بعددها وخطوات اختيارها من يوتيوب، لا صف لكل مسار ولا زر يبدّله', () => {
@@ -109,7 +109,7 @@ test('مسار واحد: سطر الحالة بوصفه، ووضع التصدي�
   assert.ok(page.ui.menu().querySelector('.row.status svg.glyph'), 'علامة الالتقاط رمز SVG لا محرف');
   assert.equal(page.ui.menu().querySelector('.row.status').getAttribute('data-tone'), 'warn', 'مسار قد يكون ناقصًا: علامة تحذير لا علامة سلامة');
   assert.equal(text.includes('مقاطع كما في يوتيوب'), false, 'لا سطر شرح في المشغّل');
-  assert.equal(page.ui.field('mode:normal').getAttribute('title'), 'مقاطع كما في يوتيوب، للتزامن الأدق', 'الشرح في التلميح');
+  assert.equal(page.ui.field('mode:normal').getAttribute('title'), 'مقاطع قصيرة قريبة من تقسيم يوتيوب، للتزامن الأدق مع الكلام', 'الشرح في التلميح');
   assert.match(text, /آخر ترجمة عند 12:40 والفيديو 18:05؛ قد يكون النص ناقصًا\./);
   const dl = page.ui.item(DL);
   assert.equal(dl.className, 'primary');
@@ -118,10 +118,10 @@ test('مسار واحد: سطر الحالة بوصفه، ووضع التصدي�
   // تعليمات الترجمة من نافذة الإضافة (AA3، لوحة 10): لا زر نسخ في المشغّل، وسطر يدل عليها.
   assert.ok(page.ui.field('copy') === null, 'لا زر نسخ');
   assert.equal(page.ui.menu().querySelectorAll('button').filter((b) => /نسخ/.test(b.textContent)).length, 0);
-  assert.equal(page.ui.field('instructionsNote').textContent, 'تعليمات الترجمة (من ← إلى) من نافذة الإضافة');
+  assert.equal(page.ui.field('instructionsNote').textContent, 'انسخ تعليمات الترجمة من نافذة الإضافة.');
   assert.equal(dl.parentNode.className, 'actions');
   click(page.ui.item('مقاطع أطول'));
-  assert.equal(page.ui.field('mode:long').getAttribute('title'), 'جمل أطول ليفهم النموذج السياق، بالترقيم والتوقيت نفسيهما');
+  assert.equal(page.ui.field('mode:long').getAttribute('title'), 'يدمج المقاطع المتجاورة في جمل أطول ليفهم النموذج السياق، فيتغير عدد المقاطع وترقيمها وحدود توقيتها');
   assert.equal(page.ui.item('مقاطع أطول').getAttribute('aria-checked'), 'true');
 });
 
@@ -212,8 +212,8 @@ test('تحذيرات البناء تظهر بعد التنزيل (تقسيم ل�
 test('التقسيم مطوي تحت «خيارات احتياطية»: عند الجمل أو الصمت، بأحجام الأجزاء قبل التنزيل، والتحقق، وحفظ كل جزء', async () => {
   const page = withTrack();
   open(page);
-  assert.equal(page.ui.menuText().includes('تقسيم الملف'), false, 'مطوي');
-  click(page.ui.item('خيارات احتياطية'));
+  assert.equal(page.ui.menuText().includes('تقسيم الملف إلى أجزاء'), false, 'مطوي');
+  click(page.ui.item('تقسيم الملفات الطويلة'));
   const check = page.ui.field('split');
   check.checked = true;
   check.dispatchEvent({ type: 'change', target: check });
@@ -224,7 +224,7 @@ test('التقسيم مطوي تحت «خيارات احتياطية»: عند �
   page.ui.field('splitSize').dispatchEvent({ type: 'input', target: page.ui.field('splitSize') });
   page.env.win.advance(PREVIEW_MS + 10);
   const rows = page.ui.menu().querySelectorAll('.row.part').map((r) => r.textContent);
-  assert.deepEqual(rows, ['1 · 1–2 · 3 محارف', '2 · 3–4 · 6 محارف', '3 · 5–6 · 9 محارف']);
+  assert.deepEqual(rows, ['الجزء 1 · المقاطع 1–2 · 3 أحرف', 'الجزء 2 · المقاطع 3–4 · 6 أحرف', 'الجزء 3 · المقاطع 5–6 · 9 أحرف']);
   assert.equal(page.ui.menu().querySelector('.row.part bdi').getAttribute('dir'), 'ltr');
   page.ui.field('splitSize').value = '7';
   page.ui.field('splitSize').dispatchEvent({ type: 'input', target: page.ui.field('splitSize') });
@@ -250,7 +250,7 @@ test('إلغاء حوار الحفظ في جزء يوقف بقية الأجزا�
   page.flows.parts = 3;
   page.flows.saveResults = [{ ok: true, mode: 'ask', downloadId: 1 }, { ok: false, code: 'SV_CANCELLED' }];
   open(page);
-  click(page.ui.item('خيارات احتياطية'));
+  click(page.ui.item('تقسيم الملفات الطويلة'));
   const check = page.ui.field('split');
   check.checked = true;
   check.dispatchEvent({ type: 'change', target: check });
@@ -311,8 +311,8 @@ test('«اللغة»: رمز لا يعرفه المتصفح أو غير صالح
 test('عنوان القائمة «تحميل الأصل»، واسم الوصول لها، ولا «تحميل الترجمة» في أي نص منها أو من تلميح زرها', () => {
   const page = withTrack();
   open(page);
-  assert.equal(page.ui.menu().querySelector('.title').textContent, 'تحميل الأصل');
-  assert.equal(page.ui.menuLabel(), 'تحميل الأصل');
+  assert.equal(page.ui.menu().querySelector('.title').textContent, 'تنزيل الأصل');
+  assert.equal(page.ui.menuLabel(), 'تنزيل الأصل');
   assert.equal(page.ui.menuText().includes('تحميل الترجمة'), false);
   assert.equal(page.ui.btn('download').getAttribute('aria-label').includes('الترجمة الإنجليزية'), false);
 });

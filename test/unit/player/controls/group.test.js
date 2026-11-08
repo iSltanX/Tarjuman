@@ -21,7 +21,7 @@ test('بلا ترجمة عربية: − والشارة و+ معطّلة بسبب
   assert.equal(ui.btn('upload').getAttribute('aria-disabled'), null);
   assert.equal(ui.btn('download').getAttribute('aria-disabled'), null);
   assert.equal(ui.btn('upload').getAttribute('aria-label'), 'رفع الترجمة (SRT)');
-  assert.equal(ui.btn('download').getAttribute('aria-label'), 'تحميل الأصل (SRT)');
+  assert.equal(ui.btn('download').getAttribute('aria-label'), 'تنزيل الأصل (SRT)');
 });
 
 test('أثناء قراءة المحفوظ: أفعال العرض معطّلة بسبب ظاهر، والضغط لا يغيّر شيئًا', () => {
@@ -56,7 +56,7 @@ test('التلميحات بالخطوة الحالية ومعنى الإشارة
   page.env.win.advance(TIP_HIDE_MS + 10);
   assert.equal(ui.tip(), null);
   ui.btn('download').focus();
-  assert.equal(ui.tip(), 'تحميل الأصل (SRT)');
+  assert.equal(ui.tip(), 'تنزيل الأصل (SRT)');
 });
 
 test('− و+ يغيّران الإزاحة وحدها بخطوة الإعداد: نبضة وتلميح عابر لثانية، ولا مساس بالمظهر ولا بالمقاطع', () => {
@@ -159,14 +159,14 @@ test('معنى الحالة في اسم الوصول ووصفه وتلميحه �
     return t;
   };
   assert.equal(ui.btn('download').getAttribute('aria-description'), null);
-  assert.equal(tipOf('download'), 'تحميل الأصل (SRT)', 'لا مسار: الاسم وحده');
+  assert.equal(tipOf('download'), 'تنزيل الأصل (SRT)', 'لا مسار: الاسم وحده');
   page.controller.set({ captured: [trackInfo()] });
-  assert.equal(ui.btn('download').getAttribute('aria-label'), 'تحميل الأصل (SRT)', 'اسم الوصول هو اسم الوظيفة');
-  assert.equal(ui.btn('download').getAttribute('aria-description'), 'المسار جاهز');
-  assert.equal(tipOf('download'), 'تحميل الأصل (SRT) · المسار جاهز');
+  assert.equal(ui.btn('download').getAttribute('aria-label'), 'تنزيل الأصل (SRT)', 'اسم الوصول هو اسم الوظيفة');
+  assert.equal(ui.btn('download').getAttribute('aria-description'), 'الأصل جاهز');
+  assert.equal(tipOf('download'), 'تنزيل الأصل (SRT) · الأصل جاهز');
   page.controller.set({ captured: [trackInfo({ warnings: ['EX_MAYBE_INCOMPLETE'] })] });
-  assert.equal(ui.btn('download').getAttribute('aria-description'), 'قد يكون المسار ناقصًا');
-  assert.equal(tipOf('download'), 'تحميل الأصل (SRT) · قد يكون المسار ناقصًا');
+  assert.equal(ui.btn('download').getAttribute('aria-description'), 'قد يكون الأصل ناقصًا');
+  assert.equal(tipOf('download'), 'تنزيل الأصل (SRT) · قد يكون الأصل ناقصًا');
   page.controller.set({ arabic: arabic() });
   assert.equal(ui.btn('upload').getAttribute('aria-label'), 'الترجمة: talk.ar.srt');
   assert.equal(ui.btn('upload').getAttribute('aria-description'), 'مطابق للأصل');
@@ -180,7 +180,7 @@ test('الاسم تلميح عند المرور وعند التركيز بلوح
   const page = mountPage({ state: withArabic({ view: { displayOffsetMs: 500, displayMode: 'ar' } }) });
   const { ui } = page;
   const expected = {
-    download: 'تحميل الأصل (SRT)',
+    download: 'تنزيل الأصل (SRT)',
     upload: 'الترجمة',
     minus: 'تقديم الترجمة 0.5 ث (تظهر أبكر)',
     badge: 'الإزاحة: \u2066+0.5\u2069 ث (تظهر الترجمة لاحقًا). اضغط للخيارات',

@@ -86,7 +86,7 @@ test('U44: «تحميل الأصل» و«الترجمة» حواران لا قا
   const roles = ui.menu().querySelectorAll('[role]').map((e) => e.getAttribute('role'));
   assert.ok(!roles.some((r) => r.startsWith('menuitem')), roles.join(','));
   // المساران مجموعة اختيار واحد بنقطة Tab واحدة والأسهم تنقل بينهما.
-  const tracks = ui.menu().querySelectorAll('[role="radiogroup"]').find((g) => g.getAttribute('aria-label') === 'المسار');
+  const tracks = ui.menu().querySelectorAll('[role="radiogroup"]').find((g) => g.getAttribute('aria-label') === 'ترجمة يوتيوب الملتقطة');
   assert.ok(tracks, 'مجموعة المسارات');
   const radios = tracks.children;
   assert.deepEqual(radios.map((r) => [r.getAttribute('role'), r.getAttribute('tabindex')]), [['radio', '0'], ['radio', '-1']]);
@@ -218,7 +218,7 @@ test('U48: حقل «مقاطع لكل جزء» موصوف برسالة خطئه 
   const { ui } = page;
   H.click(ui.btn('download'), 0);
   await settleN(2);
-  H.click(ui.item('خيارات احتياطية'), 0);
+  H.click(ui.item('تقسيم الملفات الطويلة'), 0);
   await settleN(2);
   const split = ui.field('split');
   split.checked = true;

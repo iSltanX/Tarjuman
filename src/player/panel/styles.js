@@ -128,7 +128,6 @@ export function panelCss() {
 .steps li.done .steps__n { border-color: var(--tj-success); background: var(--tj-success-bg); color: var(--tj-success); }
 .steps li.now { color: var(--tj-text); }
 .steps li.now .steps__n { border-color: var(--tj-brand); background: var(--tj-brand); color: var(--tj-brand-ink); }
-.empty__note { margin: 0; font-size: 12px; line-height: 18px; color: var(--tj-muted); }
 .alert { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-danger-bg); font-size: 13px; line-height: 20px; }
 .alert .ic { color: var(--tj-danger); margin-top: 1px; }
 .alert__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }

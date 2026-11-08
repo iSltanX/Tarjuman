@@ -256,7 +256,7 @@ test('تمرير المستخدم (عجلة) يوقف التتبّع: يتبدّ
   assert.equal(hidden(pill), false, 'تظهر فور إيقاف التتبّع');
   assert.ok(pill.textContent.includes('العودة إلى'));
   assert.ok(pill.textContent.includes('00:50'), 'زمن المرساة');
-  assert.equal(pill.getAttribute('aria-label'), 'العودة إلى 00:50');
+  assert.equal(pill.getAttribute('aria-label'), 'العودة إلى المقطع الحالي · 00:50');
   page.video.tickTo(80.5);
   assert.equal(list.scrolls.length, base, 'لا تحرّك بعد الإيقاف');
   assert.ok(ui(page).resume.textContent.includes('01:20'), 'الزمن يتبع المرساة الحالية');

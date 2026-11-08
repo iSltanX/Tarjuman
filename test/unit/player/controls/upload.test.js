@@ -112,7 +112,7 @@ test('ملخص المقارنة بلونه: نقص بأرقامه، وتوقيت
   assert.equal(p2.ui.menu().querySelector('.summary').textContent, 'توقيت مختلف في 12 مقطعًا');
   const p3 = mountPage({ state: makeState({ arabic: arabic({ comparison: null }) }) });
   click(p3.ui.btn('upload'));
-  assert.equal(p3.ui.menu().querySelector('.summary').textContent, 'لا بصمة للمقارنة؛ عُرض الملف كما هو.');
+  assert.equal(p3.ui.menu().querySelector('.summary').textContent, 'لم يُنزَّل الأصل من ترجمان لهذا الفيديو، فلا مقارنة؛ يُعرض الملف كما هو.');
 });
 
 /** صفحة بترجمة في الخانة 1 (نشطة) وما يُعطى من غيرها، ثم الرفع من قائمة العرض حتى التأكيد المضغوط. */
@@ -198,7 +198,7 @@ test('استبدال خانة معدّلة: «سيُستبدل تعديلان ي
   assert.equal(keep.getAttribute('aria-label'), 'إبقاء تعديلاتي');
   keep.checked = true;
   keep.dispatchEvent({ type: 'change', target: keep });
-  assert.match(page.ui.menuText(), /تُبقى تعديلاتك اليدوية/);
+  assert.match(page.ui.menuText(), /تبقى تعديلاتك اليدوية\./);
   click(page.ui.item('استبدال'));
   await settle();
   const [, n, input, opts] = loads(page)[0];

@@ -103,7 +103,7 @@ test('قائمة خيارات اللوحة: بند واحد «إخفاء زر ا
   const items = v.qa('.menu [role="menuitem"]');
   assert.equal(items.length, 1);
   assert.ok(items[0].textContent.includes('إخفاء زر اللوحة'));
-  assert.ok(items[0].textContent.includes('من كل صفحات الفيديو. تعيده من نافذة ترجمان أو الإعدادات.'));
+  assert.ok(items[0].textContent.includes('من كل صفحات الفيديو. تعيده من نافذة الإضافة أو الإعدادات.'));
   key(items[0], 'Escape');
   assert.equal(hidden(v.q('.menu')), true);
   assert.equal(opts.getAttribute('aria-expanded'), 'false');
@@ -269,8 +269,8 @@ test('لا مسار أصلي: «مع الأصل» معطّل بسببه (aria و
   page.mount();
   const [ar, dual] = ui(page).segs();
   assert.equal(dual.getAttribute('aria-disabled'), 'true');
-  assert.ok(dual.getAttribute('title').includes('لا مسار أصلي'));
-  assert.ok(dual.getAttribute('aria-label').includes('لا مسار أصلي'));
+  assert.ok(dual.getAttribute('title').includes('الأصل غير ملتقط'));
+  assert.ok(dual.getAttribute('aria-label').includes('الأصل غير ملتقط'));
   assert.equal(ar.getAttribute('aria-checked'), 'true');
   assert.equal(dual.getAttribute('aria-checked'), 'false');
   click(dual);
@@ -295,7 +295,7 @@ test('مفتاح «متابعة التشغيل»: مفعّل افتراضيًا 
   const sw = ui(page).switchEl;
   assert.equal(sw.getAttribute('role'), 'switch');
   assert.equal(sw.getAttribute('aria-checked'), 'true');
-  assert.ok(sw.textContent.includes('متابعة التشغيل'));
+  assert.ok(sw.textContent.includes('تمرير تلقائي'));
   click(sw);
   assert.equal(ui(page).switchEl.getAttribute('aria-checked'), 'false');
   assert.equal(ago(page, 'updatePrefs').length, 0, 'لا يُحفظ');
@@ -322,6 +322,16 @@ test('جارٍ التحميل: هيكل صفوف وaria-busy ومؤشر، بلا
   assert.equal(handle.peek().rows, 3);
 });
 
+test('ق-4: سطر الأصل في الحالة الفارغة يميّز ترجمة يوتيوب الآلية بلغة مصدرها، والمحفوظة «محفوظة»', () => {
+  const names = new Intl.DisplayNames(['ar'], { type: 'language' });
+  const captured = watchPage({ state: makeState({ arabic: null, activeSlot: null, english: english({ key: 'ar|asr|en', lang: 'ar', kind: 'asr', via: 'en', cues: enCues(412) }) }) });
+  const h1 = captured.mount();
+  assert.equal(h1.peek().steps[0].text, `${names.of('ar')} · ترجمة يوتيوب الآلية عن ${names.of('en')} · ملتقطة · 412 مقطعًا`);
+  const saved = watchPage({ state: makeState({ arabic: null, activeSlot: null, english: english({ key: 'ar|asr|en', lang: 'ar', kind: 'asr', via: 'en', source: 'saved', cues: enCues(412) }) }) });
+  const h2 = saved.mount();
+  assert.equal(h2.peek().steps[0].text, `${names.of('ar')} · ترجمة يوتيوب الآلية عن ${names.of('en')} · محفوظة · 412 مقطعًا`);
+});
+
 test('لا ترجمة: خطوات تدل على «زر التنزيل» و«زر الرفع» بالاسم دون تكرارهما (لا أزرار تحميل ولا رفع في اللوحة)', () => {
   const page = watchPage({ state: makeState({ arabic: null, activeSlot: null, english: english({ cues: enCues(412) }) }) });
   const handle = page.mount();
@@ -336,8 +346,9 @@ test('لا ترجمة: خطوات تدل على «زر التنزيل» و«زر
   assert.equal(steps[0].state, 'done');
   assert.ok(steps[1].text.includes('زر التنزيل'));
   assert.equal(steps[1].state, 'now');
-  assert.ok(steps[2].text.includes('زر الرفع'));
-  assert.ok(v.q('.empty__note').textContent.includes('متزامنًا'));
+  assert.ok(steps[2].text.includes('زر «رفع الترجمة (SRT)»'));
+  assert.ok(v.q('.empty__note') === null, 'لا سطر ختامي بعد دمجه في خطوة الرفع (م-209)');
+  assert.ok(v.q('.steps').textContent.includes('فيظهر نصه هنا متزامنًا مع الفيديو'));
   assert.equal(v.qa('.empty button').length, 0, 'لا زر يكرر زرّي الشريط');
   assert.equal(handle.peek().rows, 0);
   assert.equal(hidden(v.q('.foot')), true);
@@ -398,16 +409,16 @@ test('عمود ضيق (≤ 320): تسميات مختصرة «الترجمة»/«
   assert.equal(handle.peek().narrow, true);
   const [ar, dual] = ui(page).segs();
   assert.equal(ar.textContent, 'الترجمة');
-  assert.equal(dual.textContent, 'مزدوج');
+  assert.equal(dual.textContent, 'مع الأصل');
   assert.ok(dual.getAttribute('aria-label').includes('مع'), 'اسم الوصول الكامل');
   assert.equal(ar.getAttribute('aria-label'), 'الترجمة وحدها');
-  assert.equal(ui(page).switchEl.textContent, 'متابعة');
-  assert.equal(ui(page).switchEl.getAttribute('aria-label'), 'متابعة التشغيل');
+  assert.equal(ui(page).switchEl.textContent, 'تمرير تلقائي');
+  assert.equal(ui(page).switchEl.getAttribute('aria-label'), 'تمرير تلقائي');
   assert.equal(ui(page).q('.root').hasAttribute('data-narrow'), true);
   host.rect = { ...host.rect, width: 402 };
   page.env.win.resize(host);
   assert.equal(ui(page).segs()[0].textContent, 'الترجمة وحدها');
-  assert.equal(ui(page).switchEl.textContent, 'متابعة التشغيل');
+  assert.equal(ui(page).switchEl.textContent, 'تمرير تلقائي');
 });
 
 test('عمود ضيق: أزرار − و+ بأسماء وصول كاملة (الكلمات تُخفى بالأنماط لا من DOM)', () => {

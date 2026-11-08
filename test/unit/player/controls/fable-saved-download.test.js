@@ -20,19 +20,19 @@ test('FA-17: مسار محفوظ بلا التقاط: القائمة تعرضه 
   click(page.ui.btn('download'));
   const text = page.ui.menuText();
   assert.match(text, /الإنجليزية · يدوية · 5 مقاطع · محفوظ/);
-  assert.match(text, /لم تُلتقط الترجمة في هذه الزيارة؛ يُنزَّل المسار المحفوظ من تنزيلك السابق\./);
-  assert.ok(page.ui.item('تنزيل المحفوظ'), 'زر التنزيل');
+  assert.match(text, /لم تُلتقط ترجمة يوتيوب في هذه الزيارة؛ يُنزَّل الأصل المحفوظ من تنزيلك السابق\./);
+  assert.ok(page.ui.item('تنزيل الأصل المحفوظ'), 'زر التنزيل');
   assert.ok(page.ui.item('نسخ التعليمات') === null, 'لا نسخ في المشغّل (AA3)');
-  assert.match(text, /تعليمات الترجمة \(من ← إلى\) من نافذة الإضافة/);
-  assert.match(text, /فعّل الترجمة \(CC\) واختر لغة المسار الذي تريده، ثم افتح هذه القائمة\./, 'إرشاد CC باقٍ للالتقاط الجديد');
-  assert.ok(text.indexOf('تنزيل المحفوظ') < text.indexOf('فعّل الترجمة'), 'المحفوظ أولًا');
-  assert.equal(page.ui.btn('download').getAttribute('aria-description'), 'المسار المحفوظ جاهز');
+  assert.match(text, /انسخ تعليمات الترجمة من نافذة الإضافة\./);
+  assert.match(text, /فعّل ترجمة يوتيوب \(CC\) واختر اللغة التي تريدها، ثم افتح هذه القائمة\./, 'إرشاد CC باقٍ للالتقاط الجديد');
+  assert.ok(text.indexOf('تنزيل الأصل المحفوظ') < text.indexOf('فعّل ترجمة يوتيوب'), 'المحفوظ أولًا');
+  assert.equal(page.ui.btn('download').getAttribute('aria-description'), 'الأصل المحفوظ جاهز');
 });
 
 test('FA-17: «تنزيل المحفوظ» يبني المسار المحفوظ بالوضع العادي بلا تقسيم ويحفظ الملف ثم البصمة بلا تكرار', async () => {
   const page = mountPage({ state: makeState({ english: savedEnglish }) });
   click(page.ui.btn('download'));
-  click(page.ui.item('تنزيل المحفوظ'));
+  click(page.ui.item('تنزيل الأصل المحفوظ'));
   await settle();
   const spec = page.flows.built.at(-1);
   assert.deepEqual([spec.mode, spec.split, spec.track.key, spec.track.cues.length], ['normal', null, 'en|manual', 5]);
@@ -49,7 +49,7 @@ test('FA-17: مع التقاط حي تبقى القائمة المعتادة (ا
   click(page.ui.btn('download'));
   assert.equal(page.ui.menuText().includes('محفوظ'), false);
   assert.ok(page.ui.item('تنزيل الملف'));
-  assert.ok(page.ui.item('تنزيل المحفوظ') === null);
+  assert.ok(page.ui.item('تنزيل الأصل المحفوظ') === null);
 });
 
 test('FA-17: recordSavedExport في المتحكم الحقيقي يحفظ بصمة جديدة مرة واحدة، ولا يكرر بصمة التصدير نفسه', async () => {

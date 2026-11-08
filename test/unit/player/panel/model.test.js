@@ -199,7 +199,7 @@ test('نص المقطع يُسوّى لسطر واحد، ومعنى الإزاح
   assert.equal(offsetMeaningShort(-500), 'تظهر أبكر');
   assert.equal(offsetMeaningShort(0), 'في توقيتها المحفوظ');
   assert.equal(offsetMeaningShort(40), 'في توقيتها المحفوظ', 'دون شبكة 100ms');
-  assert.ok(LABELS.hideHint.includes('نافذة ترجمان'));
+  assert.ok(LABELS.hideHint.includes('نافذة الإضافة'));
 });
 
 test('derive يحمل مراجع المقاطع نفسها (المتحكم يثبّتها ما لم يتغير مصدرها)', () => {

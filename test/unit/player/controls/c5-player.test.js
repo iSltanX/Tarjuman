@@ -50,7 +50,7 @@ test('U31: معاينة الأجزاء تقول إن حجم الجزء رُفع 
   const page = mountPage({ state: makeState({ captured: [trackInfo()] }) });
   page.flows.parts = 3;
   click(page.ui.btn('download'));
-  click(page.ui.item('خيارات احتياطية'));
+  click(page.ui.item('تقسيم الملفات الطويلة'));
   const check = page.ui.field('split');
   check.checked = true;
   check.dispatchEvent({ type: 'change', target: check });
