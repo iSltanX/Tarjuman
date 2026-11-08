@@ -34,6 +34,11 @@ const WATCH = `https://www.youtube.com/watch?v=${VIDEO}`;
 const SITE = 'https://bysltan.com';
 const SUPPORT = 'https://bysltan.com/tarjuman/support';
 const REPO = 'https://github.com/iSltanX/Tarjuman';
+/** نصوص «حول» بلغة الواجهة المعروضة (2.1.0): Firefox يبدأ بلغة المتصفح، وهي الإنجليزية في ملف الاختبار. */
+const ABOUT_TEXT = {
+  ar: { report: 'الإبلاغ عن مشكلة', support: 'الدعم والخصوصية', icons: 'وأيقونات الواجهة رُسمت لهوية ترجمان؛ وترخيصا Lucide (ISC) وFeather (MIT) في ملف الإشعارات لأن الإصدارات السابقة استعملت أيقوناتهما.', design: 'التصميم والتطوير', author: 'سلطان', copyright: '© 2026 سلطان (BySultan). جميع الحقوق محفوظة.' },
+  en: { report: 'Report a problem', support: 'Support and privacy', icons: 'The interface icons were drawn for Tarjuman’s identity; the Lucide (ISC) and Feather (MIT) licenses are in the notices file', design: 'Design and development', author: 'Sultan', copyright: '© 2026 Sultan (BySultan). All rights reserved.' },
+};
 const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const WORK = path.join(PROFILE_ROOT, 't8-work', `${browser}-${RUN}`);
 const EXT = path.join(WORK, 'ext');
@@ -105,7 +110,8 @@ try {
     });
     await step('about', async () => {
       await sleep(600);
-      const a = await st.eval(() => {
+      const expected = ABOUT_TEXT[await st.eval(() => document.documentElement.lang)] ?? ABOUT_TEXT.ar;
+      const a = await st.eval((x) => {
         const sec = document.querySelector('section#about');
         const t = (sec?.textContent ?? '').replace(/\s+/g, ' ');
         const links = [...(sec?.querySelectorAll('a') ?? [])];
@@ -113,16 +119,16 @@ try {
           version: [...(sec?.querySelectorAll('.st-about__row') ?? [])].map((r) => r.textContent.replace(/\s+/g, ' ').trim()),
           external: links.filter((l) => /^https?:/.test(l.getAttribute('href') ?? '')).map((l) => ({ href: l.getAttribute('href'), text: l.textContent.trim(), target: l.getAttribute('target'), rel: l.getAttribute('rel') })),
           notices: links.filter((l) => /THIRD_PARTY_NOTICES\.txt$/.test(l.getAttribute('href') ?? '')).map((l) => l.textContent.trim()),
-          report: [...(sec?.querySelectorAll('button, summary') ?? [])].some((b) => b.textContent.includes('الإبلاغ عن مشكلة')),
-          lucide: t.includes('وأيقونات الواجهة رُسمت لهوية ترجمان؛ وترخيصا Lucide (ISC) وFeather (MIT) في ملف الإشعارات لأن الإصدارات السابقة استعملت أيقوناتهما.'),
-          credits: t.includes('التصميم والتطوير') && t.includes('سلطان') && t.includes('© 2026 سلطان (BySultan). جميع الحقوق محفوظة.'),
+          report: [...(sec?.querySelectorAll('button, summary') ?? [])].some((b) => b.textContent.includes(x.report)),
+          lucide: t.includes(x.icons),
+          credits: t.includes(x.design) && t.includes(x.author) && t.includes(x.copyright),
         };
-      });
+      }, { args: [expected] });
       const hrefs = a.external.map((x) => x.href).sort();
       check('about-version', a.version.some((r) => r.includes(VERSION)), { rows: a.version });
       // روابط «حول» الثلاثة منذ 2.0.0 (الموقع والمستودع العام والدعم) وبطاقة الحقوق بطلب سلطان (2026-11-07).
       check('about-links-site-repo-and-support', JSON.stringify(hrefs) === JSON.stringify([SITE, REPO, SUPPORT].sort()) && a.external.every((x) => x.target === '_blank' && /noopener/.test(x.rel ?? '')) && a.credits,
-        { links: a.external.map((x) => ({ text: x.text, target: x.target })), support: a.external.some((x) => x.href === SUPPORT && x.text === 'الدعم والخصوصية') });
+        { links: a.external.map((x) => ({ text: x.text, target: x.target })), support: a.external.some((x) => x.href === SUPPORT && x.text === expected.support) });
       check('about-report-button', a.report);
       check('about-icons-line-and-notices-link', a.lucide && a.notices.length === 1, { notices: a.notices });
       const notices = await readFile(path.join(EXT, 'THIRD_PARTY_NOTICES.txt'), 'utf8').catch(() => '');

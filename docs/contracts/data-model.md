@@ -69,7 +69,7 @@ Fingerprint = {
 
 ```js
 ComparisonReport = {
-  fingerprintId: "fp_…" | null,    // null = لا بصمة للمقارنة («عُرض الملف كما هو»)
+  fingerprintId: "fp_…" | null,    // null = لا بصمة للمقارنة («يُعرض الملف كما هو»)
   matched: boolean,                // تطابق العدد والترقيم، ولا نقص ولا زيادة ولا انحراف فوق العتبة
   countSource: 427 | null,         // عدد البصمة؛ null بلا بصمة
   countTarget: 425,                // عدد الملف العربي
@@ -79,7 +79,7 @@ ComparisonReport = {
   empty: [201], noArabic: [88],    // تحذيرات محتوى لا تؤثر في matched
   restoreTimingAvailable: boolean, // true فقط عند تطابق العدد والترقيم
   driftThresholdMs: 100,           // العتبة المستعملة
-  notes: ["أُزيل سياج ``` حول الملف"]   // كل تحويل للنص يُذكر هنا
+  notes: ["أُزيلت علامات كتلة النص (``` أو ~~~) المحيطة بالملف."]   // كل تحويل للنص يُذكر هنا
 }
 ```
 
