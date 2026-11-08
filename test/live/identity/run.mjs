@@ -718,7 +718,7 @@ try {
     await closeBarMenus();
     await clickBar('upload');
     const m2 = await barMenu();
-    check('player-menu-titles', m1?.label === 'تحميل الأصل' && m2?.label === 'الترجمة', { download: m1?.label, upload: m2?.label, ...why1 });
+    check('player-menu-titles', m1?.label === 'تنزيل الأصل' && m2?.label === 'الترجمة', { download: m1?.label, upload: m2?.label, ...why1 });
     // قائمة «الترجمة» المفتوحة (لوحة 10): زرها المفتوح بالطين الليلي، والخانة المختارة في «حفظ في» والمقطّعة بالطين الليلي بحبر داكن،
     // والخيار المحدد في القائمة صبغة طين 18% بنص طيني، والرئيسي بالطين.
     const open = await shadowStyle('tarjuman-controls', 'button[aria-expanded="true"]');
@@ -782,7 +782,7 @@ try {
     });
     // البلاطة صنوبر #1E4A44 وزواياها شفافة؛ والرمز عاج #F3EFE6 (النقطة والكتاب)، والفجوة بين النقطتين والكتاب بلون البلاطة.
     check('extension-icon-pine-tile-ivory-mark-transparent-corners', icon.corner[3] === 0 && icon.tile.slice(0, 3).join() === '30,74,68' && icon.dot.slice(0, 3).join() === '243,239,230' && icon.gap.slice(0, 3).join() === '30,74,68' && icon.book.slice(0, 3).join() === '243,239,230' && icon.size.join() === '128,128', icon);
-    check('popup-shows-hidden-entry-row', !!row && row.includes('زر النص المتزامن مخفي') && row.includes('إظهاره'), { row });
+    check('popup-shows-hidden-entry-row', !!row && row.includes('زر النص المتزامن مخفي') && row.includes('إظهار'), { row });
     await shoot(pop, 'popup-entry-hidden', { width: 360 });
     await clickSel(pop, '.tj-popup__entry [data-action="show-entry"]');
     await pop.waitFor(() => /ظهر زر النص المتزامن/.test(document.querySelector('.tj-popup__entry-result')?.textContent ?? ''), { timeoutMs: 5000 });

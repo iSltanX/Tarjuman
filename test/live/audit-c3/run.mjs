@@ -409,7 +409,7 @@ async function dialogsScenario(ext) {
     const out = { focus: {} };
     // I04: الفتح بلوحة المفاتيح والإغلاق بـEsc: التركيز يعود إلى المُطلِق.
     const triggers = [
-      ['restore-original', () => [...document.querySelectorAll('.ed-head button')].find((b) => b.textContent.trim() === 'استعادة الأصل…')],
+      ['restore-original', () => [...document.querySelectorAll('.ed-head button')].find((b) => b.textContent.trim() === 'الرجوع إلى النسخة المرفوعة…')],
       ['discard', () => [...document.querySelectorAll('.ed-unsaved button')].find((b) => b.textContent.trim() === 'تجاهل التغييرات')],
       ['switch-slot', () => document.querySelectorAll('.ed-head [role=radio]')[1]],
     ];

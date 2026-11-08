@@ -181,7 +181,7 @@ async function openReport(st) {
   await clickOn(st, `document.getElementById('st-report-text')`, 'وصف البلاغ');
   await st.typeText('C1 live test: header capture only, never delivered.');
   await sleep(500);
-  await clickOn(st, byText('#st-report button', 'أرسل البلاغ'), 'أرسل البلاغ');
+  await clickOn(st, byText('#st-report button', 'إرسال البلاغ'), 'إرسال البلاغ');
   return st.waitFor(() => document.querySelector('[data-report-result]')?.getAttribute('data-report-result') ?? null, { timeoutMs: 30000 }).catch(() => null);
 }
 

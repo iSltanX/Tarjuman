@@ -497,22 +497,22 @@ try {
   await settle();
   s = await info();
   const orig2 = await run(E.cue, 2);
-  check('original-view-read-only', s.view === 'original' && s.readOnlyRow && orig2.text === imp.cues[2].text && s.preview === 'الأصل المستورد للعرض والتصدير فقط. اختر «النسخة المعدّلة» للتعديل.',
+  check('original-view-read-only', s.view === 'original' && s.readOnlyRow && orig2.text === imp.cues[2].text && s.preview === 'النسخة المرفوعة للعرض والتصدير فقط. اختر «النسخة المعدّلة» لتعدّل.',
     { view: s.view, readOnly: s.readOnlyRow });
   await openSrtExport();
   const origFile = await downloadFromDialog();
   check('export-original', origFile?.name === `${VIDEO}.ar.original.srt` && origFile.cues[0].startMs === imp.cues[0].startMs && origFile.cues[2].text === imp.cues[2].text, { name: origFile?.name });
   await ed.eval(() => { const sel = document.querySelector('.ed-head select'); sel.value = 'edit'; sel.dispatchEvent(new Event('change')); });
   await settle();
-  await clickOn('.ed-head button', 'استعادة الأصل');
+  await clickOn('.ed-head button', 'الرجوع إلى النسخة المرفوعة');
   s = await info();
   const restoreDlg = s.dialog;
-  await clickOn('dialog[open] button', 'استعادة الأصل');
+  await clickOn('dialog[open] button', 'الرجوع إلى النسخة المرفوعة');
   await sleep(800);
   s = await info();
   const stored2 = await iso(P.stored, VIDEO);
   const pl2 = await yt.waitFor(() => globalThis.__tarjuman?.controller.getState().arabic?.edited === false, { contextId: isoId, timeoutMs: 5000, intervalMs: 150 });
-  check('restore-original-with-confirm', restoreDlg?.title === 'استعادة الأصل المستورد؟' && stored2.current === null && stored2.original[2].text === imp.cues[2].text && s.versions.length === 1 && !!pl2,
+  check('restore-original-with-confirm', restoreDlg?.title === 'الرجوع إلى النسخة المرفوعة؟' && stored2.current === null && stored2.original[2].text === imp.cues[2].text && s.versions.length === 1 && !!pl2,
     { dialog: restoreDlg?.title, current: stored2.current, player: !!pl2 });
 
   // ===== التعارض: تعديل غير محفوظ ثم ± من المشغّل =====

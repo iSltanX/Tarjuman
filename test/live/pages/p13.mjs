@@ -194,7 +194,7 @@ async function shot(page, name, { dark = true } = {}) {
 }
 
 const chipLabels = (page) => page.eval(() => [...document.querySelectorAll('.tj-chip')].map((c) => c.getAttribute('aria-label')));
-const chipText = (counts) => ['الكل', 'بانتظار الترجمة', 'مترجمة', 'معدّلة', 'تحذيرات آلية', 'تحتاج مراجعة'].map((l, i) => `${l} (${Object.values(counts)[i]})`);
+const chipText = (counts) => ['الكل', 'بانتظار الترجمة', 'مترجمة', 'معدّلة', 'فيها فروق عن الأصل', 'تحتاج مراجعة'].map((l, i) => `${l} (${Object.values(counts)[i]})`);
 
 async function start() {
   await setDownloadPrefs();
@@ -231,7 +231,7 @@ async function createPhase() {
   await clickOn(lib, byText('.tj-chip', 'تحتاج مراجعة'), 'رقاقة تحتاج مراجعة');
   const review = await lib.waitFor((n) => document.querySelectorAll('li.lib-row').length === Math.min(n, 50) && document.querySelectorAll('li.lib-row').length, { args: [expected.review], timeoutMs: 5000 });
   check('ac6-filter-review', review === Math.min(expected.review, 50), { rows: review, expected: expected.review });
-  await clickOn(lib, byText('.tj-chip', 'تحذيرات آلية'), 'رقاقة تحذيرات آلية');
+  await clickOn(lib, byText('.tj-chip', 'فيها فروق عن الأصل'), 'رقاقة تحذيرات آلية');
   const warned = await lib.waitFor(() => document.querySelectorAll('li.lib-row').length, { timeoutMs: 5000 });
   check('ac6-filter-warnings-separate', warned === Math.min(expected.warnings, 50) && expected.warnings !== expected.review, { rows: warned, warnings: expected.warnings, review: expected.review });
   await clickOn(lib, byText('.tj-chip', 'الكل'), 'رقاقة الكل');
@@ -467,7 +467,7 @@ async function restorePhase() {
   const pv = await textOf(st, topDialog);
   const boxes = await st.eval(() => [...document.querySelectorAll('dialog.tj-dialog[open] .st-restore input[type="checkbox"]')].map((x) => ({ video: x.getAttribute('data-video'), checked: x.checked, role: x.getAttribute('role') })));
   const settingsBox = boxes.find((x) => !x.video && x.role !== 'switch' && x.checked === false);
-  check('ac4-preview', opened && /جديدة — ستُضاف \(302\)/.test(pv) && /موجودة — تُتخطى افتراضيًا \(2\)/.test(pv) && /الحالية أحدث/.test(pv)
+  check('ac4-preview', opened && /فيديوهات جديدة ستُضاف \(302\)/.test(pv) && /فيديوهات موجودة تبقى كما هي ما لم تُستبدل \(2\)/.test(pv) && /الحالية أحدث/.test(pv)
     && boxes.filter((x) => x.video).every((x) => !x.checked) && Boolean(settingsBox) && /نزّل نسخة من بياناتك الحالية أولًا/.test(pv), { counts: /\d+ فيديو[^·]*·[^·]+·[^·]+/.exec(pv)?.[0] ?? null });
   check('ac4-no-write-before-confirm', (await storageHash(st)) === hashBefore);
   await shot(st, 'restore-preview');

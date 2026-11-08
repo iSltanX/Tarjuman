@@ -93,7 +93,7 @@ test('ما كتبه المشغّل (ثلاث ترجمات وعلامات وسا�
   doc.body.append(lib.root);
   await lib.load();
   const chips = findAll(lib.root, (e) => e.classList.contains('tj-chip')).map((c) => c.getAttribute('aria-label'));
-  assert.deepEqual(chips, ['الكل (2)', 'بانتظار الترجمة (0)', 'مترجمة (2)', 'معدّلة (0)', 'تحذيرات آلية (0)', 'تحتاج مراجعة (1)']);
+  assert.deepEqual(chips, ['الكل (2)', 'بانتظار الترجمة (0)', 'مترجمة (2)', 'معدّلة (0)', 'فيها فروق عن الأصل (0)', 'تحتاج مراجعة (1)']);
 });
 
 test('التفعيل من المحفوظات ينعكس في المشغّل المفتوح على التخزين نفسه', async () => {

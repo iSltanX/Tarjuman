@@ -21,7 +21,7 @@ function popupWorst() {
     { tone: 'danger', text: 'تعذّر ربط الأدوات بالمشغّل — أعد تحميل الصفحة', reason: 'تغيّرت بنية مشغّل يوتيوب فلم يُعثر على شريط الأدوات. أعد تحميل الصفحة، وإن تكرر فانسخ تشخيص الصفحة.' },
     { tone: 'warning', text: 'هذا المسار مترجم آليًا من لغة أخرى، فلا يُلتقط أصلًا للترجمة. اختر المسار الإنجليزي الأصلي من إعدادات يوتيوب.' },
   );
-  const entry = el('div', { className: 'tj-popup__entry', attrs: { role: 'group' }, children: [el('span', { className: 'tj-popup__entry-text', text: 'زر النص المتزامن مخفي من الشريط' }), button({ label: 'إظهاره', size: 'sm', variant: 'ghost' })] });
+  const entry = el('div', { className: 'tj-popup__entry', attrs: { role: 'group' }, children: [el('span', { className: 'tj-popup__entry-text', text: 'زر النص المتزامن مخفي من الشريط' }), button({ label: 'إظهار', size: 'sm', variant: 'ghost' })] });
   const actions = el('div', { className: 'tj-popup__actions', children: [button({ label: 'نسخ تعليمات الترجمة', icon: 'copy', size: 'lg', variant: 'primary', className: 'tj-popup__primary' })] });
   const steps = el('div', { className: 'tj-popup__guide', children: [guideList([{ n: 1, text: 'نزّل الأصل من زر التنزيل وانسخ التعليمات', state: 'now' }, { n: 2, text: 'ترجمها بنموذجك المفضّل', state: 'pending' }, { n: 3, text: 'ارفع العربية من زر الترجمة في الشريط', state: 'pending' }])] });
   const diag = el('div', { className: 'tj-popup__diag-host', children: [el('p', { className: 'tj-popup__diag-row', children: [el('button', { className: 'tj-popup__diag', text: 'نسخ تشخيص الصفحة', attrs: { type: 'button' } })] })] });

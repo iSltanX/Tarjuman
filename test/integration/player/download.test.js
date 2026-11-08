@@ -76,13 +76,13 @@ test('التقسيم عند الجمل أو الصمت: أحجام الأجزا�
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('خيارات احتياطية'));
+  click(page.ui.item('تقسيم الملفات الطويلة'));
   const check = page.ui.field('split');
   check.checked = true;
   check.dispatchEvent({ type: 'change', target: check });
   const rows = page.ui.menu().querySelectorAll('.row.part').map((r) => r.textContent);
   assert.equal(rows.length, 3, '420 مقطعًا بحد 200: ثلاثة أجزاء');
-  const ranges = rows.map((r) => r.split(' · ')[1].split('–').map(Number));
+  const ranges = rows.map((r) => r.split(' · ')[1].replace('المقاطع ', '').split('–').map(Number));
   assert.equal(ranges[0][0], 1);
   assert.equal(ranges.at(-1)[1], 420);
   for (const [, to] of ranges.slice(0, -1)) assert.equal(to % 5, 0, `الحد ${to} عند نهاية جملة وصمت`);

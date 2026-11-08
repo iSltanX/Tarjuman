@@ -525,16 +525,16 @@ try {
     });
     let copied = null;
     for (let attempt = 0; attempt < 2 && !copied; attempt++) {
-      await clickOn(st, byText('#st-report button', 'انسخ البلاغ'), 'انسخ البلاغ');
+      await clickOn(st, byText('#st-report button', 'نسخ البلاغ'), 'نسخ البلاغ');
       copied = await st.waitFor(() => window.__t3copied?.at(-1) ?? null, { timeoutMs: 5000 });
     }
     const result1 = await st.eval(() => document.querySelector('.st-report__result')?.textContent.replace(/\s+/g, ' ').trim() ?? null);
     check('report-copy-offline', copied === json && !!json, { same: copied === json, copiedLength: copied?.length ?? null, jsonLength: json.length, result: result1 });
     await s.blockReports(st);
-    await clickOn(st, byText('#st-report button', 'أرسل البلاغ'), 'أرسل البلاغ');
+    await clickOn(st, byText('#st-report button', 'إرسال البلاغ'), 'إرسال البلاغ');
     const failed = await st.waitFor(() => {
       const r = document.querySelector('[data-report-result="failed"]');
-      return r ? { failure: r.getAttribute('data-failure'), retry: [...r.querySelectorAll('button')].some((b) => b.textContent.includes('أعد المحاولة')), copy: [...r.querySelectorAll('button')].some((b) => b.textContent.includes('انسخ البلاغ')), text: r.textContent.replace(/\s+/g, ' ').trim() } : null;
+      return r ? { failure: r.getAttribute('data-failure'), retry: [...r.querySelectorAll('button')].some((b) => b.textContent.includes('أعد المحاولة')), copy: [...r.querySelectorAll('button')].some((b) => b.textContent.includes('نسخ البلاغ')), text: r.textContent.replace(/\s+/g, ' ').trim() } : null;
     }, { timeoutMs: 25000 });
     const sent = await st.eval(() => !!document.querySelector('[data-report-result="sent"]'));
     if (!failed && !sent) {

@@ -2,7 +2,7 @@
 // الجلسة اليدوية لمواد المتاجر (جولة النشر T6): تنزيل SRT الحقيقي لفيديو اللقطات من حزمة المتجر نفسها، في نافذة Chrome عادية
 // بلا أي علم تحكم (navigator.webdriver=false)، فيعيد يوتيوب جسم الترجمة كما للمستخدم. Chrome بملف chrome-manual الذي حُمّلت فيه
 // الإضافة يدويًا مرة (P1) من مجلد extension-manual، فتوضع فيه حزمة المتجر tarjuman-<الإصدار>-chrome.zip مفكوكة كما هي.
-// نقرة سلطان الوحيدة: CC بالإنجليزية إن لم تكن مفعّلة، ثم «تحميل الأصل (SRT)» ← «تنزيل الملف».
+// نقرة سلطان الوحيدة: CC بالإنجليزية إن لم تكن مفعّلة، ثم «تنزيل الأصل (SRT)» ← «تنزيل الملف».
 // السكربت يراقب مجلد التنزيل وحده، ثم يغلق Chrome، ويفحص الملف بالمحلل الصارم، وينسخه إلى مجلد العمل خارج المستودع ليُبنى منه
 // جسم الالتقاط للّقطات المؤتمتة (t6-shots.mjs). الأدلة بلا نص مقاطع: الاسم والحجم والبصمة وعدد المقاطع ومداها.
 //   command npm run package
@@ -57,7 +57,7 @@ await mkdir(DL, { recursive: true });
 await setDownloadDir(PROFILE, DL);
 execFileSync('open', ['-n', '-a', appOf('chrome'), '--args', `--user-data-dir=${PROFILE}`, '--no-first-run', '--no-default-browser-check', '--mute-audio',
   '--window-size=1400,950', '--window-position=40,40', WATCH]);
-log(`Chrome مفتوح على فيديو اللقطات بحزمة المتجر ${manifest.version} (${unpackedIdOf(CHROME_EXT)}). المنتظر: «تحميل الأصل (SRT)» ← «تنزيل الملف».`);
+log(`Chrome مفتوح على فيديو اللقطات بحزمة المتجر ${manifest.version} (${unpackedIdOf(CHROME_EXT)}). المنتظر: «تنزيل الأصل (SRT)» ← «تنزيل الملف».`);
 
 // ---- المراقبة ----
 const listSrt = async () => (await readdir(DL, { recursive: true }).catch(() => [])).filter((n) => n.endsWith('.srt'));

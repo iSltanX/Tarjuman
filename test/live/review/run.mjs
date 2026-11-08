@@ -428,7 +428,7 @@ async function report() {
     await sleep(300);
 
     // المحاولة 1: انقطاع الشبكة.
-    await clickOn(st, byText('#st-report button', 'أرسل البلاغ'), 'أرسل البلاغ');
+    await clickOn(st, byText('#st-report button', 'إرسال البلاغ'), 'إرسال البلاغ');
     const r1 = await waitPaused(1);
     if (!r1) throw new Error('لم يصل طلب البلاغ إلى المحاكاة (الإذن؟)');
     await st.send('Fetch.failRequest', { requestId: r1.requestId, errorReason: 'InternetDisconnected' });
@@ -479,7 +479,7 @@ async function report() {
     await clickOn(st, `document.getElementById('st-report-text')`, 'وصف البلاغ (ثانٍ)');
     await st.send('Input.insertText', { text: DESC });
     await sleep(300);
-    await clickOn(st, byText('#st-report button', 'أرسل البلاغ'), 'أرسل البلاغ (ثانٍ)');
+    await clickOn(st, byText('#st-report button', 'إرسال البلاغ'), 'أرسل البلاغ (ثانٍ)');
     const r4 = await waitPaused(4);
     if (r4) await fulfill(r4, 201, { id: 9002 });
     const second = await st.waitFor(() => /#9002/.test(document.querySelector('[data-report-result="sent"]')?.textContent ?? '') || null, { timeoutMs: 10000 });
