@@ -31,8 +31,8 @@ export function renderDensity(box, { doc, items, maxCps, maxLineChars, onJump })
     doc,
   });
   box.replaceChildren(...[
-    head(doc, 'الكثافة', statusPill({ tone: items.length ? 'warning' : 'success', text: items.length ? formatCount(items.length, COUNT.warning) : 'لا تنبيهات ✓', doc })),
-    el('p', { className: 'tj-caption', text: `الحد ${maxCps} محرفًا في الثانية و${maxLineChars} للسطر (من الإعدادات). تنبيه لا يمنع الحفظ ولا التصدير، ولا يختصر النص.`, doc }),
+    head(doc, 'سرعة القراءة وطول السطر', statusPill({ tone: items.length ? 'warning' : 'success', text: items.length ? formatCount(items.length, COUNT.warning) : 'لا تنبيهات ✓', doc })),
+    el('p', { className: 'tj-caption', text: `الحد ${maxCps} حرفًا في الثانية (من الإعدادات) و${maxLineChars} حرفًا للسطر. تنبيه لا يمنع الحفظ ولا التصدير، ولا يختصر النص.`, doc }),
     items.length ? list : null,
     items.length > MAX_ITEMS ? el('p', { className: 'tj-caption', text: `و${items.length - MAX_ITEMS} أخرى.`, doc }) : null,
   ].filter(Boolean));
@@ -72,7 +72,7 @@ export function renderMarks(box, { doc, marks, readOnly, onJump, onRemoveOrphans
     children: [
       el('h3', { className: 'tj-label', text: `فقدت مقطعها (${marks.orphan.length})`, doc }),
       el('p', { className: 'tj-caption', text: `لا مقطع يطابقها بعد الاستبدال أو الدمج أو الشطر: ${marks.orphan.slice(0, 8).map((m) => `${m.n} عند ${formatTimecode(m.startMs)}`).join('، ')}${marks.orphan.length > 8 ? '…' : ''}.`, doc }),
-      button({ label: 'إزالة العلامات اليتيمة', size: 'sm', variant: 'ghost', disabledReason: readOnly ? messageFor('ED_READ_ONLY') : null, onClick: onRemoveOrphans, doc }),
+      button({ label: 'إزالة العلامات التي فقدت مقطعها', size: 'sm', variant: 'ghost', disabledReason: readOnly ? messageFor('ED_READ_ONLY') : null, onClick: onRemoveOrphans, doc }),
     ],
     doc,
   }) : null;

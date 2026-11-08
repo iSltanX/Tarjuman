@@ -269,7 +269,7 @@ test('U22: التركيز يبقى في اللوحة الجانبية بعد إ�
   await m.env.flush();
   assert.ok(attached(doc, doc.activeElement) && doc.activeElement.classList.contains('ed-ref-choice'), 'على قائمة المرجع');
 
-  const orphan = buttonNamed(m.env.root, 'إزالة العلامات اليتيمة');
+  const orphan = buttonNamed(m.env.root, 'إزالة العلامات التي فقدت مقطعها');
   orphan.focus();
   orphan.click();
   await m.env.flush(6);
@@ -569,7 +569,7 @@ test('U75: تصدير «الأصل المستورد» من المحرّر بإز
   const m = await mounted({ saveFile: async (file) => { saved.push(file); return { ok: true, mode: 'downloads' }; } });
   m.editor.setView('original');
   await m.env.flush();
-  buttonNamed(m.env.root, 'تصدير الأصل').click();
+  buttonNamed(m.env.root, 'تصدير النسخة المرفوعة').click();
   await settle();
   const dlg = dialogOf(m.doc);
   assert.equal(dlg.querySelectorAll('input[name=ed-timing]').length, 2, 'سؤال التوقيت للأصل');

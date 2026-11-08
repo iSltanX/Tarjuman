@@ -50,10 +50,10 @@ test('الرأس صفّان: الوجهة والعنوان والمعرّف ثم
   assert.ok(named(rows[0], 'تصدير') && named(rows[0], 'حفظ'));
   assert.equal(rows[0].querySelectorAll('.tj-pill').length, 1, 'شارة حالة الحفظ في الصف الأول');
   const second = text(rows[1]);
-  assert.ok(second.includes('خانة التحرير') && second.includes('النسخة المعروضة'));
+  assert.ok(second.includes('الترجمة المفتوحة') && second.includes('النسخة المعروضة'));
   assert.equal(rows[1].querySelector('select').getAttribute('aria-label'), 'النسخة المعروضة');
   assert.ok(rows[1].querySelector('.tj-slots'), 'محدد خانة التحرير');
-  assert.ok(named(rows[1], 'استعادة الأصل'));
+  assert.ok(named(rows[1], 'الرجوع إلى النسخة المرفوعة'));
   assert.ok(rows[1].querySelector('.ed-slot-note'));
 });
 
@@ -68,7 +68,7 @@ test('تسمية «خانة التحرير» تختفي مع المحدد حين
   await mountEditor(env.root, { videoId: one.videoId, store, doc: env.doc, now: () => (at += 1000) });
   await env.flush();
   const row = [...env.root.querySelector('header.ed-head').children].filter((c) => c.classList.contains('ed-head__row'))[1];
-  const label = [...row.children].find((c) => text(c) === 'خانة التحرير');
+  const label = [...row.children].find((c) => text(c) === 'الترجمة المفتوحة');
   assert.ok(label.hidden === true, 'بلا محدد لا تسمية له');
   assert.ok(row.querySelector('.tj-slots').hidden === true);
 });
@@ -103,10 +103,10 @@ test('الأصل المستورد للقراءة فقط: ملاحظة بمخرج
   editor.setView('original');
   await env.flush();
   assert.ok(banner.hidden === false);
-  assert.ok(text(banner).includes('تعرض الأصل المستورد — قراءة فقط'));
+  assert.ok(text(banner).includes('تعرض النسخة المرفوعة — للقراءة فقط'));
   assert.ok(text(banner).includes('التعديل في «النسخة المعدّلة».'));
-  const goBack = named(banner, 'الانتقال إليها');
-  assert.ok(goBack && named(banner, 'تصدير الأصل'));
+  const goBack = named(banner, 'الانتقال إلى النسخة المعدّلة');
+  assert.ok(goBack && named(banner, 'تصدير النسخة المرفوعة'));
   const before = banner.children[0];
   editor.setView('original');
   await env.flush();
@@ -140,7 +140,7 @@ test('الحالة الفارغة: «فتح الفيديو» يفتحه بلا �
   assert.ok(text(empty).includes('لا ترجمة محفوظة لهذا الفيديو'));
   // العنوان لا يتكرر نصًا (تدقيق Fable، UX-13): النص يقول السبب.
   assert.equal(text(empty).split('لا ترجمة محفوظة لهذا الفيديو').length - 1, 1);
-  assert.ok(text(empty).includes('يعمل المحرّر على ترجمة محفوظة'));
+  assert.equal(text(empty).includes('يعمل المحرّر على ترجمة محفوظة'), false, 'لا جملة تكرر العنوان والخطوات (م-123)');
   named(empty, 'فتح الفيديو').click();
   await settle();
   assert.deepEqual(calls, [videoId]);

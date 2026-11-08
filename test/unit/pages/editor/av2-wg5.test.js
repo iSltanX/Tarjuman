@@ -45,7 +45,7 @@ test('AV2 U-028: خانة فرنسية تعطي مقارنة المحرّر noAr
   for (const lang of ['fr', undefined]) {
     const { S, env } = await open(lang);
     assert.deepEqual(S.comparison.noArabic, [], `lang=${lang}`);
-    assert.ok(!textOf(env.root).includes('غير مترجم:'), `lang=${lang}`);
+    assert.ok(!textOf(env.root).includes('بلا ترجمة:'), `lang=${lang}`);
   }
 });
 

@@ -75,7 +75,7 @@ export async function openRescueDialog({ doc, first, offsets }) {
   const v = await openDialog({
     doc, size: 'lg', title: 'مقارنة تغييراتي بالنسخة الأحدث', content, focus: 'cancel',
     actions: [
-      { label: `تطبيق غير المتعارض (${first.kept.length})`, value: 'apply', variant: 'primary' },
+      { label: `تطبيق الاختيارات (${first.kept.length})`, value: 'apply', variant: 'primary' },
       { label: 'تصدير نسختي…', value: 'export' },
       { label: 'إلغاء', value: 'cancel' },
     ],

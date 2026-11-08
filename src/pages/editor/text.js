@@ -235,16 +235,16 @@ export function comparisonLines(r) {
   if (!r || r.fingerprintId === null) return [{ tone: 'info', text: 'لا مرجع للمقارنة بالأصل، فيُعرض الملف كما هو.' }];
   const lines = [];
   if (r.matched) lines.push({ tone: 'success', text: 'مطابق للأصل' });
-  lines.push({ tone: r.countSource === r.countTarget ? 'info' : 'warning', text: `العدد: ${r.countTarget} من ${r.countSource}` });
+  lines.push({ tone: r.countSource === r.countTarget ? 'info' : 'warning', text: `عدد المقاطع: ${r.countTarget} من ${r.countSource}` });
   if (r.numbering === 'different') lines.push({ tone: 'warning', text: 'الترقيم غير متسلسل أو مختلف عن الأصل.' });
   if (r.missing.length) {
     const adj = agree(r.missing.length, { one: 'ناقص', two: 'ناقصان', few: 'ناقصة', many: 'ناقصًا', single: 'ناقص' });
     lines.push({ tone: 'warning', text: `${formatCount(r.missing.length, COUNT_FORMS.cue)} ${adj}: ${numberList(r.missing)}` });
   }
-  if (r.extra.length) lines.push({ tone: 'warning', text: `زائد عن الأصل: ${numberList(r.extra)}` });
+  if (r.extra.length) lines.push({ tone: 'warning', text: `مقاطع زائدة: ${numberList(r.extra)}` });
   if (r.drift.length) lines.push({ tone: 'warning', text: `توقيت مختلف في ${formatCount(r.drift.length, COUNT_FORMS.cue)}` });
   if (r.empty.length) lines.push({ tone: 'warning', text: `بلا نص: ${numberList(r.empty)}` });
-  if (r.noArabic.length) lines.push({ tone: 'warning', text: `غير مترجم: ${numberList(r.noArabic)}` });
+  if (r.noArabic.length) lines.push({ tone: 'warning', text: `بلا ترجمة: ${numberList(r.noArabic)}` });
   return lines;
 }
 
@@ -253,7 +253,7 @@ export function comparisonLines(r) {
  * @param {import('../../core/model/tracks.js').ComparisonReport | null} r
  */
 export function restoreUnavailable(r) {
-  if (!r || r.fingerprintId === null) return 'لا بصمة للمقارنة، فلا توقيت أصلي يُستعاد.';
+  if (!r || r.fingerprintId === null) return 'لا مرجع للمقارنة بالأصل، فلا توقيت أصلي يُستعاد.';
   if (r.restoreTimingAvailable) return null;
   if (r.countSource !== r.countTarget) return `العدد مختلف (${r.countTarget} مقابل ${r.countSource})، فلا يمكن مطابقة التوقيت بأمان.`;
   return 'الترقيم مختلف عن الأصل، فلا يمكن مطابقة التوقيت بأمان.';

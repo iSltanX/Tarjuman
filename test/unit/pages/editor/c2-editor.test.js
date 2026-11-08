@@ -24,7 +24,7 @@ for (const dirty of [false, true]) {
     const editor = await mountEditor(env.root, { videoId: ID, store, doc: env.doc, now });
     await env.flush();
     if (dirty) editor.state.session.setText(1, 'مسودة محلية');
-    env.root.querySelectorAll('button').find((x) => x.textContent.includes('استعادة الأصل')).click();
+    env.root.querySelectorAll('button').find((x) => x.textContent.includes('الرجوع إلى النسخة المرفوعة')).click();
     await env.flush();
     const dialog = env.doc.querySelector('dialog[open]');
     assert.ok(dialog, 'الحوار مفتوح');
@@ -54,7 +54,7 @@ test('U09 (ضابط المراجعة): علامة من مكان آخر لا تم
   const env = editorDocument({ videoId: ID });
   const editor = await mountEditor(env.root, { videoId: ID, store, doc: env.doc, now });
   await env.flush();
-  env.root.querySelectorAll('button').find((x) => x.textContent.includes('استعادة الأصل')).click();
+  env.root.querySelectorAll('button').find((x) => x.textContent.includes('الرجوع إلى النسخة المرفوعة')).click();
   await env.flush();
   const dialog = env.doc.querySelector('dialog[open]');
   await other.updateBundle(ID, (b) => withMark(b, 1, { index: 3, kind: 'todo' }, new Date(now()).toISOString()).bundle);

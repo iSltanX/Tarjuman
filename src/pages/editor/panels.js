@@ -54,7 +54,7 @@ export function renderIssues(box, { doc, report, onJump }) {
 export function renderReference(box, { doc, options, savedId, shownId, preview, readOnly, busy, onChoose, onCommit, onCancel }) {
   const head = el('div', { className: 'ed-panel__head', children: [el('h2', { className: 'tj-h4', text: 'مرجع الأصل', doc }), preview ? statusPill({ tone: 'warning', text: 'معاينة غير محفوظة', doc }) : el('span', { doc })], doc });
   if (!options.length) {
-    box.replaceChildren(head, el('p', { className: 'tj-caption', text: 'لا تصدير للأصل محفوظ لهذا الفيديو، فلا مرجع للمقارنة. نزّل الأصل من زر التنزيل في المشغّل أولًا.', doc }));
+    box.replaceChildren(head, el('p', { className: 'tj-caption', text: 'لم يُنزَّل الأصل من ترجمان لهذا الفيديو، فلا مرجع للمقارنة. نزّله من زر «تنزيل الأصل (SRT)» في المشغّل أولًا.', doc }));
     return;
   }
   const sel = el('select', {
@@ -73,7 +73,7 @@ export function renderReference(box, { doc, options, savedId, shownId, preview, 
   box.replaceChildren(...[
     head,
     sel,
-    shown ? el('p', { className: `tj-caption${weak ? ' ed-ref-weak' : ''}`, text: `${weak ? 'ثقة ضعيفة: ' : ''}${shown.why}`, doc }) : el('p', { className: 'tj-caption', text: 'بلا مرجع: يُعرض الملف كما هو، ولا ناقص ولا انحراف يُحسب.', doc }),
+    shown ? el('p', { className: `tj-caption${weak ? ' ed-ref-weak' : ''}`, text: `${weak ? 'ثقة ضعيفة: ' : ''}${shown.why}`, doc }) : el('p', { className: 'tj-caption', text: 'بلا مرجع: يُعرض الملف كما هو، فلا يُحسب ناقص ولا فرق توقيت.', doc }),
     el('p', { className: 'tj-caption', text: 'المطابقة في العدد والتوقيت لا تعني صحة المعنى.', doc }),
     preview ? el('div', {
       className: 'ed-group ed-wrap',
@@ -115,7 +115,7 @@ export function renderComparison(box, { doc, report, notes, readOnly, onRestore,
     restore,
     notes.length ? el('details', {
       className: 'ed-notes',
-      children: [el('summary', { text: `ملاحظات الاستيراد (${notes.length})`, doc }), el('ul', { children: notes.map((t) => el('li', { className: 'tj-auto', text: t, dir: textDirection(t), doc })), doc })],
+      children: [el('summary', { text: `ملاحظات قراءة الملف (${notes.length})`, doc }), el('ul', { children: notes.map((t) => el('li', { className: 'tj-auto', text: t, dir: textDirection(t), doc })), doc })],
       doc,
     }) : null,
   ].filter(Boolean));

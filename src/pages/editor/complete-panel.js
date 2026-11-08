@@ -9,10 +9,10 @@ import { openDialog, setDisabled } from './dialogs.js';
 import { numberList } from './text.js';
 
 const GROUPS = Object.freeze([
-  ['missing', 'الناقص', 'مقاطع في الأصل لا تقابلها ترجمة.'],
-  ['empty', 'الفارغ', 'مقاطع بلا نص.'],
-  ['noArabic', 'غير مترجمة', 'اختياري: نص مطابق للأصل أو بلا حرف من نص لغة الترجمة (قد يكون اسمًا أو رقمًا صحيحًا كما هو).'],
-  ['marked', 'المعلّمة «أعود إليه»', null],
+  ['missing', 'الناقصة', 'مقاطع في الأصل لا تقابلها ترجمة.'],
+  ['empty', 'الفارغة', 'مقاطع بلا نص.'],
+  ['noArabic', 'غير المترجمة', 'اختياري: مقاطع نصها مطابق للأصل أو بلا حرف من حروف لغة الترجمة؛ قد تكون أسماء أو أرقامًا صحيحة كما هي، فراجعها قبل اختيارها.'],
+  ['marked', 'المعلّمة بـ«أعود إليه»', null],
   ['selected', 'المحددة', 'بمربعات التحديد في القائمة.'],
 ]);
 const MAX_PREVIEW = 300;
@@ -40,7 +40,7 @@ export function renderCompletePanel(box, o) {
     });
   });
   const download = button({ label: 'تنزيل ملف الاستكمال', variant: 'primary', size: 'sm', loading: o.busy, onClick: o.onDownload, doc });
-  const copy = button({ label: 'نسخ تعليماته', size: 'sm', onClick: o.onCopy, doc });
+  const copy = button({ label: 'نسخ تعليمات الاستكمال', size: 'sm', onClick: o.onCopy, doc });
   setDisabled(download, o.reason ?? (o.numbers.length ? null : messageFor('ED_COMPLETE_NOTHING')));
   setDisabled(copy, o.reason);
   const file = el('input', { attrs: { type: 'file', accept: '.srt,.txt,.md,text/plain', multiple: '', hidden: '', 'aria-hidden': 'true', tabindex: '-1' }, doc });
@@ -49,26 +49,26 @@ export function renderCompletePanel(box, o) {
     file.value = '';
     if (files.length) o.onImport(files);
   });
-  const importBtn = button({ label: 'استيراد ملف تصحيح…', size: 'sm', onClick: () => file.click(), doc });
+  const importBtn = button({ label: 'رفع الاستكمال المترجم…', size: 'sm', onClick: () => file.click(), doc });
   setDisabled(importBtn, o.reason ?? o.readOnly);
 
   const parts = o.parts ? el('section', {
     className: 'ed-markgroup',
     children: [
-      el('h3', { className: 'tj-label', text: 'الأجزاء المستلمة', doc }),
+      el('h3', { className: 'tj-label', text: 'اكتمال الأجزاء', doc }),
       el('ul', {
         className: 'ed-resume',
         children: o.parts.map((p) => el('li', {
           className: 'ed-resume__item',
           children: [
             el('span', { className: 'tj-body-sm', text: `الجزء ${p.index} (${p.from}–${p.to})`, doc }),
-            statusPill({ tone: p.complete ? 'success' : p.received ? 'warning' : 'neutral', text: p.complete ? 'مستلم ✓' : `${p.received} من ${p.total}`, doc }),
+            statusPill({ tone: p.complete ? 'success' : p.received ? 'warning' : 'neutral', text: p.complete ? 'مكتمل ✓' : `${p.received} من ${p.total}`, doc }),
           ],
           doc,
         })),
         doc,
       }),
-      el('p', { className: 'tj-caption', text: 'مشتقة من الترجمة الحالية: كل جزء مستلم حين تقابل كل مقاطعه ترجمة.', doc }),
+      el('p', { className: 'tj-caption', text: 'يُعدّ الجزء مكتملًا حين تقابل كل مقاطعه ترجمة في الملف الحالي.', doc }),
     ],
     doc,
   }) : null;
@@ -76,10 +76,10 @@ export function renderCompletePanel(box, o) {
   box.replaceChildren(...[
     el('div', {
       className: 'ed-panel__head',
-      children: [el('h2', { className: 'tj-h4', text: 'الاستكمال', doc }), statusPill({ tone: o.numbers.length ? 'info' : 'neutral', text: o.numbers.length ? formatCount(o.numbers.length, COUNT_FORMS.cue) : 'لا مختار', doc })],
+      children: [el('h2', { className: 'tj-h4', text: 'الاستكمال', doc }), statusPill({ tone: o.numbers.length ? 'info' : 'neutral', text: o.numbers.length ? formatCount(o.numbers.length, COUNT_FORMS.cue) : 'لا مقاطع مختارة', doc })],
       doc,
     }),
-    el('p', { className: 'tj-caption', text: 'ملف صغير بالمقاطع المختارة من الأصل نفسه، تترجمه بتعليماته، ثم تستورد ما يعيده فيوضع كل مقطع في موضعه.', doc }),
+    el('p', { className: 'tj-caption', text: 'ملف صغير بالمقاطع المختارة من الأصل، تترجمه بتعليماته، ثم ترفع ما يعيده النموذج فيوضع كل مقطع في موضعه.', doc }),
     o.reason ? alertBox({ tone: 'info', title: 'لا يُبنى ملف الاستكمال الآن', text: o.reason, doc }) : null,
     el('fieldset', { className: 'ed-fieldset', children: [el('legend', { className: 'tj-label', text: 'المقاطع', doc }), ...checks], doc }),
     o.numbers.length ? el('p', { className: 'tj-caption', text: `الأرقام: ${numberList(o.numbers)}`, doc }) : null,
@@ -102,7 +102,7 @@ export async function previewPatch({ doc, plan }) {
   const sync = () => {
     total.textContent = `المختار ${formatCount(picked.size, COUNT_FORMS.cue)} من ${plan.items.length}.`;
     if (applyBtn) {
-      applyBtn.firstChild.textContent = `تطبيق ${picked.size}`;
+      applyBtn.firstChild.textContent = `تطبيق على ${picked.size === 2 ? 'مقطعين' : formatCount(picked.size, COUNT_FORMS.cue)}`;
       setDisabled(applyBtn, picked.size ? null : 'اختر بندًا واحدًا على الأقل.');
     }
   };
@@ -144,9 +144,9 @@ export async function previewPatch({ doc, plan }) {
   });
   sync();
   const v = await openDialog({
-    doc, size: 'lg', title: 'معاينة ملف التصحيح', content, focus: 'cancel',
+    doc, size: 'lg', title: 'معاينة الاستكمال المترجم', content, focus: 'cancel',
     actions: [
-      { label: `تطبيق ${picked.size}`, value: 'apply', variant: 'primary', ref: (b) => { applyBtn = b; sync(); } },
+      { label: `تطبيق على ${picked.size === 2 ? 'مقطعين' : formatCount(picked.size, COUNT_FORMS.cue)}`, value: 'apply', variant: 'primary', ref: (b) => { applyBtn = b; sync(); } },
       { label: 'إلغاء', value: 'cancel' },
     ],
   });

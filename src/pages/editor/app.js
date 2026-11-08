@@ -50,7 +50,7 @@ import { RowLayout, createVirtualList, rowHeight, textLines, wrappedLines } from
 
 const KIND_LABEL = Object.freeze({
   text: 'تعديل النص', time: 'تعديل الزمن', shift: 'نقل التوقيت', commit: 'تثبيت الإزاحة', restore: 'استعادة التوقيت',
-  replace: 'الاستبدال', merge: 'الدمج', split: 'الشطر', drift: 'تصحيح الانجراف', patch: 'ملف التصحيح', rescue: 'إعادة تطبيق تعديلاتي',
+  replace: 'الاستبدال', merge: 'الدمج', split: 'الشطر', drift: 'تصحيح الانجراف', patch: 'الاستكمال المترجم', rescue: 'إعادة تطبيق تعديلاتي',
 });
 const STEPS = [100, 250, 500, 1000, 2000, 5000];
 /** سكون على مقطع قبل كتابة آخر موضع (نقطة طبيعية، لا مع كل تمرير). */
@@ -123,8 +123,8 @@ export async function mountEditor(app, {
     });
     // النص يقول السبب لا يكرر العنوان (كان ST_NO_RECORD بالجملة نفسها؛ تدقيق Fable، UX-13 = F2)، والخطوات بعده.
     loading.replaceWith(emptyState({
-      title: 'لا ترجمة محفوظة لهذا الفيديو', text: 'يعمل المحرّر على ترجمة محفوظة، ولم تُرفع لهذا الفيديو ترجمة بعد.',
-      steps: ['افتح الفيديو على يوتيوب', 'ارفع ملف الترجمة من زر الرفع في شريط المشغّل', 'ثم افتح المحرّر من أيقونة الإضافة'], action: actions, doc,
+      title: 'لا ترجمة محفوظة لهذا الفيديو',
+      steps: ['افتح الفيديو على يوتيوب', 'ارفع ملف الترجمة من زر الرفع في شريط المشغّل', 'ثم افتح المحرّر من نافذة الإضافة'], action: actions, doc,
     }));
     app.append(emptyNote);
     return null;
@@ -177,11 +177,11 @@ export async function mountEditor(app, {
   const titleEl = el('h1', { className: 'ed-title tj-h3 tj-truncate tj-auto', doc });
   // الزوج اللغوي في رأس المحرّر (AA3، لوحة 19 البند ٢): لغة مسار الأصل ← لغة الترجمة المفتوحة. يُغيَّر من قائمة «الترجمة» في المشغّل أو من
   // الإعدادات، لا هنا، فلا تتعارض كتابته مع جلسة تحرير لم تُحفظ.
-  const pairEl = el('span', { className: 'ed-pair tj-caption', attrs: { title: 'لغة الأصل ← لغة الترجمة. تُغيَّر لغة الترجمة من قائمة «الترجمة» في المشغّل أو من «اللغات» في الإعدادات.' }, doc });
-  const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'خانة التحرير', onSelect: (n) => switchSlot(n), doc });
+  const pairEl = el('span', { className: 'ed-pair tj-caption', attrs: { title: 'لغة الأصل ← لغة الترجمة. تُغيَّر لغة الترجمة من قائمة «الترجمة» في المشغّل.' }, doc });
+  const slotsEl = slotPicker({ slots: slotModels(bundle), size: 'md', ariaLabel: 'الترجمة المفتوحة', onSelect: (n) => switchSlot(n), doc });
   const slotNote = el('span', { className: 'ed-slot-note tj-caption', doc });
   const versionSel = el('select', { className: 'ed-select', attrs: { 'aria-label': 'النسخة المعروضة' }, on: { change: () => setView(versionSel.value) }, doc });
-  const restoreOrigBtn = button({ label: 'استعادة الأصل…', variant: 'ghost', size: 'sm', onClick: () => onRestoreOriginal(), doc });
+  const restoreOrigBtn = button({ label: 'الرجوع إلى النسخة المرفوعة…', variant: 'ghost', size: 'sm', onClick: () => onRestoreOriginal(), doc });
   const statusBox = el('span', { className: 'ed-status', attrs: { role: 'status' }, doc });
   // أيقونتان بلا نص (اسمهما في aria-label، وما سيتراجع عنه أو يعاد في التلميح): الإعادة هي أيقونة التراجع معكوسة بـCSS.
   const undoBtn = button({ label: 'تراجع', icon: 'undo', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-undo', onClick: () => doUndo(), doc });
@@ -190,7 +190,7 @@ export async function mountEditor(app, {
   const exportMenu = createMenu({
     label: 'تصدير', chevron: true, doc,
     items: [
-      { id: 'srt', label: 'الترجمة SRT…', hint: 'النسخة الحالية أو الأصل، بتوقيت المشاهدة أو المحفوظ', onSelect: () => onExport() },
+      { id: 'srt', label: 'الترجمة SRT…', hint: 'النسخة الحالية أو المرفوعة، بتوقيت المشاهدة أو المحفوظ', onSelect: () => onExport() },
       { id: 'report', label: 'تقرير مراجعة…', hint: 'المقاطع ومشكلاتها وعلاماتك بأزمنتها', onSelect: () => onReport() },
       { id: 'study', label: 'نص دراسي…', hint: 'فقرات للقراءة بروابط توقيت، بلغة الترجمة أو باللغتين', onSelect: () => onStudy() },
     ],
@@ -199,7 +199,7 @@ export async function mountEditor(app, {
   const saveBtn = button({ label: 'حفظ', variant: 'primary', size: 'sm', onClick: () => save(), doc });
   // الرأس صفّان (لوحة Editor): الأول للوجهة والعنوان ثم الحالة والتراجع والتصدير والحفظ، والثاني لخانة التحرير والنسخة المعروضة
   // وسطر الخانة النشطة. تسمية «خانة التحرير» تختفي مع المحدد (ترجمة واحدة لا محدد).
-  const slotLabel = el('span', { className: 'ed-head__label', text: 'خانة التحرير', attrs: { 'aria-hidden': 'true' }, doc });
+  const slotLabel = el('span', { className: 'ed-head__label', text: 'الترجمة المفتوحة', attrs: { 'aria-hidden': 'true' }, doc });
   const slotSep = el('span', { className: 'ed-head__sep', attrs: { 'aria-hidden': 'true' }, doc });
   const headEl = el('header', {
     className: 'ed-head',
@@ -293,7 +293,7 @@ export async function mountEditor(app, {
   });
   const timingMenu = createMenu({
     label: 'أدوات التوقيت', chevron: true, align: 'start', doc,
-    items: [{ id: 'drift', label: 'تصحيح الانجراف…', hint: 'تحويل خطي للتوقيت كله بنقطتين صحيحتين', onSelect: () => onDrift() }],
+    items: [{ id: 'drift', label: 'تصحيح الانجراف…', hint: 'يصحّح تقدّمًا أو تأخرًا يزداد تدريجيًا على طول الفيديو، بنقطتين تعرف زمنهما الصحيح', onSelect: () => onDrift() }],
   });
   const toolbarEl = el('section', {
     className: 'ed-toolbar', attrs: { 'aria-label': 'أدوات التحرير' },
@@ -328,7 +328,7 @@ export async function mountEditor(app, {
   const bannerEl = el('div', { className: 'ed-banner', doc });
   const issuesEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المشكلات' }, doc });
   const compareEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'المقارنة' }, doc });
-  const densityEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'الكثافة' }, doc });
+  const densityEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'سرعة القراءة وطول السطر' }, doc });
   const refEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'مرجع الأصل' }, doc });
   const marksEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'العلامات' }, doc });
   const resumeEl = el('section', { className: 'ed-panel', attrs: { 'aria-label': 'آخر موضع' }, doc });
@@ -677,13 +677,13 @@ export async function mountEditor(app, {
       statusBox.replaceChildren(statusPill({ ...status, doc }));
       statusBox.dataset.sig = sig;
     }
-    const options = [['edit', S.edited || dirty ? 'النسخة المعدّلة' : 'النسخة الحالية (الأصل المستورد)']];
-    if (S.edited) options.push(['original', 'الأصل المستورد (للعرض والتصدير)']);
+    const options = [['edit', S.edited || dirty ? 'النسخة المعدّلة' : 'النسخة الحالية (لم تُعدَّل بعد)']];
+    if (S.edited) options.push(['original', 'النسخة المرفوعة (للعرض والتصدير)']);
     if (versionSel.options.length !== options.length || versionSel.options[0].text !== options[0][1]) {
       versionSel.replaceChildren(...options.map(([v, t]) => el('option', { text: t, attrs: { value: v }, doc })));
     }
     versionSel.value = S.view;
-    setDisabled(restoreOrigBtn, S.external ? 'تغيّر السجل من مكان آخر؛ أعد الفتح أولًا.' : S.edited ? null : 'لا نسخة معدّلة محفوظة؛ المعروض هو الأصل المستورد.');
+    setDisabled(restoreOrigBtn, S.external ? 'تغيّر السجل من مكان آخر؛ أعد الفتح أولًا.' : S.edited ? null : 'لا نسخة معدّلة محفوظة؛ المعروض هو النسخة المرفوعة.');
     const ro = readOnly() ? messageFor('ED_READ_ONLY') : null;
     setDisabled(undoBtn, ro ?? (s.canUndo ? null : 'لا شيء للتراجع'));
     undoBtn.title = undoBtn.title || `تراجع عن: ${KIND_LABEL[s.undoKind]} (${keyHint('Z', { mac })})`;
@@ -750,7 +750,7 @@ export async function mountEditor(app, {
     if (resultEl.textContent !== (S.result?.text ?? '')) resultEl.textContent = S.result?.text ?? '';
     enToggle.checked = S.showEnglish;
     enToggle.disabled = !S.englishTrack?.cues.length && !S.opened.slots.some((x) => x.track && x.n !== S.slot);
-    enToggle.parentElement.title = enToggle.disabled ? 'لا مسار إنجليزي محفوظ ولا ترجمة أخرى لهذا الفيديو.' : '';
+    enToggle.parentElement.title = enToggle.disabled ? 'لا أصل محفوظ ولا ترجمة أخرى لهذا الفيديو تُعرض مرجعًا.' : '';
   }
 
   function renderOffset() {
@@ -758,7 +758,7 @@ export async function mountEditor(app, {
     offsetText.textContent = offsetLine(s.offsetMs);
     offsetSub.textContent = s.offsetChanged
       ? `ثُبّتت الإزاحة ${offsetInline(s.baseOffsetMs)} ث في التوقيت ولم يُحفظ ذلك بعد. التراجع يعيدهما معًا.`
-      : '+ تأخير: تظهر الترجمة لاحقًا · − تقديم: تظهر أبكر. تغيّرها أزرار ± في شريط المشغّل.';
+      : '+ تأخير · − تقديم. تُغيَّر من أزرار ± في شريط المشغّل.';
     setDisabled(commitBtn, readOnly() ? messageFor('ED_READ_ONLY') : s.offsetMs === 0 ? messageFor('ED_NO_OFFSET') : null);
   }
 
@@ -778,12 +778,12 @@ export async function mountEditor(app, {
         bannerEl.setAttribute('data-kind', 'readonly');
         bannerEl.hidden = false;
         bannerEl.replaceChildren(alertBox({
-          tone: 'info', title: 'تعرض الأصل المستورد — قراءة فقط', text: 'التعديل في «النسخة المعدّلة».',
+          tone: 'info', title: 'تعرض النسخة المرفوعة — للقراءة فقط', text: 'التعديل في «النسخة المعدّلة».',
           action: el('div', {
             className: 'ed-group',
             children: [
-              button({ label: 'الانتقال إليها', variant: 'ghost', size: 'sm', onClick: () => setView('edit'), doc }),
-              button({ label: 'تصدير الأصل', variant: 'ghost', size: 'sm', onClick: () => onExport(), doc }),
+              button({ label: 'الانتقال إلى النسخة المعدّلة', variant: 'ghost', size: 'sm', onClick: () => setView('edit'), doc }),
+              button({ label: 'تصدير النسخة المرفوعة', variant: 'ghost', size: 'sm', onClick: () => onExport(), doc }),
             ],
             doc,
           }),
@@ -920,7 +920,7 @@ export async function mountEditor(app, {
     rebuildList();
     S.result = {
       tone: 'success',
-      text: `أُعيد تطبيق ${formatCount(plan.kept.length, COUNT_FORMS.change)} من تعديلاتك فوق النسخة الأحدث، وبقي ما غيّره الأحدث. لم يُكتب شيء بعد: راجعها ثم احفظ.`,
+      text: `أُعيد تطبيق ${formatCount(plan.kept.length, COUNT_FORMS.change)} من تعديلاتك فوق النسخة الأحدث وفق اختياراتك في المواضع المتعارضة. لم يُكتب شيء بعد: راجعها ثم احفظ.`,
     };
     renderAll();
   }
@@ -1101,7 +1101,7 @@ export async function mountEditor(app, {
     const read = await readPatch(files, { fingerprint: fp, cues: session.snapshot(), target: openedLang() });
     if (!read.ok) {
       await openDialog({
-        doc, tone: 'danger', title: 'تعذّر قراءة ملف التصحيح',
+        doc, tone: 'danger', title: 'تعذّرت قراءة الاستكمال المترجم',
         body: `${read.error.message}${read.error.line ? ` (السطر ${read.error.line})` : ''}`,
         actions: [{ label: 'حسنًا', value: 'ok', variant: 'primary' }],
       });
@@ -1123,7 +1123,7 @@ export async function mountEditor(app, {
       return;
     }
     const inserted = r.inserted ? ` (أُدرج ${r.inserted}${r.renumbered ? '، وأُعيد ترقيم المقاطع من 1 فلا يتكرر رقم' : ''})` : '';
-    S.result = { tone: 'success', text: `طُبّق ملف التصحيح على ${formatCount(only.length, COUNT_FORMS.cue)}${inserted}. احفظ لتثبيت ذلك، والتراجع يعيده خطوةً واحدة.` };
+    S.result = { tone: 'success', text: `طُبّق الاستكمال المترجم على ${formatCount(only.length, COUNT_FORMS.cue)}${inserted}. احفظ لتثبيت ذلك، والتراجع يعيده خطوةً واحدة.` };
     computeParts();
     renderToolbar();
     renderComplete();
@@ -1785,9 +1785,9 @@ export async function mountEditor(app, {
     // التعارض (تدقيق 7a66f91، U09).
     const seen = S.opened;
     const v = await openDialog({
-      doc, tone: 'danger', title: 'استعادة الأصل المستورد؟', focus: 'cancel',
-      body: `ستُستبدل النسخة المعدّلة المحفوظة بالأصل المستورد كما رُفع${dirty ? `، وتُفقد التغييرات غير المحفوظة (${changes()})` : ''}. لا تراجع بعد التأكيد، والأصل نفسه لا يتغير.`,
-      actions: [{ label: 'استعادة الأصل', value: 'restore', variant: 'danger' }, { label: 'إلغاء', value: 'cancel' }],
+      doc, tone: 'danger', title: 'الرجوع إلى النسخة المرفوعة؟', focus: 'cancel',
+      body: `ستحل النسخة المرفوعة محل نسختك المعدّلة المحفوظة${dirty ? `، وتُفقد التغييرات غير المحفوظة (${changes()})` : ''}. لا تراجع بعد التأكيد، والنسخة المرفوعة نفسها لا تتغير.`,
+      actions: [{ label: 'الرجوع إلى النسخة المرفوعة', value: 'restore', variant: 'danger' }, { label: 'إلغاء', value: 'cancel' }],
     });
     if (v !== 'restore') return;
     S.saving = true;
@@ -1906,7 +1906,7 @@ export async function mountEditor(app, {
       const name = plan.ok ? plan.name : `${videoId}.ar${variant === 'original' ? '.original' : ''}.srt`;
       nameLine.replaceChildren('اسم الملف: ', ltr(name, { doc }));
       noteLine.textContent = variant === 'original'
-        ? (off === 0 ? 'الأصل المستورد كما رُفع، بتوقيته المحفوظ.' : 'الأصل المستورد كما رُفع، بالتوقيت الذي تختاره.')
+        ? (off === 0 ? 'النسخة المرفوعة كما هي، بتوقيتها المحفوظ.' : 'النسخة المرفوعة كما هي، بالتوقيت الذي تختاره.')
         : S.session.dirty ? `يُصدَّر ما تراه الآن، ومنه تغييرات غير محفوظة (${changes()}).` : off === 0 ? 'إزاحة العرض صفر، فيُصدَّر التوقيت المحفوظ كما هو.' : '';
       noteLine.hidden = !noteLine.textContent;
       const why = plan.ok ? null : exportError(plan);
@@ -1920,7 +1920,7 @@ export async function mountEditor(app, {
     const content = el('div', {
       className: 'tj-stack',
       children: [
-        hasOriginal ? radios('ed-variant', { legend: 'النسخة', options: [['current', 'النسخة الحالية (ما تراه في المحرّر)'], ['original', 'الأصل المستورد كما رُفع']] }, variant, (v) => { variant = v; refresh(); }) : null,
+        hasOriginal ? radios('ed-variant', { legend: 'النسخة', options: [['current', 'النسخة الحالية (ما تراه في المحرّر)'], ['original', 'النسخة المرفوعة كما هي']] }, variant, (v) => { variant = v; refresh(); }) : null,
         timingBox, nameLine, noteLine, notesBox, errorBox,
       ],
       doc,

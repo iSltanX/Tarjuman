@@ -50,7 +50,7 @@ test('الإنقاذ: تعارض نص واحد: الأحدث افتراضي، و
   assert.ok(text.includes('المقطع 2'), text);
   assert.ok(text.includes('الأحدث: الأحدث'), text);
   assert.ok(text.includes('تعديلي: تعديلي'), text);
-  assert.ok(text.includes(`تطبيق غير المتعارض (${first.kept.length})`), text);
+  assert.ok(text.includes(`تطبيق الاختيارات (${first.kept.length})`), text);
   assert.equal(dlg.querySelectorAll('fieldset').length, 1, 'لا إزاحة متعارضة');
   const mineRadio = findAll(dlg, (x) => x.tagName === 'input' && x.getAttribute('value') === 'mine')[0];
   mineRadio.dispatchEvent({ type: 'change' });
@@ -221,9 +221,9 @@ test('لوحة الاستكمال: مربعات المجموعات بأعداد�
     onPick: (k, on) => calls.push(['pick', k, on]), onDownload: () => calls.push(['download']), onCopy: () => calls.push(['copy']),
   }));
   const text = textOf(box);
-  assert.ok(text.includes('الناقص (2)') && text.includes('الفارغ (1)') && text.includes('غير مترجمة (0)'), text);
+  assert.ok(text.includes('الناقصة (2)') && text.includes('الفارغة (1)') && text.includes('غير المترجمة (0)'), text);
   assert.ok(text.includes('+ القاموس (3)'));
-  assert.ok(text.includes('مستلم') && text.includes('10 من 40'), text);
+  assert.ok(text.includes('مكتمل') && text.includes('10 من 40'), text);
   const boxes = findAll(box, (x) => x.tagName === 'input' && x.getAttribute('type') === 'checkbox');
   assert.equal(boxes.length, 5);
   assert.equal(boxes[0].checked, true);
@@ -232,7 +232,7 @@ test('لوحة الاستكمال: مربعات المجموعات بأعداد�
   boxes[1].checked = true;
   boxes[1].dispatchEvent({ type: 'change' });
   btn(box, 'تنزيل ملف الاستكمال').dispatchEvent({ type: 'click' });
-  btn(box, 'نسخ تعليماته').dispatchEvent({ type: 'click' });
+  btn(box, 'نسخ تعليمات الاستكمال').dispatchEvent({ type: 'click' });
   assert.deepEqual(calls, [['pick', 'empty', true], ['download'], ['copy']]);
 });
 
@@ -243,10 +243,10 @@ test('لوحة الاستكمال: لا أرقام مختارة تعطّل ال�
   const dl = btn(box, 'تنزيل ملف الاستكمال');
   assert.equal(dl.getAttribute('aria-disabled'), 'true');
   assert.ok(dl.title.includes(messageFor('ED_COMPLETE_NOTHING')) || textOf(dl).includes(messageFor('ED_COMPLETE_NOTHING')));
-  assert.ok(textOf(box).includes('لا مختار'));
+  assert.ok(textOf(box).includes('لا مقاطع مختارة'));
   renderCompletePanel(box, panelOpts(e.doc, { reason: 'لا أصل إنجليزي', readOnly: null }));
   assert.ok(textOf(box).includes('لا أصل إنجليزي') && textOf(box).includes('لا يُبنى ملف الاستكمال الآن'));
-  for (const name of ['تنزيل ملف الاستكمال', 'نسخ تعليماته', 'استيراد ملف تصحيح']) assert.equal(btn(box, name).getAttribute('aria-disabled'), 'true', name);
+  for (const name of ['تنزيل ملف الاستكمال', 'نسخ تعليمات الاستكمال', 'رفع الاستكمال المترجم']) assert.equal(btn(box, name).getAttribute('aria-disabled'), 'true', name);
   assert.ok(findAll(box, (x) => x.tagName === 'input' && x.getAttribute('type') === 'checkbox').every((c) => c.disabled));
 });
 
@@ -255,7 +255,7 @@ test('لوحة الاستكمال: الاستيراد القرائي يعطّل 
   const got = [];
   const box = e.doc.createElement('section');
   renderCompletePanel(box, panelOpts(e.doc, { readOnly: 'للقراءة فقط', onImport: (f) => got.push(f) }));
-  assert.equal(btn(box, 'استيراد ملف تصحيح').getAttribute('aria-disabled'), 'true');
+  assert.equal(btn(box, 'رفع الاستكمال المترجم').getAttribute('aria-disabled'), 'true');
   const file = findAll(box, (x) => x.tagName === 'input' && x.getAttribute('type') === 'file')[0];
   file.files = [{ name: 'a.srt' }];
   file.value = 'C:\\a.srt';
@@ -270,7 +270,7 @@ test('لوحة الاستكمال: الاستيراد القرائي يعطّل 
   renderCompletePanel(box, panelOpts(e.doc, { onImport: () => {} }));
   const file2 = findAll(box, (x) => x.tagName === 'input' && x.getAttribute('type') === 'file')[0];
   file2.click = () => { clicked++; };
-  btn(box, 'استيراد ملف تصحيح').dispatchEvent({ type: 'click' });
+  btn(box, 'رفع الاستكمال المترجم').dispatchEvent({ type: 'click' });
   assert.equal(clicked, 1);
 });
 
@@ -297,7 +297,7 @@ test('معاينة الملف: كل البنود مختارة افتراضيًا
   boxes[0].checked = false;
   boxes[0].dispatchEvent({ type: 'change' });
   assert.ok(textOf(dlg).includes('من 3'));
-  assert.ok(btn(dlg, 'تطبيق').textContent.includes('تطبيق 2'));
+  assert.ok(btn(dlg, 'تطبيق').textContent.includes('تطبيق على مقطعين'));
   dlg.close('apply');
   assert.deepEqual(await done, [2, 3]);
 });
@@ -311,7 +311,7 @@ test('معاينة الملف: إلغاء كل البنود يعطّل التط�
     b.checked = false;
     b.dispatchEvent({ type: 'change' });
   }
-  assert.equal(btn(dlg, 'تطبيق 0').getAttribute('aria-disabled'), 'true');
+  assert.equal(btn(dlg, 'تطبيق على 0 مقطع').getAttribute('aria-disabled'), 'true');
   dlg.close('apply'); // تطبيق بلا مختار يعيد null
   assert.equal(await done, null);
 

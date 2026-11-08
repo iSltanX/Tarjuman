@@ -287,7 +287,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
       const cuesTouched = new Set([...picked].map((k) => matches[k].index)).size;
       total.textContent = `المختار: ${formatCount(picked.size, COUNT.match)} في ${formatCount(cuesTouched, COUNT_FORMS.cue)}.`;
       if (applyBtn) {
-        applyBtn.firstChild.textContent = `استبدال ${picked.size}`;
+        applyBtn.firstChild.textContent = `استبدال ${picked.size === 2 ? 'موضعين' : formatCount(picked.size, COUNT.match)}`;
         setDisabled(applyBtn, picked.size ? null : 'اختر موضعًا واحدًا على الأقل.');
       }
     };
@@ -298,7 +298,6 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
         el('p', { className: 'tj-body-sm', text: `«${S.query}» ← «${replacement}». حرفيًا في المواضع المختارة وحدها؛ التوقيت والأرقام كما هي، وكل الاستبدال خطوة واحدة في التراجع.`, doc }),
         el('div', { className: 'ed-preview-table ed-replace-list', children: rows, doc }),
         matches.length > MAX_PREVIEW ? el('p', { className: 'tj-caption', text: `تُعرض أول ${MAX_PREVIEW} موضع؛ والباقي (${matches.length - MAX_PREVIEW}) يُستبدل معها.`, doc }) : null,
-        el('p', { className: 'tj-caption', text: `يتغير نص ${formatCount(plan.changes.length, COUNT_FORMS.cue)}.`, doc }),
         total,
       ],
       doc,
@@ -307,7 +306,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     const v = await openDialog({
       doc, size: 'lg', title: 'معاينة استبدال الكل', content, focus: 'cancel',
       actions: [
-        { label: `استبدال ${picked.size}`, value: 'apply', variant: 'primary', ref: (b) => { applyBtn = b; sync(); } },
+        { label: `استبدال ${picked.size === 2 ? 'موضعين' : formatCount(picked.size, COUNT.match)}`, value: 'apply', variant: 'primary', ref: (b) => { applyBtn = b; sync(); } },
         { label: 'إلغاء', value: 'cancel' },
       ],
     });
