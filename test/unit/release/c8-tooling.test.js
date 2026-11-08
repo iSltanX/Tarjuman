@@ -73,6 +73,10 @@ test('U60: الجذر وأبوه وsrc وما تحتها (ومنه src/..foo) و
   await mkdir(path.join(tmp, 'old-name'));
   await writeFile(path.join(tmp, 'old-name', 'manifest.json'), JSON.stringify({ name: 'ترجمان - ترجمتك العربية فوق الفيديو', short_name: 'ترجمان' }));
   assert.equal(await outDirProblem(path.join(tmp, 'old-name'), root), null);
+  // وبناءات 0.2.0 و1.0.0 بلا short_name واسمها «ترجمان» (الاسم المختصر الحالي): بناء ترجمان (التدقيق الموحد V2، U-067).
+  await mkdir(path.join(tmp, 'v1-build', 'pages'), { recursive: true });
+  await writeFile(path.join(tmp, 'v1-build', 'manifest.json'), JSON.stringify({ name: 'ترجمان', version: '1.0.0' }));
+  assert.equal(await outDirProblem(path.join(tmp, 'v1-build'), root), null);
   await writeFile(path.join(tmp, 'other-ext', 'manifest.json'), JSON.stringify({ name: 'غيره', short_name: 'غيره' }));
   assert.match(await outDirProblem(path.join(tmp, 'other-ext'), root), /ليس بيان ترجمان/);
   await mkdir(path.join(tmp, 'no-manifest', 'pages'), { recursive: true });

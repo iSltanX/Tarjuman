@@ -49,8 +49,10 @@ export async function outDirProblem(out, { root }) {
   try {
     const built = JSON.parse(await readFile(path.join(out, 'manifest.json'), 'utf8'));
     const own = JSON.parse(await readFile(path.join(src, 'manifest.json'), 'utf8'));
-    // الاسم المختصر «ترجمان» ثابت عبر الإصدارات، والاسم الكامل تغيّر في 2.0.0 (لوحة الهوية 18): فبناء سابق بالاسم القديم بناءُ ترجمان.
-    return built.name === own.name || (typeof own.short_name === 'string' && built.short_name === own.short_name) ? null : 'بيانه ليس بيان ترجمان';
+    // الاسم تغيّر عبر الإصدارات، والاسم المختصر «ترجمان» ثابت منذ 1.1.0: فبناء سابق بأي منهما بناءُ ترجمان. وبناءات 0.2.0 و1.0.0
+    // بلا short_name واسمها «ترجمان» نفسه، أي الاسم المختصر الحالي (التدقيق الموحد V2، U-067: كان dist قديم من 1.0.0 يُرفض).
+    const ours = new Set([own.name, own.short_name].filter((n) => typeof n === 'string' && n));
+    return ours.has(built.name) || ours.has(built.short_name) ? null : 'بيانه ليس بيان ترجمان';
   } catch {
     return 'لا بيان ترجمان في جذره';
   }
