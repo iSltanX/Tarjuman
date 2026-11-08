@@ -63,7 +63,7 @@ Privacy policy: https://bysltan.com/tarjuman/privacy. The same package is publis
 
 <!-- field: reviewer.amo -->
 ```text
-No account, login or payment is needed. Desktop only. The interface is in English or Arabic: on first use it follows YouTube's interface language (otherwise the browser's), any other language starts in English, and Settings > Display > Interface language changes it. The names below are the English ones.
+No account, login or payment is needed. Desktop only. Interface: English or Arabic (Settings > Display); names below are English.
 
 Source code: tarjuman-2.0.0-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild bundles each entry with syntax-level minification only: no renamed identifiers, no source maps, no obfuscation.
 
