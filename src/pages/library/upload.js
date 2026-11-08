@@ -110,7 +110,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   };
   let referenceBlock;
   if (!fps.length) {
-    referenceBlock = el('p', { className: 'tj-caption', text: 'لا تصدير للأصل محفوظ لهذا الفيديو، فلا مرجع للمقارنة؛ يُحفظ الملف كما هو.', doc });
+    referenceBlock = el('p', { className: 'tj-caption', text: 'لم يُنزَّل الأصل من ترجمان لهذا الفيديو، فلا مرجع للمقارنة؛ يُحفظ الملف كما هو.', doc });
   } else if (fps.length === 1) {
     // تصدير واحد: لا اختيار، والمرجع سطر.
     referenceBlock = el('p', { className: 'tj-body-sm lib-up__ref-line', children: ['المرجع: ', el('span', { text: fingerprintLabel(fps[0], absoluteTime(fps[0].createdAt)), doc })], doc });
@@ -198,11 +198,11 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       kids.push(...diffCountLines(impact.diff).map((t) => el('p', { className: 'tj-body-sm lib-up__counts', text: t, doc })));
       if (impact.diff.changes.length) kids.push(diffTable(doc, impact.diff.changes));
       if (impact.edits) {
-        kids.push(el('p', { className: 'tj-body-sm lib-up__lost', text: `سيُستبدل ${formatCount(impact.edits, EDIT_FORMS)}.`, doc }));
+        kids.push(el('p', { className: 'tj-body-sm lib-up__lost', text: `في الترجمة الحالية ${formatCount(impact.edits, EDIT_FORMS)}.`, doc }));
         keepBox.checked = false;
         keepBox.disabled = !impact.keep.ok;
         keepBox.setAttribute('aria-disabled', impact.keep.ok ? 'false' : 'true');
-        keepLabel.title = impact.keep.ok ? 'تُطبَّق تعديلاتك على الملف الجديد حيث لم يغيّر موضعها، وما تعارض منها يأخذه الملف الجديد.' : impact.keep.reason ?? '';
+        keepLabel.title = impact.keep.ok ? 'تبقى تعديلاتك حيث لم يغيّر الملف الجديد موضعها، وعند التعارض يُعتمد الملف الجديد.' : impact.keep.reason ?? '';
         keepWhy.textContent = impact.keep.ok ? '' : ` (${impact.keep.reason ?? ''})`;
         if (impact.keep.ok) keepBox.removeAttribute('aria-describedby');
         else keepBox.setAttribute('aria-describedby', keepWhy.getAttribute('id'));

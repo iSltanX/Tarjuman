@@ -34,8 +34,8 @@ import { thumbnailsShown } from '../../core/consent/thumbnails.js';
 import { uploadContent } from './upload.js';
 
 export { isolate };
-export const COPY_TIP = 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.';
-export const CAPTION = 'ترجماتك محفوظة هنا على هذا الجهاز وحده. افتح الترجمات لتقارن النسخ وتختار النشطة.';
+export const COPY_TIP = 'ألصقها مع ملف الأصل في محادثة نموذجك.';
+export const CAPTION = 'اضغط «إظهار الترجمات» في أي فيديو لتقارن نسخه وتختار ما يُعرض فوق الفيديو.';
 let seq = 0;
 
 /**
@@ -268,8 +268,8 @@ export function createLibrary(env) {
     const group = radioGroup({
       legend: 'توقيت الملف المصدَّر',
       options: [
-        { value: 'shown', label: `كما يظهر الآن (المحفوظ + الإزاحة ${offsetInline(offsetMs)} ث)`, hint: 'الاختيار المناسب لما تشاهده فوق الفيديو.' },
-        { value: 'saved', label: 'المحفوظ كما هو (دون الإزاحة)', hint: 'التوقيت المخزَّن في ترجمتك بلا تعديل.' },
+        { value: 'shown', label: `توقيت المشاهدة (المحفوظ + الإزاحة ${offsetInline(offsetMs)} ث)` },
+        { value: 'saved', label: 'التوقيت المحفوظ (دون الإزاحة)' },
       ],
       doc,
     });
@@ -540,7 +540,7 @@ export function createLibrary(env) {
   function addChip(m, n) {
     const b = el('button', {
       className: 'lib-chip lib-chip--add',
-      attrs: { type: 'button', 'data-slot': String(n), 'data-fk': `${m.videoId}:chip-add`, title: `رفع ترجمة إلى الخانة ${n}`, 'aria-description': `رفع ترجمة إلى الخانة ${n}` },
+      attrs: { type: 'button', 'data-slot': String(n), 'data-fk': `${m.videoId}:chip-add`, title: `رفع الترجمة ${n}`, 'aria-description': `رفع الترجمة ${n}` },
       children: [el('span', { className: 'lib-chip__text', text: `${n} · فارغة`, doc })],
       doc,
     });
@@ -824,7 +824,7 @@ export function createLibrary(env) {
     }
     if (!state.entries.length) {
       listHost.append(statePanel(emptyState({
-        icon: 'library', title: 'لا ترجمات محفوظة بعد', text: 'كل فيديو تحمّل أصله أو ترفع ترجمته يُحفظ هنا تلقائيًا.',
+        icon: 'library', title: 'لا ترجمات محفوظة بعد', text: 'كل فيديو تنزّل أصله أو ترفع ترجمته يُحفظ هنا تلقائيًا.',
         steps: ['افتح فيديو على يوتيوب', 'اضغط زر التنزيل في شريط المشغّل', 'ارفع ترجمتك من زر الرفع في الشريط'], doc,
       })));
       return;

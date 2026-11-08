@@ -218,7 +218,7 @@ test('U58: رسالة التفعيل بفعلها، والإعلان يذكر ط
   await quiesce(m);
   const toast = m.root.querySelector('.tj-toast--action');
   assert.ok(textOf(toast).startsWith('فُعّلت الترجمة 2'));
-  assert.match(textOf(m.lib.toaster.live), /للتراجع: «تراجع» في الرسالة، أو اضغط شريحة الترجمة 1/);
+  assert.match(textOf(m.lib.toaster.live), /للتراجع اختر «تراجع» في الرسالة، أو اضغط زر الترجمة 1/);
   const longTimers = () => [...m.clock.q.values()].filter((t) => t.ms >= 3000).length;
   assert.equal(longTimers(), 1, 'مهلة الرسالة جارية');
   const undo = buttonNamed(toast, 'تراجع');
@@ -312,12 +312,12 @@ test('U59: سطر سبب المرجع في حوار الرفع يتبع المر
   assert.equal(textOf(why), '', '«بلا مرجع»: لا سبب (كان يبقى «مطابقة لهذا التصدير»)');
 });
 
-test('U59: صيغ العدد — «جزآن» في وصف البصمة، و«مسارا الأصل الملتقطان» في ملخص الحذف، و«النتائج: …» في الإعلان', async () => {
+test('U59: صيغ العدد — «جزآن» في وصف البصمة، و«ملفا أصل محفوظان» في ملخص الحذف، و«النتائج: …» في الإعلان', async () => {
   assert.match(fingerprintLabel({ trackKey: 'en|asr', mode: 'normal', count: 12, parts: [{}, {}] }), /جزآن/);
   assert.match(fingerprintLabel({ trackKey: 'en|asr', mode: 'normal', count: 12, parts: Array.from({ length: 11 }, () => ({})) }), /11 جزءًا/);
   const b = sampleBundle({ videoId: IDS[0] });
   const two = { ...b, record: { ...b.record, english: [b.record.english[0], { ...b.record.english[0], key: 'en|asr' }] } };
-  assert.ok(deleteSummary(two, { scope: 'all' }).items.includes('مسارا الأصل الملتقطان'));
+  assert.ok(deleteSummary(two, { scope: 'all' }).items.includes('ملفا أصل محفوظان'));
   const m = await mount();
   const search = m.root.querySelector('.lib-search__input');
   search.value = 'ث';
@@ -330,13 +330,13 @@ test('U76: حوار الرفع إلى خانة ممتلئة يحذّر من مح
   const pick = [new File([writeSrt(makeCues(5).map((c) => ({ ...c, text: `جديد ${c.n}` })))], 'x.ar.srt')];
   const m = await mount({ pick });
   await expand(m, IDS[0]);
-  buttonNamed(cardOf(m, IDS[0], 1), 'ملف بديل…').click();
+  buttonNamed(cardOf(m, IDS[0], 1), 'استبدال…').click();
   await settle(20);
   const text = textOf(m.confirms.at(-1).content);
-  assert.match(text, /تحل الترجمة المستبدلة محل النسخة السابقة المحفوظة الآن \(من الترجمة 2،/);
+  assert.match(text, /وتُحذف النسخة السابقة المحفوظة الآن \(من الترجمة 2،/);
   const n = await mount({ pick, seed: async (s) => seedBundle(s, { ...sampleBundle({ videoId: IDS[0], third: true }), previous: null }) });
   await expand(n, IDS[0]);
-  buttonNamed(cardOf(n, IDS[0], 1), 'ملف بديل…').click();
+  buttonNamed(cardOf(n, IDS[0], 1), 'استبدال…').click();
   await settle(20);
   assert.equal(textOf(n.confirms.at(-1).content).includes('تحل الترجمة المستبدلة'), false);
 });

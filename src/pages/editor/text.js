@@ -232,7 +232,7 @@ export const durationText = (ms) => (Math.round(ms / 100) / 10).toFixed(1);
  * @returns {{ tone: 'success' | 'info' | 'warning', text: string }[]}
  */
 export function comparisonLines(r) {
-  if (!r || r.fingerprintId === null) return [{ tone: 'info', text: 'لا بصمة للمقارنة؛ عُرض الملف كما هو.' }];
+  if (!r || r.fingerprintId === null) return [{ tone: 'info', text: 'لا مرجع للمقارنة بالأصل، فيُعرض الملف كما هو.' }];
   const lines = [];
   if (r.matched) lines.push({ tone: 'success', text: 'مطابق للأصل' });
   lines.push({ tone: r.countSource === r.countTarget ? 'info' : 'warning', text: `العدد: ${r.countTarget} من ${r.countSource}` });

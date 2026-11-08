@@ -48,7 +48,7 @@ for (const [label, t, named] of [
     if (named) await store.updateBundle(A, (b) => withSlotName(b, 1, 'نسختي'));
     const rows = libraryEntries(await store.listLibrary());
     const full = await store.getBundle(A);
-    assert.deepEqual({ id: rowStatus(rows[0]).id, text: rowStatus(rows[0]).text }, { id: 'warning', text: '1 ناقصة' });
+    assert.deepEqual({ id: rowStatus(rows[0]).id, text: rowStatus(rows[0]).text }, { id: 'warning', text: 'مقطع ناقص' });
     assert.equal(filterEntries(rows, 'warnings').length, 1);
     assert.equal(filterCounts(rows).warnings, 1);
     assert.equal(rows[0].summary.warned, 1);

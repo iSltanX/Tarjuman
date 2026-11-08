@@ -258,7 +258,7 @@ test('التجميع بالتاريخ (ترتيب «آخر تعديل»): الي
   });
   const groups = () => m.root.querySelectorAll('section.lib-group');
   assert.deepEqual(groups().map((g) => [g.getAttribute('data-group'), textOf(g.querySelector('.lib-group__title')), textOf(g.querySelector('.lib-group__n'))]), [
-    ['today', 'اليوم', '2'], ['week', 'هذا الأسبوع', '1'], ['older', 'أقدم', '1'],
+    ['today', 'اليوم', '2'], ['week', 'آخر 7 أيام', '1'], ['older', 'أقدم', '1'],
   ]);
   assert.deepEqual(groups().map((g) => g.querySelectorAll('li.lib-row').map((r) => textOf(r.querySelector('h3')))), [['ج اليوم', 'ب اليوم'], ['أ هذا الأسبوع'], ['د أقدم']], 'الأحدث أولًا داخل القسم');
   assert.equal(m.root.querySelectorAll('ul.lib-list').length, 3, 'صندوق صفوف لكل قسم');
@@ -292,7 +292,7 @@ test('الصف: الشارة الوحيدة والترجمات (شرائح لل�
   const m = await mount({ records: [], seed: async (store, setClock) => { setClock(at(0, 13)); await seedBundle(store, sampleBundle({ videoId: ID(1) })); } });
   const row = rowFor(m, ID(1));
   assert.equal(row.querySelectorAll('.tj-pill').length, 1, 'شارة حالة واحدة');
-  assert.equal(textOf(row.querySelector('.tj-pill')), 'تحتاج مراجعة 2');
+  assert.equal(textOf(row.querySelector('.tj-pill')), 'تحتاج مراجعة (2)');
   assert.deepEqual([...row.querySelector('.lib-row__actions').children].map((c) => c.getAttribute('data-fk') ?? c.querySelector('button').getAttribute('data-fk')), [`${ID(1)}:edit`, `${ID(1)}:open`, `${ID(1)}:toggle`, `${ID(1)}:more`]);
   assert.equal(textOf(row.querySelector('.lib-trs__label')), 'الترجمات');
   const toggle = buttonNamed(row, 'إظهار الترجمات');

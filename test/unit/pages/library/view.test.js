@@ -319,7 +319,7 @@ test('«نسخ التعليمات»: بند بتلميحه المعتمد، وف
   await m.lib.load();
   const item = menuItem(m, IDS[0], 'نسخ التعليمات');
   assert.equal(textOf(item.querySelector('.tj-menu__hint')), COPY_TIP);
-  assert.equal(COPY_TIP, 'ينسخ تعليمات الترجمة لترفقها مع ملف SRT.');
+  assert.equal(COPY_TIP, 'ألصقها مع ملف الأصل في محادثة نموذجك.');
   assert.ok(item.getAttribute('aria-disabled') === null, 'معرّف صالح: البند ممكّن');
   item.click();
   await settle();
@@ -365,9 +365,9 @@ test('تصدير SRT من «المزيد»: قائمة بأسباب التعطي
   assert.equal(menuButton.getAttribute('aria-expanded'), 'true');
   const items = menuItems(menuButton);
   // «الترجمات…» حذفت: صارت بطاقات في الصف نفسه (التوسيع).
-  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الترجمة — الأصل المستورد', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'رفع ترجمة…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
+  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الترجمة — النسخة المرفوعة', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'رفع ترجمة…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
   assert.equal(items[1].getAttribute('aria-disabled'), 'true');
-  assert.equal(textOf(items[1].querySelector('.tj-menu__hint')), 'لم تُعدَّل الترجمة، فالأصل المستورد هو النسخة الحالية.');
+  assert.equal(textOf(items[1].querySelector('.tj-menu__hint')), 'لم تُعدَّل الترجمة، فالنسخة المرفوعة هي الحالية.');
   assert.ok(items.slice(-2).every((i) => i.classList.contains('tj-menu__item--danger')), 'الحذفان بلون الخطر');
   items[1].click();
   await settle();
@@ -440,7 +440,7 @@ test('«حذف الترجمة النشطة…»: حوار يسرد ما يُحذ
   assert.equal(dialog.tone, 'danger');
   assert.equal(textOf(dialog.content.querySelector('.lib-del__title')), 'عنوان', 'عنوان الفيديو في الحوار');
   assert.deepEqual(listItems(dialog.content, 0), [`الترجمة 1 — ملف ${LRI}${IDS[0]}.ar.srt${PDI}`], 'ما يُحذف: هذه الترجمة وحدها (بلا تعديلات ولا علامات ولا إزاحة)');
-  assert.deepEqual(listItems(dialog.content, 1), ['مسارات الأصل والبصمات تبقى'], 'ما يبقى');
+  assert.deepEqual(listItems(dialog.content, 1), ['ملفات الأصل المحفوظة ومراجع المقارنة تبقى'], 'ما يبقى');
   assert.match(textOf(dialog.content.querySelector('.lib-del__note')), /لا يمكن التراجع/);
   assert.equal(findAll(dialog.content, (e) => e.tagName === 'input').length, 0, 'لا خيارات: التأكيد على ما سُرد');
   assert.equal((await m.store.getVideo(IDS[0])).arabic !== null, true, 'الإلغاء لم يحذف');
@@ -452,7 +452,7 @@ test('«حذف الترجمة النشطة…»: حوار يسرد ما يُحذ
   const after = await m.store.getVideo(IDS[0]);
   assert.equal(after.arabic, null);
   assert.equal(after.english.length, 1);
-  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'حُذفت الترجمة، وبقي مسار الأصل والبصمة.');
+  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'حُذفت الترجمة، وبقي الأصل المحفوظ ومراجع المقارنة.');
   assert.equal(rows(m)[0].querySelectorAll('.tj-pill').map(textOf)[0], 'بانتظار الترجمة', 'القائمة تحدّثت');
   assert.ok(buttonNamed(rows(m)[0], 'المزيد'), 'الصف باقٍ');
   const again = buttonNamed(rows(m)[0], 'المزيد');
@@ -471,7 +471,7 @@ test('«حذف بيانات الفيديو…»: حوار يسرد ما سيُح
   const only = m.calls.confirms[0];
   assert.equal(only.title, 'حذف بيانات هذا الفيديو؟');
   assert.equal(only.confirmLabel, 'حذف نهائيًا');
-  assert.deepEqual(listItems(only.content), ['مسار الأصل الملتقط', 'بصمات التصدير (1)', 'سجل الفيديو: العنوان والمدة وإعدادات العرض']);
+  assert.deepEqual(listItems(only.content), ['ملف أصل محفوظ', 'مراجع المقارنة بالأصل (1)', 'عنوان الفيديو ومدته وإعدادات عرضه']);
   assert.equal(textOf(only.content.querySelector('.lib-del__note')), 'لا يمكن التراجع.', 'بلا ترجمات لا «صدّر الترجمات»');
   assert.equal(await m.store.getVideo(IDS[1]), null);
   assert.equal(rows(m).length, 1);
@@ -482,7 +482,7 @@ test('«حذف بيانات الفيديو…»: حوار يسرد ما سيُح
   deleteItem(moreA).click();
   await settle();
   const all = m.calls.confirms[1];
-  assert.deepEqual(listItems(all.content), ['الترجمة 1', `الإزاحة المحفوظة (${LRI}+0.5${PDI} ث)`, 'مسار الأصل الملتقط', 'بصمات التصدير (1)', 'سجل الفيديو: العنوان والمدة وإعدادات العرض']);
+  assert.deepEqual(listItems(all.content), ['الترجمة 1', `الإزاحة المحفوظة (${LRI}+0.5${PDI} ث)`, 'ملف أصل محفوظ', 'مراجع المقارنة بالأصل (1)', 'عنوان الفيديو ومدته وإعدادات عرضه']);
   assert.match(textOf(all.content.querySelector('.lib-del__note')), /صدّر الترجمات أولًا/);
   assert.equal(findAll(all.content, (e) => e.tagName === 'input').length, 0);
   assert.ok(await m.store.getVideo(IDS[0]), 'الإلغاء لم يحذف');
@@ -534,7 +534,7 @@ test('الرفع: حوار الفحص الكامل — الافتراضي أول
   assert.equal(b.slots[1].track.original[0].text, 'جديد 1');
   assert.equal(b.slots[0].track.original[0].text, 'سطر 1', 'الأولى باقية');
   assert.equal(b.slots[0].offsetMs, 1000, 'إزاحة الأولى باقية');
-  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'حُفظت الترجمة في الخانة 2.');
+  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'حُفظت الترجمة 2.');
   const chips = rows(m)[0].querySelector('.lib-chips');
   assert.deepEqual(chips.querySelectorAll('button').map((x) => [textOf(x), x.getAttribute('aria-pressed')]), [['الترجمة 1', 'false'], ['الترجمة 2', 'true']], 'صارت ترجمتين بعد الإضافة، والجديدة نشطة');
   assert.equal(rows(m)[0].querySelectorAll('.lib-chip--add').map(textOf)[0], '3 · فارغة', 'والشريحة المتقطّعة للخانة التالية');
@@ -603,7 +603,7 @@ test('«إبقاء تعديلاتي»: يُعرض ما سيُفقد، ومتاح
   await m.lib.load();
   clickReplace(m);
   await settle(10);
-  assert.match(seen[0].text, /سيُستبدل تعديل يدوي واحد/);
+  assert.match(seen[0].text, /في الترجمة الحالية تعديل يدوي واحد/);
   assert.equal(seen[0].disabled, false);
   const b = await m.store.getBundle(IDS[0]);
   assert.equal(b.record.arabic.original[3].text, 'جديد 4', 'الأصل الجديد');
@@ -750,7 +750,7 @@ test('إخفاق حفظ بصمة التصدير بعد نزول الملف يظ�
   await settle();
   assert.equal(m.calls.downloads.length, 1);
   assert.ok(m.root.querySelector('.tj-toast--danger') === null);
-  assert.match(textOf(m.root.querySelector('.tj-toast--info')), /نُزّل الملف، لكن تعذّر حفظ بصمته/);
+  assert.match(textOf(m.root.querySelector('.tj-toast--info')), /نُزّل الملف، لكن تعذّر حفظ ما يلزم لمقارنته/);
 });
 
 test('تغيّر الإعدادات من صفحة أخرى لا يعيد بناء القائمة (يحفظ التركيز والصف نفسه)', async () => {
@@ -807,7 +807,7 @@ test('تدقيق 5fedcb9 (CL-007): اسم الوصول لأزرار الصف ي�
   const chips = findAll(rowFor(m, IDS[0]), (e) => e.classList.contains('lib-chip'));
   assert.ok(chips.length >= 1);
   for (const c of chips) assert.ok(c.getAttribute('aria-label') === null, `${textOf(c)}: الاسم من النص الظاهر`);
-  assert.equal(chips.at(-1).getAttribute('aria-description'), 'رفع ترجمة إلى الخانة 2');
+  assert.equal(chips.at(-1).getAttribute('aria-description'), 'رفع الترجمة 2');
 });
 
 test('تدقيق 5fedcb9 (CL-005): بلا ترجمة محفوظة سطر «تُحفظ ترجمةً جديدة» بلا محدد ولا «فارغة»؛ و«رفع إليها» يربط الجديدة بالخانة المطلوبة', async () => {

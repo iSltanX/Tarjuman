@@ -42,7 +42,7 @@ test('FA-04: معاينة ملف أُعيد ترقيمه تقول الناقص �
   assert.equal(p.renumbered, true);
   assert.equal(p.matched, false);
   assert.equal(playerSummary(p).text, 'مقطع واحد ناقص: 5 · الترقيم مختلف عن الأصل، والمقارنة بالتوقيت');
-  assert.deepEqual(librarySummary(p).lines, ['عدد المقاطع: 426 من 427', 'مقطع واحد ناقص: 5', 'ترقيم المقاطع يختلف عن الملف المصدَّر، فقورنت بتوقيتها.']);
+  assert.deepEqual(librarySummary(p).lines, ['عدد المقاطع: 426 من 427', 'مقطع واحد ناقص: 5', 'ترقيم المقاطع يختلف عن الأصل، فقورنت بتوقيتها.']);
 });
 
 test('FA-04: المعاينة تطابق ما تعرضه الأسطح بعد الحفظ (trackComparison) في النقص والزيادة والانحراف', async () => {

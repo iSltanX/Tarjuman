@@ -22,7 +22,7 @@ export const FILTERS = Object.freeze([
   Object.freeze({ value: 'awaiting', label: 'بانتظار الترجمة' }),
   Object.freeze({ value: 'translated', label: 'مترجمة' }),
   Object.freeze({ value: 'edited', label: 'معدّلة' }),
-  Object.freeze({ value: 'warnings', label: 'تحذيرات آلية' }),
+  Object.freeze({ value: 'warnings', label: 'فيها فروق عن الأصل' }),
   Object.freeze({ value: 'review', label: 'تحتاج مراجعة' }),
 ]);
 export const FILTER_VALUES = Object.freeze(FILTERS.map((f) => f.value));
@@ -202,7 +202,7 @@ export function rowStatus(e) {
   const s = summaryOf(e);
   /** @type {{ tone: 'info' | 'warning' | 'edited', text: string, id: string, title: string }[]} */
   const items = [];
-  if (s.marks.todo > 0) items.push({ tone: 'info', text: `تحتاج مراجعة ${s.marks.todo}`, id: 'review', title: 'مقاطع علّمتها «أعود إليه»' });
+  if (s.marks.todo > 0) items.push({ tone: 'info', text: `تحتاج مراجعة (${s.marks.todo})`, id: 'review', title: 'مقاطع علّمتها «أعود إليه»' });
   const warning = warningText(e.arabic);
   if (warning) items.push({ tone: 'warning', text: warning, id: 'warning', title: 'الفحص الآلي: المقارنة بالأصل' });
   if (e.arabic.edited || s.edited > 0) items.push({ tone: 'edited', text: 'معدّلة', id: 'edited', title: 'عُدّلت في المحرّر بعد الرفع' });
@@ -278,15 +278,15 @@ export function rowModel(e, nowMs) {
 function warningText(a) {
   if (a.matched !== false) return null;
   const parts = [];
-  if (a.missing > 0) parts.push(`${a.missing} ناقصة`);
-  if (a.extra > 0) parts.push(`${a.extra} زائدة`);
-  if (a.drift > 0) parts.push(`توقيت مختلف في ${a.drift}`);
+  if (a.missing > 0) parts.push(formatCount(a.missing, { ...NOUN.missing, one: 'مقطع ناقص' }));
+  if (a.extra > 0) parts.push(formatCount(a.extra, { ...NOUN.extra, one: 'مقطع زائد' }));
+  if (a.drift > 0) parts.push(`توقيت مختلف في ${a.drift === 2 ? 'مقطعين' : formatCount(a.drift, COUNT_FORMS.cue)}`);
   return parts.join(' · ') || 'غير مطابقة';
 }
 
 export const DATE_GROUPS = Object.freeze([
   Object.freeze({ key: 'today', label: 'اليوم' }),
-  Object.freeze({ key: 'week', label: 'هذا الأسبوع' }),
+  Object.freeze({ key: 'week', label: 'آخر 7 أيام' }),
   Object.freeze({ key: 'older', label: 'أقدم' }),
 ]);
 
@@ -330,7 +330,7 @@ export function exportOptions(e) {
     { id: 'ar-current', label: `${tName} — النسخة الحالية`, disabledReason: e.arabic ? null : noArabic, action: { type: 'ar', variant: 'current' } },
     {
       id: 'ar-original',
-      label: `${tName} — الأصل المستورد`,
+      label: `${tName} — النسخة المرفوعة`,
       disabledReason: !e.arabic ? noArabic : e.arabic.edited ? null : messageFor('PG_ORIGINAL_SAME'),
       action: { type: 'ar', variant: 'original' },
     },
@@ -396,12 +396,12 @@ const numbers = (list) => (list.length > LIST_LIMIT ? `${list.slice(0, LIST_LIMI
  * @returns {{ tone: 'info' | 'success' | 'warning', lines: string[] }}
  */
 export function comparisonSummary(r) {
-  if (!r || r.fingerprintId === null) return { tone: 'info', lines: ['لا بصمة للمقارنة؛ عُرض الملف كما هو.'] };
+  if (!r || r.fingerprintId === null) return { tone: 'info', lines: ['لا مرجع للمقارنة بالأصل، فيُعرض الملف كما هو.'] };
   // الفارغ وغير المترجم لا يمنعان matched بعقد البيانات، لكنهما تحذير يُقال بعد سطر المطابقة البنيوية (U-027) كما في المحرّر.
   const warn = [];
   const empty = r.empty ?? [];
   const untranslated = r.noArabic ?? [];
-  if (empty.length) warn.push(`${formatCount(empty.length, NOUN.empty)} (لم يترجمها النموذج): ${numbers(empty)}`);
+  if (empty.length) warn.push(`${formatCount(empty.length, NOUN.empty)}: ${numbers(empty)}`);
   if (untranslated.length) warn.push(`${formatCount(untranslated.length, COUNT_FORMS.cue)} بلا ترجمة: ${numbers(untranslated)}`);
   if (r.matched) return warn.length ? { tone: 'warning', lines: ['مطابق للأصل', ...warn] } : { tone: 'success', lines: ['مطابق للأصل'] };
   const lines = [];
@@ -409,11 +409,11 @@ export function comparisonSummary(r) {
   if (r.missing.length) lines.push(`${formatCount(r.missing.length, NOUN.missing)}: ${numbers(r.missing)}`);
   if (r.extra.length) lines.push(`${formatCount(r.extra.length, NOUN.extra)}: ${numbers(r.extra)}`);
   // معاينة الرفع بالمحاذاة (FA-04): ملف أُعيد ترقيمه يُقال إنه قورن بتوقيته، فلا يُظن النقص من آخره.
-  if (r.renumbered) lines.push('ترقيم المقاطع يختلف عن الملف المصدَّر، فقورنت بتوقيتها.');
-  else if (r.numbering === 'different' && !r.missing.length && !r.extra.length) lines.push('ترقيم المقاطع يختلف عن الملف المصدَّر.');
+  if (r.renumbered) lines.push('ترقيم المقاطع يختلف عن الأصل، فقورنت بتوقيتها.');
+  else if (r.numbering === 'different' && !r.missing.length && !r.extra.length) lines.push('ترقيم المقاطع يختلف عن الأصل.');
   if (r.drift.length) lines.push(r.drift.length === 1 ? 'توقيت مختلف في مقطع واحد' : r.drift.length === 2 ? 'توقيت مختلف في مقطعين' : `توقيت مختلف في ${formatCount(r.drift.length, COUNT_FORMS.cue)}`);
   lines.push(...warn);
-  return { tone: 'warning', lines: lines.length ? lines : ['الملف لا يطابق الملف المصدَّر.'] };
+  return { tone: 'warning', lines: lines.length ? lines : ['يختلف عن الأصل.'] };
 }
 
 // ---- الإصدار الثاني: الترجمات الثلاث والنسخة السابقة والرفع (P13) ----
@@ -426,7 +426,7 @@ const MODE_LABEL = Object.freeze({ normal: 'عادي', long: 'مقاطع أطو�
 export const PART_FORMS = Object.freeze({ one: 'جزء واحد', two: 'جزآن', few: 'أجزاء', many: 'جزءًا', single: 'جزء' });
 /** صيغ مسارات الأصل الملتقطة في ملخص الحذف (كانت «2 مسارات إنجليزية ملتقطة»، U59؛ وبلا لغة ثابتة منذ AA3). */
 export const EN_TRACK_FORMS = Object.freeze({
-  one: 'مسار الأصل الملتقط', two: 'مسارا الأصل الملتقطان', few: 'مسارات أصل ملتقطة', many: 'مسارًا ملتقطًا', single: 'مسار ملتقط',
+  one: 'ملف أصل محفوظ', two: 'ملفا أصل محفوظان', few: 'ملفات أصل محفوظة', many: 'ملف أصل محفوظًا', single: 'ملف أصل محفوظ',
 });
 
 /**
@@ -436,7 +436,7 @@ export const EN_TRACK_FORMS = Object.freeze({
  */
 export function previousLostText(prev, target, date = '') {
   const whose = prev.from === target ? 'من هذه الترجمة' : `من الترجمة ${prev.from}`;
-  return `تحل الترجمة المستبدلة محل النسخة السابقة المحفوظة الآن (${whose}${date ? `، ${date}` : ''})، فلا يمكن استعادة تلك بعدها.`;
+  return `وتُحذف النسخة السابقة المحفوظة الآن (${whose}${date ? `، ${date}` : ''}) ولا يمكن استعادتها.`;
 }
 
 /**
@@ -470,10 +470,10 @@ export function manualEdits(track) {
  */
 export function diffCountLines(d) {
   const c = d.counts;
-  if (!d.aligned) return [`لا يتحاذى الملفان بالتوقيت: سيُستبدل كل شيء (${c.removed} حالية ← ${c.added} جديدة).`];
+  if (!d.aligned) return [`تعذّرت مطابقة مقاطع الملفين بتوقيتها، فيحل الملف الجديد كله محل الحالي (${c.removed} حالية ← ${c.added} جديدة).`];
   return [
     `يتغير النص في ${c.textChanged} · التوقيت في ${c.timingChanged} · يُضاف ${c.added} · يُحذف ${c.removed} · بلا تغيير ${c.unchanged}`,
-    ...(d.confidence === 'low' ? ['المحاذاة غير مؤكدة: الأعداد تقريبية.'] : []),
+    ...(d.confidence === 'low' ? ['مطابقة المقاطع غير مؤكدة، فالأعداد تقريبية.'] : []),
   ];
 }
 
@@ -550,15 +550,15 @@ export function deleteSummary(b, what, { pair = false } = {}) {
   if (what.scope === 'all') {
     const en = b.record.english.length;
     if (en) items.push(formatCount(en, EN_TRACK_FORMS));
-    if (b.record.fingerprints.length) items.push(`بصمات التصدير (${b.record.fingerprints.length})`);
-    items.push('سجل الفيديو: العنوان والمدة وإعدادات العرض');
-    if (pair) items.push('زوج لغات هذا الفيديو المحفوظ');
+    if (b.record.fingerprints.length) items.push(`مراجع المقارنة بالأصل (${b.record.fingerprints.length})`);
+    items.push('عنوان الفيديو ومدته وإعدادات عرضه');
+    if (pair) items.push('اللغتان المختارتان لهذا الفيديو');
     return { items, keeps };
   }
   const others = b.slots.filter((s) => s.track && s.n !== what.n);
   if (others.length) keeps.push(`${slotsPhrase(others.map((s) => s.n))} تبقى${b.active === what.n ? `، وتصبح الترجمة ${others[0].n} النشطة` : ''}`);
   if (b.previous) keeps.push('النسخة السابقة تبقى');
-  if (b.record.english.length) keeps.push('مسارات الأصل والبصمات تبقى');
-  if (pair) keeps.push('زوج لغات الفيديو يبقى');
+  if (b.record.english.length) keeps.push('ملفات الأصل المحفوظة ومراجع المقارنة تبقى');
+  if (pair) keeps.push('اللغتان المختارتان للفيديو تبقيان');
   return { items, keeps };
 }

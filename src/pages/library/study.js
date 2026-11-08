@@ -24,7 +24,7 @@ export function studyContent({ doc, hasEnglish, name, note = '' }) {
     legend: 'اللغة', value: 'ar', doc,
     options: [
       { value: 'ar', label: 'الترجمة وحدها' },
-      { value: 'bi', label: 'ثنائي · الترجمة والأصل', disabledReason: hasEnglish ? null : 'لا مسار أصل محفوظ لهذا الفيديو.' },
+      { value: 'bi', label: 'باللغتين · الترجمة والأصل', disabledReason: hasEnglish ? null : 'لا أصل محفوظ لهذا الفيديو.' },
     ],
     onChange: () => { refresh(); },
   });

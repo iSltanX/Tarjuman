@@ -13,7 +13,7 @@ const report = (over = {}) => ({
 test('AV2 U-027: مطابق بنيويًا مع فارغ وغير مترجم: نبرة تحذير بسطرين بعد «مطابق للأصل»', () => {
   const s = comparisonSummary(report({ empty: [2], noArabic: [1] }));
   assert.equal(s.tone, 'warning');
-  assert.deepEqual(s.lines, ['مطابق للأصل', 'مقطع واحد فارغ (لم يترجمها النموذج): 2', 'مقطع واحد بلا ترجمة: 1']);
+  assert.deepEqual(s.lines, ['مطابق للأصل', 'مقطع واحد فارغ: 2', 'مقطع واحد بلا ترجمة: 1']);
 });
 
 test('AV2 U-027: الملف النظيف يبقى «مطابق للأصل» بنبرة نجاح، وغير المطابق يذكر غير المترجم', () => {
@@ -27,9 +27,9 @@ test('AV2 U-019: ملخص حذف بيانات الفيديو يذكر زوج ا�
   const b = sampleBundle({ videoId: 'AAAAAAAAAAA' });
   assert.ok(!deleteSummary(b, { scope: 'all' }).items.some((t) => t.includes('زوج')), 'بلا زوج: لا بند');
   const all = deleteSummary(b, { scope: 'all' }, { pair: true });
-  assert.equal(all.items.at(-1), 'زوج لغات هذا الفيديو المحفوظ');
+  assert.equal(all.items.at(-1), 'اللغتان المختارتان لهذا الفيديو');
   const slot = deleteSummary(b, { scope: 'slot', n: 1 }, { pair: true });
   assert.ok(!slot.items.some((t) => t.includes('زوج')));
-  assert.ok(slot.keeps.includes('زوج لغات الفيديو يبقى'));
+  assert.ok(slot.keeps.includes('اللغتان المختارتان للفيديو تبقيان'));
   assert.ok(!deleteSummary(b, { scope: 'slot', n: 1 }).keeps.some((t) => t.includes('زوج')));
 });

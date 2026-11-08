@@ -136,7 +136,7 @@ test('شريحة الرفع المتقطّعة: الخانة الفارغة ال
   const add = rowFor(m, IDS[0]).querySelectorAll('.lib-chip--add');
   assert.equal(add.length, 1, 'شريحة متقطّعة واحدة');
   assert.equal(textOf(add[0]), '3 · فارغة');
-  assert.equal(add[0].getAttribute('aria-description'), 'رفع ترجمة إلى الخانة 3');
+  assert.equal(add[0].getAttribute('aria-description'), 'رفع الترجمة 3');
   assert.ok(add[0].getAttribute('aria-pressed') === null && add[0].getAttribute('role') === null, 'إجراء لا زر تبديل في شريط الترجمات');
   assert.equal(add[0].parentNode.querySelector('.lib-chips').querySelectorAll('.lib-chip--add').length, 0, 'خارج شريط الترجمات');
   const before = JSON.stringify(m.area.dump());
@@ -179,13 +179,13 @@ test('شريحة الرفع المتقطّعة: إن حُذفت الأولى ف�
 
 test('الفرز بالحالات الخمس بأعدادها، و«تحذيرات آلية» منفصلة عن «تحتاج مراجعة» البشرية', async () => {
   const m = await mount();
-  assert.deepEqual(FILTERS.map((f) => f.label), ['الكل', 'بانتظار الترجمة', 'مترجمة', 'معدّلة', 'تحذيرات آلية', 'تحتاج مراجعة']);
+  assert.deepEqual(FILTERS.map((f) => f.label), ['الكل', 'بانتظار الترجمة', 'مترجمة', 'معدّلة', 'فيها فروق عن الأصل', 'تحتاج مراجعة']);
   const chips = findAll(m.root, (e) => e.classList.contains('tj-chip'));
-  assert.deepEqual(chips.map((c) => c.getAttribute('aria-label')), ['الكل (3)', 'بانتظار الترجمة (1)', 'مترجمة (2)', 'معدّلة (1)', 'تحذيرات آلية (0)', 'تحتاج مراجعة (1)']);
+  assert.deepEqual(chips.map((c) => c.getAttribute('aria-label')), ['الكل (3)', 'بانتظار الترجمة (1)', 'مترجمة (2)', 'معدّلة (1)', 'فيها فروق عن الأصل (0)', 'تحتاج مراجعة (1)']);
   chips[5].click();
   await settle();
   assert.deepEqual(m.root.querySelectorAll('li.lib-row').map((r) => r.getAttribute('data-video')), [IDS[0]]);
-  assert.ok(textOf(rowFor(m, IDS[0])).includes('تحتاج مراجعة 2'), 'شارة العلامات «أعود إليه»');
+  assert.ok(textOf(rowFor(m, IDS[0])).includes('تحتاج مراجعة (2)'), 'شارة العلامات «أعود إليه»');
 
   // النموذج: تحذير آلي بلا علامات، وعلامة بلا تحذير.
   const entries = [
@@ -234,8 +234,8 @@ test('التوسيع في الصف: بطاقة لكل ترجمة بتفاصيل�
   assert.ok(findAll(two, (e) => e.classList.contains('lib-prevl')).length === 1, 'النسخة السابقة في بطاقة خانتها (2)');
   assert.ok(findAll(one, (e) => e.classList.contains('lib-prevl')).length === 0);
   const actions = (card) => card.querySelector('.lib-card__actions').querySelectorAll('button').map(textOf);
-  assert.deepEqual(actions(one), ['تصدير SRT', 'ملف بديل…', 'حذف…'], 'النشطة بلا «تفعيل»');
-  assert.deepEqual(actions(two), ['تفعيل', 'تصدير SRT', 'ملف بديل…', 'حذف…']);
+  assert.deepEqual(actions(one), ['تصدير SRT', 'استبدال…', 'حذف…'], 'النشطة بلا «تفعيل»');
+  assert.deepEqual(actions(two), ['تفعيل', 'تصدير SRT', 'استبدال…', 'حذف…']);
   assert.equal(textOf(two.querySelector('.lib-card__actions .tj-btn--primary')), 'تفعيل', 'الإجراء الرئيسي في غير النشطة');
   // يُطوى: تزول البطاقات والحالة تعود.
   open.click();
@@ -258,7 +258,7 @@ test('التوسيع: الخانة الفارغة بطاقة متقطّعة وا
   const exp = await expand(m, IDS[0]);
   assert.equal(exp.querySelectorAll('section.lib-card').length, 3, 'ترجمتان وبطاقة فارغة واحدة');
   const empty = exp.querySelector('.lib-card--empty');
-  assert.equal(textOf(empty.querySelector('h4')), 'الترجمة 3 · خانة فارغة');
+  assert.equal(textOf(empty.querySelector('h4')), 'الترجمة 3 · فارغة');
   assert.equal(empty.getAttribute('data-slot'), '3');
   m.answers.push(false);
   buttonNamed(empty, 'رفع ترجمة…').click();
@@ -328,7 +328,7 @@ test('التوسيع: الاسم المختصر يُحفظ (Enter أو change) �
   buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'حذف…').click();
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).slots[2].track, null);
-  assert.ok(textOf(expOf(m, IDS[0]).querySelector('.lib-card--empty')).includes('الترجمة 3 · خانة فارغة'), 'صارت البطاقة المتقطّعة');
+  assert.ok(textOf(expOf(m, IDS[0]).querySelector('.lib-card--empty')).includes('الترجمة 3 · فارغة'), 'صارت البطاقة المتقطّعة');
   assert.equal(textOf(m.root.querySelectorAll('.tj-toast--success').at(-1)), 'حُذفت الترجمة 3.');
   assert.deepEqual(chipsOf(m, IDS[0]).map((b) => b.getAttribute('data-slot')), ['1', '2'], 'والشريحة زالت');
 });
@@ -374,7 +374,7 @@ test('التوسيع: «ملف بديل…» يرفع إلى الخانة نفس
   const exp = await expand(m, IDS[0]);
   const before = JSON.stringify(m.area.dump());
   m.answers.push(false);
-  buttonNamed(cardOf(exp, 2), 'ملف بديل…').click();
+  buttonNamed(cardOf(exp, 2), 'استبدال…').click();
   await settle(10);
   const dialog = m.calls.confirms.at(-1);
   const radios = findAll(dialog.content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio');
@@ -382,7 +382,7 @@ test('التوسيع: «ملف بديل…» يرفع إلى الخانة نفس
   assert.equal(dialog.confirmLabel, 'استبدال');
   assert.equal(JSON.stringify(m.area.dump()), before);
   m.answers.push(true);
-  buttonNamed(cardOf(expOf(m, IDS[0]), 2), 'ملف بديل…').click();
+  buttonNamed(cardOf(expOf(m, IDS[0]), 2), 'استبدال…').click();
   await settle(20);
   const b = await m.store.getBundle(IDS[0]);
   assert.equal(b.slots[1].track.original[0].text, 'بديل 1');
@@ -422,7 +422,7 @@ test('التوسيع — نتيجة المقارنة: مطابقة بعدّها�
   assert.ok(cardOf(exp, 1).querySelector('.lib-result').classList.contains('lib-result--success'));
   assert.match(textOf(cardOf(exp, 2).querySelector('.lib-result')), /ناقص[^\n]*: 4، 5/);
   assert.ok(cardOf(exp, 2).querySelector('.lib-result').classList.contains('lib-result--warning'));
-  assert.match(textOf(cardOf(exp, 3).querySelector('.lib-result')), /لا بصمة للمقارنة/);
+  assert.match(textOf(cardOf(exp, 3).querySelector('.lib-result')), /لا مرجع للمقارنة بالأصل/);
 });
 
 test('AV2 U-061 (D-03): بطاقة الخانة تعرض المقارنة الحاضرة — رُفع ناقصًا ثم اكتمل في المحرّر فتقول «مطابق للأصل» كالشارة', async () => {
@@ -585,7 +585,7 @@ test('«نص دراسي…» بلا مسار إنجليزي: الثنائي مع
   });
   openMore(m, IDS[0], 'نص دراسي');
   await settle(10);
-  assert.deepEqual(seen && { disabled: seen.disabled, why: seen.why }, { disabled: true, why: 'لا مسار أصل محفوظ لهذا الفيديو.' });
+  assert.deepEqual(seen && { disabled: seen.disabled, why: seen.why }, { disabled: true, why: 'لا أصل محفوظ لهذا الفيديو.' });
   assert.ok(seen.described, 'السبب مرتبط بالخيار');
 });
 

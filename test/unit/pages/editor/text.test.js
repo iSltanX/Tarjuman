@@ -58,7 +58,7 @@ test('العدّ: الأخطاء والتحذيرات والتغييرات بم�
 
 test('المقارنة: مطابق، وناقص بأرقامه، وانحراف، وبلا بصمة؛ وسبب منع الاستعادة', () => {
   assert.deepEqual(comparisonLines(comparison()).map((l) => l.text), ['مطابق للأصل', 'العدد: 5 من 5']);
-  assert.deepEqual(comparisonLines(null), [{ tone: 'info', text: 'لا بصمة للمقارنة؛ عُرض الملف كما هو.' }]);
+  assert.deepEqual(comparisonLines(null), [{ tone: 'info', text: 'لا مرجع للمقارنة بالأصل، فيُعرض الملف كما هو.' }]);
   const r = { ...comparison(), matched: false, countTarget: 3, missing: [57, 58, 201], drift: Array.from({ length: 12 }, (_, i) => ({ n: i + 1, startDeltaMs: 300, endDeltaMs: 0 })), restoreTimingAvailable: false };
   const texts = comparisonLines(r).map((l) => l.text);
   assert.ok(texts.includes('3 مقاطع ناقصة: 57، 58، 201'), texts.join(' | '));

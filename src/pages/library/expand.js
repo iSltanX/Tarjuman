@@ -221,7 +221,7 @@ export function createExpansion(env) {
       select.addEventListener('change', () => {
         act(() => changeReference({ store, videoId, n: s.n, fingerprintId: select.value || null, now }), messageFor('PG_REFERENCE_CHANGED', { n: s.n }));
       });
-      out.push(el('div', { className: 'tj-field lib-card__field', children: [el('label', { className: 'tj-field__label', text: 'تغيير المرجع…', attrs: { for: sid }, doc }), select], doc }));
+      out.push(el('div', { className: 'tj-field lib-card__field', children: [el('label', { className: 'tj-field__label', text: 'مرجع المقارنة', attrs: { for: sid }, doc }), select], doc }));
     }
     return out;
   }
@@ -318,7 +318,7 @@ export function createExpansion(env) {
     const actions = [
       active ? null : mark(act1('تفعيل', { variant: 'primary', onClick: () => act(() => activateSlot({ store, videoId, n: s.n, now }), messageFor('PG_SLOT_ACTIVATED', { n: s.n })) }), 'activate'),
       mark(act1('تصدير SRT', { variant: 'secondary', icon: 'download', onClick: guarded(() => env.exportSlot(s.n)) }), 'export'),
-      mark(act1('ملف بديل…', { variant: 'ghost', icon: 'upload', onClick: () => env.upload(s.n) }), 'replace'),
+      mark(act1('استبدال…', { variant: 'ghost', icon: 'upload', onClick: () => env.upload(s.n) }), 'replace'),
       mark(act1('حذف…', { variant: 'ghost', className: 'lib-card__delete', onClick: guarded(() => removeSlot(s)) }), 'delete'),
     ];
     return el('section', {
@@ -351,7 +351,7 @@ export function createExpansion(env) {
     return el('section', {
       className: 'lib-card lib-card--empty', attrs: { 'data-slot': String(n), 'aria-labelledby': `${id}-t${n}` },
       children: [
-        el('h4', { className: 'tj-h4 lib-card__title', text: `الترجمة ${n} · خانة فارغة`, attrs: { id: `${id}-t${n}` }, doc }),
+        el('h4', { className: 'tj-h4 lib-card__title', text: `الترجمة ${n} · فارغة`, attrs: { id: `${id}-t${n}` }, doc }),
         el('p', { className: 'tj-caption', text: 'ارفع ملفًا آخر لتقارن بين الترجمات وتختار أدقّها.', doc }),
         b.previous && b.previous.from === n ? previousLine(b, bytes, true) : null,
         el('div', { className: 'lib-card__actions', children: [up], doc }),

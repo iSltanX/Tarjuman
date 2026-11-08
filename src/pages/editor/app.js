@@ -1899,7 +1899,7 @@ export async function mountEditor(app, {
       timingBox.replaceChildren(...(off !== 0
         ? [radios('ed-timing', {
           legend: 'التوقيت المصدَّر',
-          options: [['shown', `الظاهر أثناء المشاهدة (المحفوظ + الإزاحة ${offsetInline(off)} ث)`], ['saved', 'المحفوظ فقط']],
+          options: [['shown', `توقيت المشاهدة (المحفوظ + الإزاحة ${offsetInline(off)} ث)`], ['saved', 'التوقيت المحفوظ (دون الإزاحة)']],
         }, choice, (v) => { choice = v; refresh(); })]
         : []));
       timingBox.hidden = off === 0;
