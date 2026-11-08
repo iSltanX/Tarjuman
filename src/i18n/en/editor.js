@@ -120,7 +120,7 @@ export default Object.freeze({
   tabs: { review: 'Review' },
   pane: { auto: 'Automatic check', mine: 'Your review' },
   list: { aria: 'Segments', region: 'Segment list' },
-  col: { start: 'Start', end: 'End', duration: 'Duration', translation: 'Translation', refAria: 'Reference column' },
+  col: { start: 'Start', end: 'End', duration: 'Dur.', translation: 'Translation', refAria: 'Reference column' },
   row: {
     cueAria: 'Segment {n}', selectAria: 'Select segment {n}', startAria: 'Start of segment {n}', endAria: 'End of segment {n}', textAria: 'Text of segment {n}',
     missing: 'Segment {n} isn’t in the translation file', edited: 'edited',

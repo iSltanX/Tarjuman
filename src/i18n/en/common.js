@@ -23,7 +23,7 @@ export default Object.freeze({
     label: 'Translation {n}', labelActive: 'Translation {n}, active', labelEmpty: 'Translation {n}, empty', picker: 'Active translation',
   },
   langPicker: {
-    from: 'From', to: 'To', empty: 'Choose a language', search: 'Search languages', auto: 'Auto from the video’s subtitles', autoShort: 'Auto',
+    from: 'From', to: 'To', empty: 'Select', search: 'Search languages', auto: 'Auto from video', autoShort: 'Auto',
     quick: 'Quick access', video: 'In this video', recent: 'Recently used', all: 'All languages', results: 'Results', none: 'No language with that name or code',
     swap: 'Swap languages', list: 'Languages', row: 'Translation languages',
   },

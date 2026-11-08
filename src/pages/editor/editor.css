@@ -309,6 +309,9 @@ html, body.ed-page { height: 100%; }
   }
   .ed-body { grid-template-columns: minmax(0, 1fr) 240px; padding-inline: 16px; }
   .ed-main { overflow-x: auto; }
+  /* العدّاد في بداية الشريط: القائمة أعرض من مساحتها هنا، فنهاية الشريط تقع خارج المرئي في الاتجاهين. */
+  .ed-main__bar { justify-content: flex-start; }
+  .ed-main__bar .ed-spacer { display: none; }
   .ed-list__head, .ed-list { min-width: 944px; }
   .ed-list__head.ed-list--no-en, .ed-list.ed-list--no-en { min-width: 780px; }
 }
