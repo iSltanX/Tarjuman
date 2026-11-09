@@ -1,6 +1,6 @@
 # إجابات نماذج التقديم — ترجمان 2.1.1
 
-> **المرحلة:** T6 من جولة النشر، 2026-11-04، ومحدّثة للإصدار 2.1.1. إجابات حقول Chrome Web Store وMicrosoft Edge Add-ons (Partner Center) وFirefox Add-ons (AMO) لحزم `release/store/tarjuman-2.1.1-*` المبنية من الفرع `tj/store-release` بعد دمج الهوية الثالثة. تُطابَق مع نموذج كل متجر وقت التقديم. ولا يُرفع شيء في هذه الجولة.
+> **المرحلة:** T6 من جولة النشر، 2026-11-04، ومحدّثة للإصدار 2.1.1. إجابات حقول Chrome Web Store وMicrosoft Edge Add-ons (Partner Center) وFirefox Add-ons (AMO) لحزم `release/store/tarjuman-<الإصدار>-*` التي يبنيها `npm run package`. تُطابَق مع نموذج كل متجر وقت التقديم. والرفع بيد سلطان، وحالة كل متجر في `CLAUDE.md`.
 > **اللغة:** ما يقرؤه المراجعون وحدهم (الغرض الواحد، ومبررات الأذونات، وملاحظات الاختبار) بالإنجليزية للّصق، وتحته معناه بالعربية. وما يراه المستخدمون في [`listing.ar.md`](listing.ar.md).
 > **العلامات:** **[قرار]** ينتظر سلطان. و`⟨بعد T7⟩` كانت روابط الموقع قبل نشره، وثُبّتت في §٥ بعد أن أعادت 200 (2026-11-04).
 
@@ -125,7 +125,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | Small / Large promotional tile | `store/promo/small-promo-440x280.png` و`store/promo/marquee-1400x560.png` |
 | Screenshots | `store/screenshots/chromium/{ar,en}/` الخمس لكل لغة |
 | Search terms | `edge.searchTerms` في `listing.ar.md` |
-| Notes for certification | نص مختصر من `reviewers.en.md` (`reviewer.chrome` و`reviewer.edge`) بعيّنة ترجمة محايدة، لأن الحد أقل من 2,000 محرف. وكلمات البحث الإنجليزية مكتوبة في اللوحة مباشرة |
+| Notes for certification | `reviewer.chrome` ثم `reviewer.edge` من `reviewers.en.md`. وحد الحقل الفعلي غير معروف (غير منشور، ولم يُتحقق منه في اللوحة)، فيُطابَق بعدّاده. وإن ضاق عنهما فالنسخة المختصرة `reviewer.edge.fallback` (أقل من 2,000 محرف). وكلمات البحث الإنجليزية مكتوبة في اللوحة مباشرة |
 
 ### Firefox Add-ons
 
@@ -148,4 +148,4 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 
 ## ٧. ما لا يُقدَّم
 
-لا رابط لا يفتح للعموم، ولا لقطة غير حقيقية، ولا فيديو ترويجي في هذا الإصدار (الحقل اختياري في Chrome وEdge)، ولا وعد لم يثبت سلوكه.
+لا رابط لا يفتح للعموم، ولا لقطة غير حقيقية، ولا وعد لم يثبت سلوكه.

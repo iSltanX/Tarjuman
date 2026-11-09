@@ -115,7 +115,7 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 - It doesn’t download video or audio, and doesn’t request subtitle files on its own: it reads a copy of the subtitles the player requested when you turned them on.
 - It doesn’t create subtitles in a language YouTube doesn’t offer for the video, and doesn’t switch tracks for you.
 - It doesn’t translate anything itself, and needs no account or API key.
-- It doesn’t work on Shorts, on live streams in progress, or on players embedded in other sites.
+- It doesn’t work on Shorts or on players embedded in other sites. On live streams in progress, only subtitle extraction is blocked; uploading and showing an SRT file still work.
 - It’s for desktop computers only, not phones.
 
 ## المتصفحات — `#browsers`

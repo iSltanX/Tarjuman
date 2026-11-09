@@ -43,7 +43,7 @@ Features
 • Comparison with the original: when you upload your file, Tarjuman compares it with the original you downloaded and shows what's missing, what's extra, what drifted and what stayed untranslated. It never changes your file silently.
 • An editor for review: edit text and timing, merge and split segments, search and replace, and mark what you want to return to. It can also prepare a file with the missing segments so you can complete them.
 • Synced transcript: a panel beside the video shows the whole translation with the current segment highlighted. Closed until you open it from its button.
-• Library: every video you translated with the languages of each translation, up to three translations per video, a previous version of what you replaced, and a backup you can move to another device.
+• Library: every video you translated with the languages of each translation, up to three translations per video, a previous version of what you replaced, and a backup you can move to another browser.
 • Style it your way: display mode, font, size, background and position.
 • Interface in Arabic or English: choose it in Settings. Video languages and your translations aren't affected.
 
@@ -51,7 +51,7 @@ What it doesn't do
 • It doesn't download video or audio, and doesn't request subtitle files itself: it reads a copy of the subtitles the player requested when you turned them on.
 • It doesn't create a translation in a language the site doesn't offer for the video, and doesn't switch tracks for you.
 • It doesn't translate by itself, and needs no account or API key.
-• It doesn't work on Shorts, live streams in progress, or players embedded in other sites. It's for desktop only.
+• It doesn't work on Shorts or players embedded in other sites. On live streams in progress, only subtitle extraction is blocked; uploading and showing an SRT file still work. It's for desktop only.
 
 Your data
 • Your translations and settings stay in the extension's storage on your device and aren't synced with any service. Removing the extension deletes them, so take a backup first.
@@ -81,7 +81,7 @@ Features
 • Comparison with the original: when you upload your file, Tarjuman compares it with the original you downloaded and shows what's missing, what's extra, what drifted and what stayed untranslated. It never changes your file silently.
 • An editor for review: edit text and timing, merge and split segments, search and replace, and mark what you want to return to. It can also prepare a file with the missing segments so you can complete them.
 • Synced transcript: a panel beside the video shows the whole translation with the current segment highlighted. Closed until you open it from its button.
-• Library: every video you translated with the languages of each translation, up to three translations per video, a previous version of what you replaced, and a backup you can move to another device.
+• Library: every video you translated with the languages of each translation, up to three translations per video, a previous version of what you replaced, and a backup you can move to another browser.
 • Style it your way: display mode, font, size, background and position.
 • Interface in Arabic or English: choose it in Settings. Video languages and your translations aren't affected.
 

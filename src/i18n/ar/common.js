@@ -17,7 +17,7 @@ export default Object.freeze({
   bytes: { zero: '0 ك.ب', kb: '{n} ك.ب', mb: '{n} م.ب', gb: '{n} غ.ب' },
   nav: {
     library: 'المحفوظات', settings: 'الإعدادات', editor: 'المحرّر',
-    brand: 'ترجمان — المحفوظات', pages: 'صفحات ترجمان', yourData: 'بياناتك على جهازك',
+    brand: 'ترجمان — المحفوظات', pages: 'صفحات ترجمان', yourData: 'ترجماتك وإعداداتك في متصفحك',
   },
   page: { title: 'ترجمان — {page}', renderFailed: 'تعذّر عرض الصفحة' },
   slot: {

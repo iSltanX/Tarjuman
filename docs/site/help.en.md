@@ -113,7 +113,7 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 | “Couldn’t copy to the clipboard…” | Click inside the popup to focus it, then press “Copy instructions” again. |
 | Library is empty after a new install | The new copy is a separate extension with new storage. Move your Library over with a backup ([“Moving your Library”](#move)). |
 
-**Where Tarjuman doesn’t work:** Shorts, live streams in progress, players embedded in other sites, YouTube Music, phones, and picture-in-picture windows.
+**Where Tarjuman doesn’t work:** Shorts, players embedded in other sites, YouTube Music, phones, and picture-in-picture windows. On live streams in progress, only subtitle extraction is blocked; uploading and showing an SRT file still work.
 
 ## Contact — `#contact`
 

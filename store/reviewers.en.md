@@ -2,7 +2,7 @@
 
 > **المرحلة:** T6 من جولة النشر، 2026-11-04. بالإنجليزية لأن المراجعين يقرؤونها (قرار سلطان: «ملاحظات المراجعين بالإنجليزية»)، ولا يراها المستخدمون. تصف ما يحدث فعلًا فقط، ولا تدّعي أن التصدير مسموح ولا تخفيه (§١ من [`README.md`](README.md)).
 > **الحقول:** Chrome «Test instructions» (اختياري ونوصي به)، وEdge «Notes for certification» (البند 1.3 يوجب خطوات الاختبار)، وAMO «Notes for Reviewers» (حتى 3,000 محرف). والكتل تُلصق كما هي، ويقيس `scripts/release/store-assets.mjs --check` أطوالها.
-> **ملف التجربة:** مقاطع عربية قليلة داخل الملاحظة نفسها لأن الحقول نص فقط. والملف الكامل (60 مقطعًا بتوقيت الأصل) في [`test-files/Y-rmzh0PI3c.ar.srt`](test-files/Y-rmzh0PI3c.ar.srt)، ترجمه ترجمان في T6 عن الترجمة الإنجليزية للفيلم.
+> **ملف التجربة:** مقاطع عربية قليلة داخل الملاحظة نفسها لأن الحقول نص فقط. والملف الكامل (60 مقطعًا بتوقيت الأصل) في [`test-files/Y-rmzh0PI3c.ar.srt`](test-files/Y-rmzh0PI3c.ar.srt)، تُرجم خارج ترجمان بنموذج ذكاء اصطناعي عن الترجمة الإنجليزية للفيلم، لأن ترجمان لا يترجم.
 
 ## Chrome Web Store — Test instructions
 
@@ -50,13 +50,39 @@ Arabic sample (test.ar.srt):
 
 ## Microsoft Edge Add-ons — Notes for certification
 
-نص Chrome نفسه بحرفه، فالحزمة بايتاتها نفسها. ويُضاف إليه سطر لأن الحقل يسأل عن الفروق بحسب المنطقة والإعدادات، وفقرة عن سياسة الخصوصية لأن البند 1.5.2 يطلب أن تشير أساسًا إلى Edge (قرار سلطان 2026-11-05: سياسة واحدة، وتوضيح للمراجع). والنص كله نحو 3,360 محرفًا، وحد الحقل غير منشور، فيُطابَق بعدّاده وقت التقديم:
+نص Chrome نفسه بحرفه، فالحزمة بايتاتها نفسها. ويُضاف إليه سطر لأن الحقل يسأل عن الفروق بحسب المنطقة والإعدادات، وفقرة عن سياسة الخصوصية لأن البند 1.5.2 يطلب أن تشير أساسًا إلى Edge (قرار سلطان 2026-11-05: سياسة واحدة، وتوضيح للمراجع). والنص كله نحو 3,460 محرفًا. وحد الحقل الفعلي غير معروف (غير منشور، ولم يُتحقق منه في اللوحة)، فيُطابَق بعدّاده وقت التقديم، وإن ضاق عنه فالنسخة المختصرة `reviewer.edge.fallback` أدناه أقل من 2,000 محرف:
 
 <!-- field: reviewer.edge -->
 ```text
-Expected differences: none by region. Captions must exist for the video (the test video has English manual captions). Tarjuman does not run on Shorts, live streams in progress, or YouTube players embedded in other sites.
+Expected differences: none by region. Captions must exist for the video (the test video has English manual captions). Tarjuman's buttons do not appear on Shorts or in YouTube players embedded in other sites. On live streams in progress, only subtitle extraction is refused; uploading and showing an SRT file still work.
 
 Privacy policy: https://bysltan.com/tarjuman/privacy. The same package is published for other browsers, so one policy covers it; where behavior differs by browser, it names Microsoft Edge explicitly (e.g. Library thumbnails are on by default in Microsoft Edge, with a switch in Settings). Nothing reaches the developer unless the user sends a problem report after previewing it.
+```
+
+### نسخة مختصرة احتياطية (إن ضاق حد الحقل)
+
+أقل من 2,000 محرف، وتغني عن `reviewer.chrome` و`reviewer.edge` معًا.
+
+<!-- field: reviewer.edge.fallback -->
+```text
+No account, login or payment is needed. Tarjuman works on www.youtube.com watch pages on desktop. Interface: English or Arabic (Settings > Display); names below are English.
+
+Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3c
+1. Turn on captions (CC). Tarjuman adds buttons to the player's control bar.
+2. "Download original (SRT)" > "Download file" saves the .srt to Downloads. The toolbar popup copies translation instructions ("Copy instructions").
+3. Translation happens outside the extension. To skip it, save the sample below as test.ar.srt (UTF-8).
+4. "Upload translation (SRT)" > choose the file. The line appears over the video at 3:00; missing lines are reported, never changed silently. The − and + buttons shift the timing.
+
+It downloads no video or audio and never requests subtitle files itself: a main-world script wraps fetch and XMLHttpRequest to read a copy of the /api/timedtext response the player requested, and passes the page's call through unchanged.
+
+Network: only Library thumbnails from i.ytimg.com by video ID (a setting turns them off), and an optional problem report the user sends from Settings after previewing it. Its host is an optional permission requested on the first send.
+
+Privacy policy: https://bysltan.com/tarjuman/privacy. One policy covers every browser; where behavior differs it names Microsoft Edge. On Shorts and embedded players the buttons do not appear. On live streams in progress only extraction is refused.
+
+Sample (test.ar.srt):
+12
+00:03:00,500 --> 00:03:04,000
+أنت أكثر بكثير من مجرد خروف، أليس كذلك؟
 ```
 
 ## Firefox Add-ons — Notes for Reviewers
