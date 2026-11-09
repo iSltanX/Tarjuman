@@ -48,12 +48,11 @@ test('checkField: الطول بنقاط الترميز، والرابط المم
   assert.deepEqual(checkField({ id: 'amo.summary', text: 'أ'.repeat(250) }, MANIFEST), []);
 });
 
-test('checkField: الوصف بلا متصفح آخر وبإسناد العلامة ونسبة الفيلم وتكرار العلامة في حده', () => {
-  const ok = `${'نص '.repeat(100)}\nYouTube علامة تجارية لشركة Google LLC.\nCosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0.`;
+test('checkField: الوصف بلا متصفح آخر وبإسناد العلامة وتكرار العلامة في حده', () => {
+  const ok = `${'نص '.repeat(100)}\nYouTube علامة تجارية لشركة Google LLC.`;
   assert.deepEqual(checkField({ id: 'chromium.description', text: ok }, MANIFEST), []);
   assert.match(checkField({ id: 'chromium.description', text: `${ok}\nيعمل في Chrome.` }, MANIFEST).join(), /يذكر متصفحًا: Chrome/);
   assert.match(checkField({ id: 'chromium.description', text: ok.replace('YouTube علامة', 'علامة') }, MANIFEST).join(), /إسناد علامة يوتيوب/);
-  assert.match(checkField({ id: 'chromium.description', text: ok.replace('CC BY 3.0', '') }, MANIFEST).join(), /نسبة الفيلم/);
   assert.match(checkField({ id: 'chromium.description', text: `${ok}\n${'يوتيوب '.repeat(5)}` }, MANIFEST).join(), /«يوتيوب» 6 مرات/);
   assert.match(checkField({ id: 'chromium.description', text: 'قصير' }, MANIFEST).join(), /أدناه 250/);
   assert.match(checkField({ id: 'amo.summary', text: `نص${String.fromCodePoint(0x200f)}` }, MANIFEST).join(), /غير مرئي/);

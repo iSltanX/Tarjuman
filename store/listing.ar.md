@@ -72,7 +72,6 @@
 • سياسة الخصوصية: https://bysltan.com/tarjuman/privacy
 
 YouTube علامة تجارية لشركة Google LLC. وترجمان لا صلة له بيوتيوب ولا بـGoogle، ولا يحظى بتأييدهما.
-لقطات الشاشة على فيلم Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0.
 ```
 
 ### Firefox Add-ons
@@ -110,7 +109,6 @@ YouTube علامة تجارية لشركة Google LLC. وترجمان لا صل�
 • سياسة الخصوصية: https://bysltan.com/tarjuman/privacy
 
 YouTube علامة تجارية لشركة Google LLC. وترجمان لا صلة له بيوتيوب ولا بـGoogle، ولا يحظى بتأييدهما.
-لقطات الشاشة على فيلم Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0.
 ```
 
 ## الفئة
@@ -188,4 +186,3 @@ tarjuman
 | بياناتك | جدول أدلة `docs/site/privacy.md`، وقياس المحو عند الإزالة في `test/live/stores/t3.mjs` |
 | Firefox: الصور بموافقة، والبلاغ بموافقة | `src/core/consent/thumbnails.js`، و`scripts/targets.mjs` (`data_collection_permissions`) |
 | إسناد علامة يوتيوب، و«الموقع» بدل تكرار اسمه | [Chrome Web Store Branding](https://developer.chrome.com/docs/webstore/branding)، و`LICENSE` (الفقرة الأخيرة)، وحد التكرار 5 في `scripts/release/store-assets.mjs` (`brandMax`) |
-| نسبة الفيلم | صفحة المشروع الرسمية [gooseberry.blender.org/about](http://gooseberry.blender.org/about/): الفيلم «licensed under the Creative Commons Attribution 3.0 license»، وسطر النسبة «(CC) Blender Foundation \| gooseberry.blender.org»، والشعارات والعلامات مستثناة. ويوتيوب نفسه يعلن رفعه `Y-rmzh0PI3c` «Creative Commons Attribution license (reuse allowed)». قُرئا في 2026-11-04 |

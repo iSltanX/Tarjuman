@@ -21,14 +21,12 @@ const OTHER_BROWSER_RE = /\b(?:Chrome|Chromium|Firefox|Brave|Edge|Opera|Safari|V
 const INVISIBLE_RE = /[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/;
 const TRADEMARK = 'YouTube علامة تجارية لشركة Google LLC';
 const TRADEMARK_EN = 'YouTube is a trademark of Google LLC';
-const FILM = ['Cosmos Laundromat', '(CC) Blender Foundation | gooseberry.blender.org', 'CC BY 3.0'];
-const DESCRIPTION = { noOtherBrowser: true, trademark: true, film: true, brandMax: 5, noDownloader: true };
-// الوصف الإنجليزي (2.1.1): اللقطات الجديدة لا تستعمل الفيلم، فلا نسبة له.
-const DESCRIPTION_EN = { noOtherBrowser: true, trademark: TRADEMARK_EN, brandMax: 5, noDownloader: true };
+const DESCRIPTION = { noOtherBrowser: true, trademark: true, brandMax: 5, noDownloader: true };
+const DESCRIPTION_EN = { ...DESCRIPTION, trademark: TRADEMARK_EN };
 
 /**
  * الحقول وحدودها: max/min بالمحارف (نقاط الترميز)، وnoUrl، وقواعد الوصف. المصدر في store/README.md §٣.
- * @type {Record<string, { max?: number, min?: number, noUrl?: boolean, equalsManifest?: 'name'|'description', lines?: { max: number, each: number, words: number }, tags?: boolean, slug?: boolean, noOtherBrowser?: boolean, trademark?: boolean | string, film?: boolean, locale?: 'en', brandMax?: number, noDownloader?: boolean }>}
+ * @type {Record<string, { max?: number, min?: number, noUrl?: boolean, equalsManifest?: 'name'|'description', lines?: { max: number, each: number, words: number }, tags?: boolean, slug?: boolean, noOtherBrowser?: boolean, trademark?: boolean | string, locale?: 'en', brandMax?: number, noDownloader?: boolean }>}
  */
 export const FIELD_RULES = Object.freeze({
   'manifest.name': { max: 45, equalsManifest: 'name', noOtherBrowser: true, noDownloader: true }, // Chrome 75، وAMO 50، وEdge بحسب MDN 45
@@ -87,7 +85,6 @@ export function checkField({ id, text }, manifest, locales = {}) {
   }
   if (rule.noDownloader && /downloader/i.test(text)) p.push('فيه «downloader»');
   if (rule.trademark && !text.includes(typeof rule.trademark === 'string' ? rule.trademark : TRADEMARK)) p.push('بلا جملة إسناد علامة يوتيوب');
-  if (rule.film && !FILM.every((x) => text.includes(x))) p.push('بلا نسبة الفيلم كاملة');
   if (rule.brandMax) {
     const yt = (text.match(/يوتيوب|YouTube/g) ?? []).length;
     const g = (text.match(/Google/g) ?? []).length;
