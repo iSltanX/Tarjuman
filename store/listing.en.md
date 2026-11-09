@@ -89,7 +89,7 @@ What it doesn't do
 • It doesn't download video or audio, and doesn't request subtitle files itself: it reads a copy of the subtitles the player requested when you turned them on.
 • It doesn't create a translation in a language the site doesn't offer for the video, and doesn't switch tracks for you.
 • It doesn't translate by itself, and needs no account or API key.
-• It doesn't work on Shorts, live streams in progress, or players embedded in other sites. It's for the desktop version only.
+• It doesn't work on Shorts or players embedded in other sites. On live streams in progress, only subtitle extraction is blocked; uploading and showing an SRT file still work. It's for the desktop version only.
 
 Your data
 • Your translations and settings stay in the extension's storage on your device and aren't synced with any service. Removing the extension deletes them, so take a backup first.
