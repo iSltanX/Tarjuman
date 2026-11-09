@@ -124,7 +124,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | Small / Large promotional tile | `store/promo/small-promo-440x280.png` و`store/promo/marquee-1400x560.png` |
 | Screenshots | `store/screenshots/chromium/{ar,en}/` الخمس لكل لغة |
 | Search terms | `edge.searchTerms` في `listing.ar.md` |
-| Notes for certification | `reviewers.en.md` (`reviewer.edge`) |
+| Notes for certification | نص مختصر من `reviewers.en.md` (`reviewer.chrome` و`reviewer.edge`) بعيّنة ترجمة محايدة، لأن الحد أقل من 2,000 محرف. وكلمات البحث الإنجليزية مكتوبة في اللوحة مباشرة |
 
 ### Firefox Add-ons
 
