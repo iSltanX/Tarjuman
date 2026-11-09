@@ -66,7 +66,7 @@ test('checkField: كلمات Edge ووسوم AMO والرابط القصير', (
   assert.match(checkField({ id: 'amo.tags', text: 'subtitles' }, MANIFEST).join(), /ليس من وسوم AMO/);
   assert.match(checkField({ id: 'amo.slug', text: 'Tarjuman_1' }, MANIFEST).join(), /الأحرف اللاتينية/);
   assert.match(checkField({ id: 'x.y', text: 'نص' }, MANIFEST).join(), /حقل غير معروف/);
-  assert.ok(FIELD_RULES['reviewer.amo'].max === 3000);
+  assert.ok(FIELD_RULES['reviewer.amo'].max === 2970); // حد AMO 3000 ويعدّ السطر الجديد محرفين
 });
 
 test('decodePng: يفك RGBA وRGB بمقاسهما وقيم بكسلاتهما', () => {
