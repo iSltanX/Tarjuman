@@ -12,7 +12,7 @@
 export const CODE_RULES = Object.freeze([
   {
     id: 'html-string',
-    re: /\b(?:innerHTML|outerHTML|insertAdjacentHTML|setHTMLUnsafe|parseHTMLUnsafe|createContextualFragment|srcdoc)\b|\bdocument\s*\.\s*write(?:ln)?\b|parseFromString\([^)]*text\/html/,
+    re: /\b(?:innerHTML|outerHTML|insertAdjacentHTML|setHTML|setHTMLUnsafe|parseHTMLUnsafe|createContextualFragment|srcdoc|parseFromString)\b|\bdocument\s*\.\s*write(?:ln)?\b/,
     msg: 'إدراج HTML نصي ممنوع؛ textContent وDOM فقط',
   },
   // eval اسمًا أينما ورد، ومنه بعد نقطة: window.eval( وglobalThis.eval( كانا يمرّان من الفحص الثابت (تدقيق Fable، FA-02).

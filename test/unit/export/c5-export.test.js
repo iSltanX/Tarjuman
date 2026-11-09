@@ -1,7 +1,7 @@
 // تدقيق 7a66f91، المرحلة C5: التصدير وSRT. U78 (سطر نص يُقرأ رأسَ مقطع)، وU35 في الذهاب والإياب، وU79 (ملف الاستكمال لا يرمي)،
 // وU80 (تعريف واحد للفراغ في التصدير العربي ولوحة المشكلات)، وU99 (محارف التحكم وما يتغير عند إعادة القراءة)، وU98 (لا رمي)،
 // وU30 (النص الدراسي بمرجع زمني واحد)، وU31 (الأجزاء ≤ حد الرفع). كل اختبار سلوكي هنا فشل على الشيفرة السابقة للسبب
-// المقصود، إلا ما وُسم «حارس». وقراءة ffmpeg المستقلة تُتخطى إن لم يكن ffmpeg مثبتًا.
+// المقصود، إلا ما وُسم «حارس». وقراءة ffmpeg المستقلة بلا ffmpeg تخطٍّ يُبلّغه scripts/run-tests.mjs ويفشل في CI.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -250,7 +250,12 @@ test('مراجعة حارس: مسار إنجليزي فيه «# of people» وس
   const en = makeCues(4, { text: (i) => (i === 2 ? '# of people\nhere' : i === 3 ? '```' : `line ${i}`) });
   const built = buildExport({ videoId: VIDEO, track: englishTrack({ cues: en }), mode: 'normal', now: NOW });
   assert.equal(built.files[0].text.includes('# of people'), true);
-  if (hasFfmpeg) assert.equal(ffmpegCount(built.files[0].text), 4);
+});
+
+test('مراجعة حارس (ffmpeg): مسار إنجليزي فيه «# of people» وسياج ``` يقرؤه ffmpeg بعدده', { skip: !hasFfmpeg && 'ffmpeg غير مثبت' }, () => {
+  const en = makeCues(4, { text: (i) => (i === 2 ? '# of people\nhere' : i === 3 ? '```' : `line ${i}`) });
+  const built = buildExport({ videoId: VIDEO, track: englishTrack({ cues: en }), mode: 'normal', now: NOW });
+  assert.equal(ffmpegCount(built.files[0].text), 4);
 });
 
 test('مراجعة حارس: نص عربي «2020» ثم «10 -> 20» يُصدَّر ويُستورد كما هو', async () => {

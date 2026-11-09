@@ -3,8 +3,11 @@
 // اختباراته بعد، فيُبلَّغ «لا اختبارات بعد» وينجح؛ والمجلد الغائب أو غير المقروء فشل دائمًا. لا سكربت في المشروع يمرّره اليوم.
 //   node scripts/run-tests.mjs test/unit
 //   node scripts/run-tests.mjs test/integration
+// وكل اختبار مُتخطّى يُذكر باسمه وسببه في آخر المخرج، ويفشل التشغيل في CI (المتغير CI): لا تخطٍّ صامت.
 import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -41,5 +44,27 @@ if (!files.length) {
   console.log(`run-tests: لا اختبارات بعد في ${dirs.join('، ')}`);
   process.exit(0);
 }
-const r = spawnSync(process.execPath, ['--test', ...files.map((f) => path.relative(ROOT, f))], { cwd: ROOT, stdio: 'inherit' });
+// تقرير TAP في ملف جانبي لعدّ التخطي، ومخرج spec المعتاد كما كان.
+const scratch = mkdtempSync(path.join(tmpdir(), 'tj-run-tests-'));
+const tapFile = path.join(scratch, 'report.tap');
+const r = spawnSync(process.execPath, [
+  '--test', '--test-reporter=spec', '--test-reporter-destination=stdout', '--test-reporter=tap', `--test-reporter-destination=${tapFile}`,
+  ...files.map((f) => path.relative(ROOT, f)),
+], { cwd: ROOT, stdio: 'inherit' });
+let skipped = [];
+try {
+  skipped = readFileSync(tapFile, 'utf8').split('\n').map((l) => /^\s*ok \d+ - (.*?) # SKIP\b\s*(.*)$/.exec(l)).filter(Boolean).map((m) => `${m[1]} (${m[2] || 'بلا سبب'})`);
+} catch {
+  console.error('run-tests: تعذّرت قراءة تقرير التخطي');
+  process.exitCode = 1;
+} finally {
+  rmSync(scratch, { recursive: true, force: true });
+}
+if (skipped.length) {
+  console.error(`run-tests: مُتخطّى ${skipped.length}:\n- ${skipped.join('\n- ')}`);
+  if (process.env.CI) {
+    console.error('run-tests: التخطي ممنوع في CI');
+    process.exit(1);
+  }
+}
 process.exit(r.status ?? 1);

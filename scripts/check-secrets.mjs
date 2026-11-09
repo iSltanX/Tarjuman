@@ -5,6 +5,7 @@
 // ويمتد (تدقيق V2، U-047) إلى كل ملف نصي متتبَّع في Git خارج هذه النطاقات: الأسرار ومسارات الجهاز المحلية، دون قاعدة الروابط
 // (الشيفرة والوثائق تذكر روابط عامة بحق)، إلا ما ورد في EXCLUDED أدناه بسببه. وحين لا يتوفر Git يمشي على الشجرة نفسها.
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFile, readdir, realpath, lstat, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,31 +24,36 @@ const SENSITIVE_HOST = /(?:youtu\.?be|youtube|google|googlevideo|ytimg|ggpht)/i;
 // مسارات الجهاز المحلية (اسم المستخدم والقرص ومجلدات الجلسات المؤقتة) لا تدخل العيّنات ولا السجلات؛ تُكتب برمز عام مثل $SCRATCH/.
 const LOCAL_PATH = /(?:\/Users\/[^/\s"'`]+\/|\/private\/(?:tmp|var)\/|\/Volumes\/[^/\s"'`]+\/|\b[A-Za-z]:\\Users\\)/g;
 
-// ما يُستثنى من الفحص الموسَّع وحده (لا من نطاقات العيّنات أعلاه)، وسبب كل بند. إضافة بند تحتاج سببًا يُكتب هنا.
+// استثناءات الفحص الموسَّع وحده (لا نطاقات العيّنات أعلاه) بالسطر لا بالملف: كل بند ملف وسببه وبصمات أسطره بعينها، فأي اكتشاف
+// آخر في الملف نفسه يُرفض، وبصمة لا تطابق سطرًا في ملف موجود تُرفض أيضًا (استثناء قديم). والبصمة SHA-256 للسطر (أول 16 محرفًا)،
+// لئلا يحمل هذا الملف نص الأسطر نفسها. وإضافة بند تحتاج سببًا يُكتب هنا.
 const EXTRA_TEXT = /\.(json|srt|txt|log|md|csv|ndjson|js|mjs|cjs|css|html|yml|yaml|svg|webmanifest|toml)$|(^|\/)\.[a-z]+ignore$/i;
 const EXTRA_IGNORED_TYPES = ['url', 'timedtext-path']; // الروابط العامة ومسار timedtext مذكوران في الشيفرة والوثائق بحق
-const EXCLUDED = [
-  // تعريف الأنماط نفسه وسلسلة التوريد.
-  ['src/core/diagnostics/sanitize.js', 'تعريف أنماط التنقية: يحوي أسماء الترويسات وملفات الارتباط'],
-  ['test/fixtures/', 'نسخ مصدرية قديمة مجمَّدة للإصدارات السابقة (تحوي تعريف الأنماط نفسه)؛ ونصوصها غير الشيفرة تُفحص بنطاقات العيّنات أعلاه'],
-  ['package-lock.json', 'تجزئات سلامة الحزم تشبه الرموز الطويلة'],
-  // اختبارات تحوي نماذج وهمية مقصودة لاختبار التنقية والكشف.
-  ['test/unit/diagnostics/sanitize.test.js', 'نماذج أسرار وهمية لاختبار التنقية'],
-  ['test/unit/report/personal-secrets.test.js', 'نماذج أسرار وهمية لاختبار تقرير التشخيص'],
-  ['test/unit/pages/settings/report.test.js', 'نماذج ملفات ارتباط وهمية لاختبار البلاغ'],
-  ['test/e2e/static/messages-diagnostics.test.js', 'نماذج ملفات ارتباط وهمية لاختبار رسائل التشخيص'],
-  ['test/unit/extract/extract.test.js', 'روابط timedtext وهمية بمعاملات pot وهمية'],
-  ['test/unit/extract/extractor.test.js', 'روابط timedtext وهمية بمعاملات pot وهمية'],
-  ['test/unit/model/errors.test.js', 'رابط وهمي بمعاملات وهمية لاختبار تنقية الأخطاء'],
-  ['test/unit/player/overlay/errors.test.js', 'رابط وهمي بمعاملات وهمية لاختبار تنقية الأخطاء'],
-  ['test/integration/roundtrip/roundtrip.test.js', 'سلاسل طويلة وهمية لاختبار الذهاب والإياب'],
-  ['test/unit/store/av2-wg2.test.js', 'سلاسل طويلة وهمية لاختبار التخزين'],
-  ['test/live/audit-c1/run.mjs', 'ترويسة وهمية في سيناريو حي مقصود'],
-  ['test/unit/pages/settings/view.test.js', 'مسار جهاز وهمي لاختبار عرض المسارات'],
-  ['test/unit/release/store.test.js', 'مسار جهاز وهمي لاختبار مواد المتاجر'],
-  ['test/unit/save/save.test.js', 'مسار جهاز وهمي لاختبار مكان الحفظ'],
-];
-const isExcluded = (rel) => EXCLUDED.some(([p]) => (p.endsWith('/') ? rel.startsWith(p) : rel === p));
+const LINE_EXEMPT = new Map([
+  ['src/core/diagnostics/sanitize.js', 'تعريف أنماط التنقية: يحوي أسماء الترويسات وملفات الارتباط', ['5603b54289fbccf6']],
+  ['test/fixtures/v1/src/core/diagnostics/sanitize.js', 'نسخة مصدرية مجمَّدة: تعريف الأنماط نفسه', ['5603b54289fbccf6']],
+  ['test/fixtures/v1.1/src/core/diagnostics/sanitize.js', 'نسخة مصدرية مجمَّدة: تعريف الأنماط نفسه', ['5603b54289fbccf6']],
+  ['test/unit/diagnostics/sanitize.test.js', 'نماذج أسرار وهمية لاختبار التنقية', ['f38ee967f67ab1a8', '321a8e5630055327', 'b7171d5def232d29', 'd8822ca1e2c47023', 'ee94ec1a5bc18220']],
+  ['test/unit/report/personal-secrets.test.js', 'نماذج أسرار وهمية لاختبار تقرير التشخيص', ['ad91c6ef66bbb33b', '837c17ea01181401', '1d1b9849615b7238', 'a2b98efd45cf107c', '6234aee3918c30e0']],
+  ['test/unit/pages/settings/report.test.js', 'نماذج ملفات ارتباط وهمية لاختبار البلاغ', ['b67a6bbedbd048e0']],
+  ['test/e2e/static/messages-diagnostics.test.js', 'نماذج ملفات ارتباط وهمية لاختبار رسائل التشخيص', ['c96c2e21c06a8a1b']],
+  ['test/unit/extract/extract.test.js', 'روابط timedtext وهمية بمعاملات pot وهمية', ['93e56ec49da7ce84']],
+  ['test/unit/extract/extractor.test.js', 'روابط timedtext وهمية بمعاملات pot وهمية', ['c2b9c48a77a8a3bb']],
+  ['test/unit/model/errors.test.js', 'رابط وهمي بمعاملات وهمية لاختبار تنقية الأخطاء', ['f723cb84b6fdb17e']],
+  ['test/unit/player/overlay/errors.test.js', 'رابط وهمي بمعاملات وهمية لاختبار تنقية الأخطاء', ['c0c436ea86429128']],
+  ['test/integration/roundtrip/roundtrip.test.js', 'سلاسل طويلة وهمية لاختبار الذهاب والإياب', ['b4a09348b44395c1', 'fd2ba1b88c6879a0']],
+  ['test/unit/store/av2-wg2.test.js', 'سلاسل طويلة وهمية لاختبار التخزين', ['e30135d389ab7022', 'e30135d389ab7022']],
+  ['test/live/audit-c1/run.mjs', 'ترويسة وهمية في سيناريو حي مقصود', ['014edc09a6e9c8dc']],
+  ['test/unit/pages/settings/view.test.js', 'مسار جهاز وهمي لاختبار عرض المسارات', ['fd15e34e5363a892', '5102d6b3791cb8d2', '1f530b30bc84f574']],
+  ['test/unit/release/store.test.js', 'مسار جهاز وهمي لاختبار مواد المتاجر', ['5777f18baa029532']],
+  ['test/unit/save/save.test.js', 'مسار جهاز وهمي لاختبار مكان الحفظ', ['f2a4fdc00a8c2a70', 'b0209bd1611ee454']],
+].map(([file, why, hashes]) => [file, { why, hashes: new Set(hashes) }]));
+// تجزئات سلامة الحزم تشبه الرموز الطويلة: سطر integrity وحده بصيغته، في ملف القفل وحده.
+const LOCK_FILE = 'package-lock.json';
+const LOCK_INTEGRITY = /^\s*"integrity": "sha512-[A-Za-z0-9+/]+={0,2}",?$/;
+const lineHash = (line) => createHash('sha256').update(line).digest('hex').slice(0, 16);
+/** هل هذا السطر مستثنى في ملفه؟ */
+const lineExempt = (rel, line) => (rel === LOCK_FILE ? LOCK_INTEGRITY.test(line) : LINE_EXEMPT.get(rel)?.hashes.has(lineHash(line)) === true);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'release', '.claude', 'coverage', '.web-ext-artifacts']);
 
 /** الملفات المتتبَّعة إن كان الجذر جذر مستودع Git، وإلا null (الشجرة تُمشى بدلًا منها). */
@@ -116,13 +122,9 @@ for (const scope of SCOPES) {
 // الفحص الموسَّع: بقية الملفات النصية المتتبَّعة (أو الشجرة كلها بلا Git)، بقواعد الأسرار والمسار المحلي دون قاعدة الروابط.
 const everything = (await trackedFiles(ROOT)) ?? (await walkAll(ROOT).catch(() => []));
 let extra = 0;
-let excluded = 0;
+let exempted = 0;
 for (const rel of everything) {
   if (seen.has(rel) || !EXTRA_TEXT.test(rel)) continue;
-  if (isExcluded(rel)) {
-    excluded++;
-    continue;
-  }
   const file = path.join(ROOT, rel);
   const info = await lstat(file).catch(() => null);
   if (!info?.isFile()) continue; // رابط رمزي أو محذوف لم يُسجَّل بعد
@@ -133,8 +135,21 @@ for (const rel of everything) {
   scanned++;
   extra++;
   const text = await readFile(file, 'utf8');
-  for (const f of findSecrets(text, EXTRA_IGNORED_TYPES)) findings.push(`${rel}@${f.index}: ${f.type} ${f.sample}`);
-  for (const m of text.matchAll(LOCAL_PATH)) findings.push(`${rel}@${m.index}: local-path ${m[0]}`);
+  const lines = text.split('\n');
+  const lineOf = (index) => lines[text.slice(0, index).split('\n').length - 1];
+  const hits = [
+    ...findSecrets(text, EXTRA_IGNORED_TYPES).map((f) => [f.index, `${f.type} ${f.sample}`]),
+    ...[...text.matchAll(LOCAL_PATH)].map((m) => [m.index, `local-path ${m[0]}`]),
+  ];
+  for (const [index, what] of hits) {
+    if (lineExempt(rel, lineOf(index))) exempted++;
+    else findings.push(`${rel}@${index}: ${what}`);
+  }
+  const listed = LINE_EXEMPT.get(rel);
+  if (listed) {
+    const present = new Set(lines.map(lineHash));
+    for (const h of listed.hashes) if (!present.has(h)) findings.push(`${rel}: استثناء لسطر لم يعد موجودًا (${h})`);
+  }
 }
 
 if (!scanned) findings.push('لا ملف نصيًا في نطاقات الفحص (test/fixtures وtest/e2e/fixtures)');
@@ -142,4 +157,4 @@ if (findings.length) {
   console.error(`check-secrets: ${findings.length} اكتشاف في ${scanned} ملف\n- ${findings.slice(0, 50).join('\n- ')}`);
   process.exit(1);
 }
-console.log(`check-secrets: ناجح (${scanned} ملف بلا pot ولا تواقيع ولا روابط ولا ملفات ارتباط ولا مسارات محلية؛ منها ${extra} خارج نطاقات العيّنات، و${excluded} مستثنى بسببه)`);
+console.log(`check-secrets: ناجح (${scanned} ملف بلا pot ولا تواقيع ولا روابط ولا ملفات ارتباط ولا مسارات محلية؛ منها ${extra} خارج نطاقات العيّنات، و${exempted} اكتشافًا مستثنى بسطره)`);

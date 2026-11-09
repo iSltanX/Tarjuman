@@ -36,11 +36,8 @@ function contractExporter(track, { size = null } = {}) {
   return { files, fingerprint: fingerprint({ videoId: VIDEO_ID, track, parts }) };
 }
 
-/** تصدير P3 الحقيقي إن دُمجت (src/core/export/index.js)؛ وإلا null فتُتخطى سيناريوهاته. */
-const p3 = await import('../../../src/core/export/index.js').catch((e) => {
-  if (e.code === 'ERR_MODULE_NOT_FOUND' && /core\/export/.test(e.message)) return null;
-  throw e;
-});
+/** تصدير P3 الحقيقي: غياب الوحدة فشل لا تخطٍّ. */
+const p3 = await import('../../../src/core/export/index.js');
 const p3Exporter = typeof p3?.buildExport === 'function'
   ? (track, { size = null } = {}) => {
     const out = p3.buildExport({
@@ -93,7 +90,6 @@ const doImport = (files, fp) => readImport(files, { fingerprints: [fp], settings
 // --- السيناريوهات (تُعاد لكل مصدّر) -------------------------------------------------------------------------
 
 function defineRoundtrip(label, exporter) {
-  const skip = exporter ? false : 'P3 لم تُدمج بعد (src/core/export غير موجودة)؛ يعمل هذا السيناريو بعد دمجها';
   const exportManual = () => {
     const exp = exporter(manual);
     const source = sourceOf(exp.files);
@@ -102,7 +98,7 @@ function defineRoundtrip(label, exporter) {
     return { exp, source, fp: exp.fingerprint, text: exp.files[0].text };
   };
 
-  test(`${label}: ترجمة أمينة (427 مقطعًا) ← مطابقة تامة بلا ملاحظات`, { skip }, async () => {
+  test(`${label}: ترجمة أمينة (427 مقطعًا) ← مطابقة تامة بلا ملاحظات`, async () => {
     const { fp, text, source } = exportManual();
     const r = await doImport(fileOf(modelTranslate(text), `${VIDEO_ID}.ar.srt`), fp);
     assert.equal(r.ok, true);
@@ -111,7 +107,7 @@ function defineRoundtrip(label, exporter) {
     assert.deepEqual(r.cues.map((c) => [c.n, c.startMs, c.endMs]), source.map((c) => [c.n, c.startMs, c.endMs]));
   });
 
-  test(`${label}: أخطاء معروفة معًا ← تقرير مطابق للمتوقع حرفيًا`, { skip }, async () => {
+  test(`${label}: أخطاء معروفة معًا ← تقرير مطابق للمتوقع حرفيًا`, async () => {
     const { fp, text, source } = exportManual();
     const at = (n) => source[n - 1];
     assert.ok(/\p{L}/u.test(at(88).text), 'مقطع الإبقاء بالإنجليزية فيه حروف');
@@ -144,7 +140,7 @@ function defineRoundtrip(label, exporter) {
     assert.deepEqual(previewRestoreTiming(r.cues, fp), { available: false, changes: [] });
   });
 
-  test(`${label}: حذف مقطع مع إعادة ترقيم ← العدد مختلف والترقيم متسلسل والانحراف يبدأ عند الموضع`, { skip }, async () => {
+  test(`${label}: حذف مقطع مع إعادة ترقيم ← العدد مختلف والترقيم متسلسل والانحراف يبدأ عند الموضع`, async () => {
     const { fp, text, source } = exportManual();
     const r = await doImport(fileOf(modelTranslate(text, { drop: [57], renumber: true }), 'ar.srt'), fp);
     const expected = [];
@@ -158,7 +154,7 @@ function defineRoundtrip(label, exporter) {
     assert.deepEqual(previewRestoreTiming(r.cues, fp), { available: false, changes: [] }, 'اختلاف العدد يمنع الاستعادة');
   });
 
-  test(`${label}: النموذج أزاح كل الأزمنة ← انحراف شامل، والاستعادة معاينة ثم تطبيق بتأكيد ← مطابقة، والسجل صالح`, { skip }, async () => {
+  test(`${label}: النموذج أزاح كل الأزمنة ← انحراف شامل، والاستعادة معاينة ثم تطبيق بتأكيد ← مطابقة، والسجل صالح`, async () => {
     const { fp, text, source } = exportManual();
     const r = await doImport(fileOf(modelTranslate(text, { shiftAll: 250 }), 'ar.srt'), fp);
     assert.deepEqual(r.comparison, {
@@ -185,7 +181,7 @@ function defineRoundtrip(label, exporter) {
     assert.deepEqual(validateVideoRecord(next, { stored: false }), { ok: true });
   });
 
-  test(`${label}: استيراد الملف الإنجليزي بالخطأ ← مطابق توقيتًا لكن كل مقاطعه بلا حرف عربي`, { skip }, async () => {
+  test(`${label}: استيراد الملف الإنجليزي بالخطأ ← مطابق توقيتًا لكن كل مقاطعه بلا حرف عربي`, async () => {
     const { fp, text, source } = exportManual();
     const r = await doImport(fileOf(text, 'english.srt'), fp);
     assert.equal(r.comparison.matched, true);
@@ -193,7 +189,7 @@ function defineRoundtrip(label, exporter) {
     assert.ok(r.comparison.noArabic.length > 400);
   });
 
-  test(`${label}: تصدير احتياطي مقسَّم (1,056 مقطعًا في 6 أجزاء) ← يُدمج مهما كان ترتيب الاختيار ← مطابقة`, { skip }, async () => {
+  test(`${label}: تصدير احتياطي مقسَّم (1,056 مقطعًا في 6 أجزاء) ← يُدمج مهما كان ترتيب الاختيار ← مطابقة`, async () => {
     const exp = exporter(asr, { size: 200 });
     assert.equal(exp.files.length, 6);
     assert.equal(exp.fingerprint.parts.length, 6);
@@ -210,7 +206,7 @@ function defineRoundtrip(label, exporter) {
     assert.equal(r.fileName.includes('part'), false, r.fileName);
   });
 
-  test(`${label}: جزء ناقص من التصدير المقسَّم ← تحذير فجوة ونقص بأرقامه`, { skip }, async () => {
+  test(`${label}: جزء ناقص من التصدير المقسَّم ← تحذير فجوة ونقص بأرقامه`, async () => {
     const exp = exporter(asr, { size: 200 });
     const parts = exp.files.map((f) => fileOf(modelTranslate(f.text), f.name.replace('.en.', '.ar.')));
     // الجزء الثالث المحذوف من خطة أجزاء المصدّر نفسه: العقد يفرض الترقيم المستمر لا طولًا ثابتًا للجزء

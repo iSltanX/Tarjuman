@@ -170,6 +170,23 @@ const PASSTHROUGH = new Set([
   'const XHR = window.XMLHttpRequest.prototype;',
 ]);
 const CAPTURE = path.join('main-world', 'capture.js');
+// الأسماء المستعارة للطلب الأصلي (F-07): origFetch.call(window, url) طلب لا تظهر فيه كلمة fetch معرّفًا. فهذه الأسماء لا ترد
+// إلا في أسطرها المراجَعة حرفيًا في ملفها.
+const REQUEST_ALIAS = /(?<![\w$])(?:origFetch|origOpen|origSend|pageFetch)(?![\w$])/;
+const ALIAS_LINES = new Map([
+  [CAPTURE, new Set([
+    'const origFetch = window.fetch;',
+    'const result = origFetch.apply(this, arguments); // الطلب الوحيد: طلب الصفحة نفسه.',
+    'const origOpen = XHR.open;',
+    'const origSend = XHR.send;',
+    'return origOpen.apply(this, arguments);',
+    'return origSend.apply(this, arguments);',
+  ])],
+  [path.join('core', 'report', 'client.js'), new Set([
+    'const pageFetch = (url, init) => globalThis.fetch(url, init);',
+    'export async function sendReport(payload, key, { granted, request = pageFetch, timeoutMs = SEND_TIMEOUT_MS }) {',
+  ])],
+]);
 // قناة البلاغات (جولة النشر T2.1): أضيق استثناء لهذا المضيف وهذا الملف. طلب fetch واحد وطلب إذن واحد بسطريهما
 // المراجَعين حرفيًا، والمضيف رابطًا في هذا الملف وحده. فلا طلب في ملف آخر، ولا مضيف آخر هنا، والعامل وسكربتا المحتوى بلا شبكة.
 const REPORT_FILE = path.join('core', 'report', 'client.js');
@@ -304,6 +321,7 @@ for (const file of await walk(SRC)) {
     for (const r of RULES) if (r.re.test(line) && !r.allow?.(rel, line)) problems.push(`${at}: ${r.msg}`);
     if (NETWORK.test(line) && !(rel === CAPTURE && PASSTHROUGH.has(line.trim())) && !PACKAGED_READS.get(rel)?.has(line.trim())
       && !(rel === REPORT_FILE && REPORT_LINES.has(line.trim()))) problems.push(`${at}: طلب شبكة من الإضافة`);
+    if (REQUEST_ALIAS.test(line) && !ALIAS_LINES.get(rel)?.has(line.trim())) problems.push(`${at}: اسم مستعار لطلب شبكة خارج أسطره المراجَعة`);
     for (const m of line.matchAll(URL_RE)) if (!URL_OK(m[0], rel)) problems.push(`${at}: نطاق خارجي ${m[0].slice(0, 60)}`);
     if (STORAGE.test(line) && !inStore) problems.push(`${at}: التخزين خارج src/core/store`);
     if (STORE_WRITE.test(line) && !STORE_WRITERS.has(rel)) problems.push(`${at}: الكتابة في التخزين عبر الكاتب الواحد وحده (writer.js)`);
