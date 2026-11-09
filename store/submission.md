@@ -103,6 +103,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | Screenshots | `store/screenshots/chromium/{ar,en}/` الخمس لكل لغة |
 | Small promo tile | `store/promo/small-promo-440x280.png` |
 | Marquee promo tile | `store/promo/marquee-1400x560.png` |
+| YouTube video (لكل لغة) | العربية `https://www.youtube.com/watch?v=OmC8oCZ7z0g`، والإنجليزية `https://www.youtube.com/watch?v=emmPgij1lmk` (قناة BySultan، بطلب سلطان 2026-11-09) |
 | Mature content | لا |
 | Single purpose، والأذونات، والشيفرة البعيدة، وData usage | §١ إلى §٤ |
 | Test instructions | `reviewers.en.md` (`reviewer.chrome`) |
