@@ -3,7 +3,7 @@
 // يوتيوب رسم المشغّل أو أزال المضيف (فحص خفيف كل ثانية وعند أحداث يوتيوب). لا ترمي أبدًا: الإخفاق رمز في state
 // وفي diagnostics، ويبقى المشغّل والأدوات سليمين. محمّل خطوط الترجمة واحد للمستند (P6)، فلا تعيد الجلسات تحميلها.
 import { TjError } from '../../core/errors/index.js';
-import { EVENTS, getPlayer } from '../youtube-dom.js';
+import { EVENTS, getMainVideo, getPlayer } from '../youtube-dom.js';
 import { createFontLoader } from './fonts.js';
 import { createOverlaySession } from './session.js';
 
@@ -121,6 +121,8 @@ export function mountOverlay(controller, env = {}) {
     /** أعداد ورموز فقط: لا نص مقاطع ولا روابط (R36). */
     diagnostics: () => ({
       state, attempts, failures, lastCode: lastError?.code ?? null, lastDetail: lastError?.detail ?? null,
+      // الطبقة مركَّبة والمشغّل بلا عنصر فيديو يعرفه المحدد: لا تظهر الترجمة ولا خطأ، فيُبلَّغ برمز (F-04).
+      videoCode: state === 'mounted' && !getMainVideo(doc) ? 'PL_NO_VIDEO_ELEMENT' : null,
       session: session ? session.diagnostics() : null,
       fonts: fonts ? fonts.diagnostics() : null,
     }),

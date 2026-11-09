@@ -244,6 +244,8 @@ export function toolsStatus(reply) {
   const { controls, overlay } = reply.mounted;
   const code = typeof reply.tools?.code === 'string' ? reply.tools.code : null;
   const reason = code ? messageFor(code) : null;
+  // مركَّبان مع رمز: المشغّل بلا عنصر فيديو (F-04)، فلا تُعرض «جاهزة».
+  if (controls === 'mounted' && overlay === 'mounted' && code) return { tone: 'danger', text: t('popup.status.toolsOverlayError'), reason };
   if (controls === 'mounted' && overlay === 'mounted') return { tone: 'success', text: t('popup.status.toolsOk'), reason: null };
   // العنوان عام، والسبب والإجراء من رسالة الرمز مرة واحدة؛ وبلا رمز يبقى الإجراء الاحتياطي.
   if (controls === 'error') return { tone: 'danger', text: t('popup.status.toolsControlsError'), reason: reason ?? toolsReloadAction() };

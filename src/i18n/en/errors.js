@@ -160,6 +160,7 @@ export default Object.freeze({
 
   // player and overlay
   PL_MOUNT_FAILED: 'Couldn’t attach the subtitle layer over the player. Reload the page; if it keeps happening, copy the diagnostics report.',
+  PL_NO_VIDEO_ELEMENT: 'Tarjuman couldn’t find the video element in the player, so subtitles can’t appear over it. Reload the page; if it keeps happening, YouTube may have changed its page, so copy the diagnostics report.',
   PL_RENDER_FAILED: 'Couldn’t display the subtitle line. Reload the page; if it keeps happening, copy the diagnostics report.',
   PL_FULLSCREEN_HOST: 'Couldn’t show the subtitles in fullscreen here. Exit fullscreen and enter it again; if it keeps happening, copy the diagnostics report.',
   PL_PREFS_FAILED: 'Couldn’t save your choice in the synced transcript panel. Try again.',

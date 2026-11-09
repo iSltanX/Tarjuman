@@ -128,3 +128,4 @@ createDiagnosticReport({ version: '0.2.0', browser: 'Brave 1.98', sections: { st
 
 - **الاستيراد** (`import.js`): `IM_NOTE_HIDDEN_CHARS` ملاحظة واحدة بعدد المحارف التي أزالتها التنقية الموحدة (`src/core/text/sanitize.js`). وصار `IM_NOTE_CONTROL` لرموز C0/C1 وحدها، فأُسقط من نصه ذكر تجاوز الاتجاه.
 - **أمانة الرفع (F-03):** `IM_NOTE_TRIMMED` ملاحظة واحدة بعدد الأسطر التي قُصّت مسافات أطرافها. و`IM_CUE_TIME_NOT_AFTER_START` تحذير لكل مقطع نهايته ليست بعد بدايته برقمه وسطره. ويعرض `readImport` أول عشرين منها، ثم `IM_CUE_TIME_MORE` بعدد البقية.
+- **المشغّل (F-04):** `PL_NO_VIDEO_ELEMENT` الطبقة مركَّبة والمشغّل بلا عنصر فيديو: يصل نافذة الإضافة في `tools.code` وتقرير التشخيص في `videoCode`.

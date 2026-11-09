@@ -17,7 +17,7 @@ function toolsCode(mounted) {
       }
     }
   }
-  return null;
+  return safe(() => mounted.overlay?.diagnostics?.().videoCode) ?? null;
 }
 
 const safe = (fn) => {

@@ -9,7 +9,7 @@ import { readImport, reviewIncoming } from '../../core/import/index.js';
 import { saveFile } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { loadUiFonts } from '../overlay/fonts.js';
-import { EVENTS, getPlayer, getRightControls } from '../youtube-dom.js';
+import { EVENTS, getPlayer, getRightControls, videoIdFromLocation } from '../youtube-dom.js';
 import { createControlsSession } from './session.js';
 import { createPanelLink, panelLink } from '../link.js';
 
@@ -93,6 +93,14 @@ export function mountControls(controller, deps = {}) {
     if (stopped) return;
     // لغة الواجهة تبدّلت: تُعاد الجلسة بلغتها، إلا إن كان فيها تدفق رفع أو مراجعة أو تأكيد أو كتابة مفتوحة فيؤجَّل إلى الفحص التالي بعد انتهائه.
     if (session && builtLocale !== getLocale() && !session.holdsFlow()) dropSession();
+    // خارج صفحة الفيديو لا أزرار (F-05): تخرج الجلسة من DOM وتعود الحالة إلى الانتظار، والتنقل إلى مشاهدة يعيدها بحدث يوتيوب أو الفحص الدوري.
+    if (videoIdFromLocation(win.location) === null) {
+      dropSession();
+      observeBar(null);
+      observePage(false);
+      if (state !== 'error' || failures < MAX_FAILURES) state = 'waiting';
+      return;
+    }
     const player = getPlayer(doc);
     const right = player ? getRightControls(doc) : null;
     if (!player || !right) {
