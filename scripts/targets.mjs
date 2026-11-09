@@ -11,9 +11,34 @@ export const TARGETS = Object.freeze(['chromium', 'firefox']);
 export const DEFAULT_OUT = Object.freeze({ chromium: 'dist', firefox: 'dist-firefox' });
 
 /** ما يكتبه البناء في جذر مجلده. */
-export const BUILD_TOP = Object.freeze(['manifest.json', 'THIRD_PARTY_NOTICES.txt', 'background', 'content', 'main-world', 'pages', 'ui', 'icons', 'dev']);
+export const BUILD_TOP = Object.freeze(['manifest.json', 'THIRD_PARTY_NOTICES.txt', '_locales', 'background', 'content', 'main-world', 'pages', 'ui', 'icons', 'dev']);
 /** ملفات يضعها مدير الملفات في أي مجلد (Finder وExplorer): لا تجعل المجلد غير مملوك ولا غير فارغ. */
 export const OS_JUNK = Object.freeze(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
+
+/** لغات اسم الإضافة ووصفها في البيان (`_locales`): لغتا الواجهة، وتتبعان لغة المتصفح لا «لغة الواجهة» داخل الإضافة. */
+export const MANIFEST_LOCALES = Object.freeze(['ar', 'en']);
+
+/**
+ * رسائل البيان لكل لغة: { ar: { extName: '…' }, en: { … } }.
+ * @param {string} src مجلد المصدر @returns {Promise<Record<string, Record<string, string>>>}
+ */
+export async function manifestMessages(src) {
+  const out = {};
+  for (const locale of MANIFEST_LOCALES) {
+    const raw = JSON.parse(await readFile(path.join(src, '_locales', locale, 'messages.json'), 'utf8'));
+    out[locale] = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, v?.message]));
+  }
+  return out;
+}
+
+/**
+ * نص بيان بعد استبدال `__MSG_x__` برسالتها، والنص الثابت كما هو، ورسالة غائبة undefined.
+ * @param {unknown} value @param {Record<string, string>} messages
+ */
+export function manifestText(value, messages) {
+  const m = typeof value === 'string' ? /^__MSG_(\w+)__$/.exec(value) : null;
+  return m ? messages[m[1]] : value;
+}
 
 /** هل child هو parent أو داخله؟ بمقاطع المسار لا بالنص (فـsrc/..foo داخل src). */
 export function insidePath(child, parent) {
@@ -51,7 +76,9 @@ export async function outDirProblem(out, { root }) {
     const own = JSON.parse(await readFile(path.join(src, 'manifest.json'), 'utf8'));
     // الاسم تغيّر عبر الإصدارات، والاسم المختصر «ترجمان» ثابت منذ 1.1.0: فبناء سابق بأي منهما بناءُ ترجمان. وبناءات 0.2.0 و1.0.0
     // بلا short_name واسمها «ترجمان» نفسه، أي الاسم المختصر الحالي (التدقيق الموحد V2، U-067: كان dist قديم من 1.0.0 يُرفض).
-    const ours = new Set([own.name, own.short_name].filter((n) => typeof n === 'string' && n));
+    // ومنذ 2.1.1 الاسمان رمزا `__MSG_…__`، فتُقبل قيمهما المترجمة أيضًا: بناء سابق يحمل الاسم نصًّا.
+    const messages = Object.values(await manifestMessages(src));
+    const ours = new Set([own.name, own.short_name, ...messages.flatMap((m) => [manifestText(own.name, m), manifestText(own.short_name, m)])].filter((n) => typeof n === 'string' && n));
     return ours.has(built.name) || ours.has(built.short_name) ? null : 'بيانه ليس بيان ترجمان';
   } catch {
     return 'لا بيان ترجمان في جذره';

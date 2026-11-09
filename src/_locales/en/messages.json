@@ -1,0 +1,5 @@
+{
+  "extName": { "message": "Tarjuman — Your translation over the video" },
+  "extShortName": { "message": "Tarjuman" },
+  "extDescription": { "message": "Save subtitles as SRT to translate with any AI model, from any language to yours, then show them over the video to adjust and edit." }
+}

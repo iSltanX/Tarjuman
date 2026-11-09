@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "ترجمان — ترجمتك فوق الفيديو",
-  "short_name": "ترجمان",
-  "version": "2.1.0",
-  "description": "يحفظ ترجمة الفيديو في ملف SRT لتترجمه بأي نموذج ذكاء اصطناعي من أي لغة إلى لغتك، ثم يعرض ترجمتك فوق الفيديو بضبط التوقيت والتحرير.",
+  "default_locale": "en",
+  "name": "__MSG_extName__",
+  "short_name": "__MSG_extShortName__",
+  "version": "2.1.1",
+  "description": "__MSG_extDescription__",
   "minimum_chrome_version": "130",
   "icons": {
     "16": "icons/tarjuman-icon-16.png",
@@ -17,7 +18,7 @@
     "service_worker": "background/worker.js"
   },
   "action": {
-    "default_title": "ترجمان",
+    "default_title": "__MSG_extShortName__",
     "default_popup": "pages/popup/index.html",
     "default_icon": { "16": "icons/tarjuman-icon-16.png", "32": "icons/tarjuman-icon-32.png" }
   },

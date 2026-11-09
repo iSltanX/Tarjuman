@@ -39,6 +39,10 @@ test('parseFields: كل كتلة text بعد تعليق field تُقرأ بمع�
 test('checkField: الطول بنقاط الترميز، والرابط الممنوع، ومطابقة البيان', () => {
   assert.deepEqual(checkField({ id: 'manifest.name', text: MANIFEST.name }, MANIFEST), []);
   assert.match(checkField({ id: 'manifest.name', text: 'ترجمان' }, MANIFEST).join(), /لا يطابق name/);
+  const en = { en: { name: 'Tarjuman', description: 'Short' } };
+  assert.deepEqual(checkField({ id: 'en.manifest.name', text: 'Tarjuman' }, MANIFEST, en), [], 'الحقل الإنجليزي يقارن ببيان لغته');
+  assert.match(checkField({ id: 'en.manifest.name', text: MANIFEST.name }, MANIFEST, en).join(), /لا يطابق name/);
+  assert.match(checkField({ id: 'en.chromium.description', text: `${'x '.repeat(130)}` }, MANIFEST, en).join(), /إسناد علامة يوتيوب/);
   assert.match(checkField({ id: 'amo.summary', text: 'انظر https://bysltan.com' }, MANIFEST).join(), /رابط/);
   assert.match(checkField({ id: 'amo.summary', text: 'أ'.repeat(251) }, MANIFEST).join(), /طوله 251 وحده 250/);
   assert.deepEqual(checkField({ id: 'amo.summary', text: 'أ'.repeat(250) }, MANIFEST), []);

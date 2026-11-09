@@ -214,7 +214,7 @@
 | حساب Google للنشر | حساب مخصص باسم الناشر BySultan، لا الحساب الشخصي. وبريده `iSultanBy@gmail.com`، وهو بريد التواصل الظاهر في متجر Chrome وبريد الدعم | — |
 | صفة التاجر في Chrome | **غير تاجر**، متسقة مع حساب Edge الفردي | T8 |
 | الاسم | `name`: **«ترجمان — ترجمتك فوق الفيديو»** (27 محرفًا) منذ 2.0.0، نص لوحة الهوية 18 ([`docs/identity.md`](../docs/identity.md)، AA5)، وكان «ترجمان - ترجمتك العربية فوق الفيديو» (35 محرفًا) في 1.1.0 على نمط مِجهَر. و`short_name` و`default_title`: «ترجمان». وتبقى علامة يوتيوب خارج العنوان. ومتجرا Chrome وEdge يأخذان العنوان من البيان، فيظهر الاسم الكامل في صفحة الإضافات بالمتصفح أيضًا | T2 يعدّله في البيان للهدفين، وAA5 للاسم الجديد |
-| لغة الإدراج | العربية وحدها بلا `_locales`، وملاحظات المراجعين بالإنجليزية. وواجهة الإضافة صارت بالعربية والإنجليزية في 2.1.0، والإدراج باقٍ بالعربية ما لم يقرر سلطان غير ذلك | T6 |
+| لغة الإدراج | العربية والإنجليزية منذ 2.1.1 بطلب سلطان (2026-11-09): `src/_locales` و`default_locale: en`، ونصوص [`listing.ar.md`](listing.ar.md) و[`listing.en.md`](listing.en.md)، وملاحظات المراجعين بالإنجليزية. وكان قبلها العربية وحدها بلا `_locales` | T6 و2.1.1 |
 | الظهور | عام (Public) في المتاجر الثلاثة، وكل المناطق | T6 وT8 |
 | Firefox | `tarjuman@bysltan.com` (على نمط `mijhar@bysltan.com`)، لسطح المكتب وحده بلا `gecko_android` | T2 |
 | الموقع | `bysltan.com`، وصفحات ترجمان فيه من T7 | T7 |
@@ -314,6 +314,7 @@
 | الملف | ما فيه |
 | --- | --- |
 | [`listing.ar.md`](listing.ar.md) | ما يراه المستخدمون: الاسم والوصف القصير من البيان، وملخص AMO، والوصف الكامل بنسختيه، والفئة، وكلمات Edge، ووسم AMO، ورابطه، وسجل الإصدار. اعتمده سلطان مع الفئات (2026-11-04) |
+| [`listing.en.md`](listing.en.md) | نصوص صفحة اللغة الإنجليزية: الاسم والوصف القصير من `_locales/en`، والوصف الكامل وملخص AMO |
 | [`submission.md`](submission.md) | إجابات النماذج: الغرض الواحد، ومبررات الأذونات، والشيفرة البعيدة، وإفصاح البيانات، والروابط، وحقول كل متجر |
 | [`reviewers.en.md`](reviewers.en.md) | ملاحظات المراجعين بالإنجليزية لكل متجر، ومعها مقاطع عربية للتجربة |
 | `icons/` | `chrome-store-icon-128.png` (البلاطة 96 بحشو شفاف 16)، و`edge-logo-300.png`. والبلاطة تطابق أيقونة الإضافة المشحونة (`src/icons/tarjuman-icon-128.png`) إلا تنعيم الزوايا |
@@ -330,7 +331,7 @@
 
 | المتجر | الحقل المطلوب | المادة |
 | --- | --- | --- |
-| Chrome | الحزمة | `release/store/tarjuman-2.1.0-chrome.zip` (يبنيها `npm run package`) |
+| Chrome | الحزمة | `release/store/tarjuman-2.1.1-chrome.zip` (يبنيها `npm run package`) |
 | Chrome | الاسم والملخص | `manifest.name` و`manifest.description` في `listing.ar.md` |
 | Chrome | الوصف التفصيلي | `chromium.description` |
 | Chrome | الفئة واللغة | `listing.ar.md` «الفئة»، والعربية |
@@ -342,7 +343,7 @@
 | Chrome | Data usage وLimited Use | `submission.md` §٤، ومنه قناة البلاغات |
 | Chrome | رابط سياسة الخصوصية | `submission.md` §٥ (T7) |
 | Chrome | إعلان التاجر | غير تاجر (سلطان، §٥) |
-| Edge | الحزمة | `release/store/tarjuman-2.1.0-edge.zip` (يبنيها `npm run package`) |
+| Edge | الحزمة | `release/store/tarjuman-2.1.1-edge.zip` (يبنيها `npm run package`) |
 | Edge | Category | `listing.ar.md` «الفئة» |
 | Edge | Privacy policy URL | `submission.md` §٥ (T7) |
 | Edge | Single purpose والأذونات والشيفرة البعيدة وData usage | `submission.md` §١ إلى §٤ |
@@ -350,7 +351,7 @@
 | Edge | Extension logo | `icons/edge-logo-300.png` |
 | Edge | الاسم والوصف القصير | من البيان |
 | Edge | خطوات الاختبار (البند 1.3) | `reviewer.chrome` و`reviewer.edge` في `reviewers.en.md` |
-| Firefox | ملف الإضافة وشيفرة المصدر | `tarjuman-2.1.0-firefox.zip` و`tarjuman-2.1.0-source.zip` (يبنيهما `npm run package`) |
+| Firefox | ملف الإضافة وشيفرة المصدر | `tarjuman-2.1.1-firefox.zip` و`tarjuman-2.1.1-source.zip` (يبنيهما `npm run package`) |
 | Firefox | `data_collection_permissions` | في البيان (T2.1 وT5)، وشرحه في `submission.md` §٢ |
 | Firefox | Name وSummary | من البيان، و`amo.summary` |
 | Firefox | Categories | `listing.ar.md` «الفئة» |

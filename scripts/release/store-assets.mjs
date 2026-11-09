@@ -7,10 +7,11 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inflateSync } from 'node:zlib';
+import { manifestMessages, manifestText } from '../targets.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const STORE_DIR = 'store';
-export const TEXT_FILES = Object.freeze(['listing.ar.md', 'submission.md', 'reviewers.en.md']);
+export const TEXT_FILES = Object.freeze(['listing.ar.md', 'listing.en.md', 'submission.md', 'reviewers.en.md']);
 
 /** وسوم AMO الثابتة كما أعادتها /api/v5/addons/tags/ في 2026-11-04. */
 export const AMO_TAGS = Object.freeze(['ad blocker', 'anti malware', 'anti tracker', 'antivirus', 'chat', 'container', 'content blocker', 'coupon', 'dailymotion', 'dark mode', 'dndbeyond', 'download', 'facebook', 'google', 'image search', 'mp3', 'music', 'password manager', 'pinterest', 'pixiv', 'privacy', 'reddit', 'roblox', 'scholar', 'search', 'security', 'shopping', 'social media', 'streaming', 'torrent', 'translate', 'twitch', 'twitter', 'user scripts', 'video converter', 'video downloader', 'vpn', 'wayback machine', 'whatsapp', 'word counter', 'youtube', 'zoom']);
@@ -19,16 +20,24 @@ const URL_RE = /https?:\/\/|www\.|\b[a-z0-9-]+\.(?:com|org|dev|io|net)\b/i;
 const OTHER_BROWSER_RE = /\b(?:Chrome|Chromium|Firefox|Brave|Edge|Opera|Safari|Vivaldi)\b|كروم|فايرفوكس|فيرفكس|إيدج|بريف|أوبرا|سفاري/i;
 const INVISIBLE_RE = /[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/;
 const TRADEMARK = 'YouTube علامة تجارية لشركة Google LLC';
+const TRADEMARK_EN = 'YouTube is a trademark of Google LLC';
 const FILM = ['Cosmos Laundromat', '(CC) Blender Foundation | gooseberry.blender.org', 'CC BY 3.0'];
 const DESCRIPTION = { noOtherBrowser: true, trademark: true, film: true, brandMax: 5, noDownloader: true };
+// الوصف الإنجليزي (2.1.1): اللقطات الجديدة لا تستعمل الفيلم، فلا نسبة له.
+const DESCRIPTION_EN = { noOtherBrowser: true, trademark: TRADEMARK_EN, brandMax: 5, noDownloader: true };
 
 /**
  * الحقول وحدودها: max/min بالمحارف (نقاط الترميز)، وnoUrl، وقواعد الوصف. المصدر في store/README.md §٣.
- * @type {Record<string, { max?: number, min?: number, noUrl?: boolean, equalsManifest?: 'name'|'description', lines?: { max: number, each: number, words: number }, tags?: boolean, slug?: boolean, noOtherBrowser?: boolean, trademark?: boolean, film?: boolean, brandMax?: number, noDownloader?: boolean }>}
+ * @type {Record<string, { max?: number, min?: number, noUrl?: boolean, equalsManifest?: 'name'|'description', lines?: { max: number, each: number, words: number }, tags?: boolean, slug?: boolean, noOtherBrowser?: boolean, trademark?: boolean | string, film?: boolean, locale?: 'en', brandMax?: number, noDownloader?: boolean }>}
  */
 export const FIELD_RULES = Object.freeze({
   'manifest.name': { max: 45, equalsManifest: 'name', noOtherBrowser: true, noDownloader: true }, // Chrome 75، وAMO 50، وEdge بحسب MDN 45
   'manifest.description': { max: 132, equalsManifest: 'description', noOtherBrowser: true, noDownloader: true }, // Chrome best-listing
+  'en.manifest.name': { max: 45, equalsManifest: 'name', locale: 'en', noOtherBrowser: true, noDownloader: true },
+  'en.manifest.description': { max: 132, equalsManifest: 'description', locale: 'en', noOtherBrowser: true, noDownloader: true },
+  'en.chromium.description': { min: 250, max: 10000, ...DESCRIPTION_EN },
+  'en.amo.summary': { max: 250, noUrl: true, noOtherBrowser: true, noDownloader: true },
+  'en.amo.description': { max: 15000, ...DESCRIPTION_EN },
   'amo.summary': { max: 250, noUrl: true, noOtherBrowser: true, noDownloader: true }, // AMO
   'chromium.description': { min: 250, max: 10000, ...DESCRIPTION }, // Edge: من 250 إلى 10,000
   'amo.description': { max: 15000, ...DESCRIPTION }, // AMO
@@ -57,10 +66,11 @@ export function parseFields(md) {
 const chars = (s) => [...s].length;
 
 /**
- * @param {{ id: string, text: string }} field @param {{ name: string, description: string }} manifest
+ * @param {{ id: string, text: string }} field @param {{ name: string, description: string }} manifest نصا البيان العربيان
+ * @param {Record<string, { name: string, description: string }>} [locales] نصا البيان لكل لغة أخرى، للحقول التي لها locale
  * @returns {string[]} المشكلات بالعربية
  */
-export function checkField({ id, text }, manifest) {
+export function checkField({ id, text }, manifest, locales = {}) {
   const rule = FIELD_RULES[id];
   if (!rule) return [`حقل غير معروف: ${id}`];
   const p = [];
@@ -70,13 +80,13 @@ export function checkField({ id, text }, manifest) {
   if (rule.min && n < rule.min) p.push(`طوله ${n} وأدناه ${rule.min}`);
   if (INVISIBLE_RE.test(text)) p.push('فيه محرف اتجاه أو محرف غير مرئي');
   if (rule.noUrl && URL_RE.test(text)) p.push('فيه رابط والحقل يمنعه');
-  if (rule.equalsManifest && text !== manifest[rule.equalsManifest]) p.push(`لا يطابق ${rule.equalsManifest} في البيان`);
+  if (rule.equalsManifest && text !== (rule.locale ? locales[rule.locale] : manifest)?.[rule.equalsManifest]) p.push(`لا يطابق ${rule.equalsManifest} في البيان`);
   if (rule.noOtherBrowser) {
     const m = OTHER_BROWSER_RE.exec(text);
     if (m) p.push(`يذكر متصفحًا: ${m[0]}`);
   }
   if (rule.noDownloader && /downloader/i.test(text)) p.push('فيه «downloader»');
-  if (rule.trademark && !text.includes(TRADEMARK)) p.push('بلا جملة إسناد علامة يوتيوب');
+  if (rule.trademark && !text.includes(typeof rule.trademark === 'string' ? rule.trademark : TRADEMARK)) p.push('بلا جملة إسناد علامة يوتيوب');
   if (rule.film && !FILM.every((x) => text.includes(x))) p.push('بلا نسبة الفيلم كاملة');
   if (rule.brandMax) {
     const yt = (text.match(/يوتيوب|YouTube/g) ?? []).length;
@@ -196,14 +206,18 @@ export function checkImage(img, { w, h, rule }) {
 export async function checkStore(root = ROOT) {
   const problems = [];
   const summary = { fields: [], assets: [], shots: {} };
-  const manifest = JSON.parse(await readFile(path.join(root, 'src/manifest.json'), 'utf8'));
+  const raw = JSON.parse(await readFile(path.join(root, 'src/manifest.json'), 'utf8'));
+  const messages = await manifestMessages(path.join(root, 'src'));
+  const textsOf = (locale) => ({ name: manifestText(raw.name, messages[locale]), description: manifestText(raw.description, messages[locale]) });
+  const manifest = textsOf('ar');
+  const locales = { en: textsOf('en') };
   const seen = new Set();
   for (const f of TEXT_FILES) {
     const md = await readFile(path.join(root, STORE_DIR, f), 'utf8');
     for (const field of parseFields(md)) {
       if (seen.has(field.id)) problems.push(`${f}: ${field.id} مكرر`);
       seen.add(field.id);
-      const issues = checkField(field, manifest);
+      const issues = checkField(field, manifest, locales);
       summary.fields.push({ id: field.id, chars: chars(field.text) });
       for (const i of issues) problems.push(`${f}: ${field.id} — ${i}`);
     }

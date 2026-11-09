@@ -7,7 +7,7 @@ import { cp, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { GECKO, TARGETS, targetManifest } from '../../../scripts/targets.mjs';
+import { GECKO, TARGETS, manifestMessages, manifestText, targetManifest } from '../../../scripts/targets.mjs';
 import { auditPackage } from '../../../scripts/release/audit.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -62,10 +62,18 @@ test('هدف غير معروف مرفوض في الطبقة والبناء', () 
   assert.match(r.stderr, /هدف غير معروف safari/);
 });
 
-test('اسم المتاجر (قرار سلطان، store/README.md §٥، ولوحة الهوية 18 منذ 2.0.0): الاسم بعبارته، و«ترجمان» اسمًا مختصرًا وتلميحًا', () => {
-  assert.equal(base.name, 'ترجمان — ترجمتك فوق الفيديو', 'منذ 2.0.0 نص لوحة الهوية 18');
-  assert.equal(base.short_name, 'ترجمان');
-  assert.equal(base.action.default_title, 'ترجمان');
+test('اسم المتاجر (قرار سلطان، store/README.md §٥، ولوحة الهوية 18 منذ 2.0.0): الاسم بعبارته، و«ترجمان» اسمًا مختصرًا وتلميحًا', async () => {
+  const messages = await manifestMessages(path.join(ROOT, 'src'));
+  assert.equal(base.default_locale, 'en', 'لغة من لا توجد لغته، كما تعود الواجهة إلى الإنجليزية مع أي لغة ثالثة');
+  assert.equal(manifestText(base.name, messages.ar), 'ترجمان — ترجمتك فوق الفيديو', 'منذ 2.0.0 نص لوحة الهوية 18');
+  assert.equal(manifestText(base.short_name, messages.ar), 'ترجمان');
+  assert.equal(manifestText(base.action.default_title, messages.ar), 'ترجمان');
+  assert.equal(manifestText(base.name, messages.en), 'Tarjuman — Your translation over the video');
+  assert.equal(manifestText(base.short_name, messages.en), 'Tarjuman');
+  assert.equal(manifestText(base.action.default_title, messages.en), 'Tarjuman');
+  assert.deepEqual(Object.keys(messages.ar).sort(), Object.keys(messages.en).sort());
+  assert.equal(manifestText('نص ثابت', messages.ar), 'نص ثابت');
+  assert.equal(manifestText('__MSG_missing__', messages.ar), undefined);
 });
 
 test('البناءان: الملفات نفسها بالبايت عدا البيان، وكلاهما يجتاز التدقيق بهدفه', async () => {

@@ -142,6 +142,7 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   for (const v of Object.values(manifest.icons ?? {})) add(v);
   for (const v of Object.values(manifest.action?.default_icon ?? {})) add(v);
   for (const f of [...SUBTITLE_FONT_LIST, ...UI_FONT_LIST]) for (const p of [...Object.values(f.files), f.license]) add(p);
+  if (manifest.default_locale) for (const l of ['ar', 'en']) add(`_locales/${l}/messages.json`);
   const local = (ref) => !/^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i.test(ref);
   // المراجع من الجذور وحدها، بالتعدي: صفحات الإضافة الأربع (يفتحها سكربت)، ثم كل HTML وCSS بلغه مرجع؛ فملفان مهملان يشير
   // أحدهما إلى الآخر لا يصيران «مشارًا إليهما» (تدقيق Fable، FA-02).
@@ -164,7 +165,7 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   // الإضافة الأربع والإشعارات بأسمائها. البناء ينسخ كل .html و.css تحت src/pages وsrc/ui، فكان ملف مهمل (pages/x/scratch.css أو
   // صفحة تجريبية) يُشحن ويمر بالنمط وحده (تدقيق Fable، FA-02).
   const expected = new Set(['manifest.json', NOTICES_FILE, ...required]);
-  const unexpected = files.filter((f) => !expected.has(f) || !/^(?:manifest\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt)|ui\/fonts\/ui\/[a-z-]+-(?:700\.woff2|800\.woff2|OFL\.txt)|icons\/tarjuman-icon-(?:16|32|48|128)\.png|THIRD_PARTY_NOTICES\.txt)$/.test(f));
+  const unexpected = files.filter((f) => !expected.has(f) || !/^(?:manifest\.json|_locales\/(?:ar|en)\/messages\.json|background\/worker\.js|(?:content|main-world)\/main\.js|main-world\/capture\.js|pages\/(?:popup|library|settings|editor)\/[a-z-]+\.(?:html|css|js)|ui\/[a-z-]+\.css|ui\/fonts\/subtitle\/[a-z-]+-(?:400\.woff2|700\.woff2|OFL\.txt)|ui\/fonts\/ui\/[a-z-]+-(?:700\.woff2|800\.woff2|OFL\.txt)|icons\/tarjuman-icon-(?:16|32|48|128)\.png|THIRD_PARTY_NOTICES\.txt)$/.test(f));
   check('only-expected-files', unexpected.length === 0, { unexpected, files: files.length });
   check('no-source-maps-or-gallery', !files.some((f) => f.endsWith('.map') || f.startsWith('ui/gallery/')), null);
 

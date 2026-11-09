@@ -6,7 +6,7 @@ import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CODE_RULES } from './code-rules.mjs';
-import { targetManifest } from './targets.mjs';
+import { MANIFEST_LOCALES, manifestMessages, manifestText, targetManifest } from './targets.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const srcArg = process.argv.indexOf('--src');
@@ -57,6 +57,17 @@ if ('browser_specific_settings' in base) problems.push('manifest: browser_specif
 const SUBTITLE_FONTS = path.join('ui', 'fonts', 'subtitle');
 const UI_FONTS = path.join('ui', 'fonts', 'ui');
 
+// رسائل البيان: لغتان بالمفاتيح نفسها، والافتراضية إحداهما (2.1.1).
+let messages = {};
+try {
+  messages = await manifestMessages(SRC);
+} catch (e) {
+  problems.push(`_locales: تعذّرت قراءتها (${e.message})`);
+}
+if (!MANIFEST_LOCALES.includes(base.default_locale)) problems.push(`manifest: default_locale ${JSON.stringify(base.default_locale ?? null)} والمعتمد إحدى ${MANIFEST_LOCALES.join('، ')}`);
+const messageKeys = MANIFEST_LOCALES.map((l) => Object.keys(messages[l] ?? {}).sort().join());
+if (new Set(messageKeys).size > 1) problems.push('_locales: مفاتيح اللغتين مختلفة');
+
 for (const target of ['chromium', 'firefox']) {
   let manifest;
   try {
@@ -83,10 +94,17 @@ for (const target of ['chromium', 'firefox']) {
       if (k !== 'background' && k !== 'browser_specific_settings' && JSON.stringify(base[k]) !== JSON.stringify(manifest[k])) problems.push(`${at}: الطبقة غيّرت ${k}`);
     }
   }
-  if (typeof manifest.name !== 'string' || ![...manifest.name].length || [...manifest.name].length > NAME_MAX) problems.push(`${at}: name فارغ أو أطول من ${NAME_MAX}`);
-  if (typeof manifest.short_name !== 'string' || ![...manifest.short_name].length || [...manifest.short_name].length > SHORT_NAME_MAX) problems.push(`${at}: short_name فارغ أو أطول من ${SHORT_NAME_MAX}`);
-  if (typeof manifest.description !== 'string' || [...manifest.description].length > DESCRIPTION_MAX) problems.push(`${at}: description مفقود أو أطول من ${DESCRIPTION_MAX}`);
-  for (const k of ['name', 'short_name', 'description']) if (BROWSER_NAMES.test(manifest[k] ?? '')) problems.push(`${at}: ${k} يذكر متصفحًا أو شركة متصفح`);
+  // الحدود على النص الذي يراه المستخدم بكل لغة، لا على رمز `__MSG_…__`.
+  for (const locale of MANIFEST_LOCALES) {
+    const text = (k) => manifestText(manifest[k], messages[locale] ?? {});
+    const name = text('name');
+    const shortName = text('short_name');
+    const description = text('description');
+    if (typeof name !== 'string' || ![...name].length || [...name].length > NAME_MAX) problems.push(`${at}: name فارغ أو أطول من ${NAME_MAX} (${locale})`);
+    if (typeof shortName !== 'string' || ![...shortName].length || [...shortName].length > SHORT_NAME_MAX) problems.push(`${at}: short_name فارغ أو أطول من ${SHORT_NAME_MAX} (${locale})`);
+    if (typeof description !== 'string' || ![...description].length || [...description].length > DESCRIPTION_MAX) problems.push(`${at}: description مفقود أو أطول من ${DESCRIPTION_MAX} (${locale})`);
+    for (const k of ['name', 'short_name', 'description']) if (BROWSER_NAMES.test(text(k) ?? '')) problems.push(`${at}: ${k} يذكر متصفحًا أو شركة متصفح (${locale})`);
+  }
   const cs = manifest.content_scripts ?? [];
   const mainWorld = cs.filter((c) => c.world === 'MAIN');
   const isolated = cs.filter((c) => c.world !== 'MAIN');

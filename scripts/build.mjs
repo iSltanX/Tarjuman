@@ -98,6 +98,9 @@ for (const file of [...(await walk(path.join(SRC, 'pages'))), ...(await walk(pat
   await cp(file, path.join(OUT, rel));
 }
 
+// اسم الإضافة ووصفها بلغتي البيان (2.1.1)، كما هما.
+await cp(path.join(SRC, '_locales'), path.join(OUT, '_locales'), { recursive: true });
+
 // إشعارات الأطراف الثالثة (جولة النشر T4) في جذر الحزمة: الخطوط وأيقونات Lucide ودوال esbuild المساعدة، وتراخيصها تشترط بقاء
 // الإشعار مع كل نسخة. يولّدها scripts/release/notices.mjs، ويفتحها «عرض التراخيص» في «حول». وبلا الملف لا تُبنى حزمة.
 const NOTICES = 'THIRD_PARTY_NOTICES.txt';
