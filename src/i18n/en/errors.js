@@ -105,6 +105,8 @@ export default Object.freeze({
   IM_PARTS_GAP: 'There’s a gap in numbering between “{a}” and “{b}” ({from}–{to}). A part may be missing.',
   IM_NUMBERING_IRREGULAR: 'The numbering isn’t sequential: segment {n} came after segment {prev}. We kept it as it was; it shows in the comparison report.',
   IM_HTML_LITERAL: '{count} segments contain HTML-like tags. They’re kept as literal text and not interpreted.',
+  IM_CUE_TIME_NOT_AFTER_START: 'Segment {n} (line {line}) doesn’t end after it starts, so it won’t appear over the video.',
+  IM_CUE_TIME_MORE: '{count} more segments have the same problem: they don’t end after they start.',
 
   IM_NOTE_FENCE: 'Removed the code-block fence (``` or ~~~) around the file.',
   IM_NOTE_CHATTER_BEFORE: 'Removed {count} explanation or heading lines before the file, starting with: “{first}”.',
@@ -115,6 +117,7 @@ export default Object.freeze({
   IM_NOTE_TAGS: 'Stripped formatting tags (like italic, bold, font, color, and positioning commands) from {count} segments.',
   IM_NOTE_CONTROL: 'Removed invisible control characters from {count} segments.',
   IM_NOTE_HIDDEN_CHARS: 'Removed {count} hidden characters from the text: tag characters, text-direction embeddings, overrides and isolates, and byte-order marks anywhere but the start of the file.',
+  IM_NOTE_TRIMMED: 'Trimmed spaces from the edges of {count} lines.',
   IM_NOTE_MERGED: '{verb} {files} by segment number: {names}.',
   IM_NOTE_MORE: 'More notes weren’t listed because there are too many ({count}).',
 

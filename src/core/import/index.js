@@ -21,6 +21,8 @@ export { applyPatch, applyPatchDetailed, cuesKey, partsStatus, readPatch } from 
 export { REVIEW_THRESHOLDS, classTransitions, reviewIncoming, sameExport, videoIdFromName } from './review.js';
 
 const NAMES_NOTE_CHARS = 300;
+// تحذير لكل مقطع نهايته ليست بعد بدايته، وما يزيد على هذا الحد يُذكر عدده في تحذير واحد، فلا يبني ملف معيب آلاف الصفوف في تبويب يوتيوب.
+const MAX_TIME_WARNINGS = 20;
 // «part01of02» بنمط أسماء ترجمان كله، لا «part01» وحده فيبقى «of02» في الاسم (تدقيق 7a66f91، U38).
 const PART_MARK = /[._ -]?part[._ -]?\d+(?:of\d+)?/i;
 
@@ -33,6 +35,16 @@ function mergedFileName(order) {
 function threshold(settings) {
   const v = settings?.thresholds?.driftMs;
   return Number.isInteger(v) && v >= 10 && v <= 5000 ? v : DEFAULT_DRIFT_MS;
+}
+
+/** تحذيرات القراءة بعد حصر صفوف الزمن المعكوس. @param {{ code: string, params?: object }[]} list */
+function capTimeWarnings(list) {
+  const isTime = (w) => w.code === 'IM_CUE_TIME_NOT_AFTER_START';
+  const extra = list.filter(isTime).length - MAX_TIME_WARNINGS;
+  if (extra <= 0) return list;
+  let seen = 0;
+  const kept = list.filter((w) => !isTime(w) || ++seen <= MAX_TIME_WARNINGS);
+  return [...kept, { code: 'IM_CUE_TIME_MORE', params: { count: extra } }];
 }
 
 /** حدّ النموذج 50 ملاحظة وكل ملاحظة ≤ 500 محرف؛ الفائض يُختصر بملاحظة تذكر عدده. */
@@ -108,7 +120,7 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
     const report = compare(cues, fingerprint, { driftMs: threshold(settings), target: lang });
     // ملاحظات الاستيراد أولًا ثم ما يضيفه المقارن (سبب تعذّر الاستعادة الشاملة).
     const comparison = { ...report, notes: capNotes([...notes, ...report.notes]) };
-    return { ok: true, fileName, cues, comparison, fingerprintId: fingerprint ? fingerprint.id : null, notes: finalNotes, warnings, lang };
+    return { ok: true, fileName, cues, comparison, fingerprintId: fingerprint ? fingerprint.id : null, notes: finalNotes, warnings: capTimeWarnings(warnings), lang };
   } catch (err) {
     const info = toErrorInfo(err);
     const line = err instanceof TjError ? err.params?.line : undefined;

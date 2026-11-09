@@ -165,7 +165,7 @@ test('المقطع الفارغ مقبول نصه فارغًا، وسطور ال
   const r = parseSrtLenient(text);
   assert.equal(r.cues[0].text, '');
   assert.equal(r.cues[1].text, 'سطر أول\nسطر ثانٍ');
-  assert.deepEqual(r.notes, []);
+  assert.deepEqual(r.notes, [messageFor('IM_NOTE_TRIMMED', { count: 2 })]);
 });
 
 test('لا يعدّل التوقيت: نهاية قبل بداية وتداخل مقبولان كما وردا (مشكلة توقيت لا خطأ نموذج)', () => {

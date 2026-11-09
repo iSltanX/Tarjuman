@@ -170,7 +170,9 @@ export function parseSrtLenient(input) {
   let tagged = 0;
   let controlled = 0;
   let hidden = 0;
+  let trimmed = 0;
   let literalHtml = 0;
+  const reversed = [];
   let irregular = null;
   heads.forEach((h, k) => {
     const last = k === heads.length - 1;
@@ -193,6 +195,7 @@ export function parseSrtLenient(input) {
     const clean = sanitizeText(textLines.join('\n'));
     hidden += clean.removed;
     const cleanTextLines = clean.text.split('\n');
+    trimmed += cleanTextLines.filter((l) => l !== l.trim()).length;
     let t = cleanTextLines.map((l) => l.trim()).join('\n');
     if (clean.removed) t = cleanLines(t);
     const noTags = t.replace(FORMAT_TAG_RE, '').replace(OVERRIDE_RE, '');
@@ -216,6 +219,7 @@ export function parseSrtLenient(input) {
     if (startMs > LIMITS.maxTimeMs || endMs > LIMITS.maxTimeMs) throw new TjError('IM_TIME_OUT_OF_RANGE', { params: { line: h.time + 1 } });
 
     if (k > 0 && !irregular && n !== cues[k - 1].n + 1) irregular = { prev: cues[k - 1].n, n };
+    if (endMs <= startMs) reversed.push({ code: 'IM_CUE_TIME_NOT_AFTER_START', params: { n, line: h.time + 1 } });
     cues.push({ n, startMs, endMs, text: t });
   });
 
@@ -229,9 +233,11 @@ export function parseSrtLenient(input) {
   if (tagged) notes.push(messageFor('IM_NOTE_TAGS', { count: tagged }));
   if (controlled) notes.push(messageFor('IM_NOTE_CONTROL', { count: controlled }));
   if (hidden) notes.push(messageFor('IM_NOTE_HIDDEN_CHARS', { count: hidden }));
+  if (trimmed) notes.push(messageFor('IM_NOTE_TRIMMED', { count: trimmed }));
 
   const warnings = [];
   if (irregular) warnings.push({ code: 'IM_NUMBERING_IRREGULAR', params: irregular });
   if (literalHtml) warnings.push({ code: 'IM_HTML_LITERAL', params: { count: literalHtml } });
+  warnings.push(...reversed);
   return { cues, notes, warnings };
 }
