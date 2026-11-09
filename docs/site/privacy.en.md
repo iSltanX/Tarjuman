@@ -6,7 +6,7 @@
 
 - **مسار الصفحة:** Tarjuman · Privacy Policy
 - **العنوان (`h1`):** Privacy Policy — Tarjuman
-- **تاريخ السريان:** 2026-11-08
+- **تاريخ السريان:** 2026-11-09
 - **المقدمة:** Tarjuman is a browser extension for YouTube watch pages, from BySultan (bysltan.com). This page describes what the extension stores on your device, what it sends, to whom, and when, as the code of version ⟨رقم الإصدار⟩ does it.
 
 ## Summary — `#summary`
@@ -27,7 +27,7 @@ The following is stored in the extension’s local storage within this browser�
 - **Dates:** The first save and last change for each video, the capture of each track, the upload and editing of each translation, the date of each fingerprint, mark and last position, and the date the extension’s storage was initialized.
 - **Original subtitles:** The text, timing and language of the track you chose on YouTube, and its type (manual, auto-generated, or YouTube’s auto-translation and its source language), when you download its file, or when you upload a translation and the track is saved as a reference for it. Anything Tarjuman captures before that stays in the memory of the open page and is gone when you close it.
 - **A fingerprint of each file you export:** Its segment numbers and times, a digital fingerprint of its text, and the file’s name and date, which Tarjuman uses to compare your translation when you upload it. The fingerprint doesn’t contain the text itself.
-- **Your translations:** Up to three per video. Each has the name of the file you uploaded, its short name if you gave it one, its text as you uploaded it, its language if you set it or it came in the file name, your edits to it, the result of comparing it with the original, the offset, and the display mode. Alongside them is one previous version of what you last replaced.
+- **Your translations:** Up to three per video. Each has the name of the file you uploaded, its short name if you gave it one, its text after the cleanup listed in the upload report (formatting tags and hidden characters are removed, and spaces at line edges are trimmed), its language if you set it or it came in the file name, your edits to it, the result of comparing it with the original, the offset, and the display mode. Alongside them is one previous version of what you last replaced.
 - **Review marks and last position:** The segment number, its time, and a short fingerprint of its text, without the text itself.
 - **Your settings:** The timing step, display mode, translation appearance, export options, reading speed limit, the terms you write in the glossary, where files are saved and the subfolder name if you named one, and interface switches.
 - **Language preferences:** The default “From” and “To” pair, remembering the last translation language, the languages you chose recently, and the pair you changed for each video, with its ID. A pair is stored by video ID when you change it, even before you save a translation for that video, and is removed when you delete that video’s data (deleting a single translation doesn’t remove it). A pair with no row in “Library” is removed by “Clear all data”, or when the pairs exceed 200 and the oldest are dropped.

@@ -17,7 +17,7 @@
 
 There's no built-in model, no API key, no account, no translation server, and no video or audio download. Your translations and settings stay in your browser; Library thumbnails are requested from YouTube by video ID unless you turn them off.
 
-> **Release status:** version **2.1.0** is published on Chrome Web Store (which also serves Brave) and Microsoft Edge Add-ons. The repository is on **2.1.1**, not published yet. Tarjuman isn't published on Firefox Add-ons yet.
+> **Release status:** version **2.1.0** is published on Chrome Web Store (which also serves Brave) and Microsoft Edge Add-ons. **2.1.1** is under review in the stores. The repository is on **2.1.2**, not published yet: hidden-text cleanup, an honest upload report, and corrected docs. Tarjuman isn't published on Firefox Add-ons yet.
 
 ## Features
 
@@ -63,7 +63,7 @@ There's no built-in model, no API key, no account, no translation server, and no
 | Microsoft Edge (130 or later) | Version 2.1.0 from [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
 | Mozilla Firefox (144 or later) | Not on Firefox Add-ons yet. To try it: [install from source](docs/development.md) (Arabic) |
 
-In every browser, version 2.1.1 can be tried from source the same way. The store copy and the source copy are separate extensions, so move your Library between them with a backup ([user guide](docs/user-guide.md) §9, Arabic).
+In every browser, version 2.1.2 can be tried from source the same way. The store copy and the source copy are separate extensions, so move your Library between them with a backup ([user guide](docs/user-guide.md) §9, Arabic).
 
 After installing, pin Tarjuman's icon to the browser toolbar: the extensions icon (the puzzle piece), then the pin next to Tarjuman.
 
