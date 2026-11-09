@@ -6,7 +6,7 @@
 
 - **مسار الصفحة:** Tarjuman · Privacy Policy
 - **العنوان (`h1`):** Privacy Policy — Tarjuman
-- **تاريخ السريان:** 2026-11-09
+- **تاريخ السريان:** 2026-11-10
 - **المقدمة:** Tarjuman is a browser extension for YouTube watch pages, from BySultan (bysltan.com). This page describes what the extension stores on your device, what it sends, to whom, and when, as the code of version ⟨رقم الإصدار⟩ does it.
 
 ## Summary — `#summary`
