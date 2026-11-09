@@ -319,11 +319,11 @@
 | [`reviewers.en.md`](reviewers.en.md) | ملاحظات المراجعين بالإنجليزية لكل متجر، ومعها مقاطع عربية للتجربة |
 | `icons/` | `chrome-store-icon-128.png` (البلاطة 96 بحشو شفاف 16)، و`edge-logo-300.png`. والبلاطة تطابق أيقونة الإضافة المشحونة (`src/icons/tarjuman-icon-128.png`) إلا تنعيم الزوايا |
 | `promo/` | `small-promo-440x280.png` (Chrome وEdge)، و`marquee-1400x560.png` (Chrome Marquee وEdge Large) |
-| `screenshots/chromium/` | ثلاث لقطات 1280×800 لـChrome وEdge: ‏`01-overlay` الطبقة والشريط واللوحة، و`02-popup` النافذة والزوج اللغوي، و`03-editor` المحرّر |
-| `screenshots/firefox/` | اللقطات الثلاث نفسها بمقاس 1280×960 لـAMO (الشريط العلوي 256 بدل 176، والواجهة لا تُمط) |
+| `screenshots/chromium/{ar,en}/` | خمس لقطات 1280×800 لكل لغة لـChrome وEdge: `01-overlay` و`02-workflow` و`03-timing` و`04-appearance` و`05-editor` |
+| `screenshots/firefox/{ar,en}/` | الخمس نفسها بمقاس 1280×960 لـAMO، والواجهة لا تُمط |
 | [`test-files/`](test-files/README.md) | ملف الترجمة الإنجليزية لفيديو اللقطات كما نزّله ترجمان، وترجمته العربية |
 
-**مصدر الصور (2.1.0، والقوالب من AA5):** إطارات لوحة الهوية 18 وعناوينها ونصوصها كما هي (`tools/store-art/`، ويرسمها `tools/store-art/render.mjs` في Chrome بلا نافذة بمعامل 1)، وما ترسمه اللوحة من واجهة داخل الإطار لقطة حقيقية من بناء 2.1.0 للحالة نفسها (`test/live/aa4/site-shots.mjs`). وصورة الترويج الكبيرة فيها لقطة حقيقية كذلك. والأيقونتان من `tools/brand/icons.mjs` بلا متصفح. وفيديو اللقطات Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0، بلا أشخاص حقيقيين ولا اسم قناة ولا تعليقات ولا حساب. ولا لقطة اختبار قديمة. وأُعيد التقاط الإطارات الست وصورة الترويج الكبيرة من بناء 2.1.0 بنصوصه الجديدة في 2026-11-08، والواجهة فيها بالعربية. والبلاطة الصغيرة بلا واجهة فلم تتغير.
+**مصدر الصور (2026-11-09):** لقطات حقيقية من حزمة 2.1.0 (واجهتها مطابقة لـ2.1.1) على مشغّل محلي تجريبي، بمشاهد ونصوص أُعدّت لها، ومولّدها في مجلد العمل المحلي `tarjuman-images/` غير المتتبع. لا فيلم من غير ترجمان، ولا رقم إصدار على أي صورة. والبلاطتان في `promo/` نصهما باللغتين لأن Chrome لا يترجمهما.
 
 ### تغطية حقول §٣
 
@@ -336,7 +336,7 @@
 | Chrome | الوصف التفصيلي | `chromium.description` |
 | Chrome | الفئة واللغة | `listing.ar.md` «الفئة»، والعربية |
 | Chrome | أيقونة المتجر | `icons/chrome-store-icon-128.png` |
-| Chrome | لقطات (1 إلى 5) | `screenshots/chromium/` الثلاث |
+| Chrome | لقطات (1 إلى 5) | `screenshots/chromium/{ar,en}/` الخمس |
 | Chrome | Single purpose | `reviewer.singlePurpose` في `submission.md` §١ |
 | Chrome | تبرير الأذونات | `reviewer.permission.*` في `submission.md` §٢، ومعها الإذن الاختياري لقناة البلاغات |
 | Chrome | إعلان الشيفرة البعيدة | `submission.md` §٣ |
@@ -359,3 +359,26 @@
 | Firefox | Privacy policy | `submission.md` §٥ (T7) |
 
 والاختياري كله له مادة أيضًا: Small promo وMarquee وLarge tile (`promo/`)، ولقطات Edge وAMO، وكلمات Edge، ووسم AMO ورابطه، وNotes for Reviewers، وRelease notes، وTest instructions. ولا فيديو ترويجي في هذا الإصدار.
+
+## ٨. لغات الإدراج (2.1.1)
+
+الهدف: زائر المتجر بالعربية يرى الإدراج العربي، وغيره الإنجليزي، ضمن ما يدعمه كل متجر. وهذا يحتاج رفع 2.1.1 أولًا، لأن Chrome يربط لغات الإدراج بمجلدات `_locales` في الحزمة.
+
+| اللغة | اسم الإضافة ووصفها | الوصف الكامل | اللقطات |
+| --- | --- | --- | --- |
+| العربية | `src/_locales/ar` | `listing.ar.md` | `screenshots/chromium/ar` (Firefox: `screenshots/firefox/ar`) |
+| الإنجليزية (`default_locale`) | `src/_locales/en` | `listing.en.md` | `screenshots/chromium/en` (Firefox: `screenshots/firefox/en`) |
+
+**ما تحقق (2026-11-09):**
+
+- صفحة Chrome Web Store العامة تعرض الآن 2.1.0 والإدراج العربي وحده، ولغته «العربية»، سواء طُلبت بـ`hl=ar` أو `hl=en`.
+- في Chrome، اسم الإضافة من `_locales/ar` مع متصفح عربي، وعند غياب لغة المتصفح يعود إلى `default_locale` الإنجليزية (جولة حية على حزمة 2.1.1).
+- وثائق Chrome: كل لغة في لوحة الإدراج تقابل مجلدًا في `_locales`، ولكل لغة وصفها ولقطاتها، واللقطات المترجمة تُعرض قبل العامة.
+
+**القيود:**
+
+- لا يمكن التحقق من سلوك صفحة المتجر مع لغة ثالثة قبل رفع 2.1.1 وتعبئة اللغتين. فبعد النشر تُفتح الصفحة بـ`hl=ar` و`hl=en` و`hl=fr`.
+- البلاطة الصغيرة وMarquee لا تُترجمان في Chrome، فنصهما باللغتين.
+- Edge يطلب الوصف والشعار لكل لغة في الحزمة.
+- AMO لا يربط اللقطات باللغة، والتعليق وحده يُترجم، فتُرفع مجموعة واحدة.
+- المستخدمون يرون اسم الإضافة بلغة المتصفح، لا بـ«لغة الواجهة» داخلها.

@@ -166,10 +166,12 @@ export const ASSETS = Object.freeze([
   { file: 'promo/small-promo-440x280.png', w: 440, h: 280, rule: 'opaque' }, // Chrome وEdge
   { file: 'promo/marquee-1400x560.png', w: 1400, h: 560, rule: 'opaque' }, // Chrome Marquee وEdge Large
 ]);
-/** اللقطات: Chrome حتى 5 وEdge حتى 6 بمقاس 1280×800، وAMO 1280×960 (يجتاز 1.6:1 الموصى به و4:3 فأكبر من 1000×750). */
+/** اللقطات لكل لغة من لغات الإدراج: Chrome حتى 5 وEdge حتى 6 بمقاس 1280×800، وAMO 1280×960 (يجتاز 1.6:1 الموصى به و4:3 فأكبر من 1000×750). */
 export const SHOT_SETS = Object.freeze([
-  { dir: 'screenshots/chromium', w: 1280, h: 800, min: 1, max: 6 },
-  { dir: 'screenshots/firefox', w: 1280, h: 960, min: 1, max: 10 },
+  { dir: 'screenshots/chromium/ar', w: 1280, h: 800, min: 1, max: 5 },
+  { dir: 'screenshots/chromium/en', w: 1280, h: 800, min: 1, max: 5 },
+  { dir: 'screenshots/firefox/ar', w: 1280, h: 960, min: 1, max: 10 },
+  { dir: 'screenshots/firefox/en', w: 1280, h: 960, min: 1, max: 10 },
 ]);
 
 /** @returns {string[]} */
@@ -245,8 +247,7 @@ export async function checkStore(root = ROOT) {
       }
     }
   }
-  const [a, b] = SHOT_SETS.map((s) => names[s.dir].join(','));
-  if (a !== b) problems.push('لقطات Chromium وFirefox ليست المجموعة نفسها بأسمائها');
+  if (new Set(SHOT_SETS.map((s) => names[s.dir].join(','))).size > 1) problems.push('لقطات اللغات والمتصفحات ليست المجموعة نفسها بأسمائها');
   return { problems, summary };
 }
 

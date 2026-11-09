@@ -144,14 +144,14 @@ const section = (text, from, to) => {
     .replace(/^(#{2,3}) [٠-٩]+\. /gm, '$1 ');
 };
 const block = (t) => `\`\`\`text\n${t}\n\`\`\``;
-const shots = async (set) => (await readdir(path.join(ROOT, 'store/screenshots', set))).filter((n) => n.endsWith('.png')).sort();
+const shots = async (set) => (await readdir(path.join(ROOT, 'store/screenshots', set, 'ar'))).filter((n) => n.endsWith('.png')).sort();
 const chromiumShots = await shots('chromium');
 const firefoxShots = await shots('firefox');
 for (const n of chromiumShots) {
-  await cp(path.join(ROOT, 'store/screenshots/chromium', n), `stores/chrome-web-store/screenshots/${n}`);
-  await cp(path.join(ROOT, 'store/screenshots/chromium', n), `stores/edge-addons/screenshots/${n}`);
+  await cp(path.join(ROOT, 'store/screenshots/chromium/ar', n), `stores/chrome-web-store/screenshots/${n}`);
+  await cp(path.join(ROOT, 'store/screenshots/chromium/ar', n), `stores/edge-addons/screenshots/${n}`);
 }
-for (const n of firefoxShots) await cp(path.join(ROOT, 'store/screenshots/firefox', n), `stores/firefox-amo/screenshots/${n}`);
+for (const n of firefoxShots) await cp(path.join(ROOT, 'store/screenshots/firefox/ar', n), `stores/firefox-amo/screenshots/${n}`);
 for (const n of ['small-promo-440x280.png', 'marquee-1400x560.png']) {
   await cp(path.join(ROOT, 'store/promo', n), `stores/chrome-web-store/promo/${n}`);
   await cp(path.join(ROOT, 'store/promo', n), `stores/edge-addons/promo/${n}`);

@@ -78,8 +78,7 @@ npm run package
 | `store` | مواد المتاجر: النصوص والأيقونات والبلاطات واللقطات وإجابات نماذج التقديم وملاحظات المراجعين وملفا الاختبار. |
 | `docs` | الوثائق، وفهرسها في [`docs/README.md`](README.md). |
 | `tools/brand` | مولّد أيقونات الإضافة من مصدر الشعار، بلا متصفح. |
-| `tools/store-art` | قوالب مواد المتاجر المرئية ومولّدها. |
-| `tools/readme-assets` | مولّد صور README وصورة المعاينة الاجتماعية. |
+| `tools/store-art` و`tools/readme-assets` | قوالب سابقة لصور المتاجر وREADME، حلّت محل ناتجها صور `tarjuman-images/`. |
 | `tools/calibrate-reading.mjs` | مولّد جدول [معايرة كثافة القراءة](reading-calibration.md). |
 
 ## البنية والقرارات
@@ -98,8 +97,7 @@ npm run package
 | `PRIVACY.md` | [`site/privacy.md`](site/privacy.md) | `node scripts/site/privacy.mjs` (و`--check` في `npm run check`) |
 | `THIRD_PARTY_NOTICES.txt` | تراخيص الخطوط والأيقونات وأدوات البناء | `npm run notices` |
 | أيقونات الإضافة `src/icons` | الشعار في `tools/brand` | `node tools/brand/icons.mjs` |
-| صور `.github/assets` | قوالب [`tools/readme-assets`](../tools/readme-assets/README.md) | `node tools/readme-assets/render.mjs` (يفتح Chrome بلا نافذة) |
-| مواد المتاجر المرئية في `store` | قوالب `tools/store-art` | `node tools/store-art/render.mjs` (يفتح Chrome بلا نافذة) |
+| صور `.github/assets` ولقطات `store/screenshots/{chromium,firefox}/{ar,en}` و`store/promo` | مجلد العمل المحلي `tarjuman-images/` (غير متتبع) | `tarjuman-images/_source/compose.mjs`، ثم تُنسخ النتائج إلى مواضعها. ولا رقم إصدار على أي صورة |
 | نصوص صفحات الموقع | [`site`](site/README.md) | مولّد النصوص في مستودع الموقع |
 
 ## الإصدار والمتاجر

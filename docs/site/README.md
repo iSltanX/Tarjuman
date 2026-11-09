@@ -13,7 +13,7 @@
 | [`tarjuman.md`](tarjuman.md) | نص الصفحة التعريفية `/tarjuman` بالترتيب وبنية التصميم المعتمد، وجدول أدلته |
 | [`privacy.md`](privacy.md) | نص سياسة الخصوصية `/tarjuman/privacy`، وهو **المصدر الواحد** للخصوصية، وجدول أدلته |
 | [`help.md`](help.md) | نص صفحة المساعدة `/tarjuman/support`، ومنه قسم الإبلاغ `#report`، وجدول أدلته |
-| [`credits.md`](credits.md) | نص صفحة الحقوق `/tarjuman/credits`: نسبة الفيلم في اللقطات ورخصته ومصدره، والعلامات، والخطوط، وحقوق ترجمان، وجدول أدلته |
+| [`credits.md`](credits.md) | نص صفحة الحقوق `/tarjuman/credits`: مصدر المشاهد في الصور، والعلامات، والخطوط، وحقوق ترجمان، وجدول أدلته |
 | [`spec.md`](spec.md) | تصميم الصفحات بالهوية الرابعة: المسارات، والألوان من `src/ui/tokens.css`، والطباعة، والمكوّنات، والصور، وإمكانية الوصول |
 | `README.md` | هذا الملف: القواعد، والروابط، وحكم إعلان Firefox، وما بقي |
 
@@ -46,7 +46,7 @@
 | الرابط | الحال |
 | --- | --- |
 | `https://bysltan.com/tarjuman` و`/privacy` و`/support` و`/credits` | تنشرها T7. ولا رابط إليها من الإضافة قبل نشرها (قرار T4، `store/README.md` §٥) |
-| `/tarjuman/credits#film` | نسبة الفيلم في اللقطات كاملة، ورابطها «الحقوق» في تذييل كل صفحة |
+| `/tarjuman/credits#images` | مصدر المشاهد في الصور، ورابطها «الحقوق» في تذييل كل صفحة |
 | `/tarjuman/privacy#report` و`/tarjuman/support#report` | مراسٍ ثابتة، تحيل إليها المتاجر وقناة البلاغات |
 | بريد الدعم `iSultanBy@gmail.com` | قرار سلطان (T1)، ظاهر للعموم |
 | روابط المتاجر | منشور في Chrome Web Store (ومنه Brave): `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj`، وفي Microsoft Edge Add-ons: `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi`. وهما زرّا البطل ورابطا المتصفحات والتثبيت والمساعدة (2026-11-07). وFirefox «قريبًا» نصًا بلا رابط حتى يُنشر فيه |

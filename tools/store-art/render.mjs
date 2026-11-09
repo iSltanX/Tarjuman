@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// تنبيه: صور store/ الحالية من مجلد العمل المحلي tarjuman-images/ وهذه القوالب سابقة لها، ومسارات الإخراج أدناه لم تعد مواضعها.
 // مواد المتاجر المرئية من لوحة الهوية 18 (AA5)، تحل محل t6-art.mjs (الهوية الثالثة):
 //   store/promo/small-promo-440x280.png        البلاطة الصغيرة (Chrome وEdge)
 //   store/promo/marquee-1400x560.png           Marquee في Chrome، وLarge tile في Edge

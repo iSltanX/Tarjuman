@@ -16,6 +16,7 @@
 
 <p align="center">
   <a href="https://bysltan.com/tarjuman">الموقع</a> ·
+  <a href="README.en.md">English</a> ·
   <a href="docs/user-guide.md">دليل الاستخدام</a> ·
   <a href="https://bysltan.com/tarjuman/support">المساعدة</a> ·
   <a href="PRIVACY.md">الخصوصية</a> ·
@@ -34,8 +35,8 @@
 
 - **من أي لغة إلى لغتك:** كل مسار ترجمة يوفّره يوتيوب للفيديو، وترجمة يوتيوب الآلية موسومةً بلغة أصلها، وأي ملف SRT بأي لغة. واللغات المتاحة لكل فيديو يحددها يوتيوب وحده، وترجمان لا ينشئ مسارًا ولا يبدّله.
 - **ترجمتك فوق الفيديو** باتجاه لغتها، وحدها أو فوق الأصل، في الوضع العادي والمسرح وملء الشاشة. وتختفي أثناء الإعلانات.
-- **ملف الأصل بضغطة:** «تنزيل الأصل (SRT)» في شريط المشغّل ينزّل المسار الذي اخترته بلغته. و**تعليمات الترجمة من نافذة الإضافة**: «من» و«إلى» لأي لغتين، وزر نسخ واحد.
-- **التوقيت بضغطة:** زرّا − و+ يقدّمان الترجمة أو يؤخّرانها، و«مزامنة بجملة» تضبطها على جملة تسمعها. ويُحفظ التوقيت لكل ترجمة.
+- **ملف الأصل من شريط المشغّل:** «تنزيل الأصل (SRT)» في شريط المشغّل ينزّل المسار الذي اخترته بلغته. و**تعليمات الترجمة من نافذة الإضافة**: «من» و«إلى» لأي لغتين، وزر نسخ واحد.
+- **التوقيت من شريط المشغّل:** زرّا − و+ يقدّمان الترجمة أو يؤخّرانها، و«مزامنة بجملة» تضبطها على جملة تسمعها. ويُحفظ التوقيت لكل ترجمة.
 - **مقارنة بالأصل:** حين ترفع ملفك يقارنه ترجمان بالأصل الذي نزّلته، فيبيّن ما نقص وما زاد وما انحرف توقيته وما بقي غير مترجم، ولا يعدّل في ملفك شيئًا بصمت.
 - **محرّر للمراجعة:** تعدّل النص والتوقيت، وتدمج المقاطع وتشطرها، وتبحث وتستبدل، وتعلّم ما تعود إليه. ويجهّز لك ملفًا بالمقاطع الناقصة لتستكملها.
 - **النص المتزامن:** لوحة بجانب الفيديو تعرض الترجمة كلها والمقطع الحالي مميز. مغلقة حتى تفتحها من زرها.
@@ -47,15 +48,22 @@
 
 <table>
   <tr>
-    <td colspan="2" valign="top"><img src="store/screenshots/chromium/01-overlay.png" alt="ترجمة عربية فوق السطر الإنجليزي في المشغّل، وأزرار ترجمان في شريطه، ولوحة النص المتزامن بجانبه"><br><sub>ترجمتك فوق الفيديو، والنص كله بجانبه</sub></td>
+    <td colspan="2" valign="top"><img src=".github/assets/gallery/ar/01-overlay.png" alt="ترجمة عربية فوق السطر الإنجليزي في المشغّل، وأزرار ترجمان في شريطه، ولوحة النص المتزامن بجانبه"><br><sub>ترجمتك فوق الفيديو، والنص كله في لوحة تفتحها متى شئت</sub></td>
   </tr>
   <tr>
-    <td width="50%" valign="top"><img src="store/screenshots/chromium/02-popup.png" alt="نافذة ترجمان بتعليمات الترجمة: «من» الإنجليزية و«إلى» العربية وزر النسخ"><br><sub>من أي لغة إلى لغتك: «من» و«إلى» وزر نسخ واحد</sub></td>
-    <td width="50%" valign="top"><img src="store/screenshots/chromium/03-editor.png" alt="المحرّر: المقاطع بتوقيتها وترجمتها وأصلها، ولوحة المراجعة والمقارنة"><br><sub>المحرّر: النص والتوقيت والمراجعة والاستكمال</sub></td>
+    <td width="50%" valign="top"><img src=".github/assets/gallery/ar/02-workflow.png" alt="نافذة ترجمان بتعليمات الترجمة، وقائمة تنزيل الأصل"><br><sub>ملف الأصل والتعليمات، والترجمة خارج الإضافة</sub></td>
+    <td width="50%" valign="top"><img src=".github/assets/gallery/ar/03-timing.png" alt="قائمة توقيت الترجمة فوق المشغّل وفيها الإزاحة والخطوة ومزامنة بجملة"><br><sub>ضبط التوقيت من شريط المشغّل</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src=".github/assets/gallery/ar/04-appearance.png" alt="إعدادات مظهر الترجمة: الخط والحجم والخلفية والموضع، ونتيجتها فوق الفيديو"><br><sub>الخط والحجم والخلفية والموضع</sub></td>
+    <td width="50%" valign="top"><img src=".github/assets/gallery/ar/05-editor.png" alt="المحرّر: المقاطع بتوقيتها وترجمتها وأصلها، وصف مقطع ناقص، ولوحة المراجعة"><br><sub>المحرّر: النص والتوقيت والمراجعة والاستكمال</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2" valign="top"><img src=".github/assets/gallery/ar/06-library.png" alt="المحفوظات: الفيديوهات بصورها ولغاتها وحال كل ترجمة"><br><sub>المحفوظات: كل فيديو وترجماته</sub></td>
   </tr>
 </table>
 
-<sub>لقطات حقيقية من الإصدار 2.1.0 في Chrome، في إطارات مواد المتاجر. الفيلم Cosmos Laundromat، (CC) Blender Foundation | gooseberry.blender.org، برخصة CC BY 3.0.</sub>
+<sub>أزرار ترجمان وصفحاته في الصور لقطات من الإضافة نفسها، على مشغّل محلي تجريبي بمشاهد ونصوص أُعدّت لهذه الصور.</sub>
 
 ## التثبيت
 
@@ -88,20 +96,7 @@
 
 والشرح الكامل في [دليل الاستخدام](docs/user-guide.md): التوقيت، والمحرّر، والمحفوظات، والإعدادات، والنسخ الاحتياطي، وحل المشكلات. والقيود المعروفة في [`docs/known-limitations.md`](docs/known-limitations.md).
 
-<details>
-<summary><b>English interface</b></summary>
-
-<div dir="ltr">
-
-Tarjuman's interface comes in Arabic and English. It arrives in version 2.1.0, available from Chrome Web Store and Microsoft Edge Add-ons. On first run it follows YouTube's interface language, otherwise the browser's; any other language starts in English. Change it in **Settings › Display › Interface language**. Video, subtitle and translation languages aren't affected.
-
-1. Open a YouTube video, turn on **CC** and pick the subtitle language. From Tarjuman's buttons in the player bar choose **Download original (SRT)** › **Download file**.
-2. In the toolbar popup, under **Translation instructions**, set **From** and **To**, then press **Copy instructions**. The copied instructions follow the interface language from version 2.1.1; in 2.1.0 they are in Arabic.
-3. Send the file and the instructions to the AI model you choose, and save its output as an SRT file. Tarjuman doesn't translate and doesn't contact any model.
-4. Press **Upload translation (SRT)**. Your translation appears over the video. Adjust its timing with **−** and **+**, or open the editor with **Edit translation** in the popup.
-
-</div>
-</details>
+**English:** see [README.en.md](README.en.md).
 
 ## الخصوصية
 

@@ -1,6 +1,6 @@
 # إجابات نماذج التقديم — ترجمان 2.1.1
 
-> **المرحلة:** T6 من جولة النشر، 2026-11-04، ومحدّثة للإصدار 2.1.0. إجابات حقول Chrome Web Store وMicrosoft Edge Add-ons (Partner Center) وFirefox Add-ons (AMO) لحزم `release/store/tarjuman-2.1.1-*` المبنية من الفرع `tj/store-release` بعد دمج الهوية الثالثة. تُطابَق مع نموذج كل متجر وقت التقديم. ولا يُرفع شيء في هذه الجولة.
+> **المرحلة:** T6 من جولة النشر، 2026-11-04، ومحدّثة للإصدار 2.1.1. إجابات حقول Chrome Web Store وMicrosoft Edge Add-ons (Partner Center) وFirefox Add-ons (AMO) لحزم `release/store/tarjuman-2.1.1-*` المبنية من الفرع `tj/store-release` بعد دمج الهوية الثالثة. تُطابَق مع نموذج كل متجر وقت التقديم. ولا يُرفع شيء في هذه الجولة.
 > **اللغة:** ما يقرؤه المراجعون وحدهم (الغرض الواحد، ومبررات الأذونات، وملاحظات الاختبار) بالإنجليزية للّصق، وتحته معناه بالعربية. وما يراه المستخدمون في [`listing.ar.md`](listing.ar.md).
 > **العلامات:** **[قرار]** ينتظر سلطان. و`⟨بعد T7⟩` كانت روابط الموقع قبل نشره، وثُبّتت في §٥ بعد أن أعادت 200 (2026-11-04).
 
@@ -65,7 +65,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | الفئة | تُعلَّم؟ | لماذا |
 | --- | --- | --- |
 | Website content | **نعم** | يقرأ نص الترجمة الأصلية من رد يوتيوب وعنوان الفيديو وقائمة لغات مساراته من بيانات المشغّل، ويعالجها ويحفظ الأولين على الجهاز. لا يُرسل شيء منها إلى أحد |
-| Web history | **نعم** | المحفوظات قائمة بالفيديوهات التي حفظ لها المستخدم ترجمة (المعرّف والعنوان والمدة) على الجهاز، وصورها تُطلب من يوتيوب بمعرّفاتها ولها مفتاح يطفئها. وهي الفئة نفسها التي عُدّت بها الصور في Firefox (`browsingActivity`)، فيتسق الإعلان في المتاجر الثلاثة |
+| Web history | **نعم** | المحفوظات قائمة بالفيديوهات التي حفظ لها المستخدم ترجمة أو مسارها الأصلي، ومعرّفات فيديوهات غيّر لها زوج اللغات (المعرّف والعنوان والمدة) على الجهاز، وصورها تُطلب من يوتيوب بمعرّفاتها ولها مفتاح يطفئها. وهي الفئة نفسها التي عُدّت بها الصور في Firefox (`browsingActivity`)، فيتسق الإعلان في المتاجر الثلاثة |
 | Personal communications | **نعم** | «الإبلاغ عن مشكلة»: الوصف الذي يكتبه المستخدم ويرسله بنفسه إلى المطوّر. يُفصَح عنه احتياطًا لأنه رسالة منه |
 | Personally identifiable information | لا | لا اسم ولا بريد ولا معرّف مستخدم أو جهاز، والبلاغ بلا شيء من ذلك |
 | Health / Financial and payment information | لا | — |
@@ -84,9 +84,9 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | الدعم (Support URL، وEdge «Support contact detail»، وAMO «Support website») | `https://bysltan.com/tarjuman/support` | يعمل (200، 2026-11-04)، وهو رابط «الدعم والخصوصية» في «حول» |
 | بريد الدعم (AMO «Support email»، وبريد حساب Chrome) | `iSultanBy@gmail.com` | قرار سلطان (§٥ من `README.md`) |
 | المستودع | `https://github.com/iSltanX/Tarjuman` | عام: 200 لزائر غير مسجَّل (2026-11-07)، ورابطه في بطاقة «الحقوق» في «حول» منذ 2.0.0. ولا يطلبه حقل في المتاجر الثلاثة |
-| صفحة ترجمان في Chrome Web Store (ومنه Brave) | `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj` | منشورة: 200 لزائر غير مسجَّل (2026-11-08) باسم ترجمان والإصدار `2.0.0`، وتاريخ التحديث 8 نوفمبر 2026. وهي رابط المتجر في `README.md` وصفحة الموقع |
-| صفحة ترجمان في Microsoft Edge Add-ons | `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi` | منشورة: 200 لزائر غير مسجَّل (2026-11-08)، وواجهة المتجر تعيد اسم ترجمان والإصدار `2.0.0` والناشر BySultan. وهي رابط Edge في `README.md` وصفحة الموقع |
-| صفحة Firefox Add-ons | — | لا صفحة عامة مؤكدة: واجهة AMO تعيد 401 للمعرّف `tarjuman@bysltan.com` وللرابط `tarjuman` (2026-11-08). وما لم يُنشر «قريبًا» نصًّا بلا رابط في الموقع والوثائق |
+| صفحة ترجمان في Chrome Web Store (ومنه Brave) | `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj` | منشورة: 200 لزائر غير مسجَّل (2026-11-09) باسم ترجمان والإصدار `2.1.0`، وتاريخ التحديث 9 نوفمبر 2026. وهي رابط المتجر في `README.md` وصفحة الموقع |
+| صفحة ترجمان في Microsoft Edge Add-ons | `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi` | منشورة: 200 لزائر غير مسجَّل (2026-11-09)، وواجهة المتجر تعيد اسم ترجمان والإصدار `2.1.0` والناشر BySultan. وهي رابط Edge في `README.md` وصفحة الموقع |
+| صفحة Firefox Add-ons | — | لا صفحة عامة: لوحة المطوّر تعرض الإضافة «Awaiting Review» (2026-11-09)، وواجهة AMO تعيد 401 للمعرّف `tarjuman@bysltan.com` وللرابط `tarjuman`. وما لم يُنشر «قريبًا» نصًّا بلا رابط في الموقع والوثائق |
 
 ## ٦. حقول كل متجر
 
@@ -100,7 +100,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | Primary category | Make Chrome Yours › Accessibility (`listing.ar.md` «الفئة») |
 | Language | العربية |
 | Store icon | `store/icons/chrome-store-icon-128.png` |
-| Screenshots | `store/screenshots/chromium/` الثلاث |
+| Screenshots | `store/screenshots/chromium/{ar,en}/` الخمس لكل لغة |
 | Small promo tile | `store/promo/small-promo-440x280.png` |
 | Marquee promo tile | `store/promo/marquee-1400x560.png` |
 | Mature content | لا |
@@ -122,7 +122,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | Description | `chromium.description` في `listing.ar.md` (لا ذكر لمتصفح آخر، وطوله بين 250 و10,000) |
 | Extension logo | `store/icons/edge-logo-300.png` |
 | Small / Large promotional tile | `store/promo/small-promo-440x280.png` و`store/promo/marquee-1400x560.png` |
-| Screenshots | `store/screenshots/chromium/` الثلاث |
+| Screenshots | `store/screenshots/chromium/{ar,en}/` الخمس لكل لغة |
 | Search terms | `edge.searchTerms` في `listing.ar.md` |
 | Notes for certification | `reviewers.en.md` (`reviewer.edge`) |
 
@@ -141,7 +141,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | Tags | `youtube` |
 | License | **All Rights Reserved** (`all-rights-reserved`)، مطابقًا لـ`LICENSE` (قرار سلطان في T4) |
 | Support email وwebsite وHomepage | §٥ |
-| Screenshots | `store/screenshots/firefox/` |
+| Screenshots | `store/screenshots/firefox/{ar,en}/` |
 | Notes for Reviewers | `reviewers.en.md` (`reviewer.amo`، حتى 3,000) |
 | Release notes | `amo.releaseNotes` في `listing.ar.md` |
 
