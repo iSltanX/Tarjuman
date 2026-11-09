@@ -1,14 +1,17 @@
 // تعليمات الترجمة (R40، الملحق أ في docs/product-spec.md): نص عربي ثابت ينسخه المستخدم ويرسله مع ملف SRT إلى النموذج
 // الذي يختاره. القالب مصدره الملحق أ وحده ويُبنى منه حرفيًا (اختبار يطابقه بالمواصفة)؛ لا يُعرض داخل الإضافة ولا يُحفظ
 // ولا يدخل التشخيص. منذ 2.0.0 (AA1، حرية اللغات) القالب لأي زوج لغتين: لغة الملف المرفق («من») واللغة المطلوبة («إلى»)
-// متغيران، والنص يبقى بالعربية لأنها لغة الواجهة، وتوجيه الأسلوب بحسب لغة الترجمة. التعليمات تقلل أخطاء النموذج ولا تضمن
+// متغيران، وتوجيه الأسلوب بحسب لغة الترجمة. ومنذ 2.1.1 لغة النص تتبع لغة واجهة الإضافة وحدها: الملحق أ بالعربية، والملحق ج بالإنجليزية
+// (instructions-en.js)، ولا يمس ذلك لغتي الزوج. التعليمات تقلل أخطاء النموذج ولا تضمن
 // شيئًا؛ المقارن في الاستيراد (P4) هو الحكم.
 import { TjError } from '../errors/index.js';
+import { getLocale } from '../../i18n/index.js';
 import { arabicName, baseLang } from '../lang/index.js';
 import { isSourceLang, isVideoId } from '../model/ids.js';
 import { GLOSSARY_LIMITS } from '../model/prefs.js';
 import { LIMITS } from '../model/validate.js';
-import { COUNT_FORMS, formatCount } from '../../ui/format.js';
+import { formatCount } from '../../ui/format.js';
+import { EN_TEXTS } from './instructions-en.js';
 
 /**
  * القالب المعتمد (الملحق أ، حرفيًا) بمتغيراته: العنوان والرابط، واللغتان باسميهما ورمزيهما ({{source_language}} و{{target_language}}
@@ -86,7 +89,12 @@ const SRT_SECTION = '\n\nبنية SRT: التزم بها حرفيًا';
 // بند المصدر المترجم آليًا يُدرج قبل «افهم قبل أن تترجم».
 const UNDERSTAND_SECTION = '\n\nافهم قبل أن تترجم';
 
+// بصيغ ثابتة لا من الفهرس: لغة هذا النص هي لغة القالب، لا لغة الواجهة وقت البناء إن طُلبت لغة بعينها.
+const CUE_FORMS = Object.freeze({ one: 'مقطع واحد', two: 'مقطعان', few: 'مقاطع', many: 'مقطعًا', single: 'مقطع' });
 const PART_FORMS = Object.freeze({ one: 'جزء واحد', two: 'جزأين', few: 'أجزاء', many: 'جزءًا', single: 'جزء' });
+
+/** نصوص التعليمات بلغة الواجهة: الإنجليزية لـen، والعربية لما عداها. @param {string} locale */
+const textsFor = (locale) => (locale === 'en' ? EN_TEXTS : AR_TEXTS);
 
 // فواصل الأسطر والجداول تصير مسافة (لتبقى الكلمات منفصلة)، ثم تُجرَّد محارف التحكم والمحارف الخفية: فواصل الصفر
 // والاتجاهات (LRM وRLM وALM وعوازل الاتجاه) وأسوار الاتجاه والوصل والقواطع الناعمة وBOM، ومحدد التنويع المنغولي الرابع
@@ -106,12 +114,13 @@ const ASTRAL_INVISIBLE = new RegExp('[\\u{13430}-\\u{1343F}\\u{1BCA0}-\\u{1BCA3}
 /**
  * العنوان بيانات لا تعليمات: سطر واحد بلا محارف خفية ولا تحكم ولا مسافات متتالية، وبحد النموذج. الغائب أو الفارغ
  * بعد التجريد «غير متوفر». هذه الدالة لا تفسّر شيئًا في العنوان (لا قوالب ولا وسوم).
- * @param {unknown} title
+ * @param {unknown} title @param {'ar' | 'en'} [locale]
  * @returns {string}
  */
-export function cleanTitle(title) {
-  if (typeof title !== 'string') return TITLE_UNAVAILABLE;
-  return cleanLine(title, LIMITS.maxTitleChars) || TITLE_UNAVAILABLE;
+export function cleanTitle(title, locale = getLocale()) {
+  const missing = textsFor(locale).titleUnavailable;
+  if (typeof title !== 'string') return missing;
+  return cleanLine(title, LIMITS.maxTitleChars) || missing;
 }
 
 /** سطر بيانات واحد: بلا فواصل أسطر ولا محارف خفية ولا تحكم ولا مسافات متتالية، مقصوصًا إلى max محرفًا (بالمحارف لا الوحدات). */
@@ -123,9 +132,13 @@ function cleanLine(value, max) {
 
 /**
  * قيم اللغة في القوالب لرمز: «الإنجليزية (en)»، و«بالإنجليزية»، والرمز. رمز لا يعرف المتصفح اسمه يُكتب رمزًا («بلغة xx»).
- * @param {string} code
+ * @param {string} code @param {'ar' | 'en'} [locale] الإنجليزية: «English (en)» و«in English»
  */
-export function languageValues(code) {
+export function languageValues(code, locale = getLocale()) {
+  return textsFor(locale).language(code);
+}
+
+function arabicLanguageValues(code) {
   const name = arabicName(code);
   return {
     label: name ? `${name} (${code})` : code,
@@ -136,17 +149,18 @@ export function languageValues(code) {
 
 /**
  * لغتا الزوج بعد التحقق: رمزان صالحان مختلفان، وإلا MD_INVALID (النافذة تمنع النسخ قبلها، AA3).
- * @param {unknown} source @param {unknown} target
+ * @param {unknown} source @param {unknown} target @param {'ar' | 'en'} locale لغة نص التعليمات
  */
-function pairValues(source, target) {
+function pairValues(source, target, locale) {
   if (!isSourceLang(source)) throw new TjError('MD_INVALID', { detail: 'لغة الملف المرفق' });
   if (!isSourceLang(target)) throw new TjError('MD_INVALID', { detail: 'اللغة المطلوبة' });
   if (source === target) throw new TjError('MD_INVALID', { detail: 'اللغتان متطابقتان' });
-  const s = languageValues(source);
-  const t = languageValues(target);
+  const text = textsFor(locale);
+  const s = text.language(source);
+  const t = text.language(target);
   return {
     source_language: s.label, target_language: t.label, in_source: s.in, in_target: t.in, source_code: s.code, target_code: t.code,
-    style: (baseLang(target) === 'ar' ? STYLE_ARABIC : STYLE_OTHER).replace('{{in_target}}', t.in),
+    style: (baseLang(target) === 'ar' ? text.styleArabic : text.styleOther).replace('{{in_target}}', t.in),
   };
 }
 
@@ -155,9 +169,10 @@ function pairValues(source, target) {
  * والملاحظة الغائبة تسقط معها أقواسها، وأول 100 مصطلح وحدها. البناء بالوصل لا بالاستبدال، فلا يُوسَّع شيء داخل المصطلح.
  * @param {{ source: string, target: string, note?: string | null }[] | null | undefined} glossary
  * @param {{ source: string, target: string }} pair لغتا الزوج لسطر رأس المقابلات (AA1)
+ * @param {'ar' | 'en'} [locale] لغة نص الفقرة
  * @returns {string | null}
  */
-export function glossaryParagraph(glossary, pair) {
+export function glossaryParagraph(glossary, pair, locale = getLocale()) {
   if (!Array.isArray(glossary)) return null;
   const lines = [];
   for (const term of glossary) {
@@ -169,8 +184,9 @@ export function glossaryParagraph(glossary, pair) {
     lines.push(`- ${source} = ${target}${note ? ` (${note})` : ''}`);
   }
   if (!lines.length) return null;
-  const v = pairValues(pair?.source, pair?.target);
-  const head = GLOSSARY_TEMPLATE.slice(0, GLOSSARY_TEMPLATE.lastIndexOf('\n') + 1)
+  const v = pairValues(pair?.source, pair?.target, locale);
+  const template = textsFor(locale).glossary;
+  const head = template.slice(0, template.lastIndexOf('\n') + 1)
     .replace(/\{\{(in_source|in_target)\}\}/g, (_, key) => v[key]);
   return head + lines.join('\n');
 }
@@ -184,16 +200,21 @@ function watchLink(videoId) {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
-/** @param {{ index: number, from: number, to: number }[]} parts */
-function partsParagraph(parts) {
+/** @param {{ index: number, from: number, to: number }[]} parts @param {'ar' | 'en'} locale */
+function partsParagraph(parts, locale) {
   const ok = Array.isArray(parts) && parts.length >= 2
     && parts.every((p) => Number.isInteger(p?.index) && Number.isInteger(p.from) && Number.isInteger(p.to) && p.from >= 1 && p.to >= p.from);
   if (!ok) throw new RangeError('أجزاء تقسيم غير صالحة');
+  return textsFor(locale).partsLines(parts).join('\n');
+}
+
+/** فقرة الأجزاء بالعربية، بعد التحقق من الأجزاء في partsParagraph. */
+function arabicPartsLines(parts) {
   return [
-    `عدد المقاطع الكلي: ${formatCount(parts.at(-1).to, COUNT_FORMS.cue)}، في ${formatCount(parts.length, PART_FORMS)}.`,
+    `عدد المقاطع الكلي: ${formatCount(parts.at(-1).to, CUE_FORMS)}، في ${formatCount(parts.length, PART_FORMS)}.`,
     `الملف مقسّم إلى أجزاء بترقيم مستمر: ${parts.map((p) => `الجزء ${p.index} (المقاطع ${p.from}–${p.to})`).join('، ')}.`,
     'أرسل كل جزء بدوره، وأبقِ ترقيم كل جزء كما هو؛ لا تبدأ الترقيم من 1 في الأجزاء اللاحقة. يجب أن يحوي ناتج كل جزء مقاطع جزئه نفسها بالترقيم نفسه وبالترتيب نفسه.',
-  ].join('\n');
+  ];
 }
 
 const VARIABLES = /\{\{(video_title|video_url|source_language|target_language|in_source|in_target|source_code|target_code|style|via_language)\}\}/g;
@@ -211,24 +232,26 @@ function fillWith(values) {
  *   videoId: string, title?: string | null, source: string, target: string, via?: string | null,
  *   parts?: { index: number, from: number, to: number }[] | null,
  *   glossary?: { source: string, target: string, note?: string | null }[] | null
- * }} spec source: لغة الملف المرفق، وtarget: اللغة المطلوبة، وvia: لغة المسار الذي ترجمه يوتيوب عنه
+ *   locale?: 'ar' | 'en'
+ * }} spec source: لغة الملف المرفق، وtarget: اللغة المطلوبة، وvia: لغة المسار الذي ترجمه يوتيوب عنه، وlocale: لغة نص التعليمات (لغة الواجهة الحالية افتراضيًا)
  * @returns {string}
  */
-export function instructions({ videoId, title, source, target, via = null, parts = null, glossary = null }) {
-  const pair = pairValues(source, target);
-  const fill = fillWith({ ...pair, video_title: cleanTitle(title), video_url: watchLink(videoId), via_language: via ? languageValues(via).label : null });
-  let template = INSTRUCTIONS_TEMPLATE;
+export function instructions({ videoId, title, source, target, via = null, parts = null, glossary = null, locale = getLocale() }) {
+  const text = textsFor(locale);
+  const pair = pairValues(source, target, locale);
+  const fill = fillWith({ ...pair, video_title: cleanTitle(title, locale), video_url: watchLink(videoId), via_language: via ? text.language(via).label : null });
+  let template = text.template;
   if (via) {
-    const at = template.indexOf(UNDERSTAND_SECTION);
-    template = `${template.slice(0, at)}\n${MACHINE_SOURCE_LINE}${template.slice(at)}`;
+    const at = template.indexOf(text.understandSection);
+    template = `${template.slice(0, at)}\n${text.machine}${template.slice(at)}`;
   }
-  const block = glossaryParagraph(glossary, { source, target });
+  const block = glossaryParagraph(glossary, { source, target }, locale);
   // الموضع من القالب لا من النص المعبّأ، فلا يربكه عنوان يحوي اسم القسم.
-  const at = template.indexOf(SRT_SECTION);
-  const text = block
+  const at = template.indexOf(text.srtSection);
+  const body = block
     ? `${fill(template.slice(0, at))}\n\n${block}${fill(template.slice(at))}`
     : fill(template);
-  return parts ? `${text}\n\n${partsParagraph(parts)}` : text;
+  return parts ? `${body}\n\n${partsParagraph(parts, locale)}` : body;
 }
 
 /** تعليمات الاستكمال (الملحق ب، Q11) حرفيًا بمتغيرات الملحق أ نفسها. */
@@ -250,13 +273,28 @@ export const PATCH_INSTRUCTIONS_TEMPLATE = `استكمال ترجمة مقاطع
 /**
  * نص تعليمات الاستكمال: الملحق ب بعنوانه ورابطه ولغتي الزوج، وفقرة القاموس عند وجوده قبل البند الأخير. تنسخه لوحة «الاستكمال»
  * (P14) مع ملف الاستكمال، ولا يُعرض داخل الإضافة.
- * @param {{ videoId: string, title?: string | null, source: string, target: string, glossary?: { source: string, target: string, note?: string | null }[] | null }} spec
+ * @param {{ videoId: string, title?: string | null, source: string, target: string, glossary?: { source: string, target: string, note?: string | null }[] | null, locale?: 'ar' | 'en' }} spec
  * @returns {string}
  */
-export function patchInstructions({ videoId, title, source, target, glossary = null }) {
-  const fill = fillWith({ ...pairValues(source, target), video_title: cleanTitle(title), video_url: watchLink(videoId) });
-  const block = glossaryParagraph(glossary, { source, target });
-  if (!block) return fill(PATCH_INSTRUCTIONS_TEMPLATE);
-  const at = PATCH_INSTRUCTIONS_TEMPLATE.lastIndexOf('\n- ');
-  return `${fill(PATCH_INSTRUCTIONS_TEMPLATE.slice(0, at))}\n\n${block}\n${fill(PATCH_INSTRUCTIONS_TEMPLATE.slice(at))}`;
+export function patchInstructions({ videoId, title, source, target, glossary = null, locale = getLocale() }) {
+  const template = textsFor(locale).patch;
+  const fill = fillWith({ ...pairValues(source, target, locale), video_title: cleanTitle(title, locale), video_url: watchLink(videoId) });
+  const block = glossaryParagraph(glossary, { source, target }, locale);
+  if (!block) return fill(template);
+  const at = template.lastIndexOf('\n- ');
+  return `${fill(template.slice(0, at))}\n\n${block}\n${fill(template.slice(at))}`;
 }
+
+const AR_TEXTS = Object.freeze({
+  template: INSTRUCTIONS_TEMPLATE,
+  titleUnavailable: TITLE_UNAVAILABLE,
+  styleArabic: STYLE_ARABIC,
+  styleOther: STYLE_OTHER,
+  machine: MACHINE_SOURCE_LINE,
+  glossary: GLOSSARY_TEMPLATE,
+  patch: PATCH_INSTRUCTIONS_TEMPLATE,
+  srtSection: SRT_SECTION,
+  understandSection: UNDERSTAND_SECTION,
+  language: arabicLanguageValues,
+  partsLines: arabicPartsLines,
+});

@@ -401,6 +401,8 @@ instructions({ videoId, title, parts?, glossary? }) → string            // glo
 // 2.0.0 (AA1): instructions({ videoId, title, source, target, via?, parts?, glossary? }) → string — لغة الملف المرفق واللغة المطلوبة
 //   (رمزان صالحان مختلفان وإلا MD_INVALID)، وvia لغة أصل مسار ترجمه يوتيوب آليًا؛ وpatchInstructions({ videoId, title, source, target, glossary? })
 //   وglossaryParagraph(glossary, { source, target }) كذلك. وbuildExport يقبل target (اللغة المطلوبة) ويعيد instructions null حين تساوي لغة المسار.
+// 2.1.1 (طلب سلطان 2026-11-09): instructions وpatchInstructions تقبلان locale?: 'ar' | 'en' (لغة الواجهة الحالية افتراضيًا)، وglossaryParagraph معاملًا ثالثًا: لغة النص وحدها،
+//   العربية الملحقان أ وب والإنجليزية الملحق ج، ولا يمس ذلك source ولا target.
 planPartsByContent(cues: Cue[], size: number) → { index, from, to }[] | null   // planParts القديم باقٍ
 buildPatchPackage({ videoId, title, fingerprint, englishTracks, numbers, glossary? }) → { ok: true, file: { name, text }, instructions: string, count } | { ok: false, code, params? }   // glossary (W6): فقرة القاموس في instructions وحدها؛ ولا يرمي: EX_PATCH_SOURCE_UNWRITABLE بـparams.list (C5، U79)
 buildStudyText({ videoId, title, cues, english?, format: 'txt' | 'md', bilingual: boolean }) → { name, text }
