@@ -16,7 +16,7 @@
 | اختصارات لوحة مفاتيح للإزاحة | تجنّبًا للتعارض مع اختصارات يوتيوب. |
 | المزامنة السحابية والنسخ الاحتياطي التلقائي | النسخة الاحتياطية يدوية: الإعدادات ← «النسخ الاحتياطي» ← «إنشاء نسخة احتياطية» (ملف JSON في مكان الحفظ)، وتُستعاد في المتصفح نفسه أو غيره بمعاينة. ولا نسخ تلقائي ولا مزامنة. |
 | الحفظ التلقائي في مجلد حر خارج التنزيلات | `chrome.downloads` لا يقبل إلا مسارًا داخل التنزيلات، وواجهة نظام الملفات معطّلة افتراضيًا في Brave. البديلان: مجلد فرعي داخل التنزيلات، أو السؤال عند كل تنزيل. |
-| النشر في المتاجر | الحزم جاهزة لمتاجر Chrome وEdge وFirefox (`npm run package`، جولة النشر T4)، ونُشر `2.1.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi)، و`2.1.1` قيد المراجعة في المتاجر الثلاثة، و`2.1.2` في المستودع ولم يُنشر. |
+| النشر في المتاجر | الحزم جاهزة لمتاجر Chrome وEdge وFirefox (`npm run package`، جولة النشر T4)، ونُشر `2.1.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi)، و`2.1.2` قيد المراجعة في المتاجر الثلاثة منذ 2026-11-10. |
 
 ## ٢. الاستخراج
 

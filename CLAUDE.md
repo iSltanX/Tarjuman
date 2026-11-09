@@ -4,8 +4,8 @@
 
 ## الحالة
 
-- الإصدار في المستودع `2.1.2` (`src/manifest.json` و`package.json`)، ولم يُنشر ولم يُقدَّم إلى أي متجر: تنقية النص المخفي، وأمانة تقرير الرفع، وتصحيح الوثائق.
-- المنشور: `2.1.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi)، و`2.1.1` قيد المراجعة في المتجرين (أُرسل 2026-11-09، وفي Chrome بيد سلطان). وفي Firefox Add-ons `2.1.1` مقدَّم وبانتظار المراجعة (2026-11-09)، ولم يُنشر بعد.
+- الإصدار في المستودع `2.1.2` (`src/manifest.json` و`package.json`)، وقيد المراجعة في المتاجر الثلاثة (أرسله سلطان 2026-11-10): تنقية النص المخفي، وأمانة تقرير الرفع، وتصحيح الوثائق.
+- المنشور: `2.1.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). ولم يُنشر ترجمان في Firefox Add-ons بعد.
 - رفع الحزم إلى المتاجر ونشر الموقع (`bysltan.com/tarjuman`، مستودع `iSltanX/WebSiteSultan`) بيد سلطان.
 - الوسمان `tj-v1` (`0.2.0`) و`tj-v2` (`1.0.0`) باقيان، واختبارات الرجوع تبني حزمة `tj-v1` من وسمها.
 
