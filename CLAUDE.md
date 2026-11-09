@@ -5,7 +5,7 @@
 ## الحالة
 
 - الإصدار في المستودع `2.1.0` (`src/manifest.json` و`package.json`): نصوص الواجهة ودعم العربية والإنجليزية.
-- المنشور: `2.1.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). وفي Firefox Add-ons مقدَّم وقيد المراجعة، ولم يُنشر بعد.
+- المنشور: `2.1.0` في [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi)، و`2.0.0` في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و2.1.0 لم يُنشر فيه بعد. وفي Firefox Add-ons مقدَّم وقيد المراجعة، ولم يُنشر بعد.
 - رفع الحزم إلى المتاجر ونشر الموقع (`bysltan.com/tarjuman`، مستودع `iSltanX/WebSiteSultan`) بيد سلطان.
 - الوسمان `tj-v1` (`0.2.0`) و`tj-v2` (`1.0.0`) باقيان، واختبارات الرجوع تبني حزمة `tj-v1` من وسمها.
 

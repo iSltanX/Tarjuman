@@ -1,6 +1,6 @@
 # دليل استخدام ترجمان
 
-> هذا الدليل للإصدار `2.1.0`، على **Chrome وEdge وBrave وFirefox للحاسوب**. والمنشور الآن في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (لـChrome وBrave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) هو هذا الإصدار. ولم يُنشر ترجمان في Firefox Add-ons بعد، فيُحمَّل فيه من ملف على جهازك (§١)، وحين يُنشر تثبّته من متجره (§٩ للانتقال). كل المعالجة والحفظ على جهازك. وما أضافه الإصدار الثاني: حتى ثلاث ترجمات لكل فيديو، ونسخة سابقة تلقائية، ومكان حفظ الملفات، والقاموس، والمزامنة بالجملة، وأدوات المراجعة والاستكمال في المحرّر، والنسخ الاحتياطي.
+> هذا الدليل للإصدار `2.1.0`، على **Chrome وEdge وBrave وFirefox للحاسوب**. والمنشور الآن في [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) هو هذا الإصدار. أما [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (لـChrome وBrave) فالمنشور فيه `2.0.0` حتى يُنشر 2.1.0 فيه، فيُجرَّب 2.1.0 (ومنه الواجهة الإنجليزية) في هذين المتصفحين من ملف على جهازك (§١). ولم يُنشر ترجمان في Firefox Add-ons بعد، فيُحمَّل فيه من ملف كذلك، وحين يُنشر تثبّته من متجره (§٩ للانتقال). كل المعالجة والحفظ على جهازك. وما أضافه الإصدار الثاني: حتى ثلاث ترجمات لكل فيديو، ونسخة سابقة تلقائية، ومكان حفظ الملفات، والقاموس، والمزامنة بالجملة، وأدوات المراجعة والاستكمال في المحرّر، والنسخ الاحتياطي.
 
 ترجمان يستخرج ترجمة فيديو يوتيوب بأي لغة يوفّرها يوتيوب له إلى ملف SRT، فترسله أنت مع تعليمات جاهزة إلى أي نموذج ذكاء اصطناعي تختاره لترجمته إلى اللغة التي تريدها. ثم ترفع الملف الناتج فيظهر فوق الفيديو نفسه، وتضبط توقيته وتحرّره، وتجده محفوظًا متى عدت.
 
@@ -13,7 +13,7 @@
 - **في Chrome وBrave:** افتح [صفحة ترجمان في Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj).
 - **في Edge:** افتح [صفحة ترجمان في Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi).
 
-اضغط زر الإضافة، ثم وافق على الأذونات، وانتقل إلى §٢. والمتجران يقدّمان الإصدار `2.1.0`، وتصل التحديثات التالية تلقائيًا.
+اضغط زر الإضافة، ثم وافق على الأذونات، وانتقل إلى §٢. ويقدّم متجر Edge الإصدار `2.1.0`، ويقدّم Chrome Web Store الآن `2.0.0` ويتحدّث تلقائيًا إلى 2.1.0 حين يُنشر فيه.
 
 وإن كان عندك ترجمان من مجلد قبل نشره، فانقل محفوظاتك إلى نسخة المتجر بالنسخة الاحتياطية (§٩).
 

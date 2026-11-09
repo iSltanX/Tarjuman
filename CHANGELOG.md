@@ -4,7 +4,7 @@
 
 ## 2.1.0 — 2026-11-08
 
-منشور في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) و[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). ولم يُنشر ترجمان في Firefox Add-ons بعد.
+منشور في [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). والمنشور في [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) (ومنه Brave) ما زال 2.0.0 حتى يُنشر 2.1.0 فيه. ولم يُنشر ترجمان في Firefox Add-ons بعد.
 
 **الواجهة بالعربية والإنجليزية**
 
