@@ -268,8 +268,8 @@ test('رأس مبتور أو مكسور عند أطراف الملف خطأ بر
 test('محارف تجاوز الاتجاه والعزل تُزال من النص بملاحظة، وتبقى LRM وRLM وALM وZWNJ وZWJ', () => {
   const r = parseSrtLenient(block(1, T1, 'a\u202Ebc\u202C \u2066x\u2069 \u200F\u061C\u200C\u200Dنص'));
   assert.equal(r.cues[0].text, 'abc x \u200F\u061C\u200C\u200Dنص');
-  assert.deepEqual(r.notes, [messageFor('IM_NOTE_CONTROL', { count: 1 })]);
-  assert.match(r.notes[0], /تجاوز اتجاه/);
+  assert.deepEqual(r.notes, [messageFor('IM_NOTE_HIDDEN_CHARS', { count: 4 })]);
+  assert.match(r.notes[0], /تجاوزه/);
 });
 
 test('U+2028 وU+2029 فاصلا سطر مثل LF', () => {

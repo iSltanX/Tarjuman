@@ -174,7 +174,7 @@ test('U79: نص إنجليزي مختار فيه سطر زمن كامل أو ر�
 });
 
 test('AV2 U-004: ملف الاستكمال يقبل ما يقبله التصدير الكامل — عنوان وسياج ووسوم ومحارف اتجاه — والنص حرفي', () => {
-  const texts = ['# of people', '```', '~~~', '<i>Hello</i>', '<font color="#ff0">Warn</font>', '\u202Bمرحبا\u202C', 'line one\n# two'];
+  const texts = ['# of people', '```', '~~~', '<i>Hello</i>', '<font color="#ff0">Warn</font>', '\u200Fمرحبا', 'line one\n# two'];
   const en = makeCues(12, { text: (i) => (i >= 1 && i <= texts.length ? texts[i - 1] : `line ${i}`) });
   const numbers = texts.map((_, k) => k + 2);
   const r = buildPatchPackage(patchSpec(en, numbers));
@@ -184,6 +184,11 @@ test('AV2 U-004: ملف الاستكمال يقبل ما يقبله التصدي
   assert.deepEqual(body.split('\n\n').map((blk) => Number(blk.split('\n')[0])), numbers, 'ترقيم الملف الكامل');
   // التصدير الكامل يقبل المجموعة نفسها (عقد interfaces: السياج والعنوان في الإنجليزي نص).
   assert.doesNotThrow(() => assertWritable(en, { arabic: false }));
+  // محارف تضمين الاتجاه وتجاوزه تُنقّى قبل التصدير (N-05)، وبصمة النص على المحفوظ كما هو.
+  const bidi = makeCues(12, { text: (i) => (i === 4 ? '\u202Bمرحبا\u202C' : `line ${i}`) });
+  const cleaned = buildPatchPackage(patchSpec(bidi, [4]));
+  assert.equal(cleaned.ok, true, JSON.stringify(cleaned));
+  assert.ok(cleaned.file.text.includes('\nمرحبا\n'), 'النص بلا محارف التضمين');
   // سطر الزمن يبقى رمز U79.
   const bad = buildPatchPackage(patchSpec(makeCues(12, { text: (i) => (i === 10 ? 'he said\n00:00:01,000 --> 00:00:02,000' : `line ${i}`) }), [10]));
   assert.equal(bad.code, 'EX_PATCH_SOURCE_UNWRITABLE');

@@ -1,4 +1,5 @@
 // تحليل json3 كما يعيده مشغّل يوتيوب. البنية مستنتجة من شيفرة مشاريع وعينات حقيقية، لا من توثيق رسمي.
+import { sanitizeText } from '../text/sanitize.js';
 
 export class ConvertError extends Error {
   /**
@@ -68,7 +69,8 @@ export function parseJson3(body) {
     const objs = e.segs.filter((s) => s !== null && typeof s === 'object' && !Array.isArray(s));
     stats.invalidSegs += e.segs.length - objs.length;
     const segs = objs.map((s) => ({
-      text: typeof s.utf8 === 'string' ? s.utf8 : '',
+      // بعد فك JSON: المحارف الخفية قد تصل مهرّبة في الجسم الخام. وقبل فحص الفراغ والثوابت، فالحدث المخفي كله حدث فارغ.
+      text: typeof s.utf8 === 'string' ? sanitizeText(s.utf8).text : '',
       offsetMs: Number.isFinite(s.tOffsetMs) ? ms(s.tOffsetMs) : 0,
     }));
     const text = segs.map((s) => s.text).join('');

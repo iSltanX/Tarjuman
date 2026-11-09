@@ -2,6 +2,7 @@
 // والأصناف، والأحداث، وصيغ العناوين. لا محدد يوتيوب خارج هذا الملف؛ الحاجة إلى محدد جديد طلب ملف مشترك.
 // كل دالة تأخذ doc/win لتُختبر دون متصفح، ولا تغيّر DOM يوتيوب.
 import { videoIdFromLocation } from '../core/model/video-location.js';
+import { sanitizeText } from '../core/text/sanitize.js';
 
 /**
  * لغة واجهة يوتيوب الفعلية كما يعلنها في جذر صفحته (html[lang]، ولا علاقة لها بلغة الفيديو أو ترجماته)، أو null.
@@ -136,7 +137,7 @@ export function displayedCaption(doc = document) {
  * @returns {string | null}
  */
 export function videoTitle(doc = document) {
-  const t = String(doc.title || '').replace(/^\(\d+\+?\)\s*/, '').replace(/\s+-\s+YouTube\s*$/, '').trim();
+  const t = sanitizeText(doc.title || '').text.replace(/^\(\d+\+?\)\s*/, '').replace(/\s+-\s+YouTube\s*$/, '').trim();
   return t && t !== 'YouTube' ? t.slice(0, 500) : null;
 }
 

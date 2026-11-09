@@ -6,6 +6,7 @@ import { joinList, t } from '../../i18n/index.js';
 import { validateCues } from '../model/cue.js';
 import { assertValid } from '../model/validate.js';
 import { joinWords, endsSentence } from '../convert/text.js';
+import { sanitizeText } from '../text/sanitize.js';
 import { checkFormat, clock, docTitle, mdEscape, mdEscapeLine, timeUrl, videoUrl } from './doc.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
@@ -52,7 +53,7 @@ const LINE_SPLIT = new RegExp('\\r\\n|[\\r\\n\\u0085\\u2028\\u2029]');
  * فلا شيء (AV2 U-007)؛ فمخرجات العربية والإنجليزية كما كانت بايتًا. وهو في هذا الملف وحده، و`oneLine` المشترك لم يُمس.
  * @param {unknown} text
  */
-const oneLine = (text) => joinWords(String(text).split(LINE_SPLIT).map((l) => l.trim()).filter(Boolean));
+const oneLine = (text) => joinWords(sanitizeText(text).text.split(LINE_SPLIT).map((l) => l.trim()).filter(Boolean));
 
 /** @param {Cue[]} cues */
 function paragraphs(cues) {

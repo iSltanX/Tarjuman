@@ -3,6 +3,7 @@
 // وإزالة الشرطات تعيده كما كان.
 import { TjError } from '../errors/index.js';
 import { isVideoId } from '../model/ids.js';
+import { sanitizeText } from '../text/sanitize.js';
 import { cleanTitle } from './instructions.js';
 
 /** @param {string} videoId */
@@ -38,7 +39,7 @@ export const mdUnescape = (text) => String(text).replace(/\\([\\`*_[\]<>|~&#:.+\
 // فواصل الأسطر كلها (CRLF وCR وNEL وفاصلا السطر والفقرة)، لا \n وحده.
 const LINE_SPLIT = new RegExp('\\r\\n|[\\r\\n\\u0085\\u2028\\u2029]');
 /** نص المقطع في سطر واحد: فواصل الأسطر داخله مسافة، ولا يتغير غيرها. */
-export const oneLine = (text) => String(text).split(LINE_SPLIT).map((l) => l.trim()).filter(Boolean).join(' ');
+export const oneLine = (text) => sanitizeText(text).text.split(LINE_SPLIT).map((l) => l.trim()).filter(Boolean).join(' ');
 
 /** عنوان الوثيقة: عنوان الفيديو سطرًا واحدًا بعد التجريد (كالتعليمات)، و«غير متوفر» إن غاب. */
 export const docTitle = (title) => cleanTitle(title);

@@ -7,6 +7,7 @@ import { validateCues } from '../model/cue.js';
 import { newFingerprintId, isVideoId, parseTrackKey } from '../model/ids.js';
 import { EXPORT_MODES, validateFingerprint } from '../model/tracks.js';
 import { assertValid } from '../model/validate.js';
+import { sanitizeCues } from '../text/sanitize.js';
 import { DEFAULT_TARGET_LANG } from '../model/lang-prefs.js';
 import { textHash } from './hash.js';
 import { instructions } from './instructions.js';
@@ -55,9 +56,10 @@ export function buildExport({ videoId, title = null, track, mode, split = null, 
   if (!EXPORT_MODES.includes(mode)) throw invalid('mode');
   const parsed = parseTrackKey(track?.key);
   if (!parsed || parsed.lang !== track.lang || parsed.kind !== track.kind || parsed.via !== (track.via ?? null)) throw invalid('track.key');
-  const cues = track.cues;
-  if (!Array.isArray(cues) || cues.length === 0) throw new TjError('EX_NO_TRACK');
-  assertValid(validateCues(cues, 'track.cues'), 'track.cues');
+  if (!Array.isArray(track.cues) || track.cues.length === 0) throw new TjError('EX_NO_TRACK');
+  assertValid(validateCues(track.cues, 'track.cues'), 'track.cues');
+  // ما حُفظ قبل 2.1.2 قد يحمل محارف خفية، فلا تصل إلى ملف النموذج. وبصمة النص على المحفوظ كما هو، ليبقى ملف الاستكمال مطابقًا له.
+  const cues = sanitizeCues(track.cues).cues;
   assertWritable(cues);
   if (split !== null && (typeof split !== 'object' || !Number.isInteger(split.size) || split.size < 1)) throw invalid('split.size');
   if (split !== null && split.by !== undefined && split.by !== 'count' && split.by !== 'content') throw invalid('split.by');
@@ -93,7 +95,7 @@ export function buildExport({ videoId, title = null, track, mode, split = null, 
     mode,
     count: cues.length,
     cues: cues.map((c, i) => ({ n: i + 1, startMs: c.startMs, endMs: c.endMs })),
-    textHash: textHash(cues),
+    textHash: textHash(track.cues),
     fileName: ranges ? null : files[0].name,
     createdAt: new Date(ms).toISOString(),
     parts: ranges ? ranges.map(({ index, from, to }) => ({ index, from, to })) : null,

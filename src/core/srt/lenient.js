@@ -5,6 +5,7 @@
 // الرقم أو الزمن كله (**12** و`00:00:01,000 --> …`)، والعناوين والفقرات قبل الملف وبعده. وما داخل نص المقطع يبقى حرفيًا.
 import { TjError, messageFor } from '../errors/index.js';
 import { LIMITS } from '../model/validate.js';
+import { sanitizeText } from '../text/sanitize.js';
 
 const MAX_CUE_NUMBER = LIMITS.maxCues * 10;
 const EXCERPT_CHARS = 60;
@@ -12,8 +13,8 @@ const EXCERPT_CHARS = 60;
 const INDIC_DIGITS = /[٠-٩۰-۹]/g;
 const HAS_INDIC = /[٠-٩۰-۹]/;
 const INVISIBLE_MARKS = /[\u061C\u200B-\u200F\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/g;
-// تُزال من النص: C0/C1 ومحارف تجاوز الاتجاه والعزل. تبقى LRM وRLM وALM وZWNJ فهي مشروعة في العربية.
-const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
+// تُزال من النص: C0/C1. ومحارف الاتجاه والوسوم شأن sanitizeText. تبقى LRM وRLM وALM وZWNJ فهي مشروعة.
+const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g;
 // ما يشبه جزءًا من رأس مقطع عند أطراف الملف خطأ برقم السطر لا «شرح» يُحذف بصمت.
 const CUE_FRAGMENT_RE = /^\d+$|-->|\d:\d\d:\d\d/;
 
@@ -42,7 +43,7 @@ const LITERAL_TAG_RE = /<\/?[A-Za-z][^<>]*>/;
 const latinDigits = (s) => s.replace(INDIC_DIGITS, (d) => String(d.charCodeAt(0) - (d.charCodeAt(0) >= 0x06f0 ? 0x06f0 : 0x0660)));
 
 /** صورة السطر لمطابقة الرأس: بلا علامات اتجاه، وأرقام لاتينية، وبلا مسافات أطراف. */
-const headerForm = (line) => latinDigits(line.replace(INVISIBLE_MARKS, '')).trim();
+const headerForm = (line) => latinDigits(sanitizeText(line).text.replace(INVISIBLE_MARKS, '')).trim();
 
 /** صورة الرأس بعد نزع غلاف التأكيد إن أحاط بالسطر كله. */
 const bare = (line) => {
@@ -75,7 +76,7 @@ const cleanLines = (text) => text.split('\n').map((l) => l.trim()).filter(Boolea
  */
 export function readableText(text) {
   const s = String(text);
-  const noControls = s.replace(CONTROL_CHARS, '');
+  const noControls = sanitizeText(s).text.replace(CONTROL_CHARS, '');
   const stripped = noControls !== s;
   const lines = noControls.split('\n').map((l) => l.trim());
   return { text: (stripped ? lines.filter(Boolean) : lines).join('\n'), stripped };
@@ -160,7 +161,7 @@ export function parseSrtLenient(input) {
       if (!t) return;
       if (FENCE_RE.test(t)) fence = true;
       else if (CUE_FRAGMENT_RE.test(bare(l)) && !(after && proseAfter(bare(l)))) throw new TjError('IM_STRAY_TEXT', { params: { line: from + i + 1 } });
-      else bucket.push(t);
+      else bucket.push(sanitizeText(t).text);
     });
   };
   sortOut(lines.slice(0, heads[0].num), chatterBefore, 0);
@@ -168,6 +169,7 @@ export function parseSrtLenient(input) {
   const cues = [];
   let tagged = 0;
   let controlled = 0;
+  let hidden = 0;
   let literalHtml = 0;
   let irregular = null;
   heads.forEach((h, k) => {
@@ -187,7 +189,12 @@ export function parseSrtLenient(input) {
       });
     }
 
-    let t = textLines.map((l) => l.trim()).join('\n');
+    // التنقية قبل القص: trim يزيل U+FEFF عند الأطراف، فلا يُعدّ محرفًا مزالًا ولا مسافة مقصوصة.
+    const clean = sanitizeText(textLines.join('\n'));
+    hidden += clean.removed;
+    const cleanTextLines = clean.text.split('\n');
+    let t = cleanTextLines.map((l) => l.trim()).join('\n');
+    if (clean.removed) t = cleanLines(t);
     const noTags = t.replace(FORMAT_TAG_RE, '').replace(OVERRIDE_RE, '');
     if (noTags !== t) {
       tagged++;
@@ -221,6 +228,7 @@ export function parseSrtLenient(input) {
   if (timeMarks) notes.push(messageFor('IM_NOTE_TIME_MARKS', { count: timeMarks }));
   if (tagged) notes.push(messageFor('IM_NOTE_TAGS', { count: tagged }));
   if (controlled) notes.push(messageFor('IM_NOTE_CONTROL', { count: controlled }));
+  if (hidden) notes.push(messageFor('IM_NOTE_HIDDEN_CHARS', { count: hidden }));
 
   const warnings = [];
   if (irregular) warnings.push({ code: 'IM_NUMBERING_IRREGULAR', params: irregular });
