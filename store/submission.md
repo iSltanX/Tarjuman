@@ -135,13 +135,13 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | شيفرة المصدر | نعم، `release/store/tarjuman-2.1.1-source.zip` وفيه `SOURCE-README.txt`. ويطابق إعادة بنائه الحزمة بايتًا (T4) |
 | Name | من البيان |
 | Add-on URL | `tarjuman` (`listing.ar.md`) |
-| Summary | `amo.summary` في `listing.ar.md` |
-| Description | `amo.description` في `listing.ar.md` |
+| Summary | `en.amo.summary` في `listing.en.md` (AMO بلا لغة عربية، §٨ من `README.md`) |
+| Description | `en.amo.description` في `listing.en.md` |
 | Categories | Language Support، وPhotos, Music & Videos |
 | Tags | `youtube` |
 | License | **All Rights Reserved** (`all-rights-reserved`)، مطابقًا لـ`LICENSE` (قرار سلطان في T4) |
 | Support email وwebsite وHomepage | §٥ |
-| Screenshots | `store/screenshots/firefox/{ar,en}/` |
+| Screenshots | `store/screenshots/firefox/en/` الخمس، بتعليقات إنجليزية |
 | Notes for Reviewers | `reviewers.en.md` (`reviewer.amo`، حتى 3,000) |
 | Release notes | `amo.releaseNotes` في `listing.ar.md` |
 

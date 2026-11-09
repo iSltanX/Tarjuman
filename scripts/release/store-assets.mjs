@@ -50,7 +50,7 @@ export const FIELD_RULES = Object.freeze({
   'reviewer.permission.host': { min: 30 },
   'reviewer.chrome': { min: 200 },
   'reviewer.edge': { min: 30 },
-  'reviewer.amo': { min: 200, max: 3000 }, // Notes for Reviewers
+  'reviewer.amo': { min: 200, max: 2970 }, // Notes for Reviewers: الحد 3000 لكن AMO يعدّ السطر الجديد محرفين
 });
 
 /** @param {string} md @returns {{ id: string, text: string }[]} */

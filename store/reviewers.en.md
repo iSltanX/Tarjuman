@@ -67,7 +67,7 @@ No account, login or payment is needed. Desktop only. Interface: English or Arab
 
 Source code: tarjuman-2.1.1-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild bundles each entry with syntax-level minification only: no renamed identifiers, no source maps, no obfuscation.
 
-Test video (Cosmos Laundromat, Blender Foundation, CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3c
+Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3c
 1. Turn on captions (CC); any language works, English is used here. Tarjuman adds buttons to the player's control bar.
 2. "Download original (SRT)" > "Download file" saves the English .srt (via a blob: URL in the background script). The toolbar popup copies translation instructions ("Copy instructions") for the chosen From and To languages.
 3. Translation happens outside the extension. To skip it, save the Arabic sample below as test.ar.srt.
