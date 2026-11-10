@@ -1377,7 +1377,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     importText(text) {
       const s = controller.getState();
       if (destroyed || !s.videoId) return { ok: false, code: 'TJ_NO_VIDEO' };
-      if (ui.upload.busy || ui.upload.pending) return { ok: false, code: 'busy' };
+      // ما ينتظر المستخدم في المشغّل (رفع أو تأكيد أو تنزيل أو مزامنة أو كتابة) لا يُغلق من النافذة.
+      if (ui.upload.busy || ui.upload.pending || ui.download.busy || ui.open === 'confirm' || ui.timing.sync || layer.isTyping()) return { ok: false, code: 'busy' };
       const file = new File([String(text)], LABELS.pastedName, { type: 'text/plain' });
       ui.open = s.arabic ? 'display' : null;
       startImport([file], !!s.arabic);

@@ -234,7 +234,11 @@ startPage({
     pasteArea.addEventListener('paste', async (ev) => {
       ev.preventDefault();
       const videoId = reply?.watch && !reply.loading ? reply.videoId : null;
-      if (!videoId) return;
+      if (!videoId) {
+        pasteStatus.setAttribute('data-tone', 'danger');
+        pasteStatus.textContent = t('popup.paste.failed');
+        return;
+      }
       const text = ev.clipboardData?.getData('text/plain') ?? '';
       pasteStatus.setAttribute('data-tone', 'neutral');
       pasteStatus.textContent = '';

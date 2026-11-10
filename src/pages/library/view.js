@@ -351,7 +351,8 @@ export function createLibrary(env) {
     area.addEventListener('paste', (ev) => {
       ev.preventDefault();
       text = ev.clipboardData?.getData('text/plain') ?? '';
-      if (text.trim()) area.closest?.('dialog')?.close?.('confirm');
+      // ما لا نص فيه يغلق الحوار أيضًا فتُقال «لا نص» بعده، بدل حقل يبدو معطّلًا.
+      area.closest?.('dialog')?.close?.('confirm');
     });
     const ok = await confirm({ title: tr('library.paste.title', { title: isolate(clip(m.displayTitle, 80)) }), confirmLabel: tr('library.paste.next'), content, doc });
     if (!ok) return false;

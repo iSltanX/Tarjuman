@@ -80,6 +80,18 @@ test('اللصق في المشغّل يعطي الملخص نفسه عند رف�
   assert.equal((await viaPaste.store.getBundle(A)).slots[0].track.original.length, 8);
 });
 
+test('اللصق والمشغّل مشغول (كتابة في حقل القائمة): «busy» ولا رفع ولا إغلاق لما هو مفتوح', async () => {
+  const area = createMemoryArea();
+  const page = await openPage(area);
+  const layer = page.ui.layerHost().shadowRoot.querySelector('.layer');
+  layer.setAttribute('data-typing', '');
+  assert.deepEqual(page.controls.importText(fenced), { ok: false, code: 'busy' });
+  await settle(area);
+  assert.equal((await page.store.getBundle(A))?.slots?.[0]?.track ?? null, null, 'لا شيء محفوظ');
+  layer.removeAttribute('data-typing');
+  assert.deepEqual(page.controls.importText(fenced), { ok: true });
+});
+
 test('معالج الصفحة: النص إلى خط الرفع للفيديو المعروض وحده، والرسالة الباطلة والفيديو الآخر مرفوضان', async () => {
   const fake = createFakeChrome();
   const got = [];
@@ -104,8 +116,12 @@ test('النافذة: sendPaste يرسل إلى التبويب النشط، وا
   assert.equal(sent.length, 3, 'الفارغ والكبير لم يُرسلا');
 });
 
-test('لا قراءة للحافظة برمجيًا: القاعدة تمسك readText وread وclipboardRead، ولا تمس الكتابة ولا حدث اللصق', () => {
+test('لا قراءة للحافظة برمجيًا: القاعدة تمسك readText وread وclipboardRead وصيغها الملتوية، ولا تمس الكتابة ولا حدث اللصق', () => {
   assert.ok(codeViolations('const t = await navigator.clipboard.readText();').some((v) => v.id === 'clipboard-read'));
   assert.ok(codeViolations('navigator.clipboard.read()').some((v) => v.id === 'clipboard-read'));
+  // من مراجعة المرحلة 4: الاسم المستعار والأقواس والتفكيك وexecCommand واستعلام الإذن.
+  for (const src of ['const c = navigator.clipboard; c.readText();', 'navigator.clipboard["readText"]()', 'const { readText } = navigator.clipboard;', 'document.execCommand("paste")', "navigator.permissions.query({ name: 'clipboard-read' })"]) {
+    assert.ok(codeViolations(src).some((v) => v.id === 'clipboard-read'), src);
+  }
   assert.ok(!codeViolations('navigator.clipboard.writeText(text); ev.clipboardData.getData("text/plain")').some((v) => v.id === 'clipboard-read'));
 });
