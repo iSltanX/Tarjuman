@@ -10,7 +10,7 @@ import { resolveMarks } from '../../core/model/marks.js';
 import { textDirection } from '../../ui/format.js';
 import { el, icon } from './dom.js';
 import { createTimeline, originalLookup } from './model.js';
-import { LABELS, clockLabel, flatText } from './text.js';
+import { LABELS, clockLabel, flatText, markedSeekLabel } from './text.js';
 
 /** صفوف تُلحق دفعات: وسائط append الكثيرة جدًا تفشل في المتصفحات. */
 const CHUNK = 500;
@@ -64,7 +64,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
   let actsRow = -1;
 
   const seekMs = (i) => Math.max(0, cues[i].startMs + offsetMs);
-  const timeAria = (i) => (todo.has(i) ? `${LABELS.seekTo} ${labels[i]}، ${LABELS.rowMarked}` : `${LABELS.seekTo} ${labels[i]}`);
+  const timeAria = (i) => (todo.has(i) ? markedSeekLabel(labels[i]) : `${LABELS.seekTo} ${labels[i]}`);
 
   /** حال أزرار الشريط لصفه: العلامة مضغوطة إن كان «أعود إليه»، والمزامنة معطّلة بسببها إن وُجد. */
   function paintActs() {
@@ -94,10 +94,16 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     rowEls[i].appendChild(acts);
     paintActs();
   }
-  const focusOnActs = () => {
-    const f = list.getRootNode?.()?.activeElement ?? null;
-    return !!f && acts.contains(f);
-  };
+  // التركيز داخل الشريط يُتتبَّع بأحداثه (لا بـactiveElement من الجذر: لا يتاح في كل بيئة).
+  let actsFocused = false;
+  acts.addEventListener('focusin', () => {
+    actsFocused = true;
+  });
+  acts.addEventListener('focusout', (ev) => {
+    const to = ev.relatedTarget ?? null;
+    if (!to || !acts.contains(to)) actsFocused = false;
+  });
+  const focusOnActs = () => actsFocused;
 
   function rowIndexOf(target) {
     for (let n = target; n && n !== list; n = n.parentNode) {
@@ -203,6 +209,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     focusInside = false;
     acts.remove();
     actsRow = -1;
+    actsFocused = false;
     marksRef = null;
     todo = new Set();
     generation++;

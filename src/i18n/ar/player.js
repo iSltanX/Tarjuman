@@ -226,7 +226,7 @@ export default Object.freeze({
     rowActions: 'أفعال المقطع',
     markRow: 'علّم للمراجعة',
     markRowTip: 'علّم للمراجعة: يظهر في «أعود إليه» بالمحرّر',
-    rowMarked: 'معلّم للمراجعة',
+    seekMarked: 'الانتقال إلى {time}، معلّم للمراجعة',
     unmarked: 'أُزيلت علامة المقطع {n}',
     syncRow: 'أسمع هذه الآن',
     syncRowTip: 'أسمع هذه الآن: يضبط التوقيت فتظهر هذه الجملة في هذه اللحظة',

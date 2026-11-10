@@ -206,7 +206,7 @@ export default Object.freeze({
     rowActions: 'Segment actions',
     markRow: 'Mark for review',
     markRowTip: 'Mark for review: it appears under “To revisit” in the editor',
-    rowMarked: 'marked for review',
+    seekMarked: 'Jump to {time}, marked for review',
     unmarked: 'Removed the mark from segment {n}',
     syncRow: 'I hear this now',
     syncRowTip: 'I hear this now: shifts the timing so this line shows at this moment',

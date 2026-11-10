@@ -60,6 +60,9 @@ export const earlierTip = (stepMs) => T('earlierTip', { step: stepLabel(stepMs),
 /** @param {number} stepMs */
 export const laterTip = (stepMs) => T('laterTip', { step: stepLabel(stepMs), unit: LABELS.seconds });
 
+/** اسم زمن الصف المعلَّم «أعود إليه» (ف9). @param {string} time «00:12» */
+export const markedSeekLabel = (time) => T('seekMarked', { time });
+
 /** رسالة إزالة «أعود إليه» من صف (ف9). @param {number} n رقم المقطع */
 export const unmarkedNote = (n) => T('unmarked', { n });
 
