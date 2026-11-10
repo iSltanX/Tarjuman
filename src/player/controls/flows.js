@@ -202,6 +202,8 @@ export async function readFor({ controller, importFlow, files, fallbackLang = nu
     ok: true,
     videoId,
     input: { fileName, cues, comparison, fingerprintId, notes, lang },
+    // أرقام «المواضع الغامضة» (ف6) لزر «علّمها للمراجعة» بعد الحفظ.
+    ambiguous: res.ambiguous ?? null,
     fileLang,
     preview,
     warnings: (res.warnings ?? []).map((w) => messageFor(w.code, w.params)),

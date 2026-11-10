@@ -6,6 +6,8 @@
 import { TjError, messageFor } from '../errors/index.js';
 import { LIMITS } from '../model/validate.js';
 import { sanitizeText } from '../text/sanitize.js';
+import { ambiguousNumbers } from '../import/ambiguous.js';
+import { joinList } from '../../i18n/index.js';
 
 const MAX_CUE_NUMBER = LIMITS.maxCues * 10;
 const EXCERPT_CHARS = 60;
@@ -223,7 +225,17 @@ export function parseSrtLenient(input) {
     cues.push({ n, startMs, endMs, text: t });
   });
 
+  // «المواضع الغامضة» (ف6): سطر بعد الملف قائمته أرقام مقاطع موجودة يُعاد بأرقامه، ولا يُعدّ شرحًا أُزيل.
+  const existing = new Set(cues.map((c) => c.n));
+  let ambiguous = null;
+  const at = chatterAfter.findIndex((l) => ambiguousNumbers(l, existing));
+  if (at !== -1) {
+    ambiguous = { numbers: ambiguousNumbers(chatterAfter[at], existing), line: chatterAfter[at] };
+    chatterAfter.splice(at, 1);
+  }
+
   const notes = [];
+  if (ambiguous) notes.push(messageFor('IM_NOTE_AMBIGUOUS', { count: ambiguous.numbers.length, list: joinList(ambiguous.numbers.slice(0, 12).map(String).concat(ambiguous.numbers.length > 12 ? ['…'] : [])) }));
   if (fence) notes.push(messageFor('IM_NOTE_FENCE'));
   if (chatterBefore.length) notes.push(messageFor('IM_NOTE_CHATTER_BEFORE', { count: chatterBefore.length, first: excerpt(chatterBefore[0]) }));
   if (chatterAfter.length) notes.push(messageFor('IM_NOTE_CHATTER_AFTER', { count: chatterAfter.length, first: excerpt(chatterAfter[0]) }));
@@ -239,5 +251,5 @@ export function parseSrtLenient(input) {
   if (irregular) warnings.push({ code: 'IM_NUMBERING_IRREGULAR', params: irregular });
   if (literalHtml) warnings.push({ code: 'IM_HTML_LITERAL', params: { count: literalHtml } });
   warnings.push(...reversed);
-  return { cues, notes, warnings };
+  return { cues, notes, warnings, ambiguous };
 }

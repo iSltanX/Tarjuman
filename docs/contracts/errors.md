@@ -134,3 +134,4 @@ createDiagnosticReport({ version: '0.2.0', browser: 'Brave 1.98', sections: { st
 
 - **رموز بلا مستعمل حُذفت (ح6):** لم يكن يصدرها شيء في الإضافة، فحُذفت من ملفات مجالاتها ومن الفهرس الإنجليزي: `TJ_NOT_IMPLEMENTED` و`TJ_NOT_YOUTUBE` و`ST_SAVED` و`SV_SAVED` (`base.js`)، و`CT_COPIED` و`CT_COPY_FAILED` (`controls.js`)، و`ED_RESCUE_NONE` (`editor.js`)، و`PG_REPLACE_DONE` و`PG_IMPORT_DONE` (`pages.js`). ويبقى `BK_RESTORE_CHANGED` لأن عقد النسخ الاحتياطي يسمّيه.
 - **ح5:** حُذف `PG_REFERENCE_CHANGED` (`pages.js`) مع اختيار المرجع في المحفوظات.
+- **رمز جديد (ف6):** `IM_NOTE_AMBIGUOUS` (`import.js`) ملاحظة بعدد «المواضع الغامضة» التي ذكرها النموذج بعد الملف وأرقامها.

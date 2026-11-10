@@ -424,9 +424,17 @@ export function displayMenu(h, act, m, root = null) {
   // لغة الترجمة النشطة تُحدَّد أو تُغيَّر هنا (AA3): ما حُفظ قبل 2.0.0 «غير محددة» حتى يختارها المستخدم.
   out.push(langSelect(h, act, { name: 'slotLang', value: m.lang, suggested: m.langSuggested ?? [], fid: 'slotLang', disabled: m.switching || m.busy, id: 'tj-slot-lang' }));
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
-  const notes = m.notes.slice(0, 1);
+  // ف6: «ذكر النموذج مواضع غامضة: 3، 6» وزر «علّمها للمراجعة» بعد الرفع، ولا تتكرر ملاحظته بين الملاحظات.
+  if (m.ambiguous) {
+    out.push(h('div', {
+      className: 'row ambiguous', attrs: { 'data-fid': 'ambiguous' },
+      children: [h('span', { className: 'note', text: m.ambiguous.text }), button(h, 'secondary', LABELS.markAmbiguous, { act, name: 'markAmbiguous', fid: 'markAmbiguous', disabled: m.busy, extra: { 'aria-label': LABELS.markAmbiguousLabel } })],
+    }));
+  }
+  const allNotes = m.ambiguous ? m.notes.filter((n) => n !== m.ambiguous.text) : m.notes;
+  const notes = allNotes.slice(0, 1);
   for (const n of notes) out.push(h('div', { className: 'note', text: n }));
-  if (m.notes.length > notes.length) out.push(h('div', { className: 'note', text: moreNotesLine(m.notes.length - notes.length) }));
+  if (allNotes.length > notes.length) out.push(h('div', { className: 'note', text: moreNotesLine(allNotes.length - notes.length) }));
   out.push(sep(h));
   out.push(label(h, LABELS.displayMode));
   // «فوق ‹لغة الأصل›»: باسم لغته الفعلية من مساره، وبلا أصل «فوق الأصل» معطّلًا بسببه.

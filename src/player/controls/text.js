@@ -69,6 +69,8 @@ export const syncAt = (time) => T('syncAt', { time });
 export const slotToast = (n) => T('slotToast', { n });
 /** @param {number} n رقم المقطع */
 export const markToast = (n) => T('markToast', { n });
+/** «عُلّم للمراجعة: مقطعان.» (ف6). @param {number} n */
+export const markedAmbiguousText = (n) => T('markedAmbiguous', { count: formatCount(n, COUNT_FORMS.cue) });
 /** @param {number} ms «الإزاحة −3.2 ث» */
 export const offsetToast = (ms) => T('offsetToast', { offset: offsetInline(ms) });
 /**

@@ -6,6 +6,7 @@
 import { trackComparison } from '../core/compare/index.js';
 import { sameExport } from '../core/import/review.js';
 import { withContinuation } from '../core/import/continuation.js';
+import { ambiguousMarks } from '../core/import/ambiguous.js';
 import { TjError, toErrorInfo } from '../core/errors/index.js';
 import {
   bundleFromRecord, referencedFingerprints, slotModels, withActiveSlot, withMark, withMarksReplaced, withSlotLang, withSlotUpload,
@@ -573,6 +574,34 @@ export function createController({ store, extractor = null, page = {}, now = () 
         changed();
       }
       return { n };
+    },
+
+    /**
+     * «علّمها للمراجعة» (ف6): علامات «أعود إليه» لمقاطع النشطة المذكورة بأرقامها في سطر «المواضع الغامضة»، دون ما عليه علامة،
+     * بكتابة واحدة وتراجع دقيق.
+     * @param {number[]} numbers
+     * @returns {Promise<{ count: number, undo: () => Promise<void> }>}
+     */
+    async markAmbiguous(numbers) {
+      requireVideo();
+      const slot = bundleFor(saved)?.active ?? null;
+      if (!slot) throw new TjError('ST_NO_RECORD');
+      let added = [];
+      const { id, next } = await writeBundle((b) => {
+        if (!b || b.active !== slot || !b.slots[slot - 1].track) throw new TjError('ST_NO_RECORD');
+        const s = b.slots[slot - 1];
+        added = ambiguousMarks(s.track.current ?? s.track.original, s.marks, numbers, iso());
+        return added.length ? withMarksReplaced(b, slot, { add: added }, iso()) : undefined;
+      });
+      if (id === videoId && next) changed();
+      return {
+        count: added.length,
+        undo: async () => {
+          if (!added.length) return;
+          const { id: uid, next: back } = await writeBundle((b) => (b && b.slots[slot - 1].track ? withMarksReplaced(b, slot, { remove: added }, iso()) : undefined));
+          if (uid === videoId && back) changed();
+        },
+      };
     },
 
     /**

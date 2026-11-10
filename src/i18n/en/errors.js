@@ -107,6 +107,7 @@ export default Object.freeze({
   IM_NOTE_FENCE: 'Removed the code-block fence (``` or ~~~) around the file.',
   IM_NOTE_CHATTER_BEFORE: 'Removed {count} explanation or heading lines before the file, starting with: “{first}”.',
   IM_NOTE_CHATTER_AFTER: 'Removed {count} explanation or heading lines after the file, starting with: “{first}”.',
+  IM_NOTE_AMBIGUOUS: 'The model listed {count} ambiguous passages: {list}.',
   IM_NOTE_MD_EMPHASIS: 'Removed emphasis marks (like ** and `) around {count} number and timing lines.',
   IM_NOTE_DIGITS: 'Converted Arabic-Indic digits in numbering and timing lines to Latin digits.',
   IM_NOTE_TIME_MARKS: 'Fixed the format of {count} timing lines: Arabic decimal and comma marks to “,”, and arrows to -->.',

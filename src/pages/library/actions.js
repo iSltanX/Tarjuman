@@ -7,9 +7,9 @@ import { diffTranslations, keepEditsMerge } from '../../core/align/index.js';
 import { compare } from '../../core/compare/index.js';
 import { TjError, messageFor } from '../../core/errors/index.js';
 import { buildArabicExport, buildExport, buildStudyText, studyTiming, studyTimingNote, translationLang } from '../../core/export/index.js';
-import { findContinuation, readImport, reviewIncoming, sameExport, withContinuation } from '../../core/import/index.js';
+import { ambiguousMarks, findContinuation, readImport, reviewIncoming, sameExport, withContinuation } from '../../core/import/index.js';
 import {
-  applyRecordChange, referencedFingerprints, withActiveSlot, withPreviousRestored, withSlotName, withSlotUpload, withoutPrevious,
+  applyRecordChange, referencedFingerprints, withActiveSlot, withMarksReplaced, withPreviousRestored, withSlotName, withSlotUpload, withoutPrevious,
   withoutSlot,
 } from '../../core/model/bundle.js';
 import { LIMITS } from '../../core/model/validate.js';
@@ -307,6 +307,29 @@ export async function prepareUpload({ store, videoId, files, knownVideoIds = [] 
   const review = reviewIncoming({ fileName: result.fileName, cues: result.cues, videoId, fingerprints: bundle.record.fingerprints, knownVideoIds });
   // ف3: هل الملف تتمة لترجمة محفوظة؟ فيُقترح «إكمال الترجمة N» افتراضيًا.
   return { bundle, settings, result, review, continuation: findContinuation(bundle, result.cues) };
+}
+
+/**
+ * «علّمها للمراجعة» (ف6): علامات «أعود إليه» لمقاطع الخانة n المذكورة في سطر «المواضع الغامضة»، دون ما عليه علامة، بكتابة واحدة.
+ * يعيد المضاف وتراجعه الدقيق.
+ * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string, n: 1 | 2 | 3, numbers: number[], now: () => number }} o
+ * @returns {Promise<{ count: number, undo: () => Promise<void> }>}
+ */
+export async function markAmbiguous({ store, videoId, n, numbers, now }) {
+  let added = [];
+  await onBundle(store, videoId, (b) => {
+    const s = b.slots[n - 1];
+    if (!s?.track) throw new TjError('ST_SLOT_EMPTY');
+    added = ambiguousMarks(s.track.current ?? s.track.original, s.marks, numbers, iso(now));
+    return added.length ? withMarksReplaced(b, n, { add: added }, iso(now)) : undefined;
+  });
+  return {
+    count: added.length,
+    undo: async () => {
+      if (!added.length) return;
+      await onBundle(store, videoId, (b) => (b.slots[n - 1].track ? withMarksReplaced(b, n, { remove: added }, iso(now)) : undefined));
+    },
+  };
 }
 
 /**

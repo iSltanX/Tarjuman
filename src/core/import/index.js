@@ -19,6 +19,7 @@ const isFewCount = (n) => n % 100 >= 3 && n % 100 <= 10;
 export { MAX_FILES, MAX_FILE_BYTES, mergeParts, selectFingerprint };
 export { applyPatch, applyPatchDetailed, cuesKey, partsStatus, planPatchCues, readPatch } from './patch.js';
 export { findContinuation, withContinuation } from './continuation.js';
+export { ambiguousMarks, ambiguousNumbers } from './ambiguous.js';
 export { REVIEW_THRESHOLDS, classTransitions, reviewIncoming, sameExport, videoIdFromName } from './review.js';
 
 const NAMES_NOTE_CHARS = 300;
@@ -63,7 +64,8 @@ function capNotes(notes) {
  * @returns {Promise<
  *   { ok: true, fileName: string, cues: import('../model/cue.js').Cue[], comparison: import('../model/tracks.js').ComparisonReport | null,
  *     fingerprintId: string | null, notes: string[], warnings: { code: string, params?: Record<string, string | number> }[],
- *     lang: string | null }
+ *     lang: string | null, ambiguous: number[] | null }
+ *   ambiguous: أرقام «المواضع الغامضة» التي ذكرها النموذج في سطر بعد الملف (ف6)، أو null
  *   lang: لغة الملف من رمز صريح في اسمه (talk.ja.srt)، وإلا null «غير محددة» حتى يختارها المستخدم (AA1؛ لا تخمين من النص)
  *   | { ok: false, error: { code: string, message: string, line?: number } }>}
  */
@@ -79,10 +81,12 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
     const parts = [];
     const notes = [];
     const warnings = [];
+    const ambiguous = new Set();
     let total = 0;
     for (const file of files) {
       current = displayName(file);
       const parsed = parseSrtLenient(await readFileText(file));
+      for (const n of parsed.ambiguous?.numbers ?? []) ambiguous.add(n);
       // الحد على المجموع أيضًا: كل ملف يجتاز حده وحده، والمدقق يرفض ما فوق 50,000 بعد الدمج.
       total += parsed.cues.length;
       if (total > LIMITS.maxCues) {
@@ -121,7 +125,10 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
     const report = compare(cues, fingerprint, { driftMs: threshold(settings), target: lang });
     // ملاحظات الاستيراد أولًا ثم ما يضيفه المقارن (سبب تعذّر الاستعادة الشاملة).
     const comparison = { ...report, notes: capNotes([...notes, ...report.notes]) };
-    return { ok: true, fileName, cues, comparison, fingerprintId: fingerprint ? fingerprint.id : null, notes: finalNotes, warnings: capTimeWarnings(warnings), lang };
+    // أرقام الغامضة الموجودة في الملف المدموج وحدها (ف6).
+    const present = new Set(cues.map((c) => c.n));
+    const vague = [...ambiguous].filter((n) => present.has(n)).sort((a, b) => a - b);
+    return { ok: true, fileName, cues, comparison, fingerprintId: fingerprint ? fingerprint.id : null, notes: finalNotes, warnings: capTimeWarnings(warnings), lang, ambiguous: vague.length ? vague : null };
   } catch (err) {
     const info = toErrorInfo(err);
     const line = err instanceof TjError ? err.params?.line : undefined;

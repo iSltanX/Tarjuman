@@ -10,7 +10,7 @@ import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
-import { getDir, t as tr } from '../../i18n/index.js';
+import { getDir, joinList, t as tr } from '../../i18n/index.js';
 
 /** تعذّرت قراءة التفضيلات: الافتراضي، لكن بلا صور (لا طلب خارجي ما لم يُعرف أن المستخدم يريده؛ مراجعة الهوية L9). */
 const PREFS_UNREADABLE = Object.freeze({ ...DEFAULT_PREFS, ui: Object.freeze({ ...DEFAULT_PREFS.ui, thumbnails: false }) });
@@ -19,7 +19,7 @@ import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } fr
 import { closeMenuWithin, createMenu } from '../../ui/menu.js';
 import { holdPage } from '../../ui/page-hold.js';
 import { createToaster } from '../../ui/toast.js';
-import { activateSlot, applyContinuation, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, prepareUpload, studyName, studyNote, undoActivation } from './actions.js';
+import { activateSlot, applyContinuation, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, markAmbiguous, prepareUpload, studyName, studyNote, undoActivation } from './actions.js';
 import { radioGroup } from './choice.js';
 import { createCopyState } from './copy.js';
 import { deleteContent } from './delete.js';
@@ -363,6 +363,7 @@ export function createLibrary(env) {
         toaster.show(tr('library.upload.completed', { n: done.n }), 'success');
         wrote = true;
         await load();
+        offerAmbiguous(m, done.n, prep.result.ambiguous);
         return;
       }
       const info = await applyUpload({ store, bundle: prep.bundle, settings: prep.settings, result: prep.result, ...choice, now });
@@ -370,8 +371,34 @@ export function createLibrary(env) {
       if (info.offsetWas !== 0) toaster.show(messageFor('ST_OFFSET_RESET'), 'info');
       wrote = true;
       await load();
+      offerAmbiguous(m, choice.n, prep.result.ambiguous);
     }, m);
     return wrote;
+  }
+
+  /**
+   * «علّمها للمراجعة» بعد الحفظ (ف6): رسالة بسطر المواضع الغامضة وزرها؛ والتعليم برسالة فيها «تراجع». لا يُعلَّم شيء بلا ضغطة.
+   * @param {{ videoId: string }} m @param {1 | 2 | 3} n @param {number[] | null | undefined} numbers
+   */
+  function offerAmbiguous(m, n, numbers) {
+    if (!numbers?.length) return;
+    const text = messageFor('IM_NOTE_AMBIGUOUS', { count: numbers.length, list: joinList(numbers.slice(0, 12).map(String).concat(numbers.length > 12 ? ['…'] : [])) });
+    toaster.show(text, 'info', {
+      action: {
+        label: tr('library.upload.markAmbiguous'),
+        onClick: () => guarded(async () => {
+          const r = await markAmbiguous({ store, videoId: m.videoId, n, numbers, now });
+          await load();
+          if (!r.count) {
+            toaster.show(tr('library.upload.markedNone'), 'info');
+            return;
+          }
+          toaster.show(tr('library.upload.markedAmbiguous', { n, count: formatCount(r.count, COUNT_FORMS.cue) }), 'success', {
+            action: { label: tr('library.view.undo'), onClick: () => guarded(async () => { await r.undo(); await load(); }) },
+          });
+        }),
+      },
+    });
   }
 
   /** شريحة الترجمة النشطة في صف الفيديو (وجهة التركيز بعد زوال رسالة «تراجع» وهو فيها). */

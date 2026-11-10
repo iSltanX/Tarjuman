@@ -5,6 +5,7 @@ import { TjError, hasCode, messageFor, toErrorInfo } from '../../core/errors/ind
 import { lookupMs } from '../../core/model/timing.js';
 import { rankUsable } from '../../core/model/track-order.js';
 import { formatOffset } from '../../ui/format.js';
+import { joinList } from '../../i18n/index.js';
 import { holdTimer } from '../../ui/hold.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
 import { fitSize, watchBar } from './bar.js';
@@ -15,7 +16,7 @@ import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu }
 import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
 import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
 import {
-  LABELS, badgeTip, comparisonSummary, downloadedLine, downloadedParts, markToast, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, partsWord, plusTip, shortTime, syncUndoStaleLine,
+  LABELS, badgeTip, comparisonSummary, downloadedLine, downloadedParts, markToast, markedAmbiguousText, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, partsWord, plusTip, shortTime, syncUndoStaleLine,
   slotToast, withState,
 } from './text.js';
 
@@ -111,7 +112,7 @@ function freshUi(videoId) {
       key: null, mode: null, why: false, fallback: false, split: false, splitSize: null, splitError: null, busy: false,
       saveLine: null, result: [], preview: null,
     },
-    upload: { busy: false, error: null, warnings: [], pending: null, pickFor: null, plans: new Map() },
+    upload: { busy: false, error: null, warnings: [], pending: null, pickFor: null, plans: new Map(), ambiguous: null },
     timing: { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null, sync: null },
   };
 }
@@ -270,6 +271,13 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return { parts: d.preview.sizes?.rows ?? null, partsRaised: d.preview.sizes?.raised ?? false };
   }
 
+  /** سطر «المواضع الغامضة» وزرها بعد الرفع (ف6)، ما لم يُعلَّم بعد. */
+  function ambiguousModel() {
+    const nums = ui.upload.ambiguous;
+    if (!nums?.length) return null;
+    return { text: messageFor('IM_NOTE_AMBIGUOUS', { count: nums.length, list: joinList(nums.slice(0, 12).map(String).concat(nums.length > 12 ? ['…'] : [])) }), count: nums.length };
+  }
+
   function displayModel(s) {
     const a = s.arabic;
     const slots = slotsOf(s);
@@ -277,7 +285,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       fileName: a.fileName, count: a.cues.length, edited: a.edited, comparison: a.comparison, notes: a.comparison?.notes ?? [],
       slots, switching: s.loading || ui.switching, uploadLabel: slots.some((x) => !x.filled) ? LABELS.uploadMore : LABELS.replace,
-      warnings: ui.upload.warnings, mode: s.view.displayMode, dualAvailable: !!s.english, originalLang: s.english?.lang ?? null, busy: ui.upload.busy, error: ui.upload.error,
+      warnings: ui.upload.warnings, ambiguous: ambiguousModel(), mode: s.view.displayMode, dualAvailable: !!s.english, originalLang: s.english?.lang ?? null, busy: ui.upload.busy, error: ui.upload.error,
       // لغة الترجمة النشطة (AA3) ومقترحاتها: الحالية، ثم «إلى» في النافذة، ثم الأخيرة.
       lang, langSuggested: [lang, ...pairTargets(s)].filter(Boolean),
       // الإعلان لحظة الرسم (فتح القائمة بعد بدئه)؛ وتغيّره والقائمة مفتوحة يعيد الرسم من الفحص الدوري (flags.ad).
@@ -769,6 +777,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         }
         break;
       case 'keep': if (ui.upload.pending) ui.upload.pending.keep = !!value; break;
+      case 'markAmbiguous': markAmbiguous(); return;
       case 'confirmReplace': confirmUpload(); return;
       case 'cancelReplace':
         ui.upload.pending = null;
@@ -896,6 +905,30 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (destroyed || ui !== mine) return;
     counts.marks++;
     addToast('success', markToast(n), { action: { label: LABELS.undo, run: () => r.undo() } });
+    render();
+  }
+
+  /** «علّمها للمراجعة» (ف6): علامات «أعود إليه» برسالة فيها «تراجع». */
+  async function markAmbiguous() {
+    const nums = ui.upload.ambiguous;
+    if (!nums?.length) return;
+    const mine = ui;
+    let r;
+    try {
+      r = await controller.markAmbiguous(nums);
+    } catch (err) {
+      if (destroyed || ui !== mine) return;
+      counts.flowFailures++;
+      addToast('error', toErrorInfo(err).message);
+      render();
+      return;
+    }
+    if (destroyed || ui !== mine) return;
+    ui.upload.ambiguous = null;
+    if (r.count) {
+      counts.marks += r.count;
+      addToast('success', markedAmbiguousText(r.count), { action: { label: LABELS.undo, run: () => r.undo() } });
+    } else addToast('info', LABELS.markedNone);
     render();
   }
 
@@ -1163,6 +1196,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       if (r.ok) {
         counts.imports++;
         u.warnings = read.warnings;
+        u.ambiguous = read.ambiguous ?? null;
         ui.open = 'display';
         render();
         return;
@@ -1218,6 +1252,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       counts.imports++;
       u.pending = null;
       u.warnings = p.warnings;
+      // «علّمها للمراجعة» للنشطة وحدها: الملف حُفظ فيها (أو أكملها).
+      const into = m.completing ? p.complete.cont.n : m.target;
+      u.ambiguous = p.ambiguous && controller.getState().activeSlot === into ? p.ambiguous : null;
     }
     if (stillOpen) ui.open = controller.getState().arabic ? 'display' : null;
     render();

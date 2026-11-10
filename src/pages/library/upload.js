@@ -6,7 +6,7 @@ import { messageFor } from '../../core/errors/index.js';
 import { describeLang, knownLanguages, textFitsLang } from '../../core/lang/index.js';
 import { isSourceLang } from '../../core/model/ids.js';
 import { sourceOf } from '../../core/model/pair.js';
-import { getLocale, t as tr } from '../../i18n/index.js';
+import { getLocale, joinList, t as tr } from '../../i18n/index.js';
 import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
 import { pairLabel } from '../../ui/lang.js';
 import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
@@ -229,6 +229,8 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
     children: [
       el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
       ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
+      // ف6: ما ذكره النموذج من مواضع غامضة، وزرها بعد الحفظ.
+      result.ambiguous?.length ? el('p', { className: 'tj-caption lib-up__ambiguous', text: `${messageFor('IM_NOTE_AMBIGUOUS', { count: result.ambiguous.length, list: joinList(result.ambiguous.slice(0, 12).map(String).concat(result.ambiguous.length > 12 ? ['…'] : [])) })} ${tr('library.upload.ambiguousHint')}`, doc }) : null,
       hint ? alertBox({ tone: 'warning', text: hint, doc }) : null,
       langBlock,
       onlyNew ? null : targetHead,

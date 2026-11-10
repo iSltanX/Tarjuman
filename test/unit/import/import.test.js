@@ -27,7 +27,8 @@ const failed = async (input, opts) => {
 test('ملف نظيف مع بصمته: مطابقة تامة، وكل حقول النتيجة بصيغة العقد', async () => {
   const r = await run(fixture('clean.ar.srt', 'iG9CE55wbtY.ar.srt'));
   assert.equal(r.ok, true);
-  assert.deepEqual(Object.keys(r).sort(), ['comparison', 'cues', 'fileName', 'fingerprintId', 'lang', 'notes', 'ok', 'warnings']);
+  assert.deepEqual(Object.keys(r).sort(), ['ambiguous', 'comparison', 'cues', 'fileName', 'fingerprintId', 'lang', 'notes', 'ok', 'warnings']);
+  assert.equal(r.ambiguous, null, 'بلا سطر مواضع غامضة (ف6)');
   assert.equal(r.fileName, 'iG9CE55wbtY.ar.srt');
   assert.equal(r.lang, 'ar', 'لغة الملف من رمز صريح في اسمه (AA1)');
   assert.equal(r.cues.length, 8);
