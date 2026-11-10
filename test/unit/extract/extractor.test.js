@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDiagnosticReport, formatDiagnosticReport } from '../../../src/core/diagnostics/report.js';
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
-import { chooseTrack } from '../../../src/extract/select.js';
+import { rankUsable } from '../../../src/core/model/track-order.js';
 import { captureMsg, makeExtractor, sample } from './helpers.js';
 
 const manual = sample('manual');
@@ -24,9 +24,7 @@ test('مسارات متعددة: يدوي وتلقائي ولهجة، كل بم�
   assert.equal(tracks.find((x) => x.key === 'en|asr').cueCount, 1056);
   assert.equal(tracks.find((x) => x.key === 'en|manual').cueCount, 427);
   // اليدويان بزمن واحد: أولهما التقاطًا (لا تفضيل لـen على en-GB منذ 2.0.0، AA1).
-  assert.equal(chooseTrack(tracks).key, 'en-GB|manual');
-  assert.equal(chooseTrack(tracks, 'en|manual').key, 'en|manual');
-  assert.equal(chooseTrack(tracks, 'en|asr').key, 'en|asr');
+  assert.equal(rankUsable(tracks)[0].key, 'en-GB|manual');
   assert.equal(extractor.convert('en-GB|manual').lang, 'en-GB');
   assert.equal(extractor.convert('en|asr').kind, 'asr');
 });
@@ -134,7 +132,7 @@ test('التقاط تلقائي حقيقي: 1056 مقطعًا عاديًا وأ�
   assert.deepEqual([info.ok, info.code, info.cueCount], [false, 'EX_UNSUPPORTED_FORMAT', 0]);
   const conv = extractor.convert('en-GB|asr', { mode: 'long' });
   assert.deepEqual([conv.ok, conv.code, conv.cues.length], [false, 'EX_UNSUPPORTED_FORMAT', 0]);
-  assert.equal(chooseTrack(extractor.tracks()).key, 'en|asr', 'المعطوب لا يُختار');
+  assert.equal(rankUsable(extractor.tracks())[0].key, 'en|asr', 'المعطوب لا يُختار');
 });
 
 test('المدة تُقرأ عند الطلب: التقاط سبق معرفتها يُفحص بحدودها لاحقًا', () => {

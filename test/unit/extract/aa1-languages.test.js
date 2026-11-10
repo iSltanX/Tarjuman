@@ -4,7 +4,7 @@
 // لا يُجلب تحت الأتمتة، ودليله في جلسة AA5 اليدوية.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chooseTrack, rankTracks } from '../../../src/extract/select.js';
+import { rankTracks, rankUsable } from '../../../src/core/model/track-order.js';
 import { MAX_LISTED_TRACKS, validateTracklistMessage } from '../../../src/extract/message.js';
 import { convertCapture } from '../../../src/extract/capture-adapter.js';
 import { captureMsg, makeExtractor, sample } from './helpers.js';
@@ -51,8 +51,7 @@ test('الترتيب والاختيار: الأصلي قبل المترجم آل
     t('en|manual', 'manual', null, '2026-01-01T00:00:00.000Z'),
   ];
   assert.deepEqual(rankTracks(list).map((x) => x.key), ['fr|manual', 'en|manual', 'ja|asr', 'ar|manual|en']);
-  assert.equal(chooseTrack([list[0]]).key, 'ar|manual|en', 'وحده يُختار، لكن لا يتقدّم على أصلي');
-  assert.equal(chooseTrack(list, 'ar|manual|en').key, 'ar|manual|en', 'اختيار المستخدم الصريح');
+  assert.equal(rankUsable([list[0]])[0].key, 'ar|manual|en', 'وحده يُختار، لكن لا يتقدّم على أصلي');
 });
 
 const listMsg = (over = {}) => ({ source: 'tarjuman', v: 1, kind: 'tracklist', videoId: VID, tracks: [], translatable: false, ...over });

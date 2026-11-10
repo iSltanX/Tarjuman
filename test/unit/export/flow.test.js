@@ -6,7 +6,7 @@ import { createController } from '../../../src/content/controller.js';
 import { buildExport, download } from '../../../src/core/export/index.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
-import { chooseTrack } from '../../../src/extract/select.js';
+import { rankUsable } from '../../../src/core/model/track-order.js';
 import { captureMsg, makeExtractor, sample } from '../extract/helpers.js';
 
 const manual = sample('manual');
@@ -37,7 +37,7 @@ function sink() {
 test('تدفق كامل: يدوي بوضع طويل', async () => {
   const { VID, store, extractor, c } = await setup(manual);
   extractor.handleMessage(captureMsg({ videoId: VID, body: manual.body }));
-  const key = chooseTrack(c.getState().captured).key;
+  const key = rankUsable(c.getState().captured)[0].key;
   assert.equal(key, 'en|manual');
 
   const conv = c.convertCaptured(key, { mode: 'long' });
@@ -83,7 +83,7 @@ test('مسار معطوب: لا تصدير، والأداة تقرأ الرمز 
   extractor.handleMessage(captureMsg({ videoId: VID, body: manual.body }));
   const conv = c.convertCaptured('en|manual', { mode: 'normal' });
   assert.deepEqual([conv.ok, conv.code, conv.cues.length], [false, 'EX_BEYOND_DURATION', 0], 'ثابت الحدود وحده (تدقيق 7a66f91، U39)');
-  assert.equal(chooseTrack(c.getState().captured), null);
+  assert.deepEqual(rankUsable(c.getState().captured), []);
   assert.throws(() => buildExport({
     videoId: VID, mode: 'normal', track: { key: conv.key, lang: conv.lang, kind: conv.kind, cues: conv.cues },
   }), (e) => e.code === 'EX_NO_TRACK');

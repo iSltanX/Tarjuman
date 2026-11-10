@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { LazyText, catalogOf, getDir, getLocale, joinList, lt, missingKeys, onLocaleChange, setLocale, t, texts } from '../../../src/i18n/index.js';
+import { LazyText, catalogOf, getDir, getLocale, joinList, lt, setLocale, t, texts } from '../../../src/i18n/index.js';
 import { formatCount, COUNT_FORMS, formatBytes } from '../../../src/ui/format.js';
 import { TjError, messageFor } from '../../../src/core/errors/index.js';
 import { compareCatalogs, scanSources } from '../../../scripts/check-i18n.mjs';
@@ -15,17 +15,13 @@ test('لغة الوحدة قبل التهيئة هي المرجعية', () => {
   assert.equal(getDir(), 'rtl');
 });
 
-test('t: القوالب تُملأ باللغة الحالية، والتبديل يبلّغ مرة لكل تغيير فعلي', (ctx) => {
+test('t: القوالب تُملأ باللغة الحالية بعد التبديل', (ctx) => {
   ctx.after(() => setLocale('ar'));
   assert.equal(t('common.slot.label', { n: 2 }), 'الترجمة 2');
-  const seen = [];
-  const off = onLocaleChange((l) => seen.push(l));
   setLocale('en');
   setLocale('en');
   assert.equal(t('common.slot.label', { n: 2 }), 'Translation 2');
   assert.equal(getDir(), 'ltr');
-  assert.deepEqual(seen, ['en']);
-  off();
   setLocale('fr');
   assert.equal(getLocale(), 'en', 'لغة غير مدعومة لا تُقبل');
 });
@@ -63,26 +59,25 @@ test('صيغ العدّ باللغتين', (ctx) => {
   assert.equal(joinList(['a', 'b']), 'a, b');
 });
 
-test('الاسترجاع عند نقص مفتاح: لا مفتاح خام أبدًا، وعبارة مفهومة بلغة الواجهة، ويُسجَّل النقص', (ctx) => {
+test('الاسترجاع عند نقص مفتاح: لا مفتاح خام أبدًا، وعبارة مفهومة بلغة الواجهة', (ctx) => {
   ctx.after(() => setLocale('ar'));
   const k = 'common.definitelyMissing';
   assert.equal(t(k), 'نص غير متاح');
   setLocale('en');
   assert.equal(t(k), 'Text unavailable');
   assert.equal(texts('common').definitelyMissing, 'Text unavailable');
-  assert.ok(missingKeys().includes(`en:${k}`));
   assert.ok(!String(t(k)).includes(k));
 });
 
 test('رسائل الأخطاء تتبع اللغة، والرمز ثابت', (ctx) => {
   ctx.after(() => setLocale('ar'));
-  const ar = messageFor('ST_SAVED');
+  const ar = messageFor('ST_RESTORED');
   setLocale('en');
-  const en = messageFor('ST_SAVED');
+  const en = messageFor('ST_RESTORED');
   assert.notEqual(ar, en);
   assert.ok(!/[؀-ۿ]/.test(en));
-  const err = new TjError('ST_SAVED');
-  assert.equal(err.code, 'ST_SAVED');
+  const err = new TjError('ST_RESTORED');
+  assert.equal(err.code, 'ST_RESTORED');
   assert.equal(err.message, en);
 });
 

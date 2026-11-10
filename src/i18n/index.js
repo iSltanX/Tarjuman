@@ -27,8 +27,6 @@ function flatten(node, prefix, out) {
 const TABLES = Object.freeze(Object.fromEntries(LOCALES.map((l) => [l, flatten(CATALOG[l], '', new Map())])));
 
 let current = /** @type {'ar' | 'en'} */ (REFERENCE_LOCALE);
-const listeners = new Set();
-const missing = new Set();
 
 /** اللغة الحالية لهذا السياق. */
 export const getLocale = () => current;
@@ -36,25 +34,17 @@ export const getLocale = () => current;
 export const getDir = () => localeDir(current);
 
 /**
- * يغيّر لغة هذا السياق ويبلّغ المستمعين إن تغيّرت. لا يكتب في التخزين.
+ * يغيّر لغة هذا السياق. لا يكتب في التخزين.
  * @param {'ar' | 'en'} locale
  */
 export function setLocale(locale) {
   if (!isLocale(locale) || locale === current) return;
   current = locale;
-  for (const fn of [...listeners]) fn(current);
-}
-
-/** @param {(locale: 'ar' | 'en') => void} fn @returns {() => void} */
-export function onLocaleChange(fn) {
-  listeners.add(fn);
-  return () => listeners.delete(fn);
 }
 
 function lookup(key) {
   const table = TABLES[current];
   if (table.has(key)) return table.get(key);
-  missing.add(`${current}:${key}`);
   const fallback = TABLES[DEFAULT_LOCALE];
   return fallback.has(key) ? fallback.get(key) : undefined;
 }
@@ -118,9 +108,6 @@ export const lt = (key, params) => new LazyText(key, params);
 
 /** يصل عناصر قائمة بفاصل اللغة الحالية («، » أو «, »). @param {readonly unknown[]} items */
 export const joinList = (items) => items.join(t('common.listSep'));
-
-/** المفاتيح الناقصة منذ بدء السياق (رموز لا نصوص)، للتشخيص والاختبارات. */
-export const missingKeys = () => [...missing];
 
 /** فهرس لغة مسطّحًا، لفحص التغطية. @param {'ar' | 'en'} locale @returns {ReadonlyMap<string, unknown>} */
 export const catalogOf = (locale) => TABLES[locale];

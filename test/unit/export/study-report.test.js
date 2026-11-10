@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { TjError } from '../../../src/core/errors/index.js';
 import { buildReviewReport, buildStudyText } from '../../../src/core/export/index.js';
-import { mdUnescape } from '../../../src/core/export/doc.js';
+// عكس mdEscape وmdEscapeLine للمقارنة بالنص الأصلي: كل شرطة مائلة في الأصل مهرّبة، فلا لبس.
+const mdUnescape = (text) => String(text).replace(/\\([\\`*_[\]<>|~&#:.+\-)])/g, '$1');
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
 import { realTrack } from '../../helpers/fixtures.js';
 import { REAL_ARABIC, realArabic } from '../../fixtures/v2/index.js';

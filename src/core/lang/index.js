@@ -58,12 +58,6 @@ export function baseLang(code) {
   return n ? n.split('-')[0] : null;
 }
 
-/** هل الرمزان للغة واحدة بلهجتين أو بالرمز نفسه (en وen-GB نعم، en وes لا). @param {unknown} a @param {unknown} b */
-export const sameBaseLang = (a, b) => {
-  const x = baseLang(a);
-  return x !== null && x === baseLang(b);
-};
-
 const SCRIPT_CODE = /^[A-Z][a-z]{3}$/;
 /** الأسماء المعروفة لنصوص يونيكود في الرموز: Orig في en-orig مقطع خاص بيوتيوب لا نص. */
 function isScript(s) {

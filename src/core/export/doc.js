@@ -33,8 +33,6 @@ export const mdEscape = (text) => String(text)
   .replace(/\bwww(?=\.)/gi, 'www\\');
 /** نص يبدأ به سطر (كالاقتباس): ومعه علامة القائمة أو الترقيم في أوله. */
 export const mdEscapeLine = (text) => mdEscape(text).replace(/^([-+])(?=\s|$)/, '\\$1').replace(/^(\d+)([.)])(?=\s|$)/, '$1\\$2');
-/** عكس mdEscape وmdEscapeLine (للاختبار وللمقارنة بالنص الأصلي): كل شرطة مائلة في الأصل مهرّبة، فلا لبس. */
-export const mdUnescape = (text) => String(text).replace(/\\([\\`*_[\]<>|~&#:.+\-)])/g, '$1');
 
 // فواصل الأسطر كلها (CRLF وCR وNEL وفاصلا السطر والفقرة)، لا \n وحده.
 const LINE_SPLIT = new RegExp('\\r\\n|[\\r\\n\\u0085\\u2028\\u2029]');

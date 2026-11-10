@@ -25,7 +25,7 @@ test('كل رمز يبدأ ببادئة مجاله، ولا بادئة لمجا�
       assert.ok(ARABIC.test(msg) && msg.trim().length >= 4, `${code}: رسالة عربية`);
     }
   }
-  assert.ok(seen.has('EX_WRONG_VIDEO') && seen.has('ST_CONFLICT') && seen.has('TJ_NOT_IMPLEMENTED'));
+  assert.ok(seen.has('EX_WRONG_VIDEO') && seen.has('ST_CONFLICT') && seen.has('TJ_NO_VIDEO'));
 });
 
 test('ملفات مجالات المراحل اللاحقة موجودة ببادئاتها ورسائلها مجمَّدة (تملؤها مرحلة المجال في ملفها)', () => {

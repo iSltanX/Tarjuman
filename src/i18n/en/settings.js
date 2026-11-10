@@ -10,7 +10,6 @@ export default Object.freeze({
     label: 'Restore defaults', aria: '{label}: {title}',
     sectionDefault: 'This section’s settings are already at their defaults.',
     displayDefault: 'Display mode, subtitle font, size, background and position are already at their defaults.',
-    appearanceDefault: 'Font and size are already at their defaults.',
   },
   sections: {
     display: { title: 'Display', desc: 'How the translation looks over the video, the synced transcript panel and its button, and video thumbnails in Library.' },

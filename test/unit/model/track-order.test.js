@@ -1,8 +1,9 @@
-// اختيار المسار عند تعدد المسارات (P3-AC1). منذ 2.0.0 (AA1) لا تفضيل للغة ولا للهجة: اليدوي قبل التلقائي ثم الأحدث، والأصلي قبل
-// المترجم آليًا (aa1-languages.test.js).
+// ترتيب المسارات عند تعددها (P3-AC1) من موضعه الواحد src/core/model/track-order.js. منذ 2.0.0 (AA1) لا تفضيل للغة ولا للهجة:
+// اليدوي قبل التلقائي ثم الأحدث، والأصلي قبل المترجم آليًا (aa1-languages.test.js). وحُذف src/extract/select.js (ح6): لم
+// يستعمله شيء في الإضافة، والمشغّل والمتحكم يأخذان أول الصالح من rankUsable.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chooseTrack, rankTracks } from '../../../src/extract/select.js';
+import { rankTracks, rankUsable } from '../../../src/core/model/track-order.js';
 
 const t = (key, over = {}) => {
   const [lang, kind] = key.split('|');
@@ -34,16 +35,13 @@ test('rankTracks: الأحدث التقاطًا أولًا عند التساوي
   assert.deepEqual(keys(rankTracks(sameLang)), ['b|asr', 'a|asr']);
 });
 
-test('chooseTrack: اختيار المستخدم الصالح أقوى من الترتيب، والمعطوب لا يُختار', () => {
+test('rankUsable: الصالح وحده بالترتيب نفسه، فالأول هو المختار افتراضيًا', () => {
   const list = [t('en|manual'), t('en|asr'), t('en-GB|asr', { ok: false, cueCount: 0, code: 'EX_INVARIANT_FAILED' })];
-  assert.equal(chooseTrack(list).key, 'en|manual');
-  assert.equal(chooseTrack(list, 'en|asr').key, 'en|asr');
-  assert.equal(chooseTrack(list, 'en-GB|asr').key, 'en|manual', 'المعطوب يرجع إلى الأفضل');
-  assert.equal(chooseTrack(list, 'xx|manual').key, 'en|manual', 'مفتاح غير موجود يرجع إلى الأفضل');
+  assert.deepEqual(keys(rankUsable(list)), ['en|manual', 'en|asr']);
 });
 
-test('chooseTrack: لا مسار صالح ← null', () => {
-  assert.equal(chooseTrack([]), null);
-  assert.equal(chooseTrack([t('en|manual', { ok: false, cueCount: 0 })]), null);
-  assert.equal(chooseTrack([t('en|manual', { cueCount: 0 })]), null);
+test('rankUsable: لا مسار صالح ← قائمة فارغة', () => {
+  assert.deepEqual(rankUsable([]), []);
+  assert.deepEqual(rankUsable([t('en|manual', { ok: false, cueCount: 0 })]), []);
+  assert.deepEqual(rankUsable([t('en|manual', { cueCount: 0 })]), []);
 });

@@ -3,7 +3,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createEditSession } from '../../../src/core/edit/index.js';
-import { planRescue, rescueConflicts } from '../../../src/core/edit/rescue.js';
+import { planRescue } from '../../../src/core/edit/rescue.js';
+
+// التعارضات المسرودة في أول تمرير (قبل أي اختيار)، كما يحسبها حوار الإنقاذ من planRescue بلا resolve.
+const rescueConflicts = (o) => {
+  const r = planRescue({ ...o, resolve: {} });
+  return r.ok ? r.conflicts : [];
+};
 import { withSlotEdit } from '../../../src/core/model/bundle.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { openedSlot, saveSlot } from '../../../src/pages/editor/persist.js';

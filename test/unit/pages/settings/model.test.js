@@ -9,7 +9,7 @@ import { DEFAULT_SETTINGS, mergeSettings, validateSettings } from '../../../../s
 import { SUBTITLE_FONT_LIST } from '../../../../src/ui/subtitle-fonts.js';
 import {
   confirmWord, DEFAULT_SCALE_MARK_PCT, completenessText, confirmWordOk, normalizeNumber, parseCompleteness, parseDrift, parseSplit, parseStep,
-  previewStyle, resetState, snapScale, stepChoice, stepText,
+  previewStyle, snapScale, stepChoice, stepText,
 } from '../../../../src/pages/settings/model.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -71,14 +71,6 @@ test('الخطوة: نص الحقل وزر المقطّعة', () => {
   assert.equal(stepChoice(500), '0.5');
   assert.equal(stepChoice(1000), '1');
   assert.equal(stepChoice(1500), 'custom');
-});
-
-test('استعادة الخط والحجم: معطّلة بسببها حين تكونان افتراضيتين فقط', () => {
-  const d = DEFAULT_SETTINGS.appearance;
-  assert.deepEqual(resetState(d), { isDefault: true, disabledReason: 'الخط والحجم افتراضيان بالفعل.' });
-  assert.equal(resetState({ ...d, font: 'tajawal' }).isDefault, false);
-  assert.equal(resetState({ ...d, scale: 105 }).disabledReason, null);
-  assert.equal(resetState({ ...d, background: 'solid', position: 'top' }).isDefault, true, 'الخلفية والموضع ليسا من الاستعادة');
 });
 
 test('منزلق الحجم: يقرّب إلى شبكة 5 ويقصر على 70..160، وعلامة الافتراضي عند 33%', () => {

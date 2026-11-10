@@ -8,8 +8,6 @@ import { t } from '../../i18n/index.js';
 import { PLAYER_TOKENS } from '../../ui/player-tokens.js';
 import { subtitleFontStack } from '../../ui/subtitle-fonts.js';
 
-/** أزرار الخطوة المعروضة: 0.5 و1 ثانية، وما عداهما «مخصص». */
-export const STEP_PRESETS_MS = Object.freeze([500, 1000]);
 /** الخطوة المخصصة: من 0.1 إلى 10 ثوانٍ بمضاعفات 0.1 (نموذج الإعدادات). */
 export const STEP_RANGE_MS = Object.freeze({ min: 100, max: 10000, grid: 100 });
 export const SPLIT_RANGE = Object.freeze({ min: 50, max: 2000 });
@@ -190,15 +188,6 @@ export const stepChoice = (ms) => (ms === 500 ? '0.5' : ms === 1000 ? '1' : 'cus
 
 /** نسبة الاكتمال الظاهرة في الحقل. @param {number} fraction */
 export const completenessText = (fraction) => String(Math.round(fraction * 100));
-
-/**
- * «الخط والحجم افتراضيان» (أبقيت للتوافق؛ الصفحة تستعمل sectionReset).
- * @param {{ font: string, scale: number }} appearance
- */
-export function resetState(appearance) {
-  const isDefault = appearance.font === DEFAULT_SETTINGS.appearance.font && appearance.scale === DEFAULT_SETTINGS.appearance.scale;
-  return { isDefault, disabledReason: isDefault ? t('settings.reset.appearanceDefault') : null };
-}
 
 /** يقرّب قيمة المنزلق إلى شبكته (70..160 بخطوة 5). @param {unknown} v */
 export function snapScale(v) {

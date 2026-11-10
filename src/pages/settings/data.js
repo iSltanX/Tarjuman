@@ -16,7 +16,6 @@ let seq = 0;
 const PREVIEW_FRESH_MAX = 100;
 /** صيغ العدّ بلغة الواجهة الحالية (settings.dataCount). */
 const FORMS = texts('settings.dataCount');
-export { FORMS as DATA_COUNT_FORMS };
 
 /** التاريخ المطلق بأرقام لاتينية. @param {string} iso */
 export function backupDate(iso) {

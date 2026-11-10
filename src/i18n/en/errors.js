@@ -6,8 +6,6 @@ const fixFirst = ({ count }) => (/^\d+$/.test(String(count)) ? `Fix ${count} tim
 export default Object.freeze({
   // base: general, storage, model, saving
   TJ_UNEXPECTED: 'Something went wrong. Try again; if it keeps happening, copy the diagnostics report.',
-  TJ_NOT_IMPLEMENTED: 'This feature isn’t available in this version yet.',
-  TJ_NOT_YOUTUBE: 'Open a YouTube video to see its status here.',
   TJ_RELOAD_PAGE: 'This page was opened before Tarjuman was installed or updated. Reload it to use Tarjuman’s tools here.',
   TJ_OPEN_OR_RELOAD: 'Open a YouTube video to get started. If one is already open from before Tarjuman was installed or updated, reload its page.',
   TJ_NO_VIDEO: 'There’s no video on this page.',
@@ -29,7 +27,6 @@ export default Object.freeze({
   ST_MIGRATION_FAILED: 'Couldn’t upgrade the Library to the new version. Nothing was deleted; copy the diagnostics report.',
   ST_RESTORED: 'Your saved translation for this video was restored.',
   ST_OFFSET_RESET: 'The display offset was reset because the new file carries its own timing.',
-  ST_SAVED: 'Saved.',
   ST_SLOT_EMPTY: 'Upload the translation file (SRT) first.',
   ST_NO_PREVIOUS: 'There’s no previous version saved for this video.',
   ST_PREVIOUS_SAVED: 'The replaced translation was saved as the previous version; you can restore it from the Library.',
@@ -37,7 +34,6 @@ export default Object.freeze({
   MD_INVALID: 'The data isn’t valid, so nothing was saved. Copy the diagnostics report.',
   MD_NEGATIVE_TIME: 'The offset would put some segments before the start of the video: {list}. Change the offset or export the saved timing.',
 
-  SV_SAVED: 'File saved.',
   SV_FALLBACK_BLOB: 'Couldn’t save to the chosen location, so the file was downloaded to your Downloads folder as usual.',
   SV_BAD_FILE: 'The file name or type isn’t accepted, so nothing was saved.',
   SV_TOO_LARGE: 'The file is too large to save from here. Export it from the Library.',
@@ -173,8 +169,6 @@ export default Object.freeze({
   CT_NO_CAPTIONS: 'This video has no subtitles available on YouTube.',
   CT_INCOMPLETE_AT: 'The last subtitle is at {last} and the video is {duration}; the text may be incomplete.',
   CT_FINGERPRINT_NOT_SAVED: 'The file was downloaded, but what’s needed to compare it with your translation later couldn’t be saved. Download again; if it keeps happening, copy the diagnostics report.',
-  CT_COPIED: 'Translation instructions copied.',
-  CT_COPY_FAILED: 'Couldn’t copy to the clipboard. Try again.',
   CT_SPLIT_INVALID: 'Enter a number of segments per part between 50 and 2000.',
 
   CT_VIDEO_CHANGED: 'The video changed before the action finished, so nothing was applied to the new video. Try again here.',
@@ -213,8 +207,6 @@ export default Object.freeze({
   PG_ORIGINAL_SAME: 'The translation hasn’t been edited, so the uploaded version is the current one.',
   PG_EXPORT_DONE: 'The file download started.',
   PG_FINGERPRINT_NOT_SAVED: 'The file was downloaded, but what’s needed to compare it with your translation couldn’t be saved; an accurate comparison may not be available when you upload it. Export it again.',
-  PG_REPLACE_DONE: 'Translation replaced, and the display offset was reset.',
-  PG_IMPORT_DONE: 'Translation saved for this video.',
   PG_DELETE_ARABIC_DONE: 'Translation deleted. The saved original and comparison references remain.',
   PG_DELETE_ALL_DONE: 'All data for this video was deleted.',
   PG_DELETE_STALE: 'This video’s translations changed somewhere else after the confirmation opened, so nothing was deleted. Review what’s shown now, then delete again if you want.',
@@ -307,7 +299,6 @@ export default Object.freeze({
   ED_MARK_FAILED: 'Couldn’t save the mark. Try again.',
   ED_NO_REFERENCE: 'This translation has no comparison reference, so a completion file can’t be built and a translated completion can’t be uploaded. Choose the reference from the comparison panel.',
   ED_COMPLETE_NOTHING: 'No segments chosen for completion. Choose at least one group.',
-  ED_RESCUE_NONE: 'There’s no newer version to compare with; save directly.',
 
   // backup and restore
   BK_TOO_LARGE: 'The file is larger than {max}, so it wasn’t read. Tarjuman doesn’t create a backup larger than that either.',

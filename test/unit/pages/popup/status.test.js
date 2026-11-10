@@ -3,7 +3,9 @@
 // فيديو على يوتيوب»).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describeStatus, editorGate, libraryHash, queryVideoState, quickActions } from '../../../../src/pages/popup/status.js';
+import { describeStatus, editorGate, libraryHash, queryPopupState, quickActions } from '../../../../src/pages/popup/status.js';
+
+const queryVideoState = async (env) => (await queryPopupState(env)).reply;
 import { videoStateRequest } from '../../../../src/core/model/messages.js';
 
 const reply = (over = {}) => ({

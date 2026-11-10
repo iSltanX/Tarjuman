@@ -78,7 +78,6 @@ npm run package
 | `store` | مواد المتاجر: النصوص والأيقونات والبلاطات واللقطات وإجابات نماذج التقديم وملاحظات المراجعين وملفا الاختبار. |
 | `docs` | الوثائق، وفهرسها في [`docs/README.md`](README.md). |
 | `tools/brand` | مولّد أيقونات الإضافة من مصدر الشعار، بلا متصفح. |
-| `tools/store-art` و`tools/readme-assets` | قوالب سابقة لصور المتاجر وREADME، حلّت محل ناتجها صور `tarjuman-images/`. |
 | `tools/calibrate-reading.mjs` | مولّد جدول [معايرة كثافة القراءة](reading-calibration.md). |
 
 ## البنية والقرارات

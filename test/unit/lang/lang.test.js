@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  arabicName, baseLang, describeLang, hasRtlLetter, langDirection, langFromFileName, langScript, nativeName, normalizeLang, sameBaseLang, scriptLetterPattern, textDirection, knownLanguages, searchLanguages, foldForSearch,
+  arabicName, baseLang, describeLang, hasRtlLetter, langDirection, langFromFileName, langScript, nativeName, normalizeLang, scriptLetterPattern, textDirection, knownLanguages, searchLanguages, foldForSearch,
 } from '../../../src/core/lang/index.js';
 
 test('التطبيع: الحالة والشرطة بقواعد BCP-47، واللغة كما وردت (iw يبقى iw)، وغير الصالح null', () => {
@@ -13,9 +13,6 @@ test('التطبيع: الحالة والشرطة بقواعد BCP-47، والل
   assert.equal(normalizeLang(' pt-br '), 'pt-BR');
   for (const bad of ['', 'und', 'zxx', 'mul', 'a.en', 'e', '12', 'en--x', 'x'.repeat(40), null, undefined, 3]) assert.equal(normalizeLang(bad), null, String(bad));
   assert.equal(baseLang('en-GB'), 'en');
-  assert.equal(sameBaseLang('en', 'en-GB'), true);
-  assert.equal(sameBaseLang('en', 'es'), false);
-  assert.equal(sameBaseLang(null, null), false);
 });
 
 test('النص والاتجاه من بيانات المتصفح: العربية والفارسية والأردية والعبرية والثانا RTL، والبقية LTR، والمجهول null', () => {

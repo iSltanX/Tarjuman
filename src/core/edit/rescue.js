@@ -45,12 +45,3 @@ export function planRescue({ base, mine, theirs, offsets, resolve = {}, offsetCh
   }
   return { ...merged, cues, offsetMs, offsetConflict, counts: { mine: changed(mineB), theirs: changed(theirs) } };
 }
-
-/**
- * كل التعارضات المسرودة في أول تمرير (قبل أي اختيار)، لعرضها باختيار لكلٍّ: تُحسب بلا resolve.
- * @param {Parameters<typeof planRescue>[0]} o
- */
-export const rescueConflicts = (o) => {
-  const r = planRescue({ ...o, resolve: {} });
-  return r.ok ? r.conflicts : [];
-};

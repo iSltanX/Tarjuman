@@ -25,7 +25,7 @@ messageFor(code, params) // القوالب {name} تُملأ؛ الرمز الم
 
 | الملف | المالك | البادئات | المحتوى الآن |
 | --- | --- | --- | --- |
-| `base.js` | P2 ثم P10 | `TJ_` عامة، `ST_` تخزين، `MD_` نموذج، `SV_` الحفظ (P10) | `TJ_UNEXPECTED`، `TJ_NOT_IMPLEMENTED`، `TJ_NOT_YOUTUBE`، `TJ_NO_VIDEO`، `TJ_BAD_MESSAGE`، `TJ_BAD_VIDEO_ID`؛ `ST_READ_FAILED`، `ST_WRITE_FAILED`، `ST_QUOTA_EXCEEDED`، `ST_CAPACITY_WARNING`، `ST_LARGE_LIBRARY`، `ST_CORRUPT_RECORD`، `ST_CONFLICT`، `ST_ARABIC_EXISTS`، `ST_NO_RECORD`، `ST_SCHEMA_NEWER`، `ST_MIGRATION_FAILED`، وإشعارات `ST_RESTORED` و`ST_OFFSET_RESET` و`ST_SAVED`؛ `MD_INVALID`، `MD_NEGATIVE_TIME` |
+| `base.js` | P2 ثم P10 | `TJ_` عامة، `ST_` تخزين، `MD_` نموذج، `SV_` الحفظ (P10) | `TJ_UNEXPECTED`، `TJ_NO_VIDEO`، `TJ_BAD_MESSAGE`، `TJ_BAD_VIDEO_ID`؛ `ST_READ_FAILED`، `ST_WRITE_FAILED`، `ST_QUOTA_EXCEEDED`، `ST_CAPACITY_WARNING`، `ST_LARGE_LIBRARY`، `ST_CORRUPT_RECORD`، `ST_CONFLICT`، `ST_ARABIC_EXISTS`، `ST_NO_RECORD`، `ST_SCHEMA_NEWER`، `ST_MIGRATION_FAILED`، وإشعارا `ST_RESTORED` و`ST_OFFSET_RESET`؛ `MD_INVALID`، `MD_NEGATIVE_TIME` |
 | `extract.js` | P3 ثم P11 | `EX_`، `KIND_` | مملوء في W3 (P3): رسائل الاستخراج (`EX_WRONG_VIDEO`…`EX_LIVE`، و`KIND_MISMATCH`، و`EX_NO_TRACK`) نُقلت من `src/extract/codes.js` المحذوف، ومعها رموز التحويل والتصدير (`EX_INVARIANT_FAILED`، و`EX_SPLIT_NOT_NEEDED`، و`EX_DOWNLOAD_FAILED`…). وفي W6 (P11) §٦. وأضاف تدقيق 7a66f91 (C4) `EX_BEYOND_DURATION`: فشل ثابت الحدود وحده (نص يبدأ بعد نهاية الفيديو). |
 | `import.js` | P4 ثم P11 | `IM_` استيراد، `CMP_` مقارنة | مملوء في W3 (P4): أخطاء القراءة والتحليل والأجزاء (`IM_NO_FILE`…`IM_PARTS_GAP`)، وملاحظات التنظيف (`IM_NOTE_…`)، و`CMP_RESTORE_UNAVAILABLE`. وفي W6 (P11) §٦. |
 | `overlay.js` | P5 | `PL_` | مملوء في W3 (P5): `PL_MOUNT_FAILED`، و`PL_RENDER_FAILED`، و`PL_FULLSCREEN_HOST`. |
@@ -57,7 +57,7 @@ createDiagnosticReport({ version: '0.2.0', browser: 'Brave 1.98', sections: { st
 
 ## ٥. الإصدار الثاني (P10)
 
-- **الحفظ** (`SV_`، عقد الواجهات §١٣): `SV_SAVED` نجاح، و`SV_FALLBACK_BLOB` إشعار حين تعذّرت واجهة التنزيلات فنُزّل الملف بالطريقة الحالية (مجلد التنزيلات وإعداد المتصفح)، و`SV_BAD_FILE` اسم أو امتداد غير مقبول، و`SV_TOO_LARGE` فوق حد القناة، و`SV_BAD_FOLDER` اسم مجلد فرعي غير صالح، و`SV_CANCELLED` ألغى المستخدم حوار الحفظ، و`SV_FAILED` غير ذلك. و`SV_UNSETTLED` (تدقيق 7a66f91، C4): صدر معرّف التنزيل وتعذّر الاستعلام عن نتيجته أو غاب عنصره، فلا بديل Blob كي لا يتكرر الملف.
+- **الحفظ** (`SV_`، عقد الواجهات §١٣): `SV_FALLBACK_BLOB` إشعار حين تعذّرت واجهة التنزيلات فنُزّل الملف بالطريقة الحالية (مجلد التنزيلات وإعداد المتصفح)، و`SV_BAD_FILE` اسم أو امتداد غير مقبول، و`SV_TOO_LARGE` فوق حد القناة، و`SV_BAD_FOLDER` اسم مجلد فرعي غير صالح، و`SV_CANCELLED` ألغى المستخدم حوار الحفظ، و`SV_FAILED` غير ذلك. و`SV_UNSETTLED` (تدقيق 7a66f91، C4): صدر معرّف التنزيل وتعذّر الاستعلام عن نتيجته أو غاب عنصره، فلا بديل Blob كي لا يتكرر الملف.
 - **الخانات والسابقة** (`ST_`): `ST_SLOT_EMPTY` تفعيل خانة فارغة أو تعديلها، و`ST_NO_PREVIOUS` استعادة بلا سابقة، و`ST_PREVIOUS_SAVED` إشعار «حُفظت الترجمة المستبدلة نسخةً سابقة…». والاستبدال بلا تأكيد يبقى `ST_ARABIC_EXISTS`.
 - **القفز** (`TJ_`): `TJ_WRONG_VIDEO` التبويب يعرض فيديو غير المطلوب، و`TJ_SEEK_FAILED` تعذّر تغيير الزمن (لا مشغّل بعد).
 - **النسخة الاحتياطية** (`BK_`): المجال مسجّل ببادئته وبلا رسائل حتى P13. محتوى النسخة لا يدخل التشخيص أبدًا: الأعداد والرموز وحدها.
@@ -129,3 +129,7 @@ createDiagnosticReport({ version: '0.2.0', browser: 'Brave 1.98', sections: { st
 - **الاستيراد** (`import.js`): `IM_NOTE_HIDDEN_CHARS` ملاحظة واحدة بعدد المحارف التي أزالتها التنقية الموحدة (`src/core/text/sanitize.js`). وصار `IM_NOTE_CONTROL` لرموز C0/C1 وحدها، فأُسقط من نصه ذكر تجاوز الاتجاه.
 - **أمانة الرفع (F-03):** `IM_NOTE_TRIMMED` ملاحظة واحدة بعدد الأسطر التي قُصّت مسافات أطرافها. و`IM_CUE_TIME_NOT_AFTER_START` تحذير لكل مقطع نهايته ليست بعد بدايته برقمه وسطره. ويعرض `readImport` أول عشرين منها، ثم `IM_CUE_TIME_MORE` بعدد البقية.
 - **المشغّل (F-04):** `PL_NO_VIDEO_ELEMENT` الطبقة مركَّبة والمشغّل بلا عنصر فيديو: يصل نافذة الإضافة في `tools.code` وتقرير التشخيص في `videoCode`.
+
+## ١٣. خطة 2.2.0 (بقرار سلطان، 2026-11-10)
+
+- **رموز بلا مستعمل حُذفت (ح6):** لم يكن يصدرها شيء في الإضافة، فحُذفت من ملفات مجالاتها ومن الفهرس الإنجليزي: `TJ_NOT_IMPLEMENTED` و`TJ_NOT_YOUTUBE` و`ST_SAVED` و`SV_SAVED` (`base.js`)، و`CT_COPIED` و`CT_COPY_FAILED` (`controls.js`)، و`ED_RESCUE_NONE` (`editor.js`)، و`PG_REPLACE_DONE` و`PG_IMPORT_DONE` (`pages.js`). ويبقى `BK_RESTORE_CHANGED` لأن عقد النسخ الاحتياطي يسمّيه.

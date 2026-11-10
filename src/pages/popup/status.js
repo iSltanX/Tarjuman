@@ -58,14 +58,6 @@ export async function queryPopupState({ tabs = globalThis.chrome?.tabs, timeoutM
   }
 }
 
-/**
- * @param {{ tabs?: typeof chrome.tabs, timeoutMs?: number }} [env]
- * @returns {Promise<import('../../core/model/messages.js').VideoStateReply | null>}
- */
-export async function queryVideoState(env = {}) {
-  return (await queryPopupState(env)).reply;
-}
-
 /** فترة إعادة الاستعلام ما دام الرد «جارٍ القراءة»، وحدها الأقصى (L-25). */
 export const LOADING_POLL_MS = 400;
 export const LOADING_MAX_MS = 5000;

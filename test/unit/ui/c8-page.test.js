@@ -1,12 +1,8 @@
-// تدقيق 7a66f91، U103 (T-01): src/ui/page.js (تشغيل الصفحة وحدّ الأخطاء وفتح الصفحات) وpages/library/menu.js وicons.js (إعادتا تصدير
-// للتوافق) لم يكن يحمّلها أي اختبار.
+// تدقيق 7a66f91، U103 (T-01): src/ui/page.js (تشغيل الصفحة وحدّ الأخطاء وفتح الصفحات) لم يكن يحمّله أي اختبار. وإعادتا التصدير
+// pages/library/menu.js وicons.js حُذفتا (ح6): لم يستوردهما شيء.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startPage, openPage, extensionVersion } from '../../../src/ui/page.js';
-import { createMenu } from '../../../src/ui/menu.js';
-import { createMenu as legacyCreateMenu } from '../../../src/pages/library/menu.js';
-import { ICON_NAMES, icon } from '../../../src/ui/components.js';
-import { PAGE_ICON_NAMES, pageIcon } from '../../../src/pages/library/icons.js';
 import { TjError } from '../../../src/core/errors/index.js';
 import { FakeDocument, FakeElement, textOf } from '../pages/library/fake-dom.js';
 
@@ -83,15 +79,4 @@ test('openPage: يبني عنوان الصفحة من getURL، ومعها v وha
 
 test('extensionVersion: من البيان', () => {
   assert.equal(extensionVersion({ runtime: { getManifest: () => ({ version: '1.2.3' }) } }), '1.2.3');
-});
-
-test('library/menu.js وicons.js: إعادتا تصدير تشيران إلى الأصل المشترك في src/ui', () => {
-  assert.ok(legacyCreateMenu === createMenu);
-  assert.ok(PAGE_ICON_NAMES === ICON_NAMES);
-  assert.ok(PAGE_ICON_NAMES.length > 0);
-  const doc = new FakeDocument();
-  const a = pageIcon(PAGE_ICON_NAMES[0], { doc });
-  const b = icon(PAGE_ICON_NAMES[0], { doc });
-  assert.equal(a.tagName, b.tagName);
-  assert.equal(a.getAttribute('class'), b.getAttribute('class'));
 });
