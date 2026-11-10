@@ -63,12 +63,11 @@ test('البنية: الرأس وعشرة أقسام بترتيبها («الل�
   assert.ok(textOf(m.root).includes('تُحفظ التغييرات فورًا'));
   assert.ok(textOf(m.root).includes(subtitleNote()));
   assert.ok(textOf(m.root).includes(scaleNote()));
-  // ق-1: «معاينة حية» بعد «الموضع» مباشرة وقبل المفاتيح الثلاثة، بلا شرح تحتها (م-019).
+  // ق-1: «معاينة حية» بعد «الموضع» مباشرة وقبل المفتاحين، بلا شرح تحتها (م-019). وح4 (2026-11-10): لا «لوحة النص المتزامن».
   const displayRows = findAll(m.root.querySelector('section[data-section="display"]'), (e) => e.classList?.contains('st-row__label')).map((e) => textOf(e.querySelector('.tj-label')));
   const previewAt = displayRows.indexOf('معاينة حية');
   assert.equal(displayRows[previewAt - 1], 'الموضع');
-  assert.equal(displayRows[previewAt + 1], 'لوحة النص المتزامن');
-  assert.deepEqual(displayRows.slice(previewAt + 2, previewAt + 4), ['زر النص المتزامن', 'صور الفيديو في المحفوظات']);
+  assert.deepEqual(displayRows.slice(previewAt + 1), ['زر النص المتزامن', 'صور الفيديو في المحفوظات']);
   assert.equal(findAll(m.root, (e) => e.classList?.contains('st-note') && textOf(e).startsWith('الحجم نسبة')).length, 1, 'شرح الحجم مرة واحدة تحت «حجم الخط»');
   assert.ok(m.root.querySelector('.st-status') === null, 'لا سطر «المكان المختار» (م-044)');
   assert.ok(textOf(m.root).includes(MODE_NOTES.normal) && textOf(m.root).includes(MODE_NOTES.long));

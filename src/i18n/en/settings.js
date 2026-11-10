@@ -34,13 +34,9 @@ export default Object.freeze({
     subtitleNote: 'Applies only to the translation over the video.',
     scaleNote: 'Size is a share of the player height, so text grows in full screen. Default 100%.',
   },
-  panelOpenSwitch: {
-    label: 'Synced transcript panel', hint: 'Beside the video', text: 'Open on video pages',
-    note: 'Closed by default. Its button in the player bar opens and closes it, and it keeps its last state across videos.',
-  },
   entrySwitch: {
     label: 'Synced transcript button', hint: 'In the player bar', text: 'Shown on video pages',
-    note: 'Turning it off hides the button and closes the panel too. Bring it back here or from the extension popup. Closing the panel alone doesn’t hide the button.',
+    note: 'The panel is closed by default; its button opens and closes it, and it keeps its last state on every video. Turning this off hides the button and closes the panel too. Bring it back here or from the extension popup.',
   },
   thumbsSwitch: {
     label: 'Video thumbnails in Library', text: 'Show each video’s thumbnail',

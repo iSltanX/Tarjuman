@@ -175,7 +175,6 @@ export default Object.freeze({
   panel: {
     title: 'النص المتزامن',
     panel: 'النص المتزامن — ترجمان',
-    options: 'خيارات اللوحة',
     close: 'إغلاق اللوحة',
     closeHint: 'إغلاق اللوحة (يبقى زرها)',
     hideEntry: 'إخفاء زر اللوحة',

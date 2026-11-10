@@ -157,7 +157,6 @@ export default Object.freeze({
   panel: {
     title: 'Synced transcript',
     panel: 'Synced transcript — Tarjuman',
-    options: 'Panel options',
     close: 'Close panel',
     closeHint: 'Close panel (its button stays)',
     hideEntry: 'Hide panel button',

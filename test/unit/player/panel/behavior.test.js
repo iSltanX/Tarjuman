@@ -70,25 +70,15 @@ test('الفتح من مكان آخر (نافذة الأيقونة) لا يسر�
   assert.ok(page.doc._focused === other);
 });
 
-test('قائمة الخيارات: التركيز يدخل بندها عند الفتح، ويعود إلى زرها بـEscape، وخروجه منها يغلقها', () => {
+test('ح4: «إخفاء زر اللوحة» بلوحة المفاتيح: التركيز عليه ثم الضغط يخفي وينقل التركيز إلى «تراجع» (L10)', () => {
   const page = watchPage();
   page.mount();
   const v = ui(page);
-  const [opts] = v.qa('.head .b');
-  click(opts);
-  const item = v.q('.menu [role="menuitem"]');
-  assert.ok(page.doc._focused === item);
-  key(item, 'Escape');
-  assert.ok(page.doc._focused === opts);
-  assert.equal(hidden(v.q('.menu')), true);
-  click(opts);
-  const outside = page.doc.createElement('button');
-  page.doc.body.appendChild(outside);
-  item.dispatchEvent({ type: 'focusout', bubbles: true, relatedTarget: outside });
-  assert.equal(hidden(v.q('.menu')), true, 'Tab خارجها يغلقها');
-  click(opts);
-  item.dispatchEvent({ type: 'focusout', bubbles: true, relatedTarget: opts });
-  assert.equal(hidden(v.q('.menu')), false, 'الانتقال إلى زرها لا يغلقها');
+  const hide = v.q('.head .hide');
+  hide.focus();
+  click(hide);
+  assert.equal(page.handle.peek().mode, 'toast');
+  assert.ok(v.root.activeElement === v.q('.toast .act'), 'إلى «تراجع» لا إلى body');
 });
 
 test('ملء الشاشة: الصفوف تبقى بأعيانها، ولا تتغير حالة التتبّع، ولا إعادة بناء عند الخروج', () => {

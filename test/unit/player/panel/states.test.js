@@ -60,17 +60,17 @@ test('الزر يعود من الإعدادات أو نافذة الأيقونة
   assert.equal(hidden(ui(page).host), false);
 });
 
-test('المفتوحة: الرأس (الشعار والعنوان) وزرا خيارات اللوحة والإغلاق باسميهما', () => {
+test('المفتوحة: الرأس (الشعار والعنوان) وزرا «إخفاء زر اللوحة» والإغلاق باسميهما (ح4: لا قائمة «⋯»)', () => {
   const page = watchPage();
   page.mount();
   const v = ui(page);
   assert.equal(hidden(v.panel), false);
   assert.equal(v.q('.title').textContent, 'النص المتزامن');
   assert.equal(v.panel.getAttribute('aria-label'), 'النص المتزامن — ترجمان');
-  const [opts, close] = v.qa('.head .b');
-  assert.equal(opts.getAttribute('aria-label'), 'خيارات اللوحة');
-  assert.equal(opts.getAttribute('aria-haspopup'), 'menu');
-  assert.equal(opts.getAttribute('aria-expanded'), 'false');
+  const [hide, close] = v.qa('.head .b');
+  assert.ok(hide === v.q('.head .hide'));
+  assert.equal(hide.getAttribute('aria-label'), 'إخفاء زر اللوحة');
+  assert.equal(hide.hasAttribute('aria-haspopup'), false, 'زر مباشر لا يفتح قائمة');
   assert.equal(close.getAttribute('aria-label'), 'إغلاق اللوحة');
   assert.ok(v.q('.head .mark'), 'رمز الشعار');
   assert.equal(v.q('.head .mark').getAttribute('viewBox'), '0 0 200 176.4', 'رمز الشعار وحده دون الاسم (إطار 200 × 176.4)');
@@ -92,39 +92,23 @@ test('الإغلاق: panelOpen=false وحده، فتختفي من الصفحة 
   assert.equal(page.controller.getState().prefs.ui.panelEntry, true);
 });
 
-test('قائمة خيارات اللوحة: بند واحد «إخفاء زر اللوحة» وسطر الشرح، وتُغلق بـEscape والنقر خارجها', () => {
+test('ح4: «إخفاء زر اللوحة» زر مباشر في الرأس بتلميح يقول أين يعود، ولا قائمة «⋯» ولا بنود', () => {
   const page = watchPage();
   page.mount();
   const v = ui(page);
-  const [opts] = v.qa('.head .b');
-  assert.equal(hidden(v.q('.menu')), true);
-  click(opts);
-  assert.equal(hidden(v.q('.menu')), false);
-  assert.equal(opts.getAttribute('aria-expanded'), 'true');
-  const items = v.qa('.menu [role="menuitem"]');
-  assert.equal(items.length, 1);
-  assert.ok(items[0].textContent.includes('إخفاء زر اللوحة'));
-  assert.ok(items[0].textContent.includes('من كل صفحات الفيديو. تعيده من نافذة الإضافة أو الإعدادات.'));
-  key(items[0], 'Escape');
-  assert.equal(hidden(v.q('.menu')), true);
-  assert.equal(opts.getAttribute('aria-expanded'), 'false');
-  click(opts);
-  page.doc.dispatchEvent({ type: 'pointerdown', composedPath: () => [page.doc.body], target: page.doc.body });
-  assert.equal(hidden(v.q('.menu')), true, 'نقرة خارج المضيف');
-  click(opts);
-  v.q('.root').dispatchEvent({ type: 'pointerdown', bubbles: true });
-  assert.equal(hidden(v.q('.menu')), true, 'نقرة داخل اللوحة خارج القائمة');
-  click(opts);
-  v.q('.menu').dispatchEvent({ type: 'pointerdown', bubbles: true });
-  assert.equal(hidden(v.q('.menu')), false, 'نقرة داخل القائمة لا تغلقها');
+  const hide = v.q('.head .hide');
+  assert.equal(hide.getAttribute('title'), 'إخفاء زر اللوحة: من كل صفحات الفيديو. تعيده من نافذة الإضافة أو الإعدادات.');
+  assert.ok(v.q('.menu') === null, 'لا قائمة');
+  assert.equal(v.qa('[role="menuitem"]').length, 0);
+  click(hide);
+  assert.equal(page.handle.peek().mode, 'toast', 'ضغطة واحدة تخفي، والرسالة فيها «تراجع»');
 });
 
 test('الإخفاء: panelEntry=false وpanelOpen=false معًا، ثم رسالة «أُخفي زر النص المتزامن» بتراجع', () => {
   const page = watchPage();
   page.mount();
   const v = ui(page);
-  click(v.qa('.head .b')[0]);
-  click(v.q('.menu [role="menuitem"]'));
+  click(v.q('.head .hide'));
   assert.deepEqual(lastPrefs(page), { ui: { panelEntry: false, panelOpen: false } });
   assert.equal(page.handle.peek().mode, 'toast');
   assert.equal(hidden(v.toast), false);
@@ -132,15 +116,14 @@ test('الإخفاء: panelEntry=false وpanelOpen=false معًا، ثم رسا�
   assert.ok(v.toast.textContent.includes('تراجع'));
   assert.equal(hidden(v.panel), true);
   assert.equal(hidden(v.host), false, 'المضيف باقٍ ليحمل الرسالة');
-  assert.equal(hidden(v.q('.menu')), true);
+  assert.ok(v.q('.menu') === null);
 });
 
 test('التراجع يعيد الأمرين: الزر واللوحة مفتوحة كما كانت، وتختفي الرسالة', () => {
   const page = watchPage();
   page.mount();
   const v = ui(page);
-  click(v.qa('.head .b')[0]);
-  click(v.q('.menu [role="menuitem"]'));
+  click(v.q('.head .hide'));
   click(v.q('.act'));
   assert.deepEqual(lastPrefs(page), { ui: { panelEntry: true, panelOpen: true } });
   assert.equal(page.handle.peek().mode, 'open');
@@ -154,8 +137,7 @@ test('التراجع بعد إخفاء من لوحة كانت مغلقة (من �
   const page = watchPage({ state: makeState({ prefs: prefsWith({ panelOpen: false }) }) });
   page.mount();
   page.controller.set({ prefs: prefsWith({ panelOpen: true }) });
-  click(ui(page).qa('.head .b')[0]);
-  click(ui(page).q('.menu [role="menuitem"]'));
+  click(ui(page).q('.head .hide'));
   page.controller.set({ prefs: prefsWith({ panelEntry: false, panelOpen: false }) });
   click(ui(page).q('.act'));
   assert.deepEqual(lastPrefs(page), { ui: { panelEntry: true, panelOpen: true } });
@@ -164,8 +146,7 @@ test('التراجع بعد إخفاء من لوحة كانت مغلقة (من �
 test('الرسالة تدوم ستّ ثوانٍ بالضبط ثم يزول كل شيء (المضيف مخفي) والزر يبقى مخفيًا', () => {
   const page = watchPage();
   page.mount();
-  click(ui(page).qa('.head .b')[0]);
-  click(ui(page).q('.menu [role="menuitem"]'));
+  click(ui(page).q('.head .hide'));
   assert.equal(UNDO_MS, 6000);
   page.env.win.advance(UNDO_MS - 100);
   assert.equal(page.handle.peek().mode, 'toast');
@@ -178,8 +159,7 @@ test('الرسالة تدوم ستّ ثوانٍ بالضبط ثم يزول كل 
 test('الرسالة تُغلق إن عاد الزر من مكان آخر قبل انقضاء المهلة', () => {
   const page = watchPage();
   page.mount();
-  click(ui(page).qa('.head .b')[0]);
-  click(ui(page).q('.menu [role="menuitem"]'));
+  click(ui(page).q('.head .hide'));
   assert.equal(page.handle.peek().mode, 'toast');
   page.controller.set({ prefs: prefsWith({ panelEntry: true, panelOpen: false }) });
   assert.equal(page.handle.peek().mode, 'none');
@@ -191,8 +171,7 @@ test('الرسالة تُغلق إن عاد الزر من مكان آخر قبل
 test('فشل كتابة التفضيل أثناء الإخفاء: تُسحب الرسالة ويبقى الزر، ولا يُرمى', async () => {
   const page = watchPage({ controllerOpts: { prefsFail: true } });
   const handle = page.mount();
-  click(ui(page).qa('.head .b')[0]);
-  click(ui(page).q('.menu [role="menuitem"]'));
+  click(ui(page).q('.head .hide'));
   await Promise.resolve();
   await Promise.resolve();
   await new Promise((r) => setImmediate(r));
@@ -452,9 +431,8 @@ test('مراجعة الهوية L3 وL10: الرسالة تبقى حتى يُح�
   const page = watchPage({ controllerOpts: { prefsGate: () => (gated ? new Promise((r) => { release = r; }) : null) } });
   page.mount();
   const v = ui(page);
-  click(v.qa('.head .b')[0]);
-  v.q('.menu [role="menuitem"]').focus();
-  click(v.q('.menu [role="menuitem"]'));
+  v.q('.head .hide').focus();
+  click(v.q('.head .hide'));
   await flush();
   assert.equal(page.handle.peek().mode, 'toast');
   assert.ok(v.root.activeElement === v.q('.act'), 'التركيز إلى «تراجع» لا إلى body');

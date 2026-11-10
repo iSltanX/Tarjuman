@@ -40,8 +40,7 @@ function hiddenToast() {
   const page = watchPage();
   page.mount();
   const v = ui(page);
-  click(v.qa('.head .b')[0]);
-  click(v.q('.menu [role="menuitem"]'));
+  click(v.q('.head .hide'));
   assert.equal(page.handle.peek().mode, 'toast');
   return { page, v };
 }

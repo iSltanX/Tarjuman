@@ -35,9 +35,11 @@ export const resetLabel = () => t('settings.reset.label');
 /** تعذّر قياس المساحة أو الأحجام وحده (تدقيق 7a66f91، U03): المحفوظات سليمة، فلا «تعذّرت قراءة المحفوظات» ولا «لم يُحذف شيء». */
 export const capacityUnavailable = () => t('settings.storage.capacityUnavailable');
 export const sizesUnavailable = () => t('settings.storage.sizesUnavailable');
-/** مفاتيح الواجهة على هذا الجهاز في «العرض» (prefs.ui). اللوحة مغلقة افتراضيًا (قرار سلطان 2026-11-03)، وزرها في شريط المشغّل. */
+/**
+ * مفاتيح الواجهة على هذا الجهاز في «العرض» (prefs.ui). اللوحة مغلقة افتراضيًا (قرار سلطان 2026-11-03)، وتُفتح وتُغلق من زرها في شريط
+ * المشغّل وحده، وتبقى على آخر حال (ح4، 2026-11-10: حُذف مفتاح «مفتوحة في صفحات الفيديو» المكرر، وقيمته المحفوظة كما هي).
+ */
 export const ENTRY_SWITCH = texts('settings.entrySwitch');
-export const PANEL_OPEN_SWITCH = texts('settings.panelOpenSwitch');
 // Firefox (قرار سلطان 2026-11-04، core/consent/thumbnails.js): التفعيل يطلب موافقة «نشاط التصفح»، والصور مطفأة حتى يوافق. note وnoteFirefox قالبان بـ{host}.
 export const THUMBNAILS_SWITCH = texts('settings.thumbsSwitch');
 const thumbsNote = (firefox) => t(firefox ? 'settings.thumbsSwitch.noteFirefox' : 'settings.thumbsSwitch.note', { host: ltrInline('i.ytimg.com') });
@@ -214,12 +216,11 @@ export function createSettings(env) {
       }
       let patch = { [key]: input.checked };
       if (key === 'panelEntry' && !input.checked) patch = { panelEntry: false, panelOpen: false };
-      if (key === 'panelOpen' && input.checked) patch = { panelOpen: true, panelEntry: true };
       savePrefs({ ui: patch }, mark);
     });
     sync.push(() => { input.checked = shown(); });
     input.checked = shown();
-    // الاسم تسمية الصف ثم نص الحال («لوحة النص المتزامن، مفتوحة في صفحات الفيديو»)، لا نص الحال وحده (تدقيق 7a66f91، U87).
+    // الاسم تسمية الصف ثم نص الحال («زر النص المتزامن، يظهر في صفحات الفيديو»)، لا نص الحال وحده (تدقيق 7a66f91، U87).
     input.setAttribute('aria-labelledby', `st-ui-${key}-row st-ui-${key}-text`);
     return el('label', {
       className: 'st-switch', attrs: { for: `st-ui-${key}` },
@@ -394,9 +395,7 @@ export function createSettings(env) {
   })();
   sync.push(() => preview.update(settings.appearance));
 
-  // مفاتيح الواجهة (prefs.ui) على هذا الجهاز: لوحة النص المتزامن وزرها في شريط المشغّل، وصور الفيديو في المحفوظات.
-  const openMark = marks();
-  const openSwitch = uiSwitch('panelOpen', PANEL_OPEN_SWITCH.text, openMark);
+  // مفاتيح الواجهة (prefs.ui) على هذا الجهاز: زر لوحة النص المتزامن في شريط المشغّل، وصور الفيديو في المحفوظات.
   const entryMark = marks();
   const entrySwitch = uiSwitch('panelEntry', ENTRY_SWITCH.text, entryMark);
   const thumbsMark = marks();
@@ -448,7 +447,6 @@ export function createSettings(env) {
     row(t('settings.display.background'), bgMark, bgSeg.root),
     row(t('settings.display.position'), posMark, posSeg.root),
     row(t('settings.display.preview'), null, preview.root),
-    named(rowWithHint(PANEL_OPEN_SWITCH.label, PANEL_OPEN_SWITCH.hint, openMark, openSwitch, note(PANEL_OPEN_SWITCH.note)), 'panelOpen'),
     named(rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)), 'panelEntry'),
     named(row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsNote(thumbsConsent.needed))), 'thumbnails'));
 

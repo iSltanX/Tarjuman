@@ -270,7 +270,7 @@ test('U87: اسم كل مفتاح في «العرض» يبدأ بتسمية صف
   const m = await mount();
   const sec = sectionOf(m, 'display');
   const switches = findAll(sec, (e) => e.getAttribute('role') === 'switch');
-  assert.equal(switches.length, 3);
+  assert.equal(switches.length, 2, 'ح4: مفتاح واحد للوحة (زرها) ومفتاح الصور');
   for (const s of switches) {
     const ids = (s.getAttribute('aria-labelledby') ?? '').split(' ');
     assert.equal(ids.length, 2);
@@ -279,7 +279,7 @@ test('U87: اسم كل مفتاح في «العرض» يبدأ بتسمية صف
     assert.ok(stateText?.classList.contains('st-switch__label'));
   }
   const names = switches.map((s) => s.getAttribute('aria-labelledby').split(' ').map((id) => textOf(m.doc.getElementById(id))).join('، '));
-  assert.ok(names.some((n) => n.startsWith('لوحة النص المتزامن، ')), names.join(' | '));
+  assert.ok(names.some((n) => n === 'زر النص المتزامن، يظهر في صفحات الفيديو'), names.join(' | '));
 });
 
 test('U59 (المراجعة المستقلة): نسخٌ بدأ أثناء الإرسال وانتهى بعده لا يكتب فوق نتيجة الإرسال', async () => {

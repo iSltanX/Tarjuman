@@ -122,8 +122,7 @@ test('U49 (L-17): إخفاق «فوق الأصل» يُقال داخل اللو�
 
 test('U49 (N09): إخفاق «إخفاء الزر» لا يزيل رسالة التراجع صامتًا: تعود اللوحة ومعها السبب', async () => {
   const { u } = await mounted({}, { prefsFail: true });
-  P.click(u.qa('.head .b')[0]);
-  P.click(u.q('.menu [role="menuitem"]'));
+  P.click(u.q('.head .hide'));
   await flushN();
   assert.equal(u.host.getAttribute('data-mode'), 'open');
   assert.ok(visibleAlerts(u).some((a) => a.textContent.includes(messageFor('PL_PREFS_FAILED'))));

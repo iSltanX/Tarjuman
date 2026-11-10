@@ -87,12 +87,13 @@ export function createPanelView({ doc, win, on }) {
 
   const transcript = createTranscript({ doc, onSeek: (ms) => on.seek(ms), onAct: (act, i) => on.rowAct?.(act, i), syncReason: (i) => on.syncReason?.(i) ?? null });
 
-  // ———— الرأس والقائمة ————
+  // ———— الرأس ————
   const load = el(doc, 'span', { className: 'load', attrs: { role: 'img', 'aria-label': LABELS.loading } }, [el(doc, 'i'), el(doc, 'i')]);
-  const optsBtn = el(doc, 'button', {
-    className: 'b b--ghost b--icon', attrs: { type: 'button', 'aria-label': LABELS.options, 'aria-haspopup': 'menu', 'aria-expanded': 'false' },
-    on: { click: () => setMenu(!menuOpen, { focus: true }) },
-  }, [icon(doc, 'more')]);
+  // «إخفاء زر اللوحة» زر مباشر (ح4، 2026-11-10): كانت قائمة «⋯» ببند واحد. والرسالة بعده فيها «تراجع» كما كانت.
+  const hideBtn = el(doc, 'button', {
+    className: 'b b--ghost b--icon hide', attrs: { type: 'button', 'aria-label': LABELS.hideEntry, title: `${LABELS.hideEntry}: ${LABELS.hideHint}` },
+    on: { click: () => on.hide() },
+  }, [icon(doc, 'eye-off')]);
   const closeBtn = el(doc, 'button', {
     className: 'b b--ghost b--icon', attrs: { type: 'button', 'aria-label': LABELS.close, title: LABELS.closeHint }, on: { click: () => on.close() },
   }, [icon(doc, 'x')]);
@@ -100,18 +101,8 @@ export function createPanelView({ doc, win, on }) {
     el(doc, 'span', { className: 'head__mark' }, [mark(doc, 22)]),
     el(doc, 'h2', { className: 'title', text: LABELS.title }),
     el(doc, 'span', { className: 'spacer' }),
-    load, optsBtn, closeBtn,
+    load, hideBtn, closeBtn,
   ]);
-  const hideItem = el(doc, 'button', {
-    className: 'mitem', attrs: { type: 'button', role: 'menuitem' }, on: { click: () => { setMenu(false); on.hide(); } },
-  }, [
-    icon(doc, 'eye-off'),
-    el(doc, 'span', { className: 'mitem__col' }, [
-      el(doc, 'span', { text: LABELS.hideEntry }),
-      el(doc, 'span', { className: 'mitem__hint', text: LABELS.hideHint }),
-    ]),
-  ]);
-  const menu = el(doc, 'div', { className: 'menu', attrs: { role: 'menu', 'aria-label': LABELS.options, hidden: '' } }, [hideItem]);
   // إخفاق فعل من أفعال اللوحة (الإغلاق، و«فوق الأصل»، و«إخفاء الزر») يُقال هنا بدل أن يمر صامتًا (تدقيق 7a66f91، U49)، في أي
   // شكل للّوحة المفتوحة؛ ويزول بالفعل التالي أو بإغلاقه.
   const actionText = el(doc, 'span');
@@ -219,7 +210,7 @@ export function createPanelView({ doc, win, on }) {
     stepError,
   ]);
 
-  const panel = el(doc, 'section', { className: 'panel', attrs: { 'aria-label': LABELS.panel } }, [head, menu, notes, bar, body, foot]);
+  const panel = el(doc, 'section', { className: 'panel', attrs: { 'aria-label': LABELS.panel } }, [head, notes, bar, body, foot]);
 
   // ———— رسالة التراجع ————
   const undoBtn = el(doc, 'button', { className: 'act', attrs: { type: 'button' }, text: LABELS.undo, on: { click: () => on.undo() } });
@@ -233,38 +224,8 @@ export function createPanelView({ doc, win, on }) {
   // المؤشر أو التركيز على الرسالة يمسك مؤقت زوالها (WCAG 2.2.1؛ U-042)، والجلسة تملك المؤقت.
   onHold(toast, (why, held) => on.toastHold?.(why, held));
 
-  // ———— عزل لوحة المفاتيح، وقائمة الخيارات ————
-  let menuOpen = false;
-  function setMenu(open, { focus = false } = {}) {
-    if (menuOpen === open) return;
-    menuOpen = open;
-    setHidden(menu, !open);
-    setAttr(optsBtn, 'aria-expanded', open ? 'true' : 'false');
-    if (open && focus) hideItem.focus();
-    if (!open && focus) optsBtn.focus();
-  }
-  for (const type of KEYS) {
-    shell.addEventListener(type, (ev) => {
-      if (type === 'keydown' && ev.key === 'Escape' && menuOpen) {
-        ev.preventDefault();
-        setMenu(false, { focus: true });
-      }
-      ev.stopPropagation();
-    });
-  }
-  // خروج التركيز من القائمة (Tab) يغلقها؛ والانتقال داخلها أو إلى زرها لا.
-  menu.addEventListener('focusout', (ev) => {
-    const to = ev.relatedTarget;
-    if (menuOpen && !(to && (menu.contains(to) || optsBtn.contains(to)))) setMenu(false);
-  });
-  shell.addEventListener('pointerdown', (ev) => {
-    if (menuOpen && !menu.contains(ev.target) && !optsBtn.contains(ev.target)) setMenu(false);
-  });
-  const outside = (ev) => {
-    const path = typeof ev.composedPath === 'function' ? ev.composedPath() : [];
-    if (menuOpen && !path.includes(host)) setMenu(false);
-  };
-  doc.addEventListener('pointerdown', outside, true);
+  // ———— عزل لوحة المفاتيح ————
+  for (const type of KEYS) shell.addEventListener(type, (ev) => ev.stopPropagation());
 
   // ———— الهندسة والعرض ————
   const layout = { place: 'beside', heightPx: null, width: 0, narrow: false, wide: false };
@@ -391,7 +352,6 @@ export function createPanelView({ doc, win, on }) {
     setAttr(shell, 'data-kind', m.kind);
     setHidden(panel, m.mode !== 'open');
     setHidden(toast, m.mode !== 'toast');
-    if (m.mode !== 'open') setMenu(false);
     const actionError = m.mode === 'open' ? l.actionError ?? null : null;
     setHidden(actionErr, !actionError);
     if (actionError) setText(actionText, actionError);
@@ -429,7 +389,7 @@ export function createPanelView({ doc, win, on }) {
       transcript.clear();
     }
 
-    // التركيز لا يضيع بتبديل الشكل. إخفاء الزر من قائمة اللوحة: إلى «تراجع» لا إلى body (مراجعة الهوية L10)، والتراجع يعيده
+    // التركيز لا يضيع بتبديل الشكل. إخفاء الزر من رأس اللوحة: إلى «تراجع» لا إلى body (مراجعة الهوية L10)، والتراجع يعيده
     // إلى اللوحة. والإغلاق (أو تراجع لا يعيدها): يُبلَّغ المستدعي (lostFocus) فيعيده إلى زر اللوحة في شريط المشغّل.
     let lostFocus = false;
     // ونقل التركيز إلى «تراجع» لا يُمسك الرسالة (focusQuietly): تزول بعد مدتها ما لم يقصدها المستخدم بالمؤشر أو التركيز.
@@ -448,7 +408,6 @@ export function createPanelView({ doc, win, on }) {
   }
 
   function destroy() {
-    doc.removeEventListener('pointerdown', outside, true);
     transcript.clear();
     sheet.release();
     host.remove();
@@ -516,9 +475,8 @@ export function createPanelView({ doc, win, on }) {
         return en && win.getComputedStyle ? { color: win.getComputedStyle(en).color, lang: en.getAttribute('lang'), back: win.getComputedStyle(transcript.rowEl(transcript.current)).backgroundColor } : null;
       })(),
       toast: toast.hasAttribute('hidden') ? null : toast.textContent,
-      menu: menuOpen,
       boxes: !o.boxes ? undefined : {
-        host: box(host), panel: box(panel), opts: box(optsBtn), close: box(closeBtn), hide: box(hideItem), follow: box(followSwitch),
+        host: box(host), panel: box(panel), close: box(closeBtn), hide: box(hideBtn), follow: box(followSwitch),
         resume: box(resume), reset: box(resetBtn), earlier: box(earlierBtn), later: box(laterBtn), undo: box(undoBtn), list: box(transcript.list),
         mark: box(transcript.actsParts.markBtn), sync: box(transcript.actsParts.syncBtn), noteUndo: box(noteUndo),
         dual: Array.from(segs.el.children).map(box),
@@ -530,11 +488,11 @@ export function createPanelView({ doc, win, on }) {
   }
 
   return {
-    host, root, shell, styleMode, transcript, render, setResume, setLayout, setTheme, setMenu, destroy, peek,
+    host, root, shell, styleMode, transcript, render, setResume, setLayout, setTheme, destroy, peek,
     /** فُتحت اللوحة من زرها في الشريط بلوحة المفاتيح: التركيز إلى زر الإغلاق (أول ما فيها). */
     focusPanel: () => closeBtn.focus(),
     typing: () => root.activeElement === stepInput,
     /** عناصر للاختبار والتركيز البرمجي. */
-    parts: { panel, optsBtn, closeBtn, menu, hideItem, segs: segs.el, followSwitch, resume, resetBtn, earlierBtn, laterBtn, stepSegs: stepSegs.el, stepInput, toast, foot, bar, body, err, empty, skel, note, noteUndo, ...transcript.actsParts },
+    parts: { panel, hideBtn, closeBtn, segs: segs.el, followSwitch, resume, resetBtn, earlierBtn, laterBtn, stepSegs: stepSegs.el, stepInput, toast, foot, bar, body, err, empty, skel, note, noteUndo, ...transcript.actsParts },
   };
 }

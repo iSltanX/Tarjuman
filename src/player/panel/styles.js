@@ -34,8 +34,8 @@ export function panelCss() {
 .mark { display: block; flex: none; direction: ltr; pointer-events: none; color: var(--tj-logo-glyph); }
 .mark path { fill: currentColor; }
 
-.b, .mitem, .switch, .resume, .act, .t, .segs button { all: unset; box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.b:focus-visible, .mitem:focus-visible, .switch:focus-visible, .resume:focus-visible, .act:focus-visible, .segs button:focus-visible, .t:focus-visible, .num:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
+.b, .switch, .resume, .act, .t, .segs button { all: unset; box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.b:focus-visible, .switch:focus-visible, .resume:focus-visible, .act:focus-visible, .segs button:focus-visible, .t:focus-visible, .num:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 
 /* الأزرار بلا إطار دائم (لوحة 08): بخلفية الزر المحايدة والمرور والضغط أغمق منها، والشفاف بلا خلفية حتى المرور، والمفتوح
    (قائمة الخيارات) بالطين على صبغة المرور (لوحة 06: الطين للحالة المفتوحة). الحد الشفاف يحفظ المقاس. */
@@ -61,12 +61,6 @@ export function panelCss() {
 .load i + i { animation-delay: 450ms; }
 @keyframes tj-pulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
 
-.menu { position: absolute; top: 46px; inset-inline-end: 8px; z-index: 5; width: 272px; max-width: calc(100% - 16px); padding: 6px; border-radius: var(--tj-radius-lg); background: var(--tj-surface); box-shadow: var(--tj-e2); }
-.mitem { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 8px 10px; border-radius: var(--tj-radius-md); color: var(--tj-text); font-size: 14px; line-height: 22px; }
-.mitem:hover { background: var(--tj-hover); }
-.mitem .ic { margin-top: 2px; color: var(--tj-text-2); }
-.mitem__col { display: flex; flex-direction: column; min-width: 0; }
-.mitem__hint { font-size: 12px; line-height: 18px; color: var(--tj-muted); }
 
 /* الشريط: الحالة والنص والمتابعة */
 .bar { grid-area: bar; flex: none; display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--tj-border); }

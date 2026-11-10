@@ -742,8 +742,6 @@ try {
     check('panel-close-hides-panel-keeps-bar-button', p.mode === 'none' && p.hostHidden && !!bar.buttons.panel.box && bar.buttons.panel.pressed === 'false' && ui?.panelOpen === false && ui?.panelEntry === true, { mode: p.mode, ui, pressed: bar.buttons.panel.pressed });
     await clickBar('panel');
     p = await waitPeek((x) => x.mode === 'open');
-    await clickBox(p.boxes.opts, 'خيارات اللوحة');
-    p = await waitPeek((x) => x.menu === true);
     await clickBox(p.boxes.hide, 'إخفاء زر اللوحة');
     p = await waitPeek((x) => x.mode === 'toast');
     check('panel-hide-shows-undo-message', p.mode === 'toast' && !!p.toast && !!p.boxes.undo, { mode: p.mode, toast: p.toast });
@@ -753,8 +751,6 @@ try {
     p = await waitPeek((x) => x.mode === 'open');
     ui = await iso(P.prefs);
     check('panel-undo-restores-entry-and-open-panel', p.mode === 'open' && ui?.panelEntry === true && ui?.panelOpen === true, { mode: p.mode, ui });
-    await clickBox(p.boxes.opts, 'خيارات اللوحة');
-    p = await waitPeek((x) => x.menu === true);
     await clickBox(p.boxes.hide, 'إخفاء زر اللوحة');
     p = await waitPeek((x) => x.mode === 'none', 9000);
     ui = await iso(P.prefs);
@@ -957,10 +953,8 @@ try {
     }
     check('panel-right-of-video-in-arabic-youtube', side === 'right' && p.mirrored === true && p.mode === 'open' && !overlaps(g.host, g.player) && p.rows === s0.arabic && g.docWidth <= g.viewport.w, { side, mirrored: p.mirrored, mode: p.mode, rows: p.rows, host: g.host, player: g.player });
     await snap(yt, 'watch-panel-arabic-interface');
-    // إخفاء الزر من قائمة اللوحة: بعد الرسالة لا لوحة، فيعود تخطيط يوتيوب العربي كما كان (العمود يسار الفيديو).
+    // إخفاء الزر من رأس اللوحة (ح4: زر مباشر): بعد الرسالة لا لوحة، فيعود تخطيط يوتيوب العربي كما كان (العمود يسار الفيديو).
     let q = await peek();
-    await clickBox(q.boxes.opts, 'خيارات اللوحة');
-    q = await waitPeek((x) => x.menu === true);
     await clickBox(q.boxes.hide, 'إخفاء زر اللوحة');
     q = await waitPeek((x) => x.mode === 'none', 9000);
     await sleep(800);

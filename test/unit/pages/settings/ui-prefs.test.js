@@ -1,5 +1,5 @@
-// مفاتيح الواجهة في «العرض» (product-spec §٦.٦): «لوحة النص المتزامن» (prefs.ui.panelOpen، مطفأة افتراضيًا)، و«زر النص
-// المتزامن» في شريط المشغّل (prefs.ui.panelEntry)، و«صور الفيديو في المحفوظات» (prefs.ui.thumbnails). يقرآن التفضيلات ويكتبانها فورًا بعلامة «حُفظ» دون المساس بغيرهما، ويعود المفتاح إلى المحفوظ عند
+// مفاتيح الواجهة في «العرض» (product-spec §٦.٦): «زر النص المتزامن» في شريط المشغّل (prefs.ui.panelEntry)، وحده للوحة (ح4،
+// 2026-11-10: حُذف مفتاح «مفتوحة في صفحات الفيديو» المكرر لزرها، وقيمة panelOpen المحفوظة كما هي)، و«صور الفيديو في المحفوظات» (prefs.ui.thumbnails). يقرآن التفضيلات ويكتبانها فورًا بعلامة «حُفظ» دون المساس بغيرهما، ويعود المفتاح إلى المحفوظ عند
 // فشل الكتابة، ويتبعان تغيّر التفضيلات من سياق آخر (نافذة الأيقونة أو قائمة اللوحة)؛ ونص «حول» صادق في شأن الصور.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,7 +7,7 @@ import { messageFor } from '../../../../src/core/errors/index.js';
 import { DEFAULT_PREFS } from '../../../../src/core/model/prefs.js';
 import { createStore } from '../../../../src/core/store/index.js';
 import { privacyLine } from '../../../../src/pages/settings/about.js';
-import { ENTRY_SWITCH, PANEL_OPEN_SWITCH, THUMBNAILS_SWITCH, createSettings } from '../../../../src/pages/settings/view.js';
+import { ENTRY_SWITCH, THUMBNAILS_SWITCH, createSettings } from '../../../../src/pages/settings/view.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW } from '../../../helpers/fixtures.js';
 import { buttonNamed, findAll, newDocument, settle, textOf } from '../library/fake-dom.js';
@@ -47,7 +47,7 @@ test('العرض يحوي مفتاحين بتسميتيهما وشرحيهما: 
   assert.equal(ENTRY_SWITCH.text, 'يظهر في صفحات الفيديو');
   assert.ok(textOf(entry).includes('في شريط المشغّل'));
   assert.ok(textOf(entry).includes('يظهر في صفحات الفيديو'));
-  assert.ok(textOf(entry).includes('إطفاؤه يخفي الزر ويغلق اللوحة معه، وتعيده من هنا أو من نافذة الإضافة. أما إغلاق اللوحة وحده فلا يخفي الزر.'));
+  assert.ok(textOf(entry).includes('اللوحة مغلقة افتراضيًا، وزرها يفتحها ويغلقها وتبقى على آخر حال في كل الفيديوهات. وإطفاء هذا المفتاح يخفي الزر ويغلق اللوحة معه، وتعيده من هنا أو من نافذة الإضافة.'));
   assert.ok(textOf(thumbs).includes('i.ytimg.com'));
   assert.ok(textOf(thumbs).includes('بمعرّف الفيديو'));
   assert.ok(textOf(thumbs).includes('أطفئها إن لم ترد هذا الاتصال'));
@@ -58,27 +58,16 @@ test('العرض يحوي مفتاحين بتسميتيهما وشرحيهما: 
   }
 });
 
-test('«لوحة النص المتزامن» (قرار سلطان 2026-11-03): مطفأة افتراضيًا؛ تشغيلها يفتح اللوحة ويعيد زرها معًا، وإطفاؤها يغلقها وحدها', async () => {
-  const m = await mount({ prefs: { ui: { panelEntry: false } } });
-  const row = rowOf(m, PANEL_OPEN_SWITCH.label);
-  assert.ok(row && section(m, 'العرض').contains(row), 'في «العرض»');
-  assert.ok(textOf(row).includes(PANEL_OPEN_SWITCH.text) && textOf(row).includes('مغلقة افتراضيًا'));
-  assert.equal(DEFAULT_PREFS.ui.panelOpen, false);
-  const input = sw(m, 'ui.panelOpen');
-  assert.equal(input.getAttribute('role'), 'switch');
-  assert.equal(input.checked, false);
-  toggle(input, true);
+test('ح4: مفتاح واحد للوحة في الإعدادات («زر النص المتزامن»)، ولا «مفتوحة في صفحات الفيديو»، وقيمة panelOpen المحفوظة كما هي', async () => {
+  const m = await mount({ prefs: { ui: { panelOpen: true } } });
+  assert.equal(DEFAULT_PREFS.ui.panelOpen, false, 'مغلقة افتراضيًا');
+  assert.equal(sw(m, 'ui.panelOpen') ?? null, null, 'لا مفتاح لفتح اللوحة');
+  assert.equal(findAll(m.root, (e) => e.tagName === 'input' && /^ui\.panel/.test(e.getAttribute('data-pref') ?? '')).length, 1);
+  assert.ok(!textOf(m.root).includes('مفتوحة في صفحات الفيديو'));
+  // ما كان محفوظًا يبقى (اللوحة تُفتح وتُغلق من زرها وتتذكر حالها)، وتغيير غيره من الإعدادات لا يمسه.
+  toggle(sw(m, 'ui.thumbnails'), false);
   await settle();
-  assert.deepEqual((await m.store.getPrefs()).ui, { thumbnails: true, panelEntry: true, panelOpen: true, panelDual: true }, 'لا لوحة مفتوحة بلا زر يغلقها');
-  assert.equal(sw(m, 'ui.panelEntry').checked, true, 'المفتاح الآخر يتبع');
-  assert.deepEqual(marks(row), ['حُفظ']);
-  toggle(input, false);
-  await settle();
-  assert.deepEqual((await m.store.getPrefs()).ui, { thumbnails: true, panelEntry: true, panelOpen: false, panelDual: true });
-  // فتحها من زر الشريط (تفضيل من سياق آخر) يحدّث المفتاح.
-  await m.store.setPrefs({ ui: { panelOpen: true } });
-  await settle();
-  assert.equal(sw(m, 'ui.panelOpen').checked, true);
+  assert.equal((await m.store.getPrefs()).ui.panelOpen, true);
 });
 
 test('القيم الأولية من prefs.ui: مفعّلان افتراضيًا، والمحفوظ المطفأ يظهر مطفأً', async () => {
