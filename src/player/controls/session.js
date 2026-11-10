@@ -1370,6 +1370,20 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   return {
     player,
     /** فيها ما يضيع بإعادة البناء: رفع جارٍ أو ملف بانتظار التأكيد أو تنزيل جارٍ أو كتابة في حقل أو مزامنة بجملة مفتوحة. */
+    /**
+     * ف5: النص الملصوق ملفًا بلا رمز لغة في اسمه، فاللغة من «إلى» كما في الرفع. يعيد البدء أو سبب تعذّره.
+     * @param {string} text
+     */
+    importText(text) {
+      const s = controller.getState();
+      if (destroyed || !s.videoId) return { ok: false, code: 'TJ_NO_VIDEO' };
+      if (ui.upload.busy || ui.upload.pending) return { ok: false, code: 'CT_UPLOAD_BUSY' };
+      const file = new File([String(text)], LABELS.pastedName, { type: 'text/plain' });
+      ui.open = s.arabic ? 'display' : null;
+      startImport([file], !!s.arabic);
+      return { ok: true };
+    },
+
     holdsFlow: () => !destroyed && !!(ui.upload.pending || ui.upload.busy || ui.download.busy || ui.open === 'confirm' || ui.timing.sync || layer.isTyping()),
     /** المشغّل والطبقة ما زالا في الصفحة؛ المجموعة تُعاد إلى الشريط في check. */
     healthy: () => !destroyed && player.isConnected && layer.isConnected(),

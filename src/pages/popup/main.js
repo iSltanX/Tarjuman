@@ -22,7 +22,7 @@ import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
 import { bindEntryRow } from './entry.js';
 import {
-  PAIR_TEXT, attachedGlossary, captureLine, completeAction, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, originDownloaded, missText, pageReport,
+  PAIR_TEXT, attachedGlossary, captureLine, completeAction, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, originDownloaded, missText, pageReport, sendPaste,
   pairState, queryPageDiagnostics, queryPopupState, quickActions, recentEntries, recentLine, toolsStatus, untilSettled, videoLangs,
 } from './status.js';
 import { guideList, notVideoNote, pairSkeleton, skeletonCard, statusCard } from './view.js';
@@ -85,12 +85,29 @@ startPage({
     // كتلة «تعليمات الترجمة» (لوحة 09): عنوانها وهيكلها حتى يصل الرد وتفضيلات اللغات.
     const pairTitle = el('h2', { className: 'tj-popup__eyebrow', text: PAIR_TEXT.title, attrs: { id: 'tj-pair-title' } });
     const pairHost = el('section', { className: 'tj-popup__pair', attrs: { 'aria-labelledby': 'tj-pair-title' }, children: [pairTitle, pairSkeleton()] });
+    // ف5: «الصق الترجمة هنا» لمن يعيد نموذجه النص في المحادثة لا ملفًا. اللصق بحدث اللصق في الحقل وحده: لا إذن قراءة الحافظة
+    // ولا قراءة برمجية لها. النص يُرسل إلى صفحة الفيديو فيمر بخط الرفع نفسه (الفحص والمقارنة والتأكيد).
+    const pasteArea = el('textarea', {
+      className: 'tj-field__input tj-popup__paste-input',
+      attrs: { id: 'tj-paste', rows: '2', placeholder: t('popup.paste.placeholder'), 'aria-describedby': 'tj-paste-hint tj-paste-status', spellcheck: 'false', autocomplete: 'off' },
+    });
+    const pasteStatus = el('p', { className: 'tj-popup__pair-caption', attrs: { id: 'tj-paste-status', 'aria-live': 'polite' } });
+    const pasteHost = el('section', {
+      className: 'tj-popup__pair tj-popup__paste', attrs: { 'aria-labelledby': 'tj-paste-label' },
+      children: [
+        el('label', { className: 'tj-popup__eyebrow', text: t('popup.paste.label'), attrs: { id: 'tj-paste-label', for: 'tj-paste' } }),
+        pasteArea,
+        el('p', { className: 'tj-popup__pair-note', text: t('popup.paste.hint'), attrs: { id: 'tj-paste-hint' } }),
+        pasteStatus,
+      ],
+    });
+    pasteHost.hidden = true;
     const stepsHost = el('div', { className: 'tj-popup__guide' });
     const diagHost = el('div', { className: 'tj-popup__diag-host' });
     const recentTitle = el('span', { className: 'tj-popup__eyebrow', text: t('popup.recent') });
     recentTitle.hidden = true;
     const recentHost = el('div', { className: 'tj-popup__recent' });
-    main.append(eyebrow, card, entryHost, pairHost, stepsHost, diagHost, recentTitle, recentHost, notice);
+    main.append(eyebrow, card, entryHost, pairHost, pasteHost, stepsHost, diagHost, recentTitle, recentHost, notice);
     app.append(main);
     // مدخل واحد لكل وجهة، ولا ينتظر حالة الفيديو (قد تتأخر حتى مهلتها إن علق سكربت المحتوى). المحفوظات تُفتح على صف الفيديو
     // الحالي إن كان محفوظًا (تُعرف بعد الرد).
@@ -212,6 +229,25 @@ startPage({
       return paintPair();
     }
 
+    // الكتابة في الحقل لا تُرسل شيئًا: اللصق وحده.
+    pasteArea.addEventListener('input', () => { pasteArea.value = ''; });
+    pasteArea.addEventListener('paste', async (ev) => {
+      ev.preventDefault();
+      const videoId = reply?.watch && !reply.loading ? reply.videoId : null;
+      if (!videoId) return;
+      const text = ev.clipboardData?.getData('text/plain') ?? '';
+      pasteStatus.setAttribute('data-tone', 'neutral');
+      pasteStatus.textContent = '';
+      const r = await sendPaste({ videoId, text });
+      if (r.ok) {
+        pasteStatus.setAttribute('data-tone', 'success');
+        pasteStatus.textContent = t('popup.paste.sent');
+        return;
+      }
+      pasteStatus.setAttribute('data-tone', 'danger');
+      pasteStatus.textContent = ['empty', 'tooLarge', 'failed'].includes(r.code) ? t(`popup.paste.${r.code}`) : messageFor(r.code);
+    });
+
     function paintSteps() {
       stepsHost.replaceChildren();
       // فيديو بلا ترجمة: ثلاث خطوات، والأولى منجزة بتنزيل الأصل فعلًا لا بالتقاطه، بالزوج المختار.
@@ -261,6 +297,8 @@ startPage({
       }
       card.replaceWith(next);
       card = next;
+      // حقل اللصق لصفحة فيديو استقر ردها وأدوات المشغّل فيها مركّبة.
+      pasteHost.hidden = !(reply?.watch && !reply.loading && reply.mounted?.controls === 'mounted');
       if (focused) card.querySelector(`[data-action="${focused}"]`)?.focus();
       diagHost.replaceChildren();
       // «جارٍ القراءة»: هيكل الكتلة حتى يستقر الرد (لوحة 09، الحالة 6)، فلا يُعرض زوج قبل معرفة مسار الفيديو.

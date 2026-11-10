@@ -46,6 +46,7 @@ export default Object.freeze({
     saveNew: 'New',
     saveNewLabel: 'Save as a new translation',
     savesAsNew: 'Saves as a new translation',
+    pastedName: 'Pasted text',
     completeOption: 'Complete {n}',
     completeOptionLabel: 'Complete translation {n} with this file’s segments',
     completeLine: 'Continues translation {n}: adds {adds} in their places.',

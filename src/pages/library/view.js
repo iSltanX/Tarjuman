@@ -11,6 +11,7 @@ import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { getDir, joinList, t as tr } from '../../i18n/index.js';
+import { MAX_PASTE_CHARS } from '../../core/model/messages.js';
 
 /** تعذّرت قراءة التفضيلات: الافتراضي، لكن بلا صور (لا طلب خارجي ما لم يُعرف أن المستخدم يريده؛ مراجعة الهوية L9). */
 const PREFS_UNREADABLE = Object.freeze({ ...DEFAULT_PREFS, ui: Object.freeze({ ...DEFAULT_PREFS.ui, thumbnails: false }) });
@@ -330,10 +331,45 @@ export function createLibrary(env) {
    * الرفع إلى خانة (حوار الفحص الكامل): المنتقي، ثم القراءة والفحص، ثم الحوار، ثم الكتابة بالحزمة التي بُني عليها. يعيد هل كُتب.
    * @param {{ videoId: string, displayTitle: string }} m @param {1 | 2 | 3 | null} [preferred]
    */
-  async function upload(m, preferred = null) {
+  /**
+   * «لصق ترجمة…» (ف5): حوار بحقل يُلصق فيه رد النموذج (حدث اللصق وحده، لا قراءة للحافظة)، ثم خط الرفع نفسه بملف من النص بلا
+   * رمز لغة في اسمه (فاللغة من «إلى» كما في الرفع).
+   */
+  async function paste(m, preferred = null) {
+    let text = '';
+    const area = el('textarea', { className: 'tj-field__input lib-paste__input', attrs: { id: `lib-paste-${m.videoId}`, rows: '4', placeholder: tr('library.paste.placeholder'), spellcheck: 'false', autocomplete: 'off' }, doc });
+    const content = el('div', {
+      className: 'tj-field lib-paste',
+      children: [
+        el('label', { className: 'tj-field__label', text: tr('library.paste.label'), attrs: { for: area.getAttribute('id') }, doc }),
+        area,
+        el('span', { className: 'tj-field__hint', text: tr('library.paste.hint'), doc }),
+      ],
+      doc,
+    });
+    area.addEventListener('input', () => { area.value = ''; });
+    area.addEventListener('paste', (ev) => {
+      ev.preventDefault();
+      text = ev.clipboardData?.getData('text/plain') ?? '';
+      if (text.trim()) area.closest?.('dialog')?.close?.('confirm');
+    });
+    const ok = await confirm({ title: tr('library.paste.title', { title: isolate(clip(m.displayTitle, 80)) }), confirmLabel: tr('library.paste.next'), content, doc });
+    if (!ok) return false;
+    if (!text.trim()) {
+      toaster.show(tr('library.paste.empty'), 'danger');
+      return false;
+    }
+    if (text.length > MAX_PASTE_CHARS) {
+      toaster.show(tr('library.paste.tooLarge'), 'danger');
+      return false;
+    }
+    return upload(m, preferred, [new File([text], tr('library.paste.name'), { type: 'text/plain' })]);
+  }
+
+  async function upload(m, preferred = null, given = null) {
     let wrote = false;
     await guarded(async () => {
-      const files = await env.pickFiles();
+      const files = given ?? await env.pickFiles();
       if (!files || !files.length) return;
       const prep = await prepareUpload({ store, videoId: m.videoId, files, knownVideoIds: state.entries.map((e) => e.videoId) });
       if (!prep.result.ok) {
@@ -678,6 +714,7 @@ export function createLibrary(env) {
         { id: 'study', label: tr('library.rowAction.study'), icon: 'file', disabledReason: studyGate(entry), onSelect: () => study(m, entry) },
         { kind: 'separator' },
         { id: 'upload', label: tr('library.rowAction.upload'), icon: 'upload', onSelect: () => upload(m) },
+        { id: 'paste', label: tr('library.rowAction.paste'), icon: 'copy', onSelect: () => paste(m) },
         { id: 'copy', label: tr('library.rowAction.copyInstructions'), icon: 'copy', hint: tr('library.view.copyTip'), disabledReason: gate.enabled ? null : gate.reason, onSelect: () => copyInstructions(m, entry) },
         { kind: 'separator' },
         ...(m.hasArabic ? [{ id: 'delete-active', label: tr('library.rowAction.deleteActive'), tone: /** @type {const} */ ('danger'), icon: 'trash', onSelect: () => removeData(m, 'arabic') }] : []),

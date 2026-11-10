@@ -1,4 +1,4 @@
-// ف3 (2026-11-10) في حوار «رفع ترجمة» بالمحفوظات: ترجمة مقتطعة (4 من 8) ثم الجزء الثاني بأرقامه: الافتراضي «إكمال الترجمة 1»
+// ف3 (2026-11-10) في حوار «رفع ترجمة» بالمحفوظات، وف5 «لصق ترجمة…» في آخره: ترجمة مقتطعة (4 من 8) ثم الجزء الثاني بأرقامه: الافتراضي «إكمال الترجمة 1»
 // بسطر ما يضيفه، و«حفظ» يُكمل الترجمة نفسها بنسخة حالية وملاحظة. وترجمة كاملة ثانية: لا خيار إكمال، والافتراضي «جديدة».
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -71,4 +71,43 @@ test('ترجمة كاملة ثانية: لا خيار إكمال، ويُحفظ 
   const b = await m.store.getBundle(ID);
   assert.equal(b.slots[1].track?.original.length, 8, 'ترجمة ثانية');
   assert.equal(b.slots[0].track.current, null, 'الأولى كما هي');
+});
+
+test('ف5: «لصق ترجمة…» بحقل يُلصق فيه، ثم حوار الرفع نفسه، ويُحفظ النص الملصوق ترجمةً', async () => {
+  let t = Date.parse(NOW);
+  const area = createMemoryArea({ unlimited: true });
+  const store = createStore({ area, now: () => (t += 1000) });
+  await store.updateVideo(ID, () => ({ ...videoRecord({ videoId: ID, arabic: false }), title: 'محاضرة' }));
+  await store.getSettings();
+  await area.flush();
+  const doc = newDocument();
+  const text = AR.map((c) => `${c.n}\n${ts(c.startMs)} --> ${ts(c.endMs)}\n${c.text}\n`).join('\n');
+  const dialogs = [];
+  let picked = 0;
+  const lib = createLibrary({
+    store, doc, now: () => Date.parse(NOW) + 60000,
+    openTab: async () => {}, openPage: async () => {}, saveFile: async () => ({ ok: true }), clipboardWrite: async () => {},
+    pickFiles: async () => { picked++; return null; }, diagnosticsText: async () => '{}',
+    confirm: async (o) => {
+      dialogs.push(o.title);
+      const field = findAll(o.content, (e) => e.tagName === 'textarea')[0];
+      if (field) {
+        field.dispatchEvent({ type: 'paste', clipboardData: { getData: (type) => (type === 'text/plain' ? text : '') }, preventDefault() {} });
+      }
+      return true;
+    },
+    setTimer: () => 0, clearTimer: () => {},
+  });
+  doc.body.append(lib.root);
+  await lib.load();
+  const more = buttonNamed(lib.root, 'المزيد: محاضرة');
+  more.click();
+  more.parentNode.querySelectorAll('[role=menuitem]').find((i) => textOf(i).startsWith('لصق ترجمة')).click();
+  await settle(30);
+  assert.equal(picked, 0, 'لا منتقي ملفات');
+  assert.match(dialogs[0], /^لصق ترجمة: /);
+  assert.equal(dialogs.length, 2, 'حوار اللصق ثم حوار الرفع');
+  const b = await store.getBundle(ID);
+  assert.equal(b.slots[0].track.original.length, 8);
+  assert.equal(b.slots[0].track.fileName, 'نص ملصوق');
 });

@@ -169,6 +169,7 @@ export default Object.freeze({
     addText: '{n} · فارغة',
   },
   rowAction: {
+    paste: 'لصق ترجمة…',
     complete: 'أكمل الناقص ({n})',
     completeAria: 'أكمل الناقص ({n}) في {title}',
     completeTitle: 'يفتح المحرّر على «الاستكمال» والمقاطع الناقصة مختارة',
@@ -219,6 +220,16 @@ export default Object.freeze({
     mdHint: 'بروابط الأوقات إلى الفيديو.',
   },
   thumb: { duration: 'المدة ' },
+  paste: {
+    title: 'لصق ترجمة: {title}',
+    label: 'الصق الترجمة هنا',
+    hint: 'الصق رد النموذج كما هو (SRT أو نص المحادثة): يُفحص كما يُفحص الملف المرفوع، ثم تختار أين يُحفظ.',
+    placeholder: 'الصق هنا (⌘V أو Ctrl+V)',
+    next: 'متابعة',
+    name: 'نص ملصوق',
+    empty: 'لا نص في ما لصقته.',
+    tooLarge: 'النص الملصوق أكبر من حد الرفع (5 م.ب).',
+  },
   upload: {
     newOne: 'جديدة',
     newAria: 'جديدة — حفظ كترجمة جديدة',

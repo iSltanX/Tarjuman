@@ -2,7 +2,7 @@
 // وتشخيص الصفحة (أعداد ورموز)، والقفز إلى زمن في الفيديو المعروض وحده. لا يُقبل شيء إلا من صفحة في الإضافة نفسها،
 // والقفز لا يغيّر إلا الزمن. ما عدا ذلك تغيّره الصفحات في التخزين، والمتحكم يسمع تغيّره.
 import {
-  MESSAGE_VERSION, buildVideoStateReply, isExtensionPage, isPageDiagnosticsRequest, isSeekRequest, isVideoIdRequest, isVideoStateRequest, MSG,
+  MESSAGE_VERSION, buildVideoStateReply, isExtensionPage, isPageDiagnosticsRequest, isPasteImportRequest, isSeekRequest, isVideoIdRequest, isVideoStateRequest, MSG,
 } from '../core/model/messages.js';
 import { seekMainVideo } from '../player/youtube-dom.js';
 
@@ -67,6 +67,16 @@ export function installMessageHandler({ controller, mounted, runtime = globalThi
       else if (req.videoId !== s.videoId) sendResponse({ v: MESSAGE_VERSION, ok: false, code: 'TJ_WRONG_VIDEO' });
       else if (!seek(req.ms)) sendResponse({ v: MESSAGE_VERSION, ok: false, code: 'TJ_SEEK_FAILED' });
       else sendResponse({ v: MESSAGE_VERSION, ok: true, ms: req.ms });
+    } else if (req && typeof req === 'object' && req.type === MSG.pasteImport) {
+      // ف5: النص الملصوق في نافذة الإضافة يدخل خط الرفع نفسه في المشغّل، للفيديو المعروض وحده.
+      const s = controller.getState();
+      if (!isPasteImportRequest(req)) sendResponse({ v: MESSAGE_VERSION, ok: false, code: 'TJ_BAD_MESSAGE' });
+      else if (!s.videoId) sendResponse({ v: MESSAGE_VERSION, ok: false, code: 'TJ_NO_VIDEO' });
+      else if (req.videoId !== s.videoId) sendResponse({ v: MESSAGE_VERSION, ok: false, code: 'TJ_WRONG_VIDEO' });
+      else {
+        const r = safe(() => mounted.controls?.importText?.(req.text)) ?? { ok: false, code: 'TJ_RELOAD_PAGE' };
+        sendResponse(r.ok ? { v: MESSAGE_VERSION, ok: true } : { v: MESSAGE_VERSION, ok: false, code: r.code });
+      }
     }
     return undefined;
   };

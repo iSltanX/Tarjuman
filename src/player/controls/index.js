@@ -182,6 +182,12 @@ export function mountControls(controller, deps = {}) {
       state = 'stub';
     },
 
+    /**
+     * ف5: نص ملصوق في نافذة الإضافة إلى خط الرفع نفسه (فحص ومقارنة وتأكيد في قائمة الترجمة). يعيد البدء أو سبب تعذّره.
+     * @param {string} text @returns {{ ok: true } | { ok: false, code: string }}
+     */
+    importText: (text) => (session ? session.importText(text) : { ok: false, code: 'TJ_RELOAD_PAGE' }),
+
     /** أعداد ورموز فقط: لا نص مقاطع ولا أسماء ملفات ولا روابط (R36). */
     diagnostics: () => ({
       state, attempts, failures, lastCode: lastError?.code ?? null, lastDetail: lastError?.detail ?? null,

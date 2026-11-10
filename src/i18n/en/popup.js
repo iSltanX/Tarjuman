@@ -44,6 +44,15 @@ export default Object.freeze({
     hidden: 'Synced transcript button is hidden', show: 'Show', done: 'The synced transcript button now appears on video pages.',
     showTitle: 'Shows the synced transcript button on video pages', group: 'Synced transcript button',
   },
+  paste: {
+    label: 'Paste the translation here',
+    hint: 'Paste the model’s reply as it is (SRT or chat text): it’s checked like an uploaded file, and its result shows in the Translation menu on the video page.',
+    placeholder: 'Paste here (⌘V or Ctrl+V)',
+    sent: 'Sent to the video page: see the result in the Translation menu.',
+    empty: 'There’s no text in what you pasted.',
+    tooLarge: 'The pasted text is larger than the upload limit (5 MB).',
+    failed: 'Couldn’t send the text to the video page. Reload the page, then paste again.',
+  },
   pair: {
     title: 'Translation instructions', copy: 'Copy instructions', copied: 'Instructions copied', failed: 'Couldn’t copy — try again',
     detected: 'Original language detected from the video’s subtitles.',

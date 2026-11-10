@@ -369,7 +369,7 @@ test('تصدير SRT من «المزيد»: قائمة بأسباب التعطي
   assert.equal(menuButton.getAttribute('aria-expanded'), 'true');
   const items = menuItems(menuButton);
   // «الترجمات…» حذفت: صارت بطاقات في الصف نفسه (التوسيع).
-  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الترجمة — النسخة المرفوعة', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'رفع ترجمة…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
+  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الترجمة — النسخة المرفوعة', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'رفع ترجمة…', 'لصق ترجمة…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
   assert.equal(items[1].getAttribute('aria-disabled'), 'true');
   assert.equal(textOf(items[1].querySelector('.tj-menu__hint')), 'لم تُعدَّل الترجمة، فالنسخة المرفوعة هي الحالية.');
   assert.ok(items.slice(-2).every((i) => i.classList.contains('tj-menu__item--danger')), 'الحذفان بلون الخطر');

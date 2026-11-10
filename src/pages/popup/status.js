@@ -10,7 +10,9 @@ import { getLocale, t, texts } from '../../i18n/index.js';
 import { isSourceLang, parseTrackKey } from '../../core/model/ids.js';
 import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 import { pairLabel } from '../../ui/lang.js';
-import { MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest } from '../../core/model/messages.js';
+import {
+  MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest, MAX_PASTE_CHARS, isPasteImportReply, pasteImportRequest,
+} from '../../core/model/messages.js';
 import { relativeTime } from '../library/model.js';
 import { notVideoText } from './view.js';
 
@@ -420,3 +422,24 @@ export function copyArgs({ reply, pair, glossary }) {
  * @param {E[]} entries @param {number} [limit]
  */
 export const recentEntries = (entries, limit = RECENT_LIMIT) => entries.slice().sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0)).slice(0, limit);
+
+/**
+ * ف5: النص الملصوق في حقل النافذة إلى صفحة الفيديو المفتوحة (عقد messages). لا قراءة للحافظة برمجيًا: النص من حدث اللصق وحده.
+ * @param {{ videoId: string, text: string }} p
+ * @param {{ tabs?: typeof chrome.tabs, timeoutMs?: number }} [env]
+ * @returns {Promise<{ ok: true } | { ok: false, code: string }>}
+ */
+export async function sendPaste({ videoId, text }, { tabs = globalThis.chrome?.tabs, timeoutMs = REPLY_TIMEOUT_MS } = {}) {
+  if (!text || !text.trim()) return { ok: false, code: 'empty' };
+  if (text.length > MAX_PASTE_CHARS) return { ok: false, code: 'tooLarge' };
+  try {
+    const [tab] = await withTimeout(tabs.query({ active: true, lastFocusedWindow: true }), timeoutMs);
+    if (!tab || tab.id === undefined) return { ok: false, code: 'failed' };
+    const r = await withTimeout(tabs.sendMessage(tab.id, pasteImportRequest(videoId, text)), timeoutMs);
+    if (!isPasteImportReply(r)) return { ok: false, code: 'failed' };
+    return r.ok ? { ok: true } : { ok: false, code: r.code };
+  } catch {
+    return { ok: false, code: 'failed' };
+  }
+}
+

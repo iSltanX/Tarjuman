@@ -23,6 +23,8 @@ export const CODE_RULES = Object.freeze([
   { id: 'network-channel', re: /\b(?:sendBeacon|WebSocket|EventSource|RTCPeerConnection|WebTransport)\b|\bnew\s+(?:Request|Image)\s*\(/, msg: 'قنوات شبكة ممنوعة' },
   { id: 'web-storage', re: /\b(?:localStorage|sessionStorage|indexedDB)\b/, msg: 'التخزين عبر src/core/store وحده (لا localStorage ولا IndexedDB)' },
   { id: 'console', re: /\bconsole\b/, msg: 'التسجيل في الكونسول ممنوع؛ الأخطاء برموز وتقرير التشخيص' },
+  // ف5 (2026-11-10): اللصق بحدث اللصق في الحقل وحده (event.clipboardData)؛ لا قراءة للحافظة برمجيًا ولا إذن بها.
+  { id: 'clipboard-read', re: /\bclipboard\s*(?:\?\.|\.)\s*read(?:Text)?\b|\bclipboardRead\b/, msg: 'قراءة الحافظة برمجيًا ممنوعة؛ اللصق بحدث اللصق في الحقل وحده' },
   {
     id: 'bracket-name',
     re: /\[\s*['"`](?:innerHTML|outerHTML|insertAdjacentHTML|setHTMLUnsafe|eval|fetch|sendBeacon|storage|downloads|write|writeln|XMLHttpRequest|constructor)['"`]\s*\]/,

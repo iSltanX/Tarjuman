@@ -164,6 +164,7 @@ export default Object.freeze({
     addText: '{n} · empty',
   },
   rowAction: {
+    paste: 'Paste a translation…',
     complete: 'Complete missing ({n})',
     completeAria: 'Complete missing ({n}) in {title}',
     completeTitle: 'Opens the editor on Completion with the missing segments selected',
@@ -214,6 +215,16 @@ export default Object.freeze({
     mdHint: 'With time links to the video.',
   },
   thumb: { duration: 'Duration ' },
+  paste: {
+    title: 'Paste a translation: {title}',
+    label: 'Paste the translation here',
+    hint: 'Paste the model’s reply as it is (SRT or chat text): it’s checked like an uploaded file, then you choose where to save it.',
+    placeholder: 'Paste here (⌘V or Ctrl+V)',
+    next: 'Continue',
+    name: 'Pasted text',
+    empty: 'There’s no text in what you pasted.',
+    tooLarge: 'The pasted text is larger than the upload limit (5 MB).',
+  },
   upload: {
     newOne: 'New',
     newAria: 'New — save as a new translation',

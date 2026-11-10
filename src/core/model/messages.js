@@ -14,6 +14,7 @@ export const MSG = Object.freeze({
   seek: 'tj:seek',
   saveFile: 'tj:save-file',
   store: 'tj:store',
+  pasteImport: 'tj:paste-import',
 });
 export const SAVE_REPLY_MODES = Object.freeze(['downloads', 'subfolder', 'ask']);
 
@@ -226,3 +227,23 @@ export const isStoreRequest = (req) => isTyped(req, MSG.store) && typeof req.wid
 
 /** @param {unknown} r رد الكاتب: { v, ok: true, value? } أو { v, ok: false, code, detail? } */
 export const isStoreReply = (r) => isPlainObject(r) && r.v === MESSAGE_VERSION && (r.ok === true || (r.ok === false && typeof r.code === 'string'));
+
+/**
+ * لصق ناتج النموذج من نافذة الإضافة إلى صفحة الفيديو (ف5، عقد messages): النص كما لصقه المستخدم في الحقل، للفيديو المعروض وحده.
+ * يمر في الصفحة بخط الاستيراد نفسه (الفحص والمقارنة والتأكيد وحد الحجم). لا يُقرأ من الحافظة شيء برمجيًا.
+ * @param {string} videoId @param {string} text
+ */
+export const pasteImportRequest = (videoId, text) => ({ type: MSG.pasteImport, v: MESSAGE_VERSION, videoId, text });
+
+/** حد النص الملصوق بالمحارف، كحد ملف الرفع بالبايت تقريبًا (5 م.ب). */
+export const MAX_PASTE_CHARS = 5 * 1024 * 1024;
+
+/** @param {unknown} req */
+export function isPasteImportRequest(req) {
+  return isTyped(req, MSG.pasteImport) && Object.keys(req).length === 4 && isVideoId(req.videoId)
+    && typeof req.text === 'string' && req.text.length > 0 && req.text.length <= MAX_PASTE_CHARS;
+}
+
+/** @param {unknown} r */
+export const isPasteImportReply = (r) => isPlainObject(r) && r.v === MESSAGE_VERSION && (r.ok === true || (r.ok === false && typeof r.code === 'string'));
+

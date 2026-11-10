@@ -243,3 +243,5 @@
   .lib-sort { margin-inline-start: 0; }
   .lib-quota { width: 100%; }
 }
+/* حقل «لصق ترجمة…» (ف5): لا يُكتب فيه، اللصق وحده. */
+.lib-paste__input { width: 100%; min-height: 96px; resize: vertical; font: 400 13px/20px var(--tj-font-body); }

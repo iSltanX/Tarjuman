@@ -71,6 +71,8 @@
 .tj-popup__pair-caption[data-tone="muted"] { color: var(--tj-muted); }
 .tj-popup__pair-caption[data-tone="success"] { color: var(--tj-success); }
 .tj-popup__pair-caption[data-tone="danger"] { color: var(--tj-danger); }
+/* حقل اللصق (ف5): بعرض الكتلة، لا يُكتب فيه (اللصق وحده). */
+.tj-popup__paste-input { width: 100%; min-height: 56px; resize: none; font: 400 13px/20px var(--tj-font-body); }
 .tj-popup__pair-skel { display: flex; flex-direction: column; gap: 10px; }
 .tj-popup__pair-skel-row { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); gap: 6px; align-items: center; }
 .tj-popup__pair-skel-row > .tj-skeleton { height: 40px; border-radius: var(--tj-radius-md); }

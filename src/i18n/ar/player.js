@@ -46,6 +46,7 @@ export default Object.freeze({
     saveNew: 'جديدة',
     saveNewLabel: 'حفظ كترجمة جديدة',
     savesAsNew: 'تُحفظ ترجمةً جديدة',
+    pastedName: 'نص ملصوق',
     completeOption: 'إكمال {n}',
     completeOptionLabel: 'إكمال الترجمة {n} بمقاطع هذا الملف',
     completeLine: 'تتمة للترجمة {n}: يضيف {adds} في مواضعها.',

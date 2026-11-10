@@ -132,6 +132,18 @@ chrome.runtime.sendMessage({ type: "tj:save-file", v: 1, file: { name: "iG9CE55w
 
 في Brave وChrome (`test/live/compat/`): رسالة الحفظ من المشغّل وصلت العامل الخلفي فحفظ بالوضع المخزَّن (`downloads` و`subfolder` و`ask`)؛ و`tj:seek` من صفحة الإضافة غيّر زمن الفيديو المعروض وحده ورُفض لمعرّف آخر بـ`TJ_WRONG_VIDEO`؛ ورد الحالة الموسّع حمل الخانات والالتقاط وحالة الأدوات، ونافذة الإصدار الأول (حزمة `tj-v1`) قرأت رد مشغّلها كما اعتادت.
 
+## ٧ب. خطة 2.2.0: لصق ناتج النموذج — `tj:paste-import` (ف5، بقرار سلطان 2026-11-10)
+
+```js
+chrome.tabs.sendMessage(tabId, { type: "tj:paste-import", v: 1, videoId: "iG9CE55wbtY", text: "1\n00:00:01,000 --> …" })   // pasteImportRequest(videoId, text)
+// ← { v: 1, ok: true } | { v: 1, ok: false, code: "TJ_BAD_MESSAGE" | "TJ_NO_VIDEO" | "TJ_WRONG_VIDEO" | "TJ_RELOAD_PAGE" | "CT_UPLOAD_BUSY" }
+```
+
+- **من نافذة الإضافة وحدها** (`isExtensionPage`)، والنص هو ما لصقه المستخدم في حقل «الصق الترجمة هنا» من حدث اللصق (`event.clipboardData`): لا إذن `clipboardRead` ولا قراءة للحافظة برمجيًا (قاعدة `clipboard-read` في `scripts/code-rules.mjs`).
+- `isPasteImportRequest`: أربعة مفاتيح بالضبط، ومعرّف صالح، ونص غير فارغ حتى `MAX_PASTE_CHARS` (5 م.ب محارف). وللفيديو المعروض وحده (`TJ_WRONG_VIDEO` لغيره).
+- الصفحة تمرره إلى `mounted.controls.importText(text)`: ملف بلا رمز لغة في اسمه («نص ملصوق») إلى خط الرفع نفسه (`readImport` بحد الحجم نفسه، والمقارنة، والتأكيد في قائمة الترجمة). والرد يقول إن الخط بدأ، لا نتيجته؛ والنتيجة في المشغّل.
+- المحفوظات لا تمر بهذه الرسالة: «لصق ترجمة…» يبني الملف في الصفحة نفسها ويمر بـ`prepareUpload`.
+
 ## ٨. الكاتب الواحد للتخزين — `tj:store` (C2، تدقيق 7a66f91، قرار سلطان Q15)
 
 صفحات الإضافة وسكربت المحتوى → العامل الخلفي. كل كتابة في التخزين (عقد التخزين §١٢)، والقراءة مباشرة بلا رسالة.
