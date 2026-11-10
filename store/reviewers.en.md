@@ -20,7 +20,7 @@ Test video (Cosmos Laundromat, Blender Foundation, CC BY, English captions): htt
 
 What it does not do: it does not download video or audio, and it never requests subtitle files itself. A main-world script at document_start wraps fetch and XMLHttpRequest to read a copy of the /api/timedtext response that the YouTube player requested when captions were turned on; it makes no request of its own and passes the page's call through unchanged.
 
-Network: only (a) video thumbnails in Library, loaded from i.ytimg.com by video ID (a setting turns them off), and (b) an optional problem report that the user writes and sends from Settings > About > "Report a problem", after a preview of every field. Its host, app-reports.isultantf.workers.dev, is an optional permission requested on the first send.
+Network: only video thumbnails in Library, loaded from i.ytimg.com by video ID (a setting turns them off). There is no Tarjuman server and no optional host permission: Settings > About > "Report a problem" shows every field, then copies the report as text for the user to email to the support address; the extension sends nothing.
 
 Arabic sample (test.ar.srt):
 12
@@ -75,7 +75,7 @@ Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3
 
 It downloads no video or audio and never requests subtitle files itself: a main-world script wraps fetch and XMLHttpRequest to read a copy of the /api/timedtext response the player requested, and passes the page's call through unchanged.
 
-Network: only Library thumbnails from i.ytimg.com by video ID (a setting turns them off), and an optional problem report the user sends from Settings after previewing it. Its host is an optional permission requested on the first send.
+Network: only Library thumbnails from i.ytimg.com by video ID (a setting turns them off). There is no Tarjuman server and no optional host permission: "Report a problem" in Settings copies the report as text for the user to email; the extension sends nothing.
 
 Privacy policy: https://bysltan.com/tarjuman/privacy. One policy covers every browser; where behavior differs it names Microsoft Edge. On Shorts and embedded players the buttons do not appear. On live streams in progress only extraction is refused.
 
@@ -102,10 +102,9 @@ Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3
 
 How subtitles are read: a main-world content script at document_start wraps fetch and XMLHttpRequest and reads a copy of the /api/timedtext response the YouTube player requested. It sends no request and passes the page's call through unchanged.
 
-Data (data_collection_permissions: required none; optional technicalAndInteraction, browsingActivity):
+Data (data_collection_permissions: required none; optional browsingActivity):
 - Library thumbnails from i.ytimg.com by video ID: off in Firefox until the user turns them on in Settings, which requests browsingActivity.
-- Problem report from Settings > About > "Report a problem": sent only when the user presses send after a full preview; requests the optional host permission app-reports.isultantf.workers.dev and, in Firefox, technicalAndInteraction if it was not already granted in the install prompt. Nothing is attached automatically beyond the shown diagnostics: no subtitle text, video ID or account. The description is sent verbatim. As with any extension request, the browser adds User-Agent, Accept-Language and an Origin header with the extension origin (in Firefox, the per-install moz-extension UUID).
-- Why technicalAndInteraction and not personalCommunications: the report is a problem report about Tarjuman (the user's description of the problem plus the shown browser, OS and extension versions) sent only to the developer, which matches "crash and error reports"; it is not a message between people. The Chrome and Edge dashboards disclose the same field conservatively as personal communications.
+- Problem report from Settings > About > "Report a problem": copied as text after a full preview, for the user to email to the support address. The extension sends nothing and has no optional host permission. Since 2.2.0 technicalAndInteraction is no longer declared, because no report leaves the extension.
 Everything else stays in storage.local.
 
 Arabic sample (test.ar.srt):
@@ -132,8 +131,7 @@ Arabic sample (test.ar.srt):
 | المقارنة لا تعدّل بصمت | `docs/contracts/data-model.md` §٥ |
 | غلافا fetch وXHR يقرآن الرد ولا يطلبان | `src/main-world/capture.js` |
 | `blob:` في Firefox | `test/live/stores/t3.mjs` (`3d6a800`) |
-| الصور والبلاغ وموافقتا Firefox | `docs/site/privacy.md` وجدول أدلته، و`scripts/targets.mjs` |
+| الصور وموافقة Firefox الواحدة، والبلاغ بلا إرسال | `docs/site/privacy.md` وجدول أدلته، و`scripts/targets.mjs`، و`src/pages/settings/report.js` |
 | إعادة البناء بايتًا | `scripts/release/store.mjs` (الطريقة)، و`release/store/tarjuman-2.1.2-store.json` (`source.reproduced`) |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
 | سياسة واحدة تسمّي Edge حيث يختلف السلوك، والصور مفعّلة افتراضيًا فيه بمفتاح في الإعدادات | `docs/site/privacy.md` (أسطر «في Chrome وEdge وBrave»)، و`src/core/model/prefs.js` (`ui.thumbnails: true`)، و`src/pages/settings/view.js`؛ والبند 1.5.2 من [سياسات مطوري Edge](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (قُرئ 2026-11-05) |
-| البلاغ من «تقارير الأعطال والأخطاء» لا من الاتصالات الشخصية | تعريفا `technicalAndInteraction` و`personalCommunications` في [Built-in data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) (قُرئ 2026-11-05)، و`src/core/report/payload.js`، و`submission.md` §٤ |

@@ -9,6 +9,7 @@ import { BROWSERS, PROFILE_ROOT, launch, loadExtension, sleep } from '../harness
 import { FONT_READ_LOG, collectErrors, openTab } from '../harness/extension.mjs';
 import { BidiPage, FIREFOX, launchFirefox, testPrefs } from '../harness/bidi.mjs';
 
+/** مضيف خادم البلاغات قبل و1 (2.2.0): يُحجب ويُعدّ كل طلب إليه حارسًا، والمنتظر صفر. */
 export const REPORTS_HOST = 'app-reports.isultantf.workers.dev';
 export const GECKO_ID = 'tarjuman@bysltan.com';
 export const APPS = { ...BROWSERS, firefox: FIREFOX };

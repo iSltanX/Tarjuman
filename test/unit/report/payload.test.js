@@ -1,4 +1,4 @@
-// «الإبلاغ عن مشكلة» (جولة النشر T2.1): الجسم بعقد app-reports v1 حرفًا، وسقوفه، وتضييق التشخيص، والمعاينة لكل حقل، ونسخه.
+// «الإبلاغ عن مشكلة» (جولة النشر T2.1، ونسخ وحده منذ و1): الجسم بشكل عقد app-reports v1 حرفًا، وسقوفه، وتضييق التشخيص، والمعاينة لكل حقل، ونسخه.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { KIND_LABELS, LIMITS, PRODUCT_ID, REPORT_KINDS, buildPayload, diagnosticsOf, formError, reviewRows, serialise } from '../../../src/core/report/payload.js';

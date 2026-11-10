@@ -1,5 +1,5 @@
-// تدقيق 7a66f91، المرحلة C7 (صفحة الإعدادات): نموذج البلاغ لا يعيد عقد role=alert مع كل حرف (U52) ولا يضع فقرة ابنًا لـdl
-// (U58) والنسخ يعمل أثناء الإرسال (U59)، والاستعادة تقول حال كل قسم وتعيد المتعذّر وحده (U54)، والمسح يُقال نجاحه وما تعذّر
+// تدقيق 7a66f91، المرحلة C7 (صفحة الإعدادات): نموذج البلاغ لا يعيد عقد النتيجة مع كل حرف (U52) ولا يضع فقرة ابنًا لـdl
+// (U58) ونسخ البلاغ ونسخ البريد مستقلان (U59، بعد و1)، والاستعادة تقول حال كل قسم وتعيد المتعذّر وحده (U54)، والمسح يُقال نجاحه وما تعذّر
 // بعده (U56)، والنسخة الجزئية والكبيرة برسالتيهما (U94، U55)، والفتح الأول لا يكتب جزء العنوان (U57)، وزرّا «استعادة الافتراضي»
 // باسمين، والقاموس لا يُعاد بناؤه بلا تغيير ويحفظ التركيز (U58)، و«مخصص» يزول بالاستعادة (U59)، وأسماء المفاتيح بتسمية صفها (U87).
 import { test } from 'node:test';
@@ -50,15 +50,14 @@ const checkbox = (root, label) => findAll(root, (e) => e.tagName === 'input' && 
 const asFile = (text) => ({ size: text.length, text: async () => text });
 const markText = (root) => findAll(root, (e) => e.classList.contains('tj-saved')).map(textOf).filter(Boolean);
 
-function reportHarness({ send } = {}) {
+function reportHarness({ copy } = {}) {
   const doc = newDocument();
   const copies = [];
   const panel = reportPanel({
     doc,
     env: {
-      diagnostics: async () => DIAG, requestPermission: () => Promise.resolve(true),
-      send: send ?? (async () => ({ ok: false, failure: 'server', status: 500 })),
-      copy: async (t) => { copies.push(t); }, newKey: () => '00000001-0000-4000-8000-000000000000',
+      diagnostics: async () => DIAG,
+      copy: copy ?? (async (t) => { copies.push(t); }),
     },
   });
   doc.body.append(panel.root);
@@ -67,17 +66,17 @@ function reportHarness({ send } = {}) {
   return { doc, panel, type, copies, root: panel.root };
 }
 
-test('U52: بعد فشل الإرسال لا تُدرج عقدة role=alert جديدة مع كل حرف، وسطر الأسرار لا يُعاد كتابته', async () => {
-  const h = reportHarness();
+test('U52: بعد فشل النسخ لا تُدرج عقدة نتيجة جديدة مع كل حرف، وسطر الأسرار لا يُعاد كتابته', async () => {
+  const h = reportHarness({ copy: async () => { throw new Error('denied'); } });
   h.panel.open();
   await settle();
   h.type('وصف أول');
-  buttonNamed(h.root, 'إرسال البلاغ').click();
+  buttonNamed(h.root, 'نسخ البلاغ').click();
   await settle(5);
-  const failed = h.root.querySelector('.st-report__failed');
+  const failed = h.root.querySelector('[data-report-result="copy-failed"]');
   assert.ok(failed);
   for (const v of ['وصف أول ث', 'وصف أول ثا', 'وصف أول ثان']) h.type(v);
-  assert.ok(h.root.querySelector('.st-report__failed') === failed, 'العقدة نفسها');
+  assert.ok(h.root.querySelector('[data-report-result="copy-failed"]') === failed, 'العقدة نفسها');
   const secret = h.root.querySelector('.st-report__secret');
   h.type('sessionid=abcdef0123456789abcdef0123456789');
   const node = secret.childNodes[0];
@@ -88,7 +87,7 @@ test('U52: بعد فشل الإرسال لا تُدرج عقدة role=alert جد
 test('U58 (UI-03): قبل قراءة التشخيص وعند فشلها أبناء dl أزواجه وحدها، والحال فقرة خارجها', async () => {
   let release;
   const doc = newDocument();
-  const panel = reportPanel({ doc, env: { diagnostics: () => new Promise((r) => { release = r; }), requestPermission: () => Promise.resolve(true), send: async () => ({ ok: true, id: 1 }), copy: async () => {}, newKey: () => '00000001-0000-4000-8000-000000000000' } });
+  const panel = reportPanel({ doc, env: { diagnostics: () => new Promise((r) => { release = r; }), copy: async () => {} } });
   doc.body.append(panel.root);
   panel.open();
   await settle();
@@ -102,24 +101,18 @@ test('U58 (UI-03): قبل قراءة التشخيص وعند فشلها أبنا
   assert.equal(dl.hidden, false);
 });
 
-test('U59 (L-20): «نسخ البلاغ» يعمل أثناء الإرسال ويُقال، والانشغال على زر الإرسال وحده', async () => {
-  let finish;
-  const h = reportHarness({ send: () => new Promise((r) => { finish = r; }) });
+test('U59 (L-20) بعد و1: «نسخ البلاغ» و«نسخ البريد» مستقلان، نتيجة كلٍّ في موضعها ولا تمحو إحداهما الأخرى', async () => {
+  const h = reportHarness();
   h.panel.open();
   await settle();
   h.type('وصف');
-  buttonNamed(h.root, 'إرسال البلاغ').click();
+  buttonNamed(h.root, 'نسخ البلاغ').click();
   await settle(3);
-  const copy = buttonNamed(h.root, 'نسخ البلاغ');
-  assert.equal(copy.getAttribute('aria-busy'), 'false');
-  assert.equal(copy.hasAttribute('aria-disabled'), false);
-  copy.click();
+  buttonNamed(h.root, 'نسخ البريد').click();
   await settle(3);
-  assert.equal(h.copies.length, 1, 'نُسخ والإرسال جارٍ');
-  assert.match(textOf(h.root.querySelector('.st-report__result')), /يُرسل البلاغ…نُسخ البلاغ نصًّا\./);
-  finish({ ok: true, id: 7, replayed: false });
-  await settle(3);
-  assert.match(textOf(h.root.querySelector('.st-report__result')), /#7/);
+  assert.equal(h.copies.length, 2);
+  assert.match(textOf(h.root.querySelector('.st-report__result')), /نُسخ البلاغ نصًّا\./);
+  assert.match(textOf(h.root.querySelector('.st-report__email')), /نُسخ البريد\./);
 });
 
 test('U54: الاستعادة عبر الصفحة — تعذّر القاموس بعد نجاح الإعدادات يُقال بعينه، و«أعد المحاولة» لا تكتب الإعدادات ثانية', async () => {
@@ -261,33 +254,4 @@ test('U87: اسم كل مفتاح في «العرض» يبدأ بتسمية صف
   }
   const names = switches.map((s) => s.getAttribute('aria-labelledby').split(' ').map((id) => textOf(m.doc.getElementById(id))).join('، '));
   assert.ok(names.some((n) => n === 'زر النص المتزامن، يظهر في صفحات الفيديو'), names.join(' | '));
-});
-
-test('U59 (المراجعة المستقلة): نسخٌ بدأ أثناء الإرسال وانتهى بعده لا يكتب فوق نتيجة الإرسال', async () => {
-  let finishSend;
-  let finishCopy;
-  const doc = newDocument();
-  const panel = reportPanel({
-    doc,
-    env: {
-      diagnostics: async () => DIAG, requestPermission: () => Promise.resolve(true),
-      send: () => new Promise((r) => { finishSend = r; }), copy: () => new Promise((r) => { finishCopy = r; }),
-      newKey: () => '00000001-0000-4000-8000-000000000000',
-    },
-  });
-  doc.body.append(panel.root);
-  panel.open();
-  await settle();
-  const ta = panel.root.querySelector('textarea');
-  ta.value = 'وصف';
-  ta.dispatchEvent({ type: 'input' });
-  buttonNamed(panel.root, 'إرسال البلاغ').click();
-  await settle(3);
-  buttonNamed(panel.root, 'نسخ البلاغ').click();
-  await settle(3);
-  finishSend({ ok: true, id: 9, replayed: false });
-  await settle(3);
-  finishCopy();
-  await settle(3);
-  assert.match(textOf(panel.root.querySelector('.st-report__result')), /#9/, 'رقم البلاغ باقٍ');
 });

@@ -19,7 +19,7 @@ async function seeded() {
   return { area, store };
 }
 
-test('detectBrowser: الاسم والرقم الرئيسي فقط بكشف قناة البلاغ (Edge قبل Chrome، وFirefox باسمه؛ تدقيق 7a66f91، U53)', async () => {
+test('detectBrowser: الاسم والرقم الرئيسي فقط بكشف بلاغ المشكلة (Edge قبل Chrome، وFirefox باسمه؛ تدقيق 7a66f91، U53)', async () => {
   const brands = (...b) => ({ userAgentData: { brands: b.map(([brand, version]) => ({ brand, version })) }, userAgent: 'Mozilla/5.0 (X) Chrome/156.0.0.0 Safari/537.36' });
   assert.equal(await detectBrowser(brands(['Not.A/Brand', '99'], ['Chromium', '156'], ['Brave', '156']), {}), 'Brave 156');
   assert.equal(await detectBrowser(brands(['Not)A;Brand', '8'], ['Chromium', '156'], ['Google Chrome', '156']), {}), 'Chrome 156');

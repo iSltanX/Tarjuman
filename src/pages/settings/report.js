@@ -1,22 +1,18 @@
-// «الإبلاغ عن مشكلة» (جولة النشر T2.1): زر في قسم «حول» يفتح تحته نموذجًا. يختار المستخدم النوع (خلل أو اقتراح أو أخرى)
-// ويصف ما حدث (حتى 2000 محرف)، ويرى قبل الإرسال كل ما سيُرسل (الجسم المبني نفسه صفًّا صفًّا ونصه كاملًا)، ثم يرسله بنفسه.
-// أول ضغطة «أرسل البلاغ» تطلب إذن مضيف خادم البلاغات (وفي Firefox موافقة «البيانات التقنية والتفاعل») قبل أي انتظار. ولا طلب
-// قبل الضغطة، ولا إعادة تلقائية، ومحاولة واحدة في كل مرة. والنجاح يعرض رقم البلاغ مع نسخه، والفشل يتبع جدول الردود في العقد
-// بـ«أعد المحاولة» و«انسخ البلاغ»، والنسخ يعمل بلا شبكة. والطلب نفسه في src/core/report/client.js وحده.
+// «الإبلاغ عن مشكلة» (جولة النشر T2.1، وبلا خادم منذ و1 في 2.2.0، قرار سلطان ق3): زر في قسم «حول» يفتح تحته نموذجًا. يختار
+// المستخدم النوع (خلل أو اقتراح أو أخرى) ويصف ما حدث (حتى 2000 محرف)، ويرى كل ما يُرفق (الجسم المبني نفسه صفًّا صفًّا ونصه
+// كاملًا)، ثم «نسخ البلاغ» فيرسله بنفسه إلى بريد الدعم الظاهر تحته مع زر نسخه. لا يُرسل ترجمان شيئًا: لا خادم ولا طلب ولا إذن،
+// ولا يُفتح بريد ولا رابط تلقائيًا. والنسخ وحده يكتب في الحافظة، بضغطة المستخدم.
 import { getLocale, t } from '../../i18n/index.js';
 import { findSecrets } from '../../core/diagnostics/sanitize.js';
 import { personalHintText, personalHints } from '../../core/report/personal.js';
-import { REPORTS_ORIGIN, hostGranted, requestReportPermission, retryable, sendReport } from '../../core/report/client.js';
 import { collectDiagnostics } from '../../core/report/diagnostics.js';
-import { SUPPORT_EMAIL, failureText } from '../../core/report/messages.js';
+import { SUPPORT_EMAIL } from '../../core/report/messages.js';
 import { KIND_LABELS, LIMITS, REPORT_KINDS, buildPayload, formError, reviewRows, serialise } from '../../core/report/payload.js';
 import { button, el, ltr } from '../../ui/components.js';
-import { holdPage } from '../../ui/page-hold.js';
 import { segmented } from '../../ui/forms.js';
 
 /** عنوان اللوحة وزرها بلغة الواجهة الحالية. */
 export const reportLabel = () => t('settings.report.label');
-const REPORTS_HOST = new URL(REPORTS_ORIGIN).host;
 const promptOf = (kind) => t(`settings.report.prompts.${kind}`);
 /** أرقام لاتينية بلا فواصل آلاف في اللغتين. */
 const count = { format: (n) => new Intl.NumberFormat(`${getLocale()}-u-nu-latn`, { useGrouping: false }).format(n) };
@@ -24,20 +20,14 @@ const count = { format: (n) => new Intl.NumberFormat(`${getLocale()}-u-nu-latn`,
 /**
  * @typedef {{
  *   diagnostics?: () => Promise<import('../../core/report/payload.js').Diagnostics>,
- *   requestPermission?: (target: 'chromium' | 'firefox') => Promise<boolean>,
- *   send?: (payload: object, key: string) => Promise<import('../../core/report/client.js').SendOutcome>,
  *   copy?: (text: string) => Promise<void>,
- *   newKey?: () => string,
  * }} ReportEnv
  */
 
 /** المصادر الحية، تُقرأ عند الحاجة لا عند تركيب الصفحة. @returns {Required<ReportEnv>} */
 const liveEnv = () => ({
   diagnostics: () => collectDiagnostics(),
-  requestPermission: (target) => requestReportPermission(globalThis.chrome, target),
-  send: (payload, key) => sendReport(payload, key, { granted: () => hostGranted(globalThis.chrome) }),
   copy: (text) => globalThis.navigator.clipboard.writeText(text),
-  newKey: () => globalThis.crypto.randomUUID(),
 });
 
 /** @param {HTMLButtonElement} b @param {string | null} reason سبب التعطيل، أو null للتفعيل */
@@ -64,20 +54,11 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   /** @type {import('../../core/report/payload.js').Diagnostics | null} */
   let diag = null;
   let diagFailed = false;
-  let busy = false;
-  /**
-   * مفتاح عدم التكرار لهذا البلاغ بعينه: يُعاد في محاولاته بعد فشل، وجسم معدَّل يأخذ مفتاحًا جديدًا، والنجاح يختم البلاغ فيأخذ
-   * التالي مفتاحًا جديدًا ولو طابق وصفه الأول (عقد app-reports: مفتاح لكل بلاغ يُعاد في محاولاته وحدها).
-   */
-  let key = null;
-  let keyBody = null;
-  /** @type {null | { state: 'sent' | 'id-copied' | 'id-copy-failed', id: number } | { state: 'failed', failure: string, retryAfterSeconds?: number } | { state: 'copied' | 'copy-failed' }} */
+  /** @type {null | 'copied' | 'copy-failed'} نتيجة نسخ البلاغ */
   let outcome = null;
-  /** آخر فعل في منطقة النتيجة كان عليه التركيز (data-report-action): يعود إليه بعد إعادة رسمها إن بقي. */
-  let focusAction = null;
-  /** نتيجة نسخ أثناء الإرسال (النسخ لا يمس الشبكة فيعمل والإرسال جارٍ؛ تدقيق 7a66f91، U59 L-20). */
-  let copiedWhileBusy = null;
-  /** حال منطقة النتيجة المرسومة: تُعاد حين تتغير وحدها، لا مع كل حرف في الوصف (كانت role=alert تُدرج من جديد؛ U52). */
+  /** @type {null | 'copied' | 'copy-failed'} نتيجة نسخ البريد */
+  let emailOutcome = null;
+  /** حال منطقة النتيجة المرسومة: تُعاد حين تتغير وحدها، لا مع كل حرف في الوصف (U52). */
   let painted = null;
 
   const regionId = 'st-report';
@@ -116,9 +97,16 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   const rowsStatus = el('p', { className: 'tj-caption st-report__rows-status', doc });
   const json = el('pre', { className: 'st-report__json', attrs: { dir: 'ltr' }, doc });
 
-  const sendBtn = button({ label: t('settings.report.send'), variant: 'primary', doc, onClick: () => send() });
-  const copyBtn = button({ label: t('settings.report.copy'), variant: 'secondary', icon: 'copy', doc, onClick: () => copyReport() });
-  // tabindex=-1: يستقبل التركيز برمجيًا حين يزول الزر الذي كان عليه (renderResult)، ولا يدخل ترتيب Tab.
+  const copyBtn = button({ label: t('settings.report.copy'), variant: 'primary', icon: 'copy', doc, onClick: () => copyReport() });
+  // بريد الدعم ظاهرًا مع زر نسخه (ق3): لا رابط mailto ولا فتح بريد.
+  const emailBtn = button({ label: t('settings.report.copyEmail'), variant: 'ghost', size: 'sm', icon: 'copy', doc, onClick: () => copyEmail() });
+  emailBtn.setAttribute('data-report-action', 'copy-email');
+  const emailNote = el('span', { className: 'tj-caption', attrs: { role: 'status' }, doc });
+  const emailLine = el('div', {
+    className: 'st-report__email',
+    children: [el('p', { className: 'tj-body-sm', children: [t('settings.report.emailA'), ltr(SUPPORT_EMAIL, { doc }), t('settings.report.emailB')], doc }), el('div', { className: 'st-actions', children: [emailBtn, emailNote], doc })],
+    doc,
+  });
   const result = el('div', { className: 'st-report__result', attrs: { role: 'status', tabindex: '-1' }, doc });
 
   const region = el('div', {
@@ -146,23 +134,22 @@ export function reportPanel({ doc = document, env = {} } = {}) {
             doc,
           }),
           el('p', { className: 'tj-caption', text: t('settings.report.notAttached'), doc }),
-          el('p', { className: 'tj-caption st-report__permission', doc }),
         ],
         doc,
       }),
-      el('div', { className: 'st-actions', children: [sendBtn, copyBtn], doc }),
+      el('div', { className: 'st-actions', children: [copyBtn], doc }),
       result,
+      emailLine,
     ],
     doc,
   });
   region.hidden = true;
-  const permissionNote = region.querySelector('.st-report__permission');
 
   /** الجسم للمعاينة (بوصف مؤقت إن كان فارغًا)، أو null قبل قراءة التشخيص. */
   const preview = () => (diag ? buildPayload({ kind, description: text.trim() || '…' }, diag) : null);
-  /** لا يُرسل البلاغ ولا يُنسخ وفيه ما يشبه رمز جلسة أو ملف ارتباط أو توقيعًا (منقّي التشخيص نفسه؛ الروابط وحدها مسموحة). */
+  /** لا يُنسخ البلاغ وفيه ما يشبه رمز جلسة أو ملف ارتباط أو توقيعًا (منقّي التشخيص نفسه؛ الروابط وحدها مسموحة). */
   const secrets = () => [...new Set(findSecrets(text, ['url']).map((f) => f.type))];
-  /** سبب منع الإرسال والنسخ، أو null. */
+  /** سبب منع النسخ، أو null. */
   function blockedReason() {
     if (!diag) return t(diagFailed ? 'settings.report.diagFailed' : 'settings.report.diagReading');
     const error = formError({ kind, description: text });
@@ -172,89 +159,16 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     return null;
   }
 
-  /** زر في منطقة النتيجة باسم فعله، ليعود إليه التركيز بعد إعادة الرسم. */
-  const action = (name, opts) => {
-    const b = button({ doc, ...opts });
-    b.setAttribute('data-report-action', name);
-    return b;
-  };
-
-  /**
-   * إعادة الرسم تبدّل عقد النتيجة كلها. فإن كان التركيز فيها («أعد المحاولة» بلوحة المفاتيح مثلًا) لا يسقط إلى الصفحة: يعود إلى
-   * الفعل نفسه في الرسم الجديد إن وُجد، وإلا إلى منطقة النتيجة نفسها فيُقرأ ما فيها («يُرسل البلاغ…» ثم النتيجة).
-   */
   function renderResult() {
-    const state = JSON.stringify({ busy, outcome, copiedWhileBusy });
+    const state = JSON.stringify({ outcome, emailOutcome });
     if (state === painted) return;
     painted = state;
-    const active = doc.activeElement;
-    const inside = Boolean(active) && (active === result || result.contains(active));
-    if (inside && active !== result) focusAction = active.getAttribute?.('data-report-action') ?? null;
-    paintResult();
-    if (!inside) return;
-    const target = focusAction ? result.querySelector(`[data-report-action="${focusAction}"]`) : null;
-    (target ?? result).focus?.();
-  }
-
-  function paintResult() {
-    if (busy) {
-      const note = copiedWhileBusy ? el('p', { className: 'tj-caption', text: t(copiedWhileBusy === 'copied' ? 'settings.report.copied' : 'settings.report.copyFailed'), doc }) : null;
-      result.replaceChildren(el('p', { className: 'tj-body-sm', text: t('settings.report.sending'), doc }), ...(note ? [note] : []));
-      return;
-    }
-    if (!outcome) {
-      result.replaceChildren();
-      return;
-    }
-    if (outcome.state === 'sent' || outcome.state === 'id-copied' || outcome.state === 'id-copy-failed') {
-      const id = outcome.id;
-      const copyId = action('copy-id', { label: t('settings.report.copyId'), variant: 'ghost', size: 'sm', icon: 'copy', onClick: () => {
-        // فشل الحافظة (رفض أو غيابها) نتيجة ظاهرة لا صمت: الرقم ظاهر فوقه ليُنسخ باليد.
-        Promise.resolve().then(() => deps.copy(`#${id}`)).then(
-          () => { outcome = { state: 'id-copied', id }; render(); },
-          () => { outcome = { state: 'id-copy-failed', id }; render(); },
-        );
-      } });
-      const copyNote = outcome.state === 'id-copied'
-        ? el('span', { className: 'tj-caption', attrs: { 'data-report-copy': 'done' }, text: t('settings.report.idCopied'), doc })
-        : outcome.state === 'id-copy-failed'
-          ? el('span', { className: 'tj-caption st-report__copy-failed', attrs: { role: 'alert', 'data-report-copy': 'failed' }, text: t('settings.report.idCopyFailed'), doc })
-          : null;
-      result.replaceChildren(el('div', {
-        className: 'st-report__done', attrs: { 'data-report-result': 'sent' },
-        children: [
-          el('p', { className: 'tj-body-sm', children: [t('settings.report.sentA'), ltr(`#${id}`, { doc }), t('settings.report.sentB'), ltr(SUPPORT_EMAIL, { doc }), t('settings.report.sentC')], doc }),
-          el('div', { className: 'st-actions', children: [copyId, copyNote], doc }),
-        ],
-        doc,
-      }));
-      return;
-    }
-    if (outcome.state === 'failed') {
-      const again = retryable(outcome.failure);
-      result.replaceChildren(el('div', {
-        className: 'st-report__failed', attrs: { role: 'alert', 'data-report-result': 'failed', 'data-failure': outcome.failure },
-        children: [
-          el('p', { className: 'tj-body-sm', text: failureText(outcome.failure, outcome.retryAfterSeconds), doc }),
-          el('div', {
-            className: 'st-actions',
-            children: [
-              again ? action('retry', { label: t('settings.report.retry'), variant: 'secondary', icon: 'restore', onClick: () => send() }) : null,
-              action('copy', { label: t('settings.report.copy'), variant: 'secondary', icon: 'copy', onClick: () => copyReport() }),
-            ],
-            doc,
-          }),
-        ],
-        doc,
-      }));
-      return;
-    }
-    const copied = outcome.state === 'copied';
-    result.replaceChildren(el('p', {
-      className: 'tj-body-sm', attrs: { 'data-report-result': outcome.state },
-      text: t(copied ? 'settings.report.copiedNothingSent' : 'settings.report.copyFailed'),
+    result.replaceChildren(...(outcome ? [el('p', {
+      className: 'tj-body-sm', attrs: { 'data-report-result': outcome },
+      text: t(outcome === 'copied' ? 'settings.report.copied' : 'settings.report.copyFailed'),
       doc,
-    }));
+    })] : []));
+    emailNote.textContent = emailOutcome ? t(emailOutcome === 'copied' ? 'settings.report.emailCopied' : 'settings.report.emailCopyFailed') : '';
   }
 
   function render() {
@@ -278,16 +192,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     rowsStatus.hidden = Boolean(p);
     rowsStatus.textContent = p ? '' : t(diagFailed ? 'settings.report.diagFailed' : 'settings.report.diagReading');
     json.textContent = p ? serialise(p) : '';
-    const firefox = diag?.buildTarget === 'firefox';
-    permissionNote.textContent = t('settings.report.permission', { host: REPORTS_HOST, firefox });
-    const reason = blockedReason();
-    setDisabled(sendBtn, busy ? null : reason);
-    // النسخ يعمل أثناء الإرسال (لا يمس الشبكة)، فلا يبدو مفعّلًا ثم يسكت (U59 L-20)؛ والانشغال على زر الإرسال وحده.
-    setDisabled(copyBtn, reason);
-    sendBtn.setAttribute('aria-busy', busy ? 'true' : 'false');
-    copyBtn.setAttribute('aria-busy', 'false');
-    textarea.disabled = busy;
-    kinds.inputs.forEach((input) => { input.disabled = busy; });
+    setDisabled(copyBtn, blockedReason());
     renderResult();
   }
 
@@ -311,62 +216,27 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     trigger.setAttribute('aria-expanded', 'false');
   }
 
-  function send() {
-    if (busy || blockedReason()) return;
-    const target = diag.buildTarget === 'firefox' ? 'firefox' : 'chromium';
-    // الإذن أول ما في الضغطة قبل أي انتظار (المتصفح يرفض طلبه خارج فعل المستخدم).
-    const asked = deps.requestPermission(target);
-    const payload = buildPayload({ kind, description: text }, diag);
-    const body = serialise(payload);
-    if (body !== keyBody) {
-      key = deps.newKey();
-      keyBody = body;
-    }
-    const k = key;
-    busy = true;
-    outcome = null;
-    copiedWhileBusy = null;
-    render();
-    // إعادة التحميل أثناء الإرسال تُضيع رقم البلاغ أو سبب فشله.
-    const release = holdPage();
-    Promise.resolve(asked)
-      .then((granted) => (granted ? deps.send(payload, k) : { ok: false, failure: 'permission', status: null }))
-      .catch(() => ({ ok: false, failure: 'unexpected', status: null }))
-      .then((r) => {
-        busy = false;
-        if (r.ok) {
-          outcome = { state: 'sent', id: r.id };
-          // البلاغ التالي بلاغ جديد ولو طابق نصّه هذا: المفتاح لإعادة البلاغ نفسه بعد فشل، لا لما بعد النجاح (مراجعة T8).
-          key = null;
-          keyBody = null;
-          text = '';
-          textarea.value = '';
-        } else {
-          outcome = { state: 'failed', failure: r.failure, ...(r.retryAfterSeconds === undefined ? {} : { retryAfterSeconds: r.retryAfterSeconds }) };
-        }
-        render();
-        release();
-      });
-  }
-
   function copyReport() {
     if (blockedReason()) return;
     const body = serialise(buildPayload({ kind, description: text }, diag));
-    const during = busy;
-    // يُحسم بحال الإرسال لحظة انتهاء النسخ: نسخٌ بدأ أثناء الإرسال وانتهى بعده لا يكتب فوق نتيجة الإرسال (رقم البلاغ أو سبب
-    // فشله؛ ملاحظة المراجعة المستقلة)، وأثناءه يُقال تحت «يُرسل البلاغ…».
-    const settle = (state) => {
-      if (busy) copiedWhileBusy = state;
-      else if (!during) outcome = { state };
-      render();
-    };
-    Promise.resolve().then(() => deps.copy(body)).then(() => settle('copied'), () => settle('copy-failed'));
+    Promise.resolve().then(() => deps.copy(body)).then(
+      () => { outcome = 'copied'; render(); },
+      () => { outcome = 'copy-failed'; render(); },
+    );
+  }
+
+  function copyEmail() {
+    // فشل الحافظة نتيجة ظاهرة لا صمت: البريد ظاهر فوقه ليُنسخ باليد.
+    Promise.resolve().then(() => deps.copy(SUPPORT_EMAIL)).then(
+      () => { emailOutcome = 'copied'; render(); },
+      () => { emailOutcome = 'copy-failed'; render(); },
+    );
   }
 
   render();
   return {
     root: el('div', { className: 'st-report-host', children: [el('div', { className: 'st-actions', children: [trigger], doc }), region], doc }),
     open,
-    get state() { return { opened, kind, text, busy, key, outcome, diag }; },
+    get state() { return { opened, kind, text, outcome, emailOutcome, diag }; },
   };
 }

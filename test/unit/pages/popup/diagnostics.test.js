@@ -7,7 +7,7 @@ import { pageDiagnosticsRequest } from '../../../../src/core/model/messages.js';
 import { browserLabel as reportBrowserLabel, liveSources } from '../../../../src/core/report/diagnostics.js';
 import { attachedGlossary, captureLine, pageReport, queryPageDiagnostics, toolsStatus } from '../../../../src/pages/popup/status.js';
 
-/** كشف المتصفح في النافذة هو كشف قناة البلاغ نفسه (تدقيق 7a66f91، U53). */
+/** كشف المتصفح في النافذة هو كشف بلاغ المشكلة نفسه (تدقيق 7a66f91، U53). */
 const browserLabel = (nav) => reportBrowserLabel(liveSources({ nav, api: {} }));
 
 const reply = (over = {}) => ({

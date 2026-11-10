@@ -86,8 +86,8 @@ export async function outDirProblem(out, { root }) {
 }
 
 /**
- * إعدادات Gecko المعتمدة (قرار سلطان، store/README.md §٥). لا يُجمع شيء دون موافقة، فالمطلوب none؛ وقناة البلاغات (T2.1)
- * فئتها الاختيارية technicalAndInteraction (اسم المتصفح وإصداره والنظام في البلاغ)، تُطلب مع إذن مضيفها عند أول إرسال.
+ * إعدادات Gecko المعتمدة (قرار سلطان، store/README.md §٥). لا يُجمع شيء دون موافقة، فالمطلوب none. ومنذ و1 (2.2.0، ق3) لا قناة
+ * بلاغات، فلا technicalAndInteraction ولا إذن مضيف اختياري.
  * وصور المحفوظات تنقل معرّفات المحفوظات إلى i.ytimg.com (حكم T5 بتعريفات Mozilla، docs/site/README.md)، فتُعلن
  * browsingActivity اختيارية، ويطلبها مفتاح الصور عند تفعيله، والصور مطفأة حتى الموافقة (قرار سلطان 2026-11-04،
  * src/core/consent/thumbnails.js). فيبقى none صادقًا: لا يُجمع شيء دون موافقة.
@@ -97,7 +97,7 @@ export async function outDirProblem(out, { root }) {
 export const GECKO = Object.freeze({
   id: 'tarjuman@bysltan.com',
   strict_min_version: '144.0',
-  data_collection_permissions: Object.freeze({ required: Object.freeze(['none']), optional: Object.freeze(['technicalAndInteraction', 'browsingActivity']) }),
+  data_collection_permissions: Object.freeze({ required: Object.freeze(['none']), optional: Object.freeze(['browsingActivity']) }),
 });
 
 /**

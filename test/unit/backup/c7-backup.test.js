@@ -1,14 +1,12 @@
 // تدقيق 7a66f91، المرحلة C7 (النسخ الاحتياطي والتخزين وعميل البلاغ): حد واحد بالبايت للإنشاء والحفظ والقراءة (U55، Q28)،
 // والنسخة مع تابع تالف جزئية بعينها والأصل باقٍ (U94، Q29)، والاستعادة بحال كل قسم وإعادة المتعذّر وحده (U54)، والمسح يُقال
-// نجاحه وما تعذّر بعده نتيجةً (U56)، والقارئ لا يرمي لتداخل عميق ويجرّد محارف الاتجاه (U59)، وRetry-After بسقف والمهلة أثناء
-// قراءة الجسم «timeout» (U85).
+// نجاحه وما تعذّر بعده نتيجةً (U56)، والقارئ لا يرمي لتداخل عميق ويجرّد محارف الاتجاه (U59). واختبارات U85 (Retry-After
+// ومهلة الإرسال) حُذفت مع عميل الإرسال في و1 (2.2.0).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BACKUP_LIMITS, countData, createBackup, readBackup, retrySettings, runRestore, settingsFailureCode, sha256Hex } from '../../../src/core/backup/index.js';
 import { TjError, messageFor } from '../../../src/core/errors/index.js';
 import { utf8Length } from '../../../src/core/model/validate.js';
-import { RETRY_AFTER_MAX_S, parseRetryAfter, sendReport } from '../../../src/core/report/client.js';
-import { failureText } from '../../../src/core/report/messages.js';
 import { SAVE_LIMITS, validateSaveFile } from '../../../src/core/save/index.js';
 import { altsKey } from '../../../src/core/store/keys.js';
 import { migrate } from '../../../src/core/store/migrate.js';
@@ -175,39 +173,4 @@ test('U59 (L-13): محارف تجاوز الاتجاه تُجرَّد من ال�
   const rec = await fresh.getVideo(IDS[0]);
   assert.equal(rec.title, 'عنوان gnp.exe‏');
   assert.equal(rec.arabic.fileName, 'invoicetrs.srt');
-});
-
-test('U85: Retry-After بالثواني الصحيحة أو بتاريخ HTTP وحدهما وبسقف يوم، والنص بالساعات فوق الساعة', () => {
-  const now = Date.parse('2026-11-05T00:00:00Z');
-  assert.equal(parseRetryAfter('120', now), 120);
-  assert.equal(parseRetryAfter('1e308', now), undefined, 'ليس عددًا صحيحًا بالثواني');
-  assert.equal(parseRetryAfter('-1', now), undefined);
-  assert.equal(parseRetryAfter('99999999', now), RETRY_AFTER_MAX_S);
-  assert.equal(parseRetryAfter('Thu, 01 Jan 2099 00:00:00 GMT', now), RETRY_AFTER_MAX_S, 'كان «38 مليون دقيقة»');
-  assert.equal(parseRetryAfter('Thu, 05 Nov 2026 00:02:00 GMT', now), 120);
-  assert.match(failureText('rate-limited', 120), /بعد دقيقتين\.$/);
-  assert.match(failureText('rate-limited', 7200), /بعد ساعتين\.$/);
-  assert.match(failureText('rate-limited', RETRY_AFTER_MAX_S), /بعد 24 ساعة\.$/);
-  assert.match(failureText('rate-limited', 3 * 3600), /بعد 3 ساعات\.$/);
-});
-
-test('U85: انقضاء المهلة أثناء قراءة جسم الرد «timeout» لا «unexpected»', async () => {
-  const key = '123e4567-e89b-42d3-a456-426614174000';
-  const request = async (_url, init) => ({
-    status: 201,
-    headers: { get: () => null },
-    json: () => new Promise((_, reject) => init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))),
-  });
-  const r = await sendReport({}, key, { granted: async () => true, request, timeoutMs: 20 });
-  assert.deepEqual(r, { ok: false, failure: 'timeout', status: null });
-});
-
-test('U85 (المراجعة المستقلة): رد نهائي غير قابل للإعادة يبقى كما هو ولو انقضت المهلة بعده', async () => {
-  const key = '123e4567-e89b-42d3-a456-426614174000';
-  const request = async (_url, init) => {
-    await new Promise((r) => init.signal.addEventListener('abort', r));
-    return { status: 413, headers: { get: () => null }, json: async () => ({}) };
-  };
-  const r = await sendReport({}, key, { granted: async () => true, request, timeoutMs: 10 });
-  assert.equal(r.failure, 'too-large');
 });

@@ -36,9 +36,7 @@ downloads: Saves only the files the user asks for (the original SRT, exported tr
 
 <!-- field: reviewer.permission.host -->
 ```text
-Host access (content scripts on https://www.youtube.com/*): Required to add Tarjuman's buttons to the YouTube player, to read a copy of the subtitle response that the YouTube player itself requested when the user turned captions on (a document_start main-world script reads only /api/timedtext responses and makes no request of its own), and to draw the user's subtitles over the video. It also reads, from the player data already on the page, the list of caption languages the video offers (language, kind and name only, no URLs or tokens, no request, no track switching) to show how many other languages exist. It runs on no other site.
-
-Optional host permission https://app-reports.isultantf.workers.dev/*: Requested only when the user presses "Send report" in Settings > About > Report a problem, after a preview of every field that will be sent. It is the developer's problem-report endpoint (HTTPS, one JSON request, no credentials, no automatic retry). If the user declines, nothing is sent. It is not used for anything else.
+Host access (content scripts on https://www.youtube.com/*): Required to add Tarjuman's buttons to the YouTube player, to read a copy of the subtitle response that the YouTube player itself requested when the user turned captions on (a document_start main-world script reads only /api/timedtext responses and makes no request of its own), and to draw the user's subtitles over the video. It also reads, from the player data already on the page, the list of caption languages the video offers (language, kind and name only, no URLs or tokens, no request, no track switching) to show how many other languages exist. It runs on no other site. There is no optional host permission: "Report a problem" in Settings only copies the report as text for the user to email; the extension sends nothing.
 ```
 
 المعنى بالترتيب:
@@ -46,19 +44,19 @@ Optional host permission https://app-reports.isultantf.workers.dev/*: Requested 
 - **التخزين غير المحدود:** فيديو بساعتين نحو 0.7 م.ب، فالحد الافتراضي 10 م.ب يمتلئ بنحو خمسة عشر فيديو طويلًا فيفشل الحفظ ([`docs/contracts/storage.md`](../docs/contracts/storage.md) §٥). ولا يضيف تحذير تثبيت (ثبت في P2).
 - **التنزيلات:** الملفات التي يطلبها المستخدم وحدها، في المكان الذي يختاره، والاستعلام بمعرّفات ما نزّلته الإضافة وحدها.
 - **يوتيوب:** أزرار المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل بلا طلب جديد، ورسم الترجمة فوق الفيديو. ولا موقع غيره.
-- **خادم البلاغات (اختياري):** يُطلب عند أول ضغطة «إرسال البلاغ» بعد المعاينة، وإن رُفض لا يُرسل شيء.
+- **لا إذن مضيف اختياري** منذ 2.2.0 (و1): حُذف إذن خادم البلاغات، و«الإبلاغ عن مشكلة» ينسخ البلاغ نصًّا ولا يرسله.
 
 **`web_accessible_resources`:** ملفات الخطوط (`ui/fonts/subtitle/*.woff2` و`ui/fonts/ui/*.woff2`) لـ`www.youtube.com` وحده، بعنوان متغير (`use_dynamic_url`)، لترسم الترجمة وأدوات المشغّل بخطوط مضمّنة دون تحميلها من الشبكة. ليس إذنًا، ويُذكر في ملاحظات المراجعين.
 
-**Firefox — `data_collection_permissions`** (من البيان، فلا حقل لها في نموذج AMO): `required: ["none"]`، و`optional: ["technicalAndInteraction", "browsingActivity"]`. «البيانات التقنية والتفاعل» للبلاغ لأنه يحمل إصدار ترجمان والمتصفح والنظام: يعرضها Firefox وحدها من الاختيارية في نافذة التثبيت، وإن لم تكن ممنوحة تُطلب عند أول إرسال؛ و«نشاط التصفح» تُطلب حين يفعّل المستخدم صور المحفوظات لأنها تُطلب من يوتيوب بمعرّفات الفيديوهات المحفوظة (قرار سلطان، §٥ من [`README.md`](README.md)). ولا يخرج بلاغ إلا حين يضغط المستخدم «إرسال البلاغ»، ولا صورة إلا بالموافقة والمفتاح معًا.
+**Firefox — `data_collection_permissions`** (من البيان، فلا حقل لها في نموذج AMO): `required: ["none"]`، و`optional: ["browsingActivity"]` وحدها منذ 2.2.0 (و1: حُذفت «البيانات التقنية والتفاعل» مع قناة البلاغات). و«نشاط التصفح» تُطلب حين يفعّل المستخدم صور المحفوظات لأنها تُطلب من يوتيوب بمعرّفات الفيديوهات المحفوظة (قرار سلطان، §٥ من [`README.md`](README.md))، ولا صورة إلا بالموافقة والمفتاح معًا. والبلاغ لا يخرج من الإضافة.
 
 ## ٣. الشيفرة البعيدة
 
-Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Manifest V3، وكل شيفرتها في الحزمة، ولا `eval` ولا `new Function` ولا سكربت من الشبكة (`audit.mjs`: `no-external-connection-or-forbidden-code`). والطلبان الخارجيان الوحيدان صور `i.ytimg.com` (عنصر `<img>`) والبلاغ (JSON)، ولا يُنفَّذ منهما شيء.
+Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Manifest V3، وكل شيفرتها في الحزمة، ولا `eval` ولا `new Function` ولا سكربت من الشبكة (`audit.mjs`: `no-external-connection-or-forbidden-code`). والطلب الخارجي الوحيد صور `i.ytimg.com` (عنصر `<img>`)، ولا يُنفَّذ منه شيء.
 
 ## ٤. إفصاح البيانات
 
-**ما لا يحدث:** لا حساب، ولا قياس استخدام، ولا إعلانات، ولا بيع ولا نقل لغرض آخر. ولا يصل إلى المطوّر إلا البلاغ الذي يرسله المستخدم بنفسه. التفصيل في [`docs/site/privacy.md`](../docs/site/privacy.md) وجدول أدلته.
+**ما لا يحدث:** لا حساب، ولا قياس استخدام، ولا إعلانات، ولا بيع ولا نقل لغرض آخر. ولا يصل إلى المطوّر شيء من الإضافة: البلاغ ينسخه المستخدم ويرسله من بريده إن شاء. التفصيل في [`docs/site/privacy.md`](../docs/site/privacy.md) وجدول أدلته.
 
 **Chrome — Data usage** (وEdge «What user data do you plan to collect»، بالفئات نفسها). الفئات بأسمائها الإنجليزية كما في النماذج، وتُطابق نصوصها وقت التقديم لأن صفحتي النماذج الرسميتين لا تسردانها. وصفحة Chrome تقضي بالإفصاح «even when data is processed or stored locally» ([user-data-faq](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq)، س3).
 
@@ -66,11 +64,11 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | --- | --- | --- |
 | Website content | **نعم** | يقرأ نص الترجمة الأصلية من رد يوتيوب وعنوان الفيديو وقائمة لغات مساراته من بيانات المشغّل، ويعالجها ويحفظ الأولين على الجهاز. لا يُرسل شيء منها إلى أحد |
 | Web history | **نعم** | المحفوظات قائمة بالفيديوهات التي حفظ لها المستخدم ترجمة أو مسارها الأصلي، ومعرّفات فيديوهات غيّر لها زوج اللغات (المعرّف والعنوان والمدة) على الجهاز، وصورها تُطلب من يوتيوب بمعرّفاتها ولها مفتاح يطفئها. وهي الفئة نفسها التي عُدّت بها الصور في Firefox (`browsingActivity`)، فيتسق الإعلان في المتاجر الثلاثة |
-| Personal communications | **نعم** | «الإبلاغ عن مشكلة»: الوصف الذي يكتبه المستخدم ويرسله بنفسه إلى المطوّر. يُفصَح عنه احتياطًا لأنه رسالة منه |
-| Personally identifiable information | لا | لا اسم ولا بريد ولا معرّف مستخدم أو جهاز، والبلاغ بلا شيء من ذلك |
+| Personal communications | لا (**تغيّرت في 2.2.0**) | لا خادم: «الإبلاغ عن مشكلة» ينسخ البلاغ نصًّا ولا يرسله، فلا ينقل ترجمان رسالة. وكانت «نعم» حتى 2.1.2 احتياطًا للبلاغ المرسَل، فتُطفأ في لوحتي Chrome وEdge عند رفع 2.2.0 |
+| Personally identifiable information | لا | لا اسم ولا بريد ولا معرّف مستخدم أو جهاز، ولا يُرسل البلاغ |
 | Health / Financial and payment information | لا | — |
 | Authentication information | لا | لا كلمة مرور ولا رمز. وتنبّه صفحة البلاغ إن بدا في الوصف ما يشبه رمز جلسة |
-| Location | لا | لا موقع. وعنوان IP يراه خادم البلاغات وقت الطلب فيحسب منه حد الإرسال ببصمة مملّحة تنتهي بمدتها، ولا يصل إلى البلاغ |
+| Location | لا | لا موقع |
 | User activity | لا | لا تتبّع نقرات ولا ضغطات ولا تمرير |
 
 **الإقرارات الثلاثة** (تُعلَّم كلها): لا بيع ولا نقل لطرف ثالث خارج الحالات المعتمدة، ولا استعمال لغير الغرض الواحد، ولا استعمال لتقدير الجدارة الائتمانية أو للإقراض. ويطابقها `#limited-use` في سياسة الخصوصية.

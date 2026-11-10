@@ -1,9 +1,9 @@
-// بلاغ المشكلة ولغة الواجهة: نصوص الأخطاء والتنبيه وصفوف المعاينة تتبع اللغة، أما جسم البلاغ المرسَل فلا تتغير بنيته ولا قيمه الآلية
-// بلغة الواجهة إلا حقل locale وحده؛ ووصف المستخدم يُرسل كما كتبه في اللغتين.
+// بلاغ المشكلة ولغة الواجهة: نصوص التنبيه وصفوف المعاينة والنتائج تتبع اللغة، أما جسم البلاغ المنسوخ فلا تتغير بنيته ولا قيمه الآلية
+// بلغة الواجهة إلا حقل locale وحده؛ ووصف المستخدم يُنسخ كما كتبه في اللغتين.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setLocale } from '../../../src/i18n/index.js';
-import { SUPPORT_EMAIL, failureText } from '../../../src/core/report/messages.js';
+import { SUPPORT_EMAIL } from '../../../src/core/report/messages.js';
 import { KIND_LABELS, REPORT_KINDS, buildPayload, reviewRows, serialise } from '../../../src/core/report/payload.js';
 import { personalHintText } from '../../../src/core/report/personal.js';
 import { browserLabel } from '../../../src/core/report/diagnostics.js';
@@ -22,7 +22,7 @@ const withLocale = (locale, fn) => {
   }
 };
 
-test('جسم البلاغ المرسَل: لغة الواجهة تغيّر حقل locale وحده، وكل ما عداه بنيةً وقيمةً كما هو', () => {
+test('جسم البلاغ المنسوخ: لغة الواجهة تغيّر حقل locale وحده، وكل ما عداه بنيةً وقيمةً كما هو', () => {
   const ar = withLocale('ar', () => buildPayload(FORM, DIAG));
   const en = withLocale('en', () => buildPayload(FORM, DIAG));
   assert.equal(ar.locale, 'ar');
@@ -32,7 +32,7 @@ test('جسم البلاغ المرسَل: لغة الواجهة تغيّر حق�
   const { locale: _e, ...restEn } = en;
   assert.deepEqual(restEn, restAr);
   assert.equal(en.description, 'الترجمة لا تظهر بعد الرفع', 'وصف المستخدم كما كتبه لا يُترجم');
-  assert.equal(serialise(en).includes('Bug'), false, 'تسمية النوع للعرض وحده لا للإرسال');
+  assert.equal(serialise(en).includes('Bug'), false, 'تسمية النوع للعرض وحده لا للجسم');
 });
 
 test('صفوف المعاينة: ما يظهر هو الجسم نفسه، والتسميات بلغة الواجهة، والحقول (field) ثابتة', () => {
@@ -47,30 +47,9 @@ test('صفوف المعاينة: ما يظهر هو الجسم نفسه، وال
   withLocale('en', () => assert.deepEqual(REPORT_KINDS.map((k) => KIND_LABELS[k]), ['Bug', 'Suggestion', 'Other']));
 });
 
-test('رسائل فشل الإرسال بالإنجليزية: لكل سبب نصه وبريد الدعم، وبصيغ الجمع في الانتظار', () => {
-  withLocale('en', () => {
-    for (const f of ['permission', 'network', 'timeout', 'invalid', 'too-large', 'unsupported', 'rate-limited', 'server', 'unexpected']) {
-      const text = failureText(f);
-      assert.match(text, /^[\x20-\x7e’“”]+$/u, f);
-    }
-    assert.ok(failureText('invalid').includes(SUPPORT_EMAIL));
-    assert.ok(failureText('rate-limited', 30).endsWith('Try again in a minute.'));
-    assert.ok(failureText('rate-limited', 120).endsWith('Try again in 2 minutes.'));
-    assert.ok(failureText('rate-limited', 600).endsWith('Try again in 10 minutes.'));
-    assert.ok(failureText('rate-limited', 3600).endsWith('Try again in an hour.'));
-    assert.ok(failureText('rate-limited', 7200).endsWith('Try again in 2 hours.'));
-    assert.ok(failureText('rate-limited', 10 * 60 * 60).endsWith('Try again in 10 hours.'));
-    assert.equal(failureText('rate-limited'), 'Too many reports were sent from your network recently, so the server paused receiving.');
-  });
-  withLocale('ar', () => {
-    assert.match(failureText('rate-limited', 7200), /أعد المحاولة بعد ساعتين\.$/);
-    assert.match(failureText('rate-limited', 11 * 60), /أعد المحاولة بعد 11 دقيقة\.$/);
-  });
-});
-
 test('تنبيه البيانات الشخصية وتسمية المتصفح المجهول بالإنجليزية', async () => {
   withLocale('en', () => {
-    assert.equal(personalHintText(['email']), 'Your description seems to include an email address. It’s sent as you wrote it, so remove it if the report doesn’t need it.');
+    assert.equal(personalHintText(['email']), 'Your description seems to include an email address. It’s copied as you wrote it, so remove it if the report doesn’t need it.');
     assert.ok(personalHintText(['youtube-link', 'email', 'video-id']).includes('a YouTube link, an email address or a video ID'));
     assert.equal(personalHintText([]), '');
   });
@@ -93,9 +72,8 @@ test('لوحة البلاغ بالإنجليزية: كل نصوصها إنجلي
     const panel = reportPanel({
       doc,
       env: {
-        diagnostics: async () => DIAG, requestPermission: async () => true,
-        send: async (payload) => { log.push(payload); return { ok: false, failure: 'network', status: null }; },
-        copy: async () => {}, newKey: () => '00000001-0000-4000-8000-000000000000',
+        diagnostics: async () => DIAG,
+        copy: async (text) => { log.push(text); },
       },
     });
     doc.body.append(panel.root);
@@ -108,14 +86,20 @@ test('لوحة البلاغ بالإنجليزية: كل نصوصها إنجلي
     textarea.dispatchEvent({ type: 'input' });
     await settle();
     assert.equal(region.hidden, false);
-    buttonNamed(panel.root, 'Send report').click();
+    assert.ok(buttonNamed(panel.root, 'Send report') === null, 'لا إرسال (و1)');
+    buttonNamed(panel.root, 'Copy report').click();
     await settle();
     assert.equal(log.length, 1);
-    assert.equal(log[0].locale, 'en');
-    assert.equal(log[0].description, 'الترجمة تتأخر', 'وصف المستخدم كما كتبه');
-    const own = textOf(panel.root).replace('الترجمة تتأخر', '');
+    const copied = JSON.parse(log[0]);
+    assert.equal(copied.locale, 'en');
+    assert.equal(copied.description, 'الترجمة تتأخر', 'وصف المستخدم كما كتبه');
+    buttonNamed(panel.root, 'Copy email').click();
+    await settle();
+    assert.equal(log[1], SUPPORT_EMAIL);
+    const own = textOf(panel.root).replace(/الترجمة تتأخر/g, '');
     assert.equal(own.match(ARABIC), null, own);
-    assert.ok(textOf(panel.root).includes('Couldn’t reach the reports server.'));
+    assert.ok(textOf(panel.root).includes('Report copied as text. Paste it into an email to support.'));
+    assert.ok(textOf(panel.root).includes('Email copied.'));
     assert.deepEqual(findAll(region, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio').map((r) => r.getAttribute('value')), ['bug', 'suggestion', 'other']);
     assert.equal(textOf(region.querySelector('fieldset legend')), 'Report type');
   } finally {

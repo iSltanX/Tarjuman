@@ -80,7 +80,7 @@
 | قراءة نسخة استجابة الترجمة ومعالجتها على الجهاز | «تعامل مع بيانات المستخدم»، فاستخراج محتوى الصفحة ومحتوى طلبات HTTP واستجاباتها منه، والإفصاح لازم وإن بقيت البيانات على الجهاز (user-data-faq، س2 وس3) | لا نقل، فلا يقتضي إفصاحًا خاصًا | النقل عند Mozilla ما خرج من الإضافة أو المتصفح، فلا نقل هنا |
 | حفظ ملف SRT على القرص بأمر المستخدم | داخل الوظيفة المعلنة | داخل الوظيفة المعلنة | الأسئلة الشائعة تجيز النسخ الاحتياطي المحلي الذي يطلقه المستخدم بلا موافقة صريحة |
 | صور المحفوظات من `i.ytimg.com` بمعرّف الفيديو (مفتاح مفعّل افتراضيًا) | لا نص يخصه (لم يُتحقق) | لا نص يخصه (لم يُتحقق) | **حُسم في T5:** نقل أقرب فئاته `browsingActivity`، فالصور في Firefox مطفأة حتى يوافق المستخدم عليها اختيارية (قرار سلطان 2026-11-04) |
-| البلاغ (T2.1): وصف يكتبه المستخدم واسم المتصفح وإصداره إلى خادم المطوّر | سياسة خصوصية وإفصاح في لوحة المتجر، وإفصاح بارز وموافقة **داخل واجهة الإضافة**، وHTTPS بلا بيانات في الرابط أو الترويسات (Purple Copper)، وأضيق إذن ولو كان اختياريًا | سياسة خصوصية (اتفاقية المطوّر §4(h)، والبند 1.5.1) | `optional: ["technicalAndInteraction"]`، وهو مفعّل افتراضيًا ويُطفأ عند التثبيت. فإن أُطفئ لا يُرسل البلاغ، أو يُطلب الإذن بـ`permissions.request`. والنص الحر قد يُعدّ بيانات شخصية بتقدير المراجع |
+| البلاغ (T2.1، **وحُذفت قناته في 2.2.0، و1**): وصف يكتبه المستخدم واسم المتصفح وإصداره إلى خادم المطوّر | سياسة خصوصية وإفصاح في لوحة المتجر، وإفصاح بارز وموافقة **داخل واجهة الإضافة**، وHTTPS بلا بيانات في الرابط أو الترويسات (Purple Copper)، وأضيق إذن ولو كان اختياريًا | سياسة خصوصية (اتفاقية المطوّر §4(h)، والبند 1.5.1) | `optional: ["technicalAndInteraction"]`، وهو مفعّل افتراضيًا ويُطفأ عند التثبيت. فإن أُطفئ لا يُرسل البلاغ، أو يُطلب الإذن بـ`permissions.request`. والنص الحر قد يُعدّ بيانات شخصية بتقدير المراجع |
 
 ## ٣. جدول المتطلبات
 
@@ -124,7 +124,7 @@
 | فيديو | اختياري | رابط يوتيوب | — | [cws-dashboard-listing](https://developer.chrome.com/docs/webstore/cws-dashboard-listing) |
 | Homepage وSupport URL | اختياريان | Official URL يتطلب موقعًا موثّقًا في Search Console | T7 | [cws-dashboard-listing](https://developer.chrome.com/docs/webstore/cws-dashboard-listing) |
 | Single purpose | مطلوب | وصف مفصّل للغرض الواحد | T6 | [cws-dashboard-privacy](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) |
-| تبرير الأذونات | مطلوب لكل إذن | `storage` و`unlimitedStorage` و`downloads`، وإذن البلاغ الاختياري بعد T2.1 | T6 | [cws-dashboard-privacy](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) |
+| تبرير الأذونات | مطلوب لكل إذن | `storage` و`unlimitedStorage` و`downloads`، وإذن البلاغ الاختياري بعد T2.1 (حُذف في 2.2.0، و1) | T6 | [cws-dashboard-privacy](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) |
 | إعلان الشيفرة البعيدة | مطلوب | «No, I am not using remote code» | T6 | [cws-dashboard-privacy](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) |
 | Data usage وتصديقات Limited Use | مطلوب للنشر والتحديث | خانات لأنواع البيانات، وقائمتها الكاملة لم يُتحقق منها | T5 وT6 | [user-data-faq](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq) |
 | رابط سياسة الخصوصية | مطلوب، فالإضافة تتعامل مع بيانات المستخدم | غيابه أو تعطّل رابطه سبب رفض (Purple Lithium) | T5 وT7 | [troubleshooting](https://developer.chrome.com/docs/webstore/troubleshooting) |
@@ -239,7 +239,7 @@
 | القرار | المعتمد | التنفيذ |
 | --- | --- | --- |
 | إعلان Firefox وصور المحفوظات | الخيار أ: في Firefox وحده الصور مطفأة حتى يفعّل المستخدم مفتاحها ويوافق على «نشاط التصفح» (`browsingActivity` في `optional`)، ويبقى Chromium كما هو. فيبقى `required: ["none"]` صادقًا. التفصيل في `docs/site/README.md` | نُفّذ: `src/core/consent/thumbnails.js`، والمفتاح في الإعدادات، والمحفوظات، وطبقة Firefox والحارسان. لم يُختبر حيًا (T8) |
-| حذف البلاغ بطلب صاحبه | «لحذفه راسل بريد الدعم برقمه» | نُفّذ في `privacy.md` `#report` |
+| حذف البلاغ بطلب صاحبه | «لحذفه راسل بريد الدعم برقمه» (ومنذ 2.2.0 بلا رقم: «ولحذفها راسل بريد الدعم») | نُفّذ في `privacy.md` `#report` |
 | استعمال البلاغ | «يُستعمل لفهم المشكلة وإصلاحها وتحسين ترجمان وحده» | نُفّذ في `privacy.md` `#limited-use` |
 
 فلا [قرار] في `privacy.md`، و`PRIVACY.md` بلا تنبيه مسودة. وثُبّت تاريخ السريان 2026-11-04 يوم نشر الموقع، و`--strict` ينجح. ثم ثُبّت 2026-11-05 بقرار سلطان في تدقيق 7a66f91 (C9) بعد نصوص C1 المعتمدة، ويصل الموقع بطلب دمج منفصل.
@@ -258,7 +258,7 @@
 | القرار | المعتمد | التنفيذ |
 | --- | --- | --- |
 | Edge 1.5.2: «the privacy policy should primarily refer to the Microsoft Edge browser» | سياسة خصوصية واحدة كما هي، وفقرة في «Notes for certification» تبيّن أن الحزمة نفسها منشورة لمتصفحات أخرى، وأن السياسة تسمّي Microsoft Edge حيث يختلف السلوك. وإن رفضها المراجع فالبديل قسم خاص بـEdge في صفحة الخصوصية بطلب دمج في الموقع وإذن منفصل | `reviewer.edge` في `reviewers.en.md` |
-| فئة البلاغ في Firefox | يبقى `technicalAndInteraction` في البيان (البلاغ من «crash and error reports» بتعريف Mozilla، لا رسالة بين أشخاص)، وبند في «Notes for Reviewers» يشرح ذلك ويذكر أن Chrome وEdge يُفصحان عن الحقل احتياطًا تحت «Personal communications». فلا تغيير في الشيفرة ولا الحزم | `reviewer.amo` في `reviewers.en.md` |
+| فئة البلاغ في Firefox (حتى 2.1.2؛ حُذفت مع القناة في 2.2.0، و1) | يبقى `technicalAndInteraction` في البيان (البلاغ من «crash and error reports» بتعريف Mozilla، لا رسالة بين أشخاص)، وبند في «Notes for Reviewers» يشرح ذلك ويذكر أن Chrome وEdge يُفصحان عن الحقل احتياطًا تحت «Personal communications». فلا تغيير في الشيفرة ولا الحزم | `reviewer.amo` في `reviewers.en.md` |
 
 **بيدك عند النشر، لا في هذه الجولة:** إنشاء الحسابات الثلاثة، ودفع رسوم Chrome، والتحقق بخطوتين، وإعلان صفة التاجر، والرفع.
 
@@ -338,9 +338,9 @@
 | Chrome | أيقونة المتجر | `icons/chrome-store-icon-128.png` |
 | Chrome | لقطات (1 إلى 5) | `screenshots/chromium/{ar,en}/` الخمس |
 | Chrome | Single purpose | `reviewer.singlePurpose` في `submission.md` §١ |
-| Chrome | تبرير الأذونات | `reviewer.permission.*` في `submission.md` §٢، ومعها الإذن الاختياري لقناة البلاغات |
+| Chrome | تبرير الأذونات | `reviewer.permission.*` في `submission.md` §٢، ولا إذن اختياري منذ 2.2.0 (و1) |
 | Chrome | إعلان الشيفرة البعيدة | `submission.md` §٣ |
-| Chrome | Data usage وLimited Use | `submission.md` §٤، ومنه قناة البلاغات |
+| Chrome | Data usage وLimited Use | `submission.md` §٤، وPersonal communications «لا» منذ 2.2.0 (و1) |
 | Chrome | رابط سياسة الخصوصية | `submission.md` §٥ (T7) |
 | Chrome | إعلان التاجر | غير تاجر (سلطان، §٥) |
 | Edge | الحزمة | `release/store/tarjuman-2.1.2-edge.zip` (يبنيها `npm run package`) |

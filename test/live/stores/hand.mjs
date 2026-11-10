@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// الجلسة اليدوية (جولة النشر T3): الاستخراج الحقيقي في المتصفحات الأربعة، وبلاغان تجريبيان حقيقيان من Chrome وFirefox. نوافذ
+// الجلسة اليدوية (جولة النشر T3): الاستخراج الحقيقي في المتصفحات الأربعة، وبلاغان منسوخان من Chrome وFirefox. نوافذ
 // عادية بلا أي علم تحكم (navigator.webdriver=false)، فيعيد يوتيوب جسم الترجمة كما للمستخدم؛ ببناء التطوير (test: true في
 // البلاغ). Brave وEdge بـ--load-extension، وChrome بملف chrome-manual الذي حُمّلت فيه الإضافة يدويًا مرة (P1) من مجلد
 // extension-manual فيوضع فيه البناء، وFirefox بـweb-ext run (تثبيت مؤقت عبر خادم أدوات المطوّر، لا Marionette).
 // نقرات سلطان: في كل متصفح ⤓ EN ← «تنزيل الملف» ثم «نسخ التعليمات»؛ وفي Chrome وFirefox الإعدادات ← «حول» ← «الإبلاغ عن مشكلة»
-// ← «أرسل البلاغ» ← قبول الإذن. السكربت يراقب مجلدات التنزيل وحافظة الجهاز والبلاغات الجديدة في app-reports وحدها، ثم يغلق
-// المتصفحات ويقارن، ويتحقق من كل بلاغ برقمه ووسومه (product:tarjuman وkind:* وtest) ثم يغلقه.
+// ← «نسخ البلاغ» (بلا خادم منذ و1، 2.2.0: لا إرسال ولا إذن). السكربت يراقب مجلدات التنزيل وحافظة الجهاز، ثم يغلق المتصفحات
+// ويقارن، ويتحقق من كل بلاغ منسوخ بحقوله (product: tarjuman وkind وtest وbuild_target).
 //   command node test/live/stores/hand.mjs [--minutes 30] [--out test-results/live/T3/manual]
 //   command node test/live/stores/hand.mjs --finalize <مجلد hand-…> --log <سجل الجلسة> [--out …]
 //     إغلاق جلسة انتهت يدها ولم ينتهِ سكربتها: يُتحقق من الملفات (ومنها المجلد الفرعي لمكان الحفظ المختار) ومن أحداث الحافظة في
@@ -37,7 +37,6 @@ const WORK = FINALIZE ? path.resolve(FINALIZE) : path.join(PROFILE_ROOT, 't3-wor
 const EXT_C = path.join(WORK, 'ext-chromium');
 const EXT_F = path.join(WORK, 'ext-firefox');
 const CHROME_EXT = path.join(PROFILE_ROOT, 'extension-manual');
-const REPO = 'iSltanX/app-reports';
 const BROWSERS = ['brave', 'chrome', 'edge', 'firefox'];
 const dl = (b) => path.join(WORK, b, 'downloads');
 // بداية الجلسة من اسم مجلدها في الإغلاق (2026-11-03T21-23-34-287Z ← ISO).
@@ -130,8 +129,17 @@ for (const b of BROWSERS) result.browsers[b] = { browser: `${APPS[b].name} ${app
 // ---- المراقبة ----
 const seenFiles = new Map();
 let lastDownloadBrowser = null;
-const reportsSeen = new Map();
-let lastGh = 0;
+/** البلاغات المنسوخة كما التُقطت من الحافظة. */
+const reportsCopied = [];
+/** @param {string} clip */
+function copiedReport(clip) {
+  try {
+    const r = JSON.parse(clip);
+    return r?.product === 'tarjuman' ? r : null;
+  } catch {
+    return null;
+  }
+}
 // بحث في المجلد وما تحته: Chrome يحفظ في مجلد فرعي (Tarjuman/) إن اختاره سلطان مكانًا للحفظ.
 const listSrt = async (b) => {
   try {
@@ -140,11 +148,6 @@ const listSrt = async (b) => {
     return [];
   }
 };
-function ghReports() {
-  const r = spawnSync('gh', ['issue', 'list', '--repo', REPO, '--label', 'product:tarjuman', '--state', 'all', '--json', 'number,title,labels,createdAt,state,body', '--limit', '30'], { encoding: 'utf8' });
-  if (r.status !== 0) return null;
-  return JSON.parse(r.stdout).filter((i) => Date.parse(i.createdAt) >= started.getTime() - 60000);
-}
 if (FINALIZE) {
   // الملفات بأوقات تعديلها، والحافظة من سطور سجل الجلسة، وكل نسخ يُنسب إلى آخر تنزيل قبله.
   for (const b of BROWSERS) {
@@ -166,7 +169,6 @@ if (FINALIZE) {
   const clip = readClipboard();
   const last = result.clipboard.at(-1);
   if (last && clip.length === last.length) last.sha = sha16(clip);
-  for (const i of ghReports() ?? []) reportsSeen.set(i.number, i);
 }
 const guard = FINALIZE ? null : sentinel();
 let lastClip = guard;
@@ -186,21 +188,17 @@ while (Date.now() < end) {
   const clip = readClipboard();
   if (clip !== lastClip) {
     lastClip = clip;
-    if (clip.includes(VIDEO) || /SRT/.test(clip)) {
+    const report = copiedReport(clip);
+    if (report) {
+      reportsCopied.push({ at: new Date().toISOString(), report });
+      log(`بلاغ منسوخ: ${report.diagnostics?.browser ?? '?'} (${report.kind})`);
+    } else if (clip.includes(VIDEO) || /SRT/.test(clip)) {
       result.clipboard.push({ after: lastDownloadBrowser, length: clip.length, sha: sha16(clip), at: new Date().toISOString() });
       log(`نسخ إلى الحافظة بعد تنزيل ${lastDownloadBrowser ?? '—'} (${clip.length} محرفًا)`);
     }
   }
-  if (Date.now() - lastGh > 15000) {
-    lastGh = Date.now();
-    for (const i of ghReports() ?? []) {
-      if (reportsSeen.has(i.number)) continue;
-      reportsSeen.set(i.number, i);
-      log(`بلاغ جديد #${i.number}: ${i.labels.map((l) => l.name).join(', ')}`);
-    }
-  }
   const browsersWithSrt = new Set([...seenFiles.values()].map((x) => x.browser));
-  if (browsersWithSrt.size === BROWSERS.length && reportsSeen.size >= 2 && result.clipboard.length >= BROWSERS.length) break;
+  if (browsersWithSrt.size === BROWSERS.length && reportsCopied.length >= 2 && result.clipboard.length >= BROWSERS.length) break;
   await sleep(1000);
 }
 
@@ -278,15 +276,11 @@ for (const b of BROWSERS) {
     })),
   };
 }
-for (const i of reportsSeen.values()) {
-  const labels = i.labels.map((l) => l.name);
-  const browser = /Firefox/.test(i.body) ? 'firefox' : /Google Chrome/.test(i.body) ? 'chrome' : /Microsoft Edge/.test(i.body) ? 'edge' : /Brave/.test(i.body) ? 'brave' : null;
-  const ok = labels.includes('product:tarjuman') && labels.includes('test') && labels.some((l) => l.startsWith('kind:'));
-  let closed = i.state === 'CLOSED';
-  if (ok && !closed) {
-    closed = spawnSync('gh', ['issue', 'close', String(i.number), '--repo', REPO, '--reason', 'completed'], { encoding: 'utf8' }).status === 0;
-  }
-  result.reports.push({ number: i.number, labels, browser, buildTarget: /"build_target":\s*"(\w+)"/.exec(i.body)?.[1] ?? null, ok, closed });
+for (const { at, report } of reportsCopied) {
+  const name = String(report.diagnostics?.browser ?? '');
+  const browser = /Firefox/.test(name) ? 'firefox' : /Google Chrome/.test(name) ? 'chrome' : /Microsoft Edge/.test(name) ? 'edge' : /Brave/.test(name) ? 'brave' : null;
+  const ok = ['bug', 'suggestion', 'other'].includes(report.kind) && report.test === true && !!report.diagnostics?.build_target;
+  result.reports.push({ at, browser, kind: report.kind, buildTarget: report.diagnostics?.build_target ?? null, ok });
 }
 result.done = { srt: new Set([...seenFiles.values()].map((x) => x.browser)).size, clipboard: result.clipboard.length, reports: result.reports.length };
 await mkdir(OUT, { recursive: true });

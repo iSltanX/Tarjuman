@@ -1,9 +1,10 @@
-// أضيق استثناء لقناة البلاغات (جولة النشر T2.1): الفحص الثابت والتدقيق يقبلان طلبها وإذنها ومضيفها في ملفها وحده، ويكشفان أي طلب
-// أو مضيف أو طلب إذن في غيره، وأي سطر معدَّل فيه، وأي إذن مضيف آخر. والأذونات الإلزامية كما هي.
+// بلا خادم بلاغات (و1، 2.2.0، قرار سلطان ق3): لا قناة ولا استثناء لها. الفحص الثابت والتدقيق يكشفان أي طلب أو مضيف بلاغات أو
+// طلب إذن في أي ملف، وأي إذن مضيف اختياري أو إلزامي في البيان بهدفيه. والأذونات الإلزامية كما هي.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,59 +25,47 @@ async function staticWith(mutate) {
 }
 const append = async (file, text) => writeFile(file, `${await readFile(file, 'utf8')}\n${text}\n`);
 
-test('الفحص الثابت: الشجرة الحالية ناجحة بالاستثناء المسمّى', () => {
+test('الفحص الثابت: الشجرة الحالية ناجحة، ولا ملف لعميل الإرسال', () => {
   const r = node([path.join(ROOT, 'scripts/check-static.mjs')]);
   assert.equal(r.status, 0, r.stderr);
+  assert.equal(existsSync(path.join(ROOT, 'src/core/report/client.js')), false);
 });
 
-test('الفحص الثابت: طلب أو مضيف البلاغات أو طلب إذن خارج ملف القناة مكشوف', async () => {
+test('الفحص الثابت: طلب أو مضيف البلاغات أو طلب إذن في أي ملف، ومنه ملف البلاغ في الإعدادات، مكشوف', async () => {
   const r = await staticWith(async (dir) => {
     await append(path.join(dir, 'pages/settings/report.js'), 'export const x = () => globalThis.fetch("https://app-reports.isultantf.workers.dev/v1/reports");');
-    await append(path.join(dir, 'background/worker.js'), 'export const y = (api) => api.permissions.request({ origins: [] });');
+    await append(path.join(dir, 'core/report/messages.js'), 'export const y = (api) => api.permissions.request({ origins: [] });');
     await append(path.join(dir, 'content/main.js'), "export const z = 'https://app-reports.isultantf.workers.dev';");
   });
   assert.equal(r.status, 1);
   assert.match(r.stderr, /pages\/settings\/report\.js:\d+: طلب شبكة من الإضافة/);
   assert.match(r.stderr, /pages\/settings\/report\.js:\d+: نطاق خارجي https:\/\/app-reports/);
-  assert.match(r.stderr, /background\/worker\.js:\d+: واجهة تحتاج إذنًا غير معتمد/);
+  assert.match(r.stderr, /core\/report\/messages\.js:\d+: واجهة تحتاج إذنًا غير معتمد/);
   assert.match(r.stderr, /content\/main\.js:\d+: نطاق خارجي https:\/\/app-reports/);
 });
 
-test('الفحص الثابت: في ملف القناة نفسه، سطر طلب معدَّل أو مضيف آخر أو طلب إذن آخر مكشوف', async () => {
-  const r = await staticWith(async (dir) => {
-    const f = path.join(dir, 'core/report/client.js');
-    let text = await readFile(f, 'utf8');
-    text = text.replace('globalThis.fetch(url, init);', "globalThis.fetch(url, { ...init, credentials: 'include' });");
-    await writeFile(f, `${text}\nexport const other = 'https://collector.example';\nexport const more = (api) => api.permissions.request({ origins: ['<all_urls>'] });\n`);
-  });
-  assert.equal(r.status, 1);
-  assert.match(r.stderr, /core\/report\/client\.js:\d+: طلب شبكة من الإضافة/);
-  assert.match(r.stderr, /core\/report\/client\.js:\d+: نطاق خارجي https:\/\/collector\.example/);
-  assert.match(r.stderr, /core\/report\/client\.js:\d+: واجهة تحتاج إذنًا غير معتمد/);
-});
-
-test('الفحص الثابت: إذن مضيف اختياري آخر أو إلزامي، أو غياب إذن البلاغ، مكشوف في الهدفين', async () => {
+test('الفحص الثابت: أي إذن مضيف اختياري أو إلزامي مكشوف في الهدفين', async () => {
   const withManifest = (fn) => staticWith(async (dir) => {
     const p = path.join(dir, 'manifest.json');
     const m = JSON.parse(await readFile(p, 'utf8'));
     fn(m);
     await writeFile(p, JSON.stringify(m));
   });
-  const extra = await withManifest((m) => { m.optional_host_permissions.push('https://api.example.com/*'); });
-  assert.match(extra.stderr, /- manifest: optional_host_permissions غير المعتمد/);
-  assert.match(extra.stderr, /- manifest \(firefox\): optional_host_permissions غير المعتمد/);
-  const missing = await withManifest((m) => { delete m.optional_host_permissions; });
-  assert.match(missing.stderr, /optional_host_permissions غير المعتمد null/);
+  const optional = await withManifest((m) => { m.optional_host_permissions = ['https://app-reports.isultantf.workers.dev/*']; });
+  assert.match(optional.stderr, /- manifest: المفتاح optional_host_permissions غير مسموح/);
+  assert.match(optional.stderr, /- manifest \(firefox\): المفتاح optional_host_permissions غير مسموح/);
   const host = await withManifest((m) => { m.host_permissions = ['https://app-reports.isultantf.workers.dev/*']; });
   assert.match(host.stderr, /manifest: المفتاح host_permissions غير مسموح/);
 });
 
-test('التدقيق: مضيف البلاغات خارج حزمة الإعدادات، أو طلب ثانٍ فيها، أو إذن مضيف زائد، مكشوف', async () => {
+test('التدقيق: الحزمة بلا قناة بلاغات؛ ومضيفها في أي ملف، أو طلب في حزمة الإعدادات، أو إذن مضيف اختياري، مكشوف', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'tj-report-audit-'));
   try {
     const built = path.join(tmp, 'dist');
     assert.equal(node([path.join(ROOT, 'scripts/build.mjs'), '--out', built]).status, 0);
-    assert.equal((await auditPackage(built)).ok, true);
+    const good = await auditPackage(built);
+    assert.equal(good.ok, true);
+    assert.ok(good.checks.find((c) => c.id === 'no-report-channel').ok);
     const variant = async (mutate) => {
       const bad = path.join(tmp, `bad-${Math.random().toString(16).slice(2)}`);
       await cp(built, bad, { recursive: true });
@@ -85,13 +74,13 @@ test('التدقيق: مضيف البلاغات خارج حزمة الإعداد
     };
     const failed = (r, id) => r.checks.find((c) => c.id === id).ok === false;
     let r = await variant((d) => append(path.join(d, 'background/worker.js'), 'var u = "https://app-reports.isultantf.workers.dev";'));
-    assert.ok(failed(r, 'report-channel-settings-only'));
+    assert.ok(failed(r, 'no-report-channel'));
     r = await variant((d) => append(path.join(d, 'pages/settings/main.js'), 'globalThis.fetch(url, init);'));
-    assert.ok(failed(r, 'report-channel-settings-only'));
+    assert.ok(failed(r, 'no-report-channel'));
     r = await variant(async (d) => {
       const p = path.join(d, 'manifest.json');
       const m = JSON.parse(await readFile(p, 'utf8'));
-      await writeFile(p, JSON.stringify({ ...m, optional_host_permissions: [...m.optional_host_permissions, '<all_urls>'] }));
+      await writeFile(p, JSON.stringify({ ...m, optional_host_permissions: ['https://app-reports.isultantf.workers.dev/*'] }));
     });
     assert.ok(failed(r, 'no-host-or-optional-permissions'));
   } finally {

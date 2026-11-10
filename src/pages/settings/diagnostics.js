@@ -6,7 +6,7 @@ import { toErrorInfo } from '../../core/errors/index.js';
 import { browserLabel, liveSources } from '../../core/report/diagnostics.js';
 
 /**
- * «Microsoft Edge 156» أو «Firefox 159» أو «Brave 156»: الاسم والرقم الرئيسي وحدهما، بكشف قناة البلاغ نفسه (U53).
+ * «Microsoft Edge 156» أو «Firefox 159» أو «Brave 156»: الاسم والرقم الرئيسي وحدهما، بكشف بلاغ المشكلة نفسه (U53).
  * @param {Navigator} [nav] @param {typeof chrome} [api]
  * @returns {Promise<string>}
  */

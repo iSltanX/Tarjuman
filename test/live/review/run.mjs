@@ -6,10 +6,8 @@
 //   ٢) النص الدراسي بإزاحة سالبة: إشعار في الحوار قبل التنزيل، والملف النازل روابطه بالإزاحة وما قبل الصفر وحده من 0:00؛
 //      من المحفوظات ومن المحرّر، وبإزاحة موجبة بلا إشعار.
 //   ٣) بصمة التصدير بأزمنتها: تصدير الإنجليزية بالنص نفسه وتوقيت آخر يحفظ بصمته، ورفع الترجمة يقارنها بها بلا انحراف.
-//   ٤) «الإبلاغ عن مشكلة»: خادم البلاغات محاكى بـCDP Fetch في الصفحة نفسها (لا يخرج طلب ولا يُنشأ بلاغ حقيقي)؛ التركيز بعد
-//      «أعد المحاولة» بمفتاح Enter، وفشل «نسخ الرقم» ونجاحه، والمفتاح نفسه في الإعادات وجديد للبلاغ التالي.
-// نسخة الاختبار من dist تحمل إذن مضيف البلاغات في host_permissions (في ملف التعريف، لا في المستودع)، و«طلب الإذن» مستبدل
-// في الصفحة بنعم: حوار الإذن ينتظر يدًا بلا نافذة (T3)، وليس مما تغيّر هنا. والحافظة مستبدلة لتُرفض أو تُقبل عمدًا.
+//   ٤) «الإبلاغ عن مشكلة» بلا خادم (و1، 2.2.0): لا زر إرسال، و«نسخ البلاغ» ينسخ الجسم و«نسخ البريد» بريد الدعم، ولا طلب إلى
+//      مضيف البلاغات القديم ولا إلى غيره. والحافظة مستبدلة في الصفحة لتُقرأ.
 //   command npm run build
 //   command node test/live/review/run.mjs --browser brave [--out test-results/live/review-apply]
 //   command node test/live/review/run.mjs --browser chrome
@@ -19,7 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
 import { messageFor } from '../../../src/core/errors/index.js';
-import { REPORTS_HOST_PATTERN } from '../../../src/core/report/client.js';
+import { SUPPORT_EMAIL } from '../../../src/core/report/messages.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { makeStep } from '../../helpers/live-step.mjs';
@@ -38,7 +36,8 @@ const RUN = new Date().toISOString().replace(/[:.]/g, '-');
 const DL = path.join(PROFILE_ROOT, `downloads-${PROFILE}`, RUN);
 const EXT = path.join(PROFILE_ROOT, `ext-${PROFILE}`, RUN);
 const STALE = messageFor('PG_DELETE_STALE');
-const REPORTS_HOST = new URL(REPORTS_HOST_PATTERN.replace('/*', '/')).host;
+/** مضيف خادم البلاغات قبل و1 (2.2.0): يُعدّ كل طلب إليه، والمنتظر صفر. */
+const REPORTS_HOST = 'app-reports.isultantf.workers.dev';
 
 const result = { browser: null, at: new Date().toISOString(), commit: null, extension: null, checks: [], observations: {}, screenshots: [], errors: {}, network: {} };
 const check = (id, ok, detail = null) => {
@@ -204,12 +203,8 @@ const filled = (bd) => bd ? bd.slots.map((s) => Boolean(s.track)) : null;
 
 async function start() {
   await setDownloadPrefs();
-  // نسخة الاختبار: dist كما بُني، وإذن مضيف البلاغات ممنوح عند التحميل (ملف التعريف وحده، لا المستودع).
+  // نسخة الاختبار: dist كما بُني، بلا تعديل في بيانه.
   await cp(DIST, EXT, { recursive: true });
-  const manifestFile = path.join(EXT, 'manifest.json');
-  const manifest = JSON.parse(await readFile(manifestFile, 'utf8'));
-  manifest.host_permissions = [...(manifest.host_permissions ?? []), REPORTS_HOST_PATTERN];
-  await writeFile(manifestFile, JSON.stringify(manifest, null, 2));
   b = await launch({ browser, profile: PROFILE, headless: true });
   result.browser = `${BROWSERS[browser].name} ${appVersion(BROWSERS[browser].bin) ?? '?'} (${b.version.product})`;
   result.commit = gitHead();
@@ -392,101 +387,29 @@ async function report() {
   await step('report-flow', async () => {
     const st = await openExt('pages/settings/index.html#about', 'settings');
     await st.waitFor(() => { const a = document.getElementById('about'); return a && !a.hidden; }, { timeoutMs: 10000 });
-    // خادم البلاغات محاكى في الصفحة نفسها: كل طلب إليه يُوقف هنا ويُرد عليه من الحزام، فلا يخرج شيء.
-    const paused = [];
-    await st.send('Fetch.enable', { patterns: [{ urlPattern: `https://${REPORTS_HOST}/*`, requestStage: 'Request' }] });
-    st.on('Fetch.requestPaused', (e) => paused.push(e));
-    const waitPaused = async (n, timeoutMs = 15000) => {
-      const end = Date.now() + timeoutMs;
-      while (Date.now() < end && paused.length < n) await sleep(100);
-      return paused[n - 1] ?? null;
-    };
-    const keyOf = (e) => e ? Object.entries(e.request.headers).find(([k]) => k.toLowerCase() === 'idempotency-key')?.[1] ?? null : null;
-    const fulfill = (e, status, body = null) => st.send('Fetch.fulfillRequest', {
-      requestId: e.requestId, responseCode: status, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
-      body: Buffer.from(JSON.stringify(body ?? {})).toString('base64'),
+    // الحافظة مستبدلة في الصفحة لتُقرأ (بلا نافذة لا حافظة للجهاز).
+    await st.eval(() => {
+      globalThis.__copied = [];
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (t) => { globalThis.__copied.push(t); } } });
     });
-    const stub = await st.eval(() => {
-      try {
-        Object.defineProperty(chrome.permissions, 'request', { configurable: true, value: async () => true });
-        return chrome.permissions.request.toString().includes('true');
-      } catch (err) {
-        return String(err?.message ?? err);
-      }
-    });
-    observe('report-permission-stub', stub);
-    const focus = () => st.eval(() => {
-      const a = document.activeElement;
-      return { tag: a?.tagName ?? null, action: a?.getAttribute?.('data-report-action') ?? null, isResult: a === document.querySelector('.st-report__result'), body: a === document.body };
-    });
-
     await clickOn(st, byText('#about button', 'الإبلاغ عن مشكلة'), 'الإبلاغ عن مشكلة');
     await st.waitFor(() => !document.getElementById('st-report')?.hidden && !!document.querySelector('[data-report-field="diagnostics.build_target"]'), { timeoutMs: 15000 });
     await clickOn(st, `document.getElementById('st-report-text')`, 'وصف البلاغ');
-    const DESC = 'بلاغ آلي من الاختبار الحي لإصلاحات المراجعة — خادم محاكى';
+    const DESC = 'بلاغ آلي من الاختبار الحي — نسخ بلا خادم';
     await st.send('Input.insertText', { text: DESC });
     await sleep(300);
-
-    // المحاولة 1: انقطاع الشبكة.
-    await clickOn(st, byText('#st-report button', 'إرسال البلاغ'), 'إرسال البلاغ');
-    const r1 = await waitPaused(1);
-    if (!r1) throw new Error('لم يصل طلب البلاغ إلى المحاكاة (الإذن؟)');
-    await st.send('Fetch.failRequest', { requestId: r1.requestId, errorReason: 'InternetDisconnected' });
-    await st.waitFor(() => !!document.querySelector('[data-report-result="failed"] [data-report-action="retry"]'), { timeoutMs: 10000 });
-
-    // المحاولة 2: «أعد المحاولة» مركّزًا وEnter، والطلب معلّق: التركيز على منطقة النتيجة لا على الصفحة.
-    await st.eval(() => document.querySelector('[data-report-action="retry"]').focus());
-    await pressEnter(st);
-    const r2 = await waitPaused(2);
-    const duringSend = await focus();
-    const tabindex = await st.eval(() => document.querySelector('.st-report__result')?.getAttribute('tabindex') ?? null);
-    await fulfill(r2, 503, { error: 'unavailable' });
-    await st.waitFor(() => document.querySelector('[data-report-result="failed"]')?.textContent.includes('العطل من جهته') ?? null, { timeoutMs: 10000 });
-    await sleep(200);
-    const afterFail = await focus();
-    await shot(st, 'report-failed-focus');
-
-    // المحاولة 3: Enter على «أعد المحاولة» الجديد، ثم نجاح.
-    await pressEnter(st);
-    const r3 = await waitPaused(3);
-    const duringSend2 = await focus();
-    await fulfill(r3, 201, { id: 9001 });
-    await st.waitFor(() => !!document.querySelector('[data-report-result="sent"]'), { timeoutMs: 10000 });
-    await sleep(200);
-    const afterSent = await focus();
-    const sentText = await textOf(st, `document.querySelector('[data-report-result="sent"]')`);
-    check('report-focus-keyboard-retry', !!r2 && duringSend.isResult && tabindex === '-1' && afterFail.action === 'retry' && duringSend2.isResult && afterSent.isResult && /#9001/.test(sentText ?? ''),
-      { duringSend, tabindex, afterFail, duringSend2, afterSent });
-    check('report-same-key-across-retries', !!keyOf(r1) && keyOf(r1) === keyOf(r2) && keyOf(r2) === keyOf(r3), { attempts: 3, sameKey: keyOf(r1) === keyOf(r2) && keyOf(r2) === keyOf(r3) });
-
-    // «نسخ الرقم»: الحافظة ترفض ثم تقبل.
-    await st.eval(() => { Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async () => { throw new DOMException('denied', 'NotAllowedError'); } }); return true; });
-    await st.eval(() => document.querySelector('[data-report-action="copy-id"]').focus());
-    await pressEnter(st);
-    const failedNote = await st.waitFor(() => { const n = document.querySelector('[data-report-copy="failed"]'); return n ? { role: n.getAttribute('role'), text: n.textContent.trim() } : null; }, { timeoutMs: 5000 });
-    const stillShown = /#9001/.test((await textOf(st, `document.querySelector('[data-report-result="sent"]')`)) ?? '');
-    const focusAfterCopyFail = await focus();
-    await shot(st, 'report-copy-id-failed');
-    check('report-copy-id-failure-visible', failedNote?.role === 'alert' && /تعذّر نسخ الرقم/.test(failedNote?.text ?? '') && stillShown && focusAfterCopyFail.action === 'copy-id',
-      { note: failedNote, idStillShown: stillShown, focus: focusAfterCopyFail });
-    await st.eval(() => { window.__rvCopied = []; Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async (t) => { window.__rvCopied.push(t); } }); return true; });
-    await pressEnter(st);
-    const done = await st.waitFor(() => document.querySelector('[data-report-copy="done"]')?.textContent.trim() ?? null, { timeoutMs: 5000 });
-    const copied = await st.eval(() => window.__rvCopied.at(-1) ?? null);
-    check('report-copy-id-success', done === 'نُسخ الرقم.' && copied === '#9001', { done, copied });
-
-    // بلاغ ثانٍ بالوصف نفسه بعد النجاح: مفتاح جديد (T8، 0cf63a0) فيُنشأ لا يُعاد الأول.
-    await clickOn(st, `document.getElementById('st-report-text')`, 'وصف البلاغ (ثانٍ)');
-    await st.send('Input.insertText', { text: DESC });
+    const noSend = await st.eval(() => ![...document.querySelectorAll('#st-report button')].some((x) => x.textContent.trim() === 'إرسال البلاغ'));
+    await clickOn(st, byText('#st-report button', 'نسخ البلاغ'), 'نسخ البلاغ');
+    const result1 = await st.waitFor(() => document.querySelector('[data-report-result="copied"]')?.textContent.trim() ?? null, { timeoutMs: 5000 });
+    await clickOn(st, byText('#st-report button', 'نسخ البريد'), 'نسخ البريد');
     await sleep(300);
-    await clickOn(st, byText('#st-report button', 'إرسال البلاغ'), 'أرسل البلاغ (ثانٍ)');
-    const r4 = await waitPaused(4);
-    if (r4) await fulfill(r4, 201, { id: 9002 });
-    const second = await st.waitFor(() => /#9002/.test(document.querySelector('[data-report-result="sent"]')?.textContent ?? '') || null, { timeoutMs: 10000 });
-    check('report-next-report-new-key', !!r4 && keyOf(r4) !== keyOf(r1) && !!second, { newKey: !!r4 && keyOf(r4) !== keyOf(r1), shown9002: !!second });
-    observe('report-requests', { paused: paused.length, allIntercepted: true, note: 'كل طلب إلى مضيف البلاغات أُوقف ورُدّ عليه من الحزام؛ لم يُتابَع أي طلب إلى الشبكة' });
-    await st.send('Fetch.disable').catch(() => {});
-  }, ['report-focus-keyboard-retry', 'report-same-key-across-retries', 'report-copy-id-failure-visible', 'report-copy-id-success', 'report-next-report-new-key']);
+    const copied = await st.eval(() => globalThis.__copied);
+    await shot(st, 'report-copied');
+    let body = null;
+    try { body = JSON.parse(copied[0]); } catch { /* ليس JSON */ }
+    check('report-copy-only', noSend && /نُسخ البلاغ نصًّا/.test(result1 ?? '') && body?.description === DESC && copied[1] === SUPPORT_EMAIL,
+      { noSend, result: result1, description: body?.description === DESC, email: copied[1] === SUPPORT_EMAIL });
+  }, ['report-copy-only']);
 }
 
 try {
@@ -507,18 +430,19 @@ try {
 } catch (err) {
   check('run-completed', false, { error: String(err?.message ?? err).replace(/https?:\/\/\S+/g, '[رابط]').slice(0, 300) });
 } finally {
-  // أخطاء متوقعة وحدها: سجل الشبكة لطلبي البلاغ الفاشلين عمدًا (الانقطاع و503) في صفحة الإعدادات.
-  const expected = { settings: 2 };
+  // لا أخطاء متوقعة: لا طلب بلاغ منذ و1.
+  const expected = {};
   const real = (p) => {
     let skip = expected[p.label] ?? 0;
     return p.errs.list.filter((x) => !(x.kind === 'log.network' && skip-- > 0));
   };
   for (const p of pages) {
     result.errors[p.label] = p.errs.list;
-    result.network[p.label] = { external: p.net.external, hosts: [...p.net.hosts], reportsIntercepted: p.net.reports };
+    result.network[p.label] = { external: p.net.external, hosts: [...p.net.hosts], reports: p.net.reports };
   }
   check('no-extension-errors', pages.every((p) => real(p).length === 0), Object.fromEntries(pages.map((p) => [p.label, { errors: real(p).length, expectedReportFailures: expected[p.label] ?? 0 }])));
   check('no-external-network', pages.every((p) => p.net.external === 0), Object.fromEntries(pages.map((p) => [p.label, p.net.external])));
+  check('no-reports-host', pages.every((p) => p.net.reports === 0), Object.fromEntries(pages.map((p) => [p.label, p.net.reports])));
   await b?.close().catch(() => {});
   await mkdir(OUT, { recursive: true });
   const json = JSON.stringify(result, null, 2).replaceAll(DL, '‹تنزيلات الاختبار›').replaceAll(EXT, '‹نسخة الاختبار›');

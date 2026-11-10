@@ -56,8 +56,8 @@ test('U84: التنبيه يرى رابط يوتيوب والبريد والمع
   assert.deepEqual(personalHints('m.youtube.com/shorts'), ['youtube-link']);
   assert.deepEqual(personalHints('راسلني على someone.name+tag@example.co.uk'), ['email']);
   assert.deepEqual(personalHints('المعرّف iG9CE55wbtY يتعطل'), ['video-id']);
-  assert.equal(personalHintText(['youtube-link', 'email', 'video-id']), 'يبدو أن في وصفك رابط يوتيوب، عنوان بريد أو معرّف فيديو. يُرسل الوصف كما كتبته، فاحذفه إن لم يحتجه البلاغ.');
-  assert.equal(personalHintText(['email']), 'يبدو أن في وصفك عنوان بريد. يُرسل الوصف كما كتبته، فاحذفه إن لم يحتجه البلاغ.');
+  assert.equal(personalHintText(['youtube-link', 'email', 'video-id']), 'يبدو أن في وصفك رابط يوتيوب، عنوان بريد أو معرّف فيديو. يُنسخ الوصف كما كتبته، فاحذفه إن لم يحتجه البلاغ.');
+  assert.equal(personalHintText(['email']), 'يبدو أن في وصفك عنوان بريد. يُنسخ الوصف كما كتبته، فاحذفه إن لم يحتجه البلاغ.');
   assert.equal(personalHintText([]), '');
 });
 
@@ -74,15 +74,14 @@ test('U84 (النتائج الخاطئة المحتملة): كلمات من 11 �
   for (const text of benign) assert.deepEqual(personalHints(text), [], text);
 });
 
-test('U84: في لوحة البلاغ يظهر التنبيه والإرسال ممكن؛ وما يشبه رمز جلسة يمنع ويحل محل التنبيه', async () => {
+test('U84: في لوحة البلاغ يظهر التنبيه والنسخ ممكن؛ وما يشبه رمز جلسة يمنع ويحل محل التنبيه', async () => {
   const doc = newDocument();
   const sent = [];
   const panel = reportPanel({
     doc,
     env: {
       diagnostics: async () => ({ appVersion: '1.1.0', os: 'macos', osVersion: '15.6.1', arch: 'arm64', browser: 'Google Chrome', browserVersion: '156.0.0.0', buildTarget: 'chromium', test: false }),
-      requestPermission: async () => true, send: async (p) => { sent.push(p); return { ok: true, id: 7, replayed: false }; },
-      copy: async () => {}, newKey: () => '00000001-0000-4000-8000-000000000000',
+      copy: async (text) => { sent.push(JSON.parse(text)); },
     },
   });
   doc.body.append(panel.root);
@@ -91,21 +90,21 @@ test('U84: في لوحة البلاغ يظهر التنبيه والإرسال �
   const area = panel.root.querySelector('textarea');
   const type = (v) => { area.value = v; area.dispatchEvent({ type: 'input' }); };
   const note = panel.root.querySelector('#st-report-hint');
-  const send = buttonNamed(panel.root, 'إرسال البلاغ');
+  const copyBtn = buttonNamed(panel.root, 'نسخ البلاغ');
 
   type('يتعطل على youtu.be/dQw4w9WgXcQ');
   assert.equal(note.hidden, false);
   assert.match(note.textContent, /رابط يوتيوب، معرّف فيديو|رابط يوتيوب أو معرّف فيديو/);
   assert.equal(note.getAttribute('role'), 'status', 'تذكير لا تنبيه مانع');
-  assert.equal(send.getAttribute('aria-disabled'), null, 'الإرسال ممكن');
+  assert.equal(copyBtn.getAttribute('aria-disabled'), null, 'النسخ ممكن');
   assert.ok(area.getAttribute('aria-describedby').split(' ').includes('st-report-hint'));
-  send.click();
+  copyBtn.click();
   await settle(10);
   assert.equal(sent.length, 1);
-  assert.equal(sent[0].description, 'يتعطل على youtu.be/dQw4w9WgXcQ', 'يُرسل كما كُتب');
+  assert.equal(sent[0].description, 'يتعطل على youtu.be/dQw4w9WgXcQ', 'يُنسخ كما كُتب');
 
   type(`sapisid=${V}`);
-  assert.equal(send.getAttribute('aria-disabled'), 'true', 'الصيغة الجديدة تمنع');
+  assert.equal(copyBtn.getAttribute('aria-disabled'), 'true', 'الصيغة الجديدة تمنع');
   assert.equal(note.hidden, true, 'والتنبيه المانع وحده ظاهر');
   type('وصف عادي بلا شيء');
   assert.equal(note.hidden, true);

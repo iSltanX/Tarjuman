@@ -42,16 +42,14 @@
     "privacy": {
       "ar": [
         "- ترجماتك وإعداداتك في تخزين الإضافة على جهازك، ولا تُزامَن مع أي خدمة. وإزالة الإضافة تحذفها، فخذ نسخة احتياطية قبلها.",
-        "- لا يخرج من الإضافة إلا شيئان:",
-        "  - **صور الفيديو في «المحفوظات»:** مطفأة حتى تفعّل مفتاحها من الإعدادات، فتُطلب حينها من خوادم يوتيوب بمعرّف الفيديو. وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح».",
-        "  - **بلاغ عن مشكلة:** ترسله أنت بنفسك من الإعدادات بعد أن ترى كل ما فيه، ولا يُرفق به تلقائيًا نص ترجمة ولا معرّف فيديو.",
+        "- لا يخرج من الإضافة إلا **صور الفيديو في «المحفوظات»**: مطفأة حتى تفعّل مفتاحها من الإعدادات، فتُطلب حينها من خوادم يوتيوب بمعرّف الفيديو. وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح».",
+        "- لا خادم لترجمان. و«الإبلاغ عن مشكلة» في الإعدادات ينسخ البلاغ بعد أن ترى كل ما فيه، فترسله أنت من بريدك إلى بريد الدعم، ولا يُرفق به تلقائيًا نص ترجمة ولا معرّف فيديو.",
         "- لا قياس استخدام، ولا إعلانات، ولا بيع لبياناتك."
       ],
       "en": [
         "- Your translations and settings stay in the extension's storage on your device and aren't synced with any service. Removing the extension deletes them, so take a backup first.",
-        "- Only two things leave the extension:",
-        "  - **Video thumbnails in Library:** off until you turn on their switch in Settings; only then are they requested from YouTube’s servers by video ID. On Firefox, turning them on also asks for your “browsing activity” consent.",
-        "  - **A problem report:** you send it yourself from Settings after seeing everything in it, with no translation text or video ID attached automatically.",
+        "- Only one thing leaves the extension: **video thumbnails in Library**, off until you turn on their switch in Settings; only then are they requested from YouTube’s servers by video ID. On Firefox, turning them on also asks for your “browsing activity” consent.",
+        "- Tarjuman has no server. “Report a problem” in Settings copies the report after you see everything in it, and you send it from your own email to the support address, with no translation text or video ID attached automatically.",
         "- No usage tracking, no ads, and no selling of your data."
       ]
     },
@@ -62,8 +60,7 @@
         "| `storage` | حفظ ترجماتك ولغاتها ومسار الأصل وبصمات التصدير والعلامات وتفضيلات اللغات والإعدادات على جهازك. |",
         "| `unlimitedStorage` | فيديو بساعتين نحو 0.7 م.ب، فالحد الافتراضي يمتلئ بنحو خمسة عشر فيديو طويلًا. ولا يضيف تحذير تثبيت. |",
         "| `downloads` | حفظ الملفات التي تطلبها وحدها (ملف SRT الأصلي، والترجمات المصدَّرة، والنسخة الاحتياطية)، والاستعلام عن تنزيلات الإضافة وحدها. |",
-        "| `https://www.youtube.com/*` | سكربتا المحتوى: أزرار ترجمان في المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل وقائمة لغات مساراته من بيانات الصفحة بلا طلب، ورسم ترجمتك فوق الفيديو. |",
-        "| خادم البلاغات (اختياري) | يُطلب عند أول ضغطة «إرسال البلاغ» بعد المعاينة، ولا يُستعمل لغيره. وإن رفضته لا يُرسل شيء. |"
+        "| `https://www.youtube.com/*` | سكربتا المحتوى: أزرار ترجمان في المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل وقائمة لغات مساراته من بيانات الصفحة بلا طلب، ورسم ترجمتك فوق الفيديو. |"
       ],
       "en": [
         "| Permission | Why |",
@@ -71,8 +68,7 @@
         "| `storage` | Saving your translations, their languages, the original track, export fingerprints, marks, language preferences and settings on your device. |",
         "| `unlimitedStorage` | A two-hour video takes about 0.7 MB, so the default limit fills up after about fifteen long videos. It adds no install warning. |",
         "| `downloads` | Saving only the files you ask for (the original SRT, exported translations and the backup), and querying the extension's own downloads only. |",
-        "| `https://www.youtube.com/*` | The content scripts: Tarjuman's buttons in the player, reading a copy of the subtitle response the player requested and the list of its track languages from the page data without any request, and drawing your translation over the video. |",
-        "| Reports server (optional) | Requested on the first press of \"Send report\" after the preview, and used for nothing else. If you refuse it, nothing is sent. |"
+        "| `https://www.youtube.com/*` | The content scripts: Tarjuman's buttons in the player, reading a copy of the subtitle response the player requested and the list of its track languages from the page data without any request, and drawing your translation over the video. |"
       ]
     },
     "install-stores": {
@@ -86,7 +82,6 @@
         "- **التخزين** (ومعه تخزين غير محدود الحجم، ولا يضيف تحذيرًا).",
         "- **التنزيلات** (الإصدار الثاني): يظهر بسببها تحذير «إدارة عمليات التنزيل» عند التثبيت أو الترقية. تستعملها صفحات الإضافة والعامل الخلفي لأدوات المشغّل، لتحفظ ملفات ترجمان وحدها في المكان الذي تختاره (§٧). لا يقرأ تنزيلاتك الأخرى ولا يفتحها ولا يحذفها.",
         "- **العمل على صفحات `www.youtube.com`** وحدها. لا تبويبات، ولا مواقع أخرى.",
-        "- **إذن اختياري لا يُطلب عند التثبيت:** الاتصال بخادم البلاغات وحده، يطلبه المتصفح عند أول «إرسال البلاغ» (§٨). وفي Firefox معه موافقة «البيانات التقنية والتفاعل»، ويعرضها Firefox أيضًا في الإعدادات الاختيارية بنافذة التثبيت فتشغّلها أو تطفئها هناك.",
         "- **في Firefox، موافقة «نشاط التصفح» لصور المحفوظات:** لا تُطلب عند التثبيت، بل حين تفعّل «صور الفيديو في المحفوظات» (§٨)."
       ]
     }

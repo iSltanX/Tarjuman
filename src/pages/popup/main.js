@@ -36,7 +36,7 @@ function diagnosticsLink(reply) {
     let ok = false;
     try {
       const sections = await queryPageDiagnostics();
-      // المتصفح بكشف قناة البلاغ (U53): Firefox وEdge باسميهما.
+      // المتصفح بكشف بلاغ المشكلة (U53): Firefox وEdge باسميهما.
       const browser = await browserLabel();
       await navigator.clipboard.writeText(pageReport({ reply, sections, version: extensionVersion(), browser }));
       ok = true;

@@ -106,7 +106,7 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 - **On your device:** Your translations and settings are in the extension’s storage in your browser. No server keeps them, and nothing is synced.
 - **To YouTube:** Video thumbnails in “Library” are requested from YouTube’s servers using the video ID. A switch turns them off, and in Firefox they’re requested only with your consent.
 - **To the model you choose:** What you send it yourself: the file and the instructions. The extension doesn’t connect to it.
-- **To the reports channel:** A problem report, when you write it, see everything in it, and press “Send report”. No translation text or video ID is attached automatically.
+- **No Tarjuman server:** You write a problem report, see everything in it, then copy it and send it from your own email. No translation text or video ID is attached automatically.
 - **Nothing else:** No usage tracking, no ads, and no selling of your data.
 - **الرابط:** [Full privacy policy](/tarjuman/en/privacy).
 
@@ -143,7 +143,7 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 2. **Pin its icon to the browser toolbar:** Click the extensions icon (the puzzle piece), then the pin next to “Tarjuman”. That’s where you’ll copy the translation instructions.
 3. **Open a YouTube video:** Then start with [First use](/tarjuman/en/support#first-use) on the Help page.
 
-**Permissions on install:** Storage, downloads, and access to `www.youtube.com` pages only. A fourth, optional permission is requested only when you send a report. In Firefox there are two optional consents: one for reports, which Firefox shows in the install dialog for you to turn on or off, and one for Library thumbnails, when you turn them on. Details are under [Permissions](/tarjuman/en/privacy#permissions).
+**Permissions on install:** Storage, downloads, and access to `www.youtube.com` pages only. There’s no other, optional permission. In Firefox there’s one optional consent, for Library thumbnails, requested when you turn them on. Details are under [Permissions](/tarjuman/en/privacy#permissions).
 
 ## التذييل
 

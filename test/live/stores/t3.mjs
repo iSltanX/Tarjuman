@@ -4,8 +4,8 @@
 //   التثبيت ← الجسر (غلافا fetch وXHR في عالم الصفحة، ورسالة الالتقاط إلى العالم المعزول) ← تنزيل SRT من شريط المشغّل (في Firefox
 //   عبر رابط blob: من صفحة الخلفية، إذ يرفض روابط data:) ← نسخ التعليمات من نافذة الإضافة بزوج «من» و«إلى» (منذ 2.0.0، AA3 ق٨؛ وقائمة
 //   المشغّل بلا نسخ) ← رفع العربية من الشريط ← العرض فوق الفيديو ← التوقيت (+ و−) ← خطوط الواجهة
-//   والترجمة ← المحرّر ← الحفظ بعد إعادة التحميل ← النسخة الاحتياطية ← «الإبلاغ عن مشكلة» (المعاينة والنسخ والخطأ، بحجب خادم
-//   البلاغات فلا يُرسل بلاغ) ← في Firefox منح إذن يوتيوب وسحبه ← الإزالة وقياس محو التخزين ← إعادة التثبيت فارغًا ← الاستعادة.
+//   والترجمة ← المحرّر ← الحفظ بعد إعادة التحميل ← النسخة الاحتياطية ← «الإبلاغ عن مشكلة» (المعاينة والنسخ ونسخ البريد، ولا إرسال
+//   منذ و1 ولا طلب إلى مضيف البلاغات القديم) ← في Firefox منح إذن يوتيوب وسحبه ← الإزالة وقياس محو التخزين ← إعادة التثبيت فارغًا ← الاستعادة.
 // تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُرسل جسم P1 الحقيقي للفيديو نفسه من عالم الصفحة برسالة الالتقاط نفسها.
 //   command node test/live/stores/t3.mjs --browser brave|chrome|edge|firefox [--headed] [--out test-results/live/T3/<browser>]
 import { createHash } from 'node:crypto';
@@ -530,19 +530,13 @@ try {
     }
     const result1 = await st.eval(() => document.querySelector('.st-report__result')?.textContent.replace(/\s+/g, ' ').trim() ?? null);
     check('report-copy-offline', copied === json && !!json, { same: copied === json, copiedLength: copied?.length ?? null, jsonLength: json.length, result: result1 });
+    // بلا خادم منذ و1 (2.2.0): لا زر إرسال، و«نسخ البريد» ينسخ بريد الدعم، ولا طلب إلى مضيف البلاغات القديم.
     await s.blockReports(st);
-    await clickOn(st, byText('#st-report button', 'إرسال البلاغ'), 'إرسال البلاغ');
-    const failed = await st.waitFor(() => {
-      const r = document.querySelector('[data-report-result="failed"]');
-      return r ? { failure: r.getAttribute('data-failure'), retry: [...r.querySelectorAll('button')].some((b) => b.textContent.includes('أعد المحاولة')), copy: [...r.querySelectorAll('button')].some((b) => b.textContent.includes('نسخ البلاغ')), text: r.textContent.replace(/\s+/g, ' ').trim() } : null;
-    }, { timeoutMs: 25000 });
-    const sent = await st.eval(() => !!document.querySelector('[data-report-result="sent"]'));
-    if (!failed && !sent) {
-      check('report-error-row', null, { note: 'لم يُرد الإذن ولا الطلب في 25 ثانية بلا نافذة (حوار الإذن ينتظر يدًا)؛ يُختبر في الجلسة اليدوية', blocked: s.reportsBlocked.count });
-    } else {
-      check('report-error-row', !!failed && !sent && failed.retry && failed.copy && (failed.failure !== 'network' || s.reportsBlocked.count >= 1),
-        { failed, sent, blockedRequests: s.reportsBlocked.count });
-    }
+    const noSend = await st.eval(() => ![...document.querySelectorAll('#st-report button')].some((x) => x.textContent.trim() === 'إرسال البلاغ'));
+    await clickOn(st, byText('#st-report button', 'نسخ البريد'), 'نسخ البريد');
+    const email = await st.waitFor(() => (window.__t3copied?.length ?? 0) >= 2 ? window.__t3copied.at(-1) : null, { timeoutMs: 5000 });
+    await sleep(1500);
+    check('report-no-send', noSend && /@/.test(email ?? '') && s.reportsBlocked.count === 0, { noSend, email: !!email, blockedRequests: s.reportsBlocked.count });
     await shot(st, 'settings-report');
   });
 

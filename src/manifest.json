@@ -13,7 +13,6 @@
     "128": "icons/tarjuman-icon-128.png"
   },
   "permissions": ["storage", "unlimitedStorage", "downloads"],
-  "optional_host_permissions": ["https://app-reports.isultantf.workers.dev/*"],
   "background": {
     "service_worker": "background/worker.js"
   },

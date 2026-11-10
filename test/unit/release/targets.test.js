@@ -45,9 +45,10 @@ test('طبقة Firefox: الخلفية سكربت بالملف نفسه، وإع
   assert.equal(JSON.stringify(base), before, 'البيان الأساسي لم يتغير');
   assert.deepEqual(m.background, { scripts: [base.background.service_worker] });
   assert.deepEqual(m.browser_specific_settings, {
-    gecko: { id: 'tarjuman@bysltan.com', strict_min_version: '144.0', data_collection_permissions: { required: ['none'], optional: ['technicalAndInteraction', 'browsingActivity'] } },
+    gecko: { id: 'tarjuman@bysltan.com', strict_min_version: '144.0', data_collection_permissions: { required: ['none'], optional: ['browsingActivity'] } },
   });
-  assert.deepEqual(m.optional_host_permissions, ['https://app-reports.isultantf.workers.dev/*'], 'إذن البلاغ الاختياري من البيان الأساسي نفسه');
+  assert.equal('optional_host_permissions' in m, false, 'لا إذن مضيف اختياري (و1: بلا خادم بلاغات)');
+  assert.equal('optional_host_permissions' in base, false);
   assert.equal('gecko_android' in m.browser_specific_settings, false, 'سطح المكتب وحده');
   const changed = Object.keys(m).filter((k) => JSON.stringify(m[k]) !== JSON.stringify(base[k]));
   assert.deepEqual(changed.sort(), ['background', 'browser_specific_settings']);

@@ -3,25 +3,19 @@
 //   consent   Firefox: مكتبة من 60 فيديو بموافقة «نشاط التصفح»، ثم سحبها (permissions.remove، كصفحة الإضافات) والصفحة مفتوحة،
 //             ثم «عرض المزيد» والتمرير والبحث: المقبول صفر طلبات i.ytimg.com جديدة. ثم المنح من جديد يعيدها (حساسية القياس).
 //             طلبات الصور تُعترض بـBiDi وتُفشَل قبل خروجها، فلا يصل شيء إلى يوتيوب.
-//   report    I14 (Q11): ترويسات طلب البلاغ كما يرسلها المتصفح. Firefox: اعتراض BiDi عند beforeRequestSent ثم failRequest
-//             (لا يخرج الطلب). Chrome: خادم HTTPS وهمي على 127.0.0.1 يُوجَّه إليه مضيف البلاغات بـ--host-resolver-rules، فتُسجَّل
-//             الترويسات كما وصلت. حدّه: يثبت ما يرسله المتصفح لهذا المضيف بالإذن نفسه، ولا يثبت ما يسجّله الخادم الحقيقي أو
-//             بنيته الوسيطة (Cloudflare).
+//   (report، I14: ترويسات طلب البلاغ، حُذف مع قناة البلاغات في و1، 2.2.0: لا طلب بلاغ يُفحص.)
 //   download  I12 (Q14، Chrome): ثلاثة تنزيلات من الإضافة، و«آخر ملف» = الأحدث، ثم حذفه من القائمة وإعادة التشغيل وتنزيل عادي
 //             من صفحة ويب محلية: هل يأخذ الرقم نفسه؟ وماذا يعرض «آخر ملف»؟
 //   pages     Chrome: المحفوظات والإعدادات بلا انحدار (الصفوف والسعة والأحجام والصور فورًا كما كانت).
 // الاستعمال (بإذن سلطان، وبعد إعلامه):
-//   command node test/live/audit-c1/run.mjs --browser firefox|chrome --scenarios consent,report,download,pages --ext <مجلد البناء> --out <مجلد>
-// وفي Chrome لسيناريو report: --ext-reports <بناء فيه مضيف البلاغات في host_permissions> (بديل حوار الإذن الذي ينتظر يدًا بلا نافذة).
-import { execFileSync } from 'node:child_process';
+//   command node test/live/audit-c1/run.mjs --browser firefox|chrome --scenarios consent,download,pages --ext <مجلد البناء> --out <مجلد>
 import { randomUUID } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { createServer as createHttps } from 'node:https';
 import { createServer as createHttp } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { PROFILE_ROOT, human, sleep } from '../harness/browser.mjs';
-import { REPORTS_HOST, startBrowser } from '../stores/driver.mjs';
+import { startBrowser } from '../stores/driver.mjs';
 import { buildSeedMany, storageItems } from '../ui/seed.mjs';
 
 const arg = (name, dflt = null) => {
@@ -29,9 +23,8 @@ const arg = (name, dflt = null) => {
   return i > 0 ? process.argv[i + 1] : dflt;
 };
 const BROWSER = arg('browser', 'firefox');
-const SCENARIOS = String(arg('scenarios', 'consent,report')).split(',');
+const SCENARIOS = String(arg('scenarios', 'consent')).split(',');
 const EXT = path.resolve(arg('ext'));
-const EXT_REPORTS = arg('ext-reports') ? path.resolve(arg('ext-reports')) : null;
 const OUT = path.resolve(arg('out'));
 const TMP = await mkdtemp(path.join(os.tmpdir(), 'tj-c1-live-'));
 const profiles = [];
@@ -93,7 +86,6 @@ async function shot(page, name) {
 }
 
 /** يقرأ ترويسات BiDi بصيغة { name, value: { type, value } } إلى كائن بأسماء صغيرة. */
-const bidiHeaders = (list = []) => Object.fromEntries(list.map((h) => [h.name.toLowerCase(), h.value?.value ?? String(h.value ?? '')]));
 
 // ================================================================ consent (Firefox)
 async function consentScenario() {
@@ -148,106 +140,6 @@ async function consentScenario() {
     result.steps.consentErrors = s.errors();
   } finally {
     await s.close();
-  }
-}
-
-// ================================================================ report (I14)
-async function selfSignedCert() {
-  const key = path.join(TMP, 'key.pem');
-  const cert = path.join(TMP, 'cert.pem');
-  execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '1', '-subj', `/CN=${REPORTS_HOST}`, '-addext', `subjectAltName=DNS:${REPORTS_HOST}`], { stdio: 'ignore' });
-  return { key: await readFile(key), cert: await readFile(cert) };
-}
-
-async function openReport(st) {
-  await st.waitFor(() => !!document.getElementById('about'), { timeoutMs: 15000 });
-  await clickOn(st, byText('#about button', 'الإبلاغ عن مشكلة'), 'الإبلاغ عن مشكلة');
-  await st.waitFor(() => !document.getElementById('st-report')?.hidden && !!document.querySelector('[data-report-field="diagnostics.build_target"]'), { timeoutMs: 15000 });
-  const box = await st.waitFor(() => {
-    const t = document.getElementById('st-report-text');
-    t?.scrollIntoView({ block: 'center' });
-    const r = t?.getBoundingClientRect();
-    return r && r.width > 0 && r.height > 0 ? { w: Math.round(r.width), h: Math.round(r.height) } : null;
-  }, { timeoutMs: 10000 }).catch(async () => {
-    await shot(st, 'report-textarea');
-    result.notes.push(`حقل الوصف: ${JSON.stringify(await st.eval(() => {
-      const t = document.getElementById('st-report-text');
-      const reg = document.getElementById('st-report');
-      return { exists: !!t, regionHidden: reg?.hidden ?? null, display: t ? getComputedStyle(t).display : null, sectionHidden: t?.closest('section')?.hidden ?? null, active: location.hash, w: innerWidth, h: innerHeight };
-    }))}`);
-    return null;
-  });
-  if (!box) throw new Error('حقل الوصف بلا مساحة');
-  await clickOn(st, `document.getElementById('st-report-text')`, 'وصف البلاغ');
-  await st.typeText('C1 live test: header capture only, never delivered.');
-  await sleep(500);
-  await clickOn(st, byText('#st-report button', 'إرسال البلاغ'), 'إرسال البلاغ');
-  return st.waitFor(() => document.querySelector('[data-report-result]')?.getAttribute('data-report-result') ?? null, { timeoutMs: 30000 }).catch(() => null);
-}
-
-async function reportScenario() {
-  if (BROWSER === 'firefox') {
-    const s = await startBrowser('firefox', { profile: profileName('report'), ext: EXT, downloadDir: path.join(TMP, 'dl-report') });
-    result.versions.firefox = s.version;
-    const seen = [];
-    try {
-      const st = await s.openExt('pages/settings/index.html#about');
-      await s.interceptHosts([REPORTS_HOST], (r) => seen.push({ method: r.method, path: new URL(r.url).pathname, headers: bidiHeaders(r.headers) }));
-      const outcome = await openReport(st);
-      await sleep(1500);
-      const uuid = new URL(s.base).host;
-      const post = seen.find((r) => r.method === 'POST') ?? null;
-      result.steps.reportRequests = seen;
-      check('i14-firefox-captured', !!post, { outcome, requests: seen.map((r) => r.method), notDelivered: true });
-      check('i14-firefox-origin', post ? null : false, {
-        origin: post?.headers.origin ?? null, originHasInstallUuid: post ? String(post.headers.origin ?? '').includes(uuid) : null,
-        referer: post?.headers.referer ?? null, userAgent: post?.headers['user-agent'] ?? null, acceptLanguage: post?.headers['accept-language'] ?? null,
-        preflight: seen.some((r) => r.method === 'OPTIONS'), headerNames: post ? Object.keys(post.headers).sort() : [],
-      });
-    } finally {
-      await s.close();
-    }
-    return;
-  }
-  // Chrome: خادم HTTPS وهمي على 127.0.0.1 بشهادة ذاتية لاسم مضيف البلاغات، والمتصفح يوجّه الاسم إليه.
-  const tls = await selfSignedCert();
-  const seen = [];
-  const server = createHttps(tls, (req, res) => {
-    seen.push({ method: req.method, path: req.url, headers: { ...req.headers }, httpVersion: req.httpVersion });
-    if (req.method === 'OPTIONS') {
-      res.writeHead(204, { 'access-control-allow-origin': req.headers.origin ?? '*', 'access-control-allow-methods': 'POST', 'access-control-allow-headers': 'content-type, idempotency-key' });
-      res.end();
-      return;
-    }
-    req.resume();
-    req.on('end', () => {
-      res.writeHead(503, { 'content-type': 'application/json', 'access-control-allow-origin': req.headers.origin ?? '*' });
-      res.end('{"error":"c1-live-test"}');
-    });
-  });
-  await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  const port = server.address().port;
-  const s = await startBrowser('chrome', {
-    profile: profileName('report'), ext: EXT_REPORTS ?? EXT, downloadDir: path.join(TMP, 'dl-report'),
-    extraArgs: [`--host-resolver-rules=MAP ${REPORTS_HOST} 127.0.0.1:${port}`, '--ignore-certificate-errors'],
-  });
-  result.versions.chrome = s.version;
-  try {
-    const st = await s.extPage('pages/settings/index.html#about');
-    const outcome = await openReport(st);
-    await sleep(1500);
-    const post = seen.find((r) => r.method === 'POST') ?? null;
-    result.steps.reportRequests = seen.map((r) => ({ ...r, headers: Object.fromEntries(Object.entries(r.headers).filter(([k]) => k !== 'idempotency-key')) }));
-    check('i14-chrome-captured', !!post, { outcome, requests: seen.map((r) => r.method), port: 'loopback' });
-    check('i14-chrome-origin', post ? null : false, {
-      origin: post?.headers.origin ?? null, originIsExtensionId: post ? String(post.headers.origin ?? '') === `chrome-extension://${s.extensionId}` : null,
-      referer: post?.headers.referer ?? null, userAgent: post?.headers['user-agent'] ?? null, acceptLanguage: post?.headers['accept-language'] ?? null,
-      secFetchSite: post?.headers['sec-fetch-site'] ?? null, preflight: seen.some((r) => r.method === 'OPTIONS'), headerNames: post ? Object.keys(post.headers).sort() : [],
-      cookie: post?.headers.cookie ?? null,
-    });
-  } finally {
-    await s.close();
-    server.close();
   }
 }
 
@@ -350,7 +242,6 @@ async function pagesScenario() {
 await mkdir(OUT, { recursive: true });
 try {
   if (SCENARIOS.includes('consent') && BROWSER === 'firefox') await step('consent', consentScenario);
-  if (SCENARIOS.includes('report')) await step('report', reportScenario);
   if (SCENARIOS.includes('download') && BROWSER === 'chrome') await step('download', downloadScenario);
   if (SCENARIOS.includes('pages') && BROWSER !== 'firefox') await step('pages', pagesScenario);
 } finally {

@@ -28,11 +28,10 @@ export const WORKER = 'background/worker.js';
 const BACKGROUND = { chromium: { service_worker: WORKER }, firefox: { scripts: [WORKER] } };
 /** إعدادات Gecko المعتمدة (store/README.md §٥)، حرفية هنا لا مأخوذة من طبقة البناء؛ وفئتا البلاغ (T2.1) وصور المحفوظات (2026-11-04) الاختياريتان. */
 const GECKO_SETTINGS = {
-  gecko: { id: 'tarjuman@bysltan.com', strict_min_version: '144.0', data_collection_permissions: { required: ['none'], optional: ['technicalAndInteraction', 'browsingActivity'] } },
+  gecko: { id: 'tarjuman@bysltan.com', strict_min_version: '144.0', data_collection_permissions: { required: ['none'], optional: ['browsingActivity'] } },
 };
-/** قناة البلاغات (جولة النشر T2.1): إذن مضيف اختياري لخادمها وحده، والطلب والمضيف في حزمة صفحة الإعدادات وحدها. */
-const REPORTS_ORIGIN = 'https://app-reports.isultantf.workers.dev';
-const OPTIONAL_HOSTS = [`${REPORTS_ORIGIN}/*`];
+/** و1 (2.2.0، قرار سلطان ق3): لا قناة بلاغات، فلا مضيف اختياري ولا طلب. والاسم يُفحص غيابه من الحزمة كلها. */
+const REPORTS_HOST = 'app-reports.';
 const SETTINGS_BUNDLE = 'pages/settings/main.js';
 /** صفحات الإضافة الأربع: يفتحها سكربت (runtime.getURL) لا مرجع في البيان أو HTML، فتُسمّى هنا. */
 const PAGES = ['popup', 'library', 'settings', 'editor'];
@@ -50,16 +49,13 @@ const URL_OK = (u, rel) => u === 'http://www.w3.org/2000/svg'
   || u.startsWith('https://www.youtube.com/watch?v=')
   || (rel === 'pages/settings/main.js' && ['https://bysltan.com', 'https://github.com/iSltanX/Tarjuman', 'https://bysltan.com/tarjuman/support'].includes(u))
   || (rel === WORKER && u === 'https://www.youtube.com/')
-  // صور الفيديو في المحفوظات من خوادم يوتيوب بمعرّفه، بمفتاح يطفئها (قرار سلطان 2026-11-03، docs/product-spec.md §٦.٦).
-  || (rel === 'pages/library/main.js' && u === 'https://i.ytimg.com/vi/')
-  // خادم البلاغات بأصله وحده في حزمة الإعدادات (المسار والنمط يُبنيان منه في الشيفرة)، ونمط إذنه الاختياري في البيان.
-  || (rel === SETTINGS_BUNDLE && u === REPORTS_ORIGIN)
-  || (rel === 'manifest.json' && OPTIONAL_HOSTS.includes(u));
+  // صور الفيديو في المحفوظات من خوادم يوتيوب بمعرّفه، مطفأة حتى تُفعَّل (قرار سلطان 2026-11-03، و2، docs/product-spec.md §٦.٦).
+  || (rel === 'pages/library/main.js' && u === 'https://i.ytimg.com/vi/');
 /**
- * طلبات الشبكة في الحزمة: قراءة خط الترجمة من ملفاتها (P6، chrome-extension://)، وطلب البلاغ الوحيد من صفحة الإعدادات
- * بغلافه المسمّى (جولة النشر T2.1) بعد ضغطة المستخدم وإذن مضيفه.
+ * طلبات الشبكة في الحزمة: قراءة خط الترجمة من ملفاتها (P6، chrome-extension://) وحدها. ومنذ و1 (2.2.0) لا طلب بلاغ من صفحة
+ * الإعدادات.
  */
-const FETCH_OK = new Map([['content/main.js', [/\bfetch\(runtime\.getURL\(/]], [SETTINGS_BUNDLE, [/^fetch\(url, init\)/]]]);
+const FETCH_OK = new Map([['content/main.js', [/\bfetch\(runtime\.getURL\(/]]]);
 const FORBIDDEN = [
   { re: /\bnew\s+(?:XMLHttpRequest|WebSocket|EventSource)\b/, why: 'اتصال شبكة جديد' },
   { re: /\bsendBeacon\s*\(|\bimportScripts\s*\(/, why: 'إرسال أو تحميل شيفرة' },
@@ -109,9 +105,8 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   // ---- البيان والأذونات ----
   const perms = [...(manifest.permissions ?? [])].sort();
   check('permissions-approved-only', JSON.stringify(perms) === JSON.stringify([...APPROVED_PERMISSIONS].sort()), { permissions: perms });
-  // لا أذونات مضيف إلزامية ولا أذونات اختيارية، إلا مضيف خادم البلاغات الاختياري وحده (T2.1).
-  check('no-host-or-optional-permissions', !manifest.host_permissions && !manifest.optional_permissions
-    && JSON.stringify(manifest.optional_host_permissions ?? null) === JSON.stringify(OPTIONAL_HOSTS),
+  // لا أذونات مضيف إلزامية ولا اختيارية ولا مضيف اختياري (و1، 2.2.0: لا خادم بلاغات).
+  check('no-host-or-optional-permissions', !manifest.host_permissions && !manifest.optional_permissions && !manifest.optional_host_permissions,
     { host: manifest.host_permissions ?? null, optional: manifest.optional_permissions ?? null, optionalHosts: manifest.optional_host_permissions ?? null });
   const matches = (manifest.content_scripts ?? []).flatMap((c) => c.matches ?? []);
   check('content-scripts-youtube-only', matches.length > 0 && matches.every((m) => m === YOUTUBE_MATCH)
@@ -188,17 +183,16 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   }
   check('no-external-connection-or-forbidden-code', problems.length === 0, { problems: problems.slice(0, 20) });
 
-  // ---- قناة البلاغات (جولة النشر T2.1): مضيفها وطلب إذنها في حزمة الإعدادات وحدها، وفيها طلب fetch واحد بغلافه المسمّى ----
+  // ---- بلا خادم (و1، 2.2.0): لا اسم لخادم البلاغات في أي ملف من الحزمة، ولا fetch في حزمة الإعدادات ----
   const reportHolders = [];
   let settingsText = '';
-  for (const rel of files.filter((f) => f.endsWith('.js'))) {
+  for (const rel of files.filter((f) => /\.(?:js|json|html)$/.test(f))) {
     const text = await readFile(path.join(dir, rel), 'utf8');
-    if (text.includes(REPORTS_ORIGIN.replace('https://', '')) || /\bpermissions\s*\.\s*request\b/.test(text)) reportHolders.push(rel);
+    if (text.includes(REPORTS_HOST)) reportHolders.push(rel);
     if (rel === SETTINGS_BUNDLE) settingsText = text;
   }
-  const reportFetches = [...settingsText.matchAll(/\bfetch\s*\(/g)].length;
-  check('report-channel-settings-only', JSON.stringify(reportHolders) === JSON.stringify([SETTINGS_BUNDLE]) && reportFetches === 1
-    && settingsText.includes('pageFetch = (url, init) => globalThis.fetch(url, init)'), { holders: reportHolders, fetches: reportFetches });
+  const settingsFetches = [...settingsText.matchAll(/\bfetch\s*\(/g)].length;
+  check('no-report-channel', reportHolders.length === 0 && settingsFetches === 0, { holders: reportHolders, fetches: settingsFetches });
 
   // ---- خطوط الترجمة المضمّنة ورخصها ----
   const fonts = [];

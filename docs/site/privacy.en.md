@@ -14,14 +14,13 @@
 - Tarjuman is injected into `www.youtube.com` pages and works on the watch page. It extracts the subtitles that YouTube’s player has fetched on its own, in whichever language you chose there, and shows your translation over the video, all inside your browser.
 - What it stores, including your translations and settings, stays in the extension’s storage in this browser on this device. It isn’t synced with your browser account or with any service.
 - No account, no API key, no AI model inside the extension, no usage tracking, and no ads.
-- **Not everything is local.** Only two things leave the extension:
-  - Video thumbnails in “Library”, from YouTube’s servers, with a switch that turns them off. In Firefox they’re requested only with your consent.
-  - A problem report, which you send yourself after seeing everything in it.
+- **Not everything is local.** Only one thing leaves the extension: video thumbnails in “Library”, from YouTube’s servers, with a switch that turns them off. In Firefox they’re requested only with your consent.
+- Tarjuman has no server. You copy a problem report from Settings after seeing everything in it, and send it from your own email.
 - Translation happens outside the extension: you copy the file and the instructions to a model you choose, and the extension doesn’t connect to it.
 
 ## What’s stored on your device — `#stored`
 
-The following is stored in the extension’s local storage within this browser’s profile. None of it is sent to the developer, except the interface language as part of a report you send yourself.
+The following is stored in the extension’s local storage within this browser’s profile. None of it is sent to the developer. Only the interface language goes into a report’s text, if you copy and send it yourself.
 
 - **About each video you saved something for:** Its ID, title and duration.
 - **Dates:** The first save and last change for each video, the capture of each track, the upload and editing of each translation, the date of each fingerprint, mark and last position, and the date the extension’s storage was initialized.
@@ -49,13 +48,13 @@ The following is stored in the extension’s local storage within this browser�
 
 ## What’s sent, to whom, and when — `#sent`
 
-Tarjuman doesn’t connect to any server except in the two cases listed after the YouTube page below.
+Tarjuman has no server, and it connects to none except for the “Library” thumbnails listed after the YouTube page below.
 
 ### The YouTube page you’re watching — `#youtube`
 
 - Tarjuman works inside the watch page. When you turn on subtitles (CC), YouTube’s player requests them itself, and Tarjuman reads a copy of the response. It doesn’t send YouTube any new request.
 - From the player data already in the page, it also reads the list of subtitle tracks the video offers, with each one’s language, type and name, in order to show them to you. It doesn’t read their links or tokens, request them, or switch the track you chose. This list stays in the memory of the open page and isn’t stored.
-- On first run, as long as the interface language isn’t set, it reads YouTube’s interface language from the same page (the `lang` attribute), or otherwise the browser’s interface language, to choose its own interface language. That code isn’t sent to anyone. What appears afterward is the resulting interface language: in a report if you send one, and in the text of the instructions you copy.
+- On first run, as long as the interface language isn’t set, it reads YouTube’s interface language from the same page (the `lang` attribute), or otherwise the browser’s interface language, to choose its own interface language. That code isn’t sent to anyone. What appears afterward is the resulting interface language: in a report if you copy one, and in the text of the instructions you copy.
 - Tarjuman doesn’t change what YouTube collects about you while you watch. That is governed by Google’s policy.
 
 ### Video thumbnails in “Library” — `#thumbnails`
@@ -69,35 +68,20 @@ Tarjuman doesn’t connect to any server except in the two cases listed after th
 - **How to stop it:** Settings › “Display” › turn off “Video thumbnails in Library”. An icon then appears instead of the thumbnail, and nothing is requested. The switch stays off after “Clear all data”.
 - Tarjuman doesn’t store the thumbnails. The browser keeps them in its cache like any other image.
 
-### The reports server, when you send a report — `#report`
+### A problem report, with no server — `#report`
 
-- **When:** Only when you open Settings › “About” › “Report a problem”, write a description, review what will be sent, then press “Send report”. A single request, with no automatic retry.
-- **Permission:**
-  - On the first send, the browser asks your permission to connect to the reports server only (`app-reports.isultantf.workers.dev`). In Firefox this comes with the “Technical and interaction data” consent.
-  - If you decline, nothing is sent.
-  - You can withdraw the permission at any time from the browser’s add-ons page.
+- **Not sent by the extension:** Settings › “About” › “Report a problem” shows the whole report, then copies it as text when you press “Copy report”. You send it yourself from your own email to the support address under [“Contact”](#contact), which is shown in the form with a “Copy email” button. There’s no reports server and no permission, and no email app or link opens from the extension.
 - **What it contains:**
   - The report type (bug, suggestion or other), and your description as you wrote it, up to 2000 characters.
   - The Tarjuman version, the browser’s name and version, and the build package (Chromium or Firefox).
   - The operating system, its version and architecture, and the interface language (Arabic or English).
-  - You see all of this before sending.
+  - You see all of this before copying.
 - **Not attached automatically:**
   - No translation text, no video ID, title or link, nothing from your Library, and no attachments.
-  - No account, and no identifier Tarjuman assigns to you. The deduplication key is a random number for each report and doesn’t identify you.
-- **Your description as written:** The description is sent verbatim, so if you write a link, a video ID or an email address in it, that is sent with it. The page reminds you if it seems to contain a YouTube link, an email address or something resembling a video ID. It may miss some, so review it yourself. It also blocks sending and copying until you remove anything that resembles a session token or cookie.
-- **What the browser adds to the request:**
-  - Its type, version and operating system (`User-Agent`), its preferred languages (`Accept-Language`), and in Chrome, Edge and Brave, browser hints (`Sec-CH-UA`).
-  - The origin header (`Origin`) with the extension’s address. In Chrome, Edge and Brave this is Tarjuman’s own ID, which is the same for everyone who installs it. In Firefox it’s a random ID that Firefox generates for the Tarjuman installation in your profile, and it remains until you remove the extension.
-  - No cookie and no page address is sent.
-- **Destination:** A Cloudflare worker receives the report and opens it as an issue in a private GitHub repository that Tarjuman’s developer can view. The report isn’t published.
-- **Server limits:**
-  - Five reports per hour per IP address, and one hundred per day across all apps combined.
-  - The server counts this limit using a salted fingerprint of your address, which ends when the limit’s period ends. Your address doesn’t reach the report or the repository.
-- **The number:** You’ll see a report number, which is your only reference. We don’t ask for an email address, and you won’t receive a reply.
-- **If sending fails:**
-  - “Try again” when that helps.
-  - “Copy report” copies what would have been sent as text, without a network connection, so you can send it to the support email under [“Contact”](#contact).
-- **Retention:** The report isn’t deleted automatically. To have it deleted, email the support address with its number.
+  - No account, and no identifier Tarjuman assigns to you.
+- **Your description as written:** The description is copied verbatim, so if you write a link, a video ID or an email address in it, that is copied with it. The page reminds you if it seems to contain a YouTube link, an email address or something resembling a video ID. It may miss some, so review it yourself. It also blocks copying until you remove anything that resembles a session token or cookie.
+- **What reaches us:** Only what you paste into your email, along with what the email itself carries (your address, and your name if it shows). Your email provider and the support address’s provider govern the message.
+- **Retention:** Your email stays in the support inbox until it’s deleted. To have it deleted, email the support address.
 
 ### What doesn’t use the network — `#offline`
 
@@ -118,11 +102,7 @@ Tarjuman doesn’t connect to any server except in the two cases listed after th
 - **Storage** (along with unlimited storage size): To keep your Library and settings on your device.
 - **Downloads:** To save Tarjuman’s files where you choose.
 - **Pages on `www.youtube.com`:** So Tarjuman’s tools can work over the player. No other sites, and no tabs.
-- **Optional:** Connecting to the reports server only, requested the first time you send a report.
-- **In Firefox, two optional consents:**
-  - “Technical and interaction data” for reports: Firefox shows this in the optional settings of the install dialog, where you can turn it on or off. If it hasn’t been granted, it’s requested on the first send. The consent alone sends nothing: no report leaves until you press “Send report”.
-  - “Browsing activity” for Library thumbnails: Requested only when you turn on the thumbnails switch.
-  - You can withdraw both from Firefox’s add-ons page.
+- **In Firefox, one optional consent:** “Browsing activity” for Library thumbnails, requested only when you turn on the thumbnails switch. You can withdraw it from Firefox’s add-ons page.
 - No permission for browsing history, cookies, or tabs.
 
 ## Third parties — `#third-parties`
@@ -130,15 +110,14 @@ Tarjuman doesn’t connect to any server except in the two cases listed after th
 | Party | When something reaches it | What governs it |
 | --- | --- | --- |
 | YouTube (Google) | “Library” thumbnails, and the YouTube page itself while you watch | [Google Privacy Policy](https://policies.google.com/privacy) |
-| Cloudflare | When you send a report, since the request passes through its worker | [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/) |
-| GitHub | When you send a report, since it’s stored as an issue in a private repository | [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) |
+| Google (Gmail, the support email) | When you email support, including a report you send from your own email | [Google Privacy Policy](https://policies.google.com/privacy) |
 | The AI model you choose | When you send it the file yourself | Its terms of service |
 | The browser’s store | Installation and updates | The store’s policy |
 
 ## No selling, no advertising — `#limited-use`
 
 - Tarjuman doesn’t sell your data, and doesn’t transfer it for advertising, credit assessment or any other purpose.
-- What arrives in a report is used only to understand and fix the problem and to improve Tarjuman.
+- What arrives in report emails is used only to understand and fix the problem and to improve Tarjuman.
 
 ## Retention and deletion — `#retention`
 
@@ -147,7 +126,7 @@ Tarjuman doesn’t connect to any server except in the two cases listed after th
   - Or all of it, from Settings › “Clear all data”.
 - **Removing the extension** deletes all of its storage. This was measured in Chrome, Edge, Brave and Firefox. So make a backup first if you want to keep your Library.
 - **Files you downloaded** stay in their folder until you delete them yourself.
-- **A report** isn’t deleted automatically (see [“The reports server”](#report)).
+- **A report email** stays in the support inbox until it’s deleted. To have it deleted, email the support address (see [“A problem report”](#report)).
 
 ## Changes — `#changes`
 

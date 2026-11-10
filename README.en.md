@@ -93,9 +93,8 @@ The interface comes in Arabic and English. On first run it follows YouTube's int
 
 <!-- tj:facts privacy -->
 - Your translations and settings stay in the extension's storage on your device and aren't synced with any service. Removing the extension deletes them, so take a backup first.
-- Only two things leave the extension:
-  - **Video thumbnails in Library:** off until you turn on their switch in Settings; only then are they requested from YouTube’s servers by video ID. On Firefox, turning them on also asks for your “browsing activity” consent.
-  - **A problem report:** you send it yourself from Settings after seeing everything in it, with no translation text or video ID attached automatically.
+- Only one thing leaves the extension: **video thumbnails in Library**, off until you turn on their switch in Settings; only then are they requested from YouTube’s servers by video ID. On Firefox, turning them on also asks for your “browsing activity” consent.
+- Tarjuman has no server. “Report a problem” in Settings copies the report after you see everything in it, and you send it from your own email to the support address, with no translation text or video ID attached automatically.
 - No usage tracking, no ads, and no selling of your data.
 <!-- /tj:facts privacy -->
 
@@ -111,7 +110,6 @@ The full policy is in [`PRIVACY.md`](PRIVACY.md) (Arabic), the same text publish
 | `unlimitedStorage` | A two-hour video takes about 0.7 MB, so the default limit fills up after about fifteen long videos. It adds no install warning. |
 | `downloads` | Saving only the files you ask for (the original SRT, exported translations and the backup), and querying the extension's own downloads only. |
 | `https://www.youtube.com/*` | The content scripts: Tarjuman's buttons in the player, reading a copy of the subtitle response the player requested and the list of its track languages from the page data without any request, and drawing your translation over the video. |
-| Reports server (optional) | Requested on the first press of "Send report" after the preview, and used for nothing else. If you refuse it, nothing is sent. |
 <!-- /tj:facts permissions -->
 
 </details>

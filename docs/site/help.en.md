@@ -22,7 +22,7 @@ Tarjuman is for desktop computers and works on YouTube watch pages.
 
 After installing, pin Tarjuman’s icon to the browser toolbar: click the extensions icon (the puzzle piece), then the pin next to “Tarjuman”. You’ll copy the translation instructions from its popup.
 
-On install, Tarjuman asks for three permissions: storage, downloads, and access to `www.youtube.com` pages only. A fourth, optional permission is requested only when you send a report. In Firefox there are two optional consents: one for reports, which Firefox shows in the install dialog for you to turn on or off, and one for Library thumbnails, when you turn them on. Each is explained in [Privacy](/tarjuman/en/privacy#permissions).
+On install, Tarjuman asks for three permissions: storage, downloads, and access to `www.youtube.com` pages only. There’s no other, optional permission. In Firefox there’s one optional consent, for Library thumbnails, requested when you turn them on. Each is explained in [Privacy](/tarjuman/en/privacy#permissions).
 
 ## First use — `#first-use`
 
@@ -86,17 +86,14 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 ## Reporting a problem — `#report`
 
 - **Where:** Settings › “About” › “Report a problem”.
-- **When it’s sent:** Only when you choose the type (bug, suggestion or other), write what happened, review what will be sent, then press “Send report”.
+- **How:** Choose the type (bug, suggestion or other), write what happened, review the whole report, then press “Copy report” to copy it as text. Paste it into an email from your own address to the support email under [“Contact”](#contact), which is shown in the form with a “Copy email” button.
+- **Not sent by the extension:** Tarjuman has no server and asks for no permission, and no email app or link opens from the extension.
 - **What it contains:**
   - Your description as you wrote it, up to 2000 characters.
   - The Tarjuman version, the browser and its version, the build package, the operating system, and the interface language.
-  - You see all of this before sending.
-- **Not attached automatically:** Translation text, a video’s ID, title or link, or anything from your Library. Your description is sent as you wrote it, and the browser adds to the request what it adds to any request, which in Firefox includes a random ID for your Tarjuman installation (details are on the Privacy page).
-- **Permission:** On the first send, the browser asks your permission to connect to the reports server only. If you decline, nothing is sent.
-- **Where it goes:** A private reports channel for Tarjuman’s developer, which isn’t published.
-- **Server limits:** Five reports per hour per IP address, and one hundred per day across all apps combined. If you go over them, it tells you when to try again.
-- **The number:** You’ll see a report number, which is your only reference. We don’t ask for an email address, and you won’t receive a reply. Keep the number if you want to mention it later.
-- **If sending fails:** “Try again” when that helps. “Copy report” copies it as text without a network connection, so you can send it to the support email under [“Contact”](#contact).
+  - You see all of this before copying.
+- **Not attached automatically:** Translation text, a video’s ID, title or link, or anything from your Library. Your description is copied as you wrote it.
+- **The reply:** It reaches your email if you write to us from it.
 - Details are in [Privacy](/tarjuman/en/privacy#report).
 
 ## Troubleshooting — `#troubleshooting`

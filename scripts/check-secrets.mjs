@@ -43,7 +43,6 @@ const LINE_EXEMPT = new Map([
   ['test/unit/player/overlay/errors.test.js', 'رابط وهمي بمعاملات وهمية لاختبار تنقية الأخطاء', ['c0c436ea86429128']],
   ['test/integration/roundtrip/roundtrip.test.js', 'سلاسل طويلة وهمية لاختبار الذهاب والإياب', ['b4a09348b44395c1', 'fd2ba1b88c6879a0']],
   ['test/unit/store/av2-wg2.test.js', 'سلاسل طويلة وهمية لاختبار التخزين', ['e30135d389ab7022', 'e30135d389ab7022']],
-  ['test/live/audit-c1/run.mjs', 'ترويسة وهمية في سيناريو حي مقصود', ['014edc09a6e9c8dc']],
   ['test/unit/pages/settings/view.test.js', 'مسار جهاز وهمي لاختبار عرض المسارات', ['fd15e34e5363a892', '5102d6b3791cb8d2', '1f530b30bc84f574']],
   ['test/unit/release/store.test.js', 'مسار جهاز وهمي لاختبار مواد المتاجر', ['5777f18baa029532']],
   ['test/unit/save/save.test.js', 'مسار جهاز وهمي لاختبار مكان الحفظ', ['f2a4fdc00a8c2a70', 'b0209bd1611ee454']],
