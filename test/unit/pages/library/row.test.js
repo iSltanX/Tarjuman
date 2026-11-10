@@ -349,11 +349,14 @@ test('العرض الضيق (≤ 760): الأنماط تجعل الصف عمود
   assert.match(narrow, /\.lib-exp__cards \{ grid-template-columns: minmax\(0, 1fr\); \}/, 'البطاقات عمود واحد');
 });
 
-test('الوضعان: كل ألوان أنماط المحفوظات من الرموز، والاستثناء المسمّى ما فوق الصورة أو مكانها وحده (شارة المدة وبلاطة «بلا صورة»)', () => {
+test('الوضعان: كل ألوان أنماط المحفوظات من الرموز، والاستثناء المسمّى ما فوق الصورة وحده (شارة المدة)؛ والبلاطة الافتراضية من الرموز (ص1)', () => {
   const css = readFileSync(new URL('../../../../src/pages/library/library.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const literals = [...css.matchAll(/#[0-9a-fA-F]{3,8}\b|\brgba?\([^)]*\)|\bhsla?\([^)]*\)/g)].map((m) => m[0]);
-  assert.deepEqual(literals.sort(), ['#1E4A44', '#2B3F3B', '#fff', 'rgb(0 0 0 / 75%)', 'rgb(255 255 255 / 72%)'], 'ثوابت محتوى الفيديو وحدها (لا تتبع الوضع)');
-  assert.match(css, /--lib-scrim: rgb\(0 0 0 \/ 75%\);\s*--lib-scrim-ink: #fff;\s*--lib-tile: linear-gradient\(135deg, #2B3F3B, #1E4A44\);\s*--lib-tile-ink: rgb\(255 255 255 \/ 72%\);/);
+  assert.deepEqual(literals.sort(), ['#fff', 'rgb(0 0 0 / 75%)'], 'ثوابت محتوى الفيديو وحدها (لا تتبع الوضع)');
+  assert.match(css, /--lib-scrim: rgb\(0 0 0 \/ 75%\);\s*--lib-scrim-ink: #fff;/);
+  assert.ok(!/--lib-tile/.test(css), 'لا صنوبر ثابت للبلاطة');
+  assert.match(css, /\.lib-thumb \{[^}]*background: var\(--tj-surface-2\);/);
+  assert.match(css, /\.lib-thumb__fallback \{[^}]*color: var\(--tj-border-strong\);/);
   const uses = [...css.matchAll(/(?:^|[;{\s])(?:color|background|border-color|fill|stroke)\s*:\s*([^;}]+)/g)].map((m) => m[1].trim());
   for (const v of uses) assert.ok(/var\(--(?:tj|lib)-|transparent|currentColor|none|inherit/.test(v), `قيمة لون خارج الرموز: ${v}`);
 });

@@ -46,17 +46,23 @@ test('مفعّلة: عنصر img واحد بالسمات المعتمدة وعن
   assert.deepEqual(urls, [`https://i.ytimg.com/vi/${ID}/mqdefault.jpg`]);
 });
 
-test('مُطفأة (prefs.ui.thumbnails = false): بلاطة بأيقونة التشغيل ولا img ولا أي عنوان صورة', () => {
+test('مُطفأة (prefs.ui.thumbnails = false): البلاطة الافتراضية برمز ترجمان (ص1) ولا img ولا أي عنوان صورة', () => {
   const t = make({ enabled: false });
   assert.equal(imgOf(t), null);
   assert.equal(t.state(), 'fallback');
   assert.equal(t.root.getAttribute('data-state'), 'fallback');
   const tile = t.root.querySelector('.lib-thumb__fallback');
   assert.ok(tile);
-  const svg = tile.children[0];
-  assert.equal(svg.tagName, 'svg');
-  assert.equal(svg.getAttribute('aria-hidden'), 'true', 'الأيقونة زخرفية');
-  assert.deepEqual([...svg.children].map((c) => c.tagName), ['path'], 'أيقونة التشغيل (لوحة 13) لا لقطة');
+  assert.equal(tile.getAttribute('aria-hidden'), 'true', 'زخرفية مخفية عن قارئ الشاشة');
+  // ص1 (ق14): رمز ترجمان بنسختين، 34 للبلاطة و24 برسم الأحجام الصغيرة للصف الضيق؛ لا أيقونة تشغيل ولا كلمة.
+  const [big, small] = tile.children;
+  assert.deepEqual([big.tagName, small.tagName], ['svg', 'svg']);
+  assert.deepEqual([big.getAttribute('width'), small.getAttribute('width')], ['34', '24']);
+  assert.equal(big.getAttribute('class'), 'lib-thumb__mark');
+  assert.equal(small.getAttribute('class'), 'lib-thumb__mark lib-thumb__mark--small');
+  assert.deepEqual([...big.children].map((c) => c.getAttribute('class')), ['tj-logo__dots', 'tj-logo__dots', 'tj-logo__book'], 'نقطتا التاء فوق الكتاب');
+  assert.ok(big.children[2].getAttribute('d') !== small.children[2].getAttribute('d'), 'الصغيرة برسم الكتاب المصحّح');
+  assert.equal(tile.textContent.trim(), '', 'بلا كلمة');
   const everything = findAll(t.root, () => true).flatMap((e) => [...e._attrs.values(), e.textContent]).join('|');
   assert.equal(/ytimg|\.jpg|https?:/.test(everything), false, 'لا طلب ولا عنوان حين تُطفأ');
 });

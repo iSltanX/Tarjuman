@@ -131,6 +131,17 @@ test('التباين بالوضعين: كل نص ≥ 4.5:1 على السطح ا�
   assert.ok(ratio(value('light', '--tj-logo-on-tile'), value('light', '--tj-logo-tile')) >= 4.5);
 });
 
+test('استثناء مسمّى (ص1، ق14): رمز البلاطة الافتراضية في المحفوظات زخرفي بتباين منخفض عمدًا بالوضعين، ومخفي عن قارئ الشاشة', () => {
+  // --tj-border-strong على --tj-surface-2: نحو 1.35 فاتحًا و1.39 داكنًا. ليس نصًا ولا عنصر تحكم ولا معلومة، فلا يخضع لحدّي 4.5 و3.
+  for (const [mode, expect] of [['light', 1.35], ['dark', 1.39]]) {
+    const r = ratio(value(mode, '--tj-border-strong'), value(mode, '--tj-surface-2'));
+    assert.ok(Math.abs(r - expect) < 0.03, `${mode}: ${r.toFixed(2)}`);
+    assert.ok(r < 3, 'خافت عمدًا');
+  }
+  const thumb = readFileSync(new URL('../../../src/pages/library/thumb.js', import.meta.url), 'utf8');
+  assert.match(thumb, /className: 'lib-thumb__fallback', attrs: \{ 'aria-hidden': 'true' \}/);
+});
+
 test('رموز المشغّل (داكن بالوضعين): قيم .pl في اللوحة، والمحدد صبغة طين 18% بنص طيني، والرئيسي بالطين الليلي بحبر داكن', () => {
   assert.equal(PLAYER_TOKENS.menuBg, 'rgb(15 25 23 / 92%)');
   assert.equal(PLAYER_TOKENS.menuText, '#F1EFE8');

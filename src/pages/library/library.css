@@ -1,14 +1,12 @@
 /* صفحة المحفوظات (الهوية الرابعة «كتابٌ مفتوح»، لوحة 13): رأس بالعنوان والعدد والسعة، وشريط أدوات (بحث وترتيب ورقائق تصفية)،
    وأقسام التاريخ بعنوان خافت وخط، ثم صف لكل فيديو بطاقةً بخط حافة: صورة الفيديو ثم العنوان وسطره وشارته، ثم عمود «الترجمات»
    بشرائح الخانات، ثم الأفعال؛ ويتوسع الصف في مكانه ببطاقات ترجماته على سطح غائر. كل لون من رموز src/ui/tokens.css بالوضعين،
-   والاستثناء المسمّى ثوابت ما فوق الصورة أو مكانها (--lib-scrim لشارة المدة، و--lib-tile لبلاطة «بلا صورة» بالصنوبر كلوحة 13):
-   محتوى فيديو لا يتبع الوضع. لا معنى بالألوان وحدها. العرض الضيق: صف بعمود واحد وأفعال تحت المحتوى وصورة أصغر. */
+   والاستثناء المسمّى ثوابت ما فوق الصورة (--lib-scrim لشارة المدة): محتوى فيديو لا يتبع الوضع. والبلاطة الافتراضية «بلا صورة»
+   (ص1، ق14) من الرموز نفسها بالوضعين: سطح غائر باهت ورمز ترجمان بلون الحد القوي. لا معنى بالألوان وحدها. العرض الضيق: صف بعمود واحد وأفعال تحت المحتوى وصورة أصغر. */
 
 .lib {
   --lib-scrim: rgb(0 0 0 / 75%);
   --lib-scrim-ink: #fff;
-  --lib-tile: linear-gradient(135deg, #2B3F3B, #1E4A44);
-  --lib-tile-ink: rgb(255 255 255 / 72%);
   display: flex; flex-direction: column; gap: var(--tj-space-4);
 }
 .lib-count[hidden] { display: none; }
@@ -80,14 +78,19 @@
 .lib-toggle[aria-expanded="true"], .lib-toggle[aria-expanded="true"]:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-selected-soft); color: var(--tj-selected-soft-ink); }
 .lib-toggle[aria-expanded="true"] .tj-icon { transform: rotate(180deg); }
 
-/* صورة الفيديو: 128×72 بزاوية 6؛ بلاطة صنوبرية بأيقونة التشغيل عند الإطفاء أو الخطأ (لا توهم بأنها لقطة). والمدة شارة معتمة فوقها. */
+/* صورة الفيديو: 128×72 بزاوية 6. وعند الإطفاء أو الخطأ البلاطة الافتراضية (ص1): سطح غائر ورمز ترجمان بعرض 34 في وسطها بلون أبهت من
+   النص بكثير (تباين منخفض عمدًا: زخرفي مخفي عن قارئ الشاشة، استثناء مسمّى في اختبار الهوية)، بلا كلمة ولا أيقونة تشغيل ولا تدرّج.
+   والمدة شارة معتمة فوقها. */
 .lib-thumb {
   position: relative; width: 128px; height: 72px; flex: none; overflow: hidden; border-radius: var(--tj-radius-md);
-  background: var(--lib-tile); color: var(--lib-tile-ink);
+  background: var(--tj-surface-2);
 }
 .lib-thumb__img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.lib-thumb__fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--lib-tile-ink); }
-.lib-thumb__fallback .tj-icon { width: 22px; height: 22px; }
+/* مرفوع قليلًا عن الوسط فلا يلمس شارة المدة ولو طالت (1:12:40). */
+.lib-thumb__fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-bottom: 8px; color: var(--tj-border-strong); }
+.lib-thumb__mark { display: block; flex: none; }
+.lib-thumb__mark path { fill: currentColor; }
+.lib-thumb__mark--small { display: none; }
 .lib-thumb__dur {
   position: absolute; inset-block-end: 4px; inset-inline-end: 4px; z-index: 1; padding: 1px 5px; border-radius: var(--tj-radius-xs);
   background: var(--lib-scrim); color: var(--lib-scrim-ink); font: 400 11px/16px var(--tj-font-mono); direction: ltr;
@@ -232,6 +235,10 @@
 @media (max-width: 760px) {
   .lib-row__grid { grid-template-columns: 96px minmax(0, 1fr); grid-template-areas: "thumb main" "thumb trs" "acts acts"; gap: 8px 12px; padding: 12px; }
   .lib-thumb { width: 96px; height: 54px; }
+  /* الرمز بعرض 24 برسم الأحجام الصغيرة، ومرفوعًا فلا يتقاطع مع شارة المدة. */
+  .lib-thumb__fallback { align-items: flex-start; padding: 6px 0 0; }
+  .lib-thumb__mark { display: none; }
+  .lib-thumb__mark--small { display: block; }
   .lib-row--skeleton { grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 12px; }
   .lib-skel-thumb { height: 54px; }
   .lib-row__title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 14px; line-height: 22px; overflow-wrap: anywhere; }

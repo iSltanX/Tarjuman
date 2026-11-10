@@ -1,11 +1,13 @@
 // صورة الفيديو في صف المحفوظات (docs/product-spec.md §٦.٦، قرار سلطان 2026-11-03). هذه الوحدة وحدها تحمل العنوان الخارجي
 // الوحيد في صفحات الإضافة: <img src="https://i.ytimg.com/vi/‹المعرّف›/mqdefault.jpg"> بمعرّف الفيديو المحفوظ المُتحقَّق منه
 // (isVideoId)، وحين `prefs.ui.thumbnails` وحده؛ لا fetch ولا XHR ولا Image()، فالمتصفح يحمّلها كأي صورة، وذاكرته المؤقتة هي
-// الذاكرة الوحيدة (لا تخزين للصور في الإضافة). عند الإطفاء أو الخطأ أو الصورة البديلة الرمادية: بلاطة بأيقونة الفيديو لا توهم
-// بأنها لقطة. والمدة من `record.durationMs` حين تكون عددًا موجبًا، وإلا لا شيء (لا تُخمَّن).
+// الذاكرة الوحيدة (لا تخزين للصور في الإضافة). عند الإطفاء أو الخطأ أو الصورة البديلة الرمادية: البلاطة الافتراضية (ص1، قرار سلطان
+// ق14، 2026-11-10): سطح غائر باهت ورمز ترجمان في وسطه بلون أبهت، زخرفي مخفي عن قارئ الشاشة، مرسوم بـlogoMark عنصرَ SVG مضمّنًا
+// (لا ملف صورة ولا عنوان ولا طلب). والمدة من `record.durationMs` حين تكون عددًا موجبًا، وإلا لا شيء (لا تُخمَّن).
 import { isVideoId } from '../../core/model/ids.js';
 import { t } from '../../i18n/index.js';
-import { el, icon, ltr } from '../../ui/components.js';
+import { el, ltr } from '../../ui/components.js';
+import { logoMark } from '../../ui/logo.js';
 
 /** البادئة الوحيدة المسموحة (استثناء مسمّى في check-static واختبار «لا شبكة»). */
 export const THUMB_BASE = 'https://i.ytimg.com/vi/';
@@ -94,7 +96,12 @@ export function thumbnail({ doc = document, videoId, enabled, durationMs = null,
       media = node;
       if (armed) source(node, url);
     } else {
-      media = el('span', { className: 'lib-thumb__fallback', children: [icon('play', { doc })], doc });
+      // نسختان من الرمز: بعرض 34 للبلاطة 128×72، وبعرض 24 (رسم الأحجام الصغيرة) للصف الضيق 96×54؛ تُظهر CSS إحداهما بالعرض.
+      media = el('span', {
+        className: 'lib-thumb__fallback', attrs: { 'aria-hidden': 'true' },
+        children: [logoMark({ width: 34, className: 'lib-thumb__mark', doc }), logoMark({ width: 24, className: 'lib-thumb__mark lib-thumb__mark--small', doc })],
+        doc,
+      });
     }
     root.setAttribute('data-state', img ? 'image' : 'fallback');
     durNode = durationNode();
