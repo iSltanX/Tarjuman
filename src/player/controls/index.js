@@ -10,6 +10,7 @@ import { saveFile } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { loadUiFonts } from '../overlay/fonts.js';
 import { EVENTS, getPlayer, getRightControls, videoIdFromLocation } from '../youtube-dom.js';
+import { PLAYER_WAIT_MS, hasAnyVideo } from '../overlay/index.js';
 import { createControlsSession } from './session.js';
 import { createPanelLink, panelLink } from '../link.js';
 
@@ -61,6 +62,9 @@ export function mountControls(controller, deps = {}) {
   let attempts = 0;
   let failures = 0;
   let lastError = null;
+  const now = deps.now ?? (() => Date.now());
+  /** بدء انتظار المشغّل أو شريطه في صفحة مشاهدة فيها فيديو (ف10)، أو null. */
+  let waitingSince = null;
   const MO = win.MutationObserver ?? globalThis.MutationObserver;
 
   function dropSession() {
@@ -98,6 +102,7 @@ export function mountControls(controller, deps = {}) {
       dropSession();
       observeBar(null);
       observePage(false);
+      waitingSince = null;
       if (state !== 'error' || failures < MAX_FAILURES) state = 'waiting';
       return;
     }
@@ -107,10 +112,14 @@ export function mountControls(controller, deps = {}) {
       if (session && player && session.player === player && session.healthy()) return; // الشريط يُعاد رسمه الآن
       dropSession();
       observeBar(null);
-      if (state !== 'error' || failures < MAX_FAILURES) state = 'waiting';
+      const timedOut = playerTimedOut(player, right);
+      if (state !== 'error' || failures < MAX_FAILURES) state = timedOut ? 'error' : 'waiting';
       observePage(true);
       return;
     }
+    waitingSince = null;
+    // ظهر ما غاب: لا يبقى في التشخيص رمز ما تعافت منه الأدوات (ف10).
+    if (lastError?.code === 'CT_PLAYER_NOT_FOUND') lastError = null;
     if (session && session.player === player && session.healthy()) {
       session.check();
       observeBar(right);
@@ -147,8 +156,29 @@ export function mountControls(controller, deps = {}) {
     }, COALESCE_MS);
   }
 
+  /**
+   * انقضت مهلة المشغّل؟ (ف10): في صفحة مشاهدة فيها فيديو ولا مشغّل أو شريط منذ PLAYER_WAIT_MS، والرمز يسمّي ما غاب. بلا فيديو بعد
+   * يبدأ العدّ من جديد (الصفحة ما زالت تُحمَّل).
+   * @param {Element | null} player @param {Element | null} right
+   */
+  function playerTimedOut(player, right) {
+    if (!hasAnyVideo(doc)) {
+      waitingSince = null;
+      return false;
+    }
+    const t = now();
+    if (waitingSince === null) waitingSince = t;
+    if (t - waitingSince < PLAYER_WAIT_MS) return false;
+    if (lastError?.code !== 'CT_PLAYER_NOT_FOUND') {
+      const missing = [player ? null : 'player', right ? null : 'rightControls'].filter(Boolean);
+      lastError = new TjError('CT_PLAYER_NOT_FOUND', { detail: `missing=${missing.join(',')}` });
+    }
+    return true;
+  }
+
   const onPage = () => {
     failures = 0;
+    waitingSince = null;
     schedule();
   };
   doc.addEventListener(EVENTS.navigateFinish, onPage);

@@ -92,7 +92,8 @@ test('رد الحالة (AA3): مسار «من» وآخر تنزيل بأجزا�
 test('تشخيص الصفحة: أعداد ورموز من المتحكم ونقطتي التركيب، لصفحات الإضافة وحدها', async () => {
   const { fake } = setup();
   const r = await fake.dispatchMessage(pageDiagnosticsRequest());
-  assert.deepEqual(r, { v: 1, ok: true, sections: { controller: { pendingWrites: 0, version: 3 }, mounted: { overlay: { state: 'mounted' }, controls: { state: 'mounted' } } } });
+  // ف10: قسما dom وpanel؛ وفي بيئة الاختبار بلا مستند ولا لوحة يكونان null (والخريطة في f10-player-timeout.test.js).
+  assert.deepEqual(r, { v: 1, ok: true, sections: { controller: { pendingWrites: 0, version: 3 }, mounted: { overlay: { state: 'mounted' }, controls: { state: 'mounted' } }, dom: null, panel: null } });
   assert.equal(await fake.dispatchMessage(pageDiagnosticsRequest(), { id: fake.chrome.runtime.id, url: 'https://www.youtube.com/' }), undefined);
 });
 

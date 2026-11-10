@@ -157,6 +157,7 @@ export default Object.freeze({
 
   // player and overlay
   PL_MOUNT_FAILED: 'Couldn’t attach the subtitle layer over the player. Reload the page; if it keeps happening, copy the diagnostics report.',
+  PL_PLAYER_NOT_FOUND: 'Tarjuman couldn’t find YouTube’s player on the page, so subtitles can’t appear over it; YouTube has most likely changed its page. Reload the page; if it persists, copy the page diagnostics.',
   PL_NO_VIDEO_ELEMENT: 'Tarjuman couldn’t find the video element in the player, so subtitles can’t appear over it. Reload the page; if it keeps happening, YouTube may have changed its page, so copy the diagnostics report.',
   PL_RENDER_FAILED: 'Couldn’t display the subtitle line. Reload the page; if it keeps happening, copy the diagnostics report.',
   PL_FULLSCREEN_HOST: 'Couldn’t show the subtitles in fullscreen here. Exit fullscreen and enter it again; if it keeps happening, copy the diagnostics report.',
@@ -164,6 +165,7 @@ export default Object.freeze({
 
   CT_MOUNT_FAILED: 'Couldn’t attach Tarjuman’s tools to the player bar. Reload the page; if it keeps happening, copy the diagnostics report.',
   CT_RENDER_FAILED: 'Couldn’t update Tarjuman’s tools on the player bar. Reload the page; if it keeps happening, copy the diagnostics report.',
+  CT_PLAYER_NOT_FOUND: 'Tarjuman couldn’t find YouTube’s player bar; YouTube has most likely changed its page. Reload the page; if it persists, copy the page diagnostics from here.',
   CT_BAR_OVERFLOW: 'The player bar is too narrow for Tarjuman’s tools and YouTube’s tools together at this width. Widen the window or use theater mode.',
 
   CT_NOT_CAPTURED: 'Turn on YouTube subtitles (CC) and choose the language you want, then open this menu.',
