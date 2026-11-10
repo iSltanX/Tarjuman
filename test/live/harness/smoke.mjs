@@ -124,11 +124,17 @@ try {
 
   // ٢. نافذة الأيقونة (تبويب خلفي فيبقى يوتيوب نشطًا): رد سكربت المحتوى ونقطتا التركيب.
   const popup = await openPopup(b.conn, extId, pageErrors, yt.targetId);
-  const s1 = await stateFromPopup(popup);
+  // ف8 (2026-11-10): الدخان يشترط «مركّبة» للأدوات والطبقة (كان يقبل «بانتظار المشغّل» نجاحًا فلا يكشف غياب شريط يوتيوب).
+  // يُنتظر التركيب حتى 20 ث، ثم يُحكم.
+  let s1 = await stateFromPopup(popup);
+  for (let i = 0; i < 20 && !(s1.reply?.mounted?.overlay === 'mounted' && s1.reply?.mounted?.controls === 'mounted'); i++) {
+    await sleep(1000);
+    s1 = await stateFromPopup(popup);
+  }
   const r1 = s1.reply;
   check('popup-video-state', r1?.watch === true && r1.videoId === VIDEO && r1.arabic === null, r1 && { via: s1.via, videoId: r1.videoId, loading: r1.loading, arabic: r1.arabic, view: r1.view });
-  // الطبقة (P5) وأدوات الشريط (P6) ركّبتاهما مرحلتاهما: كل منهما تنتظر المشغّل أو مركّبة.
-  check('mount-points-stub', ['waiting', 'mounted'].includes(r1?.mounted?.overlay) && ['waiting', 'mounted'].includes(r1?.mounted?.controls), r1?.mounted ?? null);
+  // الطبقة (P5) وأدوات الشريط (P6) مركّبتان؛ و«بانتظار» أو خطأ (CT_PLAYER_NOT_FOUND بعد المهلة، ف10) يُسقط الفحص، ومعه الرمز.
+  check('mount-points-mounted', r1?.mounted?.overlay === 'mounted' && r1?.mounted?.controls === 'mounted', r1 ? { mounted: r1.mounted, code: r1.tools?.code ?? null } : null);
   // بعد جولة الصقل: مدخل واحد لكل صفحة في تذييل النافذة، والمحرّر إجراء سريع [data-action="editor"] حين تكون للفيديو ترجمة.
   // الأفعال تُرسم بعد رد سكربت المحتوى والتذييل لا ينتظره، فيُنتظر رسمها لا لحظة ظهور التذييل. أما رد يتجاوز مهلة النافذة
   // (REPLY_TIMEOUT_MS = 1.5 ث) فتعرض فيه النافذة «افتح فيديو…» بلا أفعال، ويسقط الفحص كما ينبغي: رُصد في Edge بلا نافذة، وأول

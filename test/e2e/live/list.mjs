@@ -2,10 +2,12 @@
 // قائمة فيديوهات الاختبار الثابتة (P9-AC2) وفحصها الدوري. أربعة بنود تحتاج جسم الترجمة فتُفحص في الجلسة اليدوية
 // (hand.mjs: يدوي، وتلقائي، وطويل، وبث مسجّل؛ منفذ التصحيح يجعل webdriver=true فيعود الجسم فارغًا)، وبندان لا يحتاجانه
 // فيُفحصان هنا في جلسة مؤتمتة: «بلا ترجمة» (لا التقاط ورسالة الإرشاد)، و«بإعلان» (إخفاء الترجمة العربية المحفوظة أثناء
-// الإعلان ورفض ترجمته وعودتها بعده). يُشغَّل بعد cycle.mjs فلفيديو TED ترجمة عربية محفوظة.
+// الإعلان ورفض ترجمته وعودتها بعده). بند «بإعلان» يشترط لفيديو TED ترجمة عربية محفوظة في ملف المتصفح نفسه: ارفعها من شريط
+// المشغّل قبل الجولة (cycle.mjs الذي كان يزرعها حُذف؛ ف8، 2026-11-10).
 //   node test/e2e/live/list.mjs --browser chrome [--only nocap,ad]
 import path from 'node:path';
 import { dismissConsent, waitForPlayer } from '../../live/harness/youtube.mjs';
+import { messageFor } from '../../../src/core/errors/index.js';
 import { BROWSERS, Evidence, ROOT, attachTab, clip, connectBrowser, launchBrowser, loadState, openUnattached, saveState, sleep } from './lib.mjs';
 
 const argv = process.argv.slice(2);
@@ -84,7 +86,8 @@ try {
         await sleep(600);
         const menu = (await iso(() => globalThis.__tarjuman.mounted.controls.peek())).layer.menu;
         const st = await iso(STATE);
-        r.result = { captured: st.captured.length, menuGuides: /فعّل الترجمة \(CC\)/.test(menu?.text ?? '') };
+        // نص الرسالة من رمزها لا حرفيًا (ف8: كان ينتظر نصًا قديمًا): إرشاد «فعّل CC» أو «لا ترجمة لهذا الفيديو» حين يعطّل يوتيوب زر CC.
+        r.result = { captured: st.captured.length, menuGuides: ['CT_NOT_CAPTURED', 'CT_NO_CAPTIONS'].some((c) => (menu?.text ?? '').includes(messageFor(c))) };
         ev.check('list-nocap-no-capture-and-guidance', st.captured.length === 0 && r.result.menuGuides, r.result);
       } else if (item.slot === 'ad') {
         let seen = null;

@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "source": "المشغّل المحلي (حزام جولة 2.2.0؛ خط أساس يوتيوب الحقيقي معلّق بإذن سلطان)",
+  "at": "2026-11-10T04:02:28.306Z",
+  "dom": {
+    "player": true,
+    "video": true,
+    "rightControls": true,
+    "leftControls": true,
+    "volumePanel": true,
+    "chromeBottom": true,
+    "progressBar": true,
+    "captionWindow": true,
+    "captionSegment": true,
+    "subtitlesButton": true,
+    "liveBadge": false,
+    "inlinePreview": false
+  },
+  "tracklist": {
+    "renderer": {
+      "captionTracks": "array",
+      "translationLanguages": "array"
+    },
+    "track": {
+      "baseUrl": "string",
+      "languageCode": "string",
+      "name": {
+        "simpleText": "string"
+      }
+    }
+  },
+  "timedtext": [
+    {
+      "params": [
+        "c",
+        "expire",
+        "fmt",
+        "lang",
+        "pot",
+        "signature",
+        "v"
+      ]
+    }
+  ],
+  "events": {
+    "yt-navigate-start": false,
+    "yt-navigate-finish": false,
+    "yt-page-data-updated": false,
+    "yt-player-updated": false
+  }
+}

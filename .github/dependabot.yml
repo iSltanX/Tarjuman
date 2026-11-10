@@ -1,7 +1,19 @@
 # تحديث إجراءات GitHub المثبتة بمعرّف التزام (تدقيق V2، U-046): طلب سحب أسبوعي يرفع المعرّف ويحدّث تعليق الإصدار.
+# وأدوات البناء والفحص (ف8، 2026-11-10): تنبيه أسبوعي بطلبات سحب مجمّعة لاعتماديات التطوير في npm. تحديثها يغيّر الحزم الناتجة،
+# فتُعاد مطابقة بصماتها (docs/maintenance.md §٥) قبل الدمج.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    allow:
+      - dependency-type: development
+    groups:
+      build-tools:
+        patterns: ['*']
+    open-pull-requests-limit: 3
