@@ -60,7 +60,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   /** @type {any} */
   let video = null;
 
-  /** رسالة فعل من صف: نصها، وتراجعها إن كان، ومؤقت زوالها. @type {{ text: string, undo: (() => unknown) | null } | null} */
+  /** رسالة فعل من صف: نصها، وتراجعها إن كان، وفيديوها، ومؤقت زوالها. @type {{ text: string, undo: (() => unknown) | null, videoId: string | null } | null} */
   let note = null;
   let noteHold = null;
 
@@ -197,7 +197,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   /** @param {string} text @param {(() => unknown) | null} [undo] */
   function showNote(text, undo = null) {
     clearNote();
-    note = { text, undo };
+    note = { text, undo, videoId: controller.getState().videoId ?? null };
     noteHold = holdTimer({
       ms: UNDO_MS,
       onExpire: () => {
@@ -220,7 +220,8 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     if (isAdShowing(doc)) return messageFor('CT_AD_SHOWING');
     const cue = controller.getState().arabic?.cues?.[i];
     const v = video;
-    if (!cue || !v || !Number.isFinite(v.currentTime)) return LABELS.syncFar;
+    if (!v || !Number.isFinite(v.currentTime)) return LABELS.syncNoVideo;
+    if (!cue) return LABELS.syncFar;
     if (Math.abs(cue.startMs + offset() - v.currentTime * 1000) <= SYNC_NEAR_MS) return null;
     const timeline = view.transcript.timeline();
     if (timeline && anchor >= 0 && Math.abs(timeline.rankOf(i) - timeline.rankOf(anchor)) <= SYNC_NEAR_ROWS) return null;
@@ -229,13 +230,20 @@ export function createPanelSession({ controller, doc, win, link = null }) {
 
   /** «علّم للمراجعة» من صف: يبدّل «أعود إليه» على مقطعه في الخانة المعروضة، ورسالة فيها «تراجع». @param {number} i */
   function markRow(i) {
-    const cue = controller.getState().arabic?.cues?.[i];
+    const s = controller.getState();
+    const cue = s.arabic?.cues?.[i];
     if (!cue || typeof controller.markCue !== 'function') return;
     const had = view.transcript.marked(i);
+    const videoId = s.videoId;
     act(async () => {
       const r = await controller.markCue({ index: i }, had ? null : 'todo');
       if (destroyed) return;
-      showNote(had ? unmarkedNote(cue.n) : markToast(cue.n), () => r.undo());
+      // التراجع لفيديو العلامة وحده: التراجع يكتب في سجل الفيديو الحالي، فلا يمس فيديو آخر (مراجعة المرحلة 5، م2).
+      showNote(had ? unmarkedNote(cue.n) : markToast(cue.n), () => {
+        if (controller.getState().videoId === videoId) return r.undo();
+        showNote(LABELS.undoStale);
+        return null;
+      });
     }, { visible: true, own: true });
   }
 
@@ -407,11 +415,11 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       const nav = nav$.state();
       const fullscreen = isPlayerFullscreen(doc);
       const model = derive(s, { videoId: nav.videoId, navigating: nav.navigating, visible: nav.videoId !== null && !fullscreen }, { toast: !!toast });
-      // ما قيل عن فعل في لوحة مفتوحة لا يبقى إلى فتح لاحق، ولا رسالة فعل صف.
+      // ما قيل عن فعل في لوحة مفتوحة لا يبقى إلى فتح لاحق، ولا رسالة فعل صف؛ ورسالة الصف لفيديوها وحده (م2).
       if (model.mode !== 'open') {
         actionError = null;
         if (note) clearNote();
-      }
+      } else if (note && note.videoId !== (s.videoId ?? null)) clearNote();
       // رسالة التراجع تُغلق إن عاد الزر من مكان آخر (نافذة الأيقونة أو الإعدادات) بعد أن رُصد مخفيًا.
       if (toast) {
         if (prefsUi?.panelEntry === false) toast.seen = true;

@@ -50,7 +50,11 @@ export const SECTION_ALIASES = Object.freeze({ timing: 'display' });
  * @param {unknown} id
  * @returns {string | null}
  */
-export const sectionFor = (id) => (isSectionId(id) ? /** @type {string} */ (id) : SECTION_ALIASES[/** @type {string} */ (id)] ?? null);
+export const sectionFor = (id) => {
+  if (isSectionId(id)) return /** @type {string} */ (id);
+  // ملك الكائن وحده: «#constructor» و«#toString» ليسا بديلين (مراجعة المرحلة 5، م3).
+  return typeof id === 'string' && Object.hasOwn(SECTION_ALIASES, id) ? SECTION_ALIASES[id] : null;
+};
 
 /** الأقسام التي تملك «استعادة الافتراضي»: مفاتيح الإعدادات ومجموعات التفضيلات التي تعيدها. */
 const RESETTABLE = Object.freeze({

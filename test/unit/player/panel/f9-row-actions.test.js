@@ -164,3 +164,41 @@ test('زر رُكّز بنقرة الفأرة (لا :focus-visible) لا يثب�
   over(rows[3]);
   assert.ok(actsOf(v).parentNode === rows[3], 'يتبع المؤشر');
 });
+
+// ———— من مراجعة المرحلة 5 ————
+
+test('م1: الشريط في صف غير صف نقطة Tab خارج ترتيب Tab، فأول Tab إلى القائمة زمن الصف الحالي ثم زرا صفه', () => {
+  const { v, handle } = open({ cues: arCues(60), t: 101.5 }); // الحالي الصف 40 (يبدأ 101.0 ث)
+  const rows = v.rows();
+  assert.equal(handle.peek().current, 40);
+  assert.ok(actsOf(v).parentNode === rows[0], 'الشريط في الصف 0 بعد البناء');
+  assert.equal(btn(v, 'mark').getAttribute('tabindex'), '-1');
+  assert.equal(btn(v, 'sync').getAttribute('tabindex'), '-1');
+  assert.equal(rows[40].children[0].getAttribute('tabindex'), '0', 'نقطة Tab على الحالي');
+  rows[40].children[0].focus();
+  assert.ok(actsOf(v).parentNode === rows[40]);
+  assert.equal(btn(v, 'mark').getAttribute('tabindex'), '0', 'بعد زمن صفه في ترتيب Tab');
+});
+
+test('م2: رسالة العلامة تزول حين يتغير الفيديو، فلا تراجع يكتب في سجل فيديو آخر', async () => {
+  const { v, c, handle, page } = open();
+  over(v.rows()[1]);
+  click(btn(v, 'mark'));
+  await settle();
+  assert.ok(handle.peek().note);
+  page.navigateTo('BBBBBBBBBBB');
+  c.set({ videoId: 'BBBBBBBBBBB' });
+  assert.equal(handle.peek().note, null);
+});
+
+test('ط2 وط3: بلا زمن فيديو سبب «يتاح حين يعمل الفيديو»، وسبب التعطيل يصف الزر لقارئ الشاشة', () => {
+  const { v, page } = open({ t: 4 });
+  page.video.silentTo(Number.NaN);
+  over(v.rows()[2]);
+  const sync = btn(v, 'sync');
+  assert.equal(sync.getAttribute('aria-disabled'), 'true');
+  assert.equal(sync.getAttribute('title'), 'يتاح حين يعمل الفيديو.');
+  assert.equal(sync.getAttribute('aria-describedby'), 'tj-r2-ar tj-acts-why');
+  assert.equal(v.q('.acts .sr').getAttribute('id'), 'tj-acts-why');
+  assert.equal(v.q('.acts .sr').textContent, 'يتاح حين يعمل الفيديو.');
+});

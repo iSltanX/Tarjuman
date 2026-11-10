@@ -23,7 +23,7 @@ import { saveLocationControl } from './location.js';
 import {
   DEFAULT_SCALE_MARK_PCT, DEFAULT_SECTION, PREVIEW_BOX, READING_DEFAULT_CPS, SECTIONS, completenessText, confirmWord,
   confirmWordOk, parseCompleteness, parseDrift, parseReadingSpeed, parseSplit, previewStyle, readingText,
-  previewLines, sectionFor, sectionReset, snapScale,
+  previewLines, SECTION_ALIASES, sectionFor, sectionReset, snapScale,
 } from './model.js';
 
 // نصوص الصفحة في فهرس التوطين (settings.*) وتُقرأ بلغة الواجهة الحالية عند كل استعمال، لا عند تحميل الوحدة.
@@ -747,7 +747,8 @@ export function createSettings(env) {
   );
   for (const sec of Object.values(sections)) sec.querySelector('h2').tabIndex = -1;
   syncAll();
-  select(active, { remember: !!fromHash && fromHash !== active });
+  // يُكتب العنوان عند الفتح لبديل قسم محذوف وحده (#timing ⇒ #display)؛ وجزء غير معروف يبقى كما كان (U57، وط1).
+  select(active, { remember: typeof fromHash === 'string' && Object.hasOwn(SECTION_ALIASES, fromHash) });
   // القيم الظاهرة قبل القراءة افتراضية: الصفحة «مشغولة» حتى تُقرأ المحفوظة (تدقيق Fable، UX-23)، وبفشل القراءة لا تبقى الأدوات
   // فعّالة فوق قيم افتراضية قد لا تكون المحفوظة (inert)، ورسالة الخطأ وحدها تُقرأ.
   root.setAttribute('aria-busy', 'true');

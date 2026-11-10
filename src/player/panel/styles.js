@@ -37,8 +37,8 @@ export function panelCss() {
 .b, .switch, .resume, .act, .t, .segs button { all: unset; box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .b:focus-visible, .switch:focus-visible, .resume:focus-visible, .act:focus-visible, .segs button:focus-visible, .t:focus-visible, .num:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 
-/* الأزرار بلا إطار دائم (لوحة 08): بخلفية الزر المحايدة والمرور والضغط أغمق منها، والشفاف بلا خلفية حتى المرور، والمفتوح
-   (قائمة الخيارات) بالطين على صبغة المرور (لوحة 06: الطين للحالة المفتوحة). الحد الشفاف يحفظ المقاس. */
+/* الأزرار بلا إطار دائم (لوحة 08): بخلفية الزر المحايدة والمرور والضغط أغمق منها، والشفاف بلا خلفية حتى المرور. الحد الشفاف
+   يحفظ المقاس. (قائمة الخيارات ونمطها المفتوح حُذفا في ح4.) */
 .b { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: var(--tj-control-sm); min-width: var(--tj-control-sm); padding: 0 10px; border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-control); color: var(--tj-text); font: 700 13px/20px var(--tj-font-body); white-space: nowrap; }
 .b:hover { background: var(--tj-control-hover); }
 .b:active { background: var(--tj-control-pressed); }
@@ -49,7 +49,6 @@ export function panelCss() {
 .b[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
 .b[aria-disabled="true"]:hover, .b[aria-disabled="true"]:active { background: var(--tj-control); }
 .b--ghost[aria-disabled="true"]:hover, .b--ghost[aria-disabled="true"]:active { background: transparent; }
-.b[aria-expanded="true"] { background: var(--tj-hover); color: var(--tj-accent-text); }
 
 /* اللوحة */
 .panel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-xl); }
@@ -115,6 +114,7 @@ export function panelCss() {
 .ra[aria-pressed="true"] { color: var(--tj-warning); }
 .ra[aria-pressed="true"] .ic path { fill: currentColor; }
 .ra[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .notes { grid-area: note; flex: none; display: flex; flex-direction: column; }
 .note { display: flex; align-items: center; gap: 8px; margin: 8px 14px 0; padding: 4px; padding-inline-start: 12px; border-radius: var(--tj-radius-md); background: var(--tj-text); color: var(--tj-on-ink); font-size: 13px; line-height: 20px; }
 .note__text { min-width: 0; }

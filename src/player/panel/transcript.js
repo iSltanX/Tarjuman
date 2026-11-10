@@ -8,7 +8,7 @@
 // إليه» سمة على صفها (data-mark) تُرى دائمًا.
 import { resolveMarks } from '../../core/model/marks.js';
 import { textDirection } from '../../ui/format.js';
-import { el, icon } from './dom.js';
+import { el, icon, setAttr } from './dom.js';
 import { createTimeline, originalLookup } from './model.js';
 import { LABELS, clockLabel, flatText, markedSeekLabel } from './text.js';
 
@@ -60,7 +60,9 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
   const syncBtn = el(doc, 'button', {
     className: 'ra', attrs: { type: 'button', 'data-act': 'sync', 'aria-label': LABELS.syncRow, title: LABELS.syncRowTip },
   }, [icon(doc, 'sync', { size: 'xs' })]);
-  const acts = el(doc, 'div', { className: 'acts', attrs: { role: 'group', 'aria-label': LABELS.rowActions } }, [markBtn, syncBtn]);
+  // سبب تعطيل «أسمع هذه الآن» نصًا مخفيًا يصف الزر، فيقرؤه قارئ الشاشة قبل الضغط لا بعده وحده (مراجعة المرحلة 5، ط3).
+  const why = el(doc, 'span', { className: 'sr', attrs: { id: 'tj-acts-why' } });
+  const acts = el(doc, 'div', { className: 'acts', attrs: { role: 'group', 'aria-label': LABELS.rowActions } }, [markBtn, syncBtn, why]);
   let actsRow = -1;
 
   const seekMs = (i) => Math.max(0, cues[i].startMs + offsetMs);
@@ -70,19 +72,25 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
   function paintActs() {
     if (actsRow < 0) return;
     const arId = `tj-r${actsRow}-ar`;
-    const why = syncReason(actsRow);
-    // ما لم يتغير لا يُكتب: يُعاد الرسم مع كل تغيّر للصف الحالي، فلا يمس DOM إلا ما تغيّر.
-    setA(markBtn, 'aria-pressed', todo.has(actsRow) ? 'true' : 'false');
-    setA(markBtn, 'aria-describedby', arId);
-    setA(syncBtn, 'aria-describedby', arId);
-    setA(syncBtn, 'aria-disabled', why ? 'true' : null);
-    setA(syncBtn, 'title', why ?? LABELS.syncRowTip);
+    const reason = syncReason(actsRow);
+    // ما لم يتغير لا يُكتب (setAttr): يُعاد الرسم مع كل تغيّر للصف الحالي، فلا يمس DOM إلا ما تغيّر.
+    setAttr(markBtn, 'aria-pressed', todo.has(actsRow) ? 'true' : 'false');
+    setAttr(markBtn, 'aria-describedby', arId);
+    setAttr(syncBtn, 'aria-describedby', reason ? `${arId} tj-acts-why` : arId);
+    setAttr(syncBtn, 'aria-disabled', reason ? 'true' : null);
+    setAttr(syncBtn, 'title', reason ?? LABELS.syncRowTip);
+    if (why.textContent !== (reason ?? '')) why.textContent = reason ?? '';
+    syncActsTab();
   }
-  /** @param {Element} e @param {string} k @param {string | null} v */
-  function setA(e, k, v) {
-    if (v === null) {
-      if (e.hasAttribute(k)) e.removeAttribute(k);
-    } else if (e.getAttribute(k) !== v) e.setAttribute(k, v);
+
+  /**
+   * أزرار الشريط في ترتيب Tab ما دام في صف نقطة Tab وحده (بعد زمن ذلك الصف)؛ وفي صف آخر (المرور بالفأرة، أو بعد البناء والتشغيل
+   * في صف بعيد) خارجه، فلا يصل Tab إلى أزرار صف غير الذي يحمل النقطة (مراجعة المرحلة 5، م1).
+   */
+  function syncActsTab() {
+    const v = actsRow >= 0 && actsRow === tabRow ? '0' : '-1';
+    setAttr(markBtn, 'tabindex', v);
+    setAttr(syncBtn, 'tabindex', v);
   }
 
   /** ينقل الشريط إلى صف i (لا ينقله والتركيز فيه: إزالة المركّز تُفقده). @param {number} i */
@@ -127,6 +135,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     if (i !== tabRow) timeEls[tabRow]?.setAttribute('tabindex', '-1');
     tabRow = i;
     if (timeEls[i].getAttribute('tabindex') !== '0') timeEls[i].setAttribute('tabindex', '0');
+    syncActsTab();
   }
 
   /** أقرب زر فعل (data-act) إلى الهدف داخل الشريط، أو null. */

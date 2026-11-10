@@ -115,9 +115,11 @@ export function createPanelView({ doc, win, on }) {
   // رسالة فعل من صف (ف9): «عُلِّم المقطع 12 للمراجعة» أو «الإزاحة −3.2 ث» وفيها «تراجع»؛ تزول بعد مدتها، ويمسكها المؤشر والتركيز.
   const noteText = el(doc, 'span', { className: 'note__text' });
   const noteUndo = el(doc, 'button', { className: 'note__act', attrs: { type: 'button' }, text: LABELS.undo, on: { click: () => on.noteUndo?.() } });
-  const note = el(doc, 'div', { className: 'note', attrs: { role: 'status', hidden: '' } }, [noteText, noteUndo]);
+  const note = el(doc, 'div', { className: 'note', attrs: { hidden: '' } }, [noteText, noteUndo]);
   onHold(note, (why, held) => on.noteHold?.(why, held));
-  const notes = el(doc, 'div', { className: 'notes' }, [actionErr, note]);
+  // المنطقة الحية ثابتة في الصفحة والرسالة تظهر داخلها: قارئات الشاشة تعلن ما يتغير داخل منطقة موجودة، لا عنصرًا يظهر (ط3).
+  const noteLive = el(doc, 'div', { attrs: { role: 'status' } }, [note]);
+  const notes = el(doc, 'div', { className: 'notes' }, [actionErr, noteLive]);
 
   // ———— الشريط: الحالة والنص والمتابعة ————
   const statusEl = el(doc, 'div', { className: 'status', attrs: { 'data-fid': 'status' } });

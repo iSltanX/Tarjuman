@@ -210,6 +210,8 @@ export default Object.freeze({
     syncRow: 'I hear this now',
     syncRowTip: 'I hear this now: shifts the timing so this line shows at this moment',
     syncFar: 'This line is far from the playback position; “I hear this now” is for lines near it.',
+    syncNoVideo: 'Available once the video is playing.',
+    undoStale: 'The video changed, so this can’t be undone.',
     statusSlotNamed: 'Translation {n} “{name}”',
     // Completed capture step: YouTube auto-translation, or manual/auto-generated, saved or captured.
     captureLine: ({ lang, via, kind, saved, count }) => (via
