@@ -2,7 +2,7 @@
 // (لا HTML نصي أبدًا: Trusted Types في يوتيوب). سطر لكل سطر في المقطع، واتجاه كل سطر من حروفه. الطبقة لا تلتقط
 // النقرات (pointer-events: none في الورقة)، فلا تحجب أي أداة من أدوات يوتيوب.
 import { createSheet } from './sheet.js';
-import { FADE_MS, HOST_ID, overlayCss } from './styles.js';
+import { FADE_MS, HOST_ID, LINE_PAD_X, overlayCss } from './styles.js';
 import { lineDirection } from './text.js';
 
 const sameLines = (a, b) => a.length === b.length && a.every((l, i) => l === b[i]);
@@ -51,18 +51,50 @@ export function createOverlayView({ doc, win }) {
     el.setAttribute('dir', lineDirection(text, lang));
     // لغة غير معروفة «und» (BCP-47)، فلا يُنطق السطر بلغة مفترضة.
     el.setAttribute('lang', lang ?? 'und');
-    // النص في عنصر داخلي تحمل خلفيته (ف2): لكل سطر ملتفّ صندوقه بعرض نصه.
-    const txt = doc.createElement('span');
-    txt.className = 'txt';
-    txt.textContent = text;
-    el.appendChild(txt);
+    el.textContent = text;
     return el;
   }
+
+  /**
+   * ف2: سطر التفّ بحد العرض يبقى صندوقه بعرض الحد (text-wrap: balance لا يضيّق الكتلة)، فيُضيَّق إلى أعرض سطر ملتفّ فيه.
+   * القياس من مستطيلات نصه (Range) مجمّعة بالسطر، لأن السطر الواحد قد يكون عدة مستطيلات (مقاطع اتجاه مختلطة). والسطر الذي لم
+   * يلتفّ بلا عرض صريح (fit-content كما كان). يُعاد مع كل رسم وتبدّل خط أو حجم أو تحميل خط.
+   * @param {HTMLElement} el
+   */
+  function fitLine(el) {
+    el.style.removeProperty('width');
+    if (typeof doc.createRange !== 'function' || !el.textContent) return;
+    const range = doc.createRange();
+    range.selectNodeContents(el);
+    const rows = new Map();
+    for (const r of range.getClientRects?.() ?? []) {
+      if (!(r.width > 0)) continue;
+      const key = Math.round(r.top + r.height / 2);
+      const near = [...rows.keys()].find((k) => Math.abs(k - key) <= r.height / 3);
+      const row = rows.get(near ?? key) ?? { left: Infinity, right: -Infinity };
+      row.left = Math.min(row.left, r.left);
+      row.right = Math.max(row.right, r.right);
+      rows.set(near ?? key, row);
+    }
+    if (rows.size < 2) return;
+    const widest = Math.max(...[...rows.values()].map((x) => x.right - x.left));
+    el.style.setProperty('width', `${Math.ceil(widest) + LINE_PAD_X * 2 + 1}px`);
+  }
+
+  function fitAll() {
+    for (const el of stage.children) fitLine(el);
+  }
+
+  // الخط المختار يُحمَّل بعد أول رسم أحيانًا، فتتغير عروض الأسطر: يُعاد التضييق.
+  const fonts = doc.fonts;
+  const onFonts = () => fitAll();
+  fonts?.addEventListener?.('loadingdone', onFonts);
 
   /** تغيّرت لغة سطر معروض (U-030): يُعاد رسم الظاهر بسمتي lang وdir الجديدتين دون انتظار المقطع التالي. */
   function redrawShown() {
     if (!shown.ar.length && !shown.en.length) return;
     stage.replaceChildren(...shown.ar.map((t) => line(t, 'ar')), ...shown.en.map((t) => line(t, 'en')));
+    fitAll();
     publishStage();
   }
 
@@ -107,6 +139,7 @@ export function createOverlayView({ doc, win }) {
       shown = { ar: [...ar], en: [...en] };
       stage.replaceChildren(...ar.map((t) => line(t, 'ar')), ...en.map((t) => line(t, 'en')));
       stage.removeAttribute('data-empty');
+      fitAll();
       publishStage();
     },
 
@@ -154,6 +187,7 @@ export function createOverlayView({ doc, win }) {
       set('--tj-sub-font-en', f.en);
       if (Number.isFinite(f.capAr)) set('--tj-cap-ar', `${f.capAr}em`);
       if (Number.isFinite(f.capEn)) set('--tj-cap-en', `${f.capEn}em`);
+      fitAll();
     },
 
     /** @param {{ fontPx: number, anchor: 'top' | 'bottom', offsetPx: number }} l */
@@ -162,12 +196,15 @@ export function createOverlayView({ doc, win }) {
       host.style.setProperty('--tj-offset', `${l.offsetPx}px`);
       host.setAttribute('data-anchor', l.anchor);
       layout = { anchor: l.anchor, offsetPx: l.offsetPx };
+      fitAll();
       publishStage();
     },
 
     /** @param {Element} parent يضع المضيف آخر أبناء الأب إن لم يكن فيه. */
     attachTo(parent) {
-      if (host.parentNode !== parent) parent.appendChild(host);
+      if (host.parentNode === parent) return;
+      parent.appendChild(host);
+      fitAll();
     },
 
     isConnected: () => host.isConnected,
@@ -193,6 +230,7 @@ export function createOverlayView({ doc, win }) {
 
     destroy() {
       cancelFade();
+      fonts?.removeEventListener?.('loadingdone', onFonts);
       sheet.release();
       host.remove();
     },

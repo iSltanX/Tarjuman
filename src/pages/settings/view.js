@@ -368,8 +368,7 @@ export function createSettings(env) {
 
   // المعاينة الحية: صندوق فيديو داكن بسطرين، يتحدث فور تغيير أي من المظهر.
   const preview = (() => {
-    // النص في عنصر داخلي تحمل خلفيته كالطبقة (ف2): لكل سطر ملتفّ صندوقه.
-    const stage = el('div', { className: 'st-preview__stage', children: previewLines().map((line) => el('p', { className: 'st-preview__line', children: [el('span', { className: 'st-preview__txt', text: line, doc })], attrs: { lang: getLocale(), dir: getDir() }, doc })), doc });
+    const stage = el('div', { className: 'st-preview__stage', children: previewLines().map((line) => el('p', { className: 'st-preview__line', text: line, attrs: { lang: getLocale(), dir: getDir() }, doc })), doc });
     const screen = el('div', { className: 'st-preview__screen', children: [stage], doc });
     screen.style.width = `${PREVIEW_BOX.width}px`;
     screen.style.aspectRatio = `${PREVIEW_BOX.width} / ${PREVIEW_BOX.height}`;
