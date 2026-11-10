@@ -289,12 +289,12 @@ test('التجميع: قسم فارغ لا يُعرض، وعدد القسم عل
   assert.deepEqual(heads(), [['older', '1', 1]], 'البحث يخفي الأقسام الفارغة');
 });
 
-test('الصف: الشارة الوحيدة والترجمات (شرائح للموجودة وشريحة رفع) وأفعاله الأربعة بترتيبها، والتوسيع يحفظ حاله عبر إعادة الرسم', async () => {
+test('الصف: الشارة الوحيدة والترجمات (شرائح للموجودة وشريحة رفع) وأفعاله الستة بترتيبها (الرفع واللصق أيقونتان بجانب «تحرير»)، والتوسيع يحفظ حاله عبر إعادة الرسم', async () => {
   const m = await mount({ records: [], seed: async (store, setClock) => { setClock(at(0, 13)); await seedBundle(store, sampleBundle({ videoId: ID(1) })); } });
   const row = rowFor(m, ID(1));
   assert.equal(row.querySelectorAll('.tj-pill').length, 1, 'شارة حالة واحدة');
   assert.equal(textOf(row.querySelector('.tj-pill')), 'تحتاج مراجعة (2)');
-  assert.deepEqual([...row.querySelector('.lib-row__actions').children].map((c) => c.getAttribute('data-fk') ?? c.querySelector('button').getAttribute('data-fk')), [`${ID(1)}:edit`, `${ID(1)}:open`, `${ID(1)}:toggle`, `${ID(1)}:more`]);
+  assert.deepEqual([...row.querySelector('.lib-row__actions').children].map((c) => c.getAttribute('data-fk') ?? c.querySelector('button').getAttribute('data-fk')), [`${ID(1)}:edit`, `${ID(1)}:upload`, `${ID(1)}:paste`, `${ID(1)}:open`, `${ID(1)}:toggle`, `${ID(1)}:more`]);
   assert.equal(textOf(row.querySelector('.lib-trs__label')), 'الترجمات');
   const toggle = buttonNamed(row, 'إظهار الترجمات');
   toggle.click();

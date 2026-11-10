@@ -216,9 +216,13 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
   display: flex; flex-direction: column; gap: 2px; padding: 6px;
   background: var(--tj-surface); border: 0; border-radius: var(--tj-radius-lg); box-shadow: var(--tj-e2);
   animation: tj-pop var(--tj-motion-menu) var(--tj-ease);
+  /* حدّ الارتفاع بتمرير داخلي: ما يتسع له جانب الزر المختار (--tj-menu-max من menu.js، place)، وإلا حد ثابت. */
+  max-height: var(--tj-menu-max, calc(100vh - 96px)); overflow-y: auto; overscroll-behavior: contain;
 }
 .tj-menu__list[hidden] { display: none !important; }
 .tj-menu__list--start { inset-inline-end: auto; inset-inline-start: 0; }
+/* إلى الأعلى حين يقطعها أسفل النافذة ويتسع ما فوق الزر أكثر (menu.js، place). */
+.tj-menu__list--up { inset-block-start: auto; inset-block-end: calc(100% + 4px); }
 /* مجموعة بنود بعنوانها (role=group، U58): عمود كبنود القائمة نفسها. */
 .tj-menu__grp { display: flex; flex-direction: column; gap: 1px; }
 .tj-menu__group { padding: 6px 10px 2px; font: 700 11px/16px var(--tj-font-body); color: var(--tj-muted); }

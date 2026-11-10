@@ -142,9 +142,8 @@ test('الإلغاء لا يغيّر بصمة التخزين: حوار الرف�
   });
   doc.body.append(lib.root);
   await lib.load();
-  const more = buttonNamed(lib.root.querySelector(`li[data-video="${A}"]`), 'المزيد');
-  more.click();
-  more.parentNode.querySelectorAll('[role=menuitem]').find((i) => textOf(i).startsWith('رفع ترجمة')).click();
+  // أيقونة «رفع ترجمة…» بجانب «تحرير» (كانت بندًا في «المزيد» حتى 2026-11-10).
+  buttonNamed(lib.root.querySelector(`li[data-video="${A}"]`), 'رفع ترجمة…').click();
   await settle(10);
   assert.ok(shown, 'عُرض الحوار');
   assert.equal(await fingerprintOf(area), before, 'إلغاء الرفع بلا أثر');

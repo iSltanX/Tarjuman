@@ -63,6 +63,8 @@ export const IDENTITY_ICONS = Object.freeze({
   cc: [['rect', { x: 2.5, y: 5, width: 15, height: 11, rx: 2 }], ['path', { d: 'M8.5 9.3a1.6 1.6 0 1 0 0 2.4M14 9.3a1.6 1.6 0 1 0 0 2.4' }]],
   'logo-t': [['path', { d: 'M7 3l3 3-3 3-3-3zM13 3l3 3-3 3-3-3z', fill: 'currentColor', stroke: 'none' }], ['path', { d: 'M3 12h2.4c2.3 0 3.6 1 4.6 2.6 1-1.6 2.3-2.6 4.6-2.6H17v5H3z', fill: 'currentColor', stroke: 'none' }]],
   swap: [['path', { d: 'M4 7h11M12 4l3 3-3 3M16 13H5M8 10l-3 3 3 3' }]],
+  // لوح الحافظة لـ«لصق ترجمة…» في صف المحفوظات (2026-11-10): أيقونة النسخ نفسها تلتبس بالنسخ بجانب زر.
+  paste: [['rect', { x: 4.5, y: 4, width: 11, height: 13, rx: 2 }], ['rect', { x: 7.5, y: 2.5, width: 5, height: 3, rx: 1 }], ['path', { d: 'M7.5 10h5M7.5 13h3' }]],
 });
 
 /**

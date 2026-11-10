@@ -710,9 +710,17 @@ export function createLibrary(env) {
     ].filter(Boolean);
     const metaKids = line.flatMap((node, i) => (i ? [sep(), node] : [node]));
 
-    // الأفعال.
-    const exportItems = exportOptions(entry).map((o) => ({ id: o.id, label: o.label, hint: o.hint, disabledReason: o.disabledReason, icon: 'download', onSelect: () => exportFile(m, o) }));
+    // الأفعال. «رفع ترجمة…» و«لصق ترجمة…» أيقونتان ظاهرتان بجانب «تحرير» لا بندان في «المزيد» (طلب سلطان 2026-11-10: كانت
+    // القائمة تسعة بنود تتجاوز الشاشة)، فتبقى القائمة للتصدير ونسخ التعليمات والحذف. و«النسخة المرفوعة» لا تُعرض إلا حين تختلف
+    // عن الحالية (بعد تعديل)، بدل بند معطّل بسطر شرح. ولفيديو بلا ترجمة الزر الرئيسي «رفع ترجمة» نفسه، فلا أيقونة رفع ثانية.
+    const exportItems = exportOptions(entry)
+      .filter((o) => o.id !== 'ar-original' || entry.arabic?.edited)
+      .map((o) => ({ id: o.id, label: o.label, hint: o.hint, disabledReason: o.disabledReason, icon: 'download', onSelect: () => exportFile(m, o) }));
     const gate = copyGate(entry, copyPair(entry, state.langPrefs));
+    /** @param {string} k @param {string} labelKey @param {Parameters<typeof button>[0]['icon']} iconName @param {() => void} onClick */
+    const iconAction = (k, labelKey, iconName, onClick) => keyed(button({ label: name(tr(labelKey)), iconOnly: true, icon: iconName, variant: 'ghost', size: 'sm', className: `lib-${k}`, title: tr(labelKey), doc, onClick }), k);
+    const uploadIcon = m.hasArabic ? iconAction('upload', 'library.rowAction.upload', 'upload', () => upload(m)) : null;
+    const pasteIcon = iconAction('paste', 'library.rowAction.paste', 'paste', () => paste(m));
     const moreMenu = createMenu({
       label: tr('library.rowAction.more'), ariaLabel: name(tr('library.rowAction.more')), icon: 'more', iconOnly: true, variant: 'ghost', className: 'lib-more', doc,
       items: [
@@ -720,8 +728,6 @@ export function createLibrary(env) {
         ...exportItems,
         { id: 'study', label: tr('library.rowAction.study'), icon: 'file', disabledReason: studyGate(entry), onSelect: () => study(m, entry) },
         { kind: 'separator' },
-        { id: 'upload', label: tr('library.rowAction.upload'), icon: 'upload', onSelect: () => upload(m) },
-        { id: 'paste', label: tr('library.rowAction.paste'), icon: 'copy', onSelect: () => paste(m) },
         { id: 'copy', label: tr('library.rowAction.copyInstructions'), icon: 'copy', hint: tr('library.view.copyTip'), disabledReason: gate.enabled ? null : gate.reason, onSelect: () => copyInstructions(m, entry) },
         { kind: 'separator' },
         ...(m.hasArabic ? [{ id: 'delete-active', label: tr('library.rowAction.deleteActive'), tone: /** @type {const} */ ('danger'), icon: 'trash', onSelect: () => removeData(m, 'arabic') }] : []),
@@ -793,7 +799,7 @@ export function createLibrary(env) {
           doc,
         }),
         translationsColumn(m),
-        el('div', { className: 'lib-row__actions', children: [primary, open, toggle, moreMenu.root], doc }),
+        el('div', { className: 'lib-row__actions', children: [primary, uploadIcon, pasteIcon, open, toggle, moreMenu.root], doc }),
       ],
       doc,
     }));

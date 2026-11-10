@@ -51,7 +51,8 @@ test('كل أيقونة في مجموعة الهوية مصنّفة مرسومة
   assert.deepEqual(Object.keys(ORIGINAL_ICONS), ['src/ui/icons.js']);
   const names = ORIGINAL_ICONS['src/ui/icons.js'];
   assert.deepEqual([...names].sort(), Object.keys(IDENTITY_ICONS).sort());
-  assert.equal(names.length, 51);
+  // 52 منذ أيقونة «paste» للصق في صف المحفوظات (2026-11-10).
+  assert.equal(names.length, 52);
   assert.ok(notices.includes('1.2 Icons — drawn for Tarjuman.'));
   assert.ok(notices.includes(names.join(', ')));
   const text = await readFile(path.join(ROOT, 'src/ui/icons.js'), 'utf8');

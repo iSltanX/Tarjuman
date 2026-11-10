@@ -107,11 +107,35 @@ export function createMenu({ label, ariaLabel, icon: iconName, chevron = false, 
     itemButtons[((i % n) + n) % n].focus();
   }
 
+  /**
+   * تُفتح القائمة إلى الأعلى حين يقطعها أسفل النافذة ويتسع لها ما فوق الزر أكثر مما تحته (2026-11-10: كانت قائمة صف المحفوظات
+   * الأخير تُقطع أسفل الشاشة). وإن لم يتسع لها الجانب المختار كله حُدّ ارتفاعها بما فيه (--tj-menu-max) فتُمرَّر من داخلها ولا
+   * تتجاوز حافة النافذة. القياس بعد إظهارها؛ وبلا قياس (بيئة بلا تخطيط) تبقى إلى الأسفل بحدها الثابت في الأنماط كما كانت.
+   */
+  function place() {
+    menu.classList.remove('tj-menu__list--up');
+    // القيمة الفارغة تزيل الإعلان في CSSOM، فلا يبقى حد من فتحة سابقة.
+    menu.style.setProperty('--tj-menu-max', '');
+    const win = doc.defaultView;
+    const vh = win?.innerHeight;
+    if (typeof vh !== 'number' || !(vh > 0) || typeof menu.getBoundingClientRect !== 'function') return;
+    const list = menu.getBoundingClientRect();
+    const btn = button.getBoundingClientRect();
+    const height = list.bottom - list.top;
+    const below = vh - btn.bottom - 12;
+    const above = btn.top - 12;
+    const up = list.bottom > vh - 8 && above > below;
+    if (up) menu.classList.add('tj-menu__list--up');
+    const room = up ? above : below;
+    if (height > room) menu.style.setProperty('--tj-menu-max', `${Math.max(120, Math.floor(room))}px`);
+  }
+
   function open() {
     if (opened) return;
     current?.close();
     opened = true;
     menu.hidden = false;
+    place();
     button.setAttribute('aria-expanded', 'true');
     doc.addEventListener('pointerdown', onPointerDown, true);
     current = { close: () => close(), root };

@@ -34,9 +34,7 @@ async function mount(file, onConfirm) {
   });
   doc.body.append(lib.root);
   await lib.load();
-  const more = buttonNamed(lib.root, 'المزيد: محاضرة');
-  more.click();
-  more.parentNode.querySelectorAll('[role=menuitem]').find((i) => textOf(i).startsWith('رفع ترجمة')).click();
+  buttonNamed(lib.root, 'رفع ترجمة…: محاضرة').click();
   await settle(20);
   return { store, root: lib.root };
 }
@@ -100,9 +98,7 @@ test('ف5: «لصق ترجمة…» بحقل يُلصق فيه، ثم حوار �
   });
   doc.body.append(lib.root);
   await lib.load();
-  const more = buttonNamed(lib.root, 'المزيد: محاضرة');
-  more.click();
-  more.parentNode.querySelectorAll('[role=menuitem]').find((i) => textOf(i).startsWith('لصق ترجمة')).click();
+  buttonNamed(lib.root, 'لصق ترجمة…: محاضرة').click();
   await settle(30);
   assert.equal(picked, 0, 'لا منتقي ملفات');
   assert.match(dialogs[0], /^لصق ترجمة: /);

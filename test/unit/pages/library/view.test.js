@@ -69,11 +69,9 @@ async function mount({ records = IDS.map((id, i) => ({ id, title: `عنوان ${
 
 /** بنود القائمة المنسدلة المرتبطة بزرها. */
 const menuItems = (button) => button.parentNode.querySelectorAll('[role=menuitem]');
-/** «رفع ترجمة…» من قائمة «المزيد» للصف المسمّى. */
+/** أيقونة «رفع ترجمة…» بجانب «تحرير» في الصف المسمّى (كانت بندًا في «المزيد» حتى 2026-11-10). */
 const clickReplace = (m, name = 'عنوان') => {
-  const more = buttonNamed(m.root, `المزيد: ${name}`);
-  more.click();
-  menuItems(more).find((i) => textOf(i).startsWith('رفع ترجمة')).click();
+  buttonNamed(m.root, `رفع ترجمة…: ${name}`).click();
 };
 /** حذف الترجمة النشطة (قبل الأخير) أو حذف بيانات الفيديو (الأخير). */
 const deleteItem = (more, which = 'all') => menuItems(more).at(which === 'all' ? -1 : -2);
@@ -368,21 +366,17 @@ test('تصدير SRT من «المزيد»: قائمة بأسباب التعطي
   menuButton.click();
   assert.equal(menuButton.getAttribute('aria-expanded'), 'true');
   const items = menuItems(menuButton);
-  // «الترجمات…» حذفت: صارت بطاقات في الصف نفسه (التوسيع).
-  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الترجمة — النسخة المرفوعة', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'رفع ترجمة…', 'لصق ترجمة…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
-  assert.equal(items[1].getAttribute('aria-disabled'), 'true');
-  assert.equal(textOf(items[1].querySelector('.tj-menu__hint')), 'لم تُعدَّل الترجمة، فالنسخة المرفوعة هي الحالية.');
+  // «الترجمات…» حذفت: صارت بطاقات في الصف نفسه (التوسيع). و«رفع ترجمة…» و«لصق ترجمة…» أيقونتان في الصف، و«النسخة المرفوعة»
+  // لا تظهر قبل تعديل (2026-11-10).
+  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
   assert.ok(items.slice(-2).every((i) => i.classList.contains('tj-menu__item--danger')), 'الحذفان بلون الخطر');
-  items[1].click();
-  await settle();
-  assert.equal(m.calls.downloads.length, 0, 'المعطّل لا ينزّل');
   items[0].click();
   await settle();
   assert.deepEqual(m.calls.downloads.map((f) => f.name), [`${IDS[0]}.ar.srt`]);
   assert.equal(menuButton.getAttribute('aria-expanded'), 'false', 'القائمة تُغلق بالاختيار');
   assert.equal(m.calls.confirms.length, 0);
   menuButton.click();
-  menuItems(menuButton)[2].click();
+  menuItems(menuButton)[1].click();
   await settle();
   assert.equal(m.calls.downloads[1].name, `${IDS[0]}.en.manual.normal.srt`);
   assert.ok(m.root.querySelector('.tj-toast--success'));
@@ -733,7 +727,7 @@ test('كل رسالة عابرة تُعلَن لقارئ الشاشة بنصها
   await m.lib.load();
   const exportBtn = buttonNamed(m.root, 'المزيد: عنوان');
   exportBtn.click();
-  menuItems(exportBtn)[2].click();
+  menuItems(exportBtn)[1].click();
   await settle();
   assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'بدأ تنزيل الملف.');
   await m.clock.runAll();
@@ -749,7 +743,7 @@ test('إخفاق حفظ بصمة التصدير بعد نزول الملف يظ�
   const exportBtn = buttonNamed(m.root, 'المزيد: عنوان');
   exportBtn.click();
   m.area.failNext('set', new Error('boom'));
-  menuItems(exportBtn)[2].click();
+  menuItems(exportBtn)[1].click();
   await settle();
   assert.equal(m.calls.downloads.length, 1);
   assert.ok(m.root.querySelector('.tj-toast--danger') === null);
@@ -865,4 +859,42 @@ test('حوار الرفع (AA3): لغة الترجمة من رمز صريح في
     const b = await m.store.getBundle(IDS[0]);
     assert.equal(b.slots[1].track.lang ?? null, expected, `${name}: المحفوظة`);
   }
+});
+
+test('طلب سلطان 2026-11-10: «رفع ترجمة…» و«لصق ترجمة…» أيقونتان بجانب «تحرير» باسم الصف وتلميحهما، وبلا ترجمة اللصق وحده بجانب «رفع ترجمة»', async () => {
+  let picks = 0;
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }, { id: IDS[1], title: 'بلا ترجمة', arabic: false }], env: { pickFiles: async () => { picks++; return null; } } });
+  await m.lib.load();
+  const withAr = rowFor(m, IDS[0]);
+  const up = buttonNamed(withAr, 'رفع ترجمة…: عنوان');
+  const paste = buttonNamed(withAr, 'لصق ترجمة…: عنوان');
+  assert.ok(up, 'أيقونة الرفع في الصف');
+  assert.ok(paste, 'أيقونة اللصق في الصف');
+  assert.equal(up.title, 'رفع ترجمة…');
+  assert.equal(paste.title, 'لصق ترجمة…');
+  assert.ok(up.classList.contains('tj-btn--icon') && paste.classList.contains('tj-btn--icon'), 'أيقونتان لا زرّان بنص');
+  up.click();
+  await settle();
+  assert.equal(picks, 1, 'الأيقونة تفتح منتقي الملفات كما كان البند');
+  const bare = rowFor(m, IDS[1]);
+  assert.equal(buttonNamed(bare, 'رفع ترجمة…'), null, 'لا أيقونة رفع ثانية بجانب الزر الرئيسي «رفع ترجمة»');
+  assert.ok(buttonNamed(bare, 'رفع ترجمة: بلا ترجمة'));
+  assert.ok(buttonNamed(bare, 'لصق ترجمة…: بلا ترجمة'));
+  const more = buttonNamed(withAr, 'المزيد: عنوان');
+  more.click();
+  const labels = menuItems(more).map((i) => textOf(i.querySelector('.tj-menu__label')));
+  assert.equal(labels.some((l) => /^(رفع|لصق) ترجمة/.test(l)), false, 'لا رفع ولا لصق في «المزيد»');
+});
+
+test('«الترجمة — النسخة المرفوعة» في «المزيد» بعد تعديل وحده، ومتاحة', async () => {
+  const original = makeCues(5);
+  const edited = original.map((c) => (c.n === 2 ? { ...c, text: 'سطر 2 بعد تعديلي' } : c));
+  const record = withArabicEdit(videoRecord({ videoId: IDS[0], cues: original }), { cues: edited }, NOW);
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان', record }] });
+  await m.lib.load();
+  const more = buttonNamed(m.root, 'المزيد: عنوان');
+  more.click();
+  const items = menuItems(more);
+  assert.deepEqual(items.slice(0, 3).map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الترجمة — النسخة المرفوعة', 'الإنجليزية — المستخرجة']);
+  assert.equal(items[1].getAttribute('aria-disabled'), null);
 });

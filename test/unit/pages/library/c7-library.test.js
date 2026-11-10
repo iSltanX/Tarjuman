@@ -241,7 +241,7 @@ test('U58 (DS-S5): عنوان «تصدير» في «المزيد» مجموعة 
   const items = group.querySelectorAll('[role=menuitem]').map((i) => textOf(i.querySelector('.tj-menu__label')));
   // بنود التصدير حتى الفاصل، ومنها «نص دراسي…» (تنزيل ملف أيضًا) كما تُرى تحت العنوان.
   assert.ok(items.length >= 3 && items.every((t) => /^(الترجمة|العربية|الإنجليزية|نص دراسي)/.test(t)), items.join(' | '));
-  assert.equal(more.parentNode.querySelectorAll('[role=menuitem]').filter((i) => !group.contains(i)).map((i) => textOf(i.querySelector('.tj-menu__label')))[0], 'رفع ترجمة…', 'ما بعد الفاصل خارج المجموعة');
+  assert.equal(more.parentNode.querySelectorAll('[role=menuitem]').filter((i) => !group.contains(i)).map((i) => textOf(i.querySelector('.tj-menu__label')))[0], 'نسخ التعليمات', 'ما بعد الفاصل خارج المجموعة');
   assert.equal(more.parentNode.querySelector('[role=presentation]'), null);
   assert.equal(group.querySelector('.tj-menu__group').getAttribute('aria-hidden'), 'true', 'العنوان المرئي لا يُقرأ مرتين');
 });
@@ -294,9 +294,7 @@ test('I05: حقل الاسم المفتوح بلا تغيير لا يُغلق ح
 
 test('U59 وح5: سطر سبب المرجع في حوار الرفع للأقرب الذي اختاره ترجمان، بلا قائمة', async () => {
   const m = await mount({ seed: async (s) => seedBundle(s, sampleBundle({ videoId: IDS[0] })), pick: [new File([writeSrt(makeCues(5).map((c) => ({ ...c, text: `جديد ${c.n}` })))], 'x.ar.srt')] });
-  const more = buttonNamed(rowFor(m, IDS[0]), 'المزيد');
-  more.click();
-  more.parentNode.querySelectorAll('[role=menuitem]').find((i) => textOf(i).startsWith('رفع ترجمة')).click();
+  buttonNamed(rowFor(m, IDS[0]), 'رفع ترجمة…').click();
   await settle(20);
   const content = m.confirms.at(-1).content;
   assert.ok(content.querySelector('select.lib-up__ref') === null, 'بصمتان: سطر لا قائمة');
