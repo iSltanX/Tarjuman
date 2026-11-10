@@ -20,7 +20,7 @@ Test video (Cosmos Laundromat, Blender Foundation, CC BY, English captions): htt
 
 What it does not do: it does not download video or audio, and it never requests subtitle files itself. A main-world script at document_start wraps fetch and XMLHttpRequest to read a copy of the /api/timedtext response that the YouTube player requested when captions were turned on; it makes no request of its own and passes the page's call through unchanged.
 
-Network: only video thumbnails in Library, loaded from i.ytimg.com by video ID (a setting turns them off). There is no Tarjuman server and no optional host permission: Settings > About > "Report a problem" shows every field, then copies the report as text for the user to email to the support address; the extension sends nothing.
+Network: only video thumbnails in Library, loaded from i.ytimg.com by video ID (off by default since 2.2.0; a setting turns them on). There is no Tarjuman server and no optional host permission: Settings > About > "Report a problem" shows every field, then copies the report as text for the user to email to the support address; the extension sends nothing.
 
 Arabic sample (test.ar.srt):
 12
@@ -56,7 +56,7 @@ Arabic sample (test.ar.srt):
 ```text
 Expected differences: none by region. Captions must exist for the video (the test video has English manual captions). Tarjuman's buttons do not appear on Shorts or in YouTube players embedded in other sites. On live streams in progress, only subtitle extraction is refused; uploading and showing an SRT file still work.
 
-Privacy policy: https://bysltan.com/tarjuman/privacy. The same package is published for other browsers, so one policy covers it; where behavior differs by browser, it names Microsoft Edge explicitly (e.g. Library thumbnails are on by default in Microsoft Edge, with a switch in Settings). Nothing reaches the developer unless the user sends a problem report after previewing it.
+Privacy policy: https://bysltan.com/tarjuman/privacy. The same package is published for other browsers, so one policy covers it; where behavior differs by browser, it names Microsoft Edge explicitly (e.g. in Microsoft Edge, Library thumbnails stay as they were for users upgrading to 2.2.0, while new installs start with them off). Nothing reaches the developer from the extension: a problem report is copied as text for the user to email.
 ```
 
 ### نسخة مختصرة احتياطية (إن ضاق حد الحقل)
@@ -75,7 +75,7 @@ Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3
 
 It downloads no video or audio and never requests subtitle files itself: a main-world script wraps fetch and XMLHttpRequest to read a copy of the /api/timedtext response the player requested, and passes the page's call through unchanged.
 
-Network: only Library thumbnails from i.ytimg.com by video ID (a setting turns them off). There is no Tarjuman server and no optional host permission: "Report a problem" in Settings copies the report as text for the user to email; the extension sends nothing.
+Network: only Library thumbnails from i.ytimg.com by video ID (off by default since 2.2.0; a setting turns them on). There is no Tarjuman server and no optional host permission: "Report a problem" in Settings copies the report as text for the user to email; the extension sends nothing.
 
 Privacy policy: https://bysltan.com/tarjuman/privacy. One policy covers every browser; where behavior differs it names Microsoft Edge. On Shorts and embedded players the buttons do not appear. On live streams in progress only extraction is refused.
 
@@ -134,4 +134,4 @@ Arabic sample (test.ar.srt):
 | الصور وموافقة Firefox الواحدة، والبلاغ بلا إرسال | `docs/site/privacy.md` وجدول أدلته، و`scripts/targets.mjs`، و`src/pages/settings/report.js` |
 | إعادة البناء بايتًا | `scripts/release/store.mjs` (الطريقة)، و`release/store/tarjuman-2.1.2-store.json` (`source.reproduced`) |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
-| سياسة واحدة تسمّي Edge حيث يختلف السلوك، والصور مفعّلة افتراضيًا فيه بمفتاح في الإعدادات | `docs/site/privacy.md` (أسطر «في Chrome وEdge وBrave»)، و`src/core/model/prefs.js` (`ui.thumbnails: true`)، و`src/pages/settings/view.js`؛ والبند 1.5.2 من [سياسات مطوري Edge](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (قُرئ 2026-11-05) |
+| سياسة واحدة تسمّي Edge حيث يختلف السلوك: الصور مطفأة افتراضيًا منذ 2.2.0، ومن رقّى تبقى صوره كما كانت | `docs/site/privacy.md` (أسطر «في Chrome وEdge وBrave»)، و`src/core/model/prefs.js` (`ui.thumbnails: false`)، و`src/background/thumbs-pin.js`، و`src/pages/settings/view.js`؛ والبند 1.5.2 من [سياسات مطوري Edge](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (قُرئ 2026-11-05) |

@@ -104,7 +104,7 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 **العنوان:** Where your data goes, and what Tarjuman doesn’t do
 
 - **On your device:** Your translations and settings are in the extension’s storage in your browser. No server keeps them, and nothing is synced.
-- **To YouTube:** Video thumbnails in “Library” are requested from YouTube’s servers using the video ID. A switch turns them off, and in Firefox they’re requested only with your consent.
+- **To YouTube:** Video thumbnails in “Library” are requested from YouTube’s servers using the video ID. They stay off until you turn on their switch, and in Firefox they’re requested only with your consent.
 - **To the model you choose:** What you send it yourself: the file and the instructions. The extension doesn’t connect to it.
 - **No Tarjuman server:** You write a problem report, see everything in it, then copy it and send it from your own email. No translation text or video ID is attached automatically.
 - **Nothing else:** No usage tracking, no ads, and no selling of your data.

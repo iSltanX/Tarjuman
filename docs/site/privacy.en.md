@@ -14,7 +14,7 @@
 - Tarjuman is injected into `www.youtube.com` pages and works on the watch page. It extracts the subtitles that YouTube’s player has fetched on its own, in whichever language you chose there, and shows your translation over the video, all inside your browser.
 - What it stores, including your translations and settings, stays in the extension’s storage in this browser on this device. It isn’t synced with your browser account or with any service.
 - No account, no API key, no AI model inside the extension, no usage tracking, and no ads.
-- **Not everything is local.** Only one thing leaves the extension: video thumbnails in “Library”, from YouTube’s servers, with a switch that turns them off. In Firefox they’re requested only with your consent.
+- **Not everything is local.** Only one thing leaves the extension: video thumbnails in “Library”, from YouTube’s servers, which stay off until you turn on their switch. In Firefox they’re requested only with your consent.
 - Tarjuman has no server. You copy a problem report from Settings after seeing everything in it, and send it from your own email.
 - Translation happens outside the extension: you copy the file and the instructions to a model you choose, and the extension doesn’t connect to it.
 
@@ -43,7 +43,7 @@ The following is stored in the extension’s local storage within this browser�
   - They’re files on your device and remain after the extension is removed, until you delete them yourself.
 - **Backup:** A JSON file containing your entire Library, settings, glossary and language preferences. It includes your translations and video titles, so keep it somewhere safe. If you turned off “Video thumbnails in Library”, the backup carries that, so they stay off wherever you restore it.
 - **Downloads permission:** Tarjuman uses it to save its own files only, and to look them up by their IDs. It doesn’t read, open or delete your other downloads.
-- **Clipboard:** Tarjuman writes to it only when you press a copy button, and never reads from it.
+- **Clipboard:** Tarjuman writes to it only when you press a copy button. It doesn’t read from it programmatically; it reads only what you paste yourself into the “Paste the translation here” field (in the popup, or “Paste a translation…” in Library), with no clipboard-read permission.
 - **Diagnostics reports** (“Copy page diagnostics” and “Copy diagnostics report”): These contain the version, browser, report time, sizes, counts, error codes, tool status, and the values of display and export settings. No titles, video IDs, text or links. They’re copied to the clipboard only and aren’t sent.
 
 ## What’s sent, to whom, and when — `#sent`
@@ -59,13 +59,13 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 
 ### Video thumbnails in “Library” — `#thumbnails`
 
-- **When:** When you open the “Library” page while the “Video thumbnails in Library” switch is on.
-  - In Chrome, Edge and Brave: The switch is on by default.
+- **When:** When you open the “Library” page while the “Video thumbnails in Library” switch is on. The switch is off by default since 2.2.0, so a Tarjuman tile appears instead of the thumbnail and nothing is requested until you turn it on.
+  - In Chrome, Edge and Brave: If you upgraded to 2.2.0, your thumbnails stay as they were before the upgrade (shown unless you had turned them off).
   - In Firefox: Thumbnails are off until you turn on the switch, and Firefox then asks for your “Browsing activity” consent. If you decline, they stay off. You can withdraw consent at any time from Firefox’s add-ons page, and the thumbnails stop.
 - **What’s sent, and to whom:**
   - The browser loads the thumbnail of each saved video shown to you in the list from `i.ytimg.com`, which is YouTube’s servers, using the video’s ID, as it loads any image on the web.
   - YouTube therefore sees the IDs of the videos in your Library, along with what reaches it with any image request, such as your IP address and browser type. The address of the page that requested them isn’t sent with them.
-- **How to stop it:** Settings › “Display” › turn off “Video thumbnails in Library”. An icon then appears instead of the thumbnail, and nothing is requested. The switch stays off after “Clear all data”.
+- **How to stop it:** Settings › “Display” › turn off “Video thumbnails in Library”. A Tarjuman tile then appears instead of the thumbnail, and nothing is requested. The switch stays off after “Clear all data”.
 - Tarjuman doesn’t store the thumbnails. The browser keeps them in its cache like any other image.
 
 ### A problem report, with no server — `#report`

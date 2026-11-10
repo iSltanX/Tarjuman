@@ -49,7 +49,7 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 - **The instructions** are copied from the extension popup with a “From” and “To” pair, for any two different languages. Their text is in the interface language at the time of copying, Arabic or English. They include the video’s title and link, and ask for a complete SRT file with the same numbers and timing, named with the requested language’s code. Your glossary terms are added if you’ve turned that on. Copying works only on a YouTube video page, because the instructions carry its title and link.
 - **Segment style:** “Standard” keeps short segments close to YouTube’s splitting, for the tightest sync with speech. “Longer segments” merges neighboring segments into longer sentences so the model gets more context, which changes the segment count, numbering and timing boundaries.
 - **Very long files:** Under “Splitting long files” in the download menu, split the file into parts and send each part separately. The instructions you copy afterward include a paragraph about the parts.
-- If the model returns text in the chat, upload it as is: Tarjuman accepts SRT, or timestamped plain text or Markdown.
+- If the model returns text in the chat, copy it and paste it into “Paste the translation here” in the extension’s popup (or “Paste a translation…” in Library), or save it as a file and upload it: Tarjuman accepts SRT, or timestamped plain text or Markdown.
 - On upload, Tarjuman compares the file with the original: “Matches the original”, or a summary of what’s missing, extra, drifted or left untranslated. It never changes anything in your file silently.
 
 ## Timing — `#timing`
@@ -71,7 +71,7 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 - Each video holds up to three translations, one of which you make active. When you replace a translation, the previous one is saved so you can restore it.
 - From there you can export the translation, copy the instructions with the video’s language pair, or delete a translation or all of the video’s data.
 - Translations saved before 2.0.0 without a language show “Unknown language”. Set it from “Translation language” in the “Translation” menu, or for all of them under Settings › “Languages”.
-- Video thumbnails are requested from YouTube’s servers. Turn them off under Settings › “Display” › “Video thumbnails in Library” if you want nothing requested.
+- Video thumbnails stay off until you turn them on under Settings › “Display” › “Video thumbnails in Library”, so a Tarjuman tile appears instead and nothing is requested. Once on, they’re requested from YouTube’s servers. If you upgraded in Chrome, Edge or Brave, your thumbnails stay as they were.
 - In Firefox, thumbnails stay off until you turn on that same switch, and Firefox then asks for your “Browsing activity” consent. You can withdraw it from Firefox’s add-ons page.
 
 ## Moving your Library — `#move`

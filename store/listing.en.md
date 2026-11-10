@@ -55,7 +55,7 @@ What it doesn't do
 
 Your data
 • Your translations and settings stay in the extension's storage on your device and aren't synced with any service. Removing the extension deletes them, so take a backup first.
-• Only one thing leaves the extension: video thumbnails in Library are requested from YouTube's servers by video ID, and have a switch to turn them off. Tarjuman has no server: you copy a problem report from Settings after seeing everything in it and send it from your own email, with no translation text or video ID attached automatically.
+• Only one thing leaves the extension: video thumbnails in Library are requested from YouTube's servers by video ID, and stay off until you turn on their switch. Tarjuman has no server: you copy a problem report from Settings after seeing everything in it and send it from your own email, with no translation text or video ID attached automatically.
 • No usage tracking, no ads, and no selling of your data.
 • Privacy policy: https://bysltan.com/tarjuman/privacy
 
