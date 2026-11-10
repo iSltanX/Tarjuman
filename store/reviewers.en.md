@@ -1,4 +1,4 @@
-# ملاحظات المراجعين — ترجمان 2.1.2
+# ملاحظات المراجعين — ترجمان 2.2.0
 
 > **المرحلة:** T6 من جولة النشر، 2026-11-04. بالإنجليزية لأن المراجعين يقرؤونها (قرار سلطان: «ملاحظات المراجعين بالإنجليزية»)، ولا يراها المستخدمون. تصف ما يحدث فعلًا فقط، ولا تدّعي أن التصدير مسموح ولا تخفيه (§١ من [`README.md`](README.md)).
 > **الحقول:** Chrome «Test instructions» (اختياري ونوصي به)، وEdge «Notes for certification» (البند 1.3 يوجب خطوات الاختبار)، وAMO «Notes for Reviewers» (حتى 3,000 محرف). والكتل تُلصق كما هي، ويقيس `scripts/release/store-assets.mjs --check` أطوالها.
@@ -91,7 +91,7 @@ Sample (test.ar.srt):
 ```text
 No account, login or payment is needed. Desktop only. Interface: English or Arabic (Settings > Display); names below are English.
 
-Source code: tarjuman-2.1.2-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild bundles each entry with syntax-level minification only: no renamed identifiers, no source maps, no obfuscation.
+Source code: tarjuman-2.2.0-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild bundles each entry with syntax-level minification only: no renamed identifiers, no source maps, no obfuscation.
 
 Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3c
 1. Turn on captions (CC); any language works, English is used here. Tarjuman adds buttons to the player's control bar.
@@ -132,6 +132,6 @@ Arabic sample (test.ar.srt):
 | غلافا fetch وXHR يقرآن الرد ولا يطلبان | `src/main-world/capture.js` |
 | `blob:` في Firefox | `test/live/stores/t3.mjs` (`3d6a800`) |
 | الصور وموافقة Firefox الواحدة، والبلاغ بلا إرسال | `docs/site/privacy.md` وجدول أدلته، و`scripts/targets.mjs`، و`src/pages/settings/report.js` |
-| إعادة البناء بايتًا | `scripts/release/store.mjs` (الطريقة)، و`release/store/tarjuman-2.1.2-store.json` (`source.reproduced`) |
+| إعادة البناء بايتًا | `scripts/release/store.mjs` (الطريقة)، و`release/store/tarjuman-2.2.0-store.json` (`source.reproduced`) |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
 | سياسة واحدة تسمّي Edge حيث يختلف السلوك: الصور مطفأة افتراضيًا منذ 2.2.0، ومن رقّى تبقى صوره كما كانت | `docs/site/privacy.md` (أسطر «في Chrome وEdge وBrave»)، و`src/core/model/prefs.js` (`ui.thumbnails: false`)، و`src/background/thumbs-pin.js`، و`src/pages/settings/view.js`؛ والبند 1.5.2 من [سياسات مطوري Edge](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (قُرئ 2026-11-05) |
