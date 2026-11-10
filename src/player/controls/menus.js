@@ -10,7 +10,7 @@ import { formatOffset, textDirection } from '../../ui/format.js';
 import { languageName } from '../../ui/lang.js';
 import { glyph } from './glyphs.js';
 import {
-  LABELS, comparisonSummary, completeHintLine, completeLine, completeOptionLabel, completeOptionText, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
+  LABELS, comparisonSummary, completeHintLine, completeLine, longFileLine, completeOptionLabel, completeOptionText, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
   shortTime, slotLabel, stepSeconds, syncAt, trackLine, translationLine,
 } from './text.js';
 
@@ -217,7 +217,7 @@ function otherLanguages(h, { langs, other, brave, translatable }) {
  * @param {{
  *   live: boolean, unavailable: boolean, captureIssue: string | null, invalid: { code: string | null }[],
  *   tracks: import('../../extract/index.js').TrackInfo[], selectedKey: string | null, mode: 'normal' | 'long', durationMs: number | null,
- *   why: boolean, fallbackOpen: boolean, split: boolean, splitSize: string, splitError: string | null,
+ *   why: boolean, fallbackOpen: boolean, split: boolean, splitSize: string, splitError: string | null, longFile?: { count: number, chars: number | null } | null,
  *   busy: boolean, saveLine: { tone: string, text: string } | null,
  *   result: { tone: 'info' | 'warn' | 'error', text: string }[], pickGuide: { brave: boolean } | null,
  *   otherLangs: number | null, translatable: boolean,
@@ -312,6 +312,8 @@ export function downloadMenu(h, act, m, root = null) {
     { value: 'long', label: LABELS.modeLong, title: LABELS.modeLongNote },
   ], m.mode, act, 'mode', 'mode', { root }));
 
+  // ف4: الملف أطول من حد الإعدادات: عدد مقاطعه وطوله قبل الإرسال، وقسم التقسيم مفتوح أدناه.
+  if (m.longFile) out.push(alert(h, 'info', longFileLine(m.longFile)));
   out.push(h('div', {
     className: 'actions',
     children: [

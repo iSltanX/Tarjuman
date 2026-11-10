@@ -143,6 +143,15 @@ export async function recordSavedFor({ controller, key, built, videoId }) {
  * الأجزاء ضمن حد الرفع (تدقيق 7a66f91، U31)، فيُقال قبل التنزيل. null إن لم يلزم تقسيم أو تعذّر.
  * @returns {{ rows: { index: number, from: number, to: number, chars: number }[], raised: boolean } | null}
  */
+/**
+ * طول نص المسار بالوضع المختار (محارف نصوص مقاطعه)، لسطر «ملف طويل» (ف4). null إن تعذّر تحويله.
+ * @param {{ controller: object, key: string, mode: 'normal' | 'long' }} p
+ */
+export function fileChars({ controller, key, mode }) {
+  const conv = controller.convertCaptured(key, { mode });
+  return conv.ok ? conv.cues.reduce((n, c) => n + String(c.text).length, 0) : null;
+}
+
 export function partSizes(p) {
   const r = prepareExport(p);
   if (!r.ok) return null;

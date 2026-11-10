@@ -151,8 +151,11 @@ test('«تنزيل الملف»: الحفظ بـsaveFile ثم البصمة، د�
   assert.deepEqual(order, [['save', 0]], 'لا نسخ قبل الحفظ ولا بعده');
   assert.deepEqual(page.copied, [], 'التنزيل لا يكتب في الحافظة');
   assert.equal(page.flows.instructionCalls.length, 0, 'ولا يبني نص التعليمات للحافظة');
-  assert.deepEqual(page.controller.calls.map((c) => c[0]), ['convertCaptured', 'recordExport']);
-  assert.deepEqual(page.controller.calls[0], ['convertCaptured', 'en|manual', 'long']);
+  // قبل التنزيل قياس طول الملف وحده (ف4: 412 مقطعًا فوق حد 200)، ثم التحويل والبصمة.
+  const names = page.controller.calls.map((c) => c[0]);
+  assert.deepEqual(names.slice(-2), ['convertCaptured', 'recordExport']);
+  assert.ok(names.slice(0, -2).every((x) => x === 'convertCaptured'));
+  assert.deepEqual(page.controller.calls.at(-2), ['convertCaptured', 'en|manual', 'long']);
   const spec = page.flows.built[0];
   assert.equal(spec.videoId, 'AAAAAAAAAAA');
   assert.equal(spec.title, 'محاضرة');
@@ -160,7 +163,7 @@ test('«تنزيل الملف»: الحفظ بـsaveFile ثم البصمة، د�
   assert.equal(spec.split, null);
   assert.equal(spec.track.cues[0].startMs, 1000, 'المقاطع كما أعطاها المتحكم: لا إزاحة فيها (+3 ث مهملة)');
   assert.deepEqual(page.flows.downloads, [{ name: 'AAAAAAAAAAA.en.manual.long.srt', hasDoc: true }]);
-  assert.deepEqual(page.controller.calls[1][1], { trackKey: 'en|manual', fingerprint: { id: 'fp_new0000001', mode: 'long', parts: null } });
+  assert.deepEqual(page.controller.calls.at(-1)[1], { trackKey: 'en|manual', fingerprint: { id: 'fp_new0000001', mode: 'long', parts: null } });
   assert.deepEqual(lines(page), [['saveLine', 'ok', named('AAAAAAAAAAA.en.manual.long.srt')]]);
   assert.ok(page.ui.menu().querySelector('[data-fid="saveLine"] svg.glyph'), 'رمز النجاح SVG');
   assert.equal(page.ui.toasts().length, 0, 'النتيجة في القائمة لا رسالة فوق الفيديو');
@@ -209,11 +212,11 @@ test('تحذيرات البناء تظهر بعد التنزيل (تقسيم ل�
   assert.ok(page.ui.menuText().includes(messageFor('EX_SPLIT_NOT_NEEDED')));
 });
 
-test('التقسيم مطوي تحت «خيارات احتياطية»: عند الجمل أو الصمت، بأحجام الأجزاء قبل التنزيل، والتحقق، وحفظ كل جزء', async () => {
+test('التقسيم تحت «تقسيم الملفات الطويلة»: مفتوح للملف الطويل دون تفعيله (ف4)، عند الجمل أو الصمت، بأحجام الأجزاء قبل التنزيل، والتحقق، وحفظ كل جزء', async () => {
   const page = withTrack();
   open(page);
-  assert.equal(page.ui.menuText().includes('تقسيم الملف إلى أجزاء'), false, 'مطوي');
-  click(page.ui.item('تقسيم الملفات الطويلة'));
+  assert.equal(page.ui.menuText().includes('تقسيم الملف إلى أجزاء'), true, 'مفتوح: 412 مقطعًا فوق حد 200');
+  assert.equal(page.ui.field('split').checked, false, 'دون تفعيل التقسيم');
   const check = page.ui.field('split');
   check.checked = true;
   check.dispatchEvent({ type: 'change', target: check });
@@ -250,7 +253,7 @@ test('إلغاء حوار الحفظ في جزء يوقف بقية الأجزا�
   page.flows.parts = 3;
   page.flows.saveResults = [{ ok: true, mode: 'ask', downloadId: 1 }, { ok: false, code: 'SV_CANCELLED' }];
   open(page);
-  click(page.ui.item('تقسيم الملفات الطويلة'));
+  if (page.ui.item('تقسيم الملفات الطويلة').getAttribute('aria-expanded') !== 'true') click(page.ui.item('تقسيم الملفات الطويلة'));
   const check = page.ui.field('split');
   check.checked = true;
   check.dispatchEvent({ type: 'change', target: check });

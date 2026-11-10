@@ -9,7 +9,7 @@ import { joinList } from '../../i18n/index.js';
 import { holdTimer } from '../../ui/hold.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
 import { fitSize, watchBar } from './bar.js';
-import { completeInto, continuationFor, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
+import { completeInto, continuationFor, fileChars, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
@@ -109,7 +109,7 @@ function freshUi(videoId) {
     /** لغة الترجمة المطلوبة أثناء تبديلها (U-029): تُرسم في المنتقي حتى يتم الحفظ، ثم تعود الحالة الحقيقية. undefined = لا تبديل. */
     pendingLang: /** @type {string | null | undefined} */ (undefined),
     download: {
-      key: null, mode: null, why: false, fallback: false, split: false, splitSize: null, splitError: null, busy: false,
+      key: null, mode: null, why: false, fallback: false, fallbackTouched: false, longKey: null, longChars: null, split: false, splitSize: null, splitError: null, busy: false,
       saveLine: null, result: [], preview: null,
     },
     upload: { busy: false, error: null, warnings: [], pending: null, pickFor: null, plans: new Map(), ambiguous: null },
@@ -238,16 +238,35 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     };
   }
 
+  /**
+   * «ملف طويل» (ف4): المسار المختار أكثر مقاطع من «يُقترح التقسيم ابتداءً من» في الإعدادات. العدد وطول النص (يُحسب مرة لكل
+   * مسار ووضع)، أو null.
+   */
+  function longFileOf(s, tracks) {
+    const d = ui.download;
+    const t = tracks.find((x) => x.key === d.key) ?? tracks[0];
+    if (!t || !(t.cueCount > s.settings.export.splitThreshold)) return null;
+    const mode = d.mode ?? s.settings.export.modeDefault;
+    const key = `${t.key}|${t.capturedAt}|${mode}`;
+    if (d.longKey !== key) {
+      d.longKey = key;
+      d.longChars = fileChars({ controller, key: t.key, mode });
+    }
+    return { count: t.cueCount, chars: d.longChars };
+  }
+
   function downloadModel(s) {
     const d = ui.download;
     const tracks = okTracks(s);
+    const longFile = longFileOf(s, tracks);
     return {
       live: flags.live, unavailable: flags.unavailable, captureIssue: s.captureIssue?.code ?? null,
       invalid: s.captured.filter((t) => !t.ok).map((t) => ({ code: t.code })),
       tracks: tracks.map((t) => ({ key: t.key, lang: t.lang, kind: t.kind, via: t.via ?? null, ok: t.ok, cueCount: t.cueCount, warnings: t.warnings, lastEndMs: t.lastEndMs, capturedAt: t.capturedAt })),
       selectedKey: tracks.some((t) => t.key === d.key) ? d.key : tracks[0]?.key ?? null,
       mode: d.mode ?? s.settings.export.modeDefault, durationMs: s.durationMs,
-      why: d.why, fallbackOpen: d.fallback, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
+      // قسم التقسيم مفتوح للملف الطويل دون تفعيل التقسيم، ما لم يطوه المستخدم (ف4).
+      why: d.why, longFile, fallbackOpen: d.fallbackTouched ? d.fallback : d.fallback || !!longFile, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
       busy: d.busy, saveLine: d.saveLine, result: d.result,
       pickGuide: (!tracks.length && PICK_AGAIN.has(s.captureIssue?.code ?? '')) || otherLangs(s, tracks) ? { brave: flags.brave } : null,
       otherLangs: otherLangs(s, tracks), translatable: s.available?.translatable === true,
@@ -749,7 +768,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       case 'why': d.why = !d.why; break;
       case 'track': d.key = value; d.saveLine = null; d.result = []; break;
       case 'mode': d.mode = value; d.saveLine = null; break;
-      case 'fallback': d.fallback = !d.fallback; break;
+      case 'fallback': d.fallback = !downloadModel(controller.getState()).fallbackOpen; d.fallbackTouched = true; break;
       case 'split': d.split = !!value; d.splitError = null; break;
       case 'splitSize':
         d.splitSize = String(value);

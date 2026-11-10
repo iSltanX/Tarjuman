@@ -218,7 +218,8 @@ test('U48: حقل «مقاطع لكل جزء» موصوف برسالة خطئه 
   const { ui } = page;
   H.click(ui.btn('download'), 0);
   await settleN(2);
-  H.click(ui.item('تقسيم الملفات الطويلة'), 0);
+  // الملف أطول من حد الإعدادات: القسم مفتوح وحده (ف4).
+  if (ui.item('تقسيم الملفات الطويلة').getAttribute('aria-expanded') !== 'true') H.click(ui.item('تقسيم الملفات الطويلة'), 0);
   await settleN(2);
   const split = ui.field('split');
   split.checked = true;

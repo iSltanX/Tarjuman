@@ -68,6 +68,8 @@ export default Object.freeze({
     savedNote: 'No YouTube subtitles were captured this visit; the original saved from your earlier download will be downloaded.',
     stateSaved: 'Saved original ready',
     instructionsNote: 'Copy the translation instructions from the extension popup.',
+    longFile: 'Long file: {count} and {chars}. If your model can’t handle a file this long, split it under “Splitting long files” below.',
+    longFileCount: 'Long file: {count}. If your model can’t handle a file this long, split it under “Splitting long files” below.',
     pickSteps: 'CC, then Settings, then “Subtitles/CC”, then the language you want',
     braveNote: 'In Brave the browser language may appear first; choose the language you want from YouTube’s subtitles menu.',
     machine: 'auto-translated by YouTube',

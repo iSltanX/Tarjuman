@@ -110,6 +110,9 @@ export const previousLostLine = (from, target) => T('previousLost', { from: from
 /** عدد المحارف بأرقام مجمّعة: «18,400 محرف»، «12 محرفًا»، «5 محارف». @param {number} n */
 export const charsText = (n) => T('chars', { n, grouped: n.toLocaleString('en-US') });
 
+/** «ملف طويل: 427 مقطعًا و32,140 حرفًا…» (ف4). @param {{ count: number, chars: number | null }} f */
+export const longFileLine = (f) => (f.chars === null ? T('longFileCount', { count: formatCount(f.count, COUNT_FORMS.cue) }) : T('longFile', { count: formatCount(f.count, COUNT_FORMS.cue), chars: charsText(f.chars) }));
+
 /** صف جزء في التقسيم الاحتياطي: «1 · 1–200 · 18,400 محرف». @param {{ index: number, from: number, to: number, chars: number }} p */
 export const partRow = (p) => T('partRow', { index: p.index, from: p.from, to: p.to, chars: charsText(p.chars) });
 

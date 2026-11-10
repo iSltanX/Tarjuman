@@ -76,7 +76,8 @@ test('التقسيم عند الجمل أو الصمت: أحجام الأجزا�
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  click(page.ui.item('تقسيم الملفات الطويلة'));
+  // الملف أطول من حد الإعدادات: القسم مفتوح وحده (ف4).
+  if (page.ui.item('تقسيم الملفات الطويلة').getAttribute('aria-expanded') !== 'true') click(page.ui.item('تقسيم الملفات الطويلة'));
   const check = page.ui.field('split');
   check.checked = true;
   check.dispatchEvent({ type: 'change', target: check });
