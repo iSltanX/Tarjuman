@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "source": "المشغّل المحلي (حزام جولة 2.2.0؛ خط أساس يوتيوب الحقيقي معلّق بإذن سلطان)",
-  "at": "2026-11-10T04:02:28.306Z",
+  "source": "chrome Chrome/156.0.8078.80",
+  "at": "2026-11-10T04:07:47.269Z",
   "dom": {
     "player": true,
     "video": true,
@@ -11,41 +11,69 @@
     "chromeBottom": true,
     "progressBar": true,
     "captionWindow": true,
-    "captionSegment": true,
+    "captionSegment": false,
     "subtitlesButton": true,
-    "liveBadge": false,
+    "liveBadge": true,
     "inlinePreview": false
   },
   "tracklist": {
     "renderer": {
+      "audioTracks": "array",
       "captionTracks": "array",
+      "defaultAudioTrackIndex": "number",
       "translationLanguages": "array"
     },
     "track": {
       "baseUrl": "string",
+      "isTranslatable": "boolean",
       "languageCode": "string",
       "name": {
         "simpleText": "string"
-      }
+      },
+      "trackName": "string",
+      "vssId": "string"
     }
   },
   "timedtext": [
     {
       "params": [
         "c",
+        "caps",
+        "cbr",
+        "cbrand",
+        "cbrver",
+        "cos",
+        "cosver",
+        "cplatform",
+        "cplayer",
+        "cver",
+        "ei",
+        "exp",
         "expire",
         "fmt",
+        "hl",
+        "ip",
+        "ipbits",
+        "key",
         "lang",
+        "opi",
         "pot",
+        "potc",
         "signature",
-        "v"
+        "sparams",
+        "v",
+        "xoaf",
+        "xobt",
+        "xorb",
+        "xovt",
+        "xowf"
       ]
     }
   ],
   "events": {
     "yt-navigate-start": false,
-    "yt-navigate-finish": false,
-    "yt-page-data-updated": false,
-    "yt-player-updated": false
+    "yt-navigate-finish": true,
+    "yt-page-data-updated": true,
+    "yt-player-updated": true
   }
 }
