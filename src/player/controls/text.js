@@ -140,9 +140,13 @@ export const completeOptionText = (n) => T('completeOption', { n });
 export const completeOptionLabel = (n) => T('completeOptionLabel', { n });
 /**
  * سطر ما يضيفه الإكمال وما يبقى بعده (ف3).
- * @param {{ n: number, adds: number, remaining: number }} c
+ * @param {{ n: number, adds: number, remaining: number, renumbered?: boolean }} c
  */
-export const completeLine = (c) => `${T('completeLine', { n: c.n, adds: formatCount(c.adds, COUNT_FORMS.cue) })} ${c.remaining ? T('completeRemaining', { count: formatCount(c.remaining, COUNT_FORMS.cue) }) : T('completeDone')}`;
+export const completeLine = (c) => [
+  T('completeLine', { n: c.n, adds: formatCount(c.adds, COUNT_FORMS.cue) }),
+  c.remaining ? T('completeRemaining', { count: formatCount(c.remaining, COUNT_FORMS.cue) }) : T('completeDone'),
+  c.renumbered ? T('completeRenumbered') : null,
+].filter(Boolean).join(' ');
 
 /**
  * الخطوة بالثواني بلا أصفار زائدة: 500 ← «0.5»، و1000 ← «1»، و1500 ← «1.5».

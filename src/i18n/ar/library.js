@@ -230,6 +230,7 @@ export default Object.freeze({
     completeAria: 'إكمال الترجمة {n} بمقاطع هذا الملف',
     completeLine: 'الملف تتمة للترجمة {n}: يضيف {adds} في مواضعها.',
     completeDone: 'وتكتمل الترجمة بعده.',
+    completeRenumbered: 'ويُعاد ترقيم المقاطع من 1 فلا يتكرر رقم.',
     completeRemaining: 'ويبقى بعده {count} ناقصًا أو غير مترجم.',
     completed: 'أُكملت الترجمة {n}.',
     ambiguousHint: 'بعد الحفظ تُعرض «علّمها للمراجعة».',

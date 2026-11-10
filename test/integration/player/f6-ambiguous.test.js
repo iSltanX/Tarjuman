@@ -70,6 +70,32 @@ test('المشغّل: سطر المواضع الغامضة وزرها بعد ا�
   assert.deepEqual(await todoMarks(page.store), [], 'التراجع يزيلهما');
 });
 
+test('المشغّل: الزر للخانة التي رُفع إليها الملف: يختفي حين تُعرض خانة أخرى، ولا يعلّم غيرها', async () => {
+  const area = createMemoryArea();
+  const page = await openPage(area);
+  click(page.ui.btn('upload'));
+  chooseFiles(page.ui, [new File([clean], 'first.ar.srt')]);
+  await settle(area);
+  // ملف ثانٍ بمواضع غامضة إلى خانة جديدة (2) تصير النشطة.
+  click(page.ui.item('رفع ترجمة…'));
+  chooseFiles(page.ui, [new File([`${clean}\nمواضع غامضة: 3، 6\n`], 'second.ar.srt')]);
+  await settle(area);
+  click(page.ui.item('حفظ'));
+  await settle(area);
+  assert.equal(page.controller.getState().activeSlot, 2);
+  assert.ok(page.ui.menu().querySelector('[data-fid="ambiguous"]'), 'الزر للخانة 2');
+  click(page.ui.menu().querySelector('[data-fid="slot:1"]'));
+  await settle(area);
+  assert.equal(page.ui.menu().querySelector('[data-fid="ambiguous"]'), null, 'لا يظهر والخانة 1 معروضة');
+  click(page.ui.menu().querySelector('[data-fid="slot:2"]'));
+  await settle(area);
+  click(page.ui.menu().querySelector('[data-fid="markAmbiguous"]'));
+  await settle(area);
+  const b = await page.store.getBundle(A);
+  assert.deepEqual(b.slots[1].marks.filter((m) => m.kind === 'todo').map((m) => m.n), [3, 6], 'على الخانة 2');
+  assert.deepEqual(b.slots[0].marks, [], 'الخانة 1 كما هي');
+});
+
 test('المشغّل: «ترجمتُ 8 مقاطع» بعد الملف لا سطر ولا زر', async () => {
   const area = createMemoryArea();
   const page = await openPage(area);

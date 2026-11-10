@@ -21,6 +21,11 @@ test('ambiguousNumbers: قائمة أرقام لمقاطع موجودة بوسم
   assert.equal(ambiguousNumbers('مواضع غامضة: لا يوجد', has), null);
   assert.equal(ambiguousNumbers('مواضع غامضة:', has), null);
   assert.equal(ambiguousNumbers('', has), null);
+  // من مراجعة المرحلة 3: «نص: أرقام» لا يُفهم قائمة ما لم يسمِّ الوسم الغموض، ورقم وحيد بلا وسم ليس قائمة.
+  for (const line of ['عدد المقاطع المترجمة: 8', 'Total cues: 4', 'Time 12:30', 'Note: 3', '3']) assert.equal(ambiguousNumbers(line, has), null, line);
+  assert.deepEqual(ambiguousNumbers('Ambiguous: 6', has), [6], 'وسم صريح برقم واحد');
+  assert.deepEqual(ambiguousNumbers('المقاطع الملتبسة: 4 و7', has), [4, 7]);
+  assert.deepEqual(ambiguousNumbers('3، 6', has), [3, 6], 'بلا وسم رقمان فأكثر');
 });
 
 test('المحلل: السطر بعد الملف يُعاد بأرقامه وبملاحظته، ولا يُعدّ من أسطر الشرح المزالة', () => {

@@ -867,7 +867,7 @@ export async function mountEditor(app, {
 
   /**
    * «اعتماد هذا المرجع»: كتابة واحدة للخانة بمرجعها وتقريره. التقرير وصف للملف كما رُفع (الأصل لا النسخة المعدّلة، عقد
-   * data-model §١٠) كما في المحفوظات (changeReference)، والحاضر يُشتق من النسخة الحالية (GM-013).
+   * data-model §١٠)، والحاضر يُشتق من النسخة الحالية (GM-013). واختيار المرجع هنا وحده منذ ح5.
    */
   async function commitRef() {
     if (S.refPreview === undefined || S.refBusy) return;

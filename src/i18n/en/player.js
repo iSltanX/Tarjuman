@@ -50,6 +50,7 @@ export default Object.freeze({
     completeOptionLabel: 'Complete translation {n} with this file’s segments',
     completeLine: 'Continues translation {n}: adds {adds} in their places.',
     completeDone: 'The translation is complete after it.',
+    completeRenumbered: 'Segments are renumbered from 1 so no number repeats.',
     completeRemaining: '{count} will still be missing or untranslated.',
     keepEdits: 'Keep my edits',
     nameOther: 'The name points to another video',

@@ -411,6 +411,9 @@ function langSelect(h, act, { name, value, suggested, fid, disabled = false, id 
  * }} m originalLang رمز لغة مسار الأصل الفعلي (يسمّي وضع «فوق الأصل»)، أو null؛ وad إعلان يُعرض الآن؛ وlang لغة الترجمة النشطة أو null
  * @param {ShadowRoot | null} [root] جذر القائمة (للتركيز بالأسهم في المحدد)
  */
+/** صدر ملاحظة «المواضع الغامضة» بلغة الواجهة (قبل العدد)، لتمييزها بين الملاحظات ولو سبقها اسم ملف في رفع أجزاء. */
+const AMBIGUOUS_HEAD = () => messageFor('IM_NOTE_AMBIGUOUS', { count: '\u0000', list: '' }).split('\u0000')[0];
+
 export function displayMenu(h, act, m, root = null) {
   const summary = comparisonSummary(m.comparison);
   const dual = dualLabels(m.originalLang);
@@ -433,7 +436,7 @@ export function displayMenu(h, act, m, root = null) {
       children: [h('span', { className: 'note', text: m.ambiguous.text }), button(h, 'secondary', LABELS.markAmbiguous, { act, name: 'markAmbiguous', fid: 'markAmbiguous', disabled: m.busy, extra: { 'aria-label': LABELS.markAmbiguousLabel } })],
     }));
   }
-  const allNotes = m.ambiguous ? m.notes.filter((n) => n !== m.ambiguous.text) : m.notes;
+  const allNotes = m.ambiguous ? m.notes.filter((n) => !n.includes(AMBIGUOUS_HEAD())) : m.notes;
   const notes = allNotes.slice(0, 1);
   for (const n of notes) out.push(h('div', { className: 'note', text: n }));
   if (allNotes.length > notes.length) out.push(h('div', { className: 'note', text: moreNotesLine(allNotes.length - notes.length) }));

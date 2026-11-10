@@ -194,7 +194,8 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   function renderImpact() {
     if (completing) {
       const tail = cont.remaining ? tr('library.upload.completeRemaining', { count: formatCount(cont.remaining, COUNT_FORMS.cue) }) : tr('library.upload.completeDone');
-      impactHost.replaceChildren(el('p', { className: 'tj-body-sm lib-up__complete', text: `${tr('library.upload.completeLine', { n: cont.n, adds: formatCount(cont.adds, COUNT_FORMS.cue) })} ${tail}`, doc }));
+      const renum = cont.renumbered ? ` ${tr('library.upload.completeRenumbered')}` : '';
+      impactHost.replaceChildren(el('p', { className: 'tj-body-sm lib-up__complete', text: `${tr('library.upload.completeLine', { n: cont.n, adds: formatCount(cont.adds, COUNT_FORMS.cue) })} ${tail}${renum}`, doc }));
       return;
     }
     const kids = [];

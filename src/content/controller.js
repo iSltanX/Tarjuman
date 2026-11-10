@@ -577,18 +577,17 @@ export function createController({ store, extractor = null, page = {}, now = () 
     },
 
     /**
-     * «علّمها للمراجعة» (ف6): علامات «أعود إليه» لمقاطع النشطة المذكورة بأرقامها في سطر «المواضع الغامضة»، دون ما عليه علامة،
-     * بكتابة واحدة وتراجع دقيق.
-     * @param {number[]} numbers
+     * «علّمها للمراجعة» (ف6): علامات «أعود إليه» لمقاطع الخانة التي رُفع إليها الملف، المذكورة بأرقامها في سطر «المواضع الغامضة»،
+     * دون ما عليه علامة، بكتابة واحدة وتراجع دقيق.
+     * @param {number[]} numbers @param {1 | 2 | 3} slot الخانة التي حُفظ فيها الملف (لا النشطة لحظة الضغط)
      * @returns {Promise<{ count: number, undo: () => Promise<void> }>}
      */
-    async markAmbiguous(numbers) {
+    async markAmbiguous(numbers, slot) {
       requireVideo();
-      const slot = bundleFor(saved)?.active ?? null;
-      if (!slot) throw new TjError('ST_NO_RECORD');
+      if (slot !== 1 && slot !== 2 && slot !== 3) throw new TjError('MD_INVALID', { detail: `slot=${slot}` });
       let added = [];
       const { id, next } = await writeBundle((b) => {
-        if (!b || b.active !== slot || !b.slots[slot - 1].track) throw new TjError('ST_NO_RECORD');
+        if (!b || !b.slots[slot - 1].track) throw new TjError('ST_SLOT_EMPTY', { detail: `slot=${slot}` });
         const s = b.slots[slot - 1];
         added = ambiguousMarks(s.track.current ?? s.track.original, s.marks, numbers, iso());
         return added.length ? withMarksReplaced(b, slot, { add: added }, iso()) : undefined;

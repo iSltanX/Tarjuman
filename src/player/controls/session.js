@@ -290,10 +290,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return { parts: d.preview.sizes?.rows ?? null, partsRaised: d.preview.sizes?.raised ?? false };
   }
 
-  /** سطر «المواضع الغامضة» وزرها بعد الرفع (ف6)، ما لم يُعلَّم بعد. */
-  function ambiguousModel() {
-    const nums = ui.upload.ambiguous;
-    if (!nums?.length) return null;
+  /** سطر «المواضع الغامضة» وزرها بعد الرفع (ف6)، ما لم يُعلَّم بعد، وما دامت خانة الملف هي النشطة المعروضة. */
+  function ambiguousModel(s) {
+    const a = ui.upload.ambiguous;
+    if (!a?.numbers?.length || s.activeSlot !== a.n) return null;
+    const nums = a.numbers;
     return { text: messageFor('IM_NOTE_AMBIGUOUS', { count: nums.length, list: joinList(nums.slice(0, 12).map(String).concat(nums.length > 12 ? ['…'] : [])) }), count: nums.length };
   }
 
@@ -304,7 +305,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       fileName: a.fileName, count: a.cues.length, edited: a.edited, comparison: a.comparison, notes: a.comparison?.notes ?? [],
       slots, switching: s.loading || ui.switching, uploadLabel: slots.some((x) => !x.filled) ? LABELS.uploadMore : LABELS.replace,
-      warnings: ui.upload.warnings, ambiguous: ambiguousModel(), mode: s.view.displayMode, dualAvailable: !!s.english, originalLang: s.english?.lang ?? null, busy: ui.upload.busy, error: ui.upload.error,
+      warnings: ui.upload.warnings, ambiguous: ambiguousModel(s), mode: s.view.displayMode, dualAvailable: !!s.english, originalLang: s.english?.lang ?? null, busy: ui.upload.busy, error: ui.upload.error,
       // لغة الترجمة النشطة (AA3) ومقترحاتها: الحالية، ثم «إلى» في النافذة، ثم الأخيرة.
       lang, langSuggested: [lang, ...pairTargets(s)].filter(Boolean),
       // الإعلان لحظة الرسم (فتح القائمة بعد بدئه)؛ وتغيّره والقائمة مفتوحة يعيد الرسم من الفحص الدوري (flags.ad).
@@ -330,7 +331,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   function confirmModel(s) {
     const p = ui.upload.pending;
     const slots = slotsOf(s);
-    const complete = p.complete ? { n: p.complete.cont.n, adds: p.complete.cont.adds, remaining: p.complete.cont.remaining } : null;
+    const complete = p.complete ? { n: p.complete.cont.n, adds: p.complete.cont.adds, remaining: p.complete.cont.remaining, renumbered: p.complete.cont.renumbered } : null;
     if (p.target === 'complete' && complete) {
       // الإكمال (ف3): المقارنة للترجمة بعده، ولا استبدال ولا تعديلات تُفقد ولا لغة ملف (تبقى لغة الخانة).
       return {
@@ -929,12 +930,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   /** «علّمها للمراجعة» (ف6): علامات «أعود إليه» برسالة فيها «تراجع». */
   async function markAmbiguous() {
-    const nums = ui.upload.ambiguous;
-    if (!nums?.length) return;
+    const a = ui.upload.ambiguous;
+    if (!a?.numbers?.length) return;
     const mine = ui;
     let r;
     try {
-      r = await controller.markAmbiguous(nums);
+      r = await controller.markAmbiguous(a.numbers, a.n);
     } catch (err) {
       if (destroyed || ui !== mine) return;
       counts.flowFailures++;
@@ -1215,7 +1216,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       if (r.ok) {
         counts.imports++;
         u.warnings = read.warnings;
-        u.ambiguous = read.ambiguous ?? null;
+        u.ambiguous = read.ambiguous?.length ? { n: 1, numbers: read.ambiguous } : null;
         ui.open = 'display';
         render();
         return;
@@ -1273,7 +1274,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       u.warnings = p.warnings;
       // «علّمها للمراجعة» للنشطة وحدها: الملف حُفظ فيها (أو أكملها).
       const into = m.completing ? p.complete.cont.n : m.target;
-      u.ambiguous = p.ambiguous && controller.getState().activeSlot === into ? p.ambiguous : null;
+      u.ambiguous = p.ambiguous?.length ? { n: into, numbers: p.ambiguous } : null;
     }
     if (stillOpen) ui.open = controller.getState().arabic ? 'display' : null;
     render();

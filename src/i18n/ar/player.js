@@ -50,6 +50,7 @@ export default Object.freeze({
     completeOptionLabel: 'إكمال الترجمة {n} بمقاطع هذا الملف',
     completeLine: 'تتمة للترجمة {n}: يضيف {adds} في مواضعها.',
     completeDone: 'وتكتمل بعده.',
+    completeRenumbered: 'ويُعاد ترقيم المقاطع من 1 فلا يتكرر رقم.',
     completeRemaining: 'ويبقى {count} ناقصًا أو غير مترجم.',
     keepEdits: 'إبقاء تعديلاتي',
     nameOther: 'الاسم يشير إلى فيديو آخر',
