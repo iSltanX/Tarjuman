@@ -3,6 +3,9 @@
 // مشاهدة، فيُتحقق من سكربت المحتوى ونقاط التركيب ورد نافذة الأيقونة وانعكاس التخزين في المشغّل وفتح
 // الصفحات الأربع منها، ومن خلو كل ذلك من أخطاء الإضافة، ومن تحذيرات التثبيت وطلبات الشبكة.
 // لا يعتمد على جسم الترجمة، فيصح تحت الأتمتة. لا يكتب رابطًا ولا رمزًا في الأدلة.
+// النصوص المتوقعة من الفهرس بلغة الواجهة التي تعرضها الإضافة (lang في كل صفحة)، لا بالعربية وحدها: لغة يوتيوب أولًا
+// (src/i18n/locale.js)، ويوتيوب تحت الأتمتة إنجليزي فتأتي الواجهة إنجليزية. كان الدخان يطلب نصوصًا عربية واتجاهًا من
+// اليمين فيسقط على كل حزمة منذ التوطين (جولة 2.2.0 الحية، 2026-11-10).
 //   node test/live/harness/smoke.mjs --browser brave|chrome [--ext dist] [--gallery <بناء تطوير>]
 //        [--video iG9CE55wbtY] [--out test-results/live/P2] [--headed]
 import { execFileSync } from 'node:child_process';
@@ -15,6 +18,8 @@ import { recordNetwork } from './netlog.mjs';
 import { dismissConsent, waitForPlayer } from './youtube.mjs';
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
 import { summarizeVideo } from '../../../src/core/model/video.js';
+import { catalogOf, isLocale, localeDir } from '../../../src/i18n/index.js';
+import { formatCount } from '../../../src/ui/format.js';
 import { videoRecord } from '../../helpers/fixtures.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -26,10 +31,21 @@ const GALLERY = val('gallery') ? path.resolve(val('gallery')) : null;
 const VIDEO = val('video', 'iG9CE55wbtY');
 const OUT = path.resolve(ROOT, val('out', 'test-results/live/P2'), browser);
 const rel = (f) => path.relative(ROOT, f);
-// صورة الفيديو المصغّرة في المحفوظات (قرار سلطان 2026-11-03، Q35: مفعّلة افتراضيًا في Chromium) الطلب الخارجي الوحيد المسموح
-// من صفحات الإضافة: من صفحة المحفوظات وحدها، بمعرّف الفيديو، وبلا مُحيل؛ تُعدّ وحدها. كان
-// الدخان يعدّها طلبًا خارجيًا فيسقط page-library على أي حزمة حالية (تدقيق Fable، FA-03).
+// صورة الفيديو المصغّرة في المحفوظات الطلب الخارجي الوحيد المسموح من صفحات الإضافة حين تكون مفعّلة (مطفأة افتراضيًا منذ
+// 2.2.0، و2): من صفحة المحفوظات وحدها، بمعرّف الفيديو، وبلا مُحيل؛ تُعدّ وحدها. كان الدخان يعدّها طلبًا خارجيًا فيسقط
+// page-library على أي حزمة تعرضها (تدقيق Fable، FA-03).
 const THUMB_RE = /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/mqdefault\.jpg$/;
+
+/** نصوص الفحوص بلغة واجهة مدعومة، من الفهرس نفسه الذي ترسم منه الإضافة. */
+function uiText(locale) {
+  const c = catalogOf(locale);
+  return {
+    library: c.get('common.nav.library'),
+    settings: c.get('common.nav.settings'),
+    noLimit: c.get('settings.storage.noLimit').replace('{used}', '').trim(),
+    fiveCues: formatCount(5, c.get('common.count.cue')),
+  };
+}
 
 const manifest = JSON.parse(await readFile(path.join(EXT, 'manifest.json'), 'utf8'));
 const result = { browser: null, at: new Date().toISOString(), extension: { version: manifest.version, versionName: manifest.version_name ?? null, permissions: manifest.permissions }, video: VIDEO, checks: [], errors: {}, screenshots: [], notes: [] };
@@ -135,16 +151,28 @@ try {
   check('popup-video-state', r1?.watch === true && r1.videoId === VIDEO && r1.arabic === null, r1 && { via: s1.via, videoId: r1.videoId, loading: r1.loading, arabic: r1.arabic, view: r1.view });
   // الطبقة (P5) وأدوات الشريط (P6) مركّبتان؛ و«بانتظار» أو خطأ (CT_PLAYER_NOT_FOUND بعد المهلة، ف10) يُسقط الفحص، ومعه الرمز.
   check('mount-points-mounted', r1?.mounted?.overlay === 'mounted' && r1?.mounted?.controls === 'mounted', r1 ? { mounted: r1.mounted, code: r1.tools?.code ?? null } : null);
-  // بعد جولة الصقل: مدخل واحد لكل صفحة في تذييل النافذة، والمحرّر إجراء سريع [data-action="editor"] حين تكون للفيديو ترجمة.
-  // الأفعال تُرسم بعد رد سكربت المحتوى والتذييل لا ينتظره، فيُنتظر رسمها لا لحظة ظهور التذييل. أما رد يتجاوز مهلة النافذة
-  // (REPLY_TIMEOUT_MS = 1.5 ث) فتعرض فيه النافذة «افتح فيديو…» بلا أفعال، ويسقط الفحص كما ينبغي: رُصد في Edge بلا نافذة، وأول
-  // رد قيس هناك فوق المهلة في حزمة الأساس 67fa674 أيضًا (تدقيق Fable، FA-21 وFA-23).
-  await popup.waitFor(() => document.querySelectorAll('.tj-popup__actions [data-action]').length > 0, { timeoutMs: 10000 }).catch(() => null);
+  // بعد جولة الصقل: مدخل واحد لكل صفحة في تذييل النافذة ([data-action] library وsettings)، وزر «نسخ التعليمات»
+  // [data-action="copy"] في قسم التعليمات، والمحرّر إجراء سريع في .tj-popup__actions حين تكون للفيديو ترجمة.
+  // سطر أدوات المشغّل (.tj-popup__tools-text) يُرسم بعد رد سكربت المحتوى والتذييل لا ينتظره، فيُنتظر رسمه لا لحظة ظهور
+  // التذييل. أما رد يتجاوز مهلة النافذة (REPLY_TIMEOUT_MS = 1.5 ث) فتعرض فيه النافذة «افتح فيديو…» بلا سطر الأدوات، ويسقط
+  // الفحص كما ينبغي: رُصد في Edge بلا نافذة، وأول رد قيس هناك فوق المهلة في حزمة الأساس 67fa674 أيضًا (تدقيق Fable، FA-21
+  // وFA-23).
+  await popup.waitFor(() => !!document.querySelector('.tj-popup__tools-text') && !!document.querySelector('[data-action="copy"]'), { timeoutMs: 10000 }).catch(() => null);
   const items1 = await popup.eval(() => ({
-    menu: [...document.querySelectorAll('.tj-popup__nav [data-action]')].map((x) => ({ name: x.textContent.trim(), disabled: x.getAttribute('aria-disabled') === 'true' })),
+    locale: document.documentElement.lang,
+    menu: [...document.querySelectorAll('.tj-popup__nav [data-action]')].map((x) => ({ action: x.getAttribute('data-action'), name: x.textContent.trim(), disabled: x.getAttribute('aria-disabled') === 'true' })),
+    copy: !!document.querySelector('[data-action="copy"]'),
+    replyDrawn: !!document.querySelector('.tj-popup__tools-text'),
     actions: [...document.querySelectorAll('.tj-popup__actions [data-action]')].map((x) => x.getAttribute('data-action')),
   }));
-  check('popup-items', items1.menu.length === 2 && items1.menu.map((i) => i.name).join('|') === 'المحفوظات|الإعدادات' && items1.actions.includes('copy'), items1);
+  const uiLocale = isLocale(items1.locale) ? items1.locale : null;
+  const youtubeLang = await yt.eval(() => document.documentElement.lang).catch(() => null);
+  result.uiLocale = uiLocale;
+  result.youtubeLang = youtubeLang;
+  const tx = uiLocale ? uiText(uiLocale) : null;
+  check('popup-items', !!tx && items1.menu.map((i) => i.action).join('|') === 'library|settings'
+    && items1.menu.map((i) => i.name).join('|') === `${tx.library}|${tx.settings}` && items1.menu.every((i) => !i.disabled)
+    && items1.copy && items1.replyDrawn, { ...items1, youtubeLang });
   await shoot(popup, 'popup-no-arabic', { width: 320 });
   await b.conn.send('Target.activateTarget', { targetId: yt.targetId });
 
@@ -165,22 +193,24 @@ try {
 
   // ٤. فتح الصفحات الأربع من نافذة الأيقونة، وكل صفحة بلا أخطاء وبمحتواها من التخزين.
   const seen = new Set();
+  // نصوص كل صفحة بلغتها هي (x من uiText)، فيُكشف أيضًا اختلاف لغة صفحة عن النافذة في ui-locale-consistent.
   const expect = {
-    library: (t) => t.includes(VIDEO) && t.includes('المحفوظات'),
-    settings: (t) => t.includes('الإعدادات') && t.includes('بلا حد ثابت'),
-    editor: (t) => t.includes('5 مقاطع') && t.includes('+0.5'),
+    library: (t, x) => t.includes(VIDEO) && t.includes(x.library),
+    settings: (t, x) => t.includes(x.settings) && t.includes(x.noLimit),
+    editor: (t, x) => t.includes(x.fiveCues) && t.includes('+0.5'),
   };
-  const names = { library: 'المحفوظات', settings: 'الإعدادات', editor: 'المحرّر' };
+  const pageLocales = {};
   for (const name of ['library', 'settings', 'editor']) {
     const pop = await openPopup(b.conn, extId, pageErrors, yt.targetId);
     if (name === 'editor') await shoot(pop, 'popup-with-arabic', { width: 320 });
-    const clicked = await pop.eval((label, action) => {
+    // المدخل بسمته لا بنصه، فلا يتوقف على لغة الواجهة.
+    const clicked = await pop.eval((action) => {
       const item = document.querySelector(`.tj-popup__actions [data-action="${action}"]`)
-        ?? [...document.querySelectorAll('.tj-popup__nav [data-action]')].find((x) => x.textContent.trim() === label);
+        ?? document.querySelector(`.tj-popup__nav [data-action="${action}"]`);
       if (!item || item.getAttribute('aria-disabled') === 'true') return item ? 'disabled' : 'missing';
       item.click();
       return 'clicked';
-    }, { args: [names[name], name] });
+    }, { args: [name] });
     const prefix = `chrome-extension://${extId}/pages/${name}/index.html`;
     const target = clicked === 'clicked' ? await waitForTarget(b.conn, (u) => u.startsWith(prefix), { exclude: seen }) : null;
     const via = target ? 'popup' : `direct (${clicked})`;
@@ -213,9 +243,11 @@ try {
       await sleep(300);
     }
     const text = await page.eval(() => document.body.innerText);
-    const dir = await page.eval(() => getComputedStyle(document.documentElement).direction);
-    check(`page-${name}`, expect[name](text) && dir === 'rtl' && pnet.other === 0 && pnet.referers === 0, {
-      openedVia: via, rtl: dir === 'rtl', externalRequests: pnet.other, externalHosts: [...pnet.hosts],
+    const { lang, dir } = await page.eval(() => ({ lang: document.documentElement.lang, dir: getComputedStyle(document.documentElement).direction }));
+    const loc = isLocale(lang) ? lang : null;
+    pageLocales[name] = lang || null;
+    check(`page-${name}`, !!loc && expect[name](text, uiText(loc)) && dir === localeDir(loc) && pnet.other === 0 && pnet.referers === 0, {
+      openedVia: via, locale: lang || null, dir, externalRequests: pnet.other, externalHosts: [...pnet.hosts],
       ...(name === 'library' ? { thumbnails: pnet.thumbs, thumbnailReferers: pnet.referers } : {}),
     });
     await shoot(page, name);
@@ -236,6 +268,10 @@ try {
     }
     await page.close();
   }
+
+  // لغة واحدة للنافذة والصفحات الثلاث (الكاتب الواحد يحسمها لكل السياقات). ولغة يوتيوب تُسجَّل ولا تُشترط: أول سياق يصل
+  // يحسم اللغة ويحفظها (uiLocaleInit في src/core/store/writer.js)، فقد تكون من لغة المتصفح أو من جولة سابقة في ملف التعريف نفسه.
+  check('ui-locale-consistent', !!uiLocale && Object.values(pageLocales).every((l) => l === uiLocale), { popup: uiLocale, pages: pageLocales, youtubeLang });
 
   // ٥. الشبكة: لا طلب أصله الإضافة من صفحة يوتيوب.
   const ns = net.stats();
