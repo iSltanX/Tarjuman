@@ -10,7 +10,7 @@ import { formatOffset, textDirection } from '../../ui/format.js';
 import { languageName } from '../../ui/lang.js';
 import { glyph } from './glyphs.js';
 import {
-  LABELS, comparisonSummary, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
+  LABELS, comparisonSummary, completeHintLine, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
   shortTime, slotLabel, stepSeconds, syncAt, trackLine, translationLine,
 } from './text.js';
 
@@ -416,6 +416,9 @@ export function displayMenu(h, act, m, root = null) {
     h('div', { className: 'row file', children: [h('span', { className: 'name', text: m.fileName, attrs: { dir: 'ltr', title: m.fileName } })] }),
     summaryRow(h, summary),
   ];
+  // ف1: سطر نصي يدل على «أكمل الناقص» في نافذة الإضافة، بلا زر ولا رابط.
+  const completeHint = completeHintLine(m.comparison);
+  if (completeHint) out.push(h('div', { className: 'note', text: completeHint }));
   // لغة الترجمة النشطة تُحدَّد أو تُغيَّر هنا (AA3): ما حُفظ قبل 2.0.0 «غير محددة» حتى يختارها المستخدم.
   out.push(langSelect(h, act, { name: 'slotLang', value: m.lang, suggested: m.langSuggested ?? [], fid: 'slotLang', disabled: m.switching || m.busy, id: 'tj-slot-lang' }));
   for (const w of m.warnings) out.push(alert(h, 'warn', w));

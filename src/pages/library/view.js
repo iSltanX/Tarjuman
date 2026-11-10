@@ -42,7 +42,7 @@ let seq = 0;
  * @typedef {{
  *   store: ReturnType<typeof import('../../core/store/index.js').createStore>,
  *   doc?: Document, now?: () => number,
- *   openTab: (url: string) => Promise<unknown>, openPage: (name: 'editor', params: { v: string }) => Promise<unknown>,
+ *   openTab: (url: string) => Promise<unknown>, openPage: (name: 'editor', params: { v: string, t?: 1 | 2 | 3, p?: 'complete' }) => Promise<unknown>,
  *   saveFile: import('./actions.js').SaveFn,
  *   clipboardWrite: (text: string) => Promise<void>,
  *   pickFiles: () => Promise<File[] | null>,
@@ -613,6 +613,13 @@ export function createLibrary(env) {
     const st = m.status;
     const pill = statusPill({ tone: st.tone, text: st.text, plain: st.tone === 'neutral' || st.id === 'edited', title: st.title, doc });
     if (st.id === 'edited') pill.prepend(icon('edit', { doc }));
+    // «أكمل الناقص (N)» بجوار الشارة حين تنقص الترجمة النشطة مقاطع (ف1): نقرة إلى «الاستكمال» في المحرّر.
+    const missing = entry.arabic?.missing ?? 0;
+    const completeBtn = missing > 0 ? keyed(button({
+      label: tr('library.rowAction.complete', { n: missing }), variant: 'ghost', size: 'sm', title: tr('library.rowAction.completeTitle'), doc,
+      onClick: () => guarded(async () => { state.focusId = entry.videoId; remember(); await env.openPage('editor', { v: entry.videoId, p: 'complete' }); }),
+    }), 'complete') : null;
+    completeBtn?.setAttribute('aria-label', tr('library.rowAction.completeAria', { n: missing, title: m.displayTitle }));
 
     // سطر «المعرّف · عُدّل منذ · N مقطعًا».
     const sep = () => el('span', { className: 'lib-row__sep', text: '·', attrs: { 'aria-hidden': 'true' }, doc });
@@ -665,6 +672,7 @@ export function createLibrary(env) {
         ctl = createExpansion({
           doc, store, videoId: entry.videoId, title: m.displayTitle, now, confirm, toaster,
           onChanged: () => load(), upload: (n) => upload(m, n), exportSlot: (n) => exportSlotFile(m, n),
+          complete: (n) => guarded(async () => { state.focusId = entry.videoId; remember(); await env.openPage('editor', { v: entry.videoId, t: n, p: 'complete' }); }),
         });
         expansions.set(entry.videoId, ctl);
       }
@@ -702,7 +710,7 @@ export function createLibrary(env) {
           children: [
             el('h3', { className: `tj-h4 tj-auto lib-row__title${m.hasTitle ? '' : ' lib-row__title--empty'}`, text: m.displayTitle, dir: textDirection(m.displayTitle), attrs: { id: titleId, ...(m.hasTitle ? { title: m.displayTitle } : {}) }, doc }),
             el('div', { className: 'lib-row__meta', children: metaKids, doc }),
-            el('div', { className: 'lib-row__status', children: [pill], doc }),
+            el('div', { className: 'lib-row__status', children: [pill, completeBtn], doc }),
           ],
           doc,
         }),

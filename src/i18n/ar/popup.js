@@ -13,6 +13,7 @@ export default Object.freeze({
   card: {
     loading: 'جارٍ قراءة حالة الفيديو', saved: 'محفوظ', savedTitle: 'هذا الفيديو في المحفوظات',
     edited: 'معدّلة', differs: 'تختلف عن الأصل', noTranslation: 'لا ترجمة محفوظة بعد',
+    missing: { one: 'مقطع ناقص', two: 'مقطعان ناقصان', few: 'مقاطع ناقصة', many: 'مقطعًا ناقصًا', single: 'مقطع ناقص' },
   },
   steps: {
     label: 'خطوات الترجمة', done: 'تمّت', now: 'الخطوة الحالية', pending: 'لاحقًا',
@@ -40,6 +41,7 @@ export default Object.freeze({
   },
   editor: {
     open: 'تحرير الترجمة', needVideo: 'افتح فيديو على يوتيوب أولًا', reading: 'جارٍ قراءة ترجمة الفيديو…', none: 'لا ترجمة لهذا الفيديو بعد',
+    complete: 'أكمل الناقص ({n})', completeTitle: 'يفتح المحرّر على «الاستكمال» والمقاطع الناقصة مختارة',
   },
   entry: {
     hidden: 'زر النص المتزامن مخفي', show: 'إظهار', done: 'ظهر زر النص المتزامن في صفحات الفيديو.',

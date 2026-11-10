@@ -22,7 +22,7 @@ import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
 import { bindEntryRow } from './entry.js';
 import {
-  PAIR_TEXT, attachedGlossary, captureLine, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, originDownloaded, missText, pageReport,
+  PAIR_TEXT, attachedGlossary, captureLine, completeAction, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, originDownloaded, missText, pageReport,
   pairState, queryPageDiagnostics, queryPopupState, quickActions, recentEntries, recentLine, toolsStatus, untilSettled, videoLangs,
 } from './status.js';
 import { guideList, notVideoNote, pairSkeleton, skeletonCard, statusCard } from './view.js';
@@ -243,7 +243,21 @@ startPage({
           },
         }) : null;
         action?.setAttribute('data-action', a.id);
-        next = statusCard(status, toolsStatus(reply), captureLine(reply), document, action);
+        // «أكمل الناقص (N)» (ف1): نقرة تفتح المحرّر على «الاستكمال» والناقصة مختارة.
+        const c = completeAction(reply, missing);
+        const complete = c ? button({
+          label: c.label, icon: 'edit', size: 'sm', variant: 'secondary', title: c.title,
+          onClick: async () => {
+            try {
+              await openPage('editor', { v: c.videoId, p: 'complete' });
+              window.close();
+            } catch {
+              notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
+            }
+          },
+        }) : null;
+        complete?.setAttribute('data-action', c.id);
+        next = statusCard(status.kind === 'has-subtitle' ? { ...status, missing } : status, toolsStatus(reply), captureLine(reply), document, [complete, action]);
       }
       card.replaceWith(next);
       card = next;
@@ -265,7 +279,18 @@ startPage({
       return status;
     }
 
+    /** المقاطع الناقصة في الترجمة النشطة من ملخص الفيديو في المحفوظات (ف1)، و0 حين لا ترجمة أو تعذّرت القراءة. */
+    const readMissing = async () => {
+      if (!reply?.arabic || !reply.videoId) return 0;
+      try {
+        return (await store.listIndex()).find((e) => e.videoId === reply.videoId)?.arabic?.missing ?? 0;
+      } catch {
+        return 0;
+      }
+    };
+    let missing = 0;
     let downloaded = await originDownloaded(store, reply);
+    missing = await readMissing();
     let status = paint();
     // «جارٍ القراءة» (بداية الصفحة أو تنقّل فيها): يُعاد الاستعلام حتى يستقر، بحد (L-25).
     if (reply?.loading) {
@@ -273,6 +298,7 @@ startPage({
       if (state.reply && !state.reply.loading) {
         reply = state.reply;
         downloaded = await originDownloaded(store, reply);
+        missing = await readMissing();
         status = paint();
       }
     }

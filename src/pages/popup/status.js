@@ -336,6 +336,18 @@ export function quickActions(reply) {
   return [];
 }
 
+/**
+ * «أكمل الناقص (N)» (ف1): حين تنقص الترجمة النشطة مقاطع من الأصل، زر يفتح المحرّر على «الاستكمال» والناقصة مختارة. العدد من
+ * ملخص الفيديو في المحفوظات (`missing` للنسخة الحاضرة)، ولا زر حين لا نقص أو لا ترجمة.
+ * @param {import('../../core/model/messages.js').VideoStateReply | null} reply @param {number} missing
+ * @returns {{ id: 'complete', label: string, title: string, videoId: string } | null}
+ */
+export function completeAction(reply, missing) {
+  const gate = editorGate(reply);
+  if (!gate.enabled || !(missing > 0)) return null;
+  return { id: 'complete', label: t('popup.editor.complete', { n: missing }), title: t('popup.editor.completeTitle'), videoId: gate.videoId };
+}
+
 // ---- كتلة «تعليمات الترجمة» (AA3، لوحة 09، قرارا سلطان ق٢ وق٥) ----
 
 /** نصوص كتلة «تعليمات الترجمة» بلغة الواجهة الحالية عند كل قراءة (popup.pair). */

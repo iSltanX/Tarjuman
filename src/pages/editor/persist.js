@@ -29,6 +29,15 @@ export function slotParam(search) {
 }
 
 /**
+ * لوحة يُفتح عليها المحرّر من معامل p في عنوانه (ف1: editor.html?v=ID&p=complete)، أو null.
+ * @param {string} search مثل location.search
+ * @returns {'complete' | null}
+ */
+export function panelParam(search) {
+  return new URLSearchParams(search).get('p') === 'complete' ? 'complete' : null;
+}
+
+/**
  * الخانة التي تُفتح: المطلوبة إن كانت ممتلئة، وإلا النشطة (وfallback يبيّن أن المطلوبة لم تُفتح).
  * @param {Bundle | null} bundle @param {1 | 2 | 3 | null} requested
  * @returns {{ n: 1 | 2 | 3 | null, fallback: boolean }}

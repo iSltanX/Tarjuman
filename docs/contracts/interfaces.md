@@ -200,7 +200,7 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 | نافذة الأيقونة | `pages/popup/index.html` | الأيقونة (`action.default_popup`) | P7 |
 | المحفوظات | `pages/library/index.html` | نافذة الأيقونة | P7 |
 | الإعدادات | `pages/settings/index.html` | نافذة الأيقونة | P7 |
-| المحرّر | `pages/editor/index.html?v=VIDEO_ID` | نافذة الأيقونة والمحفوظات | P8 |
+| المحرّر | `pages/editor/index.html?v=VIDEO_ID` (و`&t=2` لخانة، و`&p=complete` للوحة «الاستكمال»، ف1) | نافذة الأيقونة والمحفوظات | P8 |
 
 - المسارات من `PAGES` و`pagePath(name, { v })` في `src/core/model/ids.js`، والفتح بـ`openPage(name, params)` في `src/ui/page.js` (`chrome.tabs.create`)، وقراءة `v` بـ`videoParam(location.search)`. «فتح الفيديو» بـ`watchUrl(id)` وحده.
 - **هيكل الصفحة:** مجلد فيه `index.html` (يربط `../../ui/tokens.css` و`base.css` و`components.css` ثم `<script src="main.js">`) و`main.js` نقطة دخول يجمّعها البناء مع ما تستورده، وأي ملفات CSS محلية تُنسخ تلقائيًا. صفحة واحدة لكل مجلد؛ لا صفحة جديدة دون تغيير البيان (عقد).
@@ -470,4 +470,4 @@ test/
 تغييرات الواجهات المعتمدة في §5 من خطة 2.2.0 (ق2)، كلٌّ ببنده:
 
 - **ح5 — اختيار مرجع المقارنة في المحرّر وحده:** حوار «رفع ترجمة» في المحفوظات (`uploadContent` في `src/pages/library/upload.js`) يعرض المرجع سطرًا: الأقرب الذي يقترحه `review.suggested` بسببه، و«غير مؤكد» حين يتقارب مرجعان، وإحالة إلى المحرّر؛ ولا قائمة. وبطاقة الترجمة (`referenceRow` في `expand.js`) سطر «المرجع» مقروءًا بلا قائمة. وحُذفت `changeReference` من `actions.js` ورمزها `PG_REFERENCE_CHANGED`. والمحرّر يبدّل المرجع كما كان (`withSlotReference`).
-
+- **ف1 — من «ناقص» إلى «أكمِل»:** `pagePath('editor', { v, t?, p? })` يقبل `t` (1..3) و`p` من `EDITOR_PANELS` (`'complete'` وحدها)، وغيرهما `RangeError`. والمحرّر يقرأ `p` بـ`panelParam` ويُفتح على «الاستكمال» (`setSideTab('complete')`) حين في الخانة المفتوحة ناقص أو فارغ أو غير مترجم، وإلا يتجاهله. ونافذة الإضافة: `completeAction(reply, missing)` (العدد من `listIndex()`، `arabic.missing` للنسخة الحاضرة) يعطي «أكمل الناقص (N)»، والبطاقة تقول العدد بدل «تختلف عن الأصل». والمحفوظات: الزر نفسه بجوار شارة الصف وفي سطر نتيجة الترجمة (`env.complete(n)` في `createExpansion`). وقائمة الترجمة في المشغّل: `completeHintLine(comparison)` سطر نصي بلا زر ولا رابط.

@@ -169,6 +169,9 @@ export default Object.freeze({
     addText: '{n} · فارغة',
   },
   rowAction: {
+    complete: 'أكمل الناقص ({n})',
+    completeAria: 'أكمل الناقص ({n}) في {title}',
+    completeTitle: 'يفتح المحرّر على «الاستكمال» والمقاطع الناقصة مختارة',
     copyId: 'نسخ معرّف الفيديو {id}',
     copyIdTitle: 'نسخ المعرّف',
     more: 'المزيد',

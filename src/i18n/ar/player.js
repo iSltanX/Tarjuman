@@ -126,6 +126,7 @@ export default Object.freeze({
     replaceSlot: 'استبدال {label}',
     replaceSlotNamed: 'استبدال {label} — {name}',
     moreNotes: 'راجع بقية الملاحظات ({n}) في المحرّر.',
+    completeHint: 'لإكمال الناقص: «أكمل الناقص» في نافذة الإضافة (أيقونة ترجمان).',
     minusTip: 'تقديم الترجمة {step} ث (تظهر أبكر)',
     plusTip: 'تأخير الترجمة {step} ث (تظهر لاحقًا)',
     badgeZero: 'الإزاحة: {offset} ث. اضغط للخيارات',

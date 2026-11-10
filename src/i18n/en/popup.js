@@ -13,6 +13,7 @@ export default Object.freeze({
   card: {
     loading: 'Reading the video’s status', saved: 'Saved', savedTitle: 'This video is in Library',
     edited: 'Edited', differs: 'Differs from original', noTranslation: 'No saved translation yet',
+    missing: { one: '1 segment missing', other: 'segments missing' },
   },
   steps: {
     label: 'Translation steps', done: 'Done', now: 'Current step', pending: 'Later',
@@ -36,6 +37,7 @@ export default Object.freeze({
     awaiting: 'Awaiting translation',
   },
   editor: {
+    complete: 'Complete missing ({n})', completeTitle: 'Opens the editor on Completion with the missing segments selected',
     open: 'Edit translation', needVideo: 'Open a YouTube video first', reading: 'Reading the video’s subtitles…', none: 'No translation for this video yet',
   },
   entry: {

@@ -70,7 +70,7 @@ const densityOf = (prefs) => ({ maxCps: prefs?.review?.maxCps ?? READING_DEFAULT
  * }} deps slot خانة التحرير المطلوبة (t في العنوان)؛ وبدونها النشطة. seek وopenVideo وsaveFile للاختبار وحده.
  */
 export async function mountEditor(app, {
-  videoId, slot: requested = null, store, doc = document, now = Date.now, seek = jumpToVideo, openVideo = defaultOpenVideo, saveFile = defaultSaveFile,
+  videoId, slot: requested = null, panel = null, store, doc = document, now = Date.now, seek = jumpToVideo, openVideo = defaultOpenVideo, saveFile = defaultSaveFile,
 }) {
   const win = doc.defaultView;
   const title = (text) => el('h1', { className: 'tj-h1', text, doc });
@@ -1037,13 +1037,22 @@ export async function mountEditor(app, {
     S.parts = S.fp?.parts && S.view === 'edit' ? partsStatus(S.fp, S.session.snapshot()) : null;
   }
 
+  const currentCompletion = () => completionGroups({
+    cues: shownCues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView, selection: S.selection,
+    numbersOf: S.view === 'edit' && S.coverage?.ok ? S.coverage.numbersOf : null, target: openedLang(),
+  });
+
+  /** في الخانة المفتوحة ما يُستكمل: ناقص أو فارغ أو بلا حرف من لغة الترجمة (ف1). */
+  function hasGaps() {
+    if (!S.markView) return false;
+    const g = currentCompletion();
+    return g.missing.length + g.empty.length + g.noArabic.length > 0;
+  }
+
   /** @param {boolean} [force] يرسم اللوحة وإن كانت مخفية (تبديل اللغة: لوحة مخفية لا تبقى بلغة قديمة) */
   function renderComplete(force = false) {
     if ((completePane.hidden && !force) || !S.markView) return;
-    const groups = completionGroups({
-      cues: shownCues(), comparison: S.comparison, fingerprint: S.fp, marks: S.markView, selection: S.selection,
-      numbersOf: S.view === 'edit' && S.coverage?.ok ? S.coverage.numbersOf : null, target: openedLang(),
-    });
+    const groups = currentCompletion();
     S.completeNumbers = completionNumbers(groups, S.picks);
     keepFocus(completeEl, () => renderCompletePanel(completeEl, {
       doc, reason: completeReason(), groups, picks: S.picks, numbers: S.completeNumbers, parts: S.parts,
@@ -2182,6 +2191,12 @@ export async function mountEditor(app, {
   load(bundle, picked.n);
   rememberSlot(picked.n);
   setSideTab('review');
+  // ف1: «أكمل الناقص» من نافذة الإضافة أو المحفوظات يفتح المحرّر على «الاستكمال» والناقصة مختارة (الاختيار الافتراضي: الناقصة
+  // والفارغة). ويُتجاهل المعامل حين لا ناقص ولا غير مترجم: تبقى «المراجعة».
+  if (panel === 'complete' && hasGaps()) {
+    setSideTab('complete');
+    setFold('side', true);
+  }
   if (picked.fallback) toast(slotFallback(requested, picked.n), 'info');
   const api = { get state() { return S; }, save, jumpTo, setView, switchSlot, relocalize };
   if (typeof __TJ_DEV__ !== 'undefined' && __TJ_DEV__) globalThis.__tarjumanEditor = api;

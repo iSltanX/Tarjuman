@@ -164,6 +164,9 @@ export default Object.freeze({
     addText: '{n} · empty',
   },
   rowAction: {
+    complete: 'Complete missing ({n})',
+    completeAria: 'Complete missing ({n}) in {title}',
+    completeTitle: 'Opens the editor on Completion with the missing segments selected',
     copyId: 'Copy video ID {id}',
     copyIdTitle: 'Copy ID',
     more: 'More',

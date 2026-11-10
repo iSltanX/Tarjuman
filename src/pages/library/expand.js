@@ -24,7 +24,7 @@ let seq = 0;
  *   now: () => number, confirm: typeof import('../../ui/components.js').confirmDialog,
  *   toaster: { show: (text: string, tone?: string, opts?: object) => unknown },
  *   onChanged: () => Promise<void> | void, upload: (n: 1 | 2 | 3) => Promise<boolean>,
- *   exportSlot: (n: 1 | 2 | 3) => Promise<unknown>,
+ *   exportSlot: (n: 1 | 2 | 3) => Promise<unknown>, complete?: (n: 1 | 2 | 3) => unknown,
  * }} env
  * @returns {{ root: HTMLElement, id: string, refresh: () => Promise<void>, dispose: () => void }}
  */
@@ -192,13 +192,20 @@ export function createExpansion(env) {
    * كشارة الصف والمشغّل والمحرّر، لا لتقرير الرفع المخزّن وحده: بعد الاستكمال أو التعديل في المحرّر لا تبقى نتيجة متقادمة
    * (قرار سلطان D-03، 2026-11-08، تدقيق V2 U-061؛ ومبدأ GM-013). وتقرير الرفع يبقى في البيانات كما هو.
    */
-  function resultLine(track, fingerprints) {
+  function resultLine(track, fingerprints, n) {
     const r = trackComparison(track, fingerprints);
     const sum = comparisonSummary(r);
     const text = sum.lines.join('\n') + (sum.tone === 'success' && r && r.countSource !== null ? tr('library.compare.ofCount', { target: r.countTarget, source: r.countSource }) : '');
+    // «أكمل الناقص (N)» في سطر النتيجة حين تنقص هذه الترجمة مقاطع (ف1): المحرّر على خانتها و«الاستكمال».
+    const missing = r?.missing?.length ?? 0;
+    const complete = missing > 0 && env.complete ? button({
+      label: tr('library.rowAction.complete', { n: missing }), variant: 'ghost', size: 'sm', title: tr('library.rowAction.completeTitle'), doc,
+      onClick: () => env.complete(n),
+    }) : null;
+    complete?.setAttribute('data-fk', fk(`card-${n}:complete`));
     return el('p', {
       className: `lib-result lib-result--${sum.tone}`,
-      children: [icon(sum.tone === 'success' ? 'check' : sum.tone === 'warning' ? 'warning' : 'info', { doc }), el('span', { text, doc })],
+      children: [icon(sum.tone === 'success' ? 'check' : sum.tone === 'warning' ? 'warning' : 'info', { doc }), el('span', { text, doc }), complete],
       doc,
     });
   }
@@ -319,7 +326,7 @@ export function createExpansion(env) {
           ],
           doc,
         }),
-        resultLine(track, b.record.fingerprints),
+        resultLine(track, b.record.fingerprints, s.n),
         ...referenceRow(b, s),
         s.marks.length ? el('p', { className: 'tj-caption lib-card__marks', text: tr('library.card.marks', { todo, done }), doc }) : null,
         b.previous && b.previous.from === s.n ? previousLine(b, bytes, true) : null,

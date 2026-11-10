@@ -123,6 +123,13 @@ export const replaceSlotTitle = (s) => (s.name ? T('replaceSlotNamed', { label: 
 export const moreNotesLine = (n) => T('moreNotes', { n });
 
 /**
+ * سطر يدل على «أكمل الناقص» في نافذة الإضافة حين تنقص الترجمة مقاطع (ف1). نص بلا زر ولا رابط: المشغّل للمشاهدة (§٦.٥)،
+ * ولا رابط منه إلى صفحات الإضافة.
+ * @param {{ fingerprintId?: string | null, missing?: number[] } | null | undefined} cmp
+ */
+export const completeHintLine = (cmp) => (cmp?.fingerprintId && cmp.missing?.length ? T('completeHint') : null);
+
+/**
  * الخطوة بالثواني بلا أصفار زائدة: 500 ← «0.5»، و1000 ← «1»، و1500 ← «1.5».
  * @param {number} ms
  */

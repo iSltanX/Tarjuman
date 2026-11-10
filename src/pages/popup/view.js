@@ -3,7 +3,7 @@
 // في status.js، والتركيب في main.js. الصنف التاريخي tj-popup__status باقٍ على البطاقة والهيكل والملاحظة: يقرؤه الحزام الحي.
 import { t } from '../../i18n/index.js';
 import { el, statusPill } from '../../ui/components.js';
-import { textDirection } from '../../ui/format.js';
+import { formatCount, textDirection } from '../../ui/format.js';
 import { popupIcon } from './icons.js';
 
 /** نص ملاحظة «ليست صفحة فيديو» كما في اللوحة المعتمدة، بلغة الواجهة الحالية. */
@@ -64,6 +64,7 @@ function toolsRow(tools, doc) {
  * @param {ReturnType<typeof import('./status.js').toolsStatus>} tools
  * @param {ReturnType<typeof import('./status.js').captureLine>} capture
  * @param {Document} [doc]
+ * @param {HTMLElement | HTMLElement[] | null} [action] زر «تحرير الترجمة»، ومعه «أكمل الناقص» حين تنقص مقاطع (ف1)
  */
 export function statusCard(s, tools, capture, doc = document, action = null) {
   const card = el('section', { className: 'tj-popup__card tj-popup__status', attrs: { 'aria-live': 'polite' }, doc });
@@ -74,7 +75,9 @@ export function statusCard(s, tools, capture, doc = document, action = null) {
     card.append(el('p', { className: 'tj-popup__line', text: s.line, doc }));
     const pills = [savedPill(doc), iconPill({ text: s.mode, outline: true, doc })];
     if (s.edited) pills.push(iconPill({ text: t('popup.card.edited'), iconName: 'edit', outline: true, doc }));
-    if (s.matched === false) pills.push(iconPill({ text: t('popup.card.differs'), iconName: 'warning', tone: 'warning', doc }));
+    // العدد الصريح حين تنقص مقاطع (ف1)، وإلا «تختلف عن الأصل».
+    if (s.missing > 0) pills.push(iconPill({ text: formatCount(s.missing, t('popup.card.missing')), iconName: 'warning', tone: 'warning', doc }));
+    else if (s.matched === false) pills.push(iconPill({ text: t('popup.card.differs'), iconName: 'warning', tone: 'warning', doc }));
     card.append(el('div', { className: 'tj-popup__pills', children: pills, doc }));
   } else {
     card.append(el('p', { className: 'tj-popup__line', text: t('popup.card.noTranslation'), doc }));
@@ -88,7 +91,9 @@ export function statusCard(s, tools, capture, doc = document, action = null) {
   if (capture) card.append(resultLine({ tone: 'warn', iconName: 'warning', text: capture.text, className: 'tj-popup__capture', doc }));
   if (tools) card.append(el('hr', { className: 'tj-rule', doc }), toolsRow(tools, doc));
   // «تحرير الترجمة» زر مؤطّر داخل البطاقة (لوحة 09): الزر الرئيسي الوحيد في النافذة نسخ التعليمات.
-  if (action) card.append(el('div', { className: 'tj-popup__actions', children: [action], doc }));
+  // و«أكمل الناقص» قبله حين تنقص مقاطع (ف1).
+  const actions = [].concat(action ?? []).filter(Boolean);
+  if (actions.length) card.append(el('div', { className: 'tj-popup__actions', children: actions, doc }));
   return card;
 }
 

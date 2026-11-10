@@ -117,6 +117,7 @@ export default Object.freeze({
     replaceSlot: 'Replace {label}',
     replaceSlotNamed: 'Replace {label} — {name}',
     moreNotes: 'See the remaining notes ({n}) in the Editor.',
+    completeHint: 'To complete the missing segments, use “Complete missing” in the extension popup (Tarjuman icon).',
     minusTip: 'Show translation {step} s earlier',
     plusTip: 'Show translation {step} s later',
     badgeZero: 'Offset: {offset} s. Click for options',

@@ -111,7 +111,7 @@ export async function startPage({ title, render, wide = false, nav = null, doc =
 
 /**
  * يفتح صفحة من صفحات الإضافة في تبويب جديد (لا يحتاج إذن tabs). hash يفتحها على قسم أو بحث بعينه (#q=…).
- * @param {Parameters<typeof pagePath>[0]} name @param {{ v?: string }} [params]
+ * @param {Parameters<typeof pagePath>[0]} name @param {Parameters<typeof pagePath>[1]} [params]
  * @param {{ api?: typeof chrome, hash?: string }} [o]
  */
 export function openPage(name, params, { api = globalThis.chrome, hash } = {}) {

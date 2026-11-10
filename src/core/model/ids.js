@@ -64,16 +64,29 @@ export const PAGES = Object.freeze({
   editor: 'pages/editor/index.html',
 });
 
+/** لوحات المحرّر التي يفتحها عنوانه (ف1): «الاستكمال» وحدها. */
+export const EDITOR_PANELS = Object.freeze(['complete']);
+
 /**
  * @param {keyof typeof PAGES} name
- * @param {{ v?: string }} [params] v لمعرّف الفيديو (المحرّر وحده يحتاجه)
+ * @param {{ v?: string, t?: 1 | 2 | 3, p?: 'complete' }} [params] v لمعرّف الفيديو (المحرّر وحده يحتاجه)، وt لخانة التحرير،
+ *   وp للوحة يُفتح عليها المحرّر (ف1). t وp لا معنى لهما بلا v.
  */
 export function pagePath(name, params = {}) {
   const base = PAGES[name];
   if (!base) throw new RangeError(`صفحة غير معروفة: ${name}`);
   if (params.v === undefined) return base;
   if (!isVideoId(params.v)) throw new RangeError('معرّف فيديو غير صالح');
-  return `${base}?v=${params.v}`;
+  let out = `${base}?v=${params.v}`;
+  if (params.t !== undefined) {
+    if (![1, 2, 3].includes(params.t)) throw new RangeError('خانة غير صالحة');
+    out += `&t=${params.t}`;
+  }
+  if (params.p !== undefined) {
+    if (!EDITOR_PANELS.includes(params.p)) throw new RangeError('لوحة غير معروفة');
+    out += `&p=${params.p}`;
+  }
+  return out;
 }
 
 /**
