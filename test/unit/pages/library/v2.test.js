@@ -394,19 +394,13 @@ test('التوسيع: «ملف بديل…» يرفع إلى الخانة نفس
   assert.ok(textOf(cardOf(expOf(m, IDS[0]), 2)).includes('بديل.ar.srt'), 'البطاقة بالملف الجديد');
 });
 
-test('التوسيع — تغيير المرجع عند التعدد يعيد المقارنة ويحفظ المرجع', async () => {
+test('ح5: التوسيع — المرجع عند التعدد سطر مقروء بلا قائمة، ويُبدَّل من المحرّر وحده', async () => {
   const m = await mount();
   const exp = await expand(m, IDS[0]);
-  const select = cardOf(exp, 2).querySelector('select');
-  assert.equal(select.childNodes.length, 3, 'البصمتان و«بلا مرجع»');
-  assert.equal(select.value, 'fp_test000002');
-  select.value = 'fp_test000001';
-  select.dispatchEvent({ type: 'change' });
-  await settle(10);
-  const s = (await m.store.getBundle(IDS[0])).slots[1];
-  assert.equal(s.track.fingerprintId, 'fp_test000001');
-  assert.equal(s.track.comparison.fingerprintId, 'fp_test000001');
-  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'تغيّر مرجع المقارنة للترجمة 2.');
+  const card = cardOf(exp, 2);
+  assert.equal(card.querySelector('select'), null, 'لا قائمة مرجع');
+  assert.match(textOf(card.querySelector('.lib-card__ref')), /^المرجع: /);
+  assert.equal((await m.store.getBundle(IDS[0])).slots[1].track.fingerprintId, 'fp_test000002', 'المرجع المحفوظ لم يتغير');
 });
 
 test('التوسيع — نتيجة المقارنة: مطابقة بعدّها، والمقاطع الناقصة بأرقامها، وبلا بصمة سطر معلومة', async () => {

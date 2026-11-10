@@ -71,7 +71,6 @@ export const MESSAGES = Object.freeze({
   PG_SLOT_DELETED: 'حُذفت الترجمة {n}.',
   PG_SLOT_RENAMED: 'حُفظ الاسم المختصر.',
   PG_SLOT_NAME_INVALID: 'الاسم المختصر سطر واحد حتى 24 حرفًا.',
-  PG_REFERENCE_CHANGED: 'تغيّر مرجع المقارنة للترجمة {n}.',
   PG_PREVIOUS_RESTORED: 'استُعيدت النسخة السابقة إلى الترجمة {n}، وصارت الحالية هي السابقة.',
   PG_PREVIOUS_DELETED: 'حُذفت النسخة السابقة.',
   PG_UPLOAD_SAVED: 'حُفظت الترجمة {n}.',

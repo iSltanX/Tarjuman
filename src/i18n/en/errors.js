@@ -243,7 +243,6 @@ export default Object.freeze({
   PG_SLOT_DELETED: 'Translation {n} deleted.',
   PG_SLOT_RENAMED: 'Short name saved.',
   PG_SLOT_NAME_INVALID: 'The short name must be a single line of up to 24 characters.',
-  PG_REFERENCE_CHANGED: 'The comparison reference for translation {n} changed.',
   PG_PREVIOUS_RESTORED: 'The previous version was restored to translation {n}, and the current one became the previous version.',
   PG_PREVIOUS_DELETED: 'Previous version deleted.',
   PG_UPLOAD_SAVED: 'Translation {n} saved.',

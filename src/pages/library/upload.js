@@ -116,36 +116,17 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
     // تصدير واحد: لا اختيار، والمرجع سطر.
     referenceBlock = el('p', { className: 'tj-body-sm lib-up__ref-line', children: [tr('library.upload.referenceLine'), el('span', { text: fingerprintLabel(fps[0], absoluteTime(fps[0].createdAt)), doc })], doc });
   } else {
-    const ranked = review.references.map((r) => r.fingerprintId);
-    const order = [...ranked, ...fps.map((f) => f.id).filter((x) => !ranked.includes(x))];
-    const sid = `${id}-ref`;
-    const select = el('select', {
-      className: 'tj-field__input lib-up__ref', attrs: { id: sid, 'aria-describedby': `${sid}-why` },
-      children: [
-        ...order.map((fid) => {
-          const fp = fps.find((f) => f.id === fid);
-          return el('option', { text: `${fingerprintLabel(fp, absoluteTime(fp.createdAt))}${fid === review.suggested ? tr('library.upload.closest') : ''}`, attrs: { value: fid }, doc });
-        }),
-        el('option', { text: tr('library.upload.noRef'), attrs: { value: '' }, doc }),
-      ],
-      doc,
-    });
-    select.value = reference ?? '';
-    // سبب المرجع المختار لا المقترح وحده: السطر وصف القائمة، فيتبع الاختيار (كان يبقى «مطابقة لهذا التصدير»، U59).
-    const whyOf = (fid) => review.references.find((r) => r.fingerprintId === fid)?.why ?? '';
-    const why = whyOf(reference);
-    select.addEventListener('change', () => {
-      reference = select.value || null;
-      whyEl.textContent = whyOf(reference);
-      renderCompare();
-    });
-    const whyEl = el('span', { className: 'tj-field__hint', text: why, attrs: { id: `${sid}-why` }, doc });
+    // ح5 (2026-11-10): عند تعدد التصديرات يختار ترجمان الأقرب، والاختيار اليدوي في المحرّر وحده. هنا سطر يقول بماذا تُقارَن
+    // الترجمة ولماذا، و«غير مؤكد» حين يتقارب مرجعان.
+    const fp = reference ? fps.find((f) => f.id === reference) ?? null : null;
+    const label = fp ? `${fingerprintLabel(fp, absoluteTime(fp.createdAt))}${fp.id === review.suggested ? tr('library.upload.closest') : ''}` : tr('library.upload.noRef');
+    const why = review.references.find((r) => r.fingerprintId === reference)?.why ?? '';
     referenceBlock = el('div', {
-      className: 'tj-field lib-up__field',
+      className: 'lib-up__field',
       children: [
-        el('div', { className: 'lib-up__label', children: [el('label', { className: 'tj-field__label', text: tr('library.upload.reference'), attrs: { for: sid }, doc }), fps.length > 1 && !review.certain ? statusPill({ tone: 'warning', text: tr('library.upload.uncertain'), title: tr('library.upload.uncertainTitle'), doc }) : null], doc }),
-        select,
-        whyEl,
+        el('p', { className: 'tj-body-sm lib-up__ref-line', children: [tr('library.upload.referenceLine'), el('span', { text: label, doc }), !review.certain ? statusPill({ tone: 'warning', text: tr('library.upload.uncertain'), title: tr('library.upload.uncertainTitle'), doc }) : null], doc }),
+        why ? el('p', { className: 'tj-caption lib-up__why', text: why, doc }) : null,
+        el('p', { className: 'tj-caption', text: tr('library.upload.referenceHint'), doc }),
       ],
       doc,
     });

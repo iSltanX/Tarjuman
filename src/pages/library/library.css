@@ -135,7 +135,6 @@
 .lib-card__meta { overflow-wrap: anywhere; }
 .lib-card__ref, .lib-card__marks { overflow-wrap: anywhere; }
 .lib-card__field { gap: 4px; }
-.lib-card__select { min-height: var(--tj-control-sm); font-size: 13px; }
 .lib-result { display: flex; align-items: flex-start; gap: 6px; margin: 0; font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); white-space: pre-line; overflow-wrap: anywhere; }
 .lib-result .tj-icon { flex: none; width: 14px; height: 14px; margin-top: 3px; }
 .lib-result--success .tj-icon { color: var(--tj-success); }
@@ -190,7 +189,6 @@
 .lib-up__targets { margin: 0; }
 .lib-up__head { margin: 0 0 -6px; }
 .lib-up__label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.lib-up__ref { width: 100%; min-height: var(--tj-control-sm); font-size: 14px; }
 .lib-up__impact { display: flex; flex-direction: column; gap: 8px; }
 .lib-up__impact:empty { display: none; }
 .lib-up__counts { font-weight: 700; }

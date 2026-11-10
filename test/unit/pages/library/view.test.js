@@ -622,27 +622,26 @@ test('«إبقاء تعديلاتي»: يُعرض ما سيُفقد، ومتاح
   assert.match(seen[1].text, /لا يمكن إبقاء تعديلاتك/, 'السبب في اسم الوصول');
 });
 
-test('المرجع عند تعدد التصديرات: قائمة بالمقترح «الأقرب» و«غير مؤكد» عند التقارب، وتغييره يعيد المقارنة ويُحفظ مع الخانة', async () => {
+test('ح5: المرجع عند تعدد التصديرات سطر بالأقرب و«غير مؤكد» عند التقارب، بلا قائمة، ويُحفظ الأقرب مع الخانة', async () => {
   const track = englishTrack();
   const fp1 = fingerprint({ track, id: 'fp_test000001' });
   const fp2 = fingerprint({ track, id: 'fp_test000002', mode: 'long' });
   const record = { ...videoRecord({ videoId: IDS[0] }), english: [track], fingerprints: [fp1, fp2] };
   record.arabic.fingerprintId = fp1.id;
   record.arabic.comparison.fingerprintId = fp1.id;
+  let suggested = null;
   const m = await mount({
     records: [{ id: IDS[0], title: 'عنوان', record }],
     env: {
       pickFiles: async () => [new File([writeSrt(makeCues(5).map((c) => ({ ...c, text: `جديد ${c.n}` })))], 'x.ar.srt')],
       confirm: async (o) => {
         m.calls.confirms.push(o);
-        const select = findAll(o.content, (e) => e.tagName === 'select' && e.classList.contains('lib-up__ref'))[0];
-        const labels = select.childNodes.map(textOf);
-        assert.equal(labels.length, 3, 'البصمتان و«بلا مرجع»');
-        assert.ok(labels.some((l) => l.endsWith('— الأقرب')));
+        assert.equal(findAll(o.content, (e) => e.tagName === 'select' && e.classList.contains('lib-up__ref')).length, 0, 'لا قائمة مرجع');
+        const line = findAll(o.content, (e) => e.classList?.contains('lib-up__ref-line'))[0];
+        assert.match(textOf(line), /^المرجع: .*— الأقرب/);
+        suggested = /عادي/.test(textOf(line)) ? fp1.id : fp2.id;
         assert.match(allText(o.content), /غير مؤكد/);
-        select.value = '';
-        select.dispatchEvent({ type: 'change' });
-        assert.match(allText(o.content), /لا مرجع للمقارنة بالأصل/);
+        assert.match(allText(o.content), /يُبدَّل المرجع من المحرّر/);
         return true;
       },
     },
@@ -651,7 +650,7 @@ test('المرجع عند تعدد التصديرات: قائمة بالمقتر
   clickReplace(m);
   await settle(10);
   const b = await m.store.getBundle(IDS[0]);
-  assert.equal(b.slots[1].track.fingerprintId, null, 'المرجع المختار محفوظ مع الخانة');
+  assert.equal(b.slots[1].track.fingerprintId, suggested, 'الأقرب محفوظ مع الخانة');
 });
 
 test('تنبيه الاسم: ملف باسم فيديو آخر محفوظ يُنبَّه إليه بعنوانه مقصوصًا', async () => {

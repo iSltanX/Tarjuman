@@ -9,7 +9,7 @@ import { TjError, messageFor } from '../../core/errors/index.js';
 import { buildArabicExport, buildExport, buildStudyText, studyTiming, studyTimingNote, translationLang } from '../../core/export/index.js';
 import { readImport, reviewIncoming, sameExport } from '../../core/import/index.js';
 import {
-  applyRecordChange, referencedFingerprints, withActiveSlot, withPreviousRestored, withSlotName, withSlotReference, withSlotUpload, withoutPrevious,
+  applyRecordChange, referencedFingerprints, withActiveSlot, withPreviousRestored, withSlotName, withSlotUpload, withoutPrevious,
   withoutSlot,
 } from '../../core/model/bundle.js';
 import { LIMITS } from '../../core/model/validate.js';
@@ -289,23 +289,6 @@ export function compareWith(cues, fp, settings, notes = [], target = 'ar') {
   // target لغة الترجمة لفحص «غير مترجم» (AA1): null لا فحص؛ والافتراضي العربية كما كان للمستدعين القدماء.
   const report = compare(cues, fp, { driftMs: settings.thresholds.driftMs, target });
   return { ...report, notes: [...notes, ...report.notes].slice(0, LIMITS.maxNotes) };
-}
-
-/**
- * تغيير مرجع المقارنة لخانة: المقارنة تُعاد بالبصمة المختارة (أو بلا مرجع)، وتُكتب مع المرجع كتابةً واحدة.
- * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string, n: 1 | 2 | 3,
- *   fingerprintId: string | null, now: () => number }} o
- */
-export async function changeReference({ store, videoId, n, fingerprintId, now }) {
-  const settings = await store.getSettings();
-  return onBundle(store, videoId, (b) => {
-    const s = b.slots[n - 1];
-    if (!s.track) throw new TjError('ST_SLOT_EMPTY');
-    const fp = fingerprintId ? b.record.fingerprints.find((f) => f.id === fingerprintId) ?? null : null;
-    if (fingerprintId && !fp) throw new TjError('MD_INVALID', { detail: 'fingerprintId' });
-    // التقرير وصف للملف المستورد كما في readImport وapplyUpload: الأصل لا النسخة المعدّلة، فلا يتغير بإعادة اختيار المرجع.
-    return withSlotReference(b, n, { fingerprintId, comparison: fp ? compareWith(s.track.original, fp, settings, s.track.notes, s.track.lang ?? null) : null }, iso(now));
-  });
 }
 
 /**

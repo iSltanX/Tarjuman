@@ -10,7 +10,7 @@ import { SLOT_NAME_MAX } from '../../core/model/slots.js';
 import { t as tr } from '../../i18n/index.js';
 import { alertBox, button, el, icon, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
-import { activateSlot, changeReference, deletePrevious, deleteSlot, renameSlot, restorePrevious } from './actions.js';
+import { activateSlot, deletePrevious, deleteSlot, renameSlot, restorePrevious } from './actions.js';
 import { deleteContent } from './delete.js';
 import { captureFocus, restoreFocus, toggleKeyOf } from './focus.js';
 import { EDIT_FORMS, absoluteTime, comparisonSummary, deleteSummary, fingerprintLabel, manualEdits, relativeTime } from './model.js';
@@ -203,28 +203,12 @@ export function createExpansion(env) {
     });
   }
 
+  /** سطر «المرجع» مقروءًا: بماذا قورنت الترجمة. ويُبدَّل المرجع من المحرّر وحده (ح5، 2026-11-10). */
   function referenceRow(b, s) {
     const fps = b.record.fingerprints;
     const current = fps.find((f) => f.id === s.track.fingerprintId) ?? null;
     const label = current ? fingerprintLabel(current, absoluteTime(current.createdAt)) : tr('library.card.noReference');
-    const out = [el('p', { className: 'tj-caption lib-card__ref', children: [tr('library.card.referenceLine'), el('span', { text: label, doc })], doc })];
-    if (fps.length > 1 || (fps.length === 1 && !current)) {
-      const sid = `${id}-ref-${s.n}`;
-      const select = el('select', {
-        className: 'tj-field__input lib-card__select', attrs: { id: sid, 'data-fk': fk(`card-${s.n}:ref`) },
-        children: [
-          ...fps.map((f) => el('option', { text: fingerprintLabel(f, absoluteTime(f.createdAt)), attrs: { value: f.id }, doc })),
-          el('option', { text: tr('library.card.noReference'), attrs: { value: '' }, doc }),
-        ],
-        doc,
-      });
-      select.value = current?.id ?? '';
-      select.addEventListener('change', () => {
-        act(() => changeReference({ store, videoId, n: s.n, fingerprintId: select.value || null, now }), messageFor('PG_REFERENCE_CHANGED', { n: s.n }));
-      });
-      out.push(el('div', { className: 'tj-field lib-card__field', children: [el('label', { className: 'tj-field__label', text: tr('library.card.referenceLabel'), attrs: { for: sid }, doc }), select], doc }));
-    }
-    return out;
+    return [el('p', { className: 'tj-caption lib-card__ref', children: [tr('library.card.referenceLine'), el('span', { text: label, doc })], doc })];
   }
 
   /** سطر النسخة السابقة: تاريخها وسعتها، واستعادتها بتبديل قابل للعكس وحذفها بتأكيد. `own` داخل بطاقة خانتها (بلا «من الترجمة N»). */

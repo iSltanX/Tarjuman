@@ -292,24 +292,16 @@ test('I05: حقل الاسم المفتوح بلا تغيير لا يُغلق ح
   assert.equal(cardOf(m, IDS[0], 2).querySelector('input'), null);
 });
 
-test('U59: سطر سبب المرجع في حوار الرفع يتبع المرجع المختار', async () => {
+test('U59 وح5: سطر سبب المرجع في حوار الرفع للأقرب الذي اختاره ترجمان، بلا قائمة', async () => {
   const m = await mount({ seed: async (s) => seedBundle(s, sampleBundle({ videoId: IDS[0] })), pick: [new File([writeSrt(makeCues(5).map((c) => ({ ...c, text: `جديد ${c.n}` })))], 'x.ar.srt')] });
   const more = buttonNamed(rowFor(m, IDS[0]), 'المزيد');
   more.click();
   more.parentNode.querySelectorAll('[role=menuitem]').find((i) => textOf(i).startsWith('رفع ترجمة')).click();
   await settle(20);
   const content = m.confirms.at(-1).content;
-  const select = content.querySelector('select.lib-up__ref');
-  assert.ok(select, 'بصمتان: قائمة مرجع');
-  const why = content.querySelector(`#${select.getAttribute('aria-describedby')}`);
-  assert.match(textOf(why), /مطابقة لهذا التصدير/, 'سبب المقترح');
-  const other = select.querySelectorAll('option').map((o) => o.getAttribute('value')).find((v) => v && v !== select.value);
-  select.value = other;
-  select.dispatchEvent({ type: 'change' });
-  assert.match(textOf(why), /مطابقة لهذا التصدير/, 'المرجع الآخر مطابق أيضًا في العيّنة: سببه هو');
-  select.value = '';
-  select.dispatchEvent({ type: 'change' });
-  assert.equal(textOf(why), '', '«بلا مرجع»: لا سبب (كان يبقى «مطابقة لهذا التصدير»)');
+  assert.equal(content.querySelector('select.lib-up__ref'), null, 'بصمتان: سطر لا قائمة');
+  assert.match(textOf(content.querySelector('.lib-up__ref-line')), /— الأقرب/);
+  assert.match(textOf(content.querySelector('.lib-up__why')), /مطابقة لهذا التصدير/, 'سبب المقترح');
 });
 
 test('U59: صيغ العدد — «جزآن» في وصف البصمة، و«ملفا أصل محفوظان» في ملخص الحذف، و«النتائج: …» في الإعلان', async () => {

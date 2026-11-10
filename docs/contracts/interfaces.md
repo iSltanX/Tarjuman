@@ -464,3 +464,10 @@ test/
 | P12 | `player/controls/**`، و`pages/popup/**` | المتحكم (§١٢)، و`saveFile` (§١٣)، و`instructions` بالقاموس، ومحرّكات P11، وردّا الحالة والتشخيص (عقد الرسائل §٥–§٦)، و`slotPicker` و`createToaster` | لا |
 | P13 | `pages/library/**`، و`pages/settings/**`، و`core/backup/**`، و`errors/backup.js` | `getBundle` و`updateBundle` وانتقالات الحزمة و`listLibrary` و`restoreVideo` و`bundleBytes` و`getPrefs`/`setPrefs` و`getLastSave` و`savedPath` و`saveFile`، وصيغة `backup.md`، ومحرّكات P11، و`src/ui` | لا |
 | P14 | `pages/editor/**`، و`core/edit/**` (عدا محرّكات P11) | `updateBundle` بـ`expect` وانتقالات الخانة والعلامات والموضع، و`resolveMark`، و`jumpToVideo`، و`saveFile`، ومحرّكات P11، و`src/ui` | لا |
+
+## ١٩. خطة 2.2.0 (بقرار سلطان، 2026-11-10)
+
+تغييرات الواجهات المعتمدة في §5 من خطة 2.2.0 (ق2)، كلٌّ ببنده:
+
+- **ح5 — اختيار مرجع المقارنة في المحرّر وحده:** حوار «رفع ترجمة» في المحفوظات (`uploadContent` في `src/pages/library/upload.js`) يعرض المرجع سطرًا: الأقرب الذي يقترحه `review.suggested` بسببه، و«غير مؤكد» حين يتقارب مرجعان، وإحالة إلى المحرّر؛ ولا قائمة. وبطاقة الترجمة (`referenceRow` في `expand.js`) سطر «المرجع» مقروءًا بلا قائمة. وحُذفت `changeReference` من `actions.js` ورمزها `PG_REFERENCE_CHANGED`. والمحرّر يبدّل المرجع كما كان (`withSlotReference`).
+
