@@ -56,12 +56,14 @@ There's no built-in model, no API key, no account, no translation server, and no
 
 ## Install
 
+<!-- tj:facts install -->
 | Browser | Available now |
 | --- | --- |
 | Google Chrome (130 or later) | From [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Brave (Chromium 130 or later) | From [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Microsoft Edge (130 or later) | From [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
 | Mozilla Firefox (144 or later) | Not on Firefox Add-ons yet. To try it: [install from source](docs/development.md) (Arabic) |
+<!-- /tj:facts install -->
 
 In every browser, the latest version can be tried from source the same way. The store copy and the source copy are separate extensions, so move your Library between them with a backup ([user guide](docs/user-guide.md) §9, Arabic).
 
@@ -89,17 +91,20 @@ The interface comes in Arabic and English. On first run it follows YouTube's int
 
 ## Privacy
 
+<!-- tj:facts privacy -->
 - Your translations and settings stay in the extension's storage on your device and aren't synced with any service. Removing the extension deletes them, so take a backup first.
 - Only two things leave the extension:
   - **Video thumbnails in Library:** requested from YouTube's servers by video ID, with a switch to turn them off. On Firefox they're off until you turn on the switch and agree to "browsing activity".
   - **A problem report:** you send it yourself from Settings after seeing everything in it, with no translation text or video ID attached automatically.
 - No usage tracking, no ads, and no selling of your data.
+<!-- /tj:facts privacy -->
 
 The full policy is in [`PRIVACY.md`](PRIVACY.md) (Arabic), the same text published at [bysltan.com/tarjuman/privacy](https://bysltan.com/tarjuman/privacy).
 
 <details>
 <summary><b>Permissions and why they're needed</b></summary>
 
+<!-- tj:facts permissions -->
 | Permission | Why |
 | --- | --- |
 | `storage` | Saving your translations, their languages, the original track, export fingerprints, marks, language preferences and settings on your device. |
@@ -107,6 +112,7 @@ The full policy is in [`PRIVACY.md`](PRIVACY.md) (Arabic), the same text publish
 | `downloads` | Saving only the files you ask for (the original SRT, exported translations and the backup), and querying the extension's own downloads only. |
 | `https://www.youtube.com/*` | The content scripts: Tarjuman's buttons in the player, reading a copy of the subtitle response the player requested and the list of its track languages from the page data without any request, and drawing your translation over the video. |
 | Reports server (optional) | Requested on the first press of "Send report" after the preview, and used for nothing else. If you refuse it, nothing is sent. |
+<!-- /tj:facts permissions -->
 
 </details>
 

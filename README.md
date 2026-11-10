@@ -8,8 +8,10 @@
 </p>
 
 <p align="center">
+<!-- tj:facts badges -->
   <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 2.1.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-2.1.0-1E4A44?logo=googlechrome&logoColor=white"></a>
   <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 2.1.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-2.1.0-1E4A44?logo=microsoftedge&logoColor=white"></a>
+<!-- /tj:facts badges -->
   <img alt="المعالجة والحفظ على جهازك" src="https://img.shields.io/badge/data-on--device-2A6E46">
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
 </p>
@@ -67,12 +69,14 @@
 
 ## التثبيت
 
+<!-- tj:facts install -->
 | المتصفح | المتاح الآن |
 | --- | --- |
 | Google Chrome ‏(130 فأحدث) | من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Brave ‏(Chromium 130 فأحدث) | من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، المتجر نفسه |
 | Microsoft Edge ‏(130 فأحدث) | من [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
 | Mozilla Firefox ‏(144 فأحدث) | غير منشور في Firefox Add-ons بعد. وللتجربة: [التثبيت من الشيفرة](docs/development.md#التثبيت-من-الشيفرة) |
+<!-- /tj:facts install -->
 
 وفي كل المتصفحات يُجرَّب الإصدار الأحدث من الشيفرة بالطريقة نفسها. ونسخة المتجر ونسخة الشيفرة إضافتان منفصلتان، فانقل محفوظاتك بينهما بالنسخة الاحتياطية ([دليل الاستخدام](docs/user-guide.md) §٩).
 
@@ -100,17 +104,20 @@
 
 ## الخصوصية
 
+<!-- tj:facts privacy -->
 - ترجماتك وإعداداتك في تخزين الإضافة على جهازك، ولا تُزامَن مع أي خدمة. وإزالة الإضافة تحذفها، فخذ نسخة احتياطية قبلها.
 - لا يخرج من الإضافة إلا شيئان:
   - **صور الفيديو في «المحفوظات»:** تُطلب من خوادم يوتيوب بمعرّف الفيديو، ولها مفتاح يطفئها. وفي Firefox هي مطفأة حتى تفعّل مفتاحها وتوافق على «نشاط التصفح».
   - **بلاغ عن مشكلة:** ترسله أنت بنفسك من الإعدادات بعد أن ترى كل ما فيه، ولا يُرفق به تلقائيًا نص ترجمة ولا معرّف فيديو.
 - لا قياس استخدام، ولا إعلانات، ولا بيع لبياناتك.
+<!-- /tj:facts privacy -->
 
 السياسة الكاملة في [`PRIVACY.md`](PRIVACY.md)، وهي النص المنشور نفسه في [bysltan.com/tarjuman/privacy](https://bysltan.com/tarjuman/privacy).
 
 <details>
 <summary><b>الأذونات ولماذا يطلبها</b></summary>
 
+<!-- tj:facts permissions -->
 | الإذن | لماذا |
 | --- | --- |
 | `storage` | حفظ ترجماتك ولغاتها ومسار الأصل وبصمات التصدير والعلامات وتفضيلات اللغات والإعدادات على جهازك. |
@@ -118,6 +125,7 @@
 | `downloads` | حفظ الملفات التي تطلبها وحدها (ملف SRT الأصلي، والترجمات المصدَّرة، والنسخة الاحتياطية)، والاستعلام عن تنزيلات الإضافة وحدها. |
 | `https://www.youtube.com/*` | سكربتا المحتوى: أزرار ترجمان في المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل وقائمة لغات مساراته من بيانات الصفحة بلا طلب، ورسم ترجمتك فوق الفيديو. |
 | خادم البلاغات (اختياري) | يُطلب عند أول ضغطة «إرسال البلاغ» بعد المعاينة، ولا يُستعمل لغيره. وإن رفضته لا يُرسل شيء. |
+<!-- /tj:facts permissions -->
 
 </details>
 

@@ -1,0 +1,94 @@
+{
+  "_note": "ح2 (2026-11-10): مصدر واحد للمقاطع المكررة. scripts/docs/facts.mjs يولّد القوالب بين علامتي <!-- tj:facts الاسم --> و<!-- /tj:facts الاسم --> في README.md وREADME.en.md وdocs/user-guide.md (المتغيرات {chrome} و{edge} و{minChromium} و{minFirefox} و{email})، ويفحص بلا علامات روابط المتاجر والحدود الدنيا في docs/site وstore، وبنية النسخ العربية والإنجليزية. حرّر هنا ثم: node scripts/docs/facts.mjs",
+  "stores": {
+    "chrome": "https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj",
+    "edge": "https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi",
+    "firefox": null
+  },
+  "minimum": {
+    "chromium": 130,
+    "firefox": 144
+  },
+  "published": {
+    "chrome": "2.1.0",
+    "edge": "2.1.0"
+  },
+  "supportEmail": "iSultanBy@gmail.com",
+  "blocks": {
+    "badges": {
+      "ar": [
+        "  <a href=\"{chrome}\"><img alt=\"ترجمان {pubChrome} في Chrome Web Store\" src=\"https://img.shields.io/badge/Chrome%20Web%20Store-{pubChrome}-1E4A44?logo=googlechrome&logoColor=white\"></a>",
+        "  <a href=\"{edge}\"><img alt=\"ترجمان {pubEdge} في Microsoft Edge Add-ons\" src=\"https://img.shields.io/badge/Edge%20Add--ons-{pubEdge}-1E4A44?logo=microsoftedge&logoColor=white\"></a>"
+      ]
+    },
+    "install": {
+      "ar": [
+        "| المتصفح | المتاح الآن |",
+        "| --- | --- |",
+        "| Google Chrome ‏({minChromium} فأحدث) | من [Chrome Web Store]({chrome}) |",
+        "| Brave ‏(Chromium {minChromium} فأحدث) | من [Chrome Web Store]({chrome})، المتجر نفسه |",
+        "| Microsoft Edge ‏({minChromium} فأحدث) | من [Microsoft Edge Add-ons]({edge}) |",
+        "| Mozilla Firefox ‏({minFirefox} فأحدث) | غير منشور في Firefox Add-ons بعد. وللتجربة: [التثبيت من الشيفرة](docs/development.md#التثبيت-من-الشيفرة) |"
+      ],
+      "en": [
+        "| Browser | Available now |",
+        "| --- | --- |",
+        "| Google Chrome ({minChromium} or later) | From [Chrome Web Store]({chrome}) |",
+        "| Brave (Chromium {minChromium} or later) | From [Chrome Web Store]({chrome}) |",
+        "| Microsoft Edge ({minChromium} or later) | From [Microsoft Edge Add-ons]({edge}) |",
+        "| Mozilla Firefox ({minFirefox} or later) | Not on Firefox Add-ons yet. To try it: [install from source](docs/development.md) (Arabic) |"
+      ]
+    },
+    "privacy": {
+      "ar": [
+        "- ترجماتك وإعداداتك في تخزين الإضافة على جهازك، ولا تُزامَن مع أي خدمة. وإزالة الإضافة تحذفها، فخذ نسخة احتياطية قبلها.",
+        "- لا يخرج من الإضافة إلا شيئان:",
+        "  - **صور الفيديو في «المحفوظات»:** تُطلب من خوادم يوتيوب بمعرّف الفيديو، ولها مفتاح يطفئها. وفي Firefox هي مطفأة حتى تفعّل مفتاحها وتوافق على «نشاط التصفح».",
+        "  - **بلاغ عن مشكلة:** ترسله أنت بنفسك من الإعدادات بعد أن ترى كل ما فيه، ولا يُرفق به تلقائيًا نص ترجمة ولا معرّف فيديو.",
+        "- لا قياس استخدام، ولا إعلانات، ولا بيع لبياناتك."
+      ],
+      "en": [
+        "- Your translations and settings stay in the extension's storage on your device and aren't synced with any service. Removing the extension deletes them, so take a backup first.",
+        "- Only two things leave the extension:",
+        "  - **Video thumbnails in Library:** requested from YouTube's servers by video ID, with a switch to turn them off. On Firefox they're off until you turn on the switch and agree to \"browsing activity\".",
+        "  - **A problem report:** you send it yourself from Settings after seeing everything in it, with no translation text or video ID attached automatically.",
+        "- No usage tracking, no ads, and no selling of your data."
+      ]
+    },
+    "permissions": {
+      "ar": [
+        "| الإذن | لماذا |",
+        "| --- | --- |",
+        "| `storage` | حفظ ترجماتك ولغاتها ومسار الأصل وبصمات التصدير والعلامات وتفضيلات اللغات والإعدادات على جهازك. |",
+        "| `unlimitedStorage` | فيديو بساعتين نحو 0.7 م.ب، فالحد الافتراضي يمتلئ بنحو خمسة عشر فيديو طويلًا. ولا يضيف تحذير تثبيت. |",
+        "| `downloads` | حفظ الملفات التي تطلبها وحدها (ملف SRT الأصلي، والترجمات المصدَّرة، والنسخة الاحتياطية)، والاستعلام عن تنزيلات الإضافة وحدها. |",
+        "| `https://www.youtube.com/*` | سكربتا المحتوى: أزرار ترجمان في المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل وقائمة لغات مساراته من بيانات الصفحة بلا طلب، ورسم ترجمتك فوق الفيديو. |",
+        "| خادم البلاغات (اختياري) | يُطلب عند أول ضغطة «إرسال البلاغ» بعد المعاينة، ولا يُستعمل لغيره. وإن رفضته لا يُرسل شيء. |"
+      ],
+      "en": [
+        "| Permission | Why |",
+        "| --- | --- |",
+        "| `storage` | Saving your translations, their languages, the original track, export fingerprints, marks, language preferences and settings on your device. |",
+        "| `unlimitedStorage` | A two-hour video takes about 0.7 MB, so the default limit fills up after about fifteen long videos. It adds no install warning. |",
+        "| `downloads` | Saving only the files you ask for (the original SRT, exported translations and the backup), and querying the extension's own downloads only. |",
+        "| `https://www.youtube.com/*` | The content scripts: Tarjuman's buttons in the player, reading a copy of the subtitle response the player requested and the list of its track languages from the page data without any request, and drawing your translation over the video. |",
+        "| Reports server (optional) | Requested on the first press of \"Send report\" after the preview, and used for nothing else. If you refuse it, nothing is sent. |"
+      ]
+    },
+    "install-stores": {
+      "ar": [
+        "- **في Chrome وBrave:** افتح [صفحة ترجمان في Chrome Web Store]({chrome}).",
+        "- **في Edge:** افتح [صفحة ترجمان في Microsoft Edge Add-ons]({edge})."
+      ]
+    },
+    "permissions-guide": {
+      "ar": [
+        "- **التخزين** (ومعه تخزين غير محدود الحجم، ولا يضيف تحذيرًا).",
+        "- **التنزيلات** (الإصدار الثاني): يظهر بسببها تحذير «إدارة عمليات التنزيل» عند التثبيت أو الترقية. تستعملها صفحات الإضافة والعامل الخلفي لأدوات المشغّل، لتحفظ ملفات ترجمان وحدها في المكان الذي تختاره (§٧). لا يقرأ تنزيلاتك الأخرى ولا يفتحها ولا يحذفها.",
+        "- **العمل على صفحات `www.youtube.com`** وحدها. لا تبويبات، ولا مواقع أخرى.",
+        "- **إذن اختياري لا يُطلب عند التثبيت:** الاتصال بخادم البلاغات وحده، يطلبه المتصفح عند أول «إرسال البلاغ» (§٨). وفي Firefox معه موافقة «البيانات التقنية والتفاعل»، ويعرضها Firefox أيضًا في الإعدادات الاختيارية بنافذة التثبيت فتشغّلها أو تطفئها هناك.",
+        "- **في Firefox، موافقة «نشاط التصفح» لصور المحفوظات:** لا تُطلب عند التثبيت، بل حين تفعّل «صور الفيديو في المحفوظات» (§٨)."
+      ]
+    }
+  }
+}

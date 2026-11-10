@@ -96,6 +96,7 @@ npm run package
 | الملف | مصدره | الأمر |
 | --- | --- | --- |
 | `PRIVACY.md` | [`site/privacy.md`](site/privacy.md) | `node scripts/site/privacy.mjs` (و`--check` في `npm run check`) |
+| المقاطع بين `<!-- tj:facts الاسم -->` و`<!-- /tj:facts الاسم -->` في `README.md` و`README.en.md` و`user-guide.md` (التثبيت والمتاجر والأذونات وملخص الخصوصية) | [`facts.json`](facts.json) (ح2) | `node scripts/docs/facts.mjs` (و`--check` في `npm run check`، ومعه مطابقة روابط المتاجر والحدود الدنيا وبريد الدعم في `site/` و`store/` بلا علامات، وبنية النسخ العربية والإنجليزية) |
 | `THIRD_PARTY_NOTICES.txt` | تراخيص الخطوط والأيقونات وأدوات البناء | `npm run notices` |
 | أيقونات الإضافة `src/icons` | الشعار في `tools/brand` | `node tools/brand/icons.mjs` |
 | صور `.github/assets` ولقطات `store/screenshots/{chromium,firefox}/{ar,en}` و`store/promo` | مجلد العمل المحلي `tarjuman-images/` (غير متتبع) | `tarjuman-images/_source/compose.mjs`، ثم تُنسخ النتائج إلى مواضعها. ولا رقم إصدار على أي صورة |
