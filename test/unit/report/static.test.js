@@ -77,6 +77,9 @@ test('التدقيق: الحزمة بلا قناة بلاغات؛ ومضيفها
     assert.ok(failed(r, 'no-report-channel'));
     r = await variant((d) => append(path.join(d, 'pages/settings/main.js'), 'globalThis.fetch(url, init);'));
     assert.ok(failed(r, 'no-report-channel'));
+    assert.ok(good.checks.find((c) => c.id === 'permissions-request-settings-only').ok);
+    r = await variant((d) => append(path.join(d, 'background/worker.js'), 'var q = (api) => api.permissions.request({ origins: [] });'));
+    assert.ok(failed(r, 'permissions-request-settings-only'));
     r = await variant(async (d) => {
       const p = path.join(d, 'manifest.json');
       const m = JSON.parse(await readFile(p, 'utf8'));

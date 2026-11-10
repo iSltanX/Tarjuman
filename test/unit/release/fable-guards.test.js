@@ -95,7 +95,7 @@ const failed = (r) => r.checks.filter((c) => !c.ok).map((c) => c.id);
 test('FA-02: الحزمة السليمة ناجحة، وكل ملف فيها يشير إليه البيان أو صفحة أو نمط أو قائمة الخطوط', async () => {
   const r = await auditPackage(built);
   assert.deepEqual(failed(r), []);
-  assert.equal(r.checks.length, 15);
+  assert.equal(r.checks.length, 16);
 });
 
 test('FA-02: ملف مشحون لا يشير إليه شيء يُرفض ولو طابق نمط الاسم، ومثله ملفان مهملان يشير أحدهما إلى الآخر', async () => {

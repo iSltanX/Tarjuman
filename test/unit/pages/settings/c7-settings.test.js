@@ -66,17 +66,21 @@ function reportHarness({ copy } = {}) {
   return { doc, panel, type, copies, root: panel.root };
 }
 
-test('U52: بعد فشل النسخ لا تُدرج عقدة نتيجة جديدة مع كل حرف، وسطر الأسرار لا يُعاد كتابته', async () => {
+test('U52: نتيجة فشل النسخ تُرسم حين تتغير وحدها: أول تعديل يمحوها مرة، ولا تُعاد مع كل حرف، وسطر الأسرار لا يُعاد كتابته', async () => {
   const h = reportHarness({ copy: async () => { throw new Error('denied'); } });
   h.panel.open();
   await settle();
   h.type('وصف أول');
   buttonNamed(h.root, 'نسخ البلاغ').click();
   await settle(5);
-  const failed = h.root.querySelector('[data-report-result="copy-failed"]');
-  assert.ok(failed);
+  assert.ok(h.root.querySelector('[data-report-result="copy-failed"]'));
+  const result = h.root.querySelector('.st-report__result');
+  let paints = 0;
+  const original = result.replaceChildren.bind(result);
+  result.replaceChildren = (...nodes) => { paints += 1; return original(...nodes); };
   for (const v of ['وصف أول ث', 'وصف أول ثا', 'وصف أول ثان']) h.type(v);
-  assert.ok(h.root.querySelector('[data-report-result="copy-failed"]') === failed, 'العقدة نفسها');
+  assert.equal(paints, 1, 'مُحيت مرة واحدة');
+  assert.ok(h.root.querySelector('[data-report-result]') === null);
   const secret = h.root.querySelector('.st-report__secret');
   h.type('sessionid=abcdef0123456789abcdef0123456789');
   const node = secret.childNodes[0];

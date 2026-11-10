@@ -185,14 +185,19 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
 
   // ---- بلا خادم (و1، 2.2.0): لا اسم لخادم البلاغات في أي ملف من الحزمة، ولا fetch في حزمة الإعدادات ----
   const reportHolders = [];
+  const permissionRequests = [];
   let settingsText = '';
   for (const rel of files.filter((f) => /\.(?:js|json|html)$/.test(f))) {
     const text = await readFile(path.join(dir, rel), 'utf8');
     if (text.includes(REPORTS_HOST)) reportHolders.push(rel);
+    if (/\bpermissions\s*\.\s*request\b/.test(text)) permissionRequests.push(rel);
     if (rel === SETTINGS_BUNDLE) settingsText = text;
   }
   const settingsFetches = [...settingsText.matchAll(/\bfetch\s*\(/g)].length;
   check('no-report-channel', reportHolders.length === 0 && settingsFetches === 0, { holders: reportHolders, fetches: settingsFetches });
+  // طلب إذن أو موافقة في حزمة الإعدادات وحدها: موافقة صور المحفوظات في Firefox (core/consent/thumbnails.js). كان هذا جزءًا من فحص
+  // قناة البلاغات، فبقي بعد حذفها (المراجعة المستقلة للمرحلة 7).
+  check('permissions-request-settings-only', permissionRequests.every((f) => f === SETTINGS_BUNDLE), { files: permissionRequests });
 
   // ---- خطوط الترجمة المضمّنة ورخصها ----
   const fonts = [];

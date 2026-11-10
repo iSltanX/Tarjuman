@@ -54,6 +54,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   /** @type {import('../../core/report/payload.js').Diagnostics | null} */
   let diag = null;
   let diagFailed = false;
+  let diagReading = false;
   /** @type {null | 'copied' | 'copy-failed'} نتيجة نسخ البلاغ */
   let outcome = null;
   /** @type {null | 'copied' | 'copy-failed'} نتيجة نسخ البريد */
@@ -72,7 +73,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
   const kinds = segmented({
     legend: t('settings.report.kindLegend'), value: kind, doc,
     options: REPORT_KINDS.map((k) => ({ value: k, label: KIND_LABELS[k] })),
-    onChange: (v) => { kind = v; textLabel.textContent = promptOf(v); render(); },
+    onChange: (v) => setKind(v),
   });
   const textarea = el('textarea', {
     className: 'tj-field__input st-report__text',
@@ -80,11 +81,29 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     doc,
   });
   textarea.addEventListener('input', () => {
-    text = String(textarea.value ?? '');
-    // عودة النص بعد تبديل لغة الواجهة (data-tj-keep) تفتح اللوحة التي فيها حقله، فلا يبقى مخبوءًا.
-    if (!opened && text) open();
+    const next = String(textarea.value ?? '');
+    // نتيجة النسخ تصف نصًّا سبق؛ تعديله يمحوها فلا يُظن المنسوخ هو الحالي (المراجعة المستقلة للمرحلة 7).
+    if (next !== text) outcome = null;
+    text = next;
+    // عودة النص بعد تبديل لغة الواجهة (data-tj-keep) تفتح اللوحة التي فيها حقله، فلا يبقى مخبوءًا، ولا تسحب التركيز.
+    if (!opened && text) open({ focus: false });
     render();
   });
+  // نوع البلاغ يعود بعد تبديل لغة الواجهة كالوصف: حقل مخفي بقيمته (data-tj-keep لا يحفظ أزرار الاختيار).
+  const kindKeep = el('input', { attrs: { type: 'hidden', 'data-tj-keep': 'settings.report.kind' }, doc });
+  kindKeep.value = kind;
+  kindKeep.addEventListener('input', () => {
+    const v = String(kindKeep.value ?? '');
+    if (REPORT_KINDS.includes(v) && v !== kind) { kinds.set(v); setKind(v); }
+  });
+  /** @param {string} v */
+  function setKind(v) {
+    if (v !== kind) outcome = null;
+    kind = v;
+    kindKeep.value = v;
+    textLabel.textContent = promptOf(v);
+    render();
+  }
   // عنوان الحقل بحسب نوع البلاغ (ق-6).
   const textLabel = el('label', { className: 'tj-field__label', text: promptOf(kind), attrs: { for: textId }, doc });
   const counter = el('span', { className: 'tj-caption st-report__count', attrs: { id: countId }, doc });
@@ -116,6 +135,7 @@ export function reportPanel({ doc = document, env = {} } = {}) {
       el('h3', { className: 'tj-h4', text: reportLabel(), attrs: { id: 'st-report-title' }, doc }),
       el('p', { className: 'tj-body-sm', text: t('settings.report.intro'), doc }),
       kinds.root,
+      kindKeep,
       textLabel,
       textarea,
       counter,
@@ -196,18 +216,22 @@ export function reportPanel({ doc = document, env = {} } = {}) {
     renderResult();
   }
 
-  function open() {
+  /** @param {{ focus?: boolean }} [o] focus: false حين تفتحها عودة النص بعد تبديل اللغة */
+  function open({ focus = true } = {}) {
     opened = true;
     region.hidden = false;
     trigger.setAttribute('aria-expanded', 'true');
-    if (!diag && !diagFailed) {
+    // تعذّر القراءة لا يدوم: فتح النموذج ثانيةً يعيد المحاولة (المراجعة المستقلة للمرحلة 7).
+    if (!diag && !diagReading) {
+      diagReading = true;
+      diagFailed = false;
       Promise.resolve().then(deps.diagnostics).then(
-        (d) => { diag = d; render(); },
-        () => { diagFailed = true; render(); },
+        (d) => { diag = d; diagReading = false; render(); },
+        () => { diagFailed = true; diagReading = false; render(); },
       );
     }
     render();
-    textarea.focus?.();
+    if (focus) textarea.focus?.();
   }
 
   function close() {

@@ -475,7 +475,8 @@ test('كل عنصر إدخال باسم وصول: منزلق الحجم بـaria
   const m = await mount();
   assert.equal(m.settings.slider.getAttribute('aria-label'), 'حجم خط الترجمة');
   const labelFor = (id) => findAll(m.root, (e) => e.tagName === 'label' && e.getAttribute('for') === id).length;
-  const inputs = findAll(m.root, (e) => e.tagName === 'input');
+  // الحقل المخفي (type=hidden) لا يُعرض لقارئ الشاشة فلا اسم له: حفظ نوع البلاغ عند تبديل اللغة (المرحلة 7).
+  const inputs = findAll(m.root, (e) => e.tagName === 'input' && e.getAttribute('type') !== 'hidden');
   assert.ok(inputs.length > 20);
   for (const i of inputs) {
     const type = i.getAttribute('type');

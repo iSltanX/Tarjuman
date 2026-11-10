@@ -162,3 +162,86 @@ test('ق-6: عنوان حقل الوصف يتبع نوع البلاغ', async ()
   pick('bug');
   assert.equal(label(), 'ماذا حدث؟');
 });
+
+// ---- المراجعة المستقلة للمرحلة 7 ----
+
+test('نتيجة النسخ تُمحى حين يتغير الوصف أو النوع، فلا يُظن المنسوخ هو الحالي', async () => {
+  const h = harness();
+  h.trigger.click();
+  await settle();
+  h.type('وصف أول');
+  buttonNamed(h.region, 'نسخ البلاغ').click();
+  await settle();
+  assert.ok(h.region.querySelector('[data-report-result="copied"]'));
+  h.type('وصف أول معدَّل');
+  assert.ok(h.region.querySelector('[data-report-result]') === null, 'الوصف تغيّر');
+  buttonNamed(h.region, 'نسخ البلاغ').click();
+  await settle();
+  assert.ok(h.region.querySelector('[data-report-result="copied"]'));
+  h.type('وصف أول معدَّل');
+  assert.ok(h.region.querySelector('[data-report-result="copied"]'), 'إدخال بلا تغيير لا يمحوها');
+  const r = h.region.querySelector('input[value="suggestion"]'); r.checked = true; r.dispatchEvent({ type: 'change' });
+  assert.ok(h.region.querySelector('[data-report-result]') === null, 'النوع تغيّر');
+});
+
+test('نوع البلاغ يعود بعد تبديل لغة الواجهة بحقل data-tj-keep مخفي، والحقل يتبع الاختيار', async () => {
+  const h = harness();
+  const keep = h.panel.root.querySelector('[data-tj-keep="settings.report.kind"]');
+  assert.ok(keep, 'الحقل المخفي موجود');
+  assert.equal(keep.getAttribute('type'), 'hidden');
+  assert.equal(keep.value, 'bug');
+  h.trigger.click();
+  await settle();
+  const r = h.region.querySelector('input[value="other"]'); r.checked = true; r.dispatchEvent({ type: 'change' });
+  assert.equal(keep.value, 'other');
+  // عودة القيمة بعد إعادة التحميل كما تفعلها restoreKept.
+  const h2 = harness();
+  const keep2 = h2.panel.root.querySelector('[data-tj-keep="settings.report.kind"]');
+  keep2.value = 'suggestion';
+  keep2.dispatchEvent({ type: 'input' });
+  h2.trigger.click();
+  await settle();
+  assert.equal(h2.region.querySelector('input[value="suggestion"]').checked, true);
+  assert.equal(textOf(h2.region.querySelector('label[for="st-report-text"]')), 'ما اقتراحك؟');
+  h2.type('اقتراح');
+  buttonNamed(h2.region, 'نسخ البلاغ').click();
+  await settle();
+  assert.equal(JSON.parse(h2.log[0][1]).kind, 'suggestion');
+  keep2.value = 'غير معروف';
+  keep2.dispatchEvent({ type: 'input' });
+  assert.equal(h2.region.querySelector('input[value="suggestion"]').checked, true, 'قيمة غير معروفة لا تغيّر شيئًا');
+});
+
+test('عودة الوصف بعد تبديل اللغة تفتح النموذج ولا تسحب التركيز؛ وفتحه بالزر يركّز الوصف', async () => {
+  const h = harness();
+  const area = h.panel.root.querySelector('textarea');
+  let focused = 0;
+  area.focus = () => { focused += 1; };
+  area.value = 'نص عائد';
+  area.dispatchEvent({ type: 'input' });
+  await settle();
+  assert.equal(h.region.hidden, false);
+  assert.equal(focused, 0);
+  h.trigger.click();
+  h.trigger.click();
+  await settle();
+  assert.equal(focused, 1);
+});
+
+test('تعذّر التشخيص لا يدوم: إغلاق النموذج وفتحه يعيد القراءة، ونجاحها يتيح النسخ', async () => {
+  let calls = 0;
+  const h = harness({ diagnostics: async () => { calls += 1; if (calls === 1) throw new Error('x'); return DIAG; } });
+  h.trigger.click();
+  await settle();
+  h.type('خلل');
+  assert.equal(buttonNamed(h.region, 'نسخ البلاغ').getAttribute('aria-disabled'), 'true');
+  h.trigger.click();
+  h.trigger.click();
+  await settle();
+  assert.equal(calls, 2);
+  assert.equal(buttonNamed(h.region, 'نسخ البلاغ').getAttribute('aria-disabled'), null);
+  h.trigger.click();
+  h.trigger.click();
+  await settle();
+  assert.equal(calls, 2, 'لا قراءة ثالثة بعد النجاح');
+});

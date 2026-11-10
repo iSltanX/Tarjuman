@@ -76,10 +76,27 @@ function storeLinks(line, base) {
     out.push({ url: m[2], text: m[1] });
     seen.add(m.index + m[0].indexOf(m[2]));
   }
-  for (const m of line.matchAll(new RegExp(`${base}${URL_END}`, 'g'))) if (!seen.has(m.index)) out.push({ url: m[0], text: null });
+  // الرابط المجرد لا يأخذ علامة الترقيم بعده (نقطة الجملة أو فاصلتها) جزءًا منه.
+  for (const m of line.matchAll(new RegExp(`${base}${URL_END}`, 'g'))) if (!seen.has(m.index)) out.push({ url: m[0].replace(/[.,;:!?]+$/, ''), text: null });
   return out;
 }
 const OURS = /Chrome Web Store|Edge Add-ons|Firefox Add-ons|ترجمان|Tarjuman/i;
+/** أسماء المتصفحات: الحد الأدنى يُنسب إلى أقرب اسم قبله في عبارته، وإلا إلى عائلة السطر إن كانت واحدة. */
+const BROWSER_NAME = /Firefox|Chromium|Chrome|Edge|Brave|Opera|Vivaldi/g;
+/** منتجات ليست متصفحات: رقم بعدها في عبارته ليس حدًّا أدنى لمتصفح. */
+const NOT_BROWSER = /Node|macOS|Windows|Linux|iOS|Android|Ubuntu|Python/i;
+/** المتصفح الذي يخصه الحد الأدنى في موضعه، أو null إن لم يخص متصفحًا أو التبس. @param {string} line @param {number} at */
+function browserOf(line, at) {
+  // العبارة: من آخر فاصلة أو خط جدول أو نهاية حد سابق إلى الرقم. سطر يذكر Chrome وFirefox معًا يُنسب كل حد إلى متصفحه.
+  const clause = line.slice(0, at).split(/[،,;|]|فأحدث|or later/).at(-1);
+  const name = [...clause.matchAll(BROWSER_NAME)].at(-1)?.[0];
+  if (name) return name === 'Firefox' ? 'firefox' : 'chromium';
+  // Node.js 22 أو macOS 14 في عبارتهما: ليسا حدًّا لمتصفح.
+  if (NOT_BROWSER.test(clause)) return null;
+  // صف جدول اسم المتصفح في خانة أخرى: عائلة السطر إن كانت واحدة، وإلا التباس لا يُحكم فيه.
+  const families = new Set([...line.matchAll(BROWSER_NAME)].map((x) => (x[0] === 'Firefox' ? 'firefox' : 'chromium')));
+  return families.size === 1 ? [...families][0] : null;
+}
 const ours = (l) => l.text === null || OURS.test(l.text);
 /**
  * مطابقة بلا علامات: روابط المتاجر والحدود الدنيا وبريد الدعم في نصوص لا تُولَّد (docs/site وstore).
@@ -101,7 +118,10 @@ export function matchProblems(files, facts) {
       }
       if (linksOnly) return;
       for (const m of line.matchAll(/\b(\d{2,3})\s*(?:فأحدث|or later)/g)) {
-        const want = /Firefox/.test(line) ? facts.minimum.firefox : facts.minimum.chromium;
+        // كان المتصفح يُعرف بوجود Firefox في السطر كله، فيخطئ سطرًا بالمتصفحين ويعدّ Node.js وmacOS (المراجعة المستقلة للمرحلة 7).
+        const family = browserOf(line, m.index);
+        if (!family) continue;
+        const want = facts.minimum[family];
         if (Number(m[1]) !== want) out.push(`${at}: حد أدنى ${m[1]} والحقائق ${want}`);
       }
       for (const m of line.matchAll(/\b[\w.+-]+@gmail\.com\b/gi)) if (m[0] !== facts.supportEmail) out.push(`${at}: بريد يخالف بريد الدعم: ${m[0]}`);
@@ -157,6 +177,9 @@ export function runFacts({ root = ROOT, write = false } = {}) {
   for (const t of TARGETS) {
     const text = read(root, t.file);
     if (!blocksIn(text).length) problems.push(`${t.file}: لا علامات tj:facts`);
+    // علامة فتح بلا إغلاق (أو بإغلاق باسم آخر) لا يطابقها MARK فلا تُولَّد ولا تُفحص؛ فتُعدّ العلامات.
+    const opens = (text.match(/<!-- tj:facts [a-z-]+ -->/g) ?? []).length;
+    if (opens !== blocksIn(text).length) problems.push(`${t.file}: ${opens - blocksIn(text).length} علامة tj:facts بلا إغلاق مطابق`);
     const next = applyBlocks(text, facts, t.lang);
     if (next === text) continue;
     if (write) {
@@ -174,6 +197,12 @@ export function runFacts({ root = ROOT, write = false } = {}) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+  // وسيط مجهول (‎--chek مثلًا) لا يكتب الملفات بصمت: يفشل.
+  const unknown = process.argv.slice(2).filter((a) => a !== '--check');
+  if (unknown.length) {
+    console.error(`facts: وسيط مجهول ${unknown.join(' ')} (المقبول: --check وحده، أو بلا وسيط للكتابة)`);
+    process.exit(2);
+  }
   const check = process.argv.includes('--check');
   const { problems, written } = runFacts({ write: !check });
   for (const f of written) console.log(`كُتب: ${f}`);
