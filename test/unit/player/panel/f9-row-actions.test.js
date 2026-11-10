@@ -153,3 +153,14 @@ test('لوحة المفاتيح: التركيز في زمن صف يحمل إلي
   over(rows[4]);
   assert.ok(actsOf(v).parentNode === rows[2], 'الزر المركّز لا يُنزع من تحت المستخدم');
 });
+
+test('زر رُكّز بنقرة الفأرة (لا :focus-visible) لا يثبّت الشريط: المرور على صف آخر ينقله إليه (جولة هـ)', () => {
+  const { v } = open();
+  const rows = v.rows();
+  over(rows[1]);
+  const mark = btn(v, 'mark');
+  mark.matches = (sel) => sel !== ':focus-visible';
+  mark.focus();
+  over(rows[3]);
+  assert.ok(actsOf(v).parentNode === rows[3], 'يتبع المؤشر');
+});

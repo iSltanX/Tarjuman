@@ -94,16 +94,24 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     rowEls[i].appendChild(acts);
     paintActs();
   }
-  // التركيز داخل الشريط يُتتبَّع بأحداثه (لا بـactiveElement من الجذر: لا يتاح في كل بيئة).
-  let actsFocused = false;
-  acts.addEventListener('focusin', () => {
-    actsFocused = true;
+  // التركيز داخل الشريط يُتتبَّع بأحداثه (لا بـactiveElement من الجذر: لا يتاح في كل بيئة). والمحميّ منه ما جاء من لوحة
+  // المفاتيح (:focus-visible): زر رُكّز بنقرة الفأرة يتبع المؤشر إلى صف آخر، وإلا بقي الشريط في صف النقرة لا يتحرك (جولة هـ).
+  let actsFocusEl = null;
+  acts.addEventListener('focusin', (ev) => {
+    actsFocusEl = ev.target ?? null;
   });
   acts.addEventListener('focusout', (ev) => {
     const to = ev.relatedTarget ?? null;
-    if (!to || !acts.contains(to)) actsFocused = false;
+    if (!to || !acts.contains(to)) actsFocusEl = null;
   });
-  const focusOnActs = () => actsFocused;
+  const focusOnActs = () => {
+    if (!actsFocusEl) return false;
+    try {
+      return typeof actsFocusEl.matches === 'function' ? actsFocusEl.matches(':focus-visible') : true;
+    } catch {
+      return true;
+    }
+  };
 
   function rowIndexOf(target) {
     for (let n = target; n && n !== list; n = n.parentNode) {
@@ -209,7 +217,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     focusInside = false;
     acts.remove();
     actsRow = -1;
-    actsFocused = false;
+    actsFocusEl = null;
     marksRef = null;
     todo = new Set();
     generation++;
