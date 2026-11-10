@@ -67,9 +67,9 @@ test('ق-7: حقل «حد التنبيه إلى نقص الأصل» في «ال�
   assert.ok(text.indexOf('حد التنبيه إلى نقص الأصل') < text.indexOf('تقسيم الملفات الطويلة'));
 });
 
-test('م-038 وم-078: قسمان بلا وصف لا يتركان عنصرًا فارغًا تحت العنوان', async () => {
+test('م-038 وم-078: القسم بلا وصف («حول»؛ و«التوقيت» حُذف في ح3) لا يترك عنصرًا فارغًا تحت العنوان', async () => {
   const m = await mountSettings();
-  for (const id of ['timing', 'about']) {
+  for (const id of ['about']) {
     const titles = m.section(id).querySelector('.st-section__titles');
     assert.ok(titles.querySelector('p') === null, id);
   }

@@ -28,7 +28,7 @@ export const SECTIONS = Object.freeze([
   section('display', 'eye', true),
   // قسم «اللغات» (AA3، لوحة 15): بعد «العرض» كترتيب اللوحة.
   section('langs', 'swap', true),
-  section('timing', 'clock'),
+  // «التوقيت» حُذف (ح3، 2026-11-10): خطوة ± تُضبط حيث تُستعمل (قائمة التوقيت في المشغّل وتذييل لوحة النص).
   section('export', 'download', true),
   section('compare', 'compare', true),
   section('glossary', 'glossary', true),
@@ -42,10 +42,19 @@ export const DEFAULT_SECTION = SECTIONS[0].id;
 /** @param {unknown} id */
 export const isSectionId = (id) => SECTIONS.some((s) => s.id === id);
 
+/** روابط أقسام حُذفت إلى ما يقوم مقامها: #timing القديم (ح3) إلى «العرض». */
+export const SECTION_ALIASES = Object.freeze({ timing: 'display' });
+
+/**
+ * القسم الذي يُعرض لجزء العنوان: معرّف قسم، أو بديل قسم محذوف، أو null.
+ * @param {unknown} id
+ * @returns {string | null}
+ */
+export const sectionFor = (id) => (isSectionId(id) ? /** @type {string} */ (id) : SECTION_ALIASES[/** @type {string} */ (id)] ?? null);
+
 /** الأقسام التي تملك «استعادة الافتراضي»: مفاتيح الإعدادات ومجموعات التفضيلات التي تعيدها. */
 const RESETTABLE = Object.freeze({
   display: Object.freeze({ settings: Object.freeze(['displayModeDefault', 'appearance']), prefs: Object.freeze([]) }),
-  timing: Object.freeze({ settings: Object.freeze(['offsetStepMs']), prefs: Object.freeze([]) }),
   export: Object.freeze({ settings: Object.freeze(['export']), thresholds: Object.freeze(['completeness']), prefs: Object.freeze(['saveLocation']) }),
   compare: Object.freeze({ settings: Object.freeze([]), thresholds: Object.freeze(['driftMs']), prefs: Object.freeze(['review']) }),
 });

@@ -213,8 +213,8 @@ test('U57: الفتح الأول بلا جزء في العنوان لا يكتب
   const m = await mount({ env: { nav } });
   assert.deepEqual(writes, []);
   assert.equal(m.settings.active, 'display');
-  m.root.querySelector('a[data-section="timing"]').click();
-  assert.deepEqual(writes, ['timing']);
+  m.root.querySelector('a[data-section="export"]').click();
+  assert.deepEqual(writes, ['export']);
 });
 
 test('U58: زرّا «استعادة الافتراضي» في «التصدير» باسمين مختلفين، وكل زر قسم يسمّي قسمه', async () => {
@@ -245,25 +245,6 @@ test('U58: جدول القاموس لا يُعاد بناؤه بحفظ لا يم
   await settle(5);
   assert.equal(dels().length, n - 1);
   assert.ok(m.doc.activeElement === dels()[0], 'التركيز على حذف المصطلح الذي حلّ محله');
-});
-
-test('U59 (TJ-AUD-017a): «مخصص» لا يبقى محددًا بعد «استعادة الافتراضي» في التوقيت', async () => {
-  const m = await mount();
-  const sec = sectionOf(m, 'timing');
-  const custom = findAll(sec, (e) => e.tagName === 'input' && e.getAttribute('value') === 'custom')[0];
-  custom.checked = true;
-  custom.dispatchEvent({ type: 'change' });
-  const input = sec.querySelector('.st-custom input');
-  input.value = '2';
-  input.dispatchEvent({ type: 'change' });
-  await settle(5);
-  assert.equal(m.settings.settings.offsetStepMs, 2000);
-  buttonNamed(sec, 'استعادة الافتراضي').click();
-  await settle(5);
-  assert.equal(m.settings.settings.offsetStepMs, 500);
-  const checked = findAll(sec, (e) => e.tagName === 'input' && e.getAttribute('type') === 'radio' && e.checked).map((e) => e.getAttribute('value'));
-  assert.deepEqual(checked, ['0.5']);
-  assert.equal(sec.querySelector('.st-custom').hidden, true);
 });
 
 test('U87: اسم كل مفتاح في «العرض» يبدأ بتسمية صفه ثم نص حاله', async () => {

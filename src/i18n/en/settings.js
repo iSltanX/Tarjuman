@@ -14,7 +14,6 @@ export default Object.freeze({
   sections: {
     display: { title: 'Display', desc: 'How the translation looks over the video, the synced transcript panel and its button, and video thumbnails in Library.' },
     langs: { title: 'Languages', desc: 'The languages translation instructions start with, and setting a language for saved translations that have none.' },
-    timing: { title: 'Timing' },
     export: { title: 'Export', desc: 'Where downloaded files are saved, how original segments are shaped, and when to suggest splitting into parts.' },
     compare: { title: 'Compare and review', desc: 'When translation timing counts as different from the original, and when to flag reading speed.' },
     glossary: { title: 'Glossary', desc: 'Your preferred translations for terms, attached to translation instructions when you copy them.' },
@@ -43,11 +42,6 @@ export default Object.freeze({
     note: 'Requested from YouTube’s servers ({host}) using the video ID. Turn off if you don’t want this connection.',
     noteFirefox: 'Requested from YouTube’s servers ({host}) using the video ID. Turn off if you don’t want this connection. In Firefox, turning it on asks for your “Browsing activity” consent, which you can withdraw from the browser’s add-ons page.',
     refused: 'Consent wasn’t granted, so thumbnails are hidden.',
-  },
-  timing: {
-    step: 'Step for ± buttons', halfSec: '0.5 s', oneSec: '1 s', custom: 'Custom',
-    customStep: 'Custom step', customHint: 'In seconds, from 0.1 to 10, in multiples of 0.1.', unit: 's',
-    note: '+ delays: the translation appears later · − advances: it appears earlier. The offset is saved per translation and doesn’t change your file.',
   },
   export: {
     where: 'Where translation files are saved',

@@ -22,8 +22,8 @@ import { whileHeld } from '../../ui/page-hold.js';
 import { saveLocationControl } from './location.js';
 import {
   DEFAULT_SCALE_MARK_PCT, DEFAULT_SECTION, PREVIEW_BOX, READING_DEFAULT_CPS, SECTIONS, completenessText, confirmWord,
-  confirmWordOk, isSectionId, parseCompleteness, parseDrift, parseReadingSpeed, parseSplit, parseStep, previewStyle, readingText,
-  previewLines, sectionReset, snapScale, stepChoice, stepText,
+  confirmWordOk, parseCompleteness, parseDrift, parseReadingSpeed, parseSplit, previewStyle, readingText,
+  previewLines, sectionFor, sectionReset, snapScale,
 } from './model.js';
 
 // نصوص الصفحة في فهرس التوطين (settings.*) وتُقرأ بلغة الواجهة الحالية عند كل استعمال، لا عند تحميل الوحدة.
@@ -114,7 +114,6 @@ export function createSettings(env) {
       return thumbsGranted;
     });
   }
-  let stepCustom = false;
   /** مؤشر إلى ما يحدّث الواجهة من الإعدادات (يُملأ أدناه). */
   const sync = [];
 
@@ -254,8 +253,6 @@ export function createSettings(env) {
       resetBtn = button({ label: resetLabel(), variant: 'ghost', size: 'sm', icon: 'restore', className: 'st-section__reset', doc, onClick: async () => {
         const r = sectionReset(settings, def.id, prefs);
         if (!r || r.isDefault) return;
-        // الاستعادة قيمة جاهزة لا من الحقل المخصص: «مخصص» لا يبقى محددًا بعدها (تدقيق 7a66f91، U59).
-        if (def.id === 'timing') stepCustom = false;
         if (Object.keys(r.patch).length) await save(r.patch, resetMark);
         if (Object.keys(r.prefsPatch).length) await savePrefs(r.prefsPatch, resetMark);
       } });
@@ -456,34 +453,6 @@ export function createSettings(env) {
   const langsSection = section(byId.langs, ...langs.rows);
   let unknownCounted = false;
 
-  // ---- التوقيت ----
-  const stepMark = marks();
-  let stepField;
-  const stepSeg = segmented({
-    legend: t('settings.timing.step'), value: stepChoice(settings.offsetStepMs), doc,
-    options: [{ value: '0.5', label: t('settings.timing.halfSec') }, { value: '1', label: t('settings.timing.oneSec') }, { value: 'custom', label: t('settings.timing.custom') }],
-    onChange: (v) => {
-      stepCustom = v === 'custom';
-      customHost.hidden = !stepCustom;
-      if (v === 'custom') { stepField.input.focus(); return; }
-      stepField.setError(null);
-      save({ offsetStepMs: v === '1' ? 1000 : 500 }, stepMark);
-    },
-  });
-  stepField = numberField({
-    label: t('settings.timing.customStep'), hint: t('settings.timing.customHint'), unit: t('settings.timing.unit'), value: stepText(settings.offsetStepMs), parse: parseStep, mark: null, doc,
-    commit: (ms) => save({ offsetStepMs: ms }, stepMark),
-  });
-  const customHost = el('div', { className: 'st-custom', children: [stepField.root], doc });
-  customHost.hidden = true;
-  sync.push((force) => {
-    const choice = stepChoice(settings.offsetStepMs);
-    stepSeg.set(stepCustom ? 'custom' : choice);
-    customHost.hidden = !(stepCustom || choice === 'custom');
-    stepField.set(stepText(settings.offsetStepMs), { force });
-  });
-  const timing = section(byId.timing,
-    row(t('settings.timing.step'), stepMark, stepSeg.root, customHost, note(t('settings.timing.note'))));
 
   // ---- التصدير ----
   // مكان حفظ ملفات الترجمة (R65) أول بند: يتبعه كل تصدير من المحفوظات والنسخة الاحتياطية.
@@ -725,8 +694,10 @@ export function createSettings(env) {
   }
 
   // ---- التنقّل بين الأقسام ----
-  const sections = { display, langs: langsSection, timing, export: exporting, compare: comparison, glossary: glossarySection, storage, data: dataSection, diagnostics, about };
-  let active = isSectionId(nav.get()) ? nav.get() : DEFAULT_SECTION;
+  const sections = { display, langs: langsSection, export: exporting, compare: comparison, glossary: glossarySection, storage, data: dataSection, diagnostics, about };
+  // جزء عنوان لقسم محذوف (#timing) يفتح بديله، ويُكتب البديل في العنوان (ح3).
+  const fromHash = nav.get();
+  let active = sectionFor(fromHash) ?? DEFAULT_SECTION;
   const navLinks = SECTIONS.map((s) => el('a', {
     className: 'st-nav__link', attrs: { href: `#${s.id}`, 'data-section': s.id },
     children: [icon(s.icon, { doc }), el('span', { className: 'st-nav__name', text: s.title, doc })],
@@ -740,7 +711,7 @@ export function createSettings(env) {
    * الفتح الأول بلا جزء: كتابته المتزامنة أثناء التحليل تمرّر الصفحة إلى القسم فيختفي عنوانها تحت الرأس (تدقيق 7a66f91، U57).
    */
   function select(id, { focus = false, remember = true } = {}) {
-    if (!isSectionId(id)) id = DEFAULT_SECTION;
+    id = sectionFor(id) ?? DEFAULT_SECTION;
     // مغادرة قسم النسخ الاحتياطي بعد ظهور تقرير الاستعادة تعني أنه قُرئ: يصير تبديل لغة معلّق ممكنًا.
     if (active === 'data' && id !== 'data') data.releaseReport();
     active = id;
@@ -757,7 +728,11 @@ export function createSettings(env) {
       langs.countUnknown().catch(() => {});
     }
   }
-  const offNav = nav.onChange(() => { if (isSectionId(nav.get()) && nav.get() !== active) select(nav.get()); });
+  const offNav = nav.onChange(() => {
+    const raw = nav.get();
+    const id = sectionFor(raw);
+    if (id && (id !== active || raw !== id)) select(id);
+  });
 
   root.append(
     sideNav,
@@ -765,14 +740,14 @@ export function createSettings(env) {
       className: 'st-content',
       children: [
         el('header', { className: 'st-head', children: [el('h1', { className: 'tj-display', text: t('common.nav.settings'), doc }), el('p', { className: 'tj-caption', text: saveHint(), doc })], doc }),
-        reminderHost, alertHost, display, langsSection, timing, exporting, comparison, glossarySection, storage, dataSection, diagnostics, about,
+        reminderHost, alertHost, display, langsSection, exporting, comparison, glossarySection, storage, dataSection, diagnostics, about,
       ],
       doc,
     }),
   );
   for (const sec of Object.values(sections)) sec.querySelector('h2').tabIndex = -1;
   syncAll();
-  select(active, { remember: false });
+  select(active, { remember: !!fromHash && fromHash !== active });
   // القيم الظاهرة قبل القراءة افتراضية: الصفحة «مشغولة» حتى تُقرأ المحفوظة (تدقيق Fable، UX-23)، وبفشل القراءة لا تبقى الأدوات
   // فعّالة فوق قيم افتراضية قد لا تكون المحفوظة (inert)، ورسالة الخطأ وحدها تُقرأ.
   root.setAttribute('aria-busy', 'true');
@@ -785,8 +760,6 @@ export function createSettings(env) {
     if (change.settings || change.cleared) {
       store.getSettings().then((s) => {
         settings = s;
-        // قيمة جاهزة من سياق آخر أو بعد المسح: «مخصص» لا يبقى محددًا إلا والمستخدم يكتب في حقله (U59).
-        if (stepChoice(s.offsetStepMs) !== 'custom' && doc.activeElement !== stepField.input) stepCustom = false;
         syncAll();
       }).catch(() => {});
     }

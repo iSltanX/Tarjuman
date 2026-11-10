@@ -127,7 +127,7 @@ test('اللغة الإنجليزية: كل الإعدادات بلا حرف ع�
   try {
     const m = await mount();
     const titles = findAll(m.root, (e) => e.tagName === 'h2').map(textOf);
-    assert.deepEqual(titles, ['Display', 'Languages', 'Timing', 'Export', 'Compare and review', 'Glossary', 'Storage', 'Backup', 'Diagnostics', 'About']);
+    assert.deepEqual(titles, ['Display', 'Languages', 'Export', 'Compare and review', 'Glossary', 'Storage', 'Backup', 'Diagnostics', 'About']);
     assert.equal(textOf(findAll(m.root, (e) => e.tagName === 'h1')[0]), 'Settings');
     // كل الأقسام مرسومة في الشجرة (المخفي منها بـhidden)، فيُفحص نصها كله.
     const text = textOf(m.root).replaceAll(AR_NAME, '').replaceAll(EN_NAME, '');
