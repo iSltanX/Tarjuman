@@ -110,6 +110,22 @@ export function panelCss() {
 .row.cur .t::before { display: none; }
 .row.cur .t::after { content: ""; order: -1; width: 6px; height: 6px; border-radius: 1px; background: var(--tj-mark); transform: rotate(45deg); }
 .row.cur .ar { font-weight: 700; }
+/* أفعال الصف (ف9): شريط واحد على طرف الصف الممرور عليه أو المركّز (يُرى بالمرور والتركيز وحدهما)، و«أعود إليه» خط على بدايته */
+.row { position: relative; }
+.row[data-mark="todo"]::before { content: ""; position: absolute; inset-block: 8px; inset-inline-start: 2px; width: 3px; border-radius: 2px; background: var(--tj-warning); }
+.acts { position: absolute; top: 4px; inset-inline-end: 6px; z-index: 1; display: flex; gap: 2px; padding: 2px; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); background: var(--tj-surface); opacity: 0; pointer-events: none; }
+.row:hover > .acts, .row:focus-within > .acts { opacity: 1; pointer-events: auto; }
+.ra { all: unset; box-sizing: border-box; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--tj-radius-sm); color: var(--tj-text-2); cursor: pointer; }
+.ra:hover { background: var(--tj-hover); color: var(--tj-text); }
+.ra:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 1px; }
+.ra[aria-pressed="true"] { color: var(--tj-warning); }
+.ra[aria-pressed="true"] .ic path { fill: currentColor; }
+.ra[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.notes { grid-area: note; flex: none; display: flex; flex-direction: column; }
+.note { display: flex; align-items: center; gap: 8px; margin: 8px 14px 0; padding: 4px; padding-inline-start: 12px; border-radius: var(--tj-radius-md); background: var(--tj-text); color: var(--tj-on-ink); font-size: 13px; line-height: 20px; }
+.note__text { min-width: 0; }
+.note__act { all: unset; box-sizing: border-box; cursor: pointer; margin-inline-start: auto; flex: none; display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: var(--tj-radius-md); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.note__act:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .prog { display: block; margin-top: 6px; height: 3px; border-radius: 2px; background: var(--tj-accent-track); overflow: hidden; }
 .prog i { display: block; height: 3px; border-radius: 2px; background: var(--tj-accent); transform-origin: right center; transform: scaleX(0); }
 .root[dir="ltr"] .prog i { transform-origin: left center; }

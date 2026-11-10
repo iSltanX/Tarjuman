@@ -3,8 +3,12 @@
 // (فيبقى موضع التمرير والتركيز)؛ وتحديث الحالي والماضي والتقدم عند تغيّر الزمن يمس صفوفًا قليلة لا القائمة كلها. والنقر يُفوَّض
 // إلى القائمة نفسها (مستمع واحد لا مستمع لكل صف). والقائمة نقطة Tab واحدة: زر زمن واحد بـtabindex=0 (الحالي، أو آخر ما ركّزه
 // المستخدم)، والأسهم وPage وHome وEnd تنقل التركيز بين الصفوف؛ وكل زر موصوف بنص صفه (تدقيق 7a66f91، U45).
+// وأفعال الصف (ف9، 2026-11-10): «علّم للمراجعة» و«أسمع هذه الآن» في شريط واحد يُنقل إلى الصف الممرور عليه أو المركّز (لا زران
+// في كل صف من آلاف الصفوف)، ويعود إلى صف نقطة Tab حين يغادر المؤشر القائمة، فيأتي بعد زمن صفه في ترتيب Tab. والعلامة «أعود
+// إليه» سمة على صفها (data-mark) تُرى دائمًا.
+import { resolveMarks } from '../../core/model/marks.js';
 import { textDirection } from '../../ui/format.js';
-import { el } from './dom.js';
+import { el, icon } from './dom.js';
 import { createTimeline, originalLookup } from './model.js';
 import { LABELS, clockLabel, flatText } from './text.js';
 
@@ -15,9 +19,10 @@ const PAGE_ROWS = 10;
 const NAV = Object.freeze({ ArrowDown: 1, ArrowUp: -1, PageDown: PAGE_ROWS, PageUp: -PAGE_ROWS });
 
 /**
- * @param {{ doc: Document, onSeek: (ms: number) => void }} deps
+ * @param {{ doc: Document, onSeek: (ms: number) => void, onAct?: (act: 'mark' | 'sync', i: number) => void, syncReason?: (i: number) => string | null }} deps
+ * syncReason: لماذا لا تتاح «أسمع هذه الآن» لصف i الآن (إعلان، أو جملة بعيدة عن لحظة التشغيل)، أو null.
  */
-export function createTranscript({ doc, onSeek }) {
+export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = () => null }) {
   // الحاوية نفسها خارج ترتيب Tab: Firefox يضع حاويات التمرير فيه، فتصير نقطتين (الحاوية ثم الصف)؛ والوصول إلى المحتوى بالصف
   // المركّز والأسهم (الحي في Firefox، C6).
   const list = el(doc, 'div', { className: 'list', attrs: { role: 'list', 'aria-label': LABELS.listLabel, tabindex: '-1' } });
@@ -43,8 +48,56 @@ export function createTranscript({ doc, onSeek }) {
   /** الصف الذي يحمل نقطة Tab، وهل التركيز داخل القائمة (فلا تُنقل النقطة من تحته مع تقدّم التشغيل). */
   let tabRow = 0;
   let focusInside = false;
+  /** علامات الخانة كما وصلت (مرجعها يحكم إعادة الحل)، وصفوف «أعود إليه» بعد الحل. */
+  let marksRef = null;
+  /** @type {Set<number>} */
+  let todo = new Set();
+
+  // ———— شريط أفعال الصف (واحد للقائمة كلها) ————
+  const markBtn = el(doc, 'button', {
+    className: 'ra', attrs: { type: 'button', 'data-act': 'mark', 'aria-pressed': 'false', 'aria-label': LABELS.markRow, title: LABELS.markRowTip },
+  }, [icon(doc, 'flag', { size: 'xs' })]);
+  const syncBtn = el(doc, 'button', {
+    className: 'ra', attrs: { type: 'button', 'data-act': 'sync', 'aria-label': LABELS.syncRow, title: LABELS.syncRowTip },
+  }, [icon(doc, 'sync', { size: 'xs' })]);
+  const acts = el(doc, 'div', { className: 'acts', attrs: { role: 'group', 'aria-label': LABELS.rowActions } }, [markBtn, syncBtn]);
+  let actsRow = -1;
 
   const seekMs = (i) => Math.max(0, cues[i].startMs + offsetMs);
+  const timeAria = (i) => (todo.has(i) ? `${LABELS.seekTo} ${labels[i]}، ${LABELS.rowMarked}` : `${LABELS.seekTo} ${labels[i]}`);
+
+  /** حال أزرار الشريط لصفه: العلامة مضغوطة إن كان «أعود إليه»، والمزامنة معطّلة بسببها إن وُجد. */
+  function paintActs() {
+    if (actsRow < 0) return;
+    const arId = `tj-r${actsRow}-ar`;
+    const why = syncReason(actsRow);
+    // ما لم يتغير لا يُكتب: يُعاد الرسم مع كل تغيّر للصف الحالي، فلا يمس DOM إلا ما تغيّر.
+    setA(markBtn, 'aria-pressed', todo.has(actsRow) ? 'true' : 'false');
+    setA(markBtn, 'aria-describedby', arId);
+    setA(syncBtn, 'aria-describedby', arId);
+    setA(syncBtn, 'aria-disabled', why ? 'true' : null);
+    setA(syncBtn, 'title', why ?? LABELS.syncRowTip);
+  }
+  /** @param {Element} e @param {string} k @param {string | null} v */
+  function setA(e, k, v) {
+    if (v === null) {
+      if (e.hasAttribute(k)) e.removeAttribute(k);
+    } else if (e.getAttribute(k) !== v) e.setAttribute(k, v);
+  }
+
+  /** ينقل الشريط إلى صف i (لا ينقله والتركيز فيه: إزالة المركّز تُفقده). @param {number} i */
+  function moveActs(i) {
+    if (!rowEls[i]) return;
+    if (actsRow === i) return paintActs();
+    if (focusOnActs()) return;
+    actsRow = i;
+    rowEls[i].appendChild(acts);
+    paintActs();
+  }
+  const focusOnActs = () => {
+    const f = list.getRootNode?.()?.activeElement ?? null;
+    return !!f && acts.contains(f);
+  };
 
   function rowIndexOf(target) {
     for (let n = target; n && n !== list; n = n.parentNode) {
@@ -60,6 +113,16 @@ export function createTranscript({ doc, onSeek }) {
     if (i !== tabRow) timeEls[tabRow]?.setAttribute('tabindex', '-1');
     tabRow = i;
     if (timeEls[i].getAttribute('tabindex') !== '0') timeEls[i].setAttribute('tabindex', '0');
+  }
+
+  /** أقرب زر فعل (data-act) إلى الهدف داخل الشريط، أو null. */
+  function actOf(target) {
+    for (let n = target; n && n !== list; n = n.parentNode) {
+      if (n === acts) return null;
+      const a = n.getAttribute?.('data-act');
+      if (a) return a;
+    }
+    return null;
   }
 
   /**
@@ -79,6 +142,13 @@ export function createTranscript({ doc, onSeek }) {
   list.addEventListener('click', (ev) => {
     const i = rowIndexOf(ev.target);
     if (i < 0 || !cues || i >= cues.length) return;
+    // زر من شريط الأفعال: فعله وحده، لا قفز. والمعطّل يُبلَّغ (فيقال سببه) بدل أن يمر صامتًا.
+    const act = actOf(ev.target);
+    if (act === 'mark' || act === 'sync') {
+      onAct(act, i);
+      return;
+    }
+    if (acts.contains(ev.target)) return;
     const t = timeEls[i];
     const onTime = !!t && (ev.target === t || t.contains?.(ev.target));
     if (!onTime && (ev.detail > 1 || selecting())) return;
@@ -97,7 +167,18 @@ export function createTranscript({ doc, onSeek }) {
   list.addEventListener('focusin', (ev) => {
     focusInside = true;
     const i = rowIndexOf(ev.target);
-    if (i >= 0 && ev.target === timeEls[i]) setTabRow(i);
+    if (i >= 0 && ev.target === timeEls[i]) {
+      setTabRow(i);
+      moveActs(i);
+    }
+  });
+  // المرور على صف يحمل إليه الشريط؛ ومغادرة القائمة تعيده إلى صف نقطة Tab (فيأتي بعد زمنه في ترتيب Tab).
+  list.addEventListener('pointerover', (ev) => {
+    const i = rowIndexOf(ev.target);
+    if (i >= 0 && i !== actsRow) moveActs(i);
+  });
+  list.addEventListener('pointerleave', () => {
+    if (rowEls.length) moveActs(tabRow);
   });
   list.addEventListener('focusout', (ev) => {
     const to = ev.relatedTarget ?? null;
@@ -120,6 +201,10 @@ export function createTranscript({ doc, onSeek }) {
     tabRow = 0;
     // الصف المركّز أُزيل (Firefox لا يطلق focusout عند الإزالة): لا يبقى «التركيز داخل القائمة» معلّقًا.
     focusInside = false;
+    acts.remove();
+    actsRow = -1;
+    marksRef = null;
+    todo = new Set();
     generation++;
   }
 
@@ -151,11 +236,12 @@ export function createTranscript({ doc, onSeek }) {
 
   /**
    * يضمن أن الصفوف تطابق (المقاطع، الأصل، الإزاحة). مرجعا المقاطع والأصل يحكمان إعادة البناء؛ والإزاحة وحدها تحدّث الأزمنة.
-   * @param {{ cues: import('../../core/model/cue.js').Cue[], originalCues: import('../../core/model/cue.js').Cue[] | null, offsetMs: number, originalLang?: string | null, translationLang?: string | null }} s
+   * @param {{ cues: import('../../core/model/cue.js').Cue[], originalCues: import('../../core/model/cue.js').Cue[] | null, offsetMs: number, originalLang?: string | null, translationLang?: string | null, marks?: import('../../core/model/marks.js').Mark[] | null }} s
    * @returns {{ rebuilt: boolean, relabeled: boolean }}
    */
   function sync(s) {
     if (cues === s.cues && originalRef === s.originalCues) {
+      setMarks(s.marks ?? null);
       // المقاطع نفسها ولغة الخانة أو الأصل تغيّرت (U-030): تُحدَّث lang وdir للعناصر القائمة بلا إعادة بناء.
       const nextTr = s.translationLang ?? null;
       const nextEn = s.originalLang ?? null;
@@ -181,7 +267,7 @@ export function createTranscript({ doc, onSeek }) {
         if (label === labels[i]) continue;
         labels[i] = label;
         timeEls[i].textContent = label;
-        timeEls[i].setAttribute('aria-label', `${LABELS.seekTo} ${label}`);
+        timeEls[i].setAttribute('aria-label', timeAria(i));
       }
       return { rebuilt: false, relabeled: true };
     }
@@ -198,8 +284,33 @@ export function createTranscript({ doc, onSeek }) {
     labels = new Array(cues.length);
     for (let i = 0; i < cues.length; i++) rowEls[i] = buildRow(i, original);
     for (let i = 0; i < rowEls.length; i += CHUNK) list.append(...rowEls.slice(i, i + CHUNK));
+    setMarks(s.marks ?? null);
+    if (rowEls.length) moveActs(0);
     generation++;
     return { rebuilt: true, relabeled: false };
+  }
+
+  /**
+   * علامات «أعود إليه» على صفوفها: تُحل بمراسيها (الرقم والزمن والبصمة) إلى المقاطع المعروضة حين يتغير مرجع العلامات أو المقاطع،
+   * ويُمس من الصفوف ما تغيّر وحده. «تمت المراجعة» لا تُعلَّم في اللوحة.
+   * @param {import('../../core/model/marks.js').Mark[] | null} marks
+   */
+  function setMarks(marks) {
+    if (marks === marksRef) return;
+    marksRef = marks;
+    const next = new Set();
+    if (marks?.length && cues?.length) {
+      for (const r of resolveMarks(marks, cues)) if (r.mark.kind === 'todo' && r.index !== null) next.add(r.index);
+    }
+    for (const i of new Set([...todo, ...next])) {
+      if (todo.has(i) === next.has(i) || !rowEls[i]) continue;
+      if (next.has(i)) rowEls[i].setAttribute('data-mark', 'todo');
+      else rowEls[i].removeAttribute('data-mark');
+    }
+    const changed = [...todo, ...next].filter((i) => todo.has(i) !== next.has(i));
+    todo = next;
+    for (const i of changed) if (timeEls[i]) timeEls[i].setAttribute('aria-label', timeAria(i));
+    paintActs();
   }
 
   /**
@@ -259,6 +370,15 @@ export function createTranscript({ doc, onSeek }) {
       return curRow;
     },
     timeline: () => timeline,
+    /** هل على صف i علامة «أعود إليه». @param {number} i */
+    marked: (i) => todo.has(i),
+    /** صف شريط الأفعال الآن (أو -1)، وأزراره (للاختبار والحزام). */
+    get actsRow() {
+      return actsRow;
+    },
+    actsParts: { acts, markBtn, syncBtn },
+    /** يعيد رسم حال الشريط (يتغير سبب تعطيل المزامنة مع زمن التشغيل والإعلان). */
+    refreshActs: paintActs,
     rowEl: (i) => rowEls[i] ?? null,
     labelOf: (i) => labels[i] ?? '',
     cueAt: (i) => cues?.[i] ?? null,

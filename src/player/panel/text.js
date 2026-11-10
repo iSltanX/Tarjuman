@@ -60,6 +60,9 @@ export const earlierTip = (stepMs) => T('earlierTip', { step: stepLabel(stepMs),
 /** @param {number} stepMs */
 export const laterTip = (stepMs) => T('laterTip', { step: stepLabel(stepMs), unit: LABELS.seconds });
 
+/** رسالة إزالة «أعود إليه» من صف (ف9). @param {number} n رقم المقطع */
+export const unmarkedNote = (n) => T('unmarked', { n });
+
 /** @param {string} langName «مع الإنجليزية». */
 export const withOriginal = (langName) => T('withOriginal', { name: langName });
 

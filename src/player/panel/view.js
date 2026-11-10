@@ -85,7 +85,7 @@ export function createPanelView({ doc, win, on }) {
   const shell = el(doc, 'div', { className: 'root', attrs: { dir: getDir(), lang: getLocale(), 'data-theme': 'light' } });
   root.appendChild(shell);
 
-  const transcript = createTranscript({ doc, onSeek: (ms) => on.seek(ms) });
+  const transcript = createTranscript({ doc, onSeek: (ms) => on.seek(ms), onAct: (act, i) => on.rowAct?.(act, i), syncReason: (i) => on.syncReason?.(i) ?? null });
 
   // ———— الرأس والقائمة ————
   const load = el(doc, 'span', { className: 'load', attrs: { role: 'img', 'aria-label': LABELS.loading } }, [el(doc, 'i'), el(doc, 'i')]);
@@ -120,6 +120,13 @@ export function createPanelView({ doc, win, on }) {
     actionText,
     el(doc, 'button', { className: 'b b--ghost b--icon', attrs: { type: 'button', 'aria-label': LABELS.dismiss }, on: { click: () => on.dismissError?.() } }, [icon(doc, 'x', { size: 'sm' })]),
   ]);
+
+  // رسالة فعل من صف (ف9): «عُلِّم المقطع 12 للمراجعة» أو «الإزاحة −3.2 ث» وفيها «تراجع»؛ تزول بعد مدتها، ويمسكها المؤشر والتركيز.
+  const noteText = el(doc, 'span', { className: 'note__text' });
+  const noteUndo = el(doc, 'button', { className: 'note__act', attrs: { type: 'button' }, text: LABELS.undo, on: { click: () => on.noteUndo?.() } });
+  const note = el(doc, 'div', { className: 'note', attrs: { role: 'status', hidden: '' } }, [noteText, noteUndo]);
+  onHold(note, (why, held) => on.noteHold?.(why, held));
+  const notes = el(doc, 'div', { className: 'notes' }, [actionErr, note]);
 
   // ———— الشريط: الحالة والنص والمتابعة ————
   const statusEl = el(doc, 'div', { className: 'status', attrs: { 'data-fid': 'status' } });
@@ -212,7 +219,7 @@ export function createPanelView({ doc, win, on }) {
     stepError,
   ]);
 
-  const panel = el(doc, 'section', { className: 'panel', attrs: { 'aria-label': LABELS.panel } }, [head, menu, actionErr, bar, body, foot]);
+  const panel = el(doc, 'section', { className: 'panel', attrs: { 'aria-label': LABELS.panel } }, [head, menu, notes, bar, body, foot]);
 
   // ———— رسالة التراجع ————
   const undoBtn = el(doc, 'button', { className: 'act', attrs: { type: 'button' }, text: LABELS.undo, on: { click: () => on.undo() } });
@@ -370,7 +377,7 @@ export function createPanelView({ doc, win, on }) {
 
   /**
    * @param {import('./model.js').PanelModel} m
-   * @param {{ follow: boolean, resume: { visible: boolean, label: string }, step: { custom: boolean, text: string | null, error: string | null }, toast: boolean, actionError?: string | null }} l
+   * @param {{ follow: boolean, resume: { visible: boolean, label: string }, step: { custom: boolean, text: string | null, error: string | null }, toast: boolean, actionError?: string | null, note?: { text: string, undo: boolean } | null }} l
    * @returns {{ rebuilt: boolean, relabeled: boolean, becameReady: boolean, mode: string, kind: string | null }}
    */
   function render(m, l) {
@@ -388,6 +395,12 @@ export function createPanelView({ doc, win, on }) {
     const actionError = m.mode === 'open' ? l.actionError ?? null : null;
     setHidden(actionErr, !actionError);
     if (actionError) setText(actionText, actionError);
+    const n = m.mode === 'open' ? l.note ?? null : null;
+    setHidden(note, !n);
+    if (n) {
+      setText(noteText, n.text);
+      setHidden(noteUndo, !n.undo);
+    }
 
     let out = { rebuilt: false, relabeled: false };
     if (m.mode === 'open') {
@@ -401,7 +414,7 @@ export function createPanelView({ doc, win, on }) {
       setHidden(err, m.kind !== 'error');
       setAttr(panel, 'aria-busy', m.kind === 'loading' ? 'true' : null);
       if (readyOpen) {
-        out = transcript.sync({ cues: m.cues, originalCues: m.dual ? m.original.cues : null, offsetMs: m.offsetMs, originalLang: m.dual ? m.original.lang : null, translationLang: m.translationLang ?? null });
+        out = transcript.sync({ cues: m.cues, originalCues: m.dual ? m.original.cues : null, offsetMs: m.offsetMs, originalLang: m.dual ? m.original.lang : null, translationLang: m.translationLang ?? null, marks: m.marks ?? null });
         renderBar(m, l);
         renderFoot(m, l);
         setResume(l.resume.visible, l.resume.label);
@@ -491,6 +504,9 @@ export function createPanelView({ doc, win, on }) {
       error: err.hasAttribute('hidden') ? null : errText.textContent,
       inlineError: inlineError.hasAttribute('hidden') ? null : inlineText.textContent,
       actionError: actionErr.hasAttribute('hidden') ? null : actionText.textContent,
+      note: note.hasAttribute('hidden') ? null : { text: noteText.textContent, undo: !noteUndo.hasAttribute('hidden') },
+      marked: Array.from({ length: transcript.size }, (_, i) => i).filter((i) => transcript.marked(i)),
+      actsRow: transcript.actsRow,
       // للحزام الحي: نقاط Tab في القائمة، ولغة الجذر، والمركّز (صفه أو منطقته)، ولون الأصل في الصف الحالي كما يحسبه المتصفح.
       tabStops: Array.from(transcript.list.querySelectorAll('.t')).filter((b) => b.getAttribute('tabindex') !== '-1').length,
       lang: shell.getAttribute('lang'),
@@ -504,6 +520,7 @@ export function createPanelView({ doc, win, on }) {
       boxes: !o.boxes ? undefined : {
         host: box(host), panel: box(panel), opts: box(optsBtn), close: box(closeBtn), hide: box(hideItem), follow: box(followSwitch),
         resume: box(resume), reset: box(resetBtn), earlier: box(earlierBtn), later: box(laterBtn), undo: box(undoBtn), list: box(transcript.list),
+        mark: box(transcript.actsParts.markBtn), sync: box(transcript.actsParts.syncBtn), noteUndo: box(noteUndo),
         dual: Array.from(segs.el.children).map(box),
         rows: (o.rows ?? []).map((i) => ({ i, label: transcript.labelOf(i), box: box(transcript.rowEl(i)), time: box(transcript.rowEl(i)?.firstElementChild ?? null) })),
       },
@@ -518,6 +535,6 @@ export function createPanelView({ doc, win, on }) {
     focusPanel: () => closeBtn.focus(),
     typing: () => root.activeElement === stepInput,
     /** عناصر للاختبار والتركيز البرمجي. */
-    parts: { panel, optsBtn, closeBtn, menu, hideItem, segs: segs.el, followSwitch, resume, resetBtn, earlierBtn, laterBtn, stepSegs: stepSegs.el, stepInput, toast, foot, bar, body, err, empty, skel },
+    parts: { panel, optsBtn, closeBtn, menu, hideItem, segs: segs.el, followSwitch, resume, resetBtn, earlierBtn, laterBtn, stepSegs: stepSegs.el, stepInput, toast, foot, bar, body, err, empty, skel, note, noteUndo, ...transcript.actsParts },
   };
 }

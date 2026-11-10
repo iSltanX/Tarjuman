@@ -6,18 +6,26 @@
 import { TjError, toErrorInfo, messageFor } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
 import { holdTimer } from '../../ui/hold.js';
-import { parseSeconds } from '../controls/text.js';
+import { syncOffset } from '../controls/sentence.js';
+import { markToast, offsetToast, parseSeconds, syncUndoStaleLine } from '../controls/text.js';
 import { watchNavigation } from '../watch/navigation.js';
 import { getMainVideo, getPlayer, isAdShowing, isPlayerFullscreen, seekMainVideo } from '../youtube-dom.js';
 import { FALLBACK_HEIGHT, createColumnLayout, isBeside, placeHost } from './column.js';
 import { createFollow } from './follow.js';
 import { derive } from './model.js';
+import { LABELS, unmarkedNote } from './text.js';
 import { createPanelView } from './view.js';
 
 /** رسالة «أُخفي زر النص المتزامن» وفيها «تراجع»: وقت كافٍ للقرار (كرسائل التراجع في الأدوات). */
 export const UNDO_MS = 6000;
 const STEP = Object.freeze({ min: 100, max: 10000 });
 const COALESCE_MS = 50;
+/**
+ * «أسمع هذه الآن» من صف (ف9) للجمل القريبة من لحظة التشغيل وحدها: ثلاث قبل الحالية وثلاث بعدها (نافذة «مزامنة بجملة» في
+ * المشغّل)، أو ما يظهر خلال نصف دقيقة منها. فالصف البعيد لا يعطي إزاحة كبيرة خاطئة بنقرة.
+ */
+export const SYNC_NEAR_ROWS = 3;
+export const SYNC_NEAR_MS = 30000;
 const VIDEO_EVENTS = ['timeupdate', 'seeking', 'seeked', 'ratechange', 'pause', 'play', 'playing', 'ended', 'loadedmetadata', 'emptied', 'durationchange'];
 
 /**
@@ -52,6 +60,10 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   /** @type {any} */
   let video = null;
 
+  /** رسالة فعل من صف: نصها، وتراجعها إن كان، ومؤقت زوالها. @type {{ text: string, undo: (() => unknown) | null } | null} */
+  let note = null;
+  let noteHold = null;
+
   const fail = (code, err) => {
     lastCode = code;
     if (code === 'PL_RENDER_FAILED') counts.renderFailures++;
@@ -60,9 +72,9 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   /**
    * فعل على المتحكم: لا يرمي ولا يترك وعدًا مرفوضًا بلا معالج؛ الإخفاق رمز في التشخيص. وإخفاق ما يحفظه المستخدم من اللوحة
    * (visible) يُقال داخلها أيضًا (تدقيق 7a66f91، U49: كان إغلاقها من زرها و«فوق الأصل» و«إخفاء الزر» تفشل صامتة). وكل فعل
-   * جديد يمسح ما قيل عن سابقه.
+   * جديد يمسح ما قيل عن سابقه. وown: نص الخطأ نفسه (علامة تعارضت مع تعديل من مكان آخر مثلًا) لا رسالة التفضيلات.
    */
-  const act = (fn, { visible = false } = {}) => {
+  const act = (fn, { visible = false, own = false } = {}) => {
     if (actionError) {
       actionError = null;
       render();
@@ -71,7 +83,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       counts.actionFailures++;
       lastCode = toErrorInfo(err).code;
       if (visible && !destroyed) {
-        actionError = messageFor('PL_PREFS_FAILED');
+        actionError = own ? toErrorInfo(err).message : messageFor('PL_PREFS_FAILED');
         render();
       }
     };
@@ -125,6 +137,8 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       if (follow.on) follow.reveal(anchor, { force: snap, instant: snap });
       if (snap && !view.transcript.list.clientHeight) snapNext = true;
       updateResume();
+      // قرب الجملة من لحظة التشغيل يتغير بتقدّمها: يُعاد حال «أسمع هذه الآن» في الصف الذي عليه الشريط.
+      view.transcript.refreshActs();
     }
     const c = loc.cue;
     tr.progress(c && c.endMs > c.startMs ? (ms - c.startMs) / (c.endMs - c.startMs) : 0);
@@ -174,6 +188,87 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     view.setLayout({ place, heightPx, width });
   }
 
+  // ———— أفعال الصف (ف9) ————
+  function clearNote() {
+    noteHold?.cancel();
+    noteHold = null;
+    note = null;
+  }
+  /** @param {string} text @param {(() => unknown) | null} [undo] */
+  function showNote(text, undo = null) {
+    clearNote();
+    note = { text, undo };
+    noteHold = holdTimer({
+      ms: UNDO_MS,
+      onExpire: () => {
+        noteHold = null;
+        note = null;
+        render();
+      },
+      setTimer: (fn, ms) => win.setTimeout(fn, ms), clearTimer: (id) => win.clearTimeout(id),
+    });
+    noteHold.arm();
+    render();
+  }
+
+  /**
+   * لماذا لا تتاح «أسمع هذه الآن» لصف i الآن، أو null: زمن الإعلان ليس زمن الفيديو (كقائمة المشغّل)، ولا فيديو بزمن، والجملة
+   * البعيدة عن لحظة التشغيل (SYNC_NEAR_ROWS وSYNC_NEAR_MS).
+   * @param {number} i
+   */
+  function syncReason(i) {
+    if (isAdShowing(doc)) return messageFor('CT_AD_SHOWING');
+    const cue = controller.getState().arabic?.cues?.[i];
+    const v = video;
+    if (!cue || !v || !Number.isFinite(v.currentTime)) return LABELS.syncFar;
+    if (Math.abs(cue.startMs + offset() - v.currentTime * 1000) <= SYNC_NEAR_MS) return null;
+    const timeline = view.transcript.timeline();
+    if (timeline && anchor >= 0 && Math.abs(timeline.rankOf(i) - timeline.rankOf(anchor)) <= SYNC_NEAR_ROWS) return null;
+    return LABELS.syncFar;
+  }
+
+  /** «علّم للمراجعة» من صف: يبدّل «أعود إليه» على مقطعه في الخانة المعروضة، ورسالة فيها «تراجع». @param {number} i */
+  function markRow(i) {
+    const cue = controller.getState().arabic?.cues?.[i];
+    if (!cue || typeof controller.markCue !== 'function') return;
+    const had = view.transcript.marked(i);
+    act(async () => {
+      const r = await controller.markCue({ index: i }, had ? null : 'todo');
+      if (destroyed) return;
+      showNote(had ? unmarkedNote(cue.n) : markToast(cue.n), () => r.undo());
+    }, { visible: true, own: true });
+  }
+
+  /**
+   * «أسمع هذه الآن» من صف: إزاحة تجعل بداية جملته تظهر في لحظة الضغط (syncOffset نفسها في «مزامنة بجملة»)، ثم «الإزاحة −3.2 ث»
+   * بتراجع بعد ثبوتها. والتراجع للترجمة التي زامنها المستخدم وحدها (CX-004). لا يُمس الفيديو ولا الملف.
+   * @param {number} i
+   */
+  function syncRow(i) {
+    const why = syncReason(i);
+    if (why) {
+      showNote(why);
+      return;
+    }
+    const s = controller.getState();
+    const cue = s.arabic.cues[i];
+    const prev = s.view.displayOffsetMs;
+    const next = syncOffset(video.currentTime * 1000, cue);
+    const target = { videoId: s.videoId, cues: s.arabic.cues };
+    act(async () => {
+      await controller.setOffset(next);
+      if (destroyed) return;
+      const now = controller.getState();
+      if (now.videoId !== target.videoId || now.arabic?.cues !== target.cues || now.view.displayOffsetMs !== next) return;
+      showNote(offsetToast(next), () => {
+        const cur = controller.getState();
+        if (cur.videoId === target.videoId && cur.arabic?.cues === target.cues) return controller.setOffset(prev);
+        showNote(syncUndoStaleLine());
+        return null;
+      });
+    }, { visible: true, own: true });
+  }
+
   // ———— أفعال المستخدم ————
   function clearToast() {
     toastHold?.cancel();
@@ -201,6 +296,15 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     close: () => setPrefs({ ui: { panelOpen: false } }),
     setDual: (v) => setPrefs({ ui: { panelDual: v } }),
     toastHold: (why, held) => toastHold?.hold(why, held),
+    rowAct: (act, i) => (act === 'mark' ? markRow(i) : syncRow(i)),
+    syncReason,
+    noteHold: (why, held) => noteHold?.hold(why, held),
+    noteUndo() {
+      const undo = note?.undo ?? null;
+      clearNote();
+      render();
+      if (undo) act(undo, { visible: true, own: true });
+    },
     hide() {
       const restore = controller.getState().prefs?.ui?.panelOpen === true;
       clearToast();
@@ -303,8 +407,11 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       const nav = nav$.state();
       const fullscreen = isPlayerFullscreen(doc);
       const model = derive(s, { videoId: nav.videoId, navigating: nav.navigating, visible: nav.videoId !== null && !fullscreen }, { toast: !!toast });
-      // ما قيل عن فعل في لوحة مفتوحة لا يبقى إلى فتح لاحق.
-      if (model.mode !== 'open') actionError = null;
+      // ما قيل عن فعل في لوحة مفتوحة لا يبقى إلى فتح لاحق، ولا رسالة فعل صف.
+      if (model.mode !== 'open') {
+        actionError = null;
+        if (note) clearNote();
+      }
       // رسالة التراجع تُغلق إن عاد الزر من مكان آخر (نافذة الأيقونة أو الإعدادات) بعد أن رُصد مخفيًا.
       if (toast) {
         if (prefsUi?.panelEntry === false) toast.seen = true;
@@ -321,6 +428,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
         step,
         toast: !!toast,
         actionError,
+        note: note ? { text: note.text, undo: !!note.undo } : null,
       });
       ready = out.mode === 'open' && out.kind === 'ready';
       // التركيز بين اللوحة وزرها في الشريط: فُتحت بلوحة المفاتيح ← زر الإغلاق؛ وأُغلقت وفيها التركيز ← زرها في الشريط.
@@ -379,6 +487,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     for (const t of VIDEO_EVENTS) video?.removeEventListener(t, onVideoEvent);
     video = null;
     clearToast();
+    clearNote();
     columns?.restore();
     view?.destroy();
   }
@@ -487,6 +596,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       return {
         ...counts, lastCode, mode: p.mode, kind: p.kind, rows: p.rows, follow: follow.on, place: p.place, narrow: p.narrow, wide: p.wide,
         theme: p.theme, styleMode: view.styleMode, anchor, toast: !!toast, video: !!video, mirrored: columns.mirrored, fitted: columns.fitted,
+        marked: p.marked.length, note: !!note,
       };
     },
     destroy() {

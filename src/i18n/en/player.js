@@ -203,6 +203,14 @@ export default Object.freeze({
     meaningEarlier: 'Appears earlier',
     meaningZero: 'At its saved timing',
     statusSlot: 'Translation {n}',
+    rowActions: 'Segment actions',
+    markRow: 'Mark for review',
+    markRowTip: 'Mark for review: it appears under “To revisit” in the editor',
+    rowMarked: 'marked for review',
+    unmarked: 'Removed the mark from segment {n}',
+    syncRow: 'I hear this now',
+    syncRowTip: 'I hear this now: shifts the timing so this line shows at this moment',
+    syncFar: 'This line is far from the playback position; “I hear this now” is for lines near it.',
     statusSlotNamed: 'Translation {n} “{name}”',
     // Completed capture step: YouTube auto-translation, or manual/auto-generated, saved or captured.
     captureLine: ({ lang, via, kind, saved, count }) => (via
