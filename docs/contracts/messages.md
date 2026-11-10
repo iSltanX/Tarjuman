@@ -93,6 +93,8 @@ chrome.tabs.sendMessage(tabId, { type: "tj:get-page-diagnostics", v: 1 })    // 
 // الرد: { v: 1, ok: true, sections: { controller, extractor, mounted, dom, panel } } — أعداد ورموز فقط
 ```
 
+**ف7 (2026-11-10):** في تشخيص المستخرج `requestsSeen` (طلبات الترجمة التي رآها غلافا الالتقاط للفيديو المعروض، و0 حين لم يُرَ طلب) و`requestsSeenPage` (أكبر عدّ في الصفحة). أعداد فقط، من رسالة `kind: "seen"` (عقد الاستخراج).
+
 **ف10 (2026-11-10):** `dom` خريطة وجود العناصر التي يعتمد عليها ترجمان، نعم أو لا لكل مفتاح في `SELECTORS` (§٧ في عقد الواجهات) ومعها `anyVideo` لأي عنصر فيديو (`domPresence` في `src/content/messages.js`). أسماء وقيم منطقية فقط. و`panel` تشخيص لوحة النص المتزامن (`mounted.panel.diagnostics()`: أعداد وحالة ورموز)، وكان خارج التقرير. وحالة الأدوات والطبقة قد تكون `error` برمز `CT_PLAYER_NOT_FOUND` أو `PL_PLAYER_NOT_FOUND` (عقد الأخطاء §١٣).
 
 يُقبل من صفحات الإضافة وحدها (`isExtensionPage`) كطلب الحالة. الأقسام بلا نص ولا عنوان ولا رابط، والنافذة تبني منها `createDiagnosticReport` (عقد الأخطاء §٤) الذي ينقّيها مرة أخرى.

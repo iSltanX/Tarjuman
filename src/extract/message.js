@@ -54,6 +54,21 @@ export function validateCaptureMessage(d) {
   };
 }
 
+/** أقصى عدّ مقبول لطلبات الترجمة المرئية (ف7): أكبر منه بيانات غير معقولة من الصفحة. */
+const MAX_SEEN = 1_000_000;
+
+/**
+ * «رُئي طلب ترجمة» من غلافي الالتقاط (ف7، MAIN → ISOLATED): معرّف الفيديو من الطلب وعدد الطلبات المرئية في الصفحة، لا غير.
+ * @param {unknown} d
+ * @returns {{ videoId: string | null, seen: number } | null}
+ */
+export function validateSeenMessage(d) {
+  if (!d || typeof d !== 'object') return null;
+  if (d.source !== MESSAGE_SOURCE || d.v !== 1 || d.kind !== 'seen') return null;
+  if (!Number.isInteger(d.seen) || d.seen < 1 || d.seen > MAX_SEEN) return null;
+  return { videoId: typeof d.videoId === 'string' && VIDEO_ID.test(d.videoId) ? d.videoId : null, seen: d.seen };
+}
+
 /** حدود قائمة المسارات المتاحة (AA1): مسارات الفيديو قليلة عادة، والاسم كما يعرضه يوتيوب في قائمته. */
 export const MAX_LISTED_TRACKS = 64;
 export const MAX_TRACK_NAME_CHARS = 120;

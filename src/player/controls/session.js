@@ -125,6 +125,9 @@ function freshUi(videoId) {
  *   now?: () => number,
  * }} deps
  */
+/** مهلة «CC مضغوط ولا التقاط» قبل رسالتها (ف7): الالتقاط يصل عادة في أقل من ثانية بعد تشغيل CC. */
+export const CC_GRACE_MS = 2000;
+
 export function createControlsSession({ controller, doc, win, player, flows, now = () => Date.now(), link = null }) {
   const counts = {
     renders: 0, renderFailures: 0, reinserts: 0, downloads: 0, imports: 0, flowFailures: 0, overflows: 0,
@@ -138,7 +141,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let menuKind = null;
   let lastModel = null;
   let overflow = null;
-  let flags = { live: false, unavailable: false, brave: false, ad: false };
+  let flags = { live: false, unavailable: false, brave: false, ad: false, ccStuck: false };
+  /** منذ متى زر CC مضغوط ولا التقاط (ف7)، أو null. */
+  let ccOnSince = null;
   /** المؤشر فوق التلميح (U89). */
   let tipHover = false;
   /** channel قناة الرسالة: رسائل الاستيراد ('import') تُمسح ببدء استيراد جديد، فلا تتراكم أخطاء قديمة بعد نجاحه (U43). */
@@ -189,7 +194,24 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const b = doc.querySelector(SELECTORS.subtitlesButton);
     return !!b && (b.getAttribute('aria-disabled') === 'true' || b.hasAttribute('disabled'));
   }
-  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc) });
+  /** زر CC مضغوط: المستخدم شغّل ترجمة يوتيوب (aria-pressed كما يكتبه المشغّل). */
+  function captionsOn() {
+    return doc.querySelector(SELECTORS.subtitlesButton)?.getAttribute('aria-pressed') === 'true';
+  }
+  /**
+   * CC مضغوط ولم يُلتقط شيء منذ CC_GRACE_MS (ف7): المشغّل سبق ترجمان أو جلب الترجمة من طريق لا يمر بالالتقاط، فرسالة تقول العلاج
+   * بدل «فعّل ترجمة يوتيوب (CC)» وهي مفعّلة أمام المستخدم.
+   */
+  function ccStuckNow() {
+    if (!captionsOn() || controller.getState().captured.length) {
+      ccOnSince = null;
+      return false;
+    }
+    const t = now();
+    if (ccOnSince === null) ccOnSince = t;
+    return t - ccOnSince >= CC_GRACE_MS;
+  }
+  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc), ccStuck: ccStuckNow() });
 
   // ———— نماذج العرض ————
 
@@ -260,7 +282,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const tracks = okTracks(s);
     const longFile = longFileOf(s, tracks);
     return {
-      live: flags.live, unavailable: flags.unavailable, captureIssue: s.captureIssue?.code ?? null,
+      live: flags.live, unavailable: flags.unavailable, captureIssue: s.captureIssue?.code ?? null, ccStuck: flags.ccStuck,
       invalid: s.captured.filter((t) => !t.ok).map((t) => ({ code: t.code })),
       tracks: tracks.map((t) => ({ key: t.key, lang: t.lang, kind: t.kind, via: t.via ?? null, ok: t.ok, cueCount: t.cueCount, warnings: t.warnings, lastEndMs: t.lastEndMs, capturedAt: t.capturedAt })),
       selectedKey: tracks.some((t) => t.key === d.key) ? d.key : tracks[0]?.key ?? null,
@@ -1394,7 +1416,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       try {
         place();
         const next = readFlags();
-        if (next.live !== flags.live || next.unavailable !== flags.unavailable || next.ad !== flags.ad) {
+        if (next.live !== flags.live || next.unavailable !== flags.unavailable || next.ad !== flags.ad || next.ccStuck !== flags.ccStuck) {
           flags = next;
           render();
         }

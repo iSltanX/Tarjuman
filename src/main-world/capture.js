@@ -101,6 +101,14 @@ if (doc) {
   else scheduleTracks();
 }
 
+// ف7 (2026-11-10): كم طلب ترجمة رآه الغلافان في هذه الصفحة. يُبلَّغ عند الطلب نفسه (قبل استجابته) بمعرّف الفيديو وعدد، بلا رابط
+// ولا رمز: فإن لم يُرَ طلب بقي العدّ صفرًا في تشخيص الصفحة، وهذا الدليل على أن المشغّل جلب الترجمة من طريق لا يمر بالغلافين.
+let seenRequests = 0;
+function noteSeen(meta) {
+  seenRequests++;
+  window.postMessage({ source: 'tarjuman', v: 1, kind: 'seen', videoId: meta.videoId, seen: seenRequests }, origin);
+}
+
 function metaFor(url) {
   try {
     return typeof url === 'string' ? readTimedtextParams(url, window.location.href) : null;
@@ -120,6 +128,7 @@ window.fetch = function fetch(input, init) {
     meta = null;
   }
   if (meta) {
+    noteSeen(meta);
     // يُسجَّل قبل أن تعيد الدالة الوعد للصفحة، فيُنسخ الجسم قبل أن تستهلكه.
     result.then((res) => {
       let copy;
@@ -149,6 +158,7 @@ XHR.open = function open(method, url) {
 XHR.send = function send() {
   const meta = pending.get(this);
   if (meta) {
+    noteSeen(meta);
     this.addEventListener('loadend', () => {
       try {
         const type = this.responseType;

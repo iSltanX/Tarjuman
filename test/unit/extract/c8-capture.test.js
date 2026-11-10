@@ -32,10 +32,12 @@ class FakeXHR {
 function load({ fetchImpl } = {}) {
   assert.equal(SOURCE.match(IMPORT_LINES)?.length, 2, 'شكل الاستيرادين تغيّر؛ حدّث الحقن');
   const posted = [];
+  // ف7: رسائل «رُئي طلب» (عدّ عند الطلب نفسه) في قائمتها؛ وposted لرسائل الالتقاط وحدها كما كان.
+  const seen = [];
   const fetchCalls = [];
   const win = {
     location: { origin: ORIGIN, href: `${ORIGIN}/watch?v=AAAAAAAAAAA` },
-    postMessage: (msg, origin) => posted.push({ msg, origin }),
+    postMessage: (msg, origin) => (msg?.kind === 'seen' ? seen : posted).push({ msg, origin }),
     fetch(input) {
       fetchCalls.push(input);
       return fetchImpl ? fetchImpl(input) : Promise.resolve(new Response('{"events":[]}', { status: 200 }));
@@ -49,7 +51,7 @@ function load({ fetchImpl } = {}) {
   // اسم الملف الحقيقي ليُنسب إليه قياس التغطية؛ والسطر المحذوف يبقى فارغًا فلا تتغير أرقام الأسطر.
   vm.runInContext(SOURCE.replace(IMPORT_LINES, ''), ctx, { filename: CAPTURE_URL.href });
   const restore = () => { FakeXHR.prototype.open = origOpen; FakeXHR.prototype.send = origSend; };
-  return { win, posted, fetchCalls, origFetch, restore };
+  return { win, posted, seen, fetchCalls, origFetch, restore };
 }
 
 const plain = (x) => JSON.parse(JSON.stringify(x)); // الرسائل من سياق vm بنموذج أصل آخر
@@ -118,6 +120,8 @@ test('fetch: رفض الأصل يصل الصفحة كما هو ولا رسالة
   await assert.rejects(() => env.win.fetch(TT), (e) => e === boom);
   await tick();
   assert.equal(env.posted.length, 0);
+  // ف7: الطلب نفسه رُئي (عُدّ عند الطلب) وإن رُفضت استجابته؛ أعداد ومعرّف فقط.
+  assert.deepEqual(env.seen.map((x) => ({ ...x.msg })), [{ source: 'tarjuman', v: 1, kind: 'seen', videoId: 'AAAAAAAAAAA', seen: 1 }]);
 });
 
 test('fetch: رمي الأصل متزامنًا يخرج للصفحة كما هو (لا يلتقطه الغلاف)', (t) => {

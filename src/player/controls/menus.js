@@ -261,7 +261,8 @@ export function downloadMenu(h, act, m, root = null) {
       out.push(alert(h, 'info', messageFor('CT_NO_CAPTIONS')));
     } else {
       const why = button(h, 'link', LABELS.whyLink, { act, name: 'why', fid: 'why', first: !m.saved, extra: { 'aria-expanded': m.why ? 'true' : 'false' } });
-      out.push(alert(h, 'info', messageFor('CT_NOT_CAPTURED'), [h('span', { children: [why] }), m.why ? h('span', { className: 'note', text: LABELS.why }) : null]));
+      // ف7: CC مضغوط ولا التقاط بعد مهلته ⇒ العلاج («أوقف CC ثم شغّلها») بدل «فعّل CC» وهي مفعّلة.
+      out.push(alert(h, m.ccStuck ? 'warn' : 'info', messageFor(m.ccStuck ? 'CT_CC_NOT_CAPTURED' : 'CT_NOT_CAPTURED'), [h('span', { children: [why] }), m.why ? h('span', { className: 'note', text: LABELS.why }) : null]));
     }
     out.push(...otherLanguages(h, { langs: m.otherLangs, other: false, brave, translatable: m.translatable }));
     return out;

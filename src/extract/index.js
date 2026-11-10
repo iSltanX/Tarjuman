@@ -7,7 +7,7 @@ import { COMPLETENESS_RATIO, normalizeCompleteness, normalizeLongOptions } from 
 import { checkAcceptance, convertCapture, trackOf } from './capture-adapter.js';
 import { createCaptureStore } from './capture-store.js';
 import { createPendingBuffer } from './pending.js';
-import { MAX_BODY_CHARS, validateCaptureMessage, validateTracklistMessage } from './message.js';
+import { MAX_BODY_CHARS, validateCaptureMessage, validateSeenMessage, validateTracklistMessage } from './message.js';
 
 const MODES = Object.freeze(['normal', 'long']);
 const MAX_RUNS_PER_TRACK = 6;
@@ -62,6 +62,9 @@ export function createExtractor(env) {
   let listed = null;
   const listeners = new Set();
   let listenerFailures = 0;
+  /** طلبات الترجمة التي رآها غلافا الالتقاط للفيديو المعروض، وأكبر عدّ في الصفحة كلها (ف7). أعداد فقط. */
+  let seen = { videoId: /** @type {string | null} */ (null), count: 0 };
+  let seenPage = 0;
   // كل مشترك على حدة: استثناء في أحدهم لا يخرج من معالج رسالة الجسر ولا يحرم غيره.
   const emit = () => {
     for (const fn of [...listeners]) {
@@ -176,6 +179,17 @@ export function createExtractor(env) {
    * قائمة المسارات من بيانات المشغّل (AA1): تُقبل للفيديو المعروض وحده، وتُبلَّغ المشتركين إن تغيّرت.
    * @param {unknown} data
    */
+  function handleSeen(data) {
+    const m = validateSeenMessage(data);
+    if (!m) return { accepted: false, code: null };
+    const current = env.currentVideoId();
+    sync(current);
+    if (seen.videoId !== current) seen = { videoId: current, count: 0 };
+    if (current && m.videoId === current) seen.count++;
+    seenPage = Math.max(seenPage, m.seen);
+    return { accepted: true, code: null };
+  }
+
   function handleTracklist(data) {
     const list = validateTracklistMessage(data);
     if (!list) return { accepted: false, code: null };
@@ -197,6 +211,7 @@ export function createExtractor(env) {
     handleMessage(data) {
       pending.prune(now());
       if (data && typeof data === 'object' && data.kind === 'tracklist') return handleTracklist(data);
+      if (data && typeof data === 'object' && data.kind === 'seen') return handleSeen(data);
       const msg = validateCaptureMessage(data);
       return msg ? evaluate(msg) : { accepted: false, code: null };
     },
@@ -209,6 +224,7 @@ export function createExtractor(env) {
     /** يُستدعى عند تغيّر الفيديو المعروض: يفرّغ ما لا يخصه ويعيد تقييم ما انتظر له. */
     setVideo(videoId) {
       sync(videoId);
+      if (seen.videoId !== videoId) seen = { videoId, count: 0 };
       for (const { msg, ageMs } of pending.take(videoId, now())) evaluate(msg, ageMs);
       emit();
     },
@@ -262,6 +278,9 @@ export function createExtractor(env) {
       pendingChars: pending.chars,
       listed: listed ? { tracks: listed.tracks.length, translatable: listed.translatable } : null,
       listenerFailures,
+      // ف7: «طلبات مرئية» للفيديو المعروض (0 = لم يمر طلب ترجمة بالغلافين)، وأكبر عدّ في الصفحة.
+      requestsSeen: seen.videoId !== null && seen.videoId === env.currentVideoId() ? seen.count : 0,
+      requestsSeenPage: seenPage,
       tracks: [...slots].map(([key, slot]) => {
         const info = infoOf(key, slot);
         const conv = run(slot, 'normal');

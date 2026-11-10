@@ -169,6 +169,7 @@ export default Object.freeze({
   CT_BAR_OVERFLOW: 'The player bar is too narrow for Tarjuman’s tools and YouTube’s tools together at this width. Widen the window or use theater mode.',
 
   CT_NOT_CAPTURED: 'Turn on YouTube subtitles (CC) and choose the language you want, then open this menu.',
+  CT_CC_NOT_CAPTURED: 'YouTube subtitles (CC) are on, but Tarjuman didn’t capture them. Turn CC off and on again; if it happens on every video, copy the page diagnostics from the extension popup.',
   CT_NO_CAPTIONS: 'This video has no subtitles available on YouTube.',
   CT_INCOMPLETE_AT: 'The last subtitle is at {last} and the video is {duration}; the text may be incomplete.',
   CT_FINGERPRINT_NOT_SAVED: 'The file was downloaded, but what’s needed to compare it with your translation later couldn’t be saved. Download again; if it keeps happening, copy the diagnostics report.',
