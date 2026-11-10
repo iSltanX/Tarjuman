@@ -62,7 +62,7 @@ test('المشغّل: سطر المواضع الغامضة وزرها بعد ا�
   click(page.ui.menu().querySelector('[data-fid="markAmbiguous"]'));
   await settle(area);
   assert.deepEqual(await todoMarks(page.store), [3, 6]);
-  assert.equal(page.ui.menu()?.querySelector('[data-fid="ambiguous"]') ?? null, null, 'يزول السطر بعد التعليم');
+  assert.ok((page.ui.menu()?.querySelector('[data-fid="ambiguous"]') ?? null) === null, 'يزول السطر بعد التعليم');
   const toast = page.ui.layerHost().shadowRoot.querySelector('.toasts');
   assert.match(toast.textContent, /عُلّم للمراجعة: مقطعان\./);
   click(toast.querySelector('button.act'));
@@ -86,7 +86,7 @@ test('المشغّل: الزر للخانة التي رُفع إليها الم�
   assert.ok(page.ui.menu().querySelector('[data-fid="ambiguous"]'), 'الزر للخانة 2');
   click(page.ui.menu().querySelector('[data-fid="slot:1"]'));
   await settle(area);
-  assert.equal(page.ui.menu().querySelector('[data-fid="ambiguous"]'), null, 'لا يظهر والخانة 1 معروضة');
+  assert.ok(page.ui.menu().querySelector('[data-fid="ambiguous"]') === null, 'لا يظهر والخانة 1 معروضة');
   click(page.ui.menu().querySelector('[data-fid="slot:2"]'));
   await settle(area);
   click(page.ui.menu().querySelector('[data-fid="markAmbiguous"]'));
@@ -102,7 +102,7 @@ test('المشغّل: «ترجمتُ 8 مقاطع» بعد الملف لا سط�
   click(page.ui.btn('upload'));
   chooseFiles(page.ui, [new File([`${clean}\nترجمتُ 8 مقاطع\n`], 'talk.ar.srt')]);
   await settle(area);
-  assert.equal(page.ui.menu().querySelector('[data-fid="ambiguous"]'), null);
+  assert.ok(page.ui.menu().querySelector('[data-fid="ambiguous"]') === null);
 });
 
 test('المحفوظات: بعد الحفظ رسالة فيها «علّمها للمراجعة»، والضغط يجعل «تحتاج مراجعة» 1', async () => {

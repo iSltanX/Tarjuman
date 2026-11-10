@@ -54,6 +54,17 @@ const matchesCompound = (el, c) =>
 /** الأب عبر حدود الظل: أب العقدة، أو مضيف الجذر المظلل. */
 const up = (n) => n.parentNode ?? n._host ?? null;
 
+/**
+ * روابط الشجرة غير قابلة للعدّ (2026-11-10): فحص العقدة (رسالة assert عند الفشل، أو util.inspect) لا يمشي الشجرة كلها عبرها،
+ * فيبقى بضعة أسطر بدل مئات الآلاف (عنصر واحد بين 200 أخ كان 119 ألف سطر، وفرقه التربيعي بلغ 114 غ.ب). القراءة والكتابة كما هما.
+ * @param {object} node @param {string[]} keys
+ */
+function hideLinks(node, keys) {
+  for (const k of keys) {
+    Object.defineProperty(node, k, { value: node[k], writable: true, configurable: true, enumerable: false });
+  }
+}
+
 export class FakeElement {
   constructor(tag, doc) {
     this.tagName = tag.toLowerCase();
@@ -68,6 +79,7 @@ export class FakeElement {
     this.rect = { top: 0, left: 0, width: 0, height: 0, bottom: 0, right: 0 };
     this.shadowRoot = null;
     this._listeners = new Map();
+    hideLinks(this, ['ownerDocument', 'children', 'parentNode', 'shadowRoot']);
     const self = this;
     this._classes = new Set();
     this.classList = {
@@ -217,6 +229,7 @@ export class FakeElement {
   attachShadow() {
     const root = new FakeElement('#shadow-root', this.ownerDocument);
     root._host = this;
+    hideLinks(root, ['_host']);
     root.adoptedStyleSheets = [];
     this.shadowRoot = root;
     return root;

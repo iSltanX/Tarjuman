@@ -398,7 +398,7 @@ test('ح5: التوسيع — المرجع عند التعدد سطر مقروء
   const m = await mount();
   const exp = await expand(m, IDS[0]);
   const card = cardOf(exp, 2);
-  assert.equal(card.querySelector('select'), null, 'لا قائمة مرجع');
+  assert.ok(card.querySelector('select') === null, 'لا قائمة مرجع');
   assert.match(textOf(card.querySelector('.lib-card__ref')), /^المرجع: /);
   assert.equal((await m.store.getBundle(IDS[0])).slots[1].track.fingerprintId, 'fp_test000002', 'المرجع المحفوظ لم يتغير');
 });

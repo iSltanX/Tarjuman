@@ -299,7 +299,7 @@ test('U59 وح5: سطر سبب المرجع في حوار الرفع للأقر�
   more.parentNode.querySelectorAll('[role=menuitem]').find((i) => textOf(i).startsWith('رفع ترجمة')).click();
   await settle(20);
   const content = m.confirms.at(-1).content;
-  assert.equal(content.querySelector('select.lib-up__ref'), null, 'بصمتان: سطر لا قائمة');
+  assert.ok(content.querySelector('select.lib-up__ref') === null, 'بصمتان: سطر لا قائمة');
   assert.match(textOf(content.querySelector('.lib-up__ref-line')), /— الأقرب/);
   assert.match(textOf(content.querySelector('.lib-up__why')), /مطابقة لهذا التصدير/, 'سبب المقترح');
 });

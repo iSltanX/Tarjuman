@@ -74,7 +74,7 @@ test('الجزء الأول ثم الثاني: «إكمال 1» مختار بس�
   assert.equal(checked(page), 'target:complete', 'الإكمال مختار');
   assert.match(page.ui.menu().querySelector('[data-fid="completeLine"]').textContent, /تتمة للترجمة 1: يضيف 4 مقاطع في مواضعها\. وتكتمل بعده\./);
   assert.ok(page.ui.menu().querySelector('[data-fid="target:2"]'), '«جديدة» باقية');
-  assert.equal(page.ui.menu().querySelector('[data-fid="uploadLang"]'), null, 'لا لغة ملف للإكمال');
+  assert.ok(page.ui.menu().querySelector('[data-fid="uploadLang"]') === null, 'لا لغة ملف للإكمال');
   click(page.ui.item('حفظ'));
   await settle(area);
   const b = await page.store.getBundle(A);
@@ -91,7 +91,7 @@ test('ترجمة كاملة ثانية للفيديو نفسه: الافتراض
   const page = await openPage(area);
   await pick(page, area, srtFile(AR.slice(0, 5), 'part1.ar.srt'));
   await pick(page, area, srtFile(AR, 'full.ar.srt'));
-  assert.equal(page.ui.menu().querySelector('[data-fid="target:complete"]'), null);
+  assert.ok(page.ui.menu().querySelector('[data-fid="target:complete"]') === null);
   assert.equal(checked(page), 'target:2');
 });
 

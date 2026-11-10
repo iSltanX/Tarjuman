@@ -27,11 +27,23 @@ const fixFocus = (doc) => {
   el.dispatchEvent({ type: 'focusout', bubbles: true });
 };
 
+/**
+ * روابط الشجرة غير قابلة للعدّ (2026-11-10): فحص العقدة (رسالة assert عند الفشل، أو util.inspect) لا يمشي الشجرة كلها عبرها،
+ * فيبقى بضعة أسطر بدل مئات الآلاف (عنصر واحد بين 200 أخ كان 119 ألف سطر، وفرقه التربيعي بلغ 114 غ.ب). القراءة والكتابة كما هما.
+ * @param {object} node @param {string[]} keys
+ */
+function hideLinks(node, keys) {
+  for (const k of keys) {
+    Object.defineProperty(node, k, { value: node[k], writable: true, configurable: true, enumerable: false });
+  }
+}
+
 class FakeText {
   constructor(text) {
     this.nodeType = 3;
     this.textContent = String(text);
     this.parentNode = null;
+    hideLinks(this, ['parentNode']);
   }
 
   remove() {
@@ -60,6 +72,7 @@ export class FakeElement {
     this._attrs = new Map();
     this._classes = new Set();
     this._listeners = new Map();
+    hideLinks(this, ['ownerDocument', 'childNodes', 'parentNode']);
     this.style = { setProperty(k, v) { this[k] = String(v); }, getPropertyValue(k) { return this[k] ?? ''; } };
     this.id = '';
     this.value = '';
