@@ -58,12 +58,12 @@ There's no built-in model, no API key, no account, no translation server, and no
 
 | Browser | Available now |
 | --- | --- |
-| Google Chrome (130 or later) | Version 2.1.0 from [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
-| Brave (Chromium 130 or later) | Version 2.1.0 from [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
-| Microsoft Edge (130 or later) | Version 2.1.0 from [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
+| Google Chrome (130 or later) | From [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
+| Brave (Chromium 130 or later) | From [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
+| Microsoft Edge (130 or later) | From [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
 | Mozilla Firefox (144 or later) | Not on Firefox Add-ons yet. To try it: [install from source](docs/development.md) (Arabic) |
 
-In every browser, version 2.1.2 can be tried from source the same way. The store copy and the source copy are separate extensions, so move your Library between them with a backup ([user guide](docs/user-guide.md) §9, Arabic).
+In every browser, the latest version can be tried from source the same way. The store copy and the source copy are separate extensions, so move your Library between them with a backup ([user guide](docs/user-guide.md) §9, Arabic).
 
 After installing, pin Tarjuman's icon to the browser toolbar: the extensions icon (the puzzle piece), then the pin next to Tarjuman.
 
