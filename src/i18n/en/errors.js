@@ -179,7 +179,6 @@ export default Object.freeze({
   CT_KEEP_UNAVAILABLE: 'Keeping edits isn’t available: the new file couldn’t be aligned with the current translation.',
   CT_UNDO_FAILED: 'Couldn’t undo. Try again; if it keeps happening, copy the diagnostics report.',
   CT_PANEL_TOGGLE_FAILED: 'Couldn’t save whether the synced transcript panel is open or closed. Try again.',
-  CT_UPLOAD_BUSY: 'An upload or confirmation is still open in the player; finish or cancel it, then paste again.',
   CT_AD_SHOWING: 'Available after the ad ends; right now the time is the ad’s, not the video’s.',
 
   CT_NEEDS_ARABIC: 'Upload a translation first to adjust its timing.',

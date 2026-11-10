@@ -245,7 +245,7 @@ startPage({
         return;
       }
       pasteStatus.setAttribute('data-tone', 'danger');
-      pasteStatus.textContent = ['empty', 'tooLarge', 'failed'].includes(r.code) ? t(`popup.paste.${r.code}`) : messageFor(r.code);
+      pasteStatus.textContent = ['empty', 'tooLarge', 'failed', 'busy'].includes(r.code) ? t(`popup.paste.${r.code}`) : messageFor(r.code);
     });
 
     function paintSteps() {

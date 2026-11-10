@@ -136,7 +136,7 @@ chrome.runtime.sendMessage({ type: "tj:save-file", v: 1, file: { name: "iG9CE55w
 
 ```js
 chrome.tabs.sendMessage(tabId, { type: "tj:paste-import", v: 1, videoId: "iG9CE55wbtY", text: "1\n00:00:01,000 --> …" })   // pasteImportRequest(videoId, text)
-// ← { v: 1, ok: true } | { v: 1, ok: false, code: "TJ_BAD_MESSAGE" | "TJ_NO_VIDEO" | "TJ_WRONG_VIDEO" | "TJ_RELOAD_PAGE" | "CT_UPLOAD_BUSY" }
+// ← { v: 1, ok: true } | { v: 1, ok: false, code: "TJ_BAD_MESSAGE" | "TJ_NO_VIDEO" | "TJ_WRONG_VIDEO" | "TJ_RELOAD_PAGE" | "busy" }   // busy: رفع أو تأكيد لم ينتهِ في المشغّل (نص النافذة، لا رمز خطأ)
 ```
 
 - **من نافذة الإضافة وحدها** (`isExtensionPage`)، والنص هو ما لصقه المستخدم في حقل «الصق الترجمة هنا» من حدث اللصق (`event.clipboardData`): لا إذن `clipboardRead` ولا قراءة للحافظة برمجيًا (قاعدة `clipboard-read` في `scripts/code-rules.mjs`).

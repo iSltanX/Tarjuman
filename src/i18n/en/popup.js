@@ -52,6 +52,7 @@ export default Object.freeze({
     empty: 'There’s no text in what you pasted.',
     tooLarge: 'The pasted text is larger than the upload limit (5 MB).',
     failed: 'Couldn’t send the text to the video page. Reload the page, then paste again.',
+    busy: 'An upload or confirmation is still open in the player; finish or cancel it, then paste again.',
   },
   pair: {
     title: 'Translation instructions', copy: 'Copy instructions', copied: 'Instructions copied', failed: 'Couldn’t copy — try again',

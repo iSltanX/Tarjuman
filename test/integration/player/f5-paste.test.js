@@ -99,7 +99,7 @@ test('النافذة: sendPaste يرسل إلى التبويب النشط، وا
   assert.deepEqual(sent, [[7, 'tj:paste-import', fenced.length]]);
   assert.deepEqual(await sendPaste({ videoId: A, text: '  ' }, { tabs: tabs({ v: 1, ok: true }) }), { ok: false, code: 'empty' });
   assert.deepEqual(await sendPaste({ videoId: A, text: 'x'.repeat(MAX_PASTE_CHARS + 1) }, { tabs: tabs({ v: 1, ok: true }) }), { ok: false, code: 'tooLarge' });
-  assert.deepEqual(await sendPaste({ videoId: A, text: fenced }, { tabs: tabs({ v: 1, ok: false, code: 'CT_UPLOAD_BUSY' }) }), { ok: false, code: 'CT_UPLOAD_BUSY' });
+  assert.deepEqual(await sendPaste({ videoId: A, text: fenced }, { tabs: tabs({ v: 1, ok: false, code: 'busy' }) }), { ok: false, code: 'busy' });
   assert.deepEqual(await sendPaste({ videoId: A, text: fenced }, { tabs: tabs(undefined) }), { ok: false, code: 'failed' });
   assert.equal(sent.length, 3, 'الفارغ والكبير لم يُرسلا');
 });
