@@ -4,6 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { countData, createBackup, planRestore, readBackup, restoreItems, runRestore, sha256Hex } from '../../../src/core/backup/index.js';
+import { DEFAULT_PREFS } from '../../../src/core/model/prefs.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { videoRecord } from '../../helpers/fixtures.js';
@@ -50,7 +51,9 @@ test('U05: النسخة تحمل الإطفاء، والاستعادة في مل
   const src = await storeWith({ thumbnails: false });
   const text = await backupOf(src.store);
   const fresh = await storeWith({ video: false });
-  assert.equal((await fresh.store.getPrefs()).ui.thumbnails, true, 'افتراضي الجهاز الجديد');
+  // و2: الافتراضي صار «مطفأة»، فالجهاز الجديد هنا فعّلها بنفسه ليُرى أن الاستعادة تطفئها.
+  await fresh.store.setPrefs({ ui: { thumbnails: true } });
+  assert.equal((await fresh.store.getPrefs()).ui.thumbnails, true, 'مفعّلة على الجهاز الجديد');
   const { read, report } = await restoreInto(fresh.store, text);
   assert.equal(read.thumbnailsOff, true);
   assert.equal(report.thumbnails, 'off');
@@ -95,5 +98,5 @@ test('U05: «مسح كل البيانات» يُبقي الإطفاء، ومع �
 
   const on = await storeWith({ thumbnails: true });
   await on.store.clearAll();
-  assert.equal((await on.store.getPrefs()).ui.thumbnails, true);
+  assert.equal((await on.store.getPrefs()).ui.thumbnails, DEFAULT_PREFS.ui.thumbnails, 'يعود الافتراضي (مطفأة منذ و2)');
 });

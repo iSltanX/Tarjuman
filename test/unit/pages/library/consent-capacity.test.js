@@ -65,7 +65,7 @@ function recordingDocument() {
   return { doc, sources };
 }
 
-async function mount({ count = 3, perms = null, watch = true, areaOpts = { unlimited: true }, seed, doc = newDocument() } = {}) {
+async function mount({ count = 3, perms = null, watch = true, areaOpts = { unlimited: true }, seed, doc = newDocument(), thumbs = true } = {}) {
   let clock = NOW - 86400000;
   const area = createMemoryArea(areaOpts);
   const store = createStore({ area, now: () => clock });
@@ -73,6 +73,8 @@ async function mount({ count = 3, perms = null, watch = true, areaOpts = { unlim
     clock += 1000;
     await store.updateVideo(ID(i), () => ({ ...videoRecord({ videoId: ID(i) }), title: `فيديو ${i}`, durationMs: 60000 }));
   }
+  // و2: الصور مطفأة افتراضيًا؛ اختبارات الموافقة عن صور مفعّلة في التفضيل.
+  if (thumbs) await store.setPrefs({ ui: { thumbnails: true } });
   if (seed) await seed(store, area);
   await area.flush();
   const env = perms ? {

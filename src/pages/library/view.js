@@ -167,12 +167,15 @@ export function createLibrary(env) {
   });
   const resultsLive = el('p', { className: 'tj-sr-only', attrs: { role: 'status', 'aria-live': 'polite' }, doc });
   const listHost = el('div', { className: 'lib-list-host', doc });
+  // و2 (ق4): سطر يدل على مفتاح الصور حين تكون مطفأة (أو بلا موافقة Firefox)، بلا رابط ولا طلب.
+  const thumbsNote = el('p', { className: 'tj-caption lib-thumbs-note', text: tr('library.view.thumbsOff'), doc });
+  thumbsNote.hidden = true;
   const header = el('header', {
     className: 'tj-page-head lib-header',
     children: [
       el('div', {
         className: 'tj-page-head__titles',
-        children: [el('div', { className: 'tj-page-head__title', children: [el('h1', { className: 'tj-display', text: tr('common.nav.library'), doc }), countPill], doc }), el('p', { className: 'tj-caption lib-caption', text: tr('library.view.caption'), doc })],
+        children: [el('div', { className: 'tj-page-head__title', children: [el('h1', { className: 'tj-display', text: tr('common.nav.library'), doc }), countPill], doc }), el('p', { className: 'tj-caption lib-caption', text: tr('library.view.caption'), doc }), thumbsNote],
         doc,
       }),
       quotaHost,
@@ -556,7 +559,10 @@ export function createLibrary(env) {
 
   // ---- موافقة الصور ----
   const thumbsOn = () => thumbnailsShown(state.prefs.ui.thumbnails, state.thumbsGranted);
-  const applyThumbs = () => { for (const th of thumbs) th.setEnabled(thumbsOn()); };
+  const applyThumbs = () => {
+    thumbsNote.hidden = thumbsOn();
+    for (const th of thumbs) th.setEnabled(thumbsOn());
+  };
   /** قراءة الموافقة الآن: آخر قراءة بدأت هي الحاكمة، فتُطبَّق على الحالة والصور الحالية، والأقدم تعيد نتيجتها. */
   function readConsent() {
     const gen = ++consentGen;

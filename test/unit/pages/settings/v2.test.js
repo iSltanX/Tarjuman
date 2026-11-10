@@ -392,6 +392,9 @@ test('تدقيق 7a66f91 (U05، Q10): نسخة أُطفئت فيها الصور 
   await src.area.flush();
   const built = await createBackup({ store: src.store, appVersion: '1.1.0', pause: noPause });
   const { area, store } = newStore();
+  // و2: الافتراضي «مطفأة»، فالجهاز هنا فعّلها ليُرى أن الاستعادة تطفئها.
+  await store.setPrefs({ ui: { thumbnails: true } });
+  await area.flush();
   const m = await mount({ store, area });
   assert.equal((await store.getPrefs()).ui.thumbnails, true);
   m.pick(asFile(built.text));

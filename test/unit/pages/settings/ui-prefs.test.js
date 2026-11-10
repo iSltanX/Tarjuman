@@ -50,7 +50,7 @@ test('العرض يحوي مفتاحين بتسميتيهما وشرحيهما: 
   assert.ok(textOf(entry).includes('اللوحة مغلقة افتراضيًا، وزرها يفتحها ويغلقها وتبقى على آخر حال في كل الفيديوهات. وإطفاء هذا المفتاح يخفي الزر ويغلق اللوحة معه، وتعيده من هنا أو من نافذة الإضافة.'));
   assert.ok(textOf(thumbs).includes('i.ytimg.com'));
   assert.ok(textOf(thumbs).includes('بمعرّف الفيديو'));
-  assert.ok(textOf(thumbs).includes('أطفئها إن لم ترد هذا الاتصال'));
+  assert.ok(textOf(thumbs).includes('مطفأة حتى تفعّلها'), 'و2: مطفأة افتراضيًا');
   assert.ok(THUMBNAILS_SWITCH.note.includes('خوادم يوتيوب'));
   for (const input of [sw(m, 'ui.panelEntry'), sw(m, 'ui.thumbnails')]) {
     assert.equal(input.getAttribute('role'), 'switch');
@@ -70,11 +70,13 @@ test('ح4: مفتاح واحد للوحة في الإعدادات («زر الن
   assert.equal((await m.store.getPrefs()).ui.panelOpen, true);
 });
 
-test('القيم الأولية من prefs.ui: مفعّلان افتراضيًا، والمحفوظ المطفأ يظهر مطفأً', async () => {
+test('القيم الأولية من prefs.ui: زر اللوحة مفعّل والصور مطفأة افتراضيًا (و2)، والمحفوظ يظهر كما حُفظ', async () => {
   const fresh = await mount();
   assert.equal(sw(fresh, 'ui.panelEntry').checked, true);
-  assert.equal(sw(fresh, 'ui.thumbnails').checked, true);
-  assert.deepEqual([DEFAULT_PREFS.ui.panelEntry, DEFAULT_PREFS.ui.thumbnails], [true, true]);
+  assert.equal(sw(fresh, 'ui.thumbnails').checked, false, 'تثبيت جديد: الصور مطفأة حتى تُفعَّل');
+  assert.deepEqual([DEFAULT_PREFS.ui.panelEntry, DEFAULT_PREFS.ui.thumbnails], [true, false]);
+  const on = await mount({ prefs: { ui: { thumbnails: true } } });
+  assert.equal(sw(on, 'ui.thumbnails').checked, true, 'المفعّل يظهر مفعّلًا');
   const off = await mount({ prefs: { ui: { panelEntry: false, thumbnails: false } } });
   assert.equal(sw(off, 'ui.panelEntry').checked, false);
   assert.equal(sw(off, 'ui.thumbnails').checked, false);
@@ -85,12 +87,12 @@ test('«زر النص المتزامن»: الإطفاء يكتب panelEntry=fal
   toggle(sw(m, 'ui.panelEntry'), false);
   await settle();
   const p = await m.store.getPrefs();
-  assert.deepEqual(p.ui, { thumbnails: true, panelEntry: false, panelOpen: false, panelDual: false }, 'لا تُفتح اللوحة وحدها حين يعود الزر');
+  assert.deepEqual(p.ui, { thumbnails: false, panelEntry: false, panelOpen: false, panelDual: false }, 'لا تُفتح اللوحة وحدها حين يعود الزر');
   assert.equal(p.glossary.attach, false);
   assert.deepEqual(marks(rowOf(m, 'زر النص المتزامن')), ['حُفظ']);
   toggle(sw(m, 'ui.panelEntry'), true);
   await settle();
-  assert.deepEqual((await m.store.getPrefs()).ui, { thumbnails: true, panelEntry: true, panelOpen: false, panelDual: false }, 'التشغيل يعيد الزر وحده واللوحة مغلقة');
+  assert.deepEqual((await m.store.getPrefs()).ui, { thumbnails: false, panelEntry: true, panelOpen: false, panelDual: false }, 'التشغيل يعيد الزر وحده واللوحة مغلقة');
 });
 
 test('«صور الفيديو في المحفوظات»: يكتب prefs.ui.thumbnails ويبقى panelEntry على حاله', async () => {
@@ -119,12 +121,12 @@ function firefoxConsent({ granted = false, answer = true } = {}) {
 
 test('Firefox (قرار سلطان 2026-11-04): بلا موافقة يبدو المفتاح مطفأً وإن كان التفضيل مفعّلًا، وشرحه يذكر موافقة «نشاط التصفح»', async () => {
   const c = firefoxConsent();
-  const m = await mount({ env: { thumbsConsent: c.thumbsConsent } });
-  assert.equal(m.settings.prefs.ui.thumbnails, true, 'التفضيل الافتراضي لم يُمسّ');
+  const m = await mount({ env: { thumbsConsent: c.thumbsConsent }, prefs: { ui: { thumbnails: true } } });
+  assert.equal(m.settings.prefs.ui.thumbnails, true, 'التفضيل المفعّل لم يُمسّ');
   assert.equal(sw(m, 'ui.thumbnails').checked, false, 'المعروض = المفتاح والموافقة معًا');
   const row = rowOf(m, 'صور الفيديو في المحفوظات');
-  assert.ok(textOf(row).includes('وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح»'));
-  assert.ok(textOf(row).includes('أطفئها إن لم ترد هذا الاتصال') && textOf(row).includes('نشاط التصفح'), 'نسخة Firefox بالجملتين (م-024)');
+  assert.ok(textOf(row).includes('ويطلب Firefox موافقتك على «نشاط التصفح»'));
+  assert.ok(textOf(row).includes('مطفأة حتى تفعّلها') && textOf(row).includes('نشاط التصفح'), 'نسخة Firefox بالجملتين (م-024، و2)');
   assert.deepEqual(c.state.calls, ['check'], 'قراءة بلا طلب عند الفتح');
 });
 
@@ -152,7 +154,7 @@ test('Firefox: رفض الموافقة يبقي المفتاح مطفأً برس
   assert.deepEqual(await m.store.getPrefs(), before, 'لا كتابة');
 
   const on = firefoxConsent({ granted: true });
-  const m2 = await mount({ env: { thumbsConsent: on.thumbsConsent } });
+  const m2 = await mount({ env: { thumbsConsent: on.thumbsConsent }, prefs: { ui: { thumbnails: true } } });
   assert.equal(sw(m2, 'ui.thumbnails').checked, true, 'الموافقة الممنوحة والمفتاح المفعّل: مفعّل');
   toggle(sw(m2, 'ui.thumbnails'), false);
   await settle();

@@ -76,13 +76,13 @@ test('التخزين: مفتاح prefs مستقل؛ كتابة الإعدادا�
   assert.ok(events.some((e) => e.prefs && e.prefs.newValue.saveLocation.mode === 'ask'));
 });
 
-test('تفضيلات الواجهة (product-spec §٦.٦): صور الفيديو وزر اللوحة مفعّلان، واللوحة مغلقة ومع الأصل افتراضيًا؛ والقراءة متسامحة والكتابة صارمة', () => {
-  assert.deepEqual(DEFAULT_PREFS.ui, { thumbnails: true, panelEntry: true, panelOpen: false, panelDual: true });
+test('تفضيلات الواجهة (product-spec §٦.٦): زر اللوحة مفعّل، والصور مطفأة حتى تُفعَّل (و2)، واللوحة مغلقة ومع الأصل افتراضيًا؛ والقراءة متسامحة والكتابة صارمة', () => {
+  assert.deepEqual(DEFAULT_PREFS.ui, { thumbnails: false, panelEntry: true, panelOpen: false, panelDual: true });
   const old = structuredClone(DEFAULT_PREFS);
   delete old.ui;
   assert.deepEqual(normalizePrefs(old).ui, DEFAULT_PREFS.ui, 'تفضيلات الإصدار الثاني بلا ui تُقرأ بالافتراضي');
   assert.equal(validatePrefs(old).ok, false, 'الكتابة تشترط المجموعة كاملة');
   const broken = { ...structuredClone(DEFAULT_PREFS), ui: { thumbnails: 'نعم', panelEntry: false, panelOpen: 1, panelDual: false } };
-  assert.deepEqual(normalizePrefs(broken).ui, { thumbnails: true, panelEntry: false, panelOpen: false, panelDual: false }, 'التالف وحده يعود افتراضيه');
+  assert.deepEqual(normalizePrefs(broken).ui, { thumbnails: false, panelEntry: false, panelOpen: false, panelDual: false }, 'التالف وحده يعود افتراضيه (الصور مطفأة منذ و2)');
   assert.equal(validatePrefs({ ...structuredClone(DEFAULT_PREFS), ui: { ...DEFAULT_PREFS.ui, extra: true } }).ok, false);
 });

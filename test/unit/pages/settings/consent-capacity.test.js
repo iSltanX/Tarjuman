@@ -28,10 +28,12 @@ function firefoxConsent({ granted = true } = {}) {
   };
 }
 
-async function mount({ videos = 0, env = {}, prepare } = {}) {
+async function mount({ videos = 0, env = {}, prepare, thumbs = true } = {}) {
   let t = Date.parse(NOW);
   const area = createMemoryArea({ unlimited: true });
   const store = createStore({ area, now: () => (t += 1000) });
+  // و2: الصور مطفأة افتراضيًا؛ اختبارات الموافقة عن تفضيل مفعّل.
+  if (thumbs) await store.setPrefs({ ui: { thumbnails: true } });
   for (let i = 0; i < videos; i++) await store.updateVideo(`V${String(i).padStart(10, '0')}`, () => videoRecord({ videoId: `V${String(i).padStart(10, '0')}` }));
   await area.flush();
   if (prepare) prepare(area, store);

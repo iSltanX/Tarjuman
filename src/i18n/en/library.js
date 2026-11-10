@@ -124,6 +124,7 @@ export default Object.freeze({
   },
   view: {
     caption: 'Click “Show translations” on any video to compare its versions and choose what appears over the video.',
+    thumbsOff: 'Video thumbnails are off, so a Tarjuman tile shows instead. Turn them on in Settings → “Display” → “Video thumbnails in Library”.',
     copyTip: 'Paste them with the original file into your model’s chat.',
     searchPlaceholder: 'Search by title or ID',
     searchLabel: 'Search by title or ID',

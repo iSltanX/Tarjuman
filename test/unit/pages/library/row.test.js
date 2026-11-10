@@ -19,7 +19,8 @@ const at = (daysAgo, hour = 12) => new Date(2026, 10, 3 - daysAgo, hour, 0).getT
 /**
  * @param {{ records: { id: string, title?: string | null, durationMs?: number | null, at?: number, arabic?: boolean }[], prefs?: object, env?: object, doc?: object }} o
  */
-async function mount({ records, prefs, env = {}, doc = newDocument(), seed } = {}) {
+// و2 (2026-11-10): الصور مطفأة افتراضيًا، فاختبارات الصورة تفعّلها صراحةً؛ وprefs: null يبقي التثبيت الجديد بلا تفضيلات مكتوبة.
+async function mount({ records, prefs = { ui: { thumbnails: true } }, env = {}, doc = newDocument(), seed } = {}) {
   let clock = NOW;
   const area = createMemoryArea({ unlimited: true });
   const store = createStore({ area, now: () => clock });
@@ -370,4 +371,16 @@ test('حفظ التركيز: بعد التفعيل من شريحة يعود ال
   assert.equal((await m.store.getBundle(ID(1))).active, 2);
   assert.equal(m.doc.activeElement.getAttribute('data-fk'), `${ID(1)}:chip-2`, 'الشريحة المعاد بناؤها');
   assert.equal(chip(2).getAttribute('aria-pressed'), 'true');
+});
+
+test('و2: تثبيت جديد بلا تفضيلات مكتوبة: لا img ولا عنوان صورة، والبلاطة الافتراضية، وسطر يدل على مفتاح الصور', async () => {
+  const m = await mount({ records: [{ id: ID(1) }, { id: ID(2) }], prefs: null });
+  assert.equal(findAll(m.lib.root, (e) => e.tagName === 'img').length, 0, 'لا طلب صورة');
+  assert.equal(findAll(m.lib.root, (e) => e.classList?.contains('lib-thumb__fallback')).length, 2);
+  const note = m.lib.root.querySelector('.lib-thumbs-note');
+  assert.equal(note.hidden, false);
+  assert.match(textOf(note), /صور الفيديو مطفأة.*الإعدادات ← «العرض» ← «صور الفيديو في المحفوظات»/);
+  await m.store.setPrefs({ ui: { thumbnails: true } });
+  await settle(10);
+  assert.equal(note.hidden, true, 'يزول السطر حين تُفعَّل');
 });

@@ -39,8 +39,8 @@ export default Object.freeze({
   },
   thumbsSwitch: {
     label: 'Video thumbnails in Library', text: 'Show each video’s thumbnail',
-    note: 'Requested from YouTube’s servers ({host}) using the video ID. Turn off if you don’t want this connection.',
-    noteFirefox: 'Requested from YouTube’s servers ({host}) using the video ID. Turn off if you don’t want this connection. In Firefox, turning it on asks for your “Browsing activity” consent, which you can withdraw from the browser’s add-ons page.',
+    note: 'Off until you turn them on, so a Tarjuman tile shows instead. Once on, they’re requested from YouTube’s servers ({host}) using the video ID.',
+    noteFirefox: 'Off until you turn them on, so a Tarjuman tile shows instead. Once on, they’re requested from YouTube’s servers ({host}) using the video ID, and Firefox asks for your “Browsing activity” consent, which you can withdraw on the browser’s add-ons page.',
     refused: 'Consent wasn’t granted, so thumbnails are hidden.',
   },
   export: {

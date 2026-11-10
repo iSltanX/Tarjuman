@@ -43,14 +43,14 @@
       "ar": [
         "- ترجماتك وإعداداتك في تخزين الإضافة على جهازك، ولا تُزامَن مع أي خدمة. وإزالة الإضافة تحذفها، فخذ نسخة احتياطية قبلها.",
         "- لا يخرج من الإضافة إلا شيئان:",
-        "  - **صور الفيديو في «المحفوظات»:** تُطلب من خوادم يوتيوب بمعرّف الفيديو، ولها مفتاح يطفئها. وفي Firefox هي مطفأة حتى تفعّل مفتاحها وتوافق على «نشاط التصفح».",
+        "  - **صور الفيديو في «المحفوظات»:** مطفأة حتى تفعّل مفتاحها من الإعدادات، فتُطلب حينها من خوادم يوتيوب بمعرّف الفيديو. وفي Firefox يطلب تفعيلها موافقتك على «نشاط التصفح».",
         "  - **بلاغ عن مشكلة:** ترسله أنت بنفسك من الإعدادات بعد أن ترى كل ما فيه، ولا يُرفق به تلقائيًا نص ترجمة ولا معرّف فيديو.",
         "- لا قياس استخدام، ولا إعلانات، ولا بيع لبياناتك."
       ],
       "en": [
         "- Your translations and settings stay in the extension's storage on your device and aren't synced with any service. Removing the extension deletes them, so take a backup first.",
         "- Only two things leave the extension:",
-        "  - **Video thumbnails in Library:** requested from YouTube's servers by video ID, with a switch to turn them off. On Firefox they're off until you turn on the switch and agree to \"browsing activity\".",
+        "  - **Video thumbnails in Library:** off until you turn on their switch in Settings; only then are they requested from YouTube’s servers by video ID. On Firefox, turning them on also asks for your “browsing activity” consent.",
         "  - **A problem report:** you send it yourself from Settings after seeing everything in it, with no translation text or video ID attached automatically.",
         "- No usage tracking, no ads, and no selling of your data."
       ]

@@ -29,7 +29,9 @@ export const DEFAULT_PREFS = Object.freeze({
   // تفضيلات الواجهة على هذا الجهاز (docs/product-spec.md §٦.٦): صور الفيديو في المحفوظات من
   // خوادم يوتيوب (مفعّلة افتراضيًا بقرار سلطان)، وزر لوحة النص المتزامن في صفحة الفيديو، وحالة اللوحة (مفتوحة؟ ومع
   // الأصل؟). لا تُستعاد من النسخة الاحتياطية (backup/read.js: PREFS_GROUPS)، فهي للجهاز لا للبيانات.
-  ui: Object.freeze({ thumbnails: true, panelEntry: true, panelOpen: false, panelDual: true }),
+  // صور المحفوظات مطفأة حتى تُفعَّل (و2، 2026-11-10): فتح المحفوظات لا يُصدر طلبًا في تثبيت جديد. ومن رقّى تُثبَّت حاله
+  // (src/background/thumbs-pin.js).
+  ui: Object.freeze({ thumbnails: false, panelEntry: true, panelOpen: false, panelDual: true }),
 });
 
 // سطر واحد بلا محارف تحكم (ومنها فواصل الأسطر)، ومشذّب.

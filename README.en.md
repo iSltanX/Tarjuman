@@ -94,7 +94,7 @@ The interface comes in Arabic and English. On first run it follows YouTube's int
 <!-- tj:facts privacy -->
 - Your translations and settings stay in the extension's storage on your device and aren't synced with any service. Removing the extension deletes them, so take a backup first.
 - Only two things leave the extension:
-  - **Video thumbnails in Library:** requested from YouTube's servers by video ID, with a switch to turn them off. On Firefox they're off until you turn on the switch and agree to "browsing activity".
+  - **Video thumbnails in Library:** off until you turn on their switch in Settings; only then are they requested from YouTube’s servers by video ID. On Firefox, turning them on also asks for your “browsing activity” consent.
   - **A problem report:** you send it yourself from Settings after seeing everything in it, with no translation text or video ID attached automatically.
 - No usage tracking, no ads, and no selling of your data.
 <!-- /tj:facts privacy -->

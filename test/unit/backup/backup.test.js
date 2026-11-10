@@ -8,6 +8,7 @@ import {
   restoreItems, retryItems, runRestore, sha256Hex,
 } from '../../../src/core/backup/index.js';
 import { TjError } from '../../../src/core/errors/index.js';
+import { DEFAULT_PREFS } from '../../../src/core/model/prefs.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { NOW, makeCues, videoRecord } from '../../helpers/fixtures.js';
@@ -103,7 +104,8 @@ test('ذهاب وإياب: مكتبة فارغة تستعيد كل شيء كما
   assert.equal(again.settings, 'restored');
   assert.equal((await store.getSettings()).offsetStepMs, 1000);
   assert.equal((await store.getSettings()).appearance.scale, 120);
-  assert.deepEqual(await store.getPrefs(), samplePrefs({ mode: 'ask' }));
+  // ui قيم هذا الجهاز لا تُستعاد (إلا إطفاء الصور): افتراضيه، والصور فيه مطفأة منذ و2.
+  assert.deepEqual(await store.getPrefs(), { ...samplePrefs({ mode: 'ask' }), ui: DEFAULT_PREFS.ui });
 });
 
 test('دون النسخ السابقة: options.previous=false، وكل previous null، والعدد صفر', async () => {
