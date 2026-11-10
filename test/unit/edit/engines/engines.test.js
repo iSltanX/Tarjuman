@@ -147,19 +147,31 @@ test('مقاييس الكثافة: المحارف المرئية ومسافات�
   assert.deepEqual(readingMetrics({ startMs: 5, endMs: 5, text: 'أ' }), { cps: Infinity, longestLine: 1 });
   assert.deepEqual(readingMetrics({ startMs: 5, endMs: 5, text: '' }), { cps: 0, longestLine: 0 });
   assert.deepEqual(densityIssues({ startMs: 0, endMs: 1000, text: 'س'.repeat(21) }), ['ED_READING_FAST']);
-  assert.deepEqual(densityIssues({ startMs: 0, endMs: 10_000, text: 'س'.repeat(43) }), ['ED_LINE_LONG']);
+  assert.deepEqual(densityIssues({ startMs: 0, endMs: 10_000, text: 'س'.repeat(84) }), [], 'سطران كاملان بلا تنبيه (ح7)');
+  assert.deepEqual(densityIssues({ startMs: 0, endMs: 10_000, text: 'س'.repeat(85) }), ['ED_LINE_LONG']);
+  assert.deepEqual(densityIssues({ startMs: 0, endMs: 10_000, text: 'س'.repeat(43) }, { maxLineChars: 42 }), ['ED_LINE_LONG'], 'حد السطر قابل للتمرير');
   assert.deepEqual(densityIssues({ startMs: 0, endMs: 1000, text: 'س'.repeat(21) }, { maxCps: 25 }), [], 'العتبة قابلة للضبط');
   for (const code of ['ED_READING_FAST', 'ED_LINE_LONG']) assert.ok(hasCode(code));
 });
 
 test('العتبة الافتراضية مكتوبة بمبررها ومعايرة على العيّنتين العربيتين الحقيقيتين: تنبيه على الشاذ لا على عُشر الكلام', () => {
-  assert.deepEqual(READING_DEFAULTS, { maxCps: 20, maxLineChars: 42 });
+  assert.deepEqual(READING_DEFAULTS, { maxCps: 20, maxLineChars: 84 });
   const doc = readFileSync(path.join(ROOT, 'docs/reading-calibration.md'), 'utf8');
   assert.match(doc, /\*\*20 محرفًا في الثانية\*\*/);
-  assert.match(doc, /\*\*42 محرفًا\*\*/);
+  assert.match(doc, /\*\*84 محرفًا\*\*/);
   const cues = [REAL_ARABIC.manual, REAL_ARABIC.asrLong].flatMap((name) => parseSrtLenient(realArabic(name)).cues);
   const fast = cues.filter((c) => densityIssues(c).includes('ED_READING_FAST')).length / cues.length;
   const long = cues.filter((c) => densityIssues(c).includes('ED_LINE_LONG')).length / cues.length;
   assert.ok(fast > 0.01 && fast < 0.05, `سرعة ${fast}`);
-  assert.ok(long > 0.02 && long < 0.1, `سطر ${long}`);
+  assert.equal(long, 0, 'أطول سطر في العيّنتين 59 حرفًا: لا يتجاوز سطرين كاملين');
+});
+
+test('ح7: ترجمة ميدواي التلقائية (عادي، سطر لكل مقطع) تنبّه على 12 قراءة سريعة، وعلى السطر الأطول من 84 وحده', () => {
+  const cues = parseSrtLenient(readFileSync(path.join(ROOT, 'test/e2e/fixtures/Y9rkKtK1b44.en.asr.normal.ar.srt'), 'utf8')).cues;
+  assert.equal(cues.length, 1056);
+  const issues = cues.map((c) => densityIssues(c));
+  assert.equal(issues.filter((x) => x.includes('ED_READING_FAST')).length, 12);
+  const long = cues.filter((c, i) => issues[i].includes('ED_LINE_LONG'));
+  assert.deepEqual(long.map((c) => readingMetrics(c).longestLine > 84), [true], 'سطر واحد فوق 84 (كانت 400 بحد 42)');
+  assert.equal(cues.filter((c) => readingMetrics(c).longestLine > 42).length, 400, 'ما كان ينبَّه عليه بحد 42');
 });

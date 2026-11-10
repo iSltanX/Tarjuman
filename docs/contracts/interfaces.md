@@ -429,7 +429,7 @@ readingMetrics(cue) → { cps: number, longestLine: number }
 - `src/core/compare`: `rankReferences` يكتب `why` برسالة `CMP_REF_MATCHED` أو `CMP_REF_SUMMARY`.
 - `src/core/import`: `partsStatus(fingerprint, cues) → { index, from, to, total, received, complete }[] | null` حالة استلام الأجزاء المشتقة (R52)، وهي `plan.parts` في ناتج `readPatch`، و`videoIdFromName(fileName, { videoId?, knownVideoIds? }) → null | { videoId, differs }` قرينة الاسم، و`REVIEW_THRESHOLDS` (`suggest` 0.5، و`certain` 0.8، و`gap` 0.1)، و`classTransitions` و`cuesKey`.
 - `src/core/export`: `patchInstructions({ videoId, title, glossary? }) → string` نص الملحق ب، و`glossaryParagraph(terms) → string | null` فقرة القاموس وحدها، و`GLOSSARY_TEMPLATE` و`PATCH_INSTRUCTIONS_TEMPLATE`، و`CONTENT_SPLIT` (`tolerance` 0.15، و`silenceMs` 1500). و`GLOSSARY_LIMITS` هو ثابت نموذج التفضيلات نفسه (`maxTerms` 100، و`maxSource` و`maxTarget` 80، و`maxNote` 120)، يعيد التصدير تصديره ولا يعرّف غيره.
-- `src/core/edit/density.js`: `READING_DEFAULTS` (`maxCps` 20، و`maxLineChars` 42) معايرة على مقاطع عربية حقيقية، وهي ما يعنيه `prefs.review.maxCps: null`؛ و`densityIssues(cue, limits?) → ('ED_READING_FAST' | 'ED_LINE_LONG')[]` للوحة المشكلات (P14).
+- `src/core/edit/density.js`: `READING_DEFAULTS` (`maxCps` 20، و`maxLineChars` 84 منذ ح7، قرار سلطان ق5 في 2026-11-10، وكان 42) معايرة على مقاطع عربية حقيقية، وهي ما يعنيه `prefs.review.maxCps: null`؛ و`densityIssues(cue, limits?) → ('ED_READING_FAST' | 'ED_LINE_LONG')[]` للوحة المشكلات (P14).
 - `src/core/edit`: محرّكات P11 في ملفاتها (`search.js` و`structure.js` و`drift.js` و`density.js`) تُستورد منها مباشرة، و`index.js` القديم لم يُمس.
 - الرموز الجديدة في [عقد الأخطاء](errors.md) §٦.
 

@@ -43,5 +43,11 @@ out.push('');
 out.push('| العتبة المرشحة | نسبة التنبيه (الاثنتان معًا) |');
 out.push('| --- | --- |');
 for (const t of [15, 17, 20, 25]) out.push(`| سرعة > ${t} محرف/ث | ${rate(all.cps, t)} |`);
-for (const t of [37, 42, 50]) out.push(`| سطر > ${t} محرفًا | ${rate(all.line, t)} |`);
+for (const t of [37, 42, 50, 84]) out.push(`| سطر > ${t} محرفًا | ${rate(all.line, t)} |`);
+// ح7: ترجمة مسار تلقائي بوضع «عادي» (سطر واحد لكل مقطع، لا يلفّه النموذج): هنا يظهر أثر حد السطر.
+const asrNormal = parseSrtLenient(readFileSync(path.join(ROOT, 'test/e2e/fixtures/Y9rkKtK1b44.en.asr.normal.ar.srt'), 'utf8')).cues.map(readingMetrics).map((x) => x.longestLine).sort((a, b) => a - b);
+out.push('');
+out.push('| ميدواي تلقائي، «عادي» (سطر لكل مقطع) | المقاطع | أطول سطر: الوسيط · م90 · م95 · م99 · الأقصى | سطر > 42 | سطر > 84 |');
+out.push('| --- | --- | --- | --- | --- |');
+out.push(`| ترجمة نموذج | ${asrNormal.length} | ${[50, 90, 95, 99].map((q) => pct(asrNormal, q)).concat(asrNormal.at(-1)).join(' · ')} | ${asrNormal.filter((x) => x > 42).length} (${rate(asrNormal, 42)}) | ${asrNormal.filter((x) => x > 84).length} (${rate(asrNormal, 84)}) |`);
 process.stdout.write(`${out.join('\n')}\n`);

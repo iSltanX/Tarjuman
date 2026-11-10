@@ -290,7 +290,7 @@ export default Object.freeze({
   ED_DRIFT_RANGE: 'The correction would push some times over the allowed limit (100 hours). Check the two correction points.',
   ED_DRIFT_NEGATIVE: 'The correction would put some segments before the start of the video: {list}. Nothing changed.',
   ED_READING_FAST: 'Fast reading: {cps} characters per second (limit {max}). Lengthen the duration or split the text into two segments if you can.',
-  ED_LINE_LONG: 'Long line: {chars} characters (limit {max}). The text will wrap.',
+  ED_LINE_LONG: 'Long line: {chars} characters (limit {max}). It may show as more than two lines over the video; split the text into two segments if you can.',
 
   ED_REVIEW_MISSING: 'Missing from the translation',
   ED_REVIEW_DRIFT: 'Timing differs from the original',
