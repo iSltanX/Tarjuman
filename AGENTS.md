@@ -10,7 +10,7 @@
 
 ## الوثائق الحاكمة بالترتيب
 
-1. [`CLAUDE.md`](CLAUDE.md): الحالة والقواعد الثابتة.
+1. [`CLAUDE.md`](CLAUDE.md): القواعد الثابتة، والإحالة إلى سطر الحالة.
 2. [`docs/product-spec.md`](docs/product-spec.md): النطاق والقرارات، والعقود في [`docs/contracts/`](docs/contracts/README.md).
 3. [`docs/development.md`](docs/development.md) و[`docs/maintenance.md`](docs/maintenance.md): البناء والفحوص والحزم. و[`docs/identity.md`](docs/identity.md): الهوية البصرية المعتمدة.
 4. [`docs/known-limitations.md`](docs/known-limitations.md): قيود معروفة، فلا تُبلَّغ خللًا جديدًا إلا بدليل يتجاوزها.
