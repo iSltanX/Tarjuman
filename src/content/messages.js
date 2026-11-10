@@ -29,15 +29,6 @@ const safe = (fn) => {
 };
 
 /**
- * @param {{
- *   controller: { getState: () => import('./controller.js').ControllerState, diagnostics?: () => object },
- *   mounted: { overlay?: { state: string, diagnostics?: () => object }, controls?: { state: string, diagnostics?: () => object } },
- *   runtime?: typeof chrome.runtime,
- *   seek?: (ms: number) => boolean,
- * }} deps
- * @returns {() => void} إلغاء الاستماع
- */
-/**
  * خريطة وجود العناصر التي يعتمد عليها ترجمان (ف10، 2026-11-10): نعم أو لا لكل محدد في SELECTORS، و`anyVideo` لأي عنصر فيديو.
  * أسماء ونعم/لا فقط، بلا نص ولا رابط، لتقرير تشخيص الصفحة.
  * @param {Document} [doc] @returns {Record<string, boolean>}
@@ -56,6 +47,16 @@ export function domPresence(doc = document) {
   return out;
 }
 
+/**
+ * @param {{
+ *   controller: { getState: () => import('./controller.js').ControllerState, diagnostics?: () => object },
+ *   mounted: { overlay?: { state: string, diagnostics?: () => object }, controls?: { state: string, diagnostics?: () => object }, panel?: { diagnostics?: () => object } },
+ *   runtime?: typeof chrome.runtime,
+ *   seek?: (ms: number) => boolean,
+ *   dom?: () => Record<string, boolean>,
+ * }} deps  dom للاختبار: خريطة وجود العناصر (ف10)، والافتراضي domPresence للمستند
+ * @returns {() => void} إلغاء الاستماع
+ */
 export function installMessageHandler({ controller, mounted, runtime = globalThis.chrome.runtime, seek = (ms) => seekMainVideo(ms), dom = () => domPresence() }) {
   const handler = (req, sender, sendResponse) => {
     if (!isExtensionPage(sender, runtime)) return undefined;

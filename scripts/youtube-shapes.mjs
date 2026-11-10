@@ -90,14 +90,8 @@ export function collectInPage(selectors) {
  * @param {{ inPage: ReturnType<typeof collectInPage>, requests: string[], events: string[], source: string, at: string }} o
  */
 export function snapshot({ inPage, requests, events, source, at }) {
-  const shapes = requests.map(requestShape).filter(Boolean);
-  const seen = new Set();
-  const request = shapes.filter((s) => {
-    const k = JSON.stringify(s);
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
+  // أشكال فريدة مرتبة، فلا يظهر ترتيب وصول الطلبات فرقًا (مراجعة المرحلة 6، م8).
+  const request = [...new Set(requests.map(requestShape).filter(Boolean).map((s) => JSON.stringify(s)))].sort().map((k) => JSON.parse(k));
   return {
     version: SHAPES_VERSION, source, at,
     dom: inPage.dom,

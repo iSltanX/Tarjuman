@@ -112,8 +112,8 @@ export function mountControls(controller, deps = {}) {
       if (session && player && session.player === player && session.healthy()) return; // الشريط يُعاد رسمه الآن
       dropSession();
       observeBar(null);
-      const timedOut = playerTimedOut(player, right);
-      if (state !== 'error' || failures < MAX_FAILURES) state = timedOut ? 'error' : 'waiting';
+      // خطأ تركيب نهائي (MAX_FAILURES) يبقى برمزه: لا تكتب المهلة فوقه (مراجعة المرحلة 6، م5).
+      if (state !== 'error' || failures < MAX_FAILURES) state = playerTimedOut(player, right) ? 'error' : 'waiting';
       observePage(true);
       return;
     }

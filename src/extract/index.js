@@ -176,7 +176,7 @@ export function createExtractor(env) {
   }
 
   /**
-   * قائمة المسارات من بيانات المشغّل (AA1): تُقبل للفيديو المعروض وحده، وتُبلَّغ المشتركين إن تغيّرت.
+   * «رُئي طلب ترجمة» من غلافي الالتقاط (ف7): يُعدّ للفيديو المعروض وحده، وأكبر عدّ في الصفحة. لا يُبلّغ المشتركين.
    * @param {unknown} data
    */
   function handleSeen(data) {
@@ -190,6 +190,10 @@ export function createExtractor(env) {
     return { accepted: true, code: null };
   }
 
+  /**
+   * قائمة المسارات من بيانات المشغّل (AA1): تُقبل للفيديو المعروض وحده، وتُبلَّغ المشتركين إن تغيّرت.
+   * @param {unknown} data
+   */
   function handleTracklist(data) {
     const list = validateTracklistMessage(data);
     if (!list) return { accepted: false, code: null };

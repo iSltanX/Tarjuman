@@ -125,3 +125,30 @@ test('المستخرج: «طلبات مرئية» للفيديو المعروض 
   ex.setVideo('BBBBBBBBBBB');
   assert.equal(ex.diagnostics().requestsSeen, 0);
 });
+
+// ———— من مراجعة المرحلة 6 ————
+
+test('م1: أثناء الإعلان لا رسالة «لم يلتقطها» (المشغّل لا يجلب ترجمة الفيديو قبل انتهائه)، وبعده تبدأ المهلة من أولها', () => {
+  const p = page();
+  p.player.classList.add('ad-showing');
+  p.cc.setAttribute('aria-pressed', 'true');
+  p.tick(CC_GRACE_MS + 1500);
+  click(p.ui.btn('download'));
+  assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')), 'لا إنذار أثناء الإعلان');
+  p.player.classList.remove('ad-showing');
+  p.tick(1100);
+  assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')), 'المهلة من انتهاء الإعلان');
+  p.tick(CC_GRACE_MS);
+  assert.ok(menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')));
+  p.handle.unmount();
+});
+
+test('م2: التقاط مرفوض (captureIssue) يقول سببه وحده، بلا «لم يلتقطها» معه', () => {
+  const p = page();
+  p.controller.set({ captureIssue: { code: 'EX_NOT_ENGLISH' } });
+  p.cc.setAttribute('aria-pressed', 'true');
+  p.tick(CC_GRACE_MS + 1500);
+  click(p.ui.btn('download'));
+  assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')));
+  p.handle.unmount();
+});

@@ -8,6 +8,7 @@
 import path from 'node:path';
 import { dismissConsent, waitForPlayer } from '../../live/harness/youtube.mjs';
 import { messageFor } from '../../../src/core/errors/index.js';
+import EN_ERRORS from '../../../src/i18n/en/errors.js';
 import { BROWSERS, Evidence, ROOT, attachTab, clip, connectBrowser, launchBrowser, loadState, openUnattached, saveState, sleep } from './lib.mjs';
 
 const argv = process.argv.slice(2);
@@ -87,7 +88,9 @@ try {
         const menu = (await iso(() => globalThis.__tarjuman.mounted.controls.peek())).layer.menu;
         const st = await iso(STATE);
         // نص الرسالة من رمزها لا حرفيًا (ف8: كان ينتظر نصًا قديمًا): إرشاد «فعّل CC» أو «لا ترجمة لهذا الفيديو» حين يعطّل يوتيوب زر CC.
-        r.result = { captured: st.captured.length, menuGuides: ['CT_NOT_CAPTURED', 'CT_NO_CAPTIONS'].some((c) => (menu?.text ?? '').includes(messageFor(c))) };
+        // وباللغتين: واجهة الإضافة قد تتبع لغة المتصفح (--lang=en-US)، وmessageFor في Node عربي (مراجعة المرحلة 6، م9).
+        const guides = ['CT_NOT_CAPTURED', 'CT_NO_CAPTIONS'].flatMap((c) => [messageFor(c), EN_ERRORS[c]]).filter(Boolean);
+        r.result = { captured: st.captured.length, menuGuides: guides.some((g) => (menu?.text ?? '').includes(g)) };
         ev.check('list-nocap-no-capture-and-guidance', st.captured.length === 0 && r.result.menuGuides, r.result);
       } else if (item.slot === 'ad') {
         let seen = null;

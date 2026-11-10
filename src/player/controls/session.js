@@ -142,8 +142,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let lastModel = null;
   let overflow = null;
   let flags = { live: false, unavailable: false, brave: false, ad: false, ccStuck: false };
-  /** منذ متى زر CC مضغوط ولا التقاط (ف7)، أو null. */
+  /** منذ متى زر CC مضغوط ولا التقاط (ف7)، ولأي فيديو، أو null. */
   let ccOnSince = null;
+  let ccVideo = null;
   /** المؤشر فوق التلميح (U89). */
   let tipHover = false;
   /** channel قناة الرسالة: رسائل الاستيراد ('import') تُمسح ببدء استيراد جديد، فلا تتراكم أخطاء قديمة بعد نجاحه (U43). */
@@ -203,12 +204,18 @@ export function createControlsSession({ controller, doc, win, player, flows, now
    * بدل «فعّل ترجمة يوتيوب (CC)» وهي مفعّلة أمام المستخدم.
    */
   function ccStuckNow() {
-    if (!captionsOn() || controller.getState().captured.length) {
+    const s = controller.getState();
+    // لا إنذار أثناء الإعلان (المشغّل لا يجلب ترجمة الفيديو قبل انتهائه)، ولا مع التقاط مرفوض (رآه ترجمان وقال سببه في
+    // captureIssue)، والعدّ لكل فيديو من أوله (مراجعة المرحلة 6، م1 وم2).
+    if (!captionsOn() || s.captured.length || s.captureIssue || isAdShowing(doc)) {
       ccOnSince = null;
       return false;
     }
     const t = now();
-    if (ccOnSince === null) ccOnSince = t;
+    if (ccOnSince === null || ccVideo !== s.videoId) {
+      ccOnSince = t;
+      ccVideo = s.videoId;
+    }
     return t - ccOnSince >= CC_GRACE_MS;
   }
   const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc), ccStuck: ccStuckNow() });

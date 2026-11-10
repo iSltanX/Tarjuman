@@ -36,11 +36,16 @@ try {
   });
   await page.goto(`https://www.youtube.com/watch?v=${video}`);
   await dismissConsent(page);
+  // الأحداث من أول انتقال بعد التحميل (إلى فيديو مقترح) لا من التحميل نفسه: كذلك جُمع خط الأساس، فالمقارنة على الطريقة نفسها.
   await page.eval((names) => {
     window.__tjShapeEvents = [];
     for (const n of names) document.addEventListener(n, () => window.__tjShapeEvents.push(n));
   }, { args: [NAV_EVENTS] });
-  await waitForPlayer(page, video, 45000);
+  if (!(await waitForPlayer(page, video, 45000))) {
+    console.error('تعذّرت الجولة: لم يجهز المشغّل خلال 45 ث (تحدٍّ أو موافقة أو شبكة). لم يُكتب شيء.');
+    process.exitCode = 1;
+    throw new Error('player-not-ready');
+  }
   await ensureCC(page, true);
   await sleep(3000);
   const inPage = await page.eval(collectInPage, { args: [SELECTORS] });

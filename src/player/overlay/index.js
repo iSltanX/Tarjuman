@@ -86,8 +86,8 @@ export function mountOverlay(controller, env = {}) {
     const player = getPlayer(doc);
     if (!player) {
       dropSession();
-      const timedOut = playerTimedOut();
-      if (state !== 'error' || failures < MAX_FAILURES) state = timedOut ? 'error' : 'waiting';
+      // خطأ تركيب نهائي (MAX_FAILURES) يبقى برمزه: لا تكتب المهلة فوقه (مراجعة المرحلة 6، م5).
+      if (state !== 'error' || failures < MAX_FAILURES) state = playerTimedOut() ? 'error' : 'waiting';
       startObserving();
       return;
     }

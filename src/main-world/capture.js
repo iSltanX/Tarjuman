@@ -105,8 +105,12 @@ if (doc) {
 // ولا رمز: فإن لم يُرَ طلب بقي العدّ صفرًا في تشخيص الصفحة، وهذا الدليل على أن المشغّل جلب الترجمة من طريق لا يمر بالغلافين.
 let seenRequests = 0;
 function noteSeen(meta) {
-  seenRequests++;
-  window.postMessage({ source: 'tarjuman', v: 1, kind: 'seen', videoId: meta.videoId, seen: seenRequests }, origin);
+  try {
+    seenRequests++;
+    window.postMessage({ source: 'tarjuman', v: 1, kind: 'seen', videoId: meta.videoId, seen: seenRequests }, origin);
+  } catch {
+    // لا شيء: العدّ لا يمس طلب الصفحة ولا نتيجته أبدًا.
+  }
 }
 
 function metaFor(url) {
