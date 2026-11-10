@@ -6,7 +6,7 @@ import { DEFAULT_FOLDER, DEFAULT_PREFS, GLOSSARY_LIMITS, READING_SPEED, isValidF
 import { DEFAULT_SETTINGS, SUBTITLE_SCALE } from '../../core/model/settings.js';
 import { t } from '../../i18n/index.js';
 import { PLAYER_TOKENS } from '../../ui/player-tokens.js';
-import { subtitleFontStack } from '../../ui/subtitle-fonts.js';
+import { subtitleFont, subtitleFontStack } from '../../ui/subtitle-fonts.js';
 
 /** الخطوة المخصصة: من 0.1 إلى 10 ثوانٍ بمضاعفات 0.1 (نموذج الإعدادات). */
 export const STEP_RANGE_MS = Object.freeze({ min: 100, max: 10000, grid: 100 });
@@ -218,6 +218,8 @@ export function previewStyle(a) {
   const pct = PREVIEW_POSITION_PCT[a.position] ?? PREVIEW_POSITION_PCT.bottom;
   return {
     fontFamily: subtitleFontStack(a.font),
+    // حد عرض السطر كالطبقة (ف2): ما زاد على نحو 42 حرفًا يلتفّ سطرين متوازنين.
+    lineCap: `${subtitleFont(a.font).lineCapEm}em`,
     fontSize: `${Math.max(PREVIEW_MIN_FONT_PX, Math.round(PREVIEW_REFERENCE_HEIGHT * PREVIEW_BASE_RATIO * (a.scale / 100)))}px`,
     anchor: a.position === 'top' ? 'top' : 'bottom',
     offset: `${pct}%`,

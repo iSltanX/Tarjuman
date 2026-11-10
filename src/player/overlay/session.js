@@ -8,7 +8,7 @@ import { createSyncEngine } from '../sync/engine.js';
 import { hostParent } from '../watch/fullscreen.js';
 import { watchNavigation } from '../watch/navigation.js';
 import { watchPlayerState } from '../watch/player-state.js';
-import { subtitleFontStack } from '../../ui/subtitle-fonts.js';
+import { LATIN_LINE_CAP_EM, subtitleFont, subtitleFontStack } from '../../ui/subtitle-fonts.js';
 import { getMainVideo } from '../youtube-dom.js';
 import { createCaptionHider } from './caption-hider.js';
 import { decide } from './decision.js';
@@ -91,7 +91,7 @@ export function createOverlaySession({ controller, doc, win, player, fonts = nul
       view.setAppearance({ background: d.appearance.background });
       view.setLang(controller.getState().english?.lang ?? null);
       view.setTranslationLang?.(controller.getState().arabic?.lang ?? null);
-      view.setFont({ ar: subtitleFontStack(d.appearance.font), en: subtitleFontStack('almarai') });
+      view.setFont({ ar: subtitleFontStack(d.appearance.font), en: subtitleFontStack('almarai'), capAr: subtitleFont(d.appearance.font).lineCapEm, capEn: LATIN_LINE_CAP_EM });
       if (d.engaged && fonts && fontRequested !== d.appearance.font) {
         fontRequested = d.appearance.font;
         fonts.ensure(fontRequested);

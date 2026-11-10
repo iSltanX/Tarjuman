@@ -51,7 +51,11 @@ export function createOverlayView({ doc, win }) {
     el.setAttribute('dir', lineDirection(text, lang));
     // لغة غير معروفة «und» (BCP-47)، فلا يُنطق السطر بلغة مفترضة.
     el.setAttribute('lang', lang ?? 'und');
-    el.textContent = text;
+    // النص في عنصر داخلي تحمل خلفيته (ف2): لكل سطر ملتفّ صندوقه بعرض نصه.
+    const txt = doc.createElement('span');
+    txt.className = 'txt';
+    txt.textContent = text;
+    el.appendChild(txt);
     return el;
   }
 
@@ -138,12 +142,18 @@ export function createOverlayView({ doc, win }) {
     },
 
     /**
-     * عائلة الخط بسلسلتها (المختار ثم المراعي المضمّن ثم خطوط النظام العربية)؛ تتغير دون إعادة بناء الأسطر.
-     * @param {{ ar: string, en: string }} f
+     * عائلة الخط بسلسلتها (المختار ثم المراعي المضمّن ثم خطوط النظام العربية)، وحد عرض السطر لكلٍّ بوحدة em (ف2)؛ تتغير
+     * دون إعادة بناء الأسطر.
+     * @param {{ ar: string, en: string, capAr?: number, capEn?: number }} f
      */
     setFont(f) {
-      if (host.style.getPropertyValue('--tj-sub-font') !== f.ar) host.style.setProperty('--tj-sub-font', f.ar);
-      if (host.style.getPropertyValue('--tj-sub-font-en') !== f.en) host.style.setProperty('--tj-sub-font-en', f.en);
+      const set = (name, value) => {
+        if (host.style.getPropertyValue(name) !== value) host.style.setProperty(name, value);
+      };
+      set('--tj-sub-font', f.ar);
+      set('--tj-sub-font-en', f.en);
+      if (Number.isFinite(f.capAr)) set('--tj-cap-ar', `${f.capAr}em`);
+      if (Number.isFinite(f.capEn)) set('--tj-cap-en', `${f.capEn}em`);
     },
 
     /** @param {{ fontPx: number, anchor: 'top' | 'bottom', offsetPx: number }} l */

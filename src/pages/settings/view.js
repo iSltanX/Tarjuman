@@ -368,7 +368,8 @@ export function createSettings(env) {
 
   // المعاينة الحية: صندوق فيديو داكن بسطرين، يتحدث فور تغيير أي من المظهر.
   const preview = (() => {
-    const stage = el('div', { className: 'st-preview__stage', children: previewLines().map((line) => el('p', { className: 'st-preview__line', text: line, attrs: { lang: getLocale(), dir: getDir() }, doc })), doc });
+    // النص في عنصر داخلي تحمل خلفيته كالطبقة (ف2): لكل سطر ملتفّ صندوقه.
+    const stage = el('div', { className: 'st-preview__stage', children: previewLines().map((line) => el('p', { className: 'st-preview__line', children: [el('span', { className: 'st-preview__txt', text: line, doc })], attrs: { lang: getLocale(), dir: getDir() }, doc })), doc });
     const screen = el('div', { className: 'st-preview__screen', children: [stage], doc });
     screen.style.width = `${PREVIEW_BOX.width}px`;
     screen.style.aspectRatio = `${PREVIEW_BOX.width} / ${PREVIEW_BOX.height}`;
@@ -379,6 +380,7 @@ export function createSettings(env) {
         const s = previewStyle(a);
         stage.style.fontFamily = s.fontFamily;
         stage.style.fontSize = s.fontSize;
+        stage.style.setProperty('--st-cap', s.lineCap);
         stage.style.top = s.anchor === 'top' ? s.offset : 'auto';
         stage.style.bottom = s.anchor === 'bottom' ? s.offset : 'auto';
         stage.setAttribute('data-bg', s.background);

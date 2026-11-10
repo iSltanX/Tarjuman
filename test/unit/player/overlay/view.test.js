@@ -93,7 +93,13 @@ test('النص يدخل textContent وحده: لا عناصر ولا سمات م
   const evil = '<img src=x onerror=alert(1)> و <script>x()</script>';
   view.render({ ar: [evil], en: [] });
   assert.equal(stage.children.length, 1);
-  assert.equal(stage.children[0].children.length, 0, 'لا أبناء داخل السطر');
+  // ابن واحد ثابت يحمل خلفية السطر (ف2)، ونصه textContent بلا أبناء.
+  assert.equal(stage.children[0].children.length, 1, 'عنصر النص وحده داخل السطر');
+  const txt = stage.children[0].children[0];
+  assert.equal(txt.className, 'txt');
+  assert.equal(txt.children.length, 0, 'لا أبناء من نص المقطع');
+  assert.deepEqual([...txt._attrs.keys()].filter((k) => k !== 'class'), [], 'لا سمة من نص المقطع');
+  assert.equal(txt.textContent, evil);
   assert.equal(stage.children[0].textContent, evil);
   // dir من حروف النص، وlang من نوع السطر (تدقيق 7a66f91، C6، U48): لا سمة من نص المقطع نفسه.
   assert.deepEqual([...stage.children[0]._attrs.keys()].sort(), ['dir', 'lang']);

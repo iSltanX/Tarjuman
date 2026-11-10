@@ -90,10 +90,12 @@
   background: linear-gradient(160deg, #2A2F33, #0F1416); border: 1px solid var(--tj-border-strong);
 }
 .st-preview__stage { position: absolute; inset-inline: 4%; display: flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.5; font-weight: 400; }
-.st-preview__line { margin: 0; padding: 2px 8px; border-radius: 4px; color: var(--st-sub-text); text-align: center; unicode-bidi: isolate; width: fit-content; max-width: 100%; overflow-wrap: anywhere; font: inherit; }
-.st-preview__stage[data-bg="none"] .st-preview__line { background: none; text-shadow: 0 0 3px #000, 0 0 6px #000, 0 1px 3px #000, 0 2px 8px rgb(0 0 0 / 90%); }
-.st-preview__stage[data-bg="soft"] .st-preview__line { background: var(--st-sub-bg-soft); }
-.st-preview__stage[data-bg="solid"] .st-preview__line { background: var(--st-sub-bg-solid); }
+.st-preview__line { margin: 0; padding: 2px 0; color: var(--st-sub-text); text-align: center; unicode-bidi: isolate; width: fit-content; max-width: min(100%, calc(var(--st-cap, 21.6em) + 16px)); overflow-wrap: anywhere; text-wrap: balance; font: inherit; }
+/* الخلفية على النص لا على الكتلة، لكل سطر ملتفّ صندوقه (ف2، كالطبقة). */
+.st-preview__txt { padding: 2px 8px; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.st-preview__stage[data-bg="none"] .st-preview__line { text-shadow: 0 0 3px #000, 0 0 6px #000, 0 1px 3px #000, 0 2px 8px rgb(0 0 0 / 90%); }
+.st-preview__stage[data-bg="soft"] .st-preview__txt { background: var(--st-sub-bg-soft); }
+.st-preview__stage[data-bg="solid"] .st-preview__txt { background: var(--st-sub-bg-solid); }
 
 /* الحقول الرقمية بوحدتها (tj-num من src/ui). */
 .st-fields { display: flex; flex-wrap: wrap; gap: var(--tj-space-5); padding: 14px 20px; }
