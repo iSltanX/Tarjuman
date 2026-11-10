@@ -20,6 +20,9 @@ export default Object.freeze({
     brand: 'ترجمان — المحفوظات', pages: 'صفحات ترجمان', yourData: 'ترجماتك وإعداداتك في متصفحك',
   },
   page: { title: 'ترجمان — {page}', renderFailed: 'تعذّر عرض الصفحة' },
+  continuation: {
+    note: 'أُكملت بالملف «{file}»: {count}.',
+  },
   slot: {
     label: 'الترجمة {n}', labelActive: 'الترجمة {n}، نشطة', labelEmpty: 'الترجمة {n}، فارغة', picker: 'الترجمة النشطة',
   },

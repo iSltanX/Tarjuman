@@ -19,7 +19,7 @@ import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } fr
 import { closeMenuWithin, createMenu } from '../../ui/menu.js';
 import { holdPage } from '../../ui/page-hold.js';
 import { createToaster } from '../../ui/toast.js';
-import { activateSlot, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, prepareUpload, studyName, studyNote, undoActivation } from './actions.js';
+import { activateSlot, applyContinuation, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, prepareUpload, studyName, studyNote, undoActivation } from './actions.js';
 import { radioGroup } from './choice.js';
 import { createCopyState } from './copy.js';
 import { deleteContent } from './delete.js';
@@ -358,6 +358,13 @@ export function createLibrary(env) {
       confirmBtn = view.root.closest?.('form')?.querySelector('button[value="confirm"]') ?? null;
       if (!(await pending)) return;
       const choice = view.choice();
+      if (choice.complete) {
+        const done = await applyContinuation({ store, bundle: prep.bundle, cont: choice.complete, fileName: prep.result.fileName, now });
+        toaster.show(tr('library.upload.completed', { n: done.n }), 'success');
+        wrote = true;
+        await load();
+        return;
+      }
       const info = await applyUpload({ store, bundle: prep.bundle, settings: prep.settings, result: prep.result, ...choice, now });
       toaster.show(messageFor(info.replaced ? 'PG_UPLOAD_REPLACED' : 'PG_UPLOAD_SAVED', { n: choice.n }), 'success');
       if (info.offsetWas !== 0) toaster.show(messageFor('ST_OFFSET_RESET'), 'info');

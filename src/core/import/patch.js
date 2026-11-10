@@ -114,22 +114,8 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 
     if (files.length > MAX_FILES) throw new TjError('IM_TOO_MANY_FILES', { params: { count: files.length, max: MAX_FILES } });
     multi = files.length > 1;
 
-    // التحقق أثناء القراءة: الرقم داخل البصمة، والزمن زمنها حرفيًا، ولا تكرار. فيتوقف عند أول ملف يثبت بطلانه ولا يقرأ
-    // البقية (تدقيق 7a66f91، U40)، والمجموع لا يتجاوز عدد البصمة لأن الأرقام فريدة داخلها.
-    const byStart = new Map();
-    fingerprint.cues.forEach((c, i) => { if (!byStart.has(c.startMs)) byStart.set(c.startMs, i); });
-    const seen = new Set();
-    const check = (c) => {
-      if (seen.has(c.n)) throw new TjError('IM_PATCH_DUPLICATE', { params: { n: c.n } });
-      seen.add(c.n);
-      if (c.n > fingerprint.count) throw new TjError('IM_PATCH_OUT_OF_RANGE', { params: { n: c.n, count: fingerprint.count } });
-      const s = fingerprint.cues[c.n - 1];
-      if (c.startMs !== s.startMs || c.endMs !== s.endMs) {
-        const k = byStart.get(c.startMs);
-        if (k !== undefined && fingerprint.cues[k].endMs === c.endMs) throw new TjError('IM_PATCH_RENUMBERED', { params: { n: c.n, expected: k + 1 } });
-        throw new TjError('IM_PATCH_TIME_MISMATCH', { params: { n: c.n } });
-      }
-    };
+    // التحقق أثناء القراءة: يتوقف عند أول ملف يثبت بطلانه ولا يقرأ البقية (تدقيق 7a66f91، U40).
+    const check = patchChecker(fingerprint);
     const incoming = [];
     const notes = [];
     const warnings = [];
@@ -148,47 +134,7 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 
     }
     current = null;
     incoming.sort((x, y) => x.n - y.n);
-
-    const map = mapToFingerprint(fingerprint, cues);
-    if (!map.ok) throw new TjError('IM_PATCH_UNALIGNED', { params: { reasons: map.reasons.join(' ') } });
-    /** @type {PatchItem[]} */
-    const items = [];
-    const skipped = [];
-    for (const c of incoming) {
-      const i = c.n - 1;
-      if (isBlankText(c.text)) skipped.push({ n: c.n, reason: 'empty' });
-      else if (map.structure.has(i)) skipped.push({ n: c.n, reason: 'structure' });
-      else if (map.weak.has(i)) skipped.push({ n: c.n, reason: 'weak' });
-      else if (map.at.has(i)) {
-        const j = map.at.get(i);
-        items.push({ n: c.n, action: 'replace', index: j, before: one(cues[j]), after: { ...one(cues[j]), text: c.text } });
-      } else {
-        const s = fingerprint.cues[i];
-        items.push({ n: c.n, action: 'insert', index: map.insertAt[i], before: null, after: { n: c.n, startMs: s.startMs, endMs: s.endMs, text: c.text } });
-      }
-    }
-    // لا مقطع مترجم أصلًا خطأ؛ أما ما تُخطّي لموضعه في الترجمة فخطة بلا بنود يشرحها التحذير.
-    if (!items.length && skipped.every((x) => x.reason === 'empty')) throw new TjError('IM_PATCH_NOTHING');
-    const listOf = (ns) => ({ list: shortList(ns) });
-    const empty = skipped.filter((x) => x.reason === 'empty').map((x) => x.n);
-    const structural = skipped.filter((x) => x.reason === 'structure').map((x) => x.n);
-    const weakOnes = skipped.filter((x) => x.reason === 'weak').map((x) => x.n);
-    const untranslated = untranslatedTest(target, parseTrackKey(fingerprint.trackKey)?.lang ?? null);
-    const noArabic = untranslated ? items.filter((x) => untranslated(x.after.text)).map((x) => x.n) : [];
-    if (empty.length) warnings.push({ code: 'IM_PATCH_SKIPPED_EMPTY', params: listOf(empty) });
-    if (structural.length) warnings.push({ code: 'IM_PATCH_SKIPPED_STRUCTURE', params: listOf(structural) });
-    if (weakOnes.length) warnings.push({ code: 'IM_PATCH_SKIPPED_WEAK', params: listOf(weakOnes) });
-    if (noArabic.length) warnings.push({ code: 'IM_PATCH_NO_ARABIC', params: listOf(noArabic) });
-
-    const received = receivedOf(map, cues);
-    for (const it of items) received.add(it.n - 1);
-    return {
-      ok: true,
-      plan: {
-        fingerprintId: fingerprint.id, count: fingerprint.count, base: { count: cues.length, key: cuesKey(cues) },
-        items, skipped, warnings, notes, parts: statusOf(fingerprint, received),
-      },
-    };
+    return { ok: true, plan: planFrom(incoming, { fingerprint, cues, target, notes, warnings }) };
   } catch (err) {
     const info = toErrorInfo(err);
     const error = { code: info.code, message: multi && current ? `«${current}»: ${info.message}` : info.message };
@@ -196,6 +142,96 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 
     if (line) error.line = line;
     if (info.code === 'TJ_UNEXPECTED') error.detail = info.detail;
     return { ok: false, error };
+  }
+}
+
+/**
+ * فاحص مقاطع التصحيح بالبصمة: الرقم داخلها، والزمن زمنها حرفيًا، ولا تكرار. والمجموع لا يتجاوز عدد البصمة لأن الأرقام فريدة
+ * داخلها. يرمي TjError عند أول مقطع باطل.
+ * @param {Fingerprint} fingerprint
+ * @returns {(c: Cue) => void}
+ */
+function patchChecker(fingerprint) {
+  const byStart = new Map();
+  fingerprint.cues.forEach((c, i) => { if (!byStart.has(c.startMs)) byStart.set(c.startMs, i); });
+  const seen = new Set();
+  return (c) => {
+    if (seen.has(c.n)) throw new TjError('IM_PATCH_DUPLICATE', { params: { n: c.n } });
+    seen.add(c.n);
+    if (c.n > fingerprint.count) throw new TjError('IM_PATCH_OUT_OF_RANGE', { params: { n: c.n, count: fingerprint.count } });
+    const s = fingerprint.cues[c.n - 1];
+    if (c.startMs !== s.startMs || c.endMs !== s.endMs) {
+      const k = byStart.get(c.startMs);
+      if (k !== undefined && fingerprint.cues[k].endMs === c.endMs) throw new TjError('IM_PATCH_RENUMBERED', { params: { n: c.n, expected: k + 1 } });
+      throw new TjError('IM_PATCH_TIME_MISMATCH', { params: { n: c.n } });
+    }
+  };
+}
+
+/**
+ * الخطة من مقاطع مقروءة ومفحوصة بترتيب أرقامها: كل مقطع في موضعه من الترجمة الحالية (استبدال أو إدراج). يرمي TjError
+ * (IM_PATCH_UNALIGNED أو IM_PATCH_NOTHING).
+ * @param {Cue[]} incoming @param {{ fingerprint: Fingerprint, cues: Cue[], target: string | null, notes: string[], warnings: PatchPlan['warnings'] }} ctx
+ * @returns {PatchPlan}
+ */
+function planFrom(incoming, { fingerprint, cues, target, notes, warnings }) {
+  const map = mapToFingerprint(fingerprint, cues);
+  if (!map.ok) throw new TjError('IM_PATCH_UNALIGNED', { params: { reasons: map.reasons.join(' ') } });
+  /** @type {PatchItem[]} */
+  const items = [];
+  const skipped = [];
+  for (const c of incoming) {
+    const i = c.n - 1;
+    if (isBlankText(c.text)) skipped.push({ n: c.n, reason: 'empty' });
+    else if (map.structure.has(i)) skipped.push({ n: c.n, reason: 'structure' });
+    else if (map.weak.has(i)) skipped.push({ n: c.n, reason: 'weak' });
+    else if (map.at.has(i)) {
+      const j = map.at.get(i);
+      items.push({ n: c.n, action: 'replace', index: j, before: one(cues[j]), after: { ...one(cues[j]), text: c.text } });
+    } else {
+      const s = fingerprint.cues[i];
+      items.push({ n: c.n, action: 'insert', index: map.insertAt[i], before: null, after: { n: c.n, startMs: s.startMs, endMs: s.endMs, text: c.text } });
+    }
+  }
+  // لا مقطع مترجم أصلًا خطأ؛ أما ما تُخطّي لموضعه في الترجمة فخطة بلا بنود يشرحها التحذير.
+  if (!items.length && skipped.every((x) => x.reason === 'empty')) throw new TjError('IM_PATCH_NOTHING');
+  const listOf = (ns) => ({ list: shortList(ns) });
+  const empty = skipped.filter((x) => x.reason === 'empty').map((x) => x.n);
+  const structural = skipped.filter((x) => x.reason === 'structure').map((x) => x.n);
+  const weakOnes = skipped.filter((x) => x.reason === 'weak').map((x) => x.n);
+  const untranslated = untranslatedTest(target, parseTrackKey(fingerprint.trackKey)?.lang ?? null);
+  const noArabic = untranslated ? items.filter((x) => untranslated(x.after.text)).map((x) => x.n) : [];
+  if (empty.length) warnings.push({ code: 'IM_PATCH_SKIPPED_EMPTY', params: listOf(empty) });
+  if (structural.length) warnings.push({ code: 'IM_PATCH_SKIPPED_STRUCTURE', params: listOf(structural) });
+  if (weakOnes.length) warnings.push({ code: 'IM_PATCH_SKIPPED_WEAK', params: listOf(weakOnes) });
+  if (noArabic.length) warnings.push({ code: 'IM_PATCH_NO_ARABIC', params: listOf(noArabic) });
+
+  const received = receivedOf(map, cues);
+  for (const it of items) received.add(it.n - 1);
+  return {
+    fingerprintId: fingerprint.id, count: fingerprint.count, base: { count: cues.length, key: cuesKey(cues) },
+    items, skipped, warnings, notes, parts: statusOf(fingerprint, received),
+  };
+}
+
+/**
+ * الخطة نفسها من مقاطع في الذاكرة لا من ملفات (ف3: ملف مرفوع قُرئ بالاستيراد): الفحص والمواضع كما في readPatch بلا ملاحظات
+ * قراءة ولا قرينة اسم. لا يرمي.
+ * @param {Cue[]} cues مقاطع الملف المرفوع
+ * @param {{ fingerprint: Fingerprint, cues: Cue[], target?: string | null }} ctx البصمة، والترجمة الحالية، ولغتها
+ * @returns {{ ok: true, plan: PatchPlan } | { ok: false, error: { code: string, message: string } }}
+ */
+export function planPatchCues(cues, { fingerprint, cues: current = [], target = 'ar' } = {}) {
+  try {
+    if (!fingerprint || !Array.isArray(fingerprint.cues) || !fingerprint.cues.length) throw new TjError('IM_PATCH_NO_REFERENCE');
+    if (cues.length > LIMITS.maxCues) throw new TjError('IM_TOO_MANY_CUES', { params: { max: LIMITS.maxCues } });
+    const incoming = [...cues].sort((x, y) => x.n - y.n);
+    const check = patchChecker(fingerprint);
+    for (const c of incoming) check(c);
+    return { ok: true, plan: planFrom(incoming, { fingerprint, cues: current, target, notes: [], warnings: [] }) };
+  } catch (err) {
+    const info = toErrorInfo(err);
+    return { ok: false, error: { code: info.code, message: info.message } };
   }
 }
 

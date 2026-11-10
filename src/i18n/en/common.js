@@ -19,6 +19,9 @@ export default Object.freeze({
     brand: 'Tarjuman — Library', pages: 'Tarjuman pages', yourData: 'Your translations and settings stay in your browser',
   },
   page: { title: 'Tarjuman — {page}', renderFailed: 'Couldn’t display this page' },
+  continuation: {
+    note: 'Completed with “{file}”: {count}.',
+  },
   slot: {
     label: 'Translation {n}', labelActive: 'Translation {n}, active', labelEmpty: 'Translation {n}, empty', picker: 'Active translation',
   },

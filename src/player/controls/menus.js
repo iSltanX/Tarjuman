@@ -10,7 +10,7 @@ import { formatOffset, textDirection } from '../../ui/format.js';
 import { languageName } from '../../ui/lang.js';
 import { glyph } from './glyphs.js';
 import {
-  LABELS, comparisonSummary, completeHintLine, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
+  LABELS, comparisonSummary, completeHintLine, completeLine, completeOptionLabel, completeOptionText, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
   shortTime, slotLabel, stepSeconds, syncAt, trackLine, translationLine,
 } from './text.js';
 
@@ -174,11 +174,13 @@ function slotPicker(h, act, slots, { disabled = false, root = null } = {}) {
  * @param {H} h @param {Act} act @param {SlotModel[]} slots @param {number} target
  * @param {{ disabled?: boolean, root?: ShadowRoot | null }} [o]
  */
-function targetPicker(h, act, slots, target, { disabled = false, root = null } = {}) {
+function targetPicker(h, act, slots, target, { disabled = false, root = null, complete = null } = {}) {
   const filled = slots.filter((s) => s.filled);
   const free = slots.find((s) => !s.filled) ?? null;
   if (!filled.length) return h('span', { className: 'dim', text: LABELS.savesAsNew });
-  const items = filled.map((s) => ({ n: s.n, value: s.n, text: String(s.n), label: replaceSlotLabel(s), title: replaceSlotTitle(s), checked: s.n === target, fid: `target:${s.n}` }));
+  // ف3: «إكمال N» أولًا حين يكون الملف تتمة لترجمة محفوظة.
+  const items = complete ? [{ n: 'complete', value: 'complete', text: completeOptionText(complete.n), label: completeOptionLabel(complete.n), title: completeOptionLabel(complete.n), checked: target === 'complete', fid: 'target:complete' }] : [];
+  items.push(...filled.map((s) => ({ n: s.n, value: s.n, text: String(s.n), label: replaceSlotLabel(s), title: replaceSlotTitle(s), checked: s.n === target, fid: `target:${s.n}` })));
   if (free) items.push({ n: null, value: free.n, text: LABELS.saveNew, label: LABELS.saveNewLabel, title: LABELS.saveNewLabel, checked: free.n === target, fid: `target:${free.n}` });
   return radioRow(h, act, 'target', items, { disabled, root, label: LABELS.saveTo, first: true });
 }
@@ -471,12 +473,14 @@ export function confirmMenu(h, act, m, root = null) {
   if (m.hint) out.push(alert(h, 'warn', m.hint));
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
   out.push(sep(h));
-  // لغة الملف (AA3): من رمز صريح في اسمه، وإلا «إلى» في نافذة الإضافة، وإلا «غير محددة»؛ ويغيّرها المستخدم قبل الحفظ.
-  out.push(langSelect(h, act, { name: 'uploadLang', value: m.lang ?? null, suggested: m.langSuggested ?? [], fid: 'uploadLang', disabled: m.busy, id: 'tj-upload-lang' }));
+  // لغة الملف (AA3): من رمز صريح في اسمه، وإلا «إلى» في نافذة الإضافة، وإلا «غير محددة»؛ ويغيّرها المستخدم قبل الحفظ. ولا لغة
+  // للإكمال (ف3): تبقى لغة الخانة.
+  if (!m.completing) out.push(langSelect(h, act, { name: 'uploadLang', value: m.lang ?? null, suggested: m.langSuggested ?? [], fid: 'uploadLang', disabled: m.busy, id: 'tj-upload-lang' }));
   out.push(h('div', {
     className: 'row target',
-    children: [h('span', { text: LABELS.saveTo }), targetPicker(h, act, m.slots, m.target, { disabled: m.busy, root })],
+    children: [h('span', { text: LABELS.saveTo }), targetPicker(h, act, m.slots, m.target, { disabled: m.busy, root, complete: m.complete ?? null })],
   }));
+  if (m.completing) out.push(h('div', { className: 'row complete', text: completeLine(m.complete), attrs: { 'data-tone': 'ok', 'aria-live': 'polite', 'data-fid': 'completeLine' } }));
   if (m.filled && m.edits > 0) {
     out.push(h('div', { className: 'row edits', text: m.keep ? keptLine(m.conflicts) : editsLine(m.edits), attrs: { 'data-tone': m.keep ? 'ok' : 'warn', 'aria-live': 'polite' } }));
     const reason = m.keepAvailable ? null : messageFor('CT_KEEP_UNAVAILABLE');

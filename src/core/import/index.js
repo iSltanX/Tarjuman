@@ -17,7 +17,8 @@ import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 const isFewCount = (n) => n % 100 >= 3 && n % 100 <= 10;
 
 export { MAX_FILES, MAX_FILE_BYTES, mergeParts, selectFingerprint };
-export { applyPatch, applyPatchDetailed, cuesKey, partsStatus, readPatch } from './patch.js';
+export { applyPatch, applyPatchDetailed, cuesKey, partsStatus, planPatchCues, readPatch } from './patch.js';
+export { findContinuation, withContinuation } from './continuation.js';
 export { REVIEW_THRESHOLDS, classTransitions, reviewIncoming, sameExport, videoIdFromName } from './review.js';
 
 const NAMES_NOTE_CHARS = 300;

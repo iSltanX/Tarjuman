@@ -69,6 +69,9 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   let target = defaultTarget(bundle, preferred);
   let reference = review.suggested ?? result.fingerprintId ?? null;
   let impact = uploadImpact(bundle, target, result.cues);
+  // ف3: الملف تتمة لترجمة محفوظة؟ فالخيار الافتراضي «إكمال الترجمة N»، و«جديدة» و«استبدال» باقيتان.
+  const cont = prep.continuation ?? null;
+  let completing = !!cont;
 
   // الخانة الهدف مقطّعة «حفظ في» (تصميم LibraryDialogs): الترجمات المحفوظة بأرقامها وأسمائها المختصرة (الحفظ فيها استبدال)
   // ثم «جديدة» للخانة الفارغة. اسم الوصول يحوي النص الظاهر ويزيد الفعل (WCAG 2.5.3).
@@ -79,13 +82,20 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
     const label = chipLabel(o);
     return { value: String(o.n), label, ariaLabel: tr(o.active ? 'library.upload.replaceAriaActive' : 'library.upload.replaceAria', { label, n: o.n }) };
   };
+  const completeOption = cont ? [{ value: 'complete', label: tr('library.upload.completeOne', { n: cont.n }), ariaLabel: tr('library.upload.completeAria', { n: cont.n }) }] : [];
   const targetSeg = segGroup({
-    legend: tr('library.upload.saveIn'), value: String(target), options: options.map(segOption), doc,
+    legend: tr('library.upload.saveIn'), value: completing ? 'complete' : String(target), options: [...completeOption, ...options.map(segOption)], doc,
     onChange: (v) => {
-      target = Number(v);
-      impact = uploadImpact(bundle, target, result.cues);
+      completing = v === 'complete';
+      if (!completing) {
+        target = Number(v);
+        impact = uploadImpact(bundle, target, result.cues);
+      }
+      langBlock.hidden = completing;
+      referenceBlock.hidden = completing;
+      renderCompare();
       renderImpact();
-      onTarget(impact.replace);
+      onTarget(!completing && impact.replace);
     },
   });
   // العنوان المرئي فقرة فوق المجموعة: legend يقع على حد fieldset فتُقص نقاط حروفه العليا («حفظ في»)؛ ويبقى اسم الوصول.
@@ -103,6 +113,14 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   // المرجع.
   const compareHost = el('div', { className: 'lib-up__compare', doc });
   const renderCompare = () => {
+    if (completing) {
+      // الإكمال: المقارنة للترجمة بعده بمرجع خانتها ولغتها، لا للملف وحده.
+      const track = bundle.slots[cont.n - 1].track;
+      const slotFp = fps.find((f) => f.id === track.fingerprintId) ?? null;
+      const s = comparisonSummary(previewComparison(cont.cues, slotFp, { settings, notes: [], target: track.lang ?? null }));
+      compareHost.replaceChildren(alertBox({ tone: s.tone, text: s.lines.join('\n'), doc }));
+      return;
+    }
     const fp = reference ? fps.find((f) => f.id === reference) ?? null : null;
     // المعاينة بالمحاذاة كما تُعرض بعد الحفظ (FA-04)، لأي مرجع مختار؛ وتقرير الحفظ بالرقم يُحسب عند الحفظ كما كان.
     const report = previewComparison(result.cues, fp, { settings, notes: result.notes, target: lang ?? null });
@@ -174,6 +192,11 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   const keepWhy = el('span', { className: 'tj-sr-only', attrs: { id: `${id}-keep-why` }, doc });
   const keepLabel = el('label', { className: 'lib-check', attrs: { for: `${id}-keep` }, children: [keepBox, el('span', { text: tr('library.upload.keepEdits'), doc }), keepWhy], doc });
   function renderImpact() {
+    if (completing) {
+      const tail = cont.remaining ? tr('library.upload.completeRemaining', { count: formatCount(cont.remaining, COUNT_FORMS.cue) }) : tr('library.upload.completeDone');
+      impactHost.replaceChildren(el('p', { className: 'tj-body-sm lib-up__complete', text: `${tr('library.upload.completeLine', { n: cont.n, adds: formatCount(cont.adds, COUNT_FORMS.cue) })} ${tail}`, doc }));
+      return;
+    }
     const kids = [];
     const slot = bundle.slots[target - 1];
     if (impact.replace) {
@@ -197,6 +220,8 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
     impactHost.replaceChildren(...kids);
   }
 
+  langBlock.hidden = completing;
+  referenceBlock.hidden = completing;
   renderCompare();
   renderImpact();
   const root = el('div', {
@@ -216,7 +241,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   });
   return {
     root,
-    replace: () => impact.replace,
-    choice: () => ({ n: target, fingerprintId: reference, keepCues: impact.keep.ok && keepBox.checked ? impact.keep.cues : null, lang }),
+    replace: () => !completing && impact.replace,
+    choice: () => (completing ? { complete: cont } : { n: target, fingerprintId: reference, keepCues: impact.keep.ok && keepBox.checked ? impact.keep.cues : null, lang }),
   };
 }

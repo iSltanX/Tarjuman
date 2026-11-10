@@ -8,7 +8,7 @@ import { formatOffset } from '../../ui/format.js';
 import { holdTimer } from '../../ui/hold.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
 import { fitSize, watchBar } from './bar.js';
-import { loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
+import { completeInto, continuationFor, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
@@ -303,6 +303,16 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   function confirmModel(s) {
     const p = ui.upload.pending;
     const slots = slotsOf(s);
+    const complete = p.complete ? { n: p.complete.cont.n, adds: p.complete.cont.adds, remaining: p.complete.cont.remaining } : null;
+    if (p.target === 'complete' && complete) {
+      // الإكمال (ف3): المقارنة للترجمة بعده، ولا استبدال ولا تعديلات تُفقد ولا لغة ملف (تبقى لغة الخانة).
+      return {
+        fileName: p.input.fileName, count: p.input.cues.length, comparison: p.complete.preview ?? p.preview ?? p.input.comparison, warnings: p.warnings,
+        hint: p.hint ? nameOtherLine(p.hint.title) : null, slots, target: 'complete', complete, completing: true, filled: false, edits: 0,
+        keepAvailable: false, keep: false, conflicts: 0, offsetNote: false, previousFrom: null,
+        busy: ui.upload.busy, error: ui.upload.error, lang: p.lang ?? null, langSuggested: [],
+      };
+    }
     const target = slots.find((x) => x.n === p.target) ?? slots[0];
     const filled = target.filled;
     const plan = filled ? planFor(s, p, target.n) : { edits: 0, keep: null };
@@ -310,7 +320,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       // المعاينة بالمحاذاة كما بعد الحفظ (FA-04)، وتقرير الحفظ بالرقم يبقى في input.
       fileName: p.input.fileName, count: p.input.cues.length, comparison: p.preview ?? p.input.comparison, warnings: p.warnings,
-      hint: p.hint ? nameOtherLine(p.hint.title) : null, slots, target: target.n, filled, edits: plan.edits,
+      hint: p.hint ? nameOtherLine(p.hint.title) : null, slots, target: target.n, complete, completing: false, filled, edits: plan.edits,
       keepAvailable: keepOk, keep: keepOk && p.keep, conflicts: keepOk ? plan.keep.conflicts : 0,
       offsetNote: filled && target.active && Math.round(s.view.displayOffsetMs / 100) !== 0,
       // استبدال ممتلئة والنسخة السابقة موجودة: تُمحى (U76).
@@ -753,7 +763,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       case 'replace': pick('replace'); return;
       case 'target':
         if (ui.upload.pending && !ui.upload.busy) {
-          ui.upload.pending.target = Number(value);
+          ui.upload.pending.target = value === 'complete' && ui.upload.pending.complete ? 'complete' : Number(value);
           ui.upload.pending.keep = false;
           ui.upload.error = null;
         }
@@ -1166,7 +1176,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     u.busy = false;
     u.plans.clear();
-    u.pending = { ...read, hint, target: defaultTarget(slotsOf(controller.getState())), keep: false, lang: read.input.lang ?? null };
+    // ف3: الملف تتمة لترجمة محفوظة؟ فالمختار «إكمال الترجمة N»، و«جديدة» و«استبدال» باقيتان.
+    const cont = continuationFor({ controller, read });
+    u.pending = { ...read, hint, target: cont ? 'complete' : defaultTarget(slotsOf(controller.getState())), complete: cont, keep: false, lang: read.input.lang ?? null };
     ui.open = 'confirm';
     render();
     layer.focusFirst();
@@ -1183,7 +1195,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     u.busy = true;
     u.error = null;
     render();
-    const r = await loadIntoFor({ controller, read: p, n: m.target, replace: m.filled, current, lang: p.lang ?? null });
+    const r = m.completing
+      ? await completeInto({ controller, read: p, cont: p.complete.cont })
+      : await loadIntoFor({ controller, read: p, n: m.target, replace: m.filled, current, lang: p.lang ?? null });
     if (destroyed || ui.upload !== u) return;
     u.busy = false;
     // أغلق المستخدم التأكيد أثناء الحفظ (Esc أو النقر خارجه): تُطبَّق النتيجة دون إعادة فتح القائمة ولا نقل التركيز.

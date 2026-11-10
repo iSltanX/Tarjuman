@@ -5,6 +5,7 @@
 // الفيديو (الترجمات الثلاث والسابقة والعلامات) والتفضيلات، ويبدّل النشطة ويرفع إلى خانة ويعلّم المقطع بتراجع.
 import { trackComparison } from '../core/compare/index.js';
 import { sameExport } from '../core/import/review.js';
+import { withContinuation } from '../core/import/continuation.js';
 import { TjError, toErrorInfo } from '../core/errors/index.js';
 import {
   bundleFromRecord, referencedFingerprints, slotModels, withActiveSlot, withMark, withMarksReplaced, withSlotLang, withSlotUpload,
@@ -550,6 +551,28 @@ export function createController({ store, extractor = null, page = {}, now = () 
         changed();
       }
       return { record: next.record, replaced: result.replaced, activated };
+    },
+
+    /**
+     * «إكمال الترجمة N» (ف3): الناتج نسخة حالية للخانة بملاحظة (withContinuation). يُرفض بـST_CONFLICT إن تغيّرت ترجمة الخانة
+     * عمّا حُسب عليه الإكمال (cont.base)، فلا يُكتب ناتج قديم فوق ما تغيّر.
+     * @param {import('../core/import/continuation.js').Continuation} cont @param {string} note
+     */
+    async completeSlot(cont, note) {
+      requireVideo();
+      const n = cont.n;
+      const seen = canonical(cont.base);
+      const { id, next } = await writeBundle((b) => {
+        const track = b?.slots[n - 1]?.track ?? null;
+        if (!track || canonical(track.current ?? track.original) !== seen) throw new TjError('ST_CONFLICT', { detail: `slot=${n}` });
+        return withContinuation(b, cont, note, iso());
+      });
+      if (id === videoId && next) {
+        view = { ...next.record.view };
+        error = null;
+        changed();
+      }
+      return { n };
     },
 
     /**

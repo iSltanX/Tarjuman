@@ -7,7 +7,7 @@ import { diffTranslations, keepEditsMerge } from '../../core/align/index.js';
 import { compare } from '../../core/compare/index.js';
 import { TjError, messageFor } from '../../core/errors/index.js';
 import { buildArabicExport, buildExport, buildStudyText, studyTiming, studyTimingNote, translationLang } from '../../core/export/index.js';
-import { readImport, reviewIncoming, sameExport } from '../../core/import/index.js';
+import { findContinuation, readImport, reviewIncoming, sameExport, withContinuation } from '../../core/import/index.js';
 import {
   applyRecordChange, referencedFingerprints, withActiveSlot, withPreviousRestored, withSlotName, withSlotUpload, withoutPrevious,
   withoutSlot,
@@ -16,7 +16,8 @@ import { LIMITS } from '../../core/model/validate.js';
 import { arabicCues } from '../../core/model/video.js';
 import { exportTiming } from '../../core/model/timing.js';
 import { withExport, withExportRefreshed } from '../../core/model/transitions.js';
-import { joinList } from '../../i18n/index.js';
+import { joinList, t as tr } from '../../i18n/index.js';
+import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 import { manualEdits } from './model.js';
 
 const iso = (now) => new Date(now()).toISOString();
@@ -302,9 +303,22 @@ export async function prepareUpload({ store, videoId, files, knownVideoIds = [] 
   if (!bundle) throw new TjError('PG_VIDEO_GONE');
   const settings = await store.getSettings();
   const result = await readImport(files, { fingerprints: bundle.record.fingerprints, settings });
-  if (!result.ok) return { bundle, settings, result, review: null };
+  if (!result.ok) return { bundle, settings, result, review: null, continuation: null };
   const review = reviewIncoming({ fileName: result.fileName, cues: result.cues, videoId, fingerprints: bundle.record.fingerprints, knownVideoIds });
-  return { bundle, settings, result, review };
+  // ف3: هل الملف تتمة لترجمة محفوظة؟ فيُقترح «إكمال الترجمة N» افتراضيًا.
+  return { bundle, settings, result, review, continuation: findContinuation(bundle, result.cues) };
+}
+
+/**
+ * «إكمال الترجمة N» بعد التأكيد (ف3): الناتج نسخة حالية للخانة بملاحظة، على الحزمة التي بُني عليها الحوار (expect)، فإن تغيّرت
+ * منذئذ رُفض بـST_CONFLICT ولم يُكتب شيء.
+ * @param {{ store: ReturnType<typeof import('../../core/store/index.js').createStore>, bundle: import('../../core/model/slots.js').Bundle,
+ *   cont: NonNullable<ReturnType<typeof findContinuation>>, fileName: string, now: () => number }} o
+ */
+export async function applyContinuation({ store, bundle, cont, fileName, now }) {
+  const note = tr('common.continuation.note', { file: fileName, count: formatCount(cont.adds, COUNT_FORMS.cue) });
+  await onBundle(store, bundle.videoId, (b) => withContinuation(b, cont, note, iso(now)), { expect: bundle });
+  return { n: cont.n };
 }
 
 /**

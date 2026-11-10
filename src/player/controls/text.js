@@ -129,6 +129,16 @@ export const moreNotesLine = (n) => T('moreNotes', { n });
  */
 export const completeHintLine = (cmp) => (cmp?.fingerprintId && cmp.missing?.length ? T('completeHint') : null);
 
+/** خيار «إكمال N» في «حفظ في» (ف3). @param {number} n */
+export const completeOptionText = (n) => T('completeOption', { n });
+/** @param {number} n */
+export const completeOptionLabel = (n) => T('completeOptionLabel', { n });
+/**
+ * سطر ما يضيفه الإكمال وما يبقى بعده (ف3).
+ * @param {{ n: number, adds: number, remaining: number }} c
+ */
+export const completeLine = (c) => `${T('completeLine', { n: c.n, adds: formatCount(c.adds, COUNT_FORMS.cue) })} ${c.remaining ? T('completeRemaining', { count: formatCount(c.remaining, COUNT_FORMS.cue) }) : T('completeDone')}`;
+
 /**
  * الخطوة بالثواني بلا أصفار زائدة: 500 ← «0.5»، و1000 ← «1»، و1500 ← «1.5».
  * @param {number} ms

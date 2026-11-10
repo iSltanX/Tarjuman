@@ -5,7 +5,9 @@
 // مضغوط إن وُجدت ترجمة أو دل الاسم على فيديو آخر)، ولغة الملف من رمز صريح في اسمه، وإلا «إلى» في نافذة الإضافة إن وافق نصها.
 // كل تدفق يثبّت معرّف الفيديو عند بدئه، فنتيجة تأخرت حتى تبدّل الفيديو لا تُطبَّق على الجديد أبدًا.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
-import { previewComparison, videoIdFromName, withSuggestedReference } from '../../core/import/index.js';
+import { findContinuation, previewComparison, videoIdFromName, withSuggestedReference } from '../../core/import/index.js';
+import { t } from '../../i18n/index.js';
+import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 import { DEFAULT_DRIFT_MS, compare } from '../../core/compare/index.js';
 import { textFitsLang } from '../../core/lang/index.js';
 import { LIMITS } from '../../core/model/validate.js';
@@ -251,3 +253,46 @@ export async function loadIntoFor({ controller, read, n, replace, current = null
     return { ok: false, error: toErrorInfo(err) };
   }
 }
+
+/**
+ * ف3: هل الملف المقروء تتمة لترجمة محفوظة لهذا الفيديو؟ ومعها المقارنة بعد الإكمال بمرجع خانتها، للحوار.
+ * @param {{ controller: object, read: { videoId: string, input: { cues: object[] } } }} p
+ * @returns {{ cont: import('../../core/import/continuation.js').Continuation, preview: object | null } | null}
+ */
+export function continuationFor({ controller, read }) {
+  const s = controller.getState();
+  if (s.videoId !== read.videoId || !s.bundle) return null;
+  let cont = null;
+  try {
+    cont = findContinuation(s.bundle, read.input.cues);
+  } catch {
+    cont = null;
+  }
+  if (!cont) return null;
+  const track = s.bundle.slots[cont.n - 1].track;
+  const fp = (s.bundle.record.fingerprints ?? []).find((f) => f.id === track.fingerprintId) ?? null;
+  let preview = null;
+  try {
+    preview = fp ? previewComparison(cont.cues, fp, { settings: s.settings, notes: [], target: track.lang ?? null }) : null;
+  } catch {
+    preview = null;
+  }
+  return { cont, preview };
+}
+
+/**
+ * «إكمال الترجمة N» للفيديو نفسه الذي قُرئ له الملف وحده، بملاحظة بما أُكمل.
+ * @param {{ controller: object, read: { videoId: string, input: { fileName: string } }, cont: import('../../core/import/continuation.js').Continuation }} p
+ * @returns {Promise<{ ok: true } | { ok: false, error: { code: string, message: string } }>}
+ */
+export async function completeInto({ controller, read, cont }) {
+  if (controller.getState().videoId !== read.videoId) return { ok: false, error: infoOf('CT_VIDEO_CHANGED') };
+  try {
+    const note = t('common.continuation.note', { file: read.input.fileName, count: formatCount(cont.adds, COUNT_FORMS.cue) });
+    await controller.completeSlot(cont, note);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: toErrorInfo(err) };
+  }
+}
+
