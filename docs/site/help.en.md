@@ -71,7 +71,7 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 - Each video holds up to three translations, one of which you make active. When you replace a translation, the previous one is saved so you can restore it.
 - From there you can export the translation, copy the instructions with the video’s language pair, or delete a translation or all of the video’s data.
 - Translations saved before 2.0.0 without a language show “Unknown language”. Set it from “Translation language” in the “Translation” menu, or for all of them under Settings › “Languages”.
-- Video thumbnails stay off until you turn them on under Settings › “Display” › “Video thumbnails in Library”, so a Tarjuman tile appears instead and nothing is requested. Once on, they’re requested from YouTube’s servers. If you upgraded in Chrome, Edge or Brave, your thumbnails stay as they were.
+- Video thumbnails stay off until you turn them on under Settings › “Display” › “Video thumbnails in Library”, so a Tarjuman tile appears instead and nothing is requested. Once on, they’re requested from YouTube’s servers. If you upgraded in Chrome, Edge or Brave, your thumbnails stay as they were. Through 2.1.2, they’re on by default in these browsers.
 - In Firefox, thumbnails stay off until you turn on that same switch, and Firefox then asks for your “Browsing activity” consent. You can withdraw it from Firefox’s add-ons page.
 
 ## Moving your Library — `#move`
@@ -87,13 +87,14 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 
 - **Where:** Settings › “About” › “Report a problem”.
 - **How:** Choose the type (bug, suggestion or other), write what happened, review the whole report, then press “Copy report” to copy it as text. Paste it into an email from your own address to the support email under [“Contact”](#contact), which is shown in the form with a “Copy email” button.
-- **Not sent by the extension:** Tarjuman has no server and asks for no permission, and no email app or link opens from the extension.
+- **Not sent by the extension:** Since 2.2.0, Tarjuman has no server and asks for no permission, and no email app or link opens from the extension.
 - **What it contains:**
   - Your description as you wrote it, up to 2000 characters.
   - The Tarjuman version, the browser and its version, the build package, the operating system, and the interface language.
   - You see all of this before copying.
 - **Not attached automatically:** Translation text, a video’s ID, title or link, or anything from your Library. Your description is copied as you wrote it.
 - **The reply:** It reaches your email if you write to us from it.
+- **Through 2.1.2:** A “Send report” button sends it, after you allow it, to the reports server, and shows you its number as a reference. This goes away when you update to 2.2.0.
 - Details are in [Privacy](/tarjuman/en/privacy#report).
 
 ## Troubleshooting — `#troubleshooting`

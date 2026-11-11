@@ -6,7 +6,7 @@
 
 - **مسار الصفحة:** Tarjuman · Privacy Policy
 - **العنوان (`h1`):** Privacy Policy — Tarjuman
-- **تاريخ السريان:** 2026-11-10
+- **تاريخ السريان:** 2026-11-11
 - **المقدمة:** Tarjuman is a browser extension for YouTube watch pages, from BySultan (bysltan.com). This page describes what the extension stores on your device, what it sends, to whom, and when, as the code of version ⟨رقم الإصدار⟩ does it.
 
 ## Summary — `#summary`
@@ -14,8 +14,8 @@
 - Tarjuman is injected into `www.youtube.com` pages and works on the watch page. It extracts the subtitles that YouTube’s player has fetched on its own, in whichever language you chose there, and shows your translation over the video, all inside your browser.
 - What it stores, including your translations and settings, stays in the extension’s storage in this browser on this device. It isn’t synced with your browser account or with any service.
 - No account, no API key, no AI model inside the extension, no usage tracking, and no ads.
-- **Not everything is local.** Only one thing leaves the extension: video thumbnails in “Library”, from YouTube’s servers, which stay off until you turn on their switch. In Firefox they’re requested only with your consent.
-- Tarjuman has no server. You copy a problem report from Settings after seeing everything in it, and send it from your own email.
+- **Not everything is local.** Since 2.2.0, only one thing leaves the extension: video thumbnails in “Library”, from YouTube’s servers, which stay off until you turn on their switch (through 2.1.2, they’re on by default in Chrome, Edge and Brave). In Firefox they’re requested only with your consent.
+- Since 2.2.0, Tarjuman has no server. You copy a problem report from Settings after seeing everything in it, and send it from your own email. Through 2.1.2, a report is also sent, when you press “Send report” and allow it, to the reports server (see [“A problem report”](#report)).
 - Translation happens outside the extension: you copy the file and the instructions to a model you choose, and the extension doesn’t connect to it.
 
 ## What’s stored on your device — `#stored`
@@ -48,7 +48,7 @@ The following is stored in the extension’s local storage within this browser�
 
 ## What’s sent, to whom, and when — `#sent`
 
-Tarjuman has no server, and it connects to none except for the “Library” thumbnails listed after the YouTube page below.
+Since 2.2.0, Tarjuman has no server, and it connects to none except for the “Library” thumbnails listed after the YouTube page below. Through 2.1.2, it also connects to the reports server when you send a report (see [“A problem report”](#report)).
 
 ### The YouTube page you’re watching — `#youtube`
 
@@ -60,7 +60,7 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 ### Video thumbnails in “Library” — `#thumbnails`
 
 - **When:** When you open the “Library” page while the “Video thumbnails in Library” switch is on. The switch is off by default since 2.2.0, so a Tarjuman tile appears instead of the thumbnail and nothing is requested until you turn it on.
-  - In Chrome, Edge and Brave: If you upgraded to 2.2.0, your thumbnails stay as they were before the upgrade (shown unless you had turned them off).
+  - In Chrome, Edge and Brave: If you upgraded to 2.2.0, your thumbnails stay as they were before the upgrade (shown unless you had turned them off). Through 2.1.2, the switch is on by default there.
   - In Firefox: Thumbnails are off until you turn on the switch, and Firefox then asks for your “Browsing activity” consent. If you decline, they stay off. You can withdraw consent at any time from Firefox’s add-ons page, and the thumbnails stop.
 - **What’s sent, and to whom:**
   - The browser loads the thumbnail of each saved video shown to you in the list from `i.ytimg.com`, which is YouTube’s servers, using the video’s ID, as it loads any image on the web.
@@ -82,6 +82,11 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 - **Your description as written:** The description is copied verbatim, so if you write a link, a video ID or an email address in it, that is copied with it. The page reminds you if it seems to contain a YouTube link, an email address or something resembling a video ID. It may miss some, so review it yourself. It also blocks copying until you remove anything that resembles a session token or cookie.
 - **What reaches us:** Only what you paste into your email, along with what the email itself carries (your address, and your name if it shows). Your email provider and the support address’s provider govern the message.
 - **Retention:** Your email stays in the support inbox until it’s deleted. To have it deleted, email the support address.
+- **Through 2.1.2, with a reports server:** These versions have a “Send report” button that sends the same report. All of this, including the permission, goes away when you update to 2.2.0.
+  - **Permission:** On the first send, the browser asks your permission to connect to the reports server only (`app-reports.isultantf.workers.dev`), and in Firefox this comes with the “Technical and interaction data” consent. If you decline, nothing is sent.
+  - **Destination:** A Cloudflare worker receives it and opens it as an issue in a private GitHub repository that Tarjuman’s developer can view. It isn’t published. You see its number as your reference.
+  - **What the browser adds to the request:** Its type, version and operating system, its preferred languages, and the `Origin` header with the extension’s address (in Firefox, a random ID for your installation). No cookies and no page address. The server limits the number of reports using a temporary salted fingerprint of your IP address, and your address doesn’t reach the report.
+  - **Retention:** A sent report isn’t deleted automatically. To have it deleted, email the support address with its number.
 
 ### What doesn’t use the network — `#offline`
 
@@ -103,6 +108,7 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 - **Downloads:** To save Tarjuman’s files where you choose.
 - **Pages on `www.youtube.com`:** So Tarjuman’s tools can work over the player. No other sites, and no tabs.
 - **In Firefox, one optional consent:** “Browsing activity” for Library thumbnails, requested only when you turn on the thumbnails switch. You can withdraw it from Firefox’s add-ons page.
+- **Through 2.1.2, one optional permission:** Connecting to the reports server only, requested on the first report you send (in Firefox, with the “Technical and interaction data” consent). It goes away when you update to 2.2.0.
 - No permission for browsing history, cookies, or tabs.
 
 ## Third parties — `#third-parties`
@@ -111,13 +117,15 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 | --- | --- | --- |
 | YouTube (Google) | “Library” thumbnails, and the YouTube page itself while you watch | [Google Privacy Policy](https://policies.google.com/privacy) |
 | Google (Gmail, the support email) | When you email support, including a report you send from your own email | [Google Privacy Policy](https://policies.google.com/privacy) |
+| Cloudflare | Through 2.1.2, when you send a report, since the request passes through its worker | [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/) |
+| GitHub | Through 2.1.2, when you send a report, since it’s stored as an issue in a private repository | [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) |
 | The AI model you choose | When you send it the file yourself | Its terms of service |
 | The browser’s store | Installation and updates | The store’s policy |
 
 ## No selling, no advertising — `#limited-use`
 
 - Tarjuman doesn’t sell your data, and doesn’t transfer it for advertising, credit assessment or any other purpose.
-- What arrives in report emails is used only to understand and fix the problem and to improve Tarjuman.
+- What arrives in report emails, and in reports sent through 2.1.2, is used only to understand and fix the problem and to improve Tarjuman.
 
 ## Retention and deletion — `#retention`
 
@@ -127,6 +135,7 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 - **Removing the extension** deletes all of its storage. This was measured in Chrome, Edge, Brave and Firefox. So make a backup first if you want to keep your Library.
 - **Files you downloaded** stay in their folder until you delete them yourself.
 - **A report email** stays in the support inbox until it’s deleted. To have it deleted, email the support address (see [“A problem report”](#report)).
+- **A report sent through 2.1.2** isn’t deleted automatically. To have it deleted, email the support address with its number.
 
 ## Changes — `#changes`
 

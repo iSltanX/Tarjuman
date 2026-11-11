@@ -54,9 +54,9 @@ test('[قرار] يُبقي المولَّد مسودة بتنبيه، و--stric
   assert.equal(ok.text.includes('مسودة'), false);
 });
 
-test('تاريخ السريان: ثُبّت 2026-11-10 يوم نشر صفحات 2.1.2، وغير المثبت يرفضه --strict، وتاريخ غير صالح يُرفض', () => {
-  assert.equal(effectiveDateOf(source), '2026-11-10', 'ثُبّت بـ--effective يوم النشر');
-  assert.match(generate({ strict: true }).text, /تسري هذه السياسة اعتبارًا من 2026-11-10\./, '--strict يقبل المصدر المثبت');
+test('تاريخ السريان: ثُبّت 2026-11-11 يوم نشر صفحات 2.2.0، وغير المثبت يرفضه --strict، وتاريخ غير صالح يُرفض', () => {
+  assert.equal(effectiveDateOf(source), '2026-11-11', 'ثُبّت بـ--effective يوم النشر');
+  assert.match(generate({ strict: true }).text, /تسري هذه السياسة اعتبارًا من 2026-11-11\./, '--strict يقبل المصدر المثبت');
   assert.equal(effectiveDateOf(undated), null);
   assert.throws(() => generate({ source: undated, strict: true }), /تاريخ السريان غير مثبت/, '--strict يرفض النشر قبل التاريخ');
   assert.equal(effectiveDateOf(withEffectiveDate(undated, '2026-11-04')), '2026-11-04');
