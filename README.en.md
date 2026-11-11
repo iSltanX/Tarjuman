@@ -17,7 +17,7 @@
 
 There's no built-in model, no API key, no account, no translation server, and no video or audio download. Your translations and settings stay in your browser; Library thumbnails are requested from YouTube by video ID unless you turn them off.
 
-> **Release status:** version **2.1.0** is published on Chrome Web Store (which also serves Brave) and Microsoft Edge Add-ons. **2.1.2** has been under review in all three stores since 2026-11-10 (hidden-text cleanup, an honest upload report and corrected docs, along with what 2.1.1 brought). **2.2.0** is in the repository and hasn't been submitted yet: completing a partial translation in two clicks or by uploading the rest, pasting the model's output, two balanced lines over the video, "Mark" and "Hear this now" from the transcript panel, no server at all, and Library thumbnails off until you turn them on. Tarjuman isn't published on Firefox Add-ons yet.
+> **Release status:** the current version is **2.2.0** (2026-11-11): completing a partial translation in two clicks or by uploading the rest, pasting the model's output, two balanced lines over the video, "Mark" and "I hear this now" from the transcript panel, no server at all, and Library thumbnails off until you turn them on. Tarjuman is published on Chrome Web Store (which also serves Brave) and Microsoft Edge Add-ons, and isn't published on Firefox Add-ons yet.
 
 ## Features
 
