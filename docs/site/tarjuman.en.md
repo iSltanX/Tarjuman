@@ -104,9 +104,9 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 **العنوان:** Where your data goes, and what Tarjuman doesn’t do
 
 - **On your device:** Your translations and settings are in the extension’s storage in your browser. No server keeps them, and nothing is synced.
-- **To YouTube:** Video thumbnails in “Library” are requested from YouTube’s servers using the video ID. They stay off until you turn on their switch (through 2.1.2, they’re on by default in Chrome, Edge and Brave), and in Firefox they’re requested only with your consent.
+- **To YouTube:** Video thumbnails in “Library” are requested from YouTube’s servers using the video ID. They stay off until you turn on their switch, and in Firefox they’re requested only with your consent.
 - **To the model you choose:** What you send it yourself: the file and the instructions. The extension doesn’t connect to it.
-- **No Tarjuman server:** You write a problem report, see everything in it, then copy it and send it from your own email. No translation text or video ID is attached automatically. Through 2.1.2, it’s sent, after you allow it, to the reports server.
+- **No Tarjuman server:** You write a problem report, see everything in it, then copy it and send it from your own email. No translation text or video ID is attached automatically.
 - **Nothing else:** No usage tracking, no ads, and no selling of your data.
 - **الرابط:** [Full privacy policy](/tarjuman/en/privacy).
 
@@ -143,7 +143,7 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 2. **Pin its icon to the browser toolbar:** Click the extensions icon (the puzzle piece), then the pin next to “Tarjuman”. That’s where you’ll copy the translation instructions.
 3. **Open a YouTube video:** Then start with [First use](/tarjuman/en/support#first-use) on the Help page.
 
-**Permissions on install:** Storage, downloads, and access to `www.youtube.com` pages only. Since 2.2.0, there’s no other, optional permission (through 2.1.2, an optional permission to connect to the reports server, requested on the first report you send). In Firefox there’s one optional consent, for Library thumbnails, requested when you turn them on. Details are under [Permissions](/tarjuman/en/privacy#permissions).
+**Permissions on install:** Storage, downloads, and access to `www.youtube.com` pages only. There’s no other, optional permission. In Firefox there’s one optional consent, for Library thumbnails, requested when you turn them on. Details are under [Permissions](/tarjuman/en/privacy#permissions).
 
 ## التذييل
 
