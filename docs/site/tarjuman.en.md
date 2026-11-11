@@ -143,7 +143,7 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 2. **Pin its icon to the browser toolbar:** Click the extensions icon (the puzzle piece), then the pin next to “Tarjuman”. That’s where you’ll copy the translation instructions.
 3. **Open a YouTube video:** Then start with [First use](/tarjuman/en/support#first-use) on the Help page.
 
-**Permissions on install:** Storage, downloads, and access to `www.youtube.com` pages only. There’s no other, optional permission. In Firefox there’s one optional consent, for Library thumbnails, requested when you turn them on. Details are under [Permissions](/tarjuman/en/privacy#permissions).
+**Permissions on install:** Storage, downloads, and access to `www.youtube.com` pages only. Since 2.2.0, there’s no other, optional permission (through 2.1.2, an optional permission to connect to the reports server, requested on the first report you send). In Firefox there’s one optional consent, for Library thumbnails, requested when you turn them on. Details are under [Permissions](/tarjuman/en/privacy#permissions).
 
 ## التذييل
 
