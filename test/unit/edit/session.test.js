@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { createEditSession, resolveScope } from '../../../src/core/edit/index.js';
 import { exportTiming, shownTimes } from '../../../src/core/model/index.js';
 import { fingerprint, englishTrack, makeCues } from '../../helpers/fixtures.js';
+import { CONSTANT_MAX_EXPONENT, LINEAR_MAX_EXPONENT, growth } from '../../helpers/growth.js';
 
 const times = (s) => s.snapshot().map((c) => [c.startMs, c.endMs]);
 const shown = (s) => s.snapshot().map((c) => shownTimes(c, s.offsetMs));
@@ -238,17 +239,32 @@ test('لا تطبيق مزدوج: التصدير بعد التثبيت يطاب�
 
 test('الأداء: نقل 50,000 مقطع والتراجع عنه، وتعديل نص فيها، سريعان ولا يحفظان نسخة كاملة لكل خطوة', () => {
   const s = createEditSession({ cues: makeCues(50000) });
-  let t = performance.now();
   s.shift({ kind: 'all' }, 100);
   s.undo();
   s.redo();
-  const shiftMs = performance.now() - t;
-  t = performance.now();
   for (let i = 0; i < 200; i++) s.setText(i, `نص ${i}`);
-  const textMs = performance.now() - t;
   assert.equal(s.changedCount, 50000);
-  assert.ok(shiftMs < 1000, `النقل ${shiftMs.toFixed(0)}ms`);
-  assert.ok(textMs < 100, `النص ${textMs.toFixed(0)}ms`);
+  // بالنمو لا بزمن مطلق (تحقق الجولة الثانية §١١): كان النقل والتراجع والإعادة دون 1000ms بزمن الساعة فسقط بـ1356ms تحت الحمل.
+  // والآن الأس المقدّر بزمن المعالج بين 1,000 و50,000 مقطع (test/helpers/growth.js): النقل خطي، وتعديل النص لا يتعلق بحجم الملف
+  // (نسخة كاملة لكل خطوة تجعله خطيًا). والحدود المطلقة سخية تكشف الانهيار وحده.
+  const shift = growth({ small: 1000, large: 50000, prepare: (n) => {
+    const x = createEditSession({ cues: makeCues(n) });
+    return () => {
+      x.shift({ kind: 'all' }, 100);
+      x.undo();
+      x.redo();
+    };
+  } });
+  assert.ok(shift.exponent < LINEAR_MAX_EXPONENT, `النقل: ${shift.note}`);
+  assert.ok(shift.large < 5000, `النقل: ${shift.note}`);
+  const text = growth({ small: 1000, large: 50000, prepare: (n) => {
+    const x = createEditSession({ cues: makeCues(n) });
+    return () => {
+      for (let i = 0; i < 2000; i++) x.setText(i % 500, `نص ${i}`);
+    };
+  } });
+  assert.ok(text.exponent < CONSTANT_MAX_EXPONENT, `النص: ${text.note}`);
+  assert.ok(text.large < 1000, `النص: ${text.note}`);
 });
 
 test('التراجع عن نقل أصلح زمنًا سالبًا كتبه المستخدم يعيده كما كان، ولا يرمي ولا يُسقط خطوة (مراجعة)', () => {

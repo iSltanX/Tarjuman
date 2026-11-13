@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { ISSUE_LIMITS, findIssues } from '../../../src/core/edit/index.js';
 import { hasCode } from '../../../src/core/errors/index.js';
 import { makeCues, realTrack } from '../../helpers/fixtures.js';
+import { LINEAR_MAX_EXPONENT, growth } from '../../helpers/growth.js';
 
 const cue = (n, startMs, endMs, text = `سطر ${n}`) => ({ n, startMs, endMs, text });
 const codes = (r) => r.list.map((i) => `${i.n}:${i.code}`);
@@ -67,26 +68,15 @@ test('byIndex للصفوف، والقائمة مرتبة بالموضع، وكل
 });
 
 test('الأداء: الفحص خطّي، و50,000 مقطع تُفحص بسرعة تكفي لكل تعديل', () => {
-  // عتبة نسبية (تدقيق 7a66f91، U68): كانت 200ms مطلقة فسقطت 3/3 تحت حمل المعالج (300–411ms) وهي 5ms خاملة. والنسبة بين
-  // 50,000 و10,000 مقطع تحت الحمل نفسه نحو 5 للخطي ونحو 25 للتربيعي، وأفضل خمس قراءات تُسقط تقطّع الجدولة. والحد المطلق سخي
-  // يكشف الانهيار وحده.
-  const best = (cues) => {
-    let min = Infinity;
-    for (let i = 0; i < 5; i++) {
-      const t = performance.now();
-      const r = findIssues(cues);
-      min = Math.min(min, performance.now() - t);
-      assert.equal(r.list.length, 0);
-    }
-    return min;
-  };
-  const small = makeCues(10000);
-  const large = makeCues(50000);
-  best(small); // إحماء المترجم الفوري
-  const a = best(small);
-  const b = best(large);
-  assert.ok(b / Math.max(a, 0.05) < 15, `النسبة ${(b / Math.max(a, 0.05)).toFixed(1)} (${a.toFixed(2)}ms ← ${b.toFixed(2)}ms)`);
-  assert.ok(b < 2000, `${b.toFixed(1)}ms`);
+  // بالنمو لا بزمن مطلق (تدقيق 7a66f91، U68؛ ثم تحقق الجولة الثانية §١١): كانت 200ms مطلقة فسقطت تحت الحمل، ثم نسبة 15 بين 10,000
+  // و50,000 مقطع بزمن الساعة فسقطت بـ16.5. والآن الأس المقدّر بزمن المعالج بين 1,000 و50,000 (test/helpers/growth.js)، والحد
+  // المطلق سخي يكشف الانهيار وحده.
+  const g = growth({ small: 1000, large: 50000, prepare: (n) => {
+    const cues = makeCues(n);
+    return () => assert.equal(findIssues(cues).list.length, 0);
+  } });
+  assert.ok(g.exponent < LINEAR_MAX_EXPONENT, g.note);
+  assert.ok(g.large < 2000, g.note);
 });
 
 test('نص لا يقبله التخزين (أطول من الحد أو فيه NUL) خطأ يمنع الحفظ قبل أن يفشل التخزين برسالة عامة (مراجعة)', () => {
