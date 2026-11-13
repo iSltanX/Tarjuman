@@ -113,6 +113,8 @@
 .lib-chip:hover:not(.lib-chip--active) { background: var(--tj-control-hover); color: var(--tj-text); }
 .lib-chip--active { background: var(--tj-selected); color: var(--tj-selected-ink); cursor: default; }
 .lib-chip--active .lib-chip__mark { background: var(--tj-accent); }
+/* ت-٥ (وجده ح٧): شريحة الترجمة النشطة في وضع التباين العالي بحدّ بلون النظام، كالمختار في components.css. */
+@media (forced-colors: active) { .lib-chip--active { outline: 2px solid Highlight; outline-offset: -2px; } }
 .lib-chip--add { background: transparent; color: var(--tj-text-2); font-weight: 400; }
 .lib-chip--add:hover { background: var(--tj-hover); color: var(--tj-text); }
 

@@ -560,7 +560,8 @@ export function createLibrary(env) {
   // ---- موافقة الصور ----
   const thumbsOn = () => thumbnailsShown(state.prefs.ui.thumbnails, state.thumbsGranted);
   const applyThumbs = () => {
-    thumbsNote.hidden = thumbsOn();
+    // ت-٢: قبل وصول التفضيلات المحفوظة لا يُحسب السطر من الافتراضية (كان يومض إطارًا والصور مفعّلة)؛ load() يطبّقه بعدها.
+    thumbsNote.hidden = state.status !== 'ready' || thumbsOn();
     for (const th of thumbs) th.setEnabled(thumbsOn());
   };
   /** قراءة الموافقة الآن: آخر قراءة بدأت هي الحاكمة، فتُطبَّق على الحالة والصور الحالية، والأقدم تعيد نتيجتها. */

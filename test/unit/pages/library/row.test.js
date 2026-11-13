@@ -20,7 +20,7 @@ const at = (daysAgo, hour = 12) => new Date(2026, 10, 3 - daysAgo, hour, 0).getT
  * @param {{ records: { id: string, title?: string | null, durationMs?: number | null, at?: number, arabic?: boolean }[], prefs?: object, env?: object, doc?: object }} o
  */
 // و2 (2026-11-10): الصور مطفأة افتراضيًا، فاختبارات الصورة تفعّلها صراحةً؛ وprefs: null يبقي التثبيت الجديد بلا تفضيلات مكتوبة.
-async function mount({ records, prefs = { ui: { thumbnails: true } }, env = {}, doc = newDocument(), seed } = {}) {
+async function mount({ records, prefs = { ui: { thumbnails: true } }, env = {}, doc = newDocument(), seed, beforeLoad } = {}) {
   let clock = NOW;
   const area = createMemoryArea({ unlimited: true });
   const store = createStore({ area, now: () => clock });
@@ -42,6 +42,7 @@ async function mount({ records, prefs = { ui: { thumbnails: true } }, env = {}, 
     ...env,
   });
   doc.body.append(lib.root);
+  beforeLoad?.(lib);
   await lib.load();
   await settle(10);
   return { lib, store, area, doc, calls, root: lib.root };
@@ -393,4 +394,18 @@ test('ت-٢ (تحقق Fable للتصميم، البند 26): سطر «صور ا�
   // Firefox: المفتاح مفعّل والموافقة غير ممنوحة، فالصور لا تظهر والسطر يقول ذلك.
   const noConsent = await mount({ records: [{ id: ID(1) }], prefs: { ui: { thumbnails: true } }, env: { thumbsConsent: async () => false } });
   assert.equal(noConsent.root.querySelector('.lib-thumbs-note').hidden, false, 'بلا موافقة: السطر ظاهر');
+});
+
+test('ت-٢ (ح٧): والصور مفعّلة لا يظهر السطر لحظةً قبل وصول التفضيلات (كان يومض إطارًا واحدًا)', async () => {
+  const seen = [];
+  await mount({
+    records: [{ id: ID(1) }], prefs: { ui: { thumbnails: true } },
+    beforeLoad: (lib) => {
+      const note = lib.root.querySelector('.lib-thumbs-note');
+      let v = note.hidden;
+      Object.defineProperty(note, 'hidden', { get: () => v, set: (x) => { v = x; seen.push(x); }, configurable: true });
+    },
+  });
+  assert.ok(seen.length > 0, 'طُبّق السطر');
+  assert.deepEqual([...new Set(seen)], [true], 'لم يُكتب ظاهرًا قط');
 });
