@@ -17,8 +17,9 @@ const CHUNK = 500;
 /** خطوة PageUp وPageDown بين الصفوف. */
 const PAGE_ROWS = 10;
 const NAV = Object.freeze({ ArrowDown: 1, ArrowUp: -1, PageDown: PAGE_ROWS, PageUp: -PAGE_ROWS });
-/** حركة المؤشر بين الضغط والنقرة التي تجعلها سحبًا لا نقرة على الصف (B3). */
+/** حركة المؤشر بين الضغط والنقرة التي تجعلها سحبًا لا نقرة على الصف (B3): بالفأرة والقلم، وباللمس أوسع (القرار ٣١). */
 export const DRAG_PX = 5;
+export const TOUCH_DRAG_PX = 10;
 
 /**
  * @param {{ doc: Document, onSeek: (ms: number) => void, onAct?: (act: 'mark' | 'sync', i: number) => void, syncReason?: (i: number) => string | null }} deps
@@ -164,12 +165,14 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
   }
 
   // B3: ضغطة تبدأ على عنصر وتنتهي على آخر يرسل Chromium وFirefox نقرتها إلى أقرب أب مشترك، وهو الصف، ولا تحديد نص يدل على
-  // السحب. فيُحفظ موضع الضغطة، وهل بدأت في شريط الأفعال، وهل تحرك المؤشر بعدها أكثر من DRAG_PX.
-  /** @type {{ x: number, y: number, inActs: boolean, moved: boolean } | null} */
+  // السحب. فيُحفظ موضع الضغطة، وهل بدأت في شريط الأفعال، وهل تحرك المؤشر بعدها أكثر من حدها: DRAG_PX للفأرة والقلم،
+  // وTOUCH_DRAG_PX للمس (الإصبع يرتجف أكثر).
+  /** @type {{ x: number, y: number, limit: number, inActs: boolean, moved: boolean } | null} */
   let press = null;
-  const far = (p, ev) => Math.hypot(ev.clientX - p.x, ev.clientY - p.y) > DRAG_PX;
+  const far = (p, ev) => Math.hypot(ev.clientX - p.x, ev.clientY - p.y) > p.limit;
   list.addEventListener('pointerdown', (ev) => {
-    press = { x: ev.clientX, y: ev.clientY, inActs: acts.contains(ev.target), moved: false };
+    const limit = ev.pointerType === 'touch' ? TOUCH_DRAG_PX : DRAG_PX;
+    press = { x: ev.clientX, y: ev.clientY, limit, inActs: acts.contains(ev.target), moved: false };
   });
   list.addEventListener('pointermove', (ev) => {
     if (press && !press.moved && far(press, ev)) press.moved = true;

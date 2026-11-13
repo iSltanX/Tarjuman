@@ -19,7 +19,7 @@ async function mounted(over = {}) {
   return { page, u: P.ui(page) };
 }
 
-const ptr = (type, el, x, y) => el.dispatchEvent({ type, bubbles: true, clientX: x, clientY: y, button: 0, pointerType: 'mouse' });
+const ptr = (type, el, x, y, pointerType = 'mouse') => el.dispatchEvent({ type, bubbles: true, clientX: x, clientY: y, button: 0, pointerType });
 const clickAt = (el, x, y, detail = 1) => el.dispatchEvent({ type: 'click', bubbles: true, detail, clientX: x, clientY: y });
 const actBtn = (u, act) => u.q('.acts').children.find((b) => b.getAttribute('data-act') === act);
 /** ما يصل إلى مستمع المستند (اختصارات يوتيوب) من الضغطات. */
@@ -95,6 +95,26 @@ test('B3: النقرة العادية على نص الصف تقفز (حركة 5 
   ptr('pointerdown', ar, 300, 120);
   clickAt(ar, 300, 120);
   assert.equal(page.video.writes.length, 5, 'ونقرة بلا حركة بعد ذلك');
+});
+
+test('B3 (القرار ٣١): حد السحب باللمس 10 بكسل، وبالفأرة والقلم 5', async () => {
+  const { page, u } = await mounted();
+  const ar = u.rows()[2].querySelector('.ar');
+  ptr('pointerdown', ar, 300, 120, 'touch');
+  ptr('pointermove', ar, 308, 120, 'touch');
+  clickAt(ar, 308, 120);
+  assert.equal(page.video.writes.length, 1, 'لمسة بارتجاف 8 بكسل نقرة تقفز');
+  ptr('pointerdown', ar, 300, 120, 'touch');
+  ptr('pointermove', ar, 312, 120, 'touch');
+  clickAt(ar, 312, 120);
+  assert.equal(page.video.writes.length, 1, 'سحب لمس 12 بكسل: لا قفز');
+  ptr('pointerdown', ar, 300, 120, 'pen');
+  ptr('pointermove', ar, 308, 120, 'pen');
+  clickAt(ar, 308, 120);
+  assert.equal(page.video.writes.length, 1, 'القلم بحد الفأرة: 8 بكسل سحب');
+  ptr('pointerdown', ar, 300, 120);
+  clickAt(ar, 308, 120);
+  assert.equal(page.video.writes.length, 1, 'والفأرة كذلك');
 });
 
 // ———— ت-٤ ————
