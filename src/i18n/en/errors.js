@@ -254,7 +254,7 @@ export default Object.freeze({
   PG_LIST_LIMIT: 'The lists have reached their limit of 20. Delete a list to create another.',
   PG_LIST_PAIR_MISSING: 'Choose a “From” language (or “Any language”) and a “To” language for the list.',
   PG_LIST_PAIR_SAME: 'The list’s two languages are the same. Choose two different languages.',
-  PG_LIST_GONE: 'This list was deleted from another page, so the general glossary is shown. Add the term again if you want it there.',
+  PG_LIST_GONE: 'This list was deleted from another page, so the term wasn’t added and the general glossary is shown. The term is still in the fields; add it there if you want.',
   PG_LIST_TERM_DUPLICATE: 'This term is already in this list.',
   PG_LIST_TERM_LIMIT: 'This list has reached its limit of 100 terms. Delete a term to add another.',
 
