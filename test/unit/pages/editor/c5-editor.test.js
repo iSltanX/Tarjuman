@@ -108,3 +108,24 @@ test('الفكرة ١١: بلا مسار أصل محفوظ «مع الأصل» �
   assert.match(m.saved[0].name, /\.ar\.srt$/);
   assert.doesNotMatch(m.saved[0].text, /line 1/);
 });
+
+test('الفكرة ١١ (ح-49): «رفع الاستكمال المترجم…» بملف ثنائي: المعاينة بالتحذير وزره بمسار الأصل المحفوظ، والنقرة ثم التطبيق يكتبان الترجمة وحدها', async () => {
+  const m = await mounted();
+  const fp = m.editor.state.fp;
+  const english = m.editor.state.opened.record.english.find((t) => t.key === fp.trackKey);
+  const ts = (ms) => new Date(ms).toISOString().slice(11, 23).replace('.', ',');
+  const patch = fp.cues.slice(0, 2).map((c, i) => `${c.n}\n${ts(c.startMs)} --> ${ts(c.endMs)}\nمستكمل ${c.n}\n${english.cues[i].text}\n`).join('\n');
+  const input = m.env.root.querySelectorAll('input').find((x) => x.getAttribute('type') === 'file');
+  input.files = [new File([patch], 'patch.srt')];
+  input.dispatchEvent({ type: 'change' });
+  await settle(10);
+  const dlg = m.env.doc.querySelector('dialog[open]');
+  assert.ok(dlg && dlg.textContent.includes('يبدو الملف مصدَّرًا مع الأصل: آخر سطر في مقطعين (من 2)'), dlg?.textContent);
+  dlg.querySelectorAll('button').find((b) => b.textContent.includes('أزل سطر الأصل من كل مقطع')).dispatchEvent({ type: 'click' });
+  assert.ok(!dlg.textContent.includes(english.cues[0].text), 'البنود بلا سطر الأصل');
+  dlg.close('apply');
+  await settle(10);
+  const s = m.editor.state.session;
+  assert.equal(s.cueAt(0).text, 'مستكمل 1');
+  assert.equal(s.cueAt(1).text, 'مستكمل 2');
+});

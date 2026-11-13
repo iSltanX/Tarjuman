@@ -11,6 +11,7 @@ import { selectFingerprint } from './fingerprint.js';
 import { mergeParts } from './merge.js';
 import { MAX_FILES, MAX_FILE_BYTES, readFileText } from './read-file.js';
 import { clip, displayName, toList } from './files.js';
+import { bilingualCheck, withoutLastLines } from './bilingual.js';
 import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 
 /** العدد الذي يؤنَّث معه الفعل (3 إلى 10، و103…). @param {number} n */
@@ -21,6 +22,7 @@ export { applyPatch, applyPatchDetailed, cuesKey, partsStatus, planPatchCues, re
 export { findContinuation, withContinuation } from './continuation.js';
 export { ambiguousMarks, ambiguousNumbers } from './ambiguous.js';
 export { REVIEW_THRESHOLDS, classTransitions, reviewIncoming, sameExport, videoIdFromName } from './review.js';
+export { bilingualCheck, withoutLastLines } from './bilingual.js';
 
 const NAMES_NOTE_CHARS = 300;
 // تحذير لكل مقطع نهايته ليست بعد بدايته، وما يزيد على هذا الحد يُذكر عدده في تحذير واحد، فلا يبني ملف معيب آلاف الصفوف في تبويب يوتيوب.
@@ -59,17 +61,20 @@ function capNotes(notes) {
 
 /**
  * @param {File | File[] | FileList} fileOrFiles أكثر من ملف = أجزاء احتياطية تُدمج بالأرقام
- * @param {{ fingerprints?: import('../model/tracks.js').Fingerprint[], settings?: import('../model/settings.js').Settings, lang?: string | null }} [opts]
- *   lang لغة الملف التي اختارها المستخدم (AA1/AA3)؛ وبلا اختيار من رمز صريح في اسم الملف، وإلا null
+ * @param {{ fingerprints?: import('../model/tracks.js').Fingerprint[], settings?: import('../model/settings.js').Settings, lang?: string | null,
+ *   originals?: { lang?: string, cues?: import('../model/cue.js').Cue[] }[] }} [opts]
+ *   lang لغة الملف التي اختارها المستخدم (AA1/AA3)؛ وبلا اختيار من رمز صريح في اسم الملف، وإلا null. originals مسارات الأصل
+ *   المحفوظة للفيديو (record.english) لحارس الملف الثنائي (الفكرة ١١، ح-49)؛ وبلاها لا حارس.
  * @returns {Promise<
  *   { ok: true, fileName: string, cues: import('../model/cue.js').Cue[], comparison: import('../model/tracks.js').ComparisonReport | null,
  *     fingerprintId: string | null, notes: string[], warnings: { code: string, params?: Record<string, string | number> }[],
- *     lang: string | null, ambiguous: number[] | null }
+ *     lang: string | null, ambiguous: number[] | null, bilingual: import('./bilingual.js').Bilingual | null }
  *   ambiguous: أرقام «المواضع الغامضة» التي ذكرها النموذج في سطر بعد الملف (ف6)، أو null
+ *   bilingual: الملف مصدَّر «مع الأصل» (IM_BILINGUAL)، تعرضه المراجعة تحذيرًا بزر الإزالة (withoutOriginalLines)، أو null
  *   lang: لغة الملف من رمز صريح في اسمه (talk.ja.srt)، وإلا null «غير محددة» حتى يختارها المستخدم (AA1؛ لا تخمين من النص)
  *   | { ok: false, error: { code: string, message: string, line?: number } }>}
  */
-export async function readImport(fileOrFiles, { fingerprints = [], settings, lang: chosen } = {}) {
+export async function readImport(fileOrFiles, { fingerprints = [], settings, lang: chosen, originals = [] } = {}) {
   let multi = false;
   let current = null;
   try {
@@ -129,7 +134,9 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
     // أرقام الغامضة الموجودة في الملف المدموج وحدها (ف6).
     const present = new Set(cues.map((c) => c.n));
     const vague = [...ambiguous].filter((n) => present.has(n)).sort((a, b) => a - b);
-    return { ok: true, fileName, cues, comparison, fingerprintId: fingerprint ? fingerprint.id : null, notes: finalNotes, warnings: capTimeWarnings(warnings), lang, ambiguous: vague.length ? vague : null };
+    // ح-49: تحذير لا رفض، ولا يُزال شيء هنا.
+    const bilingual = bilingualCheck(cues, originals);
+    return { ok: true, fileName, cues, comparison, fingerprintId: fingerprint ? fingerprint.id : null, notes: finalNotes, warnings: capTimeWarnings(warnings), lang, ambiguous: vague.length ? vague : null, bilingual };
   } catch (err) {
     const info = toErrorInfo(err);
     const line = err instanceof TjError ? err.params?.line : undefined;
@@ -157,6 +164,25 @@ export function previewComparison(cues, fingerprint, { settings, notes = [], tar
   const report = fingerprint ? currentComparison(cues, fingerprint, { driftMs, coverage, target }) : compare(cues, null, { driftMs, target });
   const renumbered = !!coverage.ok && coverage.pairs.some(([i, j]) => fingerprint.cues[i].n !== cues[j].n);
   return { ...report, renumbered, notes: capNotes([...notes, ...report.notes]) };
+}
+
+/**
+ * «أزل سطر الأصل من كل مقطع» بعد نقرة المستخدم في مراجعة الاستيراد (الفكرة ١١، ح-49): نتيجة readImport بلا آخر سطر في المقاطع
+ * التي طابق فيها الأصل، وملاحظة IM_NOTE_BILINGUAL_REMOVED بعددها (كل تحويل للنص يُذكر في notes)، والمقارنة بالمرجع نفسه من جديد،
+ * وstripped عددها. وما ليس ثنائيًا يعود كما هو. لا كتابة في التخزين.
+ * @template {Extract<Awaited<ReturnType<typeof readImport>>, { ok: true }>} R
+ * @param {R} result
+ * @param {{ fingerprints?: import('../model/tracks.js').Fingerprint[], settings?: import('../model/settings.js').Settings }} [opts]
+ * @returns {R & { stripped?: number }}
+ */
+export function withoutOriginalLines(result, { fingerprints = [], settings } = {}) {
+  if (!result?.ok || !result.bilingual) return result;
+  const { count, indexes } = result.bilingual;
+  const cues = withoutLastLines(result.cues, indexes);
+  const raw = [...result.notes, messageFor('IM_NOTE_BILINGUAL_REMOVED', { count })];
+  const fingerprint = result.fingerprintId ? fingerprints.find((f) => f.id === result.fingerprintId) ?? null : null;
+  const report = compare(cues, fingerprint, { driftMs: threshold(settings), target: result.lang ?? null });
+  return { ...result, cues, notes: capNotes(raw), comparison: { ...report, notes: capNotes([...raw, ...report.notes]) }, bilingual: null, stripped: count };
 }
 
 /**

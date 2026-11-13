@@ -2,12 +2,13 @@
 // والمرجع (قائمة عند تعدد التصديرات، والمقترح «الأقرب»، و«غير مؤكد» عند التقارب)، وملخص المقارنة بالمرجع المختار، وتنبيه
 // الاسم، وأعداد ما سيتغير وجدول قابل للطي (# · الحالي · الجديد) بدفعات من 200، وما سيُفقد من التعديلات اليدوية، و«إبقاء
 // تعديلاتي» بشرط المحاذاة (والسبب في التلميح واسم الوصول). لا كتابة هنا: الحوار يعيد الاختيار، والإلغاء لا يمس التخزين.
+// وحارس الملف الثنائي (الفكرة ١١، ح-49): تحذير IM_BILINGUAL بزر «أزل سطر الأصل من كل مقطع» يطلب onStrip، ثم سطر بما أُزيل.
 import { messageFor } from '../../core/errors/index.js';
 import { describeLang, knownLanguages, textFitsLang } from '../../core/lang/index.js';
 import { isSourceLang } from '../../core/model/ids.js';
 import { sourceOf } from '../../core/model/pair.js';
 import { getLocale, joinList, t as tr } from '../../i18n/index.js';
-import { alertBox, el, ltr, statusPill } from '../../ui/components.js';
+import { alertBox, button, el, ltr, statusPill } from '../../ui/components.js';
 import { pairLabel } from '../../ui/lang.js';
 import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { previewComparison } from '../../core/import/index.js';
@@ -55,14 +56,22 @@ function diffTable(doc, changes) {
   });
 }
 
+/** سطر ما أُزيل بنقرة «أزل سطر الأصل من كل مقطع» (ح-49): وجهة التركيز بعد زوال الزر. @param {Document} doc @param {number} count */
+function stripped(doc, count) {
+  const box = alertBox({ tone: 'success', text: messageFor('IM_NOTE_BILINGUAL_REMOVED', { count }), doc });
+  box.classList.add('lib-up__stripped');
+  box.setAttribute('tabindex', '-1');
+  return box;
+}
+
 /**
  * يبني محتوى الحوار وحالته. `choice()` يعيد { n, fingerprintId, keepCues }، و`replace()` هل الهدف ممتلئ.
  * @param {{
  *   doc: Document, prep: Awaited<ReturnType<typeof import('./actions.js').prepareUpload>>, preferred?: 1 | 2 | 3 | null,
- *   titleOf?: (videoId: string) => string | null, onTarget?: (replace: boolean) => void,
- * }} o
+ *   titleOf?: (videoId: string) => string | null, onTarget?: (replace: boolean) => void, onStrip?: () => void,
+ * }} o onStrip: «أزل سطر الأصل من كل مقطع» (ح-49)؛ المستدعي يعيد بناء الحوار بالملف بعد الإزالة.
  */
-export function uploadContent({ doc, prep, preferred = null, titleOf = () => null, onTarget = () => {}, suggested = [] }) {
+export function uploadContent({ doc, prep, preferred = null, titleOf = () => null, onTarget = () => {}, suggested = [], onStrip = () => {} }) {
   const { bundle, result, review, settings } = prep;
   const id = `lib-up-${++seq}`;
   const fps = bundle.record.fingerprints;
@@ -230,6 +239,12 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
     children: [
       el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
       ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
+      // ح-49: الملف مصدَّر «مع الأصل»: تحذير وزر الإزالة، ولا يُزال شيء قبل النقرة؛ وبعدها سطر بما أُزيل يُنقل إليه التركيز.
+      result.bilingual ? alertBox({
+        tone: 'warning', text: messageFor('IM_BILINGUAL', { count: result.bilingual.count, total: result.bilingual.total }),
+        action: button({ label: tr('common.bilingual.remove'), variant: 'secondary', size: 'sm', className: 'lib-up__strip', onClick: () => onStrip(), doc }), doc,
+      }) : null,
+      result.stripped ? stripped(doc, result.stripped) : null,
       // ف6: ما ذكره النموذج من مواضع غامضة، وزرها بعد الحفظ.
       result.ambiguous?.length ? el('p', { className: 'tj-caption lib-up__ambiguous', text: `${messageFor('IM_NOTE_AMBIGUOUS', { count: result.ambiguous.length, list: joinList(result.ambiguous.slice(0, 12).map(String).concat(result.ambiguous.length > 12 ? ['…'] : [])) })} ${tr('library.upload.ambiguousHint')}`, doc }) : null,
       hint ? alertBox({ tone: 'warning', text: hint, doc }) : null,

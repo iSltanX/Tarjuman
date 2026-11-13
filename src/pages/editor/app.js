@@ -1134,7 +1134,8 @@ export async function mountEditor(app, {
     const fp = S.fp;
     const before = session.version;
     const stale = () => S.session !== session || S.fp !== fp || session.version !== before;
-    const read = await readPatch(files, { fingerprint: fp, cues: session.snapshot(), target: openedLang() });
+    // مسارات الأصل المحفوظة لحارس الملف الثنائي (الفكرة ١١، ح-49).
+    const read = await readPatch(files, { fingerprint: fp, cues: session.snapshot(), target: openedLang(), originals: S.opened?.record?.english ?? [] });
     if (!read.ok) {
       await openDialog({
         doc, tone: 'danger', title: t('editor.complete.readFailed'),
@@ -1147,13 +1148,15 @@ export async function mountEditor(app, {
       toast(messageFor('IM_PATCH_STALE'), 'danger');
       return;
     }
-    const only = await previewPatch({ doc, plan: read.plan });
+    // «أزل سطر الأصل من كل مقطع» في المعاينة يبدّل الخطة بخطته بلا سطر الأصل (ح-49).
+    let plan = read.plan;
+    const only = await previewPatch({ doc, plan, bilingual: read.bilingual, onStrip: (p) => { plan = p; } });
     if (!only) return;
     if (stale()) {
       toast(messageFor('IM_PATCH_STALE'), 'danger');
       return;
     }
-    const r = session.applyPatchPlan(read.plan, { only });
+    const r = session.applyPatchPlan(plan, { only });
     if (!r.ok) {
       toast(messageFor(r.code), 'danger');
       return;

@@ -336,3 +336,33 @@ test('معاينة الملف: أكثر من 300 بند: تُعرض الأولى
   dlg.close('apply');
   assert.equal((await done).length, 305);
 });
+
+test('الفكرة ١١ (ح-49): معاينة ملف استكمال ثنائي: التحذير بزره ولا يُزال شيء بلا نقرة، والنقرة تبدّل البنود بخطة بلا سطر الأصل وتبلّغ المستدعي وتنقل التركيز', async () => {
+  const withOriginal = plan({ items: [{ n: 1, action: 'replace', before: { text: 'أ' }, after: { text: 'مستكمل 1\nline 1' } }, { n: 2, action: 'replace', before: { text: '' }, after: { text: 'مستكمل 2\nline 2' } }] });
+  const without = plan({ items: [{ n: 1, action: 'replace', before: { text: 'أ' }, after: { text: 'مستكمل 1' } }, { n: 2, action: 'replace', before: { text: '' }, after: { text: 'مستكمل 2' } }], notes: ['أُزيل بطلبك سطر الأصل (آخر سطر) من مقطعين.'] });
+  // بلا نقرة: البنود كما قُرئت.
+  const e0 = env();
+  const kept = previewPatch({ doc: e0.doc, plan: withOriginal, bilingual: { count: 2, total: 2, plan: without } });
+  await settle();
+  const d0 = dialogOf(e0.doc);
+  assert.ok(textOf(d0).includes('يبدو الملف مصدَّرًا مع الأصل: آخر سطر في مقطعين (من 2) هو نص الأصل نفسه.'), textOf(d0));
+  assert.ok(textOf(d0).includes('مستكمل 1 / line 1'));
+  d0.close('apply');
+  assert.deepEqual(await kept, [1, 2]);
+
+  const e = env();
+  const seen = [];
+  const done = previewPatch({ doc: e.doc, plan: withOriginal, bilingual: { count: 2, total: 2, plan: without }, onStrip: (p) => seen.push(p) });
+  await settle();
+  const dlg = dialogOf(e.doc);
+  btn(dlg, 'أزل سطر الأصل من كل مقطع').dispatchEvent({ type: 'click' });
+  const text = textOf(dlg);
+  assert.ok(!text.includes('line 1') && text.includes('مستكمل 1'), text);
+  assert.ok(!text.includes('يبدو الملف مصدَّرًا مع الأصل') && !btn(dlg, 'أزل سطر الأصل'), 'زال التحذير وزره');
+  const note = dlg.querySelector('[data-fid="stripped"]');
+  assert.equal(textOf(note), 'أُزيل بطلبك سطر الأصل (آخر سطر) من مقطعين.');
+  assert.ok(e.doc.activeElement === note, 'التركيز على سطر ما أُزيل');
+  assert.deepEqual(seen, [without], 'المستدعي يطبّق الخطة بلا سطر الأصل');
+  dlg.close('apply');
+  assert.deepEqual(await done, [1, 2]);
+});

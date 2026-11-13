@@ -23,6 +23,7 @@ export default Object.freeze({
   continuation: {
     note: 'Completed with “{file}”: {count}.',
   },
+  bilingual: { remove: 'Remove the original line from each segment' },
   slot: {
     label: 'Translation {n}', labelActive: 'Translation {n}, active', labelEmpty: 'Translation {n}, empty', picker: 'Active translation',
   },

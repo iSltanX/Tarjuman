@@ -109,6 +109,7 @@ export default Object.freeze({
   IM_HTML_LITERAL: ({ count }) => `${count} ${by(count, 'segment contains', 'segments contain')} HTML-like tags. They’re kept as literal text and not interpreted.`,
   IM_CUE_TIME_NOT_AFTER_START: 'Segment {n} (line {line}) doesn’t end after it starts, so it won’t appear over the video.',
   IM_CUE_TIME_MORE: ({ count }) => `${count} more ${by(count, 'segment has the same problem: it doesn’t end after it starts', 'segments have the same problem: they don’t end after they start')}.`,
+  IM_BILINGUAL: ({ count, total }) => `This file looks like it was exported with the original: the last line of ${count} of ${total} ${by(total, 'segment', 'segments')} is the original text itself. Saved as is, the original would become part of the translation.`,
 
   IM_NOTE_FENCE: 'Removed the code-block fence (``` or ~~~) around the file.',
   IM_NOTE_CHATTER_BEFORE: ({ count, first }) => `Removed ${count} explanation or heading ${by(count, 'line', 'lines')} before the file, starting with: “${first}”.`,
@@ -123,6 +124,7 @@ export default Object.freeze({
   IM_NOTE_TRIMMED: ({ count }) => `Trimmed spaces from the edges of ${count} ${by(count, 'line', 'lines')}.`,
   IM_NOTE_MERGED: '{verb} {files} by segment number: {names}.',
   IM_NOTE_MORE: 'More notes weren’t listed because there are too many ({count}).',
+  IM_NOTE_BILINGUAL_REMOVED: ({ count }) => `At your request, the original line (the last line) was removed from ${count} ${by(count, 'segment', 'segments')}.`,
 
   IM_PATCH_NO_REFERENCE: 'There’s no reference for the completion file: the original it was built on is no longer saved. Create a new completion file from the Editor.',
   IM_PATCH_OUT_OF_RANGE: 'Segment number {n} is higher than the original’s segment count ({count}). Make sure this is the right completion file for this video.',

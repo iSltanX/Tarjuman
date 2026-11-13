@@ -90,11 +90,17 @@ export function renderCompletePanel(box, o) {
 
 /**
  * معاينة ملف التصحيح قبل تطبيقه: كل بند بمربع اختيار (استبدال نص في موضعه أو إدراج ناقص بزمن الأصل)، والتحذيرات والملاحظات.
- * @param {{ doc: Document, plan: import('../../core/import/patch.js').PatchPlan }} o
+ * وحارس الملف الثنائي (الفكرة ١١، ح-49): إن كان الملف مصدَّرًا «مع الأصل» فتحذير IM_BILINGUAL بزر «أزل سطر الأصل من كل مقطع» يبدّل
+ * الخطة بخطته بلا سطر الأصل (bilingual.plan من readPatch) ويعيد رسم البنود، ويُبلَّغ المستدعي بها (onStrip) ليطبّقها؛ ولا يُزال شيء قبله.
+ * @param {{ doc: Document, plan: import('../../core/import/patch.js').PatchPlan,
+ *   bilingual?: { count: number, total: number, plan: import('../../core/import/patch.js').PatchPlan | null } | null,
+ *   onStrip?: (plan: import('../../core/import/patch.js').PatchPlan) => void }} o
  * @returns {Promise<number[] | null>} أرقام البنود المختارة، أو null
  */
-export async function previewPatch({ doc, plan }) {
-  const picked = new Set(plan.items.map((it) => it.n));
+export async function previewPatch({ doc, plan: read, bilingual = null, onStrip = () => {} }) {
+  let plan = read;
+  let stripped = false;
+  let picked = new Set(plan.items.map((it) => it.n));
   let applyBtn = null;
   const total = el('p', { className: 'tj-caption', doc });
   const applyLabel = () => t('editor.complete.applyTo', { n: picked.size, count: formatCount(picked.size, COUNT_FORMS.cue) });
@@ -106,42 +112,60 @@ export async function previewPatch({ doc, plan }) {
     }
   };
   const flat = (s) => s.replace(/\s*\n\s*/g, ' / ');
-  const rows = plan.items.slice(0, MAX_PREVIEW).map((it) => {
-    const box = el('input', { attrs: { type: 'checkbox', checked: '', 'aria-label': t('editor.complete.applyAria', { n: it.n }) }, on: { change: () => { if (box.checked) picked.add(it.n); else picked.delete(it.n); sync(); } }, doc });
-    return el('label', {
-      className: 'ed-replace-item',
-      children: [
-        box,
-        el('span', { className: 'ed-replace-item__n tj-mono-sm', text: String(it.n), doc }),
-        el('span', {
-          className: 'ed-replace-item__text', dir: 'auto',
-          children: it.action === 'replace'
-            ? [t('editor.complete.replace'), it.before.text ? el('del', { text: flat(it.before.text), doc }) : el('del', { text: t('editor.complete.empty'), doc }), ' ', el('ins', { text: flat(it.after.text), doc })]
-            : [t('editor.complete.insertAt'), ltr(formatTimecode(it.after.startMs), { doc }), ': ', el('ins', { text: flat(it.after.text), doc })],
-          doc,
-        }),
-      ],
-      doc,
+  const content = el('div', { className: 'tj-stack', doc });
+  const strip = () => {
+    plan = bilingual.plan;
+    stripped = true;
+    picked = new Set(plan.items.map((it) => it.n));
+    onStrip(plan);
+    paint();
+    content.querySelector('[data-fid="stripped"]')?.focus();
+  };
+  function paint() {
+    const rows = plan.items.slice(0, MAX_PREVIEW).map((it) => {
+      const box = el('input', { attrs: { type: 'checkbox', checked: '', 'aria-label': t('editor.complete.applyAria', { n: it.n }) }, on: { change: () => { if (box.checked) picked.add(it.n); else picked.delete(it.n); sync(); } }, doc });
+      return el('label', {
+        className: 'ed-replace-item',
+        children: [
+          box,
+          el('span', { className: 'ed-replace-item__n tj-mono-sm', text: String(it.n), doc }),
+          el('span', {
+            className: 'ed-replace-item__text', dir: 'auto',
+            children: it.action === 'replace'
+              ? [t('editor.complete.replace'), it.before.text ? el('del', { text: flat(it.before.text), doc }) : el('del', { text: t('editor.complete.empty'), doc }), ' ', el('ins', { text: flat(it.after.text), doc })]
+              : [t('editor.complete.insertAt'), ltr(formatTimecode(it.after.startMs), { doc }), ': ', el('ins', { text: flat(it.after.text), doc })],
+            doc,
+          }),
+        ],
+        doc,
+      });
     });
-  });
-  const inserts = plan.items.filter((x) => x.action === 'insert').length;
-  const content = el('div', {
-    className: 'tj-stack',
-    children: [
+    const inserts = plan.items.filter((x) => x.action === 'insert').length;
+    // ح-49: التحذير بزره ما دامت خطة الإزالة متاحة ولم تُطلب؛ وبعدها سطر ما أُزيل (وجهة التركيز بعد زوال الزر).
+    const guard = bilingual?.plan && !stripped ? alertBox({
+      tone: 'warning', text: messageFor('IM_BILINGUAL', { count: bilingual.count, total: bilingual.total }),
+      action: button({ label: t('common.bilingual.remove'), size: 'sm', onClick: () => strip(), doc }), doc,
+    }) : null;
+    const done = stripped ? alertBox({ tone: 'success', text: messageFor('IM_NOTE_BILINGUAL_REMOVED', { count: bilingual.count }), doc }) : null;
+    done?.setAttribute('tabindex', '-1');
+    done?.setAttribute('data-fid', 'stripped');
+    content.replaceChildren(...[
       el('p', {
         className: 'tj-body-sm',
         text: t('editor.complete.summary', { n: plan.items.length, count: formatCount(plan.items.length, COUNT_FORMS.cue), replace: plan.items.length - inserts, insert: inserts }),
         doc,
       }),
+      guard,
+      done,
       ...plan.warnings.map((w) => alertBox({ tone: 'warning', title: t('editor.complete.warning'), text: messageFor(w.code, w.params), doc })),
       plan.notes.length ? el('details', { className: 'ed-notes', children: [el('summary', { text: t('editor.complete.readNotes', { n: plan.notes.length }), doc }), el('ul', { children: plan.notes.map((note) => el('li', { className: 'tj-auto', text: note, doc })), doc })], doc }) : null,
       rows.length ? el('div', { className: 'ed-preview-table ed-replace-list', children: rows, doc }) : el('p', { className: 'tj-caption', text: t('editor.complete.nothing'), doc }),
       plan.items.length > MAX_PREVIEW ? el('p', { className: 'tj-caption', text: t('editor.complete.truncated', { n: MAX_PREVIEW }), doc }) : null,
       total,
-    ].filter(Boolean),
-    doc,
-  });
-  sync();
+    ].filter(Boolean));
+    sync();
+  }
+  paint();
   const v = await openDialog({
     doc, size: 'lg', title: t('editor.complete.previewTitle'), content, focus: 'cancel',
     actions: [

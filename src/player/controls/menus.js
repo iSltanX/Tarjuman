@@ -490,7 +490,8 @@ export function displayMenu(h, act, m, root = null) {
  *   fileName: string, count: number, comparison: object | null, warnings: string[], hint: string | null,
  *   slots: SlotModel[], target: number, filled: boolean, edits: number, keepAvailable: boolean, keep: boolean, conflicts: number,
  *   offsetNote: boolean, previousFrom?: number | null, busy: boolean, error: string | null, lang?: string | null, langSuggested?: string[],
- * }} m
+ *   bilingual?: { text: string, action: string } | null, stripped?: string | null,
+ * }} m bilingual وstripped: حارس الملف الثنائي (الفكرة ١١، ح-49)
  * @param {ShadowRoot | null} [root]
  */
 export function confirmMenu(h, act, m, root = null) {
@@ -502,6 +503,9 @@ export function confirmMenu(h, act, m, root = null) {
   ];
   if (m.hint) out.push(alert(h, 'warn', m.hint));
   for (const w of m.warnings) out.push(alert(h, 'warn', w));
+  // الفكرة ١١ (ح-49): الملف مصدَّر «مع الأصل»: تحذير وزر «أزل سطر الأصل من كل مقطع»، ولا يُزال شيء قبل النقرة؛ وبعدها سطر ما أُزيل.
+  if (m.bilingual) out.push(alert(h, 'warn', m.bilingual.text, [button(h, 'secondary', m.bilingual.action, { act, name: 'stripOriginal', fid: 'stripOriginal', disabled: m.busy })]));
+  if (m.stripped) out.push(h('div', { className: 'row complete', text: m.stripped, attrs: { 'data-tone': 'ok', 'aria-live': 'polite', 'data-fid': 'stripped', tabindex: '-1' } }));
   out.push(sep(h));
   // لغة الملف (AA3): من رمز صريح في اسمه، وإلا «إلى» في نافذة الإضافة، وإلا «غير محددة»؛ ويغيّرها المستخدم قبل الحفظ. ولا لغة
   // للإكمال (ف3): تبقى لغة الخانة.

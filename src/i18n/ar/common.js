@@ -25,6 +25,8 @@ export default Object.freeze({
   continuation: {
     note: 'أُكملت بالملف «{file}»: {count}.',
   },
+  // الفكرة ١١ (ح-49): زر حارس الملف الثنائي في مراجعة الاستيراد (المحفوظات والمشغّل والمحرّر).
+  bilingual: { remove: 'أزل سطر الأصل من كل مقطع' },
   slot: {
     label: 'الترجمة {n}', labelActive: 'الترجمة {n}، نشطة', labelEmpty: 'الترجمة {n}، فارغة', picker: 'الترجمة النشطة',
   },

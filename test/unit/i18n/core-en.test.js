@@ -29,6 +29,9 @@ const FUNCTION_SAMPLES = {
   PG_LANG_ASSIGN_SKIPPED: { n: '2 translations', count: 2 },
   // الفكرة ٤ (الإنذار المبكر): تسمّي الصيغة المرفوضة إن عُرفت.
   EX_UNSUPPORTED_FORMAT: { format: 'srv3' },
+  // الفكرة ١١ (ح-49): العدد خامًا والمعدود بالجمع بالعدد.
+  IM_BILINGUAL: { count: 3, total: 4 },
+  IM_NOTE_BILINGUAL_REMOVED: { count: 3 },
 };
 
 test('كل رمز خطأ له رسالة إنجليزية بالقوالب نفسها وبلا حرف عربي', () => {

@@ -5,11 +5,11 @@ import { TjError, hasCode, messageFor, toErrorInfo } from '../../core/errors/ind
 import { lookupMs } from '../../core/model/timing.js';
 import { rankUsable } from '../../core/model/track-order.js';
 import { formatOffset } from '../../ui/format.js';
-import { joinList } from '../../i18n/index.js';
+import { joinList, t } from '../../i18n/index.js';
 import { holdTimer } from '../../ui/hold.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow, isSubtitlesButton } from '../youtube-dom.js';
 import { fitSize, isFolded, timeClipped, watchBar } from './bar.js';
-import { completeInto, continuationFor, fileChars, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
+import { completeInto, continuationFor, fileChars, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles, stripFor } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
@@ -374,6 +374,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return plan;
   }
 
+  /** حارس الملف الثنائي في التأكيد (الفكرة ١١، ح-49): التحذير وزره، ثم سطر ما أُزيل بعد النقرة. */
+  const bilingualModel = (p) => ({
+    bilingual: p.bilingual ? { text: messageFor('IM_BILINGUAL', { count: p.bilingual.count, total: p.bilingual.total }), action: t('common.bilingual.remove') } : null,
+    stripped: p.stripped ? messageFor('IM_NOTE_BILINGUAL_REMOVED', { count: p.stripped }) : null,
+  });
+
   /** التأكيد المضغوط بعد فحص الملف (§١٩.٣): الملف والملخص، وقرينة الاسم، و«حفظ في» 1 2 3، وما يمسه الاستبدال. */
   function confirmModel(s) {
     const p = ui.upload.pending;
@@ -383,6 +389,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       // الإكمال (ف3): المقارنة للترجمة بعده، ولا استبدال ولا تعديلات تُفقد ولا لغة ملف (تبقى لغة الخانة).
       return {
         fileName: p.input.fileName, count: p.input.cues.length, comparison: p.complete.preview ?? p.preview ?? p.input.comparison, warnings: p.warnings,
+        ...bilingualModel(p),
         hint: p.hint ? nameOtherLine(p.hint.title) : null, slots, target: 'complete', complete, completing: true, filled: false, edits: 0,
         keepAvailable: false, keep: false, conflicts: 0, offsetNote: false, previousFrom: null,
         busy: ui.upload.busy, error: ui.upload.error, lang: p.lang ?? null, langSuggested: [],
@@ -395,6 +402,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       // المعاينة بالمحاذاة كما بعد الحفظ (FA-04)، وتقرير الحفظ بالرقم يبقى في input.
       fileName: p.input.fileName, count: p.input.cues.length, comparison: p.preview ?? p.input.comparison, warnings: p.warnings,
+      ...bilingualModel(p),
       hint: p.hint ? nameOtherLine(p.hint.title) : null, slots, target: target.n, complete, completing: false, filled, edits: plan.edits,
       keepAvailable: keepOk, keep: keepOk && p.keep, conflicts: keepOk ? plan.keep.conflicts : 0,
       offsetNote: filled && target.active && Math.round(s.view.displayOffsetMs / 100) !== 0,
@@ -869,6 +877,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         break;
       case 'keep': if (ui.upload.pending) ui.upload.pending.keep = !!value; break;
       case 'markAmbiguous': markAmbiguous(); return;
+      case 'stripOriginal': stripOriginal(); return;
       case 'confirmReplace': confirmUpload(); return;
       case 'cancelReplace':
         ui.upload.pending = null;
@@ -1289,7 +1298,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const hint = await nameHintFor({ controller, importFlow: flows.importFlow, read });
     if (destroyed || ui.upload !== u) return;
     const slots = slotsOf(controller.getState());
-    if (!hint && !slots.some((x) => x.filled)) {
+    // الملف الثنائي (ح-49) لا يُحفظ مباشرة: التأكيد يعرض تحذيره وزر الإزالة.
+    if (!hint && !read.bilingual && !slots.some((x) => x.filled)) {
       const r = await loadIntoFor({ controller, read, n: 1, replace: false });
       if (destroyed || ui.upload !== u) return;
       u.busy = false;
@@ -1316,6 +1326,24 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     ui.open = 'confirm';
     render();
     layer.focusFirst();
+  }
+
+  /**
+   * «أزل سطر الأصل من كل مقطع» (الفكرة ١١، ح-49): الملف المعلّق بلا سطر الأصل حيث طابق، ثم التأكيد نفسه بفحصه الجديد (والتتمة)،
+   * والتركيز إلى سطر ما أُزيل (زال الزر). لا كتابة في التخزين قبل «حفظ».
+   */
+  function stripOriginal() {
+    const u = ui.upload;
+    const p = u.pending;
+    if (!p?.bilingual || u.busy) return;
+    const next = stripFor({ controller, read: p, lang: p.lang ?? null });
+    const cont = continuationFor({ controller, read: next });
+    const target = cont ? 'complete' : p.target === 'complete' ? defaultTarget(slotsOf(controller.getState())) : p.target;
+    u.plans.clear();
+    u.error = null;
+    u.pending = { ...next, complete: cont, target, keep: false };
+    render();
+    layer.find('stripped')?.focus();
   }
 
   async function confirmUpload() {

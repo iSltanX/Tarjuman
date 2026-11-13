@@ -36,6 +36,8 @@ import { clip, isolate } from './text.js';
 import { thumbnail } from './thumb.js';
 import { thumbnailsShown } from '../../core/consent/thumbnails.js';
 import { uploadContent } from './upload.js';
+// حارس الملف الثنائي في حوار الرفع (الفكرة ١١، ح-49).
+import { withoutOriginal } from './actions.js';
 
 export { isolate };
 let seq = 0;
@@ -378,7 +380,8 @@ export function createLibrary(env) {
     await guarded(async () => {
       const files = given ?? await env.pickFiles();
       if (!files || !files.length) return;
-      const prep = await prepareUpload({ store, videoId: m.videoId, files, knownVideoIds: state.entries.map((e) => e.videoId) });
+      const knownVideoIds = state.entries.map((e) => e.videoId);
+      let prep = await prepareUpload({ store, videoId: m.videoId, files, knownVideoIds });
       if (!prep.result.ok) {
         toaster.show(prep.result.error.message, 'danger');
         return;
@@ -389,16 +392,28 @@ export function createLibrary(env) {
       // «إلى» المختارة لهذا الفيديو في نافذة الإضافة، ثم الافتراضية، ثم الأخيرة: مقترحات لغة الملف (AA3).
       const lp = state.langPrefs;
       const suggested = lp ? [lp.videos?.[m.videoId]?.to, lp.pair?.to, ...(lp.recent ?? [])].filter(Boolean) : [];
-      const view = uploadContent({
-        doc, prep, preferred, titleOf, suggested,
-        onTarget: (replace) => {
-          if (!confirmBtn) return;
-          const label = confirmBtn.querySelector('span') ?? confirmBtn;
-          label.textContent = labelFor(replace);
+      const onTarget = (replace) => {
+        if (!confirmBtn) return;
+        const label = confirmBtn.querySelector('span') ?? confirmBtn;
+        label.textContent = labelFor(replace);
+      };
+      // المحتوى في حاوية ثابتة: «أزل سطر الأصل من كل مقطع» (الفكرة ١١، ح-49) يعيد بناءه بالملف بعد الإزالة في الحوار نفسه.
+      const host = el('div', { className: 'lib-up-host', doc });
+      let view = null;
+      const build = () => uploadContent({
+        doc, prep, preferred, titleOf, suggested, onTarget,
+        onStrip: () => {
+          prep = withoutOriginal(prep, { videoId: m.videoId, knownVideoIds });
+          view = build();
+          host.replaceChildren(view.root);
+          onTarget(view.replace());
+          view.root.querySelector('.lib-up__stripped')?.focus();
         },
       });
-      const pending = confirm({ title: tr('library.dialog.uploadTitle', { title: isolate(clip(m.displayTitle, 80)) }), confirmLabel: labelFor(view.replace()), content: view.root, doc });
-      confirmBtn = view.root.closest?.('form')?.querySelector('button[value="confirm"]') ?? null;
+      view = build();
+      host.append(view.root);
+      const pending = confirm({ title: tr('library.dialog.uploadTitle', { title: isolate(clip(m.displayTitle, 80)) }), confirmLabel: labelFor(view.replace()), content: host, doc });
+      confirmBtn = host.closest?.('form')?.querySelector('button[value="confirm"]') ?? null;
       if (!(await pending)) return;
       const choice = view.choice();
       if (choice.complete) {

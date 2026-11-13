@@ -5,7 +5,7 @@
 // مضغوط إن وُجدت ترجمة أو دل الاسم على فيديو آخر)، ولغة الملف من رمز صريح في اسمه، وإلا «إلى» في نافذة الإضافة إن وافق نصها.
 // كل تدفق يثبّت معرّف الفيديو عند بدئه، فنتيجة تأخرت حتى تبدّل الفيديو لا تُطبَّق على الجديد أبدًا.
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
-import { findContinuation, previewComparison, videoIdFromName, withSuggestedReference } from '../../core/import/index.js';
+import { findContinuation, previewComparison, videoIdFromName, withSuggestedReference, withoutOriginalLines } from '../../core/import/index.js';
 import { t } from '../../i18n/index.js';
 import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 import { DEFAULT_DRIFT_MS, compare } from '../../core/compare/index.js';
@@ -162,7 +162,8 @@ export function partSizes(p) {
 }
 
 /**
- * قراءة ملف أو أجزاء وفحصها ومقارنتها بالبصمات المحفوظة لهذا الفيديو. لا كتابة في التخزين هنا.
+ * قراءة ملف أو أجزاء وفحصها ومقارنتها بالبصمات المحفوظة لهذا الفيديو. لا كتابة في التخزين هنا. وbilingual حارس الملف الثنائي
+ * (الفكرة ١١، ح-49) بمسارات الأصل المحفوظة.
  * preview ملخص المعاينة بالمحاذاة كما يُعرض بعد الحفظ (FA-04)، وinput.comparison تقرير الحفظ بالرقم كما كان.
  * fallbackLang: «إلى» في نافذة الإضافة لهذا الفيديو (AA3)، تُستعمل بلا رمز في الاسم إن وافق نص الملف نصها. fileLang: الرمز الصريح في الاسم.
  * @returns {Promise<
@@ -174,7 +175,8 @@ export async function readFor({ controller, importFlow, files, fallbackLang = nu
   const videoId = s.videoId;
   let res;
   try {
-    res = await importFlow.readImport(files, { fingerprints: s.saved?.fingerprints ?? [], settings: s.settings });
+    // مسارات الأصل المحفوظة لحارس الملف الثنائي (الفكرة ١١، ح-49).
+    res = await importFlow.readImport(files, { fingerprints: s.saved?.fingerprints ?? [], settings: s.settings, originals: s.saved?.english ?? [] });
   } catch (err) {
     return { ok: false, error: toErrorInfo(err) };
   }
@@ -213,10 +215,26 @@ export async function readFor({ controller, importFlow, files, fallbackLang = nu
     input: { fileName, cues, comparison, fingerprintId, notes, lang },
     // أرقام «المواضع الغامضة» (ف6) لزر «علّمها للمراجعة» بعد الحفظ.
     ambiguous: res.ambiguous ?? null,
+    // الملف مصدَّر «مع الأصل» (ح-49): التأكيد يعرض التحذير وزر الإزالة، ولا يُحفظ مباشرة.
+    bilingual: res.bilingual ?? null,
     fileLang,
     preview,
     warnings: (res.warnings ?? []).map((w) => messageFor(w.code, w.params)),
   };
+}
+
+/**
+ * «أزل سطر الأصل من كل مقطع» في التأكيد (الفكرة ١١، ح-49): نتيجة القراءة بلا سطر الأصل حيث طابق (withoutOriginalLines)، بتقرير الحفظ
+ * بلغة الملف المقترحة وملاحظة الإزالة، والمعاينة بلغة الملف المختارة. وما ليس ثنائيًا يعود كما هو. لا كتابة في التخزين هنا.
+ * @param {{ controller: object, read: { input: object, bilingual: object | null, lang?: string | null }, lang?: string | null }} p
+ */
+export function stripFor({ controller, read, lang }) {
+  if (!read?.bilingual) return read;
+  const s = controller.getState();
+  const res = withoutOriginalLines({ ok: true, ...read.input, bilingual: read.bilingual }, { fingerprints: s.saved?.fingerprints ?? [], settings: s.settings });
+  const input = { fileName: res.fileName, cues: res.cues, comparison: res.comparison, fingerprintId: res.fingerprintId, notes: res.notes, lang: read.input.lang ?? null };
+  const next = { ...read, input, bilingual: null, stripped: res.stripped };
+  return { ...next, preview: previewFor({ controller, read: next, lang: lang === undefined ? input.lang : lang }) };
 }
 
 /**

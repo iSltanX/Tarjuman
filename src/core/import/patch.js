@@ -7,13 +7,14 @@ import { shortList } from '../align/align.js';
 import { ALIGN_DEFAULTS, alignCues, iou, toBlocks } from '../align/index.js';
 import { isBlankText, untranslatedTest } from '../compare/compare.js';
 import { parseTrackKey } from '../model/ids.js';
-import { TjError, toErrorInfo } from '../errors/index.js';
+import { TjError, messageFor, toErrorInfo } from '../errors/index.js';
 import { fnv1a64 } from '../export/hash.js';
 import { LIMITS } from '../model/validate.js';
 import { parseSrtLenient } from '../srt/lenient.js';
 import { displayName, toList } from './files.js';
 import { MAX_FILES, readFileText } from './read-file.js';
 import { videoIdFromName } from './review.js';
+import { bilingualCheck, withoutLastLines } from './bilingual.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 /** @typedef {import('../model/tracks.js').Fingerprint} Fingerprint */
@@ -112,11 +113,14 @@ export function partsStatus(fingerprint, cues) {
 
 /**
  * @param {File | File[] | FileList} fileOrFiles ملف التصحيح، أو أجزاء مستلمة (أكثر من ملف يُجمع بالأرقام)
- * @param {{ fingerprint: Fingerprint, cues: Cue[], target?: string | null }} ctx البصمة التي بُني عليها ملف الاستكمال أو التقسيم، والترجمة
- *   الحالية، ولغتها لفحص «غير مترجم» (AA1: null لا فحص، والافتراضي العربية كما كان)
- * @returns {Promise<{ ok: true, plan: PatchPlan } | { ok: false, error: { code: string, message: string, line?: number } }>}
+ * @param {{ fingerprint: Fingerprint, cues: Cue[], target?: string | null, originals?: { lang?: string, cues?: Cue[] }[] }} ctx البصمة التي بُني
+ *   عليها ملف الاستكمال أو التقسيم، والترجمة الحالية، ولغتها لفحص «غير مترجم» (AA1: null لا فحص، والافتراضي العربية كما كان)، ومسار
+ *   الأصل المحفوظ لحارس الملف الثنائي (الفكرة ١١، ح-49)
+ * @returns {Promise<{ ok: true, plan: PatchPlan, bilingual: { count: number, total: number, plan: PatchPlan | null } | null }
+ *   | { ok: false, error: { code: string, message: string, line?: number } }>} bilingual: الملف مصدَّر «مع الأصل» (IM_BILINGUAL)، ومعه خطته
+ *   بلا سطر الأصل (وملاحظتها) تعرضها المعاينة بنقرة «أزل سطر الأصل من كل مقطع»؛ ولا يُزال شيء قبلها.
  */
-export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 'ar' } = {}) {
+export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 'ar', originals = [] } = {}) {
   let multi = false;
   let current = null;
   try {
@@ -146,7 +150,17 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 
     }
     current = null;
     incoming.sort((x, y) => x.n - y.n);
-    return { ok: true, plan: planFrom(incoming, { fingerprint, cues, target, notes, warnings }) };
+    const plan = planFrom(incoming, { fingerprint, cues, target, notes: [...notes], warnings: [...warnings] });
+    const bi = bilingualCheck(incoming, originals);
+    if (!bi) return { ok: true, plan, bilingual: null };
+    let stripped = null;
+    try {
+      const removed = messageFor('IM_NOTE_BILINGUAL_REMOVED', { count: bi.count });
+      stripped = planFrom(withoutLastLines(incoming, bi.indexes), { fingerprint, cues, target, notes: [...notes, removed], warnings: [...warnings] });
+    } catch {
+      stripped = null;
+    }
+    return { ok: true, plan, bilingual: { count: bi.count, total: bi.total, plan: stripped } };
   } catch (err) {
     const info = toErrorInfo(err);
     const error = { code: info.code, message: multi && current ? `«${current}»: ${info.message}` : info.message };

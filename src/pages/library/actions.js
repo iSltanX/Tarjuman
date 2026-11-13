@@ -7,7 +7,7 @@ import { diffTranslations, keepEditsMerge } from '../../core/align/index.js';
 import { compare } from '../../core/compare/index.js';
 import { TjError, messageFor } from '../../core/errors/index.js';
 import { buildExport, buildStudyText, buildSubtitleExport, studyTiming, studyTimingNote, subtitleFileName, translationLang } from '../../core/export/index.js';
-import { ambiguousMarks, findContinuation, readImport, reviewIncoming, sameExport, withContinuation } from '../../core/import/index.js';
+import { ambiguousMarks, findContinuation, readImport, reviewIncoming, sameExport, withContinuation, withoutOriginalLines } from '../../core/import/index.js';
 import {
   applyRecordChange, referencedFingerprints, withActiveSlot, withMarksReplaced, withPreviousRestored, withSlotName, withSlotUpload, withoutPrevious,
   withoutSlot,
@@ -312,11 +312,25 @@ export async function prepareUpload({ store, videoId, files, knownVideoIds = [] 
   const bundle = await store.getBundle(videoId);
   if (!bundle) throw new TjError('PG_VIDEO_GONE');
   const settings = await store.getSettings();
-  const result = await readImport(files, { fingerprints: bundle.record.fingerprints, settings });
+  // مسارات الأصل المحفوظة لحارس الملف الثنائي (الفكرة ١١، ح-49).
+  const result = await readImport(files, { fingerprints: bundle.record.fingerprints, settings, originals: bundle.record.english });
   if (!result.ok) return { bundle, settings, result, review: null, continuation: null };
   const review = reviewIncoming({ fileName: result.fileName, cues: result.cues, videoId, fingerprints: bundle.record.fingerprints, knownVideoIds });
   // ف3: هل الملف تتمة لترجمة محفوظة؟ فيُقترح «إكمال الترجمة N» افتراضيًا.
   return { bundle, settings, result, review, continuation: findContinuation(bundle, result.cues) };
+}
+
+/**
+ * «أزل سطر الأصل من كل مقطع» في حوار الرفع (الفكرة ١١، ح-49): الملف الوارد بلا سطر الأصل حيث طابق (withoutOriginalLines)، ثم فحصه
+ * من جديد كما في prepareUpload (المرجع الأقرب والتتمة). لا كتابة هنا؛ وما ليس ثنائيًا يعود كما هو.
+ * @param {Awaited<ReturnType<typeof prepareUpload>>} prep @param {{ videoId: string, knownVideoIds?: string[] }} o
+ */
+export function withoutOriginal(prep, { videoId, knownVideoIds = [] }) {
+  if (!prep.result?.ok || !prep.result.bilingual) return prep;
+  const fingerprints = prep.bundle.record.fingerprints;
+  const result = withoutOriginalLines(prep.result, { fingerprints, settings: prep.settings });
+  const review = reviewIncoming({ fileName: result.fileName, cues: result.cues, videoId, fingerprints, knownVideoIds });
+  return { ...prep, result, review, continuation: findContinuation(prep.bundle, result.cues) };
 }
 
 /**
