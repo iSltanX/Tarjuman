@@ -258,3 +258,20 @@ test('المشغّل الحي يبدأ سماع أحداث التنقل والع
   assert.ok(listen > src.indexOf('const reference = [...requests];'), 'بعد طلبات الفيديو المرجعي');
   assert.ok(listen < src.indexOf('await clickRelated('), 'قبل نقر المقترح');
 });
+
+test('المشغّل الحي (الإصدار 2): وسائط الصفحة من inPageWatch، ومجسّا الحالة بعد قراءة الأحداث وكلٌّ يعيد ما غيّره، واللقطة بنتائجهما', () => {
+  // نص المشغّل لا تشغيله، كالاختبار السابق.
+  const src = readFileSync(new URL('../../live/harness/youtube-shapes.mjs', import.meta.url), 'utf8');
+  const read = src.indexOf('window.__tjShapeEvents ?? []');
+  assert.ok(read > 0);
+  assert.match(src, /page\.eval\(collectInPage, \{ args: \[watch\] \}\)/);
+  assert.ok(src.indexOf('const watch = inPageWatch();') < src.indexOf('page.eval(collectInPage'), 'الوسائط من inPageWatch قبل أول جمع');
+  for (const [apply, undo] of [["'Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] }", "'Emulation.setEmulatedMedia', { features: [] }"],
+    ["'Emulation.setDeviceMetricsOverride', { width: 800", "'Emulation.clearDeviceMetricsOverride'"]]) {
+    assert.ok(src.indexOf(apply) > read, `${apply}: بعد قراءة الأحداث`);
+    assert.ok(src.indexOf(undo) > read, `${undo}: يُعاد ما غيّره المجسّ`);
+  }
+  assert.ok(/finally \{\s*await undo\(\)/.test(src), 'الإعادة في finally ولو تعذّر المجسّ');
+  assert.match(src, /snapshot\(\{ inPage, probes, requests: reference, events,/);
+  assert.match(src, /unobservedNow\(base, now\)/);
+});
