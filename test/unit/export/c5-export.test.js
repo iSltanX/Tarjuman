@@ -9,7 +9,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
-  buildArabicExport, buildExport, buildPatchPackage, buildStudyText, studyTiming, textHash,
+  buildArabicExport, buildExport, buildPatchPackage, buildStudyText, buildSubtitleExport, studyTiming, textHash,
 } from '../../../src/core/export/index.js';
 import { findIssues } from '../../../src/core/edit/issues.js';
 import { planArabicExport } from '../../../src/core/edit/export.js';
@@ -178,6 +178,34 @@ test('ع-١٧: فاصلان متتاليان منها سطر فارغ تعلنه
 test('ع-١٧ حارس (ffmpeg): ملف من نص فيه U+2028 وCR يقرؤه ffmpeg بعدده', { skip: !hasFfmpeg && 'ffmpeg غير مثبت' }, () => {
   const file = arabicExport([cue(1, `أ${CR}ب`), cue(2, `ج${LS}د`), cue(3, 'هـ')]);
   assert.equal(ffmpegCount(file.text), 3);
+});
+
+test('ع-١٧ والفكرة ١١: CR وU+2028 وU+2029 في نص الترجمة وفي سطر الأصل تُكتب LF أو مسافة في WebVTT والملف الثنائي، والمتتاليان سطر فارغ EX_EMPTY_TEXT برقمه', () => {
+  const en = [cue(1, 'one'), cue(2, `two${CR}lines${LS}here`), cue(3, `three${PS}`)];
+  for (const [format, bilingual] of [['vtt', false], ['vtt', true], ['srt', true]]) {
+    const label = `${format}${bilingual ? ' مع الأصل' : ''}`;
+    const r = buildSubtitleExport({ videoId: VIDEO, cues: [cue(1, `أ${CR}ب`), cue(2, `ج${LS}د`), cue(3, `هـ${PS}و`)], format, bilingual, original: en, sourceLang: 'en' });
+    assert.doesNotMatch(r.text, new RegExp(`[${CR}${LS}${PS}]`), label);
+    assert.ok(r.text.includes('أ\nب') && r.text.includes('ج\nد') && r.text.includes('هـ\nو'), label);
+    if (bilingual) assert.ok(r.text.includes('ج\nد\ntwo lines here\n'), `${label}: سطر الأصل واحد`);
+    const e = tjCode(() => buildSubtitleExport({ videoId: VIDEO, cues: [cue(1, 'تمهيد'), cue(2, `مرحبا${LS}${LS}بكم`)], format, bilingual, original: en, sourceLang: 'en' }));
+    assert.equal(e.code, 'EX_EMPTY_TEXT', label);
+    assert.equal(e.params.list, '2', label);
+  }
+});
+
+test('ع-١٧ والفكرة ١١ (ffmpeg): WebVTT والملف الثنائي من نص فيه U+2028 وCR يقرؤهما ffmpeg بعددهما', { skip: !hasFfmpeg && 'ffmpeg غير مثبت' }, () => {
+  const ar = [cue(1, `أ${CR}ب`), cue(2, `ج${LS}د`), cue(3, 'هـ')];
+  const en = [cue(1, `one${CR}x`), cue(2, 'two'), cue(3, 'three')];
+  assert.equal(ffmpegCount(buildSubtitleExport({ videoId: VIDEO, cues: ar, format: 'srt', bilingual: true, original: en, sourceLang: 'en' }).text), 3);
+  const dir = mkdtempSync(path.join(tmpdir(), 'tj-c5-vtt-'));
+  try {
+    writeFileSync(path.join(dir, 'in.vtt'), buildSubtitleExport({ videoId: VIDEO, cues: ar, format: 'vtt', bilingual: true, original: en, sourceLang: 'en' }).text);
+    execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', path.join(dir, 'in.vtt'), '-f', 'srt', path.join(dir, 'out.srt')]);
+    assert.equal((readFileSync(path.join(dir, 'out.srt'), 'utf8').match(/^\d{2}:\d{2}:\d{2},\d{3} --> /gm) ?? []).length, 3);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 // ---- U98: planArabicExport لا يرمي ----

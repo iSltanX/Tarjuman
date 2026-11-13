@@ -1,6 +1,7 @@
 // تدفق التصدير (عقد interfaces §٥): وحدة نقية تستهلكها أدوات الشريط (P6) والمحفوظات (P7) والمحرّر (P8).
 // الإنجليزي: controller.convertCaptured(key, { mode }) ← buildExport ← download لكل ملف ← controller.recordExport.
-// العربي: exportTiming (عقد التوقيت §٥) ← buildArabicExport ← download. لا كتابة في التخزين هنا.
+// العربي: exportTiming (عقد التوقيت §٥) ← buildArabicExport ← download. وملف الترجمة SRT أو WebVTT، وحده أو مع الأصل (الفكرة
+// ١١): buildSubtitleExport في bilingual.js يحاذي ثم يطبّق exportTiming بنفسه. لا كتابة في التخزين هنا.
 import { TjError, messageFor } from '../errors/index.js';
 import { joinList } from '../../i18n/index.js';
 import { validateCues } from '../model/cue.js';
@@ -24,6 +25,8 @@ export { fnv1a64, textHash } from './hash.js';
 export { buildPatchPackage, patchFileName } from './patch.js';
 export { buildStudyText, studyTiming, studyTimingNote } from './study.js';
 export { buildReviewReport } from './report.js';
+export { buildSubtitleExport, originalLines, subtitleFileName } from './bilingual.js';
+export { SUBTITLE_FORMATS } from './names.js';
 
 const invalid = (what) => new TjError('MD_INVALID', { detail: `تصدير: ${what}` });
 
