@@ -58,3 +58,79 @@ test('U-056: دليل الصيانة بلا خطوة نسخ تعليمات من 
   const doc = await readFile(path.join(ROOT, 'docs/maintenance.md'), 'utf8');
   assert.doesNotMatch(doc, /نسخ تعليمات الترجمة|ثم «نسخ التعليمات» في كل تبويب/);
 });
+
+// ---------------------------------------------------------------- تحقق Gemini، ع-٣٢ (البند 38)
+// سكربتات حية بقيت بعد حذف ما تعتمد عليه (src/pages/poc حُذف في 0c03aa8 وثلاثة سكربتات في p1 تفتحه)، وأخرى لا يشير إليها شيء.
+// الحراس نصية لا استيراد (استيراد سكربت حي يشغّله): كل صفحة إضافة يذكرها سكربت حي موجودة، وكل استيراد نسبي فيه موجود، وكل
+// سكربت حي يشير إليه شيء خارج المجلدات الحية (package.json أو وثيقة أو سكربت أو مصدر أو اختبار) أو سكربت حي مُشار إليه.
+
+const LIVE_DIRS = ['test/live', 'test/e2e/live'];
+const posixRel = (f) => path.relative(ROOT, f).split(path.sep).join('/');
+const liveFiles = async () => (await Promise.all(LIVE_DIRS.map((d) => walk(path.join(ROOT, d), () => true)))).flat().map(posixRel).sort();
+const isCode = (rel) => /\.(?:mjs|js)$/.test(rel);
+
+test('ع-٣٢: كل صفحة إضافة (pages/<اسم>/) يذكرها سكربت حي موجودة في src/pages', async () => {
+  const missing = [];
+  for (const rel of (await liveFiles()).filter(isCode)) {
+    if (SITE_SCRIPTS.has(rel)) continue;
+    const text = await readFile(path.join(ROOT, rel), 'utf8');
+    for (const [, page] of text.matchAll(/\bpages\/([a-z0-9-]+)\/(?:index\.html|[\w-]+\.(?:js|css|html))/g)) {
+      if (!(await readdir(path.join(ROOT, 'src/pages', page)).then(() => true, () => false))) missing.push(`${rel}: pages/${page}`);
+    }
+  }
+  assert.deepEqual([...new Set(missing)], []);
+});
+
+test('ع-٣٢: كل استيراد نسبي في سكربت حي يشير إلى ملف موجود', async () => {
+  const missing = [];
+  for (const rel of (await liveFiles()).filter(isCode)) {
+    // أسطر الشيفرة وحدها: سطر يبدأ بعلامة اقتباس نصٌّ يُكتب في ملف آخر (مدخل يُبنى في شجرة tj-v1 مثلًا)، لا استيراد.
+    const lines = (await readFile(path.join(ROOT, rel), 'utf8')).split('\n').filter((l) => !/^\s*(?:['"`]|\/\/|\*)/.test(l));
+    for (const [, spec] of lines.join('\n').matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)['"](\.{1,2}\/[^'"]+)['"]/g)) {
+      const target = path.resolve(ROOT, path.dirname(rel), spec);
+      if (!(await readFile(target).then(() => true, () => false))) missing.push(`${rel}: ${spec}`);
+    }
+  }
+  assert.deepEqual(missing, []);
+});
+
+test('ع-٣٢: لا سكربت حي ميت: كل ملف تحت المجلدات الحية يشير إليه شيء خارجها أو ملف حي مُشار إليه', async () => {
+  // مجلدات لا تُعدّ إشارة: المولَّد والمحلي والعيّنات.
+  const SKIP = /^(?:node_modules|\.git|\.claude|dist[\w-]*|release|test-results|audit|coverage)\/|^test\/fixtures\//;
+  const TEXT = /\.(?:m?js|cjs|json|md|ya?ml|txt|html|css)$/;
+  const roots = [];
+  // المستوى الأعلى أولًا، فلا يُمشى node_modules ولا مخرجات البناء.
+  const top = (await readdir(ROOT, { withFileTypes: true })).filter((e) => !SKIP.test(`${e.name}/`));
+  const entries = (await Promise.all(top.map(async (e) => (e.isDirectory() ? readdir(path.join(ROOT, e.name), { withFileTypes: true, recursive: true }) : [e])))).flat();
+  for (const e of entries) {
+    const abs = path.join(e.parentPath ?? e.path ?? ROOT, e.name);
+    const rel = posixRel(abs);
+    if (!e.isFile() || !TEXT.test(e.name) || SKIP.test(rel) || LIVE_DIRS.some((d) => rel.startsWith(`${d}/`))) continue;
+    roots.push({ rel, text: await readFile(abs, 'utf8') });
+  }
+  const live = await liveFiles();
+  const texts = new Map(await Promise.all(live.map(async (rel) => [rel, await readFile(path.join(ROOT, rel), 'utf8')])));
+  /** هل يشير النص (من الملف from) إلى الملف الحي rel: بمساره الكامل، أو باستيراد نسبي، أو بمجلده وحده، أو بآخر مقطعين منه. */
+  const pointsTo = (from, text, rel) => {
+    const dir = path.posix.dirname(rel);
+    const relSpec = path.posix.relative(path.posix.dirname(from), rel);
+    const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.includes(rel)
+      || new RegExp(`['"\`](?:\\./)?${escape(relSpec)}['"\`]`).test(text)
+      || new RegExp(`${escape(dir)}/?(?![\\w.-]|/[\\w.-])`).test(text)
+      || text.includes(`${path.posix.basename(dir)}/${path.posix.basename(rel)}`);
+  };
+  const alive = new Set(live.filter((rel) => roots.some((r) => pointsTo(r.rel, r.text, rel))));
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const rel of live) {
+      if (alive.has(rel)) continue;
+      if ([...alive].some((a) => pointsTo(a, texts.get(a), rel))) {
+        alive.add(rel);
+        grew = true;
+      }
+    }
+  }
+  assert.ok(alive.size > 30, `${alive.size}`);
+  assert.deepEqual(live.filter((rel) => !alive.has(rel)), []);
+});
