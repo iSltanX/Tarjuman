@@ -55,12 +55,12 @@ export const inPageWatch = () => ({
   classes: CLASSES,
   attrs: { singleColumn: ATTRS.singleColumn, dark: ATTRS.dark, layout: ATTRS.layout.source },
   badge: { selector: SELECTORS.liveBadge, ...BADGE },
-  cc: { selector: SELECTORS.subtitlesButton, attrs: [...CC_ATTRS] },
+  cc: { selector: SELECTORS.subtitlesButton, attrs: [...CC_ATTRS], pressed: 'aria-pressed' },
 });
 /**
  * @typedef {{ dom: Record<string, string>, panel: Record<string, string>, player: string, flexy: string, classes: Record<string, string>,
  *   attrs: { singleColumn: string, dark: string, layout: string }, badge: { selector: string, disabled: string, liveHead: string },
- *   cc: { selector: string, attrs: string[] } }} InPageWatch
+ *   cc: { selector: string, attrs: string[], pressed: string } }} InPageWatch
  */
 
 const MAX_DEPTH = 4;
@@ -198,7 +198,8 @@ export function collectInPage(w) {
   const btn = find(w.cc.selector);
   if (btn) {
     cc = Object.fromEntries(w.cc.attrs.map((a) => [a, btn.hasAttribute(a)]));
-    cc.on = btn.getAttribute(w.cc.attrs[0]) === 'true';
+    // مضغوط كما يقرؤه captionsOn في أدوات المشغّل: القيمة 'true' وحدها.
+    cc.on = btn.getAttribute(w.cc.pressed) === 'true';
   }
   let response = null;
   try {
