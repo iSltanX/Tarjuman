@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { createStore, createWriter, messageTransport, versionOf } from '../../../src/core/store/index.js';
 import { createController } from '../../../src/content/controller.js';
 import { saveSlot } from '../../../src/pages/editor/persist.js';
-import { createStoreService } from '../../../src/background/store-service.js';
+import { CONTENT_SCRIPT_OPS, createStoreService } from '../../../src/background/store-service.js';
 import { storeRequest } from '../../../src/core/model/messages.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { videoRecord } from '../../helpers/fixtures.js';
@@ -278,6 +278,51 @@ test('خدمة العامل: tj:store من سكربت ترجمان على يوت
   assert.equal(svc.handle({ ...req, op: 'eval' }, { id: 'ext', url: 'chrome-extension://ext/pages/settings/index.html' }), null, 'عملية غير معروفة');
   assert.equal((await svc.handle(req, { id: 'ext', url: 'chrome-extension://ext/pages/settings/index.html' })).ok, true);
   assert.equal((await svc.handle({ ...req, wid: 'wid-sender-0002' }, { id: 'ext', url: 'https://www.youtube.com/watch?v=x', tab: { id: 1 } })).ok, true);
+});
+
+// ── قوائم المصطلحات لكل زوج (الفكرة ٨، storage §١٥) ─────────────────────────
+
+test('الفكرة ٨: عملية glossaries لصفحات الإضافة وحدها، وسكربت يوتيوب يُرفض فيها بالشكل المعتاد ولا يُكتب شيء', async () => {
+  const runtime = { id: 'ext', getURL: (p) => `chrome-extension://ext/${p}`, onMessage: { addListener() {}, removeListener() {} } };
+  const area = createMemoryArea();
+  const svc = createStoreService({ runtime, writer: createWriter({ area }) });
+  assert.equal(CONTENT_SCRIPT_OPS.includes('glossaries'), false);
+  const youtube = { id: 'ext', url: 'https://www.youtube.com/watch?v=x', tab: { id: 1 } };
+  for (const [i, args] of [{ add: { from: 'en', to: 'ar' } }, { value: { schema: 1, lists: [] } }].entries()) {
+    assert.deepEqual(await svc.handle(storeRequest('glossaries', args, `wid-gloss-yt-${i}`), youtube), { v: 1, ok: false, code: 'TJ_BAD_MESSAGE', detail: null });
+  }
+  assert.equal(area.dump().glossaries, undefined, 'لم يُكتب شيء من سكربت المحتوى');
+  const r = await svc.handle(storeRequest('glossaries', { add: { from: 'en', to: 'ar' } }, 'wid-gloss-page-1'), { id: 'ext', url: 'chrome-extension://ext/pages/settings/index.html' });
+  assert.equal(r.ok, true);
+  assert.deepEqual(area.dump().glossaries, { schema: 1, lists: [{ from: 'en', to: 'ar', terms: [] }] });
+});
+
+test('الفكرة ٨: تعديلات القوائم من صفحتين على أحدث قيمة في الكاتب لا يُسقط بعضها بعضًا، وonChange يحملها، و«مسح كل البيانات» يزيلها', async () => {
+  const env = storeEnv();
+  const a = env.context();
+  const b = env.context();
+  const seen = [];
+  const off = b.onChange((c) => { if (c.glossaries) seen.push(c.glossaries.newValue); });
+  const EN_AR = { from: 'en', to: 'ar' };
+  assert.equal((await a.addGlossaryList(EN_AR)).added, true);
+  assert.equal((await b.addGlossaryList({ from: 'EN', to: 'ar' })).reason, 'duplicate', 'القائمة نفسها بصيغة أخرى');
+  // صفحتان تضيفان معًا: كلٌّ على أحدث قيمة عند الكاتب، فلا يمحو أحدهما ما أضافه الآخر.
+  const [x, y] = await Promise.all([a.addListTerm(EN_AR, { source: 'prompt', target: 'موجِّه', note: null }), b.addListTerm(EN_AR, { source: 'token', target: 'رمز', note: null })]);
+  assert.equal(x.added && y.added, true);
+  assert.deepEqual((await a.getGlossaries()).lists[0].terms.map((t) => t.source).sort(), ['prompt', 'token']);
+  assert.equal((await b.addListTerm(EN_AR, { source: 'PROMPT', target: 'x', note: null })).reason, 'duplicate');
+  assert.equal((await a.removeListTerm(EN_AR, 'Token')).removed, true);
+  await assert.rejects(a.addListTerm({ from: 'en', to: 'en' }, { source: 'q', target: 'ق', note: null }), (e) => e.code === 'MD_INVALID');
+  await assert.rejects(a.setGlossaries({ schema: 1, lists: [{ from: 'en', to: 'ar', terms: [], extra: 1 }] }), (e) => e.code === 'MD_INVALID');
+  await env.area.flush();
+  assert.ok(seen.length >= 3, 'التغيير يصل الصفحة الأخرى');
+  assert.deepEqual(seen.at(-1).lists[0].terms.map((t) => t.source), ['prompt']);
+  // التفضيلات والقاموس العام لا تمسهما القوائم.
+  assert.equal(env.area.dump().prefs, undefined);
+  await a.clearAll();
+  assert.equal(env.area.dump().glossaries, undefined, '«مسح كل البيانات» يزيل المفتاح');
+  assert.deepEqual(await a.getGlossaries(), { schema: 1, lists: [] });
+  off();
 });
 
 // ── الفحص الثابت ───────────────────────────────────────────────────────────

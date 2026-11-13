@@ -10,11 +10,12 @@ import { DEFAULT_PREFS, addTerm, mergePrefs, normalizePrefs, removeTerm, validat
 import { DEFAULT_SETTINGS, mergeSettings, normalizeSettings, validateSettings } from '../model/settings.js';
 import { applyLangPrefs, normalizeLangPrefs, validateLangPrefs } from '../model/lang-prefs.js';
 import { UI_LOCALE_SCHEMA, normalizeUiLocale, validateUiLocale } from '../model/ui-locale.js';
+import { addList, addListTerm, listPair, normalizeGlossaries, removeList, removeListTerm, validateGlossaries } from '../model/glossaries.js';
 import { resolveInitialLocale } from '../../i18n/locale.js';
 import { assertValid, isPlainObject } from '../model/validate.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { MESSAGE_VERSION, isStoreRequest } from '../model/messages.js';
-import { KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, companionKeys, indexKey, langKey, marksKey, prevKey, videoKey } from './keys.js';
+import { KEY_GLOSSARIES, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, companionKeys, indexKey, langKey, marksKey, prevKey, videoKey } from './keys.js';
 import { MIGRATIONS, STORAGE_SCHEMA, migrate } from './migrate.js';
 import { canonical, printKeys, rawPrint, versionOf } from './version.js';
 
@@ -258,6 +259,45 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
     return {};
   }
 
+  // ---- قوائم المصطلحات لكل زوج (الفكرة ٨، عقد storage §١٥) ----
+
+  /**
+   * تعديل واحد على المخزَّن نفسه داخل طابور المفتاح، فلا تُسقط صفحةٌ قائمة أو مصطلحًا أضافته أخرى (كالقاموس العام، U13): قائمة لزوج
+   * (add)، أو حذفها (remove)، أو مصطلح فيها (list مع term)، أو حذفه بمفتاحه الموحّد (list مع removeKey)؛ أو القيمة كاملة (value) من
+   * «استعادة الإعدادات والقاموس». لا يُكتب شيء إن لم يتغير. ليست في CONTENT_SCRIPT_OPS: لا يكتبها جانب يوتيوب.
+   * @param {{ add?: unknown, remove?: unknown, list?: unknown, term?: unknown, removeKey?: unknown, value?: unknown }} req
+   */
+  async function glossaries(req) {
+    if (req.value !== undefined) {
+      const next = jsonPatch(req.value);
+      assertValid(validateGlossaries(next), 'glossaries');
+      await write({ [KEY_GLOSSARIES]: next });
+      return { glossaries: next };
+    }
+    const pairOf = (p) => {
+      const pair = listPair(p);
+      if (!pair) throw new TjError('MD_INVALID', { detail: 'glossaries: زوج القائمة' });
+      return pair;
+    };
+    const { [KEY_GLOSSARIES]: raw } = await read(KEY_GLOSSARIES);
+    const cur = normalizeGlossaries(raw);
+    let r;
+    if (req.add !== undefined) r = addList(cur, req.add);
+    else if (req.remove !== undefined) r = removeList(cur, pairOf(req.remove));
+    else if (req.term !== undefined) {
+      assertValid(validateTerm(req.term), 'term');
+      r = addListTerm(cur, pairOf(req.list), req.term);
+    } else if (req.removeKey !== undefined) {
+      if (typeof req.removeKey !== 'string') throw new TjError('MD_INVALID', { detail: 'removeKey' });
+      r = removeListTerm(cur, pairOf(req.list), req.removeKey);
+    } else throw new TjError('MD_INVALID', { detail: 'glossaries: لا تعديل' });
+    if (r.added || r.removed) {
+      assertValid(validateGlossaries(r.glossaries), 'glossaries');
+      await write({ [KEY_GLOSSARIES]: r.glossaries });
+    }
+    return r;
+  }
+
   /**
    * «مسح كل البيانات»: كل شيء ثم meta جديد، ويبقى إطفاء صور المحفوظات (U05، Q10) ولغة الواجهة (تفضيل جهاز لا بيانات: لا تنقلب
    * الصفحة المفتوحة إلى لغة أخرى بعد المسح). وتعذّر قراءة التفضيلات يرفض المسح
@@ -309,6 +349,7 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
       case 'saves': return inLane(KEY_SAVES, () => saves(req));
       case 'uiLocale': return inLane(KEY_UI_LOCALE, () => uiLocale(req));
       case 'uiLocaleInit': return inLane(KEY_UI_LOCALE, () => uiLocaleInit(req));
+      case 'glossaries': return inLane(KEY_GLOSSARIES, () => glossaries(req));
       case 'clear': return exclusiveAll(() => clear(req));
       default: return Promise.reject(new TjError('TJ_BAD_MESSAGE', { detail: String(req.op).slice(0, 20) }));
     }

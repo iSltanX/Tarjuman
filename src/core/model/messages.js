@@ -216,8 +216,8 @@ export function isSaveReply(r) {
 
 // ---- الكاتب الواحد (عقد messages §٨، storage §١٢؛ تدقيق 7a66f91، C2) ----
 
-/** عمليات الكتابة التي يقبلها الكاتب في العامل الخلفي، ولا غيرها. */
-export const STORE_OPS = Object.freeze(['ready', 'put', 'delete', 'orphan', 'index', 'settings', 'prefs', 'langPrefs', 'saves', 'clear', 'uiLocale', 'uiLocaleInit']);
+/** عمليات الكتابة التي يقبلها الكاتب في العامل الخلفي، ولا غيرها. وglossaries قوائم المصطلحات لكل زوج (الفكرة ٨، storage §١٥). */
+export const STORE_OPS = Object.freeze(['ready', 'put', 'delete', 'orphan', 'index', 'settings', 'prefs', 'langPrefs', 'saves', 'clear', 'uiLocale', 'uiLocaleInit', 'glossaries']);
 
 /**
  * طلب كتابة: العملية ومعاملاتها بيانات لا شيفرة، ومعرّف عشوائي يجعل إعادة الإرسال بعد خطأ قناة لا تطبّق الكتابة مرتين.

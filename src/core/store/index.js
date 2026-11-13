@@ -9,6 +9,7 @@ import { DEFAULT_SETTINGS, normalizeSettings } from '../model/settings.js';
 import { DEFAULT_PREFS, normalizePrefs, sourceKey } from '../model/prefs.js';
 import { DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../model/lang-prefs.js';
 import { normalizeUiLocale } from '../model/ui-locale.js';
+import { normalizeGlossaries } from '../model/glossaries.js';
 import { storeRequest } from '../model/messages.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { isVideoId, parseTrackKey } from '../model/ids.js';
@@ -23,7 +24,7 @@ import { chromeLocalArea } from './area.js';
 import { bundleReadKeys, checkRaw, hasCompanions, itemsFor, rawBundle, salvageRaw } from './bundles.js';
 import { computeCapacity } from './capacity.js';
 import {
-  COMPANION_KINDS, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, indexKey, langKey, marksKey, parseKey, prevKey, videoKey,
+  COMPANION_KINDS, KEY_GLOSSARIES, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, indexKey, langKey, marksKey, parseKey, prevKey, videoKey,
 } from './keys.js';
 // واجهة التخزين تعرض للصفحات والمتحكم ما تحتاجه من النموذج للحزمة دون استيراد إضافي.
 export { bundleFromRecord, slotModels } from '../model/bundle.js';
@@ -36,6 +37,7 @@ export { STORAGE_SCHEMA, MIGRATIONS } from './migrate.js';
 export { computeCapacity, WARN_RATIO, FULL_RATIO, ADVISORY_BYTES } from './capacity.js';
 export {
   videoKey, indexKey, bundleKey, altsKey, prevKey, marksKey, langKey, companionKeys, parseKey, KEY_META, KEY_SETTINGS, KEY_PREFS, KEY_SAVES, KEY_LANG_PREFS,
+  KEY_GLOSSARIES,
 } from './keys.js';
 export { createWriter } from './writer.js';
 export { localTransport, messageTransport } from './transport.js';
@@ -53,8 +55,10 @@ export { versionOf } from './version.js';
  *   index: boolean, cleared: boolean,
  *   prefs: { oldValue: unknown, newValue: unknown } | null,
  *   langPrefs: { oldValue: unknown, newValue: unknown } | null,
- *   bundles: string[], uiLocale?: { oldValue: unknown, newValue: unknown } | null
- * }} StoreChange langPrefs (AA3): تغيّر تفضيلات اللغات من أي سياق، وuiLocale لغة الواجهة ويغيب إن لم تتغير
+ *   bundles: string[], uiLocale?: { oldValue: unknown, newValue: unknown } | null,
+ *   glossaries?: { oldValue: unknown, newValue: unknown } | null
+ * }} StoreChange langPrefs (AA3): تغيّر تفضيلات اللغات من أي سياق، وuiLocale لغة الواجهة ويغيب إن لم تتغير، وglossaries قوائم
+ *   المصطلحات لكل زوج (الفكرة ٨) ويغيب كذلك إن لم تتغير
  */
 
 // كاتب واحد لكل مساحة في السياق نفسه (الاختبارات والأدوات): مخزنان على المساحة نفسها يمرّان به كما يمرّ سياقان في المتصفح
@@ -414,6 +418,65 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
       return exclusive(async () => {
         await ready();
         return call('prefs', { removeKey: sourceKey(String(source)) });
+      });
+    },
+
+    // ---- قوائم المصطلحات لكل زوج (الفكرة ٨، عقد storage §١٥) ----
+
+    /** @returns {Promise<import('../model/glossaries.js').Glossaries>} القوائم كاملة دائمًا، والتالف منها يسقط وحده */
+    async getGlossaries() {
+      await ready();
+      const { [KEY_GLOSSARIES]: raw } = await read(KEY_GLOSSARIES);
+      return normalizeGlossaries(raw);
+    },
+
+    /**
+     * القيمة كاملة («استعادة الإعدادات والقاموس» من نسخة احتياطية): تحل محل القوائم الحالية كما يحل قاموس النسخة محل القاموس العام.
+     * @param {import('../model/glossaries.js').Glossaries} value
+     * @returns {Promise<import('../model/glossaries.js').Glossaries>}
+     */
+    setGlossaries(value) {
+      return exclusive(async () => {
+        await ready();
+        return (await call('glossaries', { value })).glossaries;
+      });
+    },
+
+    /**
+     * قائمة جديدة فارغة لزوج على أحدث القوائم؛ reason 'duplicate' (والزوج الموجود في pair) أو 'limit' أو 'invalid'.
+     * @param {import('../model/glossaries.js').ListPair} pair
+     */
+    addGlossaryList(pair) {
+      return exclusive(async () => {
+        await ready();
+        return call('glossaries', { add: pair });
+      });
+    },
+
+    /** @param {import('../model/glossaries.js').ListPair} pair */
+    removeGlossaryList(pair) {
+      return exclusive(async () => {
+        await ready();
+        return call('glossaries', { remove: pair });
+      });
+    },
+
+    /**
+     * مصطلح في قائمة زوج بمفتاحه الموحّد على أحدث القوائم (كـaddTerm للقاموس العام)؛ reason 'duplicate' أو 'limit' أو 'missing'.
+     * @param {import('../model/glossaries.js').ListPair} pair @param {import('../model/prefs.js').GlossaryTerm} term
+     */
+    addListTerm(pair, term) {
+      return exclusive(async () => {
+        await ready();
+        return call('glossaries', { list: pair, term });
+      });
+    },
+
+    /** @param {import('../model/glossaries.js').ListPair} pair @param {string} source */
+    removeListTerm(pair, source) {
+      return exclusive(async () => {
+        await ready();
+        return call('glossaries', { list: pair, removeKey: sourceKey(String(source)) });
       });
     },
 
@@ -806,9 +869,11 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           // تفضيلات اللغات (AA3): الصفحات والمشغّل يتبعون الزوج واللغات الأخيرة حين تتغير من سياق آخر.
           else if (k.kind === 'langPrefs') out.langPrefs = { oldValue: ch.oldValue ?? null, newValue: ch.newValue ?? null };
           else if (k.kind === 'uiLocale') out.uiLocale = { oldValue: ch.oldValue ?? null, newValue: ch.newValue ?? null };
+          // قوائم المصطلحات لكل زوج (الفكرة ٨): الإعدادات والنافذة والمحفوظات والمحرّر تتبعها حين تتغير من سياق آخر.
+          else if (k.kind === 'glossaries') out.glossaries = { oldValue: ch.oldValue ?? null, newValue: ch.newValue ?? null };
           else if (COMPANION_KINDS.includes(k.kind) && !out.bundles.includes(k.videoId)) out.bundles.push(k.videoId);
         }
-        if (Object.keys(out.videos).length || out.settings || out.index || out.cleared || out.prefs || out.langPrefs || out.uiLocale || out.bundles.length) fn(out);
+        if (Object.keys(out.videos).length || out.settings || out.index || out.cleared || out.prefs || out.langPrefs || out.uiLocale || out.glossaries || out.bundles.length) fn(out);
       });
     },
   };

@@ -11,6 +11,11 @@ export const KEY_SAVES = 'saves';
 export const KEY_LANG_PREFS = 'langPrefs';
 /** لغة واجهة الإضافة (عقد storage §١٤): مفتاح مستقل، لا يقرؤه أي إصدار سابق ولا يمس لغات الفيديو والترجمة. */
 export const KEY_UI_LOCALE = 'uiLocale';
+/**
+ * قوائم المصطلحات لكل زوج لغتين (الفكرة ٨، عقد storage §١٥): مفتاح مستقل لا حقل في prefs ولا في المصطلح، لأن كاتب 1.1.0 يطبّع
+ * prefs قبل كل كتابة فيُسقط ما لا يعرفه. يتجاهله parseKey في الإصدارات السابقة، ويزيله «مسح كل البيانات».
+ */
+export const KEY_GLOSSARIES = 'glossaries';
 const VIDEO = 'video:';
 const INDEX = 'index:';
 const BUNDLE = 'bundle:';
@@ -42,7 +47,7 @@ export const COMPANION_KINDS = Object.freeze(['bundle', 'alts', 'prev', 'marks',
 
 /**
  * @param {string} key
- * @returns {{ kind: 'meta' | 'settings' | 'prefs' | 'saves' | 'langPrefs' | 'uiLocale' }
+ * @returns {{ kind: 'meta' | 'settings' | 'prefs' | 'saves' | 'langPrefs' | 'uiLocale' | 'glossaries' }
  *   | { kind: 'video' | 'index' | 'bundle' | 'alts' | 'prev' | 'marks' | 'lang', videoId: string } | null}
  */
 export function parseKey(key) {
@@ -52,6 +57,7 @@ export function parseKey(key) {
   if (key === KEY_SAVES) return { kind: 'saves' };
   if (key === KEY_LANG_PREFS) return { kind: 'langPrefs' };
   if (key === KEY_UI_LOCALE) return { kind: 'uiLocale' };
+  if (key === KEY_GLOSSARIES) return { kind: 'glossaries' };
   for (const [prefix, kind] of PER_VIDEO) {
     if (key.startsWith(prefix)) {
       const videoId = key.slice(prefix.length);
