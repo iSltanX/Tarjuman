@@ -50,6 +50,29 @@ const FSI = String.fromCodePoint(0x2068);
  */
 export const isolate = (s) => `${FSI}${s}${PDI}`;
 
+const LTR_SPAN = new RegExp(`${LRI}[^${LRI}${FSI}${PDI}]*${PDI}`, 'g');
+
+/**
+ * يقسم نصًا عند مقاطعه المعزولة LTR (ltrInline: LRI…PDI) ليُرسم كل مقطع في الـDOM عنصرًا ذريًا معزولًا (ltrNodes في
+ * components.js، و.iso في قوائم المشغّل). العزل النصي وحده يصحّح ترتيب الاسم في سطر واحد، لكن الاسم الطويل إن انكسر سطره
+ * تُرتَّب أجزاؤه سطرًا سطرًا مع الجملة العربية: «نُزّل -KA3zmDkEUQs.en.from» ثم «ar.asr.normal.srt»، والشرطة في غير مكانها
+ * (لقطة سلطان في Chrome، الجولة الرابعة). والعنصر الذري ينقل الاسم كله إلى سطره ويلتف داخله بترتيب LTR. كل جزء بنصه كما هو
+ * (المقطع بعلامتيه)، فوصل الأجزاء يعيد النص نفسه؛ والعزل FSI…PDI (نص حر كعنوان) يبقى نصًا.
+ * @param {string} s @returns {{ text: string, ltr: boolean }[]}
+ */
+export function ltrParts(s) {
+  const text = String(s ?? '');
+  const out = [];
+  let at = 0;
+  for (const m of text.matchAll(LTR_SPAN)) {
+    if (m.index > at) out.push({ text: text.slice(at, m.index), ltr: false });
+    out.push({ text: m[0], ltr: true });
+    at = m.index + m[0].length;
+  }
+  if (at < text.length || !out.length) out.push({ text: text.slice(at), ltr: false });
+  return out;
+}
+
 /**
  * زمن بصيغة HH:MM:SS,mmm (للعرض؛ الكاتب في src/core/srt يكتب الصيغة نفسها في الملف).
  * @param {number} ms

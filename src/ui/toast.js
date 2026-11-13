@@ -1,7 +1,7 @@
 // الرسالة العابرة المشتركة (عقد interfaces §١٥): رُفعت من المحفوظات (P7) إلى src/ui في الإصدار الثاني. ثلاث ثوانٍ (والخطأ
 // ضعفها)، ثلاث نبرات بنص دائمًا (لا معنى باللون وحده)، ومنطقة حيّة مستقلة للإعلان، وحتى ثلاث رسائل متراكمة، وزر
 // «تراجع» اختياري لما يمس شيئًا محفوظًا (مواصفة التصميم §١٩.١). الأنماط tj-toast في components.css.
-import { el, icon } from './components.js';
+import { el, icon, ltrNodes } from './components.js';
 import { holdTimer, onHold } from './hold.js';
 
 // آلية الإمساك (المؤشر والتركيز) مشتركة مع المشغّل والمحرّر في رسائل «تراجع» المحلية (U-042).
@@ -56,7 +56,9 @@ export function createToaster({ doc = document, setTimer = (fn, ms) => setTimeou
   /** @param {string} text @param {'success' | 'danger' | 'info'} [tone] @param {ToastOptions} [opts] */
   function show(text, tone = 'success', { action, announce: spoken, focusAfter } = {}) {
     announce(spoken ?? text);
-    const children = [icon(tone === 'danger' ? 'danger' : tone === 'info' ? 'info' : 'success', { doc }), el('span', { text, doc })];
+    // اسم الملف المعزول LTR في الرسالة عنصر ذري (ltrNodes)، فلا تنقلب أجزاؤه إن انكسر سطره.
+    const nodes = ltrNodes(text, { doc });
+    const children = [icon(tone === 'danger' ? 'danger' : tone === 'info' ? 'info' : 'success', { doc }), el('span', nodes ? { children: nodes, doc } : { text, doc })];
     /** @type {HTMLElement} */
     let node;
     if (action) {

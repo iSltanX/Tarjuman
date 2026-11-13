@@ -6,6 +6,7 @@ import { ICONS, ICON_VIEWBOX } from './icons.js';
 import { logo } from './logo.js';
 import { LazyText, t } from '../i18n/index.js';
 import { holdPage } from './page-hold.js';
+import { ltrParts } from './format.js';
 
 export { ICONS };
 
@@ -70,10 +71,30 @@ export function el(tag, { className, text, attrs, dir, children, on, doc = docum
 }
 
 /**
- * نص LTR معزول (زمن، أو معرّف، أو اسم ملف) داخل الواجهة أيًّا كان اتجاهها.
- * @param {string} text @param {{ mono?: boolean, doc?: Document }} [o]
+ * نص LTR معزول (زمن، أو معرّف، أو اسم ملف) داخل الواجهة أيًّا كان اتجاهها: عنصر ذري (inline-block) فلا يتوزع على سطرين مع جملة
+ * عربية. وwrap يلتف داخله إن طال بلا فواصل (اسم ملف في حوار أو قائمة)، فلا يفيض خارجها؛ ولا يُستعمل للأزمنة في الجداول.
+ * @param {string} text @param {{ mono?: boolean, wrap?: boolean, doc?: Document }} [o]
  */
-export const ltr = (text, { mono = true, doc = document } = {}) => el('bdi', { className: mono ? 'tj-ltr tj-mono' : 'tj-ltr', text, dir: 'ltr', doc });
+export const ltr = (text, { mono = true, wrap = false, doc = document } = {}) => el('bdi', { className: `tj-ltr${mono ? ' tj-mono' : ''}${wrap ? ' tj-ltr--wrap' : ''}`, text, dir: 'ltr', doc });
+
+/**
+ * نص بمقاطع معزولة LTR (ltrInline: اسم ملف أو معرّف داخل جملة عربية) عقدًا للـDOM: كل مقطع عنصر ltr ذري يلتف داخله، بخط النص
+ * نفسه وبعلامتي عزله، والباقي نص كما هو؛ فالاسم الطويل لا تنقلب أجزاؤه إن انكسر سطره (ltrParts في format.js)، والنص المرئي كما
+ * هو. يعيد null للنص بلا مقطع معزول (أو LazyText)، فيبقى textContent كما كان.
+ * @param {unknown} text @param {{ doc?: Document }} [o] @returns {(string | HTMLElement)[] | null}
+ */
+export function ltrNodes(text, { doc = document } = {}) {
+  if (typeof text !== 'string') return null;
+  const parts = ltrParts(text);
+  if (!parts.some((p) => p.ltr)) return null;
+  return parts.map((p) => (p.ltr ? ltr(p.text, { mono: false, wrap: true, doc }) : p.text));
+}
+
+/** خصائص el لنص قد يحمل مقاطع معزولة LTR: عناصرها (ltrNodes)، وإلا text كما هو. */
+const richText = (text, doc) => {
+  const nodes = ltrNodes(text, { doc });
+  return nodes ? { children: nodes } : { text };
+};
 
 let seq = 0;
 const uid = (p) => `${p}-${++seq}`;
@@ -165,7 +186,7 @@ export function alertBox({ tone = 'info', title, text, action, doc = document })
     attrs: { role: tone === 'danger' || tone === 'warning' ? 'alert' : 'status' },
     children: [
       icon(tone, { doc }),
-      el('div', { className: 'tj-alert__body', children: [title ? el('strong', { className: 'tj-alert__title', text: title, doc }) : null, text ? el('p', { className: 'tj-alert__text', text, doc }) : null, action ?? null], doc }),
+      el('div', { className: 'tj-alert__body', children: [title ? el('strong', { className: 'tj-alert__title', text: title, doc }) : null, text ? el('p', { className: 'tj-alert__text', ...richText(text, doc), doc }) : null, action ?? null], doc }),
     ],
     doc,
   });
