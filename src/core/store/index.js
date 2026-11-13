@@ -80,16 +80,24 @@ export function sharedWriter(area, { schema = STORAGE_SCHEMA, migrations = MIGRA
 const newWid = () => globalThis.crypto.randomUUID();
 
 /**
+ * مهلة قبل إعادة كتابة بلا expect رفضها الكاتب بـST_CONFLICT (م.ث، قبل المحاولة الثانية ثم الثالثة)، ويُضاف إليها جزء عشوائي
+ * حتى مثلها. الإعادة الفورية كانت تخسر السباق نفسه أمام رشقة سياق آخر (± متتالية) حتى المحاولة الثالثة (ع-١٥).
+ */
+export const CONFLICT_RETRY_DELAYS = Object.freeze([25, 75]);
+
+/**
  * @param {{
  *   area?: import('./area.js').StorageArea,
  *   now?: () => number,
  *   schema?: number,
  *   migrations?: Record<number, import('./migrate.js').MigrationStep>,
  *   transport?: import('./transport.js').StoreTransport,
+ *   sleep?: (ms: number) => Promise<void>,
  * }} [opts] بلا area ولا transport: chrome.storage.local للقراءة والعامل الخلفي للكتابة (الإنتاج). وبـarea وحدها: الكاتب
- *   المشترك لتلك المساحة في السياق نفسه. والعامل الخلفي يمرّر transport إلى كاتبه.
+ *   المشترك لتلك المساحة في السياق نفسه. والعامل الخلفي يمرّر transport إلى كاتبه. وsleep مهلة إعادة الكتابة بعد
+ *   ST_CONFLICT (CONFLICT_RETRY_DELAYS)، تُحقن في الاختبارات.
  */
-export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCHEMA, migrations = MIGRATIONS, transport } = {}) {
+export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCHEMA, migrations = MIGRATIONS, transport, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
   if (!transport) transport = area ? localTransport(sharedWriter(area, { schema, migrations })) : messageTransport(globalThis.chrome.runtime);
   area ??= chromeLocalArea();
   const iso = () => new Date(now()).toISOString();
@@ -246,6 +254,9 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
       } catch (err) {
         if (!isConflict(err) || expect !== undefined || attempt >= 3) throw err;
       }
+      // مهلة متزايدة قبل الإعادة (ع-١٥): يُتم السياق الآخر كتابته، والجزء العشوائي لا يُعيد سياقين معًا. والمحاولات ثلاث كما كانت.
+      const ms = CONFLICT_RETRY_DELAYS[attempt - 1];
+      await sleep(Math.round(ms + Math.random() * ms));
     }
   }
 
@@ -549,12 +560,25 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         for (let attempt = 1; ; attempt++) {
           // بلا checkRaw: الموجود (ولو تالفًا) يُتخطى افتراضيًا فلا يُكتب فوقه دون اختيار، والاستبدال الصريح يطمسه كله بما
           // في النسخة فيصلحه (تدقيق 5fedcb9، GM-006؛ كان التالف يرفض في الحالتين).
-          const raw = rawBundle(await read(bundleReadKeys(videoId)), videoId);
+          let found = await read(bundleReadKeys(videoId));
           const byPrint = expect !== undefined && expect !== null && typeof expect.print === 'string';
+          // سجل مخزَّن لا يجتاز مدققه (ومنه null) ومُلخّصه سليم: المعاينة رأت المُلخّص فـexpect نسخته، ونسخة السجل التالف لا
+          // تطابقها أبدًا فكان كل استبدال «changed» (ع-١٤). تُعاد القراءة بمفاتيح البصمة (ومنها المُلخّص)، فيُقارَن expect بالمُلخّص
+          // المخزَّن، وتُحمَّل بصمة القيم الخام من القراءة نفسها فيقارنها الكاتب داخل طابوره كما مع السجل غير المقروء (U-023).
+          const corrupt = !byPrint && found[videoKey(videoId)] !== undefined && !validateVideoRecord(found[videoKey(videoId)]).ok;
+          let print = byPrint ? expect.print : undefined;
+          if (corrupt) {
+            found = await read(printKeys(videoId));
+            print = rawPrint(found, videoId);
+          }
+          const raw = rawBundle(found, videoId);
+          const summary = found[indexKey(videoId)];
+          const asSummary = corrupt && validateIndexEntry(summary).ok && summary.videoId === videoId && versionOf(summary) === versionOf(expect);
           if (byPrint) {
             if (rawPrint(await read(printKeys(videoId)), videoId) !== expect.print) return { status: 'changed' };
-          } else if (expect !== undefined && versionOf(raw.record) !== versionOf(expect)) return { status: 'changed' };
-          if (raw.record !== null && !replace) return { status: 'skipped' };
+          } else if (expect !== undefined && versionOf(raw.record) !== versionOf(expect) && !asSummary) return { status: 'changed' };
+          const present = found[videoKey(videoId)] !== undefined;
+          if (present && !replace) return { status: 'skipped' };
           const prior = raw.record !== null && Number.isInteger(raw.record.rev) && raw.record.rev > 0 ? raw.record.rev : 0;
           const next = structuredClone(parsed.bundle);
           next.record.rev = prior + 1;
@@ -563,14 +587,14 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
           // كما في writeBundle: الكاتب يقارن بالنسخة المقروءة، فسجلٌ أنشأه سياق آخر بين القراءة والكتابة يُعاد تقييم تخطيه بدل
           // الكتابة فوقه بتقرير «أضيف» (CX-003). والتوابع اليتيمة لسجل غائب تُطمس برأس جديد.
           try {
-            await call('put', { videoId, base: versionOf(raw.record), ...(byPrint ? { print: expect.print } : {}), items: itemsFor(next, raw, { forceHead: raw.record === null && hasCompanions(raw) }) });
+            await call('put', { videoId, base: versionOf(raw.record), ...(print !== undefined ? { print } : {}), items: itemsFor(next, raw, { forceHead: raw.record === null && hasCompanions(raw) }) });
           } catch (err) {
             if (isConflict(err) && attempt < 3) continue;
             throw err;
           }
           wrote(videoId);
           remember(next);
-          return { status: raw.record ? 'replaced' : 'added' };
+          return { status: present ? 'replaced' : 'added' };
         }
       });
     },

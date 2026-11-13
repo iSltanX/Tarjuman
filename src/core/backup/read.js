@@ -198,9 +198,12 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   const total = data.videos.length;
   onProgress({ done: 0, total });
   for (const [index, raw] of data.videos.entries()) {
-    const entry = stripBidi(raw);
+    // التجريد عودي كالفك، فيدخل حماية المدخل نفسها: تداخلٌ اجتاز تسلسل البصمة قد يتجاوز عوديته، فيُعدّ هذا الفيديو وحده
+    // «تعذّر» لا «خطأ غير متوقع» للملف كله (ع-١٤).
+    let entry = raw;
     let r;
     try {
+      entry = stripBidi(raw);
       r = checkEntry(entry);
     } catch (err) {
       if (!(err instanceof RangeError)) throw err;
