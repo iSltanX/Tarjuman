@@ -5,6 +5,7 @@ import { buildTarget, needsConsent, thumbnailsConsent, watchThumbnailsConsent } 
 import { saveFile } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { t } from '../../i18n/index.js';
+import { copyText } from '../../ui/clipboard.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { pickFiles } from '../../ui/picker.js';
 import { collectDiagnostics } from '../settings/diagnostics.js';
@@ -25,7 +26,8 @@ startPage({
       openTab: (url) => chrome.tabs.create({ url }),
       openPage,
       saveFile: (file) => saveFile(file, { store }),
-      clipboardWrite: (text) => navigator.clipboard.writeText(text),
+      // النص الجاهز بـwriteText، ووعد تقرير التشخيص بـClipboardItem في النقرة نفسها (B1).
+      clipboardWrite: (text) => copyText(text),
       pickFiles: () => pickSrtFiles(),
       diagnosticsText: () => collectDiagnostics({ store, version: extensionVersion() }),
       // صور المحفوظات في Firefox بموافقة «نشاط التصفح» (core/consent/thumbnails.js) تُقرأ وتُراقَب؛ وفي Chromium بلا مدخل («نعم»).

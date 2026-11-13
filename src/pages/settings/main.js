@@ -5,6 +5,7 @@ import { buildTarget, needsConsent, requestThumbnailsConsent, thumbnailsConsent,
 import { saveFile, savedPath } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { t } from '../../i18n/index.js';
+import { copyText } from '../../ui/clipboard.js';
 import { extensionVersion, startPage } from '../../ui/page.js';
 import { pickFiles } from '../../ui/picker.js';
 import { collectDiagnostics } from './diagnostics.js';
@@ -23,7 +24,8 @@ startPage({
     const target = buildTarget();
     const settings = createSettings({
       store, version,
-      clipboardWrite: (text) => navigator.clipboard.writeText(text),
+      // النص الجاهز بـwriteText، ووعد التقرير بـClipboardItem في النقرة نفسها (B1).
+      clipboardWrite: (text) => copyText(text),
       diagnosticsText: () => collectDiagnostics({ store, version }),
       saveFile: (file) => saveFile(file, { store }),
       savedPath: (id) => savedPath(id),

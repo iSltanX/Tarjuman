@@ -14,6 +14,7 @@ import { recordPair } from '../../core/model/pair.js';
 import { browserLabel } from '../../core/report/diagnostics.js';
 import { createStore } from '../../core/store/index.js';
 import { t } from '../../i18n/index.js';
+import { copyText } from '../../ui/clipboard.js';
 import { alertBox, button, el, icon } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
 import { langPair } from '../../ui/lang-picker.js';
@@ -35,10 +36,13 @@ function diagnosticsLink(reply) {
     link.setAttribute('aria-busy', 'true');
     let ok = false;
     try {
-      const sections = await queryPageDiagnostics();
-      // المتصفح بكشف بلاغ المشكلة (U53): Firefox وEdge باسميهما.
-      const browser = await browserLabel();
-      await navigator.clipboard.writeText(pageReport({ reply, sections, version: extensionVersion(), browser }));
+      // الحافظة لحظة النقرة بوعد التقرير، قبل أي await (تحقق Gemini، B1): مغادرة التركيز أثناء الجمع كانت تُفشل writeText في Chromium.
+      await copyText((async () => {
+        const sections = await queryPageDiagnostics();
+        // المتصفح بكشف بلاغ المشكلة (U53): Firefox وEdge باسميهما.
+        const browser = await browserLabel();
+        return pageReport({ reply, sections, version: extensionVersion(), browser });
+      })());
       ok = true;
     } catch {
       ok = false;

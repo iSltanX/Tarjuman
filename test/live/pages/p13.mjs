@@ -423,9 +423,10 @@ async function createPhase() {
   await writeFile(path.join(HANDOFF, 'from-brave.meta.json'), JSON.stringify({ counts: finalCounts, glossary: 4, at: new Date().toISOString() }));
 
   // AC5: تقرير التشخيص لا يحمل شيئًا من محتوى النسخة.
-  await st.eval(() => { window.__copied = []; navigator.clipboard.writeText = async (t) => { window.__copied.push(t); }; });
+  // تقرير التشخيص يُنسخ بـclipboard.write وClipboardItem يحمل وعده (تحقق Gemini، B1)، وwriteText احتياطًا: يُعترض الاثنان.
+  await st.eval(() => { window.__copied = []; navigator.clipboard.writeText = async (t) => { window.__copied.push(t); }; navigator.clipboard.write = async (items) => { for (const it of items) window.__copied.push(await (await it.getType('text/plain')).text()); }; });
   await navHash(st, 'diagnostics');
-  await st.eval(() => { window.__copied = []; navigator.clipboard.writeText = async (t) => { window.__copied.push(t); }; });
+  await st.eval(() => { window.__copied = []; navigator.clipboard.writeText = async (t) => { window.__copied.push(t); }; navigator.clipboard.write = async (items) => { for (const it of items) window.__copied.push(await (await it.getType('text/plain')).text()); }; });
   await clickOn(st, byText('#diagnostics button', 'نسخ تقرير التشخيص'), 'نسخ التشخيص');
   await sleep(600);
   const diag = await st.eval(() => window.__copied[0] ?? '');

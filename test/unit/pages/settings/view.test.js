@@ -385,7 +385,8 @@ test('التخزين: المستخدم بنص، والمسح بحوار يطلب
 
 test('التشخيص: زر النسخ ينسخ التقرير، وبيان ما يتضمنه وما لا يتضمنه، والفشل برسالة', async () => {
   let fail = false;
-  const m = await mount({ env: { clipboardWrite: async (x) => { if (fail) throw new Error('رفض'); m.calls.clipboard.push(x); } } });
+  // الحافظة تتسلّم وعد التقرير في النقرة نفسها (تحقق Gemini، B1)، فيُسجَّل النص بعد اكتماله.
+  const m = await mount({ env: { clipboardWrite: async (x) => { if (fail) throw new Error('رفض'); m.calls.clipboard.push(await x); } } });
   const diag = section(m, 'التشخيص');
   assert.ok(textOf(diag).includes('الإصدار، والمتصفح، ونوع الخطأ، وأحجامًا وأعدادًا.'));
   assert.deepEqual(findAll(diag, (e) => e.classList.contains('st-panel__title')).map(textOf), ['يتضمن', 'لا يتضمن أبدًا']);

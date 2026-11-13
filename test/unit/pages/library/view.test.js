@@ -56,7 +56,8 @@ async function mount({ records = IDS.map((id, i) => ({ id, title: `عنوان ${
     openTab: async (u) => { calls.tabs.push(u); },
     openPage: async (name, params) => { calls.pages.push([name, params]); },
     saveFile: async (f) => { calls.downloads.push(f); return { ok: true, mode: 'downloads', downloadId: calls.downloads.length }; },
-    clipboardWrite: async (text) => { calls.clipboard.push(text); },
+    // نص التعليمات جاهز، وتقرير التشخيص وعدٌ يُسلَّم في النقرة نفسها (تحقق Gemini، B1): يُسجَّل النص بعد اكتماله.
+    clipboardWrite: async (text) => { calls.clipboard.push(await text); },
     pickFiles: async () => null,
     diagnosticsText: async () => { calls.diagnostics++; return '{"tarjuman":"test"}'; },
     confirm: async (o) => { calls.confirms.push(o); return answers.length ? answers.shift() : false; },

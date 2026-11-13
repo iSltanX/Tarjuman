@@ -53,7 +53,7 @@ const positionLabel = (v) => t(`settings.display.${POSITION_KEYS[v]}`);
  * @typedef {{
  *   store: ReturnType<typeof import('../../core/store/index.js').createStore>,
  *   version: string, doc?: Document, now?: () => number,
- *   clipboardWrite: (text: string) => Promise<void>,
+ *   clipboardWrite: (text: string | Promise<string>) => Promise<void>,
  *   diagnosticsText: () => Promise<string>,
  *   saveFile?: (file: { name: string, text: string }) => Promise<{ ok: true, mode: string, downloadId: number | null } | { ok: false, code: string }>,
  *   savedPath?: (downloadId: number) => Promise<string | null>,
@@ -655,7 +655,8 @@ export function createSettings(env) {
   const diagMark = marks();
   const diagBtn = button({ label: t('settings.diag.copy'), variant: 'secondary', icon: 'copy', doc, onClick: async () => {
     try {
-      await env.clipboardWrite(await env.diagnosticsText());
+      // الحافظة لحظة النقرة بوعد التقرير لا بعد جمعه (تحقق Gemini، B1): مغادرة التركيز أثناء الجمع كانت تُفشل النسخ في Chromium.
+      await env.clipboardWrite(env.diagnosticsText());
       diagMark.flash(messageFor('PG_DIAGNOSTICS_DONE'), 'success');
     } catch {
       diagMark.flash(messageFor('PG_DIAGNOSTICS_FAILED'), 'danger');

@@ -45,7 +45,7 @@ let seq = 0;
  *   doc?: Document, now?: () => number,
  *   openTab: (url: string) => Promise<unknown>, openPage: (name: 'editor', params: { v: string, t?: 1 | 2 | 3, p?: 'complete' }) => Promise<unknown>,
  *   saveFile: import('./actions.js').SaveFn,
- *   clipboardWrite: (text: string) => Promise<void>,
+ *   clipboardWrite: (text: string | Promise<string>) => Promise<void>,
  *   pickFiles: () => Promise<File[] | null>,
  *   diagnosticsText: () => Promise<string>,
  *   confirm?: typeof confirmDialog,
@@ -903,7 +903,8 @@ export function createLibrary(env) {
         label: tr('library.view.copyDiagnostics'), icon: 'copy', variant: 'ghost', size: 'sm', doc,
         onClick: async () => {
           try {
-            await env.clipboardWrite(await env.diagnosticsText());
+            // الحافظة لحظة النقرة بوعد التقرير لا بعد جمعه (تحقق Gemini، B1)، كما في الإعدادات.
+            await env.clipboardWrite(env.diagnosticsText());
             toaster.show(messageFor('PG_DIAGNOSTICS_DONE'), 'success');
           } catch {
             toaster.show(messageFor('PG_DIAGNOSTICS_FAILED'), 'danger');
