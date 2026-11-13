@@ -82,3 +82,37 @@ test('«أسمع هذه الآن» من صف يغيّر إزاحة العرض ا
   assert.equal(controller.getState().view.displayOffsetMs, -1200, 'الإزاحة السابقة');
   assert.deepEqual((await store.getBundle(A)).slots[1].track, before, 'نص الخانة وتوقيت ملفها لم يتغيرا');
 });
+
+test('الفكرة ٦: «عدّل النص» من صف يكتب نسخة حالية للخانة المعروضة بأسطره وعلامتُه مرتبطة، بلا إعادة بناء، والمحرّر يرى النص، والتراجع يعيد الأصل', async () => {
+  const { area, store, controller, handle, v, now } = await open();
+  const rows = v.rows();
+  const rebuilds = handle.diagnostics().session.rebuilds;
+  rows[1].dispatchEvent({ type: 'pointerover', bubbles: true });
+  click(v.q('.acts').children.find((b) => b.getAttribute('data-act') === 'edit'));
+  const field = v.q('.edit__field');
+  assert.equal(field.value, 'ثانية 2', 'نص المقطع 2 الذي عليه «أعود إليه»');
+  field.value = 'ثانية 2\nمصحّحة';
+  field.dispatchEvent({ type: 'keydown', bubbles: true, key: 'Enter' });
+  await settle(area);
+  const slot = (await store.getBundle(A)).slots[1];
+  assert.equal(slot.track.current[1].text, 'ثانية 2\nمصحّحة');
+  assert.equal(slot.track.original[1].text, 'ثانية 2', 'الأصل المستورد كما هو');
+  assert.equal(v.q('.edit__field'), null, 'الحقل أُغلق');
+  assert.ok(v.rows()[1] === rows[1], 'الصف نفسه');
+  assert.equal(rows[1].querySelector('.ar').textContent, 'ثانية 2 مصحّحة');
+  assert.equal(rows[1].getAttribute('data-mark'), 'todo', 'العلامة على صفها بعد التعديل');
+  assert.equal(handle.diagnostics().session.rebuilds, rebuilds, 'لا إعادة بناء');
+  assert.equal(handle.peek().note.text, 'عُدِّل نص المقطع 2');
+
+  const env = editorDocument({ videoId: A });
+  await mountEditor(env.root, { videoId: A, store, doc: env.doc, now, slot: 2 });
+  await env.flush();
+  assert.equal(env.root.querySelectorAll('[data-field="text"]')[1].value, 'ثانية 2\nمصحّحة', 'المحرّر يفتح على النص المعدّل');
+  assert.deepEqual(env.root.querySelectorAll('.ed-chip--todo').map((c) => c.textContent), ['2'], 'و«أعود إليه» مرتبطة');
+
+  click(v.q('.note__act'));
+  await settle(area);
+  assert.equal((await store.getBundle(A)).slots[1].track.current, null, 'التراجع يعيد الأصل المستورد (لا نسخة معدّلة)');
+  assert.equal(controller.getState().arabic.edited, false);
+  assert.equal(v.rows()[1].querySelector('.ar').textContent, 'ثانية 2');
+});

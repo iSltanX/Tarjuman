@@ -6,6 +6,7 @@
 // الإخفاق رمز في التشخيص. والمقطع الحالي بقاعدة الطبقة نفسها (indexFor.find بـlookupMs)، فيتفق الصف المميَّز مع ما على الشاشة.
 import { TjError, toErrorInfo, messageFor } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
+import { copyText } from '../../ui/clipboard.js';
 import { holdTimer } from '../../ui/hold.js';
 import { syncOffset } from '../controls/sentence.js';
 import { markToast, offsetToast, parseSeconds, syncUndoStaleLine } from '../controls/text.js';
@@ -61,7 +62,10 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   /** @type {any} */
   let video = null;
 
-  /** رسالة فعل من صف: نصها، وتراجعها إن كان، وفيديوها، ومؤقت زوالها. @type {{ text: string, undo: (() => unknown) | null, videoId: string | null } | null} */
+  /**
+   * رسالة فعل من صف: نصها، وفعل زرها إن كان («تراجع» افتراضيًا، أو label كـ«نسخ النص»)، وفيديوها، ومؤقت زوالها.
+   * @type {{ text: string, undo: (() => unknown) | null, label: string | null, videoId: string | null } | null}
+   */
   let note = null;
   let noteHold = null;
 
@@ -195,10 +199,10 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     noteHold = null;
     note = null;
   }
-  /** @param {string} text @param {(() => unknown) | null} [undo] */
-  function showNote(text, undo = null) {
+  /** @param {string} text @param {(() => unknown) | null} [undo] @param {string | null} [label] تسمية زر الفعل بدل «تراجع» */
+  function showNote(text, undo = null, label = null) {
     clearNote();
-    note = { text, undo, videoId: controller.getState().videoId ?? null };
+    note = { text, undo, label, videoId: controller.getState().videoId ?? null };
     noteHold = holdTimer({
       ms: UNDO_MS,
       onExpire: () => {
@@ -334,6 +338,19 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     });
   }
 
+  /**
+   * مقطع الحقل تغيّر من مكان آخر وفيه ما كُتب (الفكرة ٦): «تغيّرت الترجمة؛ لم يُحفظ تعديلك» وزرها «نسخ النص» يكتب ما كُتب في الحافظة
+   * بضغطة المستخدم (لا قراءة للحافظة)، ثم يقول نجاحه أو تعذّره.
+   * @param {string} text
+   */
+  function lostEdit(text) {
+    if (destroyed) return;
+    showNote(LABELS.editLost, () => copyText(text, { clipboard: win.navigator?.clipboard, Item: win.ClipboardItem }).then(
+      () => !destroyed && showNote(LABELS.editCopied),
+      () => !destroyed && showNote(LABELS.editCopyFailed),
+    ), LABELS.editCopy);
+  }
+
   // ———— أفعال المستخدم ————
   function clearToast() {
     toastHold?.cancel();
@@ -364,6 +381,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     rowAct: (act, i) => (act === 'mark' ? markRow(i) : act === 'edit' ? editRow(i) : syncRow(i)),
     rowEdit: (kind, i, text) => {
       if (kind === 'save') saveEdit(i, text);
+      else if (kind === 'lost') lostEdit(text);
     },
     syncReason,
     noteHold: (why, held) => noteHold?.hold(why, held),
@@ -496,7 +514,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
         step,
         toast: !!toast,
         actionError,
-        note: note ? { text: note.text, undo: !!note.undo } : null,
+        note: note ? { text: note.text, undo: !!note.undo, label: note.label } : null,
       });
       ready = out.mode === 'open' && out.kind === 'ready';
       // التركيز بين اللوحة وزرها في الشريط: فُتحت بلوحة المفاتيح ← زر الإغلاق؛ وأُغلقت وفيها التركيز ← زرها في الشريط.

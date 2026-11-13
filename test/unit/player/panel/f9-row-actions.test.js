@@ -432,3 +432,105 @@ test('الفكرة ٦: الحقل المفتوح يُمسك تبديل لغة ا
   assert.equal(handle.holdsFlow(), false);
   assert.equal(handle.editing(), false);
 });
+
+// ———— الفكرة ٦: المسار التدريجي في sync() ————
+
+/** يغيّر في حالة المتحكم الوهمي مقاطع الترجمة المعروضة كما يصلها تعديل من مكان آخر (مصفوفة جديدة). */
+const setCues = (c, fn) => {
+  const cur = c.getState().arabic;
+  c.set({ arabic: { ...cur, cues: fn(cur.cues) } });
+};
+
+test('الفكرة ٦: تغيّر نص صف آخر والحقل مفتوح يُحدَّث في مكانه، والحقل باقٍ بما كُتب والتركيز فيه، بلا إعادة بناء', () => {
+  const { v, c, handle } = open();
+  const rows = v.rows();
+  const f = openEdit(v, 1);
+  f.value = 'ما أكتبه';
+  const rebuilds = handle.diagnostics().session.rebuilds;
+  setCues(c, (cues) => cues.map((x, i) => (i === 3 ? { ...x, text: 'من المحرّر\nبسطرين' } : x)));
+  assert.ok(field(v) === f, 'الحقل نفسه');
+  assert.equal(f.value, 'ما أكتبه');
+  assert.ok(v.root.activeElement === f, 'والتركيز فيه');
+  assert.ok(v.rows()[3] === rows[3] && v.rows()[1] === rows[1], 'الصفوف بأعيانها');
+  assert.equal(rows[3].querySelector('.ar').textContent, 'من المحرّر بسطرين');
+  assert.equal(handle.diagnostics().session.rebuilds, rebuilds, 'لا إعادة بناء');
+});
+
+test('الفكرة ٦: الحفظ يحدّث نص صفه في مكانه بلا إعادة بناء، والأسطر تبقى في المقطع فيُعاد فتحه بها', async () => {
+  const { v, c, handle } = open();
+  const rows = v.rows();
+  const rebuilds = handle.diagnostics().session.rebuilds;
+  const f = openEdit(v, 2);
+  f.value = 'أول\nثانٍ';
+  keydown(f, 'Enter');
+  await settle();
+  assert.equal(field(v), null);
+  assert.ok(v.rows()[2] === rows[2], 'الصف نفسه');
+  assert.equal(rows[2].querySelector('.ar').textContent, 'أول ثانٍ');
+  assert.equal(c.getState().arabic.cues[2].text, 'أول\nثانٍ', 'فاصل السطر في المقطع المحفوظ');
+  assert.equal(handle.diagnostics().session.rebuilds, rebuilds, 'لا إعادة بناء');
+  assert.ok(v.root.activeElement === btn(v, 'edit'), 'Enter: التركيز إلى «عدّل النص» في صفه');
+  click(btn(v, 'edit'));
+  assert.equal(field(v).value, 'أول\nثانٍ', 'إعادة الفتح بالأسطر');
+});
+
+test('الفكرة ٦: إعادة بناء والحقل مفتوح (دمج في المحرّر غيّر العدد) تعيد فتحه على المقطع نفسه بمرساته وبما كُتب، والتركيز فيه', async () => {
+  const { v, c, handle } = open();
+  const f = openEdit(v, 2);
+  f.value = 'مسودة';
+  const rebuilds = handle.diagnostics().session.rebuilds;
+  setCues(c, (cues) => cues.slice(1));
+  assert.equal(handle.diagnostics().session.rebuilds, rebuilds + 1, 'أُعيد البناء');
+  const g = field(v);
+  assert.ok(g && g !== f, 'حقل جديد');
+  assert.equal(g.value, 'مسودة');
+  assert.equal(handle.peek().editing, 1, 'على المقطع نفسه في موضعه الجديد');
+  assert.ok(v.root.activeElement === g);
+  keydown(g, 'Enter');
+  await settle();
+  assert.deepEqual(c.calls.filter((x) => x[0] === 'editCueText'), [['editCueText', 1, 'مسودة']]);
+});
+
+test('الفكرة ٦: المقطع نفسه تغيّر من مكان آخر والحقل مفتوح: يُغلق، و«تغيّرت الترجمة؛ لم يُحفظ تعديلك» مع «نسخ النص» تنسخ ما كُتب', async () => {
+  const { v, c, page, handle } = open();
+  const copied = [];
+  page.win.navigator = { clipboard: { writeText: async (t) => { copied.push(t); } } };
+  const f = openEdit(v, 1);
+  f.value = 'ما كتبته';
+  setCues(c, (cues) => cues.map((x, i) => (i === 1 ? { ...x, text: 'من المحرّر' } : x)));
+  await settle();
+  assert.equal(field(v), null, 'الحقل أُغلق');
+  assert.equal(v.rows()[1].querySelector('.ar').textContent, 'من المحرّر');
+  assert.deepEqual(handle.peek().note, { text: 'تغيّرت الترجمة؛ لم يُحفظ تعديلك.', undo: true });
+  assert.equal(v.q('.note__act').textContent, 'نسخ النص');
+  click(v.q('.note__act'));
+  await settle();
+  assert.deepEqual(copied, ['ما كتبته']);
+  assert.equal(handle.peek().note.text, 'نُسخ النص.');
+  assert.equal(c.calls.filter((x) => x[0] === 'editCueText').length, 0, 'لا كتابة فوق ما تغيّر');
+  // التركيز عاد إلى «عدّل النص» في صفه. وبلا ما كُتب (الحقل كما فُتح) يُغلق بلا رسالة؛ وفي غيره تعود «تراجع» تسمية زر الرسالة.
+  assert.ok(v.root.activeElement === btn(v, 'edit') && v.q('.acts').parentNode === v.rows()[1]);
+  const g = openEdit(v, 1);
+  assert.equal(g.value, 'من المحرّر');
+  setCues(c, (cues) => cues.map((x, i) => (i === 1 ? { ...x, text: 'تغيير آخر' } : x)));
+  await settle();
+  assert.equal(field(v), null);
+  assert.equal(handle.peek().note.text, 'نُسخ النص.', 'لا رسالة جديدة');
+  click(btn(v, 'mark'));
+  await settle();
+  assert.equal(v.q('.note__act').textContent, 'تراجع');
+});
+
+test('الفكرة ٦: إعادة بناء تُسقط مقطع الحقل (تغيّر زمنه) تقول «تغيّرت الترجمة» بما كُتب، وفشل النسخ يُقال', async () => {
+  const { v, c, page, handle } = open();
+  page.win.navigator = { clipboard: { writeText: async () => { throw new Error('denied'); } } };
+  const f = openEdit(v, 1);
+  f.value = 'نصي';
+  setCues(c, (cues) => cues.map((x, i) => (i === 1 ? { ...x, startMs: x.startMs + 100 } : x)));
+  await settle();
+  assert.equal(field(v), null);
+  assert.equal(handle.peek().note.text, 'تغيّرت الترجمة؛ لم يُحفظ تعديلك.');
+  click(v.q('.note__act'));
+  await settle();
+  assert.equal(handle.peek().note.text, 'تعذّر نسخ النص.');
+});

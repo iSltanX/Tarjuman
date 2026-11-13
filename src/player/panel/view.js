@@ -124,6 +124,7 @@ export function createPanelView({ doc, win, on }) {
   ]);
 
   // رسالة فعل من صف (ف9): «عُلِّم المقطع 12 للمراجعة» أو «الإزاحة −3.2 ث» وفيها «تراجع»؛ تزول بعد مدتها، ويمسكها المؤشر والتركيز.
+  // وزرها بتسمية أخرى حين يكون فعله غير التراجع («نسخ النص» بعد «تغيّرت الترجمة؛ لم يُحفظ تعديلك»، الفكرة ٦).
   const noteText = el(doc, 'span', { className: 'note__text' });
   const noteUndo = el(doc, 'button', { className: 'note__act', attrs: { type: 'button' }, text: LABELS.undo, on: { click: () => on.noteUndo?.() } });
   const note = el(doc, 'div', { className: 'note', attrs: { hidden: '' } }, [noteText, noteUndo]);
@@ -364,7 +365,8 @@ export function createPanelView({ doc, win, on }) {
 
   /**
    * @param {import('./model.js').PanelModel} m
-   * @param {{ follow: boolean, resume: { visible: boolean, label: string }, step: { custom: boolean, text: string | null, error: string | null }, toast: boolean, actionError?: string | null, note?: { text: string, undo: boolean } | null }} l
+   * @param {{ follow: boolean, resume: { visible: boolean, label: string }, step: { custom: boolean, text: string | null, error: string | null }, toast: boolean, actionError?: string | null, note?: { text: string, undo: boolean, label?: string | null } | null }} l
+   *   note.label: تسمية زر الرسالة بدل «تراجع» («نسخ النص» حين تغيّر مقطع حقل التحرير، الفكرة ٦)
    * @returns {{ rebuilt: boolean, relabeled: boolean, becameReady: boolean, mode: string, kind: string | null }}
    */
   function render(m, l) {
@@ -386,6 +388,7 @@ export function createPanelView({ doc, win, on }) {
     if (n) {
       setText(noteText, n.text);
       setHidden(noteUndo, !n.undo);
+      setText(noteUndo, n.label ?? LABELS.undo);
     }
 
     let out = { rebuilt: false, relabeled: false };

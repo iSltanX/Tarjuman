@@ -6,8 +6,9 @@
 // وأفعال الصف (ف9، 2026-11-10): «علّم للمراجعة» و«أسمع هذه الآن» في شريط واحد يُنقل إلى الصف الممرور عليه أو المركّز (لا زران
 // في كل صف من آلاف الصفوف)، ويعود إلى صف نقطة Tab حين يغادر المؤشر القائمة، فيأتي بعد زمن صفه في ترتيب Tab. والعلامة «أعود
 // إليه» سمة على صفها (data-mark) تُرى دائمًا. و«عدّل النص» (الفكرة ٦، ح-54) زر ثالث فيه: حقل واحد للقائمة مكان نص الصف بنص مقطعه
-// الخام (بفواصل أسطره، لا السطر الواحد المعروض)، والحفظ والإلغاء يُبلَّغان المستدعي (onEdit)، والنقر داخله لا يقفز.
-import { markAnchor, resolveMarks } from '../../core/model/marks.js';
+// الخام (بفواصل أسطره، لا السطر الواحد المعروض)، والحفظ والإلغاء يُبلَّغان المستدعي (onEdit)، والنقر داخله لا يقفز. وتغيّر نص مقاطع
+// بعددها وأرقامها وأزمنتها (حفظ الحقل، أو تعديل نص من المحرّر) يحدّث نص صفوفها في مكانها، فلا يزول الحقل ولا التمرير.
+import { markAnchor, resolveMarks, sameAnchor } from '../../core/model/marks.js';
 import { ltrParts, textDirection } from '../../ui/format.js';
 import { el, icon, setAttr, setHidden, setText } from './dom.js';
 import { originalLookup } from '../../core/align/original.js';
@@ -28,10 +29,11 @@ export const TOUCH_DRAG_PX = 10;
 /**
  * @param {{
  *   doc: Document, onSeek: (ms: number) => void, onAct?: (act: 'mark' | 'sync' | 'edit', i: number) => void, syncReason?: (i: number) => string | null,
- *   onEdit?: (kind: 'save', i: number, text: string) => void,
+ *   onEdit?: (kind: 'save' | 'lost', i: number, text: string) => void,
  * }} deps
- * syncReason: لماذا لا تتاح «أسمع هذه الآن» لصف i الآن (إعلان، أو جملة بعيدة عن لحظة التشغيل)، أو null. onEdit: طلب حفظ نص الحقل
- * المفتوح على صف i (Enter أو «حفظ»)؛ والمستدعي يحكم فيه (حارس النص، والكتابة) ثم يغلقه أو يقول سببه داخله.
+ * syncReason: لماذا لا تتاح «أسمع هذه الآن» لصف i الآن (إعلان، أو جملة بعيدة عن لحظة التشغيل)، أو null. onEdit: 'save' طلب حفظ نص
+ * الحقل المفتوح على صف i (Enter أو «حفظ»)، والمستدعي يحكم فيه (حارس النص، والكتابة) ثم يغلقه أو يقول سببه داخله؛ و'lost' (i = -1)
+ * مقطع الحقل تغيّر من مكان آخر فأُغلق وفيه ما كُتب، يُبلَّغ بعد انتهاء المزامنة.
  */
 export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = () => null, onEdit = () => {} }) {
   // الحاوية نفسها خارج ترتيب Tab: Firefox يضع حاويات التمرير فيه، فتصير نقطتين (الحاوية ثم الصف)؛ والوصول إلى المحتوى بالصف
@@ -268,7 +270,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
    * الآن أو null، وهل طُلب الحفظ أو الإلغاء من لوحة المفاتيح (فيعود التركيز إلى «عدّل النص» في صفه بعد الإغلاق، وبالمؤشر يغادر
    * القائمة كما في ت-٤). وضغطاته معزولة عن يوتيوب بعازل الجذر (ownsKey في view.js: كل ضغطة في textarea)، فالجذر المغلق يُري يوتيوب
    * المضيف لا الحقل.
-   * @type {{ i: number, anchor: { n: number, startMs: number, textHash: string }, box: HTMLElement, field: any, msg: HTMLElement, save: HTMLElement, cancel: HTMLElement, saving: string | null, keyboard: boolean } | null}
+   * @type {{ i: number, anchor: { n: number, startMs: number, textHash: string }, base: string, box: HTMLElement, field: any, msg: HTMLElement, save: HTMLElement, cancel: HTMLElement, saving: string | null, keyboard: boolean } | null}
    */
   let edit = null;
 
@@ -301,7 +303,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     const cancel = el(doc, 'button', { className: 'b b--ghost edit__cancel', attrs: { type: 'button' }, text: LABELS.editCancel });
     const hint = el(doc, 'span', { className: 'edit__hint', attrs: { id: 'tj-edit-hint' } }, richParts(editHintText()));
     const box = el(doc, 'div', { className: 'edit' }, [field, msg, el(doc, 'div', { className: 'edit__bar' }, [hint, cancel, save])]);
-    edit = { i, anchor: markAnchor(cue), box, field, msg, save, cancel, saving: null, keyboard: false };
+    edit = { i, anchor: markAnchor(cue), base: cue.text, box, field, msg, save, cancel, saving: null, keyboard: false };
 
     // Enter يحفظ وShift+Enter سطر جديد وEsc يلغي؛ وأثناء تركيب IME يُترك المفتاح للمحرّر الصيني والياباني وأمثالهما (Enter يختار).
     field.addEventListener('keydown', (ev) => {
@@ -404,6 +406,57 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     if (edit && edit.saving === text) closeEdit();
   }
 
+  /**
+   * مقطع الحقل تغيّر من مكان آخر: يُغلق، وما كُتب فيه (إن اختلف عمّا فُتح عليه) يُبلَّغ بعد انتهاء المزامنة (onEdit('lost'))، فلا
+   * يضيع بصمت ولا تتداخل حلقة الرسم. والتركيز إن كان فيه إلى «عدّل النص» في صفه.
+   */
+  function loseEdit() {
+    const text = edit.field.value;
+    const lost = text !== edit.base;
+    edit.keyboard = true;
+    closeEdit();
+    if (lost) Promise.resolve().then(() => onEdit('lost', -1, text));
+  }
+
+  /**
+   * الحقل بعد تغيّر نص المقاطع في المسار التدريجي: باقٍ ما دام مقطعه بمرساته؛ وإن صار نصّه النصَّ الجاري حفظه فقد نجحت الكتابة فيُغلق؛
+   * وإلا فقد تغيّر من مكان آخر.
+   */
+  function keepEdit() {
+    const c = cues[edit.i];
+    if (sameAnchor(markAnchor(c), edit.anchor)) return;
+    if (edit.saving !== null && c.text === edit.saving) closeEdit();
+    else loseEdit();
+  }
+
+  /**
+   * الحقل بعد إعادة بناء الصفوف (تغيّر العدد أو الأزمنة أو الأصل): يُعاد فتحه على مقطعه بمرساته حيث صار، بما كُتب وموضع المؤشر
+   * والتركيز؛ وإن صار نصّه النصَّ الجاري حفظه فقد نجحت الكتابة؛ وإلا فقد تغيّر من مكان آخر.
+   * @param {{ anchor: { n: number, startMs: number, textHash: string }, base: string, text: string, saving: string | null, keyboard: boolean, focused: boolean, sel: [number, number] | null }} p
+   */
+  function reopenEdit(p) {
+    const at = (a) => cues.findIndex((c) => c.n === a.n && c.startMs === a.startMs && sameAnchor(markAnchor(c), a));
+    const j = at(p.anchor);
+    if (j >= 0 && openEdit(j, { text: p.text, focus: p.focused })) {
+      edit.base = p.base;
+      edit.keyboard = p.keyboard;
+      if (p.focused && p.sel) edit.field.setSelectionRange?.(p.sel[0], p.sel[1]);
+      if (p.saving !== null) editBusy(p.saving);
+      return;
+    }
+    if (p.saving !== null && at({ ...p.anchor, textHash: markAnchor({ ...p.anchor, text: p.saving }).textHash }) >= 0) return;
+    if (p.text !== p.base) Promise.resolve().then(() => onEdit('lost', -1, p.text));
+  }
+
+  /** الحقل المفتوح قبل إعادة البناء، ليُعاد فتحه بعدها (reopenEdit)، أو null. */
+  function pendingEdit() {
+    if (!edit) return null;
+    const f = edit.field;
+    const focused = !!focusEl && edit.box.contains(focusEl);
+    const sel = Number.isInteger(f.selectionStart) && Number.isInteger(f.selectionEnd) ? [f.selectionStart, f.selectionEnd] : null;
+    return { anchor: edit.anchor, base: edit.base, text: f.value, saving: edit.saving, keyboard: edit.keyboard, focused, sel };
+  }
+
   function clear() {
     if (!cues && !rowEls.length) return;
     prog.remove();
@@ -459,46 +512,80 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
   }
 
   /**
-   * يضمن أن الصفوف تطابق (المقاطع، الأصل، الإزاحة). مرجعا المقاطع والأصل يحكمان إعادة البناء؛ والإزاحة وحدها تحدّث الأزمنة.
+   * المقاطع نفسها عددًا وأرقامًا وأزمنةً (قد يختلف نصها): المسار التدريجي يكفي (الفكرة ٦).
+   * @param {import('../../core/model/cue.js').Cue[]} a @param {import('../../core/model/cue.js').Cue[]} b
+   */
+  const sameShape = (a, b) => a.length === b.length && a.every((c, i) => c.n === b[i].n && c.startMs === b[i].startMs && c.endMs === b[i].endMs);
+
+  /**
+   * يضمن أن الصفوف تطابق (المقاطع، الأصل، الإزاحة). مرجعا المقاطع والأصل يحكمان إعادة البناء؛ والإزاحة وحدها تحدّث الأزمنة. ومقاطع
+   * جديدة بعدد الصفوف وأرقامها وأزمنتها والأصل نفسه (حفظ نص مقطع من اللوحة أو من المحرّر) تحدّث نص الصفوف المتغيرة وحدها (retext)، فيبقى
+   * حقل الكتابة والتمرير والتركيز؛ وإعادة البناء تعيد فتح الحقل على مقطعه بمرساته (reopenEdit).
    * @param {{ cues: import('../../core/model/cue.js').Cue[], originalCues: import('../../core/model/cue.js').Cue[] | null, offsetMs: number, originalLang?: string | null, translationLang?: string | null, marks?: import('../../core/model/marks.js').Mark[] | null }} s
    * @returns {{ rebuilt: boolean, relabeled: boolean }}
    */
   function sync(s) {
-    if (cues === s.cues && originalRef === s.originalCues) {
-      setMarks(s.marks ?? null);
-      // المقاطع نفسها ولغة الخانة أو الأصل تغيّرت (U-030): تُحدَّث lang وdir للعناصر القائمة بلا إعادة بناء.
-      const nextTr = s.translationLang ?? null;
-      const nextEn = s.originalLang ?? null;
-      if (nextTr !== translationLang || nextEn !== originalLang) {
-        translationLang = nextTr;
-        originalLang = nextEn;
-        for (const row of rowEls) {
-          for (const span of row.children[1].children) {
-            if (span.className === 'ar') {
-              span.setAttribute('dir', textDirection(span.textContent, translationLang));
-              span.setAttribute('lang', translationLang ?? 'und');
-            } else if (span.className === 'en') {
-              span.setAttribute('dir', textDirection(span.textContent, originalLang));
-              span.setAttribute('lang', originalLang ?? 'en');
-            }
+    const same = cues === s.cues && originalRef === s.originalCues;
+    if (!same && !(cues && s.cues && originalRef === s.originalCues && sameShape(cues, s.cues))) return rebuild(s);
+    if (!same) retext(s.cues);
+    setMarks(s.marks ?? null, { force: !same });
+    // المقاطع نفسها ولغة الخانة أو الأصل تغيّرت (U-030): تُحدَّث lang وdir للعناصر القائمة بلا إعادة بناء.
+    const nextTr = s.translationLang ?? null;
+    const nextEn = s.originalLang ?? null;
+    if (nextTr !== translationLang || nextEn !== originalLang) {
+      translationLang = nextTr;
+      originalLang = nextEn;
+      for (const row of rowEls) {
+        for (const span of row.children[1].children) {
+          if (span.className === 'ar') {
+            span.setAttribute('dir', textDirection(span.textContent, translationLang));
+            span.setAttribute('lang', translationLang ?? 'und');
+          } else if (span.className === 'en') {
+            span.setAttribute('dir', textDirection(span.textContent, originalLang));
+            span.setAttribute('lang', originalLang ?? 'en');
           }
         }
-        if (edit) {
-          setAttr(edit.field, 'lang', translationLang ?? 'und');
-          setAttr(edit.field, 'dir', textDirection(edit.field.value, translationLang));
-        }
       }
-      if (s.offsetMs === offsetMs) return { rebuilt: false, relabeled: false };
-      offsetMs = s.offsetMs;
-      for (let i = 0; i < rowEls.length; i++) {
-        const label = clockLabel(seekMs(i));
-        if (label === labels[i]) continue;
-        labels[i] = label;
-        timeEls[i].textContent = label;
-        timeEls[i].setAttribute('aria-label', timeAria(i));
+      if (edit) {
+        setAttr(edit.field, 'lang', translationLang ?? 'und');
+        setAttr(edit.field, 'dir', textDirection(edit.field.value, translationLang));
       }
-      return { rebuilt: false, relabeled: true };
     }
+    if (s.offsetMs === offsetMs) return { rebuilt: false, relabeled: false };
+    offsetMs = s.offsetMs;
+    for (let i = 0; i < rowEls.length; i++) {
+      const label = clockLabel(seekMs(i));
+      if (label === labels[i]) continue;
+      labels[i] = label;
+      timeEls[i].textContent = label;
+      timeEls[i].setAttribute('aria-label', timeAria(i));
+    }
+    return { rebuilt: false, relabeled: true };
+  }
+
+  /**
+   * المسار التدريجي (الفكرة ٦): نص الصفوف التي تغيّر نص مقطعها وحده واتجاهه، والجدول الزمني لمراجع المقاطع الجديدة (الأزمنة نفسها،
+   * فالصف الحالي والماضي كما هما)؛ والحقل المفتوح باقٍ أو يُغلق بقاعدته (keepEdit).
+   * @param {import('../../core/model/cue.js').Cue[]} next
+   */
+  function retext(next) {
+    const prev = cues;
+    cues = next;
+    timeline = createTimeline(cues);
+    generation++;
+    for (let i = 0; i < cues.length; i++) {
+      if (cues[i].text === prev[i].text) continue;
+      const ar = arOf(i);
+      const text = flatText(cues[i].text);
+      setText(ar, text);
+      setAttr(ar, 'dir', textDirection(text, translationLang));
+    }
+    if (edit) keepEdit();
+  }
+
+  /** بناء الصفوف كلها من جديد، والحقل المفتوح يُعاد فتحه بعده (reopenEdit). @param {Parameters<typeof sync>[0]} s */
+  function rebuild(s) {
+    const pending = pendingEdit();
     clear();
     cues = s.cues;
     originalRef = s.originalCues;
@@ -514,6 +601,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     for (let i = 0; i < rowEls.length; i += CHUNK) list.append(...rowEls.slice(i, i + CHUNK));
     setMarks(s.marks ?? null);
     if (rowEls.length) moveActs(0);
+    if (pending) reopenEdit(pending);
     generation++;
     return { rebuilt: true, relabeled: false };
   }
@@ -521,10 +609,10 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
   /**
    * علامات «أعود إليه» على صفوفها: تُحل بمراسيها (الرقم والزمن والبصمة) إلى المقاطع المعروضة حين يتغير مرجع العلامات أو المقاطع،
    * ويُمس من الصفوف ما تغيّر وحده. «تمت المراجعة» لا تُعلَّم في اللوحة.
-   * @param {import('../../core/model/marks.js').Mark[] | null} marks
+   * @param {import('../../core/model/marks.js').Mark[] | null} marks @param {{ force?: boolean }} [o] force: المقاطع تغيّرت والعلامات نفسها
    */
-  function setMarks(marks) {
-    if (marks === marksRef) return;
+  function setMarks(marks, { force = false } = {}) {
+    if (marks === marksRef && !force) return;
     marksRef = marks;
     const next = new Set();
     if (marks?.length && cues?.length) {
