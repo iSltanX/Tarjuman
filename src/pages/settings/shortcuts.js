@@ -21,10 +21,11 @@ export async function openShortcuts(tabs) {
 }
 
 /**
- * @param {{ doc: Document, target: 'chromium' | 'firefox', open: () => Promise<unknown> }} o
+ * @param {{ doc: Document, target: 'chromium' | 'firefox', tabs?: { create: (o: { url: string }) => Promise<unknown> } }} o tabs واجهة التبويبات
+ *   (chrome.tabs من نقطة الدخول، فلا تستورد main.js هذه الوحدة)
  * @returns {{ root: HTMLElement }}
  */
-export function shortcutsControl({ doc, target, open }) {
+export function shortcutsControl({ doc, target, tabs }) {
   const note = (children) => el('p', { className: 'tj-caption st-note', children, doc });
   const what = note([t('settings.shortcuts.what')]);
   if (target === 'firefox') {
@@ -35,13 +36,7 @@ export function shortcutsControl({ doc, target, open }) {
     label: t('settings.shortcuts.open'), variant: 'secondary', icon: 'keyboard', doc,
     onClick: () => {
       // الفتح أول ما في الضغطة؛ والرفض نصٌّ بالعنوان ليُكتب في شريط العنوان.
-      let pending;
-      try {
-        pending = Promise.resolve(open());
-      } catch (err) {
-        pending = Promise.reject(err);
-      }
-      pending.then(
+      openShortcuts(tabs).then(
         () => failed.replaceChildren(),
         () => failed.replaceChildren(note(ltrNodes(t('settings.shortcuts.openFailed', { url: ltrInline(SHORTCUTS_URL) }), { doc }))),
       );

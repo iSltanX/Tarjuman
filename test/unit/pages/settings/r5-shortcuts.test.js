@@ -39,7 +39,7 @@ const PDI = String.fromCodePoint(0x2069);
 const isolated = (node, value) => findAll(node, (e) => e.tagName === 'bdi').some((e) => e.dir === 'ltr' && e.classList.contains('tj-ltr--wrap') && e.textContent === `${LRI}${value}${PDI}`);
 
 test('الصف في «العرض» بعد «زر النص المتزامن» وقبل صور المحفوظات، بالأوامر الخمسة وأنها بلا مفاتيح', async () => {
-  const m = await mount({ shortcuts: { target: 'chromium', open: async () => {} } });
+  const m = await mount({ shortcuts: { target: 'chromium', tabs: { create: async () => ({ id: 1 }) } } });
   const rows = findAll(display(m), (e) => String(e.className) === 'st-row');
   const i = rows.indexOf(rowOf(m));
   assert.ok(i > 0, 'الصف في قسم العرض');
@@ -53,13 +53,14 @@ test('الصف في «العرض» بعد «زر النص المتزامن» و�
 
 test('Chromium: الزر يفتح صفحة اختصارات المتصفح بـtabs.create، ولا يكتب في التخزين', async () => {
   const opened = [];
-  const m = await mount({ shortcuts: { target: 'chromium', open: async () => { opened.push(SHORTCUTS_URL); } } });
+  const m = await mount({ shortcuts: { target: 'chromium', tabs: { create: async (o) => { opened.push(o); return { id: 1 }; } } } });
   const b = openBtn(m);
   assert.ok(b, 'زر ظاهر');
   assert.equal(textOf(b), 'فتح صفحة الاختصارات');
   b.dispatchEvent({ type: 'click' });
   await settle(5);
-  assert.deepEqual(opened, ['chrome://extensions/shortcuts']);
+  assert.deepEqual(opened, [{ url: 'chrome://extensions/shortcuts' }]);
+  assert.equal(SHORTCUTS_URL, 'chrome://extensions/shortcuts');
   assert.doesNotMatch(textOf(rowOf(m)), /تعذّر فتحها/);
   assert.equal(JSON.stringify(await m.area.get(null)), m.before, 'لا تخزين');
   // openShortcuts نفسها: tabs.create بالعنوان وحده.
@@ -69,7 +70,7 @@ test('Chromium: الزر يفتح صفحة اختصارات المتصفح بـt
 });
 
 test('Chromium: إن رفض المتصفح فتحها يُقال ذلك ويُكتب العنوان عنصرًا معزولًا LTR', async () => {
-  const m = await mount({ shortcuts: { target: 'chromium', open: async () => { throw new Error('Cannot navigate'); } } });
+  const m = await mount({ shortcuts: { target: 'chromium', tabs: { create: async () => { throw new Error('Cannot navigate'); } } } });
   openBtn(m).dispatchEvent({ type: 'click' });
   await settle(5);
   const text = textOf(rowOf(m));
@@ -79,13 +80,15 @@ test('Chromium: إن رفض المتصفح فتحها يُقال ذلك ويُك
 });
 
 test('Firefox: لا زر، ونص يقول الطريق من صفحة الإضافات بعنوانها معزولًا', async () => {
-  const m = await mount({ shortcuts: { target: 'firefox', open: async () => { throw new Error('unused'); } } });
+  const created = [];
+  const m = await mount({ shortcuts: { target: 'firefox', tabs: { create: async (o) => { created.push(o); } } } });
   assert.equal(openBtn(m), null);
   const text = textOf(rowOf(m));
   assert.match(text, /في Firefox/);
   assert.match(text, /«إدارة اختصارات الإضافات»/);
   assert.ok(isolated(rowOf(m), FIREFOX_ADDONS), 'about:addons عنصر ذري معزول');
   assert.equal(FIREFOX_ADDONS, 'about:addons');
+  assert.deepEqual(created, [], 'لا فتح في Firefox');
 });
 
 test('الفحص الثابت: عنوان صفحة الاختصارات مسموح في ملفه وحده وبعينه، لا في ملف آخر ولا عنوانًا داخليًا آخر', async () => {
@@ -104,4 +107,11 @@ test('الفحص الثابت: عنوان صفحة الاختصارات مسمو
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test('بلا واجهة التبويبات (بيئة بلاها): الزر يقول تعذّر الفتح ويكتب العنوان، ولا يرمي', async () => {
+  const m = await mount();
+  openBtn(m).dispatchEvent({ type: 'click' });
+  await settle(5);
+  assert.match(textOf(rowOf(m)), /تعذّر فتحها من هنا/);
 });
