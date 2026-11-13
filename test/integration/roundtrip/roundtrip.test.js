@@ -189,7 +189,7 @@ function defineRoundtrip(label, exporter) {
     assert.ok(r.comparison.noArabic.length > 400);
   });
 
-  test(`${label}: تصدير احتياطي مقسَّم (1,056 مقطعًا في 6 أجزاء) ← يُدمج مهما كان ترتيب الاختيار ← مطابقة`, async () => {
+  test(`${label}: تصدير احتياطي مقسَّم (1,066 مقطعًا في 6 أجزاء) ← يُدمج مهما كان ترتيب الاختيار ← مطابقة`, async () => {
     const exp = exporter(asr, { size: 200 });
     assert.equal(exp.files.length, 6);
     assert.equal(exp.fingerprint.parts.length, 6);
@@ -200,8 +200,8 @@ function defineRoundtrip(label, exporter) {
     assert.equal(r.ok, true);
     assert.equal(r.notes.length, 1, 'ملاحظة الدمج وحدها');
     assert.match(r.notes[0], /دُمجت 6 ملفات/);
-    assert.deepEqual(r.comparison, { ...baseExpected(exp.fingerprint, 1056), matched: true, restoreTimingAvailable: true, notes: r.notes });
-    assert.equal(r.cues.length, 1056);
+    assert.deepEqual(r.comparison, { ...baseExpected(exp.fingerprint, 1066), matched: true, restoreTimingAvailable: true, notes: r.notes });
+    assert.equal(r.cues.length, 1066);
     assert.deepEqual(r.warnings, []);
     assert.equal(r.fileName.includes('part'), false, r.fileName);
   });
@@ -210,7 +210,7 @@ function defineRoundtrip(label, exporter) {
     const exp = exporter(asr, { size: 200 });
     const parts = exp.files.map((f) => fileOf(modelTranslate(f.text), f.name.replace('.en.', '.ar.')));
     // الجزء الثالث المحذوف من خطة أجزاء المصدّر نفسه: العقد يفرض الترقيم المستمر لا طولًا ثابتًا للجزء
-    // (مصدّر العقد 401..600، وتوزيع P3 المتوازن 353..528).
+    // (مصدّر العقد 401..600، وتوزيع P3 المتوازن 357..534).
     const gap = exp.fingerprint.parts[2];
     const len = gap.to - gap.from + 1;
     assert.ok(gap.from > 1 && len >= 1 && len <= 200, JSON.stringify(gap));
@@ -218,7 +218,7 @@ function defineRoundtrip(label, exporter) {
     assert.equal(r.ok, true);
     assert.deepEqual(r.warnings.map((w) => [w.code, w.params.from, w.params.to]), [['IM_PARTS_GAP', gap.from, gap.to]]);
     assert.deepEqual(r.comparison.missing, Array.from({ length: len }, (_, i) => gap.from + i));
-    assert.deepEqual([r.comparison.countTarget, r.comparison.numbering, r.comparison.matched], [1056 - len, 'different', false]);
+    assert.deepEqual([r.comparison.countTarget, r.comparison.numbering, r.comparison.matched], [1066 - len, 'different', false]);
   });
 }
 

@@ -21,7 +21,7 @@
 
 ## العيّنات الحقيقية
 
-`realArabic(REAL_ARABIC.manual | asrLong)` تقرأ مقابلَي عيّنتي P1 العربيين من [`test/e2e/fixtures/`](../../e2e/fixtures/) كما هما (427 و729 مقطعًا)، وتُحاذى بمساري P1 المحوّلين من [`test/fixtures/json3/`](../json3/).
+`realArabic(REAL_ARABIC.manual | asrLong)` تقرأ مقابلَي عيّنتي P1 العربيين من [`test/e2e/fixtures/`](../../e2e/fixtures/) كما هما (427 و729 مقطعًا). اليدوي يُحاذى بمساره المحوّل من [`test/fixtures/json3/`](../json3/)، والتلقائي بأصله الذي تُرجم: ناتج ما قبل ع-٣ مجمّدًا، يقرؤه `sourceBeforeE03(SOURCE_BEFORE_E03.asrLong | asrNormal)` من [`test/fixtures/export/`](../export/README.md)، لأن تحويل اليوم يقطع مجموعات ASR التي لا تتسع في سطرين فتغيّر ترقيمه.
 
 ## ملفات Markdown وTXT
 

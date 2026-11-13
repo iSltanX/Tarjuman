@@ -76,7 +76,7 @@ test('الحفظ والاسترجاع: المسار الإنجليزي والع�
   await assert.rejects(store.getVideo('../x'), code('TJ_BAD_VIDEO_ID'));
 });
 
-test('عينة P1 الحقيقية (تلقائي 1,056 مقطعًا) بأصل وحالية تُحفظ وتُسترجع حرفيًا', async () => {
+test('عينة P1 الحقيقية (تلقائي 1,066 مقطعًا) بأصل وحالية تُحفظ وتُسترجع حرفيًا', async () => {
   const { store, area } = make();
   const { fixture, cues } = realTrack('asr');
   const track = englishTrack({ kind: 'asr', cues });

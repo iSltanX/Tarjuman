@@ -4,11 +4,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rankReferences } from '../../../src/core/compare/index.js';
 import { classTransitions, reviewIncoming, videoIdFromName } from '../../../src/core/import/index.js';
-import { convertTrack } from '../../../src/core/convert/index.js';
 import { fileName } from '../../../src/core/export/names.js';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
-import { englishTrack, fingerprint, realTrack } from '../../helpers/fixtures.js';
-import { REAL_ARABIC, arabicTwin, dropAt, longTrack, realArabic } from '../../fixtures/v2/index.js';
+import { parseSrtStrict } from '../../../src/core/srt/parser.js';
+import { englishTrack, fingerprint } from '../../helpers/fixtures.js';
+import { REAL_ARABIC, SOURCE_BEFORE_E03, arabicTwin, dropAt, longTrack, realArabic, sourceBeforeE03 } from '../../fixtures/v2/index.js';
 
 const VIDEO = 'iG9CE55wbtY';
 const EN = longTrack(2400);
@@ -31,10 +31,11 @@ test('الترتيب بالمطابقة لا بالأحدث: التصدير ال
 });
 
 test('عيّنة P1 التلقائية: الملف العربي بوضع «مقاطع أطول» يطابق بصمة الطويل لا العادي الأحدث', () => {
-  const asr = realTrack('asr');
-  const long = convertTrack({ body: asr.body, trackKind: 'asr', durationMs: asr.fixture.durationMs, mode: 'long' });
-  const fpLong = fingerprint({ videoId: 'Y9rkKtK1b44', id: 'fp_long00001', mode: 'long', track: englishTrack({ kind: 'asr', cues: long.cues }), createdAt: '2026-11-01T00:00:00.000Z' });
-  const fpNormal = fingerprint({ videoId: 'Y9rkKtK1b44', id: 'fp_norm00001', track: englishTrack({ kind: 'asr', cues: asr.cues }), createdAt: '2026-11-02T00:00:00.000Z' });
+  // ترجمة النموذج بُنيت على تصديري ما قبل ع-٣، فالبصمتان من أصليهما المجمّدين لا من تحويل اليوم.
+  const long = parseSrtStrict(sourceBeforeE03(SOURCE_BEFORE_E03.asrLong));
+  const normal = parseSrtStrict(sourceBeforeE03(SOURCE_BEFORE_E03.asrNormal));
+  const fpLong = fingerprint({ videoId: 'Y9rkKtK1b44', id: 'fp_long00001', mode: 'long', track: englishTrack({ kind: 'asr', cues: long }), createdAt: '2026-11-01T00:00:00.000Z' });
+  const fpNormal = fingerprint({ videoId: 'Y9rkKtK1b44', id: 'fp_norm00001', track: englishTrack({ kind: 'asr', cues: normal }), createdAt: '2026-11-02T00:00:00.000Z' });
   const ar = parseSrtLenient(realArabic(REAL_ARABIC.asrLong)).cues;
   const review = reviewIncoming({ fileName: 'Y9rkKtK1b44.en.asr.long.ar.srt', cues: ar, videoId: 'Y9rkKtK1b44', fingerprints: [fpNormal, fpLong] });
   assert.equal(review.suggested, 'fp_long00001');

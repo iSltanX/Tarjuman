@@ -1,5 +1,5 @@
 // buildExport وbuildArabicExport على العينتين الحقيقيتين بمسار المنتج: التقاط ← convert ← buildExport (P3-AC2،
-// AC5، AC6). يقارن الوضع العادي بملفي SRT اللذين ولّدتهما P1 حيًا من الجسمين نفسيهما.
+// AC5، AC6). يقارن الوضع العادي بملفي SRT اللذين ولّدتهما P1 حيًا من الجسمين نفسيهما، والتلقائي بمرجعه المعاد توليده بعد ع-٣.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -28,10 +28,11 @@ function captured(kind, mode) {
   return { videoId: s.fixture.videoId, track: { key: conv.key, lang: conv.lang, kind: conv.kind, cues: conv.cues, warnings: conv.warnings } };
 }
 
-const cases = [['manual', 'iG9CE55wbtY.en.manual.srt'], ['asr', 'Y9rkKtK1b44.en.asr.srt']];
+// مرجع التلقائي أُعيد توليده بعد ع-٣ (قطع المجموعة حين لا يتسع نصها في سطرين)، وناتج P1 الحي مجمّد في before-e03.
+const cases = [['manual', 'iG9CE55wbtY.en.manual.srt', 'لما ولّدته P1 حيًا'], ['asr', 'Y9rkKtK1b44.en.asr.srt', 'لمرجعه بعد ع-٣']];
 
-for (const [kind, p1File] of cases) {
-  test(`${kind} عادي: الملف مطابق حرفيًا لما ولّدته P1 حيًا، باسم المعرّف واللغة والنوع والوضع`, () => {
+for (const [kind, p1File, source] of cases) {
+  test(`${kind} عادي: الملف مطابق حرفيًا ${source}، باسم المعرّف واللغة والنوع والوضع`, () => {
     const { videoId, track } = captured(kind, 'normal');
     const out = buildExport({ videoId, track, mode: 'normal', now: NOW, rand });
     assert.equal(out.files.length, 1);
@@ -84,10 +85,10 @@ test('التقسيم الاحتياطي: ترقيم مستمر، وضمّ الأ
   const { videoId, track } = captured('asr', 'normal');
   const whole = buildExport({ videoId, track, mode: 'normal', now: NOW, rand });
   const out = buildExport({ videoId, track, mode: 'normal', split: { size: 200 }, now: NOW, rand });
-  assert.equal(out.files.length, 6, '1056 مقطعًا بحد 200 ← 6 أجزاء');
+  assert.equal(out.files.length, 6, '1066 مقطعًا بحد 200 ← 6 أجزاء');
   assert.deepEqual(out.fingerprint.parts.map((p) => p.index), [1, 2, 3, 4, 5, 6]);
   assert.equal(out.fingerprint.parts[0].from, 1);
-  assert.equal(out.fingerprint.parts.at(-1).to, 1056);
+  assert.equal(out.fingerprint.parts.at(-1).to, 1066);
   assert.deepEqual(validateFingerprint(out.fingerprint), { ok: true });
   assert.equal(out.fingerprint.fileName, null);
   assert.equal(out.files.map((f) => f.text).join('\n'), whole.files[0].text, 'ضمّ الأجزاء = الملف الكامل');
@@ -103,10 +104,10 @@ test('التقسيم الاحتياطي: ترقيم مستمر، وضمّ الأ
     assert.deepEqual(numbers, Array.from({ length: f.cueCount }, (_, k) => next + k));
     next += f.cueCount;
   });
-  assert.equal(next, 1057);
+  assert.equal(next, 1067);
   assert.deepEqual(out.fingerprint.cues, whole.fingerprint.cues, 'بصمة الأزمنة كاملة لا تتغير بالتقسيم');
   assert.match(out.instructions, /6 أجزاء/);
-  assert.match(out.instructions, /الجزء 2 \(المقاطع 177–352\)/);
+  assert.match(out.instructions, /الجزء 2 \(المقاطع 179–356\)/);
 });
 
 test('التقسيم لا يعمل إلا بطلب صريح، ولا يلزم إن كفى حجم الجزء', () => {

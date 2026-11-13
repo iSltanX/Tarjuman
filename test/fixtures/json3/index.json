@@ -39,7 +39,7 @@
       "bodySha256": "aa34a91cd5fa99e3",
       "bodyChars": 953282,
       "expected": {
-        "cues": 1056,
+        "cues": 1066,
         "words": 9031,
         "duplicatesRemoved": 0,
         "textEvents": 1266

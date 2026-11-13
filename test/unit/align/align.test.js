@@ -3,12 +3,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { alignCues, isIdentity, toBlocks } from '../../../src/core/align/index.js';
-import { convertTrack } from '../../../src/core/convert/index.js';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
+import { parseSrtStrict } from '../../../src/core/srt/parser.js';
 import { realTrack } from '../../helpers/fixtures.js';
 import { deepFreeze } from '../../fixtures/srt/index.js';
 import {
-  REAL_ARABIC, arabicTwin, driftSome, dropAt, longTrack, mergeSplitShift, realArabic, renumber, rng, shiftAll,
+  REAL_ARABIC, SOURCE_BEFORE_E03, arabicTwin, driftSome, dropAt, longTrack, mergeSplitShift, realArabic, renumber, rng, shiftAll, sourceBeforeE03,
 } from '../../fixtures/v2/index.js';
 
 const EN = deepFreeze(longTrack(2400));
@@ -31,12 +31,12 @@ test('عيّنتا P1 الحقيقيتان ومقابلاهما العربيان
   assert.equal(manual.cues.length, 427);
   assert.ok(isIdentity(r1, 427, arManual.length), r1.reasons.join(' | '));
 
-  const asr = realTrack('asr');
-  const long = convertTrack({ body: asr.body, trackKind: 'asr', durationMs: asr.fixture.durationMs, mode: 'long' });
+  // ترجمة النموذج بُنيت على «مقاطع أطول» قبل ع-٣، فتُحاذى بذلك الأصل المجمّد لا بتحويل اليوم.
+  const long = parseSrtStrict(sourceBeforeE03(SOURCE_BEFORE_E03.asrLong));
   const arLong = parseSrtLenient(realArabic(REAL_ARABIC.asrLong)).cues;
-  const r2 = alignCues(long.cues, arLong);
+  const r2 = alignCues(long, arLong);
   assert.equal(arLong.length, 729);
-  assert.ok(isIdentity(r2, long.cues.length, 729), r2.reasons.join(' | '));
+  assert.ok(isIdentity(r2, long.length, 729), r2.reasons.join(' | '));
 });
 
 test('دمج وشطر يعيدان العدد إلى أصله مع إزاحة بمقطع: تُكشف البنية والإزاحة، والمحاذاة ليست هوية', () => {

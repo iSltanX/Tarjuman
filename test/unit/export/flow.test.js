@@ -74,7 +74,7 @@ test('تدفق كامل: تلقائي مقسَّم بطلب صريح، بصمة 
   const stored = await store.getVideo(VID);
   assert.deepEqual(stored.fingerprints[0].parts, out.fingerprint.parts);
   assert.equal(stored.fingerprints[0].fileName, null);
-  assert.equal(stored.english[0].cues.length, 1056);
+  assert.equal(stored.english[0].cues.length, 1066);
 });
 
 test('مسار معطوب: لا تصدير، والأداة تقرأ الرمز من النتيجة', async () => {

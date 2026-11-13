@@ -3,8 +3,10 @@
 import { ConvertError } from './json3.js';
 import { SENTENCE_END, hasNoSpaceScript, joinWords, splitWords, wrapLines } from './text.js';
 
+// maxLines: المجموعة تُقطع حين لا يتسع نصها بعد اللف في سطرين (ع-٣)، كما في «مقاطع أطول»؛ فـ84 محرفًا وحدها قد تُلفّ ثلاثة أسطر
+// ثالثها كلمة يتيمة، والتعليمات تطلب سطرًا أو سطرين كما في الأصل.
 export const ASR_DEFAULTS = Object.freeze({
-  gapMs: 700, maxChars: 84, maxDurationMs: 6000, lineChars: 42, tailMs: 1500, minDurationMs: 300, rollingWords: 3,
+  gapMs: 700, maxChars: 84, maxLines: 2, maxDurationMs: 6000, lineChars: 42, tailMs: 1500, minDurationMs: 300, rollingWords: 3,
 });
 
 // الصيغة المتدحرجة تعيد سطر عرض، فلا يُقارن من ذيل الحدث ورأس تاليه أكثر من هذا (حد لكلمات الحدث؛ تدقيق 7a66f91، U77).
@@ -164,10 +166,12 @@ export function convertAsr(events, options = {}) {
     }
     const prev = cur.words[cur.words.length - 1];
     const canBreak = w.t > cur.startMs;
+    // «يتسع في سطرين بعد اللف» يُحسب آخرًا وحين يجوز القطع وحده، والمجموعة حينها دون maxChars، فلا كلفة تربيعية (U77).
     const shouldBreak = SENTENCE_END.test(prev.text)
       || w.t - prev.t > o.gapMs
       || cur.chars + 1 + w.text.length > o.maxChars
-      || w.t - cur.startMs > o.maxDurationMs;
+      || w.t - cur.startMs > o.maxDurationMs
+      || (canBreak && wrapLines(groupText([...cur.words, w]), o.lineChars).split('\n').length > o.maxLines);
     if (canBreak && shouldBreak) {
       groups.push(cur);
       cur = { startMs: w.t, words: [w], chars: w.text.length };
@@ -185,15 +189,21 @@ export function convertAsr(events, options = {}) {
     if (last.eventEndMs !== null) end = Math.min(end, last.eventEndMs);
     end = Math.max(end, g.startMs + o.minDurationMs);
     if (next) end = Math.min(end, next.startMs);
-    // كلمات اللغات التي لا تفصل بالمسافات تُوصل بلا مسافة (AA1)؛ وغيرها بمسافة كما كان.
-    // وأجزاء الكلمة الملتصقة (glue، قطع متصلة) تبقى نصًا موصولًا كما هو؛ وNFC قبل اللف فلا يُكسر حرف عن علامته (AV2 U-003).
-    const texts = [];
-    g.words.forEach((w, i) => {
-      if (i > 0 && w.glue) texts[texts.length - 1] += w.text;
-      else texts.push(w.text);
-    });
-    const joined = (texts.some(hasNoSpaceScript) ? joinWords(texts) : texts.join(' ')).normalize('NFC');
-    return { startMs: g.startMs, endMs: end, text: wrapLines(joined, o.lineChars) };
+    return { startMs: g.startMs, endMs: end, text: wrapLines(groupText(g.words), o.lineChars) };
   });
   return { cues, report: { words: words.length, clampedWordTimes: clamped, clampedToEvent, options: o } };
+}
+
+/**
+ * نص مجموعة كلمات قبل اللف: كلمات اللغات التي لا تفصل بالمسافات تُوصل بلا مسافة (AA1)، وغيرها بمسافة كما كان. وأجزاء الكلمة
+ * الملتصقة (glue، قطع متصلة) تبقى نصًا موصولًا كما هو؛ وNFC قبل اللف فلا يُكسر حرف عن علامته (AV2 U-003).
+ * @param {{ text: string, glue?: boolean }[]} words
+ */
+function groupText(words) {
+  const texts = [];
+  words.forEach((w, i) => {
+    if (i > 0 && w.glue) texts[texts.length - 1] += w.text;
+    else texts.push(w.text);
+  });
+  return (texts.some(hasNoSpaceScript) ? joinWords(texts) : texts.join(' ')).normalize('NFC');
 }

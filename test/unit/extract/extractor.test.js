@@ -21,7 +21,7 @@ test('مسارات متعددة: يدوي وتلقائي ولهجة، كل بم�
   const tracks = extractor.tracks();
   assert.deepEqual(tracks.map((x) => x.key), ['en|asr', 'en-GB|manual', 'en|manual'], 'ترتيب الالتقاط');
   assert.ok(tracks.every((x) => x.ok && x.cueCount > 0));
-  assert.equal(tracks.find((x) => x.key === 'en|asr').cueCount, 1056);
+  assert.equal(tracks.find((x) => x.key === 'en|asr').cueCount, 1066);
   assert.equal(tracks.find((x) => x.key === 'en|manual').cueCount, 427);
   // اليدويان بزمن واحد: أولهما التقاطًا (لا تفضيل لـen على en-GB منذ 2.0.0، AA1).
   assert.equal(rankUsable(tracks)[0].key, 'en-GB|manual');
@@ -114,12 +114,12 @@ test('الوضع الطويل: الأرقام قابلة للضبط، ووضع �
   assert.equal(extractor.convert('').kind, 'manual');
 });
 
-test('التقاط تلقائي حقيقي: 1056 مقطعًا عاديًا وأقل منها طويلًا، والفشل يعيد رمزه لا استثناء', () => {
+test('التقاط تلقائي حقيقي: 1066 مقطعًا عاديًا (ع-٣) وأقل منها طويلًا، والفشل يعيد رمزه لا استثناء', () => {
   const { extractor } = makeExtractor({ videoId: asr.fixture.videoId, durationMs: asr.fixture.durationMs });
   const r = extractor.handleMessage(captureMsg({ videoId: asr.fixture.videoId, body: asr.body, trackKind: 'asr' }));
   assert.deepEqual(r, { accepted: true, code: null });
-  assert.equal(extractor.convert('en|asr').cues.length, 1056);
-  assert.ok(extractor.convert('en|asr', { mode: 'long' }).cues.length < 1056);
+  assert.equal(extractor.convert('en|asr').cues.length, 1066);
+  assert.ok(extractor.convert('en|asr', { mode: 'long' }).cues.length < 1066);
   // جسم JSON صالح البنية لكنه متدحرج (الثاني يعيد ذيل الأول بأزمنته نفسها؛ تدقيق 7a66f91، U28): يُقبل التقاطه ويُعلَن
   // فشل تحويله برمزه.
   const rolling = JSON.stringify({ events: [

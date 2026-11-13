@@ -112,6 +112,20 @@ test('ASR: لا يُقسم المقطع بين كلمتين بالزمن نفس�
   for (const c of q.cues) for (const line of c.text.split('\n')) assert.ok(line.length <= 42, line);
 });
 
+test('ASR (ع-٣): مجموعة دون 84 محرفًا لا تتسع في سطرين تُقطع، فلا مقطع بثلاثة أسطر ثالثها كلمة يتيمة', () => {
+  // نص المقطع 17 في عيّنة ميدواي الحقيقية: 83 محرفًا، ولا فاصل يجعل الشطرين ≤ 42 فكان يُلفّ ثلاثة أسطر آخرها «Battle».
+  const text = 'uh Jonathan parall the the author of shattered sword the untold story of the Battle of Midway';
+  const words = text.split(' ').map((w, i) => [i * 200, w]);
+  const r = convertTrack({ body: body([asrEvent(0, 5000, words)]), trackKind: 'asr', durationMs: 6000 });
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.cues.filter((c) => c.text.split('\n').length > 2).map((c) => c.text), []);
+  assert.equal(r.cues.map((c) => c.text.replace(/\n/g, ' ')).join(' '), text, 'الكلمات كلها بترتيبها');
+  assert.ok(r.cues.every((c) => c.text.split('\n').every((l) => l.length <= 42)));
+  // وكلمات بالزمن نفسه لا يُقطع بينها كما كان، ولو زادت على سطرين.
+  const same = convertTrack({ body: body([asrEvent(0, 5000, text.split(' ').map((w) => [0, w]))]), trackKind: 'asr', durationMs: 6000 });
+  assert.equal(same.cues.length, 1);
+});
+
 test('الثوابت تكشف الفقد والتداخل والفراغ والحدود', () => {
   const cues = [{ startMs: 0, endMs: 1000, text: 'a b' }, { startMs: 1000, endMs: 2000, text: 'c' }];
   const byKey = (r) => Object.fromEntries(r.results.map((x) => [x.key, x.ok]));

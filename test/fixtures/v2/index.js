@@ -140,5 +140,20 @@ export const REAL_ARABIC = Object.freeze({
   asrLong: 'Y9rkKtK1b44.en.asr.long.ar.srt',
 });
 
+/**
+ * الأصل الإنجليزي الذي ترجمه النموذج إلى عيّنتي ميدواي العربيتين: ناتج ما قبل ع-٣ مجمّدًا في test/fixtures/export (العادي ملف P1 الحي
+ * بايتًا، والأطول من محوّل ما قبل ع-٣). ترجمة النموذج بُنيت على ترقيمه، فتُقارن به لا بتحويل اليوم الذي صار يقطع مجموعات ASR
+ * التي لا تتسع في سطرين. لا يُعدَّل ولا تُعدَّل الترجمة.
+ */
+export const SOURCE_BEFORE_E03 = Object.freeze({
+  asrNormal: 'Y9rkKtK1b44.en.asr.before-e03.srt',
+  asrLong: 'Y9rkKtK1b44.en.asr.long.before-e03.srt',
+});
+
+/** نص ملف الأصل المجمّد. @param {string} name من SOURCE_BEFORE_E03 */
+export function sourceBeforeE03(name) {
+  return readFileSync(path.join(ROOT, 'test/fixtures/export', name), 'utf8');
+}
+
 /** ملف نصي من هذا المجلد (عيّنات Markdown وTXT). */
 export const readV2 = (name) => readFileSync(path.join(DIR, name), 'utf8');

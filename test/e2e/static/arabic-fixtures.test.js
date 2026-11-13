@@ -12,21 +12,29 @@ import { parseSrtStrict } from '../../../src/core/srt/parser.js';
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
 
 const ROOT = new URL('../../../', import.meta.url);
+// ميدواي: ترجمتا النموذج بُنيتا على تصديري ما قبل ع-٣ (قبل أن يقطع المحوّل مجموعة ASR لا تتسع في سطرين)، فتُقارنان بالأصل الذي
+// تُرجم فعلًا، مجمّدًا في test/fixtures/export (source)، لا بتحويل اليوم؛ ولا تُعدَّل ترجمة نموذج باليد.
 const CASES = [
   { id: 'iG9CE55wbtY', kind: 'manual', mode: 'normal', fixture: 'manual-ted-iG9CE55wbtY.json', durationMs: 1203421, cues: 427, ar: 'iG9CE55wbtY.en.manual.normal.ar.srt' },
-  { id: 'Y9rkKtK1b44', kind: 'asr', mode: 'long', fixture: 'asr-nwc-Y9rkKtK1b44.json', durationMs: 3600000, cues: 729, ar: 'Y9rkKtK1b44.en.asr.long.ar.srt' },
+  { id: 'Y9rkKtK1b44', kind: 'asr', mode: 'long', fixture: 'asr-nwc-Y9rkKtK1b44.json', durationMs: 3600000, cues: 729, ar: 'Y9rkKtK1b44.en.asr.long.ar.srt', source: 'Y9rkKtK1b44.en.asr.long.before-e03.srt' },
   // P15: ترجمة ثانية للمحاضرة نفسها من نموذج آخر (Haiku) لاختبار الخانات، وميدواي بالوضع العادي (Sonnet) للرحلة الطويلة.
   { id: 'iG9CE55wbtY', kind: 'manual', mode: 'normal', fixture: 'manual-ted-iG9CE55wbtY.json', durationMs: 1203421, cues: 427, ar: 'iG9CE55wbtY.en.manual.normal.haiku.ar.srt' },
   // وفيها ما يفعله نموذج حقيقي: أربعة مقاطع بلا حرف عربي («K» مرتين، و«VB-6»، و«1944»)، والمقارِن يرصد الثلاثة الأولى.
-  { id: 'Y9rkKtK1b44', kind: 'asr', mode: 'normal', fixture: 'asr-nwc-Y9rkKtK1b44.json', durationMs: 3600000, cues: 1056, ar: 'Y9rkKtK1b44.en.asr.normal.ar.srt', latin: [180, 244, 439, 593], noArabic: [180, 244, 439] },
+  { id: 'Y9rkKtK1b44', kind: 'asr', mode: 'normal', fixture: 'asr-nwc-Y9rkKtK1b44.json', durationMs: 3600000, cues: 1056, ar: 'Y9rkKtK1b44.en.asr.normal.ar.srt', source: 'Y9rkKtK1b44.en.asr.before-e03.srt', latin: [180, 244, 439, 593], noArabic: [180, 244, 439] },
 ];
 
-async function exported(c) {
+/** مقاطع تحويل اليوم من عيّنة json3 بمسار المنتج. */
+async function converted(c) {
   const body = await readFile(new URL(`test/fixtures/json3/${c.fixture}`, ROOT), 'utf8');
   const ex = createExtractor({ currentVideoId: () => c.id, durationMs: () => c.durationMs, isLive: () => false });
   ex.handleMessage({ source: 'tarjuman', v: 1, kind: 'timedtext', videoId: c.id, lang: 'en', trackKind: c.kind, kindParam: c.kind === 'asr' ? 'asr' : null, capsAsr: true, hasTlang: false, format: 'json3', hasPot: true, transport: 'xhr', status: 200, bodyLength: body.length, body, truncated: false });
-  const conv = ex.convert(`en|${c.kind}`, { mode: c.mode });
-  return buildExport({ videoId: c.id, title: null, track: { key: `en|${c.kind}`, lang: 'en', kind: c.kind, cues: conv.cues, warnings: conv.warnings }, mode: c.mode, now: Date.parse('2026-11-02T00:00:00.000Z') });
+  return ex.convert(`en|${c.kind}`, { mode: c.mode });
+}
+
+/** الأصل الذي تُرجم: المجمّد إن وُجد، وإلا تحويل اليوم. */
+async function exported(c) {
+  const cues = c.source ? parseSrtStrict(await readFile(new URL(`test/fixtures/export/${c.source}`, ROOT), 'utf8')) : (await converted(c)).cues;
+  return buildExport({ videoId: c.id, title: null, track: { key: `en|${c.kind}`, lang: 'en', kind: c.kind, cues }, mode: c.mode, now: Date.parse('2026-11-02T00:00:00.000Z') });
 }
 
 for (const c of CASES) {
@@ -40,6 +48,19 @@ for (const c of CASES) {
     assert.deepEqual(findSecrets(text), []);
     assert.equal(text.charCodeAt(0) === 0xfeff, false, 'بلا BOM');
   });
+
+  if (c.source) {
+    test(`${c.source}: الأصل المجمّد ناتج العيّنة نفسها قبل ع-٣، بكلمات تحويل اليوم وترتيبها، والفرق في التجميع وحده`, async () => {
+      const frozen = parseSrtStrict(await readFile(new URL(`test/fixtures/export/${c.source}`, ROOT), 'utf8'));
+      const today = (await converted(c)).cues;
+      const words = (cues) => cues.flatMap((x) => x.text.split(/\s+/u));
+      assert.equal(frozen.length, c.cues);
+      assert.deepEqual(words(frozen), words(today));
+      assert.equal(frozen[0].startMs, today[0].startMs);
+      assert.ok(frozen.some((x) => x.text.split('\n').length > 2), 'فيه مقاطع الأسطر الثلاثة التي أزالها ع-٣');
+      assert.ok(today.every((x) => x.text.split('\n').length <= 2));
+    });
+  }
 
   test(`${c.ar}: الاستيراد كما يرفعه المستخدم يطابق بصمة التصدير نفسه`, async () => {
     const built = await exported(c);

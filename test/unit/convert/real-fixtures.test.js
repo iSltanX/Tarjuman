@@ -34,6 +34,16 @@ for (const f of index.fixtures) {
     assert.ok(r.report.completeness >= 0.85, `اكتمال ${r.report.completeness}`);
   });
 
+  test(`عينة حقيقية ${f.file}: كل مقطع في سطر أو سطرين بالوضعين، ولا سطر فوق 42 (ع-٣)`, () => {
+    for (const mode of ['normal', 'long']) {
+      const r = convertTrack({ body: load(f), trackKind: f.trackKind, durationMs: f.durationMs, mode });
+      assert.equal(r.ok, true, mode);
+      const over = r.cues.filter((c) => c.text.split('\n').length > 2).map((c) => c.n);
+      assert.deepEqual(over, [], `${mode}: مقاطع بأكثر من سطرين`);
+      assert.ok(r.cues.every((c) => c.text.split('\n').every((l) => l.length <= 42)), mode);
+    }
+  });
+
   test(`عينة حقيقية ${f.file}: العبث بالمخرجات يُكشف`, () => {
     const r = convertTrack({ body: load(f), trackKind: f.trackKind, durationMs: f.durationMs });
     const words = r.cues.flatMap((c) => splitWords(c.text));
