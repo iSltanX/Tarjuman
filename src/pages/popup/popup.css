@@ -96,7 +96,7 @@
 .tj-popup__link { all: unset; display: inline; cursor: pointer; color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; padding: 8px 2px; margin: -8px -2px; }
 .tj-popup__link:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; border-radius: 4px; }
 /* حقل اللصق (ف5): بعرض الكتلة وارتفاع 40 بسطر واحد (ح-60؛ كان 56)، لا يُكتب فيه (اللصق وحده)، والخط كما هو. */
-.tj-popup__paste-input { width: 100%; min-height: 40px; resize: none; font: 400 13px/20px var(--tj-font-body); }
+.tj-popup__paste-input { width: 100%; min-height: 40px; padding-block: 8px; resize: none; font: 400 13px/20px var(--tj-font-body); } /* سطر 20 في وسط 40 تقريبًا */
 .tj-popup__pair-skel { display: flex; flex-direction: column; gap: 10px; }
 .tj-popup__pair-skel-row { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); gap: 6px; align-items: center; }
 .tj-popup__pair-skel-row > .tj-skeleton { height: 40px; border-radius: var(--tj-radius-md); }
