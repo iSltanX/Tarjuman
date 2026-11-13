@@ -33,7 +33,7 @@ On install, Tarjuman asks for three permissions: storage, downloads, and access 
 5. Upload it with the “Upload translation (SRT)” button on the player bar, and the translation appears over the video. Its language comes from a code in the file name (such as `talk.ja.srt`) or from “To”, and you can change it before saving.
 6. When you come back to the video, you’ll find your translation and its timing as you left them.
 
-If the menu says “Turn on YouTube subtitles (CC) and choose the language you want. It’ll appear in this menu.”, the player hasn’t loaded any subtitles yet. Turn on CC while the menu is open, and the language appears in it once the player loads it. Or choose the language from ⚙ › Subtitles/CC, then open the menu again.
+If the player hasn’t loaded any subtitles yet, the menu usually shows a “Turn on CC now” button. Press it, and Tarjuman presses the player’s CC button for you; the language appears in the menu once the player loads it. If the menu says “Turn on YouTube subtitles (CC) and choose the language you want. It’ll appear in this menu.”, turn on CC yourself while the menu is open. Or choose the language from ⚙ › Subtitles/CC, then open the menu again.
 
 ### Interface language — `#language`
 
@@ -106,6 +106,7 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 
 | What you see | What to do |
 | --- | --- |
+| “Turn on CC now” or “Restart CC” in the “Download original” menu | Press it. Tarjuman presses the player’s CC button for you, and the language appears in the menu once the player loads it. If it says “Nothing arrived”, reload the page. |
 | “Turn on YouTube subtitles (CC) and choose the language you want…” | Turn on CC while the menu is open, and the language appears in it once the player loads it. Or choose the language from ⚙ › Subtitles/CC, then open the menu again. If the message stays, turn CC off and on again. |
 | The language you want isn’t in YouTube’s menu | YouTube doesn’t offer it for this video. Choose another track and translate it with your model, or use YouTube’s auto-translation, which is labeled as such. |
 | “Copy instructions” is disabled in the popup | The reason appears below it: choose two different languages for “From” and “To”, or open a YouTube video. |
