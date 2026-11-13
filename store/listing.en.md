@@ -39,7 +39,7 @@ How it works
 Features
 • From any language to yours: accepts every subtitle track available for the video, the site's auto-translation labeled with its source language, and any SRT file in any language. The languages available for each video are set by the site alone; Tarjuman doesn't create or switch tracks.
 • Your translation over the video, in the direction of its language, alone or over the original, in default view, theater and fullscreen. Hidden during ads.
-• Timing from the player bar: the − and + buttons move the translation earlier or later, and "Sync by sentence" sets it from a sentence you're hearing. Timing is saved with each translation.
+• Timing from the player bar: the − and + buttons on the player bar, or inside the timing menu when the bar is narrow, move the translation earlier or later, and "Sync by sentence" sets it from a sentence you're hearing. Timing is saved with each translation.
 • Comparison with the original: when you upload your file, Tarjuman compares it with the original you downloaded and shows what's missing, what's extra, what drifted and what stayed untranslated. It never changes your file silently.
 • An editor for review: edit text and timing, merge and split segments, search and replace, and mark what you want to return to. It can also prepare a file with the missing segments so you can complete them.
 • Synced transcript: a panel beside the video shows the whole translation with the current segment highlighted. Closed until you open it from its button.
@@ -77,7 +77,7 @@ How it works
 Features
 • From any language to yours: accepts every subtitle track available for the video, the site's auto-translation labeled with its source language, and any SRT file in any language. The languages available for each video are set by the site alone; Tarjuman doesn't create or switch tracks.
 • Your translation over the video, in the direction of its language, alone or over the original, in default view, theater and fullscreen. Hidden during ads.
-• Timing from the player bar: the − and + buttons move the translation earlier or later, and "Sync by sentence" sets it from a sentence you're hearing. Timing is saved with each translation.
+• Timing from the player bar: the − and + buttons on the player bar, or inside the timing menu when the bar is narrow, move the translation earlier or later, and "Sync by sentence" sets it from a sentence you're hearing. Timing is saved with each translation.
 • Comparison with the original: when you upload your file, Tarjuman compares it with the original you downloaded and shows what's missing, what's extra, what drifted and what stayed untranslated. It never changes your file silently.
 • An editor for review: edit text and timing, merge and split segments, search and replace, and mark what you want to return to. It can also prepare a file with the missing segments so you can complete them.
 • Synced transcript: a panel beside the video shows the whole translation with the current segment highlighted. Closed until you open it from its button.

@@ -25,7 +25,7 @@ There's no built-in model, no API key, no account, no translation server, and no
 - **Your translation over the video,** in the direction of its language, alone or over the original, in default view, theater and fullscreen. Hidden during ads.
 - **The original file from the player bar:** "Download original (SRT)" saves the track you chose in its language.
 - **Translation instructions from the popup:** "From" and "To" for any two languages, and one Copy button. The instructions are copied in the interface language.
-- **Timing from the player bar:** the − and + buttons move the translation earlier or later, and "Sync by sentence" sets it from a sentence you're hearing. Timing is saved with each translation.
+- **Timing from the player bar:** the − and + buttons on the player bar, or inside the timing menu when the bar is narrow, move the translation earlier or later, and "Sync by sentence" sets it from a sentence you're hearing. Timing is saved with each translation.
 - **Comparison with the original:** when you upload your file, Tarjuman compares it with the original you downloaded and shows what's missing, what's extra, what drifted and what stayed untranslated. It never changes your file silently.
 - **An editor for review:** edit text and timing, merge and split segments, search and replace, and mark what you want to return to. It can also prepare a file with the missing segments so you can complete them.
 - **Synced transcript:** a panel beside the video shows the whole translation with the current segment highlighted. Closed until you open it from its button.

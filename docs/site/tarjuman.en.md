@@ -65,7 +65,7 @@ Your translation appears in the text direction of its language, on its own or ov
 
 ### Timing from the player bar
 
-The − and + buttons on the player bar move the translation earlier or later, and “Sync by sentence…” sets it from a sentence you hear. Timing is saved with each translation.
+The − and + buttons on the player bar, or inside the timing menu when the bar is narrow, move the translation earlier or later, and “Sync by sentence…” sets it from a sentence you hear. Timing is saved with each translation.
 
 ⟨لقطة: قائمة التوقيت⟩
 

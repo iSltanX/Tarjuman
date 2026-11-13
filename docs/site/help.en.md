@@ -54,7 +54,7 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 
 ## Timing — `#timing`
 
-- If the translation runs ahead of the speech or behind it, adjust it with the − and + buttons on the player bar. Each press moves it by a fixed step, 0.5 seconds by default, which you can change in Settings.
+- If the translation runs ahead of the speech or behind it, adjust it with the − and + buttons on the player bar, or inside the timing menu when the bar is narrow. Each press moves it by a fixed step, 0.5 seconds by default, which you can change in Settings.
 - Tarjuman saves the offset with each translation, so it’s there when you come back.
 - The timing menu also has “Sync by sentence…”: choose a sentence you hear and Tarjuman sets the timing from it, with “Undo” alongside.
 
