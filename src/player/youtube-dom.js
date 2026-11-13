@@ -1,6 +1,7 @@
 // كل ما يعتمد على أسماء يوتيوب الداخلية غير الرسمية في ملف واحد (R39، عقد interfaces §٧): المحددات،
 // والأصناف، والأحداث، وصيغ العناوين. لا محدد يوتيوب خارج هذا الملف؛ الحاجة إلى محدد جديد طلب ملف مشترك.
-// كل دالة تأخذ doc/win لتُختبر دون متصفح، ولا تغيّر DOM يوتيوب.
+// كل دالة تأخذ doc/win لتُختبر دون متصفح، ولا تغيّر DOM يوتيوب. وpressSubtitles وحدها تضغط زر CC، بنقرة المستخدم نفسه على زر
+// في قائمة «تنزيل الأصل» يسمّي فعله (الفكرة ٧-ب، ح-56).
 import { videoIdFromLocation } from '../core/model/video-location.js';
 import { sanitizeText } from '../core/text/sanitize.js';
 
@@ -132,6 +133,101 @@ export function isSubtitlesButton(node) {
   if (!doc || typeof doc.querySelectorAll !== 'function') return false;
   for (const b of doc.querySelectorAll(SELECTORS.subtitlesButton)) if (b.contains(node)) return true;
   return false;
+}
+
+// ———— الضغط على زر CC بنقرة المستخدم (الفكرة ٧-ب، ح-56) ————
+
+/** فاصل قراءة حال زر CC أثناء «الإعادة»، ومهلة انطفائه قبل التشغيل. */
+export const CC_POLL_MS = 50;
+export const CC_OFF_WAIT_MS = 2000;
+
+/**
+ * المتصفحات التي يُحجب فيها الضغط على زر CC (ح-56): فارغة، لأن القياس ثبت في Chrome وBrave وEdge وFirefox (بعد جلب ناجح أعاد
+ * كل تشغيل لـCC الطلب ووصل الالتقاط، والإعادة كذلك). ومتصفح يثبت فيه خلاف ذلك يُضاف اسمه هنا، فلا يظهر فيه الزر وتبقى الرسالة
+ * النصية.
+ * @type {readonly ('chrome' | 'brave' | 'edge' | 'firefox')[]}
+ */
+export const CC_PRESS_BLOCKED = Object.freeze([]);
+
+/**
+ * عائلة المتصفح لحجب الضغط فيه: firefox وedge من وكيل المستخدم، وbrave من علامته، وما سواها chrome.
+ * @param {Navigator | undefined | null} nav
+ * @returns {'chrome' | 'brave' | 'edge' | 'firefox'}
+ */
+function browserFamily(nav) {
+  const ua = String(nav?.userAgent ?? '');
+  if (/Firefox\//.test(ua)) return 'firefox';
+  if (/Edg\//.test(ua)) return 'edge';
+  const brands = nav?.userAgentData?.brands;
+  if (nav && (typeof nav.brave === 'object' || (Array.isArray(brands) && brands.some((b) => /brave/i.test(String(b?.brand)))))) return 'brave';
+  return 'chrome';
+}
+
+/** @param {Document} doc @returns {HTMLElement | null} */
+const subtitlesButton = (doc) => doc.querySelector(SELECTORS.subtitlesButton);
+
+/** زر CC مضغوط (aria-pressed كما يكتبه المشغّل). @param {Document} doc */
+const subtitlesOn = (doc) => subtitlesButton(doc)?.getAttribute('aria-pressed') === 'true';
+
+/**
+ * ما يمنع الضغط على زر CC الآن، أو null: لا زر، أو متصفح محجوب، أو زر معطّل (aria-disabled أو disabled، لا aria-pressed)، أو
+ * إعلان، أو بث جارٍ.
+ * @param {Document} doc @param {readonly string[]} blocked
+ * @returns {'missing' | 'blocked' | 'disabled' | 'ad' | 'live' | null}
+ */
+function pressBlocker(doc, blocked) {
+  const b = subtitlesButton(doc);
+  if (!b) return 'missing';
+  if (blocked.includes(browserFamily(doc.defaultView?.navigator))) return 'blocked';
+  if (b.getAttribute('aria-disabled') === 'true' || b.hasAttribute('disabled')) return 'disabled';
+  if (isAdShowing(doc)) return 'ad';
+  if (isLiveNow(doc)) return 'live';
+  return null;
+}
+
+/**
+ * يُعرض زر «تفعيل CC الآن» و«إعادة تشغيل CC»: زر CC موجود والمتصفح غير محجوب (ح-56). وتعطيله والإعلان والبث تقولها القائمة
+ * بحالها، وpressSubtitles تفحصها قبل كل ضغطة.
+ * @param {Document} [doc] @param {{ blocked?: readonly string[] }} [o]
+ */
+export function subtitlesPressable(doc = document, { blocked = CC_PRESS_BLOCKED } = {}) {
+  const why = pressBlocker(doc, blocked);
+  return why !== 'missing' && why !== 'blocked';
+}
+
+/**
+ * يضغط زر CC في المشغّل بنقرة المستخدم الصريحة على زر في قائمة «تنزيل الأصل» يسمّي فعله (الفكرة ٧-ب، ح-56). يقرأ حال الزر
+ * (aria-pressed) قبل كل ضغطة، فلا ضغطتان عمياوان (ضغطتان بفاصل 250 م.ث من «مطفأة» انتهتا مطفأة في مجسّ Fable). التشغيل: ضغطة واحدة
+ * إن كانت CC مطفأة، ولا شيء إن كانت مشغّلة. والإعادة: ضغطة تطفئها، ثم انتظار aria-pressed="false" حتى waitMs، ثم ضغطة تشغّلها؛
+ * وإن لم تنطفئ في المهلة فلا ضغطة ثانية، وإن كانت مطفأة فضغطة التشغيل وحدها. وقبل كل ضغطة: الزر موجود وغير معطّل، ولا إعلان ولا
+ * بث جارٍ، والمتصفح غير محجوب (CC_PRESS_BLOCKED). لا طلب من ترجمان: المشغّل يطلب الترجمة كما يطلبها حين يضغط المستخدم CC بيده.
+ * @param {Document} [doc]
+ * @param {{ restart?: boolean, waitMs?: number, pollMs?: number, blocked?: readonly string[] }} [o]
+ * @returns {Promise<{ ok: boolean, presses: number, reason: 'missing' | 'blocked' | 'disabled' | 'ad' | 'live' | 'timeout' | null }>}
+ */
+export async function pressSubtitles(doc = document, { restart = false, waitMs = CC_OFF_WAIT_MS, pollMs = CC_POLL_MS, blocked = CC_PRESS_BLOCKED } = {}) {
+  let presses = 0;
+  const done = (reason) => ({ ok: reason === null, presses, reason });
+  const press = () => {
+    const why = pressBlocker(doc, blocked);
+    if (why) return why;
+    subtitlesButton(doc).click();
+    presses++;
+    return null;
+  };
+  const first = pressBlocker(doc, blocked);
+  if (first) return done(first);
+  if (subtitlesOn(doc)) {
+    if (!restart) return done(null);
+    const off = press();
+    if (off) return done(off);
+    const win = doc.defaultView;
+    for (let left = waitMs; subtitlesButton(doc)?.getAttribute('aria-pressed') !== 'false'; left -= pollMs) {
+      if (left <= 0 || !win) return done('timeout');
+      await new Promise((resolve) => { win.setTimeout(resolve, pollMs); });
+    }
+  }
+  return done(press());
 }
 
 /**
