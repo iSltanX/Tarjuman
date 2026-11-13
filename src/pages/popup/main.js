@@ -29,7 +29,7 @@ import {
 import { roundTripText } from '../../ui/track.js';
 import { guideList, notVideoNote, pairSkeleton, roundTripNote, skeletonCard, statusCard } from './view.js';
 
-/** «نسخ تشخيص الصفحة» (§١٩.٦): رابط صغير ونتيجته بسطر. التقرير رموز وأعداد منقّاة، ولا يُعرض. */
+/** «نسخ تشخيص الصفحة» (§١٩.٦): رابط صغير ونتيجته بجانبه، في سطر حال الأدوات بالبطاقة (ح-60). التقرير رموز وأعداد منقّاة، ولا يُعرض. */
 function diagnosticsLink(reply) {
   const result = el('span', { className: 'tj-popup__diag-result', attrs: { role: 'status', 'aria-live': 'polite' } });
   const link = el('button', { className: 'tj-popup__diag', text: t('popup.diag.link'), attrs: { type: 'button', 'data-action': 'diagnostics' } });
@@ -52,7 +52,7 @@ function diagnosticsLink(reply) {
     result.textContent = ok ? t('popup.diag.done') : t('popup.diag.failed');
     result.setAttribute('data-tone', ok ? 'success' : 'danger');
   });
-  return el('p', { className: 'tj-popup__diag-row', children: [link, result] });
+  return el('span', { className: 'tj-popup__diag-row', children: [link, result] });
 }
 
 /** مدخل وجهة في تذييل النافذة (المحفوظات أو الإعدادات): واحد لكل وجهة. */
@@ -87,14 +87,29 @@ startPage({
     const eyebrow = el('span', { className: 'tj-popup__eyebrow', text: t('popup.currentVideo') });
     let card = skeletonCard();
     const entryHost = el('div', { className: 'tj-popup__entry-host' });
-    // كتلة «تعليمات الترجمة» (لوحة 09): عنوانها وهيكلها حتى يصل الرد وتفضيلات اللغات.
+    // كتلة «تعليمات الترجمة» (لوحة 09): عنوانها وهيكلها حتى يصل الرد وتفضيلات اللغات. وفي صف العنوان زر «الخطوات» (ح-60): الخطوات
+    // الثلاث تُقرأ مرة، فهي مطوية تحته على بُعد نقرة (aria-expanded وaria-controls، وفي الـDOM مخفية) لا ظاهرة تحت اللصق.
     const pairTitle = el('h2', { className: 'tj-popup__eyebrow', text: PAIR_TEXT.title, attrs: { id: 'tj-pair-title' } });
-    const pairHost = el('section', { className: 'tj-popup__pair', attrs: { 'aria-labelledby': 'tj-pair-title' }, children: [pairTitle, pairSkeleton()] });
+    const stepsHost = el('div', { className: 'tj-popup__guide', attrs: { id: 'tj-steps' } });
+    stepsHost.hidden = true;
+    const stepsToggle = el('button', {
+      className: 'tj-popup__more',
+      attrs: { type: 'button', 'data-action': 'steps', 'aria-expanded': 'false', 'aria-controls': 'tj-steps' },
+      children: [el('span', { text: t('popup.steps.toggle') }), icon('chev-down', { className: 'tj-icon tj-icon--sm' })],
+    });
+    stepsToggle.hidden = true;
+    stepsToggle.addEventListener('click', () => {
+      const open = stepsToggle.getAttribute('aria-expanded') !== 'true';
+      stepsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      stepsHost.hidden = !open;
+    });
+    const pairHead = el('div', { className: 'tj-popup__pair-head', children: [pairTitle, stepsToggle] });
+    const pairHost = el('section', { className: 'tj-popup__pair', attrs: { 'aria-labelledby': 'tj-pair-title' }, children: [pairHead, pairSkeleton()] });
     // ف5: «الصق الترجمة هنا» لمن يعيد نموذجه النص في المحادثة لا ملفًا. اللصق بحدث اللصق في الحقل وحده: لا إذن قراءة الحافظة
     // ولا قراءة برمجية لها. النص يُرسل إلى صفحة الفيديو فيمر بخط الرفع نفسه (الفحص والمقارنة والتأكيد).
     const pasteArea = el('textarea', {
       className: 'tj-field__input tj-popup__paste-input',
-      attrs: { id: 'tj-paste', rows: '2', placeholder: t('popup.paste.placeholder', pasteKeys()), 'aria-describedby': 'tj-paste-hint tj-paste-status', spellcheck: 'false', autocomplete: 'off' },
+      attrs: { id: 'tj-paste', rows: '1', placeholder: t('popup.paste.placeholder', pasteKeys()), 'aria-describedby': 'tj-paste-hint tj-paste-status', spellcheck: 'false', autocomplete: 'off' },
     });
     const pasteStatus = el('p', { className: 'tj-popup__pair-caption', attrs: { id: 'tj-paste-status', 'aria-live': 'polite' } });
     const pasteHost = el('section', {
@@ -102,17 +117,16 @@ startPage({
       children: [
         el('label', { className: 'tj-popup__eyebrow', text: t('popup.paste.label'), attrs: { id: 'tj-paste-label', for: 'tj-paste' } }),
         pasteArea,
-        el('p', { className: 'tj-popup__pair-note', text: t('popup.paste.hint'), attrs: { id: 'tj-paste-hint' } }),
+        // شرح اللصق وصفٌ للحقل (aria-describedby) لا سطر تحته (ح-60): يُقرأ مرة، ونتيجة اللصق تظهر في سطر الحال تحته.
+        el('p', { className: 'tj-popup__pair-note tj-sr-only', text: t('popup.paste.hint'), attrs: { id: 'tj-paste-hint' } }),
         pasteStatus,
       ],
     });
     pasteHost.hidden = true;
-    const stepsHost = el('div', { className: 'tj-popup__guide' });
-    const diagHost = el('div', { className: 'tj-popup__diag-host' });
     const recentTitle = el('span', { className: 'tj-popup__eyebrow', text: t('popup.recent') });
     recentTitle.hidden = true;
     const recentHost = el('div', { className: 'tj-popup__recent' });
-    main.append(eyebrow, card, entryHost, pairHost, pasteHost, stepsHost, diagHost, recentTitle, recentHost, notice);
+    main.append(eyebrow, card, entryHost, pairHost, pasteHost, recentTitle, recentHost, notice);
     app.append(main);
     // مدخل واحد لكل وجهة، ولا ينتظر حالة الفيديو (قد تتأخر حتى مهلتها إن علق سكربت المحتوى). المحفوظات تُفتح على صف الفيديو
     // الحالي إن كان محفوظًا (تُعرف بعد الرد).
@@ -149,19 +163,26 @@ startPage({
     let pair = { from: null, to: null };
     let touched = false;
     let picker = null;
-    // سطر المصدر تحت الحقلين: «مكتشفة من ترجمة الفيديو» أو «الأصل: ‹الوصف›»، أو سطر الفيديو المترجم إلى لغته (ح-58) بزرّه.
-    const sourceNote = el('div', { className: 'tj-popup__source' });
+    // سطر المصدر تحت الحقلين: «مكتشفة من ترجمة الفيديو» أو «الأصل: ‹الوصف›» وصفٌ لحقل «من» يُقرأ مرة (ح-60: مخفي بصريًا، وتلميحه
+    // عند المرور)، أو سطر الفيديو المترجم إلى لغته (ح-58) بزرّه ظاهرًا.
+    const sourceNote = el('div', { className: 'tj-popup__source', attrs: { id: 'tj-pair-source' } });
     /** سطر ح-58 الحالي ولغته: يبقى بحاله (مفتوحًا أو مطويًا) ما بقيت اللغة، ويُبنى من جديد إن تغيّرت. */
     let roundTrip = null;
 
     function paintSource(st) {
+      const from = picker?.fromField.field ?? null;
       if (st.roundTrip) {
         if (roundTrip?.via !== st.roundTrip) roundTrip = { via: st.roundTrip, node: roundTripNote(roundTripText(st.roundTrip), document) };
+        sourceNote.classList.remove('tj-sr-only');
         if (roundTrip.node.parentNode !== sourceNote) sourceNote.replaceChildren(roundTrip.node);
+        from?.removeAttribute('title');
         return;
       }
       roundTrip = null;
+      sourceNote.classList.add('tj-sr-only');
       sourceNote.replaceChildren(...(st.sourceNote ? [el('p', { className: 'tj-popup__pair-note', text: st.sourceNote })] : []));
+      if (st.sourceNote) from?.setAttribute('title', st.sourceNote);
+      else from?.removeAttribute('title');
     }
     const caption = el('p', { className: 'tj-popup__pair-caption', attrs: { id: 'tj-pair-caption', 'aria-live': 'polite' } });
     const copyLabel = el('span', { text: PAIR_TEXT.copy });
@@ -189,6 +210,8 @@ startPage({
       // تعذّر النسخ: الزر والتنبيه يقولانه، فلا سطر مكرر تحته (لوحة 09، الحالة 7).
       caption.textContent = copyState === 'success' ? st.done : copyState === 'error' ? '' : st.caption;
       caption.setAttribute('data-tone', copyState === 'success' ? 'success' : copyState === 'error' ? 'danger' : st.ready ? 'neutral' : 'muted');
+      // الشرح الثابت تحت الزر وصفه وحده (aria-describedby، ح-60)؛ وسبب التعطيل ونتيجة النسخ ظاهران.
+      caption.classList.toggle('tj-sr-only', copyState === 'idle' && st.ready);
     }
 
     const copy = createCopyState({
@@ -234,7 +257,9 @@ startPage({
           savePair(why);
         },
       });
-      pairHost.replaceChildren(pairTitle, picker.root, sourceNote, copyBtn, caption);
+      pairHost.replaceChildren(pairHead, stepsHost, picker.root, sourceNote, copyBtn, caption);
+      // سطر المصدر وصف حقل «من» (ح-60).
+      picker.fromField.field.setAttribute('aria-describedby', 'tj-pair-source');
       paintPair();
     }
 
@@ -273,9 +298,12 @@ startPage({
 
     function paintSteps() {
       stepsHost.replaceChildren();
-      // فيديو بلا ترجمة: ثلاث خطوات، والأولى منجزة بتنزيل الأصل فعلًا لا بالتقاطه، بالزوج المختار.
+      // فيديو بلا ترجمة: ثلاث خطوات، والأولى منجزة بتنزيل الأصل فعلًا لا بالتقاطه، بالزوج المختار؛ مطوية خلف «الخطوات» (ح-60)، وتبقى
+      // على حالها (مفتوحة أو مطوية) عند إعادة الرسم، ولا زر حين لا خطوات.
       const steps = guideSteps(reply, pair, downloaded);
       if (steps) stepsHost.append(guideList(steps));
+      stepsToggle.hidden = !steps;
+      stepsHost.hidden = !steps || stepsToggle.getAttribute('aria-expanded') !== 'true';
     }
 
     /** يرسم البطاقة والكتلة والخطوات والتشخيص من الحالة؛ ويُعاد بعد «جارٍ القراءة»، والزر المركّز يبقى مركّزًا. */
@@ -330,14 +358,15 @@ startPage({
           },
         }) : null;
         complete?.setAttribute('data-action', c.id);
-        next = statusCard(status.kind === 'has-subtitle' ? { ...status, missing } : status, toolsStatus(reply), captureLine(reply), document, [complete, action]);
+        // «نسخ تشخيص الصفحة» بجانب سطر حال الأدوات في البطاقة (ح-60)، لا سطرًا مستقلًا تحت الخطوات.
+        const tools = toolsStatus(reply);
+        next = statusCard(status.kind === 'has-subtitle' ? { ...status, missing } : status, tools, captureLine(reply), document, [complete, action], tools ? diagnosticsLink(reply) : null);
       }
       card.replaceWith(next);
       card = next;
       // حقل اللصق لصفحة فيديو استقر ردها وأدوات المشغّل فيها مركّبة.
       pasteHost.hidden = !(reply?.watch && !reply.loading && reply.mounted?.controls === 'mounted');
       if (focused) card.querySelector(`[data-action="${focused}"]`)?.focus();
-      diagHost.replaceChildren();
       // «جارٍ القراءة»: هيكل الكتلة حتى يستقر الرد (لوحة 09، الحالة 6)، فلا يُعرض زوج قبل معرفة مسار الفيديو.
       if (reply?.watch && reply.loading) {
         // قائمة مفتوحة تُغلق قبل إزالة حقلها، فلا يبقى مستمع على المستند.
@@ -346,11 +375,9 @@ startPage({
           picker.toField.close();
           picker = null;
         }
-        pairHost.replaceChildren(pairTitle, pairSkeleton());
+        pairHost.replaceChildren(pairHead, pairSkeleton());
       } else refreshPair();
       paintSteps();
-      // تشخيص الصفحة حيث تُعرض حالة أدوات المشغّل.
-      if (toolsStatus(reply)) diagHost.append(diagnosticsLink(reply));
       return status;
     }
 

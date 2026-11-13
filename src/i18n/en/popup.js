@@ -18,7 +18,7 @@ export default Object.freeze({
     missing: { one: '1 segment missing', other: 'segments missing' },
   },
   steps: {
-    label: 'Translation steps', done: 'Done', now: 'Current step', pending: 'Later',
+    label: 'Translation steps', toggle: 'Steps', done: 'Done', now: 'Current step', pending: 'Later',
     downloadFrom: 'Download the original ({from}) with the download button in the bar',
     download: 'Download the original with the download button in the bar',
     copyTo: 'Copy the instructions and send them with the file to an AI model to translate into {to}',

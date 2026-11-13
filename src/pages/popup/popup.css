@@ -1,5 +1,5 @@
 /* نافذة الأيقونة (الهوية الرابعة «كتابٌ مفتوح»، لوحة 09): 340 عرضًا وارتفاع بحسب المحتوى (الحالات المعتادة بلا تمرير؛ والمتصفح
-   يحدّها بـ600). رأس 52 بالشعار (الرمز 24 والاسم 18) و«ترجماتك وإعداداتك في متصفحك» على سطح البطاقة، وبطاقة الفيديو الحالي على العاج بخط شعري لا ظل
+   يحدّها بـ600، ح-60: ما يُقرأ مرة مطوي أو وصف أو في سطر الأدوات، والخط والعرض كما هما). رأس 52 بالشعار (الرمز 24 والاسم 18) و«ترجماتك وإعداداتك في متصفحك» على سطح البطاقة، وبطاقة الفيديو الحالي على العاج بخط شعري لا ظل
    وفيها «تحرير الترجمة» مؤطّرًا، ثم كتلة «تعليمات الترجمة» (AA3)، ثم تذييل 48 بمدخل واحد لكل وجهة (المحفوظات والإعدادات). كل لون من
    رموز src/ui/tokens.css بالوضعين، والمعيّن (نقطة التاء) نقطة الحالة وحدها. */
 .tj-popup { width: 340px; min-height: 0; background: var(--tj-bg); }
@@ -28,8 +28,11 @@
 .tj-popup__result--warn { color: var(--tj-warning); }
 .tj-popup__result--warn .tj-icon { color: inherit; }
 .tj-popup__capture { font-size: 12px; line-height: 18px; }
-/* حالة أدوات المشغّل: معيّن بلون الحالة ونصها، وتحته سبب التعطل. بانتظار المشغّل معيّن ينبض (الانشغال). */
-.tj-popup__tools { display: flex; align-items: flex-start; gap: 8px; font: 400 12px/18px var(--tj-font-body); color: var(--tj-text-2); }
+/* حالة أدوات المشغّل: معيّن بلون الحالة ونصها، وتحته سبب التعطل، و«نسخ تشخيص الصفحة» في طرفه (ح-60). بانتظار المشغّل معيّن ينبض (الانشغال). */
+.tj-popup__tools { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 4px 8px; font: 400 12px/18px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-popup__tools > .tj-popup__diag-row { margin-inline-start: auto; }
+/* الرابط في سطر الأدوات بسطره 18 وهدف 34 بامتداد لا يغيّر السطر (CL-018). */
+.tj-popup__tools .tj-popup__diag { min-height: 0; padding: 8px 4px; margin: -8px -4px; }
 .tj-popup__dot { flex: none; width: 5px; height: 5px; margin-top: 6.5px; border-radius: 1px; transform: rotate(45deg); background: currentColor; }
 .tj-popup__tools-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .tj-popup__tools--success .tj-popup__dot { color: var(--tj-success); }
@@ -59,10 +62,18 @@
 .tj-popup__actions { display: flex; justify-content: flex-start; }
 .tj-popup__actions:empty { display: none; }
 
-/* كتلة «تعليمات الترجمة» (لوحة 09): عنوانها، وصف «من ⇄ إلى» (حقلا 40 ومبادلة 32 بفجوة 6)، وسطر المصدر، وزر النسخ 40 بعرض كامل
-   (الإجراء الرئيسي الوحيد في النافذة)، وشرحه تحته. النتيجة على الزر نفسه لثانيتين. */
+/* كتلة «تعليمات الترجمة» (لوحة 09): عنوانها وزر «الخطوات» في صفه (ح-60)، وصف «من ⇄ إلى» (حقلا 40 ومبادلة 32 بفجوة 6)، وسطر
+   المصدر، وزر النسخ 40 بعرض كامل (الإجراء الرئيسي الوحيد في النافذة)، وسبب تعطيله أو نتيجته تحته. النتيجة على الزر نفسه لثانيتين. */
 .tj-popup__pair { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.tj-popup__pair > .tj-popup__eyebrow { margin: 0; }
+.tj-popup__pair > .tj-popup__eyebrow, .tj-popup__pair-head > .tj-popup__eyebrow { margin: 0; }
+.tj-popup__pair-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* «الخطوات»: زر نصي صغير بسطر العنوان (18) وسهمه، وهدفه 34 بامتداد لا يغيّر السطر؛ والسهم يقلب حين تُفتح. */
+.tj-popup__more { all: unset; display: inline-flex; align-items: center; gap: 4px; padding: 8px 4px; margin: -8px -4px; cursor: pointer; font: 700 12px/18px var(--tj-font-body); color: var(--tj-text-2); }
+.tj-popup__more:hover { color: var(--tj-text); }
+.tj-popup__more:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; border-radius: 4px; }
+.tj-popup__more .tj-icon { width: 14px; height: 14px; transition: transform var(--tj-motion-fast) var(--tj-ease); }
+.tj-popup__more[aria-expanded="true"] .tj-icon { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .tj-popup__more .tj-icon { transition: none; } }
 .tj-popup__pair-note { margin: -4px 0 0; font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 .tj-popup__pair-note:empty { display: none; }
 .tj-popup__copy { width: 100%; min-height: 40px; font-size: 14px; line-height: 20px; }
@@ -84,8 +95,8 @@
 /* زر نصي داخل سطر (اختر مساره الأصلي، والخطوات): بلون سطره مسطّرًا، وهدفه 34 ارتفاعًا (سطر 18 وامتداد 8 من كل جهة) لا يغيّر السطر (CL-018). */
 .tj-popup__link { all: unset; display: inline; cursor: pointer; color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; padding: 8px 2px; margin: -8px -2px; }
 .tj-popup__link:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; border-radius: 4px; }
-/* حقل اللصق (ف5): بعرض الكتلة، لا يُكتب فيه (اللصق وحده). */
-.tj-popup__paste-input { width: 100%; min-height: 56px; resize: none; font: 400 13px/20px var(--tj-font-body); }
+/* حقل اللصق (ف5): بعرض الكتلة وارتفاع 40 بسطر واحد (ح-60؛ كان 56)، لا يُكتب فيه (اللصق وحده)، والخط كما هو. */
+.tj-popup__paste-input { width: 100%; min-height: 40px; resize: none; font: 400 13px/20px var(--tj-font-body); }
 .tj-popup__pair-skel { display: flex; flex-direction: column; gap: 10px; }
 .tj-popup__pair-skel-row { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); gap: 6px; align-items: center; }
 .tj-popup__pair-skel-row > .tj-skeleton { height: 40px; border-radius: var(--tj-radius-md); }
@@ -97,7 +108,7 @@
 /* منطقة حية (role=status): تبقى في الشجرة فارغةً ليعلن قارئ الشاشة ما يُكتب فيها، وتخرج من التدفق فلا تأخذ فجوة. */
 .tj-popup__notice:empty { position: absolute; }
 
-/* الخطوات الثلاث لفيديو بلا ترجمة عربية: منجزة بعلامة ✓، والحالية برقمها ممتلئًا بالإبراز، والمنتظرة برقمها محاطًا. */
+/* الخطوات الثلاث لفيديو بلا ترجمة عربية، مطوية تحت «الخطوات» (ح-60): منجزة بعلامة ✓، والحالية برقمها ممتلئًا بالإبراز، والمنتظرة برقمها محاطًا. */
 .tj-popup__guide:empty { display: none; }
 .tj-popup__steps { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 12px; list-style: none; border-radius: var(--tj-radius-card); background: var(--tj-surface-2); }
 .tj-popup__step { display: flex; align-items: center; gap: 10px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
@@ -111,8 +122,7 @@
 .tj-popup__step--now { color: var(--tj-text); }
 .tj-popup__step--now .tj-popup__step-n { border-color: var(--tj-brand); background: var(--tj-brand); color: var(--tj-brand-ink); }
 
-/* «نسخ تشخيص الصفحة»: رابط نصي صغير تحت الإجراءات ونتيجته بسطر بجانبه. */
-.tj-popup__diag-host:empty { display: none; }
+/* «نسخ تشخيص الصفحة»: رابط نصي صغير ونتيجته بجانبه، في سطر الأدوات بالبطاقة (ح-60). */
 .tj-popup__diag-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
 .tj-popup__diag { all: unset; display: inline-flex; align-items: center; min-height: 32px; padding: 0 4px; cursor: pointer; font: 400 12px/18px var(--tj-font-body); color: var(--tj-text-2); text-decoration: underline; text-underline-offset: 3px; } /* هدف 32 ارتفاعًا (CL-018) */
 .tj-popup__diag:hover { color: var(--tj-text); }

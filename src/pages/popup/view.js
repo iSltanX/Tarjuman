@@ -42,10 +42,11 @@ function resultLine({ tone, iconName, text, className = '', doc }) {
 }
 
 /**
- * سطر أدوات المشغّل: معيّن بلون الحالة ونصها، وتحته سبب التعطل إن وُجد.
+ * سطر أدوات المشغّل: معيّن بلون الحالة ونصها، وتحته سبب التعطل إن وُجد، وفي طرفه «نسخ تشخيص الصفحة» إن مُرّر (ح-60).
  * @param {{ tone: 'success' | 'info' | 'danger', text: string, reason: string | null }} tools @param {Document} doc
+ * @param {HTMLElement | null} [extra]
  */
-function toolsRow(tools, doc) {
+function toolsRow(tools, doc, extra = null) {
   return el('div', {
     className: `tj-popup__tools tj-popup__tools--${tools.tone}`,
     children: [
@@ -55,6 +56,7 @@ function toolsRow(tools, doc) {
         children: [el('span', { text: tools.text, doc }), tools.reason && tools.reason !== tools.text ? el('span', { className: 'tj-popup__reason', text: tools.reason, doc }) : null],
         doc,
       }),
+      extra,
     ],
     doc,
   });
@@ -67,8 +69,9 @@ function toolsRow(tools, doc) {
  * @param {ReturnType<typeof import('./status.js').captureLine>} capture
  * @param {Document} [doc]
  * @param {HTMLElement | HTMLElement[] | null} [action] زر «تحرير الترجمة»، ومعه «أكمل الناقص» حين تنقص مقاطع (ف1)
+ * @param {HTMLElement | null} [toolsExtra] «نسخ تشخيص الصفحة» في طرف سطر الأدوات (ح-60)
  */
-export function statusCard(s, tools, capture, doc = document, action = null) {
+export function statusCard(s, tools, capture, doc = document, action = null, toolsExtra = null) {
   const card = el('section', { className: 'tj-popup__card tj-popup__status', attrs: { 'aria-live': 'polite' }, doc });
   card.append(el('h2', { className: 'tj-popup__title tj-clamp-2 tj-auto', text: s.title, dir: textDirection(s.title), attrs: { title: s.title }, doc }));
   if (s.kind === 'loading') {
@@ -92,7 +95,7 @@ export function statusCard(s, tools, capture, doc = document, action = null) {
       : el('p', { className: 'tj-popup__result tj-popup__english', text, doc }));
   }
   if (capture) card.append(resultLine({ tone: 'warn', iconName: 'warning', text: capture.text, className: 'tj-popup__capture', doc }));
-  if (tools) card.append(el('hr', { className: 'tj-rule', doc }), toolsRow(tools, doc));
+  if (tools) card.append(el('hr', { className: 'tj-rule', doc }), toolsRow(tools, doc, toolsExtra));
   // «تحرير الترجمة» زر مؤطّر داخل البطاقة (لوحة 09): الزر الرئيسي الوحيد في النافذة نسخ التعليمات.
   // و«أكمل الناقص» قبله حين تنقص مقاطع (ف1).
   const actions = [].concat(action ?? []).filter(Boolean);
