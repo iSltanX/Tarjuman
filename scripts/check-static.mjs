@@ -217,6 +217,12 @@ const HTML_INLINE = [
 const MIN_CHROME = '130';
 if (base.minimum_chrome_version !== MIN_CHROME) problems.push(`manifest: minimum_chrome_version ${JSON.stringify(base.minimum_chrome_version ?? null)} والمعتمد ${MIN_CHROME} (Q09)`);
 const STORE_WRITERS = new Set([path.join('core', 'store', 'writer.js'), path.join('core', 'store', 'migrate.js')]);
+// قاعدة STORE_WRITE تطابق اسم المتغير area وحده (تحقق Gemini، ع-٢١): chromeLocalArea().set(…) أو مساحة باسم آخر في صفحة كانت تمر.
+// فمحوّل chrome.storage.local لا يستورده إلا المخزن (وكاتبه داخله) والعامل الخلفي الذي يملك الكاتب الواحد؛ وكل سياق آخر يكتب عبر
+// createStore ورسالة tj:store. الاستيراد يُقرأ من الشيفرة بعد نزع التعليقات (مراجع الأنواع في JSDoc لا تُحسب).
+const AREA_FILE = path.join('core', 'store', 'area.js');
+const AREA_IMPORTERS = new Set([path.join('core', 'store', 'index.js'), path.join('background', 'worker.js')]);
+const IMPORT_SPEC = /(?:\bfrom\s*|\bimport\s*\(?\s*)['"`]([^'"`]+)['"`]/g;
 // واجهة التنزيلات محصورة في ملفات ترجمان (اعتماد سلطان 2026-11-02، عقد interfaces §١٣): في src/core/save وsrc/background
 // وحدهما؛ والوصول إلى كائنها (.downloads) في أسطر مراجَعة حرفيًا تسلّمه إلى متغير اسمه downloads لا غير؛ ولا يُستدعى منه
 // إلا download وsearch، وsearch بالمعرّف وحده. فلا بحث في تنزيلات المستخدم، ولا فتح ولا حذف، ولا مستمعات تمس كل التنزيلات.
@@ -309,6 +315,11 @@ for (const file of await walk(SRC)) {
     for (const m of line.matchAll(URL_RE)) if (!URL_OK(m[0], rel)) problems.push(`${at}: نطاق خارجي ${m[0].slice(0, 60)}`);
     if (STORAGE.test(line) && !inStore) problems.push(`${at}: التخزين خارج src/core/store`);
     if (STORE_WRITE.test(line) && !STORE_WRITERS.has(rel)) problems.push(`${at}: الكتابة في التخزين عبر الكاتب الواحد وحده (writer.js)`);
+    for (const m of line.matchAll(IMPORT_SPEC)) {
+      if (m[1].startsWith('.') && path.relative(SRC, path.resolve(path.dirname(file), m[1])) === AREA_FILE && !AREA_IMPORTERS.has(rel)) {
+        problems.push(`${at}: محوّل التخزين (core/store/area.js) لا يستورده إلا core/store/index.js والعامل الخلفي`);
+      }
+    }
     const inDl = DL_DIRS.some((d) => rel.startsWith(d));
     const members = [...line.matchAll(DL_MEMBER)].map((m) => m[1]);
     if (!inDl && (DL_OBJECT.test(line) || members.length)) problems.push(`${at}: واجهة التنزيلات خارج src/core/save وsrc/background`);

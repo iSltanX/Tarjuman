@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// فحص آلي لخلو العينات والسجلات من pot والتواقيع والروابط وملفات الارتباط والرموز ومسارات الجهاز المحلية.
+// فحص آلي لخلو العينات والسجلات من pot والتواقيع والروابط وملفات الارتباط والرموز ومسارات الجهاز المحلية والأسرار العامة.
 // يمرّ على test/fixtures/ وعينات test/e2e/fixtures/ (ترجمات حقيقية). الوثائق السردية (.md) فيهما قد تذكر روابط مراجع
 // عامة، أما روابط يوتيوب وجوجل والأسرار فممنوعة فيها أيضًا. يخرج برمز 1 عند أي اكتشاف.
 // ويمتد (تدقيق V2، U-047) إلى كل ملف نصي متتبَّع في Git خارج هذه النطاقات: الأسرار ومسارات الجهاز المحلية، دون قاعدة الروابط
@@ -47,6 +47,24 @@ const LINE_EXEMPT = new Map([
   ['test/unit/release/store.test.js', 'مسار جهاز وهمي لاختبار مواد المتاجر', ['5777f18baa029532']],
   ['test/unit/save/save.test.js', 'مسار جهاز وهمي لاختبار مكان الحفظ', ['f2a4fdc00a8c2a70', 'b0209bd1611ee454']],
 ].map(([file, why, hashes]) => [file, { why, hashes: new Set(hashes) }]));
+// أسرار عامة (تحقق Gemini، ع-٢١): أنماط findSecrets في sanitize.js أسرار يوتيوب والرموز الطويلة وحدها، فكان رمز GitHub في سير
+// عمل، وسرّ عميل OAuth، ورمز npm، ومفتاح خاص في .md، وسرّ أو كلمة مرور في إعداد، تمر كلها. الأنماط هنا لا في sanitize.js، لئلا يتغير
+// ما يحذفه التشخيص. وهي أنماط حزمة المصدر (LEAKS في scripts/release/store.mjs) ومعها npm وOAuth وSlack والإسناد الصريح لسرّ.
+const GENERIC_SECRETS = [
+  ['private-key', /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----/g],
+  ['github-token', /\b(?:github_pat_[A-Za-z0-9_]{22,}|gh[pousr]_[A-Za-z0-9]{36,})\b/g],
+  ['npm-token', /\bnpm_[A-Za-z0-9]{36,}\b/g],
+  ['aws-key', /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g],
+  ['google-key', /\bAIza[0-9A-Za-z_-]{35}\b/g],
+  ['oauth-client-secret', /\bGOCSPX-[A-Za-z0-9_-]{20,}/g],
+  ['slack-token', /\bxox[abprs]-[A-Za-z0-9-]{10,}/g],
+  ['api-key', /\bsk-(?:ant-|proj-)?[A-Za-z0-9_-]{32,}/g],
+  // سرّ مسنَد بالاسم إلى قيمة حرفية من 12 محرفًا فأكثر بلا فراغ (secret: '…' وpassword = "…" وapiKey: '…').
+  ['secret-assignment', /\b(?:[A-Za-z]+[_-])?(?:secret|password|passwd|api[_-]?key|auth[_-]?token|access[_-]?token)["']?\s*[:=]\s*["'][^"'\s]{12,}["']/gi],
+];
+const genericSecrets = (text) => GENERIC_SECRETS.flatMap(([type, re]) => [...text.matchAll(re)].map((m) => ({ index: m.index, type, sample: `${m[0].slice(0, 4)}…(${m[0].length})` })));
+// ملفات أسرار بأسمائها لا تُتتبَّع في المستودع العام أيًّا كان ما فيها: البيئة، ومفاتيح التوقيع والشهادات، وإعداد npm بالرمز.
+const SECRET_FILE = /(?:^|\/)(?:\.env(?:\.[^/]*)?|\.npmrc|id_(?:rsa|dsa|ecdsa|ed25519)|[^/]+\.(?:pem|key|p12|pfx))$/i;
 // تجزئات سلامة الحزم تشبه الرموز الطويلة: سطر integrity وحده بصيغته، في ملف القفل وحده.
 const LOCK_FILE = 'package-lock.json';
 const LOCK_INTEGRITY = /^\s*"integrity": "sha512-[A-Za-z0-9+/]+={0,2}",?$/;
@@ -114,6 +132,7 @@ for (const scope of SCOPES) {
       if (rel.endsWith('.md') && f.type === 'url' && !SENSITIVE_HOST.test(text.slice(f.index, f.index + f.length))) continue;
       findings.push(`${rel}@${f.index}: ${f.type} ${f.sample}`);
     }
+    for (const f of genericSecrets(text)) findings.push(`${rel}@${f.index}: ${f.type} ${f.sample}`);
     for (const m of text.matchAll(LOCAL_PATH)) findings.push(`${rel}@${m.index}: local-path ${m[0]}`);
   }
 }
@@ -123,6 +142,10 @@ const everything = (await trackedFiles(ROOT)) ?? (await walkAll(ROOT).catch(() =
 let extra = 0;
 let exempted = 0;
 for (const rel of everything) {
+  if (SECRET_FILE.test(rel)) {
+    findings.push(`${rel}: ملف أسرار باسمه (.env و.npmrc ومفاتيح التوقيع) لا يُتتبَّع في المستودع`);
+    continue;
+  }
   if (seen.has(rel) || !EXTRA_TEXT.test(rel)) continue;
   const file = path.join(ROOT, rel);
   const info = await lstat(file).catch(() => null);
@@ -138,6 +161,7 @@ for (const rel of everything) {
   const lineOf = (index) => lines[text.slice(0, index).split('\n').length - 1];
   const hits = [
     ...findSecrets(text, EXTRA_IGNORED_TYPES).map((f) => [f.index, `${f.type} ${f.sample}`]),
+    ...genericSecrets(text).map((f) => [f.index, `${f.type} ${f.sample}`]),
     ...[...text.matchAll(LOCAL_PATH)].map((m) => [m.index, `local-path ${m[0]}`]),
   ];
   for (const [index, what] of hits) {
@@ -156,4 +180,4 @@ if (findings.length) {
   console.error(`check-secrets: ${findings.length} اكتشاف في ${scanned} ملف\n- ${findings.slice(0, 50).join('\n- ')}`);
   process.exit(1);
 }
-console.log(`check-secrets: ناجح (${scanned} ملف بلا pot ولا تواقيع ولا روابط ولا ملفات ارتباط ولا مسارات محلية؛ منها ${extra} خارج نطاقات العيّنات، و${exempted} اكتشافًا مستثنى بسطره)`);
+console.log(`check-secrets: ناجح (${scanned} ملف بلا pot ولا تواقيع ولا روابط ولا ملفات ارتباط ولا مسارات محلية ولا أسرار عامة ولا ملفات أسرار؛ منها ${extra} خارج نطاقات العيّنات، و${exempted} اكتشافًا مستثنى بسطره)`);

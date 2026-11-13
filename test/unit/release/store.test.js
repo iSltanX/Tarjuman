@@ -64,7 +64,7 @@ test('فحص التسريب يكشف مسار الجهاز والمفتاح ال
   const dir = await mkdtemp(path.join(os.tmpdir(), 'tj-t4-leak-'));
   try {
     await writeFile(path.join(dir, 'a.js'), 'const p = "/Users/someone/Projects/x";');
-    await writeFile(path.join(dir, 'b.txt'), '-----BEGIN OPENSSH PRIVATE KEY-----');
+    await writeFile(path.join(dir, 'b.txt'), ['-----BEGIN', 'OPENSSH PRIVATE KEY-----'].join(' ')); // يُبنى وقت التشغيل فلا يكشفه check-secrets في الملف نفسه
     await writeFile(path.join(dir, 'c.json'), `{"t":"ghp_${'a'.repeat(36)}"}`);
     await writeFile(path.join(dir, 'd.js'), 'const ok = "https://app-reports.isultantf.workers.dev";');
     assert.deepEqual(await scanLeaks(dir, ['a.js', 'b.txt', 'c.json', 'd.js']), ['a.js: مسار من الجهاز', 'b.txt: مفتاح خاص', 'c.json: رمز GitHub']);
