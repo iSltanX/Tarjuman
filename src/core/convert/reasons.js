@@ -15,6 +15,13 @@ export const REASONS = Object.freeze([
 ]);
 
 /**
+ * سبب رفض صيغة لا محلّل لها (القبول، وسجل المحلّلات في index.js): fmt-srv3 وfmt-vtt باسميهما، وdefault-not-json لطلب بلا fmt جسمه
+ * ليس JSON، وfmt-other لما سواها.
+ * @param {string} format صنف fmt (FORMATS في src/extract/timedtext-params.js)
+ */
+export const formatReason = (format) => (format === 'srv3' ? 'fmt-srv3' : format === 'vtt' ? 'fmt-vtt' : format === 'default' ? 'default-not-json' : 'fmt-other');
+
+/**
  * سبب x (خطأ أو قرار قبول أو تقرير تحويل) إن كان من القائمة، وإلا 'other'؛ فلا يعبر التشخيصَ نصٌّ حر.
  * @param {unknown} x
  * @returns {string}

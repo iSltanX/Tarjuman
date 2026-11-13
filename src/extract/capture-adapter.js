@@ -2,9 +2,7 @@
 // معزول هنا ليُستبدل إن غيّر يوتيوب آلية الطلب. منذ 2.0.0 (AA1) يُقبل المسار بأي لغة يختارها المستخدم من يوتيوب، والمترجم آليًا
 // من يوتيوب (tlang) يُقبل موسومًا بلغته ولغة أصله (قرار سلطان ق٢)؛ والمرفوض اللغة غير الصالحة وحدها.
 import { convertTrack } from '../core/convert/index.js';
-
-// سبب رفض الصيغة (الفكرة ٤-ب): fmt-srv3 وfmt-vtt باسميهما، وdefault-not-json لطلب بلا fmt جسمه ليس JSON، وfmt-other لما سواها.
-const FORMAT_REASONS = Object.freeze({ srv3: 'fmt-srv3', vtt: 'fmt-vtt', default: 'default-not-json' });
+import { formatReason } from '../core/convert/reasons.js';
 
 /**
  * reason: سبب الرفض من REASONS (src/core/convert/reasons.js) يحدد موضعه داخل رمزه، ويدخل التشخيص؛ وdetail وصف داخلي لا يدخله.
@@ -25,7 +23,7 @@ export function checkAcceptance(msg, ctx) {
   if (msg.truncated || msg.body.trim() === '') return { accepted: false, code: 'EX_EMPTY_BODY', reason: msg.truncated ? 'truncated' : 'blank', detail: `طول الجسم ${msg.bodyLength}` };
   const looksJson = msg.body.trimStart().startsWith('{');
   if (msg.format !== 'json3' && !(msg.format === 'default' && looksJson)) {
-    return { accepted: false, code: 'EX_UNSUPPORTED_FORMAT', reason: FORMAT_REASONS[msg.format] ?? 'fmt-other', detail: `fmt=${msg.format}` };
+    return { accepted: false, code: 'EX_UNSUPPORTED_FORMAT', reason: formatReason(msg.format), detail: `fmt=${msg.format}` };
   }
   if (ctx.isLive) return { accepted: false, code: 'EX_LIVE', reason: 'live', detail: 'بث جارٍ' };
   return { accepted: true };
@@ -41,12 +39,13 @@ export const trackOf = (msg) => (msg.hasTlang && msg.tlang
   : { lang: /** @type {string} */ (msg.lang), kind: msg.trackKind, via: null });
 
 /**
- * @param {{ body: string, trackKind: 'manual' | 'asr', via?: string | null }} capture التقاط مقبول
+ * @param {{ body: string, trackKind: 'manual' | 'asr', via?: string | null, format?: string }} capture التقاط مقبول، وformat صنف fmt
+ *   الذي يختار محلّله (الفكرة ٤)، وغيابه json3
  * @param {number | null} durationMs
  * @param {{ mode?: 'normal' | 'long', longOptions?: object, completenessRatio?: number }} [opts]
  */
 export function convertCapture(capture, durationMs, { mode = 'normal', longOptions, completenessRatio } = {}) {
   // المترجم آليًا يُحوَّل ببنيته كما وصلت (inferKind): ترجمة يوتيوب قد لا تحمل توقيت كلمات مسار أصلها التلقائي.
   const trackKind = capture.via ? 'auto' : capture.trackKind;
-  return convertTrack({ body: capture.body, trackKind, durationMs, mode, longOptions, completenessRatio });
+  return convertTrack({ body: capture.body, format: capture.format, trackKind, durationMs, mode, longOptions, completenessRatio });
 }

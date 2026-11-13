@@ -104,6 +104,11 @@ test('التحويل: التدحرج بالزمن وبالنمط، وفشل ال
   }
   const ok = convertTrack({ trackKind: 'manual', durationMs: 4000, body: json([{ tStartMs: 0, dDurationMs: 2000, segs: [{ utf8: 'hi' }] }]) });
   assert.deepEqual([ok.ok, ok.report.reason], [true, undefined]);
+  // سجل المحلّلات (الفكرة ٤): صيغة بلا محلّل بسبب صيغتها من القائمة.
+  for (const [format, reason] of [['srv3', 'fmt-srv3'], ['vtt', 'fmt-vtt'], ['other', 'fmt-other']]) {
+    const r = convertTrack({ trackKind: 'manual', format, body: json([{ tStartMs: 0, dDurationMs: 2000, segs: [{ utf8: 'hi' }] }]) });
+    assert.deepEqual([r.ok, r.code, r.report.reason], [false, 'EX_UNSUPPORTED_FORMAT', reason], format);
+  }
 });
 
 test('كل رد رفض في القبول وكل ConvertError يحمل سببًا، وكل سبب في القائمة تُصدره حالة مختبرة هنا', () => {

@@ -144,7 +144,7 @@ export function createExtractor(env) {
   }
 
   /**
-   * @param {{ entry: { body: string, trackKind: 'manual' | 'asr' }, runs: Map<string, object> }} slot
+   * @param {{ entry: { body: string, trackKind: 'manual' | 'asr', format?: string }, runs: Map<string, object> }} slot
    * @param {'normal' | 'long'} mode
    * @param {object} [longOptions] خيارات الوضع الطويل؛ الافتراضية إن غابت
    */
@@ -238,7 +238,7 @@ export function createExtractor(env) {
     // وجسم مطابق لآخر التقاط للمفتاح نفسه (إيقاف CC وتشغيلها، أو رسالة مكررة من الصفحة) لا يُحوَّل من جديد: تحويلاته هي نفسها
     // (تدقيق Fable، FA-07: نحو 120 م.ث لكل تكرار بستين ألف حدث).
     const prev = slots.get(key);
-    const probe = { entry: { body: msg.body, trackKind: msg.trackKind, via: track.via }, runs: prev && prev.entry.body === msg.body ? prev.runs : new Map() };
+    const probe = { entry: { body: msg.body, trackKind: msg.trackKind, via: track.via, format: msg.format }, runs: prev && prev.entry.body === msg.body ? prev.runs : new Map() };
     const conv = run(probe, 'normal');
     if (!conv.ok && conv.code !== 'EX_BEYOND_DURATION' && prev && run(prev, 'normal').ok) {
       captures.reject({

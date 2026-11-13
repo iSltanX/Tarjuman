@@ -6,11 +6,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { convertTrack } from '../../../src/core/convert/index.js';
+import { PARSERS, convertTrack } from '../../../src/core/convert/index.js';
 import { parseJson3 } from '../../../src/core/convert/json3.js';
 import { detectRollingOverlap } from '../../../src/core/convert/asr.js';
 import { splitWords, wrapLines } from '../../../src/core/convert/text.js';
 import { createExtractor } from '../../../src/extract/index.js';
+import { convertCapture } from '../../../src/extract/capture-adapter.js';
 import { messageFor } from '../../../src/core/errors/index.js';
 
 const DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../fixtures/json3');
@@ -318,4 +319,32 @@ test('AV2 U-002: تدحرج ياباني بالزمن وبالنمط يُرفض 
     { tStartMs: 2000, dDurationMs: 4000, wWinId: 1, segs: [seg(0, 'はい'), seg(300, 'はい'), seg(600, 'はい'), seg(900, 'ね')] },
   ], 8000);
   assert.equal(real.ok, true, real.code);
+});
+
+// ---- الفكرة ٤ (ح-38): سجل المحلّلات ----
+
+test('الفكرة ٤: سجل المحلّلات json3 وحده (لا srv3 ولا WebVTT إلا بعيّنة حقيقية)، والتحويل يحلّل بمحلّل صيغة الالتقاط', () => {
+  assert.ok(Object.isFrozen(PARSERS));
+  assert.deepEqual(Object.keys(PARSERS), ['json3'], 'ح-38: محلّل جديد يدخل بقرار وعيّنة حقيقية');
+  assert.equal(PARSERS.json3, parseJson3);
+  const json = body([manualEvent(0, 2000, 'hello')]);
+  // json3، وبلا fmt والجسم JSON (default، قاعدة القبول)، وبلا صيغة (الافتراضي): محلّل json3.
+  for (const format of ['json3', 'default', undefined]) {
+    const r = convertTrack({ body: json, trackKind: 'manual', durationMs: 4000, ...(format ? { format } : {}) });
+    assert.deepEqual([r.ok, r.cues.map((c) => c.text)], [true, ['hello']], String(format));
+  }
+  // صيغة بلا محلّل ترفض برمزها وسببها، ولو كان الجسم JSON يحلّله json3: كان التحويل يتجاهل الصيغة.
+  for (const [format, reason] of [['srv3', 'fmt-srv3'], ['vtt', 'fmt-vtt'], ['other', 'fmt-other']]) {
+    const r = convertTrack({ body: json, trackKind: 'manual', durationMs: 4000, format });
+    assert.deepEqual([r.ok, r.code, r.report.reason, r.cues.length], [false, 'EX_UNSUPPORTED_FORMAT', reason, 0], format);
+  }
+});
+
+test('الفكرة ٤: convertCapture يمرّر صيغة الالتقاط المحفوظة إلى التحويل، والمدخل بلا صيغة json3', () => {
+  const json = body([manualEvent(0, 2000, 'hi')]);
+  assert.equal(convertCapture({ body: json, trackKind: 'manual', format: 'json3' }, 4000).ok, true);
+  assert.equal(convertCapture({ body: json, trackKind: 'manual', format: 'default' }, 4000).ok, true);
+  assert.equal(convertCapture({ body: json, trackKind: 'manual' }, 4000).ok, true);
+  const vtt = convertCapture({ body: json, trackKind: 'manual', format: 'vtt' }, 4000);
+  assert.deepEqual([vtt.ok, vtt.code, vtt.report.reason], [false, 'EX_UNSUPPORTED_FORMAT', 'fmt-vtt']);
 });

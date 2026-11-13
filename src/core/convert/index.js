@@ -1,5 +1,6 @@
 // نقطة دخول التحويل: json3 ← مقاطع ← ثوابت ← SRT. لا يُصدَّر شيء إن فشل ثابت واحد.
 import { ConvertError, parseJson3, dedupeExact, sortEvents, inferKind } from './json3.js';
+import { formatReason } from './reasons.js';
 import { convertManual } from './manual.js';
 import { convertAsr } from './asr.js';
 import { mergeLong } from './long.js';
@@ -8,6 +9,13 @@ import { splitWords } from './text.js';
 
 export { ConvertError } from './json3.js';
 export { LONG_DEFAULTS, normalizeLongOptions } from './long.js';
+
+/**
+ * سجل المحلّلات بصيغة الالتقاط (الفكرة ٤، ح-38): json3 وحده. ومحلّل صيغة أخرى (srv3) لا يدخل إلا حين يرصد الفاحص صيغة غير json3 أو
+ * يصل بلاغ بها، بعيّنة حقيقية، فيكون الإصدار الطارئ ملفًا واحدًا واختباره. ولا يتغير شرط القبول في العقد: المنتج يقبل json3 وحده.
+ * كل محلّل يعيد { events, stats } كما يعيدها parseJson3، ويرمي ConvertError بسببه.
+ */
+export const PARSERS = Object.freeze({ json3: parseJson3 });
 
 /** عتبة «قد يكون ناقصًا» الافتراضية (Q6)، والإعداد thresholds.completeness يغيّرها في حدود 0.5..1 (تدقيق 7a66f91، U37). */
 export const COMPLETENESS_RATIO = 0.85;
@@ -19,8 +27,9 @@ export const normalizeCompleteness = (v) => (typeof v === 'number' && Number.isF
  * (long.js) حتى سطرين ونحو 12 ثانية. longOptions تضبط أرقام الوضع الطويل، وcompletenessRatio عتبة تحذير الاكتمال.
  * وآخر نهاية تتجاوز المدة بأكثر من الهامش ومقطعها يبدأ داخلها تُقص إلى المدة (تدقيق 7a66f91، I10)، فلا يبقى لثابت
  * الحدود إلا نص يبدأ بعد نهاية الفيديو، ورمزه EX_BEYOND_DURATION لا EX_INVARIANT_FAILED (U39).
+ * format: صنف fmt الذي يختار المحلّل من PARSERS (json3 افتراضيًا، وdefault بلا fmt وجسمه JSON يُحلَّل json3 كما في قاعدة القبول).
  * @param {{
- *   body: string, trackKind: 'manual' | 'asr' | 'auto', durationMs?: number | null, asrOptions?: object,
+ *   body: string, format?: string, trackKind: 'manual' | 'asr' | 'auto', durationMs?: number | null, asrOptions?: object,
  *   mode?: 'normal' | 'long', longOptions?: Partial<typeof import('./long.js').LONG_DEFAULTS>, completenessRatio?: number
  * }} input
  * @returns {{
@@ -28,13 +37,17 @@ export const normalizeCompleteness = (v) => (typeof v === 'number' && Number.isF
  *   cues: object[], srt: string | null, invariants: object | null, warnings: string[], report: object
  * }}
  */
-export function convertTrack({ body, trackKind: requested, durationMs = null, asrOptions, mode = 'normal', longOptions, completenessRatio }) {
+export function convertTrack({ body, format = 'json3', trackKind: requested, durationMs = null, asrOptions, mode = 'normal', longOptions, completenessRatio }) {
   if (mode !== 'normal' && mode !== 'long') throw new RangeError(`وضع تحويل غير معروف: ${mode}`);
   // auto (AA1): النوع من البنية نفسها، لمسار ترجمه يوتيوب آليًا فلا يُعرف شكل جسمه من نوع أصله.
   let trackKind = requested === 'auto' ? 'manual' : requested;
   const report = { trackKind, mode };
   try {
-    const parsed = parseJson3(body);
+    // بلا fmt والجسم JSON (default في قاعدة القبول) يُحلَّل json3؛ وصيغة بلا محلّل ترفض بسبب صيغتها.
+    const key = format === 'default' ? 'json3' : format;
+    const parse = Object.hasOwn(PARSERS, key) ? PARSERS[key] : null;
+    if (!parse) throw new ConvertError('EX_UNSUPPORTED_FORMAT', 'لا محلّل لهذه الصيغة', {}, formatReason(format));
+    const parsed = parse(body);
     report.stats = parsed.stats;
     report.inferredKind = inferKind(parsed);
     if (requested === 'auto') {
