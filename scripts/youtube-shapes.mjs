@@ -289,8 +289,9 @@ export function diffShapes(base, now) {
       }
       return;
     }
-    // عنصر كان موجودًا فغاب: «غاب» لا «تغيّر».
-    if (a === true && b === false) out.push({ path, kind: 'missing', before: a, after: b });
+    // عنصر كان موجودًا فغاب: «غاب» لا «تغيّر»؛ وقسم لا يعرفه خط أساس أقدم «جديد»، وقسم غاب من اللقطة «غاب».
+    if ((a === true && b === false) || b === undefined) out.push({ path, kind: 'missing', before: a, after: b });
+    else if (a === undefined) out.push({ path, kind: 'added', before: a, after: b });
     else out.push({ path, kind: 'changed', before: a, after: b });
   };
   for (const k of SECTIONS) walk(base?.[k], now?.[k], k);

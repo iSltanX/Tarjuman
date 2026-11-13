@@ -219,6 +219,11 @@ test('«unobserved» لا يُعدّ فرقًا في أي من الجهتين، 
   renamed.attrs.layout = ['is-two-cols'];
   assert.deepEqual(diffShapes(base, renamed).map(diffLine), ['تغيّر: attrs.layout']);
   assert.equal(snapshot({ inPage: { dom: {} }, ...at }).panel, UNOBSERVED, 'قسم لم يُجمع');
+  // خط أساس بإصدار أقدم بلا قسم: القسم «جديد» لا «تغيّر»، والقسم الذي غاب من اللقطة «غاب».
+  const { panel, ...older } = base;
+  assert.ok(panel);
+  assert.deepEqual(diffShapes(older, base).map(diffLine), ['جديد: panel']);
+  assert.deepEqual(diffShapes(base, older).map(diffLine), ['غاب: panel']);
 });
 
 test('خط الأساس في المستودع (الإصدار 2): أقسامه كلها بمفاتيح السجل، ومصدره مذكور، والتنقل الفعلي سُجّل، وأشكال بلا رابط ولا معرّف ولا عنوان', () => {
