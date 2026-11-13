@@ -41,7 +41,7 @@ export function findContinuation(bundle, cues) {
     // ثقة المحاذاة: لا مقطع متخطًّى (فارغ أو لبنية أو لضعف)، ولا نص بلا حرف من لغة الترجمة.
     if (!plan.items.length || plan.skipped.length || plan.warnings.some((w) => w.code === 'IM_PATCH_NO_ARABIC')) continue;
     // بلا تداخل مع ما تُرجم: الاستبدال على مقطع فارغ أو غير مترجم وحده.
-    const untranslated = untranslatedTest(target, parseTrackKey(fp.trackKey)?.lang ?? null);
+    const untranslated = untranslatedTest(target, parseTrackKey(fp.trackKey)?.lang ?? null, base);
     const gap = (text) => isBlankText(text) || (untranslated ? untranslated(text) : false);
     if (plan.items.some((it) => it.action === 'replace' && !gap(it.before.text))) continue;
     const applied = applyPatchDetailed(base, plan);

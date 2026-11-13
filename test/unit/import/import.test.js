@@ -48,6 +48,14 @@ test('لغة الملف من اسمه بنصه (ع-٨): كلمة من الاسم
   assert.equal(ar.lang, 'ar');
 });
 
+test('تحقق الجولة الثانية (ن-٥): ترجمة بنجابية بالشاهمكهية اسمها talk.pa.srt لغتها pa، ولا تُعدّ مقاطعها «غير مترجمة»', async () => {
+  const shahmukhi = readSrtFixture('clean.ar.srt').replace(/[^\n]*\p{Script=Arabic}[^\n]*/gu, 'تُسی کیویں ہو، ست سری اکال');
+  const r = await run(fileOf(shahmukhi, 'talk.pa.srt'));
+  assert.equal(r.ok, true);
+  assert.equal(r.lang, 'pa');
+  assert.deepEqual(r.comparison.noArabic, []);
+});
+
 test('المدخل: File واحد، أو مصفوفة، أو شبه مصفوفة كـFileList', async () => {
   const f = () => fixture('clean.ar.srt');
   const single = await run(f());

@@ -121,7 +121,7 @@ export function trackComparison(track, fingerprints) {
     // يبقى المخزّن بعقد البيانات (تقرير الاستيراد التاريخي)، ولا يُعاد إلا حين يتفق معه الحاضر.
     const key = `stored|${fp.id}|${target ?? ''}`;
     if (!byFp.has(key)) {
-      const untranslated = untranslatedTest(target, parseTrackKey(fp.trackKey)?.lang ?? null);
+      const untranslated = untranslatedTest(target, parseTrackKey(fp.trackKey)?.lang ?? null, cues);
       const empty = cues.filter((c) => isBlankText(c.text)).map((c) => c.n).sort((a, b) => a - b);
       const noArabic = untranslated ? cues.filter((c) => !isBlankText(c.text) && untranslated(c.text)).map((c) => c.n).sort((a, b) => a - b) : [];
       const same = (a, b) => a.length === b.length && a.every((n, i) => n === b[i]);

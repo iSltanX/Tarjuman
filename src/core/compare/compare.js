@@ -6,7 +6,7 @@ import { messageFor } from '../errors/index.js';
 import { isBlankText } from '../model/cue.js';
 import { LIMITS } from '../model/validate.js';
 import { parseTrackKey } from '../model/ids.js';
-import { langScript, scriptLetterPattern } from '../lang/index.js';
+import { dominantScript, langScript, langScripts, scriptsLetterPattern } from '../lang/index.js';
 import { alignToFingerprint, sameStructure } from './restore.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
@@ -31,15 +31,24 @@ export const lacksArabic = (text) => lacksScript(text, HAS_ARABIC_LETTER);
  * فحص «غير مترجم» بحسب لغة الترجمة (AA1، حرية اللغات): مقطع بحروف ليس فيها حرف من نص لغة الترجمة. لا يصح إلا حين يُعرف نص
  * لغة الترجمة ويختلف عن نص لغة المسار (الإنجليزية ← الفرنسية بالنص اللاتيني نفسه لا يُميَّز فيها المترجم من غيره)، وإلا null
  * فلا فحص. والحقل في التقرير noArabic باسمه التاريخي، لأن 1.1.0 يقرؤه بمدققه.
+ * ولغة الترجمة بأكثر من كتابة (langScripts، ن-٥): حرف من أيّها ترجمة (البنجابية بالكرمكهية أو الشاهمكهية من الإنجليزية)؛ فإن
+ * كان نص المسار إحداها (الصربية من الإنجليزية) فالكتابة الغالبة على نص الترجمة نفسه (sample) تحسم: غيرُ نص المسار يُفحص بها
+ * وحدها، ونصُّ المسار أو بلا عيّنة لا فحص.
  * @param {string | null | undefined} target لغة الترجمة @param {string | null | undefined} [source] لغة المسار
+ * @param {{ text: string }[] | null} [sample] مقاطع الترجمة نفسها
  * @returns {((text: string) => boolean) | null}
  */
-export function untranslatedTest(target, source = null) {
-  const t = target ? langScript(target) : null;
-  if (!t) return null;
+export function untranslatedTest(target, source = null, sample = null) {
+  const scripts = target ? langScripts(target) : [];
+  if (!scripts.length) return null;
   const s = source ? langScript(source) : null;
-  if (s && s === t) return null;
-  const letter = scriptLetterPattern(target);
+  let expect = scripts;
+  if (s && scripts.includes(s)) {
+    const used = scripts.length > 1 && Array.isArray(sample) ? dominantScript(sample, scripts) : null;
+    if (!used || used === s) return null;
+    expect = [used];
+  }
+  const letter = scriptsLetterPattern(expect);
   return letter ? (text) => lacksScript(text, letter) : null;
 }
 const HIGH_SURROGATE = /[\uD800-\uDBFF]/;
@@ -55,7 +64,7 @@ const clipNote = (s) => (s.length <= LIMITS.maxNoteChars ? s : `${s.slice(0, LIM
  */
 export function compare(cues, fingerprint, { driftMs = DEFAULT_DRIFT_MS, target = 'ar' } = {}) {
   if (!Number.isInteger(driftMs) || driftMs < 0 || driftMs > MAX_DRIFT_MS) throw new RangeError(`عتبة الانحراف غير صالحة: ${driftMs}`);
-  const untranslated = untranslatedTest(target, fingerprint ? parseTrackKey(fingerprint.trackKey)?.lang ?? null : null);
+  const untranslated = untranslatedTest(target, fingerprint ? parseTrackKey(fingerprint.trackKey)?.lang ?? null : null, cues);
 
   const source = fingerprint ? new Map(fingerprint.cues.map((c) => [c.n, c])) : null;
   const found = new Set();

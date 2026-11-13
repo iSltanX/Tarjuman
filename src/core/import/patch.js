@@ -224,7 +224,7 @@ function planFrom(incoming, { fingerprint, cues, target, notes, warnings }) {
   const empty = skipped.filter((x) => x.reason === 'empty').map((x) => x.n);
   const structural = skipped.filter((x) => x.reason === 'structure').map((x) => x.n);
   const weakOnes = skipped.filter((x) => x.reason === 'weak').map((x) => x.n);
-  const untranslated = untranslatedTest(target, parseTrackKey(fingerprint.trackKey)?.lang ?? null);
+  const untranslated = untranslatedTest(target, parseTrackKey(fingerprint.trackKey)?.lang ?? null, cues);
   const noArabic = untranslated ? items.filter((x) => untranslated(x.after.text)).map((x) => x.n) : [];
   if (empty.length) warnings.push({ code: 'IM_PATCH_SKIPPED_EMPTY', params: listOf(empty) });
   if (structural.length) warnings.push({ code: 'IM_PATCH_SKIPPED_STRUCTURE', params: listOf(structural) });

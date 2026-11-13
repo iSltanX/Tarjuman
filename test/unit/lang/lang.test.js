@@ -16,7 +16,8 @@ test('التطبيع: الحالة والشرطة بقواعد BCP-47، والل
 });
 
 test('النص والاتجاه من بيانات المتصفح: العربية والفارسية والأردية والعبرية والثانا RTL، والبقية LTR، والمجهول null', () => {
-  for (const c of ['ar', 'fa', 'ur', 'he', 'iw', 'yi', 'ps', 'ug', 'dv', 'ckb']) assert.equal(langDirection(c), 'rtl', c);
+  // ug خرجت من القائمة (ن-٥): تُكتب بالسيريلية واللاتينية أيضًا، فاتجاهها من نصها.
+  for (const c of ['ar', 'fa', 'ur', 'he', 'iw', 'yi', 'ps', 'dv', 'ckb']) assert.equal(langDirection(c), 'rtl', c);
   for (const c of ['en', 'ja', 'zh-Hant', 'ko', 'ru', 'hi', 'th', 'tr', 'en-orig']) assert.equal(langDirection(c), 'ltr', c);
   assert.equal(langDirection('xx'), null);
   assert.equal(langScript('ja'), 'Jpan');
@@ -129,4 +130,41 @@ test('AV2 U-005: الوسوم المركبة القديمة لا تُطوى إل
   assert.equal(normalizeLang('art-lojban'), 'jbo');
   assert.equal(normalizeLang('iw'), 'iw');
   for (const c of ['zh-Hant', 'es-419', 'fil', 'en-GB', 'pt-BR']) assert.equal(normalizeLang(c), c, c);
+});
+
+test('تحقق الجولة الثانية (ن-٥): الرمز الصحيح بكتابته البديلة يبقى لغة الملف، وغرض ع-٨ باقٍ', () => {
+  const cues = (text) => [{ text }, { text }];
+  const keep = [
+    ['talk.sr.srt', 'Dobar dan, kako ste?', 'sr'], ['talk.sr.srt', 'Добар дан, како сте?', 'sr'], ['talk.bs.srt', 'Добар дан', 'bs'],
+    ['talk.pa.srt', 'ست سری اکال', 'pa'], ['talk.pa.srt', 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ', 'pa'], ['talk.uz.srt', 'Салом дунё', 'uz'], ['talk.uz.srt', 'Salom dunyo', 'uz'],
+    ['talk.ku.srt', 'سڵاو، چۆنی؟', 'ku'], ['talk.ku.srt', 'Silav, tu çawa yî?', 'ku'], ['talk.ms.srt', 'سلامت ڤاڬي', 'ms'], ['talk.ms.srt', 'Selamat pagi', 'ms'],
+    ['talk.az.srt', 'Салам дүнја', 'az'], ['talk.az.srt', 'سلام دونیا', 'az'], ['talk.kk.srt', 'Sälem älem', 'kk'], ['talk.kk.srt', 'Сәлем әлем', 'kk'],
+    ['talk.tk.srt', 'Салам дүнйә', 'tk'], ['talk.mn.srt', 'ᠮᠣᠩᠭᠣᠯ ᠬᠡᠯᠡ', 'mn'], ['talk.sd.srt', 'सिन्धी भाषा', 'sd'], ['talk.ks.srt', 'कॉशुर', 'ks'],
+    ['talk.ha.srt', 'سَنُ دَ زُوَا', 'ha'], ['talk.ug.srt', 'Уйғур тили', 'ug'], ['talk.tt.srt', 'Tatar tele', 'tt'],
+  ];
+  for (const [name, text, code] of keep) assert.equal(langFromFileName(name, cues(text)), code, `${name}: ${text}`);
+  // الكتابة الصريحة في الرمز تُحكم بها وحدها.
+  assert.equal(langFromFileName('talk.sr-Latn.srt', cues('Добар дан')), null);
+  assert.equal(langFromFileName('talk.pa-Arab.srt', cues('ست سری اکال')), 'pa-Arab');
+  // غرض ع-٨: كلمة من الاسم لا تصير لغة بنص آخر.
+  const ar = cues('مرحبًا بكم في هذا الدرس');
+  const en = cues('Let it be, whisper words of wisdom');
+  for (const name of ['what.it.is.srt', 'let.it.be.srt', 'say.no.srt', 'go.to.srt']) assert.equal(langFromFileName(name, ar), null, name);
+  assert.equal(langFromFileName('let.it.be.srt', en), null, 'be بلا لاتينية');
+  assert.equal(langFromFileName('talk.sr.srt', ar), null, 'العربية ليست من كتابات الصربية');
+});
+
+test('تحقق الجولة الثانية (ن-٥): لغة كتاباتها من الاتجاهين يحسم نصُّها اتجاهَ السطر، واسمها الأصلي باتجاه كتابتها المرجحة', () => {
+  for (const c of ['pa', 'sd', 'ks', 'ku', 'ms', 'uz', 'az', 'kk', 'ha', 'ug']) assert.equal(langDirection(c), null, c);
+  for (const c of ['sr', 'bs', 'mn', 'tk', 'pa-Guru', 'sr-Latn']) assert.equal(langDirection(c), 'ltr', c);
+  assert.equal(langDirection('pa-Arab'), 'rtl');
+  assert.equal(textDirection('ست سری اکال', 'pa'), 'rtl', 'البنجابية بالشاهمكهية');
+  assert.equal(textDirection('ਸਤ ਸ੍ਰੀ ਅਕਾਲ', 'pa'), 'ltr');
+  assert.equal(textDirection('سڵاو', 'ku'), 'rtl', 'الكردية السورانية');
+  assert.equal(textDirection('Silav', 'ku'), 'ltr');
+  assert.equal(textDirection('OK!', 'sd'), 'ltr', 'القرار ١٨ كما كان للغة RTL المرجحة');
+  assert.equal(textDirection('سنڌي', 'sd'), 'rtl');
+  assert.equal(describeLang('pa').dir, 'ltr', 'اسمها الأصلي بالكرمكهية');
+  assert.equal(describeLang('sd').dir, 'rtl');
+  assert.equal(describeLang('ug').dir, 'rtl');
 });

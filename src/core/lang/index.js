@@ -1,6 +1,7 @@
 // اللغات (AA1، حرية اللغات): تطبيع رمز اللغة، واسمها بالعربية وبلغتها، ونص كتابتها واتجاهها. البيانات كلها من المتصفح نفسه
-// (Intl.Locale وIntl.DisplayNames، أي بيانات CLDR)، فلا قائمة لغات مكتوبة بالشيفرة ولا اتجاه مفترض للغة بعينها. ما لا يعرفه
-// المتصفح يبقى رمزه، والرمز غير الصالح null. لا شبكة ولا chrome ولا DOM هنا، ولا ترمي أي دالة.
+// (Intl.Locale وIntl.DisplayNames، أي بيانات CLDR)، فلا قائمة لغات مكتوبة بالشيفرة إلا الكتابات البديلة (ALSO_WRITTEN_IN، ن-٥)،
+// ولا اتجاه مفترض للغة بعينها. ما لا يعرفه المتصفح يبقى رمزه، والرمز غير الصالح null. لا شبكة ولا chrome ولا DOM هنا، ولا ترمي
+// أي دالة.
 
 /** رمز لغة كما يرد من يوتيوب أو من اسم ملف: لغة من 2–3 حروف (أو 5–8) ثم مقاطع BCP-47. */
 const LANG_SYNTAX = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8})*$|^[A-Za-z]{5,8}$/;
@@ -14,6 +15,19 @@ const RTL_SCRIPTS = new Set(['Arab', 'Aran', 'Hebr', 'Syrc', 'Thaa', 'Nkoo', 'Sa
 
 /** النصوص المركبة إلى نصوص يونيكود التي تتكون منها. */
 const COMPOSITE_SCRIPTS = { Jpan: ['Hira', 'Kana', 'Hani'], Hans: ['Hani'], Hant: ['Hani'], Kore: ['Hang', 'Hani'], Hanb: ['Hani', 'Bopo'] };
+
+/**
+ * لغات تُكتب اليوم بأكثر من كتابة، وما تُكتب به سوى كتابتها المرجحة في CLDR (تحقق الجولة الثانية، ن-٥). الاستثناء الوحيد من «لا
+ * قائمة لغات مكتوبة بالشيفرة»: المتصفح يعطي الكتابة المرجحة للرمز وحدها (sr ← Cyrl، pa ← Guru)، ولا يعطي ما سواها. فـsr باللاتينية،
+ * وpa بالشاهمكهية، وuz بالسيريلية، وku بالعربية (السورانية)، وms بالجاوية، رموز صحيحة لنصوصها. والرمز بكتابة صريحة (sr-Latn)
+ * يُحكم بكتابته وحدها. ولا تُضاف اللاتينية إلى لغة رمزها كلمة إنجليزية شائعة في أسماء الملفات (be وno وto وis…؛ ع-٨).
+ */
+const ALSO_WRITTEN_IN = Object.freeze({
+  az: ['Cyrl', 'Arab'], bm: ['Nkoo'], bs: ['Cyrl'], cnr: ['Cyrl'], crh: ['Latn'], ff: ['Adlm', 'Arab'], ha: ['Arab'], iu: ['Latn'],
+  jv: ['Java'], kk: ['Latn', 'Arab'], ks: ['Deva'], ku: ['Arab', 'Cyrl'], ky: ['Arab'], mn: ['Mong'], mni: ['Mtei'], ms: ['Arab'],
+  pa: ['Arab'], sat: ['Deva', 'Beng', 'Orya', 'Latn'], sd: ['Deva'], shi: ['Latn'], sr: ['Latn'], su: ['Sund'], tk: ['Cyrl'],
+  tt: ['Latn'], tzm: ['Tfng'], ug: ['Cyrl', 'Latn'], uz: ['Cyrl', 'Arab'], vai: ['Latn'],
+});
 
 /**
  * حرف من نص يُكتب من اليمين، في أي موضع من النص. الأرقام العربية الهندية ليست حروفًا فلا تقلب اتجاهًا.
@@ -81,22 +95,52 @@ export function langScript(code) {
   return null;
 }
 
+const scriptsCache = new Map();
 /**
- * اتجاه كتابة اللغة: rtl أو ltr، أو null إن لم يُعرف نصها.
+ * كتابات اللغة التي يُقبل بها نصها: المرجحة أولًا ثم ما تُكتب به سواها (ALSO_WRITTEN_IN، ن-٥)، أو [] إن لم يُعرف نصها. والرمز
+ * بكتابة صريحة (sr-Latn، pa-Arab، zh-Hant) كتابته وحدها. محفوظة لكل رمز (يستدعيها textDirection لكل سطر معروض).
+ * @param {unknown} code
+ * @returns {readonly string[]}
+ */
+export function langScripts(code) {
+  const key = typeof code === 'string' ? code : null;
+  if (key !== null && scriptsCache.has(key)) return scriptsCache.get(key);
+  const primary = langScript(code);
+  let out = [];
+  if (primary) {
+    const n = normalizeLang(code);
+    const explicit = safe(() => new Intl.Locale(n).script, null);
+    out = explicit && isScript(explicit) ? [primary] : [...new Set([primary, ...(ALSO_WRITTEN_IN[n.split('-')[0].toLowerCase()] ?? [])])];
+  }
+  const frozen = Object.freeze(out);
+  if (key !== null && scriptsCache.size < 500) scriptsCache.set(key, frozen);
+  return frozen;
+}
+
+const scriptDirection = (s) => (RTL_SCRIPTS.has(s) ? 'rtl' : 'ltr');
+/** اتجاه الكتابة المرجحة وحدها (اسم اللغة الأصلي)، أو null. @param {unknown} code */
+const primaryDirection = (code) => {
+  const s = langScript(code);
+  return s ? scriptDirection(s) : null;
+};
+
+/**
+ * اتجاه كتابة اللغة: rtl أو ltr، أو null إن لم يُعرف نصها، أو كانت كتاباتها من الاتجاهين (pa بالكرمكهية والشاهمكهية، وsd
+ * بالعربية والديفناغرية؛ ن-٥) فيحسم النص نفسه في textDirection.
  * @param {unknown} code
  * @returns {'rtl' | 'ltr' | null}
  */
 export function langDirection(code) {
-  const s = langScript(code);
-  if (!s) return null;
-  return RTL_SCRIPTS.has(s) ? 'rtl' : 'ltr';
+  const dirs = new Set(langScripts(code).map(scriptDirection));
+  return dirs.size === 1 ? [...dirs][0] : null;
 }
 
 /**
  * اتجاه سطر نص: من لغته إن عُرفت، وإلا RTL إن احتوى أي حرف من نص يُكتب من اليمين ولو بدأ بكلمة لاتينية («API هو الواجهة»)،
  * وإلا LTR. القاعدة الثانية هي قاعدة الإصدار الأول للعربية (تدقيق 5fedcb9، CL-002) معمّمة على العبرية والفارسية وغيرهما.
  * وفي لغة تُكتب من اليمين لا يُعرض RTL سطرٌ خالٍ من أي حرف يُكتب من اليمين (القرار ١٨، تحقق Fable ت-٣): «OK!» في ترجمة عربية
- * يُعرض LTR فلا يُقلب ترقيمه «!OK»، كما تقول المواصفة §٩ وCL-002. ولغة تُكتب من اليسار تحسم كما في AA1.
+ * يُعرض LTR فلا يُقلب ترقيمه «!OK»، كما تقول المواصفة §٩ وCL-002. ولغة تُكتب من اليسار تحسم كما في AA1. ولغة كتاباتها من الاتجاهين
+ * (langDirection null، ن-٥) كلغة لا يُعرف نصها: البنجابية بالشاهمكهية RTL وبالكرمكهية LTR.
  * @param {unknown} text @param {unknown} [lang]
  * @returns {'rtl' | 'ltr'}
  */
@@ -113,19 +157,45 @@ export const hasRtlLetter = (text) => RTL_LETTER.test(String(text ?? ''));
 
 const letterCache = new Map();
 /**
- * نمط «حرف من نص هذه اللغة»، أو null إن لم يُعرف نصها. اليابانية تقبل الهيراغانا والكاتاكانا والكانجي، والكورية الهانغل
+ * نمط «حرف من إحدى هذه الكتابات»، أو null إن خلت القائمة. اليابانية تقبل الهيراغانا والكاتاكانا والكانجي، والكورية الهانغل
  * والهانجا، والصينية الهان.
+ * @param {string[]} scripts
+ * @returns {RegExp | null}
+ */
+export function scriptsLetterPattern(scripts) {
+  if (!scripts.length) return null;
+  const key = scripts.join('+');
+  if (letterCache.has(key)) return letterCache.get(key);
+  const parts = [...new Set(scripts.flatMap((s) => COMPOSITE_SCRIPTS[s] ?? [s]))];
+  const re = safe(() => new RegExp(`(?=[${parts.map((p) => `\\p{Script=${p}}`).join('')}])\\p{L}`, 'u'), null);
+  letterCache.set(key, re);
+  return re;
+}
+
+/**
+ * نمط «حرف من نص هذه اللغة» بكل كتاباتها (langScripts)، أو null إن لم يُعرف نصها.
  * @param {unknown} code
  * @returns {RegExp | null}
  */
-export function scriptLetterPattern(code) {
-  const s = langScript(code);
-  if (!s) return null;
-  if (letterCache.has(s)) return letterCache.get(s);
-  const parts = COMPOSITE_SCRIPTS[s] ?? [s];
-  const re = safe(() => new RegExp(`(?=[${parts.map((p) => `\\p{Script=${p}}`).join('')}])\\p{L}`, 'u'), null);
-  letterCache.set(s, re);
-  return re;
+export const scriptLetterPattern = (code) => scriptsLetterPattern(langScripts(code));
+
+/**
+ * الكتابة الغالبة على حروف أول المقاطع من بين كتابات معطاة، أو null إن لم يكن فيها حرف منها.
+ * @param {{ text: string }[]} cues @param {string[]} scripts
+ * @returns {string | null}
+ */
+export function dominantScript(cues, scripts) {
+  const tests = scripts.map((s) => [s, scriptsLetterPattern([s])]).filter(([, re]) => re);
+  const counts = new Map();
+  for (const c of cues.slice(0, 200)) {
+    for (const ch of String(c?.text ?? '')) {
+      const hit = tests.find(([, re]) => re.test(ch));
+      if (hit) counts.set(hit[0], (counts.get(hit[0]) ?? 0) + 1);
+    }
+  }
+  let best = null;
+  for (const [s, n] of counts) if (!best || n > counts.get(best)) best = s;
+  return best;
 }
 
 const nameCache = new Map();
@@ -197,7 +267,8 @@ export function nativeName(code) {
 }
 
 /**
- * وصف اللغة للواجهة: الاسم العربي، والأصلي، والرمز، والاتجاه. الاسم العربي إن غاب يحل محله الرمز.
+ * وصف اللغة للواجهة: الاسم العربي، والأصلي، والرمز، والاتجاه. الاسم العربي إن غاب يحل محله الرمز. والاتجاه اتجاه كتابتها المرجحة
+ * التي يُكتب بها اسمها الأصلي (primaryDirection)، ولو كُتبت بغيرها أيضًا.
  * @param {unknown} code @param {'ar' | 'en'} [locale] لغة الواجهة لحقل name، وarabic يبقى الاسم العربي دائمًا
  * @returns {{ code: string, arabic: string, name: string, native: string | null, dir: 'rtl' | 'ltr' | null, known: boolean } | null}
  */
@@ -205,14 +276,15 @@ export function describeLang(code, locale = 'ar') {
   const n = normalizeLang(code);
   if (!n) return null;
   const arabic = arabicName(n);
-  return { code: n, arabic: arabic ?? n, name: localizedName(n, { locale }) ?? arabic ?? n, native: nativeName(n), dir: langDirection(n), known: arabic !== null };
+  return { code: n, arabic: arabic ?? n, name: localizedName(n, { locale }) ?? arabic ?? n, native: nativeName(n), dir: primaryDirection(n), known: arabic !== null };
 }
 
 /**
  * رمز لغة من اسم ملف ترجمة إن جاء صريحًا قبل الامتداد مباشرة (talk.ja.srt ← ja، وtalk.pt-BR.srt ← pt-BR)، وإلا null. لا يُقبل
- * إلا رمز يعرف المتصفح اسمه، فلا يُقرأ «normal» أو «long» لغةً. ومع نص الملف لا يُقبل إلا إن وافق نصُّه نص كتابة اللغة
- * (textFitsLang، ع-٨)، فلا تصير كلمة من الاسم لغةً بكتابة أخرى (let.it.be.srt بيلاروسيةً، وwhat.it.is.srt بنص عربي آيسلنديةً).
- * وحدّه أن النص لا يميّز لغتين بالكتابة نفسها: what.it.is.srt بنص إنجليزي يبقى is، ولا تُخمَّن اللغة من النص.
+ * إلا رمز يعرف المتصفح اسمه، فلا يُقرأ «normal» أو «long» لغةً. ومع نص الملف لا يُقبل إلا إن وافق نصُّه إحدى كتابات اللغة
+ * (textFitsLang، ع-٨)، فلا تصير كلمة من الاسم لغةً بكتابة أخرى (let.it.be.srt بيلاروسيةً، وwhat.it.is.srt بنص عربي آيسلنديةً)،
+ * ويبقى الرمز الصحيح بكتابته البديلة (talk.sr.srt باللاتينية، وtalk.pa.srt بالشاهمكهية؛ ن-٥). وحدّه أن النص لا يميّز لغتين بالكتابة
+ * نفسها: what.it.is.srt بنص إنجليزي يبقى is، ولا تُخمَّن اللغة من النص.
  * @param {unknown} fileName @param {{ text: string }[] | null} [cues] نص الملف، وبلاه يُحكم بالاسم وحده
  * @returns {string | null}
  */
@@ -243,7 +315,7 @@ export function knownLanguages(locale = 'ar') {
       const code = a + b;
       if (safe(() => Intl.getCanonicalLocales(code)[0], null) !== code) continue;
       const arabic = arabicName(code);
-      if (arabic) out.push({ code, arabic, name: localizedName(code, { locale }) ?? arabic, native: nativeName(code), dir: langDirection(code) });
+      if (arabic) out.push({ code, arabic, name: localizedName(code, { locale }) ?? arabic, native: nativeName(code), dir: primaryDirection(code) });
     }
   }
   // الترتيب بالاسم بلا «ال» في أوله، فتتجاور «الإنجليزية» و«إنجليزية» و«دزونكا» بحروفها لا بأداة التعريف.
@@ -301,7 +373,7 @@ export function searchLanguages(query, list = knownLanguages(), locale = 'ar') {
 }
 
 /**
- * هل يوافق نص الملف نص كتابة اللغة المقترحة (AA3): أكثر حروف أول المقاطع من نصها. لا يستنتج لغة من النص أبدًا، وإنما يمنع وسم ملف
+ * هل يوافق نص الملف نص كتابة اللغة المقترحة (AA3): أكثر حروف أول المقاطع من إحدى كتاباتها (langScripts، ن-٥). لا يستنتج لغة من النص أبدًا، وإنما يمنع وسم ملف
  * فرنسي بالعربية لأن «إلى» في النافذة عربية فيُعرض بغير اتجاهه. اللغة التي لا يُعرف نصها تُقبل، ونص بلا حروف يُقبل.
  * @param {{ text: string }[]} cues @param {string} lang
  */

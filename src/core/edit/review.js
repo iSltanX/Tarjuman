@@ -5,8 +5,8 @@
 import { isBlankText, untranslatedTest } from '../compare/index.js';
 import { parseTrackKey } from '../model/ids.js';
 
-/** فحص «غير مترجم» بلغة الترجمة ولغة مسار البصمة (AA1)، أو «لا شيء» حين لا يصح الفحص. */
-const untranslatedFor = (target, fingerprint) => untranslatedTest(target, fingerprint ? parseTrackKey(fingerprint.trackKey)?.lang ?? null : null) ?? (() => false);
+/** فحص «غير مترجم» بلغة الترجمة ولغة مسار البصمة (AA1) ونص الترجمة (ن-٥)، أو «لا شيء» حين لا يصح الفحص. */
+const untranslatedFor = (target, fingerprint, cues) => untranslatedTest(target, fingerprint ? parseTrackKey(fingerprint.trackKey)?.lang ?? null : null, cues) ?? (() => false);
 import { cueTextHash, markAnchor, resolveMarks, sameAnchor } from '../model/marks.js';
 import { DENSITY_CODES } from './issues.js';
 
@@ -137,7 +137,7 @@ export const REVIEW_CODES = Object.freeze({ missing: 'ED_REVIEW_MISSING', drift:
  * @returns {import('../export/report.js').ReviewItem[]}
  */
 export function reviewItems({ cues, issues, comparison, fingerprint, marks, english = [], includeText = false, include = {}, target = 'ar' }) {
-  const lacksTarget = untranslatedFor(target, fingerprint);
+  const lacksTarget = untranslatedFor(target, fingerprint, cues);
   const auto = include.auto !== false;
   const withMarks = include.marks !== false;
   const cmp = comparison && comparison.fingerprintId !== null ? comparison : null;
@@ -179,7 +179,7 @@ export function reviewItems({ cues, issues, comparison, fingerprint, marks, engl
  * }} o
  */
 export function completionGroups({ cues, comparison, fingerprint, marks, selection, numbersOf = null, target = 'ar' }) {
-  const lacksTarget = untranslatedFor(target, fingerprint);
+  const lacksTarget = untranslatedFor(target, fingerprint, cues);
   const count = fingerprint?.count ?? 0;
   const inRange = (n) => Number.isInteger(n) && n >= 1 && n <= count;
   const uniq = (ns) => [...new Set(ns.filter(inRange))].sort((a, b) => a - b);

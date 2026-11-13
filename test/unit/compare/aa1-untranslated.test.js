@@ -48,3 +48,22 @@ test('المقارنة الحاضرة لترجمة بلا لغة (محفوظة �
   assert.deepEqual(trackComparison(track, [fp]).noArabic, []);
   assert.deepEqual(trackComparison({ ...track, current: original.map((c) => ({ ...c })), lang: 'ar' }, [fp]).noArabic, [1]);
 });
+
+test('تحقق الجولة الثانية (ن-٥): لغة الترجمة بأكثر من كتابة: حرف من أيّها ترجمة، وإن كان نص المسار إحداها فنص الترجمة يحسم', () => {
+  const en = { key: 'en|manual', lang: 'en', kind: 'manual', cues: makeCues(3) };
+  const fp = fingerprint({ track: en, id: 'fp_test000079' });
+  // البنجابية عن الإنجليزية: الشاهمكهية والكرمكهية ترجمة، والإنجليزي الباقي غير مترجم.
+  const pa = untranslatedTest('pa', 'en');
+  assert.deepEqual(['ست سری اکال', 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ', 'still English'].map(pa), [false, false, true]);
+  assert.deepEqual(compare(cues(['ست سری اکال', 'still English', 'تُسی کیویں ہو']), fp, { target: 'pa' }).noArabic, [2]);
+  // الصربية عن الإنجليزية: باللاتينية لا يُميَّز المترجم (لا فحص)، وبالسيريلية يُفحص بها كما كان قبل الإصلاح.
+  assert.equal(untranslatedTest('sr', 'en'), null, 'بلا عيّنة لا فحص');
+  assert.deepEqual(compare(cues(['Dobar dan', 'Kako ste', 'still English']), fp, { target: 'sr' }).noArabic, []);
+  assert.deepEqual(compare(cues(['Добар дан', 'Како сте', 'still English']), fp, { target: 'sr' }).noArabic, [3]);
+  // والملايوية بالجاوية عن الإنجليزية تُفحص بالعربية، وباللاتينية لا فحص كما كان.
+  assert.deepEqual(compare(cues(['سلامت ڤاڬي', 'تريما كاسيه', 'still English']), fp, { target: 'ms' }).noArabic, [3]);
+  assert.deepEqual(compare(cues(['Selamat pagi', 'still English']), fp, { target: 'ms' }).noArabic, []);
+  // واللغة بكتابة واحدة كما كانت.
+  assert.deepEqual(compare(cues(['مرحبًا', 'still English']), fp, { target: 'ar' }).noArabic, [2]);
+  assert.equal(untranslatedTest('fr', 'en', cues(['Bonjour'])), null);
+});
