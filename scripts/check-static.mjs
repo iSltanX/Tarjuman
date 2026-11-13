@@ -39,8 +39,13 @@ const GECKO_SETTINGS = '{"gecko":{"id":"tarjuman@bysltan.com","strict_min_versio
 const FORBIDDEN_KEYS = [
   'host_permissions', 'optional_permissions', 'optional_host_permissions',
   'externally_connectable', 'content_security_policy', 'sandbox', 'oauth2', 'key', 'chrome_url_overrides',
-  'devtools_page', 'options_page', 'options_ui', 'commands', 'side_panel', 'declarative_net_request', 'update_url',
+  'devtools_page', 'options_page', 'options_ui', 'side_panel', 'declarative_net_request', 'update_url',
 ];
+// اختصارات لوحة المفاتيح الاختيارية (الفكرة ١٠، المسار ب، القرار ح-55، حُسم نيابةً عن سلطان بتفويضه): كان commands ممنوعًا كله، وصار
+// يُقبل بالأوامر الخمسة المعروفة وحدها (يرسلها العامل الخلفي إلى سكربت المحتوى، عقد messages §٩)، ولكلٍّ وصف من رسائل البيان باللغتين
+// وحده. **ولا suggested_key**: الأوامر غير مربوطة حتى يربطها المستخدم في صفحة اختصارات متصفحه، فلا تعارض مفروض مع يوتيوب أو المتصفح؛
+// ولا global ولا أمر خاص (‎_execute_action يفتح النافذة). ليس إذنًا ولا يُظهر تحذيرًا، والأسماء هنا حرفية لا مأخوذة من الشيفرة.
+const COMMAND_NAMES = ['display-mode', 'offset-earlier', 'offset-later', 'mark-review', 'replay-line'];
 const PAGES = ['popup', 'library', 'settings', 'editor'];
 const YT = '["https://www.youtube.com/*"]';
 // الاسم والملخص في المتاجر (store/README.md §٣): الاسم حتى 50 (AMO)، والمختصر حتى 12، والملخص حتى 132 (Chrome)؛ ولا ذكر
@@ -81,6 +86,26 @@ for (const target of ['chromium', 'firefox']) {
     problems.push(`${at}: الأذونات ${JSON.stringify(perms)} والمعتمد ${JSON.stringify(ALLOWED_PERMISSIONS)}`);
   }
   for (const k of FORBIDDEN_KEYS) if (k in manifest) problems.push(`${at}: المفتاح ${k} غير مسموح`);
+  if ('commands' in manifest) {
+    const cmds = manifest.commands;
+    if (!cmds || typeof cmds !== 'object' || Array.isArray(cmds)) problems.push(`${at}: commands ليس كائنًا بأسماء الأوامر`);
+    else {
+      for (const name of Object.keys(cmds)) if (!COMMAND_NAMES.includes(name)) problems.push(`${at}: commands: أمر غير معروف ${name}`);
+      for (const name of COMMAND_NAMES) if (!(name in cmds)) problems.push(`${at}: commands: ينقص الأمر ${name}`);
+      for (const name of Object.keys(cmds).filter((n) => COMMAND_NAMES.includes(n))) {
+        const c = cmds[name];
+        if (!c || typeof c !== 'object' || Array.isArray(c)) {
+          problems.push(`${at}: commands.${name} ليس كائنًا`);
+          continue;
+        }
+        if ('suggested_key' in c) problems.push(`${at}: commands.${name}.suggested_key غير مسموح: الأوامر بلا مفاتيح مقترحة، يربطها المستخدم في صفحة اختصارات متصفحه (ح-55)`);
+        for (const k of Object.keys(c)) if (k !== 'description' && k !== 'suggested_key') problems.push(`${at}: commands.${name}: حقل غير مسموح ${k}`);
+        const described = typeof c.description === 'string' && /^__MSG_\w+__$/.test(c.description)
+          && MANIFEST_LOCALES.every((l) => (manifestText(c.description, messages[l] ?? {}) ?? '').trim().length > 0);
+        if (!described) problems.push(`${at}: commands.${name}.description ليس رسالة توطين لها نص في اللغتين`);
+      }
+    }
+  }
   if ('background' in manifest && JSON.stringify(manifest.background) !== BACKGROUND[target]) problems.push(`${at}: background غير المعتمد ${JSON.stringify(manifest.background)} (المعتمد ${BACKGROUND[target]})`);
   if (target === 'firefox' && JSON.stringify(manifest.browser_specific_settings) !== GECKO_SETTINGS) {
     problems.push(`${at}: browser_specific_settings غير المعتمد ${JSON.stringify(manifest.browser_specific_settings ?? null).slice(0, 200)}`);

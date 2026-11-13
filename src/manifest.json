@@ -16,6 +16,13 @@
   "background": {
     "service_worker": "background/worker.js"
   },
+  "commands": {
+    "display-mode": { "description": "__MSG_cmdDisplayMode__" },
+    "offset-earlier": { "description": "__MSG_cmdOffsetEarlier__" },
+    "offset-later": { "description": "__MSG_cmdOffsetLater__" },
+    "mark-review": { "description": "__MSG_cmdMarkReview__" },
+    "replay-line": { "description": "__MSG_cmdReplayLine__" }
+  },
   "action": {
     "default_title": "__MSG_extShortName__",
     "default_popup": "pages/popup/index.html",

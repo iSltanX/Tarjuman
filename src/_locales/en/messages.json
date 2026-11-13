@@ -1,5 +1,10 @@
 {
   "extName": { "message": "Tarjuman — Your translation over the video" },
   "extShortName": { "message": "Tarjuman" },
-  "extDescription": { "message": "Save subtitles as SRT to translate with any AI model, from any language to yours, then show them over the video to adjust and edit." }
+  "extDescription": { "message": "Save subtitles as SRT to translate with any AI model, from any language to yours, then show them over the video to adjust and edit." },
+  "cmdDisplayMode": { "message": "Switch display mode between translation only, translation over original, and hidden" },
+  "cmdOffsetEarlier": { "message": "Show the translation one step earlier" },
+  "cmdOffsetLater": { "message": "Show the translation one step later" },
+  "cmdMarkReview": { "message": "Mark the visible line for review" },
+  "cmdReplayLine": { "message": "Replay line: jump to the start of the visible line, or the last line that started" }
 }
