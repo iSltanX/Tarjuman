@@ -151,7 +151,7 @@ export const completeOptionLabel = (n) => T('completeOptionLabel', { n });
  * @param {{ n: number, adds: number, remaining: number, renumbered?: boolean }} c
  */
 export const completeLine = (c) => [
-  T('completeLine', { n: c.n, adds: formatCount(c.adds, COUNT_FORMS.cue, { case: 'acc' }) }),
+  T('completeLine', { n: c.n, adds: formatCount(c.adds, COUNT_FORMS.cue, { case: 'acc' }), addsN: c.adds }),
   c.remaining ? T('completeRemaining', { n: c.remaining, count: formatCount(c.remaining, COUNT_FORMS.cue) }) : T('completeDone'),
   c.renumbered ? T('completeRenumbered') : null,
 ].filter(Boolean).join(' ');

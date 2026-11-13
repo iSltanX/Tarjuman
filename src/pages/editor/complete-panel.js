@@ -130,7 +130,7 @@ export async function previewPatch({ doc, plan }) {
     children: [
       el('p', {
         className: 'tj-body-sm',
-        text: t('editor.complete.summary', { count: formatCount(plan.items.length, COUNT_FORMS.cue), replace: plan.items.length - inserts, insert: inserts }),
+        text: t('editor.complete.summary', { n: plan.items.length, count: formatCount(plan.items.length, COUNT_FORMS.cue), replace: plan.items.length - inserts, insert: inserts }),
         doc,
       }),
       ...plan.warnings.map((w) => alertBox({ tone: 'warning', title: t('editor.complete.warning'), text: messageFor(w.code, w.params), doc })),

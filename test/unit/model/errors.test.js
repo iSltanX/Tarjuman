@@ -6,8 +6,11 @@ import { createDiagnosticReport } from '../../../src/core/diagnostics/report.js'
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
 
 const ARABIC = /[؀-ۿ]/;
-// الرسائل العربية الدالّة وعيّناتها (IM_STRAY_TEXT، ع-١٢ ب): تُفحص بكل صيغة، ولا دالّة خارج هذه القائمة.
-const AR_FUNCTION_SAMPLES = { IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }] };
+// الرسائل العربية الدالّة وعيّناتها (IM_STRAY_TEXT، ع-١٢ ب؛ وPG_LANG_ASSIGN_SKIPPED بالمثنى، تحقق مستقل §١٠): تُفحص بكل صيغة، ولا دالّة خارج هذه القائمة.
+const AR_FUNCTION_SAMPLES = {
+  IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }],
+  PG_LANG_ASSIGN_SKIPPED: [{ n: 'ترجمة واحدة', count: 1 }, { n: 'ترجمتان', count: 2 }, { n: '3 ترجمات', count: 3 }],
+};
 
 test('كل رمز يبدأ ببادئة مجاله، ولا بادئة لمجالين، ولا رمز مكرر', () => {
   const owners = new Map();

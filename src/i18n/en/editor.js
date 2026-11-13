@@ -245,7 +245,7 @@ export default Object.freeze({
     prevTitle: 'Previous ({key})', nextTitle: 'Next ({key})', prevAria: 'Previous result', nextAria: 'Next result',
     replace: 'Replace', replaceWith: 'Replace with', replaceAria: 'Replacement text', replaceHere: 'Replace here', replaceAll: 'Preview replace all…',
     originalReadOnly: 'The original is read-only: search in the translation to replace.', nothingToReplace: 'No results to replace.', typeFirst: 'Type what to search for first.',
-    noOthers: 'No other matches outside what was just replaced; pick a result with ↑↓ to replace it.',
+    noOthers: 'No other matches outside what was just replaced; pick a result with the Previous and Next buttons to replace it.',
     replaceInAria: 'Replace in segment {n}', picked: 'Selected: {matches} in {cues}.', pickOne: 'Choose at least one match.',
     applyN: ({ count }) => `Replace ${count}`,
     previewIntro: '“{query}” → “{replacement}”. Replaced literally in the selected matches only; timing and numbers stay as they are, and the whole replacement is one undo step.',

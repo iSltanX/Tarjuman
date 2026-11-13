@@ -25,6 +25,8 @@ const AR = {
   item: ['بند واحد', 'بندان', '3 بنود', '11 بندًا', '100 بند'],
   line: ['سطر واحد', 'سطران', '3 أسطر', '11 سطرًا', '100 سطر'],
 };
+// الضمير بعد المعدود يطابقه (تحقق مستقل §١٠): «مقطعًا واحدًا في موضعه» و«مقطعين في موضعَيهما» و«3 مقاطع في مواضعها».
+const PLACES = ['في موضعه', 'في موضعَيهما', 'في مواضعها', 'في مواضعها', 'في مواضعها'];
 const en = (one, other) => NS.map((n) => (n === 1 ? `1 ${one}` : `${n} ${other}`));
 const EN = {
   cue: en('segment', 'segments'), change: en('change', 'changes'), translation: en('translation', 'translations'), video: en('video', 'videos'),
@@ -73,8 +75,8 @@ const SITES = [
     ar: ['تطبيق على #', AR.cueGen], en: ['Apply to #', EN.cue],
   },
   {
-    key: 'library.upload.completeLine', site: ['pages/library/upload.js', "'library.upload.completeLine'", 'acc'], params: (n) => ({ n: 1, adds: acc(n, COUNT_FORMS.cue) }),
-    ar: ['الملف تتمة للترجمة 1: يضيف # في مواضعها.', AR.cueAcc], en: ['This file continues translation 1: it adds # in place.', EN.cue],
+    key: 'library.upload.completeLine', site: ['pages/library/upload.js', "'library.upload.completeLine'", 'acc'], params: (n) => ({ n: 1, adds: acc(n, COUNT_FORMS.cue), addsN: n }),
+    ar: ['الملف تتمة للترجمة 1: يضيف #.', AR.cueAcc.map((s, i) => `${s} ${PLACES[i]}`)], en: ['This file continues translation 1: it adds # in place.', EN.cue],
   },
   {
     key: 'settings.langs.assignTitle', site: ['pages/settings/langs.js', "'settings.langs.assignTitle'", 'gen'],
@@ -121,7 +123,7 @@ test('ع-٢٦: سطر المقارنة في المحرّر «توقيت مختل
 
 test('ع-٢٦: سطر الاستكمال في المشغّل بالمعدود منصوبًا مفعولًا به', (ctx) => {
   reset(ctx);
-  NS.forEach((n, i) => assert.equal(completeLine({ n: 2, adds: n, remaining: 0 }), `تتمة للترجمة 2: يضيف ${AR.cueAcc[i]} في مواضعها. وتكتمل بعده.`, `ar ${n}`));
+  NS.forEach((n, i) => assert.equal(completeLine({ n: 2, adds: n, remaining: 0 }), `تتمة للترجمة 2: يضيف ${AR.cueAcc[i]} ${PLACES[i]}. وتكتمل بعده.`, `ar ${n}`));
   setLocale('en');
   NS.forEach((n, i) => assert.equal(completeLine({ n: 2, adds: n, remaining: 0 }), `Continues translation 2: adds ${EN.cue[i]} in place. The translation is complete after it.`, `en ${n}`));
 });

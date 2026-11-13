@@ -230,7 +230,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     return null;
   }
 
-  /** «استبدال هنا» وحده: لا مطابقة خارج ما استُبدل للتو (التنقّل بـ↑↓ يختارها صراحةً). */
+  /** «استبدال هنا» وحده: لا مطابقة خارج ما استُبدل للتو (زرّا «السابقة» و«التالية» يختارانها صراحةً). */
   function hereWhy() {
     return replaceWhy() ?? (S.current < 0 && S.inserted.length && S.matches.every(insertedIn(cues())) ? t('editor.search.noOthers') : null);
   }

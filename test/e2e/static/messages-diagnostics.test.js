@@ -21,8 +21,11 @@ const POT = `pot=${'Mk'.repeat(40)}`;
 const HOSTILE = `https://www.youtube.com/api/timedtext?v=iG9CE55wbtY&${POT}&signature=${'A1b2'.repeat(10)} SAPISID=abcdefghijkl`;
 const clean = (text) => findSecrets(text).length === 0 && !/https?:\/\//.test(text) && !/timedtext/.test(text);
 
-// الرسائل العربية الدالّة وعيّناتها (IM_STRAY_TEXT، ع-١٢ ب): تُفحص بكل صيغة، ولا دالّة خارج هذه القائمة.
-const AR_FUNCTION_SAMPLES = { IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }] };
+// الرسائل العربية الدالّة وعيّناتها (IM_STRAY_TEXT، ع-١٢ ب؛ وPG_LANG_ASSIGN_SKIPPED بالمثنى، تحقق مستقل §١٠): تُفحص بكل صيغة، ولا دالّة خارج هذه القائمة.
+const AR_FUNCTION_SAMPLES = {
+  IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }],
+  PG_LANG_ASSIGN_SKIPPED: [{ n: 'ترجمة واحدة', count: 1 }, { n: 'ترجمتان', count: 2 }, { n: '3 ترجمات', count: 3 }],
+};
 /** كل الرموز من مجالات السجل نفسه (لا من قائمة يدوية)، ومنها مجالات الإصدار الثاني كالنسخ الاحتياطي (P15). والرسالة الدالّة
  * بكل عيّنة من AR_FUNCTION_SAMPLES، ومعها params التي مُلئت بها. */
 async function catalog() {

@@ -8,8 +8,11 @@ import { DOMAINS, messageFor } from '../../../src/core/errors/index.js';
 const LRI = String.fromCodePoint(0x2066);
 const PDI = String.fromCodePoint(0x2069);
 const ARABIC = /[\u0600-\u06FF]/;
-// الرسائل العربية الدالّة وعيّناتها (IM_STRAY_TEXT، ع-١٢ ب): تُفحص بكل صيغة، ولا دالّة خارج هذه القائمة.
-const AR_FUNCTION_SAMPLES = { IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }] };
+// الرسائل العربية الدالّة وعيّناتها (IM_STRAY_TEXT، ع-١٢ ب؛ وPG_LANG_ASSIGN_SKIPPED بالمثنى، تحقق مستقل §١٠): تُفحص بكل صيغة، ولا دالّة خارج هذه القائمة.
+const AR_FUNCTION_SAMPLES = {
+  IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }],
+  PG_LANG_ASSIGN_SKIPPED: [{ n: 'ترجمة واحدة', count: 1 }, { n: 'ترجمتان', count: 2 }, { n: '3 ترجمات', count: 3 }],
+};
 /** النص بعد حذف كل ما بين LRI وPDI: ما بقي يُرسم في سياق عربي. */
 const outsideIsolates = (s) => s.replace(new RegExp(`${LRI}[^${PDI}]*${PDI}`, 'g'), '');
 /** رقم بعلامة + أو - أو − ليس جزءًا من كلمة أو رقم قبله (فـ«U+2212» و«10-20» لا يُعدّان). */

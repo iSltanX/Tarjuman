@@ -58,7 +58,7 @@ test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-0
   assert.equal(menu.querySelectorAll('.row.available').length, 0, 'لا صف لكل مسار');
   const note = menu.querySelector('[data-fid="otherLangs"]');
   assert.equal(note.getAttribute('data-count'), '2');
-  assert.equal(note.querySelector('.steps').textContent, `في هذا الفيديو لغتان أخريان. لاختيار إحداها: ${LABELS.pickSteps}`);
+  assert.equal(note.querySelector('.steps').textContent, `في هذا الفيديو لغتان أخريان. لاختيار إحداهما: ${LABELS.pickSteps}`);
   assert.equal(note.querySelector('button'), null, 'لا تبديل من الإضافة');
   assert.equal(page.ui.menuText().includes('Español'), false, 'ولا أسماء المسارات');
   assert.equal(page.ui.menuText().includes(LABELS.machineSteps), false, 'الترجمة الآلية بلا التقاط وحده');

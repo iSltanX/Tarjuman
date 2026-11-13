@@ -179,7 +179,7 @@ export default Object.freeze({
   CT_NO_CAPTIONS: 'This video has no subtitles available on YouTube.',
   CT_INCOMPLETE_AT: 'The last subtitle is at {last} and the video is {duration}; the text may be incomplete.',
   CT_FINGERPRINT_NOT_SAVED: 'The file was downloaded, but what’s needed to compare it with your translation later couldn’t be saved. Download again; if it keeps happening, copy the diagnostics report.',
-  CT_FINGERPRINT_VIDEO_CHANGED: 'The video changed before the original’s file finished downloading, so it won’t be possible to compare it with your translation later. To make that possible, go back to that video and download the original’s file again.',
+  CT_FINGERPRINT_VIDEO_CHANGED: 'The video changed before the original file finished downloading, so it won’t be possible to compare it with your translation later. To make that possible, go back to that video and download the original file again.',
   CT_SPLIT_INVALID: 'Enter a number of segments per part between 50 and 2000.',
 
   CT_VIDEO_CHANGED: 'The video changed before the action finished, so nothing was applied to the new video. Try again here.',
@@ -206,7 +206,7 @@ export default Object.freeze({
   PG_PAIR_MISSING: 'Choose the original file’s language in “From” and the requested language in “To”, then copy the instructions.',
   PG_PAIR_NOT_SAVED: 'Couldn’t save the two languages for this video. The instructions are copied with them now, but they may not stay when you open the popup again.',
   PG_LANG_ASSIGN_PARTIAL: ({ n }) => `The language was set where possible, but saving failed for ${n} ${by(n, 'video', 'videos')}. Try again for the rest.`,
-  PG_LANG_ASSIGN_SKIPPED: 'The language was set for videos whose script matched; {n} whose script doesn’t match the chosen language were skipped. Set their language from the Translation menu in the player.',
+  PG_LANG_ASSIGN_SKIPPED: ({ n, count }) => `The language was set for videos whose script matched; ${n} whose script doesn’t match the chosen language ${by(count, 'was', 'were')} skipped. Set ${by(count, 'its', 'their')} language from the Translation menu in the player.`,
   PG_LANG_PREFS_UNREAD: 'Couldn’t read the language preferences, so the two default languages are shown. Reopen the popup; if it keeps happening, copy the diagnostics report.',
   PG_COPY_BAD_ID: 'The video ID isn’t valid, so the translation instructions can’t be copied for it.',
   PG_ID_COPIED: 'Video ID copied.',

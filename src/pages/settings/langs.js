@@ -194,7 +194,7 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
       }
     }
     busy = false;
-    const outcome = failed ? messageFor('PG_LANG_ASSIGN_PARTIAL', { n: String(failed) }) : skipped ? messageFor('PG_LANG_ASSIGN_SKIPPED', { n: formatCount(skipped, translationForms()) }) : messageFor('PG_SAVED');
+    const outcome = failed ? messageFor('PG_LANG_ASSIGN_PARTIAL', { n: String(failed) }) : skipped ? messageFor('PG_LANG_ASSIGN_SKIPPED', { n: formatCount(skipped, translationForms()), count: skipped }) : messageFor('PG_SAVED');
     unknownMark.flash(outcome, failed ? 'danger' : skipped ? 'info' : 'success');
     await countUnknown();
   }
