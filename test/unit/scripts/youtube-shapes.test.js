@@ -78,3 +78,14 @@ test('خط الأساس في المستودع: أشكال بلا قيم، ومص
   assert.ok(!/https?:\/\//.test(text), 'بلا رابط');
   for (const id of ['iG9CE55wbtY', 'walkF00001x']) assert.ok(!text.includes(id), `بلا معرّف فيديو (${id})`);
 });
+
+test('المشغّل الحي يبدأ سماع أحداث التنقل والعدّاد فارغ قبل نقر المقترح مباشرة، لا من التحميل الأول (تحقق الجولة الثانية، Y2)', () => {
+  // نص المشغّل لا تشغيله: استيراده يفتح المتصفح (test/live يُفحص بـnode --check وحده).
+  const src = readFileSync(new URL('../../live/harness/youtube-shapes.mjs', import.meta.url), 'utf8');
+  const listen = src.indexOf('window.__tjShapeEvents = [];');
+  assert.ok(listen > 0, 'السماع والتصفير في المشغّل');
+  assert.equal(src.indexOf('window.__tjShapeEvents = [];', listen + 1), -1, 'موضع واحد للتصفير');
+  assert.ok(listen > src.indexOf('await waitForPlayer('), 'بعد جاهزية المشغّل (أي بعد أحداث التحميل الأول)');
+  assert.ok(listen > src.indexOf('const reference = [...requests];'), 'بعد طلبات الفيديو المرجعي');
+  assert.ok(listen < src.indexOf('await clickRelated('), 'قبل نقر المقترح');
+});

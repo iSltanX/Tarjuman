@@ -37,11 +37,6 @@ try {
   });
   await page.goto(`https://www.youtube.com/watch?v=${video}`);
   await dismissConsent(page);
-  // الأحداث من أول انتقال بعد التحميل (إلى فيديو مقترح) لا من التحميل نفسه: كذلك جُمع خط الأساس، فالمقارنة على الطريقة نفسها.
-  await page.eval((names) => {
-    window.__tjShapeEvents = [];
-    for (const n of names) document.addEventListener(n, () => window.__tjShapeEvents.push(n));
-  }, { args: [NAV_EVENTS] });
   if (!(await waitForPlayer(page, video, 45000))) {
     console.error('تعذّرت الجولة: لم يجهز المشغّل خلال 45 ث (تحدٍّ أو موافقة أو شبكة). لم يُكتب شيء.');
     process.exitCode = 1;
@@ -64,6 +59,12 @@ try {
   // طلبات ترجمة الفيديو المرجعي وحده: المقترح يتغيّر بين جولة وأخرى (يدوي أو آلي، ولطلب الآلي معاملات أخرى)، فلا يدخل شكل طلبه
   // في المقارنة؛ وكان خط الأساس يُجمع بلا انتقال أصلًا.
   const reference = [...requests];
+  // الأحداث من الانتقال إلى المقترح وحده: يبدأ السماع والعدّاد فارغ قبل النقر مباشرة، فلا يدخله ما أطلقه التحميل الأول
+  // (yt-page-data-updated وyt-navigate-finish وyt-player-updated تأتي منه أيضًا؛ تحقق الجولة الثانية، صف Y2).
+  await page.eval((names) => {
+    window.__tjShapeEvents = [];
+    for (const n of names) document.addEventListener(n, () => window.__tjShapeEvents.push(n));
+  }, { args: [NAV_EVENTS] });
   try {
     await clickRelated(page, related);
   } catch (err) {
