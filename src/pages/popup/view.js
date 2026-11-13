@@ -132,6 +132,32 @@ export function notVideoNote(doc = document, text = notVideoText(), action = nul
   });
 }
 
+/**
+ * سطر الفيديو المترجم إلى لغته (ح-58) تحت حقلي «من» و«إلى»: أيقونة تحذير و«الفيديو بالعربية أصلًا:» وزر «اختر مساره الأصلي» يفتح
+ * التفصيل تحته ويطويه (aria-expanded وaria-controls، والتفصيل في الـDOM مخفيًا حتى يُفتح). لا يمنع النسخ.
+ * @param {{ lead: string, action: string, how: string }} text من roundTripText @param {Document} [doc]
+ */
+export function roundTripNote(text, doc = document) {
+  const how = el('p', { className: 'tj-popup__pair-note tj-popup__roundtrip-how', text: text.how, attrs: { id: 'tj-roundtrip-how' }, doc });
+  how.hidden = true;
+  const toggle = el('button', {
+    className: 'tj-popup__link', text: text.action,
+    attrs: { type: 'button', 'aria-expanded': 'false', 'aria-controls': 'tj-roundtrip-how', 'data-action': 'round-trip' },
+    doc,
+  });
+  toggle.addEventListener('click', () => {
+    const open = toggle.getAttribute('aria-expanded') !== 'true';
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    how.hidden = !open;
+  });
+  const line = el('p', {
+    className: 'tj-popup__result tj-popup__result--warn tj-popup__roundtrip',
+    children: [popupIcon('warning', { doc, className: 'tj-icon tj-icon--sm' }), el('span', { children: [`${text.lead} `, toggle], doc })],
+    doc,
+  });
+  return el('div', { className: 'tj-popup__roundtrip-host', attrs: { role: 'note' }, children: [line, how], doc });
+}
+
 /** هيكل كتلة «تعليمات الترجمة» أثناء القراءة (لوحة 09، الحالة 6): الحقلان والمبادلة والزر. @param {Document} [doc] */
 export function pairSkeleton(doc = document) {
   return el('div', {

@@ -26,7 +26,8 @@ import {
   PAIR_TEXT, attachedGlossary, captureLine, completeAction, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, originDownloaded, missAction, missText, pageReport, sendPaste,
   pairState, queryPageDiagnostics, queryPopupState, quickActions, recentEntries, recentLine, toolsStatus, untilSettled, videoLangs,
 } from './status.js';
-import { guideList, notVideoNote, pairSkeleton, skeletonCard, statusCard } from './view.js';
+import { roundTripText } from '../../ui/track.js';
+import { guideList, notVideoNote, pairSkeleton, roundTripNote, skeletonCard, statusCard } from './view.js';
 
 /** «نسخ تشخيص الصفحة» (§١٩.٦): رابط صغير ونتيجته بسطر. التقرير رموز وأعداد منقّاة، ولا يُعرض. */
 function diagnosticsLink(reply) {
@@ -148,7 +149,20 @@ startPage({
     let pair = { from: null, to: null };
     let touched = false;
     let picker = null;
-    const sourceNote = el('p', { className: 'tj-popup__pair-note' });
+    // سطر المصدر تحت الحقلين: «مكتشفة من ترجمة الفيديو» أو «الأصل: ‹الوصف›»، أو سطر الفيديو المترجم إلى لغته (ح-58) بزرّه.
+    const sourceNote = el('div', { className: 'tj-popup__source' });
+    /** سطر ح-58 الحالي ولغته: يبقى بحاله (مفتوحًا أو مطويًا) ما بقيت اللغة، ويُبنى من جديد إن تغيّرت. */
+    let roundTrip = null;
+
+    function paintSource(st) {
+      if (st.roundTrip) {
+        if (roundTrip?.via !== st.roundTrip) roundTrip = { via: st.roundTrip, node: roundTripNote(roundTripText(st.roundTrip), document) };
+        if (roundTrip.node.parentNode !== sourceNote) sourceNote.replaceChildren(roundTrip.node);
+        return;
+      }
+      roundTrip = null;
+      sourceNote.replaceChildren(...(st.sourceNote ? [el('p', { className: 'tj-popup__pair-note', text: st.sourceNote })] : []));
+    }
     const caption = el('p', { className: 'tj-popup__pair-caption', attrs: { id: 'tj-pair-caption', 'aria-live': 'polite' } });
     const copyLabel = el('span', { text: PAIR_TEXT.copy });
     let copyGlyph = icon('copy');
@@ -161,7 +175,7 @@ startPage({
 
     function paintPair() {
       const st = pairState({ reply, pair });
-      sourceNote.textContent = st.sourceNote ?? '';
+      paintSource(st);
       if (st.ready) copyBtn.removeAttribute('aria-disabled');
       else copyBtn.setAttribute('aria-disabled', 'true');
       // النتيجة على الزر نفسه لثانيتين (لونًا وأيقونةً وكلمة)، ثم يعود؛ والشرح تحت الزر بحسب الحالة.

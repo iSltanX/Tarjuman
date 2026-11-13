@@ -10,6 +10,11 @@ export default Object.freeze({
     via: '{name}, auto-translated by YouTube from {source}',
     state: { captured: 'captured', saved: 'saved' },
     original: 'Original',
+    roundTrip: {
+      lead: ({ name }) => `This video is in ${name}:`,
+      action: 'pick its own track',
+      how: ({ name }) => `This track was auto-translated by YouTube from ${name}. To pick its own track in the player: CC, then Settings, then “Subtitles/CC”, then ${name}. You can also continue with this track.`,
+    },
   },
   cancel: 'Cancel',
   count: {

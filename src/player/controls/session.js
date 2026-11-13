@@ -2,6 +2,7 @@
 // يكتبه المستخدم، وما يجري) في عرض واحد: المجموعة في الشريط، والقوائم والتلميحات والرسائل في الطبقة. لا تكتب في
 // التخزين إلا عبر أفعال المتحكم، ولا ترمي إليه: الإخفاق رمز في التشخيص، أو رسالة مفهومة للمستخدم إن خصّ فعله.
 import { TjError, hasCode, messageFor, toErrorInfo } from '../../core/errors/index.js';
+import { initialPair, normalizeLangPrefs } from '../../core/model/lang-prefs.js';
 import { isCommandName } from '../../core/model/messages.js';
 import { lookupMs } from '../../core/model/timing.js';
 import { rankUsable } from '../../core/model/track-order.js';
@@ -95,6 +96,11 @@ const pairTargets = (s) => {
   return [...new Set([saved, lp.pair?.to ?? null, ...(lp.recent ?? [])].filter(Boolean))];
 };
 /**
+ * «إلى» لهذا الفيديو كما تعرضها نافذة الإضافة (ح-58): المحفوظة له، وإلا الافتراضية من الإعدادات. لكشف الفيديو المترجم إلى لغته.
+ * @returns {string | null}
+ */
+const pairTarget = (s) => initialPair(normalizeLangPrefs(s.langPrefs ?? null), { videoId: s.videoId ?? null }).to;
+/**
  * مسار الأصل المحفوظ حين لا التقاط صالح في هذه الزيارة (FA-17): يُنزَّل من القائمة بالوضع العادي كما في المحفوظات.
  * @returns {{ key: string, lang: string, kind: 'manual' | 'asr', cueCount: number } | null}
  */
@@ -117,7 +123,7 @@ function freshUi(videoId) {
     /** لغة الترجمة المطلوبة أثناء تبديلها (U-029): تُرسم في المنتقي حتى يتم الحفظ، ثم تعود الحالة الحقيقية. undefined = لا تبديل. */
     pendingLang: /** @type {string | null | undefined} */ (undefined),
     download: {
-      key: null, mode: null, why: false, fallback: false, fallbackTouched: false, longKey: null, longChars: null, split: false, splitSize: null, splitError: null, busy: false,
+      key: null, mode: null, why: false, roundTrip: false, fallback: false, fallbackTouched: false, longKey: null, longChars: null, split: false, splitSize: null, splitError: null, busy: false,
       saveLine: null, result: [], preview: null,
       // الفكرة ٧-ب: زر CC ينتظر الالتقاط بعد الضغط ({ kind }) أو null، وسطر نتيجته.
       cc: null, ccLine: null,
@@ -328,7 +334,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       selectedKey: tracks.some((t) => t.key === d.key) ? d.key : tracks[0]?.key ?? null,
       mode: d.mode ?? s.settings.export.modeDefault, durationMs: s.durationMs,
       // قسم التقسيم مفتوح للملف الطويل دون تفعيل التقسيم، ما لم يطوه المستخدم (ف4).
-      why: d.why, longFile, fallbackOpen: d.fallbackTouched ? d.fallback : d.fallback || !!longFile, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
+      why: d.why, roundTripOpen: d.roundTrip, target: pairTarget(s), longFile, fallbackOpen: d.fallbackTouched ? d.fallback : d.fallback || !!longFile, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
       busy: d.busy, saveLine: d.saveLine, result: d.result,
       pickGuide: (!tracks.length && PICK_AGAIN.has(s.captureIssue?.code ?? '')) || otherLangs(s, tracks) ? { brave: flags.brave } : null,
       otherLangs: otherLangs(s, tracks), translatable: s.available?.translatable === true,
@@ -872,6 +878,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const t = ui.timing;
     switch (name) {
       case 'why': d.why = !d.why; break;
+      case 'roundTrip': d.roundTrip = !d.roundTrip; break;
       case 'track': d.key = value; d.saveLine = null; d.result = []; break;
       case 'mode': d.mode = value; d.saveLine = null; break;
       case 'fallback': d.fallback = !downloadModel(controller.getState()).fallbackOpen; d.fallbackTouched = true; break;

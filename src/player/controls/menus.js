@@ -5,9 +5,11 @@
 // الإضافة. تعليمات الترجمة (من ← إلى) في نافذة الإضافة وحدها منذ AA3، فلا يمر نصها من هنا أبدًا.
 import { messageFor } from '../../core/errors/index.js';
 import { knownLanguages } from '../../core/lang/index.js';
+import { roundTrip } from '../../core/model/pair.js';
 import { getDir, getLocale } from '../../i18n/index.js';
 import { formatOffset, isolate, ltrParts, textDirection } from '../../ui/format.js';
 import { languageName } from '../../ui/lang.js';
+import { roundTripText } from '../../ui/track.js';
 import { glyph } from './glyphs.js';
 import {
   LABELS, ccLanguagesLine, comparisonSummary, completeHintLine, completeLine, longFileLine, completeOptionLabel, completeOptionText, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
@@ -222,6 +224,37 @@ function otherLanguages(h, { langs, other, brave, translatable, pickAgain = fals
 }
 
 /**
+ * زر نصي يفتح تفصيلًا ويطويه داخل سطره (ح-58 وح-61): نصه وحده بلا عمود (.stack) فيبقى في سطره، وaria-expanded وaria-controls إلى
+ * التفصيل الذي يبقى في الـDOM مخفيًا حتى يُفتح، وdata-fid باسم فعله فيعود إليه التركيز بعد إعادة البناء.
+ * @param {H} h @param {Act} act @param {{ name: string, text: string, open: boolean, controls: string }} o
+ */
+function disclosure(h, act, { name, text, open, controls }) {
+  return h('button', {
+    className: 'link', text,
+    attrs: { type: 'button', 'data-fid': name, 'aria-expanded': open ? 'true' : 'false', 'aria-controls': controls },
+    on: { click: () => act(name) },
+  });
+}
+
+/**
+ * سطر الفيديو المترجم إلى لغته (ح-58) بعد سطر اللغة: تنبيه واحد «الفيديو بالعربية أصلًا:» وزر «اختر مساره الأصلي» يفتح التفصيل تحته
+ * (aria-expanded وaria-controls، والتفصيل في الـDOM مخفيًا حتى يُفتح). لا يمنع التنزيل.
+ * @param {H} h @param {Act} act @param {string} via @param {boolean} open @param {Node[]} [more] ما يلحق بالتفصيل
+ */
+function roundTripLine(h, act, via, open, more = []) {
+  const text = roundTripText(via);
+  const how = h('div', { className: 'note stack', attrs: { id: 'tj-roundtrip-how', 'data-fid': 'roundTripHow', hidden: open ? null : '' }, children: [h('span', { text: text.how }), ...more] });
+  const toggle = disclosure(h, act, { name: 'roundTrip', text: text.action, open, controls: 'tj-roundtrip-how' });
+  return [
+    h('div', {
+      className: 'row status roundtrip', attrs: { 'data-tone': 'warn', role: 'note' },
+      children: [h.glyph?.('warn') ?? null, h('span', { className: 'line__text', children: [h('span', { text: `${text.lead} ` }), toggle] })],
+    }),
+    how,
+  ];
+}
+
+/**
  * زر CC في «تنزيل الأصل» بلا التقاط (الفكرة ٧-ب، ح-56): «تفعيل CC الآن» أو «إعادة تشغيل CC»، و«جارٍ انتظار ترجمة يوتيوب…» بعد
  * الضغط حتى يصل الالتقاط أو تنقضي المهلة، ومعطّل بسببه أثناء الإعلان. رئيسي، وثانوي مع «تنزيل الأصل المحفوظ» فلا إجراءان رئيسيان.
  * @param {H} h @param {Act} act @param {{ kind: 'on' | 'restart', busy: boolean, ad: boolean }} cc
@@ -266,6 +299,7 @@ export function downloadMenu(h, act, m, root = null) {
     if (m.saved) {
       out.push(label(h, LABELS.languageTitle));
       out.push(statusRow(h, 'ok', trackLine(m.saved, { state: 'saved' }), 'language'));
+      if (roundTrip(m.saved, m.target)) out.push(...roundTripLine(h, act, m.saved.via, !!m.roundTripOpen));
       out.push(h('div', { className: 'note', text: LABELS.savedNote, attrs: { 'data-fid': 'savedNote' } }));
       out.push(h('div', {
         className: 'actions',
@@ -358,6 +392,8 @@ export function downloadMenu(h, act, m, root = null) {
       : messageFor(w);
     out.push(alert(h, 'warn', text));
   }
+  // ح-58: المسار ترجمة يوتيوب الآلية عن لغة الهدف نفسها.
+  if (roundTrip(sel, m.target)) out.push(...roundTripLine(h, act, sel.via, !!m.roundTripOpen));
 
   out.push(label(h, LABELS.exportMode));
   out.push(segmented(h, LABELS.exportMode, [

@@ -174,6 +174,10 @@ button.danger { background: var(--tj-p-error); color: var(--tj-p-accent-ink); }
 button.primary[aria-disabled="true"], button.secondary[aria-disabled="true"] { opacity: 0.45; cursor: default; filter: none; }
 button.primary[aria-busy="true"] { cursor: progress; }
 button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; font-size: 0.93em; font-weight: 700; padding: 7px 4px; margin: -7px -4px; } /* «لماذا؟» بهدف 32 دون تغيير السطر (CL-018) */
+/* زر نصي داخل سطر صغير (0.93em) بمقاس سطره لا أصغر منه (ح-58 وح-61). */
+.row.status button.link, .note button.link, .line button.link { font-size: 1em; }
+/* المطوي بسمة hidden داخل القائمة (تفصيل ح-58 وح-61): مخفي ولو كان له عرض من صنفه (.stack). */
+.menu [hidden] { display: none !important; }
 
 /* المقطّعة: خيار واحد من قليل في صف (وضع التصدير، وأوضاع العرض، والخطوة)؛ المختار بالطين الليلي بحبر داكن (لوحة 10)، بلا إطار. */
 .seg { display: flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgb(255 255 255 / 7%); }

@@ -4,7 +4,7 @@
 // نفسه: «الإنجليزية (ترجمة يوتيوب الآلية) ملتقطة · تلقائية» في النافذة، و«مترجمة آليًا من يوتيوب عن العربية» في القائمة، و«ترجمة
 // يوتيوب الآلية عن العربية» في اللوحة. لا DOM هنا.
 import { t } from '../i18n/index.js';
-import { COUNT_FORMS, formatCount } from './format.js';
+import { COUNT_FORMS, formatCount, ltrInline } from './format.js';
 import { languageName } from './lang.js';
 
 /**
@@ -20,4 +20,19 @@ export function trackDescription(track, { count = null, state = null, region = t
     ? t('common.track.via', { name, source: languageName(track.via, { region }) ?? track.via })
     : `${name} · ${t(`common.track.kind.${track?.kind === 'asr' ? 'asr' : 'manual'}`)}`;
   return [head, Number.isInteger(count) ? formatCount(count, COUNT_FORMS.cue) : null, state ? t(`common.track.state.${state}`) : null].filter(Boolean).join(' · ');
+}
+
+/**
+ * سطر الفيديو المترجم إلى لغته (ح-58، core/model/pair.js roundTrip) في النافذة والقائمة باللغتين: صدره «الفيديو بالعربية أصلًا:»،
+ * وزرّه «اختر مساره الأصلي» يفتح التفصيل (أنه ترجمة يوتيوب الآلية عن تلك اللغة، وطريق مساره الأصلي في المشغّل، وأن المتابعة جائزة).
+ * سطر تنبيه واحد لا يمنع التنزيل ولا النسخ.
+ * @param {string} via لغة مصدر المسار (وهي لغة الهدف)
+ * @returns {{ lead: string, action: string, how: string }}
+ */
+export function roundTripText(via) {
+  const named = languageName(via);
+  const known = named !== null && named !== via;
+  // الرمز الذي لا يُعرف اسمه معزول LTR داخل الجملة («بلغة xx»).
+  const name = known ? named : ltrInline(String(via));
+  return { lead: t('common.track.roundTrip.lead', { name, known }), action: t('common.track.roundTrip.action'), how: t('common.track.roundTrip.how', { name }) };
 }

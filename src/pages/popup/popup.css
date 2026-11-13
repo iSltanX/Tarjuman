@@ -71,6 +71,17 @@
 .tj-popup__pair-caption[data-tone="muted"] { color: var(--tj-muted); }
 .tj-popup__pair-caption[data-tone="success"] { color: var(--tj-success); }
 .tj-popup__pair-caption[data-tone="danger"] { color: var(--tj-danger); }
+/* سطر المصدر تحت الحقلين، وسطر الفيديو المترجم إلى لغته (ح-58): تنبيه بأيقونته وزر نصي يفتح تفصيله تحته. */
+.tj-popup__source:empty { display: none; }
+.tj-popup__source { margin: -4px 0 0; }
+.tj-popup__source > .tj-popup__pair-note { margin: 0; }
+.tj-popup__roundtrip-host { display: flex; flex-direction: column; gap: 4px; }
+.tj-popup__roundtrip { align-items: flex-start; font-size: 12px; line-height: 18px; }
+.tj-popup__roundtrip .tj-icon { margin-top: 2px; }
+.tj-popup__roundtrip-how { margin: 0; }
+/* زر نصي داخل سطر (اختر مساره الأصلي، والخطوات): بلون سطره مسطّرًا، وهدفه 34 ارتفاعًا (سطر 18 وامتداد 8 من كل جهة) لا يغيّر السطر (CL-018). */
+.tj-popup__link { all: unset; display: inline; cursor: pointer; color: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; padding: 8px 2px; margin: -8px -2px; }
+.tj-popup__link:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; border-radius: 4px; }
 /* حقل اللصق (ف5): بعرض الكتلة، لا يُكتب فيه (اللصق وحده). */
 .tj-popup__paste-input { width: 100%; min-height: 56px; resize: none; font: 400 13px/20px var(--tj-font-body); }
 .tj-popup__pair-skel { display: flex; flex-direction: column; gap: 10px; }

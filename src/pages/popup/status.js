@@ -10,6 +10,7 @@ import { describeLang } from '../../core/lang/index.js';
 import { getLocale, t, texts } from '../../i18n/index.js';
 import { YOUTUBE_MATCHES, isSourceLang, parseTrackKey } from '../../core/model/ids.js';
 import { termsFor } from '../../core/model/glossaries.js';
+import { roundTrip } from '../../core/model/pair.js';
 import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
 import { pairLabel } from '../../ui/lang.js';
 import { trackDescription } from '../../ui/track.js';
@@ -417,16 +418,18 @@ export function videoLangs(reply) {
 export const detectedSource = (reply) => (reply?.watch && !reply.loading && isSourceLang(reply.source?.lang) ? reply.source.lang : null);
 
 /**
- * حالة الكتلة: هل يُتاح النسخ وسببه إن لم يُتح، وسطر المصدر تحت الحقلين، والشرح تحت الزر.
+ * حالة الكتلة: هل يُتاح النسخ وسببه إن لم يُتح، وسطر المصدر تحت الحقلين، والشرح تحت الزر. وroundTrip (ح-58): لغة مصدر المسار حين
+ * يكون «من» ترجمةَ يوتيوب الآلية عن لغة «إلى» نفسها (الفيديو بهذه اللغة أصلًا)، فيحل سطر تنبيهه محل سطر المصدر ولا يمنع النسخ.
  * @param {{ reply: import('../../core/model/messages.js').VideoStateReply | null, pair: { from: string | null, to: string | null } }} p
- * @returns {{ ready: boolean, reason: string | null, sourceNote: string | null, caption: string, done: string }}
+ * @returns {{ ready: boolean, reason: string | null, sourceNote: string | null, roundTrip: string | null, caption: string, done: string }}
  */
 export function pairState({ reply, pair }) {
   const from = isSourceLang(pair.from) ? pair.from : null;
   const to = isSourceLang(pair.to) ? pair.to : null;
   const detected = detectedSource(reply);
   const via = from && reply?.source?.via && from === reply.source.lang ? reply.source.via : null;
-  const sourceNote = via ? machineNote(from, via) : from && from === detected ? PAIR_TEXT.detected : null;
+  const back = via && roundTrip({ via }, to) ? via : null;
+  const sourceNote = back ? null : via ? machineNote(from, via) : from && from === detected ? PAIR_TEXT.detected : null;
   let reason = null;
   if (!reply?.watch || !reply.videoId) reason = PAIR_TEXT.noVideo;
   else if (reply.loading) reason = PAIR_TEXT.loading;
@@ -438,6 +441,7 @@ export function pairState({ reply, pair }) {
     ready: reason === null,
     reason,
     sourceNote,
+    roundTrip: back,
     caption: reason ?? PAIR_TEXT.caption,
     done: from && to ? PAIR_TEXT.done : '',
   };
