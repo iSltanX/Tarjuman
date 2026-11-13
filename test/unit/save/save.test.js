@@ -46,6 +46,24 @@ test('الاسم والامتداد والحجم: أسماء ترجمان وال
   assert.equal(validateSaveFile({ name: 'a.json', text: '{}' }).mime, 'application/json;charset=utf-8', 'النوع من الامتداد');
 });
 
+test('الفكرة ١١: ملف الترجمة WebVTT والثنائي يُقبلان، ونوع .vtt من الامتداد text/vtt في الصفحة والعامل', async () => {
+  for (const name of ['iG9CE55wbtY.ar.vtt', 'iG9CE55wbtY.ar.dual-en.vtt', 'iG9CE55wbtY.translation.original.dual-en-GB.vtt', 'iG9CE55wbtY.ar.dual-en.srt']) {
+    assert.equal(validateSaveFile({ name, text: 'WEBVTT\n' }).ok, true, name);
+  }
+  assert.deepEqual(validateSaveFile({ name: 'iG9CE55wbtY.ar.vtt', text: 'WEBVTT\n' }), { ok: true, ext: 'vtt', mime: 'text/vtt;charset=utf-8' });
+  assert.equal(validateSaveFile({ name: 'iG9CE55wbtY.ar.ass', text: '' }).ok, false, 'ولا .ass');
+  // الصفحة: Blob بنوع الامتداد لا بنوع يمرّره المستدعي.
+  const types = [];
+  const win = {
+    URL: { createObjectURL: (b) => { types.push(b.type); return 'blob:tj'; }, revokeObjectURL() {} },
+    Blob: class { constructor(parts, opts) { this.type = opts?.type; } },
+    setTimeout() {},
+  };
+  const r = await saveFile({ name: 'iG9CE55wbtY.ar.dual-en.vtt', text: 'WEBVTT\n', mime: 'text/plain' }, { api: { downloads: fakeDownloads() }, store: store(), doc: { defaultView: win }, settle: fast });
+  assert.equal(r.ok, true);
+  assert.deepEqual(types, ['text/vtt;charset=utf-8']);
+});
+
 test('الأوضاع الثلاثة: الافتراضي بلا saveAs (يتبع المتصفح)، والمجلد الفرعي تلقائي، والسؤال بحوار؛ والتالف يعود إلى الافتراضي', () => {
   assert.deepEqual(downloadTarget({ mode: 'downloads', folder: 'Tarjuman' }, 'a.srt'), { filename: 'a.srt' });
   assert.deepEqual(downloadTarget({ mode: 'subfolder', folder: 'ترجماتي' }, 'a.srt'), { filename: 'ترجماتي/a.srt', saveAs: false });

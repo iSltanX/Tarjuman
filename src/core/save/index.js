@@ -12,9 +12,10 @@ import { createStore } from '../store/index.js';
 // يُقرأ (تدقيق 7a66f91، U55، قرار Q28؛ كان 256 مليون وحدة UTF-16، فتُحفظ نسخة CJK فوق 512 م.ب ثم تُرفض). وقناة سكربت
 // المحتوى بوحدات الرسالة كما هي.
 export const SAVE_LIMITS = Object.freeze({ maxNameChars: 150, maxPageBytes: 512 * 1024 * 1024, maxMessageChars: 16 * 1024 * 1024 });
-/** النوع من الامتداد وحده، لا من المستدعي. */
+/** النوع من الامتداد وحده، لا من المستدعي. وvtt ملف الترجمة WebVTT (الفكرة ١١). */
 export const SAVE_TYPES = Object.freeze({
   srt: 'application/x-subrip;charset=utf-8',
+  vtt: 'text/vtt;charset=utf-8',
   txt: 'text/plain;charset=utf-8',
   md: 'text/markdown;charset=utf-8',
   json: 'application/json;charset=utf-8',
