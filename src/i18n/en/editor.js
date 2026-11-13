@@ -199,7 +199,7 @@ export default Object.freeze({
   },
   marks: {
     title: 'Marks', none: 'No marks',
-    intro: 'Your own review, separate from the automatic check. Toggle a segment’s mark with the mark button in its row, or from the player (“Mark for review”).',
+    intro: 'Your own review, separate from the automatic check. Toggle a segment’s mark with the mark button in its row, or from the player (“Review later”).',
     jumpAria: ({ n, label, moved }) => `Go to segment ${n} (${label}${moved ? ', may have moved' : ''})`,
     nothing: 'Nothing.', check: 'Needs checking', checkNote: 'The segment’s text or timing changed since the mark was placed: make sure it’s on the right segment, then toggle it.',
     orphanTitle: 'Lost their segment ({n})', orphanItem: '{n} at {at}', orphanNote: 'No segment matches them after the replace, merge or split: {list}.',

@@ -16,7 +16,7 @@ export default Object.freeze({
   bytes: { zero: '0 KB', kb: '{n} KB', mb: '{n} MB', gb: '{n} GB' },
   nav: {
     library: 'Library', settings: 'Settings', editor: 'Editor',
-    brand: 'Tarjuman — Library', pages: 'Tarjuman pages', yourData: 'Your translations and settings stay in your browser',
+    brand: 'Tarjuman — Library', pages: 'Tarjuman pages', yourData: 'Your data stays in your browser',
   },
   page: { title: 'Tarjuman — {page}', renderFailed: 'Couldn’t display this page' },
   continuation: {

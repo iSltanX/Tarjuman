@@ -58,11 +58,14 @@ export function renderReference(box, { doc, options, savedId, shownId, preview, 
     box.replaceChildren(head, el('p', { className: 'tj-caption', text: t('editor.ref.noOriginal'), doc }));
     return;
   }
+  // النسبة أول نص الخيار فلا يقصّها عرض القائمة المغلقة مع اسم مرجع طويل (ت-١٣)، والنص كاملًا في title للخيار وللقائمة.
+  const optionText = (o, k) => `${Math.round(o.score * 100)}% — ${o.label}${k === 0 ? t('editor.ref.closest') : ''}`;
+  const shownAt = options.findIndex((o) => o.id === shownId);
   const sel = el('select', {
-    className: 'ed-select ed-ref-choice', attrs: { 'aria-label': t('editor.ref.choiceAria') },
+    className: 'ed-select ed-ref-choice', attrs: { 'aria-label': t('editor.ref.choiceAria'), title: shownAt === -1 ? t('editor.ref.none') : optionText(options[shownAt], shownAt) },
     on: { change: () => onChoose(sel.value || null) },
     children: [
-      ...options.map((o, k) => el('option', { text: `${o.label} — ${Math.round(o.score * 100)}%${k === 0 ? t('editor.ref.closest') : ''}`, attrs: { value: o.id }, doc })),
+      ...options.map((o, k) => el('option', { text: optionText(o, k), attrs: { value: o.id, title: optionText(o, k) }, doc })),
       el('option', { text: t('editor.ref.none'), attrs: { value: '' }, doc }),
     ],
     doc,

@@ -144,3 +144,17 @@ test('AV2 U-042: التركيز على زر التراجع يمسكها، وبع
   assert.ok(now !== undo && !toastEl.contains(now), 'خرج التركيز من الرسالة');
   assert.ok(now !== env.doc.body, 'لم يسقط إلى body');
 });
+
+test('ت-١٣ (تحقق Fable للتصميم): خيار «المرجع» يبدأ بنسبة المطابقة فلا يقصّها عرض القائمة، والنص كاملًا في title للخيار وللقائمة', async () => {
+  const { env } = await open('fr');
+  const choice = env.root.querySelector('.ed-ref-choice');
+  const opts = [...choice.children].filter((o) => o.getAttribute('value'));
+  assert.ok(opts.length >= 1, 'خيار مرجع واحد على الأقل');
+  for (const o of opts) {
+    assert.match(textOf(o), /^\d+% — /, textOf(o));
+    assert.equal(o.getAttribute('title'), textOf(o));
+  }
+  assert.ok(textOf(opts[0]).endsWith('— الأقرب'), 'الأقرب في آخره كما كان');
+  const shown = opts.find((o) => o.getAttribute('value') === choice.value);
+  assert.equal(choice.getAttribute('title'), shown ? textOf(shown) : 'بلا مرجع', 'title القائمة نص المختار');
+});

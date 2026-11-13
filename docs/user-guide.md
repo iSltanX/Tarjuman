@@ -327,7 +327,7 @@ npm run package
 | لغة الترجمة | Translation language |
 | توقيت الترجمة | Translation timing |
 | مزامنة بجملة… | Sync by sentence… |
-| علّم للمراجعة | Mark for review |
+| علّم للمراجعة | Review later |
 | النص المتزامن | Synced transcript |
 | تعليمات الترجمة | Translation instructions |
 | من / إلى | From / To |
