@@ -1,11 +1,13 @@
 // تدقيق V2، WG-4: U-031 وU-032. قائمة المسارات (tracklist) من سكربت عالم الصفحة عبر تنقل SPA، بوثيقة ومشغّل وهميين
 // (c8-capture.test.js يحمّله بلا document فيعطّل القائمة). السكربت المصدر في node:vm، واستيراداته تُحقن من الوحدات الحقيقية.
+// ومعها ع-١١ (د) من تحقق Gemini: رجوع سريع إلى فيديو قبل أن يحمّل المشغّل الذي بعده، مع المستخرج الحقيقي في العالم المعزول.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { videoIdFromLocation } from '../../../src/core/model/video-location.js';
 import { readTimedtextParams } from '../../../src/extract/timedtext-params.js';
+import { createExtractor } from '../../../src/extract/index.js';
 
 const CAPTURE_URL = new URL('../../../src/main-world/capture.js', import.meta.url);
 const SOURCE = readFileSync(CAPTURE_URL, 'utf8').replace(/^import \{[^}]*\} from '[^']+';\s*$/gm, '');
@@ -18,8 +20,11 @@ const response = (id) => ({
   captions: { playerCaptionsTracklistRenderer: { captionTracks: [{ languageCode: 'es', name: { simpleText: 'es' } }], translationLanguages: [{ languageCode: 'ar' }] } },
 });
 
-/** صفحة يوتيوب مصطنعة: المشغّل يبقى بآخر فيديو حُمّل ويحمّل فيديو صفحة المشاهدة أو البث. */
-function page(startPath) {
+/**
+ * صفحة يوتيوب مصطنعة: المشغّل يبقى بآخر فيديو حُمّل ويحمّل فيديو صفحة المشاهدة أو البث. sink يستلم كل رسالة كما يستلمها الجسر
+ * (العالم المعزول).
+ */
+function page(startPath, { sink = () => {} } = {}) {
   const listeners = new Map();
   const loc = { origin: ORIGIN, href: '' };
   const setUrl = (p) => { loc.href = new URL(p, ORIGIN).href; };
@@ -34,7 +39,11 @@ function page(startPath) {
   const posted = [];
   const win = {
     location: loc, document: doc,
-    postMessage: (msg) => posted.push(JSON.parse(JSON.stringify(msg))),
+    postMessage: (msg) => {
+      const m = JSON.parse(JSON.stringify(msg));
+      posted.push(m);
+      sink(m);
+    },
     fetch: () => Promise.resolve(new Response('{}', { status: 200 })),
     XMLHttpRequest: class { open() {} send() {} addEventListener() {} },
   };
@@ -50,9 +59,10 @@ function page(startPath) {
   run();
   return {
     posted,
-    nav(p) {
+    /** load: false تنقلٌ لم يحمّل فيه المشغّل الفيديو الجديد بعد طوال المحاولات (رجوع سريع). */
+    nav(p, { load = true } = {}) {
       setUrl(p);
-      if (idNow()) player.loaded = idNow();
+      if (load && idNow()) player.loaded = idNow();
       for (const t of ['yt-navigate-finish', 'yt-page-data-updated', 'yt-player-updated']) doc.fire(t);
       run();
     },
@@ -75,6 +85,25 @@ test('AV2 U-031: ضابط A ثم B ثم A كما هو، والتنقل داخل 
   assert.deepEqual(p.lists(), [A, B, A]);
   p.nav(`/watch?v=${A}&t=30`);
   assert.deepEqual(p.lists(), [A, B, A], 'المفتاح نفسه لا يعاد');
+});
+
+test('ع-١١ (د): A ثم B قبل أن يحمّله المشغّل ثم رجوع سريع إلى A: تُرسل قائمة A من جديد فلا تضيع في العالم المعزول', () => {
+  let current = A;
+  const extractor = createExtractor({ currentVideoId: () => current });
+  const p = page(`/watch?v=${A}`, { sink: (m) => extractor.handleMessage(m) });
+  extractor.setVideo(A);
+  assert.deepEqual(extractor.available()?.tracks.map((x) => x.lang), ['es']);
+  current = B;
+  p.nav(`/watch?v=${B}`, { load: false });
+  extractor.setVideo(B);
+  assert.equal(extractor.available(), null, 'قائمة A صُفّرت عند مغادرته');
+  current = A;
+  p.nav(`/watch?v=${A}`, { load: false });
+  extractor.setVideo(A);
+  assert.deepEqual(p.lists(), [A, A], 'العودة إلى A تعيد إرسال قائمته');
+  assert.deepEqual(extractor.available()?.tracks.map((x) => x.lang), ['es'], 'قائمة A متاحة بعد العودة');
+  p.nav(`/watch?v=${A}&t=30`, { load: false });
+  assert.deepEqual(p.lists(), [A, A], 'وعلى A نفسه لا تكرار');
 });
 
 test('AV2 U-032: /live/<id> يرسل قائمة المسارات كصفحة المشاهدة، والعودة إليه كذلك', () => {

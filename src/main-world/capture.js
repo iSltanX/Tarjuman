@@ -25,6 +25,7 @@ const MAX_TRACKS = 64;
 // الوثيقة حاضرة دائمًا في عالم الصفحة؛ وغيابها (بيئة اختبار الغلافين) يعطّل قائمة المسارات وحدها.
 const doc = typeof document === 'undefined' ? null : document;
 let lastList = '';
+let lastId = null;
 let timers = [];
 
 // المنطق نفسه الذي يرى به العالم المعزول الفيديو الحالي (/watch?v= و/live/<id>، تدقيق V2، U-032).
@@ -65,6 +66,12 @@ function postTracks() {
   if (!id) {
     lastList = '';
     return;
+  }
+  // وكذلك عند تغيّر الفيديو ولو لم تجهز بيانات مشغّله (رجوع سريع أ ← ب ← أ): الجهة المعزولة صفّرت قائمة أ عند مغادرته،
+  // فلو بقي مفتاحها لما أُرسلت عند العودة (ع-١١ د).
+  if (id !== lastId) {
+    lastId = id;
+    lastList = '';
   }
   const r = playerResponse(id);
   if (!r) return;
