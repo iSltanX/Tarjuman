@@ -4,6 +4,7 @@
 // ملفات TXT وMarkdown (R48) بالمحلّل نفسه: تُزال أغلفة محددة واضحة فقط بملاحظة — أسوار ``` و~~~، والتأكيد حول سطر
 // الرقم أو الزمن كله (**12** و`00:00:01,000 --> …`)، والعناوين والفقرات قبل الملف وبعده. وما داخل نص المقطع يبقى حرفيًا.
 import { TjError, messageFor } from '../errors/index.js';
+import { isBlankText } from '../model/cue.js';
 import { LIMITS } from '../model/validate.js';
 import { sanitizeText } from '../text/sanitize.js';
 import { ambiguousNumbers } from '../import/ambiguous.js';
@@ -62,10 +63,14 @@ const wrapped = (line) => EMPHASIS_RE.test(headerForm(line));
 const timeForm = (form) => (/^[-\u2212]?\d+:\d/.test(form)
   ? form.replace(TIME_COMMA_RE, ',').replace(ARROW_RE, (m) => (m.trim() === '-->' ? m : ' --> '))
   : form);
-/** حدّ لنص المقطع أينما وقع: سطر فارغ أو سياج أو عنوان (U38). @param {string} line */
+/**
+ * حدّ لنص المقطع أينما وقع: سطر فارغ أو سياج أو عنوان (U38). والفارغ بتعريف isBlankText بعد التنقية: سطر فيه محرف خفي باقٍ
+ * وحده (RLM أو LRM أو ZWSP، تكتبه نماذج فاصلًا) فارغ لا سطر يلتصق بنص المقطع (تحقق Gemini، ع-٧)؛ أما ما فرغ بالتنقية وحدها
+ * (تجاوز اتجاه أو وسوم) فلا يقطع المقطع ويُزال بملاحظته كما كان. @param {string} line
+ */
 const textBoundary = (line) => {
   const t = line.trim();
-  return t === '' || FENCE_RE.test(t) || HEADING_RE.test(t);
+  return t === '' || FENCE_RE.test(t) || HEADING_RE.test(t) || (isBlankText(t) && sanitizeText(t).text.trim() !== '');
 };
 
 const excerpt = (s) => (s.length > EXCERPT_CHARS ? `${s.slice(0, EXCERPT_CHARS - 1)}…` : s);
@@ -74,14 +79,18 @@ const cleanLines = (text) => text.split('\n').map((l) => l.trim()).filter(Boolea
 /**
  * نص مقطع كما يقرؤه هذا المحلّل من حيث المحارف: بلا محارف تحكم ولا تجاوز اتجاه، وبلا مسافات أطراف الأسطر، وبلا سطر صار
  * فارغًا بالتجريد. يكتب به التصدير العربي فلا يحمل الملف U+202E الذي يقلب العرض في مشغّلات أخرى (تدقيق 7a66f91، U99).
+ * وبلا سطر بقي فيه محرف خفي وحده (RLM أو ZWSP…): يقرؤه الاستيراد فاصلًا (ع-٧)، وترجمة حُفظت قبل ذلك قد تحمله وسط نص مقطع.
+ * والسطر الفارغ الخالص في نص لم يُجرَّد منه شيء يبقى، فيرفضه فحص الفراغ برقم مقطعه كما كان.
  * @param {string} text @returns {{ text: string, stripped: boolean }}
  */
 export function readableText(text) {
   const s = String(text);
   const noControls = sanitizeText(s).text.replace(CONTROL_CHARS, '');
-  const stripped = noControls !== s;
   const lines = noControls.split('\n').map((l) => l.trim());
-  return { text: (stripped ? lines.filter(Boolean) : lines).join('\n'), stripped };
+  const hidden = (l) => l !== '' && isBlankText(l);
+  const charsStripped = noControls !== s;
+  const stripped = charsStripped || lines.some(hidden);
+  return { text: (stripped ? lines.filter((l) => !hidden(l) && (l !== '' || !charsStripped)) : lines).join('\n'), stripped };
 }
 
 /**
@@ -160,7 +169,7 @@ export function parseSrtLenient(input) {
   const sortOut = (slice, bucket, from, after = false) => {
     slice.forEach((l, i) => {
       const t = l.trim();
-      if (!t) return;
+      if (isBlankText(t)) return;
       if (FENCE_RE.test(t)) fence = true;
       else if (CUE_FRAGMENT_RE.test(bare(l)) && !(after && proseAfter(bare(l)))) throw new TjError('IM_STRAY_TEXT', { params: { line: from + i + 1 } });
       else bucket.push(sanitizeText(t).text);
@@ -189,7 +198,7 @@ export function parseSrtLenient(input) {
       rest.forEach((l, j) => {
         const t = l.trim();
         if (FENCE_RE.test(t)) fence = true;
-        else if (t !== '') throw new TjError('IM_STRAY_TEXT', { params: { line: h.time + 1 + stop + j + 1 } });
+        else if (!isBlankText(t)) throw new TjError('IM_STRAY_TEXT', { params: { line: h.time + 1 + stop + j + 1 } });
       });
     }
 

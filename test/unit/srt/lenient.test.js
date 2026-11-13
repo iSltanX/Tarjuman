@@ -251,6 +251,24 @@ test('علامات غير مرئية (ALM وZWSP وZWNJ وZWJ وWJ وLRM وRLM) 
   }
 });
 
+test('تحقق Gemini (ع-٧): سطر فيه محرف خفي وحده (RLM أو LRM أو ZWSP) فاصل كالسطر الفارغ، لا سطر يلتصق بنص المقطع', () => {
+  const T2 = '00:00:04,000 --> 00:00:05,000';
+  for (const code of [0x200f, 0x200e, 0x200b]) {
+    const mark = String.fromCharCode(code);
+    const name = `U+${code.toString(16).toUpperCase()}`;
+    for (const sep of [mark, ` ${mark} `, `${mark}${mark}`]) {
+      const r = parseSrtLenient(`1\n${T1}\nمرحبا\n${sep}\n2\n${T2}\nعالم\n${sep}\n`);
+      assert.deepEqual(r.cues.map((c) => [c.n, c.text]), [[1, 'مرحبا'], [2, 'عالم']], `${name} بين مقطعين وبعد آخرها`);
+      assert.deepEqual([r.notes, r.warnings], [[], []], `${name}: لا ملاحظة شرح ولا قصّ`);
+      const spaced = parseSrtLenient(`1\n${T1}\nمرحبا\n${sep}\n\n2\n${T2}\nعالم\n`);
+      assert.deepEqual(spaced.cues.map((c) => c.text), ['مرحبا', 'عالم'], `${name} ثم سطر فارغ`);
+    }
+    // ما بعده في وسط الملف نص خارج المقطع كما بعد السطر الفارغ، برقم سطره.
+    const stray = fail(`1\n${T1}\nمرحبا\n${mark}\nبعد الفاصل\n\n2\n${T2}\nعالم\n`);
+    assert.deepEqual([stray.code, stray.params.line], ['IM_STRAY_TEXT', 5], name);
+  }
+});
+
 test('رأس مبتور أو مكسور عند أطراف الملف خطأ برقم السطر، لا «شرح» يُحذف بصمت (كما في وسطه)', () => {
   const good = `${block(1, T1, 'أ')}\n${block(2, '00:00:04,000 --> 00:00:05,000', 'ب')}`;
   const cut = fail(`${good}\n3\n00:00:06,000\n`);
