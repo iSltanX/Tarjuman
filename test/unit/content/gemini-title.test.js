@@ -140,3 +140,17 @@ test('Y3: تنقل أثناء كتابة جارية: لا تُكتب في سجل
   assert.equal(rec.videoId, A);
   assert.notEqual(rec.title, TB, 'عنوان B لا يُكتب في سجل A');
 });
+
+test('Y3 (قيد موثّق): فيديو بعنوان السابق حرفًا بحرف يبقى بلا عنوان في الصفحة نفسها، ويُعرف بعد إعادة تحميلها', async () => {
+  const { store, doc, ex, c, nav } = await setup();
+  await c.start(A);
+  await nav(B);
+  ex.setTracks([]);
+  assert.equal(c.getState().title, null, 'TA لـB لا يُميَّز من عنوان A الباقي');
+  const rec = await c.loadArabic({ fileName: 'b.ar.srt', cues: makeCues(3) });
+  assert.equal(rec.title, null, 'ولا يُكتب في سجله');
+  // إعادة التحميل: فيديو الصفحة الأول يأخذ عنوانها.
+  const fresh = createController({ store, extractor: fakeExtractor({ videoId: null }), page: { title: () => doc.title, durationMs: () => 60000 } });
+  await fresh.start(B);
+  assert.equal(fresh.getState().title, TA);
+});
