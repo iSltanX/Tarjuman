@@ -2,22 +2,23 @@
 // يكتبه المستخدم، وما يجري) في عرض واحد: المجموعة في الشريط، والقوائم والتلميحات والرسائل في الطبقة. لا تكتب في
 // التخزين إلا عبر أفعال المتحكم، ولا ترمي إليه: الإخفاق رمز في التشخيص، أو رسالة مفهومة للمستخدم إن خصّ فعله.
 import { TjError, hasCode, messageFor, toErrorInfo } from '../../core/errors/index.js';
+import { isCommandName } from '../../core/model/messages.js';
 import { lookupMs } from '../../core/model/timing.js';
 import { rankUsable } from '../../core/model/track-order.js';
 import { formatOffset } from '../../ui/format.js';
 import { joinList, t } from '../../i18n/index.js';
 import { holdTimer } from '../../ui/hold.js';
-import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow, isSubtitlesButton } from '../youtube-dom.js';
+import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow, isSubtitlesButton, seekMainVideo } from '../youtube-dom.js';
 import { fitSize, isFolded, timeClipped, watchBar } from './bar.js';
 import { completeInto, continuationFor, fileChars, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles, stripFor } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
 import { builder, confirmMenu, displayMenu, downloadMenu, stepText, timingMenu } from './menus.js';
 import { defaultTarget, keepEditsPlan, manualEdits } from './replace.js';
-import { nearestCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
+import { nearestCueIndex, replayCueIndex, sentenceWindow, syncOffset, visibleCueIndex, windowAround } from './sentence.js';
 import {
-  LABELS, badgeTip, comparisonSummary, downloadedLine, downloadedParts, markToast, markedAmbiguousText, minusTip, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, partsWord, plusTip, shortTime, syncUndoStaleLine,
-  slotToast, withState,
+  LABELS, badgeTip, comparisonSummary, downloadedLine, downloadedParts, markToast, markedAmbiguousText, minusTip, modeToast, nameOtherLine, nudgeFlash, offsetToast, parseSeconds, partsWord, plusTip, shortTime,
+  syncUndoStaleLine, slotToast, withState,
 } from './text.js';
 
 export const TOAST_MS = 3000;
@@ -46,6 +47,13 @@ const splitSizeOf = (raw) => {
   const n = Number(String(raw ?? '').trim());
   return Number.isInteger(n) && n >= SPLIT.min && n <= SPLIT.max ? n : null;
 };
+/**
+ * أوامر الاختصارات (الفكرة ١٠، المسار ب، ح-55): يربطها المستخدم في صفحة اختصارات متصفحه، ويمرّرها العامل الخلفي ومعالج الرسائل. لكل أمر
+ * قناة رسالته، فالضغطات المتتالية تبدّل رسالتها ولا تراكمها.
+ */
+const COMMAND_CHANNEL = Object.freeze({ reason: 'command', mode: 'command-mode', offset: 'command-offset' });
+/** دورة وضع العرض بترتيب قائمة «الترجمة» (الترجمة وحدها، فوق الأصل، إخفاء). */
+const MODE_CYCLE = Object.freeze(['ar', 'dual', 'off']);
 /** زر كل قائمة: موضعها فوقه، وإليه يعود التركيز عند إغلاقها. */
 const ANCHOR = { download: 'download', display: 'upload', confirm: 'upload', timing: 'badge' };
 // حوارات غير نمطية كلها: فيها عناوين ومجموعات اختيار وحقول وأزرار، لا بنود قائمة (تدقيق 7a66f91، U44).
@@ -788,17 +796,26 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     });
   }
 
-  /** @param {1 | -1} dir @param {{ fromMenu?: boolean }} [o] fromMenu: من قائمة الشارة في المقاس المطوي (ت-١) */
-  function nudge(dir, { fromMenu = false } = {}) {
+  /**
+   * @param {1 | -1} dir @param {{ fromMenu?: boolean, notify?: boolean }} [o] fromMenu: من قائمة الشارة في المقاس المطوي (ت-١)؛ notify: من
+   *   أمر اختصار (الفكرة ١٠): رسالة قصيرة بالإزاحة بدل التلميح العابر، لأن التلميح جزء من الطبقة فلا يظهر حين يُخفى الشريط، والرسائل خارجها
+   */
+  function nudge(dir, { fromMenu = false, notify = false } = {}) {
     controller.nudgeOffset(dir)?.catch?.(() => {});
     ui.timing.offsetText = null;
     ui.timing.offsetError = null;
     const flash = nudgeFlash(controller.getState().view.displayOffsetMs);
-    // التلميح العابر لا يُقرأ: الإزاحة الجديدة تُعلن في منطقة حية، كما تعلنها قيمة التذييل في اللوحة (U48).
-    layer.announce(flash);
+    if (notify) {
+      // منطقة الرسائل حية (role=status)، فلا إعلان ثانٍ؛ ورسالة واحدة تتبدّل مع كل ضغطة.
+      clearChannel(COMMAND_CHANNEL.offset);
+      addToast('info', flash, { icon: 'clock', channel: COMMAND_CHANNEL.offset });
+    } else {
+      // التلميح العابر لا يُقرأ: الإزاحة الجديدة تُعلن في منطقة حية، كما تعلنها قيمة التذييل في اللوحة (U48).
+      layer.announce(flash);
+    }
     group.pulse();
     // ومن القائمة لا تلميح عابر فوقها: قيمتها الكبيرة تقول الإزاحة.
-    if (!fromMenu) {
+    if (!fromMenu && !notify) {
       ui.flash = flash;
       later('flash', FLASH_MS, () => {
         ui.flash = null;
@@ -1043,6 +1060,45 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       ui.upload.error = toErrorInfo(err).message;
       render();
     }
+  }
+
+  /**
+   * أمر «تبديل وضع العرض» (الفكرة ١٠): الوضع التالي بترتيب قائمة «الترجمة»، متخطيًا «فوق الأصل» حين لا أصل (كما يعطّله اختياره هناك)،
+   * ورسالة قصيرة بالوضع الجديد: في فجوة بين الجمل أو بعد الإخفاء لا يُرى أثره، والشريط قد يكون مخفيًا.
+   */
+  function cycleDisplayMode() {
+    const s = controller.getState();
+    let i = MODE_CYCLE.indexOf(s.view.displayMode);
+    do i = (i + 1) % MODE_CYCLE.length; while (MODE_CYCLE[i] === 'dual' && !s.english);
+    const next = MODE_CYCLE[i];
+    setMode(next);
+    clearChannel(COMMAND_CHANNEL.mode);
+    addToast('info', modeToast(next, s.english?.lang ?? null), { channel: COMMAND_CHANNEL.mode });
+    render();
+  }
+
+  /**
+   * أمر «أعد الجملة» (الفكرة ١٠، ح-55): القفز إلى بداية الجملة الظاهرة بزمن الفيديو والإزاحة، وإلا آخر جملة بدأت (replayCueIndex)،
+   * بلا تشغيل ولا إيقاف (seekMainVideo يغيّر الزمن وحده). وأثناء الإعلان لا قفز بزمنه (U47)، وقبل أول جملة رسالة.
+   */
+  function replayLine() {
+    const s = controller.getState();
+    const cues = s.arabic?.cues;
+    if (!cues?.length) return;
+    if (isAdShowing(doc)) {
+      clearChannel(COMMAND_CHANNEL.reason);
+      addToast('info', messageFor('CT_AD_SHOWING'), { channel: COMMAND_CHANNEL.reason });
+      return;
+    }
+    const video = getMainVideo(doc);
+    if (!video || !Number.isFinite(video.currentTime)) return;
+    const index = replayCueIndex(cues, lookupMs(video.currentTime, s.view.displayOffsetMs));
+    if (index === null) {
+      clearChannel(COMMAND_CHANNEL.reason);
+      addToast('info', LABELS.replayNone, { channel: COMMAND_CHANNEL.reason });
+      return;
+    }
+    seekMainVideo(Math.max(0, cues[index].startMs + s.view.displayOffsetMs), doc);
   }
 
   /**
@@ -1502,6 +1558,29 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       const file = new File([String(text)], LABELS.pastedName, { type: 'text/plain' });
       ui.open = s.arabic ? 'display' : null;
       startImport([file], !!s.arabic);
+      return { ok: true };
+    },
+
+    /**
+     * الفكرة ١٠ (ح-55): أمر اختصار ربطه المستخدم في متصفحه. الأفعال نفسها التي في الشريط وقوائمه؛ وبلا ترجمة أو أثناء قراءتها رسالة قصيرة
+     * واحدة بالسبب ولا فعل (كتعطيل أزرار العرض والتوقيت)، لأن الضغطة مقصودة في صفحة الفيديو فلا تمر صامتة.
+     * @param {string} name @returns {{ ok: true } | { ok: false, code: string }}
+     */
+    command(name) {
+      const s = controller.getState();
+      if (destroyed || !s.videoId) return { ok: false, code: 'TJ_NO_VIDEO' };
+      if (!isCommandName(name)) return { ok: false, code: 'TJ_BAD_MESSAGE' };
+      const why = s.loading ? 'CT_LOADING' : !s.arabic ? 'CT_NEEDS_ARABIC' : null;
+      if (why) {
+        clearChannel(COMMAND_CHANNEL.reason);
+        addToast('info', why === 'CT_LOADING' ? messageFor('CT_LOADING') : LABELS.commandNeedsTranslation, { channel: COMMAND_CHANNEL.reason });
+        return { ok: false, code: why };
+      }
+      if (name === 'display-mode') cycleDisplayMode();
+      else if (name === 'offset-earlier') nudge(-1, { notify: true });
+      else if (name === 'offset-later') nudge(1, { notify: true });
+      else if (name === 'mark-review') markVisible();
+      else replayLine();
       return { ok: true };
     },
 

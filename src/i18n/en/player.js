@@ -118,6 +118,10 @@ export default Object.freeze({
     markedAmbiguous: 'Marked for review: {count}.',
     markedNone: 'The ambiguous passages are already marked.',
     offsetToast: 'Offset {offset} s',
+    // Keyboard shortcut commands (idea 10, H-55): the new display mode, and why a command did nothing.
+    modeToast: 'Display mode: {mode}',
+    commandNeedsTranslation: 'This video has no translation yet. Upload yours first.',
+    replayNone: 'No translation line has started before this point.',
     downloadedLine: 'Downloaded {name}',
     downloadedParts: 'Downloaded {parts}',
     partsWord: ({ n }) => (n === 1 ? '1 part' : `${n} parts`),

@@ -218,6 +218,12 @@ export function mountControls(controller, deps = {}) {
      */
     importText: (text) => (session ? session.importText(text) : { ok: false, code: 'TJ_RELOAD_PAGE' }),
 
+    /**
+     * الفكرة ١٠ (ح-55): أمر اختصار من العامل الخلفي (عبر معالج الرسائل) إلى أفعال الجلسة. بلا جلسة (صفحة ليست مشاهدة، أو قبل ظهور
+     * الشريط) لا يفعل شيئًا. @param {string} name @returns {{ ok: true } | { ok: false, code: string }}
+     */
+    command: (name) => (session ? session.command(name) : { ok: false, code: 'TJ_NO_VIDEO' }),
+
     /** أعداد ورموز فقط: لا نص مقاطع ولا أسماء ملفات ولا روابط (R36). */
     diagnostics: () => ({
       state, attempts, failures, lastCode: lastError?.code ?? null, lastDetail: lastError?.detail ?? null,

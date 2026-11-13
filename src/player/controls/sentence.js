@@ -28,6 +28,21 @@ export function visibleCueIndex(cues, ms, graceMs = VISIBLE_GRACE_MS) {
 }
 
 /**
+ * الجملة التي يعيدها «أعد الجملة» (الفكرة ١٠، ح-55): الظاهرة عند زمن البحث (ومنها المنتهية للتو، visibleCueIndex)، وإلا آخر جملة
+ * بدأت قبله (أكبر بداية لا تتجاوزه، والأحدث موضعًا عند التساوي)، وإلا null (قبل أول جملة).
+ * @param {import('../../core/model/cue.js').Cue[]} cues @param {number} ms زمن البحث بتوقيت الملف
+ * @returns {number | null}
+ */
+export function replayCueIndex(cues, ms) {
+  const visible = visibleCueIndex(cues, ms);
+  if (visible !== null) return visible;
+  if (!Number.isFinite(ms)) return null;
+  let best = null;
+  for (let i = 0; i < cues.length; i++) if (cues[i].startMs <= ms && (best === null || cues[i].startMs >= cues[best].startMs)) best = i;
+  return best;
+}
+
+/**
  * أقرب مقطع إلى زمن البحث: الظاهر، وإلا الأقرب بدايةً. محور نافذة الجمل.
  * @param {import('../../core/model/cue.js').Cue[]} cues @param {number} ms
  */

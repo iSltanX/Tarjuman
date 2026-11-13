@@ -57,6 +57,21 @@ export function isOwnContentScript(sender, runtime) {
   return !!sender && sender.id === runtime.id && !!sender.tab && typeof sender.url === 'string' && sender.url.startsWith('https://www.youtube.com/');
 }
 
+/**
+ * عناوين العامل الخلفي داخل الإضافة: عامل الخدمة في Chromium كما في البيان، وصفحة الخلفية التي يولّدها Firefox من background.scripts.
+ */
+export const BACKGROUND_PAGES = Object.freeze(['background/worker.js', '_generated_background_page.html']);
+
+/**
+ * المرسِل العامل الخلفي للإضافة نفسها (رسالة الأمر، الفكرة ١٠، عقد messages §٩): صفحة من الإضافة بلا تبويب، وعنوانها أحد عنوانَي
+ * العامل بالضبط؛ فلا تمر النافذة ولا صفحات الإضافة ولا سكربت محتوى ولا إضافة أخرى.
+ * @param {{ id?: string, url?: string, tab?: object }} sender
+ * @param {{ id: string, getURL: (p: string) => string }} runtime
+ */
+export function isBackgroundSender(sender, runtime) {
+  return isExtensionPage(sender, runtime) && !sender.tab && BACKGROUND_PAGES.some((p) => sender.url === runtime.getURL(p));
+}
+
 const isTyped = (req, type) => isPlainObject(req) && req.type === type && req.v === MESSAGE_VERSION;
 
 /** @param {unknown} req */

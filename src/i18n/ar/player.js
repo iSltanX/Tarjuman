@@ -121,6 +121,10 @@ export default Object.freeze({
     markedAmbiguous: 'عُلّم للمراجعة: {count}.',
     markedNone: 'المواضع الغامضة معلّمة من قبل.',
     offsetToast: 'الإزاحة {offset} ث',
+    // أوامر الاختصارات (الفكرة ١٠، ح-55): رسالة الوضع الجديد، وما يقال حين لا يفعل الأمر شيئًا.
+    modeToast: 'وضع العرض: {mode}',
+    commandNeedsTranslation: 'لا ترجمة لهذا الفيديو بعد. ارفع ترجمتك أولًا.',
+    replayNone: 'لم تبدأ جملة من الترجمة قبل هذه اللحظة.',
     downloadedLine: 'نُزّل {name}',
     downloadedParts: 'نُزّل {parts}',
     partsWord: ({ n }) => (n === 2 ? 'جزآن' : n % 100 >= 3 && n % 100 <= 10 ? `${n} أجزاء` : `${n} جزءًا`),

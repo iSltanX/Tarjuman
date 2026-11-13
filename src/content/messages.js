@@ -1,8 +1,10 @@
 // الرد على صفحات الإضافة (عقد messages §٢ و§٥–§٧): حالة الفيديو الحالي (موسّعة بالخانات والالتقاط وحالة الأدوات)،
 // وتشخيص الصفحة (أعداد ورموز)، والقفز إلى زمن في الفيديو المعروض وحده. لا يُقبل شيء إلا من صفحة في الإضافة نفسها،
-// والقفز لا يغيّر إلا الزمن. ما عدا ذلك تغيّره الصفحات في التخزين، والمتحكم يسمع تغيّره.
+// والقفز لا يغيّر إلا الزمن. ما عدا ذلك تغيّره الصفحات في التخزين، والمتحكم يسمع تغيّره. ومنذ الفكرة ١٠ (§٩) أمر الاختصار من العامل
+// الخلفي وحده، يمر إلى أفعال جلسة الشريط.
 import {
-  MESSAGE_VERSION, buildVideoStateReply, isExtensionPage, isPageDiagnosticsRequest, isPasteImportRequest, isSeekRequest, isVideoIdRequest, isVideoStateRequest, MSG,
+  MESSAGE_VERSION, buildVideoStateReply, isBackgroundSender, isCommandRequest, isExtensionPage, isPageDiagnosticsRequest, isPasteImportRequest, isSeekRequest, isVideoIdRequest,
+  isVideoStateRequest, MSG,
 } from '../core/model/messages.js';
 import { PANEL_SELECTORS, SELECTORS, seekMainVideo } from '../player/youtube-dom.js';
 
@@ -105,6 +107,15 @@ export function installMessageHandler({ controller, mounted, runtime = globalThi
       else if (req.videoId !== s.videoId) sendResponse({ v: MESSAGE_VERSION, ok: false, code: 'TJ_WRONG_VIDEO' });
       else {
         const r = safe(() => mounted.controls?.importText?.(req.text)) ?? { ok: false, code: 'TJ_RELOAD_PAGE' };
+        sendResponse(r.ok ? { v: MESSAGE_VERSION, ok: true } : { v: MESSAGE_VERSION, ok: false, code: r.code });
+      }
+    } else if (req && typeof req === 'object' && req.type === MSG.command) {
+      // الفكرة ١٠ (ح-55، §٩): الاختصار الذي ربطه المستخدم في متصفحه، من العامل الخلفي وحده (لا من النافذة ولا صفحات الإضافة)، ويُتجاهل
+      // من غيره بلا رد. والفعل في جلسة الشريط بعلامتها: لا فعل بلا أدوات مركّبة (صفحة ليست مشاهدة)، ورسالة قصيرة بلا ترجمة.
+      if (!isBackgroundSender(sender, runtime)) return undefined;
+      if (!isCommandRequest(req)) sendResponse({ v: MESSAGE_VERSION, ok: false, code: 'TJ_BAD_MESSAGE' });
+      else {
+        const r = safe(() => mounted.controls?.command?.(req.name)) ?? { ok: false, code: 'TJ_NO_VIDEO' };
         sendResponse(r.ok ? { v: MESSAGE_VERSION, ok: true } : { v: MESSAGE_VERSION, ok: false, code: r.code });
       }
     }
