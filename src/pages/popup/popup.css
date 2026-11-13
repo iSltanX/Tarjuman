@@ -13,7 +13,7 @@
 /* بطاقة الفيديو الحالي. */
 .tj-popup__card { display: flex; flex-direction: column; gap: 10px; align-items: stretch; padding: 14px; border-radius: var(--tj-radius-card); background: var(--tj-surface); border: 1px solid var(--tj-border); }
 .tj-popup__card .tj-rule { margin: 0; }
-.tj-popup__title { font: 700 15px/23px var(--tj-font-head); }
+.tj-popup__title { font: 700 16px/24px var(--tj-font-head); }
 .tj-popup__line { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
 .tj-popup__pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .tj-popup__pills .tj-pill .tj-icon { width: 14px; height: 14px; }

@@ -334,9 +334,7 @@ const ODD_ALLOWED = [
   ['src/pages/library/library.css', '.lib-chip', 'padding', '0 11px'], // 11 + حدّ شفاف 1 = 12
   ['src/pages/library/library.css', '.lib-result .tj-icon', 'margin-top', '3px'], // (20 − 14) / 2: أيقونة 14 على سطر 20
   ['src/pages/settings/settings.css', '.st-scale__mark', 'margin-inline-start', '-1px'], // نصف علامة عرضها 2
-  ['src/pages/settings/settings.css', '.st-gl__submit', 'padding-top', '27px'], // سطر التسمية 21 + فجوة الحقل 6
   ['src/ui/base.css', '.tj-sr-only', 'margin', '-1px'], // نمط الإخفاء البصري المعياري
-  ['src/ui/components.css', '.tj-alert .tj-icon', 'margin-top', '3px'], // (23 − 18) / 2: أيقونة 18 على سطر 23
   ['src/ui/components.css', '.tj-choice__option > input[type="radio"]', 'margin', '3px 0 0'], // هامش المتصفح العلوي للدائرة مع سطر 20
   ['src/ui/components.css', '.tj-seg', 'padding', '3px'], // 3 + حدّ شفاف 1 = 4، والمقطّعة 40
   ['src/ui/components.css', '.tj-menu__grp', 'gap', '1px'], // شعري بين البنود
@@ -383,4 +381,48 @@ test('ت-١٢ (ج): نص الهوية §٥: سلّم 2 داخل المكوّنا
   assert.doesNotMatch(doc, /مسافات على سلّم 4 \(4…64\)/);
   assert.match(doc, /سلّم 2 داخل المكوّنات/);
   assert.match(doc, /سلّم 4 بين الكتل/);
+});
+
+// ---- ت-١٢ (ب) كاملًا (تحقق مستقل، 2026-11-13): كل حجم خط على سلّمي الهوية §٤، وكل سطر على سلّم 2 ----
+/** سلّما §٤: Almarai 16/14/13/12 (النص والحقول والأزرار والقوائم)، وCairo 30/22/18/16/14 (العناوين واسم المنتج). */
+const BODY_SIZES = [16, 14, 13, 12];
+const HEAD_SIZES = [30, 22, 18, 16, 14];
+
+test('ت-١٢ (ب): كل حجم خط بالبكسل في الصفحات واللوحة والمشغّل على سلّم خطه في الهوية §٤، وكل سطر بالبكسل زوجي', async () => {
+  const { groupCss, layerCss } = await import('../../../src/player/controls/styles.js');
+  const { panelCss } = await import('../../../src/player/panel/styles.js');
+  const sheets = [...walk(path.join(ROOT, 'src'))].filter((f) => f.endsWith('.css')).map((f) => [path.relative(ROOT, f), read(path.relative(ROOT, f))]);
+  sheets.push(['player/controls', `${groupCss()}\n${layerCss()}`.replace(/\/\*[\s\S]*?\*\//g, '')], ['player/panel', panelCss().replace(/\/\*[\s\S]*?\*\//g, '')]);
+  const off = [];
+  let seen = 0;
+  for (const [file, css] of sheets) {
+    for (const [, selector, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const where = `${file}: ${selector.trim()}`;
+      for (const decl of body.split(';')) {
+        const at = decl.indexOf(':');
+        if (at < 0) continue;
+        const prop = decl.slice(0, at).trim();
+        const val = decl.slice(at + 1).trim();
+        if (prop === 'font') {
+          // «font: <الوزن> <الحجم>px[/<السطر>px] var(--…-font-…)»؛ والأحادي العرض خارج السلّم (§٤ لا يحدّد له مقاسًا).
+          const m = /^\d+\s+(\d+(?:\.\d+)?)px(?:\/(\d+(?:\.\d+)?)px)?\s+var\(--[\w-]*font-(body|head|mono)\)/.exec(val);
+          if (!m) continue;
+          seen++;
+          const [, size, line, family] = m;
+          if (family !== 'mono' && !(family === 'head' ? HEAD_SIZES : BODY_SIZES).includes(Number(size))) off.push(`${where} { font: ${val} } — الحجم ${size} خارج سلّم ${family === 'head' ? 'Cairo' : 'Almarai'}`);
+          if (line && Number(line) % 2 !== 0) off.push(`${where} { font: ${val} } — السطر ${line} فردي`);
+        } else if (prop === 'font-size') {
+          const m = /^(\d+(?:\.\d+)?)px$/.exec(val);
+          if (!m) continue;
+          seen++;
+          if (![...new Set([...BODY_SIZES, ...HEAD_SIZES])].includes(Number(m[1]))) off.push(`${where} { font-size: ${val} } — خارج السلّمين`);
+        } else if (prop === 'line-height') {
+          const m = /^(\d+(?:\.\d+)?)px$/.exec(val);
+          if (m && Number(m[1]) % 2 !== 0) off.push(`${where} { line-height: ${val} } — فردي`);
+        }
+      }
+    }
+  }
+  assert.ok(seen > 150, `قُرئت ${seen} تصريحًا فقط`);
+  assert.deepEqual(off, [], 'أحجام خارج السلّم');
 });
