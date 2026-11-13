@@ -6,7 +6,7 @@
 
 ```text
 src/
-  manifest.json                    مشترك (مجمَّد): كل نقاط الدخول والأذونات
+  manifest.json                    مشترك (مجمَّد): كل نقاط الدخول والأذونات، وأوامر الاختصارات بلا مفاتيح (الفكرة ١٠، §١٣)
   main-world/capture.js            مجمَّد (P1): الالتقاط في MAIN
   content/{main,bridge,controller,messages}.js   مشترك (مجمَّد)
   extract/                         P3 — index.js واجهة ExtractorAdapter (§٢)
@@ -125,6 +125,12 @@ MountHandle = { state: "stub" | "waiting" | "mounted" | "error", unmount(): void
 - الرموز داخل المشغّل نصًا من `playerTokensCss()` (§٩)، فسكربت المحتوى لا يحمّل ملفات CSS من الإضافة.
 
 - **حصر الأزرار (F-05، 2026-11-09):** `mountControls` لا تركّب أزرار الشريط إلا حين يعيد `videoIdFromLocation` معرّفًا (صفحة مشاهدة أو `/live/`)، وتبقى في الانتظار في غيرها. وغلافا `fetch` وXHR باقيان في كل الصفحات لأن التنقل داخل يوتيوب بلا إعادة تحميل.
+- **أوامر الاختصارات (الفكرة ١٠، القرار ح-55، حُسم نيابةً عن سلطان بتفويضه):** مقبض `mountControls` فيه `command(name) → { ok: true } | { ok: false, code }`، يستدعيه معالج الرسائل لرسالة `tj:command` من العامل الخلفي (عقد الرسائل §٩)، وبلا جلسة `TJ_NO_VIDEO`. والجلسة تمرّره إلى أفعالها، ولكل أمر رسالة قصيرة في قناتها (`COMMAND_CHANNEL`) تتبدّل مع الضغطات ولا تتراكم:
+  - `display-mode`: الوضع التالي بترتيب قائمة «الترجمة» (`ar` ← `dual` ← `off`) بـ`controller.setDisplayMode`، متخطيًا `dual` بلا `state.english`، ورسالة بالوضع (`modeToast`).
+  - `offset-earlier` و`offset-later`: `nudge(∓1, { notify: true })`، أي `controller.nudgeOffset` بخطوة الإعدادات، ورسالة بالإزاحة (`nudgeFlash`) بدل التلميح العابر، لأن التلميح داخل الطبقة يُخفى مع الشريط والرسائل خارجها.
+  - `mark-review`: `markVisible()` كما هو («علّم للمراجعة»).
+  - `replay-line`: `seekMainVideo` إلى بداية الجملة التي يعيدها `replayCueIndex(cues, lookupMs(…))` في `sentence.js` (الظاهرة، وإلا آخر ما بدأ) زائدًا الإزاحة، بلا تشغيل ولا إيقاف؛ وأثناء الإعلان `CT_AD_SHOWING`، وقبل أول جملة نص `replayNone`.
+  - بلا ترجمة (`CT_NEEDS_ARABIC`، نص `commandNeedsTranslation`) أو أثناء قراءتها (`CT_LOADING`): رسالة واحدة ولا فعل.
 
 ## ٤. نقطة الدخول — `src/content/main.js` (مجمَّد)
 
@@ -331,14 +337,14 @@ SAVE_TYPES = { srt, vtt, txt, md, json }   // النوع من الامتداد �
 
   ودائمًا `conflictAction: 'uniquify'`: **لا كتابة فوق ملف قائم**. وسلوك كل وضع في كل متصفح كما ثبت حيًا في «ما ثبت حيًا» أدناه.
 - **التحقق قبل التنزيل:** الاسم 1..150 محرفًا من الحروف (ومنها العربية) والأرقام و`. _ -` والمسافة، بلا فواصل مسار ولا `..` ولا محارف تحكم، ولا يبدأ بنقطة ولا مسافة (ويبدأ بـ`_` أو `-` كما يبدأ معرّف يوتيوب؛ تدقيق 5fedcb9)؛ وامتداده `.srt` أو `.vtt` (الفكرة ١١) أو `.txt` أو `.md` أو `.json`؛ والنوع من الامتداد لا من المستدعي؛ والحجم: عبر العامل حتى `maxMessageChars`، وما فوقه يرجع سكربت المحتوى إلى تنزيل Blob مع إشعار `SV_FALLBACK_BLOB` (لا رفض)؛ ومن الصفحات حتى `maxPageBytes` **بالبايت الفعلي** (`utf8Length`)، وهو حد قراءة النسخة الاحتياطية نفسه (عقد [`backup.md`](backup.md) §١؛ تدقيق 7a66f91، U55، قرار Q28). وإلا `SV_BAD_FILE` أو `SV_TOO_LARGE` (الأخير لحد الصفحات) بلا تنزيل.
-- **العامل الخلفي** `src/background/worker.js` (`background.service_worker` في البيان، وفي بناء Firefox صفحة خلفية `background.scripts` من `scripts/targets.mjs`) فيه أربع خدمات لا منطق منتج غيرها: الكاتب الواحد للتخزين (`createStoreService` في `store-service.js`، عقد الرسائل §٨)، والحفظ، وتلميح أيقونة الإضافة بلغة الواجهة (`installActionTitle` في `action-title.js`)، وتثبيت حال صور المحفوظات عند الترقية في Chromium (`installThumbsPin` في `thumbs-pin.js`، و2). **والحفظ** `createSaveService({ runtime, downloads, store })` في `save-service.js` يستمع لـ`tj:save-file`، ويقبلها من سكربت الإضافة وحده (`sender.id` ثم سكربت محتوى على يوتيوب أو صفحة إضافة)، ويقرأ الوضع من التفضيلات، ويتحقق من الملف، ويحفظ النص من رابط `blob:` حيث للخلفية `URL.createObjectURL` (صفحة الخلفية في Firefox، الذي يرفض `data:` في `downloads.download`؛ ويبقيها حية ما دام التنزيل قد يقرأ الرابط، تحقق Gemini، B4)، وإلا من رابط `data:` (عامل الخدمة في Chromium)، ويسجّل المعرّف بـ`store.setLastSave`.
+- **العامل الخلفي** `src/background/worker.js` (`background.service_worker` في البيان، وفي بناء Firefox صفحة خلفية `background.scripts` من `scripts/targets.mjs`) فيه خمس خدمات لا منطق منتج غيرها: الكاتب الواحد للتخزين (`createStoreService` في `store-service.js`، عقد الرسائل §٨)، والحفظ، وتلميح أيقونة الإضافة بلغة الواجهة (`installActionTitle` في `action-title.js`)، وتثبيت حال صور المحفوظات عند الترقية في Chromium (`installThumbsPin` في `thumbs-pin.js`، و2)، وتمرير أوامر الاختصارات إلى التبويب النشط (`installCommands({ commands, tabs })` في `commands.js`، الفكرة ١٠، عقد الرسائل §٩)، ومستمعه متزامن كمستمعَي الرسائل. **والحفظ** `createSaveService({ runtime, downloads, store })` في `save-service.js` يستمع لـ`tj:save-file`، ويقبلها من سكربت الإضافة وحده (`sender.id` ثم سكربت محتوى على يوتيوب أو صفحة إضافة)، ويقرأ الوضع من التفضيلات، ويتحقق من الملف، ويحفظ النص من رابط `blob:` حيث للخلفية `URL.createObjectURL` (صفحة الخلفية في Firefox، الذي يرفض `data:` في `downloads.download`؛ ويبقيها حية ما دام التنزيل قد يقرأ الرابط، تحقق Gemini، B4)، وإلا من رابط `data:` (عامل الخدمة في Chromium)، ويسجّل المعرّف بـ`store.setLastSave`.
 - **الإذن محصور في ملفات ترجمان** (اعتماد سلطان 2026-11-02)، ويفرضه `check-static`:
   - `chrome.downloads` في `src/core/save/**` و`src/background/**` وحدهما.
   - لا يُستدعى منه إلا `download` و`search`، و`search` بالمعرّف وحده `search({ id })` لمعرّف نزّلته الإضافة نفسها (من نتيجة `download` أو `getLastSave`).
   - **«آخر ملف»:** `savedPath` لا يعيد مسارًا إلا لعنصر `byExtensionId` فيه معرّف الإضافة (`runtime.id`)، فلا يُعرض مسار تنزيل آخر صار يحمل الرقم المحفوظ (Firefox يعيد ترقيم السجل كل جلسة، ويفقد `byExtensionId` بعد إعادة التشغيل فيغيب السطر؛ تدقيق 7a66f91، U04).
   - لا `open` ولا `show` ولا `showDefaultFolder` ولا `erase` ولا `removeFile` ولا `cancel` ولا `pause` ولا `resume` ولا `acceptDanger` ولا `getFileIcon` ولا `setUiOptions` ولا `setShelfEnabled` ولا `drag`، ولا مستمع `onCreated` أو `onChanged` أو `onErased` أو `onDeterminingFilename` (تمس كل تنزيلات المتصفح).
 - **المكان الفعلي** `savedPath(id)`: من `downloads.search({ id })` لذلك الملف وحده، إن كانت حالته `complete` و`exists`؛ وإلا `null` فلا يُعرض مسار. **لا يُخزَّن مسار**، ولا يدخل التشخيص.
-- **البيان:** `permissions` = `storage` و`unlimitedStorage` و`downloads` وحدها (تحذير التثبيت الجديد الوحيد «إدارة التنزيلات»)، و`background: { service_worker: "background/worker.js" }`. لا `tabs` ولا `host_permissions`.
+- **البيان:** `permissions` = `storage` و`unlimitedStorage` و`downloads` وحدها (تحذير التثبيت الجديد الوحيد «إدارة التنزيلات»)، و`background: { service_worker: "background/worker.js" }`. لا `tabs` ولا `host_permissions`. ومنذ الفكرة ١٠ `commands` بالأوامر الخمسة، لكلٍّ `description` من رسائل البيان باللغتين وحده، **بلا `suggested_key`** ولا `global` ولا أمر خاص؛ وليس إذنًا ولا يُظهر تحذيرًا، ويفرض شكله `scripts/check-static.mjs` (`COMMAND_NAMES`) في بياني الهدفين، وطبقة Firefox لا تمسه.
 
 ### ما ثبت حيًا في P10
 
@@ -469,8 +475,8 @@ readingMetrics(cue) → { cps: number, longestLine: number }
 
 ```text
 src/
-  manifest.json                     مجمَّد بعد W6: الأذونات storage وunlimitedStorage وdownloads، والعامل الخلفي
-  background/worker.js، save-service.js   مجمَّد بعد W6: العامل الخلفي للحفظ وحده
+  manifest.json                     مجمَّد بعد W6: الأذونات storage وunlimitedStorage وdownloads، والعامل الخلفي (ومنذ الفكرة ١٠ commands بلا مفاتيح)
+  background/worker.js، save-service.js   مجمَّد بعد W6: العامل الخلفي للحفظ وحده (ثم الكاتب الواحد C2، وأوامر الاختصارات commands.js في الفكرة ١٠، §١٣)
   content/{main,bridge,controller,messages}.js   مجمَّد بعد W6 (§١٢، وعقد الرسائل §٥–§٧)
   core/
     model/                          مجمَّد بعد W6: + slots.js وmarks.js وbundle.js وprefs.js

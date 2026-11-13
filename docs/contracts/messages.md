@@ -1,6 +1,6 @@
 # عقد الرسائل
 
-> **مثبّت في P2 (2026-11-01)، ووسّعته P10 للإصدار الثاني (2026-11-02) ثم جُمِّد.** المسارات ثلاثة في الإصدار الأول (§١–§٣)، ويضيف الثاني ثلاث رسائل محددة (§٥–§٧)؛ وكلها بيانات أو طلبات مقيّدة، لا أوامر عامة. **وأضافت C2 (تدقيق 7a66f91، قرار سلطان Q15، 2026-11-05) رسالة الكاتب الواحد `tj:store` (§٨).** الشيفرة: `src/content/bridge.js` و`src/content/messages.js` و`src/core/model/messages.js`، واختباراتها `test/unit/content/page-boundary.test.js`.
+> **مثبّت في P2 (2026-11-01)، ووسّعته P10 للإصدار الثاني (2026-11-02) ثم جُمِّد.** المسارات ثلاثة في الإصدار الأول (§١–§٣)، ويضيف الثاني ثلاث رسائل محددة (§٥–§٧)؛ وكلها بيانات أو طلبات مقيّدة، لا أوامر عامة. **وأضافت C2 (تدقيق 7a66f91، قرار سلطان Q15، 2026-11-05) رسالة الكاتب الواحد `tj:store` (§٨).** **وأضافت الفكرة ١٠ (القرار ح-55 في جولة 2026-11-13، حُسم نيابةً عن سلطان بتفويضه) رسالة الأمر `tj:command` من العامل الخلفي إلى سكربت المحتوى (§٩)، والأولى في هذا الاتجاه.** الشيفرة: `src/content/bridge.js` و`src/content/messages.js` و`src/core/model/messages.js` و`src/background/commands.js`، واختباراتها `test/unit/content/page-boundary.test.js`.
 
 ## ١. MAIN → ISOLATED (الالتقاط)
 
@@ -45,7 +45,7 @@ chrome.tabs.sendMessage(tabId, { type: "tj:get-video-state", v: 1 })   // videoS
 ## ٤. الممنوعات
 
 - MAIN ← الإضافة: لا أوامر. الإضافة → MAIN: لا رسائل.
-- لا `chrome.runtime.sendMessage` من سكربت المحتوى إلا رسالتي الحفظ (§٧) والتخزين (§٨) إلى العامل الخلفي، ولا `externally_connectable`، ولا `runtime.connect`. والعامل الخلفي للحفظ والكاتب الواحد وحدهما.
+- لا `chrome.runtime.sendMessage` من سكربت المحتوى إلا رسالتي الحفظ (§٧) والتخزين (§٨) إلى العامل الخلفي، ولا `externally_connectable`، ولا `runtime.connect`. والعامل الخلفي للحفظ والكاتب الواحد، ومنذ الفكرة ١٠ لتمرير أوامر الاختصارات (§٩)، وحدها؛ ولا يرسل العامل إلى سكربت المحتوى إلا `tj:command`.
 - لا رسالة جديدة دون تغيير هذا العقد على `main`.
 
 ---
@@ -171,3 +171,18 @@ chrome.runtime.sendMessage({ type: "tj:store", v: 1, wid: "…", op: "put", vide
 - **العامل غير المتاح** بعد ثلاث إعادات: `ST_WRITE_FAILED`، ولا كتابة مباشرة بديلة.
 - **سياق الإضافة المبطَل** (تحقق Gemini، B5-ب): سكربت محتوى بقي في صفحة فُتحت قبل تحديث الإضافة أو إعادة تحميلها (`sendMessage` يرمي «Extension context invalidated.»، أو زال `chrome.runtime.id` بعد أن كان) يرد عليه الناقل نفسه `{ v: 1, ok: false, code: "TJ_RELOAD_PAGE" }` فورًا بلا إعادة، لا `ST_WRITE_FAILED` بعد الإعادات الثلاث؛ والقراءة في السياق نفسه كذلك (عقد التخزين §٣).
 
+## ٩. أمر الاختصار — `tj:command` (الفكرة ١٠، المسار ب، القرار ح-55 في جولة 2026-11-13، حُسم نيابةً عن سلطان بتفويضه)
+
+العامل الخلفي → سكربت المحتوى في التبويب النشط. والأوامر في البيان (`commands`) **بلا `suggested_key`**، فلا يصل حدثها حتى يربطها المستخدم في صفحة اختصارات متصفحه؛ والفحص الثابت يقبل المفتاح بالأسماء الخمسة وحدها ويرفض المفتاح المقترح.
+
+```js
+chrome.commands.onCommand.addListener((name, tab) => …)                        // src/background/commands.js (installCommands)
+chrome.tabs.sendMessage(tabId, { type: "tj:command", v: 1, name: "display-mode" })   // commandRequest(name)
+// name: "display-mode" | "offset-earlier" | "offset-later" | "mark-review" | "replay-line"   (COMMAND_NAMES)
+// الرد: { v: 1, ok: true } | { v: 1, ok: false, code: "TJ_BAD_MESSAGE" | "TJ_NO_VIDEO" | "CT_NEEDS_ARABIC" | "CT_LOADING" }
+```
+
+- **التبويب:** من وسيط الحدث (`tab.id`؛ Chrome، وFirefox منذ 126 والحد الأدنى 144)، وإلا `tabs.query({ active: true, currentWindow: true })` احتياطًا؛ وكلاهما بلا إذن `tabs` (المعرّف يصل بلا العنوان). ولا شيء بلا تبويب صالح، ولا لاسم غير الخمسة (`isCommandName`).
+- **لا مستقبل:** العامل لا يعرف عنوان التبويب، فيرسل؛ وتبويب بلا سكربت ترجمان (موقع آخر، أو صفحة يوتيوب فُتحت قبل تثبيت الإضافة أو تحديثها) يرفض الإرسال، فيُبتلع الرفض **بصمت**: لا موضع يُعرض فيه شيء بلا إذن جديد. والرد لا يُنتظر لشيء، ويُعاد للاختبار وحده.
+- **هوية المرسِل:** سكربت المحتوى يقبلها من **العامل الخلفي للإضافة نفسها وحده** (`isBackgroundSender`): `isExtensionPage` (§٢)، وبلا `sender.tab`، وعنوانه بالضبط `runtime.getURL("background/worker.js")` (عامل الخدمة في Chromium) أو `runtime.getURL("_generated_background_page.html")` (صفحة الخلفية التي يولّدها Firefox من `background.scripts`، ولم يثبت حيًّا بعد). وما عداه، ومنه نافذة الإضافة وصفحاتها، يُتجاهل بلا رد. والطلب ثلاثة مفاتيح بالضبط (`isCommandRequest`)، والمعيب من العامل `TJ_BAD_MESSAGE`.
+- **الفعل:** `mounted.controls.command(name)` (عقد الواجهات §٣) إلى أفعال جلسة الشريط نفسها؛ وبلا أدوات مركّبة (صفحة ليست مشاهدة، أو قبل ظهور الشريط) `TJ_NO_VIDEO` بلا شيء، وبلا ترجمة أو أثناء قراءتها رسالة قصيرة في المشغّل برمزها. والرسالة لا تحمل غير الاسم: لا زمن ولا قيمة ولا نص.
