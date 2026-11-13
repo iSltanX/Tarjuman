@@ -94,19 +94,22 @@ test('ت-٩: «لماذا؟» زر يُفعَّل بلوحة المفاتيح و
 test('القرار ٢٩: «فعّل CC» بعدد لغات الفيديو بصيغ العدد، وخطوات الاختيار بلا عدد، بالعربية والإنجليزية', async () => {
   const { setLocale } = await import('../../../../src/i18n/index.js');
   const { otherLanguagesLine } = await import('../../../../src/player/controls/text.js');
-  assert.equal(ccLanguagesLine(1), 'في هذا الفيديو لغة واحدة: فعّل ترجمة يوتيوب (CC) واخترها، ثم افتح هذه القائمة.');
+  // ح-40: «فتظهر في هذه القائمة» بدل «ثم افتح هذه القائمة»، لأن الضغط على CC لا يغلقها وهي تتحدّث بالالتقاط.
+  assert.equal(messageFor('CT_NOT_CAPTURED'), 'فعّل ترجمة يوتيوب (CC) واختر اللغة التي تريدها، فتظهر في هذه القائمة.');
+  assert.equal(ccLanguagesLine(1), 'في هذا الفيديو لغة واحدة: فعّل ترجمة يوتيوب (CC) واخترها، فتظهر في هذه القائمة.');
   // «إحداهما» مع المثنى و«إحداها» مع الجمع (تحقق مستقل §١٠، البند ١).
-  assert.equal(ccLanguagesLine(2), 'في هذا الفيديو لغتان: فعّل ترجمة يوتيوب (CC) واختر إحداهما، ثم افتح هذه القائمة.');
-  assert.equal(ccLanguagesLine(3), 'في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، ثم افتح هذه القائمة.');
-  assert.equal(ccLanguagesLine(11), 'في هذا الفيديو 11 لغة: فعّل ترجمة يوتيوب (CC) واختر إحداها، ثم افتح هذه القائمة.');
+  assert.equal(ccLanguagesLine(2), 'في هذا الفيديو لغتان: فعّل ترجمة يوتيوب (CC) واختر إحداهما، فتظهر في هذه القائمة.');
+  assert.equal(ccLanguagesLine(3), 'في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، فتظهر في هذه القائمة.');
+  assert.equal(ccLanguagesLine(11), 'في هذا الفيديو 11 لغة: فعّل ترجمة يوتيوب (CC) واختر إحداها، فتظهر في هذه القائمة.');
   assert.equal(otherLanguagesLine(1, { other: false, counted: false }), `لاختيارها: ${LABELS.pickSteps}`);
   assert.equal(otherLanguagesLine(2, { other: false, counted: false }), `لاختيار إحداهما: ${LABELS.pickSteps}`);
   assert.equal(otherLanguagesLine(3, { other: false, counted: false }), `لاختيار إحداها: ${LABELS.pickSteps}`);
   assert.equal(otherLanguagesLine(2), `في هذا الفيديو لغتان أخريان. لاختيار إحداهما: ${LABELS.pickSteps}`);
   setLocale('en');
   try {
-    assert.equal(ccLanguagesLine(1), 'This video has 1 language: turn on YouTube subtitles (CC) and choose it, then open this menu.');
-    assert.equal(ccLanguagesLine(3), 'This video has 3 languages: turn on YouTube subtitles (CC) and choose one, then open this menu.');
+    assert.equal(messageFor('CT_NOT_CAPTURED'), 'Turn on YouTube subtitles (CC) and choose the language you want. It’ll appear in this menu.');
+    assert.equal(ccLanguagesLine(1), 'This video has 1 language: turn on YouTube subtitles (CC) and choose it. It’ll appear in this menu.');
+    assert.equal(ccLanguagesLine(3), 'This video has 3 languages: turn on YouTube subtitles (CC) and choose one. It’ll appear in this menu.');
     assert.ok(otherLanguagesLine(3, { other: false, counted: false }).startsWith('To choose one: CC, then Settings'));
   } finally {
     setLocale('ar');

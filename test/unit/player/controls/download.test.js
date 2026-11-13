@@ -23,7 +23,9 @@ const withTrack = (over = {}) => mountPage({ state: makeState({ captured: [track
 test('لم يُلتقط مسار: إرشاد لتفعيل CC واختيار English، و«لماذا؟» يكشف سطري الشرح، ولا زر تنزيل', () => {
   const page = mountPage();
   open(page);
-  assert.match(page.ui.menuText(), /فعّل ترجمة يوتيوب \(CC\) واختر اللغة التي تريدها، ثم افتح هذه القائمة\./);
+  // ح-40: بلا «ثم افتح هذه القائمة»؛ الضغط على CC لا يغلقها، فتظهر اللغة فيها حين تُلتقط (f7-cc-stuck.test.js).
+  assert.match(page.ui.menuText(), /فعّل ترجمة يوتيوب \(CC\) واختر اللغة التي تريدها، فتظهر في هذه القائمة\./);
+  assert.equal(page.ui.menuText().includes('افتح هذه القائمة'), false);
   assert.ok(page.ui.item(DL) === null);
   assert.equal(page.ui.menuText().includes('لا يرسل أي طلب'), false);
   click(page.ui.item('لماذا؟'));
@@ -66,7 +68,7 @@ test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-0
   // يتيحها خلف «لماذا؟» (ت-٩).
   const none = mountPage({ state: makeState({ available }) });
   open(none);
-  assert.ok(none.ui.menuText().includes('في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، ثم افتح هذه القائمة.'));
+  assert.ok(none.ui.menuText().includes('في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، فتظهر في هذه القائمة.'));
   assert.equal(none.ui.menu().querySelector('[data-fid="otherLangs"]'), null, 'خلف «لماذا؟»');
   click(none.ui.item('لماذا؟'));
   const n2 = none.ui.menu().querySelector('[data-fid="otherLangs"]');

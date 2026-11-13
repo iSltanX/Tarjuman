@@ -174,7 +174,7 @@ export default Object.freeze({
   CT_PLAYER_NOT_FOUND: 'Tarjuman couldn’t find YouTube’s player bar; YouTube has most likely changed its page. Reload the page; if it persists, copy the page diagnostics from here.',
   CT_BAR_OVERFLOW: 'The player bar is too narrow for Tarjuman’s tools and YouTube’s tools together at this width. Widen the window or use theater mode.',
 
-  CT_NOT_CAPTURED: 'Turn on YouTube subtitles (CC) and choose the language you want, then open this menu.',
+  CT_NOT_CAPTURED: 'Turn on YouTube subtitles (CC) and choose the language you want. It’ll appear in this menu.',
   CT_CC_NOT_CAPTURED: 'YouTube subtitles (CC) are on, but Tarjuman didn’t capture them. Turn CC off and on again; if it happens on every video, copy the page diagnostics from the extension popup.',
   CT_NO_CAPTIONS: 'This video has no subtitles available on YouTube.',
   CT_INCOMPLETE_AT: 'The last subtitle is at {last} and the video is {duration}; the text may be incomplete.',

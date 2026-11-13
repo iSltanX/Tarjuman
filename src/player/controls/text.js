@@ -57,8 +57,8 @@ export function otherLanguagesLine(n, { other = true, counted = true } = {}) {
 }
 
 /**
- * رسالة القائمة بلا التقاط ولغات الفيديو معروفة (القرار ٢٩): «في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، ثم افتح
- * هذه القائمة.» بدل CT_NOT_CAPTURED وعددٍ خلف «لماذا؟». @param {number} n
+ * رسالة القائمة بلا التقاط ولغات الفيديو معروفة (القرار ٢٩): «في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، فتظهر
+ * في هذه القائمة.» بدل CT_NOT_CAPTURED وعددٍ خلف «لماذا؟». @param {number} n
  */
 export const ccLanguagesLine = (n) => T('ccLanguages', { n, count: formatCount(n, COUNT_FORMS.language) });
 

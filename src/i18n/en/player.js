@@ -108,7 +108,7 @@ export default Object.freeze({
     otherPickNone: 'To choose another language: {steps}',
     otherWhat: ({ n, count, other }) => (!other ? count : n === 1 ? '1 other language' : `${n} other languages`),
     otherInVideo: ({ n, what, steps }) => `This video has ${what}. To choose ${n === 1 ? 'it' : 'one'}: ${steps}`,
-    ccLanguages: ({ n, count }) => `This video has ${count}: turn on YouTube subtitles (CC) and choose ${n === 1 ? 'it' : 'one'}, then open this menu.`,
+    ccLanguages: ({ n, count }) => `This video has ${count}: turn on YouTube subtitles (CC) and choose ${n === 1 ? 'it' : 'one'}. It’ll appear in this menu.`,
     pickWhich: ({ n, steps }) => `To choose ${n === 1 ? 'it' : 'one'}: ${steps}`,
     syncAt: 'At {time}',
     slotToast: 'Translation {n}',
