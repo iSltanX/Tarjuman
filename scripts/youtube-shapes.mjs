@@ -1,10 +1,18 @@
 // «هل تغيّر يوتيوب؟» (ف8، 2026-11-10): أشكال بلا قيم لما يعتمد عليه ترجمان في صفحة يوتيوب، ومقارنتها بخط أساس محفوظ في المستودع
-// (قرار سلطان ق10: أشكال بلا قيم). أربعة أشياء: وجود العناصر التي في SELECTORS، وشكل طلب الترجمة (أسماء معاملاته بلا قيمها؛
+// (قرار سلطان ق10: أشكال بلا قيم). أربعة أشياء: وجود العناصر التي في WATCHED (SELECTORS وزمن المشغّل)، وشكل طلب الترجمة (أسماء معاملاته بلا قيمها؛
 // والمسار لا يُحفظ: المشغّل الحي يجمع طلبات الترجمة وحدها، وفحص الأسرار يمنع مسارها في fixtures)، وشكل قائمة المسارات في بيانات المشغّل (المفاتيح وأنواعها)، وأحداث التنقل التي رُئيت. يذكر الفروق ولا يحكم بالفشل:
 // يوتيوب يجرّب واجهات مختلفة، والحكم لمن يقرأ. وحدة نقية بلا متصفح ولا شبكة؛ يستعملها المشغّل الحي
 // test/live/harness/youtube-shapes.mjs (بإذن سلطان لكل جولة) وجولة المشغّل المحلي واختبارات الوحدة.
+import { CLASSES, SELECTORS } from '../src/player/youtube-dom.js';
 
 export const SHAPES_VERSION = 1;
+
+/**
+ * ما يُفحص وجوده في صفحة يوتيوب (مفاتيح dom في اللقطة): SELECTORS كلها، ومعها ما تبحث عنه الشيفرة بصنفه داخل عنصر منها، بالطريقة
+ * نفسها: زمن المشغّل (CLASSES.timeDisplay داخل الأدوات اليسرى) الذي يقيس به src/player/controls/bar.js قصّ الزمن والمساحة (ت-١).
+ * فإن غيّر يوتيوب اسمه أو أخرجه من الأدوات اليسرى ظهر «غاب: dom.timeDisplay».
+ */
+export const WATCHED = Object.freeze({ ...SELECTORS, timeDisplay: `${SELECTORS.leftControls} .${CLASSES.timeDisplay}` });
 /** أحداث يوتيوب التي يسمعها ترجمان (EVENTS في src/player/youtube-dom.js، و yt-player-updated في الالتقاط). */
 export const NAV_EVENTS = Object.freeze(['yt-navigate-start', 'yt-navigate-finish', 'yt-page-data-updated', 'yt-player-updated']);
 const MAX_DEPTH = 4;
@@ -45,7 +53,7 @@ export function requestShape(url) {
 /**
  * يُجمع داخل صفحة يوتيوب (يُمرَّر إلى evaluate بنصه، فلا يعتمد على شيء خارجه): وجود كل محدد، وشكل قائمة المسارات من بيانات
  * المشغّل التي في الصفحة. أسماء وأنواع ونعم/لا فقط.
- * @param {Record<string, string>} selectors SELECTORS من src/player/youtube-dom.js
+ * @param {Record<string, string>} selectors WATCHED (SELECTORS من src/player/youtube-dom.js وزمن المشغّل)
  */
 export function collectInPage(selectors) {
   const shape = (v, d) => {

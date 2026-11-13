@@ -126,26 +126,50 @@ export async function seekAndRead(page, t) {
   return { requested: t, actual, text };
 }
 
-/** روابط المقترحات في العمود الجانبي (معرّفات فقط). */
+/**
+ * روابط المقترحات في العمود الجانبي (معرّفات فقط)، بلا الفيديو الحالي ولا رابط مخفي: في العمود رابط للفيديو الحالي بلا أبعاد
+ * (a#endpoint)، وكان أول ما يُعاد فتعجز النقرة عنه ولا يحدث تنقل (تحقق Gemini، Y2).
+ */
 export async function relatedIds(page) {
   return page.eval(() => {
+    const current = new URLSearchParams(location.search).get('v');
+    const shown = (a) => {
+      const r = a.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && getComputedStyle(a).visibility !== 'hidden';
+    };
     const ids = [];
     for (const a of document.querySelectorAll('#secondary a[href^="/watch?v="], #related a[href^="/watch?v="]')) {
       const id = new URLSearchParams(a.getAttribute('href').split('?')[1]).get('v');
-      if (id && /^[A-Za-z0-9_-]{11}$/.test(id) && !ids.includes(id)) ids.push(id);
+      if (id && /^[A-Za-z0-9_-]{11}$/.test(id) && id !== current && !ids.includes(id) && shown(a)) ids.push(id);
     }
     return ids;
   });
 }
 
-/** ينقر صورة مصغّرة لمقترح بمعرّفه (تنقل SPA داخل يوتيوب). */
-export async function clickRelated(page, id) {
-  const sel = `#secondary a[href^="/watch?v=${id}"]`;
-  const c = await page.centerOf(sel);
-  if (!c) return false;
+/**
+ * ينقر صورة مصغّرة لمقترح بمعرّفه نقرة حقيقية (تنقل SPA داخل يوتيوب)، ثم يتحقق أن الصفحة انتقلت إليه فعلًا (v في العنوان). يرمي إن
+ * لم يجد له رابطًا ظاهرًا أو لم يحدث الانتقال في المهلة، فلا تمضي جولة على تنقل لم يقع (كان يعيد false بصمت، Y2).
+ * @returns {Promise<true>}
+ */
+export async function clickRelated(page, id, { timeoutMs = 15000 } = {}) {
+  const locate = (scroll) => page.eval((x, doScroll) => {
+    const a = [...document.querySelectorAll(`#secondary a[href^="/watch?v=${x}"], #related a[href^="/watch?v=${x}"]`)]
+      .find((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+    if (!a) return null;
+    if (doScroll) a.scrollIntoView({ block: 'center', inline: 'center' });
+    const r = a.getBoundingClientRect();
+    return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+  }, { args: [id, scroll] });
+  if (!(await locate(true))) throw new Error(`تعذّر التنقل: لا رابط ظاهر للمقترح ${id}`);
   await human(400, 800);
-  const c2 = await page.centerOf(sel, { scroll: false });
-  await page.click(c2.x, c2.y);
+  const c = await locate(false);
+  if (!c) throw new Error(`تعذّر التنقل: اختفى رابط المقترح ${id}`);
+  await page.click(c.x, c.y);
+  const arrived = await page.waitFor((x) => new URLSearchParams(location.search).get('v') === x, { args: [id], timeoutMs });
+  if (!arrived) {
+    const now = await currentUrlVideoId(page).catch(() => null);
+    throw new Error(`تعذّر التنقل: نُقر المقترح ${id} وبقي العنوان على ${now ?? 'غير معروف'} بعد ${Math.round(timeoutMs / 1000)} ث`);
+  }
   return true;
 }
 
