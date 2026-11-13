@@ -138,7 +138,12 @@
 
 /* المصطلحات: جدول بخط شعري ورأس على الغائر. */
 .st-gl { display: flex; flex-direction: column; gap: var(--tj-space-3); width: 100%; max-width: 680px; }
-.st-gl__head { display: flex; align-items: center; gap: var(--tj-space-2); }
+.st-gl__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--tj-space-2); }
+/* قوائم الأزواج (الفكرة ٨): محدد «القاموس» برقائقه في رأس الجدول، ونموذج «+ زوج» في مكانه بحدّ البطاقة، وسطر «يُرسل أول 100». */
+.st-gl__lists { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.st-gl__pair { display: flex; flex-direction: column; gap: var(--tj-space-2); padding: var(--tj-space-3); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); }
+.st-gl__pair .tj-lang-row { max-width: 440px; }
+.st-gl__cap { margin: 0; }
 .st-gl__wrap { width: 100%; overflow-x: auto; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); }
 .st-gl__wrap[hidden], .st-gl__empty[hidden] { display: none; }
 .st-gl__table { width: 100%; border-collapse: collapse; font: 400 14px/22px var(--tj-font-body); }

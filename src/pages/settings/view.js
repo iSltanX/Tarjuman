@@ -7,6 +7,7 @@
 import { thumbnailsShown } from '../../core/consent/thumbnails.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
+import { DEFAULT_GLOSSARIES } from '../../core/model/glossaries.js';
 import { getDir, getLocale, isLocale, t, texts, LOCALE_NAMES } from '../../i18n/index.js';
 import { DEFAULT_SETTINGS, SUBTITLE_BACKGROUNDS, SUBTITLE_POSITIONS, SUBTITLE_SCALE } from '../../core/model/settings.js';
 import { alertBox, button, confirmDialog, el, icon, ltr, statusPill } from '../../ui/components.js';
@@ -98,6 +99,9 @@ export function createSettings(env) {
   const now = env.now ?? Date.now;
   let settings = DEFAULT_SETTINGS;
   let prefs = DEFAULT_PREFS;
+  /** قوائم المصطلحات لكل زوج (الفكرة ٨): مفتاحها glossaries، وتعذّر قراءتها يبقي آخر ما قُرئ. */
+  let glossaries = DEFAULT_GLOSSARIES;
+  const readGlossaries = () => (typeof store.getGlossaries === 'function' ? store.getGlossaries().catch(() => glossaries) : Promise.resolve(glossaries));
   // موافقة صور المحفوظات (Firefox وحده؛ core/consent/thumbnails.js): الصور تظهر بالمفتاح والموافقة معًا، وفي Chromium بالمفتاح.
   const thumbsConsent = env.thumbsConsent ?? { needed: false, check: () => Promise.resolve(true), request: () => Promise.resolve(true) };
   let thumbsGranted = !thumbsConsent.needed;
@@ -172,6 +176,31 @@ export function createSettings(env) {
   }
   const addTerm = (term, mark) => changeTerms(() => store.addTerm(term), mark);
   const removeTerm = (source, mark) => changeTerms(() => store.removeTerm(source), mark);
+
+  /**
+   * تعديل قوائم الأزواج على أحدث قيمة في الكاتب (الفكرة ٨)، كـchangeTerms: نتيجة العملية، أو null عند الفشل بعلامة «تعذّر الحفظ».
+   * @param {() => Promise<{ glossaries: object }>} op @param {{ flash: Function }} mark
+   */
+  async function changeLists(op, mark) {
+    let r;
+    try {
+      r = await op();
+    } catch {
+      mark.flash(messageFor('PG_SAVE_FAILED'), 'danger');
+      glossaries = await readGlossaries();
+      syncAll(true);
+      return null;
+    }
+    glossaries = r.glossaries;
+    syncAll();
+    return r;
+  }
+  const glossaryLists = {
+    add: (pair, mark) => changeLists(() => store.addGlossaryList(pair), mark),
+    remove: (pair, mark) => changeLists(() => store.removeGlossaryList(pair), mark),
+    addTerm: (pair, term, mark) => changeLists(() => store.addListTerm(pair, term), mark),
+    removeTerm: (pair, source, mark) => changeLists(() => store.removeListTerm(pair, source), mark),
+  };
 
   // ---- البُنى المشتركة ----
   const note = (text) => el('p', { className: 'tj-caption st-note', text, doc });
@@ -525,11 +554,14 @@ export function createSettings(env) {
   // ---- المصطلحات ----
   const glossaryAttachMark = marks();
   const glossaryListMark = marks();
-  const glossary = glossaryControl({ doc, getPrefs: () => prefs, savePrefs, addTerm, removeTerm, attachMark: glossaryAttachMark, listMark: glossaryListMark });
+  const glossary = glossaryControl({
+    doc, getPrefs: () => prefs, savePrefs, addTerm, removeTerm, attachMark: glossaryAttachMark, listMark: glossaryListMark,
+    getGlossaries: () => glossaries, lists: typeof store.addGlossaryList === 'function' ? glossaryLists : null, confirm,
+  });
   sync.push(() => glossary.sync());
   const glossarySection = section(byId.glossary,
     row(t('settings.glossary.attachRow'), glossaryAttachMark, glossary.attachRow, note(t('settings.glossary.attachNote'))),
-    row(t('settings.glossary.listRow'), glossaryListMark, el('div', { className: 'st-gl__head', children: [glossary.counter], doc }), glossary.list));
+    row(t('settings.glossary.listRow'), glossaryListMark, glossary.head, glossary.list));
 
   // ---- التخزين ----
   const usageText = el('span', { className: 'tj-body-sm st-quota__text', doc });
@@ -594,7 +626,7 @@ export function createSettings(env) {
     if (result?.reinit === 'failed') warnings.push(messageFor('PG_CLEAR_REINIT_FAILED'));
     if (result?.thumbs === 'failed') warnings.push(messageFor('PG_CLEAR_THUMBS_FAILED'));
     clearAlert.replaceChildren(...(warnings.length ? [alertBox({ tone: 'warning', title: messageFor('PG_CLEAR_DONE'), text: warnings.join('\n'), doc })] : []));
-    [settings, prefs] = await Promise.all([store.getSettings().catch(() => DEFAULT_SETTINGS), store.getPrefs().catch(() => DEFAULT_PREFS)]);
+    [settings, prefs, glossaries] = await Promise.all([store.getSettings().catch(() => DEFAULT_SETTINGS), store.getPrefs().catch(() => DEFAULT_PREFS), readGlossaries()]);
     syncAll();
     await Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage(), location.refreshLast()]).catch(() => {});
   }
@@ -643,6 +675,7 @@ export function createSettings(env) {
       await Promise.all([
         store.getSettings().then((s) => { settings = s; }).catch(() => {}),
         store.getPrefs().then((p) => { prefs = p; }).catch(() => {}),
+        readGlossaries().then((g) => { glossaries = g; }),
       ]);
       syncAll();
       await Promise.all([refreshCapacity(), refreshReminder(), refreshLibraryUsage()]);
@@ -817,6 +850,9 @@ export function createSettings(env) {
     if (change.prefs || change.cleared) {
       Promise.all([store.getPrefs(), readConsent()]).then(([p]) => { prefs = p; syncAll(); location.refreshLast(); }).catch(() => {});
     }
+    if (change.glossaries || change.cleared) {
+      readGlossaries().then((g) => { glossaries = g; syncAll(); });
+    }
     if (change.langPrefs || change.cleared) {
       langs.apply(change.langPrefs?.newValue ?? null);
       syncAll();
@@ -858,7 +894,7 @@ export function createSettings(env) {
     get prefs() { return prefs; },
     async load() {
       try {
-        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent(), langs.load(), readUiLocale(), readAccess()]);
+        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent(), langs.load(), readUiLocale(), readAccess(), readGlossaries().then((g) => { glossaries = g; })]);
         syncAll();
         for (const sec of Object.values(sections)) sec.removeAttribute('inert');
       } catch (err) {

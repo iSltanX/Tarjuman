@@ -14,6 +14,7 @@ export default Object.freeze({
     change: { one: 'تغيير واحد', oneAcc: 'تغييرًا واحدًا', two: 'تغييران', twoOblique: 'تغييرين', few: 'تغييرات', many: 'تغييرًا', single: 'تغيير' },
     language: { one: 'لغة واحدة', two: 'لغتان', twoOblique: 'لغتين', few: 'لغات', many: 'لغة', single: 'لغة' },
     file: { one: 'ملف واحد', oneAcc: 'ملفًا واحدًا', two: 'ملفان', twoOblique: 'ملفين', few: 'ملفات', many: 'ملفًا', single: 'ملف' },
+    term: { one: 'مصطلح واحد', oneAcc: 'مصطلحًا واحدًا', two: 'مصطلحان', twoOblique: 'مصطلحين', few: 'مصطلحات', many: 'مصطلحًا', single: 'مصطلح' },
   },
   bytes: { zero: '0 ك.ب', kb: '{n} ك.ب', mb: '{n} م.ب', gb: '{n} غ.ب' },
   nav: {

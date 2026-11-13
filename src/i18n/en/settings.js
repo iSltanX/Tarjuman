@@ -70,6 +70,16 @@ export default Object.freeze({
     colSource: 'Term', colTarget: 'Preferred translation', colNote: 'Note', delete: 'Delete',
     empty: 'No terms yet. Add a term and the translation you prefer, and the model will be asked to follow it.',
     fieldNote: 'Note (optional)', add: 'Add', addForm: 'Add a term', remove: 'Delete term {source}',
+    listPick: 'Glossary:', listGeneral: 'General', anySource: 'Any language',
+    addPair: 'Pair', addPairAria: 'Add a term list for a language pair', pairForm: 'New list for a language pair', createPair: 'Create list',
+    pairHint: 'The list’s terms are attached only to this pair’s instructions, ahead of the general glossary. “Any language” in “From” covers every file translated into the “To” language.',
+    pairEmpty: 'No terms in this pair’s list yet. Add a term and its translation, and it’s attached only to this pair’s instructions.',
+    removePair: 'Delete list…', removePairAria: 'Delete the {pair} list…', removeTitle: 'Delete the {pair} list?', removeConfirm: 'Delete list',
+    removeBody: ({ n, count }) => (Number(n) === 0
+      ? 'This empty list is deleted from this browser. The general glossary isn’t affected.'
+      : `This list and its ${count} are deleted from this browser. This can’t be undone. The general glossary isn’t affected.`),
+    sentCap: 'Only the first {max} are sent with this pair’s instructions ({count} in all): its list first, then the general glossary.',
+    sentCapGeneral: 'With some pair lists there are more than {max}, so only the first {max} are sent with that pair’s instructions: its list first, then the general glossary.',
   },
   location: {
     reset: 'Restore default location', resetDefault: 'The save location is already the default.',

@@ -12,6 +12,7 @@ export default Object.freeze({
     change: { one: '1 change', other: 'changes' },
     language: { one: '1 language', other: 'languages' },
     file: { one: '1 file', other: 'files' },
+    term: { one: '1 term', other: 'terms' },
   },
   bytes: { zero: '0 KB', kb: '{n} KB', mb: '{n} MB', gb: '{n} GB' },
   nav: {

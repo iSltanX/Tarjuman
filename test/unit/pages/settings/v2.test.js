@@ -169,6 +169,136 @@ test('«المصطلحات»: إضافة وحذف بتحقق، والعدّاد 
   assert.equal((await m.store.getPrefs()).glossary.attach, false);
 });
 
+/** يختار لغة في حقل منتقي اللغة بفتح قائمته والضغط على خيارها، كما يفعل المستخدم. */
+function pickLang(field, code) {
+  field.field.click();
+  const option = findAll(field.root.ownerDocument.body, (e) => e.getAttribute?.('role') === 'option' && e.getAttribute('data-code') === code)[0];
+  assert.ok(option, `خيار ${code}`);
+  option.click();
+}
+
+test('الفكرة ٨: بلا قوائم أزواج لا يظهر المحدد (التجربة كما كانت) وإلا «+ زوج»؛ وإنشاء قائمة يُظهره ويختارها، ومصطلحاتها في قائمتها لا في العام', async () => {
+  const m = await mount();
+  const sec = section(m, 'المصطلحات');
+  const g = m.settings.glossary;
+  const bar = findAll(sec, (e) => e.classList.contains('st-gl__lists'))[0];
+  const counter = findAll(sec, (e) => e.classList.contains('st-gl__count'))[0];
+  assert.equal(bar.hidden, true, 'المحدد مخفي حتى أول قائمة');
+  const addPair = buttonNamed(sec, 'إضافة قائمة مصطلحات لزوج لغتين');
+  assert.ok(addPair, '«+ زوج» ظاهر');
+  assert.equal(g.pairForm.hidden, true);
+
+  // نقص لغة: رسالة ولا كتابة.
+  addPair.click();
+  assert.equal(g.pairForm.hidden, false);
+  buttonNamed(g.pairForm, 'إنشاء القائمة').click();
+  await settle();
+  assert.ok(textOf(g.pairForm).includes(messageFor('PG_LIST_PAIR_MISSING')));
+  assert.deepEqual((await m.store.getGlossaries()).lists, []);
+
+  pickLang(g.picker.fromField, 'en');
+  pickLang(g.picker.toField, 'ar');
+  buttonNamed(g.pairForm, 'إنشاء القائمة').click();
+  await settle();
+  assert.deepEqual((await m.store.getGlossaries()).lists, [{ from: 'en', to: 'ar', terms: [] }]);
+  assert.equal(g.pairForm.hidden, true);
+  assert.equal(bar.hidden, false, 'المحدد ظاهر بعد أول قائمة');
+  const chips = findAll(bar, (e) => e.tagName === 'button');
+  assert.deepEqual(chips.map((b) => b.getAttribute('aria-label')), ['عام (0)', 'الإنجليزية ← العربية (0)']);
+  assert.equal(chips[1].getAttribute('aria-pressed'), 'true', 'القائمة الجديدة مختارة');
+  assert.ok(textOf(sec).includes('لا مصطلحات في قائمة هذا الزوج بعد'));
+
+  g.inputs.source.value = 'cache';
+  g.inputs.target.value = 'الذاكرة المؤقتة';
+  g.form.dispatchEvent({ type: 'submit', preventDefault() {} });
+  await settle();
+  assert.deepEqual((await m.store.getGlossaries()).lists[0].terms, [{ source: 'cache', target: 'الذاكرة المؤقتة', note: null }]);
+  assert.deepEqual((await m.store.getPrefs()).glossary.terms, [], 'القاموس العام لم يُمس');
+  assert.equal(textOf(counter), '1 من 100');
+  // المكرر في القائمة برسالتها.
+  g.inputs.source.value = 'CACHE';
+  g.inputs.target.value = 'x';
+  g.form.dispatchEvent({ type: 'submit', preventDefault() {} });
+  await settle();
+  assert.ok(textOf(sec).includes(messageFor('PG_LIST_TERM_DUPLICATE')));
+
+  // «عام» يعرض القاموس العام، وما يُضاف فيه في prefs.
+  findAll(bar, (e) => e.tagName === 'button')[0].click();
+  await settle();
+  assert.equal(textOf(counter), '0 من 100');
+  assert.equal(findAll(sec, (e) => e.tagName === 'tr' && e.parentNode?.tagName === 'tbody').length, 0);
+  g.inputs.source.value = 'prompt';
+  g.inputs.target.value = 'موجِّه';
+  g.form.dispatchEvent({ type: 'submit', preventDefault() {} });
+  await settle();
+  assert.deepEqual((await m.store.getPrefs()).glossary.terms.map((x) => x.source), ['prompt']);
+  assert.equal((await m.store.getGlossaries()).lists[0].terms.length, 1);
+
+  // الزوج نفسه بصيغة أخرى يختار الموجودة ولا ينشئ ثانية.
+  buttonNamed(sec, 'إضافة قائمة مصطلحات لزوج لغتين').click();
+  pickLang(g.picker.fromField, 'en');
+  pickLang(g.picker.toField, 'ar');
+  buttonNamed(g.pairForm, 'إنشاء القائمة').click();
+  await settle();
+  assert.equal((await m.store.getGlossaries()).lists.length, 1);
+  assert.deepEqual(g.selected, { from: 'en', to: 'ar' });
+});
+
+test('الفكرة ٨: حذف قائمة زوج بتأكيد يذكر عدد مصطلحاتها، والإلغاء لا يحذف، وبعده يُعرض العام ويختفي المحدد', async () => {
+  const { store, area } = newStore();
+  await store.addGlossaryList({ from: '*', to: 'fr' });
+  for (const s of ['a', 'b', 'c']) await store.addListTerm({ from: '*', to: 'fr' }, { source: s, target: `${s}-fr`, note: null });
+  const m = await mount({ store, area });
+  const sec = section(m, 'المصطلحات');
+  const g = m.settings.glossary;
+  const bar = findAll(sec, (e) => e.classList.contains('st-gl__lists'))[0];
+  assert.equal(bar.hidden, false);
+  assert.deepEqual(findAll(bar, (e) => e.tagName === 'button').map((b) => b.getAttribute('aria-label')), ['عام (0)', 'أي لغة ← الفرنسية (3)']);
+  assert.equal(buttonNamed(sec, 'حذف قائمة'), null, 'لا حذف والقاموس العام معروض');
+  g.select({ from: '*', to: 'fr' });
+  await settle();
+  const remove = buttonNamed(sec, 'حذف قائمة أي لغة ← الفرنسية…');
+  assert.ok(remove);
+  m.answers.push(false);
+  remove.click();
+  await settle();
+  assert.equal(m.calls.confirms.at(-1).title, 'حذف قائمة أي لغة ← الفرنسية؟');
+  assert.equal(m.calls.confirms.at(-1).body, 'تُحذف من هذا المتصفح هذه القائمة و3 مصطلحات فيها، ولا يمكن التراجع عن ذلك. ولا يتأثر القاموس العام.');
+  assert.equal(m.calls.confirms.at(-1).tone, 'danger');
+  assert.equal((await m.store.getGlossaries()).lists.length, 1, 'الإلغاء لا يحذف');
+  m.answers.push(true);
+  remove.click();
+  await settle();
+  assert.deepEqual((await m.store.getGlossaries()).lists, []);
+  assert.equal(g.selected, null);
+  assert.equal(bar.hidden, true, 'لا قوائم: المحدد مخفي من جديد');
+});
+
+test('الفكرة ٨: سطر «يُرسل أول 100» حين يزيد ما يُرفق لزوج على الحد، بالأعداد بصيغها؛ ويتبع تغيّر القوائم من صفحة أخرى', async () => {
+  const { store, area } = newStore();
+  await store.setPrefs({ glossary: { attach: true, terms: Array.from({ length: 60 }, (_, i) => ({ source: `g${i}`, target: `ع${i}`, note: null })) } });
+  await store.addGlossaryList({ from: 'en', to: 'ar' });
+  for (let i = 0; i < 39; i++) await store.addListTerm({ from: 'en', to: 'ar' }, { source: `p${i}`, target: `ز${i}`, note: null });
+  const m = await mount({ store, area });
+  const sec = section(m, 'المصطلحات');
+  const cap = findAll(sec, (e) => e.classList.contains('st-gl__cap'))[0];
+  assert.equal(cap.hidden, true, '99 لا يزيد على الحد');
+  await store.addListTerm({ from: 'en', to: 'ar' }, { source: 'p39', target: 'ز39', note: null });
+  await store.addListTerm({ from: 'en', to: 'ar' }, { source: 'p40', target: 'ز40', note: null });
+  await area.flush();
+  await settle();
+  assert.equal(cap.hidden, false, 'تغيّر القوائم من صفحة أخرى يصل');
+  assert.equal(textOf(cap), 'مع بعض قوائم الأزواج تزيد المصطلحات على 100 مصطلح، فيُرسل أول 100 مصطلح مع تعليمات ذلك الزوج: قائمته أولًا ثم القاموس العام.');
+  m.settings.glossary.select({ from: 'en', to: 'ar' });
+  await settle();
+  assert.equal(textOf(cap), 'يُرسل مع تعليمات هذا الزوج أول 100 مصطلح من 101 مصطلح: قائمته أولًا ثم القاموس العام.');
+  // «أرفق القاموس» مطفأ: لا يُرسل شيء، فلا سطر.
+  await store.setPrefs({ glossary: { attach: false } });
+  await area.flush();
+  await settle();
+  assert.equal(cap.hidden, true);
+});
+
 test('«البيانات» — الإنشاء: ملف tarjuman-backup-YYYY-MM-DD.json عبر saveFile بخيار تضمين السوابق، ونتيجته سطر بلا محتوى', async () => {
   const { store } = await sourceBackup();
   const m = await mount({ store, area: createMemoryArea() });
