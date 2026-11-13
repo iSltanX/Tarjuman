@@ -13,8 +13,11 @@ import { arabic, click, makeState, mountPage, settle } from './harness.js';
 const need = (icons) => icons * BUTTON_PX.tight + BADGE_PX.tight + ROOM_GAP_PX;
 const prefsWith = (ui) => ({ ...DEFAULT_PREFS, ui: { ...DEFAULT_PREFS.ui, ...ui } });
 
-/** شريط من 12 إلى 748 وزمن يوتيوب ينتهي عند timeRight: المساحة = 748 − timeRight − 52 − others. */
-function narrow({ state = makeState({ arabic: arabic() }), others = 256, group = 136, timeRight = 242, link } = {}) {
+/**
+ * شريط من 12 إلى 748 وزمن يوتيوب ينتهي عند timeRight: المساحة = 748 − timeRight − 52 − others، وفي السكون (للطي، ن-١) 748 − timeRight − others:
+ * 206 بالزمن عند 242 (المطوي: دون الأضيق للستة 220، وفوق المطوي 152)، و148 به عند 300 (المطوي باللوحة).
+ */
+function narrow({ state = makeState({ arabic: arabic() }), others = 300, group = 102, timeRight = 242, link } = {}) {
   const page = mountPage({ state, width: 760, link });
   const mk = (cls, left, right) => {
     const el = page.env.doc.createElement('div');
@@ -46,7 +49,7 @@ test('القرار ٢٨: fitSize يطوي زر اللوحة حين لا يتسع
 });
 
 test('القرار ٢٨: في «المطوي باللوحة» زر اللوحة مطوي لا مخفي: الشارة تقول إنه في قائمتها، وفيها زر يفتح اللوحة ويغلقها', async () => {
-  // 748 − 300 − 52 − 256 = 140 ← 140: دون حد المطوي (3×34+42+8 = 152).
+  // في السكون 748 − 300 − 300 = 148: دون حد المطوي (3×34+42+8 = 152).
   const page = narrow({ state: makeState({ arabic: arabic(), prefs: prefsWith({ panelOpen: false }) }), timeRight: 300 });
   assert.equal(page.ui.size(), 'folded-panel');
   assert.deepEqual(shownKinds(page), ['download', 'upload', 'badge']);

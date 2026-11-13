@@ -15,12 +15,13 @@ export const BADGE_PX = Object.freeze({ normal: 56, compact: 50, tight: 42 });
 export const ROOM_GAP_PX = 8;
 /**
  * عنوان الفصل يُقتطع حتى سهمه «›»، فيُحجز بعد الوقت عرضُ السهم وحشوه ما دام للفيديو فصول، ظاهرًا كان العنوان أو مخفيًا (يخفيه
- * يوتيوب حين يتسع منزلق الصوت). ثبت حيًا: بعرض 1280 غطّت الأزرار نصف السهم حين لم يُحجز.
+ * يوتيوب حين يتسع منزلق الصوت). ثبت حيًا: بعرض 1280 غطّت الأزرار نصف السهم حين لم يُحجز. يُحجز لاختيار المقاس (48 و40 و34) وحده،
+ * لا للطي (ن-١).
  */
 export const CHAPTER_MIN_PX = 44;
 /**
  * منزلق الصوت يتسع 52px حين يمر المؤشر على زر الصوت (ثبت حيًا في Chrome وBrave 156) فيدفع الوقت يمينًا. يُحجز عرضه دائمًا ويُطرح
- * المتسع منه الآن، فلا يتبدل مقاس الأزرار تحت المؤشر، ولا يدفع المنزلقُ الوقتَ تحتها.
+ * المتسع منه الآن، فلا يتبدل مقاس الأزرار تحت المؤشر، ولا يدفع المنزلقُ الوقتَ تحتها. لاختيار المقاس وحده، لا للطي (ن-١).
  */
 export const VOLUME_RESERVE_PX = 52;
 /** المساحة تُقرَّب إلى هذا المضاعف: تغيّر عرض الوقت بكسلًا لا يعيد الرسم. */
@@ -29,8 +30,8 @@ const ROOM_STEP = 4;
 /**
  * @typedef {{
  *   hidden: boolean, fullscreen: boolean, size: 'normal' | 'compact' | 'fullscreen',
- *   width: number, height: number, lift: number, room: number | null,
- * }} BarSnapshot
+ *   width: number, height: number, lift: number, room: number | null, restRoom: number | null,
+ * }} BarSnapshot room: المساحة بحجز سهم الفصل ومنزلق الصوت المتسع (لاختيار المقاس)؛ restRoom: المساحة في السكون بلا حجز (للطي، ن-١)
  */
 
 /**
@@ -51,9 +52,12 @@ export function sizeFor({ fullscreen, big, small, width }) {
  * جديد. فإن لم يتسع المطوي نفسه لما بقي وزر اللوحة بينها طُوي زر اللوحة في القائمة نفسها («مطوي باللوحة»، القرار ٢٨: ثبت القص
  * حيًا بعد طي − و+، والزر يُطوى ولا يُخفى)، والعتبة كذلك حدّ المطوي نفسه. وإن بقي زمن يوتيوب مقصوصًا بعد ذلك يُبلَّغ (timeClipped،
  * وCT_BAR_OVERFLOW). وملء الشاشة كما هو. بلا قياس: المقاس الأساسي.
- * @param {{ size: 'normal' | 'compact' | 'fullscreen', room: number | null }} bar
+ * والطي بالمساحة في السكون (restRoom) لا بالمحجوزة (ن-١، قرار سلطان بعد التحقق المستقل للجولة الثانية): كانت حسبة الطي تحجز منزلق
+ * الصوت المتسع وسهم الفصل، فطُوي − و+ من مشغّل بعرض 800 وزر اللوحة من 732 في Chrome، وزمن يوتيوب لم يُقص في 2.2.0 إلا من 680.
+ * فالأضيق يبقى ما اتسع له الشريط في السكون، كما في 2.2.0، ولا يُطوى شيء إلا حيث يبدأ القص فعلًا.
+ * @param {{ size: 'normal' | 'compact' | 'fullscreen', room: number | null, restRoom?: number | null }} bar بلا restRoom: room
  * @param {number} icons أزرار الأيقونة الظاهرة غير الشارة (− و+ منها، وزر اللوحة إن كان ظاهرًا)
- * @param {{ panel?: boolean }} [o] panel: زر اللوحة بين icons
+ * @param {{ panel?: boolean }} [o] panel: زر اللوحة بين icons ويجوز طيّه (لا يُطوى والشارة معطّلة، ن-١: session.js)
  * @returns {'normal' | 'compact' | 'tight' | 'folded' | 'folded-panel' | 'fullscreen'}
  */
 export function fitSize(bar, icons, { panel = false } = {}) {
@@ -61,8 +65,9 @@ export function fitSize(bar, icons, { panel = false } = {}) {
   const need = (size, n = icons) => n * BUTTON_PX[size] + BADGE_PX[size] + ROOM_GAP_PX;
   if (bar.size === 'normal' && bar.room >= need('normal')) return 'normal';
   if (bar.room >= need('compact')) return 'compact';
-  if (bar.room >= need('tight')) return 'tight';
-  if (!panel || bar.room >= need('tight', icons - 2)) return 'folded';
+  const rest = Math.max(bar.room, bar.restRoom ?? bar.room);
+  if (rest >= need('tight')) return 'tight';
+  if (!panel || rest >= need('tight', icons - 2)) return 'folded';
   return 'folded-panel';
 }
 
@@ -110,7 +115,23 @@ export function timeClipped(doc, own) {
  * @param {Document} doc @param {Element | null} own مضيف المجموعة
  * @returns {number | null} null إن لم يُرسم الشريط أو المجموعة
  */
-export function roomFor(doc, own) {
+export const roomFor = (doc, own) => roomsFor(doc, own)?.room ?? null;
+
+/**
+ * المساحة في السكون (ن-١): كـroomFor بلا حجز سهم الفصل ولا اتساع منزلق الصوت، ويُطرح ما اتسع من المنزلق الآن، فلا تتغير بمرور المؤشر
+ * أيضًا. بها يُحكم الطي وحده (fitSize)، فيبدأ حيث يبدأ قص زمن يوتيوب في السكون.
+ * @param {Document} doc @param {Element | null} own
+ * @returns {number | null}
+ */
+export const restRoomFor = (doc, own) => roomsFor(doc, own)?.restRoom ?? null;
+
+/**
+ * المساحتان بقياس واحد. حافة السكون: نهاية الأدوات اليسرى والزمن بعرض نصه، ناقص ما اتسع من منزلق الصوت الآن (يدفع الزمن يمينًا
+ * بقدره)؛ والمحجوزة: حافة السكون وسهم الفصل (إن كان للفيديو فصول) ومنزلق الصوت المتسع كله.
+ * @param {Document} doc @param {Element | null} own
+ * @returns {{ room: number, restRoom: number } | null}
+ */
+function roomsFor(doc, own) {
   const chrome = getChromeBottom(doc);
   const left = getLeftControls(doc);
   const right = own?.parentNode;
@@ -130,14 +151,15 @@ export function roomFor(doc, own) {
   // الزمن بعرض نصه: مستطيله المنضغط يجعل المساحة أوسع مما هي (ت-١).
   const timeRight = naturalTimeRight(timeDisplay(doc));
   if (timeRight !== null && timeRight > edge) edge = timeRight;
-  if (chapters) edge += CHAPTER_MIN_PX;
-  const volume = doc.querySelector(SELECTORS.volumePanel)?.getBoundingClientRect().width ?? 0;
-  edge += VOLUME_RESERVE_PX - Math.min(volume, VOLUME_RESERVE_PX);
+  const volume = Math.min(doc.querySelector(SELECTORS.volumePanel)?.getBoundingClientRect().width ?? 0, VOLUME_RESERVE_PX);
+  const rest = edge - volume;
+  const reserved = rest + (chapters ? CHAPTER_MIN_PX : 0) + VOLUME_RESERVE_PX;
   const others = right.getBoundingClientRect().width - own.getBoundingClientRect().width;
-  return Math.floor((cb.right - edge - others) / ROOM_STEP) * ROOM_STEP;
+  const fit = (e) => Math.floor((cb.right - e - others) / ROOM_STEP) * ROOM_STEP;
+  return { room: fit(reserved), restRoom: fit(rest) };
 }
 
-const KEYS = ['hidden', 'fullscreen', 'size', 'width', 'height', 'lift', 'room'];
+const KEYS = ['hidden', 'fullscreen', 'size', 'width', 'height', 'lift', 'room', 'restRoom'];
 const same = (a, b) => KEYS.every((k) => a[k] === b[k]);
 
 /**
@@ -157,6 +179,7 @@ export function watchBar({ doc, win, player, own = () => null, onChange, pollMs 
     if (!hidden && c && c.height > 0) lastLift = Math.max(0, Math.round(rect.bottom - c.top));
     const fullscreen = isPlayerFullscreen(doc);
     const width = Math.round(rect.width);
+    const rooms = roomsFor(doc, own());
     return {
       hidden,
       fullscreen,
@@ -164,7 +187,8 @@ export function watchBar({ doc, win, player, own = () => null, onChange, pollMs 
       width,
       height: Math.round(rect.height),
       lift: lastLift,
-      room: roomFor(doc, own()),
+      room: rooms?.room ?? null,
+      restRoom: rooms?.restRoom ?? null,
     };
   }
 

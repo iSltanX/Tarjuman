@@ -18,7 +18,8 @@ const tightNeed = (icons) => icons * BUTTON_PX.tight + BADGE_PX.tight + ROOM_GAP
 
 /**
  * شريط بعرض 736 (من 12 إلى 748) وزمن يوتيوب من 120 إلى 242، وأدوات يوتيوب اليمنى بعرض others، ومضيف المجموعة بعرض group.
- * بلا منزلق صوت يُحجز عرضه كله (52): المساحة = 748 − 242 − 52 − others.
+ * بلا منزلق صوت يُحجز عرضه كله (52): المساحة = 748 − 242 − 52 − others. والطي بالمساحة في السكون بلا حجز (ن-١): 748 − 242 − others،
+ * فالمطوي بـothers = 314 (في السكون 192: دون الأضيق للأزرار الستة 220، وفوق المطوي 152).
  */
 function narrow({ state = withArabic(), others, group, time = { left: 120, right: 242 }, natural = null } = {}) {
   const page = mountPage({ state, width: 760 });
@@ -60,8 +61,8 @@ test('ت-١: fitSize يطوي − و+ حين لا يتسع الأضيق للأز
 });
 
 test('ت-١: في المقاس المطوي لا يُرسم − و+ في الشريط، والشارة تقول إنهما في قائمتها', () => {
-  // 748 − 242 − 52 − 256 = 198 ← 196: دون الأضيق للأزرار الستة (5×34+42+8 = 220).
-  const { page } = narrow({ others: 256, group: 204 });
+  // في السكون 748 − 242 − 314 = 192: دون الأضيق للأزرار الستة (5×34+42+8 = 220).
+  const { page } = narrow({ others: 314, group: 204 });
   assert.equal(page.ui.size(), 'folded');
   assert.deepEqual(shownKinds(page), ['download', 'upload', 'panel', 'badge']);
   assert.ok(page.ui.btn('minus').hasAttribute('hidden') && page.ui.btn('plus').hasAttribute('hidden'));
@@ -72,7 +73,7 @@ test('ت-١: في المقاس المطوي لا يُرسم − و+ في الش�
 });
 
 test('ت-١: − و+ في قائمة الشارة بالمؤشر ولوحة المفاتيح، كترتيبهما في الشريط، ويبقى التركيز على الزر بعد الضغط', () => {
-  const { page } = narrow({ others: 256, group: 204 });
+  const { page } = narrow({ others: 314, group: 204 });
   click(page.ui.btn('badge'), 0);
   const minus = page.ui.field('nudge:minus');
   const plus = page.ui.field('nudge:plus');
@@ -112,7 +113,7 @@ test('ت-١: المقاسات الأوسع كما كانت: الأضيق الم�
 });
 
 test('ت-١: اتساع الشريط والقائمة مفتوحة والتركيز على − فيها: يعود − و+ إلى الشريط ولا يسقط التركيز من القائمة', () => {
-  const { page } = narrow({ others: 256, group: 204 });
+  const { page } = narrow({ others: 314, group: 204 });
   click(page.ui.btn('badge'), 0);
   page.ui.field('nudge:minus').focus();
   page.right.rect = { ...page.right.rect, left: 748 - 100 - 204, width: 304 };
@@ -134,8 +135,8 @@ test('ت-١: الطي والتركيز على − في الشريط: ينتقل 
   };
   mk('ytp-time-display', 120, 242);
   page.chrome.rect = { ...page.chrome.rect, left: 12, right: 748, width: 736 };
-  page.right.rect = { top: 0, bottom: 40, left: 288, right: 748, width: 460, height: 40 };
-  page.ui.groupHost().rect = { top: 0, bottom: 40, left: 288, right: 492, width: 204, height: 40 };
+  page.right.rect = { top: 0, bottom: 40, left: 230, right: 748, width: 518, height: 40 };
+  page.ui.groupHost().rect = { top: 0, bottom: 40, left: 230, right: 434, width: 204, height: 40 };
   page.env.win.resize(page.player);
   assert.equal(page.ui.size(), 'folded');
   assert.ok(page.env.doc._focused === page.ui.btn('badge'));
@@ -165,7 +166,7 @@ test('ت-١: كشف القص يرصد تداخل زمن يوتيوب مع الم
 });
 
 test('ت-١: CT_BAR_OVERFLOW حين يبقى زمن يوتيوب مقصوصًا بعد الطي في قياسين متتاليين، ولا يُبلَّغ في الحالة السليمة ولا العابرة', () => {
-  // قص باقٍ بعد الطي (وطي زر اللوحة معهما، القرار ٢٨: المساحة 60): الزمن تحت المجموعة في القياس بعد الرسم وفي الفحص الدوري بعده.
+  // قص باقٍ بعد الطي (وطي زر اللوحة معهما، القرار ٢٨: المساحة في السكون 112): الزمن تحت المجموعة في القياس بعد الرسم وفي الفحص الدوري بعده.
   const bad = narrow({ others: 256, group: 136, time: { left: 120, right: 380 } });
   assert.equal(bad.page.handle.diagnostics().session.overflows, 0, 'قياس واحد لا يكفي');
   bad.page.env.win.advance(1100);
@@ -187,8 +188,8 @@ test('ت-١: CT_BAR_OVERFLOW حين يبقى زمن يوتيوب مقصوصًا 
   flick.page.env.win.advance(1100);
   assert.equal(flick.page.handle.diagnostics().session.overflows, 0);
   assert.notEqual(lastCode(flick.page), 'CT_BAR_OVERFLOW');
-  // بعد الطي يتسع الزمن (المجموعة 136 تبدأ عند 356 والزمن ينتهي عند 242): لا قص ولا رمز.
-  const ok = narrow({ others: 256, group: 136 });
+  // بعد الطي يتسع الزمن (المجموعة 136 تبدأ عند 298 والزمن ينتهي عند 242): لا قص ولا رمز.
+  const ok = narrow({ others: 314, group: 136 });
   ok.page.env.win.advance(1100);
   assert.equal(ok.page.ui.size(), 'folded');
   assert.equal(ok.page.handle.diagnostics().session.overflow, null);

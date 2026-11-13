@@ -251,7 +251,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const panelShown = ui$?.panelEntry !== false;
     const panelOpen = panelShown && ui$?.panelOpen === true;
     const panelTip = panelOpen ? LABELS.panelClose : LABELS.panelOpen;
-    const size = fitSize(bar, panelShown ? 5 : 4, { panel: panelShown });
+    // ن-١ (قرار سلطان، نقض ح-2): لا يُطوى زر اللوحة ما دامت الشارة معطّلة (بلا ترجمة أو أثناء التحميل)، فقائمتها لا تُفتح ولا
+    // طريق إلى اللوحة غيره، وفيها خطوات البدء. يبقى في الشريط ولو بقي قص، ويُبلَّغ CT_BAR_OVERFLOW كما في measureOverflow.
+    const size = fitSize(bar, panelShown ? 5 : 4, { panel: panelShown && !viewOff });
     // ت-١ (قرار سلطان 2026-11-13): في المقاس المطوي لا يُرسم − و+ في الشريط، وهما في قائمة الشارة؛ والشارة تقول ذلك في تلميحها ووصفها.
     // وفي «المطوي باللوحة» زر اللوحة معهما (القرار ٢٨).
     const folded = isFolded(size);
@@ -1509,6 +1511,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         group: box(group.host),
         fit: lastModel?.size ?? null,
         room: bar$.snapshot().room,
+        restRoom: bar$.snapshot().restRoom,
         buttons: Object.fromEntries(['download', 'upload', 'panel', 'minus', 'badge', 'plus'].map((k) => {
           const el = group.button(k);
           const shown = !!el.getClientRects?.().length;
