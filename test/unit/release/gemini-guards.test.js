@@ -35,6 +35,40 @@ const SECRET_CASES = [
   ['رمز npm في سكربت', 'scripts/publish.mjs', `const t = '${j('np', 'm_', b64(36))}';\n`, /npm-token/],
   ['مفتاح AWS', 'docs/aws.md', `المفتاح ${j('AK', 'IA', 'ABCDEFGHIJKLMNOP')}\n`, /aws-key/],
   ['رمز Slack', 'scripts/notify.mjs', `const hook = '${j('xo', 'xb-', '1234567890-', b64(24))}';\n`, /slack-token/],
+  // تحقق الجولة الثانية (ن-١٢): ما نجا من مجسّ الأسرار (D-guards/secrets) بقرار صاحب المشروع.
+  ['سرّ AWS في YAML', 'deploy/aws.yml', `${j('aws_secret', '_access_key')}: ${b64(40)}\n`, /aws-secret/],
+  ['سرّ AWS مسنَد في شيفرة', 'scripts/aws.mjs', `const ${j('aws_secret', '_access_key')} = "${j(b64(20), '/', b64(19))}";\n`, /aws-secret/],
+  ['سرّ AWS بصيغة البيئة في .sh', 'deploy/env.sh', `export ${j('AWS_SECRET', '_ACCESS_KEY')}=${j(b64(30), '+', b64(9))}\n`, /aws-secret/],
+  ['كتلة PGP خاصة', 'docs/pgp.txt', `${j('-----BEGIN PGP', ' PRIVATE', ' KEY BLOCK-----')}\n${b64(64)}\n`, /private-key/],
+  ['مفتاح Stripe السري', 'scripts/pay.mjs', `const s = '${j('sk', '_live_', b64(24))}';\n`, /stripe-key/],
+  ['مفتاح Stripe المقيَّد', 'scripts/pay2.mjs', `const s = '${j('rk', '_live_', b64(30))}';\n`, /stripe-key/],
+  ['رمز GitHub القديم باسم متغير', 'scripts/gh.mjs', `const ${j('GITHUB', '_TOKEN')} = '${hex(40)}';\n`, /github-token-legacy/],
+  ['رمز GitHub القديم في YAML', '.github/workflows/x.yml', `env:\n  ${j('GH', '_TOKEN')}: ${hex(40)}\n`, /github-token-legacy/],
+  ['رمز GitHub القديم في ترويسة', 'scripts/curl.sh', `curl -H "${j('Author', 'ization')}: ${j('tok', 'en')} ${hex(40)}" https://api.example.com\n`, /github-token-legacy/],
+  ['رمز GitHub OAuth', 'scripts/o.mjs', `const t = '${j('gh', 'o_', b64(36))}';\n`, /github-token/],
+  ['رمز GitHub للمستخدم', 'scripts/u.mjs', `const t = '${j('gh', 'u_', b64(36))}';\n`, /github-token/],
+  ['رمز GitHub للخادم', 'scripts/s.mjs', `const t = '${j('gh', 's_', b64(36))}';\n`, /github-token/],
+  ['رمز GitHub للتحديث', 'scripts/r.mjs', `const t = '${j('gh', 'r_', b64(36))}';\n`, /github-token/],
+  ['رمز GitHub في .sh', 'deploy/push.sh', `export ${j('GITHUB', '_TOKEN')}=${j('gh', 'p_', b64(36))}\n`, /github-token/],
+  ['مفتاح AWS في .ts', 'src/app.ts', `const k = "${j('AK', 'IA', 'ABCDEFGHIJKLMNOP')}";\n`, /aws-key/],
+];
+/** أضداد قريبة من حالات ن-١٢: تشبهها ولا تكونها، فلا تُنذر. */
+const NEAR_MISSES = [
+  ['سرّ AWS من أسرار CI', '.github/workflows/aws.yml', `env:\n  ${j('AWS_SECRET', '_ACCESS_KEY')}: \${{ secrets.${j('AWS_SECRET', '_ACCESS_KEY')} }}\n`],
+  ['سرّ AWS من البيئة', 'scripts/aws-env.mjs', `const ${j('aws_secret', '_access_key')} = process.env.${j('AWS_SECRET', '_ACCESS_KEY')};\n`],
+  ['سرّ AWS فارغ في .sh', 'deploy/blank.sh', `export ${j('AWS_SECRET', '_ACCESS_KEY')}=\n`],
+  ['سرّ AWS أقصر من 40', 'docs/aws-short.md', `${j('aws_secret', '_access_key')}: ${b64(39)}\n`],
+  ['كتلة PGP عامة', 'docs/pgp-pub.txt', `${j('-----BEGIN PGP', ' PUBLIC', ' KEY BLOCK-----')}\n${b64(64)}\n`],
+  ['توقيع PGP', 'docs/pgp-sig.txt', `${j('-----BEGIN PGP', ' SIGNATURE-----')}\n${b64(64)}\n`],
+  ['مفتاح Stripe المنشور', 'scripts/pk.mjs', `const p = '${j('pk', '_live_', b64(24))}';\n`],
+  ['مثال مفتاح Stripe', 'docs/stripe.md', `${j('sk', '_live_')}YOUR_KEY\n`],
+  ['بصمة التزام باسم آخر', 'scripts/sha.mjs', `const commit = '${hex(40)}';\nconst x = { sha: "${hex(40)}" };\n`],
+  ['رمز بطول 39', 'scripts/t39.mjs', `const ${j('tok', 'en')} = '${hex(39)}';\n`],
+  ['رمز بطول 41', 'scripts/t41.mjs', `const ${j('tok', 'en')} = '${hex(41)}';\n`],
+  ['اسم يبدأ بـtoken وليس إسنادًا له', 'scripts/tk.mjs', `const tokenizer = { ${j('tok', 'enizer')}: '${hex(40)}' };\n`],
+  ['بادئة GitHub غير معروفة', 'scripts/ghx.mjs', `const t = '${j('gh', 'x_', b64(36))}';\n`],
+  ['سكربت .sh سليم', 'deploy/ok.sh', 'export NODE_ENV=production\nnode scripts/build.mjs\n'],
+  ['شيفرة .ts سليمة', 'src/ok.ts', 'export const apiKey = readKey();\n'],
 ];
 /** ملفات أسرار بأسمائها: تُرفض أيًّا كان ما فيها. */
 const SECRET_FILES = [
@@ -88,6 +122,14 @@ test('ع-٢١: ما يشبه السرّ ولا يكونه يمر: إسناد ق�
   const r = await secretsTree('not-secret', 'scripts/ok.mjs', `${ok}\n`);
   assert.equal(r.status, 0, r.stderr);
   assert.equal((await secretsTree('env-example', 'docs/env.example', 'X=\n')).status, 0, 'env.example بلا نقطة في أوله ليس ملف بيئة');
+});
+
+test('ن-١٢: الأضداد القريبة من سرّ AWS وPGP وStripe ورمز GitHub القديم، و.sh و.ts السليمان، لا تُنذر', async () => {
+  for (const [i, [label, rel, text]] of NEAR_MISSES.entries()) {
+    const r = await secretsTree(`near-${i}`, rel, text);
+    assert.equal(r.status, 0, `${label}: ${r.stderr}`);
+    assert.match(r.stdout, /منها 1 خارج نطاقات العيّنات/, `${label}: لم يُفحص الملف`);
+  }
 });
 
 // ---------------------------------------------------------------- ع-٢١: محوّل التخزين

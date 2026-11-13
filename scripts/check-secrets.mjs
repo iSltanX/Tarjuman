@@ -27,7 +27,8 @@ const LOCAL_PATH = /(?:\/Users\/[^/\s"'`]+\/|\/private\/(?:tmp|var)\/|\/Volumes\
 // استثناءات الفحص الموسَّع وحده (لا نطاقات العيّنات أعلاه) بالسطر لا بالملف: كل بند ملف وسببه وبصمات أسطره بعينها، فأي اكتشاف
 // آخر في الملف نفسه يُرفض، وبصمة لا تطابق سطرًا في ملف موجود تُرفض أيضًا (استثناء قديم). والبصمة SHA-256 للسطر (أول 16 محرفًا)،
 // لئلا يحمل هذا الملف نص الأسطر نفسها. وإضافة بند تحتاج سببًا يُكتب هنا.
-const EXTRA_TEXT = /\.(json|srt|txt|log|md|csv|ndjson|js|mjs|cjs|css|html|yml|yaml|svg|webmanifest|toml)$|(^|\/)\.[a-z]+ignore$/i;
+// وسكربتات الصدفة وTypeScript (تحقق الجولة الثانية، ن-١٢): لا ملف منها اليوم، وأول ما يُضاف منها يُفحص.
+const EXTRA_TEXT = /\.(json|srt|txt|log|md|csv|ndjson|js|mjs|cjs|css|html|yml|yaml|svg|webmanifest|toml|sh|bash|zsh|ts|mts|cts|tsx)$|(^|\/)\.[a-z]+ignore$/i;
 const EXTRA_IGNORED_TYPES = ['url', 'timedtext-path']; // الروابط العامة ومسار timedtext مذكوران في الشيفرة والوثائق بحق
 const LINE_EXEMPT = new Map([
   ['src/core/diagnostics/sanitize.js', 'تعريف أنماط التنقية: يحوي أسماء الترويسات وملفات الارتباط', ['5603b54289fbccf6']],
@@ -50,9 +51,17 @@ const LINE_EXEMPT = new Map([
 // أسرار عامة (تحقق Gemini، ع-٢١): أنماط findSecrets في sanitize.js أسرار يوتيوب والرموز الطويلة وحدها، فكان رمز GitHub في سير
 // عمل، وسرّ عميل OAuth، ورمز npm، ومفتاح خاص في .md، وسرّ أو كلمة مرور في إعداد، تمر كلها. الأنماط هنا لا في sanitize.js، لئلا يتغير
 // ما يحذفه التشخيص. وهي أنماط حزمة المصدر (LEAKS في scripts/release/store.mjs) ومعها npm وOAuth وSlack والإسناد الصريح لسرّ.
+// وتحقق الجولة الثانية (ن-١٢): سرّ AWS المسنَد باسمه، وكتلة PGP الخاصة، ومفتاح Stripe الحي، ورمز GitHub القديم بلا بادئة.
 const GENERIC_SECRETS = [
-  ['private-key', /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----/g],
+  ['private-key', /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY(?: BLOCK)?-----/g],
   ['github-token', /\b(?:github_pat_[A-Za-z0-9_]{22,}|gh[pousr]_[A-Za-z0-9]{36,})\b/g],
+  // رمز GitHub القديم 40 محرفًا ست عشريًا بلا بادئة: يُعرف باسم ينتهي بـtoken يُسنَد إليه (GITHUB_TOKEN = '…'، GH_TOKEN: …)، أو بترويسة
+  // بترويسة التخويل بصيغة «token …». وبصمة التزام بغير هذا الاسم لا تُنذر.
+  ['github-token-legacy', /\b[A-Za-z_-]*token["']?\s*[:=]\s*["']?[0-9a-f]{40}\b|\btoken[ \t]+[0-9a-f]{40}\b/gi],
+  // سرّ AWS نفسه (40 محرفًا) مسنَدًا باسمه بأي صيغة (aws_secret_access_key: …، AWS_SECRET_ACCESS_KEY=…، awsSecretAccessKey = '…').
+  ['aws-secret', /\baws[_-]?secret[_-]?access[_-]?key["']?\s*[:=]\s*["']?[A-Za-z0-9/+]{40}(?![A-Za-z0-9/+=])/gi],
+  // مفتاح Stripe السري والمقيَّد في الإنتاج؛ والمنشور (pk_live_) عام بطبعه.
+  ['stripe-key', /\b[sr]k_live_[0-9A-Za-z]{24,}\b/g],
   ['npm-token', /\bnpm_[A-Za-z0-9]{36,}\b/g],
   ['aws-key', /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g],
   ['google-key', /\bAIza[0-9A-Za-z_-]{35}\b/g],
