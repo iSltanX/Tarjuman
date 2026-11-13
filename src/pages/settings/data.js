@@ -147,7 +147,7 @@ export function dataControl(env) {
       }));
     }
     if (built.skipped.length) {
-      kids.push(alertBox({ tone: 'warning', text: t('settings.data.notIncluded', { count: formatCount(built.skipped.length, COUNT_FORMS.video), ids: joinList(built.skipped.map((x) => idText(x.videoId))) }), doc }));
+      kids.push(alertBox({ tone: 'warning', text: t('settings.data.notIncluded', { n: built.skipped.length, count: formatCount(built.skipped.length, COUNT_FORMS.video), ids: joinList(built.skipped.map((x) => idText(x.videoId))) }), doc }));
     }
     host.replaceChildren(...kids);
   }

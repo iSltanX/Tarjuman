@@ -193,7 +193,7 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   const keepLabel = el('label', { className: 'lib-check', attrs: { for: `${id}-keep` }, children: [keepBox, el('span', { text: tr('library.upload.keepEdits'), doc }), keepWhy], doc });
   function renderImpact() {
     if (completing) {
-      const tail = cont.remaining ? tr('library.upload.completeRemaining', { count: formatCount(cont.remaining, COUNT_FORMS.cue) }) : tr('library.upload.completeDone');
+      const tail = cont.remaining ? tr('library.upload.completeRemaining', { n: cont.remaining, count: formatCount(cont.remaining, COUNT_FORMS.cue) }) : tr('library.upload.completeDone');
       const renum = cont.renumbered ? ` ${tr('library.upload.completeRenumbered')}` : '';
       impactHost.replaceChildren(el('p', { className: 'tj-body-sm lib-up__complete', text: `${tr('library.upload.completeLine', { n: cont.n, adds: formatCount(cont.adds, COUNT_FORMS.cue, { case: 'acc' }) })} ${tail}${renum}`, doc }));
       return;

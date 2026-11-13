@@ -1303,7 +1303,7 @@ export async function mountEditor(app, {
 
   function removeOrphans() {
     if (readOnly() || !S.markView.orphans.length) return;
-    writeMarkPlan({ remove: S.markView.orphans, add: [] }, t('editor.marks.orphansRemoved', { count: formatCount(S.markView.orphans.length, COUNT.mark) }));
+    writeMarkPlan({ remove: S.markView.orphans, add: [] }, t('editor.marks.orphansRemoved', { n: S.markView.orphans.length, count: formatCount(S.markView.orphans.length, COUNT.mark) }));
   }
 
   /** مواضع الخانات الممتلئة: لكلٍّ رقم المقطع الأقرب إلى موضعها المحفوظ. */

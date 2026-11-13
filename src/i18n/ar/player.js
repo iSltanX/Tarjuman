@@ -52,7 +52,7 @@ export default Object.freeze({
     completeLine: 'تتمة للترجمة {n}: يضيف {adds} في مواضعها.',
     completeDone: 'وتكتمل بعده.',
     completeRenumbered: 'ويُعاد ترقيم المقاطع من 1 فلا يتكرر رقم.',
-    completeRemaining: 'ويبقى {count} بلا ترجمة أو بترجمة ناقصة.',
+    completeRemaining: ({ n, count }) => `ويبقى ${count} ${n === 2 ? 'ناقصَين أو غير مترجمَين' : n === 1 || n % 100 >= 11 ? 'ناقصًا أو غير مترجم' : 'ناقصةً أو غير مترجمة'}.`,
     keepEdits: 'إبقاء تعديلاتي',
     nameOther: 'الاسم يشير إلى فيديو آخر',
     markReview: 'علّم للمراجعة',

@@ -243,7 +243,7 @@ export default Object.freeze({
     completeLine: 'الملف تتمة للترجمة {n}: يضيف {adds} في مواضعها.',
     completeDone: 'وتكتمل الترجمة بعده.',
     completeRenumbered: 'ويُعاد ترقيم المقاطع من 1 فلا يتكرر رقم.',
-    completeRemaining: 'ويبقى بعده {count} بلا ترجمة أو بترجمة ناقصة.',
+    completeRemaining: ({ n, count }) => `ويبقى بعده ${count} ${n === 2 ? 'ناقصَين أو غير مترجمَين' : n === 1 || n % 100 >= 11 ? 'ناقصًا أو غير مترجم' : 'ناقصةً أو غير مترجمة'}.`,
     completed: 'أُكملت الترجمة {n}.',
     ambiguousHint: 'بعد الحفظ تُعرض «علّمها للمراجعة».',
     markAmbiguous: 'علّمها للمراجعة',

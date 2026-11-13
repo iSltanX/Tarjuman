@@ -105,7 +105,7 @@ export default Object.freeze({
     createFailed: 'تعذّر إنشاء النسخة الاحتياطية', restoreFailed: 'تعذّرت الاستعادة', restoreFileFailed: 'تعذّرت الاستعادة من هذا الملف',
     thumbsStayOff: 'صور الفيديو في المحفوظات مطفأة في هذه النسخة، فتبقى مطفأة على هذا الجهاز بعد الاستعادة.',
     excluded: '{id}: استُبعد {parts}',
-    notIncluded: 'لم يُضمَّن {count} لتعذّر القراءة: {ids}',
+    notIncluded: ({ n, count, ids }) => `لم يُضمَّن ${count} لتعذّر قراءة ${n === 1 ? 'سجله' : n === 2 ? 'سجلَّيهما' : 'سجلاتها'}: ${ids}`,
     invalidTitle: ({ n, formatted }) => `تعذّرت قراءة ${n === 2 ? 'فيديوهين' : formatted} من النسخة؛ يُتخطى ما تعذّرت قراءته وتُستعاد البقية`,
     meta: 'أُنشئت {date} · ترجمان {version}',
     freshTitle: 'فيديوهات جديدة ستُضاف ({n})', noTranslation: 'بلا ترجمة', more: 'و{count} غيرها',
