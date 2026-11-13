@@ -26,9 +26,10 @@ const savedEnglish = { key: 'en|manual', lang: 'en', kind: 'manual', cues: EN_CU
  * الحالات: الرسالة الوحيدة المنتظرة، وهل لها تفصيل خلف «لماذا؟»، وعدد خطوات الاختيار فيه (سطر اللغات أو السطر العام)، وهل
  * فيه خطوات الترجمة الآلية.
  */
+// cc: الحالة زر يضغط CC (الفكرة ٧-ب، ح-56)، فالرسالة لا تظهر بجانبه بل خلف «لماذا؟» مرة واحدة إرشادًا يدويًا.
 const CASES = [
   { name: 'لا التقاط ولا قائمة لغات', state: {}, code: 'CT_NOT_CAPTURED', why: true, steps: 0, machine: false },
-  { name: 'لا التقاط وفي الفيديو ثلاث لغات وترجمة آلية: «فعّل CC» بالعدد (القرار ٢٩)', state: { available }, code: 'CC_LANGS:3', why: true, steps: 1, machine: true },
+  { name: 'لا التقاط وفي الفيديو ثلاث لغات وترجمة آلية: زر «تفعيل CC الآن»، و«فعّل CC» بالعدد (القرار ٢٩) خلف «لماذا؟»', state: { available }, code: 'CC_LANGS:3', cc: 'تفعيل CC الآن', why: true, steps: 1, machine: true },
   { name: 'استجابة فارغة ولغات معروفة', state: { captureIssue: { code: 'EX_EMPTY_BODY', at: 1 }, available }, code: 'EX_EMPTY_BODY', why: true, steps: 1, machine: true },
   { name: 'أصل محفوظ واستجابة فارغة (لقطة Fable)', state: { english: savedEnglish, captureIssue: { code: 'EX_EMPTY_BODY', at: 1 }, available }, code: 'EX_EMPTY_BODY', why: true, steps: 1, machine: true },
   { name: 'رفض مسار قديم بلا قائمة لغات', state: { captureIssue: { code: 'EX_NOT_ENGLISH', at: 1 } }, code: 'EX_NOT_ENGLISH', why: true, steps: 1, machine: false },
@@ -40,7 +41,8 @@ for (const c of CASES) {
     const page = mountPage({ state: makeState(c.state) });
     click(page.ui.btn('download'));
     const before = page.ui.menuText();
-    assert.deepEqual(shown(before), [c.code], 'رسالة الحالة وحدها، بلا رسالتين متعارضتين');
+    assert.deepEqual(shown(before), c.cc ? [] : [c.code], 'رسالة الحالة وحدها، بلا رسالتين متعارضتين (أو زر CC وحده)');
+    if (c.cc) assert.ok(page.ui.item(c.cc), 'زر CC بدل الرسالة');
     assert.equal(count(before, LABELS.pickSteps), 0, 'خطوات الاختيار خلف «لماذا؟»');
     assert.equal(count(before, LABELS.machineSteps), 0, 'وخطوات الترجمة الآلية');
     assert.equal(count(before, LABELS.why), 0, 'والشرح');

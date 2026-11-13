@@ -12,17 +12,18 @@ import { validateSeenMessage } from '../../../../src/extract/message.js';
 import { readTimedtextParams } from '../../../../src/extract/timedtext-params.js';
 import { mountControls } from '../../../../src/player/controls/index.js';
 import { CC_GRACE_MS } from '../../../../src/player/controls/session.js';
+import { ccLanguagesLine } from '../../../../src/player/controls/text.js';
 import { isSubtitlesButton } from '../../../../src/player/youtube-dom.js';
 import { addPlayer, createFakeEnv } from '../overlay/fake-dom.js';
-import { addBar, arabic, click, fakeController, fakeFlows, inspect, key, makeState, mountPage, pointerdown, trackInfo } from './harness.js';
+import { addBar, arabic, click, fakeController, fakeFlows, inspect, key, makeState, mountPage, pointerdown, settle, trackInfo } from './harness.js';
 
-/** صفحة بأدوات ترجمان وساعة تتقدّم مع المؤقتات. */
-function page() {
+/** صفحة بأدوات ترجمان وساعة تتقدّم مع المؤقتات. @param {object} [over] حقول الحالة (مثل available) */
+function page(over = {}) {
   const env = createFakeEnv();
   let t = Date.parse('2026-11-10T12:00:00.000Z');
   const parts = addPlayer(env);
   const bar = addBar(env, parts);
-  const controller = fakeController(makeState());
+  const controller = fakeController(makeState(over));
   const flows = fakeFlows();
   const handle = mountControls(controller, { doc: env.doc, win: env.win, exportFlow: flows.exportFlow, importFlow: flows.importFlow, now: () => t, uiFonts: null });
   const tick = (ms) => {
@@ -35,21 +36,29 @@ function page() {
 }
 const menuText = (p) => p.ui.menuText();
 
-test('قبل تشغيل CC الرسالة القديمة، وCC مضغوط بلا التقاط بعد ثانيتين الرسالة الجديدة والقائمة مفتوحة', () => {
+const RESTART = 'إعادة تشغيل CC';
+const ON_NOW = 'تفعيل CC الآن';
+
+test('قبل تشغيل CC الرسالة القديمة، وCC مضغوط بلا التقاط بعد ثانيتين زر «إعادة تشغيل CC» والقائمة مفتوحة، ورسالته خلف «لماذا؟» (٧-ب)', () => {
   const p = page();
   click(p.ui.btn('download'));
   assert.match(menuText(p), /فعّل ترجمة يوتيوب \(CC\)/);
   p.cc.setAttribute('aria-pressed', 'true');
   p.tick(CC_GRACE_MS - 600);
   assert.match(menuText(p), /فعّل ترجمة يوتيوب \(CC\)/, 'قبل المهلة');
+  assert.ok(p.ui.item(RESTART) === null, 'ولا زر قبلها');
   p.tick(1700);
-  assert.ok(menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')), 'بعد المهلة، والقائمة مفتوحة يعيدها الفحص الدوري');
+  assert.ok(p.ui.item(RESTART), 'بعد المهلة، والقائمة مفتوحة يعيدها الفحص الدوري');
+  assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')), 'زر واحد بدل الرسالة');
+  click(p.ui.item('لماذا؟'));
+  assert.equal(menuText(p).split(messageFor('CT_CC_NOT_CAPTURED')).length - 1, 1, 'الإرشاد اليدوي خلف «لماذا؟» مرة واحدة');
   assert.match(messageFor('CT_CC_NOT_CAPTURED'), /أوقف CC ثم شغّلها/);
   assert.match(messageFor('CT_CC_NOT_CAPTURED'), /تشخيص الصفحة/);
-  // وصل الالتقاط: لا رسالة «لم يُلتقط» أصلًا.
+  // وصل الالتقاط: لا رسالة «لم يُلتقط» أصلًا ولا زر.
   p.controller.set({ captured: [trackInfo()] });
   p.tick(1100);
   assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')));
+  assert.ok(p.ui.item(RESTART) === null);
   p.handle.unmount();
 });
 
@@ -63,6 +72,7 @@ test('إيقاف CC يعيد العدّ: تشغيلها من جديد ينتظر
   p.tick(1100);
   click(p.ui.btn('download'));
   assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')), 'لم تنقضِ المهلة بعد التشغيل الثاني');
+  assert.ok(p.ui.item(RESTART) === null, 'ولا زر «إعادة تشغيل CC» (٧-ب)');
   p.handle.unmount();
 });
 
@@ -136,21 +146,24 @@ test('م1: أثناء الإعلان لا رسالة «لم يلتقطها» (ا
   p.tick(CC_GRACE_MS + 1500);
   click(p.ui.btn('download'));
   assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')), 'لا إنذار أثناء الإعلان');
+  assert.ok(p.ui.item(RESTART) === null, 'ولا زر «إعادة تشغيل CC» (٧-ب)');
   p.player.classList.remove('ad-showing');
   p.tick(1100);
-  assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')), 'المهلة من انتهاء الإعلان');
+  assert.ok(p.ui.item(RESTART) === null, 'المهلة من انتهاء الإعلان');
   p.tick(CC_GRACE_MS);
-  assert.ok(menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')));
+  assert.ok(p.ui.item(RESTART), 'بعد المهلة زر «إعادة تشغيل CC»، ورسالته خلف «لماذا؟»');
   p.handle.unmount();
 });
 
-test('م2: التقاط مرفوض (captureIssue) يقول سببه وحده، بلا «لم يلتقطها» معه', () => {
+test('م2: التقاط مرفوض (captureIssue) يقول سببه وحده، بلا «لم يلتقطها» معه ولا زر «إعادة تشغيل CC»', () => {
   const p = page();
   p.controller.set({ captureIssue: { code: 'EX_NOT_ENGLISH' } });
   p.cc.setAttribute('aria-pressed', 'true');
   p.tick(CC_GRACE_MS + 1500);
   click(p.ui.btn('download'));
   assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')));
+  assert.ok(menuText(p).includes(messageFor('EX_NOT_ENGLISH')));
+  assert.ok(p.ui.item(RESTART) === null && p.ui.item(ON_NOW) === null);
   p.handle.unmount();
 });
 
@@ -245,4 +258,156 @@ test('isSubtitlesButton: زر CC في المشغّل وما داخله نعم، 
   assert.equal(isSubtitlesButton(stray), false, 'خارج المشغّل');
   for (const x of [null, undefined, p.env.doc, p.env.win]) assert.equal(isSubtitlesButton(x), false, String(x));
   p.handle.unmount();
+});
+
+// ———— ح-56 (الجولة الخامسة، الفكرة ٧-ب): زر واحد يضغط زر CC بدل كتلة الإرشاد ————
+// «تفعيل CC الآن» حين CC مطفأة وللفيديو مسارات، و«إعادة تشغيل CC» حين ccStuck. الضغطة بنقرة المستخدم على الزر، وتقرأ حال زر CC قبل
+// كل ضغطة (من «مطفأة» ضغطة، و«الإعادة» ضغطتان بينهما انتظار الحال)، ثم انتظار بمهلة: وصل الالتقاط فالقائمة تتحدّث (ح-40)، وإلا
+// «لم يصل شيء — أعد تحميل الصفحة». والإرشاد اليدوي خلف «لماذا؟». ولا ضغط والزر معطّل أو أثناء إعلان أو بث، ولا زر بلا زر CC.
+
+/** لغتان في بيانات المشغّل، ولا التقاط بعد. */
+const AVAILABLE = { videoId: 'AAAAAAAAAAA', tracks: [{ lang: 'en', kind: 'manual', name: 'English' }, { lang: 'es', kind: 'manual', name: 'Español' }], translatable: false };
+const WAITING = 'جارٍ انتظار ترجمة يوتيوب…';
+const NO_EFFECT = 'لم يصل شيء — أعد تحميل الصفحة';
+
+/** زر CC كزر يوتيوب: الضغطة تبدّل aria-pressed بعد delay، وتُسجَّل حاله لحظة كل ضغطة. */
+function ytCc(p, { delay = 0 } = {}) {
+  const presses = [];
+  p.cc.addEventListener('click', () => {
+    const was = p.cc.getAttribute('aria-pressed');
+    presses.push(was);
+    const flip = () => p.cc.setAttribute('aria-pressed', was === 'true' ? 'false' : 'true');
+    if (delay) p.env.win.setTimeout(flip, delay);
+    else flip();
+  });
+  return presses;
+}
+/** يقدّم الساعة ms على خطوات، وتُنفَّذ بينها الوعود (الضغط وانتظار الحال غير متزامنين). */
+async function flow(p, ms, step = 50) {
+  for (let left = ms; left > 0; left -= step) {
+    await settle();
+    p.tick(Math.min(step, left));
+  }
+  await settle();
+}
+
+test('٧-ب: CC مطفأة وللفيديو مسارات: زر «تفعيل CC الآن» بدل رسالة «فعّل CC»، والإرشاد اليدوي خلف «لماذا؟»', () => {
+  const p = page({ available: AVAILABLE });
+  click(p.ui.btn('download'));
+  assert.ok(p.ui.item(ON_NOW), 'الزر');
+  assert.ok(!menuText(p).includes(ccLanguagesLine(2)) && !menuText(p).includes(messageFor('CT_NOT_CAPTURED')), 'لا رسالة «فعّل CC» بجانبه');
+  assert.equal(p.ui.menu().querySelectorAll('.alert').length, 0, 'لا كتلة إرشاد');
+  click(p.ui.item('لماذا؟'));
+  assert.equal(menuText(p).split(ccLanguagesLine(2)).length - 1, 1, 'الإرشاد اليدوي خلف «لماذا؟» مرة واحدة');
+  p.handle.unmount();
+});
+
+test('٧-ب: «تفعيل CC الآن» ضغطة واحدة من «مطفأة»، والزر ينتظر، ثم وصل الالتقاط فالقائمة تتحدّث وحدها بالمسار', async () => {
+  const p = page({ available: AVAILABLE });
+  const presses = ytCc(p);
+  click(p.ui.btn('download'));
+  click(p.ui.item(ON_NOW));
+  await settle();
+  assert.deepEqual(presses, [null], 'ضغطة واحدة على زر CC وهو غير مضغوط');
+  assert.equal(p.cc.getAttribute('aria-pressed'), 'true');
+  const busy = p.ui.item(WAITING);
+  assert.ok(busy, 'الزر ينتظر');
+  assert.equal(busy.getAttribute('aria-busy'), 'true');
+  assert.equal(busy.getAttribute('aria-disabled'), 'true');
+  click(busy);
+  await flow(p, 1000);
+  assert.equal(presses.length, 1, 'لا ضغطة ثانية أثناء الانتظار');
+  assert.ok(p.ui.item(WAITING), 'ما زال ينتظر بعد مهلة ccStuck');
+  p.controller.set({ captured: [trackInfo()] });
+  assert.equal(p.ui.menuOpen(), true);
+  assert.ok(menuText(p).includes('الإنجليزية · يدوية · 412 مقطعًا'), 'المسار الملتقط في القائمة المفتوحة');
+  assert.ok(p.ui.item('تنزيل الملف'));
+  await flow(p, 10000, 500);
+  assert.ok(!menuText(p).includes(NO_EFFECT), 'لا سطر «لم يصل شيء» بعد الالتقاط');
+  p.handle.unmount();
+});
+
+test('٧-ب: ccStuck: «إعادة تشغيل CC» ضغطتان بينهما انتظار انطفاء CC (لا ضغطتان عمياوان)', async () => {
+  const p = page();
+  const presses = ytCc(p, { delay: 300 });
+  p.cc.setAttribute('aria-pressed', 'true');
+  click(p.ui.btn('download'));
+  p.tick(CC_GRACE_MS + 1100);
+  click(p.ui.item(RESTART));
+  await flow(p, 1500);
+  assert.deepEqual(presses, ['true', 'false'], 'الإطفاء، ثم التشغيل بعد أن صارت مطفأة');
+  assert.equal(p.cc.getAttribute('aria-pressed'), 'true', 'تنتهي مشغّلة');
+  p.controller.set({ captured: [trackInfo()] });
+  assert.ok(menuText(p).includes('الإنجليزية · يدوية · 412 مقطعًا'));
+  p.handle.unmount();
+});
+
+test('٧-ب: لم يصل الالتقاط في المهلة: سطر «لم يصل شيء — أعد تحميل الصفحة»، ويعود الزر «إعادة تشغيل CC»', async () => {
+  const p = page({ available: AVAILABLE });
+  ytCc(p);
+  click(p.ui.btn('download'));
+  click(p.ui.item(ON_NOW));
+  await flow(p, 1000);
+  assert.ok(!menuText(p).includes(NO_EFFECT), 'قبل المهلة');
+  await flow(p, 10000, 500);
+  const line = p.ui.field('ccLine');
+  assert.ok(line, 'سطر النتيجة');
+  assert.equal(line.textContent, NO_EFFECT);
+  assert.equal(line.getAttribute('role'), 'status');
+  assert.ok(p.ui.item(RESTART), 'CC مشغّلة بلا التقاط: «إعادة تشغيل CC»');
+  assert.ok(p.ui.item(WAITING) === null);
+  p.handle.unmount();
+});
+
+test('٧-ب: أثناء الإعلان الزر معطّل بسببه ولا يُضغط؛ والبث الجاري رسالته وحدها؛ ويوتيوب يعطّل CC: «لا ترجمة» بلا زر', () => {
+  const ad = page({ available: AVAILABLE });
+  const presses = ytCc(ad);
+  ad.player.classList.add('ad-showing');
+  ad.tick(1100);
+  click(ad.ui.btn('download'));
+  const btn = ad.ui.item(ON_NOW);
+  assert.ok(btn);
+  assert.equal(btn.getAttribute('aria-disabled'), 'true');
+  assert.equal(btn.getAttribute('aria-description'), 'يتاح بعد انتهاء الإعلان.');
+  click(btn);
+  assert.deepEqual(presses, [], 'لا ضغط أثناء الإعلان');
+  ad.player.classList.remove('ad-showing');
+  ad.tick(1100);
+  assert.equal(ad.ui.item(ON_NOW).getAttribute('aria-disabled'), null, 'ويُتاح بعده');
+  ad.handle.unmount();
+
+  const live = page({ available: AVAILABLE });
+  const badge = live.env.doc.createElement('button');
+  badge.className = 'ytp-live-badge ytp-button';
+  badge.style.setProperty('display', 'inline-block');
+  live.player.appendChild(badge);
+  live.env.win.getComputedStyle = (el) => ({ display: el.style.getPropertyValue('display') || 'inline' });
+  live.tick(1100);
+  click(live.ui.btn('download'));
+  assert.ok(menuText(live).includes(messageFor('EX_LIVE')));
+  assert.ok(live.ui.item(ON_NOW) === null && live.ui.item(RESTART) === null, 'لا زر في البث الجاري');
+  live.handle.unmount();
+
+  const off = page({ available: AVAILABLE });
+  off.cc.setAttribute('aria-disabled', 'true');
+  off.tick(1100);
+  click(off.ui.btn('download'));
+  assert.ok(menuText(off).includes(messageFor('CT_NO_CAPTIONS')));
+  assert.ok(off.ui.item(ON_NOW) === null, 'لا زر وCC معطّل');
+  off.handle.unmount();
+});
+
+test('٧-ب: بلا زر CC في المشغّل، أو بلا مسارات معروفة للفيديو، تبقى الرسالة النصية بلا زر', () => {
+  const gone = page({ available: AVAILABLE });
+  gone.cc.remove();
+  gone.tick(1100);
+  click(gone.ui.btn('download'));
+  assert.ok(gone.ui.item(ON_NOW) === null, 'تبدّل محدد الزر: يغيب الزر');
+  assert.ok(menuText(gone).includes(ccLanguagesLine(2)), 'وتبقى الرسالة');
+  gone.handle.unmount();
+  const unknown = page();
+  click(unknown.ui.btn('download'));
+  assert.ok(unknown.ui.item(ON_NOW) === null);
+  assert.ok(menuText(unknown).includes(messageFor('CT_NOT_CAPTURED')));
+  unknown.handle.unmount();
 });

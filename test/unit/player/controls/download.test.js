@@ -34,6 +34,49 @@ test('لم يُلتقط مسار: إرشاد لتفعيل CC واختيار Engl
   assert.equal(page.ui.menuText().includes('CC ثم الإعدادات'), false, 'الخطوات لرفض المسار وحده');
 });
 
+test('٧-ب (ح-56): بلا التقاط وللفيديو مسارات: زر واحد بدل كتلة الإرشاد لا إضافة إليها، و«لماذا؟» بعده، ومع أصل محفوظ يبقى الرئيسي «تنزيل الأصل المحفوظ»', () => {
+  const available = { videoId: 'AAAAAAAAAAA', tracks: [{ lang: 'en', kind: 'manual', name: 'English' }], translatable: false };
+  const page = mountPage({ state: makeState({ available }) });
+  open(page);
+  const menu = page.ui.menu();
+  assert.equal(menu.querySelectorAll('.alert').length, 0, 'لا كتلة إرشاد');
+  assert.deepEqual(menu.querySelectorAll('button').map((b) => b.textContent), ['تفعيل CC الآن', 'لماذا؟'], 'زر واحد ثم «لماذا؟»');
+  const cc = page.ui.item('تفعيل CC الآن');
+  assert.equal(cc.className, 'primary');
+  assert.equal(cc.getAttribute('data-first'), '', 'أول ما يُركَّز بلوحة المفاتيح');
+  assert.equal(page.ui.item('لماذا؟').getAttribute('aria-expanded'), 'false');
+  click(page.ui.item('لماذا؟'));
+  const text = page.ui.menuText();
+  assert.ok(text.includes('في هذا الفيديو لغة واحدة: فعّل ترجمة يوتيوب (CC) واخترها، فتظهر في هذه القائمة.'), 'الإرشاد اليدوي لمن يفضّله');
+  assert.ok(text.includes(LABELS.why));
+  // مع أصل محفوظ من تنزيل سابق (FA-17): زر CC ثانوي بعد فاصل، فلا إجراءان رئيسيان في القائمة.
+  const saved = mountPage({ state: makeState({ available, english: { key: 'en|manual', lang: 'en', kind: 'manual', cues: [{ n: 1, startMs: 0, endMs: 1000, text: 'a' }], source: 'saved' } }) });
+  open(saved);
+  assert.deepEqual(saved.ui.menu().querySelectorAll('button.primary').map((b) => b.textContent), ['تنزيل الأصل المحفوظ']);
+  assert.equal(saved.ui.item('تفعيل CC الآن').className, 'secondary');
+  assert.equal(saved.ui.menu().querySelectorAll('.alert').length, 0);
+});
+
+test('٧-ب (ح-56): زر CC بالإنجليزية: «Turn on CC now» بلا حرف عربي، والإرشاد اليدوي خلف «Why?»', async () => {
+  const { setLocale } = await import('../../../../src/i18n/index.js');
+  setLocale('en');
+  try {
+    const available = { videoId: 'AAAAAAAAAAA', tracks: [{ lang: 'en', kind: 'manual', name: 'English' }], translatable: false };
+    const page = mountPage({ state: makeState({ available }) });
+    click(page.ui.btn('download'));
+    assert.deepEqual(page.ui.menu().querySelectorAll('button').map((b) => b.textContent), ['Turn on CC now', 'Why?']);
+    click(page.ui.item('Why?'));
+    assert.ok(page.ui.menuText().includes('This video has 1 language: turn on YouTube subtitles (CC) and choose it. It’ll appear in this menu.'));
+    assert.ok(!/[\u0600-\u06FF]/.test(page.ui.menuText()), 'بلا حرف عربي');
+    assert.equal(LABELS.ccRestart, 'Restart CC');
+    assert.equal(LABELS.ccWaiting, 'Waiting for YouTube subtitles…');
+    assert.equal(LABELS.ccNoEffect, 'Nothing arrived — reload the page');
+    assert.equal(LABELS.ccAfterAd, 'Available after the ad ends.');
+  } finally {
+    setLocale('ar');
+  }
+});
+
 test('رفض مسار (قديم أو مستقبلي): رسالته وحدها، وخلف «لماذا؟» خطوات اختيار لغة من يوتيوب بسطر عام، وملاحظة Brave في Brave وحده (ت-٩)', () => {
   for (const code of ['EX_NOT_ENGLISH', 'EX_TRANSLATED_TRACK']) {
     const chrome = mountPage({ state: makeState({ captureIssue: { code, at: 1 } }) });
@@ -80,12 +123,14 @@ test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-0
   assert.equal(page.ui.menuText().includes('Español'), false, 'ولا أسماء المسارات');
   assert.equal(page.ui.menuText().includes(LABELS.machineSteps), false, 'الترجمة الآلية بلا التقاط وحده');
   // بلا التقاط: عدد كل لغات الفيديو في سطر «فعّل CC» نفسه (القرار ٢٩)، وخطوات الاختيار بلا عدد وخطوات ترجمة يوتيوب الآلية حين
-  // يتيحها خلف «لماذا؟» (ت-٩).
+  // يتيحها خلف «لماذا؟» (ت-٩). ومنذ ٧-ب (ح-56) زر «تفعيل CC الآن» مكان السطر، والسطر نفسه خلف «لماذا؟» إرشادًا يدويًا.
   const none = mountPage({ state: makeState({ available }) });
   open(none);
-  assert.ok(none.ui.menuText().includes('في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، فتظهر في هذه القائمة.'));
+  assert.ok(none.ui.item('تفعيل CC الآن'));
+  assert.ok(!none.ui.menuText().includes('في هذا الفيديو 3 لغات'));
   assert.equal(none.ui.menu().querySelector('[data-fid="otherLangs"]'), null, 'خلف «لماذا؟»');
   click(none.ui.item('لماذا؟'));
+  assert.ok(none.ui.menuText().includes('في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، فتظهر في هذه القائمة.'));
   const n2 = none.ui.menu().querySelector('[data-fid="otherLangs"]');
   assert.equal(n2.getAttribute('data-count'), '3');
   assert.equal(n2.querySelector('.steps').textContent, `لاختيار إحداها: ${LABELS.pickSteps}`);

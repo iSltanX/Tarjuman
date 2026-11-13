@@ -8,7 +8,7 @@ import { rankUsable } from '../../core/model/track-order.js';
 import { formatOffset } from '../../ui/format.js';
 import { joinList, t } from '../../i18n/index.js';
 import { holdTimer } from '../../ui/hold.js';
-import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow, isSubtitlesButton, seekMainVideo } from '../youtube-dom.js';
+import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow, isSubtitlesButton, pressSubtitles, seekMainVideo, subtitlesPressable } from '../youtube-dom.js';
 import { fitSize, isFolded, timeClipped, watchBar } from './bar.js';
 import { completeInto, continuationFor, fileChars, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles, stripFor } from './flows.js';
 import { createGroup } from './group.js';
@@ -119,6 +119,8 @@ function freshUi(videoId) {
     download: {
       key: null, mode: null, why: false, fallback: false, fallbackTouched: false, longKey: null, longChars: null, split: false, splitSize: null, splitError: null, busy: false,
       saveLine: null, result: [], preview: null,
+      // الفكرة ٧-ب: زر CC ينتظر الالتقاط بعد الضغط ({ kind }) أو null، وسطر نتيجته.
+      cc: null, ccLine: null,
     },
     upload: { busy: false, error: null, warnings: [], pending: null, pickFor: null, plans: new Map(), ambiguous: null },
     timing: { offsetText: null, offsetError: null, custom: false, stepText: null, stepError: null, sync: null },
@@ -135,6 +137,11 @@ function freshUi(videoId) {
  */
 /** مهلة «CC مضغوط ولا التقاط» قبل رسالتها (ف7): الالتقاط يصل عادة في أقل من ثانية بعد تشغيل CC. */
 export const CC_GRACE_MS = 2000;
+/**
+ * مهلة انتظار الالتقاط بعد ضغط زر CC من «تنزيل الأصل» قبل سطر «لم يصل شيء» (الفكرة ٧-ب): في القياس (ح-56) وصل الالتقاط بعد كل
+ * ضغطة خلال الثواني الخمس التي انتظرها المجسّ، في المتصفحات الأربعة.
+ */
+export const CC_PRESS_WAIT_MS = 5000;
 
 export function createControlsSession({ controller, doc, win, player, flows, now = () => Date.now(), link = null }) {
   const counts = {
@@ -149,7 +156,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let menuKind = null;
   let lastModel = null;
   let overflow = null;
-  let flags = { live: false, unavailable: false, brave: false, ad: false, ccStuck: false, panelIssue: null };
+  let flags = { live: false, unavailable: false, brave: false, ad: false, ccStuck: false, ccOn: false, panelIssue: null };
   /** منذ متى زر CC مضغوط ولا التقاط (ف7)، ولأي فيديو، أو null. */
   let ccOnSince = null;
   let ccVideo = null;
@@ -227,7 +234,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return t - ccOnSince >= CC_GRACE_MS;
   }
   // panelIssue: رمز تعذّر ظهور لوحة النص من صلتها (ع-ل)، يقوله زرها.
-  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc), ccStuck: ccStuckNow(), panelIssue: link?.panelIssue?.() ?? null });
+  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc), ccStuck: ccStuckNow(), ccOn: captionsOn(), panelIssue: link?.panelIssue?.() ?? null });
 
   // ———— نماذج العرض ————
 
@@ -326,6 +333,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       pickGuide: (!tracks.length && PICK_AGAIN.has(s.captureIssue?.code ?? '')) || otherLangs(s, tracks) ? { brave: flags.brave } : null,
       otherLangs: otherLangs(s, tracks), translatable: s.available?.translatable === true,
       saved: savedEnglish(s, tracks),
+      cc: ccModel(s, tracks), ccLine: d.ccLine,
       ...previewParts(s, tracks),
     };
   }
@@ -557,7 +565,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       const bar = bar$.snapshot();
       // اختفى شريط يوتيوب والقائمة مفتوحة بلا تركيز فيها (لا كتابة ولا لوحة مفاتيح) ولا عمل جارٍ ولا قرار ينتظر (تأكيد، أو
       // اختيار جملة للمزامنة): تُغلق بدل أن تعود فجأة مع الشريط عند أول حركة للمؤشر.
-      const pending = ui.open === 'confirm' || (ui.open === 'timing' && !!ui.timing.sync);
+      // وزر CC ينتظر الالتقاط بعد ضغطه (الفكرة ٧-ب) كذلك: سطر نتيجته في القائمة.
+      const pending = ui.open === 'confirm' || (ui.open === 'timing' && !!ui.timing.sync) || (ui.open === 'download' && !!ui.download.cc);
       if (bar.hidden && ui.open && !pending && !ui.download.busy && !ui.upload.busy && !layer.isTyping() && !layer.focused()) ui.open = null;
       // وما بقي مفتوحًا بقرار يبقى ظاهرًا: لا قائمة خفية تتلقى الضغطات، ولا تختفي أمام مستخدم لوحة المفاتيح (GM-003).
       layer.setKeep?.(!!ui.open && (pending || ui.download.busy || ui.upload.busy || !!layer.focused()));
@@ -872,6 +881,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         later('preview', PREVIEW_MS, render);
         return;
       case 'download': startDownload(); return;
+      case 'cc': pressCc(); return;
       case 'slotLang': setSlotLang(value); return;
       case 'uploadLang':
         if (ui.upload.pending && !ui.upload.busy) {
@@ -1315,6 +1325,54 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     render();
   }
 
+  // ———— الفكرة ٧-ب (ح-56): زر CC في «تنزيل الأصل» ————
+
+  /**
+   * زر CC بلا التقاط: «إعادة تشغيل CC» حين ccStuck، و«تفعيل CC الآن» حين CC مطفأة وللفيديو مسارات في بيانات المشغّل، وبعد الضغط
+   * ينتظر حتى يصل الالتقاط أو تنقضي المهلة. ولا زر بلا زر CC أو في متصفح محجوب (تبقى الرسالة النصية)، ولا في البث الجاري ولا وCC
+   * معطّلة (رسالتاهما)؛ وأثناء الإعلان معطّل بسببه.
+   * @returns {{ kind: 'on' | 'restart', busy: boolean, ad: boolean } | null}
+   */
+  function ccModel(s, tracks) {
+    const wait = ui.download.cc;
+    if (tracks.length || s.captured.length || s.captureIssue || flags.live || flags.unavailable) return null;
+    if (wait) return { kind: wait.kind, busy: true, ad: false };
+    if (!subtitlesPressable(doc)) return null;
+    const kind = flags.ccStuck ? 'restart' : !flags.ccOn && s.available?.tracks?.length ? 'on' : null;
+    return kind ? { kind, busy: false, ad: flags.ad } : null;
+  }
+
+  /**
+   * «تفعيل CC الآن» و«إعادة تشغيل CC»: ضغطة على زر CC بنقرة المستخدم نفسه على هذا الزر، تقرأ حاله قبل كل ضغطة (pressSubtitles)، ثم
+   * انتظار الالتقاط CC_PRESS_WAIT_MS: إن وصل تحدّثت القائمة وحدها بالمسار (ح-40)، وإلا سطر «لم يصل شيء — أعد تحميل الصفحة». ولا طلب
+   * من ترجمان: المشغّل يطلب الترجمة كما يطلبها حين يضغط المستخدم CC بيده.
+   */
+  async function pressCc() {
+    const s = controller.getState();
+    const m = ccModel(s, okTracks(s));
+    if (!m || m.busy || m.ad) return;
+    const mine = ui;
+    const d = mine.download;
+    d.cc = { kind: m.kind };
+    d.ccLine = null;
+    render();
+    const r = await pressSubtitles(doc, { restart: m.kind === 'restart' });
+    if (destroyed || ui !== mine) return;
+    if (!r.ok) {
+      d.cc = null;
+      d.ccLine = { tone: 'warn', text: r.reason === 'ad' ? LABELS.ccAfterAd : LABELS.ccNoEffect };
+      render();
+      return;
+    }
+    later('ccWait', CC_PRESS_WAIT_MS, () => {
+      if (ui !== mine || !d.cc) return;
+      d.cc = null;
+      const after = controller.getState();
+      if (!after.captured.length && !after.captureIssue) d.ccLine = { tone: 'warn', text: LABELS.ccNoEffect };
+      render();
+    });
+  }
+
   // ———— الرفع ————
 
   function onFiles(files) {
@@ -1593,7 +1651,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       try {
         place();
         const next = readFlags();
-        if (next.live !== flags.live || next.unavailable !== flags.unavailable || next.ad !== flags.ad || next.ccStuck !== flags.ccStuck || next.panelIssue !== flags.panelIssue) {
+        if (next.live !== flags.live || next.unavailable !== flags.unavailable || next.ad !== flags.ad || next.ccStuck !== flags.ccStuck || next.ccOn !== flags.ccOn || next.panelIssue !== flags.panelIssue) {
           // ع-ل: تعافت اللوحة (ظهر العمود): لا تبقى رسالة سبب زال.
           if (flags.panelIssue && !next.panelIssue) clearChannel('panel');
           flags = next;

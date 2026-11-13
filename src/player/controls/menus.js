@@ -222,10 +222,25 @@ function otherLanguages(h, { langs, other, brave, translatable, pickAgain = fals
 }
 
 /**
+ * زر CC في «تنزيل الأصل» بلا التقاط (الفكرة ٧-ب، ح-56): «تفعيل CC الآن» أو «إعادة تشغيل CC»، و«جارٍ انتظار ترجمة يوتيوب…» بعد
+ * الضغط حتى يصل الالتقاط أو تنقضي المهلة، ومعطّل بسببه أثناء الإعلان. رئيسي، وثانوي مع «تنزيل الأصل المحفوظ» فلا إجراءان رئيسيان.
+ * @param {H} h @param {Act} act @param {{ kind: 'on' | 'restart', busy: boolean, ad: boolean }} cc
+ * @param {{ secondary?: boolean, first?: boolean }} [o]
+ */
+function ccButton(h, act, cc, { secondary = false, first = false } = {}) {
+  const text = cc.busy ? LABELS.ccWaiting : cc.kind === 'restart' ? LABELS.ccRestart : LABELS.ccOnNow;
+  return button(h, secondary ? 'secondary' : 'primary', text, {
+    act, name: 'cc', fid: 'cc', first, disabled: cc.busy || cc.ad, reason: cc.ad ? LABELS.ccAfterAd : null,
+    extra: { 'aria-busy': cc.busy ? 'true' : null },
+  });
+}
+
+/**
  * قائمة التحميل (§٦.١ و§١٩.٥، وAA3 لوحة 10): اللغة (المسارات الملتقطة بلغتها ونوعها وعددها، والمترجم آليًا موسومًا في آخرها)،
  * ووضع التصدير، وزر «تنزيل الملف» وحده بسطر نتيجته، وسطر «تعليمات الترجمة (من ← إلى) من نافذة الإضافة»، ثم سطر لغات الفيديو
  * الأخرى بعددها وخطوات اختيارها من يوتيوب (لا تبدّلها الإضافة، ق١)، ثم «خيارات احتياطية» (التقسيم) بأحجام الأجزاء. لا عرض لمكان الحفظ.
- * وبلا مسار ملتقط: رسالة واحدة بحسب الحالة، والتفصيل (ومنه سطر اللغات) خلف «لماذا؟» (ت-٩).
+ * وبلا مسار ملتقط: رسالة واحدة بحسب الحالة، والتفصيل (ومنه سطر اللغات) خلف «لماذا؟» (ت-٩)؛ ورسالتا «فعّل CC» و«مفعّلة بلا التقاط»
+ * يحل محلهما زر CC حين يُتاح (الفكرة ٧-ب، ح-56)، ونصهما أول التفصيل.
  * @param {H} h @param {Act} act
  * @param {{
  *   live: boolean, unavailable: boolean, captureIssue: string | null, captureFormat?: string | null, invalid: { code: string | null }[],
@@ -234,6 +249,7 @@ function otherLanguages(h, { langs, other, brave, translatable, pickAgain = fals
  *   busy: boolean, saveLine: { tone: string, text: string } | null,
  *   result: { tone: 'info' | 'warn' | 'error', text: string }[], pickGuide: { brave: boolean } | null,
  *   otherLangs: number | null, translatable: boolean,
+ *   cc?: { kind: 'on' | 'restart', busy: boolean, ad: boolean } | null, ccLine?: { tone: string, text: string } | null,
  *   parts: { index: number, from: number, to: number, chars: number }[] | null, partsRaised: boolean,
  * }} m partsRaised: رُفع حجم الجزء ليبقى عدد الأجزاء ضمن حد الرفع (U31)، فيُقال تحت الأحجام قبل التنزيل
  */
@@ -277,18 +293,27 @@ export function downloadMenu(h, act, m, root = null) {
     const noCaptions = !states.length && m.unavailable;
     const langs = m.otherLangs > 0 ? m.otherLangs : null;
     const ccWithCount = !states.length && !noCaptions && !m.ccStuck && langs !== null;
+    // الفكرة ٧-ب (ح-56): زر واحد يضغط CC مكان رسالة «فعّل CC» أو «مفعّلة بلا التقاط»، لا معها؛ ونصها إرشادٌ يدوي أول ما خلف «لماذا؟».
+    const cc = !states.length && !noCaptions ? m.cc ?? null : null;
     if (!states.length) {
       states.push(noCaptions ? ['info', messageFor('CT_NO_CAPTIONS')]
         : m.ccStuck ? ['warn', messageFor('CT_CC_NOT_CAPTURED')]
           : ['info', ccWithCount ? ccLanguagesLine(langs) : messageFor('CT_NOT_CAPTURED')]);
     }
+    const guide = cc ? states.pop()[1] : null;
     const details = [
+      guide ? h('div', { className: 'note', text: guide, attrs: { 'data-fid': 'ccGuide' } }) : null,
       noCaptions ? null : h('div', { className: 'note', text: LABELS.why, attrs: { 'data-fid': 'whyText' } }),
       ...otherLanguages(h, { langs, other: false, counted: !ccWithCount, pickAgain: !!m.pickGuide, brave, translatable: m.translatable }),
     ].filter(Boolean);
+    const whyLink = (first) => button(h, 'link', LABELS.whyLink, { act, name: 'why', fid: 'why', first, extra: { 'aria-expanded': m.why ? 'true' : 'false' } });
+    if (cc) {
+      out.push(h('div', { className: 'actions', children: [ccButton(h, act, cc, { secondary: !!m.saved, first: !m.saved })] }));
+      if (m.ccLine) out.push(resultLine(h, m.ccLine, 'ccLine'));
+      out.push(h('span', { children: [whyLink(false)] }));
+    }
     states.forEach(([tone, text], i) => {
-      const why = i === 0 && details.length
-        ? button(h, 'link', LABELS.whyLink, { act, name: 'why', fid: 'why', first: !m.saved, extra: { 'aria-expanded': m.why ? 'true' : 'false' } }) : null;
+      const why = i === 0 && details.length ? whyLink(!m.saved) : null;
       out.push(alert(h, tone, text, why ? [h('span', { children: [why] })] : []));
     });
     if (m.why) out.push(...details);
