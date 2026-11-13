@@ -7,7 +7,7 @@
 - **مسار الصفحة:** Tarjuman · Help
 - **العنوان (`h1`):** Help — Tarjuman
 - **المقدمة:** How to install Tarjuman and get started from any language to yours, adjust your translation’s timing and edit it, move your Library, and report a problem.
-- **فهرس «في هذه الصفحة»:** Install · First use · Translating with a model you choose · Timing · Editor · Library · Moving your Library · Reporting a problem · Troubleshooting · Contact
+- **فهرس «في هذه الصفحة»:** Install · First use · Translating with a model you choose · Timing · Keyboard shortcuts · Editor · Library · Moving your Library · Reporting a problem · Troubleshooting · Contact
 
 ## Install — `#install`
 
@@ -57,6 +57,12 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 - If the translation runs ahead of the speech or behind it, adjust it with the − and + buttons on the player bar, or inside the timing menu when the bar is narrow. Each press moves it by a fixed step, 0.5 seconds by default, which you can change in Settings.
 - Tarjuman saves the offset with each translation, so it’s there when you come back.
 - The timing menu also has “Sync by sentence…”: choose a sentence you hear and Tarjuman sets the timing from it, with “Undo” alongside.
+
+## Keyboard shortcuts — `#shortcuts`
+
+- Tarjuman has five commands you can assign to keys of your choice: switch display mode, show the translation one step earlier, show it one step later, mark the visible line for review, and replay the line (moves the video to the start of the visible line). None has a key until you assign one, so Tarjuman doesn’t impose a key that clashes with YouTube’s or your browser’s shortcuts.
+- Assign them on your browser’s shortcuts page: in Chrome, Edge and Brave from Settings › Display › “Open the shortcuts page”; in Firefox from the add-ons page (`about:addons`) › the gear ⚙ › “Manage Extension Shortcuts”.
+- They work on video pages while Tarjuman’s buttons are in the player bar. They aren’t a new permission, and Tarjuman saves nothing for them.
 
 ## Editor — `#editor`
 
