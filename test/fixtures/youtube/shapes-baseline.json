@@ -1,7 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "source": "chrome Chrome/157.0.8103.51",
-  "at": "2026-11-13T16:21:53.688Z",
+  "at": "2026-11-13T20:25:00.904Z",
   "dom": {
     "player": true,
     "video": true,
@@ -17,6 +17,47 @@
     "inlinePreview": false,
     "timeDisplay": true
   },
+  "panel": {
+    "flexy": true,
+    "secondaryInner": true,
+    "secondary": true,
+    "anySecondaryInner": true,
+    "anySecondary": true,
+    "below": true,
+    "belowAnchor": true,
+    "columns": true,
+    "primary": true
+  },
+  "classes": {
+    "adShowing": true,
+    "adInterrupting": true,
+    "autohide": true,
+    "fullscreen": "unobserved",
+    "bigMode": "unobserved",
+    "smallMode": "unobserved",
+    "chapter": true,
+    "timeDisplay": true
+  },
+  "attrs": {
+    "singleColumn": true,
+    "dark": "unobserved",
+    "layout": [
+      "default-two-column-layout",
+      "flexy-large-window_",
+      "is-two-columns_"
+    ]
+  },
+  "badge": {
+    "shown": false,
+    "disabled": "unobserved",
+    "liveHead": "unobserved"
+  },
+  "cc": {
+    "aria-pressed": true,
+    "aria-disabled": false,
+    "disabled": false,
+    "on": true
+  },
   "tracklist": {
     "renderer": {
       "audioTracks": "array",
@@ -27,16 +68,23 @@
     "track": {
       "baseUrl": "string",
       "isTranslatable": "boolean",
+      "kind": "string",
       "languageCode": "string",
       "name": {
         "simpleText": "string"
       },
+      "rtl": "boolean",
       "trackName": "string",
       "vssId": "string"
-    }
+    },
+    "kinds": [
+      "absent",
+      "asr"
+    ]
   },
   "timedtext": [
     {
+      "fmt": "json3",
       "params": [
         "c",
         "caps",
@@ -67,6 +115,7 @@
         "xobt",
         "xorb",
         "xovt",
+        "xowatf",
         "xowf"
       ]
     }
