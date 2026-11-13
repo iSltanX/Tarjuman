@@ -9,6 +9,7 @@ import { panelCss } from '../../../src/player/panel/styles.js';
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const SHEETS = {
+  'src/ui/base.css': read('src/ui/base.css'),
   'src/ui/components.css': read('src/ui/components.css'),
   'src/pages/editor/editor.css': read('src/pages/editor/editor.css'),
   'src/pages/settings/settings.css': read('src/pages/settings/settings.css'),
@@ -41,6 +42,8 @@ test('ت-٥: لا قاعدة تلغي حلقة التركيز بـoutline: none�
 
 test('ت-٥: كل ورقة تميّز مختارها في وضع التباين العالي بحدّ بلون النظام', () => {
   const expect = {
+    // الشريط العلوي (تحقق مستقل، الجولة الثانية): الصفحة الحالية بخلفيتها وحدها كانت بلا كتلة.
+    'src/ui/base.css': ['.tj-topbar__link[aria-current="page"]'],
     'src/ui/components.css': ['.tj-seg__option input:checked + .tj-seg__label', '.tj-chip[aria-pressed="true"]', '.tj-slots__slot[aria-checked="true"]', '.tj-lang-item.is-active', '.tj-choice__option:has(input:checked)'],
     'src/pages/editor/editor.css': ['.ed-seg__opt[aria-checked="true"]', '.ed-tab[aria-selected="true"]', '.ed-row.is-selected', '.ed-row.is-active'],
     'src/pages/settings/settings.css': ['.st-nav__link[aria-current="page"]', '.st-font:has(input:checked)', '.st-switch__input:checked + .st-switch__track'],

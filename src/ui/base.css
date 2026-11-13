@@ -108,6 +108,12 @@ a:hover { color: var(--tj-accent-text); }
   .tj-topbar__nav { min-height: 40px; }
 }
 
+/* ت-٥ (تحقق مستقل، 2026-11-13): الصفحة الحالية في الشريط العلوي تُميَّز بخلفيتها وحدها، فتتساوى مع غيرها في وضع التباين العالي؛
+   حدّ بلون النظام كالقسم الحالي في الإعدادات. */
+@media (forced-colors: active) {
+  .tj-topbar__link[aria-current="page"] { outline: 2px solid Highlight; outline-offset: -2px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
