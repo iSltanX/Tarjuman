@@ -24,8 +24,8 @@ import { mergeCues, splitCue } from './structure.js';
  * @typedef {'text' | 'time' | 'shift' | 'commit' | 'restore' | 'replace' | 'merge' | 'split' | 'drift' | 'patch' | 'rescue'} EditKind
  * @typedef {{
  *   kind: EditKind, patch?: [number, Cue, Cue][], indices?: number[] | null, delta?: number, offset?: [number, number], group?: string,
- *   swap?: [Cue[], Cue[]]
- * }} Entry
+ *   swap?: [Cue[], Cue[]], committed?: number
+ * }} Entry committed: ما أدخلته خطوة الاستبدال في عدّاد التثبيت (استعادة مسودة فيها تثبيت لم يُحفظ، الفكرة ٩)
  * @typedef {{ kind: EditKind, indices: number[] | null, offset: boolean, version: number, structural?: boolean, undo?: boolean, redo?: boolean }} ChangeEvent
  */
 
@@ -189,6 +189,7 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
       work = (forward ? entry.swap[1] : entry.swap[0]).slice();
       recount();
       if (entry.offset) moveOffset(entry.offset, forward);
+      if (entry.committed) committed += forward ? entry.committed : -entry.committed;
       return null;
     }
     const d = forward ? entry.delta : -entry.delta;
@@ -206,17 +207,18 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
 
   /**
    * يستبدل المصفوفة كلها خطوةً واحدة (البنية والانجراف والتصحيح وإعادة التطبيق). المقاطع التي لم تتغير في موضعها تبقى
-   * بمراجعها. يعيد false إن لم يتغير شيء (فلا خطوة فارغة).
-   * @param {EditKind} kind @param {Cue[]} next @param {{ offsetMs?: number }} [o]
+   * بمراجعها. يعيد false إن لم يتغير شيء (فلا خطوة فارغة). committedMs ما يُضاف إلى عدّاد التثبيت مع الخطوة نفسها (استعادة المسودة).
+   * @param {EditKind} kind @param {Cue[]} next @param {{ offsetMs?: number, committedMs?: number }} [o]
    */
-  const swapAll = (kind, next, { offsetMs: nextOffset } = {}) => {
+  const swapAll = (kind, next, { offsetMs: nextOffset, committedMs: addCommitted = 0 } = {}) => {
     const before = work.slice();
     const after = next.map((c, i) => (before[i] && sameCue(before[i], c) ? before[i] : freezeCue(c)));
     const offsetPair = nextOffset !== undefined && nextOffset !== offset ? [offset, nextOffset] : undefined;
-    if (after.length === before.length && after.every((c, i) => c === before[i]) && !offsetPair) return false;
-    push({ kind, swap: [before, after], ...(offsetPair ? { offset: offsetPair } : {}) });
+    if (after.length === before.length && after.every((c, i) => c === before[i]) && !offsetPair && !addCommitted) return false;
+    push({ kind, swap: [before, after], ...(offsetPair ? { offset: offsetPair } : {}), ...(addCommitted ? { committed: addCommitted } : {}) });
     work = after.slice();
     if (offsetPair) offset = offsetPair[1];
+    committed += addCommitted;
     recount();
     openGroup = null;
     drafts.clear();
@@ -488,6 +490,18 @@ export function createEditSession({ cues, offsetMs = 0, maxHistory = 200, densit
     rebaseMerged(latest, merged) {
       session.rebase(latest);
       swapAll('rescue', merged.cues, { offsetMs: merged.offsetMs });
+    },
+
+    /**
+     * استعادة مسودة المحرّر (الفكرة ٩، ح-48) بضغطة صريحة: المحفوظ الحاضر يصبح الأساس بلا تاريخ، ثم المسودة فوقه خطوةً واحدة
+     * «rescue» بإزاحتها، ومعها ما ثُبّت فيها من الإزاحة ولم يُحفظ (committedMs) فيبقى الإنقاذ وتبنّي ± المشغّل على قاعدتهما (U24).
+     * فالتراجع يعيد المحفوظ كما هو وتثبيته صفرًا، والإعادة تعيد المسودة. لا كتابة هنا: الحفظ بعده صريح.
+     * @param {{ cues: Cue[], offsetMs: number }} current @param {{ cues: Cue[], offsetMs: number, committedMs?: number }} draft
+     * @returns {{ ok: true, changed: boolean }}
+     */
+    restoreDraft(current, { cues: next, offsetMs: nextOffset, committedMs = 0 }) {
+      session.rebase(current);
+      return { ok: true, changed: swapAll('rescue', next, { offsetMs: nextOffset, committedMs }) };
     },
 
     /**

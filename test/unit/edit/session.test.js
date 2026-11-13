@@ -317,3 +317,49 @@ test('حفظ انتهى والمستخدم عدّل أثناءه: المحفوظ
   assert.equal(s.isChanged(0), true);
   assert.equal(s.isChanged(1), false);
 });
+
+// ── استعادة مسودة المحرّر (الفكرة ٩، ح-48) ─────────────────────────────────
+
+test('الفكرة ٩: restoreDraft = المحفوظ أساسًا ثم المسودة خطوةً واحدة «rescue» بإزاحتها وتثبيتها؛ والتراجع يعيد المحفوظ وتثبيته صفرًا، والإعادة تعيدها', () => {
+  const saved = makeCues(4);
+  const s = createEditSession({ cues: saved, offsetMs: 0 });
+  // مسودة بُنيت على المحفوظ نفسه: نص المقطع 2 معدّل، ثم «تثبيت الإزاحة» +500 في التوقيت ولم يُحفظ.
+  const draftSession = createEditSession({ cues: saved, offsetMs: 500 });
+  draftSession.setText(1, 'من المسودة');
+  draftSession.commitOffset();
+  const draft = { cues: draftSession.snapshot(), offsetMs: draftSession.offsetMs, committedMs: draftSession.committedMs };
+  assert.deepEqual([draft.offsetMs, draft.committedMs], [0, 500]);
+  const events = [];
+  s.onChange((e) => events.push(e));
+  const r = s.restoreDraft({ cues: saved, offsetMs: 500 }, draft);
+  assert.deepEqual(r, { ok: true, changed: true });
+  assert.deepEqual(s.snapshot(), draft.cues);
+  assert.deepEqual([s.offsetMs, s.baseOffsetMs, s.committedMs], [0, 500, 500]);
+  assert.equal(s.dirty, true);
+  assert.equal(s.historySize, 1, 'خطوة واحدة');
+  assert.equal(s.undoKind, 'rescue');
+  assert.equal(events.at(-1).structural, true, 'الصفوف تُبنى من جديد');
+  // ± المشغّل لا يُتبنّى فوق تثبيت لم يُحفظ (U24)، كما في الجلسة التي كُتبت فيها المسودة.
+  assert.equal(s.adoptOffset(800), false);
+  s.undo();
+  assert.deepEqual(s.snapshot(), saved, 'التراجع يعيد المحفوظ');
+  assert.deepEqual([s.offsetMs, s.committedMs, s.dirty], [500, 0, false]);
+  s.redo();
+  assert.deepEqual(s.snapshot(), draft.cues);
+  assert.deepEqual([s.offsetMs, s.committedMs], [0, 500]);
+});
+
+test('الفكرة ٩: restoreDraft يبدأ من المحفوظ الحاضر لا من تعديلات الجلسة، ومسودة تطابقه لا تضيف خطوة', () => {
+  const saved = makeCues(3);
+  const s = createEditSession({ cues: saved, offsetMs: 0 });
+  s.setText(0, 'تعديل في الجلسة');
+  const draft = { cues: saved.map((c, i) => (i === 2 ? { ...c, text: 'من المسودة' } : c)), offsetMs: 0, committedMs: 0 };
+  s.restoreDraft({ cues: saved, offsetMs: 0 }, draft);
+  assert.deepEqual(s.snapshot(), draft.cues, 'تعديل الجلسة لا يبقى فوق المسودة');
+  assert.equal(s.historySize, 1);
+  s.undo();
+  assert.deepEqual(s.snapshot(), saved, 'والتراجع إلى المحفوظ لا إلى تعديل الجلسة');
+  const same = createEditSession({ cues: saved, offsetMs: 0 });
+  assert.deepEqual(same.restoreDraft({ cues: saved, offsetMs: 0 }, { cues: saved, offsetMs: 0 }), { ok: true, changed: false });
+  assert.equal(same.canUndo, false);
+});
