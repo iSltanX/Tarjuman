@@ -5,9 +5,10 @@ import { TjError, toErrorInfo } from '../errors/index.js';
 import { t } from '../../i18n/index.js';
 import { bundleToBackup } from '../model/bundle.js';
 import { DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../model/lang-prefs.js';
+import { normalizeGlossaries } from '../model/glossaries.js';
 import { utf8Length } from '../model/validate.js';
 import { STORAGE_SCHEMA } from '../store/migrate.js';
-import { BACKUP_FORMAT, BACKUP_LIMITS, BACKUP_VERSION, BACKUP_VERSION_V1, HASH_ALGORITHM, backupFileName, countData, sha256Hex } from './format.js';
+import { BACKUP_FORMAT, BACKUP_LIMITS, BACKUP_VERSION, BACKUP_VERSION_V1, BACKUP_VERSION_V2, HASH_ALGORITHM, backupFileName, countData, sha256Hex } from './format.js';
 
 /** استراحة للصفحة بين الدفعات فلا تتجمد (والاختبارات تحقن غيرها). */
 export const yieldToPage = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -31,13 +32,18 @@ const byCreated = (a, b) => (a.record.createdAt < b.record.createdAt ? -1 : a.re
  */
 export async function createBackup({ store, appVersion, includePrevious = true, now = Date.now, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch, maxBytes = BACKUP_LIMITS.maxBytes }) {
   const createdAt = new Date(now()).toISOString();
-  const [settings, prefs, library, langRaw] = await Promise.all([
+  const [settings, prefs, library, langRaw, glossRaw] = await Promise.all([
     store.getSettings(), store.getPrefs(), store.listLibrary(),
     typeof store.getLangPrefs === 'function' ? store.getLangPrefs().catch(() => null) : null,
+    // قوائم المصطلحات لكل زوج (الفكرة ٨): تعذّر قراءتها يرفض الإنشاء كتعذّر قراءة التفضيلات، فلا تُحفظ نسخة تُسقطها بصمت.
+    typeof store.getGlossaries === 'function' ? store.getGlossaries() : null,
   ]);
   // تفضيلات اللغات (AA3): تُضمَّن حين تختلف عن الافتراضي، فتصير النسخة بالإصدار 2 الذي يرفضه 1.1.0 برسالة لا بفساد صامت.
   const langPrefs = langRaw ? normalizeLangPrefs(langRaw) : null;
   const langChanged = !!langPrefs && JSON.stringify(langPrefs) !== JSON.stringify(normalizeLangPrefs(DEFAULT_LANG_PREFS));
+  // قوائم الأزواج (الفكرة ٨، ح-46): تُضمَّن حين توجد قائمة وحدها، فتصير النسخة بالإصدار 3؛ وبلا قوائم تبقى بالإصدار 1 أو 2 كما كانت.
+  const glossaries = glossRaw ? normalizeGlossaries(glossRaw) : null;
+  const hasLists = !!glossaries && glossaries.lists.length > 0;
   const ids = library.map((item) => item.entry.videoId);
   const videos = [];
   // سجل بمفتاح لا يُقرأ ولا مُلخّص له لا يظهر في المحفوظات، فيُذكر «تعذّر» بدل أن يغيب عن التقرير (تدقيق 5fedcb9، CX-H4).
@@ -66,7 +72,7 @@ export async function createBackup({ store, appVersion, includePrevious = true, 
   }
   videos.sort(byCreated);
   const v2 = langChanged || videos.some((v) => 'lang' in v);
-  const data = langChanged ? { settings, prefs, videos, langPrefs } : { settings, prefs, videos };
+  const data = { settings, prefs, videos, ...(langChanged ? { langPrefs } : {}), ...(hasLists ? { glossaries } : {}) };
   let dataJson;
   try {
     dataJson = JSON.stringify(data);
@@ -76,8 +82,9 @@ export async function createBackup({ store, appVersion, includePrevious = true, 
     throw err;
   }
   const header = {
-    // الإصدار 2 حين توجد بيانات لغة في مدخل (AA1) أو تفضيلات لغات غير افتراضية (AA3)، وإلا 1 الذي يستعيده 1.1.0 كما هو.
-    format: BACKUP_FORMAT, version: v2 ? BACKUP_VERSION : BACKUP_VERSION_V1, createdAt,
+    // الإصدار 3 حين توجد قوائم أزواج (الفكرة ٨)، و2 حين توجد بيانات لغة في مدخل (AA1) أو تفضيلات لغات غير افتراضية (AA3)، وإلا 1
+    // الذي يستعيده 1.1.0 كما هو.
+    format: BACKUP_FORMAT, version: hasLists ? BACKUP_VERSION : v2 ? BACKUP_VERSION_V2 : BACKUP_VERSION_V1, createdAt,
     app: { version: String(appVersion), storageSchema: STORAGE_SCHEMA },
     options: { previous: includePrevious },
     counts: countData(data),

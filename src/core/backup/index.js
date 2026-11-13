@@ -6,5 +6,5 @@ export {
 export { createBackup, yieldToPage } from './create.js';
 export { readBackup } from './read.js';
 export {
-  mergeReports, planRestore, reportCode, restoreDiagnostics, restoreItems, retryItems, retrySettings, runRestore, settingsFailureCode,
+  mergeReports, planRestore, prefsPart, reportCode, restoreDiagnostics, restoreItems, retryItems, retrySettings, runRestore, settingsFailureCode,
 } from './restore.js';

@@ -10,7 +10,7 @@ export default Object.freeze({
       settings: 'الإعدادات', prefs: 'القاموس والتفضيلات',
       offsetStepMs: 'خطوة الإزاحة', displayModeDefault: 'وضع العرض الافتراضي', appearance: 'مظهر الترجمة',
       export: 'التصدير', thresholds: 'عتبات المقارنة',
-      glossary: 'القاموس', review: 'حد سرعة القراءة', saveLocation: 'مكان الحفظ',
+      glossary: 'القاموس', review: 'حد سرعة القراءة', saveLocation: 'مكان الحفظ', glossaries: 'قوائم مصطلحات الأزواج',
     },
   },
   export: {

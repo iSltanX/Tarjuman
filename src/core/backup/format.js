@@ -4,8 +4,13 @@
 import { isPlainObject } from '../model/validate.js';
 
 export const BACKUP_FORMAT = 'tarjuman-backup';
-/** أعلى إصدار يقرؤه 2.0.0 ويكتبه حين يحتاجه: 2 حين في المدخلات بيانات لغة (AA1، backup.md §٧)، و1 بصيغة 1.1.0 ما سوى ذلك. */
-export const BACKUP_VERSION = 2;
+/**
+ * أعلى إصدار يقرؤه ويكتبه حين يحتاجه: 3 حين تحمل النسخة قوائم مصطلحات لأزواج (الفكرة ٨، ح-46، backup.md §٩)، و2 حين في المدخلات
+ * بيانات لغة أو تفضيلات لغات غير افتراضية (AA1 وAA3، §٨)، و1 بصيغة 1.1.0 ما سوى ذلك. فنسخة من لا قوائم له يقرؤها 2.2.0 كما كانت،
+ * ونسخة القوائم يرفضها 2.2.0 وما قبله برسالة «من إصدار أحدث» (BK_VERSION_NEWER) لا «ليست نسخة احتياطية».
+ */
+export const BACKUP_VERSION = 3;
+export const BACKUP_VERSION_V2 = 2;
 export const BACKUP_VERSION_V1 = 1;
 /** maxBytes حد الملف (يُرفض ما فوقه قبل قراءته)، وbatch عدد الفيديوهات بين كل استراحة للصفحة. */
 export const BACKUP_LIMITS = Object.freeze({ maxBytes: 512 * 1024 * 1024, batch: 25 });

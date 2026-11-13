@@ -7,6 +7,7 @@ import { joinList, t } from '../../i18n/index.js';
 import { bundleFromBackup } from '../model/bundle.js';
 import { isVideoId } from '../model/ids.js';
 import { normalizeLangPrefs } from '../model/lang-prefs.js';
+import { normalizeGlossaries, validateGlossaries } from '../model/glossaries.js';
 import { DEFAULT_PREFS, normalizePrefs, validatePrefs } from '../model/prefs.js';
 import { DEFAULT_SETTINGS, normalizeSettings, validateSettings } from '../model/settings.js';
 import { validateVideoRecord } from '../model/video.js';
@@ -26,10 +27,12 @@ import {
  *   header: { createdAt: string, version: number, app: { version: string, storageSchema: number }, options: { previous: boolean },
  *     counts: ReturnType<typeof countData> },
  *   settings: SectionRead, prefs: SectionRead, thumbnailsOff: boolean, langPrefs?: import('../model/lang-prefs.js').LangPrefs | null,
+ *   glossaries?: import('../model/glossaries.js').Glossaries | null,
  *   videos: BackupItem[], invalid: InvalidItem[], warnings: { code: string, params?: Record<string, string> }[]
  * }} BackupRead
  *   thumbnailsOff: «صور الفيديو في المحفوظات» مطفأة في النسخة (prefs.ui.thumbnails === false). تُطبَّق وحدها من ui، ولا تُطبَّق «نعم»
  *   أبدًا، فلا تعود الصور بالاستعادة؛ والحقل الغائب (نسخة أقدم من الميزة) يُبقي قيمة الجهاز (تدقيق 7a66f91، U05، قرار Q10).
+ *   glossaries: قوائم المصطلحات لكل زوج (الفكرة ٨، الإصدار 3) بقراءة متسامحة، أو null إن غابت أو لم يبقَ منها شيء.
  * @typedef {{ ok: false, code: string, params?: Record<string, string>, detail?: string }} BackupReject
  */
 
@@ -52,8 +55,8 @@ function checkShape(file) {
       ? OK : fail('backup.counts', 'قيمة غير صالحة')),
     () => exactKeys(file.integrity, ['algorithm', 'hash'], 'backup.integrity'),
     () => (file.integrity.algorithm === HASH_ALGORITHM && /^[0-9a-f]{64}$/.test(file.integrity.hash) ? OK : fail('backup.integrity', 'قيمة غير صالحة')),
-    // تفضيلات اللغات اختيارية في الإصدار 2 (AA3)، ولا تُقبل في الإصدار 1.
-    () => exactKeys(file.data, ['settings', 'prefs', 'videos'], 'backup.data', file.version >= 2 ? ['langPrefs'] : []),
+    // تفضيلات اللغات اختيارية منذ الإصدار 2 (AA3)، وقوائم الأزواج منذ الإصدار 3 (الفكرة ٨)، ولا تُقبل واحدة منهما قبل إصدارها.
+    () => exactKeys(file.data, ['settings', 'prefs', 'videos'], 'backup.data', [...(file.version >= 2 ? ['langPrefs'] : []), ...(file.version >= 3 ? ['glossaries'] : [])]),
     () => (Array.isArray(file.data.videos) ? OK : fail('backup.data.videos', 'ليست قائمة')),
   ]);
 }
@@ -108,7 +111,7 @@ const GROUP_NAMES = Object.freeze({
   settings: 'settings', prefs: 'prefs',
   'settings.offsetStepMs': 'offsetStepMs', 'settings.displayModeDefault': 'displayModeDefault', 'settings.appearance': 'appearance',
   'settings.export': 'export', 'settings.thresholds': 'thresholds',
-  'prefs.glossary': 'glossary', 'prefs.review': 'review', 'prefs.saveLocation': 'saveLocation',
+  'prefs.glossary': 'glossary', 'prefs.review': 'review', 'prefs.saveLocation': 'saveLocation', glossaries: 'glossaries',
 });
 /** @param {string} key مثل «prefs.glossary (جزئيًا)» */
 const groupName = (key) => {
@@ -165,7 +168,8 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   if (!isPlainObject(file) || file.format !== BACKUP_FORMAT) return reject('BK_NOT_BACKUP', 'format');
   if (!Number.isInteger(file.version) || file.version < 1) return reject('BK_NOT_BACKUP', 'version');
   if (file.version > supportedVersion) return reject('BK_VERSION_NEWER', `version=${file.version}`);
-  // لا خطوات ترقية لصيغة الملف قبل الإصدار 1 (backup.md §٧)؛ والإصدار التالي يضيف خطوته هنا.
+  // لا خطوات ترقية لصيغة الملف قبل الإصدار 1 (backup.md §٧)؛ والإصداران 2 و3 يضيفان أقسامًا اختيارية وحدها (§٨ و§٩)، فالأقدم يُقرأ كما هو.
+  // والإصدار التالي الذي يغيّر شكلًا قائمًا يضيف خطوته هنا.
   const shape = checkShape(file);
   if (!shape.ok) return reject('BK_NOT_BACKUP', `${shape.path} — ${shape.reason}`);
 
@@ -186,7 +190,15 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
   const warnings = [];
   const settings = readSection(data.settings, normalizeSettings, validateSettings, SETTINGS_GROUPS, 'settings', normalizeSettings(DEFAULT_SETTINGS));
   const prefs = readSection(data.prefs, normalizePrefs, validatePrefs, PREFS_GROUPS, 'prefs', normalizePrefs(DEFAULT_PREFS), ['glossary']);
-  const excluded = [...(settings?.excluded ?? []), ...(prefs?.excluded ?? [])];
+  // قوائم الأزواج (الفكرة ٨): قراءة متسامحة، فالقائمة أو المصطلح التالف يسقط وحده ويُسمّى في التحذير، وما لا يبقى منه شيء لا يُستعاد.
+  let glossaries = null;
+  const glossaryExcluded = [];
+  if (data.glossaries !== undefined && data.glossaries !== null) {
+    const g = normalizeGlossaries(data.glossaries);
+    if (g.lists.length) glossaries = g;
+    if (!validateGlossaries(data.glossaries).ok) glossaryExcluded.push(g.lists.length ? 'glossaries (جزئيًا)' : 'glossaries');
+  }
+  const excluded = [...(settings?.excluded ?? []), ...(prefs?.excluded ?? []), ...glossaryExcluded];
   const thumbnailsOff = isPlainObject(data.prefs) && isPlainObject(data.prefs.ui) && data.prefs.ui.thumbnails === false;
   if (excluded.length) warnings.push({ code: 'BK_SETTINGS_INVALID', params: { groups: joinList(excluded.map(groupName)) } });
 
@@ -235,5 +247,6 @@ export async function readBackup(input, { maxBytes = BACKUP_LIMITS.maxBytes, sup
     settings, prefs, thumbnailsOff, videos, invalid, warnings,
     // قراءة متسامحة لكل حقل: التالف يعود افتراضيه ولا يسقط غيره، ويُطبَّق مع «استعادة الإعدادات والقاموس» وحدها.
     langPrefs: isPlainObject(data.langPrefs) ? normalizeLangPrefs(data.langPrefs) : null,
+    glossaries,
   };
 }

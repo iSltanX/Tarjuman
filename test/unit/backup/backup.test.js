@@ -4,8 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BACKUP_LIMITS, backupFileName, countData, createBackup, mergeReports, planRestore, readBackup, reportCode, restoreDiagnostics,
-  restoreItems, retryItems, runRestore, sha256Hex,
+  BACKUP_LIMITS, BACKUP_VERSION, backupFileName, countData, createBackup, mergeReports, planRestore, prefsPart, readBackup, reportCode,
+  restoreDiagnostics, restoreItems, retryItems, retrySettings, runRestore, settingsFailureCode, sha256Hex,
 } from '../../../src/core/backup/index.js';
 import { TjError } from '../../../src/core/errors/index.js';
 import { DEFAULT_PREFS } from '../../../src/core/model/prefs.js';
@@ -150,7 +150,7 @@ test('التالف يُرفض كله قبل أي كتابة: JSON، والصيغ
 test('الأحدث إصدارًا يُرفض كله ولو تغيّرت مفاتيحه، والحجم فوق الحد يُرفض دون قراءة، وتعذّر القراءة برمزه', async () => {
   const { store } = await sourceLibrary();
   const { text } = await createBackup({ store, appVersion: '0.3.0', pause: noPause });
-  const newer = { ...JSON.parse(text), version: 3, newSection: {} }; // 2.0.0 يقرأ حتى الإصدار 2 (AA1)
+  const newer = { ...JSON.parse(text), version: 4, newSection: {} }; // يقرأ حتى الإصدار 3 (قوائم الأزواج، الفكرة ٨)
   const r = await readBackup(JSON.stringify(newer), { pause: noPause });
   assert.equal(r.code, 'BK_VERSION_NEWER');
   assert.match(r.code && new TjError(r.code).message, /حدّث ترجمان/);
@@ -423,4 +423,114 @@ test('تدقيق 5fedcb9 (GM-015.4): مدخل لا يطابق ثوابت الح�
   // ونسخة سليمة تمر كما هي (ذهاب وإياب).
   const fine = await readBackup(text, { pause: noPause });
   assert.deepEqual(fine.invalid, []);
+});
+
+// ── قوائم المصطلحات لكل زوج (الفكرة ٨، ح-46، backup.md §٩) ──────────────────
+
+const EN_AR = { from: 'en', to: 'ar' };
+/** مكتبة المصدر ومعها قائمتا زوج. */
+async function withLists() {
+  const src = await sourceLibrary();
+  await src.store.addGlossaryList(EN_AR);
+  await src.store.addListTerm(EN_AR, { source: 'cache', target: 'الذاكرة المؤقتة', note: null });
+  await src.store.addGlossaryList({ from: '*', to: 'fr' });
+  return src;
+}
+
+test('ح-46: الإصدار 3 حين تحمل النسخة قوائم أزواج وحده، وبلا قوائم يبقى ما كان (1 أو 2) ولا قسم glossaries', async () => {
+  assert.equal(BACKUP_VERSION, 3);
+  const plain = await sourceLibrary();
+  const p = JSON.parse((await createBackup({ store: plain.store, appVersion: '2.2.0', pause: noPause })).text);
+  assert.equal(p.version, 1, 'مكتبة بلا قوائم ولا لغات: صيغة 1.1.0 كما كانت');
+  assert.deepEqual(Object.keys(p.data), ['settings', 'prefs', 'videos']);
+  // قائمة فارغة قائمةٌ أنشأها المستخدم: تُحمل كذلك.
+  await plain.store.addGlossaryList({ from: 'ja', to: 'en' });
+  const one = JSON.parse((await createBackup({ store: plain.store, appVersion: '2.2.0', pause: noPause })).text);
+  assert.equal(one.version, 3);
+  assert.deepEqual(one.data.glossaries, { schema: 1, lists: [{ from: 'ja', to: 'en', terms: [] }] });
+  const src = await withLists();
+  const built = await createBackup({ store: src.store, appVersion: '2.2.0', pause: noPause });
+  const file = JSON.parse(built.text);
+  assert.equal(file.version, 3);
+  assert.deepEqual(file.data.glossaries, await src.store.getGlossaries());
+  assert.deepEqual(file.counts, countData(file.data), 'لا عدّ للقوائم في counts، والبصمة تشملها مع data');
+  assert.equal(file.integrity.hash, await sha256Hex(JSON.stringify(file.data)));
+});
+
+test('ح-46: استعادة القوائم مع «الإعدادات والقاموس» وحدها تحل محل الحالية، وبدونها لا تُمس، ونسخة بلا قوائم لا تمحو قوائم الجهاز', async () => {
+  const src = await withLists();
+  const built = await createBackup({ store: src.store, appVersion: '2.2.0', pause: noPause });
+  const read = await readBackup(built.text, { pause: noPause });
+  assert.equal(read.ok, true);
+  assert.deepEqual(read.glossaries, await src.store.getGlossaries());
+  assert.deepEqual(read.warnings, []);
+
+  const { store } = newStore();
+  await store.addGlossaryList({ from: 'de', to: 'ar' });
+  const { items } = restoreItems(planRestore(read, []), new Set());
+  await runRestore({ store, items, pause: noPause });
+  assert.deepEqual((await store.getGlossaries()).lists.map((l) => l.from), ['de'], 'بلا اختيار الإعدادات لا تُمس القوائم');
+  const r = await runRestore({ store, items: [], settings: read.settings.patch, prefs: read.prefs.patch, glossaries: read.glossaries, pause: noPause });
+  assert.equal(r.parts.glossaries, 'restored');
+  assert.equal(prefsPart(r.parts), 'restored');
+  assert.equal(reportCode(r), 'BK_RESTORE_DONE');
+  assert.deepEqual(await store.getGlossaries(), await src.store.getGlossaries(), 'تحل محل القوائم الحالية');
+
+  // نسخة بلا قوائم (1 أو 2): glossaries null، فلا تُمس قوائم الجهاز ولو اختيرت الإعدادات.
+  const plain = await sourceLibrary();
+  const old = await readBackup((await createBackup({ store: plain.store, appVersion: '2.2.0', pause: noPause })).text, { pause: noPause });
+  assert.equal(old.glossaries, null);
+  await runRestore({ store, items: [], settings: old.settings.patch, prefs: old.prefs.patch, glossaries: old.glossaries, pause: noPause });
+  assert.equal((await store.getGlossaries()).lists.length, 2);
+
+  // نسخة فيها القوائم وحدها (لا إعدادات صالحة): «الإعدادات والقاموس» متاح.
+  const onlyLists = { ...read, settings: null, prefs: null, langPrefs: null };
+  assert.equal(planRestore(onlyLists, []).hasSettings, true);
+});
+
+test('ح-46: القراءة متسامحة للقوائم التالفة: القائمة أو المصطلح التالف يسقط وحده بتحذير يسمّيها، والتالفة كلها لا تُستعاد', async () => {
+  const src = await withLists();
+  const { text } = await createBackup({ store: src.store, appVersion: '2.2.0', pause: noPause });
+  const partial = await reseal(text, (f) => {
+    f.data.glossaries.lists.push({ from: 'en', to: 'en', terms: [] }, { from: 'ja', to: 'ar', terms: [{ source: 'x', target: 'y', note: null, extra: 1 }, { source: '東京', target: 'طوكيو', note: null }] });
+    f.data.glossaries.lists[0].terms.push({ source: '', target: 'z', note: null });
+  });
+  const r = await readBackup(partial, { pause: noPause });
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.glossaries.lists.map((l) => [l.from, l.to, l.terms.map((t) => t.source)]), [['en', 'ar', ['cache']], ['*', 'fr', []], ['ja', 'ar', ['東京']]]);
+  assert.deepEqual(r.warnings, [{ code: 'BK_SETTINGS_INVALID', params: { groups: 'قوائم مصطلحات الأزواج، جزئيًا' } }]);
+  const broken = await readBackup(await reseal(text, (f) => { f.data.glossaries = { schema: 1, lists: 'x' }; }), { pause: noPause });
+  assert.equal(broken.ok, true, 'الملف كله لا يُرفض بقسم تالف');
+  assert.equal(broken.glossaries, null);
+  assert.deepEqual(broken.warnings, [{ code: 'BK_SETTINGS_INVALID', params: { groups: 'قوائم مصطلحات الأزواج' } }]);
+  // قسم glossaries في نسخة بالإصدار 2 ليس من صيغتها: «ليست نسخة احتياطية» كما يقول 2.2.0، ولذلك تُكتب بالإصدار 3.
+  const mislabeled = await reseal(text, (f) => { f.version = 2; });
+  const v2 = await readBackup(mislabeled, { pause: noPause });
+  assert.equal(v2.code, 'BK_NOT_BACKUP');
+  assert.match(v2.detail, /backup\.data\.glossaries/);
+});
+
+test('ح-46: تعذّر كتابة القوائم وحدها تعذّرٌ لقسم «القاموس والتفضيلات» برسالته، وإعادة المحاولة تكتبها وحدها', async () => {
+  const src = await withLists();
+  const read = await readBackup((await createBackup({ store: src.store, appVersion: '2.2.0', pause: noPause })).text, { pause: noPause });
+  const { store } = newStore();
+  const calls = { prefs: 0, lists: 0 };
+  const f = Object.create(store);
+  f.setPrefs = (x) => { calls.prefs++; return store.setPrefs(x); };
+  f.setGlossaries = (x) => { calls.lists++; return calls.lists === 1 ? Promise.reject(new TjError('ST_WRITE_FAILED')) : store.setGlossaries(x); };
+  const chosen = { settings: read.settings.patch, prefs: read.prefs.patch, langPrefs: null, glossaries: read.glossaries };
+  const first = await runRestore({ store: f, items: [], ...chosen, pause: noPause });
+  assert.deepEqual(first.parts, { settings: 'restored', prefs: 'restored', langPrefs: null, glossaries: 'failed' });
+  assert.equal(first.settings, 'failed');
+  assert.equal(prefsPart(first.parts), 'failed');
+  assert.equal(settingsFailureCode(first), 'BK_RESTORE_PREFS_PART_FAILED');
+  const again = retrySettings(first, chosen);
+  assert.deepEqual(again, { settings: null, prefs: null, langPrefs: null, glossaries: read.glossaries });
+  const second = await runRestore({ store: f, items: [], ...again, pause: noPause });
+  const merged = mergeReports(first, second);
+  assert.equal(merged.settings, 'restored');
+  assert.equal(merged.parts.glossaries, 'restored');
+  assert.equal(reportCode(merged), 'BK_RESTORE_DONE');
+  assert.deepEqual(calls, { prefs: 1, lists: 2 }, 'التفضيلات كُتبت مرة واحدة');
+  assert.deepEqual(await store.getGlossaries(), await src.store.getGlossaries());
 });

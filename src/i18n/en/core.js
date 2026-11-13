@@ -8,7 +8,7 @@ export default Object.freeze({
       settings: 'Settings', prefs: 'Glossary and preferences',
       offsetStepMs: 'Offset step', displayModeDefault: 'Default display mode', appearance: 'Subtitle appearance',
       export: 'Export', thresholds: 'Comparison thresholds',
-      glossary: 'Glossary', review: 'Reading speed limit', saveLocation: 'Save location',
+      glossary: 'Glossary', review: 'Reading speed limit', saveLocation: 'Save location', glossaries: 'Pair term lists',
     },
   },
   export: {

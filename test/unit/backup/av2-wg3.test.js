@@ -38,10 +38,10 @@ test('AV2 U-021: فشل اللغات وحدها يبقي الخلاصة failed �
   const { store, f, calls } = faulty(2);
   const chosen = { settings: { offsetStepMs: 1000 }, prefs: { glossary: samplePrefs().glossary }, langPrefs: LANG };
   const first = await runRestore({ store: f, items: [], ...chosen, pause: noPause });
-  assert.deepEqual(first.parts, { settings: 'restored', prefs: 'restored', langPrefs: 'failed' });
+  assert.deepEqual(first.parts, { settings: 'restored', prefs: 'restored', langPrefs: 'failed', glossaries: null });
   assert.equal(first.settings, 'failed');
   const again = retrySettings(first, chosen);
-  assert.deepEqual(again, { settings: null, prefs: null, langPrefs: LANG });
+  assert.deepEqual(again, { settings: null, prefs: null, langPrefs: LANG, glossaries: null });
   const retry = await runRestore({ store: f, items: [], ...again, pause: noPause });
   const merged = mergeReports(first, retry);
   assert.equal(merged.settings, 'failed', 'اللغات ما زالت متعذرة');

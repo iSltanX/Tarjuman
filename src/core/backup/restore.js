@@ -17,11 +17,12 @@ import { BACKUP_LIMITS } from './format.js';
  *   failed: { videoId: string, code: string, message: string }[],
  *   remaining: string[], stopped: boolean,
  *   settings: 'restored' | 'failed' | null, settingsCode: string | null,
- *   parts?: { settings: SectionState, prefs: SectionState, langPrefs: SectionState },
+ *   parts?: { settings: SectionState, prefs: SectionState, langPrefs: SectionState, glossaries?: SectionState },
  *   thumbnails?: 'off' | 'failed' | null
  * }} RestoreReport
  *   settings خلاصة الأقسام الثلاثة (failed إن تعذّر أحدها)، وparts حال كل قسم وحده: الإعدادات والقاموس واللغات ثلاث كتابات، فإن نجح بعضها وتعذّر غيره
- *   قيل ذلك بعينه (U-021 وU-022)، وإعادة المحاولة تكتب المتعذّر وحده فلا تمحو تغييرًا أجراه المستخدم بعدها (تدقيق 7a66f91، U54).
+ *   قيل ذلك بعينه (U-021 وU-022)، وإعادة المحاولة تكتب المتعذّر وحده فلا تمحو تغييرًا أجراه المستخدم بعدها (تدقيق 7a66f91، U54). وقوائم
+ *   الأزواج (الفكرة ٨) كتابة رابعة في parts.glossaries، يُبلَّغ عنها في قسم «القاموس والتفضيلات» (prefsPart) وتُعاد وحدها إن تعذّرت.
  * @typedef {'restored' | 'failed' | null} SectionState
  */
 
@@ -47,7 +48,8 @@ export function planRestore(backup, existingIds, seen = new Map(), prints = new 
       videos: backup.videos.length, translations: sum(backup.videos, 'translations'), marks: sum(backup.videos, 'marks'),
       previous: sum(backup.videos, 'previous'), fresh: fresh.length, existing: existing.length, invalid: backup.invalid.length,
     },
-    hasSettings: Boolean(backup.settings && Object.keys(backup.settings.patch).length) || Boolean(backup.prefs && Object.keys(backup.prefs.patch).length) || Boolean(backup.langPrefs),
+    hasSettings: Boolean(backup.settings && Object.keys(backup.settings.patch).length) || Boolean(backup.prefs && Object.keys(backup.prefs.patch).length) || Boolean(backup.langPrefs)
+      || Boolean(backup.glossaries),
   };
 }
 
@@ -72,16 +74,17 @@ export function restoreItems(plan, replace) {
  *   store: ReturnType<typeof import('../store/index.js').createStore>,
  *   items: RestoreItem[], skipped?: string[],
  *   settings?: object | null, prefs?: object | null, langPrefs?: import('../model/lang-prefs.js').LangPrefs | null, thumbnailsOff?: boolean,
+ *   glossaries?: import('../model/glossaries.js').Glossaries | null,
  *   onProgress?: (p: { done: number, total: number }) => void, pause?: () => Promise<void>, batch?: number,
  * }} o settings وprefs تعديلا القسمين إن اختار المستخدم «استعادة الإعدادات والقاموس»، وإلا null. وthumbnailsOff إطفاء صور
  *   المحفوظات الذي في النسخة: يُطبَّق في كل استعادة ولو لم تُختر الإعدادات، لأنه رفض سابق لا يُتجاوز (U05، Q10)، ولا يشغّلها أبدًا.
  * @returns {Promise<RestoreReport>}
  */
-export async function runRestore({ store, items, skipped = [], settings = null, prefs = null, langPrefs = null, thumbnailsOff = false, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch }) {
+export async function runRestore({ store, items, skipped = [], settings = null, prefs = null, langPrefs = null, glossaries = null, thumbnailsOff = false, onProgress = () => {}, pause = yieldToPage, batch = BACKUP_LIMITS.batch }) {
   /** @type {RestoreReport} */
   const report = {
     added: [], skipped: [...skipped], replaced: [], changed: [], failed: [], remaining: [], stopped: false,
-    settings: null, settingsCode: null, parts: { settings: null, prefs: null, langPrefs: null }, thumbnails: null,
+    settings: null, settingsCode: null, parts: { settings: null, prefs: null, langPrefs: null, glossaries: null }, thumbnails: null,
   };
   if (thumbnailsOff) {
     try {
@@ -114,6 +117,17 @@ export async function runRestore({ store, items, skipped = [], settings = null, 
       report.parts.langPrefs = report.langPrefs = 'restored';
     } catch (err) {
       report.parts.langPrefs = report.langPrefs = 'failed';
+      report.settingsCode ??= toErrorInfo(err).code;
+    }
+  }
+  // قوائم الأزواج من النسخة (الفكرة ٨، الإصدار 3) مع «استعادة الإعدادات والقاموس»: تحل محل القوائم الحالية كما يحل قاموس النسخة
+  // محل القاموس العام. والنسخة بلا قوائم لا تمس قوائم الجهاز.
+  if (glossaries && typeof store.setGlossaries === 'function') {
+    try {
+      await store.setGlossaries(glossaries);
+      report.parts.glossaries = 'restored';
+    } catch (err) {
+      report.parts.glossaries = 'failed';
       report.settingsCode ??= toErrorInfo(err).code;
     }
   }
@@ -178,6 +192,7 @@ function mergeSettings(before, retry) {
     prefs: retry.parts?.prefs ?? before.parts?.prefs ?? null,
     // قديمًا كان حال اللغات في report.langPrefs وحده ويُسقطه الدمج (U-021)؛ يُقرأ منه إن غاب من parts.
     langPrefs: retry.parts?.langPrefs ?? retry.langPrefs ?? before.parts?.langPrefs ?? before.langPrefs ?? null,
+    glossaries: retry.parts?.glossaries ?? before.parts?.glossaries ?? null,
   };
   const states = Object.values(parts).filter(Boolean);
   const settings = states.length ? (states.includes('failed') ? 'failed' : 'restored') : (retry.settings ?? before.settings);
@@ -186,15 +201,27 @@ function mergeSettings(before, retry) {
 
 /**
  * ما تُعاد كتابته من الأقسام: المتعذّر وحده (U54، U-021).
- * @param {RestoreReport} report @param {{ settings: object | null, prefs: object | null, langPrefs?: object | null }} chosen
- * @returns {{ settings: object | null, prefs: object | null, langPrefs: object | null }}
+ * @param {RestoreReport} report @param {{ settings: object | null, prefs: object | null, langPrefs?: object | null, glossaries?: object | null }} chosen
+ * @returns {{ settings: object | null, prefs: object | null, langPrefs: object | null, glossaries: object | null }}
  */
 export function retrySettings(report, chosen) {
   return {
     settings: report.parts?.settings === 'failed' ? chosen.settings : null,
     prefs: report.parts?.prefs === 'failed' ? chosen.prefs : null,
     langPrefs: report.parts?.langPrefs === 'failed' ? chosen.langPrefs ?? null : null,
+    glossaries: report.parts?.glossaries === 'failed' ? chosen.glossaries ?? null : null,
   };
+}
+
+/**
+ * حال قسم «القاموس والتفضيلات» للمستخدم: كتابة التفضيلات (ومنها القاموس العام) وكتابة قوائم الأزواج (الفكرة ٨) معًا، فتعذّر إحداهما
+ * تعذّرٌ للقسم، ونجاح ما كُتب منهما نجاحه، وnull إن لم يُكتب شيء منهما.
+ * @param {RestoreReport['parts'] | null | undefined} parts
+ * @returns {SectionState}
+ */
+export function prefsPart(parts) {
+  const states = [parts?.prefs ?? null, parts?.glossaries ?? null];
+  return states.includes('failed') ? 'failed' : states.includes('restored') ? 'restored' : null;
 }
 
 /**
@@ -204,7 +231,8 @@ export function retrySettings(report, chosen) {
  */
 export function settingsFailureCode(r) {
   if (r.settings !== 'failed') return null;
-  const { settings, prefs, langPrefs } = r.parts ?? {};
+  const { settings, langPrefs } = r.parts ?? {};
+  const prefs = prefsPart(r.parts);
   const failed = [settings, prefs, langPrefs].filter((x) => x === 'failed').length;
   if (failed === 1 && settings === 'failed' && prefs === 'restored') return 'BK_RESTORE_SETTINGS_PART_FAILED';
   if (failed === 1 && prefs === 'failed' && settings === 'restored') return 'BK_RESTORE_PREFS_PART_FAILED';

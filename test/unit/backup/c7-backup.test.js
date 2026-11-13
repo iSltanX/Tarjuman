@@ -103,18 +103,18 @@ test('U54: الإعدادات والقاموس بحال كل قسم — تعذّ
   };
   const chosen = { settings: { offsetStepMs: 1000 }, prefs: { glossary: samplePrefs().glossary } };
   const first = await runRestore({ store: faulty, items: [], ...chosen, pause: noPause });
-  assert.deepEqual(first.parts, { settings: 'restored', prefs: 'failed', langPrefs: null });
+  assert.deepEqual(first.parts, { settings: 'restored', prefs: 'failed', langPrefs: null, glossaries: null });
   assert.equal(first.settings, 'failed');
   assert.equal(settingsFailureCode(first), 'BK_RESTORE_PREFS_PART_FAILED');
   assert.doesNotMatch(messageFor(settingsFailureCode(first)), /وبقيت الحالية كما هي\.$/, 'لا «بقيت الحالية» عن القسم الذي تغيّر');
   assert.equal((await store.getSettings()).offsetStepMs, 1000);
   await store.setSettings({ offsetStepMs: 900 }); // تغيير المستخدم بعد التقرير
   const again = retrySettings(first, chosen);
-  assert.deepEqual(again, { settings: null, prefs: chosen.prefs, langPrefs: null });
+  assert.deepEqual(again, { settings: null, prefs: chosen.prefs, langPrefs: null, glossaries: null });
   const second = await runRestore({ store: faulty, items: [], ...again, pause: noPause });
   assert.equal(calls.settings, 1, 'الإعدادات لم تُكتب ثانية');
   assert.equal((await store.getSettings()).offsetStepMs, 900, 'تغيير المستخدم باقٍ');
-  assert.deepEqual(second.parts, { settings: null, prefs: 'restored', langPrefs: null });
+  assert.deepEqual(second.parts, { settings: null, prefs: 'restored', langPrefs: null, glossaries: null });
   const both = { parts: { settings: 'failed', prefs: 'failed' }, settings: 'failed' };
   assert.equal(settingsFailureCode(both), 'BK_RESTORE_SETTINGS_FAILED');
   assert.equal(settingsFailureCode({ parts: { settings: 'failed', prefs: 'restored' }, settings: 'failed' }), 'BK_RESTORE_SETTINGS_PART_FAILED');

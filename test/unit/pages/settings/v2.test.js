@@ -376,6 +376,35 @@ test('«البيانات» — الاستبدال الصريح لصف والإع
   assert.ok(textOf(section(m, 'النسخ الاحتياطي')).includes('استُعيدت الإعدادات والقاموس.'));
 });
 
+test('الفكرة ٨: نسخة بقوائم أزواج (الإصدار 3) تُستعاد من الصفحة مع «الإعدادات والقاموس» فتظهر في «المصطلحات»، وبدونها لا تُمس', async () => {
+  const src = newStore();
+  await src.store.addGlossaryList({ from: 'en', to: 'ar' });
+  await src.store.addListTerm({ from: 'en', to: 'ar' }, { source: 'cache', target: 'الذاكرة المؤقتة', note: null });
+  const built = await createBackup({ store: src.store, appVersion: '2.2.0', pause: noPause });
+  assert.equal(JSON.parse(built.text).version, 3);
+  const { area, store } = newStore();
+  const m = await mount({ store, area });
+  const bar = findAll(section(m, 'المصطلحات'), (e) => e.classList.contains('st-gl__lists'))[0];
+  assert.equal(bar.hidden, true);
+  const tick = (on) => async (o) => {
+    const box = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('type') === 'checkbox').find((b) => textOf(b.parentNode) === 'استعادة الإعدادات والقاموس وتفضيلات اللغات');
+    assert.equal(box.disabled, false, 'القوائم وحدها تكفي لإتاحة الخيار');
+    box.checked = on;
+  };
+  m.pick(asFile(built.text));
+  m.answers.push(tick(false));
+  await m.settings.data.restoreFromFile();
+  await settle(10);
+  assert.deepEqual((await store.getGlossaries()).lists, [], 'بلا اختيار الإعدادات لا تُستعاد');
+  m.pick(asFile(built.text));
+  m.answers.push(tick(true));
+  await m.settings.data.restoreFromFile();
+  await settle(10);
+  assert.deepEqual(await store.getGlossaries(), await src.store.getGlossaries());
+  assert.ok(textOf(section(m, 'النسخ الاحتياطي')).includes('استُعيدت الإعدادات والقاموس.'));
+  assert.equal(bar.hidden, false, 'المحدد ظاهر بعد الاستعادة');
+});
+
 test('«البيانات» — «استبدال بيانات كل الفيديوهات الموجودة» يختار كل الصفوف', async () => {
   const { built } = await sourceBackup();
   const { area, store } = newStore();

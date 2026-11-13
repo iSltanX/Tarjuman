@@ -4,7 +4,7 @@
 // الإعدادات والقاموس» غير مختارة، ورابط «نزّل نسخة من بياناتك الحالية أولًا». ثم تقدم ظاهر وتقرير بما أضيف وما تُخطّي وما
 // استُبدل وما تعذّر، مع «أعد المحاولة» لما تعذّر وحده. لا يدخل شيء من محتوى النسخة التشخيص ولا السجلات.
 import {
-  BACKUP_LIMITS, createBackup, mergeReports, planRestore, readBackup, reportCode, restoreItems, retryItems, retrySettings, runRestore, settingsFailureCode, yieldToPage,
+  BACKUP_LIMITS, createBackup, mergeReports, planRestore, prefsPart, readBackup, reportCode, restoreItems, retryItems, retrySettings, runRestore, settingsFailureCode, yieldToPage,
 } from '../../core/backup/index.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { getLocale, joinList, t, texts } from '../../i18n/index.js';
@@ -310,7 +310,8 @@ export function dataControl(env) {
     const lines = [reportLine(report)];
     // حال كل قسم بعينه (U54): لا «بقيت الحالية كما هي» وقد تغيّر أحدهما.
     if (report.settings === 'restored') {
-      const p = report.parts ?? {};
+      // قوائم الأزواج (الفكرة ٨) من «القاموس والتفضيلات» (prefsPart).
+      const p = { ...(report.parts ?? {}), prefs: prefsPart(report.parts) };
       if (p.settings || p.prefs || !p.langPrefs) {
         lines.push(t(p.settings && !p.prefs ? 'settings.data.settingsRestored' : p.prefs && !p.settings ? 'settings.data.prefsRestored' : 'settings.data.settingsPrefsRestored'));
       }
@@ -332,20 +333,20 @@ export function dataControl(env) {
   }
 
   // chosen: ما اختاره المستخدم من الأقسام الثلاثة كاملًا، ويُمرَّر كما هو في كل إعادة محاولة، فيبقى المتعذّر مرتين متاحًا للثالثة.
-  async function run({ items, skipped, settings, prefs, langPrefs = null, thumbnailsOff = false, titles, before, chosen = { settings, prefs, langPrefs } }) {
+  async function run({ items, skipped, settings, prefs, langPrefs = null, glossaries = null, thumbnailsOff = false, titles, before, chosen = { settings, prefs, langPrefs, glossaries } }) {
     // تشغيل واحد في كل وقت: النقر المزدوج على «أعد المحاولة» لا يشغّل تشغيلين من التقرير نفسه.
     if (running) return null;
     running = true;
     setBusy(true);
     try {
-      const report = await runRestore({ store, items, skipped, settings, prefs, langPrefs, thumbnailsOff, pause, onProgress: restoreMeter.show(t('settings.data.restoring')) });
+      const report = await runRestore({ store, items, skipped, settings, prefs, langPrefs, glossaries, thumbnailsOff, pause, onProgress: restoreMeter.show(t('settings.data.restoring')) });
       restoreMeter.hide();
       const merged = before ? mergeReports(before, report) : report;
       // إعادة المحاولة تكتب القسم المتعذّر وحده، فلا تمحو تغييرًا أجراه المستخدم بعد التقرير في القسم الذي نجح (U54).
       const again = retrySettings(merged, chosen);
       renderReport(merged, titles, () => run({
         items: retryItems(merged, items), skipped: [],
-        settings: again.settings, prefs: again.prefs, langPrefs: again.langPrefs, chosen,
+        settings: again.settings, prefs: again.prefs, langPrefs: again.langPrefs, glossaries: again.glossaries, chosen,
         thumbnailsOff: merged.thumbnails === 'failed' && thumbnailsOff,
         titles, before: merged,
       }));
@@ -421,8 +422,9 @@ export function dataControl(env) {
       items, skipped,
       settings: choice.settings ? read.settings?.patch ?? null : null,
       prefs: choice.settings ? read.prefs?.patch ?? null : null,
-      // تفضيلات اللغات (AA3) مع «استعادة الإعدادات والقاموس».
+      // تفضيلات اللغات (AA3) وقوائم الأزواج (الفكرة ٨) مع «استعادة الإعدادات والقاموس».
       langPrefs: choice.settings ? read.langPrefs ?? null : null,
+      glossaries: choice.settings ? read.glossaries ?? null : null,
       thumbnailsOff: read.thumbnailsOff === true,
       titles, before: null,
     });
