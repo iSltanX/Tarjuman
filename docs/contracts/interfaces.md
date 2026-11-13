@@ -91,9 +91,9 @@ extractor.handleMessage(data)        // بيانات MAIN الخام → { accep
 extractor.setVideo(videoId)          // عند التنقل إلى فيديو: يفرّغ ما لا يخصه، ويعيد تقييم ما انتظر له (2000ms)؛ وnull يحجب مسارات آخر فيديو ولا يفرّغها (Y4-أ)
 extractor.tracks()                   // TrackInfo[] للفيديو الحالي
 extractor.convert(key, { mode })     // ConvertResult؛ نسخة مستقلة كل مرة
-extractor.lastRejection()            // { code, at, videoId } | null — ما يخص المستخدم فقط
+extractor.lastRejection()            // { code, reason, format, at, videoId } | null — ما يخص المستخدم فقط؛ reason من REASONS، وformat هو srv3 أو vtt لرفض الصيغة وإلا null (الفكرة ٤)
 extractor.subscribe(fn)              // fn() عند أي تغيّر، وعند كل قائمة مسارات للفيديو الحالي (Y3)؛ يعيد دالة إلغاء
-extractor.diagnostics()              // أعداد ورموز فقط، بلا جسم ولا نص ولا رابط
+extractor.diagnostics()              // أعداد ورموز فقط، بلا جسم ولا نص ولا رابط؛ ولكل مسار reason وrolling وstats وconverter، ولكل رفض reason (الفكرة ٤-ب)
 extractor.setCompleteness(ratio)     // عتبة EX_MAYBE_INCOMPLETE من الإعدادات (0.5..1، وغير الصالح 0.85)؛ المتحكم يمرّرها (تدقيق 7a66f91، U37)
 
 TrackInfo = { key: "en|manual", lang, kind, capturedAt: "ISO", ok, code, warnings: string[], cueCount, completeness, lastEndMs }

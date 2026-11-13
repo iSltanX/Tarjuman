@@ -58,12 +58,13 @@ chrome.tabs.sendMessage(tabId, { type: "tj:get-video-state", v: 1 })   // videoS
 {
   …§٢,
   slots: [{ n: 1, filled: true, active: true, name: "ترجمتي" | null }, { n: 2, … }, { n: 3, … }],   // 1 2 3 بلا نص
-  capture: { state: "captured" | "rejected" | "none", count: 1, code: "EX_NOT_ENGLISH" | null },   // الالتقاط لهذه الجلسة
+  capture: { state: "captured" | "rejected" | "none", count: 1, code: "EX_NOT_ENGLISH" | null, format?: "srv3" | "vtt" },   // الالتقاط لهذه الجلسة
   tools: { overlay: "mounted", controls: "mounted", code: "CT_MOUNT_FAILED" | null }               // = mounted مع آخر رمز تعطل
 }
 ```
 
 - `capture.state`: `captured` عند مسار ملتقط صالح، و`rejected` عند آخر رفض يخص الفيديو (`code` رمزه، مثل `EX_NOT_ENGLISH` لمسار عربي أو مترجم آليًا)، وإلا `none`.
+- `capture.format` (الفكرة ٤، الإنذار المبكر، بعد 2.2.0): اسم الصيغة المرفوضة (`srv3` أو `vtt`) عند رفض `EX_UNSUPPORTED_FORMAT` بصيغة مسمّاة وحده، وغائب في غيره؛ فتسمّيها رسالة الرمز في النافذة (`messageFor(code, { format })`) كما في قائمة التحميل. ومصدره `lastRejection().format`. والتغيير في `core/model/messages.js` المجمَّد هذا الحقل وحده.
 - `tools.code` آخر رمز تعطل من نقطتي التركيب إن وُجد (`state: "error"`)؛ والسبب المفهوم من `messageFor(code)`.
 - `isVideoStateReplyV2(reply)` يتحقق من الحقول الجديدة؛ والنافذة الجديدة تعرض الرد القديم (بلا هذه الحقول) كما يعرضه الأول.
 
@@ -97,6 +98,8 @@ chrome.tabs.sendMessage(tabId, { type: "tj:get-page-diagnostics", v: 1 })    // 
 **ف7 (2026-11-10):** في تشخيص المستخرج `requestsSeen` (طلبات الترجمة التي رآها غلافا الالتقاط للفيديو المعروض، و0 حين لم يُرَ طلب) و`requestsSeenPage` (أكبر عدّ في الصفحة). أعداد فقط، من رسالة `kind: "seen"` (عقد الاستخراج).
 
 **ف10 (2026-11-10):** `dom` خريطة وجود العناصر التي يعتمد عليها ترجمان، نعم أو لا لكل مفتاح في `SELECTORS` (§٧ في عقد الواجهات) ومعها `anyVideo` لأي عنصر فيديو (`domPresence` في `src/content/messages.js`). أسماء وقيم منطقية فقط. و`panel` تشخيص لوحة النص المتزامن (`mounted.panel.diagnostics()`: أعداد وحالة ورموز)، وكان خارج التقرير. وحالة الأدوات والطبقة قد تكون `error` برمز `CT_PLAYER_NOT_FOUND` أو `PL_PLAYER_NOT_FOUND` (عقد الأخطاء §١٣).
+
+**الفكرة ٤-ب (ح-38، بعد 2.2.0):** في تشخيص المستخرج لكل مسار `reason` (سبب فشله من القائمة المغلقة `REASONS`، و`null` للسليم) و`rolling` (`eventIndex` و`repeatedWords` و`basis`، أو `null`) و`stats` و`converter` (أعداد وقيم منطقية بأسمائها)، ولكل رفض حديث `reason`. وما زال القسم **أعدادًا ورموزًا فقط**: يُنتقى كل حقل باسمه، فلا يعبر نص ترجمة ولا وصف خطأ ولا تفصيله ولا رابط ولا معرّف، و`format` صنف من قائمة مغلقة. وتفصيلها في عقد الأخطاء §٤.
 
 يُقبل من صفحات الإضافة وحدها (`isExtensionPage`) كطلب الحالة. الأقسام بلا نص ولا عنوان ولا رابط، والنافذة تبني منها `createDiagnosticReport` (عقد الأخطاء §٤) الذي ينقّيها مرة أخرى.
 
