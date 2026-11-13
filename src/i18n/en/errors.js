@@ -8,6 +8,7 @@ export default Object.freeze({
   TJ_UNEXPECTED: 'Something went wrong. Try again; if it keeps happening, copy the diagnostics report.',
   TJ_RELOAD_PAGE: 'This page was opened before Tarjuman was installed or updated. Reload it to use Tarjuman’s tools here.',
   TJ_OPEN_OR_RELOAD: 'Open a YouTube video to get started. If one is already open from before Tarjuman was installed or updated, reload its page.',
+  TJ_SITE_ACCESS_OFF: 'Tarjuman doesn’t have permission to run on YouTube right now, so its tools can’t work there. Allow it on YouTube from your browser’s extensions page: in Chrome, Edge, and Brave, open Tarjuman’s details and change its site access; in Firefox, open Tarjuman’s permissions. Then reload the video page.',
   TJ_NO_VIDEO: 'There’s no video on this page.',
   TJ_BAD_MESSAGE: 'An invalid message arrived between parts of the extension and was ignored.',
   TJ_BAD_VIDEO_ID: 'The video ID isn’t valid. Open the page from the Library or the extension popup.',

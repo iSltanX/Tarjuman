@@ -33,8 +33,8 @@ async function catalog() {
   }));
 }
 
-// كلمات لاتينية مقصودة في الرسائل: أسماء يراها المستخدم كما هي في يوتيوب والملفات والترميز.
-const LATIN_OK = new Set(['CC', 'English', 'SRT', 'UTF', 'Windows', 'HTML']);
+// كلمات لاتينية مقصودة في الرسائل: أسماء يراها المستخدم كما هي في يوتيوب والملفات والترميز، والمتصفحات (TJ_SITE_ACCESS_OFF، B5-أ).
+const LATIN_OK = new Set(['CC', 'English', 'SRT', 'UTF', 'Windows', 'HTML', 'Chrome', 'Edge', 'Brave', 'Firefox']);
 
 test('كل رمز رسالة عربية: الصيغة، وحرف عربي، ولا رابط ولا رمز، واللاتيني من القائمة المقصودة وحدها', async () => {
   const all = await catalog();

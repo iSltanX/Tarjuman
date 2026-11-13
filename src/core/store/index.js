@@ -29,7 +29,7 @@ import {
 export { bundleFromRecord, slotModels } from '../model/bundle.js';
 import { MIGRATIONS, STORAGE_SCHEMA } from './migrate.js';
 import { createWriter } from './writer.js';
-import { localTransport, messageTransport } from './transport.js';
+import { invalidation, localTransport, messageTransport } from './transport.js';
 import { printKeys, rawPrint, versionOf } from './version.js';
 
 export { STORAGE_SCHEMA, MIGRATIONS } from './migrate.js';
@@ -140,11 +140,16 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
     return readyPromise;
   };
 
+  // سياق الإضافة المبطَل (تحقق Gemini، B5-ب): صفحة فُتحت قبل تحديث الإضافة لا تقرأ التخزين بعده، فالعلاج إعادة تحميلها
+  // (TJ_RELOAD_PAGE) لا «تعذّرت قراءة المحفوظات». وغيره من فشل القراءة يبقى ST_READ_FAILED.
+  const invalidated = invalidation();
+  const readFailed = (err) => new TjError(invalidated(err) ? 'TJ_RELOAD_PAGE' : 'ST_READ_FAILED', { detail: String(err && err.message), cause: err });
+
   async function read(keys) {
     try {
       return await area.get(keys);
     } catch (err) {
-      throw new TjError('ST_READ_FAILED', { detail: String(err && err.message), cause: err });
+      throw readFailed(err);
     }
   }
 
@@ -152,7 +157,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
     try {
       return await area.getKeys();
     } catch (err) {
-      throw new TjError('ST_READ_FAILED', { detail: String(err && err.message), cause: err });
+      throw readFailed(err);
     }
   }
 
@@ -610,7 +615,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
         const [record, alts, previous, marks] = await Promise.all([videoKey, altsKey, prevKey, marksKey].map((k) => area.getBytesInUse(k(videoId))));
         return { record, alts, previous, marks };
       } catch (err) {
-        throw new TjError('ST_READ_FAILED', { detail: String(err && err.message), cause: err });
+        throw readFailed(err);
       }
     },
 
@@ -759,7 +764,7 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
       try {
         bytes = await area.getBytesInUse(null);
       } catch (err) {
-        throw new TjError('ST_READ_FAILED', { detail: String(err && err.message), cause: err });
+        throw readFailed(err);
       }
       return computeCapacity(bytes, area);
     },

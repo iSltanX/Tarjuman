@@ -99,6 +99,12 @@ export function videoParam(search) {
 }
 
 /**
+ * نمط مطابقة يوتيوب كما في content_scripts.matches في البيان: إذنه وحده ما تسأل عنه نافذة الأيقونة (تحقق Gemini، B5-أ). نمط
+ * إذن لا رابط يُفتح.
+ */
+export const YOUTUBE_MATCHES = Object.freeze(['https://www.youtube.com/*']);
+
+/**
  * عنوان صفحة المشاهدة الوحيد الذي تفتحه الإضافة (أمر «فتح الفيديو»)، وعند زمن بالثواني الصحيحة للقفز (الإصدار الثاني).
  * @param {string} videoId
  * @param {{ atMs?: number }} [opts]

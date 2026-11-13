@@ -2,12 +2,13 @@
 // التبويب النشط، ووصف الحالة الأربع للبطاقة (ومؤشر «محفوظ»)، وسطر حالة أدوات المشغّل والطبقة بسببه، وسطر رفض الالتقاط،
 // والإجراءات السريعة بحسب السياق، ووجهة مدخل «المحفوظات» الواحد، وشرط تفعيل «المحرّر»، وتقرير تشخيص الصفحة المنقّى (R64).
 // الاستعلام يعيد null لكل ما ليس رد صفحة فيديو صالحًا، ومعه سببه: صفحة يوتيوب بلا سكربت أو بنسخة أقدم («أعد تحميل الصفحة»)،
-// أو تبويب ليس يوتيوب («افتح فيديو على يوتيوب»)، أو لا يُعرف العنوان (الاثنان في جملة).
+// أو تبويب ليس يوتيوب («افتح فيديو على يوتيوب»)، أو لا يُعرف العنوان (الاثنان في جملة)، أو إذن يوتيوب مسحوب (B5-أ: «اسمح له من
+// إعدادات الإضافة في متصفحك»، بلا زر).
 import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagnostics/report.js';
 import { messageFor } from '../../core/errors/index.js';
 import { describeLang } from '../../core/lang/index.js';
 import { getLocale, t, texts } from '../../i18n/index.js';
-import { isSourceLang, parseTrackKey } from '../../core/model/ids.js';
+import { YOUTUBE_MATCHES, isSourceLang, parseTrackKey } from '../../core/model/ids.js';
 import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 import { pairLabel } from '../../ui/lang.js';
 import {
@@ -36,13 +37,28 @@ export function tabPlace(tab) {
 }
 
 /**
+ * إذن يوتيوب مسحوب يقينًا (تحقق Gemini، B5-أ): Firefox يسمح بسحبه، وChromium بـ«الوصول إلى المواقع» عند النقر، فلا يُحقن سكربت
+ * المحتوى ولا يُكشف العنوان. `true` حين يقول المتصفح `false` وحده؛ وغياب الواجهة أو رفضها أو تأخرها «لا يُعرف» فتبقى الحالة كما كانت.
+ * @param {typeof chrome.permissions | undefined} permissions @param {number} timeoutMs
+ */
+async function siteAccessOff(permissions, timeoutMs) {
+  if (typeof permissions?.contains !== 'function') return false;
+  try {
+    return (await withTimeout(Promise.resolve(permissions.contains({ origins: [...YOUTUBE_MATCHES] })), timeoutMs)) === false;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * حالة النافذة: رد الصفحة، أو سبب غيابه (تدقيق 7a66f91، Q31): `stale` صفحة يوتيوب بلا سكربت ترجمان أو بنسخة أقدم (فُتحت قبل
  * التثبيت أو التحديث، وChromium لا يحقن سكربتات البيان في التبويبات المفتوحة) فتُعاد تحميلًا، و`elsewhere` ليست يوتيوب، و`unknown`
- * لا يُعرف العنوان (الاحتمالان معًا في نص واحد).
- * @param {{ tabs?: typeof chrome.tabs, timeoutMs?: number }} [env]
- * @returns {Promise<{ reply: import('../../core/model/messages.js').VideoStateReply | null, miss: null | 'stale' | 'elsewhere' | 'unknown' }>}
+ * لا يُعرف العنوان (الاحتمالان معًا في نص واحد). و`siteOff` (B5-أ): لا رد، والتبويب يوتيوب أو مجهول، وإذن يوتيوب مسحوب
+ * (`permissions.contains` ← false)، فإعادة التحميل وحدها لا تجدي.
+ * @param {{ tabs?: typeof chrome.tabs, permissions?: typeof chrome.permissions, timeoutMs?: number }} [env]
+ * @returns {Promise<{ reply: import('../../core/model/messages.js').VideoStateReply | null, miss: null | 'stale' | 'elsewhere' | 'unknown' | 'siteOff' }>}
  */
-export async function queryPopupState({ tabs = globalThis.chrome?.tabs, timeoutMs = REPLY_TIMEOUT_MS } = {}) {
+export async function queryPopupState({ tabs = globalThis.chrome?.tabs, permissions = globalThis.chrome?.permissions, timeoutMs = REPLY_TIMEOUT_MS } = {}) {
   let tab;
   try {
     [tab] = await withTimeout(tabs.query({ active: true, lastFocusedWindow: true }), timeoutMs);
@@ -52,11 +68,13 @@ export async function queryPopupState({ tabs = globalThis.chrome?.tabs, timeoutM
   if (!tab || tab.id === undefined) return { reply: null, miss: 'unknown' };
   const place = tabPlace(tab);
   const miss = place === 'youtube' ? 'stale' : place === 'other' ? 'elsewhere' : 'unknown';
+  // لا رد: على تبويب يوتيوب أو مجهول يُسأل عن الإذن قبل «أعد التحميل»؛ وتبويب معروف أنه ليس يوتيوب يبقى «افتح فيديو».
+  const noReply = async () => ({ reply: null, miss: place !== 'other' && (await siteAccessOff(permissions, timeoutMs)) ? 'siteOff' : miss });
   try {
     const reply = await withTimeout(tabs.sendMessage(tab.id, videoStateRequest()), timeoutMs);
-    return isVideoStateReply(reply) ? { reply, miss: null } : { reply: null, miss };
+    return isVideoStateReply(reply) ? { reply, miss: null } : noReply();
   } catch {
-    return { reply: null, miss };
+    return noReply();
   }
 }
 
@@ -86,9 +104,10 @@ export async function untilSettled(query, first, { intervalMs = LOADING_POLL_MS,
 
 /**
  * نص الملاحظة حين لا رد صفحة فيديو.
- * @param {null | 'stale' | 'elsewhere' | 'unknown'} miss
+ * @param {null | 'stale' | 'elsewhere' | 'unknown' | 'siteOff'} miss
  */
-export const missText = (miss) => (miss === 'stale' ? messageFor('TJ_RELOAD_PAGE') : miss === 'unknown' ? messageFor('TJ_OPEN_OR_RELOAD') : notVideoText());
+export const missText = (miss) => (miss === 'stale' ? messageFor('TJ_RELOAD_PAGE') : miss === 'unknown' ? messageFor('TJ_OPEN_OR_RELOAD')
+  : miss === 'siteOff' ? messageFor('TJ_SITE_ACCESS_OFF') : notVideoText());
 
 /** اسم لغة للعرض بلغة الواجهة من رمزها، والرمز الذي لا يعرف المتصفح اسمه يبقى رمزه. @param {string} code */
 export const langLabel = (code) => describeLang(code, getLocale())?.name ?? code;

@@ -55,15 +55,17 @@ test('لا شبكة في الصفحات: لا fetch ولا XHR ولا قنوات
   }
 });
 
-test('واجهات chrome في الصفحات قائمة مسماة: tabs.query وsendMessage وcreate، وruntime.getURL وgetManifest فقط', () => {
-  const allowed = new Set(['tabs.query', 'tabs.sendMessage', 'tabs.create', 'runtime.getURL', 'runtime.getManifest']);
+test('واجهات chrome في الصفحات قائمة مسماة: tabs.query وsendMessage وcreate، وruntime.getURL وgetManifest، وpermissions.contains فقط', () => {
+  // permissions.contains (تحقق Gemini، B5-أ): النافذة تسأل هل إذن يوتيوب قائم حين لا رد، بلا طلب إذن (permissions.request ممنوع).
+  const allowed = new Set(['tabs.query', 'tabs.sendMessage', 'tabs.create', 'runtime.getURL', 'runtime.getManifest', 'permissions.contains']);
   const used = new Set();
   for (const f of files.filter((x) => x.endsWith('.js'))) {
     const text = strip(readFileSync(f, 'utf8'));
     // chrome.x.y وapi.x.y وglobalThis.chrome?.x.y، وكذلك المتغيرات المسماة باسم الواجهة (tabs.query بعد استخراج tabs).
-    for (const m of text.matchAll(/\b(?:chrome|api)\??\.((?:tabs|runtime|storage|windows|scripting|downloads|cookies|management|history|webRequest)\.\w+)/g)) used.add(m[1]);
-    for (const m of text.matchAll(/(?<![\w.])((?:tabs|runtime|windows|scripting|downloads|cookies|management|history)\.\w+)\(/g)) used.add(m[1]);
+    for (const m of text.matchAll(/\b(?:chrome|api)\??\.((?:tabs|runtime|storage|windows|scripting|downloads|cookies|management|history|webRequest|permissions)\.\w+)/g)) used.add(m[1]);
+    for (const m of text.matchAll(/(?<![\w.])((?:tabs|runtime|windows|scripting|downloads|cookies|management|history|permissions)\.\w+)\(/g)) used.add(m[1]);
   }
+  assert.ok(used.has('permissions.contains'), 'النافذة تسأل عن إذن يوتيوب (B5-أ)');
   for (const u of used) assert.ok(allowed.has(u), `واجهة غير معتمدة: ${u}`);
   assert.ok(used.has('tabs.create'), 'فتح الصفحات والفيديو بتبويب جديد');
   const status = strip(readFileSync(path.join(ROOT, 'src/pages/popup/status.js'), 'utf8'));
