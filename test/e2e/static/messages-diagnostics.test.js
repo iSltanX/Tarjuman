@@ -21,9 +21,16 @@ const POT = `pot=${'Mk'.repeat(40)}`;
 const HOSTILE = `https://www.youtube.com/api/timedtext?v=iG9CE55wbtY&${POT}&signature=${'A1b2'.repeat(10)} SAPISID=abcdefghijkl`;
 const clean = (text) => findSecrets(text).length === 0 && !/https?:\/\//.test(text) && !/timedtext/.test(text);
 
-/** كل الرموز من مجالات السجل نفسه (لا من قائمة يدوية)، ومنها مجالات الإصدار الثاني كالنسخ الاحتياطي (P15). */
+// الرسائل العربية الدالّة وعيّناتها (IM_STRAY_TEXT، ع-١٢ ب): تُفحص بكل صيغة، ولا دالّة خارج هذه القائمة.
+const AR_FUNCTION_SAMPLES = { IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }] };
+/** كل الرموز من مجالات السجل نفسه (لا من قائمة يدوية)، ومنها مجالات الإصدار الثاني كالنسخ الاحتياطي (P15). والرسالة الدالّة
+ * بكل عيّنة من AR_FUNCTION_SAMPLES، ومعها params التي مُلئت بها. */
 async function catalog() {
-  return DOMAINS.flatMap((d) => Object.entries(d.MESSAGES).map(([code, text]) => ({ domain: d.name, code, text })));
+  return DOMAINS.flatMap((d) => Object.entries(d.MESSAGES).flatMap(([code, msg]) => {
+    if (typeof msg !== 'function') return [{ domain: d.name, code, text: msg, params: null }];
+    assert.ok(Object.hasOwn(AR_FUNCTION_SAMPLES, code), `${code}: رسالة دالّة خارج القائمة`);
+    return AR_FUNCTION_SAMPLES[code].map((params) => ({ domain: d.name, code, text: msg(params), params }));
+  }));
 }
 
 // كلمات لاتينية مقصودة في الرسائل: أسماء يراها المستخدم كما هي في يوتيوب والملفات والترميز.
@@ -33,15 +40,15 @@ test('كل رمز رسالة عربية: الصيغة، وحرف عربي، ول
   const all = await catalog();
   // 137 رمزًا في الإصدار الأول (P9)؛ الحد الأدنى يكشف مجالًا أُفرغ خطأً دون أن يكسر إضافة رموز جديدة.
   assert.ok(all.length >= 130, `عدد الرموز ${all.length}`);
-  assert.equal(new Set(all.map((x) => x.code)).size, all.length, 'لا رمز مكرر بين المجالات');
-  for (const { code, text } of all) {
+  assert.equal(new Set(all.map((x) => x.code)).size, all.filter((x) => !x.params || x.params === AR_FUNCTION_SAMPLES[x.code][0]).length, 'لا رمز مكرر بين المجالات');
+  for (const { code, text, params } of all) {
     assert.match(code, /^[A-Z]+_[A-Z0-9_]+$/, code);
     assert.ok(text.trim().length > 0, `${code}: فارغة`);
     assert.match(text, /\p{Script=Arabic}/u, `${code}: بلا حرف عربي`);
     assert.ok(clean(text), `${code}: فيها رابط أو رمز`);
     const latin = (text.replace(/\{[a-z]+\}/gi, '').match(/[A-Za-z]{2,}/g) ?? []).filter((w) => !LATIN_OK.has(w));
     assert.deepEqual(latin, [], `${code}: كلمات لاتينية غير مقصودة`);
-    assert.equal(messageFor(code), text.replace(/\{[a-z]+\}/gi, (m) => m), `${code}: messageFor يعيد الرسالة نفسها`);
+    assert.equal(params ? messageFor(code, params) : messageFor(code), text, `${code}: messageFor يعيد الرسالة نفسها`);
   }
 });
 

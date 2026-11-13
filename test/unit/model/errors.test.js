@@ -6,6 +6,8 @@ import { createDiagnosticReport } from '../../../src/core/diagnostics/report.js'
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
 
 const ARABIC = /[؀-ۿ]/;
+// الرسائل العربية الدالّة وعيّناتها (IM_STRAY_TEXT، ع-١٢ ب): تُفحص بكل صيغة، ولا دالّة خارج هذه القائمة.
+const AR_FUNCTION_SAMPLES = { IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }] };
 
 test('كل رمز يبدأ ببادئة مجاله، ولا بادئة لمجالين، ولا رمز مكرر', () => {
   const owners = new Map();
@@ -22,7 +24,10 @@ test('كل رمز يبدأ ببادئة مجاله، ولا بادئة لمجا�
       assert.ok(d.PREFIXES.some((p) => code.startsWith(p)), `${code} خارج بادئات ${d.name}`);
       assert.ok(!seen.has(code), `${code} مكرر`);
       seen.add(code);
-      assert.ok(ARABIC.test(msg) && msg.trim().length >= 4, `${code}: رسالة عربية`);
+      if (typeof msg === 'function') assert.ok(Object.hasOwn(AR_FUNCTION_SAMPLES, code), `${code}: رسالة دالّة خارج القائمة`);
+      for (const text of typeof msg === 'function' ? AR_FUNCTION_SAMPLES[code].map((p) => msg(p)) : [msg]) {
+        assert.ok(ARABIC.test(text) && text.trim().length >= 4, `${code}: رسالة عربية`);
+      }
     }
   }
   assert.ok(seen.has('EX_WRONG_VIDEO') && seen.has('ST_CONFLICT') && seen.has('TJ_NO_VIDEO'));

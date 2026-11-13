@@ -8,6 +8,8 @@ import { DOMAINS, messageFor } from '../../../src/core/errors/index.js';
 const LRI = String.fromCodePoint(0x2066);
 const PDI = String.fromCodePoint(0x2069);
 const ARABIC = /[\u0600-\u06FF]/;
+// الرسائل العربية الدالّة وعيّناتها (IM_STRAY_TEXT، ع-١٢ ب): تُفحص بكل صيغة، ولا دالّة خارج هذه القائمة.
+const AR_FUNCTION_SAMPLES = { IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }] };
 /** النص بعد حذف كل ما بين LRI وPDI: ما بقي يُرسم في سياق عربي. */
 const outsideIsolates = (s) => s.replace(new RegExp(`${LRI}[^${PDI}]*${PDI}`, 'g'), '');
 /** رقم بعلامة + أو - أو − ليس جزءًا من كلمة أو رقم قبله (فـ«U+2212» و«10-20» لا يُعدّان). */
@@ -16,8 +18,10 @@ const SIGNED = /(?<![\w\u2066])[+\-\u2212]\d/;
 test('FA-05: لا رقم موقّعًا خارج عزل LTR في أي رسالة عربية من الكتالوج', () => {
   const bad = [];
   for (const d of DOMAINS) {
-    for (const [code, text] of Object.entries(d.MESSAGES)) {
-      if (typeof text === 'string' && ARABIC.test(text) && SIGNED.test(outsideIsolates(text))) bad.push(`${code}: ${text}`);
+    for (const [code, msg] of Object.entries(d.MESSAGES)) {
+      for (const text of typeof msg === 'function' ? AR_FUNCTION_SAMPLES[code].map((p) => msg(p)) : [msg]) {
+        if (typeof text === 'string' && ARABIC.test(text) && SIGNED.test(outsideIsolates(text))) bad.push(`${code}: ${text}`);
+      }
     }
   }
   assert.deepEqual(bad, []);
