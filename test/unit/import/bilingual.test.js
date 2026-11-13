@@ -106,3 +106,18 @@ test('ملف الاستكمال (المحرّر): الثنائي يُكتشف و
   const plain = await readPatch(fileOf(patch, 'patch.srt'), { fingerprint: FP, cues: current });
   assert.equal(plain.bilingual, null, 'بلا أصل لا حارس');
 });
+
+test('لغة الملف بعد الإزالة: اسم ترجمان ID.ar.dual-en.srt لا تجتاز لغته فحص الكتابة على النص الثنائي (عربي ولاتيني)، فتُقرأ من الاسم على النص بعد الإزالة (الجولة الحية)', async () => {
+  // نص الأصل أطول من الترجمة، كما في الملفات الحقيقية، فتغلب الحروف اللاتينية على النص الثنائي.
+  const long = EN.map((c) => ({ ...c, text: `${c.text} and a much longer original sentence here` }));
+  const track = englishTrack({ cues: long });
+  const fp = fingerprint({ videoId: VIDEO, track });
+  const file = buildSubtitleExport({ videoId: VIDEO, cues: AR, lang: 'ar', format: 'srt', bilingual: true, original: long, sourceLang: 'en' });
+  assert.equal(file.name, `${VIDEO}.ar.dual-en.srt`);
+  const r = await readImport(fileOf(file.text, file.name), { fingerprints: [fp], originals: [track] });
+  assert.equal(r.lang, null, 'قبل الإزالة: النص الثنائي لا يوافق العربية');
+  const s = withoutOriginalLines(r, { fingerprints: [fp] });
+  assert.equal(s.lang, 'ar', 'بعد الإزالة: من الاسم على نص الترجمة وحده');
+  const chosen = withoutOriginalLines({ ...r, lang: 'fa' }, { fingerprints: [fp] });
+  assert.equal(chosen.lang, 'fa', 'لغة قائمة لا تُستبدل');
+});

@@ -179,10 +179,13 @@ export function withoutOriginalLines(result, { fingerprints = [], settings } = {
   if (!result?.ok || !result.bilingual) return result;
   const { count, indexes } = result.bilingual;
   const cues = withoutLastLines(result.cues, indexes);
+  // لغة الملف من اسمه تُقرأ من جديد على نص الترجمة وحده: النص الثنائي (حروف الأصل اللاتينية مع العربية) لا يجتاز فحص الكتابة،
+  // فكانت «غير محددة» بعد الإزالة لملف اسمه ID.ar.dual-en.srt (الجولة الحية). واللغة القائمة لا تُستبدل.
+  const lang = result.lang ?? langFromFileName(result.fileName, cues);
   const raw = [...result.notes, messageFor('IM_NOTE_BILINGUAL_REMOVED', { count })];
   const fingerprint = result.fingerprintId ? fingerprints.find((f) => f.id === result.fingerprintId) ?? null : null;
-  const report = compare(cues, fingerprint, { driftMs: threshold(settings), target: result.lang ?? null });
-  return { ...result, cues, notes: capNotes(raw), comparison: { ...report, notes: capNotes([...raw, ...report.notes]) }, bilingual: null, stripped: count };
+  const report = compare(cues, fingerprint, { driftMs: threshold(settings), target: lang });
+  return { ...result, cues, lang, notes: capNotes(raw), comparison: { ...report, notes: capNotes([...raw, ...report.notes]) }, bilingual: null, stripped: count };
 }
 
 /**
