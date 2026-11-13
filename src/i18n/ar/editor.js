@@ -147,15 +147,20 @@ export default Object.freeze({
     readOnly: 'الأصل للعرض فقط', noNext: 'لا مقطع بعده',
   },
   export: {
-    srt: 'الترجمة SRT…', srtHint: 'النسخة الحالية أو المرفوعة، بتوقيت المشاهدة أو المحفوظ',
+    file: 'ملف الترجمة…', fileHint: 'بصيغة SRT أو WebVTT، وحدها أو مع الأصل، بتوقيت المشاهدة أو المحفوظ',
     report: 'تقرير مراجعة…', reportHint: 'المقاطع ومشكلاتها وعلاماتك بأزمنتها',
     study: 'نص دراسي…', studyHint: 'فقرات للقراءة بروابط توقيت، بلغة الترجمة أو باللغتين',
-    title: 'تصدير الترجمة (SRT)', downloadSrt: 'تنزيل SRT', download: 'تنزيل', fileName: 'اسم الملف: ',
+    title: 'تصدير الترجمة', download: 'تنزيل', fileName: 'اسم الملف: ',
     blocked: 'لا يُصدَّر الآن', cannot: 'لا يمكن التصدير',
     timingLegend: 'التوقيت المصدَّر', timingShown: 'توقيت المشاهدة (المحفوظ + الإزاحة {off} ث)', timingSaved: 'التوقيت المحفوظ (دون الإزاحة)',
     variantLegend: 'النسخة', variantCurrent: 'النسخة الحالية (ما تراه في المحرّر)', variantUploaded: 'النسخة المرفوعة كما هي',
     noteUploadedSaved: 'النسخة المرفوعة كما هي، بتوقيتها المحفوظ.', noteUploadedChoose: 'النسخة المرفوعة كما هي، بالتوقيت الذي تختاره.',
     noteDirty: 'يُصدَّر ما تراه الآن، ومنه تغييرات غير محفوظة ({n}).', noteZeroOffset: 'إزاحة العرض صفر، فيُصدَّر التوقيت المحفوظ كما هو.',
+    // الفكرة ١١: الصيغة والمحتوى.
+    formatLegend: 'الصيغة', formatSrt: 'SRT — تقبله أغلب المشغّلات', formatVtt: 'WebVTT — لمشغّلات الويب',
+    contentLegend: 'المحتوى', contentOnly: 'الترجمة وحدها', contentDual: 'مع الأصل (سطره تحت كل مقطع)',
+    noOriginal: 'لا أصل محفوظ لهذا الفيديو؛ نزّله من المشغّل أولًا.',
+    dualNote: 'الملف للمشاهدة في مشغّل آخر، لا للرفع إلى ترجمان.',
   },
   format: { legend: 'الصيغة', md: 'Markdown (روابط توقيت قابلة للنقر)', txt: 'نص عادي TXT' },
   report: {

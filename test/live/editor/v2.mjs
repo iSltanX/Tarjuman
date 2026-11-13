@@ -686,8 +686,9 @@ try {
     const cues = await iso(P.slotCues, GAP, 1);
     check('ac6-explicit-save', cues.length === 900 && cues.find((c) => c[0] === 300)?.[3] === 'مكمَّل 300', { count: cues.length });
     before = await snapshotDl();
-    await menu('تصدير', 'الترجمة SRT');
-    await clickOn('dialog[open] button', 'تنزيل SRT');
+    // «ملف الترجمة…» (الفكرة ١١): SRT وحدها افتراضيًا، ثم «تنزيل».
+    await menu('تصدير', 'ملف الترجمة');
+    await clickOn('dialog[open] button', 'تنزيل');
     const srt = (await newFiles(before, 'Tarjuman'))[0];
     check('ac9-srt-in-subfolder', !!srt && srt.name.endsWith('.ar.srt') && parseSrtLenient(srt.text).cues.length === 900, { name: srt?.name });
     await iso(P.prefs, { saveLocation: { mode: 'downloads', folder: 'Tarjuman' } });

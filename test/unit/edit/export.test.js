@@ -71,3 +71,21 @@ test('معرّف غير صالح أو ملف بلا مقاطع: رمز واضح 
   assert.equal(planArabicExport({ videoId: 'bad', cues: makeCues(1), offsetMs: 0 }).code, 'TJ_BAD_VIDEO_ID');
   assert.equal(planArabicExport({ videoId: VIDEO_ID, lang: 'ar', cues: [], offsetMs: 0 }).code, 'ST_NO_RECORD');
 });
+
+test('الفكرة ١١: الصيغة والمحتوى: WebVTT ومع الأصل بمحاذاة الزمن المحفوظ ثم الإزاحة، وبلا أصل يُصدَّر وحده باسمه، والسهم يُرفض برسالته', () => {
+  const cues = makeCues(2);
+  const english = makeCues(2, { text: (i) => `line ${i}` });
+  const r = planArabicExport({ videoId: VIDEO_ID, lang: 'ar', cues, offsetMs: 500, format: 'vtt', bilingual: true, original: english, sourceLang: 'en' });
+  assert.equal(r.ok, true);
+  assert.equal(r.name, `${VIDEO_ID}.ar.dual-en.vtt`);
+  assert.equal(r.timing, 'shown');
+  assert.ok(r.text.startsWith('WEBVTT\n\n1\n00:00:01.500 --> 00:00:03.500\nسطر 1\nline 1\n'), r.text);
+  const alone = planArabicExport({ videoId: VIDEO_ID, lang: 'ar', cues, offsetMs: 0, format: 'srt', bilingual: true, original: [], sourceLang: 'en' });
+  assert.equal(alone.name, `${VIDEO_ID}.ar.srt`);
+  assert.doesNotMatch(alone.text, /line/);
+  const arrow = planArabicExport({ videoId: VIDEO_ID, lang: 'ar', cues: [cue(1, 1000, 2000, 'أ --> ب')], offsetMs: 0, format: 'vtt' });
+  assert.equal(arrow.ok, false);
+  assert.equal(arrow.code, 'EX_TEXT_BREAKS_VTT');
+  assert.match(arrow.message, /1/);
+  assert.equal(planArabicExport({ videoId: VIDEO_ID, lang: 'ar', cues, offsetMs: 0, format: 'ass' }).code, 'MD_INVALID');
+});

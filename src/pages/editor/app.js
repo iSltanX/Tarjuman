@@ -30,6 +30,7 @@ import { createMenu } from '../../ui/menu.js';
 import { pairLabel } from '../../ui/lang.js';
 import { jumpToVideo, openVideo as defaultOpenVideo } from '../../ui/seek.js';
 import { TOAST_MS } from '../../ui/toast.js';
+import { subtitleFileName } from '../../core/export/bilingual.js';
 import { openDriftDialog } from './drift-dialog.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
 import { keepFocus } from './focus.js';
@@ -195,11 +196,11 @@ export async function mountEditor(app, {
   // أيقونتان بلا نص (اسمهما في aria-label، وما سيتراجع عنه أو يعاد في التلميح): الإعادة هي أيقونة التراجع معكوسة بـCSS.
   const undoBtn = button({ label: lt('editor.action.undo'), icon: 'undo', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-undo', onClick: () => doUndo(), doc });
   const redoBtn = button({ label: lt('editor.action.redo'), icon: 'redo', iconOnly: true, variant: 'ghost', size: 'sm', className: 'ed-redo', onClick: () => doRedo(), doc });
-  // «تصدير ▾» (§١٩.٩): الترجمة SRT، وتقرير المراجعة، والنص الدراسي؛ وكلها عبر saveFile (R65).
+  // «تصدير ▾» (§١٩.٩): ملف الترجمة (SRT أو WebVTT، وحده أو مع الأصل؛ الفكرة ١١)، وتقرير المراجعة، والنص الدراسي؛ وكلها عبر saveFile (R65).
   const exportMenu = createMenu({
     label: lt('editor.action.export'), chevron: true, doc,
     items: [
-      { id: 'srt', label: lt('editor.export.srt'), hint: lt('editor.export.srtHint'), onSelect: () => onExport() },
+      { id: 'file', label: lt('editor.export.file'), hint: lt('editor.export.fileHint'), onSelect: () => onExport() },
       { id: 'report', label: lt('editor.export.report'), hint: lt('editor.export.reportHint'), onSelect: () => onReport() },
       { id: 'study', label: lt('editor.export.study'), hint: lt('editor.export.studyHint'), onSelect: () => onStudy() },
     ],
@@ -1911,24 +1912,33 @@ export async function mountEditor(app, {
     const hasOriginal = S.edited || S.session.dirty;
     let variant = S.view === 'original' ? 'original' : 'current';
     let choice = 'shown';
+    // الصيغة والمحتوى (الفكرة ١١): SRT أو WebVTT، والترجمة وحدها أو مع الأصل من مسار الأصل المحفوظ (S.englishTrack، مرجع النص
+    // الدراسي نفسه)، و«مع الأصل» معطّل بسببه بلا مسار.
+    let format = 'srt';
+    let bilingual = false;
+    const english = S.englishTrack?.cues ?? [];
+    const noOriginal = english.length ? null : t('editor.export.noOriginal');
     let plan = null;
     let confirmBtn = null;
     const offset = S.session.offsetMs;
-    const radios = (name, items, value, onPick) => el('fieldset', {
-      className: 'ed-fieldset',
-      children: [
-        el('legend', { className: 'tj-label', text: items.legend, doc }),
-        ...items.options.map(([v, label]) => el('label', {
-          className: 'ed-radio',
-          children: [el('input', { attrs: { type: 'radio', name, value: v, ...(v === value ? { checked: '' } : {}) }, on: { change: () => onPick(v) }, doc }), el('span', { text: label, doc })],
-          doc,
-        })),
-      ],
-      doc,
-    });
+    const radios = (name, items, value, onPick) => {
+      const reasons = [];
+      const labels = items.options.map(([v, label, why]) => {
+        const input = el('input', { attrs: { type: 'radio', name, value: v, ...(v === value ? { checked: '' } : {}) }, on: { change: () => onPick(v) }, doc });
+        if (why) {
+          input.disabled = true;
+          input.setAttribute('aria-disabled', 'true');
+          input.setAttribute('aria-describedby', `${name}-${v}-why`);
+          reasons.push(el('p', { className: 'tj-caption', text: why, attrs: { id: `${name}-${v}-why` }, doc }));
+        }
+        return el('label', { className: 'ed-radio', attrs: why ? { title: why } : {}, children: [input, el('span', { text: label, doc })], doc });
+      });
+      return el('fieldset', { className: 'ed-fieldset', children: [el('legend', { className: 'tj-label', text: items.legend, doc }), ...labels, ...reasons], doc });
+    };
     const timingBox = el('div', { doc });
     const nameLine = el('p', { className: 'tj-body-sm', doc });
     const noteLine = el('p', { className: 'tj-caption', doc });
+    const dualLine = el('p', { className: 'tj-caption', text: t('editor.export.dualNote'), doc });
     const errorBox = el('div', { doc });
     // ما جُرّد عند الكتابة وما يتغير عند إعادة الاستيراد، قبل التنزيل (تدقيق 7a66f91، U99).
     const notesBox = el('div', { attrs: { 'data-fid': 'exportNotes' }, doc });
@@ -1939,9 +1949,13 @@ export async function mountEditor(app, {
       const s = variant === 'original' ? S.original : S.session;
       const errs = s.issues().errors;
       const off = offsetOf(variant);
+      const lang = translationLang(S.opened?.slots[S.slot - 1]?.track);
+      const dual = bilingual && english.length > 0;
       plan = errs
         ? { ok: false, code: 'ED_EXPORT_HAS_ERRORS', count: errs }
-        : planArabicExport({ videoId, cues: s.snapshot(), offsetMs: off, choice, variant, lang: translationLang(S.opened?.slots[S.slot - 1]?.track) });
+        : planArabicExport({
+          videoId, cues: s.snapshot(), offsetMs: off, choice, variant, lang, format, bilingual: dual, original: dual ? english : null, sourceLang: S.englishTrack?.lang ?? null,
+        });
       timingBox.replaceChildren(...(off !== 0
         ? [radios('ed-timing', {
           legend: t('editor.export.timingLegend'),
@@ -1949,12 +1963,20 @@ export async function mountEditor(app, {
         }, choice, (v) => { choice = v; refresh(); })]
         : []));
       timingBox.hidden = off === 0;
-      const name = plan.ok ? plan.name : `${videoId}.ar${variant === 'original' ? '.original' : ''}.srt`;
+      let name = plan.ok ? plan.name : '';
+      if (!name) {
+        try {
+          name = subtitleFileName({ videoId, lang, variant, format, bilingual: dual, sourceLang: S.englishTrack?.lang ?? null });
+        } catch {
+          name = '';
+        }
+      }
       nameLine.replaceChildren(t('editor.export.fileName'), ltr(name, { doc }));
       noteLine.textContent = variant === 'original'
         ? (off === 0 ? t('editor.export.noteUploadedSaved') : t('editor.export.noteUploadedChoose'))
         : S.session.dirty ? t('editor.export.noteDirty', { n: changes() }) : off === 0 ? t('editor.export.noteZeroOffset') : '';
       noteLine.hidden = !noteLine.textContent;
+      dualLine.hidden = !dual;
       const why = plan.ok ? null : exportError(plan);
       errorBox.replaceChildren(...(why ? [alertBox({ tone: 'danger', title: t('editor.export.cannot'), text: why, doc })] : []));
       errorBox.hidden = !why;
@@ -1967,7 +1989,9 @@ export async function mountEditor(app, {
       className: 'tj-stack',
       children: [
         hasOriginal ? radios('ed-variant', { legend: t('editor.export.variantLegend'), options: [['current', t('editor.export.variantCurrent')], ['original', t('editor.export.variantUploaded')]] }, variant, (v) => { variant = v; refresh(); }) : null,
-        timingBox, nameLine, noteLine, notesBox, errorBox,
+        radios('ed-format', { legend: t('editor.export.formatLegend'), options: [['srt', t('editor.export.formatSrt')], ['vtt', t('editor.export.formatVtt')]] }, format, (v) => { format = v; refresh(); }),
+        radios('ed-content', { legend: t('editor.export.contentLegend'), options: [['only', t('editor.export.contentOnly')], ['dual', t('editor.export.contentDual'), noOriginal]] }, 'only', (v) => { bilingual = v === 'dual'; refresh(); }),
+        timingBox, nameLine, noteLine, dualLine, notesBox, errorBox,
       ],
       doc,
     });
@@ -1975,7 +1999,7 @@ export async function mountEditor(app, {
     const v = await openDialog({
       doc, size: 'md', title: t('editor.export.title'), content, focus: 'download',
       actions: [{
-        label: t('editor.export.downloadSrt'), value: 'download', variant: 'primary',
+        label: t('editor.export.download'), value: 'download', variant: 'primary',
         ref: (b) => {
           confirmBtn = b;
           setDisabled(b, plan.ok ? null : exportError(plan));
