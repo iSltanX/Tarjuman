@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as column from '../../../src/player/panel/column.js';
-import { ATTRS, PANEL_SELECTORS, SELECTORS, isBelow } from '../../../src/player/youtube-dom.js';
+import { ATTRS, CLASSES, EVENTS, PANEL_SELECTORS, SELECTORS, isBelow } from '../../../src/player/youtube-dom.js';
 
 test('PANEL_SELECTORS: محددات اللوحة كما كانت في column.js، مجمّدة، ولا شيء منها في SELECTORS', () => {
   assert.ok(Object.isFrozen(PANEL_SELECTORS));
@@ -47,4 +47,17 @@ test('column.js وpanel/session.js يستوردان أسماء يوتيوب من
   assert.equal(column.COLUMNS_SELECTOR, PANEL_SELECTORS.columns);
   assert.equal(column.SINGLE_COLUMN_ATTR, ATTRS.singleColumn);
   assert.ok(Object.isFrozen(column.COLUMN_SELECTORS));
+});
+
+test('عقد interfaces §٧ يذكر كل سجل في youtube-dom.js وكل مفتاح فيه (كان جدوله ناقصًا ومحددات اللوحة خارجه)', () => {
+  const doc = readFileSync(new URL('../../../docs/contracts/interfaces.md', import.meta.url), 'utf8');
+  const start = doc.indexOf('## ٧. محددات يوتيوب');
+  const section = doc.slice(start, doc.indexOf('\n## ', start + 1));
+  assert.ok(start > 0 && section.length > 0);
+  for (const [name, registry] of Object.entries({ SELECTORS, CLASSES, EVENTS, PANEL_SELECTORS, ATTRS })) {
+    assert.ok(section.includes(`\`${name}\``), name);
+    for (const key of Object.keys(registry)) assert.ok(section.includes(`\`${key}\``), `${name}.${key}`);
+  }
+  assert.ok(section.includes('`isBelow`'));
+  assert.ok(section.includes('capture.js') && section.includes('check-static.mjs'), 'الاستثناء والقاعدة التي تفرضه');
 });
