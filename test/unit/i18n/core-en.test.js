@@ -27,6 +27,8 @@ const FUNCTION_SAMPLES = {
   PG_LANG_ASSIGN_PARTIAL: { n: '2' },
   // المعدود بصيغه والعدد خامًا (تحقق مستقل §١٠): was/were وits/their بالعدد، وتُفحص صيغتاه في r2v-texts.test.js.
   PG_LANG_ASSIGN_SKIPPED: { n: '2 translations', count: 2 },
+  // الفكرة ٤ (الإنذار المبكر): تسمّي الصيغة المرفوضة إن عُرفت.
+  EX_UNSUPPORTED_FORMAT: { format: 'srv3' },
 };
 
 test('كل رمز خطأ له رسالة إنجليزية بالقوالب نفسها وبلا حرف عربي', () => {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readTimedtextParams } from '../../../src/extract/timedtext-params.js';
+import { FORMATS, formatOf, readTimedtextParams } from '../../../src/extract/timedtext-params.js';
 import { validateCaptureMessage } from '../../../src/extract/message.js';
 import { checkAcceptance } from '../../../src/extract/capture-adapter.js';
 import { createCaptureStore } from '../../../src/extract/capture-store.js';
@@ -50,6 +50,22 @@ const msg = (over = {}) => ({
   status: 200, bodyLength: 2, body: '{"events":[]}', ...over,
 });
 
+test('الفكرة ٤ (الإنذار المبكر): fmt=vtt يُسمّى vtt لا other، والمجهول other، وبلا fmt default', () => {
+  const at = (fmt) => readTimedtextParams(fake('').replace('&fmt=json3', fmt === null ? '' : `&fmt=${fmt}`)).format;
+  assert.deepEqual([at('json3'), at('srv3'), at('vtt'), at('ttml'), at('VTT'), at(null)], ['json3', 'srv3', 'vtt', 'other', 'other', 'default']);
+  assert.deepEqual([...FORMATS], ['json3', 'srv3', 'vtt', 'other', 'default']);
+  assert.ok(Object.isFrozen(FORMATS));
+  assert.equal(formatOf('vtt'), 'vtt');
+  // والرسالة تحفظ الاسم (كانت تصير other)، وكل صنف من FORMATS يمر كما هو.
+  for (const f of FORMATS) assert.equal(validateCaptureMessage(msg({ format: f })).format, f);
+  assert.equal(validateCaptureMessage(msg({ format: 'ttml' })).format, 'other');
+});
+
+test('الفكرة ٤ (الإنذار المبكر): وسم responseType=document يمر بقيمته وحدها، وغيره null', () => {
+  assert.equal(validateCaptureMessage(msg({ body: '', bodyLength: 0, responseType: 'document' })).responseType, 'document');
+  for (const v of [undefined, 'text', 'json', 'Document', 1]) assert.equal(validateCaptureMessage(msg({ responseType: v })).responseType, null, String(v));
+});
+
 test('validateCaptureMessage: يرفض غير المتوقع وينسخ المعروف فقط', () => {
   assert.equal(validateCaptureMessage(null), null);
   assert.equal(validateCaptureMessage({ ...msg(), source: 'x' }), null);
@@ -87,6 +103,11 @@ test('checkAcceptance: قواعد العقد بالترتيب', () => {
   assert.equal(v({ status: 403 }).reason, 'status');
   assert.equal(v({ body: '', bodyLength: 0 }).reason, 'blank');
   assert.equal(v({ hasTlang: true }).reason, 'bad-tlang');
+  // الإنذار المبكر: vtt باسمها، ورد XHR بنوع document بلا جسم صيغةٌ لا تُقرأ لا «استجابة فارغة»، والحالة قبلهما.
+  assert.deepEqual([v({ format: 'vtt', body: 'WEBVTT' }).code, v({ format: 'vtt', body: 'WEBVTT' }).reason], ['EX_UNSUPPORTED_FORMAT', 'fmt-vtt']);
+  const doc = v({ body: '', bodyLength: 0, responseType: 'document' });
+  assert.deepEqual([doc.accepted, doc.code, doc.reason], [false, 'EX_UNSUPPORTED_FORMAT', 'xhr-document']);
+  assert.equal(v({ body: '', bodyLength: 0, responseType: 'document', status: 404 }).reason, 'status');
 });
 
 test('capture-store: يُفرَّغ ما لا يخص الفيديو الحالي ولا يقبل غيره', () => {

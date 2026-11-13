@@ -52,7 +52,7 @@ export default Object.freeze({
   EX_NO_VIDEO: 'No video is showing, so the captured subtitles were ignored. Open a watch page, then turn on subtitles (CC).',
   EX_BAD_LANG: 'The captured subtitles have an unknown language and were ignored. Pick the language again from YouTube’s subtitles menu, and copy the diagnostics report if it keeps happening.',
   EX_EMPTY_BODY: 'Couldn’t extract the subtitles (empty response). Turn subtitles off and on again.',
-  EX_UNSUPPORTED_FORMAT: 'This subtitle format isn’t supported in this version, so nothing was exported. Try another video, and copy the diagnostics report so the format can be checked.',
+  EX_UNSUPPORTED_FORMAT: ({ format }) => `This subtitle format${typeof format === 'string' && /^[a-z][a-z0-9]{0,15}$/.test(format) ? ` (${format})` : ''} isn’t supported in this version, so nothing was exported. Try another video, and copy the diagnostics report so the format can be checked.`,
   EX_LIVE: 'This is a live stream in progress, so the full file isn’t available. Come back after the stream ends.',
   EX_NO_TRACK: 'Tarjuman hasn’t captured this video’s subtitles yet. Turn on YouTube subtitles (CC) and pick the language from its menu.',
 

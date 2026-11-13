@@ -217,7 +217,7 @@ function otherLanguages(h, { langs, other, brave, translatable, pickAgain = fals
  * وبلا مسار ملتقط: رسالة واحدة بحسب الحالة، والتفصيل (ومنه سطر اللغات) خلف «لماذا؟» (ت-٩).
  * @param {H} h @param {Act} act
  * @param {{
- *   live: boolean, unavailable: boolean, captureIssue: string | null, invalid: { code: string | null }[],
+ *   live: boolean, unavailable: boolean, captureIssue: string | null, captureFormat?: string | null, invalid: { code: string | null }[],
  *   tracks: import('../../extract/index.js').TrackInfo[], selectedKey: string | null, mode: 'normal' | 'long', durationMs: number | null,
  *   why: boolean, fallbackOpen: boolean, split: boolean, splitSize: string, splitError: string | null, longFile?: { count: number, chars: number | null } | null,
  *   busy: boolean, saveLine: { tone: string, text: string } | null,
@@ -261,7 +261,7 @@ export function downloadMenu(h, act, m, root = null) {
     // وحدها لرفض يطلب لغة أخرى)، وخطوات ترجمة يوتيوب الآلية، وملاحظة Brave مع الخطوات. و«فعّل CC» ولغات الفيديو معروفة سطر واحد
     // بالعدد (القرار ٢٩)، فالخطوات خلف «لماذا؟» بلا عدد.
     const states = [];
-    if (m.captureIssue) states.push(['warn', messageFor(m.captureIssue)]);
+    if (m.captureIssue) states.push(['warn', messageFor(m.captureIssue, { format: m.captureFormat ?? null })]);
     for (const code of new Set(m.invalid.map((t) => t.code ?? 'EX_NO_TRACK'))) states.push(['error', messageFor(code)]);
     const noCaptions = !states.length && m.unavailable;
     const langs = m.otherLangs > 0 ? m.otherLangs : null;

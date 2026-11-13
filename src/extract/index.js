@@ -39,6 +39,8 @@ const STATS_KEYS = Object.freeze(['totalEvents', 'textEvents', 'windowEvents', '
 const CONVERTER_KEYS = Object.freeze(['trimmed', 'merged', 'filledEnds', 'extended', 'wordCount', 'clampedWordTimes', 'clampedToEvent',
   'duplicatesRemoved', 'eventsReordered', 'endClampedToDuration']);
 const ROLLING_BASES = Object.freeze(['time', 'pattern']);
+/** الصيغة التي تسمّيها رسالة EX_UNSUPPORTED_FORMAT للمستخدم (الفكرة ٤): srv3 وvtt، ولا اسم لـjson3 ولا لغير المسمّاة. */
+const namedFormat = (code, format) => (code === 'EX_UNSUPPORTED_FORMAT' && (format === 'srv3' || format === 'vtt') ? format : null);
 /** @param {unknown} o @param {readonly string[]} keys @returns {Record<string, number | boolean> | null} */
 const pick = (o, keys) => (o && typeof o === 'object'
   ? Object.fromEntries(keys.filter((k) => Number.isFinite(o[k]) || typeof o[k] === 'boolean').map((k) => [k, o[k]]))
@@ -66,7 +68,8 @@ function trackDiagnostics(conv) {
  *   ok: boolean, code: string | null, key: string, lang: string, kind: 'manual' | 'asr', via: string | null, mode: 'normal' | 'long',
  *   cues: { n: number, startMs: number, endMs: number, text: string }[], warnings: string[], report: object | null
  * }} ConvertResult
- * @typedef {{ code: string, reason: string, at: number, videoId: string | null }} Rejection reason: سببه من REASONS (الفكرة ٤-ب)
+ * @typedef {{ code: string, reason: string, format: 'srv3' | 'vtt' | null, at: number, videoId: string | null }} Rejection reason: سببه من
+ *   REASONS (الفكرة ٤-ب)؛ وformat اسم الصيغة المرفوضة لرسالة EX_UNSUPPORTED_FORMAT (الإنذار المبكر)، وnull لغيرها
  */
 
 /**
@@ -222,7 +225,7 @@ export function createExtractor(env) {
       if (decision.code === 'EX_WRONG_VIDEO' && pendingAgeMs === undefined) pending.add(msg, now());
       // رفض فيديو آخر أو معاينة أو إعلان لا يخص المستخدم؛ غيره يُعرض له.
       if (decision.code !== 'EX_WRONG_VIDEO' && decision.code !== 'EX_NO_VIDEO') {
-        lastRejection = { code: decision.code, reason: decision.reason, at: now(), videoId: current };
+        lastRejection = { code: decision.code, reason: decision.reason, format: namedFormat(decision.code, msg.format), at: now(), videoId: current };
         emit();
       }
       return { accepted: false, code: decision.code };

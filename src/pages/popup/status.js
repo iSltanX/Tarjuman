@@ -285,7 +285,7 @@ export function toolsStatus(reply) {
 export function captureLine(reply) {
   const c = reply?.watch ? reply.capture : null;
   if (!c || c.state !== 'rejected' || typeof c.code !== 'string') return null;
-  return { tone: 'warning', text: messageFor(c.code) };
+  return { tone: 'warning', text: messageFor(c.code, { format: c.format ?? null }) };
 }
 
 /**

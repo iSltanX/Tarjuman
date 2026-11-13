@@ -3,8 +3,8 @@
 // من يوتيوب (tlang) يُقبل موسومًا بلغته ولغة أصله (قرار سلطان ق٢)؛ والمرفوض اللغة غير الصالحة وحدها.
 import { convertTrack } from '../core/convert/index.js';
 
-// سبب رفض الصيغة (الفكرة ٤-ب): fmt-srv3 لـsrv3، وdefault-not-json لطلب بلا fmt جسمه ليس JSON، وfmt-other لما سواهما.
-const FORMAT_REASONS = Object.freeze({ srv3: 'fmt-srv3', default: 'default-not-json' });
+// سبب رفض الصيغة (الفكرة ٤-ب): fmt-srv3 وfmt-vtt باسميهما، وdefault-not-json لطلب بلا fmt جسمه ليس JSON، وfmt-other لما سواها.
+const FORMAT_REASONS = Object.freeze({ srv3: 'fmt-srv3', vtt: 'fmt-vtt', default: 'default-not-json' });
 
 /**
  * reason: سبب الرفض من REASONS (src/core/convert/reasons.js) يحدد موضعه داخل رمزه، ويدخل التشخيص؛ وdetail وصف داخلي لا يدخله.
@@ -20,6 +20,8 @@ export function checkAcceptance(msg, ctx) {
   if (!msg.lang) return { accepted: false, code: 'EX_BAD_LANG', reason: 'bad-lang', detail: 'lang غير صالح' };
   if (msg.hasTlang && !msg.tlang) return { accepted: false, code: 'EX_BAD_LANG', reason: 'bad-tlang', detail: 'tlang غير صالح' };
   if (msg.status !== 200) return { accepted: false, code: 'EX_EMPTY_BODY', reason: 'status', detail: `الحالة ${msg.status}` };
+  // رد XHR بنوع document يصل بلا جسم موسومًا (الفكرة ٤): صيغة لا تقرؤها هذه النسخة، لا «استجابة فارغة» يعيدها إيقاف CC وتشغيلها.
+  if (msg.responseType === 'document') return { accepted: false, code: 'EX_UNSUPPORTED_FORMAT', reason: 'xhr-document', detail: 'رد XHR بنوع document' };
   if (msg.truncated || msg.body.trim() === '') return { accepted: false, code: 'EX_EMPTY_BODY', reason: msg.truncated ? 'truncated' : 'blank', detail: `طول الجسم ${msg.bodyLength}` };
   const looksJson = msg.body.trimStart().startsWith('{');
   if (msg.format !== 'json3' && !(msg.format === 'default' && looksJson)) {

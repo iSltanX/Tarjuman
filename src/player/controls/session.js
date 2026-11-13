@@ -306,6 +306,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const longFile = longFileOf(s, tracks);
     return {
       live: flags.live, unavailable: flags.unavailable, captureIssue: s.captureIssue?.code ?? null, ccStuck: flags.ccStuck,
+      // اسم الصيغة المرفوضة لرسالة EX_UNSUPPORTED_FORMAT (الفكرة ٤، الإنذار المبكر)، وnull لغيرها.
+      captureFormat: s.captureIssue?.format ?? null,
       invalid: s.captured.filter((t) => !t.ok).map((t) => ({ code: t.code })),
       tracks: tracks.map((t) => ({ key: t.key, lang: t.lang, kind: t.kind, via: t.via ?? null, ok: t.ok, cueCount: t.cueCount, warnings: t.warnings, lastEndMs: t.lastEndMs, capturedAt: t.capturedAt })),
       selectedKey: tracks.some((t) => t.key === d.key) ? d.key : tracks[0]?.key ?? null,

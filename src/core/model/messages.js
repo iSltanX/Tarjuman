@@ -27,7 +27,7 @@ export const SAVE_REPLY_MODES = Object.freeze(['downloads', 'subfolder', 'ask'])
  *   view: { displayOffsetMs: number, displayMode: 'ar' | 'dual' | 'off' },
  *   mounted: { overlay: string, controls: string },
  *   slots?: SlotSummary[],
- *   capture?: { state: 'captured' | 'rejected' | 'none', count: number, code: string | null },
+ *   capture?: { state: 'captured' | 'rejected' | 'none', count: number, code: string | null, format?: 'srv3' | 'vtt' },
  *   tools?: { overlay: string, controls: string, code: string | null },
  *   source?: SourceRef | null, lastExport?: LastExport | null, available?: { lang: string, kind: 'manual' | 'asr', name: string | null }[] | null
  * }} VideoStateReply
@@ -139,7 +139,11 @@ export function buildVideoStateReply(s, mounted) {
     view: { ...s.view },
     mounted: { overlay: String(mounted.overlay), controls: String(mounted.controls) },
     slots: slotSummaries(s),
-    capture: { state: okTracks.length ? 'captured' : issue ? 'rejected' : 'none', count: okTracks.length, code: okTracks.length ? null : issue },
+    capture: {
+      state: okTracks.length ? 'captured' : issue ? 'rejected' : 'none', count: okTracks.length, code: okTracks.length ? null : issue,
+      // اسم الصيغة المرفوضة لرسالة EX_UNSUPPORTED_FORMAT في النافذة (الفكرة ٤)، عند رفض بصيغة مسمّاة وحده.
+      ...(!okTracks.length && s.captureIssue?.format ? { format: s.captureIssue.format } : {}),
+    },
     tools: { overlay: String(mounted.overlay), controls: String(mounted.controls), code: mounted.code ?? null },
     source: isVideoId(s.videoId) ? sourceRef(s) : null,
     lastExport: isVideoId(s.videoId) ? lastExportOf(s) : null,

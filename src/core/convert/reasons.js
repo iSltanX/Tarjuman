@@ -3,9 +3,9 @@
 // (src/extract/capture-adapter.js) والتحليل (json3.js) والتحويل (asr.js وindex.js) يحمل واحدًا منها، والتشخيص يمرّره بـreasonOf.
 
 export const REASONS = Object.freeze([
-  // القبول: الفيديو، واللغة، والجسم، والصيغة، والبث.
-  'no-video', 'wrong-video', 'bad-v', 'bad-lang', 'bad-tlang', 'status', 'truncated', 'blank',
-  'fmt-srv3', 'fmt-other', 'default-not-json', 'live',
+  // القبول: الفيديو، واللغة، والجسم، والصيغة، والبث. وxhr-document رد XHR بنوع document لا يُقرأ نصه (الإنذار المبكر).
+  'no-video', 'wrong-video', 'bad-v', 'bad-lang', 'bad-tlang', 'status', 'truncated', 'blank', 'xhr-document',
+  'fmt-srv3', 'fmt-vtt', 'fmt-other', 'default-not-json', 'live',
   // التحليل (json3)، والجسم الفارغ عنده blank كما في القبول.
   'not-json', 'no-events', 'bad-event', 'bad-start', 'no-text-events',
   // التحويل: التدحرج بأساسه (عقد الاستخراج)، والثوابت، وفشل ثابت الحدود وحده.

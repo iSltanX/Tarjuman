@@ -281,3 +281,26 @@ test('الفكرة ٤-ب: فشل تحويل لا يحل محل التقاط سل
   assert.deepEqual(extractor.handleMessage(captureMsg(base, { body: '{"x":1}', bodyLength: 7 })), { accepted: false, code: 'EX_UNSUPPORTED_FORMAT' });
   assert.deepEqual(extractor.diagnostics().recentRejections.map((x) => [x.code, x.reason]), [['EX_UNSUPPORTED_FORMAT', 'no-events']]);
 });
+
+test('الفكرة ٤ (الإنذار المبكر): vtt باسمها في التشخيص، ورد document يُرفض بسببه، وآخر رفض يسمّي الصيغة المسمّاة وحدها', () => {
+  const { extractor } = makeExtractor({ videoId: VID, durationMs: manual.fixture.durationMs });
+  const vtt = 'WEBVTT\n\n00:00.000 --> 00:01.000\nhello there';
+  assert.deepEqual(extractor.handleMessage(captureMsg(base, { format: 'vtt', body: vtt })), { accepted: false, code: 'EX_UNSUPPORTED_FORMAT' });
+  assert.deepEqual([extractor.lastRejection().reason, extractor.lastRejection().format], ['fmt-vtt', 'vtt']);
+  // رد XHR بنوع document: كان لا يصل جسم ولا رفض؛ الآن رفض بسببه، وjson3 لا تُسمّى في الرسالة.
+  assert.equal(extractor.handleMessage(captureMsg(base, { body: '', bodyLength: 0, responseType: 'document' })).code, 'EX_UNSUPPORTED_FORMAT');
+  assert.deepEqual([extractor.lastRejection().reason, extractor.lastRejection().format], ['xhr-document', null]);
+  extractor.handleMessage(captureMsg(base, { format: 'srv3', body: '', bodyLength: 0, responseType: 'document' }));
+  assert.deepEqual([extractor.lastRejection().reason, extractor.lastRejection().format], ['xhr-document', 'srv3'], 'الصيغة المطلوبة باسمها');
+  extractor.handleMessage(captureMsg(base, { status: 403 }));
+  assert.equal(extractor.lastRejection().format, null, 'غير رفض الصيغة بلا اسم');
+  const d = extractor.diagnostics();
+  assert.deepEqual(d.recentRejections.map((x) => [x.code, x.reason, x.format, x.bodyLength]), [
+    ['EX_UNSUPPORTED_FORMAT', 'fmt-vtt', 'vtt', vtt.length], ['EX_UNSUPPORTED_FORMAT', 'xhr-document', 'json3', 0],
+    ['EX_UNSUPPORTED_FORMAT', 'xhr-document', 'srv3', 0], ['EX_EMPTY_BODY', 'status', 'json3', manual.body.length],
+  ]);
+  assert.ok(d.recentRejections.every((x) => REASONS.includes(x.reason)));
+  const text = formatDiagnosticReport(createDiagnosticReport({ version: '2.2.0', browser: 'Chrome 156', at: '2026-11-13T12:00:00.000Z', sections: { extract: d } }));
+  assert.deepEqual(findSecrets(text), []);
+  assert.equal(text.includes('hello there') || text.includes('WEBVTT'), false, 'لا جسم في التشخيص');
+});

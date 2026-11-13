@@ -43,6 +43,11 @@ test('سطر الالتقاط: الرفض برسالته (مسار عربي أو
   assert.equal(captureLine(reply({ capture: { state: 'none', count: 0, code: null } })), null);
   assert.equal(captureLine(reply({ capture: undefined })), null, 'رد الإصدار الأول');
   assert.equal(captureLine(null), null);
+  // الفكرة ٤ (الإنذار المبكر): رفض بصيغة مسمّاة يذكر اسمها، والرد بلا format (الأقدم) بلا اسم.
+  const srv3 = captureLine(reply({ capture: { state: 'rejected', count: 0, code: 'EX_UNSUPPORTED_FORMAT', format: 'srv3' } }));
+  assert.equal(srv3.text, messageFor('EX_UNSUPPORTED_FORMAT', { format: 'srv3' }));
+  assert.ok(srv3.text.includes('srv3'));
+  assert.equal(captureLine(reply({ capture: { state: 'rejected', count: 0, code: 'EX_UNSUPPORTED_FORMAT' } })).text, messageFor('EX_UNSUPPORTED_FORMAT'));
 });
 
 const fakeTabs = ({ answer, onSend } = {}) => ({

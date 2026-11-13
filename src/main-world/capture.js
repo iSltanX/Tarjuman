@@ -10,13 +10,14 @@ import { readTimedtextParams } from '../extract/timedtext-params.js';
 const MAX_BODY_CHARS = 20 * 1024 * 1024;
 const origin = window.location.origin;
 
-function post(meta, transport, status, body) {
+function post(meta, transport, status, body, responseType) {
   const tooLarge = body.length > MAX_BODY_CHARS;
   window.postMessage({
     source: 'tarjuman', v: 1, kind: 'timedtext',
     videoId: meta.videoId, lang: meta.lang, trackKind: meta.trackKind, kindParam: meta.kindParam,
     capsAsr: meta.capsAsr, hasTlang: meta.hasTlang, tlang: meta.tlang, format: meta.format, hasPot: meta.hasPot,
     transport, status, bodyLength: body.length, body: tooLarge ? '' : body, truncated: tooLarge,
+    ...(responseType === 'document' ? { responseType } : {}),
   }, origin);
   scheduleTracks();
 }
@@ -179,6 +180,9 @@ XHR.send = function send() {
         else if (type === 'json') post(meta, 'xhr', this.status, this.response == null ? '' : JSON.stringify(this.response));
         else if (type === 'arraybuffer' && this.response) post(meta, 'xhr', this.status, new TextDecoder().decode(this.response));
         else if (type === 'blob' && this.response) this.response.text().then((b) => post(meta, 'xhr', this.status, b), () => {});
+        // الفكرة ٤ (الإنذار المبكر، ح-38): رد document (XML محلَّل) لا نص له يُقرأ، وكان لا يصل منه جسم ولا رفض؛ فتصل رسالة بلا جسم
+        // موسومة به، فيُرفض بسببه ويظهر في التشخيص. لا يُسلسَل المستند: ليس البايتات التي أرسلها يوتيوب، ولا محلّل لصيغته.
+        else if (type === 'document') post(meta, 'xhr', this.status, '', 'document');
       } catch {
         // لا شيء: الفشل هنا لا يؤثر في الصفحة.
       }

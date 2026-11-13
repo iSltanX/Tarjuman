@@ -12,6 +12,8 @@ const ARABIC = /[\u0600-\u06FF]/;
 const AR_FUNCTION_SAMPLES = {
   IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }],
   PG_LANG_ASSIGN_SKIPPED: [{ n: 'ترجمة واحدة', count: 1 }, { n: 'ترجمتان', count: 2 }, { n: '3 ترجمات', count: 3 }],
+  // الفكرة ٤ (الإنذار المبكر): تسمّي الصيغة المرفوضة إن عُرفت، وبلا اسم كما كانت.
+  EX_UNSUPPORTED_FORMAT: [{}, { format: 'srv3' }, { format: 'vtt' }],
 };
 /** النص بعد حذف كل ما بين LRI وPDI: ما بقي يُرسم في سياق عربي. */
 const outsideIsolates = (s) => s.replace(new RegExp(`${LRI}[^${PDI}]*${PDI}`, 'g'), '');

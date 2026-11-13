@@ -10,6 +10,8 @@ const ARABIC = /[؀-ۿ]/;
 const AR_FUNCTION_SAMPLES = {
   IM_STRAY_TEXT: [{ line: 7 }, { line: 7, heading: true }],
   PG_LANG_ASSIGN_SKIPPED: [{ n: 'ترجمة واحدة', count: 1 }, { n: 'ترجمتان', count: 2 }, { n: '3 ترجمات', count: 3 }],
+  // الفكرة ٤ (الإنذار المبكر): تسمّي الصيغة المرفوضة إن عُرفت، وبلا اسم كما كانت.
+  EX_UNSUPPORTED_FORMAT: [{}, { format: 'srv3' }, { format: 'vtt' }],
 };
 
 test('كل رمز يبدأ ببادئة مجاله، ولا بادئة لمجالين، ولا رمز مكرر', () => {

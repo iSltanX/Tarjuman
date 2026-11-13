@@ -49,6 +49,16 @@ test('رد الحالة: حقول الأول كما هي (النافذة الق�
   assert.equal(isVideoStateReplyV2(old), false, 'رد نسخة أقدم يُعرف');
 });
 
+test('الفكرة ٤ (الإنذار المبكر): رد الحالة يحمل اسم الصيغة المرفوضة لرسالتها، ولا format لغير رفض الصيغة', async () => {
+  const named = setup({ s: state({ captureIssue: { code: 'EX_UNSUPPORTED_FORMAT', reason: 'fmt-vtt', format: 'vtt', at: 1 } }) });
+  assert.deepEqual((await named.fake.dispatchMessage(videoStateRequest())).capture, { state: 'rejected', count: 0, code: 'EX_UNSUPPORTED_FORMAT', format: 'vtt' });
+  const doc = setup({ s: state({ captureIssue: { code: 'EX_UNSUPPORTED_FORMAT', reason: 'xhr-document', format: null, at: 1 } }) });
+  assert.deepEqual((await doc.fake.dispatchMessage(videoStateRequest())).capture, { state: 'rejected', count: 0, code: 'EX_UNSUPPORTED_FORMAT' });
+  // ومع مسار ملتقط صالح لا رفض ولا صيغة.
+  const ok = setup({ s: state({ captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }], captureIssue: { code: 'EX_UNSUPPORTED_FORMAT', format: 'vtt', at: 1 } }) });
+  assert.deepEqual((await ok.fake.dispatchMessage(videoStateRequest())).capture, { state: 'captured', count: 1, code: null });
+});
+
 test('رد الحالة لحالة بلا slots (سجل الإصدار الأول): الخانة 1 من السجل', async () => {
   const { fake } = setup({ s: state({ captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }] }) });
   const r = await fake.dispatchMessage(videoStateRequest());

@@ -51,6 +51,21 @@ test('رفض مسار (قديم أو مستقبلي): رسالته وحدها، 
   assert.equal(brave.ui.menu().querySelector('.note-in').textContent, 'في Brave قد تظهر لغة المتصفح أولًا؛ فاختر اللغة التي تريدها من قائمة الترجمة في يوتيوب.');
 });
 
+test('الفكرة ٤ (الإنذار المبكر): رفض الالتقاط بصيغة مسمّاة يذكر اسمها في القائمة، والرفض بلا اسم صيغة كما كان', () => {
+  const srv3 = mountPage({ state: makeState({ captureIssue: { code: 'EX_UNSUPPORTED_FORMAT', reason: 'fmt-srv3', format: 'srv3', at: 1 } }) });
+  open(srv3);
+  const text = srv3.ui.menu().querySelector('.alert').textContent;
+  assert.ok(text.includes(messageFor('EX_UNSUPPORTED_FORMAT', { format: 'srv3' })), text);
+  assert.ok(text.includes('srv3'));
+  const doc = mountPage({ state: makeState({ captureIssue: { code: 'EX_UNSUPPORTED_FORMAT', reason: 'xhr-document', format: null, at: 1 } }) });
+  open(doc);
+  assert.ok(doc.ui.menu().querySelector('.alert').textContent.includes(messageFor('EX_UNSUPPORTED_FORMAT')));
+  // رفض آخر لا يتأثر بمعامل الصيغة.
+  const empty = mountPage({ state: makeState({ captureIssue: { code: 'EX_EMPTY_BODY', reason: 'status', format: null, at: 1 } }) });
+  open(empty);
+  assert.ok(empty.ui.menu().querySelector('.alert').textContent.includes(messageFor('EX_EMPTY_BODY')));
+});
+
 test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-07): سطر واحد بعددها وخطوات اختيارها من يوتيوب، لا صف لكل مسار ولا زر يبدّله', () => {
   // en يدوي ملتقط، وen تلقائي ليس لغة أخرى، وes وja لغتان أخريان.
   const available = { videoId: 'AAAAAAAAAAA', tracks: [{ lang: 'en', kind: 'manual', name: 'English' }, { lang: 'en', kind: 'asr', name: null }, { lang: 'es', kind: 'manual', name: 'Español' }, { lang: 'ja', kind: 'asr', name: null }], translatable: true };

@@ -5,10 +5,18 @@ const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const LANG = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8})*$/;
 
 /**
+ * أصناف معامل fmt، قائمة مغلقة: الصيغ المسمّاة، وother لغيرها، وdefault لغيابه. وvtt مسمّاة للإنذار المبكر (الفكرة ٤، ح-38): كانت
+ * تصير other فيضيع اسمها من التشخيص. ولا محلّل إلا لـjson3 (src/core/convert/index.js).
+ */
+export const FORMATS = Object.freeze(['json3', 'srv3', 'vtt', 'other', 'default']);
+/** @param {string | null} fmt قيمة المعامل كما في الرابط @returns {'json3' | 'srv3' | 'vtt' | 'other' | 'default'} */
+export const formatOf = (fmt) => (fmt === null ? 'default' : fmt === 'json3' || fmt === 'srv3' || fmt === 'vtt' ? fmt : 'other');
+
+/**
  * @typedef {{
  *   videoId: string | null, lang: string | null, trackKind: 'manual' | 'asr',
  *   kindParam: string | null, capsAsr: boolean, hasTlang: boolean, tlang: string | null,
- *   format: 'json3' | 'srv3' | 'other' | 'default', hasPot: boolean
+ *   format: 'json3' | 'srv3' | 'vtt' | 'other' | 'default', hasPot: boolean
  * }} TimedtextMeta
  */
 
@@ -39,7 +47,7 @@ export function readTimedtextParams(rawUrl, base) {
     hasTlang: p.has('tlang'),
     // لغة ترجمة يوتيوب الآلية إن وُجدت (AA1، قرار سلطان ق٢): المسار يُقبل موسومًا بها وبلغة أصله lang.
     tlang: p.get('tlang') && LANG.test(p.get('tlang')) ? p.get('tlang') : null,
-    format: fmt === null ? 'default' : fmt === 'json3' ? 'json3' : fmt === 'srv3' ? 'srv3' : 'other',
+    format: formatOf(fmt),
     hasPot: p.has('pot'),
   };
 }

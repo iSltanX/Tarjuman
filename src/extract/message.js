@@ -1,5 +1,6 @@
 // التحقق من رسالة MAIN → ISOLATED. كل ما يصل من الصفحة بيانات غير موثوقة: تُنسخ الحقول المعروفة
 // بأنواعها فقط، ويُرفض ما عداها. لا أوامر من الصفحة إلى الإضافة.
+import { FORMATS as FORMAT_LIST } from './timedtext-params.js';
 
 export const MESSAGE_SOURCE = 'tarjuman';
 export const MAX_BODY_CHARS = 20 * 1024 * 1024;
@@ -13,14 +14,14 @@ const MAX_REPORTED_LENGTH = 2 ** 30;
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const LANG = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8}){0,4}$/;
-const FORMATS = new Set(['json3', 'srv3', 'other', 'default']);
+const FORMATS = new Set(FORMAT_LIST);
 
 /**
  * @typedef {{
  *   videoId: string | null, lang: string | null, trackKind: 'manual' | 'asr', kindParam: string | null,
  *   capsAsr: boolean, hasTlang: boolean, tlang: string | null, format: string, hasPot: boolean, transport: 'fetch' | 'xhr',
- *   status: number, bodyLength: number, body: string, truncated: boolean
- * }} CaptureMessage
+ *   status: number, bodyLength: number, body: string, truncated: boolean, responseType: 'document' | null
+ * }} CaptureMessage responseType: رد XHR بنوع document لا يُقرأ نصه، فيصل بلا جسم موسومًا به (الفكرة ٤)، وnull لغيره
  */
 
 /**
@@ -51,6 +52,7 @@ export function validateCaptureMessage(d) {
     bodyLength: d.truncated === true ? Math.min(d.bodyLength, MAX_REPORTED_LENGTH) : d.body.length,
     body: d.body,
     truncated: d.truncated === true,
+    responseType: d.responseType === 'document' ? 'document' : null,
   };
 }
 

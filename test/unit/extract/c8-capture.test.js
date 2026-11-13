@@ -157,7 +157,7 @@ test('fetch: جسم أكبر من 20 مليون حرف يُرسل truncated بل
   assert.notEqual(validateCaptureMessage(m), null);
 });
 
-test('XHR: فروع responseType (نص، json، arraybuffer، blob) تنتج رسالة xhr، و"document" يُتجاهل', async (t) => {
+test('XHR: فروع responseType (نص، json، arraybuffer، blob) تنتج رسالة xhr بلا وسم', async (t) => {
   const env = load();
   t.after(env.restore);
   xhr(env, { type: '', next: { responseText: '{"a":1}' } });
@@ -166,13 +166,28 @@ test('XHR: فروع responseType (نص، json، arraybuffer، blob) تنتج ر�
   xhr(env, { type: 'json', next: { response: null } });
   xhr(env, { type: 'arraybuffer', next: { response: new TextEncoder().encode('{"b":2}').buffer } });
   xhr(env, { type: 'blob', next: { response: new Blob(['{"c":3}']) } });
-  xhr(env, { type: 'document', next: { response: {} } });
   await tick(10);
   const msgs = env.posted.map((p) => plain(p.msg));
   assert.ok(msgs.every((m) => m.transport === 'xhr' && m.status === 200 && m.videoId === 'AAAAAAAAAAA'));
   assert.deepEqual(msgs.map((m) => m.body).sort(), ['', '{"a":1}', '{"a":1}', '{"b":2}', '{"c":3}', '{"t":1}'].sort());
   assert.ok(env.posted.every((p) => p.origin === ORIGIN));
   assert.ok(msgs.every((m) => validateCaptureMessage(m) !== null));
+  assert.ok(msgs.every((m) => !('responseType' in m)), 'بلا وسم document');
+});
+
+test('XHR بنوع document (الفكرة ٤، الإنذار المبكر): رسالة بلا جسم موسومة responseType=document، ولا يُقرأ responseText', async (t) => {
+  const env = load();
+  t.after(env.restore);
+  const x = xhr(env, { type: 'document', next: { response: {} } });
+  // في المتصفح يرمي responseText لنوع document؛ فلا يُقرأ.
+  Object.defineProperty(x, 'responseText', { get() { throw new Error('InvalidStateError'); } });
+  await tick(10);
+  assert.equal(env.posted.length, 1, 'كانت لا تصل رسالة ولا رفض');
+  const m = plain(env.posted[0].msg);
+  assert.deepEqual([m.transport, m.status, m.body, m.bodyLength, m.truncated, m.responseType], ['xhr', 200, '', 0, false, 'document']);
+  assert.equal(env.posted[0].origin, ORIGIN);
+  assert.equal(validateCaptureMessage(m).responseType, 'document', 'يجتاز المصادقة الحقيقية بوسمه');
+  assert.equal(JSON.stringify(m).includes('SECRET'), false);
 });
 
 test('XHR: open وsend يمرّران وسائطهما للأصل كما هي، وغير timedtext (وURL) لا رسالة له', async (t) => {
