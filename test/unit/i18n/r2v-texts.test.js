@@ -56,3 +56,24 @@ test('§١٠ (٩): «the original file» لفظًا واحدًا في الفهر
   assert.equal(text, 'The video changed before the original file finished downloading, so it won’t be possible to compare it with your translation later. To make that possible, go back to that video and download the original file again.');
   assert.doesNotMatch(src('i18n/en/errors.js'), /original’s file/);
 });
+
+test('ن-٩ (نقض ح-12): شارة البيانات الإنجليزية تطابق العربية «ترجماتك وإعداداتك في متصفحك» ولا توسّع الوعد إلى «data»', (ctx) => {
+  reset(ctx);
+  assert.equal(t('common.nav.yourData'), 'ترجماتك وإعداداتك في متصفحك');
+  setLocale('en');
+  // الصيغة الأدق من bc1c9af: صور المحفوظات حين تُفعَّل تُطلب من يوتيوب بمعرّف الفيديو، فلا يُقال إن «بياناتك» كلها في المتصفح.
+  assert.equal(t('common.nav.yourData'), 'Your translations and settings stay in your browser');
+  assert.doesNotMatch(t('common.nav.yourData'), /\bdata\b/i);
+});
+
+test('ح-4 (تحقق مستقل): فعل «علّم للمراجعة» بلفظ إنجليزي واحد قصير في قائمة المشغّل وصف لوحة النص', (ctx) => {
+  reset(ctx);
+  assert.equal(t('player.controls.markReview'), t('player.panel.markRow'), 'العربية لفظ واحد');
+  setLocale('en');
+  const label = t('player.controls.markReview');
+  assert.equal(t('player.panel.markRow'), label, 'زر الصف وزر القائمة بالاسم نفسه');
+  assert.ok(t('player.panel.markRowTip').startsWith(`${label}: `), 'التلميح يبدأ بالاسم');
+  // «Review later» نحو 74 بكسل بمقاييس المراعي العريض 13 من نحو 87 متاحة في زر القائمة (قياس 47485fe)، فلا يلتف.
+  assert.equal(label, 'Review later');
+  for (const k of ['player.controls.markReview', 'player.panel.markRow', 'player.panel.markRowTip']) assert.doesNotMatch(t(k), /Mark for review/, k);
+});
