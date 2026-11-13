@@ -26,6 +26,12 @@ export default Object.freeze({
     modeNormalNote: 'Short segments close to YouTube’s splitting, for the tightest sync with speech',
     modeLongNote: 'Merges neighboring segments into longer sentences so the AI model gets more context; segment count, numbering and timing boundaries change',
     checking: 'Downloading…',
+    // Idea 7-B (H-56): one button in “Download original” presses the player’s CC button instead of the guidance message; the manual steps stay behind “Why?”.
+    ccOnNow: 'Turn on CC now',
+    ccRestart: 'Restart CC',
+    ccWaiting: 'Waiting for YouTube subtitles…',
+    ccNoEffect: 'Nothing arrived — reload the page',
+    ccAfterAd: 'Available after the ad ends.',
     fallback: 'Splitting long files',
     split: 'Split the file into parts',
     splitSize: 'Segments per part',
