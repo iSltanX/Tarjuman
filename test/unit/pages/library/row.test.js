@@ -384,3 +384,13 @@ test('و2: تثبيت جديد بلا تفضيلات مكتوبة: لا img ول
   await settle(10);
   assert.equal(note.hidden, true, 'يزول السطر حين تُفعَّل');
 });
+
+test('ت-٢ (تحقق Fable للتصميم، البند 26): سطر «صور الفيديو مطفأة» يتبع الحال من أول تحميل، في الاتجاهين', async () => {
+  const on = await mount({ records: [{ id: ID(1) }], prefs: { ui: { thumbnails: true } } });
+  assert.equal(on.root.querySelector('.lib-thumbs-note').hidden, true, 'الصور مفعّلة والموافقة قائمة: لا سطر');
+  const off = await mount({ records: [{ id: ID(1) }], prefs: { ui: { thumbnails: false } } });
+  assert.equal(off.root.querySelector('.lib-thumbs-note').hidden, false, 'الصور مطفأة: السطر ظاهر');
+  // Firefox: المفتاح مفعّل والموافقة غير ممنوحة، فالصور لا تظهر والسطر يقول ذلك.
+  const noConsent = await mount({ records: [{ id: ID(1) }], prefs: { ui: { thumbnails: true } }, env: { thumbsConsent: async () => false } });
+  assert.equal(noConsent.root.querySelector('.lib-thumbs-note').hidden, false, 'بلا موافقة: السطر ظاهر');
+});

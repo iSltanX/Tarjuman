@@ -996,6 +996,8 @@ export function createLibrary(env) {
       ]);
       if (mine !== loadSeq) return;
       Object.assign(state, { entries: libraryEntries(items), capacity, prefs, thumbsGranted, langPrefs, status: 'ready', error: null });
+      // ت-٢ (تحقق Fable للتصميم): سطر «صور الفيديو مطفأة» من الحال المحمّلة الآن، لا مما طبّقته قراءة الموافقة قبل وصول التفضيلات.
+      applyThumbs();
     } catch (err) {
       if (mine !== loadSeq) return;
       const info = toErrorInfo(err);
