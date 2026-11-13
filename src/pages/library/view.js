@@ -357,7 +357,8 @@ export function createLibrary(env) {
       // ما لا نص فيه يغلق الحوار أيضًا فتُقال «لا نص» بعده، بدل حقل يبدو معطّلًا.
       area.closest?.('dialog')?.close?.('confirm');
     });
-    const ok = await confirm({ title: tr('library.paste.title', { title: isolate(clip(m.displayTitle, 80)) }), confirmLabel: tr('library.paste.next'), content, doc });
+    // يفتح والتركيز في الحقل، فيعمل Ctrl+V أو ⌘V فورًا (ح-3، قرار سلطان)؛ والحوار للّصق وحده، وEnter في الحقل لا يتابع.
+    const ok = await confirm({ title: tr('library.paste.title', { title: isolate(clip(m.displayTitle, 80)) }), confirmLabel: tr('library.paste.next'), content, focus: area, doc });
     if (!ok) return false;
     if (!text.trim()) {
       toaster.show(tr('library.paste.empty'), 'danger');

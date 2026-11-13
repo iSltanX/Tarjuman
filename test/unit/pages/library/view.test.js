@@ -8,6 +8,7 @@ import { createStore } from '../../../../src/core/store/index.js';
 import { withArabicEdit, withView } from '../../../../src/core/model/index.js';
 import { writeSrt } from '../../../../src/core/srt/writer.js';
 import { createLibrary } from '../../../../src/pages/library/view.js';
+import { confirmDialog } from '../../../../src/ui/components.js';
 import { t } from '../../../../src/i18n/index.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, englishTrack, fingerprint, makeCues, videoRecord } from '../../../helpers/fixtures.js';
@@ -885,6 +886,30 @@ test('طلب سلطان 2026-11-10: «رفع ترجمة…» و«لصق ترجم
   more.click();
   const labels = menuItems(more).map((i) => textOf(i.querySelector('.tj-menu__label')));
   assert.equal(labels.some((l) => /^(رفع|لصق) ترجمة/.test(l)), false, 'لا رفع ولا لصق في «المزيد»');
+});
+
+test('ح-3 (قرار سلطان، تحقق مستقل): حوار «لصق ترجمة…» يفتح والتركيز في حقل اللصق فيعمل Ctrl+V فورًا، وحوارات التأكيد الأخرى على «إلغاء»', async () => {
+  const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }], env: { confirm: (o) => confirmDialog(o) } });
+  await m.lib.load();
+  buttonNamed(m.root, 'لصق ترجمة…: عنوان').click();
+  await settle();
+  const dialog = m.doc.body.querySelector('dialog');
+  assert.ok(dialog, 'الحوار مفتوح');
+  const area = dialog.querySelector('textarea');
+  assert.ok(area, 'حقل اللصق في الحوار');
+  assert.ok(m.doc.activeElement === area, 'التركيز في الحقل لا على «إلغاء»');
+  dialog.close('cancel');
+  await settle();
+  // سياسة «إلغاء أولًا» باقية لما سواه: حوار بلا حقل مطلوب، ومُمرَّر من خارج الحوار.
+  const outside = m.doc.createElement('textarea');
+  m.doc.body.append(outside);
+  for (const focus of [undefined, outside]) {
+    const pending = confirmDialog({ title: 'حذف؟', confirmLabel: 'حذف', focus, doc: m.doc });
+    const d = m.doc.body.querySelector('dialog');
+    assert.ok(m.doc.activeElement === d.querySelector('button[value="cancel"]'), 'التركيز على «إلغاء»');
+    d.close('cancel');
+    assert.equal(await pending, false);
+  }
 });
 
 test('«الترجمة — النسخة المرفوعة» في «المزيد» بعد تعديل وحده، ومتاحة', async () => {

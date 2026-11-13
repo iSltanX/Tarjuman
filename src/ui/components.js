@@ -204,10 +204,12 @@ export function statusPill({ tone = 'neutral', text, plain = false, title, doc =
 /**
  * حوار تأكيد عبر <dialog>. الزر الخطِر يذكر الفعل. Esc والإلغاء يعيدان false. اسمه عنوانه ووصفه نصه أو محتواه
  * (aria-labelledby وaria-describedby؛ كان بلا اسم ولا وصف، فلا يُقرأ ما سيُحذف، تدقيق 7a66f91، U51).
- * @param {{ title: string, body?: string, confirmLabel: string, cancelLabel?: string, tone?: 'default' | 'danger', content?: HTMLElement, doc?: Document }} o
+ * يفتح التركيز على «إلغاء» (سياسة «إلغاء أولًا»: لا فعل غير مقصود بـEnter)، إلا حوارًا غرضه حقل في محتواه فيُمرَّر focus
+ * (حوار اللصق، ح-3: يعمل Ctrl+V فورًا).
+ * @param {{ title: string, body?: string, confirmLabel: string, cancelLabel?: string, tone?: 'default' | 'danger', content?: HTMLElement, focus?: HTMLElement | null, doc?: Document }} o
  * @returns {Promise<boolean>}
  */
-export function confirmDialog({ title, body, confirmLabel, cancelLabel = t('common.cancel'), tone = 'default', content, doc = document }) {
+export function confirmDialog({ title, body, confirmLabel, cancelLabel = t('common.cancel'), tone = 'default', content, focus = null, doc = document }) {
   return new Promise((resolve) => {
     // حوار مفتوح يوقف تبديل اللغة حتى يُغلق: لا يضيع قرار قيد الاتخاذ ولا يختلط نصه بلغتين.
     const release = holdPage();
@@ -241,7 +243,8 @@ export function confirmDialog({ title, body, confirmLabel, cancelLabel = t('comm
     }, { once: true });
     doc.body.append(dialog);
     dialog.showModal();
-    form.querySelector('button[value="cancel"]').focus();
+    // الحقل المطلوب إن كان داخل الحوار، وإلا «إلغاء».
+    (focus && form.contains(focus) ? focus : form.querySelector('button[value="cancel"]')).focus();
   });
 }
 
