@@ -10,7 +10,7 @@
 >
 > **2.2.0 (2026-11-10):** روجعت السياسة على سلوك 2.2.0: لا خادم لترجمان (حُذفت قناة البلاغات وإذنها وموافقة Firefox «البيانات التقنية والتفاعل»، والبلاغ يُنسخ ويُرسل من بريد المستخدم، وجهة Gmail لبريد الدعم بدل Cloudflare وGitHub)، وصور المحفوظات مطفأة افتراضيًا (ومن رقّى في Chromium تبقى كما كانت)، والحافظة لا يُقرأ منها إلا ما يلصقه المستخدم. وتغيّر ما يُرسَل، فثُبّت تاريخ السريان 2026-11-11 يوم نشر الصفحات بطلب سلطان. وأُضيفت يومها سطور «حتى 2.1.2» لسلوك الإصدارات السابقة ثم حُذفت بطلبه، لأن المتاجر تراجع 2.2.0 على هذه الصفحة، فهي تصف 2.2.0 وحده، وفي «التغييرات» سطر بما تغيّر فيه.
 >
-> **تحقق 2026-11-13:** أُضيف في `#youtube` سطر صريح بأن صفحة يوتيوب ترى وجود ترجمان من عناصره فيها. ولم يتغير ما تحفظه الإضافة أو ترسله، فبقي تاريخ السريان، وتغييره قرار سلطان.
+> **تحقق 2026-11-13:** أُضيف في `#youtube` سطر صريح بأن صفحة يوتيوب ترى وجود ترجمان من عناصره فيها، وصيغ جدول الأدلة على أن `check-static.mjs` و`audit.mjs` فحصان نصيان يحرسان الوعد ولا يقوم عليهما. ولم يتغير ما تحفظه الإضافة أو ترسله، فبقي تاريخ السريان، وتغييره قرار سلطان.
 >
 > **توطين الواجهة (2.1.0، 2026-11-08):** روجعت السياسة على الشيفرة: لغة الواجهة تُحفظ في مفتاحها ولا تدخل النسخة الاحتياطية، وتُقرأ لغة واجهة يوتيوب أو المتصفح عند أول تشغيل، وحقل اللغة في البلاغ يتبع الواجهة. ولا إذن ولا اتصال جديدان. وثُبّت تاريخ السريان 2026-11-08 يوم نشر 2.1.0 بقرار سلطان، لأن ما يُحفظ ويُرسل تغيّر.
 >
@@ -156,14 +156,14 @@
 
 ## جدول الأدلة (للمراجعة، لا يُنشر)
 
-المسارات في مستودع ترجمان (الإصدار 2.0.0). و«T3» الاختبار الحي `test/live/stores/t3.mjs` في Brave وChrome وEdge وFirefox. ونتائج التشغيلات الحية المؤرشفة ولقطاتها حُذفت من المستودع في تنظيفه (2026-11-08) وبقيت في تاريخ Git، وتُعاد بالسكربتات المذكورة.
+المسارات في مستودع ترجمان (الإصدار 2.0.0). و«T3» الاختبار الحي `test/live/stores/t3.mjs` في Brave وChrome وEdge وFirefox. ونتائج التشغيلات الحية المؤرشفة ولقطاتها حُذفت من المستودع في تنظيفه (2026-11-08) وبقيت في تاريخ Git، وتُعاد بالسكربتات المذكورة. و`scripts/check-static.mjs` و`scripts/release/audit.mjs`، حيث يُذكران دليلًا على «لا اتصال»، فحصان نصيان للشيفرة والحزمة: يكشفان طلبًا أو رابطًا يُكتب خطأً، لا ما يُموَّه عمدًا (رابط يُركَّب من متغير، أو واجهة طلب لا يسمّيانها). فالوعد قائم على الشيفرة نفسها (وعلى البيان في الأذونات)، والفحصان يحرسانه من الخطأ.
 
 | القسم | البند | الدليل |
 | --- | --- | --- |
 | الخلاصة | يُحقن في صفحات `www.youtube.com` ويعمل في صفحة المشاهدة | `src/manifest.json`: `content_scripts.matches` = `https://www.youtube.com/*`، و`scripts/check-static.mjs` (`YT`) و`scripts/release/audit.mjs` (`content-scripts-youtube-only`) |
 | الخلاصة | الترجمة التي جلبها المشغّل، بأي لغة | `src/main-world/capture.js` (غلافا fetch وXHR يقرآن الرد)، و`src/extract/capture-adapter.js` (لا شرط لغة منذ AA1)، و`docs/contracts/extraction.md`؛ T3: «الجسر» و«الالتقاط» |
 | الخلاصة، ما يُحفظ | تخزين الإضافة المحلي، ولا مزامنة | `src/core/store/area.js` (`api.storage.local` وحده)، و`scripts/check-static.mjs` (التخزين خارج `src/core/store` ممنوع، ولا `localStorage` ولا IndexedDB)؛ ولا `storage.sync` في `src/` |
-| الخلاصة | لا حساب ولا مفتاح ولا نموذج ولا قياس ولا إعلان | لا طلب شبكة في الحزمة إلا المسمّى: `scripts/release/audit.mjs` (`no-external-connection-or-forbidden-code` و`FETCH_OK` و`URL_OK`) و`scripts/check-static.mjs`؛ `docs/product-spec.md` §١ |
+| الخلاصة | لا حساب ولا مفتاح ولا نموذج ولا قياس ولا إعلان | الشيفرة نفسها: لا طلب شبكة في `src/` إلا صور المحفوظات (`src/pages/library/thumb.js`)، وغلافا الالتقاط يمرّران طلب المشغّل كما هو (`src/main-world/capture.js`)؛ والبيان بأذوناته الثلاثة بلا إذن مضيف (`src/manifest.json`)؛ و`docs/product-spec.md` §١. ويحرسها فحصان نصيان للشيفرة والحزمة، `scripts/check-static.mjs` و`scripts/release/audit.mjs` (`no-external-connection-or-forbidden-code` و`FETCH_OK` و`URL_OK`)، يكشفان الخطأ لا التمويه |
 | الخلاصة، الصور | صور المحفوظات ومفتاحها، وموافقة Firefox | `src/pages/library/thumb.js` (`THUMB_BASE`)، و`src/core/model/prefs.js` (`ui.thumbnails` افتراضيًا `false` منذ 2.2.0)، و`src/background/thumbs-pin.js` (تثبيت حال من رقّى في Chromium، و2)، و`src/pages/settings/view.js` (المفتاح ونصه)، و`src/core/consent/thumbnails.js` (`thumbnailsShown`: المفتاح والموافقة في Firefox)؛ `docs/product-spec.md` §٦.٦ |
 | الخلاصة، البلاغ | لا خادم، تنسخه بعد أن تراه وترسله من بريدك | `src/pages/settings/report.js` (المعاينة ثم «نسخ البلاغ» و«نسخ البريد»، بلا إرسال)، و`src/core/report/payload.js` (`reviewRows` من الجسم نفسه)، و`scripts/release/audit.mjs` (`no-report-channel`)؛ و`test/unit/privacy/report-permission.test.js` (لا إذن ولا fetch، و1) |
 | الخلاصة، النموذج | الترجمة خارج الإضافة | `docs/product-spec.md` §١ و§٣؛ لا رابط ولا طلب لأي مزوّد في الحزمة (`audit.mjs`) |
@@ -196,7 +196,7 @@
 | البلاغ | ما يحويه | `src/core/report/payload.js` (`buildPayload` و`diagnosticsOf`)، و`src/core/report/diagnostics.js`؛ T3: المعاينة «بحقول العقد وهدف البناء»؛ و`test/unit/report/ui-locale.test.js` (`locale` يتبع لغة الواجهة) |
 | البلاغ | ما لا يُرفق تلقائيًا، والوصف حرفيًا مع التذكير والمنع | `src/core/report/payload.js` (لا حقل لها)، و`src/core/report/personal.js` (التذكير غير المانع)، و`src/core/diagnostics/sanitize.js` و`src/pages/settings/report.js` (المنع)؛ و`test/unit/report/personal-secrets.test.js` (تدقيق 7a66f91، U84) |
 | البلاغ | ما يصلنا ومدته | بريد الدعم وحده (`src/core/report/messages.js`)؛ والحذف بطلب صاحبه قرار سلطان (2026-11-04، `store/README.md` §٥) |
-| بلا اتصال | المحتوى والعامل والنافذة والمحرّر | `scripts/release/audit.mjs` (`FETCH_OK`: الخطوط من الحزمة وحدها، و`no-report-channel`) |
+| بلا اتصال | المحتوى والعامل والنافذة والمحرّر | الشيفرة نفسها: لا `fetch` إلا قراءة الخطوط من الحزمة (`src/player/overlay/fonts.js` بـ`runtime.getURL`) وغلافا الالتقاط، ولا قناة بلاغات (`src/pages/settings/report.js`). ويحرسها `scripts/release/audit.mjs` (`FETCH_OK` و`no-report-channel`) و`scripts/check-static.mjs`، وهما فحصان نصيان يكشفان الخطأ لا التمويه |
 | بلا اتصال | الخطوط مضمّنة | `src/ui/subtitle-fonts.js` و`src/ui/ui-fonts.js`، و`audit.mjs` (`subtitle-fonts-with-ofl-licenses` و`ui-fonts-with-ofl-licenses`)؛ T3: «خطوط الواجهة من الحزمة» |
 | النموذج | ما في التعليمات | `src/core/export/instructions.js` و`instructions-en.js` (`video_title` و`video_url` وفقرة المصطلحات، و`source` و`target` منذ AA1، ولغة النص من لغة الواجهة منذ 2.1.1)، و`docs/product-spec.md` الملحقان أ وج |
 | ما يُحفظ | التواريخ، والاسم المختصر، وتجزئة نص البصمة، وسقوط أزواج اللغات بعد 200 | `src/core/model/video.js` و`tracks.js` و`slots.js` و`marks.js`، و`src/core/export/index.js` و`hash.js`، و`src/core/model/lang-prefs.js` |
