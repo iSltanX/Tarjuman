@@ -132,12 +132,17 @@ test('الاسم ID.<lang>.dual-<src>: لا يُقرأ لغةً زائفة (ar-E
   assert.equal(fileName({ videoId: VIDEO, lang: 'ar', translation: true, format: 'vtt', dualOf: 'en' }), `${VIDEO}.ar.dual-en.vtt`);
   assert.throws(() => fileName({ videoId: VIDEO, lang: 'ar', translation: true, format: 'ass' }), (e) => e.code === 'MD_INVALID');
   assert.throws(() => fileName({ videoId: VIDEO, lang: 'ar', translation: true, dualOf: 'not a lang' }), (e) => e.code === 'MD_INVALID');
+  // أسماء ترجمان نفسه تُقرأ لغتُها (لا ar-EN الزائفة ولا «غير محددة» بعد «أزل سطر الأصل»): .dual-<src> و.original قبل الامتداد.
   const name = `${VIDEO}.ar.dual-en.srt`;
-  assert.equal(langFromFileName(name), null);
+  assert.equal(langFromFileName(name), 'ar');
+  assert.equal(langFromFileName(`${VIDEO}.ar.dual-en-GB.srt`), 'ar');
+  assert.equal(langFromFileName(`${VIDEO}.ar.original.srt`), 'ar');
+  assert.equal(langFromFileName(`${VIDEO}.ja.original.dual-en.srt`), 'ja');
+  assert.equal(langFromFileName(`${VIDEO}.translation.dual-ja.srt`), null, 'بلا لغة: لا تُقرأ ja لغةَ الترجمة');
   const r = build({ cues: one, format: 'srt', bilingual: true });
   const back = await readImport(fileOf(r.text, name));
   assert.equal(back.ok, true);
-  assert.equal(back.lang, null, 'لا ar-EN');
+  assert.equal(back.lang, 'ar', 'لا ar-EN');
 });
 
 test('مع الأصل بلا أصل محفوظ يُرفض (EX_STUDY_NO_ENGLISH)، والصيغة غير المعروفة MD_INVALID، ولا .ass', () => {
