@@ -198,7 +198,11 @@ export function parseSrtLenient(input) {
       rest.forEach((l, j) => {
         const t = l.trim();
         if (FENCE_RE.test(t)) fence = true;
-        else if (!isBlankText(t)) throw new TjError('IM_STRAY_TEXT', { params: { line: h.time + 1 + stop + j + 1 } });
+        // والحدّ نفسه عنوان («# » أول السطر) يُقال سببه (ع-١٢ ب): ليس بعد سطر فارغ، بل قُرئ هو عنوانًا.
+        else if (!isBlankText(t)) {
+          const heading = j === 0 && HEADING_RE.test(t);
+          throw new TjError('IM_STRAY_TEXT', { params: { line: h.time + 1 + stop + j + 1, ...(heading ? { heading: true } : {}) } });
+        }
       });
     }
 

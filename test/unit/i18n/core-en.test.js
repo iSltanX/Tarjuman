@@ -15,7 +15,7 @@ const codes = DOMAINS.flatMap((d) => Object.keys(d.MESSAGES));
 const reset = (ctx) => ctx.after(() => setLocale('ar'));
 
 // الرسالة العربية تأخذ معاملات مبنية على المطابقة النحوية في الصفحة (تصريف الفعل والضمير)؛ فقيمتها الإنجليزية دالة تكتفي بالعدد.
-const FUNCTION_SAMPLES = { BK_RESTORE_CHANGED: { videos: '2 videos' }, ED_SAVE_HAS_ERRORS: { count: '3 timing errors' }, ED_EXPORT_HAS_ERRORS: { count: '3 timing errors' } };
+const FUNCTION_SAMPLES = { BK_RESTORE_CHANGED: { videos: '2 videos' }, ED_SAVE_HAS_ERRORS: { count: '3 timing errors' }, ED_EXPORT_HAS_ERRORS: { count: '3 timing errors' }, IM_STRAY_TEXT: { line: '7' } };
 
 test('كل رمز خطأ له رسالة إنجليزية بالقوالب نفسها وبلا حرف عربي', () => {
   const ar = catalogOf('ar');
@@ -30,6 +30,8 @@ test('كل رمز خطأ له رسالة إنجليزية بالقوالب نف�
       const sample = FUNCTION_SAMPLES[code];
       const out = value(sample);
       assert.ok(!ARABIC.test(out) && out.includes(Object.values(sample)[0]), code);
+      // IM_STRAY_TEXT بصيغتيه (ع-١٢ ب): heading تغيّر السبب لا الرمز.
+      if (code === 'IM_STRAY_TEXT') assert.ok(!ARABIC.test(value({ ...sample, heading: true })) && value({ ...sample, heading: true }) !== out, code);
       continue;
     }
     const text = value;

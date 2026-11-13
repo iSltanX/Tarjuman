@@ -91,7 +91,9 @@ export default Object.freeze({
   IM_TIME_OUT_OF_RANGE: 'Line {line}: the time is over the allowed limit (100 hours). Fix it in the file, then upload again.',
   IM_MISSING_NUMBER: 'Line {line}: the timing line has no segment number before it. Add the number on the previous line, then upload again.',
   IM_BAD_NUMBER: 'Line {line}: the segment number isn’t valid; it must be a positive whole number up to {max}. Fix it in the file, then upload again.',
-  IM_STRAY_TEXT: 'Line {line}: text outside any segment (after a blank line inside a segment or between two segments). Delete it or move it into the segment, then upload again.',
+  IM_STRAY_TEXT: ({ line, heading }) => (heading
+    ? `Line ${line}: it starts with “#” and a space, so it’s read as a heading that ends the segment and leaves what follows outside it. Delete the “#” at the start of the line if it’s part of the text, or delete the line, then upload again.`
+    : `Line ${line}: text outside any segment (after a blank line inside a segment or between two segments). Delete it or move it into the segment, then upload again.`),
   IM_CUE_TOO_LONG: 'Line {line}: the segment text is longer than {max} characters. Two segments may have merged; check it, then upload again.',
   IM_TOO_MANY_CUES: 'The segment count is over the limit ({max}) in the file or across all parts. Make sure these are the right files.',
 

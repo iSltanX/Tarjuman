@@ -318,3 +318,20 @@ test('تدقيق 5fedcb9 (GM-012): بعد الملف، المواضع الغام
   // سطر زمن مقطوع بعد الملف ما زال خطأ زمن.
   assert.equal(fail(`${file}\n3\n00:00:06,000 --> \n`).code, 'IM_BAD_TIME');
 });
+
+test('قرار سلطان (ع-١٢ ب): سطر يبدأ بـ«#» ثم مسافة يقطع المقطع، فرسالة IM_STRAY_TEXT تقول إنه قُرئ عنوانًا، بالرمز نفسه', () => {
+  const T2 = '00:00:04,000 --> 00:00:05,000';
+  for (const text of ['# la la la #', 'سطر\n# la la la #']) {
+    const e = fail(`1\n${T1}\n${text}\n\n2\n${T2}\nعالم\n`);
+    const line = text.startsWith('#') ? 3 : 4;
+    assert.deepEqual([e.code, e.params.line, e.params.heading], ['IM_STRAY_TEXT', line, true], text);
+    assert.ok(e.message.includes('«#»') && e.message.includes('عنوانًا'), e.message);
+    assert.ok(!e.message.includes('بعد سطر فارغ'), e.message);
+  }
+  // ما بعد سطر فارغ يبقى برسالته كما كانت، ولو كان عنوانًا: الحدّ هو السطر الفارغ.
+  const blank = fail(`1\n${T1}\nمرحبا\n\n# بعد الفراغ\n\n2\n${T2}\nعالم\n`);
+  assert.deepEqual([blank.code, blank.params.line, blank.params.heading ?? false], ['IM_STRAY_TEXT', 5, false]);
+  assert.ok(blank.message.includes('بعد سطر فارغ'), blank.message);
+  // وبلا المعامل (كل من يرمي الرمز دونه) النص القائم حرفيًا.
+  assert.equal(messageFor('IM_STRAY_TEXT', { line: 7 }), 'السطر 7: نص خارج أي مقطع (بعد سطر فارغ داخل المقطع أو بين مقطعين). احذفه أو ضمّه إلى المقطع ثم أعد الرفع.');
+});
