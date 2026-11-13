@@ -5,6 +5,7 @@
 import { TjError } from '../../core/errors/index.js';
 import { reanchorMarks, slotEditTransition } from '../../core/edit/index.js';
 import { withMarksReplaced, withPosition, withSlotOriginalRestored, withSlotReference } from '../../core/model/bundle.js';
+import { canonical } from '../../core/store/version.js';
 
 /** @typedef {import('../../core/model/slots.js').Bundle} Bundle */
 /** @typedef {import('../../core/model/video.js').VideoRecord} VideoRecord */
@@ -154,7 +155,8 @@ export function slotChange(a, b, n) {
   const x = a?.slots?.[n - 1];
   const y = b?.slots?.[n - 1];
   if (!x?.track || !y?.track) return Boolean(x?.track) !== Boolean(y?.track) ? 'content' : 'none';
-  const content = (s) => JSON.stringify([s.track.fileName, s.track.importedAt, s.track.editedAt, s.track.original, s.track.current]);
+  // بنيويًا لا بترتيب المفاتيح: المفتوحة بعد الحفظ كما بنتها الكتابة، والمقروءة من Chromium مرتبة المفاتيح (ع-١).
+  const content = (s) => canonical([s.track.fileName, s.track.importedAt, s.track.editedAt, s.track.original, s.track.current]);
   if (content(x) !== content(y)) return 'content';
   return x.offsetMs !== y.offsetMs ? 'offset' : 'none';
 }

@@ -4,8 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotContentChanged, slotParam, versionOf, writeMarks,
-  writePosition, writeReference,
+  classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotChange, slotContentChanged, slotParam, versionOf,
+  writeMarks, writePosition, writeReference,
 } from '../../../../src/pages/editor/persist.js';
 import { createEditSession } from '../../../../src/core/edit/index.js';
 import { createController } from '../../../../src/content/controller.js';
@@ -21,8 +21,7 @@ const clock = (start = Date.parse(NOW)) => {
   return () => (t += 1000);
 };
 
-async function setup(seed = (s) => s.updateVideo(VIDEO_ID, () => videoRecord({ offset: 500 }))) {
-  const area = createMemoryArea();
+async function setup(seed = (s) => s.updateVideo(VIDEO_ID, () => videoRecord({ offset: 500 })), area = createMemoryArea()) {
   const first = createStore({ area, now: clock() });
   await seed(first);
   await area.flush();
@@ -128,6 +127,47 @@ test('علامة من المشغّل لا تمس محتوى خانة التحر�
   const saved = await save(editor, latest, 1, s);
   assert.equal(saved.slots[0].track.current[1].text, 'تعديلي');
   assert.equal(saved.slots[0].marks.length, 3, 'علامة المشغّل باقية');
+});
+
+// ع-١: المحرّر بعد الحفظ يمسك الحزمة كما بنتها الكتابة (مقاطع بمفاتيح n,startMs,endMs,text)، وChromium يعيد المقروء بمفاتيح
+// مرتبة؛ فالمقارنة بترتيب المفاتيح عدّت ± من المشغّل تغيّر محتوى فعطّلت الحفظ.
+const keyOrdered = () => createMemoryArea({ unlimited: true, chromiumKeyOrder: true });
+const plusOnActive = (player) => player.updateVideo(VIDEO_ID, (r) => withView(r, { displayOffsetMs: r.view.displayOffsetMs + 1000 }, NOW));
+
+test('ع-١: بعد أول حفظ وعلى ترتيب مفاتيح Chromium، ± من المشغّل تغيّر إزاحة لا محتوى، فتُتبنّى ويُقبل الحفظ التالي', async () => {
+  for (const seed of [undefined, withSlots()]) {
+    const { area, editor, player, opened } = await setup(seed, keyOrdered());
+    const s1 = createEditSession({ cues: openedSlot(opened, 1).cues, offsetMs: 500 });
+    s1.setText(0, 'تحرير أول');
+    const saved = await saveSlot(editor, VIDEO_ID, opened, 1, { cues: s1.snapshot(), offsetChanged: false, offsetMs: 500, reanchorFrom: s1.baseSnapshot() });
+    await settle(area);
+    const s2 = createEditSession({ cues: openedSlot(saved, 1).cues, offsetMs: openedSlot(saved, 1).offsetMs });
+    s2.setText(1, 'تحرير ثانٍ');
+    await plusOnActive(player);
+    await settle(area);
+    const latest = await editor.getBundle(VIDEO_ID);
+    assert.equal(latest.slots[0].offsetMs, 1500);
+    assert.equal(slotChange(saved, latest, 1), 'offset', 'المحتوى نفسه بترتيب مفاتيح آخر');
+    assert.equal(s2.adoptOffset(latest.slots[0].offsetMs), true);
+    const again = await saveSlot(editor, VIDEO_ID, latest, 1, { cues: s2.snapshot(), offsetChanged: s2.offsetChanged, offsetMs: s2.offsetMs });
+    assert.equal(again.slots[0].track.current[1].text, 'تحرير ثانٍ');
+    assert.equal(again.record.view.displayOffsetMs, 1500, 'إزاحة المشغّل باقية');
+  }
+});
+
+test('ع-١: الخانة 2 بعد حفظها وعلى ترتيب Chromium: ± على النشطة أو علامة على الخانة 1 لا تغيّر محتواها', async () => {
+  for (const external of [plusOnActive, (p) => p.updateBundle(VIDEO_ID, (b) => withMark(b, 1, { index: 0, kind: 'todo' }, NOW).bundle)]) {
+    const { area, editor, player, opened } = await setup(withSlots(), keyOrdered());
+    const s = createEditSession({ cues: openedSlot(opened, 2).cues, offsetMs: -1200 });
+    s.setText(0, 'تحرير أول');
+    const saved = await saveSlot(editor, VIDEO_ID, opened, 2, { cues: s.snapshot(), offsetChanged: false, offsetMs: -1200, reanchorFrom: s.baseSnapshot() });
+    await settle(area);
+    await external(player);
+    await settle(area);
+    const latest = await editor.getBundle(VIDEO_ID);
+    assert.equal(classifyChange(saved, { oldValue: saved.record, newValue: latest.record }), 'changed');
+    assert.equal(slotChange(saved, latest, 2), 'none');
+  }
 });
 
 test('الحفظ يعيد ربط علامات المقاطع المعدّلة في الكتابة نفسها (البنية كما هي)، ولا يمسها بعد دمج', async () => {
