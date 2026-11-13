@@ -187,7 +187,7 @@ tarjuman
 | الواجهة بالعربية أو الإنجليزية، ولا تتأثر لغات الفيديو ولا الترجمات | `src/i18n/locale.js` (`LOCALES`)، و`src/pages/settings/view.js` (`uiLocale`)، و`docs/contracts/storage.md` §١٤ |
 | المحفوظات ولغتا كل ترجمة والنسخة الاحتياطية | `docs/user-guide.md` §٦ و§٧، و`docs/contracts/backup.md`، و`docs/contracts/data-model.md` §١٧ (`recordPair`) |
 | قائمة التحميل بعدد اللغات الأخرى | `src/player/controls/text.js` (`otherLanguagesLine`)، بقرار سلطان بعد AA4 |
-| المحفوظات القديمة باقية ولغتها «غير محددة» | `docs/contracts/storage.md` §١٣، و`test/integration/compat/`، والاختبار الحي للتحديث في المكان (`release/v2/README.md`) |
+| المحفوظات القديمة باقية ولغتها «غير محددة» | `docs/contracts/storage.md` §١٣، و`test/integration/compat/`، والاختبار الحي للتحديث في المكان على حزمة الإصدار (`release/` متجاهَل، فلا يُشار إلى ملف فيه) |
 | لا تنزيل فيديو، ولا طلب ترجمة | `src/main-world/capture.js` (يقرأ رد طلب المشغّل وحده)، و`scripts/release/audit.mjs` (لا طلب شبكة في سكربتي المحتوى وعالم الصفحة) |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
 | بياناتك | جدول أدلة `docs/site/privacy.md`، وقياس المحو عند الإزالة في `test/live/stores/t3.mjs` |

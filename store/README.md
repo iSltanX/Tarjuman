@@ -186,7 +186,7 @@
 قرأتها في T1 ولم تُختبر بعد. يثبتها T2 وT3 بالبناء والاختبار.
 
 - **Firefox: الخلفية.** `background.service_worker` غير مدعوم، فتحل محله `background.scripts`. وإن وُجد `service_worker` وحده فخطأ `BACKGROUND_SERVICE_WORKER_NOFALLBACK`.
-- **Firefox: الخطوط.** `use_dynamic_url` غير مدعوم، ورابط `moz-extension://` عشوائي لكل نسخة متصفح أصلًا. وأثر المفتاح في `web-ext lint` لم يُختبر.
+- **Firefox: الخطوط.** `use_dynamic_url` غير مدعوم فيتجاهله Firefox، ورابط `moz-extension://` عشوائي لكل نسخة متصفح أصلًا. و`web-ext lint` يقبل البيان بلا خطأ ولا تحذير (`lint:firefox` بـ`--warnings-as-errors` في `check:all`).
 - **Firefox: إصدارات المفاتيح.** `world: "MAIN"` مدعوم منذ 128، و`optional_host_permissions` منذ 128 أيضًا، فالحد الأدنى 140 يغطيهما ويتسق مع `data_collection_permissions`. (حاشية: هذا وقع T1 التاريخي؛ الحد المعتمد الآن 144 بقرار سلطان Q08، ومصدره `scripts/targets.mjs`.)
 - **Firefox: إذن يوتيوب.** أذونات المضيف المشتقة من `content_scripts.matches` تُمنح عند التثبيت منذ 127، ويستطيع المستخدم سحبها. يختبرها T3.
 - **Firefox: التنزيل.** `downloads.download` بعنوان `data:` لا يذكره MDN، وهو يوثّق طريق `blob`. **حُسم في T3:** Firefox يرفض `data:`، فصار التنزيل فيه بـ`blob:` (`3d6a800`).
