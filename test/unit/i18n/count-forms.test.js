@@ -143,23 +143,28 @@ test('ع-٢٦: القالبان الخامان بصيغ العدّ: بنود ا�
 });
 
 test('ع-٢٦: الصحيحتا الإعراب تبقيان مرفوعتين («لم يُضمَّن فيديوهان»، «ويبقى بعده مقطعان»)، وبلا case في استدعائهما', () => {
-  // وما بعد العدد يطابق عدده (بطلب سلطان بعد الدفعة ج): العدد من formatCount مرفوعًا (فاعل أو نائب فاعل)، والضمير والحال والفعل
-  // بعده بالمفرد والمثنى والجمع، و11–99 بتمييزها المفرد.
+  // وما بعد العدد يطابق عدده (بطلب سلطان بعد الدفعتين ج ود): العدد من formatCount مرفوعًا (فاعل أو نائب فاعل)، والضمير والفعل
+  // بعده بالمفرد والمثنى والجمع، و«ناقص» نعت يتبع منعوته في الإعراب: مع المفرد والمثنى مرفوع، و3–10 جمع لغير العاقل فمؤنث
+  // مفرد، و11–99 يتبع تمييزه المنصوب، و100 فما فوق تمييزه المجرور.
   const video = (n) => t('settings.data.notIncluded', { n, count: formatCount(n, COUNT_FORMS.video), ids: 'a' });
   assert.equal(video(1), 'لم يُضمَّن فيديو واحد لتعذّر قراءة سجله: a');
   assert.equal(video(2), 'لم يُضمَّن فيديوهان لتعذّر قراءة سجلَّيهما: a');
   assert.equal(video(3), 'لم يُضمَّن 3 فيديوهات لتعذّر قراءة سجلاتها: a');
   const rest = (n) => t('library.upload.completeRemaining', { n, count: formatCount(n, COUNT_FORMS.cue) });
-  assert.equal(rest(1), 'ويبقى بعده مقطع واحد ناقصًا أو غير مترجم.');
-  assert.equal(rest(2), 'ويبقى بعده مقطعان ناقصَين أو غير مترجمَين.');
-  assert.equal(rest(3), 'ويبقى بعده 3 مقاطع ناقصةً أو غير مترجمة.');
+  assert.equal(rest(1), 'ويبقى بعده مقطع واحد ناقص أو غير مترجم.');
+  assert.equal(rest(2), 'ويبقى بعده مقطعان ناقصان أو غيرُ مترجمَين.');
+  assert.equal(rest(3), 'ويبقى بعده 3 مقاطع ناقصة أو غير مترجمة.');
   assert.equal(rest(11), 'ويبقى بعده 11 مقطعًا ناقصًا أو غير مترجم.');
-  assert.equal(rest(100), 'ويبقى بعده 100 مقطع ناقصةً أو غير مترجمة.');
-  assert.equal(t('player.controls.completeRemaining', { n: 2, count: formatCount(2, COUNT_FORMS.cue) }), 'ويبقى مقطعان ناقصَين أو غير مترجمَين.');
+  assert.equal(rest(100), 'ويبقى بعده 100 مقطع ناقص أو غير مترجم.');
+  assert.equal(rest(103), 'ويبقى بعده 103 مقاطع ناقصة أو غير مترجمة.');
+  assert.equal(t('player.controls.completeRemaining', { n: 2, count: formatCount(2, COUNT_FORMS.cue) }), 'ويبقى مقطعان ناقصان أو غيرُ مترجمَين.');
   const marks = (n, count) => t('editor.marks.orphansRemoved', { n, count });
   assert.equal(marks(1, 'علامة واحدة'), 'أُزيلت علامة واحدة فقدت مقطعها.');
   assert.equal(marks(2, 'علامتان'), 'أُزيلت علامتان فقدتا مقطعَيهما.');
   assert.equal(marks(3, '3 علامات'), 'أُزيلت 3 علامات فقدت مقاطعها.');
+  // الجملة نعت للتمييز: من 11 فما فوق تمييزه مفرد («11 علامة»)، فتتبعه.
+  assert.equal(marks(11, '11 علامة'), 'أُزيلت 11 علامة فقدت مقطعها.');
+  assert.equal(marks(100, '100 علامة'), 'أُزيلت 100 علامة فقدت مقطعها.');
   const line = (file, marker) => src(file).split('\n').find((l) => l.includes(marker));
   assert.ok(!line('pages/settings/data.js', "'settings.data.notIncluded'").includes('case:'));
   assert.ok(!line('pages/library/upload.js', "'library.upload.completeRemaining'").includes('case:'));

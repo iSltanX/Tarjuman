@@ -221,7 +221,7 @@ export default Object.freeze({
     removeOrphans: 'إزالة العلامات التي فقدت مقطعها',
     restored: 'أُعيدت العلامات كما كانت.', conflict: 'تغيّرت الترجمة من مكان آخر؛ أعد المحاولة بعد تحديثها.',
     many: ' (كانت عليه {count}، فصارت واحدة)', toggled: 'المقطع {n}: «{label}»{many}.',
-    removedMany: 'أُزيلت {count} عن المقطع {n}.', removedOne: 'أُزيلت علامة المقطع {n}.', orphansRemoved: ({ n, count }) => `أُزيلت ${count} ${n === 1 ? 'فقدت مقطعها' : n === 2 ? 'فقدتا مقطعَيهما' : 'فقدت مقاطعها'}.`,
+    removedMany: 'أُزيلت {count} عن المقطع {n}.', removedOne: 'أُزيلت علامة المقطع {n}.', orphansRemoved: ({ n, count }) => `أُزيلت ${count} ${n === 2 ? 'فقدتا مقطعَيهما' : n % 100 >= 3 && n % 100 <= 10 ? 'فقدت مقاطعها' : 'فقدت مقطعها'}.`,
   },
   resume: {
     title: 'آخر موضع', none: 'لا موضع محفوظ', from: 'تابع من المقطع {n}',
