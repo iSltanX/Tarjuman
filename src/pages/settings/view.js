@@ -21,6 +21,7 @@ import { dataControl } from './data.js';
 import { glossaryControl } from './glossary.js';
 import { whileHeld } from '../../ui/page-hold.js';
 import { saveLocationControl } from './location.js';
+import { shortcutsControl } from './shortcuts.js';
 import {
   DEFAULT_SCALE_MARK_PCT, DEFAULT_SECTION, PREVIEW_BOX, READING_DEFAULT_CPS, SECTIONS, completenessText, confirmWord,
   confirmWordOk, parseCompleteness, parseDrift, parseReadingSpeed, parseSplit, previewStyle, readingText,
@@ -66,6 +67,7 @@ const positionLabel = (v) => t(`settings.display.${POSITION_KEYS[v]}`);
  *   setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void,
  *   thumbsConsent?: { needed: boolean, check: () => Promise<boolean>, request: () => Promise<boolean>, watch?: (fn: (e: { revoked: boolean }) => void) => () => void },
  *   youtubeAccess?: { check: () => Promise<boolean | null>, request: () => Promise<boolean>, watch?: (fn: () => void) => () => void },
+ *   shortcuts?: { target: 'chromium' | 'firefox', open: () => Promise<unknown> },
  * }} SettingsEnv
  */
 
@@ -427,6 +429,11 @@ export function createSettings(env) {
   const entrySwitch = uiSwitch('panelEntry', ENTRY_SWITCH.text, entryMark);
   const thumbsMark = marks();
   const thumbsSwitch = uiSwitch('thumbnails', THUMBNAILS_SWITCH.text, thumbsMark);
+  // اختصارات لوحة المفاتيح (الفكرة ١٠، ح-55): في «العرض» لأن أوامرها الخمسة تعمل على الترجمة فوق الفيديو (الوضع والتوقيت والعلامة
+  // والإعادة)، بجوار «زر النص المتزامن» من أدوات صفحة الفيديو. لا قيمة تُحفظ: الربط في صفحة اختصارات المتصفح.
+  const shortcuts = shortcutsControl({ doc, ...(env.shortcuts ?? { target: 'chromium', open: () => Promise.reject(new Error('tabs غير متاح')) }) });
+  const shortcutsRow = rowWithHint(t('settings.shortcuts.label'), t('settings.shortcuts.hint'), null, shortcuts.root);
+  shortcutsRow.setAttribute('data-row', 'shortcuts');
 
   // لغة الواجهة (أعلى «العرض»): مفتاح مستقل uiLocale عبر المخزن (setUiLocale) لا في settings ولا prefs ولا langPrefs ولا النسخة الاحتياطية،
   // ولا يمسه «استعادة الافتراضي». التغيير يسمعه startPage (watchLocale) فتعيد الصفحة تحميل نفسها، فلا إعادة رسم هنا. الاسمان بصيغتيهما
@@ -475,6 +482,7 @@ export function createSettings(env) {
     row(t('settings.display.position'), posMark, posSeg.root),
     row(t('settings.display.preview'), null, preview.root),
     named(rowWithHint(ENTRY_SWITCH.label, ENTRY_SWITCH.hint, entryMark, entrySwitch, note(ENTRY_SWITCH.note)), 'panelEntry'),
+    shortcutsRow,
     named(row(THUMBNAILS_SWITCH.label, thumbsMark, thumbsSwitch, note(thumbsNote(thumbsConsent.needed))), 'thumbnails'));
 
   // ---- اللغات (AA3، لوحة 15) ----

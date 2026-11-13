@@ -64,6 +64,9 @@ const STATIC = {
   'library.dialog.unreadableNote': 'isolate(',
   'settings.thumbsSwitch.note': 'ltrInline(',
   'settings.thumbsSwitch.noteFirefox': 'ltrInline(',
+  // عنوان صفحة الاختصارات (الفكرة ١٠): يُرسم عنصرًا ذريًا بـltrNodes (r5-shortcuts.test.js).
+  'settings.shortcuts.openFailed': 'ltrInline(',
+  'settings.shortcuts.firefox': 'ltrInline(',
   'settings.data.excluded': 'idText(',
   'settings.data.notIncluded': 'idText(',
   'editor.action.undoTitle': 'keyHint(',

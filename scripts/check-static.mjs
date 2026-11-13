@@ -250,7 +250,12 @@ const ABOUT_LINKS = new Set(['https://bysltan.com', 'https://github.com/iSltanX/
 // وكلها ممنوعة هنا كما كانت). فلا يمرّ رابط آخر في ذلك الملف، ولا هذا الرابط في ملف آخر.
 const THUMB_FILE = path.join('pages', 'library', 'thumb.js');
 const THUMB_URL = 'https://i.ytimg.com/vi/';
-const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u)) || (rel === THUMB_FILE && u === THUMB_URL);
+// صفحة اختصارات الإضافات في Chromium (الفكرة ١٠، ح-55): عنوان داخلي في المتصفح (chrome://) يفتحه زر في الإعدادات بـtabs.create، لا
+// طلب شبكة؛ في ملفه وحده وبالعنوان وحده. ونمط الروابط يرى منه ما بعد «chrome:».
+const SHORTCUTS_FILE = path.join('pages', 'settings', 'shortcuts.js');
+const SHORTCUTS_PAGE = '//extensions/shortcuts';
+const URL_OK = (u, rel) => u.startsWith('https://www.youtube.com/') || u === 'http://www.w3.org/2000/svg' || (rel === ABOUT_FILE && ABOUT_LINKS.has(u)) || (rel === THUMB_FILE && u === THUMB_URL)
+  || (rel === SHORTCUTS_FILE && u === SHORTCUTS_PAGE);
 // والسلسلة الاختيارية (?.) كالنقطة: api.storage?.local وchrome?.storage كانا يمرّان (تدقيق Fable، FA-02)، كما تعالجها قاعدة التنزيلات.
 const STORAGE = /\bchrome\s*(?:\??\.|\[\s*['"`]|\?\.\s*\[\s*['"`])\s*storage\b|\.\s*storage\s*(?:\??\.\s*(?:local|sync|session|managed|onChanged)\b|(?:\?\.)?\s*\[)/;
 // الكتابة في المساحة للكاتب الواحد وحده (عقد storage §١٢، تدقيق 7a66f91، C2): لا set ولا remove ولا clear خارج writer.js

@@ -10,6 +10,7 @@ import { copyText } from '../../ui/clipboard.js';
 import { extensionVersion, startPage } from '../../ui/page.js';
 import { pickFiles } from '../../ui/picker.js';
 import { collectDiagnostics } from './diagnostics.js';
+import { openShortcuts } from './shortcuts.js';
 import { createSettings } from './view.js';
 
 /** منتقي ملف JSON واحد داخل ضغطة المستخدم، ملحقًا بالمستند ما دام مفتوحًا (I03)؛ null عند الإلغاء. */
@@ -44,6 +45,8 @@ startPage({
         request: () => requestYoutubeAccess(chrome),
         watch: (fn) => watchYoutubeAccess(chrome, fn),
       },
+      // اختصارات لوحة المفاتيح (الفكرة ١٠، ح-55): زر يفتح صفحة اختصارات المتصفح في Chromium، ونص الطريق إليها في Firefox.
+      shortcuts: { target, open: () => openShortcuts(chrome.tabs) },
     });
     app.append(settings.root);
     await settings.load();

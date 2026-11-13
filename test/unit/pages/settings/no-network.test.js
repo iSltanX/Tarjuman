@@ -50,6 +50,8 @@ test('لا شبكة في الصفحات: لا fetch ولا XHR ولا قنوات
     for (const m of text.matchAll(URL_RE)) {
       if (m[0] === 'http://www.w3.org/2000/svg') continue;
       if (relPosix(f) === THUMB_FILE && m[0] === THUMB_URL) continue;
+      // صفحة اختصارات المتصفح (الفكرة ١٠، ح-55): chrome://extensions/shortcuts عنوان داخلي يفتحه زر بـtabs.create، في ملفه وحده.
+      if (relPosix(f) === 'pages/settings/shortcuts.js' && m[0] === '//extensions/shortcuts') continue;
       assert.ok(rel(f) === path.join('pages', 'settings', 'about.js') ? allowedLinks.has(m[0]) : m[0].startsWith('https://www.youtube.com/watch?v='), `${rel(f)}: رابط ${m[0]}`);
     }
   }

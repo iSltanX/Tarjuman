@@ -68,7 +68,8 @@ test('البنية: الرأس وتسعة أقسام بترتيبها («الل�
   const displayRows = findAll(m.root.querySelector('section[data-section="display"]'), (e) => e.classList?.contains('st-row__label')).map((e) => textOf(e.querySelector('.tj-label')));
   const previewAt = displayRows.indexOf('معاينة حية');
   assert.equal(displayRows[previewAt - 1], 'الموضع');
-  assert.deepEqual(displayRows.slice(previewAt + 1), ['زر النص المتزامن', 'صور الفيديو في المحفوظات']);
+  // الفكرة ١٠ (ح-55): «اختصارات لوحة المفاتيح» بعد «زر النص المتزامن».
+  assert.deepEqual(displayRows.slice(previewAt + 1), ['زر النص المتزامن', 'اختصارات لوحة المفاتيح', 'صور الفيديو في المحفوظات']);
   assert.equal(findAll(m.root, (e) => e.classList?.contains('st-note') && textOf(e).startsWith('الحجم نسبة')).length, 1, 'شرح الحجم مرة واحدة تحت «حجم الخط»');
   assert.ok(m.root.querySelector('.st-status') === null, 'لا سطر «المكان المختار» (م-044)');
   assert.ok(textOf(m.root).includes(MODE_NOTES.normal) && textOf(m.root).includes(MODE_NOTES.long));

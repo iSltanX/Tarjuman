@@ -37,6 +37,14 @@ export default Object.freeze({
     label: 'Synced transcript button', hint: 'In the player bar', text: 'Shown on video pages',
     note: 'The panel is closed by default; its button opens and closes it, and it keeps its last state on every video. Turning this off hides the button and closes the panel too. Bring it back here or from the extension popup.',
   },
+  // Keyboard shortcuts (idea 10, H-55): commands with no keys until the user assigns them on the browser's shortcuts page.
+  shortcuts: {
+    label: 'Keyboard shortcuts', hint: 'Off until you assign them',
+    what: 'Five commands for the video page: switch display mode, show the translation one step earlier or later, mark the visible line for review, and replay the line. None has a key until you choose one on your browser’s shortcuts page.',
+    open: 'Open the shortcuts page',
+    openFailed: 'Couldn’t open it from here. Type its address in the address bar: {url}',
+    firefox: 'In Firefox: open {url}, click the gear ⚙ above the extensions list, then “Manage Extension Shortcuts”.',
+  },
   thumbsSwitch: {
     label: 'Video thumbnails in Library', text: 'Show each video’s thumbnail',
     note: 'Off until you turn them on, so a Tarjuman tile shows instead. Once on, they’re requested from YouTube’s servers ({host}) using the video ID.',
