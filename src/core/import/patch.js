@@ -1,7 +1,8 @@
 // ملف التصحيح والأجزاء المستلمة تباعًا (R52): ملف SRT صغير بأرقام الملف الكامل (غير متتالية عن قصد) يعيده النموذج من ملف
 // الاستكمال. يثبت أنه لهذا الفيديو وهذا المرجع بالأرقام والأزمنة: كل مقطع رقمه داخل البصمة وزمنه زمنها حرفيًا. ثم خطة تضع
 // كل مقطع في موضعه من الترجمة الحالية ولا تمس غيره: استبدال نص المقطع المقابل (بتوقيته وأرقامه كما هي)، أو إدراج الناقص
-// بزمن البصمة بين جاريه. المواضع من محاذاة الترجمة بالبصمة لا من الرقم وحده. والتطبيق دالة منفصلة بعد المعاينة.
+// بزمن البصمة مزاحًا بإزاحة جيرانه بين جاريه. المواضع من محاذاة الترجمة بالبصمة لا من الرقم وحده. والتطبيق دالة منفصلة
+// بعد المعاينة.
 import { shortList } from '../align/align.js';
 import { ALIGN_DEFAULTS, alignCues, iou, toBlocks } from '../align/index.js';
 import { isBlankText, untranslatedTest } from '../compare/compare.js';
@@ -37,7 +38,8 @@ const TREND_SPAN = 5;
 /**
  * مواضع البصمة في الترجمة: المقابل 1:1، وما دخل دمجًا أو شطرًا في الترجمة، وما يقابله مقطع بزمن لا يطابق زمنه بوضوح
  * (weak: لا يُستبدل، كمقطع أضافه المستخدم فوق موضع ساقط)، وموضع الإدراج لما لا مقابل له. التقابل الزمني يُقاس بعد طرح
- * وسيط فروق الأزواج المجاورة، فلا تُسقطه إزاحة عامة ولا انجراف تدريجي.
+ * وسيط فروق الأزواج المجاورة، فلا تُسقطه إزاحة عامة ولا انجراف تدريجي. وللإدراج: extra مقاطع الترجمة التي لا مقابل لها،
+ * وshiftAt(i) وسيط فروق أقرب الأزواج إلى موضع لا مقابل له (خمسة من كل جهة، وصفر بلا أزواج).
  * @param {Fingerprint} fingerprint @param {Cue[]} cues
  */
 function mapToFingerprint(fingerprint, cues) {
@@ -45,7 +47,9 @@ function mapToFingerprint(fingerprint, cues) {
   const structure = new Set();
   const weak = new Set();
   const insertAt = new Int32Array(fingerprint.count);
-  if (!cues.length) return { ok: true, at, structure, weak, insertAt };
+  const extra = new Uint8Array(cues.length);
+  const onesBefore = new Int32Array(fingerprint.count);
+  if (!cues.length) return { ok: true, at, structure, weak, insertAt, extra, shiftAt: () => 0 };
   const alignment = alignCues(fingerprint.cues.map((c) => ({ ...c, text: '' })), cues);
   if (alignment.confidence === 'low') return { ok: false, reasons: alignment.reasons };
   let seen = 0;
@@ -54,8 +58,11 @@ function mapToFingerprint(fingerprint, cues) {
     if (block.a.length && block.b.length) {
       if (block.a.length === 1 && block.b.length === 1) ones.push([block.a[0], block.b[0]]);
       else block.a.forEach((i) => structure.add(i));
+    } else block.b.forEach((j) => { extra[j] = 1; });
+    for (const i of block.a) {
+      insertAt[i] = seen;
+      onesBefore[i] = ones.length;
     }
-    for (const i of block.a) insertAt[i] = seen;
     if (block.b.length) seen = block.b.at(-1) + 1;
   }
   const deltas = ones.map(([i, j]) => cues[j].startMs - fingerprint.cues[i].startMs);
@@ -67,7 +74,12 @@ function mapToFingerprint(fingerprint, cues) {
     if (iou(f.startMs, f.endMs, c.startMs - shift, c.endMs - shift) >= ALIGN_DEFAULTS.weakIou) at.set(i, j);
     else weak.add(i);
   });
-  return { ok: true, at, structure, weak, insertAt };
+  const shiftAt = (i) => {
+    const p = onesBefore[i];
+    const near = deltas.slice(Math.max(0, p - TREND_SPAN), p + TREND_SPAN).sort((x, y) => x - y);
+    return near.length ? near[near.length >> 1] : 0;
+  };
+  return { ok: true, at, structure, weak, insertAt, extra, shiftAt };
 }
 
 /** حالة كل جزء من الأرقام المستلمة (مواضع البصمة من 0). */
@@ -189,8 +201,21 @@ function planFrom(incoming, { fingerprint, cues, target, notes, warnings }) {
       const j = map.at.get(i);
       items.push({ n: c.n, action: 'replace', index: j, before: one(cues[j]), after: { ...one(cues[j]), text: c.text } });
     } else {
+      // زمن البصمة بإزاحة جيرانه في الترجمة، فلا يسبقهم ولا يتأخر عنهم بإزاحة ثُبّتت (تحقق Gemini، ع-٢). وموضعه بين المقاطع
+      // الزائدة المجاورة بمقارنة الزمن لا بترتيب المحاذاة (ع-١٢). وما بقي يكسر الترتيب مع جاريه أو يخرج عن حدود الزمن لا يُدرج:
+      // يُتخطى بتحذير الموضع الضعيف، ولا قصّ صامت.
       const s = fingerprint.cues[i];
-      items.push({ n: c.n, action: 'insert', index: map.insertAt[i], before: null, after: { n: c.n, startMs: s.startMs, endMs: s.endMs, text: c.text } });
+      const shift = map.shiftAt(i);
+      const startMs = s.startMs + shift;
+      const endMs = s.endMs + shift;
+      let index = map.insertAt[i];
+      while (index > 0 && map.extra[index - 1] && cues[index - 1].startMs > startMs) index--;
+      while (index < cues.length && map.extra[index] && cues[index].startMs <= startMs) index++;
+      const prev = cues[index - 1];
+      const next = cues[index];
+      if (startMs < 0 || endMs > LIMITS.maxTimeMs || (prev && prev.startMs > startMs) || (next && next.startMs < startMs)) {
+        skipped.push({ n: c.n, reason: 'weak' });
+      } else items.push({ n: c.n, action: 'insert', index, before: null, after: { n: c.n, startMs, endMs, text: c.text } });
     }
   }
   // لا مقطع مترجم أصلًا خطأ؛ أما ما تُخطّي لموضعه في الترجمة فخطة بلا بنود يشرحها التحذير.

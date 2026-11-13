@@ -4,11 +4,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compare } from '../../../src/core/compare/index.js';
 import { TjError, messageFor } from '../../../src/core/errors/index.js';
-import { applyPatch, partsStatus, readPatch } from '../../../src/core/import/index.js';
+import { applyPatch, partsStatus, planPatchCues, readPatch } from '../../../src/core/import/index.js';
 import { formatSrtTime } from '../../../src/core/srt/time.js';
 import { englishTrack, fingerprint } from '../../helpers/fixtures.js';
 import { deepFreeze, fileOf } from '../../fixtures/srt/index.js';
-import { arabicTwin, dropAt, longTrack, mergeAt, renumber } from '../../fixtures/v2/index.js';
+import { arabicTwin, dropAt, longTrack, mergeAt, renumber, shiftAll } from '../../fixtures/v2/index.js';
 
 const VIDEO = 'iG9CE55wbtY';
 const EN = longTrack(2400);
@@ -71,6 +71,64 @@ test('مراجعة: مقطع أضافه المستخدم فوق موضع ساق�
   const shifted = AR.map((c) => ({ ...c, startMs: c.startMs + 1500, endMs: c.endMs + 1500 }));
   const s = await read(patchFor([9]), shifted);
   assert.deepEqual(s.plan.items.map((x) => [x.n, x.action, x.index]), [[9, 'replace', 8]]);
+});
+
+const ordered = (cues) => cues.every((c, i) => i === 0 || c.startMs >= cues[i - 1].startMs);
+// أول فجوة واسعة (2.5 ث فأكثر) بعد مقطع: يتسع فيها مقطع زائد لا يقابل شيئًا في البصمة.
+const WIDE = EN.findIndex((c, i) => i > 10 && EN[i + 1].startMs - c.endMs >= 2500);
+
+test('تحقق Gemini (ع-٢): ناقص في ترجمة أُزيح توقيتها كله يُدرج بإزاحة جيرانه لا بزمن البصمة وحده، فيبقى الترتيب الزمني', async () => {
+  for (const delta of [300, 14000, -700]) {
+    const current = deepFreeze(dropAt(shiftAll(AR, delta), [6]));
+    const r = await read(patchFor([7]), current);
+    assert.equal(r.ok, true, JSON.stringify(r.error));
+    assert.deepEqual(r.plan.items.map((x) => [x.n, x.action, x.index]), [[7, 'insert', 6]], `الإزاحة ${delta}`);
+    assert.deepEqual(r.plan.items[0].after, { n: 7, startMs: EN[6].startMs + delta, endMs: EN[6].endMs + delta, text: 'مستكمل 7' }, `الإزاحة ${delta}`);
+    assert.deepEqual([r.plan.skipped, r.plan.warnings], [[], []]);
+    const out = applyPatch(current, r.plan);
+    assert.ok(ordered(out), `الترتيب الزمني بعد الإدراج، الإزاحة ${delta}`);
+    assert.deepEqual(out, shiftAll(AR, delta).map((c, i) => (i === 6 ? { ...c, text: 'مستكمل 7' } : c)), `الإزاحة ${delta}`);
+    // المسار نفسه في «إكمال الترجمة» عند الرفع (planPatchCues).
+    const mem = planPatchCues(patchFor([7]), { fingerprint: FP, cues: current });
+    assert.deepEqual(mem.plan.items, r.plan.items, `planPatchCues، الإزاحة ${delta}`);
+  }
+});
+
+test('تحقق Gemini (ع-١٢ ج): ناقص بجوار مقطع زائد في الفجوة نفسها يُدرج قبله أو بعده بمقارنة الزمن لا بترتيب المحاذاة', async () => {
+  const k = WIDE;
+  const extra = { n: 9999, startMs: EN[k].endMs + 300, endMs: EN[k].endMs + 1300, text: 'زائد' };
+  // الزائد بعد موضع الناقص: يُدرج الناقص قبله.
+  const lostBefore = dropAt(AR, [k]);
+  const a = deepFreeze([...lostBefore.slice(0, k), extra, ...lostBefore.slice(k)]);
+  const ra = await read(patchFor([k + 1]), a);
+  assert.equal(ra.ok, true, JSON.stringify(ra.error));
+  assert.deepEqual(ra.plan.items.map((x) => [x.n, x.action, x.index]), [[k + 1, 'insert', k]]);
+  const outA = applyPatch(a, ra.plan);
+  assert.ok(ordered(outA), 'الترتيب الزمني والزائد بعد موضع الناقص');
+  assert.deepEqual(outA.slice(k, k + 2).map((c) => c.text), [`مستكمل ${k + 1}`, 'زائد']);
+  // الزائد قبل موضع الناقص: يُدرج الناقص بعده.
+  const lostAfter = dropAt(AR, [k + 1]);
+  const b = deepFreeze([...lostAfter.slice(0, k + 1), extra, ...lostAfter.slice(k + 1)]);
+  const rb = await read(patchFor([k + 2]), b);
+  assert.deepEqual(rb.plan.items.map((x) => [x.n, x.action, x.index]), [[k + 2, 'insert', k + 2]]);
+  const outB = applyPatch(b, rb.plan);
+  assert.ok(ordered(outB), 'الترتيب الزمني والزائد قبل موضع الناقص');
+  assert.deepEqual(outB.slice(k + 1, k + 3).map((c) => c.text), ['زائد', `مستكمل ${k + 2}`]);
+});
+
+test('تحقق Gemini (ع-٢): إدراج يكسر الترتيب الزمني مع جاره أو يقع قبل الصفر لا يُطبَّق، بل يُتخطى بتحذير «لا يطابق موضعه»', async () => {
+  const k = WIDE;
+  // جار نقله المستخدم إلى ما بعد موضع الناقص: لا موضع للناقص بين جاريه بالزمن.
+  const moved = deepFreeze(dropAt(AR, [k]).map((c, i) => (i === k - 1 ? { ...c, startMs: EN[k].endMs + 300, endMs: EN[k].endMs + 1300 } : c)));
+  const r = await read(patchFor([k + 1]), moved);
+  assert.equal(r.ok, true, JSON.stringify(r.error));
+  assert.deepEqual([r.plan.items, r.plan.skipped], [[], [{ n: k + 1, reason: 'weak' }]]);
+  assert.deepEqual(r.plan.warnings.map((w) => w.code), ['IM_PATCH_SKIPPED_WEAK']);
+  // ترجمة أُزيحت 1.5 ث إلى الوراء ينقصها الأول: زمنه المزاح سالب، ولا قصّ صامت.
+  const early = deepFreeze(dropAt(shiftAll(AR, -1500), [0]));
+  const e = await read(patchFor([1, 7]), early);
+  assert.deepEqual(e.plan.items.map((x) => [x.n, x.action]), [[7, 'replace']]);
+  assert.deepEqual(e.plan.skipped, [{ n: 1, reason: 'weak' }]);
 });
 
 test('ليس لهذا المرجع: زمن لا يطابق، وترقيم أُعيد من 1، ورقم خارج الملف، ومكرر، وبلا بصمة', async () => {
