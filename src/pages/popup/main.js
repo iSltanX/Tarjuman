@@ -16,7 +16,7 @@ import { createStore } from '../../core/store/index.js';
 import { t } from '../../i18n/index.js';
 import { copyText } from '../../ui/clipboard.js';
 import { alertBox, button, el, icon } from '../../ui/components.js';
-import { textDirection } from '../../ui/format.js';
+import { pasteKeys, textDirection } from '../../ui/format.js';
 import { langPair } from '../../ui/lang-picker.js';
 import { logo } from '../../ui/logo.js';
 import { extensionVersion, openPage, startPage } from '../../ui/page.js';
@@ -93,7 +93,7 @@ startPage({
     // ولا قراءة برمجية لها. النص يُرسل إلى صفحة الفيديو فيمر بخط الرفع نفسه (الفحص والمقارنة والتأكيد).
     const pasteArea = el('textarea', {
       className: 'tj-field__input tj-popup__paste-input',
-      attrs: { id: 'tj-paste', rows: '2', placeholder: t('popup.paste.placeholder'), 'aria-describedby': 'tj-paste-hint tj-paste-status', spellcheck: 'false', autocomplete: 'off' },
+      attrs: { id: 'tj-paste', rows: '2', placeholder: t('popup.paste.placeholder', pasteKeys()), 'aria-describedby': 'tj-paste-hint tj-paste-status', spellcheck: 'false', autocomplete: 'off' },
     });
     const pasteStatus = el('p', { className: 'tj-popup__pair-caption', attrs: { id: 'tj-paste-status', 'aria-live': 'polite' } });
     const pasteHost = el('section', {

@@ -220,7 +220,7 @@ export default Object.freeze({
     title: 'Paste a translation: {title}',
     label: 'Paste the translation here',
     hint: 'Paste the model’s reply as it is (SRT or chat text): it’s checked like an uploaded file, then you choose where to save it.',
-    placeholder: 'Paste here (⌘V or Ctrl+V)',
+    placeholder: 'Paste here ({mac} or {pc})',
     next: 'Continue',
     name: 'Pasted text',
     empty: 'There’s no text in what you pasted.',

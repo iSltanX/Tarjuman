@@ -240,7 +240,7 @@ export default Object.freeze({
     placeholder: 'Search segments ({hint})', aria: 'Search segments', fieldAria: 'Search in',
     inTranslation: 'In translation', inOriginal: 'In original (read-only)', optionsAria: 'Search options',
     wholeWord: 'Whole word', ignoreMarks: 'Ignore diacritics', options: 'Options',
-    prevTitle: 'Previous (⇧ Enter)', nextTitle: 'Next (Enter)', prevAria: 'Previous result', nextAria: 'Next result',
+    prevTitle: 'Previous ({key})', nextTitle: 'Next ({key})', prevAria: 'Previous result', nextAria: 'Next result',
     replace: 'Replace', replaceWith: 'Replace with', replaceAria: 'Replacement text', replaceHere: 'Replace here', replaceAll: 'Preview replace all…',
     originalReadOnly: 'The original is read-only: search in the translation to replace.', nothingToReplace: 'No results to replace.', typeFirst: 'Type what to search for first.',
     noOthers: 'No other matches outside what was just replaced; pick a result with ↑↓ to replace it.',

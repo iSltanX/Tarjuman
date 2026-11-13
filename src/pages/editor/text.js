@@ -56,10 +56,11 @@ export function pendingSentence(n, drafts) {
 }
 
 /**
- * تلميح اختصار بحسب المنصة: «⌘Z» و«⇧⌘Z» في ماك، و«Ctrl+Z» و«Ctrl+Shift+Z» في غيره (U27: كانت برموز ماك وحدها).
+ * تلميح اختصار بحسب المنصة: «⌘Z» و«⇧⌘Z» في ماك، و«Ctrl+Z» و«Ctrl+Shift+Z» في غيره (U27: كانت برموز ماك وحدها). معزولًا LTR،
+ * فلا يظهر «(F⌘)» داخل جملة عربية (⌘ و⇧ محايدان يأخذان اتجاه الفقرة؛ تحقق Fable للتصميم، ت-٨).
  * @param {string} key الحرف @param {{ mac: boolean, shift?: boolean }} o
  */
-export const keyHint = (key, { mac, shift = false }) => (mac ? `${shift ? '⇧' : ''}⌘${key}` : `Ctrl+${shift ? 'Shift+' : ''}${key}`);
+export const keyHint = (key, { mac, shift = false }) => ltrInline(mac ? `${shift ? '⇧' : ''}⌘${key}` : `Ctrl+${shift ? 'Shift+' : ''}${key}`);
 
 /** ماك أم لا، من النافذة (userAgentData ثم platform). @param {Window | null | undefined} win */
 export const isMac = (win) => /mac/i.test(String(win?.navigator?.userAgentData?.platform ?? win?.navigator?.platform ?? ''));

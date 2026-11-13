@@ -225,7 +225,7 @@ export default Object.freeze({
     title: 'لصق ترجمة: {title}',
     label: 'الصق الترجمة هنا',
     hint: 'الصق رد النموذج كما هو (SRT أو نص المحادثة): يُفحص كما يُفحص الملف المرفوع، ثم تختار أين يُحفظ.',
-    placeholder: 'الصق هنا (⌘V أو Ctrl+V)',
+    placeholder: 'الصق هنا ({mac} أو {pc})',
     next: 'متابعة',
     name: 'نص ملصوق',
     empty: 'لا نص في ما لصقته.',

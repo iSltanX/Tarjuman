@@ -37,6 +37,12 @@ export const textDirection = (s, lang = null) => langTextDirection(s, lang);
 /** نص LTR معزول داخل جملة عربية (فرق موقّع، أو مثال «+1.2»). @param {string} s */
 export const ltrInline = (s) => `${LRI}${s}${PDI}`;
 
+/**
+ * اختصارا اللصق لقالبي {mac} و{pc} في تلميح حقل اللصق (المحفوظات والنافذة)، معزولين LTR: «⌘V» لا «V⌘» داخل جملة عربية (⌘ محايد
+ * يأخذ اتجاه الفقرة؛ تحقق Fable للتصميم، ت-٨).
+ */
+export const pasteKeys = () => ({ mac: ltrInline('⌘V'), pc: ltrInline('Ctrl+V') });
+
 const FSI = String.fromCodePoint(0x2068);
 /**
  * نص حر اتجاهه من أول حرف قوي فيه، معزول داخل جملة عربية (عنوان فيديو): «10 Tips…» لا تنقلب كلماته و«?» لا تنتقل إلى أوله

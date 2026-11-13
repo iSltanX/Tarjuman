@@ -9,7 +9,7 @@
 import { keepBreaks, planReplace, searchCues } from '../../core/edit/index.js';
 import { lt, t } from '../../i18n/index.js';
 import { button, el } from '../../ui/components.js';
-import { COUNT_FORMS, formatCount, textDirection } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, ltrInline, textDirection } from '../../ui/format.js';
 import { openDialog, setDisabled } from './dialogs.js';
 import { COUNT, isMac, keyHint } from './text.js';
 
@@ -102,8 +102,11 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
   optsBtn.setAttribute('aria-expanded', 'false');
   optsBtn.setAttribute('aria-controls', optsPanel.id);
   const counter = el('span', { className: 'ed-search__count tj-caption', attrs: { 'aria-live': 'polite' }, doc });
-  const prevBtn = button({ label: '↑', size: 'sm', title: lt('editor.search.prevTitle'), onClick: () => step(-1, { focus: true }), doc });
-  const nextBtn = button({ label: '↓', size: 'sm', title: lt('editor.search.nextTitle'), onClick: () => step(1, { focus: true }), doc });
+  // تلميحا التنقّل باختصاريهما معزولين LTR (ت-٨)، ويعودان حين يُفعَّل الزر بنتائج (setDisabled يمحو التلميح مع السبب).
+  const prevTip = lt('editor.search.prevTitle', () => ({ key: ltrInline('⇧ Enter') }));
+  const nextTip = lt('editor.search.nextTitle', () => ({ key: ltrInline('Enter') }));
+  const prevBtn = button({ label: '↑', size: 'sm', title: prevTip, onClick: () => step(-1, { focus: true }), doc });
+  const nextBtn = button({ label: '↓', size: 'sm', title: nextTip, onClick: () => step(1, { focus: true }), doc });
   // اسما زرّي التنقّل يُكتبان هنا ويُعاد كتابتهما في relocalize() (button لا يقبل aria-label مستقلًا عن تسميته).
   const nameNav = () => {
     prevBtn.setAttribute('aria-label', t('editor.search.prevAria'));
@@ -324,7 +327,10 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
   function render() {
     const n = S.matches.length;
     counter.textContent = !S.query.trim() ? '' : n ? t('editor.search.counter', { cur: S.current < 0 ? 0 : S.current + 1, n }) : t('editor.search.noResults');
-    for (const b of [prevBtn, nextBtn]) setDisabled(b, n ? null : t('editor.search.noResults'));
+    for (const [b, tip] of [[prevBtn, prevTip], [nextBtn, nextTip]]) {
+      setDisabled(b, n ? null : t('editor.search.noResults'));
+      if (n) b.title = String(tip);
+    }
     setDisabled(hereBtn, hereWhy());
     setDisabled(allBtn, replaceWhy());
     const m = S.matches[S.current];

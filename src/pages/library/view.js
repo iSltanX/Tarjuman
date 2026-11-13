@@ -16,7 +16,7 @@ import { MAX_PASTE_CHARS } from '../../core/model/messages.js';
 /** تعذّرت قراءة التفضيلات: الافتراضي، لكن بلا صور (لا طلب خارجي ما لم يُعرف أن المستخدم يريده؛ مراجعة الهوية L9). */
 const PREFS_UNREADABLE = Object.freeze({ ...DEFAULT_PREFS, ui: Object.freeze({ ...DEFAULT_PREFS.ui, thumbnails: false }) });
 import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
+import { COUNT_FORMS, formatBytes, formatCount, offsetInline, pasteKeys, textDirection } from '../../ui/format.js';
 import { closeMenuWithin, createMenu } from '../../ui/menu.js';
 import { holdPage } from '../../ui/page-hold.js';
 import { createToaster } from '../../ui/toast.js';
@@ -340,7 +340,7 @@ export function createLibrary(env) {
    */
   async function paste(m, preferred = null) {
     let text = '';
-    const area = el('textarea', { className: 'tj-field__input lib-paste__input', attrs: { id: `lib-paste-${m.videoId}`, rows: '4', placeholder: tr('library.paste.placeholder'), spellcheck: 'false', autocomplete: 'off' }, doc });
+    const area = el('textarea', { className: 'tj-field__input lib-paste__input', attrs: { id: `lib-paste-${m.videoId}`, rows: '4', placeholder: tr('library.paste.placeholder', pasteKeys()), spellcheck: 'false', autocomplete: 'off' }, doc });
     const content = el('div', {
       className: 'tj-field lib-paste',
       children: [

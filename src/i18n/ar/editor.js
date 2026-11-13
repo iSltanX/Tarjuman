@@ -255,7 +255,7 @@ export default Object.freeze({
     placeholder: 'بحث في المقاطع ({hint})', aria: 'بحث في المقاطع', fieldAria: 'البحث في',
     inTranslation: 'في الترجمة', inOriginal: 'في الأصل (قراءة فقط)', optionsAria: 'خيارات البحث',
     wholeWord: 'كلمة كاملة', ignoreMarks: 'تجاهل التشكيل', options: 'الخيارات',
-    prevTitle: 'السابقة (⇧ Enter)', nextTitle: 'التالية (Enter)', prevAria: 'النتيجة السابقة', nextAria: 'النتيجة التالية',
+    prevTitle: 'السابقة ({key})', nextTitle: 'التالية ({key})', prevAria: 'النتيجة السابقة', nextAria: 'النتيجة التالية',
     replace: 'استبدال', replaceWith: 'استبدل بـ', replaceAria: 'نص الاستبدال', replaceHere: 'استبدال هنا', replaceAll: 'معاينة استبدال الكل…',
     originalReadOnly: 'الأصل للقراءة فقط: ابحث في الترجمة للاستبدال.', nothingToReplace: 'لا نتائج لاستبدالها.', typeFirst: 'اكتب ما تبحث عنه أولًا.',
     noOthers: 'لا مطابقات أخرى خارج ما استُبدل؛ اختر نتيجة بـ↑↓ لتستبدلها.',

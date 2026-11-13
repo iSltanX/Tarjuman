@@ -47,7 +47,7 @@ export default Object.freeze({
   paste: {
     label: 'Paste the translation here',
     hint: 'Paste the model’s reply as it is (SRT or chat text): it’s checked like an uploaded file, and its result shows in the Translation menu on the video page.',
-    placeholder: 'Paste here (⌘V or Ctrl+V)',
+    placeholder: 'Paste here ({mac} or {pc})',
     sent: 'Sent to the video page: see the result in the Translation menu.',
     empty: 'There’s no text in what you pasted.',
     tooLarge: 'The pasted text is larger than the upload limit (5 MB).',
