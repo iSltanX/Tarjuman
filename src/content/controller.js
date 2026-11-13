@@ -2,12 +2,15 @@
 // والمسارات الملتقطة والإزاحة ووضع العرض والإعدادات، ويطبّق عقد التوقيت: الإزاحة تُحفظ لكل فيديو ولا تمس
 // التوقيت المحفوظ، والاستيراد يصفّرها بإشعار، والتصدير الإنجليزي لا يتأثر بها. الطبقة والأدوات تقرآن
 // الحالة وتشتركان في تغيّرها، ولا تكتبان في التخزين إلا عبر أفعاله. وفي الإصدار الثاني (عقد interfaces §١٢) يعرف حزمة
-// الفيديو (الترجمات الثلاث والسابقة والعلامات) والتفضيلات، ويبدّل النشطة ويرفع إلى خانة ويعلّم المقطع بتراجع.
+// الفيديو (الترجمات الثلاث والسابقة والعلامات) والتفضيلات، ويبدّل النشطة ويرفع إلى خانة ويعلّم المقطع بتراجع، ويكتب نص مقطع واحد
+// من لوحة النص بانتقال «حفظ» المحرّر نفسه (الفكرة ٦).
 import { trackComparison } from '../core/compare/index.js';
 import { sameExport } from '../core/import/review.js';
 import { withContinuation } from '../core/import/continuation.js';
 import { ambiguousMarks } from '../core/import/ambiguous.js';
 import { TjError, toErrorInfo } from '../core/errors/index.js';
+import { reanchorMarks } from '../core/edit/review.js';
+import { slotEditTransition } from '../core/edit/transition.js';
 import {
   bundleFromRecord, referencedFingerprints, slotModels, withActiveSlot, withMark, withMarksReplaced, withSlotLang, withSlotUpload,
 } from '../core/model/bundle.js';
@@ -343,6 +346,41 @@ export function createController({ store, extractor = null, page = {}, now = () 
     }
     changed();
     return state;
+  }
+
+  /**
+   * نص المقطع index في الخانة slot (الفكرة ٦) بكتابة واحدة: انتقال «حفظ» المحرّر (slotEditTransition: نسخة حالية، ومطابقة الأصل
+   * current = null، وخطأ توقيت في الملف يرفض بـED_SAVE_HAS_ERRORS)، ثم ربط علامات المقطع بنصه الجديد (reanchorMarks) كما يفعل حفظ
+   * المحرّر، فلا تصير «قد تكون انتقلت». seen مرساة المقطع الذي رآه المستخدم: إن تغيّر في الخانة من مكان آخر (أو زالت الخانة)
+   * رُفض بـST_CONFLICT ولم يُكتب شيء، وتُقرأ الحالة من جديد. والنص نفسه لا يُكتب.
+   * @param {1 | 2 | 3} slot @param {number} index @param {{ n: number, startMs: number, textHash: string }} seen @param {string} text
+   * @returns {Promise<{ n: number, startMs: number, textHash: string } | null>} مرساة المقطع بعد الكتابة، أو null بلا كتابة
+   */
+  async function writeCueText(slot, index, seen, text) {
+    let anchor = null;
+    let wrote;
+    try {
+      wrote = await writeBundle((b) => {
+        anchor = null;
+        if (!b) throw new TjError('ST_NO_RECORD');
+        const track = b.slots[slot - 1].track;
+        const cues = track ? track.current ?? track.original : null;
+        const cue = cues?.[index] ?? null;
+        if (!cue || !sameAnchor(markAnchor(cue), seen)) throw new TjError('ST_CONFLICT', { detail: `cue=${index}` });
+        if (cue.text === text) return undefined;
+        const at = iso();
+        const edited = cues.map((c, i) => (i === index ? { ...c, text } : c));
+        const next = slotEditTransition(b, slot, { cues: edited }, at);
+        anchor = markAnchor(edited[index]);
+        const plan = reanchorMarks(next.slots[slot - 1].marks, cues, edited);
+        return plan.remove.length ? withMarksReplaced(next, slot, plan, at) : next;
+      });
+    } catch (err) {
+      if (err instanceof TjError && err.code === 'ST_CONFLICT') await reloadIfNewer();
+      throw err;
+    }
+    if (anchor && wrote.id === videoId && wrote.next) changed();
+    return anchor;
   }
 
   function preferredCapturedTrack() {
@@ -685,6 +723,29 @@ export function createController({ store, extractor = null, page = {}, now = () 
         undo: async () => {
           const { id: uid, next: back } = await writeBundle((b) => (b && b.slots[slot - 1].track ? withMarksReplaced(b, slot, { remove: mark ? [mark] : [], add: before }, iso()) : undefined));
           if (uid === videoId && back) changed();
+        },
+      };
+    },
+
+    /**
+     * نص مقطع واحد من النشطة برقمه في state.arabic.cues (الفكرة ٦، ح-54: التحرير السريع في لوحة النص؛ والتوقيت والدمج والشطر في
+     * المحرّر وحده). يُكتب في الخانة التي يراها المستخدم بحارس مرساة مقطعه (writeCueText). وحارس النص الفارغ وما يكسر SRT في
+     * اللوحة قبل الاستدعاء (cueTextIssue في player/panel/model.js)؛ وما يرفضه التخزين يُرفض هنا كما في المحرّر.
+     * @param {{ index: number }} target @param {string} text النص كما كُتب بفواصل أسطره
+     * @returns {Promise<{ undo: () => Promise<void> }>} undo يكتب النص السابق بالمسار نفسه وبحارس المرساة الجديدة
+     */
+    async editCueText({ index }, text) {
+      requireVideo();
+      if (typeof text !== 'string') throw new TjError('MD_INVALID', { detail: 'text' });
+      const slot = bundleFor(saved)?.active ?? null;
+      if (!slot) throw new TjError('ST_NO_RECORD');
+      const seenCue = state.arabic?.cues[index] ?? null;
+      if (!seenCue) throw new RangeError(`لا مقطع بالرقم ${index}`);
+      const before = seenCue.text;
+      const after = await writeCueText(slot, index, markAnchor(seenCue), text);
+      return {
+        undo: async () => {
+          if (after) await writeCueText(slot, index, after, before);
         },
       };
     },

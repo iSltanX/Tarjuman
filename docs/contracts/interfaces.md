@@ -42,7 +42,7 @@ controller.subscribe(fn)         // fn(state) عند كل تغيّر؛ يعيد 
 controller.diagnostics()         // أعداد ورموز: الكتابات الجارية، وإخفاقات المشتركين وآخرها، وتشخيص المستخرج
 ```
 
-حالة الإصدار الثاني وأفعاله في §١٢؛ وكل ما هنا باقٍ بمعناه وتوقيعه.
+حالة الإصدار الثاني وأفعاله في §١٢؛ وكل ما هنا باقٍ بمعناه وتوقيعه. والمتحكم مجمَّد: كل فعل جديد فيه سطر في §١٢ بقراره، وآخرها `editCueText` (الفكرة ٦، ح-54).
 
 كل مشترك يُبلَّغ على حدة: استثناء في مشترك (الطبقة مثلًا) لا يوقف المتحكم ولا يحرم غيره (الأدوات)، ويُعدّ في `diagnostics()`. وقد يصل أكثر من إشعار للتغيّر الواحد؛ والمشترك يقرأ الحالة الأخيرة ولا يفترض عددًا.
 
@@ -301,6 +301,7 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 | `loadArabicInto(n, input, { replace, activate })` | الرفع إلى خانة (`withSlotUpload`) بمدخل `loadArabic` ومعه `current?`. الممتلئة تحتاج `replace` وتحفظ السابقة. إشعار `ST_OFFSET_RESET` إن صُفّرت إزاحة النشطة، وإلا `ST_PREVIOUS_SAVED` عند الاستبدال. تعيد `{ record, replaced, activated }`. | `ST_ARABIC_EXISTS`، `MD_INVALID`، `ST_*` |
 | `markCue({ index }, kind = "todo")` | يعلّم مقطع النشطة برقمه في `state.arabic.cues` (`withMark`)، و`null` يزيل علامته. تعيد `{ mark, undo }`، و`undo()` يعيد العلامات كما كانت بكتابة واحدة. | `ST_NO_RECORD`، `RangeError`، `ST_*` |
 | `updatePrefs(patch)` | `store.setPrefs`. | `MD_INVALID`، `ST_*` |
+| `editCueText({ index }, text)` | نص مقطع واحد من النشطة برقمه في `state.arabic.cues` (الفكرة ٦، القرار ح-54 في جولة 2026-11-13، حُسم نيابةً عن سلطان بتفويضه: التحرير السريع في لوحة النص، والتوقيت والدمج والشطر في المحرّر وحده). كتابة حزمة واحدة في الخانة التي يراها المستخدم: يُرفض بـ`ST_CONFLICT` إن تغيّرت مرساة المقطع (الرقم والبداية وبصمة النص) منذ رآه أو زالت الخانة، ثم `slotEditTransition` (نسخة حالية بفواصل الأسطر كما كُتبت، ومطابقة الأصل `current = null`، وخطأ توقيت في الملف يرفضها كحفظ المحرّر)، ثم `reanchorMarks` مع `withMarksReplaced` فتبقى علامة المقطع مرتبطة. والنص نفسه لا يُكتب. تعيد `{ undo }`، و`undo()` يكتب النص السابق بالمسار نفسه وبحارس المرساة الجديدة. وحارس النص الفارغ وما يكسر SRT في اللوحة قبل الاستدعاء (`cueTextIssue` في `src/player/panel/model.js`). | `ST_NO_RECORD`، `ST_CONFLICT`، `ED_SAVE_HAS_ERRORS`، `MD_INVALID`، `RangeError`، `ST_*` |
 
 `loadArabic` (الإصدار الأول) يبقى: يكتب في النشطة، واستبدالها يحفظ السابقة تلقائيًا عبر `updateVideo`. و`handleStoreChange` يحدّث `prefs` من `change.prefs`. والقفز إلى زمن ليس فعلًا في المتحكم: يتحقق منه معالج الرسائل (§١٤).
 

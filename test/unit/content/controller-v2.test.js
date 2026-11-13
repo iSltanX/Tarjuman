@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createController } from '../../../src/content/controller.js';
 import { createStore } from '../../../src/core/store/index.js';
-import { withActiveSlot } from '../../../src/core/model/bundle.js';
+import { withActiveSlot, withSlotEdit } from '../../../src/core/model/bundle.js';
+import { cueTextHash, resolveMarks } from '../../../src/core/model/marks.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { NOW, VIDEO_ID, englishTrack, fakeExtractor, fingerprint, makeCues } from '../../helpers/fixtures.js';
 import { samplePrefs, sampleBundle, seedBundle } from '../../helpers/fixtures-v2.js';
@@ -156,4 +157,88 @@ test('تدقيق 5fedcb9 (GM-027.4): ± لم يُحفظ (فشل الكتابة) 
   assert.equal(s.error?.code, 'ST_QUOTA_EXCEEDED');
   await c.nudgeOffset(1);
   assert.notEqual(c.getState().view.displayOffsetMs, before, 'التالية تُحفظ وتظهر');
+});
+
+// ———— الفكرة ٦ (ح-54): تحرير نص مقطع واحد من لوحة النص ————
+
+test('الفكرة ٦: editCueText يكتب نص مقطع النشطة نسخةً حالية بأسطره، ولا يمس الأصل المستورد ولا غيره، والتراجع يعيده', async () => {
+  const { c, store } = await setup();
+  const before = await store.getBundle(A);
+  const r = await c.editCueText({ index: 1 }, 'سطر أول\nسطر ثانٍ');
+  const b = await store.getBundle(A);
+  assert.equal(b.slots[0].track.current[1].text, 'سطر أول\nسطر ثانٍ', 'فواصل الأسطر كما كُتبت');
+  assert.deepEqual(b.slots[0].track.current.filter((_, i) => i !== 1), before.slots[0].track.current.filter((_, i) => i !== 1));
+  assert.deepEqual(b.slots[0].track.original, before.slots[0].track.original, 'الأصل المستورد لا يُمس');
+  assert.deepEqual(b.slots[1], before.slots[1], 'الخانة الأخرى كما هي');
+  assert.equal(c.getState().arabic.cues[1].text, 'سطر أول\nسطر ثانٍ', 'الحالة تتبع الكتابة');
+  assert.equal(c.getState().arabic.edited, true);
+  await r.undo();
+  assert.equal((await store.getBundle(A)).slots[0].track.current[1].text, before.slots[0].track.current[1].text);
+  assert.equal(c.getState().arabic.cues[1].text, before.slots[0].track.current[1].text);
+});
+
+test('الفكرة ٦: نص مطابق للأصل المستورد يعيد الخانة إلى الأصل (current = null) كحفظ المحرّر، والنص نفسه لا يُكتب', async () => {
+  const { c, store } = await setup({ bundle: sampleBundle({ active: 2 }) });
+  const original = (await store.getBundle(A)).slots[1].track.original;
+  const r = await c.editCueText({ index: 2 }, 'نص جديد');
+  let b = await store.getBundle(A);
+  assert.equal(b.slots[1].track.current[2].text, 'نص جديد');
+  assert.equal(c.getState().arabic.edited, true);
+  await r.undo();
+  b = await store.getBundle(A);
+  assert.equal(b.slots[1].track.current, null, 'مطابقة الأصل: لا نسخة معدّلة');
+  assert.equal(b.slots[1].track.editedAt, null);
+  assert.equal(c.getState().arabic.edited, false);
+  assert.deepEqual(c.getState().arabic.cues, original);
+  const rev = b.record.rev;
+  const same = await c.editCueText({ index: 0 }, original[0].text);
+  assert.equal((await store.getBundle(A)).record.rev, rev, 'النص نفسه: لا كتابة');
+  await same.undo();
+  assert.equal((await store.getBundle(A)).record.rev, rev, 'ولا تراجع يكتب');
+});
+
+test('الفكرة ٦: علامة المقطع المعدّل تُربط بنصه الجديد في الكتابة نفسها فتبقى مرتبطة لا «قد تكون انتقلت»', async () => {
+  const { c, store } = await setup();
+  const mark0 = sampleBundle().slots[0].marks[0];
+  await c.editCueText({ index: 0 }, 'أولى 1 بعد التصحيح');
+  const b = await store.getBundle(A);
+  const cues = b.slots[0].track.current;
+  const marks = b.slots[0].marks;
+  assert.equal(marks.length, 2);
+  const m = marks.find((x) => x.n === mark0.n && x.startMs === mark0.startMs);
+  assert.equal(m.textHash, cueTextHash('أولى 1 بعد التصحيح'), 'المرساة بنص المقطع الجديد');
+  assert.equal(m.kind, 'todo');
+  assert.equal(m.at, mark0.at, 'تاريخ العلامة كما كان');
+  assert.deepEqual(resolveMarks(marks, cues).map((x) => [x.index, x.state]), [[0, 'linked'], [2, 'linked']]);
+  assert.equal(c.getState().marks.items.find((x) => x.n === mark0.n).textHash, m.textHash);
+});
+
+test('الفكرة ٦: ST_CONFLICT إن تغيّر المقطع الذي رآه المستخدم من مكان آخر، ولا يُكتب فوقه، والحالة تُقرأ من جديد', async () => {
+  const { c, store, other, area } = await setup();
+  // تعديل المقطع نفسه من المحرّر في تبويب آخر، قبل أن يصل حدثه إلى هذا المتحكم.
+  let t = Date.parse(NOW);
+  const textAt = (text) => (b) => withSlotEdit(b, 1, { cues: b.slots[0].track.current.map((x, i) => (i === 1 ? { ...x, text } : x)) }, new Date((t += 60000)).toISOString());
+  await other.updateBundle(A, textAt('من المحرّر'));
+  assert.notEqual(c.getState().arabic.cues[1].text, 'من المحرّر', 'لم يصل الحدث بعد');
+  await assert.rejects(c.editCueText({ index: 1 }, 'من اللوحة'), code('ST_CONFLICT'));
+  assert.equal((await store.getBundle(A)).slots[0].track.current[1].text, 'من المحرّر', 'ما كتبه السياق الآخر باقٍ');
+  await settle(area);
+  assert.equal(c.getState().arabic.cues[1].text, 'من المحرّر', 'الحالة بآخر نسخة');
+  const r = await c.editCueText({ index: 1 }, 'من اللوحة');
+  await other.updateBundle(A, textAt('تعديل ثالث'));
+  await assert.rejects(r.undo(), code('ST_CONFLICT'), 'والتراجع بحارس المرساة الجديدة');
+  assert.equal((await store.getBundle(A)).slots[0].track.current[1].text, 'تعديل ثالث');
+});
+
+test('الفكرة ٦: خطأ توقيت في الملف يرفض الكتابة كالمحرّر (ED_SAVE_HAS_ERRORS)، والمدخل غير الصالح يُرفض', async () => {
+  const bundle = sampleBundle({ active: 2 });
+  const bad = bundle.slots[1].track.original[3];
+  bad.endMs = bad.startMs;
+  bundle.record.arabic = structuredClone(bundle.slots[1].track);
+  const { c, store } = await setup({ bundle });
+  const rev = (await store.getBundle(A)).record.rev;
+  await assert.rejects(c.editCueText({ index: 0 }, 'نص'), code('ED_SAVE_HAS_ERRORS'));
+  assert.equal((await store.getBundle(A)).record.rev, rev);
+  await assert.rejects(c.editCueText({ index: 99 }, 'نص'), RangeError);
+  await assert.rejects(c.editCueText({ index: 0 }, null), code('MD_INVALID'));
 });
