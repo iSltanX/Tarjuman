@@ -165,6 +165,7 @@ export default Object.freeze({
   PL_RENDER_FAILED: 'Couldn’t display the subtitle line. Reload the page; if it keeps happening, copy the diagnostics report.',
   PL_FULLSCREEN_HOST: 'Couldn’t show the subtitles in fullscreen here. Exit fullscreen and enter it again; if it keeps happening, copy the diagnostics report.',
   PL_PREFS_FAILED: 'Couldn’t save your choice in the synced transcript panel. Try again.',
+  PL_COLUMN_NOT_FOUND: 'Couldn’t show the synced transcript panel: Tarjuman couldn’t find the suggested-videos column on the YouTube page; YouTube has most likely changed its page. Reload the page; if it persists, copy the page diagnostics from the extension popup.',
 
   CT_MOUNT_FAILED: 'Couldn’t attach Tarjuman’s tools to the player bar. Reload the page; if it keeps happening, copy the diagnostics report.',
   CT_RENDER_FAILED: 'Couldn’t update Tarjuman’s tools on the player bar. Reload the page; if it keeps happening, copy the diagnostics report.',

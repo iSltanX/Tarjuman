@@ -5,7 +5,8 @@
 import { TjError } from '../../core/errors/index.js';
 import { getLocale } from '../../i18n/index.js';
 import { loadUiFonts } from '../overlay/fonts.js';
-import { EVENTS, videoIdFromLocation } from '../youtube-dom.js';
+import { PLAYER_WAIT_MS } from '../overlay/index.js';
+import { EVENTS, getPlayer, videoIdFromLocation } from '../youtube-dom.js';
 import { chooseColumn } from './column.js';
 import { createPanelSession } from './session.js';
 import { createPanelLink, panelLink } from '../link.js';
@@ -48,6 +49,33 @@ export function mountPanel(controller, env = {}) {
   /** مفتاح التخطيط الذي ثبت فيه العمود فوق المشغّل (FA-22)، فتبقى اللوحة تحت الفيديو حتى يتغير؛ وأول رصد لم يثبت بعد. */
   const columnMemo = { overlapKey: null, pending: null };
   const now = env.now ?? (() => Date.now());
+  /** بدء انتظار العمود في صفحة مشاهدة فيها مشغّل يوتيوب (ع-ل)، أو null. */
+  let waitingSince = null;
+
+  /** ع-ل: لا عمود ولا سبب بعد الآن (ظهر العمود، أو غادر المستخدم صفحة المشاهدة، أو لا مشغّل بعد). */
+  function clearColumnIssue() {
+    waitingSince = null;
+    if (lastError?.code === 'PL_COLUMN_NOT_FOUND') lastError = null;
+    link.setPanelIssue?.(null);
+  }
+
+  /**
+   * انقضت مهلة العمود؟ (ع-ل، قرار سلطان ١٥): كانت اللوحة تنتظر العمود إلى الأبد بصمت. فالغياب فشل في صفحة مشاهدة فيها مشغّل
+   * يوتيوب (صفحة المشاهدة رُسمت، والعمود يُرسم معه) منذ PLAYER_WAIT_MS، مهلة الطبقة والأدوات نفسها (ف10)؛ وقبل ظهور المشغّل
+   * انتظار عادي بلا مهلة. والرمز في التشخيص وعلى الصلة، فيقول زر اللوحة في الشريط السبب.
+   */
+  function columnTimedOut() {
+    if (!getPlayer(doc)) {
+      clearColumnIssue();
+      return false;
+    }
+    const t = now();
+    if (waitingSince === null) waitingSince = t;
+    if (t - waitingSince < PLAYER_WAIT_MS) return false;
+    if (lastError?.code !== 'PL_COLUMN_NOT_FOUND') lastError = new TjError('PL_COLUMN_NOT_FOUND', { detail: 'missing=column' });
+    link.setPanelIssue?.('PL_COLUMN_NOT_FOUND');
+    return true;
+  }
 
   const MO = win.MutationObserver ?? globalThis.MutationObserver;
 
@@ -96,6 +124,7 @@ export function mountPanel(controller, env = {}) {
     if (videoIdFromLocation(win.location) === null) {
       dropSession();
       state = 'waiting';
+      clearColumnIssue();
       stopObserving();
       return;
     }
@@ -103,10 +132,13 @@ export function mountPanel(controller, env = {}) {
     const column = chooseColumn(doc, win, columnMemo, now);
     if (!column) {
       session?.detach();
-      if (state !== 'error' || failures < MAX_FAILURES) state = 'waiting';
+      // خطأ تركيب نهائي (MAX_FAILURES) يبقى برمزه: لا تكتب المهلة فوقه (كما في الطبقة والأدوات).
+      if (state !== 'error' || failures < MAX_FAILURES) state = columnTimedOut() ? 'error' : 'waiting';
       startObserving();
       return;
     }
+    // ظهر العمود: لا يبقى في التشخيص ولا على زر اللوحة سبب ما تعافت منه (ع-ل).
+    clearColumnIssue();
     stopObserving();
     if (!session) {
       if (failures >= MAX_FAILURES) return;

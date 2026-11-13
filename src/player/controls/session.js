@@ -141,7 +141,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let menuKind = null;
   let lastModel = null;
   let overflow = null;
-  let flags = { live: false, unavailable: false, brave: false, ad: false, ccStuck: false };
+  let flags = { live: false, unavailable: false, brave: false, ad: false, ccStuck: false, panelIssue: null };
   /** منذ متى زر CC مضغوط ولا التقاط (ف7)، ولأي فيديو، أو null. */
   let ccOnSince = null;
   let ccVideo = null;
@@ -218,7 +218,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     return t - ccOnSince >= CC_GRACE_MS;
   }
-  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc), ccStuck: ccStuckNow() });
+  // panelIssue: رمز تعذّر ظهور لوحة النص من صلتها (ع-ل)، يقوله زرها.
+  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc), ccStuck: ccStuckNow(), panelIssue: link?.panelIssue?.() ?? null });
 
   // ———— نماذج العرض ————
 
@@ -260,7 +261,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         label: upLabel, tip: withState(s.arabic ? LABELS.translation : LABELS.upload, upState), description: s.arabic ? summary.text : upState,
         disabled: noVideo || s.loading, loading: ui.upload.busy, expanded: ui.open === 'display' || ui.open === 'confirm', popup: upPopup,
       },
-      panel: { label: LABELS.panel, tip: panelTip, description: null, disabled: noVideo, hidden: !panelShown, pressed: panelOpen },
+      // ع-ل: اللوحة لا تظهر لغياب عمود يوتيوب: السبب في التلميح ووصف الزر، كالسبب مع الأزرار الأخرى. والزر يبقى يفتح ويغلق.
+      panel: {
+        label: LABELS.panel, tip: flags.panelIssue ? `${panelTip} — ${messageFor(flags.panelIssue)}` : panelTip,
+        description: flags.panelIssue ? messageFor(flags.panelIssue) : null, disabled: noVideo, hidden: !panelShown, pressed: panelOpen,
+      },
       minus: { label: withReason(minusTip(step)), tip: withReason(minusTip(step)), description: null, disabled: viewOff },
       badge: { label: withReason(badge), tip: withReason(badge), description: null, disabled: viewOff, text: formatOffset(off), sign: signOf(off), expanded: ui.open === 'timing' },
       plus: { label: withReason(plusTip(step)), tip: withReason(plusTip(step)), description: null, disabled: viewOff },
@@ -737,6 +742,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     closeMenu(false);
     const open = controller.getState().prefs?.ui?.panelOpen === true;
     if (!open && keyboard) link?.requestPanelFocus();
+    // ع-ل: فتحٌ لا تظهر بعده اللوحة يقول لماذا، فلا يمر صامتًا؛ والرسالة تزول وحدها حين يظهر العمود (check).
+    if (!open && flags.panelIssue) addToast('warning', messageFor(flags.panelIssue), { channel: 'panel' });
     controller.updatePrefs({ ui: { panelOpen: !open } })?.catch?.((err) => {
       fail('CT_PANEL_TOGGLE_FAILED', err);
       addToast('error', messageFor('CT_PANEL_TOGGLE_FAILED'));
@@ -1428,7 +1435,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       try {
         place();
         const next = readFlags();
-        if (next.live !== flags.live || next.unavailable !== flags.unavailable || next.ad !== flags.ad || next.ccStuck !== flags.ccStuck) {
+        if (next.live !== flags.live || next.unavailable !== flags.unavailable || next.ad !== flags.ad || next.ccStuck !== flags.ccStuck || next.panelIssue !== flags.panelIssue) {
+          // ع-ل: تعافت اللوحة (ظهر العمود): لا تبقى رسالة سبب زال.
+          if (flags.panelIssue && !next.panelIssue) clearChannel('panel');
           flags = next;
           render();
         }
