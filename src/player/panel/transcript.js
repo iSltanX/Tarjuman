@@ -17,6 +17,8 @@ const CHUNK = 500;
 /** خطوة PageUp وPageDown بين الصفوف. */
 const PAGE_ROWS = 10;
 const NAV = Object.freeze({ ArrowDown: 1, ArrowUp: -1, PageDown: PAGE_ROWS, PageUp: -PAGE_ROWS });
+/** حركة المؤشر بين الضغط والنقرة التي تجعلها سحبًا لا نقرة على الصف (B3). */
+export const DRAG_PX = 5;
 
 /**
  * @param {{ doc: Document, onSeek: (ms: number) => void, onAct?: (act: 'mark' | 'sync', i: number) => void, syncReason?: (i: number) => string | null }} deps
@@ -161,10 +163,37 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     return a === root.host || list.contains(a);
   }
 
-  // النقر على الزمن يقفز دائمًا؛ وعلى نص الصف يقفز إلا إن كان المستخدم يحدد نصًا (سحب أو نقر مزدوج لكلمة؛ U49، L-27).
+  // B3: ضغطة تبدأ على عنصر وتنتهي على آخر يرسل Chromium وFirefox نقرتها إلى أقرب أب مشترك، وهو الصف، ولا تحديد نص يدل على
+  // السحب. فيُحفظ موضع الضغطة، وهل بدأت في شريط الأفعال، وهل تحرك المؤشر بعدها أكثر من DRAG_PX.
+  /** @type {{ x: number, y: number, inActs: boolean, moved: boolean } | null} */
+  let press = null;
+  const far = (p, ev) => Math.hypot(ev.clientX - p.x, ev.clientY - p.y) > DRAG_PX;
+  list.addEventListener('pointerdown', (ev) => {
+    press = { x: ev.clientX, y: ev.clientY, inActs: acts.contains(ev.target), moved: false };
+  });
+  list.addEventListener('pointermove', (ev) => {
+    if (press && !press.moved && far(press, ev)) press.moved = true;
+  });
+  list.addEventListener('pointercancel', () => {
+    press = null;
+  });
+  // ت-٤: ما ركّزته نقرة المؤشر في القائمة (زر الزمن، أو زر الشريط، أو القائمة نفسها) يُتتبَّع بأحداث التركيز كما في الشريط.
+  let focusEl = null;
+
+  // النقر على الزمن يقفز دائمًا؛ وعلى نص الصف يقفز إلا إن كان المستخدم يحدد نصًا (سحب أو نقر مزدوج لكلمة؛ U49، L-27)، أو سحب
+  // المؤشر بلا تحديد، أو بدأت الضغطة في شريط الأفعال (B3).
   list.addEventListener('click', (ev) => {
+    // نقرة المؤشر وحدها (detail > 0) تُنسب إلى آخر ضغطة؛ وتفعيل لوحة المفاتيح (detail = 0) لا تمسه ضغطة قديمة.
+    const p = ev.detail > 0 ? press : null;
+    press = null;
     const i = rowIndexOf(ev.target);
     if (i < 0 || !cues || i >= cues.length) return;
+    rowClick(ev, i, p);
+    // ت-٤: بعد نقرة المؤشر على صف لا يبقى التركيز في القائمة، فالمسافة وk والأسهم بعدها لمشغّل يوتيوب ولا تكرر القفز، كما بعد
+    // أزرار الشريط (controls/group.js). وتفعيل لوحة المفاتيح يبقي التركيز حيث هو.
+    if (ev.detail > 0 && focusInside && focusEl) focusEl.blur?.();
+  });
+  function rowClick(ev, i, p) {
     // زر من شريط الأفعال: فعله وحده، لا قفز. والمعطّل يُبلَّغ (فيقال سببه) بدل أن يمر صامتًا.
     const act = actOf(ev.target);
     if (act === 'mark' || act === 'sync') {
@@ -174,9 +203,11 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     if (acts.contains(ev.target)) return;
     const t = timeEls[i];
     const onTime = !!t && (ev.target === t || t.contains?.(ev.target));
+    // الضغط والإفلات على زر الزمن نفسه نقرة عليه مهما تحرك المؤشر فوقه؛ وما سواه سحب إن بدأ في الشريط أو تحرك المؤشر (B3).
+    if (!onTime && p && (p.inActs || p.moved || far(p, ev))) return;
     if (!onTime && (ev.detail > 1 || selecting())) return;
     onSeek(seekMs(i));
-  });
+  }
   list.addEventListener('keydown', (ev) => {
     const i = rowIndexOf(ev.target);
     if (i < 0 || ev.target !== timeEls[i]) return;
@@ -189,6 +220,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
   });
   list.addEventListener('focusin', (ev) => {
     focusInside = true;
+    focusEl = ev.target ?? null;
     const i = rowIndexOf(ev.target);
     if (i >= 0 && ev.target === timeEls[i]) {
       setTabRow(i);
@@ -205,7 +237,10 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
   });
   list.addEventListener('focusout', (ev) => {
     const to = ev.relatedTarget ?? null;
-    if (!to || !list.contains(to)) focusInside = false;
+    if (!to || !list.contains(to)) {
+      focusInside = false;
+      focusEl = null;
+    }
   });
 
   function clear() {
@@ -224,6 +259,8 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     tabRow = 0;
     // الصف المركّز أُزيل (Firefox لا يطلق focusout عند الإزالة): لا يبقى «التركيز داخل القائمة» معلّقًا.
     focusInside = false;
+    focusEl = null;
+    press = null;
     acts.remove();
     actsRow = -1;
     actsFocusEl = null;

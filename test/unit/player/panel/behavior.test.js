@@ -8,7 +8,7 @@ import { arCues, click, english, hidden, key, layoutList, makeState, prepareVide
 
 const classesOf = (rows, cls) => rows.map((r, i) => (r.classList.contains(cls) ? i : -1)).filter((i) => i >= 0);
 
-test('عزل لوحة المفاتيح: الضغطات داخل اللوحة لا تصل إلى مستمعي المستند (اختصارات يوتيوب)', () => {
+test('عزل لوحة المفاتيح: ما تعالجه اللوحة (التفعيل على زر، وتنقل القائمة، والحقل) لا يصل إلى مستمعي المستند، وما سواه يصل (ت-٤)', () => {
   const page = watchPage();
   page.mount();
   const seen = [];
@@ -16,12 +16,15 @@ test('عزل لوحة المفاتيح: الضغطات داخل اللوحة ل�
   const v = ui(page);
   for (const type of ['keydown', 'keyup', 'keypress']) {
     v.switchEl.dispatchEvent({ type, bubbles: true, key: ' ' });
-    v.list.dispatchEvent({ type, bubbles: true, key: 'k' });
+    v.list.dispatchEvent({ type, bubbles: true, key: 'ArrowDown' });
     v.q('.num')?.dispatchEvent({ type, bubbles: true, key: 'f' });
   }
-  assert.deepEqual(seen, [], 'لا ضغطة وصلت');
+  assert.deepEqual(seen, [], 'لا ضغطة مما تعالجه اللوحة وصلت');
+  // ت-٤: اختصارات يوتيوب من غير الحقول تصل (كانت اللوحة تعزل كل ضغطة، فلا تعمل k والأسهم بعد نقرة فيها).
+  v.list.dispatchEvent({ type: 'keydown', bubbles: true, key: 'k' });
+  assert.deepEqual(seen, ['k'], 'k من القائمة يصل');
   page.doc.dispatchEvent({ type: 'keydown', key: 'k' });
-  assert.deepEqual(seen, ['k'], 'والمستند نفسه يعمل');
+  assert.deepEqual(seen, ['k', 'k'], 'والمستند نفسه يعمل');
 });
 
 test('التركيز مع زر اللوحة في الشريط (صلة link): الفتح بلوحة المفاتيح يدخل زر الإغلاق، والإغلاق يعيده إلى زر الشريط', () => {

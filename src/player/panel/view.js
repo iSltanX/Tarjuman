@@ -10,8 +10,15 @@ import { HOST_ID, NARROW_MAX, WIDE_MIN, panelCss } from './styles.js';
 import { createTranscript } from './transcript.js';
 import { LABELS, captureLine, earlierTip, laterTip, offsetMeaningShort, offsetValue, statusParts, stepLabel, withOriginal } from './text.js';
 
-/** ما يعزله جذر اللوحة عن يوتيوب: اختصارات لوحة المفاتيح (المسافة وk وf والأسهم والأرقام…) وهو يكتب أو يضغط داخلها. */
+/** أحداث لوحة المفاتيح التي يعزل جذر اللوحة منها ما تعالجه اللوحة نفسها عن اختصارات يوتيوب (ownsKey). */
 const KEYS = ['keydown', 'keyup', 'keypress'];
+/**
+ * ت-٤: ما تعالجه اللوحة فلا يصل إلى يوتيوب: التفعيل على زر، والتنقل بين الصفوف وتمرير القائمة، والأسهم في مقطّعة الاختيار. وكل
+ * ضغطة في حقل كتابة (المواصفة §٦.١). وما سواها (k وj وl وf والأرقام…) يصل إلى اختصارات يوتيوب كما من أزرار الشريط.
+ */
+const ACTIVATE_KEYS = new Set(['Enter', ' ', 'Spacebar']);
+const LIST_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End']);
+const RADIO_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 const STEP_PRESETS = Object.freeze([500, 1000]);
 
 /**
@@ -226,8 +233,21 @@ export function createPanelView({ doc, win, on }) {
   // المؤشر أو التركيز على الرسالة يمسك مؤقت زوالها (WCAG 2.2.1؛ U-042)، والجلسة تملك المؤقت.
   onHold(toast, (why, held) => on.toastHold?.(why, held));
 
-  // ———— عزل لوحة المفاتيح ————
-  for (const type of KEYS) shell.addEventListener(type, (ev) => ev.stopPropagation());
+  // ———— عزل لوحة المفاتيح (ت-٤: ما تعالجه اللوحة وحده، لا كل ضغطة) ————
+  /** @param {KeyboardEvent} ev */
+  function ownsKey(ev) {
+    const t = ev.target ?? null;
+    const tag = String(t?.tagName ?? '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || t?.isContentEditable) return true;
+    if (ACTIVATE_KEYS.has(ev.key) && tag === 'button') return true;
+    if (LIST_KEYS.has(ev.key) && transcript.list.contains(t)) return true;
+    return RADIO_KEYS.has(ev.key) && (segs.el.contains(t) || stepSegs.el.contains(t));
+  }
+  for (const type of KEYS) {
+    shell.addEventListener(type, (ev) => {
+      if (ownsKey(ev)) ev.stopPropagation();
+    });
+  }
 
   // ———— الهندسة والعرض ————
   const layout = { place: 'beside', heightPx: null, width: 0, narrow: false, wide: false };
