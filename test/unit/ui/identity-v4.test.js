@@ -274,3 +274,21 @@ test('ت-١٢ (أ): زرّا «النتيجة السابقة/التالية» ف
   assert.match(src, /const prevBtn = button\(\{[^}]*icon: 'chev-up', iconOnly: true/);
   assert.match(src, /const nextBtn = button\(\{[^}]*icon: 'chev-down', iconOnly: true/);
 });
+
+test('ت-١٢ (ب): عنوان صف المحفوظات والزر الكبير وعنوان لوحة المحرّر على سلّمي الهوية §٤ (Almarai 16/14/13/12، وCairo 22/18/16/14)', () => {
+  const ALMARAI = [16, 14, 13, 12];
+  const CAIRO = [22, 18, 16, 14];
+  const fontSize = (body) => Number((/font:\s*\d+\s+(\d+)px/.exec(body) ?? /font-size:\s*(\d+)px/.exec(body))?.[1]);
+  const lib = read('src/pages/library/library.css');
+  const ui = read('src/ui/components.css');
+  const ed = read('src/pages/editor/editor.css');
+  for (const [name, body] of [['.lib-row__title', ownRule(lib, '.lib-row__title')], ['.tj-btn--lg', ownRule(ui, '.tj-btn--lg')]]) {
+    assert.ok(ALMARAI.includes(fontSize(body)), `${name} ${fontSize(body)}px خارج سلّم Almarai`);
+  }
+  // عنوان لوحة المحرّر بـ.tj-h4 (Cairo 14/22 في base.css)، ولا تجاوز له بـCairo 13.
+  assert.doesNotMatch(ed, /\.ed-panel__head \.tj-h4 \{[^}]*13px/);
+  assert.ok(CAIRO.includes(fontSize(ownRule(read('src/ui/base.css'), '.tj-h4'))));
+  for (const [sheet, name] of [[lib, 'library.css'], [ui, 'components.css'], [ed, 'editor.css']]) {
+    assert.doesNotMatch(sheet, /font:\s*\d+\s+13px\/\d+px var\(--tj-font-head\)/, `${name}: Cairo 13`);
+  }
+});

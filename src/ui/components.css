@@ -24,7 +24,7 @@
 .tj-btn--xs .tj-icon { width: 14px; height: 14px; stroke-width: 2; }
 .tj-btn--sm { min-height: var(--tj-control-sm); padding: 0 10px; font-size: 13px; line-height: 18px; gap: 6px; }
 .tj-btn--sm .tj-icon { width: 16px; height: 16px; stroke-width: 2; }
-.tj-btn--lg { min-height: var(--tj-control-lg); padding: 0 18px; font-size: 15px; line-height: 22px; }
+.tj-btn--lg { min-height: var(--tj-control-lg); padding: 0 18px; font-size: 16px; line-height: 24px; }
 .tj-btn--xl { min-height: var(--tj-control-xl); padding: 0 24px; font-size: 16px; line-height: 24px; border-radius: var(--tj-radius-lg); }
 /* الأنواع الستة: الرئيسي صنوبر، والثانوي محايد، والمؤطّر، والشفاف، والخطر، والطيني لما يحمل اللحظة وحدها. */
 .tj-btn--primary { background: var(--tj-brand); color: var(--tj-brand-ink); }
