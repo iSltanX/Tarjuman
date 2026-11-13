@@ -153,8 +153,8 @@ const RULES = [
     re: /\bchrome\s*(?:\.|\[\s*['"`])\s*(?:webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen)\b|\bchrome\s*\[\s*['"`]downloads|\bpermissions\s*\.\s*request\b|\btabs\s*\.\s*(?:executeScript|insertCSS)\b/,
     msg: 'واجهة تحتاج إذنًا غير معتمد',
     // طلب موافقة صور المحفوظات في Firefox وحده، بسطره المراجَع في ملف الموافقة (قرار سلطان 2026-11-04، core/consent/thumbnails.js).
-    // ومنذ و1 (2.2.0) لا طلب إذن مضيف البلاغات.
-    allow: (rel, line) => rel === CONSENT_FILE && CONSENT_LINES.has(line.trim()),
+    // وإعادة طلب إذن يوتيوب نفسه بسطره في ملفه (الفكرة ٣-أ، ح-39، core/consent/youtube-access.js). ومنذ و1 (2.2.0) لا طلب إذن مضيف البلاغات.
+    allow: (rel, line) => CONSENT_LINES.get(rel)?.has(line.trim()) === true,
   },
 ];
 // الشبكة: fetch وXMLHttpRequest معرّفين ممنوعان، إلا أسطر غلافي الالتقاط في capture.js التي تمرّر طلب
@@ -182,10 +182,15 @@ const ALIAS_LINES = new Map([
 ]);
 // و1 (2.2.0، قرار سلطان ق3): لا قناة بلاغات، فلا استثناء لمضيفها ولا لطلبها. لا fetch خارج غلاف الالتقاط وقراءة خطوط الحزمة.
 // موافقة صور المحفوظات في Firefox (قرار سلطان 2026-11-04، docs/site/README.md): طلب واحد لفئة browsingActivity وحدها، بسطره
-// المراجَع حرفيًا في ملفه وحده؛ بلا مضيف ولا إذن آخر.
-const CONSENT_FILE = path.join('core', 'consent', 'thumbnails.js');
-const CONSENT_LINES = new Set([
-  'return Promise.resolve(api.permissions.request({ data_collection: [THUMBS_DATA] })).then((granted) => granted === true, () => false);',
+// المراجَع حرفيًا في ملفه وحده؛ بلا مضيف ولا إذن آخر. وإذن يوتيوب نفسه (الفكرة ٣-أ، ح-39): إعادة طلب أصل content_scripts.matches
+// المعلن (YOUTUBE_MATCHES) إن سحبه المستخدم، بسطره في ملفه وحده؛ لا إذن جديد، والبيان بلا إذن مضيف. وكل سطر في ملفه لا في الآخر.
+const CONSENT_LINES = new Map([
+  [path.join('core', 'consent', 'thumbnails.js'), new Set([
+    'return Promise.resolve(api.permissions.request({ data_collection: [THUMBS_DATA] })).then((granted) => granted === true, () => false);',
+  ])],
+  [path.join('core', 'consent', 'youtube-access.js'), new Set([
+    'return Promise.resolve(api.permissions.request({ origins: [...YOUTUBE_MATCHES] })).then((granted) => granted === true, () => false);',
+  ])],
 ]);
 // قراءة ملف خط الترجمة من حزمة الإضافة نفسها (chrome-extension://، ليست شبكة) لـFontFace ببياناته (عقد interfaces §٣):
 // في محمّل خطوط الطبقة وحده، والسطر مراجَع حرفيًا كأسطر غلافي الالتقاط (طلب ملف مشترك من P6).

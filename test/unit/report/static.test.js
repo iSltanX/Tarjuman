@@ -44,6 +44,23 @@ test('الفحص الثابت: طلب أو مضيف البلاغات أو طلب
   assert.match(r.stderr, /content\/main\.js:\d+: نطاق خارجي https:\/\/app-reports/);
 });
 
+// الفكرة ٣-أ (ح-39): سطر طلب مراجَع ثانٍ في ملف موافقة ثانٍ، إعادة طلب إذن يوتيوب نفسه. كل سطر في ملفه وحده، حرفيًا.
+test('الفحص الثابت: سطرا الطلب المراجَعان كلٌّ في ملفه وحده، وأي تغيير فيهما أو نقل مكشوف', async () => {
+  const YT_LINE = 'return Promise.resolve(api.permissions.request({ origins: [...YOUTUBE_MATCHES] })).then((granted) => granted === true, () => false);';
+  const THUMBS_LINE = 'return Promise.resolve(api.permissions.request({ data_collection: [THUMBS_DATA] })).then((granted) => granted === true, () => false);';
+  const source = await readFile(path.join(ROOT, 'src/core/consent/youtube-access.js'), 'utf8');
+  assert.equal(source.split('\n').filter((l) => l.trim() === YT_LINE).length, 1, 'السطر المراجَع في ملفه مرة واحدة');
+  const r = await staticWith(async (dir) => {
+    await append(path.join(dir, 'pages/popup/status.js'), `export const a = (api) => { ${YT_LINE} };`);
+    await append(path.join(dir, 'core/consent/youtube-access.js'), `export const b = (api) => { ${THUMBS_LINE} };`);
+    await append(path.join(dir, 'core/consent/thumbnails.js'), `export const c = (api) => { ${YT_LINE} };`);
+    await append(path.join(dir, 'core/consent/youtube-access.js'), "export const d = (api) => api.permissions.request({ origins: ['<all_urls>'] });");
+  });
+  assert.equal(r.status, 1);
+  const flagged = r.stderr.split('\n').filter((l) => l.includes('واجهة تحتاج إذنًا غير معتمد')).map((l) => l.replace(/:\d+:.*/, '').replace(/^- /, ''));
+  assert.deepEqual(flagged.sort(), ['core/consent/thumbnails.js', 'core/consent/youtube-access.js', 'core/consent/youtube-access.js', 'pages/popup/status.js'].map((p) => p.split('/').join(path.sep)).sort());
+});
+
 test('الفحص الثابت: أي إذن مضيف اختياري أو إلزامي مكشوف في الهدفين', async () => {
   const withManifest = (fn) => staticWith(async (dir) => {
     const p = path.join(dir, 'manifest.json');
