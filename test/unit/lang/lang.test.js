@@ -29,7 +29,12 @@ test('اتجاه السطر: بلغته إن عُرفت، وإلا RTL لأي ح
   assert.equal(textDirection('שלום world'), 'rtl', 'العبرية لا العربية وحدها');
   assert.equal(textDirection('hello'), 'ltr');
   assert.equal(textDirection('١٢٣'), 'ltr', 'الأرقام العربية الهندية ليست حروفًا');
-  assert.equal(textDirection('hello', 'ar'), 'rtl');
+  // القرار ١٨ (ت-٣): في لغة تُكتب من اليمين، السطر الخالي من حروفها LTR (CL-002)، وما فيه حرف منها RTL ولو بدأ بلاتينية.
+  assert.equal(textDirection('hello', 'ar'), 'ltr');
+  assert.equal(textDirection('OK!', 'ar'), 'ltr', 'لا يُقلب ترقيمه «!OK»');
+  assert.equal(textDirection('API هو الواجهة', 'ar'), 'rtl');
+  assert.equal(textDirection('2026', 'he'), 'ltr');
+  assert.equal(textDirection('שלום', 'he'), 'rtl');
   assert.equal(textDirection('مرحبا', 'en'), 'ltr', 'اللغة المعروفة أقوى من الحروف');
   assert.equal(textDirection('مرحبا', 'xx'), 'rtl', 'لغة لا يُعرف نصها: الحروف');
   assert.equal(hasRtlLetter('ب'), true);

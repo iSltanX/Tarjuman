@@ -23,7 +23,10 @@ test('اتجاه كل سطر من حروفه: RTL إن احتوى عربيًا �
   assert.equal(hasArabic('שלום'), true, 'العبرية تُكتب من اليمين');
   assert.equal(lineDirection('שלום world'), 'rtl');
   assert.equal(lineDirection('سلام', 'en'), 'ltr', 'سطر بلغة معروفة يتبعها');
-  assert.equal(lineDirection('hello', 'fa'), 'rtl');
+  // القرار ١٨ (ت-٣): لغة تُكتب من اليمين وسطر بلا حروفها ⇒ LTR (CL-002)، وما فيه حرف منها RTL.
+  assert.equal(lineDirection('hello', 'fa'), 'ltr');
+  assert.equal(lineDirection('OK!', 'ar'), 'ltr');
+  assert.equal(lineDirection('سلام hello', 'fa'), 'rtl');
 });
 
 test('تقسيم الأسطر: لا فراغات طرفية ولا أسطر فارغة، وكل أنواع نهاية السطر', () => {

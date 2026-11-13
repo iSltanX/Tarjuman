@@ -10,7 +10,8 @@ import { click, ui, watchPage } from './harness.js';
 test('AV2 U-030: sync بالمقاطع نفسها ولغة fr بعد ar يحدّث lang="fr" dir="ltr" بلا إعادة بناء', () => {
   const env = createFakeEnv();
   const t = createTranscript({ doc: env.doc, onSeek: () => {} });
-  const cues = makeCues(3, { text: (i) => ['Bonjour à tous', 'Merci beaucoup', 'Au revoir'][i - 1] });
+  // نص عربي في الخانتين: مع ar يُعرض RTL، ومع لغة تُكتب من اليسار تحسم اللغة (AA1). ونص لاتيني خالص في خانة عربية LTR (القرار ١٨).
+  const cues = makeCues(3, { text: (i) => ['مرحبًا بكم', 'شكرًا جزيلًا', 'إلى اللقاء'][i - 1] });
   const attrs = (k) => t.list.children.map((r) => `${r.children[1].children[k].getAttribute('lang')}|${r.children[1].children[k].getAttribute('dir')}`);
   const first = t.sync({ cues, originalCues: null, offsetMs: 0, translationLang: 'ar' });
   assert.equal(first.rebuilt, true);

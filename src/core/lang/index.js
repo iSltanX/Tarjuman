@@ -95,13 +95,17 @@ export function langDirection(code) {
 /**
  * اتجاه سطر نص: من لغته إن عُرفت، وإلا RTL إن احتوى أي حرف من نص يُكتب من اليمين ولو بدأ بكلمة لاتينية («API هو الواجهة»)،
  * وإلا LTR. القاعدة الثانية هي قاعدة الإصدار الأول للعربية (تدقيق 5fedcb9، CL-002) معمّمة على العبرية والفارسية وغيرهما.
+ * وفي لغة تُكتب من اليمين لا يُعرض RTL سطرٌ خالٍ من أي حرف يُكتب من اليمين (القرار ١٨، تحقق Fable ت-٣): «OK!» في ترجمة عربية
+ * يُعرض LTR فلا يُقلب ترقيمه «!OK»، كما تقول المواصفة §٩ وCL-002. ولغة تُكتب من اليسار تحسم كما في AA1.
  * @param {unknown} text @param {unknown} [lang]
  * @returns {'rtl' | 'ltr'}
  */
 export function textDirection(text, lang = null) {
   const byLang = lang ? langDirection(lang) : null;
+  const rtlLetter = RTL_LETTER.test(String(text ?? ''));
+  if (byLang === 'rtl') return rtlLetter ? 'rtl' : 'ltr';
   if (byLang) return byLang;
-  return RTL_LETTER.test(String(text ?? '')) ? 'rtl' : 'ltr';
+  return rtlLetter ? 'rtl' : 'ltr';
 }
 
 /** هل في النص حرف من نص يُكتب من اليمين. @param {unknown} text */

@@ -85,7 +85,12 @@ test('الوضع المزدوج: العربي أولًا ثم الإنجليزي
   assert.deepEqual(dirs(stage), ['ltr', 'rtl'], 'الترجمة بلا لغة من حروفها، والأصل العربي RTL');
   view.setTranslationLang('he');
   view.render({ ar: ['Shalom'], en: [] });
-  assert.deepEqual(dirs(stage), ['rtl'], 'لغة الترجمة المعروفة أقوى من حروفها');
+  assert.deepEqual(dirs(stage), ['ltr'], 'القرار ١٨: لغة تُكتب من اليمين وسطر بلا حروفها LTR');
+  view.render({ ar: ['שלום world'], en: [] });
+  assert.deepEqual(dirs(stage), ['rtl']);
+  view.setTranslationLang('en');
+  view.render({ ar: ['سلام'], en: [] });
+  assert.deepEqual(dirs(stage), ['ltr'], 'لغة تُكتب من اليسار أقوى من حروفها (AA1)');
 });
 
 test('النص يدخل textContent وحده: لا عناصر ولا سمات من نص المقطع', () => {
