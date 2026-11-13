@@ -19,6 +19,15 @@ const MAX_RECENT_REJECTIONS = 20;
  * يبقى دائمًا وإن تجاوزه وحده (تدقيق 7a66f91، U33). الأجسام الحقيقية نحو مليون محرف لخمسين دقيقة ASR.
  */
 export const MAX_CAPTURED_CHARS = 2 * MAX_BODY_CHARS;
+/**
+ * ن-٦ (قرار سلطان 2026-11-13: «حكم البث يخص الفيديو الملتقط نفسه»): بعد تبدّل الفيديو تبقى شارة بث السابق ظاهرة لحظات (قيست حتى
+ * 787 م.ث في Brave و552 في Edge و506 في Firefox، في التحقق المستقل للجولة الثانية)، فالتقاط يُقيَّم فيها (ومنه ما انتظر تبدّل العنوان)
+ * لا يُحكم عليه بها: يُمسك ويُعاد تقييمه كل LIVE_RECHECK_MS، فيُقبل متى زالت الشارة، ولا يُرفض EX_LIVE إلا إن بقيت ظاهرة حتى
+ * تنقضي LIVE_SETTLE_MS من التبدّل، وحينها هي شارة الفيديو نفسه. وبعد هذه المدة يُحكم بالشارة فورًا كما كان.
+ */
+export const LIVE_SETTLE_MS = 3000;
+export const LIVE_RECHECK_MS = 250;
+const MAX_LIVE_HELD = 8;
 
 /**
  * @typedef {{
@@ -40,12 +49,17 @@ export const MAX_CAPTURED_CHARS = 2 * MAX_BODY_CHARS;
  *   isLive?: () => boolean,
  *   now?: () => number,
  *   maxCapturedChars?: number,
- * }} env maxCapturedChars: حد المحارف الإجمالي (MAX_CAPTURED_CHARS افتراضيًا؛ الاختبار يصغّره)
+ *   setTimeout?: (fn: () => void, ms: number) => unknown,
+ *   clearTimeout?: (id: unknown) => void,
+ * }} env maxCapturedChars: حد المحارف الإجمالي (MAX_CAPTURED_CHARS افتراضيًا؛ الاختبار يصغّره)؛ setTimeout وclearTimeout لإعادة
+ *   تقييم الممسوك بشارة البث (ن-٦)، ومؤقتات الصفحة افتراضيًا (الاختبار يحقن مؤقتات وهمية)
  */
 export function createExtractor(env) {
   const now = env.now ?? (() => Date.now());
   const durationMs = env.durationMs ?? (() => null);
   const isLive = env.isLive ?? (() => false);
+  const setTimer = env.setTimeout ?? ((fn, ms) => globalThis.setTimeout(fn, ms));
+  const clearTimer = env.clearTimeout ?? ((id) => globalThis.clearTimeout(id));
   const maxCapturedChars = Number.isInteger(env.maxCapturedChars) && env.maxCapturedChars > 0 ? env.maxCapturedChars : MAX_CAPTURED_CHARS;
   /** عتبة «قد يكون ناقصًا» من الإعدادات، يمرّرها المتحكم بـsetCompleteness (تدقيق 7a66f91، U37). */
   let completeness = COMPLETENESS_RATIO;
@@ -67,6 +81,11 @@ export function createExtractor(env) {
   /** طلبات الترجمة التي رآها غلافا الالتقاط للفيديو المعروض، وأكبر عدّ في الصفحة كلها (ف7). أعداد فقط. */
   let seen = { videoId: /** @type {string | null} */ (null), count: 0 };
   let seenPage = 0;
+  /** متى صار الفيديو الحالي هو المعروض (ن-٦): شارة البث قبل LIVE_SETTLE_MS منه قد تكون للسابق. */
+  let videoSince = now();
+  /** التقاطات الفيديو الحالي الممسوكة بشارة بث قد لا تخصه (ن-٦)، بترتيب وصولها، ومؤقت إعادة تقييمها. @type {import('./message.js').CaptureMessage[]} */
+  let liveHeld = [];
+  let liveTimer = /** @type {unknown} */ (null);
   // كل مشترك على حدة: استثناء في أحدهم لا يخرج من معالج رسالة الجسر ولا يحرم غيره.
   const emit = () => {
     for (const fn of [...listeners]) {
@@ -86,6 +105,9 @@ export function createExtractor(env) {
   function sync(current) {
     if (!captures.setCurrentVideo(current)) return;
     lastRejection = null;
+    // ن-٦: الممسوك يخص الفيديو السابق، فيسقط؛ ومدة الشك في الشارة تبدأ من هنا.
+    videoSince = now();
+    dropLive();
     if (listed && listed.videoId !== current) listed = null;
     // Y4-أ: صفحة بلا فيديو لا تمسح مسارات آخر فيديو (المخزن يُبقي أجسامها)، فتعود بالعودة إليه؛ والفيديو الآخر يمسحها.
     if (current !== null && slotsVideo() !== current) slots.clear();
@@ -119,14 +141,52 @@ export function createExtractor(env) {
     };
   }
 
+  function dropLive() {
+    liveHeld = [];
+    if (liveTimer !== null) clearTimer(liveTimer);
+    liveTimer = null;
+  }
+
+  /** ن-٦: يُمسك التقاط الفيديو الحالي حتى يُعرف أن شارة البث له، بحد عدد ومحارف كمخزن الانتظار (الأحدث يبقى). */
+  function holdLive(msg) {
+    liveHeld.push(msg);
+    let total = liveHeld.reduce((n, m) => n + m.body.length, 0);
+    while (liveHeld.length > 1 && (liveHeld.length > MAX_LIVE_HELD || total > MAX_BODY_CHARS)) total -= liveHeld.shift().body.length;
+    if (liveTimer === null) liveTimer = setTimer(recheckLive, LIVE_RECHECK_MS);
+  }
+
+  /**
+   * ن-٦: زالت الشارة فيُقيَّم الممسوك بكل القواعد (فيُقبل)، أو انقضت مدة الشك وهي ظاهرة فيُحكم بها (EX_LIVE كما كان)؛ وإلا يُعاد
+   * بعد LIVE_RECHECK_MS. وتبدّل الفيديو أثناءه يسقطه (sync).
+   */
+  function recheckLive() {
+    liveTimer = null;
+    if (!liveHeld.length) return;
+    sync(env.currentVideoId());
+    if (!liveHeld.length) return;
+    if (isLive() && now() - videoSince < LIVE_SETTLE_MS) {
+      liveTimer = setTimer(recheckLive, LIVE_RECHECK_MS);
+      return;
+    }
+    const held = liveHeld;
+    liveHeld = [];
+    for (const msg of held) evaluate(msg, 0, true);
+  }
+
   /**
    * @param {import('./message.js').CaptureMessage} msg بعد validateCaptureMessage
    * @param {number} [pendingAgeMs]
+   * @param {boolean} [settled] حكم البث نهائي (بعد الإمساك، ن-٦)، فلا يُمسك ثانية
    */
-  function evaluate(msg, pendingAgeMs) {
+  function evaluate(msg, pendingAgeMs, settled = false) {
     const current = env.currentVideoId();
     sync(current);
     const decision = checkAcceptance(msg, { currentVideoId: current, isLive: isLive() });
+    // ن-٦: شارة بث بعد تبدّل الفيديو بقليل قد تكون للسابق: لا حكم بها الآن، ولا رفض يظهر للمستخدم.
+    if (!decision.accepted && decision.code === 'EX_LIVE' && !settled && now() - videoSince < LIVE_SETTLE_MS) {
+      holdLive(msg);
+      return { accepted: false, code: decision.code };
+    }
     if (!decision.accepted) {
       captures.reject({
         code: decision.code, detail: decision.detail, videoId: msg.videoId, currentVideoId: current, lang: msg.lang,
