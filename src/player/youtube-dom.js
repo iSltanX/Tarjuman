@@ -46,6 +46,43 @@ export const EVENTS = Object.freeze({
   pageDataUpdated: 'yt-page-data-updated',
 });
 
+// ———— مواضع لوحة النص وسمات صفحة المشاهدة (الفكرة ١، الجولة الثالثة) ————
+// كانت محددات اللوحة في panel/column.js وسمة الوضع الداكن في panel/session.js، وهما اسمان ليوتيوب خارج هذا الملف (R39). ولا تدخل
+// SELECTORS: مفاتيحها مربوطة بخط أساس «هل تغيّر يوتيوب؟» وبخريطة الوجود في تشخيص الصفحة، فلكلٍّ منهما قسم مستقل.
+
+/** معرّف #below: الموضع البديل للوحة تحت الفيديو (العمود الواحد، أو عمود يقع فوق المشغّل). */
+const BELOW_ID = 'below';
+
+/**
+ * محددات مواضع لوحة النص المتزامن (src/player/panel/column.js): العمود الثانوي داخل ytd-watch-flexy ثم مطلقًا (احتياط لتغيّر
+ * البنية)، و#below وصندوق بيانات الفيديو فيه، وحاوية العمودين وعموداها.
+ */
+export const PANEL_SELECTORS = Object.freeze({
+  flexy: 'ytd-watch-flexy',
+  secondaryInner: 'ytd-watch-flexy #secondary-inner',
+  secondary: 'ytd-watch-flexy #secondary',
+  anySecondaryInner: '#secondary-inner',
+  anySecondary: '#secondary',
+  below: `ytd-watch-flexy #${BELOW_ID}`,
+  // يوتيوب يضعه داخل صندوق في #below لا ابنًا مباشرًا له.
+  belowAnchor: 'ytd-watch-metadata',
+  columns: 'ytd-watch-flexy #columns',
+  primary: 'ytd-watch-flexy #primary',
+});
+
+/** سمات يوتيوب التي يقرؤها ترجمان: أسماؤها لا قيمها. */
+export const ATTRS = Object.freeze({
+  /** تخطيط العمود الواحد (عرض ضيق): سمة على ytd-watch-flexy. */
+  singleColumn: 'is-single-column',
+  /** وضع يوتيوب الداكن: سمة على جذر الصفحة (html)، تتبعها ألوان اللوحة. */
+  dark: 'dark',
+  /** أسماء سمات ytd-watch-flexy التي تغيّر التخطيط (الأعمدة والنافذة والمسرح وملء الشاشة): مفتاح التخطيط في column.js. */
+  layout: /column|window|theater|full/,
+});
+
+/** العنصر هو #below (لا العمود الثانوي). @param {{ id?: string } | null | undefined} el */
+export const isBelow = (el) => el?.id === BELOW_ID;
+
 const POLL_MS = 500;
 
 // معرّف الفيديو المعروض من العنوان: المصدر الوحيد للحقيقة في «الفيديو الحالي»، وحدة نقية يستوردها عالم الصفحة أيضًا (U-032).
