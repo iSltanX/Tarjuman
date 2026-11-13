@@ -7,6 +7,7 @@ import {
   rowModel, rowStatus, searchEntries, slotsPhrase, sortEntries, translationTotal,
 } from '../../../../src/pages/library/model.js';
 import { sampleBundle } from '../../../helpers/fixtures-v2.js';
+import { isolate } from '../../../../src/ui/format.js';
 
 const NOW = Date.parse('2026-11-02T12:00:00.000Z');
 const ago = (ms) => new Date(NOW - ms).toISOString();
@@ -104,7 +105,7 @@ test('rowModel: الشرائح للترجمات الموجودة وحدها، و
   const m = rowModel(entry({ slots: [slot(1, false), slot(2, true, { active: true, name: 'Claude' }), slot(3, true)] }), NOW);
   assert.deepEqual(m.filled.map((s) => s.n), [2, 3], 'الفارغة لا تُعدّ نسخةً');
   assert.equal(m.nextEmpty, 1, 'أول خانة فارغة ولو سبقت الممتلئة');
-  assert.deepEqual(m.filled.map(chipLabel), ['2 · Claude', 'الترجمة 3'], 'الاسم المختصر إن وُجد وإلا «الترجمة N»');
+  assert.deepEqual(m.filled.map(chipLabel), [`2 · ${isolate('Claude')}`, 'الترجمة 3'], 'الاسم المختصر إن وُجد وإلا «الترجمة N»');
   assert.equal(rowModel(entry({ slots: [slot(1, true, { active: true }), slot(2, true), slot(3, true)] }), NOW).nextEmpty, null, 'ثلاث ترجمات: لا شريحة رفع');
   // سجل الإصدار الأول بلا slots: النشطة في 1، والتالية 2.
   const old = rowModel(entry(), NOW);
@@ -234,7 +235,7 @@ test('deleteSummary: بنود لما يوجد فعلًا وحده، لكل تر�
   // الكل: ثلاث ترجمات بأسماء، والسابقة، وتعديلات الأولى (5)، وعلامات الأولى والثانية (3)، وإزاحاتها، وموضع الأولى، والإنجليزي والبصمات.
   assert.deepEqual(deleteSummary(b, { scope: 'all' }), {
     items: [
-      'الترجمات 1 و2 «مراجعة» و3', 'النسخة السابقة (من الترجمة 2)', '5 تعديلات يدوية', '3 علامات مراجعة', 'الإزاحات المحفوظة', 'آخر موضع محفوظ في المحرّر',
+      `الترجمات 1 و2 «${isolate('مراجعة')}» و3`, 'النسخة السابقة (من الترجمة 2)', '5 تعديلات يدوية', '3 علامات مراجعة', 'الإزاحات المحفوظة', 'آخر موضع محفوظ في المحرّر',
       'ملف أصل محفوظ', 'مراجع المقارنة بالأصل (2)', 'عنوان الفيديو ومدته وإعدادات عرضه',
     ],
     keeps: [],
@@ -246,7 +247,7 @@ test('deleteSummary: بنود لما يوجد فعلًا وحده، لكل تر�
   // غير نشطة بلا شيء: الثانية بعلامة واحدة وإزاحة؛ لا «تصبح النشطة» لأن النشطة غيرها.
   const two = deleteSummary(b, { scope: 'slot', n: 2 });
   assert.deepEqual(two.items.slice(1), ['علامة مراجعة واحدة', `الإزاحة المحفوظة (${LRI}−1.2${PDI} ث)`]);
-  assert.ok(two.items[0].startsWith('الترجمة 2 «مراجعة» — ملف'));
+  assert.ok(two.items[0].startsWith(`الترجمة 2 «${isolate('مراجعة')}» — ملف`));
   assert.deepEqual(two.keeps, ['الترجمتان 1 و3 تبقى', 'النسخة السابقة تبقى', 'ملفات الأصل المحفوظة ومراجع المقارنة تبقى']);
   // بلا سابقة ولا ترجمة أخرى: لا بنود «تبقى» لها.
   const solo = sampleBundle({ videoId: 'AAAAAAAAAAA', previous: false });

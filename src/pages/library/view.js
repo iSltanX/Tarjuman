@@ -620,7 +620,7 @@ export function createLibrary(env) {
    */
   function slotChip(m, s, focusable) {
     const label = chipLabel(s);
-    const base = s.name ? tr('library.chipRow.base', { n: s.n, name: s.name }) : tr('common.slot.label', { n: s.n });
+    const base = s.name ? tr('library.chipRow.base', { n: s.n, name: isolate(s.name) }) : tr('common.slot.label', { n: s.n });
     const b = el('button', {
       className: `lib-chip${s.active ? ' lib-chip--active' : ''}`,
       attrs: {

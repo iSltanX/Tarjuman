@@ -9,7 +9,7 @@ import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { SLOT_NAME_MAX } from '../../core/model/slots.js';
 import { t as tr } from '../../i18n/index.js';
 import { alertBox, button, el, icon, ltr, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatBytes, formatCount, offsetInline, textDirection } from '../../ui/format.js';
+import { COUNT_FORMS, formatBytes, formatCount, ltrInline, offsetInline, textDirection } from '../../ui/format.js';
 import { activateSlot, deletePrevious, deleteSlot, renameSlot, restorePrevious } from './actions.js';
 import { deleteContent } from './delete.js';
 import { captureFocus, restoreFocus, toggleKeyOf } from './focus.js';
@@ -253,7 +253,8 @@ export function createExpansion(env) {
       className: 'lib-prevl',
       children: [
         icon('restore', { doc, className: 'tj-icon lib-prevl__icon' }),
-        el('span', { className: 'lib-prevl__text', text: parts.join(' · '), attrs: { title: `${p.track.fileName} · ${formatCount(p.track.original.length, COUNT_FORMS.cue)} · ${absoluteTime(p.savedAt)}` }, doc }),
+        // اسم الملف في التلميح معزول LTR: أوله لا يُقرأ اتجاهًا للتلميح كله، وشرطته الأولى لا تنتقل إلى آخره.
+        el('span', { className: 'lib-prevl__text', text: parts.join(' · '), attrs: { title: `${ltrInline(p.track.fileName)} · ${formatCount(p.track.original.length, COUNT_FORMS.cue)} · ${absoluteTime(p.savedAt)}` }, doc }),
         restore, remove,
       ],
       doc,

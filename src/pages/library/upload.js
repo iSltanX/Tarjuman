@@ -237,7 +237,8 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
   const root = el('div', {
     className: 'lib-up',
     children: [
-      el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
+      // اسم الملف المرفوع قد يطول بلا فواصل («My_Translation_Final…srt»): يلتف داخل عنصره فلا يفيض خارج الحوار.
+      el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, wrap: true, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
       ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
       // ح-49: الملف مصدَّر «مع الأصل»: تحذير وزر الإزالة، ولا يُزال شيء قبل النقرة؛ وبعدها سطر بما أُزيل يُنقل إليه التركيز.
       result.bilingual ? alertBox({

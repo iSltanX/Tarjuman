@@ -8,7 +8,7 @@ import { messageFor } from '../../core/errors/index.js';
 import { isVideoId, parseTrackKey } from '../../core/model/ids.js';
 import { getLocale, joinList, t as tr } from '../../i18n/index.js';
 import { languageName, pairLabel } from '../../ui/lang.js';
-import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, isolate, ltrInline, offsetInline } from '../../ui/format.js';
 
 /** حجم الدفعة المعروضة: عرض تدريجي لمحفوظات كثيرة. */
 export const PAGE_SIZE = 50;
@@ -176,8 +176,11 @@ const filledOf = (slots) => slots.filter((s) => s.filled).sort((a, b) => a.n - b
 /** مجموع الترجمات المحفوظة في كل المحفوظات (الخانات الممتلئة)، لرأس الصفحة «N فيديو · M ترجمة». @param {{ slots?: { filled: boolean }[], arabic: unknown }[]} entries */
 export const translationTotal = (entries) => entries.reduce((n, e) => n + (e.slots ? e.slots.filter((s) => s.filled).length : e.arabic ? 1 : 0), 0);
 
-/** نص شريحة الخانة: «1 · Claude»، وبلا اسم مختصر «الترجمة 1». @param {{ n: number, name?: string | null }} s */
-export const chipLabel = (s) => (s.name ? tr('library.chip.named', { n: s.n, name: s.name }) : tr('library.chip.plain', { n: s.n }));
+/**
+ * نص شريحة الخانة: «1 · Claude»، وبلا اسم مختصر «الترجمة 1». والاسم معزول (FSI…PDI) كما في المحرّر، فاسم لاتيني مثل «v2.» لا
+ * ينتقل ترقيمه في الجملة العربية. @param {{ n: number, name?: string | null }} s
+ */
+export const chipLabel = (s) => (s.name ? tr('library.chip.named', { n: s.n, name: isolate(s.name) }) : tr('library.chip.plain', { n: s.n }));
 
 /**
  * الحالة الوحيدة في الصف (شارة واحدة): الأولى من «تحتاج مراجعة» ثم «تحذير آلي» ثم «معدّلة»، وإلا «مترجمة»؛ وبلا ترجمة «بانتظار
@@ -498,8 +501,9 @@ export function nameHintText(hint, titleOf = () => null) {
   if (!hint?.differs) return null;
   const t = titleOf(hint.videoId);
   const title = t ? (Array.from(t).length > 40 ? `${Array.from(t).slice(0, 39).join('')}…` : t) : null;
-  // العنوان معزول (FSI…PDI) فلا تنقلب علامات ترقيمه داخل الجملة العربية (تدقيق 5fedcb9، CL-002).
-  return title ? tr('library.nameHint.withTitle', { title: `${String.fromCodePoint(0x2068)}${title}${String.fromCodePoint(0x2069)}` }) : tr('library.nameHint.withId', { id: hint.videoId });
+  // العنوان معزول (FSI…PDI) فلا تنقلب علامات ترقيمه داخل الجملة العربية (تدقيق 5fedcb9، CL-002)، والمعرّف LTR (LRI…PDI): شرطة
+  // أول معرّف مثل «-xyz…» لا تنتقل إلى آخره بين القوسين.
+  return title ? tr('library.nameHint.withTitle', { title: `${String.fromCodePoint(0x2068)}${title}${String.fromCodePoint(0x2069)}` }) : tr('library.nameHint.withId', { id: ltrInline(hint.videoId) });
 }
 
 /** «الترجمة 2» و«الترجمتان 1 و3» و«الترجمات 1 و2 و3» (وبالإنجليزية «Translations 1 and 3»). @param {number[]} nums */
@@ -516,7 +520,7 @@ export function deleteSummary(b, what, { pair = false } = {}) {
   const slots = what.scope === 'slot' ? [b.slots[what.n - 1]] : b.slots.filter((s) => s.track);
   const items = [];
   const keeps = [];
-  const named = (s) => (s.name ? tr('library.delete.named', { n: s.n, name: s.name }) : String(s.n));
+  const named = (s) => (s.name ? tr('library.delete.named', { n: s.n, name: isolate(s.name) }) : String(s.n));
   if (what.scope === 'slot') {
     const s = slots[0];
     items.push(tr('library.delete.slotItem', { name: named(s), file: ltrInline(s.track.fileName) }));

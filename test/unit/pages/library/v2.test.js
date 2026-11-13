@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { instructions } from '../../../../src/core/export/instructions.js';
 import { compare } from '../../../../src/core/compare/compare.js';
 import { createStore } from '../../../../src/core/store/index.js';
-import { formatTimecode } from '../../../../src/ui/format.js';
+import { formatTimecode, isolate } from '../../../../src/ui/format.js';
 import { createLibrary } from '../../../../src/pages/library/view.js';
 import { FILTERS, filterCounts, filterEntries, libraryEntries, manualEdits } from '../../../../src/pages/library/model.js';
 import { t as tt } from '../../../../src/i18n/index.js';
@@ -97,9 +97,9 @@ const txt = (e) => e.textContent;
 test('الصف: شريحة لكل ترجمة موجودة تميّز النشطة، والضغط على غيرها يفعّلها برسالة «فُعّلت الترجمة 2» و«تراجع»، ولا شريحة لفارغ سوى شريحة الرفع', async () => {
   const m = await mount();
   let chips = chipsOf(m, IDS[0]);
-  assert.deepEqual(chips.map((b) => [textOf(b), b.getAttribute('aria-pressed')]), [['الترجمة 1', 'true'], ['2 · مراجعة', 'false'], ['الترجمة 3', 'false']], 'الاسم المختصر إن وُجد');
+  assert.deepEqual(chips.map((b) => [textOf(b), b.getAttribute('aria-pressed')]), [['الترجمة 1', 'true'], [`2 · ${isolate('مراجعة')}`, 'false'], ['الترجمة 3', 'false']], 'الاسم المختصر إن وُجد');
   assert.equal(rowFor(m, IDS[0]).querySelectorAll('.lib-chip--add').length, 0, 'ثلاث ترجمات: لا شريحة رفع');
-  assert.equal(chips[1].title, 'الترجمة 2 — مراجعة — اضغط لتفعيلها');
+  assert.equal(chips[1].title, `الترجمة 2 — ${isolate('مراجعة')} — اضغط لتفعيلها`);
   assert.equal(chips[0].title, `الترجمة 1 (النشطة) — الإزاحة ${LRI}+0.5${PDI} ث`, 'إزاحة النشطة في تلميح شريحتها');
   assert.deepEqual(chips.map((b) => b.getAttribute('tabindex')), ['0', '-1', '-1'], 'نقطة Tab واحدة');
   chips[1].click();
@@ -134,7 +134,7 @@ test('شريحة الرفع المتقطّعة: الخانة الفارغة ال
     },
     env: { pickFiles: async () => [new File([text], 'جديد.ar.srt')] },
   });
-  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', '2 · مراجعة'], 'الشرائح للموجودة وحدها');
+  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', `2 · ${isolate('مراجعة')}`], 'الشرائح للموجودة وحدها');
   const add = rowFor(m, IDS[0]).querySelectorAll('.lib-chip--add');
   assert.equal(add.length, 1, 'شريحة متقطّعة واحدة');
   assert.equal(textOf(add[0]), 'الترجمة 3 · فارغة');
@@ -157,7 +157,7 @@ test('شريحة الرفع المتقطّعة: الخانة الفارغة ال
   const b = await m.store.getBundle(IDS[0]);
   assert.equal(b.slots[2].track.original[0].text, 'جديد 1');
   assert.equal(rowFor(m, IDS[0]).querySelectorAll('.lib-chip--add').length, 0);
-  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', '2 · مراجعة', 'الترجمة 3']);
+  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', `2 · ${isolate('مراجعة')}`, 'الترجمة 3']);
 });
 
 test('شريحة الرفع المتقطّعة: إن حُذفت الأولى فالفارغة التالية هي 1 وإليها يذهب الرفع', async () => {
@@ -169,7 +169,7 @@ test('شريحة الرفع المتقطّعة: إن حُذفت الأولى ف�
     },
     env: { pickFiles: async () => [new File([text], 'x.ar.srt')] },
   });
-  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['2 · مراجعة', 'الترجمة 3'], 'الرقم هوية الخانة: لا إعادة ترقيم');
+  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), [`2 · ${isolate('مراجعة')}`, 'الترجمة 3'], 'الرقم هوية الخانة: لا إعادة ترقيم');
   const add = rowFor(m, IDS[0]).querySelector('.lib-chip--add');
   assert.equal(textOf(add), 'الترجمة 1 · فارغة');
   m.answers.push(false);
@@ -287,7 +287,7 @@ test('التوسيع: الاسم المختصر يُحفظ (Enter أو change) �
   name.dispatchEvent({ type: 'change' });
   await settle(10);
   assert.equal((await m.store.getBundle(IDS[0])).slots[1].name, 'نسخة المراجع');
-  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', '2 · نسخة المراجع', 'الترجمة 3'], 'الشريحة تحدّثت');
+  assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', `2 · ${isolate('نسخة المراجع')}`, 'الترجمة 3'], 'الشريحة تحدّثت');
   assert.equal(textOf(cardOf(expOf(m, IDS[0]), 2).querySelector('h4')), 'الترجمة 2 · نسخة المراجع');
   // اسم أطول من الحد: رسالة خطأ ولا يُحفظ.
   exp = expOf(m, IDS[0]);

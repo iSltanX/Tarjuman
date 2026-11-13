@@ -1,7 +1,7 @@
 // محتوى حوار الحذف (تصميم LibraryDialogs): عنوان الفيديو سطرًا، ثم «ما يُحذف» بنودًا من بيانات الفيديو الفعلية
 // (deleteSummary في model.js) و«ما يبقى» إن وُجد، ثم تنبيه التراجع. لا بند لما لا يوجد.
 import { t } from '../../i18n/index.js';
-import { el } from '../../ui/components.js';
+import { el, ltrNodes } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
 
 /**
@@ -9,7 +9,12 @@ import { textDirection } from '../../ui/format.js';
  * @returns {HTMLElement}
  */
 export function deleteContent({ doc, subtitle, summary, note }) {
-  const list = (items) => el('ul', { className: 'lib-del__list', children: items.map((t) => el('li', { text: t, doc })), doc });
+  // اسم الملف في بند «الترجمة 2 — ملف …» عنصر معزول ذري (ltrNodes): لا تنقلب أجزاؤه إن انكسر سطره في الحوار.
+  const item = (t) => {
+    const nodes = ltrNodes(t, { doc });
+    return el('li', nodes ? { children: nodes, doc } : { text: t, doc });
+  };
+  const list = (items) => el('ul', { className: 'lib-del__list', children: items.map(item), doc });
   return el('div', {
     className: 'lib-del',
     children: [
