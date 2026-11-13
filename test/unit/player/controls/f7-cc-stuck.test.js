@@ -12,8 +12,9 @@ import { validateSeenMessage } from '../../../../src/extract/message.js';
 import { readTimedtextParams } from '../../../../src/extract/timedtext-params.js';
 import { mountControls } from '../../../../src/player/controls/index.js';
 import { CC_GRACE_MS } from '../../../../src/player/controls/session.js';
+import { isSubtitlesButton } from '../../../../src/player/youtube-dom.js';
 import { addPlayer, createFakeEnv } from '../overlay/fake-dom.js';
-import { addBar, click, fakeController, fakeFlows, inspect, makeState, trackInfo } from './harness.js';
+import { addBar, arabic, click, fakeController, fakeFlows, inspect, key, makeState, mountPage, pointerdown, trackInfo } from './harness.js';
 
 /** صفحة بأدوات ترجمان وساعة تتقدّم مع المؤقتات. */
 function page() {
@@ -150,5 +151,98 @@ test('م2: التقاط مرفوض (captureIssue) يقول سببه وحده، �
   p.tick(CC_GRACE_MS + 1500);
   click(p.ui.btn('download'));
   assert.ok(!menuText(p).includes(messageFor('CT_CC_NOT_CAPTURED')));
+  p.handle.unmount();
+});
+
+// ———— ح-40 (الجولة الثالثة، الفكرة ٧-أ): زر CC لا يغلق «تنزيل الأصل» ————
+// الضغط على زر CC هو الفعل الذي تطلبه القائمة، فتبقى مفتوحة وتتحدّث وحدها حين يصل الالتقاط. وتُغلق بأي نقر آخر خارجها (ومنه ⚙)
+// وبـEsc، والقوائم الأخرى تُغلق بزر CC كما كانت.
+
+/** رمز داخل زر CC كما في يوتيوب: هدف النقرة عنصر داخل الزر لا الزر نفسه. */
+const ccIcon = (p) => {
+  const svg = p.env.doc.createElement('svg');
+  p.cc.appendChild(svg);
+  return svg;
+};
+
+test('ح-40: الضغط على زر CC (أو رمزه) والقائمة مفتوحة لا يغلقها، وتعرض المسار وحدها حين يصل الالتقاط', () => {
+  const p = page();
+  click(p.ui.btn('download'));
+  assert.ok(menuText(p).includes(messageFor('CT_NOT_CAPTURED')));
+  pointerdown(ccIcon(p));
+  assert.equal(p.ui.menuOpen(), true, 'رمز CC داخل الزر');
+  pointerdown(p.cc);
+  assert.equal(p.ui.menuOpen(), true, 'الزر نفسه');
+  p.cc.setAttribute('aria-pressed', 'true');
+  p.tick(500);
+  p.controller.set({ captured: [trackInfo()] });
+  assert.equal(p.ui.menuOpen(), true);
+  assert.ok(menuText(p).includes('الإنجليزية · يدوية · 412 مقطعًا'), 'المسار الملتقط في القائمة المفتوحة');
+  assert.ok(p.ui.item('تنزيل الملف'), 'وزر التنزيل');
+  assert.ok(!menuText(p).includes(messageFor('CT_NOT_CAPTURED')));
+  p.handle.unmount();
+});
+
+test('ح-40: وتُغلق بأي نقر آخر خارجها (⚙ والفيديو) وبـEsc', () => {
+  const p = page();
+  for (const [name, el] of [['⚙', p.yt[1]], ['الفيديو', p.video]]) {
+    click(p.ui.btn('download'));
+    pointerdown(p.cc);
+    assert.equal(p.ui.menuOpen(), true, `قبل ${name}`);
+    pointerdown(el);
+    assert.equal(p.ui.menuOpen(), false, name);
+  }
+  click(p.ui.btn('download'));
+  pointerdown(p.cc);
+  assert.equal(p.ui.menuOpen(), true);
+  key(p.env.doc.body, 'Escape');
+  assert.equal(p.ui.menuOpen(), false, 'Esc');
+  p.handle.unmount();
+});
+
+test('ح-40: القوائم الأخرى (التوقيت والترجمة) تُغلق بالضغط على زر CC كما كانت', () => {
+  const p = mountPage({ state: makeState({ arabic: arabic() }) });
+  click(p.ui.btn('badge'));
+  assert.equal(p.ui.menuLabel(), 'توقيت الترجمة');
+  pointerdown(p.cc);
+  assert.equal(p.ui.menuOpen(), false, 'التوقيت');
+  click(p.ui.btn('upload'));
+  assert.equal(p.ui.menuOpen(), true);
+  pointerdown(p.cc);
+  assert.equal(p.ui.menuOpen(), false, 'الترجمة');
+  p.handle.unmount();
+});
+
+test('ح-40: فُتحت بلوحة المفاتيح ثم ضُغط CC: التركيز يبقى فيها حين تُبنى بالمسار، وانتقاله إلى زر CC لا يغلقها', () => {
+  const p = page();
+  const root = p.ui.layerHost().shadowRoot;
+  click(p.ui.btn('download'), 0);
+  assert.ok(root.activeElement === p.ui.item('لماذا؟'), 'التركيز على «لماذا؟»');
+  pointerdown(p.cc);
+  p.controller.set({ captured: [trackInfo()] });
+  assert.equal(p.ui.menuOpen(), true);
+  assert.ok(root.activeElement === p.ui.item('تنزيل الملف'), 'زال «لماذا؟» فالتركيز على أول القائمة لا على الصفحة');
+  // المتصفح ينقل التركيز إلى الزر المنقور: خروجه إلى زر CC لا يغلقها، وإلى غيره يغلقها كما كان (U46).
+  p.cc.focus();
+  assert.equal(p.ui.menuOpen(), true, 'التركيز إلى زر CC');
+  p.ui.item('تنزيل الملف').focus();
+  p.yt[1].focus();
+  assert.equal(p.ui.menuOpen(), false, 'التركيز إلى ⚙');
+  p.handle.unmount();
+});
+
+test('isSubtitlesButton: زر CC في المشغّل وما داخله نعم، وما خارجه وnull لا', () => {
+  const p = page();
+  assert.equal(isSubtitlesButton(p.cc), true, 'الزر');
+  assert.equal(isSubtitlesButton(ccIcon(p)), true, 'عنصر داخل الزر');
+  for (const [name, el] of [['⚙', p.yt[1]], ['الفيديو', p.video], ['المشغّل', p.player], ['زر ترجمان', p.ui.btn('download')], ['القائمة', p.ui.menu()], ['الصفحة', p.env.doc.body]]) {
+    assert.equal(isSubtitlesButton(el), false, name);
+  }
+  // زر بالصنف نفسه خارج المشغّل ليس زر CC فيه.
+  const stray = p.env.doc.createElement('button');
+  stray.className = 'ytp-subtitles-button';
+  p.env.doc.body.appendChild(stray);
+  assert.equal(isSubtitlesButton(stray), false, 'خارج المشغّل');
+  for (const x of [null, undefined, p.env.doc, p.env.win]) assert.equal(isSubtitlesButton(x), false, String(x));
   p.handle.unmount();
 });

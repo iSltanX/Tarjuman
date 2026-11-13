@@ -85,6 +85,19 @@ export const areControlsHidden = (doc = document) => playerHas(CLASSES.autohide,
 export const isPlayerFullscreen = (doc = document) => playerHas(CLASSES.fullscreen, doc) || !!doc.fullscreenElement;
 
 /**
+ * العقدة زر CC في المشغّل أو عنصر داخله (رمزه). قائمة «تنزيل الأصل» لا تُغلق بالضغط عليه (ح-40). null وما ليس عقدة في
+ * مستند: false.
+ * @param {unknown} node
+ * @returns {boolean}
+ */
+export function isSubtitlesButton(node) {
+  const doc = /** @type {any} */ (node)?.ownerDocument;
+  if (!doc || typeof doc.querySelectorAll !== 'function') return false;
+  for (const b of doc.querySelectorAll(SELECTORS.subtitlesButton)) if (b.contains(node)) return true;
+  return false;
+}
+
+/**
  * مدة الفيديو الرئيسي بالملي ثانية، أو null أثناء الإعلان أو قبل التحميل.
  * @param {Document} [doc]
  */

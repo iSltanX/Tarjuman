@@ -7,7 +7,7 @@ import { rankUsable } from '../../core/model/track-order.js';
 import { formatOffset } from '../../ui/format.js';
 import { joinList } from '../../i18n/index.js';
 import { holdTimer } from '../../ui/hold.js';
-import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
+import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow, isSubtitlesButton } from '../youtube-dom.js';
 import { fitSize, isFolded, timeClipped, watchBar } from './bar.js';
 import { completeInto, continuationFor, fileChars, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
@@ -488,8 +488,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
             // حقل بلا تحديد
           }
         }
-      } else if (fid.startsWith('nudge:') || fid === 'panelToggle') {
+      } else if (spec.kind === 'download' || fid.startsWith('nudge:') || fid === 'panelToggle') {
         // ت-١: اتسع الشريط فعاد − و+ (أو زر اللوحة) إليه وزالا من القائمة والتركيز عليهما: إلى أول القائمة لا إلى الصفحة.
+        // وح-40: وصل الالتقاط و«تنزيل الأصل» مفتوحة فزال ما كان مركّزًا («لماذا؟»): إلى أولها كذلك.
         layer.focusFirst();
       }
     }
@@ -734,6 +735,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
    */
   function focusLeave(to) {
     if (!ui.open || to === group.host) return;
+    // ح-40: نقرة زر CC تنقل إليه التركيز في المتصفح، فلا تُغلق بها «تنزيل الأصل» كما لا تُغلق بالنقرة نفسها (onDocPointer).
+    if (ui.open === 'download' && isSubtitlesButton(to)) return;
     const pending = ui.open === 'confirm' || (ui.open === 'timing' && !!ui.timing.sync);
     if (pending || ui.download.busy || ui.upload.busy) return;
     closeMenu(false);
@@ -1362,6 +1365,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     if (!ui.open) return;
     const path = typeof ev.composedPath === 'function' ? ev.composedPath() : [ev.target];
     if (group.owns(path) || layer.owns(path)) return;
+    // ح-40: زر CC هو ما تطلبه «تنزيل الأصل» بلا التقاط، فتبقى مفتوحة وتتحدّث بالالتقاط؛ والقوائم الأخرى تُغلق به.
+    if (ui.open === 'download' && path.some(isSubtitlesButton)) return;
     closeMenu(false);
   };
   // Esc في الصفحة يغلق القائمة المفتوحة، وبلا قائمة يُخفي التلميح الظاهر: المؤشر فوق الزر والتركيز في مكان آخر، فلا تصل الضغطة
