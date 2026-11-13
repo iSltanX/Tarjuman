@@ -41,9 +41,9 @@ npm run package
 | `npm run check:i18n` | تغطية التوطين: تطابق فهرسي العربية والإنجليزية مفتاحًا وقالبًا، ووجود كل مفتاح تستعمله الشيفرة، ولا نص عربي خارج الفهرس في واجهات المنتج. |
 | `npm run check` | الفحص الثابت (الأذونات، ولا شيفرة بعيدة ولا `eval` ولا HTML نصي ولا اتصال غير معلن؛ وهو نصي يكشف الخطأ لا التمويه المتعمد)، والأسرار، وتغطية التوطين، والإشعارات، وتطابق `PRIVACY.md` مع مصدره، ومواد المتاجر، واختبارات الوحدة، والبناءان. |
 | `npm run test:integration` | اختبارات التكامل بين الطبقات. |
-| `node scripts/run-tests.mjs test/e2e/static test/e2e/regression` | e2e الثابت والانحدار على الحزمة المبنية، بلا متصفح. |
+| `node scripts/run-tests.mjs test/e2e/static test/e2e/regression` | e2e الثابت والانحدار بلا متصفح، ومنه تغليف حزمة مبنية وتدقيقها (`test/e2e/static/release.test.js`). |
 | `npm run lint:firefox` | `web-ext lint` على بناء Firefox. |
-| `npm run check:all` | الأربعة أعلاه بالترتيب، وهي ما يشغّله CI ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) في كل دفع وطلب دمج، ومعها `npm run package`. |
+| `npm run check:all` | `check` والتكامل وe2e و`lint:firefox` بالترتيب. ويشغّلها CI ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) خطوةً خطوة في كل دفع إلى `main` و`tj/**`، وكل طلب دمج، وأسبوعيًا، ثم `npm run package` بعدها (و`check:all` نفسه لا يشغّل `package`). |
 
 وللتطوير السريع `npm test` (الوحدة وحدها) و`npm run check:quick` (الفحص الثابت والوحدة).
 
