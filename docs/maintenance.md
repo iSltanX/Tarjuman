@@ -112,7 +112,7 @@ npm run youtube:shapes -- --browser chrome
 | العَرَض | الأرجح أنه | أين تبدأ |
 | --- | --- | --- |
 | «تعذّر استخراج الترجمة (استجابة فارغة)» في تصفح عادي دائمًا | يوتيوب صار يشترط شيئًا جديدًا في طلب الترجمة، أو غيّر نقله | `src/main-world/capture.js` (الالتقاط السلبي)، و`src/extract/` (المحوّل). **لا** إعادة طلب، ولا رموز، ولا انتحال عميل (product-spec §٤). |
-| «صيغة الترجمة غير مدعومة» أو فشل الثوابت (`EX_INVARIANT_FAILED`) | تغيّرت بنية `json3` (`events` و`segs` و`tOffsetMs`) أو ظهرت صيغة ASR جديدة | `src/core/convert/` بعينة حقيقية منقّاة جديدة في `test/fixtures/json3/` |
+| «صيغة الترجمة غير مدعومة» أو فشل الثوابت (`EX_INVARIANT_FAILED`) | تغيّرت بنية `json3` (`events` و`segs` و`tOffsetMs`) أو ظهرت صيغة ASR جديدة | `src/core/convert/` بعينة حقيقية منقّاة جديدة في `test/fixtures/json3/`: يُحفظ رد `timedtext` (‏json3) من أدوات المطوّر في جلسة عادية، ثم `node test/live/p1/make-fixtures.mjs <الملف> --id <المعرّف> --kind manual --name <اسم> --duration-ms <المدة>` (و`asr` للتلقائي) يرفضه إن كان فيه رابط أو رمز، ويحفظه ويكتب قيمه المتوقعة في `index.json`، بلا متصفح |
 | رفض `EX_WRONG_VIDEO` لكل الفيديوهات، أو التقاط فيديو سابق | تغيّر توقيت التنقل أو المعاملات (`v` و`lang` و`kind` و`tlang`) | `src/extract/timedtext-params.js` و`pending.js` و`capture-store.js` |
 | اختفاء أزرار ترجمان أو موضع خاطئ في الشريط | تغيّر DOM المشغّل (`.ytp-right-controls`، و`ytp-autohide`، وأحجام الشريط) | `src/player/youtube-dom.js` وحده (محددات يوتيوب معزولة فيه)، ثم `src/player/controls/bar.js`. والتحقق الحي `test/live/controls/run.mjs` (الشريط وقوائمه والأوضاع والعروض الضيقة، بلغة الواجهة الفعلية) |
 | الترجمة تظهر فوق الإعلان، أو لا تعود بعده | تغيّرت فئات الإعلان (`ad-showing` و`ad-interrupting`) | `src/player/youtube-dom.js` و`src/player/watch/player-state.js` |
