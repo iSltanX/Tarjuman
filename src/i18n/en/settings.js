@@ -19,7 +19,7 @@ export default Object.freeze({
     glossary: { title: 'Glossary', desc: 'Your preferred translations for terms, attached to translation instructions when you copy them.' },
     storage: { title: 'Storage', desc: 'The space Tarjuman uses in this browser, and clearing its data.' },
     data: { title: 'Backup', desc: 'Save a copy of your Library and settings to a file, and restore it here or in another browser.' },
-    diagnostics: { title: 'Diagnostics', desc: 'A technical report to attach when you ask for help.' },
+    diagnostics: { title: 'Diagnostics', desc: 'Tarjuman’s access to YouTube, and a technical report to attach when you ask for help.' },
     about: { title: 'About' },
   },
   uiLocale: { title: 'Interface language' },
@@ -129,6 +129,13 @@ export default Object.freeze({
     translation: { one: '1 translation', other: 'translations' },
     mark: { one: '1 mark', other: 'marks' },
     previous: { one: '1 previous version', other: 'previous versions' },
+  },
+  access: {
+    row: 'YouTube access', granted: 'Granted', revoked: 'Revoked',
+    allow: 'Allow', allowAria: 'Allow YouTube access',
+    revokedNote: 'Tarjuman’s permission to run on YouTube was revoked in your browser, so its tools don’t work there. “Allow” asks you for the same permission you granted on install, not a new one.',
+    reload: 'Reload any open YouTube page so Tarjuman’s tools work there.',
+    refused: 'Permission wasn’t granted, so Tarjuman’s tools won’t work on YouTube.',
   },
   diag: {
     row: 'Diagnostics report', copy: 'Copy diagnostics report',

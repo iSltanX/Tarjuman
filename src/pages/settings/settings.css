@@ -52,6 +52,8 @@
 .st-note { max-width: 560px; font-size: 12px; line-height: 18px; }
 .st-notes { display: flex; flex-direction: column; gap: 2px; }
 .st-actions { display: flex; flex-wrap: wrap; gap: var(--tj-space-2); }
+/* «الوصول إلى يوتيوب» (الفكرة ٣-أ): الشارة بارتفاعها في وسط سطر الزر، لا ممدودة إليه. */
+.st-access { display: flex; flex-wrap: wrap; align-items: center; gap: var(--tj-space-2); }
 .st-danger { color: var(--tj-danger); }
 
 /* علامة «حُفظ» (tj-saved من src/ui) تحت التسمية بمساحة محجوزة (لا تدفع ما تحتها). */

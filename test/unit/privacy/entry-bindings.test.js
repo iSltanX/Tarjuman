@@ -40,13 +40,14 @@ async function bundle(entry, plugins = []) {
 }
 
 /** @param {'firefox' | 'chromium'} target */
-function fakeChrome({ granted = false, answer = false } = {}) {
+function fakeChrome({ granted = false, answer = false, youtube = true } = {}) {
   const log = [];
   return {
     log,
     tabs: { create() {} },
     permissions: {
       getAll: async () => { log.push('getAll'); return { data_collection: granted ? ['browsingActivity'] : [] }; },
+      contains: async (p) => { log.push(['contains', p]); return youtube; },
       request: async (p) => { log.push(['request', p]); return answer; },
       onAdded: { addListener: () => log.push('onAdded'), removeListener() {} },
       onRemoved: { addListener: () => log.push('onRemoved'), removeListener() {} },
@@ -109,6 +110,25 @@ test('الإعدادات في Firefox: طلب الموافقة يصل المتص
   const yes = await renderEntry(SET, 'firefox', { answer: true });
   assert.equal(await yes.deps.thumbsConsent.request(), true);
 });
+
+// الفكرة ٣-أ (ح-39): إذن يوتيوب نفسه في الإعدادات بالهدفين، بالوحدة الحقيقية core/consent/youtube-access.js: contains وrequest بأصل
+// يوتيوب وحده، والمراقبة بحدثي الأذونات. والنافذة لا تربطه (الطلب في حزمة الإعدادات وحدها).
+for (const target of ['chromium', 'firefox']) {
+  test(`الإعدادات (${target}): إذن يوتيوب يُقرأ ويُطلب بأصله وحده ويُراقَب`, async () => {
+    const off = await renderEntry(SET, target, { youtube: false, answer: true });
+    assert.equal(typeof off.deps.youtubeAccess?.check, 'function', 'الربط موجود');
+    assert.equal(await off.deps.youtubeAccess.check(), false);
+    const contains = off.chrome.log.find((x) => Array.isArray(x) && x[0] === 'contains');
+    assert.deepEqual(JSON.parse(JSON.stringify(contains[1])), { origins: ['https://www.youtube.com/*'] });
+    assert.equal(await off.deps.youtubeAccess.request(), true);
+    const req = off.chrome.log.find((x) => Array.isArray(x) && x[0] === 'request');
+    assert.deepEqual(JSON.parse(JSON.stringify(req[1])), { origins: ['https://www.youtube.com/*'] });
+    off.deps.youtubeAccess.watch(() => {});
+    assert.deepEqual(off.chrome.log.filter((x) => x === 'onAdded' || x === 'onRemoved').sort(), ['onAdded', 'onRemoved']);
+    const on = await renderEntry(SET, target, { youtube: true });
+    assert.equal(await on.deps.youtubeAccess.check(), true);
+  });
+}
 
 // ---- العامل الخلفي: MV3 يوقظ العامل بحدث، فمستمع يُسجَّل بعد أول تنفيذ متزامن يضيع حدثه ----
 

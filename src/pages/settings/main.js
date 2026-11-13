@@ -2,6 +2,7 @@
 // عبر saveFile (يتبع مكان الحفظ المختار)، والمكان الفعلي لآخر ملف من سجل المتصفح وحده، ومنتقي ملف النسخة الاحتياطية.
 // المنطق كله في view.js وmodel.js وdata.js وglossary.js وlocation.js وdiagnostics.js. خطوط المعاينة من ملفات الإضافة.
 import { buildTarget, needsConsent, requestThumbnailsConsent, thumbnailsConsent, watchThumbnailsConsent } from '../../core/consent/thumbnails.js';
+import { requestYoutubeAccess, watchYoutubeAccess, youtubeAccess } from '../../core/consent/youtube-access.js';
 import { saveFile, savedPath } from '../../core/save/index.js';
 import { createStore } from '../../core/store/index.js';
 import { t } from '../../i18n/index.js';
@@ -36,6 +37,12 @@ startPage({
         check: () => thumbnailsConsent(chrome, target),
         request: () => requestThumbnailsConsent(chrome, target),
         watch: (fn) => watchThumbnailsConsent(chrome, target, fn),
+      },
+      // إذن يوتيوب نفسه في «التشخيص» بالهدفين (الفكرة ٣-أ، core/consent/youtube-access.js): يُقرأ ويُراقَب، ويُعاد طلبه من هنا وحده.
+      youtubeAccess: {
+        check: () => youtubeAccess(chrome),
+        request: () => requestYoutubeAccess(chrome),
+        watch: (fn) => watchYoutubeAccess(chrome, fn),
       },
     });
     app.append(settings.root);

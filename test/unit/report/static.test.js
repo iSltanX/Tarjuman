@@ -95,6 +95,9 @@ test('التدقيق: الحزمة بلا قناة بلاغات؛ ومضيفها
     r = await variant((d) => append(path.join(d, 'pages/settings/main.js'), 'globalThis.fetch(url, init);'));
     assert.ok(failed(r, 'no-report-channel'));
     assert.ok(good.checks.find((c) => c.id === 'permissions-request-settings-only').ok);
+    // الفكرة ٣-أ (ح-39): إعادة طلب إذن يوتيوب في حزمة الإعدادات، والنافذة تقرؤه ولا تطلبه؛ والفحص نفسه لم يتغير.
+    assert.match(await readFile(path.join(built, 'pages/settings/main.js'), 'utf8'), /permissions\.request\(\{ origins: \[\.\.\.YOUTUBE_MATCHES\] \}\)/);
+    assert.equal(/permissions\s*\.\s*request\b/.test(await readFile(path.join(built, 'pages/popup/main.js'), 'utf8')), false);
     r = await variant((d) => append(path.join(d, 'background/worker.js'), 'var q = (api) => api.permissions.request({ origins: [] });'));
     assert.ok(failed(r, 'permissions-request-settings-only'));
     r = await variant(async (d) => {

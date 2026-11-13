@@ -64,6 +64,7 @@ const positionLabel = (v) => t(`settings.display.${POSITION_KEYS[v]}`);
  *   report?: import('./report.js').ReportEnv,
  *   setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void,
  *   thumbsConsent?: { needed: boolean, check: () => Promise<boolean>, request: () => Promise<boolean>, watch?: (fn: (e: { revoked: boolean }) => void) => () => void },
+ *   youtubeAccess?: { check: () => Promise<boolean | null>, request: () => Promise<boolean>, watch?: (fn: () => void) => () => void },
  * }} SettingsEnv
  */
 
@@ -652,6 +653,53 @@ export function createSettings(env) {
     row(t('settings.data.restoreRow'), null, data.restoreRow, note(t('settings.data.restoreNote'))));
 
   // ---- التشخيص ----
+  // «الوصول إلى يوتيوب» أول القسم (الفكرة ٣-أ، ح-41): إذن يوتيوب نفسه الذي مُنح عند التثبيت (core/consent/youtube-access.js)، «ممنوح»
+  // بلا زر و«مسحوب» بزر «السماح» يعيد طلبه. لا يُكتب في التخزين، فيُقرأ عند الفتح ومع أحداث الأذونات وعند ظهور الصفحة، وآخر قراءة
+  // بدأت هي الحاكمة. والمجهول (لا واجهة أو رفضت) لا يدّعي شيئًا فيُخفى السطر. والمنح لا يحقن سكربت المحتوى في تبويب مفتوح، فبعده
+  // (بالزر أو من المتصفح) سطر «أعد تحميل صفحة يوتيوب المفتوحة…».
+  const access = env.youtubeAccess ?? { check: () => Promise.resolve(null), request: () => Promise.resolve(false) };
+  /** @type {boolean | null} */
+  let accessState = null;
+  let accessRegained = false;
+  let accessGen = 0;
+  const accessMark = marks();
+  const accessHost = el('div', { className: 'st-access', doc });
+  const accessNotes = el('div', { className: 'st-notes', attrs: { 'aria-live': 'polite' }, doc });
+  const allowBtn = button({ label: t('settings.access.allow'), variant: 'primary', icon: 'shield', doc, onClick: () => {
+    // الطلب أول ما في الضغطة قبل أي انتظار: المتصفح لا يطلب الإذن خارج فعل المستخدم.
+    const pending = access.request();
+    Promise.resolve(pending).then((granted) => granted === true, () => false).then((granted) => {
+      if (!granted) accessMark.flash(t('settings.access.refused'), 'info');
+      return readAccess();
+    });
+  } });
+  allowBtn.setAttribute('aria-label', t('settings.access.allowAria'));
+  allowBtn.setAttribute('data-action', 'youtube-access');
+  const accessRow = row(t('settings.access.row'), accessMark, accessHost, accessNotes);
+  accessRow.setAttribute('data-row', 'youtube-access');
+  function paintAccess() {
+    const hadFocus = doc.activeElement === allowBtn;
+    accessRow.hidden = accessState === null;
+    accessHost.replaceChildren(
+      ...(accessState === null ? [] : [statusPill({ tone: accessState ? 'success' : 'warning', text: t(accessState ? 'settings.access.granted' : 'settings.access.revoked'), doc })]),
+      ...(accessState === false ? [allowBtn] : []),
+    );
+    accessNotes.replaceChildren(...(accessState === false ? [note(t('settings.access.revokedNote'))] : accessState && accessRegained ? [note(t('settings.access.reload'))] : []));
+    // الزر يختفي بالمنح: التركيز إلى عنوان القسم لا إلى أول الصفحة.
+    if (hadFocus && accessState !== false) root.querySelector('#st-diagnostics-title')?.focus?.();
+  }
+  function readAccess() {
+    const gen = ++accessGen;
+    return Promise.resolve().then(() => access.check()).then((v) => (typeof v === 'boolean' ? v : null), () => null).then((v) => {
+      if (gen !== accessGen) return accessState;
+      if (accessState === false && v === true) accessRegained = true;
+      if (v === false) accessRegained = false;
+      accessState = v;
+      paintAccess();
+      return accessState;
+    });
+  }
+  paintAccess();
   const diagMark = marks();
   const diagBtn = button({ label: t('settings.diag.copy'), variant: 'secondary', icon: 'copy', doc, onClick: async () => {
     try {
@@ -664,6 +712,7 @@ export function createSettings(env) {
   } });
   const panel = (tone, title, text) => el('div', { className: `st-panel st-panel--${tone}`, children: [el('strong', { className: 'st-panel__title', text: title, doc }), el('p', { className: 'tj-body-sm', text, doc })], doc });
   const diagnostics = section(byId.diagnostics,
+    accessRow,
     row(t('settings.diag.row'), diagMark, el('div', { className: 'st-actions', children: [diagBtn], doc }),
       el('div', {
         className: 'st-panels',
@@ -780,7 +829,11 @@ export function createSettings(env) {
     }
   });
 
-  const onVisible = () => { if (doc.visibilityState !== 'hidden') readConsent(); };
+  const onVisible = () => {
+    if (doc.visibilityState === 'hidden') return;
+    readConsent();
+    readAccess();
+  };
   doc.addEventListener?.('visibilitychange', onVisible);
   const win = doc.defaultView ?? null;
   win?.addEventListener?.('pageshow', onVisible);
@@ -796,6 +849,7 @@ export function createSettings(env) {
       readConsent();
     })
     : () => {};
+  const unwatchAccess = typeof access.watch === 'function' ? access.watch(() => { readAccess(); }) : () => {};
 
   return {
     root, preview, slider, select, data, location, glossary, langs,
@@ -804,7 +858,7 @@ export function createSettings(env) {
     get prefs() { return prefs; },
     async load() {
       try {
-        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent(), langs.load(), readUiLocale()]);
+        [settings, prefs] = await Promise.all([store.getSettings(), store.getPrefs(), readConsent(), langs.load(), readUiLocale(), readAccess()]);
         syncAll();
         for (const sec of Object.values(sections)) sec.removeAttribute('inert');
       } catch (err) {
@@ -820,6 +874,7 @@ export function createSettings(env) {
       unsubscribe();
       offNav();
       unwatchConsent();
+      unwatchAccess();
       doc.removeEventListener?.('visibilitychange', onVisible);
       win?.removeEventListener?.('pageshow', onVisible);
     },
