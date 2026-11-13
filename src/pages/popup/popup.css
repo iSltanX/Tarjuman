@@ -113,7 +113,9 @@
 /* ليست صفحة فيديو: ملاحظة معلومة ثم آخر الترجمات في بطاقة، لكل ترجمة سطر عنوانها وسطر عمرها وعدد مقاطعها. */
 /* الملاحظة تنبيه محايد كلوحتي 08 و09: سطح غائر وأيقونتها بالطين. */
 .tj-popup__note { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); color: var(--tj-text); font: 400 13px/20px var(--tj-font-body); }
-.tj-popup__note .tj-icon { color: var(--tj-accent); }
+.tj-popup__note > .tj-icon { color: var(--tj-accent); } /* أيقونة الملاحظة وحدها، لا أيقونة زرها */
+/* الإذن مسحوب (الفكرة ٣-أ): النص ثم «امنح الإذن من الإعدادات» تحته. */
+.tj-popup__note-body { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
 .tj-popup__recent:empty { display: none; }
 .tj-popup__card--list { padding: 4px 12px; gap: 0; }
 .tj-popup__recent-list { display: flex; flex-direction: column; }

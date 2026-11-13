@@ -23,7 +23,7 @@ import { extensionVersion, openPage, startPage } from '../../ui/page.js';
 import { createCopyState } from '../library/copy.js';
 import { bindEntryRow } from './entry.js';
 import {
-  PAIR_TEXT, attachedGlossary, captureLine, completeAction, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, originDownloaded, missText, pageReport, sendPaste,
+  PAIR_TEXT, attachedGlossary, captureLine, completeAction, copyArgs, describeStatus, detectedSource, editorGate, guideSteps, libraryHash, originDownloaded, missAction, missText, pageReport, sendPaste,
   pairState, queryPageDiagnostics, queryPopupState, quickActions, recentEntries, recentLine, toolsStatus, untilSettled, videoLangs,
 } from './status.js';
 import { guideList, notVideoNote, pairSkeleton, skeletonCard, statusCard } from './view.js';
@@ -270,7 +270,21 @@ startPage({
       let next;
       if (status.kind === 'not-video') {
         eyebrow.hidden = true;
-        next = notVideoNote(document, missText(state.miss));
+        // إذن يوتيوب مسحوب (الفكرة ٣-أ): رابط إلى «التشخيص» في الإعدادات حيث زر «السماح»، والنافذة لا تطلب الإذن بنفسها.
+        const act = missAction(state.miss);
+        const go = act ? button({
+          label: act.label, icon: 'settings', size: 'sm', variant: 'secondary',
+          onClick: async () => {
+            try {
+              await openPage('settings', undefined, { hash: act.hash });
+              window.close();
+            } catch {
+              notice.replaceChildren(alertBox({ tone: 'danger', text: messageFor('PG_OPEN_FAILED') }));
+            }
+          },
+        }) : null;
+        go?.setAttribute('data-action', 'site-access');
+        next = notVideoNote(document, missText(state.miss), go);
       } else {
         // «تحرير الترجمة» مؤطّرًا داخل البطاقة (لوحة 09).
         const gate = editorGate(reply);

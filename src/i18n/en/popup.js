@@ -4,6 +4,7 @@ export default Object.freeze({
   currentVideo: 'Current video',
   recent: 'Recent translations',
   notVideo: 'Open a YouTube video to start.',
+  siteAccess: { open: 'Grant permission in Settings' },
   diag: {
     link: 'Copy page diagnostics', done: 'Diagnostics copied', failed: 'Couldn’t copy — try again', excluded: '[excluded]',
   },

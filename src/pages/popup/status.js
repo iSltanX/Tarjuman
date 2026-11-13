@@ -3,7 +3,7 @@
 // والإجراءات السريعة بحسب السياق، ووجهة مدخل «المحفوظات» الواحد، وشرط تفعيل «المحرّر»، وتقرير تشخيص الصفحة المنقّى (R64).
 // الاستعلام يعيد null لكل ما ليس رد صفحة فيديو صالحًا، ومعه سببه: صفحة يوتيوب بلا سكربت أو بنسخة أقدم («أعد تحميل الصفحة»)،
 // أو تبويب ليس يوتيوب («افتح فيديو على يوتيوب»)، أو لا يُعرف العنوان (الاثنان في جملة)، أو إذن يوتيوب مسحوب (B5-أ: «اسمح له من
-// إعدادات الإضافة في متصفحك»، بلا زر).
+// إعدادات الإضافة في متصفحك»، وتحته منذ الفكرة ٣-أ رابط إلى الإعدادات حيث يُعاد طلبه، بلا طلب من النافذة).
 import { createDiagnosticReport, formatDiagnosticReport } from '../../core/diagnostics/report.js';
 import { messageFor } from '../../core/errors/index.js';
 import { describeLang } from '../../core/lang/index.js';
@@ -108,6 +108,17 @@ export async function untilSettled(query, first, { intervalMs = LOADING_POLL_MS,
  */
 export const missText = (miss) => (miss === 'stale' ? messageFor('TJ_RELOAD_PAGE') : miss === 'unknown' ? messageFor('TJ_OPEN_OR_RELOAD')
   : miss === 'siteOff' ? messageFor('TJ_SITE_ACCESS_OFF') : notVideoText());
+
+/** قسم الإعدادات الذي فيه «الوصول إلى يوتيوب» وزر «السماح» (الفكرة ٣-أ، ح-41). */
+export const SITE_ACCESS_SECTION = 'diagnostics';
+
+/**
+ * إجراء تحت نص الملاحظة (الفكرة ٣-أ، ح-39): حين إذن يوتيوب مسحوب وحده، «امنح الإذن من الإعدادات» إلى قسم «التشخيص». النافذة لا تطلب
+ * الإذن بنفسها (الطلب في حزمة الإعدادات وحدها، وحوار الإذن قد يغلق النافذة قبل أن يُحل وعده).
+ * @param {null | 'stale' | 'elsewhere' | 'unknown' | 'siteOff'} miss
+ * @returns {{ label: string, hash: string } | null}
+ */
+export const missAction = (miss) => (miss === 'siteOff' ? { label: t('popup.siteAccess.open'), hash: SITE_ACCESS_SECTION } : null);
 
 /** اسم لغة للعرض بلغة الواجهة من رمزها، والرمز الذي لا يعرف المتصفح اسمه يبقى رمزه. @param {string} code */
 export const langLabel = (code) => describeLang(code, getLocale())?.name ?? code;

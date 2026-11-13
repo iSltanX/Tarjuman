@@ -119,11 +119,15 @@ export function guideList(steps, doc = document) {
   });
 }
 
-/** ملاحظة «ليست صفحة فيديو» أو «أعد تحميل الصفحة»: أيقونة الفيديو والنص. @param {Document} [doc] @param {string} [text] */
-export function notVideoNote(doc = document, text = notVideoText()) {
+/**
+ * ملاحظة «ليست صفحة فيديو» أو «أعد تحميل الصفحة»: أيقونة الفيديو والنص، وتحته إجراء إن مُرّر («امنح الإذن من الإعدادات»، الفكرة ٣-أ).
+ * @param {Document} [doc] @param {string} [text] @param {HTMLElement | null} [action]
+ */
+export function notVideoNote(doc = document, text = notVideoText(), action = null) {
+  const body = action ? el('div', { className: 'tj-popup__note-body', children: [el('span', { text, doc }), action], doc }) : el('span', { text, doc });
   return el('div', {
     className: 'tj-popup__note tj-popup__status', attrs: { role: 'status' },
-    children: [popupIcon('info', { doc }), el('span', { text, doc })],
+    children: [popupIcon('info', { doc }), body],
     doc,
   });
 }

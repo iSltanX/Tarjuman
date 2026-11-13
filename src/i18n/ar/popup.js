@@ -4,6 +4,8 @@ export default Object.freeze({
   currentVideo: 'الفيديو الحالي',
   recent: 'آخر الترجمات',
   notVideo: 'افتح فيديو على يوتيوب لتبدأ.',
+  // إذن يوتيوب مسحوب (الفكرة ٣-أ): رابط تحت نص TJ_SITE_ACCESS_OFF إلى «التشخيص» في الإعدادات.
+  siteAccess: { open: 'امنح الإذن من الإعدادات' },
   diag: {
     link: 'نسخ تشخيص الصفحة', done: 'نُسخ التشخيص', failed: 'تعذّر النسخ — أعد المحاولة', excluded: '[مستبعد]',
   },
