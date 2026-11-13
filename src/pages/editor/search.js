@@ -1,6 +1,6 @@
 // البحث والاستبدال في المحرّر (R51، مواصفة التصميم §١٩.٩): حقل بحث في شريط الأدوات يركّزه ⌘F (القائمة افتراضية فلا يرى
 // بحث المتصفح صفوفها المخفية)، وخيارات منبثقة (العربية أو الإنجليزية للقراءة فقط، وكلمة كاملة، وتجاهل التشكيل)، وعدّاد
-// «3 من 41» بـ↑↓، وصف استبدال: «استبدال هنا» و«معاينة استبدال الكل…» بمربعات اختيار. المطابقة في searchCues والاستبدال
+// «3 من 41» بزرّي السابقة والتالية، وصف استبدال: «استبدال هنا» و«معاينة استبدال الكل…» بمربعات اختيار. المطابقة في searchCues والاستبدال
 // الحرفي في planReplace (P11)، وتطبيقه خطوة واحدة في الجلسة. هنا الحالة والعناصر فقط؛ لا يمس التوقيت ولا المرجع.
 //
 // كل مطابقة تحمل نصها كما وُجد، فلا يُستبدل موضع تغيّر نصه بعد البحث، والبحث المعلّق يُنفَّذ قبل الاستبدال (U23). وما أُدرج
@@ -105,14 +105,9 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
   // تلميحا التنقّل باختصاريهما معزولين LTR (ت-٨)، ويعودان حين يُفعَّل الزر بنتائج (setDisabled يمحو التلميح مع السبب).
   const prevTip = lt('editor.search.prevTitle', () => ({ key: ltrInline('⇧ Enter') }));
   const nextTip = lt('editor.search.nextTitle', () => ({ key: ltrInline('Enter') }));
-  const prevBtn = button({ label: '↑', size: 'sm', title: prevTip, onClick: () => step(-1, { focus: true }), doc });
-  const nextBtn = button({ label: '↓', size: 'sm', title: nextTip, onClick: () => step(1, { focus: true }), doc });
-  // اسما زرّي التنقّل يُكتبان هنا ويُعاد كتابتهما في relocalize() (button لا يقبل aria-label مستقلًا عن تسميته).
-  const nameNav = () => {
-    prevBtn.setAttribute('aria-label', t('editor.search.prevAria'));
-    nextBtn.setAttribute('aria-label', t('editor.search.nextAria'));
-  };
-  nameNav();
+  // زرّان أيقونيان من الهوية (chev-up وchev-down) لا نصّا «↑» و«↓» بخط النظام (ت-١٢)، واسماهما لقارئ الشاشة تسميتاهما فيتبعان relabel.
+  const prevBtn = button({ label: lt('editor.search.prevAria'), icon: 'chev-up', iconOnly: true, size: 'sm', title: prevTip, onClick: () => step(-1, { focus: true }), doc });
+  const nextBtn = button({ label: lt('editor.search.nextAria'), icon: 'chev-down', iconOnly: true, size: 'sm', title: nextTip, onClick: () => step(1, { focus: true }), doc });
   const replaceToggle = button({ label: lt('editor.search.replace'), size: 'sm', onClick: () => toggleReplace(), doc });
   replaceToggle.setAttribute('aria-expanded', 'false');
 
@@ -361,9 +356,8 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
       else render();
     },
     render,
-    /** تبديل اللغة في مكانه: ما لا يتبع relabel (اسما زرّي التنقّل) ثم ما يُرسم من الحالة. */
+    /** تبديل اللغة في مكانه: ما يُرسم من الحالة (النصوص الثابتة واسما زرّي التنقّل تتبع relabel). */
     relocalize() {
-      nameNav();
       render();
     },
     /** حالة صف لتمييزه: 'current' أو 'match' أو null. @param {number} index */

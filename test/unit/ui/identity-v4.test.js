@@ -267,3 +267,10 @@ test('ت-١١ (تحقق Fable للتصميم): عدّاد رقاقة التصف�
   // في الرقاقة المختارة يرث العدّاد نص المختار (العاج على الصنوبر)، لا حبر الصفحة.
   assert.match(ownRule(ui, '.tj-chip[aria-pressed="true"] .tj-chip__count'), /color: inherit/);
 });
+
+test('ت-١٢ (أ): زرّا «النتيجة السابقة/التالية» في بحث المحرّر أيقونتا الهوية (chev-up وchev-down) لا نصّا سهم', () => {
+  const src = readFileSync(path.join(ROOT, 'src/pages/editor/search.js'), 'utf8');
+  assert.doesNotMatch(src, /label: '[↑↓]'/, 'لا تسمية بسهم نصي');
+  assert.match(src, /const prevBtn = button\(\{[^}]*icon: 'chev-up', iconOnly: true/);
+  assert.match(src, /const nextBtn = button\(\{[^}]*icon: 'chev-down', iconOnly: true/);
+});
