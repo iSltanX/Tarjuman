@@ -26,7 +26,6 @@ export default Object.freeze({
     upload: 'ارفع الملف المترجم من زر «رفع الترجمة (SRT)» في شريط المشغّل',
   },
   status: {
-    captured: '{name} ملتقطة', savedTrack: '{name} محفوظة', viaMachine: ' (ترجمة يوتيوب الآلية)',
     notCaptured: 'لم تُلتقط ترجمة الفيديو بعد',
     translationIn: ({ name, code, known }) => {
       if (!known) return `ترجمة بلغة ${code}`;
@@ -35,7 +34,6 @@ export default Object.freeze({
     translationUnknown: 'ترجمة بلغة غير محددة',
     offset: 'الإزاحة {offset} ث',
     modeDual: 'الترجمة فوق {source}', modeOff: 'الترجمة مخفية', modeSingle: 'الترجمة وحدها', original: 'الأصل',
-    kind: { manual: 'يدوية', asr: 'تلقائية' },
     toolsOk: 'أدوات المشغّل تعمل', toolsControlsError: 'تعذّر تشغيل أدوات ترجمان في المشغّل',
     toolsOverlayError: 'تعذّر عرض الترجمة فوق الفيديو', toolsWaiting: 'بانتظار المشغّل',
     reload: 'أعد تحميل صفحة الفيديو ثم حاول مجددًا.',
@@ -60,7 +58,8 @@ export default Object.freeze({
     same: 'اللغتان متطابقتان؛ اختر لغة أخرى لإحداهما.',
     caption: 'تعليمات لنموذجك تحافظ على أرقام المقاطع وتوقيتها وصيغة SRT.',
     done: 'ألصقها مع ملف الأصل في محادثة نموذجك.',
-    machine: 'الأصل ترجمة آلية من يوتيوب عن {lang}.',
+    // وصف المسار الواحد (ح-57، src/ui/track.js) بعد «الأصل:».
+    machine: 'الأصل: {track}.',
   },
   paste: {
     label: 'الصق الترجمة هنا',

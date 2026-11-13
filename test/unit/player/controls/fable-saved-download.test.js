@@ -19,7 +19,7 @@ test('FA-17: مسار محفوظ بلا التقاط: القائمة تعرضه 
   const page = mountPage({ state: makeState({ english: savedEnglish }) });
   click(page.ui.btn('download'));
   const text = page.ui.menuText();
-  assert.match(text, /الإنجليزية · يدوية · 5 مقاطع · محفوظ/);
+  assert.match(text, /الإنجليزية · يدوية · 5 مقاطع · محفوظة/);
   assert.match(text, /لم تُلتقط ترجمة يوتيوب في هذه الزيارة؛ يُنزَّل الأصل المحفوظ من تنزيلك السابق\./);
   assert.ok(page.ui.item('تنزيل الأصل المحفوظ'), 'زر التنزيل');
   assert.ok(page.ui.item('نسخ التعليمات') === null, 'لا نسخ في المشغّل (AA3)');

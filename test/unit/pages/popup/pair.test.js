@@ -37,8 +37,8 @@ test('«من» مكتشفة من مسار الفيديو وحده (ق٥)، وا�
   assert.equal(pairState({ reply: reply({ source: ja }), pair: { from: 'ja', to: 'en' } }).sourceNote, PAIR_TEXT.detected);
   assert.equal(pairState({ reply: reply({ source: ja }), pair: { from: 'ko', to: 'en' } }).sourceNote, null, 'غيّرها المستخدم');
   const machine = reply({ source: { key: 'ar|asr|en', lang: 'ar', kind: 'asr', via: 'en', from: 'captured' } });
-  assert.equal(pairState({ reply: machine, pair: { from: 'ar', to: 'fr' } }).sourceNote, machineNote('en'));
-  assert.equal(machineNote('en'), 'الأصل ترجمة آلية من يوتيوب عن الإنجليزية.');
+  assert.equal(pairState({ reply: machine, pair: { from: 'ar', to: 'fr' } }).sourceNote, machineNote('ar', 'en'));
+  assert.equal(machineNote('ar', 'en'), 'الأصل: العربية، ترجمها يوتيوب آليًا عن الإنجليزية.', 'الوصف الواحد (ح-57)');
 });
 
 test('ما يُنسخ: الزوج المختار، والمصدر المترجم آليًا، وأجزاء آخر تنزيل بلغة «من» نفسها وحدها، والقاموس', () => {

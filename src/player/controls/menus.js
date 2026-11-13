@@ -265,7 +265,7 @@ export function downloadMenu(h, act, m, root = null) {
     // وتبقى إرشادات CC بعده لمن يريد التقاطًا جديدًا (الوضع الطويل أو التقسيم).
     if (m.saved) {
       out.push(label(h, LABELS.languageTitle));
-      out.push(statusRow(h, 'ok', `${trackLine(m.saved)} · ${LABELS.savedTag}`, 'language'));
+      out.push(statusRow(h, 'ok', trackLine(m.saved, { state: 'saved' }), 'language'));
       out.push(h('div', { className: 'note', text: LABELS.savedNote, attrs: { 'data-fid': 'savedNote' } }));
       out.push(h('div', {
         className: 'actions',

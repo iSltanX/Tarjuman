@@ -10,7 +10,6 @@ import { machineNote, pairState, PAIR_TEXT } from '../../../src/pages/popup/stat
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { captureMsg, makeExtractor, sample } from '../extract/helpers.js';
 import { click, makeState, mountPage } from '../player/controls/harness.js';
-import { LABELS } from '../../../src/player/controls/text.js';
 
 const VID = 'AAAAAAAAAAA';
 const BODY = sample('manual').body;
@@ -39,15 +38,15 @@ test('AV2 U-034 (D-01): الترجمة الآلية الملتقط الوحيد 
   const r = reply();
   assert.deepEqual([r.source.key, r.source.lang, r.source.via], ['ar|manual|en', 'ar', 'en']);
   const text = menuText(c);
-  assert.ok(text.includes(LABELS.machine), 'قائمة التحميل تسمه «مترجمة آليًا من يوتيوب»');
+  assert.ok(text.includes('العربية، ترجمها يوتيوب آليًا عن الإنجليزية'), 'قائمة التحميل تسمه بالوصف الواحد (ح-57)');
   // «من» بلغة المحتوى وتحتها سطر الآلية؛ ومع «إلى» عربية يتعطل النسخ برسالة صريحة لا بصمت.
   const same = pairState({ reply: r, pair: { from: 'ar', to: 'ar' } });
   assert.equal(same.ready, false);
   assert.equal(same.reason, PAIR_TEXT.same);
-  assert.equal(same.sourceNote, machineNote('en'));
+  assert.equal(same.sourceNote, machineNote('ar', 'en'));
   const other = pairState({ reply: r, pair: { from: 'ar', to: 'fr' } });
   assert.equal(other.ready, true, 'زوج مختلف ينسخ من ترجمة يوتيوب الآلية');
-  assert.equal(other.sourceNote, machineNote('en'));
+  assert.equal(other.sourceNote, machineNote('ar', 'en'));
 });
 
 test('AV2 U-034 (D-01): الترجمة الآلية لا تتقدّم على أصلي التُقط قبلها أو بعدها', async () => {

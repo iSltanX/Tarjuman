@@ -5,6 +5,12 @@ export default Object.freeze({
   pair: '{from} → {to}',
   pairNoFrom: '? → {to}',
   languageUnknown: 'Unknown language',
+  track: {
+    kind: { manual: 'manual', asr: 'auto-generated' },
+    via: '{name}, auto-translated by YouTube from {source}',
+    state: { captured: 'captured', saved: 'saved' },
+    original: 'Original',
+  },
   cancel: 'Cancel',
   count: {
     cue: { one: '1 segment', other: 'segments' },

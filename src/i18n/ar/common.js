@@ -5,6 +5,13 @@ export default Object.freeze({
   pair: '{from} ← {to}',
   pairNoFrom: '؟ ← {to}',
   languageUnknown: 'لغة غير محددة',
+  // وصف مسار الأصل الواحد (ح-57) لنافذة الإضافة وقائمة «تنزيل الأصل» واللوحة: src/ui/track.js.
+  track: {
+    kind: { manual: 'يدوية', asr: 'تلقائية' },
+    via: '{name}، ترجمها يوتيوب آليًا عن {source}',
+    state: { captured: 'ملتقطة', saved: 'محفوظة' },
+    original: 'الأصل',
+  },
   cancel: 'إلغاء',
   // صيغ العدّ بصيغة formatCount: one وtwo كلمتان كاملتان، وfew وmany وsingle تتبع العدد. وtwoOblique المثنى منصوبًا أو مجرورًا،
   // وoneAcc المفرد منصوبًا، لموضعي case: 'gen' و'acc' (ع-٢٦)؛ وما لا يختلف رسمه منصوبًا («لغة واحدة») لا صيغة له.

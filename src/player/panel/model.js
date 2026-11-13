@@ -85,7 +85,7 @@ export function cueTextIssue(cue, text) {
  *   status: { slot: number | null, name: string | null, count: number } | null,
  *   original: { lang: string, name: string, cues: Cue[] } | null,
  *   dualPref: boolean, dual: boolean,
- *   capture: { done: boolean, lang: string, langName: string, kind: 'manual' | 'asr', count: number, saved: boolean } | null,
+ *   capture: { done: boolean, lang: string, langName: string, kind: 'manual' | 'asr', via: string | null, count: number, saved: boolean } | null,
  *   error: { code: string, message: string } | null,
  *   marks: import('../../core/model/marks.js').Mark[] | null,
  * }} PanelModel
@@ -151,7 +151,7 @@ export function derive(state, page, ui) {
     original,
     dualPref,
     dual: dualPref && !!original,
-    capture: en ? { done: true, lang: en.lang, langName: original.name, kind: en.kind, via: en.via ? languageName(en.via) || en.via : null, count: en.cues.length, saved: en.source === 'saved' } : null,
+    capture: en ? { done: true, lang: en.lang, langName: original.name, kind: en.kind, via: en.via ?? null, count: en.cues.length, saved: en.source === 'saved' } : null,
     error: state.error ? { code: state.error.code, message: errorText(state.error) } : null,
     // علامات الخانة المعروضة (ف9): «أعود إليه» على صفوفها. مرجع المصفوفة نفسه ما لم تتغير، فلا يُعاد حلها في كل رسم.
     marks: arabic && slot && state.marks?.slot === slot ? state.marks.items : null,

@@ -11,9 +11,6 @@ export default Object.freeze({
     downloadTitle: 'تنزيل الأصل',
     displayTitle: 'الترجمة',
     languageTitle: 'اللغة',
-    originalFallback: 'الأصل',
-    kindManual: 'يدوية',
-    kindAsr: 'تلقائية',
     translationUnknown: 'لغة غير محددة',
     edited: 'معدّلة',
     timingTitle: 'توقيت الترجمة',
@@ -73,7 +70,6 @@ export default Object.freeze({
     downloadFileHint: 'ملف الأصل (SRT) وحده',
     downloadSaved: 'تنزيل الأصل المحفوظ',
     downloadSavedHint: 'الأصل المحفوظ من تنزيلك السابق، بمقاطعه العادية. لمقاطع أطول أو للتقسيم شغّل ترجمة يوتيوب (CC) ليُلتقط من جديد.',
-    savedTag: 'محفوظ',
     savedNote: 'لم تُلتقط ترجمة يوتيوب في هذه الزيارة؛ يُنزَّل الأصل المحفوظ من تنزيلك السابق.',
     stateSaved: 'الأصل المحفوظ جاهز',
     instructionsNote: 'انسخ تعليمات الترجمة من نافذة الإضافة.',
@@ -81,7 +77,6 @@ export default Object.freeze({
     longFileCount: 'ملف طويل: {count}. إن عجز نموذجك عن ملف بهذا الطول فقسّمه من «تقسيم الملفات الطويلة» أدناه.',
     pickSteps: 'CC ثم الإعدادات ثم «الترجمة» ثم اللغة التي تريدها',
     braveNote: 'في Brave قد تظهر لغة المتصفح أولًا؛ فاختر اللغة التي تريدها من قائمة الترجمة في يوتيوب.',
-    machine: 'مترجمة آليًا من يوتيوب',
     machineSteps: 'لترجمة يوتيوب الآلية: CC ثم الإعدادات ثم «الترجمة» ثم «الترجمة التلقائية» ثم اللغة',
     translationLang: 'لغة الترجمة',
     langUnknownOption: 'غير محددة',
@@ -111,7 +106,6 @@ export default Object.freeze({
     dismissMessage: 'إغلاق الرسالة',
     dualShort: 'فوق {name}',
     dualAria: 'الترجمة فوق {name}',
-    trackVia: '{machine} عن {name}',
     otherPickNone: 'لاختيار لغة أخرى: {steps}',
     otherWhat: ({ n, count, other }) => (!other ? count : n === 1 ? 'لغة أخرى' : n === 2 ? 'لغتان أخريان' : `${count} أخرى`),
     // «إحداهما» مع المثنى و«إحداها» مع الجمع (تحقق مستقل §١٠).
@@ -268,9 +262,5 @@ export default Object.freeze({
     editCopy: 'نسخ النص',
     editCopied: 'نُسخ النص.',
     editCopyFailed: 'تعذّر نسخ النص.',
-    // سطر الخطوة المنجزة (التقاط الأصل): من ترجمة يوتيوب الآلية، أو يدوي/تلقائي، محفوظ أو ملتقط.
-    captureLine: ({ lang, via, kind, saved, count }) => (via
-      ? `${lang} · ترجمة يوتيوب الآلية عن ${via} · ${saved ? 'محفوظة' : 'ملتقطة'} · ${count}`
-      : `${lang} ${kind === 'manual' ? 'اليدوية' : 'التلقائية'} ${saved ? 'محفوظة' : 'ملتقطة'} · ${count}`),
   },
 });

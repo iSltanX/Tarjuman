@@ -3,6 +3,7 @@
 import { t, texts } from '../../i18n/index.js';
 import { COUNT_FORMS, formatCount, formatOffset, isolate, ltrInline } from '../../ui/format.js';
 import { languageName as sharedLanguageName } from '../../ui/lang.js';
+import { trackDescription } from '../../ui/track.js';
 
 /** نصوص اللوحة من الفهرس (player.panel) باللغة الحالية عند كل قراءة. */
 export const LABELS = texts('player.panel');
@@ -10,10 +11,11 @@ export const LABELS = texts('player.panel');
 const T = (key, params) => t(`player.panel.${key}`, params);
 
 /**
- * سطر الخطوة المنجزة في حالة الفراغ: ما التُقط من الأصل ولغته ونوعه وعدد مقاطعه.
- * @param {{ langName: string, via?: string | null, kind: string, saved: boolean, count: number }} cap
+ * سطر الخطوة المنجزة في حالة الفراغ: ما التُقط من الأصل بالوصف الواحد مع النافذة وقائمة «تنزيل الأصل» (ح-57، src/ui/track.js)، باللغة
+ * الأساسية وحدها كبقية اللوحة: «الإنجليزية · تلقائية · 412 مقطعًا · ملتقطة»، و«العربية، ترجمها يوتيوب آليًا عن الإنجليزية · 412 مقطعًا · محفوظة».
+ * @param {{ lang: string, via?: string | null, kind: 'manual' | 'asr', saved: boolean, count: number }} cap via: رمز لغة المصدر
  */
-export const captureLine = (cap) => T('captureLine', { lang: cap.langName, via: cap.via ?? null, kind: cap.kind, saved: cap.saved, count: formatCount(cap.count, COUNT_FORMS.cue) });
+export const captureLine = (cap) => trackDescription(cap, { count: cap.count, state: cap.saved ? 'saved' : 'captured', region: false });
 
 /**
  * اسم لغة الأصل للوحة: اللغة الأساسية وحدها (en-GB ← الإنجليزية) من الدالة المشتركة (src/ui/lang.js)؛ وبلا اسم معروف الرمز

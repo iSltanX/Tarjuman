@@ -11,9 +11,6 @@ export default Object.freeze({
     downloadTitle: 'Download original',
     displayTitle: 'Translation',
     languageTitle: 'Language',
-    originalFallback: 'Original',
-    kindManual: 'manual',
-    kindAsr: 'auto-generated',
     translationUnknown: 'Language not set',
     edited: 'edited',
     timingTitle: 'Translation timing',
@@ -72,7 +69,6 @@ export default Object.freeze({
     downloadFileHint: 'The original file (SRT) only',
     downloadSaved: 'Download saved original',
     downloadSavedHint: 'The original saved from your earlier download, with standard segments. For longer segments or splitting, turn on YouTube captions (CC) so it is captured again.',
-    savedTag: 'saved',
     savedNote: 'No YouTube subtitles were captured this visit; the original saved from your earlier download will be downloaded.',
     stateSaved: 'Saved original ready',
     instructionsNote: 'Copy the translation instructions from the extension popup.',
@@ -80,7 +76,6 @@ export default Object.freeze({
     longFileCount: 'Long file: {count}. If your model can’t handle a file this long, split it under “Splitting long files” below.',
     pickSteps: 'CC, then Settings, then “Subtitles/CC”, then the language you want',
     braveNote: 'In Brave the browser language may appear first; choose the language you want from YouTube’s subtitles menu.',
-    machine: 'auto-translated by YouTube',
     machineSteps: 'For YouTube’s auto-translation: CC, then Settings, then “Subtitles/CC”, then “Auto-translate”, then the language',
     translationLang: 'Translation language',
     langUnknownOption: 'Not set',
@@ -110,7 +105,6 @@ export default Object.freeze({
     dismissMessage: 'Dismiss message',
     dualShort: 'Over {name}',
     dualAria: 'Translation over {name}',
-    trackVia: '{machine} from {name}',
     otherPickNone: 'To choose another language: {steps}',
     otherWhat: ({ n, count, other }) => (!other ? count : n === 1 ? '1 other language' : `${n} other languages`),
     otherInVideo: ({ n, what, steps }) => `This video has ${what}. To choose ${n === 1 ? 'it' : 'one'}: ${steps}`,
@@ -245,9 +239,5 @@ export default Object.freeze({
     editCopied: 'Text copied.',
     editCopyFailed: 'Couldn’t copy the text.',
     statusSlotNamed: 'Translation {n} “{name}”',
-    // Completed capture step: YouTube auto-translation, or manual/auto-generated, saved or captured.
-    captureLine: ({ lang, via, kind, saved, count }) => (via
-      ? `${lang} · YouTube auto-translation from ${via} · ${saved ? 'saved' : 'captured'} · ${count}`
-      : `${lang} · ${kind === 'manual' ? 'manual' : 'auto-generated'} · ${saved ? 'saved' : 'captured'} · ${count}`),
   },
 });

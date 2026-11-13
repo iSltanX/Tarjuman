@@ -152,7 +152,7 @@ test('ترجمة يوتيوب الآلية الملتقطة موسومة بلغ�
   const page = mountPage({ state: makeState({ captured: [trackInfo({ key: 'ar|asr|en', lang: 'ar', kind: 'asr', via: 'en', cueCount: 30 }), trackInfo({ key: 'en|asr', kind: 'asr', cueCount: 30 })] }) });
   open(page);
   const radios = page.ui.menu().querySelectorAll('button.item[role="radio"]');
-  assert.deepEqual(radios.map((r) => r.textContent), ['الإنجليزية · تلقائية · 30 مقطعًا', 'العربية · مترجمة آليًا من يوتيوب عن الإنجليزية · 30 مقطعًا']);
+  assert.deepEqual(radios.map((r) => r.textContent), ['الإنجليزية · تلقائية · 30 مقطعًا', 'العربية، ترجمها يوتيوب آليًا عن الإنجليزية · 30 مقطعًا'], 'الوصف الواحد (ح-57)');
   assert.equal(radios[0].getAttribute('aria-checked'), 'true');
 });
 

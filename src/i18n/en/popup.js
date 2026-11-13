@@ -25,13 +25,11 @@ export default Object.freeze({
     upload: 'Upload the translated file with “Upload translation (SRT)” in the player bar',
   },
   status: {
-    captured: '{name} captured', savedTrack: '{name} saved', viaMachine: ' (auto-translated by YouTube)',
     notCaptured: 'The video’s subtitles haven’t been captured yet',
     translationIn: ({ name }) => `${name} translation`,
     translationUnknown: 'Translation in an unspecified language',
     offset: 'Offset {offset} s',
     modeDual: 'Translation over {source}', modeOff: 'Translation hidden', modeSingle: 'Translation only', original: 'original',
-    kind: { manual: 'manual', asr: 'auto-generated' },
     toolsOk: 'Player tools are working', toolsControlsError: 'Couldn’t start Tarjuman’s tools in the player',
     toolsOverlayError: 'Couldn’t show the translation over the video', toolsWaiting: 'Waiting for the player',
     reload: 'Reload the video page and try again.',
@@ -66,6 +64,6 @@ export default Object.freeze({
     same: 'The two languages are the same; pick a different one for either.',
     caption: 'Instructions for your model that keep segment numbers, timing and the SRT format.',
     done: 'Paste them with the original file into your model’s chat.',
-    machine: 'The original is an auto-translation by YouTube from {lang}.',
+    machine: 'Original: {track}.',
   },
 });

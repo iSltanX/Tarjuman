@@ -303,14 +303,14 @@ test('جارٍ التحميل: هيكل صفوف وaria-busy ومؤشر، بلا
   assert.equal(handle.peek().rows, 3);
 });
 
-test('ق-4: سطر الأصل في الحالة الفارغة يميّز ترجمة يوتيوب الآلية بلغة مصدرها، والمحفوظة «محفوظة»', () => {
+test('ق-4 وح-57: سطر الأصل في الحالة الفارغة بالوصف الواحد: ترجمة يوتيوب الآلية بلغة مصدرها، والمحفوظة «محفوظة»', () => {
   const names = new Intl.DisplayNames(['ar'], { type: 'language' });
   const captured = watchPage({ state: makeState({ arabic: null, activeSlot: null, english: english({ key: 'ar|asr|en', lang: 'ar', kind: 'asr', via: 'en', cues: enCues(412) }) }) });
   const h1 = captured.mount();
-  assert.equal(h1.peek().steps[0].text, `${names.of('ar')} · ترجمة يوتيوب الآلية عن ${names.of('en')} · ملتقطة · 412 مقطعًا`);
+  assert.equal(h1.peek().steps[0].text, `${names.of('ar')}، ترجمها يوتيوب آليًا عن ${names.of('en')} · 412 مقطعًا · ملتقطة`);
   const saved = watchPage({ state: makeState({ arabic: null, activeSlot: null, english: english({ key: 'ar|asr|en', lang: 'ar', kind: 'asr', via: 'en', source: 'saved', cues: enCues(412) }) }) });
   const h2 = saved.mount();
-  assert.equal(h2.peek().steps[0].text, `${names.of('ar')} · ترجمة يوتيوب الآلية عن ${names.of('en')} · محفوظة · 412 مقطعًا`);
+  assert.equal(h2.peek().steps[0].text, `${names.of('ar')}، ترجمها يوتيوب آليًا عن ${names.of('en')} · 412 مقطعًا · محفوظة`);
 });
 
 test('لا ترجمة: خطوات تدل على «زر التنزيل» و«زر الرفع» بالاسم دون تكرارهما (لا أزرار تحميل ولا رفع في اللوحة)', () => {
@@ -323,7 +323,7 @@ test('لا ترجمة: خطوات تدل على «زر التنزيل» و«زر
   const steps = handle.peek().steps;
   assert.equal(steps.length, 3);
   const names = new Intl.DisplayNames(['ar'], { type: 'language' });
-  assert.ok(steps[0].text.includes(names.of('en')) && steps[0].text.includes('412 مقطعًا') && steps[0].text.includes('اليدوية') && steps[0].text.includes('ملتقطة'));
+  assert.equal(steps[0].text, `${names.of('en')} · يدوية · 412 مقطعًا · ملتقطة`, 'الوصف الواحد (ح-57)');
   assert.equal(steps[0].state, 'done');
   assert.ok(steps[1].text.includes('زر التنزيل'));
   assert.equal(steps[1].state, 'now');
@@ -347,8 +347,7 @@ test('لا ترجمة ولا أصل ملتقط بعد: الخطوة الأولى
 test('الأصل التلقائي المحفوظ يُسمّى كذلك في الخطوة الأولى', () => {
   const page = watchPage({ state: makeState({ arabic: null, activeSlot: null, english: english({ kind: 'asr', source: 'saved', lang: 'fr' }) }) });
   const t = page.mount().peek().steps[0].text;
-  assert.ok(t.includes('التلقائية') && t.includes('محفوظة'));
-  assert.ok(t.includes(new Intl.DisplayNames(['ar'], { type: 'language' }).of('fr')));
+  assert.equal(t, `${new Intl.DisplayNames(['ar'], { type: 'language' }).of('fr')} · تلقائية · 3 مقاطع · محفوظة`);
 });
 
 test('الخطأ: ما حدث وإعادة المحاولة → controller.reload، بلا صفوف', () => {

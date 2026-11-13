@@ -49,7 +49,7 @@ test('بطاقة الفيديو: الحالات الأربع بالإنجليز�
     const none = describeStatus(reply());
     assert.equal(none.englishLine, 'The video’s subtitles haven’t been captured yet');
     const cap = describeStatus(reply({ english: captured }));
-    assert.equal(cap.englishLine, 'Japanese captured · auto-generated · 212 segments');
+    assert.equal(cap.englishLine, 'Japanese · auto-generated · 212 segments · captured');
     const via = describeStatus(reply({ english: { captured: [{ key: 'en|asr|via=ja', kind: 'asr', cueCount: 3, ok: true }], saved: [] } }));
     noArabic('via', via.englishLine);
     const has = describeStatus(withArabic());
@@ -120,7 +120,7 @@ test('كتلة التعليمات: كل سبب تعطيل وسطر المصدر 
     assert.equal(ready.sourceNote, 'Original language detected from the video’s subtitles.');
     assert.equal(ready.caption, 'Instructions for your model that keep segment numbers, timing and the SRT format.');
     assert.equal(ready.done, 'Paste them with the original file into your model’s chat.');
-    assert.equal(machineNote('en'), 'The original is an auto-translation by YouTube from English.');
+    assert.equal(machineNote('ja', 'en'), 'Original: Japanese, auto-translated by YouTube from English.');
   });
 });
 

@@ -12,6 +12,7 @@ import { YOUTUBE_MATCHES, isSourceLang, parseTrackKey } from '../../core/model/i
 import { termsFor } from '../../core/model/glossaries.js';
 import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
 import { pairLabel } from '../../ui/lang.js';
+import { trackDescription } from '../../ui/track.js';
 import {
   MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest, MAX_PASTE_CHARS, isPasteImportReply, pasteImportRequest,
 } from '../../core/model/messages.js';
@@ -135,8 +136,6 @@ const translationIn = (code) => {
 
 /** وضع العرض في سطر الأدوات بلغة الأصل الفعلية: «الترجمة فوق اليابانية». @param {string} mode @param {string | null} source */
 const modeText = (mode, source) => (mode === 'dual' ? t('popup.status.modeDual', { source: source ? langLabel(source) : t('popup.status.original') }) : mode === 'off' ? t('popup.status.modeOff') : t('popup.status.modeSingle'));
-/** نوع مسار الأصل كما يُعرض بجانب حالته: «ملتقطة · يدوية». */
-const kindText = (kind) => (kind === 'manual' || kind === 'asr' ? t(`popup.status.kind.${kind}`) : null);
 
 /**
  * مسار الأصل الذي تُبنى عليه حالة البطاقة: مسار «من» في الرد (ق٥)، وإلا أول ملتقط سليم، وإلا أول محفوظ.
@@ -160,7 +159,7 @@ function baseTrack(reply) {
  *   | { kind: 'loading', title: string }
  *   | { kind: 'no-subtitle', title: string, englishLine: string, englishKind: string | null, englishReady: boolean, saved: boolean }
  *   | { kind: 'has-subtitle', title: string, line: string, edited: boolean, matched: boolean | null, mode: string, fileName: string, saved: true }}
- *   englishLine/englishReady (الاسمان التاريخيان): سطر مسار الأصل وجاهزيته
+ *   englishLine/englishReady (الاسمان التاريخيان): سطر مسار الأصل وجاهزيته؛ englishKind نوعه («يدوية» أو «تلقائية»)، ولا نوع للمترجم آليًا
  */
 export function describeStatus(reply) {
   if (!reply || !reply.watch) return { kind: 'not-video' };
@@ -169,9 +168,9 @@ export function describeStatus(reply) {
   const base = baseTrack(reply);
   if (!reply.arabic) {
     const saved = reply.english.saved.length > 0;
-    const name = base ? `${langLabel(base.lang)}${base.via ? t('popup.status.viaMachine') : ''}` : null;
-    const kind = base ? kindText(base.kind) : null;
-    const line = !base ? t('popup.status.notCaptured') : [t(base.captured ? 'popup.status.captured' : 'popup.status.savedTrack', { name }), kind, formatCount(base.cueCount, COUNT_FORMS.cue)].filter(Boolean).join(' · ');
+    // الوصف الواحد مع قائمة «تنزيل الأصل» (ح-57)، وحاله في آخره: «الإنجليزية · تلقائية · 1066 مقطعًا · ملتقطة».
+    const line = !base ? t('popup.status.notCaptured') : trackDescription(base, { count: base.cueCount, state: base.captured ? 'captured' : 'saved' });
+    const kind = base && !base.via ? t(`common.track.kind.${base.kind === 'asr' ? 'asr' : 'manual'}`) : null;
     return { kind: 'no-subtitle', title, englishLine: line, englishKind: kind, englishReady: !!base, saved };
   }
   const a = reply.arabic;
@@ -392,8 +391,11 @@ export function completeAction(reply, missing) {
 /** نصوص كتلة «تعليمات الترجمة» بلغة الواجهة الحالية عند كل قراءة (popup.pair). */
 export const PAIR_TEXT = texts('popup.pair');
 
-/** ترجمة يوتيوب الآلية: «الأصل ترجمة آلية من يوتيوب عن الإنجليزية.». @param {string} via */
-export const machineNote = (via) => t('popup.pair.machine', { lang: langLabel(via) });
+/**
+ * ترجمة يوتيوب الآلية بالوصف الواحد (ح-57): «الأصل: العربية، ترجمها يوتيوب آليًا عن الإنجليزية.».
+ * @param {string} lang لغة المسار («من») @param {string} via لغة مصدره
+ */
+export const machineNote = (lang, via) => t('popup.pair.machine', { track: trackDescription({ lang, via }) });
 
 /**
  * لغات مسارات الفيديو لقائمة «من» (مجموعة «في هذا الفيديو»): الملتقطة والمحفوظة ثم ما في بيانات المشغّل، بلا تكرار.
@@ -424,7 +426,7 @@ export function pairState({ reply, pair }) {
   const to = isSourceLang(pair.to) ? pair.to : null;
   const detected = detectedSource(reply);
   const via = from && reply?.source?.via && from === reply.source.lang ? reply.source.via : null;
-  const sourceNote = via ? machineNote(via) : from && from === detected ? PAIR_TEXT.detected : null;
+  const sourceNote = via ? machineNote(from, via) : from && from === detected ? PAIR_TEXT.detected : null;
   let reason = null;
   if (!reply?.watch || !reply.videoId) reason = PAIR_TEXT.noVideo;
   else if (reply.loading) reason = PAIR_TEXT.loading;

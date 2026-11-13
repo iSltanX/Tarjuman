@@ -179,13 +179,13 @@ test('بطاقة فيديو بترجمة: العنوان والسطر والشا
   assert.equal(findAll(card, (e) => e.classList.contains('tj-popup__tools--success')).length, 1);
 });
 
-test('بطاقة بلا ترجمة: سطر مسار الأصل بلغته ونوعه وأيقونة ✓ حين يتوفر، وبلاها حين لا', () => {
+test('بطاقة بلا ترجمة: سطر مسار الأصل بالوصف الواحد (ح-57) وأيقونة ✓ حين يتوفر، وبلاها حين لا', () => {
   const doc = newDocument();
   const ready = reply({ english: captured });
   const card = statusCard(describeStatus(ready), toolsStatus(ready), null, doc);
   assert.ok(textOf(card.querySelector('.tj-popup__line')) === 'لا ترجمة محفوظة بعد');
   const line = card.querySelector('.tj-popup__english');
-  assert.equal(textOf(line), 'الإنجليزية ملتقطة · يدوية · 5 مقاطع');
+  assert.equal(textOf(line), 'الإنجليزية · يدوية · 5 مقاطع · ملتقطة');
   assert.equal(findAll(line, (e) => e.tagName === 'svg').length, 1);
   const none = reply();
   const bare = statusCard(describeStatus(none), toolsStatus(none), null, doc);

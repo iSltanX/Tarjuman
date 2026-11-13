@@ -3,6 +3,7 @@
 import { t, texts, joinList } from '../../i18n/index.js';
 import { COUNT_FORMS, formatCount, formatTimecode, isolate, ltrInline, offsetInline } from '../../ui/format.js';
 import { languageName as sharedLanguageName } from '../../ui/lang.js';
+import { trackDescription } from '../../ui/track.js';
 
 /** نصوص الأدوات من الفهرس (player.controls) باللغة الحالية عند كل قراءة. */
 export const LABELS = texts('player.controls');
@@ -32,15 +33,12 @@ export function dualLabels(lang) {
 }
 
 /**
- * سطر المسار الملتقط في قائمة التحميل: «الإنجليزية · يدوية · 412 مقطعًا» (اسم لغته الفعلي، ونوعه، وعدد مقاطعه)؛ والمترجم آليًا
- * من يوتيوب موسوم بلغة أصله: «العربية · مترجمة آليًا من يوتيوب عن الإنجليزية · 412 مقطعًا» (ق٢).
+ * سطر المسار الملتقط في قائمة التحميل بالوصف الواحد مع نافذة الإضافة (ح-57، src/ui/track.js): «الإنجليزية · يدوية · 412 مقطعًا»
+ * (اسم لغته الفعلي، ونوعه، وعدد مقاطعه)؛ والمترجم آليًا من يوتيوب بلغة أصله: «العربية، ترجمها يوتيوب آليًا عن الإنجليزية · 412 مقطعًا» (ق٢).
  * @param {{ lang: string, kind: 'manual' | 'asr', via?: string | null, cueCount: number }} t
+ * @param {{ state?: 'captured' | 'saved' | null }} [o] حاله في آخره («محفوظة» للأصل المحفوظ من تنزيل سابق)
  */
-export function trackLine(t) {
-  const name = languageName(t.lang) ?? LABELS.originalFallback;
-  const what = t.via ? T('trackVia', { machine: LABELS.machine, name: languageName(t.via) ?? t.via }) : t.kind === 'asr' ? LABELS.kindAsr : LABELS.kindManual;
-  return `${name} · ${what} · ${formatCount(t.cueCount, COUNT_FORMS.cue)}`;
-}
+export const trackLine = (t, { state = null } = {}) => trackDescription(t, { count: t.cueCount, state });
 
 /**
  * سطر لغات الفيديو الأخرى في قائمة التحميل (قرار سلطان 2026-11-07 بعد لقطات AA4): عددها حين تُعرف قائمة مسارات الفيديو، ثم خطوات

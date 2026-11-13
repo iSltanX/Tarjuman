@@ -24,24 +24,25 @@ test('جارٍ: الهيكل مع العنوان', () => {
   assert.deepEqual(describeStatus(reply({ loading: true })), { kind: 'loading', title: 'عنوان تجريبي' });
 });
 
-test('فيديو بلا ترجمة محفوظة: مسار الأصل بلغته الفعلية ملتقطًا أو محفوظًا، أو لم يُلتقط', () => {
+test('فيديو بلا ترجمة محفوظة: مسار الأصل بلغته الفعلية ملتقطًا أو محفوظًا بالوصف الواحد (ح-57)، أو لم يُلتقط', () => {
   assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'لم تُلتقط ترجمة الفيديو بعد', englishKind: null, englishReady: false, saved: false });
   const captured = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }], saved: [] } });
-  assert.equal(describeStatus(captured).englishLine, 'الإنجليزية ملتقطة · يدوية · 5 مقاطع');
+  assert.equal(describeStatus(captured).englishLine, 'الإنجليزية · يدوية · 5 مقاطع · ملتقطة');
   assert.equal(describeStatus(captured).englishKind, 'يدوية', 'نوع المسار الملتقط');
   const auto = reply({ english: { captured: [{ key: 'ja|asr', kind: 'asr', cueCount: 212, ok: true }], saved: [] } });
-  assert.equal(describeStatus(auto).englishLine, 'اليابانية ملتقطة · تلقائية · 212 مقطعًا', 'بأي لغة (AA3)');
+  assert.equal(describeStatus(auto).englishLine, 'اليابانية · تلقائية · 212 مقطعًا · ملتقطة', 'بأي لغة (AA3)');
   const machine = reply({ english: { captured: [{ key: 'ar|asr|en', kind: 'asr', cueCount: 9, ok: true }], saved: [] } });
-  assert.equal(describeStatus(machine).englishLine, 'العربية (ترجمة يوتيوب الآلية) ملتقطة · تلقائية · 9 مقاطع', 'موسومة (ق٢)');
+  assert.equal(describeStatus(machine).englishLine, 'العربية، ترجمها يوتيوب آليًا عن الإنجليزية · 9 مقاطع · ملتقطة', 'موسومة بلغة مصدرها بلا «تلقائية» (ق٢، ح-57)');
+  assert.equal(describeStatus(machine).englishKind, null, 'لا نوع للمترجم آليًا');
   const failed = reply({ english: { captured: [{ key: 'en|asr', kind: 'asr', cueCount: 0, ok: false }], saved: [] } });
   assert.equal(describeStatus(failed).englishLine, 'لم تُلتقط ترجمة الفيديو بعد', 'مسار فاشل ليس ملتقطًا');
   const saved = reply({ english: { captured: [], saved: [{ key: 'en|manual', kind: 'manual', cueCount: 5 }] } });
-  assert.equal(describeStatus(saved).englishLine, 'الإنجليزية محفوظة · يدوية · 5 مقاطع');
+  assert.equal(describeStatus(saved).englishLine, 'الإنجليزية · يدوية · 5 مقاطع · محفوظة');
   assert.equal(describeStatus(saved).saved, true, 'مؤشر «محفوظ» لسجل بلا ترجمة');
   assert.equal(describeStatus(captured).saved, false, 'الملتقط وحده ليس محفوظًا');
   // مسار «من» في الرد يتقدّم (آخر ما نُزّل، ق٥).
   const two = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }, { key: 'ja|asr', kind: 'asr', cueCount: 7, ok: true }], saved: [] }, source: { key: 'ja|asr', lang: 'ja', kind: 'asr', via: null, from: 'export' } });
-  assert.ok(describeStatus(two).englishLine.startsWith('اليابانية ملتقطة'));
+  assert.ok(describeStatus(two).englishLine.startsWith('اليابانية · تلقائية'));
 });
 
 test('العنوان الغائب يعود إلى المعرّف', () => {
