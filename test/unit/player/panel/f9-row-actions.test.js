@@ -1,8 +1,10 @@
 // ف9 (2026-11-10): «علّم للمراجعة» و«أسمع هذه الآن» من صف اللوحة. شريط واحد يُنقل إلى الصف الممرور عليه أو المركّز، والعلامة
 // «أعود إليه» سمة على صفها تُرى دائمًا، والمزامنة للجمل القريبة من لحظة التشغيل وحدها ومعطّلة أثناء الإعلان، ورسالة فيها «تراجع».
+// والفكرة ٦ (ح-54): «عدّل النص» زر ثالث في الشريط نفسه، وحقل مكان نص الصف بنصه الخام.
 // مقارنة العقد بـassert.ok(a === b) لا assert.equal: فشل assert.equal على عقدة من الـDOM الوهمي يستنزف الذاكرة.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { TjError } from '../../../../src/core/errors/index.js';
 import { markAnchor, sameAnchor } from '../../../../src/core/model/marks.js';
 import { offsetToast } from '../../../../src/player/controls/text.js';
 import { arCues, click, makeState, settle, ui, watchPage } from './harness.js';
@@ -24,6 +26,27 @@ function open({ cues = arCues(5), t = 0, marks = [] } = {}) {
       undo: async () => {
         c.calls.push(['undoMark', index]);
         write([...c.getState().marks.items.filter((m) => !mark || !sameAnchor(m, mark)), ...before]);
+      },
+    };
+  };
+  // تحرير نص المقطع (الفكرة ٦) كما يفعل الحقيقي: مصفوفة مقاطع جديدة بالنص الجديد، وتراجع يعيد السابق؛ وeditFail يرفض مرة.
+  c.editCueText = async ({ index }, text) => {
+    c.calls.push(['editCueText', index, text]);
+    if (c.editFail) {
+      const err = c.editFail;
+      c.editFail = null;
+      throw err;
+    }
+    const before = c.getState().arabic.cues[index].text;
+    const write = (value) => {
+      const cur = c.getState().arabic;
+      c.set({ arabic: { ...cur, edited: true, cues: cur.cues.map((x, i) => (i === index ? { ...x, text: value } : x)) } });
+    };
+    write(text);
+    return {
+      undo: async () => {
+        c.calls.push(['undoEdit', index]);
+        write(before);
       },
     };
   };
@@ -201,4 +224,211 @@ test('ط2 وط3: بلا زمن فيديو سبب «يتاح حين يعمل ال
   assert.equal(sync.getAttribute('aria-describedby'), 'tj-r2-ar tj-acts-why');
   assert.equal(v.q('.acts .sr').getAttribute('id'), 'tj-acts-why');
   assert.equal(v.q('.acts .sr').textContent, 'يتاح حين يعمل الفيديو.');
+});
+
+// ———— الفكرة ٦ (ح-54): «عدّل النص» من صف اللوحة ————
+
+const field = (v) => v.q('.edit__field');
+const keydown = (el, key, extra = {}) => el.dispatchEvent({ type: 'keydown', bubbles: true, key, ...extra });
+/** ما يصل إلى مستمع المستند (اختصارات يوتيوب) من الضغطات. */
+const youtubeKeys = (page) => {
+  const seen = [];
+  for (const type of ['keydown', 'keyup', 'keypress']) page.doc.addEventListener(type, (ev) => seen.push(`${type}:${ev.key}`));
+  return seen;
+};
+/** يفتح حقل صف i بزر «عدّل النص» (نقرة مؤشر). */
+function openEdit(v, i) {
+  over(v.rows()[i]);
+  click(btn(v, 'edit'));
+  return field(v);
+}
+
+test('الفكرة ٦: «عدّل النص» زر ثالث موصوف بنص صفه، ويفتح حقلًا مكان النص بنص المقطع الخام وأسطره، والتركيز فيه، ولا قفز ولا إيقاف', () => {
+  const cues = arCues(5);
+  cues[1] = { ...cues[1], text: 'سطر أول\nسطر ثانٍ' };
+  const { v, page, handle } = open({ cues });
+  const rows = v.rows();
+  over(rows[1]);
+  const edit = btn(v, 'edit');
+  assert.equal(edit.tagName, 'button');
+  assert.equal(edit.getAttribute('aria-label'), 'عدّل النص');
+  assert.match(edit.getAttribute('title'), /والتوقيت والدمج والشطر في المحرّر/);
+  assert.equal(edit.getAttribute('aria-describedby'), 'tj-r1-ar');
+  page.video.setPlaying(true);
+  click(edit);
+  const f = field(v);
+  assert.ok(f, 'الحقل مفتوح');
+  assert.equal(f.tagName, 'textarea');
+  assert.equal(f.value, 'سطر أول\nسطر ثانٍ', 'نص المقطع الخام بفاصل سطره، لا السطر الواحد المعروض');
+  assert.equal(rows[1].querySelector('.ar').textContent, 'سطر أول سطر ثانٍ', 'الصف يعرض سطرًا واحدًا');
+  assert.equal(rows[1].querySelector('.ar').hasAttribute('hidden'), true, 'الحقل مكان النص');
+  assert.ok(f.parentNode.parentNode === rows[1].children[1], 'في جسم الصف نفسه');
+  assert.equal(f.getAttribute('aria-label'), 'نص المقطع 2');
+  assert.equal(f.getAttribute('lang'), 'und');
+  assert.ok(v.root.activeElement === f, 'التركيز في الحقل');
+  assert.equal(v.q('.acts'), null, 'الشريط خارج DOM ما دام الحقل مفتوحًا');
+  over(rows[3]);
+  assert.equal(v.q('.acts'), null, 'والمرور على صف آخر لا يعيده');
+  assert.equal(handle.peek().editing, 1);
+  assert.deepEqual(page.video.writes, [], 'لا قفز');
+  assert.equal(page.video.paused, false, 'ولا إيقاف للفيديو');
+  const hint = v.q('.edit__hint');
+  assert.match(hint.textContent, /للحفظ/);
+  assert.deepEqual(hint.children.filter((x) => x.tagName === 'bdi').map((x) => x.getAttribute('dir')), ['ltr', 'ltr', 'ltr'], 'أسماء المفاتيح عناصر معزولة LTR');
+});
+
+test('الفكرة ٦: Enter يحفظ بالنص كما كُتب وShift+Enter لا، والرسالة «عُدِّل نص المقطع» بتراجع يعيده؛ ولا قفز', async () => {
+  const { v, c, page, handle } = open();
+  const f = openEdit(v, 1);
+  f.value = 'نص جديد\nبسطرين';
+  assert.equal(keydown(f, 'Enter', { shiftKey: true }), true, 'Shift+Enter سطر جديد (لا يُمنع)');
+  assert.equal(c.calls.filter((x) => x[0] === 'editCueText').length, 0);
+  assert.equal(keydown(f, 'Enter'), false, 'Enter يُمنع افتراضه ويحفظ');
+  await settle();
+  assert.deepEqual(c.calls.filter((x) => x[0] === 'editCueText'), [['editCueText', 1, 'نص جديد\nبسطرين']]);
+  assert.equal(field(v), null, 'الحقل أُغلق بعد الحفظ');
+  assert.equal(v.rows()[1].querySelector('.ar').textContent, 'نص جديد بسطرين');
+  assert.equal(v.rows()[1].querySelector('.ar').hasAttribute('hidden'), false);
+  assert.deepEqual(handle.peek().note, { text: 'عُدِّل نص المقطع 2', undo: true });
+  click(v.q('.note__act'));
+  await settle();
+  assert.deepEqual(c.calls.filter((x) => x[0] === 'undoEdit'), [['undoEdit', 1]]);
+  assert.equal(v.rows()[1].querySelector('.ar').textContent, 'سطر 2', '«تراجع» يعيد النص');
+  assert.deepEqual(page.video.writes, []);
+});
+
+test('الفكرة ٦: Esc يلغي بلا كتابة ويعود التركيز إلى «عدّل النص» في صفه، والنص نفسه يُغلق بلا كتابة', async () => {
+  const { v, c, handle } = open();
+  const f = openEdit(v, 2);
+  f.value = 'لن يُحفظ';
+  assert.equal(keydown(f, 'Escape'), false);
+  await settle();
+  assert.equal(field(v), null);
+  assert.equal(v.rows()[2].querySelector('.ar').textContent, 'سطر 3');
+  assert.equal(v.rows()[2].querySelector('.ar').hasAttribute('hidden'), false);
+  assert.ok(v.root.activeElement === btn(v, 'edit'), 'التركيز إلى زر صفه بعد Esc');
+  assert.ok(v.q('.acts').parentNode === v.rows()[2]);
+  assert.equal(handle.peek().editing, null);
+  const g = openEdit(v, 2);
+  keydown(g, 'Enter');
+  await settle();
+  assert.equal(field(v), null, 'بلا تغيير: يُغلق');
+  assert.equal(c.calls.filter((x) => x[0] === 'editCueText').length, 0, 'ولا كتابة');
+  assert.equal(handle.peek().note, null);
+});
+
+test('الفكرة ٦: Enter أثناء تركيب IME (isComposing أو keyCode 229) لا يحفظ ولا يلغي', async () => {
+  const { v, c } = open();
+  const f = openEdit(v, 1);
+  f.value = 'مرحبا';
+  assert.equal(keydown(f, 'Enter', { isComposing: true }), true, 'لا يُمنع: يختار المرشّح');
+  keydown(f, 'Enter', { keyCode: 229 });
+  keydown(f, 'Escape', { isComposing: true });
+  await settle();
+  assert.equal(c.calls.filter((x) => x[0] === 'editCueText').length, 0);
+  assert.ok(field(v) === f, 'الحقل باقٍ');
+  keydown(f, 'Enter');
+  await settle();
+  assert.deepEqual(c.calls.filter((x) => x[0] === 'editCueText'), [['editCueText', 1, 'مرحبا']]);
+});
+
+test('الفكرة ٦: النقر والسحب داخل الحقل لا يقفزان ولا يُسقطان التركيز، و«حفظ» و«إلغاء» بالفأرة لا تقفز', async () => {
+  const { v, c, page } = open();
+  const f = openEdit(v, 1);
+  page.doc.getSelection = () => ({ isCollapsed: true, toString: () => '' });
+  f.dispatchEvent({ type: 'pointerdown', bubbles: true, clientX: 300, clientY: 60, pointerType: 'mouse' });
+  f.dispatchEvent({ type: 'click', bubbles: true, detail: 1, clientX: 300, clientY: 60 });
+  f.dispatchEvent({ type: 'pointerdown', bubbles: true, clientX: 300, clientY: 60, pointerType: 'mouse' });
+  f.dispatchEvent({ type: 'pointermove', bubbles: true, clientX: 200, clientY: 60, pointerType: 'mouse' });
+  f.dispatchEvent({ type: 'click', bubbles: true, detail: 1, clientX: 200, clientY: 60 });
+  f.dispatchEvent({ type: 'click', bubbles: true, detail: 2, clientX: 200, clientY: 60 });
+  assert.deepEqual(page.video.writes, [], 'لا قفز');
+  assert.ok(v.root.activeElement === f, 'التركيز باقٍ في الحقل');
+  f.value = 'بالفأرة';
+  click(v.q('.edit__save'));
+  await settle();
+  assert.deepEqual(c.calls.filter((x) => x[0] === 'editCueText'), [['editCueText', 1, 'بالفأرة']]);
+  const g = openEdit(v, 3);
+  click(v.q('.edit__cancel'));
+  assert.equal(field(v), null);
+  assert.ok(g && v.root.activeElement !== g);
+  assert.deepEqual(page.video.writes, [], 'ولا قفز من الزرين');
+});
+
+test('الفكرة ٦: الحارس يمنع قبل الكتابة النص الفارغ وما يكسر SRT وما لا يقبله التخزين، بسببه داخل الحقل وإحالة إلى المحرّر', async () => {
+  const { v, c } = open();
+  const f = openEdit(v, 1);
+  const msg = v.q('.edit__msg');
+  assert.equal(msg.hasAttribute('hidden'), true);
+  const cases = [
+    ['', /بلا نص.*افتح المحرّر/],
+    ['   ', /بلا نص/],
+    ['أول\n\nثالث', /سطر فارغ.*اشطر المقطع في المحرّر/],
+    ['12\n00:00:01,000 --> 00:00:02,000', /رأسَ مقطع.*في المحرّر/],
+    ['x'.repeat(5001), /أطول من 5000 حرف/],
+  ];
+  for (const [text, why] of cases) {
+    f.value = text;
+    keydown(f, 'Enter');
+    await settle();
+    assert.equal(msg.hasAttribute('hidden'), false, JSON.stringify(text.slice(0, 20)));
+    assert.match(msg.textContent, why);
+    assert.equal(msg.getAttribute('role'), 'alert');
+    assert.equal(f.getAttribute('aria-invalid'), 'true');
+    assert.ok(field(v) === f, 'الحقل باقٍ بنصه');
+    assert.equal(f.value, text);
+  }
+  assert.equal(c.calls.filter((x) => x[0] === 'editCueText').length, 0, 'لا كتابة');
+  f.value = 'صحيح';
+  f.dispatchEvent({ type: 'input', bubbles: true });
+  assert.equal(msg.hasAttribute('hidden'), true, 'الكتابة تزيل السبب');
+  assert.equal(f.hasAttribute('aria-invalid'), false);
+});
+
+test('الفكرة ٦: إخفاق الكتابة يُقال داخل الحقل والنص باقٍ (أخطاء التوقيت بإحالة إلى المحرّر)، ثم يُحفظ', async () => {
+  const { v, c, handle } = open();
+  const f = openEdit(v, 1);
+  f.value = 'نص';
+  c.editFail = new TjError('ED_SAVE_HAS_ERRORS', { params: { count: '2' } });
+  keydown(f, 'Enter');
+  await settle();
+  assert.ok(field(v) === f, 'الحقل باقٍ');
+  assert.equal(f.value, 'نص');
+  assert.equal(f.readOnly, false, 'قابل للكتابة بعد الإخفاق');
+  assert.equal(v.q('.edit__msg').textContent, 'في هذه الترجمة أخطاء توقيت تمنع حفظ أي تعديل؛ صحّحها في المحرّر أولًا.');
+  assert.equal(handle.peek().note, null);
+  assert.equal(handle.diagnostics().session.actionFailures, 1);
+  keydown(f, 'Enter');
+  await settle();
+  assert.equal(field(v), null);
+  assert.equal(handle.peek().note.text, 'عُدِّل نص المقطع 2');
+});
+
+test('الفكرة ٦: ضغطات الحقل لا تصل يوتيوب (المسافة وK وJ وL وF وM والأرقام)، والجذر مغلق فيوتيوب يرى المضيف', () => {
+  const { v, page } = open();
+  const yt = youtubeKeys(page);
+  const f = openEdit(v, 1);
+  for (const k of [' ', 'k', 'K', 'j', 'l', 'f', 'm', '0', '5', 'ArrowLeft', 'Home']) {
+    for (const type of ['keydown', 'keyup', 'keypress']) f.dispatchEvent({ type, bubbles: true, key: k });
+  }
+  assert.deepEqual(yt, [], 'لا ضغطة وصلت');
+  // وخارج الحقل تبقى قاعدة ت-٤: k من زر الإغلاق تصل.
+  v.qa('.head .b')[1].dispatchEvent({ type: 'keydown', bubbles: true, key: 'k' });
+  assert.deepEqual(yt, ['keydown:k']);
+});
+
+test('الفكرة ٦: الحقل المفتوح يُمسك تبديل لغة الواجهة ويُعرف من مقبض التركيب، والمتابعة معلّقة ما دام مفتوحًا', () => {
+  const { v, handle } = open();
+  assert.equal(handle.peek().follow, true);
+  assert.equal(handle.holdsFlow(), false);
+  assert.equal(handle.editing(), false);
+  const f = openEdit(v, 1);
+  assert.ok(f);
+  assert.equal(handle.holdsFlow(), true);
+  assert.equal(handle.editing(), true);
+  assert.equal(handle.peek().follow, false, 'المتابعة معلّقة');
+  assert.ok(handle.peek().resume, '«العودة إلى ‹الزمن›» ظاهرة');
+  keydown(f, 'Escape');
+  assert.equal(handle.holdsFlow(), false);
+  assert.equal(handle.editing(), false);
 });

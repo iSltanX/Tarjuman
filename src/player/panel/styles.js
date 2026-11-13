@@ -115,6 +115,21 @@ export function panelCss() {
 .ra[aria-pressed="true"] .ic path { fill: currentColor; }
 .ra[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* تحرير نص المقطع (الفكرة ٦): الحقل مكان نص الصف بمقاسه وخطه، بحدّ الحقول (الهوية §٣) والتركيز طيني بهالة 3px؛ و«حفظ» الإجراء
+   الرئيسي الواحد بالصنوبر، و«إلغاء» شفاف، وسطر المفاتيح خافت. الصف المحرَّر لا يُنقر للقفز (المؤشر عادي). */
+.row.editing { cursor: auto; }
+.edit { display: flex; flex-direction: column; gap: 6px; }
+.edit__field { display: block; box-sizing: border-box; width: 100%; margin: 0; padding: 6px 10px; resize: none; overflow-y: auto; border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-md); background: var(--tj-surface); color: var(--tj-text); font: 400 16px/26px var(--tj-font-body); white-space: pre-wrap; overflow-wrap: anywhere; text-align: start; }
+.edit__field:focus { outline: 2px solid transparent; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
+.edit__field[aria-invalid="true"] { border-color: var(--tj-danger); }
+.edit__field[readonly] { color: var(--tj-text-2); }
+.edit__msg { font-size: 12px; line-height: 18px; color: var(--tj-danger); }
+.edit__bar { display: flex; align-items: center; gap: 6px; }
+.edit__hint { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 18px; color: var(--tj-muted); }
+.b--primary { background: var(--tj-brand); color: var(--tj-brand-ink); }
+.b--primary:hover { background: var(--tj-brand-hover); }
+.b--primary:active { background: var(--tj-brand-hover); }
+.b--primary[aria-disabled="true"]:hover, .b--primary[aria-disabled="true"]:active { background: var(--tj-brand); }
 .notes { grid-area: note; flex: none; display: flex; flex-direction: column; }
 .note { display: flex; align-items: center; gap: 8px; margin: 8px 14px 0; padding: 4px; padding-inline-start: 12px; border-radius: var(--tj-radius-md); background: var(--tj-text); color: var(--tj-on-ink); font-size: 13px; line-height: 20px; }
 .note__text { min-width: 0; }
@@ -173,7 +188,7 @@ export function panelCss() {
 .root[data-narrow] .bar { padding: 6px 10px; gap: 6px; }
 .root[data-narrow] .foot { padding: 8px 10px; }
 .root[data-narrow] .row { padding: 6px 8px; }
-.root[data-narrow] .ar { font-size: 14px; line-height: 22px; }
+.root[data-narrow] .ar, .root[data-narrow] .edit__field { font-size: 14px; line-height: 22px; }
 .root[data-narrow] .off .lbl, .root[data-narrow] .off__val .mean { display: none; }
 .root[data-narrow] .off .b { width: var(--tj-control-lg); padding: 0; }
 .root[data-narrow] .foot__hint { display: none; }

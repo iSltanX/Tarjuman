@@ -5,28 +5,35 @@
 // المستخدم)، والأسهم وPage وHome وEnd تنقل التركيز بين الصفوف؛ وكل زر موصوف بنص صفه (تدقيق 7a66f91، U45).
 // وأفعال الصف (ف9، 2026-11-10): «علّم للمراجعة» و«أسمع هذه الآن» في شريط واحد يُنقل إلى الصف الممرور عليه أو المركّز (لا زران
 // في كل صف من آلاف الصفوف)، ويعود إلى صف نقطة Tab حين يغادر المؤشر القائمة، فيأتي بعد زمن صفه في ترتيب Tab. والعلامة «أعود
-// إليه» سمة على صفها (data-mark) تُرى دائمًا.
-import { resolveMarks } from '../../core/model/marks.js';
-import { textDirection } from '../../ui/format.js';
-import { el, icon, setAttr } from './dom.js';
+// إليه» سمة على صفها (data-mark) تُرى دائمًا. و«عدّل النص» (الفكرة ٦، ح-54) زر ثالث فيه: حقل واحد للقائمة مكان نص الصف بنص مقطعه
+// الخام (بفواصل أسطره، لا السطر الواحد المعروض)، والحفظ والإلغاء يُبلَّغان المستدعي (onEdit)، والنقر داخله لا يقفز.
+import { markAnchor, resolveMarks } from '../../core/model/marks.js';
+import { ltrParts, textDirection } from '../../ui/format.js';
+import { el, icon, setAttr, setHidden, setText } from './dom.js';
 import { originalLookup } from '../../core/align/original.js';
 import { createTimeline } from './model.js';
-import { LABELS, clockLabel, flatText, markedSeekLabel } from './text.js';
+import { LABELS, clockLabel, editFieldLabel, editHintText, flatText, markedSeekLabel } from './text.js';
 
 /** صفوف تُلحق دفعات: وسائط append الكثيرة جدًا تفشل في المتصفحات. */
 const CHUNK = 500;
 /** خطوة PageUp وPageDown بين الصفوف. */
 const PAGE_ROWS = 10;
 const NAV = Object.freeze({ ArrowDown: 1, ArrowUp: -1, PageDown: PAGE_ROWS, PageUp: -PAGE_ROWS });
+/** أسطر حقل التحرير: بعدد أسطر نصه بين حدّين، وما زاد يُمرَّر داخله. */
+const EDIT_ROWS = Object.freeze({ min: 2, max: 6 });
 /** حركة المؤشر بين الضغط والنقرة التي تجعلها سحبًا لا نقرة على الصف (B3): بالفأرة والقلم، وباللمس أوسع (القرار ٣١). */
 export const DRAG_PX = 5;
 export const TOUCH_DRAG_PX = 10;
 
 /**
- * @param {{ doc: Document, onSeek: (ms: number) => void, onAct?: (act: 'mark' | 'sync', i: number) => void, syncReason?: (i: number) => string | null }} deps
- * syncReason: لماذا لا تتاح «أسمع هذه الآن» لصف i الآن (إعلان، أو جملة بعيدة عن لحظة التشغيل)، أو null.
+ * @param {{
+ *   doc: Document, onSeek: (ms: number) => void, onAct?: (act: 'mark' | 'sync' | 'edit', i: number) => void, syncReason?: (i: number) => string | null,
+ *   onEdit?: (kind: 'save', i: number, text: string) => void,
+ * }} deps
+ * syncReason: لماذا لا تتاح «أسمع هذه الآن» لصف i الآن (إعلان، أو جملة بعيدة عن لحظة التشغيل)، أو null. onEdit: طلب حفظ نص الحقل
+ * المفتوح على صف i (Enter أو «حفظ»)؛ والمستدعي يحكم فيه (حارس النص، والكتابة) ثم يغلقه أو يقول سببه داخله.
  */
-export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = () => null }) {
+export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = () => null, onEdit = () => {} }) {
   // الحاوية نفسها خارج ترتيب Tab: Firefox يضع حاويات التمرير فيه، فتصير نقطتين (الحاوية ثم الصف)؛ والوصول إلى المحتوى بالصف
   // المركّز والأسهم (الحي في Firefox، C6).
   const list = el(doc, 'div', { className: 'list', attrs: { role: 'list', 'aria-label': LABELS.listLabel, tabindex: '-1' } });
@@ -64,9 +71,12 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
   const syncBtn = el(doc, 'button', {
     className: 'ra', attrs: { type: 'button', 'data-act': 'sync', 'aria-label': LABELS.syncRow, title: LABELS.syncRowTip },
   }, [icon(doc, 'sync', { size: 'xs' })]);
+  const editBtn = el(doc, 'button', {
+    className: 'ra', attrs: { type: 'button', 'data-act': 'edit', 'aria-label': LABELS.editRow, title: LABELS.editRowTip },
+  }, [icon(doc, 'edit', { size: 'xs' })]);
   // سبب تعطيل «أسمع هذه الآن» نصًا مخفيًا يصف الزر، فيقرؤه قارئ الشاشة قبل الضغط لا بعده وحده (مراجعة المرحلة 5، ط3).
   const why = el(doc, 'span', { className: 'sr', attrs: { id: 'tj-acts-why' } });
-  const acts = el(doc, 'div', { className: 'acts', attrs: { role: 'group', 'aria-label': LABELS.rowActions } }, [markBtn, syncBtn, why]);
+  const acts = el(doc, 'div', { className: 'acts', attrs: { role: 'group', 'aria-label': LABELS.rowActions } }, [markBtn, syncBtn, editBtn, why]);
   let actsRow = -1;
 
   const seekMs = (i) => Math.max(0, cues[i].startMs + offsetMs);
@@ -83,6 +93,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     setAttr(syncBtn, 'aria-describedby', reason ? `${arId} tj-acts-why` : arId);
     setAttr(syncBtn, 'aria-disabled', reason ? 'true' : null);
     setAttr(syncBtn, 'title', reason ?? LABELS.syncRowTip);
+    setAttr(editBtn, 'aria-describedby', arId);
     if (why.textContent !== (reason ?? '')) why.textContent = reason ?? '';
     syncActsTab();
   }
@@ -95,11 +106,12 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     const v = actsRow >= 0 && actsRow === tabRow ? '0' : '-1';
     setAttr(markBtn, 'tabindex', v);
     setAttr(syncBtn, 'tabindex', v);
+    setAttr(editBtn, 'tabindex', v);
   }
 
-  /** ينقل الشريط إلى صف i (لا ينقله والتركيز فيه: إزالة المركّز تُفقده). @param {number} i */
+  /** ينقل الشريط إلى صف i (لا ينقله والتركيز فيه: إزالة المركّز تُفقده، ولا والحقل مفتوح: خارج DOM حتى يُغلق). @param {number} i */
   function moveActs(i) {
-    if (!rowEls[i]) return;
+    if (!rowEls[i] || edit) return;
     if (actsRow === i) return paintActs();
     if (focusOnActs()) return;
     actsRow = i;
@@ -190,17 +202,20 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     // نقرة المؤشر وحدها (detail > 0) تُنسب إلى آخر ضغطة؛ وتفعيل لوحة المفاتيح (detail = 0) لا تمسه ضغطة قديمة.
     const p = ev.detail > 0 ? press : null;
     press = null;
+    // داخل حقل التحرير (الفكرة ٦): النقر والسحب والنقر المزدوج للكتابة وحدها، لا قفز ولا إسقاط للتركيز؛ وزرّاه يعملان بمستمعيهما.
+    // وهدفٌ خرج من القائمة أثناء النقرة نفسها (أغلق «حفظ» الحقل، أو أُعيد بناء الصفوف) لا يُنسب إلى صف: مسار الحدث يُحسب قبل إزالته.
+    if ((edit && edit.box.contains(ev.target)) || !list.contains(ev.target)) return;
     const i = rowIndexOf(ev.target);
     if (i < 0 || !cues || i >= cues.length) return;
     rowClick(ev, i, p);
     // ت-٤: بعد نقرة المؤشر على صف لا يبقى التركيز في القائمة، فالمسافة وk والأسهم بعدها لمشغّل يوتيوب ولا تكرر القفز، كما بعد
-    // أزرار الشريط (controls/group.js). وتفعيل لوحة المفاتيح يبقي التركيز حيث هو.
-    if (ev.detail > 0 && focusInside && focusEl) focusEl.blur?.();
+    // أزرار الشريط (controls/group.js). وتفعيل لوحة المفاتيح يبقي التركيز حيث هو. والحقل الذي فتحته النقرة («عدّل النص») يبقى مركّزًا.
+    if (ev.detail > 0 && focusInside && focusEl && !(edit && edit.box.contains(focusEl))) focusEl.blur?.();
   });
   function rowClick(ev, i, p) {
     // زر من شريط الأفعال: فعله وحده، لا قفز. والمعطّل يُبلَّغ (فيقال سببه) بدل أن يمر صامتًا.
     const act = actOf(ev.target);
-    if (act === 'mark' || act === 'sync') {
+    if (act === 'mark' || act === 'sync' || act === 'edit') {
       onAct(act, i);
       return;
     }
@@ -247,6 +262,148 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     }
   });
 
+  // ———— تحرير نص المقطع في مكانه (الفكرة ٦، ح-54) ————
+  /**
+   * الحقل المفتوح (واحد للقائمة)، أو null: صفه، ومرساة مقطعه كما فُتح عليه (الرقم والبداية وبصمة النص)، وعناصره، والنص الذي يُحفظ
+   * الآن أو null، وهل طُلب الحفظ أو الإلغاء من لوحة المفاتيح (فيعود التركيز إلى «عدّل النص» في صفه بعد الإغلاق، وبالمؤشر يغادر
+   * القائمة كما في ت-٤). وضغطاته معزولة عن يوتيوب بعازل الجذر (ownsKey في view.js: كل ضغطة في textarea)، فالجذر المغلق يُري يوتيوب
+   * المضيف لا الحقل.
+   * @type {{ i: number, anchor: { n: number, startMs: number, textHash: string }, box: HTMLElement, field: any, msg: HTMLElement, save: HTMLElement, cancel: HTMLElement, saving: string | null, keyboard: boolean } | null}
+   */
+  let edit = null;
+
+  const arOf = (i) => rowEls[i]?.children[1]?.children[0] ?? null;
+  const lineCount = (text) => String(text).split(/\r\n|\r|\n|\u2028|\u2029/).length;
+
+  /** نص فيه مقاطع معزولة LTR عناصرَ bdi ذرية (أسماء المفاتيح في سطر الحقل)، وما سواها نص. @param {string} text */
+  const richParts = (text) => ltrParts(text).map((p) => (p.ltr ? el(doc, 'bdi', { className: 'ltr', text: p.text, attrs: { dir: 'ltr' } }) : el(doc, 'span', { text: p.text })));
+
+  /**
+   * يفتح الحقل على صف i مكان نصه (.ar يُخفى، والأصل تحته يبقى)، بنص المقطع الخام أو text. الشريط يخرج من DOM حتى يُغلق.
+   * @param {number} i @param {{ text?: string | null, focus?: boolean }} [o]
+   * @returns {boolean}
+   */
+  function openEdit(i, { text = null, focus = true } = {}) {
+    const cue = cues?.[i];
+    const ar = arOf(i);
+    if (!cue || !ar) return false;
+    if (edit) closeEdit();
+    const value = text ?? cue.text;
+    const field = el(doc, 'textarea', {
+      className: 'edit__field',
+      attrs: { 'aria-label': editFieldLabel(cue.n), 'aria-describedby': 'tj-edit-msg tj-edit-hint', lang: translationLang ?? 'und', dir: textDirection(value, translationLang) },
+    });
+    field.value = value;
+    const fit = () => setAttr(field, 'rows', String(Math.min(EDIT_ROWS.max, Math.max(EDIT_ROWS.min, lineCount(field.value)))));
+    fit();
+    const msg = el(doc, 'div', { className: 'edit__msg', attrs: { id: 'tj-edit-msg', role: 'alert', hidden: '' } });
+    const save = el(doc, 'button', { className: 'b b--primary edit__save', attrs: { type: 'button' }, text: LABELS.editSave });
+    const cancel = el(doc, 'button', { className: 'b b--ghost edit__cancel', attrs: { type: 'button' }, text: LABELS.editCancel });
+    const hint = el(doc, 'span', { className: 'edit__hint', attrs: { id: 'tj-edit-hint' } }, richParts(editHintText()));
+    const box = el(doc, 'div', { className: 'edit' }, [field, msg, el(doc, 'div', { className: 'edit__bar' }, [hint, cancel, save])]);
+    edit = { i, anchor: markAnchor(cue), box, field, msg, save, cancel, saving: null, keyboard: false };
+
+    // Enter يحفظ وShift+Enter سطر جديد وEsc يلغي؛ وأثناء تركيب IME يُترك المفتاح للمحرّر الصيني والياباني وأمثالهما (Enter يختار).
+    field.addEventListener('keydown', (ev) => {
+      if (ev.isComposing || ev.keyCode === 229) return;
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        cancelEdit(true);
+      } else if (ev.key === 'Enter' && !ev.shiftKey) {
+        ev.preventDefault();
+        requestSave(true);
+      }
+    });
+    field.addEventListener('input', () => {
+      fit();
+      setAttr(field, 'dir', textDirection(field.value, translationLang));
+      if (!msg.hasAttribute('hidden')) {
+        setHidden(msg, true);
+        setAttr(field, 'aria-invalid', null);
+      }
+    });
+    save.addEventListener('click', (ev) => requestSave(ev.detail === 0));
+    cancel.addEventListener('click', (ev) => cancelEdit(ev.detail === 0));
+
+    rowEls[i].classList.add('editing');
+    setHidden(ar, true);
+    ar.parentNode.insertBefore(box, ar.nextSibling);
+    acts.remove();
+    actsRow = -1;
+    actsFocusEl = null;
+    if (focus) {
+      field.focus();
+      field.setSelectionRange?.(value.length, value.length);
+    }
+    return true;
+  }
+
+  /** طلب الحفظ: مرة واحدة ما دامت كتابة جارية. @param {boolean} keyboard */
+  function requestSave(keyboard) {
+    if (!edit || edit.saving !== null) return;
+    edit.keyboard = keyboard;
+    onEdit('save', edit.i, edit.field.value);
+  }
+
+  /** الإلغاء: يُغلق بلا كتابة (لا أثناء كتابة جارية). @param {boolean} keyboard */
+  function cancelEdit(keyboard) {
+    if (!edit || edit.saving !== null) return;
+    edit.keyboard = keyboard;
+    closeEdit();
+  }
+
+  /** يغلق الحقل ويعيد نص الصف والشريط: التركيز إلى «عدّل النص» إن جاء الطلب من لوحة المفاتيح، وإلا يغادر القائمة. */
+  function closeEdit() {
+    if (!edit) return;
+    const { i, box, keyboard } = edit;
+    const had = !!focusEl && box.contains(focusEl);
+    const focused = focusEl;
+    edit = null;
+    rowEls[i]?.classList.remove('editing');
+    const ar = arOf(i);
+    if (ar) setHidden(ar, false);
+    if (had && keyboard && rowEls[i]) {
+      setTabRow(i);
+      moveActs(i);
+      editBtn.focus();
+    } else if (had) focused.blur?.();
+    box.remove();
+    if (actsRow < 0 && rowEls.length) moveActs(rowEls[i] ? i : tabRow);
+  }
+
+  /** سبب منع الحفظ داخل الحقل (حارس النص، أو إخفاق الكتابة)، والحقل مفتوح بنصه والتركيز فيه. @param {string} text */
+  function editMessage(text) {
+    if (!edit) return;
+    setText(edit.msg, text);
+    setHidden(edit.msg, false);
+    setAttr(edit.field, 'aria-invalid', 'true');
+    edit.field.focus();
+  }
+
+  /** كتابة النص جارية: الحقل للقراءة وحدها حتى تنتهي. @param {string} text */
+  function editBusy(text) {
+    if (!edit) return;
+    edit.saving = text;
+    edit.field.readOnly = true;
+    setAttr(edit.box, 'aria-busy', 'true');
+    setAttr(edit.save, 'aria-disabled', 'true');
+  }
+
+  /** أخفقت الكتابة: يعود الحقل قابلًا للكتابة بنصه وسببه. @param {string} text */
+  function editFailed(text) {
+    if (!edit) return;
+    edit.saving = null;
+    edit.field.readOnly = false;
+    setAttr(edit.box, 'aria-busy', null);
+    setAttr(edit.save, 'aria-disabled', null);
+    editMessage(text);
+  }
+
+  /** نجحت كتابة text: يُغلق الحقل إن بقي مفتوحًا عليها. @param {string} text */
+  function finishEdit(text) {
+    if (edit && edit.saving === text) closeEdit();
+  }
+
   function clear() {
     if (!cues && !rowEls.length) return;
     prog.remove();
@@ -270,6 +427,8 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     actsFocusEl = null;
     marksRef = null;
     todo = new Set();
+    // الحقل أُزيل مع صفه (إغلاق اللوحة، أو فيديو آخر، أو إعادة البناء).
+    edit = null;
     generation++;
   }
 
@@ -323,6 +482,10 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
               span.setAttribute('lang', originalLang ?? 'en');
             }
           }
+        }
+        if (edit) {
+          setAttr(edit.field, 'lang', translationLang ?? 'und');
+          setAttr(edit.field, 'dir', textDirection(edit.field.value, translationLang));
         }
       }
       if (s.offsetMs === offsetMs) return { rebuilt: false, relabeled: false };
@@ -441,7 +604,19 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     get actsRow() {
       return actsRow;
     },
-    actsParts: { acts, markBtn, syncBtn },
+    actsParts: { acts, markBtn, syncBtn, editBtn },
+    openEdit,
+    closeEdit,
+    editMessage,
+    editBusy,
+    editFailed,
+    finishEdit,
+    /** صف الحقل المفتوح، أو -1. */
+    editing: () => (edit ? edit.i : -1),
+    /** حال الحقل للّقطة والحزام: صفه وسببه الظاهر وهل الكتابة جارية (لا نص المقطع). */
+    editState: () => (edit ? { row: edit.i, message: edit.msg.hasAttribute('hidden') ? null : edit.msg.textContent, busy: edit.saving !== null } : null),
+    /** عناصر الحقل (للاختبار والحزام). */
+    editParts: () => (edit ? { box: edit.box, field: edit.field, msg: edit.msg, save: edit.save, cancel: edit.cancel } : null),
     /** يعيد رسم حال الشريط (يتغير سبب تعطيل المزامنة مع زمن التشغيل والإعلان). */
     refreshActs: paintActs,
     rowEl: (i) => rowEls[i] ?? null,

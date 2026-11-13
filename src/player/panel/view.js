@@ -14,7 +14,8 @@ import { LABELS, captureLine, earlierTip, laterTip, offsetMeaningShort, offsetVa
 const KEYS = ['keydown', 'keyup', 'keypress'];
 /**
  * ت-٤: ما تعالجه اللوحة فلا يصل إلى يوتيوب: التفعيل على زر، والتنقل بين الصفوف وتمرير القائمة، والأسهم في مقطّعة الاختيار. وكل
- * ضغطة في حقل كتابة (المواصفة §٦.١). وما سواها (k وj وl وf والأرقام…) يصل إلى اختصارات يوتيوب كما من أزرار الشريط.
+ * ضغطة في حقل كتابة (المواصفة §٦.١): حقل الخطوة، وحقل تحرير نص المقطع (الفكرة ٦)، والجذر مغلق فيوتيوب يرى المضيف لا الحقل، فالعزل
+ * هنا صراحةً. وما سواها (k وj وl وf والأرقام…) يصل إلى اختصارات يوتيوب كما من أزرار الشريط.
  */
 const ACTIVATE_KEYS = new Set(['Enter', ' ', 'Spacebar']);
 const LIST_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End']);
@@ -92,7 +93,10 @@ export function createPanelView({ doc, win, on }) {
   const shell = el(doc, 'div', { className: 'root', attrs: { dir: getDir(), lang: getLocale(), 'data-theme': 'light' } });
   root.appendChild(shell);
 
-  const transcript = createTranscript({ doc, onSeek: (ms) => on.seek(ms), onAct: (act, i) => on.rowAct?.(act, i), syncReason: (i) => on.syncReason?.(i) ?? null });
+  const transcript = createTranscript({
+    doc, onSeek: (ms) => on.seek(ms), onAct: (act, i) => on.rowAct?.(act, i), syncReason: (i) => on.syncReason?.(i) ?? null,
+    onEdit: (kind, i, text) => on.rowEdit?.(kind, i, text),
+  });
 
   // ———— الرأس ————
   const load = el(doc, 'span', { className: 'load', attrs: { role: 'img', 'aria-label': LABELS.loading } }, [el(doc, 'i'), el(doc, 'i')]);
@@ -488,6 +492,9 @@ export function createPanelView({ doc, win, on }) {
       note: note.hasAttribute('hidden') ? null : { text: noteText.textContent, undo: !noteUndo.hasAttribute('hidden') },
       marked: Array.from({ length: transcript.size }, (_, i) => i).filter((i) => transcript.marked(i)),
       actsRow: transcript.actsRow,
+      // حقل تحرير المقطع (الفكرة ٦): صفه وسببه الظاهر وهل الكتابة جارية، بلا نص المقطع.
+      editing: transcript.editing() >= 0 ? transcript.editing() : null,
+      edit: transcript.editState(),
       // للحزام الحي: نقاط Tab في القائمة، ولغة الجذر، والمركّز (صفه أو منطقته)، ولون الأصل في الصف الحالي كما يحسبه المتصفح.
       tabStops: Array.from(transcript.list.querySelectorAll('.t')).filter((b) => b.getAttribute('tabindex') !== '-1').length,
       lang: shell.getAttribute('lang'),
@@ -500,7 +507,8 @@ export function createPanelView({ doc, win, on }) {
       boxes: !o.boxes ? undefined : {
         host: box(host), panel: box(panel), close: box(closeBtn), hide: box(hideBtn), follow: box(followSwitch),
         resume: box(resume), reset: box(resetBtn), earlier: box(earlierBtn), later: box(laterBtn), undo: box(undoBtn), list: box(transcript.list),
-        mark: box(transcript.actsParts.markBtn), sync: box(transcript.actsParts.syncBtn), noteUndo: box(noteUndo),
+        mark: box(transcript.actsParts.markBtn), sync: box(transcript.actsParts.syncBtn), edit: box(transcript.actsParts.editBtn), noteUndo: box(noteUndo),
+        editField: box(transcript.editParts()?.field ?? null), editSave: box(transcript.editParts()?.save ?? null), editCancel: box(transcript.editParts()?.cancel ?? null),
         dual: Array.from(segs.el.children).map(box),
         rows: (o.rows ?? []).map((i) => ({ i, label: transcript.labelOf(i), box: box(transcript.rowEl(i)), time: box(transcript.rowEl(i)?.firstElementChild ?? null) })),
       },
@@ -513,7 +521,8 @@ export function createPanelView({ doc, win, on }) {
     host, root, shell, styleMode, transcript, render, setResume, setLayout, setTheme, destroy, peek,
     /** فُتحت اللوحة من زرها في الشريط بلوحة المفاتيح: التركيز إلى زر الإغلاق (أول ما فيها). */
     focusPanel: () => closeBtn.focus(),
-    typing: () => root.activeElement === stepInput,
+    /** الكتابة في اللوحة تُمسك تبديل لغة الواجهة (content/locale.js): حقل الخطوة مركّزًا، أو حقل تحرير مقطع مفتوحًا (الفكرة ٦). */
+    typing: () => root.activeElement === stepInput || transcript.editing() >= 0,
     /** عناصر للاختبار والتركيز البرمجي. */
     parts: { panel, hideBtn, closeBtn, segs: segs.el, followSwitch, resume, resetBtn, earlierBtn, laterBtn, stepSegs: stepSegs.el, stepInput, toast, foot, bar, body, err, empty, skel, note, noteUndo, ...transcript.actsParts },
   };

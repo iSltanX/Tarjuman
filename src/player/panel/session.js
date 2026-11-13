@@ -1,7 +1,8 @@
 // جلسة اللوحة في عمود يوتيوب الثانوي: تجمع حالة المتحكم (المقاطع والإزاحة والخطوة والتفضيلات) وحالة الصفحة (الفيديو والتنقل
 // وملء الشاشة والمشغّل) وحالة الواجهة المحلية (التتبّع، ورسالة التراجع، وحقل الخطوة) في حلقة عرض واحدة. تنتهي بمغادرة صفحة
 // الفيديو أو بالتدمير، وتنقل المضيف بين الأعمدة إن أعاد يوتيوب رسمها دون أن تفقد حالتها المحلية.
-// لا تكتب في التخزين إلا عبر أفعال المتحكم (updatePrefs وupdateSettings وnudgeOffset وresetOffset وreload)، ولا ترمي إليه:
+// لا تكتب في التخزين إلا عبر أفعال المتحكم (updatePrefs وupdateSettings وnudgeOffset وresetOffset وreload، وأفعال الصف markCue
+// وsetOffset وeditCueText)، ولا ترمي إليه:
 // الإخفاق رمز في التشخيص. والمقطع الحالي بقاعدة الطبقة نفسها (indexFor.find بـlookupMs)، فيتفق الصف المميَّز مع ما على الشاشة.
 import { TjError, toErrorInfo, messageFor } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
@@ -12,8 +13,8 @@ import { watchNavigation } from '../watch/navigation.js';
 import { ATTRS, getMainVideo, getPlayer, isAdShowing, isBelow, isPlayerFullscreen, seekMainVideo } from '../youtube-dom.js';
 import { FALLBACK_HEIGHT, createColumnLayout, isBeside, placeHost } from './column.js';
 import { createFollow } from './follow.js';
-import { derive } from './model.js';
-import { LABELS, unmarkedNote } from './text.js';
+import { cueTextIssue, derive } from './model.js';
+import { LABELS, editIssueText, editedNote, unmarkedNote } from './text.js';
 import { createPanelView } from './view.js';
 
 /** رسالة «أُخفي زر النص المتزامن» وفيها «تراجع»: وقت كافٍ للقرار (كرسائل التراجع في الأدوات). */
@@ -277,6 +278,62 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     }, { visible: true, own: true });
   }
 
+  /**
+   * «عدّل النص» من صف (الفكرة ٦، ح-54): حقل مكان نص الصف بنص مقطعه الخام. المتابعة تُعلَّق ما دام مفتوحًا (كأي تركيز بلوحة المفاتيح في
+   * القائمة) فلا تُسحب القائمة من تحت الكاتب، و«العودة إلى ‹الزمن›» تعيدها. ولا إيقاف للفيديو، ولا نقرة مزدوجة (تحدد كلمة).
+   * @param {number} i
+   */
+  function editRow(i) {
+    const cue = controller.getState().arabic?.cues?.[i];
+    if (!cue || typeof controller.editCueText !== 'function') return;
+    follow.set(false);
+    view.transcript.openEdit(i);
+  }
+
+  /** نص الإخفاق داخل الحقل: أخطاء التوقيت في الترجمة بإحالة إلى المحرّر (رسالة المحرّر تعدّها بصيغته)، وغيرها نص رمزه. */
+  const editErrorText = (err) => {
+    const info = toErrorInfo(err);
+    return info.code === 'ED_SAVE_HAS_ERRORS' ? LABELS.editTimingErrors : info.message;
+  };
+
+  /**
+   * حفظ الحقل المفتوح على صف i: النص نفسه يغلقه بلا كتابة؛ وحارس النص قبل الكتابة (cueTextIssue) يقول سببه داخل الحقل ويبقيه مفتوحًا
+   * بنصه؛ وإلا editCueText، ثم «عُدِّل نص المقطع N» بتراجع لفيديوه وحده (م2). والإخفاق يُقال داخل الحقل والنص باقٍ.
+   * @param {number} i @param {string} text
+   */
+  function saveEdit(i, text) {
+    const tr = view.transcript;
+    const s = controller.getState();
+    const cue = s.arabic?.cues?.[i];
+    if (!cue || text === cue.text) {
+      tr.closeEdit();
+      return;
+    }
+    const issue = cueTextIssue(cue, text);
+    if (issue) {
+      tr.editMessage(editIssueText(issue));
+      return;
+    }
+    const videoId = s.videoId;
+    tr.editBusy(text);
+    act(async () => {
+      let r;
+      try {
+        r = await controller.editCueText({ index: i }, text);
+      } catch (err) {
+        if (!destroyed) tr.editFailed(editErrorText(err));
+        throw err;
+      }
+      if (destroyed) return;
+      tr.finishEdit(text);
+      showNote(editedNote(cue.n), () => {
+        if (controller.getState().videoId === videoId) return r.undo();
+        showNote(LABELS.undoStale);
+        return null;
+      });
+    });
+  }
+
   // ———— أفعال المستخدم ————
   function clearToast() {
     toastHold?.cancel();
@@ -304,7 +361,10 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     close: () => setPrefs({ ui: { panelOpen: false } }),
     setDual: (v) => setPrefs({ ui: { panelDual: v } }),
     toastHold: (why, held) => toastHold?.hold(why, held),
-    rowAct: (act, i) => (act === 'mark' ? markRow(i) : syncRow(i)),
+    rowAct: (act, i) => (act === 'mark' ? markRow(i) : act === 'edit' ? editRow(i) : syncRow(i)),
+    rowEdit: (kind, i, text) => {
+      if (kind === 'save') saveEdit(i, text);
+    },
     syncReason,
     noteHold: (why, held) => noteHold?.hold(why, held),
     noteUndo() {
@@ -561,6 +621,8 @@ export function createPanelSession({ controller, doc, win, link = null }) {
 
   return {
     holdsFlow: () => !destroyed && view.typing(),
+    /** حقل تحرير نص مقطع مفتوح في اللوحة (الفكرة ٦). */
+    editing: () => !destroyed && view.transcript.editing() >= 0,
     /** يضع المضيف أول ابن في العمود (ينقله من عمود قديم)، ويربط الفيديو والمراقبة، ويعيد الرسم. */
     attach(next) {
       if (destroyed) return;
@@ -604,7 +666,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       return {
         ...counts, lastCode, mode: p.mode, kind: p.kind, rows: p.rows, follow: follow.on, place: p.place, narrow: p.narrow, wide: p.wide,
         theme: p.theme, styleMode: view.styleMode, anchor, toast: !!toast, video: !!video, mirrored: columns.mirrored, fitted: columns.fitted,
-        marked: p.marked.length, note: !!note,
+        marked: p.marked.length, note: !!note, editing: view.transcript.editing() >= 0,
       };
     },
     destroy() {

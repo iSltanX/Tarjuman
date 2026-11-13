@@ -1,6 +1,7 @@
 // منطق اللوحة النقي (بلا DOM): الجدول الزمني للمقاطع (المقطع الحالي بقاعدة الطبقة نفسها)، ونموذج العرض من حالة المتحكم (أي
 // شكل يظهر الآن وبأي نص). docs/product-spec.md §٦.٦. والنص الأصلي المتداخل مع كل مقطع عربي (originalLookup) في النواة منذ الفكرة
 // ١١: src/core/align/original.js.
+import { findIssues } from '../../core/edit/issues.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
 import { indexFor } from '../sync/cue-index.js';
 import { messageFor, hasCode } from '../../core/errors/index.js';
@@ -58,6 +59,21 @@ export function createTimeline(cues) {
   }
 
   return { size: n, locate, rowAtRank, rankOf };
+}
+
+/** رموز فحص المحرّر التي يمنع بها التحرير السريع الحفظ (cueTextIssue). */
+const EDIT_BLOCKERS = new Set(['ED_TEXT_INVALID', 'ED_TEXT_EMPTY', 'ED_TEXT_BLANK_LINE', 'ED_TEXT_BREAKS_SRT']);
+
+/**
+ * ما يمنع حفظ نص من اللوحة (الفكرة ٦، ح-54): فحوص المحرّر نفسها (findIssues) على المقطع وحده بنصه الجديد، وما يُمنع منها النص
+ * الفارغ (ED_TEXT_EMPTY) وما يكسر SRT (سطر فارغ، أو سطر يُقرأ رأسَ مقطع) وما لا يقبله التخزين (ED_TEXT_INVALID). والمحرّر يحفظ الثلاثة
+ * الأولى بتحذير ويمنع تصديرها، فالتحرير السريع لا يُدخلها ويحيل إليه. ولا تُفحص هنا التداخلات ولا الكثافة: النص وحده يتغير.
+ * @param {Cue} cue @param {string} text
+ * @returns {{ code: string, params: Record<string, string | number> | null } | null}
+ */
+export function cueTextIssue(cue, text) {
+  const hit = findIssues([{ ...cue, text }]).list.find((x) => EDIT_BLOCKERS.has(x.code));
+  return hit ? { code: hit.code, params: hit.params } : null;
 }
 
 /**
