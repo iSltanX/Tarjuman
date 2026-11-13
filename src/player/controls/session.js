@@ -1171,7 +1171,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     const files = prep.built.files;
     const r = await saveFiles({ exportFlow: flows.exportFlow, files, doc });
-    if (destroyed || ui.download !== d) return;
+    if (destroyed) return;
+    // تبدّل الفيديو وحوار الحفظ مفتوح (ع-٦): نزل الملف ولا تُحفظ بصمته لغير الفيديو المعروض، فيُنبَّه في الصفحة الجديدة.
+    if (ui.download !== d) {
+      if (r.saved.length) addToast('warning', messageFor('CT_FINGERPRINT_VIDEO_CHANGED'));
+      return;
+    }
     d.busy = false;
     if (r.saved.length) {
       counts.downloads++;

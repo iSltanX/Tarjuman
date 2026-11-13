@@ -264,14 +264,26 @@ test('إلغاء حوار الحفظ في جزء يوقف بقية الأجزا�
   assert.ok(page.ui.menuText().includes(messageFor('SV_CANCELLED')));
 });
 
-test('تبدّل الفيديو أثناء الحفظ: لا بصمة تُحفظ للفيديو الجديد، والقائمة تُغلق', async () => {
+test('تبدّل الفيديو أثناء الحفظ: لا بصمة تُحفظ للفيديو الجديد، والقائمة تُغلق، وتنبيه في الصفحة الجديدة أن البصمة لم تُحفظ (ع-٦)', async () => {
   const page = withTrack();
   open(page);
   page.flows.onSave = () => page.controller.set({ videoId: 'BBBBBBBBBBB', captured: [] });
   click(page.ui.item(DL));
   await settle();
+  assert.equal(page.flows.downloads.length, 1, 'الملف نُزّل');
   assert.equal(page.controller.calls.some((c) => c[0] === 'recordExport'), false);
   assert.equal(page.ui.menuOpen(), false);
+  assert.deepEqual(page.ui.toasts().map((t) => t.tone), ['warning'], 'تنبيه باقٍ حتى يُغلق');
+  assert.equal(page.ui.toasts()[0].text.includes(messageFor('CT_FINGERPRINT_VIDEO_CHANGED')), true);
+  // وأُلغي حوار الحفظ وقد تبدّل الفيديو: لم ينزل شيء، فلا تنبيه.
+  const cancelled = withTrack();
+  open(cancelled);
+  cancelled.flows.saveResults = [{ ok: false, code: 'SV_CANCELLED' }];
+  cancelled.flows.onSave = () => cancelled.controller.set({ videoId: 'BBBBBBBBBBB', captured: [] });
+  click(cancelled.ui.item(DL));
+  await settle();
+  assert.equal(cancelled.flows.downloads.length, 0);
+  assert.equal(cancelled.ui.toasts().length, 0);
 });
 
 // اسم اللغة من رمز المسار الملتقط نفسه (Intl.DisplayNames بالعربية)، لا نص «الإنجليزية» مكتوب في الشيفرة.

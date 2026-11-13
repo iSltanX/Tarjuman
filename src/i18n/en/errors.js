@@ -173,6 +173,7 @@ export default Object.freeze({
   CT_NO_CAPTIONS: 'This video has no subtitles available on YouTube.',
   CT_INCOMPLETE_AT: 'The last subtitle is at {last} and the video is {duration}; the text may be incomplete.',
   CT_FINGERPRINT_NOT_SAVED: 'The file was downloaded, but what’s needed to compare it with your translation later couldn’t be saved. Download again; if it keeps happening, copy the diagnostics report.',
+  CT_FINGERPRINT_VIDEO_CHANGED: 'The video changed while the original’s file was downloading, so what’s needed to compare it with your translation later wasn’t saved. To compare later, download it again from its video’s page.',
   CT_SPLIT_INVALID: 'Enter a number of segments per part between 50 and 2000.',
 
   CT_VIDEO_CHANGED: 'The video changed before the action finished, so nothing was applied to the new video. Try again here.',
