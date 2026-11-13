@@ -1,30 +1,30 @@
 // عمود يوتيوب الثانوي (docs/product-spec.md §٦.٦): مضيف اللوحة أول أبنائه، فيضعه يوتيوب يمين الفيديو في التخطيط العريض
 // وتحته في وضع المسرح، ولا يغطي الفيديو ولا أدواته. وفي تخطيط العمود الواحد (عرض ضيق، `is-single-column`) يُخفي يوتيوب
 // العمود الثانوي كله وينقل مقترحاته إلى #below، فتنتقل اللوحة إلى #below بعد صندوق بيانات الفيديو (العنوان والقناة) كما في لوحة
-// WatchNarrow، وتعود إلى العمود بعودة العمودين. هنا وحدها محددات هذه المواضع (مثل محددات youtube-dom.js: غير رسمية،
-// فالحاجة إلى تغييرها في ملف واحد)، وقراءة هندسة المشغّل والعمود. وعمود يقع فوق المشغّل (تخطيط يجرّبه يوتيوب) يُعامل كالعمود
-// الواحد: اللوحة تحت الفيديو (chooseColumn، تدقيق Fable، FA-22).
-import { getPlayer } from '../youtube-dom.js';
+// WatchNarrow، وتعود إلى العمود بعودة العمودين. ومحددات هذه المواضع وسماتها في youtube-dom.js مع سائر أسماء يوتيوب غير الرسمية
+// (PANEL_SELECTORS وATTRS، الفكرة ١)، ويعيد هذا الملف تصديرها بأسمائه؛ وهنا قراءة هندسة المشغّل والعمود. وعمود يقع فوق المشغّل
+// (تخطيط يجرّبه يوتيوب) يُعامل كالعمود الواحد: اللوحة تحت الفيديو (chooseColumn، تدقيق Fable، FA-22).
+import { ATTRS, PANEL_SELECTORS, getPlayer, isBelow } from '../youtube-dom.js';
 
 /** بالترتيب: الداخلي ثم الخارجي، داخل ytd-watch-flexy أولًا ثم مطلقًا (احتياط لتغيّر البنية). */
 export const COLUMN_SELECTORS = Object.freeze([
-  'ytd-watch-flexy #secondary-inner',
-  'ytd-watch-flexy #secondary',
-  '#secondary-inner',
-  '#secondary',
+  PANEL_SELECTORS.secondaryInner,
+  PANEL_SELECTORS.secondary,
+  PANEL_SELECTORS.anySecondaryInner,
+  PANEL_SELECTORS.anySecondary,
 ]);
 
 /** تخطيط العمود الواحد: سمة على ytd-watch-flexy، والموضع البديل تحت الفيديو وبعد بيانات الفيديو فيه. */
-export const SINGLE_COLUMN_ATTR = 'is-single-column';
-export const BELOW_SELECTOR = 'ytd-watch-flexy #below';
-export const BELOW_ANCHOR_TAG = 'ytd-watch-metadata';
+export const SINGLE_COLUMN_ATTR = ATTRS.singleColumn;
+export const BELOW_SELECTOR = PANEL_SELECTORS.below;
+export const BELOW_ANCHOR_TAG = PANEL_SELECTORS.belowAnchor;
 
 /** ارتفاع احتياطي للوحة قبل أن يُعرف ارتفاع المشغّل. */
 export const FALLBACK_HEIGHT = 480;
 
 /** @param {Document} doc @returns {HTMLElement | null} العمود الثانوي، أو #below في تخطيط العمود الواحد (بالمحددات وحدها) */
 export function findColumn(doc) {
-  if (doc.querySelector('ytd-watch-flexy')?.hasAttribute?.(SINGLE_COLUMN_ATTR)) {
+  if (doc.querySelector(PANEL_SELECTORS.flexy)?.hasAttribute?.(SINGLE_COLUMN_ATTR)) {
     const below = doc.querySelector(BELOW_SELECTOR);
     if (below) return below;
   }
@@ -49,9 +49,9 @@ const rectOf = (el) => {
  * @param {Document} doc @param {Window} win
  */
 export function layoutKeyOf(doc, win) {
-  const flexy = doc.querySelector('ytd-watch-flexy');
+  const flexy = doc.querySelector(PANEL_SELECTORS.flexy);
   const attrs = flexy?.getAttributeNames?.() ?? [];
-  return `${win.innerWidth ?? 0}|${attrs.filter((n) => /column|window|theater|full/.test(n)).sort().join(',')}`;
+  return `${win.innerWidth ?? 0}|${attrs.filter((n) => ATTRS.layout.test(n)).sort().join(',')}`;
 }
 
 /**
@@ -80,7 +80,7 @@ export function overlapsPlayer(player, column) {
  */
 export function chooseColumn(doc, win, memo, now = Date.now) {
   const column = findColumn(doc);
-  if (!column || column.id === 'below') return column;
+  if (!column || isBelow(column)) return column;
   const below = doc.querySelector(BELOW_SELECTOR);
   if (!below) return column;
   if (doc.fullscreenElement) return memo.overlapKey !== null ? below : column;
@@ -122,7 +122,7 @@ function belowAnchor(column) {
  * @returns {boolean} هل نُقل أو أُدرج
  */
 export function placeHost(host, column) {
-  const anchor = column.id === 'below' ? belowAnchor(column) : null;
+  const anchor = isBelow(column) ? belowAnchor(column) : null;
   const before = anchor ? anchor.nextSibling : column.firstChild;
   const placed = host.parentNode === column && (anchor ? anchor.nextSibling === host : (column.firstElementChild ?? column.firstChild) === host);
   if (placed) return false;
@@ -142,9 +142,9 @@ export function isBeside(player, column) {
 }
 
 /** عمودا صفحة المشاهدة: الحاوية ذات flex، والعمود الأول (المشغّل) والثانوي. */
-export const COLUMNS_SELECTOR = 'ytd-watch-flexy #columns';
-export const PRIMARY_SELECTOR = 'ytd-watch-flexy #primary';
-export const SECONDARY_SELECTOR = 'ytd-watch-flexy #secondary';
+export const COLUMNS_SELECTOR = PANEL_SELECTORS.columns;
+export const PRIMARY_SELECTOR = PANEL_SELECTORS.primary;
+export const SECONDARY_SELECTOR = PANEL_SELECTORS.secondary;
 /** الخصائص الأفقية التي تتبادل جهتيها في المرآة. */
 const SIDES = Object.freeze([['padding-left', 'paddingRight'], ['padding-right', 'paddingLeft'], ['margin-left', 'marginRight'], ['margin-right', 'marginLeft']]);
 /**

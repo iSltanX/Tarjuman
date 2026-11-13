@@ -9,7 +9,7 @@ import { holdTimer } from '../../ui/hold.js';
 import { syncOffset } from '../controls/sentence.js';
 import { markToast, offsetToast, parseSeconds, syncUndoStaleLine } from '../controls/text.js';
 import { watchNavigation } from '../watch/navigation.js';
-import { getMainVideo, getPlayer, isAdShowing, isPlayerFullscreen, seekMainVideo } from '../youtube-dom.js';
+import { ATTRS, getMainVideo, getPlayer, isAdShowing, isBelow, isPlayerFullscreen, seekMainVideo } from '../youtube-dom.js';
 import { FALLBACK_HEIGHT, createColumnLayout, isBeside, placeHost } from './column.js';
 import { createFollow } from './follow.js';
 import { derive } from './model.js';
@@ -427,7 +427,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       }
       // اللوحة ظاهرة في العمود الثانوي: عرضه مريح (SIDE_WIDTH)، وفي الواجهة العربية يمين الفيديو بتبديل العمودين (ويبقى كذلك
       // خلف ملء الشاشة فلا يقفز التخطيط عند الخروج).
-      const inSecondary = !!column && column.id !== 'below';
+      const inSecondary = !!column && !isBelow(column);
       columns.update(inSecondary && (model.mode !== 'none' || (fullscreen && columns.active)));
       measure();
       const out = view.render(model, {
@@ -479,7 +479,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   const onWin = () => render();
   const onFullscreen = () => render();
 
-  const isDark = () => doc.documentElement.hasAttribute('dark');
+  const isDark = () => doc.documentElement.hasAttribute(ATTRS.dark);
 
   function teardown() {
     off?.();
@@ -521,7 +521,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     off = controller.subscribe(render);
     if (MO) {
       themeObserver = new MO(() => view.setTheme(isDark()));
-      themeObserver.observe(doc.documentElement, { attributes: true, attributeFilter: ['dark'] });
+      themeObserver.observe(doc.documentElement, { attributes: true, attributeFilter: [ATTRS.dark] });
     }
     doc.addEventListener('fullscreenchange', onFullscreen);
     win.addEventListener('resize', onWin);
