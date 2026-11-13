@@ -28,6 +28,7 @@ import { holdTimer, onHold } from '../../ui/hold.js';
 import { createMenu } from '../../ui/menu.js';
 import { pairLabel } from '../../ui/lang.js';
 import { jumpToVideo, openVideo as defaultOpenVideo } from '../../ui/seek.js';
+import { TOAST_MS } from '../../ui/toast.js';
 import { openDriftDialog } from './drift-dialog.js';
 import { confirmLeave, openDialog, setDisabled } from './dialogs.js';
 import { keepFocus } from './focus.js';
@@ -372,7 +373,8 @@ export async function mountEditor(app, {
   const unsavedDiscard = button({ label: lt('editor.unsaved.discard'), variant: 'ghost', size: 'sm', onClick: () => onDiscard(), doc });
   // الشريط السفلي معكوس الألوان (لوحة Editor): معيّن ثم الجملة، وفي النهاية «تجاهل» ثم «حفظ» (الحفظ أقصى النهاية).
   const unsavedEl = el('div', { className: 'ed-unsaved', attrs: { role: 'region', 'aria-label': lt('editor.unsaved.region') }, children: [el('span', { className: 'ed-unsaved__dot', attrs: { 'aria-hidden': 'true' }, doc }), unsavedText, el('span', { className: 'ed-spacer', doc }), unsavedDiscard, unsavedSave], doc });
-  const toastEl = el('div', { className: 'ed-toast', attrs: { role: 'status', 'aria-live': 'polite', inert: '' }, doc });
+  // المنطقة الحية لا تخمد أبدًا: قارئ الشاشة يعلن ما يُكتب في منطقة حاضرة في شجرة الوصول، لا منطقةً تدخلها مع نصها (ت-١٤).
+  const toastEl = el('div', { className: 'ed-toast', attrs: { role: 'status', 'aria-live': 'polite' }, doc });
   // الرسالة العابرة تحت الرأس عند طرفه (تحت «حفظ»)، لا فوق العنوان (ملاحظة W4 من لقطة w4-editor-saved).
   headEl.appendChild(toastEl);
   const mainEl = el('section', { className: 'ed-main', attrs: { 'aria-label': lt('editor.list.region') }, children: [el('div', { className: 'ed-main__bar', children: [resumeChip, el('span', { className: 'ed-spacer', doc }), counterEl], doc }), listHead, scroller], doc });
@@ -997,13 +999,16 @@ export async function mountEditor(app, {
     }) : null;
     toastEl.replaceChildren(...[el('span', { text, doc }), undo].filter(Boolean));
     toastEl.className = `ed-toast ed-toast--${tone}${undo ? ' ed-toast--action' : ''} is-shown`;
-    toastEl.removeAttribute('inert');
     toastHold?.cancel();
-    toastHold = holdTimer({ ms: undo ? 7000 : 3000, onExpire: hideToast, setTimer: (fn, ms) => win.setTimeout(fn, ms), clearTimer: (id) => win.clearTimeout(id) });
+    // الخطأ ضعف المدة كالرسالة المشتركة src/ui/toast.js (ت-١٤)، و«تراجع» أطول.
+    toastHold = holdTimer({ ms: (tone === 'danger' ? 2 : 1) * (undo ? 7000 : TOAST_MS), onExpire: hideToast, setTimer: (fn, ms) => win.setTimeout(fn, ms), clearTimer: (id) => win.clearTimeout(id) });
     toastHold.arm();
   }
 
-  /** المخفية خامدة (inert): زرها خارج ترتيب Tab وشجرة الوصول، فلا يُفعَّل وهو غير مرئي (U21). */
+  /**
+   * المخفية: محتواها خامد (inert)، فزر «تراجع» خارج ترتيب Tab وشجرة الوصول ولا يُفعَّل وهو غير مرئي (U21)، ولا يُقرأ نصها القديم.
+   * والمنطقة الحية نفسها لا تخمد (ت-١٤)، والرسالة التالية تستبدل المحتوى كله.
+   */
   function hideToast() {
     toastHold?.cancel();
     toastHold = null;
@@ -1014,7 +1019,7 @@ export async function mountEditor(app, {
     }
     toastReturn = null;
     toastEl.classList.remove('is-shown');
-    toastEl.setAttribute('inert', '');
+    for (const child of toastEl.children) child.setAttribute('inert', '');
   }
 
   // ---- الاستكمال (R52) ----

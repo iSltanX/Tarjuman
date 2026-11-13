@@ -237,7 +237,9 @@ test('U21: زر «تراجع» في الرسالة العابرة يخرج من 
   assert.equal(toast.hasAttribute('inert'), false, 'ظاهرة قابلة للتفاعل');
   await m.env.advance(7000);
   assert.equal(toast.classList.contains('is-shown'), false);
-  assert.equal(toast.hasAttribute('inert'), true, 'المخفية خامدة');
+  // الزر خامد في المخفية، والمنطقة الحية نفسها لا تخمد فتُعلن الرسالة التالية (ت-١٤).
+  assert.equal(toast.querySelector('.ed-toast__action').hasAttribute('inert'), true, 'زر المخفية خامد');
+  assert.equal(toast.hasAttribute('inert'), false, 'المنطقة الحية غير خامدة');
 });
 
 // ---- U22: التركيز في اللوحة الجانبية ----

@@ -42,7 +42,13 @@ export function openDialog({ doc, title, body, content = null, size = 'sm', tone
   return new Promise((resolve) => {
     // تبديل اللغة يُؤجَّل حتى يُغلق الحوار، فلا تتبدّل الصفحة خلفه ويبقى هو بلغة أخرى.
     const release = holdPage();
-    const dialog = el('dialog', { className: `tj-dialog ed-dialog ed-dialog--${size}${tone === 'danger' ? ' tj-dialog--danger' : ''}`, attrs: { 'aria-labelledby': 'ed-dialog-title' }, doc });
+    // اسمه عنوانه، ووصفه فقرة السؤال إن كانت (كـconfirmDialog؛ كان حارس المغادرة يُسمع عنوانه دون سؤاله، ت-١٤). وحوار المحتوى وحده
+    // (معاينة أو جدول أو نموذج) بلا وصف: يُقرأ بالتنقّل فيه، والوصف به يقرأ الجدول كله عند الفتح.
+    const dialog = el('dialog', {
+      className: `tj-dialog ed-dialog ed-dialog--${size}${tone === 'danger' ? ' tj-dialog--danger' : ''}`,
+      attrs: { 'aria-labelledby': 'ed-dialog-title', 'aria-describedby': body ? 'ed-dialog-body' : null },
+      doc,
+    });
     const buttons = actions.map((a) => {
       const b = button({ label: a.label, variant: a.variant ?? 'secondary', className: a.className ?? '', type: 'submit', value: a.value, doc });
       a.ref?.(b);
@@ -52,7 +58,7 @@ export function openDialog({ doc, title, body, content = null, size = 'sm', tone
       className: 'tj-dialog__form', attrs: { method: 'dialog' },
       children: [
         el('h2', { className: 'tj-dialog__title', text: title, attrs: { id: 'ed-dialog-title' }, doc }),
-        body ? el('p', { className: 'tj-dialog__body', text: body, doc }) : null,
+        body ? el('p', { className: 'tj-dialog__body', text: body, attrs: { id: 'ed-dialog-body' }, doc }) : null,
         content,
         el('div', { className: 'tj-dialog__footer', children: buttons, doc }),
       ],

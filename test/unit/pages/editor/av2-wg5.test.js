@@ -124,7 +124,9 @@ test('AV2 U-042: المؤشر على رسالة التراجع يمسكها بع
   assert.ok(shown(toastEl), 'المدة كاملة من المغادرة');
   await env.advance(200);
   assert.ok(!shown(toastEl));
-  assert.ok(toastEl.hasAttribute('inert'));
+  // زر المخفية خامد، والمنطقة الحية نفسها لا تخمد (ت-١٤).
+  assert.ok(toastEl.querySelector('.ed-toast__action').hasAttribute('inert'));
+  assert.ok(!toastEl.hasAttribute('inert'));
 });
 
 test('AV2 U-042: التركيز على زر التراجع يمسكها، وبعد خروجه تزول وينتقل التركيز إلى ما كان عليه لا إلى body', async () => {
