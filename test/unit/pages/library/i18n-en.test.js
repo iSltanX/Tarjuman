@@ -11,6 +11,7 @@ import {
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW, makeCues, videoRecord } from '../../../helpers/fixtures.js';
 import { sampleBundle } from '../../../helpers/fixtures-v2.js';
+import { exportContent } from '../../../../src/pages/library/export.js';
 import { newDocument, settle, textOf } from './fake-dom.js';
 
 const ARABIC = /[؀-ۿ]/;
@@ -64,7 +65,7 @@ test('الإنجليزية: الصفحة والتوسيع وقائمة المز�
   more.click();
   const after = allText(m.root);
   assert.equal(hasArabic(after), false, `بعد التوسيع والقائمة: ${after.split('\n').find(hasArabic)}`);
-  assert.match(after, /Export SRT/);
+  assert.match(after, /Export…/);
   assert.match(after, /Delete video data/);
 });
 
@@ -115,4 +116,13 @@ test('رجوع اللغة إلى العربية يعيد النصوص العرب
   const now = Date.parse(NOW);
   assert.equal(relativeTime(new Date(now - 3 * 3600 * 1000).toISOString(), now), 'قبل 3 ساعات');
   void makeCues;
+});
+
+test('الإنجليزية: حوار «تصدير…» (الفكرة ١١) بالصيغة والمحتوى والتوقيت وسبب تعطيل «مع الأصل» بلا حرف عربي', () => {
+  setLocale('en');
+  const doc = newDocument();
+  const c = exportContent({ doc, offsetMs: 500, hasOriginal: false, name: () => 'AAAAAAAAAAA.en.srt' });
+  const text = allText(c.root);
+  assert.equal(hasArabic(text), false, text.split('\n').find(hasArabic));
+  for (const s of ['Format', 'Content', 'Translation only', 'With the original', 'No original is saved for this video.', 'Exported file timing', 'File name']) assert.ok(text.includes(s), s);
 });

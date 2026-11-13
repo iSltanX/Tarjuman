@@ -17,14 +17,14 @@ import { MAX_PASTE_CHARS } from '../../core/model/messages.js';
 /** تعذّرت قراءة التفضيلات: الافتراضي، لكن بلا صور (لا طلب خارجي ما لم يُعرف أن المستخدم يريده؛ مراجعة الهوية L9). */
 const PREFS_UNREADABLE = Object.freeze({ ...DEFAULT_PREFS, ui: Object.freeze({ ...DEFAULT_PREFS.ui, thumbnails: false }) });
 import { alertBox, button, chipGroup, confirmDialog, el, emptyState, icon, ltr, statusPill } from '../../ui/components.js';
-import { COUNT_FORMS, formatBytes, formatCount, offsetInline, pasteKeys, textDirection } from '../../ui/format.js';
+import { COUNT_FORMS, formatBytes, formatCount, pasteKeys, textDirection } from '../../ui/format.js';
 import { closeMenuWithin, createMenu } from '../../ui/menu.js';
 import { holdPage } from '../../ui/page-hold.js';
 import { createToaster } from '../../ui/toast.js';
 import { activateSlot, applyContinuation, applyUpload, deleteVideoData, exportArabic, exportEnglish, exportSlot, exportStudy, markAmbiguous, prepareUpload, studyName, studyNote, undoActivation } from './actions.js';
-import { radioGroup } from './choice.js';
 import { createCopyState } from './copy.js';
 import { deleteContent } from './delete.js';
+import { exportContent } from './export.js';
 import { createExpansion } from './expand.js';
 import { captureFocus, restoreFocus, toggleKeyOf } from './focus.js';
 import {
@@ -275,18 +275,16 @@ export function createLibrary(env) {
   }
   const removeUnreadable = (m) => guarded(() => deleteUnreadable(m));
 
-  function askTiming(offsetMs) {
-    const group = radioGroup({
-      legend: tr('library.dialog.timingTitle'),
-      options: [
-        { value: 'shown', label: tr('library.dialog.timingShown', { offset: offsetInline(offsetMs) }) },
-        { value: 'saved', label: tr('library.dialog.timingSaved') },
-      ],
-      doc,
-    });
-    return confirm({ title: tr('library.dialog.timingTitle'), body: tr('library.dialog.timingBody', { offset: offsetInline(offsetMs) }), confirmLabel: tr('library.dialog.export'), content: group.root, doc })
-      .then((ok) => (ok ? group.value() : null));
-  }
+  /**
+   * حوار «تصدير…» لملف الترجمة (الفكرة ١١): الصيغة والمحتوى، والتوقيت عند إزاحة غير صفر، ومعاينة الاسم؛ الإلغاء null.
+   * @param {{ displayTitle: string }} m @param {string} body أي نسخة تُصدَّر
+   * @returns {import('./actions.js').AskExport}
+   */
+  const askExport = (m, body) => ({ offsetMs, hasOriginal, name }) => {
+    const content = exportContent({ doc, offsetMs, hasOriginal, name });
+    return confirm({ title: tr('library.dialog.exportTitle', { title: isolate(clip(m.displayTitle, 80)) }), body, confirmLabel: tr('library.dialog.download'), content: content.root, doc })
+      .then((ok) => (ok ? content.value() : null));
+  };
 
   /** نتيجة الحفظ (saveFile) رسالةً عابرة: النجاح، والرجوع إلى التنزيل العادي، والإلغاء، والفشل برمزه. يعيد هل حُفظ. */
   function savedToast(saved, successCode = 'PG_EXPORT_DONE') {
@@ -307,7 +305,8 @@ export function createLibrary(env) {
 
   const exportFile = (m, option) => guarded(async () => {
     if (option.action.type === 'ar') {
-      const r = await exportArabic({ store, videoId: m.videoId, variant: option.action.variant, askTiming, save: env.saveFile });
+      const body = tr(option.action.variant === 'original' ? 'library.exportDialog.bodyUploaded' : 'library.exportDialog.bodyCurrent');
+      const r = await exportArabic({ store, videoId: m.videoId, variant: option.action.variant, ask: askExport(m, body), save: env.saveFile });
       if (r && savedToast(r.saved)) exportNotes(r.notes);
     } else {
       const r = await exportEnglish({ store, videoId: m.videoId, trackKey: option.action.trackKey, save: env.saveFile, now });
@@ -316,9 +315,9 @@ export function createLibrary(env) {
     }
   }, m);
 
-  /** «تصدير SRT» في بطاقة ترجمة (نشطة أو لا). */
+  /** «تصدير…» في بطاقة ترجمة (نشطة أو لا). */
   const exportSlotFile = (m, n) => guarded(async () => {
-    const r = await exportSlot({ store, videoId: m.videoId, n, askTiming, save: env.saveFile });
+    const r = await exportSlot({ store, videoId: m.videoId, n, ask: askExport(m, tr('library.exportDialog.bodySlot', { n })), save: env.saveFile });
     if (r && savedToast(r.saved)) exportNotes(r.notes);
   }, m);
 

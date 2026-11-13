@@ -170,10 +170,10 @@ test('rowModel: بلا عنوان محفوظ يظهر بنصه واسم الوص
   assert.equal(rowModel(entry(), NOW).accessName, 'محاضرة عن الخطوط');
 });
 
-test('خيارات التصدير: العربية الحالية والأصل والإنجليزية، والمعطّل يذكر سببه', () => {
+test('خيارات التصدير: العربية الحالية والأصل (بحوار «تصدير…»، الفكرة ١١) والإنجليزية، والمعطّل يذكر سببه', () => {
   const full = exportOptions(entry({ arabic: { fileName: 'x', cueCount: 3, edited: true, matched: true, missing: 0, extra: 0, drift: 0 } }));
   assert.deepEqual(full.map((o) => [o.label, o.disabledReason]), [
-    ['الترجمة — النسخة الحالية', null], ['الترجمة — النسخة المرفوعة', null], ['الإنجليزية — المستخرجة', null],
+    ['الترجمة — النسخة الحالية…', null], ['الترجمة — النسخة المرفوعة…', null], ['الإنجليزية — المستخرجة', null],
   ]);
   assert.deepEqual(full[2].action, { type: 'en', trackKey: 'en|manual' });
   assert.equal(full[2].hint, '427 مقطعًا');

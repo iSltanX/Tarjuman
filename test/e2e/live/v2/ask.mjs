@@ -55,6 +55,8 @@ try {
     const beforeSet = await snapshot();
     await clickOn(lib, `${row}?.querySelector('button.lib-more')`, 'المزيد');
     await clickOn(lib, byText('.tj-menu__list:not([hidden]) [role=menuitem]', item), item);
+    // الترجمة بحوار «تصدير…» (الفكرة ١١): SRT وحدها افتراضيًا، ثم «تنزيل».
+    if (label === 'العربية') await clickOn(lib, `document.querySelector('dialog[open] button[value="confirm"]')`, 'تنزيل');
     console.log(`\n>>> حوار الحفظ مفتوح (${label}): اضغط «حفظ» في نافذة ${BROWSERS[browser].name}.`);
     const t0 = Date.now();
     const file = await waitSaved(beforeSet, match);

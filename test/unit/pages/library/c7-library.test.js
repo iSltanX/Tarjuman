@@ -109,7 +109,7 @@ test('U72: الـDOM الوهمي كالمتصفح — فصل المركّز ي�
   assert.ok(doc.activeElement === doc.body, 'ضبط textContent على الأب يفصل المركّز');
 });
 
-test('U50: «تفعيل» في بطاقة يُبقي التركيز على «تصدير SRT» في البطاقة نفسها (صارت النشطة)', async () => {
+test('U50: «تفعيل» في بطاقة يُبقي التركيز على «تصدير…» في البطاقة نفسها (صارت النشطة)', async () => {
   const m = await mount();
   await expand(m, IDS[0]);
   press(buttonNamed(cardOf(m, IDS[0], 2), 'تفعيل'));

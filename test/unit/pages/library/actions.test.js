@@ -29,12 +29,21 @@ const sink = () => {
   const files = [];
   return { files, save: async (f) => { files.push(f); return { ok: true, mode: 'downloads', downloadId: files.length }; } };
 };
-const noAsk = () => assert.fail('لا سؤال عن التوقيت عند إزاحة صفر');
+/** حوار «تصدير…» (الفكرة ١١) بإجابة ثابتة؛ ويسجّل ما سُئل به. */
+const askWith = (choice = {}, log = []) => async (o) => {
+  log.push(o);
+  return { format: 'srt', bilingual: false, timing: 'shown', ...choice };
+};
+const noAsk = askWith();
 
-test('تصدير العربية: إزاحة صفر ← المحفوظ دون سؤال، باسم VIDEOID.ar.srt وبترقيم من 1', async () => {
+test('تصدير العربية: إزاحة صفر ← المحفوظ بلا سؤال توقيت في الحوار، باسم VIDEOID.ar.srt وبترقيم من 1', async () => {
   const { store } = await seeded();
   const { files, save } = sink();
-  const r = await exportArabic({ store, videoId: ID, variant: 'current', askTiming: noAsk, save });
+  const asked = [];
+  const r = await exportArabic({ store, videoId: ID, variant: 'current', ask: askWith({}, asked), save });
+  assert.equal(asked.length, 1);
+  assert.equal(asked[0].offsetMs, 0, 'الحوار يعرف أن لا إزاحة فلا يسأل عن التوقيت');
+  assert.equal(asked[0].hasOriginal, true);
   assert.deepEqual(r, { name: `${ID}.ar.srt`, timing: 'saved', cueCount: 5, saved: { ok: true, mode: 'downloads', downloadId: 1 }, notes: [] });
   assert.equal(files.length, 1);
   const back = parseSrtStrict(files[0].text);
@@ -47,13 +56,13 @@ test('تصدير العربية بإزاحة: يسأل بقيمتها، و«كم
   for (const [choice, delta] of [['shown', 500], ['saved', 0]]) {
     const { files, save } = sink();
     const asked = [];
-    const r = await exportArabic({ store, videoId: ID, variant: 'current', askTiming: async (ms) => { asked.push(ms); return choice; }, save });
-    assert.deepEqual(asked, [500]);
+    const r = await exportArabic({ store, videoId: ID, variant: 'current', ask: askWith({ timing: choice }, asked), save });
+    assert.deepEqual(asked.map((o) => o.offsetMs), [500]);
     assert.equal(r.timing, choice);
     assert.equal(parseSrtStrict(files[0].text)[0].startMs, raw[0].startMs + delta);
   }
   const cancelled = sink();
-  assert.equal(await exportArabic({ store, videoId: ID, variant: 'current', askTiming: async () => null, save: cancelled.save }), null);
+  assert.equal(await exportArabic({ store, videoId: ID, variant: 'current', ask: async () => null, save: cancelled.save }), null);
   assert.equal(cancelled.files.length, 0);
 });
 
@@ -62,21 +71,21 @@ test('الزمن السالب بعد الإزاحة يرفض التصدير وي
   const before = await store.getVideo(ID);
   const { files, save } = sink();
   await assert.rejects(
-    exportArabic({ store, videoId: ID, variant: 'current', askTiming: async () => 'shown', save }),
+    exportArabic({ store, videoId: ID, variant: 'current', ask: askWith({ timing: 'shown' }), save }),
     (e) => e.code === 'MD_NEGATIVE_TIME' && /1، 2/.test(e.message),
   );
   assert.equal(files.length, 0);
   assert.deepEqual(await store.getVideo(ID), before);
   // «المحفوظ كما هو» يبقى متاحًا لمن يريد الملف رغم الإزاحة.
-  assert.equal((await exportArabic({ store, videoId: ID, variant: 'current', askTiming: async () => 'saved', save })).timing, 'saved');
+  assert.equal((await exportArabic({ store, videoId: ID, variant: 'current', ask: askWith({ timing: 'saved' }), save })).timing, 'saved');
 });
 
 test('الأصل المستورد بعد التحرير: النسخة الحالية غير الأصل، وأسماء الملفين مختلفة', async () => {
   const edited = makeCues(5, { text: (i) => `معدّل ${i}` });
   const { store } = await seeded({}, (r) => withArabicEdit(r, { cues: edited }, NOW));
   const { files, save } = sink();
-  const cur = await exportArabic({ store, videoId: ID, variant: 'current', askTiming: noAsk, save });
-  const orig = await exportArabic({ store, videoId: ID, variant: 'original', askTiming: noAsk, save });
+  const cur = await exportArabic({ store, videoId: ID, variant: 'current', ask: noAsk, save });
+  const orig = await exportArabic({ store, videoId: ID, variant: 'original', ask: noAsk, save });
   assert.equal(cur.name, `${ID}.ar.srt`);
   assert.equal(orig.name, `${ID}.ar.original.srt`);
   assert.match(files[0].text, /معدّل 1/);
@@ -84,10 +93,36 @@ test('الأصل المستورد بعد التحرير: النسخة الحال
   assert.doesNotMatch(files[1].text, /معدّل/);
 });
 
+test('الفكرة ١١: «تصدير…» بالصيغة والمحتوى: WebVTT ومع الأصل من مسار مرجع الترجمة، والاسم المعاين هو اسم الملف، والإزاحة على الملف كله', async () => {
+  const { store } = await seeded({ offset: 500 });
+  const { files, save } = sink();
+  const asked = [];
+  const r = await exportArabic({ store, videoId: ID, variant: 'current', ask: askWith({ format: 'vtt', bilingual: true, timing: 'shown' }, asked), save });
+  assert.equal(asked[0].hasOriginal, true);
+  assert.equal(asked[0].name({ format: 'vtt', bilingual: true }), `${ID}.ar.dual-en.vtt`, 'المعاينة');
+  assert.equal(asked[0].name({ format: 'srt', bilingual: false }), `${ID}.ar.srt`);
+  assert.equal(r.name, `${ID}.ar.dual-en.vtt`);
+  assert.equal(files[0].name, r.name);
+  // المقطع الأول 1.0–3.0 وأصله «line 1» في الزمن المحفوظ، والملف بإزاحة +0.5.
+  assert.ok(files[0].text.startsWith('WEBVTT\n\n1\n00:00:01.500 --> 00:00:03.500\nسطر 1\nline 1\n'), files[0].text.slice(0, 120));
+  assert.equal(r.timing, 'shown');
+});
+
+test('الفكرة ١١: بلا مسار أصل محفوظ «مع الأصل» غير متاح (hasOriginal: false)، ولو طُلب صُدِّرت الترجمة وحدها باسمها', async () => {
+  const { store } = await seeded({}, (rec) => ({ ...rec, english: [], fingerprints: [] }));
+  const { files, save } = sink();
+  const asked = [];
+  const r = await exportArabic({ store, videoId: ID, variant: 'current', ask: askWith({ format: 'srt', bilingual: true }, asked), save });
+  assert.equal(asked[0].hasOriginal, false);
+  assert.equal(asked[0].name({ format: 'srt', bilingual: true }), `${ID}.ar.srt`);
+  assert.equal(r.name, `${ID}.ar.srt`);
+  assert.doesNotMatch(files[0].text, /line/);
+});
+
 test('تصدير العربية: لا ترجمة أو لا سجل برمزين ثابتين', async () => {
   const { store } = await seeded({ arabic: false });
-  await assert.rejects(exportArabic({ store, videoId: ID, variant: 'current', askTiming: noAsk, save: async () => ({ ok: true, mode: 'downloads', downloadId: 1 }) }), code('PG_NO_ARABIC'));
-  await assert.rejects(exportArabic({ store, videoId: 'BBBBBBBBBBB', variant: 'current', askTiming: noAsk, save: async () => ({ ok: true, mode: 'downloads', downloadId: 1 }) }), code('PG_VIDEO_GONE'));
+  await assert.rejects(exportArabic({ store, videoId: ID, variant: 'current', ask: noAsk, save: async () => ({ ok: true, mode: 'downloads', downloadId: 1 }) }), code('PG_NO_ARABIC'));
+  await assert.rejects(exportArabic({ store, videoId: 'BBBBBBBBBBB', variant: 'current', ask: noAsk, save: async () => ({ ok: true, mode: 'downloads', downloadId: 1 }) }), code('PG_VIDEO_GONE'));
 });
 
 test('تصدير الإنجليزية: المسار المحفوظ بالوضع «عادي»، وتُحفظ بصمته مرة واحدة ولا تتراكم نسخ متطابقة', async () => {
@@ -213,7 +248,7 @@ test('رسالة الزمن السالب تقتطع قائمة المقاطع ع
   // أقصى إزاحة سالبة (−10 دقائق) تجعل كل المقاطع الاثني عشر سالبة.
   const { store } = await seeded({ offset: -600000, cues });
   await assert.rejects(
-    exportArabic({ store, videoId: ID, variant: 'current', askTiming: async () => 'shown', save: async () => ({ ok: true, mode: 'downloads', downloadId: 1 }) }),
+    exportArabic({ store, videoId: ID, variant: 'current', ask: askWith({ timing: 'shown' }), save: async () => ({ ok: true, mode: 'downloads', downloadId: 1 }) }),
     (e) => e.code === 'MD_NEGATIVE_TIME' && e.message.includes('1، 2، 3، 4، 5، 6، 7، 8…') && !e.message.includes('9،'),
   );
 });

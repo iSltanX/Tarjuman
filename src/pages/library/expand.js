@@ -1,6 +1,6 @@
 // التوسيع في الصف (docs/product-spec.md §٦.٦؛ يحل محل لوحة «الترجمات…» الجانبية، وR43/R44، وP13-AC1/AC3): بطاقة لكل ترجمة
 // موجودة (الرقم والاسم المختصر القابل للتعديل، والملف، والتاريخ، وعدد التعديلات اليدوية، والإزاحة، ونتيجة المقارنة،
-// والمرجع و«تغيير المرجع» عند التعدد، والعلامات، و«تفعيل» لغير النشطة، و«تصدير SRT» و«ملف بديل…» و«حذف…» بتأكيد يسرد
+// والمرجع و«تغيير المرجع» عند التعدد، والعلامات، و«تفعيل» لغير النشطة، و«تصدير…» (الصيغة والمحتوى، الفكرة ١١) و«ملف بديل…» و«حذف…» بتأكيد يسرد
 // ما يُحذف)، وبطاقة متقطّعة واحدة للخانة الفارغة التالية بزر «رفع ترجمة…»، وسطر «نسخة سابقة محفوظة» باستعادتها (تبديل قابل
 // للعكس) وحذفها حيث خانتها. لا خانة فارغة تُعرض نسخةً، ولا خانة رابعة. كل فعل كتابة واحدة عبر actions.js ثم تُقرأ الحزمة من
 // جديد؛ والرسائل العابرة للمحفوظات نفسها.
@@ -81,7 +81,7 @@ export function createExpansion(env) {
   const firstKeyIn = (node) => node?.querySelector('[data-fk]')?.getAttribute('data-fk') ?? null;
 
   /**
-   * بدائل التركيز بعد إعادة الرسم حين يزول العنصر المركّز (تدقيق 7a66f91، U50): «تفعيل» إلى «تصدير SRT» في بطاقته (صارت
+   * بدائل التركيز بعد إعادة الرسم حين يزول العنصر المركّز (تدقيق 7a66f91، U50): «تفعيل» إلى «تصدير…» في بطاقته (صارت
    * النشطة)، وحقل الاسم إلى زر التسمية، وغيرهما إلى أول عنصر في بطاقته، ثم في أقرب بطاقة بعدها أو قبلها (بطاقة حُذفت)، ثم
    * إلى أول عنصر في التوسيع، ثم إلى زر التوسيع في الصف (خارج الجذر؛ كان يُبحث عنه داخله فلا يوجد أبدًا).
    */
@@ -309,7 +309,7 @@ export function createExpansion(env) {
     };
     const actions = [
       active ? null : mark(act1(tr('library.card.activate'), { variant: 'primary', onClick: () => act(() => activateSlot({ store, videoId, n: s.n, now }), messageFor('PG_SLOT_ACTIVATED', { n: s.n })) }), 'activate'),
-      mark(act1(tr('library.card.exportSrt'), { variant: 'secondary', icon: 'download', onClick: guarded(() => env.exportSlot(s.n)) }), 'export'),
+      mark(act1(tr('library.card.export'), { variant: 'secondary', icon: 'download', onClick: guarded(() => env.exportSlot(s.n)) }), 'export'),
       mark(act1(tr('library.card.replace'), { variant: 'ghost', icon: 'upload', onClick: () => env.upload(s.n) }), 'replace'),
       mark(act1(tr('library.card.delete'), { variant: 'ghost', className: 'lib-card__delete', onClick: guarded(() => removeSlot(s)) }), 'delete'),
     ];

@@ -1,12 +1,12 @@
-// أوامر المحفوظات فوق التخزين والتدفقات المختبرة (عقد interfaces §٥ و§٦ و§١٣، وstorage §٦ و§١١): تصدير SRT (عربي بتوقيت
-// التصدير وإنجليزي بالوضع «عادي» وحده) والنص الدراسي عبر saveFile، والاستبدال (استيراد ومقارنة ثم تأكيد)، والحذف (النشطة
+// أوامر المحفوظات فوق التخزين والتدفقات المختبرة (عقد interfaces §٥ و§٦ و§١٣، وstorage §٦ و§١١): تصدير ملف الترجمة (SRT أو
+// WebVTT، وحده أو مع الأصل، بتوقيت التصدير؛ الفكرة ١١) والإنجليزي SRT بالوضع «عادي» وحده والنص الدراسي عبر saveFile، والاستبدال (استيراد ومقارنة ثم تأكيد)، والحذف (النشطة
 // وحدها أو كل بيانات الفيديو)؛ وفي الإصدار الثاني: تبديل النشطة، والاسم المختصر، والمرجع، وحذف خانة، والنسخة السابقة
 // (استعادة بتبديل قابل للعكس وحذف)، والرفع إلى خانة بفحص كامل. لا واجهة هنا: كل شيء بتبعيات تُحقن، فتُختبر بمحاكاة
 // التخزين. الكتابة عبر انتقالات النموذج وupdateVideo وupdateBundle وحدها، كل تغيير كتابة ذرية واحدة.
 import { diffTranslations, keepEditsMerge } from '../../core/align/index.js';
 import { compare } from '../../core/compare/index.js';
 import { TjError, messageFor } from '../../core/errors/index.js';
-import { buildArabicExport, buildExport, buildStudyText, studyTiming, studyTimingNote, translationLang } from '../../core/export/index.js';
+import { buildExport, buildStudyText, buildSubtitleExport, studyTiming, studyTimingNote, subtitleFileName, translationLang } from '../../core/export/index.js';
 import { ambiguousMarks, findContinuation, readImport, reviewIncoming, sameExport, withContinuation } from '../../core/import/index.js';
 import {
   applyRecordChange, referencedFingerprints, withActiveSlot, withMarksReplaced, withPreviousRestored, withSlotName, withSlotUpload, withoutPrevious,
@@ -14,17 +14,12 @@ import {
 } from '../../core/model/bundle.js';
 import { LIMITS } from '../../core/model/validate.js';
 import { arabicCues } from '../../core/model/video.js';
-import { exportTiming } from '../../core/model/timing.js';
 import { withExport, withExportRefreshed } from '../../core/model/transitions.js';
-import { joinList, t as tr } from '../../i18n/index.js';
+import { t as tr } from '../../i18n/index.js';
 import { COUNT_FORMS, formatCount } from '../../ui/format.js';
 import { manualEdits } from './model.js';
 
 const iso = (now) => new Date(now()).toISOString();
-
-/** أول 8 أرقام ثم «…»: الإزاحة الكبيرة على ملف طويل تعطي مئات الأرقام لا تُقرأ في رسالة عابرة. */
-const LIST_LIMIT = 8;
-const listNumbers = (list) => (list.length > LIST_LIMIT ? `${joinList(list.slice(0, LIST_LIMIT))}…` : joinList(list));
 
 async function requireRecord(store, videoId) {
   const record = await store.getVideo(videoId);
@@ -38,53 +33,65 @@ async function requireRecord(store, videoId) {
  */
 
 /**
- * تصدير العربية: المحفوظ كما هو إن كانت الإزاحة صفرًا، وإلا يسأل `askTiming` المستخدم (shown الافتراضي أو saved).
- * الإلغاء يعيد null. الزمن السالب يرفض التصدير برمز MD_NEGATIVE_TIME ومقاطعه. لا يغيّر شيئًا مخزَّنًا.
+ * @typedef {{ format: 'srt' | 'vtt', bilingual: boolean, timing: 'shown' | 'saved' }} ExportChoice
+ * @typedef {(o: { offsetMs: number, hasOriginal: boolean, name: (c: { format: 'srt' | 'vtt', bilingual: boolean }) => string }) => Promise<ExportChoice | null>} AskExport
+ *   حوار «تصدير…» (الفكرة ١١): الصيغة والمحتوى، والتوقيت حين لا تكون الإزاحة صفرًا، ومعاينة الاسم. الإلغاء null.
+ */
+
+/**
+ * تصدير ملف الترجمة النشطة بنسختها: يسأل `ask` المستخدم (الصيغة، والمحتوى، والتوقيت عند إزاحة غير صفر، والافتراضي «shown»)،
+ * والإلغاء يعيد null. الزمن السالب يرفض التصدير برمز MD_NEGATIVE_TIME ومقاطعه. لا يغيّر شيئًا مخزَّنًا.
  * @param {{
  *   store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string,
- *   variant: 'current' | 'original', askTiming: (offsetMs: number) => Promise<'shown' | 'saved' | null>,
- *   save: SaveFn
+ *   variant: 'current' | 'original', ask: AskExport, save: SaveFn
  * }} o
- * @returns {Promise<{ name: string, timing: 'saved' | 'shown', cueCount: number, saved: Awaited<ReturnType<SaveFn>> } | null>}
+ * @returns {Promise<{ name: string, timing: 'saved' | 'shown', cueCount: number, saved: Awaited<ReturnType<SaveFn>>, notes: string[] } | null>}
  */
-export async function exportArabic({ store, videoId, variant, askTiming, save }) {
+export async function exportArabic({ store, videoId, variant, ask, save }) {
   const record = await requireRecord(store, videoId);
   if (!record.arabic) throw new TjError('PG_NO_ARABIC');
   const source = variant === 'original' ? record.arabic.original : arabicCues(record);
-  return exportCues({ videoId, source, offset: record.view.displayOffsetMs, variant, askTiming, save, lang: translationLang(record.arabic) });
+  return exportCues({ videoId, source, offset: record.view.displayOffsetMs, variant, ask, save, lang: translationLang(record.arabic), original: studySource(record) });
 }
 
 /**
- * «تصدير SRT» في بطاقة ترجمة: النسخة الحالية للخانة n (نشطة أو لا) بإزاحتها هي، وبسؤال التوقيت نفسه إن لم تكن صفرًا. اسم
- * الملف المتفق عليه VIDEOID.ar.srt كتصدير «المزيد». لا يغيّر شيئًا مخزَّنًا.
+ * «تصدير…» في بطاقة ترجمة: النسخة الحالية للخانة n (نشطة أو لا) بإزاحتها هي، بالحوار نفسه. وأصل «مع الأصل» مسار مرجعها هي
+ * (studySource). لا يغيّر شيئًا مخزَّنًا.
  * @param {{
  *   store: ReturnType<typeof import('../../core/store/index.js').createStore>, videoId: string, n: 1 | 2 | 3,
- *   askTiming: (offsetMs: number) => Promise<'shown' | 'saved' | null>, save: SaveFn
+ *   ask: AskExport, save: SaveFn
  * }} o
  */
-export async function exportSlot({ store, videoId, n, askTiming, save }) {
+export async function exportSlot({ store, videoId, n, ask, save }) {
   const b = await store.getBundle(videoId);
   if (!b) throw new TjError('PG_VIDEO_GONE');
   const s = b.slots[n - 1];
   if (!s?.track) throw new TjError('PG_NO_ARABIC');
   const offset = b.active === n ? b.record.view.displayOffsetMs : s.offsetMs;
-  return exportCues({ videoId, source: s.track.current ?? s.track.original, offset, variant: 'current', askTiming, save, lang: translationLang(s.track) });
+  return exportCues({
+    videoId, source: s.track.current ?? s.track.original, offset, variant: 'current', ask, save, lang: translationLang(s.track),
+    original: studySource(b.record, s.track.fingerprintId ?? null),
+  });
 }
 
-/** الجزء المشترك: توقيت التصدير (سؤال عند إزاحة غير صفر، والإلغاء null، والزمن السالب يرفض) ثم بناء الملف وحفظه. */
-async function exportCues({ videoId, source, offset, variant, askTiming, save, lang = null }) {
-  let choice = 'shown';
-  if (offset !== 0) {
-    const picked = await askTiming(offset);
-    if (picked === null) return null;
-    choice = picked;
-  }
-  const timed = exportTiming(source, offset, choice);
-  if (!timed.ok) throw new TjError('MD_NEGATIVE_TIME', { params: { list: listNumbers(timed.negative) } });
-  const file = buildArabicExport({ videoId, cues: timed.cues, variant, lang });
+/**
+ * الجزء المشترك: الحوار (الصيغة والمحتوى، والتوقيت عند إزاحة غير صفر)، ثم buildSubtitleExport (المحاذاة في الزمن المحفوظ ثم
+ * exportTiming، والزمن السالب يرفض) وحفظه. و«مع الأصل» بلا مسار أصل محفوظ معطّل في الحوار.
+ */
+async function exportCues({ videoId, source, offset, variant, ask, save, lang = null, original = null }) {
+  const hasOriginal = (original?.cues?.length ?? 0) > 0;
+  const sourceLang = original?.lang ?? null;
+  const name = ({ format, bilingual }) => subtitleFileName({ videoId, lang, variant, format, bilingual: bilingual && hasOriginal, sourceLang });
+  const choice = await ask({ offsetMs: offset, hasOriginal, name });
+  if (!choice) return null;
+  const bilingual = choice.bilingual === true && hasOriginal;
+  const file = buildSubtitleExport({
+    videoId, cues: source, offsetMs: offset, timing: offset !== 0 && choice.timing === 'saved' ? 'saved' : 'shown', variant, lang,
+    format: choice.format === 'vtt' ? 'vtt' : 'srt', bilingual, original: bilingual ? original.cues : null, sourceLang,
+  });
   const saved = await save({ name: file.name, text: file.text });
   // notes: ما جُرّد عند الكتابة وما يتغير عند إعادة الاستيراد (تدقيق 7a66f91، U99)، تُقال بعد الحفظ.
-  return { name: file.name, timing: timed.timing, cueCount: timed.cues.length, saved, notes: file.notes };
+  return { name: file.name, timing: file.timing, cueCount: file.count, saved, notes: file.notes };
 }
 
 // التصدير نفسه بأزمنته (sameExport) وبلا أجزاء: كانت الأزمنة تُهمل فيُرفض تصدير بتوقيت جديد ونصه مطابق، ويبقى المرجع القديم.
@@ -164,9 +171,12 @@ export async function studyNote({ store, videoId }) {
   return studyTimingNote(studyCues(await requireRecord(store, videoId)).clamped);
 }
 
-/** مسار الأصل للنص الثنائي: مسار بصمة النشطة، ثم اليدوي، ثم أي مسار. @param {import('../../core/model/video.js').VideoRecord} record */
-function studySource(record) {
-  const fp = record.fingerprints.find((f) => f.id === record.arabic?.fingerprintId);
+/**
+ * مسار الأصل للنص الثنائي وملف «مع الأصل» (الفكرة ١١): مسار بصمة الترجمة (النشطة، أو الخانة المعطاة)، ثم اليدوي، ثم أي مسار.
+ * @param {import('../../core/model/video.js').VideoRecord} record @param {string | null} [fingerprintId]
+ */
+function studySource(record, fingerprintId = record.arabic?.fingerprintId) {
+  const fp = record.fingerprints.find((f) => f.id === fingerprintId);
   return record.english.find((t) => t.key === fp?.trackKey) ?? record.english.find((t) => t.kind === 'manual') ?? record.english[0] ?? null;
 }
 

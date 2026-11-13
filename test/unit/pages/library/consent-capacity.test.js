@@ -235,6 +235,6 @@ test('U03: فشل bundleBytes في التوسيع لا يُسقط بطاقات �
   await settle(10);
   const cards = m.root.querySelectorAll('.lib-card');
   assert.ok(cards.length >= 2, 'البطاقات معروضة');
-  assert.ok(buttonNamed(m.root.querySelector('.lib-card'), 'تصدير SRT') || m.root.querySelector('.lib-card__actions button'), 'وأزرارها');
+  assert.ok(buttonNamed(m.root.querySelector('.lib-card'), 'تصدير…') || m.root.querySelector('.lib-card__actions button'), 'وأزرارها');
   assert.equal(findAll(m.root, (e) => e.classList?.contains('tj-alert--danger')).length, 0, 'لا تنبيه خطأ مكان البطاقات');
 });

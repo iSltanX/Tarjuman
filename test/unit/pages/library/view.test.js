@@ -360,7 +360,7 @@ test('نسخ المعرّف: يكتب المعرّف وحده', async () => {
   assert.deepEqual(m.calls.clipboard, [IDS[0]]);
 });
 
-test('تصدير SRT من «المزيد»: قائمة بأسباب التعطيل، والعربية الحالية تنزل باسمها دون سؤال عند إزاحة صفر', async () => {
+test('التصدير من «المزيد»: قائمة بأسباب التعطيل، والعربية الحالية بحوار «تصدير…» (SRT وحدها افتراضيًا) بلا سؤال توقيت عند إزاحة صفر', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: 'عنوان' }] });
   await m.lib.load();
   const menuButton = buttonNamed(m.root, 'المزيد: عنوان');
@@ -370,13 +370,19 @@ test('تصدير SRT من «المزيد»: قائمة بأسباب التعطي
   const items = menuItems(menuButton);
   // «الترجمات…» حذفت: صارت بطاقات في الصف نفسه (التوسيع). و«رفع ترجمة…» و«لصق ترجمة…» أيقونتان في الصف، و«النسخة المرفوعة»
   // لا تظهر قبل تعديل (2026-11-10).
-  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
+  assert.deepEqual(items.map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية…', 'الإنجليزية — المستخرجة', 'نص دراسي…', 'نسخ التعليمات', 'حذف الترجمة النشطة…', 'حذف بيانات الفيديو…']);
   assert.ok(items.slice(-2).every((i) => i.classList.contains('tj-menu__item--danger')), 'الحذفان بلون الخطر');
+  m.answers.push(true);
   items[0].click();
   await settle();
   assert.deepEqual(m.calls.downloads.map((f) => f.name), [`${IDS[0]}.ar.srt`]);
   assert.equal(menuButton.getAttribute('aria-expanded'), 'false', 'القائمة تُغلق بالاختيار');
-  assert.equal(m.calls.confirms.length, 0);
+  assert.equal(m.calls.confirms.length, 1, 'حوار «تصدير…» واحد');
+  const dialog = m.calls.confirms[0];
+  assert.equal(dialog.title, `تصدير ترجمة «${FSI}عنوان${PDI}»`);
+  assert.equal(dialog.body, 'النسخة الحالية من الترجمة النشطة.');
+  assert.equal(dialog.confirmLabel, 'تنزيل');
+  assert.deepEqual(findAll(dialog.content, (e) => e.tagName === 'input').map((e) => e.getAttribute('value')), ['srt', 'vtt', 'only', 'dual'], 'الصيغة والمحتوى، بلا توقيت عند إزاحة صفر');
   menuButton.click();
   menuItems(menuButton)[1].click();
   await settle();
@@ -384,7 +390,7 @@ test('تصدير SRT من «المزيد»: قائمة بأسباب التعطي
   assert.ok(m.root.querySelector('.tj-toast--success'));
 });
 
-test('تصدير العربية بإزاحة يسأل عن التوقيت بقيمتها، والإلغاء لا ينزّل', async () => {
+test('تصدير العربية بإزاحة: حوار «تصدير…» نفسه يسأل عن التوقيت بقيمتها، والإلغاء لا ينزّل', async () => {
   const m = await mount({ records: [{ id: IDS[0], title: 'عنوان', offset: 500 }] });
   await m.lib.load();
   const exportBtn = buttonNamed(m.root, 'المزيد: عنوان');
@@ -393,8 +399,10 @@ test('تصدير العربية بإزاحة يسأل عن التوقيت بقي
   menuItems(exportBtn)[0].click();
   await settle();
   assert.equal(m.calls.confirms.length, 1);
-  assert.equal(m.calls.confirms[0].title, 'توقيت الملف المصدَّر');
-  assert.match(m.calls.confirms[0].body, /\u2066\+0\.5\u2069 ث/);
+  assert.equal(m.calls.confirms[0].title, `تصدير ترجمة «${FSI}عنوان${PDI}»`);
+  assert.ok(textOf(m.calls.confirms[0].content).includes('توقيت الملف المصدَّر'));
+  assert.deepEqual(findAll(m.calls.confirms[0].content, (e) => e.getAttribute('value') === 'shown' || e.getAttribute('value') === 'saved').map((e) => e.checked), [true, false], 'الظاهر افتراضيًا');
+  assert.match(textOf(m.calls.confirms[0].content), /\u2066\+0\.5\u2069 ث/);
   assert.equal(m.calls.downloads.length, 0);
 
   exportBtn.click();
@@ -424,6 +432,7 @@ test('القائمة المنسدلة: Esc يغلق ويعيد التركيز، 
 
 const LRI = String.fromCodePoint(0x2066);
 const PDI = String.fromCodePoint(0x2069);
+const FSI = String.fromCodePoint(0x2068);
 const listItems = (root, nth = 0) => root.querySelectorAll('ul.lib-del__list')[nth].querySelectorAll('li').map(textOf);
 
 test('«حذف الترجمة النشطة…»: حوار يسرد ما يُحذف وما يبقى من بيانات الفيديو الفعلية، والإلغاء لا يمسّ شيئًا، والتأكيد يبقي الإنجليزي', async () => {
@@ -912,7 +921,7 @@ test('ح-3 (قرار سلطان، تحقق مستقل): حوار «لصق ترج
   }
 });
 
-test('«الترجمة — النسخة المرفوعة» في «المزيد» بعد تعديل وحده، ومتاحة', async () => {
+test('«الترجمة — النسخة المرفوعة…» في «المزيد» بعد تعديل وحده، ومتاحة', async () => {
   const original = makeCues(5);
   const edited = original.map((c) => (c.n === 2 ? { ...c, text: 'سطر 2 بعد تعديلي' } : c));
   const record = withArabicEdit(videoRecord({ videoId: IDS[0], cues: original }), { cues: edited }, NOW);
@@ -921,6 +930,6 @@ test('«الترجمة — النسخة المرفوعة» في «المزيد»
   const more = buttonNamed(m.root, 'المزيد: عنوان');
   more.click();
   const items = menuItems(more);
-  assert.deepEqual(items.slice(0, 3).map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية', 'الترجمة — النسخة المرفوعة', 'الإنجليزية — المستخرجة']);
+  assert.deepEqual(items.slice(0, 3).map((i) => textOf(i.querySelector('.tj-menu__label'))), ['الترجمة — النسخة الحالية…', 'الترجمة — النسخة المرفوعة…', 'الإنجليزية — المستخرجة']);
   assert.equal(items[1].getAttribute('aria-disabled'), null);
 });

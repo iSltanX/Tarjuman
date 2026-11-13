@@ -236,8 +236,8 @@ test('التوسيع في الصف: بطاقة لكل ترجمة بتفاصيل�
   assert.ok(findAll(two, (e) => e.classList.contains('lib-prevl')).length === 1, 'النسخة السابقة في بطاقة خانتها (2)');
   assert.ok(findAll(one, (e) => e.classList.contains('lib-prevl')).length === 0);
   const actions = (card) => card.querySelector('.lib-card__actions').querySelectorAll('button').map(textOf);
-  assert.deepEqual(actions(one), ['تصدير SRT', 'استبدال…', 'حذف…'], 'النشطة بلا «تفعيل»');
-  assert.deepEqual(actions(two), ['تفعيل', 'تصدير SRT', 'استبدال…', 'حذف…']);
+  assert.deepEqual(actions(one), ['تصدير…', 'استبدال…', 'حذف…'], 'النشطة بلا «تفعيل»');
+  assert.deepEqual(actions(two), ['تفعيل', 'تصدير…', 'استبدال…', 'حذف…']);
   assert.equal(textOf(two.querySelector('.lib-card__actions .tj-btn--primary')), 'تفعيل', 'الإجراء الرئيسي في غير النشطة');
   // يُطوى: تزول البطاقات والحالة تعود.
   open.click();
@@ -335,19 +335,20 @@ test('التوسيع: الاسم المختصر يُحفظ (Enter أو change) �
   assert.deepEqual(chipsOf(m, IDS[0]).map((b) => b.getAttribute('data-slot')), ['1', '2'], 'والشريحة زالت');
 });
 
-test('التوسيع: «تصدير SRT» لأي ترجمة (ولو غير نشطة) بإزاحتها هي وبسؤال التوقيت، والإلغاء لا ينزّل', async () => {
+test('التوسيع: «تصدير…» لأي ترجمة (ولو غير نشطة) بإزاحتها هي، والتوقيت في حوار «تصدير…» نفسه، والإلغاء لا ينزّل', async () => {
   const m = await mount();
   let exp = await expand(m, IDS[0]);
-  // الخانة 3 غير نشطة بإزاحة +0.3: يسأل عن التوقيت؛ الإلغاء لا ينزّل.
+  // الخانة 3 غير نشطة بإزاحة +0.3: حوار «تصدير…» يسأل عن التوقيت؛ الإلغاء لا ينزّل.
   m.answers.push(false);
-  buttonNamed(cardOf(exp, 3), 'تصدير SRT').click();
+  buttonNamed(cardOf(exp, 3), 'تصدير…').click();
   await settle(10);
-  assert.equal(m.calls.confirms.at(-1).title, 'توقيت الملف المصدَّر');
-  assert.match(m.calls.confirms.at(-1).body, /\u2066\+0\.3\u2069 ث/);
+  assert.equal(m.calls.confirms.at(-1).body, 'النسخة الحالية من الترجمة 3.');
+  assert.ok(textOf(m.calls.confirms.at(-1).content).includes('توقيت الملف المصدَّر'));
+  assert.match(textOf(m.calls.confirms.at(-1).content), /\u2066\+0\.3\u2069 ث/);
   assert.equal(m.calls.saves.length, 0);
   // «كما يظهر الآن»: التوقيت المحفوظ + الإزاحة.
   m.answers.push(true);
-  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'تصدير SRT').click();
+  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'تصدير…').click();
   await settle(10);
   assert.equal(m.calls.saves.length, 1);
   assert.equal(m.calls.saves[0].name, `${IDS[0]}.ar.srt`);
@@ -363,7 +364,7 @@ test('التوسيع: «تصدير SRT» لأي ترجمة (ولو غير نشط
     saved.dispatchEvent({ type: 'change' });
     return true;
   });
-  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'تصدير SRT').click();
+  buttonNamed(cardOf(expOf(m, IDS[0]), 3), 'تصدير…').click();
   await settle(10);
   assert.ok(m.calls.saves[1].text.includes(`${formatTimecode(stored.startMs)} --> `));
   // نتيجة saveFile الفاشلة رسالة بنص رمزها.
@@ -505,7 +506,7 @@ test('التوسيع: يبقى مفتوحًا عبر إعادة بناء الق�
   const { activateSlot } = await import('../../../../src/pages/library/actions.js');
   const m = await mount();
   const exp = await expand(m, IDS[0]);
-  const btn = buttonNamed(cardOf(exp, 3), 'تصدير SRT');
+  const btn = buttonNamed(cardOf(exp, 3), 'تصدير…');
   btn.focus();
   // تغيّر من سياق آخر: الخانة 2 نشطة.
   await activateSlot({ store: m.store, videoId: IDS[0], n: 2, now: () => Date.parse(NOW) + 99999 });
@@ -585,6 +586,47 @@ test('«نص دراسي…» بلا مسار إنجليزي: الثنائي مع
   assert.ok(seen.described, 'السبب مرتبط بالخيار');
 });
 
+test('الفكرة ١١: «تصدير…» في المحفوظات: الصيغة والمحتوى بمقطّعتين، ومعاينة الاسم تتبعهما، و«مع الأصل» يحمل سطر الأصل تحت كل مقطع', async () => {
+  const m = await mount();
+  let seen = null;
+  m.answers.push((o) => {
+    const input = (v) => findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('value') === v)[0];
+    const fileName = () => textOf(o.content.querySelector('.lib-study__file'));
+    const hint = findAll(o.content, (e) => e.classList.contains('tj-field__hint') && textOf(e).startsWith('سطر الأصل'))[0];
+    seen = { title: o.title.includes('تصدير ترجمة'), first: fileName(), hintHidden: hint.hidden, checked: ['srt', 'only'].map((v) => input(v).checked) };
+    for (const v of ['vtt', 'dual']) {
+      input(v).checked = true;
+      input(v).dispatchEvent({ type: 'change' });
+    }
+    Object.assign(seen, { after: fileName(), hintAfter: hint.hidden });
+    return true;
+  });
+  openMore(m, IDS[1], 'الترجمة — النسخة الحالية');
+  await settle(10);
+  assert.deepEqual(seen, { title: true, first: `${IDS[1]}.ar.srt`, hintHidden: true, checked: [true, true], after: `${IDS[1]}.ar.dual-en.vtt`, hintAfter: false });
+  assert.equal(m.calls.saves.length, 1);
+  assert.equal(m.calls.saves[0].name, `${IDS[1]}.ar.dual-en.vtt`);
+  assert.ok(m.calls.saves[0].text.startsWith('WEBVTT\n\n1\n'));
+  assert.ok(m.calls.saves[0].text.includes('\nسطر 1\nline 1\n'), 'سطر الأصل تحت الترجمة');
+  assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'بدأ تنزيل الملف.');
+});
+
+test('الفكرة ١١: «تصدير…» بلا مسار أصل: «مع الأصل» معطّل بسببه مرتبطًا بالخيار، والإلغاء لا ينزّل', async () => {
+  const m = await mount({
+    seed: async (store) => { await store.updateVideo(IDS[0], () => ({ ...videoRecord({ videoId: IDS[0] }), english: [], fingerprints: [], arabic: { ...videoRecord({ videoId: IDS[0] }).arabic, fingerprintId: null, comparison: null }, title: 'عربي وحده' })); },
+  });
+  let seen = null;
+  m.answers.push((o) => {
+    const dual = findAll(o.content, (e) => e.tagName === 'input' && e.getAttribute('value') === 'dual')[0];
+    seen = { disabled: dual.disabled, why: findAll(o.content, (e) => e.classList.contains('tj-field__hint') && e.id === dual.getAttribute('aria-describedby')).map(textOf)[0] };
+    return false;
+  });
+  openMore(m, IDS[0], 'الترجمة — النسخة الحالية');
+  await settle(10);
+  assert.deepEqual(seen, { disabled: true, why: 'لا أصل محفوظ لهذا الفيديو.' });
+  assert.equal(m.calls.saves.length, 0);
+});
+
 test('التصدير يتبع saveFile: الإلغاء رسالة معلومة، والرجوع إلى التنزيل العادي SV_FALLBACK_BLOB، ولا بصمة لتصدير لم يحدث', async () => {
   let reply = { ok: false, code: 'SV_CANCELLED' };
   const m = await mount({ env: { saveFile: async () => reply } });
@@ -593,6 +635,7 @@ test('التصدير يتبع saveFile: الإلغاء رسالة معلومة،
   assert.equal(textOf(m.root.querySelector('.tj-toast--info')), 'أُلغي الحفظ.');
   assert.equal((await m.store.getVideo(IDS[1])).fingerprints.length, 1, 'لا بصمة لتصدير أُلغي');
   reply = { ok: true, mode: 'blob', downloadId: null };
+  m.answers.push(true);
   openMore(m, IDS[1], 'الترجمة — النسخة الحالية');
   await settle(10);
   assert.ok(findAll(m.root, (e) => e.classList.contains('tj-toast--info')).some((t) => textOf(t).includes('تعذّر الحفظ في المكان المختار')));

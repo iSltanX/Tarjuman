@@ -304,8 +304,8 @@ export function groupEntries(entries, nowMs) {
 }
 
 /**
- * أوامر «تصدير SRT»: الترجمة الحالية، والأصل المستورد، ومسارات الأصل المستخرجة (مسار لكل لغة ونوع محفوظ) بأسماء لغاتها الفعلية
- * (AA3). المعطّل يذكر سببه دائمًا. المعرّف يحمل ما يحتاجه التنفيذ.
+ * أوامر «تصدير»: الترجمة الحالية والأصل المستورد بحوار «تصدير…» (الصيغة SRT أو WebVTT والمحتوى، الفكرة ١١)، ومسارات الأصل
+ * المستخرجة SRT (مسار لكل لغة ونوع محفوظ) بأسماء لغاتها الفعلية (AA3). المعطّل يذكر سببه دائمًا. المعرّف يحمل ما يحتاجه التنفيذ.
  * @param {import('../../core/model/video.js').IndexEntry} e
  * @returns {{ id: string, label: string, hint?: string, disabledReason: string | null, action: { type: 'ar', variant: 'current' | 'original' } | { type: 'en', trackKey: string } }[]}
  */
