@@ -10,7 +10,7 @@ import { messageFor } from '../../../src/core/errors/index.js';
 import { toolsStatus } from '../../../src/pages/popup/status.js';
 import { mountControls } from '../../../src/player/controls/index.js';
 import { PLAYER_WAIT_MS, mountOverlay } from '../../../src/player/overlay/index.js';
-import { SELECTORS } from '../../../src/player/youtube-dom.js';
+import { PANEL_SELECTORS, SELECTORS } from '../../../src/player/youtube-dom.js';
 import { createFakeChrome } from '../../helpers/chrome-storage.js';
 import { addPlayer, createFakeEnv } from './overlay/fake-dom.js';
 import { addBar, fakeController, fakeFlows } from './controls/harness.js';
@@ -86,15 +86,44 @@ test('الطبقة خارج صفحة المشاهدة لا تخطئ (الصفح�
   handle.unmount();
 });
 
-test('خريطة وجود العناصر: نعم أو لا لكل محدد في youtube-dom، بلا نص', () => {
+test('خريطة وجود العناصر: نعم أو لا لكل محدد في youtube-dom (SELECTORS ومواضع اللوحة PANEL_SELECTORS)، بلا نص', () => {
   const env = createFakeEnv();
   addPlayer(env);
   const map = domPresence(env.doc);
-  assert.deepEqual(Object.keys(map).sort(), [...Object.keys(SELECTORS), 'anyVideo'].sort());
+  assert.deepEqual(Object.keys(map).sort(), [...Object.keys(SELECTORS), ...Object.keys(PANEL_SELECTORS), 'anyVideo'].sort());
   assert.ok(Object.values(map).every((v) => v === true || v === false));
   assert.equal(map.player, true);
   assert.equal(map.video, true);
   assert.equal(map.rightControls, false, 'العنصر الغائب مسمّى');
+  assert.equal(map.flexy, false, 'صفحة بلا ytd-watch-flexy: مواضع اللوحة غائبة بأسمائها');
+  assert.equal(map.secondaryInner, false);
+});
+
+test('خريطة وجود العناصر (الفكرة ١): مواضع اللوحة كما تبحث عنها column.js، وصندوق بيانات الفيديو داخل #below وحده', () => {
+  const env = createFakeEnv();
+  const el = (tag, id) => {
+    const e = env.doc.createElement(tag);
+    if (id) e.id = id;
+    return e;
+  };
+  const flexy = el('ytd-watch-flexy');
+  const columns = el('div', 'columns');
+  const primary = el('div', 'primary');
+  const secondary = el('div', 'secondary');
+  const below = el('div', 'below');
+  const meta = el('ytd-watch-metadata');
+  secondary.appendChild(el('div', 'secondary-inner'));
+  columns.appendChild(primary);
+  columns.appendChild(secondary);
+  flexy.appendChild(columns);
+  flexy.appendChild(below);
+  env.doc.body.appendChild(flexy);
+  env.doc.body.appendChild(meta);
+  const outside = domPresence(env.doc);
+  for (const k of ['flexy', 'secondaryInner', 'secondary', 'anySecondaryInner', 'anySecondary', 'below', 'columns', 'primary']) assert.equal(outside[k], true, k);
+  assert.equal(outside.belowAnchor, false, 'بيانات الفيديو خارج #below: لا موضع للوحة بعدها');
+  below.appendChild(el('div')).appendChild(meta);
+  assert.equal(domPresence(env.doc).belowAnchor, true, 'في صندوق داخل #below كما يضعها يوتيوب');
 });
 
 test('تشخيص الصفحة: قسما dom (الخريطة) وpanel (تشخيص اللوحة) مع الأدوات والطبقة', async () => {

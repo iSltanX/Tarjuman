@@ -4,7 +4,7 @@
 import {
   MESSAGE_VERSION, buildVideoStateReply, isExtensionPage, isPageDiagnosticsRequest, isPasteImportRequest, isSeekRequest, isVideoIdRequest, isVideoStateRequest, MSG,
 } from '../core/model/messages.js';
-import { SELECTORS, seekMainVideo } from '../player/youtube-dom.js';
+import { PANEL_SELECTORS, SELECTORS, seekMainVideo } from '../player/youtube-dom.js';
 
 /** آخر رمز تعطل من نقطتي التركيب، إن كانت إحداهما في حالة خطأ. */
 function toolsCode(mounted) {
@@ -29,14 +29,21 @@ const safe = (fn) => {
 };
 
 /**
- * خريطة وجود العناصر التي يعتمد عليها ترجمان (ف10، 2026-11-10): نعم أو لا لكل محدد في SELECTORS، و`anyVideo` لأي عنصر فيديو.
- * أسماء ونعم/لا فقط، بلا نص ولا رابط، لتقرير تشخيص الصفحة.
+ * مواضع لوحة النص في خريطة الوجود (الفكرة ١): PANEL_SELECTORS كما تبحث عنها panel/column.js، وصندوق بيانات الفيديو داخل #below.
+ * مفاتيحها غير مفاتيح SELECTORS، فالخريطة مسطّحة.
+ */
+const PANEL_PRESENCE = Object.freeze({ ...PANEL_SELECTORS, belowAnchor: `${PANEL_SELECTORS.below} ${PANEL_SELECTORS.belowAnchor}` });
+
+/**
+ * خريطة وجود العناصر التي يعتمد عليها ترجمان (ف10، 2026-11-10): نعم أو لا لكل محدد في SELECTORS، ولكل موضع للوحة النص في
+ * PANEL_SELECTORS (الفكرة ١: فيُعرف من التقرير أيّ مواضعها غاب حين لا تظهر اللوحة)، و`anyVideo` لأي عنصر فيديو. أسماء ونعم/لا فقط،
+ * بلا نص ولا رابط، لتقرير تشخيص الصفحة.
  * @param {Document} [doc] @returns {Record<string, boolean>}
  */
 export function domPresence(doc = document) {
   /** @type {Record<string, boolean>} */
   const out = {};
-  for (const [k, sel] of Object.entries(SELECTORS)) {
+  for (const [k, sel] of [...Object.entries(SELECTORS), ...Object.entries(PANEL_PRESENCE)]) {
     try {
       out[k] = !!doc.querySelector(sel);
     } catch {
