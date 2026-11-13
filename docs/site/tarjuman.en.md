@@ -87,7 +87,7 @@ Every video you’ve translated, with up to three translations per video, the tw
 
 ### Synced transcript
 
-A panel beside the video shows the whole translation with the current segment highlighted, so you can read what came before and what’s coming. It stays closed until you open it from its button.
+A panel beside the video shows the whole translation with the current segment highlighted, so you can read what came before and what’s coming, and fix a segment’s text right where it is. It stays closed until you open it from its button.
 
 ⟨لقطة: لوحة النص المتزامن⟩
 

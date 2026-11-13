@@ -87,7 +87,7 @@
 
 ### النص المتزامن
 
-لوحة يمين الفيديو تعرض الترجمة كلها، والمقطع الحالي مميز، فتقرأ ما سبق وما يأتي. مغلقة حتى تفتحها من زرها.
+لوحة يمين الفيديو تعرض الترجمة كلها، والمقطع الحالي مميز، فتقرأ ما سبق وما يأتي، وتصحّح نص مقطع منها في مكانه. مغلقة حتى تفتحها من زرها.
 
 ⟨لقطة: لوحة النص المتزامن⟩
 
@@ -170,7 +170,7 @@
 | مقارنة بالأصل | النقص والزيادة والانحراف وغير المترجم، ولا تعديل صامت | `docs/contracts/data-model.md` §٥ و§١٧ («غير مترجم» بلغة الترجمة)، و`docs/user-guide.md` §٣ الخطوة ٥ |
 | محرّر | الأدوات والاستكمال | `docs/user-guide.md` §٥، و`test/live/aa4/site-shots.mjs` (`04-editor`) |
 | محفوظاتك | الترجمات الثلاث ولغتاها والسابقة والتصدير والنسخة الاحتياطية | `docs/user-guide.md` §٦ و§٧، و`docs/contracts/data-model.md` §١٠ و§١١ و§١٧ (`recordPair`)، و`test/live/aa4/site-shots.mjs` (`05-library`) |
-| النص المتزامن | يمين الفيديو، مغلقة افتراضيًا، واللقطة | `docs/product-spec.md` §٦.٦، و`src/core/model/prefs.js` (`panelOpen: false`)، واللقطة جزء اللوحة من `01-overlay-panel` |
+| النص المتزامن | يمين الفيديو، مغلقة افتراضيًا، وتصحيح نص مقطع في مكانه، واللقطة | `docs/product-spec.md` §٦.٦، و`src/core/model/prefs.js` (`panelOpen: false`)، و«عدّل النص» (الفكرة ٦، ح-54: `docs/product-spec.md` §٦.٥ و§١٥، و`openEdit` في `src/player/panel/transcript.js`، و`editCueText` في `src/content/controller.js`)، واللقطة جزء اللوحة من `01-overlay-panel` |
 | مظهرها كما تحب | وضع العرض والخط والحجم والخلفية والموضع، والخطوط مضمّنة وخطوط الجهاز لما لا تحويه، ولغتا الواجهة (`docs/contracts/storage.md` §١٤) | `src/pages/settings/view.js` (قسم «العرض»)، و`src/ui/subtitle-fonts.js`، و`docs/user-guide.md` §٣ الخطوة ٦، و`test/live/aa4/site-shots.mjs` (`06-settings`) |
 | أين تذهب بياناتك | كل البنود | جدول أدلة `docs/site/privacy.md` |
 | ما لا يفعله | لا تنزيل فيديو ولا صوت، ولا طلب ترجمة، ولا إنشاء مسار ولا تبديله، ولا ترجمة بنفسه، ولا Shorts ولا مضمّنة، ولا استخراج من بث جارٍ، والحاسوب وحده | `store/listing.ar.md` («ما لا يفعله» المعتمد)، و`docs/contracts/extraction.md` (قاعدة `player-api`)، و`docs/known-limitations.md` §١ |
