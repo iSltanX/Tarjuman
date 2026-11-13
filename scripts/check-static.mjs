@@ -147,6 +147,21 @@ for (const p of PAGES) {
 // فقط)، والوصول إليها بالأقواس ممنوع كذلك. الفحص سطرًا بسطر بعد نزع التعليقات؛ هو حدّ أدنى لا محلل كامل.
 // القواعد بلا استثناء مشتركة مع تدقيق الحزمة (scripts/code-rules.mjs، تدقيق 7a66f91، U61)، ومنها الصيغ الديناميكية؛ وهنا ما له
 // استثناء مسمّى بملفه وسطره.
+// أسماء يوتيوب الداخلية غير الرسمية في src/player/youtube-dom.js وحده (R39، عقد interfaces §٧؛ الفكرة ١، الجولة الثالثة): كان العقد
+// يقولها ولا شيء يفرضها، فكانت محددات اللوحة في panel/column.js وسمة الوضع الداكن في panel/session.js. والأنماط: أصناف المشغّل (ytp-)
+// وعناصر الصفحة (ytd-)، وmovie_player، وأحداث yt-navigate-/yt-page-/yt-player-، وبيانات الصفحة الأولى (ytInitial…) ومنفذ المشغّل
+// getPlayerResponse، وأعمدة صفحة المشاهدة (#secondary و#secondary-inner و#primary و#below و#columns، ومقارنة المعرّف بأسمائها)، وسمة
+// is-single-column، وسمة dark على html ([dark]، أو اسمها في دوال السمات وattributeFilter). والقيمة "dark" لسمة ترجمان data-theme،
+// و'below' موضعًا للوحة، ليستا اسمين ليوتيوب فتمرّان. والاستثناء سكربت عالم الصفحة capture.js بأسطره المراجَعة حرفيًا: مجمَّد، ولا
+// يستورد youtube-dom.js فيجرّ إلى عالم الصفحة ما لا يحتاجه (sanitize.js وعناوين التبويب).
+const YT_DOM_FILE = path.join('player', 'youtube-dom.js');
+const YT_NAMES = /\byt[pd]-|\bmovie_player\b|\byt-(?:navigate|page|player)-|\bytInitial|\bgetPlayerResponse\b|#(?:secondary(?:-inner)?|primary|below|columns)(?![\w-])|(?:\.id\s*[!=]==?\s*|getElementById\s*\(\s*)['"`](?:secondary(?:-inner)?|primary|below|columns)['"`]|\bis-single-column\b|\[\s*dark\s*[\]=~|^$*]|\b(?:has|get|set|remove|toggle)Attribute\s*\(\s*['"`]dark['"`]|\battributeFilter\s*:\s*\[[^\]]*['"`]dark['"`]/;
+const YT_CAPTURE_LINES = new Set([
+  "const el = doc ? doc.getElementById('movie_player') : null;",
+  "const r = el && typeof el.getPlayerResponse === 'function' ? el.getPlayerResponse() : null;",
+  'const r = window.ytInitialPlayerResponse;',
+  "for (const name of ['yt-navigate-finish', 'yt-page-data-updated', 'yt-player-updated']) doc.addEventListener(name, scheduleTracks);",
+]);
 const RULES = [
   ...CODE_RULES,
   {
@@ -155,6 +170,11 @@ const RULES = [
     // طلب موافقة صور المحفوظات في Firefox وحده، بسطره المراجَع في ملف الموافقة (قرار سلطان 2026-11-04، core/consent/thumbnails.js).
     // وإعادة طلب إذن يوتيوب نفسه بسطره في ملفه (الفكرة ٣-أ، ح-39، core/consent/youtube-access.js). ومنذ و1 (2.2.0) لا طلب إذن مضيف البلاغات.
     allow: (rel, line) => CONSENT_LINES.get(rel)?.has(line.trim()) === true,
+  },
+  {
+    re: YT_NAMES,
+    msg: 'اسم يوتيوب داخلي خارج src/player/youtube-dom.js (R39، عقد interfaces §٧)',
+    allow: (rel, line) => rel === YT_DOM_FILE || (rel === CAPTURE && YT_CAPTURE_LINES.has(line.trim())),
   },
 ];
 // الشبكة: fetch وXMLHttpRequest معرّفين ممنوعان، إلا أسطر غلافي الالتقاط في capture.js التي تمرّر طلب
