@@ -10,7 +10,7 @@ import { formatOffset, textDirection } from '../../ui/format.js';
 import { languageName } from '../../ui/lang.js';
 import { glyph } from './glyphs.js';
 import {
-  LABELS, comparisonSummary, completeHintLine, completeLine, longFileLine, completeOptionLabel, completeOptionText, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
+  LABELS, ccLanguagesLine, comparisonSummary, completeHintLine, completeLine, longFileLine, completeOptionLabel, completeOptionText, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
   shortTime, slotLabel, stepSeconds, syncAt, trackLine, translationLine,
 } from './text.js';
 
@@ -197,12 +197,12 @@ function resultLine(h, line, fid) {
  * لم تُلتقط، وبلا قائمة معروفة الخطوات وحدها بعد مسار ملتقط (other) أو لرفض يطلب لغة أخرى (pickAgain)، ولا سطر حين يُعرف أن
  * لا لغة أخرى. وبلا مسار ملتقط يأتي السطر خلف «لماذا؟» لا بجوار رسالة الحالة (ت-٩). وخطوات ترجمة يوتيوب الآلية حين يتيحها الفيديو،
  * وملاحظة Brave مع سطر اللغات.
- * @param {H} h @param {{ langs: number | null, other: boolean, brave: boolean, translatable: boolean, pickAgain?: boolean }} o
+ * @param {H} h @param {{ langs: number | null, other: boolean, brave: boolean, translatable: boolean, pickAgain?: boolean, counted?: boolean }} o
  */
-function otherLanguages(h, { langs, other, brave, translatable, pickAgain = false }) {
+function otherLanguages(h, { langs, other, brave, translatable, pickAgain = false, counted = true }) {
   const pick = langs === null ? other || pickAgain : langs > 0;
   const lines = [
-    pick ? h('span', { className: 'steps', text: otherLanguagesLine(langs, { other }) }) : null,
+    pick ? h('span', { className: 'steps', text: otherLanguagesLine(langs, { other, counted }) }) : null,
     translatable ? h('span', { className: 'steps', text: LABELS.machineSteps }) : null,
     pick && brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null,
   ].filter(Boolean);
@@ -258,15 +258,22 @@ export function downloadMenu(h, act, m, root = null) {
     // كان تنبيه الرفض بخطواته يليه «فعّل CC…» ولو قال الرفض «أوقف الترجمة ثم شغّلها»، ثم سطر اللغات بالخطوات نفسها: ثلاث مرات.
     // الرسالة: الرفض أو تعذّر التحويل إن وقع (لكلٍّ علاجه، والرمز الواحد مرة)، وإلا «لا ترجمة لهذا الفيديو»، وإلا CC مفعّلة بلا
     // التقاط (ف7: العلاج بدل «فعّل CC» وهي مفعّلة)، وإلا «فعّل CC». والتفصيل: الشرح، ثم سطر اللغات بعددها وخطواتها (أو الخطوات
-    // وحدها لرفض يطلب لغة أخرى)، وخطوات ترجمة يوتيوب الآلية، وملاحظة Brave مع الخطوات.
+    // وحدها لرفض يطلب لغة أخرى)، وخطوات ترجمة يوتيوب الآلية، وملاحظة Brave مع الخطوات. و«فعّل CC» ولغات الفيديو معروفة سطر واحد
+    // بالعدد (القرار ٢٩)، فالخطوات خلف «لماذا؟» بلا عدد.
     const states = [];
     if (m.captureIssue) states.push(['warn', messageFor(m.captureIssue)]);
     for (const code of new Set(m.invalid.map((t) => t.code ?? 'EX_NO_TRACK'))) states.push(['error', messageFor(code)]);
     const noCaptions = !states.length && m.unavailable;
-    if (!states.length) states.push(noCaptions ? ['info', messageFor('CT_NO_CAPTIONS')] : [m.ccStuck ? 'warn' : 'info', messageFor(m.ccStuck ? 'CT_CC_NOT_CAPTURED' : 'CT_NOT_CAPTURED')]);
+    const langs = m.otherLangs > 0 ? m.otherLangs : null;
+    const ccWithCount = !states.length && !noCaptions && !m.ccStuck && langs !== null;
+    if (!states.length) {
+      states.push(noCaptions ? ['info', messageFor('CT_NO_CAPTIONS')]
+        : m.ccStuck ? ['warn', messageFor('CT_CC_NOT_CAPTURED')]
+          : ['info', ccWithCount ? ccLanguagesLine(langs) : messageFor('CT_NOT_CAPTURED')]);
+    }
     const details = [
       noCaptions ? null : h('div', { className: 'note', text: LABELS.why, attrs: { 'data-fid': 'whyText' } }),
-      ...otherLanguages(h, { langs: m.otherLangs > 0 ? m.otherLangs : null, other: false, pickAgain: !!m.pickGuide, brave, translatable: m.translatable }),
+      ...otherLanguages(h, { langs, other: false, counted: !ccWithCount, pickAgain: !!m.pickGuide, brave, translatable: m.translatable }),
     ].filter(Boolean);
     states.forEach(([tone, text], i) => {
       const why = i === 0 && details.length

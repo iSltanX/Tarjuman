@@ -89,8 +89,11 @@ try {
         const st = await iso(STATE);
         // نص الرسالة من رمزها لا حرفيًا (ف8: كان ينتظر نصًا قديمًا): إرشاد «فعّل CC» أو «لا ترجمة لهذا الفيديو» حين يعطّل يوتيوب زر CC.
         // وباللغتين: واجهة الإضافة قد تتبع لغة المتصفح (--lang=en-US)، وmessageFor في Node عربي (مراجعة المرحلة 6، م9).
+        // و«فعّل CC» بعدد لغات الفيديو حين تُعرف (القرار ٢٩) بصيغ العدد.
         const guides = ['CT_NOT_CAPTURED', 'CT_NO_CAPTIONS'].flatMap((c) => [messageFor(c), EN_ERRORS[c]]).filter(Boolean);
-        r.result = { captured: st.captured.length, menuGuides: guides.some((g) => (menu?.text ?? '').includes(g)) };
+        const ccLangs = /في هذا الفيديو .+: فعّل ترجمة يوتيوب \(CC\)|This video has .+: turn on YouTube subtitles \(CC\)/;
+        const text = menu?.text ?? '';
+        r.result = { captured: st.captured.length, menuGuides: guides.some((g) => text.includes(g)) || ccLangs.test(text) };
         ev.check('list-nocap-no-capture-and-guidance', st.captured.length === 0 && r.result.menuGuides, r.result);
       } else if (item.slot === 'ad') {
         let seen = null;

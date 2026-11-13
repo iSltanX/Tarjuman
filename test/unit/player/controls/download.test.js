@@ -62,14 +62,16 @@ test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-0
   assert.equal(note.querySelector('button'), null, 'لا تبديل من الإضافة');
   assert.equal(page.ui.menuText().includes('Español'), false, 'ولا أسماء المسارات');
   assert.equal(page.ui.menuText().includes(LABELS.machineSteps), false, 'الترجمة الآلية بلا التقاط وحده');
-  // بلا التقاط: عدد كل لغات الفيديو، وخطوات ترجمة يوتيوب الآلية حين يتيحها، خلف «لماذا؟» بجوار رسالة الحالة الواحدة (ت-٩).
+  // بلا التقاط: عدد كل لغات الفيديو في سطر «فعّل CC» نفسه (القرار ٢٩)، وخطوات الاختيار بلا عدد وخطوات ترجمة يوتيوب الآلية حين
+  // يتيحها خلف «لماذا؟» (ت-٩).
   const none = mountPage({ state: makeState({ available }) });
   open(none);
+  assert.ok(none.ui.menuText().includes('في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، ثم افتح هذه القائمة.'));
   assert.equal(none.ui.menu().querySelector('[data-fid="otherLangs"]'), null, 'خلف «لماذا؟»');
   click(none.ui.item('لماذا؟'));
   const n2 = none.ui.menu().querySelector('[data-fid="otherLangs"]');
   assert.equal(n2.getAttribute('data-count'), '3');
-  assert.ok(n2.textContent.startsWith('في هذا الفيديو 3 لغات. لاختيار إحداها:'));
+  assert.equal(n2.querySelector('.steps').textContent, `لاختيار إحداها: ${LABELS.pickSteps}`);
   assert.ok(n2.textContent.includes(LABELS.machineSteps));
   // قائمة الفيديو غير معروفة بعد مسار ملتقط: الخطوات وحدها؛ ولا لغة أخرى معروفة: لا سطر.
   const unknown = mountPage({ state: makeState({ captured: [trackInfo()] }) });

@@ -45,14 +45,22 @@ export function trackLine(t) {
 /**
  * سطر لغات الفيديو الأخرى في قائمة التحميل (قرار سلطان 2026-11-07 بعد لقطات AA4): عددها حين تُعرف قائمة مسارات الفيديو، ثم خطوات
  * اختيارها من يوتيوب؛ وبلا قائمة معروفة الخطوات وحدها. «أخرى» بعد مسار ملتقط، وبلا التقاط «في هذا الفيديو 13 لغة».
+ * وcounted: false حين قيل العدد في رسالة الحالة (ccLanguagesLine)، فالخطوات وحدها.
  * @param {number | null} n عدد اللغات المختلفة التي لم تُلتقط، وnull حين لا تُعرف
- * @param {{ other?: boolean }} [o]
+ * @param {{ other?: boolean, counted?: boolean }} [o]
  */
-export function otherLanguagesLine(n, { other = true } = {}) {
+export function otherLanguagesLine(n, { other = true, counted = true } = {}) {
   if (n === null || n < 1) return T('otherPickNone', { steps: LABELS.pickSteps });
+  if (!counted) return T('pickWhich', { n, steps: LABELS.pickSteps });
   const what = T('otherWhat', { n, other, count: formatCount(n, COUNT_FORMS.language) });
   return T('otherInVideo', { n, what, steps: LABELS.pickSteps });
 }
+
+/**
+ * رسالة القائمة بلا التقاط ولغات الفيديو معروفة (القرار ٢٩): «في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، ثم افتح
+ * هذه القائمة.» بدل CT_NOT_CAPTURED وعددٍ خلف «لماذا؟». @param {number} n
+ */
+export const ccLanguagesLine = (n) => T('ccLanguages', { n, count: formatCount(n, COUNT_FORMS.language) });
 
 /**
  * سطر الترجمة في قائمتها: «العربية · 412 مقطعًا» باسم لغتها (و«· معدّلة» حين عُدّلت)، و«لغة غير محددة» بلا لغة.

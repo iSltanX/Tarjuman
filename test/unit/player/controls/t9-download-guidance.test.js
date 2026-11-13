@@ -5,13 +5,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { messageFor } from '../../../../src/core/errors/index.js';
-import { LABELS } from '../../../../src/player/controls/text.js';
+import { LABELS, ccLanguagesLine } from '../../../../src/player/controls/text.js';
 import { A, EN_CUES, click, makeState, mountPage, trackInfo } from './harness.js';
 
 const count = (text, part) => text.split(part).length - 1;
 /** رسائل الحالة الممكنة في القائمة بلا مسار ملتقط: يظهر منها واحدة فقط. */
 const STATE_CODES = ['CT_NOT_CAPTURED', 'CT_CC_NOT_CAPTURED', 'CT_NO_CAPTIONS', 'EX_EMPTY_BODY', 'EX_BEYOND_DURATION', 'EX_NOT_ENGLISH'];
-const shown = (text) => STATE_CODES.filter((c) => text.includes(messageFor(c)));
+/** «فعّل CC» بعدد لغات الفيديو (القرار ٢٩): رسالة حالة أيضًا، ورمزها هنا CC_LANGS:<العدد>. */
+const shown = (text) => [
+  ...STATE_CODES.filter((c) => text.includes(messageFor(c))),
+  ...[1, 2, 3, 11].filter((n) => text.includes(ccLanguagesLine(n))).map((n) => `CC_LANGS:${n}`),
+];
+/** العدد في سطر اللغات خلف «لماذا؟» (otherInVideo) لا يتكرر حين قيل في الرسالة. */
+const COUNTED = /في هذا الفيديو .+\. لاختيار/;
 // en يدوي، وes وja لغتان أخريان، وترجمة يوتيوب الآلية متاحة.
 const available = { videoId: A, tracks: [{ lang: 'en', kind: 'manual', name: 'English' }, { lang: 'es', kind: 'manual', name: 'Español' }, { lang: 'ja', kind: 'asr', name: null }], translatable: true };
 const savedEnglish = { key: 'en|manual', lang: 'en', kind: 'manual', cues: EN_CUES, source: 'saved' };
@@ -22,7 +28,7 @@ const savedEnglish = { key: 'en|manual', lang: 'en', kind: 'manual', cues: EN_CU
  */
 const CASES = [
   { name: 'لا التقاط ولا قائمة لغات', state: {}, code: 'CT_NOT_CAPTURED', why: true, steps: 0, machine: false },
-  { name: 'لا التقاط وفي الفيديو لغتان أخريان وترجمة آلية', state: { available }, code: 'CT_NOT_CAPTURED', why: true, steps: 1, machine: true },
+  { name: 'لا التقاط وفي الفيديو ثلاث لغات وترجمة آلية: «فعّل CC» بالعدد (القرار ٢٩)', state: { available }, code: 'CC_LANGS:3', why: true, steps: 1, machine: true },
   { name: 'استجابة فارغة ولغات معروفة', state: { captureIssue: { code: 'EX_EMPTY_BODY', at: 1 }, available }, code: 'EX_EMPTY_BODY', why: true, steps: 1, machine: true },
   { name: 'أصل محفوظ واستجابة فارغة (لقطة Fable)', state: { english: savedEnglish, captureIssue: { code: 'EX_EMPTY_BODY', at: 1 }, available }, code: 'EX_EMPTY_BODY', why: true, steps: 1, machine: true },
   { name: 'رفض مسار قديم بلا قائمة لغات', state: { captureIssue: { code: 'EX_NOT_ENGLISH', at: 1 } }, code: 'EX_NOT_ENGLISH', why: true, steps: 1, machine: false },
@@ -52,6 +58,7 @@ for (const c of CASES) {
     assert.equal(count(after, LABELS.pickSteps), c.steps, 'خطوات الاختيار مرة واحدة على الأكثر');
     assert.equal(count(after, LABELS.machineSteps), c.machine ? 1 : 0);
     assert.equal(count(after, LABELS.why), 1, 'الشرح مرة واحدة');
+    if (c.code.startsWith('CC_LANGS')) assert.ok(!COUNTED.test(after), 'العدد في الرسالة وحدها، لا خلف «لماذا؟»');
     click(page.ui.item(LABELS.whyLink));
     assert.equal(count(page.ui.menuText(), LABELS.pickSteps), 0, 'ويطويه الضغط مرة أخرى');
     assert.equal(page.ui.item(LABELS.whyLink).getAttribute('aria-expanded'), 'false');
@@ -82,4 +89,21 @@ test('ت-٩: «لماذا؟» زر يُفعَّل بلوحة المفاتيح و
   const text = page.ui.menuText();
   assert.equal(count(text, LABELS.braveNote), 1);
   assert.equal(count(text, LABELS.pickSteps), 1);
+});
+
+test('القرار ٢٩: «فعّل CC» بعدد لغات الفيديو بصيغ العدد، وخطوات الاختيار بلا عدد، بالعربية والإنجليزية', async () => {
+  const { setLocale } = await import('../../../../src/i18n/index.js');
+  const { otherLanguagesLine } = await import('../../../../src/player/controls/text.js');
+  assert.equal(ccLanguagesLine(1), 'في هذا الفيديو لغة واحدة: فعّل ترجمة يوتيوب (CC) واخترها، ثم افتح هذه القائمة.');
+  assert.equal(ccLanguagesLine(2), 'في هذا الفيديو لغتان: فعّل ترجمة يوتيوب (CC) واختر إحداها، ثم افتح هذه القائمة.');
+  assert.equal(ccLanguagesLine(11), 'في هذا الفيديو 11 لغة: فعّل ترجمة يوتيوب (CC) واختر إحداها، ثم افتح هذه القائمة.');
+  assert.equal(otherLanguagesLine(1, { other: false, counted: false }), `لاختيارها: ${LABELS.pickSteps}`);
+  setLocale('en');
+  try {
+    assert.equal(ccLanguagesLine(1), 'This video has 1 language: turn on YouTube subtitles (CC) and choose it, then open this menu.');
+    assert.equal(ccLanguagesLine(3), 'This video has 3 languages: turn on YouTube subtitles (CC) and choose one, then open this menu.');
+    assert.ok(otherLanguagesLine(3, { other: false, counted: false }).startsWith('To choose one: CC, then Settings'));
+  } finally {
+    setLocale('ar');
+  }
 });
