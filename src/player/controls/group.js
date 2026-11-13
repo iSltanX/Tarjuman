@@ -1,7 +1,8 @@
 // مجموعة الأزرار داخل شريط يوتيوب (مواصفة التصميم الأولى §٥، والهوية البصرية docs/identity.md): تحميل الأصل، والترجمة، والنص المتزامن
 // (يفتح اللوحة ويغلقها؛ مضغوط aria-pressed، ومخفي إن أُخفي زرها)، و−، والشارة، و+، بهذا الترتيب LTR دائمًا، بمقاس يتسع
-// له الشريط (bar.js fitSize) ولا يُخفى منها شيء. أيقونات بلا حروف ولا صناديق ولا نقاط حالة: اسم الوظيفة (ومعنى حالتها) في التلميح
-// عند المرور والتركيز وفي اسم الوصول ووصفه، والانشغال ماسّتا نبض مكان الأيقونة. Shadow DOM مغلق داخل عنصر واحد يُدرج في
+// له الشريط (bar.js fitSize) ولا يُخفى منها شيء، إلا − و+ في المقاس المطوي فهما في قائمة الشارة (ت-١). أيقونات بلا حروف
+// ولا صناديق ولا نقاط حالة: اسم الوظيفة (ومعنى حالتها) في التلميح عند المرور والتركيز وفي اسم الوصول ووصفه، والانشغال
+// ماسّتا نبض مكان الأيقونة. Shadow DOM مغلق داخل عنصر واحد يُدرج في
 // بداية أدوات الشريط اليمنى، فيظهر ويختفي مع الشريط كأي زر أصلي. الأزرار تبقى قابلة للتركيز وهي معطّلة (aria-disabled)
 // لتقرأ سببها. لا منطق منتج هنا: كل ضغط يُبلَّغ.
 import { getLocale } from '../../i18n/index.js';
@@ -19,10 +20,11 @@ const OWN_KEYS = new Set(['Enter', ' ', 'Spacebar', 'Escape']);
 
 /**
  * label اسم الوصول (وفيه السبب إن عُطّل)، وdescription معنى الحالة لقارئ الشاشة (أو null)، وtip نص التلميح البصري (تعرضه الطبقة).
- * pressed للزر المبدِّل (اللوحة مفتوحة)، وhidden لزر أخفاه المستخدم، وpopup نوع ما يفتحه الزر إن خالف نوعه الثابت (null: لا نافذة).
+ * pressed للزر المبدِّل (اللوحة مفتوحة)، وhidden لزر أخفاه المستخدم (اللوحة) أو طواه المقاس (− و+ في «المطوي»، ت-١)، وpopup نوع ما
+ * يفتحه الزر إن خالف نوعه الثابت (null: لا نافذة).
  * @typedef {{ label: string, tip?: string, description?: string | null, disabled?: boolean, unavailable?: boolean, loading?: boolean, expanded?: boolean, pressed?: boolean, hidden?: boolean, popup?: string | null }} ButtonModel
  * @typedef {{
- *   size: 'normal' | 'compact' | 'tight' | 'fullscreen',
+ *   size: 'normal' | 'compact' | 'tight' | 'folded' | 'fullscreen',
  *   download: ButtonModel, upload: ButtonModel, panel: ButtonModel, minus: ButtonModel, plus: ButtonModel,
  *   badge: ButtonModel & { text: string, sign: 'zero' | 'positive' | 'negative' },
  * }} GroupModel
@@ -133,6 +135,7 @@ export function createGroup({ doc, win, on }) {
     /** @param {GroupModel} m */
     update(m) {
       setAttr(group, 'data-size', m.size);
+      const had = root.activeElement;
       for (const kind of KINDS) {
         const b = buttons[kind];
         const s = m[kind];
@@ -151,12 +154,16 @@ export function createGroup({ doc, win, on }) {
           setAttr(b.el, 'aria-pressed', s.pressed ? 'true' : 'false');
           setAttr(b.el, 'hidden', s.hidden ? '' : null);
         }
+        // ت-١: − و+ يُطويان داخل قائمة الشارة في المقاس المطوي، ويعودان بعودته.
+        if (kind === 'minus' || kind === 'plus') setAttr(b.el, 'hidden', s.hidden ? '' : null);
         if (b.load) setAttr(b.load, 'hidden', s.loading ? null : '');
         if (kind === 'badge') {
           if (b.text.textContent !== m.badge.text) b.text.textContent = m.badge.text;
           setAttr(b.el, 'data-sign', m.badge.sign);
         }
       }
+      // زر طُوي وعليه التركيز: إلى الشارة التي صار فيها، لا إلى الصفحة فتذهب الضغطات إلى اختصارات يوتيوب.
+      if (had && had.hasAttribute?.('hidden') && (had === buttons.minus.el || had === buttons.plus.el)) buttons.badge.el.focus();
     },
 
     /** نبضة الشارة (120ms) بعد تغيّر الإزاحة. */

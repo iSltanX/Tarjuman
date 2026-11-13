@@ -36,6 +36,8 @@ export const CLASSES = Object.freeze({
   smallMode: 'ytp-small-mode',
   // عنوان الفصل في الأدوات اليسرى: يتمدد ويُقتطع، فلا يُحسب من المساحة اللازمة لها.
   chapter: 'ytp-chapter-container',
+  // زمن المشغّل («1:02 / 20:03») في الأدوات اليسرى: ينضغط داخل حاويته حين يضيق الشريط، فيُقاس قصّه بعرض نصه (ت-١).
+  timeDisplay: 'ytp-time-display',
 });
 
 export const EVENTS = Object.freeze({

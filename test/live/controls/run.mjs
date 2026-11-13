@@ -108,6 +108,8 @@ const M = {
       chrome: chrome ? { ...r(chrome), opacity: getComputedStyle(chrome).opacity } : null,
       right: right ? { ...r(right), first: right.firstElementChild?.id || right.firstElementChild?.className?.split(' ').slice(-1)[0] || null, children: [...right.children].map((c) => ({ id: c.id || null, cls: typeof c.className === 'string' ? c.className.split(' ').filter((x) => x.startsWith('ytp-') && x !== 'ytp-button').slice(0, 2).join('.') : '', box: r(c), shown: getComputedStyle(c).display !== 'none' })) } : null,
       leftRight: (() => { const l = p?.querySelector('.ytp-left-controls'); return l ? r(l) : null; })(),
+      // زمن يوتيوب بعرض نصه وصندوقه (ت-١): مقصوص إن زاد نصه على صندوقه أو امتد تحت أدوات ترجمان.
+      time: (() => { const t = p?.querySelector('.ytp-left-controls .ytp-time-display'); return t ? { ...r(t), scroll: t.scrollWidth, client: t.clientWidth } : null; })(),
       video: v ? { t: +v.currentTime.toFixed(3), paused: v.paused, muted: v.muted, duration: v.duration } : null,
       active: document.activeElement?.id || document.activeElement?.tagName || null,
       tjHosts: [...document.querySelectorAll('[id^="tarjuman"]')].map((e) => e.id),
@@ -695,7 +697,10 @@ try {
         const pk = await iso(I.peek);
         const ytOutside = m.right.children.filter((c) => c.shown && c.box.width > 0 && (c.box.right > m.chrome.right + 1 || c.box.left < m.chrome.left - 1 || c.box.top >= m.chrome.bottom - 1)).map((c) => c.cls || c.id);
         const overlapLeft = m.leftRight ? pk.group.left < m.leftRight.right - 1 : null;
-        narrow.push({ viewport: w, player: m.player.width, size: pk.size, five: Object.values(pk.buttons).every((x) => x.box.width > 0), outside: ytOutside, overlapLeft, overflow: pk.overflow, group: pk.group.width });
+        // ت-١ (قرار سلطان 2026-11-13): في المقاس المطوي − و+ في قائمة الشارة لا في الشريط، وما سواهما ظاهر.
+        const all = Object.entries(pk.buttons).every(([k, x]) => (x.box?.width ?? 0) > 0 || (pk.fit === 'folded' && (k === 'minus' || k === 'plus')));
+        const timeCut = !!m.time && (m.time.scroll > m.time.client + 1 || m.time.right > pk.group.left + 1);
+        narrow.push({ viewport: w, player: m.player.width, size: pk.size, fit: pk.fit, five: all, timeCut, time: m.time, outside: ytOutside, overlapLeft, overflow: pk.overflow, group: pk.group.width });
         if (w === 520) {
           await freshShot();
           await main(M.seek, SHOT_AT);
@@ -707,7 +712,8 @@ try {
           const pk2 = await iso(I.peek);
           const maxLine = Math.max(0, ...(ov.lineBoxes ?? []).map((x) => x.width));
           if (scale === 160) check('compact-160: wraps-within-92%-and-above-bar', 'P6-AC8', (ov.lineBoxes ?? []).length > 0 && maxLine <= m2.player.width * 0.92 + 1 && ov.stage.bottom <= m2.chrome.top + 1, { lines: (ov.lineBoxes ?? []).length, maxLine, player: m2.player.width, lineHeights: (ov.lineBoxes ?? []).map((x) => x.height), font: ov.font });
-          check(`compact${scale === 160 ? '-160' : ''}: five-in-bar`, 'P6-AC7', pk2.size === 'compact' && Object.values(pk2.buttons).every((x) => x.box.width > 0 && x.box.top >= m2.chrome.top - 1 && x.box.bottom <= m2.chrome.bottom + 1), { size: pk2.size, player: m2.player.width });
+          const shown2 = Object.entries(pk2.buttons).filter(([k]) => !(pk2.fit === 'folded' && (k === 'minus' || k === 'plus'))).map(([, x]) => x);
+          check(`compact${scale === 160 ? '-160' : ''}: five-in-bar`, 'P6-AC7', pk2.size === 'compact' && shown2.every((x) => (x.box?.width ?? 0) > 0 && x.box.top >= m2.chrome.top - 1 && x.box.bottom <= m2.chrome.bottom + 1), { size: pk2.size, fit: pk2.fit, player: m2.player.width });
           await shoot(`ac7-compact${suffix}`);
         }
       }
@@ -720,6 +726,10 @@ try {
         const fits = narrow.filter((n) => !n.outside.length && !n.overlapLeft);
         result.measures.smallestFittingPlayer = fits.length ? Math.min(...fits.map((n) => n.player)) : null;
         result.notes.push(`المشغّل الضيق: أصغر عرض مشغّل اتسع فيه الشريط لأدواتنا وأدوات يوتيوب ${result.measures.smallestFittingPlayer ?? 'لا شيء'}px؛ التفاصيل في measures.narrow.`);
+        // ت-١: لا قص لزمن يوتيوب عند 640 بعد الطي؛ وما دونه يُقاس ويُذكر (قد يبقى القص فيُبلَّغ CT_BAR_OVERFLOW).
+        const at640 = narrow.find((n) => n.viewport === 640);
+        check('t1-no-time-cut-at-640', 'ت-١', !!at640 && !at640.timeCut, at640 ? { player: at640.player, fit: at640.fit, time: at640.time, group: at640.group } : null);
+        result.notes.push(`ت-١: زمن يوتيوب مقصوص عند ${narrow.filter((n) => n.timeCut).map((n) => n.player).join('، ') || 'لا شيء'}px.`);
       }
       if (scale === 160) {
         const loaded = await iso(I.fonts, fam('markazi'));

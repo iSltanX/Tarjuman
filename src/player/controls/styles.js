@@ -24,8 +24,9 @@ export function groupCss() {
 :host { all: initial; display: inline-flex; flex: none; height: 100%; vertical-align: top; position: relative; }
 .group { display: flex; align-items: stretch; height: 100%; direction: ltr; font-family: var(--tj-p-font-body); --w: 48px; --icon: 22px; --badge: 44px; --badge-fs: 13px; --badge-pad: 8px; }
 .group[data-size="compact"] { --w: 40px; --icon: 20px; --badge: 38px; --badge-fs: 12px; --badge-pad: 6px; }
-/* الشريط الأضيق: الأزرار الستة كلها باقية (− و+ منها، product-spec §٦.١) بصندوق 34 وأيقونة 18، فلا تتداخل مع وقت يوتيوب. */
-.group[data-size="tight"] { --w: 34px; --icon: 18px; --badge: 34px; --badge-fs: 11px; --badge-pad: 4px; }
+/* الشريط الأضيق: الأزرار الستة كلها بصندوق 34 وأيقونة 18، فلا تتداخل مع وقت يوتيوب. والمطوي بالمقاس نفسه بلا − و+ (يحملان
+   hidden، وهما في قائمة الشارة؛ ت-١ بقرار سلطان 2026-11-13، product-spec §٦.١). */
+.group[data-size="folded"], .group[data-size="tight"] { --w: 34px; --icon: 18px; --badge: 34px; --badge-fs: 11px; --badge-pad: 4px; }
 .btn[hidden] { display: none; }
 .group[data-size="fullscreen"] { --w: 54px; --icon: 26px; --badge: 50px; --badge-fs: 15px; }
 .btn { all: unset; box-sizing: border-box; position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--w); height: 100%; color: var(--tj-p-icon); cursor: pointer; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
@@ -181,6 +182,12 @@ button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decor
 .row.field > .seg button { flex: none; min-width: 34px; padding: 0 9px; }
 
 .big { padding: 2px 6px 0; text-align: center; font: 700 var(--big-fs)/1.3 var(--tj-p-font-head); }
+/* − و+ حول القيمة في قائمة الشارة حين طُويا من الشريط (ت-١): − يسارًا و+ يمينًا كخط الأعداد، بهدف 32 وأكثر. */
+.nudge { display: flex; align-items: center; gap: 8px; padding: 0 2px; }
+.nudge > .big { flex: 1 1 auto; min-width: 0; }
+button.nudge-btn { all: unset; box-sizing: border-box; flex: none; width: 40px; height: 40px; display: inline-grid; place-items: center; border-radius: 8px; background: rgb(255 255 255 / 10%); color: var(--tj-p-menu-text); cursor: pointer; }
+button.nudge-btn:hover { background: rgb(255 255 255 / 16%); }
+button.nudge-btn svg.glyph--btn { width: 18px; height: 18px; }
 .big[data-sign="positive"], .big[data-sign="negative"] { color: var(--tj-p-accent); }
 .meaning { padding: 0 6px 2px; text-align: center; font-size: 0.93em; color: var(--tj-p-menu-text-2); }
 .field { justify-content: space-between; }

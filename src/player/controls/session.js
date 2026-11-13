@@ -8,7 +8,7 @@ import { formatOffset } from '../../ui/format.js';
 import { joinList } from '../../i18n/index.js';
 import { holdTimer } from '../../ui/hold.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
-import { fitSize, watchBar } from './bar.js';
+import { fitSize, timeClipped, watchBar } from './bar.js';
 import { completeInto, continuationFor, fileChars, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
@@ -251,8 +251,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const panelShown = ui$?.panelEntry !== false;
     const panelOpen = panelShown && ui$?.panelOpen === true;
     const panelTip = panelOpen ? LABELS.panelClose : LABELS.panelOpen;
+    const size = fitSize(bar, panelShown ? 5 : 4);
+    // ت-١ (قرار سلطان 2026-11-13): في المقاس المطوي لا يُرسم − و+ في الشريط، وهما في قائمة الشارة؛ والشارة تقول ذلك في تلميحها ووصفها.
+    const folded = size === 'folded';
     return {
-      size: fitSize(bar, panelShown ? 5 : 4),
+      size,
       download: {
         label: dlName, tip: withState(dlName, dlState), description: dlState, disabled: noVideo, unavailable,
         loading: ui.download.busy, expanded: ui.open === 'download',
@@ -266,9 +269,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         label: LABELS.panel, tip: flags.panelIssue ? `${panelTip} — ${messageFor(flags.panelIssue)}` : panelTip,
         description: flags.panelIssue ? messageFor(flags.panelIssue) : null, disabled: noVideo, hidden: !panelShown, pressed: panelOpen,
       },
-      minus: { label: withReason(minusTip(step)), tip: withReason(minusTip(step)), description: null, disabled: viewOff },
-      badge: { label: withReason(badge), tip: withReason(badge), description: null, disabled: viewOff, text: formatOffset(off), sign: signOf(off), expanded: ui.open === 'timing' },
-      plus: { label: withReason(plusTip(step)), tip: withReason(plusTip(step)), description: null, disabled: viewOff },
+      minus: { label: withReason(minusTip(step)), tip: withReason(minusTip(step)), description: null, disabled: viewOff, hidden: folded },
+      badge: {
+        label: withReason(badge), tip: withState(withReason(badge), folded ? LABELS.badgeFolded : null), description: folded ? LABELS.badgeFolded : null,
+        disabled: viewOff, text: formatOffset(off), sign: signOf(off), expanded: ui.open === 'timing',
+      },
+      plus: { label: withReason(plusTip(step)), tip: withReason(plusTip(step)), description: null, disabled: viewOff, hidden: folded },
     };
   }
 
@@ -401,6 +407,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       offsetMs: off, offsetText: t.offsetText ?? formatOffset(off), offsetError: t.offsetError,
       stepMs: step, custom: t.custom || !PRESET_STEPS.includes(step), stepText: t.stepText ?? stepText(step), stepError: t.stepError, sync,
+      // ت-١: − و+ المطويان من الشريط حول القيمة الكبيرة، بتلميحيهما في الشريط.
+      nudge: lastModel?.size === 'folded' ? { minus: minusTip(step), plus: plusTip(step) } : null,
       ad: isAdShowing(doc),
     };
   }
@@ -468,6 +476,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
             // حقل بلا تحديد
           }
         }
+      } else if (fid.startsWith('nudge:')) {
+        // ت-١: اتسع الشريط فعاد − و+ إليه وزالا من القائمة والتركيز عليهما: إلى أول القائمة لا إلى الصفحة.
+        layer.focusFirst();
       }
     }
   }
@@ -520,6 +531,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       // وما بقي مفتوحًا بقرار يبقى ظاهرًا: لا قائمة خفية تتلقى الضغطات، ولا تختفي أمام مستخدم لوحة المفاتيح (GM-003).
       layer.setKeep?.(!!ui.open && (pending || ui.download.busy || ui.upload.busy || !!layer.focused()));
       lastModel = groupModel(s, bar);
+      // زر طُوي (ت-١) أو أُخفي والمؤشر أو التركيز عليه: لا يبقى تلميحه عالقًا فوق موضع لا يُرسم فيه.
+      if (ui.hint && lastModel[ui.hint]?.hidden) ui.hint = null;
       group.update(lastModel);
       layer.setBar(bar);
       renderMenu(s);
@@ -750,18 +763,23 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     });
   }
 
-  function nudge(dir) {
+  /** @param {1 | -1} dir @param {{ fromMenu?: boolean }} [o] fromMenu: من قائمة الشارة في المقاس المطوي (ت-١) */
+  function nudge(dir, { fromMenu = false } = {}) {
     controller.nudgeOffset(dir)?.catch?.(() => {});
     ui.timing.offsetText = null;
     ui.timing.offsetError = null;
-    ui.flash = nudgeFlash(controller.getState().view.displayOffsetMs);
+    const flash = nudgeFlash(controller.getState().view.displayOffsetMs);
     // التلميح العابر لا يُقرأ: الإزاحة الجديدة تُعلن في منطقة حية، كما تعلنها قيمة التذييل في اللوحة (U48).
-    layer.announce(ui.flash);
+    layer.announce(flash);
     group.pulse();
-    later('flash', FLASH_MS, () => {
-      ui.flash = null;
-      renderTip();
-    });
+    // ومن القائمة لا تلميح عابر فوقها: قيمتها الكبيرة تقول الإزاحة.
+    if (!fromMenu) {
+      ui.flash = flash;
+      later('flash', FLASH_MS, () => {
+        ui.flash = null;
+        renderTip();
+      });
+    }
     render();
   }
 
@@ -862,6 +880,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
         layer.find('sync')?.focus();
         return;
       case 'sentence': applySentence(Number(value)); return;
+      // ت-١: − و+ من قائمة الشارة حين طُويا من الشريط.
+      case 'nudge': if (ui.open === 'timing' && !t.sync) nudge(value === -1 ? -1 : 1, { fromMenu: true }); return;
       case 'reset':
         t.offsetText = null;
         t.offsetError = null;
@@ -1347,7 +1367,13 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     layer.attachTo(player);
   }
 
-  /** هل دُفع شيء من الشريط خارجه، أو تداخلت المجموعة مع الأدوات اليسرى؟ قياس للتقرير، لا إخفاء لشيء. */
+  /** بُلّغ القص الحالي: مرة لكل قص متصل، ويعود بزواله. */
+  let overflowReported = false;
+  /**
+   * هل دُفع شيء من الشريط خارجه، أو تداخلت المجموعة مع الأدوات اليسرى، أو قُص زمن يوتيوب (ت-١: ينضغط داخل حاويته ولا يتداخل مع
+   * شيء، فلم يكن يُرى)؟ قياس للتقرير، لا إخفاء لشيء. ويُبلَّغ ما بقي بعد الطي والاستقرار: قياسان متتاليان (بعد الرسم ثم الفحص
+   * الدوري) لا قياس عابر أثناء تغيّر العرض قبل أن يستقر تخطيط يوتيوب.
+   */
   function measureOverflow(bar) {
     const right = group.host.parentNode;
     const chrome = getChromeBottom(doc);
@@ -1364,11 +1390,15 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       const r = k.getBoundingClientRect();
       return r.width > 0 && r.right > mine.left + 1 && r.left < mine.right - 1 && r.bottom > mine.top && r.top < mine.bottom;
     });
-    const now$ = outside || overlap ? { width: bar.width, size: bar.size, outside, overlap } : null;
-    if (now$ && !overflow) {
+    const clipped = timeClipped(doc, group.host);
+    const fit = lastModel?.size ?? null;
+    const now$ = outside || overlap || clipped ? { width: bar.width, size: bar.size, fit, outside, overlap, clipped } : null;
+    if (now$ && overflow && !overflowReported) {
+      overflowReported = true;
       counts.overflows++;
-      fail('CT_BAR_OVERFLOW', `width=${bar.width} size=${bar.size}`);
+      fail('CT_BAR_OVERFLOW', `width=${bar.width} size=${bar.size} fit=${fit} ${outside ? 'outside' : overlap ? 'overlap' : 'time'}`);
     }
+    if (!now$) overflowReported = false;
     overflow = now$;
   }
 

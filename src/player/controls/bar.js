@@ -46,22 +46,58 @@ export function sizeFor({ fullscreen, big, small, width }) {
 /**
  * مقاس مجموعة ترجمان في الشريط بحسب المساحة الخالية فيه، لا بعرض المشغّل وحده: مشغّل يوتيوب الحديث بأزراره الكبيرة لا يتسع
  * للمجموعة بمقاسها العادي دون 800px تقريبًا، فتداخلت مع الوقت (ملاحظة سلطان 2026-11-03). بالترتيب: عادي (48)، فمضغوط (40)،
- * فأضيق (34)؛ والأزرار كلها باقية في كل مقاس، − و+ منها (product-spec §٦.١: لا تُنقل إلى قائمة ولا تُخفى). وإن لم يتسع الأضيق
- * يُقاس الفيض ويُبلَّغ (CT_BAR_OVERFLOW). وملء الشاشة كما هو. بلا قياس: المقاس الأساسي.
+ * فأضيق (34) والأزرار كلها فيه، − و+ منها. فإن لم يتسع الأضيق للأزرار كلها طُوي − و+ داخل قائمة الشارة («مطوي»، بمقاس الأضيق
+ * نفسه): ت-١ بقرار سلطان 2026-11-13 (product-spec §٦.١ و§٦.٦)، فكان الأضيق يبقى ويُقص زمن يوتيوب. فالعتبة حدّ الأضيق نفسه، لا رقم
+ * جديد. وإن بقي زمن يوتيوب مقصوصًا بعد الطي يُبلَّغ (timeClipped، وCT_BAR_OVERFLOW). وملء الشاشة كما هو. بلا قياس: المقاس الأساسي.
  * @param {{ size: 'normal' | 'compact' | 'fullscreen', room: number | null }} bar
  * @param {number} icons أزرار الأيقونة الظاهرة غير الشارة (− و+ منها)
- * @returns {'normal' | 'compact' | 'tight' | 'fullscreen'}
+ * @returns {'normal' | 'compact' | 'tight' | 'folded' | 'fullscreen'}
  */
 export function fitSize(bar, icons) {
   if (bar.size === 'fullscreen' || bar.room === null) return bar.size;
   const need = (size) => icons * BUTTON_PX[size] + BADGE_PX[size] + ROOM_GAP_PX;
   if (bar.size === 'normal' && bar.room >= need('normal')) return 'normal';
   if (bar.room >= need('compact')) return 'compact';
-  return 'tight';
+  if (bar.room >= need('tight')) return 'tight';
+  return 'folded';
+}
+
+/** زمن يوتيوب في الأدوات اليسرى، أو null. @param {Document} doc */
+const timeDisplay = (doc) => getLeftControls(doc)?.querySelector?.(`.${CLASSES.timeDisplay}`) ?? null;
+
+/**
+ * الحافة اليمنى لزمن يوتيوب بعرض نصه لا بمستطيله (ت-١): حين يضيق الشريط ينضغط الزمن داخل حاويته فيُقص إلى «1:08 / 2»، ويبدو
+ * مستطيله أن الشريط أوسع مما هو. null بلا زمن ظاهر أو مقصوص (أخفاه يوتيوب نفسه: بلا عرض ولا نص).
+ * @param {Element | null} time
+ * @returns {number | null}
+ */
+function naturalTimeRight(time) {
+  if (!time?.getBoundingClientRect) return null;
+  const r = time.getBoundingClientRect();
+  const natural = Math.max(r.width || 0, time.scrollWidth || 0);
+  return natural > 0 ? r.left + natural : null;
 }
 
 /**
- * المساحة (px) المتاحة لمجموعة ترجمان: من نهاية أدوات يوتيوب اليسرى الأساسية (التشغيل والصوت والوقت، وسهم عنوان الفصل وحده لأن
+ * زمن يوتيوب مقصوص (ت-١): نصه أعرض من صندوقه (ينضغط داخل حاويته ولا يتداخل مع شيء، فلم يكن كشف التداخل يراه)، أو صندوقه يمتد
+ * تحت مجموعة ترجمان أو خارج حاوية الأدوات اليسرى. وزمن أخفاه يوتيوب نفسه (بلا عرض ولا نص) ليس قصًّا. قياس للتبليغ، لا إخفاء لشيء.
+ * @param {Document} doc @param {Element | null} own مضيف المجموعة
+ */
+export function timeClipped(doc, own) {
+  const time = timeDisplay(doc);
+  if (!time?.getBoundingClientRect) return false;
+  const r = time.getBoundingClientRect();
+  const box = typeof time.clientWidth === 'number' ? time.clientWidth : r.width;
+  if ((time.scrollWidth || 0) > (box || 0) + 1) return true;
+  if (!(r.width > 0)) return false;
+  const mine = own?.getBoundingClientRect?.();
+  if (mine && mine.width > 0 && r.right > mine.left + 1 && r.left < mine.right - 1 && r.bottom > mine.top && r.top < mine.bottom) return true;
+  const left = getLeftControls(doc)?.getBoundingClientRect?.();
+  return !!left && left.width > 0 && r.right > left.right + 1;
+}
+
+/**
+ * المساحة (px) المتاحة لمجموعة ترجمان: من نهاية أدوات يوتيوب اليسرى الأساسية (التشغيل والصوت والوقت بعرض نصه، وسهم عنوان الفصل وحده لأن
  * عنوانه يُقتطع، ومنزلق الصوت بعرضه المتسع دائمًا) إلى نهاية الشريط، ناقص أدوات يوتيوب اليمنى غير المجموعة. لا تتغير بمقاس المجموعة
  * نفسها ولا بمرور المؤشر، فلا تذبذب بين مقاسين.
  * @param {Document} doc @param {Element | null} own مضيف المجموعة
@@ -84,6 +120,9 @@ export function roomFor(doc, own) {
     const r = k.getBoundingClientRect();
     if (r.width > 0 && r.right > edge) edge = r.right;
   }
+  // الزمن بعرض نصه: مستطيله المنضغط يجعل المساحة أوسع مما هي (ت-١).
+  const timeRight = naturalTimeRight(timeDisplay(doc));
+  if (timeRight !== null && timeRight > edge) edge = timeRight;
   if (chapters) edge += CHAPTER_MIN_PX;
   const volume = doc.querySelector(SELECTORS.volumePanel)?.getBoundingClientRect().width ?? 0;
   edge += VOLUME_RESERVE_PX - Math.min(volume, VOLUME_RESERVE_PX);

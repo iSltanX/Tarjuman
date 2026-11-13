@@ -136,6 +136,8 @@ export default Object.freeze({
     badgeZero: 'Offset: {offset} s. Click for options',
     badgeLater: 'Offset: {offset} s (translation appears later). Click for options',
     badgeEarlier: 'Offset: {offset} s (translation appears earlier). Click for options',
+    // ت-١: folded bar, − and + inside the badge menu (appended to its tip and description).
+    badgeFolded: 'including earlier and later',
     nudgeZero: '{offset} s · at its saved timing',
     nudgeLater: '{offset} s · appears later',
     nudgeEarlier: '{offset} s · appears earlier',

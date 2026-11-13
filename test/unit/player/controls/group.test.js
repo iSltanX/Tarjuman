@@ -299,14 +299,15 @@ test('زر اللوحة بلوحة المفاتيح يطلب التركيز دا
   assert.equal(link.focusButton(), false, 'الإزالة تلغي التسجيل');
 });
 
-test('الملاءمة بالمساحة الخالية في الشريط لا بعرض المشغّل وحده: عادي (48)، فمضغوط (40)، فأضيق (34)', () => {
+test('الملاءمة بالمساحة الخالية في الشريط لا بعرض المشغّل وحده: عادي (48)، فمضغوط (40)، فأضيق (34)، فمطوي (ت-١)', () => {
   const bar = (room, size = 'normal') => ({ size, room });
   assert.equal(fitSize(bar(null), 5), 'normal', 'بلا قياس: المقاس الأساسي');
   assert.equal(fitSize(bar(5 * 48 + 56 + 8), 5), 'normal');
   assert.equal(fitSize(bar(5 * 48 + 56 + 7), 5), 'compact');
   assert.equal(fitSize(bar(5 * 40 + 50 + 8), 5), 'compact');
   assert.equal(fitSize(bar(5 * 40 + 50 + 7), 5), 'tight');
-  assert.equal(fitSize(bar(100), 5), 'tight', 'لا مقاس أصغر: يُقاس الفيض ويُبلَّغ');
+  assert.equal(fitSize(bar(5 * 34 + 42 + 8), 5), 'tight');
+  assert.equal(fitSize(bar(100), 5), 'folded', 'لا يتسع الأضيق: يُطوى − و+ في قائمة الشارة (ت-١، قرار سلطان 2026-11-13)');
   assert.equal(fitSize(bar(4 * 40 + 50 + 8), 4), 'compact', 'زر اللوحة مخفي: أربعة');
   assert.equal(fitSize(bar(2000, 'compact'), 5), 'compact', 'وضع يوتيوب الصغير يبقى مضغوطًا');
   assert.equal(fitSize(bar(10, 'fullscreen'), 5), 'fullscreen');
@@ -343,7 +344,7 @@ test('roomFor: من نهاية أدوات يوتيوب اليسرى (وسهم ا
   assert.equal(roomFor(env.doc, null), null);
 });
 
-test('الأضيق (product-spec §٦.١): الأزرار الستة كلها في الشريط، − و+ منها، لا تُنقل إلى قائمة ولا تُخفى', () => {
+test('الأضيق (product-spec §٦.١): ما اتسع الأضيق للأزرار الستة بقيت كلها في الشريط، − و+ منها (والمطوي في t1-bar-fold.test.js)', () => {
   const css = groupCss();
   assert.doesNotMatch(css, /data-kind="(minus|plus)"\][^{]*\{[^}]*display: none/, 'لا نمط يخفي − أو +');
   const page = mountPage({ state: withArabic(), width: 760 });
@@ -355,10 +356,10 @@ test('الأضيق (product-spec §٦.١): الأزرار الستة كلها ف
   };
   mk('ytp-time-display', 120, 242);
   page.chrome.rect = { ...page.chrome.rect, left: 12, right: 748, width: 736 };
-  page.right.rect = { top: 0, bottom: 40, left: 300, right: 748, width: 540, height: 40 };
-  page.ui.groupHost().rect = { top: 0, bottom: 40, left: 300, right: 584, width: 284, height: 40 };
+  page.right.rect = { top: 0, bottom: 40, left: 232, right: 748, width: 516, height: 40 };
+  page.ui.groupHost().rect = { top: 0, bottom: 40, left: 232, right: 516, width: 284, height: 40 };
   page.env.win.resize(page.player);
-  // 748 − 242 − (540 − 284) = 250 ← 248: أقل من المضغوط (5×40+50+8 = 258)، ويتسع للأضيق (5×34+42+8 = 220).
+  // 748 − 242 − 52 (منزلق الصوت محجوز) − (516 − 284) = 222 ← 220: أقل من المضغوط (5×40+50+8 = 258)، ويتسع للأضيق (5×34+42+8 = 220).
   assert.equal(page.ui.size(), 'tight');
   assert.deepEqual(page.ui.kinds(), ['download', 'upload', 'panel', 'minus', 'badge', 'plus']);
   assert.ok(page.ui.kinds().every((k) => !page.ui.btn(k).hasAttribute('hidden')));

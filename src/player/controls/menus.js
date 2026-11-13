@@ -536,9 +536,9 @@ export function confirmMenu(h, act, m, root = null) {
 }
 
 /**
- * قائمة خيارات التوقيت (§٦.٣): مكمّلة لزرّي − و+ لا بديل عنهما.
+ * قائمة خيارات التوقيت (§٦.٣): مكمّلة لزرّي − و+ لا بديل عنهما، إلا في الشريط المطوي فهما فيها (ت-١، nudge بتلميحيهما).
  * @param {H} h @param {Act} act
- * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null, ad?: boolean }} m
+ * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null, ad?: boolean, nudge?: { minus: string, plus: string } | null }} m
  */
 export function timingMenu(h, act, m, root = null) {
   if (m.sync) return syncView(h, act, m.sync);
@@ -559,12 +559,20 @@ export function timingMenu(h, act, m, root = null) {
   });
   offset.value = m.offsetText;
   const preset = m.custom ? 'custom' : String(m.stepMs);
+  const big = h('div', {
+    className: 'big', attrs: { 'data-sign': sign(m.offsetMs), 'data-fid': 'big', 'aria-live': 'polite' },
+    children: [h('bdi', { text: value, attrs: { dir: 'ltr' } }), h('span', { text: ` ${LABELS.seconds}` })],
+  });
+  // ت-١ (قرار سلطان 2026-11-13): في الشريط المطوي − و+ هنا حول القيمة، − يسارًا و+ يمينًا كخط الأعداد كما في الشريط (أول الصف
+  // يمينه في RTL)، باسميهما وتلميحيهما في الشريط؛ أزرار تُبلغ بالمؤشر ولوحة المفاتيح.
+  const nudgeBtn = (dir, kind, tip) => h('button', {
+    className: 'nudge-btn', attrs: { type: 'button', 'data-fid': `nudge:${kind}`, 'aria-label': tip, title: tip },
+    on: { click: () => act('nudge', dir) }, children: [h.glyph?.(kind, 'glyph glyph--btn') ?? null],
+  });
+  const nudges = m.nudge ? [nudgeBtn(-1, 'minus', m.nudge.minus), nudgeBtn(1, 'plus', m.nudge.plus)] : null;
   const out = [
     h('h2', { className: 'title', text: LABELS.timingTitle }),
-    h('div', {
-      className: 'big', attrs: { 'data-sign': sign(m.offsetMs), 'data-fid': 'big', 'aria-live': 'polite' },
-      children: [h('bdi', { text: value, attrs: { dir: 'ltr' } }), h('span', { text: ` ${LABELS.seconds}` })],
-    }),
+    nudges ? h('div', { className: 'nudge', children: getDir() === 'rtl' ? [nudges[1], big, nudges[0]] : [nudges[0], big, nudges[1]] }) : big,
     h('div', { className: 'meaning', text: offsetMeaning(m.offsetMs), attrs: { 'data-fid': 'meaning' } }),
     sep(h),
     h('div', { className: 'row field', children: [h('label', { text: LABELS.offsetField, attrs: { for: 'tj-offset' } }), offset, h('span', { className: 'unit', text: LABELS.seconds })] }),
