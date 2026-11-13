@@ -76,7 +76,7 @@ html, body.ed-page { height: 100%; }
   background: var(--tj-surface); color: var(--tj-text); font: 400 14px/20px var(--tj-font-body);
 }
 .ed-search__input::placeholder { color: var(--tj-muted); }
-.ed-search__input:focus-visible { outline: none; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
+.ed-search__input:focus-visible { outline: 2px solid transparent; outline-offset: 1px; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
 .ed-search__opts {
   position: absolute; top: calc(100% + 6px); inset-inline-start: 0; z-index: 20; display: flex; flex-direction: column; gap: 4px;
   min-width: 240px; padding: 10px 12px; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-lg); background: var(--tj-surface); box-shadow: var(--tj-e2);
@@ -215,7 +215,7 @@ html, body.ed-page { height: 100%; }
   font: 400 16px/24px var(--tj-font-body);
 }
 /* التركيز في حقلَي الزمن والنص حدٌّ طيني وهالة 3px (لوحة 14)، بلا تغيير في مقاس الصف. */
-.ed-time:focus-visible, .ed-row__text:focus-visible { outline: none; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
+.ed-time:focus-visible, .ed-row__text:focus-visible { outline: 2px solid transparent; outline-offset: 1px; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
 .ed-row__en {
   margin: 0; padding-top: 8px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); text-align: start;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
@@ -353,3 +353,7 @@ html, body.ed-page { height: 100%; }
   .ed-search__input { flex: 1 1 auto; width: auto; }
 }
 .ed-pair { white-space: nowrap; unicode-bidi: isolate; color: var(--tj-text-2); }
+/* ت-٥: المختار في وضع التباين العالي بحدّ بلون النظام (components.css). */
+@media (forced-colors: active) {
+  .ed-seg__opt[aria-checked="true"], .ed-tab[aria-selected="true"], .ed-row.is-selected, .ed-row.is-active { outline: 2px solid Highlight; outline-offset: -2px; }
+}

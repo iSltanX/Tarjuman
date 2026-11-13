@@ -52,7 +52,9 @@ export function groupCss() {
 .load i + i { animation-delay: ${LOAD_MS / 2}ms; }
 @keyframes tj-load { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-@media (prefers-reduced-motion: reduce) { .badge[data-pulse] { animation: none; } .load i { animation-duration: ${LOAD_MS * 3}ms; } }`;
+@media (prefers-reduced-motion: reduce) { .badge[data-pulse] { animation: none; } .load i { animation-duration: ${LOAD_MS * 3}ms; } }
+/* ت-٥: الزر المضغوط (اللوحة مفتوحة) في وضع التباين العالي بحدّ بلون النظام. */
+@media (forced-colors: active) { .btn[aria-pressed="true"] { outline: 2px solid Highlight; outline-offset: -2px; } }`;
 }
 
 export function layerCss() {
@@ -199,7 +201,7 @@ input.num:focus { box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(
 input.num[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--tj-p-error); }
 /* لغة الترجمة عند الرفع وفي قائمتها (AA3): اختيار أصلي من المتصفح على زجاج القائمة، والخيارات بألوان النظام ليقرأها كل متصفح. */
 select.lang { box-sizing: border-box; flex: 0 1 auto; min-width: 0; max-width: 62%; height: 28px; padding: 0 6px; border: 0; border-radius: 6px; font: 700 var(--fs)/1 var(--tj-p-font-body); color: var(--tj-p-menu-text); background: rgb(0 0 0 / 30%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%); cursor: pointer; }
-select.lang:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(217 147 123 / 25%); }
+select.lang:focus-visible { outline: 2px solid transparent; outline-offset: 1px; box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(217 147 123 / 25%); }
 select.lang[aria-disabled="true"], select.lang:disabled { opacity: 0.45; cursor: default; }
 select.lang option, select.lang optgroup { color: #182E2B; background: #FFFFFF; }
 .field-error { padding: 0 6px 2px; color: var(--tj-p-error); font-size: 0.93em; }
@@ -227,7 +229,11 @@ label.item:hover { background: var(--tj-p-menu-hover); }
 .toast button.act:hover { background: var(--tj-p-menu-hover); }
 
 .menu :focus-visible, .toast :focus-visible { ${FOCUS} }
-input.num:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(217 147 123 / 25%); }
+input.num:focus-visible { outline: 2px solid transparent; outline-offset: 1px; box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(217 147 123 / 25%); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* ت-٥ (تحقق Fable للتصميم): وضع التباين العالي يمحو الخلفيات والظلال، فالمختار بحدّ بلون النظام، والتركيز بالحدّ الشفاف أعلاه. */
+@media (forced-colors: active) {
+  button.slot[aria-checked="true"], button.item[aria-checked="true"], .seg button[aria-checked="true"], button.item.sentence[aria-current="true"] { outline: 2px solid Highlight; outline-offset: -2px; }
+}
 @media (prefers-reduced-motion: reduce) { .menu, .toast { animation: none; } .layer { transition: none; } }`;
 }

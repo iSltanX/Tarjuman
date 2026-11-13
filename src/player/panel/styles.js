@@ -183,5 +183,13 @@ export function panelCss() {
 .root[data-wide][data-kind="ready"] .foot { border-top: 0; border-inline-start: 1px solid var(--tj-border); justify-content: center; }
 .root[data-wide][data-kind="ready"] .foot__hint { display: none; }
 .root[data-wide][data-kind="ready"] .off .lbl, .root[data-wide][data-kind="ready"] .off__val .mean { display: none; }
-.root[data-wide][data-kind="ready"] .off .b { width: var(--tj-control-lg); padding: 0; }`;
+.root[data-wide][data-kind="ready"] .off .b { width: var(--tj-control-lg); padding: 0; }
+/* ت-٥ (تحقق Fable للتصميم): المختار في وضع التباين العالي بحدّ بلون النظام، والمفتاح بمسار وإبهام ظاهرين. */
+@media (forced-colors: active) {
+  .segs button[aria-checked="true"], .ra[aria-pressed="true"] { outline: 2px solid Highlight; outline-offset: -2px; }
+  .switch__track { border: 1px solid CanvasText; }
+  .switch__thumb { forced-color-adjust: none; background: CanvasText; }
+  .switch[aria-checked="true"] .switch__track { forced-color-adjust: none; background: Highlight; }
+  .switch[aria-checked="true"] .switch__thumb { background: HighlightText; }
+}`;
 }

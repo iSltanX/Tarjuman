@@ -273,3 +273,11 @@
 .st-lang-unknown > .tj-lang-pick { flex: 1 1 220px; position: relative; }
 .st-lang-unknown > .tj-btn { flex: none; }
 .st-lang-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+/* ت-٥: المختار في وضع التباين العالي بحدّ بلون النظام، والمفتاح بمسار وإبهام ظاهرين (components.css). */
+@media (forced-colors: active) {
+  .st-nav__link[aria-current="page"], .st-font:has(input:checked) { outline: 2px solid Highlight; outline-offset: -2px; }
+  .st-switch__track { border: 1px solid CanvasText; }
+  .st-switch__track::after { forced-color-adjust: none; background: CanvasText; }
+  .st-switch__input:checked + .st-switch__track { forced-color-adjust: none; background: Highlight; }
+  .st-switch__input:checked + .st-switch__track::after { background: HighlightText; }
+}

@@ -74,7 +74,7 @@
 .tj-field__input::placeholder { color: var(--tj-muted); }
 .tj-field__input:hover:not(:disabled) { border-color: var(--tj-text-2); }
 /* التركيز في الحقل حدّ طيني وهالة 3px (لوحة 08)، والخطأ مثله بلون الخطر. */
-.tj-field__input:focus-visible, .tj-field__input:focus { outline: none; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
+.tj-field__input:focus-visible, .tj-field__input:focus { outline: 2px solid transparent; outline-offset: 1px; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
 .tj-field__input:disabled { cursor: not-allowed; background: var(--tj-surface-2); color: var(--tj-muted); border-color: var(--tj-border-strong); }
 .tj-field__input--mono { font: 500 14px/20px var(--tj-font-mono); font-variant-numeric: tabular-nums; direction: ltr; text-align: left; }
 .tj-field__hint { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
@@ -329,7 +329,7 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-lang__v.is-empty { color: var(--tj-muted); font-weight: 400; }
 .tj-lang .tj-icon { flex: none; width: 16px; height: 16px; stroke-width: 2; color: var(--tj-muted); }
 .tj-lang:hover:not([aria-disabled="true"]) { border-color: var(--tj-text-2); }
-.tj-lang:focus-visible, .tj-lang.is-open { outline: none; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
+.tj-lang:focus-visible, .tj-lang.is-open { outline: 2px solid transparent; outline-offset: 1px; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
 .tj-lang[aria-disabled="true"] { cursor: not-allowed; background: var(--tj-surface-2); color: var(--tj-muted); border-color: var(--tj-border-strong); }
 .tj-lang-swap {
   display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
@@ -365,3 +365,8 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-lang-item .tj-icon { flex: none; width: 16px; height: 16px; stroke-width: 2.25; color: var(--tj-accent); }
 .tj-lang-item.is-on .tj-lang-item__n { color: inherit; }
 @media (prefers-reduced-motion: reduce) { .tj-lang-pop { animation: none; } .tj-lang { transition: none; } }
+/* ت-٥ (تحقق Fable للتصميم): وضع التباين العالي يمحو الخلفيات والظلال، فالمختار يُميَّز بحدّ بلون النظام، والتركيز بحلقة الحدّ الشفاف
+   أعلاه (تظهر بلون النظام في هذا الوضع)، والمفتاح بمسار وإبهام بلوني النص والتمييز. */
+@media (forced-colors: active) {
+  .tj-seg__option input:checked + .tj-seg__label, .tj-choice__option:has(input:checked), .tj-chip[aria-pressed="true"], .tj-slots__slot[aria-checked="true"], .tj-lang-item.is-active { outline: 2px solid Highlight; outline-offset: -2px; }
+}
