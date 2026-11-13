@@ -292,3 +292,32 @@ test('ت-١٢ (ب): عنوان صف المحفوظات والزر الكبير �
     assert.doesNotMatch(sheet, /font:\s*\d+\s+13px\/\d+px var\(--tj-font-head\)/, `${name}: Cairo 13`);
   }
 });
+
+/** محتوى كل كتل @media بهذا الشرط في الورقة، متصلةً. */
+function mediaBlocks(sheet, cond) {
+  let out = '';
+  for (let i = sheet.indexOf(`@media ${cond}`); i >= 0; i = sheet.indexOf(`@media ${cond}`, i + 1)) {
+    let depth = 0;
+    for (let k = sheet.indexOf('{', i); k < sheet.length; k++) {
+      if (sheet[k] === '{') depth++;
+      else if (sheet[k] === '}' && --depth === 0) {
+        out += sheet.slice(sheet.indexOf('{', i) + 1, k);
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+test('ت-١٢ (د): كل قاعدة :root[data-theme="dark"] في components.css لها نظيرة بالتصريحات نفسها تحت prefers-color-scheme: dark', () => {
+  // الصفحات لا تضبط data-theme (تتبع النظام)، فالقاعدة المقيّدة به وحده ميتة فيها (كبسولة العدّاد المختار ودوّامة الرئيسي).
+  const ui = read('src/ui/components.css');
+  const forced = [...ui.matchAll(/(?:^|\n):root\[data-theme="dark"\] ([^{]+?) \{([^}]*)\}/g)].map((m) => [m[1], m[2].trim()]);
+  assert.ok(forced.length >= 2, 'القاعدتان');
+  const media = mediaBlocks(ui, '(prefers-color-scheme: dark)');
+  for (const [sel, body] of forced) {
+    const m = new RegExp(`:root:not\\(\\[data-theme="light"\\]\\) ${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`).exec(media);
+    assert.ok(m, `نظيرة ${sel} تحت وضع النظام الداكن`);
+    assert.equal(m[1].trim(), body, sel);
+  }
+});

@@ -53,7 +53,11 @@
   border-radius: 50%; border: 2px solid var(--tj-border-input); border-top-color: var(--tj-text); animation: tj-spin 800ms linear infinite;
 }
 .tj-btn--primary[aria-busy="true"]::after { border-color: rgb(255 255 255 / 35%); border-top-color: var(--tj-brand-ink); }
+/* الداكن بالوضعين كرموز tokens.css: data-theme="dark" يفرضه، ووضع النظام الداكن ما لم يُفرض الفاتح (الصفحات لا تضبط data-theme؛ ت-١٢). */
 :root[data-theme="dark"] .tj-btn--primary[aria-busy="true"]::after { border-color: rgb(15 25 23 / 35%); border-top-color: var(--tj-brand-ink); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tj-btn--primary[aria-busy="true"]::after { border-color: rgb(15 25 23 / 35%); border-top-color: var(--tj-brand-ink); }
+}
 @keyframes tj-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes tj-spin { to { transform: rotate(360deg); } }
 /* نقطة التاء: علامة الحالة المستعارة من الشعار، معيّن 6 بكسل بزاوية 1 يدور 45°، بلون الحالة، ولا يظهر وحده أبدًا. ينبض في الانتظار وحده. */
@@ -194,6 +198,9 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-chip__count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: rgb(0 0 0 / 8%); font: 700 11px/18px var(--tj-font-mono); color: var(--tj-text); direction: ltr; }
 .tj-chip[aria-pressed="true"] .tj-chip__count { background: rgb(255 255 255 / 18%); color: inherit; }
 :root[data-theme="dark"] .tj-chip[aria-pressed="true"] .tj-chip__count { background: rgb(0 0 0 / 14%); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tj-chip[aria-pressed="true"] .tj-chip__count { background: rgb(0 0 0 / 14%); }
+}
 
 /* ---- محدد الترجمات الموجودة: زر لكل ترجمة محفوظة، والنشطة بصبغة المحدد. الأرقام تُقرأ من اليسار كخط الأعداد ---- */
 .tj-slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); direction: ltr; flex: none; }
