@@ -22,6 +22,8 @@ html, body.ed-page { height: 100%; }
 .ed-toolbar { grid-row: 2; }
 .ed-offset { grid-row: 3; }
 .ed-banner { grid-row: 4; }
+/* لافتة التغيّر الخارجي ولافتة المسودة (الفكرة ٩) في حاوية واحدة بصفّهما، فتظهران معًا بلا تراكب. */
+.ed-banners { grid-row: 4; }
 .ed-body { grid-row: 5; }
 .ed-unsaved { grid-row: 6; }
 .ed-spacer { flex: 1; }

@@ -2,6 +2,7 @@
 // و±، وسطر إزاحة العرض المنفصل، والقائمة الافتراضية بعمودها المرجعي، واللوحة الجانبية، والحفظ والأصل والتصدير وحارس
 // المغادرة. المنطق في src/core/edit (الجلسة والمشكلات وما يُصدَّر)؛ هنا الحالة المعروضة والأحداث فقط. لا حفظ تلقائي
 // أبدًا: «حفظ» وحده يكتب في خانة التحرير، بـexpect الحزمة المفتوحة، فإن تغيّر محتوى الخانة من المشغّل أو تبويب آخر رُفض.
+// وما لم يُحفظ يُكتب مسودةً في مفتاحها وحده (الفكرة ٩، draft.js)، لا في الخانة، ولا يُستعاد إلا بضغطة صريحة.
 /* global __TJ_DEV__ */
 import { compare, currentComparison, fingerprintCoverage, previewRestoreTiming, rankReferences } from '../../core/compare/index.js';
 import { canonical } from '../../core/store/version.js';
@@ -38,6 +39,8 @@ import { openReportDialog, openStudyDialog } from './export-dialogs.js';
 import { renderComparison, renderIssues, renderReference } from './panels.js';
 import { editorIcon } from './icons.js';
 import { openRescueDialog } from './rescue-dialog.js';
+import { classifyDraft } from '../../core/model/draft.js';
+import { createDraftKeeper, draftBanner } from './draft.js';
 import {
   classifyChange, openedSlot, pickSlot, restoreSlotOriginal, saveSlot, slotChange, slotContentChanged, writeMarks, writePosition, writeReference,
 } from './persist.js';
@@ -597,6 +600,8 @@ export async function mountEditor(app, {
 
   // ---- أحداث الجلسة ----
   function onSessionChange(e) {
+    // مسودة المحرّر (الفكرة ٩): كل تغيير في الجلسة يجدول كتابتها بعد السكون.
+    keeper.schedule();
     if (S.view !== 'edit') return;
     if (e.structural || S.session.count !== S.rowOf.length) {
       // عدد المقاطع أو مواضعها تغيّرت (دمج، شطر، ملف تصحيح، إعادة تطبيق، أو تراجع عنها): الصفوف تُبنى من جديد.
@@ -637,6 +642,7 @@ export async function mountEditor(app, {
     renderChrome();
     renderRefSelect();
     renderComparisonPanel();
+    renderDraftBanner();
   }
 
   function renderChrome() {
@@ -1026,6 +1032,143 @@ export async function mountEditor(app, {
     toastEl.classList.remove('is-shown');
     for (const child of toastEl.children) child.setAttribute('inert', '');
   }
+
+  // ---- مسودة المحرّر (الفكرة ٩، ح-48، عقد storage §١٦): تُكتب تلقائيًا، وتُستعاد بضغطة صريحة من لافتة ثابتة ----
+  // اللافتة في حاوية واحدة مع لافتة التغيّر الخارجي في صف الشبكة نفسه، فلا تتراكبان.
+  const draftEl = el('div', { className: 'ed-banner', doc });
+  draftEl.hidden = true;
+  const bannersEl = el('div', { className: 'ed-banners', doc });
+  bannerEl.replaceWith(bannersEl);
+  bannersEl.append(bannerEl, draftEl);
+  const keeper = createDraftKeeper({
+    win, store, videoId, now,
+    current: () => (S.session && S.info ? { session: S.session, slot: S.slot, opened: { track: S.info.track, offsetMs: S.info.offsetMs } } : null),
+  });
+  /** مسودة سابقة تنتظر قرار المستخدم في لافتتها. @type {{ slot: 1 | 2 | 3, draft: import('../../core/model/draft.js').Draft } | null} */
+  let draftOffer = null;
+  /** تصنيفها على الخانة كما هي الآن (يتغيّر بعد حفظ أو ± من المشغّل أو تغيّر من تبويب آخر). */
+  const offerNow = (o) => classifyDraft(o.draft, S.opened?.slots[o.slot - 1] ?? null);
+
+  /** اللافتة تُمسك كتابة المسودة ما دامت قائمة، فلا تحل مسودة الجلسة محل التي لم يُقرَّر فيها؛ وبعدها يُكتب ما تغيّر في أثنائها. */
+  function setDraftOffer(o) {
+    draftOffer = o;
+    keeper.hold(Boolean(o));
+    if (!o) keeper.schedule();
+    renderDraftBanner();
+  }
+
+  /** عند فتح خانة: مسودة تُستعاد أو تُنزَّل فلافتتها، وإلا تُحذف بقاياها (التالفة أو المطابقة للمحفوظ) فتُفتح الخانة نظيفة. */
+  async function checkDraft() {
+    if (typeof store.getDraft !== 'function') return;
+    const session = S.session;
+    const slot = S.slot;
+    let value;
+    try {
+      value = await store.getDraft(videoId);
+    } catch {
+      return;
+    }
+    if (S.session !== session || S.slot !== slot) return;
+    const draft = value?.slots[slot - 1] ?? null;
+    const { kind } = classifyDraft(draft, S.opened.slots[slot - 1]);
+    if (kind === 'none' || kind === 'equal') {
+      if (value && !session.dirty) keeper.drop(slot);
+      return;
+    }
+    setDraftOffer({ slot, draft });
+  }
+
+  /** اللافتة بحال المسودة الآن، وتُبنى من جديد حين يتغيّر نوعها أو لغة الواجهة وحدهما، فلا يسقط تركيز على زرّيها. */
+  function renderDraftBanner() {
+    if (draftOffer && (draftOffer.slot !== S.slot || ['none', 'equal'].includes(offerNow(draftOffer).kind))) {
+      setDraftOffer(null);
+      return;
+    }
+    const o = draftOffer;
+    if (!o) {
+      if (draftEl.hidden) return;
+      // التركيز في لافتة زالت (بعد الاستعادة أو التجاهل) ينتقل إلى القائمة لا إلى body.
+      const focused = draftEl.contains(doc.activeElement);
+      draftEl.hidden = true;
+      draftEl.removeAttribute('data-sig');
+      draftEl.replaceChildren();
+      if (focused) scroller.querySelector('textarea, button, [tabindex]')?.focus?.();
+      return;
+    }
+    const kind = offerNow(o).kind;
+    const sig = `${getLocale()}|${kind}|${o.draft.savedAt}`;
+    if (draftEl.getAttribute('data-sig') === sig) return;
+    draftEl.setAttribute('data-sig', sig);
+    draftEl.hidden = false;
+    keepFocus(draftEl, () => draftEl.replaceChildren(draftBanner({
+      doc, kind, savedAt: o.draft.savedAt, onRestore: () => onRestoreDraft(), onDiscard: () => onDiscardDraft(), onDownload: () => onDownloadDraft(),
+    })));
+  }
+
+  /** «استعادة»: المسودة فوق المحفوظ الحاضر خطوةً واحدة يُتراجع عنها، بتأكيد إن كان في المحرّر ما لم يُحفظ. لا يُكتب شيء حتى «حفظ». */
+  async function onRestoreDraft() {
+    const o = draftOffer;
+    if (!o || o.slot !== S.slot) return;
+    if (S.session.dirty || S.session.hasDrafts) {
+      const v = await openDialog({
+        doc, title: t('editor.draft.replaceTitle'), body: t('editor.draft.replaceBody', { pending: pending(), drafts: draftsOnly() }), focus: 'cancel',
+        actions: [{ label: t('editor.draft.replaceConfirm'), value: 'restore', variant: 'primary' }, { label: t('common.cancel'), value: 'cancel' }],
+      });
+      if (v !== 'restore') return;
+    }
+    const restore = draftOffer === o ? offerNow(o).restore : undefined;
+    if (!restore) {
+      renderDraftBanner();
+      return;
+    }
+    if (S.view !== 'edit') setView('edit');
+    setDraftOffer(null);
+    S.session.restoreDraft({ cues: S.info.cues, offsetMs: S.info.offsetMs }, restore);
+    toast(t('editor.draft.restored', { pending: pending() }), 'success');
+  }
+
+  /** «تجاهل»: تُحذف المسودة بعد تأكيد، والترجمة المحفوظة كما هي. */
+  async function onDiscardDraft() {
+    const o = draftOffer;
+    if (!o) return;
+    const v = await openDialog({
+      doc, tone: 'danger', title: t('editor.draft.discardTitle'), body: t('editor.draft.discardBody'), focus: 'cancel',
+      actions: [{ label: t('editor.draft.discardConfirm'), value: 'discard', variant: 'danger' }, { label: t('common.cancel'), value: 'cancel' }],
+    });
+    if (v !== 'discard' || draftOffer !== o) return;
+    try {
+      await store.clearDraft(videoId, o.slot);
+    } catch (err) {
+      toast(t('editor.draft.discardFailed', { reason: toErrorInfo(err).message }), 'danger');
+      return;
+    }
+    setDraftOffer(null);
+    toast(t('editor.draft.discarded'), 'info');
+  }
+
+  /**
+   * «تنزيل المسودة (SRT)»: بقواعد تصدير المحرّر نفسها وبتوقيتها الظاهر، باسم يميّزها قبل رمز اللغة (ID.draft.ar.srt، فيُقرأ رمزها عند
+   * رفعها)، والمسودة باقية حتى تُتجاهل. ما يمنع تصدير SRT فيها يُذكر سببه.
+   */
+  async function onDownloadDraft() {
+    const o = draftOffer;
+    if (!o) return;
+    const plan = planArabicExport({ videoId, cues: o.draft.cues, offsetMs: o.draft.offsetMs, lang: openedLang() });
+    if (!plan.ok) {
+      toast(exportError(plan), 'danger');
+      return;
+    }
+    await saveText({ name: plan.name.replace(`${videoId}.`, `${videoId}.draft.`), text: plan.text });
+  }
+
+  // فورًا عند إخفاء التبويب ومغادرة الصفحة، لا بعد السكون: إنهاء العملية بعدهما لا يُضيع إلا ما كُتب بعدهما. والمغادرة إلى
+  // «المحفوظات» بعد تأكيدها تجاهلٌ لا يُكتب.
+  win.addEventListener('pagehide', () => {
+    if (!S.leaving) keeper.flush();
+  });
+  doc.addEventListener('visibilitychange', () => {
+    if (doc.visibilityState === 'hidden' && !S.leaving) keeper.flush();
+  });
 
   // ---- الاستكمال (R52) ----
   /** لغة الأصل الذي يُستكمل منه: مسار بصمة الترجمة المفتوحة. */
@@ -1633,6 +1776,8 @@ export async function mountEditor(app, {
         session.markSaved({ cues: S.info.cues, offsetMs: S.info.offsetMs }, shape);
       } else load(saved, n, { keepUi: true });
       toast(t('editor.save.done'), 'success');
+      // المسودة بعد الحفظ (الفكرة ٩): تُحذف، أو تُكتب على الأساس الجديد إن كُتب في الحقول أثناء الحفظ.
+      keeper.flush({ force: true });
     } catch (err) {
       const info = toErrorInfo(err);
       if (info.code === 'ST_CONFLICT') {
@@ -1680,6 +1825,8 @@ export async function mountEditor(app, {
         return;
       }
       load(b, S.slot, { keepUi: true });
+      // إعادة الفتح بعد تأكيد ضياع التغييرات تجاهلٌ لها: تُحذف مسودتها (الفكرة ٩).
+      keeper.flush({ force: true });
       toast(messageFor('ED_RELOADED'), 'info');
     } catch (err) {
       const info = toErrorInfo(err);
@@ -1764,6 +1911,8 @@ export async function mountEditor(app, {
     if (S.saving) await S.saveDone;
     if (n === S.slot || !S.opened.slots[n - 1]?.track) return;
     commitFocusedTime();
+    // «التبديل دون حفظ» تجاهلٌ لتغييرات الخانة المغادَرة، فتُحذف مسودتها (الفكرة ٩).
+    let dropped = false;
     if (S.session.dirty || S.session.hasDrafts) {
       const canSave = !saveBlockReason();
       // الترتيب كما في لوحة EditorStates: «حفظ ثم التبديل» الأساسي (إن أمكن الحفظ)، ثم «البقاء» (وعليه التركيز الأول)، و«التبديل دون
@@ -1777,6 +1926,7 @@ export async function mountEditor(app, {
           { label: t('editor.switch.without'), value: 'switch', variant: 'ghost', className: 'ed-btn--danger-quiet' },
         ].filter(Boolean),
       });
+      dropped = v === 'switch';
       if (v === 'save') {
         await save();
         if (S.session.dirty) return;
@@ -1799,9 +1949,13 @@ export async function mountEditor(app, {
         return;
       }
     } else writePositionNow();
+    // مسودة الخانة المغادَرة قبل فتح غيرها: تُحذف إن تُجوهلت تغييراتها، وإلا تُكتب حالها الآن (الفكرة ٩).
+    if (dropped) keeper.drop(S.slot);
+    else keeper.flush();
     S.view = 'edit';
     S.result = null;
     load(target, n);
+    checkDraft();
     rememberSlot(n);
     toast(t('common.slot.label', { n }), 'info');
     if (resume) resumeHere();
@@ -1825,6 +1979,8 @@ export async function mountEditor(app, {
     });
     if (v !== 'discard') return;
     S.session.discard();
+    // «تجاهل التغييرات» يحذف مسودتها فورًا (الفكرة ٩).
+    keeper.flush();
     setResult('info', () => t('editor.discard.done'));
     renderAll();
   }
@@ -2040,6 +2196,8 @@ export async function mountEditor(app, {
     commitFocusedTime();
     if ((S.session.dirty || S.session.hasDrafts) && !(await confirmLeave(doc, messageFor('ED_LEAVE_UNSAVED')))) return;
     S.leaving = true;
+    // المغادرة بعد تأكيدها تجاهلٌ لما لم يُحفظ، فتُحذف مسودة الخانة (الفكرة ٩).
+    await keeper.drop(S.slot);
     // آخر موضع قبل المغادرة (لا يكتمل غالبًا في pagehide)، والصف المقصود في المحفوظات (#v=…؛ تدقيق 5fedcb9، GM-016.3).
     await writePositionNow();
     win.location.assign(new URL(`../library/index.html#v=${videoId}`, win.location.href).href);
@@ -2235,6 +2393,7 @@ export async function mountEditor(app, {
   }
 
   load(bundle, picked.n);
+  checkDraft();
   rememberSlot(picked.n);
   setSideTab('review');
   // ف1: «أكمل الناقص» من نافذة الإضافة أو المحفوظات يفتح المحرّر على «الاستكمال» والناقصة مختارة (الاختيار الافتراضي: الناقصة
@@ -2244,7 +2403,15 @@ export async function mountEditor(app, {
     setFold('side', true);
   }
   if (picked.fallback) toast(slotFallback(requested, picked.n), 'info');
-  const api = { get state() { return S; }, save, jumpTo, setView, switchSlot, relocalize };
+  const api = {
+    get state() { return S; }, save, jumpTo, setView, switchSlot, relocalize,
+    // مسودة المحرّر (الفكرة ٩) للاختبارات والمجسّ الحي: اللافتة المعروضة ونوعها وتاريخها، والإمساك، والكتابة الفورية.
+    draft: {
+      get offer() { return draftOffer ? { slot: draftOffer.slot, kind: offerNow(draftOffer).kind, savedAt: draftOffer.draft.savedAt } : null; },
+      get held() { return keeper.held; },
+      flush: () => keeper.flush(),
+    },
+  };
   if (typeof __TJ_DEV__ !== 'undefined' && __TJ_DEV__) globalThis.__tarjumanEditor = api;
   return api;
 }
