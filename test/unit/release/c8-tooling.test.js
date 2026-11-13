@@ -143,6 +143,13 @@ const VARIANTS = {
   'Function عبر constructor': "(() => {}).constructor('return 1')();",
   'innerHTML بالوصل': "document.body['inner' + 'HTML'] = '<b>x</b>';",
   'import بمتغير': 'const m = import(name);',
+  // متغيرات Node العامة (تحقق Gemini، ع-٥، قاعدة node-global): تنجح بها الاختبارات في Node وتتعطل الشيفرة في المتصفح.
+  'Buffer (Node)': "const n = Buffer.byteLength('x', 'utf8');",
+  'setImmediate (Node)': 'new Promise((r) => setImmediate(r));',
+  'clearImmediate (Node)': 'clearImmediate(t);',
+  'process.env (Node)': 'const dev = process.env.NODE_ENV;',
+  'require (Node)': "const fs = require('fs');",
+  '__dirname (Node)': 'const d = __dirname;',
 };
 
 const built = path.join(tmp, 'pkg');
@@ -189,6 +196,11 @@ test('U61: القواعد المشتركة لا تمنع تعابير مشروع
   // وما بقي ممنوعًا عمدًا (موثّق في docs/maintenance.md): الوصول المحسوب بوصل، وتفكيك chrome وglobalThis، وconstructor().
   assert.deepEqual(codeViolations("o[k + 'px'] = 1;").map((r) => r.id), ['concat-key']);
   assert.deepEqual(codeViolations('const { runtime } = chrome;').map((r) => r.id), ['destructure-global']);
+  // node-global (ع-٥): الاسم معرّفًا وحده، لا ما يشبهه (ArrayBuffer وrequireVideo وprocessed، وجملة تنتهي بكلمة process).
+  for (const ok of ['const ab = new ArrayBuffer(8);', 'requireVideo();', 'const processed = 1;', 'x.processing = 2;', "const t = 'the whole process. Then';", 'const myBuffer = 1;', 'this.requireAll(x);']) {
+    assert.deepEqual(codeViolations(ok).map((r) => r.id), [], ok);
+  }
+  assert.deepEqual(codeViolations('const e = globalThis.process?.env;').map((r) => r.id), ['node-global']);
 });
 
 test('U61: القواعد المشتركة لا تطابق شيفرة src ولا الحزمتين (لا إيجابيات كاذبة في الطي)', async () => {

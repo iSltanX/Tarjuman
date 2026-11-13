@@ -155,6 +155,7 @@ node scripts/release/audit.mjs release/tarjuman-<الإصدار>
   - الوصول المحسوب بوصل نصوص، مثل `o[k + 'px']`. والبديل القالب `` o[`${k}px`] `` أو `Map`.
   - تفكيك `chrome` و`globalThis` و`window`، مثل `const { runtime } = chrome`. والبديل `chrome.runtime`.
   - استدعاء `.constructor(`.
+  - متغيرات Node العامة (`node-global`، تحقق Gemini ع-٥): `Buffer` و`setImmediate` و`clearImmediate` و`process.` و`require(` و`__dirname` و`__filename`. الاختبارات تعمل في Node فتنجح بها، والشيفرة تتعطل في المتصفح. والبديل `TextEncoder` و`setTimeout`.
   - وهي نصية: تحرس من الخطأ لا من التمويه المتعمد.
 - التدقيق يفحص الملفات المشحونة نفسها، بقواعد الفحص الثابت التي بلا استثناء (`scripts/code-rules.mjs`، ومنها الصيغ الديناميكية والروابط بلا بروتوكول) ثم قواعده هو:
   - الأذونات `storage` و`unlimitedStorage` و`downloads` وحدها، والعامل الخلفي `background/worker.js` وحده.

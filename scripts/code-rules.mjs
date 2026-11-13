@@ -23,6 +23,14 @@ export const CODE_RULES = Object.freeze([
   { id: 'network-channel', re: /\b(?:sendBeacon|WebSocket|EventSource|RTCPeerConnection|WebTransport)\b|\bnew\s+(?:Request|Image)\s*\(/, msg: 'قنوات شبكة ممنوعة' },
   { id: 'web-storage', re: /\b(?:localStorage|sessionStorage|indexedDB)\b/, msg: 'التخزين عبر src/core/store وحده (لا localStorage ولا IndexedDB)' },
   { id: 'console', re: /\bconsole\b/, msg: 'التسجيل في الكونسول ممنوع؛ الأخطاء برموز وتقرير التشخيص' },
+  // متغيرات Node العامة (تحقق Gemini، ع-٥): الاختبارات تعمل في Node وفيه Buffer وsetImmediate وprocess، فدالة مشحونة تستعملها تنجح
+  // اختباراتها وتتعطل في المتصفح. كانت طفرتا Buffer.byteLength في utf8Length وsetImmediate في yieldToPage تمرّان من كل الحراس.
+  // والنقطة بعد process ملاصقة (process.env وprocess?.env)، فلا تُمنع جملة نثرية تنتهي بكلمة process.
+  {
+    id: 'node-global',
+    re: /(?<![\w$])(?:Buffer|setImmediate|clearImmediate|__dirname|__filename)(?![\w$])|(?<![\w$])require\s*\(|(?<![\w$])process\??\.[A-Za-z_$]/,
+    msg: 'متغير Node عام في شيفرة تعمل في المتصفح (Buffer وsetImmediate وprocess وrequire وأمثالها)',
+  },
   // ف5 (2026-11-10): اللصق بحدث اللصق في الحقل وحده (event.clipboardData)؛ لا قراءة للحافظة برمجيًا ولا إذن بها.
   { id: 'clipboard-read', re: /\bclipboard\s*(?:\?\.|\.)\s*read\b|\breadText\b|\bclipboardRead\b|['"`]clipboard-read['"`]|\bexecCommand\s*\(\s*['"`]paste/, msg: 'قراءة الحافظة برمجيًا ممنوعة؛ اللصق بحدث اللصق في الحقل وحده' },
   {
