@@ -206,7 +206,7 @@ export default Object.freeze({
     removeOrphans: 'Remove marks that lost their segment',
     restored: 'Marks restored.', conflict: 'The translation changed elsewhere; try again after it refreshes.',
     many: ' (it had {count}; now it has one)', toggled: 'Segment {n}: “{label}”{many}.',
-    removedMany: 'Removed {count} from segment {n}.', removedOne: 'Removed the mark from segment {n}.', orphansRemoved: 'Removed {count} that lost their segment.',
+    removedMany: 'Removed {count} from segment {n}.', removedOne: 'Removed the mark from segment {n}.', orphansRemoved: 'Removed {count} with no segment left.',
   },
   resume: {
     title: 'Last position', none: 'No saved position', from: 'Continue from segment {n}',

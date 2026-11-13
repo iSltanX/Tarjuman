@@ -15,7 +15,17 @@ const codes = DOMAINS.flatMap((d) => Object.keys(d.MESSAGES));
 const reset = (ctx) => ctx.after(() => setLocale('ar'));
 
 // الرسالة العربية تأخذ معاملات مبنية على المطابقة النحوية في الصفحة (تصريف الفعل والضمير)؛ فقيمتها الإنجليزية دالة تكتفي بالعدد.
-const FUNCTION_SAMPLES = { BK_RESTORE_CHANGED: { videos: '2 videos' }, ED_SAVE_HAS_ERRORS: { count: '3 timing errors' }, ED_EXPORT_HAS_ERRORS: { count: '3 timing errors' }, IM_STRAY_TEXT: { line: '7' } };
+// وما يُجمع بالعدد الخام (ع-٢٧) دالة تختار المفرد للعدد 1، وتُفحص صيغتاه في count-forms.test.js.
+const PLURAL_BY_COUNT = [
+  'IM_HTML_LITERAL', 'IM_CUE_TIME_MORE', 'IM_NOTE_CHATTER_BEFORE', 'IM_NOTE_CHATTER_AFTER', 'IM_NOTE_AMBIGUOUS', 'IM_NOTE_MD_EMPHASIS', 'IM_NOTE_TIME_MARKS',
+  'IM_NOTE_TAGS', 'IM_NOTE_CONTROL', 'IM_NOTE_HIDDEN_CHARS', 'IM_NOTE_TRIMMED', 'CMP_ALIGN_WEAK', 'CMP_ALIGN_NUMBER_ONLY', 'CMP_ALIGN_DRIFTING', 'CMP_ALIGN_SHIFTED',
+  'CMP_ALIGN_ONLY_A', 'CMP_ALIGN_ONLY_B',
+];
+const FUNCTION_SAMPLES = {
+  BK_RESTORE_CHANGED: { videos: '2 videos' }, ED_SAVE_HAS_ERRORS: { count: '3 timing errors' }, ED_EXPORT_HAS_ERRORS: { count: '3 timing errors' }, IM_STRAY_TEXT: { line: '7' },
+  ...Object.fromEntries(PLURAL_BY_COUNT.map((code) => [code, { count: 2, list: '4, 5', first: 'Here is', seconds: '1.2', from: 4, to: 5 }])),
+  PG_LANG_ASSIGN_PARTIAL: { n: '2' },
+};
 
 test('كل رمز خطأ له رسالة إنجليزية بالقوالب نفسها وبلا حرف عربي', () => {
   const ar = catalogOf('ar');

@@ -1,6 +1,8 @@
 // English error messages: same codes and the same {name} templates as src/i18n/ar/errors.js (the Arabic is the reference).
 // Each message says what happened and, briefly, what the user can do.
 // count نص معدود من المحرّر («3 timing errors»)، أو رقم خام من حارس core/edit/transition.js.
+// الجمع بالعدد لا ثابتًا (ع-٢٧): العدد الخام 1 يأخذ المفرد، وغيره الجمع. count رقم أو نص رقمي.
+const by = (count, one, other) => (Number(count) === 1 ? one : other);
 const fixFirst = ({ count }) => (/^\d+$/.test(String(count)) ? `Fix ${count} timing ${String(count) === '1' ? 'error' : 'errors'} first.` : `Fix ${count} first.`);
 
 export default Object.freeze({
@@ -103,21 +105,21 @@ export default Object.freeze({
 
   IM_PARTS_GAP: 'There’s a gap in numbering between “{a}” and “{b}” ({from}–{to}). A part may be missing.',
   IM_NUMBERING_IRREGULAR: 'The numbering isn’t sequential: segment {n} came after segment {prev}. We kept it as it was; it shows in the comparison report.',
-  IM_HTML_LITERAL: '{count} segments contain HTML-like tags. They’re kept as literal text and not interpreted.',
+  IM_HTML_LITERAL: ({ count }) => `${count} ${by(count, 'segment contains', 'segments contain')} HTML-like tags. They’re kept as literal text and not interpreted.`,
   IM_CUE_TIME_NOT_AFTER_START: 'Segment {n} (line {line}) doesn’t end after it starts, so it won’t appear over the video.',
-  IM_CUE_TIME_MORE: '{count} more segments have the same problem: they don’t end after they start.',
+  IM_CUE_TIME_MORE: ({ count }) => `${count} more ${by(count, 'segment has the same problem: it doesn’t end after it starts', 'segments have the same problem: they don’t end after they start')}.`,
 
   IM_NOTE_FENCE: 'Removed the code-block fence (``` or ~~~) around the file.',
-  IM_NOTE_CHATTER_BEFORE: 'Removed {count} explanation or heading lines before the file, starting with: “{first}”.',
-  IM_NOTE_CHATTER_AFTER: 'Removed {count} explanation or heading lines after the file, starting with: “{first}”.',
-  IM_NOTE_AMBIGUOUS: 'The model listed {count} ambiguous passages: {list}.',
-  IM_NOTE_MD_EMPHASIS: 'Removed emphasis marks (like ** and `) around {count} number and timing lines.',
+  IM_NOTE_CHATTER_BEFORE: ({ count, first }) => `Removed ${count} explanation or heading ${by(count, 'line', 'lines')} before the file, starting with: “${first}”.`,
+  IM_NOTE_CHATTER_AFTER: ({ count, first }) => `Removed ${count} explanation or heading ${by(count, 'line', 'lines')} after the file, starting with: “${first}”.`,
+  IM_NOTE_AMBIGUOUS: ({ count, list }) => `The model listed ${count} ambiguous ${by(count, 'passage', 'passages')}: ${list}.`,
+  IM_NOTE_MD_EMPHASIS: ({ count }) => `Removed emphasis marks (like ** and \`) around ${count} ${by(count, 'number or timing line', 'number and timing lines')}.`,
   IM_NOTE_DIGITS: 'Converted Arabic-Indic digits in numbering and timing lines to Latin digits.',
-  IM_NOTE_TIME_MARKS: 'Fixed the format of {count} timing lines: Arabic decimal and comma marks to “,”, and arrows to -->.',
-  IM_NOTE_TAGS: 'Stripped formatting tags (like italic, bold, font, color, and positioning commands) from {count} segments.',
-  IM_NOTE_CONTROL: 'Removed invisible control characters from {count} segments.',
-  IM_NOTE_HIDDEN_CHARS: 'Removed {count} hidden characters from the text: tag characters, extra variation selectors, text-direction embeddings, overrides and isolates, other invisible formatting characters, and byte-order marks anywhere but the start of the file.',
-  IM_NOTE_TRIMMED: 'Trimmed spaces from the edges of {count} lines.',
+  IM_NOTE_TIME_MARKS: ({ count }) => `Fixed the format of ${count} timing ${by(count, 'line', 'lines')}: Arabic decimal and comma marks to “,”, and arrows to -->.`,
+  IM_NOTE_TAGS: ({ count }) => `Stripped formatting tags (like italic, bold, font, color, and positioning commands) from ${count} ${by(count, 'segment', 'segments')}.`,
+  IM_NOTE_CONTROL: ({ count }) => `Removed invisible control characters from ${count} ${by(count, 'segment', 'segments')}.`,
+  IM_NOTE_HIDDEN_CHARS: ({ count }) => `Removed ${count} hidden ${by(count, 'character', 'characters')} from the text: tag characters, extra variation selectors, text-direction embeddings, overrides and isolates, other invisible formatting characters, and byte-order marks anywhere but the start of the file.`,
+  IM_NOTE_TRIMMED: ({ count }) => `Trimmed spaces from the edges of ${count} ${by(count, 'line', 'lines')}.`,
   IM_NOTE_MERGED: '{verb} {files} by segment number: {names}.',
   IM_NOTE_MORE: 'More notes weren’t listed because there are too many ({count}).',
 
@@ -141,15 +143,15 @@ export default Object.freeze({
   CMP_ALIGN_EMPTY: 'There are no segments to align on one side.',
   CMP_ALIGN_TOO_DENSE: 'The segment times are packed into a narrow range, so they can’t be aligned with confidence.',
   CMP_ALIGN_COVERAGE: 'Times match in only {percent}% of segments, so the file may belong to another video or reference.',
-  CMP_ALIGN_WEAK: 'Weak timing match in {count} segments, including {list}.',
-  CMP_ALIGN_NUMBER_ONLY: '{count} segments are paired with their counterparts by number only, not timing, including {list}.',
+  CMP_ALIGN_WEAK: ({ count, list }) => `Weak timing match in ${count} ${by(count, 'segment', 'segments')}, including ${list}.`,
+  CMP_ALIGN_NUMBER_ONLY: ({ count, list }) => `${count} ${by(count, 'segment is paired with its counterpart', 'segments are paired with their counterparts')} by number only, not timing, including ${list}.`,
   CMP_ALIGN_OFFSET: 'There’s a general offset of {seconds} s between the two sides, so it was subtracted before aligning.',
-  CMP_ALIGN_DRIFTING: 'Gradual timing drift consistent with neighboring segments ({count} segments), with a maximum difference of {seconds} s.',
+  CMP_ALIGN_DRIFTING: ({ count, seconds }) => `Gradual timing drift consistent with neighboring segments (${count} ${by(count, 'segment', 'segments')}), with a maximum difference of ${seconds} s.`,
   CMP_ALIGN_MERGED: 'Merged: one segment covers several in the original ({count}), at {list}.',
   CMP_ALIGN_SPLIT: 'Split: one segment in the original matches several ({count}), at {list}.',
-  CMP_ALIGN_SHIFTED: 'Numbering doesn’t match timing in {count} segments, starting at {from}–{to}: each matches, by its timing, a number other than its own.',
-  CMP_ALIGN_ONLY_A: '{count} segments in the original have no counterpart, including {list}.',
-  CMP_ALIGN_ONLY_B: '{count} segments in the file have no counterpart in the original, including {list}.',
+  CMP_ALIGN_SHIFTED: ({ count, from, to }) => `Numbering doesn’t match timing in ${count} ${by(count, 'segment', 'segments')}, starting at ${from}–${to}: ${by(count, 'it matches', 'each matches')}, by its timing, a number other than its own.`,
+  CMP_ALIGN_ONLY_A: ({ count, list }) => `${count} ${by(count, 'segment in the original has', 'segments in the original have')} no counterpart, including ${list}.`,
+  CMP_ALIGN_ONLY_B: ({ count, list }) => `${count} ${by(count, 'segment in the file has', 'segments in the file have')} no counterpart in the original, including ${list}.`,
   CMP_ALIGN_UNORDERED: 'Times aren’t ascending at segments {list}.',
 
   CMP_REF_MATCHED: 'Count, numbering, and timing match this export.',
@@ -203,7 +205,7 @@ export default Object.freeze({
   PG_PAIR_SAME: 'The file’s language is the same as the requested language, so there are no instructions to translate it. Choose another language in “To” in the extension popup.',
   PG_PAIR_MISSING: 'Choose the original file’s language in “From” and the requested language in “To”, then copy the instructions.',
   PG_PAIR_NOT_SAVED: 'Couldn’t save the two languages for this video. The instructions are copied with them now, but they may not stay when you open the popup again.',
-  PG_LANG_ASSIGN_PARTIAL: 'The language was set where possible, but saving failed for {n} videos. Try again for the rest.',
+  PG_LANG_ASSIGN_PARTIAL: ({ n }) => `The language was set where possible, but saving failed for ${n} ${by(n, 'video', 'videos')}. Try again for the rest.`,
   PG_LANG_ASSIGN_SKIPPED: 'The language was set for videos whose script matched; {n} whose script doesn’t match the chosen language were skipped. Set their language from the Translation menu in the player.',
   PG_LANG_PREFS_UNREAD: 'Couldn’t read the language preferences, so the two default languages are shown. Reopen the popup; if it keeps happening, copy the diagnostics report.',
   PG_COPY_BAD_ID: 'The video ID isn’t valid, so the translation instructions can’t be copied for it.',

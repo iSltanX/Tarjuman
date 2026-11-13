@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { catalogOf, setLocale, t } from '../../../src/i18n/index.js';
 import { COUNT_FORMS, formatCount } from '../../../src/ui/format.js';
+import { messageFor } from '../../../src/core/errors/index.js';
 import { COUNT, comparisonLines, mergePreview } from '../../../src/pages/editor/text.js';
 import { completeLine } from '../../../src/player/controls/text.js';
 
@@ -163,4 +164,48 @@ test('formatCount: الحالة لا تمس الإنجليزية، وبلا صي
     assert.equal(formatCount(1, COUNT_FORMS.cue, { case: kase }), '1 segment');
     assert.equal(formatCount(2, COUNT_FORMS.cue, { case: kase }), '2 segments');
   }
+});
+
+// ع-٢٧: الجمع الإنجليزي بالعدد في رسائل تمر بالعدد الخام (count رقم أو نص رقمي). المفرد عند 1، والجمع لغيره.
+const EN_PLURALS = [
+  ['IM_HTML_LITERAL', (n) => (n === 1 ? '1 segment contains HTML-like tags' : `${n} segments contain HTML-like tags`)],
+  ['IM_CUE_TIME_MORE', (n) => (n === 1 ? '1 more segment has the same problem: it doesn’t end after it starts.' : `${n} more segments have the same problem: they don’t end after they start.`)],
+  ['IM_NOTE_CHATTER_BEFORE', (n) => `Removed ${n} explanation or heading ${n === 1 ? 'line' : 'lines'} before the file`],
+  ['IM_NOTE_CHATTER_AFTER', (n) => `Removed ${n} explanation or heading ${n === 1 ? 'line' : 'lines'} after the file`],
+  ['IM_NOTE_AMBIGUOUS', (n) => `The model listed ${n} ambiguous ${n === 1 ? 'passage' : 'passages'}: `],
+  ['IM_NOTE_MD_EMPHASIS', (n) => `around ${n} ${n === 1 ? 'number or timing line' : 'number and timing lines'}.`],
+  ['IM_NOTE_TIME_MARKS', (n) => `Fixed the format of ${n} timing ${n === 1 ? 'line' : 'lines'}:`],
+  ['IM_NOTE_TAGS', (n) => `positioning commands) from ${n} ${n === 1 ? 'segment' : 'segments'}.`],
+  ['IM_NOTE_CONTROL', (n) => `Removed invisible control characters from ${n} ${n === 1 ? 'segment' : 'segments'}.`],
+  ['IM_NOTE_HIDDEN_CHARS', (n) => `Removed ${n} hidden ${n === 1 ? 'character' : 'characters'} from the text:`],
+  ['IM_NOTE_TRIMMED', (n) => `Trimmed spaces from the edges of ${n} ${n === 1 ? 'line' : 'lines'}.`],
+  ['CMP_ALIGN_WEAK', (n) => `Weak timing match in ${n} ${n === 1 ? 'segment' : 'segments'}, including`],
+  ['CMP_ALIGN_NUMBER_ONLY', (n) => (n === 1 ? '1 segment is paired with its counterpart by number only' : `${n} segments are paired with their counterparts by number only`)],
+  ['CMP_ALIGN_DRIFTING', (n) => `neighboring segments (${n} ${n === 1 ? 'segment' : 'segments'}), with`],
+  ['CMP_ALIGN_SHIFTED', (n) => `timing in ${n} ${n === 1 ? 'segment' : 'segments'}, starting at 4–5: ${n === 1 ? 'it matches' : 'each matches'}, by its timing`],
+  ['CMP_ALIGN_ONLY_A', (n) => (n === 1 ? '1 segment in the original has no counterpart' : `${n} segments in the original have no counterpart`)],
+  ['CMP_ALIGN_ONLY_B', (n) => (n === 1 ? '1 segment in the file has no counterpart' : `${n} segments in the file have no counterpart`)],
+  ['PG_LANG_ASSIGN_PARTIAL', (n) => `saving failed for ${n} ${n === 1 ? 'video' : 'videos'}. Try again`],
+];
+
+test('ع-٢٧: لا «1 segments» ولا «1 lines» ولا «1 videos»: الجمع الإنجليزي بالعدد، والعدد نصًا كالعدد رقمًا', (ctx) => {
+  reset(ctx);
+  setLocale('en');
+  for (const [code, expected] of EN_PLURALS) {
+    for (const n of NS) {
+      for (const v of [n, String(n)]) {
+        const out = messageFor(code, { count: v, n: v, list: '4, 5', first: 'Here is', seconds: '1.2', from: 4, to: 5 });
+        assert.ok(out.includes(expected(n)), `${code} ${JSON.stringify(v)}: ${out}`);
+        assert.ok(!/\b1 (?:segments|lines|characters|passages|videos|more segments)\b/.test(out), `${code}: ${out}`);
+      }
+    }
+  }
+});
+
+test('ع-٢٧: المصطلح الواحد لشكل المقاطع «Standard» في كل الواجهات الإنجليزية، لا «Normal»', () => {
+  const en = catalogOf('en');
+  for (const k of ['player.controls.modeNormal', 'library.mode.normal', 'settings.export.modeNormal']) assert.equal(en.get(k), 'Standard', k);
+  assert.match(en.get('settings.modeNotes.normal'), /^Standard: /);
+  assert.equal(en.get('editor.ref.modeNormal'), 'standard');
+  for (const [k, v] of en) if (typeof v === 'string') assert.ok(!/\bNormal\b/.test(v), `${k}: ${v}`);
 });

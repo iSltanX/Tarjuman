@@ -45,7 +45,7 @@ export default Object.freeze({
   },
   export: {
     where: 'Where translation files are saved',
-    mode: 'Default segment style', modeNormal: 'Normal', modeLong: 'Longer segments',
+    mode: 'Default segment style', modeNormal: 'Standard', modeLong: 'Longer segments',
     splitLabel: 'Suggest splitting from', splitUnit: 'segments',
     splitHint: 'Suggest splitting the original into parts when you download it if it has more segments than this. Default {n}.',
     splitRow: 'Splitting long files',
@@ -53,7 +53,7 @@ export default Object.freeze({
     completeHint: 'Warn that the original may be incomplete if YouTube’s subtitles end before this share of the video’s length. Default {n}%.',
   },
   modeNotes: {
-    normal: 'Normal: short segments close to YouTube’s own split, for the tightest sync with speech.',
+    normal: 'Standard: short segments close to YouTube’s own split, for the tightest sync with speech.',
     long: 'Longer segments: merges neighboring segments into longer sentences so the model gets the context; segment count, numbering and timing boundaries change.',
   },
   compare: {
@@ -105,7 +105,7 @@ export default Object.freeze({
     thumbsStayOff: 'Video thumbnails in Library are off in this backup, so they stay off on this device after restoring.',
     excluded: '{id}: excluded {parts}',
     notIncluded: '{count} left out because the record couldn’t be read: {ids}',
-    invalidTitle: ({ formatted }) => `Couldn’t read ${formatted} from the backup; those are skipped and the rest are restored`,
+    invalidTitle: ({ n, formatted }) => `Couldn’t read ${formatted} from the backup; ${n === 1 ? 'it’s' : 'those are'} skipped and the rest are restored`,
     meta: 'Created {date} · Tarjuman {version}',
     freshTitle: 'New videos to be added ({n})', noTranslation: 'No translation', more: 'and {count} more',
     replaceNote: 'Replacing overwrites all the video’s data saved in Tarjuman (its translations, marks and settings) and doesn’t keep a previous version.',
