@@ -6,6 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createController } from '../../../src/content/controller.js';
+import { createExtractor } from '../../../src/extract/index.js';
 import { compare } from '../../../src/core/compare/index.js';
 import { COMPLETION_DEFAULTS, completionGroups, completionNumbers, createEditSession, resolveSlotMarks } from '../../../src/core/edit/index.js';
 import { buildExport, buildPatchPackage } from '../../../src/core/export/index.js';
@@ -16,10 +17,9 @@ import { formatSrtTime } from '../../../src/core/srt/time.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { openedSlot } from '../../../src/pages/editor/persist.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
-import { videoRecord } from '../../helpers/fixtures.js';
+import { realTrack, videoRecord } from '../../helpers/fixtures.js';
 import { fileOf } from '../../fixtures/srt/index.js';
 import { SOURCE_BEFORE_E03, realArabic, sourceBeforeE03 } from '../../fixtures/v2/index.js';
-import { captureMsg, makeExtractor, sample } from '../../unit/extract/helpers.js';
 
 const VID = 'Y9rkKtK1b44';
 const BEFORE = '2026-11-10T10:00:00.000Z';
@@ -62,11 +62,15 @@ async function v220({ mode, arabic, drop }) {
 
 /** بعد الترقية: «تنزيل الأصل (SRT)» من المشغّل بتحويل اليوم، كما يربطه المشغّل (التقاط ← تحويل ← تصدير ← recordExport). */
 async function redownload(store, mode) {
-  const asr = sample('asr');
-  const { extractor } = makeExtractor({ videoId: VID, durationMs: asr.fixture.durationMs });
-  const c = createController({ store, extractor, page: { title: () => 'Midway', durationMs: () => asr.fixture.durationMs } });
+  const { fixture, body } = realTrack('asr');
+  const extractor = createExtractor({ currentVideoId: () => VID, durationMs: () => fixture.durationMs, isLive: () => false });
+  const c = createController({ store, extractor, page: { title: () => 'Midway', durationMs: () => fixture.durationMs } });
   await c.start(VID);
-  extractor.handleMessage(captureMsg({ videoId: VID, body: asr.body, trackKind: 'asr' }));
+  // رسالة الالتقاط كما يرسلها capture.js (عقد الاستخراج).
+  extractor.handleMessage({
+    source: 'tarjuman', v: 1, kind: 'timedtext', videoId: VID, lang: 'en', trackKind: 'asr', kindParam: 'asr', capsAsr: true, hasTlang: false,
+    format: 'json3', hasPot: true, transport: 'xhr', status: 200, bodyLength: body.length, body, truncated: false,
+  });
   const conv = c.convertCaptured(KEY, { mode });
   assert.equal(conv.ok, true);
   const out = buildExport({ videoId: VID, mode, now: Date.parse('2026-11-14T10:00:00.000Z'), track: { key: conv.key, lang: conv.lang, kind: conv.kind, cues: conv.cues } });
