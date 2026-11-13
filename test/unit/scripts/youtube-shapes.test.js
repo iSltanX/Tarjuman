@@ -5,9 +5,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import {
-  BADGE, CC_ATTRS, KIND_CLASSES, NAV_EVENTS, PANEL_WATCHED, SECTIONS, SHAPES_VERSION, UNOBSERVED, WATCHED, collectInPage, diffLine, diffShapes, inPageWatch,
-  logRow, requestShape, shapeOf, snapshot, unobservedNow, withProbes,
+  BADGE, CC_ATTRS, FMT_CLASSES, KIND_CLASSES, NAV_EVENTS, PANEL_WATCHED, SECTIONS, SHAPES_VERSION, UNOBSERVED, WATCHED,
+  collectInPage, diffLine, diffShapes, fmtClass, inPageWatch, logRow, requestShape, shapeOf, snapshot, unobservedNow, withProbes,
 } from '../../../scripts/youtube-shapes.mjs';
+import { readTimedtextParams } from '../../../src/extract/timedtext-params.js';
 import { ATTRS, CLASSES, EVENTS, PANEL_SELECTORS, SELECTORS } from '../../../src/player/youtube-dom.js';
 
 const BASELINE = JSON.parse(readFileSync(new URL('../../fixtures/youtube/shapes-baseline.json', import.meta.url), 'utf8'));
@@ -17,11 +18,35 @@ test('shapeOf: الأنواع والمفاتيح لا القيم، وأول عن
   assert.equal(shapeOf('secret-token-123'), 'string');
 });
 
-test('requestShape: أسماء المعاملات مرتبة، بلا قيمة (لا معرّف ولا رمز pot) ولا مسار', () => {
+test('requestShape: صنف fmt وأسماء المعاملات مرتبة، بلا قيمة (لا معرّف ولا رمز pot) ولا مسار', () => {
   const s = requestShape('https://www.youtube.com/api/timedtext?v=AAAAAAAAAAA&lang=en&pot=SECRET&fmt=json3&lang=ar');
-  assert.deepEqual(s, { params: ['fmt', 'lang', 'pot', 'v'] });
+  assert.deepEqual(s, { fmt: 'json3', params: ['fmt', 'lang', 'pot', 'v'] });
   assert.ok(!JSON.stringify(s).includes('SECRET') && !JSON.stringify(s).includes('AAAAAAAAAAA'));
   assert.equal(requestShape('not a url'), null);
+});
+
+test('fmtClass (ح-37): صنف من قائمة مغلقة بمصنّف الالتقاط نفسه، لا نص المعامل', () => {
+  const url = (q) => `https://www.youtube.com/api/timedtext?v=AAAAAAAAAAA&lang=en${q}`;
+  assert.deepEqual(FMT_CLASSES, ['json3', 'srv3', 'vtt', 'other', 'default']);
+  assert.equal(fmtClass(url('&fmt=json3')), 'json3');
+  assert.equal(fmtClass(url('&fmt=srv3')), 'srv3');
+  assert.equal(fmtClass(url('')), 'default', 'بلا fmt');
+  assert.equal(fmtClass(url('&fmt=SECRET123')), 'other', 'قيمة غير معروفة لا تُحفظ');
+  assert.equal(fmtClass('https://example.com/api/timedtext?fmt=json3'), 'other', 'طلب لا يقبله الالتقاط');
+  assert.equal(fmtClass('not a url'), 'other');
+  // vtt من المصنّف نفسه حين يعرفه (الفكرة ٤)؛ فالفاحص يتبع readTimedtextParams ولا يصنّف وحده.
+  for (const q of ['&fmt=json3', '&fmt=srv3', '&fmt=vtt', '&fmt=srv1', '']) {
+    const own = readTimedtextParams(url(q)).format;
+    assert.equal(fmtClass(url(q)), FMT_CLASSES.includes(own) ? own : 'other', q);
+    assert.ok(FMT_CLASSES.includes(fmtClass(url(q))), q);
+  }
+  // تغيّر الصيغة فرق في timedtext، والقيمة نفسها لا تدخل اللقطة.
+  const at = { inPage: { dom: {} }, events: [], source: 'A', at: 'x' };
+  const json3 = snapshot({ ...at, requests: [url('&fmt=json3')] });
+  const srv3 = snapshot({ ...at, requests: [url('&fmt=srv3'), url('&fmt=srv3&tlang=ar')] });
+  assert.deepEqual(json3.timedtext, [{ fmt: 'json3', params: ['fmt', 'lang', 'v'] }]);
+  assert.deepEqual(diffShapes(json3, srv3).map(diffLine), ['تغيّر: timedtext']);
+  assert.ok(!JSON.stringify(snapshot({ ...at, requests: [url('&fmt=SECRET123')] })).includes('SECRET123'));
 });
 
 test('snapshot وdiffShapes: عنصر غاب يُسمّى «غاب»، وطلب بمعامل جديد «تغيّر»، والمصدر والتاريخ لا يُقارنان', () => {

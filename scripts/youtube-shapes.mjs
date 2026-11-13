@@ -2,10 +2,11 @@
 // (قرار سلطان ق10: أشكال بلا قيم). الإصدار 2 (الفكرة ١، الجولة الثالثة) يمر على كل سجل في src/player/youtube-dom.js: وجود عناصر WATCHED
 // (SELECTORS وزمن المشغّل) ومواضع لوحة النص (PANEL_SELECTORS)، وأصناف CLASSES وسمات ATTRS حالاتٍ رُصدت أو لم تُرصد، وشكل شارة البث
 // وسمات زر CC، وشكل طلب الترجمة (أسماء معاملاته بلا قيمها؛ والمسار لا يُحفظ: المشغّل الحي يجمع طلبات الترجمة وحدها، وفحص الأسرار يمنع
-// مسارها في fixtures)، وشكل قائمة المسارات في بيانات المشغّل (اتحاد مفاتيح المسارات كلها وأنواعها، وأصناف kind)، وأحداث التنقل التي
+// مسارها في fixtures؛ ومعها صنف fmt من قائمة مغلقة، ح-37)، وشكل قائمة المسارات في بيانات المشغّل (اتحاد مفاتيح المسارات كلها وأنواعها، وأصناف kind)، وأحداث التنقل التي
 // رُئيت. والحالة التي لم تُستدعَ في الجولة (إعلان، ملء الشاشة، بث جارٍ…) تُسجَّل 'unobserved' ولا تُعدّ فرقًا: غيابها لا يثبت تغيّر
 // اسمها. يذكر الفروق ولا يحكم بالفشل: يوتيوب يجرّب واجهات مختلفة، والحكم لمن يقرأ. وحدة نقية بلا متصفح ولا شبكة؛ يستعملها المشغّل
 // الحي test/live/harness/youtube-shapes.mjs (بإذن سلطان لكل جولة) واختبارات الوحدة.
+import { readTimedtextParams } from '../src/extract/timedtext-params.js';
 import { ATTRS, CLASSES, PANEL_SELECTORS, SELECTORS } from '../src/player/youtube-dom.js';
 
 export const SHAPES_VERSION = 2;
@@ -30,6 +31,11 @@ export const CC_ATTRS = Object.freeze(['aria-pressed', 'aria-disabled', 'disable
  * liveHead. يراقبهما الفاحص ولا تعتمد عليهما الشيفرة، فلا يدخلان سجل youtube-dom.js.
  */
 export const BADGE = Object.freeze({ disabled: 'disabled', liveHead: 'ytp-live-badge-is-livehead' });
+/**
+ * أصناف fmt لطلب الترجمة (ح-37): استثناء محدود من «أشكال بلا قيم» في ق10، فهو صنف من قائمة مغلقة لا نص المعامل، وجهاز إنذار الفكرة ٤
+ * إن غيّر يوتيوب صيغة طلبه. vtt يصل من مصنّف الالتقاط حين يعرفه؛ وقبل ذلك other.
+ */
+export const FMT_CLASSES = Object.freeze(['json3', 'srv3', 'vtt', 'other', 'default']);
 /** أصناف kind لمسار الترجمة: بلا kind (يدوي)، وasr (تلقائي، كما يقرؤه src/main-world/capture.js)، وغيرهما. */
 export const KIND_CLASSES = Object.freeze(['absent', 'asr', 'other']);
 /** أحداث يوتيوب التي يسمعها ترجمان (EVENTS في src/player/youtube-dom.js، و yt-player-updated في الالتقاط). */
@@ -78,9 +84,24 @@ export function shapeOf(v, depth = MAX_DEPTH) {
 }
 
 /**
- * شكل رابط طلب ترجمة: أسماء المعاملات مرتبة، بلا قيمة واحدة (لا معرّف ولا لغة ولا رمز pot) ولا مسار.
+ * صنف fmt لطلب ترجمة بمصنّف الالتقاط نفسه (readTimedtextParams في src/extract/timedtext-params.js)، من FMT_CLASSES وحدها: ما لا
+ * يعرفه المصنّف، أو طلب لا يقبله (مضيف أو مسار آخر)، other.
+ * @param {string} url @returns {typeof FMT_CLASSES[number]}
+ */
+export function fmtClass(url) {
+  let format = null;
+  try {
+    format = readTimedtextParams(url)?.format ?? null;
+  } catch {
+    format = null;
+  }
+  return FMT_CLASSES.includes(format) ? format : 'other';
+}
+
+/**
+ * شكل رابط طلب ترجمة: صنف fmt، وأسماء المعاملات مرتبة، بلا قيمة واحدة (لا معرّف ولا لغة ولا رمز pot) ولا مسار.
  * @param {string} url
- * @returns {{ params: string[] } | null}
+ * @returns {{ fmt: typeof FMT_CLASSES[number], params: string[] } | null}
  */
 export function requestShape(url) {
   let u;
@@ -89,7 +110,7 @@ export function requestShape(url) {
   } catch {
     return null;
   }
-  return { params: [...new Set(u.searchParams.keys())].sort() };
+  return { fmt: fmtClass(url), params: [...new Set(u.searchParams.keys())].sort() };
 }
 
 /**
