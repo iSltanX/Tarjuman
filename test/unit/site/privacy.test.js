@@ -51,7 +51,9 @@ test('[قرار] يُبقي المولَّد مسودة بتنبيه، و--stric
   assert.equal(ok.decisions, 0);
   assert.equal(ok.effective, '2026-12-01');
   assert.ok(ok.text.includes('تسري هذه السياسة اعتبارًا من 2026-12-01.'));
-  assert.equal(ok.text.includes('مسودة'), false);
+  // تنبيه المسودة وحده لا الكلمة: «ما يُحفظ» يذكر مسودة المحرّر منذ الفكرة ٩.
+  assert.equal(ok.text.includes('> **مسودة:**'), false);
+  assert.equal(ok.text.includes('لم يحسمها الناشر'), false);
 });
 
 test('تاريخ السريان: ثُبّت 2026-11-11 يوم نشر صفحات 2.2.0، وغير المثبت يرفضه --strict، وتاريخ غير صالح يُرفض', () => {
