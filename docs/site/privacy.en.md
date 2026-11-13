@@ -55,7 +55,8 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 - Tarjuman works inside the watch page. When you turn on subtitles (CC), YouTube’s player requests them itself, and Tarjuman reads a copy of the response. It doesn’t send YouTube any new request.
 - From the player data already in the page, it also reads the list of subtitle tracks the video offers, with each one’s language, type and name, in order to show them to you. It doesn’t read their links or tokens, request them, or switch the track you chose. This list stays in the memory of the open page and isn’t stored.
 - On first run, as long as the interface language isn’t set, it reads YouTube’s interface language from the same page (the `lang` attribute), or otherwise the browser’s interface language, to choose its own interface language. That code isn’t sent to anyone. What appears afterward is the resulting interface language: in a report if you copy one, and in the text of the instructions you copy.
-- Tarjuman doesn’t change what YouTube collects about you while you watch. That is governed by Google’s policy.
+- Tarjuman also adds its buttons in the player’s control bar, your translation over the video, and the synced transcript panel to the YouTube page itself, so the page can see that it’s there, as it can with any extension that adds elements to a page. Tarjuman doesn’t send anything about this to YouTube or anyone else.
+- Other than that, Tarjuman doesn’t change what YouTube collects about you while you watch. That is governed by Google’s policy.
 
 ### Video thumbnails in “Library” — `#thumbnails`
 
