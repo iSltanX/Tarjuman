@@ -11,7 +11,7 @@ import { lt, t } from '../../i18n/index.js';
 import { button, el } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, ltrInline, textDirection } from '../../ui/format.js';
 import { openDialog, setDisabled } from './dialogs.js';
-import { COUNT, isMac, keyHint } from './text.js';
+import { COUNT, isMac, isolate, keyHint } from './text.js';
 
 const DELAY_MS = 120;
 const MAX_PREVIEW = 400;
@@ -299,7 +299,8 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     const content = el('div', {
       className: 'tj-stack',
       children: [
-        el('p', { className: 'tj-body-sm', text: t('editor.search.previewIntro', { query: S.query, replacement }), doc }),
+        // النصان معزولان اتجاهًا (FSI…PDI): بحث لاتيني ««foo» ← «bar»» لا تصير أقواسه وسهمه مقطعًا لاتينيًا يقلب جهة الاستبدال.
+        el('p', { className: 'tj-body-sm', text: t('editor.search.previewIntro', { query: isolate(S.query), replacement: isolate(replacement) }), doc }),
         el('div', { className: 'ed-preview-table ed-replace-list', children: rows, doc }),
         matches.length > MAX_PREVIEW ? el('p', { className: 'tj-caption', text: t('editor.search.truncated', { max: MAX_PREVIEW, rest: matches.length - MAX_PREVIEW }), doc }) : null,
         total,

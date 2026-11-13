@@ -23,10 +23,11 @@ test('خانة التحرير والنشطة: الاسم والسطر يفرّق
 
 test('رسالة الحفظ تتبع «مكان حفظ ملفات الترجمة»: التنزيلات، والمجلد الفرعي، والسؤال، والرجوع إلى المعتاد، والإلغاء', () => {
   const loc = { mode: 'subfolder', folder: 'ترجمات' };
-  // اسم الملف معزول LTR (تدقيق 7a66f91، C6، U49).
+  // اسم الملف معزول LTR (تدقيق 7a66f91، C6، U49)، واسم المجلد يكتبه المستخدم فيُعزل اتجاهًا (FSI…PDI؛ الجولة الرابعة).
   const a = `${String.fromCodePoint(0x2066)}a.srt${String.fromCodePoint(0x2069)}`;
+  const iso = (t) => `${String.fromCodePoint(0x2068)}${t}${String.fromCodePoint(0x2069)}`;
   assert.equal(saveMessage({ ok: true, mode: 'downloads' }, 'a.srt', loc, messageFor).text, `حُفظ ${a} في مجلد التنزيلات.`);
-  assert.equal(saveMessage({ ok: true, mode: 'subfolder' }, 'a.srt', loc, messageFor).text, `حُفظ ${a} في مجلد ترجمات داخل التنزيلات.`);
+  assert.equal(saveMessage({ ok: true, mode: 'subfolder' }, 'a.srt', loc, messageFor).text, `حُفظ ${a} في مجلد ${iso('ترجمات')} داخل التنزيلات.`);
   // التاريخ بصيغة المحفوظات وتوقيت الجهاز (تدقيق Fable، UX-07: كان ISO خامًا بتوقيت UTC)، والعدّ بصيغه («جزآن»).
   const at = absoluteTime('2026-11-02T10:05:00.000Z');
   assert.ok(at && !at.includes('T'), at);

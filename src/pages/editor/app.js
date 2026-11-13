@@ -24,7 +24,7 @@ import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
 import { mergeCues, splitCue } from '../../core/edit/structure.js';
 import { getDir, getLocale, lt, t } from '../../i18n/index.js';
-import { alertBox, button, el, emptyState, ltr, relabel, slotPicker, statusPill } from '../../ui/components.js';
+import { alertBox, button, el, emptyState, ltr, ltrNodes, relabel, slotPicker, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatTimecode, offsetInline, textDirection } from '../../ui/format.js';
 import { holdTimer, onHold } from '../../ui/hold.js';
 import { createMenu } from '../../ui/menu.js';
@@ -1008,7 +1008,9 @@ export async function mountEditor(app, {
       },
       doc,
     }) : null;
-    toastEl.replaceChildren(...[el('span', { text, doc }), undo].filter(Boolean));
+    // اسم الملف المعزول LTR في «حُفظ …» عنصر ذري (ltrNodes)، فلا تنقلب أجزاؤه إن انكسر سطره.
+    const nodes = ltrNodes(text, { doc });
+    toastEl.replaceChildren(...[el('span', nodes ? { children: nodes, doc } : { text, doc }), undo].filter(Boolean));
     toastEl.className = `ed-toast ed-toast--${tone}${undo ? ' ed-toast--action' : ''} is-shown`;
     toastHold?.cancel();
     // الخطأ ضعف المدة كالرسالة المشتركة src/ui/toast.js (ت-١٤)، و«تراجع» أطول.

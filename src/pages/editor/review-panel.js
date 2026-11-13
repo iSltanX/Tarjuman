@@ -5,7 +5,7 @@ import { messageFor } from '../../core/errors/index.js';
 import { joinList, t } from '../../i18n/index.js';
 import { button, el, statusPill } from '../../ui/components.js';
 import { formatCount, formatTimecode } from '../../ui/format.js';
-import { COUNT, MARK_LABEL } from './text.js';
+import { COUNT, MARK_LABEL, isolate } from './text.js';
 
 const MAX_ITEMS = 200;
 
@@ -96,7 +96,8 @@ export function renderResume(box, { doc, items, onResume }) {
   const rows = items.map((it) => el('li', {
     className: 'ed-resume__item',
     children: [
-      el('span', { className: 'tj-body-sm', text: t('editor.resume.item', { n: it.slot, name: it.name ?? '', editing: it.editing }), doc }),
+      // اسم الخانة معزول اتجاهًا كما في رأس المحرّر (editSlotLabel).
+      el('span', { className: 'tj-body-sm', text: t('editor.resume.item', { n: it.slot, name: it.name ? isolate(it.name) : '', editing: it.editing }), doc }),
       it.n === null
         ? el('span', { className: 'tj-caption', text: t('editor.resume.none'), doc })
         : button({ label: t('editor.resume.from', { n: it.n }), size: 'sm', variant: 'ghost', onClick: () => onResume(it.slot), doc }),

@@ -196,8 +196,9 @@ export function saveMessage(r, name, location, message) {
   if (!r.ok) return { tone: r.code === 'SV_CANCELLED' ? 'info' : 'danger', text: `${file}: ${message(r.code)}` };
   if (r.mode === 'blob') return { tone: 'info', text: `${file}: ${message('SV_FALLBACK_BLOB')}` };
   if (r.pending) return { tone: 'info', text: `${file}: ${message('SV_PENDING')}` };
-  // «مجلد X داخل التنزيلات» لا «التنزيلات/X»: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص.
-  if (r.mode === 'subfolder') return { tone: 'success', text: t('editor.save.subfolder', { file, folder: location?.folder ?? 'Tarjuman' }) };
+  // «مجلد X داخل التنزيلات» لا «التنزيلات/X»: الشرطة بين عربي ولاتيني تنقلب في اتجاه النص. واسم المجلد يكتبه المستخدم (عربي أو
+  // لاتيني) فيُعزل اتجاهًا (FSI…PDI) كاسم الخانة.
+  if (r.mode === 'subfolder') return { tone: 'success', text: t('editor.save.subfolder', { file, folder: isolate(location?.folder ?? 'Tarjuman') }) };
   if (r.mode === 'ask') return { tone: 'success', text: t('editor.save.ask', { file }) };
   return { tone: 'success', text: t('editor.save.downloads', { file }) };
 }
