@@ -134,3 +134,77 @@ test('ع-٣٢: لا سكربت حي ميت: كل ملف تحت المجلدات 
   assert.ok(alive.size > 30, `${alive.size}`);
   assert.deepEqual(live.filter((rel) => !alive.has(rel)), []);
 });
+
+// ---------------------------------------------------------------- تحقق الجولة الثانية (ن-١٢)
+// test/live/controls/run.mjs أُصلحت فيه مجموعة download وحدها (71729ea)، وبقي باقيه ينتظر نصوصًا عربية صلبة (بعضها لم يعد في الفهرس)
+// فيسقط بلغة واجهة أخرى أو بعد تغيير نص، ويخرج بالرمز 0 دائمًا. الحارس نصي (استيراده يشغّله): لا نص عربي في تعبير مقارنة أو في
+// انتظار قائمة، والنتيجة تُخرج 1 عند أي سقوط أو توقف.
+const ARABIC = /[؀-ۿ]/;
+/** الشيفرة بلا تعليقات السطر. */
+const codeOf = (text) => text.split('\n').map((l) => l.replace(/^\s*\/\/.*$/, '').replace(/\s\/\/\s.*$/, '')).join('\n');
+
+test('ن-١٢: controls/run.mjs بلا نص عربي صلب في مقارنة أو انتظار قائمة: كل متوقع من الفهرس بلغة الواجهة', async () => {
+  const code = codeOf(await readFile(path.join(ROOT, 'test/live/controls/run.mjs'), 'utf8'));
+  const hits = [
+    ...[...code.matchAll(/\/((?:[^/\n\\]|\\.)+)\/[a-z]*\.test\(/g)].filter((m) => ARABIC.test(m[1])).map((m) => `regex ${m[0].slice(0, 40)}`),
+    ...[...code.matchAll(/[!=]==\s*(['"`])([^'"`\n]*)\1/g)].filter((m) => ARABIC.test(m[2])).map((m) => `مقارنة ${m[0].slice(0, 40)}`),
+    ...[...code.matchAll(/\b(?:openMenuOf|clickItem)\(([^)\n]*)\)/g)].filter((m) => ARABIC.test(m[1])).map((m) => `قائمة ${m[0].slice(0, 40)}`),
+  ];
+  assert.deepEqual(hits, []);
+  assert.match(code, /catalogOf\(/);
+  assert.match(code, /setLocale\(/);
+});
+
+test('ن-١٢: controls/run.mjs يخرج بالرمز 1 عند أي سقوط أو توقف، لا 0 دائمًا', async () => {
+  const code = codeOf(await readFile(path.join(ROOT, 'test/live/controls/run.mjs'), 'utf8'));
+  assert.match(code, /process\.exitCode = result\.passed \? 0 : 1/);
+  // التوقف (استثناء، تحدّي الروبوت) فشل ولو نجح كل ما قبله.
+  assert.match(code, /result\.passed = !result\.stopped && /);
+});
+
+// ---------------------------------------------------------------- تحقق الجولة الثانية (ح-31)
+// test/live/p1/make-fixtures.mjs حُذف مع السكربتات الميتة (dc58daa) ودليل الصيانة يطلب عيّنة json3 جديدة عند تغيّر الصيغة (§٤).
+// أُعيد، وهو بلا متصفح: يُشغَّل هنا في شجرة مؤقتة (يكتب في test/fixtures/json3 بجوار مساره)، فيعيد قيم عيّنة TED المحفوظة نفسها.
+const runMakeFixtures = async (name, args) => {
+  const { mkdtemp, cp, mkdir, rm } = await import('node:fs/promises');
+  const os = await import('node:os');
+  const { spawnSync } = await import('node:child_process');
+  const t = await mkdtemp(path.join(os.tmpdir(), `tj-make-fixtures-${name}-`));
+  await cp(path.join(ROOT, 'src'), path.join(t, 'src'), { recursive: true, filter: (p) => !p.includes(`${path.sep}fonts${path.sep}`) });
+  for (const rel of ['test/live/p1/make-fixtures.mjs', 'test/live/harness/netlog.mjs']) {
+    await mkdir(path.dirname(path.join(t, rel)), { recursive: true });
+    await cp(path.join(ROOT, rel), path.join(t, rel));
+  }
+  const r = spawnSync(process.execPath, [path.join(t, 'test/live/p1/make-fixtures.mjs'), ...args(t)], { encoding: 'utf8' });
+  const out = path.join(t, 'test/fixtures/json3');
+  const index = await readFile(path.join(out, 'index.json'), 'utf8').then(JSON.parse, () => null);
+  await rm(t, { recursive: true, force: true });
+  return { r, index };
+};
+
+test('ح-31: make-fixtures.mjs يحفظ عيّنة json3 ويكتب فهرسها بالقيم التي في المستودع لعيّنة TED نفسها، بلا متصفح', async () => {
+  const fixtures = path.join(ROOT, 'test/fixtures/json3');
+  const ref = JSON.parse(await readFile(path.join(fixtures, 'index.json'), 'utf8')).fixtures.find((f) => f.videoId === 'iG9CE55wbtY');
+  const { r, index } = await runMakeFixtures('ok', () => [path.join(fixtures, ref.file), '--id', ref.videoId, '--kind', ref.trackKind, '--name', 'manual-ted-copy',
+    '--browser', 'brave', '--duration-ms', String(ref.durationMs), '--title', ref.source.title, '--channel', ref.source.channel, '--license', ref.source.license]);
+  assert.equal(r.status, 0, r.stderr);
+  const got = index.fixtures.find((f) => f.file === 'manual-ted-copy.json');
+  assert.deepEqual({ ...got, file: ref.file, capturedAt: ref.capturedAt }, ref);
+});
+
+test('ح-31: make-fixtures.mjs يرفض جسمًا فيه رابط أو رمز، وبلا معاملاته المطلوبة خطأ استعمال، ولا يكتب شيئًا', async () => {
+  const leaky = path.join(ROOT, 'test/fixtures/json3/manual-ted-iG9CE55wbtY.json');
+  const { r, index } = await runMakeFixtures('leak', (t) => {
+    const f = path.join(t, 'leak.json');
+    // جسم بمعامل pot (يُبنى وقت التشغيل فلا يحمله الملف).
+    writeFileSync(f, JSON.stringify({ events: [], u: ['https://www.youtube.com/api/timedtext?v=x&', 'pot', '=', 'A'.repeat(40)].join('') }));
+    return [f, '--id', 'aaaaaaaaaaa', '--kind', 'manual', '--name', 'leak', '--duration-ms', '1000'];
+  });
+  assert.equal(r.status, 1, r.stdout);
+  assert.match(r.stderr, /نمط حساس/);
+  assert.equal(index, null);
+  const usage = await runMakeFixtures('usage', () => [leaky, '--kind', 'manual']);
+  assert.equal(usage.r.status, 2, usage.r.stderr);
+  assert.match(usage.r.stderr, /--id/);
+  assert.equal(usage.index, null);
+});

@@ -114,10 +114,10 @@ npm run youtube:shapes -- --browser chrome
 | «تعذّر استخراج الترجمة (استجابة فارغة)» في تصفح عادي دائمًا | يوتيوب صار يشترط شيئًا جديدًا في طلب الترجمة، أو غيّر نقله | `src/main-world/capture.js` (الالتقاط السلبي)، و`src/extract/` (المحوّل). **لا** إعادة طلب، ولا رموز، ولا انتحال عميل (product-spec §٤). |
 | «صيغة الترجمة غير مدعومة» أو فشل الثوابت (`EX_INVARIANT_FAILED`) | تغيّرت بنية `json3` (`events` و`segs` و`tOffsetMs`) أو ظهرت صيغة ASR جديدة | `src/core/convert/` بعينة حقيقية منقّاة جديدة في `test/fixtures/json3/` |
 | رفض `EX_WRONG_VIDEO` لكل الفيديوهات، أو التقاط فيديو سابق | تغيّر توقيت التنقل أو المعاملات (`v` و`lang` و`kind` و`tlang`) | `src/extract/timedtext-params.js` و`pending.js` و`capture-store.js` |
-| اختفاء أزرار ترجمان أو موضع خاطئ في الشريط | تغيّر DOM المشغّل (`.ytp-right-controls`، و`ytp-autohide`، وأحجام الشريط) | `src/player/youtube-dom.js` وحده (محددات يوتيوب معزولة فيه)، ثم `src/player/controls/bar.js` |
+| اختفاء أزرار ترجمان أو موضع خاطئ في الشريط | تغيّر DOM المشغّل (`.ytp-right-controls`، و`ytp-autohide`، وأحجام الشريط) | `src/player/youtube-dom.js` وحده (محددات يوتيوب معزولة فيه)، ثم `src/player/controls/bar.js`. والتحقق الحي `test/live/controls/run.mjs` (الشريط وقوائمه والأوضاع والعروض الضيقة، بلغة الواجهة الفعلية) |
 | الترجمة تظهر فوق الإعلان، أو لا تعود بعده | تغيّرت فئات الإعلان (`ad-showing` و`ad-interrupting`) | `src/player/youtube-dom.js` و`src/player/watch/player-state.js` |
-| ترجمة الفيديو السابق تبقى بعد التنقل | تغيّر حدث التنقل (`yt-navigate-finish`) | `src/player/watch/navigation.js` |
-| الترجمة لا تظهر في ملء الشاشة | تغيّر عنصر ملء الشاشة | `src/player/watch/fullscreen.js` |
+| ترجمة الفيديو السابق تبقى بعد التنقل | تغيّر حدث التنقل (`yt-navigate-finish`) | `src/player/watch/navigation.js`، والتحقق الحي مجموعة `persist` في `test/live/controls/run.mjs` |
+| الترجمة لا تظهر في ملء الشاشة | تغيّر عنصر ملء الشاشة | `src/player/watch/fullscreen.js`، والتحقق الحي مجموعة `modes` في `test/live/controls/run.mjs` |
 | تعطل العرض كله في صفحة يوتيوب | سياسة أمان جديدة (CSP أو Trusted Types) | `src/player/overlay/sheet.js` والطبقة: DOM وCSSOM فقط، لا HTML نصي |
 | الإضافة لا تُحمَّل في Brave بعد تحديث | تغيّر دعم `--load-extension` أو وضع المطوّر | التحميل اليدوي من صفحة الإضافات (دليل الاستخدام §١) |
 | امتلاء التخزين | محفوظات كبيرة جدًا | الإعدادات ← السعة، وتصدير ما لا يلزم ثم حذفه |

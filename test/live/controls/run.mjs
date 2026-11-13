@@ -8,9 +8,14 @@
 //   node test/live/controls/run.mjs --browser brave|chrome --ext <مجلد> [--only hide,download,upload,nudge,timing,persist,modes]
 //        [--break-font tajawal] [--headed] [--out test-results/live/P6]
 // --break-font يكتب بايتات غير صالحة في ملفي خط داخل مجلد البناء المؤقت (لا المستودع) لسيناريو البديل (P6-AC9).
-// مجموعة download تتبع الواجهة الحالية: قائمة «تنزيل الأصل» (src/player/controls/menus.js) بلغتها الفعلية، ونصوصها من الفهرس نفسه
-// (عنوان القائمة يحدد اللغة)، وبلا بند نسخ (نسخ التعليمات في نافذة الإضافة منذ 2.0.0، AA3 ق٨)؛ والقائمة تُغلق باختفاء شريط يوتيوب
-// (session.js)، فتُعاد إظهاره قبل كل قراءة أو ضغطة. كانت تبحث بنصوص عربية من الإصدار الأول وببند «copy» فتسقط وتُسقط ما بعدها.
+// كل نص متوقع من الفهرس بلغة واجهة المشغّل الفعلية (تحقق الجولة الثانية، ن-١٢): اللغة من تسمية زر اللوحة بعد التركيب، ثم
+// setLocale بها، فـLABELS وmessageFor ودوال src/player/controls/text.js تعطي ما يعرضه المشغّل بتلك اللغة. كانت المجموعات غير
+// download تنتظر نصوصًا عربية صلبة (منها اثنان لم يعودا في الفهرس بصيغتهما: «مطابق للأصل ✓» وشرح الإشارة القديم) فتسقط
+// بالإنجليزية أو بعد تغيير نص. ويخرج بالرمز 1 عند أي سقوط أو توقف (كان 0 دائمًا). ورفع ملف ثانٍ يُحفظ افتراضيًا في خانة جديدة منذ
+// الخانات الثلاث، فالاستبدال يختار «حفظ في 1».
+// مجموعة download تتبع الواجهة الحالية: قائمة «تنزيل الأصل» (src/player/controls/menus.js) بلغتها الفعلية، وبلا بند نسخ (نسخ
+// التعليمات في نافذة الإضافة منذ 2.0.0، AA3 ق٨)؛ والقائمة تُغلق باختفاء شريط يوتيوب (session.js)، فتُعاد إظهاره قبل كل قراءة أو
+// ضغطة. كانت تبحث بنصوص عربية من الإصدار الأول وببند «copy» فتسقط وتُسقط ما بعدها.
 import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -23,7 +28,7 @@ import { createExtractor } from '../../../src/extract/index.js';
 import { messageFor } from '../../../src/core/errors/index.js';
 import { buildExport, instructions } from '../../../src/core/export/index.js';
 import { LOCALES, catalogOf, setLocale } from '../../../src/i18n/index.js';
-import { LABELS, ccLanguagesLine, downloadedLine, trackLine } from '../../../src/player/controls/text.js';
+import { LABELS, badgeTip, ccLanguagesLine, comparisonSummary, downloadedLine, minusTip, plusTip, trackLine } from '../../../src/player/controls/text.js';
 import { subtitleFont } from '../../../src/ui/subtitle-fonts.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -328,6 +333,11 @@ try {
   check('layer-inside-movie-player', 'P6-AC1', m0.tjHosts.includes('tarjuman-controls-layer'), { hosts: m0.tjHosts });
   result.measures.normal = { player: m0.player, group: p0.group, size: p0.size };
   await shoot('ac7-normal-shown');
+  // لغة واجهة المشغّل من تسمية زر اللوحة (ثابتة لا حال فيها)، ومنها كل نص متوقع في المجموعات كلها.
+  const UI = LOCALES.find((l) => catalogOf(l).get('player.controls.panel') === p0.buttons.panel?.label) ?? null;
+  result.uiLocale = UI ?? `غير معروفة: ${p0.buttons.panel?.label ?? 'لا زر لوحة'}`;
+  check('ui-locale-known', 'تحضير', !!UI, { locale: result.uiLocale });
+  setLocale(UI ?? 'en');
 
   // ===== AC1/AC7: الشريط يختفي فتختفي الأدوات معه =====
   if (want('hide')) {
@@ -353,20 +363,17 @@ try {
     async function downloadMenu() {
       await revealControls(page);
       const m = await menuOpen();
-      if (!m || m.label !== catalogOf(DLOC ?? 'en').get('player.controls.downloadTitle')) await clickButton('download');
+      if (!m || m.label !== LABELS.downloadTitle) await clickButton('download');
       return iso(I.peek);
     }
     await clickButton('download');
     let pk = await iso(I.peek);
-    // لغة واجهة المشغّل من عنوان القائمة نفسها، ومنها كل نص متوقع (messageFor وtrackLine وdownloadedLine باللغة نفسها).
-    const DLOC = LOCALES.find((l) => catalogOf(l).get('player.controls.downloadTitle') === pk.layer.menu?.label) ?? null;
-    result.uiLocale = DLOC ?? `غير معروفة: ${pk.layer.menu?.label ?? 'لا قائمة'}`;
-    setLocale(DLOC ?? 'en');
+    // عنوان القائمة بلغة الواجهة المكتشفة (UI)، ومنها كل نص متوقع (messageFor وtrackLine وdownloadedLine باللغة نفسها).
     // بلا التقاط صالح: لا زر تنزيل، ورسالة واحدة: تفعيل CC (بعدد لغات الفيديو إن عُرف، القرار ٢٩)، أو CC مفعّلة بلا التقاط؛ أو رفض
     // الجسم الفارغ (EX_EMPTY_BODY) حين شغّل يوتيوب الترجمة وحده، فتحت الأتمتة يعيد جسمها فارغًا (P1).
     const notCaptured = [messageFor('CT_NOT_CAPTURED'), messageFor('CT_CC_NOT_CAPTURED'), messageFor('EX_EMPTY_BODY'), ...Array.from({ length: 300 }, (_, i) => ccLanguagesLine(i + 1))].map(clean);
     const shownState = notCaptured.find((t) => clean(pk.layer.menu?.text).includes(t)) ?? null;
-    check('download-menu-before-capture', 'P6-AC4', !!DLOC && !!shownState && !(pk.layer.menu?.items ?? []).some((x) => x.fid === 'download'), { locale: DLOC, label: pk.layer.menu?.label, state: shownState, text: clean(pk.layer.menu?.text).slice(0, 160) });
+    check('download-menu-before-capture', 'P6-AC4', pk.layer.menu?.label === LABELS.downloadTitle && !!shownState && !(pk.layer.menu?.items ?? []).some((x) => x.fid === 'download'), { locale: UI, label: pk.layer.menu?.label, state: shownState, text: clean(pk.layer.menu?.text).slice(0, 160) });
     await shoot('ac4-menu-not-captured');
     const acc = await iso(I.inject, message);
     await sleep(500);
@@ -382,11 +389,21 @@ try {
     let names = await waitFiles((n) => n === normalName);
     const got = names.includes(normalName) ? await readFile(path.join(DL, normalName), 'utf8') : null;
     check('download-normal-bytes-match', 'P6-AC4', got === EXP_NORMAL.files[0].text, { name: normalName, bytes: got ? Buffer.byteLength(got) : null, expected: Buffer.byteLength(EXP_NORMAL.files[0].text), inDir: names });
-    await sleep(600);
-    const st = await iso(I.state);
+    // البصمة وسطر النجاح بعد أن تعلم الإضافة باكتمال التنزيل (downloads.onChanged)، وقد يتأخر ذلك عن ظهور الملف في المجلد تحت حمل
+    // الجهاز (سقطا بانتظار ثابت 600 م.ث، والبصمة محفوظة بعده: قورن بها الرفع): يُنتظران حتى 10 ث.
+    let st = await iso(I.state);
+    for (const end = Date.now() + 10000; st.fingerprints !== 1 && Date.now() < end;) {
+      await sleep(300);
+      st = await iso(I.state);
+    }
     check('fingerprint-saved', 'P6-AC4', st.fingerprints === 1, { fingerprints: st.fingerprints });
+    const doneLine = clean(downloadedLine(normalName));
     pk = await downloadMenu();
-    check('download-success-visible', 'P6-AC4', clean(pk.layer.menu?.text).includes(clean(downloadedLine(normalName))), { expected: clean(downloadedLine(normalName)) });
+    for (const end = Date.now() + 10000; !clean(pk.layer.menu?.text).includes(doneLine) && Date.now() < end;) {
+      await sleep(300);
+      pk = await downloadMenu();
+    }
+    check('download-success-visible', 'P6-AC4', clean(pk.layer.menu?.text).includes(doneLine), { expected: doneLine });
     await shoot('ac4-download-done');
     // مقاطع أطول
     await downloadMenu();
@@ -402,7 +419,7 @@ try {
     await clickItem('mode:normal');
     // نسخ التعليمات في نافذة الإضافة وحدها (منذ 2.0.0، AA3 ق٨): القائمة تقول ذلك ولا بند نسخ فيها، والتعليمات لا تُعرض في الصفحة.
     pk = await downloadMenu();
-    const instr = instructions({ videoId: VIDEO, title: null, source: 'en', target: 'ar', locale: DLOC ?? 'en' });
+    const instr = instructions({ videoId: VIDEO, title: null, source: 'en', target: 'ar', locale: UI ?? 'en' });
     const shownSomewhere = [pk.layer.menu?.text ?? '', ...pk.layer.toasts.map((t) => t.text), pk.layer.tip ?? ''].some((t) => t.includes(instr.slice(0, 40)))
       || (await main(M.bodyHas, instr.slice(0, 40)));
     check('copy-points-to-popup-not-player-menu', 'P6-AC4', !pk.layer.menu.items.some((x) => x.fid === 'copy') && clean(pk.layer.menu.text).includes(clean(LABELS.instructionsNote)), { note: LABELS.instructionsNote, items: pk.layer.menu.items.map((x) => x.fid) });
@@ -442,7 +459,7 @@ try {
     await sleep(1500);
     let st = await iso(I.state);
     let pk = await iso(I.peek);
-    check('upload-first-file-loads-and-compares', 'P6-AC5', st.arabic?.n === 427 && st.arabic.matched === true && /مطابق للأصل ✓/.test(pk.layer.menu?.text ?? ''), { arabic: st.arabic, menu: pk.layer.menu?.label });
+    check('upload-first-file-loads-and-compares', 'P6-AC5', st.arabic?.n === 427 && st.arabic.matched === true && clean(pk.layer.menu?.text).includes(clean(LABELS.cmpMatched)), { arabic: st.arabic, menu: pk.layer.menu?.label, expected: LABELS.cmpMatched });
     await shoot('ac5-display-menu');
     await clickItem('mode:dual');
     await sleep(400);
@@ -455,31 +472,59 @@ try {
     await clickItem('mode:ar');
     await clickButton('upload');
     await clickButton('plus');
-    // استبدال بملف ينقصه آخر مقطع ثم إلغاء
-    await clickButton('upload');
-    nextUpload = [short];
-    await clickItem('replace');
-    await sleep(1500);
-    pk = await iso(I.peek);
-    check('replace-confirm-shows-new-summary', 'P6-AC5', pk.layer.menu?.label === 'استبدال الترجمة؟' && /مقطع واحد ناقص: 427/.test(pk.layer.menu.text) && /ستُصفَّر إزاحة العرض/.test(pk.layer.menu.text), { label: pk.layer.menu?.label });
+    // استبدال بملف ينقصه آخر مقطع ثم إلغاء. منذ الخانات الثلاث يُحفظ الملف الجديد افتراضيًا في خانة فارغة («جديدة») بعنوان «رفع
+    // ترجمة»، فيُختار «حفظ في 1» (النشطة) ليكون استبدالًا بعنوانه وتنبيه الإزاحة. والقائمة تُغلق باختفاء الشريط، فيُظهر قبل كل قراءة
+    // أو ضغطة والفيديو متوقف (كمجموعة download).
+    /** ينتظر قائمة بأحد العناوين، والشريط ظاهر. */
+    async function waitMenu(labels, timeoutMs = 8000) {
+      const end = Date.now() + timeoutMs;
+      let p;
+      do {
+        await revealControls(page);
+        p = await iso(I.peek);
+        if (labels.includes(p.layer.menu?.label)) return p;
+        await sleep(250);
+      } while (Date.now() < end);
+      return p;
+    }
+    async function replaceWith(file) {
+      await main(M.pause);
+      await revealControls(page);
+      if ((await iso(I.peek)).layer.menu?.label !== LABELS.displayTitle) await clickButton('upload');
+      await waitMenu([LABELS.displayTitle]);
+      nextUpload = [file];
+      await clickItem('replace');
+      let p = await waitMenu([LABELS.uploadTitle, LABELS.confirmTitle]);
+      if (p.layer.menu?.label === LABELS.uploadTitle) {
+        await clickItem('target:1');
+        p = await waitMenu([LABELS.confirmTitle]);
+      }
+      return p;
+    }
+    pk = await replaceWith(short);
+    // ملخص المقارنة كما يكتبه المشغّل لملف ينقصه المقطع 427 وحده («مقطع واحد ناقص: 427» أو «1 segment missing: 427»).
+    const missingLast = comparisonSummary({ fingerprintId: 'live', missing: [427], extra: [], drift: [], empty: [], noArabic: [], matched: false }).text;
+    check('replace-confirm-shows-new-summary', 'P6-AC5', pk.layer.menu?.label === LABELS.confirmTitle && clean(pk.layer.menu.text).includes(clean(missingLast)) && clean(pk.layer.menu.text).includes(clean(LABELS.offsetResetNote)), { label: pk.layer.menu?.label, expected: [missingLast, LABELS.offsetResetNote] });
     await shoot('ac5-confirm-replace');
     await clickItem('cancel');
+    await sleep(400);
     st = await iso(I.state);
     check('replace-cancel-changes-nothing', 'P6-AC5', st.arabic.fileName === 'talk.ar.srt' && st.view.displayOffsetMs === 500, { arabic: st.arabic, offset: st.view.displayOffsetMs });
-    nextUpload = [short];
-    await clickItem('replace');
-    await sleep(1500);
+    await replaceWith(short);
     await clickItem('confirm');
     await sleep(800);
     st = await iso(I.state);
     pk = await iso(I.peek);
-    check('replace-confirmed-resets-offset-with-notice', 'P6-AC5', st.arabic.fileName === 'talk-missing.ar.srt' && st.view.displayOffsetMs === 0 && pk.layer.toasts.some((t) => /صُفّرت إزاحة العرض/.test(t.text)), { arabic: st.arabic, offset: st.view.displayOffsetMs });
-    nextUpload = [full];
-    await clickItem('replace');
-    await sleep(1500);
+    check('replace-confirmed-resets-offset-with-notice', 'P6-AC5', st.arabic.fileName === 'talk-missing.ar.srt' && st.view.displayOffsetMs === 0 && pk.layer.toasts.some((t) => clean(t.text).includes(clean(messageFor('ST_OFFSET_RESET')))), { arabic: st.arabic, offset: st.view.displayOffsetMs, toasts: pk.layer.toasts.map((t) => t.text) });
+    await replaceWith(full);
     await clickItem('confirm');
     await sleep(800);
-    await clickButton('upload');
+    st = await iso(I.state);
+    check('replace-back-to-full-file', 'P6-AC5', st.arabic?.fileName === 'talk.ar.srt' && st.arabic.n === 427, { arabic: st.arabic });
+    if ((await iso(I.peek)).layer.menu) {
+      await pressKey('Escape', 'Escape', 27);
+      await sleep(300);
+    }
   }
 
   // ===== AC2 وAC10: − و+ والشارة =====
@@ -496,11 +541,13 @@ try {
     const m = await main(M.main);
     check('plus-minus-change-offset-by-step', 'P6-AC2', st.view.displayOffsetMs === 500 && pk.buttons.badge.text === '+0.5', { offset: st.view.displayOffsetMs, badge: pk.buttons.badge.text });
     check('video-time-untouched', 'P6-AC2', Math.abs(m.video.t - t0) < 0.01 && m.video.paused, { before: t0, after: m.video.t });
-    check('tooltips-explain-sign', 'P6-AC2', pk.buttons.plus.label === 'تأخير الترجمة 0.5 ث (تظهر لاحقًا)' && pk.buttons.minus.label === 'تقديم الترجمة 0.5 ث (تظهر أبكر)' && /تظهر الترجمة لاحقًا/.test(pk.buttons.badge.label), { plus: pk.buttons.plus.label, minus: pk.buttons.minus.label, badge: pk.buttons.badge.label });
+    check('tooltips-explain-sign', 'P6-AC2', pk.buttons.plus.label === plusTip(st.step) && pk.buttons.minus.label === minusTip(st.step) && clean(pk.buttons.badge.label) === clean(badgeTip(st.view.displayOffsetMs)), { plus: pk.buttons.plus.label, minus: pk.buttons.minus.label, badge: pk.buttons.badge.label, expected: [plusTip(st.step), minusTip(st.step), badgeTip(st.view.displayOffsetMs)] });
     const f1 = (await iso(I.ov)).font;
     check('nudge-changes-offset-only-not-font', 'P6-AC10', JSON.stringify(f0) === JSON.stringify(f1) && JSON.stringify(st.appearance) === JSON.stringify((await iso(I.state)).appearance), { before: f0, after: f1 });
     const kids = (await main(M.main)).right.children.filter((c) => c.id === 'tarjuman-controls');
-    check('no-font-or-size-control-in-bar', 'P6-AC10', kids.length === 1 && Object.keys(pk.buttons).length === 5, { ours: kids.length, buttons: Object.keys(pk.buttons) });
+    // أزرار الشريط اليوم: الخمسة وزر النص المتزامن (منذ 2.x)، ولا خط ولا حجم بينها.
+    const BAR = ['download', 'upload', 'panel', 'minus', 'badge', 'plus'];
+    check('no-font-or-size-control-in-bar', 'P6-AC10', kids.length === 1 && JSON.stringify(Object.keys(pk.buttons).sort()) === JSON.stringify([...BAR].sort()), { ours: kids.length, buttons: Object.keys(pk.buttons) });
     await page.mouseMove(center(pk.buttons.plus.box).x, center(pk.buttons.plus.box).y);
     await sleep(500);
     await shoot('ac2-tooltip-plus');
@@ -510,7 +557,7 @@ try {
   if (want('timing')) {
     await clickButton('badge');
     let pk = await iso(I.peek);
-    check('timing-menu-opens-from-badge', 'P6-AC3', pk.layer.menu?.label === 'توقيت الترجمة' && /\+ تأخير: تظهر لاحقًا · − تقديم: تظهر أبكر/.test(pk.layer.menu.text), { text: pk.layer.menu?.text.slice(0, 80) });
+    check('timing-menu-opens-from-badge', 'P6-AC3', pk.layer.menu?.label === LABELS.timingTitle && clean(pk.layer.menu.text).includes(clean(LABELS.signLegend)), { text: pk.layer.menu?.text.slice(0, 80), expected: LABELS.signLegend });
     await shoot('ac3-timing-menu');
     const before = (await main(M.main)).video;
     await clickItem('offset');
@@ -535,7 +582,7 @@ try {
     await sleep(300);
     pk = await iso(I.peek);
     st = await iso(I.state);
-    check('invalid-input-not-applied', 'P6-AC3', st.view.displayOffsetMs === -2300 && /أدخل الإزاحة بالثواني/.test(pk.layer.menu.text), { offset: st.view.displayOffsetMs });
+    check('invalid-input-not-applied', 'P6-AC3', st.view.displayOffsetMs === -2300 && clean(pk.layer.menu.text).includes(clean(messageFor('CT_OFFSET_INVALID'))), { offset: st.view.displayOffsetMs, expected: messageFor('CT_OFFSET_INVALID') });
     await shoot('ac3-invalid-input');
     await clickItem('step:1000');
     await sleep(500);
@@ -543,18 +590,26 @@ try {
     await clickButton('plus');
     const st2 = await iso(I.state);
     check('step-choice-applies-to-buttons', 'P6-AC3', st.step === 1000 && st2.view.displayOffsetMs === -1300, { step: st.step, offset: st2.view.displayOffsetMs });
-    await openMenuOf('badge', 'توقيت الترجمة');
+    await openMenuOf('badge', LABELS.timingTitle);
     await clickItem('step:500');
     await clickItem('reset');
     await sleep(300);
     st = await iso(I.state);
     pk = await iso(I.peek);
     check('reset-to-zero', 'P6-AC3', st.view.displayOffsetMs === 0 && pk.buttons.badge.text === '0.0', { offset: st.view.displayOffsetMs });
+    // Esc والتركيز داخل القائمة (في حقل الإزاحة) يغلقها ويعيد التركيز إلى الشارة. أما بعد نقرة فأرة على بند فلا يبقى التركيز في
+    // القائمة عمدًا (src/player/controls/layer.js، تدقيق 5fedcb9 GM-003)، فـEsc من الصفحة يغلقها ويبقى التركيز حيث هو (U89)؛ وكان
+    // الفحص يضغط Esc بعد نقرتي «0.5» و«تصفير» فيجد التركيز في body (جولة التحقق الثانية: التركيز في body بعد كل نقرة).
+    await clickItem('offset');
+    // ما قبل Esc (للتشخيص): هل القائمة مفتوحة، وأين التركيز داخلها، وهل الشريط ظاهر والفيديو متوقف.
+    const pkEsc = await iso(I.peek);
+    const mEsc = await main(M.main);
+    const beforeEsc = { menu: pkEsc.layer.menu?.label ?? null, focusedFid: pkEsc.layer.focusedFid, focused: pkEsc.layer.focused, bar: pkEsc.layer.bar, active: mEsc.active, paused: mEsc.video.paused };
     await pressKey('Escape', 'Escape', 27);
     await sleep(300);
     pk = await iso(I.peek);
     const m = await main(M.main);
-    check('esc-closes-and-returns-focus', 'P6-AC3', !pk.layer.menu && m.active === 'tarjuman-controls', { menu: !!pk.layer.menu, active: m.active });
+    check('esc-closes-and-returns-focus', 'P6-AC3', !pk.layer.menu && m.active === 'tarjuman-controls', { menu: !!pk.layer.menu, active: m.active, focusedKind: pk.focusedKind, beforeEsc });
     // اختبار ضابط: الضغطة نفسها خارج الحقل تصل إلى يوتيوب (فالعزل أعلاه ذو معنى)
     // معلومة: الكتابة في الحقل والفيديو يعمل دون تحريك الفأرة — هل يُخفي يوتيوب الشريط (فتختفي القائمة معه)، وهل يبقى
     // التركيز في الحقل والضغطات معزولة؟ (بند من المراجعة المستقلة لا يُحسم إلا حيًا)
@@ -599,7 +654,7 @@ try {
       isoId = page.isolatedContextId(extId);
       if (isoId) {
         const t = await iso(() => globalThis.__tarjuman?.mounted.controls.peek()?.layer.toasts ?? []).catch(() => []);
-        restoredToast = t.find((x) => /استُعيدت ترجمتك المحفوظة/.test(x.text)) ?? null;
+        restoredToast = t.find((x) => clean(x.text).includes(clean(messageFor('ST_RESTORED')))) ?? null;
       }
       if (!restoredToast) await sleep(200);
     }
@@ -639,7 +694,7 @@ try {
     } else {
       result.notes.push('لا مقترحات في الصفحة: تخطي سيناريو التنقل.');
     }
-    await openMenuOf('badge', 'توقيت الترجمة');
+    await openMenuOf('badge', LABELS.timingTitle);
     await clickItem('reset');
     await pressKey('Escape', 'Escape', 27);
     await clickButton('upload');
@@ -810,6 +865,7 @@ try {
   result.measures.fontReadSecurityLogs = { count: known.length, fontReads: extensionReads.length };
   check('no-extension-errors', 'تحضير', real.length === 0, real.slice(0, 3));
 } catch (err) {
+  result.stopped = err.message;
   result.notes.push(`توقف: ${err.message}`);
   console.error(err);
   try {
@@ -821,7 +877,9 @@ try {
   await b.close();
   await rm(DL, { recursive: true, force: true });
   await rm(FILES, { recursive: true, force: true });
-  result.passed = result.checks.filter((c) => !c.ac.includes('معلومة') && !c.id.includes('معلومة')).every((c) => c.ok);
+  // التوقف (استثناء أو تحدّي الروبوت) فشل ولو نجح كل ما قبله، والمعلومة لا تُحسب.
+  result.passed = !result.stopped && result.checks.length > 0 && result.checks.filter((c) => !c.ac.includes('معلومة') && !c.id.includes('معلومة')).every((c) => c.ok);
   await writeFile(path.join(OUT, 'live.json'), `${JSON.stringify(result, null, 2)}\n`);
-  console.log(`\n${result.checks.filter((c) => c.ok).length}/${result.checks.length} — ${path.relative(ROOT, path.join(OUT, 'live.json'))}`);
+  console.log(`\n${result.checks.filter((c) => c.ok).length}/${result.checks.length}${result.stopped ? ' (توقف)' : ''} — ${path.relative(ROOT, path.join(OUT, 'live.json'))}`);
+  process.exitCode = result.passed ? 0 : 1;
 }
