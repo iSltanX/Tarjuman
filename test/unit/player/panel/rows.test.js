@@ -3,6 +3,7 @@
 // والخانة، وكفاءة آلاف المقاطع (بناء مرة، وتحديث صفوف قليلة).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { isolate } from '../../../../src/ui/format.js';
 import { A, B, arCues, click, english, hidden, key, layoutList, makeState, ui, watchPage } from './harness.js';
 
 const cueList = (...spec) => spec.map(([startMs, endMs, text], i) => ({ n: i + 1, startMs, endMs, text }));
@@ -372,7 +373,7 @@ test('تبديل الخانة (مقاطع أخرى): تُبنى الصفوف م�
   assert.equal(now.length, 3);
   assert.deepEqual(now.map((r) => r.children[1].children[0].textContent), ['ترجمة بديلة', 'طويلة', 'ثالثة']);
   assert.deepEqual(classesOf(now, 'cur'), [1], 'عند 4 ث المقطع الثاني (1–5)');
-  assert.equal(ui(page).status.textContent, 'متزامن · الترجمة 3 «بديلة» · 3 مقاطع');
+  assert.equal(ui(page).status.textContent, `متزامن · الترجمة 3 «${isolate('بديلة')}» · 3 مقاطع`);
 });
 
 test('تعديل المحرّر لنص المقطع (مصفوفة جديدة): إعادة بناء، والموضع الحالي محفوظ', () => {

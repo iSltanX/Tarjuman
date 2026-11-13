@@ -1,7 +1,7 @@
 // نصوص لوحة النص المتزامن ودوالها النقية (docs/product-spec.md §٦.٦، ولوحات التصميم WatchPanel وPanelStates وWatchNarrow).
 // أرقام لاتينية، والإزاحة بعلامتها (formatOffset)، والعدّ بالعربية (formatCount). لا شيء هنا يعرف DOM.
 import { t, texts } from '../../i18n/index.js';
-import { COUNT_FORMS, formatCount, formatOffset } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatOffset, isolate } from '../../ui/format.js';
 import { languageName as sharedLanguageName } from '../../ui/lang.js';
 
 /** نصوص اللوحة من الفهرس (player.panel) باللغة الحالية عند كل قراءة. */
@@ -70,13 +70,14 @@ export const unmarkedNote = (n) => T('unmarked', { n });
 export const withOriginal = (langName) => T('withOriginal', { name: langName });
 
 /**
- * أجزاء سطر الحالة: «متزامن · الترجمة 2 «مراجعة» · 412 مقطعًا». الاسم يُحذف إن لم يُسمَّ، والرقم إن لم تُعرف الخانة.
+ * أجزاء سطر الحالة: «متزامن · الترجمة 2 «مراجعة» · 412 مقطعًا». الاسم يُحذف إن لم يُسمَّ، والرقم إن لم تُعرف الخانة. والاسم
+ * معزول (FSI…PDI) كما في المحرّر: اسم لاتيني مثل «Pro (v2)» لا تنقلب أقواسه وترقيمه في الجملة العربية.
  * @param {{ slot: number | null, name: string | null, count: number }} s
  * @returns {string[]}
  */
 export function statusParts({ slot, name, count }) {
   const parts = [LABELS.synced];
-  if (slot) parts.push(name ? T('statusSlotNamed', { n: slot, name }) : T('statusSlot', { n: slot }));
+  if (slot) parts.push(name ? T('statusSlotNamed', { n: slot, name: isolate(name) }) : T('statusSlot', { n: slot }));
   parts.push(formatCount(count, COUNT_FORMS.cue));
   return parts;
 }

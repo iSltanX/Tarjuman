@@ -6,7 +6,7 @@
 import { messageFor } from '../../core/errors/index.js';
 import { knownLanguages } from '../../core/lang/index.js';
 import { getDir, getLocale } from '../../i18n/index.js';
-import { formatOffset, textDirection } from '../../ui/format.js';
+import { formatOffset, isolate, ltrParts, textDirection } from '../../ui/format.js';
 import { languageName } from '../../ui/lang.js';
 import { glyph } from './glyphs.js';
 import {
@@ -164,7 +164,7 @@ function slotPicker(h, act, slots, { disabled = false, root = null } = {}) {
   const filled = slots.filter((s) => s.filled);
   if (filled.length < 2) return null;
   return radioRow(h, act, 'slot', filled.map((s) => ({
-    n: s.n, value: s.n, text: String(s.n), label: slotLabel(s), title: s.name ? `${slotLabel(s)} — ${s.name}` : slotLabel(s), checked: s.active, fid: `slot:${s.n}`,
+    n: s.n, value: s.n, text: String(s.n), label: slotLabel(s), title: s.name ? `${slotLabel(s)} — ${isolate(s.name)}` : slotLabel(s), checked: s.active, fid: `slot:${s.n}`,
   })), { disabled, root, label: LABELS.slots });
 }
 
@@ -185,10 +185,21 @@ function targetPicker(h, act, slots, target, { disabled = false, root = null, co
   return radioRow(h, act, 'target', items, { disabled, root, label: LABELS.saveTo, first: true });
 }
 
-/** سطر نتيجة مستقل (§١٩.٥): «✓ نُزّل …». */
+/**
+ * نص سطر بمقاطعه المعزولة LTR (ltrInline) عناصر bdi ذرية (.iso): اسم الملف ينتقل كله إلى سطره ويلتف داخله بترتيب LTR، فلا تنقلب
+ * أجزاؤه مع الجملة العربية إن انكسر (ltrParts). والنص بلا مقطع معزول كما كان.
+ * @param {H} h @param {string} text
+ */
+function richText(h, text) {
+  const parts = ltrParts(text);
+  if (!parts.some((p) => p.ltr)) return { text };
+  return { children: parts.map((p) => (p.ltr ? h('bdi', { className: 'iso', text: p.text, attrs: { dir: 'ltr' } }) : h('span', { text: p.text }))) };
+}
+
+/** سطر نتيجة مستقل (§١٩.٥): «✓ نُزّل …»، واسم الملف عنصر معزول ذري (richText). */
 function resultLine(h, line, fid) {
   const tone = line.tone === 'ok' ? 'ok' : line.tone === 'error' ? 'error' : 'info';
-  return h('div', { className: 'line', attrs: { 'data-tone': line.tone, 'data-fid': fid, role: line.tone === 'error' ? 'alert' : 'status' }, children: [h.glyph?.(tone) ?? null, h('span', { className: 'line__text', text: line.text })] });
+  return h('div', { className: 'line', attrs: { 'data-tone': line.tone, 'data-fid': fid, role: line.tone === 'error' ? 'alert' : 'status' }, children: [h.glyph?.(tone) ?? null, h('span', { className: 'line__text', ...richText(h, line.text) })] });
 }
 
 /**

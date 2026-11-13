@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { messageFor } from '../../../../src/core/errors/index.js';
+import { isolate } from '../../../../src/ui/format.js';
 import { DEFAULT_PREFS, mergePrefs } from '../../../../src/core/model/prefs.js';
 import { UNDO_MS } from '../../../../src/player/panel/session.js';
 import { A, B, arCues, click, english, enCues, flush, hidden, key, makeState, ui, watchPage } from './harness.js';
@@ -183,7 +184,7 @@ test('فشل كتابة التفضيل أثناء الإخفاء: تُسحب ا�
 test('سطر الحالة من الحالة الفعلية: «متزامن · الترجمة 2 «مراجعة» · 3 مقاطع»', () => {
   const page = watchPage();
   page.mount();
-  assert.equal(ui(page).status.textContent, 'متزامن · الترجمة 2 «مراجعة» · 3 مقاطع');
+  assert.equal(ui(page).status.textContent, `متزامن · الترجمة 2 «${isolate('مراجعة')}» · 3 مقاطع`);
 });
 
 test('سطر الحالة يتبع تبديل الخانة وعدد المقاطع، ويحذف الاسم إن لم تُسمَّ الخانة', () => {

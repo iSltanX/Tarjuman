@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { lookupMs } from '../../../../src/core/model/timing.js';
 import { createSyncEngine } from '../../../../src/player/sync/engine.js';
+import { isolate } from '../../../../src/ui/format.js';
 import { createTimeline, derive } from '../../../../src/player/panel/model.js';
 import { LABELS, clockLabel, flatText, languageName, offsetMeaningShort, statusParts } from '../../../../src/player/panel/text.js';
 import { A, B, arCues, enCues, english, makeState } from './harness.js';
@@ -130,7 +131,7 @@ test('derive: الإزاحة لفيديو الصفحة وحده، وسطر ال�
 });
 
 test('سطر الحالة: «متزامن · الترجمة N «اسم» · M مقطعًا» والاسم والرقم يُحذفان إن غابا', () => {
-  assert.equal(statusParts({ slot: 2, name: 'مراجعة', count: 412 }).join(' · '), 'متزامن · الترجمة 2 «مراجعة» · 412 مقطعًا');
+  assert.equal(statusParts({ slot: 2, name: 'مراجعة', count: 412 }).join(' · '), `متزامن · الترجمة 2 «${isolate('مراجعة')}» · 412 مقطعًا`);
   assert.equal(statusParts({ slot: 1, name: null, count: 1 }).join(' · '), 'متزامن · الترجمة 1 · مقطع واحد');
   assert.equal(statusParts({ slot: null, name: null, count: 2 }).join(' · '), 'متزامن · مقطعان');
   assert.equal(statusParts({ slot: 3, name: null, count: 7 }).join(' · '), 'متزامن · الترجمة 3 · 7 مقاطع');

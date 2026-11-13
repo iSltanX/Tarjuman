@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setLocale } from '../../../../src/i18n/index.js';
+import { isolate } from '../../../../src/ui/format.js';
 import { HEALTH_MS } from '../../../../src/player/panel/index.js';
 import { earlierTip, laterTip, offsetMeaningShort, statusParts, withOriginal } from '../../../../src/player/panel/text.js';
 import { panelCss } from '../../../../src/player/panel/styles.js';
@@ -16,7 +17,7 @@ test('الدوال النقية بالإنجليزية: لا حرف عربي', (
   try {
     const out = [earlierTip(500), laterTip(1500), offsetMeaningShort(300), offsetMeaningShort(-300), offsetMeaningShort(0), withOriginal('English'), ...statusParts({ slot: 2, name: null, count: 412 }), ...statusParts({ slot: 1, name: 'My notes', count: 1 })];
     for (const t of out) assert.ok(!ARABIC.test(t), t);
-    assert.equal(statusParts({ slot: 2, name: 'Review', count: 3 }).join(' | '), 'Synced | Translation 2 “Review” | 3 segments');
+    assert.equal(statusParts({ slot: 2, name: 'Review', count: 3 }).join(' | '), `Synced | Translation 2 “${isolate('Review')}” | 3 segments`);
   } finally {
     setLocale('ar');
   }

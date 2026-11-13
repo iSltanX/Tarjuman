@@ -111,6 +111,8 @@ button.item.sentence[aria-current="true"] { box-shadow: inset -3px 0 0 var(--tj-
 .line[data-tone="info"] .glyph { color: var(--tj-p-menu-text-2); }
 .line[data-tone="error"] { color: var(--tj-p-error); }
 .line__text { unicode-bidi: plaintext; text-align: start; min-width: 0; }
+/* اسم الملف داخل السطر عنصر ذري معزول LTR: ينتقل كله إلى سطره ويلتف داخله بترتيبه، فلا تتوزع أجزاؤه على سطرين مع الجملة. */
+.iso { display: inline-block; max-width: 100%; direction: ltr; unicode-bidi: isolate; overflow-wrap: anywhere; }
 button.line { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .steps { font-weight: 700; color: var(--tj-p-menu-text); }
 .note-in { font-size: 0.93em; color: var(--tj-p-menu-text-2); }

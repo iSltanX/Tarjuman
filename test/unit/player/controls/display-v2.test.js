@@ -4,6 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { messageFor } from '../../../../src/core/errors/index.js';
+import { isolate } from '../../../../src/ui/format.js';
 import { TOAST_MS, UNDO_MS } from '../../../../src/player/controls/session.js';
 import { prepareVideo } from '../overlay/harness.js';
 import { AR_CUES, click, key, makeState, mountPage, settle, slotTrack, withSlots } from './harness.js';
@@ -23,7 +24,7 @@ test('محدد الترجمات: ترجمتان تعرضان خيارين فقط
   const b = slotButtons(page);
   assert.deepEqual(b.map((x) => [x.textContent, x.getAttribute('aria-checked'), x.getAttribute('aria-disabled')]), [['1', 'true', null], ['2', 'false', null]]);
   assert.deepEqual(b.map((x) => x.getAttribute('aria-label')), ['الترجمة 1، نشطة', 'الترجمة 2']);
-  assert.equal(b[1].getAttribute('title'), 'الترجمة 2 — نسخة ب', 'الاسم المختصر في التلميح وحده');
+  assert.equal(b[1].getAttribute('title'), `الترجمة 2 — ${isolate('نسخة ب')}`, 'الاسم المختصر في التلميح وحده (معزولًا اتجاهًا)');
   assert.equal(page.ui.menuText().includes('نسخة ب'), false, 'بلا تسميات');
   assert.ok(page.ui.menu().querySelector('[data-fid="slot:3"]') === null, 'الخانة الفارغة غير معروضة');
   click(b[0]);

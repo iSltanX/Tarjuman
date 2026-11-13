@@ -83,7 +83,8 @@ export const markedAmbiguousText = (n) => T('markedAmbiguous', { count: formatCo
 export const offsetToast = (ms) => T('offsetToast', { offset: offsetInline(ms) });
 /**
  * «نُزّل VIDEOID.en.manual.normal.srt» (رمز النجاح SVG بجانبه في القائمة): الاسم معزول LTR، فشرطة أول معرّف مثل «-xyz…» لا
- * تنتقل إلى آخره (تدقيق 7a66f91، U49). @param {string} name
+ * تنتقل إلى آخره (تدقيق 7a66f91، U49)؛ وسطر النتيجة يرسمه عنصرًا ذريًا (menus.js richText) فلا تنقلب أجزاؤه إن انكسر سطره.
+ * @param {string} name
  */
 export const downloadedLine = (name) => T('downloadedLine', { name: ltrInline(name) });
 /** «نُزّل 3 أجزاء». @param {string} parts عدد الأجزاء بكلماته */
@@ -130,7 +131,7 @@ export const slotLabel = (s) => t(s.active ? 'common.slot.labelActive' : s.fille
 /** استبدال خانة بالرفع: «استبدال الترجمة 2، نشطة» (والعنوان باسمها إن سُمّيت). @param {{ n: number, active: boolean, filled: boolean, name?: string | null }} s */
 export const replaceSlotLabel = (s) => T('replaceSlot', { label: slotLabel(s) });
 /** @param {{ n: number, active: boolean, filled: boolean, name?: string | null }} s */
-export const replaceSlotTitle = (s) => (s.name ? T('replaceSlotNamed', { label: slotLabel(s), name: s.name }) : replaceSlotLabel(s));
+export const replaceSlotTitle = (s) => (s.name ? T('replaceSlotNamed', { label: slotLabel(s), name: isolate(s.name) }) : replaceSlotLabel(s));
 
 /** «راجع بقية الملاحظات (2) في المحرّر.» @param {number} n */
 export const moreNotesLine = (n) => T('moreNotes', { n });
