@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { lookupMs } from '../../../../src/core/model/timing.js';
 import { createSyncEngine } from '../../../../src/player/sync/engine.js';
-import { createTimeline, derive, originalLookup } from '../../../../src/player/panel/model.js';
+import { createTimeline, derive } from '../../../../src/player/panel/model.js';
 import { LABELS, clockLabel, flatText, languageName, offsetMeaningShort, statusParts } from '../../../../src/player/panel/text.js';
 import { A, B, arCues, enCues, english, makeState } from './harness.js';
 
@@ -82,30 +82,7 @@ test('مقاطع فارغة: لا مرساة ولا خطأ', () => {
   assert.deepEqual([r.row, r.anchor, r.past], [-1, -1, 0]);
 });
 
-test('الأصل المتداخل: يُضم نص ما يتداخل زمنًا مع مقطع عربي بترتيب الزمن', () => {
-  const en = [cue(1, 0, 1500, 'one'), cue(2, 1500, 3000, 'two'), cue(3, 3000, 4000, 'three')];
-  const lookup = originalLookup(en);
-  assert.equal(lookup(1000, 3000), 'one two');
-  assert.equal(lookup(3500, 5500), 'three');
-  assert.equal(lookup(4000, 5000), '', 'لا تداخل عند التماس فقط');
-  assert.equal(lookup(1500, 3000), 'two', 'التماس عند الحد لا يُحتسب');
-});
-
-test('الأصل المتداخل: غير المرتب لا يفقد شيئًا، والأسطر المتعددة تُسوّى', () => {
-  const en = [cue(2, 3000, 4000, 'late'), cue(1, 0, 3000, 'early\nsecond line')];
-  assert.equal(originalLookup(en)(0, 5000), 'early second line late');
-});
-
-test('الأصل المتداخل يخدم آلاف المقاطع بلا مسح خطي', () => {
-  const en = Array.from({ length: 5000 }, (_, i) => cue(i + 1, i * 1000, i * 1000 + 900, `e${i}`));
-  const lookup = originalLookup(en);
-  const t0 = process.hrtime.bigint();
-  let hits = 0;
-  for (let i = 0; i < 5000; i++) if (lookup(i * 1000 + 100, i * 1000 + 800) === `e${i}`) hits++;
-  const ms = Number(process.hrtime.bigint() - t0) / 1e6;
-  assert.equal(hits, 5000);
-  assert.ok(ms < 500, `5000 بحثًا في ${ms.toFixed(0)}ms`);
-});
+// اختبارات الأصل المتداخل (originalLookup) انتقلت معه إلى النواة في الفكرة ١١: test/unit/align/original.test.js.
 
 // ———— نموذج العرض ————
 

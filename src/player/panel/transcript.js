@@ -9,7 +9,8 @@
 import { resolveMarks } from '../../core/model/marks.js';
 import { textDirection } from '../../ui/format.js';
 import { el, icon, setAttr } from './dom.js';
-import { createTimeline, originalLookup } from './model.js';
+import { originalLookup } from '../../core/align/original.js';
+import { createTimeline } from './model.js';
 import { LABELS, clockLabel, flatText, markedSeekLabel } from './text.js';
 
 /** صفوف تُلحق دفعات: وسائط append الكثيرة جدًا تفشل في المتصفحات. */

@@ -38,8 +38,8 @@ export function clockLabel(ms) {
   return h > 0 ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`;
 }
 
-/** @param {string} text مقطع بأسطر متعددة ← سطر واحد متصل للوحة النص. */
-export const flatText = (text) => String(text ?? '').replace(/\s*\n\s*/g, ' ').trim();
+/** مقطع بأسطر متعددة ← سطر واحد متصل للوحة النص: تعريف النواة نفسه الذي يكتب به التصدير سطر الأصل (الفكرة ١١). */
+export { flatText } from '../../core/align/original.js';
 
 const sign = (ms) => (Math.round(ms / 100) === 0 ? 0 : Math.sign(ms));
 
