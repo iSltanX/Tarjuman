@@ -82,9 +82,9 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | الدعم (Support URL، وEdge «Support contact detail»، وAMO «Support website») | `https://bysltan.com/tarjuman/support` | يعمل (200، 2026-11-04)، وهو رابط «الدعم والخصوصية» في «حول» |
 | بريد الدعم (AMO «Support email»، وبريد حساب Chrome) | `iSultanBy@gmail.com` | قرار سلطان (§٥ من `README.md`) |
 | المستودع | `https://github.com/iSltanX/Tarjuman` | عام: 200 لزائر غير مسجَّل (2026-11-07)، ورابطه في بطاقة «الحقوق» في «حول» منذ 2.0.0. ولا يطلبه حقل في المتاجر الثلاثة |
-| صفحة ترجمان في Chrome Web Store (ومنه Brave) | `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj` | منشورة: 200 لزائر غير مسجَّل (2026-11-09) باسم ترجمان والإصدار `2.1.0`، وتاريخ التحديث 9 نوفمبر 2026. وهي رابط المتجر في `README.md` وصفحة الموقع |
-| صفحة ترجمان في Microsoft Edge Add-ons | `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi` | منشورة: 200 لزائر غير مسجَّل (2026-11-09)، وواجهة المتجر تعيد اسم ترجمان والإصدار `2.1.0` والناشر BySultan. وهي رابط Edge في `README.md` وصفحة الموقع |
-| صفحة Firefox Add-ons | — | لا صفحة عامة: لوحة المطوّر تعرض الإضافة «Awaiting Review» (2026-11-09)، وواجهة AMO تعيد 401 للمعرّف `tarjuman@bysltan.com` وللرابط `tarjuman`. وما لم يُنشر «قريبًا» نصًّا بلا رابط في الموقع والوثائق |
+| صفحة ترجمان في Chrome Web Store (ومنه Brave) | `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj` | منشورة بالإصدار `2.2.0` (2026-11-13، بقول سلطان، ولم يُقس هنا). وقبلها: 200 لزائر غير مسجَّل (2026-11-09) باسم ترجمان والإصدار `2.1.0`، وتاريخ التحديث 9 نوفمبر 2026. وهي رابط المتجر في `README.md` وصفحة الموقع |
+| صفحة ترجمان في Microsoft Edge Add-ons | `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi` | منشورة بالإصدار `2.2.0` (2026-11-13، بقول سلطان، ولم يُقس هنا). وقبلها: 200 لزائر غير مسجَّل (2026-11-09)، وواجهة المتجر تعيد اسم ترجمان والإصدار `2.1.0` والناشر BySultan. وهي رابط Edge في `README.md` وصفحة الموقع |
+| صفحة Firefox Add-ons | — | لا صفحة عامة: `2.2.0` قيد المراجعة (2026-11-13، بقول سلطان). وقبلها: لوحة المطوّر تعرض الإضافة «Awaiting Review» (2026-11-09)، وواجهة AMO تعيد 401 للمعرّف `tarjuman@bysltan.com` وللرابط `tarjuman`. وما لم يُنشر «قريبًا» نصًّا بلا رابط في الموقع والوثائق |
 
 ## ٦. حقول كل متجر
 
