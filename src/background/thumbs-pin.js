@@ -1,6 +1,6 @@
 // و2 (2026-11-10): صور المحفوظات مطفأة حتى تُفعَّل (DEFAULT_PREFS.ui.thumbnails = false). التفضيلات تُكتب كاملة عند أي تغيير، فمن
 // غيّر أي تفضيل من قبل فقيمة الصور عنده صريحة ولا يمسها الافتراضي الجديد. أما من لم تُكتب تفضيلاته قط (الصور عنده ظاهرة بالافتراضي
-// القديم)، فتُثبَّت حاله صراحةً عند الترقية من إصدار أقدم من 2.2.0 وحدها (previousVersion)، فلا تنطفئ صوره بالترقية. ومن ثبّت 2.2.0
+// القديم)، فتُثبَّت حاله صراحةً عند الترقية من 1.1.0 حتى ما قبل 2.2.0 وحدها (previousVersion)، فلا تنطفئ صوره بالترقية. ومن ثبّت 2.2.0
 // أو أحدث لا يُثبَّت له شيء في أي تحديث لاحق: صوره مطفأة حتى يفعّلها (المراجعة المستقلة للمرحلة 7). في Chromium وحده: في Firefox
 // كانت مطفأة حتى الموافقة أصلًا. والتثبيت الجديد يبدأ بالافتراضي الجديد. لا يُرفع مخطط التخزين.
 // حدّان مقبولان: القراءة ثم الكتابة خطوتان (تغيير المستخدم المفتاح بينهما، في أجزاء من الثانية بعد الترقية، يُكتب فوقه)؛ والفشل
@@ -9,6 +9,12 @@ import { KEY_PREFS } from '../core/store/keys.js';
 
 /** أول إصدار صارت فيه الصور مطفأة افتراضيًا: الترقية مما قبله وحدها تُثبِّت. */
 export const THUMBS_OFF_SINCE = '2.2.0';
+
+/**
+ * أول إصدار ظهرت فيه الصور ظاهرةً افتراضيًا (أول نسخة للمتاجر): 0.2.0 (tj-v1) و1.0.0 (tj-v2) بلا صور أصلًا، فالترقية أو
+ * العودة منهما لا تُثبِّت (ع-١٦).
+ */
+export const THUMBS_ON_SINCE = '1.1.0';
 
 /** هل الإصدار أقدم من آخر؟ إصدارات أرقام مفصولة بنقاط؛ وما لا يُقرأ ⇒ null. @param {unknown} a @param {string} b */
 export function olderThan(a, b) {
@@ -40,6 +46,7 @@ export function installThumbsPin({ runtime, area, store, target }) {
   runtime.onInstalled?.addListener((details) => {
     if (details?.reason !== 'update' || target !== 'chromium') return;
     if (olderThan(details.previousVersion, THUMBS_OFF_SINCE) !== true) return;
+    if (olderThan(details.previousVersion, THUMBS_ON_SINCE) !== false) return;
     pin().catch(() => {});
   });
   return { pin };

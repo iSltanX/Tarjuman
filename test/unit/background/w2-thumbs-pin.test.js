@@ -66,8 +66,8 @@ test('من ثبّت 2.2.0 أو أحدث ولم يكتب تفضيلات: التح
   }
 });
 
-test('الترقية مما قبل 2.2.0 وحدها تثبّت؛ وإصدار سابق غائب أو لا يُقرأ ⇒ لا تثبيت', async () => {
-  for (const previousVersion of ['2.1.2', '2.1.0', '1.1.0', '0.2.0']) {
+test('الترقية من 1.1.0 إلى ما قبل 2.2.0 وحدها تثبّت؛ وإصدار سابق غائب أو لا يُقرأ ⇒ لا تثبيت', async () => {
+  for (const previousVersion of ['2.1.2', '2.1.0', '2.0.0', '1.1.0']) {
     const { store } = await upgrade({ previousVersion });
     assert.equal((await store.getPrefs()).ui.thumbnails, true, previousVersion);
   }
@@ -80,4 +80,26 @@ test('الترقية مما قبل 2.2.0 وحدها تثبّت؛ وإصدار س
   assert.equal(olderThan('2.2', '2.2.0'), false);
   assert.equal(olderThan('2.10.0', '2.2.0'), false);
   assert.equal(olderThan(null, '2.2.0'), null);
+});
+
+// ---- ع-١٦: 0.2.0 (tj-v1) و1.0.0 (tj-v2) بلا صور أصلًا، فالترقية أو العودة منهما لا تشغّلها ----
+
+test('ع-١٦: الترقية من 0.2.0 أو 1.0.0 بلا تفضيلات مكتوبة لا تشغّل الصور ولا تكتب شيئًا', async () => {
+  for (const previousVersion of ['0.2.0', '1.0.0', '1.0.9']) {
+    const { store, area } = await upgrade({ previousVersion });
+    assert.equal((await area.get([KEY_PREFS]))[KEY_PREFS], undefined, `${previousVersion}: لا كتابة`);
+    assert.equal((await store.getPrefs()).ui.thumbnails, false, previousVersion);
+  }
+});
+
+test('ع-١٦: العودة من tj-v1 بعد 2.2.0: المطفأة صراحةً تبقى مطفأة، ومن مسح بياناته في tj-v1 أو لم يكتب تفضيلات تبقى صوره مطفأة', async () => {
+  const off = { ...structuredClone(DEFAULT_PREFS), ui: { ...DEFAULT_PREFS.ui, thumbnails: false } };
+  const kept = await upgrade({ prefs: off, previousVersion: '0.2.0' });
+  assert.equal((await kept.store.getPrefs()).ui.thumbnails, false, 'tj-v1 لا يعرف مفتاح prefs فيبقى كما كتبه 2.2.0');
+  for (const previousVersion of ['0.2.0', '1.0.0']) {
+    // «مسح كل البيانات» في tj-v1 يحذف prefs، ومن لم يكتبها في 2.2.0 لا prefs عنده أصلًا: كلاهما بلا مفتاح.
+    const { store, area } = await upgrade({ previousVersion });
+    assert.equal((await area.get([KEY_PREFS]))[KEY_PREFS], undefined, `${previousVersion}: لا كتابة`);
+    assert.equal((await store.getPrefs()).ui.thumbnails, false, previousVersion);
+  }
 });
