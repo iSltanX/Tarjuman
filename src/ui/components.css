@@ -190,8 +190,9 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 }
 .tj-chip:hover { background: var(--tj-control-hover); color: var(--tj-text); }
 .tj-chip[aria-pressed="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); }
-.tj-chip__count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: rgb(0 0 0 / 8%); font: 700 11px/18px var(--tj-font-mono); color: inherit; direction: ltr; }
-.tj-chip[aria-pressed="true"] .tj-chip__count { background: rgb(255 255 255 / 18%); }
+/* العدّاد بالحبر لا بثانوي الرقاقة: 11px فوق طبقة 8% كان 4.35:1 فاتحًا (تحقق Fable للتصميم، ت-١١)؛ وفي المختارة يرث نصها. */
+.tj-chip__count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: rgb(0 0 0 / 8%); font: 700 11px/18px var(--tj-font-mono); color: var(--tj-text); direction: ltr; }
+.tj-chip[aria-pressed="true"] .tj-chip__count { background: rgb(255 255 255 / 18%); color: inherit; }
 :root[data-theme="dark"] .tj-chip[aria-pressed="true"] .tj-chip__count { background: rgb(0 0 0 / 14%); }
 
 /* ---- محدد الترجمات الموجودة: زر لكل ترجمة محفوظة، والنشطة بصبغة المحدد. الأرقام تُقرأ من اليسار كخط الأعداد ---- */

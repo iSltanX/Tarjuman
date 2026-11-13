@@ -238,3 +238,32 @@ test('تدقيق Fable (UX-16): النص الصغير داخل العنصر ال
   assert.match(read('src/ui/components.css'), /\.tj-choice__option:hover \.tj-choice__hint, \.tj-chip:hover \.tj-chip__count \{ color: var\(--tj-text\); \}/);
   assert.match(read('src/pages/settings/settings.css'), /\.st-font:hover \.st-font__tag \{ color: var\(--tj-text\); \}/);
 });
+
+/** تصريحات القاعدة التي يبدأ سطرها بهذا المحدد وحده (لا «.a:hover .b {» حين يُطلب «.b {»). */
+function ownRule(sheet, selector) {
+  const m = new RegExp(`(?:^|\\n)${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`).exec(sheet);
+  assert.ok(m, `القاعدة ${selector}`);
+  return m[1].trim();
+}
+/** لون فوقه طبقة سوداء بعتامة a (كبسولة العدّاد rgb(0 0 0 / 8%)). */
+const underBlack = (hex, a) => `#${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - a)).toString(16).padStart(2, '0')).join('')}`;
+
+test('ت-١١ (تحقق Fable للتصميم): عدّاد رقاقة التصفية ووسم «الافتراضي» في سكونهما ≥ 4.5:1 بالوضعين', () => {
+  const ui = read('src/ui/components.css');
+  const st = read('src/pages/settings/settings.css');
+  const colorOf = (body) => /(?:^|;\s*)color:\s*var\((--tj-[\w-]+)\)/.exec(body)?.[1] ?? null;
+  const count = ownRule(ui, '.tj-chip__count');
+  const tag = ownRule(st, '.st-font__tag');
+  // العدّاد كان يرث --tj-text-2 من الرقاقة (4.35:1 فاتحًا)، والوسم بالخافت (4.16:1 فاتحًا و4.38:1 داكنًا).
+  assert.equal(colorOf(count), '--tj-text', `.tj-chip__count { ${count} }`);
+  assert.equal(colorOf(tag), '--tj-text-2', `.st-font__tag { ${tag} }`);
+  assert.match(count, /background: rgb\(0 0 0 \/ 8%\)/, 'كبسولة العدّاد طبقة سوداء 8% فوق خلفية الرقاقة');
+  for (const mode of ['light', 'dark']) {
+    const r1 = ratio(value(mode, colorOf(count)), underBlack(value(mode, '--tj-control'), 0.08));
+    assert.ok(r1 >= 4.5, `${mode}: العدّاد ${r1.toFixed(2)} < 4.5`);
+    const r2 = ratio(value(mode, colorOf(tag)), value(mode, '--tj-control'));
+    assert.ok(r2 >= 4.5, `${mode}: الوسم ${r2.toFixed(2)} < 4.5`);
+  }
+  // في الرقاقة المختارة يرث العدّاد نص المختار (العاج على الصنوبر)، لا حبر الصفحة.
+  assert.match(ownRule(ui, '.tj-chip[aria-pressed="true"] .tj-chip__count'), /color: inherit/);
+});
