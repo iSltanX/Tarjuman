@@ -63,14 +63,22 @@ const wrapped = (line) => EMPHASIS_RE.test(headerForm(line));
 const timeForm = (form) => (/^[-\u2212]?\d+:\d/.test(form)
   ? form.replace(TIME_COMMA_RE, ',').replace(ARROW_RE, (m) => (m.trim() === '-->' ? m : ' --> '))
   : form);
-/**
- * حدّ لنص المقطع أينما وقع: سطر فارغ أو سياج أو عنوان (U38). والفارغ بتعريف isBlankText بعد التنقية: سطر فيه محرف خفي باقٍ
- * وحده (RLM أو LRM أو ZWSP، تكتبه نماذج فاصلًا) فارغ لا سطر يلتصق بنص المقطع (تحقق Gemini، ع-٧)؛ أما ما فرغ بالتنقية وحدها
- * (تجاوز اتجاه أو وسوم) فلا يقطع المقطع ويُزال بملاحظته كما كان. @param {string} line
- */
+/** حدّ لنص المقطع أينما وقع: سطر فارغ أو سياج أو عنوان (U38). @param {string} line */
 const textBoundary = (line) => {
   const t = line.trim();
-  return t === '' || FENCE_RE.test(t) || HEADING_RE.test(t) || (isBlankText(t) && sanitizeText(t).text.trim() !== '');
+  return t === '' || FENCE_RE.test(t) || HEADING_RE.test(t);
+};
+
+/**
+ * سطر فيه محرف خفي باقٍ بعد التنقية وحده (RLM أو LRM أو ZWSP أو ZWNJ، تكتبه نماذج فاصلًا؛ تحقق Gemini، ع-٧). يُسقط من نص المقطع
+ * أينما وقع، وليس حدًّا يقطعه (تحقق الجولة الثانية، ن-٣): بعد آخر سطر مرئي فاصل بين مقطعين يُسقط بلا ملاحظة، وقبل سطر مرئي
+ * (وسط النص أو أوله) يُسقط بملاحظة IM_NOTE_CONTROL ويبقى النص كله للمقطع كما في 2.2.0؛ فلا يُرفض ملف كان يُقبل، ولا يصير نص
+ * آخر مقطع «شرحًا بعد الملف» فيُحفظ فارغًا. أما ما فرغ بالتنقية وحدها (تجاوز اتجاه أو وسوم) فيُزال بملاحظته كما كان.
+ * @param {string} line
+ */
+const hiddenOnly = (line) => {
+  const t = line.trim();
+  return t !== '' && isBlankText(t) && sanitizeText(t).text.trim() !== '';
 };
 
 const excerpt = (s) => (s.length > EXCERPT_CHARS ? `${s.slice(0, EXCERPT_CHARS - 1)}…` : s);
@@ -79,7 +87,7 @@ const cleanLines = (text) => text.split('\n').map((l) => l.trim()).filter(Boolea
 /**
  * نص مقطع كما يقرؤه هذا المحلّل من حيث المحارف: بلا محارف تحكم ولا تجاوز اتجاه، وبلا مسافات أطراف الأسطر، وبلا سطر صار
  * فارغًا بالتجريد. يكتب به التصدير العربي فلا يحمل الملف U+202E الذي يقلب العرض في مشغّلات أخرى (تدقيق 7a66f91، U99).
- * وبلا سطر بقي فيه محرف خفي وحده (RLM أو ZWSP…): يقرؤه الاستيراد فاصلًا (ع-٧)، وترجمة حُفظت قبل ذلك قد تحمله وسط نص مقطع.
+ * وبلا سطر بقي فيه محرف خفي وحده (RLM أو ZWSP…): يُسقطه الاستيراد من نص المقطع (ع-٧، ن-٣)، وترجمة حُفظت قبل ذلك قد تحمله وسط نص مقطع.
  * والسطر الفارغ الخالص في نص لم يُجرَّد منه شيء يبقى، فيرفضه فحص الفراغ برقم مقطعه كما كان.
  * @param {string} text @returns {{ text: string, stripped: boolean }}
  */
@@ -191,8 +199,12 @@ export function parseSrtLenient(input) {
     // النص حتى أول حدّ: سطر فارغ أو سياج أو عنوان، في أي مقطع (كتلتان مسيّجتان متلاصقتان، أو عنوان ملاصق؛ U38). ما بعده:
     // الأسوار والأسطر الفارغة تُتجاوز، وغيرها نص ضائع برقم سطره، أو ذيل الشرح في آخر مقطع.
     const stop = body.findIndex(textBoundary);
-    const textLines = stop === -1 ? body : body.slice(0, stop);
+    const raw = stop === -1 ? body : body.slice(0, stop);
     const rest = stop === -1 ? [] : body.slice(stop);
+    // السطر الخفي وحده يُسقط، وقبل آخر سطر مرئي بملاحظة (ن-٣).
+    const lastVisible = raw.findLastIndex((l) => !isBlankText(l.trim()));
+    const hiddenInside = raw.slice(0, Math.max(lastVisible, 0)).some(hiddenOnly);
+    const textLines = raw.filter((l) => !hiddenOnly(l));
     if (last) sortOut(rest, chatterAfter, h.time + 1 + stop, true);
     else {
       rest.forEach((l, j) => {
@@ -222,7 +234,7 @@ export function parseSrtLenient(input) {
     if (noControls !== t) {
       controlled++;
       t = cleanLines(noControls);
-    }
+    } else if (hiddenInside) controlled++;
     if (LITERAL_TAG_RE.test(t)) literalHtml++;
     if (t.length > LIMITS.maxTextChars) throw new TjError('IM_CUE_TOO_LONG', { params: { line: h.num + 1, max: LIMITS.maxTextChars } });
 

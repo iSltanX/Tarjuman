@@ -263,9 +263,34 @@ test('تحقق Gemini (ع-٧): سطر فيه محرف خفي وحده (RLM أو 
       const spaced = parseSrtLenient(`1\n${T1}\nمرحبا\n${sep}\n\n2\n${T2}\nعالم\n`);
       assert.deepEqual(spaced.cues.map((c) => c.text), ['مرحبا', 'عالم'], `${name} ثم سطر فارغ`);
     }
-    // ما بعده في وسط الملف نص خارج المقطع كما بعد السطر الفارغ، برقم سطره.
-    const stray = fail(`1\n${T1}\nمرحبا\n${mark}\nبعد الفاصل\n\n2\n${T2}\nعالم\n`);
-    assert.deepEqual([stray.code, stray.params.line], ['IM_STRAY_TEXT', 5], name);
+  }
+});
+
+test('تحقق الجولة الثانية (ن-٣): السطر الخفي وحده فاصل بين مقطعين فقط؛ داخل المقطع يُسقط بملاحظة، فلا يُرفض ملف كان يُقبل ولا يُفرَّغ مقطع', () => {
+  const T2 = '00:00:04,000 --> 00:00:05,000';
+  const control = messageFor('IM_NOTE_CONTROL', { count: 1 });
+  // ZWNJ وZWJ مع RLM وLRM وZWSP: كلها تبقى بعد التنقية فيبقى السطر «خفيًا وحده».
+  for (const code of [0x200f, 0x200e, 0x200b, 0x200c, 0x200d]) {
+    const mark = String.fromCharCode(code);
+    const name = `U+${code.toString(16).toUpperCase()}`;
+    const parse = (text) => {
+      const r = parseSrtLenient(text);
+      return { texts: r.cues.map((c) => c.text), notes: r.notes };
+    };
+    // ١. وسط نص مقطع غير أخير: كان 2.2.0 يضمه، وع-٧ يرفض الملف IM_STRAY_TEXT. يبقى النص كله ويُسقط السطر بملاحظة.
+    assert.deepEqual(parse(`1\n${T1}\nمرحبا\n${mark}\nتتمة\n\n2\n${T2}\nعالم\n`), { texts: ['مرحبا\nتتمة', 'عالم'], notes: [control] }, `${name}: وسط مقطع`);
+    // ٢. أول نص مقطع غير أخير (بعد سطر الزمن): كان يُرفض كذلك.
+    assert.deepEqual(parse(`1\n${T1}\n${mark}\nمرحبا\n\n2\n${T2}\nعالم\n`), { texts: ['مرحبا', 'عالم'], notes: [control] }, `${name}: أول مقطع`);
+    // ٣. أول نص آخر مقطع: كان يُحفظ فارغًا ونصه «شرح بعد الملف».
+    assert.deepEqual(parse(`1\n${T1}\nأهلا\n\n2\n${T2}\n${mark}\nعالم\n`), { texts: ['أهلا', 'عالم'], notes: [control] }, `${name}: أول آخر مقطع`);
+    // ٤. وسط آخر مقطع ثم نص: كان يُحذف ما بعده «شرحًا»؛ يبقى نصًا منه كما في 2.2.0.
+    assert.deepEqual(parse(`1\n${T1}\nمرحبا\n${mark}\nتتمة الجملة\n`), { texts: ['مرحبا\nتتمة الجملة'], notes: [control] }, `${name}: وسط آخر مقطع`);
+    // ٥. بعد آخر سطر في آخر مقطع: فاصل يُسقط بلا ملاحظة كما في ع-٧، والمقطع بنصه.
+    assert.deepEqual(parse(`1\n${T1}\nمرحبا\n${mark}\n`), { texts: ['مرحبا'], notes: [] }, `${name}: بعد آخر مقطع`);
+    // وما بعد سطر فارغ في آخر الملف شرح كما كان، والسطر الخفي قبله فاصل.
+    assert.deepEqual(parse(`1\n${T1}\nمرحبا\n${mark}\n\nشرح بعد الملف\n`).texts, ['مرحبا'], `${name}: شرح بعد سطر فارغ`);
+    // ومقطع لا نص له إلا السطر الخفي فارغ كما كان (لا نص فيه يُفرَّغ)، ويعدّه المقارِن «بلا نص».
+    assert.deepEqual(parse(`1\n${T1}\n${mark}\n\n2\n${T2}\nعالم\n`).texts, ['', 'عالم'], `${name}: مقطع خفي كله`);
   }
 });
 
