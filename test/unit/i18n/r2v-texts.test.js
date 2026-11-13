@@ -77,3 +77,9 @@ test('ح-4 (تحقق مستقل): فعل «علّم للمراجعة» بلفظ 
   assert.equal(label, 'Review later');
   for (const k of ['player.controls.markReview', 'player.panel.markRow', 'player.panel.markRowTip']) assert.doesNotMatch(t(k), /Mark for review/, k);
 });
+
+test('§١٠ (٧): وصف الشارة المطوية يُقرأ وحده، فلا يبدأ بواو، ولا «فتح» واللوحة قد تكون مفتوحة', async () => {
+  const { LABELS } = await import('../../../src/player/controls/text.js');
+  assert.equal(LABELS.badgeFolded, 'فيها التقديم والتأخير');
+  assert.equal(LABELS.badgeFoldedPanel, 'فيها التقديم والتأخير والنص المتزامن');
+});

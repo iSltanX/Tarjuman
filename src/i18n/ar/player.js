@@ -151,8 +151,8 @@ export default Object.freeze({
     badgeLater: 'الإزاحة: {offset} ث (تظهر الترجمة لاحقًا). اضغط للخيارات',
     badgeEarlier: 'الإزاحة: {offset} ث (تظهر الترجمة أبكر). اضغط للخيارات',
     // ت-١: الشريط المطوي، − و+ في قائمة الشارة (يلحق تلميحها ووصفها).
-    badgeFolded: 'وفيها التقديم والتأخير',
-    badgeFoldedPanel: 'وفيها التقديم والتأخير وفتح النص المتزامن',
+    badgeFolded: 'فيها التقديم والتأخير',
+    badgeFoldedPanel: 'فيها التقديم والتأخير والنص المتزامن',
     nudgeZero: '{offset} ث · في توقيتها المحفوظ',
     nudgeLater: '{offset} ث · تظهر لاحقًا',
     nudgeEarlier: '{offset} ث · تظهر أبكر',
