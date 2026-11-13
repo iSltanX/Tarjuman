@@ -466,7 +466,8 @@ test('«البيانات» — فشل جزئي: التقرير يذكر ما ت�
   const sec = section(m, 'النسخ الاحتياطي');
   assert.ok(textOf(sec).includes(messageFor('BK_RESTORE_PARTIAL')));
   assert.ok(textOf(sec).includes('أُضيف: 2 · بقي كما هو: 0 · استُبدل: 0 · تعذّر: 1'));
-  assert.ok(textOf(sec).includes(`محاضرة عن النماذج: ${messageFor('ST_WRITE_FAILED')}`));
+  // العنوان معزول اتجاهًا (FSI…PDI) أمام سبب التعذّر (الجولة الرابعة).
+  assert.ok(textOf(sec).includes(`${String.fromCodePoint(0x2068)}محاضرة عن النماذج${String.fromCodePoint(0x2069)}: ${messageFor('ST_WRITE_FAILED')}`));
   broken = false;
   calls.length = 0;
   buttonNamed(sec, 'أعد المحاولة').click();

@@ -10,7 +10,7 @@ import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { getLocale, joinList, t, texts } from '../../i18n/index.js';
 import { alertBox, button, el, statusPill } from '../../ui/components.js';
 import { holdPage } from '../../ui/page-hold.js';
-import { COUNT_FORMS, formatCount, ltrInline, textDirection } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, isolate, ltrInline, textDirection } from '../../ui/format.js';
 
 let seq = 0;
 const PREVIEW_FRESH_MAX = 100;
@@ -129,7 +129,8 @@ export function dataControl(env) {
   function saveOutcome(host, saved, built) {
     const kids = [];
     if (saved.ok) {
-      kids.push(alertBox({ tone: 'success', text: `${messageFor('BK_CREATED', { videos: formatCount(built.counts.videos, COUNT_FORMS.video) })} ${built.name}`, doc }));
+      // اسم الملف معزول LTR، والتنبيه يرسمه عنصرًا ذريًا (alertBox ← ltrNodes): «tarjuman-backup-…» لا تنقلب أجزاؤه إن انكسر سطره.
+      kids.push(alertBox({ tone: 'success', text: `${messageFor('BK_CREATED', { videos: formatCount(built.counts.videos, COUNT_FORMS.video) })} ${ltrInline(built.name)}`, doc }));
       if (saved.mode === 'blob') kids.push(alertBox({ tone: 'info', text: messageFor('SV_FALLBACK_BLOB'), doc }));
       if (saved.pending) kids.push(alertBox({ tone: 'info', text: messageFor('SV_PENDING'), doc }));
     } else {
@@ -321,7 +322,12 @@ export function dataControl(env) {
     if (report.changed?.length) lines.push(restoreChangedLine(report.changed.length));
     if (report.thumbnails === 'off') lines.push(t('settings.data.thumbsKeptOff'));
     if (report.thumbnails === 'failed') lines.push(t('settings.data.thumbsKeepFailed'));
-    for (const f of report.failed.slice(0, 20)) lines.push(`${titles.get(f.videoId) ?? f.videoId}: ${f.message}`);
+    // العنوان نص حر يُعزل اتجاهًا (FSI…PDI)، والمعرّف بلا عنوان (titleOf يعيده مكانه) LTR (idText): «-xyz…: تعذّر…» لا تنتقل
+    // شرطته إلى آخره.
+    for (const f of report.failed.slice(0, 20)) {
+      const title = titles.get(f.videoId);
+      lines.push(`${title && title !== f.videoId ? isolate(title) : idText(f.videoId)}: ${f.message}`);
+    }
     if (report.remaining.length) lines.push(t('settings.data.remaining', { count: formatCount(report.remaining.length, COUNT_FORMS.video) }));
     const again = report.failed.length || report.remaining.length || report.settings === 'failed' || report.thumbnails === 'failed'
       ? button({ label: t('settings.data.retry'), icon: 'restore', size: 'sm', variant: 'secondary', doc, onClick: () => { retry(); } })
