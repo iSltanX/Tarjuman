@@ -159,7 +159,7 @@ export function createLanguages({ store, doc, marks, row, rowWithHint, note, con
     if (busy || !chosen || !found.total) return;
     const name = describeLang(chosen, getLocale())?.name ?? chosen;
     const ok = await confirm({
-      title: t('settings.langs.assignTitle', { name, count: formatCount(found.total, translationForms()) }),
+      title: t('settings.langs.assignTitle', { name, count: formatCount(found.total, translationForms(), { case: 'gen' }) }),
       body: LANGS_TEXT.unknownNote, confirmLabel: LANGS_TEXT.apply, doc,
     });
     if (!ok) return;

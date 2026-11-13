@@ -107,7 +107,7 @@ test('الترجمات بلا لغة: عددها، وتعيين لغتها دف�
   apply.click();
   await settle(40);
   assert.equal(m.confirms.length, 1);
-  assert.match(m.confirms[0].title, /^تعيين العربية لـترجمتان؟$/);
+  assert.match(m.confirms[0].title, /^تعيين العربية لـترجمتين؟$/, 'ع-٢٦: المثنى مجرور بعد اللام');
   const after = await m.store.getBundle(VIDEO_ID);
   assert.equal(after.record.arabic.lang, 'ar');
   assert.equal(after.slots[1].track.lang, 'ar');

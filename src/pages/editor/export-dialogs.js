@@ -4,7 +4,9 @@
 import { isTjError, messageFor } from '../../core/errors/index.js';
 import { t } from '../../i18n/index.js';
 import { alertBox, el, ltr } from '../../ui/components.js';
+import { formatCount } from '../../ui/format.js';
 import { openDialog, setDisabled } from './dialogs.js';
+import { COUNT } from './text.js';
 
 const check = (doc, label, checked, onChange, { disabled = false, title } = {}) => {
   const box = el('input', { attrs: { type: 'checkbox', ...(checked ? { checked: '' } : {}) }, on: { change: () => onChange(box.checked) }, doc });
@@ -82,7 +84,7 @@ export function openReportDialog({ doc, build }) {
     ],
     build: () => {
       const r = build(o);
-      return { file: r.count ? r.file : null, why: r.count ? null : t('editor.report.empty'), note: r.count ? t('editor.report.count', { n: r.count }) : '' };
+      return { file: r.count ? r.file : null, why: r.count ? null : t('editor.report.empty'), note: r.count ? t('editor.report.count', { count: formatCount(r.count, COUNT.item) }) : '' };
     },
   });
 }

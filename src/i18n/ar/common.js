@@ -6,13 +6,14 @@ export default Object.freeze({
   pairNoFrom: '؟ ← {to}',
   languageUnknown: 'لغة غير محددة',
   cancel: 'إلغاء',
-  // صيغ العدّ بصيغة formatCount: one وtwo كلمتان كاملتان، وfew وmany وsingle تتبع العدد.
+  // صيغ العدّ بصيغة formatCount: one وtwo كلمتان كاملتان، وfew وmany وsingle تتبع العدد. وtwoOblique المثنى منصوبًا أو مجرورًا،
+  // وoneAcc المفرد منصوبًا، لموضعي case: 'gen' و'acc' (ع-٢٦)؛ وما لا يختلف رسمه منصوبًا («لغة واحدة») لا صيغة له.
   count: {
-    cue: { one: 'مقطع واحد', two: 'مقطعان', few: 'مقاطع', many: 'مقطعًا', single: 'مقطع' },
-    video: { one: 'فيديو واحد', two: 'فيديوهان', few: 'فيديوهات', many: 'فيديو', single: 'فيديو' },
-    change: { one: 'تغيير واحد', two: 'تغييران', few: 'تغييرات', many: 'تغييرًا', single: 'تغيير' },
-    language: { one: 'لغة واحدة', two: 'لغتان', few: 'لغات', many: 'لغة', single: 'لغة' },
-    file: { one: 'ملف واحد', two: 'ملفان', few: 'ملفات', many: 'ملفًا', single: 'ملف' },
+    cue: { one: 'مقطع واحد', oneAcc: 'مقطعًا واحدًا', two: 'مقطعان', twoOblique: 'مقطعين', few: 'مقاطع', many: 'مقطعًا', single: 'مقطع' },
+    video: { one: 'فيديو واحد', oneAcc: 'فيديو واحدًا', two: 'فيديوهان', twoOblique: 'فيديوهين', few: 'فيديوهات', many: 'فيديو', single: 'فيديو' },
+    change: { one: 'تغيير واحد', oneAcc: 'تغييرًا واحدًا', two: 'تغييران', twoOblique: 'تغييرين', few: 'تغييرات', many: 'تغييرًا', single: 'تغيير' },
+    language: { one: 'لغة واحدة', two: 'لغتان', twoOblique: 'لغتين', few: 'لغات', many: 'لغة', single: 'لغة' },
+    file: { one: 'ملف واحد', oneAcc: 'ملفًا واحدًا', two: 'ملفان', twoOblique: 'ملفين', few: 'ملفات', many: 'ملفًا', single: 'ملف' },
   },
   bytes: { zero: '0 ك.ب', kb: '{n} ك.ب', mb: '{n} م.ب', gb: '{n} غ.ب' },
   nav: {

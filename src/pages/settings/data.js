@@ -141,7 +141,7 @@ export function dataControl(env) {
     // نسخة جزئية بعينها (U94، Q29): ما استُبعد من كل فيديو، والأصل التالف باقٍ.
     if (built.partial?.length) {
       kids.push(alertBox({
-        tone: 'warning', title: messageFor('BK_CREATED_PARTIAL', { videos: formatCount(built.partial.length, COUNT_FORMS.video) }),
+        tone: 'warning', title: messageFor('BK_CREATED_PARTIAL', { videos: formatCount(built.partial.length, COUNT_FORMS.video, { case: 'gen' }) }),
         text: built.partial.slice(0, 20).map((x) => t('settings.data.excluded', { id: idText(x.videoId), parts: joinList(x.dropped.map((k) => (k in PART_NAMES ? PART_NAMES[k] : k))) })).join('\n'),
         doc,
       }));

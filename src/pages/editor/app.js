@@ -292,7 +292,7 @@ export async function mountEditor(app, {
         renderToolbar();
         return { ok: false, count: 0 };
       }
-      setResult(r.count ? 'success' : 'info', () => (r.count ? t('editor.search.replaced', { count: formatCount(r.count, COUNT_FORMS.cue) }) : t('editor.search.noChange')));
+      setResult(r.count ? 'success' : 'info', () => (r.count ? t('editor.search.replaced', { count: formatCount(r.count, COUNT_FORMS.cue, { case: 'gen' }) }) : t('editor.search.noChange')));
       renderToolbar();
       return r;
     },
@@ -933,7 +933,7 @@ export async function mountEditor(app, {
     rankRefs();
     rebuildList();
     const kept = plan.kept.length;
-    setResult('success', () => t('editor.rescue.done', { count: formatCount(kept, COUNT_FORMS.change) }));
+    setResult('success', () => t('editor.rescue.done', { count: formatCount(kept, COUNT_FORMS.change, { case: 'gen' }) }));
     renderAll();
   }
 
@@ -1150,7 +1150,7 @@ export async function mountEditor(app, {
     const { inserted: added, renumbered } = r;
     setResult('success', () => {
       const inserted = added ? ` (${t('editor.complete.inserted', { n: added })}${renumbered ? t('editor.complete.renumbered') : ''})` : '';
-      return t('editor.complete.applied', { count: formatCount(only.length, COUNT_FORMS.cue), inserted });
+      return t('editor.complete.applied', { count: formatCount(only.length, COUNT_FORMS.cue, { case: 'gen' }), inserted });
     });
     computeParts();
     renderToolbar();
@@ -1888,11 +1888,11 @@ export async function mountEditor(app, {
     const v = await openDialog({
       doc, size: 'lg', title: t('editor.cmp.restoreTitle'), content: table, focus: 'cancel',
       body: t('editor.restoreTiming.body'),
-      actions: [{ label: t('editor.complete.applyAll', { count: formatCount(pv.changes.length, COUNT_FORMS.cue) }), value: 'apply', variant: 'primary' }, { label: t('common.cancel'), value: 'cancel' }],
+      actions: [{ label: t('editor.complete.applyAll', { count: formatCount(pv.changes.length, COUNT_FORMS.cue, { case: 'gen' }) }), value: 'apply', variant: 'primary' }, { label: t('common.cancel'), value: 'cancel' }],
     });
     if (v !== 'apply') return;
     const r = S.session.restoreTiming(S.fp);
-    if (r.ok) setResult('success', () => t('editor.restoreTiming.done', { count: formatCount(r.count, COUNT_FORMS.cue) }));
+    if (r.ok) setResult('success', () => t('editor.restoreTiming.done', { count: formatCount(r.count, COUNT_FORMS.cue, { case: 'gen' }) }));
     else setResult('danger', () => messageFor(r.code));
     scheduleChrome();
   }

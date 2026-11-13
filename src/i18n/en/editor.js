@@ -11,6 +11,8 @@ export default Object.freeze({
     markOther: { one: '1 other mark', other: 'other marks' },
     field: { one: '1 invalid time field', other: 'invalid time fields' },
     part: { one: '1 part', other: 'parts' },
+    item: { one: '1 item', other: 'items' },
+    line: { one: '1 line', other: 'lines' },
   },
   // The time-range arrow follows reading direction: start to end.
   range: '{from} → {to}',
@@ -144,7 +146,7 @@ export default Object.freeze({
   report: {
     title: 'Review report', intro: 'A list of the segments that need attention: their issues and timings with links into the video, and your marks. The text isn’t summarized or changed.',
     content: 'Report content', auto: 'Automatic check (timing, comparison, reading speed)', marks: 'My marks (“To revisit” and “Reviewed”)',
-    text: 'Translation and original text excerpt for each item', empty: 'No issues or marks with these options.', count: 'Items in the report: {n}.',
+    text: 'Translation and original text excerpt for each item', empty: 'No issues or marks with these options.', count: '{count} in the report.',
   },
   study: {
     title: 'Study text', intro: 'The translation as is, in paragraphs for reading, each with a link to its time in the video. No summarizing and no changes to the text.',
@@ -265,7 +267,7 @@ export default Object.freeze({
     done: 'Drift corrected across the whole file ({count}). Save to keep it; undo reverts it.', unchanged: 'The timing already matched both points; nothing changed.',
   },
   structure: {
-    merge: ({ a, b, range, lines }) => `Segment ${a} will merge with ${b}: ${range}, with the two texts on separate lines (${lines === 1 ? '1 line' : `${lines} lines`}). Undo restores them.`,
+    merge: ({ a, b, range, lines }) => `Segment ${a} will merge with ${b}: ${range}, with the two texts on separate lines (${lines}). Undo restores them.`,
     split: 'Segment {n} will split at the cursor: “{head}” | “{tail}”, with timing divided in proportion to the text. Undo restores it.',
     putCaret: 'Place the cursor in segment {n}’s text where you want to split it, then press “Split”.',
     putCaretAgain: 'Place the cursor in segment {n}’s text where you want to split it, then press “Split” again.',

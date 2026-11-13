@@ -63,13 +63,17 @@ export function formatTimecode(ms) {
 
 /**
  * العدّ بصيغ لغة الواجهة: «مقطع واحد»، «مقطعان»، «3 مقاطع»، «11 مقطعًا»، «100 مقطع»؛ وبالإنجليزية «1 segment» و«3 segments».
+ * وحالة الإعراب لموضع العدد في الجملة (ع-٢٦): بعد حرف جر أو مضافًا إليه case: 'gen' فالمثنى مجرور («في مقطعين»، «توقيت مقطعين»)،
+ * ومفعولًا به case: 'acc' فالمثنى منصوب والمفرد كذلك («يضيف مقطعين»، «يضيف مقطعًا واحدًا»). الصيغتان twoOblique وoneAcc اختياريتان:
+ * بدونهما تُستعمل two وone، والإنجليزية لا حالة فيها فلا أثر للخيار.
  * @param {number} n
- * @param {{ one: string, two?: string, few?: string, many?: string, single?: string, other?: string }} forms مثل COUNT_FORMS.cue
+ * @param {{ one: string, oneAcc?: string, two?: string, twoOblique?: string, few?: string, many?: string, single?: string, other?: string }} forms مثل COUNT_FORMS.cue
+ * @param {{ case?: 'gen' | 'acc' }} [o] بلا case: مرفوع (فاعل أو مبتدأ أو خبر، أو العدد وحده في شارة أو قائمة)
  */
-export function formatCount(n, forms) {
+export function formatCount(n, forms, o = {}) {
   if (forms.other !== undefined) return n === 1 ? forms.one : `${n} ${forms.other}`;
-  if (n === 1) return forms.one;
-  if (n === 2) return forms.two;
+  if (n === 1) return (o.case === 'acc' && forms.oneAcc) || forms.one;
+  if (n === 2) return ((o.case === 'gen' || o.case === 'acc') && forms.twoOblique) || forms.two;
   const mod = n % 100;
   if (mod >= 3 && mod <= 10) return `${n} ${forms.few}`;
   if (mod >= 11) return `${n} ${forms.many}`;

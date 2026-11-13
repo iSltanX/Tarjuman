@@ -135,7 +135,7 @@ export async function openDriftDialog({ doc, cues, activeIndex }) {
       summary ? el('p', {
         className: 'tj-body-sm',
         text: summary.changed
-          ? t('editor.drift.summary', { count: formatCount(summary.changed, COUNT_FORMS.cue), total: cues.length, max: ltrInline(`${summary.max >= 0 ? '+' : '−'}${seconds(summary.max)}`), n: summary.maxN })
+          ? t('editor.drift.summary', { count: formatCount(summary.changed, COUNT_FORMS.cue, { case: 'gen' }), total: cues.length, max: ltrInline(`${summary.max >= 0 ? '+' : '−'}${seconds(summary.max)}`), n: summary.maxN })
           : t('editor.drift.noChange'),
         doc,
       }) : null,

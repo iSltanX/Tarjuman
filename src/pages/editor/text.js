@@ -166,7 +166,7 @@ export const markTitle = (m) => `${MARK_LABEL[m.kind]}${m.state === 'moved' ? t(
 // ---- البنية والقفز ----
 /** معاينة الدمج قبل التطبيق. @param {{ n: number }} a @param {{ n: number }} b @param {{ startMs: number, endMs: number, text: string }} merged @param {(ms: number) => string} tc */
 export const mergePreview = (a, b, merged, tc) => t('editor.structure.merge', {
-  a: a.n, b: b.n, range: t('editor.range', { from: tc(merged.startMs), to: tc(merged.endMs) }), lines: merged.text.split('\n').length,
+  a: a.n, b: b.n, range: t('editor.range', { from: tc(merged.startMs), to: tc(merged.endMs) }), lines: formatCount(merged.text.split('\n').length, COUNT.line),
 });
 
 /** معاينة الشطر عند المؤشر. @param {number} n @param {string} head @param {string} tail */
@@ -221,7 +221,7 @@ export function comparisonLines(r) {
   if (r.numbering === 'different') lines.push({ tone: 'warning', text: t('editor.cmp.numbering') });
   if (r.missing.length) lines.push({ tone: 'warning', text: t('editor.cmp.missing', { n: r.missing.length, count: formatCount(r.missing.length, COUNT_FORMS.cue), list: numberList(r.missing) }) });
   if (r.extra.length) lines.push({ tone: 'warning', text: t('editor.cmp.extra', { list: numberList(r.extra) }) });
-  if (r.drift.length) lines.push({ tone: 'warning', text: t('editor.cmp.drift', { count: formatCount(r.drift.length, COUNT_FORMS.cue) }) });
+  if (r.drift.length) lines.push({ tone: 'warning', text: t('editor.cmp.drift', { count: formatCount(r.drift.length, COUNT_FORMS.cue, { case: 'gen' }) }) });
   if (r.empty.length) lines.push({ tone: 'warning', text: t('editor.cmp.empty', { list: numberList(r.empty) }) });
   if (r.noArabic.length) lines.push({ tone: 'warning', text: t('editor.cmp.untranslated', { list: numberList(r.noArabic) }) });
   return lines;

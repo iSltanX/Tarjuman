@@ -235,7 +235,7 @@ export default Object.freeze({
     onlyNew: 'Saved as a new translation.',
     completeOne: 'Complete translation {n}',
     completeAria: 'Complete translation {n} with this file’s segments',
-    completeLine: 'This file continues translation {n}: it adds {adds} in their places.',
+    completeLine: 'This file continues translation {n}: it adds {adds} in place.',
     completeDone: 'The translation is complete after it.',
     completeRenumbered: 'Segments are renumbered from 1 so no number repeats.',
     completeRemaining: '{count} will still be missing or untranslated.',

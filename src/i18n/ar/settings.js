@@ -178,7 +178,7 @@ export default Object.freeze({
     unknownNote: 'تُضاف اللغة وحدها دون أن يتغير نص الترجمة أو توقيتها أو تاريخ تعديلها، وتُتخطى الترجمة التي لا توافق حروفها اللغة المختارة. ولتغيير لغة ترجمة واحدة استعمل قائمة «الترجمة» في المشغّل.',
     defaultNote: 'اللغتان وخيار التذكّر على قيمها الافتراضية بالفعل.',
     assignTitle: 'تعيين {name} لـ{count}؟',
-    translationCount: { one: 'ترجمة واحدة', two: 'ترجمتان', few: 'ترجمات', many: 'ترجمة', single: 'ترجمة' },
+    translationCount: { one: 'ترجمة واحدة', two: 'ترجمتان', twoOblique: 'ترجمتين', few: 'ترجمات', many: 'ترجمة', single: 'ترجمة' },
     line: '{count} في {videos}',
     videosIn: ({ n, formatted }) => (n === 1 ? 'فيديو واحد' : n === 2 ? 'فيديوهين' : formatted),
   },

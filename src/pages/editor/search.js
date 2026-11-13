@@ -289,7 +289,7 @@ export function createSearch({ doc, cues, english, readOnly, active, onChange, r
     const applyLabel = () => t('editor.search.applyN', { n: picked.size, count: formatCount(picked.size, COUNT.match) });
     const sync = () => {
       const cuesTouched = new Set([...picked].map((k) => matches[k].index)).size;
-      total.textContent = t('editor.search.picked', { matches: formatCount(picked.size, COUNT.match), cues: formatCount(cuesTouched, COUNT_FORMS.cue) });
+      total.textContent = t('editor.search.picked', { matches: formatCount(picked.size, COUNT.match), cues: formatCount(cuesTouched, COUNT_FORMS.cue, { case: 'gen' }) });
       if (applyBtn) {
         applyBtn.firstChild.textContent = applyLabel();
         setDisabled(applyBtn, picked.size ? null : t('editor.search.pickOne'));

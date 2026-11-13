@@ -49,7 +49,7 @@ export default Object.freeze({
     pastedName: 'Pasted text',
     completeOption: 'Complete {n}',
     completeOptionLabel: 'Complete translation {n} with this file’s segments',
-    completeLine: 'Continues translation {n}: adds {adds} in their places.',
+    completeLine: 'Continues translation {n}: adds {adds} in place.',
     completeDone: 'The translation is complete after it.',
     completeRenumbered: 'Segments are renumbered from 1 so no number repeats.',
     completeRemaining: '{count} will still be missing or untranslated.',
