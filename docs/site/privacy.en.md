@@ -28,7 +28,7 @@ The following is stored in the extension’s local storage within this browser�
 - **A fingerprint of each file you export:** Its segment numbers and times, a digital fingerprint of its text, and the file’s name and date, which Tarjuman uses to compare your translation when you upload it. The fingerprint doesn’t contain the text itself.
 - **Your translations:** Up to three per video. Each has the name of the file you uploaded, its short name if you gave it one, its text after the cleanup listed in the upload report (formatting tags and hidden characters are removed, and spaces at line edges are trimmed), its language if you set it or it came in the file name, your edits to it, the result of comparing it with the original, the offset, and the display mode. Alongside them is one previous version of what you last replaced.
 - **Review marks and last position:** The segment number, its time, and a short fingerprint of its text, without the text itself.
-- **Your settings:** The timing step, display mode, translation appearance, export options, reading speed limit, the terms you write in the glossary, where files are saved and the subfolder name if you named one, and interface switches.
+- **Your settings:** The timing step, display mode, translation appearance, export options, reading speed limit, the terms you write in the glossary, along with the term lists you create for language pairs and each list’s two languages, where files are saved and the subfolder name if you named one, and interface switches.
 - **Language preferences:** The default “From” and “To” pair, remembering the last translation language, the languages you chose recently, and the pair you changed for each video, with its ID. A pair is stored by video ID when you change it, even before you save a translation for that video, and is removed when you delete that video’s data (deleting a single translation doesn’t remove it). A pair with no row in “Library” is removed by “Clear all data”, or when the pairs exceed 200 and the oldest are dropped.
 - **Interface language:** Arabic or English, how it was chosen (your choice, or YouTube’s or the browser’s language on first run), and when it was set. It isn’t included in backups, and it remains after “Clear all data”.
 - **The last file Tarjuman saved:** Its download ID in the browser and its date, not its path.
@@ -95,7 +95,7 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 - What reaches it from you:
   - The text and timing of the original subtitles, in the file.
   - The instructions in Tarjuman’s interface language (Arabic or English), including the video’s title and link, and the two languages you chose as “From” and “To”.
-  - Your glossary terms, if you included the glossary.
+  - Your glossary terms, if you included the glossary: the general glossary, and any language-pair lists you created that match the instructions’ two languages, up to 100 terms.
 - What the model does with that is governed by its terms of service, not by this policy. So don’t send anything you don’t want to share.
 
 ## Permissions — `#permissions`

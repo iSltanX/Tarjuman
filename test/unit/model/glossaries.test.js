@@ -142,7 +142,7 @@ test('termsFor: «أرفق القاموس» المطفأ أو تفضيلات ل�
 });
 
 test('termsFor لا يخمّن من الحروف: لغة المصطلح لغة قائمته وحدها', () => {
-  // قائمة en ← ar بمصطلح ياباني الحروف تُرفق بتعليمات en ← ar، ولا تُرفق بتعليمات ja ← ar.
+  // قائمة en → ar بمصطلح ياباني الحروف تُرفق بتعليمات en → ar، ولا تُرفق بتعليمات ja → ar.
   const g = value(list('en', 'ar', [term('東京', 'طوكيو')]));
   assert.deepEqual(sources(termsFor(prefsWith([]), g, { source: 'en', target: 'ar' }).pair), ['東京']);
   assert.deepEqual(termsFor(prefsWith([]), g, { source: 'ja', target: 'ar' }), { pair: [], general: [], total: 0 });

@@ -81,7 +81,7 @@ test('الفكرة ٨: لوحة «الاستكمال» تعدّ ما يُرفق 
   await mountEditor(env.root, { videoId: ID, store, doc: env.doc, now, slot: 2, panel: 'complete' });
   await env.flush();
   const pane = env.root.querySelector('#ed-pane-complete');
-  assert.ok(pane.textContent.includes('+ القاموس (2) في التعليمات.'), 'قائمة الزوج والعام، لا قائمة ja ← ar');
+  assert.ok(pane.textContent.includes('+ القاموس (2) في التعليمات.'), 'قائمة الزوج والعام، لا قائمة ja → ar');
   const copy = [...pane.querySelectorAll('button')].find((b) => b.textContent.includes('نسخ تعليمات الاستكمال'));
   copy.click();
   await env.flush();
