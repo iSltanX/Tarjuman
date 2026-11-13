@@ -25,6 +25,8 @@ const FUNCTION_SAMPLES = {
   BK_RESTORE_CHANGED: { videos: '2 videos' }, ED_SAVE_HAS_ERRORS: { count: '3 timing errors' }, ED_EXPORT_HAS_ERRORS: { count: '3 timing errors' }, IM_STRAY_TEXT: { line: '7' },
   ...Object.fromEntries(PLURAL_BY_COUNT.map((code) => [code, { count: 2, list: '4, 5', first: 'Here is', seconds: '1.2', from: 4, to: 5 }])),
   PG_LANG_ASSIGN_PARTIAL: { n: '2' },
+  // المعدود بصيغه والعدد خامًا (تحقق مستقل §١٠): was/were وits/their بالعدد، وتُفحص صيغتاه في r2v-texts.test.js.
+  PG_LANG_ASSIGN_SKIPPED: { n: '2 translations', count: 2 },
 };
 
 test('كل رمز خطأ له رسالة إنجليزية بالقوالب نفسها وبلا حرف عربي', () => {
