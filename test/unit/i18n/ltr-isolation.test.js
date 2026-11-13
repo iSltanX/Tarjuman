@@ -75,6 +75,8 @@ const STATIC = {
   'editor.search.prevTitle': 'ltrInline(',
   'editor.search.nextTitle': 'ltrInline(',
   'editor.search.placeholder': 'keyHint(',
+  // أسماء المفاتيح تحت حقل تحرير المقطع في اللوحة (الفكرة ٦): مواضعها بغير أسماء TECH، فتُحرس هنا صراحةً.
+  'player.panel.editHint': 'ltrInline(',
   // نص يكتبه المستخدم في جملة عربية: اسم الخانة ونصّا البحث والاستبدال، معزولة اتجاهًا (FSI…PDI).
   'editor.search.previewIntro': 'isolate(',
   'player.panel.statusSlotNamed': 'isolate(',

@@ -227,6 +227,23 @@ export default Object.freeze({
     syncFar: 'This line is far from the playback position; “I hear this now” is for lines near it.',
     syncNoVideo: 'Available once the video is playing.',
     undoStale: 'The video changed, so this can’t be undone.',
+    // Editing a segment’s text (idea 6, H-54): key names in editHint are isolated LTR and drawn as atomic elements (editHintText).
+    editRow: 'Edit text',
+    editRowTip: 'Edit this segment’s text here; timing, merging and splitting are in the editor',
+    editField: 'Text of segment {n}',
+    editHint: '{save} to save · {newline} for a new line · {cancel} to cancel',
+    editSave: 'Save',
+    editCancel: 'Cancel',
+    edited: 'Edited the text of segment {n}',
+    editEmpty: 'A segment with no text can’t be saved from here. To delete it or merge it with another, open the editor.',
+    editBlankLine: 'The text has a blank line, which splits the segment in an SRT file, so it can’t be saved from here. Delete it, or split the segment in the editor.',
+    editBreaksSrt: 'The text has a line that reads as a segment header in an SRT file (a number followed by a timing line, a full timing line, a ``` fence, or a # heading), so it can’t be saved from here. Change it, or edit the segment in the editor.',
+    editInvalid: 'The text is longer than {max} characters or has a disallowed character, so it can’t be saved. Shorten it, or split the segment in the editor.',
+    editTimingErrors: 'This translation has timing errors that block saving any edit; fix them in the editor first.',
+    editLost: 'The translation changed; your edit wasn’t saved.',
+    editCopy: 'Copy text',
+    editCopied: 'Text copied.',
+    editCopyFailed: 'Couldn’t copy the text.',
     statusSlotNamed: 'Translation {n} “{name}”',
     // Completed capture step: YouTube auto-translation, or manual/auto-generated, saved or captured.
     captureLine: ({ lang, via, kind, saved, count }) => (via

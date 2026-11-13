@@ -1,7 +1,7 @@
 // نصوص لوحة النص المتزامن ودوالها النقية (docs/product-spec.md §٦.٦، ولوحات التصميم WatchPanel وPanelStates وWatchNarrow).
 // أرقام لاتينية، والإزاحة بعلامتها (formatOffset)، والعدّ بالعربية (formatCount). لا شيء هنا يعرف DOM.
 import { t, texts } from '../../i18n/index.js';
-import { COUNT_FORMS, formatCount, formatOffset, isolate } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, formatOffset, isolate, ltrInline } from '../../ui/format.js';
 import { languageName as sharedLanguageName } from '../../ui/lang.js';
 
 /** نصوص اللوحة من الفهرس (player.panel) باللغة الحالية عند كل قراءة. */
@@ -65,6 +65,29 @@ export const markedSeekLabel = (time) => T('seekMarked', { time });
 
 /** رسالة إزالة «أعود إليه» من صف (ف9). @param {number} n رقم المقطع */
 export const unmarkedNote = (n) => T('unmarked', { n });
+
+/** اسم الوصول لحقل تحرير نص المقطع (الفكرة ٦): «نص المقطع 12». @param {number} n رقم المقطع */
+export const editFieldLabel = (n) => T('editField', { n });
+
+/** رسالة حفظ نص المقطع من اللوحة (الفكرة ٦): «عُدِّل نص المقطع 12». @param {number} n رقم المقطع */
+export const editedNote = (n) => T('edited', { n });
+
+/**
+ * سطر المفاتيح تحت حقل التحرير (الفكرة ٦): أسماء المفاتيح اختصاراتٌ داخل جملة عربية، فهي معزولة LTR (الهوية §٤) وترسمها اللوحة
+ * عناصر ذرية (ltrParts)، فلا تنقلب «Shift+Enter» مع الجملة إن انكسر سطرها.
+ */
+export const editHintText = () => T('editHint', { save: ltrInline('Enter'), newline: ltrInline('Shift+Enter'), cancel: ltrInline('Esc') });
+
+/**
+ * سبب منع حفظ نص من اللوحة (الفكرة ٦، ح-54) بإحالة إلى المحرّر، من رمز فحص المحرّر الذي منعه (cueTextIssue في model.js).
+ * @param {{ code: string, params: Record<string, string | number> | null }} issue
+ */
+export function editIssueText(issue) {
+  if (issue.code === 'ED_TEXT_EMPTY') return LABELS.editEmpty;
+  if (issue.code === 'ED_TEXT_BLANK_LINE') return LABELS.editBlankLine;
+  if (issue.code === 'ED_TEXT_BREAKS_SRT') return LABELS.editBreaksSrt;
+  return T('editInvalid', { max: issue.params?.max ?? '' });
+}
 
 /** @param {string} langName «مع الإنجليزية». */
 export const withOriginal = (langName) => T('withOriginal', { name: langName });

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { setLocale } from '../../../../src/i18n/index.js';
 import { isolate } from '../../../../src/ui/format.js';
 import { HEALTH_MS } from '../../../../src/player/panel/index.js';
-import { earlierTip, laterTip, offsetMeaningShort, statusParts, withOriginal } from '../../../../src/player/panel/text.js';
+import { earlierTip, editFieldLabel, editHintText, editIssueText, editedNote, laterTip, offsetMeaningShort, statusParts, withOriginal } from '../../../../src/player/panel/text.js';
 import { panelCss } from '../../../../src/player/panel/styles.js';
 import { english, makeState, ui, watchPage } from './harness.js';
 
@@ -18,6 +18,26 @@ test('الدوال النقية بالإنجليزية: لا حرف عربي', (
     const out = [earlierTip(500), laterTip(1500), offsetMeaningShort(300), offsetMeaningShort(-300), offsetMeaningShort(0), withOriginal('English'), ...statusParts({ slot: 2, name: null, count: 412 }), ...statusParts({ slot: 1, name: 'My notes', count: 1 })];
     for (const t of out) assert.ok(!ARABIC.test(t), t);
     assert.equal(statusParts({ slot: 2, name: 'Review', count: 3 }).join(' | '), `Synced | Translation 2 “${isolate('Review')}” | 3 segments`);
+  } finally {
+    setLocale('ar');
+  }
+});
+
+test('الفكرة ٦: نصوص تحرير المقطع بالإنجليزية بلا عربية، وأسماء المفاتيح في سطر المفاتيح معزولة LTR باللغتين', () => {
+  const LRI = String.fromCodePoint(0x2066);
+  const PDI = String.fromCodePoint(0x2069);
+  const keys = (s) => [...s.matchAll(new RegExp(`${LRI}([^${PDI}]*)${PDI}`, 'g'))].map((m) => m[1]);
+  const issues = ['ED_TEXT_EMPTY', 'ED_TEXT_BLANK_LINE', 'ED_TEXT_BREAKS_SRT', 'ED_TEXT_INVALID'].map((code) => ({ code, params: code === 'ED_TEXT_INVALID' ? { max: 5000 } : null }));
+  assert.deepEqual(keys(editHintText()), ['Enter', 'Shift+Enter', 'Esc']);
+  assert.equal(editedNote(12), 'عُدِّل نص المقطع 12');
+  assert.match(editIssueText(issues[3]), /أطول من 5000 حرف/);
+  setLocale('en');
+  try {
+    const out = [editHintText(), editedNote(12), editFieldLabel(12), ...issues.map(editIssueText)];
+    for (const t of out) assert.ok(!ARABIC.test(t), t);
+    assert.deepEqual(keys(editHintText()), ['Enter', 'Shift+Enter', 'Esc']);
+    assert.equal(editedNote(12), 'Edited the text of segment 12');
+    assert.match(editIssueText(issues[3]), /longer than 5000 characters/);
   } finally {
     setLocale('ar');
   }
