@@ -167,7 +167,7 @@ export default Object.freeze({
     activeTitle: '{base} (النشطة)',
     activateTitle: '{base} — اضغط لتفعيلها',
     addTitle: 'رفع الترجمة {n}',
-    addText: '{n} · فارغة',
+    addText: 'الترجمة {n} · فارغة',
   },
   rowAction: {
     paste: 'لصق ترجمة…',

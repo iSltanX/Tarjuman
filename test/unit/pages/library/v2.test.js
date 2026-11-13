@@ -113,7 +113,7 @@ test('الصف: شريحة لكل ترجمة موجودة تميّز النشط�
   assert.equal((await m.store.getBundle(IDS[0])).active, 1, 'التراجع يعيد النشطة السابقة');
   // سجل الإصدار الأول: ترجمة واحدة في الخانة 1 تُعرض شريحتها، والخانة 2 شريحة الرفع المتقطّعة (لا نسخة فارغة).
   assert.deepEqual(chipsOf(m, IDS[1]).map((b) => [textOf(b), b.getAttribute('aria-pressed')]), [['الترجمة 1', 'true']]);
-  assert.equal(textOf(rowFor(m, IDS[1]).querySelector('.lib-chip--add')), '2 · فارغة');
+  assert.equal(textOf(rowFor(m, IDS[1]).querySelector('.lib-chip--add')), 'الترجمة 2 · فارغة', 'ر-٣: لا تُقرأ «اثنتان فارغتان»');
   assert.equal((await m.store.getBundle(IDS[1])).active, 1);
   // لوحة المفاتيح: الأسهم تنقل التركيز بين الشرائح بترتيب العرض (اليسار هو التالي)، لا تفعّل.
   const [a, b2] = chipsOf(m, IDS[0]);
@@ -137,7 +137,7 @@ test('شريحة الرفع المتقطّعة: الخانة الفارغة ال
   assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['الترجمة 1', '2 · مراجعة'], 'الشرائح للموجودة وحدها');
   const add = rowFor(m, IDS[0]).querySelectorAll('.lib-chip--add');
   assert.equal(add.length, 1, 'شريحة متقطّعة واحدة');
-  assert.equal(textOf(add[0]), '3 · فارغة');
+  assert.equal(textOf(add[0]), 'الترجمة 3 · فارغة');
   assert.equal(add[0].getAttribute('aria-description'), 'رفع الترجمة 3');
   assert.ok(add[0].getAttribute('aria-pressed') === null && add[0].getAttribute('role') === null, 'إجراء لا زر تبديل في شريط الترجمات');
   assert.equal(add[0].parentNode.querySelector('.lib-chips').querySelectorAll('.lib-chip--add').length, 0, 'خارج شريط الترجمات');
@@ -171,7 +171,7 @@ test('شريحة الرفع المتقطّعة: إن حُذفت الأولى ف�
   });
   assert.deepEqual(chipsOf(m, IDS[0]).map(textOf), ['2 · مراجعة', 'الترجمة 3'], 'الرقم هوية الخانة: لا إعادة ترقيم');
   const add = rowFor(m, IDS[0]).querySelector('.lib-chip--add');
-  assert.equal(textOf(add), '1 · فارغة');
+  assert.equal(textOf(add), 'الترجمة 1 · فارغة');
   m.answers.push(false);
   add.click();
   await settle(10);

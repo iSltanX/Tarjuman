@@ -536,7 +536,7 @@ test('الرفع: حوار الفحص الكامل — الافتراضي أول
   assert.equal(textOf(m.root.querySelector('.tj-toast--success')), 'حُفظت الترجمة 2.');
   const chips = rows(m)[0].querySelector('.lib-chips');
   assert.deepEqual(chips.querySelectorAll('button').map((x) => [textOf(x), x.getAttribute('aria-pressed')]), [['الترجمة 1', 'false'], ['الترجمة 2', 'true']], 'صارت ترجمتين بعد الإضافة، والجديدة نشطة');
-  assert.equal(rows(m)[0].querySelectorAll('.lib-chip--add').map(textOf)[0], '3 · فارغة', 'والشريحة المتقطّعة للخانة التالية');
+  assert.equal(rows(m)[0].querySelectorAll('.lib-chip--add').map(textOf)[0], 'الترجمة 3 · فارغة', 'والشريحة المتقطّعة للخانة التالية');
 });
 
 test('الاستبدال: اختيار خانة ممتلئة يعرض أعداد الفروق وجدولها وتصفير الإزاحة، والتأكيد يستبدل ويحفظ السابقة', async () => {
