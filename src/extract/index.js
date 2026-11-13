@@ -1,6 +1,7 @@
 // واجهة ExtractorAdapter (عقد docs/contracts/interfaces.md §٢): نقطة الدخول الوحيدة من سكربت المحتوى
 // إلى الاستخراج. تملكها P3 وتحفظ التوقيعات أدناه لأن src/content مجمَّد؛ وما خلفها يتغير كما يشاء.
-// ذاكرة المسارات للفيديو الحالي وحده وفي الجلسة فقط: الجسم الخام لا يُخزَّن ولا يُرسَل، ولا رابط ولا رمز.
+// ذاكرة المسارات للفيديو الحالي وحده وفي الجلسة فقط: الجسم الخام لا يُخزَّن ولا يُرسَل، ولا رابط ولا رمز. والصفحة بلا فيديو
+// (المشغّل المصغّر) تُبقي مسارات آخر فيديو محجوبة حتى يعود فتظهر، أو يأتي غيره فتُمسح (تحقق Gemini، Y4-أ).
 import { LIMITS } from '../core/model/validate.js';
 import { parseTrackKey, trackKey } from '../core/model/ids.js';
 import { COMPLETENESS_RATIO, normalizeCompleteness, normalizeLongOptions } from '../core/convert/index.js';
@@ -10,6 +11,7 @@ import { createPendingBuffer } from './pending.js';
 import { MAX_BODY_CHARS, validateCaptureMessage, validateSeenMessage, validateTracklistMessage } from './message.js';
 
 const MODES = Object.freeze(['normal', 'long']);
+const NO_SLOTS = new Map();
 const MAX_RUNS_PER_TRACK = 6;
 const MAX_RECENT_REJECTIONS = 20;
 /**
@@ -76,11 +78,17 @@ export function createExtractor(env) {
     }
   };
 
+  /** الفيديو الذي تخصه الخانات (كلها لفيديو واحد)، أو null إن خلت. */
+  const slotsVideo = () => slots.values().next().value?.entry.videoId ?? null;
+  /** خانات الفيديو الحالي؛ وفي صفحة بلا فيديو لا شيء، وإن بقيت فيها خانات آخر فيديو (Y4-أ). */
+  const visibleSlots = () => (captures.currentVideoId === null ? NO_SLOTS : slots);
+
   function sync(current) {
     if (!captures.setCurrentVideo(current)) return;
-    slots.clear();
     lastRejection = null;
     if (listed && listed.videoId !== current) listed = null;
+    // Y4-أ: صفحة بلا فيديو لا تمسح مسارات آخر فيديو (المخزن يُبقي أجسامها)، فتعود بالعودة إليه؛ والفيديو الآخر يمسحها.
+    if (current !== null && slotsVideo() !== current) slots.clear();
   }
 
   /**
@@ -191,7 +199,8 @@ export function createExtractor(env) {
   }
 
   /**
-   * قائمة المسارات من بيانات المشغّل (AA1): تُقبل للفيديو المعروض وحده، وتُبلَّغ المشتركين إن تغيّرت.
+   * قائمة المسارات من بيانات المشغّل (AA1): تُقبل للفيديو المعروض وحده، وتُبلَّغ المشتركين كل مرة ولو لم تتغير (تحقق Gemini،
+   * Y3): عالم الصفحة يعيد إرسالها بعد تغيّر عنوان المستند، فيعيد المتحكم حساب عنوان الفيديو.
    * @param {unknown} data
    */
   function handleTracklist(data) {
@@ -200,9 +209,8 @@ export function createExtractor(env) {
     const current = env.currentVideoId();
     sync(current);
     if (list.videoId !== current) return { accepted: false, code: 'EX_WRONG_VIDEO' };
-    const changed = JSON.stringify(list) !== JSON.stringify(listed);
     listed = list;
-    if (changed) emit();
+    emit();
     return { accepted: true, code: null };
   }
 
@@ -225,7 +233,10 @@ export function createExtractor(env) {
      * @returns {import('./message.js').TrackList | null}
      */
     available: () => (listed && listed.videoId === env.currentVideoId() ? structuredClone(listed) : null),
-    /** يُستدعى عند تغيّر الفيديو المعروض: يفرّغ ما لا يخصه ويعيد تقييم ما انتظر له. */
+    /**
+     * يُستدعى عند تغيّر الفيديو المعروض: يفرّغ ما لا يخصه ويعيد تقييم ما انتظر له. والمعرّف null (المشغّل المصغّر وصفحات بلا
+     * فيديو) يحجب مسارات آخر فيديو ولا يمسحها، فتعود بالعودة إليه (Y4-أ).
+     */
     setVideo(videoId) {
       sync(videoId);
       if (seen.videoId !== videoId) seen = { videoId, count: 0 };
@@ -233,7 +244,7 @@ export function createExtractor(env) {
       emit();
     },
     /** @returns {TrackInfo[]} المسارات المقبولة للفيديو الحالي بترتيب الالتقاط */
-    tracks: () => [...slots].map(([key, slot]) => infoOf(key, slot)),
+    tracks: () => [...visibleSlots()].map(([key, slot]) => infoOf(key, slot)),
     /**
      * @param {string} key
      * @param {{ mode?: 'normal' | 'long', long?: object }} [opts] long: أرقام الوضع الطويل (LONG_DEFAULTS)
@@ -246,7 +257,7 @@ export function createExtractor(env) {
         ok: false, code, key, lang, kind: kind === 'asr' ? 'asr' : 'manual', via: parsed?.via ?? null, mode, cues: [], warnings: [], report: null,
       });
       if (!MODES.includes(mode)) return failed('MD_INVALID');
-      const slot = slots.get(key);
+      const slot = visibleSlots().get(key);
       if (!slot) return failed('EX_NO_TRACK');
       const conv = run(slot, mode, long);
       return {
@@ -285,7 +296,7 @@ export function createExtractor(env) {
       // ف7: «طلبات مرئية» للفيديو المعروض (0 = لم يمر طلب ترجمة بالغلافين)، وأكبر عدّ في الصفحة.
       requestsSeen: seen.videoId !== null && seen.videoId === env.currentVideoId() ? seen.count : 0,
       requestsSeenPage: seenPage,
-      tracks: [...slots].map(([key, slot]) => {
+      tracks: [...visibleSlots()].map(([key, slot]) => {
         const info = infoOf(key, slot);
         const conv = run(slot, 'normal');
         return {

@@ -112,6 +112,35 @@ export function createController({ store, extractor = null, page = {}, now = () 
   /** نسخة السجل: المراجعة وتاريخ الحفظ معًا، فكاتبان بالمراجعة نفسها لا يلتبسان. */
   const versionOf = (r) => (r ? `${r.rev}|${r.updatedAt}` : 'none');
 
+  // تحقق Gemini، Y3: يوتيوب يغيّر رابط الصفحة (فالمعرّف) قبل عنوان المستند، فعنوان المستند لحظة التبديل عنوانُ الصفحة السابقة،
+  // ويُعدّ مجهولًا (null) ما بقي هو نفسه، في الحالة وفي الكتابات الأربع التي تحمل العنوان. ولا حارس على فيديو الصفحة الأول (عنوانه
+  // له)، ولا حين يكون العنوانَ الذي عُرف للفيديو الجديد نفسه (العودة من المشغّل المصغّر)، ولا حين يخالف العنوانَ المعروف للسابق
+  // (سبق العنوانُ الجديد اكتشافَ التنقل).
+  /** @type {string | null} */
+  let staleTitle = null;
+  /** آخر عنوان قُبل من المستند، ولأي فيديو. */
+  let knownTitle = { videoId: /** @type {string | null} */ (null), title: /** @type {string | null} */ (null) };
+  /** التبديل الأول من start: فيديو الصفحة كما فُتحت، فعنوان المستند عنوانه. */
+  let pageStart = false;
+
+  /** عنوان الفيديو id من المستند إن كان هو المعروض، ولم يكن عنوان الصفحة السابقة (Y3). */
+  function pageTitleFor(id) {
+    if (!id || id !== videoId) return null;
+    const t = page.title?.() ?? null;
+    if (t === null || t === staleTitle) return null;
+    knownTitle = { videoId: id, title: t };
+    return t;
+  }
+
+  /** عنوان المستند لحظة التبديل إلى next إن كان للصفحة السابقة، وإلا null (Y3). يُستدعى قبل تغيّر videoId. */
+  function staleTitleAt(next) {
+    const t = page.title?.() ?? null;
+    if (!next || t === null) return null;
+    if (knownTitle.videoId === next && knownTitle.title === t) return null;
+    if (videoId && knownTitle.videoId === videoId) return t === knownTitle.title ? t : null;
+    return t;
+  }
+
   function pickEnglish() {
     const captured = extractor ? rankUsable(extractor.tracks()) : [];
     if (captured.length) {
@@ -130,9 +159,11 @@ export function createController({ store, extractor = null, page = {}, now = () 
     const a = saved?.arabic ?? null;
     const bundle = bundleFor(saved);
     const activeSlot = bundle?.active ?? null;
+    // يُقرأ ولو كان للسجل عنوان: فيُعرف عنوان المستند لكل فيديو (knownTitle) لحارس التبديل التالي (Y3).
+    const pageTitle = pageTitleFor(videoId);
     return Object.freeze({
       videoId,
-      title: saved?.title ?? (videoId ? page.title?.() ?? null : null),
+      title: saved?.title ?? pageTitle,
       durationMs: saved?.durationMs ?? (videoId ? page.durationMs?.() ?? null : null),
       loading,
       saved,
@@ -332,17 +363,23 @@ export function createController({ store, extractor = null, page = {}, now = () 
         error = toErrorInfo(err);
       }
       changed();
-      if (loadSeq === seq0) await controller.setVideo(initialVideoId ?? null);
+      if (loadSeq === seq0) {
+        pageStart = true;
+        await controller.setVideo(initialVideoId ?? null);
+      }
     },
 
     /**
      * تبديل الفيديو: تُمسح الحالة ومسارات المستخرج معًا قبل أي إشعار (فلا يظهر شيء من الفيديو السابق)،
-     * ثم يُحمَّل سجل الجديد وحده.
+     * ثم يُحمَّل سجل الجديد وحده. وعنوان المستند لحظة التبديل يُحفظ عنوانًا للصفحة السابقة لا يُورَّث (Y3، staleTitleAt).
      * @param {string | null} id
      */
     async setVideo(id) {
       const next = isVideoId(id) ? id : null;
+      const first = pageStart;
+      pageStart = false;
       if (next === videoId) return;
+      staleTitle = first ? null : staleTitleAt(next);
       const seq = ++loadSeq;
       videoId = next;
       saved = null;
@@ -406,7 +443,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       let offsetWas = offsetBefore;
       const { id, next } = await writeRecord((rec) => {
         const r = withArabicImport(rec, {
-          videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, ...input,
+          videoId: vid, title: pageTitleFor(vid), durationMs: page.durationMs?.() ?? null, ...input,
           englishTrack, displayModeDefault: settings.displayModeDefault,
         }, iso(), { replace });
         offsetWas = rec ? r.offsetWas : offsetBefore;
@@ -436,7 +473,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       // بصمات الترجمات غير النشطة والسابقة لا يسقطها حد البصمات (الإصدار الثاني).
       const keep = referencedFingerprints(bundleFor(saved));
       const { id, next } = await writeRecord((rec) => withExport(rec, {
-        videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, englishTrack, fingerprint,
+        videoId: vid, title: pageTitleFor(vid), durationMs: page.durationMs?.() ?? null, englishTrack, fingerprint,
         displayMode: view.displayMode === 'off' ? settings.displayModeDefault : view.displayMode,
       }, iso(), { keep }));
       if (id === videoId) changed();
@@ -470,7 +507,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
         }
         stored = true;
         return withExport(rec, {
-          videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, englishTrack: rec.english.find((t) => t.key === trackKey) ?? track, fingerprint,
+          videoId: vid, title: pageTitleFor(vid), durationMs: page.durationMs?.() ?? null, englishTrack: rec.english.find((t) => t.key === trackKey) ?? track, fingerprint,
           displayMode: view.displayMode === 'off' ? settings.displayModeDefault : view.displayMode,
         }, iso(), { keep });
       });
@@ -533,7 +570,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
         wrote = await writeBundle((b) => {
           if (seen !== null && basis(b) !== seen) throw new TjError('ST_CONFLICT', { detail: `slot=${n}` });
           result = withSlotUpload(b, n, {
-            videoId: vid, title: page.title?.() ?? null, durationMs: page.durationMs?.() ?? null, ...input,
+            videoId: vid, title: pageTitleFor(vid), durationMs: page.durationMs?.() ?? null, ...input,
             englishTrack, displayModeDefault: settings.displayModeDefault,
           }, iso(), { replace, activate });
           return result.bundle;

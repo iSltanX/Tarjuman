@@ -1,5 +1,6 @@
-// ذاكرة الالتقاط داخل الجلسة فقط، مفهرسة بمعرّف الفيديو. عند تغيّر الفيديو المعروض يُفرَّغ كل ما
-// لا يخصه، فلا يُصدَّر إلا مسار الفيديو الحالي. لا تخزين دائم ولا روابط.
+// ذاكرة الالتقاط داخل الجلسة فقط، مفهرسة بمعرّف الفيديو. عند تغيّر الفيديو المعروض إلى فيديو آخر يُفرَّغ كل ما
+// لا يخصه، فلا يُصدَّر إلا مسار الفيديو الحالي؛ والصفحة بلا فيديو (المشغّل المصغّر، والرئيسية والبحث) تُبقي التقاط آخر
+// فيديو حتى يعود أو يأتي غيره (تحقق Gemini، Y4-أ). لا تخزين دائم ولا روابط.
 
 const MAX_REJECTED = 100;
 
@@ -24,12 +25,16 @@ export function createCaptureStore({ now = () => Date.now() } = {}) {
   const rejected = [];
 
   return {
-    /** @param {string | null} id */
+    /**
+     * المعرّف null لا يمسح التقاط آخر فيديو (Y4-أ): بالمشغّل المصغّر لا يعيد يوتيوب طلب الترجمة عند العودة إلى الفيديو نفسه.
+     * والفيديو الآخر يمسح ما لا يخصه، ولو جاء بعد صفحة بلا فيديو.
+     * @param {string | null} id
+     */
     setCurrentVideo(id) {
       if (id === currentVideoId) return false;
       currentVideoId = id;
       navigations++;
-      for (const [key, c] of accepted) if (c.videoId !== id) accepted.delete(key);
+      if (id !== null) for (const [key, c] of accepted) if (c.videoId !== id) accepted.delete(key);
       return true;
     },
     get currentVideoId() {

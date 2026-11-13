@@ -84,7 +84,7 @@ test('قائمة المسارات: اللغة والنوع والاسم وحده
   assert.ok(many.tracks.length <= MAX_LISTED_TRACKS);
 });
 
-test('المستخرج يحفظ قائمة الفيديو المعروض وحده، ويُبلِّغ عند تغيّرها، ويفرّغها عند التنقل', () => {
+test('المستخرج يحفظ قائمة الفيديو المعروض وحده، ويُبلِّغ بكل قائمة له، ويفرّغها عند التنقل', () => {
   const { extractor, state } = makeExtractor({ videoId: VID });
   let events = 0;
   extractor.subscribe(() => events++);
@@ -94,7 +94,8 @@ test('المستخرج يحفظ قائمة الفيديو المعروض وحد�
   assert.deepEqual(extractor.available(), { videoId: VID, translatable: true, tracks: [{ lang: 'en', kind: 'asr', name: null }, { lang: 'ja', kind: 'manual', name: null }] });
   assert.equal(events, 1);
   extractor.handleMessage(listMsg({ tracks: [{ lang: 'en', kind: 'asr' }, { lang: 'ja' }], translatable: true }));
-  assert.equal(events, 1, 'لا تبليغ لقائمة لم تتغير');
+  // تحقق Gemini، Y3: القائمة نفسها تصل بعد تغيّر عنوان المستند، والتبليغ بها يعيد حساب عنوان الفيديو في المتحكم.
+  assert.equal(events, 2, 'تبليغ بالقائمة نفسها');
   assert.equal(extractor.diagnostics().listed.tracks, 2);
   state.videoId = 'BBBBBBBBBBB';
   extractor.setVideo('BBBBBBBBBBB');

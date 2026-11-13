@@ -78,7 +78,7 @@ controller.diagnostics()         // أعداد ورموز: الكتابات ال
 | `dismissNotice()` | متزامن. | — |
 | `reload()` | يعيد قراءة سجل الفيديو الحالي. | — |
 
-`start(videoId)` و`setVideo(id)` و`handleStoreChange(change)` يستدعيها `main.js` وحده. تبديل الفيديو يمسح الحالة **ومسارات المستخرج معًا قبل أي إشعار** (`setVideo` يستدعي `extractor.setVideo`)، فلا يظهر شيء من السابق، ثم يحمّل سجل الجديد؛ ونتيجة تحميل قديمة تُهمل، وكتابة تمت أثناء التحميل تُقرأ بعده. وإن تبدّل الفيديو أثناء تحميل الإعدادات في `start` فالأحدث يبقى.
+`start(videoId)` و`setVideo(id)` و`handleStoreChange(change)` يستدعيها `main.js` وحده. تبديل الفيديو يمسح الحالة **ومسارات المستخرج معًا قبل أي إشعار** (`setVideo` يستدعي `extractor.setVideo`)، فلا يظهر شيء من السابق (والصفحة بلا فيديو تحجب مسارات آخر فيديو ولا تمسحها، فتعود بالعودة إليه: تحقق Gemini، `Y4-أ`)، ثم يحمّل سجل الجديد؛ ونتيجة تحميل قديمة تُهمل، وكتابة تمت أثناء التحميل تُقرأ بعده. وإن تبدّل الفيديو أثناء تحميل الإعدادات في `start` فالأحدث يبقى. وعنوان المستند لحظة التبديل عنوانُ الصفحة السابقة (يوتيوب يغيّره بعد الرابط)، فـ`title` في الحالة وفي كتابات `loadArabic` و`recordExport` و`recordSavedExport` و`loadArabicInto` يكون `null` ما بقي هو نفسه؛ إلا في فيديو الصفحة الأول، والعودة إلى فيديو عُرف له هذا العنوان، وعنوان يخالف المعروف للسابق. ولا يُكتب في سجل فيديو عنوانُ غيره إن تبدّل المعروض أثناء الكتابة (تحقق Gemini، `Y3`).
 
 ## ٢. المستخرج — `src/extract/index.js` (P3)
 
@@ -88,11 +88,11 @@ controller.diagnostics()         // أعداد ورموز: الكتابات ال
 const extractor = createExtractor({ currentVideoId: () => id | null, durationMs: () => ms | null, isLive: () => bool, now? })
 
 extractor.handleMessage(data)        // بيانات MAIN الخام → { accepted: boolean, code: string | null }؛ يتحقق من البنية ثم القبول
-extractor.setVideo(videoId)          // عند التنقل: يفرّغ ما لا يخص الفيديو، ويعيد تقييم ما انتظر له (2000ms)
+extractor.setVideo(videoId)          // عند التنقل إلى فيديو: يفرّغ ما لا يخصه، ويعيد تقييم ما انتظر له (2000ms)؛ وnull يحجب مسارات آخر فيديو ولا يفرّغها (Y4-أ)
 extractor.tracks()                   // TrackInfo[] للفيديو الحالي
 extractor.convert(key, { mode })     // ConvertResult؛ نسخة مستقلة كل مرة
 extractor.lastRejection()            // { code, at, videoId } | null — ما يخص المستخدم فقط
-extractor.subscribe(fn)              // fn() عند أي تغيّر؛ يعيد دالة إلغاء
+extractor.subscribe(fn)              // fn() عند أي تغيّر، وعند كل قائمة مسارات للفيديو الحالي (Y3)؛ يعيد دالة إلغاء
 extractor.diagnostics()              // أعداد ورموز فقط، بلا جسم ولا نص ولا رابط
 extractor.setCompleteness(ratio)     // عتبة EX_MAYBE_INCOMPLETE من الإعدادات (0.5..1، وغير الصالح 0.85)؛ المتحكم يمرّرها (تدقيق 7a66f91، U37)
 

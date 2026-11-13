@@ -58,7 +58,7 @@ function playerResponse(id) {
 const textOf = (n) => (!n ? '' : typeof n.simpleText === 'string' ? n.simpleText
   : Array.isArray(n.runs) ? n.runs.map((x) => (x && typeof x.text === 'string' ? x.text : '')).join('') : '');
 
-/** يرسل قائمة مسارات الفيديو المعروض إن تغيّرت: اللغة والنوع والاسم وحدها، وهل يترجم يوتيوب آليًا. */
+/** يرسل قائمة مسارات الفيديو المعروض إن تغيّرت أو تغيّر عنوان المستند: اللغة والنوع والاسم وحدها، وهل يترجم يوتيوب آليًا. */
 function postTracks() {
   const id = currentVideoId();
   // صفحة بلا فيديو (الرئيسية والبحث والاشتراكات): تُصفَّر القائمة المرسلة، فالعودة إلى الفيديو نفسه تُرسلها من جديد (U-031)؛
@@ -83,7 +83,9 @@ function postTracks() {
     name: textOf(t && t.name),
   }));
   const translatable = Boolean(rend && Array.isArray(rend.translationLanguages) && rend.translationLanguages.length);
-  const key = JSON.stringify([id, tracks, translatable]);
+  // عنوان المستند في المفتاح لا في الرسالة (تحقق Gemini، Y3): يوتيوب يغيّره بعد التنقل، فتُرسل القائمة نفسها مرة بعده، فيعيد
+  // العالم المعزول حساب عنوان الفيديو بدل أن يبقى عنوان السابق.
+  const key = JSON.stringify([id, tracks, translatable, doc && typeof doc.title === 'string' ? doc.title : '']);
   if (key === lastList) return;
   lastList = key;
   window.postMessage({ source: 'tarjuman', v: 1, kind: 'tracklist', videoId: id, tracks, translatable }, origin);

@@ -1,6 +1,7 @@
 // تدقيق V2، WG-4: U-031 وU-032. قائمة المسارات (tracklist) من سكربت عالم الصفحة عبر تنقل SPA، بوثيقة ومشغّل وهميين
 // (c8-capture.test.js يحمّله بلا document فيعطّل القائمة). السكربت المصدر في node:vm، واستيراداته تُحقن من الوحدات الحقيقية.
-// ومعها ع-١١ (د) من تحقق Gemini: رجوع سريع إلى فيديو قبل أن يحمّل المشغّل الذي بعده، مع المستخرج الحقيقي في العالم المعزول.
+// ومعها ع-١١ (د) من تحقق Gemini: رجوع سريع إلى فيديو قبل أن يحمّل المشغّل الذي بعده، مع المستخرج الحقيقي في العالم المعزول؛
+// وY3: تغيّر عنوان المستند بعد التنقل يعيد إرسال القائمة نفسها.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -24,7 +25,7 @@ const response = (id) => ({
  * صفحة يوتيوب مصطنعة: المشغّل يبقى بآخر فيديو حُمّل ويحمّل فيديو صفحة المشاهدة أو البث. sink يستلم كل رسالة كما يستلمها الجسر
  * (العالم المعزول).
  */
-function page(startPath, { sink = () => {} } = {}) {
+function page(startPath, { sink = () => {}, title = '' } = {}) {
   const listeners = new Map();
   const loc = { origin: ORIGIN, href: '' };
   const setUrl = (p) => { loc.href = new URL(p, ORIGIN).href; };
@@ -32,6 +33,7 @@ function page(startPath, { sink = () => {} } = {}) {
   const player = { loaded: null, getPlayerResponse() { return this.loaded ? response(this.loaded) : null; } };
   const doc = {
     readyState: 'complete',
+    title,
     getElementById: (id) => (id === 'movie_player' ? player : null),
     addEventListener: (t, f) => { if (!listeners.has(t)) listeners.set(t, []); listeners.get(t).push(f); },
     fire(t) { for (const f of listeners.get(t) ?? []) f({ type: t }); },
@@ -64,6 +66,12 @@ function page(startPath, { sink = () => {} } = {}) {
       setUrl(p);
       if (load && idNow()) player.loaded = idNow();
       for (const t of ['yt-navigate-finish', 'yt-page-data-updated', 'yt-player-updated']) doc.fire(t);
+      run();
+    },
+    /** يوتيوب يغيّر عنوان المستند بعد التنقل مع yt-page-data-updated (تحقق Gemini، Y3). */
+    retitle(t) {
+      doc.title = t;
+      doc.fire('yt-page-data-updated');
       run();
     },
     lists: () => posted.filter((m) => m.kind === 'tracklist').map((m) => m.videoId),
@@ -104,6 +112,25 @@ test('ع-١١ (د): A ثم B قبل أن يحمّله المشغّل ثم رجو
   assert.deepEqual(extractor.available()?.tracks.map((x) => x.lang), ['es'], 'قائمة A متاحة بعد العودة');
   p.nav(`/watch?v=${A}&t=30`, { load: false });
   assert.deepEqual(p.lists(), [A, A], 'وعلى A نفسه لا تكرار');
+});
+
+test('Y3: تغيّر عنوان المستند بعد التنقل يعيد إرسال القائمة نفسها، والمستخرج يُبلِّغ بها ولو لم تتغير فيُعاد حساب العنوان', () => {
+  let current = A;
+  const extractor = createExtractor({ currentVideoId: () => current });
+  let events = 0;
+  extractor.subscribe(() => events++);
+  const p = page(`/watch?v=${A}`, { sink: (m) => extractor.handleMessage(m), title: 'A - YouTube' });
+  extractor.setVideo(A);
+  current = B;
+  p.nav(`/watch?v=${B}`);
+  extractor.setVideo(B);
+  assert.deepEqual(p.lists(), [A, B], 'قائمة B أُرسلت وعنوان المستند ما زال لـA');
+  const before = events;
+  p.retitle('B - YouTube');
+  assert.deepEqual(p.lists(), [A, B, B], 'العنوان الجديد يعيد إرسال قائمة B نفسها');
+  assert.equal(events, before + 1, 'والمستخرج يُبلِّغ المشتركين بها');
+  p.nav(`/watch?v=${B}&t=30`);
+  assert.deepEqual(p.lists(), [A, B, B], 'بلا تغيّر في العنوان لا تكرار');
 });
 
 test('AV2 U-032: /live/<id> يرسل قائمة المسارات كصفحة المشاهدة، والعودة إليه كذلك', () => {
