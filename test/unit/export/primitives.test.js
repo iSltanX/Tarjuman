@@ -52,6 +52,10 @@ test('fileName بأي لغة (AA1): المسار بلغته، والمترجم �
   assert.equal(translationLang({ lang: 'ko', fileName: 'x.ja.srt' }), 'ko');
   assert.equal(translationLang({ fileName: 'talk.ja.srt' }), 'ja', 'من رمز صريح في اسم الملف');
   assert.equal(translationLang({ lang: null, fileName: 'talk.srt' }), null);
+  // رمز الاسم بنص الترجمة (ع-٨): ترجمة عربية اسمها let.it.be.srt ليست بيلاروسية.
+  const arabicText = [{ n: 1, startMs: 0, endMs: 1000, text: 'مرحبًا بكم' }];
+  assert.equal(translationLang({ fileName: 'let.it.be.srt', original: arabicText, current: null }), null);
+  assert.equal(translationLang({ fileName: 'talk.ar.srt', original: arabicText, current: null }), 'ar');
 });
 
 test('fnv1a64: متجهات الاختبار المرجعية', () => {

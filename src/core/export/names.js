@@ -14,11 +14,12 @@ const pad = (n, width) => String(n).padStart(width, '0');
 const langPart = (lang) => lang.replace(/_/g, '-');
 
 /**
- * لغة اسم ملف الترجمة: لغتها المحفوظة، ثم رمز صريح في اسم ملفها المرفوع، وإلا null.
- * @param {{ lang?: string | null, fileName?: string | null } | null | undefined} track
+ * لغة اسم ملف الترجمة: لغتها المحفوظة، ثم رمز صريح في اسم ملفها المرفوع يوافق نصها نص كتابته (ع-٨)، وإلا null.
+ * @param {{ lang?: string | null, fileName?: string | null, current?: { text: string }[] | null, original?: { text: string }[] | null } | null | undefined} track
  * @returns {string | null}
  */
-export const translationLang = (track) => (track?.lang && isSourceLang(track.lang) ? track.lang : langFromFileName(track?.fileName ?? null));
+export const translationLang = (track) => (track?.lang && isSourceLang(track.lang) ? track.lang
+  : langFromFileName(track?.fileName ?? null, track?.current ?? track?.original ?? null));
 
 /**
  * @param {{

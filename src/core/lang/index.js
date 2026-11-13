@@ -206,16 +206,19 @@ export function describeLang(code, locale = 'ar') {
 
 /**
  * رمز لغة من اسم ملف ترجمة إن جاء صريحًا قبل الامتداد مباشرة (talk.ja.srt ← ja، وtalk.pt-BR.srt ← pt-BR)، وإلا null. لا يُقبل
- * إلا رمز يعرف المتصفح اسمه، فلا يُقرأ «normal» أو «long» أو كلمة من الاسم لغةً.
- * @param {unknown} fileName
+ * إلا رمز يعرف المتصفح اسمه، فلا يُقرأ «normal» أو «long» لغةً. ومع نص الملف لا يُقبل إلا إن وافق نصُّه نص كتابة اللغة
+ * (textFitsLang، ع-٨)، فلا تصير كلمة من الاسم لغةً بكتابة أخرى (let.it.be.srt بيلاروسيةً، وwhat.it.is.srt بنص عربي آيسلنديةً).
+ * وحدّه أن النص لا يميّز لغتين بالكتابة نفسها: what.it.is.srt بنص إنجليزي يبقى is، ولا تُخمَّن اللغة من النص.
+ * @param {unknown} fileName @param {{ text: string }[] | null} [cues] نص الملف، وبلاه يُحكم بالاسم وحده
  * @returns {string | null}
  */
-export function langFromFileName(fileName) {
+export function langFromFileName(fileName, cues = null) {
   if (typeof fileName !== 'string') return null;
   const m = /\.([A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*)\.srt$/i.exec(fileName.trim());
   if (!m) return null;
   const code = normalizeLang(m[1]);
-  return code && arabicName(code) ? code : null;
+  if (!code || !arabicName(code)) return null;
+  return !Array.isArray(cues) || textFitsLang(cues, code) ? code : null;
 }
 
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz';

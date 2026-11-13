@@ -38,6 +38,16 @@ test('ملف نظيف مع بصمته: مطابقة تامة، وكل حقول �
   assert.deepEqual([r.notes, r.warnings], [[], []]);
 });
 
+test('لغة الملف من اسمه بنصه (ع-٨): كلمة من الاسم بكتابة غير كتابة نص الملف ليست لغته', async () => {
+  for (const name of ['what.it.is.srt', 'let.it.be.srt', 'say.no.srt']) {
+    const r = await run(fixture('clean.ar.srt', name));
+    assert.equal(r.ok, true);
+    assert.equal(r.lang, null, name);
+  }
+  const ar = await run(fixture('clean.ar.srt', 'talk.ar.srt'));
+  assert.equal(ar.lang, 'ar');
+});
+
 test('المدخل: File واحد، أو مصفوفة، أو شبه مصفوفة كـFileList', async () => {
   const f = () => fixture('clean.ar.srt');
   const single = await run(f());

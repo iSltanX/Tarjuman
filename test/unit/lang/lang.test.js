@@ -71,6 +71,27 @@ test('رمز اللغة من اسم الملف: الصريح قبل .srt وحد�
   assert.equal(langFromFileName(null), null);
 });
 
+test('رمز الاسم بنص الملف (ع-٨): يُقبل إن وافق نص الملف نص كتابة لغته، فلا تصير كلمة من الاسم لغةً بنص آخر', () => {
+  const cues = (text) => [{ text }, { text }];
+  const ar = cues('مرحبًا بكم في هذا الدرس');
+  const en = cues('Let it be, whisper words of wisdom');
+  const ja = cues('こんにちは、今日は日本語の授業です');
+  // is الآيسلندية وbe البيلاروسية وno النرويجية من كلمات الاسم، والملف ترجمة عربية.
+  for (const name of ['what.it.is.srt', 'let.it.be.srt', 'say.no.srt']) assert.equal(langFromFileName(name, ar), null, name);
+  assert.equal(langFromFileName('let.it.be.srt', en), null, 'be بالكيريلية ونص الملف لاتيني');
+  assert.equal(langFromFileName('all.my.srt', en), null, 'my بالميانمارية');
+  // الرمز الصريح الموافق نص الملف يبقى.
+  assert.equal(langFromFileName('talk.ar.srt', ar), 'ar');
+  assert.equal(langFromFileName('talk.ja.srt', ja), 'ja');
+  assert.equal(langFromFileName('talk.ja.srt', ar), null);
+  // بلا نص (اسم وحده) أو نص بلا حروف: الاسم وحده كما كان.
+  assert.equal(langFromFileName('talk.ja.srt'), 'ja');
+  assert.equal(langFromFileName('talk.ja.srt', cues('12 34')), 'ja');
+  // حد معلن: النص لا يميّز لغتين بالكتابة نفسها (الإنجليزية والآيسلندية لاتينيتان)، واللغة لا تُخمَّن من النص.
+  assert.equal(langFromFileName('what.it.is.srt', en), 'is');
+  assert.equal(langFromFileName('say.no.srt', en), 'no');
+});
+
 test('كل اللغات من المتصفح (AA3): رموز ISO الثنائية التي يعرف اسمها العربي، بلا رمز قديم مكرر، مرتبة بالاسم بلا «ال»', () => {
   const all = knownLanguages();
   assert.ok(all.length > 150, `عدد اللغات ${all.length}`);

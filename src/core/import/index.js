@@ -121,7 +121,8 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
 
     const fingerprint = selectFingerprint(fingerprints, cues.length);
     const finalNotes = capNotes(notes);
-    const lang = chosen !== undefined ? chosen : langFromFileName(fileName);
+    // رمز الاسم بنص الملف (ع-٨): لا يُقبل إلا إن وافق نصه نص كتابة اللغة.
+    const lang = chosen !== undefined ? chosen : langFromFileName(fileName, cues);
     const report = compare(cues, fingerprint, { driftMs: threshold(settings), target: lang });
     // ملاحظات الاستيراد أولًا ثم ما يضيفه المقارن (سبب تعذّر الاستعادة الشاملة).
     const comparison = { ...report, notes: capNotes([...notes, ...report.notes]) };
