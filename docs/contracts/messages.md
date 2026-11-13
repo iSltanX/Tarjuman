@@ -90,7 +90,8 @@ chrome.tabs.sendMessage(tabId, { type: "tj:get-video-state", v: 1 })   // videoS
 
 ```js
 chrome.tabs.sendMessage(tabId, { type: "tj:get-page-diagnostics", v: 1 })    // pageDiagnosticsRequest()
-// الرد: { v: 1, ok: true, sections: { controller, extractor, mounted, dom, panel } } — أعداد ورموز فقط
+// الرد: { v: 1, ok: true, sections: { controller, mounted: { overlay, controls }, dom, panel } } — أعداد ورموز فقط
+// وتشخيص المستخرج داخل controller (controller.diagnostics().extractor)، لا قسمًا مستقلًا
 ```
 
 **ف7 (2026-11-10):** في تشخيص المستخرج `requestsSeen` (طلبات الترجمة التي رآها غلافا الالتقاط للفيديو المعروض، و0 حين لم يُرَ طلب) و`requestsSeenPage` (أكبر عدّ في الصفحة). أعداد فقط، من رسالة `kind: "seen"` (عقد الاستخراج).
@@ -160,7 +161,7 @@ chrome.runtime.sendMessage({ type: "tj:store", v: 1, wid: "…", op: "put", vide
 
 - **المرسِل** كما في §٧: `sender.id === chrome.runtime.id`، وسكربت محتوى على `https://www.youtube.com/` أو صفحة من الإضافة؛ وما عدا ذلك، أو عملية غير معروفة، يُتجاهل بلا رد (`isStoreRequest`).
 - **`print` في `put` (اختياري، تدقيق V2، U-023):** بصمة القيم الخام لمفاتيح الفيديو الستة كما عُرضت في تأكيد المستخدم (`rawPrint` في عقد التخزين)، وتُرسل لاستبدال سجل غير مقروء. يقارنها الكاتب بالبصمة الحاضرة **داخل طابوره** قبل أي كتابة، فإن اختلفت (أصلحه أو غيّره كاتب آخر بعد المعاينة) رُفض الطلب بـ`ST_CONFLICT` ولم يُكتب شيء؛ ولا يكفي `base` وحده لسجل لا يُقرأ. وبلا `print` لا مقارنة، وتبقى مقارنة `base` كما كانت. وللحذف `print` بالمعنى نفسه (عقد التخزين §١٢).
-- **العمليات بحسب المرسِل** (تدقيق V2، U-043؛ `CONTENT_SCRIPT_OPS` في `store-service.js`): صفحات الإضافة تُقبل منها كل العمليات أعلاه. وسكربت المحتوى على يوتيوب يُقبل منه `ready` و`put` و`orphan` و`index` و`settings` و`prefs` وحدها، وهي ما يحتاجه جانب يوتيوب فعلًا؛ وما عداها (`delete` و`clear` و`langPrefs` و`saves`) يُرفض منه برد الخطأ المعتاد `{ v: 1, ok: false, code: "TJ_BAD_MESSAGE", detail: null }` ولا يصل إلى الكاتب. تحصين في العمق لا يمنع سياق عرض مخترقًا يقرأ `storage.local` مباشرة.
+- **العمليات بحسب المرسِل** (تدقيق V2، U-043؛ `CONTENT_SCRIPT_OPS` في `store-service.js`): صفحات الإضافة تُقبل منها كل العمليات أعلاه. وسكربت المحتوى على يوتيوب يُقبل منه `ready` و`put` و`orphan` و`index` و`settings` و`prefs` و`uiLocaleInit` وحدها، وهي ما يحتاجه جانب يوتيوب فعلًا (و`uiLocaleInit` تهيئة لغة الواجهة من لغة يوتيوب إن لم تكن لها قيمة، عقد التخزين §١٤)؛ وما عداها (`delete` و`clear` و`langPrefs` و`saves` و`uiLocale`) يُرفض منه برد الخطأ المعتاد `{ v: 1, ok: false, code: "TJ_BAD_MESSAGE", detail: null }` ولا يصل إلى الكاتب. تحصين في العمق لا يمنع سياق عرض مخترقًا يقرأ `storage.local` مباشرة.
 - **المحتوى:** ما يُخزَّن اليوم وحده (السجل وتوابعه ورقع الإعدادات والتفضيلات)، بلا شيفرة ولا رابط ولا مسار. والكاتب يتحقق من كل قيمة بمدققها قبل الكتابة.
 - **`wid`:** معرّف عشوائي لكل طلب. وإعادة الإرسال بعد خطأ قناة بالمعرّف نفسه، فلا تُطبَّق الكتابة مرتين (عقد التخزين §١٢).
 - **حد القناة:** رسالة أكبر من حد المتصفح تُرفض بـ`ST_WRITE_FAILED` دون إعادة.

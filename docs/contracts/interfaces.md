@@ -119,7 +119,7 @@ MountHandle = { state: "stub" | "waiting" | "mounted" | "error", unmount(): void
 
 - `main.js` يستدعي كلًا منهما **مرة واحدة عند `document_start`** قبل وجود المشغّل؛ فالتنفيذ ينتظر `#movie_player` بنفسه (`MutationObserver`)، ويعيد التركيب عند إعادة رسم يوتيوب لعناصره، ويحدّث `state`.
 - `deps` للاختبار فقط: الأدوات تستورد تدفقي التصدير (§٥) والاستيراد (§٦) بنفسها، فلا يعرفهما `main.js`.
-- البديلان الحاليان لا يلمسان DOM ويعيدان `state: "stub"`، ويظهر ذلك في رد نافذة الأيقونة (`mounted`) والدخان الحي.
+- التنفيذان يركّبان فعلًا منذ P5 وP6 (أدناه)، ويبدآن `state: "waiting"`؛ و`"stub"` حال المقبض بعد `unmount()` وحده (كان البديلان قبلهما لا يلمسان DOM ويعيدان `"stub"`). وتظهر الحالة في رد نافذة الأيقونة (`mounted`) وتشخيص الصفحة والدخان الحي.
 - **الطبقة (P5، والخط والحجم P6):** حاوية Shadow DOM داخل `#movie_player`، و`textContent` فقط، والمظهر من `state.settings.appearance` بما فيه الخط (`font`) والحجم النسبي (`scale`، نسبة فوق الحجم النسبي لارتفاع المشغّل)، والخطوط من ملفات الإضافة (§٩) عبر `FontFace` ببياناتها لا برابطها، وعند التعذّر المراعي المضمّن ثم خط النظام العربي برمز في التشخيص، والإنجليزي للوضع المزدوج من `state.english`، والإعلان والشريط وملء الشاشة عبر `youtube-dom`، والبحث بـ`lookupMs` (عقد التوقيت). تغيّر `state.videoId` يمسح الطبقة فورًا. وإخفاء ترجمة يوتيوب الأصلية بنمط تحقنه الطبقة نفسها على `SELECTORS.captionWindow` ما دامت نشطة.
 - **الأدوات (P6):** مجموعة داخل بداية `getRightControls()`، والقوائم داخل `#movie_player`، وعزل الضغطات في الحقول، والرسائل من `messageFor(code)`، والخطوة بـ`controller.updateSettings({ offsetStepMs })`. ونوافذ الشريط الأربع حوارات غير نمطية (`role="dialog"`، وأزرارها `aria-haspopup="dialog"`، وزر الرفع بلا ترجمة بلا `aria-haspopup` لأنه يفتح المنتقي)، تُغلق بخروج التركيز إلى ما خارج الطبقة والمجموعة إلا قرارًا ينتظر أو عملًا جاريًا. والرسائل تُحدَّث بمعرّفاتها فلا يُعاد إنشاء القائم، و«علّم للمراجعة» و«مزامنة بجملة…» معطّلان أثناء الإعلان (`CT_AD_SHOWING`) (تدقيق 7a66f91، C6).
 - الرموز داخل المشغّل نصًا من `playerTokensCss()` (§٩)، فسكربت المحتوى لا يحمّل ملفات CSS من الإضافة.
@@ -187,12 +187,14 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 
 | التصدير | المحتوى |
 | --- | --- |
-| `SELECTORS` | `player` (`#movie_player`)، و`video`، و`rightControls`، و`chromeBottom`، و`progressBar`، و`captionWindow`، و`captionSegment`، و`subtitlesButton`، و`liveBadge`، و`inlinePreview` |
-| `CLASSES` | `adShowing`، و`adInterrupting`، و`autohide`، و`fullscreen`، و`bigMode`، و`smallMode` |
+| `SELECTORS` | `player` (`#movie_player`)، و`video`، و`rightControls`، و`leftControls`، و`volumePanel`، و`chromeBottom`، و`progressBar`، و`captionWindow`، و`captionSegment`، و`subtitlesButton`، و`liveBadge`، و`inlinePreview` |
+| `CLASSES` | `adShowing`، و`adInterrupting`، و`autohide`، و`fullscreen`، و`bigMode`، و`smallMode`، و`chapter` (عنوان الفصل في الأدوات اليسرى)، و`timeDisplay` (زمن المشغّل `ytp-time-display`) |
 | `EVENTS` | `navigateStart`، و`navigateFinish` (`yt-navigate-finish`)، و`pageDataUpdated` |
-| الدوال | `videoIdFromLocation` (`/watch?v=` و`/live/<id>`؛ لا Shorts)، و`getPlayer`، و`getMainVideo`، و`getRightControls`، و`getChromeBottom`، و`getCaptionContainer`، و`isAdShowing` (الإعلان أو المقاطِع؛ عند الشك إعلان)، و`areControlsHidden`، و`isPlayerFullscreen`، و`mainVideoDurationMs`، و`isLiveNow`، و`displayedCaption`، و`videoTitle`، و`watchCurrentVideo` |
+| الدوال | `videoIdFromLocation` (`/watch?v=` و`/live/<id>`؛ لا Shorts)، و`youtubeUiLanguage`، و`getPlayer`، و`getMainVideo`، و`getRightControls`، و`getLeftControls`، و`getChromeBottom`، و`getCaptionContainer`، و`isAdShowing` (الإعلان أو المقاطِع؛ عند الشك إعلان)، و`areControlsHidden`، و`isPlayerFullscreen`، و`mainVideoDurationMs`، و`seekMainVideo` (§١٤)، و`isLiveNow`، و`displayedCaption`، و`videoTitle`، و`watchCurrentVideo` |
 
 كل دالة تأخذ `doc`/`win` لتُختبر بلا متصفح، ولا تغيّر DOM يوتيوب.
+
+- **`timeDisplay` (ت-١):** `src/player/controls/bar.js` يجده داخل `leftControls` ويقيس عرض نصه ليكشف قصّ زمن يوتيوب ويحسب المساحة الخالية للأدوات (فيطويها ويسجّل `CT_BAR_OVERFLOW` إن بقي القص)، و`volumePanel` و`chapter` يُحجزان من الحسبة. ويراقبه «هل تغيّر يوتيوب؟» بالمحدد نفسه (`WATCHED` في `scripts/youtube-shapes.mjs`)، فإن غيّر يوتيوب اسمه أو أخرجه من الأدوات اليسرى ظهر «غاب: dom.timeDisplay».
 
 ## ٨. صفحات الإضافة وعناوينها
 
@@ -205,7 +207,7 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 
 - المسارات من `PAGES` و`pagePath(name, { v })` في `src/core/model/ids.js`، والفتح بـ`openPage(name, params)` في `src/ui/page.js` (`chrome.tabs.create`)، وقراءة `v` بـ`videoParam(location.search)`. «فتح الفيديو» بـ`watchUrl(id)` وحده.
 - **هيكل الصفحة:** مجلد فيه `index.html` (يربط `../../ui/tokens.css` و`base.css` و`components.css` ثم `<script src="main.js">`) و`main.js` نقطة دخول يجمّعها البناء مع ما تستورده، وأي ملفات CSS محلية تُنسخ تلقائيًا. صفحة واحدة لكل مجلد؛ لا صفحة جديدة دون تغيير البيان (عقد).
-- الصفحات لا تراسل المشغّل إلا بطلب حالة الفيديو (عقد الرسائل)، ولا طلبات شبكة منها أبدًا (فحص ثابت).
+- الصفحات لا تراسل المشغّل إلا برسائل عقد الرسائل: طلب حالة الفيديو (§٢ و§٥ هناك)، وتشخيص الصفحة (§٦)، ومعرّف الفيديو وحده والقفز إلى زمن (`tj:seek`، §٧ هناك و§١٤ هنا)، ولصق ناتج النموذج من النافذة (`tj:paste-import`، §٧ب). ولا طلبات شبكة منها (فحص ثابت) إلا صور الفيديو في المحفوظات: `<img>` من `i.ytimg.com` بمعرّف الفيديو ما دام مفتاحها مفعّلًا (`src/pages/library/thumb.js`).
 
 ## ٩. أساس الواجهة — `src/ui/` (مشترك)
 
@@ -213,15 +215,15 @@ applyRestoreTiming(cues, fingerprint) → Cue[]          // بعد تأكيد ا
 | --- | --- |
 | `tokens.css` | ألوان `Pages` بالوضعين (§٣.١ من مواصفة التصميم) بالبادئة `--tj-`، والخطوط وبدائلها، والمسافات والزوايا والظلال والحركة. الوضع يتبع النظام، و`data-theme` يفرضه. |
 | `base.css` | RTL، وسلّم الخطوط (`tj-display`…`tj-mono-sm`)، و`tj-ltr` لعزل الأزمنة والمعرّفات، والحاويات، وحلقة التركيز، وتقليل الحركة. |
-| `components.css` و`components.js` | `button` (أربعة أنواع وثلاثة مقاسات، والتحميل، و«معطّل بسبب»)، و`field` (تسمية وتلميح وخطأ، وLTR أحادي للأرقام)، و`confirmDialog` (`<dialog>`، Esc إلغاء)، و`alertBox` (أربع نبرات)، و`emptyState`، و`statusPill` (ست نبرات)، و`el` و`ltr` و`icon`. DOM وtextContent فقط. |
+| `components.css` و`components.js` | `button` (ستة أنواع: `primary` و`secondary` و`outline` و`ghost` و`danger` و`accent`؛ وخمسة مقاسات: `xs` و`sm` و`md` و`lg` و`xl`؛ وزر الأيقونة وحدها، والتحميل، و«معطّل بسبب»)، و`field` (تسمية وتلميح وخطأ، وLTR أحادي للأرقام)، و`confirmDialog` (`<dialog>`، Esc إلغاء)، و`alertBox` (أربع نبرات)، و`emptyState`، و`statusPill` (سبع نبرات: `neutral` و`info` و`success` و`warning` و`danger` و`edited` و`brand`، والخيار `plain`)، و`topbar` و`choiceGroup` و`chipGroup` و`slotPicker`، و`el` و`ltr` و`icon` و`relabel`. DOM وtextContent فقط. |
 | `format.js` | `formatOffset` (`+0.5` `−1.0` `0.0`)، و`formatTimecode` (`HH:MM:SS,mmm`)، و`formatCount` بصيغ `COUNT_FORMS` («مقطع واحد»، «مقطعان»، «3 مقاطع»، «11 مقطعًا»)، وخيارها `{ case: 'gen' | 'acc' }` للمثنى المجرور والمنصوب والمفرد المنصوب («مقطعين»، «مقطعًا واحدًا»؛ ع-٢٦) ولا يمس الإنجليزية، وبلا الخيار كما كانت، و`formatBytes`. والعزل داخل جملة عربية: `ltrInline` (LRI…PDI لاسم ملف أو رقم موقّع)، و`isolate` (FSI…PDI لنص حر كعنوان فيديو؛ تدقيق 7a66f91، C6، U49). |
 | `player-tokens.js` | رموز `Player` (§٣.٢) و`playerTokensCss(selector)` لطبقة العرض والأدوات. |
 | `page.js` | `startPage({ title, render })` بحدّ أخطاء، و`openPage`، و`extensionVersion`. |
 | `subtitle-fonts.js` | بيانات خطوط الترجمة فوق الفيديو وحدها (من «تهيئة W4»): لكل خط معرّفه (`SUBTITLE_FONTS` في نموذج الإعدادات)، واسمه العربي واللاتيني، واسم عائلة فريد داخل الإضافة، وملفّا وزنيه 400 و700، وسلسلة البدائل (المراعي المضمّن ثم خطوط النظام العربية). بلا DOM. |
-| `fonts/subtitle/` | ملفات WOFF2 للخطوط الأربعة بوزنين مع رخصة OFL لكل عائلة، من مستودع Google Fonts الرسمي. تُعلن في `web_accessible_resources` لملفات `.woff2` وحدها على يوتيوب بـ`use_dynamic_url`، ولا تُحمَّل من الشبكة. |
+| `fonts/subtitle/` | ملفات WOFF2 للخطوط الأربعة بوزنين مع رخصة OFL لكل عائلة، من مستودع Google Fonts الرسمي. تُعلن مع `fonts/ui/` في إدخال `web_accessible_resources` واحد لملفات `.woff2` وحدها على يوتيوب، ولا تُحمَّل من الشبكة. والإدخال بـ`use_dynamic_url: true` في البيان الواحد للهدفين: في Chromium لا يُبلَغ الملف إلا بمعرّف متغير يُولَّد لكل جلسة، لا بمعرّف الإضافة الثابت؛ وFirefox لا يدعم المفتاح فيتجاهله، وعنوان `moz-extension://` فيه عشوائي لكل نسخة متصفح أصلًا (`scripts/targets.mjs` لا يغيّر الإدخال، و`scripts/check-static.mjs` يشترطه كما هو). وسكربت المحتوى يقرأ الملف بـ`fetch(runtime.getURL(…))` ويبني الخط من بياناته (`FontFace`) في الهدفين. |
 | `gallery/` | معرض المكوّنات بحالاتها، في بناء التطوير وحده. |
 
-خطوط الواجهة بالاسم مع بدائلها، مثبّتة على الجهاز؛ لا تُحمَّل من الشبكة. خطوط الترجمة وحدها مضمّنة في الإضافة (`fonts/subtitle/`) ولا تغيّر خطوط الواجهة. المكوّن الجديد يُبنى داخل صفحة مرحلته، ثم يُرفع إلى `src/ui` بطلب.
+خطوط الواجهة مضمّنة في الإضافة أيضًا (لا مثبّتة على الجهاز)، بأسماء عائلات فريدة في `ui-fonts.js`: Cairo للعناوين من `fonts/ui/`، وAlmarai للنص من ملف `fonts/subtitle/` نفسه، ثم بدائل النظام. صفحات الإضافة تحمّلها من `ui/fonts.css`، والمشغّل عبر `FontFace` كخطوط الترجمة، ولا تُحمَّل من الشبكة. وتغيير خط الترجمة لا يغيّر خطوط الواجهة: عائلتان مختلفتان وإن خدمهما ملف المراعي نفسه. المكوّن الجديد يُبنى داخل صفحة مرحلته، ثم يُرفع إلى `src/ui` بطلب.
 
 ## ١٠. البناء والتشخيص والحزام
 
@@ -303,7 +305,7 @@ SAVE_LIMITS = { maxNameChars: 150, maxPageBytes: 536870912, maxMessageChars: 167
 
   ودائمًا `conflictAction: 'uniquify'`: **لا كتابة فوق ملف قائم**. وسلوك كل وضع في كل متصفح كما ثبت حيًا في «ما ثبت حيًا» أدناه.
 - **التحقق قبل التنزيل:** الاسم 1..150 محرفًا من الحروف (ومنها العربية) والأرقام و`. _ -` والمسافة، بلا فواصل مسار ولا `..` ولا محارف تحكم، ولا يبدأ بنقطة ولا مسافة (ويبدأ بـ`_` أو `-` كما يبدأ معرّف يوتيوب؛ تدقيق 5fedcb9)؛ وامتداده `.srt` أو `.txt` أو `.md` أو `.json`؛ والنوع من الامتداد لا من المستدعي؛ والحجم: عبر العامل حتى `maxMessageChars`، وما فوقه يرجع سكربت المحتوى إلى تنزيل Blob مع إشعار `SV_FALLBACK_BLOB` (لا رفض)؛ ومن الصفحات حتى `maxPageBytes` **بالبايت الفعلي** (`utf8Length`)، وهو حد قراءة النسخة الاحتياطية نفسه (عقد [`backup.md`](backup.md) §١؛ تدقيق 7a66f91، U55، قرار Q28). وإلا `SV_BAD_FILE` أو `SV_TOO_LARGE` (الأخير لحد الصفحات) بلا تنزيل.
-- **العامل الخلفي** `src/background/worker.js` (`background.service_worker` في البيان) **للحفظ وحده**: `createSaveService({ runtime, downloads, store })` في `save-service.js` يستمع لـ`tj:save-file`، ويقبلها من سكربت الإضافة وحده (`sender.id` ثم سكربت محتوى على يوتيوب أو صفحة إضافة)، ويقرأ الوضع من التفضيلات، ويتحقق من الملف، ويحفظ النص في رابط `data:` (لا `URL.createObjectURL` في العامل)، ويسجّل المعرّف بـ`store.setLastSave`. لا منطق آخر فيه.
+- **العامل الخلفي** `src/background/worker.js` (`background.service_worker` في البيان، وفي بناء Firefox صفحة خلفية `background.scripts` من `scripts/targets.mjs`) فيه أربع خدمات لا منطق منتج غيرها: الكاتب الواحد للتخزين (`createStoreService` في `store-service.js`، عقد الرسائل §٨)، والحفظ، وتلميح أيقونة الإضافة بلغة الواجهة (`installActionTitle` في `action-title.js`)، وتثبيت حال صور المحفوظات عند الترقية في Chromium (`installThumbsPin` في `thumbs-pin.js`، و2). **والحفظ** `createSaveService({ runtime, downloads, store })` في `save-service.js` يستمع لـ`tj:save-file`، ويقبلها من سكربت الإضافة وحده (`sender.id` ثم سكربت محتوى على يوتيوب أو صفحة إضافة)، ويقرأ الوضع من التفضيلات، ويتحقق من الملف، ويحفظ النص من رابط `blob:` حيث للخلفية `URL.createObjectURL` (صفحة الخلفية في Firefox، الذي يرفض `data:` في `downloads.download`؛ ويبقيها حية ما دام التنزيل قد يقرأ الرابط، تحقق Gemini، B4)، وإلا من رابط `data:` (عامل الخدمة في Chromium)، ويسجّل المعرّف بـ`store.setLastSave`.
 - **الإذن محصور في ملفات ترجمان** (اعتماد سلطان 2026-11-02)، ويفرضه `check-static`:
   - `chrome.downloads` في `src/core/save/**` و`src/background/**` وحدهما.
   - لا يُستدعى منه إلا `download` و`search`، و`search` بالمعرّف وحده `search({ id })` لمعرّف نزّلته الإضافة نفسها (من نتيجة `download` أو `getLastSave`).
