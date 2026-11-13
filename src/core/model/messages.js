@@ -15,6 +15,7 @@ export const MSG = Object.freeze({
   saveFile: 'tj:save-file',
   store: 'tj:store',
   pasteImport: 'tj:paste-import',
+  command: 'tj:command',
 });
 export const SAVE_REPLY_MODES = Object.freeze(['downloads', 'subfolder', 'ask']);
 
@@ -254,3 +255,20 @@ export function isPasteImportRequest(req) {
 /** @param {unknown} r */
 export const isPasteImportReply = (r) => isPlainObject(r) && r.v === MESSAGE_VERSION && (r.ok === true || (r.ok === false && typeof r.code === 'string'));
 
+
+// ---- اختصارات لوحة المفاتيح (الفكرة ١٠، المسار ب، ح-55؛ عقد messages §٩) ----
+
+/**
+ * أوامر البيان (commands) بلا مفاتيح مقترحة: يربطها المستخدم في صفحة اختصارات متصفحه، والعامل الخلفي يرسل اسم المضغوط منها إلى
+ * سكربت المحتوى في التبويب النشط، فيمرّره إلى أفعال جلسة الشريط. والأسماء نفسها حرفيًا في البيان وفي scripts/check-static.mjs.
+ */
+export const COMMAND_NAMES = Object.freeze(['display-mode', 'offset-earlier', 'offset-later', 'mark-review', 'replay-line']);
+
+/** @param {unknown} name */
+export const isCommandName = (name) => typeof name === 'string' && COMMAND_NAMES.includes(name);
+
+/** @param {string} name @returns {{ type: string, v: 1, name: string }} */
+export const commandRequest = (name) => ({ type: MSG.command, v: MESSAGE_VERSION, name });
+
+/** @param {unknown} req ثلاثة مفاتيح بالضبط، واسم من الأسماء الخمسة. */
+export const isCommandRequest = (req) => isTyped(req, MSG.command) && Object.keys(req).length === 3 && isCommandName(req.name);
