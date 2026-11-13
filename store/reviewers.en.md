@@ -103,7 +103,7 @@ Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3
 How subtitles are read: a main-world content script at document_start wraps fetch and XMLHttpRequest and reads a copy of the /api/timedtext response the YouTube player requested. It sends no request and passes the page's call through unchanged.
 
 Data (data_collection_permissions: required none; optional browsingActivity):
-- Library thumbnails from i.ytimg.com by video ID: off in Firefox until the user turns them on in Settings, which requests browsingActivity.
+- Library thumbnails (optional, off by default): <img> elements in the Library page loading i.ytimg.com/vi/<video ID>/mqdefault.jpg with referrerpolicy="no-referrer", so no page address is sent. Nothing is requested until the user turns on Settings > Display > "Video thumbnails in Library" and accepts Firefox's prompt for the optional browsingActivity permission (permissions.request({ data_collection: ["browsingActivity"] })). Declining keeps them off. Consent is re-read before each image, so withdrawing it in about:addons stops them. They only help recognize saved videos; Library and every other feature work fully without them.
 - Problem report from Settings > About > "Report a problem": copied as text after a full preview, for the user to email to the support address. The extension sends nothing and has no optional host permission. Since 2.2.0 technicalAndInteraction is no longer declared, because no report leaves the extension.
 Everything else stays in storage.local.
 
@@ -132,6 +132,7 @@ Arabic sample (test.ar.srt):
 | غلافا fetch وXHR يقرآن الرد ولا يطلبان | `src/main-world/capture.js` |
 | `blob:` في Firefox | `test/live/stores/t3.mjs` (`3d6a800`) |
 | الصور وموافقة Firefox الواحدة، والبلاغ بلا إرسال | `docs/site/privacy.md` وجدول أدلته، و`scripts/targets.mjs`، و`src/pages/settings/report.js` |
+| صور المحفوظات في Firefox: مطفأة افتراضيًا، ولا طلب قبل المفتاح والموافقة، والرفض يبقيها مطفأة، والموافقة تُقرأ قبل كل صورة، وبلا مُحيل، والمحفوظات تعمل بلاطةً بدونها | `src/core/model/prefs.js` (`ui.thumbnails: false`)، و`src/pages/settings/view.js` (`uiSwitch`: الطلب عند التفعيل، والرفض يعيد المفتاح)، و`src/core/consent/thumbnails.js` (`requestThumbnailsConsent` بـ`data_collection: ['browsingActivity']`، و`thumbnailsConsent` من `permissions.getAll`)، و`src/pages/library/view.js` (`thumbsConsent`) و`src/pages/library/thumb.js` (`gate` قبل إسناد `src`، و`referrerpolicy: 'no-referrer'`، والبلاطة)، و`scripts/targets.mjs` (`GECKO.data_collection_permissions`)؛ وخطر المراجعة في `docs/site/README.md` («المخاطرة المتبقية») |
 | إعادة البناء بايتًا | `scripts/release/store.mjs` (الطريقة)، و`release/store/tarjuman-2.2.0-store.json` (`source.reproduced`) |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
 | سياسة واحدة تسمّي Edge حيث يختلف السلوك: الصور مطفأة افتراضيًا منذ 2.2.0، ومن رقّى تبقى صوره كما كانت | `docs/site/privacy.md` (أسطر «في Chrome وEdge وBrave»)، و`src/core/model/prefs.js` (`ui.thumbnails: false`)، و`src/background/thumbs-pin.js`، و`src/pages/settings/view.js`؛ والبند 1.5.2 من [سياسات مطوري Edge](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (قُرئ 2026-11-05) |
