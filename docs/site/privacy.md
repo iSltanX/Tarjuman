@@ -116,7 +116,7 @@
 
 - **التخزين** (ومعه تخزين غير محدود الحجم): لحفظ محفوظاتك وإعداداتك على جهازك.
 - **التنزيلات:** لحفظ ملفات ترجمان في المكان الذي تختاره.
-- **صفحات `www.youtube.com`:** لتعمل أدوات ترجمان فوق المشغّل. لا مواقع أخرى، ولا تبويبات.
+- **صفحات `www.youtube.com`:** لتعمل أدوات ترجمان فوق المشغّل. لا مواقع أخرى، ولا تبويبات. وإن سحبته من متصفحك قال ترجمان ذلك في نافذته وإعداداته، وطلبه منك من جديد حين تضغط «السماح» في الإعدادات. وهو الإذن نفسه، لا صلاحية جديدة.
 - **في Firefox، موافقة اختيارية واحدة:** «نشاط التصفح» لصور المحفوظات، لا تُطلب إلا حين تفعّل مفتاح الصور، وتسحبها من صفحة إضافات Firefox.
 - لا صلاحية لسجل التصفح، ولا لملفات الارتباط، ولا للتبويبات.
 
@@ -201,6 +201,7 @@
 | النموذج | ما في التعليمات | `src/core/export/instructions.js` و`instructions-en.js` (`video_title` و`video_url` وفقرة المصطلحات، و`source` و`target` منذ AA1، ولغة النص من لغة الواجهة منذ 2.1.1)، و`docs/product-spec.md` الملحقان أ وج |
 | ما يُحفظ | التواريخ، والاسم المختصر، وتجزئة نص البصمة، وسقوط أزواج اللغات بعد 200 | `src/core/model/video.js` و`tracks.js` و`slots.js` و`marks.js`، و`src/core/export/index.js` و`hash.js`، و`src/core/model/lang-prefs.js` |
 | الصلاحيات | الأربع | `src/manifest.json`، و`audit.mjs` (`permissions-approved-only` و`no-host-or-optional-permissions`) |
+| الصلاحيات | إذن يوتيوب المسحوب: النافذة والإعدادات تقولانه، و«السماح» يطلب الإذن نفسه من جديد، بلا صلاحية جديدة | `src/core/consent/youtube-access.js` (`youtubeAccess` بـ`permissions.contains`، و`requestYoutubeAccess` بـ`permissions.request` لأصل `content_scripts.matches` وحده)، و`src/pages/settings/view.js` («الوصول إلى يوتيوب» في «التشخيص»)، و`src/pages/popup/status.js` (`TJ_SITE_ACCESS_OFF` و`missAction`)؛ ولا إذن في البيان غير الثلاثة، ولا طلب خارج حزمة الإعدادات (`scripts/check-static.mjs` سطرًا مراجَعًا، و`audit.mjs`: `no-host-or-optional-permissions` و`permissions-request-settings-only`)؛ و`test/unit/consent/youtube-access.test.js` و`test/unit/pages/settings/youtube-access.test.js` و`test/unit/pages/popup/site-access-link.test.js`؛ وحيًا في Firefox 160 أعاد الطلب نفسه من صفحة الإعدادات الإذن (مجسّ التحقق، 2026-11-13)، ولم يُختبر الزر نفسه حيًا بعد |
 | الصلاحيات | موافقة Firefox الاختيارية الواحدة | `scripts/targets.mjs` (`GECKO.data_collection_permissions.optional` = `browsingActivity`)، و`audit.mjs` (`target-browser-settings`)، و`src/core/consent/thumbnails.js`؛ و`test/unit/release/targets.test.js` |
 | الجهات الخارجية | يوتيوب، وGoogle لبريد الدعم | `src/pages/library/thumb.js`، و`src/core/report/messages.js` (`SUPPORT_EMAIL` على Gmail) |
 | لا بيع | لا نقل لغير الوظيفة | لا طلب شبكة غير الصور (`audit.mjs`). واستعمال البلاغ قرار سلطان (2026-11-04، `store/README.md` §٥) |

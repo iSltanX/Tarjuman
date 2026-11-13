@@ -26,7 +26,7 @@
 
 بعد التثبيت ثبّت أيقونة ترجمان في شريط المتصفح: أيقونة الإضافات (قطعة الأحجية)، ثم الدبوس بجوار «ترجمان». فمن نافذتها تنسخ تعليمات الترجمة.
 
-عند التثبيت يطلب ترجمان ثلاث صلاحيات: التخزين، والتنزيلات، والعمل على صفحات `www.youtube.com` وحدها. ولا صلاحية اختيارية غيرها. وفي Firefox موافقة اختيارية واحدة لصور المحفوظات، تُطلب حين تفعّلها. وتفصيل كل منها في [الخصوصية](/tarjuman/privacy#permissions).
+عند التثبيت يطلب ترجمان ثلاث صلاحيات: التخزين، والتنزيلات، والعمل على صفحات `www.youtube.com` وحدها. ولا صلاحية اختيارية غيرها. وإن سحبت إذن يوتيوب من متصفحك قال ترجمان ذلك في نافذته وإعداداته، وطلبه منك من جديد حين تضغط «السماح» في الإعدادات. وهو الإذن نفسه، لا صلاحية جديدة. وفي Firefox موافقة اختيارية واحدة لصور المحفوظات، تُطلب حين تفعّلها. وتفصيل كل منها في [الخصوصية](/tarjuman/privacy#permissions).
 
 ## أول استعمال — `#first-use`
 
@@ -131,6 +131,7 @@
 | التثبيت | رابطا Chrome Web Store (لـChrome وBrave) وMicrosoft Edge Add-ons | صفحتا المتجرين لزائر غير مسجَّل (2026-11-08): 200، وترجمان `2.0.0`، والناشر BySultan؛ `store/submission.md` §٥ |
 | التثبيت | «قريبًا» لـFirefox | لم يُنشر فيه بعد (`store/submission.md` §٥: روابط المتجرين المنشورين وحدهما) |
 | التثبيت | الصلاحيات الثلاث، ولا اختيارية غير موافقة Firefox للصور | `src/manifest.json`، و`docs/site/privacy.md` `#permissions` |
+| التثبيت | إذن يوتيوب المسحوب: النافذة والإعدادات تقولانه، و«السماح» يطلب الإذن نفسه من جديد، بلا صلاحية جديدة | كما في جدول أدلة `docs/site/privacy.md` (صف «الصلاحيات»: إذن يوتيوب المسحوب) |
 | أول استعمال | الخطوات الست وأسماء الأزرار، ونسخ التعليمات من النافذة، ولغة الملف المرفوع | `docs/user-guide.md` §٣، و`src/i18n/ar/settings.js` (`about.guideStep1` إلى `guideStep5`)، و`src/i18n/ar/player.js` (`controls`)، و`src/pages/popup/` (كتلة «تعليمات الترجمة»)، و`docs/contracts/data-model.md` §١٧ (`langFromFileName`)؛ وقرارات سلطان في جولة 2.0.0 (`docs/product-spec.md` §٦.٢ و§٨) |
 | أول استعمال | رسالة CC، والقائمة لا يغلقها الضغط على CC وتتحدّث بالالتقاط | `docs/user-guide.md` §٣ و§١٠، و`src/core/errors/controls.js` (`CT_NOT_CAPTURED`)، و`src/player/controls/session.js` (`onDocPointer`، ح-40) و`test/unit/player/controls/f7-cc-stuck.test.js`، و`docs/product-spec.md` §٦.٤ |
 | أول استعمال | لغة الواجهة: مكان الخيار والاختيار الأول وما لا تمسه | `src/pages/settings/view.js` (`uiLocale`)، و`src/i18n/locale.js` (`resolveInitialLocale`)، و`docs/contracts/storage.md` §١٤، و`docs/known-limitations.md` §٧ |

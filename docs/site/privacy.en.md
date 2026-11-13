@@ -102,7 +102,7 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 
 - **Storage** (along with unlimited storage size): To keep your Library and settings on your device.
 - **Downloads:** To save Tarjuman’s files where you choose.
-- **Pages on `www.youtube.com`:** So Tarjuman’s tools can work over the player. No other sites, and no tabs.
+- **Pages on `www.youtube.com`:** So Tarjuman’s tools can work over the player. No other sites, and no tabs. If you revoke it in your browser, Tarjuman says so in its popup and settings, and asks for it again when you press “Allow” in Settings. It’s the same permission, not a new one.
 - **In Firefox, one optional consent:** “Browsing activity” for Library thumbnails, requested only when you turn on the thumbnails switch. You can withdraw it from Firefox’s add-ons page.
 - No permission for browsing history, cookies, or tabs.
 

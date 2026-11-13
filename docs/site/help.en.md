@@ -22,7 +22,7 @@ Tarjuman is for desktop computers and works on YouTube watch pages.
 
 After installing, pin Tarjuman’s icon to the browser toolbar: click the extensions icon (the puzzle piece), then the pin next to “Tarjuman”. You’ll copy the translation instructions from its popup.
 
-On install, Tarjuman asks for three permissions: storage, downloads, and access to `www.youtube.com` pages only. There’s no other, optional permission. In Firefox there’s one optional consent, for Library thumbnails, requested when you turn them on. Each is explained in [Privacy](/tarjuman/en/privacy#permissions).
+On install, Tarjuman asks for three permissions: storage, downloads, and access to `www.youtube.com` pages only. There’s no other, optional permission. If you revoke the YouTube permission in your browser, Tarjuman says so in its popup and settings, and asks for it again when you press “Allow” in Settings. It’s the same permission, not a new one. In Firefox there’s one optional consent, for Library thumbnails, requested when you turn them on. Each is explained in [Privacy](/tarjuman/en/privacy#permissions).
 
 ## First use — `#first-use`
 
