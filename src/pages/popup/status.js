@@ -155,10 +155,12 @@ function baseTrack(reply) {
 /**
  * وصف بطاقة الفيديو الحالي: حالة واحدة من أربع. نصوصها بلغة المسار والترجمة الفعليتين (AA3)، لا «الإنجليزي» و«العربية».
  * @param {import('../../core/model/messages.js').VideoStateReply | null} reply
- * saved: للفيديو سجل في المحفوظات (مؤشر حالة «محفوظ» في البطاقة، لا رابط).
+ * saved: للفيديو سجل في المحفوظات. وبلا ترجمة لا يكتب السجلَّ إلا تنزيل الأصل (withExport يحفظ المسار وبصمته)، فـsaved هناك «الأصل
+ * محفوظ»، وoriginSaved يُظهر مؤشره «الأصل محفوظ» بجانب «لا ترجمة محفوظة بعد» ما لم يقله سطر المسار نفسه (المسار المحفوظ «· محفوظة»،
+ * ح-59). وكان المؤشر «محفوظ» وحده تحت «لا ترجمة محفوظة بعد» فيُقرأ أن الترجمة محفوظة.
  * @returns {{ kind: 'not-video' }
  *   | { kind: 'loading', title: string }
- *   | { kind: 'no-subtitle', title: string, englishLine: string, englishKind: string | null, englishReady: boolean, saved: boolean }
+ *   | { kind: 'no-subtitle', title: string, englishLine: string, englishKind: string | null, englishReady: boolean, saved: boolean, originSaved: boolean }
  *   | { kind: 'has-subtitle', title: string, line: string, edited: boolean, matched: boolean | null, mode: string, fileName: string, saved: true }}
  *   englishLine/englishReady (الاسمان التاريخيان): سطر مسار الأصل وجاهزيته؛ englishKind نوعه («يدوية» أو «تلقائية»)، ولا نوع للمترجم آليًا
  */
@@ -172,7 +174,7 @@ export function describeStatus(reply) {
     // الوصف الواحد مع قائمة «تنزيل الأصل» (ح-57)، وحاله في آخره: «الإنجليزية · تلقائية · 1066 مقطعًا · ملتقطة».
     const line = !base ? t('popup.status.notCaptured') : trackDescription(base, { count: base.cueCount, state: base.captured ? 'captured' : 'saved' });
     const kind = base && !base.via ? t(`common.track.kind.${base.kind === 'asr' ? 'asr' : 'manual'}`) : null;
-    return { kind: 'no-subtitle', title, englishLine: line, englishKind: kind, englishReady: !!base, saved };
+    return { kind: 'no-subtitle', title, englishLine: line, englishKind: kind, englishReady: !!base, saved, originSaved: saved && !!base?.captured };
   }
   const a = reply.arabic;
   return {

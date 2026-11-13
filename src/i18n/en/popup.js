@@ -13,6 +13,7 @@ export default Object.freeze({
   },
   card: {
     loading: 'Reading the video’s status', saved: 'Saved', savedTitle: 'This video is in Library',
+    originSaved: 'Original saved', originSavedTitle: 'The original was downloaded before; it’s in Library awaiting translation',
     edited: 'Edited', differs: 'Differs from original', noTranslation: 'No saved translation yet',
     missing: { one: '1 segment missing', other: 'segments missing' },
   },

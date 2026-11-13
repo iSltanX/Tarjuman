@@ -25,8 +25,10 @@ export function skeletonCard(doc = document) {
   });
 }
 
-/** مؤشر «محفوظ» بنقطته (معيّن الهوية)، لا رابطًا ولا زرًا. @param {Document} [doc] */
+/** مؤشر «محفوظ» بنقطته (معيّن الهوية)، لا رابطًا ولا زرًا: للفيديو بترجمة. @param {Document} [doc] */
 export const savedPill = (doc = document) => statusPill({ tone: 'success', text: t('popup.card.saved'), title: t('popup.card.savedTitle'), doc });
+/** «الأصل محفوظ» (ح-59): لفيديو بلا ترجمة نُزّل أصله من قبل فحُفظ في المحفوظات بانتظار الترجمة. @param {Document} [doc] */
+export const originSavedPill = (doc = document) => statusPill({ tone: 'success', text: t('popup.card.originSaved'), title: t('popup.card.originSavedTitle'), doc });
 
 /** شارة بلا نقطة وبأيقونة اختيارية قبل نصها (معدّلة، وتختلف عن الأصل)؛ outline لشارات الوصف المحيطية. */
 function iconPill({ text, iconName, tone = 'neutral', outline = false, doc }) {
@@ -80,13 +82,14 @@ export function statusCard(s, tools, capture, doc = document, action = null) {
     else if (s.matched === false) pills.push(iconPill({ text: t('popup.card.differs'), iconName: 'warning', tone: 'warning', doc }));
     card.append(el('div', { className: 'tj-popup__pills', children: pills, doc }));
   } else {
-    card.append(el('p', { className: 'tj-popup__line', text: t('popup.card.noTranslation'), doc }));
+    // «لا ترجمة محفوظة بعد» و«الأصل محفوظ» في سطر واحد (ح-59): ما لم يُحفظ وما حُفظ متجاوران، ولا سطر للمؤشر وحده.
+    const none = el('p', { className: 'tj-popup__line', text: t('popup.card.noTranslation'), doc });
+    card.append(s.originSaved ? el('div', { className: 'tj-popup__line-row', children: [none, originSavedPill(doc)], doc }) : none);
     // سطر مسار الأصل بلغته ونوعه وعدده (AA3): «اليابانية ملتقطة · تلقائية · 212 مقطعًا».
     const text = s.englishLine;
     card.append(s.englishReady
       ? resultLine({ tone: 'ok', iconName: 'check', text, className: 'tj-popup__english', doc })
       : el('p', { className: 'tj-popup__result tj-popup__english', text, doc }));
-    if (s.saved) card.append(el('div', { className: 'tj-popup__pills', children: [savedPill(doc)], doc }));
   }
   if (capture) card.append(resultLine({ tone: 'warn', iconName: 'warning', text: capture.text, className: 'tj-popup__capture', doc }));
   if (tools) card.append(el('hr', { className: 'tj-rule', doc }), toolsRow(tools, doc));

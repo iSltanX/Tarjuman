@@ -25,7 +25,7 @@ test('جارٍ: الهيكل مع العنوان', () => {
 });
 
 test('فيديو بلا ترجمة محفوظة: مسار الأصل بلغته الفعلية ملتقطًا أو محفوظًا بالوصف الواحد (ح-57)، أو لم يُلتقط', () => {
-  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'لم تُلتقط ترجمة الفيديو بعد', englishKind: null, englishReady: false, saved: false });
+  assert.deepEqual(describeStatus(reply()), { kind: 'no-subtitle', title: 'عنوان تجريبي', englishLine: 'لم تُلتقط ترجمة الفيديو بعد', englishKind: null, englishReady: false, saved: false, originSaved: false });
   const captured = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }], saved: [] } });
   assert.equal(describeStatus(captured).englishLine, 'الإنجليزية · يدوية · 5 مقاطع · ملتقطة');
   assert.equal(describeStatus(captured).englishKind, 'يدوية', 'نوع المسار الملتقط');
@@ -40,6 +40,7 @@ test('فيديو بلا ترجمة محفوظة: مسار الأصل بلغته 
   assert.equal(describeStatus(saved).englishLine, 'الإنجليزية · يدوية · 5 مقاطع · محفوظة');
   assert.equal(describeStatus(saved).saved, true, 'مؤشر «محفوظ» لسجل بلا ترجمة');
   assert.equal(describeStatus(captured).saved, false, 'الملتقط وحده ليس محفوظًا');
+  assert.equal(describeStatus(saved).originSaved, false, 'سطر المسار المحفوظ يقوله، فلا مؤشر يكرره (ح-59)');
   // مسار «من» في الرد يتقدّم (آخر ما نُزّل، ق٥).
   const two = reply({ english: { captured: [{ key: 'en|manual', kind: 'manual', cueCount: 5, ok: true }, { key: 'ja|asr', kind: 'asr', cueCount: 7, ok: true }], saved: [] }, source: { key: 'ja|asr', lang: 'ja', kind: 'asr', via: null, from: 'export' } });
   assert.ok(describeStatus(two).englishLine.startsWith('اليابانية · تلقائية'));

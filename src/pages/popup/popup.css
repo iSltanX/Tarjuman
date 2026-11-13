@@ -15,6 +15,8 @@
 .tj-popup__card .tj-rule { margin: 0; }
 .tj-popup__title { font: 700 16px/24px var(--tj-font-head); }
 .tj-popup__line { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
+/* «لا ترجمة محفوظة بعد» ومؤشر «الأصل محفوظ» بجانبه (ح-59)، ويلتف المؤشر تحته إن ضاق السطر. */
+.tj-popup__line-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .tj-popup__pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .tj-popup__pills .tj-pill .tj-icon { width: 14px; height: 14px; }
 .tj-popup .tj-pill--outline { background: transparent; box-shadow: inset 0 0 0 1px var(--tj-border-strong); }
