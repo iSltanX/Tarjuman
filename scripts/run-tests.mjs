@@ -5,14 +5,16 @@
 //   node scripts/run-tests.mjs test/integration
 // وكل اختبار مُتخطّى يُذكر باسمه وسببه في آخر المخرج، ويفشل التشغيل في CI (المتغير CI): لا تخطٍّ صامت.
 // تحقق Gemini (ع-٢٩): لكل اختبار مهلة (--timeout=<ms>، والافتراضية سخية)، فاختبار معلّق يفشل باسمه بدل أن يعلّق التشغيل حتى مهلة
-// CI، وتنتهي عملية الملف بعد اختباراته ولو بقي فيها مؤقت حي (--test-force-exit). واختبار todo يُذكر باسمه كالمتخطّى: الفاشل منه
-// فشلٌ دائمًا (كان node يخرج 0)، وأي todo في CI فشل.
+// CI. واختبار todo يُذكر باسمه كالمتخطّى: الفاشل منه فشلٌ دائمًا (كان node يخرج 0)، وأي todo في CI فشل.
+// تحقق الجولة الثانية (ن-٧): لا --test-force-exit، فخطأ يقع بعد انتهاء الاختبار (مؤقت لاحق، وعد مرفوض متأخرًا) يُفشل التشغيل كما في
+// 2.2.0. وعملية ملف بقيت حيةً بعد آخر اختباراته تخرج بالرمز 1 بعد مهلة إضافية باسمها (scripts/run-tests-exit-guard.mjs)، فلا يعلّق
+// التشغيل اختبارٌ معلّق بمؤقت حي.
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -60,7 +62,7 @@ if (!files.length) {
 const scratch = mkdtempSync(path.join(tmpdir(), 'tj-run-tests-'));
 const tapFile = path.join(scratch, 'report.tap');
 const r = spawnSync(process.execPath, [
-  '--test', `--test-timeout=${timeoutMs}`, '--test-force-exit',
+  '--test', `--test-timeout=${timeoutMs}`, `--import=${pathToFileURL(path.join(ROOT, 'scripts/run-tests-exit-guard.mjs')).href}`,
   '--test-reporter=spec', '--test-reporter-destination=stdout', '--test-reporter=tap', `--test-reporter-destination=${tapFile}`,
   ...files.map((f) => path.relative(ROOT, f)),
 ], { cwd: ROOT, stdio: 'inherit' });

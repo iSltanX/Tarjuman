@@ -154,17 +154,59 @@ test('ع-٢٩: todo ناجح يُذكر باسمه وينجح محليًا، و�
 test('ع-٢٩: اختبار معلّق (بمؤقت حي) يفشل باسمه بعد المهلة، ولا يعلّق التشغيل', async () => {
   const body = "test('معلّق إلى الأبد', async () => { await new Promise(() => { setInterval(() => {}, 1000); }); });\ntest('سليم بعده', () => {});";
   const t0 = Date.now();
-  const r = await runTests('hang', body, { args: ['--timeout=500'] });
+  // بلا --test-force-exit (ن-٧) يُبقي المؤقت الحي عملية الملف، فيُخرجها الحارس بعد المهلة الإضافية (300ms هنا).
+  const r = await runTests('hang', body, { args: ['--timeout=500'], env: { TJ_TEST_EXIT_GRACE_MS: '300' } });
   assert.equal(r.error, undefined, 'التشغيل علّق حتى المهلة الخارجية');
   assert.equal(r.status, 1);
   assert.match(r.stdout, /معلّق إلى الأبد/);
   assert.match(r.stdout, /timed out after 500ms/);
+  assert.match(r.stdout + r.stderr, /بقي حيًّا 300ms بعد آخر اختباراته/);
   assert.ok(Date.now() - t0 < 30_000, `${Date.now() - t0}ms`);
 });
 
-test('ع-٢٩: المهلة الافتراضية تُمرَّر إلى node --test، و--timeout بغير عدد خطأ استعمال', async () => {
+test('ع-٢٩: اختبار معلّق بلا مؤقت حي يُلغى باسمه ويُفشل التشغيل', async () => {
+  const r = await runTests('hang-no-timer', "test('معلّق بلا مؤقت', () => new Promise(() => {}));", { args: ['--timeout=500'] });
+  assert.equal(r.error, undefined, 'التشغيل علّق حتى المهلة الخارجية');
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /معلّق بلا مؤقت/);
+});
+
+// تحقق الجولة الثانية (ن-٧): --test-force-exit كان يُنهي عملية الملف فور آخر اختبار، فيُبتلع ما يقع بعده ويخرج التشغيل 0. وفي
+// 2.2.0 كان node يذكره «asynchronous activity after the test ended» ويخرج 1. الحالات من مجسّ التحقق (forceexit/cases.mjs).
+const LATE_CASES = [
+  ['رمي في مؤقت 0', "test('ينجح ثم يرمي في مؤقت 0', () => { setTimeout(() => { throw new Error('late-0'); }, 0); });", /late-0/],
+  ['رمي بعد 50', "test('ينجح ثم يرمي بعد 50', () => { setTimeout(() => { throw new Error('late-50'); }, 50); });", /late-50/],
+  ['رفض وعد متأخر', "test('ينجح ثم رفض وعد بعد 300', () => { setTimeout(() => { Promise.reject(new Error('late-reject')); }, 300); });", /late-reject/],
+  ['تأكيد متأخر', "test('تأكيد متأخر بعد 300', () => { setTimeout(() => assert.equal(1, 2), 300); });", /1 !== 2/],
+  ['عمل غير منتظر', "test('عمل غير منتظر يفشل لاحقًا', () => { (async () => { await new Promise((r) => setTimeout(r, 200)); assert.equal('a', 'b'); })(); });", /'a' !== 'b'/],
+];
+
+test('ن-٧: اختبار ينجح ثم يرمي في مؤقت لاحق أو يرفض وعدًا متأخرًا يُخرج المشغّل بالرمز 1 ويُذكر خطؤه', async () => {
+  for (const [i, [label, body, err]] of LATE_CASES.entries()) {
+    const r = await runTests(`late-${i}`, body);
+    assert.equal(r.error, undefined, `${label}: علّق`);
+    assert.equal(r.status, 1, `${label}: ابتُلع الخطأ المتأخر\n${r.stdout}`);
+    assert.match(r.stdout, err, label);
+  }
+  const control = await runTests('late-control', "test('ضابطة ناجحة', () => {});");
+  assert.equal(control.status, 0, control.stdout + control.stderr);
+});
+
+test('ن-٧: ملف بقي حيًّا بعد آخر اختباراته (مقبض متسرّب) يفشل باسمه بعد المهلة الإضافية، فلا يعلّق التشغيل ولا ينجح صامتًا', async () => {
+  const body = "test('ينجح ويترك مؤقتًا حيًّا', () => { setInterval(() => {}, 1000); });";
+  const t0 = Date.now();
+  const r = await runTests('leak', body, { env: { TJ_TEST_EXIT_GRACE_MS: '300' } });
+  assert.equal(r.error, undefined, 'التشغيل علّق حتى المهلة الخارجية');
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.match(r.stdout + r.stderr, /leak\/a\.test\.js بقي حيًّا 300ms بعد آخر اختباراته \(المقابض الحية: [^)]*\bTimeout\b/);
+  assert.match(r.stdout, /✔ ينجح ويترك مؤقتًا حيًّا/, 'الاختبار نفسه ناجح، والفشل للملف');
+  assert.ok(Date.now() - t0 < 30_000, `${Date.now() - t0}ms`);
+});
+
+test('ع-٢٩ ون-٧: المهلة الافتراضية تُمرَّر إلى node --test بلا --test-force-exit، و--timeout بغير عدد خطأ استعمال', async () => {
   const src = await readFile(path.join(ROOT, 'scripts/run-tests.mjs'), 'utf8');
-  assert.match(src, /`--test-timeout=\$\{timeoutMs\}`, '--test-force-exit'/);
+  assert.match(src, /`--test-timeout=\$\{timeoutMs\}`/);
+  assert.doesNotMatch(src, /'--test-force-exit'/);
   const bad = await runTests('bad-timeout', "test('سليم', () => {});", { args: ['--timeout=abc'] });
   assert.equal(bad.status, 2);
   assert.match(bad.stderr, /--timeout=abc ليس عددًا صحيحًا موجبًا/);
