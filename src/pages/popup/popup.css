@@ -86,7 +86,7 @@
 
 /* الخطوات الثلاث لفيديو بلا ترجمة عربية: منجزة بعلامة ✓، والحالية برقمها ممتلئًا بالإبراز، والمنتظرة برقمها محاطًا. */
 .tj-popup__guide:empty { display: none; }
-.tj-popup__steps { display: flex; flex-direction: column; gap: 9px; margin: 0; padding: 12px; list-style: none; border-radius: var(--tj-radius-card); background: var(--tj-surface-2); }
+.tj-popup__steps { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 12px; list-style: none; border-radius: var(--tj-radius-card); background: var(--tj-surface-2); }
 .tj-popup__step { display: flex; align-items: center; gap: 10px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
 .tj-popup__step-n {
   flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;

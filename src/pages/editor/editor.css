@@ -194,7 +194,7 @@ html, body.ed-page { height: 100%; }
 .ed-list--no-en .ed-row, .ed-list__head.ed-list--no-en { grid-template-columns: var(--ed-cols-no-en); }
 .ed-list__head.ed-list--no-en .ed-col-en { display: none; }
 .ed-row__check { width: 24px; height: 24px; margin: 8px 0 0; accent-color: var(--tj-text); } /* 24 حدّ WCAG 2.5.8 في صف كثيف (CL-018) */
-.ed-row__n { display: flex; align-items: center; justify-content: flex-end; gap: 5px; min-height: 40px; color: var(--tj-muted); direction: ltr; font-size: 12px; }
+.ed-row__n { display: flex; align-items: center; justify-content: flex-end; gap: 4px; min-height: 40px; color: var(--tj-muted); direction: ltr; font-size: 12px; }
 /* «معدّل» معيّن الهوية (نقطة التاء) لا دائرة. */
 .ed-row__dot { width: 5px; height: 5px; border-radius: 1px; transform: rotate(45deg); background: var(--tj-edited); visibility: hidden; flex: none; }
 .ed-row.is-edited .ed-row__dot { visibility: visible; }

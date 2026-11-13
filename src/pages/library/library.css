@@ -92,7 +92,7 @@
 .lib-thumb__mark path { fill: currentColor; }
 .lib-thumb__mark--small { display: none; }
 .lib-thumb__dur {
-  position: absolute; inset-block-end: 4px; inset-inline-end: 4px; z-index: 1; padding: 1px 5px; border-radius: var(--tj-radius-xs);
+  position: absolute; inset-block-end: 4px; inset-inline-end: 4px; z-index: 1; padding: 1px 4px; border-radius: var(--tj-radius-xs);
   background: var(--lib-scrim); color: var(--lib-scrim-ink); font: 400 11px/16px var(--tj-font-mono); direction: ltr;
 }
 
@@ -103,7 +103,7 @@
 .lib-trs__none { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
 .lib-trs__chips, .lib-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .lib-chip {
-  position: relative; display: inline-flex; align-items: center; gap: 7px; height: 28px; max-width: 220px; padding: 0 11px;
+  position: relative; display: inline-flex; align-items: center; gap: 6px; height: 28px; max-width: 220px; padding: 0 11px;
   border-radius: var(--tj-radius-pill); border: 1px solid transparent; background: var(--tj-control); color: var(--tj-text-2);
   font: 700 13px/18px var(--tj-font-body); white-space: nowrap; cursor: pointer;
 }
@@ -166,7 +166,7 @@
 .lib-state .tj-empty { margin: var(--tj-space-7) auto; }
 .lib-state .tj-empty__art { box-sizing: content-box; width: 24px; height: 24px; padding: 12px; border-radius: 12px; background: var(--tj-surface-2); color: var(--tj-muted); }
 .lib-state--error .tj-empty__art { background: var(--tj-danger-bg); color: var(--tj-danger); }
-.lib-state .tj-empty__steps { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 9px; width: min(320px, 100%); padding: 12px; border-radius: var(--tj-radius-lg); background: var(--tj-surface-2); text-align: start; }
+.lib-state .tj-empty__steps { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; width: min(320px, 100%); padding: 12px; border-radius: var(--tj-radius-lg); background: var(--tj-surface-2); text-align: start; }
 .lib-state .tj-empty__steps li { gap: 10px; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--tj-muted); font-size: 13px; }
 .lib-state .tj-empty__steps li::before { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--tj-border-input); background: transparent; color: var(--tj-muted); }
 .lib-state .tj-empty__steps li:first-child { color: var(--tj-text); }
@@ -203,7 +203,7 @@
 .lib-diff__wrap { max-height: 280px; overflow: auto; margin-top: 6px; }
 .lib-diff { width: 100%; border-collapse: collapse; font: 400 13px/20px var(--tj-font-body); }
 .lib-diff th { position: sticky; top: 0; background: var(--tj-surface-2); text-align: start; padding: 6px 10px; font-size: 12px; font-weight: 700; color: var(--tj-muted); border-bottom: 1px solid var(--tj-border); }
-.lib-diff td { padding: 7px 10px; border-bottom: 1px solid var(--tj-border); vertical-align: top; overflow-wrap: anywhere; }
+.lib-diff td { padding: 6px 10px; border-bottom: 1px solid var(--tj-border); vertical-align: top; overflow-wrap: anywhere; }
 .lib-diff tr:last-child td { border-bottom: 0; }
 .lib-diff__n { width: 44px; color: var(--tj-muted); }
 .lib-diff__before:not(.lib-diff__none) { background: var(--tj-danger-bg); color: var(--tj-danger); text-decoration: line-through; text-decoration-color: var(--tj-danger); }

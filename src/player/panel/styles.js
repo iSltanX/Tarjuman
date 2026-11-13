@@ -39,7 +39,7 @@ export function panelCss() {
 
 /* الأزرار بلا إطار دائم (لوحة 08): بخلفية الزر المحايدة والمرور والضغط أغمق منها، والشفاف بلا خلفية حتى المرور. الحد الشفاف
    يحفظ المقاس. (قائمة الخيارات ونمطها المفتوح حُذفا في ح4.) */
-.b { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: var(--tj-control-sm); min-width: var(--tj-control-sm); padding: 0 10px; border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-control); color: var(--tj-text); font: 700 13px/20px var(--tj-font-body); white-space: nowrap; }
+.b { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--tj-control-sm); min-width: var(--tj-control-sm); padding: 0 10px; border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-control); color: var(--tj-text); font: 700 13px/20px var(--tj-font-body); white-space: nowrap; }
 .b:hover { background: var(--tj-control-hover); }
 .b:active { background: var(--tj-control-pressed); }
 .b--ghost { background: transparent; color: var(--tj-text-2); }
@@ -55,7 +55,7 @@ export function panelCss() {
 .head { grid-area: head; flex: none; height: 52px; display: flex; align-items: center; gap: 8px; padding: 0; padding-inline: 14px 8px; border-bottom: 1px solid var(--tj-border); }
 .head__mark { width: 22px; flex: none; display: flex; justify-content: center; }
 .title { margin: 0; font: 700 15px/22px var(--tj-font-head); color: var(--tj-text); }
-.load { display: inline-flex; align-items: center; gap: 5px; height: 10px; margin-inline-end: 10px; color: var(--tj-accent); }
+.load { display: inline-flex; align-items: center; gap: 6px; height: 10px; margin-inline-end: 10px; color: var(--tj-accent); }
 .load i { width: 7px; height: 7px; background: currentColor; transform: rotate(45deg); border-radius: 1px; animation: tj-pulse 900ms var(--tj-ease) infinite; }
 .load i + i { animation-delay: 450ms; }
 @keyframes tj-pulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
@@ -87,9 +87,9 @@ export function panelCss() {
 .body { grid-area: body; flex: 1 1 auto; min-height: 0; position: relative; display: flex; flex-direction: column; }
 .body[data-kind="ready"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 32px; background: linear-gradient(to bottom, transparent, var(--tj-surface)); pointer-events: none; }
 .list { flex: 1 1 auto; min-height: 0; position: relative; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 6px; display: flex; flex-direction: column; gap: 1px; scrollbar-width: thin; scrollbar-color: var(--tj-border-strong) transparent; }
-.row { flex: none; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; align-items: start; padding: 7px 0; padding-inline: 10px 12px; border-radius: var(--tj-radius-lg); cursor: pointer; }
+.row { flex: none; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 0; padding-inline: 10px 12px; border-radius: var(--tj-radius-lg); cursor: pointer; }
 .row:hover { background: var(--tj-hover); }
-.t { display: flex; align-items: center; justify-content: flex-end; gap: 5px; height: 26px; border-radius: var(--tj-radius-sm); color: var(--tj-muted); font: 400 12px/26px var(--tj-font-mono); font-variant-numeric: tabular-nums; direction: ltr; cursor: pointer; }
+.t { display: flex; align-items: center; justify-content: flex-end; gap: 4px; height: 26px; border-radius: var(--tj-radius-sm); color: var(--tj-muted); font: 400 12px/26px var(--tj-font-mono); font-variant-numeric: tabular-nums; direction: ltr; cursor: pointer; }
 .root[dir="ltr"] .t { justify-content: flex-start; }
 .t::before { content: ""; display: none; width: 0; height: 0; border-style: solid; border-width: 4px 0 4px 7px; border-color: transparent transparent transparent currentColor; }
 .row:hover .t { color: var(--tj-text); text-decoration: underline; text-underline-offset: 3px; }
@@ -135,7 +135,7 @@ export function panelCss() {
 
 .empty, .err { padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
 .empty__title { margin: 0; font: 700 15px/26px var(--tj-font-head); color: var(--tj-text); }
-.steps { list-style: none; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 9px; border-radius: var(--tj-radius-lg); background: var(--tj-surface-2); }
+.steps { list-style: none; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-radius: var(--tj-radius-lg); background: var(--tj-surface-2); }
 .steps li { display: flex; align-items: center; gap: 10px; font-size: 13px; line-height: 20px; color: var(--tj-muted); }
 .steps__n { width: 22px; height: 22px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--tj-border-strong); border-radius: 50%; font-size: 12px; font-weight: 700; color: var(--tj-muted); }
 .steps li.done { color: var(--tj-text-2); }
@@ -156,7 +156,7 @@ export function panelCss() {
 .off { display: flex; align-items: center; gap: 6px; direction: ltr; }
 .off .b { height: var(--tj-control-lg); }
 .off .b:not(.b--icon) { padding: 0 12px; }
-.off__val { flex: 1 1 auto; min-width: 0; height: var(--tj-control-lg); display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: var(--tj-radius-md); background: var(--tj-brand-soft); color: var(--tj-brand-text); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.off__val { flex: 1 1 auto; min-width: 0; height: var(--tj-control-lg); display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: var(--tj-radius-md); background: var(--tj-brand-soft); color: var(--tj-brand-text); font-size: 13px; font-weight: 700; white-space: nowrap; }
 .off__val b { font: 700 17px/24px var(--tj-font-head); direction: ltr; unicode-bidi: isolate; }
 .off__val.zero { background: var(--tj-surface-2); color: var(--tj-text-2); }
 .num { all: unset; box-sizing: border-box; width: 56px; height: 24px; padding: 0 6px; border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-sm); background: var(--tj-surface); color: var(--tj-text); font: 700 12px/22px var(--tj-font-mono); direction: ltr; text-align: center; }

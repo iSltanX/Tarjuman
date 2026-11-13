@@ -101,7 +101,7 @@
   --tj-font-body: "Tarjuman UI Almarai", "SF Arabic", "Noto Sans Arabic", Tahoma, sans-serif;
   --tj-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* المسافات: سلّم 4 */
+  /* المسافات بين الكتل: سلّم 4؛ وداخل المكوّنات سلّم 2 (docs/identity.md §٥) */
   --tj-space-1: 4px;
   --tj-space-2: 8px;
   --tj-space-3: 12px;

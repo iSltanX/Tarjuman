@@ -321,3 +321,66 @@ test('ت-١٢ (د): كل قاعدة :root[data-theme="dark"] في components.css
     assert.equal(m[1].trim(), body, sel);
   }
 });
+
+// ---- ت-١٢ (ج): المسافات على سلّم 2 داخل المكوّنات وسلّم 4 بين الكتل (§٥، قرار سلطان 2026-11-13) ----
+/**
+ * القيم الفردية المقصودة وحدها، بسببها: حدّ أو ما يكمّل حدّ 1px، أو خط شعري 1px، أو توسيط بنصف عرض، أو محاذاة بصرية لأيقونة
+ * مع سطرها، أو امتداد غير مرئي لهدف الضغط. [الورقة، جزء من المحدد، الخاصية، القيمة].
+ */
+const ODD_ALLOWED = [
+  ['src/pages/editor/editor.css', '.ed-tab[aria-selected="true"]::after', 'inset-block-end', '-1px'], // الخط فوق حدّ الشريط 1px
+  ['src/pages/editor/editor.css', '.ed-row', 'padding', '8px 12px 7px'], // 7 + حدّ سفلي 1 = 8، وROW.pad = 16 في virtual.js
+  ['src/pages/library/library.css', '.lib-thumb__dur', 'padding', '1px 4px'], // شعري: شارة 18 = سطر 16 + 2
+  ['src/pages/library/library.css', '.lib-chip', 'padding', '0 11px'], // 11 + حدّ شفاف 1 = 12
+  ['src/pages/library/library.css', '.lib-result .tj-icon', 'margin-top', '3px'], // (20 − 14) / 2: أيقونة 14 على سطر 20
+  ['src/pages/settings/settings.css', '.st-scale__mark', 'margin-inline-start', '-1px'], // نصف علامة عرضها 2
+  ['src/pages/settings/settings.css', '.st-gl__submit', 'padding-top', '27px'], // سطر التسمية 21 + فجوة الحقل 6
+  ['src/ui/base.css', '.tj-sr-only', 'margin', '-1px'], // نمط الإخفاء البصري المعياري
+  ['src/ui/components.css', '.tj-alert .tj-icon', 'margin-top', '3px'], // (23 − 18) / 2: أيقونة 18 على سطر 23
+  ['src/ui/components.css', '.tj-choice__option > input[type="radio"]', 'margin', '3px 0 0'], // هامش المتصفح العلوي للدائرة مع سطر 20
+  ['src/ui/components.css', '.tj-seg', 'padding', '3px'], // 3 + حدّ شفاف 1 = 4، والمقطّعة 40
+  ['src/ui/components.css', '.tj-menu__grp', 'gap', '1px'], // شعري بين البنود
+  ['src/ui/components.css', '.tj-toast__action::after', 'inset', '-5px -2px'], // امتداد هدف الضغط
+  ['src/ui/components.css', '.tj-lang-pop__list', 'gap', '1px'], // شعري بين البنود
+  ['player/controls', '.btn[aria-pressed="true"]::after', 'margin-left', '-7px'], // نصف خط عرضه 14
+  ['player/controls', '.line', 'padding', '1px 6px'], // شعري
+  ['player/controls', 'button.link', 'padding', '7px 4px'], // هدف 32 دون تغيير السطر…
+  ['player/controls', 'button.link', 'margin', '-7px -4px'], // …يلغيه هامش سالب
+  ['player/controls', '.toast button.act::after', 'inset', '-5px -2px'], // امتداد هدف الضغط
+  ['player/panel', '.inline-error .ic', 'margin-top', '1px'], // محاذاة بصرية شعرية
+  ['player/panel', '.list', 'gap', '1px'], // شعري بين الصفوف
+  ['player/panel', '.en', 'margin-top', '1px'], // شعري
+  ['player/panel', '.alert .ic', 'margin-top', '1px'], // محاذاة بصرية شعرية
+];
+const SPACING = /^(?:padding|margin|gap|row-gap|column-gap|inset|top|right|bottom|left)(?:-(?:inline|block|top|right|bottom|left)(?:-(?:start|end))?)?$/;
+
+test('ت-١٢ (ج): لا قيمة مسافة فردية بالبكسل في الصفحات والمشغّل واللوحة إلا المقصودة المسمّاة', async () => {
+  const { groupCss, layerCss } = await import('../../../src/player/controls/styles.js');
+  const { panelCss } = await import('../../../src/player/panel/styles.js');
+  const sheets = [...walk(path.join(ROOT, 'src'))].filter((f) => f.endsWith('.css')).map((f) => [path.relative(ROOT, f), read(path.relative(ROOT, f))]);
+  sheets.push(['player/controls', `${groupCss()}\n${layerCss()}`.replace(/\/\*[\s\S]*?\*\//g, '')], ['player/panel', panelCss().replace(/\/\*[\s\S]*?\*\//g, '')]);
+  const found = [];
+  for (const [file, css] of sheets) {
+    for (const [, selector, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      for (const decl of body.split(';')) {
+        const at = decl.indexOf(':');
+        if (at < 0) continue;
+        const prop = decl.slice(0, at).trim();
+        const val = decl.slice(at + 1).trim();
+        if (!SPACING.test(prop)) continue;
+        // الفردي الصحيح وحده؛ والكسري توسيط محسوب (6.5 = (18 − 5) / 2 لمعيّن النافذة على سطره).
+        if ([...val.matchAll(/(-?\d+(?:\.\d+)?)px/g)].some((m) => Math.abs(Number(m[1])) % 2 === 1)) found.push([file, selector.trim(), prop, val]);
+      }
+    }
+  }
+  const allowed = (f) => ODD_ALLOWED.find(([file, sel, prop, val]) => f[0] === file && f[1].includes(sel) && f[2] === prop && f[3] === val);
+  assert.deepEqual(found.filter((f) => !allowed(f)).map((f) => `${f[0]}: ${f[1]} { ${f[2]}: ${f[3]} }`), [], 'قيم فردية غير مسمّاة');
+  for (const a of ODD_ALLOWED) assert.ok(found.some((f) => allowed(f) === a), `استثناء لا موضع له: ${a.join(' ')}`);
+});
+
+test('ت-١٢ (ج): نص الهوية §٥: سلّم 2 داخل المكوّنات وسلّم 4 بين الكتل', () => {
+  const doc = readFileSync(path.join(ROOT, 'docs/identity.md'), 'utf8');
+  assert.doesNotMatch(doc, /مسافات على سلّم 4 \(4…64\)/);
+  assert.match(doc, /سلّم 2 داخل المكوّنات/);
+  assert.match(doc, /سلّم 4 بين الكتل/);
+});

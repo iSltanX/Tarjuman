@@ -46,7 +46,7 @@ export function groupCss() {
 @keyframes tj-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.14); } 100% { transform: scale(1); } }
 .btn[data-busy] .icon { display: none; }
 .btn[data-busy] { cursor: progress; }
-.load { display: inline-flex; align-items: center; justify-content: center; gap: 5px; width: var(--icon); height: 10px; pointer-events: none; }
+.load { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: var(--icon); height: 10px; pointer-events: none; }
 .load[hidden] { display: none; }
 .load i { display: block; width: 7px; height: 7px; border-radius: 1px; background: currentColor; transform: rotate(45deg); opacity: 0.25; animation: tj-load ${LOAD_MS}ms ease infinite; }
 .load i + i { animation-delay: ${LOAD_MS / 2}ms; }
@@ -71,7 +71,7 @@ export function layerCss() {
 
 /* التلميح: اسم الزر (ومعنى حالته) فوقه عند المرور والتركيز. بعرض محتواه (فلا ينحصر عند طرف المشغّل) وبسطرين إن طال. يلتقط
    المؤشر فيمكن المرور فوقه دون أن يزول، ويُخفيه Esc (WCAG 1.4.13؛ تدقيق 7a66f91، U89). */
-.tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); width: max-content; max-width: min(360px, calc(100% - 16px)); box-sizing: border-box; padding: 5px 9px; border-radius: 6px; background: var(--tj-p-tooltip-bg); box-shadow: 0 0 0 1px var(--tj-p-menu-line); color: #FFFFFF; font: 700 var(--tip-fs)/1.5 var(--tj-p-font-body); text-align: center; overflow-wrap: anywhere; pointer-events: auto; }
+.tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); width: max-content; max-width: min(360px, calc(100% - 16px)); box-sizing: border-box; padding: 6px 10px; border-radius: 6px; background: var(--tj-p-tooltip-bg); box-shadow: 0 0 0 1px var(--tj-p-menu-line); color: #FFFFFF; font: 700 var(--tip-fs)/1.5 var(--tj-p-font-body); text-align: center; overflow-wrap: anywhere; pointer-events: auto; }
 .tip[hidden] { display: none; }
 
 /* القائمة: زجاج ليلي من الصنوبر 92% بتمويه 14 وزاوية 12 (لوحة 10) بعرض 280 (264 في المشغّل الضيق و320 في ملء الشاشة من layer.js)، صفوف 32، وتمرير داخلي منضبط حين
@@ -85,9 +85,9 @@ export function layerCss() {
 .label { padding: 0 6px; font-size: 0.93em; line-height: 1.5; font-weight: 700; color: var(--tj-p-menu-text-2); }
 
 /* مجموعة أزرار الخانات (الترجمات الموجودة، و«حفظ في»): كالمقطّعة، المختارة بالطين الليلي بحبر داكن (لوحة 10)، بلا إطار. */
-.slots { display: inline-flex; gap: 2px; padding: 3px; border-radius: 8px; background: rgb(255 255 255 / 7%); direction: ltr; flex: none; }
-button.slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 7px; border-radius: 4px; font: 700 12px/1 var(--tj-p-font-body); font-variant-numeric: tabular-nums; color: var(--tj-p-menu-text-2); cursor: pointer; }
-button.slot.slot--new { padding: 0 9px; }
+.slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgb(255 255 255 / 7%); direction: ltr; flex: none; }
+button.slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 6px; border-radius: 4px; font: 700 12px/1 var(--tj-p-font-body); font-variant-numeric: tabular-nums; color: var(--tj-p-menu-text-2); cursor: pointer; }
+button.slot.slot--new { padding: 0 8px; }
 .layer[dir="rtl"] button.slot.slot--new { direction: rtl; }
 button.slot::after { content: ""; position: absolute; inset: -4px 0; } /* هدف 32 ارتفاعًا (CL-018) */
 button.slot[aria-checked="true"] { background: var(--tj-p-accent); color: var(--tj-p-accent-ink); cursor: default; }
@@ -174,14 +174,14 @@ button.primary[aria-busy="true"] { cursor: progress; }
 button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; font-size: 0.93em; font-weight: 700; padding: 7px 4px; margin: -7px -4px; } /* «لماذا؟» بهدف 32 دون تغيير السطر (CL-018) */
 
 /* المقطّعة: خيار واحد من قليل في صف (وضع التصدير، وأوضاع العرض، والخطوة)؛ المختار بالطين الليلي بحبر داكن (لوحة 10)، بلا إطار. */
-.seg { display: flex; gap: 2px; padding: 3px; border-radius: 8px; background: rgb(255 255 255 / 7%); }
+.seg { display: flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgb(255 255 255 / 7%); }
 .seg button { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; min-height: calc(var(--row) - 4px); display: flex; align-items: center; justify-content: center; padding: 0 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tj-p-menu-text-2); font-weight: 700; }
 .seg button:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); color: #FFFFFF; }
 .seg button[aria-checked="true"] { background: var(--tj-p-accent); color: var(--tj-p-accent-ink); }
 .seg button[aria-disabled="true"] { opacity: 0.45; cursor: default; }
 /* المقطّعة بجوار تسميتها في صف (خطوة الأزرار): بعرض محتواها فلا يُقص «مخصص»، والتسمية تأخذ الباقي. */
 .row.field > .seg { flex: none; }
-.row.field > .seg button { flex: none; min-width: 34px; padding: 0 9px; }
+.row.field > .seg button { flex: none; min-width: 34px; padding: 0 8px; }
 
 .big { padding: 2px 6px 0; text-align: center; font: 700 var(--big-fs)/1.3 var(--tj-p-font-head); }
 /* − و+ حول القيمة في قائمة الشارة حين طُويا من الشريط (ت-١): − يسارًا و+ يمينًا كخط الأعداد، بهدف 32 وأكثر. */
