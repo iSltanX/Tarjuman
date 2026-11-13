@@ -543,9 +543,10 @@ export function confirmMenu(h, act, m, root = null) {
 }
 
 /**
- * قائمة خيارات التوقيت (§٦.٣): مكمّلة لزرّي − و+ لا بديل عنهما، إلا في الشريط المطوي فهما فيها (ت-١، nudge بتلميحيهما).
+ * قائمة خيارات التوقيت (§٦.٣): مكمّلة لزرّي − و+ لا بديل عنهما، إلا في الشريط المطوي فهما فيها (ت-١، nudge بتلميحيهما)، وزر
+ * اللوحة معهما في «المطوي باللوحة» (القرار ٢٨، panel).
  * @param {H} h @param {Act} act
- * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null, ad?: boolean, nudge?: { minus: string, plus: string } | null }} m
+ * @param {{ offsetMs: number, offsetText: string, offsetError: string | null, stepMs: number, custom: boolean, stepText: string, stepError: string | null, ad?: boolean, nudge?: { minus: string, plus: string } | null, panel?: { label: string, pressed: boolean, reason: string | null } | null }} m
  */
 export function timingMenu(h, act, m, root = null) {
   if (m.sync) return syncView(h, act, m.sync);
@@ -614,6 +615,19 @@ export function timingMenu(h, act, m, root = null) {
       button(h, 'secondary', LABELS.reset, { act, name: 'reset', fid: 'reset', icon: 'restore', title: LABELS.resetHint, extra: { 'aria-description': LABELS.resetHint } }),
     ],
   }));
+  // القرار ٢٨: زر اللوحة المطوي من الشريط، بحالته (aria-pressed) وسبب تعذّر ظهورها إن وُجد (ع-ل)؛ ويُعلم الفعلُ هل فُعّل بلوحة
+  // المفاتيح (detail = 0) فيُنقل التركيز إلى اللوحة كما من زر الشريط.
+  if (m.panel) {
+    out.push(h('div', {
+      className: 'actions',
+      children: [h('button', {
+        className: 'secondary',
+        attrs: { type: 'button', 'data-fid': 'panelToggle', 'aria-pressed': m.panel.pressed ? 'true' : 'false', 'aria-description': m.panel.reason, title: m.panel.reason },
+        on: { click: (ev) => act('panelToggle', ev.detail === 0) },
+        children: [h.glyph?.('panel', 'glyph glyph--btn') ?? null, h('span', { className: 'stack', children: [h('span', { text: m.panel.label })] })],
+      })],
+    }));
+  }
   out.push(h('div', { className: 'note', text: LABELS.signLegend }));
   return out;
 }

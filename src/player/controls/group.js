@@ -24,7 +24,7 @@ const OWN_KEYS = new Set(['Enter', ' ', 'Spacebar', 'Escape']);
  * يفتحه الزر إن خالف نوعه الثابت (null: لا نافذة).
  * @typedef {{ label: string, tip?: string, description?: string | null, disabled?: boolean, unavailable?: boolean, loading?: boolean, expanded?: boolean, pressed?: boolean, hidden?: boolean, popup?: string | null }} ButtonModel
  * @typedef {{
- *   size: 'normal' | 'compact' | 'tight' | 'folded' | 'fullscreen',
+ *   size: 'normal' | 'compact' | 'tight' | 'folded' | 'folded-panel' | 'fullscreen',
  *   download: ButtonModel, upload: ButtonModel, panel: ButtonModel, minus: ButtonModel, plus: ButtonModel,
  *   badge: ButtonModel & { text: string, sign: 'zero' | 'positive' | 'negative' },
  * }} GroupModel
@@ -162,8 +162,10 @@ export function createGroup({ doc, win, on }) {
           setAttr(b.el, 'data-sign', m.badge.sign);
         }
       }
-      // زر طُوي وعليه التركيز: إلى الشارة التي صار فيها، لا إلى الصفحة فتذهب الضغطات إلى اختصارات يوتيوب.
-      if (had && had.hasAttribute?.('hidden') && (had === buttons.minus.el || had === buttons.plus.el)) buttons.badge.el.focus();
+      // زر طُوي وعليه التركيز: إلى الشارة التي صار فيها، لا إلى الصفحة فتذهب الضغطات إلى اختصارات يوتيوب. وزر اللوحة كذلك حين
+      // طُوي في القائمة (القرار ٢٨)، لا حين أخفاه المستخدم من الإعدادات.
+      const foldedAway = had === buttons.minus.el || had === buttons.plus.el || (had === buttons.panel.el && m.size === 'folded-panel');
+      if (had && had.hasAttribute?.('hidden') && foldedAway) buttons.badge.el.focus();
     },
 
     /** نبضة الشارة (120ms) بعد تغيّر الإزاحة. */

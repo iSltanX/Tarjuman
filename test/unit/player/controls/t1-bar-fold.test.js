@@ -56,7 +56,7 @@ test('ت-١: fitSize يطوي − و+ حين لا يتسع الأضيق للأز
   assert.equal(fitSize(bar(null), 5), 'normal', 'بلا قياس: المقاس الأساسي، لا طي');
   assert.equal(fitSize(bar(0, 'fullscreen'), 5), 'fullscreen', 'ملء الشاشة لا يُطوى');
   const css = groupCss();
-  assert.match(css, /\.group\[data-size="folded"\], \.group\[data-size="tight"\] \{ --w: 34px; --icon: 18px/, 'المطوي بمقاس الأضيق نفسه');
+  assert.match(css, /\.group\[data-size="folded"\], \.group\[data-size="folded-panel"\], \.group\[data-size="tight"\] \{ --w: 34px; --icon: 18px/, 'المطويان بمقاس الأضيق نفسه');
 });
 
 test('ت-١: في المقاس المطوي لا يُرسم − و+ في الشريط، والشارة تقول إنهما في قائمتها', () => {
@@ -165,7 +165,7 @@ test('ت-١: كشف القص يرصد تداخل زمن يوتيوب مع الم
 });
 
 test('ت-١: CT_BAR_OVERFLOW حين يبقى زمن يوتيوب مقصوصًا بعد الطي في قياسين متتاليين، ولا يُبلَّغ في الحالة السليمة ولا العابرة', () => {
-  // قص باقٍ بعد الطي: الزمن تحت المجموعة في القياس بعد الرسم وفي الفحص الدوري بعده.
+  // قص باقٍ بعد الطي (وطي زر اللوحة معهما، القرار ٢٨: المساحة 60): الزمن تحت المجموعة في القياس بعد الرسم وفي الفحص الدوري بعده.
   const bad = narrow({ others: 256, group: 136, time: { left: 120, right: 380 } });
   assert.equal(bad.page.handle.diagnostics().session.overflows, 0, 'قياس واحد لا يكفي');
   bad.page.env.win.advance(1100);
@@ -173,8 +173,8 @@ test('ت-١: CT_BAR_OVERFLOW حين يبقى زمن يوتيوب مقصوصًا 
   assert.equal(d.lastCode, 'CT_BAR_OVERFLOW');
   assert.equal(d.overflows, 1);
   assert.equal(d.overflow.clipped, true);
-  assert.equal(d.overflow.fit, 'folded');
-  assert.match(d.lastDetail, /fit=folded/);
+  assert.equal(d.overflow.fit, 'folded-panel');
+  assert.match(d.lastDetail, /fit=folded-panel/);
   bad.page.env.win.advance(3300);
   assert.equal(bad.page.handle.diagnostics().session.overflows, 1, 'مرة واحدة ما دام القص نفسه');
   // نصه يُقص داخل حاويته: يُرصد كذلك.

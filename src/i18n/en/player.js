@@ -140,6 +140,7 @@ export default Object.freeze({
     badgeEarlier: 'Offset: {offset} s (translation appears earlier). Click for options',
     // ت-١: folded bar, − and + inside the badge menu (appended to its tip and description).
     badgeFolded: 'including earlier and later',
+    badgeFoldedPanel: 'including earlier, later and the synced transcript',
     nudgeZero: '{offset} s · at its saved timing',
     nudgeLater: '{offset} s · appears later',
     nudgeEarlier: '{offset} s · appears earlier',

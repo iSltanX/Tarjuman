@@ -48,19 +48,26 @@ export function sizeFor({ fullscreen, big, small, width }) {
  * للمجموعة بمقاسها العادي دون 800px تقريبًا، فتداخلت مع الوقت (ملاحظة سلطان 2026-11-03). بالترتيب: عادي (48)، فمضغوط (40)،
  * فأضيق (34) والأزرار كلها فيه، − و+ منها. فإن لم يتسع الأضيق للأزرار كلها طُوي − و+ داخل قائمة الشارة («مطوي»، بمقاس الأضيق
  * نفسه): ت-١ بقرار سلطان 2026-11-13 (product-spec §٦.١ و§٦.٦)، فكان الأضيق يبقى ويُقص زمن يوتيوب. فالعتبة حدّ الأضيق نفسه، لا رقم
- * جديد. وإن بقي زمن يوتيوب مقصوصًا بعد الطي يُبلَّغ (timeClipped، وCT_BAR_OVERFLOW). وملء الشاشة كما هو. بلا قياس: المقاس الأساسي.
+ * جديد. فإن لم يتسع المطوي نفسه لما بقي وزر اللوحة بينها طُوي زر اللوحة في القائمة نفسها («مطوي باللوحة»، القرار ٢٨: ثبت القص
+ * حيًا بعد طي − و+، والزر يُطوى ولا يُخفى)، والعتبة كذلك حدّ المطوي نفسه. وإن بقي زمن يوتيوب مقصوصًا بعد ذلك يُبلَّغ (timeClipped،
+ * وCT_BAR_OVERFLOW). وملء الشاشة كما هو. بلا قياس: المقاس الأساسي.
  * @param {{ size: 'normal' | 'compact' | 'fullscreen', room: number | null }} bar
- * @param {number} icons أزرار الأيقونة الظاهرة غير الشارة (− و+ منها)
- * @returns {'normal' | 'compact' | 'tight' | 'folded' | 'fullscreen'}
+ * @param {number} icons أزرار الأيقونة الظاهرة غير الشارة (− و+ منها، وزر اللوحة إن كان ظاهرًا)
+ * @param {{ panel?: boolean }} [o] panel: زر اللوحة بين icons
+ * @returns {'normal' | 'compact' | 'tight' | 'folded' | 'folded-panel' | 'fullscreen'}
  */
-export function fitSize(bar, icons) {
+export function fitSize(bar, icons, { panel = false } = {}) {
   if (bar.size === 'fullscreen' || bar.room === null) return bar.size;
-  const need = (size) => icons * BUTTON_PX[size] + BADGE_PX[size] + ROOM_GAP_PX;
+  const need = (size, n = icons) => n * BUTTON_PX[size] + BADGE_PX[size] + ROOM_GAP_PX;
   if (bar.size === 'normal' && bar.room >= need('normal')) return 'normal';
   if (bar.room >= need('compact')) return 'compact';
   if (bar.room >= need('tight')) return 'tight';
-  return 'folded';
+  if (!panel || bar.room >= need('tight', icons - 2)) return 'folded';
+  return 'folded-panel';
 }
+
+/** − و+ في قائمة الشارة (ت-١)، ومعهما زر اللوحة في «المطوي باللوحة» (القرار ٢٨). @param {string | null | undefined} fit */
+export const isFolded = (fit) => fit === 'folded' || fit === 'folded-panel';
 
 /** زمن يوتيوب في الأدوات اليسرى، أو null. @param {Document} doc */
 const timeDisplay = (doc) => getLeftControls(doc)?.querySelector?.(`.${CLASSES.timeDisplay}`) ?? null;

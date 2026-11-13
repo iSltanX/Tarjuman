@@ -8,7 +8,7 @@ import { formatOffset } from '../../ui/format.js';
 import { joinList } from '../../i18n/index.js';
 import { holdTimer } from '../../ui/hold.js';
 import { SELECTORS, getChromeBottom, getMainVideo, getRightControls, isAdShowing, isLiveNow } from '../youtube-dom.js';
-import { fitSize, timeClipped, watchBar } from './bar.js';
+import { fitSize, isFolded, timeClipped, watchBar } from './bar.js';
 import { completeInto, continuationFor, fileChars, loadIntoFor, nameHintFor, partSizes, prepareExport, prepareSavedExport, previewFor, readFor, recordFor, recordSavedFor, saveFiles } from './flows.js';
 import { createGroup } from './group.js';
 import { createLayer } from './layer.js';
@@ -175,8 +175,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   const group = createGroup({ doc, win, on: { action, hint, escape: onEscape } });
   // زر اللوحة يستقبل التركيز حين تُغلق اللوحة وفيها التركيز (src/player/link.js)؛ وإن أخفاه المستخدم فـ«الترجمة» الظاهر، فلا
-  // يُعطى عنصرًا لا يُرسم فيسقط التركيز إلى الصفحة (تدقيق 7a66f91، U88).
-  const unlink = link?.register(() => group.focus(group.button('panel').hasAttribute('hidden') ? 'upload' : 'panel')) ?? null;
+  // يُعطى عنصرًا لا يُرسم فيسقط التركيز إلى الصفحة (تدقيق 7a66f91، U88). وإن طُوي في قائمة الشارة فالشارة (القرار ٢٨).
+  const unlink = link?.register(() => group.focus(lastModel?.size === 'folded-panel' ? 'badge' : group.button('panel').hasAttribute('hidden') ? 'upload' : 'panel')) ?? null;
   const layer = createLayer({
     doc, win,
     on: {
@@ -251,9 +251,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     const panelShown = ui$?.panelEntry !== false;
     const panelOpen = panelShown && ui$?.panelOpen === true;
     const panelTip = panelOpen ? LABELS.panelClose : LABELS.panelOpen;
-    const size = fitSize(bar, panelShown ? 5 : 4);
+    const size = fitSize(bar, panelShown ? 5 : 4, { panel: panelShown });
     // ت-١ (قرار سلطان 2026-11-13): في المقاس المطوي لا يُرسم − و+ في الشريط، وهما في قائمة الشارة؛ والشارة تقول ذلك في تلميحها ووصفها.
-    const folded = size === 'folded';
+    // وفي «المطوي باللوحة» زر اللوحة معهما (القرار ٢٨).
+    const folded = isFolded(size);
+    const panelFolded = size === 'folded-panel';
+    const foldedNote = panelFolded ? LABELS.badgeFoldedPanel : folded ? LABELS.badgeFolded : null;
     return {
       size,
       download: {
@@ -267,11 +270,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       // ع-ل: اللوحة لا تظهر لغياب عمود يوتيوب: السبب في التلميح ووصف الزر، كالسبب مع الأزرار الأخرى. والزر يبقى يفتح ويغلق.
       panel: {
         label: LABELS.panel, tip: flags.panelIssue ? `${panelTip} — ${messageFor(flags.panelIssue)}` : panelTip,
-        description: flags.panelIssue ? messageFor(flags.panelIssue) : null, disabled: noVideo, hidden: !panelShown, pressed: panelOpen,
+        description: flags.panelIssue ? messageFor(flags.panelIssue) : null, disabled: noVideo, hidden: !panelShown || panelFolded, pressed: panelOpen,
       },
       minus: { label: withReason(minusTip(step)), tip: withReason(minusTip(step)), description: null, disabled: viewOff, hidden: folded },
       badge: {
-        label: withReason(badge), tip: withState(withReason(badge), folded ? LABELS.badgeFolded : null), description: folded ? LABELS.badgeFolded : null,
+        label: withReason(badge), tip: withState(withReason(badge), foldedNote), description: foldedNote,
         disabled: viewOff, text: formatOffset(off), sign: signOf(off), expanded: ui.open === 'timing',
       },
       plus: { label: withReason(plusTip(step)), tip: withReason(plusTip(step)), description: null, disabled: viewOff, hidden: folded },
@@ -399,6 +402,12 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     };
   }
 
+  /** زر اللوحة في قائمة الشارة (القرار ٢٨): اسمه بحالته، ومضغوط إن كانت مفتوحة، وسبب تعذّر ظهورها (ع-ل). */
+  function panelEntry(s) {
+    const open = s.prefs?.ui?.panelOpen === true;
+    return { label: open ? LABELS.panelClose : LABELS.panelOpen, pressed: open, reason: flags.panelIssue ? messageFor(flags.panelIssue) : null };
+  }
+
   function timingModel(s) {
     const t = ui.timing;
     const step = s.settings.offsetStepMs;
@@ -407,8 +416,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     return {
       offsetMs: off, offsetText: t.offsetText ?? formatOffset(off), offsetError: t.offsetError,
       stepMs: step, custom: t.custom || !PRESET_STEPS.includes(step), stepText: t.stepText ?? stepText(step), stepError: t.stepError, sync,
-      // ت-١: − و+ المطويان من الشريط حول القيمة الكبيرة، بتلميحيهما في الشريط.
-      nudge: lastModel?.size === 'folded' ? { minus: minusTip(step), plus: plusTip(step) } : null,
+      // ت-١: − و+ المطويان من الشريط حول القيمة الكبيرة، بتلميحيهما في الشريط؛ وزر اللوحة المطوي (القرار ٢٨) بحالته وسببه (ع-ل).
+      nudge: isFolded(lastModel?.size) ? { minus: minusTip(step), plus: plusTip(step) } : null,
+      panel: lastModel?.size === 'folded-panel' ? panelEntry(s) : null,
       ad: isAdShowing(doc),
     };
   }
@@ -476,8 +486,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
             // حقل بلا تحديد
           }
         }
-      } else if (fid.startsWith('nudge:')) {
-        // ت-١: اتسع الشريط فعاد − و+ إليه وزالا من القائمة والتركيز عليهما: إلى أول القائمة لا إلى الصفحة.
+      } else if (fid.startsWith('nudge:') || fid === 'panelToggle') {
+        // ت-١: اتسع الشريط فعاد − و+ (أو زر اللوحة) إليه وزالا من القائمة والتركيز عليهما: إلى أول القائمة لا إلى الصفحة.
         layer.focusFirst();
       }
     }
@@ -882,6 +892,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       case 'sentence': applySentence(Number(value)); return;
       // ت-١: − و+ من قائمة الشارة حين طُويا من الشريط.
       case 'nudge': if (ui.open === 'timing' && !t.sync) nudge(value === -1 ? -1 : 1, { fromMenu: true }); return;
+      // القرار ٢٨: زر اللوحة من قائمة الشارة حين طُوي فيها؛ value: فُعّل بلوحة المفاتيح.
+      case 'panelToggle': if (ui.open === 'timing' && lastModel?.panel && !lastModel.panel.disabled) togglePanel(value === true); return;
       case 'reset':
         t.offsetText = null;
         t.offsetError = null;

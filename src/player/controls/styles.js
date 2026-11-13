@@ -26,7 +26,7 @@ export function groupCss() {
 .group[data-size="compact"] { --w: 40px; --icon: 20px; --badge: 38px; --badge-fs: 12px; --badge-pad: 6px; }
 /* الشريط الأضيق: الأزرار الستة كلها بصندوق 34 وأيقونة 18، فلا تتداخل مع وقت يوتيوب. والمطوي بالمقاس نفسه بلا − و+ (يحملان
    hidden، وهما في قائمة الشارة؛ ت-١ بقرار سلطان 2026-11-13، product-spec §٦.١). */
-.group[data-size="folded"], .group[data-size="tight"] { --w: 34px; --icon: 18px; --badge: 34px; --badge-fs: 11px; --badge-pad: 4px; }
+.group[data-size="folded"], .group[data-size="folded-panel"], .group[data-size="tight"] { --w: 34px; --icon: 18px; --badge: 34px; --badge-fs: 11px; --badge-pad: 4px; }
 .btn[hidden] { display: none; }
 .group[data-size="fullscreen"] { --w: 54px; --icon: 26px; --badge: 50px; --badge-fs: 15px; }
 .btn { all: unset; box-sizing: border-box; position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--w); height: 100%; color: var(--tj-p-icon); cursor: pointer; border-radius: 8px; -webkit-tap-highlight-color: transparent; }

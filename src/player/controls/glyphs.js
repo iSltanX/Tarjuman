@@ -6,12 +6,12 @@ import { ICONS, ICON_VIEWBOX } from '../../ui/icons.js';
 const SVG = 'http://www.w3.org/2000/svg';
 const NAME = Object.freeze({
   info: 'info', warn: 'warning', warning: 'warning', error: 'error', danger: 'error', ok: 'check', success: 'check', x: 'x', copy: 'copy',
-  download: 'download', upload: 'upload', restore: 'restore', clock: 'clock', flag: 'flag', minus: 'minus', plus: 'plus',
+  download: 'download', upload: 'upload', restore: 'restore', clock: 'clock', flag: 'flag', minus: 'minus', plus: 'plus', panel: 'panel',
 });
 
 /**
  * @param {Document} doc
- * @param {'info' | 'warn' | 'warning' | 'error' | 'danger' | 'ok' | 'success' | 'x' | 'copy' | 'download' | 'upload' | 'restore' | 'clock' | 'flag' | 'minus' | 'plus'} tone
+ * @param {'info' | 'warn' | 'warning' | 'error' | 'danger' | 'ok' | 'success' | 'x' | 'copy' | 'download' | 'upload' | 'restore' | 'clock' | 'flag' | 'minus' | 'plus' | 'panel'} tone
  * @param {string} [className]
  * @returns {SVGSVGElement}
  */

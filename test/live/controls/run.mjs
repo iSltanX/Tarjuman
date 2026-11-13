@@ -697,8 +697,10 @@ try {
         const pk = await iso(I.peek);
         const ytOutside = m.right.children.filter((c) => c.shown && c.box.width > 0 && (c.box.right > m.chrome.right + 1 || c.box.left < m.chrome.left - 1 || c.box.top >= m.chrome.bottom - 1)).map((c) => c.cls || c.id);
         const overlapLeft = m.leftRight ? pk.group.left < m.leftRight.right - 1 : null;
-        // ت-١ (قرار سلطان 2026-11-13): في المقاس المطوي − و+ في قائمة الشارة لا في الشريط، وما سواهما ظاهر.
-        const all = Object.entries(pk.buttons).every(([k, x]) => (x.box?.width ?? 0) > 0 || (pk.fit === 'folded' && (k === 'minus' || k === 'plus')));
+        // ت-١ (قرار سلطان 2026-11-13): في المقاس المطوي − و+ في قائمة الشارة لا في الشريط، وما سواهما ظاهر؛ وفي «المطوي باللوحة»
+        // زر اللوحة معهما (القرار ٢٨).
+        const foldedAway = (fit, k) => ((fit === 'folded' || fit === 'folded-panel') && (k === 'minus' || k === 'plus')) || (fit === 'folded-panel' && k === 'panel');
+        const all = Object.entries(pk.buttons).every(([k, x]) => (x.box?.width ?? 0) > 0 || foldedAway(pk.fit, k));
         const timeCut = !!m.time && (m.time.scroll > m.time.client + 1 || m.time.right > pk.group.left + 1);
         narrow.push({ viewport: w, player: m.player.width, size: pk.size, fit: pk.fit, five: all, timeCut, time: m.time, outside: ytOutside, overlapLeft, overflow: pk.overflow, group: pk.group.width });
         if (w === 520) {
@@ -712,7 +714,7 @@ try {
           const pk2 = await iso(I.peek);
           const maxLine = Math.max(0, ...(ov.lineBoxes ?? []).map((x) => x.width));
           if (scale === 160) check('compact-160: wraps-within-92%-and-above-bar', 'P6-AC8', (ov.lineBoxes ?? []).length > 0 && maxLine <= m2.player.width * 0.92 + 1 && ov.stage.bottom <= m2.chrome.top + 1, { lines: (ov.lineBoxes ?? []).length, maxLine, player: m2.player.width, lineHeights: (ov.lineBoxes ?? []).map((x) => x.height), font: ov.font });
-          const shown2 = Object.entries(pk2.buttons).filter(([k]) => !(pk2.fit === 'folded' && (k === 'minus' || k === 'plus'))).map(([, x]) => x);
+          const shown2 = Object.entries(pk2.buttons).filter(([k]) => !foldedAway(pk2.fit, k)).map(([, x]) => x);
           check(`compact${scale === 160 ? '-160' : ''}: five-in-bar`, 'P6-AC7', pk2.size === 'compact' && shown2.every((x) => (x.box?.width ?? 0) > 0 && x.box.top >= m2.chrome.top - 1 && x.box.bottom <= m2.chrome.bottom + 1), { size: pk2.size, fit: pk2.fit, player: m2.player.width });
           await shoot(`ac7-compact${suffix}`);
         }

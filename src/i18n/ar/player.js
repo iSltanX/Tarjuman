@@ -150,6 +150,7 @@ export default Object.freeze({
     badgeEarlier: 'الإزاحة: {offset} ث (تظهر الترجمة أبكر). اضغط للخيارات',
     // ت-١: الشريط المطوي، − و+ في قائمة الشارة (يلحق تلميحها ووصفها).
     badgeFolded: 'وفيها التقديم والتأخير',
+    badgeFoldedPanel: 'وفيها التقديم والتأخير وفتح النص المتزامن',
     nudgeZero: '{offset} ث · في توقيتها المحفوظ',
     nudgeLater: '{offset} ث · تظهر لاحقًا',
     nudgeEarlier: '{offset} ث · تظهر أبكر',
