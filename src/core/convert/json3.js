@@ -70,7 +70,8 @@ export function parseJson3(body) {
     stats.invalidSegs += e.segs.length - objs.length;
     const segs = objs.map((s) => ({
       // بعد فك JSON: المحارف الخفية قد تصل مهرّبة في الجسم الخام. وقبل فحص الفراغ والثوابت، فالحدث المخفي كله حدث فارغ.
-      text: typeof s.utf8 === 'string' ? sanitizeText(s.utf8).text : '',
+      // ومحارف التحكم معها، والبديل اليتيم يُزال من القطعة قبل وصلها فلا يلتئم بديلا قطعتين محرفًا مخفيًا (ع-١٧).
+      text: typeof s.utf8 === 'string' ? sanitizeText(s.utf8, { controls: true }).text : '',
       offsetMs: Number.isFinite(s.tOffsetMs) ? ms(s.tOffsetMs) : 0,
     }));
     const text = segs.map((s) => s.text).join('');

@@ -58,8 +58,9 @@ export function buildExport({ videoId, title = null, track, mode, split = null, 
   if (!parsed || parsed.lang !== track.lang || parsed.kind !== track.kind || parsed.via !== (track.via ?? null)) throw invalid('track.key');
   if (!Array.isArray(track.cues) || track.cues.length === 0) throw new TjError('EX_NO_TRACK');
   assertValid(validateCues(track.cues, 'track.cues'), 'track.cues');
-  // ما حُفظ قبل 2.1.2 قد يحمل محارف خفية، فلا تصل إلى ملف النموذج. وبصمة النص على المحفوظ كما هو، ليبقى ملف الاستكمال مطابقًا له.
-  const cues = sanitizeCues(track.cues).cues;
+  // ما حُفظ قبل 2.1.2 (أو قبل توسيع القائمة، ع-١٧) قد يحمل محارف خفية أو تحكم، فلا تصل إلى ملف النموذج. وبصمة النص على المحفوظ
+  // كما هو، ليبقى ملف الاستكمال مطابقًا له.
+  const cues = sanitizeCues(track.cues, { controls: true }).cues;
   assertWritable(cues);
   if (split !== null && (typeof split !== 'object' || !Number.isInteger(split.size) || split.size < 1)) throw invalid('split.size');
   if (split !== null && split.by !== undefined && split.by !== 'count' && split.by !== 'content') throw invalid('split.by');

@@ -113,7 +113,7 @@ export default Object.freeze({
   IM_NOTE_TIME_MARKS: 'Fixed the format of {count} timing lines: Arabic decimal and comma marks to “,”, and arrows to -->.',
   IM_NOTE_TAGS: 'Stripped formatting tags (like italic, bold, font, color, and positioning commands) from {count} segments.',
   IM_NOTE_CONTROL: 'Removed invisible control characters from {count} segments.',
-  IM_NOTE_HIDDEN_CHARS: 'Removed {count} hidden characters from the text: tag characters, text-direction embeddings, overrides and isolates, and byte-order marks anywhere but the start of the file.',
+  IM_NOTE_HIDDEN_CHARS: 'Removed {count} hidden characters from the text: tag characters, extra variation selectors, text-direction embeddings, overrides and isolates, other invisible formatting characters, and byte-order marks anywhere but the start of the file.',
   IM_NOTE_TRIMMED: 'Trimmed spaces from the edges of {count} lines.',
   IM_NOTE_MERGED: '{verb} {files} by segment number: {names}.',
   IM_NOTE_MORE: 'More notes weren’t listed because there are too many ({count}).',

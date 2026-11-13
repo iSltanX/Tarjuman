@@ -14,6 +14,12 @@ const BLANK_RE = /^[\s\p{Cf}]*$/u;
 /** @param {string} text */
 export const isBlankText = (text) => BLANK_RE.test(String(text));
 
+// فاصل السطر في نص المقطع LF وحده، كما يكتبه كاتب SRT. وCR وCRLF وU+2028 وU+2029 (لصق في المحرّر) سطر جديد كما يقرؤها الاستيراد،
+// فتُعدّ كذلك في لوحة المشكلات وتُكتب LF في التصدير العربي، فلا يحمل الملف CR خامًا يقطع الكتلة في قارئ آخر (ع-١٧).
+const LINE_SEPARATORS = new RegExp('\\r\\n?|[\\u2028\\u2029]', 'g');
+/** النص بفواصل أسطره LF. @param {string} text */
+export const lfLines = (text) => String(text).replace(LINE_SEPARATORS, '\n');
+
 /** @param {unknown} c @param {string} [path] */
 export function validateCue(c, path = 'cue') {
   return firstFailure([

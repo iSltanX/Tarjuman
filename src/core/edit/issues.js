@@ -2,7 +2,7 @@
 // ونص لا يقبله التخزين) تمنع الحفظ والتصدير. والتحذيرات (تداخل، ومدة قصيرة جدًا، وفجوة كبيرة، ونص فارغ) لا تمنع
 // الحفظ؛ لكن التداخل والنص الفارغ يمنعان التصدير وحده لأن كاتب SRT يرفضهما (EX_TIMING_INVALID وEX_EMPTY_TEXT في P3).
 // وتنبيهات الكثافة (R55: قراءة سريعة وسطر طويل) تحذيرات لا تمنع الحفظ ولا التصدير، بعتبة من التفضيلات أو المعايرة.
-import { isBlankText } from '../model/cue.js';
+import { isBlankText, lfLines } from '../model/cue.js';
 import { LIMITS } from '../model/validate.js';
 import { breaksSrtText } from '../srt/lenient.js';
 import { READING_DEFAULTS, densityIssues, readingMetrics } from './density.js';
@@ -67,10 +67,11 @@ export function findIssues(cues, { drafts, density = null } = {}) {
 
     // ما يرفضه مدقق المقطع (isText في النموذج) خطأ هنا، فلا يصل إلى التخزين ليفشل برسالة عامة.
     if (c.text.length > LIMITS.maxTextChars || c.text.includes('\u0000')) add('ED_TEXT_INVALID', i, 'text', { max: LIMITS.maxTextChars });
-    // الفارغ بصريًا (محارف لا تُرى وحدها) فارغ كما في المقارن والتصدير العربي (تدقيق 7a66f91، U80).
+    // الفارغ بصريًا (محارف لا تُرى وحدها) فارغ كما في المقارن والتصدير العربي (تدقيق 7a66f91، U80). وفواصل الأسطر غير LF
+    // سطر جديد كما يكتبها التصدير (lfLines، ع-١٧)، فيُعلن هنا السطر الفارغ أو رأس المقطع الذي تصنعه.
     else if (isBlankText(c.text)) add('ED_TEXT_EMPTY', i, 'text');
-    else if (c.text.split('\n').some((l) => l.trim() === '')) add('ED_TEXT_BLANK_LINE', i, 'text');
-    else if (breaksSrtText(c.text)) add('ED_TEXT_BREAKS_SRT', i, 'text');
+    else if (lfLines(c.text).split('\n').some((l) => l.trim() === '')) add('ED_TEXT_BLANK_LINE', i, 'text');
+    else if (breaksSrtText(lfLines(c.text))) add('ED_TEXT_BREAKS_SRT', i, 'text');
 
     const next = cues[i + 1];
     if (broken(c)) continue;

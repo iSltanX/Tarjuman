@@ -63,7 +63,7 @@ export function buildPatchPackage({ videoId, title = null, fingerprint, englishT
   if (!source) return { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' };
   if (!validNumbers(numbers, fingerprint.count)) return { ok: false, code: 'EX_PATCH_BAD_NUMBERS' };
 
-  const picked = sanitizeCues([...numbers].sort((a, b) => a - b).map((n) => source[n - 1])).cues;
+  const picked = sanitizeCues([...numbers].sort((a, b) => a - b).map((n) => source[n - 1]), { controls: true }).cues;
   if (picked.some((c) => !(c.startMs < c.endMs) || String(c.text).split('\n').some((l) => l.trim() === ''))) {
     return { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' };
   }

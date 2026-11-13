@@ -3,7 +3,7 @@
 // ضمّ الأجزاء بسطر فارغ بينها يعطي الملف الكامل الذي كتبه الكاتب المرجعي (ويعيد المحلل الصارم قراءته).
 import { TjError } from '../errors/index.js';
 import { joinList } from '../../i18n/index.js';
-import { isBlankText } from '../model/cue.js';
+import { isBlankText, lfLines } from '../model/cue.js';
 import { breaksSrtText, parseSrtLenient, readableText } from '../srt/lenient.js';
 import { parseSrtStrict } from '../srt/parser.js';
 import { formatSrtTime } from '../srt/time.js';
@@ -38,8 +38,9 @@ export function assertWritable(cues, { arabic = false } = {}) {
 }
 
 /**
- * نصوص العربي كما تُكتب: بلا محارف تحكم ولا تجاوز اتجاه، وبلا مسافات أطراف الأسطر (readableText)، فيقرأ الاستيراد ما في
- * الملف كما هو. والمقاطع التي جُرّدت منها محارف في stripped بأرقامها في الملف (تدقيق 7a66f91، U99).
+ * نصوص العربي كما تُكتب: بفواصل أسطر LF (lfLines، ع-١٧)، وبلا محارف تحكم ولا تجاوز اتجاه، وبلا مسافات أطراف الأسطر
+ * (readableText)، فيقرأ الاستيراد ما في الملف كما هو. والمقاطع التي جُرّدت منها محارف في stripped بأرقامها في الملف (تدقيق
+ * 7a66f91، U99). وفاصل السطر غير LF لا يُذكر: يُعرض سطرًا جديدًا ويُقرأ كذلك، فلا يتغير ما يراه المستخدم.
  * @template {{ startMs: number, endMs: number, text: string }} C
  * @param {C[]} cues
  * @returns {{ cues: C[], stripped: number[] }}
@@ -47,7 +48,7 @@ export function assertWritable(cues, { arabic = false } = {}) {
 export function writableArabic(cues) {
   const stripped = [];
   const out = cues.map((c, i) => {
-    const r = readableText(c.text);
+    const r = readableText(lfLines(c.text));
     if (r.stripped) stripped.push(i + 1);
     return r.text === c.text ? c : { ...c, text: r.text };
   });

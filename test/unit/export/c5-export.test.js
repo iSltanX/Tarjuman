@@ -140,6 +140,46 @@ test('U99: وسم تنسيق يُجرَّد عند إعادة الاستيراد
   assert.deepEqual(planArabicExport({ videoId: VIDEO, cues: [cue(1, 'نظيف')], offsetMs: 0 }).notes, [], 'حارس: لا ملاحظة لنص نظيف');
 });
 
+// ---- ع-١٧: فواصل الأسطر غير LF في نص المحرّر ----
+
+const LS = String.fromCodePoint(0x2028);
+const PS = String.fromCodePoint(0x2029);
+const CR = String.fromCharCode(13);
+const issuesOf = (cues, n) => findIssues(cues).list.filter((i) => i.n === n).map((i) => i.code);
+
+test('ع-١٧: U+2028 وU+2029 وCR وCRLF في نص مقطع (لصق في المحرّر) تُكتب سطرًا جديدًا يُقرأ كما كُتب، بلا CR خام في الملف ولا ملاحظة وسوم', async () => {
+  for (const sep of [LS, PS, CR, `${CR}\n`]) {
+    const label = Array.from(sep, (c) => c.codePointAt(0).toString(16)).join('+');
+    const cues = [cue(1, 'تمهيد'), cue(2, `مرحبا${sep}بكم`), cue(3, 'ختام')];
+    assert.deepEqual(issuesOf(cues, 2), [], label);
+    const file = arabicExport(cues);
+    assert.ok(file.text.includes('\nمرحبا\nبكم\n'), label);
+    assert.equal([CR, LS, PS].some((c) => file.text.includes(c)), false, label);
+    assert.deepEqual(file.notes, [], label);
+    const back = await reimport(file.text);
+    assert.deepEqual(back.cues.map((c) => c.text), ['تمهيد', 'مرحبا\nبكم', 'ختام'], label);
+    assert.deepEqual(planArabicExport({ videoId: VIDEO, cues, offsetMs: 0 }).ok, true, label);
+  }
+});
+
+test('ع-١٧: فاصلان متتاليان منها سطر فارغ تعلنه لوحة المشكلات ويرفضه التصدير بـEX_EMPTY_TEXT برقمه، لا بفحص السلامة العام؛ وسطر زمن بعد U+2028 رأس مقطع', () => {
+  for (const sep of [LS, CR, PS]) {
+    const cues = [cue(1, 'تمهيد'), cue(2, `مرحبا${sep}${sep}بكم`)];
+    assert.deepEqual(issuesOf(cues, 2), ['ED_TEXT_BLANK_LINE'], sep.codePointAt(0).toString(16));
+    const e = tjCode(() => arabicExport(cues));
+    assert.equal(e.code, 'EX_EMPTY_TEXT');
+    assert.equal(e.params.list, '2');
+  }
+  const timed = [cue(1, 'تمهيد'), cue(2, `أ${LS}00:00:05,000 --> 00:00:06,000`)];
+  assert.deepEqual(issuesOf(timed, 2), ['ED_TEXT_BREAKS_SRT']);
+  assert.equal(tjCode(() => arabicExport(timed)).code, 'EX_TEXT_BREAKS_SRT');
+});
+
+test('ع-١٧ حارس (ffmpeg): ملف من نص فيه U+2028 وCR يقرؤه ffmpeg بعدده', { skip: !hasFfmpeg && 'ffmpeg غير مثبت' }, () => {
+  const file = arabicExport([cue(1, `أ${CR}ب`), cue(2, `ج${LS}د`), cue(3, 'هـ')]);
+  assert.equal(ffmpegCount(file.text), 3);
+});
+
 // ---- U98: planArabicExport لا يرمي ----
 
 test('U98: إزاحة غير صالحة (undefined وNaN و0.5) لا ترمي RangeError: { ok:false } برمز', () => {
