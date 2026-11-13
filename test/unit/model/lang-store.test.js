@@ -84,6 +84,32 @@ test('الدمج: يعيد المسارات والبصمات واللغات وا
   assert.equal('lang' in replaced.slots[1].track, false);
 });
 
+test('ع-١٣: الدمج بهوية الترجمة لا بموضعها: نقلها إصدار سابق بين خانتها والسابقة فتتبعها لغتها ومرجعها', () => {
+  const b = langBundle();
+  b.previous.track.lang = 'ar';
+  const p = packLang(b);
+  const lang = { ...p.lang, base: BASE };
+  const back = syncActive({ ...bundleFromRecord(p.record), slots: b.slots.map((s) => ({ ...structuredClone(s), track: s.n === 1 ? null : p.alts[s.n - 1] })), previous: { ...b.previous, track: p.previous } });
+  // استعادة السابقة في 1.1.0: تبديل الخانة 2 والسابقة.
+  const swapped = structuredClone(back);
+  [swapped.slots[1].track, swapped.previous.track] = [swapped.previous.track, swapped.slots[1].track];
+  assert.equal(mergeLang(swapped, lang), true, 'الوصف في غير موضعه: تُعاد الكتابة');
+  assert.equal(swapped.slots[1].track.lang, 'ar');
+  assert.equal(swapped.previous.track.lang, 'fr');
+  // استبدال النشطة في 1.1.0: صارت السابقة، والجديدة بلا لغة.
+  const moved = structuredClone(back);
+  moved.previous = { from: 1, savedAt: NOW, track: structuredClone(moved.record.arabic), offsetMs: 500 };
+  moved.record.arabic = { ...structuredClone(moved.record.arabic), fileName: 'new.srt', importedAt: '2026-11-02T00:00:00.000Z' };
+  syncActive(moved);
+  assert.equal(mergeLang(moved, lang), true);
+  syncActive(moved);
+  assert.equal(moved.previous.track.lang, 'en');
+  assert.equal(moved.previous.track.fingerprintId, 'fp_test000003', 'المرجع بغير الإنجليزية معها');
+  assert.equal('lang' in moved.record.arabic, false, 'الجديدة غير محددة');
+  assert.equal(moved.record.arabic.fingerprintId, null);
+  assert.equal(moved.slots[1].track.lang, 'fr');
+});
+
 test('المرافق الفارغ والتالف', () => {
   const empty = { schema: 1, videoId: A, base: BASE, sources: [], prints: [], slots: [null, null, null], previous: null };
   assert.equal(isEmptyLang(empty), true);

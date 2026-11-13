@@ -2,7 +2,7 @@
 // وترجمات بلغتها (lang)، والإصدار الأول و1.1.0 يقرآن السجل والتوابع بمدققات صارمة لا تعرف ذلك. فيُكتب لهما «إسقاط» بما
 // يفهمانه وحده (المسارات الإنجليزية الأصلية وبصماتها، والترجمات بمفاتيحها الثمانية)، ويُكتب الباقي في مفتاح مرافق جديد
 // lang:<id> يتجاهلانه (parseKey فيهما يعيده null). وعند القراءة يُدمج المرافق في الحزمة: المسارات والبصمات كما هي، ولغة كل
-// ترجمة ومرجعها بمطابقة هويتها (importedAt وfileName) في خانتها، فما استبدله إصدار سابق لا يأخذ لغة غيره. لا حذف ولا ترحيل:
+// ترجمة ومرجعها بمطابقة هويتها (importedAt وfileName) أينما صارت، فما استبدله إصدار سابق لا يأخذ لغة غيره. لا حذف ولا ترحيل:
 // المخطط يبقى 1 كقرار الإصدار الثاني (عقد storage §٧).
 import { isV1Track, validateComparisonReport, validateFingerprint, validateSourceTrack } from './tracks.js';
 import { isSourceLang, isVideoId } from './ids.js';
@@ -73,7 +73,7 @@ const sameTrack = (t, m) => !!t && !!m && t.importedAt === m.importedAt && t.fil
 
 /**
  * يدمج المرافق في حزمة فُكّت من قيم 1.1.0 (يعدّلها في مكانها). المسارات والبصمات تُضاف بلا تكرار وفي الحدود (ما يشير إليه
- * مرجع يبقى)، ولغة الترجمة ومرجعها لا يُطبَّقان إلا على الترجمة نفسها في خانتها.
+ * مرجع يبقى)، ولغة الترجمة ومرجعها لا يُطبَّقان إلا على الترجمة نفسها (بهويتها، في خانتها أو السابقة).
  * @param {import('./slots.js').Bundle} b
  * @param {LangValue} v
  * @returns {boolean} هل اختلف شيء عما وُصف (تُعاد الكتابة لتحديث النسخة)
@@ -86,24 +86,30 @@ export function mergeLang(b, v) {
   const ids = new Set(r.fingerprints.map((f) => f.id));
   for (const f of v.prints) if (!ids.has(f.id)) r.fingerprints.push(copy(f));
   const apply = (track, meta) => {
-    if (!meta) return;
-    if (!sameTrack(track, meta)) {
-      stale = true;
-      return;
-    }
     if (meta.lang !== null) track.lang = meta.lang;
     if (meta.ref && track.fingerprintId === null && r.fingerprints.some((f) => f.id === meta.ref.fingerprintId)) {
       track.fingerprintId = meta.ref.fingerprintId;
       track.comparison = meta.ref.comparison ? copy(meta.ref.comparison) : null;
     }
   };
-  for (const s of b.slots) {
-    const meta = v.slots[s.n - 1];
-    if (s.n === b.active) apply(r.arabic, meta);
-    else apply(s.track, meta);
-  }
-  if (b.previous) apply(b.previous.track, v.previous);
-  else if (v.previous) stale = true;
+  // كل وصف لترجمته بهويتها أينما صارت (ع-١٣): 1.1.0 ينقل الترجمة بين خانتها والسابقة باستبدال أو باستعادة السابقة. موضعها
+  // المكتوب أولًا، ثم أي وصف لم يُستعمل بهويتها؛ ووصف في غير موضعه أو بلا ترجمته ⇒ تُعاد الكتابة.
+  const tracks = [...b.slots.map((s) => (s.n === b.active ? r.arabic : s.track)), b.previous ? b.previous.track : null];
+  const metas = [...v.slots, v.previous];
+  const owner = tracks.map((t, i) => (sameTrack(t, metas[i]) ? i : -1));
+  const used = new Set(owner.filter((j) => j !== -1));
+  tracks.forEach((t, i) => {
+    if (!t || owner[i] !== -1) return;
+    const j = metas.findIndex((m, k) => !used.has(k) && sameTrack(t, m));
+    if (j === -1) return;
+    owner[i] = j;
+    used.add(j);
+    stale = true;
+  });
+  if (metas.some((m, k) => m && !used.has(k))) stale = true;
+  tracks.forEach((t, i) => {
+    if (owner[i] !== -1) apply(t, metas[owner[i]]);
+  });
   // الحدود بعد الدمج: إصدار سابق قد يكون أضاف مسارات أو بصمات إنجليزية فوق ما يُحفظ هنا.
   const referenced = new Set([r.arabic?.fingerprintId, ...b.slots.map((s) => s.track?.fingerprintId), b.previous?.track.fingerprintId].filter(Boolean));
   const fit = fitLimits(r.english, r.fingerprints, referenced);

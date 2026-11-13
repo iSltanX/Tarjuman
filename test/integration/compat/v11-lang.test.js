@@ -5,12 +5,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore as createStoreV11 } from '../../fixtures/v1.1/src/core/store/index.js';
-import { withSlotUpload as withSlotUploadV11 } from '../../fixtures/v1.1/src/core/model/bundle.js';
+import { withPreviousRestored as withPreviousRestoredV11, withSlotUpload as withSlotUploadV11 } from '../../fixtures/v1.1/src/core/model/bundle.js';
 import { withView as withViewV11 } from '../../fixtures/v1.1/src/core/model/transitions.js';
 import { validateVideoRecord as validateRecordV11 } from '../../fixtures/v1.1/src/core/model/video.js';
 import { COMPANION_VALIDATORS as V11_VALIDATORS } from '../../fixtures/v1.1/src/core/model/bundle.js';
 import { readBackup as readBackupV11 } from '../../fixtures/v1.1/src/core/backup/read.js';
 import { createStore } from '../../../src/core/store/index.js';
+import { withPreviousRestored } from '../../../src/core/model/bundle.js';
 import { createBackup } from '../../../src/core/backup/create.js';
 import { readBackup } from '../../../src/core/backup/read.js';
 import { planRestore, restoreItems, runRestore } from '../../../src/core/backup/restore.js';
@@ -129,6 +130,38 @@ test('1.1.0 يستبدل الترجمة النشطة: لا تلتصق بها ل�
   assert.equal(b.record.arabic.fingerprintId, null);
   assert.equal(b.slots[1].track.lang, 'fr');
   assert.deepEqual(b.record.english.map((t) => t.key), ['en|manual', 'ja|manual', 'ar|asr|en'], 'المسارات باقية');
+});
+
+// ع-١٣: 1.1.0 ينقل الترجمة بين خانتها و«السابقة» (باستبدال أو باستعادة السابقة)، فلغتها ومرجعها يتبعانها بهويتها لا بموضعها.
+test('ع-١٣: 1.1.0 يستبدل النشطة فتصير السابقة: لغتها ومرجعها يتبعانها، وباستعادتها في 2.0.0 يعودان إلى الخانة', async () => {
+  const { area, old, two } = pair();
+  await seedBundle(two, langBundle());
+  await old.updateBundle(A, (b) => withSlotUploadV11(b, 1, {
+    videoId: A, fileName: 'new.srt', cues: makeCues(5, { text: (i) => `جديد ${i}` }), comparison: null, fingerprintId: null, notes: [],
+  }, NOW, { replace: true }).bundle);
+  const b = await two.getBundle(A);
+  assert.equal(b.previous.track.fileName, langBundle().slots[0].track.fileName, 'ترجمة الخانة 1 صارت السابقة');
+  assert.equal(b.previous.track.lang, 'en', 'لغتها باقية');
+  assert.equal(b.previous.track.fingerprintId, 'fp_test000003', 'مرجعها بغير الإنجليزية باقٍ');
+  assert.equal('lang' in b.record.arabic, false, 'الجديدة غير محددة');
+  assert.equal(b.slots[1].track.lang, 'fr');
+  const d = area.dump()[`lang:${A}`];
+  assert.equal(d.previous.lang, 'en', 'المصالحة كتبت الوصف في موضعه الجديد');
+  assert.equal(d.slots[0], null);
+  const restored = await two.updateBundle(A, (x) => withPreviousRestored(x, NOW));
+  assert.equal(restored.record.arabic.lang, 'en');
+  assert.equal(restored.record.arabic.fingerprintId, 'fp_test000003');
+});
+
+test('ع-١٣: 1.1.0 يستعيد السابقة (تبديل مع الخانة 2): كل لغة مع ترجمتها في موضعها الجديد', async () => {
+  const { old, two } = pair();
+  await seedBundle(two, langBundle());
+  await old.updateBundle(A, (b) => withPreviousRestoredV11(b, NOW));
+  const b = await two.getBundle(A);
+  assert.equal(b.slots[1].track.fileName, langBundle().previous.track.fileName);
+  assert.equal(b.slots[1].track.lang, 'ar', 'لغة السابقة مع ترجمتها في الخانة 2');
+  assert.equal(b.previous.track.lang, 'fr', 'لغة الخانة 2 مع ترجمتها في السابقة');
+  assert.equal(b.record.arabic.lang, 'en', 'النشطة كما هي');
 });
 
 test('1.1.0 يحذف الفيديو: lang: يتيم يزيله 2.0.0 عند فهرسة المحفوظات، ولا يعود لسجل جديد', async () => {
