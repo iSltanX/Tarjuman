@@ -12,8 +12,12 @@
 //   والأصل مع الترجمة باسم لغته، والتنقل داخل الموقع والرجوع، والعرض الضيق، ووضع المسرح، وملء الشاشة؛ وأيقونات الشريط بلا
 //   كلمات والتلميح بالتحويم والتركيز وعنوانا القائمتين؛ ولقطات بالوضعين. كل فعل نقرة أو عجلة أو مفتاح حقيقي (Input).
 // لا رابط ولا نص مقاطع في الأدلة؛ والتوقف عند تحدّي البوت دون تحايل.
+// النصوص المتوقعة من الفهرس بلغة الواجهة التي تعرضها الإضافة فعلًا (lang في صفحاتها، ولغة الواجهة المحفوظة في يوتيوب)، كالدخان وt3:
+// كانت عربية حرفية فلا تصح إلا والمتصفح عربي (Fable ع-٤). وصور الفيديو في المحفوظات مطفأة افتراضيًا منذ 2.2.0 (و2)، فتُختبر بعد
+// تشغيل مفتاحها من الإعدادات. ورسالة اللوحة تبقى ما دام المؤشر فوقها (إمساك الرسائل)، فيُبعد عنها قبل انتظار انقضائها.
 //   command npm run build:dev -- --out <مجلد خارج المستودع>
-//   command node test/live/identity/run.mjs --browser brave|chrome --ext <مجلد> [--out test-results/live/identity-v4] [--headed]
+//   command node test/live/identity/run.mjs --browser brave|chrome --ext <مجلد> [--locale ar|en] [--out test-results/live/identity-v4] [--headed]
+// --locale يكتب «لغة الواجهة» اختيارَ مستخدم مع البذرة (كما يختارها من الإعدادات)؛ وبدونه تُترك لتهيئتها الأولى (لغة المتصفح هنا).
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,7 +27,10 @@ import { collectErrors, emulateScheme, fullScreenshot, openTab } from '../harnes
 import { dismissConsent, revealControls, waitForPlayer } from '../harness/youtube.mjs';
 import { SEED_IDS, buildSeedFew, storageItems } from '../ui/seed.mjs';
 import { THUMB_BASE, THUMB_FILE, formatDuration } from '../../../src/pages/library/thumb.js';
+import { describeLang } from '../../../src/core/lang/index.js';
 import { writeSrt } from '../../../src/core/srt/writer.js';
+import { catalogOf, isLocale } from '../../../src/i18n/index.js';
+import { UI_LOCALE_SCHEMA } from '../../../src/core/model/ui-locale.js';
 import { clockLabel } from '../../../src/player/panel/text.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -33,11 +40,13 @@ const browser = val('browser', 'brave');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
 const OUT = path.resolve(ROOT, val('out', 'test-results/live/identity-v4'), browser);
 const HEADED = argv.includes('--headed');
+const LOCALE = val('locale');
+if (LOCALE !== null && !isLocale(LOCALE)) throw new Error(`لغة واجهة غير مدعومة: ${LOCALE}`);
 const VIDEO = SEED_IDS.ted;
 const PROFILE = `${browser}-identity-${Date.now()}`;
 const rel = (f) => path.relative(ROOT, f);
 
-const result = { browser: null, at: new Date().toISOString(), headless: !HEADED, checks: [], measures: {}, screenshots: [], notes: [] };
+const result = { browser: null, at: new Date().toISOString(), headless: !HEADED, uiLocale: {}, checks: [], measures: {}, screenshots: [], notes: [] };
 const check = (id, ok, detail = null) => {
   result.checks.push({ id, ok: !!ok, detail });
   console.log(`${ok ? '✓' : '✗'} ${id}${detail ? ` — ${JSON.stringify(detail).slice(0, 400)}` : ''}`);
@@ -49,6 +58,48 @@ const skip = (id, reason) => {
 };
 const note = (t) => { result.notes.push(t); console.log(`· ${t}`); };
 
+const ISOLATES = /[\u2066-\u2069\u200e\u200f]/g;
+/** نص للمقارنة: بلا محارف العزل والاتجاه، والمسافات مسافة واحدة. */
+const clean = (s) => String(s ?? '').replace(ISOLATES, '').replace(/\s+/g, ' ').trim();
+/**
+ * نصوص الفحص بلغة واجهة مدعومة، من الفهرس نفسه الذي ترسم منه الإضافة (كـuiText في الدخان). القوالب تُعبّأ بمعاملاتها.
+ * @param {'ar' | 'en'} locale
+ */
+function uiText(locale) {
+  const c = catalogOf(locale);
+  const fill = (key, params) => String(c.get(key)).replace(/\{(\w+)\}/g, (m, k) => (Object.hasOwn(params, k) ? String(params[k]) : m));
+  return {
+    locale,
+    productName: c.get('common.productName'),
+    yourData: c.get('common.nav.yourData'),
+    library: c.get('common.nav.library'),
+    durationPrefix: c.get('library.thumb.duration'),
+    addChip: (n) => fill('library.chipRow.addText', { n }),
+    dialogSave: c.get('library.dialog.save'),
+    slotActivated: (n) => fill('errors.PG_SLOT_ACTIVATED', { n }),
+    undo: c.get('library.view.undo'),
+    privacy: c.get('settings.about.privacy'),
+    openVideo: c.get('editor.empty.openVideo'),
+    panelButton: c.get('player.controls.panel'),
+    synced: c.get('player.panel.synced'),
+    originalName: describeLang('en', locale).name,
+    downloadTitle: c.get('player.controls.downloadTitle'),
+    displayTitle: c.get('player.controls.displayTitle'),
+    entryHidden: c.get('popup.entry.hidden'),
+    entryShow: c.get('popup.entry.show'),
+    entryDone: c.get('popup.entry.done'),
+  };
+}
+/** نصوص الصفحات بلغتها (lang على جذر صفحة الإضافة)، ونصوص يوتيوب بلغة الواجهة المحفوظة؛ تُضبطان عند أول قراءة. */
+let tx = null;
+let ytTx = null;
+async function pageLocale(page, name) {
+  const lang = await page.eval(() => document.documentElement.lang);
+  result.uiLocale[name] = lang;
+  if (!isLocale(lang)) throw new Error(`لغة صفحة ${name} غير مدعومة: ${lang}`);
+  return lang;
+}
+
 const errors = [];
 /** أخطاء الشبكة في سجل صفحات الإضافة بعناوينها: 404 صورة الفيديو لمعرّف غير موجود متوقعة (يعيد يوتيوب البديلة الرمادية). */
 const netLogs = [];
@@ -57,11 +108,16 @@ let b = null;
 let extId = null;
 
 // ---- صفحات الإضافة ----
-/** كل طلب خارجي من صفحة إضافة: المضيف والعنوان (بلا استعلام) ورأس المُحيل إن وُجد. */
+/**
+ * كل طلب خارجي من صفحة إضافة: المضيف والعنوان (بلا استعلام) ورأس المُحيل إن وُجد. وbyId عنوان كل طلب بمعرّفه (لا يُفرَّغ مع list):
+ * سجل المتصفح لصورة فشلت بعد إنشائها من الشيفرة (المحفوظات تتبع مفتاح الصور دون إعادة تحميل) يحمل عنوان السكربت لا الصورة، فيُعرف
+ * طلبه بمعرّفه.
+ */
 function watchNetwork(page) {
-  const net = { list: [] };
+  const net = { list: [], byId: new Map() };
   page.on('Network.requestWillBeSent', (p) => {
     const u = p.request.url;
+    net.byId.set(p.requestId, u.split('?')[0]);
     if (/^(chrome-extension|data|blob|about):/.test(u)) return;
     let host = '?';
     try { host = new URL(u).host; } catch { /* عنوان غير صالح */ }
@@ -74,7 +130,7 @@ async function openExt(restPath) {
   errors.push({ page: restPath.split(/[?#]/)[0], ...collectErrors(page, { extId }) });
   page.net = watchNetwork(page);
   page.on('Log.entryAdded', ({ entry }) => {
-    if (entry.level === 'error' && entry.source === 'network') netLogs.push({ url: String(entry.url ?? '').split('?')[0], text: entry.text.slice(0, 80) });
+    if (entry.level === 'error' && entry.source === 'network') netLogs.push({ url: page.net.byId.get(entry.networkRequestId) ?? String(entry.url ?? '').split('?')[0], text: entry.text.slice(0, 80) });
   });
   await page.send('Network.enable');
   await page.send('Emulation.setFocusEmulationEnabled', { enabled: true });
@@ -102,6 +158,18 @@ async function clickSel(page, selector) {
   await human(250, 500);
 }
 const prefsIn = (page) => page.eval(async () => (await chrome.storage.local.get('prefs')).prefs?.ui ?? null);
+/** صفوف المحفوظات كما تُرى: حال الصورة ومصدرها وعرضها وسياسة المُحيل، والمدة بلا بادئتها (بلغة الواجهة)، والشرائح، وسطر «بلا ترجمة». */
+const libraryRows = (page) => page.eval((durPrefix) => [...document.querySelectorAll('li.lib-row')].map((li) => {
+  const t = li.querySelector('.lib-thumb');
+  const img = t?.querySelector('img');
+  return {
+    id: li.dataset.video, state: t?.dataset.state ?? null, src: img?.getAttribute('src') ?? null, w: img?.naturalWidth ?? null,
+    policy: img?.getAttribute('referrerpolicy') ?? null, fallbackIcon: !!t?.querySelector('.lib-thumb__fallback svg'),
+    dur: t?.querySelector('.lib-thumb__dur')?.textContent.replace(durPrefix, '').replace(/[\u2066-\u2069]/g, '').trim() ?? null,
+    chips: [...li.querySelectorAll('.lib-chip')].map((c) => ({ slot: c.dataset.slot, add: c.classList.contains('lib-chip--add'), active: c.getAttribute('aria-pressed') === 'true', text: c.textContent.trim() })),
+    none: li.querySelector('.lib-trs--none')?.textContent.trim() ?? null,
+  };
+}), { args: [tx.durationPrefix] });
 
 // ---- يوتيوب ----
 let yt = null;
@@ -296,6 +364,12 @@ async function barWhy(pt, before, after) {
   const ad = await main(() => document.querySelector('#movie_player')?.classList.contains('ad-showing') ?? null);
   return { stack, ad, fit: [before?.fit, after?.fit], room: [before?.room, after?.room], hidden: (await main(() => document.querySelector('#movie_player')?.classList.contains('ytp-autohide'))) };
 }
+/** يبعد المؤشر عن اللوحة ورسائلها إلى ركن الصفحة الأيسر الأسفل (تحت المشغّل)، فلا تُمسك رسالة بالمرور فوقها. */
+async function pointerAway() {
+  const vp = await main(() => ({ w: innerWidth, h: innerHeight }));
+  await yt.mouseMove(12, vp.h - 12);
+  await sleep(300);
+}
 async function clickBar(kind) {
   await revealControls(yt);
   const p = await iso(P.bar);
@@ -327,36 +401,23 @@ try {
 
   // ===== ١. المحفوظات: الصور والمدة والطلب الخارجي الوحيد والشرائح والتوسيع =====
   const lib = await openExt('pages/library/index.html');
-  await lib.eval((obj) => chrome.storage.local.set(obj), { args: [storageItems(seed)] });
+  const chosen = LOCALE ? { uiLocale: { schema: UI_LOCALE_SCHEMA, locale: LOCALE, source: 'user', at: new Date().toISOString() } } : {};
+  await lib.eval((obj) => chrome.storage.local.set(obj), { args: [{ ...storageItems(seed), ...chosen }] });
   lib.net.list.length = 0;
   await lib.reload();
   await step('library', async () => {
     await lib.waitFor(() => document.querySelectorAll('li.lib-row').length >= 4, { timeoutMs: 10000 });
     await lib.waitFor(() => [...document.querySelectorAll('.lib-thumb')].every((t) => t.dataset.state === 'fallback' || t.querySelector('img')?.complete), { timeoutMs: 15000 });
     await sleep(800);
-    const rows = await lib.eval(() => [...document.querySelectorAll('li.lib-row')].map((li) => {
-      const t = li.querySelector('.lib-thumb');
-      const img = t?.querySelector('img');
-      return {
-        id: li.dataset.video, state: t?.dataset.state ?? null, src: img?.getAttribute('src') ?? null, w: img?.naturalWidth ?? null,
-        policy: img?.getAttribute('referrerpolicy') ?? null, fallbackIcon: !!t?.querySelector('.lib-thumb__fallback svg'),
-        dur: t?.querySelector('.lib-thumb__dur')?.textContent.replace('المدة ', '').replace(/[⁦⁧⁨⁩]/g, '').trim() ?? null,
-        chips: [...li.querySelectorAll('.lib-chip')].map((c) => ({ slot: c.dataset.slot, add: c.classList.contains('lib-chip--add'), active: c.getAttribute('aria-pressed') === 'true', text: c.textContent.trim() })),
-        none: li.querySelector('.lib-trs--none')?.textContent.trim() ?? null,
-      };
-    }));
+    tx = uiText(await pageLocale(lib, 'library'));
+    const rows = await libraryRows(lib);
     const by = Object.fromEntries(rows.map((r) => [r.id, r]));
     check('library-four-rows', rows.length === 4, rows.map((r) => r.id));
-    const real = [SEED_IDS.ted, SEED_IDS.asr].map((id) => by[id]);
-    check('library-thumbnail-real-video-id', real.every((r, i) => r && r.state === 'image' && r.src === `${THUMB_BASE}${[SEED_IDS.ted, SEED_IDS.asr][i]}/${THUMB_FILE}` && r.w >= 320 && r.policy === 'no-referrer'), real.map((r) => r && { state: r.state, w: r.w, policy: r.policy, exact: r.src === `${THUMB_BASE}${r.id}/${THUMB_FILE}` }));
-    const fake = [SEED_IDS.typo, SEED_IDS.untitled].map((id) => by[id]);
-    check('library-thumbnail-fallback-for-missing-video', fake.every((r) => r && r.state === 'fallback' && !r.src && r.fallbackIcon), fake.map((r) => r && { state: r.state, icon: r.fallbackIcon }));
+    // صور الفيديو مطفأة افتراضيًا (2.2.0، و2): البلاطة البديلة لكل صف، ولا طلب خارجي أصلًا. والصور نفسها بعد تشغيل مفتاحها (الخطوة ٢).
+    check('library-thumbnails-off-by-default-fallback-no-requests', rows.every((r) => r.state === 'fallback' && !r.src && r.fallbackIcon) && lib.net.list.length === 0, { states: rows.map((r) => r.state), requests: lib.net.list.length });
     check('library-duration-is-real', rows.every((r) => r.dur === formatDuration(DUR[r.id])), rows.map((r) => ({ id: r.id, shown: r.dur, expected: formatDuration(DUR[r.id]) })));
-    const hosts = [...new Set(lib.net.list.map((x) => x.host))];
-    const exact = lib.net.list.every((x) => /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/mqdefault\.jpg$/.test(x.path));
-    check('library-only-external-request-is-ytimg-thumbnail', hosts.join() === 'i.ytimg.com' && exact && lib.net.list.length === 4 && lib.net.list.every((x) => !x.referer), { hosts, requests: lib.net.list.length, exact, referers: lib.net.list.filter((x) => x.referer).length });
     const ted = by[SEED_IDS.ted];
-    check('library-chips-real-slot-and-add-action', ted.chips.length === 2 && ted.chips[0].active && !ted.chips[0].add && ted.chips[1].add && ted.chips[1].slot === '2' && /فارغة/.test(ted.chips[1].text), ted.chips);
+    check('library-chips-real-slot-and-add-action', ted.chips.length === 2 && ted.chips[0].active && !ted.chips[0].add && ted.chips[1].add && ted.chips[1].slot === '2' && clean(ted.chips[1].text) === clean(tx.addChip(2)), { chips: ted.chips, expectedAdd: tx.addChip(2) });
     check('library-no-translation-state-is-clear', !!by[SEED_IDS.asr].none && by[SEED_IDS.asr].chips.length === 0, { none: by[SEED_IDS.asr].none });
     await shoot(lib, 'library', { width: 1280 });
 
@@ -384,8 +445,8 @@ try {
       const got = await identityOf();
       const v = V4[scheme];
       check(`identity-v4-logo-and-ivory-${scheme}`, got.viewBox === '0 0 200 176.4' && got.paths === 3 && got.book === 'M0 123.6H' && got.glyph === v.glyph && got.dots === v.glyph
-        && got.word === 'ترجمان' && got.wordColor === v.text && got.wordWeight === '800' && /Tarjuman UI Cairo/.test(got.wordFont ?? '') && got.ink === v.text && got.bg === v.bg, got);
-      if (scheme === 'light') check('identity-badge-truthful', got.badge === 'بياناتك على جهازك', { badge: got.badge });
+        && got.word === tx.productName && got.wordColor === v.text && got.wordWeight === '800' && /Tarjuman UI Cairo/.test(got.wordFont ?? '') && got.ink === v.text && got.bg === v.bg, got);
+      if (scheme === 'light') check('identity-badge-truthful', clean(got.badge) === clean(tx.yourData), { badge: got.badge, expected: tx.yourData });
       check(`identity-v4-library-borderless-selection-${scheme}`,
         got.activeChip?.bg === v.selected && got.activeChip?.color === v.ink && got.activeChip?.border === NONE
         && got.pressedFilter?.bg === v.selected && got.pressedFilter?.color === v.ink && got.pressedFilter?.border === NONE
@@ -421,22 +482,22 @@ try {
       return cs.length === 2 ? cs.map((c) => ({ slot: c.dataset.slot, pressed: c.getAttribute('aria-pressed') })) : null;
     }, { args: [SEED_IDS.ted], timeoutMs: 8000 });
     // المرفوعة تصير النشطة (كالرفع من الشريط).
-    check('library-add-chip-uploads-real-file-into-empty-slot', chooser === 1 && !!chips2 && chips2[1].slot === '2' && chips2[1].pressed === 'true' && dlg.confirm === 'حفظ', { chooser, dialog: dlg, chips: chips2 });
+    check('library-add-chip-uploads-real-file-into-empty-slot', chooser === 1 && !!chips2 && chips2[1].slot === '2' && chips2[1].pressed === 'true' && dlg.confirm === tx.dialogSave, { chooser, dialog: dlg, chips: chips2 });
     await lib.send('Page.setInterceptFileChooserDialog', { enabled: false });
     // تفعيل الترجمة 1 من شريحتها برسالة «تراجع»، والتراجع يعيد النشطة السابقة (2)، ثم تُفعَّل 1 ثانيةً (إزاحتها +0.5 لبقية الاختبار).
     const chipOn = (n) => lib.waitFor((id, k) => document.querySelector(`li.lib-row[data-video="${id}"] .lib-chips button[data-slot="${k}"]`)?.getAttribute('aria-pressed') === 'true', { args: [SEED_IDS.ted, String(n)], timeoutMs: 6000 });
     await clickSel(lib, `li.lib-row[data-video="${SEED_IDS.ted}"] .lib-chips button[data-slot="1"]`);
     const act = await chipOn(1);
     // رسالة التفعيل نفسها (لا رسالة الرفع السابقة): الأحدث التي تذكر «الترجمة 1» وفيها «تراجع».
-    const toastText = await lib.waitFor(() => {
-      const t = [...document.querySelectorAll('.tj-toast--success')].reverse().find((x) => /الترجمة 1/.test(x.textContent) && [...x.querySelectorAll('button')].some((b) => b.textContent.trim() === 'تراجع'));
+    const toastText = await lib.waitFor((said, undo) => {
+      const t = [...document.querySelectorAll('.tj-toast--success')].reverse().find((x) => x.textContent.includes(said) && [...x.querySelectorAll('button')].some((b) => b.textContent.trim() === undo));
       if (!t) return null;
-      [...t.querySelectorAll('button')].find((b) => b.textContent.trim() === 'تراجع').setAttribute('data-live-undo', '1');
+      [...t.querySelectorAll('button')].find((b) => b.textContent.trim() === undo).setAttribute('data-live-undo', '1');
       return t.textContent.trim();
-    }, { timeoutMs: 5000 });
+    }, { args: [tx.slotActivated(1), tx.undo], timeoutMs: 5000 });
     await clickSel(lib, '[data-live-undo]');
     const back = await chipOn(2);
-    check('library-chip-activates-translation-with-undo', !!act && /الترجمة 1/.test(toastText ?? '') && !!back, { activated: !!act, toast: toastText, undone: !!back });
+    check('library-chip-activates-translation-with-undo', !!act && (toastText ?? '').includes(tx.slotActivated(1)) && !!back, { activated: !!act, toast: toastText, undone: !!back });
     await sleep(600);
     await clickSel(lib, `li.lib-row[data-video="${SEED_IDS.ted}"] .lib-chips button[data-slot="1"]`);
     if (!(await chipOn(1))) throw new Error('لم تعد الترجمة 1 النشطة');
@@ -459,7 +520,8 @@ try {
     const st = await openExt('pages/settings/index.html#display');
     await st.waitFor(() => !!document.querySelector('input[data-pref="ui.thumbnails"]'), { timeoutMs: 10000 });
     const sw = await st.eval(() => Object.fromEntries(['panelEntry', 'thumbnails'].map((k) => [k, document.querySelector(`input[data-pref="ui.${k}"]`)?.checked ?? null])));
-    check('settings-ui-switches-on-by-default', sw.panelEntry === true && sw.thumbnails === true, sw);
+    // زر النص المتزامن ظاهر افتراضيًا، وصور الفيديو مطفأة افتراضيًا منذ 2.2.0 (و2).
+    check('settings-ui-switches-default-entry-on-thumbnails-off', sw.panelEntry === true && sw.thumbnails === false, sw);
     // التحديد بدرجتين: القسم الحالي في التنقّل صبغة صنوبرية أهدأ من الإعداد المختار داخله (بطاقة الخط والمقطّعة صنوبرًا)، والكل بلا إطار.
     for (const scheme of ['light', 'dark']) {
       await emulateScheme(st, scheme);
@@ -476,11 +538,31 @@ try {
     }
     await emulateScheme(st, 'light');
     await shoot(st, 'settings-display', { width: 1280 });
+    // تشغيل «صور الفيديو»: المحفوظات المفتوحة تتبعه دون إعادة تحميل، وبعد إعادة التحميل صورة الفيديو بالمعرّف الحقيقي (بعرض 320)
+    // والبلاطة البديلة للمعرّف غير الموجود، والطلب الخارجي الوحيد i.ytimg.com بلا مُحيل.
+    await clickSel(st, 'label[for="st-ui-thumbnails"]');
+    await sleep(600);
+    check('settings-thumbnails-on-saved', (await prefsIn(st))?.thumbnails === true, await prefsIn(st));
+    const followed = await lib.waitFor((ids) => ids.every((id) => document.querySelector(`li.lib-row[data-video="${id}"] .lib-thumb`)?.dataset.state === 'image'), { args: [[SEED_IDS.ted, SEED_IDS.asr]], timeoutMs: 8000 });
+    lib.net.list.length = 0;
+    await lib.reload();
+    await lib.waitFor(() => document.querySelectorAll('li.lib-row').length >= 4, { timeoutMs: 10000 });
+    await lib.waitFor(() => [...document.querySelectorAll('.lib-thumb')].every((t) => t.dataset.state === 'fallback' || t.querySelector('img')?.complete), { timeoutMs: 15000 });
+    await sleep(1500);
+    const onRows = Object.fromEntries((await libraryRows(lib)).map((r) => [r.id, r]));
+    const real = [SEED_IDS.ted, SEED_IDS.asr].map((id) => onRows[id]);
+    check('library-thumbnail-real-video-id', !!followed && real.every((r, i) => r && r.state === 'image' && r.src === `${THUMB_BASE}${[SEED_IDS.ted, SEED_IDS.asr][i]}/${THUMB_FILE}` && r.w >= 320 && r.policy === 'no-referrer'), { followedLive: !!followed, rows: real.map((r) => r && { state: r.state, w: r.w, policy: r.policy, exact: r.src === `${THUMB_BASE}${r.id}/${THUMB_FILE}` }) });
+    const fake = [SEED_IDS.typo, SEED_IDS.untitled].map((id) => onRows[id]);
+    check('library-thumbnail-fallback-for-missing-video', fake.every((r) => r && r.state === 'fallback' && !r.src && r.fallbackIcon), fake.map((r) => r && { state: r.state, icon: r.fallbackIcon }));
+    const hosts = [...new Set(lib.net.list.map((x) => x.host))];
+    const exact = lib.net.list.every((x) => /^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/mqdefault\.jpg$/.test(x.path));
+    check('library-only-external-request-is-ytimg-thumbnail', hosts.join() === 'i.ytimg.com' && exact && lib.net.list.length === 4 && lib.net.list.every((x) => !x.referer), { hosts, requests: lib.net.list.length, exact, referers: lib.net.list.filter((x) => x.referer).length });
+    await shoot(lib, 'library-thumbnails-on', { width: 1280, schemes: ['light'] });
+    // إطفاؤه من جديد: المحفوظات تتبعه دون إعادة تحميل، ثم بعد إعادة التحميل لا طلب خارجي أصلًا.
     await clickSel(st, 'label[for="st-ui-thumbnails"]');
     await sleep(600);
     const ui = await prefsIn(st);
     check('settings-thumbnails-off-saved', ui?.thumbnails === false, ui);
-    // المحفوظات المفتوحة تتبع التفضيل دون إعادة تحميل، ثم بعد إعادة التحميل لا طلب خارجي أصلًا.
     await lib.waitFor(() => [...document.querySelectorAll('.lib-thumb')].every((t) => t.dataset.state === 'fallback'), { timeoutMs: 5000 });
     const live = await lib.eval(() => [...document.querySelectorAll('.lib-thumb')].map((t) => t.dataset.state));
     lib.net.list.length = 0;
@@ -489,14 +571,13 @@ try {
     await sleep(1500);
     const after = await lib.eval(() => ({ states: [...document.querySelectorAll('.lib-thumb')].map((t) => t.dataset.state), imgs: document.querySelectorAll('.lib-thumb img').length }));
     check('library-thumbnails-off-no-requests-fallback-only', live.every((s) => s === 'fallback') && after.states.every((s) => s === 'fallback') && after.imgs === 0 && lib.net.list.length === 0, { live, after, requests: lib.net.list.length });
-    await clickSel(st, 'label[for="st-ui-thumbnails"]');
-    await sleep(600);
-    check('settings-thumbnails-back-on', (await prefsIn(st))?.thumbnails === true);
     await st.goto(`chrome-extension://${extId}/pages/settings/index.html#about`);
-    await st.waitFor(() => document.body.innerText.includes('خوادم يوتيوب'), { timeoutMs: 8000 });
-    // سطر الخصوصية بلا خادم (و1، 2.2.0): لا خادم لترجمان، والصور ما دام مفتاحها مفعّلًا، والبلاغ ينسخه المستخدم ويرسله من بريده.
-    const about = await st.eval(() => ({ privacy: [...document.querySelectorAll('p')].some((p) => /ولا خادم لترجمان/.test(p.textContent) && /صور الفيديو في المحفوظات من خوادم يوتيوب/.test(p.textContent) && /والبلاغ تنسخه أنت وترسله من بريدك/.test(p.textContent)) }));
-    check('settings-privacy-line-matches-behavior', about.privacy, about);
+    // سطر الخصوصية بلا خادم (و1، 2.2.0): لا خادم لترجمان، والصور ما دام مفتاحها مفعّلًا، والبلاغ ينسخه المستخدم ويرسله من بريده؛ نصه
+    // من الفهرس بلغة الصفحة.
+    const stTx = uiText(await pageLocale(st, 'settings'));
+    const squash = (x) => String(x).replace(/\s+/g, '');
+    const privacy = await st.waitFor((want) => [...document.querySelectorAll('p')].some((p) => p.textContent.replace(/[\u2066-\u2069]/g, '').replace(/\s+/g, '').includes(want)), { args: [squash(stTx.privacy)], timeoutMs: 8000 });
+    check('settings-privacy-line-matches-behavior', !!privacy, { privacy: !!privacy, locale: stTx.locale });
     result.measures.permissions = { permissions: result.extension.permissions, hostPermissions: result.extension.hostPermissions };
     await st.close();
   });
@@ -516,15 +597,16 @@ try {
     await shoot(ed, 'editor', { width: 1280 });
     await ed.goto(`chrome-extension://${extId}/pages/editor/index.html?v=${SEED_IDS.asr}`);
     await ed.waitFor(() => !!document.querySelector('.tj-empty'), { timeoutMs: 10000 });
+    const edTx = uiText(await pageLocale(ed, 'editor'));
     const emptyBtns = await ed.eval(() => [...document.querySelectorAll('.tj-empty button')].map((x) => x.textContent.trim()));
     const ytTabs = async () => (await b.conn.send('Target.getTargets')).targetInfos.filter((t) => t.type === 'page' && t.url.startsWith('https://www.youtube.com/watch') && t.url.includes(`v=${SEED_IDS.asr}`));
     const before = (await ytTabs()).length;
-    await ed.eval(() => { [...document.querySelectorAll('.tj-empty button')].find((x) => x.textContent.trim() === 'فتح الفيديو')?.setAttribute('data-live-open', '1'); });
+    await ed.eval((open) => { [...document.querySelectorAll('.tj-empty button')].find((x) => x.textContent.trim() === open)?.setAttribute('data-live-open', '1'); }, { args: [edTx.openVideo] });
     await clickSel(ed, '[data-live-open]');
     await sleep(2500);
     const opened = await ytTabs();
     const noTime = opened.every((t) => !/[?&]t=/.test(t.url));
-    check('editor-empty-open-video-opens-tab-without-time', emptyBtns.includes('فتح الفيديو') && emptyBtns.includes('المحفوظات') && opened.length === before + 1 && noTime, { buttons: emptyBtns, opened: opened.length - before, noTime });
+    check('editor-empty-open-video-opens-tab-without-time', emptyBtns.includes(edTx.openVideo) && emptyBtns.includes(edTx.library) && opened.length === before + 1 && noTime, { buttons: emptyBtns, opened: opened.length - before, noTime });
     for (const t of opened) await b.conn.send('Target.closeTarget', { targetId: t.targetId }).catch(() => {});
     await shoot(ed, 'editor-empty', { width: 1280, schemes: ['light'] });
     await ed.close();
@@ -549,6 +631,10 @@ try {
   await dismissPromo();
   await main(() => { const v = document.querySelector('#movie_player video'); v.muted = true; v.pause(); return true; });
   await sleep(600);
+  const ytLocale = await iso(async () => (await chrome.storage.local.get('uiLocale')).uiLocale?.locale ?? null);
+  result.uiLocale.youtube = ytLocale;
+  if (!isLocale(ytLocale)) throw new Error(`لغة الواجهة المحفوظة غير مدعومة: ${ytLocale}`);
+  ytTx = uiText(ytLocale);
   const s0 = await iso(P.state);
   const CUES = await iso(P.cues);
   result.measures.video = { arabic: s0.arabic, english: s0.english, offset: s0.offset, step: s0.step };
@@ -561,7 +647,7 @@ try {
     check('panel-closed-by-default-nothing-in-youtube-page', p.mode === 'none' && p.hostHidden && (!g.host || g.host.height === 0) && g.docWidth <= g.viewport.w, { mode: p.mode, host: g.host });
     await revealControls(yt);
     const bar0 = await iso(P.bar);
-    check('player-bar-panel-button-shown-not-pressed', !!bar0.buttons.panel.box && bar0.buttons.panel.pressed === 'false' && bar0.buttons.panel.label === 'النص المتزامن', { panel: bar0.buttons.panel });
+    check('player-bar-panel-button-shown-not-pressed', !!bar0.buttons.panel.box && bar0.buttons.panel.pressed === 'false' && bar0.buttons.panel.label === ytTx.panelButton, { panel: bar0.buttons.panel, expected: ytTx.panelButton });
     await clickBar('panel');
     const o = await waitPeek((x) => x.mode === 'open' && x.kind === 'ready');
     const ui = await iso(P.prefs);
@@ -584,7 +670,7 @@ try {
     check('panel-width-comfortable-not-wider-than-402', g2.host.width <= 402 && g2.host.width >= 300, { width: g2.host.width, fitted: o.fitted });
     check('panel-open-right-of-video-same-height-no-overlap', g2.host.left >= g2.player.right - 4 && !overlaps(g2.host, g2.player) && Math.abs(g2.host.height - g2.player.height) <= 24 && g2.docWidth <= g2.viewport.w, { host: g2.host, player: g2.player });
     check('panel-rows-equal-arabic-cues', o.rows === s0.arabic && o.rows > 0, { rows: o.rows, cues: s0.arabic });
-    check('panel-status-line-real', /متزامن/.test(o.status) && o.status.includes(String(s0.arabic)), { status: o.status });
+    check('panel-status-line-real', clean(o.status).includes(ytTx.synced) && o.status.includes(String(s0.arabic)), { status: o.status });
   });
 
   await step('panel-current-row-and-seek', async () => {
@@ -664,7 +750,7 @@ try {
       check('panel-dual-disabled-with-reason-when-no-original', dual?.disabled && !!(dual.title || dual.aria), dual);
       return;
     }
-    check('panel-dual-names-real-original-language', !!dual && /الإنجليزية/.test(dual.text) && !dual.disabled, { dual, lang: s0.english.lang });
+    check('panel-dual-names-real-original-language', !!dual && clean(dual.text).includes(ytTx.originalName) && !dual.disabled, { dual, lang: s0.english.lang, expectedName: ytTx.originalName });
     const idx = p.dual.indexOf(dual.checked ? arOnly : dual);
     await clickBox(p.boxes.dual[idx], 'العرض');
     await sleep(700);
@@ -718,7 +804,7 @@ try {
     await closeBarMenus();
     await clickBar('upload');
     const m2 = await barMenu();
-    check('player-menu-titles', m1?.label === 'تنزيل الأصل' && m2?.label === 'الترجمة', { download: m1?.label, upload: m2?.label, ...why1 });
+    check('player-menu-titles', m1?.label === ytTx.downloadTitle && m2?.label === ytTx.displayTitle, { download: m1?.label, upload: m2?.label, expected: [ytTx.downloadTitle, ytTx.displayTitle], ...why1 });
     // قائمة «الترجمة» المفتوحة (لوحة 10): زرها المفتوح بالطين الليلي، والخانة المختارة في «حفظ في» والمقطّعة بالطين الليلي بحبر داكن،
     // والخيار المحدد في القائمة صبغة طين 18% بنص طيني، والرئيسي بالطين.
     const open = await shadowStyle('tarjuman-controls', 'button[aria-expanded="true"]');
@@ -752,6 +838,8 @@ try {
     ui = await iso(P.prefs);
     check('panel-undo-restores-entry-and-open-panel', p.mode === 'open' && ui?.panelEntry === true && ui?.panelOpen === true, { mode: p.mode, ui });
     await clickBox(p.boxes.hide, 'إخفاء زر اللوحة');
+    // الرسالة تبقى ما دام المؤشر فوقها (إمساك الرسائل)، وتظهر حيث كان زر الإخفاء: يُبعد عنها كما يفعل المستخدم بعد الضغط.
+    await pointerAway();
     p = await waitPeek((x) => x.mode === 'none', 9000);
     ui = await iso(P.prefs);
     const g = await main(M.geo);
@@ -764,6 +852,7 @@ try {
     const pop = await openExt('pages/popup/index.html');
     await pop.send('Emulation.setDeviceMetricsOverride', { width: 360, height: 640, deviceScaleFactor: 1, mobile: false });
     await pop.waitFor(() => !!document.querySelector('.tj-popup__entry [data-action="show-entry"]'), { timeoutMs: 8000 });
+    const popTx = uiText(await pageLocale(pop, 'popup'));
     const row = await pop.eval(() => document.querySelector('.tj-popup__entry')?.textContent.trim() ?? null);
     const icon = await pop.eval(async () => {
       const im = new Image();
@@ -778,13 +867,13 @@ try {
     });
     // البلاطة صنوبر #1E4A44 وزواياها شفافة؛ والرمز عاج #F3EFE6 (النقطة والكتاب)، والفجوة بين النقطتين والكتاب بلون البلاطة.
     check('extension-icon-pine-tile-ivory-mark-transparent-corners', icon.corner[3] === 0 && icon.tile.slice(0, 3).join() === '30,74,68' && icon.dot.slice(0, 3).join() === '243,239,230' && icon.gap.slice(0, 3).join() === '30,74,68' && icon.book.slice(0, 3).join() === '243,239,230' && icon.size.join() === '128,128', icon);
-    check('popup-shows-hidden-entry-row', !!row && row.includes('زر النص المتزامن مخفي') && row.includes('إظهار'), { row });
+    check('popup-shows-hidden-entry-row', !!row && row.includes(popTx.entryHidden) && row.includes(popTx.entryShow), { row });
     await shoot(pop, 'popup-entry-hidden', { width: 360 });
     await clickSel(pop, '.tj-popup__entry [data-action="show-entry"]');
-    await pop.waitFor(() => /ظهر زر النص المتزامن/.test(document.querySelector('.tj-popup__entry-result')?.textContent ?? ''), { timeoutMs: 5000 });
+    await pop.waitFor((done) => (document.querySelector('.tj-popup__entry-result')?.textContent ?? '').includes(done), { args: [popTx.entryDone], timeoutMs: 5000 });
     const res = await pop.eval(() => ({ result: document.querySelector('.tj-popup__entry-result')?.textContent.trim() ?? null, row: !!document.querySelector('.tj-popup__entry') }));
     const ui = await prefsIn(pop);
-    check('popup-show-entry-saves-and-reports-real-result', ui?.panelEntry === true && /ظهر زر النص المتزامن/.test(res.result ?? '') && !res.row, { ...res, ui });
+    check('popup-show-entry-saves-and-reports-real-result', ui?.panelEntry === true && (res.result ?? '').includes(popTx.entryDone) && !res.row, { ...res, ui });
     await pop.close();
     await front(yt);
     // الزر يعود إلى شريط المشغّل، واللوحة مغلقة (أُخفي زرها وهي مفتوحة فأُغلقت معه): لا شيء في الصفحة حتى تُفتح.
@@ -956,6 +1045,7 @@ try {
     // إخفاء الزر من رأس اللوحة (ح4: زر مباشر): بعد الرسالة لا لوحة، فيعود تخطيط يوتيوب العربي كما كان (العمود يسار الفيديو).
     let q = await peek();
     await clickBox(q.boxes.hide, 'إخفاء زر اللوحة');
+    await pointerAway();
     q = await waitPeek((x) => x.mode === 'none', 9000);
     await sleep(800);
     const nativeRow = await rowOf();
@@ -994,7 +1084,13 @@ try {
   // 404 صورة الفيديو لمعرّف غير موجود متوقعة (البلاطة البديلة هي السلوك)، وتُعدّ وحدها؛ وأي خطأ شبكة آخر يبقى خطأ.
   const expected404 = netLogs.filter((x) => MISSING_THUMB.test(x.url) && /404/.test(x.text)).length;
   const otherNet = netLogs.length - expected404;
-  result.measures.extensionNetworkLog = { expectedMissingThumb404: expected404, other: otherNet };
+  // ما لم يطابق 404 الصورة المتوقعة: مضيفه واسم ملفه ونصه وحدها (لا رابط ولا معرّف)، لتسمية السبب إن سقط no-extension-errors.
+  const unmatched = netLogs.filter((x) => !(MISSING_THUMB.test(x.url) && /404/.test(x.text))).map((x) => {
+    let host = '?';
+    try { host = new URL(x.url).host; } catch { /* بلا عنوان */ }
+    return { host, file: x.url.split('/').pop() || null, text: x.text };
+  });
+  result.measures.extensionNetworkLog = { expectedMissingThumb404: expected404, other: otherNet, unmatched };
   // رسالة المتصفح «Unsafe attempt to load URL …/ui/fonts/*.woff2» تصاحب كل قراءة ناجحة لخطوط الإضافة على يوتيوب
   // (معروفة من P6 بملف تشخيصها، وتُعدّ وحدها كما في P10)؛ والخطوط محمّلة فعلًا (تشخيص اللوحة والأدوات).
   const FONT_READ = /^Unsafe attempt to load URL chrome-extension:\/\/[^/]+\/ui\/fonts\/(subtitle|ui)\/[a-z0-9-]+\.woff2 from frame/;

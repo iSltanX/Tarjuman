@@ -8,16 +8,22 @@
 //   node test/live/controls/run.mjs --browser brave|chrome --ext <مجلد> [--only hide,download,upload,nudge,timing,persist,modes]
 //        [--break-font tajawal] [--headed] [--out test-results/live/P6]
 // --break-font يكتب بايتات غير صالحة في ملفي خط داخل مجلد البناء المؤقت (لا المستودع) لسيناريو البديل (P6-AC9).
+// مجموعة download تتبع الواجهة الحالية: قائمة «تنزيل الأصل» (src/player/controls/menus.js) بلغتها الفعلية، ونصوصها من الفهرس نفسه
+// (عنوان القائمة يحدد اللغة)، وبلا بند نسخ (نسخ التعليمات في نافذة الإضافة منذ 2.0.0، AA3 ق٨)؛ والقائمة تُغلق باختفاء شريط يوتيوب
+// (session.js)، فتُعاد إظهاره قبل كل قراءة أو ضغطة. كانت تبحث بنصوص عربية من الإصدار الأول وببند «copy» فتسقط وتُسقط ما بعدها.
 import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BROWSERS, launch, loadExtension, sleep } from '../harness/browser.mjs';
+import { BROWSERS, PROFILE_ROOT, launch, loadExtension, sleep } from '../harness/browser.mjs';
 import { FONT_READ_LOG, collectErrors, openTab } from '../harness/extension.mjs';
 import { dismissConsent, relatedIds, revealControls, waitForPlayer } from '../harness/youtube.mjs';
 import { createExtractor } from '../../../src/extract/index.js';
-import { buildExport } from '../../../src/core/export/index.js';
+import { messageFor } from '../../../src/core/errors/index.js';
+import { buildExport, instructions } from '../../../src/core/export/index.js';
+import { LOCALES, catalogOf, setLocale } from '../../../src/i18n/index.js';
+import { LABELS, ccLanguagesLine, downloadedLine, trackLine } from '../../../src/player/controls/text.js';
 import { subtitleFont } from '../../../src/ui/subtitle-fonts.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -31,6 +37,8 @@ const ONLY = val('only') ? new Set(val('only').split(',')) : null;
 const OUT = path.resolve(ROOT, val('out', 'test-results/live/P6'), browser);
 const want = (id) => !ONLY || ONLY.has(id);
 const sha = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
+/** نص للمقارنة بما يعرضه المشغّل: بلا محارف العزل والاتجاه (الأسماء معزولة في سطر «نُزّل»)، والمسافات مسافة واحدة. */
+const clean = (s) => String(s ?? '').replace(/[\u2066-\u2069\u200e\u200f]/g, '').replace(/\s+/g, ' ').trim();
 
 const result = { browser: null, at: new Date().toISOString(), headless: !argv.includes('--headed'), video: VIDEO, checks: [], notes: [], screenshots: [], measures: {}, errors: [] };
 const check = (id, ac, ok, detail = null) => {
@@ -128,10 +136,15 @@ if (BREAK) {
   for (const w of ['400', '700']) await writeFile(path.join(EXT, 'ui/fonts/subtitle', `${BREAK}-${w}.woff2`), Buffer.from('not a font'));
 }
 
-const b = await launch({ browser, profile: val('profile', `${browser}-p6-${Date.now()}`), headless: !argv.includes('--headed') });
+const PROFILE = val('profile', `${browser}-p6-${Date.now()}`);
+const DL = await mkdtemp(path.join(os.tmpdir(), 'tj-p6-dl-'));
+// مجلد التنزيل في تفضيلات ملف الاختبار قبل التشغيل، كسائق T3: تنزيلات الإضافة (downloads.download من العامل الخلفي) تذهب إليه بلا
+// سؤال وبأسمائها. وBrowser.setDownloadBehavior لا يُستعمل: بلغ الملف المجلد باسم آخر فسقط فحص البايتات (جولة الدفعة ب، والجولة d).
+await mkdir(path.join(PROFILE_ROOT, PROFILE, 'Default'), { recursive: true });
+await writeFile(path.join(PROFILE_ROOT, PROFILE, 'Default', 'Preferences'), JSON.stringify({ download: { default_directory: DL, prompt_for_download: false, directory_upgrade: true }, savefile: { default_directory: DL } }));
+const b = await launch({ browser, profile: PROFILE, headless: !argv.includes('--headed') });
 result.browser = `${BROWSERS[browser].name} (${b.version.product})`;
 console.log(`المتصفح: ${result.browser}`);
-const DL = await mkdtemp(path.join(os.tmpdir(), 'tj-p6-dl-'));
 const FILES = await mkdtemp(path.join(os.tmpdir(), 'tj-p6-files-'));
 let page;
 let isoId;
@@ -192,17 +205,19 @@ async function clearField() {
   for (let i = 0; i < 10; i++) await pressKey('Backspace', 'Backspace', 8);
 }
 
-// تنزيلات: إلى مجلد مؤقت، وتُنتظر حتى تكتمل.
-const downloads = new Map();
-b.conn.on('Browser.downloadProgress', (p) => downloads.set(p.guid, p.state));
-b.conn.on('Browser.downloadWillBegin', (p) => downloads.set(p.guid, 'begin'));
-async function waitDownloads(count, since) {
-  for (let i = 0; i < 60; i++) {
-    const done = [...downloads.values()].filter((s) => s === 'completed').length;
-    if (done >= since + count) break;
-    await sleep(250);
+/** تنزيلات إلى المجلد المؤقت: تُنتظر ملفاتها بأسمائها في المجلد نفسه (لا بأحداث CDP: تنزيل العامل الخلفي قد لا يُبلغ بها). */
+async function waitFiles(match, count = 1, timeoutMs = 20000) {
+  const end = Date.now() + timeoutMs;
+  let names = [];
+  while (Date.now() < end) {
+    names = (await readdir(DL)).filter((n) => !/\.(?:crdownload|part)$/.test(n)).sort();
+    if (names.filter(match).length >= count) {
+      await sleep(400);
+      break;
+    }
+    await sleep(300);
   }
-  return (await readdir(DL)).filter((n) => !n.endsWith('.crdownload')).sort();
+  return names;
 }
 
 // منتقي الملفات: يُعترض ويُملأ بملف من المجلد المؤقت كما يختار المستخدم.
@@ -275,7 +290,6 @@ try {
   check('load-unpacked', 'تحضير', !ext.error, ext.error ? { error: ext.error } : { method: ext.method });
   if (ext.error) throw new Error('تعذّر تحميل الإضافة');
   extId = ext.id;
-  await b.conn.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: DL, eventsEnabled: true });
   page = await openTab(b.conn, 'about:blank');
   await page.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 950, deviceScaleFactor: 1, mobile: false });
   const errs = collectErrors(page, { extId, onlyExtension: true });
@@ -334,58 +348,88 @@ try {
 
   // ===== AC4: التحميل =====
   if (want('download')) {
+    const menuOpen = async () => (await iso(I.peek)).layer.menu;
+    /** قائمة «تنزيل الأصل» مفتوحة والشريط ظاهر: تُغلق القائمة باختفاء الشريط (وهو سلوك المنتج)، فيُظهر ثم تُفتح إن أُغلقت. */
+    async function downloadMenu() {
+      await revealControls(page);
+      const m = await menuOpen();
+      if (!m || m.label !== catalogOf(DLOC ?? 'en').get('player.controls.downloadTitle')) await clickButton('download');
+      return iso(I.peek);
+    }
     await clickButton('download');
     let pk = await iso(I.peek);
-    check('download-menu-before-capture', 'P6-AC4', /فعّل الترجمة \(CC\) واختر English/.test(pk.layer.menu?.text ?? ''), { label: pk.layer.menu?.label });
+    // لغة واجهة المشغّل من عنوان القائمة نفسها، ومنها كل نص متوقع (messageFor وtrackLine وdownloadedLine باللغة نفسها).
+    const DLOC = LOCALES.find((l) => catalogOf(l).get('player.controls.downloadTitle') === pk.layer.menu?.label) ?? null;
+    result.uiLocale = DLOC ?? `غير معروفة: ${pk.layer.menu?.label ?? 'لا قائمة'}`;
+    setLocale(DLOC ?? 'en');
+    // بلا التقاط صالح: لا زر تنزيل، ورسالة واحدة: تفعيل CC (بعدد لغات الفيديو إن عُرف، القرار ٢٩)، أو CC مفعّلة بلا التقاط؛ أو رفض
+    // الجسم الفارغ (EX_EMPTY_BODY) حين شغّل يوتيوب الترجمة وحده، فتحت الأتمتة يعيد جسمها فارغًا (P1).
+    const notCaptured = [messageFor('CT_NOT_CAPTURED'), messageFor('CT_CC_NOT_CAPTURED'), messageFor('EX_EMPTY_BODY'), ...Array.from({ length: 300 }, (_, i) => ccLanguagesLine(i + 1))].map(clean);
+    const shownState = notCaptured.find((t) => clean(pk.layer.menu?.text).includes(t)) ?? null;
+    check('download-menu-before-capture', 'P6-AC4', !!DLOC && !!shownState && !(pk.layer.menu?.items ?? []).some((x) => x.fid === 'download'), { locale: DLOC, label: pk.layer.menu?.label, state: shownState, text: clean(pk.layer.menu?.text).slice(0, 160) });
     await shoot('ac4-menu-not-captured');
     const acc = await iso(I.inject, message);
     await sleep(500);
-    pk = await iso(I.peek);
-    check('capture-accepted-status-line', 'P6-AC4', acc.accepted && /English – يدوي، 427 مقطعًا/.test(pk.layer.menu?.text ?? ''), { accepted: acc.accepted, code: acc.code });
+    pk = await downloadMenu();
+    // سطر المسار الملتقط: «English · manual · 427 segments» باسم لغته ونوعه وعدد مقاطعه.
+    const line = trackLine({ lang: 'en', kind: 'manual', cueCount: EXP_NORMAL.fingerprint.cues.length });
+    check('capture-accepted-status-line', 'P6-AC4', acc.accepted && clean(pk.layer.menu?.text).includes(clean(line)), { accepted: acc.accepted, code: acc.code, expected: line });
     await shoot('ac4-menu-captured');
-    const before = downloads.size;
-    await clickItem('download');
-    let names = await waitDownloads(1, before);
+    const items = pk.layer.menu?.items.map((x) => x.fid) ?? [];
+    check('download-menu-items-current', 'P6-AC4', ['mode:normal', 'mode:long', 'download', 'fallback'].every((f) => items.includes(f)) && !items.includes('copy'), { items });
     const normalName = `${VIDEO}.en.manual.normal.srt`;
+    await clickItem('download');
+    let names = await waitFiles((n) => n === normalName);
     const got = names.includes(normalName) ? await readFile(path.join(DL, normalName), 'utf8') : null;
-    check('download-normal-bytes-match', 'P6-AC4', got === EXP_NORMAL.files[0].text, { name: normalName, bytes: got ? Buffer.byteLength(got) : null, expected: Buffer.byteLength(EXP_NORMAL.files[0].text) });
+    check('download-normal-bytes-match', 'P6-AC4', got === EXP_NORMAL.files[0].text, { name: normalName, bytes: got ? Buffer.byteLength(got) : null, expected: Buffer.byteLength(EXP_NORMAL.files[0].text), inDir: names });
     await sleep(600);
     const st = await iso(I.state);
     check('fingerprint-saved', 'P6-AC4', st.fingerprints === 1, { fingerprints: st.fingerprints });
-    pk = await iso(I.peek);
-    check('download-success-visible', 'P6-AC4', /✓ نُزّل/.test(pk.layer.menu?.text ?? ''));
+    pk = await downloadMenu();
+    check('download-success-visible', 'P6-AC4', clean(pk.layer.menu?.text).includes(clean(downloadedLine(normalName))), { expected: clean(downloadedLine(normalName)) });
     await shoot('ac4-download-done');
     // مقاطع أطول
+    await downloadMenu();
     await clickItem('mode:long');
-    const before2 = [...downloads.values()].filter((s) => s === 'completed').length;
     await sleep(2200);
+    await downloadMenu();
     await clickItem('download');
-    names = await waitDownloads(1, before2);
     const longName = `${VIDEO}.en.manual.long.srt`;
+    names = await waitFiles((n) => n === longName);
     const gotLong = names.includes(longName) ? await readFile(path.join(DL, longName), 'utf8') : null;
-    check('download-long-bytes-match', 'P6-AC4', gotLong === EXP_LONG.files[0].text, { name: longName, bytes: gotLong ? Buffer.byteLength(gotLong) : null });
+    check('download-long-bytes-match', 'P6-AC4', gotLong === EXP_LONG.files[0].text, { name: longName, bytes: gotLong ? Buffer.byteLength(gotLong) : null, inDir: names });
+    await downloadMenu();
     await clickItem('mode:normal');
-    // نسخ التعليمات
-    await iso(I.stubClipboard);
-    await clickItem('copy');
-    await sleep(500);
-    const copied = await iso(I.copied);
-    const expectSha = sha(EXP_NORMAL.instructions);
-    pk = await iso(I.peek);
-    const shownSomewhere = [pk.layer.menu?.text ?? '', ...pk.layer.toasts.map((t) => t.text), pk.layer.tip ?? ''].some((t) => t.includes(EXP_NORMAL.instructions.slice(0, 40)))
-      || (await main(M.bodyHas, EXP_NORMAL.instructions.slice(0, 40)));
-    check('copy-instructions-from-buildExport', 'P6-AC4', copied?.sha === expectSha && copied?.len === EXP_NORMAL.instructions.length, { copied: copied && { len: copied.len, sha: copied.sha }, expectSha });
-    check('instructions-never-displayed', 'P6-AC4', !shownSomewhere && pk.layer.toasts.some((t) => t.text.includes('نُسخت تعليمات الترجمة')), { toasts: pk.layer.toasts.map((t) => t.text) });
-    // التقسيم الاحتياطي (معلومة)
-    await clickItem('fallback');
-    await clickItem('split');
-    const before3 = [...downloads.values()].filter((s) => s === 'completed').length;
+    // نسخ التعليمات في نافذة الإضافة وحدها (منذ 2.0.0، AA3 ق٨): القائمة تقول ذلك ولا بند نسخ فيها، والتعليمات لا تُعرض في الصفحة.
+    pk = await downloadMenu();
+    const instr = instructions({ videoId: VIDEO, title: null, source: 'en', target: 'ar', locale: DLOC ?? 'en' });
+    const shownSomewhere = [pk.layer.menu?.text ?? '', ...pk.layer.toasts.map((t) => t.text), pk.layer.tip ?? ''].some((t) => t.includes(instr.slice(0, 40)))
+      || (await main(M.bodyHas, instr.slice(0, 40)));
+    check('copy-points-to-popup-not-player-menu', 'P6-AC4', !pk.layer.menu.items.some((x) => x.fid === 'copy') && clean(pk.layer.menu.text).includes(clean(LABELS.instructionsNote)), { note: LABELS.instructionsNote, items: pk.layer.menu.items.map((x) => x.fid) });
+    check('instructions-never-displayed', 'P6-AC4', !shownSomewhere, { shown: shownSomewhere });
+    // التقسيم الاحتياطي (معلومة): «تقسيم الملفات الطويلة» قد يكون مفتوحًا أصلًا (الملف أطول من حد الإعدادات، ف4)، فلا يُضغط إلا
+    // مغلقًا؛ وخانة التقسيم لا تُضغط إن كانت مفعّلة (يظهر حقل الحجم معها).
+    pk = await downloadMenu();
+    const has = (fid) => pk.layer.menu.items.some((x) => x.fid === fid);
+    if (!has('split')) {
+      await clickItem('fallback');
+      pk = await downloadMenu();
+    }
+    if (!has('splitSize')) {
+      await clickItem('split');
+      pk = await downloadMenu();
+    }
     await clickItem('download');
-    names = await waitDownloads(3, before3);
+    names = await waitFiles((n) => /part\d+of\d+/.test(n), 2);
+    await sleep(1500);
+    names = (await readdir(DL)).filter((n) => !/\.(?:crdownload|part)$/.test(n)).sort();
     const parts = names.filter((n) => /part\d+of\d+/.test(n));
     check('split-parts-downloaded (معلومة)', 'P6-AC4', parts.length === 3, { parts });
     await shoot('ac4-menu-fallback');
-    await clickButton('download');
+    if (await menuOpen()) {
+      await pressKey('Escape', 'Escape', 27);
+      await sleep(300);
+    }
   }
 
   // ===== AC5: الرفع والعرض =====

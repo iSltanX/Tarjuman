@@ -7,6 +7,9 @@
 //   والترجمة ← المحرّر ← الحفظ بعد إعادة التحميل ← النسخة الاحتياطية ← «الإبلاغ عن مشكلة» (المعاينة والنسخ ونسخ البريد، ولا إرسال
 //   منذ و1 ولا طلب إلى مضيف البلاغات القديم) ← في Firefox منح إذن يوتيوب وسحبه ← الإزالة وقياس محو التخزين ← إعادة التثبيت فارغًا ← الاستعادة.
 // تحت الأتمتة يعيد يوتيوب جسم الترجمة فارغًا (P1)، فيُرسل جسم P1 الحقيقي للفيديو نفسه من عالم الصفحة برسالة الالتقاط نفسها.
+// النصوص المتوقعة من الفهرس بلغة الواجهة التي تعرضها الإضافة فعلًا (lang في كل صفحة، وعنوان قائمة المشغّل)، كالدخان: يوتيوب تحت
+// الأتمتة إنجليزي فتأتي الواجهة إنجليزية، وكان الفحص يبحث بنصوص عربية فيسقط والإضافة سليمة (تحقق Gemini، T1-أ، وFable ع-٤). ويخرج
+// بالرمز 1 عند أي سقوط. وصفحات الإضافة تُغلق قبل الإزالة (T1-ب).
 //   command node test/live/stores/t3.mjs --browser brave|chrome|edge|firefox [--headed] [--out test-results/live/T3/<browser>]
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -19,7 +22,9 @@ import { attach } from '../harness/extension.mjs';
 import { dismissConsent, revealControls, waitForPlayer } from '../harness/youtube.mjs';
 import { createExtractor } from '../../../src/extract/index.js';
 import { buildExport, instructions } from '../../../src/core/export/index.js';
+import { describeLang } from '../../../src/core/lang/index.js';
 import { parseSrtLenient } from '../../../src/core/srt/lenient.js';
+import { LOCALES, catalogOf, isLocale } from '../../../src/i18n/index.js';
 import { APPS, bridge, startBrowser } from './driver.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -42,7 +47,43 @@ const ISOLATES = new RegExp(`[${String.fromCharCode(0x2066)}-${String.fromCharCo
 const clean = (s) => String(s ?? '').replace(ISOLATES, '').replace(/\s+/g, ' ').trim();
 const rel = (f) => path.relative(ROOT, f);
 
-const result = { browser: null, target: TARGET, at: new Date().toISOString(), headless: HEADLESS, video: VIDEO, extension: null, checks: [], notes: [], screenshots: [], errors: [] };
+const result = { browser: null, target: TARGET, at: new Date().toISOString(), headless: HEADLESS, video: VIDEO, extension: null, uiLocale: {}, checks: [], notes: [], screenshots: [], errors: [] };
+
+/**
+ * نصوص الفحص بلغة واجهة مدعومة، من الفهرس نفسه الذي ترسم منه الإضافة (كـuiText في الدخان). القوالب تُقطع عند متغيرها: «نُزّل {name}»
+ * ← «نُزّل»، و«اكتملت الاستعادة.» بلا نقطتها.
+ * @param {'ar' | 'en'} locale
+ */
+function uiText(locale) {
+  const c = catalogOf(locale);
+  const lead = (key) => String(c.get(key)).split('{')[0].trim();
+  return {
+    locale,
+    downloadTitle: c.get('player.controls.downloadTitle'),
+    downloaded: lead('player.controls.downloadedLine'),
+    saveFailed: [c.get('errors.SV_FAILED'), c.get('errors.SV_FALLBACK_BLOB')],
+    fallbackBlob: c.get('errors.SV_FALLBACK_BLOB'),
+    // رأس كتلة «تعليمات الترجمة» كما يُقرأ نصها: العنوان ثم «من» واسم الإنجليزية ثم «إلى» واسم العربية بلغة الواجهة.
+    pairHead: [c.get('popup.pair.title'), c.get('common.langPicker.from'), describeLang('en', locale).name, c.get('common.langPicker.to'), describeLang('ar', locale).name].join(''),
+    save: c.get('editor.action.save'),
+    backup: c.get('settings.data.create'),
+    restore: c.get('settings.data.restore'),
+    restoreDone: lead('errors.BK_RESTORE_DONE').replace(/[.。]$/, ''),
+    report: c.get('settings.report.label'),
+    copyReport: c.get('settings.report.copy'),
+    copyEmail: c.get('settings.report.copyEmail'),
+  };
+}
+/** لغة الواجهة التي يعرض بها نص معروف، بمفتاحه في الفهرس؛ أو null إن لم يطابق أي لغة. @param {string} key @param {unknown} shown */
+const localeShowing = (key, shown) => LOCALES.find((l) => catalogOf(l).get(key) === shown) ?? null;
+/** نصوص صفحة إضافة بلغتها هي (lang على جذرها)، وتُسجَّل في الأدلة. */
+async function pageText(page, name) {
+  const lang = await page.eval(() => document.documentElement.lang).catch(() => null);
+  result.uiLocale[name] = lang;
+  if (!isLocale(lang)) throw new Error(`لغة صفحة ${name} غير مدعومة: ${lang}`);
+  return uiText(lang);
+}
+const squash = (s) => String(s ?? '').replace(ISOLATES, '').replace(/\s+/g, '');
 /** ok: true نجح، false فشل، null لم يُختبر (والسبب في التفصيل). */
 const check = (id, ok, detail = null) => {
   result.checks.push({ id, ok, detail });
@@ -390,16 +431,22 @@ try {
     await clickButton('download', { menu: true });
     // منذ 2.0.0 (AA3، ق٨) نسخ التعليمات في نافذة الإضافة وحدها: قائمة «تحميل الأصل» بلا بند نسخ. تُقرأ عند فتحها، لأن Edge قد
     // يغلقها بعد بدء التنزيل.
-    const items = (await menu())?.items.map((x) => x.fid) ?? null;
+    const opened = await menu();
+    const items = opened?.items.map((x) => x.fid) ?? null;
+    // لغة واجهة المشغّل من عنوان القائمة نفسها («تنزيل الأصل» أو «Download original»)، فتُقرأ نصوصه بها.
+    const playerLocale = localeShowing('player.controls.downloadTitle', opened?.label);
+    result.uiLocale.player = playerLocale ?? `غير معروفة: ${opened?.label ?? 'لا قائمة'}`;
+    const tx = uiText(playerLocale ?? 'en');
     check('player-menu-without-copy', !!items && items.includes('download') && !items.includes('copy'), { items });
     await clickItem('download');
     const file = await waitFile((n) => n.endsWith('.srt'));
     const text = file ? await readFile(file.path, 'utf8') : null;
-    // سطر الحالة في القائمة بعد التنزيل (كما في P12): «نُزّل».
-    const line = await waitBridge('peek', (p) => /نُزّل|تعذّر حفظ/.test(p.layer.menu?.text ?? ''), { timeoutMs: 10000 });
+    // سطر الحالة في القائمة بعد التنزيل (كما في P12): «نُزّل …» أو رسالة تعذّر الحفظ، بلغة المشغّل.
+    const shownLine = (p) => [tx.downloaded, ...tx.saveFailed].some((s) => clean(p.layer.menu?.text).includes(clean(s)));
+    const line = await waitBridge('peek', shownLine, { timeoutMs: 10000 });
     // بالعامل الخلفي وواجهة التنزيلات (المكان المختار)، لا ببديل Blob من الصفحة (SV_FALLBACK_BLOB).
-    const fallback = /تعذّر الحفظ في المكان المختار/.test(line?.layer.menu?.text ?? '');
-    check('srt-download', !!file && text === EXP.files[0].text && !fallback, { file: file?.name ?? null, bytes: text?.length ?? null, expectedSha: sha(EXP.files[0].text), sha: text ? sha(text) : null, line: line ? 'نُزّل' : null, fallback });
+    const fallback = clean(line?.layer.menu?.text).includes(clean(tx.fallbackBlob));
+    check('srt-download', !!playerLocale && !!file && text === EXP.files[0].text && !fallback, { locale: playerLocale, file: file?.name ?? null, bytes: text?.length ?? null, expectedSha: sha(EXP.files[0].text), sha: text ? sha(text) : null, line: line ? (clean(line.layer.menu?.text).includes(clean(tx.downloaded)) ? 'downloaded' : 'failed') : null, fallback });
   });
   await step('copy-instructions', async () => {
     await closeMenu();
@@ -424,10 +471,11 @@ try {
       await pop.click(c.x, c.y);
       const copied = await pop.waitFor(() => window.__t3copied?.at(-1) ?? null, { timeoutMs: 6000 });
       const state = await pop.eval(() => document.querySelector('.tj-popup__copy')?.getAttribute('data-state') ?? null);
-      // التعليمات من الإنجليزية (لغة المسار الملتقط) إلى العربية (الافتراضي)، بالقاموس المرفق أو بدونه.
-      const accepted = [null, []].map((glossary) => sha(instructions({ videoId: VIDEO, title: st.title, source: 'en', target: 'ar', glossary })));
-      check('copy-instructions-from-popup', !!info && /^تعليمات الترجمة ?من ?الإنجليزية ?إلى ?العربية/.test(info.block ?? '') && !!copied && accepted.includes(sha(copied)) && state === 'success',
-        { status: info?.status?.slice(0, 80) ?? null, block: info?.block?.slice(0, 40) ?? null, copied: copied ? { chars: copied.length, sha: sha(copied) } : null, accepted, state, title: st.title ? 'معروف' : null });
+      const tx = await pageText(pop, 'popup');
+      // التعليمات من الإنجليزية (لغة المسار الملتقط) إلى العربية (الافتراضي)، بلغة الواجهة (نص التعليمات بها)، بالقاموس المرفق أو بدونه.
+      const accepted = [null, []].map((glossary) => sha(instructions({ videoId: VIDEO, title: st.title, source: 'en', target: 'ar', glossary, locale: tx.locale })));
+      check('copy-instructions-from-popup', !!info && squash(info.block).startsWith(squash(tx.pairHead)) && !!copied && accepted.includes(sha(copied)) && state === 'success',
+        { locale: tx.locale, status: info?.status?.slice(0, 80) ?? null, block: info?.block?.slice(0, 60) ?? null, expectedHead: tx.pairHead, copied: copied ? { chars: copied.length, sha: sha(copied) } : null, accepted, state, title: st.title ? 'معروف' : null });
       await shot(pop, 'popup');
     } finally {
       await pop.close().catch(() => {});
@@ -455,29 +503,47 @@ try {
   });
   await step('timing', async () => {
     const before = (await call('state')).view.displayOffsetMs;
-    await clickButton('plus');
+    // ت-١ (قرار سلطان 2026-11-13): في الشريط المطوي (fit folded) − و+ في قائمة الشارة حول القيمة لا في الشريط، فيُضغطان منها كما
+    // يفعل المستخدم؛ وإلا من الشريط. ويُسجَّل المقاس والمساحة.
+    const fits = [];
+    const nudge = async (kind) => {
+      await revealControls(yt);
+      const p = await call('peek');
+      fits.push({ fit: p?.fit ?? null, room: p?.room ?? null, size: p?.size ?? null });
+      if (p?.buttons[kind]?.box) return clickButton(kind);
+      await clickButton('badge', { menu: true });
+      await clickItem(`nudge:${kind}`);
+      await closeMenu();
+      return undefined;
+    };
+    await nudge('plus');
     const plus = await waitBridge('state', (v) => v.view.displayOffsetMs > before, { timeoutMs: 6000 });
-    await clickButton('minus');
+    await nudge('minus');
     const minus = await waitBridge('state', (v) => v.view.displayOffsetMs === before, { timeoutMs: 6000 });
-    check('timing-plus-minus', !!plus && !!minus, { before, plus: plus?.view.displayOffsetMs ?? null, back: minus?.view.displayOffsetMs ?? null });
+    check('timing-plus-minus', !!plus && !!minus, { before, plus: plus?.view.displayOffsetMs ?? null, back: minus?.view.displayOffsetMs ?? null, bar: fits });
   });
 
   // ---- المحرّر والحفظ ----
   const MARK = ' — عدّلته في T3';
   await step('editor', async () => {
     const ed = await s.extPage(`pages/editor/index.html?v=${VIDEO}&t=1`);
-    await ed.waitFor(() => !!document.querySelector('.ed-row[data-index] [data-field="text"]'), { timeoutMs: 20000 });
-    await clickOn(ed, `document.querySelector('.ed-row[data-index="0"] [data-field="text"]')`, 'نص المقطع الأول');
-    await ed.eval(() => { const ta = document.querySelector('.ed-row[data-index="0"] [data-field="text"]'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); return true; });
-    await ed.typeText(MARK);
-    await sleep(400);
-    const typed = await ed.eval(() => document.querySelector('.ed-row[data-index="0"] [data-field="text"]').value);
-    // الحفظ صريح في المحرّر (زر «حفظ» في الرأس، أو ⌘S).
-    await clickOn(ed, `[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'حفظ' && b.getClientRects().length && b.getAttribute('aria-disabled') !== 'true')`, 'حفظ');
-    const cue = await waitBridge('cueText', (t) => typeof t === 'string' && t.endsWith(MARK), { args: [1], timeoutMs: 15000 });
-    check('editor-edit-reaches-player', !!cue, { typed: typed.endsWith(MARK), cue1: cue ? 'ينتهي بالتعديل' : null });
-    await shot(ed, 'editor');
-    await ed.close();
+    // يُغلق في كل حال: محرّر بقي مفتوحًا بتعديل غير محفوظ (سقوط قبل «حفظ») يعلّق الإزالة في Firefox بحوار المغادرة (T1-ب).
+    try {
+      await ed.waitFor(() => !!document.querySelector('.ed-row[data-index] [data-field="text"]'), { timeoutMs: 20000 });
+      const tx = await pageText(ed, 'editor');
+      await clickOn(ed, `document.querySelector('.ed-row[data-index="0"] [data-field="text"]')`, 'نص المقطع الأول');
+      await ed.eval(() => { const ta = document.querySelector('.ed-row[data-index="0"] [data-field="text"]'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); return true; });
+      await ed.typeText(MARK);
+      await sleep(400);
+      const typed = await ed.eval(() => document.querySelector('.ed-row[data-index="0"] [data-field="text"]').value);
+      // الحفظ صريح في المحرّر (زر «حفظ» في الرأس، أو ⌘S).
+      await clickOn(ed, `[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === ${JSON.stringify(tx.save)} && b.getClientRects().length && b.getAttribute('aria-disabled') !== 'true')`, tx.save);
+      const cue = await waitBridge('cueText', (t) => typeof t === 'string' && t.endsWith(MARK), { args: [1], timeoutMs: 15000 });
+      check('editor-edit-reaches-player', !!cue, { locale: tx.locale, typed: typed.endsWith(MARK), cue1: cue ? 'ينتهي بالتعديل' : null });
+      await shot(ed, 'editor');
+    } finally {
+      await ed.close();
+    }
   });
   await step('saved-restored', async () => {
     await yt.reload();
@@ -496,7 +562,8 @@ try {
     st = await s.extPage('pages/settings/index.html#data');
     await st.waitFor(() => !!document.querySelector('#data') && !document.querySelector('#data').hidden, { timeoutMs: 15000 });
     const before = new Set(await listDl());
-    await clickOn(st, byText('#data button', 'إنشاء نسخة احتياطية'), 'إنشاء نسخة احتياطية');
+    const tx = await pageText(st, 'settings');
+    await clickOn(st, byText('#data button', tx.backup), tx.backup);
     const file = await waitFile((n) => /^tarjuman-backup-.*\.json$/.test(n), { except: before });
     let parsed = null;
     if (file) {
@@ -509,7 +576,8 @@ try {
     if (!st) st = await s.extPage('pages/settings/index.html#about');
     await st.eval(() => { location.hash = 'about'; return true; });
     await st.waitFor(() => { const a = document.getElementById('about'); return a && !a.hidden; }, { timeoutMs: 8000 });
-    await clickOn(st, byText('#about button', 'الإبلاغ عن مشكلة'), 'الإبلاغ عن مشكلة');
+    const tx = await pageText(st, 'settings');
+    await clickOn(st, byText('#about button', tx.report), tx.report);
     await st.waitFor(() => !document.getElementById('st-report')?.hidden && !!document.querySelector('[data-report-field="diagnostics.build_target"]'), { timeoutMs: 15000 });
     await clickOn(st, `document.getElementById('st-report-text')`, 'وصف البلاغ');
     await st.typeText('بلاغ آلي من T3 — لا يُرسل');
@@ -525,15 +593,16 @@ try {
     });
     let copied = null;
     for (let attempt = 0; attempt < 2 && !copied; attempt++) {
-      await clickOn(st, byText('#st-report button', 'نسخ البلاغ'), 'نسخ البلاغ');
+      await clickOn(st, byText('#st-report button', tx.copyReport), tx.copyReport);
       copied = await st.waitFor(() => window.__t3copied?.at(-1) ?? null, { timeoutMs: 5000 });
     }
     const result1 = await st.eval(() => document.querySelector('.st-report__result')?.textContent.replace(/\s+/g, ' ').trim() ?? null);
     check('report-copy-offline', copied === json && !!json, { same: copied === json, copiedLength: copied?.length ?? null, jsonLength: json.length, result: result1 });
     // بلا خادم منذ و1 (2.2.0): لا زر إرسال، و«نسخ البريد» ينسخ بريد الدعم، ولا طلب إلى مضيف البلاغات القديم.
     await s.blockReports(st);
-    const noSend = await st.eval(() => ![...document.querySelectorAll('#st-report button')].some((x) => x.textContent.trim() === 'إرسال البلاغ'));
-    await clickOn(st, byText('#st-report button', 'نسخ البريد'), 'نسخ البريد');
+    // لا زر إرسال بأي من اللغتين («إرسال البلاغ» قبل 2.2.0، ولا مفتاح له في الفهرس الآن).
+    const noSend = await st.eval(() => ![...document.querySelectorAll('#st-report button')].some((x) => /إرسال|\bsend\b/i.test(x.textContent)));
+    await clickOn(st, byText('#st-report button', tx.copyEmail), tx.copyEmail);
     const email = await st.waitFor(() => (window.__t3copied?.length ?? 0) >= 2 ? window.__t3copied.at(-1) : null, { timeoutMs: 5000 });
     await sleep(1500);
     check('report-no-send', noSend && /@/.test(email ?? '') && s.reportsBlocked.count === 0, { noSend, email: !!email, blockedRequests: s.reportsBlocked.count });
@@ -579,10 +648,15 @@ try {
     const before = await Promise.all(dirs.map(async (d) => ({ dir: path.basename(d), bytes: await dirSize(d) })));
     if (st) await st.close().catch(() => {});
     st = null;
+    // كل صفحة إضافة بقيت مفتوحة تُغلق قبل الإزالة بلا حوار مغادرة (T1-ب: تعلّقت webExtension.uninstall في Firefox حين بقي المحرّر
+    // مفتوحًا بتعديل غير محفوظ بعد سقوط خطوته).
+    const closedPages = await s.closeExtPages().catch((err) => ({ error: err.message.slice(0, 120) }));
+    const startedAt = Date.now();
     const r = await s.uninstall();
+    const uninstallMs = Date.now() - startedAt;
     await sleep(3000);
     const after = await Promise.all(dirs.map(async (d) => ({ dir: path.basename(d), bytes: await dirSize(d) })));
-    check('uninstall-removes-storage', !r.error && before.length > 0 && before.every((x) => x.bytes > 0) && after.every((x) => x.bytes === null), { uninstall: r, before, after });
+    check('uninstall-removes-storage', !r.error && before.length > 0 && before.every((x) => x.bytes > 0) && after.every((x) => x.bytes === null), { uninstall: r, uninstallMs, closedPages, before, after });
   });
   await step('reinstall-empty-restore', async () => {
     await s.install();
@@ -594,6 +668,7 @@ try {
     }
     const page = await s.extPage('pages/settings/index.html#data');
     await page.waitFor(() => !!document.querySelector('#data') && !document.querySelector('#data').hidden, { timeoutMs: 15000 });
+    const tx = await pageText(page, 'settings-after-reinstall');
     const keys = await page.eval(async () => Object.keys(await chrome.storage.local.get(null)).filter((k) => /^(?:video|bundle):/.test(k)).length);
     check('reinstall-starts-empty', keys === 0, { videoKeys: keys });
     if (!backupFile) {
@@ -610,7 +685,7 @@ try {
         HTMLInputElement.prototype.click = function click() { if (this.type === 'file') { window.__t3file = this; return undefined; } return orig.call(this); };
         return true;
       });
-      await clickOn(page, byText('#data button', 'استعادة من ملف'), 'استعادة من ملف…');
+      await clickOn(page, byText('#data button', tx.restore), tx.restore);
       filled = Boolean(await page.waitFor(() => !!window.__t3file, { timeoutMs: 5000 }));
       if (filled) {
         filled = await page.eval((name, text) => {
@@ -624,13 +699,13 @@ try {
       result.notes.push('الاستعادة في Firefox: الملف يُعطى للحقل بـDataTransfer في الصفحة (BiDi لا يملأ المنتقي في صفحات الإضافة)');
     } else {
       const armed = page.armChooser([backupFile]);
-      await clickOn(page, byText('#data button', 'استعادة من ملف'), 'استعادة من ملف…');
+      await clickOn(page, byText('#data button', tx.restore), tx.restore);
       filled = await armed;
     }
     const dialog = await page.waitFor(() => !!document.querySelector('dialog.tj-dialog[open] .st-restore'), { timeoutMs: 30000 });
     if (!dialog) throw new Error(`لم يظهر حوار الاستعادة (المنتقي ${filled ? 'مُلئ' : 'لم يُملأ'})`);
-    await clickOn(page, `[...document.querySelectorAll('dialog.tj-dialog[open]')].at(-1)?.querySelector('button[value="confirm"]')`, 'استعادة');
-    const report = await page.waitFor(() => [...document.querySelectorAll('#data .tj-alert')].find((e) => e.textContent.includes('اكتملت الاستعادة'))?.textContent.replace(/\s+/g, ' ').trim() ?? null, { timeoutMs: 30000, intervalMs: 200 });
+    await clickOn(page, `[...document.querySelectorAll('dialog.tj-dialog[open]')].at(-1)?.querySelector('button[value="confirm"]')`, 'تأكيد الاستعادة');
+    const report = await page.waitFor((done) => [...document.querySelectorAll('#data .tj-alert')].find((e) => e.textContent.includes(done))?.textContent.replace(/\s+/g, ' ').trim() ?? null, { args: [tx.restoreDone], timeoutMs: 30000, intervalMs: 200 });
     const restored = await page.eval(async (id) => !!(await chrome.storage.local.get(`video:${id}`))[`video:${id}`], { args: [VIDEO] });
     check('backup-restore-after-reinstall', filled && !!report && restored, { chooser: filled, report: clean(report).slice(0, 120), restored });
     await shot(page, 'settings-restore');
@@ -646,7 +721,10 @@ try {
     await s.close().catch(() => {});
   }
   const counted = result.checks.filter((c) => c.ok !== null);
-  result.summary = { passed: counted.filter((c) => c.ok).length, total: counted.length, untested: result.checks.filter((c) => c.ok === null).map((c) => c.id) };
+  const failed = counted.filter((c) => !c.ok).map((c) => c.id);
+  result.summary = { passed: counted.length - failed.length, total: counted.length, failed, untested: result.checks.filter((c) => c.ok === null).map((c) => c.id) };
   await writeFile(path.join(OUT, 't3.json'), `${JSON.stringify(result, null, 2)}\n`);
-  console.log(`\n${result.browser}: ${result.summary.passed}/${result.summary.total}${result.summary.untested.length ? ` · لم يُختبر: ${result.summary.untested.join('، ')}` : ''}`);
+  console.log(`\n${result.browser}: ${result.summary.passed}/${result.summary.total}${failed.length ? ` — سقط: ${failed.join('، ')}` : ''}${result.summary.untested.length ? ` · لم يُختبر: ${result.summary.untested.join('، ')}` : ''}`);
+  // سقوط أي فحص يُسقط الجولة (Fable ع-٤: كانت تخرج بالرمز 0 مع خمسة ساقطة). وما لم يُختبر (null) لا يُحسب.
+  if (failed.length) process.exitCode = 1;
 }

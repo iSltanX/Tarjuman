@@ -107,6 +107,13 @@ async function chromium(browser, { profile, ext, downloadDir, headless, extraArg
     extPage: (rel) => open(`chrome-extension://${id}/${rel}`, rel.split(/[?#]/)[0]),
     /** صفحة إضافة بلا جسر الحزام (حزمة المتجر، T8): في Chromium هي extPage نفسها. */
     openExt: (rel) => open(`chrome-extension://${id}/${rel}`, rel.split(/[?#]/)[0]),
+    /** يغلق كل تبويب لصفحة من صفحات الإضافة بقي مفتوحًا (قبل الإزالة). يعيد عددها. */
+    async closeExtPages() {
+      const { targetInfos } = await b.conn.send('Target.getTargets');
+      const open = targetInfos.filter((t) => t.type === 'page' && t.url.startsWith(`chrome-extension://${id}/`));
+      for (const t of open) await b.conn.send('Target.closeTarget', { targetId: t.targetId }).catch(() => {});
+      return open.length;
+    },
     async uninstall() {
       try {
         await b.conn.send('Extensions.uninstall', { id });
@@ -272,6 +279,18 @@ async function firefox({ profile, ext, downloadDir, headless }) {
       extContexts.add(page.context);
       await page.waitFor(() => document.readyState === 'complete', { timeoutMs: 15000 });
       return page;
+    },
+    /**
+     * يغلق كل سياق لصفحة من صفحات الإضافة بقي مفتوحًا، بلا حوار مغادرة (promptUnload: false)، قبل الإزالة: صفحة بتعديل غير محفوظ
+     * يسأل حوارها عند إغلاقها بالإزالة، والجلسة تتجاهل الحوارات (unhandledPromptBehavior: ignore)، فتعلّقت webExtension.uninstall
+     * حتى المهلة (تحقق Gemini، T1-ب). يعيد عددها.
+     */
+    async closeExtPages() {
+      const prefix = base ?? `moz-extension://${uuid}/`;
+      const { contexts } = await conn.send('browsingContext.getTree', {});
+      const open = contexts.filter((c) => c.url.startsWith(prefix));
+      for (const c of open) await conn.send('browsingContext.close', { context: c.context, promptUnload: false }).catch(() => {});
+      return open.length;
     },
     async uninstall() {
       try {
