@@ -32,17 +32,20 @@ test('لم يُلتقط مسار: إرشاد لتفعيل CC واختيار Engl
   assert.equal(page.ui.menuText().includes('CC ثم الإعدادات'), false, 'الخطوات لرفض المسار وحده');
 });
 
-test('رفض مسار (قديم أو مستقبلي): رسالته وخطوات اختيار لغة من يوتيوب بسطر عام، وملاحظة Brave في Brave وحده', () => {
+test('رفض مسار (قديم أو مستقبلي): رسالته وحدها، وخلف «لماذا؟» خطوات اختيار لغة من يوتيوب بسطر عام، وملاحظة Brave في Brave وحده (ت-٩)', () => {
   for (const code of ['EX_NOT_ENGLISH', 'EX_TRANSLATED_TRACK']) {
     const chrome = mountPage({ state: makeState({ captureIssue: { code, at: 1 } }) });
     open(chrome);
     const alert = chrome.ui.menu().querySelector('.alert');
     assert.ok(alert.textContent.includes(messageFor(code)));
-    assert.equal(alert.querySelector('.steps').textContent, 'CC ثم الإعدادات ثم «الترجمة» ثم اللغة التي تريدها');
-    assert.ok(alert.querySelector('.note-in') === null, 'لا ملاحظة Brave في Chrome');
+    assert.ok(alert.querySelector('.steps') === null, 'الخطوات خلف «لماذا؟»');
+    click(chrome.ui.item('لماذا؟'));
+    assert.equal(chrome.ui.menu().querySelector('[data-fid="otherLangs"] .steps').textContent, 'لاختيار لغة أخرى: CC ثم الإعدادات ثم «الترجمة» ثم اللغة التي تريدها');
+    assert.ok(chrome.ui.menu().querySelector('.note-in') === null, 'لا ملاحظة Brave في Chrome');
   }
   const brave = mountPage({ state: makeState({ captureIssue: { code: 'EX_NOT_ENGLISH', at: 1 } }), brave: true });
   open(brave);
+  click(brave.ui.item('لماذا؟'));
   assert.equal(brave.ui.menu().querySelector('.note-in').textContent, 'في Brave قد تظهر لغة المتصفح أولًا؛ فاختر اللغة التي تريدها من قائمة الترجمة في يوتيوب.');
 });
 
@@ -59,9 +62,11 @@ test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-0
   assert.equal(note.querySelector('button'), null, 'لا تبديل من الإضافة');
   assert.equal(page.ui.menuText().includes('Español'), false, 'ولا أسماء المسارات');
   assert.equal(page.ui.menuText().includes(LABELS.machineSteps), false, 'الترجمة الآلية بلا التقاط وحده');
-  // بلا التقاط: عدد كل لغات الفيديو، وخطوات ترجمة يوتيوب الآلية حين يتيحها.
+  // بلا التقاط: عدد كل لغات الفيديو، وخطوات ترجمة يوتيوب الآلية حين يتيحها، خلف «لماذا؟» بجوار رسالة الحالة الواحدة (ت-٩).
   const none = mountPage({ state: makeState({ available }) });
   open(none);
+  assert.equal(none.ui.menu().querySelector('[data-fid="otherLangs"]'), null, 'خلف «لماذا؟»');
+  click(none.ui.item('لماذا؟'));
   const n2 = none.ui.menu().querySelector('[data-fid="otherLangs"]');
   assert.equal(n2.getAttribute('data-count'), '3');
   assert.ok(n2.textContent.startsWith('في هذا الفيديو 3 لغات. لاختيار إحداها:'));

@@ -194,12 +194,13 @@ function resultLine(h, line, fid) {
 /**
  * لغات الفيديو الأخرى (قرار سلطان 2026-11-07 بعد لقطات AA4، يعدّل عرض ق١): سطر واحد بعددها وخطوات اختيارها من يوتيوب، بدل صفٍّ لكل
  * مسار؛ فالصفوف لا تُضغط (الاختيار من يوتيوب وحده، والإضافة لا تبدّل المسار)، وكانت تطيل القائمة وتكرر اسم اللغة. العدد لغاتٌ مختلفة
- * لم تُلتقط، وبلا قائمة معروفة الخطوات وحدها بعد مسار ملتقط (وقبله يكفي تنبيه CC)، ولا سطر حين يُعرف أن لا لغة أخرى. وخطوات
- * ترجمة يوتيوب الآلية حين يتيحها الفيديو، وملاحظة Brave مع سطر اللغات.
- * @param {H} h @param {{ langs: number | null, other: boolean, brave: boolean, translatable: boolean }} o
+ * لم تُلتقط، وبلا قائمة معروفة الخطوات وحدها بعد مسار ملتقط (other) أو لرفض يطلب لغة أخرى (pickAgain)، ولا سطر حين يُعرف أن
+ * لا لغة أخرى. وبلا مسار ملتقط يأتي السطر خلف «لماذا؟» لا بجوار رسالة الحالة (ت-٩). وخطوات ترجمة يوتيوب الآلية حين يتيحها الفيديو،
+ * وملاحظة Brave مع سطر اللغات.
+ * @param {H} h @param {{ langs: number | null, other: boolean, brave: boolean, translatable: boolean, pickAgain?: boolean }} o
  */
-function otherLanguages(h, { langs, other, brave, translatable }) {
-  const pick = langs === null ? other : langs > 0;
+function otherLanguages(h, { langs, other, brave, translatable, pickAgain = false }) {
+  const pick = langs === null ? other || pickAgain : langs > 0;
   const lines = [
     pick ? h('span', { className: 'steps', text: otherLanguagesLine(langs, { other }) }) : null,
     translatable ? h('span', { className: 'steps', text: LABELS.machineSteps }) : null,
@@ -213,6 +214,7 @@ function otherLanguages(h, { langs, other, brave, translatable }) {
  * قائمة التحميل (§٦.١ و§١٩.٥، وAA3 لوحة 10): اللغة (المسارات الملتقطة بلغتها ونوعها وعددها، والمترجم آليًا موسومًا في آخرها)،
  * ووضع التصدير، وزر «تنزيل الملف» وحده بسطر نتيجته، وسطر «تعليمات الترجمة (من ← إلى) من نافذة الإضافة»، ثم سطر لغات الفيديو
  * الأخرى بعددها وخطوات اختيارها من يوتيوب (لا تبدّلها الإضافة، ق١)، ثم «خيارات احتياطية» (التقسيم) بأحجام الأجزاء. لا عرض لمكان الحفظ.
+ * وبلا مسار ملتقط: رسالة واحدة بحسب الحالة، والتفصيل (ومنه سطر اللغات) خلف «لماذا؟» (ت-٩).
  * @param {H} h @param {Act} act
  * @param {{
  *   live: boolean, unavailable: boolean, captureIssue: string | null, invalid: { code: string | null }[],
@@ -252,19 +254,26 @@ export function downloadMenu(h, act, m, root = null) {
       out.push(h('div', { className: 'note', text: LABELS.instructionsNote, attrs: { 'data-fid': 'instructionsNote' } }));
       out.push(sep(h));
     }
-    if (m.captureIssue) {
-      const guide = m.pickGuide ? [h('span', { className: 'steps', text: LABELS.pickSteps }), brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null] : [];
-      out.push(alert(h, 'warn', messageFor(m.captureIssue), guide.filter(Boolean)));
-    }
-    for (const t of m.invalid) out.push(alert(h, 'error', messageFor(t.code ?? 'EX_NO_TRACK')));
-    if (m.unavailable && !m.captureIssue) {
-      out.push(alert(h, 'info', messageFor('CT_NO_CAPTIONS')));
-    } else {
-      const why = button(h, 'link', LABELS.whyLink, { act, name: 'why', fid: 'why', first: !m.saved, extra: { 'aria-expanded': m.why ? 'true' : 'false' } });
-      // ف7: CC مضغوط ولا التقاط بعد مهلته ⇒ العلاج («أوقف CC ثم شغّلها») بدل «فعّل CC» وهي مفعّلة.
-      out.push(alert(h, m.ccStuck ? 'warn' : 'info', messageFor(m.ccStuck ? 'CT_CC_NOT_CAPTURED' : 'CT_NOT_CAPTURED'), [h('span', { children: [why] }), m.why ? h('span', { className: 'note', text: LABELS.why }) : null]));
-    }
-    out.push(...otherLanguages(h, { langs: m.otherLangs, other: false, brave, translatable: m.translatable }));
+    // ت-٩ (تحقق Fable، البند 22): رسالة واحدة بحسب الحالة، والتفصيل كله خلف «لماذا؟» (product-spec §٦.٥: «يكفي سطر ملخص واحد»).
+    // كان تنبيه الرفض بخطواته يليه «فعّل CC…» ولو قال الرفض «أوقف الترجمة ثم شغّلها»، ثم سطر اللغات بالخطوات نفسها: ثلاث مرات.
+    // الرسالة: الرفض أو تعذّر التحويل إن وقع (لكلٍّ علاجه، والرمز الواحد مرة)، وإلا «لا ترجمة لهذا الفيديو»، وإلا CC مفعّلة بلا
+    // التقاط (ف7: العلاج بدل «فعّل CC» وهي مفعّلة)، وإلا «فعّل CC». والتفصيل: الشرح، ثم سطر اللغات بعددها وخطواتها (أو الخطوات
+    // وحدها لرفض يطلب لغة أخرى)، وخطوات ترجمة يوتيوب الآلية، وملاحظة Brave مع الخطوات.
+    const states = [];
+    if (m.captureIssue) states.push(['warn', messageFor(m.captureIssue)]);
+    for (const code of new Set(m.invalid.map((t) => t.code ?? 'EX_NO_TRACK'))) states.push(['error', messageFor(code)]);
+    const noCaptions = !states.length && m.unavailable;
+    if (!states.length) states.push(noCaptions ? ['info', messageFor('CT_NO_CAPTIONS')] : [m.ccStuck ? 'warn' : 'info', messageFor(m.ccStuck ? 'CT_CC_NOT_CAPTURED' : 'CT_NOT_CAPTURED')]);
+    const details = [
+      noCaptions ? null : h('div', { className: 'note', text: LABELS.why, attrs: { 'data-fid': 'whyText' } }),
+      ...otherLanguages(h, { langs: m.otherLangs > 0 ? m.otherLangs : null, other: false, pickAgain: !!m.pickGuide, brave, translatable: m.translatable }),
+    ].filter(Boolean);
+    states.forEach(([tone, text], i) => {
+      const why = i === 0 && details.length
+        ? button(h, 'link', LABELS.whyLink, { act, name: 'why', fid: 'why', first: !m.saved, extra: { 'aria-expanded': m.why ? 'true' : 'false' } }) : null;
+      out.push(alert(h, tone, text, why ? [h('span', { children: [why] })] : []));
+    });
+    if (m.why) out.push(...details);
     return out;
   }
 
