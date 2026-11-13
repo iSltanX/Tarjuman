@@ -171,6 +171,37 @@ test('تبديل الفيديو يمسح الحالة فورًا، ونتيجة 
   assert.equal(c.getState().english, null);
 });
 
+test('ن-١٢: خطأ قراءة فيديو سابق لا يظهر على الحالي (seq !== loadSeq في فرع الخطأ)', async () => {
+  // التحقق المستقل للجولة الثانية (X02): فشلت قراءة A بعد التنقل إلى B وقراءته جارية، فظهر TJ_UNEXPECTED على B وبقي بعد اكتمالها.
+  let failA;
+  let releaseB;
+  const gateA = new Promise((_, reject) => {
+    failA = reject;
+  });
+  const gateB = new Promise((r) => {
+    releaseB = r;
+  });
+  const { c } = await setup({
+    records: [videoRecord({ videoId: B, offset: 900 })],
+    storeWrap: (s) => ({ ...s, getVideo: async (id) => (id === A ? gateA : gateB.then(() => s.getVideo(id))) }),
+  });
+  const loadingA = c.start(A);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(c.getState().loading, true);
+  const loadingB = c.setVideo(B);
+  failA(new Error('تعذّرت قراءة A'));
+  await loadingA;
+  assert.equal(c.getState().videoId, B);
+  assert.equal(c.getState().error, null, 'أثناء قراءة B: لا خطأ من A');
+  assert.equal(c.getState().loading, true, 'وB ما زال يُحمَّل');
+  releaseB();
+  await loadingB;
+  const s = c.getState();
+  assert.equal(s.error, null, 'بعد اكتمال قراءة B: لا خطأ من A');
+  assert.equal(s.view.displayOffsetMs, 900);
+  assert.equal(s.loading, false);
+});
+
 test('حفظ المحرّر في سياق آخر ينعكس في المشغّل، وصدى كتابات المتحكم نفسه يُتجاهل', async () => {
   let reads = 0;
   const { c, other, area } = await setup({

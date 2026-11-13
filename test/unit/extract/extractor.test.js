@@ -79,6 +79,23 @@ test('الرفض لا يمحو مسارًا مقبولًا، ولا يظهر ل�
   assert.equal(extractor.lastRejection(), null, 'الالتقاط الناجح يمسح آخر رفض');
 });
 
+test('ن-١٢: رفض التقاط فيديو سابق لا يبقى «آخر رفض» بعد التنقل إلى غيره، ولا في صفحة بلا فيديو', () => {
+  // التحقق المستقل للجولة الثانية (X18): بلا تصفير آخر رفض عند التبدّل ظهر رفض A في قائمة تنزيل B (captureIssue).
+  const { extractor, state } = makeExtractor({ videoId: VID, durationMs: manual.fixture.durationMs });
+  assert.equal(extractor.handleMessage(captureMsg(base, { body: '', bodyLength: 0 })).code, 'EX_EMPTY_BODY');
+  assert.equal(extractor.lastRejection().code, 'EX_EMPTY_BODY');
+  state.videoId = 'BBBBBBBBBBB';
+  extractor.setVideo('BBBBBBBBBBB');
+  assert.equal(extractor.lastRejection(), null, 'فيديو آخر: لا رفض من السابق');
+  state.videoId = VID;
+  extractor.setVideo(VID);
+  extractor.handleMessage(captureMsg(base, { status: 403 }));
+  assert.equal(extractor.lastRejection().code, 'EX_EMPTY_BODY');
+  state.videoId = null;
+  extractor.setVideo(null);
+  assert.equal(extractor.lastRejection(), null, 'صفحة بلا فيديو (المصغّر): لا رفض معروض');
+});
+
 test('الوضع الطويل: مقاطع أقل بالكلمات نفسها والثوابت الستة، ونسخة مستقلة', () => {
   const { extractor } = makeExtractor({ videoId: VID, durationMs: manual.fixture.durationMs });
   extractor.handleMessage(captureMsg(base));
