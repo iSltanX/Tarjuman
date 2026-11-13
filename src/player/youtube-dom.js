@@ -109,14 +109,16 @@ export function seekMainVideo(ms, doc = document) {
 }
 
 /**
- * بث جارٍ: شارة البث ظاهرة وغير معطلة. تقدير من DOM لم يثبت حيًا بعد (عقد الاستخراج).
+ * بث جارٍ: شارة البث ظاهرة. و`disabled` عليها لا تنفي البث (تحقق Gemini، Y1، ثبت حيًا في Chrome وBrave وEdge وFirefox): يضعها
+ * يوتيوب ومعها `ytp-live-badge-is-livehead` ما دام المشاهد عند الحافة المباشرة، وأزالها بالرجوع عنها (Chrome وBrave وEdge)؛ وفي
+ * الفيديو العادي والبث المؤرشف الشارة `display: none` (عقد الاستخراج).
  * @param {Document} [doc]
  */
 export function isLiveNow(doc = document) {
   const badge = doc.querySelector(SELECTORS.liveBadge);
   if (!badge) return false;
   const style = doc.defaultView?.getComputedStyle(badge);
-  return !!style && style.display !== 'none' && !badge.hasAttribute('disabled');
+  return !!style && style.display !== 'none';
 }
 
 /**
