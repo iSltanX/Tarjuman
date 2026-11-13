@@ -12,7 +12,7 @@ import { languageName } from '../../ui/lang.js';
 import { roundTripText } from '../../ui/track.js';
 import { glyph } from './glyphs.js';
 import {
-  LABELS, ccLanguagesLine, comparisonSummary, completeHintLine, completeLine, longFileLine, completeOptionLabel, completeOptionText, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
+  LABELS, ccLanguagesLine, comparisonSummary, completeHintLine, completeLine, longFileLine, longFileWhy, completeOptionLabel, completeOptionText, cueCount, dualLabels, editsLine, keptLine, moreNotesLine, offsetMeaning, otherLanguagesLine, otherSummaryLine, partRow, previousLostLine, replaceSlotLabel, replaceSlotTitle,
   shortTime, slotLabel, stepSeconds, syncAt, trackLine, translationLine,
 } from './text.js';
 
@@ -255,6 +255,42 @@ function roundTripLine(h, act, via, open, more = []) {
 }
 
 /**
+ * لغات الفيديو الأخرى بعد مسار ملتقط (ح-61): سطر واحد «في هذا الفيديو 62 لغة أخرى.» وزر «كيف؟» يفتح طريقة اختيارها من يوتيوب (وملاحظة
+ * Brave) تحته؛ وحين لا يُعرف عددها زر «اختيار لغة أخرى» وحده. ولا سطر حين يُعرف أن لا لغة أخرى. وكان السطر بعدده وخطواته في سطرين أو ثلاثة.
+ * @param {H} h @param {Act} act @param {{ langs: number | null, brave: boolean, open: boolean }} o
+ */
+function otherLanguagesFolded(h, act, { langs, brave, open }) {
+  const known = langs !== null;
+  if (known && langs < 1) return [];
+  const how = h('div', {
+    className: 'note stack',
+    attrs: { id: 'tj-other-how', 'data-fid': 'otherLangs', 'data-count': known ? String(langs) : null, hidden: open ? null : '' },
+    children: [h('span', { className: 'steps', text: otherLanguagesLine(langs, { counted: false }) }), brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null],
+  });
+  const toggle = disclosure(h, act, { name: 'otherHow', text: known ? LABELS.otherHow : LABELS.otherPickToggle, open, controls: 'tj-other-how' });
+  return [h('div', { className: 'note', attrs: { 'data-fid': 'otherSummary' }, children: known ? [h('span', { text: `${otherSummaryLine(langs)} ` }), toggle] : [toggle] }), how];
+}
+
+/**
+ * «ملف طويل» (ف4) سطر واحد (ح-61): «ملف طويل: 1066 مقطعًا.» وزر «لماذا؟» يفتح تفصيله داخل التنبيه نفسه (الطول بالأحرف، وأن يُقسَّم
+ * من «تقسيم الملفات الطويلة» إن عجز النموذج). وكان التنبيه بتفصيله في ثلاثة أسطر.
+ * @param {H} h @param {Act} act @param {{ count: number, chars: number | null }} f @param {boolean} open
+ */
+function longFileAlert(h, act, f, open) {
+  const toggle = disclosure(h, act, { name: 'longWhy', text: LABELS.whyLink, open, controls: 'tj-long-why' });
+  return h('div', {
+    className: 'alert', attrs: { 'data-tone': 'info', role: 'note', 'data-fid': 'longFile' },
+    children: [h.glyph?.('info') ?? null, h('div', {
+      className: 'stack',
+      children: [
+        h('span', { children: [h('span', { text: `${longFileLine(f)} ` }), toggle] }),
+        h('span', { text: longFileWhy(f), attrs: { id: 'tj-long-why', 'data-fid': 'longWhyText', hidden: open ? null : '' } }),
+      ],
+    })],
+  });
+}
+
+/**
  * زر CC في «تنزيل الأصل» بلا التقاط (الفكرة ٧-ب، ح-56): «تفعيل CC الآن» أو «إعادة تشغيل CC»، و«جارٍ انتظار ترجمة يوتيوب…» بعد
  * الضغط حتى يصل الالتقاط أو تنقضي المهلة، ومعطّل بسببه أثناء الإعلان. رئيسي، وثانوي مع «تنزيل الأصل المحفوظ» فلا إجراءان رئيسيان.
  * @param {H} h @param {Act} act @param {{ kind: 'on' | 'restart', busy: boolean, ad: boolean }} cc
@@ -312,7 +348,7 @@ export function downloadMenu(h, act, m, root = null) {
       }));
       if (m.saveLine) out.push(resultLine(h, m.saveLine, 'saveLine'));
       for (const r of m.result) out.push(alert(h, r.tone, r.text));
-      out.push(h('div', { className: 'note', text: LABELS.instructionsNote, attrs: { 'data-fid': 'instructionsNote' } }));
+      if (m.saveLine?.tone === 'ok') out.push(h('div', { className: 'note', text: LABELS.instructionsNext, attrs: { 'data-fid': 'instructionsNote' } }));
       out.push(sep(h));
     }
     // ت-٩ (تحقق Fable، البند 22): رسالة واحدة بحسب الحالة، والتفصيل كله خلف «لماذا؟» (product-spec §٦.٥: «يكفي سطر ملخص واحد»).
@@ -392,8 +428,12 @@ export function downloadMenu(h, act, m, root = null) {
       : messageFor(w);
     out.push(alert(h, 'warn', text));
   }
-  // ح-58: المسار ترجمة يوتيوب الآلية عن لغة الهدف نفسها.
-  if (roundTrip(sel, m.target)) out.push(...roundTripLine(h, act, sel.via, !!m.roundTripOpen));
+  // ح-58: المسار ترجمة يوتيوب الآلية عن لغة الهدف نفسها؛ وسطر اللغات الأخرى في تفصيله لا سطرًا ثانيًا (ح-61).
+  const back = roundTrip(sel, m.target);
+  if (back) {
+    const more = m.otherLangs > 0 ? [h('span', { className: 'steps', text: otherLanguagesLine(m.otherLangs) }), brave ? h('span', { className: 'note-in', text: LABELS.braveNote }) : null].filter(Boolean) : [];
+    out.push(...roundTripLine(h, act, sel.via, !!m.roundTripOpen, more));
+  }
 
   out.push(label(h, LABELS.exportMode));
   out.push(segmented(h, LABELS.exportMode, [
@@ -401,8 +441,8 @@ export function downloadMenu(h, act, m, root = null) {
     { value: 'long', label: LABELS.modeLong, title: LABELS.modeLongNote },
   ], m.mode, act, 'mode', 'mode', { root }));
 
-  // ف4: الملف أطول من حد الإعدادات: عدد مقاطعه وطوله قبل الإرسال، وقسم التقسيم مفتوح أدناه.
-  if (m.longFile) out.push(alert(h, 'info', longFileLine(m.longFile)));
+  // ف4: الملف أطول من حد الإعدادات: عدد مقاطعه في سطر، وطوله وطريق التقسيم خلف «لماذا؟» (ح-61؛ والقسم مطوي حتى يُفتح).
+  if (m.longFile) out.push(longFileAlert(h, act, m.longFile, !!m.longWhy));
   out.push(h('div', {
     className: 'actions',
     children: [
@@ -415,8 +455,9 @@ export function downloadMenu(h, act, m, root = null) {
   }));
   if (m.saveLine) out.push(resultLine(h, m.saveLine, 'saveLine'));
   for (const r of m.result) out.push(alert(h, r.tone, r.text));
-  out.push(h('div', { className: 'note', text: LABELS.instructionsNote, attrs: { 'data-fid': 'instructionsNote' } }));
-  const others = otherLanguages(h, { langs: m.otherLangs, other: true, brave, translatable: false });
+  // الخطوة التالية بعد تنزيل ناجح وحده، بسطر قصير (ح-61): قبل التنزيل لا شيء يُنسخ بعد.
+  if (m.saveLine?.tone === 'ok') out.push(h('div', { className: 'note', text: LABELS.instructionsNext, attrs: { 'data-fid': 'instructionsNote' } }));
+  const others = back ? [] : otherLanguagesFolded(h, act, { langs: m.otherLangs, brave, open: !!m.otherOpen });
   if (others.length) out.push(sep(h), ...others);
 
   out.push(sep(h));

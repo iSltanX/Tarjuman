@@ -123,7 +123,7 @@ function freshUi(videoId) {
     /** لغة الترجمة المطلوبة أثناء تبديلها (U-029): تُرسم في المنتقي حتى يتم الحفظ، ثم تعود الحالة الحقيقية. undefined = لا تبديل. */
     pendingLang: /** @type {string | null | undefined} */ (undefined),
     download: {
-      key: null, mode: null, why: false, roundTrip: false, fallback: false, fallbackTouched: false, longKey: null, longChars: null, split: false, splitSize: null, splitError: null, busy: false,
+      key: null, mode: null, why: false, roundTrip: false, longWhy: false, otherOpen: false, fallback: false, longKey: null, longChars: null, split: false, splitSize: null, splitError: null, busy: false,
       saveLine: null, result: [], preview: null,
       // الفكرة ٧-ب: زر CC ينتظر الالتقاط بعد الضغط ({ kind }) أو null، وسطر نتيجته.
       cc: null, ccLine: null,
@@ -333,8 +333,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       tracks: tracks.map((t) => ({ key: t.key, lang: t.lang, kind: t.kind, via: t.via ?? null, ok: t.ok, cueCount: t.cueCount, warnings: t.warnings, lastEndMs: t.lastEndMs, capturedAt: t.capturedAt })),
       selectedKey: tracks.some((t) => t.key === d.key) ? d.key : tracks[0]?.key ?? null,
       mode: d.mode ?? s.settings.export.modeDefault, durationMs: s.durationMs,
-      // قسم التقسيم مفتوح للملف الطويل دون تفعيل التقسيم، ما لم يطوه المستخدم (ف4).
-      why: d.why, roundTripOpen: d.roundTrip, target: pairTarget(s), longFile, fallbackOpen: d.fallbackTouched ? d.fallback : d.fallback || !!longFile, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
+      // قسم التقسيم مطوي حتى يفتحه المستخدم، ولو كان الملف طويلًا (ح-61؛ كان يُفتح للملف الطويل، ف4)، و«لماذا؟» في سطر «ملف طويل» يدل عليه.
+      why: d.why, roundTripOpen: d.roundTrip, longWhy: d.longWhy, otherOpen: d.otherOpen, target: pairTarget(s), longFile, fallbackOpen: d.fallback, split: d.split, splitSize: d.splitSize ?? String(s.settings.export.splitThreshold), splitError: d.splitError,
       busy: d.busy, saveLine: d.saveLine, result: d.result,
       pickGuide: (!tracks.length && PICK_AGAIN.has(s.captureIssue?.code ?? '')) || otherLangs(s, tracks) ? { brave: flags.brave } : null,
       otherLangs: otherLangs(s, tracks), translatable: s.available?.translatable === true,
@@ -879,9 +879,11 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     switch (name) {
       case 'why': d.why = !d.why; break;
       case 'roundTrip': d.roundTrip = !d.roundTrip; break;
+      case 'longWhy': d.longWhy = !d.longWhy; break;
+      case 'otherHow': d.otherOpen = !d.otherOpen; break;
       case 'track': d.key = value; d.saveLine = null; d.result = []; break;
       case 'mode': d.mode = value; d.saveLine = null; break;
-      case 'fallback': d.fallback = !downloadModel(controller.getState()).fallbackOpen; d.fallbackTouched = true; break;
+      case 'fallback': d.fallback = !d.fallback; break;
       case 'split': d.split = !!value; d.splitError = null; break;
       case 'splitSize':
         d.splitSize = String(value);

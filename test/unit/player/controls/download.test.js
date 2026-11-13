@@ -109,7 +109,7 @@ test('الفكرة ٤ (الإنذار المبكر): رفض الالتقاط ب�
   assert.ok(empty.ui.menu().querySelector('.alert').textContent.includes(messageFor('EX_EMPTY_BODY')));
 });
 
-test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-07): سطر واحد بعددها وخطوات اختيارها من يوتيوب، لا صف لكل مسار ولا زر يبدّله', () => {
+test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-07؛ وح-61): سطر واحد بعددها وخطوات اختيارها من يوتيوب خلف «كيف؟»، لا صف لكل مسار ولا زر يبدّله', () => {
   // en يدوي ملتقط، وen تلقائي ليس لغة أخرى، وes وja لغتان أخريان.
   const available = { videoId: 'AAAAAAAAAAA', tracks: [{ lang: 'en', kind: 'manual', name: 'English' }, { lang: 'en', kind: 'asr', name: null }, { lang: 'es', kind: 'manual', name: 'Español' }, { lang: 'ja', kind: 'asr', name: null }], translatable: true };
   const page = mountPage({ state: makeState({ captured: [trackInfo()], available }) });
@@ -118,8 +118,13 @@ test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-0
   assert.equal(menu.querySelectorAll('.row.available').length, 0, 'لا صف لكل مسار');
   const note = menu.querySelector('[data-fid="otherLangs"]');
   assert.equal(note.getAttribute('data-count'), '2');
-  assert.equal(note.querySelector('.steps').textContent, `في هذا الفيديو لغتان أخريان. لاختيار إحداهما: ${LABELS.pickSteps}`);
+  assert.equal(page.ui.field('otherSummary').textContent, 'في هذا الفيديو لغتان أخريان. كيف؟', 'سطر واحد (ح-61)');
+  assert.equal(note.hasAttribute('hidden'), true, 'الطريقة مطوية');
+  assert.equal(note.querySelector('.steps').textContent, `لاختيار إحداهما: ${LABELS.pickSteps}`);
   assert.equal(note.querySelector('button'), null, 'لا تبديل من الإضافة');
+  click(page.ui.field('otherHow'));
+  assert.equal(page.ui.field('otherHow').getAttribute('aria-expanded'), 'true');
+  assert.equal(page.ui.field('otherLangs').hasAttribute('hidden'), false);
   assert.equal(page.ui.menuText().includes('Español'), false, 'ولا أسماء المسارات');
   assert.equal(page.ui.menuText().includes(LABELS.machineSteps), false, 'الترجمة الآلية بلا التقاط وحده');
   // بلا التقاط: عدد كل لغات الفيديو في سطر «فعّل CC» نفسه (القرار ٢٩)، وخطوات الاختيار بلا عدد وخطوات ترجمة يوتيوب الآلية حين
@@ -138,6 +143,7 @@ test('لغات الفيديو الأخرى (ق١، قرار سلطان 2026-11-0
   // قائمة الفيديو غير معروفة بعد مسار ملتقط: الخطوات وحدها؛ ولا لغة أخرى معروفة: لا سطر.
   const unknown = mountPage({ state: makeState({ captured: [trackInfo()] }) });
   open(unknown);
+  assert.equal(unknown.ui.field('otherSummary').textContent, 'اختيار لغة أخرى', 'بلا عدد: الزر وحده');
   assert.equal(unknown.ui.menu().querySelector('[data-fid="otherLangs"] .steps').textContent, `لاختيار لغة أخرى: ${LABELS.pickSteps}`);
   const only = mountPage({ state: makeState({ captured: [trackInfo()], available: { ...available, tracks: available.tracks.slice(0, 2), translatable: false } }) });
   open(only);
@@ -184,10 +190,10 @@ test('مسار واحد: سطر الحالة بوصفه، ووضع التصدي�
   assert.equal(dl.className, 'primary');
   assert.equal(dl.getAttribute('aria-label'), null, 'اسم الوصول هو النص الظاهر (ومنه «جارٍ التنزيل…»)');
   assert.equal(dl.getAttribute('aria-description'), 'ملف الأصل (SRT) وحده');
-  // تعليمات الترجمة من نافذة الإضافة (AA3، لوحة 10): لا زر نسخ في المشغّل، وسطر يدل عليها.
+  // تعليمات الترجمة من نافذة الإضافة (AA3، لوحة 10): لا زر نسخ في المشغّل، وسطر يدل عليها بعد التنزيل وحده (ح-61).
   assert.ok(page.ui.field('copy') === null, 'لا زر نسخ');
   assert.equal(page.ui.menu().querySelectorAll('button').filter((b) => /نسخ/.test(b.textContent)).length, 0);
-  assert.equal(page.ui.field('instructionsNote').textContent, 'انسخ تعليمات الترجمة من نافذة الإضافة.');
+  assert.ok(page.ui.field('instructionsNote') === null, 'لا سطر قبل التنزيل');
   assert.equal(dl.parentNode.className, 'actions');
   click(page.ui.item('مقاطع أطول'));
   assert.equal(page.ui.field('mode:long').getAttribute('title'), 'يدمج المقاطع المتجاورة في جمل أطول ليفهم النموذج السياق، فيتغير عدد المقاطع وترقيمها وحدود توقيتها');
@@ -281,10 +287,12 @@ test('تحذيرات البناء تظهر بعد التنزيل (تقسيم ل�
   assert.ok(page.ui.menuText().includes(messageFor('EX_SPLIT_NOT_NEEDED')));
 });
 
-test('التقسيم تحت «تقسيم الملفات الطويلة»: مفتوح للملف الطويل دون تفعيله (ف4)، عند الجمل أو الصمت، بأحجام الأجزاء قبل التنزيل، والتحقق، وحفظ كل جزء', async () => {
+test('التقسيم تحت «تقسيم الملفات الطويلة»: مطوي حتى يُفتح ولو طال الملف (ح-61)، عند الجمل أو الصمت، بأحجام الأجزاء قبل التنزيل، والتحقق، وحفظ كل جزء', async () => {
   const page = withTrack();
   open(page);
-  assert.equal(page.ui.menuText().includes('تقسيم الملف إلى أجزاء'), true, 'مفتوح: 412 مقطعًا فوق حد 200');
+  assert.equal(page.ui.menuText().includes('تقسيم الملف إلى أجزاء'), false, 'مطوي: 412 مقطعًا فوق حد 200 لا يفتحه');
+  click(page.ui.item('تقسيم الملفات الطويلة'));
+  assert.equal(page.ui.menuText().includes('تقسيم الملف إلى أجزاء'), true, 'نقرة تفتحه');
   assert.equal(page.ui.field('split').checked, false, 'دون تفعيل التقسيم');
   const check = page.ui.field('split');
   check.checked = true;

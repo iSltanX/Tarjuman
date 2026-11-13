@@ -15,7 +15,7 @@ import { EN_CUES, click, makeState, mountPage, settle, trackInfo } from './harne
 const savedEnglish = { key: 'en|manual', lang: 'en', kind: 'manual', cues: EN_CUES, source: 'saved' };
 const named = (name) => `نُزّل ${String.fromCodePoint(0x2066)}${name}${String.fromCodePoint(0x2069)}`;
 
-test('FA-17: مسار محفوظ بلا التقاط: القائمة تعرضه بـ«محفوظ» و«تنزيل المحفوظ» وسطر التعليمات من النافذة، وإرشاد CC بعده', () => {
+test('FA-17: مسار محفوظ بلا التقاط: القائمة تعرضه بـ«محفوظة» و«تنزيل المحفوظ»، وإرشاد CC بعده؛ وسطر التعليمات بعد التنزيل وحده (ح-61)', async () => {
   const page = mountPage({ state: makeState({ english: savedEnglish }) });
   click(page.ui.btn('download'));
   const text = page.ui.menuText();
@@ -23,10 +23,13 @@ test('FA-17: مسار محفوظ بلا التقاط: القائمة تعرضه 
   assert.match(text, /لم تُلتقط ترجمة يوتيوب في هذه الزيارة؛ يُنزَّل الأصل المحفوظ من تنزيلك السابق\./);
   assert.ok(page.ui.item('تنزيل الأصل المحفوظ'), 'زر التنزيل');
   assert.ok(page.ui.item('نسخ التعليمات') === null, 'لا نسخ في المشغّل (AA3)');
-  assert.match(text, /انسخ تعليمات الترجمة من نافذة الإضافة\./);
+  assert.ok(page.ui.field('instructionsNote') === null, 'لا سطر قبل التنزيل');
   assert.match(text, /فعّل ترجمة يوتيوب \(CC\) واختر اللغة التي تريدها، فتظهر في هذه القائمة\./, 'إرشاد CC باقٍ للالتقاط الجديد');
   assert.ok(text.indexOf('تنزيل الأصل المحفوظ') < text.indexOf('فعّل ترجمة يوتيوب'), 'المحفوظ أولًا');
   assert.equal(page.ui.btn('download').getAttribute('aria-description'), 'الأصل المحفوظ جاهز');
+  click(page.ui.item('تنزيل الأصل المحفوظ'));
+  await settle();
+  assert.equal(page.ui.field('instructionsNote').textContent, 'التالي: انسخ التعليمات من نافذة الإضافة.');
 });
 
 test('FA-17: «تنزيل المحفوظ» يبني المسار المحفوظ بالوضع العادي بلا تقسيم ويحفظ الملف ثم البصمة بلا تكرار', async () => {

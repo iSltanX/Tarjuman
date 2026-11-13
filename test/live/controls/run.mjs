@@ -415,14 +415,15 @@ try {
     names = await waitFiles((n) => n === longName);
     const gotLong = names.includes(longName) ? await readFile(path.join(DL, longName), 'utf8') : null;
     check('download-long-bytes-match', 'P6-AC4', gotLong === EXP_LONG.files[0].text, { name: longName, bytes: gotLong ? Buffer.byteLength(gotLong) : null, inDir: names });
-    await downloadMenu();
+    // سطر التعليمات بعد تنزيل ناجح وحده (ح-61): «التالي: انسخ التعليمات من نافذة الإضافة.».
+    const afterDownload = await downloadMenu();
     await clickItem('mode:normal');
     // نسخ التعليمات في نافذة الإضافة وحدها (منذ 2.0.0، AA3 ق٨): القائمة تقول ذلك ولا بند نسخ فيها، والتعليمات لا تُعرض في الصفحة.
     pk = await downloadMenu();
     const instr = instructions({ videoId: VIDEO, title: null, source: 'en', target: 'ar', locale: UI ?? 'en' });
     const shownSomewhere = [pk.layer.menu?.text ?? '', ...pk.layer.toasts.map((t) => t.text), pk.layer.tip ?? ''].some((t) => t.includes(instr.slice(0, 40)))
       || (await main(M.bodyHas, instr.slice(0, 40)));
-    check('copy-points-to-popup-not-player-menu', 'P6-AC4', !pk.layer.menu.items.some((x) => x.fid === 'copy') && clean(pk.layer.menu.text).includes(clean(LABELS.instructionsNote)), { note: LABELS.instructionsNote, items: pk.layer.menu.items.map((x) => x.fid) });
+    check('copy-points-to-popup-not-player-menu', 'P6-AC4', !pk.layer.menu.items.some((x) => x.fid === 'copy') && clean(afterDownload?.layer?.menu?.text ?? '').includes(clean(LABELS.instructionsNext)), { note: LABELS.instructionsNext, items: pk.layer.menu.items.map((x) => x.fid) });
     check('instructions-never-displayed', 'P6-AC4', !shownSomewhere, { shown: shownSomewhere });
     // التقسيم الاحتياطي (معلومة): «تقسيم الملفات الطويلة» قد يكون مفتوحًا أصلًا (الملف أطول من حد الإعدادات، ف4)، فلا يُضغط إلا
     // مغلقًا؛ وخانة التقسيم لا تُضغط إن كانت مفعّلة (يظهر حقل الحجم معها).

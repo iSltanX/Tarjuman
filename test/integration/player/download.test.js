@@ -62,7 +62,8 @@ test('لا نسخ في المشغّل (AA3): القائمة بلا زر نسخ �
   click(page.ui.btn('download'));
   assert.ok(page.ui.menu().querySelector('.tag') === null, 'لا إشارة قاموس في المشغّل');
   assert.ok(page.ui.field('copy') === null, 'لا زر نسخ');
-  assert.equal(page.ui.field('instructionsNote').textContent, 'انسخ تعليمات الترجمة من نافذة الإضافة.');
+  // سطر التعليمات بعد تنزيل ناجح وحده (ح-61).
+  assert.ok(page.ui.field('instructionsNote') === null, 'لا سطر قبل التنزيل');
   const reply = buildVideoStateReply(page.controller.getState(), { overlay: 'mounted', controls: 'mounted' });
   assert.deepEqual(reply.source, { key: 'en|manual', lang: 'en', kind: 'manual', via: null, from: 'captured' }, '«من» من المسار الملتقط (ق٥)');
   const glossary = attachedGlossary(await page.store.getPrefs());
@@ -76,7 +77,7 @@ test('التقسيم عند الجمل أو الصمت: أحجام الأجزا�
   const area = createMemoryArea();
   const page = await openPage(area);
   click(page.ui.btn('download'));
-  // الملف أطول من حد الإعدادات: القسم مفتوح وحده (ف4).
+  // الملف أطول من حد الإعدادات، والقسم مطوي حتى يُفتح (ح-61).
   if (page.ui.item('تقسيم الملفات الطويلة').getAttribute('aria-expanded') !== 'true') click(page.ui.item('تقسيم الملفات الطويلة'));
   const check = page.ui.field('split');
   check.checked = true;
@@ -90,6 +91,7 @@ test('التقسيم عند الجمل أو الصمت: أحجام الأجزا�
   click(page.ui.item('تنزيل الملف'));
   await settle(area);
   assert.deepEqual(page.events.map((e) => e[0]), ['save', 'save', 'save'], 'التنزيل يحفظ الأجزاء ولا ينسخ');
+  assert.equal(page.ui.field('instructionsNote').textContent, 'التالي: انسخ التعليمات من نافذة الإضافة.', 'الخطوة التالية بعد التنزيل (ح-61)');
   const saved = page.events.filter((e) => e[0] === 'save');
   rows.forEach((r, i) => assert.ok(r.endsWith(` · ${charsText(saved[i][2].length)}`), `حجم الجزء ${i + 1} هو حجم ملفه`));
   const full = buildExport({ videoId: A, track: { key: 'en|manual', lang: 'en', kind: 'manual', cues: EN }, mode: 'normal', now: Date.parse(NOW) }).files[0].text;

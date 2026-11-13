@@ -55,6 +55,12 @@ export function otherLanguagesLine(n, { other = true, counted = true } = {}) {
 }
 
 /**
+ * سطر لغات الفيديو الأخرى بعد مسار ملتقط في سطر واحد (ح-61): «في هذا الفيديو 62 لغة أخرى.»، وطريقة الاختيار خلف «كيف؟».
+ * @param {number} n عدد اللغات الأخرى (1 فأكثر)
+ */
+export const otherSummaryLine = (n) => T('otherSummary', { what: T('otherWhat', { n, other: true, count: formatCount(n, COUNT_FORMS.language) }) });
+
+/**
  * رسالة القائمة بلا التقاط ولغات الفيديو معروفة (القرار ٢٩): «في هذا الفيديو 3 لغات: فعّل ترجمة يوتيوب (CC) واختر إحداها، فتظهر
  * في هذه القائمة.» بدل CT_NOT_CAPTURED وعددٍ خلف «لماذا؟». @param {number} n
  */
@@ -122,8 +128,13 @@ export const previousLostLine = (from, target) => T('previousLost', { from: from
 /** عدد المحارف بأرقام مجمّعة: «18,400 محرف»، «12 محرفًا»، «5 محارف». @param {number} n */
 export const charsText = (n) => T('chars', { n, grouped: n.toLocaleString('en-US') });
 
-/** «ملف طويل: 427 مقطعًا و32,140 حرفًا…» (ف4). @param {{ count: number, chars: number | null }} f */
-export const longFileLine = (f) => (f.chars === null ? T('longFileCount', { count: formatCount(f.count, COUNT_FORMS.cue) }) : T('longFile', { count: formatCount(f.count, COUNT_FORMS.cue), chars: charsText(f.chars) }));
+/** «ملف طويل: 427 مقطعًا.» (ف4، وسطر واحد منذ ح-61). @param {{ count: number, chars: number | null }} f */
+export const longFileLine = (f) => T('longFileShort', { count: formatCount(f.count, COUNT_FORMS.cue) });
+/**
+ * تفصيل «ملف طويل» خلف «لماذا؟» (ح-61): «طوله 32,140 حرفًا. إن عجز نموذجك عن ملف بهذا الطول فقسّمه من «تقسيم الملفات الطويلة» أدناه.»
+ * @param {{ count: number, chars: number | null }} f
+ */
+export const longFileWhy = (f) => T('longFileWhy', { chars: f.chars === null ? null : charsText(f.chars) });
 
 /** صف جزء في التقسيم الاحتياطي: «1 · 1–200 · 18,400 محرف». @param {{ index: number, from: number, to: number, chars: number }} p */
 export const partRow = (p) => T('partRow', { index: p.index, from: p.from, to: p.to, chars: charsText(p.chars) });
