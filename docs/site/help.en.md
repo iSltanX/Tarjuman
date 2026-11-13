@@ -69,7 +69,7 @@ If the menu says “Turn on YouTube subtitles (CC) and choose the language you w
 
 - From Tarjuman’s icon › “Library”: every video you’ve saved a translation for, with its thumbnail, title and duration, and the language pair of each translation.
 - Each video holds up to three translations, one of which you make active. When you replace a translation, the previous one is saved so you can restore it.
-- From there you can export the translation, copy the instructions with the video’s language pair, or delete a translation or all of the video’s data.
+- From there you can export the translation as an SRT or WebVTT file, alone or with the original under each segment, copy the instructions with the video’s language pair, or delete a translation or all of the video’s data.
 - Translations saved before 2.0.0 without a language show “Unknown language”. Set it from “Translation language” in the “Translation” menu, or for all of them under Settings › “Languages”.
 - Video thumbnails stay off until you turn them on under Settings › “Display” › “Video thumbnails in Library”, so a Tarjuman tile appears instead and nothing is requested. Once on, they’re requested from YouTube’s servers. If you upgraded in Chrome, Edge or Brave, your thumbnails stay as they were.
 - In Firefox, thumbnails stay off until you turn on that same switch, and Firefox then asks for your “Browsing activity” consent. You can withdraw it from Firefox’s add-ons page.
