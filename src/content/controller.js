@@ -112,34 +112,49 @@ export function createController({ store, extractor = null, page = {}, now = () 
   /** نسخة السجل: المراجعة وتاريخ الحفظ معًا، فكاتبان بالمراجعة نفسها لا يلتبسان. */
   const versionOf = (r) => (r ? `${r.rev}|${r.updatedAt}` : 'none');
 
-  // تحقق Gemini، Y3: يوتيوب يغيّر رابط الصفحة (فالمعرّف) قبل عنوان المستند، فعنوان المستند لحظة التبديل عنوانُ الصفحة السابقة،
-  // ويُعدّ مجهولًا (null) ما بقي هو نفسه، في الحالة وفي الكتابات الأربع التي تحمل العنوان. ولا حارس على فيديو الصفحة الأول (عنوانه
-  // له)، ولا حين يكون العنوانَ الذي عُرف للفيديو الجديد نفسه (العودة من المشغّل المصغّر)، ولا حين يخالف العنوانَ المعروف للسابق
-  // (سبق العنوانُ الجديد اكتشافَ التنقل).
-  /** @type {string | null} */
-  let staleTitle = null;
-  /** آخر عنوان قُبل من المستند، ولأي فيديو. */
-  let knownTitle = { videoId: /** @type {string | null} */ (null), title: /** @type {string | null} */ (null) };
-  /** التبديل الأول من start: فيديو الصفحة كما فُتحت، فعنوان المستند عنوانه. */
+  // تحقق Gemini، Y3: يوتيوب يغيّر رابط الصفحة (فالمعرّف) قبل عنوان المستند وقبل أن يحمّل عنصر الفيديو بيانات الجديد، فالعنوان
+  // والمدة لحظة التبديل للصفحة السابقة، ويُعدّ كلٌّ منهما مجهولًا (null) ما بقي هو نفسه، في الحالة وفي الكتابات الأربع التي تحملهما
+  // (والمدة بالقرار ٢٧ب). ولا حارس على فيديو الصفحة الأول (قيمته له)، ولا حين تكون القيمةَ التي عُرفت للفيديو الجديد نفسه (العودة من
+  // المشغّل المصغّر)، ولا حين تخالف القيمةَ المعروفة للسابق (سبقت قيمةُ الجديد اكتشافَ التنقل). وفيديوهان بالعنوان نفسه أو المدة
+  // نفسها: تبقى قيمة الثاني مجهولة، فلا يُكتب في سجله إلا ما يُعرف أنه له.
+  /** التبديل الأول من start: فيديو الصفحة كما فُتحت، فقيم الصفحة له. */
   let pageStart = false;
 
-  /** عنوان الفيديو id من المستند إن كان هو المعروض، ولم يكن عنوان الصفحة السابقة (Y3). */
-  function pageTitleFor(id) {
-    if (!id || id !== videoId) return null;
-    const t = page.title?.() ?? null;
-    if (t === null || t === staleTitle) return null;
-    knownTitle = { videoId: id, title: t };
-    return t;
+  /** حارس قيمة من الصفحة تتأخر عن المعرّف (Y3). @template T @param {() => T | null} read */
+  function pageValue(read) {
+    /** @type {T | null} */
+    let stale = null;
+    /** آخر قيمة قُبلت من الصفحة، ولأي فيديو. */
+    let known = { videoId: /** @type {string | null} */ (null), value: /** @type {T | null} */ (null) };
+    return {
+      /** قيمة الفيديو id من الصفحة إن كان هو المعروض، ولم تكن قيمة الصفحة السابقة. @param {string | null} id */
+      for(id) {
+        if (!id || id !== videoId) return null;
+        const v = read() ?? null;
+        if (v === null || v === stale) return null;
+        known = { videoId: id, value: v };
+        return v;
+      },
+      /** يُستدعى في التبديل إلى next قبل تغيّر videoId: قيمة الصفحة الآن للسابقة أم لا. @param {string | null} next @param {boolean} first */
+      switchTo(next, first) {
+        stale = first ? null : staleAt(next);
+      },
+    };
+
+    /** @param {string | null} next */
+    function staleAt(next) {
+      const v = read() ?? null;
+      if (!next || v === null) return null;
+      if (known.videoId === next && known.value === v) return null;
+      if (videoId && known.videoId === videoId) return v === known.value ? v : null;
+      return v;
+    }
   }
 
-  /** عنوان المستند لحظة التبديل إلى next إن كان للصفحة السابقة، وإلا null (Y3). يُستدعى قبل تغيّر videoId. */
-  function staleTitleAt(next) {
-    const t = page.title?.() ?? null;
-    if (!next || t === null) return null;
-    if (knownTitle.videoId === next && knownTitle.title === t) return null;
-    if (videoId && knownTitle.videoId === videoId) return t === knownTitle.title ? t : null;
-    return t;
-  }
+  const pageTitle = pageValue(() => page.title?.() ?? null);
+  const pageDuration = pageValue(() => page.durationMs?.() ?? null);
+  /** عنوان الفيديو id ومدته من الصفحة، لكتابة في سجله. @param {string} id */
+  const fromPage = (id) => ({ title: pageTitle.for(id), durationMs: pageDuration.for(id) });
 
   function pickEnglish() {
     const captured = extractor ? rankUsable(extractor.tracks()) : [];
@@ -159,12 +174,12 @@ export function createController({ store, extractor = null, page = {}, now = () 
     const a = saved?.arabic ?? null;
     const bundle = bundleFor(saved);
     const activeSlot = bundle?.active ?? null;
-    // يُقرأ ولو كان للسجل عنوان: فيُعرف عنوان المستند لكل فيديو (knownTitle) لحارس التبديل التالي (Y3).
-    const pageTitle = pageTitleFor(videoId);
+    // يُقرآن ولو كان للسجل عنوان ومدة: فتُعرف قيمتا الصفحة لكل فيديو لحارس التبديل التالي (Y3).
+    const fresh = fromPage(videoId);
     return Object.freeze({
       videoId,
-      title: saved?.title ?? pageTitle,
-      durationMs: saved?.durationMs ?? (videoId ? page.durationMs?.() ?? null : null),
+      title: saved?.title ?? fresh.title,
+      durationMs: saved?.durationMs ?? fresh.durationMs,
       loading,
       saved,
       captured: extractor ? extractor.tracks() : [],
@@ -371,7 +386,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
 
     /**
      * تبديل الفيديو: تُمسح الحالة ومسارات المستخرج معًا قبل أي إشعار (فلا يظهر شيء من الفيديو السابق)،
-     * ثم يُحمَّل سجل الجديد وحده. وعنوان المستند لحظة التبديل يُحفظ عنوانًا للصفحة السابقة لا يُورَّث (Y3، staleTitleAt).
+     * ثم يُحمَّل سجل الجديد وحده. وعنوان المستند ومدة الفيديو لحظة التبديل يُحفظان للصفحة السابقة فلا يُورَّثان (Y3، pageValue).
      * @param {string | null} id
      */
     async setVideo(id) {
@@ -379,7 +394,8 @@ export function createController({ store, extractor = null, page = {}, now = () 
       const first = pageStart;
       pageStart = false;
       if (next === videoId) return;
-      staleTitle = first ? null : staleTitleAt(next);
+      pageTitle.switchTo(next, first);
+      pageDuration.switchTo(next, first);
       const seq = ++loadSeq;
       videoId = next;
       saved = null;
@@ -443,7 +459,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       let offsetWas = offsetBefore;
       const { id, next } = await writeRecord((rec) => {
         const r = withArabicImport(rec, {
-          videoId: vid, title: pageTitleFor(vid), durationMs: page.durationMs?.() ?? null, ...input,
+          videoId: vid, ...fromPage(vid), ...input,
           englishTrack, displayModeDefault: settings.displayModeDefault,
         }, iso(), { replace });
         offsetWas = rec ? r.offsetWas : offsetBefore;
@@ -473,7 +489,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       // بصمات الترجمات غير النشطة والسابقة لا يسقطها حد البصمات (الإصدار الثاني).
       const keep = referencedFingerprints(bundleFor(saved));
       const { id, next } = await writeRecord((rec) => withExport(rec, {
-        videoId: vid, title: pageTitleFor(vid), durationMs: page.durationMs?.() ?? null, englishTrack, fingerprint,
+        videoId: vid, ...fromPage(vid), englishTrack, fingerprint,
         displayMode: view.displayMode === 'off' ? settings.displayModeDefault : view.displayMode,
       }, iso(), { keep }));
       if (id === videoId) changed();
@@ -507,7 +523,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
         }
         stored = true;
         return withExport(rec, {
-          videoId: vid, title: pageTitleFor(vid), durationMs: page.durationMs?.() ?? null, englishTrack: rec.english.find((t) => t.key === trackKey) ?? track, fingerprint,
+          videoId: vid, ...fromPage(vid), englishTrack: rec.english.find((t) => t.key === trackKey) ?? track, fingerprint,
           displayMode: view.displayMode === 'off' ? settings.displayModeDefault : view.displayMode,
         }, iso(), { keep });
       });
@@ -570,7 +586,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
         wrote = await writeBundle((b) => {
           if (seen !== null && basis(b) !== seen) throw new TjError('ST_CONFLICT', { detail: `slot=${n}` });
           result = withSlotUpload(b, n, {
-            videoId: vid, title: pageTitleFor(vid), durationMs: page.durationMs?.() ?? null, ...input,
+            videoId: vid, ...fromPage(vid), ...input,
             englishTrack, displayModeDefault: settings.displayModeDefault,
           }, iso(), { replace, activate });
           return result.bundle;
