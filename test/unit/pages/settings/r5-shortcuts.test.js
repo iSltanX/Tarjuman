@@ -115,3 +115,19 @@ test('بلا واجهة التبويبات (بيئة بلاها): الزر يق�
   await settle(5);
   assert.match(textOf(rowOf(m)), /تعذّر فتحها من هنا/);
 });
+
+test('Firefox بواجهة commands.openShortcutSettings (ثبتت حيًّا في Firefox 160): زر يفتح مدير الاختصارات نفسه، وإن رفض بقي نص الطريق', async () => {
+  const opened = [];
+  const m = await mount({ shortcuts: { target: 'firefox', tabs: { create: async () => {} }, commands: { openShortcutSettings: async () => { opened.push(true); } } } });
+  const btn = openBtn(m);
+  assert.ok(btn, 'زر في Firefox حين تتاح الواجهة');
+  btn.click();
+  await settle(5);
+  assert.deepEqual(opened, [true]);
+  const failing = await mount({ shortcuts: { target: 'firefox', commands: { openShortcutSettings: async () => { throw new Error('رُفض'); } } } });
+  openBtn(failing).click();
+  await settle(5);
+  assert.match(textOf(rowOf(failing)), /«إدارة اختصارات الإضافات»/, 'الرفض يعيد نص الطريق');
+  assert.ok(isolated(rowOf(failing), FIREFOX_ADDONS));
+  assert.equal(JSON.stringify(await m.area.get(null)), m.before, 'لا كتابة في التخزين');
+});

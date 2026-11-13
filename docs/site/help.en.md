@@ -61,7 +61,7 @@ If the player hasn’t loaded any subtitles yet, the menu usually shows a “Tur
 ## Keyboard shortcuts — `#shortcuts`
 
 - Tarjuman has five commands you can assign to keys of your choice: switch display mode, show the translation one step earlier, show it one step later, mark the visible line for review, and replay the line (moves the video to the start of the visible line). None has a key until you assign one, so Tarjuman doesn’t impose a key that clashes with YouTube’s or your browser’s shortcuts.
-- Assign them on your browser’s shortcuts page: in Chrome, Edge and Brave from Settings › Display › “Open the shortcuts page”; in Firefox from the add-ons page (`about:addons`) › the gear ⚙ › “Manage Extension Shortcuts”.
+- Assign them on your browser’s shortcuts page, which you open from Settings › Display › “Open the shortcuts page”. In Firefox it’s also on the add-ons page (`about:addons`) › the gear ⚙ › “Manage Extension Shortcuts”.
 - They work on video pages while Tarjuman’s buttons are in the player bar. They aren’t a new permission, and Tarjuman saves nothing for them.
 
 ## Editor — `#editor`

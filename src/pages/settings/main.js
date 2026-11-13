@@ -45,7 +45,7 @@ startPage({
         watch: (fn) => watchYoutubeAccess(chrome, fn),
       },
       // اختصارات لوحة المفاتيح (الفكرة ١٠، ح-55): زر يفتح صفحة اختصارات المتصفح في Chromium (tabs.create)، ونص الطريق إليها في Firefox.
-      shortcuts: { target, tabs: chrome.tabs },
+      shortcuts: { target, tabs: chrome.tabs, commands: chrome.commands },
     });
     app.append(settings.root);
     await settings.load();

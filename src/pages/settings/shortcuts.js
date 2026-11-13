@@ -1,7 +1,7 @@
 // «اختصارات لوحة المفاتيح» في «العرض» (الفكرة ١٠، المسار ب، القرار ح-55، حُسم نيابةً عن سلطان بتفويضه): أوامر البيان الخمسة بلا مفاتيح
 // مقترحة، فيربطها المستخدم بما يختاره في صفحة اختصارات متصفحه، وهذا الصف يدل عليها. في Chromium (Chrome وEdge وBrave) زر يفتحها
-// بـtabs.create بلا إذن، وإن رفض المتصفح فتحها قيل ذلك وكُتب عنوانها. وFirefox لا يفتح لإضافةٍ صفحاته المميزة (about:)، فالنص يقول
-// الطريق إليها. لا تخزين ولا إذن، والعنوانان عنصران ذريان معزولان LTR (ltrNodes).
+// بـtabs.create بلا إذن، وإن رفض المتصفح فتحها قيل ذلك وكُتب عنوانها. وفي Firefox زر بـcommands.openShortcutSettings حين تتاح، وإلا
+// نص يقول الطريق إليها (لا تفتح إضافةٌ صفحاته المميزة about:). لا تخزين ولا إذن، والعنوانان عنصران ذريان معزولان LTR (ltrNodes).
 import { t } from '../../i18n/index.js';
 import { button, el, ltrNodes } from '../../ui/components.js';
 import { ltrInline } from '../../ui/format.js';
@@ -21,15 +21,26 @@ export async function openShortcuts(tabs) {
 }
 
 /**
- * @param {{ doc: Document, target: 'chromium' | 'firefox', tabs?: { create: (o: { url: string }) => Promise<unknown> } }} o tabs واجهة التبويبات
+ * @param {{ doc: Document, target: 'chromium' | 'firefox', tabs?: { create: (o: { url: string }) => Promise<unknown> }, commands?: { openShortcutSettings?: () => Promise<unknown> } }} o tabs واجهة التبويبات
  *   (chrome.tabs من نقطة الدخول، فلا تستورد main.js هذه الوحدة)
  * @returns {{ root: HTMLElement }}
  */
-export function shortcutsControl({ doc, target, tabs }) {
+export function shortcutsControl({ doc, target, tabs, commands }) {
   const note = (children) => el('p', { className: 'tj-caption st-note', children, doc });
   const what = note([t('settings.shortcuts.what')]);
   if (target === 'firefox') {
-    return { root: el('div', { className: 'st-shortcuts', children: [what, note(ltrNodes(t('settings.shortcuts.firefox', { url: ltrInline(FIREFOX_ADDONS) }), { doc }))], doc }) };
+    const path = () => note(ltrNodes(t('settings.shortcuts.firefox', { url: ltrInline(FIREFOX_ADDONS) }), { doc }));
+    // commands.openShortcutSettings (ثبتت حيًّا في Firefox 160، الجولة الخامسة) تفتح مدير الاختصارات نفسه؛ وبلاها، أو إن رفضت، نص الطريق.
+    if (typeof commands?.openShortcutSettings !== 'function') return { root: el('div', { className: 'st-shortcuts', children: [what, path()], doc }) };
+    const failedFf = el('div', { className: 'st-notes', attrs: { 'aria-live': 'polite' }, doc });
+    const ffBtn = button({
+      label: t('settings.shortcuts.open'), variant: 'secondary', icon: 'keyboard', doc,
+      onClick: () => {
+        Promise.resolve().then(() => commands.openShortcutSettings()).then(() => failedFf.replaceChildren(), () => failedFf.replaceChildren(path()));
+      },
+    });
+    ffBtn.setAttribute('data-action', 'shortcuts');
+    return { root: el('div', { className: 'st-shortcuts', children: [what, el('div', { className: 'st-actions', children: [ffBtn], doc }), failedFf], doc }) };
   }
   const failed = el('div', { className: 'st-notes', attrs: { 'aria-live': 'polite' }, doc });
   const openBtn = button({

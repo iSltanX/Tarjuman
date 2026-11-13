@@ -67,7 +67,7 @@ const positionLabel = (v) => t(`settings.display.${POSITION_KEYS[v]}`);
  *   setTimer?: (fn: () => void, ms: number) => unknown, clearTimer?: (id: unknown) => void,
  *   thumbsConsent?: { needed: boolean, check: () => Promise<boolean>, request: () => Promise<boolean>, watch?: (fn: (e: { revoked: boolean }) => void) => () => void },
  *   youtubeAccess?: { check: () => Promise<boolean | null>, request: () => Promise<boolean>, watch?: (fn: () => void) => () => void },
- *   shortcuts?: { target: 'chromium' | 'firefox', tabs?: { create: (o: { url: string }) => Promise<unknown> } },
+ *   shortcuts?: { target: 'chromium' | 'firefox', tabs?: { create: (o: { url: string }) => Promise<unknown> }, commands?: { openShortcutSettings?: () => Promise<unknown> } },
  * }} SettingsEnv
  */
 
@@ -431,7 +431,7 @@ export function createSettings(env) {
   const thumbsSwitch = uiSwitch('thumbnails', THUMBNAILS_SWITCH.text, thumbsMark);
   // اختصارات لوحة المفاتيح (الفكرة ١٠، ح-55): في «العرض» لأن أوامرها الخمسة تعمل على الترجمة فوق الفيديو (الوضع والتوقيت والعلامة
   // والإعادة)، بجوار «زر النص المتزامن» من أدوات صفحة الفيديو. لا قيمة تُحفظ: الربط في صفحة اختصارات المتصفح.
-  const shortcuts = shortcutsControl({ doc, target: env.shortcuts?.target ?? 'chromium', tabs: env.shortcuts?.tabs });
+  const shortcuts = shortcutsControl({ doc, target: env.shortcuts?.target ?? 'chromium', tabs: env.shortcuts?.tabs, commands: env.shortcuts?.commands });
   const shortcutsRow = rowWithHint(t('settings.shortcuts.label'), t('settings.shortcuts.hint'), null, shortcuts.root);
   shortcutsRow.setAttribute('data-row', 'shortcuts');
 
