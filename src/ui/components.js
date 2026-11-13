@@ -252,7 +252,8 @@ const NAV_PAGES = Object.freeze([
 ]);
 
 /**
- * الشريط العلوي المشترك: الشعار المعتمد (التركيب الأفقي)، وروابط الصفحتين (الحالية بـaria-current)، و«بياناتك على جهازك».
+ * الشريط العلوي المشترك: الشعار المعتمد (التركيب الأفقي)، وروابط الصفحتين (الحالية بـaria-current)، وشارة البيانات
+ * (common.nav.yourData: «ترجماتك وإعداداتك في متصفحك»).
  * @param {{ active: 'library' | 'settings' | 'editor' | null, doc?: Document }} o
  */
 export function topbar({ active, doc = document }) {

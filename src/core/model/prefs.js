@@ -27,10 +27,10 @@ export const DEFAULT_PREFS = Object.freeze({
   review: Object.freeze({ maxCps: null }),
   saveLocation: Object.freeze({ mode: 'downloads', folder: DEFAULT_FOLDER }),
   // تفضيلات الواجهة على هذا الجهاز (docs/product-spec.md §٦.٦): صور الفيديو في المحفوظات من
-  // خوادم يوتيوب (مفعّلة افتراضيًا بقرار سلطان)، وزر لوحة النص المتزامن في صفحة الفيديو، وحالة اللوحة (مفتوحة؟ ومع
-  // الأصل؟). لا تُستعاد من النسخة الاحتياطية (backup/read.js: PREFS_GROUPS)، فهي للجهاز لا للبيانات.
-  // صور المحفوظات مطفأة حتى تُفعَّل (و2، 2026-11-10): فتح المحفوظات لا يُصدر طلبًا في تثبيت جديد. ومن رقّى تُثبَّت حاله
-  // (src/background/thumbs-pin.js).
+  // خوادم يوتيوب، وزر لوحة النص المتزامن في صفحة الفيديو، وحالة اللوحة (مفتوحة؟ ومع الأصل؟). لا تُستعاد من النسخة
+  // الاحتياطية (backup/read.js: PREFS_GROUPS) إلا إطفاء الصور (thumbnailsOff)، فهي للجهاز لا للبيانات.
+  // صور المحفوظات مطفأة حتى تُفعَّل (و2، 2026-11-10؛ وكانت مفعّلة افتراضيًا قبل 2.2.0): فتح المحفوظات لا يُصدر طلبًا في
+  // تثبيت جديد. ومن رقّى في Chromium تُثبَّت حاله (src/background/thumbs-pin.js).
   ui: Object.freeze({ thumbnails: false, panelEntry: true, panelOpen: false, panelDual: true }),
 });
 
