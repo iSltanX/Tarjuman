@@ -104,7 +104,7 @@ export default Object.freeze({
     createFailed: 'Couldn’t create the backup', restoreFailed: 'Couldn’t restore', restoreFileFailed: 'Couldn’t restore from this file',
     thumbsStayOff: 'Video thumbnails in Library are off in this backup, so they stay off on this device after restoring.',
     excluded: '{id}: excluded {parts}',
-    notIncluded: '{count} left out because the record couldn’t be read: {ids}',
+    notIncluded: '{count} left out (couldn’t be read): {ids}',
     invalidTitle: ({ n, formatted }) => `Couldn’t read ${formatted} from the backup; ${n === 1 ? 'it’s' : 'those are'} skipped and the rest are restored`,
     meta: 'Created {date} · Tarjuman {version}',
     freshTitle: 'New videos to be added ({n})', noTranslation: 'No translation', more: 'and {count} more',

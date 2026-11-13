@@ -143,8 +143,11 @@ test('ع-٢٦: القالبان الخامان بصيغ العدّ: بنود ا�
 });
 
 test('ع-٢٦: الصحيحتا الإعراب تبقيان مرفوعتين («لم يُضمَّن فيديوهان»، «ويبقى بعده مقطعان»)، وبلا case في استدعائهما', () => {
-  assert.equal(t('settings.data.notIncluded', { count: formatCount(2, COUNT_FORMS.video), ids: 'a' }), 'لم يُضمَّن فيديوهان لتعذّر قراءة سجله: a');
-  assert.equal(t('library.upload.completeRemaining', { count: formatCount(2, COUNT_FORMS.cue) }), 'ويبقى بعده مقطعان ناقصًا أو غير مترجم.');
+  // وما بعد العدد بلفظ لا يتغيّر بعدده (حُسم في الدفعة ج: كان «سجله» و«ناقصًا» و«فقدت مقطعها» لا تطابق المثنى والجمع).
+  assert.equal(t('settings.data.notIncluded', { count: formatCount(2, COUNT_FORMS.video), ids: 'a' }), 'لم يُضمَّن فيديوهان لتعذّر القراءة: a');
+  assert.equal(t('library.upload.completeRemaining', { count: formatCount(2, COUNT_FORMS.cue) }), 'ويبقى بعده مقطعان بلا ترجمة أو بترجمة ناقصة.');
+  assert.equal(t('player.controls.completeRemaining', { count: formatCount(3, COUNT_FORMS.cue) }), 'ويبقى 3 مقاطع بلا ترجمة أو بترجمة ناقصة.');
+  assert.equal(t('editor.marks.orphansRemoved', { count: 'علامتان' }), 'أُزيلت علامتان بلا مقطع.');
   const line = (file, marker) => src(file).split('\n').find((l) => l.includes(marker));
   assert.ok(!line('pages/settings/data.js', "'settings.data.notIncluded'").includes('case:'));
   assert.ok(!line('pages/library/upload.js', "'library.upload.completeRemaining'").includes('case:'));

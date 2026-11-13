@@ -243,7 +243,7 @@ export default Object.freeze({
     completeLine: 'الملف تتمة للترجمة {n}: يضيف {adds} في مواضعها.',
     completeDone: 'وتكتمل الترجمة بعده.',
     completeRenumbered: 'ويُعاد ترقيم المقاطع من 1 فلا يتكرر رقم.',
-    completeRemaining: 'ويبقى بعده {count} ناقصًا أو غير مترجم.',
+    completeRemaining: 'ويبقى بعده {count} بلا ترجمة أو بترجمة ناقصة.',
     completed: 'أُكملت الترجمة {n}.',
     ambiguousHint: 'بعد الحفظ تُعرض «علّمها للمراجعة».',
     markAmbiguous: 'علّمها للمراجعة',

@@ -52,7 +52,7 @@ export default Object.freeze({
     completeLine: 'تتمة للترجمة {n}: يضيف {adds} في مواضعها.',
     completeDone: 'وتكتمل بعده.',
     completeRenumbered: 'ويُعاد ترقيم المقاطع من 1 فلا يتكرر رقم.',
-    completeRemaining: 'ويبقى {count} ناقصًا أو غير مترجم.',
+    completeRemaining: 'ويبقى {count} بلا ترجمة أو بترجمة ناقصة.',
     keepEdits: 'إبقاء تعديلاتي',
     nameOther: 'الاسم يشير إلى فيديو آخر',
     markReview: 'علّم للمراجعة',
