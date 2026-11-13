@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { createDiagnosticReport, formatDiagnosticReport } from '../../../src/core/diagnostics/report.js';
 import { findSecrets } from '../../../src/core/diagnostics/sanitize.js';
 import { rankUsable } from '../../../src/core/model/track-order.js';
+import { REASONS } from '../../../src/core/convert/reasons.js';
+import { t as tx } from '../../../src/i18n/index.js';
 import { captureMsg, makeExtractor, sample } from './helpers.js';
 
 const manual = sample('manual');
@@ -225,4 +227,57 @@ test('التشخيص يذكر فشل الثوابت لا نصها', () => {
   const t = extractor.diagnostics().tracks[0];
   assert.deepEqual([t.ok, t.code], [false, 'EX_BEYOND_DURATION']);
   assert.deepEqual(t.invariants.filter((x) => !x.ok).map((x) => x.key), ['bounds']);
+});
+
+// الفكرة ٤-ب (ح-38): سبب الرفض وعدّادات كل مسار في التشخيص، أرقامًا وقيمًا منطقية ورموزًا من قوائم مغلقة، منتقاةً حقلًا حقلًا
+// (لا يُنسخ كائن الخطأ ولا وصفه ولا تفصيله). وعدّاد كلمات التلقائي wordCount لا words، فلا يُستبدل «[مستبعد]» بقيمته.
+const ROLL_LINES = ['the quick brown fox', 'jumps over the lazy', 'dog and then it', 'runs far away now'];
+const ROLLING = JSON.stringify({ events: ROLL_LINES.map((l, i) => ({
+  tStartMs: i * 2000, dDurationMs: 4000, segs: [{ utf8: i ? `${ROLL_LINES[i - 1]}\n${l}` : l, tOffsetMs: 0, acAsrConf: 1 }],
+})) });
+
+test('الفكرة ٤-ب: لكل مسار سببه وتدحرجه وإحصاءاته وعدّادات محوّله، ولكل رفض سببه، بلا نص ولا «[مستبعد]»', () => {
+  const { extractor } = makeExtractor({ videoId: VID, durationMs: asr.fixture.durationMs });
+  extractor.handleMessage(captureMsg({ videoId: VID, body: asr.body, trackKind: 'asr' }));
+  extractor.handleMessage(captureMsg({ videoId: VID, body: ROLLING, trackKind: 'asr' }, { lang: 'en-GB' }));
+  extractor.handleMessage(captureMsg(base, { format: 'srv3', body: '<timedtext/>' }));
+  assert.equal(extractor.lastRejection().reason, 'fmt-srv3', 'آخر رفض يحمل سببه');
+  extractor.handleMessage(captureMsg(base, { status: 403 }));
+  assert.equal(extractor.lastRejection().reason, 'status');
+  const d = extractor.diagnostics();
+  const ok = d.tracks.find((x) => x.key === 'en|asr');
+  assert.deepEqual([ok.ok, ok.reason, ok.rolling], [true, null, null]);
+  assert.equal(ok.stats.textEvents, asr.fixture.expected.textEvents);
+  assert.equal(ok.stats.totalEvents > ok.stats.textEvents, true);
+  assert.equal(ok.converter.wordCount, asr.fixture.expected.words);
+  assert.equal(ok.converter.duplicatesRemoved, asr.fixture.expected.duplicatesRemoved);
+  assert.equal(ok.converter.endClampedToDuration, false);
+  assert.equal('words' in ok.converter || 'options' in ok.converter, false, 'لا words ولا الخيارات');
+  const roll = d.tracks.find((x) => x.key === 'en-GB|asr');
+  assert.deepEqual([roll.ok, roll.code, roll.reason, roll.converter], [false, 'EX_UNSUPPORTED_FORMAT', 'rolling-pattern', null]);
+  assert.deepEqual(Object.keys(roll.rolling).sort(), ['basis', 'eventIndex', 'repeatedWords']);
+  assert.equal(roll.rolling.basis, 'pattern');
+  assert.ok(Number.isInteger(roll.rolling.eventIndex) && roll.rolling.repeatedWords >= 3);
+  assert.equal(roll.stats.textEvents, ROLL_LINES.length);
+  assert.deepEqual(d.recentRejections.map((x) => [x.code, x.reason]), [['EX_UNSUPPORTED_FORMAT', 'fmt-srv3'], ['EX_EMPTY_BODY', 'status']]);
+  for (const r of [...d.tracks, ...d.recentRejections]) assert.ok(r.reason === null || REASONS.includes(r.reason), String(r.reason));
+  for (const x of d.tracks) {
+    for (const group of [x.stats, x.converter, x.rolling]) {
+      for (const [k, v] of Object.entries(group ?? {})) assert.ok(typeof v === 'number' || typeof v === 'boolean' || (k === 'basis' && ['time', 'pattern'].includes(v)), `${k}: ${v}`);
+    }
+  }
+  const report = createDiagnosticReport({ version: '2.2.0', browser: 'Brave 1.98', at: '2026-11-13T12:00:00.000Z', sections: { extract: d } });
+  const text = formatDiagnosticReport(report);
+  assert.deepEqual(findSecrets(text), [], text);
+  for (const leaked of ['quick brown', 'لم يُحوَّل', 'متدحرجة', 'timedtext']) assert.equal(text.includes(leaked), false, `يسرّب: ${leaked}`);
+  const sections = JSON.stringify([report.sections.extract.tracks, report.sections.extract.recentRejections]);
+  assert.equal(sections.includes(tx('core.diagnostics.excluded')), false, 'لا حقل «[مستبعد]» في المسارات والرفض');
+  assert.equal(report.sections.extract.tracks.find((x) => x.key === 'en|asr').converter.wordCount, asr.fixture.expected.words);
+});
+
+test('الفكرة ٤-ب: فشل تحويل لا يحل محل التقاط سليم، ورفضه في التشخيص بسببه', () => {
+  const { extractor } = makeExtractor({ videoId: VID, durationMs: manual.fixture.durationMs });
+  extractor.handleMessage(captureMsg(base));
+  assert.deepEqual(extractor.handleMessage(captureMsg(base, { body: '{"x":1}', bodyLength: 7 })), { accepted: false, code: 'EX_UNSUPPORTED_FORMAT' });
+  assert.deepEqual(extractor.diagnostics().recentRejections.map((x) => [x.code, x.reason]), [['EX_UNSUPPORTED_FORMAT', 'no-events']]);
 });

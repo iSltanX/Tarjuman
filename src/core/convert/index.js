@@ -78,12 +78,14 @@ export function convertTrack({ body, trackKind: requested, durationMs = null, as
     if (!invariants.ok) {
       const boundsOnly = invariants.results.every((r) => r.ok || r.key === 'bounds');
       const code = boundsOnly ? 'EX_BEYOND_DURATION' : 'EX_INVARIANT_FAILED';
+      report.reason = boundsOnly ? 'beyond-duration' : 'invariant';
       return { ok: false, code, message: 'فشل ثابت أو أكثر', cues, srt: null, invariants, warnings, report };
     }
     return { ok: true, code: null, message: null, cues, srt: invariants.srt, invariants, warnings, report };
   } catch (err) {
     if (err instanceof ConvertError) {
       report.errorDetail = err.detail;
+      report.reason = err.reason;
       return { ok: false, code: err.code, message: err.message, cues: [], srt: null, invariants: null, warnings: [], report };
     }
     throw err;

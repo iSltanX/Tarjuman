@@ -5,6 +5,7 @@
 import { LIMITS } from '../core/model/validate.js';
 import { parseTrackKey, trackKey } from '../core/model/ids.js';
 import { COMPLETENESS_RATIO, normalizeCompleteness, normalizeLongOptions } from '../core/convert/index.js';
+import { reasonOf } from '../core/convert/reasons.js';
 import { checkAcceptance, convertCapture, trackOf } from './capture-adapter.js';
 import { createCaptureStore } from './capture-store.js';
 import { createPendingBuffer } from './pending.js';
@@ -30,6 +31,32 @@ export const LIVE_RECHECK_MS = 250;
 const MAX_LIVE_HELD = 8;
 
 /**
+ * تشخيص المسار (الفكرة ٤-ب، ح-38): أرقام وقيم منطقية تُنتقى بأسمائها، فلا يعبر نص من تقرير التحويل أو تفصيل خطئه. وعدّادات المحوّل
+ * من التقرير وما يليه في convertTrack (التكرار الحرفي، وإعادة الترتيب، وقص آخر نهاية)، بلا خياراته.
+ */
+const STATS_KEYS = Object.freeze(['totalEvents', 'textEvents', 'windowEvents', 'newlineEvents', 'blankEvents', 'appendEvents', 'missingDuration',
+  'withOffsets', 'withAsrConf', 'invalidSegs', 'fractionalTimes']);
+const CONVERTER_KEYS = Object.freeze(['trimmed', 'merged', 'filledEnds', 'extended', 'wordCount', 'clampedWordTimes', 'clampedToEvent',
+  'duplicatesRemoved', 'eventsReordered', 'endClampedToDuration']);
+const ROLLING_BASES = Object.freeze(['time', 'pattern']);
+/** @param {unknown} o @param {readonly string[]} keys @returns {Record<string, number | boolean> | null} */
+const pick = (o, keys) => (o && typeof o === 'object'
+  ? Object.fromEntries(keys.filter((k) => Number.isFinite(o[k]) || typeof o[k] === 'boolean').map((k) => [k, o[k]]))
+  : null);
+/** @param {{ ok: boolean, report: object }} conv */
+function trackDiagnostics(conv) {
+  const r = conv.report;
+  const d = r.errorDetail;
+  const rolling = r.reason === 'rolling-time' || r.reason === 'rolling-pattern';
+  return {
+    reason: conv.ok ? null : reasonOf(r),
+    rolling: rolling && d ? { ...pick(d, ['eventIndex', 'repeatedWords']), basis: ROLLING_BASES.includes(d.basis) ? d.basis : 'other' } : null,
+    stats: pick(r.stats ?? d?.stats, STATS_KEYS),
+    converter: r.converter ? pick({ ...r.converter, duplicatesRemoved: r.duplicatesRemoved, eventsReordered: r.eventsReordered, endClampedToDuration: r.endClampedToDuration }, CONVERTER_KEYS) : null,
+  };
+}
+
+/**
  * @typedef {{
  *   key: string, lang: string, kind: 'manual' | 'asr', via: string | null, capturedAt: string,
  *   ok: boolean, code: string | null, warnings: string[], cueCount: number,
@@ -39,7 +66,7 @@ const MAX_LIVE_HELD = 8;
  *   ok: boolean, code: string | null, key: string, lang: string, kind: 'manual' | 'asr', via: string | null, mode: 'normal' | 'long',
  *   cues: { n: number, startMs: number, endMs: number, text: string }[], warnings: string[], report: object | null
  * }} ConvertResult
- * @typedef {{ code: string, at: number, videoId: string | null }} Rejection
+ * @typedef {{ code: string, reason: string, at: number, videoId: string | null }} Rejection reason: سببه من REASONS (الفكرة ٤-ب)
  */
 
 /**
@@ -189,13 +216,13 @@ export function createExtractor(env) {
     }
     if (!decision.accepted) {
       captures.reject({
-        code: decision.code, detail: decision.detail, videoId: msg.videoId, currentVideoId: current, lang: msg.lang,
+        code: decision.code, reason: decision.reason, detail: decision.detail, videoId: msg.videoId, currentVideoId: current, lang: msg.lang,
         trackKind: msg.trackKind, hasTlang: msg.hasTlang, format: msg.format, bodyLength: msg.bodyLength,
       });
       if (decision.code === 'EX_WRONG_VIDEO' && pendingAgeMs === undefined) pending.add(msg, now());
       // رفض فيديو آخر أو معاينة أو إعلان لا يخص المستخدم؛ غيره يُعرض له.
       if (decision.code !== 'EX_WRONG_VIDEO' && decision.code !== 'EX_NO_VIDEO') {
-        lastRejection = { code: decision.code, at: now(), videoId: current };
+        lastRejection = { code: decision.code, reason: decision.reason, at: now(), videoId: current };
         emit();
       }
       return { accepted: false, code: decision.code };
@@ -212,7 +239,7 @@ export function createExtractor(env) {
     const conv = run(probe, 'normal');
     if (!conv.ok && conv.code !== 'EX_BEYOND_DURATION' && prev && run(prev, 'normal').ok) {
       captures.reject({
-        code: conv.code, detail: 'لم يُحوَّل، والالتقاط السليم السابق باقٍ', videoId: msg.videoId, currentVideoId: current, lang: msg.lang,
+        code: conv.code, reason: reasonOf(conv.report), detail: 'لم يُحوَّل، والالتقاط السليم السابق باقٍ', videoId: msg.videoId, currentVideoId: current, lang: msg.lang,
         trackKind: msg.trackKind, hasTlang: msg.hasTlang, format: msg.format, bodyLength: msg.bodyLength,
       });
       return { accepted: false, code: conv.code };
@@ -341,8 +368,8 @@ export function createExtractor(env) {
       return () => listeners.delete(fn);
     },
     /**
-     * أعداد ورموز وأحجام فقط، بلا جسم ولا نص ولا رابط (عقد errors §٤): لكل مسار نوع الفشل وحجم الجسم وحالة
-     * الثوابت الستة، ولكل رفض حديث رمزه وحجم جسمه.
+     * أعداد ورموز وأحجام فقط، بلا جسم ولا نص ولا رابط (عقد errors §٤): لكل مسار نوع الفشل وسببه وحجم الجسم وحالة الثوابت الستة
+     * وإحصاءات التحليل وعدّادات المحوّل، ولكل رفض حديث رمزه وسببه وحجم جسمه (الفكرة ٤-ب).
      */
     diagnostics: () => ({
       currentVideoId: captures.currentVideoId,
@@ -364,10 +391,11 @@ export function createExtractor(env) {
           bodyLength: slot.entry.bodyLength, format: slot.entry.format, transport: slot.entry.transport,
           completeness: info.completeness, inferredKind: conv.report.inferredKind ?? null,
           invariants: conv.invariants ? conv.invariants.results.map(({ id, key: name, ok }) => ({ id, key: name, ok })) : null,
+          ...trackDiagnostics(conv),
         };
       }),
       recentRejections: captures.rejected().slice(-MAX_RECENT_REJECTIONS).map((r) => ({
-        code: r.code, lang: r.lang, trackKind: r.trackKind, format: r.format, bodyLength: r.bodyLength, hasTlang: r.hasTlang,
+        code: r.code, reason: reasonOf(r), lang: r.lang, trackKind: r.trackKind, format: r.format, bodyLength: r.bodyLength, hasTlang: r.hasTlang,
       })),
     }),
   };

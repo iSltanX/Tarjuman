@@ -47,7 +47,7 @@ export function createCaptureStore({ now = () => Date.now() } = {}) {
       accepted.set(keyOf(entry), entry);
       return entry;
     },
-    /** @param {{ code: string, detail: string, videoId: string | null, lang: string | null, trackKind: string, hasTlang: boolean, format: string, bodyLength: number, currentVideoId: string | null }} info */
+    /** @param {{ code: string, reason: string, detail: string, videoId: string | null, lang: string | null, trackKind: string, hasTlang: boolean, format: string, bodyLength: number, currentVideoId: string | null }} info */
     reject(info) {
       rejected.push({ ...info, id: ++seq, at: now() });
       if (rejected.length > MAX_REJECTED) rejected.shift();

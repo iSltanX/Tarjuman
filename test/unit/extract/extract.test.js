@@ -81,6 +81,12 @@ test('checkAcceptance: قواعد العقد بالترتيب', () => {
   assert.equal(v({ format: 'srv3', body: '<timedtext/>' }).code, 'EX_UNSUPPORTED_FORMAT');
   assert.equal(v({ format: 'default' }).accepted, true);
   assert.equal(v({}, { ...ctx, isLive: true }).code, 'EX_LIVE');
+  // الفكرة ٤-ب: سبب الرفض يحدد موضعه داخل رمزه (القائمة كلها في test/unit/convert/reasons.test.js).
+  assert.equal(v({ format: 'srv3', body: '<timedtext/>' }).reason, 'fmt-srv3');
+  assert.equal(v({ format: 'default', body: '<transcript/>' }).reason, 'default-not-json');
+  assert.equal(v({ status: 403 }).reason, 'status');
+  assert.equal(v({ body: '', bodyLength: 0 }).reason, 'blank');
+  assert.equal(v({ hasTlang: true }).reason, 'bad-tlang');
 });
 
 test('capture-store: يُفرَّغ ما لا يخص الفيديو الحالي ولا يقبل غيره', () => {

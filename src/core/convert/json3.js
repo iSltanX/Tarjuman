@@ -6,12 +6,14 @@ export class ConvertError extends Error {
    * @param {string} code رمز ثابت من عقد الاستخراج (EX_…)
    * @param {string} message وصف تقني منقّى (لا روابط ولا رموز)
    * @param {object} [detail]
+   * @param {string} [reason] سبب الرفض من REASONS (reasons.js، الفكرة ٤-ب): موضعه داخل رمزه، وهو وحده ما يعبر إلى التشخيص لا الوصف
    */
-  constructor(code, message, detail = {}) {
+  constructor(code, message, detail = {}, reason = 'other') {
     super(message);
     this.name = 'ConvertError';
     this.code = code;
     this.detail = detail;
+    this.reason = reason;
   }
 }
 
@@ -31,16 +33,16 @@ export class ConvertError extends Error {
  */
 export function parseJson3(body) {
   if (typeof body !== 'string' || body.trim() === '') {
-    throw new ConvertError('EX_EMPTY_BODY', 'جسم الاستجابة فارغ');
+    throw new ConvertError('EX_EMPTY_BODY', 'جسم الاستجابة فارغ', {}, 'blank');
   }
   let data;
   try {
     data = JSON.parse(body);
   } catch {
-    throw new ConvertError('EX_UNSUPPORTED_FORMAT', 'الجسم ليس JSON صالحًا');
+    throw new ConvertError('EX_UNSUPPORTED_FORMAT', 'الجسم ليس JSON صالحًا', {}, 'not-json');
   }
   if (!data || typeof data !== 'object' || !Array.isArray(data.events)) {
-    throw new ConvertError('EX_UNSUPPORTED_FORMAT', 'لا توجد مصفوفة events');
+    throw new ConvertError('EX_UNSUPPORTED_FORMAT', 'لا توجد مصفوفة events', {}, 'no-events');
   }
   const stats = {
     totalEvents: data.events.length, textEvents: 0, windowEvents: 0, newlineEvents: 0,
@@ -56,13 +58,13 @@ export function parseJson3(body) {
   /** @type {TextEvent[]} */
   const events = [];
   data.events.forEach((e, index) => {
-    if (!e || typeof e !== 'object') throw new ConvertError('EX_UNSUPPORTED_FORMAT', `حدث غير صالح عند ${index}`);
+    if (!e || typeof e !== 'object') throw new ConvertError('EX_UNSUPPORTED_FORMAT', `حدث غير صالح عند ${index}`, {}, 'bad-event');
     if (!Array.isArray(e.segs)) {
       stats.windowEvents++;
       return;
     }
     if (!Number.isFinite(e.tStartMs) || e.tStartMs < 0) {
-      throw new ConvertError('EX_UNSUPPORTED_FORMAT', `tStartMs غير صالح عند ${index}`);
+      throw new ConvertError('EX_UNSUPPORTED_FORMAT', `tStartMs غير صالح عند ${index}`, {}, 'bad-start');
     }
     // القطعة كائن؛ وما سواه (رقم أو نص أو قيمة منطقية أو null) يُتجاهل ويُعدّ، فلا يرمي فحص الخصائص TypeError يُسقط
     // المستخرج كله (تدقيق 7a66f91، U32).
@@ -94,7 +96,7 @@ export function parseJson3(body) {
     });
   });
   stats.textEvents = events.length;
-  if (events.length === 0) throw new ConvertError('EX_EMPTY_BODY', 'لا أحداث نصية في الاستجابة', { stats });
+  if (events.length === 0) throw new ConvertError('EX_EMPTY_BODY', 'لا أحداث نصية في الاستجابة', { stats }, 'no-text-events');
   return { events, stats };
 }
 

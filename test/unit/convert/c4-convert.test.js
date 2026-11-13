@@ -81,12 +81,14 @@ test('U28: الصيغة المتدحرجة ما زالت توقف التحويل
   ], 8000);
   assert.deepEqual([byTime.ok, byTime.code], [false, 'EX_UNSUPPORTED_FORMAT']);
   assert.equal(byTime.report.errorDetail.basis, 'time');
+  assert.equal(byTime.report.reason, 'rolling-time', 'الفكرة ٤-ب: السبب يميّز التدحرج من غيره تحت الرمز نفسه');
   // (ب) كل حدث يعيد سطر سابقه كاملًا (بث بترجمة متدحرجة، #1318)، في أكثر من زوج متتالٍ.
   const lines = ['the quick brown fox', 'jumps over the lazy', 'dog and then it', 'runs far away now'];
   const rolling = lines.map((l, i) => untimedEvent(i * 2000, 4000, i ? `${lines[i - 1]}\n${l}` : l));
   const byPattern = asr(rolling, 20000);
   assert.deepEqual([byPattern.ok, byPattern.code], [false, 'EX_UNSUPPORTED_FORMAT']);
   assert.equal(byPattern.report.errorDetail.basis, 'pattern');
+  assert.equal(byPattern.report.reason, 'rolling-pattern');
   assert.ok(detectRollingOverlap(parseJson3(body(rolling)).events, 3));
 });
 
@@ -303,11 +305,13 @@ test('AV2 U-002: تدحرج ياباني بالزمن وبالنمط يُرفض 
     { tStartMs: 1000, dDurationMs: 5000, wWinId: 1, segs: [seg(0, '二'), seg(1000, '三'), seg(2000, '四'), seg(3000, '五')] },
   ], 8000);
   assert.deepEqual([timed.ok, timed.code], [false, 'EX_UNSUPPORTED_FORMAT']);
+  assert.equal(timed.report.reason, 'rolling-time');
   const lines = ['今日はとてもいい天気', '散歩に行きましょう', '公園で休みます', 'それから帰ります'];
   const rolling = lines.map((l, i) => untimedEvent(i * 2000, 4000, i ? `${lines[i - 1]}\n${l}` : l));
   const byPattern = asr(rolling, 20000);
   assert.deepEqual([byPattern.ok, byPattern.code], [false, 'EX_UNSUPPORTED_FORMAT']);
   assert.equal(byPattern.report.errorDetail.basis, 'pattern');
+  assert.equal(byPattern.report.reason, 'rolling-pattern');
   // تكرار حقيقي: «はいはいはい» ثم تكراره بأزمنة لاحقة.
   const real = asr([
     { tStartMs: 0, dDurationMs: 4000, wWinId: 1, segs: [seg(0, 'はい'), seg(300, 'はい'), seg(600, 'はい'), seg(900, 'です')] },

@@ -142,7 +142,7 @@ export function convertAsr(events, options = {}) {
   });
   const rolling = detectRollingOverlap(events, o.rollingWords, perEvent);
   if (rolling) {
-    throw new ConvertError('EX_UNSUPPORTED_FORMAT', 'صيغة ASR متدحرجة: حدث يعيد ذيل السابق مع تداخل زمني', rolling);
+    throw new ConvertError('EX_UNSUPPORTED_FORMAT', 'صيغة ASR متدحرجة: حدث يعيد ذيل السابق مع تداخل زمني', rolling, rolling.basis === 'time' ? 'rolling-time' : 'rolling-pattern');
   }
   // الكلمات بترتيب الأحداث ثم ترتيبها داخل الحدث؛ والزمن يُجعل غير متناقص دون تغيير الترتيب.
   const words = [];
@@ -191,7 +191,8 @@ export function convertAsr(events, options = {}) {
     if (next) end = Math.min(end, next.startMs);
     return { startMs: g.startMs, endMs: end, text: wrapLines(groupText(g.words), o.lineChars) };
   });
-  return { cues, report: { words: words.length, clampedWordTimes: clamped, clampedToEvent, options: o } };
+  // wordCount لا words: «words» مفتاح يُسقطه منقّي التشخيص فيُستبدل «[مستبعد]» بالعدد (الفكرة ٤-ب).
+  return { cues, report: { wordCount: words.length, clampedWordTimes: clamped, clampedToEvent, options: o } };
 }
 
 /**
