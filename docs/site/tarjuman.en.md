@@ -59,7 +59,7 @@ Tarjuman accepts every subtitle track YouTube offers for the video, manual or au
 
 ### Over the video itself
 
-Your translation appears in the text direction of its language, on its own or over the original. It works in default view, theater mode and fullscreen, and hides during ads.
+Your translation appears on its own or over the original, each line in the text direction of its language; a line with none of that language’s letters reads left to right, so its punctuation isn’t flipped. It works in default view, theater mode and fullscreen, and hides during ads.
 
 ⟨لقطة: الترجمة فوق الفيديو⟩
 
