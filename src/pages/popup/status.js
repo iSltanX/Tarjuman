@@ -10,7 +10,7 @@ import { describeLang } from '../../core/lang/index.js';
 import { getLocale, t, texts } from '../../i18n/index.js';
 import { YOUTUBE_MATCHES, isSourceLang, parseTrackKey } from '../../core/model/ids.js';
 import { termsFor } from '../../core/model/glossaries.js';
-import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, ltrInline, offsetInline } from '../../ui/format.js';
 import { pairLabel } from '../../ui/lang.js';
 import {
   MESSAGE_VERSION, isVideoStateReply, pageDiagnosticsRequest, videoStateRequest, MAX_PASTE_CHARS, isPasteImportReply, pasteImportRequest,
@@ -124,10 +124,13 @@ export const missAction = (miss) => (miss === 'siteOff' ? { label: t('popup.site
 /** اسم لغة للعرض بلغة الواجهة من رمزها، والرمز الذي لا يعرف المتصفح اسمه يبقى رمزه. @param {string} code */
 export const langLabel = (code) => describeLang(code, getLocale())?.name ?? code;
 
-/** «ترجمة بالعربية» و«ترجمة باليابانية»، و«ترجمة بلغة xx» للرمز الذي لا يعرف المتصفح اسمه (وبالإنجليزية «Japanese translation»). @param {string} code */
+/**
+ * «ترجمة بالعربية» و«ترجمة باليابانية»، و«ترجمة بلغة xx» للرمز الذي لا يعرف المتصفح اسمه (وبالإنجليزية «Japanese translation»).
+ * والرمز معزول LTR داخل الجملة. @param {string} code
+ */
 const translationIn = (code) => {
   const d = describeLang(code, getLocale());
-  return t('popup.status.translationIn', { name: d?.name ?? code, code, known: Boolean(d?.known) });
+  return t('popup.status.translationIn', { name: d?.name ?? code, code: ltrInline(code), known: Boolean(d?.known) });
 };
 
 /** وضع العرض في سطر الأدوات بلغة الأصل الفعلية: «الترجمة فوق اليابانية». @param {string} mode @param {string | null} source */
