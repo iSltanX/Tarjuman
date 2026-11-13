@@ -10,6 +10,7 @@ import { DEFAULT_PREFS, normalizePrefs, sourceKey } from '../model/prefs.js';
 import { DEFAULT_LANG_PREFS, normalizeLangPrefs } from '../model/lang-prefs.js';
 import { normalizeUiLocale } from '../model/ui-locale.js';
 import { normalizeGlossaries } from '../model/glossaries.js';
+import { normalizeDraftValue, validateDraftValue } from '../model/draft.js';
 import { storeRequest } from '../model/messages.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { isVideoId, parseTrackKey } from '../model/ids.js';
@@ -24,7 +25,8 @@ import { chromeLocalArea } from './area.js';
 import { bundleReadKeys, checkRaw, hasCompanions, itemsFor, rawBundle, salvageRaw } from './bundles.js';
 import { computeCapacity } from './capacity.js';
 import {
-  COMPANION_KINDS, KEY_GLOSSARIES, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, indexKey, langKey, marksKey, parseKey, prevKey, videoKey,
+  COMPANION_KINDS, KEY_GLOSSARIES, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, draftKey, indexKey, langKey, marksKey, parseKey, prevKey,
+  videoKey,
 } from './keys.js';
 // واجهة التخزين تعرض للصفحات والمتحكم ما تحتاجه من النموذج للحزمة دون استيراد إضافي.
 export { bundleFromRecord, slotModels } from '../model/bundle.js';
@@ -37,7 +39,7 @@ export { STORAGE_SCHEMA, MIGRATIONS } from './migrate.js';
 export { computeCapacity, WARN_RATIO, FULL_RATIO, ADVISORY_BYTES } from './capacity.js';
 export {
   videoKey, indexKey, bundleKey, altsKey, prevKey, marksKey, langKey, companionKeys, parseKey, KEY_META, KEY_SETTINGS, KEY_PREFS, KEY_SAVES, KEY_LANG_PREFS,
-  KEY_GLOSSARIES,
+  KEY_GLOSSARIES, draftKey,
 } from './keys.js';
 export { createWriter } from './writer.js';
 export { localTransport, messageTransport } from './transport.js';
@@ -289,8 +291,9 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
     const ids = (kind) => new Set(keys.map(parseKey).filter((k) => k && k.kind === kind).map((k) => k.videoId));
     const videos = ids('video');
     const index = ids('index');
-    // مُلخّصات وتوابع بلا سجل: يزيلها الكاتب بعد إعادة التحقق داخل طابور كل فيديو (I01).
-    const orphans = new Set([...index, ...COMPANION_KINDS.flatMap((kind) => [...ids(kind)])].filter((id) => !videos.has(id)));
+    // مُلخّصات وتوابع بلا سجل: يزيلها الكاتب بعد إعادة التحقق داخل طابور كل فيديو (I01). ومعها مسودة المحرّر (الفكرة ٩): الإصدارات
+    // السابقة لا تعرف مفتاحها فيبقى بعد حذفها للفيديو، ويُكنس هنا.
+    const orphans = new Set([...index, ...COMPANION_KINDS.flatMap((kind) => [...ids(kind)]), ...ids('draft')].filter((id) => !videos.has(id)));
     if (orphans.size) await call('orphan', { videoIds: [...orphans] });
     const present = [...index].filter((id) => videos.has(id));
     const items = present.length ? await read(present.map(indexKey)) : {};
@@ -477,6 +480,47 @@ export function createStore({ area, now = () => Date.now(), schema = STORAGE_SCH
       return exclusive(async () => {
         await ready();
         return call('glossaries', { list: pair, removeKey: sourceKey(String(source)) });
+      });
+    },
+
+    // ---- مسودة المحرّر (الفكرة ٩، ح-48، عقد storage §١٦) ----
+
+    /**
+     * مسودات الفيديو كما خُزّنت بالقراءة المتسامحة (الخانة التالفة null)، أو null بلا مفتاح.
+     * @param {string} videoId @returns {Promise<import('../model/draft.js').DraftValue | null>}
+     */
+    async getDraft(videoId) {
+      checkId(videoId);
+      await ready();
+      const { [draftKey(videoId)]: raw } = await read(draftKey(videoId));
+      return raw === undefined ? null : normalizeDraftValue(raw, videoId);
+    },
+
+    /**
+     * مسودة خانة عبر الكاتب في طابور الفيديو (ST_NO_RECORD لفيديو حُذف). لا تُطلق onChange للمشغّل والمحفوظات ولا تغيّر بصمة الفيديو.
+     * @param {string} videoId @param {1 | 2 | 3} slot @param {import('../model/draft.js').Draft} draft
+     * @returns {Promise<{ stored: boolean }>}
+     */
+    setDraft(videoId, slot, draft) {
+      checkId(videoId);
+      return exclusive(async () => {
+        await ready();
+        return call('draft', { videoId, slot, draft });
+      });
+    },
+
+    /**
+     * يحذف مسودة خانة، ولا يراسل الكاتب إن لم يكن لها شيء مخزَّن (القيمة السليمة وخانتها فارغة)؛ والقيمة التالفة يزيلها الكاتب.
+     * @param {string} videoId @param {1 | 2 | 3} slot @returns {Promise<boolean>} هل أُرسل الحذف
+     */
+    clearDraft(videoId, slot) {
+      checkId(videoId);
+      return exclusive(async () => {
+        await ready();
+        const { [draftKey(videoId)]: raw } = await read(draftKey(videoId));
+        if (raw === undefined || (validateDraftValue(raw).ok && raw.videoId === videoId && raw.slots[slot - 1] === null)) return false;
+        await call('draft', { videoId, slot, draft: null });
+        return true;
       });
     },
 

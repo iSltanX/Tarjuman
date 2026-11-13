@@ -5,6 +5,8 @@ import { createStore, computeCapacity, ADVISORY_BYTES } from '../../../src/core/
 import { withArabicImport, withView } from '../../../src/core/model/index.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { NOW, makeCues, realTrack, englishTrack, fingerprint, comparison, videoRecord } from '../../helpers/fixtures.js';
+import { sampleBundle, seedBundle } from '../../helpers/fixtures-v2.js';
+import { draftOf } from '../../../src/core/model/draft.js';
 
 const clock = (start = Date.parse(NOW)) => {
   let t = start;
@@ -303,4 +305,83 @@ test('الأحداث: تغيّر سجل أو إعدادات من أي سياق �
   await a.updateVideo('AAAAAAAAAAA', () => videoRecord());
   await area.flush();
   assert.ok(!events.some((e) => e.videos.AAAAAAAAAAA?.newValue), 'لا أحداث بعد الإلغاء');
+});
+
+// ── مسودة المحرّر (الفكرة ٩، ح-48، عقد storage §١٦) ─────────────────────────
+
+const DRAFT_ID = 'AAAAAAAAAAA';
+/** مسودة على الخانة الأولى من الحزمة المحفوظة، بنص معدّل في المقطع الأول. */
+async function withDraft(text = 'تعديل لم يُحفظ') {
+  const { area, store } = make({ areaOpts: { unlimited: true } });
+  await seedBundle(store, sampleBundle({ videoId: DRAFT_ID }));
+  const slot = (await store.getBundle(DRAFT_ID)).slots[0];
+  const cues = slot.track.current.map((c, i) => (i === 0 ? { ...c, text } : c));
+  const draft = draftOf({ cues, offsetMs: slot.offsetMs, committedMs: 0 }, slot, NOW);
+  return { area, store, draft };
+}
+
+test('الفكرة ٩: كتابة المسودة لا تغيّر rawPrint، فحذف السجل غير المقروء بالبصمة المعروضة قبلها يمضي ويزيلها معه', async () => {
+  const { area, store, draft } = await withDraft();
+  const before = await store.rawPrint(DRAFT_ID);
+  assert.deepEqual(await store.setDraft(DRAFT_ID, 1, draft), { stored: true });
+  assert.ok(area.dump()[`draft:${DRAFT_ID}`], 'كُتبت');
+  assert.equal(await store.rawPrint(DRAFT_ID), before, 'البصمة كما هي');
+  assert.deepEqual((await store.getDraft(DRAFT_ID)).slots, [draft, null, null]);
+  await store.deleteVideo(DRAFT_ID, { print: before });
+  assert.deepEqual(Object.keys(area.dump()).filter((k) => k.endsWith(DRAFT_ID)), [], 'الحذف يزيل المسودة مع الفيديو');
+});
+
+test('الفكرة ٩: onChange لا يُطلق لكتابة المسودة ولا لحذفها وحدهما، والحزمة ونسختها كما هما', async () => {
+  const { area, store, draft } = await withDraft();
+  await area.flush();
+  const other = createStore({ area, now: clock() });
+  const events = [];
+  const off = other.onChange((c) => events.push(c));
+  const rev = (await store.getBundle(DRAFT_ID)).record.rev;
+  await store.setDraft(DRAFT_ID, 1, draft);
+  await store.setDraft(DRAFT_ID, 2, { ...draft, savedAt: '2026-11-01T12:05:00.000Z' });
+  await store.clearDraft(DRAFT_ID, 1);
+  await area.flush();
+  assert.deepEqual(events, [], 'لا حدث للمشغّل والمحفوظات');
+  assert.equal((await store.getBundle(DRAFT_ID)).record.rev, rev);
+  off();
+});
+
+test('الفكرة ٩: المسودة التالفة تُقرأ متسامحةً وتُحذف بالكتابة التالية، والمفتاح يزول حين تفرغ خاناته، ولا يُراسَل الكاتب بلا شيء يُحذف', async () => {
+  const { area, store, draft } = await withDraft();
+  area.rawSet(`draft:${DRAFT_ID}`, { schema: 1, videoId: DRAFT_ID, slots: [draft, { ...draft, cues: 'تالف' }, null] });
+  assert.deepEqual((await store.getDraft(DRAFT_ID)).slots, [draft, null, null]);
+  assert.equal(await store.clearDraft(DRAFT_ID, 2), true, 'القيمة التالفة يزيلها الكاتب');
+  assert.deepEqual(area.dump()[`draft:${DRAFT_ID}`].slots, [draft, null, null]);
+  assert.equal(await store.clearDraft(DRAFT_ID, 3), false, 'السليمة وخانتها فارغة: لا رسالة');
+  assert.equal(await store.clearDraft(DRAFT_ID, 1), true);
+  assert.equal(area.dump()[`draft:${DRAFT_ID}`], undefined, 'فرغت الخانات فزال المفتاح');
+  assert.equal(await store.getDraft(DRAFT_ID), null);
+  area.rawSet(`draft:${DRAFT_ID}`, 'تالف كله');
+  assert.deepEqual((await store.getDraft(DRAFT_ID)).slots, [null, null, null]);
+  await store.clearDraft(DRAFT_ID, 1);
+  assert.equal(area.dump()[`draft:${DRAFT_ID}`], undefined);
+});
+
+test('الفكرة ٩: مسودة يتيمة (حذف إصدارٌ سابق الفيديو وتركها) يكنسها فهرس المحفوظات، و«مسح كل البيانات» يزيلها', async () => {
+  const { area, store, draft } = await withDraft();
+  await store.setDraft(DRAFT_ID, 1, draft);
+  // إصدار سابق يحذف السجل ومُلخّصه وحدهما.
+  await area.remove([`video:${DRAFT_ID}`, `index:${DRAFT_ID}`]);
+  assert.ok(area.dump()[`draft:${DRAFT_ID}`]);
+  assert.deepEqual(await store.listLibrary(), []);
+  assert.deepEqual(Object.keys(area.dump()).filter((k) => k.endsWith(DRAFT_ID)), [], 'كُنست مع التوابع');
+  await assert.rejects(store.setDraft(DRAFT_ID, 1, draft), code('ST_NO_RECORD'), 'لا مسودة لفيديو بلا سجل');
+  const again = await withDraft();
+  await again.store.setDraft(DRAFT_ID, 1, again.draft);
+  await again.store.clearAll();
+  assert.equal(again.area.dump()[`draft:${DRAFT_ID}`], undefined);
+});
+
+test('الفكرة ٩: الكتابة صارمة: خانة خارج 1–3 أو مسودة لا تجتاز مدققها MD_INVALID ولا كتابة', async () => {
+  const { area, store, draft } = await withDraft();
+  await assert.rejects(store.setDraft(DRAFT_ID, 4, draft), code('MD_INVALID'));
+  await assert.rejects(store.setDraft(DRAFT_ID, 1, { ...draft, history: [] }), code('MD_INVALID'));
+  await assert.rejects(store.setDraft(DRAFT_ID, 1, { ...draft, cues: [] }), code('MD_INVALID'));
+  assert.equal(area.dump()[`draft:${DRAFT_ID}`], undefined);
 });

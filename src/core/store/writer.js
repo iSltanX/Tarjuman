@@ -11,11 +11,12 @@ import { DEFAULT_SETTINGS, mergeSettings, normalizeSettings, validateSettings } 
 import { applyLangPrefs, normalizeLangPrefs, validateLangPrefs } from '../model/lang-prefs.js';
 import { UI_LOCALE_SCHEMA, normalizeUiLocale, validateUiLocale } from '../model/ui-locale.js';
 import { addList, addListTerm, listPair, normalizeGlossaries, removeList, removeListTerm, validateGlossaries } from '../model/glossaries.js';
+import { DRAFT_LIMITS, isEmptyDraftValue, lastSavedAt, normalizeDraftValue, validateDraft } from '../model/draft.js';
 import { resolveInitialLocale } from '../../i18n/locale.js';
 import { assertValid, isPlainObject } from '../model/validate.js';
 import { summarizeVideo, validateIndexEntry, validateVideoRecord } from '../model/video.js';
 import { MESSAGE_VERSION, isStoreRequest } from '../model/messages.js';
-import { KEY_GLOSSARIES, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, companionKeys, indexKey, langKey, marksKey, prevKey, videoKey } from './keys.js';
+import { KEY_GLOSSARIES, KEY_LANG_PREFS, KEY_META, KEY_PREFS, KEY_SAVES, KEY_SETTINGS, KEY_UI_LOCALE, altsKey, bundleKey, companionKeys, draftKey, indexKey, langKey, marksKey, parseKey, prevKey, videoKey } from './keys.js';
 import { MIGRATIONS, STORAGE_SCHEMA, migrate } from './migrate.js';
 import { canonical, printKeys, rawPrint, versionOf } from './version.js';
 
@@ -151,7 +152,8 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
       const now = await versionNow(id, base);
       if (now !== base && now !== 'none') throw new TjError('ST_CONFLICT', { detail: `المتوقع ${base} والمخزَّن ${now}` });
     }
-    await removeKeys(printKeys(id));
+    // ومسودة المحرّر معه (الفكرة ٩): خارج البصمة فلا تمنع حذفًا ولا تغيّر ما عُرض في التأكيد، وتُزال في الكتابة نفسها.
+    await removeKeys([...printKeys(id), draftKey(id)]);
     return {};
   }
 
@@ -160,7 +162,7 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
     checkId(id);
     const { [videoKey(id)]: rec } = await read(videoKey(id));
     if (rec !== undefined) return false;
-    await removeKeys([indexKey(id), ...companionKeys(id)]);
+    await removeKeys([indexKey(id), ...companionKeys(id), draftKey(id)]);
     return true;
   }
 
@@ -298,6 +300,57 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
     return r;
   }
 
+  // ---- مسودة المحرّر (الفكرة ٩، ح-48، عقد storage §١٦) ----
+
+  /**
+   * مسودة خانة أو حذفها (draft: null)، في طابور الفيديو نفسه فتترتب مع الحفظ والحذف: لا مسودة لفيديو لا سجل له (حُذف قبلها)، والخانات
+   * الأخرى كما هي على القيمة الحاضرة (التالف منها يسقط)، والمفتاح يُزال حين تفرغ خاناته الثلاث. لا كتابة إن لم يتغير شيء. ليست في
+   * CONTENT_SCRIPT_OPS: يكتبها المحرّر وحده. created: صار للفيديو مسودة لم تكن، فيُطرد الأقدم فوق الحد بعد خروج الطابور.
+   * @param {{ videoId: string, slot: unknown, draft: unknown }} req
+   */
+  async function draft({ videoId: id, slot, draft: value }) {
+    checkId(id);
+    if (slot !== 1 && slot !== 2 && slot !== 3) throw new TjError('MD_INVALID', { detail: 'draft: slot' });
+    if (value !== null) {
+      assertValid(validateDraft(value), 'draft');
+      const { [videoKey(id)]: rec } = await read(videoKey(id));
+      if (rec === undefined) throw new TjError('ST_NO_RECORD', { detail: `${id}: مسودة لفيديو بلا سجل` });
+    }
+    const { [draftKey(id)]: raw } = await read(draftKey(id));
+    const cur = normalizeDraftValue(raw, id);
+    const next = { ...cur, slots: cur.slots.map((d, i) => (i === slot - 1 ? value : d)) };
+    if (isEmptyDraftValue(next)) {
+      if (raw !== undefined) await removeKeys(draftKey(id));
+      return { stored: false, created: false };
+    }
+    if (raw !== undefined && canonical(raw) === canonical(next)) return { stored: true, created: false };
+    await write({ [draftKey(id)]: next });
+    return { stored: true, created: raw === undefined || isEmptyDraftValue(cur) };
+  }
+
+  /**
+   * سقف المسودات (DRAFT_LIMITS.drafts): فوقه تُطرد الأقدم بآخر حفظ فيها، كلٌّ داخل طابور فيديوه بعد إعادة قراءتها، فلا تُحذف مسودة
+   * كُتبت بعد القراءة. والقيمة التالفة أقدمها. يُستدعى خارج طابور الفيديو الذي أنشأ المسودة، فلا ينتظر طابوران أحدهما الآخر.
+   * @param {string} keep الفيديو الذي أنشأ المسودة الآن
+   */
+  async function capDrafts(keep) {
+    let keys;
+    try {
+      keys = await area.getKeys();
+    } catch {
+      return;
+    }
+    const ids = keys.map(parseKey).filter((k) => k && k.kind === 'draft' && k.videoId !== keep).map((k) => k.videoId);
+    const over = ids.length + 1 - DRAFT_LIMITS.drafts;
+    if (over <= 0) return;
+    const items = await read(ids.map(draftKey));
+    const ranked = ids.map((id) => ({ id, at: lastSavedAt(normalizeDraftValue(items[draftKey(id)], id)) })).sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+    await Promise.all(ranked.slice(0, over).map(({ id, at }) => inLane(`video:${id}`, async () => {
+      const { [draftKey(id)]: raw } = await read(draftKey(id));
+      if (raw !== undefined && lastSavedAt(normalizeDraftValue(raw, id)) === at) await removeKeys(draftKey(id));
+    })));
+  }
+
   /**
    * «مسح كل البيانات»: كل شيء ثم meta جديد، ويبقى إطفاء صور المحفوظات (U05، Q10) ولغة الواجهة (تفضيل جهاز لا بيانات: لا تنقلب
    * الصفحة المفتوحة إلى لغة أخرى بعد المسح). وتعذّر قراءة التفضيلات يرفض المسح
@@ -350,6 +403,11 @@ export function createWriter({ area, schema = STORAGE_SCHEMA, migrations = MIGRA
       case 'uiLocale': return inLane(KEY_UI_LOCALE, () => uiLocale(req));
       case 'uiLocaleInit': return inLane(KEY_UI_LOCALE, () => uiLocaleInit(req));
       case 'glossaries': return inLane(KEY_GLOSSARIES, () => glossaries(req));
+      case 'draft': return inLane(`video:${req.videoId}`, () => draft(req)).then(async ({ stored, created }) => {
+        // تعذّر الطرد لا يُفشل مسودة كُتبت: يُعاد عند إنشاء المسودة التالية.
+        if (created) await capDrafts(req.videoId).catch(() => {});
+        return { stored };
+      });
       case 'clear': return exclusiveAll(() => clear(req));
       default: return Promise.reject(new TjError('TJ_BAD_MESSAGE', { detail: String(req.op).slice(0, 20) }));
     }

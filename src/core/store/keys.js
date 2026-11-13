@@ -23,6 +23,7 @@ const ALTS = 'alts:';
 const PREV = 'prev:';
 const MARKS = 'marks:';
 const LANG = 'lang:';
+const DRAFT = 'draft:';
 
 /** @param {string} videoId */
 export const videoKey = (videoId) => `${VIDEO}${videoId}`;
@@ -39,16 +40,23 @@ export const marksKey = (videoId) => `${MARKS}${videoId}`;
 /** بيانات اللغة للفيديو (AA1، عقد storage §١٣). @param {string} videoId */
 export const langKey = (videoId) => `${LANG}${videoId}`;
 
+/**
+ * مسودة المحرّر للفيديو (الفكرة ٩، ح-48، عقد storage §١٦): خارج companionKeys وCOMPANION_KINDS عمدًا، فلا تدخل بصمة القيم الخام
+ * (printKeys) ولا تُطلق onChange للمشغّل والمحفوظات، ولا تقرؤها الحزمة. تُزال مع الفيديو وفي كنس اليتيم و«مسح كل البيانات».
+ * @param {string} videoId
+ */
+export const draftKey = (videoId) => `${DRAFT}${videoId}`;
+
 /** توابع الفيديو في الإصدار الثاني و2.0.0 (تُزال معه). */
 export const companionKeys = (videoId) => [bundleKey(videoId), altsKey(videoId), prevKey(videoId), marksKey(videoId), langKey(videoId)];
 
-const PER_VIDEO = [[VIDEO, 'video'], [INDEX, 'index'], [BUNDLE, 'bundle'], [ALTS, 'alts'], [PREV, 'prev'], [MARKS, 'marks'], [LANG, 'lang']];
+const PER_VIDEO = [[VIDEO, 'video'], [INDEX, 'index'], [BUNDLE, 'bundle'], [ALTS, 'alts'], [PREV, 'prev'], [MARKS, 'marks'], [LANG, 'lang'], [DRAFT, 'draft']];
 export const COMPANION_KINDS = Object.freeze(['bundle', 'alts', 'prev', 'marks', 'lang']);
 
 /**
  * @param {string} key
  * @returns {{ kind: 'meta' | 'settings' | 'prefs' | 'saves' | 'langPrefs' | 'uiLocale' | 'glossaries' }
- *   | { kind: 'video' | 'index' | 'bundle' | 'alts' | 'prev' | 'marks' | 'lang', videoId: string } | null}
+ *   | { kind: 'video' | 'index' | 'bundle' | 'alts' | 'prev' | 'marks' | 'lang' | 'draft', videoId: string } | null}
  */
 export function parseKey(key) {
   if (key === KEY_META) return { kind: 'meta' };

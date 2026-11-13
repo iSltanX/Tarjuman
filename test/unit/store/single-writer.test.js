@@ -16,6 +16,7 @@ import { storeRequest } from '../../../src/core/model/messages.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { videoRecord } from '../../helpers/fixtures.js';
 import { sampleBundle, seedBundle } from '../../helpers/fixtures-v2.js';
+import { draftOf } from '../../../src/core/model/draft.js';
 import { storeEnv } from '../../helpers/store-env.js';
 import { settled, turns } from '../../helpers/store-race.js';
 
@@ -323,6 +324,108 @@ test('الفكرة ٨: تعديلات القوائم من صفحتين على أ
   assert.equal(env.area.dump().glossaries, undefined, '«مسح كل البيانات» يزيل المفتاح');
   assert.deepEqual(await a.getGlossaries(), { schema: 1, lists: [] });
   off();
+});
+
+// ── مسودة المحرّر (الفكرة ٩، ح-48، storage §١٦) ───────────────────────────
+
+/** مسودة على الخانة n من الحزمة المحفوظة، بآخر حفظ at. */
+async function draftFor(store, id, n = 1, at = '2026-11-05T10:00:00.000Z') {
+  const slot = (await store.getBundle(id)).slots[n - 1];
+  return draftOf({ cues: (slot.track.current ?? slot.track.original).map((c, i) => (i === 0 ? { ...c, text: `مسودة ${at}` } : c)), offsetMs: slot.offsetMs, committedMs: 0 }, slot, at);
+}
+
+test('الفكرة ٩: عملية draft لصفحات الإضافة وحدها، وسكربت يوتيوب يُرفض فيها بالشكل المعتاد ولا يُكتب شيء', async () => {
+  const runtime = { id: 'ext', getURL: (p) => `chrome-extension://ext/${p}`, onMessage: { addListener() {}, removeListener() {} } };
+  const area = createMemoryArea({ unlimited: true });
+  const s = createStore({ area });
+  await seedBundle(s, sampleBundle({ videoId: ID }));
+  const draft = await draftFor(s, ID);
+  const svc = createStoreService({ runtime, writer: createWriter({ area }) });
+  assert.equal(CONTENT_SCRIPT_OPS.includes('draft'), false);
+  const youtube = { id: 'ext', url: 'https://www.youtube.com/watch?v=x', tab: { id: 1 } };
+  assert.deepEqual(await svc.handle(storeRequest('draft', { videoId: ID, slot: 1, draft }, 'wid-draft-yt-01'), youtube), { v: 1, ok: false, code: 'TJ_BAD_MESSAGE', detail: null });
+  assert.equal(area.dump()[`draft:${ID}`], undefined, 'لم يُكتب شيء من سكربت المحتوى');
+  const page = { id: 'ext', url: 'chrome-extension://ext/pages/editor/index.html' };
+  assert.deepEqual(await svc.handle(storeRequest('draft', { videoId: ID, slot: 1, draft }, 'wid-draft-pg-01'), page), { v: 1, ok: true, value: { stored: true } });
+  assert.deepEqual(area.dump()[`draft:${ID}`].slots[0], draft);
+  // orphan في CONTENT_SCRIPT_OPS أصلًا، ويمسح المسودة مع التوابع حين لا سجل (مقبول، التحقق D).
+  assert.equal(CONTENT_SCRIPT_OPS.includes('orphan'), true);
+});
+
+test('الفكرة ٩: المسودة في طابور الفيديو: مسودة حُسبت قبل الحذف ووصلت الكاتب بعده تُرفض ST_NO_RECORD ولا تعيد مفتاحًا، والتي سبقته يزيلها', async () => {
+  const env = await seeded();
+  const editor = env.context();
+  const library = env.context();
+  const draft = await draftFor(editor, ID);
+  const gate = env.hold('draft');
+  const late = editor.setDraft(ID, 1, draft).then(() => 'ok', (e) => e.code);
+  await gate.reached;
+  await library.deleteVideo(ID);
+  gate.release();
+  assert.equal(await late, 'ST_NO_RECORD');
+  assert.deepEqual(keysOf(env.area), [], 'لا مسودة لفيديو محذوف');
+  // والعكس: مسودة كُتبت ثم حذف الفيديو يزيلها في كتابته نفسها.
+  const env2 = await seeded();
+  const s = env2.context();
+  await s.setDraft(ID, 1, await draftFor(s, ID));
+  assert.ok(env2.area.dump()[`draft:${ID}`]);
+  await s.updateBundle(ID, () => null);
+  assert.deepEqual(keysOf(env2.area), []);
+});
+
+test('الفكرة ٩: إعادة إرسال المسودة نفسها بعد توقف العامل لا تكتب مرتين، والحذف المكرر نجاح', async () => {
+  const env = await seeded();
+  const s = env.context();
+  const draft = await draftFor(s, ID);
+  env.restartAfter('draft');
+  assert.deepEqual(await s.setDraft(ID, 1, draft), { stored: true });
+  assert.equal(env.sent.filter((x) => x.op === 'draft').length, 2, 'أُرسل الطلب مرتين بمعرّف واحد');
+  assert.deepEqual(env.area.dump()[`draft:${ID}`].slots, [draft, null, null]);
+  assert.equal(await s.clearDraft(ID, 1), true);
+  assert.equal(env.area.dump()[`draft:${ID}`], undefined);
+  assert.deepEqual(await createWriter({ area: env.area }).handle(storeRequest('draft', { videoId: ID, slot: 1, draft: null }, 'wid-draft-again1')), { v: 1, ok: true, value: { stored: false } });
+});
+
+test('الفكرة ٩: سقف خمس مسودات: إنشاء السادسة يطرد أقدمها بآخر حفظ فيها، وتحديث مسودة قائمة لا يطرد شيئًا', async () => {
+  const area = createMemoryArea({ unlimited: true });
+  const s = createStore({ area });
+  const ids = ['AAAAAAAAAA1', 'AAAAAAAAAA2', 'AAAAAAAAAA3', 'AAAAAAAAAA4', 'AAAAAAAAAA5', 'AAAAAAAAAA6'];
+  for (const id of ids) await seedBundle(s, sampleBundle({ videoId: id }));
+  // آخر حفظ لكل مسودة: الثانية أقدمها، والأولى تُحدَّث لاحقًا فتصير أحدث.
+  const at = (m) => `2026-11-05T10:0${m}:00.000Z`;
+  const order = { AAAAAAAAAA1: 0, AAAAAAAAAA2: 1, AAAAAAAAAA3: 2, AAAAAAAAAA4: 3, AAAAAAAAAA5: 4 };
+  for (const id of ids.slice(0, 5)) await s.setDraft(id, 1, await draftFor(s, id, 1, at(order[id])));
+  await s.setDraft('AAAAAAAAAA1', 2, await draftFor(s, 'AAAAAAAAAA1', 2, at(8)));
+  const drafts = () => Object.keys(area.dump()).filter((k) => k.startsWith('draft:')).sort();
+  assert.equal(drafts().length, 5, 'خانة ثانية لفيديو له مسودة لا تطرد شيئًا');
+  await s.setDraft('AAAAAAAAAA6', 1, await draftFor(s, 'AAAAAAAAAA6', 1, at(9)));
+  assert.deepEqual(drafts(), ['draft:AAAAAAAAAA1', 'draft:AAAAAAAAAA3', 'draft:AAAAAAAAAA4', 'draft:AAAAAAAAAA5', 'draft:AAAAAAAAAA6'], 'طُردت الثانية (أقدم آخر حفظ)');
+  assert.ok(area.dump()['video:AAAAAAAAAA2'], 'الطرد للمسودة وحدها: الفيديو باقٍ');
+});
+
+test('الفكرة ٩: الطرد يعيد القراءة داخل طابور الفيديو المطرود: مسودة كُتبت له بعد الحصر تبقى', async () => {
+  const area = createMemoryArea({ unlimited: true });
+  const ids = ['AAAAAAAAAA1', 'AAAAAAAAAA2', 'AAAAAAAAAA3', 'AAAAAAAAAA4', 'AAAAAAAAAA5', 'AAAAAAAAAA6'];
+  const s = createStore({ area });
+  for (const id of ids) await seedBundle(s, sampleBundle({ videoId: id }));
+  for (const [i, id] of ids.slice(0, 5).entries()) await s.setDraft(id, 1, await draftFor(s, id, 1, `2026-11-05T10:0${i}:00.000Z`));
+  const fresh = await draftFor(s, 'AAAAAAAAAA1', 1, '2026-11-05T11:00:00.000Z');
+  // كاتب على المساحة نفسها يُحقن فيه أن تُقرأ المسودات للترتيب ثم تُكتب مسودة جديدة لأقدمها قبل طرده (كتابة من طابوره).
+  let injected = false;
+  const get = async (keys) => {
+    const out = await area.get(keys);
+    if (!injected && Array.isArray(keys) && keys.length > 1 && keys.every((k) => k.startsWith('draft:'))) {
+      injected = true;
+      await area.set({ 'draft:AAAAAAAAAA1': { schema: 1, videoId: 'AAAAAAAAAA1', slots: [fresh, null, null] } });
+    }
+    return out;
+  };
+  const writer = createWriter({ area: { ...area, get } });
+  const sixth = await draftFor(s, 'AAAAAAAAAA6', 1, '2026-11-05T10:09:00.000Z');
+  assert.equal((await writer.handle(storeRequest('draft', { videoId: 'AAAAAAAAAA6', slot: 1, draft: sixth }, 'wid-draft-race01'))).ok, true);
+  assert.equal(injected, true);
+  assert.deepEqual(area.dump()['draft:AAAAAAAAAA1'].slots[0], fresh, 'كُتبت بعد الترتيب فلم تُطرد');
+  assert.equal(Object.keys(area.dump()).filter((k) => k.startsWith('draft:')).length, 6, 'فوق الحد مؤقتًا حتى الإنشاء التالي، ولا فقد');
 });
 
 // ── الفحص الثابت ───────────────────────────────────────────────────────────
