@@ -91,13 +91,43 @@ test('ملف الاستكمال في «مقاطع أطول» (عيّنة P1 ال
   assert.equal(ok.file.name, 'Y9rkKtK1b44.en.asr.long.patch.srt');
   assert.deepEqual(parseSrtLenient(ok.file.text).cues.map((c) => c.text), [1, 400, 729].map((n) => long.cues[n - 1].text));
 
-  // وضع طويل بخيارات غير الافتراضية: العدد أو الأزمنة تختلف، فلا يُقبل الاشتقاق.
+  // وضع طويل بخيارات غير الافتراضية: الاشتقاق بالافتراضية لا يعيده، لكن حدوده كلها بدايات مقاطع محفوظة فيُعاد تجميع الكلمات
+  // بحدود البصمة (ن-٢)، ويُقبل لأنه يعيد بصمة النص نفسها: النص المثبت هو نص ذلك التنزيل.
   const custom = convertTrack({ body: asr.body, trackKind: 'asr', durationMs: asr.fixture.durationMs, mode: 'long', longOptions: { maxDurationMs: 6000 } });
   const fpCustom = buildExport({ videoId: 'Y9rkKtK1b44', track: trackOf(custom.cues, 'asr'), mode: 'long', now: NOW }).fingerprint;
-  assert.deepEqual(buildPatchPackage({ videoId: 'Y9rkKtK1b44', fingerprint: fpCustom, englishTracks: [stored], numbers: [1] }), { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' });
+  const regrouped = buildPatchPackage({ videoId: 'Y9rkKtK1b44', fingerprint: fpCustom, englishTracks: [stored], numbers: [1, 500] });
+  assert.equal(regrouped.ok, true, regrouped.code);
+  assert.deepEqual(parseSrtLenient(regrouped.file.text).cues.map((c) => [c.startMs, c.endMs, c.text]), [1, 500].map((n) => [custom.cues[n - 1].startMs, custom.cues[n - 1].endMs, custom.cues[n - 1].text]));
+  // ولا يُقبل تجميع لا يعيد بصمة النص: بصمة بأزمنتها وبنص غير نصها.
+  assert.deepEqual(buildPatchPackage({ videoId: 'Y9rkKtK1b44', fingerprint: { ...fpCustom, textHash: 'fnv1a64:0123456789abcdef' }, englishTracks: [stored], numbers: [1] }), { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' });
+  // ولا مسار يدوي: إعادة التجميع للتلقائي وحده.
+  assert.deepEqual(buildPatchPackage({ videoId: 'Y9rkKtK1b44', fingerprint: { ...fpCustom, trackKey: 'en|manual' }, englishTracks: [{ ...stored, key: 'en|manual', kind: 'manual' }], numbers: [1] }), { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' });
   // بصمة نص لا تطابق (المسار المحفوظ أُعيد التقاطه بنص مختلف): رفض.
   const tampered = { ...stored, cues: stored.cues.map((c, i) => (i === 3 ? { ...c, text: `${c.text} x` } : c)) };
   assert.deepEqual(buildPatchPackage({ videoId: 'Y9rkKtK1b44', fingerprint, englishTracks: [tampered], numbers: [1] }), { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' });
+});
+
+test('ن-٢: بصمة 2.2.0 التلقائية والمسار المحفوظ بتحويل اليوم (ع-٣): يُعاد تجميع كلماته بحدود البصمة بنص 2.2.0، وإلا رفض', () => {
+  const asr = realTrack('asr');
+  const stored = { ...trackOf(asr.cues, 'asr'), capturedAt: NOW, source: 'capture' };
+  for (const mode of ['normal', 'long']) {
+    // محوّل ما قبل ع-٣ نفسه: بلا حد الأسطر (المجمّدان before-e03 ناتجه؛ test/e2e/static/arabic-fixtures.test.js).
+    const old = convertTrack({ body: asr.body, trackKind: 'asr', durationMs: asr.fixture.durationMs, mode, asrOptions: { maxLines: Infinity } }).cues;
+    const fp = buildExport({ videoId: 'Y9rkKtK1b44', track: trackOf(old, 'asr'), mode, now: NOW }).fingerprint;
+    assert.notEqual(fp.count, mode === 'long' ? 735 : 1066, 'تجميع غير تجميع اليوم');
+    const all = Array.from({ length: fp.count }, (_, i) => i + 1);
+    const pkg = buildPatchPackage({ videoId: 'Y9rkKtK1b44', fingerprint: fp, englishTracks: [stored], numbers: all });
+    assert.equal(pkg.ok, true, `${mode}: ${pkg.code}`);
+    assert.deepEqual(parseSrtLenient(pkg.file.text).cues.map((c) => [c.n, c.startMs, c.endMs, c.text]), old.map((c, i) => [i + 1, c.startMs, c.endMs, c.text]), `${mode}: الملف كله بنص 2.2.0`);
+  }
+  // نص يوتيوب تغيّر بين التنزيلين (كلمة في المسار المحفوظ): لا يعيد بصمة النص، فرفض.
+  const old = convertTrack({ body: asr.body, trackKind: 'asr', durationMs: asr.fixture.durationMs, asrOptions: { maxLines: Infinity } }).cues;
+  const fp = buildExport({ videoId: 'Y9rkKtK1b44', track: trackOf(old, 'asr'), mode: 'normal', now: NOW }).fingerprint;
+  const changed = { ...stored, cues: stored.cues.map((c, i) => (i === 700 ? { ...c, text: c.text.replace(/\S+/u, 'changed') } : c)) };
+  assert.deepEqual(buildPatchPackage({ videoId: 'Y9rkKtK1b44', fingerprint: fp, englishTracks: [changed], numbers: [1] }), { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' });
+  // ونص لا يفصل كلماته بالمسافات لا يُعاد تجميعه.
+  const cjk = { ...stored, cues: stored.cues.map((c, i) => (i === 0 ? { ...c, text: `${c.text} 日本` } : c)) };
+  assert.deepEqual(buildPatchPackage({ videoId: 'Y9rkKtK1b44', fingerprint: fp, englishTracks: [cjk], numbers: [1] }), { ok: false, code: 'EX_PATCH_SOURCE_MISMATCH' });
 });
 
 test('ملف الاستكمال يرفض برمز: لا مسار، وفيديو آخر، وأرقام غير صالحة، ومعرّف غير صالح', () => {

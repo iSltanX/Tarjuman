@@ -1,9 +1,12 @@
 // ملف الاستكمال (R52): مقاطع إنجليزية مختارة بأرقامها في الملف الكامل (غير متتالية عن قصد) وأزمنة البصمة، مع تعليمات الملحق
 // ب. النص الإنجليزي من مصدر مثبت: المسار المحفوظ الذي صُدِّرت منه البصمة، ويُتحقق أنه يعيد البصمة نفسها عددًا وأزمنة وبصمة
 // نص. في «مقاطع أطول» يُعاد اشتقاق الوضع من المسار العادي المحفوظ بالخيارات الافتراضية، ولا يُقبل إلا بمطابقة البصمة؛ وإلا
-// رفض برمز. الملف يُعاد قراءته فيعطي الأرقام والأزمنة نفسها قبل التسليم. لا كتابة في التخزين.
+// يُعاد تجميع كلمات المسار التلقائي بحدود البصمة (regroupAsr، ن-٢)، ولا يُقبل إلا بمطابقة بصمة النص؛ وإلا رفض برمز. الملف
+// يُعاد قراءته فيعطي الأرقام والأزمنة نفسها قبل التسليم. لا كتابة في التخزين.
 import { joinList } from '../../i18n/index.js';
+import { ASR_DEFAULTS } from '../convert/asr.js';
 import { mergeLong } from '../convert/long.js';
+import { SENTENCE_END, hasNoSpaceScript, normalizeSpace, wrapLines } from '../convert/text.js';
 import { isVideoId } from '../model/ids.js';
 import { sanitizeCues } from '../text/sanitize.js';
 import { breaksSrtText } from '../srt/lenient.js';
@@ -32,8 +35,52 @@ export const patchFileName = ({ videoId, lang, kind, mode, via = null }) => `${v
 function provenSource(track, fp) {
   const base = track.cues;
   const cues = fp.mode === 'long' ? mergeLong(base).cues.map((c, i) => ({ n: i + 1, ...c })) : base.map((c, i) => ({ ...c, n: i + 1 }));
-  if (cues.length !== fp.count) return null;
-  if (!cues.every((c, i) => c.startMs === fp.cues[i].startMs && c.endMs === fp.cues[i].endMs)) return null;
+  const same = cues.length === fp.count && cues.every((c, i) => c.startMs === fp.cues[i].startMs && c.endMs === fp.cues[i].endMs);
+  if (same && textHash(cues) === fp.textHash) return cues;
+  return track.kind === 'asr' ? regroupAsr(base, fp) : null;
+}
+
+/**
+ * مقاطع البصمة من مسار تلقائي أُعيد تحويله بعد تنزيلها بتجميع أحدث (ن-٢): ع-٣ صار يقطع مجموعة لا تتسع في سطرين، فمن نزّل في
+ * 2.2.0 ثم أعاد التنزيل بعد الترقية صار مساره المحفوظ 1,066 مقطعًا وبصمة ترجمته 1,056. الكلمات هي هي بترتيبها، والفرق في مواضع
+ * القطع وحدها؛ فتوضع حدود البصمة على كلمات المسار المحفوظ: حدٌّ زمنه زمنُ بداية مقطع محفوظ يقع عند أول كلماته (أزمنة البدايات
+ * متزايدة تمامًا فلا يلتبس)، وغيره داخل مقطع محفوظ حيث يقطع محوّل ما قبل ع-٣ من الحد السابق: نهاية جملة أو تجاوز maxChars.
+ * والنص بلفّ المحوّل (lineChars)، والأزمنة أزمنة البصمة. لا يُقبل إلا إن أعاد بصمة النص نفسها، وهي تشمل مواضع الحدود؛ وإلا null
+ * فالرفض كما كان. والنص الذي لا يفصل كلماته بالمسافات لا يُعاد تجميعه هنا (لفّه يغيّر نصه المطبّع الذي تُحسب عليه البصمة).
+ * @param {Cue[]} base مقاطع المسار المحفوظ بالوضع العادي @param {Fingerprint} fp
+ * @returns {Cue[] | null}
+ */
+function regroupAsr(base, fp) {
+  if (!base.length || base.some((c) => hasNoSpaceScript(c.text))) return null;
+  const words = [];
+  const startAt = new Map();
+  for (const c of base) {
+    const ws = normalizeSpace(c.text).split(' ').filter(Boolean);
+    if (!ws.length || startAt.has(c.startMs)) return null;
+    startAt.set(c.startMs, words.length);
+    words.push(...ws);
+  }
+  const starts = new Set(startAt.values());
+  if (fp.cues[0].startMs !== base[0].startMs) return null;
+  const at = [0];
+  for (let i = 1; i < fp.count; i++) {
+    let k = startAt.get(fp.cues[i].startMs);
+    if (k === undefined) {
+      const from = at[i - 1];
+      let chars = words[from].length;
+      for (k = from + 1; k < words.length; k++) {
+        if (SENTENCE_END.test(words[k - 1]) || chars + 1 + words[k].length > ASR_DEFAULTS.maxChars) break;
+        chars += 1 + words[k].length;
+      }
+      // القطع المحسوب عند بداية مقطع محفوظ زمنها غير زمن البصمة: ليس هذا التجميع.
+      if (k >= words.length || starts.has(k)) return null;
+    }
+    if (k <= at[i - 1]) return null;
+    at.push(k);
+  }
+  const cues = fp.cues.map((t, i) => ({
+    n: i + 1, startMs: t.startMs, endMs: t.endMs, text: wrapLines(words.slice(at[i], at[i + 1] ?? words.length).join(' '), ASR_DEFAULTS.lineChars),
+  }));
   return textHash(cues) === fp.textHash ? cues : null;
 }
 
