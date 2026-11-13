@@ -94,8 +94,9 @@ const validNumbers = (numbers, count) => Array.isArray(numbers) && numbers.lengt
 /**
  * @param {{
  *   videoId: string, title?: string | null, fingerprint: Fingerprint, englishTracks: EnglishTrack[], numbers: number[],
- *   glossary?: { source: string, target: string, note?: string | null }[] | null, target?: string | null
- * }} spec numbers أرقام المقاطع في الملف الكامل (1..count)، وtarget لغة الترجمة التي يُستكمل لها (AA1)
+ *   glossary?: import('./instructions.js').InstructionGlossary, target?: string | null
+ * }} spec numbers أرقام المقاطع في الملف الكامل (1..count)، وtarget لغة الترجمة التي يُستكمل لها (AA1)، وglossary المصطلحات
+ *   المرفقة لزوج الاستكمال (لغة المسار ← target) كما يعيدها termsFor (الفكرة ٨)، تمر إلى patchInstructions كما هي
  * @returns {{ ok: true, file: { name: string, text: string }, instructions: string, count: number } | { ok: false, code: string, params?: { list: string } }}
  *   instructions بفقرة القاموس عند وجوده (إضافة W6 على العقد بطلب P11)، كـpatchInstructions({ videoId, title, glossary }).
  *   لا يرمي: نص مختار يُقرأ رأسَ مقطع EX_PATCH_SOURCE_UNWRITABLE بأرقامه في params.list (تدقيق 7a66f91، U79).

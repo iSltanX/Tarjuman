@@ -17,6 +17,7 @@ import { resolvePosition } from '../../core/model/marks.js';
 import { messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { buildPatchPackage, buildReviewReport, buildStudyText, patchInstructions, studyTiming, studyTimingNote, translationLang } from '../../core/export/index.js';
 import { DEFAULT_TARGET_LANG } from '../../core/model/lang-prefs.js';
+import { attachedCount, termsFor } from '../../core/model/glossaries.js';
 import { partsStatus, readPatch } from '../../core/import/index.js';
 import { saveFile as defaultSaveFile } from '../../core/save/index.js';
 import { slotModels } from '../../core/model/bundle.js';
@@ -94,10 +95,13 @@ export async function mountEditor(app, {
   let prefs;
   // تفضيلات اللغات (AA3): «إلى» المختارة لهذا الفيديو لغةُ تعليمات الاستكمال حين تكون الترجمة غير محددة اللغة. تعذّر قراءتها لا يمنع الفتح.
   let langPrefs = null;
+  // قوائم المصطلحات لكل زوج (الفكرة ٨): ما يطابق زوج الاستكمال منها يُرفق بتعليماته. تعذّر قراءتها لا يمنع الفتح.
+  let glossaries = null;
   try {
-    [bundle, settings, prefs, langPrefs] = await Promise.all([
+    [bundle, settings, prefs, langPrefs, glossaries] = await Promise.all([
       store.getBundle(videoId), store.getSettings(), store.getPrefs(),
       typeof store.getLangPrefs === 'function' ? store.getLangPrefs().catch(() => null) : null,
+      typeof store.getGlossaries === 'function' ? store.getGlossaries().catch(() => null) : null,
     ]);
   } catch (err) {
     const info = toErrorInfo(err);
@@ -133,7 +137,7 @@ export async function mountEditor(app, {
 
   // ---- الحالة ----
   const S = {
-    opened: bundle, slot: picked.n, info: null, prefs, langPrefs,
+    opened: bundle, slot: picked.n, info: null, prefs, langPrefs, glossaries,
     fp: null, englishTrack: null, edited: false,
     session: null, offSession: null, original: null,
     view: /** @type {'edit' | 'original'} */ ('edit'),
@@ -1023,7 +1027,13 @@ export async function mountEditor(app, {
   }
 
   // ---- الاستكمال (R52) ----
-  const glossary = () => (S.prefs?.glossary?.attach && S.prefs.glossary.terms.length ? S.prefs.glossary.terms : null);
+  /** لغة الأصل الذي يُستكمل منه: مسار بصمة الترجمة المفتوحة. */
+  const patchSource = () => S.opened.record.english.find((track) => track.key === S.fp?.trackKey)?.lang ?? null;
+  /**
+   * المصطلحات المرفقة بتعليمات الاستكمال لزوجه (الفكرة ٨، ح-47): قائمة الزوج تحت رأس بلغتيه، و«أي لغة ← إلى» والقاموس العام تحت
+   * الرأس المحايد، وحتى 100 للمجموع. وعددها في لوحة الاستكمال هو ما يُرفق فعلًا.
+   */
+  const glossary = () => termsFor(S.prefs, S.glossaries, { source: patchSource(), target: patchTarget() });
   /**
    * اللغة التي يُستكمل لها في تعليمات الاستكمال: لغة الترجمة، وإلا «إلى» المختارة لهذا الفيديو في نافذة الإضافة، وإلا الافتراضية في
    * الإعدادات (AA3). وتحديد لغة الترجمة نفسها من قائمة «الترجمة» في المشغّل أو من «اللغات» في الإعدادات.
@@ -1061,7 +1071,7 @@ export async function mountEditor(app, {
     S.completeNumbers = completionNumbers(groups, S.picks);
     keepFocus(completeEl, () => renderCompletePanel(completeEl, {
       doc, reason: completeReason(), groups, picks: S.picks, numbers: S.completeNumbers, parts: S.parts,
-      glossaryCount: glossary()?.length ?? 0, readOnly: readOnly() ? messageFor('ED_READ_ONLY') : null, busy: S.completeBusy,
+      glossaryCount: attachedCount(glossary()), readOnly: readOnly() ? messageFor('ED_READ_ONLY') : null, busy: S.completeBusy,
       onPick: (key, on) => {
         S.picks = { ...S.picks, [key]: on };
         renderComplete();
@@ -1102,7 +1112,7 @@ export async function mountEditor(app, {
   async function copyPatchInstructions() {
     if (completeReason()) return;
     try {
-      const source = S.opened.record.english.find((track) => track.key === S.fp?.trackKey)?.lang ?? null;
+      const source = patchSource();
       const target = patchTarget();
       if (!source || !target || source === target) {
         toast(messageFor('PG_PAIR_SAME'), 'danger');
@@ -2141,6 +2151,10 @@ export async function mountEditor(app, {
       renderComparisonPanel();
     }
     if (change.langPrefs) S.langPrefs = change.langPrefs.newValue ?? null;
+    if (change.glossaries) {
+      S.glossaries = change.glossaries.newValue ?? null;
+      renderComplete();
+    }
     if (change.prefs?.newValue) {
       // حد سرعة القراءة من الإعدادات (R55) يسري فورًا؛ ولا يمس شيئًا محفوظًا.
       S.prefs = change.prefs.newValue;

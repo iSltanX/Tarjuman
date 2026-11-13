@@ -98,9 +98,14 @@ test('اسم المتصفح ورقمه الرئيسي وحدهما (Firefox وEd
   assert.equal(await browserLabel({ userAgent: 'Mozilla/5.0 … Chrome/156.0.0.0 Safari/537.36 Edg/156.0.1.2' }), 'Microsoft Edge 156');
   assert.equal(await browserLabel({ userAgent: 'Mozilla/5.0 … Chrome/156.0.0.0 Safari/537.36' }), 'Chrome 156');
   assert.equal(await browserLabel({}), 'غير معروف');
+  // القاموس المرفق بالزوج المختار (الفكرة ٨): العام تحت الرأس المحايد، وقائمة الزوج المطابق وحدها تحت رأس الزوج.
   const terms = [{ source: 'prompt', target: 'موجِّه', note: null }];
-  assert.strictEqual(attachedGlossary({ glossary: { attach: true, terms } }), terms);
-  assert.equal(attachedGlossary({ glossary: { attach: false, terms } }), null);
-  assert.equal(attachedGlossary({ glossary: { attach: true, terms: [] } }), null);
-  assert.equal(attachedGlossary(null), null);
+  const none = { pair: [], general: [], total: 0 };
+  assert.deepEqual(attachedGlossary({ glossary: { attach: true, terms } }), { pair: [], general: terms, total: 1 });
+  assert.deepEqual(attachedGlossary({ glossary: { attach: false, terms } }), none);
+  assert.deepEqual(attachedGlossary({ glossary: { attach: true, terms: [] } }), none);
+  assert.deepEqual(attachedGlossary(null), none);
+  const lists = { schema: 1, lists: [{ from: 'en', to: 'ar', terms: [{ source: 'token', target: 'رمز', note: null }] }, { from: 'ja', to: 'ar', terms: [{ source: '東京', target: 'طوكيو', note: null }] }] };
+  assert.deepEqual(attachedGlossary({ glossary: { attach: true, terms } }, lists, { from: 'en', to: 'ar' }), { pair: [lists.lists[0].terms[0]], general: terms, total: 2 });
+  assert.deepEqual(attachedGlossary({ glossary: { attach: true, terms } }, lists, { from: null, to: 'ar' }).pair, [], 'بلا «من» لا قائمة زوج');
 });

@@ -10,6 +10,7 @@ import { TjError, messageFor, toErrorInfo } from '../../core/errors/index.js';
 import { instructions } from '../../core/export/instructions.js';
 import { watchUrl } from '../../core/model/ids.js';
 import { DEFAULT_PREFS } from '../../core/model/prefs.js';
+import { termsFor } from '../../core/model/glossaries.js';
 import { getDir, joinList, t as tr } from '../../i18n/index.js';
 import { MAX_PASTE_CHARS } from '../../core/model/messages.js';
 
@@ -93,6 +94,8 @@ export function createLibrary(env) {
     prefs: /** @type {import('../../core/model/prefs.js').Prefs} */ (DEFAULT_PREFS),
     /** تفضيلات اللغات (AA3): زوج كل فيديو في نافذة الإضافة، لسطر الصف ونسخ التعليمات. */
     langPrefs: /** @type {import('../../core/model/lang-prefs.js').LangPrefs | null} */ (null),
+    /** قوائم المصطلحات لكل زوج (الفكرة ٨): ما يطابق زوج الفيديو منها يُرفق بالتعليمات المنسوخة. */
+    glossaries: /** @type {unknown} */ (null),
     thumbsGranted: false,
     query: initial.query, filter: initial.filter, order: /** @type {'updated' | 'title'} */ (initial.order), limit: PAGE_SIZE,
     /** الصف المقصود بعد الرجوع من المحرّر (#v=…): يُبرَز مرة ثم يُنسى. */
@@ -510,7 +513,7 @@ export function createLibrary(env) {
     const pair = copyPair(entry, state.langPrefs);
     const copy = createCopyState({
       buildText: () => instructions({
-        videoId: entry.videoId, title: entry.title, glossary: state.prefs.glossary.attach ? state.prefs.glossary.terms : null,
+        videoId: entry.videoId, title: entry.title, glossary: termsFor(state.prefs, state.glossaries, { source: pair.from, target: pair.to }),
         source: pair.from, target: pair.to, via: pair.via,
       }),
       write: (text) => env.clipboardWrite(text),
@@ -992,12 +995,13 @@ export function createLibrary(env) {
     const mine = ++loadSeq;
     try {
       // السعة معلومة جانبية: فشل قياسها (getBytesInUse غائبة أو رفض عابر، تدقيق 7a66f91 U03) يخفي سطرها ولا يُسقط القائمة.
-      const [items, capacity, prefs, thumbsGranted, langPrefs] = await Promise.all([
+      const [items, capacity, prefs, thumbsGranted, langPrefs, glossaries] = await Promise.all([
         store.listLibrary(), store.capacity().catch(() => null), store.getPrefs().catch(() => PREFS_UNREADABLE), readConsent(),
         typeof store.getLangPrefs === 'function' ? store.getLangPrefs().catch(() => null) : null,
+        typeof store.getGlossaries === 'function' ? store.getGlossaries().catch(() => null) : null,
       ]);
       if (mine !== loadSeq) return;
-      Object.assign(state, { entries: libraryEntries(items), capacity, prefs, thumbsGranted, langPrefs, status: 'ready', error: null });
+      Object.assign(state, { entries: libraryEntries(items), capacity, prefs, thumbsGranted, langPrefs, glossaries, status: 'ready', error: null });
       // ت-٢ (تحقق Fable للتصميم): سطر «صور الفيديو مطفأة» من الحال المحمّلة الآن، لا مما طبّقته قراءة الموافقة قبل وصول التفضيلات.
       applyThumbs();
     } catch (err) {
@@ -1017,6 +1021,8 @@ export function createLibrary(env) {
         applyThumbs();
       }).catch(() => {});
     }
+    // قوائم المصطلحات لكل زوج (الفكرة ٨): تُقرأ عند ضغطة النسخ كالقاموس، فلا تعيد بناء القائمة.
+    if (change.glossaries) state.glossaries = change.glossaries.newValue ?? null;
     // زوج فيديو تغيّر في نافذة الإضافة (AA3): سطر الصف ونسخ التعليمات بالزوج الجديد، بإعادة القراءة كتغيّر المحفوظات.
     // وتغيّر الإعدادات من صفحة أخرى لا يمسّ القائمة: إعادة بنائها تهدم التركيز والقائمة المفتوحة.
     if (!Object.keys(change.videos).length && !change.index && !change.cleared && !change.bundles.length && !change.langPrefs) return;

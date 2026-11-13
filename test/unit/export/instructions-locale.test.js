@@ -111,14 +111,18 @@ test('locale الصريح يغلب لغة الواجهة، فلا يختلط ن�
 
 test('فقرة الأجزاء والقاموس والمصدر الآلي بالإنجليزية في مواضعها', () => {
   setLocale('en');
-  const out = instructions({ ...BASE, via: 'ko', parts: PARTS, glossary: TERMS });
+  const out = instructions({ ...BASE, via: 'ko', parts: PARTS, glossary: { pair: TERMS, general: [{ source: 'oasis', target: 'واحة', note: null }] } });
   assert.ok(out.includes('- The attached file is a machine translation that YouTube generated from Korean (ko),'));
   assert.ok(out.indexOf('machine translation that YouTube') < out.indexOf('\n\nUnderstand before you translate'));
   const style = out.indexOf('\n\nStyle\n');
   const glossary = out.indexOf('\n\nPreferred terms\n');
   const srt = out.indexOf('\n\nSRT structure: follow it exactly');
   assert.ok(style < glossary && glossary < srt);
-  assert.ok(out.includes('Equivalents (term in English = preferred equivalent in Arabic):\n- caravan = قافلة (desert context)\n- dune = كثيب\n'));
+  assert.ok(out.includes('Equivalents (term in English = preferred equivalent in Arabic):\n- caravan = قافلة (desert context)\n- dune = كثيب\n\nEquivalents (term as it appears in the file = preferred equivalent in the translation):\n- oasis = واحة\n'));
+  // القاموس العام وحده (الفكرة ٨، ح-47) تحت الرأس المحايد وحده.
+  const general = instructions({ ...BASE, glossary: TERMS });
+  assert.ok(general.includes('Equivalents (term as it appears in the file = preferred equivalent in the translation):\n- caravan = قافلة (desert context)\n- dune = كثيب\n'));
+  assert.equal(general.includes('Equivalents (term in English'), false);
   assert.ok(out.endsWith('The output of each part must contain the same segments as that part, with the same numbering and in the same order.'));
   assert.ok(out.includes('Total segments: 812 segments, in 2 parts.\nThe file is split into parts with continuous numbering: Part 1 (segments 1–400), Part 2 (segments 401–812).'));
 });

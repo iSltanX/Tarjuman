@@ -127,10 +127,12 @@ startPage({
     // «زر النص المتزامن مخفي» لا ينتظر رد الصفحة هو الآخر: التفضيلات من التخزين مباشرة.
     const entry = bindEntryRow({ store, host: entryHost });
 
-    const [first, langRead, prefs] = await Promise.all([
+    const [first, langRead, prefs, glossaries] = await Promise.all([
       queryPopupState(),
       store.getLangPrefs().then((v) => ({ ok: true, v }), () => ({ ok: false, v: normalizeLangPrefs(null) })),
       store.getPrefs().catch(() => null),
+      // قوائم المصطلحات لكل زوج (الفكرة ٨): تعذّر قراءتها يرفق القاموس العام وحده.
+      typeof store.getGlossaries === 'function' ? store.getGlossaries().catch(() => null) : null,
     ]);
     let state = first;
     reply = state.reply;
@@ -139,8 +141,7 @@ startPage({
     store.onChange((change) => {
       if (change.langPrefs) langPrefs = normalizeLangPrefs(change.langPrefs.newValue ?? null);
     });
-    // القاموس المرفق في نسخ التعليمات من هنا كما في المحفوظات (النص نفسه من instructions).
-    const glossary = attachedGlossary(prefs);
+    // القاموس المرفق في نسخ التعليمات من هنا كما في المحفوظات (النص نفسه من instructions): بالزوج المختار لحظة النسخ (الفكرة ٨).
 
     // ---- كتلة «تعليمات الترجمة» ----
     /** الزوج الظاهر الآن؛ ولمس المستخدم له يوقف التعبئة التلقائية عند استقرار الرد. */
@@ -177,7 +178,7 @@ startPage({
     }
 
     const copy = createCopyState({
-      buildText: () => instructions(copyArgs({ reply, pair, glossary })),
+      buildText: () => instructions(copyArgs({ reply, pair, glossary: attachedGlossary(prefs, glossaries, pair) })),
       write: (text) => navigator.clipboard.writeText(text),
       announce: (code) => notice.replaceChildren(code === 'PG_COPY_DONE' ? el('span', { className: 'tj-sr-only', text: messageFor(code) }) : alertBox({ tone: 'danger', text: messageFor(code) })),
       onState: (st) => {

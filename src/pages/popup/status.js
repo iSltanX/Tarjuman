@@ -9,6 +9,7 @@ import { messageFor } from '../../core/errors/index.js';
 import { describeLang } from '../../core/lang/index.js';
 import { getLocale, t, texts } from '../../i18n/index.js';
 import { YOUTUBE_MATCHES, isSourceLang, parseTrackKey } from '../../core/model/ids.js';
+import { termsFor } from '../../core/model/glossaries.js';
 import { COUNT_FORMS, formatCount, offsetInline } from '../../ui/format.js';
 import { pairLabel } from '../../ui/lang.js';
 import {
@@ -289,10 +290,13 @@ export function captureLine(reply) {
 }
 
 /**
- * القاموس المرفق بتعليمات الترجمة، أو null (التفضيلات: «أرفق القاموس» مفعّل وفيه مصطلح).
+ * المصطلحات المرفقة بتعليمات الزوج المختار (الفكرة ٨، ح-47): قائمة الزوج المطابق تحت رأس بلغتيه، و«أي لغة ← إلى» والقاموس العام تحت
+ * الرأس المحايد، وحتى 100 للمجموع (termsFor). لا شيء إن أُطفئ «أرفق القاموس» أو تعذّرت قراءة التفضيلات.
  * @param {import('../../core/model/prefs.js').Prefs | null | undefined} prefs
+ * @param {import('../../core/model/glossaries.js').Glossaries | null} [glossaries] قوائم الأزواج
+ * @param {{ from: string | null, to: string | null } | null} [pair] الزوج المختار في النافذة
  */
-export const attachedGlossary = (prefs) => (prefs?.glossary?.attach && prefs.glossary.terms?.length ? prefs.glossary.terms : null);
+export const attachedGlossary = (prefs, glossaries = null, pair = null) => termsFor(prefs, glossaries, { source: pair?.from ?? null, target: pair?.to ?? null });
 
 /**
  * تشخيص الصفحة من سكربت المحتوى في التبويب النشط (عقد messages §٦): أقسامه أو null.
@@ -437,7 +441,7 @@ export function pairState({ reply, pair }) {
 /**
  * معاملات instructions للزوج المختار: العنوان والرابط، والقاموس إن أُرفق، والمصدر المترجم آليًا إن كان «من» لغة ترجمة يوتيوب
  * الآلية، وفقرة الأجزاء إن كان آخر تنزيل لهذا الفيديو مقسّمًا بلغة «من» نفسها (فلا تُفقد وظيفة التقسيم الاحتياطي).
- * @param {{ reply: import('../../core/model/messages.js').VideoStateReply, pair: { from: string, to: string }, glossary: object[] | null }} p
+ * @param {{ reply: import('../../core/model/messages.js').VideoStateReply, pair: { from: string, to: string }, glossary: import('../../core/export/instructions.js').InstructionGlossary }} p
  */
 export function copyArgs({ reply, pair, glossary }) {
   const via = reply.source?.via && pair.from === reply.source.lang ? reply.source.via : null;

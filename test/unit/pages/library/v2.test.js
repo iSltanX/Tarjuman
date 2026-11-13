@@ -619,6 +619,31 @@ test('«نسخ» يرفق القاموس بالنص نفسه الذي تبنيه
   assert.equal(m.calls.clipboard.at(-1), instructions({ videoId: IDS[0], title: 'عنوان', source: 'en', target: 'ar' }));
 });
 
+test('الفكرة ٨: «نسخ» يرفق قائمة زوج الفيديو برأس لغتيه والقاموس العام بالرأس المحايد، ولا يرفق قوائم أزواج أخرى، ويتبع تغيّرها بلا إعادة بناء', async () => {
+  const m = await mount({
+    seed: async (store) => {
+      await store.updateVideo(IDS[0], () => ({ ...videoRecord({ videoId: IDS[0] }), title: 'عنوان' }));
+      await store.setPrefs(samplePrefs());
+      await store.addGlossaryList({ from: 'en', to: 'ar' });
+      await store.addListTerm({ from: 'en', to: 'ar' }, { source: 'cache', target: 'الذاكرة المؤقتة', note: null });
+      await store.addGlossaryList({ from: 'ja', to: 'ar' });
+      await store.addListTerm({ from: 'ja', to: 'ar' }, { source: '東京', target: 'طوكيو', note: null });
+    },
+  });
+  openMore(m, IDS[0], 'نسخ التعليمات');
+  await settle(5);
+  const text = m.calls.clipboard[0];
+  assert.ok(text.includes('المقابلات (المصطلح بالإنجليزية = المقابل المفضّل بالعربية):\n- cache = الذاكرة المؤقتة\n\nالمقابلات (المصطلح كما يرد في الملف = المقابل المفضّل في الترجمة):\n- prompt = موجِّه\n'));
+  assert.equal(text.includes('東京'), false, 'قائمة زوج آخر لا تُرفق');
+  // تغيّر القوائم من صفحة أخرى يصل عبر onChange، فالنسخة التالية تحمله.
+  await m.store.addListTerm({ from: 'en', to: 'ar' }, { source: 'build', target: 'بناء', note: null });
+  await m.area.flush();
+  await settle(5);
+  openMore(m, IDS[0], 'نسخ التعليمات');
+  await settle(5);
+  assert.ok(m.calls.clipboard.at(-1).includes('- cache = الذاكرة المؤقتة\n- build = بناء\n'));
+});
+
 test('manualEdits: يعدّ المقاطع المختلفة عن الأصل وما زاد أو نقص، وصفر بلا تعديل', () => {
   const original = [{ n: 1, startMs: 0, endMs: 1000, text: 'أ' }, { n: 2, startMs: 1000, endMs: 2000, text: 'ب' }, { n: 3, startMs: 2000, endMs: 3000, text: 'ج' }];
   assert.equal(manualEdits({ original, current: null }), 0);

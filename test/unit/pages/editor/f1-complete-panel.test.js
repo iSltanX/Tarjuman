@@ -63,3 +63,33 @@ test('p=complete على ترجمة لا ناقص فيها ولا غير مترج
   const { tab } = await open(b, { slot: 2, panel: 'complete' });
   assert.equal(tab('review').getAttribute('aria-selected'), 'true');
 });
+
+test('الفكرة ٨: لوحة «الاستكمال» تعدّ ما يُرفق لزوجها وتنسخ تعليماته بقائمة الزوج والقاموس العام برأسيهما، وتتبع تغيّر القوائم', async () => {
+  const area = createMemoryArea({ unlimited: true });
+  let t = Date.parse('2026-11-10T12:00:00.000Z');
+  const now = () => (t += 1000);
+  const store = createStore({ area, now });
+  await seedBundle(store, truncatedBundle());
+  await store.setPrefs({ glossary: { attach: true, terms: [{ source: 'prompt', target: 'موجِّه', note: null }] } });
+  await store.addGlossaryList({ from: 'en', to: 'ar' });
+  await store.addListTerm({ from: 'en', to: 'ar' }, { source: 'cache', target: 'الذاكرة المؤقتة', note: null });
+  await store.addGlossaryList({ from: 'ja', to: 'ar' });
+  await store.addListTerm({ from: 'ja', to: 'ar' }, { source: '東京', target: 'طوكيو', note: null });
+  const env = editorDocument({ videoId: ID });
+  const written = [];
+  env.doc.defaultView.navigator = { clipboard: { writeText: async (text) => { written.push(text); } } };
+  await mountEditor(env.root, { videoId: ID, store, doc: env.doc, now, slot: 2, panel: 'complete' });
+  await env.flush();
+  const pane = env.root.querySelector('#ed-pane-complete');
+  assert.ok(pane.textContent.includes('+ القاموس (2) في التعليمات.'), 'قائمة الزوج والعام، لا قائمة ja ← ar');
+  const copy = [...pane.querySelectorAll('button')].find((b) => b.textContent.includes('نسخ تعليمات الاستكمال'));
+  copy.click();
+  await env.flush();
+  assert.equal(written.length, 1);
+  assert.ok(written[0].includes('المقابلات (المصطلح بالإنجليزية = المقابل المفضّل بالعربية):\n- cache = الذاكرة المؤقتة\n\nالمقابلات (المصطلح كما يرد في الملف = المقابل المفضّل في الترجمة):\n- prompt = موجِّه\n'));
+  assert.equal(written[0].includes('東京'), false);
+  await store.addListTerm({ from: 'en', to: 'ar' }, { source: 'build', target: 'بناء', note: null });
+  await area.flush();
+  await env.flush();
+  assert.ok(env.root.querySelector('#ed-pane-complete').textContent.includes('+ القاموس (3) في التعليمات.'));
+});
