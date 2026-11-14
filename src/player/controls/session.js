@@ -769,7 +769,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   function focusLeave(to) {
     if (!ui.open || to === group.host) return;
     // ح-40: نقرة زر CC تنقل إليه التركيز في المتصفح، فلا تُغلق بها «تنزيل الأصل» كما لا تُغلق بالنقرة نفسها (onDocPointer).
-    if (ui.open === 'download' && isSubtitlesButton(to)) return;
+    // ص-٢٥: والمتصفح الذي لا يركّز الأزرار بالنقر ينقله إلى أقرب سلف يقبله (#movie_player)، فيُستثنى سلف ما ضُغط في مهمة الضغطة نفسها.
+    if (ui.open === 'download' && (isSubtitlesButton(to) || (ccPointer !== null && to.contains?.(ccPointer)))) return;
     const pending = ui.open === 'confirm' || (ui.open === 'timing' && !!ui.timing.sync);
     if (pending || ui.download.busy || ui.upload.busy) return;
     closeMenu(false);
@@ -1514,12 +1515,22 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   // ———— خارج القوائم: النقر خارجها وEsc ————
 
+  /**
+   * ص-٢٥: ما ضُغط داخل زر CC و«تنزيل الأصل» مفتوحة، حتى نهاية مهمة الضغطة (مؤقت بلا مهلة)، أو null. المتصفح ينقل التركيز في
+   * mousedown من المهمة نفسها: إلى الزر حيث يركّز الأزرار بالنقر، وإلى أقرب سلف يقبله حيث لا يركّزها (Firefox على macOS بالتفضيل
+   * accessibility.mouse_focuses_formcontrol=0، وSafari)، فلا يُغلقها focusLeave بالضغطة التي تطلبها.
+   */
+  let ccPointer = null;
   const onDocPointer = (ev) => {
     if (!ui.open) return;
     const path = typeof ev.composedPath === 'function' ? ev.composedPath() : [ev.target];
     if (group.owns(path) || layer.owns(path)) return;
     // ح-40: زر CC هو ما تطلبه «تنزيل الأصل» بلا التقاط، فتبقى مفتوحة وتتحدّث بالالتقاط؛ والقوائم الأخرى تُغلق به.
-    if (ui.open === 'download' && path.some(isSubtitlesButton)) return;
+    if (ui.open === 'download' && path.some(isSubtitlesButton)) {
+      ccPointer = path[0] ?? null;
+      later('ccPointer', 0, () => { ccPointer = null; });
+      return;
+    }
     closeMenu(false);
   };
   // Esc في الصفحة يغلق القائمة المفتوحة، وبلا قائمة يُخفي التلميح الظاهر: المؤشر فوق الزر والتركيز في مكان آخر، فلا تصل الضغطة

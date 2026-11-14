@@ -244,6 +244,48 @@ test('ح-40: فُتحت بلوحة المفاتيح ثم ضُغط CC: الترك
   p.handle.unmount();
 });
 
+// ص-٢٥ (تحقق 2.3.0): متصفح لا يركّز الأزرار بالنقر (Firefox على macOS بالتفضيل accessibility.mouse_focuses_formcontrol=0، وهو
+// سلوكه القديم وسلوك Safari) ينقل التركيز عند نقرة CC إلى أقرب سلف يقبله، #movie_player (tabindex=-1)، لا إلى زر CC؛ فكان focusLeave
+// يغلق القائمة المفتوحة بلوحة المفاتيح (ثبت حيًّا في Firefox 160 بلا نافذة بذلك التفضيل).
+test('ص-٢٥: فُتحت بلوحة المفاتيح ثم ضُغط CC فانتقل التركيز إلى المشغّل لا إلى الزر: تبقى مفتوحة، والاستثناء للضغطة نفسها وحدها', () => {
+  const p = page();
+  const root = p.ui.layerHost().shadowRoot;
+  click(p.ui.btn('download'), 0);
+  assert.ok(root.activeElement === p.ui.item('لماذا؟'), 'التركيز فيها');
+  // الضغطة على رمز داخل الزر، والمتصفح ينقل التركيز في المهمة نفسها إلى المشغّل.
+  pointerdown(ccIcon(p));
+  p.player.focus();
+  assert.equal(p.ui.menuOpen(), true, 'التركيز إلى المشغّل بضغطة CC لا يغلقها');
+  // انقضت مهمة الضغطة: خروج التركيز من القائمة إلى المشغّل بغيرها يغلقها كما كان (U46).
+  p.tick(100);
+  p.ui.item('لماذا؟').focus();
+  p.player.focus();
+  assert.equal(p.ui.menuOpen(), false, 'التركيز إلى المشغّل بلا ضغطة CC');
+  // وفي المهمة نفسها لا يُستثنى إلا سلف ما ضُغط: التركيز إلى عنصر لا يحوي زر CC يغلقها.
+  click(p.ui.btn('download'), 0);
+  pointerdown(p.cc);
+  p.yt[1].focus();
+  assert.equal(p.ui.menuOpen(), false, 'التركيز إلى ⚙ بعد ضغطة CC');
+  p.handle.unmount();
+});
+
+test('ص-٢٥ (ح-40): الاستثناء لـ«تنزيل الأصل» وحدها: التوقيت والترجمة المفتوحتان بلوحة المفاتيح تُغلقان حين ينتقل التركيز إلى زر CC أو إلى المشغّل', () => {
+  const p = mountPage({ state: makeState({ arabic: arabic() }) });
+  const root = p.ui.layerHost().shadowRoot;
+  for (const [kind, name] of [['badge', 'التوقيت'], ['upload', 'الترجمة']]) {
+    click(p.ui.btn(kind), 0);
+    assert.equal(p.ui.menuOpen(), true, name);
+    assert.ok(root.activeElement, `${name}: التركيز فيها`);
+    p.cc.focus();
+    assert.equal(p.ui.menuOpen(), false, `${name}: التركيز إلى زر CC (بـTab)`);
+    click(p.ui.btn(kind), 0);
+    assert.ok(root.activeElement, `${name}: التركيز فيها`);
+    p.player.focus();
+    assert.equal(p.ui.menuOpen(), false, `${name}: التركيز إلى المشغّل`);
+  }
+  p.handle.unmount();
+});
+
 test('isSubtitlesButton: زر CC في المشغّل وما داخله نعم، وما خارجه وnull لا', () => {
   const p = page();
   assert.equal(isSubtitlesButton(p.cc), true, 'الزر');
