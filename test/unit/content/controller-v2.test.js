@@ -16,6 +16,7 @@ const clock = (start = Date.parse(NOW)) => {
   return () => (t += 1000);
 };
 const code = (c) => (e) => e.code === c;
+const sameMark = (a, b) => a.n === b.n && a.startMs === b.startMs && a.textHash === b.textHash && a.kind === b.kind;
 const settle = async (area) => {
   await area.flush();
   await new Promise((r) => setTimeout(r, 5));
@@ -259,6 +260,22 @@ test('ص-٨: النشطة تبدّلت من سياق آخر قبل أن يصل �
   await c.activateSlot(1);
   await assert.rejects(r.undo(), code('ST_CONFLICT'), 'التراجع لا يكتب في خانة غير النشطة');
   assert.equal((await store.getBundle(A)).slots[1].track.current[0].text, 'ثانية بعد التصحيح');
+});
+
+test('ص-٢٤: تراجع markCue بعد تبديل الخانة يُرفض بـST_CONFLICT ولا يكتب في خانة غير النشطة؛ وبعد العودة إليها يتراجع', async () => {
+  const { c, store } = await setup();
+  const r = await c.markCue({ index: 1 }, 'todo');
+  const marked = (await store.getBundle(A)).slots[0].marks;
+  assert.ok(marked.some((m) => sameMark(m, r.mark)), 'العلامة في الخانة 1');
+  await c.activateSlot(2);
+  const rev = (await store.getBundle(A)).record.rev;
+  await assert.rejects(r.undo(), code('ST_CONFLICT'));
+  const b = await store.getBundle(A);
+  assert.equal(b.record.rev, rev, 'لا كتابة');
+  assert.deepEqual(b.slots[0].marks, marked, 'علامات الخانة 1 كما هي');
+  await c.activateSlot(1);
+  await r.undo();
+  assert.ok(!(await store.getBundle(A)).slots[0].marks.some((m) => sameMark(m, r.mark)), 'وفي خانتها وهي النشطة يتراجع');
 });
 
 test('ص-٢٤: editCueText ينقّي النص كما ينقّي الاستيراد نص المقطع (لا تجاوز اتجاه ولا تحكم ولا BOM ولا سطر خفي وحده)', async () => {

@@ -226,6 +226,7 @@ export default Object.freeze({
     syncFar: 'This line is far from the playback position; “I hear this now” is for lines near it.',
     syncNoVideo: 'Available once the video is playing.',
     undoStale: 'The video changed, so this can’t be undone.',
+    undoStaleSlot: 'The active translation changed, so this can’t be undone.',
     // Editing a segment’s text (idea 6, H-54): key names in editHint are isolated LTR and drawn as atomic elements (editHintText).
     editRow: 'Edit text',
     editRowTip: 'Edit this segment’s text here; timing, merging and splitting are in the Editor',
@@ -242,7 +243,6 @@ export default Object.freeze({
     editLost: 'The translation changed; your edit wasn’t saved.',
     editLostVideo: 'The video changed; your edit wasn’t saved.',
     editLostClosed: 'The panel was closed; your edit wasn’t saved.',
-    editUndoStale: 'The active translation changed, so the previous translation’s edit can’t be undone.',
     editCopy: 'Copy text',
     editCopied: 'Text copied.',
     editCopyFailed: 'Couldn’t copy the text.',

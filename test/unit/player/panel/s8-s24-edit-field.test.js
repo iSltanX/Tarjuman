@@ -48,6 +48,12 @@ function open({ cues = arCues(5) } = {}) {
       },
     };
   };
+  // «علّم للمراجعة» كما يفعل الحقيقي: العلامة في الخانة النشطة، وتراجع يسجّل الخانة التي يكتب فيها.
+  c.markCue = async ({ index }, kind = 'todo') => {
+    const at = c.getState().activeSlot;
+    c.calls.push(['markCue', index, kind, at]);
+    return { mark: null, undo: async () => { c.calls.push(['undoMark', index, at]); } };
+  };
   page.video.silentTo(0);
   const handle = page.mount();
   const copied = [];
@@ -341,7 +347,7 @@ test('ص-٢٤: «تراجع» بعد تبديل الخانة لا يكتب في 
   assert.equal(handle.peek().note?.undo, true, 'الرسالة باقية');
   await noteAct(v);
   assert.deepEqual(c.calls.filter((x) => x[0] === 'undoEdit'), [], 'لا تراجع في الخانة 2 وهي غير معروضة');
-  assert.equal(handle.peek().note.text, 'تغيّرت الترجمة النشطة، فتعذّر التراجع عن تعديل الترجمة السابقة.');
+  assert.equal(handle.peek().note.text, 'تغيّرت الترجمة النشطة، فتعذّر التراجع.');
   // التراجع في الخانة نفسها بعد العودة إليها.
   switchSlot(c, 2);
   f = openEdit(v, 2);
@@ -353,6 +359,31 @@ test('ص-٢٤: «تراجع» بعد تبديل الخانة لا يكتب في 
   await settle();
   await noteAct(v);
   assert.deepEqual(c.calls.filter((x) => x[0] === 'undoEdit'), [['undoEdit', 2, 2]]);
+});
+
+test('ص-٢٤: «تراجع» علامة الصف بعد تبديل الخانة لا يكتب في خانة غير معروضة ويقول ذلك برسالة التراجعين نفسها؛ وبعد العودة إليها يتراجع', async () => {
+  const { v, c, handle } = open();
+  const undos = () => c.calls.filter((x) => x[0] === 'undoMark');
+  over(v.rows()[1]);
+  click(btn(v, 'mark'));
+  await settle();
+  assert.equal(handle.peek().note.text, 'عُلِّم المقطع 2 للمراجعة');
+  switchSlot(c, 3);
+  await settle();
+  assert.equal(handle.peek().note?.undo, true, 'الرسالة باقية');
+  await noteAct(v);
+  assert.deepEqual(undos(), [], 'لا تراجع في الخانة 2 وهي غير معروضة');
+  assert.equal(handle.peek().note.text, 'تغيّرت الترجمة النشطة، فتعذّر التراجع.');
+  switchSlot(c, 2);
+  await settle();
+  over(v.rows()[3]);
+  click(btn(v, 'mark'));
+  await settle();
+  switchSlot(c, 1);
+  switchSlot(c, 2);
+  await settle();
+  await noteAct(v);
+  assert.deepEqual(undos(), [['undoMark', 3, 2]], 'في خانتها وهي النشطة: يتراجع');
 });
 
 // ———— فوق المتحكم والتخزين الحقيقيين (مجسّ f-r5 في التحقق الأخير، P1 بالنص نفسه) ————

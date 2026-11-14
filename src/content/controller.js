@@ -698,7 +698,8 @@ export function createController({ store, extractor = null, page = {}, now = () 
     },
 
     /**
-     * يعلّم مقطع النشطة (برقمه في state.arabic.cues) أو يزيل علامته (kind = null)، مع تراجع بكتابة واحدة.
+     * يعلّم مقطع النشطة (برقمه في state.arabic.cues) أو يزيل علامته (kind = null)، مع تراجع بكتابة واحدة في الخانة نفسها ما دامت
+     * النشطة: بعد تبديلها يُرفض بـST_CONFLICT ولا يكتب في خانة غير معروضة (التحقق الأخير لـ2.3.0 ص-٢٤).
      * @param {{ index: number }} target @param {'todo' | 'done' | null} [kind]
      * @returns {Promise<{ mark: import('../core/model/marks.js').Mark | null, undo: () => Promise<void> }>}
      */
@@ -724,8 +725,18 @@ export function createController({ store, extractor = null, page = {}, now = () 
       return {
         mark,
         undo: async () => {
-          const { id: uid, next: back } = await writeBundle((b) => (b && b.slots[slot - 1].track ? withMarksReplaced(b, slot, { remove: mark ? [mark] : [], add: before }, iso()) : undefined));
-          if (uid === videoId && back) changed();
+          let wrote;
+          try {
+            wrote = await writeBundle((b) => {
+              if (!b || !b.slots[slot - 1].track) return undefined;
+              if (b.active !== slot) throw new TjError('ST_CONFLICT', { detail: `slot=${slot}` });
+              return withMarksReplaced(b, slot, { remove: mark ? [mark] : [], add: before }, iso());
+            });
+          } catch (err) {
+            if (err instanceof TjError && err.code === 'ST_CONFLICT') await reloadIfNewer();
+            throw err;
+          }
+          if (wrote.id === videoId && wrote.next) changed();
         },
       };
     },

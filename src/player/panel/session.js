@@ -249,6 +249,20 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     return LABELS.syncFar;
   }
 
+  /**
+   * «تراجع» رسالة فعل صف يكتب في الترجمة (العلامة، ونص المقطع) لفيديوه وخانته وحدهما: بعد تغيّر الفيديو يقول «تغيّر الفيديو» فلا يمس
+   * سجل فيديو آخر (مراجعة المرحلة 5، م2)، وبعد تبديل الترجمة النشطة «تغيّرت الترجمة النشطة» فلا يكتب في خانة غير معروضة (التحقق الأخير
+   * لـ2.3.0 ص-٢٤)؛ والمتحكم يرفضه كذلك (ST_CONFLICT).
+   * @param {string | null} videoId @param {number | null} slot @param {() => unknown} undo
+   */
+  const undoHere = (videoId, slot, undo) => () => {
+    const now = controller.getState();
+    if (now.videoId !== videoId) showNote(LABELS.undoStale);
+    else if ((now.activeSlot ?? null) !== slot) showNote(LABELS.undoStaleSlot);
+    else return undo();
+    return null;
+  };
+
   /** «علّم للمراجعة» من صف: يبدّل «أعود إليه» على مقطعه في الخانة المعروضة، ورسالة فيها «تراجع». @param {number} i */
   function markRow(i) {
     const s = controller.getState();
@@ -256,15 +270,11 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     if (!cue || typeof controller.markCue !== 'function') return;
     const had = view.transcript.marked(i);
     const videoId = s.videoId;
+    const slot = s.activeSlot ?? null;
     act(async () => {
       const r = await controller.markCue({ index: i }, had ? null : 'todo');
       if (destroyed) return;
-      // التراجع لفيديو العلامة وحده: التراجع يكتب في سجل الفيديو الحالي، فلا يمس فيديو آخر (مراجعة المرحلة 5، م2).
-      showNote(had ? unmarkedNote(cue.n) : markToast(cue.n), () => {
-        if (controller.getState().videoId === videoId) return r.undo();
-        showNote(LABELS.undoStale);
-        return null;
-      });
+      showNote(had ? unmarkedNote(cue.n) : markToast(cue.n), undoHere(videoId, slot, () => r.undo()));
     }, { visible: true, own: true });
   }
 
@@ -358,13 +368,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       }
       if (destroyed) return;
       tr.finishEdit(text);
-      showNote(editedNote(cue.n), () => {
-        const now = controller.getState();
-        if (now.videoId !== videoId) showNote(LABELS.undoStale);
-        else if ((now.activeSlot ?? null) !== slot) showNote(LABELS.editUndoStale);
-        else return r.undo();
-        return null;
-      });
+      showNote(editedNote(cue.n), undoHere(videoId, slot, () => r.undo()));
     });
   }
 
