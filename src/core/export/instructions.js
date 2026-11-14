@@ -6,7 +6,7 @@
 // شيئًا؛ المقارن في الاستيراد (P4) هو الحكم.
 import { TjError } from '../errors/index.js';
 import { getLocale } from '../../i18n/index.js';
-import { arabicName, baseLang } from '../lang/index.js';
+import { arabicName, baseLang, withBa } from '../lang/index.js';
 import { isSourceLang, isVideoId } from '../model/ids.js';
 import { GLOSSARY_LIMITS } from '../model/prefs.js';
 import { LIMITS } from '../model/validate.js';
@@ -147,7 +147,7 @@ function arabicLanguageValues(code) {
   const name = arabicName(code);
   return {
     label: name ? `${name} (${code})` : code,
-    in: name ? (name.startsWith('ال') ? `ب${name}` : `بـ${name}`) : `بلغة ${code}`,
+    in: name ? withBa(name) : `بلغة ${code}`,
     code,
   };
 }

@@ -228,6 +228,20 @@ export function arabicName(code, { region = true } = {}) {
   return null;
 }
 
+/** أول الكلمة حرف عربي (لا رقم عربي هندي). */
+const ARABIC_LETTER_START = /^(?=\p{L})\p{Script=Arabic}/u;
+
+/**
+ * «ب» ملتصقة باسم لغة في جملة عربية (تحقق 2.3.0، ص-١٩): «بالعربية» و«بلغة هاواي» و«بدزونكا». والتطويل («بـ») قبل ما لا يبدأ
+ * بحرف عربي وحده، أي كلمة لاتينية أو رقم («بـKlingon»)، لا قبل كلمة عربية بدأت بـ«ال» أو لم تبدأ.
+ * @param {unknown} name
+ * @returns {string}
+ */
+export function withBa(name) {
+  const s = String(name ?? '');
+  return ARABIC_LETTER_START.test(s) ? `ب${s}` : `بـ${s}`;
+}
+
 /**
  * اسم اللغة بلغة الواجهة: العربية بقواعد arabicName، والإنجليزية من CLDR بلا شظية من الرمز (en-orig ← English).
  * @param {unknown} code @param {{ locale?: 'ar' | 'en', region?: boolean }} [o]

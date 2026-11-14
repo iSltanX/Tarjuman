@@ -7,6 +7,8 @@ import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setLocale, t } from '../../../src/i18n/index.js';
+import { arabicName, knownLanguages, withBa } from '../../../src/core/lang/index.js';
+import { languageValues } from '../../../src/core/export/instructions.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
@@ -25,4 +27,34 @@ test('ص-١٩ (٣): الأمر الخامس «إعادة الجملة» مصدر
     ...filesIn('docs/site', '.md'), ...filesIn('docs/contracts', '.md'), ...filesIn('store', '.md'), ...filesIn('src', '.js'), ...filesIn('test/unit', '.js')];
   const OLD = ['أعد', 'الجملة'].join(' ');
   for (const rel of scanned) assert.ok(!read(rel).includes(OLD), `${rel}: ${OLD}`);
+});
+
+test('ص-١٩ (٤): «ب» تلتصق باسم اللغة العربي بلا تطويل، والتطويل قبل ما لا يبدأ بحرف عربي وحده', (ctx) => {
+  reset(ctx);
+  assert.equal(withBa('العربية'), 'بالعربية');
+  assert.equal(withBa('لغة هاواي'), 'بلغة هاواي');
+  assert.equal(withBa('دزونكا'), 'بدزونكا');
+  assert.equal(withBa('Klingon'), 'بـKlingon');
+  assert.equal(withBa('3'), 'بـ3');
+  assert.equal(withBa('٣'), 'بـ٣', 'الرقم العربي الهندي رقم لا حرف');
+  assert.equal(t('common.track.roundTrip.lead', { name: 'لغة هاواي', known: true }), 'الفيديو بلغة هاواي أصلًا:');
+  assert.equal(t('common.track.roundTrip.lead', { name: 'العربية', known: true }), 'الفيديو بالعربية أصلًا:');
+  assert.equal(t('common.track.roundTrip.lead', { name: 'xx', known: false }), 'الفيديو بلغة xx أصلًا:');
+  assert.equal(t('popup.status.translationIn', { name: 'دزونكا', code: 'dz', known: true }), 'ترجمة بدزونكا');
+  assert.equal(t('popup.status.translationIn', { name: 'اليابانية', code: 'ja', known: true }), 'ترجمة باليابانية');
+  assert.equal(languageValues('xx', 'ar').in, 'بلغة xx');
+  // كل اسم يعرفه المتصفح (ومنه ما لا يبدأ بـ«ال»: «لغة هاواي» و«دزونكا» و«كيشوا»…) في المواضع الثلاثة: سطر المسار المترجم إلى
+  // لغته، وسطر الترجمة في نافذة الإضافة، و{{in_source}} و{{in_target}} في تعليمات الترجمة.
+  const codes = [...knownLanguages('ar').map((l) => l.code), 'haw', 'fil', 'ckb', 'yue'];
+  let bare = 0;
+  for (const code of codes) {
+    const name = arabicName(code);
+    if (!name) continue;
+    if (!name.startsWith('ال')) bare += 1;
+    for (const out of [t('common.track.roundTrip.lead', { name, known: true }), t('popup.status.translationIn', { name, code, known: true }), languageValues(code, 'ar').in]) {
+      assert.doesNotMatch(out, /بـ\p{Script=Arabic}/u, `${code}: ${out}`);
+      assert.ok(out.includes(`ب${name}`), `${code}: ${out}`);
+    }
+  }
+  assert.ok(bare >= 3, `أسماء لا تبدأ بـ«ال»: ${bare}`);
 });

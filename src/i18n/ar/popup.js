@@ -1,4 +1,6 @@
 // نصوص نافذة الإضافة: النص العربي هو المرجع المعتمد، والإنجليزي في ../en/popup.js بمفاتيح متطابقة.
+import { withBa } from '../../core/lang/index.js';
+
 export default Object.freeze({
   title: 'نافذة الإضافة',
   recent: 'آخر الترجمات',
@@ -30,7 +32,7 @@ export default Object.freeze({
     notCaptured: 'لم تُلتقط ترجمة الفيديو بعد',
     translationIn: ({ name, code, known }) => {
       if (!known) return `ترجمة بلغة ${code}`;
-      return `ترجمة ${name.startsWith('ال') ? `ب${name}` : `بـ${name}`}`;
+      return `ترجمة ${withBa(name)}`;
     },
     translationUnknown: 'ترجمة بلغة غير محددة',
     offset: 'الإزاحة {offset} ث',
