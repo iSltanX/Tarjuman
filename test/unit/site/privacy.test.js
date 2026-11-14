@@ -19,6 +19,16 @@ const undated = source.replace(/^- \*\*تاريخ السريان:\*\* .+$/m, '- 
 const bareMarks = (text) => text.split('\n').filter((l) => !l.startsWith('>')).join('\n').match(/(?<!`)⟨تاريخ النشر⟩(?!`)/g)?.length ?? 0;
 /** سطر «الإصدار …» في قسم «التغييرات». @param {string} text */
 const changesLine = (text) => text.slice(text.indexOf('`#changes`')).split('\n').find((l) => /^- \*\*(?:الإصدار|Version) /.test(l));
+/**
+ * المصدر بحاله قبل --effective: سطر الرأس وسطر «التغييرات» بـ⟨تاريخ النشر⟩، فإن كان مثبتًا أُرجع السطران وحدهما. فاختبار --effective
+ * على النص الحقيقي يمر قبل يوم النشر وبعده (تحقق 2.3.0، ص-٢: كان يفرض غياب التاريخ فيسقط بالإجراء الموثّق نفسه). @param {string} text
+ */
+const pendingOf = (text) => {
+  const effective = effectiveDateOf(text);
+  if (!effective) return text;
+  const line = changesLine(text);
+  return text.replace(/^- \*\*تاريخ السريان:\*\* .+$/m, '- **تاريخ السريان:** ⟨تاريخ النشر⟩').replace(line, line.replaceAll(effective, PENDING_DATE));
+};
 const { version } = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 test('PRIVACY.md المتتبَّع هو ما يولّده المولّد من مصدره', () => {
@@ -65,9 +75,30 @@ test('[قرار] يُبقي المولَّد مسودة بتنبيه، و--stric
   assert.equal(ok.text.includes('لم يحسمها الناشر'), false);
 });
 
-test('تاريخ السريان: ⟨تاريخ النشر⟩ حتى ينشر سلطان 2.3.0 (ح-62: تغيّر ما يُحفظ)، و--strict يرفضه، و--effective يملأ الرأس وسطر «التغييرات» باللغتين', () => {
+test('تاريخ السريان: المصدران وPRIVACY.md على حال واحدة، ⟨تاريخ النشر⟩ قبل النشر أو تاريخ صحيح بعد --effective (ص-٢)، و--strict يرفض غير المثبت، و--effective يملأ الرأس وسطر «التغييرات» باللغتين', () => {
+  // الحال الحاضرة أيًّا كانت (ح-62: ⟨تاريخ النشر⟩ حتى يثبّته سلطان يوم النشر): التاريخ واحد في النسختين، وصحيح إن ثُبّت
+  // (effectiveDateOf يرمي غير الصالح)، وسطر «التغييرات» عليه، وPRIVACY.md المولَّد بحاله. وما يمنع نشر غير المثبت بوابة النشر
+  // (scripts/release/gate.mjs) لا هذا الاختبار، فلا يسقط باتباع الإجراء الموثّق.
+  const effective = effectiveDateOf(source);
+  assert.equal(effectiveDateOf(sourceEn), effective, 'privacy.en.md بتاريخ privacy.md');
   for (const [name, text] of [['ar', source], ['en', sourceEn]]) {
-    assert.equal(effectiveDateOf(text), null, `${name}: يثبّته سلطان يوم النشر بـ--effective`);
+    assert.ok(changesLine(text).includes(effective ?? PENDING_DATE), `${name}: سطر «التغييرات» بتاريخ السريان، أو ⟨تاريخ النشر⟩ قبل تثبيته`);
+    if (effective) assert.equal(bareMarks(text), 0, `${name}: لا ⟨تاريخ النشر⟩ في النص بعد --effective`);
+  }
+  const current = generate();
+  assert.equal(current.effective, effective);
+  if (effective) {
+    assert.ok(current.text.includes(`تسري هذه السياسة اعتبارًا من ${effective}.`));
+    assert.ok(current.text.includes(`صدر في ${effective}`));
+    assert.equal(current.text.includes('⟨'), false);
+  } else {
+    assert.equal(current.text.includes('تسري هذه السياسة'), false);
+    assert.ok(current.text.includes(`صدر في ${PENDING_DATE}`));
+    assert.throws(() => generate({ strict: true }), /تاريخ السريان غير مثبت/, '--strict يرفض النشر قبل التاريخ');
+  }
+  // --effective على المصدر بحاله قبل النشر، باللغتين.
+  for (const [name, text] of [['ar', pendingOf(source)], ['en', pendingOf(sourceEn)]]) {
+    assert.equal(effectiveDateOf(text), null, name);
     assert.ok(changesLine(text).includes(PENDING_DATE), `${name}: سطر «التغييرات» بتاريخ الصدور ⟨تاريخ النشر⟩`);
     const dated = withEffectiveDate(text, '2026-12-01');
     assert.equal(effectiveDateOf(dated), '2026-12-01', name);
@@ -78,21 +109,19 @@ test('تاريخ السريان: ⟨تاريخ النشر⟩ حتى ينشر س�
     assert.equal(notes(dated), notes(text), `${name}: التنبيهات كما هي`);
   }
   // غير المثبت: يُولَّد بلا سطر «تسري…» وفيه «صدر في ⟨تاريخ النشر⟩»، و--strict يرفضه.
-  const pending = generate();
+  const pending = generate({ source: pendingOf(source) });
   assert.equal(pending.effective, null);
   assert.equal(pending.text.includes('تسري هذه السياسة'), false);
   assert.ok(pending.text.includes(`صدر في ${PENDING_DATE}`));
-  assert.throws(() => generate({ strict: true }), /تاريخ السريان غير مثبت/, '--strict يرفض النشر قبل التاريخ');
+  assert.throws(() => generate({ source: pendingOf(source), strict: true }), /تاريخ السريان غير مثبت/, '--strict يرفض النشر قبل التاريخ');
   // المثبت: --strict يقبله بالتاريخ في المقدمة وسطر «التغييرات»، بلا ⟨…⟩.
-  const published = generate({ source: withEffectiveDate(source, '2026-12-01'), strict: true }).text;
+  const published = generate({ source: withEffectiveDate(pendingOf(source), '2026-12-01'), strict: true }).text;
   assert.match(published, /تسري هذه السياسة اعتبارًا من 2026-12-01\./);
   assert.ok(published.includes('صدر في 2026-12-01'));
   assert.equal(published.includes('⟨'), false);
   // تثبيت سطر الرأس وحده (بيد) لا يمر: ⟨تاريخ النشر⟩ الباقي في النص لا يُنشر.
-  const headOnly = source.replace(/^- \*\*تاريخ السريان:\*\* .+$/m, '- **تاريخ السريان:** 2026-12-01');
+  const headOnly = pendingOf(source).replace(/^- \*\*تاريخ السريان:\*\* .+$/m, '- **تاريخ السريان:** 2026-12-01');
   assert.throws(() => generate({ source: headOnly }), /ما لا يُنشر: ⟨تاريخ النشر⟩/);
-  // والتاريخ واحد في النسختين.
-  assert.equal(effectiveDateOf(sourceEn), effectiveDateOf(source), 'privacy.en.md بتاريخ privacy.md');
   assert.equal(effectiveDateOf(undated), null);
   assert.throws(() => generate({ source: undated, strict: true }), /تاريخ السريان غير مثبت/, '--strict يرفض النشر قبل التاريخ');
   assert.equal(effectiveDateOf(withEffectiveDate(undated, '2026-11-04')), '2026-11-04');
