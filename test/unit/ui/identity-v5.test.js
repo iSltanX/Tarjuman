@@ -1,6 +1,6 @@
-// الهوية الرابعة «كتابٌ مفتوح» (قرار سلطان 2026-11-07، docs/identity.md): قيم لوحة الهوية (project/tj.css، الإصدار
-// 1794035287-e3de) في tokens.css ورموز المشغّل بالوضعين، وتطابق كتلتي الداكن، والتباين محسوبًا من الملف نفسه (كل نص ≥ 4.5:1 على
-// السطح الذي يحمله، وغير النص ≥ 3:1)، والحارس الذي يمنع عودة ألوان الهويات السابقة إلى src/، وقواعد المكوّنات والأسطح.
+// الهوية الخامسة «التاء» (قرار سلطان 2026-11-14، docs/identity.md): قيم لوحة الهوية 05 (والتسليم 18) في tokens.css ورموز المشغّل
+// بالوضعين، وتطابق كتلتي الداكن، والتباين محسوبًا من الملف نفسه (كل نص ≥ 4.5:1 على السطح الذي يحمله، وغير النص ≥ 3:1، والأزواج
+// الـ31 في اللوحة بنسبها)، والحارس الذي يمنع عودة ألوان الهويات السابقة إلى src/ وstore/، وقواعد المكوّنات والأسطح.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -30,45 +30,58 @@ function value(mode, name) {
   return ref ? value(mode, ref[1]) : v;
 }
 
-// رموز اللوحة (tj.css) بأسماء المنتج: --t-bg ← --tj-bg، و--t-ink ← --tj-text، و--t-primary ← --tj-brand، وهكذا.
+// قيم اللوحة 05 (والتسليم 18) بأسماء المنتج، بالوضعين. ونسخة اللوحة في tools/brand/identity-board-tj.css بأسماء --t-*.
 const BOARD = {
   light: {
-    '--tj-bg': '#F3EFE6', '--tj-surface': '#FFFDF8', '--tj-surface-2': '#EAE5DA', '--tj-surface-3': '#DFD9CC', '--tj-control': '#DFD9CC',
-    '--tj-text': '#182E2B', '--tj-text-2': '#4A5A58', '--tj-muted': '#596865', '--tj-on-ink': '#FFFDF8',
-    '--tj-border': '#E2DDD2', '--tj-border-strong': '#CDC6B8', '--tj-border-input': '#85908D',
-    '--tj-brand': '#1E4A44', '--tj-brand-hover': '#173C37', '--tj-brand-pressed': '#112E2A', '--tj-brand-ink': '#FFFFFF',
-    '--tj-accent': '#B9705A', '--tj-accent-hover': '#A6604B', '--tj-accent-text': '#8F4A36', '--tj-accent-fill': '#A05C47', '--tj-accent-soft': '#F6E7E0', '--tj-focus': '#B9705A',
-    '--tj-selected': '#1E4A44', '--tj-selected-ink': '#FFFFFF', '--tj-selected-soft': '#E6EFEC', '--tj-selected-soft-ink': '#1E4A44',
-    '--tj-success': '#2A6E46', '--tj-success-bg': '#E3F0E7', '--tj-warning': '#8F5414', '--tj-warning-bg': '#F7EAD9',
-    '--tj-danger': '#B4383E', '--tj-danger-bg': '#F8E3E3', '--tj-info': '#38679A', '--tj-info-bg': '#E3ECF5',
-    '--tj-logo-glyph': '#1E4A44', '--tj-logo-word': '#182E2B', '--tj-logo-tile': '#1E4A44', '--tj-logo-on-tile': '#F3EFE6',
+    '--tj-bg': '#F9F5F8', '--tj-surface': '#FEFDFE', '--tj-surface-2': '#F2EAEF', '--tj-surface-3': '#E9E0E6', '--tj-control': '#E9E0E6',
+    '--tj-text': '#2D1626', '--tj-text-2': '#5B4653', '--tj-muted': '#705D69', '--tj-on-ink': '#FEFDFE', '--tj-border': '#E4DBE0',
+    '--tj-border-strong': '#D2C7CE', '--tj-border-input': '#91818B', '--tj-brand': '#682455', '--tj-brand-hover': '#581847',
+    '--tj-brand-pressed': '#460D38', '--tj-brand-ink': '#FFFFFF', '--tj-accent': '#A5397E', '--tj-accent-hover': '#932C6E',
+    '--tj-accent-text': '#8B2868', '--tj-accent-fill': '#932C6E', '--tj-accent-soft': '#FEE5F2', '--tj-focus': '#A5397E', '--tj-selected': '#682455',
+    '--tj-selected-ink': '#FFFFFF', '--tj-selected-soft': '#FBE8F4', '--tj-selected-soft-ink': '#682455', '--tj-success': '#246E3A',
+    '--tj-success-bg': '#E1F5E4', '--tj-warning': '#97570D', '--tj-warning-bg': '#FEEDD7', '--tj-danger': '#B63132', '--tj-danger-bg': '#FFE7E6',
+    '--tj-info': '#2A669F', '--tj-info-bg': '#E2F0FF', '--tj-logo-glyph': '#682455', '--tj-logo-word': '#2D1626', '--tj-logo-tile': '#762E61',
+    '--tj-logo-on-tile': '#FEF8FC', '--tj-brand-soft': '#FBE8F4', '--tj-brand-text': '#682455', '--tj-accent-ink': '#FFFFFF',
+    '--tj-accent-soft-2': '#F8CEE5', '--tj-current': '#FEE5F2', '--tj-current-ink': '#8B2868', '--tj-mark': '#A5397E',
+    '--tj-logo-dots-accent': '#A5397E',
   },
   dark: {
-    '--tj-bg': '#0F1917', '--tj-surface': '#16221F', '--tj-surface-2': '#1E2B28', '--tj-surface-3': '#263431', '--tj-control': '#263431',
-    '--tj-text': '#EDE9E0', '--tj-text-2': '#B6B9B2', '--tj-muted': '#8F9893', '--tj-on-ink': '#0F1917',
-    '--tj-border': '#26332F', '--tj-border-strong': '#33423D', '--tj-border-input': '#7E8A86',
-    '--tj-brand': '#EDE9E0', '--tj-brand-hover': '#FFFFFF', '--tj-brand-pressed': '#CFCBC2', '--tj-brand-ink': '#0F1917',
-    '--tj-accent': '#D9937B', '--tj-accent-text': '#E2A48E', '--tj-accent-fill': '#D9937B', '--tj-accent-soft': '#33251F', '--tj-focus': '#D9937B',
-    '--tj-selected': '#EDE9E0', '--tj-selected-ink': '#0F1917', '--tj-selected-soft': '#1F2F2B', '--tj-selected-soft-ink': '#CFE0DA',
-    '--tj-success': '#7CC79A', '--tj-warning': '#E4B06A', '--tj-danger': '#F08C8C', '--tj-info': '#8FB4DC',
-    '--tj-logo-glyph': '#EDE9E0', '--tj-logo-word': '#EDE9E0', '--tj-logo-tile': '#1E4A44',
+    '--tj-bg': '#150C12', '--tj-surface': '#20151D', '--tj-surface-2': '#2C1F28', '--tj-surface-3': '#372932', '--tj-control': '#372932',
+    '--tj-text': '#F4EBF1', '--tj-text-2': '#C7B9C2', '--tj-muted': '#A4939D', '--tj-on-ink': '#150C12', '--tj-border': '#392B34',
+    '--tj-border-strong': '#4A3A44', '--tj-border-input': '#816E7A', '--tj-brand': '#F3E2EC', '--tj-brand-hover': '#FBF2F8',
+    '--tj-brand-pressed': '#DDCBD6', '--tj-brand-ink': '#150C12', '--tj-accent': '#E791C2', '--tj-accent-text': '#F3AAD3',
+    '--tj-accent-fill': '#E791C2', '--tj-accent-soft': '#432135', '--tj-focus': '#E791C2', '--tj-selected': '#F3E2EC', '--tj-selected-ink': '#150C12',
+    '--tj-selected-soft': '#382030', '--tj-selected-soft-ink': '#F0C5E1', '--tj-success': '#7CCD8E', '--tj-warning': '#EBB25F',
+    '--tj-danger': '#F28885', '--tj-info': '#85B6E9', '--tj-logo-glyph': '#F3E2EC', '--tj-logo-word': '#F4EBF1', '--tj-logo-tile': '#762E61',
+    '--tj-brand-soft': '#382030', '--tj-brand-text': '#F0C5E1', '--tj-accent-hover': '#F1A1CE', '--tj-accent-ink': '#150C12',
+    '--tj-current': '#432135', '--tj-current-ink': '#F3AAD3', '--tj-mark': '#E791C2', '--tj-logo-dots-accent': '#E791C2',
+    '--tj-success-bg': '#172C1C', '--tj-warning-bg': '#37250E', '--tj-danger-bg': '#3E1E1E', '--tj-info-bg': '#172839',
   },
 };
 
-test('قيم لوحة الهوية بالوضعين في tokens.css (الصنوبر يفعل، والطين يُشير، والعاج يحمل القراءة)', () => {
+test('قيم لوحة الهوية بالوضعين في tokens.css (الأرجوان العميق يفعل، والأرجوان المضيء يُشير، والورق يحمل القراءة)', () => {
   for (const mode of ['light', 'dark']) {
     for (const [name, want] of Object.entries(BOARD[mode])) assert.equal(value(mode, name), want, `${mode} ${name}`);
   }
 });
 
-test('كتلتا الداكن (وضع النظام وdata-theme="dark") متطابقتان رمزًا رمزًا، وبلاطة الشعار صنوبر بالوضعين', () => {
+test('كتلتا الداكن (وضع النظام وdata-theme="dark") متطابقتان رمزًا رمزًا، وبلاطة الشعار الأرجوانية واحدة بالوضعين', () => {
   assert.deepEqual([...DARK_MEDIA.entries()].sort(), [...DARK.entries()].sort());
   assert.equal(value('light', '--tj-logo-tile'), value('dark', '--tj-logo-tile'));
 });
 
-// ---- الحارس: لا لون من الهويات السابقة في src/ ----
-/** «باذنجاني على رمادي» (الثالثة) و«بُنّ على ورق» (الثانية) وما قبلهما: قيمها المميِّزة. */
+// ---- الحارس: لا لون من الهويات السابقة في src/ وstore/ ----
+/**
+ * «كتابٌ مفتوح» (الرابعة: الصنوبر والعاج والطين وليل الصنوبر، كل قيمة في tokens.css لم تبقَ)، و«باذنجاني على رمادي» (الثالثة)
+ * و«بُنّ على ورق» (الثانية) وما قبلهما: قيمها المميِّزة.
+ */
 const RETIRED = [
+  '#0F1917', '#112E2A', '#16221F', '#17291F', '#173C37', '#182E2B', '#1A2634', '#1E2B28', '#1E4A44', '#1F2F2B', '#26332F', '#263431',
+  '#2A6E46', '#33251F', '#33291A', '#33423D', '#351D1D', '#38679A', '#452F27', '#4A5A58', '#596865', '#7CC79A', '#7E8A86', '#85908D',
+  '#8F4A36', '#8F5414', '#8F9893', '#8FB4DC', '#A05C47', '#A6604B', '#B4383E', '#B6B9B2', '#B9705A', '#CDC6B8', '#CFCBC2', '#CFE0DA',
+  '#D9937B', '#DFD9CC', '#E2A48E', '#E2DDD2', '#E3ECF5', '#E3F0E7', '#E4B06A', '#E6EFEC', '#EAE5DA', '#EDE9E0', '#EED2C6', '#F08C8C',
+  '#F3EFE6', '#F6E7E0', '#F7EAD9', '#F8E3E3', '#FFFDF8',
+  'rgb(30 74 68', 'rgb(243 239 230', 'rgb(185 112 90', 'rgb(15 25 23', 'rgb(217 147 123', 'rgb(24 46 43', 'rgb(237 233 224',
   '#6B2D5E', '#5B2951', '#4E2646', '#D9A7CB', '#E0BCD6', '#B98FAD', '#E1D4DD', '#F5F1F3', '#4B3E48', '#E6CEDF', '#312B2F',
   '#F6F5F4', '#FEFEFD', '#E8E7E6', '#DFDDDD', '#D4D2D2', '#121112', '#1E1D1E', '#2B292A', '#221C21', '#F1EDEF', '#0E0E0E', '#979596',
   '#5C4434', '#D6B38F', '#C9A24D', '#E2C27A', '#FAF8F4', '#1F1C1A', '#4338CA',
@@ -83,9 +96,9 @@ function* walk(dir) {
   }
 }
 
-test('الحارس: لا لون من الهويات السابقة في أي ملف نصي تحت src/', () => {
+test('الحارس: لا لون من الهويات السابقة في أي ملف نصي تحت src/ وstore/', () => {
   const hits = [];
-  for (const file of walk(path.join(ROOT, 'src'))) {
+  for (const file of [...walk(path.join(ROOT, 'src')), ...walk(path.join(ROOT, 'store'))]) {
     const text = readFileSync(file, 'utf8').toUpperCase();
     for (const c of RETIRED) if (text.includes(c.toUpperCase())) hits.push(`${path.relative(ROOT, file)}: ${c}`);
   }
@@ -127,13 +140,59 @@ test('التباين بالوضعين: كل نص ≥ 4.5:1 على السطح ا�
       assert.ok(r >= 3, `${mode}: ${fg} على ${bg} = ${r.toFixed(2)} < 3`);
     }
   }
-  // الشعار على بلاطته: العاج على الصنوبر.
+  // الشعار على بلاطته: الورق على الأرجوان.
   assert.ok(ratio(value('light', '--tj-logo-on-tile'), value('light', '--tj-logo-tile')) >= 4.5);
 });
 
+// أزواج التباين في اللوحة 05 («التباين في الفاتح» و«في الداكن»): اسم الزوج كما في اللوحة، والنص والسطح، والحد، ونسبة اللوحة بالوضعين.
+const BOARD_PAIRS = [
+  ['الحبر على الأرضية', '--tj-text', '--tj-bg', 4.5, 15.50, 16.47],
+  ['الحبر على البطاقة', '--tj-text', '--tj-surface', 4.5, 16.50, 15.17],
+  ['الحبر على الغائر', '--tj-text', '--tj-surface-2', 4.5, 14.18, 13.50],
+  ['الثانوي على البطاقة', '--tj-text-2', '--tj-surface', 4.5, 8.46, 9.40],
+  ['الثانوي على الغائر', '--tj-text-2', '--tj-surface-2', 4.5, 7.27, 8.36],
+  ['الخافت على الأرضية', '--tj-muted', '--tj-bg', 4.5, 5.62, 6.62],
+  ['الخافت على البطاقة', '--tj-muted', '--tj-surface', 4.5, 5.98, 6.10],
+  ['الخافت على الغائر', '--tj-muted', '--tj-surface-2', 4.5, 5.14, 5.43],
+  ['حبر الإجراء على الإجراء', '--tj-brand-ink', '--tj-brand', 4.5, 10.65, 15.46],
+  ['الإجراء على الأرضية', '--tj-brand', '--tj-bg', 4.5, 9.86, 15.46],
+  ['الإجراء على البطاقة', '--tj-brand', '--tj-surface', 4.5, 10.49, 14.25],
+  ['نص القسم الحالي على صبغة القسم', '--tj-selected-section-ink', '--tj-selected-section', 4.5, 9.10, 9.72],
+  ['نص اللحظة على البطاقة', '--tj-accent-text', '--tj-surface', 4.5, 7.96, 9.69],
+  ['حبر المضيء على تعبئة المضيء', '--tj-accent-ink', '--tj-accent-fill', 4.5, 7.43, 8.44],
+  ['نص المقطع الحالي على صبغة المقطع', '--tj-current-ink', '--tj-current', 4.5, 6.81, 7.63],
+  ['المضيء على الأرضية', '--tj-accent', '--tj-bg', 3, 5.58, 8.44],
+  ['المضيء على البطاقة', '--tj-accent', '--tj-surface', 3, 5.94, 7.78],
+  ['التركيز على البطاقة', '--tj-focus', '--tj-surface', 3, 5.94, 7.78],
+  ['حد الحقل على البطاقة', '--tj-border-input', '--tj-surface', 3, 3.62, 3.75],
+  ['حد الحقل على الأرضية', '--tj-border-input', '--tj-bg', 3, 3.40, 4.07],
+  ['النجاح على خلفيته', '--tj-success', '--tj-success-bg', 4.5, 5.46, 7.77],
+  ['التحذير على خلفيته', '--tj-warning', '--tj-warning-bg', 4.5, 4.97, 7.72],
+  ['الخطر على خلفيته', '--tj-danger', '--tj-danger-bg', 4.5, 5.13, 6.13],
+  ['المعلومة على خلفيتها', '--tj-info', '--tj-info-bg', 4.5, 5.18, 7.05],
+  ['حبر النجاح على النجاح', '--tj-success-ink', '--tj-success', 4.5, 6.24, 10.04],
+  ['حبر الخطر على الخطر', '--tj-danger-ink', '--tj-danger', 4.5, 6.04, 7.90],
+  ['أيقونة النجاح على الحبر', '--tj-toast-success', '--tj-text', 3, 9.42, 6.02],
+  ['أيقونة التحذير على الحبر', '--tj-toast-warning', '--tj-text', 3, 9.47, 5.79],
+  ['أيقونة الخطر على الحبر', '--tj-toast-danger', '--tj-text', 3, 7.39, 6.10],
+  ['إجراء الإشعار على الحبر', '--tj-toast-accent', '--tj-text', 3, 8.60, 6.92],
+  ['النص فوق الحبر على الحبر', '--tj-on-ink', '--tj-text', 4.5, 16.50, 16.47],
+];
+
+test('أزواج التباين الـ31 في اللوحة 05 بالوضعين: كلٌّ فوق حدّه، والنسبة المحسوبة من tokens.css هي نسبة اللوحة', () => {
+  assert.equal(BOARD_PAIRS.length, 31);
+  for (const [name, fg, bg, min, light, dark] of BOARD_PAIRS) {
+    for (const [mode, want] of [['light', light], ['dark', dark]]) {
+      const r = ratio(value(mode, fg), value(mode, bg));
+      assert.ok(r >= min, `${mode}: ${name} = ${r.toFixed(2)} < ${min}`);
+      assert.equal(Number(r.toFixed(2)), want, `${mode}: ${name}`);
+    }
+  }
+});
+
 test('استثناء مسمّى (ص1، ق14): رمز البلاطة الافتراضية في المحفوظات زخرفي بتباين منخفض عمدًا بالوضعين، ومخفي عن قارئ الشاشة', () => {
-  // --tj-border-strong على --tj-surface-2: نحو 1.35 فاتحًا و1.39 داكنًا. ليس نصًا ولا عنصر تحكم ولا معلومة، فلا يخضع لحدّي 4.5 و3.
-  for (const [mode, expect] of [['light', 1.35], ['dark', 1.39]]) {
+  // --tj-border-strong على --tj-surface-2: نحو 1.39 فاتحًا و1.48 داكنًا. ليس نصًا ولا عنصر تحكم ولا معلومة، فلا يخضع لحدّي 4.5 و3.
+  for (const [mode, expect] of [['light', 1.39], ['dark', 1.48]]) {
     const r = ratio(value(mode, '--tj-border-strong'), value(mode, '--tj-surface-2'));
     assert.ok(Math.abs(r - expect) < 0.03, `${mode}: ${r.toFixed(2)}`);
     assert.ok(r < 3, 'خافت عمدًا');
@@ -142,16 +201,16 @@ test('استثناء مسمّى (ص1، ق14): رمز البلاطة الافتر
   assert.match(thumb, /className: 'lib-thumb__fallback', attrs: \{ 'aria-hidden': 'true' \}/);
 });
 
-test('رموز المشغّل (داكن بالوضعين): قيم .pl في اللوحة، والمحدد صبغة طين 18% بنص طيني، والرئيسي بالطين الليلي بحبر داكن', () => {
-  assert.equal(PLAYER_TOKENS.menuBg, 'rgb(15 25 23 / 92%)');
-  assert.equal(PLAYER_TOKENS.menuText, '#F1EFE8');
-  assert.equal(PLAYER_TOKENS.menuText2, '#B6B9B2');
-  assert.equal(PLAYER_TOKENS.accent, '#D9937B');
-  assert.equal(PLAYER_TOKENS.accentInk, '#0F1917');
-  assert.equal(PLAYER_TOKENS.selected, 'rgb(217 147 123 / 18%)');
-  assert.equal(PLAYER_TOKENS.selectedInk, '#D9937B');
-  assert.equal(PLAYER_TOKENS.menuRadius, '12px');
-  const menu = '#0F1917'; // ليل القائمة دون الشفافية: أسوأ حالة فوق فيديو داكن
+test('رموز المشغّل (داكن بالوضعين): قيم اللوحة 12، والقوائم زجاج من ليل الأرجوان، والمحدد صبغة المضيء الليلي 18% بنصه، والرئيسي بالمضيء الليلي بحبر داكن', () => {
+  assert.equal(PLAYER_TOKENS.menuBg, 'rgb(21 12 18 / 92%)');
+  assert.equal(PLAYER_TOKENS.menuText, '#F4EBF1');
+  assert.equal(PLAYER_TOKENS.menuText2, '#C7B9C2');
+  assert.equal(PLAYER_TOKENS.accent, '#E791C2');
+  assert.equal(PLAYER_TOKENS.accentInk, '#150C12');
+  assert.equal(PLAYER_TOKENS.selected, 'rgb(231 145 194 / 18%)');
+  assert.equal(PLAYER_TOKENS.selectedInk, '#E791C2');
+  assert.equal(PLAYER_TOKENS.menuRadius, '10px');
+  const menu = '#150C12'; // ليل القائمة دون الشفافية: أسوأ حالة فوق فيديو داكن
   assert.ok(ratio(PLAYER_TOKENS.accentInk, PLAYER_TOKENS.accent) >= 4.5);
   assert.ok(ratio(PLAYER_TOKENS.menuText, menu) >= 7 && ratio(PLAYER_TOKENS.menuText2, menu) >= 4.5);
   for (const k of ['warn', 'error', 'ok', 'accent', 'selectedInk']) assert.ok(ratio(PLAYER_TOKENS[k], menu) >= 4.5, k);
@@ -171,7 +230,7 @@ function rule(sheet, selector) {
 }
 const has = (sheet, selector, decl) => assert.ok(rule(sheet, selector).includes(decl), `${selector} { … ${decl} … } ← ${rule(sheet, selector)}`);
 
-test('المكوّنات (لوحة 08): الأنواع الستة والأحجام الخمسة، والمختار صنوبر بنص عاج، والتركيز طيني، والإشعار بلون الحبر', () => {
+test('المكوّنات (اللوحتان 09 و10): الأنواع الستة والأحجام الخمسة، والمختار بالأرجوان العميق بنص أبيض، والتركيز بالمضيء، والإشعار بلون الحبر', () => {
   const ui = read('src/ui/components.css');
   has(ui, '.tj-btn', 'border: 1px solid transparent; background: var(--tj-control)');
   for (const v of ['primary', 'secondary', 'outline', 'ghost', 'danger', 'accent']) assert.ok(ui.includes(`.tj-btn--${v} {`), v);
@@ -188,13 +247,14 @@ test('المكوّنات (لوحة 08): الأنواع الستة والأحجا
   has(ui, '.tj-toast', 'background: var(--tj-text); color: var(--tj-on-ink)');
   has(ui, '.tj-toast--success .tj-icon', 'var(--tj-toast-success)');
   has(ui, '.tj-meter__fill', 'background: var(--tj-accent)');
-  has(ui, '.tj-sinnah', 'transform: rotate(45deg)');
+  has(ui, '.tj-sinnah', 'clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%)');
+  assert.doesNotMatch(rule(ui, '.tj-sinnah'), /rotate\(45deg\)/, 'نقطة قلم لا معيّن مدوّر');
   has(ui, '.tj-dialog', 'border-radius: var(--tj-radius-card-lg)');
   has(ui, '.tj-logo__word', 'font-weight: 800');
   assert.match(read('src/ui/base.css'), /:focus-visible \{ outline: 2px solid var\(--tj-focus\); outline-offset: 2px; \}/);
 });
 
-test('الأسطح: الصفحة الحالية والقسم الحالي صبغة صنوبرية بأيقونة طينية، والمقطع الحالي طيني، والمفاتيح بالطين', async () => {
+test('الأسطح: الصفحة الحالية والقسم الحالي صبغة الأرجوان بأيقونة بالمضيء، والمقطع الحالي بالمضيء، والمفاتيح بالمضيء', async () => {
   const base = read('src/ui/base.css');
   has(base, '.tj-topbar__link[aria-current="page"]', 'background: var(--tj-selected-section); color: var(--tj-selected-section-ink)');
   has(base, '.tj-topbar__link[aria-current="page"] .tj-icon', 'var(--tj-selected-section-icon)');
@@ -264,7 +324,7 @@ test('ت-١١ (تحقق Fable للتصميم): عدّاد رقاقة التصف�
     const r2 = ratio(value(mode, colorOf(tag)), value(mode, '--tj-control'));
     assert.ok(r2 >= 4.5, `${mode}: الوسم ${r2.toFixed(2)} < 4.5`);
   }
-  // في الرقاقة المختارة يرث العدّاد نص المختار (العاج على الصنوبر)، لا حبر الصفحة.
+  // في الرقاقة المختارة يرث العدّاد نص المختار (الأبيض على الأرجوان العميق)، لا حبر الصفحة.
   assert.match(ownRule(ui, '.tj-chip[aria-pressed="true"] .tj-chip__count'), /color: inherit/);
 });
 

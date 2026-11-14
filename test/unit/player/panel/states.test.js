@@ -74,12 +74,12 @@ test('المفتوحة: الرأس (الشعار والعنوان) وزرا «إ
   assert.equal(hide.hasAttribute('aria-haspopup'), false, 'زر مباشر لا يفتح قائمة');
   assert.equal(close.getAttribute('aria-label'), 'إغلاق اللوحة');
   assert.ok(v.q('.head .mark'), 'رمز الشعار');
-  assert.equal(v.q('.head .mark').getAttribute('viewBox'), '0 0 200 176.4', 'رمز الشعار وحده دون الاسم (إطار 200 × 176.4)');
+  assert.equal(v.q('.head .mark').getAttribute('viewBox'), '0 0 240 195', 'رمز الشعار وحده دون الاسم (إطار 240 × 195)');
   assert.equal(v.q('.head .mark').getAttribute('width'), '22', 'رأس اللوحة 22 كلوحة 12');
   assert.equal(v.q('.head .tj-logo__word'), null);
   const ds = v.q('.head .mark').children.map((p) => p.getAttribute('d'));
-  assert.deepEqual(ds.slice(0, 2), ['M50 0L100 50 50 100 0 50Z', 'M150 0L200 50 150 100 100 50Z'], 'نقطتا التاء');
-  assert.match(ds[2], /^M0 123\.6H23\.6/, 'الكتاب بالنسخة المصحّحة تحت 32 بكسل');
+  assert.deepEqual(ds.slice(0, 2), ['M84 0L115.5 51L60 102L28.5 51Z', 'M180 0L211.5 51L156 102L124.5 51Z'], 'نقطتا التاء نقطتا قلم');
+  assert.match(ds[2], /^M0 123C52 123 /, 'الكتاب بالنسخة الصغيرة تحت 32 بكسل');
 });
 
 test('الإغلاق: panelOpen=false وحده، فتختفي من الصفحة ويبقى زرها في الشريط (panelEntry لا يُمس)', () => {

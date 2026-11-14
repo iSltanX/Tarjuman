@@ -226,7 +226,7 @@ test('حجم الأيقونات وسُمكها: مقاس واحد في الست�
   assert.match(css, /\.group\[data-size="tight"\] \{ --w: 34px; --icon: 18px/);
   assert.match(css, /\.group\[data-size="fullscreen"\] \{ --w: 54px; --icon: 26px/);
   assert.match(css, /\.btn:focus-visible \{ outline: 2px solid #FFFFFF; outline-offset: -6px/, 'حلقة تركيز بيضاء داخلية');
-  assert.match(css, /\.btn\[aria-expanded="true"\], \.btn\[aria-pressed="true"\] \{ color: var\(--tj-p-accent\); \}/, 'المفتوح والمضغوط بالطين الليلي (الهوية الرابعة، لوحة 10)');
+  assert.match(css, /\.btn\[aria-expanded="true"\], \.btn\[aria-pressed="true"\] \{ color: var\(--tj-p-accent\); \}/, 'المفتوح والمضغوط بالأرجوان المضيء الليلي (الهوية الخامسة، لوحة 12)');
   assert.match(css, /\.btn\[aria-expanded="true"\]::after, \.btn\[aria-pressed="true"\]::after \{ content: ""; position: absolute; left: 50%; bottom: 4px; width: 14px; height: 2px;[^}]*background: var\(--tj-p-accent\)/, 'وخطٌّ طيني تحت الأيقونة');
   assert.doesNotMatch(css, /\.dot|\.spin|tj-spin/, 'لا نقاط ولا دوّار');
 });

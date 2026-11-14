@@ -106,10 +106,10 @@ const DARK = Object.freeze({
 
 /** ما لا يتبدل بالوضع: الزوايا والارتفاعات والحركة والخطوط (:root وحده). */
 const SHARED = Object.freeze({
-  radiusSm: '4px',
-  radiusMd: '6px',
-  radiusLg: '10px',
-  radiusXl: '16px',
+  radiusSm: '3px',
+  radiusMd: '4px',
+  radiusLg: '8px',
+  radiusXl: '12px',
   controlSm: '32px',
   controlLg: '40px',
   motionFast: '120ms',
