@@ -92,6 +92,13 @@ test('§١٢.٢ (٩): رسالة أمر الوضع بالإنجليزية تقو
   assert.equal(t('player.controls.modeOff'), 'Hide translation', 'خيار القائمة نفسه باقٍ');
 });
 
+test('§١٢.٢ (١٠): بند التصدير في سجل الإصدار العربي للمتجر جملة كأخواته، لا «التصدير ملف»', () => {
+  const after = read('store/listing.ar.md').split('<!-- field: amo.releaseNotes -->')[1];
+  const block = after.slice(0, after.indexOf('\n```\n'));
+  assert.ok(block.includes('\n• تصدير الترجمة ملف SRT أو WebVTT، وحدها أو مع الأصل في سطر تحت كل مقطع للمشاهدة في مشغّل آخر.\n'), block);
+  assert.ok(!block.includes('• التصدير ملف'));
+});
+
 test('§١٢.٢ (١٢): سطر «يُرسل أول 100» العام يرجع إلى كل زوج منها، ويذكر قائمة «أي لغة» في ترتيب الإرفاق', (ctx) => {
   reset(ctx);
   assert.equal(t('settings.glossary.sentCapGeneral', { max: '100 مصطلح' }),
@@ -101,6 +108,13 @@ test('§١٢.٢ (١٢): سطر «يُرسل أول 100» العام يرجع إ�
   assert.equal(t('settings.glossary.sentCapGeneral', { max: '100 terms' }),
     'With some pair lists there are more than 100 terms, so only the first 100 terms are sent with each such pair’s instructions: its list first, then the “Any language” list into the same language if there is one, then the general glossary.');
   assert.ok(t('settings.glossary.sentCapGeneral', { max: '' }).includes(`“${t('settings.glossary.anySource')}”`));
+});
+
+test('§١٢.٢ (١٣): سطر 2.3.0 في «التغييرات» يسند الحذف إلى المسودة وحدها، لا إلى قوائم المصطلحات معها', () => {
+  for (const rel of ['docs/site/privacy.md', 'PRIVACY.md']) {
+    const line = read(rel).split('\n').find((l) => l.startsWith('- **الإصدار 2.3.0'));
+    assert.ok(line?.includes('ومسودة تعديلاتك في المحرّر ما لم تحفظها، والمسودة تُحذف حين تحفظ تعديلاتها أو تتجاهلها.'), rel);
+  }
 });
 
 test('§١٢.٢ (١٤): «the Editor» اسم صفحة بحرف كبير كـ«Library» و«Settings» في كل نص إنجليزي', () => {
