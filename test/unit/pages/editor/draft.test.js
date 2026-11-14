@@ -1,13 +1,15 @@
 // مسودة المحرّر (الفكرة ٩، ح-48): الكتابة بعد ثانيتين من السكون وبحد أقصى كل 15 ثانية، والتفريغ فورًا عند الإخفاء وpagehide، ولا
 // كتابة ما لم تتغير نسخة الجلسة؛ والحذف بعد الحفظ و«تجاهل التغييرات» و«التبديل دون حفظ» وعند فتح خانة نظيفة (ومنها التالفة)؛ واللافتة
 // الثابتة بحالاتها الثلاث (الهوية نفسها «استعادة / تجاهل»، والإزاحة وحدها تُتبنّى الحاضرة، والمحتوى تغيّر «تنزيل / تجاهل») وإمساك
-// الكتابة ما دامت قائمة، ونتيجة كل فعل في المنطقة الحية. العقد تُقارن بـassert.ok(a === b) لا بـassert.equal (انظر fake-dom.js).
+// الكتابة ما دامت قائمة (ح-52: تعديلات الجلسة واللافتة قائمة لا تطمس المسودة التي لم يُقرَّر فيها، ولا يحذفها الحفظ ولا
+// «التبديل دون حفظ» ولا المغادرة، والحافظ الممسَك خامد؛ وكانت إزالة شرط الإمساك تنجو من اختبارات المحرّر كلها، تحقق 2.3.0
+// ص-٤)، ونتيجة كل فعل في المنطقة الحية. العقد تُقارن بـassert.ok(a === b) لا بـassert.equal (انظر fake-dom.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore } from '../../../../src/core/store/index.js';
 import { draftOf } from '../../../../src/core/model/draft.js';
 import { mountEditor } from '../../../../src/pages/editor/app.js';
-import { DRAFT_IDLE_MS, DRAFT_MAX_MS } from '../../../../src/pages/editor/draft.js';
+import { DRAFT_IDLE_MS, DRAFT_MAX_MS, createDraftKeeper } from '../../../../src/pages/editor/draft.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
 import { NOW } from '../../../helpers/fixtures.js';
 import { sampleBundle, seedBundle } from '../../../helpers/fixtures-v2.js';
@@ -292,4 +294,133 @@ test('الفكرة ٩: تغيّر محتوى الخانة بعد المسودة:
   assert.equal(stored(), null, 'حُذفت');
   assert.match(textOf(env.root.querySelector('.ed-toast')), /حُذفت المسودة\./);
   assert.equal(editor.draft.held, false);
+});
+
+test('ح-52: ما يُكتب في الجلسة واللافتة قائمة لا يحل محل المسودة المعروضة، لا بالسكون ولا بالحد الأقصى ولا بالإخفاء ولا pagehide؛ وبعد القرار يُكتب', async () => {
+  const { env, editor, stored, calls } = await mounted({ seed: (slot) => draftOn(slot) });
+  assert.ok(banner(env), 'اللافتة ظاهرة');
+  assert.equal(editor.draft.held, true);
+  const before = structuredClone(stored());
+  editor.state.session.setText(2, 'كُتب واللافتة قائمة');
+  assert.equal(editor.state.session.dirty, true, 'في الجلسة ما لم يُحفظ');
+  await env.advance(DRAFT_IDLE_MS + 100);
+  // كتابة متصلة أطول من الحد الأقصى.
+  for (let i = 1; i <= 16; i++) {
+    editor.state.session.setText(2, `حرف ${i}`);
+    await env.advance(1000);
+  }
+  env.doc.visibilityState = 'hidden';
+  env.fireDoc({ type: 'visibilitychange' });
+  env.fireWin('pagehide');
+  await editor.draft.flush();
+  await settle(10);
+  assert.deepEqual(calls, { set: 0, clear: 0 }, 'لا كتابة ولا حذف ما دامت اللافتة');
+  assert.deepEqual(stored(), before, 'المسودة التي لم يُقرَّر فيها كما هي');
+  assert.ok(banner(env), 'واللافتة باقية');
+
+  // القرار («تجاهل» بتأكيد) يفك الإمساك: ما كُتب في أثنائها يُكتب مسودةً بعد السكون.
+  env.doc.visibilityState = 'visible';
+  byFid(env, 'draftDiscard').click();
+  await settle();
+  openDialogEl(env).close('discard');
+  await settle(10);
+  assert.equal(editor.draft.held, false);
+  assert.equal(stored(), null, 'حُذفت المسودة السابقة');
+  await env.advance(DRAFT_IDLE_MS + 100);
+  await settle(10);
+  assert.equal(stored()?.[0]?.cues[2].text, 'حرف 16', 'وكُتبت تعديلات الجلسة بعد القرار');
+});
+
+test('ح-52: «التبديل دون حفظ» والرجوع إلى «المحفوظات» واللافتة قائمة لا يحذفان المسودة التي لم يُقرَّر فيها، وتعود لافتتها', async () => {
+  const a = await mounted({ seed: (slot) => draftOn(slot) });
+  assert.ok(banner(a.env));
+  const before = structuredClone(a.stored());
+  a.editor.state.session.setText(2, 'كُتب واللافتة قائمة ثم تُرك');
+  const switching = a.editor.switchSlot(2);
+  await settle();
+  openDialogEl(a.env).close('switch');
+  await switching;
+  await settle(10);
+  assert.equal(a.editor.state.slot, 2);
+  assert.deepEqual(a.stored(), before, 'تُجوهلت تعديلات الجلسة لا المسودة السابقة');
+  await a.editor.switchSlot(1);
+  await settle(10);
+  assert.equal(a.editor.state.slot, 1, 'بلا حوار');
+  assert.equal(banner(a.env)?.getAttribute('data-kind'), 'same', 'تعود لافتتها');
+
+  const b = await mounted({ seed: (slot) => draftOn(slot) });
+  assert.ok(banner(b.env));
+  const kept = structuredClone(b.stored());
+  findAll(b.env.root, (e) => e.classList?.contains?.('ed-back'))[0].click();
+  await settle(10);
+  assert.ok(b.env.doc.defaultView.location.assigned?.includes('library'), 'غادر إلى المحفوظات');
+  assert.deepEqual(b.stored(), kept, 'المسودة باقية تنتظر قرارها');
+  assert.equal(b.calls.clear, 0);
+});
+
+test('ح-52: الحفظ واللافتة قائمة لا يحذف المسودة التي لم يُقرَّر فيها: تبقى، وتصير لافتتها «تنزيل / تجاهل» لأن الخانة تغيّرت بعدها', async () => {
+  const { env, editor, stored, calls } = await mounted({ seed: (slot) => draftOn(slot) });
+  assert.equal(banner(env)?.getAttribute('data-kind'), 'same');
+  const before = structuredClone(stored());
+  editor.state.session.setText(2, 'كُتب واللافتة قائمة ثم حُفظ');
+  await editor.save();
+  await settle(10);
+  assert.equal(editor.state.session.dirty, false, 'حُفظ');
+  assert.equal(calls.clear, 0);
+  assert.deepEqual(stored(), before, 'المسودة باقية');
+  assert.equal(banner(env)?.getAttribute('data-kind'), 'changed', 'فلا تُستعاد فوق ما حُفظ بعدها');
+  assert.equal(editor.draft.held, true);
+});
+
+/** نافذة بمؤقتات تُعدّ وتُطلق يدويًا، للحافظ وحده. */
+function keeperWin() {
+  let id = 0;
+  const timers = new Map();
+  return {
+    setTimeout: (fn) => { timers.set(++id, fn); return id; },
+    clearTimeout: (t) => { timers.delete(t); },
+    armed: () => timers.size,
+    fire: () => {
+      const due = [...timers.values()];
+      timers.clear();
+      for (const fn of due) fn();
+    },
+  };
+}
+
+test('ح-52: الحافظ الممسَك خامد: لا يجدول مؤقتًا ولا يكتب ولا يحذف (ولو بـforce)، والإمساك يوقف ما جُدول؛ وبعد فكّه يكتب ما تغيّر في أثنائه', async () => {
+  const win = keeperWin();
+  const log = [];
+  const store = {
+    setDraft: async (id, slot, d) => { log.push(['set', slot, d.cues[0].text]); },
+    clearDraft: async (id, slot) => { log.push(['clear', slot]); },
+  };
+  const session = { version: 0, dirty: false, offsetMs: 0, committedMs: 0, snapshot: () => [{ n: 1, startMs: 0, endMs: 1000, text: 'في الجلسة' }] };
+  const opened = { track: { fileName: 'a.srt', importedAt: NOW, editedAt: null }, offsetMs: 0 };
+  const keeper = createDraftKeeper({ win, store, videoId: 'AAAAAAAAAAA', now: () => Date.parse(NOW), current: () => ({ session, slot: 1, opened }) });
+
+  session.version = 1;
+  session.dirty = true;
+  keeper.schedule();
+  assert.equal(win.armed(), 2, 'السكون والحد الأقصى');
+  keeper.hold(true);
+  assert.equal(keeper.held, true);
+  assert.equal(win.armed(), 0, 'الإمساك يوقف ما جُدول');
+  session.version = 2;
+  keeper.schedule();
+  assert.equal(win.armed(), 0, 'ولا يُجدول شيء في أثنائه');
+  await keeper.flush();
+  await keeper.flush({ force: true });
+  await keeper.drop(1);
+  await keeper.settled();
+  assert.deepEqual(log, [], 'لا كتابة ولا حذف في أثنائه');
+
+  keeper.hold(false);
+  keeper.schedule();
+  assert.equal(win.armed(), 2);
+  win.fire();
+  await keeper.settled();
+  assert.deepEqual(log, [['set', 1, 'في الجلسة']], 'ما تغيّر في أثنائه يُكتب بعد فكّه');
+  await keeper.drop(1);
+  assert.deepEqual(log.at(-1), ['clear', 1], 'والتجاهل بعده يحذف');
 });
