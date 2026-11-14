@@ -148,6 +148,11 @@ export const CC_GRACE_MS = 2000;
  * ضغطة خلال الثواني الخمس التي انتظرها المجسّ، في المتصفحات الأربعة.
  */
 export const CC_PRESS_WAIT_MS = 5000;
+/**
+ * ص-٢١: شارة بث ظاهرة لحظة تبدّل الفيديو قد تكون للسابق (بعد تنقل SPA من بث تبقى حتى نحو 0.8 ث، عقد الاستخراج)، فلا تُنسب إلى
+ * الجديد حتى تزول أو تنقضي هذه المدة، وهي مدة المستخرج نفسها (LIVE_SETTLE_MS، ن-٦).
+ */
+export const LIVE_CARRY_MS = 3000;
 
 export function createControlsSession({ controller, doc, win, player, flows, now = () => Date.now(), link = null }) {
   const counts = {
@@ -162,7 +167,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
   let menuKind = null;
   let lastModel = null;
   let overflow = null;
-  let flags = { live: false, unavailable: false, brave: false, ad: false, ccStuck: false, ccOn: false, panelIssue: null };
+  let flags = { live: false, liveUnsure: false, unavailable: false, brave: false, ad: false, ccStuck: false, ccOn: false, panelIssue: null };
+  /** ص-٢١: الفيديو الذي بُدّل إليه وشارة البث ظاهرة، ومتى، أو null (LIVE_CARRY_MS). */
+  let liveCarry = null;
   /** منذ متى زر CC مضغوط ولا التقاط (ف7)، ولأي فيديو، أو null. */
   let ccOnSince = null;
   let ccVideo = null;
@@ -239,8 +246,21 @@ export function createControlsSession({ controller, doc, win, player, flows, now
     }
     return t - ccOnSince >= CC_GRACE_MS;
   }
+  /**
+   * بث جارٍ للفيديو المعروض (live)، أو شارة ظاهرة لا يُعرف بعد أهي له (liveUnsure، ص-٢١): بقيت من فيديو سابق عند التبدّل ولم تزل
+   * ولم تنقضِ LIVE_CARRY_MS. وشارة تظهر بعد التبدّل وقد كانت غائبة، أو في أول فيديو للجلسة، له فورًا.
+   */
+  function liveNow() {
+    if (!isLiveNow(doc)) {
+      liveCarry = null;
+      return { live: false, liveUnsure: false };
+    }
+    if (liveCarry && liveCarry.videoId === controller.getState().videoId && now() - liveCarry.since < LIVE_CARRY_MS) return { live: false, liveUnsure: true };
+    liveCarry = null;
+    return { live: true, liveUnsure: false };
+  }
   // panelIssue: رمز تعذّر ظهور لوحة النص من صلتها (ع-ل)، يقوله زرها.
-  const readFlags = () => ({ live: isLiveNow(doc), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc), ccStuck: ccStuckNow(), ccOn: captionsOn(), panelIssue: link?.panelIssue?.() ?? null });
+  const readFlags = () => ({ ...liveNow(), unavailable: captionsUnavailable(), brave: isBrave(win.navigator), ad: isAdShowing(doc), ccStuck: ccStuckNow(), ccOn: captionsOn(), panelIssue: link?.panelIssue?.() ?? null });
 
   // ———— نماذج العرض ————
 
@@ -595,6 +615,9 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   function syncVideo(s) {
     if (s.videoId === ui.videoId) return;
+    // ص-٢١: شارة البث الظاهرة لحظة التبدّل من فيديو إلى آخر قد تكون للسابق؛ وما يُقرأ من الصفحة يُعاد الآن لا في الفحص التالي.
+    liveCarry = ui.videoId !== null && s.videoId && isLiveNow(doc) ? { videoId: s.videoId, since: now() } : null;
+    flags = readFlags();
     ui = freshUi(s.videoId);
     dropMenu();
     for (const t of toasts) clearTimer(t.id);
@@ -1345,7 +1368,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
    */
   function ccModel(s, tracks) {
     const wait = ui.download.cc;
-    if (tracks.length || s.captured.length || s.captureIssue || flags.live || flags.unavailable) return null;
+    if (tracks.length || s.captured.length || s.captureIssue || flags.live || flags.liveUnsure || flags.unavailable) return null;
     if (wait) return { kind: wait.kind, busy: true, ad: false };
     if (!subtitlesPressable(doc)) return null;
     const kind = flags.ccStuck ? 'restart' : !flags.ccOn && s.available?.tracks?.length ? 'on' : null;
@@ -1671,7 +1694,7 @@ export function createControlsSession({ controller, doc, win, player, flows, now
       try {
         place();
         const next = readFlags();
-        if (next.live !== flags.live || next.unavailable !== flags.unavailable || next.ad !== flags.ad || next.ccStuck !== flags.ccStuck || next.ccOn !== flags.ccOn || next.panelIssue !== flags.panelIssue) {
+        if (next.live !== flags.live || next.liveUnsure !== flags.liveUnsure || next.unavailable !== flags.unavailable || next.ad !== flags.ad || next.ccStuck !== flags.ccStuck || next.ccOn !== flags.ccOn || next.panelIssue !== flags.panelIssue) {
           // ع-ل: تعافت اللوحة (ظهر العمود): لا تبقى رسالة سبب زال.
           if (flags.panelIssue && !next.panelIssue) clearChannel('panel');
           flags = next;

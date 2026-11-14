@@ -7,15 +7,17 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { messageFor } from '../../../../src/core/errors/index.js';
 import { videoIdFromLocation } from '../../../../src/core/model/video-location.js';
-import { createExtractor } from '../../../../src/extract/index.js';
+import { LIVE_SETTLE_MS, createExtractor } from '../../../../src/extract/index.js';
 import { validateSeenMessage } from '../../../../src/extract/message.js';
 import { readTimedtextParams } from '../../../../src/extract/timedtext-params.js';
 import { mountControls } from '../../../../src/player/controls/index.js';
-import { CC_GRACE_MS } from '../../../../src/player/controls/session.js';
+import * as session$ from '../../../../src/player/controls/session.js';
 import { ccLanguagesLine } from '../../../../src/player/controls/text.js';
 import { isSubtitlesButton } from '../../../../src/player/youtube-dom.js';
 import { addPlayer, createFakeEnv } from '../overlay/fake-dom.js';
 import { addBar, arabic, click, fakeController, fakeFlows, inspect, key, makeState, mountPage, pointerdown, settle, trackInfo } from './harness.js';
+
+const { CC_GRACE_MS } = session$;
 
 /** صفحة بأدوات ترجمان وساعة تتقدّم مع المؤقتات. @param {object} [over] حقول الحالة (مثل available) */
 function page(over = {}) {
@@ -452,4 +454,71 @@ test('٧-ب: بلا زر CC في المشغّل، أو بلا مسارات مع�
   assert.ok(unknown.ui.item(ON_NOW) === null);
   assert.ok(menuText(unknown).includes(messageFor('CT_NOT_CAPTURED')));
   unknown.handle.unmount();
+});
+
+// ———— ص-٢١ (تحقق 2.3.0): تسمية «بث جارٍ» العابرة بعد الانتقال من بث ————
+// بعد تنقل SPA من بث إلى فيديو عادي تبقى شارة البث ظاهرة والمشغّل على البث حتى نحو 0.8 ث (عقد الاستخراج، ن-٦)، فكان زر التنزيل
+// وقائمته يقولان «بث جارٍ» للفيديو الجديد. شارة ظاهرة لحظة التبدّل لا تُنسب إلى الجديد حتى تزول أو تنقضي LIVE_CARRY_MS (3 ث،
+// مدة المستخرج نفسها)؛ وشارة تظهر بعد التبدّل وقد كانت غائبة، أو في أول فيديو للجلسة، له فورًا.
+
+/** شارة البث في المشغّل بحال ظهورها، وgetComputedStyle الوهمي يقرأ display من نمطها. */
+function liveBadge(p) {
+  const badge = p.env.doc.createElement('button');
+  badge.className = 'ytp-live-badge ytp-button';
+  p.player.appendChild(badge);
+  p.env.win.getComputedStyle = (el) => ({ display: el.style.getPropertyValue('display') || 'inline' });
+  return { show: () => badge.style.setProperty('display', 'inline-block'), hide: () => badge.style.setProperty('display', 'none') };
+}
+/** مدة نسبة الشارة الباقية عند التبدّل (session.js)، و3 ث قبلها لتُقاس الطفرة على الرأس بلا الثابت. */
+const LIVE_CARRY_MS = session$.LIVE_CARRY_MS ?? 3000;
+const saysLive = (p) => (p.ui.btn('download').getAttribute('aria-label') ?? '').includes(messageFor('EX_LIVE'));
+
+test('ص-٢١: من بث إلى فيديو عادي لا يقول زر التنزيل وقائمته «بث جارٍ» بشارة بقيت من البث، ولا زر CC حتى يُعرف', () => {
+  const p = page({ available: AVAILABLE });
+  const badge = liveBadge(p);
+  badge.show();
+  p.tick(1100);
+  assert.equal(saysLive(p), true, 'البث نفسه، أول فيديو للجلسة: الشارة له');
+  // تنقل إلى فيديو عادي والشارة ما زالت ظاهرة (المشغّل لم يحمّل الجديد بعد).
+  p.controller.set({ videoId: 'BBBBBBBBBBB', available: { ...AVAILABLE, videoId: 'BBBBBBBBBBB' } });
+  assert.equal(saysLive(p), false, 'لحظة التبدّل');
+  p.tick(600);
+  assert.equal(saysLive(p), false, 'والشارة باقية 0.6 ث');
+  click(p.ui.btn('download'));
+  assert.ok(!menuText(p).includes(messageFor('EX_LIVE')), 'القائمة لا تقول «بث جارٍ»');
+  assert.ok(p.ui.item(ON_NOW) === null, 'ولا «تفعيل CC الآن» والبث لم يُنفَ بعد');
+  // زالت الشارة: الفيديو العادي كما هو، وزر CC يعود.
+  badge.hide();
+  p.tick(1100);
+  assert.equal(saysLive(p), false);
+  assert.ok(p.ui.item(ON_NOW), '«تفعيل CC الآن» بعد زوالها');
+  p.handle.unmount();
+});
+
+test('ص-٢١: مدة نسبة الشارة الباقية في المشغّل هي مدة المستخرج (LIVE_SETTLE_MS، ن-٦)', () => {
+  assert.equal(session$.LIVE_CARRY_MS, LIVE_SETTLE_MS);
+});
+
+test('ص-٢١: الشارة التي تظهر بعد التبدّل للفيديو الجديد فورًا، والباقية عند التبدّل من بث إلى بث له بعد LIVE_CARRY_MS', () => {
+  const p = page({ available: AVAILABLE });
+  const badge = liveBadge(p);
+  badge.hide();
+  p.tick(1100);
+  assert.equal(saysLive(p), false, 'فيديو عادي');
+  // من فيديو عادي إلى بث: الشارة غائبة عند التبدّل ثم تظهر، فهي للجديد.
+  p.controller.set({ videoId: 'BBBBBBBBBBB' });
+  badge.show();
+  p.tick(1100);
+  assert.equal(saysLive(p), true, 'ظهرت بعد التبدّل');
+  // من بث إلى بث والشارة لا تغيب: تُنسب إلى الجديد حين تنقضي المدة.
+  p.controller.set({ videoId: 'CCCCCCCCCCC' });
+  assert.equal(saysLive(p), false, 'لحظة التبدّل');
+  p.tick(LIVE_CARRY_MS - 1200);
+  assert.equal(saysLive(p), false, 'قبل انقضاء المدة');
+  p.tick(2300);
+  assert.equal(saysLive(p), true, 'بعد انقضائها، بالفحص الدوري');
+  click(p.ui.btn('download'));
+  assert.ok(menuText(p).includes(messageFor('EX_LIVE')));
+  assert.ok(p.ui.item(ON_NOW) === null, 'لا زر في البث الجاري');
+  p.handle.unmount();
 });
