@@ -1,4 +1,4 @@
-# نصوص الإدراج الإنجليزية — ترجمان 2.2.0
+# نصوص الإدراج الإنجليزية — ترجمان 2.3.0
 
 > تقابل [`listing.ar.md`](listing.ar.md) في المضمون، وتُلصق في صفحة لغة English عند توطين الإدراج. الاسم والوصف القصير من `src/_locales/en/messages.json` ولا يُكتبان في النموذج.
 > **الفحص:** كل كتلة معلّمة بـ`field:` يقيسها `node scripts/release/store-assets.mjs --check`. ولا تذكر النصوص متصفحًا (Edge 1.1.2)، ولا تعد بترجمة تلقائية.
@@ -41,11 +41,14 @@ Features
 • Your translation over the video, in the direction of its language, alone or over the original, in default view, theater and fullscreen. Hidden during ads.
 • Timing from the player bar: the − and + buttons on the player bar, or inside the timing menu when the bar is narrow, move the translation earlier or later, and "Sync by sentence" sets it from a sentence you're hearing. Timing is saved with each translation.
 • Comparison with the original: when you upload your file, Tarjuman compares it with the original you downloaded and shows what's missing, what's extra, what drifted and what stayed untranslated. It never changes your file silently.
-• An editor for review: edit text and timing, merge and split segments, search and replace, and mark what you want to return to. It can also prepare a file with the missing segments so you can complete them.
-• Synced transcript: a panel beside the video shows the whole translation with the current segment highlighted. Closed until you open it from its button.
+• An editor for review: edit text and timing, merge and split segments, search and replace, and mark what you want to return to. It can also prepare a file with the missing segments so you can complete them. What you haven't saved is kept as a draft you can restore if the Editor closes before you save.
+• Synced transcript: a panel beside the video shows the whole translation with the current segment highlighted, and lets you fix a segment's text in place. Closed until you open it from its button.
 • Library: every video you translated with the languages of each translation, up to three translations per video, a previous version of what you replaced, and a backup you can move to another browser.
+• Export: your translation as SRT or WebVTT, alone or with the original on a line under each segment, to watch in another player.
+• Glossary: a general glossary and term lists for each language pair, attached to the translation instructions when you copy them.
 • Style it your way: display mode, font, size, background and position.
 • Interface in Arabic or English: choose it in Settings. Video languages and your translations aren't affected.
+• Optional shortcuts: five commands with no default keys (switch display mode, show the translation earlier or later, mark the line for review, and replay it) that you assign keys to on your browser's shortcuts page.
 
 What it doesn't do
 • It doesn't download video or audio, and doesn't request subtitle files itself: it reads a copy of the subtitles the player requested when you turned them on.
@@ -79,11 +82,14 @@ Features
 • Your translation over the video, in the direction of its language, alone or over the original, in default view, theater and fullscreen. Hidden during ads.
 • Timing from the player bar: the − and + buttons on the player bar, or inside the timing menu when the bar is narrow, move the translation earlier or later, and "Sync by sentence" sets it from a sentence you're hearing. Timing is saved with each translation.
 • Comparison with the original: when you upload your file, Tarjuman compares it with the original you downloaded and shows what's missing, what's extra, what drifted and what stayed untranslated. It never changes your file silently.
-• An editor for review: edit text and timing, merge and split segments, search and replace, and mark what you want to return to. It can also prepare a file with the missing segments so you can complete them.
-• Synced transcript: a panel beside the video shows the whole translation with the current segment highlighted. Closed until you open it from its button.
+• An editor for review: edit text and timing, merge and split segments, search and replace, and mark what you want to return to. It can also prepare a file with the missing segments so you can complete them. What you haven't saved is kept as a draft you can restore if the Editor closes before you save.
+• Synced transcript: a panel beside the video shows the whole translation with the current segment highlighted, and lets you fix a segment's text in place. Closed until you open it from its button.
 • Library: every video you translated with the languages of each translation, up to three translations per video, a previous version of what you replaced, and a backup you can move to another browser.
+• Export: your translation as SRT or WebVTT, alone or with the original on a line under each segment, to watch in another player.
+• Glossary: a general glossary and term lists for each language pair, attached to the translation instructions when you copy them.
 • Style it your way: display mode, font, size, background and position.
 • Interface in Arabic or English: choose it in Settings. Video languages and your translations aren't affected.
+• Optional shortcuts: five commands with no default keys (switch display mode, show the translation earlier or later, mark the line for review, and replay it) that you assign keys to on your browser's shortcuts page.
 
 What it doesn't do
 • It doesn't download video or audio, and doesn't request subtitle files itself: it reads a copy of the subtitles the player requested when you turned them on.
