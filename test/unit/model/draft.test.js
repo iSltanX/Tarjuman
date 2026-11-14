@@ -1,10 +1,11 @@
 // مسودة المحرّر (الفكرة ٩، ح-48؛ model/draft.js): الشكل والتحقق الصارم، والقراءة المتسامحة (الخانة التالفة تسقط وحدها، والقيمة التي
 // لا تُقرأ كأنها بلا مسودات)، وبناء المسودة من الجلسة بالمحتوى وحده، وتصنيفها مقابل الخانة الحاضرة: الهوية بمحتوى الخانة (اسم الملف
-// وتاريخ استيراده وتعديله)، والإزاحة وحدها تُتبنّى الحاضرة، والاختلاف «تنزيل أو تجاهل» بلا دمج.
+// وتاريخ استيراده، ثم تاريخ تعديله أو بصمة مقاطعها cuesHash، تحقق 2.3.0 ص-٦؛ والمسودة بلا بصمة بتاريخ التعديل وحده)، والإزاحة وحدها
+// تُتبنّى الحاضرة، والاختلاف «تنزيل أو تجاهل» بلا دمج.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DRAFT_LIMITS, classifyDraft, draftOf, emptyDraftValue, isEmptyDraftValue, lastSavedAt, normalizeDraftValue, validateDraft, validateDraftValue,
+  DRAFT_LIMITS, classifyDraft, draftCuesHash, draftOf, emptyDraftValue, isEmptyDraftValue, lastSavedAt, normalizeDraftValue, validateDraft, validateDraftValue,
 } from '../../../src/core/model/draft.js';
 import { NOW, VIDEO_ID } from '../../helpers/fixtures.js';
 import { arabicTrack } from '../../helpers/fixtures-v2.js';
@@ -22,7 +23,10 @@ test('الشكل: draftOf يبني المسودة بالمحتوى وحده وه
   const slot = slotOf();
   const d = draftOn(slot);
   assert.deepEqual(Object.keys(d).sort(), ['base', 'committedMs', 'cues', 'offsetMs', 'savedAt']);
-  assert.deepEqual(d.base, { fileName: slot.track.fileName, importedAt: slot.track.importedAt, editedAt: slot.track.editedAt, offsetMs: 500 });
+  assert.deepEqual(d.base, {
+    fileName: slot.track.fileName, importedAt: slot.track.importedAt, editedAt: slot.track.editedAt, offsetMs: 500, cuesHash: draftCuesHash(slot.track.current),
+  });
+  assert.match(d.base.cuesHash, /^fnv1a64:[0-9a-f]{16}$/);
   assert.equal(d.cues[0].text, 'نص لم يُحفظ');
   assert.ok(d.cues[1] !== slot.track.current[1], 'نسخة لا مرجع');
   assert.equal(validateDraft(d).ok, true);
@@ -80,10 +84,11 @@ test('التصنيف: الهوية والإزاحة كما هما ← «same» �
   assert.deepEqual([own.restore.offsetMs, own.restore.committedMs], [0, 500]);
 });
 
-test('التصنيف: تغيّر المحتوى (الاسم أو تاريخ الاستيراد أو التعديل)، أو تغيّر الإزاحتين معًا ← «changed» بلا استعادة؛ ولا شيء جديد ← «equal»', () => {
+test('التصنيف: تغيّر المحتوى (الاسم أو تاريخ الاستيراد، أو المقاطع بتاريخ تعديل جديد)، أو تغيّر الإزاحتين معًا ← «changed» بلا استعادة؛ ولا شيء جديد ← «equal»', () => {
   const slot = slotOf();
   const d = draftOn(slot);
-  for (const t of [track({ importedAt: LATER }), { ...track(), fileName: 'آخر.srt' }, { ...track(), editedAt: LATER }, track({ edited: false })]) {
+  const edited = { ...track(), editedAt: LATER, current: track().current.map((c, i) => (i === 2 ? { ...c, text: 'حُفظ بعد المسودة' } : c)) };
+  for (const t of [track({ importedAt: LATER }), { ...track(), fileName: 'آخر.srt' }, edited, track({ edited: false })]) {
     const c = classifyDraft(d, slotOf(t));
     assert.equal(c.kind, 'changed');
     assert.equal(c.restore, undefined, 'بلا دمج آلي');
@@ -92,4 +97,57 @@ test('التصنيف: تغيّر المحتوى (الاسم أو تاريخ ال
   assert.equal(classifyDraft(draftOn(slot, { text: slot.track.current[0].text }), slot).kind, 'equal');
   assert.equal(classifyDraft(null, slot).kind, 'none');
   assert.equal(classifyDraft(d, { track: null, offsetMs: 0 }).kind, 'none');
+});
+
+test('ص-٦: الهوية بالمحتوى: تاريخ تعديل جديد والمقاطع كما بُنيت عليها المسودة (تحرير ثم «تراجع») ← «same»، وتحرير حقيقي ولو في مقطع آخر ← «changed»', () => {
+  const slot = slotOf();
+  const d = draftOn(slot);
+  // «تراجع» لوحة النص: المقاطع كما كانت بنسخ جديدة، وتاريخ تعديل جديد.
+  const undone = slotOf({ ...track(), editedAt: LATER, current: structuredClone(slot.track.current) });
+  const same = classifyDraft(d, undone);
+  assert.equal(same.kind, 'same');
+  assert.deepEqual(same.restore, { cues: d.cues, offsetMs: 500, committedMs: 0 });
+  assert.equal(classifyDraft(d, slotOf(undone.track, 800)).kind, 'offset', 'والإزاحة وحدها تغيّرت بعدها ← الحاضرة');
+  // تحرير حقيقي في مقطع لم تمسه المسودة: لا استعادة فوقه (قيد موثّق).
+  const other = slotOf({ ...undone.track, current: undone.track.current.map((c, i) => (i === 3 ? { ...c, text: 'من لوحة النص' } : c)) });
+  assert.equal(classifyDraft(d, other).kind, 'changed');
+  // الرجوع إلى النسخة المرفوعة بعد مسودة على خانة معدّلة: محتوى آخر.
+  assert.equal(classifyDraft(d, slotOf({ ...track(), current: null, editedAt: null })).kind, 'changed');
+  // مسودة على النسخة المرفوعة (بلا تعديل) وخانة عادت إليها: الهوية بتاريخ التعديل null كما كانت، وبالبصمة.
+  const plain = slotOf(track({ edited: false }));
+  assert.equal(classifyDraft(draftOn(plain), plain).kind, 'same');
+});
+
+test('ص-٦: المسودة بلا cuesHash (كُتبت قبله) صالحة وتُقرأ، وهويتها بتاريخ التعديل وحده كما كانت؛ والبصمة التالفة تُسقط الخانة', () => {
+  const slot = slotOf();
+  const { cuesHash, ...base } = draftOn(slot).base;
+  assert.ok(cuesHash);
+  const old = { ...draftOn(slot), base };
+  assert.equal(validateDraft(old).ok, true, 'الشكل السابق صالح');
+  assert.deepEqual(normalizeDraftValue({ schema: 1, videoId: VIDEO_ID, slots: [old, null, null] }, VIDEO_ID).slots, [old, null, null]);
+  assert.equal(classifyDraft(old, slot).kind, 'same', 'التاريخ نفسه');
+  assert.equal(classifyDraft(old, slotOf({ ...track(), editedAt: LATER, current: structuredClone(slot.track.current) })).kind, 'changed', 'بلا بصمة لا تُعرف عودة المحتوى');
+  for (const bad of ['', 'fnv1a64:XYZ', `fnv1a64:${'0'.repeat(15)}`, 'sha256:0123456789abcdef', 7, null]) {
+    const d = { ...old, base: { ...base, cuesHash: bad } };
+    assert.equal(validateDraft(d).ok, false, JSON.stringify(bad));
+    assert.deepEqual(normalizeDraftValue({ schema: 1, videoId: VIDEO_ID, slots: [d, old, null] }, VIDEO_ID).slots, [null, old, null]);
+  }
+});
+
+test('ص-٦: draftCuesHash دقيقة: الرقم والبداية والنهاية والنص كما هو (المسافات والأسطر والترتيب)، ولا تتأثر بالحقول الأخرى', () => {
+  const cues = track().current;
+  const h = draftCuesHash(cues);
+  assert.equal(draftCuesHash(structuredClone(cues)), h, 'المحتوى نفسه بنسخة أخرى');
+  assert.equal(draftCuesHash(cues.map((c) => ({ ...c, extra: true }))), h, 'المفاتيح الأربعة وحدها');
+  const variants = [
+    cues.map((c, i) => (i === 1 ? { ...c, text: `${c.text} ` } : c)),
+    cues.map((c, i) => (i === 1 ? { ...c, text: c.text.replace(' ', '  ') } : c)),
+    cues.map((c, i) => (i === 1 ? { ...c, text: c.text.replace(' ', '\n') } : c)),
+    cues.map((c, i) => (i === 1 ? { ...c, startMs: c.startMs + 1 } : c)),
+    cues.map((c, i) => (i === 1 ? { ...c, endMs: c.endMs - 1 } : c)),
+    cues.map((c, i) => (i === 1 ? { ...c, n: 99 } : c)),
+    [cues[1], cues[0], ...cues.slice(2)],
+    cues.slice(1),
+  ];
+  for (const v of variants) assert.notEqual(draftCuesHash(v), h);
 });

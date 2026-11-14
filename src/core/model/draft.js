@@ -1,8 +1,10 @@
 // مسودة المحرّر (الفكرة ٩، ح-48؛ عقد storage §١٦): ما لم يُحفظ من تعديلات خانة، يُكتب تلقائيًا ليُستعاد بضغطة صريحة بعد إغلاق
 // المحرّر أو انهياره قبل الحفظ. مفتاح واحد لكل فيديو (draft:<id>) بثلاث خانات، والمحتوى وحده بلا تاريخ تراجع: المقاطع والإزاحة وما
-// ثُبّت منها ولم يُحفظ. وهوية الخانة التي بُنيت عليها المسودة بمحتواها (اسم الملف وتاريخ استيراده وتاريخ تعديله، والإزاحة على حدة)،
-// لا بمراجعة السجل: كل كتابة لآخر موضع ترفع المراجعة. القراءة متسامحة (الخانة التالفة تسقط وحدها، والقيمة التالفة كأنها غائبة)،
-// والكتابة صارمة. لا تخزين ولا DOM هنا.
+// ثُبّت منها ولم يُحفظ. وهوية الخانة التي بُنيت عليها المسودة بمحتواها (اسم الملف وتاريخ استيراده، ثم تاريخ تعديله أو بصمة مقاطعها،
+// والإزاحة على حدة)، لا بمراجعة السجل: كل كتابة لآخر موضع ترفع المراجعة. والبصمة (تحقق 2.3.0 ص-٦) لأن «تراجع» لوحة النص يعيد المحتوى
+// مطابقًا بتاريخ تعديل جديد. القراءة متسامحة (الخانة التالفة تسقط وحدها، والقيمة التالفة كأنها غائبة)، والكتابة صارمة. لا تخزين ولا
+// DOM هنا.
+import { fnv1a64 } from '../export/hash.js';
 import { isVideoId } from './ids.js';
 import { isValidOffset } from './timing.js';
 import { LIMITS, OK, eachOf, exactKeys, fail, firstFailure, isIntIn, isIsoDate, isPlainObject, isText } from './validate.js';
@@ -13,7 +15,7 @@ export const DRAFT_LIMITS = Object.freeze({ drafts: 5 });
 
 /**
  * @typedef {import('./cue.js').Cue} Cue
- * @typedef {{ fileName: string, importedAt: string, editedAt: string | null, offsetMs: number }} DraftBase
+ * @typedef {{ fileName: string, importedAt: string, editedAt: string | null, offsetMs: number, cuesHash?: string }} DraftBase
  * @typedef {{ savedAt: string, base: DraftBase, offsetMs: number, committedMs: number, cues: Cue[] }} Draft
  * @typedef {{ schema: 1, videoId: string, slots: [Draft | null, Draft | null, Draft | null] }} DraftValue
  * @typedef {'none' | 'equal' | 'same' | 'offset' | 'changed'} DraftKind
@@ -34,14 +36,26 @@ function validateDraftCue(c, path) {
   ]);
 }
 
+/** بصمة cuesHash: «fnv1a64:» ثم 16 خانة ست عشرية. */
+const CUES_HASH_RE = /^fnv1a64:[0-9a-f]{16}$/;
+
+/**
+ * بصمة مقاطع الخانة التي بُنيت عليها المسودة: FNV-1a بـ64 بتًا على JSON الرقم والبداية والنهاية والنص كما هو (بلا تطبيع ولا طيّ
+ * مسافات)، فأي فرق في مقطع يغيّرها. ليست تشفيرًا؛ تكفي لمعرفة أن الخانة عادت كما كانت.
+ * @param {Cue[]} cues
+ */
+export const draftCuesHash = (cues) => `fnv1a64:${fnv1a64(JSON.stringify(cues.map(({ n, startMs, endMs, text }) => [n, startMs, endMs, text])))}`;
+
 /** @param {unknown} b @param {string} path */
 function validateBase(b, path) {
   return firstFailure([
-    () => exactKeys(b, ['fileName', 'importedAt', 'editedAt', 'offsetMs'], path),
+    // cuesHash اختياري: المسودات المكتوبة قبله تبقى صالحة، وتُعرف هويتها بتاريخ التعديل وحده.
+    () => exactKeys(b, ['fileName', 'importedAt', 'editedAt', 'offsetMs'], path, ['cuesHash']),
     () => (isText(b.fileName, LIMITS.maxFileNameChars) && b.fileName.length > 0 ? OK : fail(`${path}.fileName`, 'اسم ملف غير صالح')),
     () => (isIsoDate(b.importedAt) ? OK : fail(`${path}.importedAt`, 'تاريخ غير صالح')),
     () => (b.editedAt === null || isIsoDate(b.editedAt) ? OK : fail(`${path}.editedAt`, 'تاريخ غير صالح')),
     () => (isValidOffset(b.offsetMs) ? OK : fail(`${path}.offsetMs`, 'إزاحة غير صالحة')),
+    () => (b.cuesHash === undefined || (typeof b.cuesHash === 'string' && CUES_HASH_RE.test(b.cuesHash)) ? OK : fail(`${path}.cuesHash`, 'بصمة غير صالحة')),
   ]);
 }
 
@@ -101,9 +115,9 @@ export function normalizeDraftValue(raw, videoId) {
 export const lastSavedAt = (v) => v.slots.reduce((at, d) => (d && d.savedAt > at ? d.savedAt : at), '');
 
 /**
- * مسودة من الجلسة وما فُتح عليه: المحتوى وحده (المقاطع والإزاحة وما ثُبّت منها ولم يُحفظ)، وهوية الخانة المفتوحة.
+ * مسودة من الجلسة وما فُتح عليه: المحتوى وحده (المقاطع والإزاحة وما ثُبّت منها ولم يُحفظ)، وهوية الخانة المفتوحة ببصمة مقاطعها.
  * @param {{ cues: Cue[], offsetMs: number, committedMs: number }} work
- * @param {{ track: { fileName: string, importedAt: string, editedAt: string | null }, offsetMs: number }} opened
+ * @param {{ track: { fileName: string, importedAt: string, editedAt: string | null, original: Cue[], current: Cue[] | null }, offsetMs: number }} opened
  * @param {string} savedAt
  * @returns {Draft}
  */
@@ -111,7 +125,9 @@ export function draftOf(work, opened, savedAt) {
   const t = opened.track;
   return {
     savedAt,
-    base: { fileName: t.fileName, importedAt: t.importedAt, editedAt: t.editedAt ?? null, offsetMs: opened.offsetMs },
+    base: {
+      fileName: t.fileName, importedAt: t.importedAt, editedAt: t.editedAt ?? null, offsetMs: opened.offsetMs, cuesHash: draftCuesHash(t.current ?? t.original),
+    },
     offsetMs: work.offsetMs,
     committedMs: work.committedMs,
     cues: work.cues.map(({ n, startMs, endMs, text }) => ({ n, startMs, endMs, text })),
@@ -124,8 +140,9 @@ const sameCues = (a, b) => a.length === b.length && a.every((c, i) => c.n === b[
 /**
  * ما تعنيه مسودة لخانة كما هي الآن (ح-48):
  * - 'none': لا مسودة أو لا ترجمة في الخانة.
- * - 'changed': تغيّر محتوى الخانة بعدها (اسم الملف أو تاريخ استيراده أو تعديله)، أو تغيّرت إزاحتها والمسودة غيّرت الإزاحة أيضًا:
- *   لا استعادة فوقها ولا دمج آلي، بل «تنزيلها ملفًا» أو «تجاهلها».
+ * - 'changed': تغيّر محتوى الخانة بعدها (اسم الملف أو تاريخ استيراده، أو تاريخ تعديله ومقاطعها لا تطابق بصمة المسودة)، أو تغيّرت
+ *   إزاحتها والمسودة غيّرت الإزاحة أيضًا: لا استعادة فوقها ولا دمج آلي، بل «تنزيلها ملفًا» أو «تجاهلها». فتحرير ثم «تراجع» يعيد
+ *   المقاطع كما كانت لا يغيّر الهوية، والمسودة بلا بصمة (كُتبت قبلها) هويتها بتاريخ التعديل وحده.
  * - 'offset': الهوية نفسها والإزاحة وحدها تغيّرت (± من المشغّل) والمسودة لم تمسها: تُستعاد بالإزاحة الحاضرة.
  * - 'same': الهوية والإزاحة كما بُنيت عليهما: تُستعاد كما هي.
  * - 'equal': ما تستعيده يطابق المحفوظ، فلا شيء لاستعادته.
@@ -138,7 +155,9 @@ export function classifyDraft(draft, slot) {
   const t = slot?.track;
   if (!draft || !t) return { kind: 'none' };
   const b = draft.base;
-  if (b.fileName !== t.fileName || b.importedAt !== t.importedAt || b.editedAt !== (t.editedAt ?? null)) return { kind: 'changed' };
+  if (b.fileName !== t.fileName || b.importedAt !== t.importedAt) return { kind: 'changed' };
+  const sameContent = b.editedAt === (t.editedAt ?? null) || (b.cuesHash !== undefined && b.cuesHash === draftCuesHash(t.current ?? t.original));
+  if (!sameContent) return { kind: 'changed' };
   const offsetMoved = b.offsetMs !== slot.offsetMs;
   if (offsetMoved && (draft.offsetMs !== b.offsetMs || draft.committedMs !== 0)) return { kind: 'changed' };
   const restore = { cues: draft.cues, offsetMs: offsetMoved ? slot.offsetMs : draft.offsetMs, committedMs: draft.committedMs };

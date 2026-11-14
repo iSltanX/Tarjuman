@@ -1,6 +1,7 @@
 // توافق مسودة المحرّر (الفكرة ٩، ح-48؛ عقد storage §١٦) مع الإصدارات السابقة بلقطتيها المجمّدتين: 1.1.0 (test/fixtures/v1.1) وtj-v1
 // (test/fixtures/v1). المفتاح draft:<id> جديد عليهما: يتجاهله parseKey فيهما فلا يدخل قراءتهما ولا أحداثهما ولا كتاباتهما، وحذفهما
 // للفيديو يتركه يتيمًا يكنسه فهرس المحفوظات في هذا الإصدار، ومسحهما الكامل يزيله. والنسخة الاحتياطية لا تحمله ولا يتغير إصدارها.
+// والمسودة المزروعة بشكلها الحالي، ومنه بصمة مقاطع الخانة base.cuesHash (تحقق 2.3.0 ص-٦).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore as createStoreV11 } from '../../fixtures/v1.1/src/core/store/index.js';
@@ -39,6 +40,11 @@ const v1 = (area) => createStoreV1({ area, now: clock(Date.parse(NOW)) });
 test('parseKey في 1.1.0 وtj-v1 يتجاهل المفتاح draft:<id> (يعيد null)، فلا يدخل قراءتهما ولا أحداثهما ولا ترحيلهما', () => {
   assert.equal(parseKeyV11(KEY), null);
   assert.equal(parseKeyV1(KEY), null);
+});
+
+test('المسودة المزروعة بشكلها الحالي: base.cuesHash بصمة مقاطع الخانة، فما يلي يختبر الإصدارين السابقين عليه', async () => {
+  const { draft } = await seeded(v11);
+  assert.match(draft.slots[0].base.cuesHash, /^fnv1a64:[0-9a-f]{16}$/);
 });
 
 test('1.1.0 يقرأ المكتبة ويكتب عليها والمسودة قائمة: بلا خطأ، ولا تمسها كتاباته، ولا حدث عنده لكتابتها أو حذفها', async () => {
@@ -95,6 +101,7 @@ test('النسخة الاحتياطية لا تحمل المسودة: لا نص�
   const withDraft = await createBackup({ store: two, appVersion: '2.2.0', pause: noPause });
   assert.equal(withDraft.text.includes(TEXT), false, 'نص المسودة غائب');
   assert.equal(withDraft.text.includes('draft'), false);
+  assert.equal(withDraft.text.includes('cuesHash'), false, 'ولا بصمتها');
   await two.clearDraft(A, 1);
   const without = await createBackup({ store: two, appVersion: '2.2.0', pause: noPause });
   assert.equal(JSON.parse(withDraft.text).version, JSON.parse(without.text).version);

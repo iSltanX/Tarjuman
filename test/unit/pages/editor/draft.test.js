@@ -3,15 +3,17 @@
 // الثابتة بحالاتها الثلاث (الهوية نفسها «استعادة / تجاهل»، والإزاحة وحدها تُتبنّى الحاضرة، والمحتوى تغيّر «تنزيل / تجاهل») وإمساك
 // الكتابة ما دامت قائمة (ح-52: تعديلات الجلسة واللافتة قائمة لا تطمس المسودة التي لم يُقرَّر فيها، ولا يحذفها الحفظ ولا
 // «التبديل دون حفظ» ولا المغادرة، والحافظ الممسَك خامد؛ وكانت إزالة شرط الإمساك تنجو من اختبارات المحرّر كلها، تحقق 2.3.0
-// ص-٤)، ونتيجة كل فعل في المنطقة الحية. العقد تُقارن بـassert.ok(a === b) لا بـassert.equal (انظر fake-dom.js).
+// ص-٤)، والهوية بالمحتوى بعد تحرير لوحة النص ثم «تراجعها» (تحقق 2.3.0 ص-٦)، ونتيجة كل فعل في المنطقة الحية. العقد تُقارن
+// بـassert.ok(a === b) لا بـassert.equal (انظر fake-dom.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createController } from '../../../../src/content/controller.js';
 import { createStore } from '../../../../src/core/store/index.js';
-import { draftOf } from '../../../../src/core/model/draft.js';
+import { draftCuesHash, draftOf } from '../../../../src/core/model/draft.js';
 import { mountEditor } from '../../../../src/pages/editor/app.js';
 import { DRAFT_IDLE_MS, DRAFT_MAX_MS, createDraftKeeper } from '../../../../src/pages/editor/draft.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
-import { NOW } from '../../../helpers/fixtures.js';
+import { NOW, fakeExtractor } from '../../../helpers/fixtures.js';
 import { sampleBundle, seedBundle } from '../../../helpers/fixtures-v2.js';
 import { editorDocument, settle } from '../../../helpers/editor-dom.js';
 import { findAll, textOf } from '../library/fake-dom.js';
@@ -76,7 +78,8 @@ test('الفكرة ٩: الكتابة بعد ثانيتين من السكون ل
   assert.equal(calls.set, 1, 'بعد ثانيتين من آخر تغيير');
   const [d] = stored2();
   assert.equal(d.cues[0].text, 'تعديل ثانٍ');
-  assert.deepEqual(d.base, { fileName: ed2.state.info.track.fileName, importedAt: ed2.state.info.track.importedAt, editedAt: ed2.state.info.track.editedAt, offsetMs: 500 });
+  const t = ed2.state.info.track;
+  assert.deepEqual(d.base, { fileName: t.fileName, importedAt: t.importedAt, editedAt: t.editedAt, offsetMs: 500, cuesHash: draftCuesHash(t.current ?? t.original) });
   assert.deepEqual([d.offsetMs, d.committedMs], [500, 0]);
 });
 
@@ -272,7 +275,10 @@ test('الفكرة ٩: الإزاحة وحدها تغيّرت بعد المسو�
 });
 
 test('الفكرة ٩: تغيّر محتوى الخانة بعد المسودة: «تنزيل المسودة (SRT) / تجاهل» بلا دمج، والتنزيل باسم يميّزها، والتجاهل بتأكيد يحذفها', async () => {
-  const { env, editor, saved, stored } = await mounted({ seed: (slot) => draftOn(slot, { base: { editedAt: '2026-10-01T09:00:00.000Z' } }) });
+  // مسودة بُنيت على نسخة أقدم من الترجمة (تاريخ تعديل آخر ومقاطع أخرى).
+  const { env, editor, saved, stored } = await mounted({
+    seed: (slot) => draftOn(slot, { base: { editedAt: '2026-10-01T09:00:00.000Z', cuesHash: draftCuesHash(slot.track.original) } }),
+  });
   const b = banner(env);
   assert.equal(b.getAttribute('data-kind'), 'changed');
   assert.match(textOf(b), /تعديلات لم تُحفظ على نسخة أقدم/);
@@ -396,7 +402,7 @@ test('ح-52: الحافظ الممسَك خامد: لا يجدول مؤقتًا 
     clearDraft: async (id, slot) => { log.push(['clear', slot]); },
   };
   const session = { version: 0, dirty: false, offsetMs: 0, committedMs: 0, snapshot: () => [{ n: 1, startMs: 0, endMs: 1000, text: 'في الجلسة' }] };
-  const opened = { track: { fileName: 'a.srt', importedAt: NOW, editedAt: null }, offsetMs: 0 };
+  const opened = { track: { fileName: 'a.srt', importedAt: NOW, editedAt: null, original: session.snapshot(), current: null }, offsetMs: 0 };
   const keeper = createDraftKeeper({ win, store, videoId: 'AAAAAAAAAAA', now: () => Date.parse(NOW), current: () => ({ session, slot: 1, opened }) });
 
   session.version = 1;
@@ -423,4 +429,45 @@ test('ح-52: الحافظ الممسَك خامد: لا يجدول مؤقتًا 
   assert.deepEqual(log, [['set', 1, 'في الجلسة']], 'ما تغيّر في أثنائه يُكتب بعد فكّه');
   await keeper.drop(1);
   assert.deepEqual(log.at(-1), ['clear', 1], 'والتجاهل بعده يحذف');
+});
+
+/** تحرير نص مقطع من لوحة النص في المشغّل (الفكرة ٦) على المخزن نفسه، و«تراجعه» إن طُلب. */
+async function panelEdit(store, { index, text, undo }) {
+  let at = Date.parse(NOW) + 60_000;
+  const c = createController({ store, extractor: fakeExtractor(), page: { title: () => 'عنوان', durationMs: () => 90000 }, now: () => (at += 1000) });
+  const off = store.onChange((ch) => c.handleStoreChange(ch));
+  await c.start('AAAAAAAAAAA');
+  const r = await c.editCueText({ index }, text);
+  if (undo) await r.undo();
+  off();
+}
+
+test('ص-٦: تحرير مقطع آخر من لوحة النص ثم «تراجعه» يعيد الخانة كما بُنيت عليها المسودة: «استعادة» لا «تنزيل»، ولو تغيّر تاريخ تعديلها', async () => {
+  let editedAt = null;
+  const { env, editor } = await mounted({
+    seed: (slot) => {
+      editedAt = slot.track.editedAt;
+      return draftOn(slot);
+    },
+    before: (store) => panelEdit(store, { index: 2, text: 'نص من لوحة النص', undo: true }),
+  });
+  assert.ok(editedAt && editor.state.info.track.editedAt !== editedAt, 'تاريخ التعديل تغيّر بالتحرير وتراجعه');
+  assert.equal(editor.state.info.cues[2].text, 'أولى 3 (معدّل)', 'والمقطع كما كان');
+  assert.equal(banner(env)?.getAttribute('data-kind'), 'same');
+  byFid(env, 'draftRestore').click();
+  await settle(10);
+  assert.equal(banner(env), null);
+  assert.equal(editor.state.session.cueAt(0).text, DRAFT_TEXT, 'استُعيدت المسودة');
+  assert.equal(editor.state.session.cueAt(2).text, 'أولى 3 (معدّل)');
+});
+
+test('ص-٦ (قيد): تحرير حقيقي من لوحة النص ولو في مقطع لم تمسه المسودة: «تنزيل المسودة / تجاهل»، فلا تُكتب فوق النص الأحدث', async () => {
+  const { env, editor, stored } = await mounted({
+    seed: (slot) => draftOn(slot),
+    before: (store) => panelEdit(store, { index: 2, text: 'نص من لوحة النص', undo: false }),
+  });
+  assert.equal(editor.state.info.cues[2].text, 'نص من لوحة النص');
+  assert.equal(banner(env)?.getAttribute('data-kind'), 'changed');
+  assert.equal(byFid(env, 'draftRestore'), null, 'لا استعادة فوقه');
+  assert.ok(stored()?.[0], 'والمسودة باقية');
 });
