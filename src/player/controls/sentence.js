@@ -28,7 +28,7 @@ export function visibleCueIndex(cues, ms, graceMs = VISIBLE_GRACE_MS) {
 }
 
 /**
- * الجملة التي يعيدها «أعد الجملة» (الفكرة ١٠، ح-55): الظاهرة عند زمن البحث (ومنها المنتهية للتو، visibleCueIndex)، وإلا آخر جملة
+ * الجملة التي يعيدها «إعادة الجملة» (الفكرة ١٠، ح-55): الظاهرة عند زمن البحث (ومنها المنتهية للتو، visibleCueIndex)، وإلا آخر جملة
  * بدأت قبله (أكبر بداية لا تتجاوزه، والأحدث موضعًا عند التساوي)، وإلا null (قبل أول جملة).
  * @param {import('../../core/model/cue.js').Cue[]} cues @param {number} ms زمن البحث بتوقيت الملف
  * @returns {number | null}
