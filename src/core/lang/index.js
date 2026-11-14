@@ -1,7 +1,7 @@
 // اللغات (AA1، حرية اللغات): تطبيع رمز اللغة، واسمها بالعربية وبلغتها، ونص كتابتها واتجاهها. البيانات كلها من المتصفح نفسه
-// (Intl.Locale وIntl.DisplayNames، أي بيانات CLDR)، فلا قائمة لغات مكتوبة بالشيفرة إلا الكتابات البديلة (ALSO_WRITTEN_IN، ن-٥)،
-// ولا اتجاه مفترض للغة بعينها. ما لا يعرفه المتصفح يبقى رمزه، والرمز غير الصالح null. لا شبكة ولا chrome ولا DOM هنا، ولا ترمي
-// أي دالة.
+// (Intl.Locale وIntl.DisplayNames، أي بيانات CLDR)، فلا قائمة لغات مكتوبة بالشيفرة إلا الكتابات البديلة (ALSO_WRITTEN_IN، ن-٥)
+// ورمزان منها كلمتان في أسماء الملفات (LATIN_WORD_CODES، ص-١٢)، ولا اتجاه مفترض للغة بعينها. ما لا يعرفه المتصفح يبقى رمزه،
+// والرمز غير الصالح null. لا شبكة ولا chrome ولا DOM هنا، ولا ترمي أي دالة.
 
 /** رمز لغة كما يرد من يوتيوب أو من اسم ملف: لغة من 2–3 حروف (أو 5–8) ثم مقاطع BCP-47. */
 const LANG_SYNTAX = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8})*$|^[A-Za-z]{5,8}$/;
@@ -17,10 +17,12 @@ const RTL_SCRIPTS = new Set(['Arab', 'Aran', 'Hebr', 'Syrc', 'Thaa', 'Nkoo', 'Sa
 const COMPOSITE_SCRIPTS = { Jpan: ['Hira', 'Kana', 'Hani'], Hans: ['Hani'], Hant: ['Hani'], Kore: ['Hang', 'Hani'], Hanb: ['Hani', 'Bopo'] };
 
 /**
- * لغات تُكتب اليوم بأكثر من كتابة، وما تُكتب به سوى كتابتها المرجحة في CLDR (تحقق الجولة الثانية، ن-٥). الاستثناء الوحيد من «لا
- * قائمة لغات مكتوبة بالشيفرة»: المتصفح يعطي الكتابة المرجحة للرمز وحدها (sr ← Cyrl، pa ← Guru)، ولا يعطي ما سواها. فـsr باللاتينية،
- * وpa بالشاهمكهية، وuz بالسيريلية، وku بالعربية (السورانية)، وms بالجاوية، رموز صحيحة لنصوصها. والرمز بكتابة صريحة (sr-Latn)
- * يُحكم بكتابته وحدها. ولا تُضاف اللاتينية إلى لغة رمزها كلمة إنجليزية شائعة في أسماء الملفات (be وno وto وis…؛ ع-٨).
+ * لغات تُكتب اليوم بأكثر من كتابة، وما تُكتب به سوى كتابتها المرجحة في CLDR (تحقق الجولة الثانية، ن-٥). استثناء من «لا قائمة لغات
+ * مكتوبة بالشيفرة» (ومعه LATIN_WORD_CODES): المتصفح يعطي الكتابة المرجحة للرمز وحدها (sr ← Cyrl، pa ← Guru)، ولا يعطي ما سواها.
+ * فـsr باللاتينية، وpa بالشاهمكهية، وuz بالسيريلية، وku بالعربية (السورانية)، وms بالجاوية، رموز صحيحة لنصوصها. والرمز بكتابة صريحة (sr-Latn)
+ * يُحكم بكتابته وحدها. وما فيه بالعربية تسعة رموز (az وff وha وkk وku وky وms وpa وuz)، فملف بنص عربي اسمه بأحدها يُقرأ بتلك اللغة
+ * (تحقق 2.3.0، ص-١٢). واللاتينية البديلة لرمز هو كلمة شائعة في أسماء الملفات لا تكفي لقبوله من اسم الملف (LATIN_WORD_CODES)؛ أما be
+ * فلا لاتينية لها هنا، وno وto وis لاتينية في CLDR نفسه (ع-٨).
  */
 const ALSO_WRITTEN_IN = Object.freeze({
   az: ['Cyrl', 'Arab'], bm: ['Nkoo'], bs: ['Cyrl'], cnr: ['Cyrl'], crh: ['Latn'], ff: ['Adlm', 'Arab'], ha: ['Arab'], iu: ['Latn'],
@@ -28,6 +30,13 @@ const ALSO_WRITTEN_IN = Object.freeze({
   pa: ['Arab'], sat: ['Deva', 'Beng', 'Orya', 'Latn'], sd: ['Deva'], shi: ['Latn'], sr: ['Latn'], su: ['Sund'], tk: ['Cyrl'],
   tt: ['Latn'], tzm: ['Tfng'], ug: ['Cyrl', 'Latn'], uz: ['Cyrl', 'Arab'], vai: ['Latn'],
 });
+
+/**
+ * رموز من ALSO_WRITTEN_IN كتابتها البديلة اللاتينية وهي كلمة شائعة في أسماء الملفات: sat بالإنجليزية، وvai بالإيطالية والبرتغالية
+ * (تحقق 2.3.0، ص-١٢: كان what.we.sat.srt سانتاليًا وchi.vai.srt «فاي»). لا يُقبل أحدها من اسم ملف بنص لاتيني (langFromFileName)،
+ * ويبقى بكتاباته كلها في اتجاه السطر وفحص «غير مترجم» و«إلى» المختارة، والرمز بكتابة صريحة (sat-Latn) يُحكم بها.
+ */
+const LATIN_WORD_CODES = new Set(['sat', 'vai']);
 
 /**
  * حرف من نص يُكتب من اليمين، في أي موضع من النص. الأرقام العربية الهندية ليست حروفًا فلا تقلب اتجاهًا.
@@ -306,8 +315,9 @@ export function describeLang(code, locale = 'ar') {
  * رمز لغة من اسم ملف ترجمة إن جاء صريحًا قبل الامتداد (talk.ja.srt ← ja، وtalk.pt-BR.srt ← pt-BR، وID.ar.dual-en.srt ← ar)، وإلا null. لا يُقبل
  * إلا رمز يعرف المتصفح اسمه، فلا يُقرأ «normal» أو «long» لغةً. ومع نص الملف لا يُقبل إلا إن وافق نصُّه إحدى كتابات اللغة
  * (textFitsLang، ع-٨)، فلا تصير كلمة من الاسم لغةً بكتابة أخرى (let.it.be.srt بيلاروسيةً، وwhat.it.is.srt بنص عربي آيسلنديةً)،
- * ويبقى الرمز الصحيح بكتابته البديلة (talk.sr.srt باللاتينية، وtalk.pa.srt بالشاهمكهية؛ ن-٥). وحدّه أن النص لا يميّز لغتين بالكتابة
- * نفسها: what.it.is.srt بنص إنجليزي يبقى is، ولا تُخمَّن اللغة من النص.
+ * ويبقى الرمز الصحيح بكتابته البديلة (talk.sr.srt باللاتينية، وtalk.pa.srt بالشاهمكهية؛ ن-٥)، إلا اللاتينية لرمز هو كلمة شائعة في أسماء
+ * الملفات (LATIN_WORD_CODES: what.we.sat.srt بنص إنجليزي null؛ ص-١٢). وحدّه أن النص لا يميّز لغتين بالكتابة نفسها: what.it.is.srt بنص
+ * إنجليزي يبقى is، ولا تُخمَّن اللغة من النص.
  * @param {unknown} fileName @param {{ text: string }[] | null} [cues] نص الملف، وبلاه يُحكم بالاسم وحده
  * @returns {string | null}
  */
@@ -319,7 +329,9 @@ export function langFromFileName(fileName, cues = null) {
   if (!m) return null;
   const code = normalizeLang(m[1]);
   if (!code || !arabicName(code)) return null;
-  return !Array.isArray(cues) || textFitsLang(cues, code) ? code : null;
+  if (!Array.isArray(cues)) return code;
+  const scripts = langScripts(code);
+  return textFitsScripts(cues, LATIN_WORD_CODES.has(code) ? scripts.filter((sc) => sc !== 'Latn') : scripts) ? code : null;
 }
 
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
@@ -402,8 +414,11 @@ export function searchLanguages(query, list = knownLanguages(), locale = 'ar') {
  * فرنسي بالعربية لأن «إلى» في النافذة عربية فيُعرض بغير اتجاهه. اللغة التي لا يُعرف نصها تُقبل، ونص بلا حروف يُقبل.
  * @param {{ text: string }[]} cues @param {string} lang
  */
-export function textFitsLang(cues, lang) {
-  const re = scriptLetterPattern(lang);
+export const textFitsLang = (cues, lang) => textFitsScripts(cues, langScripts(lang));
+
+/** textFitsLang بكتابات معطاة. @param {{ text: string }[]} cues @param {readonly string[]} scripts */
+function textFitsScripts(cues, scripts) {
+  const re = scriptsLetterPattern([...scripts]);
   if (!re) return true;
   let letters = 0;
   let fit = 0;

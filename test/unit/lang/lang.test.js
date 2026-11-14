@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  arabicName, baseLang, describeLang, hasRtlLetter, langDirection, langFromFileName, langScript, nativeName, normalizeLang, scriptLetterPattern, textDirection, knownLanguages, searchLanguages, foldForSearch,
+  arabicName, baseLang, describeLang, hasRtlLetter, langDirection, langFromFileName, langScript, langScripts, nativeName, normalizeLang, scriptLetterPattern, textDirection, textFitsLang, knownLanguages, searchLanguages, foldForSearch,
 } from '../../../src/core/lang/index.js';
 
 test('التطبيع: الحالة والشرطة بقواعد BCP-47، واللغة كما وردت (iw يبقى iw)، وغير الصالح null', () => {
@@ -167,4 +167,31 @@ test('تحقق الجولة الثانية (ن-٥): لغة كتاباتها من
   assert.equal(describeLang('pa').dir, 'ltr', 'اسمها الأصلي بالكرمكهية');
   assert.equal(describeLang('sd').dir, 'rtl');
   assert.equal(describeLang('ug').dir, 'rtl');
+});
+
+test('تحقق 2.3.0 (ص-١٢، ن-٥): الرمز الذي كتابته البديلة اللاتينية كلمة شائعة في أسماء الملفات لا يُقرأ من اسم ملف لاتيني، وبقية كتاباته كما هي', () => {
+  const cues = (text) => [{ text }, { text }];
+  const en = cues('This is plain English text');
+  // sat كلمة إنجليزية، وvai كلمة إيطالية وبرتغالية: كان what.we.sat.srt سانتاليًا وchi.vai.srt «فاي».
+  assert.equal(langFromFileName('what.we.sat.srt', en), null);
+  assert.equal(langFromFileName('chi.vai.srt', en), null);
+  assert.equal(langFromFileName('chi.vai.srt', cues('Che bello, andiamo')), null);
+  // وكتاباتهما الأخرى تُقبل من الاسم، والرمز بكتابة صريحة تُحكم بها.
+  assert.equal(langFromFileName('talk.sat.srt', cues('ᱥᱟᱱᱛᱟᱲᱤ ᱯᱟᱹᱨᱥᱤ')), 'sat');
+  assert.equal(langFromFileName('talk.sat.srt', cues('संताली भाषा')), 'sat');
+  assert.equal(langFromFileName('talk.vai.srt', cues('ꕙꔤ ꕞꕌꔳ')), 'vai');
+  assert.equal(langFromFileName('talk.sat-Latn.srt', en), 'sat-Latn');
+  // واللاتينية باقية من كتاباتهما لغيره: «إلى» المختارة (textFitsLang) واتجاه السطر وفحص «غير مترجم».
+  assert.ok(langScripts('sat').includes('Latn') && langScripts('vai').includes('Latn'));
+  assert.equal(textFitsLang(en, 'sat'), true);
+  // والصربية باللاتينية (ن-٥) كما هي.
+  assert.equal(langFromFileName('talk.sr.srt', cues('Dobar dan, kako ste?')), 'sr');
+});
+
+test('تحقق 2.3.0 (ص-١٢، ن-٥): ملف بنص عربي يُقرأ من اسمه بتسعة رموز كتابتها المرجحة غير العربية، كلها لغات تُكتب بالعربية اليوم', () => {
+  // الواقع المسجَّل في القيود ونموذج البيانات: az وff وha وkk وku وky وms وpa وuz (الأذرية في إيران، والفولانية والهوسا بالعجمية،
+  // والكازاخية والقيرغيزية في الصين، والكردية السورانية، والملايوية بالجاوية، والبنجابية بالشاهمكهية، والأوزبكية في أفغانستان).
+  const ar = [{ text: 'هذا نص عربي واضح للاختبار' }, { text: 'وسطر ثانٍ بالعربية أيضًا' }];
+  const read = knownLanguages().map((l) => l.code).filter((c) => langScript(c) !== 'Arab' && langFromFileName(`talk.${c}.srt`, ar) === c);
+  assert.deepEqual(read.sort(), ['az', 'ff', 'ha', 'kk', 'ku', 'ky', 'ms', 'pa', 'uz']);
 });
