@@ -227,7 +227,8 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   for (const rel of files.filter((f) => /\.(?:js|json|html)$/.test(f))) {
     const text = await readFile(path.join(dir, rel), 'utf8');
     if (text.includes(REPORTS_HOST)) reportHolders.push(rel);
-    if (/\bpermissions\s*\.\s*request\b/.test(text)) permissionRequests.push(rel);
+    // بالنقطة أو بالسلسلة الاختيارية أو بالأقواس، كقاعدة الفحص الثابت (تحقق 2.3.0، ص-١٨).
+    if (/\bpermissions\s*(?:\??\.\s*request\b|(?:\?\.)?\s*\[\s*['"`]request['"`])/.test(text)) permissionRequests.push(rel);
     if (rel === SETTINGS_BUNDLE) settingsText = text;
   }
   const settingsFetches = [...settingsText.matchAll(/\bfetch\s*\(/g)].length;

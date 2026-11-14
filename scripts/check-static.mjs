@@ -179,8 +179,20 @@ for (const p of PAGES) {
 // is-single-column، وسمة dark على html ([dark]، أو اسمها في دوال السمات وattributeFilter). والقيمة "dark" لسمة ترجمان data-theme،
 // و'below' موضعًا للوحة، ليستا اسمين ليوتيوب فتمرّان. والاستثناء سكربت عالم الصفحة capture.js بأسطره المراجَعة حرفيًا: مجمَّد، ولا
 // يستورد youtube-dom.js فيجرّ إلى عالم الصفحة ما لا يحتاجه (sanitize.js وعناوين التبويب).
+// وتحقق 2.3.0 (ص-١٨): الاسمان بحروف كبيرة كما في tagName (YTD-WATCH-FLEXY)، والمعرّف في محدد سمة ([id="secondary"])، وأسماء يوتيوب
+// خارج النمطين: صنفا المشغّل وفيديوه (html5-video-player وhtml5-main-video)، ونافذة ترجمته (caption-window)، وعناصر tp-yt-، وحدث
+// yt-action، و#masthead و#player-container؛ وكل سطر مستثنى في capture.js مرة واحدة. والاسم المركّب من أجزاء (جمع أو join أو قالب يقسم
+// البادئة) خارج حدّه: نصي يكشف النسيان لا التمويه.
 const YT_DOM_FILE = path.join('player', 'youtube-dom.js');
-const YT_NAMES = /\byt[pd]-|\bmovie_player\b|\byt-(?:navigate|page|player)-|\bytInitial|\bgetPlayerResponse\b|#(?:secondary(?:-inner)?|primary|below|columns)(?![\w-])|(?:\.id\s*[!=]==?\s*|getElementById\s*\(\s*)['"`](?:secondary(?:-inner)?|primary|below|columns)['"`]|\bis-single-column\b|\[\s*dark\s*[\]=~|^$*]|\b(?:has|get|set|remove|toggle)Attribute\s*\(\s*['"`]dark['"`]|\battributeFilter\s*:\s*\[[^\]]*['"`]dark['"`]/;
+const YT_IDS = '(?:secondary(?:-inner)?|primary|below|columns|masthead(?:-container)?|player-container(?:-inner|-outer)?)';
+const YT_NAMES = new RegExp([
+  /\b[yY][tT][pPdD]-|\bmovie_player\b|\byt-(?:navigate|page|player)-|\byt-action\b|\btp-yt-|\bytInitial|\bgetPlayerResponse\b/.source,
+  /\bhtml5-(?:video-player|main-video|video-container)\b|\bcaption-window\b/.source,
+  `#${YT_IDS}(?![\\w-])`,
+  `(?:\\.id\\s*[!=]==?\\s*|getElementById\\s*\\(\\s*)['"\`]${YT_IDS}['"\`]`,
+  `\\[\\s*id\\s*[~|^$*]?=\\s*['"]?${YT_IDS}(?![\\w-])`,
+  /\bis-single-column\b|\[\s*dark\s*[\]=~|^$*]|\b(?:has|get|set|remove|toggle)Attribute\s*\(\s*['"`]dark['"`]|\battributeFilter\s*:\s*\[[^\]]*['"`]dark['"`]/.source,
+].join('|'));
 const YT_CAPTURE_LINES = new Set([
   "const el = doc ? doc.getElementById('movie_player') : null;",
   "const r = el && typeof el.getPlayerResponse === 'function' ? el.getPlayerResponse() : null;",
@@ -190,7 +202,8 @@ const YT_CAPTURE_LINES = new Set([
 const RULES = [
   ...CODE_RULES,
   {
-    re: /\bchrome\s*(?:\.|\[\s*['"`])\s*(?:webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen)\b|\bchrome\s*\[\s*['"`]downloads|\bpermissions\s*\.\s*request\b|\btabs\s*\.\s*(?:executeScript|insertCSS)\b/,
+    // ‎permissions.request بالنقطة أو بالسلسلة الاختيارية أو بالأقواس (تحقق 2.3.0، ص-١٨: كان permissions['request'] يمر).
+    re: /\bchrome\s*(?:\.|\[\s*['"`])\s*(?:webRequest|declarativeNetRequest|scripting|cookies|identity|history|bookmarks|debugger|management|offscreen)\b|\bchrome\s*\[\s*['"`]downloads|\bpermissions\s*(?:\??\.\s*request\b|(?:\?\.)?\s*\[\s*['"`]request['"`])|\btabs\s*\.\s*(?:executeScript|insertCSS)\b/,
     msg: 'واجهة تحتاج إذنًا غير معتمد',
     // طلب موافقة صور المحفوظات في Firefox وحده، بسطره المراجَع في ملف الموافقة (قرار سلطان 2026-11-04، core/consent/thumbnails.js).
     // وإعادة طلب إذن يوتيوب نفسه بسطره في ملفه (الفكرة ٣-أ، ح-39، core/consent/youtube-access.js). ومنذ و1 (2.2.0) لا طلب إذن مضيف البلاغات.
@@ -237,6 +250,23 @@ const CONSENT_LINES = new Map([
     'return Promise.resolve(api.permissions.request({ origins: [...YOUTUBE_MATCHES] })).then((granted) => granted === true, () => false);',
   ])],
 ]);
+// وكائن الأذونات نفسه (تحقق 2.3.0، ص-١٨): اسم مستعار له (const p = api.permissions; p.request(…)) أو تفكيكه
+// ({ permissions: { request } }) كان يمر من سطر الطلب. فلا يُذكر كائنه (‎.permissions أو ['permissions'] أو مفتاح تفكيك) إلا في ملفي
+// الموافقة، والنافذة (permissions.contains لقراءة إذن يوتيوب)، ومحوّل التخزين (getManifest().permissions قائمة البيان لا الواجهة)؛ وفي
+// هذه الملفات لا ‎.request( ولا ['request'] إلا في السطر المعتمد. وكل سطر معتمد مرة واحدة في ملفه.
+const PERMISSIONS_FILES = new Set([...CONSENT_LINES.keys(), path.join('pages', 'popup', 'status.js'), path.join('core', 'store', 'area.js')]);
+const PERMISSIONS_REF = /(?:\??\.)\s*permissions\b|\[\s*['"`]permissions['"`]\s*\]|\bpermissions\s*:\s*\{|\{[^{}]*\bpermissions\b[^{}]*\}\s*=(?!=)/;
+const REQUEST_CALL = /\??\.\s*request\s*\(|\[\s*['"`]request['"`]\s*\]/;
+// وأصل يوتيوب المعلن (YOUTUBE_MATCHES، ح-39): يُنسخ نشرًا ([...YOUTUBE_MATCHES]) أو يُستورد، ولا يُعدَّل؛ وتعريفه في ids.js سطر واحد
+// بقيمة content_scripts.matches في البيان نفسها، فلا يتسع الطلب بتغيير القائمة وسطره كما هو.
+const MATCHES_FILE = path.join('core', 'model', 'ids.js');
+const MATCHES_DEF = `export const YOUTUBE_MATCHES = Object.freeze(${YT.replace(/"/g, "'")});`;
+const counted = new Map();
+const countLine = (rel, line) => {
+  const k = `${rel}\n${line.trim()}`;
+  counted.set(k, (counted.get(k) ?? 0) + 1);
+};
+
 // قراءة ملف خط الترجمة من حزمة الإضافة نفسها (chrome-extension://، ليست شبكة) لـFontFace ببياناته (عقد interfaces §٣):
 // في محمّل خطوط الطبقة وحده، والسطر مراجَع حرفيًا كأسطر غلافي الالتقاط (طلب ملف مشترك من P6).
 const PACKAGED_READS = new Map([[path.join('player', 'overlay', 'fonts.js'), new Set(['const res = await fetch(runtime.getURL(path));'])]]);
@@ -365,6 +395,16 @@ for (const file of await walk(SRC)) {
     if (!line.trim()) return;
     const at = `${rel}:${i + 1}`;
     for (const r of RULES) if (r.re.test(line) && !r.allow?.(rel, line)) problems.push(`${at}: ${r.msg}`);
+    if ((rel === CAPTURE && YT_CAPTURE_LINES.has(line.trim())) || CONSENT_LINES.get(rel)?.has(line.trim())) countLine(rel, line);
+    if (PERMISSIONS_REF.test(line) && !PERMISSIONS_FILES.has(rel)) problems.push(`${at}: كائن الأذونات خارج ملفي الموافقة والنافذة ومحوّل التخزين`);
+    if (PERMISSIONS_FILES.has(rel) && REQUEST_CALL.test(line) && !CONSENT_LINES.get(rel)?.has(line.trim())) problems.push(`${at}: طلب إذن خارج السطر المعتمد`);
+    for (const m of line.matchAll(/\bYOUTUBE_MATCHES\b/g)) {
+      const spread = line.slice(Math.max(0, m.index - 3), m.index) === '...';
+      const imported = /^\s*(?:import|export)\s*\{[^}]*\}\s*from\s*['"`]/.test(line);
+      const defined = rel === MATCHES_FILE && line.trim() === MATCHES_DEF;
+      if (defined) countLine(rel, line);
+      if (!spread && !imported && !defined) problems.push(`${at}: YOUTUBE_MATCHES يُنسخ نشرًا ([...YOUTUBE_MATCHES]) ولا يُعدَّل`);
+    }
     if (NETWORK.test(line) && !(rel === CAPTURE && PASSTHROUGH.has(line.trim())) && !PACKAGED_READS.get(rel)?.has(line.trim())) problems.push(`${at}: طلب شبكة من الإضافة`);
     if (REQUEST_ALIAS.test(line) && !ALIAS_LINES.get(rel)?.has(line.trim())) problems.push(`${at}: اسم مستعار لطلب شبكة خارج أسطره المراجَعة`);
     for (const m of line.matchAll(URL_RE)) if (!URL_OK(m[0], rel)) problems.push(`${at}: نطاق خارجي ${m[0].slice(0, 60)}`);
@@ -386,6 +426,10 @@ for (const file of await walk(SRC)) {
     if (DL_LISTENERS.test(line)) problems.push(`${at}: مستمع يمس كل تنزيلات المتصفح`);
   });
 }
+
+// كل سطر مستثنى مرة واحدة في ملفه (ص-١٨: كان مكرَّره في دالة أخرى يمر)، وتعريف أصل يوتيوب موجود بقيمة البيان.
+for (const [k, n] of counted) if (n > 1) problems.push(`${k.split('\n')[0]}: سطر معتمد مكرَّر ${n} مرات: ${k.split('\n')[1].slice(0, 80)}`);
+if (counted.get(`${MATCHES_FILE}\n${MATCHES_DEF}`) !== 1) problems.push(`${MATCHES_FILE}: تعريف YOUTUBE_MATCHES غائب أو بغير قيمة content_scripts.matches (${MATCHES_DEF})`);
 
 if (problems.length) {
   console.error(`check-static: ${problems.length} مخالفة\n- ${problems.join('\n- ')}`);

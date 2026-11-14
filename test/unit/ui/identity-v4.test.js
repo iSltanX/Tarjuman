@@ -388,41 +388,93 @@ test('ت-١٢ (ج): نص الهوية §٥: سلّم 2 داخل المكوّنا
 const BODY_SIZES = [16, 14, 13, 12];
 const HEAD_SIZES = [30, 22, 18, 16, 14];
 
-test('ت-١٢ (ب): كل حجم خط بالبكسل في الصفحات واللوحة والمشغّل على سلّم خطه في الهوية §٤، وكل سطر بالبكسل زوجي', async () => {
+/**
+ * تصريح خط واحد على سلّمي §٤ (تحقق 2.3.0، ص-١٨: كان الحارس يتخطى بصمت كل font: بصيغة غير المعتادة، وrem وcalc، وسمة style).
+ * font: [مائل] [وزن رقمي أو bold…] <الحجم>[/<السطر>] var(--…font-body|head|mono)، والعائلة من رموز الهوية وحدها. الحجم بالبكسل على سلّم
+ * خطه (والأحادي العرض خارجه)؛ وفي المشغّل واللوحة em وvar(--…) أيضًا، لأن مقاسهما يتبع حجم المشغّل؛ وrem و% وcalc لا في أي سطح. والسطر
+ * بالبكسل زوجي، وبلا وحدة أو var مقبول. وما لا يُفهم مخالفة لا تخطٍّ، إلا inherit وinitial وunset.
+ * @returns {{ seen: boolean, problems: string[] }}
+ */
+function fontDecl(where, prop, val, { player = false } = {}) {
+  const v = val.replace(/\s*!important$/, '').trim();
+  if (/^(?:inherit|initial|unset|revert)$/.test(v)) return { seen: false, problems: [] };
+  const NUM = String.raw`\d+(?:\.\d+)?`;
+  const SIZE = String.raw`${NUM}(?:px|em|rem|%)|var\(--[\w-]+\)|calc\([^()]*(?:\([^()]*\)[^()]*)*\)`;
+  const sizeOk = (size, family) => {
+    const px = new RegExp(`^(${NUM})px$`).exec(size);
+    if (px) return family === 'mono' || (family === 'head' ? HEAD_SIZES : family === 'body' ? BODY_SIZES : [...new Set([...BODY_SIZES, ...HEAD_SIZES])]).includes(Number(px[1])) ? null : `الحجم ${px[1]} خارج سلّم ${family === 'head' ? 'Cairo' : family === 'body' ? 'Almarai' : 'الخطين'}`;
+    if (player && (new RegExp(`^${NUM}em$`).test(size) || /^var\(--[\w-]+\)$/.test(size))) return null;
+    return `الحجم ${size} بوحدة غير مسموحة هنا (البكسل على السلّم${player ? '، أو em أو var في المشغّل' : ''})`;
+  };
+  const lineOk = (line) => {
+    if (!line || new RegExp(`^${NUM}$`).test(line) || /^var\(--[\w-]+\)$/.test(line) || line === 'normal') return null;
+    const px = new RegExp(`^(${NUM})px$`).exec(line);
+    if (px) return Number(px[1]) % 2 ? `السطر ${px[1]} فردي` : null;
+    return `السطر ${line} بوحدة غير مسموحة`;
+  };
+  const problems = [];
+  if (prop === 'font') {
+    const m = new RegExp(String.raw`^(?:(?:normal|italic|oblique|small-caps|bold|bolder|lighter|\d{3})\s+)*(${SIZE})(?:\s*\/\s*(${NUM}(?:px)?|var\(--[\w-]+\)|normal))?\s+(.+)$`).exec(v);
+    if (!m) return { seen: true, problems: [`${where} { font: ${val} } — صيغة لا يفهمها الحارس`] };
+    const [, size, line, familyText] = m;
+    const fam = /^var\(--[\w-]*font-(body|head|mono)\)$/.exec(familyText.trim());
+    if (!fam) problems.push(`${where} { font: ${val} } — العائلة ليست رمز خط من الهوية (var(--…font-body|head|mono))`);
+    const family = fam?.[1] ?? 'body';
+    for (const why of [sizeOk(size, family), lineOk(line)]) if (why) problems.push(`${where} { font: ${val} } — ${why}`);
+  } else if (prop === 'font-size') {
+    if (!new RegExp(`^(?:${SIZE})$`).test(v)) return { seen: true, problems: [`${where} { font-size: ${val} } — صيغة لا يفهمها الحارس`] };
+    const why = sizeOk(v, null);
+    if (why) problems.push(`${where} { font-size: ${val} } — ${why}`);
+  } else if (prop === 'line-height') {
+    const why = lineOk(v);
+    if (why) problems.push(`${where} { line-height: ${val} } — ${why}`);
+  } else return { seen: false, problems: [] };
+  return { seen: true, problems };
+}
+
+test('ت-١٢ (ب): كل حجم خط في الصفحات واللوحة والمشغّل على سلّم خطه في الهوية §٤، وكل سطر بالبكسل زوجي، ولا صيغة يتخطاها الحارس', async () => {
   const { groupCss, layerCss } = await import('../../../src/player/controls/styles.js');
   const { panelCss } = await import('../../../src/player/panel/styles.js');
-  const sheets = [...walk(path.join(ROOT, 'src'))].filter((f) => f.endsWith('.css')).map((f) => [path.relative(ROOT, f), read(path.relative(ROOT, f))]);
-  sheets.push(['player/controls', `${groupCss()}\n${layerCss()}`.replace(/\/\*[\s\S]*?\*\//g, '')], ['player/panel', panelCss().replace(/\/\*[\s\S]*?\*\//g, '')]);
+  // الترجمة فوق الفيديو (overlay/styles.js) خارج السلّم بالتصميم: حجمها بمعادلة المنتج ونسبة المستخدم (docs/identity.md §٧ البند ٢).
+  const sheets = [...walk(path.join(ROOT, 'src'))].filter((f) => f.endsWith('.css')).map((f) => [path.relative(ROOT, f), read(path.relative(ROOT, f)), false]);
+  sheets.push(['player/controls', `${groupCss()}\n${layerCss()}`.replace(/\/\*[\s\S]*?\*\//g, ''), true], ['player/panel', panelCss().replace(/\/\*[\s\S]*?\*\//g, ''), true]);
   const off = [];
   let seen = 0;
-  for (const [file, css] of sheets) {
-    for (const [, selector, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-      const where = `${file}: ${selector.trim()}`;
-      for (const decl of body.split(';')) {
-        const at = decl.indexOf(':');
-        if (at < 0) continue;
-        const prop = decl.slice(0, at).trim();
-        const val = decl.slice(at + 1).trim();
-        if (prop === 'font') {
-          // «font: <الوزن> <الحجم>px[/<السطر>px] var(--…-font-…)»؛ والأحادي العرض خارج السلّم (§٤ لا يحدّد له مقاسًا).
-          const m = /^\d+\s+(\d+(?:\.\d+)?)px(?:\/(\d+(?:\.\d+)?)px)?\s+var\(--[\w-]*font-(body|head|mono)\)/.exec(val);
-          if (!m) continue;
-          seen++;
-          const [, size, line, family] = m;
-          if (family !== 'mono' && !(family === 'head' ? HEAD_SIZES : BODY_SIZES).includes(Number(size))) off.push(`${where} { font: ${val} } — الحجم ${size} خارج سلّم ${family === 'head' ? 'Cairo' : 'Almarai'}`);
-          if (line && Number(line) % 2 !== 0) off.push(`${where} { font: ${val} } — السطر ${line} فردي`);
-        } else if (prop === 'font-size') {
-          const m = /^(\d+(?:\.\d+)?)px$/.exec(val);
-          if (!m) continue;
-          seen++;
-          if (![...new Set([...BODY_SIZES, ...HEAD_SIZES])].includes(Number(m[1]))) off.push(`${where} { font-size: ${val} } — خارج السلّمين`);
-        } else if (prop === 'line-height') {
-          const m = /^(\d+(?:\.\d+)?)px$/.exec(val);
-          if (m && Number(m[1]) % 2 !== 0) off.push(`${where} { line-height: ${val} } — فردي`);
-        }
-      }
+  const take = (where, decl, player) => {
+    const at = decl.indexOf(':');
+    if (at < 0) return;
+    const r = fontDecl(where, decl.slice(0, at).trim(), decl.slice(at + 1).trim(), { player });
+    if (r.seen) seen++;
+    off.push(...r.problems);
+  };
+  for (const [file, css, player] of sheets) {
+    for (const [, selector, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) for (const decl of body.split(';')) take(`${file}: ${selector.trim()}`, decl, player);
+  }
+  // وسمة style في صفحات HTML، والخط المضمّن من الشيفرة إلا موضعيه بالتصميم: كلمة الشعار بمقاسها من عرضه (logo.js) ومعاينة الترجمة بحجمها.
+  for (const f of [...walk(path.join(ROOT, 'src'))].filter((x) => x.endsWith('.html'))) {
+    for (const [, body] of readFileSync(f, 'utf8').matchAll(/\sstyle\s*=\s*["']([^"']*)["']/gi)) for (const decl of body.split(';')) take(`${path.relative(ROOT, f)}: [style]`, decl, false);
+  }
+  const INLINE_OK = ['src/ui/logo.js: w.style.fontSize = `${wordSize}px`;', 'src/ui/logo.js: w.style.lineHeight = `${Math.round(wordSize * 4 / 3)}px`;', 'src/pages/settings/view.js: stage.style.fontSize = s.fontSize;'];
+  const inline = [];
+  for (const f of [...walk(path.join(ROOT, 'src'))].filter((x) => x.endsWith('.js') && !x.includes(`${path.sep}overlay${path.sep}`))) {
+    for (const line of readFileSync(f, 'utf8').split('\n')) {
+      if (/\.style\s*\.\s*(?:font|fontSize|lineHeight)\s*=|setProperty\(\s*['"`](?:font|font-size|line-height)['"`]/.test(line)) inline.push(`${path.relative(ROOT, f)}: ${line.trim()}`);
     }
   }
   assert.ok(seen > 150, `قُرئت ${seen} تصريحًا فقط`);
   assert.deepEqual(off, [], 'أحجام خارج السلّم');
+  assert.deepEqual(inline.filter((l) => !INLINE_OK.includes(l)), [], 'خط مضمّن من الشيفرة');
+  for (const l of INLINE_OK) assert.ok(inline.includes(l), `استثناء لا موضع له: ${l}`);
+});
+
+test('ت-١٢ (ب)، ص-١٨: الحارس يُسقط الصيغ التي كان يتخطاها، ويقبل ما في الهوية', () => {
+  const bad = (prop, val, o) => fontDecl('x', prop, val, o).problems.length > 0;
+  for (const val of ['15px var(--tj-font-body)', 'bold 15px var(--tj-font-body)', '700 15px / 20px var(--tj-font-body)', '700 14px Almarai', 'italic 700 15px var(--tj-font-body)', '700 1rem var(--tj-font-body)', '700 calc(1em + 2px) var(--tj-font-body)', '700 13px/1 var(--tj-font-head)', '700 14px/21px var(--tj-font-body)']) assert.ok(bad('font', val), val);
+  for (const val of ['0.95rem', 'calc(12px + 1px)', '90%', '15px', 'large']) assert.ok(bad('font-size', val), val);
+  assert.ok(bad('font-size', '0.93em'), 'em في الصفحات');
+  assert.ok(bad('line-height', '1.5em'));
+  for (const val of ['700 13px/1 var(--tj-font-body)', '400 14px/20px var(--tj-font-body)', '800 22px/1.3 var(--tj-font-head)', '500 11px var(--tj-font-mono)', 'inherit']) assert.ok(!bad('font', val), val);
+  for (const val of ['400 var(--fs)/1.5 var(--tj-p-font-body)', '500 0.93em/1.4 var(--tj-p-font-mono)']) assert.ok(!bad('font', val, { player: true }), val);
+  assert.ok(!bad('font-size', '0.93em', { player: true }));
+  assert.ok(!bad('font-size', '13px') && !bad('line-height', '1.5') && !bad('line-height', '20px'));
 });

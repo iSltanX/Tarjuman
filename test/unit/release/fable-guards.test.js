@@ -132,3 +132,15 @@ test('FA-19: أدنى إصدار Chromium في بيان الحزمة محروس 
   });
   assert.deepEqual(failed(r), ['target-browser-settings']);
 });
+
+test('تحقق 2.3.0 (ص-١٨): طلب الإذن بالأقواس أو بالسلسلة الاختيارية خارج حزمة الإعدادات يُرفض في التدقيق كالنقطة', async () => {
+  for (const [i, call] of ["api.permissions['request']({ origins: ['https://*/*'] })", "api.permissions?.request({ origins: ['https://*/*'] })", "api.permissions.request({ origins: ['https://*/*'] })"].entries()) {
+    const r = await pkgCopy(`pkg-perm-${i}`, async (dir) => {
+      const main = path.join(dir, 'pages', 'popup', 'main.js');
+      await writeFile(main, `${await readFile(main, 'utf8')}\nexport const _m = (api) => ${call};\n`);
+    });
+    const c = r.checks.find((x) => x.id === 'permissions-request-settings-only');
+    assert.equal(c.ok, false, call);
+    assert.deepEqual(c.detail.files, ['pages/popup/main.js', 'pages/settings/main.js'], call);
+  }
+});
