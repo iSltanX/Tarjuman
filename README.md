@@ -90,7 +90,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/assets/how-it-works-dark.png">
-    <img src=".github/assets/how-it-works-light.png" alt="خطوات ترجمان: نزّل الأصل وانسخ التعليمات في ترجمان، ثم ترجم بنموذجك خارجه، ثم شاهد واضبط في ترجمان" width="100%">
+    <img src=".github/assets/how-it-works-light.png" alt="خطوات ترجمان الأربع على صفحتين: في ترجمان على جهازك تنزّل الأصل وتنسخ التعليمات ثم تشاهد، وخارجه عند نموذجك تترجم؛ وأنت من يرسل الملف ويرفع ناتجه" width="100%">
   </picture>
 </p>
 

@@ -76,7 +76,7 @@ Tarjuman is for desktop only. Its buttons appear on `www.youtube.com` watch page
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/assets/en/how-it-works-dark.png">
-    <img src=".github/assets/en/how-it-works-light.png" alt="Tarjuman's steps: download the original and copy the instructions in Tarjuman, translate with your model outside it, then watch and adjust in Tarjuman" width="100%">
+    <img src=".github/assets/en/how-it-works-light.png" alt="Tarjuman's four steps on two pages: in Tarjuman, on your device, you download the original, copy the instructions, then watch; outside it, with your model, you translate. You send the file and upload the result" width="100%">
   </picture>
 </p>
 
