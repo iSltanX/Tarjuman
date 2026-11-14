@@ -4,7 +4,7 @@
 // وصفحة النافذة نفسها بلا تغيير إلا سكربتًا قبل main.js يضع واجهة chrome وهمية: تبويب يوتيوب نشط يرد برد الفيديو للحالة المختارة،
 // وتخزين في الذاكرة بلغة الواجهة وتفضيلاتها وسجلات الفيديو. فالمقيس الحزمة نفسها (HTML وCSS والخطوط والشيفرة) بمحرّك كل متصفح،
 // بلا يوتيوب ولا تحكم بحالته. ثم إجراءات المستخدم في الحالة (النسخ، وفتح «الخطوات» و«كيف؟»، واللصق) بنقرات في الصفحة.
-// يكتب لكل حالة ولغة: ارتفاع المحتوى، وهل يحتاج تمريرًا، وأول عنصر يُقطع، وعرض الصفحة، ولقطة 340×600.
+// يكتب لكل حالة ولغة: ارتفاع المحتوى، وهل يحتاج تمريرًا، وأول عنصر يُقطع، وعرض الصفحة، وما يخرج عن حد بطاقته أفقيًا، ولقطة 340×600.
 //   command node test/live/stores/popup-fit.mjs --browser brave|chrome|edge|firefox [--out test-results/live/popup-fit/<browser>]
 //     [--cases usual,translated] [--locales ar,en]
 import { randomUUID } from 'node:crypto';
@@ -275,10 +275,19 @@ function measure(limit) {
     const hiddenUp = (() => { for (let n = e; n && n.nodeType === 1; n = n.parentElement) if (n.hidden || n.classList.contains('tj-sr-only')) return true; return false; })();
     return { visible: !hiddenUp && r.width > 1 && r.height > 1, h: Math.round(r.height), text: e.textContent.replace(/\s+/g, ' ').trim().slice(0, 90) };
   };
+  // ما يخرج عن حد بطاقته أفقيًا (زرا «أكمل الناقص» و«تحرير الترجمة» بالإنجليزية كانا يخرجان، ST1): نصه وكم بكسلًا.
+  const spill = [...document.querySelectorAll('.tj-popup__card')].flatMap((card) => {
+    const c = card.getBoundingClientRect();
+    return [...card.querySelectorAll('button, a, p, h2, li, span')].filter((e) => e.getClientRects().length).map((e) => {
+      const r = e.getBoundingClientRect();
+      return { text: (e.textContent || e.getAttribute('aria-label') || e.tagName).replace(/\s+/g, ' ').trim().slice(0, 40), over: Math.ceil(Math.max(r.right - c.right, c.left - r.left)) };
+    }).filter((x) => x.over > 0);
+  }).slice(0, 6);
   const fontSizes = [...new Set([...document.querySelectorAll('#app *')].filter((e) => e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())).map((e) => getComputedStyle(e).fontSize))].sort();
   return {
     height, limit, fits: height <= limit, scrolls: se.scrollHeight > se.clientHeight + 1,
     width: Math.ceil(document.documentElement.scrollWidth), bodyWidth: Math.round(document.body.getBoundingClientRect().width),
+    spill,
     firstCut: cut ? (cut.textContent || cut.getAttribute('aria-label') || cut.tagName).replace(/\s+/g, ' ').trim().slice(0, 60) : null,
     lang: document.documentElement.lang, dir: document.documentElement.dir,
     sourceNote: shown('#tj-pair-source'), copyCaption: shown('#tj-pair-caption'), pasteHint: shown('#tj-paste-hint'),
@@ -345,8 +354,8 @@ try {
       const row = { id, locale, ready: before.ready, fonts: before.fonts, actions, ...m, constrained: !!CASES[id].limit, shot: path.relative(ROOT, file), full: full ? path.relative(ROOT, full) : null };
       result.cases.push(row);
       if (row.constrained && (!worst || row.height > worst.height)) worst = row;
-      const ok = row.fits && !row.scrolls && row.width <= WIDTH;
-      console.log(`${ok ? '✓' : row.constrained ? '✗' : '·'} ${row.constrained ? '' : '[يُسجَّل] '}${id} ${locale}: ${row.height}/${LIMIT}${row.scrolls ? ' تمرير' : ''}${row.firstCut ? ` — يُقطع: ${row.firstCut}` : ''} · عرض ${row.width} · ${actions.join('، ')}`);
+      const ok = row.fits && !row.scrolls && row.width <= WIDTH && !row.spill.length;
+      console.log(`${ok ? '✓' : row.constrained ? '✗' : '·'} ${row.constrained ? '' : '[يُسجَّل] '}${id} ${locale}: ${row.height}/${LIMIT}${row.scrolls ? ' تمرير' : ''}${row.firstCut ? ` — يُقطع: ${row.firstCut}` : ''}${row.spill.length ? ` — يخرج عن البطاقة: ${row.spill.map((x) => `«${x.text}» ${x.over}px`).join('، ')}` : ''} · عرض ${row.width} · ${actions.join('، ')}`);
     }
   }
 } catch (err) {
@@ -357,16 +366,17 @@ try {
   await session?.close().catch(() => {});
   server.close();
   // الشرط يحكم وحده؛ وما يُسجَّل يُطبع بأرقامه.
-  const bad = (c) => !c.fits || c.scrolls || c.width > WIDTH;
+  const bad = (c) => !c.fits || c.scrolls || c.width > WIDTH || c.spill.length > 0;
   const limited = result.cases.filter((c) => c.constrained);
   const over = limited.filter(bad);
   const reported = result.cases.filter((c) => !c.constrained && bad(c));
+  const tag = (c) => `${c.id}-${c.locale}:${c.height}${c.spill.length ? ` يخرج ${Math.max(...c.spill.map((x) => x.over))}px` : ''}`;
   result.summary = {
-    limited: limited.length, over: over.map((c) => `${c.id}-${c.locale}:${c.height}`), worst: worst ? { id: worst.id, locale: worst.locale, height: worst.height } : null,
-    reportedOver: reported.map((c) => `${c.id}-${c.locale}:${c.height}`),
+    limited: limited.length, over: over.map(tag), worst: worst ? { id: worst.id, locale: worst.locale, height: worst.height } : null,
+    reportedOver: reported.map(tag),
   };
   await writeFile(path.join(OUT, 'popup-fit.json'), `${JSON.stringify(result, null, 2)}\n`);
   console.log(`\n${result.version ?? browser}: الشرط ${limited.length - over.length}/${limited.length} بلا تمرير؛ الأطول ${worst ? `${worst.id} ${worst.locale} ${worst.height}` : '—'}${over.length ? ` — تتجاوز: ${result.summary.over.join('، ')}` : ''}`);
-  if (reported.length) console.log(`يُسجَّل ولا يحكم (فوق ${LIMIT}): ${result.summary.reportedOver.join('، ')}`);
+  if (reported.length) console.log(`يُسجَّل ولا يحكم (فوق ${LIMIT} أو يخرج عن بطاقته): ${result.summary.reportedOver.join('، ')}`);
   if (over.length || !limited.length) process.exitCode = 1;
 }
