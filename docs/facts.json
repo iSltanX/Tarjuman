@@ -17,8 +17,8 @@
   "blocks": {
     "badges": {
       "ar": [
-        "  <a href=\"{chrome}\"><img alt=\"ترجمان {pubChrome} في Chrome Web Store\" src=\"https://img.shields.io/badge/Chrome%20Web%20Store-{pubChrome}-1E4A44?logo=googlechrome&logoColor=white\"></a>",
-        "  <a href=\"{edge}\"><img alt=\"ترجمان {pubEdge} في Microsoft Edge Add-ons\" src=\"https://img.shields.io/badge/Edge%20Add--ons-{pubEdge}-1E4A44?logo=microsoftedge&logoColor=white\"></a>"
+        "  <a href=\"{chrome}\"><img alt=\"ترجمان {pubChrome} في Chrome Web Store\" src=\"https://img.shields.io/badge/Chrome%20Web%20Store-{pubChrome}-682455?logo=googlechrome&logoColor=white\"></a>",
+        "  <a href=\"{edge}\"><img alt=\"ترجمان {pubEdge} في Microsoft Edge Add-ons\" src=\"https://img.shields.io/badge/Edge%20Add--ons-{pubEdge}-682455?logo=microsoftedge&logoColor=white\"></a>"
       ]
     },
     "install": {

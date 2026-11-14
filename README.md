@@ -9,8 +9,8 @@
 
 <p align="center">
 <!-- tj:facts badges -->
-  <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 2.2.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-2.2.0-1E4A44?logo=googlechrome&logoColor=white"></a>
-  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 2.2.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-2.2.0-1E4A44?logo=microsoftedge&logoColor=white"></a>
+  <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 2.2.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-2.2.0-682455?logo=googlechrome&logoColor=white"></a>
+  <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 2.2.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-2.2.0-682455?logo=microsoftedge&logoColor=white"></a>
 <!-- /tj:facts badges -->
   <img alt="المعالجة والحفظ على جهازك" src="https://img.shields.io/badge/data-on--device-2A6E46">
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
