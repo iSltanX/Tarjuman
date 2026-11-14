@@ -27,7 +27,7 @@ const DATE_LINE = /^- \*\*تاريخ السريان:\*\* (.+)$/m;
 const INTRO_LINE = /^- \*\*المقدمة:\*\* (.+)$/m;
 const DECISION = /\s*\*\*\[قرار\]\*\*/g;
 /** تاريخ بصيغة YYYY-MM-DD موجود فعلًا (لا 2026-02-30). @param {string} s */
-const validDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
+export const validDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
 
 /** تاريخ السريان من المصدر، أو null ما دام ⟨تاريخ النشر⟩. @param {string} source */
 export function effectiveDateOf(source) {

@@ -15,6 +15,7 @@
     "build:firefox": "node scripts/build.mjs --target firefox",
     "lint:firefox": "node scripts/build.mjs --target firefox && web-ext lint --source-dir dist-firefox --warnings-as-errors",
     "package": "node scripts/release/package.mjs && node scripts/release/store.mjs",
+    "release:gate": "node scripts/release/gate.mjs",
     "test": "node scripts/run-tests.mjs test/unit",
     "test:integration": "node scripts/run-tests.mjs test/integration",
     "check:static": "node scripts/check-static.mjs",

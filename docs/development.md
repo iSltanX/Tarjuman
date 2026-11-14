@@ -44,6 +44,7 @@ npm run package
 | `node scripts/run-tests.mjs test/e2e/static test/e2e/regression` | e2e الثابت والانحدار بلا متصفح، ومنه تغليف حزمة مبنية وتدقيقها (`test/e2e/static/release.test.js`). |
 | `npm run lint:firefox` | `web-ext lint` على بناء Firefox. |
 | `npm run check:all` | `check` والتكامل وe2e و`lint:firefox` بالترتيب. ويشغّلها CI ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) خطوةً خطوة في كل دفع إلى `main` و`tj/**`، وكل طلب دمج، وأسبوعيًا، ثم `npm run package` بعدها (و`check:all` نفسه لا يشغّل `package`). |
+| `npm run release:gate` | بوابة يوم النشر (`scripts/release/gate.mjs`): تفشل ما بقي ما ينتظر النشر في الملفات المتتبعة التي تُنشر أو تُرفع (كلها إلا `scripts/` و`test/` و`tools/`): تاريخ سريان الخصوصية غير مثبت أو `PRIVACY.md` لا يطابق مصدره (`privacy.mjs --strict --check`)، وعنصر نائب `⟨…⟩` خارج الشيفرة المضمّنة (إلا `⟨رقم الإصدار⟩` و`⟨لقطة: …⟩` اللذين يملؤهما مولّد)، وجملة «لم يُنشر» أو «لم يُرفع» فيها رقم الإصدار، وعنوان الإصدار في `CHANGELOG.md` بلا تاريخ. ليست في `check:all` ولا `package`، لأن الفرع قبل يوم النشر يحمل ذلك بحق. تُشغَّل يوم النشر قبل الدمج وقبل الرفع ([`release-day.md`](release-day.md))، ويشغّلها CI على `main` وطلبات الدمج إليه. |
 
 وللتطوير السريع `npm test` (الوحدة وحدها) و`npm run check:quick` (الفحص الثابت والوحدة).
 
