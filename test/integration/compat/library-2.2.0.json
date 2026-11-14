@@ -1,0 +1,2389 @@
+{
+ "note": "لقطة تخزين مجمّدة كتبتها شيفرة 2.2.0 نفسها (c04a606، الإصدار المنشور في المتاجر) بمولّدها library-2.2.0.mjs، لاختبار الترقية من 2.2.0 والرجوع إليه (تحقق 2.3.0 ص-٢٢). لا تُعدَّل يدويًا: v2.2.test.js يتحقق أن المولّد على لقطة الشيفرة test/fixtures/v2.2 يعيدها حرفيًا.",
+ "version": "2.2.0",
+ "commit": "c04a6064f22a82c0620466d580bfbe673c655a65",
+ "storage": {
+  "meta": {
+   "schema": 1,
+   "createdAt": "2026-11-11T12:00:01.000Z",
+   "migratedAt": null
+  },
+  "settings": {
+   "schema": 1,
+   "offsetStepMs": 1000,
+   "displayModeDefault": "dual",
+   "appearance": {
+    "font": "tajawal",
+    "scale": 120,
+    "background": "solid",
+    "position": "raised"
+   },
+   "export": {
+    "modeDefault": "long",
+    "splitThreshold": 300
+   },
+   "thresholds": {
+    "driftMs": 150,
+    "completeness": 0.9
+   }
+  },
+  "prefs": {
+   "schema": 1,
+   "glossary": {
+    "attach": true,
+    "terms": [
+     {
+      "source": "prompt",
+      "target": "موجِّه",
+      "note": null
+     },
+     {
+      "source": "token",
+      "target": "رمز",
+      "note": "في سياق النماذج اللغوية"
+     },
+     {
+      "source": "latency",
+      "target": "زمن الاستجابة",
+      "note": null
+     }
+    ]
+   },
+   "review": {
+    "maxCps": 17
+   },
+   "saveLocation": {
+    "mode": "subfolder",
+    "folder": "Tarjuman"
+   },
+   "ui": {
+    "thumbnails": true,
+    "panelEntry": true,
+    "panelOpen": true,
+    "panelDual": false
+   }
+  },
+  "langPrefs": {
+   "schema": 1,
+   "pair": {
+    "from": "ja",
+    "to": "en"
+   },
+   "remember": true,
+   "recent": [
+    "ja",
+    "en"
+   ],
+   "videos": {
+    "AAAAAAAAAAA": {
+     "from": "ja",
+     "to": "en"
+    }
+   },
+   "order": [
+    "AAAAAAAAAAA"
+   ]
+  },
+  "uiLocale": {
+   "schema": 1,
+   "locale": "en",
+   "source": "user",
+   "at": "2026-11-11T12:00:02.000Z"
+  },
+  "video:AAAAAAAAAAA": {
+   "schema": 1,
+   "videoId": "AAAAAAAAAAA",
+   "title": "فيديو بثلاث ترجمات",
+   "durationMs": 60000,
+   "createdAt": "2026-11-11T12:00:03.000Z",
+   "updatedAt": "2026-11-11T12:00:03.000Z",
+   "rev": 1,
+   "english": [
+    {
+     "key": "en|manual",
+     "lang": "en",
+     "kind": "manual",
+     "capturedAt": "2026-11-11T12:00:00.000Z",
+     "source": "capture",
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000,
+       "text": "line 1"
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500,
+       "text": "line 2"
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000,
+       "text": "line 3"
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500,
+       "text": "line 4"
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000,
+       "text": "line 5"
+      }
+     ]
+    }
+   ],
+   "fingerprints": [
+    {
+     "id": "fp_snap22001",
+     "videoId": "AAAAAAAAAAA",
+     "trackKey": "en|manual",
+     "mode": "normal",
+     "count": 5,
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000
+      }
+     ],
+     "textHash": "fnv1a64:0123456789abcdef",
+     "fileName": "AAAAAAAAAAA.en.manual.normal.srt",
+     "createdAt": "2026-11-11T12:00:00.000Z",
+     "parts": null
+    },
+    {
+     "id": "fp_snap22002",
+     "videoId": "AAAAAAAAAAA",
+     "trackKey": "en|manual",
+     "mode": "long",
+     "count": 5,
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000
+      }
+     ],
+     "textHash": "fnv1a64:0123456789abcdef",
+     "fileName": "AAAAAAAAAAA.en.manual.long.srt",
+     "createdAt": "2026-11-11T12:00:00.000Z",
+     "parts": null
+    }
+   ],
+   "arabic": {
+    "fileName": "AAAAAAAAAAA.أولى.srt",
+    "importedAt": "2026-11-11T12:00:00.000Z",
+    "original": [
+     {
+      "n": 1,
+      "startMs": 1000,
+      "endMs": 3000,
+      "text": "أولى 1"
+     },
+     {
+      "n": 2,
+      "startMs": 3500,
+      "endMs": 5500,
+      "text": "أولى 2"
+     },
+     {
+      "n": 3,
+      "startMs": 6000,
+      "endMs": 8000,
+      "text": "أولى 3"
+     },
+     {
+      "n": 4,
+      "startMs": 8500,
+      "endMs": 10500,
+      "text": "أولى 4"
+     },
+     {
+      "n": 5,
+      "startMs": 11000,
+      "endMs": 13000,
+      "text": "أولى 5"
+     }
+    ],
+    "current": [
+     {
+      "n": 1,
+      "startMs": 1000,
+      "endMs": 3000,
+      "text": "أولى 1 (معدّل)"
+     },
+     {
+      "n": 2,
+      "startMs": 3500,
+      "endMs": 5500,
+      "text": "أولى 2 (معدّل)"
+     },
+     {
+      "n": 3,
+      "startMs": 6000,
+      "endMs": 8000,
+      "text": "أولى 3 (معدّل)"
+     },
+     {
+      "n": 4,
+      "startMs": 8500,
+      "endMs": 10500,
+      "text": "أولى 4 (معدّل)"
+     },
+     {
+      "n": 5,
+      "startMs": 11000,
+      "endMs": 13000,
+      "text": "أولى 5 (معدّل)"
+     }
+    ],
+    "editedAt": "2026-11-11T12:00:30.000Z",
+    "fingerprintId": null,
+    "comparison": null,
+    "notes": []
+   },
+   "view": {
+    "displayOffsetMs": 500,
+    "displayMode": "dual"
+   }
+  },
+  "index:AAAAAAAAAAA": {
+   "schema": 1,
+   "videoId": "AAAAAAAAAAA",
+   "title": "فيديو بثلاث ترجمات",
+   "updatedAt": "2026-11-11T12:00:03.000Z",
+   "rev": 1,
+   "english": [
+    {
+     "key": "en|manual",
+     "kind": "manual",
+     "cueCount": 5
+    }
+   ],
+   "arabic": {
+    "fileName": "AAAAAAAAAAA.أولى.srt",
+    "cueCount": 5,
+    "edited": true,
+    "matched": null,
+    "missing": 0,
+    "extra": 0,
+    "drift": 0
+   },
+   "fingerprints": 2,
+   "view": {
+    "displayOffsetMs": 500,
+    "displayMode": "dual"
+   }
+  },
+  "bundle:AAAAAAAAAAA": {
+   "schema": 1,
+   "videoId": "AAAAAAAAAAA",
+   "base": {
+    "rev": 1,
+    "createdAt": "2026-11-11T12:00:03.000Z",
+    "updatedAt": "2026-11-11T12:00:03.000Z"
+   },
+   "active": 1,
+   "names": [
+    null,
+    "مراجعة",
+    null
+   ],
+   "summary": {
+    "filled": 3,
+    "edited": 1,
+    "warned": 0,
+    "marks": {
+     "todo": 2,
+     "done": 1
+    }
+   }
+  },
+  "alts:AAAAAAAAAAA": {
+   "schema": 1,
+   "videoId": "AAAAAAAAAAA",
+   "slots": [
+    null,
+    {
+     "track": {
+      "fileName": "AAAAAAAAAAA.ثانية.srt",
+      "importedAt": "2026-11-11T12:00:00.000Z",
+      "original": [
+       {
+        "n": 1,
+        "startMs": 1000,
+        "endMs": 3000,
+        "text": "ثانية 1"
+       },
+       {
+        "n": 2,
+        "startMs": 3500,
+        "endMs": 5500,
+        "text": "ثانية 2"
+       },
+       {
+        "n": 3,
+        "startMs": 6000,
+        "endMs": 8000,
+        "text": "ثانية 3"
+       },
+       {
+        "n": 4,
+        "startMs": 8500,
+        "endMs": 10500,
+        "text": "ثانية 4"
+       },
+       {
+        "n": 5,
+        "startMs": 11000,
+        "endMs": 13000,
+        "text": "ثانية 5"
+       }
+      ],
+      "current": null,
+      "editedAt": null,
+      "fingerprintId": "fp_snap22002",
+      "comparison": {
+       "fingerprintId": "fp_snap22002",
+       "matched": true,
+       "countSource": 5,
+       "countTarget": 5,
+       "numbering": "same",
+       "missing": [],
+       "extra": [],
+       "drift": [],
+       "empty": [],
+       "noArabic": [],
+       "restoreTimingAvailable": true,
+       "driftThresholdMs": 100,
+       "notes": []
+      },
+      "notes": []
+     },
+     "offsetMs": -1200
+    },
+    {
+     "track": {
+      "fileName": "AAAAAAAAAAA.ثالثة.srt",
+      "importedAt": "2026-11-11T12:00:20.000Z",
+      "original": [
+       {
+        "n": 1,
+        "startMs": 1000,
+        "endMs": 3000,
+        "text": "ثالثة 1"
+       },
+       {
+        "n": 2,
+        "startMs": 3500,
+        "endMs": 5500,
+        "text": "ثالثة 2"
+       },
+       {
+        "n": 3,
+        "startMs": 6000,
+        "endMs": 8000,
+        "text": "ثالثة 3"
+       },
+       {
+        "n": 4,
+        "startMs": 8500,
+        "endMs": 10500,
+        "text": "ثالثة 4"
+       }
+      ],
+      "current": null,
+      "editedAt": null,
+      "fingerprintId": null,
+      "comparison": null,
+      "notes": []
+     },
+     "offsetMs": 300
+    }
+   ]
+  },
+  "prev:AAAAAAAAAAA": {
+   "schema": 1,
+   "videoId": "AAAAAAAAAAA",
+   "previous": {
+    "from": 2,
+    "savedAt": "2026-11-11T12:00:10.000Z",
+    "track": {
+     "fileName": "AAAAAAAAAAA.سابقة.srt",
+     "importedAt": "2026-11-11T12:00:00.000Z",
+     "original": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000,
+       "text": "سابقة 1"
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500,
+       "text": "سابقة 2"
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000,
+       "text": "سابقة 3"
+      }
+     ],
+     "current": null,
+     "editedAt": null,
+     "fingerprintId": null,
+     "comparison": null,
+     "notes": []
+    },
+    "offsetMs": 0
+   }
+  },
+  "marks:AAAAAAAAAAA": {
+   "schema": 1,
+   "videoId": "AAAAAAAAAAA",
+   "slots": [
+    {
+     "marks": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "textHash": "07ba47dd",
+       "kind": "todo",
+       "at": "2026-11-11T12:00:40.000Z"
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "textHash": "1362bf2f",
+       "kind": "done",
+       "at": "2026-11-11T12:00:40.000Z"
+      }
+     ],
+     "position": {
+      "n": 3,
+      "startMs": 6000,
+      "at": "2026-11-11T12:00:50.000Z"
+     }
+    },
+    {
+     "marks": [
+      {
+       "n": 2,
+       "startMs": 3500,
+       "textHash": "770c1c20",
+       "kind": "todo",
+       "at": "2026-11-11T12:00:40.000Z"
+      }
+     ],
+     "position": null
+    },
+    {
+     "marks": [],
+     "position": null
+    }
+   ]
+  },
+  "lang:AAAAAAAAAAA": {
+   "schema": 1,
+   "videoId": "AAAAAAAAAAA",
+   "base": {
+    "rev": 1,
+    "createdAt": "2026-11-11T12:00:03.000Z",
+    "updatedAt": "2026-11-11T12:00:03.000Z"
+   },
+   "sources": [
+    {
+     "key": "ja|manual",
+     "lang": "ja",
+     "kind": "manual",
+     "capturedAt": "2026-11-11T12:00:00.000Z",
+     "source": "capture",
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000,
+       "text": "日本語の行 1"
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500,
+       "text": "日本語の行 2"
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000,
+       "text": "日本語の行 3"
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500,
+       "text": "日本語の行 4"
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000,
+       "text": "日本語の行 5"
+      }
+     ]
+    },
+    {
+     "key": "ar|asr|en",
+     "lang": "ar",
+     "kind": "asr",
+     "via": "en",
+     "capturedAt": "2026-11-11T12:00:00.000Z",
+     "source": "capture",
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000,
+       "text": "ترجمة آلية 1"
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500,
+       "text": "ترجمة آلية 2"
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000,
+       "text": "ترجمة آلية 3"
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500,
+       "text": "ترجمة آلية 4"
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000,
+       "text": "ترجمة آلية 5"
+      }
+     ]
+    }
+   ],
+   "prints": [
+    {
+     "id": "fp_snap22003",
+     "videoId": "AAAAAAAAAAA",
+     "trackKey": "ja|manual",
+     "mode": "normal",
+     "count": 5,
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000
+      }
+     ],
+     "textHash": "fnv1a64:0123456789abcdef",
+     "fileName": "AAAAAAAAAAA.ja.manual.normal.srt",
+     "createdAt": "2026-11-11T12:00:00.000Z",
+     "parts": null
+    }
+   ],
+   "slots": [
+    {
+     "importedAt": "2026-11-11T12:00:00.000Z",
+     "fileName": "AAAAAAAAAAA.أولى.srt",
+     "lang": "en",
+     "ref": {
+      "fingerprintId": "fp_snap22003",
+      "comparison": {
+       "fingerprintId": "fp_snap22003",
+       "matched": true,
+       "countSource": 5,
+       "countTarget": 5,
+       "numbering": "same",
+       "missing": [],
+       "extra": [],
+       "drift": [],
+       "empty": [],
+       "noArabic": [],
+       "restoreTimingAvailable": true,
+       "driftThresholdMs": 100,
+       "notes": []
+      }
+     }
+    },
+    {
+     "importedAt": "2026-11-11T12:00:00.000Z",
+     "fileName": "AAAAAAAAAAA.ثانية.srt",
+     "lang": "fr",
+     "ref": null
+    },
+    null
+   ],
+   "previous": {
+    "importedAt": "2026-11-11T12:00:00.000Z",
+    "fileName": "AAAAAAAAAAA.سابقة.srt",
+    "lang": "ar",
+    "ref": null
+   }
+  },
+  "video:BBBBBBBBBBB": {
+   "schema": 1,
+   "videoId": "BBBBBBBBBBB",
+   "title": "فيديو بترجمة واحدة",
+   "durationMs": 60000,
+   "createdAt": "2026-11-11T12:00:04.000Z",
+   "updatedAt": "2026-11-11T12:00:04.000Z",
+   "rev": 1,
+   "english": [
+    {
+     "key": "en|manual",
+     "lang": "en",
+     "kind": "manual",
+     "capturedAt": "2026-11-11T12:00:00.000Z",
+     "source": "capture",
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000,
+       "text": "single 1"
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500,
+       "text": "single 2"
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000,
+       "text": "single 3"
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500,
+       "text": "single 4"
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000,
+       "text": "single 5"
+      }
+     ]
+    }
+   ],
+   "fingerprints": [
+    {
+     "id": "fp_snap22004",
+     "videoId": "BBBBBBBBBBB",
+     "trackKey": "en|manual",
+     "mode": "normal",
+     "count": 5,
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000
+      }
+     ],
+     "textHash": "fnv1a64:0123456789abcdef",
+     "fileName": "BBBBBBBBBBB.en.manual.normal.srt",
+     "createdAt": "2026-11-11T12:00:00.000Z",
+     "parts": null
+    }
+   ],
+   "arabic": {
+    "fileName": "BBBBBBBBBBB.وحيدة.srt",
+    "importedAt": "2026-11-11T12:00:00.000Z",
+    "original": [
+     {
+      "n": 1,
+      "startMs": 1000,
+      "endMs": 3000,
+      "text": "وحيدة 1"
+     },
+     {
+      "n": 2,
+      "startMs": 3500,
+      "endMs": 5500,
+      "text": "وحيدة 2"
+     },
+     {
+      "n": 3,
+      "startMs": 6000,
+      "endMs": 8000,
+      "text": "وحيدة 3"
+     },
+     {
+      "n": 4,
+      "startMs": 8500,
+      "endMs": 10500,
+      "text": "وحيدة 4"
+     },
+     {
+      "n": 5,
+      "startMs": 11000,
+      "endMs": 13000,
+      "text": "وحيدة 5"
+     }
+    ],
+    "current": null,
+    "editedAt": null,
+    "fingerprintId": "fp_snap22004",
+    "comparison": {
+     "fingerprintId": "fp_snap22004",
+     "matched": true,
+     "countSource": 5,
+     "countTarget": 5,
+     "numbering": "same",
+     "missing": [],
+     "extra": [],
+     "drift": [],
+     "empty": [],
+     "noArabic": [],
+     "restoreTimingAvailable": true,
+     "driftThresholdMs": 100,
+     "notes": []
+    },
+    "notes": []
+   },
+   "view": {
+    "displayOffsetMs": 700,
+    "displayMode": "ar"
+   }
+  },
+  "index:BBBBBBBBBBB": {
+   "schema": 1,
+   "videoId": "BBBBBBBBBBB",
+   "title": "فيديو بترجمة واحدة",
+   "updatedAt": "2026-11-11T12:00:04.000Z",
+   "rev": 1,
+   "english": [
+    {
+     "key": "en|manual",
+     "kind": "manual",
+     "cueCount": 5
+    }
+   ],
+   "arabic": {
+    "fileName": "BBBBBBBBBBB.وحيدة.srt",
+    "cueCount": 5,
+    "edited": false,
+    "matched": true,
+    "missing": 0,
+    "extra": 0,
+    "drift": 0
+   },
+   "fingerprints": 1,
+   "view": {
+    "displayOffsetMs": 700,
+    "displayMode": "ar"
+   }
+  },
+  "lang:BBBBBBBBBBB": {
+   "schema": 1,
+   "videoId": "BBBBBBBBBBB",
+   "base": {
+    "rev": 1,
+    "createdAt": "2026-11-11T12:00:04.000Z",
+    "updatedAt": "2026-11-11T12:00:04.000Z"
+   },
+   "sources": [],
+   "prints": [],
+   "slots": [
+    {
+     "importedAt": "2026-11-11T12:00:00.000Z",
+     "fileName": "BBBBBBBBBBB.وحيدة.srt",
+     "lang": "ar",
+     "ref": null
+    },
+    null,
+    null
+   ],
+   "previous": null
+  },
+  "video:CCCCCCCCCCC": {
+   "schema": 1,
+   "videoId": "CCCCCCCCCCC",
+   "title": "فيديو بلا ترجمة",
+   "durationMs": 60000,
+   "createdAt": "2026-11-11T12:00:05.000Z",
+   "updatedAt": "2026-11-11T12:00:05.000Z",
+   "rev": 1,
+   "english": [
+    {
+     "key": "en|asr",
+     "lang": "en",
+     "kind": "asr",
+     "capturedAt": "2026-11-11T12:00:00.000Z",
+     "source": "capture",
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000,
+       "text": "auto 1"
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500,
+       "text": "auto 2"
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000,
+       "text": "auto 3"
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500,
+       "text": "auto 4"
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000,
+       "text": "auto 5"
+      }
+     ]
+    }
+   ],
+   "fingerprints": [
+    {
+     "id": "fp_snap22005",
+     "videoId": "CCCCCCCCCCC",
+     "trackKey": "en|asr",
+     "mode": "normal",
+     "count": 5,
+     "cues": [
+      {
+       "n": 1,
+       "startMs": 1000,
+       "endMs": 3000
+      },
+      {
+       "n": 2,
+       "startMs": 3500,
+       "endMs": 5500
+      },
+      {
+       "n": 3,
+       "startMs": 6000,
+       "endMs": 8000
+      },
+      {
+       "n": 4,
+       "startMs": 8500,
+       "endMs": 10500
+      },
+      {
+       "n": 5,
+       "startMs": 11000,
+       "endMs": 13000
+      }
+     ],
+     "textHash": "fnv1a64:0123456789abcdef",
+     "fileName": "CCCCCCCCCCC.en.asr.normal.srt",
+     "createdAt": "2026-11-11T12:00:00.000Z",
+     "parts": null
+    }
+   ],
+   "arabic": null,
+   "view": {
+    "displayOffsetMs": 0,
+    "displayMode": "ar"
+   }
+  },
+  "index:CCCCCCCCCCC": {
+   "schema": 1,
+   "videoId": "CCCCCCCCCCC",
+   "title": "فيديو بلا ترجمة",
+   "updatedAt": "2026-11-11T12:00:05.000Z",
+   "rev": 1,
+   "english": [
+    {
+     "key": "en|asr",
+     "kind": "asr",
+     "cueCount": 5
+    }
+   ],
+   "arabic": null,
+   "fingerprints": 1,
+   "view": {
+    "displayOffsetMs": 0,
+    "displayMode": "ar"
+   }
+  },
+  "saves": {
+   "schema": 1,
+   "last": {
+    "downloadId": 42,
+    "at": "2026-11-11T12:00:06.000Z"
+   }
+  }
+ },
+ "read": {
+  "settings": {
+   "schema": 1,
+   "offsetStepMs": 1000,
+   "displayModeDefault": "dual",
+   "appearance": {
+    "font": "tajawal",
+    "scale": 120,
+    "background": "solid",
+    "position": "raised"
+   },
+   "export": {
+    "modeDefault": "long",
+    "splitThreshold": 300
+   },
+   "thresholds": {
+    "driftMs": 150,
+    "completeness": 0.9
+   }
+  },
+  "prefs": {
+   "schema": 1,
+   "glossary": {
+    "attach": true,
+    "terms": [
+     {
+      "source": "prompt",
+      "target": "موجِّه",
+      "note": null
+     },
+     {
+      "source": "token",
+      "target": "رمز",
+      "note": "في سياق النماذج اللغوية"
+     },
+     {
+      "source": "latency",
+      "target": "زمن الاستجابة",
+      "note": null
+     }
+    ]
+   },
+   "review": {
+    "maxCps": 17
+   },
+   "saveLocation": {
+    "mode": "subfolder",
+    "folder": "Tarjuman"
+   },
+   "ui": {
+    "thumbnails": true,
+    "panelEntry": true,
+    "panelOpen": true,
+    "panelDual": false
+   }
+  },
+  "langPrefs": {
+   "schema": 1,
+   "pair": {
+    "from": "ja",
+    "to": "en"
+   },
+   "remember": true,
+   "recent": [
+    "ja",
+    "en"
+   ],
+   "videos": {
+    "AAAAAAAAAAA": {
+     "from": "ja",
+     "to": "en"
+    }
+   },
+   "order": [
+    "AAAAAAAAAAA"
+   ]
+  },
+  "uiLocale": {
+   "schema": 1,
+   "locale": "en",
+   "source": "user",
+   "at": "2026-11-11T12:00:02.000Z"
+  },
+  "lastSave": {
+   "downloadId": 42,
+   "at": "2026-11-11T12:00:06.000Z"
+  },
+  "unreadable": [],
+  "index": [
+   {
+    "schema": 1,
+    "videoId": "CCCCCCCCCCC",
+    "title": "فيديو بلا ترجمة",
+    "updatedAt": "2026-11-11T12:00:05.000Z",
+    "rev": 1,
+    "english": [
+     {
+      "key": "en|asr",
+      "kind": "asr",
+      "cueCount": 5
+     }
+    ],
+    "arabic": null,
+    "fingerprints": 1,
+    "view": {
+     "displayOffsetMs": 0,
+     "displayMode": "ar"
+    }
+   },
+   {
+    "schema": 1,
+    "videoId": "BBBBBBBBBBB",
+    "title": "فيديو بترجمة واحدة",
+    "updatedAt": "2026-11-11T12:00:04.000Z",
+    "rev": 1,
+    "english": [
+     {
+      "key": "en|manual",
+      "kind": "manual",
+      "cueCount": 5
+     }
+    ],
+    "arabic": {
+     "fileName": "BBBBBBBBBBB.وحيدة.srt",
+     "cueCount": 5,
+     "edited": false,
+     "matched": true,
+     "missing": 0,
+     "extra": 0,
+     "drift": 0
+    },
+    "fingerprints": 1,
+    "view": {
+     "displayOffsetMs": 700,
+     "displayMode": "ar"
+    }
+   },
+   {
+    "schema": 1,
+    "videoId": "AAAAAAAAAAA",
+    "title": "فيديو بثلاث ترجمات",
+    "updatedAt": "2026-11-11T12:00:03.000Z",
+    "rev": 1,
+    "english": [
+     {
+      "key": "en|manual",
+      "kind": "manual",
+      "cueCount": 5
+     }
+    ],
+    "arabic": {
+     "fileName": "AAAAAAAAAAA.أولى.srt",
+     "cueCount": 5,
+     "edited": true,
+     "matched": null,
+     "missing": 0,
+     "extra": 0,
+     "drift": 0
+    },
+    "fingerprints": 2,
+    "view": {
+     "displayOffsetMs": 500,
+     "displayMode": "dual"
+    }
+   }
+  ],
+  "library": [
+   {
+    "entry": {
+     "schema": 1,
+     "videoId": "CCCCCCCCCCC",
+     "title": "فيديو بلا ترجمة",
+     "updatedAt": "2026-11-11T12:00:05.000Z",
+     "rev": 1,
+     "english": [
+      {
+       "key": "en|asr",
+       "kind": "asr",
+       "cueCount": 5
+      }
+     ],
+     "arabic": null,
+     "fingerprints": 1,
+     "view": {
+      "displayOffsetMs": 0,
+      "displayMode": "ar"
+     }
+    },
+    "summary": {
+     "filled": 0,
+     "edited": 0,
+     "warned": 0,
+     "marks": {
+      "todo": 0,
+      "done": 0
+     }
+    },
+    "slots": [
+     {
+      "n": 1,
+      "filled": false,
+      "active": false,
+      "name": null,
+      "edited": false,
+      "cueCount": 0
+     },
+     {
+      "n": 2,
+      "filled": false,
+      "active": false,
+      "name": null,
+      "edited": false,
+      "cueCount": 0
+     },
+     {
+      "n": 3,
+      "filled": false,
+      "active": false,
+      "name": null,
+      "edited": false,
+      "cueCount": 0
+     }
+    ],
+    "pairs": [
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "entry": {
+     "schema": 1,
+     "videoId": "BBBBBBBBBBB",
+     "title": "فيديو بترجمة واحدة",
+     "updatedAt": "2026-11-11T12:00:04.000Z",
+     "rev": 1,
+     "english": [
+      {
+       "key": "en|manual",
+       "kind": "manual",
+       "cueCount": 5
+      }
+     ],
+     "arabic": {
+      "fileName": "BBBBBBBBBBB.وحيدة.srt",
+      "cueCount": 5,
+      "edited": false,
+      "matched": true,
+      "missing": 0,
+      "extra": 0,
+      "drift": 0
+     },
+     "fingerprints": 1,
+     "view": {
+      "displayOffsetMs": 700,
+      "displayMode": "ar"
+     }
+    },
+    "summary": {
+     "filled": 1,
+     "edited": 0,
+     "warned": 0,
+     "marks": {
+      "todo": 0,
+      "done": 0
+     }
+    },
+    "slots": [
+     {
+      "n": 1,
+      "filled": true,
+      "active": true,
+      "name": null,
+      "edited": false,
+      "cueCount": 5
+     },
+     {
+      "n": 2,
+      "filled": false,
+      "active": false,
+      "name": null,
+      "edited": false,
+      "cueCount": 0
+     },
+     {
+      "n": 3,
+      "filled": false,
+      "active": false,
+      "name": null,
+      "edited": false,
+      "cueCount": 0
+     }
+    ],
+    "pairs": [
+     {
+      "from": "en",
+      "to": "ar",
+      "via": null
+     },
+     null,
+     null
+    ]
+   },
+   {
+    "entry": {
+     "schema": 1,
+     "videoId": "AAAAAAAAAAA",
+     "title": "فيديو بثلاث ترجمات",
+     "updatedAt": "2026-11-11T12:00:03.000Z",
+     "rev": 1,
+     "english": [
+      {
+       "key": "en|manual",
+       "kind": "manual",
+       "cueCount": 5
+      },
+      {
+       "key": "ja|manual",
+       "kind": "manual",
+       "cueCount": 5
+      },
+      {
+       "key": "ar|asr|en",
+       "kind": "asr",
+       "cueCount": 5
+      }
+     ],
+     "arabic": {
+      "fileName": "AAAAAAAAAAA.أولى.srt",
+      "cueCount": 5,
+      "edited": true,
+      "matched": true,
+      "missing": 0,
+      "extra": 0,
+      "drift": 0
+     },
+     "fingerprints": 3,
+     "view": {
+      "displayOffsetMs": 500,
+      "displayMode": "dual"
+     }
+    },
+    "summary": {
+     "filled": 3,
+     "edited": 1,
+     "warned": 0,
+     "marks": {
+      "todo": 2,
+      "done": 1
+     }
+    },
+    "slots": [
+     {
+      "n": 1,
+      "filled": true,
+      "active": true,
+      "name": null,
+      "edited": true,
+      "cueCount": 5
+     },
+     {
+      "n": 2,
+      "filled": true,
+      "active": false,
+      "name": "مراجعة",
+      "edited": false,
+      "cueCount": 5
+     },
+     {
+      "n": 3,
+      "filled": true,
+      "active": false,
+      "name": null,
+      "edited": false,
+      "cueCount": 4
+     }
+    ],
+    "pairs": [
+     {
+      "from": "ja",
+      "to": "en",
+      "via": null
+     },
+     {
+      "from": "en",
+      "to": "fr",
+      "via": null
+     },
+     {
+      "from": "en",
+      "to": null,
+      "via": null
+     }
+    ]
+   }
+  ],
+  "bundles": {
+   "AAAAAAAAAAA": {
+    "videoId": "AAAAAAAAAAA",
+    "record": {
+     "schema": 1,
+     "videoId": "AAAAAAAAAAA",
+     "title": "فيديو بثلاث ترجمات",
+     "durationMs": 60000,
+     "createdAt": "2026-11-11T12:00:03.000Z",
+     "updatedAt": "2026-11-11T12:00:03.000Z",
+     "rev": 1,
+     "english": [
+      {
+       "key": "en|manual",
+       "lang": "en",
+       "kind": "manual",
+       "capturedAt": "2026-11-11T12:00:00.000Z",
+       "source": "capture",
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "line 1"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "line 2"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "line 3"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "line 4"
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000,
+         "text": "line 5"
+        }
+       ]
+      },
+      {
+       "key": "ja|manual",
+       "lang": "ja",
+       "kind": "manual",
+       "capturedAt": "2026-11-11T12:00:00.000Z",
+       "source": "capture",
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "日本語の行 1"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "日本語の行 2"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "日本語の行 3"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "日本語の行 4"
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000,
+         "text": "日本語の行 5"
+        }
+       ]
+      },
+      {
+       "key": "ar|asr|en",
+       "lang": "ar",
+       "kind": "asr",
+       "via": "en",
+       "capturedAt": "2026-11-11T12:00:00.000Z",
+       "source": "capture",
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "ترجمة آلية 1"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "ترجمة آلية 2"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "ترجمة آلية 3"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "ترجمة آلية 4"
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000,
+         "text": "ترجمة آلية 5"
+        }
+       ]
+      }
+     ],
+     "fingerprints": [
+      {
+       "id": "fp_snap22001",
+       "videoId": "AAAAAAAAAAA",
+       "trackKey": "en|manual",
+       "mode": "normal",
+       "count": 5,
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000
+        }
+       ],
+       "textHash": "fnv1a64:0123456789abcdef",
+       "fileName": "AAAAAAAAAAA.en.manual.normal.srt",
+       "createdAt": "2026-11-11T12:00:00.000Z",
+       "parts": null
+      },
+      {
+       "id": "fp_snap22002",
+       "videoId": "AAAAAAAAAAA",
+       "trackKey": "en|manual",
+       "mode": "long",
+       "count": 5,
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000
+        }
+       ],
+       "textHash": "fnv1a64:0123456789abcdef",
+       "fileName": "AAAAAAAAAAA.en.manual.long.srt",
+       "createdAt": "2026-11-11T12:00:00.000Z",
+       "parts": null
+      },
+      {
+       "id": "fp_snap22003",
+       "videoId": "AAAAAAAAAAA",
+       "trackKey": "ja|manual",
+       "mode": "normal",
+       "count": 5,
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000
+        }
+       ],
+       "textHash": "fnv1a64:0123456789abcdef",
+       "fileName": "AAAAAAAAAAA.ja.manual.normal.srt",
+       "createdAt": "2026-11-11T12:00:00.000Z",
+       "parts": null
+      }
+     ],
+     "arabic": {
+      "fileName": "AAAAAAAAAAA.أولى.srt",
+      "importedAt": "2026-11-11T12:00:00.000Z",
+      "original": [
+       {
+        "n": 1,
+        "startMs": 1000,
+        "endMs": 3000,
+        "text": "أولى 1"
+       },
+       {
+        "n": 2,
+        "startMs": 3500,
+        "endMs": 5500,
+        "text": "أولى 2"
+       },
+       {
+        "n": 3,
+        "startMs": 6000,
+        "endMs": 8000,
+        "text": "أولى 3"
+       },
+       {
+        "n": 4,
+        "startMs": 8500,
+        "endMs": 10500,
+        "text": "أولى 4"
+       },
+       {
+        "n": 5,
+        "startMs": 11000,
+        "endMs": 13000,
+        "text": "أولى 5"
+       }
+      ],
+      "current": [
+       {
+        "n": 1,
+        "startMs": 1000,
+        "endMs": 3000,
+        "text": "أولى 1 (معدّل)"
+       },
+       {
+        "n": 2,
+        "startMs": 3500,
+        "endMs": 5500,
+        "text": "أولى 2 (معدّل)"
+       },
+       {
+        "n": 3,
+        "startMs": 6000,
+        "endMs": 8000,
+        "text": "أولى 3 (معدّل)"
+       },
+       {
+        "n": 4,
+        "startMs": 8500,
+        "endMs": 10500,
+        "text": "أولى 4 (معدّل)"
+       },
+       {
+        "n": 5,
+        "startMs": 11000,
+        "endMs": 13000,
+        "text": "أولى 5 (معدّل)"
+       }
+      ],
+      "editedAt": "2026-11-11T12:00:30.000Z",
+      "fingerprintId": "fp_snap22003",
+      "comparison": {
+       "fingerprintId": "fp_snap22003",
+       "matched": true,
+       "countSource": 5,
+       "countTarget": 5,
+       "numbering": "same",
+       "missing": [],
+       "extra": [],
+       "drift": [],
+       "empty": [],
+       "noArabic": [],
+       "restoreTimingAvailable": true,
+       "driftThresholdMs": 100,
+       "notes": []
+      },
+      "notes": [],
+      "lang": "en"
+     },
+     "view": {
+      "displayOffsetMs": 500,
+      "displayMode": "dual"
+     }
+    },
+    "active": 1,
+    "slots": [
+     {
+      "n": 1,
+      "name": null,
+      "track": {
+       "fileName": "AAAAAAAAAAA.أولى.srt",
+       "importedAt": "2026-11-11T12:00:00.000Z",
+       "original": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "أولى 1"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "أولى 2"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "أولى 3"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "أولى 4"
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000,
+         "text": "أولى 5"
+        }
+       ],
+       "current": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "أولى 1 (معدّل)"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "أولى 2 (معدّل)"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "أولى 3 (معدّل)"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "أولى 4 (معدّل)"
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000,
+         "text": "أولى 5 (معدّل)"
+        }
+       ],
+       "editedAt": "2026-11-11T12:00:30.000Z",
+       "fingerprintId": "fp_snap22003",
+       "comparison": {
+        "fingerprintId": "fp_snap22003",
+        "matched": true,
+        "countSource": 5,
+        "countTarget": 5,
+        "numbering": "same",
+        "missing": [],
+        "extra": [],
+        "drift": [],
+        "empty": [],
+        "noArabic": [],
+        "restoreTimingAvailable": true,
+        "driftThresholdMs": 100,
+        "notes": []
+       },
+       "notes": [],
+       "lang": "en"
+      },
+      "offsetMs": 500,
+      "marks": [
+       {
+        "n": 1,
+        "startMs": 1000,
+        "textHash": "07ba47dd",
+        "kind": "todo",
+        "at": "2026-11-11T12:00:40.000Z"
+       },
+       {
+        "n": 3,
+        "startMs": 6000,
+        "textHash": "1362bf2f",
+        "kind": "done",
+        "at": "2026-11-11T12:00:40.000Z"
+       }
+      ],
+      "position": {
+       "n": 3,
+       "startMs": 6000,
+       "at": "2026-11-11T12:00:50.000Z"
+      }
+     },
+     {
+      "n": 2,
+      "name": "مراجعة",
+      "track": {
+       "fileName": "AAAAAAAAAAA.ثانية.srt",
+       "importedAt": "2026-11-11T12:00:00.000Z",
+       "original": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "ثانية 1"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "ثانية 2"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "ثانية 3"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "ثانية 4"
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000,
+         "text": "ثانية 5"
+        }
+       ],
+       "current": null,
+       "editedAt": null,
+       "fingerprintId": "fp_snap22002",
+       "comparison": {
+        "fingerprintId": "fp_snap22002",
+        "matched": true,
+        "countSource": 5,
+        "countTarget": 5,
+        "numbering": "same",
+        "missing": [],
+        "extra": [],
+        "drift": [],
+        "empty": [],
+        "noArabic": [],
+        "restoreTimingAvailable": true,
+        "driftThresholdMs": 100,
+        "notes": []
+       },
+       "notes": [],
+       "lang": "fr"
+      },
+      "offsetMs": -1200,
+      "marks": [
+       {
+        "n": 2,
+        "startMs": 3500,
+        "textHash": "770c1c20",
+        "kind": "todo",
+        "at": "2026-11-11T12:00:40.000Z"
+       }
+      ],
+      "position": null
+     },
+     {
+      "n": 3,
+      "name": null,
+      "track": {
+       "fileName": "AAAAAAAAAAA.ثالثة.srt",
+       "importedAt": "2026-11-11T12:00:20.000Z",
+       "original": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "ثالثة 1"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "ثالثة 2"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "ثالثة 3"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "ثالثة 4"
+        }
+       ],
+       "current": null,
+       "editedAt": null,
+       "fingerprintId": null,
+       "comparison": null,
+       "notes": []
+      },
+      "offsetMs": 300,
+      "marks": [],
+      "position": null
+     }
+    ],
+    "previous": {
+     "from": 2,
+     "savedAt": "2026-11-11T12:00:10.000Z",
+     "track": {
+      "fileName": "AAAAAAAAAAA.سابقة.srt",
+      "importedAt": "2026-11-11T12:00:00.000Z",
+      "original": [
+       {
+        "n": 1,
+        "startMs": 1000,
+        "endMs": 3000,
+        "text": "سابقة 1"
+       },
+       {
+        "n": 2,
+        "startMs": 3500,
+        "endMs": 5500,
+        "text": "سابقة 2"
+       },
+       {
+        "n": 3,
+        "startMs": 6000,
+        "endMs": 8000,
+        "text": "سابقة 3"
+       }
+      ],
+      "current": null,
+      "editedAt": null,
+      "fingerprintId": null,
+      "comparison": null,
+      "notes": [],
+      "lang": "ar"
+     },
+     "offsetMs": 0
+    }
+   },
+   "BBBBBBBBBBB": {
+    "videoId": "BBBBBBBBBBB",
+    "record": {
+     "schema": 1,
+     "videoId": "BBBBBBBBBBB",
+     "title": "فيديو بترجمة واحدة",
+     "durationMs": 60000,
+     "createdAt": "2026-11-11T12:00:04.000Z",
+     "updatedAt": "2026-11-11T12:00:04.000Z",
+     "rev": 1,
+     "english": [
+      {
+       "key": "en|manual",
+       "lang": "en",
+       "kind": "manual",
+       "capturedAt": "2026-11-11T12:00:00.000Z",
+       "source": "capture",
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "single 1"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "single 2"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "single 3"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "single 4"
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000,
+         "text": "single 5"
+        }
+       ]
+      }
+     ],
+     "fingerprints": [
+      {
+       "id": "fp_snap22004",
+       "videoId": "BBBBBBBBBBB",
+       "trackKey": "en|manual",
+       "mode": "normal",
+       "count": 5,
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000
+        }
+       ],
+       "textHash": "fnv1a64:0123456789abcdef",
+       "fileName": "BBBBBBBBBBB.en.manual.normal.srt",
+       "createdAt": "2026-11-11T12:00:00.000Z",
+       "parts": null
+      }
+     ],
+     "arabic": {
+      "fileName": "BBBBBBBBBBB.وحيدة.srt",
+      "importedAt": "2026-11-11T12:00:00.000Z",
+      "original": [
+       {
+        "n": 1,
+        "startMs": 1000,
+        "endMs": 3000,
+        "text": "وحيدة 1"
+       },
+       {
+        "n": 2,
+        "startMs": 3500,
+        "endMs": 5500,
+        "text": "وحيدة 2"
+       },
+       {
+        "n": 3,
+        "startMs": 6000,
+        "endMs": 8000,
+        "text": "وحيدة 3"
+       },
+       {
+        "n": 4,
+        "startMs": 8500,
+        "endMs": 10500,
+        "text": "وحيدة 4"
+       },
+       {
+        "n": 5,
+        "startMs": 11000,
+        "endMs": 13000,
+        "text": "وحيدة 5"
+       }
+      ],
+      "current": null,
+      "editedAt": null,
+      "fingerprintId": "fp_snap22004",
+      "comparison": {
+       "fingerprintId": "fp_snap22004",
+       "matched": true,
+       "countSource": 5,
+       "countTarget": 5,
+       "numbering": "same",
+       "missing": [],
+       "extra": [],
+       "drift": [],
+       "empty": [],
+       "noArabic": [],
+       "restoreTimingAvailable": true,
+       "driftThresholdMs": 100,
+       "notes": []
+      },
+      "notes": [],
+      "lang": "ar"
+     },
+     "view": {
+      "displayOffsetMs": 700,
+      "displayMode": "ar"
+     }
+    },
+    "active": 1,
+    "slots": [
+     {
+      "n": 1,
+      "name": null,
+      "track": {
+       "fileName": "BBBBBBBBBBB.وحيدة.srt",
+       "importedAt": "2026-11-11T12:00:00.000Z",
+       "original": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "وحيدة 1"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "وحيدة 2"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "وحيدة 3"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "وحيدة 4"
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000,
+         "text": "وحيدة 5"
+        }
+       ],
+       "current": null,
+       "editedAt": null,
+       "fingerprintId": "fp_snap22004",
+       "comparison": {
+        "fingerprintId": "fp_snap22004",
+        "matched": true,
+        "countSource": 5,
+        "countTarget": 5,
+        "numbering": "same",
+        "missing": [],
+        "extra": [],
+        "drift": [],
+        "empty": [],
+        "noArabic": [],
+        "restoreTimingAvailable": true,
+        "driftThresholdMs": 100,
+        "notes": []
+       },
+       "notes": [],
+       "lang": "ar"
+      },
+      "offsetMs": 700,
+      "marks": [],
+      "position": null
+     },
+     {
+      "n": 2,
+      "name": null,
+      "track": null,
+      "offsetMs": 0,
+      "marks": [],
+      "position": null
+     },
+     {
+      "n": 3,
+      "name": null,
+      "track": null,
+      "offsetMs": 0,
+      "marks": [],
+      "position": null
+     }
+    ],
+    "previous": null
+   },
+   "CCCCCCCCCCC": {
+    "videoId": "CCCCCCCCCCC",
+    "record": {
+     "schema": 1,
+     "videoId": "CCCCCCCCCCC",
+     "title": "فيديو بلا ترجمة",
+     "durationMs": 60000,
+     "createdAt": "2026-11-11T12:00:05.000Z",
+     "updatedAt": "2026-11-11T12:00:05.000Z",
+     "rev": 1,
+     "english": [
+      {
+       "key": "en|asr",
+       "lang": "en",
+       "kind": "asr",
+       "capturedAt": "2026-11-11T12:00:00.000Z",
+       "source": "capture",
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000,
+         "text": "auto 1"
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500,
+         "text": "auto 2"
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000,
+         "text": "auto 3"
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500,
+         "text": "auto 4"
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000,
+         "text": "auto 5"
+        }
+       ]
+      }
+     ],
+     "fingerprints": [
+      {
+       "id": "fp_snap22005",
+       "videoId": "CCCCCCCCCCC",
+       "trackKey": "en|asr",
+       "mode": "normal",
+       "count": 5,
+       "cues": [
+        {
+         "n": 1,
+         "startMs": 1000,
+         "endMs": 3000
+        },
+        {
+         "n": 2,
+         "startMs": 3500,
+         "endMs": 5500
+        },
+        {
+         "n": 3,
+         "startMs": 6000,
+         "endMs": 8000
+        },
+        {
+         "n": 4,
+         "startMs": 8500,
+         "endMs": 10500
+        },
+        {
+         "n": 5,
+         "startMs": 11000,
+         "endMs": 13000
+        }
+       ],
+       "textHash": "fnv1a64:0123456789abcdef",
+       "fileName": "CCCCCCCCCCC.en.asr.normal.srt",
+       "createdAt": "2026-11-11T12:00:00.000Z",
+       "parts": null
+      }
+     ],
+     "arabic": null,
+     "view": {
+      "displayOffsetMs": 0,
+      "displayMode": "ar"
+     }
+    },
+    "active": null,
+    "slots": [
+     {
+      "n": 1,
+      "name": null,
+      "track": null,
+      "offsetMs": 0,
+      "marks": [],
+      "position": null
+     },
+     {
+      "n": 2,
+      "name": null,
+      "track": null,
+      "offsetMs": 0,
+      "marks": [],
+      "position": null
+     },
+     {
+      "n": 3,
+      "name": null,
+      "track": null,
+      "offsetMs": 0,
+      "marks": [],
+      "position": null
+     }
+    ],
+    "previous": null
+   }
+  }
+ }
+}

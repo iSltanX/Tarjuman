@@ -1,0 +1,46 @@
+// Core-layer user-facing strings: backup, generated export files (review report, study text) and import. Mirrors ar/core.js key for key.
+export default Object.freeze({
+  diagnostics: { excluded: '[excluded]', unknown: 'unknown', removed: '[removed]', removedType: '[{type}-removed]' },
+  backup: {
+    moreThan: 'more than {size}',
+    partial: '{name} (partial)',
+    group: {
+      settings: 'Settings', prefs: 'Glossary and preferences',
+      offsetStepMs: 'Offset step', displayModeDefault: 'Default display mode', appearance: 'Subtitle appearance',
+      export: 'Export', thresholds: 'Comparison thresholds',
+      glossary: 'Glossary', review: 'Reading speed limit', saveLocation: 'Save location',
+    },
+  },
+  export: {
+    kind: { manual: 'manual', asr: 'auto-generated' },
+    describe: { valid: '{label}, {count}', invalid: '{label}, not exportable' },
+    watch: 'Watch on YouTube',
+    report: {
+      title: 'Review report: {heading}',
+      summary: 'Items: {items} · To revisit: {todo} · Reviewed: {done}',
+      segment: 'Segment {n}',
+      problems: 'Issues',
+      none: 'None',
+      mark: 'Mark',
+      text: 'Text',
+      original: 'Original',
+      markLabel: { todo: 'To revisit', done: 'Reviewed' },
+      problem: {
+        ED_END_BEFORE_START: 'End before start',
+        ED_NEGATIVE_TIME: 'Negative time',
+        ED_TIME_FORMAT: 'Invalid time format',
+        ED_TIME_RANGE: 'Time over the limit',
+        ED_TEXT_INVALID: 'Invalid text',
+        ED_OVERLAP: 'Overlaps the next',
+        ED_SHORT: 'Very short',
+        ED_GAP: 'Large gap after',
+        ED_TEXT_EMPTY: 'No text',
+        ED_TEXT_BLANK_LINE: 'Blank line in text',
+        ED_TEXT_BREAKS_SRT: 'Line reads as a segment header',
+        ED_READING_FAST: 'Fast reading speed',
+        ED_LINE_LONG: 'Long line',
+      },
+    },
+  },
+  import: { mergedVerb: () => 'Merged' },
+});

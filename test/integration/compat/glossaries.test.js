@@ -12,7 +12,7 @@ import { parseKey as parseKeyV1 } from '../../fixtures/v1/src/core/store/keys.js
 import { readBackup as readBackupV11 } from '../../fixtures/v1.1/src/core/backup/read.js';
 import { createStore } from '../../../src/core/store/index.js';
 import { createBackup } from '../../../src/core/backup/create.js';
-import { readBackup } from '../../../src/core/backup/read.js';
+import { readBackup as readBackupV22 } from '../../fixtures/v2.2/src/core/backup/read.js';
 import { createMemoryArea } from '../../helpers/chrome-storage.js';
 import { NOW, VIDEO_ID as A, videoRecord } from '../../helpers/fixtures.js';
 import { samplePrefs, sampleBundle, seedBundle } from '../../helpers/fixtures-v2.js';
@@ -95,8 +95,8 @@ test('ح-46: نسخة بقوائم أزواج (الإصدار 3) يرفضها ق
   const r11 = await readBackupV11(v3.text, { pause: noPause });
   assert.equal(r11.ok, false);
   assert.equal(r11.code, 'BK_VERSION_NEWER', '1.1.0 يرفضها برسالة لا بفساد صامت');
-  // قارئ 2.2.0: الشيفرة نفسها بالإصدار الأعلى الذي يقرؤه (BACKUP_VERSION = 2 في c04a606)، وفحص الإصدار يسبق فحص الشكل ولم يتغير منذه.
-  const r22 = await readBackup(v3.text, { pause: noPause, supportedVersion: 2 });
+  // قارئ 2.2.0 نفسه من لقطته المجمّدة (test/fixtures/v2.2، تحقق 2.3.0 ص-٢٢)، لا شيفرة الرأس بإصداره الأعلى.
+  const r22 = await readBackupV22(v3.text, { pause: noPause });
   assert.equal(r22.ok, false);
   assert.equal(r22.code, 'BK_VERSION_NEWER');
   // وبلا قوائم: الإصدار 1 الذي يستعيده 1.1.0 كما هو.
@@ -106,4 +106,5 @@ test('ح-46: نسخة بقوائم أزواج (الإصدار 3) يرفضها ق
   const v1Text = (await createBackup({ store: plain, appVersion: '2.2.0', pause: noPause })).text;
   assert.equal(JSON.parse(v1Text).version, 1);
   assert.equal((await readBackupV11(v1Text, { pause: noPause })).ok, true);
+  assert.equal((await readBackupV22(v1Text, { pause: noPause })).ok, true, 'ويقرؤها 2.2.0');
 });

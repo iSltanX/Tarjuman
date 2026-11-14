@@ -34,6 +34,7 @@ const LINE_EXEMPT = new Map([
   ['src/core/diagnostics/sanitize.js', 'تعريف أنماط التنقية: يحوي أسماء الترويسات وملفات الارتباط', ['5603b54289fbccf6']],
   ['test/fixtures/v1/src/core/diagnostics/sanitize.js', 'نسخة مصدرية مجمَّدة: تعريف الأنماط نفسه', ['5603b54289fbccf6']],
   ['test/fixtures/v1.1/src/core/diagnostics/sanitize.js', 'نسخة مصدرية مجمَّدة: تعريف الأنماط نفسه', ['5603b54289fbccf6']],
+  ['test/fixtures/v2.2/src/core/diagnostics/sanitize.js', 'نسخة مصدرية مجمَّدة: تعريف الأنماط نفسه', ['5603b54289fbccf6']],
   ['test/unit/diagnostics/sanitize.test.js', 'نماذج أسرار وهمية لاختبار التنقية', ['f38ee967f67ab1a8', '321a8e5630055327', 'b7171d5def232d29', 'd8822ca1e2c47023', 'ee94ec1a5bc18220']],
   ['test/unit/report/personal-secrets.test.js', 'نماذج أسرار وهمية لاختبار تقرير التشخيص', ['ad91c6ef66bbb33b', '837c17ea01181401', '1d1b9849615b7238', 'a2b98efd45cf107c', '6234aee3918c30e0']],
   ['test/unit/pages/settings/report.test.js', 'نماذج ملفات ارتباط وهمية لاختبار البلاغ', ['b67a6bbedbd048e0']],

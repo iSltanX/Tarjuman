@@ -39,3 +39,11 @@ test('لقطة 1.1.0 مطابقة لالتزامها ملفًا ملفًا', asy
   assert.equal(snap.version, '1.1.0');
   assert.equal(snap.commit, '594e8043c7323da1dc5af10a1e0c8c1ecb472edc');
 });
+
+// لقطة 2.2.0 (تحقق 2.3.0 ص-٢٢): النموذج والتخزين وقارئ النسخة الاحتياطية كما نُشرت في المتاجر، ليقرأ 2.2.0 نفسه ما يكتبه هذا
+// الإصدار (v2.2.test.js)، ولتعيد لقطةَ تخزينه library-2.2.0.json حرفيًا.
+test('لقطة 2.2.0 مطابقة لالتزامها ملفًا ملفًا', async () => {
+  const snap = await checkSnapshot(path.resolve(DIR, '../v2.2'));
+  assert.equal(snap.version, '2.2.0');
+  assert.equal(snap.commit, 'c04a6064f22a82c0620466d580bfbe673c655a65');
+});
