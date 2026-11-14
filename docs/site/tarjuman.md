@@ -206,5 +206,5 @@
 | التثبيت | الأيقونة في الشريط ومنها التعليمات | `src/pages/popup/` (كتلة «تعليمات الترجمة»)، و`docs/user-guide.md` §٢ و§٣ |
 | التثبيت | الصلاحيات الثلاث والاختيارية وموافقتا Firefox | `src/manifest.json`، و`docs/site/privacy.md` (`#permissions`)، و`docs/site/help.md` (`#install`) |
 | التذييل | الناشر وبريد الدعم والحقوق ونفي الصلة بيوتيوب وعلامته | `store/README.md` §٥، و`LICENSE` (السطر الأول والفقرة الأخيرة)، و`store/listing.ar.md` (سطر العلامة) |
-| الإصدار | «ومعه الهوية الجديدة»: الإصدار 3.0.0 بالهوية الخامسة «التاء». ورقم الإصدار وتاريخه من أحدث قسم معروض في «ما الجديد» (`CHANGELOG.md`) | `docs/identity.md` (الحالة)، و`docs/site/changelog.md` |
+| الإصدار | «ومعه الهوية الجديدة»: الإصدار 3.0.0 بالهوية الخامسة «التاء». ورقم الإصدار من أحدث قسم معروض في «ما الجديد» (`CHANGELOG.md`)، و«صدر في» تاريخ سريان الخصوصية الذي يُثبَّت يوم النشر، وقبل تثبيته الرقم وحده | `docs/identity.md` (الحالة)، و`docs/site/changelog.md`، و`docs/site/privacy.md` (تاريخ السريان، `scripts/site/privacy.mjs --effective`) |
 | التذييل | رابط الحقوق | `docs/site/credits.md` |
