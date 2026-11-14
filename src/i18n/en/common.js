@@ -11,8 +11,8 @@ export default Object.freeze({
     state: { captured: 'captured', saved: 'saved' },
     original: 'Original',
     roundTrip: {
-      lead: ({ name }) => `This video is originally in ${name}:`,
-      action: 'pick its original track',
+      lead: ({ name }) => `This video is in ${name}:`,
+      action: 'pick its own track',
       how: ({ name }) => `This track was auto-translated by YouTube from ${name}. To pick the video’s original track in the player: CC, then Settings, then “Subtitles/CC”, then ${name}. You can also continue with this track.`,
     },
   },
