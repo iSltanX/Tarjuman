@@ -3,6 +3,7 @@
 // التركيز يكتب المستخدم في حقلها (product-spec §٦.٤، قرار سلطان في W4): تبقى ظاهرة حتى يغادر حقلها أو يغلقها. والرسائل
 // العابرة غير حاجبة فوق موضع الشريط. لا تلتقط الطبقة النقرات إلا على قائمة أو رسالة، ولا تصل منها ضغطة إلى اختصارات يوتيوب.
 import { getDir, getLocale, t as translate } from '../../i18n/index.js';
+import { ltrParts } from '../../ui/format.js';
 import { onHold } from '../../ui/hold.js';
 import { createSheet } from '../overlay/sheet.js';
 import { glyph } from './glyphs.js';
@@ -203,7 +204,20 @@ export function createLayer({ doc, win, on }) {
     const g = glyph(doc, t.icon ?? t.tone);
     const tx = doc.createElement('span');
     tx.className = 'text';
-    tx.textContent = t.text;
+    // مقاطع النص المعزولة LTR (اسم جزء في خطأ الرفع، ص-١٨؛ والإزاحة الموقّعة) عناصر bdi ذرية (.iso) كسطر النتيجة في القائمة، فلا
+    // تتوزع أجزاء اسم طويل على سطرين مع الجملة؛ والنص المرئي كما هو.
+    const parts = ltrParts(t.text);
+    if (parts.some((p) => p.ltr)) {
+      for (const p of parts) {
+        const node = doc.createElement(p.ltr ? 'bdi' : 'span');
+        if (p.ltr) {
+          node.className = 'iso';
+          node.setAttribute('dir', 'ltr');
+        }
+        node.textContent = p.text;
+        tx.appendChild(node);
+      }
+    } else tx.textContent = t.text;
     box.appendChild(g);
     box.appendChild(tx);
     if (t.action) {

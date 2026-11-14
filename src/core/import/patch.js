@@ -12,6 +12,7 @@ import { fnv1a64 } from '../export/hash.js';
 import { LIMITS } from '../model/validate.js';
 import { parseSrtLenient } from '../srt/lenient.js';
 import { displayName, toList } from './files.js';
+import { ltrInline } from '../../ui/format.js';
 import { MAX_FILES, readFileText } from './read-file.js';
 import { videoIdFromName } from './review.js';
 import { bilingualCheck, withoutMatchedLines } from './bilingual.js';
@@ -144,7 +145,8 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 
       if (total > LIMITS.maxCues) throw new TjError('IM_TOO_MANY_CUES', { params: { max: LIMITS.maxCues } });
       for (const c of [...parsed.cues].sort((x, y) => x.n - y.n)) check(c);
       incoming.push(...parsed.cues);
-      for (const note of parsed.notes) notes.push(multi ? `«${current}»: ${note}` : note);
+      // اسم الجزء معزول LTR كما في readImport (تحقق 2.3.0، ص-١٨).
+      for (const note of parsed.notes) notes.push(multi ? `«${ltrInline(current)}»: ${note}` : note);
       const hint = videoIdFromName(current, { videoId: fingerprint.videoId });
       if (hint?.differs) warnings.push({ code: 'IM_PATCH_NAME_OTHER_VIDEO', params: { videoId: hint.videoId } });
     }
@@ -163,7 +165,7 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 
     return { ok: true, plan, bilingual: { count: bi.count, total: bi.total, line: bi.line, plan: stripped } };
   } catch (err) {
     const info = toErrorInfo(err);
-    const error = { code: info.code, message: multi && current ? `«${current}»: ${info.message}` : info.message };
+    const error = { code: info.code, message: multi && current ? `«${ltrInline(current)}»: ${info.message}` : info.message };
     const line = err instanceof TjError ? err.params?.line : undefined;
     if (line) error.line = line;
     if (info.code === 'TJ_UNEXPECTED') error.detail = info.detail;

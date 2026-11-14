@@ -6,6 +6,12 @@ import assert from 'node:assert/strict';
 import { createStore } from '../../../../src/core/store/index.js';
 import { messageFor } from '../../../../src/core/errors/index.js';
 import { mountEditor } from '../../../../src/pages/editor/app.js';
+import { previewPatch } from '../../../../src/pages/editor/complete-panel.js';
+import { renderComparison } from '../../../../src/pages/editor/panels.js';
+import { readPatch } from '../../../../src/core/import/index.js';
+import { formatSrtTime } from '../../../../src/core/srt/time.js';
+import { englishTrack, fingerprint } from '../../../helpers/fixtures.js';
+import { fileOf } from '../../../fixtures/srt/index.js';
 import { renderResume } from '../../../../src/pages/editor/review-panel.js';
 import { saveMessage } from '../../../../src/pages/editor/text.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
@@ -91,4 +97,43 @@ test('«آخر موضع»: اسم الخانة اللاتيني معزول ات�
   const texts = box.querySelectorAll('li').map((li) => li.querySelectorAll('span')[0].textContent);
   assert.equal(texts[0], `الترجمة 2 «${FSI}Pro (v2).${PDI}»`);
   assert.equal(texts[1], 'الترجمة 3 (قيد التحرير)');
+});
+
+// ---- تحقق 2.3.0 (ص-١٨): اسم الجزء ومعرّف الفيديو في ملاحظات الاستيراد وتحذير ملف الاستكمال ----
+const PART = '-KA3zmDkEUQ.ar.from-en.manual.normal.part01of02.srt';
+const iso = (s) => `${LRI}${s}${PDI}`;
+
+test('ص-١٨: ملاحظات الاستيراد في لوحة المقارنة: اسم الجزء وأسماء الدمج عناصر bdi ذرية، والنص المرئي كما هو', () => {
+  const env = editorDocument({ videoId: 'AAAAAAAAAAA' });
+  const box = env.doc.createElement('section');
+  const two = PART.replace('01of02', '02of02');
+  const notes = [`دُمج ملفان بحسب أرقام المقاطع: ${iso(PART)}، ${iso(two)}.`, `«${iso(PART)}»: ${messageFor('IM_NOTE_FENCE')}`, 'ملاحظة بلا اسم'];
+  renderComparison(box, { doc: env.doc, report: null, notes, readOnly: false, onRestore: () => {}, onJumpN: () => {} });
+  const items = findAll(box, (e) => e.tagName === 'li' && e.parentNode?.parentNode?.classList?.contains('ed-notes'));
+  assert.deepEqual(items.map((li) => li.textContent), notes, 'النص المرئي كما هو');
+  assert.deepEqual(bdis(items[0]).map((e) => e.textContent), [iso(PART), iso(two)]);
+  assert.deepEqual(bdis(items[1]).map((e) => e.textContent), [iso(PART)]);
+  assert.equal(bdis(items[2]).length, 0, 'وبلا مقطع معزول نص كما هو');
+  for (const e of bdis(items[0])) assert.ok(e.dir === 'ltr' && e.classList.contains('tj-ltr--wrap'), 'ذري يلتف داخله');
+});
+
+test('ص-١٨: معاينة ملف الاستكمال بجزأين: معرّف الفيديو الآخر في التحذير وملاحظة الجزء عنصران ذريان', async () => {
+  const en = Array.from({ length: 6 }, (_, i) => ({ n: i + 1, startMs: 1000 + i * 3000, endMs: 3000 + i * 3000, text: `Line ${i + 1}` }));
+  const fp = fingerprint({ videoId: 'AAAAAAAAAAA', track: englishTrack({ cues: en }) });
+  const current = en.filter((c) => c.n !== 2 && c.n !== 5).map((c) => ({ ...c, text: `سطر ${c.n}` }));
+  const srt = (n) => `${n}\n${formatSrtTime(en[n - 1].startMs)} --> ${formatSrtTime(en[n - 1].endMs)}\nمستكمل ${n}\n`;
+  const read = await readPatch([fileOf(`\`\`\`srt\n${srt(2)}\`\`\`\n`, PART), fileOf(srt(5), 'AAAAAAAAAAA.ar.part02of02.srt')], { fingerprint: fp, cues: current });
+  assert.equal(read.ok, true, JSON.stringify(read.error));
+  const env = editorDocument({ videoId: 'AAAAAAAAAAA' });
+  const done = previewPatch({ doc: env.doc, plan: read.plan });
+  await settle();
+  const dlg = env.doc.querySelector('dialog[open]');
+  const alert = findAll(dlg, (e) => e.classList?.contains('tj-alert__text') && e.textContent.includes('يدل على فيديو آخر'))[0];
+  assert.ok(alert, 'تحذير الفيديو الآخر');
+  assert.deepEqual(bdis(alert).map((e) => e.textContent), [iso('-KA3zmDkEUQ')]);
+  const note = findAll(dlg, (e) => e.tagName === 'li' && e.textContent.startsWith('«'))[0];
+  assert.equal(note.textContent, `«${iso(PART)}»: ${messageFor('IM_NOTE_FENCE')}`);
+  assert.deepEqual(bdis(note).map((e) => e.textContent), [iso(PART)]);
+  dlg.close('cancel');
+  assert.equal(await done, null);
 });

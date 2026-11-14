@@ -11,6 +11,8 @@ import { shortList } from '../../../src/core/align/align.js';
 
 const ARABIC = /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/;
 const slots = (s) => [...String(s).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
+/** مواضع القيمة العربية: قوالب النص، أو معاملات الدالة المفكَّكة (رسالة عربية دالّة تعزل قيمها، ص-١٨، ونظيرها الإنجليزي نص). */
+const arSlots = (v) => (typeof v === 'function' ? (/^\s*\(\s*\{([^}]*)\}/.exec(String(v))?.[1] ?? '').split(',').map((p) => p.trim()).filter(Boolean).sort().join(',') : slots(v));
 const codes = DOMAINS.flatMap((d) => Object.keys(d.MESSAGES));
 const reset = (ctx) => ctx.after(() => setLocale('ar'));
 
@@ -55,7 +57,7 @@ test('كل رمز خطأ له رسالة إنجليزية بالقوالب نف�
     assert.equal(typeof text, 'string', code);
     assert.ok(text.trim().length > 0, code);
     assert.ok(!ARABIC.test(text), `حرف عربي في ${code}: ${text}`);
-    assert.equal(slots(text), slots(ar.get(key)), `قوالب ${code}`);
+    assert.equal(slots(text), arSlots(ar.get(key)), `قوالب ${code}`);
   }
   const extra = [...en.keys()].filter((k) => k.startsWith('errors.') && !codes.includes(k.slice(7)));
   assert.deepEqual(extra, []);

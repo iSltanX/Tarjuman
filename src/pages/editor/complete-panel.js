@@ -7,6 +7,7 @@ import { t } from '../../i18n/index.js';
 import { alertBox, button, el, ltr, statusPill } from '../../ui/components.js';
 import { COUNT_FORMS, formatCount, formatTimecode } from '../../ui/format.js';
 import { openDialog, setDisabled } from './dialogs.js';
+import { richNote } from './panels.js';
 import { numberList } from './text.js';
 
 // المجموعات برموزها؛ النصوص (التسمية والتلميح) من الفهرس عند الرسم. «marked» بلا تلميح.
@@ -158,7 +159,7 @@ export async function previewPatch({ doc, plan: read, bilingual = null, onStrip 
       guard,
       done,
       ...plan.warnings.map((w) => alertBox({ tone: 'warning', title: t('editor.complete.warning'), text: messageFor(w.code, w.params), doc })),
-      plan.notes.length ? el('details', { className: 'ed-notes', children: [el('summary', { text: t('editor.complete.readNotes', { n: plan.notes.length }), doc }), el('ul', { children: plan.notes.map((note) => el('li', { className: 'tj-auto', text: note, doc })), doc })], doc }) : null,
+      plan.notes.length ? el('details', { className: 'ed-notes', children: [el('summary', { text: t('editor.complete.readNotes', { n: plan.notes.length }), doc }), el('ul', { children: plan.notes.map((note) => el('li', { className: 'tj-auto', ...richNote(note, doc), doc })), doc })], doc }) : null,
       rows.length ? el('div', { className: 'ed-preview-table ed-replace-list', children: rows, doc }) : el('p', { className: 'tj-caption', text: t('editor.complete.nothing'), doc }),
       plan.items.length > MAX_PREVIEW ? el('p', { className: 'tj-caption', text: t('editor.complete.truncated', { n: MAX_PREVIEW }), doc }) : null,
       total,

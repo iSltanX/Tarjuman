@@ -12,7 +12,7 @@ import { mergeParts } from './merge.js';
 import { MAX_FILES, MAX_FILE_BYTES, readFileText } from './read-file.js';
 import { clip, displayName, toList } from './files.js';
 import { bilingualCheck, withoutMatchedLines } from './bilingual.js';
-import { COUNT_FORMS, formatCount } from '../../ui/format.js';
+import { COUNT_FORMS, formatCount, ltrInline } from '../../ui/format.js';
 
 /** العدد الذي يؤنَّث معه الفعل (3 إلى 10، و103…). @param {number} n */
 const isFewCount = (n) => n % 100 >= 3 && n % 100 <= 10;
@@ -99,7 +99,8 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
         throw new TjError('IM_TOO_MANY_CUES', { params: { max: LIMITS.maxCues } });
       }
       parts.push({ name: current, cues: parsed.cues });
-      for (const note of parsed.notes) notes.push(multi ? `«${current}»: ${note}` : note);
+      // اسم الجزء أول الملاحظة والخطأ معزول LTR (تحقق 2.3.0، ص-١٨): اسم ترجمان قد يبدأ بشرطة تنتقل إلى آخره بين «».
+      for (const note of parsed.notes) notes.push(multi ? `«${ltrInline(current)}»: ${note}` : note);
       for (const w of parsed.warnings) warnings.push(multi ? { ...w, params: { ...w.params, file: current } } : w);
     }
     current = null;
@@ -116,11 +117,20 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
       for (const gap of merged.gaps) warnings.push({ code: 'IM_PARTS_GAP', params: gap });
       cues = merged.cues;
       fileName = mergedFileName(merged.order);
-      const names = joinList(merged.order);
+      // كل اسم معزول LTR وحده (ص-١٨)، والقص بأسماء كاملة ثم «…» فلا يبقى عزل بلا خاتمته: الاسم حتى 255 محرفًا، فالأول يتسع دائمًا.
+      let names = joinList(merged.order.map(ltrInline));
+      if (names.length > NAMES_NOTE_CHARS) {
+        const shown = [merged.order[0]];
+        for (const name of merged.order.slice(1)) {
+          if (joinList([...shown, name].map(ltrInline)).length > NAMES_NOTE_CHARS - 1) break;
+          shown.push(name);
+        }
+        names = `${joinList(shown.map(ltrInline))}…`;
+      }
       notes.unshift(messageFor('IM_NOTE_MERGED', {
         verb: t('core.import.mergedVerb', { few: isFewCount(files.length) }),
         files: formatCount(files.length, COUNT_FORMS.file),
-        names: names.length > NAMES_NOTE_CHARS ? `${names.slice(0, NAMES_NOTE_CHARS - 1)}…` : names,
+        names,
       }));
     }
 
@@ -140,7 +150,7 @@ export async function readImport(fileOrFiles, { fingerprints = [], settings, lan
   } catch (err) {
     const info = toErrorInfo(err);
     const line = err instanceof TjError ? err.params?.line : undefined;
-    const error = { code: info.code, message: multi && current ? `«${current}»: ${info.message}` : info.message };
+    const error = { code: info.code, message: multi && current ? `«${ltrInline(current)}»: ${info.message}` : info.message };
     if (line) error.line = line;
     if (info.code === 'TJ_UNEXPECTED') error.detail = info.detail;
     return { ok: false, error };

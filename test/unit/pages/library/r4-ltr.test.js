@@ -101,3 +101,34 @@ test('سطر النسخة السابقة: اسم ملفها في التلميح 
   const title = lib.root.querySelector('.lib-exp__extra .lib-prevl .lib-prevl__text').getAttribute('title');
   assert.ok(title.startsWith(`${LRI}${NAMES[1]}${PDI} · `), title);
 });
+
+test('تحقق 2.3.0 (ص-١٨): حوار الرفع بجزأين بينهما فجوة: اسما الجزأين في التحذير عنصران ذريان معزولان LTR', async () => {
+  let t = Date.parse(NOW);
+  const area = createMemoryArea({ unlimited: true });
+  const store = createStore({ area, now: () => (t += 1000) });
+  await store.updateVideo(ID, () => ({ ...videoRecord({ videoId: ID, cues: makeCues(6), arabic: false }), title: 'محاضرة' }));
+  await store.getSettings();
+  await area.flush();
+  const doc = newDocument();
+  const srt = (ns) => ns.map((n) => `${n}\n00:00:0${n},000 --> 00:00:0${n},900\nترجمة ${n}\n`).join('\n');
+  const [a, b] = [NAMES[1], NAMES[1].replace('part12of12', 'part13of12')];
+  let seen = null;
+  const lib = createLibrary({
+    store, doc, now: () => Date.parse(NOW) + 60000,
+    openTab: async () => {}, openPage: async () => {}, saveFile: async () => ({ ok: true }), clipboardWrite: async () => {},
+    pickFiles: async () => [new File([srt([1, 2])], a), new File([srt([5, 6])], b)], diagnosticsText: async () => '{}',
+    confirm: async (o) => { seen = o.content; return false; },
+    setTimer: () => 0, clearTimer: () => {},
+  });
+  doc.body.append(lib.root);
+  await lib.load();
+  buttonNamed(lib.root, 'رفع ترجمة').click();
+  await settle(20);
+  assert.ok(seen, 'حوار الرفع');
+  const warn = findAll(seen, (e) => e.tagName === 'p' && e.textContent.includes('فجوة في الترقيم'))[0];
+  assert.ok(warn, 'تحذير الفجوة');
+  assert.equal(warn.textContent, `بين «${LRI}${a}${PDI}» و«${LRI}${b}${PDI}» فجوة في الترقيم (3–4). قد يكون جزء ناقصًا.`);
+  const iso = bdis(warn);
+  assert.deepEqual(iso.map((e) => e.textContent), [`${LRI}${a}${PDI}`, `${LRI}${b}${PDI}`]);
+  for (const e of iso) assert.ok(e.dir === 'ltr' && e.classList.contains('tj-ltr--wrap'), 'ذري يلتف داخله');
+});

@@ -30,6 +30,11 @@ const AR_FUNCTION_SAMPLES = {
   // الفكرة ١١ (ح-49): الملف الثنائي المستورد وإزالة سطر الأصل، والمعدود بعد حرف الجر بصيغه.
   IM_BILINGUAL: [{ count: 1, total: 1 }, { count: 2, total: 3 }, { count: 3, total: 5 }, { count: 11, total: 20 }, { count: 100, total: 150 }, { count: 3, total: 5, line: 'first' }],
   IM_NOTE_BILINGUAL_REMOVED: [{ count: 1 }, { count: 2 }, { count: 3 }, { count: 11 }, { count: 100 }, { count: 3, line: 'first' }],
+  // تحقق 2.3.0 (ص-١٨): اسما الجزأين ومعرّف الفيديو معزولة LTR داخل الجملة العربية.
+  IM_PARTS_OVERLAP: [{ a: '1', b: '2', from: 3, to: 4 }],
+  IM_PARTS_STRAY_NUMBER: [{ a: '1', list: '2500', b: '2' }],
+  IM_PARTS_GAP: [{ a: '1', b: '2', from: 5, to: 6 }],
+  IM_PATCH_NAME_OTHER_VIDEO: [{ videoId: '-0123456789' }],
 };
 /** كل الرموز من مجالات السجل نفسه (لا من قائمة يدوية)، ومنها مجالات الإصدار الثاني كالنسخ الاحتياطي (P15). والرسالة الدالّة
  * بكل عيّنة من AR_FUNCTION_SAMPLES، ومعها params التي مُلئت بها. */

@@ -13,6 +13,8 @@ import { baseCues, baseFingerprint, deepFreeze, fileOf, readSrtFixture } from '.
 import { NOW, VIDEO_ID, englishTrack, fingerprint, makeCues, videoRecord } from '../../helpers/fixtures.js';
 
 const ARABIC = /[؀-ۿ]/;
+// اسم الجزء معزول LTR في الملاحظة والخطأ (تحقق 2.3.0، ص-١٨، بقرار سلطان).
+const iso = (s) => `${String.fromCodePoint(0x2066)}${s}${String.fromCodePoint(0x2069)}`;
 const fp = baseFingerprint();
 const fixture = (name, fileName = name) => fileOf(readSrtFixture(name), fileName);
 const run = (input, opts = { fingerprints: [fp], settings: DEFAULT_SETTINGS }) => readImport(input, opts);
@@ -165,7 +167,7 @@ test('أجزاء احتياطية: تُدمج بالأرقام مهما كان �
   assert.equal(r.ok, true);
   assert.deepEqual(r.cues.map((c) => c.n), [1, 2, 3, 4, 5, 6, 7, 8]);
   assert.equal(r.fileName, 'abc.ar.srt');
-  assert.deepEqual(r.notes, ['دُمج ملفان بحسب أرقام المقاطع: abc.ar.part1.srt، abc.ar.part2.srt.']);
+  assert.deepEqual(r.notes, [`دُمج ملفان بحسب أرقام المقاطع: ${iso('abc.ar.part1.srt')}، ${iso('abc.ar.part2.srt')}.`]);
   assert.equal(r.comparison.matched, true);
   assert.deepEqual(r.warnings, []);
   assert.deepEqual(r.cues, (await run(fixture('clean.ar.srt'))).cues);
@@ -194,8 +196,8 @@ test('فجوة بين الأجزاء تحذير لا خطأ، والمقارنة
 test('تداخل الأجزاء أو تكرارها خطأ يسمّي الجزأين ونطاق الأرقام', async () => {
   const e = await failed([fixture('part1.ar.srt', 'a.srt'), fixture('clean.ar.srt', 'full.srt')]);
   assert.equal(e.code, 'IM_PARTS_OVERLAP');
-  assert.match(e.message, /«a\.srt»/);
-  assert.match(e.message, /«full\.srt»/);
+  assert.ok(e.message.includes(`«${iso('a.srt')}»`), e.message);
+  assert.ok(e.message.includes(`«${iso('full.srt')}»`), e.message);
   assert.match(e.message, /1–4/);
   const same = await failed([fixture('clean.ar.srt', 'one.srt'), fixture('clean.ar.srt', 'two.srt')]);
   assert.equal(same.code, 'IM_PARTS_OVERLAP');
@@ -205,7 +207,7 @@ test('خطأ في أحد عدة ملفات يذكر اسم الملف مع ال�
   const e = await failed([fixture('part1.ar.srt', 'good.srt'), fixture('corrupt-time.ar.srt', 'broken.srt')]);
   assert.equal(e.code, 'IM_BAD_TIME');
   assert.equal(e.line, 14);
-  assert.match(e.message, /«broken\.srt»/);
+  assert.ok(e.message.startsWith(`«${iso('broken.srt')}»: `), e.message);
   assert.doesNotMatch(e.message, /good\.srt/);
   const single = await failed(fixture('corrupt-time.ar.srt', 'broken.srt'));
   assert.doesNotMatch(single.message, /broken/, 'ملف واحد: لا حاجة لاسمه');
@@ -216,7 +218,7 @@ test('ملاحظات الأجزاء تُنسب إلى ملفاتها، وملا�
   const r = await run([fenced, fixture('part2.ar.srt', 'second.srt')]);
   assert.equal(r.notes.length, 2);
   assert.match(r.notes[0], /دُمج ملفان/);
-  assert.equal(r.notes[1], `«first.srt»: ${messageFor('IM_NOTE_FENCE')}`);
+  assert.equal(r.notes[1], `«${iso('first.srt')}»: ${messageFor('IM_NOTE_FENCE')}`);
 });
 
 test('كثرة الملاحظات لا تتجاوز حد النموذج (50)، وكل ملاحظة ≤ 500 محرف حتى بأسماء طويلة', async () => {
@@ -310,7 +312,7 @@ test('تدقيق 5fedcb9 (GM-026.2): رقم شاذ واحد في جزء (2500 ب
   const e = await failed([new File([srt(first)], 'part1.ar.srt'), new File([srt(second)], 'part2.ar.srt')]);
   assert.equal(e.code, 'IM_PARTS_STRAY_NUMBER');
   assert.match(e.message, /2500/);
-  assert.match(e.message, /«part1\.ar\.srt»/);
+  assert.ok(e.message.includes(`«${iso('part1.ar.srt')}»`) && e.message.includes(`«${iso('part2.ar.srt')}»`), e.message);
   // تداخل حقيقي بين جزأين يبقى IM_PARTS_OVERLAP.
   const both = await failed([new File([srt(all.slice(0, 25))], 'a.srt'), new File([srt(all.slice(20))], 'b.srt')]);
   assert.equal(both.code, 'IM_PARTS_OVERLAP');

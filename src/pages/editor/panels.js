@@ -2,11 +2,17 @@
 // «استعادة التوقيت الأصلي…» حين يتطابق العدد والترقيم وحده، وملاحظات الاستيراد. وصف فقط: لا إصلاح تلقائي.
 import { messageFor } from '../../core/errors/index.js';
 import { t } from '../../i18n/index.js';
-import { button, el, statusPill } from '../../ui/components.js';
+import { button, el, ltrNodes, statusPill } from '../../ui/components.js';
 import { textDirection } from '../../ui/format.js';
 import { comparisonLines, issuesSummary, restoreUnavailable } from './text.js';
 
 const MAX_ITEMS = 200;
+
+/** نص ملاحظة بمقاطعه المعزولة LTR عناصر ذرية (ltrNodes)، وإلا نصًا كما هو. @param {string} note @param {Document} doc */
+export const richNote = (note, doc) => {
+  const nodes = ltrNodes(note, { doc });
+  return nodes ? { children: nodes } : { text: note };
+};
 
 /**
  * @param {HTMLElement} box
@@ -119,7 +125,8 @@ export function renderComparison(box, { doc, report, notes, readOnly, onRestore,
     restore,
     notes.length ? el('details', {
       className: 'ed-notes',
-      children: [el('summary', { text: t('editor.cmp.notes', { n: notes.length }), doc }), el('ul', { children: notes.map((note) => el('li', { className: 'tj-auto', text: note, dir: textDirection(note), doc })), doc })],
+      // اسم الجزء المعزول LTR في الملاحظة («‹الجزء›: …» و«دُمج ملفان…: ‹الأسماء›»، ص-١٨) عنصر ذري يلتف داخله (ltrNodes).
+      children: [el('summary', { text: t('editor.cmp.notes', { n: notes.length }), doc }), el('ul', { children: notes.map((note) => el('li', { className: 'tj-auto', ...richNote(note, doc), dir: textDirection(note), doc })), doc })],
       doc,
     }) : null,
   ].filter(Boolean));

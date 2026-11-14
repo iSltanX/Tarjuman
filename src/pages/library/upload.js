@@ -8,7 +8,7 @@ import { describeLang, knownLanguages, textFitsLang } from '../../core/lang/inde
 import { isSourceLang } from '../../core/model/ids.js';
 import { sourceOf } from '../../core/model/pair.js';
 import { getLocale, joinList, t as tr } from '../../i18n/index.js';
-import { alertBox, button, el, ltr, statusPill } from '../../ui/components.js';
+import { alertBox, button, el, ltr, ltrNodes, statusPill } from '../../ui/components.js';
 import { pairLabel } from '../../ui/lang.js';
 import { COUNT_FORMS, formatCount, offsetInline, textDirection } from '../../ui/format.js';
 import { previewComparison } from '../../core/import/index.js';
@@ -242,7 +242,12 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
     children: [
       // اسم الملف المرفوع قد يطول بلا فواصل («My_Translation_Final…srt»): يلتف داخل عنصره فلا يفيض خارج الحوار.
       el('p', { className: 'tj-body-sm', children: [ltr(result.fileName, { mono: false, wrap: true, doc }), ` · ${formatCount(result.cues.length, COUNT_FORMS.cue)}`], doc }),
-      ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
+      // اسما الجزأين المعزولان LTR في «بين ‹أ› و‹ب› فجوة…» (ص-١٨) عنصران ذريان يلتفان داخلهما (ltrNodes).
+      ...result.warnings.map((w) => {
+        const text = messageFor(w.code, w.params);
+        const nodes = ltrNodes(text, { doc });
+        return el('p', { className: 'tj-caption', ...(nodes ? { children: nodes } : { text }), doc });
+      }),
       // ح-49: الملف مصدَّر «مع الأصل»: تحذير وزر الإزالة، ولا يُزال شيء قبل النقرة؛ وبعدها سطر بما أُزيل يُنقل إليه التركيز.
       result.bilingual ? alertBox({
         tone: 'warning', text: messageFor('IM_BILINGUAL', { count: result.bilingual.count, total: result.bilingual.total, line: result.bilingual.line }),

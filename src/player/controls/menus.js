@@ -48,7 +48,8 @@ function alert(h, tone, text, extra = []) {
   return h('div', {
     className: 'alert',
     attrs: { 'data-tone': tone, role: tone === 'info' ? 'note' : 'alert' },
-    children: [h.glyph?.(tone) ?? null, h('div', { className: 'stack', children: [h('span', { text }), ...extra] })],
+    // مقاطع النص المعزولة LTR (اسم جزء في خطأ الرفع أو تحذيره، ص-١٨) عناصر ذرية (richText).
+    children: [h.glyph?.(tone) ?? null, h('div', { className: 'stack', children: [h('span', richText(h, text)), ...extra] })],
   });
 }
 
@@ -569,7 +570,7 @@ export function displayMenu(h, act, m, root = null) {
   }
   const allNotes = m.ambiguous ? m.notes.filter((n) => !n.includes(AMBIGUOUS_HEAD())) : m.notes;
   const notes = allNotes.slice(0, 1);
-  for (const n of notes) out.push(h('div', { className: 'note', text: n }));
+  for (const n of notes) out.push(h('div', { className: 'note', ...richText(h, n) }));
   if (allNotes.length > notes.length) out.push(h('div', { className: 'note', text: moreNotesLine(allNotes.length - notes.length) }));
   out.push(sep(h));
   out.push(label(h, LABELS.displayMode));
