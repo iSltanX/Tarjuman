@@ -51,6 +51,17 @@ const SECRET_CASES = [
   ['رمز GitHub للتحديث', 'scripts/r.mjs', `const t = '${j('gh', 'r_', b64(36))}';\n`, /github-token/],
   ['رمز GitHub في .sh', 'deploy/push.sh', `export ${j('GITHUB', '_TOKEN')}=${j('gh', 'p_', b64(36))}\n`, /github-token/],
   ['مفتاح AWS في .ts', 'src/app.ts', `const k = "${j('AK', 'IA', 'ABCDEFGHIJKLMNOP')}";\n`, /aws-key/],
+  // تحقق 2.3.0 (ص-١٨): صيغ نجت من مجسّ التحقق الأخير (c-guards/secrets).
+  ['سرّ AWS بصيغة SDK بلا بادئة', 'src/s3.ts', `new S3({ accessKeyId: 'x', ${j('secret', 'AccessKey')}: '${b64(40)}' });\n`, /aws-secret/],
+  ['سرّ AWS في INI', 'cfg/aws.ini', `[default]\n${j('aws_secret', '_access_key')} = ${b64(40)}\n`, /aws-secret/],
+  ['سرّ AWS في بايثون', 'tools/x.py', `${j('AWS_SECRET', '_ACCESS_KEY')} = "${b64(40)}"\n`, /aws-secret/],
+  ['سرّ AWS في Dockerfile', 'Dockerfile', `FROM node:24\nENV ${j('AWS_SECRET', '_ACCESS_KEY')}=${b64(40)}\n`, /aws-secret/],
+  ['رمز GitHub القديم باسم PAT', 'scripts/ci2.sh', `${j('GITHUB', '_PAT')}=${hex(40)}\n`, /github-token-legacy/],
+  ['سرّ خطاف Stripe', 'src/hook.js', `const s = '${j('wh', 'sec_', b64(30))}';\n`, /stripe-key/],
+  ['رابط خطاف Slack', 'scripts/notify2.mjs', `const url = 'https://${j('hooks.', 'slack.com')}/services/T${b64(9)}/B${b64(9)}/${b64(24)}';\n`, /slack-webhook/],
+  ['كلمة مرور بلا تنصيص في سكربت صدفة', 'scripts/x.bash', `${j('PASS', 'WORD')}=${b64(30)}\n`, /secret-assignment/],
+  ['سرّ بلا تنصيص في ملف بلا امتداد', 'deploy/config', `db_${j('pass', 'word')} = ${b64(20)}\n`, /secret-assignment/],
+  ['مفتاح API بلا تنصيص في .properties', 'cfg/app.properties', `${j('api', '_key')}=${b64(32)}\n`, /secret-assignment/],
 ];
 /** أضداد قريبة من حالات ن-١٢: تشبهها ولا تكونها، فلا تُنذر. */
 const NEAR_MISSES = [
@@ -69,6 +80,14 @@ const NEAR_MISSES = [
   ['بادئة GitHub غير معروفة', 'scripts/ghx.mjs', `const t = '${j('gh', 'x_', b64(36))}';\n`],
   ['سكربت .sh سليم', 'deploy/ok.sh', 'export NODE_ENV=production\nnode scripts/build.mjs\n'],
   ['شيفرة .ts سليمة', 'src/ok.ts', 'export const apiKey = readKey();\n'],
+  // ص-١٨: أضداد القواعد الجديدة.
+  ['كلمة مرور محالة إلى متغير وقيمة مثال', 'deploy/env2.sh', `export ${j('PASS', 'WORD')}=$DB_${j('PASS', 'WORD')}\n${j('API', '_KEY')}=<your-key-here>\n${j('SEC', 'RET')}=\${{ secrets.X }}\n`],
+  ['كلمة مرور مثال قصيرة', 'docs/setup.md', `${j('PASS', 'WORD')}=changeme\n`],
+  ['إسناد بلا تنصيص في JavaScript تعبير لا قيمة', 'src/login.js', `${j('pass', 'word')} = document.forms.login.value\n${j('sec', 'ret')} = readSecretFromFileSystem\n`],
+  ['سرّ AWS بصيغة SDK من البيئة', 'src/s3b.ts', `new S3({ ${j('secret', 'AccessKey')}: process.env.KEY });\n`],
+  ['رابط Slack المثال', 'docs/slack.md', `https://${j('hooks.', 'slack.com')}/services/T000/B000/XXXX\n`],
+  ['PAT داخل كلمة', 'scripts/c.mjs', `const compat = '${hex(40)}';\n`],
+  ['ملف بلا امتداد سليم', 'LICENSE', 'MIT License\n\nCopyright (c) 2026\n'],
 ];
 /** ملفات أسرار بأسمائها: تُرفض أيًّا كان ما فيها. */
 const SECRET_FILES = [
@@ -78,6 +97,9 @@ const SECRET_FILES = [
   ['مفتاح PEM باسمه', 'key.pem', PEM],
   ['مفتاح توقيع .key', 'signing/store.key', 'x\n'],
   ['مفتاح SSH', 'deploy/id_ed25519', 'x\n'],
+  // ص-١٨: ملف بيئة باسم ينتهي بـ.env، وملف اعتماد AWS.
+  ['ملف بيئة باسم ينتهي بـ.env', 'config/prod.env', 'X=1\n'],
+  ['اعتماد AWS', 'home/.aws/credentials', '[default]\n'],
 ];
 
 /** شجرة بنطاقي العيّنات سليمة، ثم ملف واحد. بلا Git فيُمشى على الشجرة كلها. */
@@ -130,6 +152,24 @@ test('ن-١٢: الأضداد القريبة من سرّ AWS وPGP وStripe ور
     assert.equal(r.status, 0, `${label}: ${r.stderr}`);
     assert.match(r.stdout, /منها 1 خارج نطاقات العيّنات/, `${label}: لم يُفحص الملف`);
   }
+});
+
+test('ص-١٨: الملف الثنائي (بامتداده أو بمحرف NUL في أوله) لا يُفحص نصًّا، والنصي بأي امتداد يُفحص', async () => {
+  const t = path.join(tmp, 'binary');
+  for (const scope of ['test/fixtures', 'test/e2e/fixtures']) await mkdir(path.join(t, scope), { recursive: true });
+  await writeFile(path.join(t, 'test/fixtures/a.json'), '{"events":[]}\n');
+  await writeFile(path.join(t, 'test/e2e/fixtures/b.srt'), '1\n00:00:00,000 --> 00:00:01,000\nمرحبا\n');
+  await mkdir(path.join(t, 'assets'), { recursive: true });
+  const secretLine = Buffer.from(`${j('PASS', 'WORD')}=${b64(30)}\n`);
+  await writeFile(path.join(t, 'assets/blob.dat'), Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0x0d]), secretLine]));
+  await writeFile(path.join(t, 'assets/x.png'), secretLine);
+  const r = node([path.join(ROOT, 'scripts/check-secrets.mjs'), '--root', t]);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /منها 0 خارج نطاقات العيّنات/);
+  await writeFile(path.join(t, 'notes.cfg'), `${j('PASS', 'WORD')}=${b64(30)}\n`);
+  const r2 = node([path.join(ROOT, 'scripts/check-secrets.mjs'), '--root', t]);
+  assert.equal(r2.status, 1, r2.stdout);
+  assert.match(r2.stderr, /notes\.cfg@\d+: secret-assignment/);
 });
 
 // ---------------------------------------------------------------- ع-٢١: محوّل التخزين

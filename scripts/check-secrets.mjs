@@ -6,7 +6,7 @@
 // (الشيفرة والوثائق تذكر روابط عامة بحق)، إلا ما ورد في EXCLUDED أدناه بسببه. وحين لا يتوفر Git يمشي على الشجرة نفسها.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFile, readdir, realpath, lstat, stat } from 'node:fs/promises';
+import { open, readFile, readdir, realpath, lstat, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findSecrets } from '../src/core/diagnostics/sanitize.js';
@@ -29,6 +29,21 @@ const LOCAL_PATH = /(?:\/Users\/[^/\s"'`]+\/|\/private\/(?:tmp|var)\/|\/Volumes\
 // لئلا يحمل هذا الملف نص الأسطر نفسها. وإضافة بند تحتاج سببًا يُكتب هنا.
 // وسكربتات الصدفة وTypeScript (تحقق الجولة الثانية، ن-١٢): لا ملف منها اليوم، وأول ما يُضاف منها يُفحص.
 const EXTRA_TEXT = /\.(json|srt|txt|log|md|csv|ndjson|js|mjs|cjs|css|html|yml|yaml|svg|webmanifest|toml|sh|bash|zsh|ts|mts|cts|tsx)$|(^|\/)\.[a-z]+ignore$/i;
+// وما سواها (تحقق 2.3.0، ص-١٨): كل ملف نصي يُفحص أيًّا كان امتداده أو بلا امتداد (.ini و.py وDockerfile وcredentials وLICENSE)، والثنائي
+// يُعرف بامتداده (الصور والخطوط والأرشيف) أو بمحرف NUL في أول 8 ك.ب كما يعرفه Git، فلا تبقى قائمة امتدادات نصية يفوتها ملف جديد.
+const BINARY_EXT = /\.(?:png|jpe?g|gif|webp|avif|ico|icns|bmp|woff2?|ttf|otf|eot|pdf|zip|gz|tgz|xz|7z|mp3|mp4|m4a|webm|mov|wasm)$/i;
+const BINARY_PROBE = 8192;
+async function isBinary(file) {
+  if (BINARY_EXT.test(file)) return true;
+  const fh = await open(file, 'r');
+  try {
+    const buf = Buffer.alloc(BINARY_PROBE);
+    const { bytesRead } = await fh.read(buf, 0, BINARY_PROBE, 0);
+    return buf.subarray(0, bytesRead).includes(0);
+  } finally {
+    await fh.close();
+  }
+}
 const EXTRA_IGNORED_TYPES = ['url', 'timedtext-path']; // الروابط العامة ومسار timedtext مذكوران في الشيفرة والوثائق بحق
 const LINE_EXEMPT = new Map([
   ['src/core/diagnostics/sanitize.js', 'تعريف أنماط التنقية: يحوي أسماء الترويسات وملفات الارتباط', ['5603b54289fbccf6']],
@@ -53,16 +68,21 @@ const LINE_EXEMPT = new Map([
 // عمل، وسرّ عميل OAuth، ورمز npm، ومفتاح خاص في .md، وسرّ أو كلمة مرور في إعداد، تمر كلها. الأنماط هنا لا في sanitize.js، لئلا يتغير
 // ما يحذفه التشخيص. وهي أنماط حزمة المصدر (LEAKS في scripts/release/store.mjs) ومعها npm وOAuth وSlack والإسناد الصريح لسرّ.
 // وتحقق الجولة الثانية (ن-١٢): سرّ AWS المسنَد باسمه، وكتلة PGP الخاصة، ومفتاح Stripe الحي، ورمز GitHub القديم بلا بادئة.
+// وتحقق 2.3.0 (ص-١٨): السرّ بصيغة SDK بلا بادئة aws (secretAccessKey)، واسم GITHUB_PAT، وسرّ خطاف Stripe (whsec_)، ورابط خطاف Slack،
+// والسرّ المسنَد بلا علامتي تنصيص في سطر بيئة أو صدفة أو INI أو Dockerfile (PASSWORD=…).
 const GENERIC_SECRETS = [
   ['private-key', /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY(?: BLOCK)?-----/g],
   ['github-token', /\b(?:github_pat_[A-Za-z0-9_]{22,}|gh[pousr]_[A-Za-z0-9]{36,})\b/g],
   // رمز GitHub القديم 40 محرفًا ست عشريًا بلا بادئة: يُعرف باسم ينتهي بـtoken يُسنَد إليه (GITHUB_TOKEN = '…'، GH_TOKEN: …)، أو بترويسة
   // بترويسة التخويل بصيغة «token …». وبصمة التزام بغير هذا الاسم لا تُنذر.
-  ['github-token-legacy', /\b[A-Za-z_-]*token["']?\s*[:=]\s*["']?[0-9a-f]{40}\b|\btoken[ \t]+[0-9a-f]{40}\b/gi],
-  // سرّ AWS نفسه (40 محرفًا) مسنَدًا باسمه بأي صيغة (aws_secret_access_key: …، AWS_SECRET_ACCESS_KEY=…، awsSecretAccessKey = '…').
-  ['aws-secret', /\baws[_-]?secret[_-]?access[_-]?key["']?\s*[:=]\s*["']?[A-Za-z0-9/+]{40}(?![A-Za-z0-9/+=])/gi],
-  // مفتاح Stripe السري والمقيَّد في الإنتاج؛ والمنشور (pk_live_) عام بطبعه.
-  ['stripe-key', /\b[sr]k_live_[0-9A-Za-z]{24,}\b/g],
+  ['github-token-legacy', /\b(?:[A-Za-z_-]*token|[A-Za-z]*[_-]pat|pat)["']?\s*[:=]\s*["']?[0-9a-f]{40}\b|\btoken[ \t]+[0-9a-f]{40}\b/gi],
+  // سرّ AWS نفسه (40 محرفًا) مسنَدًا باسمه بأي صيغة (aws_secret_access_key: …، AWS_SECRET_ACCESS_KEY=…، awsSecretAccessKey = '…')،
+  // وبصيغة SDK بلا بادئة aws (new S3({ secretAccessKey: '…' })).
+  ['aws-secret', /\b(?:aws[_-]?)?secret[_-]?access[_-]?key["']?\s*[:=]\s*["']?[A-Za-z0-9/+]{40}(?![A-Za-z0-9/+=])/gi],
+  // مفتاح Stripe السري والمقيَّد في الإنتاج، وسرّ توقيع خطافه (whsec_)؛ والمنشور (pk_live_) عام بطبعه.
+  ['stripe-key', /\b(?:[sr]k_live_|whsec_)[0-9A-Za-z]{24,}\b/g],
+  // رابط خطاف Slack الوارد: الرابط نفسه سرّ يُرسل به أي أحد إلى القناة.
+  ['slack-webhook', /\bhooks\.slack\.com\/(?:services|workflows)\/T[A-Za-z0-9_]+\/[A-Za-z0-9_]+\/[A-Za-z0-9_]{8,}/g],
   ['npm-token', /\bnpm_[A-Za-z0-9]{36,}\b/g],
   ['aws-key', /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g],
   ['google-key', /\bAIza[0-9A-Za-z_-]{35}\b/g],
@@ -71,10 +91,15 @@ const GENERIC_SECRETS = [
   ['api-key', /\bsk-(?:ant-|proj-)?[A-Za-z0-9_-]{32,}/g],
   // سرّ مسنَد بالاسم إلى قيمة حرفية من 12 محرفًا فأكثر بلا فراغ (secret: '…' وpassword = "…" وapiKey: '…').
   ['secret-assignment', /\b(?:[A-Za-z]+[_-])?(?:secret|password|passwd|api[_-]?key|auth[_-]?token|access[_-]?token)["']?\s*[:=]\s*["'][^"'\s]{12,}["']/gi],
+  // وبلا علامتي تنصيص في سطر إسناد يبدأ بالاسم (بيئة وصدفة وINI وDockerfile ENV): PASSWORD=… وdb_password = …. والقيمة المحالة
+  // (‎$VAR و${{ secrets.X }} و<placeholder>) لا تُنذر، ولا ملفات JavaScript وTypeScript: الإسناد بلا تنصيص فيها تعبير لا قيمة حرفية.
+  ['secret-assignment', /^[ \t]*(?:export[ \t]+|ENV[ \t]+)?(?:[A-Za-z0-9]+[_-])*(?:secret|password|passwd|api[_-]?key|auth[_-]?token|access[_-]?token)(?:[_-][A-Za-z0-9]+)*[ \t]*=[ \t]*(?![$<{"'(])[^\s"'#;()]{12,}[ \t]*\r?$/gim, /\.(?:[cm]?[jt]sx?)$/i],
 ];
-const genericSecrets = (text) => GENERIC_SECRETS.flatMap(([type, re]) => [...text.matchAll(re)].map((m) => ({ index: m.index, type, sample: `${m[0].slice(0, 4)}…(${m[0].length})` })));
+/** @param {string} text @param {string} rel المسار النسبي (نمط ثالث في البند يستثني ملفاته) */
+const genericSecrets = (text, rel = '') => GENERIC_SECRETS.flatMap(([type, re, skip]) => (skip?.test(rel) ? [] : [...text.matchAll(re)].map((m) => ({ index: m.index, type, sample: `${m[0].slice(0, 4)}…(${m[0].length})` }))));
 // ملفات أسرار بأسمائها لا تُتتبَّع في المستودع العام أيًّا كان ما فيها: البيئة، ومفاتيح التوقيع والشهادات، وإعداد npm بالرمز.
-const SECRET_FILE = /(?:^|\/)(?:\.env(?:\.[^/]*)?|\.npmrc|id_(?:rsa|dsa|ecdsa|ed25519)|[^/]+\.(?:pem|key|p12|pfx))$/i;
+// وملف بيئة باسم ينتهي بـ.env (prod.env)، وملف اعتماد AWS (.aws/credentials) (تحقق 2.3.0، ص-١٨).
+const SECRET_FILE = /(?:^|\/)(?:\.env(?:\.[^/]*)?|[^/]+\.env|\.npmrc|id_(?:rsa|dsa|ecdsa|ed25519)|\.aws\/credentials|[^/]+\.(?:pem|key|p12|pfx))$/i;
 // تجزئات سلامة الحزم تشبه الرموز الطويلة: سطر integrity وحده بصيغته، في ملف القفل وحده.
 const LOCK_FILE = 'package-lock.json';
 const LOCK_INTEGRITY = /^\s*"integrity": "sha512-[A-Za-z0-9+/]+={0,2}",?$/;
@@ -142,7 +167,7 @@ for (const scope of SCOPES) {
       if (rel.endsWith('.md') && f.type === 'url' && !SENSITIVE_HOST.test(text.slice(f.index, f.index + f.length))) continue;
       findings.push(`${rel}@${f.index}: ${f.type} ${f.sample}`);
     }
-    for (const f of genericSecrets(text)) findings.push(`${rel}@${f.index}: ${f.type} ${f.sample}`);
+    for (const f of genericSecrets(text, rel)) findings.push(`${rel}@${f.index}: ${f.type} ${f.sample}`);
     for (const m of text.matchAll(LOCAL_PATH)) findings.push(`${rel}@${m.index}: local-path ${m[0]}`);
   }
 }
@@ -156,10 +181,11 @@ for (const rel of everything) {
     findings.push(`${rel}: ملف أسرار باسمه (.env و.npmrc ومفاتيح التوقيع) لا يُتتبَّع في المستودع`);
     continue;
   }
-  if (seen.has(rel) || !EXTRA_TEXT.test(rel)) continue;
+  if (seen.has(rel)) continue;
   const file = path.join(ROOT, rel);
   const info = await lstat(file).catch(() => null);
   if (!info?.isFile()) continue; // رابط رمزي أو محذوف لم يُسجَّل بعد
+  if (!EXTRA_TEXT.test(rel) && (await isBinary(file))) continue;
   if (info.size > MAX_BYTES) {
     findings.push(`${rel}: أكبر من 50 م.ب فلم يُفحص`);
     continue;
@@ -171,7 +197,7 @@ for (const rel of everything) {
   const lineOf = (index) => lines[text.slice(0, index).split('\n').length - 1];
   const hits = [
     ...findSecrets(text, EXTRA_IGNORED_TYPES).map((f) => [f.index, `${f.type} ${f.sample}`]),
-    ...genericSecrets(text).map((f) => [f.index, `${f.type} ${f.sample}`]),
+    ...genericSecrets(text, rel).map((f) => [f.index, `${f.type} ${f.sample}`]),
     ...[...text.matchAll(LOCAL_PATH)].map((m) => [m.index, `local-path ${m[0]}`]),
   ];
   for (const [index, what] of hits) {
