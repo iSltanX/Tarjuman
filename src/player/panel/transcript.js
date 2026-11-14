@@ -306,7 +306,17 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
       attrs: { 'aria-label': editFieldLabel(cue.n), 'aria-describedby': 'tj-edit-msg tj-edit-hint', lang: translationLang ?? 'und', dir: textDirection(value, translationLang) },
     });
     field.value = value;
-    const fit = () => setAttr(field, 'rows', String(Math.min(EDIT_ROWS.max, Math.max(EDIT_ROWS.min, lineCount(field.value)))));
+    // الارتفاع: أسطر النص الصريحة (من 2 إلى 6)، ثم سطرًا سطرًا ما دام النص الملتفّ في عرض اللوحة أطول من الحقل، حتى الحدّ
+    // (الجولة الحية لختام ST1: مقطع بسطرين يلتفّ ثانيهما فُتح بتمرير داخلي وقُصّ أول سطره). والقياس صفر قبل دخول الحقل الصفحة،
+    // فيُعاد بعد إدراجه.
+    const fit = () => {
+      let rows = Math.min(EDIT_ROWS.max, Math.max(EDIT_ROWS.min, lineCount(field.value)));
+      setAttr(field, 'rows', String(rows));
+      while (rows < EDIT_ROWS.max && field.scrollHeight > field.clientHeight) {
+        rows += 1;
+        setAttr(field, 'rows', String(rows));
+      }
+    };
     fit();
     const msg = el(doc, 'div', { className: 'edit__msg', attrs: { id: 'tj-edit-msg', role: 'alert', hidden: '' } });
     const save = el(doc, 'button', { className: 'b b--primary edit__save', attrs: { type: 'button' }, text: LABELS.editSave });
@@ -340,6 +350,7 @@ export function createTranscript({ doc, onSeek, onAct = () => {}, syncReason = (
     rowEls[i].classList.add('editing');
     setHidden(ar, true);
     ar.parentNode.insertBefore(box, ar.nextSibling);
+    fit();
     acts.remove();
     actsRow = -1;
     actsFocusEl = null;
