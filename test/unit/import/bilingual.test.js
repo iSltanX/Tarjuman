@@ -85,8 +85,9 @@ test('يُكتشف ما صُدِّر بتوقيت المشاهدة (إزاحة +
   assert.ok(vtt.text.includes('Line 1 &amp; more'));
   const v = await read(vtt.text, 'لصق.txt');
   assert.equal(v.ok, true);
-  assert.equal(v.bilingual?.count, 8, 'الكيانات تُفكّ للمقارنة وحدها');
-  assert.equal(v.cues[0].text, 'السطر 1\nLine 1 &amp; more', 'ولا يتغير النص المقروء');
+  assert.equal(v.bilingual?.count, 8, 'ويُحكم ثنائيًا');
+  // كانت «&amp;» تبقى في النص المقروء فتُحفظ؛ وبقرار سلطان (تحقق 2.3.0، ص-١٤) يُقرأ WebVTT بكياناته مفكوكة.
+  assert.equal(v.cues[0].text, 'السطر 1\nLine 1 & more', 'كيانات WebVTT مفكوكة في النص المقروء');
   const other = englishTrack({ lang: 'fr', kind: 'manual', cues: EN.map((c) => ({ ...c, text: `Ligne ${c.n}` })) });
   assert.equal(bilingualCheck(r.cues, [other, TRACK]).lang, 'en');
 });

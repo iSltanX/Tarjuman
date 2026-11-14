@@ -312,7 +312,7 @@ export function describeLang(code, locale = 'ar') {
 }
 
 /**
- * رمز لغة من اسم ملف ترجمة إن جاء صريحًا قبل الامتداد (talk.ja.srt ← ja، وtalk.pt-BR.srt ← pt-BR، وID.ar.dual-en.srt ← ar)، وإلا null. لا يُقبل
+ * رمز لغة من اسم ملف ترجمة إن جاء صريحًا قبل الامتداد .srt أو .vtt (talk.ja.srt ← ja، وtalk.pt-BR.srt ← pt-BR، وID.ar.dual-en.vtt ← ar)، وإلا null. لا يُقبل
  * إلا رمز يعرف المتصفح اسمه، فلا يُقرأ «normal» أو «long» لغةً. ومع نص الملف لا يُقبل إلا إن وافق نصُّه إحدى كتابات اللغة
  * (textFitsLang، ع-٨)، فلا تصير كلمة من الاسم لغةً بكتابة أخرى (let.it.be.srt بيلاروسيةً، وwhat.it.is.srt بنص عربي آيسلنديةً)،
  * ويبقى الرمز الصحيح بكتابته البديلة (talk.sr.srt باللاتينية، وtalk.pa.srt بالشاهمكهية؛ ن-٥)، إلا اللاتينية لرمز هو كلمة شائعة في أسماء
@@ -324,8 +324,8 @@ export function describeLang(code, locale = 'ar') {
 export function langFromFileName(fileName, cues = null) {
   if (typeof fileName !== 'string') return null;
   // وأسماء ترجمان نفسه بعد الرمز: «.original» (النسخة المرفوعة) و«.dual-<لغة الأصل>» (التصدير مع الأصل، الفكرة ١١)، فلا تُقرأ لغة
-  // الأصل لغةً للملف (ar-EN زائفة) ولا تضيع لغته.
-  const m = /\.([A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*)(?:\.original)?(?:\.dual-[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*)?\.srt$/i.exec(fileName.trim());
+  // الأصل لغةً للملف (ar-EN زائفة) ولا تضيع لغته. والامتداد .srt أو .vtt، فملف WebVTT الذي يصدّره ترجمان يعود بلغته (ص-١٤).
+  const m = /\.([A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*)(?:\.original)?(?:\.dual-[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*)?\.(?:srt|vtt)$/i.exec(fileName.trim());
   if (!m) return null;
   const code = normalizeLang(m[1]);
   if (!code || !arabicName(code)) return null;

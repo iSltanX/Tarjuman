@@ -98,6 +98,8 @@ export default Object.freeze({
   IM_TIME_OUT_OF_RANGE: 'Line {line}: the time is over the allowed limit (100 hours). Fix it in the file, then upload again.',
   IM_MISSING_NUMBER: 'Line {line}: the timing line has no segment number before it. Add the number on the previous line, then upload again.',
   IM_BAD_NUMBER: 'Line {line}: the segment number isn’t valid; it must be a positive whole number up to {max}. Fix it in the file, then upload again.',
+  IM_VTT_BAD_TIME: 'Line {line}: the WebVTT time format isn’t valid. Expected something like 00:00:01.000 --> 00:00:03.500 or 00:01.000 --> 00:03.500. Fix it in the file, then upload again.',
+  IM_VTT_MISSING_NUMBER: 'Line {line}: a WebVTT segment has no segment number before its timing line. Tarjuman reads segments by the numbers they were exported with, and the WebVTT files it exports are numbered. Add the segment number on the previous line, or ask the model for an SRT file with the segment numbers from the attached file, then upload again.',
   IM_STRAY_TEXT: ({ line, heading }) => (heading
     ? `Line ${line}: it starts with “#” and a space, so it’s read as a heading that ends the segment and leaves what follows outside it. Delete the “#” at the start of the line if it’s part of the text, or delete the line, then upload again.`
     : `Line ${line}: text outside any segment (after a blank line inside a segment or between two segments). Delete it or move it into the segment, then upload again.`),
@@ -122,6 +124,8 @@ export default Object.freeze({
   IM_NOTE_DIGITS: 'Converted Arabic-Indic digits in numbering and timing lines to Latin digits.',
   IM_NOTE_TIME_MARKS: ({ count }) => `Fixed the format of ${count} timing ${by(count, 'line', 'lines')}: Arabic decimal and comma marks to “,”, and arrows to -->.`,
   IM_NOTE_TAGS: ({ count }) => `Stripped formatting tags (like italic, bold, font, color, and positioning commands) from ${count} ${by(count, 'segment', 'segments')}.`,
+  IM_NOTE_VTT_SETTINGS: ({ count }) => `Ignored WebVTT cue settings (alignment, position, and line) on ${count} ${by(count, 'segment', 'segments')}; Tarjuman shows the translation in its own position.`,
+  IM_NOTE_VTT_BLOCKS: ({ count }) => `Removed ${count} WebVTT ${by(count, 'block', 'blocks')} that aren’t shown (comments, styles, and regions).`,
   IM_NOTE_CONTROL: ({ count }) => `Removed invisible control characters from ${count} ${by(count, 'segment', 'segments')}.`,
   IM_NOTE_HIDDEN_CHARS: ({ count }) => `Removed ${count} hidden ${by(count, 'character', 'characters')} from the text: tag characters, extra variation selectors, text-direction embeddings, overrides and isolates, other invisible formatting characters, and byte-order marks anywhere but the start of the file.`,
   IM_NOTE_TRIMMED: ({ count }) => `Trimmed spaces from the edges of ${count} ${by(count, 'line', 'lines')}.`,

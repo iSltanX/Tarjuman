@@ -66,7 +66,7 @@ test('الأسماء: بالعربية وبلغتها من Intl، والمجهو
   assert.equal(describeLang('und'), null);
 });
 
-test('رمز اللغة من اسم الملف: الصريح قبل .srt وحده، ولا تُقرأ «normal» أو «long» أو «asr» لغةً', () => {
+test('رمز اللغة من اسم الملف: الصريح قبل .srt أو .vtt وحده، ولا تُقرأ «normal» أو «long» أو «asr» لغةً', () => {
   assert.equal(langFromFileName('talk.ja.srt'), 'ja');
   assert.equal(langFromFileName('talk.pt-BR.srt'), 'pt-BR');
   assert.equal(langFromFileName('AAAAAAAAAAA.en.manual.normal.ar.srt'), 'ar');
@@ -75,6 +75,10 @@ test('رمز اللغة من اسم الملف: الصريح قبل .srt وحد�
   assert.equal(langFromFileName('t.xx.srt'), null, 'رمز لا يعرف المتصفح اسمه');
   assert.equal(langFromFileName('talk.srt'), null);
   assert.equal(langFromFileName(null), null);
+  // وWebVTT الذي يصدّره ترجمان يعود بلغته (تحقق 2.3.0، ص-١٤)، ولا امتداد غيرهما.
+  assert.equal(langFromFileName('AAAAAAAAAAA.ar.vtt'), 'ar');
+  assert.equal(langFromFileName('AAAAAAAAAAA.ar.dual-en.VTT'), 'ar');
+  assert.equal(langFromFileName('talk.ja.txt'), null);
 });
 
 test('رمز الاسم بنص الملف (ع-٨): يُقبل إن وافق نص الملف نص كتابة لغته، فلا تصير كلمة من الاسم لغةً بنص آخر', () => {

@@ -3,6 +3,7 @@
 // في notes، وما لا يُحلَّل يرمي TjError برقم السطر. لا يعدّل التوقيت ولا الترقيم أبدًا. (الصارم لمخرجات ترجمان: parser.js)
 // ملفات TXT وMarkdown (R48) بالمحلّل نفسه: تُزال أغلفة محددة واضحة فقط بملاحظة — أسوار ``` و~~~، والتأكيد حول سطر
 // الرقم أو الزمن كله (**12** و`00:00:01,000 --> …`)، والعناوين والفقرات قبل الملف وبعده. وما داخل نص المقطع يبقى حرفيًا.
+// وWebVTT المرقّم كالذي يصدّره ترجمان (تحقق 2.3.0، ص-١٤) بالمحلّل نفسه أيضًا، بقواعد صيغته حين تسبق ترويستُه أول سطر زمن (VTT_*).
 import { TjError, messageFor } from '../errors/index.js';
 import { isBlankText, lfLines } from '../model/cue.js';
 import { LIMITS } from '../model/validate.js';
@@ -42,6 +43,29 @@ const FORMAT_TAG_RE = /<\/?(?:i|b|u|s|em|strong|font)(?:\s[^<>]*)?>/gi;
 const OVERRIDE_RE = /\{\\[^{}]*\}/g;
 const LITERAL_TAG_RE = /<\/?[A-Za-z][^<>]*>/;
 
+// WebVTT (تحقق 2.3.0، ص-١٤، بقرار سلطان: ما يصدّره ترجمان WebVTT يعود إليه بلا فساد). الملف WebVTT إن سبق أولَ سطر زمن سطرُ
+// الترويسة «WEBVTT» (وحده، أو بعده مسافة ونص). وفيه وحده: الساعات في الزمن اختيارية، وإعدادات الموضع بعده تُهمل بملاحظة، وكتل
+// NOTE وSTYLE وREGION تُزال بملاحظة، ووسوم الإشارة تُجرَّد كوسوم التنسيق ثم تُفك الكيانات، و«# » نص لا حدّ (لا ينتهي نص الإشارة
+// إلا بسطر فارغ). والمقطع بلا رقم قبل زمنه يُرفض برسالة تخصه: ترجمان يقرأ المقاطع بأرقامها، وما يصدّره مرقّم.
+const VTT_SIGNATURE_RE = /^WEBVTT(?:[ \t].*)?$/;
+const VTT_TIME_RE = /^(?:(\d+):)?([0-5]\d):([0-5]\d)[,.](\d{3})\s*-->\s*(?:(\d+):)?([0-5]\d):([0-5]\d)[,.](\d{3})(?:[ \t]+(\S.*))?$/;
+const VTT_BLOCK_RE = /^(?:NOTE|STYLE|REGION)(?:[ \t]|$)/;
+// وسوم الإشارة سوى i وb وu (FORMAT_TAG_RE): الصنف والمتكلم واللغة والروبي، والطابع الزمني داخل النص.
+const VTT_TAG_RE = /<\/?(?:c|v|lang|ruby|rt)(?:[.\s][^<>]*)?>|<(?:\d+:)?[0-5]\d:[0-5]\d\.\d{3}>/g;
+const VTT_ENTITY_RE = /&(?:(amp|lt|gt|nbsp|lrm|rlm|quot|apos)|#(\d{1,7})|#[xX]([0-9A-Fa-f]{1,6}));/g;
+const VTT_NAMED = Object.freeze({
+  amp: '&', lt: '<', gt: '>', nbsp: String.fromCodePoint(0xa0), lrm: String.fromCodePoint(0x200e), rlm: String.fromCodePoint(0x200f), quot: '"', apos: "'",
+});
+/**
+ * كيانات WebVTT محارفَ في مرور واحد (فـ«&amp;lt;» نصه «&lt;»): المسمّاة الشائعة، والرقمية في مدى يونيكود بلا الصفر ولا البدائل.
+ * وما سواها يبقى نصًا كما ورد. @param {string} s
+ */
+const decodeVtt = (s) => s.replace(VTT_ENTITY_RE, (m, name, dec, hex) => {
+  if (name) return VTT_NAMED[name];
+  const cp = dec ? Number(dec) : Number.parseInt(hex, 16);
+  return cp > 0 && cp <= 0x10ffff && (cp < 0xd800 || cp > 0xdfff) ? String.fromCodePoint(cp) : m;
+});
+
 /** أرقام لاتينية من الهندية والفارسية، لمطابقة سطور الرأس فقط؛ لا تُطبَّق على نص المقطع أبدًا. */
 const latinDigits = (s) => s.replace(INDIC_DIGITS, (d) => String(d.charCodeAt(0) - (d.charCodeAt(0) >= 0x06f0 ? 0x06f0 : 0x0660)));
 
@@ -68,11 +92,35 @@ const timeForm = (form) => (/^[-\u2212]?\d+:\d/.test(form)
  * (hiddenOnly)، كما تقرؤه قارئات SRT الأخرى من نص المقطع (تحقق 2.3.0، بقية ص-٢٣).
  */
 const EMPTY_LINE_RE = /^[ \t]*$/;
-/** حدّ لنص المقطع أينما وقع: سطر فارغ أو سياج أو عنوان (U38). @param {string} line */
-const textBoundary = (line) => {
+/** حدّ لنص المقطع أينما وقع: سطر فارغ أو سياج أو عنوان (U38)، وفي WebVTT لا عنوان (ص-١٤). @param {string} line @param {boolean} [vtt] */
+const textBoundary = (line, vtt = false) => {
   const t = line.trim();
-  return EMPTY_LINE_RE.test(line) || FENCE_RE.test(t) || HEADING_RE.test(t);
+  return EMPTY_LINE_RE.test(line) || FENCE_RE.test(t) || (!vtt && HEADING_RE.test(t));
 };
+
+/**
+ * كتل WebVTT لا تُعرض (NOTE وSTYLE وREGION، ص-١٤): من سطر أولها بعد سطر فارغ (أو أول القطعة) حتى السطر الفارغ التالي. تُفرَّغ
+ * أسطرها فلا تُعدّ شرحًا ولا نصًا ضائعًا، ويُعاد عددها لملاحظتها.
+ * @param {string[]} slice @returns {{ lines: string[], count: number }}
+ */
+function dropVttBlocks(slice) {
+  let count = 0;
+  let inBlock = false;
+  const lines = slice.map((l, i) => {
+    if (EMPTY_LINE_RE.test(l)) {
+      inBlock = false;
+      return l;
+    }
+    if (inBlock) return '';
+    if ((i === 0 || EMPTY_LINE_RE.test(slice[i - 1])) && VTT_BLOCK_RE.test(headerForm(l))) {
+      inBlock = true;
+      count++;
+      return '';
+    }
+    return l;
+  });
+  return { lines, count };
+}
 
 /**
  * سطر فيه محرف خفي باقٍ بعد التنقية وحده (RLM أو LRM أو ZWSP أو ZWNJ، تكتبه نماذج فاصلًا؛ تحقق Gemini، ع-٧). يُسقط من نص المقطع
@@ -163,6 +211,17 @@ export function parseSrtLenient(input) {
   const text = input.charCodeAt(0) === 0xfeff ? input.slice(1) : input;
   const lines = text.replace(/\r\n?|\u2028|\u2029/g, '\n').split('\n');
 
+  // WebVTT (ص-١٤): سطر الترويسة قبل أول سطر يشبه الزمن، ولو سبقه شرح أو سياج.
+  let vttAt = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (VTT_SIGNATURE_RE.test(headerForm(lines[i]))) {
+      vttAt = i;
+      break;
+    }
+    if (TIME_LIKE_RE.test(timeForm(bare(lines[i])))) break;
+  }
+  const vtt = vttAt !== -1;
+
   // رأس المقطع: سطر رقم ثم سطر زمن. سطر زمن كامل بلا رقم قبله خطأ، وكذا سطر يشبه الزمن وهو غير صالح، إلا داخل نص مقطع
   // (بعد سطر زمن صالح وقبل أول حدّ) وليس قبله رقم: «1 --> 2» و«10:30 --> 11:00» نص منه، فما يصدّره ترجمان يقرؤه ترجمان
   // (تدقيق 7a66f91، U35). والرقم ثم ما يشبه الزمن رأس معيب ولو داخل نص.
@@ -175,20 +234,22 @@ export function parseSrtLenient(input) {
     const raw = bare(lines[i]);
     const form = timeForm(raw);
     if (!TIME_LIKE_RE.test(form)) {
-      if (textBoundary(lines[i])) inText = false;
+      if (textBoundary(lines[i], vtt)) inText = false;
       continue;
     }
-    const m = TIME_RE.exec(form);
+    // في WebVTT الساعة 0 إن غابت، والإعدادات بعد الزمن تُهمل (ص-١٤).
+    const v = vtt ? VTT_TIME_RE.exec(form) : null;
+    const m = vtt ? v && [v[0], v[1] ?? '0', v[2], v[3], v[4], v[5] ?? '0', v[6], v[7], v[8]] : TIME_RE.exec(form);
     const numbered = i > 0 && NUMBER_RE.test(bare(lines[i - 1]));
     if (!m) {
       if (inText && !numbered) continue;
-      throw new TjError('IM_BAD_TIME', { params: { line: i + 1 } });
+      throw new TjError(vtt ? 'IM_VTT_BAD_TIME' : 'IM_BAD_TIME', { params: { line: i + 1 } });
     }
-    if (!numbered) throw new TjError('IM_MISSING_NUMBER', { params: { line: i + 1 } });
+    if (!numbered) throw new TjError(vtt ? 'IM_VTT_MISSING_NUMBER' : 'IM_MISSING_NUMBER', { params: { line: i + 1 } });
     if (HAS_INDIC.test(lines[i]) || HAS_INDIC.test(lines[i - 1])) indicDigits = true;
     if (form !== raw) timeMarks++;
     emphasized += Number(wrapped(lines[i])) + Number(wrapped(lines[i - 1]));
-    heads.push({ num: i - 1, time: i, m });
+    heads.push({ num: i - 1, time: i, m, settings: v?.[9] ?? null });
     inText = true;
   }
   if (!heads.length) {
@@ -215,7 +276,17 @@ export function parseSrtLenient(input) {
       else bucket.push(sanitizeText(t).text);
     });
   };
-  sortOut(lines.slice(0, heads[0].num), chatterBefore, 0);
+  let before = lines.slice(0, heads[0].num);
+  let vttBlocks = 0;
+  if (vtt) {
+    // الترويسة وأسطرها حتى أول سطر فارغ صيغةٌ لا شرح (ص-١٤).
+    let end = vttAt + 1;
+    while (end < before.length && !EMPTY_LINE_RE.test(before[end])) end++;
+    const dropped = dropVttBlocks(before.map((l, i) => (i >= vttAt && i < end ? '' : l)));
+    before = dropped.lines;
+    vttBlocks += dropped.count;
+  }
+  sortOut(before, chatterBefore, 0);
 
   const cues = [];
   let tagged = 0;
@@ -223,6 +294,7 @@ export function parseSrtLenient(input) {
   let hidden = 0;
   let trimmed = 0;
   let literalHtml = 0;
+  let positioned = 0;
   const reversed = [];
   let irregular = null;
   heads.forEach((h, k) => {
@@ -230,9 +302,14 @@ export function parseSrtLenient(input) {
     const body = lines.slice(h.time + 1, last ? lines.length : heads[k + 1].num);
     // النص حتى أول حدّ: سطر فارغ أو سياج أو عنوان، في أي مقطع (كتلتان مسيّجتان متلاصقتان، أو عنوان ملاصق؛ U38). ما بعده:
     // الأسوار والأسطر الفارغة تُتجاوز، وغيرها نص ضائع برقم سطره، أو ذيل الشرح في آخر مقطع.
-    const stop = body.findIndex(textBoundary);
+    const stop = body.findIndex((l) => textBoundary(l, vtt));
     const raw = stop === -1 ? body : body.slice(0, stop);
-    const rest = stop === -1 ? [] : body.slice(stop);
+    let rest = stop === -1 ? [] : body.slice(stop);
+    if (vtt) {
+      const dropped = dropVttBlocks(rest);
+      rest = dropped.lines;
+      vttBlocks += dropped.count;
+    }
     // السطر الخفي وحده يُسقط، وقبل آخر سطر مرئي بملاحظة (ن-٣).
     const lastVisible = raw.findLastIndex((l) => !isBlankText(l.trim()));
     const hiddenInside = raw.slice(0, Math.max(lastVisible, 0)).some(hiddenOnly);
@@ -257,16 +334,31 @@ export function parseSrtLenient(input) {
     trimmed += cleanTextLines.filter((l) => l !== l.trim()).length;
     let t = cleanTextLines.map((l) => l.trim()).join('\n');
     if (clean.removed) t = cleanLines(t);
-    const noTags = t.replace(FORMAT_TAG_RE, '').replace(OVERRIDE_RE, '');
+    const noTags = (vtt ? t.replace(VTT_TAG_RE, '') : t).replace(FORMAT_TAG_RE, '').replace(OVERRIDE_RE, '');
     if (noTags !== t) {
       tagged++;
       t = cleanLines(noTags);
     }
     const noControls = t.replace(CONTROL_CHARS, '');
+    let ctl = hiddenInside;
     if (noControls !== t) {
-      controlled++;
+      ctl = true;
       t = cleanLines(noControls);
-    } else if (hiddenInside) controlled++;
+    }
+    if (vtt) {
+      // الكيانات بعد تجريد الوسوم، فـ«&lt;i&gt;» نص «<i>» كما يعرضه ترجمان لا وسم يُجرَّد؛ وما يأتي من كيان رقمي يمر بالتنقية كما لو
+      // جاء حرفيًا (ص-١٤).
+      const decoded = decodeVtt(t);
+      if (decoded !== t) {
+        const again = sanitizeText(decoded);
+        hidden += again.removed;
+        const plain = again.text.replace(CONTROL_CHARS, '');
+        if (plain !== again.text) ctl = true;
+        t = cleanLines(plain);
+      }
+      if (h.settings) positioned++;
+    }
+    if (ctl) controlled++;
     if (LITERAL_TAG_RE.test(t)) literalHtml++;
     if (t.length > LIMITS.maxTextChars) throw new TjError('IM_CUE_TOO_LONG', { params: { line: h.num + 1, max: LIMITS.maxTextChars } });
 
@@ -303,6 +395,8 @@ export function parseSrtLenient(input) {
   if (controlled) notes.push(messageFor('IM_NOTE_CONTROL', { count: controlled }));
   if (hidden) notes.push(messageFor('IM_NOTE_HIDDEN_CHARS', { count: hidden }));
   if (trimmed) notes.push(messageFor('IM_NOTE_TRIMMED', { count: trimmed }));
+  if (positioned) notes.push(messageFor('IM_NOTE_VTT_SETTINGS', { count: positioned }));
+  if (vttBlocks) notes.push(messageFor('IM_NOTE_VTT_BLOCKS', { count: vttBlocks }));
 
   const warnings = [];
   if (irregular) warnings.push({ code: 'IM_NUMBERING_IRREGULAR', params: irregular });

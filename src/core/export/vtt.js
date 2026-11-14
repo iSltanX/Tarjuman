@@ -2,7 +2,8 @@
 // «HH:MM:SS.mmm --> HH:MM:SS.mmm» ثم نصه، وبين المقاطع سطر فارغ، ونهاية أسطر LF وUTF-8 بلا BOM. والنص مهرّب: & ثم < و>، فلا يُقرأ
 // منه وسم ولا كيان (وسم التنسيق مثل <i> يظهر نصًا كما يعرضه ترجمان). و«-->» في النص يُرفض برقم مقطعه كما نصّت الخطة. ولا تُحقن
 // محارف عزل الاتجاه: التنقية تزيلها عمدًا (src/core/text/sanitize.js). والتحقق بقراءة مستقلة تفكّ التهريب (verifyVtt) على
-// مثال verifyRoundTrip في write.js. واستيراد WebVTT خارج النطاق: منتقيات الملفات لا تتغير.
+// مثال verifyRoundTrip في write.js. ومنتقيات الملفات لا تتغير، والاستيراد يقرأ ما يكتبه هنا بكياناته (src/core/srt/lenient.js،
+// تحقق 2.3.0، ص-١٤).
 import { TjError } from '../errors/index.js';
 import { joinList } from '../../i18n/index.js';
 import { isBlankText } from '../model/cue.js';

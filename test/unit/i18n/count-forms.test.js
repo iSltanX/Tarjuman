@@ -202,6 +202,9 @@ const EN_PLURALS = [
   ['IM_NOTE_CONTROL', (n) => `Removed invisible control characters from ${n} ${n === 1 ? 'segment' : 'segments'}.`],
   ['IM_NOTE_HIDDEN_CHARS', (n) => `Removed ${n} hidden ${n === 1 ? 'character' : 'characters'} from the text:`],
   ['IM_NOTE_TRIMMED', (n) => `Trimmed spaces from the edges of ${n} ${n === 1 ? 'line' : 'lines'}.`],
+  // WebVTT (تحقق 2.3.0، ص-١٤).
+  ['IM_NOTE_VTT_SETTINGS', (n) => `Ignored WebVTT cue settings (alignment, position, and line) on ${n} ${n === 1 ? 'segment' : 'segments'};`],
+  ['IM_NOTE_VTT_BLOCKS', (n) => `Removed ${n} WebVTT ${n === 1 ? 'block' : 'blocks'} that aren’t shown`],
   ['CMP_ALIGN_WEAK', (n) => `Weak timing match in ${n} ${n === 1 ? 'segment' : 'segments'}, including`],
   ['CMP_ALIGN_NUMBER_ONLY', (n) => (n === 1 ? '1 segment is paired with its counterpart by number only' : `${n} segments are paired with their counterparts by number only`)],
   ['CMP_ALIGN_DRIFTING', (n) => `neighboring segments (${n} ${n === 1 ? 'segment' : 'segments'}), with`],
