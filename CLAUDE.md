@@ -18,6 +18,7 @@
 | [`docs/product-spec.md`](docs/product-spec.md) | النطاق والقرارات والحدود، وتعليمات الترجمة المعتمدة (الملحقان أ وب، ويقرؤهما اختباران). |
 | [`docs/contracts/`](docs/contracts/README.md) | العقود بين الطبقات. لا تغيير فيها إلا بقرار سلطان، ويُذكر أثره. |
 | [`docs/maintenance.md`](docs/maintenance.md) | الفحص الدوري، وماذا تراقب وأين تُصلح، والحزم وبصماتها. |
+| [`docs/release-day.md`](docs/release-day.md) | يوم النشر بترتيبه: تثبيت تاريخ الخصوصية، ثم البوابة `command npm run release:gate` (ليست في `check:all`)، ثم الدفع وCI، ثم الدمج، ثم الموقع، ثم الرفع. |
 | [`docs/identity.md`](docs/identity.md) | الهوية البصرية المعتمدة «كتابٌ مفتوح». |
 | [`docs/site/`](docs/site/README.md) | نصوص صفحات الموقع، ومنها يُولَّد `PRIVACY.md`. يقرؤها مستودع الموقع بمسارها، فلا تُنقل، ولا يتغير ما يُنشر منها إلا بموافقة سلطان. |
 | [`store/`](store/README.md) | مواد المتاجر ونصوصها وإجابات نماذج التقديم. |
