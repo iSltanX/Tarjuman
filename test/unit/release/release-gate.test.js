@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { cp, mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -139,16 +139,17 @@ test('الأمر نفسه على مستودع مؤقت: يقرأ ما يتتبع
     await write(SOURCE_EN, withEffectiveDate(undated(read(SOURCE_EN)), DAY));
     await write(TARGET, generate({ source: ar, version }).text);
     await write('README.md', `**${version}** في المستودع ولم يُرفع بعد.\n`);
-    // ملف غير متتبع فيه العنصر النائب: لا يُفحص.
+    // ملف غير متتبع فيه العنصر النائب: لا يُفحص. ورابط رمزي متتبع إلى مجلد: لا يُتبع.
     await write('notes.md', 'صدر في ⟨تاريخ النشر⟩\n');
+    await symlink('docs', path.join(dir, 'linked'));
     const git = (...args) => execFileSync('git', ['-c', 'core.hooksPath=/dev/null', ...args], { cwd: dir, encoding: 'utf8' });
     git('init', '-q');
-    git('add', 'package.json', 'CHANGELOG.md', SOURCE, SOURCE_EN, TARGET, 'README.md', 'scripts');
+    git('add', 'package.json', 'CHANGELOG.md', SOURCE, SOURCE_EN, TARGET, 'README.md', 'scripts', 'linked');
     const run = () => spawnSync(process.execPath, [path.join(dir, 'scripts/release/gate.mjs')], { cwd: dir, encoding: 'utf8' });
     const failing = run();
     assert.equal(failing.status, 1, failing.stdout + failing.stderr);
     assert.match(failing.stdout, /✗ README\.md:1: تنبيه «لم يُنشر» للإصدار 9\.9\.9/);
-    assert.doesNotMatch(failing.stdout, /notes\.md/);
+    assert.doesNotMatch(failing.stdout, /notes\.md|linked/);
     assert.match(failing.stdout, /docs\/release-day\.md/);
     await write('README.md', `الإصدار الحالي **${version}** (${DAY}).\n`);
     const passing = run();

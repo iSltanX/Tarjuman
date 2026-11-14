@@ -15,7 +15,7 @@
 // الحزم (docs/release-day.md)، وتشغّلها CI على main وطلبات الدمج إليه.
 //   node scripts/release/gate.mjs        (npm run release:gate)
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { lstatSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SOURCE, SOURCE_EN, TARGET, effectiveDateOf, generate, validDate } from '../site/privacy.mjs';
@@ -98,11 +98,13 @@ export function trackedFiles(root) {
 
 /**
  * @param {{ root?: string, files?: string[], read?: (rel: string) => string }} [o]
- *   read يعيد النص، أو null لملف ثنائي (فيه بايت صفري) فلا يُفحص.
+ *   read يعيد النص، أو null لملف ثنائي (فيه بايت صفري) أو رابط رمزي فلا يُفحص.
  * @returns {{ version: string, scanned: number, problems: string[] }}
  */
 export function runGate({ root = ROOT, files, read } = {}) {
   const readText = read ?? ((rel) => {
+    // الرابط الرمزي المتتبع يحمل مسارًا لا نصًّا (ويرفضه check-secrets أصلًا)، فلا يُتبع إلى هدفه.
+    if (lstatSync(path.join(root, rel)).isSymbolicLink()) return null;
     const buf = readFileSync(path.join(root, rel));
     return buf.includes(0) ? null : buf.toString('utf8');
   });
