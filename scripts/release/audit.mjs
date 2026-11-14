@@ -2,6 +2,7 @@
 // تدقيق حزمة الإضافة المبنية قبل تسليمها للتثبيت الشخصي (P9-AC4 وAC5، وللإصدار الثاني P15-AC4 وAC6): يقرأ الملفات
 // المشحونة نفسها لا المصدر. الأذونات ضمن المعتمد وحده، ولا اتصال خارجي (لا طلب شبكة إلا قراءة خط من الحزمة، ولا رابط إلا
 // المسموح)، ولا شيفرة بعيدة ولا تقييم نصي ولا HTML نصي، ولا خطاف تطوير ولا معرض مكوّنات، وكل خط ترجمة مضمّن بملفيه ورخصته.
+// والأوامر الخمسة وحدها بلا مفاتيح مقترحة ووصفها من رسائل الحزمة باللغتين (ح-55؛ تحقق 2.3.0، ص-١٨).
 // والإصدار الثاني (product-spec §١٠ «الأذونات والعامل الخلفي»): إذن downloads وحده وعامل خلفي للحفظ فقط، وواجهة التنزيلات
 // محصورة في download وsearch (عقد interfaces §١٣: صفحات الإضافة مباشرة عبر core/save، والعامل لسكربت المحتوى)، ولا تصل
 // إليها شيفرة عالم الصفحة. وكل ملف يشير إليه البيان أو صفحة أو نمط موجود غير فارغ، وخطوط الواجهة كخطوط الترجمة برخصها.
@@ -13,6 +14,7 @@ import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CODE_RULES } from '../code-rules.mjs';
+import { MANIFEST_LOCALES, manifestMessages, manifestText } from '../targets.mjs';
 import { SUBTITLE_FONT_LIST } from '../../src/ui/subtitle-fonts.js';
 import { UI_FONT_LIST } from '../../src/ui/ui-fonts.js';
 
@@ -22,6 +24,11 @@ const NOTICES_FILE = 'THIRD_PARTY_NOTICES.txt';
 
 /** الأذونات المعتمدة (product-spec §١٠، والتحقق في P2، وdownloads للإصدار الثاني): لا غيرها ولا host_permissions ولا اختيارية. */
 export const APPROVED_PERMISSIONS = ['storage', 'unlimitedStorage', 'downloads'];
+/**
+ * اختصارات لوحة المفاتيح (الفكرة ١٠، ح-55): الأوامر الخمسة وحدها، حرفية هنا كما في الفحص الثابت لا مأخوذة من الشيفرة؛ ولكلٍّ وصف من
+ * رسائل البيان باللغتين وحده، **ولا suggested_key** (غير مربوطة حتى يربطها المستخدم) ولا global ولا أمر خاص (‎_execute_action).
+ */
+const COMMAND_NAMES = ['display-mode', 'offset-earlier', 'offset-later', 'mark-review', 'replay-line'];
 /** العامل الخلفي الوحيد: خدمة الحفظ (P10). */
 export const WORKER = 'background/worker.js';
 /** الخلفية لكل هدف: عامل خدمة في عائلة Chromium، وسكربت خلفية في Firefox (لا يدعم service_worker). الملف واحد. */
@@ -119,6 +126,36 @@ export async function auditPackage(dir, { target = 'chromium' } = {}) {
   check('save-worker-only-and-no-externally-connectable', JSON.stringify(bg) === JSON.stringify(BACKGROUND[target])
     && !manifest.externally_connectable && !manifest.content_security_policy,
     { target, background: bg, externallyConnectable: !!manifest.externally_connectable, csp: !!manifest.content_security_policy });
+  // الأوامر في البيان المشحون (تحقق 2.3.0، ص-١٨): كان الفحص الثابت وحده يُسقط suggested_key، والتدقيق لا يقرأ commands أصلًا. وبلا
+  // commands لا مخالفة، فالأوامر اختيارية في البيان.
+  const commandProblems = [];
+  if ('commands' in manifest) {
+    const cmds = manifest.commands;
+    let messages = null;
+    try {
+      messages = await manifestMessages(dir);
+    } catch {
+      commandProblems.push('رسائل البيان (_locales) لا تُقرأ');
+    }
+    if (!cmds || typeof cmds !== 'object' || Array.isArray(cmds)) commandProblems.push('commands ليس كائنًا بأسماء الأوامر');
+    else {
+      for (const name of Object.keys(cmds)) if (!COMMAND_NAMES.includes(name)) commandProblems.push(`أمر غير معروف ${name}`);
+      for (const name of COMMAND_NAMES) if (!(name in cmds)) commandProblems.push(`ينقص الأمر ${name}`);
+      for (const name of Object.keys(cmds).filter((n) => COMMAND_NAMES.includes(n))) {
+        const c = cmds[name];
+        if (!c || typeof c !== 'object' || Array.isArray(c)) {
+          commandProblems.push(`${name} ليس كائنًا`);
+          continue;
+        }
+        if ('suggested_key' in c) commandProblems.push(`${name}.suggested_key غير مسموح`);
+        for (const k of Object.keys(c)) if (k !== 'description' && k !== 'suggested_key') commandProblems.push(`${name}: حقل غير مسموح ${k}`);
+        const described = typeof c.description === 'string' && /^__MSG_\w+__$/.test(c.description) && messages
+          && MANIFEST_LOCALES.every((l) => (manifestText(c.description, messages[l] ?? {}) ?? '').trim().length > 0);
+        if (!described) commandProblems.push(`${name}.description ليس رسالة توطين لها نص في اللغتين`);
+      }
+    }
+  }
+  check('commands-known-without-keys', commandProblems.length === 0, { problems: commandProblems });
   check('manifest-v3-and-no-dev-version-name', manifest.manifest_version === 3 && !manifest.version_name, { version: manifest.version, versionName: manifest.version_name ?? null });
   // إعدادات المتصفح: لا شيء في عائلة Chromium، وفي Firefox المعتمد حرفيًا (المعرّف وأدنى إصدار ولا جمع بيانات ولا أندرويد).
   const bss = manifest.browser_specific_settings ?? null;

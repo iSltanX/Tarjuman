@@ -1,6 +1,7 @@
 // الفكرة ١٠، المسار (ب) (ح-55): اختصارات لوحة مفاتيح اختيارية عبر مفتاح commands في البيان، **بلا suggested_key**، فهي غير مربوطة
 // حتى يربطها المستخدم في صفحة اختصارات متصفحه. الفحص الثابت كان يمنع المفتاح كله، وصار يقبله بأسماء الأوامر الخمسة المعروفة وحدها،
 // وبوصف من رسائل البيان باللغتين، ويرفض أي مفتاح مقترح أو اسم آخر أو حقل آخر، في بياني الهدفين.
+// وتدقيق الحزمة (تحقق 2.3.0، ص-١٨) يفحص الأوامر في البيان المشحون بالقواعد نفسها، وكان لا يقرأ commands أصلًا.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -9,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { manifestMessages, manifestText, targetManifest } from '../../../scripts/targets.mjs';
+import { auditPackage } from '../../../scripts/release/audit.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const base = JSON.parse(await readFile(path.join(ROOT, 'src/manifest.json'), 'utf8'));
@@ -80,4 +82,61 @@ test('الفحص الثابت: اسم أمر غير معروف (ومنه _execut
 test('الفحص الثابت: بلا مفتاح commands أصلًا لا مخالفة (الأوامر اختيارية في البيان)', async () => {
   const r = await staticWith((m) => { delete m.commands; });
   assert.equal(r.status, 0, r.stderr);
+});
+
+// ---- تدقيق الحزمة المبنية (ص-١٨): commands-known-without-keys ----
+const tmp = await mkdtemp(path.join(os.tmpdir(), 'tj-r5-commands-pkg-'));
+test.after(() => rm(tmp, { recursive: true, force: true }));
+const built = path.join(tmp, 'pkg');
+assert.equal(node([path.join(ROOT, 'scripts/build.mjs'), '--out', built]).status, 0);
+
+/** نسخة من الحزمة يُعدَّل بيانها (وما يلزم من رسائلها)، ونتيجة فحص الأوامر في التدقيق. */
+async function auditWith(name, mutate, { target = 'chromium' } = {}) {
+  const dir = path.join(tmp, name);
+  await cp(built, dir, { recursive: true });
+  const p = path.join(dir, 'manifest.json');
+  const m = JSON.parse(await readFile(p, 'utf8'));
+  await mutate(m, dir);
+  await writeFile(p, JSON.stringify(m));
+  return (await auditPackage(dir, { target })).checks.find((c) => c.id === 'commands-known-without-keys');
+}
+
+test('تدقيق الحزمة: الأوامر الخمسة في البيان المشحون ناجحة، وبلا commands لا مخالفة', async () => {
+  const ok = (await auditPackage(built)).checks.find((c) => c.id === 'commands-known-without-keys');
+  assert.deepEqual([ok.ok, ok.detail.problems], [true, []]);
+  assert.equal((await auditWith('none', (m) => { delete m.commands; })).ok, true);
+});
+
+test('تدقيق الحزمة: suggested_key ولو فارغًا، وأمر سادس أو خاص، وحقل global، ووصف حرفي أو برسالة غائبة، كلها مرفوضة', async () => {
+  const cases = {
+    suggested: [(m) => { m.commands['mark-review'].suggested_key = { default: 'Alt+Shift+M' }; }, /mark-review\.suggested_key غير مسموح/],
+    suggestedEmpty: [(m) => { m.commands['display-mode'].suggested_key = {}; }, /display-mode\.suggested_key غير مسموح/],
+    sixth: [(m) => { m.commands['toggle-panel'] = { description: '__MSG_cmdMarkReview__' }; }, /أمر غير معروف toggle-panel/],
+    action: [(m) => { m.commands._execute_action = {}; }, /أمر غير معروف _execute_action/],
+    missing: [(m) => { delete m.commands['replay-line']; }, /ينقص الأمر replay-line/],
+    global: [(m) => { m.commands['replay-line'].global = true; }, /replay-line: حقل غير مسموح global/],
+    literal: [(m) => { m.commands['offset-later'].description = 'Later'; }, /offset-later\.description ليس رسالة توطين/],
+    noMessage: [(m) => { m.commands['offset-later'].description = '__MSG_noSuchMessage__'; }, /offset-later\.description ليس رسالة توطين/],
+    notObject: [(m) => { m.commands = ['display-mode']; }, /commands ليس كائنًا/],
+    emptyAr: [async (m, dir) => {
+      const p = path.join(dir, '_locales', 'ar', 'messages.json');
+      const msgs = JSON.parse(await readFile(p, 'utf8'));
+      const key = /^__MSG_(\w+)__$/.exec(m.commands['display-mode'].description)[1];
+      msgs[key].message = ' ';
+      await writeFile(p, JSON.stringify(msgs));
+    }, /display-mode\.description ليس رسالة توطين/],
+  };
+  for (const [name, [mutate, want]] of Object.entries(cases)) {
+    const c = await auditWith(name, mutate);
+    assert.equal(c.ok, false, name);
+    assert.ok(c.detail.problems.some((p) => want.test(p)), `${name}: ${JSON.stringify(c.detail.problems)}`);
+  }
+  // وفي هدف Firefox بالقواعد نفسها.
+  const ff = path.join(tmp, 'ff');
+  assert.equal(node([path.join(ROOT, 'scripts/build.mjs'), '--target', 'firefox', '--out', ff]).status, 0);
+  const p = path.join(ff, 'manifest.json');
+  const m = JSON.parse(await readFile(p, 'utf8'));
+  m.commands['mark-review'].suggested_key = { default: 'Alt+Shift+M' };
+  await writeFile(p, JSON.stringify(m));
+  assert.equal((await auditPackage(ff, { target: 'firefox' })).checks.find((c) => c.id === 'commands-known-without-keys').ok, false);
 });

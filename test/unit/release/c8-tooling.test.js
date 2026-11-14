@@ -155,10 +155,10 @@ const VARIANTS = {
 const built = path.join(tmp, 'pkg');
 assert.equal(node([BUILD, '--out', built]).status, 0);
 
-test('U61: الحزمة السليمة ناجحة 16/16 (و1: no-report-channel وpermissions-request-settings-only)، ولا قاعدة مشتركة تطابق شيئًا فيها', async () => {
+test('U61: الحزمة السليمة ناجحة 17/17 (و1: no-report-channel وpermissions-request-settings-only، وص-١٨: commands-known-without-keys)، ولا قاعدة مشتركة تطابق شيئًا فيها', async () => {
   const r = await auditPackage(built);
   assert.deepEqual(r.checks.filter((c) => !c.ok).map((c) => c.id), []);
-  assert.equal(r.checks.length, 16);
+  assert.equal(r.checks.length, 17);
 });
 
 test('U61: تدقيق الحزمة يكشف كل صيغة محقونة في الحزمة المبنية', async () => {
