@@ -86,10 +86,11 @@ export const markedAmbiguousText = (n) => T('markedAmbiguous', { count: formatCo
 /** @param {number} ms «الإزاحة −3.2 ث» */
 export const offsetToast = (ms) => T('offsetToast', { offset: offsetInline(ms) });
 /**
- * «وضع العرض: الترجمة فوق الإنجليزية» (الفكرة ١٠): رسالة أمر تبديل الوضع، بتسميات قائمة «الترجمة» نفسها.
+ * «وضع العرض: الترجمة فوق الإنجليزية» (الفكرة ١٠): رسالة أمر تبديل الوضع، بتسميات قائمة «الترجمة» نفسها، إلا الإخفاء فبمفتاحه
+ * (modeOffToast): «إخفاء الترجمة» بالعربية، و«Translation hidden» بالإنجليزية لا أمرُ القائمة «Hide translation» (تحقق 2.3.0، §١٢.٢ (٩)).
  * @param {'ar' | 'dual' | 'off'} mode @param {string | null} [lang] لغة الأصل لوضع «فوق الأصل»
  */
-export const modeToast = (mode, lang = null) => T('modeToast', { mode: mode === 'dual' ? dualLabels(lang).aria : mode === 'off' ? LABELS.modeOff : LABELS.modeAr });
+export const modeToast = (mode, lang = null) => T('modeToast', { mode: mode === 'dual' ? dualLabels(lang).aria : mode === 'off' ? LABELS.modeOffToast : LABELS.modeAr });
 /**
  * «نُزّل VIDEOID.en.manual.normal.srt» (رمز النجاح SVG بجانبه في القائمة): الاسم معزول LTR، فشرطة أول معرّف مثل «-xyz…» لا
  * تنتقل إلى آخره (تدقيق 7a66f91، U49)؛ وسطر النتيجة يرسمه عنصرًا ذريًا (menus.js richText) فلا تنقلب أجزاؤه إن انكسر سطره.

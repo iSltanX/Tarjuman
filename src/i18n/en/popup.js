@@ -36,7 +36,7 @@ export default Object.freeze({
     awaiting: 'Awaiting translation',
   },
   editor: {
-    complete: 'Complete missing ({n})', completeTitle: 'Opens the editor on Completion with the missing segments selected',
+    complete: 'Complete missing ({n})', completeTitle: 'Opens the Editor on Completion with the missing segments selected',
     open: 'Edit translation', needVideo: 'Open a YouTube video first', reading: 'Reading the video’s subtitles…', none: 'No translation for this video yet',
   },
   entry: {

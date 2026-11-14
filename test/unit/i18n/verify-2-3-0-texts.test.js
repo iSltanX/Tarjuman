@@ -1,6 +1,7 @@
 // تحقق 2.3.0 الأخير (ص-١٩ و§١٢.٢ في تقريره): نصوص فاتت الجولات. اسم واحد للأمر الخامس «إعادة الجملة» مصدرًا كالأوامر الأربعة
 // الأخرى، و«ب» ملتصقة باسم اللغة العربي بلا تطويل («بلغة هاواي» لا «بـلغة هاواي»)، ووصف قسم «العرض» يذكر صف الاختصارات،
-// والمعدود في رسالة تعيين اللغة الإنجليزية ترجمات من أولها.
+// والمعدود في رسالة تعيين اللغة الإنجليزية ترجمات من أولها. وبنود «رأي» في §١٢.٢ (٩–١٤) كما حُسمت: حالُ الإخفاء في رسالة الأمر
+// بالإنجليزية، وبند التصدير في سجل المتجر، وسطر حد المصطلحات، وحذف المسودة في «التغييرات»، و«the Editor».
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -11,6 +12,7 @@ import { arabicName, knownLanguages, withBa } from '../../../src/core/lang/index
 import { languageValues } from '../../../src/core/export/instructions.js';
 import { messageFor } from '../../../src/core/errors/index.js';
 import { formatCount } from '../../../src/ui/format.js';
+import { modeToast } from '../../../src/player/controls/text.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
@@ -79,4 +81,29 @@ test('ص-١٩ (٦): رسالة تعيين اللغة الإنجليزية تعد
     assert.ok(msg(n).startsWith('The language was set for translations whose script matched; '), msg(n));
     assert.doesNotMatch(msg(n), /videos?\b/, msg(n));
   }
+});
+
+test('§١٢.٢ (٩): رسالة أمر الوضع بالإنجليزية تقول الحال «Translation hidden» لا الأمر، والعربية باسم خيار القائمة', (ctx) => {
+  reset(ctx);
+  assert.equal(modeToast('off'), 'وضع العرض: إخفاء الترجمة');
+  setLocale('en');
+  assert.equal(modeToast('off'), 'Display mode: Translation hidden');
+  assert.equal(modeToast('ar'), 'Display mode: Translation only');
+  assert.equal(t('player.controls.modeOff'), 'Hide translation', 'خيار القائمة نفسه باقٍ');
+});
+
+test('§١٢.٢ (١٢): سطر «يُرسل أول 100» العام يرجع إلى كل زوج منها، ويذكر قائمة «أي لغة» في ترتيب الإرفاق', (ctx) => {
+  reset(ctx);
+  assert.equal(t('settings.glossary.sentCapGeneral', { max: '100 مصطلح' }),
+    'مع بعض قوائم الأزواج تزيد المصطلحات على 100 مصطلح، فيُرسل أول 100 مصطلح مع تعليمات كل زوج منها: قائمته أولًا، ثم قائمة «أي لغة» إلى اللغة نفسها إن وُجدت، ثم القاموس العام.');
+  assert.ok(t('settings.glossary.sentCapGeneral', { max: '' }).includes(`«${t('settings.glossary.anySource')}»`));
+  setLocale('en');
+  assert.equal(t('settings.glossary.sentCapGeneral', { max: '100 terms' }),
+    'With some pair lists there are more than 100 terms, so only the first 100 terms are sent with each such pair’s instructions: its list first, then the “Any language” list into the same language if there is one, then the general glossary.');
+  assert.ok(t('settings.glossary.sentCapGeneral', { max: '' }).includes(`“${t('settings.glossary.anySource')}”`));
+});
+
+test('§١٢.٢ (١٤): «the Editor» اسم صفحة بحرف كبير كـ«Library» و«Settings» في كل نص إنجليزي', () => {
+  const english = [...filesIn('src/i18n/en', '.js'), ...filesIn('docs/site', '.en.md'), 'store/listing.en.md', 'store/reviewers.en.md'];
+  for (const rel of english) assert.doesNotMatch(read(rel), /\b[Tt]he editor\b/, rel);
 });

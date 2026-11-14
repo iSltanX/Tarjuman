@@ -68,11 +68,11 @@ export default Object.freeze({
     driftLabel: 'Accepted timing difference', driftUnit: 'ms',
     driftHint: 'A segment’s timing counts as different from the original if its start or end differs by more than this. Default {n} ms.',
     readingLabel: 'Reading speed limit', readingUnit: 'chars/s',
-    readingHint: 'From 5 to 40. Leave empty for the default {cps}. The editor flags segments faster than this; it doesn’t block saving.',
+    readingHint: 'From 5 to 40. Leave empty for the default {cps}. The Editor flags segments faster than this; it doesn’t block saving.',
     readingDefault: 'Default {cps}',
   },
   glossary: {
-    attachRow: 'Attach', attachNote: 'Attached to every translation instruction you copy, including continuation instructions in the editor.',
+    attachRow: 'Attach', attachNote: 'Attached to every translation instruction you copy, including continuation instructions in the Editor.',
     listRow: 'Glossary', counter: '{n} of {max}',
     attachSwitch: 'Attach the glossary to translation instructions', caption: 'Glossary terms',
     colSource: 'Term', colTarget: 'Preferred translation', colNote: 'Note', delete: 'Delete',
@@ -87,7 +87,7 @@ export default Object.freeze({
       ? 'This empty list is deleted from this browser. The general glossary isn’t affected.'
       : `This list and its ${count} are deleted from this browser. This can’t be undone. The general glossary isn’t affected.`),
     sentCap: 'Only the first {max} are sent with this pair’s instructions ({count} in all): its list first, then the general glossary.',
-    sentCapGeneral: 'With some pair lists there are more than {max}, so only the first {max} are sent with that pair’s instructions: its list first, then the general glossary.',
+    sentCapGeneral: 'With some pair lists there are more than {max}, so only the first {max} are sent with each such pair’s instructions: its list first, then the “Any language” list into the same language if there is one, then the general glossary.',
   },
   location: {
     reset: 'Restore default location', resetDefault: 'The save location is already the default.',
