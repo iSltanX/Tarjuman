@@ -104,7 +104,7 @@ The full policy is in [`PRIVACY.md`](PRIVACY.md) (Arabic), the same text publish
 <!-- tj:facts permissions -->
 | Permission | Why |
 | --- | --- |
-| `storage` | Saving your translations, their languages, the original track, export fingerprints, marks, language preferences and settings on your device. |
+| `storage` | Saving your translations, their languages, the original track, export fingerprints, marks, language preferences, settings, term lists and Editor drafts on your device. |
 | `unlimitedStorage` | A two-hour video takes about 0.7 MB, so the default limit fills up after about fifteen long videos. It adds no install warning. |
 | `downloads` | Saving only the files you ask for (the original SRT, exported translations and the backup), and querying the extension's own downloads only. |
 | `https://www.youtube.com/*` | The content scripts: Tarjuman's buttons in the player, reading a copy of the subtitle response the player requested and the list of its track languages from the page data without any request, and drawing your translation over the video. |

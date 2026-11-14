@@ -13,7 +13,7 @@
   <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 2.2.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-2.2.0-682455?logo=microsoftedge&logoColor=white"></a>
   <a href="https://addons.mozilla.org/en-US/firefox/addon/tarjuman/"><img alt="ترجمان 2.2.0 في Firefox Add-ons" src="https://img.shields.io/badge/Firefox%20Add--ons-2.2.0-682455?logo=firefoxbrowser&logoColor=white"></a>
 <!-- /tj:facts badges -->
-  <img alt="المعالجة والحفظ على جهازك" src="https://img.shields.io/badge/data-on--device-2A6E46">
+  <img alt="بياناتك على جهازك" src="https://img.shields.io/badge/data-on--device-682455">
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
 </p>
 
@@ -118,7 +118,7 @@
 <!-- tj:facts permissions -->
 | الإذن | لماذا |
 | --- | --- |
-| `storage` | حفظ ترجماتك ولغاتها ومسار الأصل وبصمات التصدير والعلامات وتفضيلات اللغات والإعدادات على جهازك. |
+| `storage` | حفظ ترجماتك ولغاتها ومسار الأصل وبصمات التصدير والعلامات وتفضيلات اللغات والإعدادات وقوائم المصطلحات ومسودات المحرّر على جهازك. |
 | `unlimitedStorage` | فيديو بساعتين نحو 0.7 م.ب، فالحد الافتراضي يمتلئ بنحو خمسة عشر فيديو طويلًا. ولا يضيف تحذير تثبيت. |
 | `downloads` | حفظ الملفات التي تطلبها وحدها (ملف SRT الأصلي، والترجمات المصدَّرة، والنسخة الاحتياطية)، والاستعلام عن تنزيلات الإضافة وحدها. |
 | `https://www.youtube.com/*` | سكربتا المحتوى: أزرار ترجمان في المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل وقائمة لغات مساراته من بيانات الصفحة بلا طلب، ورسم ترجمتك فوق الفيديو. |
