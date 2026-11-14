@@ -63,8 +63,10 @@ function uiText(locale) {
     downloaded: lead('player.controls.downloadedLine'),
     saveFailed: [c.get('errors.SV_FAILED'), c.get('errors.SV_FALLBACK_BLOB')],
     fallbackBlob: c.get('errors.SV_FALLBACK_BLOB'),
-    // رأس كتلة «تعليمات الترجمة» كما يُقرأ نصها: العنوان ثم «من» واسم الإنجليزية ثم «إلى» واسم العربية بلغة الواجهة.
-    pairHead: [c.get('popup.pair.title'), c.get('common.langPicker.from'), describeLang('en', locale).name, c.get('common.langPicker.to'), describeLang('ar', locale).name].join(''),
+    // صف عنوان كتلة «تعليمات الترجمة»: العنوان وزر «الخطوات» بجانبه (ح-60)؛ ثم صف اللغتين: «من» واسم الإنجليزية ثم «إلى» واسم
+    // العربية بلغة الواجهة. كلٌّ من عنصره، لا من نص الكتلة كلها (فيه الخطوات المطوية).
+    pairHead: [c.get('popup.pair.title'), c.get('popup.steps.toggle')].join(''),
+    pairLangs: [c.get('common.langPicker.from'), describeLang('en', locale).name, c.get('common.langPicker.to'), describeLang('ar', locale).name].join(''),
     save: c.get('editor.action.save'),
     backup: c.get('settings.data.create'),
     restore: c.get('settings.data.restore'),
@@ -352,6 +354,30 @@ async function clickOn(page, expr, label) {
   await human(250, 450);
 }
 const byText = (sel, text) => `[...document.querySelectorAll(${JSON.stringify(sel)})].find((e) => e.textContent.replace(/\\s+/g, ' ').trim().startsWith(${JSON.stringify(text)}))`;
+/**
+ * مركز عنصر بعد ثبات التخطيط (ص-٢٦، ST1)، أو null. الصفحة المفتوحة في الخلفية لا تُخطَّط ولا تطلب خطوطها حتى يُقاس فيها شيء،
+ * فـdocument.fonts.status «loaded» والخطوط كلها «unloaded». فكان أول قياس في Firefox بالخط الاحتياطي (بطاقة الفيديو 221 بدل 179،
+ * والزر عند 427)، ثم تحمّلت الخطوط قبل الضغطة فصعد الزر 42 بكسلًا ووقعت الضغطة على «الصق الترجمة هنا»: لا نسخ. فهنا يُفرض
+ * التخطيط وتُنتظر الخطوط، ثم قراءتان متساويتان بينهما 250ms، وما تحت المركز هو العنصر نفسه.
+ */
+async function stableCenter(page, selector, timeoutMs = 10000) {
+  return page.waitFor(async (sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    el.scrollIntoView({ block: 'center', inline: 'center' });
+    el.getBoundingClientRect();
+    await document.fonts.ready;
+    const read = () => {
+      const r = el.getBoundingClientRect();
+      return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), w: r.width, h: r.height };
+    };
+    const a = read();
+    await new Promise((done) => setTimeout(done, 250));
+    const b = read();
+    if (!b.w || !b.h || a.x !== b.x || a.y !== b.y || document.fonts.status !== 'loaded') return null;
+    return el.contains(document.elementFromPoint(b.x, b.y)) ? { x: b.x, y: b.y } : null;
+  }, { args: [selector], timeoutMs, intervalMs: 200 });
+}
 async function shot(page, name) {
   const f = path.join(OUT, `${name}.png`);
   try {
@@ -459,23 +485,24 @@ try {
       const info = await pop.waitFor(() => {
         const btn = document.querySelector('.tj-popup__copy');
         const t = (sel) => document.querySelector(sel)?.textContent.replace(/\s+/g, ' ').trim() ?? null;
-        return btn && btn.getAttribute('aria-disabled') !== 'true' ? { status: t('.tj-popup__status'), block: t('.tj-popup__pair') } : null;
+        return btn && btn.getAttribute('aria-disabled') !== 'true' ? { status: t('.tj-popup__status'), head: t('.tj-popup__pair-head'), langs: t('.tj-popup__pair .tj-lang-row') } : null;
       }, { timeoutMs: 15000 });
+      // ما يكتبه المنتج إلى الحافظة: navigator.clipboard.writeText نفسها بعد الضغطة، تُستبدل لتُقرأ (الصفحة في الخلفية بلا تركيز).
       await pop.eval(() => {
         window.__t3copied = [];
         Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async (t) => { window.__t3copied.push(t); } });
         return true;
       });
-      const c = await pop.centerOf('.tj-popup__copy');
-      if (!c) throw new Error('زر «نسخ التعليمات» غير ظاهر في النافذة');
+      const c = await stableCenter(pop, '.tj-popup__copy');
+      if (!c) throw new Error('زر «نسخ التعليمات» غير ظاهر أو لم يثبت موضعه في النافذة');
       await pop.click(c.x, c.y);
       const copied = await pop.waitFor(() => window.__t3copied?.at(-1) ?? null, { timeoutMs: 6000 });
       const state = await pop.eval(() => document.querySelector('.tj-popup__copy')?.getAttribute('data-state') ?? null);
       const tx = await pageText(pop, 'popup');
       // التعليمات من الإنجليزية (لغة المسار الملتقط) إلى العربية (الافتراضي)، بلغة الواجهة (نص التعليمات بها)، بالقاموس المرفق أو بدونه.
       const accepted = [null, []].map((glossary) => sha(instructions({ videoId: VIDEO, title: st.title, source: 'en', target: 'ar', glossary, locale: tx.locale })));
-      check('copy-instructions-from-popup', !!info && squash(info.block).startsWith(squash(tx.pairHead)) && !!copied && accepted.includes(sha(copied)) && state === 'success',
-        { locale: tx.locale, status: info?.status?.slice(0, 80) ?? null, block: info?.block?.slice(0, 60) ?? null, expectedHead: tx.pairHead, copied: copied ? { chars: copied.length, sha: sha(copied) } : null, accepted, state, title: st.title ? 'معروف' : null });
+      check('copy-instructions-from-popup', !!info && squash(info.head) === squash(tx.pairHead) && squash(info.langs) === squash(tx.pairLangs) && !!copied && accepted.includes(sha(copied)) && state === 'success',
+        { locale: tx.locale, status: info?.status?.slice(0, 80) ?? null, head: info?.head ?? null, expectedHead: tx.pairHead, langs: info?.langs ?? null, expectedLangs: tx.pairLangs, at: c, copied: copied ? { chars: copied.length, sha: sha(copied) } : null, accepted, state, title: st.title ? 'معروف' : null });
       await shot(pop, 'popup');
     } finally {
       await pop.close().catch(() => {});
