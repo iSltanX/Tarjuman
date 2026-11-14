@@ -417,20 +417,21 @@ test('الفكرة ٦: ضغطات الحقل لا تصل يوتيوب (المس�
   assert.deepEqual(yt, ['keydown:k']);
 });
 
-test('الفكرة ٦: الحقل المفتوح يُمسك تبديل لغة الواجهة ويُعرف من مقبض التركيب، والمتابعة معلّقة ما دام مفتوحًا', () => {
+test('الفكرة ٦: الحقل المفتوح يُمسك تبديل لغة الواجهة، والمتابعة معلّقة ما دام مفتوحًا وتعود حين يُغلق (ص-٢٤)', async () => {
   const { v, handle } = open();
+  // ص-٢٤ (قرار سلطان): mountPanel(...).editing() حُذفت، فلا مستدعي لها؛ وholdsFlow() تقول إن الحقل مفتوح.
+  assert.equal(handle.editing, undefined);
   assert.equal(handle.peek().follow, true);
   assert.equal(handle.holdsFlow(), false);
-  assert.equal(handle.editing(), false);
   const f = openEdit(v, 1);
   assert.ok(f);
   assert.equal(handle.holdsFlow(), true);
-  assert.equal(handle.editing(), true);
   assert.equal(handle.peek().follow, false, 'المتابعة معلّقة');
   assert.ok(handle.peek().resume, '«العودة إلى ‹الزمن›» ظاهرة');
   keydown(f, 'Escape');
   assert.equal(handle.holdsFlow(), false);
-  assert.equal(handle.editing(), false);
+  await settle();
+  assert.equal(handle.peek().follow, true, 'وتعود حين يُغلق');
 });
 
 // ———— الفكرة ٦: المسار التدريجي في sync() ————

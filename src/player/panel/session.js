@@ -6,6 +6,7 @@
 // الإخفاق رمز في التشخيص. والمقطع الحالي بقاعدة الطبقة نفسها (indexFor.find بـlookupMs)، فيتفق الصف المميَّز مع ما على الشاشة.
 import { TjError, toErrorInfo, messageFor } from '../../core/errors/index.js';
 import { lookupMs } from '../../core/model/timing.js';
+import { typedText } from '../../core/srt/lenient.js';
 import { copyText } from '../../ui/clipboard.js';
 import { holdTimer } from '../../ui/hold.js';
 import { syncOffset } from '../controls/sentence.js';
@@ -63,11 +64,18 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   let video = null;
 
   /**
-   * رسالة فعل من صف: نصها، وفعل زرها إن كان («تراجع» افتراضيًا، أو label كـ«نسخ النص»)، وفيديوها، ومؤقت زوالها.
-   * @type {{ text: string, undo: (() => unknown) | null, label: string | null, videoId: string | null } | null}
+   * رسالة فعل من صف: نصها، وفعل زرها إن كان («تراجع» افتراضيًا، أو label كـ«نسخ النص»)، وفيديوها (bound: تزول بتغيّره، فلا تراجع
+   * يكتب في سجل فيديو آخر؛ ورسالة ما ضاع من حقل التحرير لا تزول به)، ومؤقت زوالها.
+   * @type {{ text: string, undo: (() => unknown) | null, label: string | null, videoId: string | null, bound: boolean } | null}
    */
   let note = null;
   let noteHold = null;
+  /** ما ضاع من حقل التحرير واللوحة غير مفتوحة (أُغلقت أو أُخفيت): يُقال حين تُفتح (ص-٨). @type {{ text: string, message: string } | null} */
+  let pendingLost = null;
+  /** هل اللوحة مفتوحة في آخر رسم. */
+  let openNow = false;
+  /** المتابعة كانت مفعّلة حين فُتح حقل التحرير ولم يغيّرها المستخدم بعد: تعود حين يُغلق (ص-٢٤). */
+  let followBack = false;
 
   const fail = (code, err) => {
     lastCode = code;
@@ -199,10 +207,14 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     noteHold = null;
     note = null;
   }
-  /** @param {string} text @param {(() => unknown) | null} [undo] @param {string | null} [label] تسمية زر الفعل بدل «تراجع» */
-  function showNote(text, undo = null, label = null) {
+  /**
+   * يضع الرسالة ومؤقتها بلا رسم (للحلقة نفسها).
+   * @param {string} text @param {(() => unknown) | null} [undo] @param {string | null} [label] تسمية زر الفعل بدل «تراجع»
+   * @param {{ bound?: boolean }} [o] bound: تزول بتغيّر الفيديو (الافتراضي)
+   */
+  function setNote(text, undo = null, label = null, { bound = true } = {}) {
     clearNote();
-    note = { text, undo, label, videoId: controller.getState().videoId ?? null };
+    note = { text, undo, label, videoId: controller.getState().videoId ?? null, bound };
     noteHold = holdTimer({
       ms: UNDO_MS,
       onExpire: () => {
@@ -213,6 +225,10 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       setTimer: (fn, ms) => win.setTimeout(fn, ms), clearTimer: (id) => win.clearTimeout(id),
     });
     noteHold.arm();
+  }
+  /** @param {Parameters<typeof setNote>} args */
+  function showNote(...args) {
+    setNote(...args);
     render();
   }
 
@@ -284,14 +300,23 @@ export function createPanelSession({ controller, doc, win, link = null }) {
 
   /**
    * «عدّل النص» من صف (الفكرة ٦، ح-54): حقل مكان نص الصف بنص مقطعه الخام. المتابعة تُعلَّق ما دام مفتوحًا (كأي تركيز بلوحة المفاتيح في
-   * القائمة) فلا تُسحب القائمة من تحت الكاتب، و«العودة إلى ‹الزمن›» تعيدها. ولا إيقاف للفيديو، ولا نقرة مزدوجة (تحدد كلمة).
+   * القائمة) فلا تُسحب القائمة من تحت الكاتب، و«العودة إلى ‹الزمن›» تعيدها؛ وتعود حين يُغلق إن كانت مفعّلة قبله ولم يغيّرها المستخدم
+   * أثناءه (editClosed، ص-٢٤). ولا إيقاف للفيديو، ولا نقرة مزدوجة (تحدد كلمة).
    * @param {number} i
    */
   function editRow(i) {
     const cue = controller.getState().arabic?.cues?.[i];
     if (!cue || typeof controller.editCueText !== 'function') return;
+    followBack = follow.on;
     follow.set(false);
     view.transcript.openEdit(i);
+  }
+
+  /** أُغلق حقل التحرير (بالحفظ أو الإلغاء أو تغيّر مقطعه): تعود المتابعة التي علّقها فتحه (ص-٢٤). */
+  function editClosed() {
+    if (destroyed || !followBack || view.transcript.editState()) return;
+    followBack = false;
+    if (ready && !follow.on) follow.resume(anchor);
   }
 
   /** نص الإخفاق داخل الحقل: أخطاء التوقيت في الترجمة بإحالة إلى المحرّر (رسالة المحرّر تعدّها بصيغته)، وغيرها نص رمزه. */
@@ -301,14 +326,16 @@ export function createPanelSession({ controller, doc, win, link = null }) {
   };
 
   /**
-   * حفظ الحقل المفتوح على صف i: النص نفسه يغلقه بلا كتابة؛ وحارس النص قبل الكتابة (cueTextIssue) يقول سببه داخل الحقل ويبقيه مفتوحًا
-   * بنصه؛ وإلا editCueText، ثم «عُدِّل نص المقطع N» بتراجع لفيديوه وحده (م2). والإخفاق يُقال داخل الحقل والنص باقٍ.
-   * @param {number} i @param {string} text
+   * حفظ الحقل المفتوح على صف i من الخانة slot: النص منقّى كالاستيراد (typedText، ص-٢٤)؛ والنص نفسه يغلقه بلا كتابة؛ وحارس النص قبل
+   * الكتابة (cueTextIssue) يقول سببه داخل الحقل ويبقيه مفتوحًا بنصه؛ وإلا editCueText بالخانة التي فُتح عليها (ص-٨)، ثم «عُدِّل نص المقطع
+   * N» بتراجع لفيديوه وخانته وحدهما (م2، ص-٢٤). والإخفاق يُقال داخل الحقل والنص باقٍ؛ وإن زال الحقل قبل النتيجة فبرسالة و«نسخ النص».
+   * @param {number} i @param {string} typed النص كما كُتب @param {number | null} slot
    */
-  function saveEdit(i, text) {
+  function saveEdit(i, typed, slot) {
     const tr = view.transcript;
     const s = controller.getState();
     const cue = s.arabic?.cues?.[i];
+    const text = typedText(typed);
     if (!cue || text === cue.text) {
       tr.closeEdit();
       return;
@@ -323,32 +350,47 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     act(async () => {
       let r;
       try {
-        r = await controller.editCueText({ index: i }, text);
+        r = await controller.editCueText({ index: i, slot }, text);
       } catch (err) {
-        if (!destroyed) tr.editFailed(editErrorText(err));
+        const code = toErrorInfo(err).code;
+        if (!destroyed && !tr.editFailed(text, editErrorText(err))) lostEdit(typed, code === 'ST_CONFLICT' ? LABELS.editLost : editErrorText(err));
         throw err;
       }
       if (destroyed) return;
       tr.finishEdit(text);
       showNote(editedNote(cue.n), () => {
-        if (controller.getState().videoId === videoId) return r.undo();
-        showNote(LABELS.undoStale);
+        const now = controller.getState();
+        if (now.videoId !== videoId) showNote(LABELS.undoStale);
+        else if ((now.activeSlot ?? null) !== slot) showNote(LABELS.editUndoStale);
+        else return r.undo();
         return null;
       });
     });
   }
 
+  /** نص رسالة ما ضاع من الحقل بسببه (ص-٨). */
+  const LOST_TEXT = Object.freeze({ changed: () => LABELS.editLost, video: () => LABELS.editLostVideo, closed: () => LABELS.editLostClosed });
+
   /**
-   * مقطع الحقل تغيّر من مكان آخر وفيه ما كُتب (الفكرة ٦): «تغيّرت الترجمة؛ لم يُحفظ تعديلك» وزرها «نسخ النص» يكتب ما كُتب في الحافظة
-   * بضغطة المستخدم (لا قراءة للحافظة)، ثم يقول نجاحه أو تعذّره.
-   * @param {string} text
+   * زال حقل التحرير وفيه ما كُتب ولم يُحفظ (الفكرة ٦، ص-٨): رسالة بسببه («تغيّرت الترجمة؛ لم يُحفظ تعديلك» أو «تغيّر الفيديو» أو
+   * «أُغلقت اللوحة») وزرها «نسخ النص» يكتب ما كُتب في الحافظة بضغطة المستخدم (لا قراءة للحافظة)، ثم يقول نجاحه أو تعذّره. ولا تزول
+   * بتغيّر الفيديو؛ واللوحة غير المفتوحة تقولها حين تُفتح.
+   * @param {string} text @param {string} message
    */
-  function lostEdit(text) {
+  function lostEdit(text, message) {
     if (destroyed) return;
-    showNote(LABELS.editLost, () => copyText(text, { clipboard: win.navigator?.clipboard, Item: win.ClipboardItem }).then(
+    pendingLost = { text, message };
+    if (openNow) render();
+  }
+
+  /** رسالة ما ضاع (pendingLost) في الحلقة نفسها، واللوحة مفتوحة. */
+  function takeLost() {
+    const { text, message } = pendingLost;
+    pendingLost = null;
+    setNote(message, () => copyText(text, { clipboard: win.navigator?.clipboard, Item: win.ClipboardItem }).then(
       () => !destroyed && showNote(LABELS.editCopied),
       () => !destroyed && showNote(LABELS.editCopyFailed),
-    ), LABELS.editCopy);
+    ), LABELS.editCopy, { bound: false });
   }
 
   // ———— أفعال المستخدم ————
@@ -379,9 +421,10 @@ export function createPanelSession({ controller, doc, win, link = null }) {
     setDual: (v) => setPrefs({ ui: { panelDual: v } }),
     toastHold: (why, held) => toastHold?.hold(why, held),
     rowAct: (act, i) => (act === 'mark' ? markRow(i) : act === 'edit' ? editRow(i) : syncRow(i)),
-    rowEdit: (kind, i, text) => {
-      if (kind === 'save') saveEdit(i, text);
-      else if (kind === 'lost') lostEdit(text);
+    rowEdit: (kind, i, text, info) => {
+      if (kind === 'save') saveEdit(i, text, info?.slot ?? null);
+      else if (kind === 'lost') lostEdit(text, (LOST_TEXT[info?.reason] ?? LOST_TEXT.changed)());
+      else if (kind === 'closed') editClosed();
     },
     syncReason,
     noteHold: (why, held) => noteHold?.hold(why, held),
@@ -433,10 +476,14 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       render();
     },
     setFollow(v) {
+      followBack = false;
       if (v) follow.resume(anchor);
       else follow.set(false);
     },
-    resume: () => follow.resume(anchor),
+    resume() {
+      followBack = false;
+      follow.resume(anchor);
+    },
     reset() {
       if (Math.round(offset() / 100) !== 0) act(() => controller.resetOffset());
     },
@@ -493,11 +540,13 @@ export function createPanelSession({ controller, doc, win, link = null }) {
       const nav = nav$.state();
       const fullscreen = isPlayerFullscreen(doc);
       const model = derive(s, { videoId: nav.videoId, navigating: nav.navigating, visible: nav.videoId !== null && !fullscreen }, { toast: !!toast });
-      // ما قيل عن فعل في لوحة مفتوحة لا يبقى إلى فتح لاحق، ولا رسالة فعل صف؛ ورسالة الصف لفيديوها وحده (م2).
+      // ما قيل عن فعل في لوحة مفتوحة لا يبقى إلى فتح لاحق، ولا رسالة فعل صف؛ ورسالة الصف لفيديوها وحده (م2)، إلا رسالة ما ضاع من
+      // حقل التحرير (ص-٨): لا تزول بتغيّر الفيديو، واللوحة غير المفتوحة تقولها حين تُفتح.
       if (model.mode !== 'open') {
         actionError = null;
         if (note) clearNote();
-      } else if (note && note.videoId !== (s.videoId ?? null)) clearNote();
+      } else if (note && note.bound && note.videoId !== (s.videoId ?? null)) clearNote();
+      if (model.mode === 'open' && pendingLost) takeLost();
       // رسالة التراجع تُغلق إن عاد الزر من مكان آخر (نافذة الأيقونة أو الإعدادات) بعد أن رُصد مخفيًا.
       if (toast) {
         if (prefsUi?.panelEntry === false) toast.seen = true;
@@ -517,6 +566,7 @@ export function createPanelSession({ controller, doc, win, link = null }) {
         note: note ? { text: note.text, undo: !!note.undo, label: note.label } : null,
       });
       ready = out.mode === 'open' && out.kind === 'ready';
+      openNow = out.mode === 'open';
       // التركيز بين اللوحة وزرها في الشريط: فُتحت بلوحة المفاتيح ← زر الإغلاق؛ وأُغلقت وفيها التركيز ← زرها في الشريط.
       if (out.mode === 'open' && link?.takePanelFocus()) view.focusPanel();
       if (out.lostFocus) link?.focusButton();
@@ -525,8 +575,11 @@ export function createPanelSession({ controller, doc, win, link = null }) {
         loc = null;
         snapNext = false;
         resumeState = { visible: false, label: '' };
-        // الإخفاء المؤقت بصفوف جاهزة (ملء الشاشة) يُبقي حالة التتبّع؛ وما عداه (إغلاق، تحميل، فيديو آخر) يعيده مفعّلًا.
-        if (!(out.mode === 'none' && out.kind === 'ready')) follow.reset();
+        // الإخفاء المؤقت بصفوف جاهزة (ملء الشاشة) يُبقي حالة التتبّع (وحقل التحرير)؛ وما عداه (إغلاق، تحميل، فيديو آخر) يعيده مفعّلًا.
+        if (!(out.mode === 'none' && out.kind === 'ready')) {
+          follow.reset();
+          followBack = false;
+        }
       }
       if (out.rebuilt) counts.rebuilds++;
       if (ready) {
@@ -639,8 +692,6 @@ export function createPanelSession({ controller, doc, win, link = null }) {
 
   return {
     holdsFlow: () => !destroyed && view.typing(),
-    /** حقل تحرير نص مقطع مفتوح في اللوحة (الفكرة ٦). */
-    editing: () => !destroyed && view.transcript.editing() >= 0,
     /** يضع المضيف أول ابن في العمود (ينقله من عمود قديم)، ويربط الفيديو والمراقبة، ويعيد الرسم. */
     attach(next) {
       if (destroyed) return;

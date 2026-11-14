@@ -10,6 +10,7 @@ import { withContinuation } from '../core/import/continuation.js';
 import { ambiguousMarks } from '../core/import/ambiguous.js';
 import { TjError, toErrorInfo } from '../core/errors/index.js';
 import { reanchorMarks } from '../core/edit/review.js';
+import { typedText } from '../core/srt/lenient.js';
 import { slotEditTransition } from '../core/edit/transition.js';
 import {
   bundleFromRecord, referencedFingerprints, slotModels, withActiveSlot, withMark, withMarksReplaced, withSlotLang, withSlotUpload,
@@ -351,8 +352,9 @@ export function createController({ store, extractor = null, page = {}, now = () 
   /**
    * نص المقطع index في الخانة slot (الفكرة ٦) بكتابة واحدة: انتقال «حفظ» المحرّر (slotEditTransition: نسخة حالية، ومطابقة الأصل
    * current = null، وخطأ توقيت في الملف يرفض بـED_SAVE_HAS_ERRORS)، ثم ربط علامات المقطع بنصه الجديد (reanchorMarks) كما يفعل حفظ
-   * المحرّر، فلا تصير «قد تكون انتقلت». seen مرساة المقطع الذي رآه المستخدم: إن تغيّر في الخانة من مكان آخر (أو زالت الخانة)
-   * رُفض بـST_CONFLICT ولم يُكتب شيء، وتُقرأ الحالة من جديد. والنص نفسه لا يُكتب.
+   * المحرّر، فلا تصير «قد تكون انتقلت». seen مرساة المقطع الذي رآه المستخدم: إن تغيّر في الخانة من مكان آخر (أو زالت الخانة، أو صارت
+   * النشطة في التخزين خانة أخرى من سياق آخر؛ التحقق الأخير لـ2.3.0 ص-٨) رُفض بـST_CONFLICT ولم يُكتب شيء، وتُقرأ الحالة من جديد.
+   * والنص نفسه لا يُكتب.
    * @param {1 | 2 | 3} slot @param {number} index @param {{ n: number, startMs: number, textHash: string }} seen @param {string} text
    * @returns {Promise<{ n: number, startMs: number, textHash: string } | null>} مرساة المقطع بعد الكتابة، أو null بلا كتابة
    */
@@ -363,6 +365,7 @@ export function createController({ store, extractor = null, page = {}, now = () 
       wrote = await writeBundle((b) => {
         anchor = null;
         if (!b) throw new TjError('ST_NO_RECORD');
+        if (b.active !== slot) throw new TjError('ST_CONFLICT', { detail: `slot=${slot}` });
         const track = b.slots[slot - 1].track;
         const cues = track ? track.current ?? track.original : null;
         const cue = cues?.[index] ?? null;
@@ -729,20 +732,22 @@ export function createController({ store, extractor = null, page = {}, now = () 
 
     /**
      * نص مقطع واحد من النشطة برقمه في state.arabic.cues (الفكرة ٦، ح-54: التحرير السريع في لوحة النص؛ والتوقيت والدمج والشطر في
-     * المحرّر وحده). يُكتب في الخانة التي يراها المستخدم بحارس مرساة مقطعه (writeCueText). وحارس النص الفارغ وما يكسر SRT في
-     * اللوحة قبل الاستدعاء (cueTextIssue في player/panel/model.js)؛ وما يرفضه التخزين يُرفض هنا كما في المحرّر.
-     * @param {{ index: number }} target @param {string} text النص كما كُتب بفواصل أسطره
-     * @returns {Promise<{ undo: () => Promise<void> }>} undo يكتب النص السابق بالمسار نفسه وبحارس المرساة الجديدة
+     * المحرّر وحده). يُكتب في الخانة التي يراها المستخدم بحارس مرساة مقطعه (writeCueText)؛ وslot الخانة التي رآها فيها (ص-٨): إن
+     * صارت النشطة غيرها رُفض بـST_CONFLICT بلا كتابة. والنص منقّى كما ينقّي الاستيراد نص المقطع (typedText، ص-٢٤). وحارس النص الفارغ
+     * وما يكسر SRT في اللوحة قبل الاستدعاء (cueTextIssue في player/panel/model.js)؛ وما يرفضه التخزين يُرفض هنا كما في المحرّر.
+     * @param {{ index: number, slot?: 1 | 2 | 3 | null }} target @param {string} text النص كما كُتب بفواصل أسطره
+     * @returns {Promise<{ undo: () => Promise<void> }>} undo يكتب النص السابق بالمسار نفسه وبحارس المرساة الجديدة، في الخانة نفسها ما دامت النشطة
      */
-    async editCueText({ index }, text) {
+    async editCueText({ index, slot: seenSlot = null }, text) {
       requireVideo();
       if (typeof text !== 'string') throw new TjError('MD_INVALID', { detail: 'text' });
       const slot = bundleFor(saved)?.active ?? null;
       if (!slot) throw new TjError('ST_NO_RECORD');
+      if (seenSlot !== null && seenSlot !== slot) throw new TjError('ST_CONFLICT', { detail: `slot=${seenSlot}` });
       const seenCue = state.arabic?.cues[index] ?? null;
       if (!seenCue) throw new RangeError(`لا مقطع بالرقم ${index}`);
       const before = seenCue.text;
-      const after = await writeCueText(slot, index, markAnchor(seenCue), text);
+      const after = await writeCueText(slot, index, markAnchor(seenCue), typedText(text));
       return {
         undo: async () => {
           if (after) await writeCueText(slot, index, after, before);

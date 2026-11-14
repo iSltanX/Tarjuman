@@ -4,7 +4,7 @@
 // ملفات TXT وMarkdown (R48) بالمحلّل نفسه: تُزال أغلفة محددة واضحة فقط بملاحظة — أسوار ``` و~~~، والتأكيد حول سطر
 // الرقم أو الزمن كله (**12** و`00:00:01,000 --> …`)، والعناوين والفقرات قبل الملف وبعده. وما داخل نص المقطع يبقى حرفيًا.
 import { TjError, messageFor } from '../errors/index.js';
-import { isBlankText } from '../model/cue.js';
+import { isBlankText, lfLines } from '../model/cue.js';
 import { LIMITS } from '../model/validate.js';
 import { sanitizeText } from '../text/sanitize.js';
 import { ambiguousNumbers } from '../import/ambiguous.js';
@@ -99,6 +99,31 @@ export function readableText(text) {
   const charsStripped = noControls !== s;
   const stripped = charsStripped || lines.some(hidden);
   return { text: (stripped ? lines.filter((l) => !hidden(l) && (l !== '' || !charsStripped)) : lines).join('\n'), stripped };
+}
+
+/**
+ * نص كتبه المستخدم في حقل «عدّل النص» بلوحة النص (الفكرة ٦، والتحقق الأخير لـ2.3.0 ص-٢٤): يُنقّى كما ينقّي الاستيراد نص المقطع من
+ * حيث المحارف، فما يُحفظ من الحقل هو ما يقرؤه الاستيراد من ملف فيه هذا النص، ولا يصل إلى التخزين ما لا يصله من ملف: فواصل الأسطر LF
+ * (lfLines)، وبلا محارف خفية ولا تجاوز اتجاه ولا عزله (sanitizeText) ولا محارف تحكم C0 وC1، وبلا مسافات أطراف الأسطر، وبلا سطر فرغ
+ * بالتنقية أو بقي فيه محرف خفي وحده (RLM أو ZWSP…، ن-٣)، وبلا أسطر فارغة في أوله وآخره (Shift+Enter في آخره): حدّ للمقطع لا يقرؤه
+ * الاستيراد نصًا. والسطر الفارغ بين سطرين يبقى، فيقول حارس اللوحة سببه ولا يُحذف بصمت. ووسوم التنسيق (<i> و{\an8}) نص كما كُتب:
+ * يجرّدها الاستيراد من ملف، والحقل لا يحذف ما يراه كاتبه. ثابتة بالتكرار.
+ * @param {string} text @returns {string}
+ */
+export function typedText(text) {
+  const out = [];
+  for (const line of lfLines(text).split('\n')) {
+    const clean = sanitizeText(line);
+    const noControls = clean.text.replace(CONTROL_CHARS, '');
+    const t = noControls.trim();
+    if (t === '' ? clean.removed > 0 || noControls !== clean.text : isBlankText(t)) continue;
+    out.push(t);
+  }
+  let from = 0;
+  let to = out.length;
+  while (from < to && out[from] === '') from++;
+  while (to > from && out[to - 1] === '') to--;
+  return out.slice(from, to).join('\n');
 }
 
 /**

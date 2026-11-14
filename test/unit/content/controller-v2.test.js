@@ -230,6 +230,45 @@ test('الفكرة ٦: ST_CONFLICT إن تغيّر المقطع الذي رآه 
   assert.equal((await store.getBundle(A)).slots[0].track.current[1].text, 'تعديل ثالث');
 });
 
+test('ص-٨: editCueText بالخانة التي رآها المستخدم: إن صارت النشطة غيرها رُفض بـST_CONFLICT بلا كتابة في أي خانة', async () => {
+  const { c, store } = await setup();
+  const before = await store.getBundle(A);
+  await c.activateSlot(2);
+  const rev = (await store.getBundle(A)).record.rev;
+  await assert.rejects(c.editCueText({ index: 1, slot: 1 }, 'رآه في الأولى'), code('ST_CONFLICT'));
+  const b = await store.getBundle(A);
+  assert.equal(b.record.rev, rev, 'لا كتابة');
+  assert.deepEqual(b.slots[0].track, before.slots[0].track);
+  assert.deepEqual(b.slots[1].track, before.slots[1].track);
+  await c.editCueText({ index: 1, slot: 2 }, 'في الثانية');
+  assert.equal((await store.getBundle(A)).slots[1].track.current[1].text, 'في الثانية', 'والخانة نفسها تُكتب');
+});
+
+test('ص-٨: النشطة تبدّلت من سياق آخر قبل أن يصل حدثه: ST_CONFLICT بلا كتابة، والحالة تُقرأ من جديد؛ والتراجع بعد تبديل الخانة يُرفض', async () => {
+  const { c, store, other, area } = await setup();
+  await other.updateBundle(A, (b) => withActiveSlot(b, 2, NOW));
+  assert.equal(c.getState().activeSlot, 1, 'لم يصل الحدث بعد');
+  const before = await store.getBundle(A);
+  await assert.rejects(c.editCueText({ index: 1, slot: 1 }, 'من اللوحة'), code('ST_CONFLICT'));
+  const b = await store.getBundle(A);
+  assert.deepEqual(b.slots[0].track, before.slots[0].track, 'الخانة 1 كما هي');
+  assert.deepEqual(b.slots[1].track, before.slots[1].track, 'والخانة 2 كما هي');
+  await settle(area);
+  assert.equal(c.getState().activeSlot, 2, 'الحالة بآخر نسخة');
+  const r = await c.editCueText({ index: 0, slot: 2 }, 'ثانية بعد التصحيح');
+  await c.activateSlot(1);
+  await assert.rejects(r.undo(), code('ST_CONFLICT'), 'التراجع لا يكتب في خانة غير النشطة');
+  assert.equal((await store.getBundle(A)).slots[1].track.current[0].text, 'ثانية بعد التصحيح');
+});
+
+test('ص-٢٤: editCueText ينقّي النص كما ينقّي الاستيراد نص المقطع (لا تجاوز اتجاه ولا تحكم ولا BOM ولا سطر خفي وحده)', async () => {
+  const { c, store } = await setup();
+  const ch = (cp) => String.fromCodePoint(cp);
+  await c.editCueText({ index: 1 }, `  نص${ch(0x202e)} مع${ch(0x7)} محارف\r\n${ch(0x200b)}\n${ch(0xfeff)}خفية  `);
+  assert.equal((await store.getBundle(A)).slots[0].track.current[1].text, 'نص مع محارف\nخفية');
+  assert.equal(c.getState().arabic.cues[1].text, 'نص مع محارف\nخفية');
+});
+
 test('الفكرة ٦: خطأ توقيت في الملف يرفض الكتابة كالمحرّر (ED_SAVE_HAS_ERRORS)، والمدخل غير الصالح يُرفض', async () => {
   const bundle = sampleBundle({ active: 2 });
   const bad = bundle.slots[1].track.original[3];

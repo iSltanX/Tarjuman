@@ -23,6 +23,13 @@ const RADIO_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 const STEP_PRESETS = Object.freeze([500, 1000]);
 
 /**
+ * لماذا تُمسح الصفوف، فيُقال ما كُتب في حقل تحرير مفتوح بسببه (ص-٨): التحميل فيديو آخر (التنقل أو التشغيل التلقائي للتالي، ومنه
+ * ملء الشاشة)، ولا ترجمة أو خطأ قراءة تغيّرٌ في الترجمة، وما سواهما لوحة أُغلقت أو أُخفيت.
+ * @param {import('./model.js').PanelModel} m @returns {import('./transcript.js').LostReason}
+ */
+const goneReason = (m) => (m.kind === 'loading' ? 'video' : m.kind === 'empty' || m.kind === 'error' ? 'changed' : 'closed');
+
+/**
  * مقطّعة اختيار واحد (radiogroup) بتنقّل الأسهم: التالي بالسهم نحو آخر الصف (الأيسر في RTL والأيمن في LTR). المعطّل لا يُختار ولا
  * يُتنقَّل إليه.
  * @param {Document} doc @param {string} label @param {string[]} values @param {(v: string) => void} pick
@@ -95,7 +102,7 @@ export function createPanelView({ doc, win, on }) {
 
   const transcript = createTranscript({
     doc, onSeek: (ms) => on.seek(ms), onAct: (act, i) => on.rowAct?.(act, i), syncReason: (i) => on.syncReason?.(i) ?? null,
-    onEdit: (kind, i, text) => on.rowEdit?.(kind, i, text),
+    onEdit: (kind, i, text, info) => on.rowEdit?.(kind, i, text, info),
   });
 
   // ———— الرأس ————
@@ -403,19 +410,19 @@ export function createPanelView({ doc, win, on }) {
       setHidden(err, m.kind !== 'error');
       setAttr(panel, 'aria-busy', m.kind === 'loading' ? 'true' : null);
       if (readyOpen) {
-        out = transcript.sync({ cues: m.cues, originalCues: m.dual ? m.original.cues : null, offsetMs: m.offsetMs, originalLang: m.dual ? m.original.lang : null, translationLang: m.translationLang ?? null, marks: m.marks ?? null });
+        out = transcript.sync({ cues: m.cues, originalCues: m.dual ? m.original.cues : null, offsetMs: m.offsetMs, originalLang: m.dual ? m.original.lang : null, translationLang: m.translationLang ?? null, marks: m.marks ?? null, slot: m.status?.slot ?? null });
         renderBar(m, l);
         renderFoot(m, l);
         setResume(l.resume.visible, l.resume.label);
       } else {
-        transcript.clear();
+        transcript.clear(goneReason(m));
         setHidden(resume, true);
         if (m.kind === 'empty') renderSteps(m);
         if (m.kind === 'error') setText(errText, m.error?.message ?? '');
       }
     } else if (!(m.mode === 'none' && m.kind === 'ready')) {
       // مخفية بملء الشاشة وهي جاهزة: تبقى الصفوف بأعيانها (لا بناء عند الخروج)؛ وغير ذلك يُمسح.
-      transcript.clear();
+      transcript.clear(goneReason(m));
     }
 
     // التركيز لا يضيع بتبديل الشكل. إخفاء الزر من رأس اللوحة: إلى «تراجع» لا إلى body (مراجعة الهوية L10)، والتراجع يعيده
