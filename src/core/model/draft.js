@@ -116,17 +116,19 @@ export const lastSavedAt = (v) => v.slots.reduce((at, d) => (d && d.savedAt > at
 
 /**
  * مسودة من الجلسة وما فُتح عليه: المحتوى وحده (المقاطع والإزاحة وما ثُبّت منها ولم يُحفظ)، وهوية الخانة المفتوحة ببصمة مقاطعها.
+ * cuesHash بصمة مقاطع الخانة المفتوحة إن حُسبت قبلُ (المحرّر يحسبها مرة لكل أساس، تحقق 2.3.0 ص-٩)، وإلا تُحسب هنا.
  * @param {{ cues: Cue[], offsetMs: number, committedMs: number }} work
  * @param {{ track: { fileName: string, importedAt: string, editedAt: string | null, original: Cue[], current: Cue[] | null }, offsetMs: number }} opened
  * @param {string} savedAt
+ * @param {string} [cuesHash]
  * @returns {Draft}
  */
-export function draftOf(work, opened, savedAt) {
+export function draftOf(work, opened, savedAt, cuesHash) {
   const t = opened.track;
   return {
     savedAt,
     base: {
-      fileName: t.fileName, importedAt: t.importedAt, editedAt: t.editedAt ?? null, offsetMs: opened.offsetMs, cuesHash: draftCuesHash(t.current ?? t.original),
+      fileName: t.fileName, importedAt: t.importedAt, editedAt: t.editedAt ?? null, offsetMs: opened.offsetMs, cuesHash: cuesHash ?? draftCuesHash(t.current ?? t.original),
     },
     offsetMs: work.offsetMs,
     committedMs: work.committedMs,

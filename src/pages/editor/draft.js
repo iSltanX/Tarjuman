@@ -2,7 +2,7 @@
 // وبحد أقصى أثناء الكتابة المتصلة، وفورًا عند إخفاء التبويب ومغادرة الصفحة؛ ويُحذف حين لا يبقى ما لم يُحفظ (بعد الحفظ أو التجاهل).
 // والاستعادة بضغطة صريحة من لافتة ثابتة لا بصمت (المواصفة §٤). هنا الجدولة واللافتة؛ والقرار عند الفتح في model/draft.js، والكتابة
 // عبر الكاتب الواحد. الكتابة أفضل جهد: تعذّرها لا يقطع التحرير ولا يُظهر رسالة كل ثانيتين، والحفظ الصريح يبقى طريق الحفظ.
-import { draftOf } from '../../core/model/draft.js';
+import { draftCuesHash, draftOf } from '../../core/model/draft.js';
 import { t } from '../../i18n/index.js';
 import { alertBox, button, el } from '../../ui/components.js';
 import { absoluteTime } from '../library/model.js';
@@ -30,6 +30,17 @@ export function createDraftKeeper({ win, store, videoId, now, current }) {
   let held = false;
   /** آخر جلسة كُتبت مسودتها ونسختها حينئذ. */
   let seen = { session: null, version: 0 };
+  /**
+   * بصمة مقاطع الأساس (تحقق 2.3.0 ص-٩): تُحسب أول حاجة لكل خانة مفتوحة، لا مع كل كتابة (5000 مقطع نحو 25 م.ث على الخيط الرئيسي).
+   * وتُعاد حين يتغير الأساس: كائن الترجمة (الحفظ وتبديل الخانة والاستبدال والرجوع إلى المرفوعة تفتحها من حزمة جديدة)، أو مقاطعها،
+   * أو تاريخ تعديلها.
+   */
+  let base = { track: null, cues: null, editedAt: undefined, hash: '' };
+  const baseHash = (track) => {
+    const cues = track.current ?? track.original;
+    if (base.track !== track || base.cues !== cues || base.editedAt !== track.editedAt) base = { track, cues, editedAt: track.editedAt, hash: draftCuesHash(cues) };
+    return base.hash;
+  };
   let chain = Promise.resolve();
   const stop = () => {
     win.clearTimeout(idle);
@@ -65,7 +76,7 @@ export function createDraftKeeper({ win, store, videoId, now, current }) {
       if (!force && session.version === last) return chain;
       seen = { session, version: session.version };
       const draft = session.dirty
-        ? draftOf({ cues: session.snapshot(), offsetMs: session.offsetMs, committedMs: session.committedMs }, opened, new Date(now()).toISOString())
+        ? draftOf({ cues: session.snapshot(), offsetMs: session.offsetMs, committedMs: session.committedMs }, opened, new Date(now()).toISOString(), baseHash(opened.track))
         : null;
       return send(() => (draft ? store.setDraft(videoId, slot, draft) : store.clearDraft(videoId, slot)));
     },

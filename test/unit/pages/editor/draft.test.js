@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createController } from '../../../../src/content/controller.js';
 import { createStore } from '../../../../src/core/store/index.js';
-import { draftCuesHash, draftOf } from '../../../../src/core/model/draft.js';
+import { classifyDraft, draftCuesHash, draftOf } from '../../../../src/core/model/draft.js';
 import { mountEditor } from '../../../../src/pages/editor/app.js';
 import { DRAFT_IDLE_MS, DRAFT_MAX_MS, createDraftKeeper } from '../../../../src/pages/editor/draft.js';
 import { createMemoryArea } from '../../../helpers/chrome-storage.js';
@@ -470,4 +470,101 @@ test('ص-٦ (قيد): تحرير حقيقي من لوحة النص ولو في �
   assert.equal(banner(env)?.getAttribute('data-kind'), 'changed');
   assert.equal(byFid(env, 'draftRestore'), null, 'لا استعادة فوقه');
   assert.ok(stored()?.[0], 'والمسودة باقية');
+});
+
+/** مقاطع يُعدّ كل مرور عليها لحساب بصمتها (draftCuesHash يبدأ بـmap). */
+function counted(cues) {
+  const seen = { maps: 0 };
+  const proxy = new Proxy(cues, {
+    get(target, key, receiver) {
+      if (key === 'map') seen.maps++;
+      return Reflect.get(target, key, receiver);
+    },
+  });
+  return { cues: proxy, seen };
+}
+
+test('ص-٩: بصمة مقاطع الأساس تُحسب مرة لكل خانة مفتوحة لا مع كل كتابة، وتُعاد حين يتغير الأساس (الترجمة أو مقاطعها أو تاريخ تعديلها)', async () => {
+  const win = keeperWin();
+  const written = [];
+  const store = { setDraft: async (id, slot, d) => { written.push([slot, d.base.cuesHash]); }, clearDraft: async () => {} };
+  const cue = (n, text) => ({ n, startMs: n * 1000, endMs: n * 1000 + 800, text });
+  const session = { version: 0, dirty: true, offsetMs: 0, committedMs: 0, snapshot: () => [cue(1, 'في الجلسة')] };
+  const plain = [cue(1, 'الأساس'), cue(2, 'الأساس 2')];
+  const a = counted(plain);
+  let opened = { track: { fileName: 'a.srt', importedAt: NOW, editedAt: null, original: a.cues, current: null }, offsetMs: 0 };
+  let slot = 1;
+  const keeper = createDraftKeeper({ win, store, videoId: 'AAAAAAAAAAA', now: () => Date.parse(NOW), current: () => ({ session, slot, opened: { ...opened } }) });
+  const write = async () => {
+    session.version++;
+    await keeper.flush();
+    await keeper.settled();
+  };
+  for (let k = 0; k < 5; k++) await write();
+  assert.equal(written.length, 5, 'خمس كتابات');
+  assert.equal(a.seen.maps, 1, 'والبصمة حُسبت مرة واحدة');
+  assert.ok(written.every(([, h]) => h === draftCuesHash(plain)), 'وهي بصمة الأساس في كل كتابة');
+
+  // الحفظ: الخانة نفسها من حزمة جديدة بمقاطع أخرى وتاريخ تعديل.
+  const savedCues = [cue(1, 'المحفوظ'), cue(2, 'الأساس 2')];
+  const b = counted(savedCues);
+  opened = { track: { ...opened.track, current: b.cues, editedAt: '2026-11-01T12:30:00.000Z' }, offsetMs: 0 };
+  await write();
+  await write();
+  assert.equal(b.seen.maps, 1, 'تُعاد بعد الحفظ مرة واحدة');
+  assert.equal(written.at(-1)[1], draftCuesHash(savedCues));
+
+  // كائن الترجمة نفسه بمقاطع أخرى، ثم بتاريخ تعديل آخر: تُعاد في الحالتين.
+  const other = [cue(1, 'من مكان آخر'), cue(2, 'الأساس 2')];
+  opened.track.current = other;
+  await write();
+  assert.equal(written.at(-1)[1], draftCuesHash(other));
+  const c = counted(other);
+  opened.track.current = c.cues;
+  opened.track.editedAt = '2026-11-01T12:40:00.000Z';
+  await write();
+  assert.equal(c.seen.maps, 1);
+
+  // تبديل الخانة: ترجمة أخرى.
+  const second = [cue(1, 'الخانة الثانية')];
+  slot = 2;
+  opened = { track: { fileName: 'b.srt', importedAt: NOW, editedAt: null, original: second, current: null }, offsetMs: 0 };
+  await write();
+  assert.deepEqual(written.at(-1), [2, draftCuesHash(second)]);
+});
+
+test('ص-٩ وص-٦: بصمة الأساس في المسودة تتبع الخانة المفتوحة بعد الحفظ و«الرجوع إلى النسخة المرفوعة» وتبديل الخانة، فتبقى الهوية بالمحتوى «استعادة»', async () => {
+  const { env, editor, store, id, stored } = await mounted();
+  const slotNow = async (n) => (await store.getBundle(id)).slots[n - 1];
+  /** تعديل ثم كتابة المسودة فورًا: بصمتها بصمة ما فُتح، وتصنيفها على الخانة كما خُزّنت «استعادة». */
+  const draftNow = async (n, text) => {
+    editor.state.session.setText(0, text);
+    await editor.draft.flush();
+    const d = stored()[n - 1];
+    const s = await slotNow(n);
+    assert.equal(d.base.cuesHash, draftCuesHash(s.track.current ?? s.track.original), `بصمة الخانة ${n} كما خُزّنت`);
+    assert.equal(classifyDraft(d, s).kind, 'same');
+    return d.base.cuesHash;
+  };
+  const first = await draftNow(1, 'قبل الحفظ');
+  await editor.save();
+  await settle(10);
+  const afterSave = await draftNow(1, 'بعد الحفظ');
+  assert.notEqual(afterSave, first, 'الحفظ غيّر الأساس فتغيّرت البصمة');
+
+  findAll(env.root, (e) => e.tagName === 'button' && textOf(e).startsWith('الرجوع إلى النسخة المرفوعة'))[0].click();
+  await settle();
+  openDialogEl(env).close('restore');
+  await settle(10);
+  assert.equal((await slotNow(1)).track.current, null, 'رجعت إلى المرفوعة');
+  const restored = await draftNow(1, 'بعد الرجوع');
+  assert.equal(restored, draftCuesHash((await slotNow(1)).track.original));
+
+  await editor.save();
+  await settle(10);
+  await editor.switchSlot(2);
+  await settle(10);
+  assert.equal(editor.state.slot, 2);
+  const second = await draftNow(2, 'في الخانة الثانية');
+  assert.notEqual(second, restored);
 });
