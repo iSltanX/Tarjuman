@@ -38,11 +38,11 @@ There's no built-in model, no API key, no account, no translation server, and no
 <table>
   <tr>
     <td width="50%" valign="top"><img src="store/screenshots/chromium/en/01-overlay.png" alt="Your translation over the video: the English line over the Arabic original, the Display mode control, and Tarjuman's buttons on the player bar"></td>
-    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/02-workflow.png" alt="The translation, in your hands: in Tarjuman you download the original and copy the instructions; outside it, the model you choose translates"></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/02-workflow.png" alt="Four steps, with the translation in your hands: in Tarjuman you download the original and copy the instructions; outside it, the model you choose translates"></td>
   </tr>
   <tr>
     <td width="50%" valign="top"><img src="store/screenshots/chromium/en/03-timing.png" alt="Sync by a sentence you hear: the timing menu over the player, and the − and + buttons on its bar"></td>
-    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/04-panel.png" alt="The whole translation beside the video: the synced transcript panel with the current segment highlighted"></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/04-panel.png" alt="The whole translation beside the video: the synced transcript panel next to the player, with the current segment highlighted"></td>
   </tr>
   <tr>
     <td width="50%" valign="top"><img src="store/screenshots/chromium/en/05-editor.png" alt="Compares your file with the original: editor rows with a missing segment"></td>
