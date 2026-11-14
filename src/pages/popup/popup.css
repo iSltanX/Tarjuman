@@ -60,8 +60,9 @@
 .tj-popup__entry-result:empty { position: absolute; }
 .tj-popup__entry-result { display: flex; flex-direction: column; gap: 6px; }
 
-/* «تحرير الترجمة» داخل البطاقة: زر مؤطّر صغير في أولها (لوحة 09). */
-.tj-popup__actions { display: flex; justify-content: flex-start; }
+/* «تحرير الترجمة» داخل البطاقة: زر مؤطّر صغير في أولها (لوحة 09)، و«أكمل الناقص (N)» قبله حين تنقص مقاطع (ف1). بينهما فجوة،
+   ويلتفان إلى سطرين حين لا يتسعان في عرض البطاقة (بالإنجليزية خرج الثاني 17px) فلا يخرج الثاني عن حدها (ST1). */
+.tj-popup__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
 .tj-popup__actions:empty { display: none; }
 
 /* كتلة «تعليمات الترجمة» (لوحة 09): عنوانها وزر «الخطوات» في صفه (ح-60)، وصف «من ⇄ إلى» (حقلا 40 ومبادلة 32 بفجوة 6)، وسطر

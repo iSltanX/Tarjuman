@@ -3,6 +3,7 @@
 // الـDOM وهمي فوق تخزين حقيقي بمحاكاة. لا تُمرَّر عقدة إلى assert.equal (انظر fake-dom.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { messageFor } from '../../../../src/core/errors/index.js';
 import { DEFAULT_PREFS } from '../../../../src/core/model/prefs.js';
 import { createStore } from '../../../../src/core/store/index.js';
@@ -192,6 +193,20 @@ test('بطاقة بلا ترجمة: سطر مسار الأصل بالوصف ال
   const bareLine = bare.querySelector('.tj-popup__english');
   assert.equal(textOf(bareLine), 'لم تُلتقط ترجمة الفيديو بعد');
   assert.equal(findAll(bareLine, (e) => e.tagName === 'svg').length, 0);
+});
+
+test('زرا البطاقة «أكمل الناقص (N)» و«تحرير الترجمة» في صف واحد يلتف بفجوة، فلا يخرج الثاني عن حدها بالإنجليزية (ST1)', async () => {
+  const doc = newDocument();
+  const r = withArabic();
+  const b = (label) => Object.assign(doc.createElement('button'), { textContent: label });
+  const card = statusCard(describeStatus(r), toolsStatus(r), null, doc, [b('Complete missing (3)'), null, b('Edit translation')]);
+  const row = card.querySelector('.tj-popup__actions');
+  assert.deepEqual([...row.children].map((x) => textOf(x)), ['Complete missing (3)', 'Edit translation'], 'الزران في صف واحد بترتيبهما');
+  // في عرض النافذة 340 يتسع الزران بالعربية في سطر ويلتفان بالإنجليزية (popup-fit: «Edit translation» كان يخرج 17px).
+  const css = await readFile(new URL('../../../../src/pages/popup/popup.css', import.meta.url), 'utf8');
+  const rule = /\.tj-popup__actions \{[^}]*\}/.exec(css)?.[0] ?? '';
+  assert.match(rule, /flex-wrap: wrap/);
+  assert.match(rule, /gap: 8px/);
 });
 
 test('خطأ ربط الأدوات: النص والسبب في البطاقة، ورفض الالتقاط سطر تحذير بنصه', () => {
