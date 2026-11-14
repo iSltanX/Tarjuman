@@ -58,3 +58,12 @@ test('ص-١٩ (٤): «ب» تلتصق باسم اللغة العربي بلا ت
   }
   assert.ok(bare >= 3, `أسماء لا تبدأ بـ«ال»: ${bare}`);
 });
+
+test('ص-١٩ (٥): وصف قسم «العرض» يذكر صف اختصارات لوحة المفاتيح بترتيب صفوفه', (ctx) => {
+  reset(ctx);
+  assert.equal(t('settings.sections.display.desc'), 'شكل الترجمة فوق الفيديو، ولوحة النص المتزامن وزرها، واختصارات لوحة المفاتيح، وصور الفيديو في المحفوظات.');
+  assert.ok(t('settings.sections.display.desc').includes(t('settings.shortcuts.label')));
+  setLocale('en');
+  assert.equal(t('settings.sections.display.desc'), 'How the translation looks over the video, the synced transcript panel and its button, keyboard shortcuts, and video thumbnails in Library.');
+  assert.ok(t('settings.sections.display.desc').includes(t('settings.shortcuts.label').toLowerCase()));
+});

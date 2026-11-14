@@ -12,7 +12,7 @@ export default Object.freeze({
     displayDefault: 'Display mode, subtitle font, size, background and position are already at their defaults.',
   },
   sections: {
-    display: { title: 'Display', desc: 'How the translation looks over the video, the synced transcript panel and its button, and video thumbnails in Library.' },
+    display: { title: 'Display', desc: 'How the translation looks over the video, the synced transcript panel and its button, keyboard shortcuts, and video thumbnails in Library.' },
     langs: { title: 'Languages', desc: 'The languages translation instructions start with, and setting a language for saved translations that have none.' },
     export: { title: 'Export', desc: 'Where downloaded files are saved, how original segments are shaped, and when to suggest splitting into parts.' },
     compare: { title: 'Compare and review', desc: 'When translation timing counts as different from the original, and when to flag reading speed.' },
