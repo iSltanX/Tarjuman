@@ -175,8 +175,8 @@
 | Support email وwebsite وHomepage | اختيارية | 100 و255 و255 محرفًا | `iSultanBy@gmail.com` و`bysltan.com`. T7 | addons-server |
 | License | مطلوبة للمدرج | منها `all-rights-reserved` | **حُسم في T4:** All Rights Reserved (§٥) | [addons-server licenses](https://mozilla.github.io/addons-server/topics/api/licenses.html) |
 | Privacy policy | مطلوبة متى نُقلت بيانات من الجهاز | لم تعد تُستضاف في AMO، ويُستحسن رابطها في الإدراج | T5 وT7 | [add-on-policies-faq](https://extensionworkshop.com/documentation/publish/add-on-policies-faq/) |
-| Notes for Reviewers | اختيارية | حتى 3,000، ولا يراها إلا Mozilla | T6 | addons-server |
-| Release notes | اختيارية | حتى 3,000 | T6 | addons-server |
+| Notes for Reviewers | اختيارية | حتى 3,000، ويُعدّ السطر الجديد محرفين لأن النموذج يرسله CRLF (ثبت عند تقديم Firefox، 2026-11-09)، ولا يراها إلا Mozilla. ويعدّها `store-assets.mjs` كذلك (`amoChars`) | T6 | addons-server |
+| Release notes | اختيارية | حتى 3,000، وتُعدّ كملاحظات المراجعين احتياطًا لأنها في صفحة الإصدار نفسها | T6 | addons-server |
 | Icon | من البيان | مربعة، وتُخزَّن بمقاسات 32 و64 و128 | 128 موجودة | [create-an-appealing-listing](https://extensionworkshop.com/documentation/develop/create-an-appealing-listing/) |
 | Screenshots | اختيارية | الموصى به 1280×800 (1.6:1). وإن كان المفتاح `content-optimization` مفعّلًا في الإنتاج، وهذا لم يُتحقق منه، فالشرط 1000×750 فأكثر بنسبة 4:3. ومقاس 1280×960 يجتاز الحالتين | T6 | [create-an-appealing-listing](https://extensionworkshop.com/documentation/develop/create-an-appealing-listing/) |
 | المراجعة | — | تحقق آلي قبل التوقيع حتى 24 ساعة، وأطول إن اختيرت للمراجعة اليدوية. ومراجعة الشيفرة يدويًا ممكنة في أي وقت بعد النشر | — | [submitting-an-add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/) |

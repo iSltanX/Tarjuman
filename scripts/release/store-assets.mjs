@@ -25,8 +25,8 @@ const DESCRIPTION = { noOtherBrowser: true, trademark: true, brandMax: 5, noDown
 const DESCRIPTION_EN = { ...DESCRIPTION, trademark: TRADEMARK_EN };
 
 /**
- * الحقول وحدودها: max/min بالمحارف (نقاط الترميز)، وnoUrl، وقواعد الوصف. المصدر في store/README.md §٣.
- * @type {Record<string, { max?: number, min?: number, noUrl?: boolean, equalsManifest?: 'name'|'description', lines?: { max: number, each: number, words: number }, tags?: boolean, slug?: boolean, noOtherBrowser?: boolean, trademark?: boolean | string, locale?: 'en', brandMax?: number, noDownloader?: boolean }>}
+ * الحقول وحدودها: max/min بالمحارف (نقاط الترميز)، وcrlf: يُعدّ السطر الجديد محرفين كما يعدّه AMO، وnoUrl، وقواعد الوصف. المصدر في store/README.md §٣.
+ * @type {Record<string, { max?: number, min?: number, crlf?: boolean, noUrl?: boolean, equalsManifest?: 'name'|'description', lines?: { max: number, each: number, words: number }, tags?: boolean, slug?: boolean, noOtherBrowser?: boolean, trademark?: boolean | string, locale?: 'en', brandMax?: number, noDownloader?: boolean }>}
  */
 export const FIELD_RULES = Object.freeze({
   'manifest.name': { max: 45, equalsManifest: 'name', noOtherBrowser: true, noDownloader: true }, // Chrome 75، وAMO 50، وEdge بحسب MDN 45
@@ -39,7 +39,7 @@ export const FIELD_RULES = Object.freeze({
   'amo.summary': { max: 250, noUrl: true, noOtherBrowser: true, noDownloader: true }, // AMO
   'chromium.description': { min: 250, max: 10000, ...DESCRIPTION }, // Edge: من 250 إلى 10,000
   'amo.description': { max: 15000, ...DESCRIPTION }, // AMO
-  'amo.releaseNotes': { max: 3000, noOtherBrowser: true }, // addons-server
+  'amo.releaseNotes': { max: 3000, crlf: true, noOtherBrowser: true }, // addons-server، من صفحة الإصدار نفسها التي فيها Notes for Reviewers
   'amo.slug': { max: 30, slug: true },
   'amo.tags': { tags: true, lines: { max: 10, each: 30, words: 100 } },
   'edge.searchTerms': { lines: { max: 7, each: 30, words: 21 } }, // Partner Center
@@ -51,7 +51,7 @@ export const FIELD_RULES = Object.freeze({
   'reviewer.chrome': { min: 200 },
   'reviewer.edge': { min: 30 },
   'reviewer.edge.fallback': { min: 200, max: 1999 }, // النسخة المختصرة إن ضاق حد Notes for certification، وهو غير معروف
-  'reviewer.amo': { min: 200, max: 2970 }, // Notes for Reviewers: الحد 3000 لكن AMO يعدّ السطر الجديد محرفين
+  'reviewer.amo': { min: 200, max: 3000, crlf: true }, // Notes for Reviewers: الحد 3000، وAMO يعدّ السطر الجديد محرفين
 });
 
 /** @param {string} md @returns {{ id: string, text: string }[]} */
@@ -65,6 +65,16 @@ export function parseFields(md) {
 const chars = (s) => [...s].length;
 
 /**
+ * الطول كما يعدّه AMO: نموذج صفحة الإصدار يرسل السطر الجديد CRLF، والخادم يعدّ نقاط الترميز، فالسطر الجديد محرفان (ثبت عند
+ * تقديم Firefox في 2026-11-09). وكان الحد قبله 2970 نقطة ترميز، وهو تقريب لا يصدق إلا حتى ثلاثين سطرًا جديدًا (تحقق 2.3.0، ص-٢٠).
+ * @param {string} s
+ */
+export const amoChars = (s) => {
+  const lf = s.replace(/\r\n?/g, '\n');
+  return chars(lf) + (lf.match(/\n/g) ?? []).length;
+};
+
+/**
  * @param {{ id: string, text: string }} field @param {{ name: string, description: string }} manifest نصا البيان العربيان
  * @param {Record<string, { name: string, description: string }>} [locales] نصا البيان لكل لغة أخرى، للحقول التي لها locale
  * @returns {string[]} المشكلات بالعربية
@@ -73,9 +83,9 @@ export function checkField({ id, text }, manifest, locales = {}) {
   const rule = FIELD_RULES[id];
   if (!rule) return [`حقل غير معروف: ${id}`];
   const p = [];
-  const n = chars(text);
+  const n = rule.crlf ? amoChars(text) : chars(text);
   if (!text.trim()) p.push('فارغ');
-  if (rule.max && n > rule.max) p.push(`طوله ${n} وحده ${rule.max}`);
+  if (rule.max && n > rule.max) p.push(`طوله ${n}${rule.crlf ? ' (والسطر الجديد محرفان)' : ''} وحده ${rule.max}`);
   if (rule.min && n < rule.min) p.push(`طوله ${n} وأدناه ${rule.min}`);
   if (INVISIBLE_RE.test(text)) p.push('فيه محرف اتجاه أو محرف غير مرئي');
   if (rule.noUrl && URL_RE.test(text)) p.push('فيه رابط والحقل يمنعه');
@@ -218,7 +228,7 @@ export async function checkStore(root = ROOT) {
       if (seen.has(field.id)) problems.push(`${f}: ${field.id} مكرر`);
       seen.add(field.id);
       const issues = checkField(field, manifest, locales);
-      summary.fields.push({ id: field.id, chars: chars(field.text) });
+      summary.fields.push({ id: field.id, chars: FIELD_RULES[field.id]?.crlf ? amoChars(field.text) : chars(field.text) });
       for (const i of issues) problems.push(`${f}: ${field.id} — ${i}`);
     }
   }

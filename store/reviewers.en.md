@@ -95,12 +95,12 @@ Sample (test.ar.srt):
 
 <!-- field: reviewer.amo -->
 ```text
-No account, login or payment is needed. Desktop only. Interface: English or Arabic (Settings > Display); names below are English.
+No account or payment is needed. Interface: English or Arabic (Settings > Display); names below are English.
 
-Source code: tarjuman-2.3.0-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild bundles each entry with syntax-level minification only: no renamed identifiers, no source maps, no obfuscation.
+Source code: tarjuman-2.3.0-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild uses syntax-level minification only: no renamed identifiers, source maps or obfuscation.
 
 Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3c
-1. Turn on captions (CC); any language works, English is used here. Tarjuman adds buttons to the player's control bar.
+1. Turn on captions (CC; any language works, English here). Tarjuman adds buttons to the player's control bar.
 2. "Download original (SRT)" > "Download file" saves the English .srt (via a blob: URL in the background script). The toolbar popup copies translation instructions ("Copy instructions").
 3. Translation happens outside the extension. To skip it, save the Arabic sample below as test.ar.srt.
 4. "Upload translation (SRT)" > choose the file. Arabic lines appear over the video from 3:00; the missing lines are reported, never changed silently. − and + shift the timing.
@@ -109,8 +109,8 @@ Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3
 How subtitles are read: a main-world content script at document_start wraps fetch and XMLHttpRequest and reads a copy of the /api/timedtext response the YouTube player requested. It sends no request and passes the page's call through unchanged. "Turn on CC now"/"Restart CC" (Download original menu) only clicks the player's CC button on the user's press.
 
 Data (data_collection_permissions: required none; optional browsingActivity):
-- Library thumbnails (optional, off by default): <img> elements in the Library page loading i.ytimg.com/vi/<video ID>/mqdefault.jpg with referrerpolicy="no-referrer", so no page address is sent. Nothing is requested until the user turns on Settings > Display > "Video thumbnails in Library" and accepts Firefox's prompt for the optional browsingActivity permission (permissions.request({ data_collection: ["browsingActivity"] })). Declining keeps them off. Consent is re-read before each image, so withdrawing it in about:addons stops them. They only help recognize saved videos; Library and every other feature work fully without them.
-- Problem report from Settings > About > "Report a problem": copied as text after a full preview, for the user to email to the support address. The extension sends nothing and has no optional host permission. Since 2.2.0 technicalAndInteraction is no longer declared.
+- Library thumbnails (off by default): <img> elements in the Library page loading i.ytimg.com/vi/<video ID>/mqdefault.jpg with referrerpolicy="no-referrer". Nothing is requested until the user turns on Settings > Display > "Video thumbnails in Library" and accepts Firefox's prompt for the optional browsingActivity permission (permissions.request({ data_collection: ["browsingActivity"] })). Declining keeps them off. Consent is re-read before each image, so withdrawing it in about:addons stops them. They only help recognize saved videos; everything works without them.
+- Problem report from Settings > About > "Report a problem": copied as text after a full preview, for the user to email. The extension sends nothing and has no optional host permission. Since 2.2.0 technicalAndInteraction is no longer declared.
 Everything else stays in storage.local.
 
 Five manifest commands have no suggested_key; users bind them in Manage Extension Shortcuts. If www.youtube.com access is withdrawn, the popup and Settings say so; "Allow" in Settings re-requests that same origin with permissions.request.

@@ -19,7 +19,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readZip } from './zip.mjs';
-import { checkStore, parseFields } from './store-assets.mjs';
+import { amoChars, checkStore, parseFields } from './store-assets.mjs';
 import { changedSince, evidenceScope } from './evidence-scope.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -275,7 +275,7 @@ ${block(field['amo.releaseNotes'])}
 
 ${common}
 `);
-await put('stores/firefox-amo/reviewer-notes.md', `# Notes for Reviewers — Tarjuman ${VERSION}\n\nFrom \`store/reviewers.en.md\` (\`reviewer.amo\`, ${[...field['reviewer.amo']].length} of 3,000 characters).\n\n${block(field['reviewer.amo'])}\n`);
+await put('stores/firefox-amo/reviewer-notes.md', `# Notes for Reviewers — Tarjuman ${VERSION}\n\nFrom \`store/reviewers.en.md\` (\`reviewer.amo\`, ${amoChars(field['reviewer.amo'])} of 3,000 characters as AMO counts them, a line break as two).\n\n${block(field['reviewer.amo'])}\n`);
 
 // ---- المصدر والتحقق ----
 await cp(path.join(STORE, `tarjuman-${VERSION}-store.json`), `provenance/tarjuman-${VERSION}-store.json`);

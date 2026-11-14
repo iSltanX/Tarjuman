@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { deflateSync } from 'node:zlib';
-import { AMO_TAGS, FIELD_RULES, checkField, checkImage, checkStore, decodePng, parseFields } from '../../../scripts/release/store-assets.mjs';
+import { AMO_TAGS, FIELD_RULES, amoChars, checkField, checkImage, checkStore, decodePng, parseFields } from '../../../scripts/release/store-assets.mjs';
 
 const MANIFEST = { name: 'ترجمان — ترجمتك فوق الفيديو', description: 'وصف قصير' };
 
@@ -66,7 +66,20 @@ test('checkField: كلمات Edge ووسوم AMO والرابط القصير', (
   assert.match(checkField({ id: 'amo.tags', text: 'subtitles' }, MANIFEST).join(), /ليس من وسوم AMO/);
   assert.match(checkField({ id: 'amo.slug', text: 'Tarjuman_1' }, MANIFEST).join(), /الأحرف اللاتينية/);
   assert.match(checkField({ id: 'x.y', text: 'نص' }, MANIFEST).join(), /حقل غير معروف/);
-  assert.ok(FIELD_RULES['reviewer.amo'].max === 2970); // حد AMO 3000 ويعدّ السطر الجديد محرفين
+});
+
+test('checkField: حقلا صفحة الإصدار في AMO بحد 3000 والسطر الجديد محرفان، كما يعدّهما AMO (تحقق 2.3.0، ص-٢٠)', () => {
+  assert.ok(FIELD_RULES['reviewer.amo'].max === 3000 && FIELD_RULES['reviewer.amo'].crlf === true);
+  assert.ok(FIELD_RULES['amo.releaseNotes'].max === 3000 && FIELD_RULES['amo.releaseNotes'].crlf === true);
+  assert.equal(amoChars('أ\nب'), 4);
+  assert.equal(amoChars('أ\r\nب'), 4, 'CRLF سطر جديد واحد');
+  // 2960 نقطة ترميز و41 سطرًا جديدًا: 3001 عند AMO. وكان الحد التقريبي 2970 بنقاط الترميز يقبلها.
+  const over = `${'x'.repeat(2919)}${'\n'.repeat(41)}`;
+  assert.match(checkField({ id: 'reviewer.amo', text: over }, MANIFEST).join(), /طوله 3001 \(والسطر الجديد محرفان\) وحده 3000/);
+  assert.match(checkField({ id: 'amo.releaseNotes', text: over }, MANIFEST).join(), /طوله 3001/);
+  // 2990 نقطة ترميز و10 أسطر جديدة: 3000 عند AMO، في الحد. وكان الحد التقريبي يرفضها.
+  const atLimit = `${'x'.repeat(2980)}${'\n'.repeat(10)}`;
+  assert.deepEqual(checkField({ id: 'reviewer.amo', text: atLimit }, MANIFEST), []);
 });
 
 test('decodePng: يفك RGBA وRGB بمقاسهما وقيم بكسلاتهما', () => {
