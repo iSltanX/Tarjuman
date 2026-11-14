@@ -57,7 +57,7 @@ npm run package
 1. **حال `<السابق>` في Edge Add-ons وAMO** من لوحة كل متجر: منشور، أو قيد المراجعة، أو مرفوض. فإن كان تقديمه قيد المراجعة فقرّر قبل رفع `<الإصدار>` ما يكون له، بما تقوله لوحة المتجر نفسها لا بتخمين. (عند كتابة هذه القائمة: 2.2.0 منشور في Edge Add-ons بقول سلطان ولم يُقس، وقيد المراجعة في AMO؛ `store/submission.md` §٥.)
 2. **البوابة قبل الرفع** على التزام الدمج: `npm run release:gate`.
 3. **الحزم:** `npm run package` على التزام الدمج إن أردت أن يحمل `release/store/tarjuman-<الإصدار>-store.json` ذلك الالتزام. والبايتات لا تتغير ما دام ما تضمّه حزمة المصدر لم يتغير (`SOURCE_PATHS` في `scripts/release/store.mjs`). و`scripts/release/v2.mjs` يجمعها مع مواد `store/` في مجلد واحد خارج المستودع للرفع اليدوي (`docs/development.md`).
-4. **الرفع**، بيد سلطان: `tarjuman-<الإصدار>-chrome.zip` إلى Chrome Web Store، و`-edge.zip` إلى Edge Add-ons، و`-firefox.zip` ومعه `-source.zip` إلى AMO. والنصوص من `store/listing.ar.md` و`store/listing.en.md` و`store/reviewers.en.md` وإجابات `store/submission.md` (`store/README.md` §٧).
+4. **الرفع**، بيد سلطان: `tarjuman-<الإصدار>-chrome.zip` إلى Chrome Web Store، و`-edge.zip` إلى Edge Add-ons، و`-firefox.zip` ومعه `-source.zip` إلى AMO. وقبل رفع AMO بعد 1 ديسمبر 2026 تُعاد قراءة سياسات Mozilla المحدّثة و«المخاطرة المتبقية» لصور Firefox في `docs/site/README.md`. والنصوص من `store/listing.ar.md` و`store/listing.en.md` و`store/reviewers.en.md` وإجابات `store/submission.md` (`store/README.md` §٧).
 
 ## ٧. بعد قبول كل متجر
 
