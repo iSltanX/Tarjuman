@@ -54,9 +54,9 @@
 }
 .tj-btn--primary[aria-busy="true"]::after { border-color: rgb(255 255 255 / 35%); border-top-color: var(--tj-brand-ink); }
 /* الداكن بالوضعين كرموز tokens.css: data-theme="dark" يفرضه، ووضع النظام الداكن ما لم يُفرض الفاتح (الصفحات لا تضبط data-theme؛ ت-١٢). */
-:root[data-theme="dark"] .tj-btn--primary[aria-busy="true"]::after { border-color: rgb(15 25 23 / 35%); border-top-color: var(--tj-brand-ink); }
+:root[data-theme="dark"] .tj-btn--primary[aria-busy="true"]::after { border-color: rgb(21 12 18 / 35%); border-top-color: var(--tj-brand-ink); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tj-btn--primary[aria-busy="true"]::after { border-color: rgb(15 25 23 / 35%); border-top-color: var(--tj-brand-ink); }
+  :root:not([data-theme="light"]) .tj-btn--primary[aria-busy="true"]::after { border-color: rgb(21 12 18 / 35%); border-top-color: var(--tj-brand-ink); }
 }
 @keyframes tj-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes tj-spin { to { transform: rotate(360deg); } }
