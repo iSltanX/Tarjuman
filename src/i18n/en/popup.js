@@ -1,7 +1,6 @@
 // Extension popup strings: mirrors src/i18n/ar/popup.js key for key. The popup is about 360px wide, so lines stay short.
 export default Object.freeze({
   title: 'Extension popup',
-  currentVideo: 'Current video',
   recent: 'Recent translations',
   notVideo: 'Open a YouTube video to start.',
   siteAccess: { open: 'Grant permission in Settings' },
@@ -46,13 +45,14 @@ export default Object.freeze({
   },
   paste: {
     label: 'Paste the translation here',
-    hint: 'Paste the model’s reply as it is (SRT or chat text): it’s checked like an uploaded file, and its result shows in the Translation menu on the video page.',
+    how: 'How?',
+    hint: 'Paste the model’s reply as is (SRT or chat text). It’s checked like an uploaded file; the result is in the Translation menu.',
     placeholder: 'Paste here ({mac} or {pc})',
     sent: 'Sent to the video page: see the result in the Translation menu.',
     empty: 'There’s no text in what you pasted.',
     tooLarge: 'The pasted text is larger than the upload limit (5 MB).',
     failed: 'Couldn’t send the text to the video page. Reload the page, then paste again.',
-    busy: 'Something is still open in the player (an upload, confirmation, edit or sync); finish or cancel it, then paste again.',
+    busy: 'The player has unfinished work (an upload, confirmation, edit or sync); finish or cancel it, then paste again.',
   },
   pair: {
     title: 'Translation instructions', copy: 'Copy instructions', copied: 'Instructions copied', failed: 'Couldn’t copy — try again',
@@ -63,7 +63,7 @@ export default Object.freeze({
     needFrom: 'Choose the language of the file you’ll translate (“From”).',
     needTo: 'Choose the language to translate into.',
     same: 'The two languages are the same; pick a different one for either.',
-    caption: 'Instructions for your model that keep segment numbers, timing and the SRT format.',
+    caption: 'Holds your model to segment numbers, timing and SRT.',
     done: 'Paste them with the original file into your model’s chat.',
     machine: 'Original: {track}.',
   },

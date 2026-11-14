@@ -25,7 +25,7 @@ test('الزر معطّل بسببه: ليست صفحة فيديو، وجارٍ 
   assert.equal(pairState({ reply: r, pair: { from: 'en', to: 'en' } }).reason, PAIR_TEXT.same);
   const ok = pairState({ reply: r, pair: { from: 'ja', to: 'en' } });
   assert.equal(ok.ready, true);
-  assert.equal(ok.caption, 'تعليمات لنموذجك تحافظ على أرقام المقاطع وتوقيتها وصيغة SRT.');
+  assert.equal(ok.caption, 'تعليمات تُلزم نموذجك بأرقام المقاطع وتوقيتها وصيغة SRT.');
   assert.equal(ok.done, 'ألصقها مع ملف الأصل في محادثة نموذجك.');
   assert.equal(pairState({ reply: r, pair: { from: 'ar', to: 'en' } }).ready, true, 'أي اتجاه (الحالة D)');
 });

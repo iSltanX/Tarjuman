@@ -1,5 +1,6 @@
-/* نافذة الأيقونة (الهوية الرابعة «كتابٌ مفتوح»، لوحة 09): 340 عرضًا وارتفاع بحسب المحتوى (الحالات المعتادة بلا تمرير؛ والمتصفح
-   يحدّها بـ600، ح-60: ما يُقرأ مرة مطوي أو وصف أو في سطر الأدوات، والخط والعرض كما هما). رأس 52 بالشعار (الرمز 24 والاسم 18) و«ترجماتك وإعداداتك في متصفحك» على سطح البطاقة، وبطاقة الفيديو الحالي على العاج بخط شعري لا ظل
+/* نافذة الأيقونة (الهوية الرابعة «كتابٌ مفتوح»، لوحة 09): 340 عرضًا وارتفاع بحسب المحتوى (أطول الحالات المعتادة بلا تمرير؛ والمتصفح
+   يحدّها بـ600، ح-60 وص-٥: الخطوات وشرح اللصق مطويان على بُعد نقرة، و«نسخ تشخيص الصفحة» في سطر الأدوات، وسطر مصدر اللغة وشرح زر
+   النسخ ظاهران، والخط والعرض كما هما؛ والقياس في المتصفحات الأربعة test/live/stores/popup-fit.mjs). رأس 52 بالشعار (الرمز 24 والاسم 18) و«ترجماتك وإعداداتك في متصفحك» على سطح البطاقة، وبطاقة الفيديو الحالي على العاج بخط شعري لا ظل
    وفيها «تحرير الترجمة» مؤطّرًا، ثم كتلة «تعليمات الترجمة» (AA3)، ثم تذييل 48 بمدخل واحد لكل وجهة (المحفوظات والإعدادات). كل لون من
    رموز src/ui/tokens.css بالوضعين، والمعيّن (نقطة التاء) نقطة الحالة وحدها. */
 .tj-popup { width: 340px; min-height: 0; background: var(--tj-bg); }
@@ -7,11 +8,12 @@
 .tj-popup__head { min-height: 52px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 16px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
 .tj-popup__local { display: inline-flex; align-items: center; gap: 6px; min-width: 0; text-align: start; font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 .tj-popup__local .tj-icon { width: 14px; height: 14px; }
-.tj-popup__main { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 16px; }
+.tj-popup__main { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 12px; } /* 12 فوق التذييل (ص-٥؛ كانت 16) */
 .tj-popup__eyebrow { font: 700 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 
-/* بطاقة الفيديو الحالي. */
-.tj-popup__card { display: flex; flex-direction: column; gap: 10px; align-items: stretch; padding: 14px; border-radius: var(--tj-radius-card); background: var(--tj-surface); border: 1px solid var(--tj-border); }
+/* بطاقة الفيديو الحالي. الفجوة داخلها وداخل الكتلتين 8 (ص-٥، ST1؛ كانت 10، وسلّم المكوّن يقبلها)، وبين الكتل 12 كما هي: فمع سطر مصدر
+   اللغة وشرح زر النسخ ظاهرين تبقى أطول الحالات المعتادة تحت 600 بلا تصغير خط ولا عرض (test/live/stores/popup-fit.mjs). */
+.tj-popup__card { display: flex; flex-direction: column; gap: 8px; align-items: stretch; padding: 14px; border-radius: var(--tj-radius-card); background: var(--tj-surface); border: 1px solid var(--tj-border); }
 .tj-popup__card .tj-rule { margin: 0; }
 .tj-popup__title { font: 700 16px/24px var(--tj-font-head); }
 .tj-popup__line { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
@@ -64,7 +66,7 @@
 
 /* كتلة «تعليمات الترجمة» (لوحة 09): عنوانها وزر «الخطوات» في صفه (ح-60)، وصف «من ⇄ إلى» (حقلا 40 ومبادلة 32 بفجوة 6)، وسطر
    المصدر، وزر النسخ 40 بعرض كامل (الإجراء الرئيسي الوحيد في النافذة)، وسبب تعطيله أو نتيجته تحته. النتيجة على الزر نفسه لثانيتين. */
-.tj-popup__pair { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tj-popup__pair { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .tj-popup__pair > .tj-popup__eyebrow, .tj-popup__pair-head > .tj-popup__eyebrow { margin: 0; }
 .tj-popup__pair-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 /* «الخطوات»: زر نصي صغير بسطر العنوان (18) وسهمه، وهدفه 34 بامتداد لا يغيّر السطر؛ والسهم يقلب حين تُفتح. */
@@ -81,10 +83,12 @@
 .tj-popup__copy[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 .tj-popup__pair-caption { margin: 0; font: 400 12px/18px var(--tj-font-body); color: var(--tj-text-2); }
 .tj-popup__pair-caption:empty { display: none; }
+/* السطر تحت زر النسخ ظاهر في كل حالاته (ص-٥): شرحه، أو سبب التعطيل، أو النتيجة؛ ملاصق للزر بفجوة 4 كسطر المصدر تحت الحقلين (فجوة الكتلة 8 إلا 4). */
+.tj-popup__copy + .tj-popup__pair-caption { margin-top: -4px; }
 .tj-popup__pair-caption[data-tone="muted"] { color: var(--tj-muted); }
 .tj-popup__pair-caption[data-tone="success"] { color: var(--tj-success); }
 .tj-popup__pair-caption[data-tone="danger"] { color: var(--tj-danger); }
-/* سطر المصدر تحت الحقلين، وسطر الفيديو المترجم إلى لغته (ح-58): تنبيه بأيقونته وزر نصي يفتح تفصيله تحته. */
+/* سطر المصدر تحت الحقلين ظاهرًا (ص-٥)، أو سطر الفيديو المترجم إلى لغته (ح-58): تنبيه بأيقونته وزر نصي يفتح تفصيله تحته. */
 .tj-popup__source:empty { display: none; }
 .tj-popup__source { margin: -4px 0 0; }
 .tj-popup__source > .tj-popup__pair-note { margin: 0; }

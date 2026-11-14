@@ -118,7 +118,7 @@ test('كتلة التعليمات: كل سبب تعطيل وسطر المصدر 
     const ready = pairState({ reply: r, pair: { from: 'ja', to: 'en' } });
     assert.equal(ready.ready, true);
     assert.equal(ready.sourceNote, 'Original language detected from the video’s subtitles.');
-    assert.equal(ready.caption, 'Instructions for your model that keep segment numbers, timing and the SRT format.');
+    assert.equal(ready.caption, 'Holds your model to segment numbers, timing and SRT.');
     assert.equal(ready.done, 'Paste them with the original file into your model’s chat.');
     assert.equal(machineNote('ja', 'en'), 'Original: Japanese, auto-translated by YouTube from English.');
   });

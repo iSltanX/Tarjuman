@@ -1,5 +1,6 @@
 // ح-60 بالإنجليزية: نافذة الإضافة في حالتها المعتادة بلغة الواجهة الإنجليزية (uiLocale في التخزين): الأساسي ظاهر، و«Steps» مطوية،
-// والشروح أوصاف، و«Copy page diagnostics» في سطر الأدوات، ولا حرف عربي. تُحمَّل نقطة الدخول مرة واحدة في هذه العملية.
+// وسطر المصدر وشرح زر النسخ ظاهران وشرح اللصق خلف «How?» (ص-٥)، و«Copy page diagnostics» في سطر الأدوات، ولا حرف عربي. تُحمَّل نقطة
+// الدخول مرة واحدة في هذه العملية.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createEntryEnv } from '../../../helpers/c8-entry-env.js';
@@ -32,7 +33,7 @@ const shown = (node) => {
   return true;
 };
 
-test('ح-60 بالإنجليزية: الأساسي ظاهر، و«Steps» مطوية، والشروح أوصاف، والتشخيص في سطر الأدوات', () => {
+test('ح-60 وص-٥ بالإنجليزية: الأساسي ظاهر، و«Steps» مطوية، وسطر المصدر وشرح النسخ ظاهران وشرح اللصق خلف «How?»، والتشخيص في سطر الأدوات', () => {
   const card = all((e) => e.classList?.contains('tj-popup__status'))[0];
   assert.equal(textOf(card.querySelector('.tj-popup__english')), 'English · auto-generated · 1066 segments · captured');
   assert.ok(shown(byAction('copy')));
@@ -43,9 +44,14 @@ test('ح-60 بالإنجليزية: الأساسي ظاهر، و«Steps» مطو
   assert.equal(textOf(toggle), 'Steps');
   assert.equal(toggle.getAttribute('aria-expanded'), 'false');
   assert.equal(shown(doc.querySelector('#tj-steps')), false);
-  assert.equal(doc.querySelector('#tj-pair-caption').classList.contains('tj-sr-only'), true);
-  assert.equal(doc.querySelector('#tj-paste-hint').classList.contains('tj-sr-only'), true);
+  // ص-٥: شرح النسخ وسطر المصدر ظاهران، وشرح اللصق خلف «How?».
+  assert.ok(shown(doc.querySelector('#tj-pair-caption')), 'شرح النسخ ظاهر');
   assert.equal(textOf(doc.querySelector('#tj-pair-source')), 'Original language detected from the video’s subtitles.');
+  assert.ok(shown(doc.querySelector('#tj-pair-source')), 'سطر المصدر ظاهر');
+  const how = byAction('paste-how');
+  assert.equal(textOf(how), 'How?');
+  assert.equal(how.getAttribute('aria-controls'), 'tj-paste-hint');
+  assert.equal(shown(doc.querySelector('#tj-paste-hint')), false, 'شرح اللصق مطوي خلفه');
   const tools = all((e) => e.classList?.contains('tj-popup__tools'))[0];
   assert.equal(textOf(tools), 'Player tools are workingCopy page diagnostics');
   assert.equal(/[؀-ۿ]/.test(textOf(doc.querySelector('main'))), false, textOf(doc.querySelector('main')));

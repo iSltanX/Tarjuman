@@ -67,6 +67,9 @@ function uiText(locale) {
     // العربية بلغة الواجهة. كلٌّ من عنصره، لا من نص الكتلة كلها (فيه الخطوات المطوية).
     pairHead: [c.get('popup.pair.title'), c.get('popup.steps.toggle')].join(''),
     pairLangs: [c.get('common.langPicker.from'), describeLang('en', locale).name, c.get('common.langPicker.to'), describeLang('ar', locale).name].join(''),
+    // ص-٥: سطر مصدر اللغة وشرح زر النسخ الظاهران.
+    detected: c.get('popup.pair.detected'),
+    caption: c.get('popup.pair.caption'),
     save: c.get('editor.action.save'),
     backup: c.get('settings.data.create'),
     restore: c.get('settings.data.restore'),
@@ -485,7 +488,18 @@ try {
       const info = await pop.waitFor(() => {
         const btn = document.querySelector('.tj-popup__copy');
         const t = (sel) => document.querySelector(sel)?.textContent.replace(/\s+/g, ' ').trim() ?? null;
-        return btn && btn.getAttribute('aria-disabled') !== 'true' ? { status: t('.tj-popup__status'), head: t('.tj-popup__pair-head'), langs: t('.tj-popup__pair .tj-lang-row') } : null;
+        // ص-٥: سطر مصدر اللغة وشرح زر النسخ ظاهران للمبصر (لا tj-sr-only ولا hidden، وصندوق له ارتفاع)، و«كيف؟» بجانب «الصق الترجمة هنا».
+        const seen = (sel) => {
+          const e = document.querySelector(sel);
+          if (!e) return null;
+          for (let n = e; n && n.nodeType === 1; n = n.parentElement) if (n.hidden || n.classList.contains('tj-sr-only')) return false;
+          return e.getBoundingClientRect().height > 1;
+        };
+        return btn && btn.getAttribute('aria-disabled') !== 'true' ? {
+          status: t('.tj-popup__status'), head: t('.tj-popup__pair-head'), langs: t('.tj-popup__pair .tj-lang-row'),
+          source: t('#tj-pair-source'), sourceSeen: seen('#tj-pair-source'), caption: t('#tj-pair-caption'), captionSeen: seen('#tj-pair-caption'),
+          how: seen('[data-action="paste-how"]'), hintHidden: seen('#tj-paste-hint') === false,
+        } : null;
       }, { timeoutMs: 15000 });
       // ما يكتبه المنتج إلى الحافظة: navigator.clipboard.writeText نفسها بعد الضغطة، تُستبدل لتُقرأ (الصفحة في الخلفية بلا تركيز).
       await pop.eval(() => {
@@ -498,11 +512,14 @@ try {
       await pop.click(c.x, c.y);
       const copied = await pop.waitFor(() => window.__t3copied?.at(-1) ?? null, { timeoutMs: 6000 });
       const state = await pop.eval(() => document.querySelector('.tj-popup__copy')?.getAttribute('data-state') ?? null);
+      // ارتفاع محتوى النافذة بعد النسخ (أطول من الهادئة بسطر النتيجة): تحت حد المتصفح 600 بلا تمرير (ح-60 وص-٥).
+      const height = await pop.eval(() => Math.ceil(document.getElementById('app').getBoundingClientRect().height));
       const tx = await pageText(pop, 'popup');
       // التعليمات من الإنجليزية (لغة المسار الملتقط) إلى العربية (الافتراضي)، بلغة الواجهة (نص التعليمات بها)، بالقاموس المرفق أو بدونه.
       const accepted = [null, []].map((glossary) => sha(instructions({ videoId: VIDEO, title: st.title, source: 'en', target: 'ar', glossary, locale: tx.locale })));
-      check('copy-instructions-from-popup', !!info && squash(info.head) === squash(tx.pairHead) && squash(info.langs) === squash(tx.pairLangs) && !!copied && accepted.includes(sha(copied)) && state === 'success',
-        { locale: tx.locale, status: info?.status?.slice(0, 80) ?? null, head: info?.head ?? null, expectedHead: tx.pairHead, langs: info?.langs ?? null, expectedLangs: tx.pairLangs, at: c, copied: copied ? { chars: copied.length, sha: sha(copied) } : null, accepted, state, title: st.title ? 'معروف' : null });
+      const visible = !!info && info.sourceSeen === true && info.source === tx.detected && info.captionSeen === true && info.caption === tx.caption && info.how === true && info.hintHidden;
+      check('copy-instructions-from-popup', !!info && squash(info.head) === squash(tx.pairHead) && squash(info.langs) === squash(tx.pairLangs) && visible && !!copied && accepted.includes(sha(copied)) && state === 'success' && height <= 600,
+        { locale: tx.locale, status: info?.status?.slice(0, 80) ?? null, head: info?.head ?? null, expectedHead: tx.pairHead, langs: info?.langs ?? null, expectedLangs: tx.pairLangs, source: info?.source ?? null, sourceSeen: info?.sourceSeen ?? null, captionSeen: info?.captionSeen ?? null, how: info?.how ?? null, hintHidden: info?.hintHidden ?? null, height, at: c, copied: copied ? { chars: copied.length, sha: sha(copied) } : null, accepted, state, title: st.title ? 'معروف' : null });
       await shot(pop, 'popup');
     } finally {
       await pop.close().catch(() => {});

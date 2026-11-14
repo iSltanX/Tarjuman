@@ -2,9 +2,11 @@
 // روابط: رأس بالشعار المعتمد و«ترجماتك وإعداداتك في متصفحك»، وبطاقة الفيديو الحالي (العنوان والحالة ومؤشر «محفوظ» أو «الأصل محفوظ»،
 // وسطر الأدوات و«نسخ تشخيص الصفحة» في طرفه، و«تحرير الترجمة» مؤطّرًا)، وصف «زر النص المتزامن مخفي» بزر إظهاره حين أخفاه المستخدم، ثم
 // كتلة «تعليمات الترجمة» وفي صف عنوانها «الخطوات» تفتح ثلاث خطوات تُرشد فيديو بلا ترجمة: «من» (تُعبّأ من لغة مسار الفيديو الملتقط أو
-// المنزَّل كما أرسلها يوتيوب، قرار سلطان ق٥) و«إلى» (آخر لغة اختيرت أو الافتراضي) وزر مبادلة، وسطر الفيديو المترجم إلى لغته إن كان
-// (ح-58)، وزر نسخ واحد معطّل حتى تُحدَّد اللغتان وتختلفا؛ ثم «الصق الترجمة هنا»، وعلى غير صفحة فيديو آخر الترجمات لفتحها أو تحريرها؛
-// ثم تذييل بمدخل واحد لكل وجهة. وما يُقرأ مرة مطوي أو وصفٌ لعنصره، فتتسع النافذة بلا تمرير في حالتها المعتادة (ح-60). كل وجهة تفتح صفحتها في تبويب جديد وتُغلق النافذة. لا طلبات شبكة، وكل نص عبر
+// المنزَّل كما أرسلها يوتيوب، قرار سلطان ق٥) و«إلى» (آخر لغة اختيرت أو الافتراضي) وزر مبادلة، وتحتهما سطر مصدر اللغة أو سطر الفيديو
+// المترجم إلى لغته (ح-58)، وزر نسخ واحد معطّل حتى تُحدَّد اللغتان وتختلفا وتحته شرحه أو سببه أو نتيجته؛ ثم «الصق الترجمة هنا» و«كيف؟»
+// بجانبها يفتح شرحه، وعلى غير صفحة فيديو آخر الترجمات لفتحها أو تحريرها؛ ثم تذييل بمدخل واحد لكل وجهة. والخطوات وشرح اللصق مطويان
+// على بُعد نقرة، وسطر المصدر وشرح الزر ظاهران (ص-٥)، فتتسع النافذة بلا تمرير في أطول حالاتها المعتادة (ح-60، test/live/stores/popup-fit.mjs).
+// كل وجهة تفتح صفحتها في تبويب جديد وتُغلق النافذة. لا طلبات شبكة، وكل نص عبر
 // textContent، ونص التعليمات يُنسخ ولا يُعرض. البناة في view.js والمنطق في status.js وصف الإظهار في entry.js والمنتقي في
 // ui/lang-picker.js.
 import { messageFor } from '../../core/errors/index.js';
@@ -85,7 +87,6 @@ startPage({
       children: [el('h1', { className: 'tj-sr-only', text: t('common.productName') }), logo({ width: 24, wordSize: 18 }), el('span', { className: 'tj-popup__local', children: [icon('shield', { className: 'tj-icon tj-icon--sm' }), el('span', { text: t('common.nav.yourData') })] })],
     }));
     const main = el('div', { className: 'tj-popup__main' });
-    const eyebrow = el('span', { className: 'tj-popup__eyebrow', text: t('popup.currentVideo') });
     let card = skeletonCard();
     const entryHost = el('div', { className: 'tj-popup__entry-host' });
     // كتلة «تعليمات الترجمة» (لوحة 09): عنوانها وهيكلها حتى يصل الرد وتفضيلات اللغات. وفي صف العنوان زر «الخطوات» (ح-60): الخطوات
@@ -113,13 +114,29 @@ startPage({
       attrs: { id: 'tj-paste', rows: '1', placeholder: t('popup.paste.placeholder', pasteKeys()), 'aria-describedby': 'tj-paste-hint tj-paste-status', spellcheck: 'false', autocomplete: 'off' },
     });
     const pasteStatus = el('p', { className: 'tj-popup__pair-caption', attrs: { id: 'tj-paste-status', 'aria-live': 'polite' } });
+    // شرح اللصق يُقرأ مرة، فهو مطوي خلف «كيف؟» في صف التسمية ويُفتح تحتها (ص-٥: يراه المبصر على بُعد نقرة، وكان مخفيًا بصريًا بلا
+    // نقرة تكشفه، ح-60)؛ والزر زر فيُفتح بالنقر واللمس وEnter والمسافة. ويبقى وصفًا للحقل (aria-describedby) لقارئ الشاشة ولو مطويًا.
+    const pasteHint = el('p', { className: 'tj-popup__pair-note tj-popup__paste-hint', text: t('popup.paste.hint'), attrs: { id: 'tj-paste-hint' } });
+    pasteHint.hidden = true;
+    const pasteHow = el('button', {
+      className: 'tj-popup__more',
+      attrs: { type: 'button', 'data-action': 'paste-how', 'aria-expanded': 'false', 'aria-controls': 'tj-paste-hint' },
+      children: [el('span', { text: t('popup.paste.how') }), icon('chev-down', { className: 'tj-icon tj-icon--sm' })],
+    });
+    pasteHow.addEventListener('click', () => {
+      const open = pasteHow.getAttribute('aria-expanded') !== 'true';
+      pasteHow.setAttribute('aria-expanded', open ? 'true' : 'false');
+      pasteHint.hidden = !open;
+    });
     const pasteHost = el('section', {
       className: 'tj-popup__pair tj-popup__paste', attrs: { 'aria-labelledby': 'tj-paste-label' },
       children: [
-        el('label', { className: 'tj-popup__eyebrow', text: t('popup.paste.label'), attrs: { id: 'tj-paste-label', for: 'tj-paste' } }),
+        el('div', {
+          className: 'tj-popup__pair-head',
+          children: [el('label', { className: 'tj-popup__eyebrow', text: t('popup.paste.label'), attrs: { id: 'tj-paste-label', for: 'tj-paste' } }), pasteHow],
+        }),
+        pasteHint,
         pasteArea,
-        // شرح اللصق وصفٌ للحقل (aria-describedby) لا سطر تحته (ح-60): يُقرأ مرة، ونتيجة اللصق تظهر في سطر الحال تحته.
-        el('p', { className: 'tj-popup__pair-note tj-sr-only', text: t('popup.paste.hint'), attrs: { id: 'tj-paste-hint' } }),
         pasteStatus,
       ],
     });
@@ -127,7 +144,9 @@ startPage({
     const recentTitle = el('span', { className: 'tj-popup__eyebrow', text: t('popup.recent') });
     recentTitle.hidden = true;
     const recentHost = el('div', { className: 'tj-popup__recent' });
-    main.append(eyebrow, card, entryHost, pairHost, pasteHost, recentTitle, recentHost, notice);
+    // البطاقة أول العمود بلا عنوان «الفيديو الحالي» فوقها (ص-٥، ST1): عنوانها عنوان الفيديو نفسه، والسطر الذي أخذه (30 بكسلًا)
+    // صار لسطر مصدر اللغة وشرح زر النسخ الظاهرين، فتتسع النافذة بلا تمرير في أطول حالاتها المعتادة (ح-60).
+    main.append(card, entryHost, pairHost, pasteHost, recentTitle, recentHost, notice);
     app.append(main);
     // مدخل واحد لكل وجهة، ولا ينتظر حالة الفيديو (قد تتأخر حتى مهلتها إن علق سكربت المحتوى). المحفوظات تُفتح على صف الفيديو
     // الحالي إن كان محفوظًا (تُعرف بعد الرد).
@@ -164,26 +183,20 @@ startPage({
     let pair = { from: null, to: null };
     let touched = false;
     let picker = null;
-    // سطر المصدر تحت الحقلين: «مكتشفة من ترجمة الفيديو» أو «الأصل: ‹الوصف›» وصفٌ لحقل «من» يُقرأ مرة (ح-60: مخفي بصريًا، وتلميحه
-    // عند المرور)، أو سطر الفيديو المترجم إلى لغته (ح-58) بزرّه ظاهرًا.
+    // سطر المصدر تحت الحقلين ظاهرًا: «مكتشفة من ترجمة الفيديو» أو «الأصل: ‹الوصف›»، ووصفٌ لحقل «من» (aria-describedby)؛ أو سطر
+    // الفيديو المترجم إلى لغته (ح-58) بزرّه. وكان في ح-60 مخفيًا بصريًا وتلميحَ مرور وحده، لا تبلغه لوحة المفاتيح ولا اللمس (ص-٥).
     const sourceNote = el('div', { className: 'tj-popup__source', attrs: { id: 'tj-pair-source' } });
     /** سطر ح-58 الحالي ولغته: يبقى بحاله (مفتوحًا أو مطويًا) ما بقيت اللغة، ويُبنى من جديد إن تغيّرت. */
     let roundTrip = null;
 
     function paintSource(st) {
-      const from = picker?.fromField.field ?? null;
       if (st.roundTrip) {
         if (roundTrip?.via !== st.roundTrip) roundTrip = { via: st.roundTrip, node: roundTripNote(roundTripText(st.roundTrip), document) };
-        sourceNote.classList.remove('tj-sr-only');
         if (roundTrip.node.parentNode !== sourceNote) sourceNote.replaceChildren(roundTrip.node);
-        from?.removeAttribute('title');
         return;
       }
       roundTrip = null;
-      sourceNote.classList.add('tj-sr-only');
       sourceNote.replaceChildren(...(st.sourceNote ? [el('p', { className: 'tj-popup__pair-note', text: st.sourceNote })] : []));
-      if (st.sourceNote) from?.setAttribute('title', st.sourceNote);
-      else from?.removeAttribute('title');
     }
     const caption = el('p', { className: 'tj-popup__pair-caption', attrs: { id: 'tj-pair-caption', 'aria-live': 'polite' } });
     const copyLabel = el('span', { text: PAIR_TEXT.copy });
@@ -211,8 +224,8 @@ startPage({
       // تعذّر النسخ: الزر والتنبيه يقولانه، فلا سطر مكرر تحته (لوحة 09، الحالة 7).
       caption.textContent = copyState === 'success' ? st.done : copyState === 'error' ? '' : st.caption;
       caption.setAttribute('data-tone', copyState === 'success' ? 'success' : copyState === 'error' ? 'danger' : st.ready ? 'neutral' : 'muted');
-      // الشرح الثابت تحت الزر وصفه وحده (aria-describedby، ح-60)؛ وسبب التعطيل ونتيجة النسخ ظاهران.
-      caption.classList.toggle('tj-sr-only', copyState === 'idle' && st.ready);
+      // السطر تحت الزر ظاهر في كل حالاته: شرحه في الهادئة، وسبب التعطيل، ونتيجة النسخ (ص-٥؛ وكان الشرح وصفًا لقارئ الشاشة وحده في
+      // ح-60). فلا يقفز ما تحته حين يُنسخ، وهو وصف الزر (aria-describedby).
     }
 
     const copy = createCopyState({
@@ -259,7 +272,7 @@ startPage({
         },
       });
       pairHost.replaceChildren(pairHead, stepsHost, picker.root, sourceNote, copyBtn, caption);
-      // سطر المصدر وصف حقل «من» (ح-60).
+      // سطر المصدر الظاهر وصفُ حقل «من» كذلك (ص-٥).
       picker.fromField.field.setAttribute('aria-describedby', 'tj-pair-source');
       paintPair();
     }
@@ -313,7 +326,6 @@ startPage({
       const focused = card.contains(document.activeElement) ? document.activeElement.getAttribute('data-action') : null;
       let next;
       if (status.kind === 'not-video') {
-        eyebrow.hidden = true;
         // إذن يوتيوب مسحوب (الفكرة ٣-أ): رابط إلى «التشخيص» في الإعدادات حيث زر «السماح»، والنافذة لا تطلب الإذن بنفسها.
         const act = missAction(state.miss);
         const go = act ? button({
