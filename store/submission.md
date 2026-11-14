@@ -21,7 +21,7 @@ Tarjuman lets a user watch a YouTube video with subtitles that the user prepares
 
 <!-- field: reviewer.permission.storage -->
 ```text
-storage: Saves the user's data in the extension's local storage on the device: the user's translations and their languages (up to three per video, plus one previous version), the original subtitle track and export fingerprints used for comparison, review marks, language preferences, and settings. Nothing is synced or sent to the developer.
+storage: Saves the user's data in the extension's local storage on the device: the user's translations and their languages (up to three per video, plus one previous version), the original subtitle track and export fingerprints used for comparison, review marks, drafts of unsaved Editor edits (for at most five videos; deleted when the user saves or discards them), glossary terms and the term lists the user creates for language pairs, language preferences, and settings. Nothing is synced or sent to the developer.
 ```
 
 <!-- field: reviewer.permission.unlimitedStorage -->
@@ -40,7 +40,7 @@ Host access (content scripts on https://www.youtube.com/*): Required to add Tarj
 ```
 
 المعنى بالترتيب:
-- **التخزين:** حفظ ترجمات المستخدم ولغاتها ومسار الأصل وبصمات التصدير والعلامات وتفضيلات اللغات والإعدادات في تخزين الإضافة على الجهاز، بلا مزامنة ولا إرسال.
+- **التخزين:** حفظ ترجمات المستخدم ولغاتها ومسار الأصل وبصمات التصدير والعلامات، ومسودات تعديلات المحرّر التي لم تُحفظ (لخمسة فيديوهات على الأكثر، وتُحذف حين يحفظها المستخدم أو يتجاهلها)، ومصطلحات القاموس وقوائم المصطلحات التي ينشئها لأزواج اللغات، وتفضيلات اللغات والإعدادات، في تخزين الإضافة على الجهاز، بلا مزامنة ولا إرسال. والقوائم والمسودات منذ 2.3.0، كما في «ما يُحفظ» من [`docs/site/privacy.md`](../docs/site/privacy.md).
 - **التخزين غير المحدود:** فيديو بساعتين نحو 0.7 م.ب، فالحد الافتراضي 10 م.ب يمتلئ بنحو خمسة عشر فيديو طويلًا فيفشل الحفظ ([`docs/contracts/storage.md`](../docs/contracts/storage.md) §٥). ولا يضيف تحذير تثبيت (ثبت في P2).
 - **التنزيلات:** الملفات التي يطلبها المستخدم وحدها، في المكان الذي يختاره، والاستعلام بمعرّفات ما نزّلته الإضافة وحدها.
 - **يوتيوب:** أزرار المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل بلا طلب جديد، ورسم الترجمة فوق الفيديو. ولا موقع غيره.
@@ -141,7 +141,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | License | **All Rights Reserved** (`all-rights-reserved`)، مطابقًا لـ`LICENSE` (قرار سلطان في T4) |
 | Support email وwebsite وHomepage | §٥ |
 | Screenshots | `store/screenshots/firefox/en/` الخمس، بتعليقات إنجليزية |
-| Notes for Reviewers | `reviewers.en.md` (`reviewer.amo`، حتى 3,000) |
+| Notes for Reviewers | `reviewers.en.md` (`reviewer.amo`، حتى 3,000 والسطر الجديد محرفان: 2,834 في 2.3.0) |
 | Release notes | `amo.releaseNotes` في `listing.ar.md` |
 
 ## ٧. ما لا يُقدَّم
