@@ -17,7 +17,7 @@ const AR = CUES.map((c) => ({ ...c, text: `ترجمة ${c.n}` }));
 const DUAL = buildSubtitleExport({ videoId: ID, cues: AR, lang: 'ar', format: 'srt', bilingual: true, original: ENGLISH, sourceLang: 'en' });
 const WARN = 'يبدو الملف مصدَّرًا مع الأصل';
 
-async function mount(onConfirm, { english = true } = {}) {
+async function mount(onConfirm, { english = true, file = { text: DUAL.text, name: DUAL.name } } = {}) {
   let t = Date.parse(NOW);
   const area = createMemoryArea({ unlimited: true });
   const store = createStore({ area, now: () => (t += 1000) });
@@ -29,7 +29,7 @@ async function mount(onConfirm, { english = true } = {}) {
   const lib = createLibrary({
     store, doc, now: () => Date.parse(NOW) + 60000,
     openTab: async () => {}, openPage: async () => {}, saveFile: async () => ({ ok: true }), clipboardWrite: async () => {},
-    pickFiles: async () => [new File([DUAL.text], DUAL.name)], diagnosticsText: async () => '{}', confirm: async (o) => onConfirm(o, doc),
+    pickFiles: async () => [new File([file.text], file.name)], diagnosticsText: async () => '{}', confirm: async (o) => onConfirm(o, doc),
     setTimer: () => 0, clearTimer: () => {},
   });
   doc.body.append(lib.root);
@@ -57,6 +57,27 @@ test('ح-49: التحذير وزره في حوار الرفع، والنقرة �
   const track = (await m.store.getBundle(ID)).slots[0].track;
   assert.deepEqual(track.original.map((c) => c.text), AR.map((c) => c.text), 'الترجمة وحدها');
   assert.ok(track.notes.includes('أُزيل بطلبك سطر الأصل (آخر سطر) من 6 مقاطع.'), 'والملاحظة محفوظة معها');
+});
+
+test('تحقق 2.3.0 (ص-٢٣): الثنائي المعكوس في حوار الرفع: التحذير يقول «أول سطر»، والنقرة تحذفه، و«حفظ» يحفظ الترجمة وحدها بملاحظتها', async () => {
+  // الملف نفسه معكوسًا: سطر الأصل أول كل مقطع والترجمة تحته.
+  const reversed = DUAL.text.split('\n\n').map((b) => {
+    const l = b.split('\n');
+    return [l[0], l[1], l[3], l[2], ...l.slice(4)].join('\n');
+  }).join('\n\n');
+  let seen = null;
+  const m = await mount((o, doc) => {
+    doc.body.append(o.content);
+    seen = { warn: textOf(o.content.querySelectorAll('.tj-alert--warning').find((a) => textOf(a).includes(WARN))) };
+    buttonNamed(o.content, 'أزل سطر الأصل من كل مقطع').click();
+    seen.note = textOf(o.content.querySelector('.lib-up__stripped'));
+    return true;
+  }, { file: { text: reversed, name: DUAL.name } });
+  assert.ok(seen.warn.startsWith('يبدو الملف مصدَّرًا مع الأصل: أول سطر في 6 مقاطع (من 6) هو نص الأصل نفسه.'), seen.warn);
+  assert.equal(seen.note, 'أُزيل بطلبك سطر الأصل (أول سطر) من 6 مقاطع.');
+  const track = (await m.store.getBundle(ID)).slots[0].track;
+  assert.deepEqual(track.original.map((c) => c.text), AR.map((c) => c.text), 'الترجمة وحدها');
+  assert.ok(track.notes.includes('أُزيل بطلبك سطر الأصل (أول سطر) من 6 مقاطع.'), 'والملاحظة محفوظة معها');
 });
 
 test('ح-49: لا يُزال شيء بلا نقرة: «حفظ» مباشرة يحفظ الملف كما هو، ولا يُرفض', async () => {

@@ -398,8 +398,8 @@ export function createControlsSession({ controller, doc, win, player, flows, now
 
   /** حارس الملف الثنائي في التأكيد (الفكرة ١١، ح-49): التحذير وزره، ثم سطر ما أُزيل بعد النقرة. */
   const bilingualModel = (p) => ({
-    bilingual: p.bilingual ? { text: messageFor('IM_BILINGUAL', { count: p.bilingual.count, total: p.bilingual.total }), action: t('common.bilingual.remove') } : null,
-    stripped: p.stripped ? messageFor('IM_NOTE_BILINGUAL_REMOVED', { count: p.stripped }) : null,
+    bilingual: p.bilingual ? { text: messageFor('IM_BILINGUAL', { count: p.bilingual.count, total: p.bilingual.total, line: p.bilingual.line }), action: t('common.bilingual.remove') } : null,
+    stripped: p.stripped ? messageFor('IM_NOTE_BILINGUAL_REMOVED', { count: p.stripped, line: p.strippedLine }) : null,
   });
 
   /** التأكيد المضغوط بعد فحص الملف (§١٩.٣): الملف والملخص، وقرينة الاسم، و«حفظ في» 1 2 3، وما يمسه الاستبدال. */

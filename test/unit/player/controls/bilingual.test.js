@@ -12,12 +12,12 @@ const DUAL = AR_CUES.map((c, i) => ({ ...c, text: `${c.text}\n${EN[i].text}` }))
 const loads = (page) => page.controller.calls.filter((c) => c[0] === 'loadArabicInto');
 const WARN = 'يبدو الملف مصدَّرًا مع الأصل: آخر سطر في 5 مقاطع (من 5) هو نص الأصل نفسه. إن حُفظ هكذا صار الأصل جزءًا من نص الترجمة.';
 
-async function uploadDual() {
+async function uploadDual(dual = DUAL) {
   const page = mountPage({ state: makeState({ saved: { fingerprints: [], english: ENGLISH } }) });
   // نتيجة القراءة كما تعيدها readImport بمسارات الأصل: الحارس من النواة نفسها.
   page.flows.readResult = (files) => ({
-    ok: true, fileName: files[0].name, cues: DUAL, comparison: null, fingerprintId: null, notes: [], warnings: [], lang: 'ar', ambiguous: null,
-    bilingual: bilingualCheck(DUAL, ENGLISH),
+    ok: true, fileName: files[0].name, cues: dual, comparison: null, fingerprintId: null, notes: [], warnings: [], lang: 'ar', ambiguous: null,
+    bilingual: bilingualCheck(dual, ENGLISH),
   });
   click(page.ui.btn('upload'));
   chooseFiles(page.ui, [{ name: 'x.ar.dual-en.srt' }]);
@@ -62,4 +62,18 @@ test('ح-49: الزر بلوحة المفاتيح يزيل سطر الأصل ف�
   const input = loads(page)[0][2];
   assert.deepEqual(input.cues.map((c) => c.text), AR_CUES.map((c) => c.text));
   assert.equal(input.notes.at(-1), 'أُزيل بطلبك سطر الأصل (آخر سطر) من 5 مقاطع.');
+});
+
+test('تحقق 2.3.0 (ص-٢٣): الثنائي المعكوس في التأكيد: التحذير يقول «أول سطر»، والزر يحذفه، وسطر ما أُزيل يقول «(أول سطر)»', async () => {
+  const page = await uploadDual(AR_CUES.map((c, i) => ({ ...c, text: `${EN[i].text}\n${c.text}` })));
+  const alert = page.ui.menu().querySelectorAll('.alert').find((a) => a.textContent.includes('يبدو الملف مصدَّرًا مع الأصل'));
+  assert.ok(alert?.textContent.startsWith('يبدو الملف مصدَّرًا مع الأصل: أول سطر في 5 مقاطع (من 5) هو نص الأصل نفسه.'), page.ui.menuText());
+  click(page.ui.field('stripOriginal'), 0);
+  await settle();
+  assert.equal(page.ui.field('stripped').textContent, 'أُزيل بطلبك سطر الأصل (أول سطر) من 5 مقاطع.');
+  click(page.ui.item('حفظ'));
+  await settle();
+  const input = loads(page)[0][2];
+  assert.deepEqual(input.cues.map((c) => c.text), AR_CUES.map((c) => c.text), 'الترجمة وحدها');
+  assert.equal(input.notes.at(-1), 'أُزيل بطلبك سطر الأصل (أول سطر) من 5 مقاطع.');
 });

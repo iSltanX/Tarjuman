@@ -14,7 +14,7 @@ import { parseSrtLenient } from '../srt/lenient.js';
 import { displayName, toList } from './files.js';
 import { MAX_FILES, readFileText } from './read-file.js';
 import { videoIdFromName } from './review.js';
-import { bilingualCheck, withoutLastLines } from './bilingual.js';
+import { bilingualCheck, withoutMatchedLines } from './bilingual.js';
 
 /** @typedef {import('../model/cue.js').Cue} Cue */
 /** @typedef {import('../model/tracks.js').Fingerprint} Fingerprint */
@@ -116,7 +116,7 @@ export function partsStatus(fingerprint, cues) {
  * @param {{ fingerprint: Fingerprint, cues: Cue[], target?: string | null, originals?: { lang?: string, cues?: Cue[] }[] }} ctx البصمة التي بُني
  *   عليها ملف الاستكمال أو التقسيم، والترجمة الحالية، ولغتها لفحص «غير مترجم» (AA1: null لا فحص، والافتراضي العربية كما كان)، ومسار
  *   الأصل المحفوظ لحارس الملف الثنائي (الفكرة ١١، ح-49)
- * @returns {Promise<{ ok: true, plan: PatchPlan, bilingual: { count: number, total: number, plan: PatchPlan | null } | null }
+ * @returns {Promise<{ ok: true, plan: PatchPlan, bilingual: { count: number, total: number, line: 'last' | 'first', plan: PatchPlan | null } | null }
  *   | { ok: false, error: { code: string, message: string, line?: number } }>} bilingual: الملف مصدَّر «مع الأصل» (IM_BILINGUAL)، ومعه خطته
  *   بلا سطر الأصل (وملاحظتها) تعرضها المعاينة بنقرة «أزل سطر الأصل من كل مقطع»؛ ولا يُزال شيء قبلها.
  */
@@ -155,12 +155,12 @@ export async function readPatch(fileOrFiles, { fingerprint, cues = [], target = 
     if (!bi) return { ok: true, plan, bilingual: null };
     let stripped = null;
     try {
-      const removed = messageFor('IM_NOTE_BILINGUAL_REMOVED', { count: bi.count });
-      stripped = planFrom(withoutLastLines(incoming, bi.indexes), { fingerprint, cues, target, notes: [...notes, removed], warnings: [...warnings] });
+      const removed = messageFor('IM_NOTE_BILINGUAL_REMOVED', { count: bi.count, line: bi.line });
+      stripped = planFrom(withoutMatchedLines(incoming, bi), { fingerprint, cues, target, notes: [...notes, removed], warnings: [...warnings] });
     } catch {
       stripped = null;
     }
-    return { ok: true, plan, bilingual: { count: bi.count, total: bi.total, plan: stripped } };
+    return { ok: true, plan, bilingual: { count: bi.count, total: bi.total, line: bi.line, plan: stripped } };
   } catch (err) {
     const info = toErrorInfo(err);
     const error = { code: info.code, message: multi && current ? `«${current}»: ${info.message}` : info.message };

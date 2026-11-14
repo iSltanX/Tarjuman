@@ -20,6 +20,8 @@ const cuesAfterPreposition = (n) => {
   if (mod >= 3 && mod <= 10) return `${n} مقاطع`;
   return mod >= 11 ? `${n} مقطعًا` : `${n} مقطع`;
 };
+/** موضع سطر الأصل في IM_BILINGUAL وIM_NOTE_BILINGUAL_REMOVED: «أول» في الثنائي المعكوس (line: 'first')، وإلا «آخر» كما يصدّر ترجمان. */
+const originalLineWord = (line) => (line === 'first' ? 'أول' : 'آخر');
 
 export const MESSAGES = Object.freeze({
   // أخطاء الملف
@@ -56,7 +58,7 @@ export const MESSAGES = Object.freeze({
   IM_CUE_TIME_NOT_AFTER_START: 'نهاية المقطع {n} (السطر {line}) ليست بعد بدايته، فلن يظهر هذا المقطع فوق الفيديو.',
   IM_CUE_TIME_MORE: 'وفي مقاطع أخرى عددها {count} المشكلة نفسها: نهايتها ليست بعد بدايتها.',
   // الفكرة ١١ (ح-49): ملف صدّره ترجمان «مع الأصل» يُرفع ترجمةً. تحذير لا رفض، ومعه «أزل سطر الأصل من كل مقطع» بنقرة.
-  IM_BILINGUAL: ({ count, total }) => `يبدو الملف مصدَّرًا مع الأصل: آخر سطر في ${cuesAfterPreposition(count)} (من ${total}) هو نص الأصل نفسه. إن حُفظ هكذا صار الأصل جزءًا من نص الترجمة.`,
+  IM_BILINGUAL: ({ count, total, line }) => `يبدو الملف مصدَّرًا مع الأصل: ${originalLineWord(line)} سطر في ${cuesAfterPreposition(count)} (من ${total}) هو نص الأصل نفسه. إن حُفظ هكذا صار الأصل جزءًا من نص الترجمة.`,
 
   // ملاحظات تُحفظ مع الترجمة: كل تحويل للنص مذكور
   IM_NOTE_FENCE: 'أُزيلت علامات كتلة النص (``` أو ~~~) المحيطة بالملف.',
@@ -73,7 +75,7 @@ export const MESSAGES = Object.freeze({
   IM_NOTE_TRIMMED: 'قُصّت المسافات من أطراف أسطر عددها {count}.',
   IM_NOTE_MERGED: '{verb} {files} بحسب أرقام المقاطع: {names}.',
   IM_NOTE_MORE: 'ملاحظات أخرى لم تُدرج لكثرتها (عددها {count}).',
-  IM_NOTE_BILINGUAL_REMOVED: ({ count }) => `أُزيل بطلبك سطر الأصل (آخر سطر) من ${cuesAfterPreposition(count)}.`,
+  IM_NOTE_BILINGUAL_REMOVED: ({ count, line }) => `أُزيل بطلبك سطر الأصل (${originalLineWord(line)} سطر) من ${cuesAfterPreposition(count)}.`,
 
   // ملف التصحيح والأجزاء المستلمة تباعًا (P11): يُتحقق أنه لهذا الفيديو وهذا المرجع بالأرقام والأزمنة.
   IM_PATCH_NO_REFERENCE: 'لا مرجع لملف الاستكمال: الأصل الذي بُني عليه لم يعد محفوظًا. أنشئ ملف استكمال جديدًا من المحرّر.',

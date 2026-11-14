@@ -1,14 +1,21 @@
 // حارس الملف الثنائي عند الاستيراد (الفكرة ١١، ح-49): ملف صدّره ترجمان «مع الأصل» ثم رُفع ترجمةً يُكتشف بمسار الأصل المحفوظ
 // (تحذير IM_BILINGUAL لا رفض)، ولا يُزال شيء قبل نقرة المستخدم، والإزالة بنقرة تحذف آخر سطر حيث طابق الأصل بملاحظة وتعيد المقارنة؛
 // ولا إنذار كاذب في ترجمة عادية فيها اسم لاتيني، ولا حارس بلا أصل محفوظ. ومثله في ملف الاستكمال (readPatch).
+// تحقق 2.3.0 (ص-١ وص-٢٣، بقرار سلطان): الترجمة المدموجة الحقيقية (ميدواي «مقاطع أطول») مصدَّرة بتوقيت المشاهدة تُكتشف كلها والإزالة
+// تطابق «الترجمة وحدها» بايتًا، والملف بلغة الأصل وحدها مقطعين سطرًا تحت سطر لا يُحكم ثنائيًا، والثنائي المعكوس يُكتشف بموضعه.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { flatText } from '../../../src/core/align/original.js';
+import { convertTrack } from '../../../src/core/convert/index.js';
 import { buildSubtitleExport } from '../../../src/core/export/index.js';
-import { bilingualCheck, readImport, readPatch, withoutLastLines, withoutOriginalLines } from '../../../src/core/import/index.js';
+import { bilingualCheck, readImport, readPatch, withoutLastLines, withoutMatchedLines, withoutOriginalLines } from '../../../src/core/import/index.js';
 import { messageFor } from '../../../src/core/errors/index.js';
+import { parseSrtStrict } from '../../../src/core/srt/parser.js';
 import { formatSrtTime } from '../../../src/core/srt/time.js';
 import { englishTrack, fingerprint } from '../../helpers/fixtures.js';
 import { fileOf } from '../../fixtures/srt/index.js';
+import { REAL_ARABIC, realArabic } from '../../fixtures/v2/index.js';
 
 const VIDEO = 'iG9CE55wbtY';
 const cue = (n, startMs, endMs, text) => ({ n, startMs, endMs, text });
@@ -73,7 +80,7 @@ test('لا حارس بلا أصل محفوظ: الملف الثنائي نفسه
 test('يُكتشف ما صُدِّر بتوقيت المشاهدة (إزاحة +1.5 ث) وما صُدِّر WebVTT ثم لُصق نصًا، وتُوازن مسارات الأصل فيُؤخذ أكثرها مطابقة', async () => {
   const shifted = dual({ offsetMs: 1500, timing: 'shown' });
   const r = await read(shifted.text, 'x.srt');
-  assert.equal(r.bilingual?.count, 8, 'نص مقطع أصل بعينه ولو انزاح الزمن');
+  assert.equal(r.bilingual?.count, 8, 'بتقدير فرق الزمن بين الملف والأصل المحفوظ');
   const vtt = dual({ format: 'vtt' });
   assert.ok(vtt.text.includes('Line 1 &amp; more'));
   const v = await read(vtt.text, 'لصق.txt');
@@ -120,4 +127,90 @@ test('لغة الملف بعد الإزالة: اسم ترجمان ID.ar.dual-en
   assert.equal(s.lang, 'ar', 'بعد الإزالة: من الاسم على نص الترجمة وحده');
   const chosen = withoutOriginalLines({ ...r, lang: 'fa' }, { fingerprints: [fp] });
   assert.equal(chosen.lang, 'fa', 'لغة قائمة لا تُستبدل');
+});
+
+// تحقق 2.3.0 (ص-١): مسار الأصل كما يحفظه ترجمان (recordExport: التحويل العادي دائمًا، 1066 مقطعًا لعيّنة ميدواي)، وترجمتا النموذج
+// الحقيقيتان: «مقاطع أطول» (729، وفي 300 منها يتداخل المقطع مع أكثر من مقطع أصل) و«عادي» (1056، وفي 89 منها كذلك).
+const MIDWAY = 'Y9rkKtK1b44';
+const midwayTrack = englishTrack({
+  kind: 'asr',
+  cues: convertTrack({ body: readFileSync(new URL('../../fixtures/json3/asr-nwc-Y9rkKtK1b44.json', import.meta.url), 'utf8'), trackKind: 'asr', mode: 'normal' }).cues,
+});
+const parsed = (text) => parseSrtStrict(text).map((c, i) => ({ n: i + 1, startMs: c.startMs, endMs: c.endMs, text: c.text }));
+const overlapping = (c, original) => original.filter((o) => o.startMs < c.endMs && o.endMs > c.startMs).length;
+/** أول موضع يختلف فيه نصّا ملفين (للرسالة وحدها، فلا يُطبع ملف كامل). */
+const firstDiff = (a, b) => {
+  let i = 0;
+  while (i < a.length && a[i] === b[i]) i++;
+  return i === a.length && i === b.length ? null : JSON.stringify(a.slice(Math.max(0, i - 60), i + 60));
+};
+
+for (const [label, name, total, merged] of [['«مقاطع أطول»', REAL_ARABIC.asrLong, 729, 300], ['«عادي»', 'Y9rkKtK1b44.en.asr.normal.ar.srt', 1056, 89]]) {
+  test(`ص-١: ترجمة ميدواي ${label} الحقيقية مصدَّرة «مع الأصل» بتوقيت المشاهدة تُكتشف كلها (${total} من ${total})، والإزالة تطابق «الترجمة وحدها» بايتًا`, async () => {
+    const ar = parsed(realArabic(name));
+    const fp = fingerprint({ videoId: MIDWAY, track: midwayTrack });
+    assert.equal(ar.length, total);
+    assert.equal(ar.filter((c) => overlapping(c, midwayTrack.cues) >= 2).length, merged, 'ترجمة مدموجة: سطر أصل كثير من مقاطعها يضم مقطعين أو أكثر');
+    for (const [offsetMs, format] of [[1500, 'srt'], [1500, 'vtt'], [-700, 'srt'], [0, 'srt']]) {
+      const tag = `${format} بإزاحة ${offsetMs}`;
+      const dual = buildSubtitleExport({ videoId: MIDWAY, cues: ar, offsetMs, timing: 'shown', lang: 'ar', format, bilingual: true, original: midwayTrack.cues, sourceLang: 'en' });
+      const alone = buildSubtitleExport({ videoId: MIDWAY, cues: ar, offsetMs, timing: 'shown', lang: 'ar', format: 'srt' });
+      const r = await readImport(fileOf(dual.text, dual.name), { fingerprints: [fp], originals: [midwayTrack] });
+      assert.equal(r.ok, true, tag);
+      assert.equal(`${r.bilingual?.count}/${r.bilingual?.total} ${r.bilingual?.line}`, `${total}/${total} last`, tag);
+      const s = withoutOriginalLines(r, { fingerprints: [fp] });
+      assert.equal(s.notes.at(-1), `أُزيل بطلبك سطر الأصل (آخر سطر) من ${total} مقطعًا.`, tag);
+      const again = buildSubtitleExport({ videoId: MIDWAY, cues: s.cues, lang: 'ar', format: 'srt' });
+      assert.equal(firstDiff(again.text, alone.text), null, `${tag}: بعد الإزالة يطابق ملف «الترجمة وحدها» بايتًا`);
+    }
+  });
+}
+
+test('ص-٢٣: ملف بلغة الأصل وحدها كل مقطع فيه مقطعا أصل سطرًا تحت سطر لا يُحكم ثنائيًا (كان 213 من 213)، ولو انزاح زمنه', async () => {
+  const en = parsed(readFileSync(new URL('../../fixtures/export/iG9CE55wbtY.en.manual.srt', import.meta.url), 'utf8'));
+  const track = englishTrack({ cues: en });
+  const pairs = (list) => {
+    const out = [];
+    for (let i = 0; i + 1 < list.length; i += 2) out.push(cue(out.length + 1, list[i].startMs, list[i + 1].endMs, `${flatText(list[i].text)}\n${flatText(list[i + 1].text)}`));
+    return out;
+  };
+  const merged = pairs(en);
+  assert.equal(merged.length, 213);
+  assert.equal(merged[0].text, 'Good morning. How are you?\n(Audience) Good.');
+  assert.equal(bilingualCheck(merged, [track]), null, 'آخر سطر مقطعُ أصل، والمقطع يغطي غيره معه');
+  assert.equal(bilingualCheck(merged.map((c) => ({ ...c, startMs: c.startMs + 1500, endMs: c.endMs + 1500 })), [track]), null, 'ولو انزاح');
+  const r = await readImport(fileOf(srtOf(merged), 'talk.en.srt'), { fingerprints: [fingerprint({ videoId: VIDEO, track })], originals: [track] });
+  assert.equal(r.ok, true);
+  assert.equal(r.bilingual, null, 'فلا زر يحذف كلامًا مشروعًا');
+  // ومثله بأزمنة منتظمة (المقاطع الثمانية): لا فرق زمن يجعل سطر أصل واحد محاذيًا لمقطع يغطي اثنين.
+  assert.equal(bilingualCheck(pairs(EN), [TRACK]), null);
+});
+
+test('ص-٢٣: الثنائي المعكوس (سطر الأصل أول المقطع والترجمة تحته) يُكتشف بموضعه ولو انزاح، والإزالة تحذف أول سطر وتقول ذلك', async () => {
+  const reversed = AR.map((c, i) => ({ ...c, startMs: c.startMs + 1500, endMs: c.endMs + 1500, text: `${EN[i].text}\n${c.text}\nسطر ثانٍ` }));
+  const r = await read(srtOf(reversed), 'x.srt');
+  assert.deepEqual([r.bilingual?.count, r.bilingual?.total, r.bilingual?.line], [8, 8, 'first']);
+  assert.equal(messageFor('IM_BILINGUAL', r.bilingual), 'يبدو الملف مصدَّرًا مع الأصل: أول سطر في 8 مقاطع (من 8) هو نص الأصل نفسه. إن حُفظ هكذا صار الأصل جزءًا من نص الترجمة.');
+  const s = withoutOriginalLines(r, { fingerprints: [FP] });
+  assert.deepEqual(s.cues.map((c) => c.text), AR.map((c) => `${c.text}\nسطر ثانٍ`), 'تبقى أسطر الترجمة كلها');
+  assert.deepEqual([s.stripped, s.strippedLine], [8, 'first']);
+  assert.equal(s.notes.at(-1), 'أُزيل بطلبك سطر الأصل (أول سطر) من 8 مقاطع.');
+  assert.deepEqual(withoutMatchedLines(reversed, { indexes: [0], line: 'first' }).slice(0, 2).map((c) => c.text), [`السطر 1\nسطر ثانٍ`, reversed[1].text], 'حيث طابق وحده');
+  // والترجمة الحقيقية (TED، 427 مقطعًا) معكوسةً.
+  const en = parsed(readFileSync(new URL('../../fixtures/export/iG9CE55wbtY.en.manual.srt', import.meta.url), 'utf8'));
+  const ar = parsed(realArabic(REAL_ARABIC.manual));
+  const lines = buildSubtitleExport({ videoId: VIDEO, cues: ar, lang: 'ar', format: 'srt', bilingual: true, original: en, sourceLang: 'en' }).text;
+  const flipped = parsed(lines).map((c) => {
+    const l = c.text.split('\n');
+    return { ...c, text: [l.at(-1), ...l.slice(0, -1)].join('\n') };
+  });
+  const real = bilingualCheck(flipped, [englishTrack({ cues: en })]);
+  assert.deepEqual([real?.count, real?.total, real?.line], [427, 427, 'first']);
+  assert.equal(firstDiff(withoutMatchedLines(flipped, real).map((c) => c.text).join('\n\n'), ar.map((c) => c.text).join('\n\n')), null);
+  // وملف الاستكمال المعكوس: الخطة بلا أول سطر، وملاحظتها بموضعه.
+  const patch = srtOf(EN.slice(0, 3).map((c) => ({ ...c, text: `${c.text}\nمستكمل ${c.n}` })));
+  const p = await readPatch(fileOf(patch, 'patch.srt'), { fingerprint: FP, cues: AR.map((c) => (c.n <= 3 ? { ...c, text: '' } : c)), originals: [TRACK] });
+  assert.deepEqual([p.bilingual.count, p.bilingual.line], [3, 'first']);
+  assert.deepEqual(p.bilingual.plan.items.map((x) => x.after.text), ['مستكمل 1', 'مستكمل 2', 'مستكمل 3']);
+  assert.equal(p.bilingual.plan.notes.at(-1), 'أُزيل بطلبك سطر الأصل (أول سطر) من 3 مقاطع.');
 });

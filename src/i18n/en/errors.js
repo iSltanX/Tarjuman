@@ -3,6 +3,8 @@
 // count نص معدود من المحرّر («3 timing errors»)، أو رقم خام من حارس core/edit/transition.js.
 // الجمع بالعدد لا ثابتًا (ع-٢٧): العدد الخام 1 يأخذ المفرد، وغيره الجمع. count رقم أو نص رقمي.
 const by = (count, one, other) => (Number(count) === 1 ? one : other);
+// موضع سطر الأصل في IM_BILINGUAL وIM_NOTE_BILINGUAL_REMOVED: first في الثنائي المعكوس، وإلا last كما يصدّر ترجمان.
+const lineWord = (line) => (line === 'first' ? 'first' : 'last');
 const fixFirst = ({ count }) => (/^\d+$/.test(String(count)) ? `Fix ${count} timing ${String(count) === '1' ? 'error' : 'errors'} first.` : `Fix ${count} first.`);
 
 export default Object.freeze({
@@ -65,6 +67,7 @@ export default Object.freeze({
   EX_TEXT_BREAKS_SRT: 'The text of segments {list} has a line that reads as a segment header in SRT (a number followed by a timing line, a full timing line, a ``` fence, or a # heading), which would change the segment count when the file is read. Edit these lines in the Editor, then export again.',
   EX_TRACK_BREAKS_SRT: 'The original text (segments {list}) has a line that reads as a segment header in SRT (a number followed by a timing line, or a full timing line), so a file the model and players read with the same count can’t be written from it. Nothing was downloaded; copy the diagnostics report to look into it.',
   EX_TEXT_BREAKS_VTT: 'The text of segments {list} contains the arrow “-->”, which separates a segment’s times in WebVTT, so a valid WebVTT file can’t be written from them. Export as SRT, or edit their text and export again.',
+  EX_TRACK_BREAKS_VTT: 'The original text (segments {list}) contains the arrow “-->”, which separates a segment’s times in WebVTT, so a valid WebVTT file can’t be written from it. The original comes from the saved YouTube track, not from your translation: export as SRT, or choose “Translation only”.',
   EX_SPLIT_NOT_NEEDED: 'The segment count doesn’t exceed the part size, so the whole file was exported without splitting. Lower the part size in Settings if you want it split.',
   EX_SPLIT_SIZE_RAISED: 'The part size was raised so the parts don’t exceed 50 files, the most that can be uploaded together as a translation. Check the part sizes before sending them.',
   EX_SPLIT_PART_TOO_LARGE: 'At this size a part may exceed the file size accepted for upload ({max}) once translated, so nothing was downloaded. Lower the part size and download again.',
@@ -109,7 +112,7 @@ export default Object.freeze({
   IM_HTML_LITERAL: ({ count }) => `${count} ${by(count, 'segment contains', 'segments contain')} HTML-like tags. They’re kept as literal text and not interpreted.`,
   IM_CUE_TIME_NOT_AFTER_START: 'Segment {n} (line {line}) doesn’t end after it starts, so it won’t appear over the video.',
   IM_CUE_TIME_MORE: ({ count }) => `${count} more ${by(count, 'segment has the same problem: it doesn’t end after it starts', 'segments have the same problem: they don’t end after they start')}.`,
-  IM_BILINGUAL: ({ count, total }) => `This file looks like it was exported with the original: the last line of ${count} of ${total} ${by(total, 'segment', 'segments')} is the original text itself. Saved as is, the original would become part of the translation.`,
+  IM_BILINGUAL: ({ count, total, line }) => `This file looks like it was exported with the original: the ${lineWord(line)} line of ${count} of ${total} ${by(total, 'segment', 'segments')} is the original text itself. Saved as is, the original would become part of the translation.`,
 
   IM_NOTE_FENCE: 'Removed the code-block fence (``` or ~~~) around the file.',
   IM_NOTE_CHATTER_BEFORE: ({ count, first }) => `Removed ${count} explanation or heading ${by(count, 'line', 'lines')} before the file, starting with: “${first}”.`,
@@ -124,7 +127,7 @@ export default Object.freeze({
   IM_NOTE_TRIMMED: ({ count }) => `Trimmed spaces from the edges of ${count} ${by(count, 'line', 'lines')}.`,
   IM_NOTE_MERGED: '{verb} {files} by segment number: {names}.',
   IM_NOTE_MORE: 'More notes weren’t listed because there are too many ({count}).',
-  IM_NOTE_BILINGUAL_REMOVED: ({ count }) => `At your request, the original line (the last line) was removed from ${count} ${by(count, 'segment', 'segments')}.`,
+  IM_NOTE_BILINGUAL_REMOVED: ({ count, line }) => `At your request, the original line (the ${lineWord(line)} line) was removed from ${count} ${by(count, 'segment', 'segments')}.`,
 
   IM_PATCH_NO_REFERENCE: 'There’s no reference for the completion file: the original it was built on is no longer saved. Create a new completion file from the Editor.',
   IM_PATCH_OUT_OF_RANGE: 'Segment number {n} is higher than the original’s segment count ({count}). Make sure this is the right completion file for this video.',

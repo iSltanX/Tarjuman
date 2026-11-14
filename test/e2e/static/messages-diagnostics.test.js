@@ -28,8 +28,8 @@ const AR_FUNCTION_SAMPLES = {
   // الفكرة ٤ (الإنذار المبكر): تسمّي الصيغة المرفوضة إن عُرفت، وبلا اسم كما كانت.
   EX_UNSUPPORTED_FORMAT: [{}, { format: 'srv3' }, { format: 'vtt' }],
   // الفكرة ١١ (ح-49): الملف الثنائي المستورد وإزالة سطر الأصل، والمعدود بعد حرف الجر بصيغه.
-  IM_BILINGUAL: [{ count: 1, total: 1 }, { count: 2, total: 3 }, { count: 3, total: 5 }, { count: 11, total: 20 }, { count: 100, total: 150 }],
-  IM_NOTE_BILINGUAL_REMOVED: [{ count: 1 }, { count: 2 }, { count: 3 }, { count: 11 }, { count: 100 }],
+  IM_BILINGUAL: [{ count: 1, total: 1 }, { count: 2, total: 3 }, { count: 3, total: 5 }, { count: 11, total: 20 }, { count: 100, total: 150 }, { count: 3, total: 5, line: 'first' }],
+  IM_NOTE_BILINGUAL_REMOVED: [{ count: 1 }, { count: 2 }, { count: 3 }, { count: 11 }, { count: 100 }, { count: 3, line: 'first' }],
 };
 /** كل الرموز من مجالات السجل نفسه (لا من قائمة يدوية)، ومنها مجالات الإصدار الثاني كالنسخ الاحتياطي (P15). والرسالة الدالّة
  * بكل عيّنة من AR_FUNCTION_SAMPLES، ومعها params التي مُلئت بها. */
@@ -43,7 +43,7 @@ async function catalog() {
 
 // كلمات لاتينية مقصودة في الرسائل: أسماء يراها المستخدم كما هي في يوتيوب والملفات والترميز، والمتصفحات (TJ_SITE_ACCESS_OFF، B5-أ).
 // وأسماء صيغ الترجمة كما في معامل fmt (srv3 وvtt) في EX_UNSUPPORTED_FORMAT (الفكرة ٤)، وWebVTT صيغة التصدير كما في حوار «تصدير…»
-// (EX_TEXT_BREAKS_VTT، الفكرة ١١).
+// (EX_TEXT_BREAKS_VTT وEX_TRACK_BREAKS_VTT، الفكرة ١١).
 const LATIN_OK = new Set(['CC', 'English', 'SRT', 'UTF', 'Windows', 'HTML', 'Chrome', 'Edge', 'Brave', 'Firefox', 'srv', 'vtt', 'WebVTT']);
 
 test('كل رمز رسالة عربية: الصيغة، وحرف عربي، ولا رابط ولا رمز، واللاتيني من القائمة المقصودة وحدها', async () => {

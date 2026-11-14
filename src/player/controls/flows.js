@@ -233,7 +233,7 @@ export function stripFor({ controller, read, lang }) {
   const s = controller.getState();
   const res = withoutOriginalLines({ ok: true, ...read.input, bilingual: read.bilingual }, { fingerprints: s.saved?.fingerprints ?? [], settings: s.settings });
   const input = { fileName: res.fileName, cues: res.cues, comparison: res.comparison, fingerprintId: res.fingerprintId, notes: res.notes, lang: read.input.lang ?? null };
-  const next = { ...read, input, bilingual: null, stripped: res.stripped };
+  const next = { ...read, input, bilingual: null, stripped: res.stripped, strippedLine: res.strippedLine };
   return { ...next, preview: previewFor({ controller, read: next, lang: lang === undefined ? input.lang : lang }) };
 }
 

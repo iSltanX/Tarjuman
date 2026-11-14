@@ -47,7 +47,8 @@ export const subtitleFileName = ({ videoId, lang = null, variant = 'current', fo
  * @returns {{ name: string, text: string, notes: string[], timing: 'saved' | 'shown', count: number }} notes ما جُرّد من نص الترجمة
  *   عند الكتابة، وفي SRT للترجمة وحدها ما يتغير عند إعادة رفعه (كـbuildArabicExport).
  * @throws {TjError} TJ_BAD_VIDEO_ID، ST_NO_RECORD، MD_INVALID، EX_STUDY_NO_ENGLISH (مع الأصل بلا أصل)، MD_NEGATIVE_TIME،
- *   EX_EMPTY_TEXT، EX_TEXT_BREAKS_SRT، EX_TRACK_BREAKS_SRT (سطر الأصل)، EX_TEXT_BREAKS_VTT، EX_TIMING_INVALID، EX_INVARIANT_FAILED.
+ *   EX_EMPTY_TEXT، EX_TEXT_BREAKS_SRT، EX_TRACK_BREAKS_SRT (سطر الأصل)، EX_TEXT_BREAKS_VTT، EX_TRACK_BREAKS_VTT (سطر الأصل)،
+ *   EX_TIMING_INVALID، EX_INVARIANT_FAILED.
  */
 export function buildSubtitleExport({
   videoId, cues, offsetMs = 0, timing = 'shown', variant = 'current', lang = null, format = 'srt', bilingual = false, original = null, sourceLang = null,
@@ -68,7 +69,13 @@ export function buildSubtitleExport({
   if (format === 'srt') assertWritable(clean, { arabic: true });
   else assertVttWritable(clean);
   const out = lines ? clean.map((c, i) => (lines[i] ? { ...c, text: `${c.text}\n${lines[i]}` } : c)) : clean;
-  if (lines && format === 'vtt') assertVttWritable(out);
+  if (lines && format === 'vtt') {
+    // «-->» في سطر الأصل يقطع الإشارة كما في الترجمة، لكن نصه من مسار الأصل المحفوظ لا يُعدَّل في المحرّر، فرمزه غير رمز الترجمة
+    // (EX_TRACK_BREAKS_VTT لا «عدّل نصها»؛ تحقق 2.3.0، ص-٢٣). والترجمة فُحصت قبله، والسطر المضموم لا يضيف سطرًا فارغًا.
+    const arrows = lines.flatMap((l, i) => (l.includes('-->') ? [i + 1] : []));
+    if (arrows.length) throw new TjError('EX_TRACK_BREAKS_VTT', { params: { list: list(arrows) } });
+    assertVttWritable(out);
+  }
   if (lines && format === 'srt') {
     // سطر الأصل بقواعد قارئ SRT العام (markdown: false): «# …» والسياج نص في المشغّلات، وسطر الزمن أو رقم يليه زمن يقطع الكتلة.
     const bad = out.flatMap((c, i) => (lines[i] && breaksSrtText(c.text, { markdown: false }) ? [i + 1] : []));

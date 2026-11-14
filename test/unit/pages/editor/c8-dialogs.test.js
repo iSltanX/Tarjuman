@@ -365,4 +365,15 @@ test('الفكرة ١١ (ح-49): معاينة ملف استكمال ثنائي: 
   assert.deepEqual(seen, [without], 'المستدعي يطبّق الخطة بلا سطر الأصل');
   dlg.close('apply');
   assert.deepEqual(await done, [1, 2]);
+
+  // تحقق 2.3.0 (ص-٢٣): الثنائي المعكوس (line: 'first' من readPatch): التحذير وسطر ما أُزيل يقولان «أول سطر».
+  const e2 = env();
+  const flipped = previewPatch({ doc: e2.doc, plan: withOriginal, bilingual: { count: 2, total: 2, line: 'first', plan: without } });
+  await settle();
+  const d2 = dialogOf(e2.doc);
+  assert.ok(textOf(d2).includes('يبدو الملف مصدَّرًا مع الأصل: أول سطر في مقطعين (من 2) هو نص الأصل نفسه.'), textOf(d2));
+  btn(d2, 'أزل سطر الأصل من كل مقطع').dispatchEvent({ type: 'click' });
+  assert.equal(textOf(d2.querySelector('[data-fid="stripped"]')), 'أُزيل بطلبك سطر الأصل (أول سطر) من مقطعين.');
+  d2.close('apply');
+  assert.deepEqual(await flipped, [1, 2]);
 });

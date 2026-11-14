@@ -93,7 +93,7 @@ export function renderCompletePanel(box, o) {
  * وحارس الملف الثنائي (الفكرة ١١، ح-49): إن كان الملف مصدَّرًا «مع الأصل» فتحذير IM_BILINGUAL بزر «أزل سطر الأصل من كل مقطع» يبدّل
  * الخطة بخطته بلا سطر الأصل (bilingual.plan من readPatch) ويعيد رسم البنود، ويُبلَّغ المستدعي بها (onStrip) ليطبّقها؛ ولا يُزال شيء قبله.
  * @param {{ doc: Document, plan: import('../../core/import/patch.js').PatchPlan,
- *   bilingual?: { count: number, total: number, plan: import('../../core/import/patch.js').PatchPlan | null } | null,
+ *   bilingual?: { count: number, total: number, line?: 'last' | 'first', plan: import('../../core/import/patch.js').PatchPlan | null } | null,
  *   onStrip?: (plan: import('../../core/import/patch.js').PatchPlan) => void }} o
  * @returns {Promise<number[] | null>} أرقام البنود المختارة، أو null
  */
@@ -143,10 +143,10 @@ export async function previewPatch({ doc, plan: read, bilingual = null, onStrip 
     const inserts = plan.items.filter((x) => x.action === 'insert').length;
     // ح-49: التحذير بزره ما دامت خطة الإزالة متاحة ولم تُطلب؛ وبعدها سطر ما أُزيل (وجهة التركيز بعد زوال الزر).
     const guard = bilingual?.plan && !stripped ? alertBox({
-      tone: 'warning', text: messageFor('IM_BILINGUAL', { count: bilingual.count, total: bilingual.total }),
+      tone: 'warning', text: messageFor('IM_BILINGUAL', { count: bilingual.count, total: bilingual.total, line: bilingual.line }),
       action: button({ label: t('common.bilingual.remove'), size: 'sm', onClick: () => strip(), doc }), doc,
     }) : null;
-    const done = stripped ? alertBox({ tone: 'success', text: messageFor('IM_NOTE_BILINGUAL_REMOVED', { count: bilingual.count }), doc }) : null;
+    const done = stripped ? alertBox({ tone: 'success', text: messageFor('IM_NOTE_BILINGUAL_REMOVED', { count: bilingual.count, line: bilingual.line }), doc }) : null;
     done?.setAttribute('tabindex', '-1');
     done?.setAttribute('data-fid', 'stripped');
     content.replaceChildren(...[

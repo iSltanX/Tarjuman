@@ -99,7 +99,7 @@ test('الزمن السالب بالإزاحة يرفض التصدير بأرق�
   }
 });
 
-test('سطر الأصل بقواعد قارئ SRT العام (markdown: false): «# …» والسياج نص، وسطر الزمن يُرفض برقم مقطعه؛ و«-->» يُرفض في WebVTT', () => {
+test('سطر الأصل بقواعد قارئ SRT العام (markdown: false): «# …» والسياج نص، وسطر الزمن يُرفض برقم مقطعه؛ و«-->» فيه يُرفض في WebVTT برمز الأصل (EX_TRACK_BREAKS_VTT)', () => {
   const ar = [cue(1, 1000, 3000, 'واحد'), cue(2, 3000, 5000, 'اثنان')];
   const hash = [cue(1, 1000, 3000, '# of people'), cue(2, 3000, 5000, '```')];
   assert.deepEqual(blocks(build({ cues: ar, original: hash, format: 'srt', bilingual: true }).text), ['واحد\n# of people', 'اثنان\n```']);
@@ -107,9 +107,19 @@ test('سطر الأصل بقواعد قارئ SRT العام (markdown: false): 
   const e = tjCode(() => build({ cues: ar, original: timeLine, format: 'srt', bilingual: true }));
   assert.equal(e.code, 'EX_TRACK_BREAKS_SRT');
   assert.match(e.message, /\b2\b/);
+  // «-->» في سطر الأصل رمزه غير رمز الترجمة (تحقق 2.3.0، ص-٢٣): الأصل من المسار المحفوظ لا يُعدَّل في المحرّر، فلا «عدّل نصها».
   const arrow = tjCode(() => build({ cues: ar, original: [cue(1, 1000, 3000, 'a --> b')], format: 'vtt', bilingual: true }));
-  assert.equal(arrow.code, 'EX_TEXT_BREAKS_VTT');
+  assert.equal(arrow.code, 'EX_TRACK_BREAKS_VTT');
   assert.match(arrow.message, /\b1\b/);
+  assert.match(arrow.message, /^في نص الأصل \(المقاطع 1\)/);
+  assert.match(arrow.message, /اختر «الترجمة وحدها»/);
+  assert.doesNotMatch(arrow.message, /عدّل نصها/);
+  // والسهم في الترجمة نفسها رمزها كما كان (يُعدَّل نصها)، ويُقدَّم على سطر الأصل.
+  const own = tjCode(() => build({ cues: [cue(1, 1000, 3000, 'أ --> ب'), cue(2, 3000, 5000, 'اثنان')], original: [cue(1, 1000, 3000, 'a'), cue(2, 3000, 5000, 'b --> c')], format: 'vtt', bilingual: true }));
+  assert.equal(own.code, 'EX_TEXT_BREAKS_VTT');
+  assert.match(own.message, /عدّل نصها/);
+  // و«-->» في سطر الأصل لا يمنع SRT (ليس سطر زمن كاملًا).
+  assert.equal(build({ cues: ar, original: [cue(1, 1000, 3000, 'a --> b')], format: 'srt', bilingual: true }).count, 2);
   // والترجمة نفسها بقواعدها: العنوان في نص الترجمة يمنع SRT (يقرؤه الاستيراد حدًّا) ولا يمنع WebVTT.
   assert.equal(tjCode(() => build({ cues: [cue(1, 1000, 3000, '# عنوان')], format: 'srt', bilingual: true })).code, 'EX_TEXT_BREAKS_SRT');
   assert.equal(build({ cues: [cue(1, 1000, 3000, '# عنوان')], format: 'vtt', bilingual: false }).count, 1);

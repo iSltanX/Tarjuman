@@ -61,6 +61,17 @@ test('كل رمز خطأ له رسالة إنجليزية بالقوالب نف�
   assert.deepEqual(extra, []);
 });
 
+test('تحقق 2.3.0 (ص-٢٣): رسالتا الملف الثنائي بموضع سطر الأصل (آخره افتراضًا، وأوله في المعكوس)، وسهم سطر الأصل في WebVTT برمزه', () => {
+  const en = catalogOf('en');
+  const warn = en.get('errors.IM_BILINGUAL');
+  assert.equal(warn({ count: 3, total: 4 }), 'This file looks like it was exported with the original: the last line of 3 of 4 segments is the original text itself. Saved as is, the original would become part of the translation.');
+  assert.equal(warn({ count: 3, total: 4, line: 'first' }), 'This file looks like it was exported with the original: the first line of 3 of 4 segments is the original text itself. Saved as is, the original would become part of the translation.');
+  const done = en.get('errors.IM_NOTE_BILINGUAL_REMOVED');
+  assert.equal(done({ count: 1 }), 'At your request, the original line (the last line) was removed from 1 segment.');
+  assert.equal(done({ count: 2, line: 'first' }), 'At your request, the original line (the first line) was removed from 2 segments.');
+  assert.equal(en.get('errors.EX_TRACK_BREAKS_VTT'), 'The original text (segments {list}) contains the arrow “-->”, which separates a segment’s times in WebVTT, so a valid WebVTT file can’t be written from it. The original comes from the saved YouTube track, not from your translation: export as SRT, or choose “Translation only”.');
+});
+
 test('عدد خام من حارس التحرير يُقرأ جملةً تامة بالإنجليزية', () => {
   const fix = catalogOf('en').get('errors.ED_SAVE_HAS_ERRORS');
   assert.equal(fix({ count: '3' }), 'Fix 3 timing errors first.');

@@ -56,9 +56,12 @@ function diffTable(doc, changes) {
   });
 }
 
-/** سطر ما أُزيل بنقرة «أزل سطر الأصل من كل مقطع» (ح-49): وجهة التركيز بعد زوال الزر. @param {Document} doc @param {number} count */
-function stripped(doc, count) {
-  const box = alertBox({ tone: 'success', text: messageFor('IM_NOTE_BILINGUAL_REMOVED', { count }), doc });
+/**
+ * سطر ما أُزيل بنقرة «أزل سطر الأصل من كل مقطع» (ح-49): وجهة التركيز بعد زوال الزر، بموضع السطر (آخره، أو أوله في الثنائي المعكوس).
+ * @param {Document} doc @param {number} count @param {'last' | 'first'} [line]
+ */
+function stripped(doc, count, line) {
+  const box = alertBox({ tone: 'success', text: messageFor('IM_NOTE_BILINGUAL_REMOVED', { count, line }), doc });
   box.classList.add('lib-up__stripped');
   box.setAttribute('tabindex', '-1');
   return box;
@@ -242,10 +245,10 @@ export function uploadContent({ doc, prep, preferred = null, titleOf = () => nul
       ...result.warnings.map((w) => el('p', { className: 'tj-caption', text: messageFor(w.code, w.params), doc })),
       // ح-49: الملف مصدَّر «مع الأصل»: تحذير وزر الإزالة، ولا يُزال شيء قبل النقرة؛ وبعدها سطر بما أُزيل يُنقل إليه التركيز.
       result.bilingual ? alertBox({
-        tone: 'warning', text: messageFor('IM_BILINGUAL', { count: result.bilingual.count, total: result.bilingual.total }),
+        tone: 'warning', text: messageFor('IM_BILINGUAL', { count: result.bilingual.count, total: result.bilingual.total, line: result.bilingual.line }),
         action: button({ label: tr('common.bilingual.remove'), variant: 'secondary', size: 'sm', className: 'lib-up__strip', onClick: () => onStrip(), doc }), doc,
       }) : null,
-      result.stripped ? stripped(doc, result.stripped) : null,
+      result.stripped ? stripped(doc, result.stripped, result.strippedLine) : null,
       // ف6: ما ذكره النموذج من مواضع غامضة، وزرها بعد الحفظ.
       result.ambiguous?.length ? el('p', { className: 'tj-caption lib-up__ambiguous', text: `${messageFor('IM_NOTE_AMBIGUOUS', { count: result.ambiguous.length, list: joinList(result.ambiguous.slice(0, 12).map(String).concat(result.ambiguous.length > 12 ? ['…'] : [])) })} ${tr('library.upload.ambiguousHint')}`, doc }) : null,
       hint ? alertBox({ tone: 'warning', text: hint, doc }) : null,
