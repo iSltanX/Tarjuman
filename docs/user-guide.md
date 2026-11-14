@@ -13,15 +13,16 @@
 <!-- tj:facts install-stores -->
 - **في Chrome وBrave:** افتح [صفحة ترجمان في Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj).
 - **في Edge:** افتح [صفحة ترجمان في Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi).
+- **في Firefox:** افتح [صفحة ترجمان في Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/tarjuman/).
 <!-- /tj:facts install-stores -->
 
 اضغط زر الإضافة، ثم وافق على الأذونات، وانتقل إلى §٢. ونسخة المتجر تتحدّث تلقائيًا حين يُنشر إصدار أحدث.
 
 وإن كان عندك ترجمان من مجلد قبل نشره، فانقل محفوظاتك إلى نسخة المتجر بالنسخة الاحتياطية (§٩).
 
-وما دام ترجمان غير منشور في Firefox Add-ons (سطر «حالة الإصدار» في [صفحة المستودع](../README.md)) فيُثبَّت فيه من ملف الحزمة كما يلي.
+أما التثبيت من ملف الحزمة فللتجربة، أو لإصدار لم يُنشر بعد في متجر متصفحك (سطر «حالة الإصدار» في [صفحة المستودع](../README.md))، كما يلي.
 
-### من الشيفرة: تجهيز الحزمة (لـFirefox حتى نشره، أو للتجربة)
+### من الشيفرة: تجهيز الحزمة (للتجربة، أو لإصدار لم يُنشر بعد)
 
 في مجلد المشروع:
 

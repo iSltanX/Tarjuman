@@ -17,7 +17,7 @@
 
 There's no built-in model, no API key, no account, no translation server, and no video or audio download. Your translations and settings stay in your browser; Library thumbnails are requested from YouTube by video ID only if you turn them on.
 
-> **Release status:** version **2.2.0** (2026-11-11) is published on Chrome Web Store (which also serves Brave) and Microsoft Edge Add-ons. **2.3.0** is in the repository and hasn't been submitted yet: exporting as WebVTT or with the original, term lists for each language pair, a draft of what you haven't saved in the Editor, fixing a segment's text from the transcript panel, optional keyboard shortcuts, and a button that turns on CC from the "Download original" menu. Tarjuman isn't published on Firefox Add-ons yet.
+> **Release status:** version **2.2.0** (2026-11-11) is published on Chrome Web Store (which also serves Brave), Microsoft Edge Add-ons, and Firefox Add-ons. **2.3.0** is in the repository and hasn't been submitted yet: exporting as WebVTT or with the original, term lists for each language pair, a draft of what you haven't saved in the Editor, fixing a segment's text from the transcript panel, optional keyboard shortcuts, and a button that turns on CC from the "Download original" menu.
 
 ## Features
 
@@ -62,7 +62,7 @@ There's no built-in model, no API key, no account, no translation server, and no
 | Google Chrome (130 or later) | From [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Brave (Chromium 130 or later) | From [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Microsoft Edge (130 or later) | From [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
-| Mozilla Firefox (144 or later) | Not on Firefox Add-ons yet. To try it: [install from source](docs/development.md) (Arabic) |
+| Mozilla Firefox (144 or later) | From [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/tarjuman/) |
 <!-- /tj:facts install -->
 
 In every browser, the latest version can be tried from source the same way. The store copy and the source copy are separate extensions, so move your Library between them with a backup ([user guide](docs/user-guide.md) §9, Arabic).

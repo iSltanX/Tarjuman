@@ -1,9 +1,9 @@
 {
-  "_note": "ح2 (2026-11-10): مصدر واحد للمقاطع المكررة. scripts/docs/facts.mjs يولّد القوالب بين علامتي <!-- tj:facts الاسم --> و<!-- /tj:facts الاسم --> في README.md وREADME.en.md وdocs/user-guide.md (المتغيرات {chrome} و{edge} و{minChromium} و{minFirefox} و{email})، ويفحص بلا علامات روابط المتاجر والحدود الدنيا في docs/site وstore، وبنية النسخ العربية والإنجليزية. حرّر هنا ثم: node scripts/docs/facts.mjs",
+  "_note": "ح2 (2026-11-10): مصدر واحد للمقاطع المكررة. scripts/docs/facts.mjs يولّد القوالب بين علامتي <!-- tj:facts الاسم --> و<!-- /tj:facts الاسم --> في README.md وREADME.en.md وdocs/user-guide.md (المتغيرات {chrome} و{edge} و{firefox} و{minChromium} و{minFirefox} و{email} و{pubChrome} و{pubEdge} و{pubFirefox})، ويفحص بلا علامات روابط المتاجر والحدود الدنيا في docs/site وstore، وبنية النسخ العربية والإنجليزية. حرّر هنا ثم: node scripts/docs/facts.mjs",
   "stores": {
     "chrome": "https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj",
     "edge": "https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi",
-    "firefox": null
+    "firefox": "https://addons.mozilla.org/en-US/firefox/addon/tarjuman/"
   },
   "minimum": {
     "chromium": 130,
@@ -11,14 +11,16 @@
   },
   "published": {
     "chrome": "2.2.0",
-    "edge": "2.2.0"
+    "edge": "2.2.0",
+    "firefox": "2.2.0"
   },
   "supportEmail": "iSultanBy@gmail.com",
   "blocks": {
     "badges": {
       "ar": [
         "  <a href=\"{chrome}\"><img alt=\"ترجمان {pubChrome} في Chrome Web Store\" src=\"https://img.shields.io/badge/Chrome%20Web%20Store-{pubChrome}-682455?logo=googlechrome&logoColor=white\"></a>",
-        "  <a href=\"{edge}\"><img alt=\"ترجمان {pubEdge} في Microsoft Edge Add-ons\" src=\"https://img.shields.io/badge/Edge%20Add--ons-{pubEdge}-682455?logo=microsoftedge&logoColor=white\"></a>"
+        "  <a href=\"{edge}\"><img alt=\"ترجمان {pubEdge} في Microsoft Edge Add-ons\" src=\"https://img.shields.io/badge/Edge%20Add--ons-{pubEdge}-682455?logo=microsoftedge&logoColor=white\"></a>",
+        "  <a href=\"{firefox}\"><img alt=\"ترجمان {pubFirefox} في Firefox Add-ons\" src=\"https://img.shields.io/badge/Firefox%20Add--ons-{pubFirefox}-682455?logo=firefoxbrowser&logoColor=white\"></a>"
       ]
     },
     "install": {
@@ -28,7 +30,7 @@
         "| Google Chrome ‏({minChromium} فأحدث) | من [Chrome Web Store]({chrome}) |",
         "| Brave ‏(Chromium {minChromium} فأحدث) | من [Chrome Web Store]({chrome})، المتجر نفسه |",
         "| Microsoft Edge ‏({minChromium} فأحدث) | من [Microsoft Edge Add-ons]({edge}) |",
-        "| Mozilla Firefox ‏({minFirefox} فأحدث) | غير منشور في Firefox Add-ons بعد. وللتجربة: [التثبيت من الشيفرة](docs/development.md#التثبيت-من-الشيفرة) |"
+        "| Mozilla Firefox ‏({minFirefox} فأحدث) | من [Firefox Add-ons]({firefox}) |"
       ],
       "en": [
         "| Browser | Available now |",
@@ -36,7 +38,7 @@
         "| Google Chrome ({minChromium} or later) | From [Chrome Web Store]({chrome}) |",
         "| Brave (Chromium {minChromium} or later) | From [Chrome Web Store]({chrome}) |",
         "| Microsoft Edge ({minChromium} or later) | From [Microsoft Edge Add-ons]({edge}) |",
-        "| Mozilla Firefox ({minFirefox} or later) | Not on Firefox Add-ons yet. To try it: [install from source](docs/development.md) (Arabic) |"
+        "| Mozilla Firefox ({minFirefox} or later) | From [Firefox Add-ons]({firefox}) |"
       ]
     },
     "privacy": {
@@ -74,7 +76,8 @@
     "install-stores": {
       "ar": [
         "- **في Chrome وBrave:** افتح [صفحة ترجمان في Chrome Web Store]({chrome}).",
-        "- **في Edge:** افتح [صفحة ترجمان في Microsoft Edge Add-ons]({edge})."
+        "- **في Edge:** افتح [صفحة ترجمان في Microsoft Edge Add-ons]({edge}).",
+      "- **في Firefox:** افتح [صفحة ترجمان في Firefox Add-ons]({firefox})."
       ]
     },
     "permissions-guide": {

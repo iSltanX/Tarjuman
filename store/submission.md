@@ -84,7 +84,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | المستودع | `https://github.com/iSltanX/Tarjuman` | عام: 200 لزائر غير مسجَّل (2026-11-07)، ورابطه في بطاقة «الحقوق» في «حول» منذ 2.0.0. ولا يطلبه حقل في المتاجر الثلاثة |
 | صفحة ترجمان في Chrome Web Store (ومنه Brave) | `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj` | منشورة بالإصدار `2.2.0` (2026-11-13، بقول سلطان، ولم يُقس هنا). وقبلها: 200 لزائر غير مسجَّل (2026-11-09) باسم ترجمان والإصدار `2.1.0`، وتاريخ التحديث 9 نوفمبر 2026. وهي رابط المتجر في `README.md` وصفحة الموقع |
 | صفحة ترجمان في Microsoft Edge Add-ons | `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi` | منشورة بالإصدار `2.2.0` (2026-11-13، بقول سلطان، ولم يُقس هنا). وقبلها: 200 لزائر غير مسجَّل (2026-11-09)، وواجهة المتجر تعيد اسم ترجمان والإصدار `2.1.0` والناشر BySultan. وهي رابط Edge في `README.md` وصفحة الموقع |
-| صفحة Firefox Add-ons | — | لا صفحة عامة: `2.2.0` قيد المراجعة (2026-11-13، بقول سلطان). وقبلها: لوحة المطوّر تعرض الإضافة «Awaiting Review» (2026-11-09)، وواجهة AMO تعيد 401 للمعرّف `tarjuman@bysltan.com` وللرابط `tarjuman`. وما لم يُنشر «قريبًا» نصًّا بلا رابط في الموقع والوثائق |
+| صفحة ترجمان في Firefox Add-ons | `https://addons.mozilla.org/en-US/firefox/addon/tarjuman/` | منشورة بالإصدار `2.2.0` (بقول سلطان 2026-11-14، وواجهة AMO العامة `/api/v5/addons/addon/tarjuman/` في اليوم نفسه: `status: public`، والإصدار `2.2.0` مراجَع في 2026-11-14، والمعرّف `tarjuman@bysltan.com`، وFirefox 144 فأحدث، والأذونات الأربعة كما في البيان). وقبلها: «Awaiting Review» في لوحة المطوّر (2026-11-09)، و401 من الواجهة حتى 2026-11-13 |
 
 ## ٦. حقول كل متجر
 

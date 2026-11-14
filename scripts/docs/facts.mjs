@@ -29,14 +29,14 @@ export const PAIRS = Object.freeze([
   { ar: 'store/listing.ar.md', en: 'store/listing.en.md', mode: 'prefix' },
 ]);
 
-const VARS = /\{(chrome|edge|minChromium|minFirefox|email|pubChrome|pubEdge)\}/g;
+const VARS = /\{(chrome|edge|firefox|minChromium|minFirefox|email|pubChrome|pubEdge|pubFirefox)\}/g;
 const MARK = /<!-- tj:facts ([a-z-]+) -->\n([\s\S]*?)\n?<!-- \/tj:facts \1 -->/g;
 
 /** @param {string} line @param {any} facts */
 export function fill(line, facts) {
   const v = {
-    chrome: facts.stores.chrome, edge: facts.stores.edge, minChromium: facts.minimum.chromium, minFirefox: facts.minimum.firefox, email: facts.supportEmail,
-    pubChrome: facts.published?.chrome, pubEdge: facts.published?.edge,
+    chrome: facts.stores.chrome, edge: facts.stores.edge, firefox: facts.stores.firefox, minChromium: facts.minimum.chromium, minFirefox: facts.minimum.firefox, email: facts.supportEmail,
+    pubChrome: facts.published?.chrome, pubEdge: facts.published?.edge, pubFirefox: facts.published?.firefox,
   };
   return line.replace(VARS, (_, k) => String(v[k]));
 }

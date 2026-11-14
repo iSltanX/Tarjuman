@@ -11,6 +11,7 @@
 <!-- tj:facts badges -->
   <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 2.2.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-2.2.0-682455?logo=googlechrome&logoColor=white"></a>
   <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 2.2.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-2.2.0-682455?logo=microsoftedge&logoColor=white"></a>
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/tarjuman/"><img alt="ترجمان 2.2.0 في Firefox Add-ons" src="https://img.shields.io/badge/Firefox%20Add--ons-2.2.0-682455?logo=firefoxbrowser&logoColor=white"></a>
 <!-- /tj:facts badges -->
   <img alt="المعالجة والحفظ على جهازك" src="https://img.shields.io/badge/data-on--device-2A6E46">
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
@@ -29,7 +30,7 @@
 
 لا نموذج مدمج، ولا مفتاح API، ولا حساب، ولا خادم ترجمة، ولا تنزيل للفيديو أو الصوت. وترجماتك وإعداداتك تبقى في متصفحك، وصور المحفوظات لا تُطلب من يوتيوب بمعرّف الفيديو إلا إن فعّلتها.
 
-> **حالة الإصدار:** المنشور **2.2.0** (2026-11-11) في Chrome Web Store (ومنه Brave) وMicrosoft Edge Add-ons. و**2.3.0** في المستودع ولم يُرفع بعد: التصدير بصيغة WebVTT أو مع الأصل، وقوائم مصطلحات لكل زوج لغتين، ومسودة لما لم تحفظه في المحرّر، وتصحيح نص المقطع من لوحة النص، واختصارات اختيارية للوحة المفاتيح، وزر يشغّل CC من قائمة «تنزيل الأصل». ولم يُنشر ترجمان في Firefox Add-ons بعد.
+> **حالة الإصدار:** المنشور **2.2.0** (2026-11-11) في Chrome Web Store (ومنه Brave) وMicrosoft Edge Add-ons وFirefox Add-ons. و**2.3.0** في المستودع ولم يُرفع بعد: التصدير بصيغة WebVTT أو مع الأصل، وقوائم مصطلحات لكل زوج لغتين، ومسودة لما لم تحفظه في المحرّر، وتصحيح نص المقطع من لوحة النص، واختصارات اختيارية للوحة المفاتيح، وزر يشغّل CC من قائمة «تنزيل الأصل».
 
 ## المزايا
 
@@ -75,7 +76,7 @@
 | Google Chrome ‏(130 فأحدث) | من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Brave ‏(Chromium 130 فأحدث) | من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، المتجر نفسه |
 | Microsoft Edge ‏(130 فأحدث) | من [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
-| Mozilla Firefox ‏(144 فأحدث) | غير منشور في Firefox Add-ons بعد. وللتجربة: [التثبيت من الشيفرة](docs/development.md#التثبيت-من-الشيفرة) |
+| Mozilla Firefox ‏(144 فأحدث) | من [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/tarjuman/) |
 <!-- /tj:facts install -->
 
 وفي كل المتصفحات يُجرَّب الإصدار الأحدث من الشيفرة بالطريقة نفسها. ونسخة المتجر ونسخة الشيفرة إضافتان منفصلتان، فانقل محفوظاتك بينهما بالنسخة الاحتياطية ([دليل الاستخدام](docs/user-guide.md) §٩).
