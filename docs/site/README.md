@@ -56,7 +56,7 @@
 | `/tarjuman/credits#images` | مصدر المشاهد في الصور، ورابطها «الحقوق» في تذييل كل صفحة |
 | `/tarjuman/privacy#report` و`/tarjuman/support#report` | مراسٍ ثابتة، تحيل إليها المتاجر وقناة البلاغات |
 | بريد الدعم `iSultanBy@gmail.com` | قرار سلطان (T1)، ظاهر للعموم |
-| روابط المتاجر | منشور في Chrome Web Store (ومنه Brave): `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj`، وفي Microsoft Edge Add-ons: `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi`. وهما زرّا البطل ورابطا المتصفحات والتثبيت والمساعدة (2026-11-07). وFirefox «قريبًا» نصًا بلا رابط حتى يُنشر فيه |
+| روابط المتاجر | منشور في Chrome Web Store (ومنه Brave): `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj`، وفي Microsoft Edge Add-ons: `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi` (2026-11-07)، وفي Firefox Add-ons: `https://addons.mozilla.org/en-US/firefox/addon/tarjuman/` (2026-11-14). وهي أزرار البطل وروابط المتصفحات والتثبيت والمساعدة |
 | سياسات Google وCloudflare وGitHub | في `privacy.md` (`#third-parties`). أعادت 200 في 2026-11-04 |
 
 ## العلامات

@@ -124,14 +124,14 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 
 **العنوان:** For desktop, in four browsers
 
-**المقدمة:** Tarjuman is published on Chrome Web Store, which Brave also installs from, and on Microsoft Edge Add-ons. It isn’t published on Firefox Add-ons yet; once it is, you’ll find the link here.
+**المقدمة:** Tarjuman is published on Chrome Web Store, which Brave also installs from, on Microsoft Edge Add-ons, and on Firefox Add-ons.
 
 | Browser | Where to get it | Status |
 | --- | --- | --- |
 | Chrome | From [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj), version 130 or later | Available |
 | Brave | From [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj), on Chromium 130 or later | Available |
 | Edge | From [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi), version 130 or later | Available |
-| Firefox | From Firefox Add-ons, version 144 or later | Coming soon |
+| Firefox | From [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/tarjuman/), version 144 or later | Available |
 
 ## التثبيت — `#install`
 
@@ -139,7 +139,7 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 
 **العنوان:** From the store to your first video
 
-1. **Install Tarjuman from your browser’s store:** In Chrome and Brave, from [its Chrome Web Store page](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj). In Edge, from [its Microsoft Edge Add-ons page](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). Coming soon to Firefox Add-ons.
+1. **Install Tarjuman from your browser’s store:** In Chrome and Brave, from [its Chrome Web Store page](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj). In Edge, from [its Microsoft Edge Add-ons page](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). In Firefox, from [its Firefox Add-ons page](https://addons.mozilla.org/en-US/firefox/addon/tarjuman/).
 2. **Pin its icon to the browser toolbar:** Click the extensions icon (the puzzle piece), then the pin next to “Tarjuman”. That’s where you’ll copy the translation instructions.
 3. **Open a YouTube video:** Then start with [First use](/tarjuman/en/support#first-use) on the Help page.
 

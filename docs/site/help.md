@@ -22,7 +22,7 @@
 | Chrome (130 فأحدث) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Brave (على Chromium 130 فأحدث) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Edge (130 فأحدث) | [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
-| Firefox (144 فأحدث) | Firefox Add-ons — قريبًا |
+| Firefox (144 فأحدث) | [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/tarjuman/) |
 
 بعد التثبيت ثبّت أيقونة ترجمان في شريط المتصفح: أيقونة الإضافات (قطعة الأحجية)، ثم الدبوس بجوار «ترجمان». فمن نافذتها تنسخ تعليمات الترجمة.
 
@@ -136,7 +136,7 @@
 | التثبيت | المتصفحات والحدود الدنيا (Chromium 130 وFirefox 144) | `src/manifest.json` (`minimum_chrome_version` 130) و`scripts/targets.mjs` (`strict_min_version` 144)، بقرار سلطان (تدقيق 7a66f91، Q08 وQ09)؛ والمختبر حيًا الإصدارات الحالية وحدها (Chrome وEdge 156، وBrave 1.98، وFirefox 159): T3 (`test/live/stores/t3.mjs`) وC1 (`test/live/audit-c1/run.mjs`) |
 | التثبيت | ما لا يُرفق بالبلاغ تلقائيًا | `docs/site/privacy.md` (`#report`) وجدول أدلتها |
 | التثبيت | رابطا Chrome Web Store (لـChrome وBrave) وMicrosoft Edge Add-ons | صفحتا المتجرين لزائر غير مسجَّل (2026-11-08): 200، وترجمان `2.0.0`، والناشر BySultan؛ `store/submission.md` §٥ |
-| التثبيت | «قريبًا» لـFirefox | لم يُنشر فيه بعد (`store/submission.md` §٥: روابط المتجرين المنشورين وحدهما) |
+| التثبيت | المتاجر الثلاثة بروابط صفحاتها | `store/submission.md` §٥ |
 | التثبيت | الصلاحيات الثلاث، ولا اختيارية غير موافقة Firefox للصور | `src/manifest.json`، و`docs/site/privacy.md` `#permissions` |
 | التثبيت | إذن يوتيوب المسحوب: النافذة والإعدادات تقولانه، و«السماح» يطلب الإذن نفسه من جديد، بلا صلاحية جديدة | كما في جدول أدلة `docs/site/privacy.md` (صف «الصلاحيات»: إذن يوتيوب المسحوب) |
 | أول استعمال | الخطوات الست وأسماء الأزرار، ونسخ التعليمات من النافذة، ولغة الملف المرفوع | `docs/user-guide.md` §٣، و`src/i18n/ar/settings.js` (`about.guideStep1` إلى `guideStep5`)، و`src/i18n/ar/player.js` (`controls`)، و`src/pages/popup/` (كتلة «تعليمات الترجمة»)، و`docs/contracts/data-model.md` §١٧ (`langFromFileName`)؛ وقرارات سلطان في جولة 2.0.0 (`docs/product-spec.md` §٦.٢ و§٨) |

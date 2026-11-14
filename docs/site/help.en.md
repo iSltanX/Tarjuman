@@ -18,7 +18,7 @@ Tarjuman is for desktop computers and works on YouTube watch pages.
 | Chrome (130 or later) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Brave (on Chromium 130 or later) | [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj) |
 | Edge (130 or later) | [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi) |
-| Firefox (144 or later) | Firefox Add-ons — coming soon |
+| Firefox (144 or later) | [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/tarjuman/) |
 
 After installing, pin Tarjuman’s icon to the browser toolbar: click the extensions icon (the puzzle piece), then the pin next to “Tarjuman”. You’ll copy the translation instructions from its popup.
 

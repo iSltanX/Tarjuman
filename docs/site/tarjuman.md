@@ -122,20 +122,20 @@
 
 **العنوان:** للحاسوب، في أربعة متصفحات
 
-**المقدمة:** ترجمان منشور في Chrome Web Store، ومنه يثبّته Brave، وفي Microsoft Edge Add-ons. ولم يُنشر في Firefox Add-ons بعد، وحين يُنشر فيه تجد رابطه هنا.
+**المقدمة:** ترجمان منشور في Chrome Web Store، ومنه يثبّته Brave، وفي Microsoft Edge Add-ons، وفي Firefox Add-ons.
 
 | المتصفح | من أين | الحال |
 | --- | --- | --- |
 | Chrome | من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، للإصدار 130 فأحدث | متاح |
 | Brave | من [Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، على Chromium 130 فأحدث | متاح |
 | Edge | من [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi)، للإصدار 130 فأحدث | متاح |
-| Firefox | من Firefox Add-ons، للإصدار 144 فأحدث | قريبًا |
+| Firefox | من [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/tarjuman/)، للإصدار 144 فأحدث | متاح |
 
 ## التثبيت — `#install`
 
 **العنوان:** من المتجر إلى أول فيديو
 
-1. **ثبّت ترجمان من متجر متصفحك:** في Chrome وBrave من [صفحته في Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، وفي Edge من [صفحته في Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi). وقريبًا في Firefox Add-ons.
+1. **ثبّت ترجمان من متجر متصفحك:** في Chrome وBrave من [صفحته في Chrome Web Store](https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj)، وفي Edge من [صفحته في Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi)، وفي Firefox من [صفحته في Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/tarjuman/).
 2. **ثبّت أيقونته في شريط المتصفح:** من أيقونة الإضافات (قطعة الأحجية)، ثم الدبوس بجوار «ترجمان». ومنها تنسخ تعليمات الترجمة.
 3. **افتح فيديو على يوتيوب:** وابدأ من [أول استعمال](/tarjuman/support#first-use) في صفحة المساعدة.
 
@@ -175,7 +175,7 @@
 | أين تذهب بياناتك | كل البنود | جدول أدلة `docs/site/privacy.md` |
 | ما لا يفعله | لا تنزيل فيديو ولا صوت، ولا طلب ترجمة، ولا إنشاء مسار ولا تبديله، ولا ترجمة بنفسه، ولا Shorts ولا مضمّنة، ولا استخراج من بث جارٍ، والحاسوب وحده | `store/listing.ar.md` («ما لا يفعله» المعتمد)، و`docs/contracts/extraction.md` (قاعدة `player-api`)، و`docs/known-limitations.md` §١ |
 | البطل والمتصفحات والتثبيت | زرّا «أضف ترجمان إلى Chrome» و«…إلى Edge»، ورابطا Chrome Web Store (لـChrome وBrave) وMicrosoft Edge Add-ons («متاح») | صفحتا المتجرين لزائر غير مسجَّل (2026-11-08): 200، وترجمان `2.0.0`، والناشر BySultan؛ `store/submission.md` §٥ |
-| المتصفحات والتثبيت | الأربعة بحدودها الدنيا (Chromium 130 وFirefox 144)، و«قريبًا» لـFirefox، ولم يُنشر فيه بعد | `test/live/stores/t3.mjs`، و`src/manifest.json`، و`scripts/targets.mjs`، و`store/submission.md` §٥؛ والحدان بقرار سلطان (تدقيق 7a66f91، Q08 وQ09) |
+| المتصفحات والتثبيت | الأربعة بحدودها الدنيا (Chromium 130 وFirefox 144)، وكلها منشورة في متاجرها | `test/live/stores/t3.mjs`، و`src/manifest.json`، و`scripts/targets.mjs`، و`store/submission.md` §٥؛ والحدان بقرار سلطان (تدقيق 7a66f91، Q08 وQ09) |
 | التثبيت | الأيقونة في الشريط ومنها التعليمات | `src/pages/popup/` (كتلة «تعليمات الترجمة»)، و`docs/user-guide.md` §٢ و§٣ |
 | التثبيت | الصلاحيات الثلاث والاختيارية وموافقتا Firefox | `src/manifest.json`، و`docs/site/privacy.md` (`#permissions`)، و`docs/site/help.md` (`#install`) |
 | التذييل | الناشر وبريد الدعم والحقوق ونفي الصلة بيوتيوب وعلامته | `store/README.md` §٥، و`LICENSE` (السطر الأول والفقرة الأخيرة)، و`store/listing.ar.md` (سطر العلامة) |
