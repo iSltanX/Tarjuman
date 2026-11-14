@@ -3,8 +3,9 @@
 // سطر ما أُزيل، و«حفظ» بعدها يحمّل الترجمة وحدها بملاحظتها.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bilingualCheck } from '../../../../src/core/import/index.js';
-import { AR_CUES, chooseFiles, click, makeState, mountPage, settle } from './harness.js';
+import { buildSubtitleExport } from '../../../../src/core/export/index.js';
+import { bilingualCheck, readImport } from '../../../../src/core/import/index.js';
+import { A, AR_CUES, chooseFiles, click, makeState, mountPage, settle } from './harness.js';
 
 const EN = AR_CUES.map((c) => ({ ...c, text: `line ${c.n}` }));
 const ENGLISH = [{ key: 'en|manual', lang: 'en', kind: 'manual', capturedAt: '2026-11-01T12:00:00.000Z', source: 'capture', cues: EN }];
@@ -62,6 +63,62 @@ test('ح-49: الزر بلوحة المفاتيح يزيل سطر الأصل ف�
   const input = loads(page)[0][2];
   assert.deepEqual(input.cues.map((c) => c.text), AR_CUES.map((c) => c.text));
   assert.equal(input.notes.at(-1), 'أُزيل بطلبك سطر الأصل (آخر سطر) من 5 مقاطع.');
+});
+
+test('تحقق 2.3.0 (ص-١٣، ح-53): بقراءة حقيقية لملف ترجمان الثنائي، «أزل سطر الأصل» يجعل لغة الملف لغة اسمه في التأكيد وفي الحفظ', async () => {
+  // الملف كما يصدّره ترجمان «مع الأصل» (ID.ar.dual-en.srt)، ويقرؤه readImport الحقيقي بمسارات الأصل: نصه الثنائي لا يجتاز فحص
+  // الكتابة فلغته null قبل الإزالة، ولا «إلى» محفوظة لهذا الفيديو. كانت تبقى «غير محددة» بعد الإزالة وتُحفظ null.
+  const dual = buildSubtitleExport({ videoId: A, cues: AR_CUES, lang: 'ar', format: 'srt', bilingual: true, original: EN, sourceLang: 'en' });
+  assert.equal(dual.name, `${A}.ar.dual-en.srt`);
+  const page = mountPage({ state: makeState({ saved: { fingerprints: [], english: ENGLISH } }) });
+  page.flows.importFlow.readImport = readImport;
+  click(page.ui.btn('upload'));
+  chooseFiles(page.ui, [new File([dual.text], dual.name)]);
+  await settle();
+  assert.ok(page.ui.field('stripOriginal'), page.ui.menuText());
+  const langField = () => page.ui.field('uploadLang');
+  assert.equal(langField().value, '', 'قبل الإزالة: «غير محددة» كما تعيدها القراءة الحقيقية');
+  click(page.ui.field('stripOriginal'), 0);
+  await settle();
+  assert.equal(langField()?.value, 'ar', page.ui.menuText());
+  click(page.ui.item('حفظ'));
+  await settle();
+  const input = loads(page)[0][2];
+  assert.equal(input.lang, 'ar');
+  assert.deepEqual(input.cues.map((c) => c.text), AR_CUES.map((c) => c.text), 'الترجمة وحدها');
+});
+
+test('ص-١٣: بلا رمز في الاسم تُعاد «إلى» بعد الإزالة على نص الترجمة وحده، واختيار المستخدم قبل الإزالة يبقى', async () => {
+  const dual = buildSubtitleExport({ videoId: A, cues: AR_CUES, lang: 'ar', format: 'srt', bilingual: true, original: EN, sourceLang: 'en' });
+  const prefs = { schema: 1, pair: { from: 'auto', to: 'ar' }, remember: true, recent: [], videos: {} };
+  const open = async () => {
+    const page = mountPage({ state: makeState({ saved: { fingerprints: [], english: ENGLISH }, langPrefs: prefs }) });
+    page.flows.importFlow.readImport = readImport;
+    click(page.ui.btn('upload'));
+    chooseFiles(page.ui, [new File([dual.text], 'talk.srt')]);
+    await settle();
+    return page;
+  };
+  // «إلى» عربية والنص الثنائي لا يوافقها قبل الإزالة، ويوافقها بعدها.
+  const page = await open();
+  assert.equal(page.ui.field('uploadLang').value, '');
+  click(page.ui.field('stripOriginal'), 0);
+  await settle();
+  assert.equal(page.ui.field('uploadLang').value, 'ar');
+  click(page.ui.item('حفظ'));
+  await settle();
+  assert.equal(loads(page)[0][2].lang, 'ar');
+  // ما اختاره المستخدم قبل الإزالة لا تستبدله المقترحة.
+  const chosen = await open();
+  const sel = chosen.ui.field('uploadLang');
+  sel.value = 'fa';
+  sel.dispatchEvent({ type: 'change' });
+  click(chosen.ui.field('stripOriginal'), 0);
+  await settle();
+  assert.equal(chosen.ui.field('uploadLang').value, 'fa');
+  click(chosen.ui.item('حفظ'));
+  await settle();
+  assert.equal(loads(chosen)[0][2].lang, 'fa');
 });
 
 test('تحقق 2.3.0 (ص-٢٣): الثنائي المعكوس في التأكيد: التحذير يقول «أول سطر»، والزر يحذفه، وسطر ما أُزيل يقول «(أول سطر)»', async () => {

@@ -218,6 +218,8 @@ export async function readFor({ controller, importFlow, files, fallbackLang = nu
     // الملف مصدَّر «مع الأصل» (ح-49): التأكيد يعرض التحذير وزر الإزالة، ولا يُحفظ مباشرة.
     bilingual: res.bilingual ?? null,
     fileLang,
+    // «إلى» التي اقتُرحت منها اللغة، فتُعاد بها بعد «أزل سطر الأصل» (stripFor، ص-١٣).
+    fallbackLang,
     preview,
     warnings: (res.warnings ?? []).map((w) => messageFor(w.code, w.params)),
   };
@@ -225,16 +227,27 @@ export async function readFor({ controller, importFlow, files, fallbackLang = nu
 
 /**
  * «أزل سطر الأصل من كل مقطع» في التأكيد (الفكرة ١١، ح-49): نتيجة القراءة بلا سطر الأصل حيث طابق (withoutOriginalLines)، بتقرير الحفظ
- * بلغة الملف المقترحة وملاحظة الإزالة، والمعاينة بلغة الملف المختارة. وما ليس ثنائيًا يعود كما هو. لا كتابة في التخزين هنا.
- * @param {{ controller: object, read: { input: object, bilingual: object | null, lang?: string | null }, lang?: string | null }} p
+ * بلغة الملف المقترحة وملاحظة الإزالة، والمعاينة بلغة الملف المختارة. واللغة المقترحة (input.lang وfileLang) تُعاد كما في readFor على
+ * نص الترجمة وحده، وlang المختارة تتبعها إلا إن غيّرها المستخدم قبل الإزالة (ص-١٣). وما ليس ثنائيًا يعود كما هو. لا كتابة في التخزين هنا.
+ * @param {{ controller: object, read: { input: object, bilingual: object | null, fileLang?: string | null, fallbackLang?: string | null }, lang?: string | null }} p
+ *   lang ما في التأكيد الآن (pending.lang)
  */
 export function stripFor({ controller, read, lang }) {
   if (!read?.bilingual) return read;
   const s = controller.getState();
-  const res = withoutOriginalLines({ ok: true, ...read.input, bilingual: read.bilingual }, { fingerprints: s.saved?.fingerprints ?? [], settings: s.settings });
-  const input = { fileName: res.fileName, cues: res.cues, comparison: res.comparison, fingerprintId: res.fingerprintId, notes: res.notes, lang: read.input.lang ?? null };
-  const next = { ...read, input, bilingual: null, stripped: res.stripped, strippedLine: res.strippedLine };
-  return { ...next, preview: previewFor({ controller, read: next, lang: lang === undefined ? input.lang : lang }) };
+  const fingerprints = s.saved?.fingerprints ?? [];
+  // بلغة الاسم وحدها، فيقرأ withoutOriginalLines رمز الاسم من جديد على نص الترجمة وحده (ID.ar.dual-en.srt ← ar، ح-53).
+  const res = withoutOriginalLines({ ok: true, ...read.input, lang: read.fileLang ?? null, bilingual: read.bilingual }, { fingerprints, settings: s.settings });
+  // اللغة المقترحة كما لو قُرئ الملف بلا سطر الأصل (readFor، تحقق 2.3.0 ص-١٣): رمز الاسم، وإلا «إلى» إن وافق نصها الآن. كانت تبقى
+  // لغة القراءة الثنائية («غير محددة») فتُحفظ null. وما اختاره المستخدم في التأكيد غير المقترحة يبقى.
+  const fileLang = res.lang ?? null;
+  const fallback = read.fallbackLang ?? null;
+  const suggested = fileLang ?? (fallback && textFitsLang(res.cues, fallback) ? fallback : null);
+  const comparison = suggested === fileLang ? res.comparison : reportForLang({ cues: res.cues, fingerprintId: res.fingerprintId, notes: res.notes }, fingerprints, s.settings, suggested);
+  const input = { fileName: res.fileName, cues: res.cues, comparison, fingerprintId: res.fingerprintId, notes: res.notes, lang: suggested };
+  const chosen = lang === undefined || lang === (read.input.lang ?? null) ? suggested : lang;
+  const next = { ...read, input, fileLang, lang: chosen, bilingual: null, stripped: res.stripped, strippedLine: res.strippedLine };
+  return { ...next, preview: previewFor({ controller, read: next, lang: chosen }) };
 }
 
 /**
