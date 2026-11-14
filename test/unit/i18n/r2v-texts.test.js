@@ -33,8 +33,8 @@ test('§١٠ (٣): «تُخطّيت ترجمتان لا توافق حروفهم�
   for (const n of [3, 11, 100]) assert.match(msg(n), /لا توافق حروفها اللغة المختارة؛ حدّد لغتها /, `ar ${n}`);
   assert.ok(src('pages/settings/langs.js').includes("messageFor('PG_LANG_ASSIGN_SKIPPED', { n: formatCount(skipped, translationForms()), count: skipped })"), 'الموضع يمرر العدد خامًا');
   setLocale('en');
-  assert.equal(msg(1), 'The language was set for videos whose script matched; 1 translation whose script doesn’t match the chosen language was skipped. Set its language from the Translation menu in the player.');
-  assert.equal(msg(2), 'The language was set for videos whose script matched; 2 translations whose script doesn’t match the chosen language were skipped. Set their language from the Translation menu in the player.');
+  assert.equal(msg(1), 'The language was set for translations whose script matched; 1 translation whose script doesn’t match the chosen language was skipped. Set its language from the Translation menu in the player.');
+  assert.equal(msg(2), 'The language was set for translations whose script matched; 2 translations whose script doesn’t match the chosen language were skipped. Set their language from the Translation menu in the player.');
 });
 
 test('ح-18 (تحقق مستقل): «لا مطابقات أخرى» تسمّي زرّي «السابقة» و«التالية» الظاهرين، لا سهمين صارا أيقونتين ولا مفاتيح أسهم', (ctx) => {

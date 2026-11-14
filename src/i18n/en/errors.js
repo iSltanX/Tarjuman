@@ -212,7 +212,7 @@ export default Object.freeze({
   PG_PAIR_MISSING: 'Choose the original file’s language in “From” and the requested language in “To”, then copy the instructions.',
   PG_PAIR_NOT_SAVED: 'Couldn’t save the two languages for this video. The instructions are copied with them now, but they may not stay when you open the popup again.',
   PG_LANG_ASSIGN_PARTIAL: ({ n }) => `The language was set where possible, but saving failed for ${n} ${by(n, 'video', 'videos')}. Try again for the rest.`,
-  PG_LANG_ASSIGN_SKIPPED: ({ n, count }) => `The language was set for videos whose script matched; ${n} whose script doesn’t match the chosen language ${by(count, 'was', 'were')} skipped. Set ${by(count, 'its', 'their')} language from the Translation menu in the player.`,
+  PG_LANG_ASSIGN_SKIPPED: ({ n, count }) => `The language was set for translations whose script matched; ${n} whose script doesn’t match the chosen language ${by(count, 'was', 'were')} skipped. Set ${by(count, 'its', 'their')} language from the Translation menu in the player.`,
   PG_LANG_PREFS_UNREAD: 'Couldn’t read the language preferences, so the two default languages are shown. Reopen the popup; if it keeps happening, copy the diagnostics report.',
   PG_COPY_BAD_ID: 'The video ID isn’t valid, so the translation instructions can’t be copied for it.',
   PG_ID_COPIED: 'Video ID copied.',

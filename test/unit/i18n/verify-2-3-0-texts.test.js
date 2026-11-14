@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { setLocale, t } from '../../../src/i18n/index.js';
 import { arabicName, knownLanguages, withBa } from '../../../src/core/lang/index.js';
 import { languageValues } from '../../../src/core/export/instructions.js';
+import { messageFor } from '../../../src/core/errors/index.js';
+import { formatCount } from '../../../src/ui/format.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
@@ -66,4 +68,15 @@ test('ص-١٩ (٥): وصف قسم «العرض» يذكر صف اختصارات 
   setLocale('en');
   assert.equal(t('settings.sections.display.desc'), 'How the translation looks over the video, the synced transcript panel and its button, keyboard shortcuts, and video thumbnails in Library.');
   assert.ok(t('settings.sections.display.desc').includes(t('settings.shortcuts.label').toLowerCase()));
+});
+
+test('ص-١٩ (٦): رسالة تعيين اللغة الإنجليزية تعدّ ترجمات من أولها، لا فيديوهات ثم ترجمات', (ctx) => {
+  reset(ctx);
+  setLocale('en');
+  const forms = () => t('settings.langs.translationCount');
+  const msg = (n) => messageFor('PG_LANG_ASSIGN_SKIPPED', { n: formatCount(n, forms()), count: n });
+  for (const n of [1, 2, 3]) {
+    assert.ok(msg(n).startsWith('The language was set for translations whose script matched; '), msg(n));
+    assert.doesNotMatch(msg(n), /videos?\b/, msg(n));
+  }
 });
