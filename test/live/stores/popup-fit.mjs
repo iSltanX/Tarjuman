@@ -251,9 +251,13 @@ async function act(name) {
     if (!ta || ta.closest('[hidden]')) return 'لا حقل';
     const dt = new DataTransfer();
     dt.setData('text/plain', '1\n00:00:01,000 --> 00:00:02,000\nمرحبًا\n');
-    ta.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+    // Firefox يتجاهل clipboardData في منشئ ClipboardEvent المصنوع (فيقرأ المنتج نصًا فارغًا ويقول «لا نص»)، فيُعرَّف على الحدث نفسه.
+    const ev = new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true });
+    if (ev.clipboardData?.getData('text/plain') !== dt.getData('text/plain')) Object.defineProperty(ev, 'clipboardData', { value: dt });
+    ta.dispatchEvent(ev);
     for (let i = 0; i < 40 && !q('#tj-paste-status')?.textContent; i++) await wait(50);
-    return q('#tj-paste-status')?.textContent ? 'shown' : 'لا نتيجة';
+    const shown = q('#tj-paste-status')?.textContent ?? '';
+    return shown ? `«${shown.slice(0, 40)}…»` : 'لا نتيجة';
   }
   return `إجراء غير معروف: ${name}`;
 }
