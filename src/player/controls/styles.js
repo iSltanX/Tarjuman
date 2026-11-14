@@ -101,7 +101,10 @@ button.slot[aria-disabled="true"] { cursor: default; }
 label.item[aria-disabled="true"] { color: rgb(255 255 255 / 45%); cursor: default; background: none; }
 .sentences { display: flex; flex-direction: column; gap: 2px; }
 button.item.sentence { display: block; min-width: 0; line-height: var(--row); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: isolate; text-align: match-parent; }
-button.item.sentence[aria-current="true"] { background: var(--tj-p-selected); border-radius: 4px; }
+/* الجملة الحالية: صبغة اللوحة 12 ومعها خط الإبراز في بداية الصف (كما في 2.3.0)، فلا تُعرف باللون وحده: الصبغة وحدها 1.35:1 على القائمة
+   (التحقق المستقل لـ3.0.0، ت٣-v3-identity-2؛ الثابت ٥). */
+button.item.sentence[aria-current="true"] { background: var(--tj-p-selected); border-radius: 4px; box-shadow: inset -3px 0 0 var(--tj-p-accent); }
+.layer[dir="ltr"] button.item.sentence[aria-current="true"] { box-shadow: inset 3px 0 0 var(--tj-p-accent); }
 .tag { align-self: flex-start; display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; margin: 0 6px; border-radius: 3px; background: rgb(255 255 255 / 10%); color: var(--tj-p-menu-text); font-size: 0.93em; font-weight: 700; white-space: nowrap; }
 
 /* سطر النتيجة: رمز SVG بنغمته ونص ثانوي، واسم الملف LTR معزول داخل الجملة؛ والخطأ بنصه كله. */

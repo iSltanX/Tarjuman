@@ -28,7 +28,7 @@ export function panelCss() {
 .spacer { flex: 1 1 auto; }
 .muted { color: var(--tj-muted); }
 
-.ic { width: 18px; height: 18px; flex: none; display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.ic { width: 18px; height: 18px; flex: none; display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; pointer-events: none; }
 .ic--sm { width: 16px; height: 16px; }
 .ic--xs { width: 14px; height: 14px; stroke-width: 2; }
 .mark { display: block; flex: none; direction: ltr; pointer-events: none; color: var(--tj-logo-glyph); }
