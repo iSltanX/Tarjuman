@@ -484,7 +484,7 @@ function counted(cues) {
   return { cues: proxy, seen };
 }
 
-test('ص-٩: بصمة مقاطع الأساس تُحسب مرة لكل خانة مفتوحة لا مع كل كتابة، وتُعاد حين يتغير الأساس (الترجمة أو مقاطعها أو تاريخ تعديلها)', async () => {
+test('ص-٩: بصمة مقاطع الأساس تُحسب مرة لكل خانة مفتوحة لا مع كل كتابة ولا مع إعادة فتحها بالمقاطع نفسها، وتُعاد حين تتغير مقاطع الأساس', async () => {
   const win = keeperWin();
   const written = [];
   const store = { setDraft: async (id, slot, d) => { written.push([slot, d.base.cuesHash]); }, clearDraft: async () => {} };
@@ -505,6 +505,14 @@ test('ص-٩: بصمة مقاطع الأساس تُحسب مرة لكل خانة 
   assert.equal(a.seen.maps, 1, 'والبصمة حُسبت مرة واحدة');
   assert.ok(written.every(([, h]) => h === draftCuesHash(plain)), 'وهي بصمة الأساس في كل كتابة');
 
+  // كتابة آخر موضع أو علامة: الخانة نفسها من حزمة جديدة بنسخة من المقاطع نفسها (تتكرر أثناء التحرير): لا تُعاد.
+  const copy = counted(structuredClone(plain));
+  opened = { track: { ...opened.track, original: copy.cues }, offsetMs: 0 };
+  await write();
+  await write();
+  assert.equal(copy.seen.maps, 0, 'لا حساب لنسخة بالمقاطع نفسها');
+  assert.equal(written.at(-1)[1], draftCuesHash(plain));
+
   // الحفظ: الخانة نفسها من حزمة جديدة بمقاطع أخرى وتاريخ تعديل.
   const savedCues = [cue(1, 'المحفوظ'), cue(2, 'الأساس 2')];
   const b = counted(savedCues);
@@ -514,16 +522,20 @@ test('ص-٩: بصمة مقاطع الأساس تُحسب مرة لكل خانة 
   assert.equal(b.seen.maps, 1, 'تُعاد بعد الحفظ مرة واحدة');
   assert.equal(written.at(-1)[1], draftCuesHash(savedCues));
 
-  // كائن الترجمة نفسه بمقاطع أخرى، ثم بتاريخ تعديل آخر: تُعاد في الحالتين.
+  // كائن الترجمة نفسه بمقاطع أخرى (كالرجوع إلى المرفوعة): تُعاد. وبتاريخ تعديل آخر والمقاطع كما هي (تحرير وتراجعه، ص-٦): لا تُعاد،
+  // والبصمة بصمتها.
   const other = [cue(1, 'من مكان آخر'), cue(2, 'الأساس 2')];
-  opened.track.current = other;
-  await write();
-  assert.equal(written.at(-1)[1], draftCuesHash(other));
   const c = counted(other);
   opened.track.current = c.cues;
-  opened.track.editedAt = '2026-11-01T12:40:00.000Z';
   await write();
   assert.equal(c.seen.maps, 1);
+  assert.equal(written.at(-1)[1], draftCuesHash(other));
+  const again = counted(structuredClone(other));
+  opened.track.current = again.cues;
+  opened.track.editedAt = '2026-11-01T12:40:00.000Z';
+  await write();
+  assert.equal(again.seen.maps, 0);
+  assert.equal(written.at(-1)[1], draftCuesHash(other));
 
   // تبديل الخانة: ترجمة أخرى.
   const second = [cue(1, 'الخانة الثانية')];

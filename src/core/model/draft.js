@@ -136,8 +136,8 @@ export function draftOf(work, opened, savedAt, cuesHash) {
   };
 }
 
-/** @param {Cue[]} a @param {Cue[]} b */
-const sameCues = (a, b) => a.length === b.length && a.every((c, i) => c.n === b[i].n && c.startMs === b[i].startMs && c.endMs === b[i].endMs && c.text === b[i].text);
+/** المقاطع نفسها رقمًا وبداية ونهاية ونصًّا (ما تحسب عليه draftCuesHash). @param {Cue[]} a @param {Cue[]} b */
+export const sameCues = (a, b) => a.length === b.length && a.every((c, i) => c.n === b[i].n && c.startMs === b[i].startMs && c.endMs === b[i].endMs && c.text === b[i].text);
 
 /**
  * ما تعنيه مسودة لخانة كما هي الآن (ح-48):
