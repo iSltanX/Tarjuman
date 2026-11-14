@@ -63,10 +63,10 @@ test('الداكن يتجاوز في tokens.css ما يتجاوزه وحده، �
   for (const key of Object.keys(PANEL_TOKENS.shared)) assert.ok(!dark.has(tokenName(key)) || dark.get(tokenName(key)) === root.get(tokenName(key)), key);
 });
 
-test('ورقة اللوحة تحمل الوضعين بمحدد data-theme، ولا لون سداسي خارج الرموز إلا الأبيض الثابت (خرزة المفتاح)', () => {
+test('ورقة اللوحة تحمل الوضعين بمحدد data-theme، ولا لون سداسي خارج الرموز (خرزة المفتاح بسطح الوضع منذ الهوية الخامسة، وكانت أبيض ثابتًا)', () => {
   const sheet = panelCss();
   assert.ok(sheet.includes(panelTokensCss('.root')));
   assert.ok(sheet.includes('.root[data-theme="dark"]'));
   const literal = sheet.replace(panelTokensCss('.root'), '').match(/#[0-9A-Fa-f]{3,8}\b/g) ?? [];
-  assert.deepEqual([...new Set(literal.map((c) => c.toUpperCase()))], ['#FFFFFF']);
+  assert.deepEqual([...new Set(literal.map((c) => c.toUpperCase()))], []);
 });

@@ -314,7 +314,9 @@ test('مطابقة ST2 (لوحات 09–16): نقطة القلم بالمضلّ�
   has(ui, '.tj-btn--outline', 'border-color: var(--tj-border-input)');
   has(read('src/pages/settings/settings.css'), '.st-scale__input::-webkit-slider-thumb', 'clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%)');
   // المقبض المشغَّل في لوحة النص من رمز موجود في مرآتها (كان ‎--tj-accent-ink الغائب عنها فصار شفافًا).
-  assert.match(panelCss(), /\.switch\[aria-checked="true"\] \.switch__thumb \{ background: var\(--tj-surface\); \}/);
+  assert.match(panelCss(), /\.switch\[aria-checked="true"\] \.switch__thumb \{ background: var\(--tj-surface\); box-shadow: none; \}/);
+  assert.match(panelCss(), /\.switch__thumb \{[^}]*background: var\(--tj-surface\); box-shadow: 0 0 0 1px var\(--tj-border-input\)/, 'والمطفأ بسطح الوضع وحلقة حدّ الحقل');
+  assert.match(ui, /\.tj-topbar::before \{[^}]*background: var\(--tj-surface\)/, 'ما فوق منحنى الشريط الثابت بسطحه');
   const { PANEL_LIGHT } = await import('../../../src/player/panel/tokens.js').catch(() => ({}));
   if (PANEL_LIGHT) assert.ok(!('accentInk' in PANEL_LIGHT), 'المرآة بلا accentInk، فلا يُستعمل في اللوحة');
   assert.doesNotMatch(panelCss(), /var\(--tj-accent-ink\)/, 'لا رمز خارج المرآة في اللوحة');

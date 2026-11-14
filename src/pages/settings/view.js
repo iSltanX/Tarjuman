@@ -379,7 +379,8 @@ export function createSettings(env) {
   slider.addEventListener('input', () => previewScale(snapScale(slider.value)));
   slider.addEventListener('change', () => save({ appearance: { scale: snapScale(slider.value) } }, scaleMark));
   const defaultMark = el('span', { className: 'st-scale__mark', attrs: { 'aria-hidden': 'true' }, doc });
-  defaultMark.style.insetInlineStart = `${DEFAULT_SCALE_MARK_PCT}%`;
+  // تحت مركز الإبهام: مركزه يتحرك من 7 إلى (العرض − 7) لأن عرضه 14، لا من 0 إلى العرض.
+  defaultMark.style.insetInlineStart = `calc(7px + (100% - 14px) * ${DEFAULT_SCALE_MARK_PCT / 100})`;
   const sliderBox = el('div', { className: 'st-scale__box', children: [el('div', { className: 'st-scale__track', children: [slider, defaultMark], doc }), scaleOut], doc });
   sync.push(() => { slider.value = String(settings.appearance.scale); showScale(settings.appearance.scale); });
   showScale(settings.appearance.scale);

@@ -134,9 +134,9 @@
 .st-switch { position: relative; display: inline-flex; flex-direction: row-reverse; align-items: center; gap: 10px; min-height: 32px; cursor: pointer; font: 700 14px/22px var(--tj-font-body); }
 .st-switch__input { position: absolute; opacity: 0; width: 36px; height: 20px; margin: 0; inset-inline-start: auto; inset-inline-end: 0; cursor: pointer; }
 .st-switch__track { position: relative; width: 36px; height: 20px; border-radius: 999px; background: var(--tj-surface-3); box-shadow: inset 0 0 0 1px var(--tj-border-input); flex: none; transition: background var(--tj-motion-menu) var(--tj-ease); }
-.st-switch__track::after { content: ""; position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--tj-surface); box-shadow: var(--tj-e1); transition: inset-inline-start var(--tj-motion-menu) var(--tj-ease); }
+.st-switch__track::after { content: ""; position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--tj-surface); box-shadow: 0 0 0 1px var(--tj-border-input); transition: inset-inline-start var(--tj-motion-menu) var(--tj-ease); }
 .st-switch__input:checked + .st-switch__track { background: var(--tj-accent-fill); box-shadow: none; }
-.st-switch__input:checked + .st-switch__track::after { inset-inline-start: 18px; background: var(--tj-accent-ink); }
+.st-switch__input:checked + .st-switch__track::after { inset-inline-start: 18px; background: var(--tj-accent-ink); box-shadow: none; }
 .st-switch__input:focus-visible + .st-switch__track { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .st-switch--danger .st-switch__input:checked + .st-switch__track { background: var(--tj-danger); }
 .st-switch--danger .st-switch__input:checked + .st-switch__track::after { background: var(--tj-danger-ink); }

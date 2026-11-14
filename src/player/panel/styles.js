@@ -76,10 +76,10 @@ export function panelCss() {
 .segs button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
 .switch { display: inline-flex; align-items: center; gap: 10px; color: var(--tj-text-2); font: 700 13px/20px var(--tj-font-body); }
 .switch__track { width: 34px; height: 20px; flex: none; display: flex; justify-content: flex-start; padding: 2px; border-radius: 999px; background: var(--tj-surface-3); box-shadow: inset 0 0 0 1px var(--tj-border-input); transition: background-color var(--tj-motion-menu); }
-.switch__thumb { width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgb(0 0 0 / 25%); }
+.switch__thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--tj-surface); box-shadow: 0 0 0 1px var(--tj-border-input); }
 .switch[aria-checked="true"] .switch__track { background: var(--tj-accent); box-shadow: none; justify-content: flex-end; }
 /* المقبض المشغَّل بسطح الوضع: ‎--tj-accent-ink ليس في مرآة اللوحة فكان شفافًا (المطابقة البصرية لـST2)، والأبيض على المضيء الليلي دون 3:1. */
-.switch[aria-checked="true"] .switch__thumb { background: var(--tj-surface); }
+.switch[aria-checked="true"] .switch__thumb { background: var(--tj-surface); box-shadow: none; }
 .inline-error, .act-error { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: var(--tj-radius-md); background: var(--tj-danger-bg); font-size: 12px; line-height: 18px; }
 .inline-error .ic, .act-error .ic { color: var(--tj-danger); margin-top: 1px; }
 .inline-error .b { margin-inline-start: auto; }
