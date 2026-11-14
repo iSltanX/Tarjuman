@@ -56,7 +56,7 @@
   </tr>
   <tr>
     <td width="50%" valign="top"><img src="store/screenshots/chromium/ar/03-timing.png" alt="مزامنة بجملة تسمعها: قائمة توقيت الترجمة فوق المشغّل، وزرّا − و+ في شريطه"></td>
-    <td width="50%" valign="top"><img src="store/screenshots/chromium/ar/04-panel.png" alt="الترجمة كلها بجانب الفيديو: لوحة النص المتزامن بجانب المشغّل، والمقطع الحالي مميز"></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/ar/04-panel.png" alt="الترجمة كلها بجانب الفيديو: لوحة النص المتزامن والمقطع الحالي مميز"></td>
   </tr>
   <tr>
     <td width="50%" valign="top"><img src="store/screenshots/chromium/ar/05-editor.png" alt="يقارن ملفك بالأصل: صفوف المحرّر وفيها مقطع ناقص"></td>

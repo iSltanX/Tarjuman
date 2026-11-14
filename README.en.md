@@ -42,7 +42,7 @@ There's no built-in model, no API key, no account, no translation server, and no
   </tr>
   <tr>
     <td width="50%" valign="top"><img src="store/screenshots/chromium/en/03-timing.png" alt="Sync by a sentence you hear: the timing menu over the player, and the − and + buttons on its bar"></td>
-    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/04-panel.png" alt="The whole translation beside the video: the synced transcript panel next to the player, with the current segment highlighted"></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/04-panel.png" alt="The whole translation beside the video: the synced transcript panel with the current segment highlighted"></td>
   </tr>
   <tr>
     <td width="50%" valign="top"><img src="store/screenshots/chromium/en/05-editor.png" alt="Compares your file with the original: editor rows with a missing segment"></td>
