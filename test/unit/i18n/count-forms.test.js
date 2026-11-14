@@ -81,7 +81,8 @@ const SITES = [
   {
     key: 'settings.langs.assignTitle', site: ['pages/settings/langs.js', "'settings.langs.assignTitle'", 'gen'],
     params: (n) => ({ name: 'X', count: gen(n, t('settings.langs.translationCount')) }),
-    ar: ['تعيين X لـ#؟', AR.translationGen], en: ['Set X for #?', EN.translation],
+    // اللام بلا تطويل قبل حرف عربي («لترجمتين») وبه قبل رقم («لـ3 ترجمات»)، تحقق 2.3.0 (ص-١٩).
+    ar: ['تعيين X #؟', AR.translationGen.map((s) => (/^\d/.test(s) ? `لـ${s}` : `ل${s}`))], en: ['Set X for #?', EN.translation],
   },
   {
     key: 'errors.BK_CREATED_PARTIAL', site: ['pages/settings/data.js', "'BK_CREATED_PARTIAL'", 'gen'], params: (n) => ({ videos: gen(n, COUNT_FORMS.video) }),

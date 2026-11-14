@@ -232,15 +232,24 @@ export function arabicName(code, { region = true } = {}) {
 const ARABIC_LETTER_START = /^(?=\p{L})\p{Script=Arabic}/u;
 
 /**
- * «ب» ملتصقة باسم لغة في جملة عربية (تحقق 2.3.0، ص-١٩): «بالعربية» و«بلغة هاواي» و«بدزونكا». والتطويل («بـ») قبل ما لا يبدأ
- * بحرف عربي وحده، أي كلمة لاتينية أو رقم («بـKlingon»)، لا قبل كلمة عربية بدأت بـ«ال» أو لم تبدأ.
- * @param {unknown} name
+ * حرف ملتصق بكلمة تُدرج في جملة عربية (تحقق 2.3.0، ص-١٩): «بالعربية» و«بلغة هاواي» و«لترجمتين». والتطويل («بـ»، «لـ») قبل ما لا
+ * يبدأ بحرف عربي وحده، أي رقم أو كلمة لاتينية أو علامة («لـ3 ترجمات»، «بـKlingon»، «لـ«…»»)، لا قبل كلمة عربية بدأت بـ«ال» أو لم
+ * تبدأ. واللام مع «ال» تُسقط الألف («للعربية»)، والباء تبقيها («بالعربية»).
+ * @param {'ب' | 'ل' | 'ك'} prefix
+ * @param {unknown} word
  * @returns {string}
  */
-export function withBa(name) {
-  const s = String(name ?? '');
-  return ARABIC_LETTER_START.test(s) ? `ب${s}` : `بـ${s}`;
+export function attachPrefix(prefix, word) {
+  const s = String(word ?? '');
+  if (!ARABIC_LETTER_START.test(s)) return `${prefix}ـ${s}`;
+  return prefix === 'ل' && s.startsWith('ال') ? `لل${s.slice(2)}` : `${prefix}${s}`;
 }
+
+/** «ب» ملتصقة بالكلمة («بالعربية»، «بلغة هاواي»، «بـKlingon»). @param {unknown} word */
+export const withBa = (word) => attachPrefix('ب', word);
+
+/** «ل» ملتصقة بالكلمة («لترجمتين»، «للعربية»، «لـ3 ترجمات»). @param {unknown} word */
+export const withLa = (word) => attachPrefix('ل', word);
 
 /**
  * اسم اللغة بلغة الواجهة: العربية بقواعد arabicName، والإنجليزية من CLDR بلا شظية من الرمز (en-orig ← English).

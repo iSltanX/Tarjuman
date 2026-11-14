@@ -299,6 +299,33 @@ test('الفكرة ٨: سطر «يُرسل أول 100» حين يزيد ما ي�
   assert.equal(cap.hidden, true);
 });
 
+test('تحقق 2.3.0 (ص-١٩): سطر «يُرسل أول 100» لقائمة زوج يذكر قائمة «أي لغة» حين يرفقها termsFor معها، ولقائمة «أي لغة» نفسها لا', async () => {
+  const { store, area } = newStore();
+  await store.setPrefs({ glossary: { attach: true, terms: Array.from({ length: 60 }, (_, i) => ({ source: `g${i}`, target: `ع${i}`, note: null })) } });
+  await store.addGlossaryList({ from: 'en', to: 'ar' });
+  for (let i = 0; i < 30; i++) await store.addListTerm({ from: 'en', to: 'ar' }, { source: `p${i}`, target: `ز${i}`, note: null });
+  await store.addGlossaryList({ from: '*', to: 'ar' });
+  for (let i = 0; i < 45; i++) await store.addListTerm({ from: '*', to: 'ar' }, { source: `a${i}`, target: `ص${i}`, note: null });
+  // «أي لغة ← الفرنسية» لا تُرفق مع زوج إلى العربية.
+  await store.addGlossaryList({ from: '*', to: 'fr' });
+  for (let i = 0; i < 5; i++) await store.addListTerm({ from: '*', to: 'fr' }, { source: `f${i}`, target: `f${i}-fr`, note: null });
+  await store.addGlossaryList({ from: 'ja', to: 'fr' });
+  for (let i = 0; i < 50; i++) await store.addListTerm({ from: 'ja', to: 'fr' }, { source: `j${i}`, target: `j${i}-fr`, note: null });
+  for (let i = 0; i < 5; i++) await store.addListTerm({ from: 'ja', to: 'fr' }, { source: `f${i}`, target: `f${i}-ja`, note: null });
+  const m = await mount({ store, area });
+  const cap = findAll(section(m, 'المصطلحات'), (e) => e.classList.contains('st-gl__cap'))[0];
+  m.settings.glossary.select({ from: 'en', to: 'ar' });
+  await settle();
+  assert.equal(textOf(cap), 'يُرسل مع تعليمات هذا الزوج أول 100 مصطلح من 135 مصطلحًا: قائمته أولًا، ثم قائمة «أي لغة» إلى اللغة نفسها، ثم القاموس العام.');
+  m.settings.glossary.select({ from: '*', to: 'ar' });
+  await settle();
+  assert.equal(textOf(cap), 'يُرسل مع تعليمات هذا الزوج أول 100 مصطلح من 105 مصطلحات: قائمته أولًا ثم القاموس العام.', 'قائمة «أي لغة» نفسها');
+  // ja ← fr مع «أي لغة ← fr» التي مصطلحاتها كلها في قائمة الزوج: لا تضيف شيئًا، فلا تُذكر.
+  m.settings.glossary.select({ from: 'ja', to: 'fr' });
+  await settle();
+  assert.equal(textOf(cap), 'يُرسل مع تعليمات هذا الزوج أول 100 مصطلح من 115 مصطلحًا: قائمته أولًا ثم القاموس العام.', 'المكرر لا يُعدّ');
+});
+
 test('«البيانات» — الإنشاء: ملف tarjuman-backup-YYYY-MM-DD.json عبر saveFile بخيار تضمين السوابق، ونتيجته سطر بلا محتوى', async () => {
   const { store } = await sourceBackup();
   const m = await mount({ store, area: createMemoryArea() });

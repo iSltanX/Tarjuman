@@ -256,12 +256,15 @@ export function glossaryControl({ doc, getPrefs, savePrefs, addTerm, removeTerm,
     const prefs = getPrefs();
     const g = getGlossaries();
     const max = GLOSSARY_LIMITS.maxTerms;
-    const totalFor = (l) => termsFor(prefs, g, { source: l.from === ANY_SOURCE ? null : l.from, target: l.to }).total;
+    const totalFor = (l, lists = g) => termsFor(prefs, lists, { source: l.from === ANY_SOURCE ? null : l.from, target: l.to }).total;
     const list = selectedList();
     let text = '';
     if (list) {
       const total = totalFor(list);
-      if (total > max) text = t('settings.glossary.sentCap', { max: formatCount(max, COUNT_FORMS.term), count: formatCount(total, COUNT_FORMS.term, { case: 'gen' }) });
+      // قائمة زوج يُرفق بعدها termsFor قائمة «أي لغة» إلى لغته يذكرها السطر حين تضيف مصطلحًا لا تكرره قائمة الزوج (تحقق 2.3.0،
+      // ص-١٩)، وقائمة «أي لغة» نفسها أو زوج بلا «أي لغة» إلى لغته بالسطر الأول.
+      const withAny = list.from !== ANY_SOURCE && total > totalFor(list, { ...g, lists: g.lists.filter((l) => l.from !== ANY_SOURCE) });
+      if (total > max) text = t(withAny ? 'settings.glossary.sentCapWithAny' : 'settings.glossary.sentCap', { max: formatCount(max, COUNT_FORMS.term), count: formatCount(total, COUNT_FORMS.term, { case: 'gen' }) });
     } else if (g.lists.some((l) => totalFor(l) > max)) {
       text = t('settings.glossary.sentCapGeneral', { max: formatCount(max, COUNT_FORMS.term, { case: 'gen' }) });
     }

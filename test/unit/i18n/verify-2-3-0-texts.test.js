@@ -8,7 +8,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setLocale, t } from '../../../src/i18n/index.js';
-import { arabicName, knownLanguages, withBa } from '../../../src/core/lang/index.js';
+import { arabicName, attachPrefix, knownLanguages, withBa, withLa } from '../../../src/core/lang/index.js';
 import { languageValues } from '../../../src/core/export/instructions.js';
 import { messageFor } from '../../../src/core/errors/index.js';
 import { formatCount } from '../../../src/ui/format.js';
@@ -63,13 +63,41 @@ test('ص-١٩ (٤): «ب» تلتصق باسم اللغة العربي بلا ت
   assert.ok(bare >= 3, `أسماء لا تبدأ بـ«ال»: ${bare}`);
 });
 
-test('ص-١٩ (٥): وصف قسم «العرض» يذكر صف اختصارات لوحة المفاتيح بترتيب صفوفه', (ctx) => {
+test('ص-١٩ (٥): وصف قسم «العرض» يذكر صفوفه كلها بترتيبها: لغة الواجهة، ثم شكل الترجمة، ثم اللوحة، ثم الاختصارات، ثم الصور', (ctx) => {
   reset(ctx);
-  assert.equal(t('settings.sections.display.desc'), 'شكل الترجمة فوق الفيديو، ولوحة النص المتزامن وزرها، واختصارات لوحة المفاتيح، وصور الفيديو في المحفوظات.');
-  assert.ok(t('settings.sections.display.desc').includes(t('settings.shortcuts.label')));
+  const desc = () => t('settings.sections.display.desc');
+  assert.equal(desc(), 'لغة الواجهة، وشكل الترجمة فوق الفيديو، ولوحة النص المتزامن وزرها، واختصارات لوحة المفاتيح، وصور الفيديو في المحفوظات.');
+  const at = (label) => desc().toLowerCase().indexOf(label.toLowerCase());
+  const order = () => [t('settings.uiLocale.title'), t('settings.shortcuts.label')].map(at);
+  assert.ok(order().every((i) => i >= 0) && order()[0] < order()[1], 'ar');
   setLocale('en');
-  assert.equal(t('settings.sections.display.desc'), 'How the translation looks over the video, the synced transcript panel and its button, keyboard shortcuts, and video thumbnails in Library.');
-  assert.ok(t('settings.sections.display.desc').includes(t('settings.shortcuts.label').toLowerCase()));
+  assert.equal(desc(), 'The interface language, how the translation looks over the video, the synced transcript panel and its button, keyboard shortcuts, and video thumbnails in Library.');
+  assert.ok(order().every((i) => i >= 0) && order()[0] < order()[1], 'en');
+});
+
+test('ص-١٩ (٤) بالقاعدة كلها: «ل» كـ«ب» بلا تطويل قبل حرف عربي («لترجمتين»، «للعربية»)، وبتطويل قبل رقم أو لاتيني أو علامة', (ctx) => {
+  reset(ctx);
+  assert.equal(withLa('ترجمة واحدة'), 'لترجمة واحدة');
+  assert.equal(withLa('ترجمتين'), 'لترجمتين');
+  assert.equal(withLa('العربية'), 'للعربية', 'اللام مع «ال» تُسقط الألف');
+  assert.equal(withLa('لغة هاواي'), 'للغة هاواي');
+  assert.equal(withLa('3 ترجمات'), 'لـ3 ترجمات');
+  assert.equal(withLa('Klingon'), 'لـKlingon');
+  assert.equal(withLa('«عنوان»'), 'لـ«عنوان»');
+  assert.equal(attachPrefix('ب', 'العربية'), withBa('العربية'));
+  assert.equal(attachPrefix('ب', 'العربية'), 'بالعربية', 'الباء مع «ال» تبقي الألف');
+  // عنوان تأكيد «تعيين لغتها» في الإعدادات ← «اللغات»: المعدود مجرور بصيغته بعد اللام.
+  const title = (n) => t('settings.langs.assignTitle', { name: 'العربية', count: formatCount(n, t('settings.langs.translationCount'), { case: 'gen' }) });
+  assert.equal(title(1), 'تعيين العربية لترجمة واحدة؟');
+  assert.equal(title(2), 'تعيين العربية لترجمتين؟');
+  assert.equal(title(3), 'تعيين العربية لـ3 ترجمات؟');
+  assert.equal(title(11), 'تعيين العربية لـ11 ترجمة؟');
+  setLocale('en');
+  assert.equal(t('settings.langs.assignTitle', { name: 'Arabic', count: '2 translations' }), 'Set Arabic for 2 translations?');
+  // ولا قالب في الفهرس العربي ورسائل الأخطاء يلصق «بـ» أو «لـ» أو «كـ» بمتغيّر إلا بالدالة، أو قبل رقم دائمًا (خطوة الإزاحة).
+  const files = [...filesIn('src/i18n/ar', '.js'), ...filesIn('src/core/errors', '.js'), 'src/core/export/instructions.js'];
+  const glued = files.flatMap((rel) => read(rel).split('\n').filter((l) => /(?<!\p{Script=Arabic})(?:[بلك]|لل)ـ?(?:\{|\$\{)/u.test(l)).map((l) => `${rel}: ${l.trim()}`));
+  assert.deepEqual(glued.map((l) => l.includes('`بـ${(tenths / 10).toFixed(1)} ث`')), [true], glued.join('\n'));
 });
 
 test('ص-١٩ (٦): رسالة تعيين اللغة الإنجليزية تعدّ ترجمات من أولها، لا فيديوهات ثم ترجمات', (ctx) => {
