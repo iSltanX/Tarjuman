@@ -35,7 +35,7 @@ export function groupCss() {
 .btn[aria-disabled="true"], .btn[data-unavailable] { color: var(--tj-p-icon-disabled); }
 .btn[aria-disabled="true"] { cursor: default; }
 .icon { width: var(--icon); height: var(--icon); pointer-events: none; display: block; }
-.badge { width: auto; min-width: var(--badge); padding: 0 var(--badge-pad); font: 700 var(--badge-fs)/1 var(--tj-p-font-body); font-variant-numeric: tabular-nums; letter-spacing: 0; white-space: nowrap; direction: ltr; unicode-bidi: isolate; }
+.badge { width: auto; min-width: var(--badge); padding: 0 var(--badge-pad); font: 700 var(--badge-fs)/1 var(--tj-p-font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0; white-space: nowrap; direction: ltr; unicode-bidi: isolate; }
 .badge[data-sign="zero"] { color: rgb(255 255 255 / 70%); }
 .badge[data-sign="positive"], .badge[data-sign="negative"] { color: var(--tj-p-accent); }
 .badge[aria-disabled="true"] { color: var(--tj-p-icon-disabled); }
@@ -85,8 +85,8 @@ export function layerCss() {
 .label { padding: 0 6px; font-size: 0.93em; line-height: 1.5; font-weight: 700; color: var(--tj-p-menu-text-2); }
 
 /* مجموعة أزرار الخانات (الترجمات الموجودة، و«حفظ في»): كالمقطّعة، المختارة بالمضيء الليلي بحبر داكن (لوحة 12)، بلا إطار. */
-.slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgb(255 255 255 / 7%); direction: ltr; flex: none; }
-button.slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 6px; border-radius: 4px; font: 700 12px/1 var(--tj-p-font-body); font-variant-numeric: tabular-nums; color: var(--tj-p-menu-text-2); cursor: pointer; }
+.slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 4px; background: rgb(255 255 255 / 7%); direction: ltr; flex: none; }
+button.slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 6px; border-radius: 3px; font: 700 12px/1 var(--tj-p-font-body); font-variant-numeric: tabular-nums; color: var(--tj-p-menu-text-2); cursor: pointer; }
 button.slot.slot--new { padding: 0 8px; }
 .layer[dir="rtl"] button.slot.slot--new { direction: rtl; }
 button.slot::after { content: ""; position: absolute; inset: -4px 0; } /* هدف 32 ارتفاعًا (CL-018) */
@@ -101,9 +101,8 @@ button.slot[aria-disabled="true"] { cursor: default; }
 label.item[aria-disabled="true"] { color: rgb(255 255 255 / 45%); cursor: default; background: none; }
 .sentences { display: flex; flex-direction: column; gap: 2px; }
 button.item.sentence { display: block; min-width: 0; line-height: var(--row); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: isolate; text-align: match-parent; }
-button.item.sentence[aria-current="true"] { box-shadow: inset -3px 0 0 var(--tj-p-accent); background: rgb(255 255 255 / 8%); }
-.layer[dir="ltr"] button.item.sentence[aria-current="true"] { box-shadow: inset 3px 0 0 var(--tj-p-accent); }
-.tag { align-self: flex-start; display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; margin: 0 6px; border-radius: 11px; background: rgb(255 255 255 / 10%); color: var(--tj-p-menu-text); font-size: 0.93em; font-weight: 700; white-space: nowrap; }
+button.item.sentence[aria-current="true"] { background: var(--tj-p-selected); border-radius: 4px; }
+.tag { align-self: flex-start; display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; margin: 0 6px; border-radius: 3px; background: rgb(255 255 255 / 10%); color: var(--tj-p-menu-text); font-size: 0.93em; font-weight: 700; white-space: nowrap; }
 
 /* سطر النتيجة: رمز SVG بنغمته ونص ثانوي، واسم الملف LTR معزول داخل الجملة؛ والخطأ بنصه كله. */
 .line { all: unset; box-sizing: border-box; display: flex; align-items: flex-start; gap: 6px; padding: 1px 6px; font-size: 0.93em; line-height: 1.5; color: var(--tj-p-menu-text-2); unicode-bidi: isolate; overflow-wrap: anywhere; }
@@ -127,7 +126,7 @@ button.line { cursor: pointer; text-decoration: underline; text-underline-offset
 .row.status[data-tone="warn"] .glyph { color: var(--tj-p-warn); }
 .dim { color: var(--tj-p-menu-text-2); white-space: nowrap; }
 .note { padding: 0 6px; font-size: 0.93em; line-height: 1.5; color: var(--tj-p-menu-text-2); }
-.alert { padding: 6px 8px; border-radius: 6px; display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+.alert { padding: 6px 8px; border-radius: 4px; display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
 .alert[data-tone="info"] { background: rgb(255 255 255 / 8%); }
 .alert[data-tone="warn"] { background: color-mix(in srgb, var(--tj-p-warn) 14%, transparent); }
 .alert[data-tone="error"] { background: color-mix(in srgb, var(--tj-p-error) 14%, transparent); }
@@ -147,7 +146,7 @@ svg.glyph--btn { width: 16px; height: 16px; margin: 0; }
 .layer[data-size="fullscreen"] svg.glyph--btn { width: 18px; height: 18px; }
 .row.summary svg.glyph, .row.status svg.glyph { margin-top: 0; }
 
-button.item { all: unset; box-sizing: border-box; min-height: var(--row); display: flex; align-items: center; gap: 8px; padding: 0 8px; border-radius: 6px; cursor: pointer; width: 100%; }
+button.item { all: unset; box-sizing: border-box; min-height: var(--row); display: flex; align-items: center; gap: 8px; padding: 0 8px; border-radius: 3px; cursor: pointer; width: 100%; }
 button.item:hover { background: var(--tj-p-menu-hover); }
 button.item[aria-disabled="true"] { color: rgb(255 255 255 / 45%); cursor: default; background: none; }
 button.item[role="radio"]::before { content: ""; flex: none; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgb(255 255 255 / 60%); }
@@ -164,7 +163,7 @@ button.item[aria-expanded="true"]::after { transform: rotate(-135deg); }
 .actions { display: flex; flex-direction: column; gap: 6px; padding: 2px 0 0; }
 .actions.inline { flex-direction: row; }
 .actions.inline > * { flex: 1 1 0; min-width: 0; }
-button.primary, button.secondary, button.danger { all: unset; box-sizing: border-box; min-height: var(--row); display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 8px; font-weight: 700; cursor: pointer; text-align: center; line-height: 1.25; }
+button.primary, button.secondary, button.danger { all: unset; box-sizing: border-box; min-height: var(--row); display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 4px; font-weight: 700; cursor: pointer; text-align: center; line-height: 1.25; }
 button.primary > .stack, button.secondary > .stack { min-width: 0; }
 button.primary { background: var(--tj-p-accent); color: var(--tj-p-accent-ink); }
 button.primary:hover { filter: brightness(1.08); }
@@ -180,8 +179,8 @@ button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decor
 .menu [hidden] { display: none !important; }
 
 /* المقطّعة: خيار واحد من قليل في صف (وضع التصدير، وأوضاع العرض، والخطوة)؛ المختار بالمضيء الليلي بحبر داكن (لوحة 12)، بلا إطار. */
-.seg { display: flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgb(255 255 255 / 7%); }
-.seg button { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; min-height: calc(var(--row) - 4px); display: flex; align-items: center; justify-content: center; padding: 0 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tj-p-menu-text-2); font-weight: 700; }
+.seg { display: flex; gap: 2px; padding: 2px; border-radius: 4px; background: rgb(255 255 255 / 7%); }
+.seg button { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; min-height: calc(var(--row) - 4px); display: flex; align-items: center; justify-content: center; padding: 0 6px; border-radius: 3px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tj-p-menu-text-2); font-weight: 700; }
 .seg button:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); color: #FFFFFF; }
 .seg button[aria-checked="true"] { background: var(--tj-p-accent); color: var(--tj-p-accent-ink); }
 .seg button[aria-disabled="true"] { opacity: 0.45; cursor: default; }
@@ -202,11 +201,11 @@ button.nudge-btn svg.glyph--btn { width: 18px; height: 18px; }
 .field label, .field .flabel { flex: 1; white-space: nowrap; font-weight: 700; color: var(--tj-p-menu-text-2); font-size: 0.93em; }
 .row.field > .seg + * { flex: none; }
 .field .unit { color: var(--tj-p-menu-text-2); }
-input.num { all: unset; box-sizing: border-box; width: 80px; height: 28px; padding: 0 8px; border-radius: 6px; direction: ltr; text-align: left; font: 700 var(--fs)/1 var(--tj-p-font-mono); color: var(--tj-p-menu-text); background: rgb(0 0 0 / 30%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%); cursor: text; }
+input.num { all: unset; box-sizing: border-box; width: 80px; height: 28px; padding: 0 8px; border-radius: 4px; direction: ltr; text-align: left; font: 700 var(--fs)/1 var(--tj-p-font-mono); color: var(--tj-p-menu-text); background: rgb(0 0 0 / 30%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%); cursor: text; }
 input.num:focus { box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(231 145 194 / 25%); }
 input.num[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--tj-p-error); }
 /* لغة الترجمة عند الرفع وفي قائمتها (AA3): اختيار أصلي من المتصفح على زجاج القائمة، والخيارات بألوان النظام ليقرأها كل متصفح. */
-select.lang { box-sizing: border-box; flex: 0 1 auto; min-width: 0; max-width: 62%; height: 28px; padding: 0 6px; border: 0; border-radius: 6px; font: 700 var(--fs)/1 var(--tj-p-font-body); color: var(--tj-p-menu-text); background: rgb(0 0 0 / 30%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%); cursor: pointer; }
+select.lang { box-sizing: border-box; flex: 0 1 auto; min-width: 0; max-width: 62%; height: 28px; padding: 0 6px; border: 0; border-radius: 4px; font: 700 var(--fs)/1 var(--tj-p-font-body); color: var(--tj-p-menu-text); background: rgb(0 0 0 / 30%); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 25%); cursor: pointer; }
 select.lang:focus-visible { outline: 2px solid transparent; outline-offset: 1px; box-shadow: inset 0 0 0 1px var(--tj-p-accent), 0 0 0 3px rgb(231 145 194 / 25%); }
 select.lang[aria-disabled="true"], select.lang:disabled { opacity: 0.45; cursor: default; }
 select.lang option, select.lang optgroup { color: #2D1626; background: #FFFFFF; }

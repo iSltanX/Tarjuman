@@ -20,16 +20,16 @@
 }
 .tj-btn .tj-icon { width: 18px; height: 18px; }
 /* الأحجام الخمسة: 28 و32 و36 (الافتراضي) و40 و48. */
-.tj-btn--xs { min-height: var(--tj-control-xs); padding: 0 8px; font-size: 12px; line-height: 18px; gap: 4px; border-radius: 5px; }
+.tj-btn--xs { min-height: var(--tj-control-xs); padding: 0 8px; font-size: 12px; line-height: 18px; gap: 4px; }
 .tj-btn--xs .tj-icon { width: 14px; height: 14px; stroke-width: 2; }
 .tj-btn--sm { min-height: var(--tj-control-sm); padding: 0 10px; font-size: 13px; line-height: 18px; gap: 6px; }
 .tj-btn--sm .tj-icon { width: 16px; height: 16px; stroke-width: 2; }
 .tj-btn--lg { min-height: var(--tj-control-lg); padding: 0 18px; font-size: 16px; line-height: 24px; }
-.tj-btn--xl { min-height: var(--tj-control-xl); padding: 0 24px; font-size: 16px; line-height: 24px; border-radius: var(--tj-radius-lg); }
+.tj-btn--xl { min-height: var(--tj-control-xl); padding: 0 24px; font-size: 16px; line-height: 24px; }
 /* الأنواع الستة: الرئيسي بالأرجوان العميق، والثانوي محايد، والمؤطّر، والشفاف، والخطر، والمضيء لما يحمل اللحظة وحدها. */
 .tj-btn--primary { background: var(--tj-brand); color: var(--tj-brand-ink); }
 .tj-btn--secondary { background: var(--tj-control); }
-.tj-btn--outline { background: transparent; border-color: var(--tj-border-strong); }
+.tj-btn--outline { background: transparent; border-color: var(--tj-border-input); }
 .tj-btn--ghost { background: transparent; color: var(--tj-text); }
 .tj-btn--danger { background: var(--tj-danger); color: var(--tj-danger-ink); }
 .tj-btn--accent { background: var(--tj-accent-fill); color: var(--tj-accent-ink); }
@@ -88,11 +88,11 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 
 /* ---- شارة الحالة: نقطة التاء ونص، ارتفاع 22 وزاوية 3 (لوحة 08) ---- */
 .tj-pill {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 22px; padding: 2px 8px; border-radius: var(--tj-radius-xs);
+  display: inline-flex; align-items: center; gap: 6px; min-height: 22px; padding: 2px 8px; border-radius: var(--tj-radius-sm);
   font: 700 12px/18px var(--tj-font-body); background: var(--tj-surface-2); color: var(--tj-text-2); white-space: nowrap;
 }
-/* نقطة الشارة معيّن الهوية (نقطة التاء)، لا دائرة. */
-.tj-pill::before { content: ""; width: 6px; height: 6px; border-radius: 1px; transform: rotate(45deg); background: currentColor; flex: none; }
+/* نقطة الشارة نقطة القلم (لوحة 09)، لا دائرة ولا معيّن مدوّر. */
+.tj-pill::before { content: ""; width: 6px; height: 7px; clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); background: currentColor; flex: none; }
 .tj-pill--plain::before { display: none; }
 .tj-pill--info { background: var(--tj-info-bg); color: var(--tj-info); }
 .tj-pill--success { background: var(--tj-success-bg); color: var(--tj-success); }
@@ -105,7 +105,7 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 /* ---- التنبيه: سطح مصبوغ بلون الدلالة وأيقونتها بلونها، بلا إطار (لوحة 08) ---- */
 .tj-alert {
   display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; width: 100%;
-  border-radius: var(--tj-radius-md); border: 1px solid transparent;
+  border-radius: var(--tj-radius-lg); border: 1px solid transparent;
   background: var(--tj-surface-2); color: var(--tj-text);
 }
 .tj-alert .tj-icon { margin-top: 2px; width: 18px; height: 18px; }
@@ -159,14 +159,14 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 /* ---- مجموعة اختيار (radio) بخيارات ذات شرح ---- */
 .tj-choice { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 /* الخيارات بشرح كلوحة الإعدادات 16: سطح بخط حافة، والمختار صبغة الأرجوان وحدّه بالحبر فيُعرف بالشكل لا باللون وحده. */
-.tj-choice__option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); cursor: pointer; background: var(--tj-surface); transition: background-color var(--tj-motion-fast), border-color var(--tj-motion-fast); }
+.tj-choice__option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-lg); cursor: pointer; background: var(--tj-surface); transition: background-color var(--tj-motion-fast), border-color var(--tj-motion-fast); }
 .tj-choice__option:hover { background: var(--tj-hover); }
 /* النص الصغير في العنصر المحايد عند المرور بالحبر (تدقيق Fable، UX-16: الخافت والثانوي على خلفية الزر المارّة دون 4.5:1). */
 .tj-choice__option:hover .tj-choice__hint, .tj-chip:hover .tj-chip__count { color: var(--tj-text); }
-.tj-choice__option:has(input:checked) { background: var(--tj-selected-soft); border-color: var(--tj-text); color: var(--tj-selected-soft-ink); }
+.tj-choice__option:has(input:checked) { background: var(--tj-selected-soft); border-color: var(--tj-brand); box-shadow: inset 0 0 0 0.5px var(--tj-brand); color: var(--tj-selected-soft-ink); }
 .tj-choice__option:has(input:checked) .tj-choice__hint { color: var(--tj-text-2); }
 .tj-choice__option:has(input:disabled) { cursor: not-allowed; color: var(--tj-muted); background: var(--tj-surface-2); }
-.tj-choice__option > input[type="radio"] { margin: 3px 0 0; accent-color: var(--tj-text); flex: none; width: 16px; height: 16px; }
+.tj-choice__option > input[type="radio"] { margin: 3px 0 0; accent-color: var(--tj-brand); flex: none; width: 16px; height: 16px; }
 .tj-choice__option > input[type="radio"]:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .tj-choice__text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
 .tj-choice__label { font: 700 13px/20px var(--tj-font-body); }
@@ -188,14 +188,14 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 /* الرقاقة حبّة بخلفية الزر، والمختارة بالأرجوان العميق بنص أبيض؛ والعدّاد في كبسولة صغيرة بالأحادي (لوحة 09). هدف الضغط 32. */
 .tj-chip {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: var(--tj-radius-pill);
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: var(--tj-radius-sm);
   border: 1px solid transparent; background: var(--tj-control); color: var(--tj-text-2);
   font: 700 13px/18px var(--tj-font-body); cursor: pointer; white-space: nowrap;
 }
 .tj-chip:hover { background: var(--tj-control-hover); color: var(--tj-text); }
 .tj-chip[aria-pressed="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); }
 /* العدّاد بالحبر لا بثانوي الرقاقة: 11px فوق طبقة 8% كان 4.35:1 فاتحًا (تحقق Fable للتصميم، ت-١١)؛ وفي المختارة يرث نصها. */
-.tj-chip__count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: rgb(0 0 0 / 8%); font: 700 11px/18px var(--tj-font-mono); color: var(--tj-text); direction: ltr; }
+.tj-chip__count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: var(--tj-radius-xs); background: rgb(0 0 0 / 8%); font: 700 11px/18px var(--tj-font-mono); color: var(--tj-text); direction: ltr; }
 .tj-chip[aria-pressed="true"] .tj-chip__count { background: rgb(255 255 255 / 18%); color: inherit; }
 :root[data-theme="dark"] .tj-chip[aria-pressed="true"] .tj-chip__count { background: rgb(0 0 0 / 14%); }
 @media (prefers-color-scheme: dark) {
@@ -247,6 +247,10 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-menu__text { display: flex; flex-direction: column; min-width: 0; }
 .tj-menu__label { font: 400 14px/20px var(--tj-font-body); }
 .tj-menu__hint { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
+
+/* ---- حافة الصفحة تحت الرؤوس (الهوية «التاء»، لوحات 11 و14 و15 و16): خط بالحد البارز ينثني في وسطه كالخط الأعلى للكتاب
+   في الشعار، مرسومًا قناعًا تحت الرأس بلا مساحة في التخطيط (بدل الخط الشعري المستقيم) ---- */
+.tj-topbar::after, .tj-popup__head::after, .ed-head::after { content: ""; position: absolute; inset-inline: 0; top: 100%; height: 8px; background: var(--tj-border-strong); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 8' preserveAspectRatio='none'%3E%3Cpath d='M0 1 C90 1 150 6 166 7.2 Q170 7.6 174 7.2 C190 6 250 1 340 1' fill='none' stroke='%23000' stroke-width='1.2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 8' preserveAspectRatio='none'%3E%3Cpath d='M0 1 C90 1 150 6 166 7.2 Q170 7.6 174 7.2 C190 6 250 1 340 1' fill='none' stroke='%23000' stroke-width='1.2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat; pointer-events: none; }
 
 /* ---- الشعار «التاء» (logo.js): الرمز بالأرجوان العميق (الورق الليلي في الداكن) والاسم «ترجمان» نصًا بـCairo 800 بلون الحبر،
    الرمز في البداية (يمين الاسم في RTL) بفجوة 8 كرأس النافذة في اللوحة 03 ---- */

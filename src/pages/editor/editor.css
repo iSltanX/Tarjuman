@@ -37,7 +37,7 @@ html, body.ed-page { height: 100%; }
 }
 
 /* ---- الرأس: صفّان. الأول للوجهة والعنوان ثم الحالة والتراجع والتصدير والحفظ، والثاني لخانة التحرير والنسخة المعروضة ---- */
-.ed-head { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
+.ed-head { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px; background: var(--tj-surface); }
 .ed-head__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
 .ed-title { flex: 1 1 240px; min-width: 0; font: 700 18px/28px var(--tj-font-head); }
 .ed-back { padding-inline-end: 12px; }
@@ -66,7 +66,7 @@ html, body.ed-page { height: 100%; }
   background: var(--tj-surface); color: var(--tj-text); font: 500 14px/20px var(--tj-font-mono); text-align: left;
 }
 .ed-toggle { cursor: pointer; font: 400 14px/20px var(--tj-font-body); }
-.ed-toggle input { accent-color: var(--tj-text); }
+.ed-toggle input { accent-color: var(--tj-selected); }
 .ed-preview { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
 
 /* ---- البحث والاستبدال ---- */
@@ -88,7 +88,7 @@ html, body.ed-page { height: 100%; }
 .ed-search__where mark, .ed-row__en mark, .ed-row__text mark { background: var(--tj-warning-bg); color: inherit; border-radius: 3px; padding: 0 2px; box-shadow: inset 0 -2px 0 var(--tj-warning); }
 .ed-replace-list { display: flex; flex-direction: column; max-height: 46vh; }
 .ed-replace-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--tj-border); cursor: pointer; font: 400 14px/22px var(--tj-font-body); }
-.ed-replace-item input { margin-top: 4px; accent-color: var(--tj-text); }
+.ed-replace-item input { margin-top: 4px; accent-color: var(--tj-selected); }
 .ed-replace-item__n { flex: none; min-width: 40px; color: var(--tj-muted); }
 .ed-replace-item__text { min-width: 0; }
 .ed-replace-item del { color: var(--tj-danger); background: var(--tj-danger-bg); text-decoration: line-through; }
@@ -195,10 +195,10 @@ html, body.ed-page { height: 100%; }
 }
 .ed-list--no-en .ed-row, .ed-list__head.ed-list--no-en { grid-template-columns: var(--ed-cols-no-en); }
 .ed-list__head.ed-list--no-en .ed-col-en { display: none; }
-.ed-row__check { width: 24px; height: 24px; margin: 8px 0 0; accent-color: var(--tj-text); } /* 24 حدّ WCAG 2.5.8 في صف كثيف (CL-018) */
+.ed-row__check { width: 24px; height: 24px; margin: 8px 0 0; accent-color: var(--tj-selected); } /* 24 حدّ WCAG 2.5.8 في صف كثيف (CL-018) */
 .ed-row__n { display: flex; align-items: center; justify-content: flex-end; gap: 4px; min-height: 40px; color: var(--tj-muted); direction: ltr; font-size: 12px; }
-/* «معدّل» معيّن الهوية (نقطة التاء) لا دائرة. */
-.ed-row__dot { width: 5px; height: 5px; border-radius: 1px; transform: rotate(45deg); background: var(--tj-edited); visibility: hidden; flex: none; }
+/* «معدّل» نقطة القلم لا دائرة. */
+.ed-row__dot { width: 6px; height: 7px; clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); background: var(--tj-edited); visibility: hidden; flex: none; }
 .ed-row.is-edited .ed-row__dot { visibility: visible; }
 .ed-time {
   width: 128px; height: 40px; padding: 0 8px; border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-field);
@@ -249,11 +249,12 @@ html, body.ed-page { height: 100%; }
 .ed-row.is-match-current { background: var(--tj-warning-bg); outline: 2px solid var(--tj-warning); outline-offset: -2px; }
 .ed-row.is-readonly .ed-time, .ed-row.is-readonly .ed-row__text { background: var(--tj-sunken); color: var(--tj-text-2); }
 .ed-list .ed-row--missing {
-  grid-template-columns: 28px 52px minmax(0, 1fr); align-items: center; background: var(--tj-sunken);
-  border-bottom: 1px dashed var(--tj-border-strong); color: var(--tj-warning);
+  grid-template-columns: 28px 52px minmax(0, 1fr); align-items: center; background: var(--tj-warning-bg);
+  border-bottom: 1px solid var(--tj-border); color: var(--tj-warning);
 }
 .ed-row--missing .ed-row__n { grid-column: 2; min-height: 28px; }
-.ed-row__missing { grid-column: 3; font: 400 13px/28px var(--tj-font-body); }
+.ed-row__missing { grid-column: 3; display: flex; align-items: center; gap: 6px; font: 400 13px/28px var(--tj-font-body); }
+.ed-row__missing::before { content: ""; flex: none; width: 6px; height: 7px; clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); background: currentColor; }
 
 /* ---- شريط التغييرات غير المحفوظة (معكوس الألوان: نص المداد خلفيةً ولون الورق نصًّا بالوضعين)، والرسالة العابرة ---- */
 .ed-unsaved {
@@ -262,7 +263,7 @@ html, body.ed-page { height: 100%; }
 }
 .ed-unsaved .tj-label { color: inherit; font: 400 14px/22px var(--tj-font-body); }
 /* معيّن التغيير غير المحفوظ (نقطة التاء) بلون نص الشريط المعكوس. */
-.ed-unsaved__dot { flex: none; width: 7px; height: 7px; border-radius: 1px; transform: rotate(45deg); background: currentColor; }
+.ed-unsaved__dot { flex: none; width: 7px; height: 8px; clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); background: currentColor; }
 .ed-unsaved .tj-btn--ghost { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .ed-unsaved .tj-btn--ghost:hover:not(:disabled):not([aria-disabled="true"]) { background: color-mix(in srgb, currentColor 14%, transparent); color: inherit; }
 .ed-unsaved .tj-btn--primary { background: var(--tj-bg); color: var(--tj-text); }
@@ -291,7 +292,7 @@ html, body.ed-page { height: 100%; }
 .ed-dialog .tj-btn.ed-btn--danger-quiet:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--tj-danger-bg); color: var(--tj-danger); }
 .ed-fieldset { margin: 0; padding: 8px 12px; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-lg); display: flex; flex-direction: column; gap: 4px; }
 .ed-radio { display: flex; align-items: center; gap: 8px; min-height: 36px; cursor: pointer; font: 400 14px/22px var(--tj-font-body); }
-.ed-radio input { accent-color: var(--tj-text); }
+.ed-radio input { accent-color: var(--tj-selected); }
 .ed-preview-table { max-height: 50vh; overflow: auto; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-lg); }
 .ed-preview-table table { width: 100%; border-collapse: collapse; font: 400 13px/20px var(--tj-font-body); }
 .ed-preview-table th, .ed-preview-table td { padding: 6px 10px; border-bottom: 1px solid var(--tj-border); text-align: start; }

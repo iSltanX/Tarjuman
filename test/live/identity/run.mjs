@@ -659,6 +659,9 @@ try {
     const btn = await shadowStyle('tarjuman-panel', '.foot .b:not(.b--ghost)');
     const seg = await shadowStyle('tarjuman-panel', '.segs button[aria-checked="true"]');
     const glyph = await shadowStyle('tarjuman-panel', '.head .mark path');
+    // مقبض «تمرير تلقائي» ظاهر في حاليه (كان شفافًا مشغَّلًا: ‎--tj-accent-ink ليس في مرآة اللوحة، مطابقة ST2).
+    const thumb = await shadowStyle('tarjuman-panel', '.switch .switch__thumb');
+    check('identity-v5-panel-follow-switch-thumb-visible-light', !!thumb && thumb.bg !== NONE, { thumb });
     check('identity-v5-player-bar-pressed-uses-p-accent', pressed?.color === V5.player.accent, { pressed });
     check('identity-v5-panel-buttons-borderless-segs-selected-mark-light', btn?.bg === V5.light.control && btn?.border === NONE && seg?.bg === V5.light.selected && seg?.color === V5.light.ink && glyph?.fill === V5.light.glyph, { btn, seg, glyph });
     const g2 = await main(M.geo);
@@ -1001,6 +1004,8 @@ try {
     const dBtn = await shadowStyle('tarjuman-panel', '.foot .b:not(.b--ghost)');
     const dSeg = await shadowStyle('tarjuman-panel', '.segs button[aria-checked="true"]');
     const dGlyph = await shadowStyle('tarjuman-panel', '.head .mark path');
+    const dThumb = await shadowStyle('tarjuman-panel', '.switch .switch__thumb');
+    check('identity-v5-panel-follow-switch-thumb-visible-dark', !!dThumb && dThumb.bg !== NONE, { thumb: dThumb });
     check('identity-v5-panel-buttons-borderless-segs-selected-mark-dark', dBtn?.bg === V5.dark.control && dBtn?.border === NONE && dSeg?.bg === V5.dark.selected && dSeg?.color === V5.dark.ink && dGlyph?.fill === V5.dark.glyph, { btn: dBtn, seg: dSeg, glyph: dGlyph });
     if (simulated) note('الوضع الداكن ليوتيوب: ضُبطت سمة html[dark] يدويًا (يوتيوب غير المسجَّل لم يتبع وضع الجهاز)، ثم أزيلت؛ وعادت اللوحة فاتحة.');
     await snap(yt, 'watch-panel-dark');

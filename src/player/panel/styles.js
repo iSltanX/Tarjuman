@@ -52,7 +52,9 @@ export function panelCss() {
 
 /* اللوحة */
 .panel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-xl); }
-.head { grid-area: head; flex: none; height: 52px; display: flex; align-items: center; gap: 8px; padding: 0; padding-inline: 14px 8px; border-bottom: 1px solid var(--tj-border); }
+.head { grid-area: head; position: relative; z-index: 1; flex: none; height: 52px; display: flex; align-items: center; gap: 8px; padding: 0; padding-inline: 14px 8px; }
+/* حافة الصفحة تحت الرأس (الهوية «التاء»، لوحة 13): خط ينثني في وسطه كالخط الأعلى للكتاب في الشعار، بلا مساحة في التخطيط. */
+.head::after { content: ""; position: absolute; inset-inline: 0; top: 100%; height: 8px; background: var(--tj-border-strong); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 8' preserveAspectRatio='none'%3E%3Cpath d='M0 1 C90 1 150 6 166 7.2 Q170 7.6 174 7.2 C190 6 250 1 340 1' fill='none' stroke='%23000' stroke-width='1.2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 8' preserveAspectRatio='none'%3E%3Cpath d='M0 1 C90 1 150 6 166 7.2 Q170 7.6 174 7.2 C190 6 250 1 340 1' fill='none' stroke='%23000' stroke-width='1.2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat; pointer-events: none; }
 .head__mark { width: 22px; flex: none; display: flex; justify-content: center; }
 .title { margin: 0; font: 700 16px/24px var(--tj-font-head); color: var(--tj-text); }
 .load { display: inline-flex; align-items: center; gap: 6px; height: 10px; margin-inline-end: 10px; color: var(--tj-accent); }
@@ -73,10 +75,11 @@ export function panelCss() {
 .segs button[aria-checked="true"] { background: var(--tj-selected); color: var(--tj-selected-ink); }
 .segs button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
 .switch { display: inline-flex; align-items: center; gap: 10px; color: var(--tj-text-2); font: 700 13px/20px var(--tj-font-body); }
-.switch__track { width: 34px; height: 20px; flex: none; display: flex; justify-content: flex-start; padding: 2px; border-radius: 999px; background: var(--tj-border-input); transition: background-color var(--tj-motion-menu); }
+.switch__track { width: 34px; height: 20px; flex: none; display: flex; justify-content: flex-start; padding: 2px; border-radius: 999px; background: var(--tj-surface-3); box-shadow: inset 0 0 0 1px var(--tj-border-input); transition: background-color var(--tj-motion-menu); }
 .switch__thumb { width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 2px rgb(0 0 0 / 25%); }
-.switch[aria-checked="true"] .switch__track { background: var(--tj-accent); justify-content: flex-end; }
-.switch[aria-checked="true"] .switch__thumb { background: var(--tj-accent-ink); }
+.switch[aria-checked="true"] .switch__track { background: var(--tj-accent); box-shadow: none; justify-content: flex-end; }
+/* المقبض المشغَّل بسطح الوضع: ‎--tj-accent-ink ليس في مرآة اللوحة فكان شفافًا (المطابقة البصرية لـST2)، والأبيض على المضيء الليلي دون 3:1. */
+.switch[aria-checked="true"] .switch__thumb { background: var(--tj-surface); }
 .inline-error, .act-error { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: var(--tj-radius-md); background: var(--tj-danger-bg); font-size: 12px; line-height: 18px; }
 .inline-error .ic, .act-error .ic { color: var(--tj-danger); margin-top: 1px; }
 .inline-error .b { margin-inline-start: auto; }
@@ -96,7 +99,7 @@ export function panelCss() {
 .row:hover .t::before { display: block; }
 .b2 { min-width: 0; }
 .ar { display: block; font-size: 16px; line-height: 26px; color: var(--tj-text); text-align: match-parent; overflow-wrap: anywhere; unicode-bidi: isolate; }
-.en { display: block; margin-top: 1px; font-size: 12px; line-height: 18px; color: var(--tj-muted); text-align: match-parent; unicode-bidi: isolate; overflow-wrap: anywhere; }
+.en { display: block; margin-top: 1px; font-size: 12px; line-height: 18px; color: var(--tj-text-2); text-align: match-parent; unicode-bidi: isolate; overflow-wrap: anywhere; }
 .row.past .ar { color: var(--tj-text-2); }
 .row.cur { background: var(--tj-current); }
 .row.cur .t { color: var(--tj-current-ink); font-weight: 700; }
@@ -172,7 +175,7 @@ export function panelCss() {
 .off .b { height: var(--tj-control-lg); }
 .off .b:not(.b--icon) { padding: 0 12px; }
 .off__val { flex: 1 1 auto; min-width: 0; height: var(--tj-control-lg); display: flex; align-items: center; justify-content: center; gap: 4px; border-radius: var(--tj-radius-md); background: var(--tj-brand-soft); color: var(--tj-brand-text); font-size: 13px; font-weight: 700; white-space: nowrap; }
-.off__val b { font: 700 18px/28px var(--tj-font-head); direction: ltr; unicode-bidi: isolate; }
+.off__val b { font: 700 16px/24px var(--tj-font-mono); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; } /* الإزاحة رقم تقني بالأحادي (اللوحة 13، والهوية §٤) */
 .off__val.zero { background: var(--tj-surface-2); color: var(--tj-text-2); }
 .num { all: unset; box-sizing: border-box; width: 56px; height: 24px; padding: 0 6px; border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-sm); background: var(--tj-surface); color: var(--tj-text); font: 700 12px/22px var(--tj-font-mono); direction: ltr; text-align: center; }
 .num[aria-invalid="true"] { border-color: var(--tj-danger); }

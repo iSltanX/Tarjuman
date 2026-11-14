@@ -26,9 +26,9 @@ export function skeletonCard(doc = document) {
 }
 
 /** مؤشر «محفوظ» بنقطته (معيّن الهوية)، لا رابطًا ولا زرًا: للفيديو بترجمة. @param {Document} [doc] */
-export const savedPill = (doc = document) => statusPill({ tone: 'success', text: t('popup.card.saved'), title: t('popup.card.savedTitle'), doc });
+export const savedPill = (doc = document) => statusPill({ tone: 'brand', text: t('popup.card.saved'), title: t('popup.card.savedTitle'), doc });
 /** «الأصل محفوظ» (ح-59): لفيديو بلا ترجمة نُزّل أصله من قبل فحُفظ في المحفوظات بانتظار الترجمة. @param {Document} [doc] */
-export const originSavedPill = (doc = document) => statusPill({ tone: 'success', text: t('popup.card.originSaved'), title: t('popup.card.originSavedTitle'), doc });
+export const originSavedPill = (doc = document) => statusPill({ tone: 'brand', text: t('popup.card.originSaved'), title: t('popup.card.originSavedTitle'), doc });
 
 /** شارة بلا نقطة وبأيقونة اختيارية قبل نصها (معدّلة، وتختلف عن الأصل)؛ outline لشارات الوصف المحيطية. */
 function iconPill({ text, iconName, tone = 'neutral', outline = false, doc }) {

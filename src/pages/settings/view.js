@@ -372,6 +372,8 @@ export function createSettings(env) {
   const showScale = (v) => {
     scaleOut.textContent = scaleText(v);
     slider.setAttribute('aria-valuetext', scaleText(v));
+    // امتلاء المسار حتى الإبهام (الهوية «التاء»: المنزلق مرسوم لا أصلي، فلا يرسم المتصفح امتلاءه).
+    slider.style.setProperty('--st-fill', `${((v - SUBTITLE_SCALE.min) / (SUBTITLE_SCALE.max - SUBTITLE_SCALE.min)) * 100}%`);
   };
   const previewScale = (v) => { preview.update({ ...settings.appearance, scale: v }); showScale(v); };
   slider.addEventListener('input', () => previewScale(snapScale(slider.value)));
@@ -380,6 +382,7 @@ export function createSettings(env) {
   defaultMark.style.insetInlineStart = `${DEFAULT_SCALE_MARK_PCT}%`;
   const sliderBox = el('div', { className: 'st-scale__box', children: [el('div', { className: 'st-scale__track', children: [slider, defaultMark], doc }), scaleOut], doc });
   sync.push(() => { slider.value = String(settings.appearance.scale); showScale(settings.appearance.scale); });
+  showScale(settings.appearance.scale);
 
   const bgMark = marks();
   const bgSeg = segmented({

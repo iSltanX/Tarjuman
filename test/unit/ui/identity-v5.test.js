@@ -241,7 +241,7 @@ test('المكوّنات (اللوحتان 09 و10): الأنواع الستة �
   has(ui, '.tj-chip[aria-pressed="true"]', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
   has(ui, '.tj-seg__option input:checked + .tj-seg__label', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
   has(ui, '.tj-slots__slot[aria-checked="true"]', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
-  has(ui, '.tj-choice__option:has(input:checked)', 'background: var(--tj-selected-soft); border-color: var(--tj-text)');
+  has(ui, '.tj-choice__option:has(input:checked)', 'background: var(--tj-selected-soft); border-color: var(--tj-brand); box-shadow: inset 0 0 0 0.5px var(--tj-brand)');
   has(ui, '.tj-field__input:focus-visible, .tj-field__input:focus', 'border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track)');
   has(ui, '.tj-field__input', 'border: 1px solid var(--tj-border-input)');
   has(ui, '.tj-toast', 'background: var(--tj-text); color: var(--tj-on-ink)');
@@ -262,8 +262,8 @@ test('الأسطح: الصفحة الحالية والقسم الحالي صبغ
   const st = read('src/pages/settings/settings.css');
   has(st, '.st-nav__link[aria-current="page"]', 'background: var(--tj-selected-section); color: var(--tj-selected-section-ink)');
   has(st, '.st-font:has(input:checked)', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
-  has(st, '.st-switch__input:checked + .st-switch__track', 'background: var(--tj-accent)');
-  has(st, '.st-section', 'border-radius: var(--tj-radius-card-lg)');
+  has(st, '.st-switch__input:checked + .st-switch__track', 'background: var(--tj-accent-fill)');
+  has(st, '.st-section', 'border-radius: var(--tj-radius-card)'); // بطاقة الإعدادات 8 (اللوحة 16)
   const lib = read('src/pages/library/library.css');
   has(lib, '.lib-row', 'background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card)');
   has(lib, '.lib-chip--active', 'background: var(--tj-selected); color: var(--tj-selected-ink)');
@@ -287,6 +287,37 @@ test('الأسطح: الصفحة الحالية والقسم الحالي صبغ
   has(layer, 'button.item[aria-checked="true"]', 'background: var(--tj-p-selected); color: var(--tj-p-selected-ink)');
   has(layer, 'button.primary', 'background: var(--tj-p-accent); color: var(--tj-p-accent-ink)');
   assert.match(layer, /backdrop-filter: blur\(14px\)/);
+});
+
+test('مطابقة ST2 (لوحات 09–16): نقطة القلم بالمضلّع في كل الأسطح لا معيّن مدوّر، وحافة الصفحة المنحنية تحت الرؤوس الأربعة، والرقائق والشارات بزاوية الهوية', async () => {
+  const sheets = ['src/ui/components.css', 'src/ui/base.css', 'src/pages/popup/popup.css', 'src/pages/library/library.css', 'src/pages/editor/editor.css', 'src/pages/settings/settings.css'].map((f) => [f, read(f)]);
+  const { panelCss } = await import('../../../src/player/panel/styles.js');
+  const { groupCss, layerCss } = await import('../../../src/player/controls/styles.js');
+  sheets.push(['panel', panelCss()], ['controls', groupCss() + layerCss()]);
+  // المعيّن المصمت المدوّر (خلفية وتدوير 45°) هو نقطة الهوية الرابعة؛ وعلامة ✓ والسهم المرسومان بحدّين مدوّرين ليسا نقطة.
+  for (const [f, css] of sheets) {
+    for (const [, sel, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (/rotate\(45deg\)/.test(body) && /background/.test(body) && !/border(?:-width|-inline-start|-block-end)?:\s*[^;]*(?:solid|2px)/.test(body)) assert.fail(`${f}: ${sel.trim()}: معيّن مدوّر بدل نقطة القلم`);
+    }
+  }
+  const ui = read('src/ui/components.css');
+  const edge = rule(ui, '.tj-topbar::after, .tj-popup__head::after, .ed-head::after');
+  assert.match(edge, /background: var\(--tj-border-strong\)/);
+  assert.match(edge, /C90 1 150 6 166 7\.2 Q170 7\.6 174 7\.2 C190 6 250 1 340 1/, 'مسار اللوحة');
+  assert.match(panelCss(), /\.head::after \{[^}]*C90 1 150 6 166 7\.2/, 'ورأس لوحة النص');
+  for (const [f, sel] of [['src/ui/base.css', '.tj-topbar'], ['src/pages/popup/popup.css', '.tj-popup__head'], ['src/pages/editor/editor.css', '.ed-head']]) {
+    assert.doesNotMatch(rule(read(f), sel), /border-bottom/, `${sel}: لا خط مستقيم تحته`);
+  }
+  has(ui, '.tj-chip', 'border-radius: var(--tj-radius-sm)');
+  assert.match(ownRule(ui, '.tj-chip__count'), /border-radius: var\(--tj-radius-xs\)/);
+  has(ui, '.tj-pill', 'border-radius: var(--tj-radius-sm)');
+  has(ui, '.tj-btn--outline', 'border-color: var(--tj-border-input)');
+  has(read('src/pages/settings/settings.css'), '.st-scale__input::-webkit-slider-thumb', 'clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%)');
+  // المقبض المشغَّل في لوحة النص من رمز موجود في مرآتها (كان ‎--tj-accent-ink الغائب عنها فصار شفافًا).
+  assert.match(panelCss(), /\.switch\[aria-checked="true"\] \.switch__thumb \{ background: var\(--tj-surface\); \}/);
+  const { PANEL_LIGHT } = await import('../../../src/player/panel/tokens.js').catch(() => ({}));
+  if (PANEL_LIGHT) assert.ok(!('accentInk' in PANEL_LIGHT), 'المرآة بلا accentInk، فلا يُستعمل في اللوحة');
+  assert.doesNotMatch(panelCss(), /var\(--tj-accent-ink\)/, 'لا رمز خارج المرآة في اللوحة');
 });
 
 test('تدقيق Fable (UX-16): النص الصغير داخل العنصر المحايد عند المرور بالحبر (≥ 4.5:1 بالوضعين)', () => {
@@ -394,6 +425,7 @@ const ODD_ALLOWED = [
   ['src/pages/library/library.css', '.lib-chip', 'padding', '0 11px'], // 11 + حدّ شفاف 1 = 12
   ['src/pages/library/library.css', '.lib-result .tj-icon', 'margin-top', '3px'], // (20 − 14) / 2: أيقونة 14 على سطر 20
   ['src/pages/settings/settings.css', '.st-scale__mark', 'margin-inline-start', '-1px'], // نصف علامة عرضها 2
+  ['src/pages/settings/settings.css', '.st-scale__input::-webkit-slider-thumb', 'margin-top', '-7px'], // (مسار 4 − إبهام 18) / 2 في Chromium
   ['src/ui/base.css', '.tj-sr-only', 'margin', '-1px'], // نمط الإخفاء البصري المعياري
   ['src/ui/components.css', '.tj-choice__option > input[type="radio"]', 'margin', '3px 0 0'], // هامش المتصفح العلوي للدائرة مع سطر 20
   ['src/ui/components.css', '.tj-seg', 'padding', '3px'], // 3 + حدّ شفاف 1 = 4، والمقطّعة 40

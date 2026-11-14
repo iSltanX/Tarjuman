@@ -26,7 +26,7 @@
 /* حاويتا التذكير والتنبيه فارغتين لا تأخذان فجوة فتزيحان القسم عن محاذاة التنقّل؛ وتبقيان في الشجرة (منطقة التنبيه حية
    role=status فيعلن قارئ الشاشة ما يُكتب فيها). */
 .st-content > div:empty { position: absolute; }
-.st-section { background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card-lg); padding: 0; display: flex; flex-direction: column; }
+.st-section { background: var(--tj-surface); border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); padding: 0; display: flex; flex-direction: column; }
 /* فتح الصفحة على قسم (#display أو #export) لا يمرّرها: القسم الظاهر وحده تحت رأس الصفحة مباشرة، وقفزة المرساة الأصلية كانت
    تمرّر 87 بكسل فيختفي عنوان الصفحة تحت الشريط اللاصق (تدقيق Fable، FA-13 = B3؛ في Chromium للقسم الظاهر عند التحليل، وفي
    Firefox بعد إظهاره أيضًا). هامش بارتفاع النافذة يجعل هدف القفزة قبل أول الصفحة فيبقى التمرير صفرًا، فيظهر العنوانان معًا (وهو
@@ -79,7 +79,13 @@
 /* المنزلق: القيمة ثم مسار بامتلاء من البداية، وعلامة للافتراضي 100%. */
 .st-scale__box { display: flex; align-items: center; gap: var(--tj-space-3); width: 100%; max-width: 420px; }
 .st-scale__track { position: relative; flex: 1; display: flex; align-items: center; }
-.st-scale__input { width: 100%; margin: 0; accent-color: var(--tj-accent); height: 24px; cursor: pointer; }
+.st-scale__input { -webkit-appearance: none; appearance: none; width: 100%; margin: 0; height: 24px; background: transparent; cursor: pointer; --st-track: linear-gradient(to right, var(--tj-accent-fill) var(--st-fill, 0%), var(--tj-surface-3) var(--st-fill, 0%)); }
+:root[dir="rtl"] .st-scale__input { --st-track: linear-gradient(to left, var(--tj-accent-fill) var(--st-fill, 0%), var(--tj-surface-3) var(--st-fill, 0%)); }
+/* المسار 4 بامتلاء من البداية، والإبهام نقطة قلم 14×18 بالمضيء (لوحتا 09 و16). */
+.st-scale__input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--st-track); }
+.st-scale__input::-moz-range-track { height: 4px; border-radius: 2px; background: var(--st-track); }
+.st-scale__input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 18px; margin-top: -7px; border: 0; background: var(--tj-accent-fill); clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); }
+.st-scale__input::-moz-range-thumb { width: 14px; height: 18px; border: 0; border-radius: 0; background: var(--tj-accent-fill); clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); }
 .st-scale__input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 4px; border-radius: 6px; }
 .st-scale__mark { position: absolute; inset-block-start: 100%; width: 2px; height: 6px; background: var(--tj-muted); border-radius: 1px; margin-inline-start: -1px; pointer-events: none; }
 .st-scale__value { min-width: 48px; text-align: end; direction: ltr; }
@@ -122,14 +128,14 @@
 /* مربع الاختيار والمفتاح (لوحة 08). الخانة بالحبر، والمفتاح: النص في البداية ومساره 36×20 في النهاية، المطفأ بحد الحقل (≥ 3:1)
    والمشغّل بالأرجوان المضيء (اللحظة: شيء يعمل الآن)، والإبهام 16 من سطح البطاقة وبحبر المضيء حين يعمل. */
 .st-check { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; font: 400 14px/22px var(--tj-font-body); cursor: pointer; }
-.st-check input { accent-color: var(--tj-text); width: 16px; height: 16px; margin: 0; flex: none; }
+.st-check input { accent-color: var(--tj-selected); width: 16px; height: 16px; margin: 0; flex: none; }
 .st-check input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .st-check:has(input:disabled) { color: var(--tj-muted); cursor: not-allowed; }
 .st-switch { position: relative; display: inline-flex; flex-direction: row-reverse; align-items: center; gap: 10px; min-height: 32px; cursor: pointer; font: 700 14px/22px var(--tj-font-body); }
 .st-switch__input { position: absolute; opacity: 0; width: 36px; height: 20px; margin: 0; inset-inline-start: auto; inset-inline-end: 0; cursor: pointer; }
-.st-switch__track { position: relative; width: 36px; height: 20px; border-radius: 999px; background: var(--tj-border-input); flex: none; transition: background var(--tj-motion-menu) var(--tj-ease); }
+.st-switch__track { position: relative; width: 36px; height: 20px; border-radius: 999px; background: var(--tj-surface-3); box-shadow: inset 0 0 0 1px var(--tj-border-input); flex: none; transition: background var(--tj-motion-menu) var(--tj-ease); }
 .st-switch__track::after { content: ""; position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--tj-surface); box-shadow: var(--tj-e1); transition: inset-inline-start var(--tj-motion-menu) var(--tj-ease); }
-.st-switch__input:checked + .st-switch__track { background: var(--tj-accent); }
+.st-switch__input:checked + .st-switch__track { background: var(--tj-accent-fill); box-shadow: none; }
 .st-switch__input:checked + .st-switch__track::after { inset-inline-start: 18px; background: var(--tj-accent-ink); }
 .st-switch__input:focus-visible + .st-switch__track { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .st-switch--danger .st-switch__input:checked + .st-switch__track { background: var(--tj-danger); }

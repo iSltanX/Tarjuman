@@ -104,12 +104,12 @@
 .lib-trs__chips, .lib-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .lib-chip {
   position: relative; display: inline-flex; align-items: center; gap: 6px; height: 28px; max-width: 220px; padding: 0 11px;
-  border-radius: var(--tj-radius-pill); border: 1px solid transparent; background: var(--tj-control); color: var(--tj-text-2);
+  border-radius: var(--tj-radius-sm); border: 1px solid transparent; background: var(--tj-control); color: var(--tj-text-2);
   font: 700 13px/18px var(--tj-font-body); white-space: nowrap; cursor: pointer;
 }
 .lib-chip::after { content: ""; position: absolute; inset: -2px 0; } /* هدف الضغط 32 ارتفاعًا بشكل مضغوط */
 .lib-chip__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.lib-chip__mark { flex: none; width: 6px; height: 6px; border-radius: 1px; transform: rotate(45deg); background: var(--tj-border-input); } /* نقطة التاء */
+.lib-chip__mark { flex: none; width: 6px; height: 7px; clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); background: var(--tj-border-input); } /* نقطة القلم */
 .lib-chip:hover:not(.lib-chip--active) { background: var(--tj-control-hover); color: var(--tj-text); }
 .lib-chip--active { background: var(--tj-selected); color: var(--tj-selected-ink); cursor: default; }
 .lib-chip--active .lib-chip__mark { background: var(--tj-accent); }
@@ -184,7 +184,7 @@
 
 /* مربع الاختيار. */
 .lib-check { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; font: 700 14px/22px var(--tj-font-body); cursor: pointer; }
-.lib-check input { accent-color: var(--tj-text); width: 16px; height: 16px; margin: 0; flex: none; }
+.lib-check input { accent-color: var(--tj-selected); width: 16px; height: 16px; margin: 0; flex: none; }
 .lib-check input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .lib-check:has(input:disabled) { color: var(--tj-muted); cursor: not-allowed; }
 
