@@ -339,7 +339,7 @@
 
 | المتجر | الحقل المطلوب | المادة |
 | --- | --- | --- |
-| Chrome | الحزمة | `release/store/tarjuman-2.3.0-chrome.zip` (يبنيها `npm run package`) |
+| Chrome | الحزمة | `release/store/tarjuman-3.0.0-chrome.zip` (يبنيها `npm run package`) |
 | Chrome | الاسم والملخص | `manifest.name` و`manifest.description` في `listing.ar.md` |
 | Chrome | الوصف التفصيلي | `chromium.description` |
 | Chrome | الفئة واللغة | `listing.ar.md` «الفئة»، والعربية |
@@ -351,15 +351,15 @@
 | Chrome | Data usage وLimited Use | `submission.md` §٤، وPersonal communications «لا» منذ 2.2.0 (و1) |
 | Chrome | رابط سياسة الخصوصية | `submission.md` §٥ (T7) |
 | Chrome | إعلان التاجر | غير تاجر (سلطان، §٥) |
-| Edge | الحزمة | `release/store/tarjuman-2.3.0-edge.zip` (يبنيها `npm run package`) |
+| Edge | الحزمة | `release/store/tarjuman-3.0.0-edge.zip` (يبنيها `npm run package`) |
 | Edge | Category | `listing.ar.md` «الفئة» |
 | Edge | Privacy policy URL | `submission.md` §٥ (T7) |
 | Edge | Single purpose والأذونات والشيفرة البعيدة وData usage | `submission.md` §١ إلى §٤ |
-| Edge | Description (250 إلى 10,000) | `chromium.description` (3,443 محرفًا في 2.3.0، بلا ذكر متصفح آخر) |
+| Edge | Description (250 إلى 10,000) | `chromium.description` (3,443 محرفًا في 3.0.0، بلا ذكر متصفح آخر) |
 | Edge | Extension logo | `icons/edge-logo-300.png` |
 | Edge | الاسم والوصف القصير | من البيان |
 | Edge | خطوات الاختبار (البند 1.3) | `reviewer.chrome` و`reviewer.edge` في `reviewers.en.md` |
-| Firefox | ملف الإضافة وشيفرة المصدر | `tarjuman-2.3.0-firefox.zip` و`tarjuman-2.3.0-source.zip` (يبنيهما `npm run package`) |
+| Firefox | ملف الإضافة وشيفرة المصدر | `tarjuman-3.0.0-firefox.zip` و`tarjuman-3.0.0-source.zip` (يبنيهما `npm run package`) |
 | Firefox | `data_collection_permissions` | في البيان (T2.1 وT5)، وشرحه في `submission.md` §٢ |
 | Firefox | Name وSummary | من البيان، و`amo.summary` |
 | Firefox | Categories | `listing.ar.md` «الفئة» |

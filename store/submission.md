@@ -1,6 +1,6 @@
-# إجابات نماذج التقديم — ترجمان 2.3.0
+# إجابات نماذج التقديم — ترجمان 3.0.0
 
-> **المرحلة:** T6 من جولة النشر، 2026-11-04، ومحدّثة للإصدار 2.3.0. إجابات حقول Chrome Web Store وMicrosoft Edge Add-ons (Partner Center) وFirefox Add-ons (AMO) لحزم `release/store/tarjuman-<الإصدار>-*` التي يبنيها `npm run package`. تُطابَق مع نموذج كل متجر وقت التقديم. والرفع بيد سلطان، وحالة كل متجر في سطر «حالة الإصدار» في [`README.md`](../README.md).
+> **المرحلة:** T6 من جولة النشر، 2026-11-04، ومحدّثة للإصدار 3.0.0. إجابات حقول Chrome Web Store وMicrosoft Edge Add-ons (Partner Center) وFirefox Add-ons (AMO) لحزم `release/store/tarjuman-<الإصدار>-*` التي يبنيها `npm run package`. تُطابَق مع نموذج كل متجر وقت التقديم. والرفع بيد سلطان، وحالة كل متجر في سطر «حالة الإصدار» في [`README.md`](../README.md).
 > **اللغة:** ما يقرؤه المراجعون وحدهم (الغرض الواحد، ومبررات الأذونات، وملاحظات الاختبار) بالإنجليزية للّصق، وتحته معناه بالعربية. وما يراه المستخدمون في [`listing.ar.md`](listing.ar.md).
 > **العلامات:** **[قرار]** ينتظر سلطان. و`⟨بعد T7⟩` كانت روابط الموقع قبل نشره، وثُبّتت في §٥ بعد أن أعادت 200 (2026-11-04).
 
@@ -40,7 +40,7 @@ Host access (content scripts on https://www.youtube.com/*): Required to add Tarj
 ```
 
 المعنى بالترتيب:
-- **التخزين:** حفظ ترجمات المستخدم ولغاتها ومسار الأصل وبصمات التصدير والعلامات، ومسودات تعديلات المحرّر التي لم تُحفظ (لخمسة فيديوهات على الأكثر، وتُحذف حين يحفظها المستخدم أو يتجاهلها)، ومصطلحات القاموس وقوائم المصطلحات التي ينشئها لأزواج اللغات، وتفضيلات اللغات والإعدادات، في تخزين الإضافة على الجهاز، بلا مزامنة ولا إرسال. والقوائم والمسودات منذ 2.3.0، كما في «ما يُحفظ» من [`docs/site/privacy.md`](../docs/site/privacy.md).
+- **التخزين:** حفظ ترجمات المستخدم ولغاتها ومسار الأصل وبصمات التصدير والعلامات، ومسودات تعديلات المحرّر التي لم تُحفظ (لخمسة فيديوهات على الأكثر، وتُحذف حين يحفظها المستخدم أو يتجاهلها)، ومصطلحات القاموس وقوائم المصطلحات التي ينشئها لأزواج اللغات، وتفضيلات اللغات والإعدادات، في تخزين الإضافة على الجهاز، بلا مزامنة ولا إرسال. والقوائم والمسودات منذ 3.0.0، كما في «ما يُحفظ» من [`docs/site/privacy.md`](../docs/site/privacy.md).
 - **التخزين غير المحدود:** فيديو بساعتين نحو 0.7 م.ب، فالحد الافتراضي 10 م.ب يمتلئ بنحو خمسة عشر فيديو طويلًا فيفشل الحفظ ([`docs/contracts/storage.md`](../docs/contracts/storage.md) §٥). ولا يضيف تحذير تثبيت (ثبت في P2).
 - **التنزيلات:** الملفات التي يطلبها المستخدم وحدها، في المكان الذي يختاره، والاستعلام بمعرّفات ما نزّلته الإضافة وحدها.
 - **يوتيوب:** أزرار المشغّل، وقراءة نسخة رد الترجمة الذي طلبه المشغّل بلا طلب جديد، ورسم الترجمة فوق الفيديو. ولا موقع غيره.
@@ -92,7 +92,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 
 | الحقل | القيمة |
 | --- | --- |
-| الحزمة | `release/store/tarjuman-2.3.0-chrome.zip` |
+| الحزمة | `release/store/tarjuman-3.0.0-chrome.zip` |
 | الاسم والملخص | من البيان (`listing.ar.md`) |
 | الوصف التفصيلي | `chromium.description` في `listing.ar.md` |
 | Primary category | Make Chrome Yours › Accessibility (`listing.ar.md` «الفئة») |
@@ -112,7 +112,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 
 | الحقل | القيمة |
 | --- | --- |
-| الحزمة | `release/store/tarjuman-2.3.0-edge.zip` (بايتات حزمة Chrome نفسها، بلا `update_url`) |
+| الحزمة | `release/store/tarjuman-3.0.0-edge.zip` (بايتات حزمة Chrome نفسها، بلا `update_url`) |
 | Availability | Public، وكل الأسواق |
 | Category | Accessibility (`listing.ar.md`) |
 | Website وSupport contact detail | §٥ |
@@ -129,9 +129,9 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 
 | الحقل | القيمة |
 | --- | --- |
-| ملف الإضافة | `release/store/tarjuman-2.3.0-firefox.zip` |
+| ملف الإضافة | `release/store/tarjuman-3.0.0-firefox.zip` |
 | التوافق | Firefox للحاسوب وحده، 144 فأحدث (تدقيق 7a66f91، قرار Q08). لا يُختار Firefox for Android، ولا `gecko_android` في البيان |
-| شيفرة المصدر | نعم، `release/store/tarjuman-2.3.0-source.zip` وفيه `SOURCE-README.txt`. ويطابق إعادة بنائه الحزمة بايتًا (T4) |
+| شيفرة المصدر | نعم، `release/store/tarjuman-3.0.0-source.zip` وفيه `SOURCE-README.txt`. ويطابق إعادة بنائه الحزمة بايتًا (T4) |
 | Name | من البيان |
 | Add-on URL | `tarjuman` (`listing.ar.md`) |
 | Summary | `en.amo.summary` في `listing.en.md` (AMO بلا لغة عربية، §٨ من `README.md`) |
@@ -141,7 +141,7 @@ Chrome وEdge: **No, I am not using remote code.** الإضافة بصيغة Man
 | License | **All Rights Reserved** (`all-rights-reserved`)، مطابقًا لـ`LICENSE` (قرار سلطان في T4) |
 | Support email وwebsite وHomepage | §٥ |
 | Screenshots | `store/screenshots/firefox/en/` الخمس، بتعليقات إنجليزية |
-| Notes for Reviewers | `reviewers.en.md` (`reviewer.amo`، حتى 3,000 والسطر الجديد محرفان: 2,834 في 2.3.0) |
+| Notes for Reviewers | `reviewers.en.md` (`reviewer.amo`، حتى 3,000 والسطر الجديد محرفان: 2,834 في 3.0.0) |
 | Release notes | `amo.releaseNotes` في `listing.ar.md` |
 
 ## ٧. ما لا يُقدَّم

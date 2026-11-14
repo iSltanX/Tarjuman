@@ -1,4 +1,4 @@
-# ملاحظات المراجعين — ترجمان 2.3.0
+# ملاحظات المراجعين — ترجمان 3.0.0
 
 > **المرحلة:** T6 من جولة النشر، 2026-11-04. بالإنجليزية لأن المراجعين يقرؤونها (قرار سلطان: «ملاحظات المراجعين بالإنجليزية»)، ولا يراها المستخدمون. تصف ما يحدث فعلًا فقط، ولا تدّعي أن التصدير مسموح ولا تخفيه (§١ من [`README.md`](README.md)).
 > **الحقول:** Chrome «Test instructions» (اختياري ونوصي به)، وEdge «Notes for certification» (البند 1.3 يوجب خطوات الاختبار)، وAMO «Notes for Reviewers» (حتى 3,000 محرف). والكتل تُلصق كما هي، ويقيس `scripts/release/store-assets.mjs --check` أطوالها.
@@ -54,7 +54,7 @@ Arabic sample (test.ar.srt):
 
 ## Microsoft Edge Add-ons — Notes for certification
 
-نص Chrome نفسه بحرفه، فالحزمة بايتاتها نفسها. ويُضاف إليه سطر لأن الحقل يسأل عن الفروق بحسب المنطقة والإعدادات، وفقرة عن سياسة الخصوصية لأن البند 1.5.2 يطلب أن تشير أساسًا إلى Edge (قرار سلطان 2026-11-05: سياسة واحدة، وتوضيح للمراجع). والنص كله نحو 4,200 محرف (منذ 2.3.0، بفقرات زرّي CC والاختصارات وإذن يوتيوب). وحد الحقل الفعلي غير معروف (غير منشور، ولم يُتحقق منه في اللوحة)، فيُطابَق بعدّاده وقت التقديم، وإن ضاق عنه فالنسخة المختصرة `reviewer.edge.fallback` أدناه أقل من 2,000 محرف:
+نص Chrome نفسه بحرفه، فالحزمة بايتاتها نفسها. ويُضاف إليه سطر لأن الحقل يسأل عن الفروق بحسب المنطقة والإعدادات، وفقرة عن سياسة الخصوصية لأن البند 1.5.2 يطلب أن تشير أساسًا إلى Edge (قرار سلطان 2026-11-05: سياسة واحدة، وتوضيح للمراجع). والنص كله نحو 4,200 محرف (منذ 3.0.0، بفقرات زرّي CC والاختصارات وإذن يوتيوب). وحد الحقل الفعلي غير معروف (غير منشور، ولم يُتحقق منه في اللوحة)، فيُطابَق بعدّاده وقت التقديم، وإن ضاق عنه فالنسخة المختصرة `reviewer.edge.fallback` أدناه أقل من 2,000 محرف:
 
 <!-- field: reviewer.edge -->
 ```text
@@ -97,7 +97,7 @@ Sample (test.ar.srt):
 ```text
 No account or payment is needed. Interface: English or Arabic (Settings > Display); names below are English.
 
-Source code: tarjuman-2.3.0-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild uses syntax-level minification only: no renamed identifiers, source maps or obfuscation.
+Source code: tarjuman-3.0.0-source.zip, with SOURCE-README.txt. Build: npm ci, then npm run build:firefox, which writes dist-firefox/ matching the submitted package byte for byte. esbuild uses syntax-level minification only: no renamed identifiers, source maps or obfuscation.
 
 Test video (CC BY, English captions): https://www.youtube.com/watch?v=Y-rmzh0PI3c
 1. Turn on captions (CC; any language works, English here). Tarjuman adds buttons to the player's control bar.
@@ -134,12 +134,12 @@ Arabic sample (test.ar.srt):
 | أسماء الأزرار والملف | `src/i18n/en/player.js` و`src/i18n/en/popup.js` و`src/i18n/en/settings.js`، و`src/core/export/names.js`؛ واسم الملف كما نزّلته الجلسة اليدوية (`store/test-files/README.md`) |
 | المقارنة لا تعدّل بصمت | `docs/contracts/data-model.md` §٥ |
 | غلافا fetch وXHR يقرآن الرد ولا يطلبان | `src/main-world/capture.js` |
-| «Turn on CC now» و«Restart CC» يضغطان زر CC في المشغّل بنقرة المستخدم، والطلب من المشغّل (2.3.0) | `src/player/youtube-dom.js` (`pressSubtitles`: `click()` على زر CC وحده)، و`src/player/controls/session.js` (فعل `cc` من زر القائمة وحده)، و`src/i18n/en/player.js` (`ccOnNow` و`ccRestart`)، و`docs/contracts/extraction.md` (ح-56)؛ وصفّه في جدول أدلة `docs/site/privacy.md` |
-| خمسة أوامر بلا `suggested_key`، يربطها المستخدم (2.3.0) | `src/manifest.json` (`commands`)، و`src/background/commands.js` (`commands.onCommand` ثم رسالة إلى التبويب النشط)، و`src/i18n/en/settings.js` (`shortcuts`: «Manage Extension Shortcuts»)، و`docs/known-limitations.md` §٣ |
-| إذن يوتيوب المسحوب: النافذة والإعدادات تقولانه، و«Allow» يطلب الأصل المعلن نفسه (2.3.0، ح-44) | `src/core/consent/youtube-access.js` (`requestYoutubeAccess` بـ`permissions.request` لأصل `content_scripts.matches` وحده)، و`src/pages/settings/view.js`، و`src/pages/popup/status.js` (`TJ_SITE_ACCESS_OFF`)، و`scripts/release/audit.mjs` (`no-host-or-optional-permissions` و`permissions-request-settings-only`) |
+| «Turn on CC now» و«Restart CC» يضغطان زر CC في المشغّل بنقرة المستخدم، والطلب من المشغّل (3.0.0) | `src/player/youtube-dom.js` (`pressSubtitles`: `click()` على زر CC وحده)، و`src/player/controls/session.js` (فعل `cc` من زر القائمة وحده)، و`src/i18n/en/player.js` (`ccOnNow` و`ccRestart`)، و`docs/contracts/extraction.md` (ح-56)؛ وصفّه في جدول أدلة `docs/site/privacy.md` |
+| خمسة أوامر بلا `suggested_key`، يربطها المستخدم (3.0.0) | `src/manifest.json` (`commands`)، و`src/background/commands.js` (`commands.onCommand` ثم رسالة إلى التبويب النشط)، و`src/i18n/en/settings.js` (`shortcuts`: «Manage Extension Shortcuts»)، و`docs/known-limitations.md` §٣ |
+| إذن يوتيوب المسحوب: النافذة والإعدادات تقولانه، و«Allow» يطلب الأصل المعلن نفسه (3.0.0، ح-44) | `src/core/consent/youtube-access.js` (`requestYoutubeAccess` بـ`permissions.request` لأصل `content_scripts.matches` وحده)، و`src/pages/settings/view.js`، و`src/pages/popup/status.js` (`TJ_SITE_ACCESS_OFF`)، و`scripts/release/audit.mjs` (`no-host-or-optional-permissions` و`permissions-request-settings-only`) |
 | `blob:` في Firefox | `test/live/stores/t3.mjs` (`3d6a800`) |
 | الصور وموافقة Firefox الواحدة، والبلاغ بلا إرسال | `docs/site/privacy.md` وجدول أدلته، و`scripts/targets.mjs`، و`src/pages/settings/report.js` |
 | صور المحفوظات في Firefox: مطفأة افتراضيًا، ولا طلب قبل المفتاح والموافقة، والرفض يبقيها مطفأة، والموافقة تُقرأ قبل كل صورة، وبلا مُحيل، والمحفوظات تعمل بلاطةً بدونها | `src/core/model/prefs.js` (`ui.thumbnails: false`)، و`src/pages/settings/view.js` (`uiSwitch`: الطلب عند التفعيل، والرفض يعيد المفتاح)، و`src/core/consent/thumbnails.js` (`requestThumbnailsConsent` بـ`data_collection: ['browsingActivity']`، و`thumbnailsConsent` من `permissions.getAll`)، و`src/pages/library/view.js` (`thumbsConsent`) و`src/pages/library/thumb.js` (`gate` قبل إسناد `src`، و`referrerpolicy: 'no-referrer'`، والبلاطة)، و`scripts/targets.mjs` (`GECKO.data_collection_permissions`)؛ وخطر المراجعة في `docs/site/README.md` («المخاطرة المتبقية») |
-| إعادة البناء بايتًا | `scripts/release/store.mjs` (الطريقة)، و`release/store/tarjuman-2.3.0-store.json` (`source.reproduced`) |
+| إعادة البناء بايتًا | `scripts/release/store.mjs` (الطريقة)، و`release/store/tarjuman-3.0.0-store.json` (`source.reproduced`) |
 | ما لا يعمل عليه | `docs/known-limitations.md` §١ |
 | سياسة واحدة تسمّي Edge حيث يختلف السلوك: الصور مطفأة افتراضيًا منذ 2.2.0، ومن رقّى تبقى صوره كما كانت | `docs/site/privacy.md` (أسطر «في Chrome وEdge وBrave»)، و`src/core/model/prefs.js` (`ui.thumbnails: false`)، و`src/background/thumbs-pin.js`، و`src/pages/settings/view.js`؛ والبند 1.5.2 من [سياسات مطوري Edge](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) (قُرئ 2026-11-05) |

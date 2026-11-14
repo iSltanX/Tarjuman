@@ -1,8 +1,8 @@
-# نصوص الإدراج — ترجمان 2.3.0
+# نصوص الإدراج — ترجمان 3.0.0
 
 > **المرحلة:** AA5 من جولة الإصدار 2.0.0، 2026-11-07. الاسم والوصف القصير وملخص AMO **من لوحة الهوية 18** حرفيًا، إلا كلمة واحدة مذكورة تحت الوصف القصير «تطبيقات الهوية» (الإصدار `1794035287-e3de`)، وبقية النصوص من سلوك 2.0.0، ولكل وعد دليل في [جدول الأدلة](#جدول-الأدلة) آخر الملف. وكُتبت نصوص 1.1.0 في جولة النشر T6 (2026-11-04) واعتمدها سلطان، وهذه تحل محلها.
 > **الإصدار 2.1.0 (2026-11-08):** حُدّثت أسماء الأزرار، وأُضيف بند لغتي الواجهة، وصار «سجل الإصدار» لـ2.1.0. ونُشر ذلك في Microsoft Edge Add-ons وChrome Web Store.
-> **الإصدار 2.3.0 (2026-11-14، لم يُرفع):** أُضيف إلى «المميزات» ما يلمسه المستخدم من 2.3.0 (التصدير WebVTT أو مع الأصل، والمصطلحات لكل زوج، ومسودة المحرّر، وتصحيح النص من لوحة النص، والاختصارات الاختيارية) في الوصفين وبالإنجليزية، وصار «سجل الإصدار» لـ2.3.0.
+> **الإصدار 3.0.0 (2026-11-14، لم يُرفع):** يحمل تعديلات 2.3.0 كلها (ولم يُرفع 2.3.0) والهوية الجديدة «التاء». أُضيف إلى «المميزات» ما يلمسه المستخدم منه (التصدير WebVTT أو مع الأصل، والمصطلحات لكل زوج، ومسودة المحرّر، وتصحيح النص من لوحة النص، والاختصارات الاختيارية) في الوصفين وبالإنجليزية، وصار «سجل الإصدار» لـ3.0.0 وأوله الهوية.
 > **لغة الإدراج** منذ 2.1.1 العربية والإنجليزية في Chrome وEdge (`src/_locales`، بطلب سلطان)، والإنجليزية وحدها في Firefox Add-ons (AMO بلا عربية)، وهذا الملف نصوص صفحة العربية، والإنجليزية في [`listing.en.md`](listing.en.md). وما يقرؤه المراجعون وحدهم بالإنجليزية في [`reviewers.en.md`](reviewers.en.md)، وإجابات نماذج التقديم في [`submission.md`](submission.md).
 > **الفحص:** كل كتلة معلّمة بـ`field:` يقيسها `node scripts/release/store-assets.mjs --check` بحدود جدول T1: الطول بالمحارف، ولا رابط حيث يُمنع، ولا اسم متصفح آخر، ولا «downloader»، وتكرار العلامات التجارية، وإسناد علامة يوتيوب. والنص يُلصق كما هو من داخل الكتلة.
 
@@ -168,7 +168,8 @@ tarjuman
 
 <!-- field: amo.releaseNotes -->
 ```text
-الإصدار 2.3.0:
+الإصدار 3.0.0:
+• هوية جديدة «التاء»: الشعار والأيقونة وألوان الواجهة وأيقوناتها، بالوضعين الفاتح والداكن.
 • تصدير الترجمة ملف SRT أو WebVTT، وحدها أو مع الأصل في سطر تحت كل مقطع للمشاهدة في مشغّل آخر.
 • قوائم مصطلحات لكل زوج لغتين في الإعدادات ← «المصطلحات»، تُرفق كل قائمة بتعليمات زوجها وحده.
 • ما لم تحفظه في المحرّر يُكتب مسودةً تستعيدها إن أُغلق قبل الحفظ.
@@ -191,12 +192,12 @@ tarjuman
 | التوقيت ومزامنة بجملة | `docs/user-guide.md` §٤، و`docs/contracts/data-model.md` §٦ و§١٠ |
 | مقارنة بالأصل وغير المترجم، بلا تعديل صامت | `docs/contracts/data-model.md` §٥ و§١٧ (`untranslatedTest`)، و`docs/user-guide.md` §٣ |
 | المحرّر والاستكمال | `docs/user-guide.md` §٥ |
-| مسودة ما لم يُحفظ في المحرّر واستعادتها (2.3.0) | `src/pages/editor/draft.js` (`DRAFT_IDLE_MS`)، و`docs/contracts/storage.md` §١٦، و`docs/known-limitations.md` §٤ («مسودة المحرّر بعد الانهيار، وحدودها») |
+| مسودة ما لم يُحفظ في المحرّر واستعادتها (3.0.0) | `src/pages/editor/draft.js` (`DRAFT_IDLE_MS`)، و`docs/contracts/storage.md` §١٦، و`docs/known-limitations.md` §٤ («مسودة المحرّر بعد الانهيار، وحدودها») |
 | النص المتزامن مغلق افتراضيًا | `src/core/model/prefs.js` (`panelOpen: false`)، و`docs/product-spec.md` §٦.٦ |
-| تصحيح نص مقطع من لوحة النص (2.3.0) | `src/player/panel/transcript.js` و`src/i18n/ar/player.js` (`editRow`: «عدّل النص»)، و`docs/user-guide.md` §٤ («لوحة النص المتزامن») |
-| التصدير SRT أو WebVTT، وحدها أو مع الأصل (2.3.0) | `src/core/export/bilingual.js`، و`src/i18n/ar/library.js` (`withOriginal`)، و`docs/known-limitations.md` §٤ («ملف الترجمة «مع الأصل» في المشغّلات الخارجية») |
-| المصطلحات: القاموس العام وقوائم الأزواج، تُرفق بالتعليمات عند النسخ (2.3.0) | `src/core/model/glossaries.js` (`termsFor`)، و`src/core/model/prefs.js` (`glossary.attach`)، و`src/i18n/ar/settings.js` (`glossary`) |
-| الاختصارات الاختيارية: خمسة أوامر بلا مفاتيح افتراضية (2.3.0) | `src/manifest.json` (`commands` بلا `suggested_key`)، و`src/background/commands.js`، و`docs/known-limitations.md` §٣ («اختصارات لوحة المفاتيح») |
+| تصحيح نص مقطع من لوحة النص (3.0.0) | `src/player/panel/transcript.js` و`src/i18n/ar/player.js` (`editRow`: «عدّل النص»)، و`docs/user-guide.md` §٤ («لوحة النص المتزامن») |
+| التصدير SRT أو WebVTT، وحدها أو مع الأصل (3.0.0) | `src/core/export/bilingual.js`، و`src/i18n/ar/library.js` (`withOriginal`)، و`docs/known-limitations.md` §٤ («ملف الترجمة «مع الأصل» في المشغّلات الخارجية») |
+| المصطلحات: القاموس العام وقوائم الأزواج، تُرفق بالتعليمات عند النسخ (3.0.0) | `src/core/model/glossaries.js` (`termsFor`)، و`src/core/model/prefs.js` (`glossary.attach`)، و`src/i18n/ar/settings.js` (`glossary`) |
+| الاختصارات الاختيارية: خمسة أوامر بلا مفاتيح افتراضية (3.0.0) | `src/manifest.json` (`commands` بلا `suggested_key`)، و`src/background/commands.js`، و`docs/known-limitations.md` §٣ («اختصارات لوحة المفاتيح») |
 | الواجهة بالعربية أو الإنجليزية، ولا تتأثر لغات الفيديو ولا الترجمات | `src/i18n/locale.js` (`LOCALES`)، و`src/pages/settings/view.js` (`uiLocale`)، و`docs/contracts/storage.md` §١٤ |
 | المحفوظات ولغتا كل ترجمة والنسخة الاحتياطية | `docs/user-guide.md` §٦ و§٧، و`docs/contracts/backup.md`، و`docs/contracts/data-model.md` §١٧ (`recordPair`) |
 | قائمة التحميل بعدد اللغات الأخرى | `src/player/controls/text.js` (`otherLanguagesLine`)، بقرار سلطان بعد AA4 |
