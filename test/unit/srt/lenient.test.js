@@ -294,6 +294,30 @@ test('تحقق الجولة الثانية (ن-٣): السطر الخفي وحد
   }
 });
 
+test('تحقق 2.3.0 (بقية ص-٢٣، بقايا ن-٣): سطر من U+FEFF أو NBSP أو مسافة يونيكود وحدها كالسطر الخفي، لا سطر فارغ يقطع المقطع', () => {
+  const T2 = '00:00:04,000 --> 00:00:05,000';
+  const control = messageFor('IM_NOTE_CONTROL', { count: 1 });
+  const parse = (text) => {
+    const r = parseSrtLenient(text);
+    return { texts: r.cues.map((c) => c.text), notes: r.notes };
+  };
+  // trim في JavaScript يزيلها فكان السطر «فارغًا»: يُرفض الملف IM_STRAY_TEXT «بعد سطر فارغ» والمستخدم لا يرى سطرًا فارغًا،
+  // وقارئات SRT الأخرى تعدّه من نص المقطع. ومعها مسافات ASCII في السطر نفسه.
+  for (const code of [0xfeff, 0x00a0, 0x3000, 0x2007, 0x202f]) {
+    const mark = ` ${String.fromCharCode(code)}\t`;
+    const name = `U+${code.toString(16).toUpperCase().padStart(4, '0')}`;
+    assert.deepEqual(parse(`1\n${T1}\nمرحبا\n${mark}\nتتمة\n\n2\n${T2}\nعالم\n`), { texts: ['مرحبا\nتتمة', 'عالم'], notes: [control] }, `${name}: وسط مقطع`);
+    assert.deepEqual(parse(`1\n${T1}\n${mark}\nمرحبا\n\n2\n${T2}\nعالم\n`), { texts: ['مرحبا', 'عالم'], notes: [control] }, `${name}: أول مقطع`);
+    assert.deepEqual(parse(`1\n${T1}\nأهلا\n\n2\n${T2}\n${mark}\nعالم\n`), { texts: ['أهلا', 'عالم'], notes: [control] }, `${name}: أول آخر مقطع`);
+    assert.deepEqual(parse(`1\n${T1}\nمرحبا\n${mark}\nتتمة الجملة\n`), { texts: ['مرحبا\nتتمة الجملة'], notes: [control] }, `${name}: وسط آخر مقطع`);
+    // فاصلًا بين مقطعين وبعد آخر مقطع: يُسقط بلا ملاحظة كما كان.
+    assert.deepEqual(parse(`1\n${T1}\nمرحبا\n${mark}\n2\n${T2}\nعالم\n${mark}\n`), { texts: ['مرحبا', 'عالم'], notes: [] }, `${name}: فاصل`);
+    assert.deepEqual(parse(`1\n${T1}\nمرحبا\n${mark}\n\nشرح بعد الملف\n`).texts, ['مرحبا'], `${name}: شرح بعد سطر فارغ`);
+  }
+  // والسطر الفارغ بمسافات ASCII وحدها حدٌّ كما كان.
+  assert.equal(fail(`1\n${T1}\nمرحبا\n \t \nتتمة\n\n2\n${T2}\nعالم\n`).code, 'IM_STRAY_TEXT');
+});
+
 test('رأس مبتور أو مكسور عند أطراف الملف خطأ برقم السطر، لا «شرح» يُحذف بصمت (كما في وسطه)', () => {
   const good = `${block(1, T1, 'أ')}\n${block(2, '00:00:04,000 --> 00:00:05,000', 'ب')}`;
   const cut = fail(`${good}\n3\n00:00:06,000\n`);

@@ -63,22 +63,29 @@ const wrapped = (line) => EMPHASIS_RE.test(headerForm(line));
 const timeForm = (form) => (/^[-\u2212]?\d+:\d/.test(form)
   ? form.replace(TIME_COMMA_RE, ',').replace(ARROW_RE, (m) => (m.trim() === '-->' ? m : ' --> '))
   : form);
+/**
+ * السطر الفارغ: لا شيء فيه إلا مسافات ASCII وجدولة. وما سواها مما يزيله trim (U+FEFF وNBSP ومسافات يونيكود) سطرٌ خفي لا فارغ
+ * (hiddenOnly)، كما تقرؤه قارئات SRT الأخرى من نص المقطع (تحقق 2.3.0، بقية ص-٢٣).
+ */
+const EMPTY_LINE_RE = /^[ \t]*$/;
 /** حدّ لنص المقطع أينما وقع: سطر فارغ أو سياج أو عنوان (U38). @param {string} line */
 const textBoundary = (line) => {
   const t = line.trim();
-  return t === '' || FENCE_RE.test(t) || HEADING_RE.test(t);
+  return EMPTY_LINE_RE.test(line) || FENCE_RE.test(t) || HEADING_RE.test(t);
 };
 
 /**
  * سطر فيه محرف خفي باقٍ بعد التنقية وحده (RLM أو LRM أو ZWSP أو ZWNJ، تكتبه نماذج فاصلًا؛ تحقق Gemini، ع-٧). يُسقط من نص المقطع
  * أينما وقع، وليس حدًّا يقطعه (تحقق الجولة الثانية، ن-٣): بعد آخر سطر مرئي فاصل بين مقطعين يُسقط بلا ملاحظة، وقبل سطر مرئي
  * (وسط النص أو أوله) يُسقط بملاحظة IM_NOTE_CONTROL ويبقى النص كله للمقطع كما في 2.2.0؛ فلا يُرفض ملف كان يُقبل، ولا يصير نص
- * آخر مقطع «شرحًا بعد الملف» فيُحفظ فارغًا. أما ما فرغ بالتنقية وحدها (تجاوز اتجاه أو وسوم) فيُزال بملاحظته كما كان.
+ * آخر مقطع «شرحًا بعد الملف» فيُحفظ فارغًا. ومثله سطر من U+FEFF أو NBSP أو مسافة يونيكود وحدها (يزيلها trim فكان «فارغًا» يُرفض
+ * الملف بعده برسالة «بعد سطر فارغ»؛ تحقق 2.3.0، بقية ص-٢٣). أما ما فرغ بالتنقية وحدها (تجاوز اتجاه أو وسوم) فيُزال بملاحظته كما كان.
  * @param {string} line
  */
 const hiddenOnly = (line) => {
+  if (EMPTY_LINE_RE.test(line) || !isBlankText(line)) return false;
   const t = line.trim();
-  return t !== '' && isBlankText(t) && sanitizeText(t).text.trim() !== '';
+  return t === '' || sanitizeText(t).text.trim() !== '';
 };
 
 const excerpt = (s) => (s.length > EXCERPT_CHARS ? `${s.slice(0, EXCERPT_CHARS - 1)}…` : s);
