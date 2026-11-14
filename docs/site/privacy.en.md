@@ -6,7 +6,7 @@
 
 - **مسار الصفحة:** Tarjuman · Privacy Policy
 - **العنوان (`h1`):** Privacy Policy — Tarjuman
-- **تاريخ السريان:** 2026-11-11
+- **تاريخ السريان:** ⟨تاريخ النشر⟩
 - **المقدمة:** Tarjuman is a browser extension for YouTube watch pages, from BySultan (bysltan.com). This page describes what the extension stores on your device, what it sends, to whom, and when, as the code of version ⟨رقم الإصدار⟩ does it.
 
 ## Summary — `#summary`
@@ -133,7 +133,7 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 ## Changes — `#changes`
 
 - When what the extension stores or sends changes, this page changes with it, its effective date changes, and the change is noted in the changelog.
-- **Version 2.2.0, released on 2026-11-11:** Tarjuman has no server: the reports server and its permission were removed, and a report is copied for you to send from your own email. “Library” thumbnails are off by default. Nothing is read from the clipboard except what you paste yourself.
+- **Version 2.3.0, released on ⟨تاريخ النشر⟩:** Your device now also stores the term lists you create for language pairs, and a draft of your Editor edits until you save them; the draft is deleted when you save or discard its edits. If you include the glossary in the instructions you send to a model yourself, the lists that match their two languages go with it. And “Turn on CC now” and “Restart CC” in “Download original” press the player’s CC button on your click, so the player requests the subtitles itself; Tarjuman sends no request.
 
 ## Contact — `#contact`
 
