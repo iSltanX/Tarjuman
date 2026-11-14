@@ -10,7 +10,7 @@
 
 ## الرأس
 
-- الشعار «كتابٌ مفتوح» مع الاسم (`src/ui/logo.js`)، يقود إلى `/tarjuman/en`.
+- الشعار «التاء» مع الاسم (`src/ui/logo.js`)، يقود إلى `/tarjuman/en`.
 - روابط: How it works (`#how`) · Features (`#features`) · Privacy (`/tarjuman/en/privacy`) · Help (`/tarjuman/en/support`).
 - **زر الرأس:** «Install» إلى `#install`.
 
@@ -22,13 +22,22 @@
 
 **السطر التالي:** Tarjuman saves YouTube’s subtitles to a file in their own language. You translate that file with the model you choose, into the language you want. Tarjuman then shows your translation over the same video, where you can adjust its timing and edit it.
 
-**الأزرار الرئيسية:** «Add Tarjuman to Chrome» إلى `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj` · «Add Tarjuman to Edge» إلى `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi`
+**الأزرار الرئيسية:** «Add Tarjuman to Chrome» إلى `https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj` · «Add Tarjuman to Edge» إلى `https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi` · «Add Tarjuman to Firefox» إلى `https://addons.mozilla.org/en-US/firefox/addon/tarjuman/`
 
 **الرابط الثانوي:** «How it works» إلى `#how`.
 
 **الحقائق:** Chrome, Brave, Edge and Firefox · Your translations stay on your device · No account or API key · You choose the model
 
 **اللقطة:** ⟨لقطة: المشغّل ولوحة النص المتزامن⟩
+
+**تعليق اللقطة:** The player with your translation over the original, and the synced transcript panel beside it. The scene was drawn for Tarjuman; its source is in [Credits](/tarjuman/en/credits#images).
+
+## بالأرقام
+
+- **0** Tarjuman servers: your translations and settings stay in the extension’s storage in your browser.
+- **3** permissions on install: storage, downloads, and pages on `www.youtube.com`.
+- **3** translations per video, plus a previous version of what you replaced.
+- **0.5** seconds per press of − and + by default; change it in the timing menu.
 
 ## كيف يعمل — `#how`
 
@@ -37,6 +46,12 @@
 **العنوان:** Four steps, with the translation in your hands
 
 **المقدمة:** Tarjuman doesn’t translate anything itself and doesn’t connect to any model. It prepares the file and the instructions for you, and shows what you bring back.
+
+**الحاشية:** No account or API key needed; the model and both languages are your choice.
+
+**بعد الخطوات في ترجمان:** It compares what you bring back with the original, and saves it in your Library.
+
+**ما يخرج من جهازك:** Nothing leaves your device unless you move it: the file and the instructions to the model you choose, and a problem report from your own email. From the extension itself, only Library video thumbnails leave, and they stay off until you turn on their switch.
 
 1. **Extract:** Open a YouTube video and choose the subtitle language from the CC button in the player. Then download its file with Tarjuman’s button on the player bar.
 2. **Copy the instructions:** Open the Tarjuman popup from the browser toolbar. “From” is filled in with the file’s language as YouTube sent it. Choose “To”, then press “Copy instructions”. Since version 2.1.1, they’re copied in the extension’s interface language.
@@ -50,6 +65,8 @@
 **الوسم:** Features
 
 **العنوان:** What Tarjuman does with your translation
+
+**الحاشية:** From Tarjuman’s own interface; the scenes in them were drawn for it.
 
 ### From any language to yours
 
@@ -145,10 +162,14 @@ Display mode, font, size, background and position, all from Settings. The fonts 
 
 **Permissions on install:** Storage, downloads, and access to `www.youtube.com` pages only. There’s no other, optional permission. In Firefox there’s one optional consent, for Library thumbnails, requested when you turn them on. Details are under [Permissions](/tarjuman/en/privacy#permissions).
 
+## الإصدار
+
+**ما يرافق الإصدار:** with the new identity.
+
 ## التذييل
 
 - Tarjuman — by BySultan ([bysltan.com](https://bysltan.com)). A desktop browser extension that works on YouTube: it saves a video’s subtitles to a file and shows your translation over the video, from any language to yours.
-- How it works (`/tarjuman/en#how`) · Features (`/tarjuman/en#features`) · Browsers (`/tarjuman/en#browsers`) · Privacy policy (`/tarjuman/en/privacy`) · Help (`/tarjuman/en/support`) · Report a problem (`/tarjuman/en/support#report`) · Credits (`/tarjuman/en/credits`) · بريد الدعم: iSultanBy@gmail.com
+- How it works (`/tarjuman/en#how`) · Features (`/tarjuman/en#features`) · Browsers (`/tarjuman/en#browsers`) · Privacy policy (`/tarjuman/en/privacy`) · Help (`/tarjuman/en/support`) · Report a problem (`/tarjuman/en/support#report`) · Credits (`/tarjuman/en/credits`) · Support email: iSultanBy@gmail.com
 - Tarjuman isn’t affiliated with YouTube or Google.
 - © 2026 Sultan (BySultan). All rights reserved.
 - YouTube is a trademark of Google LLC.

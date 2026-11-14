@@ -16,6 +16,8 @@ The videos shown in Tarjuman’s images are demos, prepared for these images:
 - Tarjuman’s buttons, menus, panels and pages in the images are captures from the extension itself.
 - The player bar around them in the images is a local simulation of its appearance, with no logo.
 
+⟨لقطة: الترجمة فوق الفيديو⟩ The player bar around them in the images is a local simulation of its appearance, with no logo.
+
 ## Trademarks — `#marks`
 
 - YouTube is a trademark of Google LLC. Tarjuman isn’t affiliated with or endorsed by YouTube or Google.

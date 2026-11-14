@@ -25,7 +25,7 @@ export const LINKS_ONLY = Object.freeze(['CHANGELOG.md', 'docs/product-spec.md']
 /** أزواج البنية: «exact» تطابق كامل بعد إسقاط قسم «جدول الأدلة» العربي (لا يُنشر)، و«prefix» الإنجليزية تطابق أول العربية. */
 export const PAIRS = Object.freeze([
   { ar: 'README.md', en: 'README.en.md', mode: 'exact' },
-  ...['credits', 'help', 'privacy', 'tarjuman'].map((n) => ({ ar: `docs/site/${n}.md`, en: `docs/site/${n}.en.md`, mode: 'exact' })),
+  ...['credits', 'help', 'privacy', 'tarjuman', 'glossary', 'brand', 'changelog'].map((n) => ({ ar: `docs/site/${n}.md`, en: `docs/site/${n}.en.md`, mode: 'exact' })),
   { ar: 'store/listing.ar.md', en: 'store/listing.en.md', mode: 'prefix' },
 ]);
 

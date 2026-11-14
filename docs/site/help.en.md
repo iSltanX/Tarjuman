@@ -33,6 +33,8 @@ On install, Tarjuman asks for three permissions: storage, downloads, and access 
 5. Upload it with the “Upload translation (SRT)” button on the player bar, and the translation appears over the video. Its language comes from a code in the file name (such as `talk.ja.srt`) or from “To”, and you can change it before saving.
 6. When you come back to the video, you’ll find your translation and its timing as you left them.
 
+⟨لقطة: قائمة تحميل الأصل⟩ From Tarjuman’s buttons on the player bar, open “Download original (SRT)”. It lists every captured track with its language, type and number of segments. Then press “Download file”.
+
 If the player hasn’t loaded any subtitles yet, the menu usually shows a “Turn on CC now” button. Press it, and Tarjuman presses the player’s CC button for you; the language appears in the menu once the player loads it. If the menu says “Turn on YouTube subtitles (CC) and choose the language you want. It’ll appear in this menu.”, turn on CC yourself while the menu is open. Or choose the language from ⚙ › Subtitles/CC, then open the menu again.
 
 ### Interface language — `#language`
@@ -58,6 +60,8 @@ If the player hasn’t loaded any subtitles yet, the menu usually shows a “Tur
 - Tarjuman saves the offset with each translation, so it’s there when you come back.
 - The timing menu also has “Sync by sentence…”: choose a sentence you hear and Tarjuman sets the timing from it, with “Undo” alongside.
 
+⟨لقطة: قائمة التوقيت⟩ Tarjuman saves the offset with each translation, so it’s there when you come back.
+
 ## Keyboard shortcuts — `#shortcuts`
 
 - Tarjuman has five commands you can assign to keys of your choice: switch display mode, show the translation one step earlier, show it one step later, mark the visible line for review, and replay the line (moves the video to the start of the visible line). None has a key until you assign one, so Tarjuman doesn’t impose a key that clashes with YouTube’s or your browser’s shortcuts.
@@ -79,6 +83,8 @@ If the player hasn’t loaded any subtitles yet, the menu usually shows a “Tur
 - Translations saved before 2.0.0 without a language show “Unknown language”. Set it from “Translation language” in the “Translation” menu, or for all of them under Settings › “Languages”.
 - Video thumbnails stay off until you turn them on under Settings › “Display” › “Video thumbnails in Library”, so a Tarjuman tile appears instead and nothing is requested. Once on, they’re requested from YouTube’s servers. If you upgraded in Chrome, Edge or Brave, your thumbnails stay as they were.
 - In Firefox, thumbnails stay off until you turn on that same switch, and Firefox then asks for your “Browsing activity” consent. You can withdraw it from Firefox’s add-ons page.
+
+⟨لقطة: المحفوظات⟩ Each video holds up to three translations, one of which you make active. When you replace a translation, the previous one is saved so you can restore it.
 
 ## Moving your Library — `#move`
 
