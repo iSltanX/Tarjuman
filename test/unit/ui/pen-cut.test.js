@@ -24,10 +24,13 @@ function sources(dir = 'src') {
   return out;
 }
 
-/** تصريحات أول قاعدة بهذا المحدد حرفيًا في نص CSS. */
+/** تصريحات أول قاعدة تبدأ سطرها بهذا المحدد حرفيًا في نص CSS (لا محدد مركّب ينتهي به). */
 function rule(cssText, selector) {
-  const at = cssText.indexOf(`${selector} {`);
-  assert.ok(at >= 0, selector);
+  const text = `\n${cssText}`;
+  const hit = text.indexOf(`\n${selector} {`);
+  assert.ok(hit >= 0, selector);
+  cssText = text;
+  const at = hit + 1;
   const start = cssText.indexOf('{', at) + 1;
   return cssText.slice(start, cssText.indexOf('}', start));
 }
@@ -51,4 +54,16 @@ test('مزامنة بجملة: الجملة الحالية بخط إبراز ف�
   assert.match(rtl, /box-shadow:\s*inset -3px 0 0 var\(--tj-p-accent\)/, 'الخط في اليمين (البداية في RTL)');
   const ltr = rule(cssText, '.layer[dir="ltr"] button.item.sentence[aria-current="true"]');
   assert.match(ltr, /box-shadow:\s*inset 3px 0 0 var\(--tj-p-accent\)/, 'الخط في اليسار (البداية في LTR)');
+});
+
+test('زوايا اللوحات 09–12 في المشغّل والنافذة (ت٣-v3-identity-5): لا 6px خارج السلّم، وملاحظة النافذة تنبيهٌ بزاوية 8، وخطوة «تمّت» ممتلئة', () => {
+  const cssText = layerCss();
+  assert.match(rule(cssText, '.tip'), /border-radius: 3px/);
+  assert.match(rule(cssText, 'label.item'), /border-radius: 3px/);
+  assert.match(rule(cssText, '.toast button.x'), /border-radius: 4px/);
+  assert.match(rule(cssText, '.toast button.act'), /border-radius: 4px/);
+  assert.doesNotMatch(cssText, /border-radius: 6px/);
+  const popup = read('src/pages/popup/popup.css');
+  assert.match(rule(popup, '.tj-popup__note'), /border-radius: var\(--tj-radius-lg\)/);
+  assert.match(rule(popup, '.tj-popup__step--done .tj-popup__step-n'), /background: var\(--tj-success\); color: var\(--tj-success-ink\)/);
 });

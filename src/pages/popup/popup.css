@@ -123,7 +123,7 @@
 }
 .tj-popup__step-n .tj-icon { width: 14px; height: 14px; stroke-width: 2.25; }
 .tj-popup__step--done { color: var(--tj-text-2); }
-.tj-popup__step--done .tj-popup__step-n { border-color: var(--tj-success); background: var(--tj-success-bg); color: var(--tj-success); }
+.tj-popup__step--done .tj-popup__step-n { border-color: var(--tj-success); background: var(--tj-success); color: var(--tj-success-ink); } /* دائرة ممتلئة بعلامة بحبر النجاح (لوحة 11) */
 .tj-popup__step--now { color: var(--tj-text); }
 .tj-popup__step--now .tj-popup__step-n { border-color: var(--tj-brand); background: var(--tj-brand); color: var(--tj-brand-ink); }
 
@@ -140,7 +140,7 @@
 
 /* ليست صفحة فيديو: ملاحظة معلومة ثم آخر الترجمات في بطاقة، لكل ترجمة سطر عنوانها وسطر عمرها وعدد مقاطعها. */
 /* الملاحظة تنبيه محايد كلوحتي 09 و11: سطح غائر وأيقونتها بالأرجوان المضيء. */
-.tj-popup__note { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); color: var(--tj-text); font: 400 13px/20px var(--tj-font-body); }
+.tj-popup__note { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--tj-radius-lg); background: var(--tj-surface-2); color: var(--tj-text); font: 400 13px/20px var(--tj-font-body); }
 .tj-popup__note > .tj-icon { color: var(--tj-accent); } /* أيقونة الملاحظة وحدها، لا أيقونة زرها */
 /* الإذن مسحوب (الفكرة ٣-أ): النص ثم «امنح الإذن من الإعدادات» تحته. */
 .tj-popup__note-body { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }

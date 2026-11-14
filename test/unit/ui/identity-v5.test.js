@@ -30,7 +30,7 @@ function value(mode, name) {
   return ref ? value(mode, ref[1]) : v;
 }
 
-// قيم اللوحة 05 (والتسليم 18) بأسماء المنتج، بالوضعين. ونسخة اللوحة في tools/brand/identity-board-tj.css بأسماء --t-*.
+// قيم اللوحة 05 (والتسليم 18) بأسماء المنتج، بالوضعين. ونسخة اللوحة في tools/brand/identity-board-tj.css بأسماء --tj-* نفسها.
 const BOARD = {
   light: {
     '--tj-bg': '#F9F5F8', '--tj-surface': '#FEFDFE', '--tj-surface-2': '#F2EAEF', '--tj-surface-3': '#E9E0E6', '--tj-control': '#E9E0E6',
@@ -246,7 +246,13 @@ test('المكوّنات (اللوحتان 09 و10): الأنواع الستة �
   has(ui, '.tj-field__input', 'border: 1px solid var(--tj-border-input)');
   has(ui, '.tj-toast', 'background: var(--tj-text); color: var(--tj-on-ink)');
   has(ui, '.tj-toast--success .tj-icon', 'var(--tj-toast-success)');
-  has(ui, '.tj-meter__fill', 'background: var(--tj-accent)');
+  has(ui, '.tj-meter__fill', 'background: var(--tj-brand)');
+  // التحقق المستقل لـ3.0.0 (ت٣-v3-identity-5): مسار المقياس بالسطح الثالث كاللوحة 10، وإجراء الإشعار بالمضيء بلا صبغة، والخانات بزاوية 3.
+  has(ui, '.tj-meter', 'background: var(--tj-surface-3)');
+  has(ui, '.tj-toast__action', 'background: transparent;\n  color: var(--tj-toast-accent)');
+  has(ui, '.tj-slots__slot', 'border-radius: var(--tj-radius-sm)');
+  has(ui, '.tj-menu__item', 'border-radius: var(--tj-radius-sm)');
+  has(ui, '.tj-tip', 'border-radius: var(--tj-radius-sm)');
   has(ui, '.tj-sinnah', 'clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%)');
   assert.doesNotMatch(rule(ui, '.tj-sinnah'), /rotate\(45deg\)/, 'نقطة قلم لا معيّن مدوّر');
   has(ui, '.tj-dialog', 'border-radius: var(--tj-radius-card-lg)');

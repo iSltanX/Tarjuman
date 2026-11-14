@@ -71,7 +71,7 @@ export function layerCss() {
 
 /* التلميح: اسم الزر (ومعنى حالته) فوقه عند المرور والتركيز. بعرض محتواه (فلا ينحصر عند طرف المشغّل) وبسطرين إن طال. يلتقط
    المؤشر فيمكن المرور فوقه دون أن يزول، ويُخفيه Esc (WCAG 1.4.13؛ تدقيق 7a66f91، U89). */
-.tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); width: max-content; max-width: min(360px, calc(100% - 16px)); box-sizing: border-box; padding: 6px 10px; border-radius: 6px; background: var(--tj-p-tooltip-bg); box-shadow: 0 0 0 1px var(--tj-p-menu-line); color: #FFFFFF; font: 700 var(--tip-fs)/1.5 var(--tj-p-font-body); text-align: center; overflow-wrap: anywhere; pointer-events: auto; }
+.tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); width: max-content; max-width: min(360px, calc(100% - 16px)); box-sizing: border-box; padding: 6px 10px; border-radius: 3px; background: var(--tj-p-tooltip-bg); box-shadow: 0 0 0 1px var(--tj-p-menu-line); color: #FFFFFF; font: 700 var(--tip-fs)/1.5 var(--tj-p-font-body); text-align: center; overflow-wrap: anywhere; pointer-events: auto; }
 .tip[hidden] { display: none; }
 
 /* القائمة: زجاج ليلي من ليل الأرجوان 92% بتمويه 14 وزاوية 10 (لوحة 12) بعرض 280 (264 في المشغّل الضيق و320 في ملء الشاشة من layer.js)، صفوف 32، وتمرير داخلي منضبط حين
@@ -215,7 +215,7 @@ select.lang option, select.lang optgroup { color: #2D1626; background: #FFFFFF; 
 .field-error { padding: 0 6px 2px; color: var(--tj-p-error); font-size: 0.93em; }
 .field-error:empty, .field-error[hidden] { display: none; }
 input.check { flex: none; width: 16px; height: 16px; margin: 0; accent-color: var(--tj-p-accent); }
-label.item { box-sizing: border-box; min-height: var(--row); display: flex; align-items: center; gap: 8px; padding: 0 8px; border-radius: 6px; cursor: pointer; }
+label.item { box-sizing: border-box; min-height: var(--row); display: flex; align-items: center; gap: 8px; padding: 0 8px; border-radius: 3px; cursor: pointer; }
 label.item:hover { background: var(--tj-p-menu-hover); }
 
 /* الرسائل العابرة فوق سطر الترجمة: ثلاث على الأكثر بعرض واحد، والإجراء («تراجع») بالإبراز مسطّرًا في طرفها. */
@@ -228,10 +228,10 @@ label.item:hover { background: var(--tj-p-menu-hover); }
 .toast[data-tone="warning"] .glyph { color: var(--tj-p-warn); }
 .toast[data-tone="error"] .glyph { color: var(--tj-p-error); }
 .toast .text { min-width: 0; flex: 1 1 auto; overflow-wrap: anywhere; }
-.toast button.x { all: unset; flex: none; cursor: pointer; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: rgb(255 255 255 / 8%); color: #FFFFFF; }
+.toast button.x { all: unset; flex: none; cursor: pointer; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 4px; background: rgb(255 255 255 / 8%); color: #FFFFFF; }
 .toast button.x .glyph { color: inherit; width: 14px; height: 14px; }
 .toast button.x:hover { background: var(--tj-p-menu-hover); }
-.toast button.act { all: unset; position: relative; flex: none; cursor: pointer; padding: 2px 8px; border-radius: 6px; font-weight: 700; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; }
+.toast button.act { all: unset; position: relative; flex: none; cursor: pointer; padding: 2px 8px; border-radius: 4px; font-weight: 700; color: var(--tj-p-accent); text-decoration: underline; text-underline-offset: 3px; }
 /* هدف «تراجع» نحو 32 بكسل بامتداد غير مرئي والشكل كما هو (كان نحو 23.5؛ تدقيق Fable، UX-09). */
 .toast button.act::after { content: ""; position: absolute; inset: -5px -2px; }
 .toast button.act:hover { background: var(--tj-p-menu-hover); }

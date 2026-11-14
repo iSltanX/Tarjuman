@@ -205,7 +205,7 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 /* ---- محدد الترجمات الموجودة: زر لكل ترجمة محفوظة، والنشطة بصبغة المحدد. الأرقام تُقرأ من اليسار كخط الأعداد ---- */
 .tj-slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); direction: ltr; flex: none; }
 .tj-slots__slot {
-  position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 6px; border-radius: 6px; border: 0;
+  position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 6px; border-radius: var(--tj-radius-sm); border: 0;
   background: transparent; color: var(--tj-text-2); font: 700 12px/1 var(--tj-font-body); font-variant-numeric: tabular-nums; cursor: pointer;
 }
 .tj-slots--md .tj-slots__slot { min-width: 32px; height: 28px; font-size: 13px; }
@@ -237,7 +237,7 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-menu__sep { height: 1px; margin: 4px 6px; background: var(--tj-border); }
 .tj-menu__item {
   display: flex; align-items: center; gap: 10px; width: 100%; min-height: 36px; padding: 6px 10px;
-  border: 0; border-radius: var(--tj-radius-md); background: transparent; text-align: start; cursor: pointer; color: var(--tj-text);
+  border: 0; border-radius: var(--tj-radius-sm); background: transparent; text-align: start; cursor: pointer; color: var(--tj-text);
 }
 .tj-menu__item:hover:not([aria-disabled="true"]), .tj-menu__item:focus-visible { background: var(--tj-hover); outline-offset: -2px; }
 .tj-menu__item[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
@@ -265,7 +265,7 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-tipwrap { position: relative; display: inline-flex; }
 .tj-tip {
   position: absolute; inset-block-end: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 30;
-  padding: 6px 10px; border-radius: var(--tj-radius-md); background: var(--tj-text); color: var(--tj-on-ink);
+  padding: 6px 10px; border-radius: var(--tj-radius-sm); background: var(--tj-text); color: var(--tj-on-ink);
   font: 400 12px/18px var(--tj-font-body); white-space: nowrap; box-shadow: var(--tj-e2); pointer-events: none;
   opacity: 0; visibility: hidden; transition: opacity var(--tj-motion-fast) var(--tj-ease);
 }
@@ -289,8 +289,8 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 /* رسالة بزر «تراجع» (الإصدار الثاني): الزر قابل للضغط والرسالة تبقى ضعف المدة. */
 .tj-toast--action { pointer-events: auto; }
 .tj-toast__action {
-  position: relative; margin-inline-start: 6px; min-height: 28px; padding: 0 10px; border-radius: var(--tj-radius-md); border: 0; background: color-mix(in srgb, currentColor 14%, transparent);
-  color: inherit; font: 700 13px/18px var(--tj-font-body); cursor: pointer;
+  position: relative; margin-inline-start: 6px; min-height: 28px; padding: 0 10px; border-radius: var(--tj-radius-md); border: 0; background: transparent;
+  color: var(--tj-toast-accent); font: 700 13px/18px var(--tj-font-body); cursor: pointer;
 }
 /* هدف الضغط 32 بكسل كقاعدة المشروع وفوق 24 (WCAG 2.5.8) بامتداد غير مرئي، والشكل كما هو (22؛ تدقيق Fable، UX-09). */
 .tj-toast__action::after { content: ""; position: absolute; inset: -5px -2px; }
@@ -312,9 +312,10 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-seg__option:has(input:disabled) { cursor: not-allowed; opacity: 0.55; }
 
 /* ---- مقياس السعة ---- */
-/* المقياس كشريط التقدّم: مسار 4 بالحد البارز، والمملوء بالأرجوان المضيء (لوحة 09)، والقرب من السعة بالتحذير ثم الخطر. */
-.tj-meter { display: block; height: 4px; border-radius: 2px; background: var(--tj-border-strong); overflow: hidden; }
-.tj-meter__fill { display: block; height: 100%; background: var(--tj-accent); border-radius: 2px; }
+/* المقياس كشريط التقدّم: مسار 4 بالسطح الثالث، والمملوء بالأرجوان العميق (لوحة 10)، والقرب من السعة بالتحذير ثم الخطر. والارتفاع من
+   الشيفرة (لوحة 08: قيم عمل). */
+.tj-meter { display: block; height: 4px; border-radius: 2px; background: var(--tj-surface-3); overflow: hidden; }
+.tj-meter__fill { display: block; height: 100%; background: var(--tj-brand); border-radius: 2px; }
 .tj-meter--warning .tj-meter__fill { background: var(--tj-warning); }
 .tj-meter--full .tj-meter__fill { background: var(--tj-danger); }
 
