@@ -16,13 +16,13 @@ test('ح-57: العربية: اليدوي والتلقائي بنوعهما، و
   assert.equal(trackDescription({ lang: 'en', kind: 'manual' }), 'الإنجليزية · يدوية');
   assert.equal(trackDescription({ lang: 'en', kind: 'asr' }), 'الإنجليزية · تلقائية');
   assert.equal(trackDescription({ lang: 'en', kind: 'asr', via: 'ar' }), 'الإنجليزية، ترجمها يوتيوب آليًا عن العربية');
-  assert.equal(trackDescription({ lang: 'en', kind: 'asr', via: 'ar' }, { count: 1066 }), 'الإنجليزية، ترجمها يوتيوب آليًا عن العربية · 1066 مقطعًا');
-  assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 1 }), 'الإنجليزية · يدوية · مقطع واحد');
+  assert.equal(trackDescription({ lang: 'en', kind: 'asr', via: 'ar' }, { count: 1066 }), 'الإنجليزية، ترجمها يوتيوب آليًا عن العربية · 1066\u00A0مقطعًا');
+  assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 1 }), 'الإنجليزية · يدوية · مقطع\u00A0واحد');
   assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 2 }), 'الإنجليزية · يدوية · مقطعان');
-  assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 5 }), 'الإنجليزية · يدوية · 5 مقاطع');
-  assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 100 }), 'الإنجليزية · يدوية · 100 مقطع');
-  assert.equal(trackDescription({ lang: 'ja', kind: 'asr' }, { count: 212, state: 'captured' }), 'اليابانية · تلقائية · 212 مقطعًا · ملتقطة');
-  assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 5, state: 'saved' }), 'الإنجليزية · يدوية · 5 مقاطع · محفوظة');
+  assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 5 }), 'الإنجليزية · يدوية · 5\u00A0مقاطع');
+  assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 100 }), 'الإنجليزية · يدوية · 100\u00A0مقطع');
+  assert.equal(trackDescription({ lang: 'ja', kind: 'asr' }, { count: 212, state: 'captured' }), 'اليابانية · تلقائية · 212\u00A0مقطعًا · ملتقطة');
+  assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 5, state: 'saved' }), 'الإنجليزية · يدوية · 5\u00A0مقاطع · محفوظة');
   for (const s of [trackDescription({ lang: 'en', kind: 'asr', via: 'ar' }), trackDescription({ lang: 'en', kind: 'asr', via: 'ar' }, { count: 3 })]) {
     assert.equal(s.includes('تلقائية'), false, s);
     assert.equal(s.includes('ترجمة يوتيوب الآلية'), false, s);
@@ -32,10 +32,10 @@ test('ح-57: العربية: اليدوي والتلقائي بنوعهما، و
 test('ح-57: الإنجليزية بلا حرف عربي، وبالصيغة نفسها', () => {
   setLocale('en');
   try {
-    assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 412 }), 'English · manual · 412 segments');
-    assert.equal(trackDescription({ lang: 'en', kind: 'asr' }, { count: 1 }), 'English · auto-generated · 1 segment');
-    assert.equal(trackDescription({ lang: 'en', kind: 'asr', via: 'ar' }, { count: 1066 }), 'English, auto-translated by YouTube from Arabic · 1066 segments');
-    assert.equal(trackDescription({ lang: 'ja', kind: 'asr' }, { count: 3, state: 'captured' }), 'Japanese · auto-generated · 3 segments · captured');
+    assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { count: 412 }), 'English · manual · 412\u00A0segments');
+    assert.equal(trackDescription({ lang: 'en', kind: 'asr' }, { count: 1 }), 'English · auto-generated · 1\u00A0segment');
+    assert.equal(trackDescription({ lang: 'en', kind: 'asr', via: 'ar' }, { count: 1066 }), 'English, auto-translated by YouTube from Arabic · 1066\u00A0segments');
+    assert.equal(trackDescription({ lang: 'ja', kind: 'asr' }, { count: 3, state: 'captured' }), 'Japanese · auto-generated · 3\u00A0segments · captured');
     assert.equal(trackDescription({ lang: 'en', kind: 'manual' }, { state: 'saved' }), 'English · manual · saved');
     for (const s of [trackDescription({ lang: 'und', kind: 'manual' }), trackDescription({ lang: 'fr', via: 'de' }, { count: 2, state: 'saved' })]) assert.equal(ARABIC.test(s), false, s);
     assert.equal(trackDescription({ lang: null, kind: 'manual' }), 'Original · manual');
@@ -58,14 +58,27 @@ test('ح-57: نافذة الإضافة وقائمة «تنزيل الأصل» و
     v: 1, ok: true, watch: true, videoId: 'iG9CE55wbtY', title: 'ت', loading: false, arabic: null, view: { displayOffsetMs: 0, displayMode: 'ar' },
     mounted: { overlay: 'mounted', controls: 'mounted' }, english: { captured: [{ key: track.key, kind: 'asr', cueCount: 1066, ok: true }], saved: [] },
   };
-  assert.equal(menu, 'الإنجليزية، ترجمها يوتيوب آليًا عن العربية · 1066 مقطعًا');
+  assert.equal(menu, 'الإنجليزية، ترجمها يوتيوب آليًا عن العربية · 1066\u00A0مقطعًا');
   assert.equal(describeStatus(reply).englishLine, `${menu} · ملتقطة`);
   assert.equal(captureLine({ lang: 'en', kind: 'asr', via: 'ar', count: 1066, saved: false }), `${menu} · ملتقطة`);
   assert.equal(machineNote('en', 'ar'), 'الأصل: الإنجليزية، ترجمها يوتيوب آليًا عن العربية.');
   setLocale('en');
   try {
     assert.equal(describeStatus(reply).englishLine, `${trackLine(track)} · captured`);
-    assert.equal(trackLine(track), 'English, auto-translated by YouTube from Arabic · 1066 segments');
+    assert.equal(trackLine(track), 'English, auto-translated by YouTube from Arabic · 1066\u00A0segments');
+  } finally {
+    setLocale('ar');
+  }
+});
+
+test('ح-57: العدد ومعدوده بمسافة لا تنكسر، فلا ينفصل «1066» عن «مقطعًا» حين يلتف السطر؛ والفواصل بين الأجزاء مسافات عادية تلتف عندها', () => {
+  const ar = trackDescription({ lang: 'en', kind: 'asr', via: 'ar' }, { count: 1066, state: 'captured' });
+  assert.ok(ar.includes('1066 مقطعًا'), ar);
+  assert.ok(!/\d [^\s·]/.test(ar), 'لا مسافة عادية بعد العدد');
+  assert.equal(ar.split(' · ').length, 3, 'الأجزاء الثلاثة بفواصل عادية');
+  setLocale('en');
+  try {
+    assert.ok(trackDescription({ lang: 'en', kind: 'manual' }, { count: 412 }).endsWith('412 segments'));
   } finally {
     setLocale('ar');
   }

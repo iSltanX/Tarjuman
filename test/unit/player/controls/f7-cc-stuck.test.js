@@ -190,7 +190,7 @@ test('ح-40: الضغط على زر CC (أو رمزه) والقائمة مفتو
   p.tick(500);
   p.controller.set({ captured: [trackInfo()] });
   assert.equal(p.ui.menuOpen(), true);
-  assert.ok(menuText(p).includes('الإنجليزية · يدوية · 412 مقطعًا'), 'المسار الملتقط في القائمة المفتوحة');
+  assert.ok(menuText(p).includes('الإنجليزية · يدوية · 412\u00A0مقطعًا'), 'المسار الملتقط في القائمة المفتوحة');
   assert.ok(p.ui.item('تنزيل الملف'), 'وزر التنزيل');
   assert.ok(!menuText(p).includes(messageFor('CT_NOT_CAPTURED')));
   p.handle.unmount();
@@ -320,7 +320,7 @@ test('٧-ب: «تفعيل CC الآن» ضغطة واحدة من «مطفأة»�
   assert.ok(p.ui.item(WAITING), 'ما زال ينتظر بعد مهلة ccStuck');
   p.controller.set({ captured: [trackInfo()] });
   assert.equal(p.ui.menuOpen(), true);
-  assert.ok(menuText(p).includes('الإنجليزية · يدوية · 412 مقطعًا'), 'المسار الملتقط في القائمة المفتوحة');
+  assert.ok(menuText(p).includes('الإنجليزية · يدوية · 412\u00A0مقطعًا'), 'المسار الملتقط في القائمة المفتوحة');
   assert.ok(p.ui.item('تنزيل الملف'));
   await flow(p, 10000, 500);
   assert.ok(!menuText(p).includes(NO_EFFECT), 'لا سطر «لم يصل شيء» بعد الالتقاط');
@@ -338,7 +338,7 @@ test('٧-ب: ccStuck: «إعادة تشغيل CC» ضغطتان بينهما ا�
   assert.deepEqual(presses, ['true', 'false'], 'الإطفاء، ثم التشغيل بعد أن صارت مطفأة');
   assert.equal(p.cc.getAttribute('aria-pressed'), 'true', 'تنتهي مشغّلة');
   p.controller.set({ captured: [trackInfo()] });
-  assert.ok(menuText(p).includes('الإنجليزية · يدوية · 412 مقطعًا'));
+  assert.ok(menuText(p).includes('الإنجليزية · يدوية · 412\u00A0مقطعًا'));
   p.handle.unmount();
 });
 

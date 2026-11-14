@@ -73,7 +73,7 @@ test('حالة الفراغ بالإنجليزية: الخطوات بلا عرب
     const v = ui(page);
     const steps = v.qa('.steps li').map((li) => li.textContent);
     assert.equal(steps.length, 3);
-    assert.match(steps[0], /^English · manual · 3 segments · captured$/);
+    assert.match(steps[0], /^English · manual · 3\u00A0segments · captured$/);
     assert.equal(ARABIC.test(steps.join(' ')), false);
   } finally {
     setLocale('ar');

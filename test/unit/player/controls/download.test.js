@@ -158,7 +158,7 @@ test('ترجمة يوتيوب الآلية الملتقطة موسومة بلغ�
   const page = mountPage({ state: makeState({ captured: [trackInfo({ key: 'ar|asr|en', lang: 'ar', kind: 'asr', via: 'en', cueCount: 30 }), trackInfo({ key: 'en|asr', kind: 'asr', cueCount: 30 })] }) });
   open(page);
   const radios = page.ui.menu().querySelectorAll('button.item[role="radio"]');
-  assert.deepEqual(radios.map((r) => r.textContent), ['الإنجليزية · تلقائية · 30 مقطعًا', 'العربية، ترجمها يوتيوب آليًا عن الإنجليزية · 30 مقطعًا'], 'الوصف الواحد (ح-57)');
+  assert.deepEqual(radios.map((r) => r.textContent), ['الإنجليزية · تلقائية · 30\u00A0مقطعًا', 'العربية، ترجمها يوتيوب آليًا عن الإنجليزية · 30\u00A0مقطعًا'], 'الوصف الواحد (ح-57)');
   assert.equal(radios[0].getAttribute('aria-checked'), 'true');
 });
 
@@ -180,7 +180,7 @@ test('مسار واحد: سطر الحالة بوصفه، ووضع التصدي�
   open(page);
   const text = page.ui.menuText();
   assert.match(text, /اللغة/);
-  assert.match(text, /الإنجليزية · يدوية · 412 مقطعًا/);
+  assert.match(text, /الإنجليزية · يدوية · 412\u00A0مقطعًا/);
   assert.ok(page.ui.menu().querySelector('.row.status svg.glyph'), 'علامة الالتقاط رمز SVG لا محرف');
   assert.equal(page.ui.menu().querySelector('.row.status').getAttribute('data-tone'), 'warn', 'مسار قد يكون ناقصًا: علامة تحذير لا علامة سلامة');
   assert.equal(text.includes('مقاطع كما في يوتيوب'), false, 'لا سطر شرح في المشغّل');
@@ -204,7 +204,7 @@ test('أكثر من مسار: قائمة اختيار (اليدوي أولًا)�
   const page = mountPage({ state: makeState({ captured: [trackInfo({ key: 'en|asr', kind: 'asr', cueCount: 600 }), trackInfo()] }) });
   open(page);
   const radios = page.ui.menu().querySelectorAll('button.item[role="radio"]');
-  assert.deepEqual(radios.map((r) => r.textContent), ['الإنجليزية · يدوية · 412 مقطعًا', 'الإنجليزية · تلقائية · 600 مقطع']);
+  assert.deepEqual(radios.map((r) => r.textContent), ['الإنجليزية · يدوية · 412\u00A0مقطعًا', 'الإنجليزية · تلقائية · 600\u00A0مقطع']);
   assert.equal(radios[0].getAttribute('aria-checked'), 'true');
   click(radios[1]);
   click(page.ui.item(DL));
@@ -371,10 +371,10 @@ test('«اللغة»: سطر القائمة يسمّي لغة المسار ال�
   assert.equal(arName('en'), 'الإنجليزية');
   assert.notEqual(arName('en-GB'), arName('en'), 'لهجة المنطقة تظهر في اسمها');
   for (const [lang, kind, expected] of [
-    ['en', 'manual', `${arName('en')} · يدوية · 412 مقطعًا`],
-    ['en-GB', 'manual', `${arName('en-GB')} · يدوية · 412 مقطعًا`],
-    ['fr', 'asr', `${arName('fr')} · تلقائية · 412 مقطعًا`],
-    ['de', 'manual', `${arName('de')} · يدوية · 412 مقطعًا`],
+    ['en', 'manual', `${arName('en')} · يدوية · 412\u00A0مقطعًا`],
+    ['en-GB', 'manual', `${arName('en-GB')} · يدوية · 412\u00A0مقطعًا`],
+    ['fr', 'asr', `${arName('fr')} · تلقائية · 412\u00A0مقطعًا`],
+    ['de', 'manual', `${arName('de')} · يدوية · 412\u00A0مقطعًا`],
   ]) {
     const page = mountPage({ state: makeState({ captured: [trackInfo({ lang, kind, key: `${lang}|${kind}` })] }) });
     open(page);
@@ -391,13 +391,13 @@ test('«اللغة»: سطر القائمة يسمّي لغة المسار ال�
 test('«اللغة»: رمز لا يعرفه المتصفح أو غير صالح يبقى كما هو (لا خطأ)، وأكثر من مسار يسمّي كلًّا بلغته', () => {
   const odd = mountPage({ state: makeState({ captured: [trackInfo({ lang: 'xx', key: 'xx|manual' })] }) });
   open(odd);
-  assert.equal(languageLine(odd).textContent, 'xx · يدوية · 412 مقطعًا');
+  assert.equal(languageLine(odd).textContent, 'xx · يدوية · 412\u00A0مقطعًا');
   const bad = mountPage({ state: makeState({ captured: [trackInfo({ lang: 'a-b-c', key: 'bad|manual' })] }) });
   open(bad);
-  assert.equal(languageLine(bad).textContent, 'a-b-c · يدوية · 412 مقطعًا', 'الرمز غير الصالح كما جاء');
+  assert.equal(languageLine(bad).textContent, 'a-b-c · يدوية · 412\u00A0مقطعًا', 'الرمز غير الصالح كما جاء');
   const many = mountPage({ state: makeState({ captured: [trackInfo({ lang: 'en', kind: 'manual' }), trackInfo({ key: 'fr|asr', lang: 'fr', kind: 'asr', cueCount: 600 })] }) });
   open(many);
-  assert.deepEqual(many.ui.menu().querySelectorAll('button.item[role="radio"]').map((r) => r.textContent), [`${arName('en')} · يدوية · 412 مقطعًا`, `${arName('fr')} · تلقائية · 600 مقطع`]);
+  assert.deepEqual(many.ui.menu().querySelectorAll('button.item[role="radio"]').map((r) => r.textContent), [`${arName('en')} · يدوية · 412\u00A0مقطعًا`, `${arName('fr')} · تلقائية · 600\u00A0مقطع`]);
 });
 
 test('عنوان القائمة «تحميل الأصل»، واسم الوصول لها، ولا «تحميل الترجمة» في أي نص منها أو من تلميح زرها', () => {

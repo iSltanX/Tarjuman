@@ -19,7 +19,9 @@ export function trackDescription(track, { count = null, state = null, region = t
   const head = track?.via
     ? t('common.track.via', { name, source: languageName(track.via, { region }) ?? track.via })
     : `${name} · ${t(`common.track.kind.${track?.kind === 'asr' ? 'asr' : 'manual'}`)}`;
-  return [head, Number.isInteger(count) ? formatCount(count, COUNT_FORMS.cue) : null, state ? t(`common.track.state.${state}`) : null].filter(Boolean).join(' · ');
+  // العدد ومعدوده بمسافة لا تنكسر، فلا ينفصل «1066» آخر سطر عن «مقطعًا» أول التالي حين يلتف السطر (لقطات «بعد» في الجولة الخامسة).
+  const cues = Number.isInteger(count) ? formatCount(count, COUNT_FORMS.cue).replace(/ /g, '\u00A0') : null;
+  return [head, cues, state ? t(`common.track.state.${state}`) : null].filter(Boolean).join(' · ');
 }
 
 /**

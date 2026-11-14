@@ -49,7 +49,7 @@ test('بطاقة الفيديو: الحالات الأربع بالإنجليز�
     const none = describeStatus(reply());
     assert.equal(none.englishLine, 'The video’s subtitles haven’t been captured yet');
     const cap = describeStatus(reply({ english: captured }));
-    assert.equal(cap.englishLine, 'Japanese · auto-generated · 212 segments · captured');
+    assert.equal(cap.englishLine, 'Japanese · auto-generated · 212\u00A0segments · captured');
     const via = describeStatus(reply({ english: { captured: [{ key: 'en|asr|via=ja', kind: 'asr', cueCount: 3, ok: true }], saved: [] } }));
     noArabic('via', via.englishLine);
     const has = describeStatus(withArabic());
