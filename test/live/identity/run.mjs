@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// الاختبار الحي للهوية الرابعة «كتابٌ مفتوح» (docs/identity.md) والوضع العادي الكامل (docs/product-spec.md §٦.٦) على
+// الاختبار الحي للهوية الخامسة «التاء» (docs/identity.md) والوضع العادي الكامل (docs/product-spec.md §٦.٦) على
 // بناء التطوير، في ملف تعريف اختبار جديد خاص بهذه الجولة، بلا نافذة ومكتوم الصوت وبحساب غير
-// مسجَّل. الهوية: الشعار والعاج بالوضعين، وأيقونة الإضافة، والأزرار بلا إطار والمختار صنوبرًا والقسم الحالي صبغته كما يحسبها المتصفح في الصفحات
+// مسجَّل. الهوية: الشعار والورق بالوضعين، وأيقونة الإضافة، والأزرار بلا إطار والمختار بالأرجوان العميق والقسم الحالي صبغته كما يحسبها المتصفح في الصفحات
 // وداخل جذور الظل المغلقة للّوحة والشريط وقوائمه (CDP: DOM المخترق وCSS.getComputedStyleForNode، دون مساس بالمنتج). ويغطي:
 //   المحفوظات: صورة الفيديو بالمعرّف الحقيقي (تُحمَّل بعرض 320) والبلاطة البديلة للمعرّف غير الموجود، والمدة الحقيقية، والطلب
 //   الخارجي الوحيد (i.ytimg.com بلا مُحيل)، وشرائح الخانات وشريحة الرفع، والتوسيع في الصف؛ ومفتاح «صور الفيديو» يوقف الطلبات.
@@ -16,7 +16,7 @@
 // كانت عربية حرفية فلا تصح إلا والمتصفح عربي (Fable ع-٤). وصور الفيديو في المحفوظات مطفأة افتراضيًا منذ 2.2.0 (و2)، فتُختبر بعد
 // تشغيل مفتاحها من الإعدادات. ورسالة اللوحة تبقى ما دام المؤشر فوقها (إمساك الرسائل)، فيُبعد عنها قبل انتظار انقضائها.
 //   command npm run build:dev -- --out <مجلد خارج المستودع>
-//   command node test/live/identity/run.mjs --browser brave|chrome --ext <مجلد> [--locale ar|en] [--out test-results/live/identity-v4] [--headed]
+//   command node test/live/identity/run.mjs --browser brave|chrome --ext <مجلد> [--locale ar|en] [--out test-results/live/identity-v5] [--headed]
 // --locale يكتب «لغة الواجهة» اختيارَ مستخدم مع البذرة (كما يختارها من الإعدادات)؛ وبدونه تُترك لتهيئتها الأولى (لغة المتصفح هنا).
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -38,7 +38,7 @@ const argv = process.argv.slice(2);
 const val = (k, d = null) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 const browser = val('browser', 'brave');
 const EXT = path.resolve(ROOT, val('ext', 'dist'));
-const OUT = path.resolve(ROOT, val('out', 'test-results/live/identity-v4'), browser);
+const OUT = path.resolve(ROOT, val('out', 'test-results/live/identity-v5'), browser);
 const HEADED = argv.includes('--headed');
 const LOCALE = val('locale');
 if (LOCALE !== null && !isLocale(LOCALE)) throw new Error(`لغة واجهة غير مدعومة: ${LOCALE}`);
@@ -326,11 +326,11 @@ async function shadowStyle(hostId, selector) {
   const get = (k) => computedStyle.find((x) => x.name === k)?.value ?? null;
   return { bg: get('background-color'), color: get('color'), border: get('border-top-color'), fill: get('fill') };
 }
-/** قيم الهوية الرابعة كما يكتبها المتصفح (rgb)، من src/ui/tokens.css وplayer-tokens.js. */
-const V4 = {
-  light: { selected: 'rgb(30, 74, 68)', ink: 'rgb(255, 255, 255)', control: 'rgb(223, 217, 204)', brand: 'rgb(30, 74, 68)', accent: 'rgb(185, 112, 90)', section: 'rgb(230, 239, 236)', sectionInk: 'rgb(30, 74, 68)', soft: 'rgb(230, 239, 236)', text: 'rgb(24, 46, 43)', bg: 'rgb(243, 239, 230)', glyph: 'rgb(30, 74, 68)' },
-  dark: { selected: 'rgb(237, 233, 224)', ink: 'rgb(15, 25, 23)', control: 'rgb(38, 52, 49)', brand: 'rgb(237, 233, 224)', accent: 'rgb(217, 147, 123)', section: 'rgb(31, 47, 43)', sectionInk: 'rgb(207, 224, 218)', soft: 'rgb(31, 47, 43)', text: 'rgb(237, 233, 224)', bg: 'rgb(15, 25, 23)', glyph: 'rgb(237, 233, 224)' },
-  player: { selected: 'rgba(217, 147, 123, 0.18)', selectedInk: 'rgb(217, 147, 123)', accent: 'rgb(217, 147, 123)', accentInk: 'rgb(15, 25, 23)' },
+/** قيم الهوية الخامسة «التاء» كما يكتبها المتصفح (rgb)، من src/ui/tokens.css وplayer-tokens.js. */
+const V5 = {
+  light: { selected: 'rgb(104, 36, 85)', ink: 'rgb(255, 255, 255)', control: 'rgb(233, 224, 230)', brand: 'rgb(104, 36, 85)', accent: 'rgb(165, 57, 126)', section: 'rgb(251, 232, 244)', sectionInk: 'rgb(104, 36, 85)', soft: 'rgb(251, 232, 244)', text: 'rgb(45, 22, 38)', bg: 'rgb(249, 245, 248)', glyph: 'rgb(104, 36, 85)' },
+  dark: { selected: 'rgb(243, 226, 236)', ink: 'rgb(21, 12, 18)', control: 'rgb(55, 41, 50)', brand: 'rgb(243, 226, 236)', accent: 'rgb(231, 145, 194)', section: 'rgb(56, 32, 48)', sectionInk: 'rgb(240, 197, 225)', soft: 'rgb(56, 32, 48)', text: 'rgb(244, 235, 241)', bg: 'rgb(21, 12, 18)', glyph: 'rgb(243, 226, 236)' },
+  player: { selected: 'rgba(231, 145, 194, 0.18)', selectedInk: 'rgb(231, 145, 194)', accent: 'rgb(231, 145, 194)', accentInk: 'rgb(21, 12, 18)' },
 };
 const NONE = 'rgba(0, 0, 0, 0)';
 const barMenu = async () => (await iso(P.bar))?.layer.menu ?? null;
@@ -421,9 +421,9 @@ try {
     check('library-no-translation-state-is-clear', !!by[SEED_IDS.asr].none && by[SEED_IDS.asr].chips.length === 0, { none: by[SEED_IDS.asr].none });
     await shoot(lib, 'library', { width: 1280 });
 
-    // الهوية كما يحسبها المتصفح بالوضعين: الشعار (رمز «كتابٌ مفتوح» بالمصحّح تحت 32 بلون الصنوبر أو العاج، والاسم نصًّا بـCairo
-    // 800 بلون الحبر) والعاج؛ ثم الأزرار بلا إطار والتحديد: الشريحة النشطة ورقيقة الفرز المضغوطة صنوبرًا بنص عاج، والثانوي بخلفية
-    // الزر، والرئيسي صنوبر، والصفحة الحالية في الشريط العلوي صبغة صنوبرية بنصها.
+    // الهوية كما يحسبها المتصفح بالوضعين: الشعار (رمز «التاء» بالنسخة الصغيرة تحت 32 بلون الأرجوان العميق أو الورق الليلي، والاسم نصًّا بـCairo
+    // 800 بلون الحبر) والورق؛ ثم الأزرار بلا إطار والتحديد: الشريحة النشطة ورقيقة الفرز المضغوطة بالأرجوان العميق بنص أبيض، والثانوي بخلفية
+    // الزر، والرئيسي بالأرجوان العميق، والصفحة الحالية في الشريط العلوي صبغة الأرجوان بنصها.
     const identityOf = () => lib.eval(() => {
       const root = document.querySelector('.tj-topbar__brand .tj-logo');
       const svg = root?.querySelector('svg.tj-logo__mark');
@@ -443,11 +443,11 @@ try {
       await emulateScheme(lib, scheme);
       await sleep(300);
       const got = await identityOf();
-      const v = V4[scheme];
-      check(`identity-v4-logo-and-ivory-${scheme}`, got.viewBox === '0 0 200 176.4' && got.paths === 3 && got.book === 'M0 123.6H' && got.glyph === v.glyph && got.dots === v.glyph
+      const v = V5[scheme];
+      check(`identity-v5-logo-and-paper-${scheme}`, got.viewBox === '0 0 240 195' && got.paths === 3 && got.book === 'M0 123C52' && got.glyph === v.glyph && got.dots === v.glyph
         && got.word === tx.productName && got.wordColor === v.text && got.wordWeight === '800' && /Tarjuman UI Cairo/.test(got.wordFont ?? '') && got.ink === v.text && got.bg === v.bg, got);
       if (scheme === 'light') check('identity-badge-truthful', clean(got.badge) === clean(tx.yourData), { badge: got.badge, expected: tx.yourData });
-      check(`identity-v4-library-borderless-selection-${scheme}`,
+      check(`identity-v5-library-borderless-selection-${scheme}`,
         got.activeChip?.bg === v.selected && got.activeChip?.color === v.ink && got.activeChip?.border === NONE
         && got.pressedFilter?.bg === v.selected && got.pressedFilter?.color === v.ink && got.pressedFilter?.border === NONE
         && got.secondary?.bg === v.control && got.secondary?.border === NONE && got.primary?.bg === v.brand
@@ -511,7 +511,7 @@ try {
       const cs = (sel) => { const e = document.querySelector(sel); if (!e) return null; const c = getComputedStyle(e); return { bg: c.backgroundColor, border: c.borderTopColor }; };
       return { active: cs('.lib-card--active'), empty: cs('.lib-card--empty'), toggle: cs('.lib-toggle[aria-expanded="true"]') };
     });
-    check('identity-v4-library-active-card-soft-empty-card-control', cardStyle.active?.bg === V4.light.soft && cardStyle.active?.border === V4.light.selected && cardStyle.empty?.bg === V4.light.control && cardStyle.empty?.border === NONE && cardStyle.toggle?.bg === V4.light.soft, cardStyle);
+    check('identity-v5-library-active-card-soft-empty-card-control', cardStyle.active?.bg === V5.light.soft && cardStyle.active?.border === V5.light.selected && cardStyle.empty?.bg === V5.light.control && cardStyle.empty?.border === NONE && cardStyle.toggle?.bg === V5.light.soft, cardStyle);
     await shoot(lib, 'library-expanded', { width: 1280 });
   });
 
@@ -522,7 +522,7 @@ try {
     const sw = await st.eval(() => Object.fromEntries(['panelEntry', 'thumbnails'].map((k) => [k, document.querySelector(`input[data-pref="ui.${k}"]`)?.checked ?? null])));
     // زر النص المتزامن ظاهر افتراضيًا، وصور الفيديو مطفأة افتراضيًا منذ 2.2.0 (و2).
     check('settings-ui-switches-default-entry-on-thumbnails-off', sw.panelEntry === true && sw.thumbnails === false, sw);
-    // التحديد بدرجتين: القسم الحالي في التنقّل صبغة صنوبرية أهدأ من الإعداد المختار داخله (بطاقة الخط والمقطّعة صنوبرًا)، والكل بلا إطار.
+    // التحديد بدرجتين: القسم الحالي في التنقّل صبغة الأرجوان أهدأ من الإعداد المختار داخله (بطاقة الخط والمقطّعة بالأرجوان العميق)، والكل بلا إطار.
     for (const scheme of ['light', 'dark']) {
       await emulateScheme(st, scheme);
       await sleep(300);
@@ -530,8 +530,8 @@ try {
         const cs = (q) => { const e = document.querySelector(q); if (!e) return null; const c = getComputedStyle(e); return { bg: c.backgroundColor, color: c.color, border: c.borderTopColor, shadow: c.boxShadow }; };
         return { section: cs('.st-nav__link[aria-current="page"]'), font: cs('.st-font:has(input:checked)'), seg: cs('.tj-seg__option input:checked + .tj-seg__label'), segTrack: cs('.tj-seg') };
       });
-      const v = V4[scheme];
-      check(`identity-v4-settings-section-calmer-than-selected-${scheme}`,
+      const v = V5[scheme];
+      check(`identity-v5-settings-section-calmer-than-selected-${scheme}`,
         sel.section?.bg === v.section && sel.section?.color === v.sectionInk && sel.section?.shadow === 'none'
         && sel.font?.bg === v.selected && sel.font?.color === v.ink && sel.font?.border === NONE
         && sel.seg?.bg === v.selected && sel.seg?.color === v.ink && sel.segTrack?.border === NONE, sel);
@@ -592,8 +592,8 @@ try {
       const cs = (q) => { const e = document.querySelector(q); if (!e) return null; const c = getComputedStyle(e); return { bg: c.backgroundColor, color: c.color, border: c.borderTopColor }; };
       return { title: !!document.querySelector('h1.ed-title'), bg: getComputedStyle(document.body).backgroundColor, empty: !!document.querySelector('.tj-empty'), seg: cs('.ed-seg__opt[aria-checked="true"]'), track: cs('.ed-seg'), tab: cs('.ed-tab[aria-selected="true"]') && getComputedStyle(document.querySelector('.ed-tab[aria-selected="true"]'), '::after').backgroundColor };
     });
-    check('editor-opens-saved-translation-with-identity', info.title && !info.empty && info.bg === V4.light.bg, info);
-    check('identity-v4-editor-seg-selected-borderless-tab-mark', info.seg?.bg === V4.light.selected && info.seg?.color === V4.light.ink && info.track?.border === NONE && info.tab === V4.light.accent, { seg: info.seg, track: info.track, tab: info.tab });
+    check('editor-opens-saved-translation-with-identity', info.title && !info.empty && info.bg === V5.light.bg, info);
+    check('identity-v5-editor-seg-selected-borderless-tab-mark', info.seg?.bg === V5.light.selected && info.seg?.color === V5.light.ink && info.track?.border === NONE && info.tab === V5.light.accent, { seg: info.seg, track: info.track, tab: info.tab });
     await shoot(ed, 'editor', { width: 1280 });
     await ed.goto(`chrome-extension://${extId}/pages/editor/index.html?v=${SEED_IDS.asr}`);
     await ed.waitFor(() => !!document.querySelector('.tj-empty'), { timeoutMs: 10000 });
@@ -653,14 +653,14 @@ try {
     const ui = await iso(P.prefs);
     const bar1 = await iso(P.bar);
     check('panel-opens-from-bar-button-and-saves', o.mode === 'open' && bar1.buttons.panel.pressed === 'true' && ui?.panelOpen === true, { mode: o.mode, kind: o.kind, ui, pressed: bar1.buttons.panel.pressed });
-    // الهوية الرابعة داخل الجذور المغلقة: زر الشريط المضغوط بالطين الليلي (لوحة 10)، وأزرار اللوحة بلا إطار، ومقطّعتها صنوبرًا،
-    // ورمز الشعار وحده رأسًا بالصنوبر.
+    // الهوية الخامسة داخل الجذور المغلقة: زر الشريط المضغوط بالمضيء الليلي (لوحة 12)، وأزرار اللوحة بلا إطار، ومقطّعتها بالأرجوان العميق،
+    // ورمز الشعار وحده رأسًا بالأرجوان العميق.
     const pressed = await shadowStyle('tarjuman-controls', 'button[aria-pressed="true"]');
     const btn = await shadowStyle('tarjuman-panel', '.foot .b:not(.b--ghost)');
     const seg = await shadowStyle('tarjuman-panel', '.segs button[aria-checked="true"]');
     const glyph = await shadowStyle('tarjuman-panel', '.head .mark path');
-    check('identity-v4-player-bar-pressed-uses-p-accent', pressed?.color === V4.player.accent, { pressed });
-    check('identity-v4-panel-buttons-borderless-segs-selected-mark-light', btn?.bg === V4.light.control && btn?.border === NONE && seg?.bg === V4.light.selected && seg?.color === V4.light.ink && glyph?.fill === V4.light.glyph, { btn, seg, glyph });
+    check('identity-v5-player-bar-pressed-uses-p-accent', pressed?.color === V5.player.accent, { pressed });
+    check('identity-v5-panel-buttons-borderless-segs-selected-mark-light', btn?.bg === V5.light.control && btn?.border === NONE && seg?.bg === V5.light.selected && seg?.color === V5.light.ink && glyph?.fill === V5.light.glyph, { btn, seg, glyph });
     const g2 = await main(M.geo);
     result.measures.geoOpen = g2;
     check('panel-host-first-in-youtube-secondary-column', g2.hosts === 1 && g2.firstInColumn, { hosts: g2.hosts, first: g2.firstInColumn, column: g2.columnId });
@@ -805,14 +805,14 @@ try {
     await clickBar('upload');
     const m2 = await barMenu();
     check('player-menu-titles', m1?.label === ytTx.downloadTitle && m2?.label === ytTx.displayTitle, { download: m1?.label, upload: m2?.label, expected: [ytTx.downloadTitle, ytTx.displayTitle], ...why1 });
-    // قائمة «الترجمة» المفتوحة (لوحة 10): زرها المفتوح بالطين الليلي، والخانة المختارة في «حفظ في» والمقطّعة بالطين الليلي بحبر داكن،
-    // والخيار المحدد في القائمة صبغة طين 18% بنص طيني، والرئيسي بالطين.
+    // قائمة «الترجمة» المفتوحة (لوحة 12): زرها المفتوح بالمضيء الليلي، والخانة المختارة في «حفظ في» والمقطّعة بالمضيء الليلي بحبر داكن،
+    // والخيار المحدد في القائمة صبغة المضيء 18% بنصه، والرئيسي بالمضيء.
     const open = await shadowStyle('tarjuman-controls', 'button[aria-expanded="true"]');
     const slot = await shadowStyle('tarjuman-controls-layer', 'button.slot[aria-checked="true"], .seg button[aria-checked="true"]');
     const item = await shadowStyle('tarjuman-controls-layer', 'button.item[aria-checked="true"]');
     const primary = await shadowStyle('tarjuman-controls-layer', 'button.primary');
-    check('identity-v4-player-menu-open-accent-and-selected', open?.color === V4.player.accent && (!slot || (slot.bg === V4.player.accent && slot.color === V4.player.accentInk))
-      && (!item || (item.bg === V4.player.selected && item.color === V4.player.selectedInk)) && !!(slot || item) && (!primary || primary.bg === V4.player.accent), { open, slot, item, primary });
+    check('identity-v5-player-menu-open-accent-and-selected', open?.color === V5.player.accent && (!slot || (slot.bg === V5.player.accent && slot.color === V5.player.accentInk))
+      && (!item || (item.bg === V5.player.selected && item.color === V5.player.selectedInk)) && !!(slot || item) && (!primary || primary.bg === V5.player.accent), { open, slot, item, primary });
     await revealControls(yt);
     await snap(yt, 'watch-player-menu-translation');
     await closeBarMenus();
@@ -863,10 +863,10 @@ try {
       const x = c.getContext('2d');
       x.drawImage(im, 0, 0);
       const px = (a, b2) => [...x.getImageData(a, b2, 1, 1).data];
-      return { corner: px(1, 1), tile: px(64, 120), dot: px(40, 45), gap: px(64, 72), book: px(20, 95), size: [im.naturalWidth, im.naturalHeight] };
+      return { corner: px(1, 1), pad: px(64, 120), tile: px(64, 100), dot: px(51, 50), gap: px(64, 70), book: px(40, 85), size: [im.naturalWidth, im.naturalHeight] };
     });
-    // البلاطة صنوبر #1E4A44 وزواياها شفافة؛ والرمز عاج #F3EFE6 (النقطة والكتاب)، والفجوة بين النقطتين والكتاب بلون البلاطة.
-    check('extension-icon-pine-tile-ivory-mark-transparent-corners', icon.corner[3] === 0 && icon.tile.slice(0, 3).join() === '30,74,68' && icon.dot.slice(0, 3).join() === '243,239,230' && icon.gap.slice(0, 3).join() === '30,74,68' && icon.book.slice(0, 3).join() === '243,239,230' && icon.size.join() === '128,128', icon);
+    // البلاطة الأرجوانية #762E61 (رسم 96 بحشو شفاف 16)؛ والرمز بالورق #FEF8FC (النقطة والكتاب)، والفجوة بين النقطتين والكتاب بلون البلاطة.
+    check('extension-icon-plum-tile-paper-mark-transparent-padding', icon.corner[3] === 0 && icon.pad[3] === 0 && icon.tile.slice(0, 3).join() === '118,46,97' && icon.dot.slice(0, 3).join() === '254,248,252' && icon.gap.slice(0, 3).join() === '118,46,97' && icon.book.slice(0, 3).join() === '254,248,252' && icon.size.join() === '128,128', icon);
     check('popup-shows-hidden-entry-row', !!row && row.includes(popTx.entryHidden) && row.includes(popTx.entryShow), { row });
     await shoot(pop, 'popup-entry-hidden', { width: 360 });
     await clickSel(pop, '.tj-popup__entry [data-action="show-entry"]');
@@ -1001,7 +1001,7 @@ try {
     const dBtn = await shadowStyle('tarjuman-panel', '.foot .b:not(.b--ghost)');
     const dSeg = await shadowStyle('tarjuman-panel', '.segs button[aria-checked="true"]');
     const dGlyph = await shadowStyle('tarjuman-panel', '.head .mark path');
-    check('identity-v4-panel-buttons-borderless-segs-selected-mark-dark', dBtn?.bg === V4.dark.control && dBtn?.border === NONE && dSeg?.bg === V4.dark.selected && dSeg?.color === V4.dark.ink && dGlyph?.fill === V4.dark.glyph, { btn: dBtn, seg: dSeg, glyph: dGlyph });
+    check('identity-v5-panel-buttons-borderless-segs-selected-mark-dark', dBtn?.bg === V5.dark.control && dBtn?.border === NONE && dSeg?.bg === V5.dark.selected && dSeg?.color === V5.dark.ink && dGlyph?.fill === V5.dark.glyph, { btn: dBtn, seg: dSeg, glyph: dGlyph });
     if (simulated) note('الوضع الداكن ليوتيوب: ضُبطت سمة html[dark] يدويًا (يوتيوب غير المسجَّل لم يتبع وضع الجهاز)، ثم أزيلت؛ وعادت اللوحة فاتحة.');
     await snap(yt, 'watch-panel-dark');
     if (simulated) await main(() => document.documentElement.removeAttribute('dark'));
