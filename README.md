@@ -51,18 +51,16 @@
 
 <table>
   <tr>
-    <td colspan="2" valign="top"><img src=".github/assets/gallery/ar/01-overlay.png" alt="ترجمة عربية فوق السطر الإنجليزي في المشغّل، وأزرار ترجمان في شريطه، ولوحة النص المتزامن بجانبه"><br><sub>ترجمتك فوق الفيديو، والنص كله في لوحة تفتحها متى شئت</sub></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/ar/01-overlay.png" alt="ترجمتك فوق الفيديو: سطر الترجمة العربية فوق الأصل الإنجليزي، ومقبض «وضع العرض»، وأزرار ترجمان في شريط المشغّل"></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/ar/02-workflow.png" alt="أربع خطوات والترجمة بيدك: في ترجمان تنزيل الأصل ونسخ التعليمات، وخارجه النموذج الذي تختاره"></td>
   </tr>
   <tr>
-    <td width="50%" valign="top"><img src=".github/assets/gallery/ar/02-workflow.png" alt="نافذة ترجمان بتعليمات الترجمة، وقائمة تنزيل الأصل"><br><sub>ملف الأصل والتعليمات، والترجمة خارج الإضافة</sub></td>
-    <td width="50%" valign="top"><img src=".github/assets/gallery/ar/03-timing.png" alt="قائمة توقيت الترجمة فوق المشغّل وفيها الإزاحة والخطوة ومزامنة بجملة"><br><sub>ضبط التوقيت من شريط المشغّل</sub></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/ar/03-timing.png" alt="مزامنة بجملة تسمعها: قائمة توقيت الترجمة فوق المشغّل، وزرّا − و+ في شريطه"></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/ar/04-panel.png" alt="الترجمة كلها بجانب الفيديو: لوحة النص المتزامن والمقطع الحالي مميز"></td>
   </tr>
   <tr>
-    <td width="50%" valign="top"><img src=".github/assets/gallery/ar/04-appearance.png" alt="إعدادات مظهر الترجمة: الخط والحجم والخلفية والموضع، ونتيجتها فوق الفيديو"><br><sub>الخط والحجم والخلفية والموضع</sub></td>
-    <td width="50%" valign="top"><img src=".github/assets/gallery/ar/05-editor.png" alt="المحرّر: المقاطع بتوقيتها وترجمتها وأصلها، وصف مقطع ناقص، ولوحة المراجعة"><br><sub>المحرّر: النص والتوقيت والمراجعة والاستكمال</sub></td>
-  </tr>
-  <tr>
-    <td colspan="2" valign="top"><img src=".github/assets/gallery/ar/06-library.png" alt="المحفوظات: الفيديوهات بصورها ولغاتها وحال كل ترجمة"><br><sub>المحفوظات: كل فيديو وترجماته</sub></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/ar/05-editor.png" alt="يقارن ملفك بالأصل: صفوف المحرّر وفيها مقطع ناقص"></td>
+    <td width="50%" valign="top"><img src=".github/assets/gallery/ar/06-library.png" alt="محفوظاتك في مكان واحد: الفيديوهات بصورها، ولغتا كل ترجمة، وخانات ترجماتها"></td>
   </tr>
 </table>
 

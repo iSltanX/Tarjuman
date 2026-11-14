@@ -37,18 +37,16 @@ There's no built-in model, no API key, no account, no translation server, and no
 
 <table>
   <tr>
-    <td colspan="2" valign="top"><img src=".github/assets/gallery/en/01-overlay.png" alt="An English translation over the Arabic original in the player, Tarjuman's buttons on its bar, and the synced transcript panel beside it"><br><sub>Your translation over the video, with the full text in a panel you can open</sub></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/01-overlay.png" alt="Your translation over the video: the English line over the Arabic original, the Display mode control, and Tarjuman's buttons on the player bar"></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/02-workflow.png" alt="The translation, in your hands: in Tarjuman you download the original and copy the instructions; outside it, the model you choose translates"></td>
   </tr>
   <tr>
-    <td width="50%" valign="top"><img src=".github/assets/gallery/en/02-workflow.png" alt="Tarjuman's popup with the translation instructions, and the Download original menu"><br><sub>The original file and instructions; the translation happens outside the extension</sub></td>
-    <td width="50%" valign="top"><img src=".github/assets/gallery/en/03-timing.png" alt="The translation timing menu over the player, with the offset, step and Sync by sentence"><br><sub>Timing from the player bar</sub></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/03-timing.png" alt="Sync by a sentence you hear: the timing menu over the player, and the − and + buttons on its bar"></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/04-panel.png" alt="The whole translation beside the video: the synced transcript panel with the current segment highlighted"></td>
   </tr>
   <tr>
-    <td width="50%" valign="top"><img src=".github/assets/gallery/en/04-appearance.png" alt="Subtitle appearance settings: font, size, background and position, and the result over the video"><br><sub>Font, size, background and position</sub></td>
-    <td width="50%" valign="top"><img src=".github/assets/gallery/en/05-editor.png" alt="The editor: segments with timing, translation and original, a missing-segment row, and the review panel"><br><sub>The editor: text, timing, review and completion</sub></td>
-  </tr>
-  <tr>
-    <td colspan="2" valign="top"><img src=".github/assets/gallery/en/06-library.png" alt="Library: videos with thumbnails, languages and the status of each translation"><br><sub>Library: every video and its translations</sub></td>
+    <td width="50%" valign="top"><img src="store/screenshots/chromium/en/05-editor.png" alt="Compares your file with the original: editor rows with a missing segment"></td>
+    <td width="50%" valign="top"><img src=".github/assets/gallery/en/06-library.png" alt="Your Library, all in one place: videos with thumbnails, the two languages of each translation, and their translation slots"></td>
   </tr>
 </table>
 

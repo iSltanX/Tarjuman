@@ -101,7 +101,7 @@ npm run package
 | المقاطع بين `<!-- tj:facts الاسم -->` و`<!-- /tj:facts الاسم -->` في `README.md` و`README.en.md` و`user-guide.md` (التثبيت والمتاجر والأذونات وملخص الخصوصية) | [`facts.json`](facts.json) (ح2) | `node scripts/docs/facts.mjs` (و`--check` في `npm run check`، ومعه مطابقة روابط المتاجر والحدود الدنيا وبريد الدعم في `site/` و`store/` بلا علامات، وبنية النسخ العربية والإنجليزية) |
 | `THIRD_PARTY_NOTICES.txt` | تراخيص الخطوط والأيقونات وأدوات البناء | `npm run notices` |
 | أيقونات الإضافة `src/icons` وأيقونتا المتجر `store/icons` وملفا الرمز `tools/brand/tarjuman-T*.svg` | مسارات الشعار في `src/ui/logo.js`، وأيقونتا 16 و32 المرسومتان بكسلًا في `tools/brand/pixel/` | `node tools/brand/icons.mjs` (و`--check`): ينسخ 16 و32 كما هما، ويولّد ملفي الرمز، ويُبقي البلاطات المرسومة (48 و128 وEdge) ما دامت ضمن حدّ التنعيم من رسمه للهندسة نفسها |
-| صور `.github/assets` ولقطات `store/screenshots/{chromium,firefox}/{ar,en}` و`store/promo` | مجلد العمل المحلي `tarjuman-images/` (غير متتبع) | في `tarjuman-images/_source/3.0.0/`: `capture.mjs` و`compose.mjs` لصور `.github/assets` والبلاطتين، و`capture2.mjs` و`compose3.mjs` للقطات المتجر على نظامها (`store-system.ar.md` بجانبها)، ثم تُنسخ النتائج إلى مواضعها. ولا رقم إصدار على أي صورة |
+| صور `.github/assets` ولقطات `store/screenshots/{chromium,firefox}/{ar,en}` و`store/promo` | مجلد العمل المحلي `tarjuman-images/` (غير متتبع) | في `tarjuman-images/_source/3.0.0/`، على نظام واحد (`store-system.ar.md` بجانبها): `capture2.mjs` و`compose3.mjs` للقطات المتجر، و`capture3.mjs` و`compose-readme.mjs` لصور `.github/assets`، و`compose.mjs` للبلاطتين. ثم تُنسخ النتائج إلى مواضعها. ولا رقم إصدار على أي صورة |
 | نصوص صفحات الموقع | [`site`](site/README.md) | مولّد النصوص في مستودع الموقع |
 
 ## الإصدار والمتاجر
