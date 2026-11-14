@@ -1,5 +1,5 @@
-/* صفحة الإعدادات (الهوية الرابعة «كتابٌ مفتوح»، لوحة 15): تنقّل جانبي 208 في البداية (اليمين في RTL) ومحتوى القسم المختار
-   بجواره. القسم بطاقة بزاوية 16 على العاج: رأسها عنوان ووصف قصير و«استعادة الافتراضي» في النهاية، وصفوفها 184 | 1fr بخط شعري
+/* صفحة الإعدادات (الهوية الخامسة «التاء»، لوحة 16): تنقّل جانبي 208 في البداية (اليمين في RTL) ومحتوى القسم المختار
+   بجواره. القسم بطاقة بزاوية 16 على الورق: رأسها عنوان ووصف قصير و«استعادة الافتراضي» في النهاية، وصفوفها 184 | 1fr بخط شعري
    كامل العرض بين الصف والصف. التسمية في العمود الأول وتحتها علامة «حُفظ» بمساحة محجوزة فلا تدفع شيئًا، والعنصر في الثاني.
    كل لون من رموز src/ui/tokens.css بالوضعين. العرض الضيق: التنقّل شريط أفقي فوق المحتوى والتسمية فوق عنصرها. */
 
@@ -9,8 +9,8 @@
 .st-head { display: flex; flex-direction: column; gap: 2px; min-height: var(--st-head-h); }
 .st-reminder:empty { display: none; }
 
-/* التنقّل الجانبي: لاصق تحت الشريط العلوي. القسم الحالي صبغة صنوبرية خفيفة بنصها وأيقونته بالطين (لوحة 15)، أهدأ من الإعداد
-   المختار داخله (صنوبر كامل)، بلا إطار. */
+/* التنقّل الجانبي: لاصق تحت الشريط العلوي. القسم الحالي صبغة الأرجوان خفيفة بنصها وأيقونته بالأرجوان المضيء (لوحة 16)، أهدأ من الإعداد
+   المختار داخله (الأرجوان العميق كاملًا)، بلا إطار. */
 .st-nav { position: sticky; top: calc(var(--tj-topbar-h) + var(--tj-space-6)); display: flex; flex-direction: column; gap: 2px; margin-top: calc(var(--st-head-h) + var(--tj-space-4)); }
 .st-nav__link {
   display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border-radius: var(--tj-radius-md);
@@ -60,7 +60,7 @@
 .st-row__label .tj-saved { min-height: 18px; }
 
 /* خط الترجمة: شرائح مدمجة في سطر، اسم كل خط بخطه نفسه و«الافتراضي» وسمٌ صغير؛ بلا إطار، وغير المختار بخلفية الزر المحايدة
-   والمختار صنوبر بنص عاج (لوحة 08)، والزر الدائري مخفي بصريًا وبقي للوحة المفاتيح وقارئ الشاشة. ووصف المختار سطرٌ واحد تحتها. */
+   والمختار بالأرجوان العميق بنص أبيض (لوحة 09)، والزر الدائري مخفي بصريًا وبقي للوحة المفاتيح وقارئ الشاشة. ووصف المختار سطرٌ واحد تحتها. */
 .st-fonts { display: flex; flex-wrap: wrap; gap: var(--tj-space-2); border: 0; padding: 0; margin: 0; min-width: 0; width: 100%; }
 .st-font {
   position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: var(--tj-control-lg); padding: 0 14px;
@@ -120,7 +120,7 @@
 .st-last-save[hidden] { display: none; }
 
 /* مربع الاختيار والمفتاح (لوحة 08). الخانة بالحبر، والمفتاح: النص في البداية ومساره 36×20 في النهاية، المطفأ بحد الحقل (≥ 3:1)
-   والمشغّل بالطين (اللحظة: شيء يعمل الآن)، والإبهام 16 من سطح البطاقة وبحبر الطين حين يعمل. */
+   والمشغّل بالأرجوان المضيء (اللحظة: شيء يعمل الآن)، والإبهام 16 من سطح البطاقة وبحبر المضيء حين يعمل. */
 .st-check { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; font: 400 14px/22px var(--tj-font-body); cursor: pointer; }
 .st-check input { accent-color: var(--tj-text); width: 16px; height: 16px; margin: 0; flex: none; }
 .st-check input:focus-visible { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
@@ -165,7 +165,7 @@
 .st-progress { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 420px; }
 .st-progress[hidden] { display: none; }
 .st-progress__text { font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); }
-/* شريط التقدم برسمنا لا بالأصلي (لوحة 08): مسار 4 بالحد البارز وامتلاء بالطين. */
+/* شريط التقدم برسمنا لا بالأصلي (لوحة 09): مسار 4 بالحد البارز وامتلاء بالأرجوان المضيء. */
 .st-progress__bar { appearance: none; -webkit-appearance: none; width: 100%; height: 4px; border: 0; border-radius: 2px; overflow: hidden; background: var(--tj-border-strong); accent-color: var(--tj-accent); }
 .st-progress__bar::-webkit-progress-bar { background: var(--tj-border-strong); }
 .st-progress__bar::-webkit-progress-value { background: var(--tj-accent); border-radius: 2px; }
@@ -209,7 +209,7 @@
 .st-about__version { font-size: 12px; line-height: 18px; color: var(--tj-text-2); }
 .st-about__browsers { box-shadow: inset 0 0 0 1px var(--tj-border-strong); background: transparent; }
 /* بطاقة «الحقوق»: صفوف مفتاح وقيمة بخط شعري بينها على سطح البطاقة، والقيمة بالحبر؛ والروابط اسم النطاق LTR معزولًا بأيقونة
-   «فتح خارجي» بخط سفلي هادئ يصير طينيًا بالمرور (لا لون وحده: النص والأيقونة يقولان إنه رابط). */
+   «فتح خارجي» بخط سفلي هادئ يصير بالمضيء بالمرور (لا لون وحده: النص والأيقونة يقولان إنه رابط). */
 .st-credits { width: 100%; max-width: 460px; margin: 0; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-card); background: var(--tj-surface); overflow: hidden; }
 .st-credits__row { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: center; gap: 4px 16px; min-height: 44px; padding: 6px 14px; }
 .st-credits__row + .st-credits__row { border-top: 1px solid var(--tj-border); }

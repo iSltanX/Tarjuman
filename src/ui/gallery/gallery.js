@@ -31,7 +31,7 @@ startPage({
       className: 'g-swatches',
       children: TOKENS.map((t) => el('div', { className: 'g-swatch', children: [el('span', { attrs: { style: `background: var(--tj-${t})` } }), el('code', { text: t })] })),
     })));
-    // الشعار «كتابٌ مفتوح» بأحجامه (الرمز المصحّح تحت 32) والأيقونات الواحدة والخمسون على شبكة 20 (الهوية الرابعة).
+    // الشعار «التاء» بأحجامه (الرمز الصغير تحت 32) وأيقونات الهوية على شبكة 20 بقواعد «قطّة القلم» (الهوية الخامسة، لوحة 07).
     app.append(section('الشعار',
       el('div', { className: 'tj-row', children: [logo({ width: 24, wordSize: 18 }), logo({ width: 40, wordSize: 28 }), ...[16, 24, 32, 48, 64].map((w) => logoMark({ width: w, className: 'tj-logo__mark g-mark' }))] }),
     ));

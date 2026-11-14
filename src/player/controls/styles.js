@@ -1,4 +1,4 @@
-// أنماط الأدوات (مواصفة التصميم الأولى §٥ و§٦ و§٣.٢، والهوية الرابعة لوحة 10): ورقتان داخل Shadow DOM مغلق، فلا تتسرب أنماط يوتيوب إليهما
+// أنماط الأدوات (مواصفة التصميم الأولى §٥ و§٦ و§٣.٢، والهوية الخامسة «التاء» لوحة 12): ورقتان داخل Shadow DOM مغلق، فلا تتسرب أنماط يوتيوب إليهما
 // ولا أنماطهما إلى يوتيوب. المجموعة في بداية أدوات الشريط اليمنى LTR، والقوائم والتلميحات والرسائل في طبقة واحدة
 // داخل #movie_player محتواها RTL. القيم المتغيرة (المواضع) بمتغيرات CSS عبر CSSOM، لا بنص ولا بسمة style.
 import { playerTokensCss } from '../../ui/player-tokens.js';
@@ -39,7 +39,7 @@ export function groupCss() {
 .badge[data-sign="zero"] { color: rgb(255 255 255 / 70%); }
 .badge[data-sign="positive"], .badge[data-sign="negative"] { color: var(--tj-p-accent); }
 .badge[aria-disabled="true"] { color: var(--tj-p-icon-disabled); }
-/* المفتوح (قائمته ظاهرة) والمضغوط (اللوحة مفتوحة): الأيقونة بالطين الليلي وخطٌّ طيني 14×2 تحتها (لوحة 10: الطين للحالة المفتوحة). */
+/* المفتوح (قائمته ظاهرة) والمضغوط (اللوحة مفتوحة): الأيقونة بالمضيء الليلي وخطٌّ بالمضيء 14×2 تحتها (لوحة 12: المضيء للحالة المفتوحة). */
 .btn[aria-expanded="true"], .btn[aria-pressed="true"] { color: var(--tj-p-accent); }
 .btn[aria-expanded="true"]::after, .btn[aria-pressed="true"]::after { content: ""; position: absolute; left: 50%; bottom: 4px; width: 14px; height: 2px; margin-left: -7px; border-radius: 1px; background: var(--tj-p-accent); pointer-events: none; }
 .badge[data-pulse] { animation: tj-pulse ${PULSE_MS}ms ease-out; }
@@ -74,7 +74,7 @@ export function layerCss() {
 .tip { position: absolute; left: var(--x, 50%); bottom: var(--y, 60px); transform: translateX(-50%); width: max-content; max-width: min(360px, calc(100% - 16px)); box-sizing: border-box; padding: 6px 10px; border-radius: 6px; background: var(--tj-p-tooltip-bg); box-shadow: 0 0 0 1px var(--tj-p-menu-line); color: #FFFFFF; font: 700 var(--tip-fs)/1.5 var(--tj-p-font-body); text-align: center; overflow-wrap: anywhere; pointer-events: auto; }
 .tip[hidden] { display: none; }
 
-/* القائمة: زجاج ليلي من الصنوبر 92% بتمويه 14 وزاوية 12 (لوحة 10) بعرض 280 (264 في المشغّل الضيق و320 في ملء الشاشة من layer.js)، صفوف 32، وتمرير داخلي منضبط حين
+/* القائمة: زجاج ليلي من ليل الأرجوان 92% بتمويه 14 وزاوية 10 (لوحة 12) بعرض 280 (264 في المشغّل الضيق و320 في ملء الشاشة من layer.js)، صفوف 32، وتمرير داخلي منضبط حين
    يضيق ارتفاع المشغّل فقط (أقصى الارتفاع من layer.js)، دون تمرير أفقي. أقسامها تفصلها خطوط (.sep) بعرضها كله. */
 .menu { position: absolute; left: var(--x, 8px); bottom: var(--y, 60px); box-sizing: border-box; width: var(--w, 280px); max-width: calc(100% - 16px); max-height: var(--max-h, 70%); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 8px; display: flex; flex-direction: column; gap: 4px; background: var(--tj-p-menu-bg); color: var(--tj-p-menu-text); border-radius: var(--tj-p-menu-radius); box-shadow: 0 12px 32px rgb(0 0 0 / 45%), 0 0 0 1px var(--tj-p-menu-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); text-align: start; font: 400 var(--fs)/1.5 var(--tj-p-font-body); pointer-events: auto; animation: tj-in var(--tj-p-motion-menu) ease-out; scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 30%) transparent; }
 .menu[hidden] { display: none; }
@@ -84,7 +84,7 @@ export function layerCss() {
 .head .title { padding: 2px 6px; }
 .label { padding: 0 6px; font-size: 0.93em; line-height: 1.5; font-weight: 700; color: var(--tj-p-menu-text-2); }
 
-/* مجموعة أزرار الخانات (الترجمات الموجودة، و«حفظ في»): كالمقطّعة، المختارة بالطين الليلي بحبر داكن (لوحة 10)، بلا إطار. */
+/* مجموعة أزرار الخانات (الترجمات الموجودة، و«حفظ في»): كالمقطّعة، المختارة بالمضيء الليلي بحبر داكن (لوحة 12)، بلا إطار. */
 .slots { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgb(255 255 255 / 7%); direction: ltr; flex: none; }
 button.slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; min-width: 32px; height: 24px; padding: 0 6px; border-radius: 4px; font: 700 12px/1 var(--tj-p-font-body); font-variant-numeric: tabular-nums; color: var(--tj-p-menu-text-2); cursor: pointer; }
 button.slot.slot--new { padding: 0 8px; }
@@ -179,7 +179,7 @@ button.link { all: unset; cursor: pointer; color: var(--tj-p-accent); text-decor
 /* المطوي بسمة hidden داخل القائمة (تفصيل ح-58 وح-61): مخفي ولو كان له عرض من صنفه (.stack). */
 .menu [hidden] { display: none !important; }
 
-/* المقطّعة: خيار واحد من قليل في صف (وضع التصدير، وأوضاع العرض، والخطوة)؛ المختار بالطين الليلي بحبر داكن (لوحة 10)، بلا إطار. */
+/* المقطّعة: خيار واحد من قليل في صف (وضع التصدير، وأوضاع العرض، والخطوة)؛ المختار بالمضيء الليلي بحبر داكن (لوحة 12)، بلا إطار. */
 .seg { display: flex; gap: 2px; padding: 2px; border-radius: 8px; background: rgb(255 255 255 / 7%); }
 .seg button { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; min-height: calc(var(--row) - 4px); display: flex; align-items: center; justify-content: center; padding: 0 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tj-p-menu-text-2); font-weight: 700; }
 .seg button:hover:not([aria-checked="true"]):not([aria-disabled="true"]) { background: var(--tj-p-menu-hover); color: #FFFFFF; }

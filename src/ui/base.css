@@ -1,4 +1,4 @@
-/* أساس صفحات الإضافة: الاتجاه من dir على الجذر بحسب لغة الواجهة (خصائص منطقية start/end لا يمين/يسار)، وسلّم الخطوط (الهوية الرابعة، لوحة 05: Cairo
+/* أساس صفحات الإضافة: الاتجاه من dir على الجذر بحسب لغة الواجهة (خصائص منطقية start/end لا يمين/يسار)، وسلّم الخطوط (الهوية الخامسة «التاء»، لوحة 06: Cairo
    للعناوين وAlmarai للنص، والسطر ≥ 1.5 بلا تباعد حروف)، وعزل الأزمنة والمعرّفات والأسماء اللاتينية LTR، وهيكل الصفحة (شريط
    علوي 56 ورأس ومحتوى بحاوية 1200 وهوامش 32، لوحتا 13 و15)، وتقليل الحركة. */
 
@@ -68,7 +68,7 @@ a:hover { color: var(--tj-accent-text); }
 .tj-topbar__inner { height: var(--tj-topbar-h); display: flex; align-items: center; gap: var(--tj-space-5); width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 var(--tj-space-7); }
 .tj-topbar__brand { display: inline-flex; align-items: center; color: inherit; text-decoration: none; min-height: 40px; padding: 0 2px; border-radius: var(--tj-radius-sm); }
 .tj-topbar__nav { display: flex; align-items: center; gap: 2px; }
-/* التنقّل كلوحتي 13 و15: أيقونة واسم في حبّة 36، والصفحة الحالية صبغة صنوبرية بنصها وأيقونتها بالطين (علامة اللحظة). */
+/* التنقّل كلوحتي 14 و16: أيقونة واسم في حبّة 36، والصفحة الحالية صبغة الأرجوان بنصها وأيقونتها بالأرجوان المضيء (علامة اللحظة). */
 .tj-topbar__link {
   position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: var(--tj-control-md); padding: 0 12px; border-radius: var(--tj-radius-md);
   font: 700 14px/20px var(--tj-font-body); color: var(--tj-text-2); text-decoration: none; border: 0; background: transparent; cursor: pointer;

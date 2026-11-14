@@ -1,4 +1,4 @@
-/* صفحة المحرّر (figma-design-brief.md §١١، والهوية الرابعة «كتابٌ مفتوح»، لوحة 14): ملء النافذة،
+/* صفحة المحرّر (figma-design-brief.md §١١، والهوية الخامسة «التاء»، لوحة 15): ملء النافذة،
    والقائمة وحدها تُمرَّر، وحين لا يتسع الارتفاع لحدّ القائمة الأدنى تتمرر الصفحة نفسها بدل قصّها (تدقيق 7a66f91، U16). الرأس والشريط على سطح البطاقة، والقائمة واللوحة الجانبية بطاقتان على الورق بخط شعري لا ظل، واللوحة
    يسارًا والقائمة يمينًا، والشريط السفلي معكوس الألوان. كل لون من رموز tokens.css بالوضعين. ارتفاع الصف محسوب في virtual.js
    (ROW)، فالحشو وحدود الحقول هنا تطابقه: حشو الصف 8+7 وحده السفلي 1، والنص 24 لكل سطر وحشوه 8+8 وحدّاه 2،
@@ -51,7 +51,7 @@ html, body.ed-page { height: 100%; }
 /* ---- شريط الأدوات والنطاق ---- */
 .ed-toolbar { display: flex; flex-direction: column; gap: 8px; padding: 10px 24px; background: var(--tj-surface); border-bottom: 1px solid var(--tj-border); }
 .ed-toolbar__row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-/* مقطّعة النطاق كمقطّعات الصفحات: مسار غائر بلا إطار، والمختار صنوبر بنص عاج، وغير المختار يتلوّن بالمرور. */
+/* مقطّعة النطاق كمقطّعات الصفحات: مسار غائر بلا إطار، والمختار بالأرجوان العميق بنص أبيض، وغير المختار يتلوّن بالمرور. */
 .ed-seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid transparent; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); }
 .ed-seg__opt {
   min-height: 32px; padding: 0 12px; border: 0; border-radius: var(--tj-radius-sm); background: transparent; color: var(--tj-text-2);
@@ -215,7 +215,7 @@ html, body.ed-page { height: 100%; }
   border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-field); background: var(--tj-surface); color: var(--tj-text);
   font: 400 16px/24px var(--tj-font-body);
 }
-/* التركيز في حقلَي الزمن والنص حدٌّ طيني وهالة 3px (لوحة 14)، بلا تغيير في مقاس الصف. */
+/* التركيز في حقلَي الزمن والنص حدٌّ بالمضيء وهالة 3px (لوحة 15)، بلا تغيير في مقاس الصف. */
 .ed-time:focus-visible, .ed-row__text:focus-visible { outline: 2px solid transparent; outline-offset: 1px; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
 .ed-row__en {
   margin: 0; padding-top: 8px; font: 400 13px/20px var(--tj-font-body); color: var(--tj-text-2); text-align: start;

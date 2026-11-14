@@ -1,6 +1,6 @@
 // أنماط لوحة النص المتزامن: ورقة واحدة داخل Shadow DOM مغلق، فلا تتسرب أنماط يوتيوب إليها ولا أنماطها إلى يوتيوب. القيم من
 // tokens.js (المطابقة لـsrc/ui/tokens.css باختبار)، والبنية والحالات من لوحات التصميم WatchPanel وPanelStates وWatchNarrow، والهوية
-// الرابعة (لوحة 12): رأس 52 برمز الشعار 22، والمقطع الحالي واحد لا يلتبس بصبغة طينية ونقطة التاء وزمن طيني.
+// الخامسة «التاء» (لوحة 13): رأس 52 برمز الشعار 22، والمقطع الحالي واحد لا يلتبس بصبغة المضيء ونقطة التاء وزمن بنص اللحظة.
 // الاتجاه RTL، والأزمنة والإزاحة معزولة LTR. الألوان بالرموز وحدها، ولا ظل للبطاقة (طبقات مسطّحة)؛ خط حافة للقائمة والرسالة.
 import { panelTokensCss } from './tokens.js';
 
@@ -116,7 +116,7 @@ export function panelCss() {
 .ra[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* تحرير نص المقطع (الفكرة ٦): الحقل مكان نص الصف بمقاسه وخطه، بحدّ الحقول (الهوية §٣) والتركيز طيني بهالة 3px؛ و«حفظ» الإجراء
-   الرئيسي الواحد بالصنوبر، و«إلغاء» شفاف، وسطر المفاتيح خافت. الصف المحرَّر لا يُنقر للقفز (المؤشر عادي). */
+   الرئيسي الواحد بالأرجوان العميق، و«إلغاء» شفاف، وسطر المفاتيح خافت. الصف المحرَّر لا يُنقر للقفز (المؤشر عادي). */
 .row.editing { cursor: auto; }
 .edit { display: flex; flex-direction: column; gap: 6px; }
 .edit__field { display: block; box-sizing: border-box; width: 100%; margin: 0; padding: 6px 10px; resize: none; overflow-y: auto; border: 1px solid var(--tj-border-input); border-radius: var(--tj-radius-md); background: var(--tj-surface); color: var(--tj-text); font: 400 16px/26px var(--tj-font-body); white-space: pre-wrap; overflow-wrap: anywhere; text-align: start; }

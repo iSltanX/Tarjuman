@@ -1,9 +1,9 @@
 /* المكوّنات المشتركة لصفحات الإضافة: الزر، والحقل، والشارة، والتنبيه، والحالة الفارغة، والحوار، والقائمة المنسدلة،
    والمقطّعة، ومجموعة الاختيار، ورقائق التصفية، ومحدد الترجمات الموجودة، والشعار، وبنود القوائم، والهيكل. كل حالة لها نص أو رمز
-   لا لون وحده، وأقل هدف ضغط 32×32 للأدوات الثانوية و40×40 لما عداها. كل الألوان من رموز tokens.css بالوضعين. الهوية الرابعة
-   (docs/identity-v4.md، لوحة المكوّنات 08): الأزرار والخيارات بلا إطار دائم؛ المحايد بخلفية الزر (--tj-control)، والرئيسي صنوبر،
-   والمختار صنوبر بنص عاج (--tj-selected)، والقسم الحالي والصف المحدد صبغة صنوبرية (--tj-selected-soft)، واللحظة طين (--tj-accent).
-   حلقة التركيز طينية 2px على :focus-visible وحده، وحقول الكتابة حقول فيبقى حدّها. */
+   لا لون وحده، وأقل هدف ضغط 32×32 للأدوات الثانوية و40×40 لما عداها. كل الألوان من رموز tokens.css بالوضعين. الهوية الخامسة
+   «التاء» (docs/identity.md، لوحتا المكوّنات 09 و10): الأزرار والخيارات بلا إطار دائم؛ المحايد بخلفية الزر (--tj-control)، والرئيسي
+   بالأرجوان العميق، والمختار بالأرجوان العميق بنص أبيض (--tj-selected)، والقسم الحالي والصف المحدد صبغته الخفيفة (--tj-selected-soft)،
+   واللحظة بالأرجوان المضيء (--tj-accent). حلقة التركيز بالمضيء 2px على :focus-visible وحده، وحقول الكتابة حقول فيبقى حدّها. */
 
 /* الأيقونات على شبكة 20 بسماكة 1.75 (لوحة 06)، و2 في الأحجام 16 و14. */
 .tj-icon { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; }
@@ -26,7 +26,7 @@
 .tj-btn--sm .tj-icon { width: 16px; height: 16px; stroke-width: 2; }
 .tj-btn--lg { min-height: var(--tj-control-lg); padding: 0 18px; font-size: 16px; line-height: 24px; }
 .tj-btn--xl { min-height: var(--tj-control-xl); padding: 0 24px; font-size: 16px; line-height: 24px; border-radius: var(--tj-radius-lg); }
-/* الأنواع الستة: الرئيسي صنوبر، والثانوي محايد، والمؤطّر، والشفاف، والخطر، والطيني لما يحمل اللحظة وحدها. */
+/* الأنواع الستة: الرئيسي بالأرجوان العميق، والثانوي محايد، والمؤطّر، والشفاف، والخطر، والمضيء لما يحمل اللحظة وحدها. */
 .tj-btn--primary { background: var(--tj-brand); color: var(--tj-brand-ink); }
 .tj-btn--secondary { background: var(--tj-control); }
 .tj-btn--outline { background: transparent; border-color: var(--tj-border-strong); }
@@ -77,7 +77,7 @@
 }
 .tj-field__input::placeholder { color: var(--tj-muted); }
 .tj-field__input:hover:not(:disabled) { border-color: var(--tj-text-2); }
-/* التركيز في الحقل حدّ طيني وهالة 3px (لوحة 08)، والخطأ مثله بلون الخطر. */
+/* التركيز في الحقل حدّ بالمضيء وهالة 3px (لوحة 09)، والخطأ مثله بلون الخطر. */
 .tj-field__input:focus-visible, .tj-field__input:focus { outline: 2px solid transparent; outline-offset: 1px; border-color: var(--tj-accent); box-shadow: 0 0 0 3px var(--tj-accent-track); }
 .tj-field__input:disabled { cursor: not-allowed; background: var(--tj-surface-2); color: var(--tj-muted); border-color: var(--tj-border-strong); }
 .tj-field__input--mono { font: 500 14px/20px var(--tj-font-mono); font-variant-numeric: tabular-nums; direction: ltr; text-align: left; }
@@ -158,7 +158,7 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 
 /* ---- مجموعة اختيار (radio) بخيارات ذات شرح ---- */
 .tj-choice { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-/* الخيارات بشرح كلوحة الإعدادات 15: سطح بخط حافة، والمختار صبغة صنوبرية وحدّه بالحبر فيُعرف بالشكل لا باللون وحده. */
+/* الخيارات بشرح كلوحة الإعدادات 16: سطح بخط حافة، والمختار صبغة الأرجوان وحدّه بالحبر فيُعرف بالشكل لا باللون وحده. */
 .tj-choice__option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--tj-border); border-radius: var(--tj-radius-md); cursor: pointer; background: var(--tj-surface); transition: background-color var(--tj-motion-fast), border-color var(--tj-motion-fast); }
 .tj-choice__option:hover { background: var(--tj-hover); }
 /* النص الصغير في العنصر المحايد عند المرور بالحبر (تدقيق Fable، UX-16: الخافت والثانوي على خلفية الزر المارّة دون 4.5:1). */
@@ -179,14 +179,14 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-seg__option { position: relative; cursor: pointer; min-width: 0; }
 .tj-seg__option input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
 .tj-seg__label { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; min-width: 56px; padding: 0 12px; border-radius: var(--tj-radius-sm); font: 700 13px/18px var(--tj-font-body); color: var(--tj-text-2); white-space: nowrap; transition: background-color var(--tj-motion-fast), color var(--tj-motion-fast); }
-/* المختار صنوبر بنص عاج وظل خفيف (لوحة 08)، كمقطّعة المحرّر؛ وغير المختار يتلوّن بالمرور. */
+/* المختار بالأرجوان العميق بنص أبيض وظل خفيف (لوحة 09)، كمقطّعة المحرّر؛ وغير المختار يتلوّن بالمرور. */
 .tj-seg__option input:checked + .tj-seg__label { background: var(--tj-selected); color: var(--tj-selected-ink); box-shadow: 0 1px 2px rgb(0 0 0 / 15%); }
 .tj-seg__option input:focus-visible + .tj-seg__label { outline: 2px solid var(--tj-focus); outline-offset: 2px; }
 .tj-seg__option:hover input:not(:checked) + .tj-seg__label { background: var(--tj-hover); color: var(--tj-text); }
 
 /* ---- رقائق التصفية بأعدادها ---- */
 .tj-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-/* الرقاقة حبّة بخلفية الزر، والمختارة صنوبر بنص عاج؛ والعدّاد في كبسولة صغيرة بالأحادي (لوحة 08). هدف الضغط 32. */
+/* الرقاقة حبّة بخلفية الزر، والمختارة بالأرجوان العميق بنص أبيض؛ والعدّاد في كبسولة صغيرة بالأحادي (لوحة 09). هدف الضغط 32. */
 .tj-chip {
   display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: var(--tj-radius-pill);
   border: 1px solid transparent; background: var(--tj-control); color: var(--tj-text-2);
@@ -248,8 +248,8 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-menu__label { font: 400 14px/20px var(--tj-font-body); }
 .tj-menu__hint { font: 400 12px/18px var(--tj-font-body); color: var(--tj-muted); }
 
-/* ---- الشعار «كتابٌ مفتوح» (logo.js): الرمز صنوبر (عاج في الداكن) والاسم «ترجمان» نصًا بـCairo 800 بلون الحبر، الرمز في البداية
-   (يمين الاسم في RTL) بفجوة 8 كرأس النافذة في لوحة 09 ---- */
+/* ---- الشعار «التاء» (logo.js): الرمز بالأرجوان العميق (الورق الليلي في الداكن) والاسم «ترجمان» نصًا بـCairo 800 بلون الحبر،
+   الرمز في البداية (يمين الاسم في RTL) بفجوة 8 كرأس النافذة في اللوحة 03 ---- */
 .tj-logo { display: inline-flex; align-items: center; gap: 8px; flex: none; color: var(--tj-logo-glyph); text-decoration: none; }
 .tj-logo__mark { display: block; flex: none; }
 .tj-logo__glyph, .tj-logo__book { fill: var(--tj-logo-glyph); }
@@ -306,7 +306,7 @@ select.tj-field__input { cursor: pointer; padding-inline-end: 8px; }
 .tj-seg__option:has(input:disabled) { cursor: not-allowed; opacity: 0.55; }
 
 /* ---- مقياس السعة ---- */
-/* المقياس كشريط التقدّم: مسار 4 بالحد البارز، والمملوء بالطين (لوحة 08)، والقرب من السعة بالتحذير ثم الخطر. */
+/* المقياس كشريط التقدّم: مسار 4 بالحد البارز، والمملوء بالأرجوان المضيء (لوحة 09)، والقرب من السعة بالتحذير ثم الخطر. */
 .tj-meter { display: block; height: 4px; border-radius: 2px; background: var(--tj-border-strong); overflow: hidden; }
 .tj-meter__fill { display: block; height: 100%; background: var(--tj-accent); border-radius: 2px; }
 .tj-meter--warning .tj-meter__fill { background: var(--tj-warning); }
