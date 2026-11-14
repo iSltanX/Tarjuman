@@ -65,7 +65,7 @@ const r = spawnSync(process.execPath, [
   '--test', `--test-timeout=${timeoutMs}`, `--import=${pathToFileURL(path.join(ROOT, 'scripts/run-tests-exit-guard.mjs')).href}`,
   '--test-reporter=spec', '--test-reporter-destination=stdout', '--test-reporter=tap', `--test-reporter-destination=${tapFile}`,
   ...files.map((f) => path.relative(ROOT, f)),
-], { cwd: ROOT, stdio: 'inherit' });
+], { cwd: ROOT, stdio: 'inherit', env: { ...process.env, TJ_TEST_TIMEOUT_MS: String(timeoutMs) } });
 let skipped = [];
 let todos = [];
 let todoFailed = [];

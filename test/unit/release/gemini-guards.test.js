@@ -242,7 +242,13 @@ test('ع-٢٩: اختبار معلّق (بمؤقت حي) يفشل باسمه ب�
   assert.equal(r.status, 1);
   assert.match(r.stdout, /معلّق إلى الأبد/);
   assert.match(r.stdout, /timed out after 500ms/);
-  assert.match(r.stdout + r.stderr, /بقي حيًّا 300ms بعد آخر اختباراته/);
+  if (Number(process.versions.node.split('.')[0]) >= 24) {
+    // المهلة تُفشل الاختبار باسمه وتُبقي عملية ملفه، فيُخرجها الحارس بعد المهلة الإضافية.
+    assert.match(r.stdout + r.stderr, /بقي حيًّا 300ms بعد آخر اختباراته/);
+  } else {
+    // ص-١٠: قبل Node 24 تُطبَّق المهلة على عملية الملف كلها فيُنهيها node --test باسم الملف، والاسم من سطر الحارس قبيلها.
+    assert.match(r.stdout, /«معلّق إلى الأبد» لم ينتهِ قبل مهلة 500ms/);
+  }
   assert.ok(Date.now() - t0 < 30_000, `${Date.now() - t0}ms`);
 });
 
