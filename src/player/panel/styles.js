@@ -56,7 +56,7 @@ export function panelCss() {
 .head__mark { width: 22px; flex: none; display: flex; justify-content: center; }
 .title { margin: 0; font: 700 16px/24px var(--tj-font-head); color: var(--tj-text); }
 .load { display: inline-flex; align-items: center; gap: 6px; height: 10px; margin-inline-end: 10px; color: var(--tj-accent); }
-.load i { width: 7px; height: 7px; background: currentColor; transform: rotate(45deg); border-radius: 1px; animation: tj-pulse 900ms var(--tj-ease) infinite; }
+.load i { width: 7px; height: 8px; background: currentColor; clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); animation: tj-pulse 900ms var(--tj-ease) infinite; }
 .load i + i { animation-delay: 450ms; }
 @keyframes tj-pulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
 
@@ -65,7 +65,7 @@ export function panelCss() {
 .bar { grid-area: bar; flex: none; display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--tj-border); }
 .status { display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 18px; color: var(--tj-text-2); white-space: nowrap; overflow: hidden; }
 .status__text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dot { width: 5px; height: 5px; flex: none; background: var(--tj-success); transform: rotate(45deg); border-radius: 1px; }
+.dot { width: 6px; height: 7px; flex: none; background: var(--tj-success); clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); }
 .ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .segs { display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--tj-radius-md); background: var(--tj-surface-2); }
 .segs button { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: var(--tj-radius-sm); color: var(--tj-text-2); font: 700 12px/24px var(--tj-font-body); white-space: nowrap; }
@@ -101,7 +101,7 @@ export function panelCss() {
 .row.cur { background: var(--tj-current); }
 .row.cur .t { color: var(--tj-current-ink); font-weight: 700; }
 .row.cur .t::before { display: none; }
-.row.cur .t::after { content: ""; order: -1; width: 6px; height: 6px; border-radius: 1px; background: var(--tj-mark); transform: rotate(45deg); }
+.row.cur .t::after { content: ""; order: -1; width: 7px; height: 8px; background: var(--tj-mark); clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); }
 .row.cur .ar { font-weight: 700; }
 /* أفعال الصف (ف9): شريط واحد على طرف الصف الممرور عليه أو المركّز (يُرى بالمرور والتركيز وحدهما)، و«أعود إليه» خط على بدايته */
 .row { position: relative; }

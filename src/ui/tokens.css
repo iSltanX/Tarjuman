@@ -1,100 +1,96 @@
-/* رموز تصميم صفحات ترجمان — الهوية الرابعة «كتابٌ مفتوح» (قرار سلطان 2026-11-07، docs/identity-v4.md). القيم من ملف رموز
-   لوحة الهوية project/tj.css (الإصدار 1794035287-e3de) بأسماء --tj-* التي تقرؤها المكوّنات والصفحات. القاعدة: «الصنوبر يفعل،
-   والطين يُشير، والعاج يحمل القراءة»: الأرضية عاج والنص حبر الصنوبر، والإجراء الرئيسي والمختار صنوبر (عاج في الداكن)، والطين
-   للّحظة وحدها (المقطع الحالي، والتركيز، والمفتاح المفعّل، وعلامة التبويب والصفحة الحاليين)، والدلالات الأربع كلٌّ بلونه ومعه
-   كلمة أو أيقونة. الداكن «ليل الصنوبر» توازن مستقل لا عكس. الوضع يتبع النظام، وdata-theme يفرضه. التباين محسوب بالوضعين في
-   test/unit/ui/identity-v4.test.js: النص ≥ 4.5:1 على كل سطح يحمله، وغير النص (حد الحقل، والتركيز، والمفتاح) ≥ 3:1. */
+/* رموز تصميم صفحات ترجمان — الهوية «التاء» (قرار سلطان 2026-11-14). القاعدة: «الأرجوان العميق يفعل، والأرجوان المضيء يُشير،
+   والورق يحمل القراءة»: حبرٌ واحد بدرجاته، والدلالات الأربع كلٌّ بلونه ومعه كلمة أو أيقونة. الداكن «ليل الأرجوان» توازن مستقل
+   لا عكس. الأسماء كما هي، والقيم وحدها تغيّرت. التباين محسوب بالوضعين: النص ≥ 4.5:1 على كل سطح يحمله، وغير النص ≥ 3:1. */
 
 :root {
   color-scheme: light dark;
 
-  /* الأسطح: الصفحة (العاج)، والبطاقة، والغائر (مسار المقطّعة والمحدد)، والزر المحايد */
-  --tj-bg: #F3EFE6;
-  --tj-surface: #FFFDF8;
-  --tj-surface-2: #EAE5DA;
-  --tj-surface-3: #DFD9CC;
-  --tj-sunken: #EAE5DA;
-  --tj-hover: rgb(24 46 43 / 5%);
-  --tj-pressed: rgb(24 46 43 / 10%);
-  --tj-overlay: rgb(24 46 43 / 44%);
+  /* الأسطح: الصفحة (الورق)، والبطاقة، والغائر (مسار المقطّعة والمحدد)، والزر المحايد */
+  --tj-bg: #F9F5F8;
+  --tj-surface: #FEFDFE;
+  --tj-surface-2: #F2EAEF;
+  --tj-surface-3: #E9E0E6;
+  --tj-sunken: #F2EAEF;
+  --tj-hover: rgb(45 22 38 / 5%);
+  --tj-pressed: rgb(45 22 38 / 10%);
+  --tj-overlay: rgb(45 22 38 / 44%);
 
-  /* النص: حبر الصنوبر، والثانوي، والخافت، والنص فوق الحبر (التلميح والإشعار) */
-  --tj-text: #182E2B;
-  --tj-text-2: #4A5A58;
-  --tj-muted: #596865;
-  --tj-on-ink: #FFFDF8;
+  /* النص: الحبر، والثانوي، والخافت، والنص فوق الحبر (التلميح والإشعار) */
+  --tj-text: #2D1626;
+  --tj-text-2: #5B4653;
+  --tj-muted: #705D69;
+  --tj-on-ink: #FEFDFE;
 
   /* الحدود: الفاصل، والبارز، وحد الحقل الذي يعرّفه وحده (≥ 3:1) */
-  --tj-border: #E2DDD2;
-  --tj-border-strong: #CDC6B8;
-  --tj-border-input: #85908D;
+  --tj-border: #E4DBE0;
+  --tj-border-strong: #D2C7CE;
+  --tj-border-input: #91818B;
 
-  /* الإجراء الرئيسي: الصنوبر يفعل */
-  --tj-brand: #1E4A44;
-  --tj-brand-hover: #173C37;
-  --tj-brand-pressed: #112E2A;
+  /* الإجراء الرئيسي: الأرجوان العميق يفعل */
+  --tj-brand: #682455;
+  --tj-brand-hover: #581847;
+  --tj-brand-pressed: #460D38;
   --tj-brand-ink: #FFFFFF;
-  --tj-brand-soft: #E6EFEC;
-  --tj-brand-text: #1E4A44;
+  --tj-brand-soft: #FBE8F4;
+  --tj-brand-text: #682455;
 
-  /* الطين الوردي: يُشير إلى اللحظة. #B9705A للكتل والأيقونات والحدود (لا للنص الصغير)، ونصه #8F4A36، وخلفية تحمل نصًا أبيض #A05C47 */
-  --tj-accent: #B9705A;
-  --tj-accent-hover: #A6604B;
-  --tj-accent-text: #8F4A36;
+  /* اللحظة: الأرجوان المضيء يُشير. --tj-accent للكتل والأيقونات والحدود، ونصه --tj-accent-text، وخلفية تحمل نصًا أبيض --tj-accent-fill */
+  --tj-accent: #A5397E;
+  --tj-accent-hover: #932C6E;
+  --tj-accent-text: #8B2868;
   --tj-accent-ink: #FFFFFF;
-  --tj-accent-fill: #A05C47;
-  --tj-accent-soft: #F6E7E0;
-  --tj-accent-soft-2: #EED2C6;
-  --tj-accent-track: rgb(185 112 90 / 24%);
-  --tj-focus: #B9705A;
+  --tj-accent-fill: #932C6E;
+  --tj-accent-soft: #FEE5F2;
+  --tj-accent-soft-2: #F8CEE5;
+  --tj-accent-track: rgb(165 57 126 / 24%);
+  --tj-focus: #A5397E;
 
   /* الأزرار المحايدة: الزر بلون السطح الثالث، والمرور والضغط بالحد البارز */
-  --tj-control: #DFD9CC;
-  --tj-control-hover: #CDC6B8;
-  --tj-control-pressed: #CDC6B8;
-  /* التحديد: المختار صنوبر بنص أبيض (المقطّعة والرقاقة والخانة والخيار)، والقسم الحالي والصف المحدد صبغة صنوبرية خفيفة، والعلامة
-     (خط التبويب والصفحة الحاليين وأيقونة القسم الحالي) بالطين. */
-  --tj-selected: #1E4A44;
+  --tj-control: #E9E0E6;
+  --tj-control-hover: #DCD0D7;
+  --tj-control-pressed: #DCD0D7;
+  /* التحديد: المختار أرجوانٌ عميق بنص أبيض، والقسم الحالي والصف المحدد صبغته الخفيفة، والعلامة بالمضيء. */
+  --tj-selected: #682455;
   --tj-selected-ink: #FFFFFF;
-  --tj-selected-soft: #E6EFEC;
-  --tj-selected-soft-ink: #1E4A44;
-  --tj-selected-mark: #B9705A;
-  --tj-selected-section: #E6EFEC;
-  --tj-selected-section-ink: #1E4A44;
-  --tj-selected-section-icon: #B9705A;
-  /* اللحظة الحالية: صبغة طينية ونقطة التاء وزمن طيني (المقطع الحالي في اللوحة والمحرّر) */
-  --tj-current: #F6E7E0;
-  --tj-current-ink: #8F4A36;
-  --tj-mark: #B9705A;
+  --tj-selected-soft: #FBE8F4;
+  --tj-selected-soft-ink: #682455;
+  --tj-selected-mark: #A5397E;
+  --tj-selected-section: #FBE8F4;
+  --tj-selected-section-ink: #682455;
+  --tj-selected-section-icon: #A5397E;
+  /* اللحظة الحالية: صبغة المضيء ونقطة القلم وزمنٌ بنص اللحظة (المقطع الحالي في اللوحة والمحرّر) */
+  --tj-current: #FEE5F2;
+  --tj-current-ink: #8B2868;
+  --tj-mark: #A5397E;
 
-  /* الشعار: الرمز صنوبر والاسم بالحبر؛ والنقطتان بالطين في الأحجام ≥ 48 وحدها */
-  --tj-logo-glyph: #1E4A44;
+  /* الشعار: الرمز بالأرجوان العميق والاسم بالحبر؛ والنقطتان بالمضيء في الأحجام ≥ 48 وحدها. البلاطة للأيقونة والصور */
+  --tj-logo-glyph: #682455;
   --tj-logo-dots: var(--tj-logo-glyph);
-  --tj-logo-dots-accent: #B9705A;
-  --tj-logo-word: #182E2B;
-  --tj-logo-tile: #1E4A44;
-  --tj-logo-on-tile: #F3EFE6;
+  --tj-logo-dots-accent: #A5397E;
+  --tj-logo-word: #2D1626;
+  --tj-logo-tile: #762E61;
+  --tj-logo-on-tile: #FEF8FC;
 
   /* الدلالات: كلٌّ بهويته، ومع كلٍّ منها كلمة أو أيقونة */
-  --tj-success: #2A6E46;
-  --tj-success-bg: #E3F0E7;
+  --tj-success: #246E3A;
+  --tj-success-bg: #E1F5E4;
   --tj-success-ink: #FFFFFF;
-  --tj-warning: #8F5414;
-  --tj-warning-bg: #F7EAD9;
+  --tj-warning: #97570D;
+  --tj-warning-bg: #FEEDD7;
   --tj-warning-ink: #FFFFFF;
-  --tj-danger: #B4383E;
-  --tj-danger-bg: #F8E3E3;
+  --tj-danger: #B63132;
+  --tj-danger-bg: #FFE7E6;
   --tj-danger-ink: #FFFFFF;
-  --tj-info: #38679A;
-  --tj-info-bg: #E3ECF5;
+  --tj-info: #2A669F;
+  --tj-info-bg: #E2F0FF;
   --tj-info-ink: #FFFFFF;
-  --tj-edited: #4A5A58;
-  --tj-edited-bg: #EAE5DA;
+  --tj-edited: #5B4653;
+  --tj-edited-bg: #F2EAEF;
   /* أيقونة الإشعار فوق الحبر: الدلالة بدرجتها الفاتحة على الحبر الداكن هنا، وبدرجتها الداكنة على حبر الوضع الداكن العاجي */
-  --tj-toast-success: #7CC79A;
-  --tj-toast-warning: #E4B06A;
-  --tj-toast-danger: #F08C8C;
-  --tj-toast-accent: #D9937B;
+  --tj-toast-success: #83D494;
+  --tj-toast-warning: #EFBA64;
+  --tj-toast-danger: #F98E8B;
+  --tj-toast-accent: #EDA4CC;
 
   /* الخطوط: المضمّنة أولًا (ui-fonts.js). Cairo للعناوين والاسم، وAlmarai للنص والحقول والأزرار، والأحادي للأزمنة والمعرّفات وحدها */
   --tj-font-head: "Tarjuman UI Cairo", "Tarjuman UI Almarai", "SF Arabic", Tahoma, sans-serif;
@@ -113,12 +109,12 @@
   --tj-space-9: 48px;
   --tj-space-10: 64px;
 
-  /* الزوايا: 3 شارة، و6 زر وحقل، و10 بطاقة وقائمة، و16 حوار ولوحة، و999 حبّة */
-  --tj-radius-xs: 3px;
-  --tj-radius-sm: 4px;
-  --tj-radius-md: 6px;
-  --tj-radius-lg: 10px;
-  --tj-radius-xl: 16px;
+  /* الزوايا: 2 شارة صغيرة، و4 زر وحقل، و8 بطاقة وقائمة، و12 حوار ولوحة، و999 حبّة */
+  --tj-radius-xs: 2px;
+  --tj-radius-sm: 3px;
+  --tj-radius-md: 4px;
+  --tj-radius-lg: 8px;
+  --tj-radius-xl: 12px;
   --tj-radius-pill: 999px;
   --tj-radius-field: var(--tj-radius-md);
   --tj-radius-button: var(--tj-radius-md);
@@ -133,10 +129,10 @@
   --tj-control-xl: 48px;
   --tj-topbar-h: 56px;
 
-  /* الطبقات: لا ظل للبطاقة، وخط حافة وظل خفيف للقوائم والتلميحات، وظل واحد للحوار والإشعار */
+  /* الطبقات: لا ظل للبطاقة، وخط حافة وظل خفيف بحبر الأرجوان للقوائم والتلميحات، وظل واحد للحوار والإشعار */
   --tj-e1: none;
-  --tj-e2: 0 0 0 1px rgb(24 46 43 / 10%), 0 4px 12px rgb(24 46 43 / 8%);
-  --tj-e3: 0 0 0 1px rgb(24 46 43 / 10%), 0 20px 48px rgb(24 46 43 / 16%);
+  --tj-e2: 0 0 0 1px rgb(45 22 38 / 10%), 0 4px 12px rgb(45 22 38 / 8%);
+  --tj-e3: 0 0 0 1px rgb(45 22 38 / 10%), 0 20px 48px rgb(45 22 38 / 16%);
 
   /* الحركة: سريعة للمرور والضغط، وأساسية للقوائم والإشعارات والمفاتيح، وبطيئة للحوار واللوحة الجانبية؛ ومنحنى واحد للدخول */
   --tj-motion-fast: 120ms;
@@ -149,71 +145,71 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --tj-bg: #0F1917;
-    --tj-surface: #16221F;
-    --tj-surface-2: #1E2B28;
-    --tj-surface-3: #263431;
-    --tj-sunken: #1E2B28;
-    --tj-hover: rgb(237 233 224 / 6%);
-    --tj-pressed: rgb(237 233 224 / 11%);
+    --tj-bg: #150C12;
+    --tj-surface: #20151D;
+    --tj-surface-2: #2C1F28;
+    --tj-surface-3: #372932;
+    --tj-sunken: #2C1F28;
+    --tj-hover: rgb(244 235 241 / 6%);
+    --tj-pressed: rgb(244 235 241 / 11%);
     --tj-overlay: rgb(0 0 0 / 60%);
-    --tj-text: #EDE9E0;
-    --tj-text-2: #B6B9B2;
-    --tj-muted: #8F9893;
-    --tj-on-ink: #0F1917;
-    --tj-border: #26332F;
-    --tj-border-strong: #33423D;
-    --tj-border-input: #7E8A86;
-    --tj-brand: #EDE9E0;
-    --tj-brand-hover: #FFFFFF;
-    --tj-brand-pressed: #CFCBC2;
-    --tj-brand-ink: #0F1917;
-    --tj-brand-soft: #1F2F2B;
-    --tj-brand-text: #CFE0DA;
-    --tj-accent: #D9937B;
-    --tj-accent-hover: #E2A48E;
-    --tj-accent-text: #E2A48E;
-    --tj-accent-ink: #0F1917;
-    --tj-accent-fill: #D9937B;
-    --tj-accent-soft: #33251F;
-    --tj-accent-soft-2: #452F27;
-    --tj-accent-track: rgb(217 147 123 / 26%);
-    --tj-focus: #D9937B;
-    --tj-control: #263431;
-    --tj-control-hover: #33423D;
-    --tj-control-pressed: #33423D;
-    --tj-selected: #EDE9E0;
-    --tj-selected-ink: #0F1917;
-    --tj-selected-soft: #1F2F2B;
-    --tj-selected-soft-ink: #CFE0DA;
-    --tj-selected-mark: #D9937B;
-    --tj-selected-section: #1F2F2B;
-    --tj-selected-section-ink: #CFE0DA;
-    --tj-selected-section-icon: #D9937B;
-    --tj-current: #33251F;
-    --tj-current-ink: #E2A48E;
-    --tj-mark: #D9937B;
-    --tj-logo-glyph: #EDE9E0;
-    --tj-logo-dots-accent: #D9937B;
-    --tj-logo-word: #EDE9E0;
-    --tj-success: #7CC79A;
-    --tj-success-bg: #17291F;
-    --tj-success-ink: #0F1917;
-    --tj-warning: #E4B06A;
-    --tj-warning-bg: #33291A;
-    --tj-warning-ink: #0F1917;
-    --tj-danger: #F08C8C;
-    --tj-danger-bg: #351D1D;
-    --tj-danger-ink: #0F1917;
-    --tj-info: #8FB4DC;
-    --tj-info-bg: #1A2634;
-    --tj-info-ink: #0F1917;
-    --tj-edited: #B6B9B2;
-    --tj-edited-bg: #1E2B28;
-    --tj-toast-success: #2A6E46;
-    --tj-toast-warning: #8F5414;
-    --tj-toast-danger: #B4383E;
-    --tj-toast-accent: #8F4A36;
+    --tj-text: #F4EBF1;
+    --tj-text-2: #C7B9C2;
+    --tj-muted: #A4939D;
+    --tj-on-ink: #150C12;
+    --tj-border: #392B34;
+    --tj-border-strong: #4A3A44;
+    --tj-border-input: #816E7A;
+    --tj-brand: #F3E2EC;
+    --tj-brand-hover: #FBF2F8;
+    --tj-brand-pressed: #DDCBD6;
+    --tj-brand-ink: #150C12;
+    --tj-brand-soft: #382030;
+    --tj-brand-text: #F0C5E1;
+    --tj-accent: #E791C2;
+    --tj-accent-hover: #F1A1CE;
+    --tj-accent-text: #F3AAD3;
+    --tj-accent-ink: #150C12;
+    --tj-accent-fill: #E791C2;
+    --tj-accent-soft: #432135;
+    --tj-accent-soft-2: #582C46;
+    --tj-accent-track: rgb(231 145 194 / 26%);
+    --tj-focus: #E791C2;
+    --tj-control: #372932;
+    --tj-control-hover: #4A3A44;
+    --tj-control-pressed: #4A3A44;
+    --tj-selected: #F3E2EC;
+    --tj-selected-ink: #150C12;
+    --tj-selected-soft: #382030;
+    --tj-selected-soft-ink: #F0C5E1;
+    --tj-selected-mark: #E791C2;
+    --tj-selected-section: #382030;
+    --tj-selected-section-ink: #F0C5E1;
+    --tj-selected-section-icon: #E791C2;
+    --tj-current: #432135;
+    --tj-current-ink: #F3AAD3;
+    --tj-mark: #E791C2;
+    --tj-logo-glyph: #F3E2EC;
+    --tj-logo-dots-accent: #E791C2;
+    --tj-logo-word: #F4EBF1;
+    --tj-success: #7CCD8E;
+    --tj-success-bg: #172C1C;
+    --tj-success-ink: #150C12;
+    --tj-warning: #EBB25F;
+    --tj-warning-bg: #37250E;
+    --tj-warning-ink: #150C12;
+    --tj-danger: #F28885;
+    --tj-danger-bg: #3E1E1E;
+    --tj-danger-ink: #150C12;
+    --tj-info: #85B6E9;
+    --tj-info-bg: #172839;
+    --tj-info-ink: #150C12;
+    --tj-edited: #C7B9C2;
+    --tj-edited-bg: #2C1F28;
+    --tj-toast-success: #196632;
+    --tj-toast-warning: #884D01;
+    --tj-toast-danger: #A5292B;
+    --tj-toast-accent: #8B2868;
     --tj-e2: 0 0 0 1px rgb(255 255 255 / 10%), 0 4px 12px rgb(0 0 0 / 40%);
     --tj-e3: 0 0 0 1px rgb(255 255 255 / 10%), 0 20px 48px rgb(0 0 0 / 60%);
   }
@@ -221,71 +217,71 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --tj-bg: #0F1917;
-  --tj-surface: #16221F;
-  --tj-surface-2: #1E2B28;
-  --tj-surface-3: #263431;
-  --tj-sunken: #1E2B28;
-  --tj-hover: rgb(237 233 224 / 6%);
-  --tj-pressed: rgb(237 233 224 / 11%);
+  --tj-bg: #150C12;
+  --tj-surface: #20151D;
+  --tj-surface-2: #2C1F28;
+  --tj-surface-3: #372932;
+  --tj-sunken: #2C1F28;
+  --tj-hover: rgb(244 235 241 / 6%);
+  --tj-pressed: rgb(244 235 241 / 11%);
   --tj-overlay: rgb(0 0 0 / 60%);
-  --tj-text: #EDE9E0;
-  --tj-text-2: #B6B9B2;
-  --tj-muted: #8F9893;
-  --tj-on-ink: #0F1917;
-  --tj-border: #26332F;
-  --tj-border-strong: #33423D;
-  --tj-border-input: #7E8A86;
-  --tj-brand: #EDE9E0;
-  --tj-brand-hover: #FFFFFF;
-  --tj-brand-pressed: #CFCBC2;
-  --tj-brand-ink: #0F1917;
-  --tj-brand-soft: #1F2F2B;
-  --tj-brand-text: #CFE0DA;
-  --tj-accent: #D9937B;
-  --tj-accent-hover: #E2A48E;
-  --tj-accent-text: #E2A48E;
-  --tj-accent-ink: #0F1917;
-  --tj-accent-fill: #D9937B;
-  --tj-accent-soft: #33251F;
-  --tj-accent-soft-2: #452F27;
-  --tj-accent-track: rgb(217 147 123 / 26%);
-  --tj-focus: #D9937B;
-  --tj-control: #263431;
-  --tj-control-hover: #33423D;
-  --tj-control-pressed: #33423D;
-  --tj-selected: #EDE9E0;
-  --tj-selected-ink: #0F1917;
-  --tj-selected-soft: #1F2F2B;
-  --tj-selected-soft-ink: #CFE0DA;
-  --tj-selected-mark: #D9937B;
-  --tj-selected-section: #1F2F2B;
-  --tj-selected-section-ink: #CFE0DA;
-  --tj-selected-section-icon: #D9937B;
-  --tj-current: #33251F;
-  --tj-current-ink: #E2A48E;
-  --tj-mark: #D9937B;
-  --tj-logo-glyph: #EDE9E0;
-  --tj-logo-dots-accent: #D9937B;
-  --tj-logo-word: #EDE9E0;
-  --tj-success: #7CC79A;
-  --tj-success-bg: #17291F;
-  --tj-success-ink: #0F1917;
-  --tj-warning: #E4B06A;
-  --tj-warning-bg: #33291A;
-  --tj-warning-ink: #0F1917;
-  --tj-danger: #F08C8C;
-  --tj-danger-bg: #351D1D;
-  --tj-danger-ink: #0F1917;
-  --tj-info: #8FB4DC;
-  --tj-info-bg: #1A2634;
-  --tj-info-ink: #0F1917;
-  --tj-edited: #B6B9B2;
-  --tj-edited-bg: #1E2B28;
-  --tj-toast-success: #2A6E46;
-  --tj-toast-warning: #8F5414;
-  --tj-toast-danger: #B4383E;
-  --tj-toast-accent: #8F4A36;
+  --tj-text: #F4EBF1;
+  --tj-text-2: #C7B9C2;
+  --tj-muted: #A4939D;
+  --tj-on-ink: #150C12;
+  --tj-border: #392B34;
+  --tj-border-strong: #4A3A44;
+  --tj-border-input: #816E7A;
+  --tj-brand: #F3E2EC;
+  --tj-brand-hover: #FBF2F8;
+  --tj-brand-pressed: #DDCBD6;
+  --tj-brand-ink: #150C12;
+  --tj-brand-soft: #382030;
+  --tj-brand-text: #F0C5E1;
+  --tj-accent: #E791C2;
+  --tj-accent-hover: #F1A1CE;
+  --tj-accent-text: #F3AAD3;
+  --tj-accent-ink: #150C12;
+  --tj-accent-fill: #E791C2;
+  --tj-accent-soft: #432135;
+  --tj-accent-soft-2: #582C46;
+  --tj-accent-track: rgb(231 145 194 / 26%);
+  --tj-focus: #E791C2;
+  --tj-control: #372932;
+  --tj-control-hover: #4A3A44;
+  --tj-control-pressed: #4A3A44;
+  --tj-selected: #F3E2EC;
+  --tj-selected-ink: #150C12;
+  --tj-selected-soft: #382030;
+  --tj-selected-soft-ink: #F0C5E1;
+  --tj-selected-mark: #E791C2;
+  --tj-selected-section: #382030;
+  --tj-selected-section-ink: #F0C5E1;
+  --tj-selected-section-icon: #E791C2;
+  --tj-current: #432135;
+  --tj-current-ink: #F3AAD3;
+  --tj-mark: #E791C2;
+  --tj-logo-glyph: #F3E2EC;
+  --tj-logo-dots-accent: #E791C2;
+  --tj-logo-word: #F4EBF1;
+  --tj-success: #7CCD8E;
+  --tj-success-bg: #172C1C;
+  --tj-success-ink: #150C12;
+  --tj-warning: #EBB25F;
+  --tj-warning-bg: #37250E;
+  --tj-warning-ink: #150C12;
+  --tj-danger: #F28885;
+  --tj-danger-bg: #3E1E1E;
+  --tj-danger-ink: #150C12;
+  --tj-info: #85B6E9;
+  --tj-info-bg: #172839;
+  --tj-info-ink: #150C12;
+  --tj-edited: #C7B9C2;
+  --tj-edited-bg: #2C1F28;
+  --tj-toast-success: #196632;
+  --tj-toast-warning: #884D01;
+  --tj-toast-danger: #A5292B;
+  --tj-toast-accent: #8B2868;
   --tj-e2: 0 0 0 1px rgb(255 255 255 / 10%), 0 4px 12px rgb(0 0 0 / 40%);
   --tj-e3: 0 0 0 1px rgb(255 255 255 / 10%), 0 20px 48px rgb(0 0 0 / 60%);
 }

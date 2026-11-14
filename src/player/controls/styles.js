@@ -48,7 +48,7 @@ export function groupCss() {
 .btn[data-busy] { cursor: progress; }
 .load { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: var(--icon); height: 10px; pointer-events: none; }
 .load[hidden] { display: none; }
-.load i { display: block; width: 7px; height: 7px; border-radius: 1px; background: currentColor; transform: rotate(45deg); opacity: 0.25; animation: tj-load ${LOAD_MS}ms ease infinite; }
+.load i { display: block; width: 7px; height: 8px; background: currentColor; clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); opacity: 0.25; animation: tj-load ${LOAD_MS}ms ease infinite; }
 .load i + i { animation-delay: ${LOAD_MS / 2}ms; }
 @keyframes tj-load { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -142,7 +142,7 @@ button.line { cursor: pointer; text-decoration: underline; text-underline-offset
 .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; unicode-bidi: isolate; min-width: 0; }
 
 /* رموز الحالة SVG (glyphs.js) بحجم السطر، بلون نغمته. */
-svg.glyph { flex: none; width: 1.08em; height: 1.08em; margin-top: 0.2em; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+svg.glyph { flex: none; width: 1.08em; height: 1.08em; margin-top: 0.2em; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: butt; stroke-linejoin: miter; }
 svg.glyph--btn { width: 16px; height: 16px; margin: 0; }
 .layer[data-size="fullscreen"] svg.glyph--btn { width: 18px; height: 18px; }
 .row.summary svg.glyph, .row.status svg.glyph { margin-top: 0; }

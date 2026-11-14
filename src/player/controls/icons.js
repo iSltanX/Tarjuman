@@ -6,7 +6,7 @@ import { ICON_VIEWBOX, IDENTITY_ICONS } from '../../ui/icons.js';
 const SVG = 'http://www.w3.org/2000/svg';
 
 export const PLAYER_STROKE = 1.9;
-const STROKE = { fill: 'none', stroke: 'currentColor', 'stroke-width': PLAYER_STROKE, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+const STROKE = { fill: 'none', stroke: 'currentColor', 'stroke-width': PLAYER_STROKE, 'stroke-linecap': 'butt', 'stroke-linejoin': 'miter', 'stroke-miterlimit': 4 };
 
 /** @param {Document} doc @param {string} tag @param {Record<string, string | number>} attrs */
 function node(doc, tag, attrs) {

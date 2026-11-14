@@ -6,7 +6,7 @@
    حلقة التركيز طينية 2px على :focus-visible وحده، وحقول الكتابة حقول فيبقى حدّها. */
 
 /* الأيقونات على شبكة 20 بسماكة 1.75 (لوحة 06)، و2 في الأحجام 16 و14. */
-.tj-icon { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.tj-icon { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; }
 .tj-icon--sm { width: 16px; height: 16px; stroke-width: 2; }
 .tj-icon--xs { width: 14px; height: 14px; stroke-width: 2; }
 
@@ -61,7 +61,7 @@
 @keyframes tj-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes tj-spin { to { transform: rotate(360deg); } }
 /* نقطة التاء: علامة الحالة المستعارة من الشعار، معيّن 6 بكسل بزاوية 1 يدور 45°، بلون الحالة، ولا يظهر وحده أبدًا. ينبض في الانتظار وحده. */
-.tj-sinnah { display: inline-block; width: 6px; height: 6px; border-radius: 1px; transform: rotate(45deg); background: currentColor; flex: none; }
+.tj-sinnah { display: inline-block; width: 7px; height: 8px; clip-path: polygon(62% 0, 100% 50%, 38% 100%, 0 50%); background: currentColor; flex: none; }
 .tj-sinnah--accent { color: var(--tj-accent); }
 .tj-sinnah--pulse { animation: tj-pulse 900ms var(--tj-ease) infinite; }
 .tj-btn__reason { font: 400 13px/20px var(--tj-font-body); color: var(--tj-muted); }
