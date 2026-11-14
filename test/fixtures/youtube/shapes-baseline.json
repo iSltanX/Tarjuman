@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "source": "chrome Chrome/157.0.8103.51",
-  "at": "2026-11-13T20:25:00.904Z",
+  "source": "chrome Chrome/157.0.8103.79",
+  "at": "2026-11-14T03:49:41.933Z",
   "dom": {
     "player": true,
     "video": true,
@@ -115,7 +115,6 @@
         "xobt",
         "xorb",
         "xovt",
-        "xowatf",
         "xowf"
       ]
     }
