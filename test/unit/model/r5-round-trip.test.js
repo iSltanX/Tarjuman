@@ -35,16 +35,16 @@ test('ح-58: نص السطر وتفصيله باللغتين، والرمز ال
   assert.deepEqual(roundTripText('ar'), {
     lead: 'الفيديو بالعربية أصلًا:',
     action: 'اختر مساره الأصلي',
-    how: 'هذا المسار ترجمه يوتيوب آليًا عن العربية. لاختيار مساره الأصلي في المشغّل: CC ثم الإعدادات ثم «الترجمة» ثم العربية. ولك أن تتابع بهذا المسار.',
+    how: 'هذا المسار ترجمه يوتيوب آليًا عن العربية. لاختيار مسار الفيديو الأصلي في المشغّل: CC ثم الإعدادات ثم «الترجمة» ثم العربية. ولك أن تتابع بهذا المسار.',
   });
   assert.equal(roundTripText('ja').lead, 'الفيديو باليابانية أصلًا:');
   assert.equal(roundTripText('qqq').lead, 'الفيديو بلغة ⁦qqq⁩ أصلًا:');
   setLocale('en');
   try {
     const en = roundTripText('ar');
-    assert.equal(en.lead, 'This video is in Arabic:');
-    assert.equal(en.action, 'pick its own track');
-    assert.match(en.how, /^This track was auto-translated by YouTube from Arabic\. To pick its own track in the player: CC, then Settings, then “Subtitles\/CC”, then Arabic\. You can also continue with this track\.$/);
+    assert.equal(en.lead, 'This video is originally in Arabic:');
+    assert.equal(en.action, 'pick its original track');
+    assert.match(en.how, /^This track was auto-translated by YouTube from Arabic\. To pick the video’s original track in the player: CC, then Settings, then “Subtitles\/CC”, then Arabic\. You can also continue with this track\.$/);
     for (const s of Object.values(en)) assert.equal(ARABIC.test(s), false, s);
   } finally {
     setLocale('ar');
@@ -121,7 +121,7 @@ test('ح-58: القائمة: سطر واحد بعد سطر اللغة، والت
   click(toggle);
   assert.equal(page.ui.field('roundTrip').getAttribute('aria-expanded'), 'true');
   assert.equal(page.ui.field('roundTripHow').hasAttribute('hidden'), false);
-  assert.match(page.ui.field('roundTripHow').textContent, /لاختيار مساره الأصلي في المشغّل: CC ثم الإعدادات ثم «الترجمة» ثم العربية/);
+  assert.match(page.ui.field('roundTripHow').textContent, /لاختيار مسار الفيديو الأصلي في المشغّل: CC ثم الإعدادات ثم «الترجمة» ثم العربية/);
   const download = page.ui.item('تنزيل الملف');
   assert.ok(download, 'لا يُمنع التنزيل');
   assert.equal(download.getAttribute('aria-disabled'), null);
@@ -144,7 +144,7 @@ test('ح-58: القائمة بالإنجليزية: السطر وتفصيله ب
   try {
     const page = openMenu(makeState({ captured: [machineTrack], langPrefs: prefsTo('ar') }));
     const line = page.ui.menu().querySelectorAll('.row').find((r) => r.classList.contains('roundtrip'));
-    assert.equal(line.textContent, 'This video is in Arabic: pick its own track');
+    assert.equal(line.textContent, 'This video is originally in Arabic: pick its original track');
     assert.equal(ARABIC.test(page.ui.menuText()), false, page.ui.menuText());
   } finally {
     setLocale('ar');
