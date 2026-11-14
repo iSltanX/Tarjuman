@@ -133,7 +133,7 @@ Tarjuman has no server, and it connects to none except for the “Library” thu
 ## Changes — `#changes`
 
 - When what the extension stores or sends changes, this page changes with it, its effective date changes, and the change is noted in the changelog.
-- **Version 2.3.0, released on ⟨تاريخ النشر⟩:** Your device now also stores the term lists you create for language pairs, and a draft of your Editor edits until you save them; the draft is deleted when you save or discard its edits. If you include the glossary in the instructions you send to a model yourself, the lists that match their two languages go with it. And “Turn on CC now” and “Restart CC” in “Download original” press the player’s CC button on your click, so the player requests the subtitles itself; Tarjuman sends no request.
+- **Version 3.0.0, released on ⟨تاريخ النشر⟩:** Your device now also stores the term lists you create for language pairs, and a draft of your Editor edits until you save them; the draft is deleted when you save or discard its edits. If you include the glossary in the instructions you send to a model yourself, the lists that match their two languages go with it. And “Turn on CC now” and “Restart CC” in “Download original” press the player’s CC button on your click, so the player requests the subtitles itself; Tarjuman sends no request.
 
 ## Contact — `#contact`
 

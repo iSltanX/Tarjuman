@@ -138,9 +138,11 @@ test('§١٢.٢ (١٢): سطر «يُرسل أول 100» العام يرجع إ�
   assert.ok(t('settings.glossary.sentCapGeneral', { max: '' }).includes(`“${t('settings.glossary.anySource')}”`));
 });
 
-test('§١٢.٢ (١٣): سطر 2.3.0 في «التغييرات» يسند الحذف إلى المسودة وحدها، لا إلى قوائم المصطلحات معها', () => {
+test('§١٢.٢ (١٣): سطر الإصدار في «التغييرات» يسند الحذف إلى المسودة وحدها، لا إلى قوائم المصطلحات معها', () => {
+  // كان السطر سطر 2.3.0، وصار سطر 3.0.0 حين رُفع الرقم (ST4)؛ فالإصدار من package.json لا رقم مكتوب.
+  const { version } = JSON.parse(read('package.json'));
   for (const rel of ['docs/site/privacy.md', 'PRIVACY.md']) {
-    const line = read(rel).split('\n').find((l) => l.startsWith('- **الإصدار 2.3.0'));
+    const line = read(rel).split('\n').find((l) => l.startsWith(`- **الإصدار ${version}،`));
     assert.ok(line?.includes('ومسودة تعديلاتك في المحرّر ما لم تحفظها، والمسودة تُحذف حين تحفظ تعديلاتها أو تتجاهلها.'), rel);
   }
 });
