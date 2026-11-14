@@ -447,6 +447,19 @@ test('U26: مناطق الحالة والتنبيه لا تُعاد كتابته
   assert.ok(notice.childNodes[0] === noticeText, 'نص التنبيه نفسه');
 });
 
+test('«محفوظ» في رأس المحرّر بصبغة الأرجوان كالنافذة (اللوحة 15، ت٣-v5b-identity-2)، وغير المحفوظ تحذير', async () => {
+  const m = await mounted();
+  const pill = () => m.env.root.querySelector('.ed-status').firstChild;
+  assert.equal(textOf(pill()), 'محفوظ');
+  assert.ok(pill().classList.contains('tj-pill--brand'), String(pill().className));
+  assert.ok(!pill().classList.contains('tj-pill--success'), 'لا أخضر النجاح');
+  const ta = m.field(1, 'text');
+  ta.value = `${ta.value} أ`;
+  ta.dispatchEvent({ type: 'input' });
+  await m.env.flushFrames();
+  assert.ok(pill().classList.contains('tj-pill--warning'), String(pill().className));
+});
+
 test('U26: خطأ نص المقطع مربوط بحقله (aria-describedby وaria-invalid)', async () => {
   const m = await mounted();
   m.editor.state.session.setText(1, '');

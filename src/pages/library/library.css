@@ -69,7 +69,6 @@
 .lib-row:not(:hover):not(:focus-within) .lib-idcopy { opacity: 0; }
 .lib-row__status { display: flex; align-items: center; gap: 6px; }
 .lib-row__status .tj-icon { width: 12px; height: 12px; }
-.lib-row .tj-pill--plain { background: transparent; box-shadow: inset 0 0 0 1px var(--tj-border-strong); }
 
 /* أفعال الصف: «تحرير» و«رفع ترجمة» نصّان، وفتح الفيديو مثلث ممتلئ، وزر التوسيع يدور عند الفتح. */
 .lib-open .tj-icon { fill: currentColor; stroke-width: 1.5; }

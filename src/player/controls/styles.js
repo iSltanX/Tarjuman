@@ -13,8 +13,12 @@ export const BAR_FADE_MS = 100;
 export const LOAD_MS = 900;
 
 const FOCUS = 'outline: 2px solid #FFFFFF; outline-offset: -3px; box-shadow: 0 0 0 4px rgb(0 0 0 / 55%);';
-/** حلقة تركيز أزرار الشريط: بيضاء داخلية حول الأيقونة (تُرى على الشريط الداكن والفاتح وفوق أي فيديو). */
-const BAR_FOCUS = 'outline: 2px solid #FFFFFF; outline-offset: -6px; border-radius: 8px;';
+/**
+ * حلقة تركيز أزرار الشريط: بيضاء داخلية حول الأيقونة، وخارجها مباشرةً هالة داكنة داخل الزر (4px بين حافته والحلقة)، فتُرى فوق
+ * الفيديو الداكن والفاتح معًا. بلا الهالة كانت الحلقة على حاوية يوتيوب الرمادية فوق إطار أبيض 2.12:1، دون 3:1 (الثابت ٥ في خطة
+ * 3.0.0، ت٣-v5b-identity-3). والهالة داخلية لأن أزرار الشريط متلاصقة.
+ */
+const BAR_FOCUS = 'outline: 2px solid #FFFFFF; outline-offset: -6px; border-radius: 8px; box-shadow: inset 0 0 0 4px rgb(0 0 0 / 55%);';
 /** مقاسات الطبقة: على الطبقة وعلى حاوية الرسائل معًا، فهي شقيقتها لا ابنتها (تدقيق 7a66f91، U42: كانت الرسائل بخط المتصفح و16px). */
 const SIZES = '--fs: 13px; --title-fs: 14px; --tip-fs: 12px; --big-fs: 28px; --row: 32px;';
 const SIZES_FULL = '--fs: 15px; --title-fs: 16px; --tip-fs: 14px; --big-fs: 32px; --row: 38px;';

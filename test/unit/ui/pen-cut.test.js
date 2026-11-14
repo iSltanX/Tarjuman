@@ -8,7 +8,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { panelCss } from '../../../src/player/panel/styles.js';
-import { layerCss } from '../../../src/player/controls/styles.js';
+import { groupCss, layerCss } from '../../../src/player/controls/styles.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
@@ -66,4 +66,32 @@ test('زوايا اللوحات 09–12 في المشغّل والنافذة (ت
   const popup = read('src/pages/popup/popup.css');
   assert.match(rule(popup, '.tj-popup__note'), /border-radius: var\(--tj-radius-lg\)/);
   assert.match(rule(popup, '.tj-popup__step--done .tj-popup__step-n'), /background: var\(--tj-success\); color: var\(--tj-success-ink\)/);
+});
+
+test('شارتا «معدّلة» و«بانتظار الترجمة» في المحفوظات مسطّحتان كاللوحة 14 والنافذة، لا مؤطّرتان شفافتان (ت٣-v5b-identity-1)', () => {
+  const lib = read('src/pages/library/library.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(lib, /\.tj-pill--plain[^{}]*\{[^}]*(?:background:\s*transparent|box-shadow)/, 'لا تجاوز يفرّغ الشارة ويؤطّرها');
+  const ui = read('src/ui/components.css');
+  assert.match(rule(ui, '.tj-pill--edited'), /background: var\(--tj-edited-bg\)/);
+  assert.match(rule(ui, '.tj-pill'), /background: var\(--tj-surface-2\)/, 'والمحايدة («بانتظار الترجمة») بالسطح الغائر');
+});
+
+/** نسبة تباين WCAG بين لونين رماديين بقيمة القناة 0–255. */
+const contrast = (a, b) => {
+  const lum = (v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+test('حلقة تركيز أزرار الشريط بهالة داكنة داخلية تجاورها، فتبلغ 3:1 فوق إطار أبيض أيضًا (الثابت ٥، ت٣-v5b-identity-3)', () => {
+  const focus = rule(groupCss(), '.btn:focus-visible');
+  assert.match(focus, /outline: 2px solid #FFFFFF; outline-offset: -6px/);
+  const halo = /box-shadow: inset 0 0 0 (\d+)px rgb\(0 0 0 \/ (\d+)%\)/.exec(focus);
+  assert.ok(halo, focus);
+  assert.equal(Number(halo[1]), 4, 'الهالة تملأ ما بين حافة الزر والحلقة (إزاحتها 6 وعرضها 2) فتجاورها');
+  // فوق إطار أبيض يرسم يوتيوب حاوية أزراره #B2B2B2 (مقيسة في المتصفحات الأربعة)، والحلقة البيضاء عليها 2.12:1.
+  const container = 0xB2;
+  const band = Math.round(container * (1 - Number(halo[2]) / 100));
+  assert.ok(contrast(255, band) >= 3, `الحلقة على الهالة ${contrast(255, band).toFixed(2)}`);
+  assert.ok(contrast(band, container) >= 3, `الهالة على الحاوية ${contrast(band, container).toFixed(2)}`);
 });

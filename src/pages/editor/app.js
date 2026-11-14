@@ -693,8 +693,9 @@ export async function mountEditor(app, {
     pairEl.textContent = pairLabel({ from: S.englishTrack?.lang ?? null, to: S.opened?.slots[S.slot - 1]?.track?.lang ?? null, translated: true }) ?? '';
     pairEl.hidden = !pairEl.textContent;
     doc.title = `${pendingWork ? '● ' : ''}${t('common.page.title', { page: t('common.nav.editor') })}`;
-    // منطقة الحالة تُكتب حين يتغير نصها أو نبرتها فقط، لا مع كل ضغطة فيُعاد إعلانها (U26).
-    const status = { tone: pendingWork ? 'warning' : 'success', text: saveStatus(changes(), dirty, s.draftCount) };
+    // منطقة الحالة تُكتب حين يتغير نصها أو نبرتها فقط، لا مع كل ضغطة فيُعاد إعلانها (U26). و«محفوظ» بصبغة الأرجوان كالنافذة
+    // (اللوحتان 11 و15، docs/identity.md §٧ البند ١٥)، لا بأخضر النجاح.
+    const status = { tone: pendingWork ? 'warning' : 'brand', text: saveStatus(changes(), dirty, s.draftCount) };
     const sig = `${getLocale()}|${status.tone}|${status.text}`;
     if (statusBox.dataset.sig !== sig) {
       statusBox.replaceChildren(statusPill({ ...status, doc }));

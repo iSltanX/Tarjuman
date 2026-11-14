@@ -631,6 +631,14 @@ try {
   await dismissPromo();
   await main(() => { const v = document.querySelector('#movie_player video'); v.muted = true; v.pause(); return true; });
   await sleep(600);
+  // قد يُفتح يوتيوب داكنًا من أول تحميل (رُئي في Edge، ت٣-v5b-identity-4)، وفحوص الوضع الفاتح تفترضه فاتحًا: يُضبط الفاتح صراحةً.
+  await emulateScheme(yt, 'light');
+  const startedDark = await main(() => { const d = document.documentElement.hasAttribute('dark'); if (d) document.documentElement.removeAttribute('dark'); return d; });
+  result.measures.youtubeStartedDark = startedDark;
+  if (startedDark) {
+    note('فُتح يوتيوب داكنًا: أزيلت سمة html[dark] قبل فحوص الوضع الفاتح.');
+    await sleep(1200);
+  }
   const ytLocale = await iso(async () => (await chrome.storage.local.get('uiLocale')).uiLocale?.locale ?? null);
   result.uiLocale.youtube = ytLocale;
   if (!isLocale(ytLocale)) throw new Error(`لغة الواجهة المحفوظة غير مدعومة: ${ytLocale}`);
@@ -1009,11 +1017,12 @@ try {
     check('identity-v5-panel-buttons-borderless-segs-selected-mark-dark', dBtn?.bg === V5.dark.control && dBtn?.border === NONE && dSeg?.bg === V5.dark.selected && dSeg?.color === V5.dark.ink && dGlyph?.fill === V5.dark.glyph, { btn: dBtn, seg: dSeg, glyph: dGlyph });
     if (simulated) note('الوضع الداكن ليوتيوب: ضُبطت سمة html[dark] يدويًا (يوتيوب غير المسجَّل لم يتبع وضع الجهاز)، ثم أزيلت؛ وعادت اللوحة فاتحة.');
     await snap(yt, 'watch-panel-dark');
-    if (simulated) await main(() => document.documentElement.removeAttribute('dark'));
+    // العودة إلى الفاتح بوضع الجهاز وسمة يوتيوب معًا، أيًّا كان من ضبط الداكن (السكربت، أو يوتيوب يتبع وضع الجهاز)؛ كانت السمة
+    // لا تُزال إلا إن ضبطها السكربت، فيسقط الفحص كذبًا حين يتبع يوتيوب الجهاز (ت٣-v5b-identity-4).
+    await emulateScheme(yt, 'light');
+    await main(() => document.documentElement.removeAttribute('dark'));
     await sleep(800);
     check('panel-light-again-after-youtube-light', (await peek()).theme === 'light');
-    await emulateScheme(yt, 'light');
-    await sleep(800);
   });
 
   // واجهة يوتيوب العربية (RTL): يضع يوتيوب عموده الثانوي يسار الفيديو، وقرار سلطان (2026-11-03) أن تبقى اللوحة يمينه، فيُبدَّل
