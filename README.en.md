@@ -17,7 +17,7 @@
 
 There's no built-in model, no API key, no account, no translation server, and no video or audio download. Your translations and settings stay in your browser; Library thumbnails are requested from YouTube by video ID only if you turn them on.
 
-> **Release status:** the current version is **3.0.0** (2026-11-15); **2.2.0** (2026-11-11) stays published on Chrome Web Store (which also serves Brave), Microsoft Edge Add-ons, and Firefox Add-ons until 3.0.0 is accepted. 3.0.0 brings the new Taa identity (logo, icon, and colors), exporting as WebVTT or with the original, term lists for each language pair, a draft of what you haven't saved in the Editor, fixing a segment's text from the transcript panel, optional keyboard shortcuts, and a button that turns on CC from the "Download original" menu.
+> **Release status:** the current version is **3.0.0** (2026-11-15), published on Firefox Add-ons; **2.2.0** (2026-11-11) stays published on Chrome Web Store (which also serves Brave) and Microsoft Edge Add-ons until 3.0.0 is accepted there. 3.0.0 brings the new Taa identity (logo, icon, and colors), exporting as WebVTT or with the original, term lists for each language pair, a draft of what you haven't saved in the Editor, fixing a segment's text from the transcript panel, optional keyboard shortcuts, and a button that turns on CC from the "Download original" menu.
 
 ## Features
 

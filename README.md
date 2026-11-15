@@ -11,7 +11,7 @@
 <!-- tj:facts badges -->
   <a href="https://chromewebstore.google.com/detail/oapjhdkejcohlhhanacplhneohancfpj"><img alt="ترجمان 2.2.0 في Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-2.2.0-682455?logo=googlechrome&logoColor=white"></a>
   <a href="https://microsoftedge.microsoft.com/addons/detail/iickeiclgbpdlkalhlofdpphhkohpkgi"><img alt="ترجمان 2.2.0 في Microsoft Edge Add-ons" src="https://img.shields.io/badge/Edge%20Add--ons-2.2.0-682455?logo=microsoftedge&logoColor=white"></a>
-  <a href="https://addons.mozilla.org/en-US/firefox/addon/tarjuman/"><img alt="ترجمان 2.2.0 في Firefox Add-ons" src="https://img.shields.io/badge/Firefox%20Add--ons-2.2.0-682455?logo=firefoxbrowser&logoColor=white"></a>
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/tarjuman/"><img alt="ترجمان 3.0.0 في Firefox Add-ons" src="https://img.shields.io/badge/Firefox%20Add--ons-3.0.0-682455?logo=firefoxbrowser&logoColor=white"></a>
 <!-- /tj:facts badges -->
   <img alt="بياناتك على جهازك" src="https://img.shields.io/badge/data-on--device-682455">
   <a href="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml"><img alt="الفحوص" src="https://github.com/iSltanX/Tarjuman/actions/workflows/ci.yml/badge.svg"></a>
@@ -30,7 +30,7 @@
 
 لا نموذج مدمج، ولا مفتاح API، ولا حساب، ولا خادم ترجمة، ولا تنزيل للفيديو أو الصوت. وترجماتك وإعداداتك تبقى في متصفحك، وصور المحفوظات لا تُطلب من يوتيوب بمعرّف الفيديو إلا إن فعّلتها.
 
-> **حالة الإصدار:** الإصدار الحالي **3.0.0** (2026-11-15)، والمنشور في المتاجر **2.2.0** (2026-11-11) في Chrome Web Store (ومنه Brave) وMicrosoft Edge Add-ons وFirefox Add-ons حتى يُقبل 3.0.0. وفي 3.0.0: الهوية الجديدة «التاء» (الشعار والأيقونة والألوان)، والتصدير بصيغة WebVTT أو مع الأصل، وقوائم مصطلحات لكل زوج لغتين، ومسودة لما لم تحفظه في المحرّر، وتصحيح نص المقطع من لوحة النص، واختصارات اختيارية للوحة المفاتيح، وزر يشغّل CC من قائمة «تنزيل الأصل».
+> **حالة الإصدار:** الإصدار الحالي **3.0.0** (2026-11-15)، منشور في Firefox Add-ons، والمنشور في Chrome Web Store (ومنه Brave) وMicrosoft Edge Add-ons **2.2.0** (2026-11-11) حتى يُقبل فيهما 3.0.0. وفي 3.0.0: الهوية الجديدة «التاء» (الشعار والأيقونة والألوان)، والتصدير بصيغة WebVTT أو مع الأصل، وقوائم مصطلحات لكل زوج لغتين، ومسودة لما لم تحفظه في المحرّر، وتصحيح نص المقطع من لوحة النص، واختصارات اختيارية للوحة المفاتيح، وزر يشغّل CC من قائمة «تنزيل الأصل».
 
 ## المزايا
 
